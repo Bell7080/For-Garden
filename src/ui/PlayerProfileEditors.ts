@@ -201,7 +201,7 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
         const plate = chipPoints(width, cellHeight, { bevel: { topLeft: 26, topRight: 0, bottomRight: 26, bottomLeft: 0 } });
         item.add(drawLayer(scene, 0, 0, plate, { fill: chosen ? 0x1b2836 : 0x0c1118, alpha: HOLO.glass, edge: chosen ? frame.color : undefined, edgeAlpha: 0.9 }));
         // 칸마다 **지금 얼굴에 그 테두리를 씌운 모습**을 세운다 — 이름만 보고는 어떤 장식인지 모른다.
-        const sample = new ProfileAvatar(scene, 0, -34, {
+        const sample = new ProfileAvatar(scene, 0, -32, {
           size: avatarSize, frameId: frame.id, portraitAssetId: profile.avatar?.portraitAssetId,
           fallback: profileAvatarContent(profile, () => false).fallback,
         });
@@ -210,7 +210,7 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
         item.add(scene.add.text(0, cellHeight / 2 - 58, frame.displayName, textStyle({ role: "emphasis", size: 24, color: chosen ? hex(frame.color) : COLOR.ink })).setOrigin(0.5));
         if (!unlocked) {
           item.add(drawGlyph(scene, "lock", -30, cellHeight / 2 - 24, 22, COLOR.inkDimHex));
-          const lockText = scene.add.text(-12, cellHeight / 2 - 24, frame.unlockAchievement ? t("achievement.tier", { current: frame.unlockAchievement.tiers, total: frame.unlockAchievement.tiers }) : t("profile.edit.frameLocked", { level: frame.unlockLevel }), textStyle({ role: "emphasis", size: 20, color: COLOR.inkDim })).setOrigin(0, 0.5);
+          const lockText = scene.add.text(-12, cellHeight / 2 - 24, frame.unlockGift ? t("profile.edit.frameGift") : frame.unlockAchievement ? t("achievement.tier", { current: frame.unlockAchievement.tiers, total: frame.unlockAchievement.tiers }) : t("profile.edit.frameLocked", { level: frame.unlockLevel }), textStyle({ role: "emphasis", size: 20, color: COLOR.inkDim })).setOrigin(0, 0.5);
           item.add(lockText);
         }
         const hit = scene.add.rectangle(0, 0, width, cellHeight, 0xffffff, 0).setInteractive({ useHandCursor: unlocked });

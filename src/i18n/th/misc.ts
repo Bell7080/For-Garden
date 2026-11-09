@@ -434,4 +434,7 @@ export const MISC_TH = {
   "stageMap.subRead": "อ่านแล้ว",
   "title.switchAccount": "เปลี่ยนบัญชี",
   "title.switchAccount.body": "เริ่มด้วยบัญชีอื่น ข้อมูลบันทึกในอุปกรณ์นี้จะถูกลบ ความคืบหน้าที่เชื่อมกับเซิร์ฟเวอร์จะคงอยู่",
+  "profile.edit.frameGift": "จำกัด",
+  "profile.unlock.gift.firstPayment": "ได้รับจากของขวัญชำระเงินครั้งแรก",
+  "profile.unlock.gift.seasonPass": "รางวัลซีซันพาสระดับ 30",
 } as const;

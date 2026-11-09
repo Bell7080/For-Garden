@@ -24,7 +24,14 @@ export interface AchievementState {
   favoriteChosen?: true;
   /** 길드에 든 적이 있다 — 탈퇴해도 목표가 되돌아가지 않게 서버가 처음 본 순간 굳힌다. */
   guildJoined?: true;
+  /** 계정 첫 결제 선물을 받았다(`FIRST_PAYMENT_GIFT`) — 어떤 상품이든 플랫폼 결제가 처음 확정된 순간 한 번 켠다. */
+  firstPaymentGift?: true;
+  /** 레벨·업적이 아니라 선물로 연 한정 프로필 테두리 ID(첫 결제 · 시즌 패스). */
+  giftFrames?: string[];
 }
+
+/** 선물로만 여는 한정 테두리 ID. `data/profileFrames.ts`의 `unlockGift` 테두리와 같아야 한다(`profileFrames.test`). */
+export const GIFT_FRAME_IDS: ReadonlySet<string> = new Set(["patron", "season"]);
 
 export function createEmptyAchievementState(): AchievementState { return { claimed: {}, goldPeak: 0 }; }
 
@@ -40,10 +47,12 @@ export function normalizeAchievementState(value: unknown): AchievementState {
     if (count > 0) claimed[series.id] = count;
   }
   const ancientFloorPeak = Math.min(ANCIENT_STRATA_MAX_FLOOR, whole(source.ancientFloorPeak));
+  const giftFrames = Array.isArray(source.giftFrames) ? [...new Set(source.giftFrames.filter((id): id is string => typeof id === "string" && GIFT_FRAME_IDS.has(id)))] : [];
   const growth = Array.isArray(source.growth) ? [...new Set(source.growth.filter((id): id is string => typeof id === "string" && NEWBIE_GROWTH_CLAIM_IDS.has(id)))] : [];
   return {
     claimed, goldPeak: Math.min(LIFETIME_COUNT_CAP, whole(source.goldPeak)), ...(ancientFloorPeak > 0 ? { ancientFloorPeak } : {}),
     ...(growth.length > 0 ? { growth } : {}), ...(source.favoriteChosen === true ? { favoriteChosen: true as const } : {}), ...(source.guildJoined === true ? { guildJoined: true as const } : {}),
+    ...(source.firstPaymentGift === true ? { firstPaymentGift: true as const } : {}), ...(giftFrames.length > 0 ? { giftFrames } : {}),
   };
 }
 
@@ -55,6 +64,8 @@ export function isValidAchievementState(value: unknown): value is AchievementSta
   if (state.growth !== undefined && (!Array.isArray(state.growth) || state.growth.some((id) => typeof id !== "string" || !NEWBIE_GROWTH_CLAIM_IDS.has(id)))) return false;
   if (state.favoriteChosen !== undefined && state.favoriteChosen !== true) return false;
   if (state.guildJoined !== undefined && state.guildJoined !== true) return false;
+  if (state.firstPaymentGift !== undefined && state.firstPaymentGift !== true) return false;
+  if (state.giftFrames !== undefined && (!Array.isArray(state.giftFrames) || state.giftFrames.some((id) => typeof id !== "string" || !GIFT_FRAME_IDS.has(id)))) return false;
   if (!state.claimed || typeof state.claimed !== "object") return false;
   return Object.entries(state.claimed).every(([id, count]) => {
     const series = ACHIEVEMENT_SERIES.find((candidate) => candidate.id === id);

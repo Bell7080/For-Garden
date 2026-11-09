@@ -3252,5 +3252,8 @@
 "Строку определяет высшая черта среди вложенных рун. Каждая дополнительная руна с чертой переносит {shift}% из «Без черты» в этот уровень."
 ],
   "profile.unlock.achievementTier": ["领取成就「{name}」第{tier}阶段奖励","รับรางวัลขั้น {tier} ของความสำเร็จ \"{name}\"","Nhận thưởng bậc {tier} của thành tựu \"{name}\"","Klaim hadiah tingkat {tier} pencapaian \"{name}\"","Reclama el nivel {tier} del logro «{name}»","Resgate o nível {tier} da conquista \"{name}\"","Hole Stufe {tier} des Erfolgs „{name}“ ab","Получите награду за ступень {tier} достижения «{name}»"],
-"profile.edit.error.banned": ["含有无法使用的词语", "มีคำที่ใช้ไม่ได้", "Có từ không được phép dùng", "Berisi kata yang tidak boleh digunakan", "Contiene una palabra no permitida", "Contém uma palavra não permitida", "Enthält ein unzulässiges Wort", "Содержит недопустимое слово"]
+"profile.edit.error.banned": ["含有无法使用的词语", "มีคำที่ใช้ไม่ได้", "Có từ không được phép dùng", "Berisi kata yang tidak boleh digunakan", "Contiene una palabra no permitida", "Contém uma palavra não permitida", "Enthält ein unzulässiges Wort", "Содержит недопустимое слово"],
+"profile.edit.frameGift": ["限定", "จำกัด", "Giới hạn", "Terbatas", "Limitado", "Limitado", "Limitiert", "Ограничено"],
+"profile.unlock.gift.firstPayment": ["通过首次付费礼物获得", "ได้รับจากของขวัญชำระเงินครั้งแรก", "Nhận từ Quà nạp lần đầu", "Didapat dari Hadiah Pembelian Pertama", "Se obtiene con el Regalo de primera compra", "Obtido com o Presente da primeira compra", "Erhältlich als Erstkauf-Geschenk", "Выдаётся как подарок за первую покупку"],
+"profile.unlock.gift.seasonPass": ["赛季通行证第30级奖励", "รางวัลซีซันพาสระดับ 30", "Thưởng Season Pass bậc 30", "Hadiah Season Pass tingkat 30", "Recompensa del nivel 30 del pase de temporada", "Recompensa do nível 30 do passe de temporada", "Saisonpass-Belohnung Stufe 30", "Награда 30-го уровня сезонного пропуска"]
 }

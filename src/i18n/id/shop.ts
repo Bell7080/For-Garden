@@ -131,4 +131,8 @@ export const SHOP_ID = {
   "shop.premium.expiresOn": "Berakhir {date}",
   "shop.premium.noRenewal": "Akses {days} hari · Tanpa perpanjangan otomatis",
   "shop.premium.perk.ticketless": "Sapu tanpa tiket",
+  "shop.premium.firstPayment.tag": "Sekali",
+  "shop.premium.firstPayment.title": "Hadiah Pembelian Pertama",
+  "shop.premium.firstPayment.note": "Diberikan bersama pembelian pertama apa pun",
+  "shop.premium.firstPayment.hint": "Kamu akan menerimanya pada pembelian pertama apa pun.",
 } as const;

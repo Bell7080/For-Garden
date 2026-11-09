@@ -6,7 +6,6 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { NEWBIE_GROWTH_DAYS, NEWBIE_GROWTH_GOAL_GEMS, NEWBIE_GROWTH_GOALS } from "../data/newbieGrowth";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { formatCurrency } from "../core/formatCurrency";
-import { breakthroughGrade, BREAKTHROUGH_GRADE_CAP } from "../core/relicProgression";
 import { motionPolicy } from "../core/settings";
 import { logError, reportError } from "../managers/ErrorReporter";
 import { notificationManager } from "../managers/NotificationManager";
@@ -19,7 +18,6 @@ import { withBusy } from "./BusyOverlay";
 import { Button } from "./Button";
 import { showContentToast } from "./ContentToast";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
-import { FaceFrame } from "./FaceFrame";
 import { chipPoints, drawLayer, drawShapeEdge, drawShapeOutline, HoloBar, HOLO, slantedRect, toPoints } from "./holo";
 import { remainingDetail } from "./itemExpiry";
 import { playNewRelicShowcase } from "./NewRelicShowcase";
@@ -29,6 +27,7 @@ import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { pressIn, pressOut } from "./pressFeedback";
 import { startPuppetHop } from "./puppetHop";
 import { RewardFrame } from "./RewardFrame";
+import { openRelicSelectPicker, SR_SELECT_TONE } from "./RelicSelectPicker";
 import { openRewardPopup } from "./RewardPopup";
 import { drawSparkle } from "./rouletteWheel";
 import { slideTabPage } from "./screenTransition";
@@ -40,7 +39,7 @@ import { COLOR, textStyle } from "./theme";
 const DAY_TONE: readonly number[] = [0x8fd3ff, 0x9fe0a8, 0xffd27a, 0xffa98a, 0xd7a8ff, 0x8fe3d6, 0xffc2e0];
 /** 가이드의 대표색 — 아침 햇살 같은 살구빛 금색. */
 const GLOW = 0xffcf7a;
-const SR_TONE = 0xc89cff;
+const SR_TONE = SR_SELECT_TONE;
 const GUIDE_SD = "torika";
 
 function hex(color: number): string { return `#${color.toString(16).padStart(6, "0")}`; }
@@ -422,55 +421,9 @@ export class NewbieGrowthPopup {
     }
   }
 
-  /** SR 선택권 — 상시 SR 렐릭이 얼굴 액자로 늘어서고, 하나를 누르면 확인 창이 묻는다. 이미 함께하는 렐릭은 파편 한 장이다. */
+  /** SR 선택권 — 가방의 선택권과 같은 고르기 창(`openRelicSelectPicker`)을 연다. */
   private openSrPicker(): void {
-    const choices = this.data?.srChoices ?? [];
-    const columns = 4;
-    const cell = 176;
-    const gapX = 30;
-    const rowHeight = cell + 86;
-    const rows = Math.ceil(choices.length / columns);
-    const width = columns * cell + (columns - 1) * gapX + 140;
-    const height = 220 + rows * rowHeight + 60;
-    this.popups.open({ width, height, title: t("newbieGrowth.sr.title"), dim: true, dimAlpha: 0.78, closeOnBackdrop: true, backButton: true }, (body, close) => {
-      const hint = this.scene.add.text(0, -height / 2 + 120, t("newbieGrowth.sr.hint"), textStyle({ role: "body", size: 25, color: COLOR.inkDim, align: "center", wrap: width - 120 })).setOrigin(0.5);
-      body.add(hint);
-      const top = -height / 2 + 200;
-      choices.forEach((relicId, index) => {
-        const def = PLAYABLE_RELICS.find((relic) => relic.id === relicId);
-        if (!def) return;
-        const column = index % columns;
-        const rowIndex = Math.floor(index / columns);
-        const inRow = Math.min(columns, choices.length - rowIndex * columns);
-        const rowWidth = inRow * cell + (inRow - 1) * gapX;
-        const x = -rowWidth / 2 + cell / 2 + column * (cell + gapX);
-        const y = top + rowIndex * rowHeight + cell / 2;
-        const owned = session.owned.has(relicId);
-        const progress = session.relicProgress[relicId];
-        const maxed = owned && progress !== undefined && breakthroughGrade(progress.breakthrough) >= BREAKTHROUGH_GRADE_CAP;
-        const item = this.scene.add.container(x, y);
-        body.add(item);
-        const frame = new FaceFrame(this.scene, 0, 0, { portraitAssetId: def.portraitAssetId, size: cell, color: maxed ? 0x68717d : SR_TONE });
-        if (maxed) frame.setAlpha(0.4);
-        item.add(frame);
-        const name = this.scene.add.text(0, cell / 2 + 26, def.name, textStyle({ role: "display", size: 26, color: maxed ? COLOR.inkDim : COLOR.ink })).setOrigin(0.5);
-        squeezeTextToWidth(name, cell + 20);
-        item.add(name);
-        if (owned) item.add(this.scene.add.text(0, cell / 2 + 58, t(maxed ? "newbieGrowth.sr.maxed" : "newbieGrowth.sr.owned"), textStyle({ role: "emphasis", size: 19, color: maxed ? COLOR.inkDim : hex(SR_TONE) })).setOrigin(0.5));
-        if (maxed) return;
-        item.setSize(cell, cell).setInteractive({ useHandCursor: true });
-        item.on("pointerdown", () => pressIn(item));
-        item.on("pointerout", () => pressOut(item, "normal", { pop: false }));
-        item.on("pointerup", () => {
-          pressOut(item);
-          this.popups.confirm({
-            title: t("newbieGrowth.sr.title"),
-            message: t(owned ? "newbieGrowth.sr.confirmOwned" : "newbieGrowth.sr.confirm", { name: def.name }),
-            confirmLabel: t("newbieGrowth.sr.confirmLabel"),
-          }, () => { close(); void this.claim([], relicId); });
-        });
-      });
-    });
+    openRelicSelectPicker(this.scene, this.popups, this.data?.srChoices ?? [], (relicId) => void this.claim([], relicId));
   }
 }
 

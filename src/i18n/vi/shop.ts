@@ -131,4 +131,8 @@ export const SHOP_VI = {
   "shop.premium.expiresOn": "Hết hạn {date}",
   "shop.premium.noRenewal": "Dùng trong {days} ngày · Không tự động gia hạn",
   "shop.premium.perk.ticketless": "Càn quét không cần vé",
+  "shop.premium.firstPayment.tag": "Một lần",
+  "shop.premium.firstPayment.title": "Quà nạp lần đầu",
+  "shop.premium.firstPayment.note": "Nhận kèm lần nạp đầu với bất kỳ gói nào",
+  "shop.premium.firstPayment.hint": "Bạn sẽ nhận được khi nạp lần đầu với bất kỳ gói nào.",
 } as const;

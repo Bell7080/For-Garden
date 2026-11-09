@@ -28,7 +28,7 @@ export function profileAvatarSizeFor(room: number): number {
   return Math.floor(room / (2 * PROFILE_FRAME_REACH));
 }
 
-export const FRAME_STYLE_RANK: readonly ProfileFrameStyle[] = ["plain", "bracket", "gem", "wing", "vine", "crown", "strata", "laurel", "prism"];
+export const FRAME_STYLE_RANK: readonly ProfileFrameStyle[] = ["plain", "bracket", "gem", "wing", "vine", "crown", "strata", "laurel", "prism", "sigil", "halo"];
 
 export function profileFrameOuter(size: number): number {
   return size * (1 + PROFILE_FRAME_PAD * 2);
@@ -157,6 +157,29 @@ export function profileFrameShapes(size: number, style: ProfileFrameStyle): Prof
         diamond(point, 0.04, 0.075, "light");
       }
       for (const cut of cuts) shapes.strokes.push({ width: size * 0.025, points: cutBracket(cut, size * 0.06, anchor.bevel, size * 0.07) });
+      break;
+    }
+    case "sigil": {
+      // 첫 후원의 증표 — 네 모서리 모두에 큰 보석, 윗변에 겹친 보석 하나, 깎인 모서리에는 괄호를 한 겹 더.
+      diamond(anchor.top, 0.1, 0.14);
+      diamond(anchor.top, 0.04, 0.07, "light");
+      for (const point of [anchor.topRight, anchor.bottomLeft, ...cuts]) {
+        diamond(point, 0.065, 0.09);
+        diamond(point, 0.025, 0.04, "light");
+      }
+      for (const cut of cuts) shapes.strokes.push({ width: size * 0.022, points: cutBracket(cut, size * 0.07, anchor.bevel * 0.9, size * 0.05) });
+      break;
+    }
+    case "halo": {
+      // 시즌의 날개 — 윗변 가운데에서 부채처럼 퍼지는 빛살 다섯, 아랫변에 보석 하나.
+      const rootY = -anchor.half + size * 0.03;
+      [-50, -25, 0, 25, 50].forEach((deg, index) => {
+        const angle = -Math.PI / 2 + (deg * Math.PI) / 180;
+        shapes.blades.push({ x: anchor.top.x, y: rootY, angle, length: size * (index === 2 ? 0.13 : 0.1), width: size * 0.04 });
+      });
+      diamond(anchor.bottom, 0.08, 0.11);
+      diamond(anchor.left, 0.05, 0.075, "light");
+      diamond(anchor.right, 0.05, 0.075, "light");
       break;
     }
     case "plain":

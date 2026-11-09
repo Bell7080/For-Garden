@@ -131,4 +131,8 @@ export const SHOP_DE = {
   "shop.premium.expiresOn": "Endet am {date}",
   "shop.premium.noRenewal": "{days} Tage gültig · Keine automatische Verlängerung",
   "shop.premium.perk.ticketless": "Säubern ohne Tickets",
+  "shop.premium.firstPayment.tag": "Einmalig",
+  "shop.premium.firstPayment.title": "Erstkauf-Geschenk",
+  "shop.premium.firstPayment.note": "Bei deinem ersten Kauf eines beliebigen Artikels dabei",
+  "shop.premium.firstPayment.hint": "Du erhältst es bei deinem ersten Kauf eines beliebigen Artikels.",
 } as const;

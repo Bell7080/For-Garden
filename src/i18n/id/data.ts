@@ -6276,4 +6276,8 @@ export default {
   "stage.7-8.name": "Ruang Depan Terbawah",
   "stage.7-9.name": "Di Depan Pintu Ruang Pengekangan",
   "stage.7-10.name": "Ruang Pengekangan Terbawah",
+  "item.sr-select-ticket.name": "Tiket Pilih Relik SR",
+  "item.sr-select-ticket.description": "Pilih satu Relik SR untuk dibawa pulang. Jika memilih Relik yang sudah dimiliki, kamu mendapat 1 Serpihannya.",
+  "profileFrame.patron.name": "Tanda Pendukung Pertama",
+  "profileFrame.season.name": "Sayap Musim",
 };

@@ -479,4 +479,7 @@ export const MISC_KO = {
   "stageMap.readRecord": "기록 읽기",
   "stageMap.sub": "SUB",
   "stageMap.subRead": "읽음",
+  "profile.edit.frameGift": "한정",
+  "profile.unlock.gift.firstPayment": "첫 결제 선물로 받습니다",
+  "profile.unlock.gift.seasonPass": "시즌 패스 30단계 보상",
 } as const;

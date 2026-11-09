@@ -6276,4 +6276,8 @@ export default {
   "stage.7-8.name": "Antecámara inferior",
   "stage.7-9.name": "Ante la puerta de la cámara de contención",
   "stage.7-10.name": "Cámara de contención inferior",
+  "item.sr-select-ticket.name": "Selector de Reliquia SR",
+  "item.sr-select-ticket.description": "Elige una Reliquia SR para traer. Si ya la tienes, recibirás 1 de sus Fragmentos.",
+  "profileFrame.patron.name": "Insignia del primer mecenas",
+  "profileFrame.season.name": "Alas de la temporada",
 };

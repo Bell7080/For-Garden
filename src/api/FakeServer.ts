@@ -23,7 +23,8 @@ import { PLACEHOLDER_AD_ENABLED, TEMP_AD_REWARD_ENABLED, placeholderAdToken, tem
 import { bannerAcceptsCount, bannerActive, canPull, carryoverTenAvailable, carryoverTensOnClose, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { socialApi } from "./FakeSocialServer";
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
-import { BANNERS } from "../data/banners";
+import { BANNERS, STANDARD_POOLS } from "../data/banners";
+import { FIRST_PAYMENT_GIFT } from "../data/firstPaymentGift";
 import { OPEN_END, OPEN_START, scheduledWindow, windowOpen } from "../core/liveSchedule";
 import { PLAYABLE_RELICS, RELICS } from "../data/relics";
 import { createObservationStory, observationDiscovery } from "../data/observations";
@@ -121,7 +122,7 @@ import { ARCHAEOLOGY_SITES, findArchaeologySite } from "../data/archaeologySites
 import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { sortByRewardPriority } from "../data/rewardPriority";
-import { findItem, type WalletItemKey } from "../data/items";
+import { findItem, type ItemDefinition, type WalletItemKey } from "../data/items";
 import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, raidRunStamina, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_SUMMON_TICKET_COST, RAID_TICKET_ITEM } from "../data/raid";
 import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunRewards, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
 import { battleArena } from "../core/battleArena";
@@ -1404,6 +1405,7 @@ export class FakeServer implements GameApi {
     this.settleItemExpiry(this.now());
     const stack = this.state.itemInventory.find(({ itemId }) => itemId === request.itemId);
     if (!stack || stack.quantity < request.quantity) throw new GameApiError("INSUFFICIENT_ITEMS", "아이템 수량이 부족합니다.");
+    if (definition.useEffect.kind === "select_relic") return this.useRelicSelector(request, definition.useEffect);
     // 병은 레벨 상한을 넘어 채운다 — 치른 대가를 상한에서 버리지 않는다. 막는 것은 보유 끝뿐이다.
     if (this.state.wallet.stamina >= STAMINA_HOLD_LIMIT) throw new GameApiError("STAMINA_FULL", "스테미나가 이미 가득 찼습니다.");
     const requested = definition.useEffect.amount * request.quantity;
@@ -1418,6 +1420,52 @@ export class FakeServer implements GameApi {
     this.state.wallet = nextWallet; this.state.itemInventory = nextItems;
     const inventory = await this.getInventory();
     return { ...inventory, itemId: request.itemId, quantityUsed: request.quantity, effect: definition.useEffect, appliedAmount, overflowAmount: requested - appliedAmount, wallet: { ...nextWallet }, stamina: this.staminaDto(this.now()) };
+  }
+
+  /**
+   * 렐릭 선택권 한 장을 쓴다 — 고른 렐릭(그 등급의 상시 풀)을 처음 만났으면 데려오고 이미 있으면 파편 한 장을 준다.
+   * 차감·지급을 한 번의 persist로 확정하고, 돌파를 끝낸 렐릭은 장을 쓰기 전에 거절한다.
+   */
+  private async useRelicSelector(request: UseConsumableRequest, effect: Extract<ItemDefinition["useEffect"], { kind: "select_relic" }>): Promise<UseConsumableResponse> {
+    if (request.quantity !== 1) throw new GameApiError("INVALID_ITEM_QUANTITY", "선택권은 한 장씩 씁니다.");
+    const relicId = request.relicId;
+    if (!relicId || !STANDARD_POOLS[effect.rarity].includes(relicId)) throw new GameApiError("RELIC_NOT_FOUND", "고를 수 없는 렐릭입니다.");
+    this.assertRelicSelectable(relicId);
+    const nextItems = removeItemLot(this.state.itemInventory, request.itemId, 1);
+    if (!nextItems) throw new GameApiError("INSUFFICIENT_ITEMS", "아이템 수량이 부족합니다.");
+    const selection = this.selectRelic(relicId, this.now());
+    const candidate = { ...this.state, itemInventory: nextItems, ...selection.state };
+    redeemDeferredStoryBond(candidate, selection.newRelicIds);
+    this.persist(candidate);
+    this.state.serverJournal = candidate.serverJournal; this.state.itemInventory = nextItems;
+    Object.assign(this.state, selection.state);
+    const inventory = await this.getInventory();
+    return {
+      ...inventory, itemId: request.itemId, quantityUsed: 1, effect, appliedAmount: 0, overflowAmount: 0, wallet: { ...this.state.wallet }, stamina: this.staminaDto(this.now()),
+      newRelicIds: selection.newRelicIds, ...(selection.fragmentRelicId ? { fragmentRelicId: selection.fragmentRelicId } : {}),
+    };
+  }
+
+  /** 선택 보상으로 고를 수 있는가 — 돌파를 끝낸 렐릭은 파편이 쓸 곳이 없어 거절한다. */
+  private assertRelicSelectable(relicId: string): void {
+    const progress = this.state.relicProgress[relicId];
+    if (this.state.owned.has(relicId) && progress && breakthroughGrade(progress.breakthrough) >= BREAKTHROUGH_GRADE_CAP) throw new GameApiError("RELIC_MAX_BREAKTHROUGH", "이미 돌파를 끝마친 렐릭입니다.");
+  }
+
+  /** 고른 렐릭을 지금 상태의 복제본에 반영한다 — 처음이면 보유·첫 유대·만난 날, 이미 있으면 파편 한 장. */
+  private selectRelic(relicId: string, now: Date): { state: Pick<Session, "owned" | "relicProgress" | "relicFragments" | "relicStory">; newRelicIds: string[]; fragmentRelicId?: string } {
+    const owned = new Set(this.state.owned);
+    const relicProgress = { ...this.state.relicProgress };
+    const relicFragments = { ...this.state.relicFragments };
+    let relicStory = this.state.relicStory;
+    if (owned.has(relicId)) {
+      relicFragments[relicId] = (relicFragments[relicId] ?? 0) + 1;
+      return { state: { owned, relicProgress, relicFragments, relicStory }, newRelicIds: [], fragmentRelicId: relicId };
+    }
+    owned.add(relicId);
+    if (!relicProgress[relicId]) relicProgress[relicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
+    if (!(relicId in relicStory.metAt)) relicStory = { ...relicStory, metAt: { ...relicStory.metAt, [relicId]: now.toISOString() } };
+    return { state: { owned, relicProgress, relicFragments, relicStory }, newRelicIds: [relicId] };
   }
 
   /**
@@ -1663,7 +1711,7 @@ export class FakeServer implements GameApi {
       case "frame": {
         const frame = findProfileFrame(request.frameId);
         if (!frame) return { ok: false, reason: "unknownFrame" };
-        if (!isProfileFrameUnlocked(frame, this.state.playerResearch.level, this.state.achievements?.claimed)) return { ok: false, reason: "frameLocked" };
+        if (!isProfileFrameUnlocked(frame, this.state.playerResearch.level, this.state.achievements?.claimed, this.state.achievements?.giftFrames)) return { ok: false, reason: "frameLocked" };
         next = { ...card, frameId: request.frameId };
         break;
       }
@@ -2467,7 +2515,11 @@ export class FakeServer implements GameApi {
     const now = this.now();
     const renewing = product.passBenefit?.autoRenew ? [...this.entitlements.values()].find((entry) => entry.productId === product.id && (entry.expiresAt === null || Date.parse(entry.expiresAt) > now.getTime())) : undefined;
     if (!renewing && this.remaining(product, now) < 1) throw new GameApiError("PURCHASE_LIMIT_REACHED", "남은 구매 제한을 초과했습니다.");
-    const bonus = this.firstBonusAvailable(product) ? product.firstPurchaseBonus ?? [] : [];
+    // 계정 첫 결제 선물은 상품의 첫 구매 보너스와 같은 지급 줄에 얹어 한 번에 확정한다(`FIRST_PAYMENT_GIFT`).
+    const achievements = normalizeAchievementState(this.state.achievements);
+    const firstPaymentGift = achievements.firstPaymentGift !== true;
+    const firstBonus = this.firstBonusAvailable(product);
+    const bonus = [...(firstBonus ? product.firstPurchaseBonus ?? [] : []), ...(firstPaymentGift ? FIRST_PAYMENT_GIFT.grants : [])];
     const nextWallet = { ...this.state.wallet };
     const applied = this.applyProductGrants(product, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now, bonus);
 
@@ -2477,6 +2529,7 @@ export class FakeServer implements GameApi {
     const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count } };
     const candidate = structuredClone(this.state);
     candidate.wallet = nextWallet; candidate.itemInventory = applied.items; candidate.productPurchases = nextPurchases;
+    if (firstPaymentGift) candidate.achievements = { ...achievements, firstPaymentGift: true, giftFrames: [...new Set([...(achievements.giftFrames ?? []), FIRST_PAYMENT_GIFT.frameId])] };
     let entitlement: PassEntitlementDto | undefined;
     if (product.passBenefit) {
       const entitlementId = `entitlement-${verification.transactionId}`;
@@ -2490,14 +2543,14 @@ export class FakeServer implements GameApi {
       if (claimedDate) this.setSubscriptionBonusDate(candidate, entitlementId, claimedDate);
     }
     this.recordReceipt(candidate, "platformTransaction", verification.transactionId, product.id, {
-      productId: product.id, quantity: 1, granted: applied.granted, grantedRunes: [], remaining: 0, firstBonusApplied: bonus.length > 0,
-      ...(entitlement ? { entitlement } : {}),
+      productId: product.id, quantity: 1, granted: applied.granted, grantedRunes: [], remaining: 0, firstBonusApplied: firstBonus,
+      ...(firstPaymentGift ? { firstPaymentGift: true as const } : {}), ...(entitlement ? { entitlement } : {}),
     });
     this.commitRaidState(candidate);
     const result: FulfillPlatformPurchaseResponse = {
       ...this.snapshot(), productId: product.id, quantity: 1, granted: applied.granted, grantedRunes: [],
-      remaining: this.remaining(product, now), firstBonusApplied: bonus.length > 0,
-      ...(entitlement ? { entitlement: { ...entitlement } } : {}),
+      remaining: this.remaining(product, now), firstBonusApplied: firstBonus,
+      ...(firstPaymentGift ? { firstPaymentGift: true as const } : {}), ...(entitlement ? { entitlement: { ...entitlement } } : {}),
     };
     this.fulfilledTransactions.set(verification.transactionId, result);
     this.fulfillResults.set(request.requestId, result);
@@ -3578,8 +3631,7 @@ export class FakeServer implements GameApi {
     const srRelicId = request.srRelicId;
     if (srRelicId !== undefined) {
       if (!newbieGrowthSrChoices().includes(srRelicId)) throw new GameApiError("RELIC_NOT_FOUND", "고를 수 없는 렐릭입니다.");
-      const progress = this.state.relicProgress[srRelicId];
-      if (this.state.owned.has(srRelicId) && progress && breakthroughGrade(progress.breakthrough) >= BREAKTHROUGH_GRADE_CAP) throw new GameApiError("RELIC_MAX_BREAKTHROUGH", "이미 돌파를 끝마친 렐릭입니다.");
+      this.assertRelicSelectable(srRelicId);
     }
     const guildJoined = await this.newbieGuildJoined();
     const facts = this.newbieGrowthFactsOf(this.state, guildJoined);
@@ -3593,30 +3645,16 @@ export class FakeServer implements GameApi {
       nextWallet[currency] += applied;
       return { currency, amount: applied };
     });
-    const nextOwned = new Set(this.state.owned);
-    const nextProgress = { ...this.state.relicProgress };
-    const nextFragments = { ...this.state.relicFragments };
-    let nextRelicStory = this.state.relicStory;
-    const newRelicIds: string[] = [];
-    let srFragmentRelicId: string | undefined;
-    if (claim.srSelect && srRelicId) {
-      if (nextOwned.has(srRelicId)) {
-        nextFragments[srRelicId] = (nextFragments[srRelicId] ?? 0) + 1;
-        srFragmentRelicId = srRelicId;
-      } else {
-        nextOwned.add(srRelicId);
-        newRelicIds.push(srRelicId);
-        if (!nextProgress[srRelicId]) nextProgress[srRelicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
-        if (!(srRelicId in nextRelicStory.metAt)) nextRelicStory = { ...nextRelicStory, metAt: { ...nextRelicStory.metAt, [srRelicId]: now.toISOString() } };
-      }
-    }
+    const selection = claim.srSelect && srRelicId ? this.selectRelic(srRelicId, now) : undefined;
+    const newRelicIds = selection?.newRelicIds ?? [];
+    const srFragmentRelicId = selection?.fragmentRelicId;
     const nextAchievements = { ...achievements, growth: [...claimed, ...claim.goalIds, ...claim.milestoneIds], ...(guildJoined ? { guildJoined: true as const } : {}) };
-    const candidate = { ...this.state, wallet: nextWallet, achievements: nextAchievements, owned: nextOwned, relicProgress: nextProgress, relicFragments: nextFragments, relicStory: nextRelicStory };
+    const candidate = { ...this.state, wallet: nextWallet, achievements: nextAchievements, ...(selection?.state ?? {}) };
     redeemDeferredStoryBond(candidate, newRelicIds);
     this.persist(candidate);
     this.state.serverJournal = candidate.serverJournal;
-    this.state.wallet = nextWallet; this.state.achievements = candidate.achievements; this.state.owned = nextOwned; this.state.relicProgress = nextProgress;
-    this.state.relicFragments = nextFragments; this.state.relicStory = nextRelicStory;
+    this.state.wallet = nextWallet; this.state.achievements = candidate.achievements;
+    if (selection) Object.assign(this.state, selection.state);
     return {
       ...this.snapshot(), growth: this.newbieGrowthDto(this.state, this.newbieGrowthFactsOf(this.state, guildJoined), now), granted, newRelicIds,
       ...(srFragmentRelicId ? { srFragmentRelicId } : {}),
@@ -3746,7 +3784,8 @@ export class FakeServer implements GameApi {
         ...this.subscriptionInfo(product, now),
       };
     });
-    return { products, serverTime: now.toISOString() };
+    const firstPaymentGift = storefront === "premium" ? { available: normalizeAchievementState(this.state.achievements).firstPaymentGift !== true, grants: FIRST_PAYMENT_GIFT.grants, frameId: FIRST_PAYMENT_GIFT.frameId } : undefined;
+    return { products, serverTime: now.toISOString(), ...(firstPaymentGift ? { firstPaymentGift } : {}) };
   }
 
   /** 가격 검증부터 제한 갱신까지 복제 상태에서 끝내고 마지막에 한 번만 확정한다. */

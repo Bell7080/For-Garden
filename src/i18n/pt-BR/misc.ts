@@ -434,4 +434,7 @@ export const MISC_PT_BR = {
   "stageMap.subRead": "Lida",
   "title.switchAccount": "Trocar de conta",
   "title.switchAccount.body": "Começar com outra conta. O salvamento local deste dispositivo será apagado. O progresso vinculado ao servidor será mantido.",
+  "profile.edit.frameGift": "Limitado",
+  "profile.unlock.gift.firstPayment": "Obtido com o Presente da primeira compra",
+  "profile.unlock.gift.seasonPass": "Recompensa do nível 30 do passe de temporada",
 } as const;

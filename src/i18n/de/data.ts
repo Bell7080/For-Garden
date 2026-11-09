@@ -6276,4 +6276,8 @@ export default {
   "stage.7-8.name": "Unterste Vorkammer",
   "stage.7-9.name": "Vor der Tür der Fesselkammer",
   "stage.7-10.name": "Unterste Fesselkammer",
+  "item.sr-select-ticket.name": "SR-Relikt-Wahlschein",
+  "item.sr-select-ticket.description": "Wähle ein SR-Relikt aus. Hast du es schon, erhältst du stattdessen 1 seiner Splitter.",
+  "profileFrame.patron.name": "Zeichen des ersten Förderers",
+  "profileFrame.season.name": "Flügel der Saison",
 };

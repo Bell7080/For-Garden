@@ -132,4 +132,8 @@ export const SHOP_JA = {
   "shop.premium.expiresOn": "{date}まで",
   "shop.premium.noRenewal": "{days}日間利用 · 自動更新なし",
   "shop.premium.perk.ticketless": "掃討券なしで掃討",
+  "shop.premium.firstPayment.tag": "1回限り",
+  "shop.premium.firstPayment.title": "初回決済ギフト",
+  "shop.premium.firstPayment.note": "どの商品でも初回決済で一緒にお届け",
+  "shop.premium.firstPayment.hint": "どの商品でも初めて決済すると一緒に受け取れます。",
 } as const;

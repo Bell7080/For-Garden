@@ -5,6 +5,7 @@ import type { ProfileModifierDefinition } from "../data/profileModifiers";
 
 /** 레벨 또는 특정 업적 단계의 보상 수령 조건. */
 export function frameUnlockText(frame: ProfileFrameDefinition): string {
+  if (frame.unlockGift) return t(`profile.unlock.gift.${frame.unlockGift}`);
   if (frame.unlockAchievement) return t("profile.unlock.achievementTier", { name: t(`achievement.series.${frame.unlockAchievement.id}` as Parameters<typeof t>[0]), tier: frame.unlockAchievement.tiers });
   return t("profile.unlock.frameLevel", { level: frame.unlockLevel });
 }

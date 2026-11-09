@@ -434,4 +434,7 @@ export const MISC_ZH_HANT = {
   "stageMap.subRead": "已讀",
   "title.switchAccount": "切換賬號",
   "title.switchAccount.body": "使用其他賬號開始。此裝置的本地存檔將被刪除，已關聯伺服器的進度會保留。",
+  "profile.edit.frameGift": "限定",
+  "profile.unlock.gift.firstPayment": "透過首次付費禮物獲得",
+  "profile.unlock.gift.seasonPass": "賽季通行證第30級獎勵",
 } as const;

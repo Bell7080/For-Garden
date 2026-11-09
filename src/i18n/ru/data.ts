@@ -6276,4 +6276,8 @@ export default {
   "stage.7-8.name": "Нижняя прихожая",
   "stage.7-9.name": "У двери камеры удержания",
   "stage.7-10.name": "Нижняя камера удержания",
+  "item.sr-select-ticket.name": "Выбор SR-реликта",
+  "item.sr-select-ticket.description": "Выберите один SR-реликт. Если он уже есть, вы получите 1 его фрагмент.",
+  "profileFrame.patron.name": "Знак первого покровителя",
+  "profileFrame.season.name": "Крылья сезона",
 };

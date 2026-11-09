@@ -434,4 +434,7 @@ export const MISC_ZH_HANS = {
   "stageMap.subRead": "已读",
   "title.switchAccount": "切换账号",
   "title.switchAccount.body": "使用其他账号开始。此设备的本地存档将被删除，已关联服务器的进度会保留。",
+  "profile.edit.frameGift": "限定",
+  "profile.unlock.gift.firstPayment": "通过首次付费礼物获得",
+  "profile.unlock.gift.seasonPass": "赛季通行证第30级奖励",
 } as const;

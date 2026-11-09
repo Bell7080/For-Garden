@@ -434,4 +434,7 @@ export const MISC_ID = {
   "stageMap.subRead": "Dibaca",
   "title.switchAccount": "Ganti akun",
   "title.switchAccount.body": "Mulai dengan akun lain. Simpanan lokal di perangkat ini akan dihapus. Progres yang terhubung ke server tetap disimpan.",
+  "profile.edit.frameGift": "Terbatas",
+  "profile.unlock.gift.firstPayment": "Didapat dari Hadiah Pembelian Pertama",
+  "profile.unlock.gift.seasonPass": "Hadiah Season Pass tingkat 30",
 } as const;

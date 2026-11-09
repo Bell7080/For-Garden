@@ -6301,4 +6301,8 @@ export default {
   "stage.7-8.name": "Lowest Antechamber",
   "stage.7-9.name": "Before the Restraint Chamber Door",
   "stage.7-10.name": "Lowest Restraint Chamber",
+  "item.sr-select-ticket.name": "SR Relic Selector",
+  "item.sr-select-ticket.description": "Pick one SR Relic to bring home. If you already have it, you get 1 of its Shards instead.",
+  "profileFrame.patron.name": "Patron's Token",
+  "profileFrame.season.name": "Wings of the Season",
 };

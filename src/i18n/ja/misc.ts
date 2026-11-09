@@ -456,4 +456,7 @@ export const MISC_JA = {
   "stageMap.subRead": "既読",
   "title.switchAccount": "アカウント切替",
   "title.switchAccount.body": "別のアカウントで開始します。この端末のローカルセーブは削除されます。サーバー連携済みの進行は保持されます。",
+  "profile.edit.frameGift": "限定",
+  "profile.unlock.gift.firstPayment": "初回決済ギフトで受け取れます",
+  "profile.unlock.gift.seasonPass": "シーズンパス30段階報酬",
 } as const;

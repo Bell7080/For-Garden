@@ -4,7 +4,13 @@ import { audioManager } from "../managers/AudioManager";
 import { slideTabPage } from "./screenTransition";
 import { t, type TextKey } from "../i18n";
 import { GameApiError, type GameApi } from "../api/contracts";
-import type { ItemCategory } from "../data/items";
+import type { ItemCategory, ItemDefinition } from "../data/items";
+import { STANDARD_POOLS } from "../data/banners";
+import { PLAYABLE_RELICS } from "../data/relics";
+import { settingsManager } from "../managers/SettingsManager";
+import { withBusy } from "./BusyOverlay";
+import { playNewRelicShowcase } from "./NewRelicShowcase";
+import { openRelicSelectPicker } from "./RelicSelectPicker";
 import { setDebugInventoryCategory, setDebugInventoryTextureKeys } from "../debug";
 import { DEFAULT_INVENTORY_SORT, INVENTORY_LAYOUT, InventoryManager, inventoryGridPosition, inventoryScrollMetrics, type InventoryDisplayItem, type InventorySort } from "../managers/InventoryManager";
 import { session } from "../state/session";
@@ -34,7 +40,7 @@ import { attachDragScroll } from "./dragScroll";
 import { addScrollHint } from "./ScrollHint";
 import { addClippedHit } from "./clippedHit";
 import type { ClipRect } from "./clipRect";
-import { logError } from "../managers/ErrorReporter";
+import { logError, reportError } from "../managers/ErrorReporter";
 
 const CATEGORIES: readonly { id: ItemCategory; labelKey: TextKey }[] = [
   { id: "rune", labelKey: "inventory.tab.rune" }, { id: "currency", labelKey: "inventory.tab.currency" }, { id: "consumable", labelKey: "inventory.tab.consumable" }, { id: "material", labelKey: "inventory.tab.material" },
@@ -318,7 +324,7 @@ export class InventoryPopup {
     if (item.category === "currency" && item.definition.icon.kind === "currency") { new CurrencyGuidePopup(this.scene, this.popups, this.onCurrencyAction).open(item.definition.icon.key); return; }
     new ItemGuidePopup(this.scene, this.popups).open({
       definition: item.definition, quantity: item.quantity, expiry: item.kind === "stack" && item.lot ? { count: item.lot.quantity, expiresAt: item.lot.expiresAt } : soonestItemExpiry(item.definition.id),
-      onUse: item.category === "consumable" ? () => this.useConsumable(item.id, item.kind === "stack" ? item.lot?.expiresAt : undefined) : undefined,
+      onUse: item.category === "consumable" ? () => this.useConsumable(item.definition, item.kind === "stack" ? item.lot?.expiresAt : undefined) : undefined,
     });
   }
 
@@ -327,7 +333,13 @@ export class InventoryPopup {
    * (TopBar가 구독) 여기서 다시 알리지 않는다. 받은 몫은 이미 지급이 끝난 영수증이라 `RewardPopup`
    * 양식이 아니라 잠금 안내와 같은 공용 토스트(`showContentToast`)로 짧게 알린다.
    */
-  private useConsumable(itemId: string, lotExpiresAt?: string): void {
+  private useConsumable(definition: ItemDefinition, lotExpiresAt?: string): void {
+    // 렐릭 선택권은 쓰기 전에 고를 렐릭을 묻는다 — 7일 가이드의 SR 마디와 같은 고르기 창이다.
+    if (definition.useEffect.kind === "select_relic") {
+      openRelicSelectPicker(this.scene, this.popups, STANDARD_POOLS[definition.useEffect.rarity], (relicId) => this.useRelicSelector(definition.id, relicId, lotExpiresAt));
+      return;
+    }
+    const itemId = definition.id;
     void this.inventory.useConsumable(this.api, itemId, lotExpiresAt).then((result) => {
       audioManager?.playUi("stamina.refill");
       showContentToast(this.scene, t("inventory.staminaGained", { amount: result.appliedAmount }), "info");
@@ -337,5 +349,15 @@ export class InventoryPopup {
       if (error instanceof GameApiError && error.code === "STAMINA_FULL") showContentToast(this.scene, t("inventory.staminaFull"), "refused");
       else logError("inventory.useConsumable", "소비품 사용 실패", error);
     });
+  }
+
+  /** 선택권 한 장을 고른 렐릭에 쓴다. 처음 만난 렐릭이면 새 캐릭터 연출을, 이미 있던 렐릭이면 파편 토스트를 띄운다. */
+  private useRelicSelector(itemId: string, relicId: string, lotExpiresAt?: string): void {
+    void withBusy(this.scene, this.inventory.useConsumable(this.api, itemId, lotExpiresAt, relicId)).then(async (result) => {
+      if (this.view) this.render(this.view);
+      const { accessibility } = settingsManager.get();
+      for (const id of result.newRelicIds ?? []) await playNewRelicShowcase(this.scene, id, { depth: 1300, reduceMotion: accessibility.reduceMotion, reduceFlashes: accessibility.reduceFlashes });
+      if (result.fragmentRelicId) showContentToast(this.scene, t("newbieGrowth.sr.fragmentDone", { name: PLAYABLE_RELICS.find(({ id }) => id === result.fragmentRelicId)?.name ?? result.fragmentRelicId }), "info");
+    }).catch((error: unknown) => reportError("inventory.useRelicSelector", error));
   }
 }

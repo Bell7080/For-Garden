@@ -2,7 +2,9 @@ import { showContentToast } from "../ui/ContentToast";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
-import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
+import type { ProductDto, ProductListResponse, PurchaseProductResponse } from "../api/contracts";
+import { ProfileAvatar } from "../ui/ProfileAvatar";
+import { playerProfileDisplay, profileAvatarContent } from "../state/playerProfile";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugPremiumSection, setDebugScene } from "../debug";
 import { PREMIUM_TABS, type PremiumCategory } from "../data/shopCatalog";
@@ -86,6 +88,8 @@ export class PremiumScene extends Phaser.Scene {
   private topBar?: TopBar;
   /** 무역과 동일한 구매 상세 프리팹을 화면 최상단에 여는 계층이다. */
   private readonly popups = new PopupLayer(this, 2600);
+  /** 아직 받지 않은 계정 첫 결제 선물. 받았으면 비워 둔다. */
+  private firstPaymentGift?: NonNullable<ProductListResponse["firstPaymentGift"]>;
   /** 설정 왕복 시 복원할 섹션이며, 지원하지 않는 외부 값은 init에서 제거한다. */
   private activeSection: PremiumSection = "premium";
   /** 첫 라벨은 카탈로그 순서에서 정해 화면과 데이터의 기본값이 갈리지 않게 한다. */
@@ -174,6 +178,7 @@ export class PremiumScene extends Phaser.Scene {
     // storefront 판정은 검증된 모델 하나가 소유한다. 여기서 filter를 다시 쓰면 같은 규칙이
     // 두 곳에 살아, 한쪽만 고쳐도 화면은 조용히 예전 규칙으로 남는다.
     this.products = premiumModel(response.products);
+    this.firstPaymentGift = response.firstPaymentGift?.available ? response.firstPaymentGift : undefined;
     this.serverOffsetMs = Date.parse(response.serverTime) - Date.now();
     // 상품을 산 뒤에는 지갑이 바뀌었으므로 상단 줄도 함께 맞춘다.
     session.wallet = { ...session.wallet, ...(await withBusy(this, gameApi.getPlayerState())).wallet };
@@ -193,7 +198,10 @@ export class PremiumScene extends Phaser.Scene {
     const ordered = this.selectedCategory === "daily"
       ? [...visible].sort((a, b) => Number(b.id === DAILY_FREE_PRODUCT_ID) - Number(a.id === DAILY_FREE_PRODUCT_ID))
       : visible;
-    const offset = gem ? 1 : 0;
+    // 계정 첫 결제 선물은 받기 전까지 한정 탭 맨 앞에 선다 — 무엇을 사든 첫 결제에 함께 온다는 안내 카드다.
+    const gift = this.selectedCategory === "limited" ? this.firstPaymentGift : undefined;
+    const offset = gem || gift ? 1 : 0;
+    if (gift) this.addFirstPaymentGiftCard(gift, 0, kind);
     ordered.forEach((product, index) => {
       if (product.id === DAILY_FREE_PRODUCT_ID && !product.purchasable) this.addDailyAdCard(index, kind);
       else this.addProduct(product, index + offset, kind);
@@ -480,6 +488,36 @@ export class PremiumScene extends Phaser.Scene {
     } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claiming = false; }
   }
 
+  /**
+   * 한정 탭 맨 앞의 「첫 결제 선물」 — 받는 것(선택권 · 화석)과 한정 테두리를 씌운 지금 얼굴이 서고, 누르면 안내만 한다.
+   * 지급은 화면이 아니라 첫 플랫폼 결제를 확정하는 서버(`fulfillPlatformPurchase`)가 같은 거래 안에서 한다.
+   */
+  private addFirstPaymentGiftCard(gift: NonNullable<ProductListResponse["firstPaymentGift"]>, index: number, kind: PremiumListKind): void {
+    const W = PREMIUM_WIDE;
+    const S = W.stack;
+    const width = premiumCardWidth(kind);
+    const height = premiumCardHeight(kind);
+    const { x, y } = premiumCardSpot(index, kind);
+    const card = this.add.container(x, y);
+    paintShowcaseCard(this, card, { width, height, accent: FIRST_PAYMENT_TONE, dim: false, railX: -width / 2 + W.pad, tag: t("shop.premium.firstPayment.tag"), stageY: S.frameY + W.frame / 2 });
+    const left = -width / 2 + W.pad;
+    const right = width / 2 - W.pad;
+    const name = this.add.text(left, S.nameY, t("shop.premium.firstPayment.title"), textStyle({ role: "display", size: W.nameSize })).setOrigin(0, 0.5).setShadow(3, 4, "#04060a", 0, true, true);
+    card.add(squeezeTextToWidth(name, right - left, 0.7));
+    const tiles = premiumGrantTiles({ grants: gift.grants }).slice(0, W.frameCap - 1);
+    const xs = premiumWideFrameXs(tiles.length + 1);
+    tiles.forEach((tile, i) => this.addGrantFrame(card, xs[i], S.frameY, W.frame, tile.icon, tile.amount));
+    const profile = playerProfileDisplay(session);
+    card.add(new ProfileAvatar(this, xs[tiles.length], S.frameY, { size: Math.round(W.frame * 0.72), frameId: gift.frameId, portraitAssetId: profile.avatar?.portraitAssetId, fallback: profileAvatarContent(profile, () => false).fallback }));
+    const bar = this.add.container(0, S.price.y);
+    bar.add(drawLayer(this, 0, 0, chipPoints(S.price.width + 120, S.price.height, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: FIRST_PAYMENT_TONE, edgeAlpha: 0.8 }));
+    const note = this.add.text(0, 0, t("shop.premium.firstPayment.note"), textStyle({ role: "emphasis", size: Math.round(S.price.height * 0.42), color: COLOR.ink })).setOrigin(0.5);
+    bar.add(squeezeTextToWidth(note, S.price.width + 80));
+    card.add(bar);
+    this.addCardHit(card, width, height, () => this.notice(t("shop.premium.firstPayment.hint")));
+    this.content?.add(card);
+  }
+
   /** 젬 탭 끝의 「광고 보고 젬 받기」 칸. */
   private addGemAdCard(index: number, kind: PremiumListKind): void {
     const slotId = "gem-ad";
@@ -739,6 +777,8 @@ const STICKER_TONE: Record<PremiumStatus, { text: string; line: number }> = {
 const PREMIUM_SOLD_OUT_ALPHA = 0.52;
 /** 첫 구매 보너스 액자의 선 — 무역의 가치 배지와 같은 뜨거운 색이라 "더 들어온다"가 먼저 걸린다. */
 const PREMIUM_BONUS_TONE = 0xe0603a;
+/** 첫 결제 선물 카드의 결 — 선물 테두리(`patron`)와 같은 금빛이다. */
+const FIRST_PAYMENT_TONE = 0xffd27a;
 
 /** 카드 색 — 구매 팝업과 같은 테마 색이다(`purchaseThemeOf` → `PURCHASE_THEME_STYLE`). 갱신 주기는 꼬리표 글자가 말한다. */
 function premiumCardTone(product: ProductDto): number {

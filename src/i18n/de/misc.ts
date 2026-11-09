@@ -434,4 +434,7 @@ export const MISC_DE = {
   "stageMap.subRead": "Gelesen",
   "title.switchAccount": "Konto wechseln",
   "title.switchAccount.body": "Mit anderem Konto starten. Lokale Speicherdaten auf diesem Gerät werden gelöscht. Mit dem Server verknüpfter Fortschritt bleibt erhalten.",
+  "profile.edit.frameGift": "Limitiert",
+  "profile.unlock.gift.firstPayment": "Erhältlich als Erstkauf-Geschenk",
+  "profile.unlock.gift.seasonPass": "Saisonpass-Belohnung Stufe 30",
 } as const;

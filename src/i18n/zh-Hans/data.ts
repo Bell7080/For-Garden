@@ -6276,4 +6276,8 @@ export default {
   "stage.7-8.name": "最底层前室",
   "stage.7-9.name": "束缚室门前",
   "stage.7-10.name": "最底层束缚室",
+  "item.sr-select-ticket.name": "SR遗物自选券",
+  "item.sr-select-ticket.description": "选择一名SR遗物带回。若选择已拥有的遗物，则改为获得1个该遗物的碎片。",
+  "profileFrame.patron.name": "首次赞助之证",
+  "profileFrame.season.name": "赛季之翼",
 };

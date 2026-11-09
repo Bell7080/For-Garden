@@ -131,5 +131,9 @@
 "Casas escavadas {progress} / {goal}",
 "Ausgegrabene Felder {progress} / {goal}",
 "Раскопано клеток {progress} / {goal}"
-]
+],
+"shop.premium.firstPayment.tag": ["限1次", "ครั้งเดียว", "Một lần", "Sekali", "Única vez", "Única vez", "Einmalig", "Однократно"],
+"shop.premium.firstPayment.title": ["首次付费礼物", "ของขวัญชำระเงินครั้งแรก", "Quà nạp lần đầu", "Hadiah Pembelian Pertama", "Regalo de primera compra", "Presente da primeira compra", "Erstkauf-Geschenk", "Подарок за первую покупку"],
+"shop.premium.firstPayment.note": ["任意商品首次付费时一并发放", "รับพร้อมการชำระเงินครั้งแรกของสินค้าใดก็ได้", "Nhận kèm lần nạp đầu với bất kỳ gói nào", "Diberikan bersama pembelian pertama apa pun", "Incluido con tu primera compra de cualquier artículo", "Incluído na sua primeira compra de qualquer item", "Bei deinem ersten Kauf eines beliebigen Artikels dabei", "Выдаётся вместе с первой покупкой любого товара"],
+"shop.premium.firstPayment.hint": ["首次购买任意商品时将一并获得。", "คุณจะได้รับพร้อมการชำระเงินครั้งแรกของสินค้าใดก็ได้", "Bạn sẽ nhận được khi nạp lần đầu với bất kỳ gói nào.", "Kamu akan menerimanya pada pembelian pertama apa pun.", "Lo recibirás con tu primera compra de cualquier artículo.", "Você receberá com sua primeira compra de qualquer item.", "Du erhältst es bei deinem ersten Kauf eines beliebigen Artikels.", "Вы получите это вместе с первой покупкой любого товара."]
 }

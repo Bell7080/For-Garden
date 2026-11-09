@@ -6276,4 +6276,8 @@ export default {
   "stage.7-8.name": "Tiền sảnh tầng đáy",
   "stage.7-9.name": "Trước cửa phòng giam cầm",
   "stage.7-10.name": "Phòng giam cầm tầng đáy",
+  "item.sr-select-ticket.name": "Phiếu chọn Di vật SR",
+  "item.sr-select-ticket.description": "Chọn một Di vật SR để đưa về. Nếu chọn Di vật đã có, bạn nhận 1 Mảnh của nó.",
+  "profileFrame.patron.name": "Dấu ấn Tài trợ Đầu",
+  "profileFrame.season.name": "Đôi cánh Mùa giải",
 };

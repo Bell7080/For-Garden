@@ -12,6 +12,8 @@ export interface ProfileFrameDefinition {
   /** 이 레벨에 닿으면 고를 수 있다. */
   readonly unlockLevel: number;
   readonly unlockAchievement?: { readonly id: string; readonly tiers: number };
+  /** 레벨·업적이 아니라 선물로만 연다 — 받은 테두리 ID는 업적 저장의 `giftFrames`가 든다. 레벨 가지나무·레벨업 창에 서지 않는다. */
+  readonly unlockGift?: "firstPayment" | "seasonPass";
   /** 테두리 선과 발광의 색. */
   readonly color: number;
   /** 액자 안쪽을 은은하게 물들이는 색. */
@@ -23,7 +25,7 @@ export interface ProfileFrameDefinition {
   readonly style: ProfileFrameStyle;
 }
 
-export type ProfileFrameStyle = "plain" | "bracket" | "gem" | "wing" | "vine" | "crown" | "strata" | "laurel" | "prism";
+export type ProfileFrameStyle = "plain" | "bracket" | "gem" | "wing" | "vine" | "crown" | "strata" | "laurel" | "prism" | "sigil" | "halo";
 
 export const DEFAULT_PROFILE_FRAME_ID = "field";
 
@@ -32,6 +34,8 @@ export const PROFILE_FRAMES: readonly ProfileFrameDefinition[] = [
   { id: "ancient", style: "strata", displayName: "태고의 지층", unlockLevel: 1, unlockAchievement: { id: "ancient-depth", tiers: 4 }, color: 0xd8ae72, wash: 0x392818 },
   { id: "conqueror", style: "laurel", displayName: "불굴의 월계", unlockLevel: 1, unlockAchievement: { id: "hard-frontline", tiers: 4 }, color: 0xf28b9b, wash: 0x3e1b28 },
   { id: "runic", style: "prism", displayName: "룬의 광채", unlockLevel: 1, unlockAchievement: { id: "rune-refinement", tiers: 4 }, color: 0x7ee5de, wash: 0x143b3a },
+  { id: "patron", style: "sigil", displayName: "첫 후원의 증표", unlockLevel: 1, unlockGift: "firstPayment", color: 0xffd27a, wash: 0x3f2a10 },
+  { id: "season", style: "halo", displayName: "시즌의 날개", unlockLevel: 1, unlockGift: "seasonPass", color: 0x9fe3ff, wash: 0x13324a },
   { id: "holo", style: "bracket", displayName: "투영 관측", unlockLevel: 10, color: 0x5fd4ff, wash: 0x173848 },
   { id: "amber", style: "gem", displayName: "호박 표본", unlockLevel: 20, color: 0xf2b441, wash: 0x3d2c12 },
   { id: "abyss", style: "wing", displayName: "심해 기록", unlockLevel: 30, color: 0xb07cff, wash: 0x2a1c44 },
@@ -48,7 +52,8 @@ export function profileFrameOrDefault(id: string): ProfileFrameDefinition {
   return findProfileFrame(id) ?? PROFILE_FRAMES[0];
 }
 
-export function isProfileFrameUnlocked(frame: ProfileFrameDefinition, playerLevel: number, claimed: Readonly<Record<string, number>> = {}): boolean {
+export function isProfileFrameUnlocked(frame: ProfileFrameDefinition, playerLevel: number, claimed: Readonly<Record<string, number>> = {}, giftFrames: readonly string[] = []): boolean {
+  if (frame.unlockGift) return giftFrames.includes(frame.id);
   return playerLevel >= frame.unlockLevel && (!frame.unlockAchievement || (claimed[frame.unlockAchievement.id] ?? 0) >= frame.unlockAchievement.tiers);
 }
 

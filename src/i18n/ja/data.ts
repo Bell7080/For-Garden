@@ -6314,4 +6314,8 @@ export default {
   "stage.7-8.name": "最下層前室",
   "stage.7-9.name": "拘束室の扉の前",
   "stage.7-10.name": "最下層拘束室",
+  "item.sr-select-ticket.name": "SRレリック選択券",
+  "item.sr-select-ticket.description": "SRレリックを1体選んで迎えます。すでにいるレリックを選ぶと、その欠片1個になります。",
+  "profileFrame.patron.name": "初後援の証",
+  "profileFrame.season.name": "シーズンの翼",
 };

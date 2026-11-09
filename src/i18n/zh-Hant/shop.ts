@@ -131,4 +131,8 @@ export const SHOP_ZH_HANT = {
   "shop.premium.expiresOn": "{date}到期",
   "shop.premium.noRenewal": "有效{days}天 · 不自動續訂",
   "shop.premium.perk.ticketless": "無需掃蕩券即可掃蕩",
+  "shop.premium.firstPayment.tag": "限1次",
+  "shop.premium.firstPayment.title": "首次付費禮物",
+  "shop.premium.firstPayment.note": "任意商品首次付費時一併發放",
+  "shop.premium.firstPayment.hint": "首次購買任意商品時將一併獲得。",
 } as const;

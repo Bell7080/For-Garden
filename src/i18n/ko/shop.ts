@@ -135,4 +135,8 @@ export const SHOP_KO = {
   "shop.premium.expiresOn": "{date} 만료",
   "shop.premium.noRenewal": "{days}일간 이용 · 자동 갱신 없음",
   "shop.premium.perk.ticketless": "소탕권 없이 소탕",
+  "shop.premium.firstPayment.tag": "1회 한정",
+  "shop.premium.firstPayment.title": "첫 결제 선물",
+  "shop.premium.firstPayment.note": "어떤 상품이든 첫 결제에 함께 지급",
+  "shop.premium.firstPayment.hint": "어떤 상품이든 처음 결제하면 함께 받습니다.",
 } as const;

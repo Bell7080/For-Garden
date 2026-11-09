@@ -6276,4 +6276,8 @@ export default {
   "stage.7-8.name": "ห้องโถงหน้าชั้นล่างสุด",
   "stage.7-9.name": "หน้าประตูห้องพันธนาการ",
   "stage.7-10.name": "ห้องพันธนาการชั้นล่างสุด",
+  "item.sr-select-ticket.name": "สิทธิ์เลือกเรลิก SR",
+  "item.sr-select-ticket.description": "เลือกเรลิก SR หนึ่งตัวมาอยู่ด้วย หากเลือกตัวที่มีอยู่แล้วจะได้รับเศษของเรลิกนั้น 1 ชิ้นแทน",
+  "profileFrame.patron.name": "เครื่องหมายผู้สนับสนุนแรก",
+  "profileFrame.season.name": "ปีกแห่งซีซัน",
 };

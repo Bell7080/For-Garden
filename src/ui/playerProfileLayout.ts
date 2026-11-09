@@ -85,7 +85,7 @@ export const AVATAR_PICKER = {
   info: { nameY: 340, conditionY: 386, previewChip: { width: 320, height: 76 } },
   tabs: { y: 474, width: 280, height: 70, gap: 18 },
   photos: { top: 588, columns: 5, cell: 150, gap: 24 },
-  frames: { top: 598, columns: 3, width: 272, height: 286, gap: 18, avatarSize: 132 },
+  frames: { top: 598, columns: 3, width: 272, height: 256, gap: 18, avatarSize: 124 },
   modifiers: { top: 598, columns: 3, width: 272, height: 76, gap: 18 },
   bottomPad: 70,
 } as const;

@@ -434,4 +434,7 @@ export const MISC_RU = {
   "stageMap.subRead": "Прочитано",
   "title.switchAccount": "Сменить аккаунт",
   "title.switchAccount.body": "Начать с другим аккаунтом. Локальное сохранение на этом устройстве будет удалено. Прогресс, связанный с сервером, сохранится.",
+  "profile.edit.frameGift": "Ограничено",
+  "profile.unlock.gift.firstPayment": "Выдаётся как подарок за первую покупку",
+  "profile.unlock.gift.seasonPass": "Награда 30-го уровня сезонного пропуска",
 } as const;

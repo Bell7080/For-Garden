@@ -436,4 +436,7 @@ export const MISC_EN = {
   "stageMap.subRead": "Read",
   "title.switchAccount": "Switch account",
   "title.switchAccount.body": "Start with another account. Local save data on this device will be deleted. Progress linked to the server will be kept.",
+  "profile.edit.frameGift": "Limited",
+  "profile.unlock.gift.firstPayment": "Received as the First Purchase Gift",
+  "profile.unlock.gift.seasonPass": "Season Pass tier 30 reward",
 } as const;

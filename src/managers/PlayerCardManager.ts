@@ -44,7 +44,7 @@ export class PlayerCardManager {
   setAvatar(relicId: string): Promise<PlayerCardResult> { return this.send({ kind: "avatar", relicId }); }
 
   frames(): { frame: ProfileFrameDefinition; unlocked: boolean }[] {
-    return PROFILE_FRAMES.map((frame) => ({ frame, unlocked: isProfileFrameUnlocked(frame, this.state.playerResearch.level, this.state.achievements?.claimed) }));
+    return PROFILE_FRAMES.map((frame) => ({ frame, unlocked: isProfileFrameUnlocked(frame, this.state.playerResearch.level, this.state.achievements?.claimed, this.state.achievements?.giftFrames) }));
   }
 
   private async send(request: UpdatePlayerCardRequest): Promise<PlayerCardResult> {

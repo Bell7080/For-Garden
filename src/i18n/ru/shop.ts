@@ -131,4 +131,8 @@ export const SHOP_RU = {
   "shop.premium.expiresOn": "Истекает {date}",
   "shop.premium.noRenewal": "Доступ на {days} дн. · Без автопродления",
   "shop.premium.perk.ticketless": "Зачистка без билетов",
+  "shop.premium.firstPayment.tag": "Однократно",
+  "shop.premium.firstPayment.title": "Подарок за первую покупку",
+  "shop.premium.firstPayment.note": "Выдаётся вместе с первой покупкой любого товара",
+  "shop.premium.firstPayment.hint": "Вы получите это вместе с первой покупкой любого товара.",
 } as const;

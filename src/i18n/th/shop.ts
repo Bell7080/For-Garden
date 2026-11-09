@@ -131,4 +131,8 @@ export const SHOP_TH = {
   "shop.premium.expiresOn": "หมดอายุ {date}",
   "shop.premium.noRenewal": "ใช้งาน {days} วัน · ไม่ต่ออายุอัตโนมัติ",
   "shop.premium.perk.ticketless": "กวาดล้างโดยไม่ใช้ตั๋ว",
+  "shop.premium.firstPayment.tag": "ครั้งเดียว",
+  "shop.premium.firstPayment.title": "ของขวัญชำระเงินครั้งแรก",
+  "shop.premium.firstPayment.note": "รับพร้อมการชำระเงินครั้งแรกของสินค้าใดก็ได้",
+  "shop.premium.firstPayment.hint": "คุณจะได้รับพร้อมการชำระเงินครั้งแรกของสินค้าใดก็ได้",
 } as const;

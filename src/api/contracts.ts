@@ -80,9 +80,9 @@ export interface MarkMailsReadRequest { mailIds: string[]; }
 export interface DeleteMailsRequest { mailIds: string[]; }
 /** 수량은 양의 정수만 허용하며 서버가 보유량과 상한을 다시 검증한다. */
 /** `lotExpiresAt`을 주면 그 묶음에서 쓴다(가방에서 누른 칸). 없으면 가장 먼저 사라질 묶음부터다. */
-export interface UseConsumableRequest { itemId: string; quantity: number; lotExpiresAt?: string; }
+export interface UseConsumableRequest { itemId: string; quantity: number; lotExpiresAt?: string; /** 렐릭 선택권(`select_relic`)에서 고른 렐릭. 서버가 그 등급의 상시 풀인지 다시 검증한다. */ relicId?: string; }
 /** 실제 적용량을 반환해 상한에서 버려진 회복을 UI가 추측하지 않게 한다. */
-export interface UseConsumableResponse extends InventoryResponse { itemId: string; quantityUsed: number; effect: ItemUseEffect; appliedAmount: number; overflowAmount: number; wallet: Wallet; stamina: StaminaDto; }
+export interface UseConsumableResponse extends InventoryResponse { itemId: string; quantityUsed: number; effect: ItemUseEffect; appliedAmount: number; overflowAmount: number; wallet: Wallet; stamina: StaminaDto; /** 렐릭 선택권으로 처음 데려온 렐릭. */ newRelicIds?: readonly string[]; /** 렐릭 선택권이 이미 있던 렐릭의 파편 한 장이 되었을 때 그 렐릭. */ fragmentRelicId?: string; }
 
 /**
  * 렐릭 추가 외형 구매.
@@ -576,6 +576,8 @@ export interface FulfillPlatformPurchaseResponse extends PurchaseProductResponse
   entitlement?: PassEntitlementDto;
   /** 이번 지급에 첫 구매 보너스가 들어 있는가. */
   firstBonusApplied: boolean;
+  /** 이번 거래가 계정 첫 결제라 첫 결제 선물(`FIRST_PAYMENT_GIFT`)이 `granted`에 함께 들었는가. */
+  firstPaymentGift?: true;
 }
 /** 진행 패스 마디 하나 — 정적 보상과 서버가 판정한 상태(받음 · 받을 수 있음 · 닿음 · 아직). */
 /** 마디 하나 — 왼쪽 무료 칸(`free`·`freeState`)과 오른쪽 유료 칸(`rewards`·`state`). */
@@ -685,7 +687,11 @@ export interface ClaimNewbieGrowthResponse extends PlayerStateDto {
 /** 상품 목록은 정적 정의에 서버가 계산한 현재 구매 가능 횟수를 결합한다. */
 export interface ProductDto { id: string; storefront: ProductStorefront; category: ShopCategory; lootCategory?: LootCategory; premiumCategory?: PremiumCategory; iconKey: ShopProductIconKey; name: string; description: string; acquisition: ProductAcquisition; grants: readonly ProductGrant[]; defaultQuantity: number; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; firstPurchaseBonus?: readonly ProductGrant[]; /** 서버가 구매 기록에서 판정한 값 — 아직 첫 구매 보너스를 받지 않았는가. */ firstBonusAvailable?: boolean; /** 룬 상품이 이 기간에 내놓는 룬의 자리. 서버가 로테이션 칸에서 정해 내려 주며, 사는 쪽은 고르지 않는다. */ runePart?: RunePart; /** 활성 구독이면 만료 시각(null은 영구)과 오늘 몫 수령 여부. */ subscription?: { expiresAt: string | null; dailyBonusClaimed: boolean }; /** 노출이 끝나는 시각 — 한정 상품의 남은 시간이 읽는다. */ visibleUntil?: string; }
 /** 상품 조회 응답은 서버 시각 기준으로 노출 중인 상품만 담는다. */
-export interface ProductListResponse { products: ProductDto[]; serverTime: string; }
+export interface ProductListResponse {
+  products: ProductDto[]; serverTime: string;
+  /** 프리미엄 상점에서만 — 계정 첫 결제 선물(`FIRST_PAYMENT_GIFT`)의 내용과 아직 받을 수 있는가. */
+  firstPaymentGift?: { available: boolean; grants: readonly ProductGrant[]; frameId: string };
+}
 /** 구매 요청은 영속 상품 ID와 사용자가 팝업에서 확정한 묶음 수량을 함께 보낸다. */
 export interface PurchaseProductRequest {
   storefront: ProductStorefront; productId: string; quantity: number;

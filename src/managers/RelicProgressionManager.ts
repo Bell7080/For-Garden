@@ -159,7 +159,7 @@ export class RelicProgressionManager {
   }
 
   /** UI와 전투가 공유할 최종 능력치를 순수 코어 계산기로 구한다. */
-  getFinalStats(relicId: string): Stats {
+  getFinalStats(relicId: string, options: { pvp?: boolean } = {}): Stats {
     const progress = this.getProgress(relicId);
     // 인스턴스 전체를 넘겨 성공 이력과 각인을 코어의 단일 계산기가 해석하게 한다.
     const gems = progress.heartGemSlots.flatMap((id) => {
@@ -168,7 +168,8 @@ export class RelicProgressionManager {
       return [rune];
     });
     const def = getRelic(relicId);
-    return calculateFinalStats(def.stats, progress, gems, def.rarity);
+    // 공명은 PvE에서만 든다 — 결투·아레나는 `pvp`로 부른다.
+    return calculateFinalStats(def.stats, progress, gems, def.rarity, { resonance: !options.pvp });
   }
 
   /** 성장 트랜잭션이 끝난 뒤에만 저장해 중간 상태가 남지 않게 한다. */

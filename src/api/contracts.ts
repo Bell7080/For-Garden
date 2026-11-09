@@ -822,7 +822,7 @@ export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPE
  */
 export interface FeedRelicResponse extends PlayerStateDto { relicId: string; feeds: number; cheesecakeSpent: number; levelsGained: number; }
 /** 돌파 결과. 열린 상한을 함께 돌려줘 화면이 표를 다시 뒤지지 않게 한다. */
-export interface BreakThroughResponse extends PlayerStateDto { relicId: string; breakthrough: number; levelCap: number; /** 돌파 뒤의 별(1~5). */ breakthroughGrade: number; /** 남은 그 개체의 파편. */ fragments: number; /** 모자란 몫을 채우느라 함께 쓴 만능 파편 수(0이면 쓰지 않았다). */ universalFragmentsUsed: number; }
+export interface BreakThroughResponse extends PlayerStateDto { relicId: string; breakthrough: number; levelCap: number; /** 돌파 뒤의 별(1~5). */ breakthroughGrade: number; /** 남은 그 개체의 파편. */ fragments: number; /** 모자란 몫을 채우느라 함께 쓴 만능 파편 수(0이면 쓰지 않았다). */ universalFragmentsUsed: number; /** 돌파 V 뒤에는 같은 조작이 공명을 올린다 — 올린 뒤의 공명 단계. */ resonance?: number; }
 /**
  * 스테미나를 쓰는 전투 입장의 환불 규칙.
  *

@@ -299,17 +299,6 @@
 "Durchbruch",
 "Прорыв"
 ],
-"info.breakthrough.gradeMax": [
-"最高等级",
-"ระดับสูงสุด",
-"Bậc tối đa",
-"Tingkat Maks",
-"Grado máx.",
-"Grau máx.",
-"Höchststufe",
-"Макс. ранг"
-],
-"info.breakthrough.alreadyMax": ["已达突破等级{rarity}。重复获得将转为DNA里程。", "ถึงระดับทะลวง {rarity} แล้ว ตัวซ้ำจะกลายเป็นไมล์ DNA", "Đã đạt Đột phá bậc {rarity}. Trùng lặp sẽ thành Dặm DNA.", "Sudah di Terobosan tingkat {rarity}. Duplikat menjadi Mil DNA.", "Ya está en Ruptura de grado {rarity}. Los duplicados se convierten en Millas de ADN.", "Já está no grau de Ruptura {rarity}. Duplicatas viram Milhas de DNA.", "Bereits auf Durchbruch-Stufe {rarity}. Duplikate werden zu DNA-Meilen.", "Уже достигнут Прорыв {rarity}. Дубликаты превратятся в мили ДНК."],
 "info.breakthrough.fragment": [
 "{name}碎片",
 "เศษ{name}",
@@ -1048,5 +1037,12 @@
 "Também serão consumidos {count} {name}",
 "Zusätzlich werden {count} {name} verbraucht",
 "Также будет израсходовано: {name} ×{count}"
-]
+],
+"info.resonance": ["共鸣", "การสั่นพ้อง", "Cộng hưởng", "Resonansi", "Resonancia", "Ressonância", "Resonanz", "Резонанс"],
+"info.resonance.max": ["共鸣已满", "สั่นพ้องสูงสุด", "Cộng hưởng tối đa", "Resonansi Penuh", "Resonancia máx.", "Ressonância máx.", "Max. Resonanz", "Резонанс макс."],
+"info.resonance.do": ["进行共鸣", "สั่นพ้อง", "Cộng hưởng", "Resonansikan", "Resonar", "Ressoar", "Resonieren", "Резонировать"],
+"info.resonance.stage": ["共鸣{stage}", "สั่นพ้อง {stage}", "Cộng hưởng {stage}", "Resonansi {stage}", "Resonancia {stage}", "Ressonância {stage}", "Resonanz {stage}", "Резонанс {stage}"],
+"info.resonance.stat": ["能力值", "ค่าสถานะ", "Chỉ số", "Statistik", "Atributos", "Atributos", "Werte", "Параметры"],
+"info.resonance.pvpOff": ["决斗与竞技场中不生效共鸣", "การสั่นพ้องไม่มีผลในการดวลและอารีนา", "Cộng hưởng không áp dụng trong Đấu tay đôi và Đấu trường", "Resonansi tidak berlaku di Duel dan Arena", "La resonancia no se aplica en Duelos ni en la Arena", "A ressonância não se aplica em Duelos nem na Arena", "Resonanz gilt nicht in Duellen und der Arena", "Резонанс не действует в дуэлях и на арене"],
+"info.resonance.alreadyMax": ["已达共鸣V。重复获得将转为DNA里程。", "สั่นพ้องถึง V แล้ว ตัวซ้ำจะกลายเป็นไมล์ DNA", "Đã đạt Cộng hưởng V. Trùng lặp sẽ thành Dặm DNA.", "Sudah di Resonansi V. Duplikat menjadi Mil DNA.", "Ya está en Resonancia V. Los duplicados se convierten en Millas de ADN.", "Já está em Ressonância V. Duplicatas viram Milhas de DNA.", "Bereits Resonanz V. Duplikate werden zu DNA-Meilen.", "Резонанс V уже достигнут. Дубликаты становятся милями ДНК."]
 }

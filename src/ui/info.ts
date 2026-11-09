@@ -46,7 +46,8 @@ import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { openElementPopup, openRolePopup } from "./affinityPopups";
 import { breakthroughSlotLabel, breakthroughEffectText, breakthroughEffectKeywords } from "./skillPresentation";
-import { addBreakthroughGradeMark, RARITY_TONE, BREAKTHROUGH_GRADE_ROMAN } from "./rarityMark";
+import { addBreakthroughGradeMark, addResonanceMark, RARITY_TONE, BREAKTHROUGH_GRADE_ROMAN } from "./rarityMark";
+import { RESONANCE_CAP, RESONANCE_CHEESECAKE, RESONANCE_STAT_PERCENT, canResonate, resonanceFragmentCost, resonanceFragmentSpend, resonanceOf } from "../core/relicResonance";
 import { addFramedIcon, addItemFrame } from "./itemFrame";
 import { FaceFrame } from "./FaceFrame";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
@@ -973,13 +974,21 @@ export class InfoManager {
     const universal = def ? relicProgression.getUniversalFragments(def.rarity) : 0;
     // 드는 파편 수는 등급이 정한다 — 같은 단계라도 R은 넷, SSR은 하나다.
     const need = def && step ? breakthroughFragmentCost(def.rarity, progress.breakthrough) : 0;
-    const ready = this.ownedNow && def !== undefined && canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake, universal);
-    this.breakButton?.container.setAlpha(step ? (ready ? 1 : 0.7) : 0.35);
+    // **돌파 V 뒤의 같은 버튼은 공명을 맡는다.** 새 버튼을 세우지 않는 이유는 둘 다 「같은 개체를 또
+    // 만나 모은 파편으로 그 개체를 키운다」는 한 조작이라서다 — 자리가 갈리면 다음 할 일이 어디인지 흐려진다.
+    const resonance = resonanceOf(progress);
+    const resonating = !step && resonance < RESONANCE_CAP;
+    const ready = this.ownedNow && def !== undefined && (step
+      ? canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake, universal)
+      : canResonate(def.rarity, progress, BREAKTHROUGH_STEPS.length, held, session.wallet.cheesecake, universal));
+    this.breakButton?.container.setAlpha(step || resonating ? (ready ? 1 : 0.7) : 0.35);
     // 문구가 바뀌면 폭도 함께 바뀐다 — 처음 그릴 때만 누르면 `돌파 완료`가 판을 넘는다.
-    if (this.breakButton) squeezeTextToWidth(this.breakButton.label.setText(step ? t("info.breakthrough") : t("info.breakthrough.gradeMax")), BREAK_BUTTON.width - BREAK_BUTTON.labelInset);
+    const label = step ? t("info.breakthrough") : resonating ? t("info.resonance") : t("info.resonance.max");
+    if (this.breakButton) squeezeTextToWidth(this.breakButton.label.setText(label), BREAK_BUTTON.width - BREAK_BUTTON.labelInset);
     this.breakButton?.label.setColor(ready ? COLOR.ink : COLOR.inkDim);
     this.paintBreakArm(ready);
-    this.paintBreakCost(def, step, held, need, universal);
+    if (resonating && def) this.paintBreakCost(def, { cheesecake: RESONANCE_CHEESECAKE }, held, resonanceFragmentCost(def.rarity, resonance), universal, resonanceFragmentSpend(def.rarity, resonance, held, universal));
+    else this.paintBreakCost(def, step, held, need, universal);
   }
 
   /**
@@ -1010,7 +1019,7 @@ export class InfoManager {
    * **액자를 쓰지 않는다** — 버튼 판 안에 액자를 넣으면 판이 두 겹으로 보인다(재화 비용 표기와
    * 같은 규칙). 파편 그림은 확정 창의 보석 조각과 같은 얼굴을 액자 없이 세운 것이다.
    */
-  private paintBreakCost(def: RelicDef | undefined, step: BreakthroughStep | undefined, held: number, need: number, universal: number): void {
+  private paintBreakCost(def: RelicDef | undefined, step: Pick<BreakthroughStep, "cheesecake"> | undefined, held: number, need: number, universal: number, resonanceSpend?: { own: number; universal: number; enough: boolean }): void {
     const row = this.breakButton?.cost;
     if (!row) return;
     row.removeAll(true);
@@ -1018,7 +1027,7 @@ export class InfoManager {
     const cheesecake = session.wallet.cheesecake;
     // 그 개체의 파편이 모자라면 **모자란 몫만** 만능 파편이 채운다. 쓰일 몫이 있으면 파편 줄은 붉지 않고,
     // 그 옆에 만능 파편 그림과 `×N`이 금빛으로 따로 서서 무엇이 함께 소모되는지 버튼이 먼저 말한다.
-    const spend = breakthroughFragmentSpend(def.rarity, relicProgression.getProgress(def.id).breakthrough, held, universal);
+    const spend = resonanceSpend ?? breakthroughFragmentSpend(def.rarity, relicProgression.getProgress(def.id).breakthrough, held, universal);
     const pairs: { short: boolean; text: string; color?: string; kind: "fragment" | "universal" | "cheesecake" }[] = [
       { kind: "fragment", short: !spend.enough && held < need, text: `${formatCurrency(held)}/${formatCurrency(need)}` },
       ...(spend.enough && spend.universal > 0 ? [{ kind: "universal" as const, short: false, text: `×${formatCurrency(spend.universal)}`, color: UNIVERSAL_SPEND_TEXT }] : []),
@@ -1070,15 +1079,17 @@ export class InfoManager {
     const progress = relicProgression.getProgress(def.id);
     const step = nextBreakthrough(progress.breakthrough);
     const height = breakConfirmHeight();
+    const resonance = resonanceOf(progress);
     // **누른 자리에 붙지 않고 화면 가운데에 선다.** 돌파 버튼은 오른쪽 기둥 위쪽에 있어, 거기
     // 매달면 판이 화면 한쪽으로 쏠려 액자 셋이 가장자리에 붙는다. 닫기 X도 두지 않는다 —
     // 고를 것이 「돌파하기」 하나뿐이라, 그만두는 손짓은 판 밖을 누르는 것으로 충분하다.
     this.popups.open({
-      width: BREAK_CONFIRM.width, height, title: t("info.breakthrough"), tilt: -1.2,
+      width: BREAK_CONFIRM.width, height, title: step ? t("info.breakthrough") : t("info.resonance"), tilt: -1.2,
       dim: true, hideCloseButton: true, onClose: from.onClose,
     }, (body, close) => {
       if (!step) {
-        body.add(this.scene.add.text(0, 20, t("info.breakthrough.alreadyMax", { rarity: BREAKTHROUGH_GRADE_ROMAN[BREAKTHROUGH_GRADE_ROMAN.length - 1] }), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(640));
+        if (resonance < RESONANCE_CAP) { this.paintResonanceConfirm(body, close, def, progress, height); return; }
+        body.add(this.scene.add.text(0, 20, t("info.resonance.alreadyMax"), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(640));
         return;
       }
       const top = -height / 2;
@@ -1153,6 +1164,72 @@ export class InfoManager {
         onClick: () => { close(); void this.breakThrough(); },
       }).setEnabled(ready));
     });
+  }
+
+  /**
+   * 공명 확정 — 돌파 확정 창과 같은 판·같은 액자를 쓰고, 오르는 것만 다르다.
+   *
+   * 공명은 레벨 상한을 열지 않고 오각형 다섯을 단계마다 3% 올린다. 그래서 등급 글자 자리에 `공명 n ▶ n+1`,
+   * 상한 줄 자리에 `능력치 +a% ▶ +b%`가 서고, 레벨 액자는 없다(공명에는 레벨 조건이 없다).
+   * 결투·아레나에서는 꺼진다는 것도 그 줄 아래 한 마디로 말한다 — 모르고 올리면 대인전에서 왜 같은지 묻게 된다.
+   */
+  private paintResonanceConfirm(body: Phaser.GameObjects.Container, close: () => void, def: RelicDef, progress: RelicProgress, height: number): void {
+    const top = -height / 2;
+    const resonance = resonanceOf(progress);
+    const stage = (value: number, x: number, color: string, size: number): void => {
+      body.add(this.scene.add.text(x, top + BREAK_CONFIRM.gradeY, t("info.resonance.stage", { stage: BREAKTHROUGH_GRADE_ROMAN[value - 1] ?? "0" }), textStyle({ role: "display", size, color })).setOrigin(0.5));
+    };
+    if (resonance > 0) stage(resonance, -170, COLOR.inkDim, 44);
+    else body.add(this.scene.add.text(-170, top + BREAK_CONFIRM.gradeY, "—", textStyle({ role: "display", size: 44, color: COLOR.inkDim })).setOrigin(0.5));
+    body.add(this.scene.add.text(0, top + BREAK_CONFIRM.gradeY, "▶", textStyle({ role: "display", size: 34, color: COLOR.inkDim })).setOrigin(0.5));
+    stage(resonance + 1, 170, COLOR.accentText, 52);
+
+    // 오르는 몫은 능력치 비율이라 상한 줄과 같은 자리·같은 무게로 선다.
+    const line = this.scene.add.container(0, top + BREAK_CONFIRM.capY);
+    const label = this.scene.add.text(0, 0, t("info.resonance.stat"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5);
+    const from = this.scene.add.text(0, 0, `+${resonance * RESONANCE_STAT_PERCENT}%`, textStyle({ role: "display", size: 32, color: COLOR.inkDim })).setOrigin(0.5);
+    const arrow = this.scene.add.text(0, 0, "▶", textStyle({ role: "display", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
+    const to = this.scene.add.text(0, 0, `+${(resonance + 1) * RESONANCE_STAT_PERCENT}%`, textStyle({ role: "display", size: 40, color: COLOR.accentText })).setOrigin(0.5);
+    const gap = 18;
+    const width = label.width + gap + from.width + gap + arrow.width + gap + to.width;
+    let cursor = -width / 2;
+    label.setX(cursor + label.width); cursor += label.width + gap;
+    from.setX(cursor + from.width / 2); cursor += from.width + gap;
+    arrow.setX(cursor + arrow.width / 2); cursor += arrow.width + gap;
+    to.setX(cursor + to.width / 2);
+    line.add([label, from, arrow, to]);
+    body.add(line);
+
+    const held = relicProgression.getFragments(def.id);
+    const universal = relicProgression.getUniversalFragments(def.rarity);
+    const spend = resonanceFragmentSpend(def.rarity, resonance, held, universal);
+    const usesUniversal = spend.enough && spend.universal > 0;
+    const universalName = findItem(UNIVERSAL_FRAGMENT_ITEM[def.rarity])?.name ?? "";
+    body.add(this.scene.add
+      .text(0, top + BREAK_CONFIRM.universalNoticeY, usesUniversal ? t("info.breakthrough.universalNotice", { name: universalName, count: formatCurrency(spend.universal) }) : t("info.resonance.pvpOff"), usesUniversal ? textStyle({ role: "emphasis", size: 22, color: UNIVERSAL_SPEND_TEXT }) : textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
+      .setOrigin(0.5));
+    const costY = top + BREAK_CONFIRM.costY;
+    const costs: BreakthroughCost[] = [
+      { kind: "fragment", label: t("info.breakthrough.fragment", { name: def.name }), need: usesUniversal ? spend.own : resonanceFragmentCost(def.rarity, resonance), have: held },
+      ...(usesUniversal ? [{ kind: "universal" as const, texture: universalFragmentTexture(def.rarity), label: universalName, need: spend.universal, have: universal }] : []),
+      { kind: "currency", texture: CURRENCY_ICON_BY_WALLET.cheesecake, label: t("info.breakthrough.cheesecake"), need: RESONANCE_CHEESECAKE, have: session.wallet.cheesecake },
+    ];
+    costs.forEach((cost, index) => {
+      const x = (index - (costs.length - 1) / 2) * BREAK_CONFIRM.costStep;
+      const enough = cost.have >= cost.need;
+      this.addBreakthroughCost(body, x, costY, cost, enough, def);
+      body.add(this.scene.add.text(x, costY + BREAK_CONFIRM.costFrame / 2 + 26, cost.label, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(BREAK_CONFIRM.costStep - 12));
+      const needKey = cost.kind === "universal" ? "info.breakthrough.universalSpend" : "info.breakthrough.need";
+      body.add(this.scene.add
+        .text(x, costY + BREAK_CONFIRM.costFrame / 2 + 58, t(needKey, { count: formatCurrency(cost.need) }), textStyle({ role: "emphasis", size: 24, color: !enough ? COLOR.dangerText : cost.kind === "universal" ? UNIVERSAL_SPEND_TEXT : COLOR.ink }))
+        .setOrigin(0.5));
+    });
+    const ready = canResonate(def.rarity, progress, BREAKTHROUGH_STEPS.length, held, session.wallet.cheesecake, universal);
+    body.add(new Button(this.scene, 0, top + BREAK_CONFIRM.actionY, {
+      width: BREAK_CONFIRM.action.width, height: BREAK_CONFIRM.action.height, label: t("info.resonance.do"), fontSize: 34,
+      variant: "primary", fill: 0x2d2440, decorDots: true, accentColor: BREAK_EDGE, accentTextColor: COLOR.ink,
+      onClick: () => { close(); void this.breakThrough(); },
+    }).setEnabled(ready));
   }
 
   /**
@@ -2274,6 +2351,8 @@ export class InfoManager {
     this.starRow.removeAll(true);
     const stars = breakthroughGrade(this.shownBreakthrough(def));
     addBreakthroughGradeMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, stars);
+    // 공명은 내 렐릭에게만 있다 — 공개 프로필은 공명을 알려 주지 않으므로 그리지 않는다.
+    if (!this.publicProfile) addResonanceMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, resonanceOf(relicProgression.getProgress(def.id)), RESONANCE_CAP);
   }
 
   /** 레벨·경험치·유대·능력치·젬을 지금 상태로 다시 칠한다. */

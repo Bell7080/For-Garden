@@ -23,6 +23,7 @@ import { PLACEHOLDER_AD_ENABLED, TEMP_AD_REWARD_ENABLED, placeholderAdToken, tem
 import { bannerAcceptsCount, bannerActive, canPull, carryoverTenAvailable, carryoverTensOnClose, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { socialApi } from "./FakeSocialServer";
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
+import { RESONANCE_CAP, RESONANCE_CHEESECAKE, canResonate, relicFragmentRoom, resonanceFragmentSpend, resonanceOf } from "../core/relicResonance";
 import { BANNERS, STANDARD_POOLS } from "../data/banners";
 import { FIRST_PAYMENT_GIFT } from "../data/firstPaymentGift";
 import { OPEN_END, OPEN_START, scheduledWindow, windowOpen } from "../core/liveSchedule";
@@ -1450,7 +1451,7 @@ export class FakeServer implements GameApi {
   /** 선택 보상으로 고를 수 있는가 — 돌파를 끝낸 렐릭은 파편이 쓸 곳이 없어 거절한다. */
   private assertRelicSelectable(relicId: string): void {
     const progress = this.state.relicProgress[relicId];
-    if (this.state.owned.has(relicId) && progress && breakthroughGrade(progress.breakthrough) >= BREAKTHROUGH_GRADE_CAP) throw new GameApiError("RELIC_MAX_BREAKTHROUGH", "이미 돌파를 끝마친 렐릭입니다.");
+    if (this.state.owned.has(relicId) && progress && this.relicFragmentRoom(relicId) <= 0) throw new GameApiError("RELIC_MAX_BREAKTHROUGH", "이미 돌파·공명에 쓸 파편을 모두 갖춘 렐릭입니다.");
   }
 
   /** 고른 렐릭을 지금 상태의 복제본에 반영한다 — 처음이면 보유·첫 유대·만난 날, 이미 있으면 파편 한 장. */
@@ -2620,7 +2621,9 @@ export class FakeServer implements GameApi {
     const pulled = pull(banner, request.count, currentPity, this.random, { forceTenUpgrade });
     const breakthroughGradeById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, breakthroughGrade(value.breakthrough)]));
     const relicSlots = pulled.slots.filter((slot) => slot.kind === "relic");
-    const outcome = resolveAcquisitions(this.state.owned, this.state.relicFragments, relicSlots.map((slot) => slot.relicId), breakthroughGradeById, BREAKTHROUGH_GRADE_CAP, (id) => MILEAGE_OVERFLOW_BY_RARITY[RELICS.find((relic) => relic.id === id)?.rarity ?? "R"]);
+    // 돌파 V 개체의 중복은 공명 V까지 남은 몫만큼 먼저 파편이 되고, 그 뒤의 중복만 마일리지가 된다.
+    const resonanceRoomById = Object.fromEntries([...new Set(relicSlots.map((slot) => slot.relicId))].map((id) => [id, this.relicFragmentRoom(id)]));
+    const outcome = resolveAcquisitions(this.state.owned, this.state.relicFragments, relicSlots.map((slot) => slot.relicId), breakthroughGradeById, BREAKTHROUGH_GRADE_CAP, (id) => MILEAGE_OVERFLOW_BY_RARITY[RELICS.find((relic) => relic.id === id)?.rarity ?? "R"], resonanceRoomById);
     // 뽑기 한 번마다 기본 1 + 풀돌 중복 보너스. 계정 상한에서 깎이는 몫은 응답에서도 뺀다.
     const mileageGained = Math.min(WALLET_CAPS.dnaFragments - this.state.wallet.dnaFragments, mileageForPull(request.count, outcome.overflowFragments));
     // 최초 획득은 반드시 기본 성장 레코드를 만들고, 중복 변화도 같은 복제본에 반영한다.
@@ -2717,7 +2720,8 @@ export class FakeServer implements GameApi {
     const current = this.state.relicProgress[relicId];
     if (!this.state.owned.has(relicId) || !current) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
     const step = nextBreakthrough(current.breakthrough);
-    if (!step) throw new GameApiError("RELIC_MAX_LEVEL", "더 뚫을 천장이 없습니다.");
+    // 돌파를 끝낸 개체는 같은 버튼이 **공명**을 올린다(`core/relicResonance.ts`) — 한 단계 위의 성장 축이다.
+    if (!step) return this.resonateRelic(relicId, current);
     if (current.level < relicLevelCap(current.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "레벨을 상한까지 올려야 돌파할 수 있습니다.");
     const held = this.state.relicFragments[relicId] ?? 0;
     // 파편 수는 **등급**이 정한다(`BREAKTHROUGH_FRAGMENTS`) — SSR은 한 장으로 한 단계지만
@@ -2739,6 +2743,39 @@ export class FakeServer implements GameApi {
     this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, itemInventory: nextItems, wallet: nextWallet });
     this.state.relicProgress = nextProgress; this.state.relicFragments = nextFragments; this.state.itemInventory = nextItems; this.state.wallet = nextWallet;
     return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(breakthrough), breakthroughGrade: breakthroughGrade(breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend.universal };
+  }
+
+  /**
+   * 공명 한 단계 — 돌파 V 개체의 파편(모자란 몫은 같은 등급 만능 파편)과 치즈케이크를 쓴다. 차감과 단계 확정은 한 저장이다.
+   * 응답 모양은 돌파와 같고 `resonance`가 더 붙는다(돌파 단계는 그대로 V).
+   */
+  private resonateRelic(relicId: string, current: Session["relicProgress"][string]): BreakThroughResponse {
+    const rarity = RELICS.find(({ id }) => id === relicId)?.rarity ?? "R";
+    const resonance = resonanceOf(current);
+    if (resonance >= RESONANCE_CAP) throw new GameApiError("RELIC_MAX_LEVEL", "공명을 모두 마친 렐릭입니다.");
+    const held = this.state.relicFragments[relicId] ?? 0;
+    const universalItem = UNIVERSAL_FRAGMENT_ITEM[rarity];
+    const universal = this.state.itemInventory.find((stack) => stack.itemId === universalItem)?.quantity ?? 0;
+    if (!canResonate(rarity, current, BREAKTHROUGH_CAP, held, this.state.wallet.cheesecake, universal)) throw new GameApiError("INSUFFICIENT_CURRENCY", "공명 재료가 부족합니다.");
+    const spend = resonanceFragmentSpend(rarity, resonance, held, universal);
+    const nextProgress = { ...this.state.relicProgress, [relicId]: { ...current, resonance: resonance + 1 } };
+    const nextFragments = { ...this.state.relicFragments, [relicId]: held - spend.own };
+    const nextItems = spend.universal > 0 ? removeItemLot(this.state.itemInventory, universalItem, spend.universal) : this.state.itemInventory;
+    if (!nextItems) throw new GameApiError("INSUFFICIENT_ITEMS", "만능 파편이 부족합니다.");
+    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake - RESONANCE_CHEESECAKE };
+    this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, itemInventory: nextItems, wallet: nextWallet });
+    this.state.relicProgress = nextProgress; this.state.relicFragments = nextFragments; this.state.itemInventory = nextItems; this.state.wallet = nextWallet;
+    return { ...this.snapshot(), relicId, breakthrough: current.breakthrough, levelCap: relicLevelCap(current.breakthrough), breakthroughGrade: breakthroughGrade(current.breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend.universal, resonance: resonance + 1 };
+  }
+
+  /**
+   * 그 렐릭이 파편을 몇 장 더 받아 쓸 수 있는가. 돌파 중이면 끝이 없고(`Infinity`), 돌파 V면 공명 V까지 남은 몫에서 가진 파편을 뺀다.
+   * 연구소 중복·선택권·마일리지 상점 파편이 같은 값을 읽는다.
+   */
+  private relicFragmentRoom(relicId: string): number {
+    if (!this.state.owned.has(relicId)) return Number.POSITIVE_INFINITY;
+    const rarity = RELICS.find(({ id }) => id === relicId)?.rarity ?? "R";
+    return relicFragmentRoom(rarity, this.state.relicProgress[relicId], this.state.relicFragments[relicId] ?? 0, BREAKTHROUGH_CAP);
   }
 
   /** 입장 허가와 비용 차감을 한 처리로 묶고 requestId 재전송에는 최초 영수증을 반환한다. */
@@ -3167,7 +3204,7 @@ export class FakeServer implements GameApi {
 
   /** 렐릭 하나의 지금 전투력. 블라인드 순서와 순위표의 내 전투력이 같은 값을 읽는다. */
   private duelRelicPower(relicId: string): number {
-    return combatPower(new RelicProgressionManager(this.state).getFinalStats(relicId));
+    return combatPower(new RelicProgressionManager(this.state).getFinalStats(relicId, { pvp: true }));
   }
 
   private duelStatusDto(duel: DuelState, now: Date): DuelStatusResponse {
@@ -3869,8 +3906,7 @@ export class FakeServer implements GameApi {
       if (grant.kind !== "weekly_ssr_fragment" && grant.kind !== "rotating_fragment" && !(grant.kind === "relic_fragment" && product.storefront === "mileage")) continue;
       const fragmentRelicId = mileageFragmentRelicId(grant, now);
       if (!fragmentRelicId) throw new GameApiError("PRODUCT_NOT_VISIBLE", "현재 교환할 수 있는 파편이 없습니다.");
-      const progress = this.state.relicProgress[fragmentRelicId];
-      if (progress && breakthroughGrade(progress.breakthrough) >= BREAKTHROUGH_GRADE_CAP) throw new GameApiError("RELIC_MAX_BREAKTHROUGH", "이미 돌파를 끝마친 렐릭입니다.");
+      if (this.relicFragmentRoom(fragmentRelicId) <= 0) throw new GameApiError("RELIC_MAX_BREAKTHROUGH", "이미 돌파·공명에 쓸 파편을 모두 갖춘 렐릭입니다.");
     }
     const nextFragments = { ...this.state.relicFragments };
     const applied = this.applyProductGrants(product, quantity, nextWallet, nextItems, now, [], nextFragments);

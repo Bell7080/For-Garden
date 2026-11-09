@@ -58,14 +58,14 @@ describe("SR 렐릭 선택권", () => {
     expect(state.owned.has(relicId)).toBe(true);
     expect(state.itemInventory.find(({ itemId }) => itemId === "sr-select-ticket")).toBeUndefined();
   });
-  it("이미 있는 렐릭은 파편 한 장이고, 돌파를 끝낸 렐릭·풀 밖 렐릭·렐릭 없음은 장을 쓰기 전에 거절한다", async () => {
+  it("이미 있는 렐릭은 파편 한 장이고, 공명까지 끝낸 렐릭·풀 밖 렐릭·렐릭 없음은 장을 쓰기 전에 거절한다", async () => {
     const { state, api } = server(); ticket(state);
     const relicId = STANDARD_POOLS.SR[0];
     state.owned.add(relicId); state.relicProgress[relicId] = createInitialRelicProgress();
     const before = state.relicFragments[relicId] ?? 0;
     await expect(api.useConsumable({ itemId: "sr-select-ticket", quantity: 1 })).rejects.toMatchObject({ code: "RELIC_NOT_FOUND" });
     await expect(api.useConsumable({ itemId: "sr-select-ticket", quantity: 1, relicId: STANDARD_POOLS.SSR[0] })).rejects.toMatchObject({ code: "RELIC_NOT_FOUND" });
-    state.relicProgress[relicId] = { ...createInitialRelicProgress(), breakthrough: 4 };
+    state.relicProgress[relicId] = { ...createInitialRelicProgress(), breakthrough: 4, resonance: 5 };
     await expect(api.useConsumable({ itemId: "sr-select-ticket", quantity: 1, relicId })).rejects.toMatchObject({ code: "RELIC_MAX_BREAKTHROUGH" });
     expect(state.itemInventory[0].quantity).toBe(1);
     state.relicProgress[relicId] = createInitialRelicProgress();

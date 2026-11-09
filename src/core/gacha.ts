@@ -405,7 +405,10 @@ export function resolveAcquisitions(
   maxStars = 5,
   /** 풀돌 개체의 중복 한 장이 바뀌는 마일리지 수. 주지 않으면 1이다. */
   overflowAmountOf: (relicId: string) => number = () => 1,
+  /** 풀돌 개체가 공명에 쓰려고 더 받을 수 있는 파편 수. 남은 몫만큼은 파편으로, 그 뒤만 마일리지가 된다. 없으면 0이다. */
+  resonanceRoomById: Readonly<Record<string, number>> = {},
 ): AcquisitionOutcome {
+  const room = { ...resonanceRoomById };
   const owned = new Set(ownedRelicIds);
   const fragments = { ...fragmentsById };
   const slots: AcquisitionResult[] = [];
@@ -421,13 +424,14 @@ export function resolveAcquisitions(
       continue;
     }
     duplicateRelicIds.push(relicId);
-    if ((breakthroughGradeById[relicId] ?? 1) >= maxStars) {
+    if ((breakthroughGradeById[relicId] ?? 1) >= maxStars && (room[relicId] ?? 0) <= 0) {
       // 풀돌 개체의 중복은 파편으로 한 번, 파편이 쓸 곳이 없어 마일리지로 한 번 더 바뀐다(양은 등급이 정한다).
       const amount = overflowAmountOf(relicId);
       overflowFragments += amount;
       slots.push({ relicId, kind: "overflow", fragments: 0, overflowFragments: amount });
     } else {
       fragments[relicId] = (fragments[relicId] ?? 0) + 1;
+      if ((breakthroughGradeById[relicId] ?? 1) >= maxStars) room[relicId] = (room[relicId] ?? 0) - 1;
       slots.push({ relicId, kind: "fragment", fragments: 1, overflowFragments: 0 });
     }
   }

@@ -70,3 +70,53 @@ export function addBreakthroughGradeMark(
   put(0, 0, GRADE_MARK_TONE.halo, 0.3, 1.24);
   put(0, 0, GRADE_MARK_TONE.ink, 1, 1);
 }
+
+/** 공명 표식의 색 — 돌파 표식과 같은 호박색 계열이라 한 덩어리로 읽힌다. */
+const RESONANCE_MARK_TONE = { on: 0xffc247, off: 0x05070a, edge: 0xfff3c4, frame: 0xf5a623 } as const;
+
+/**
+ * 공명 표식 — 돌파 등급 글자 **아래**의 작은 마름모 다섯과, 공명 V의 금빛 두 겹 테두리.
+ *
+ * 공명은 돌파 V 다음의 축이라 새 글자를 세우지 않고 같은 표식에 붙는다. 마름모는 채운 것이
+ * 지금 공명 단계이고, 다섯이 다 차면 글자 둘레에 금빛 테가 두 겹 둘러 「끝까지 키운 개체」를
+ * 말한다. 공명이 0이면 아무것도 그리지 않는다(돌파 중인 개체에 빈 칸 다섯이 서면 할 일처럼 읽힌다).
+ */
+export function addResonanceMark(
+  scene: Phaser.Scene,
+  parent: Phaser.GameObjects.Container,
+  x: number,
+  y: number,
+  size: number,
+  resonance: number,
+  cap: number,
+): void {
+  if (resonance <= 0) return;
+  const g = scene.add.graphics();
+  const dot = Math.max(5, size * 0.11);
+  const gap = dot * 2.6;
+  const rowY = y + size * 0.92;
+  for (let i = 0; i < cap; i += 1) {
+    const cx = x + (i - (cap - 1) / 2) * gap;
+    const points = [new Phaser.Math.Vector2(cx, rowY - dot), new Phaser.Math.Vector2(cx + dot * 0.8, rowY), new Phaser.Math.Vector2(cx, rowY + dot), new Phaser.Math.Vector2(cx - dot * 0.8, rowY)];
+    const on = i < resonance;
+    g.fillStyle(on ? RESONANCE_MARK_TONE.on : RESONANCE_MARK_TONE.off, on ? 1 : 0.55);
+    g.fillPoints(points, true);
+    g.lineStyle(2, on ? RESONANCE_MARK_TONE.edge : RESONANCE_MARK_TONE.frame, on ? 0.9 : 0.5);
+    g.strokePoints(points, true);
+  }
+  if (resonance >= cap) {
+    // 공명 V — 글자를 두 겹으로 감싸는 금빛 테. 판·칩과 같이 왼쪽 위·오른쪽 아래만 깎는다.
+    for (const [grow, alpha, width] of [[0, 1, 3], [size * 0.12, 0.5, 2]] as const) {
+      const hw = size * 0.56 + grow;
+      const hh = size * 0.66 + grow;
+      const cut = size * 0.22;
+      g.lineStyle(width, RESONANCE_MARK_TONE.frame, alpha);
+      g.strokePoints([
+        new Phaser.Math.Vector2(x - hw + cut, y - hh), new Phaser.Math.Vector2(x + hw, y - hh),
+        new Phaser.Math.Vector2(x + hw, y + hh - cut), new Phaser.Math.Vector2(x + hw - cut, y + hh),
+        new Phaser.Math.Vector2(x - hw, y + hh), new Phaser.Math.Vector2(x - hw, y - hh + cut),
+      ], true);
+    }
+  }
+  parent.addAt(g, 0);
+}

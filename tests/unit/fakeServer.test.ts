@@ -1688,11 +1688,11 @@ describe("FakeServer 마일리지 상점", () => {
     await expect(server.purchaseProduct({ storefront: "mileage", productId: "mileage-daily-r", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
   });
 
-  it("이미 돌파 V인 점원의 파편은 값을 받기 전에 거절한다", async () => {
+  it("공명 V까지 마친 점원의 파편은 값을 받기 전에 거절한다", async () => {
     const state = makeSession(); state.wallet.dnaFragments = 200;
     const clerk = mileageWeeklyClerkId(WEEK)!;
     state.owned.add(clerk);
-    state.relicProgress[clerk] = { level: 1, exp: 0, breakthrough: BREAKTHROUGH_GRADE_CAP - 1, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    state.relicProgress[clerk] = { level: 1, exp: 0, breakthrough: BREAKTHROUGH_GRADE_CAP - 1, resonance: 5, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
     await expect(server.purchaseProduct({ storefront: "mileage", productId: "mileage-weekly-ssr", quantity: 1 })).rejects.toMatchObject({ code: "RELIC_MAX_BREAKTHROUGH" });
     expect(state.wallet.dnaFragments).toBe(200);
@@ -1719,7 +1719,7 @@ describe("FakeServer 마일리지 상점", () => {
     expect(owner.relicFragments.dian).toBe(1);
 
     const maxed = makeSession(); maxed.wallet.dnaFragments = 300; maxed.owned.add("dian");
-    maxed.relicProgress.dian = { level: 1, exp: 0, breakthrough: BREAKTHROUGH_GRADE_CAP - 1, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    maxed.relicProgress.dian = { level: 1, exp: 0, breakthrough: BREAKTHROUGH_GRADE_CAP - 1, resonance: 5, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     await expect(new FakeServer(maxed, { latencyMs: 0, now: () => WEEK }).purchaseProduct({ storefront: "mileage", productId, quantity: 1 })).rejects.toMatchObject({ code: "RELIC_MAX_BREAKTHROUGH" });
     expect(maxed.wallet.dnaFragments).toBe(300);
   });

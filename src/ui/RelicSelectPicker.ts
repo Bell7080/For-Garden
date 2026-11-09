@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { PLAYABLE_RELICS } from "../data/relics";
-import { breakthroughGrade, BREAKTHROUGH_GRADE_CAP } from "../core/relicProgression";
+import { BREAKTHROUGH_CAP } from "../core/relicProgression";
+import { relicFragmentRoom } from "../core/relicResonance";
 import { session } from "../state/session";
 import { FaceFrame } from "./FaceFrame";
 import type { PopupLayer } from "./PopupLayer";
@@ -43,7 +44,8 @@ export function openRelicSelectPicker(scene: Phaser.Scene, popups: PopupLayer, c
       const y = top + rowIndex * rowHeight + cell / 2;
       const owned = session.owned.has(relicId);
       const progress = session.relicProgress[relicId];
-      const maxed = owned && progress !== undefined && breakthroughGrade(progress.breakthrough) >= BREAKTHROUGH_GRADE_CAP;
+      // 돌파·공명에 쓸 파편을 다 갖춘 렐릭만 막는다 — 서버(`assertRelicSelectable`)와 같은 값이다.
+      const maxed = owned && relicFragmentRoom(def.rarity, progress, session.relicFragments[relicId] ?? 0, BREAKTHROUGH_CAP) <= 0;
       const item = scene.add.container(x, y);
       body.add(item);
       const frame = new FaceFrame(scene, 0, 0, { portraitAssetId: def.portraitAssetId, size: cell, color: maxed ? 0x68717d : SR_SELECT_TONE });

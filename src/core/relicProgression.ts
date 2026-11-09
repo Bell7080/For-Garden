@@ -2,6 +2,7 @@ import type { HeartGemStatEffect } from "../data/heartGems";
 import { RUNE_STAT_RULES } from "../data/runes";
 import { assertValidRuneInstance, type RuneInstance } from "./runes";
 import { RARITY_LEVEL_GROWTH } from "./rarityScaling";
+import { resonanceOf, resonanceStatEffect } from "./relicResonance";
 import type { RelicDef, RelicProgress, RelicRarity, Stats } from "./types";
 
 /** 한계 돌파를 하지 않은 렐릭의 레벨 상한. 프로토타입에서도 최대 상태를 금방 볼 수 있게 짧다. */
@@ -409,8 +410,15 @@ export function applyHeartGems(stats: Stats, gems: readonly RuneInstance[]): Sta
   return result;
 }
 
-/** 최종 능력치는 기본 → 레벨 → 별 → Heart Gem 순서로만 계산한다. */
-export function calculateFinalStats(base: Stats, progress: RelicProgress, gems: readonly RuneInstance[], rarity: RelicRarity): Stats {
+/**
+ * 최종 능력치는 기본 → 레벨 → 공명 → 별 → Heart Gem 순서로만 계산한다.
+ *
+ * **공명은 PvE에서만 든다** — 결투·아레나는 `resonance: false`로 부른다(`RelicProgressionManager.getFinalStats`의 `pvp`).
+ */
+export function calculateFinalStats(base: Stats, progress: RelicProgress, gems: readonly RuneInstance[], rarity: RelicRarity, options: { resonance?: boolean } = {}): Stats {
   if (progress.heartGemSlots.length !== 3) throw new RangeError("Heart Gem 슬롯은 정확히 3개여야 합니다.");
-  return applyHeartGems(applyBreakthrough(applyLevelGrowth(base, progress.level, rarity), progress.breakthrough), gems);
+  const grown = applyLevelGrowth(base, progress.level, rarity);
+  const resonance = options.resonance === false ? 0 : resonanceOf(progress);
+  const resonated = resonance > 0 ? applyStatPercent(grown, resonanceStatEffect(resonance)) : grown;
+  return applyHeartGems(applyBreakthrough(resonated, progress.breakthrough), gems);
 }

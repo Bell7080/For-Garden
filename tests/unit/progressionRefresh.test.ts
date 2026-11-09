@@ -44,7 +44,7 @@ describe("성장 변화의 즉시 반영", () => {
   it("원정은 떠날 때의 모습으로 싸우고 지도·정보창도 그 모습을 읽는다", () => {
     const battle = read("src/scenes/BattleScene.ts");
     expect(battle).toContain("expeditionManager.snapshotFor(id)");
-    expect(battle).toContain("stats: frozen?.get(id)?.stats ?? relicProgression.getFinalStats(id)");
+    expect(battle).toContain("stats: frozen?.get(id)?.stats ?? relicProgression.getFinalStats(id, { pvp: this.battleInput.mode === \"duel\" })");
     expect(battle).toContain("runes: frozen?.get(id)?.runes ??");
     expect(battle).toContain("showExpeditionRelic(this, fighter.def.id)");
     const map = read("src/scenes/ExpeditionScene.ts");

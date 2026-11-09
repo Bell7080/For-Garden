@@ -122,7 +122,7 @@ export function applyDebugCommand(target: DebugTarget, command: DebugCommand, ru
         // 레벨이 현재 돌파의 상한을 넘으면 그 레벨을 담을 만큼만 돌파를 함께 올린다(만들 수 없는 성장 상태를 만들지 않는다).
         const breakthrough = Math.max(p.breakthrough, breakthroughForLevel(level));
         if (p.level === level && p.breakthrough === breakthrough) continue;
-        target.relicProgress[id] = { ...p, level, exp: 0, breakthrough };
+        target.relicProgress[id] = { ...p, level, exp: 0, breakthrough, ...(breakthrough < BREAKTHROUGH_CAP ? { resonance: undefined } : {}) };
         changed += 1;
       }
       return changed;
@@ -136,7 +136,7 @@ export function applyDebugCommand(target: DebugTarget, command: DebugCommand, ru
         const floor = breakthrough === 0 ? 1 : relicLevelCap(breakthrough - 1);
         const level = Math.min(relicLevelCap(breakthrough), Math.max(p.level, floor));
         if (p.breakthrough === breakthrough && p.level === level) continue;
-        target.relicProgress[id] = { ...p, breakthrough, level, exp: level === p.level ? p.exp : 0 };
+        target.relicProgress[id] = { ...p, breakthrough, level, exp: level === p.level ? p.exp : 0, ...(breakthrough < BREAKTHROUGH_CAP ? { resonance: undefined } : {}) };
         changed += 1;
       }
       return changed;

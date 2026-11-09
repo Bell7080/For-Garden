@@ -665,7 +665,8 @@ export class BattleScene extends Phaser.Scene {
     // 각성 단계도 같은 방식으로 스냅샷을 넘긴다. 전투 코어는 저장 상태를 직접 읽지 않는다.
     const breakthroughs = Object.fromEntries(partyIds.map((id) => [id, frozen?.get(id)?.breakthrough ?? session.relicProgress[id]?.breakthrough ?? 0]));
     // UI와 같은 성장 계산기의 스냅샷을 복사해 전투가 룬 수치를 다시 계산하지 않게 한다.
-    const players = partyIds.map((id) => ({ ...getRelic(id), stats: frozen?.get(id)?.stats ?? relicProgression.getFinalStats(id) }));
+    // 공명은 PvE에서만 든다 — 결투는 서버 재현(`duelCombatSetup`)과 같이 공명을 뺀 값으로 싸운다.
+    const players = partyIds.map((id) => ({ ...getRelic(id), stats: frozen?.get(id)?.stats ?? relicProgression.getFinalStats(id, { pvp: this.battleInput.mode === "duel" }) }));
     // 원정은 노드 정보창과 같은 정적 편성/레벨 정의를 읽고, 스토리만 스테이지 적을 읽는다.
     // 대작전은 한 판의 적 **전부가 한꺼번에** 맵 끝에서 몰려온다.
     const cakeTier = this.battleInput.mode === "cake" ? getCakeOperationTier(this.battleInput.tierId) : undefined;

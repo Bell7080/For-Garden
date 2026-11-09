@@ -30,7 +30,7 @@ export function duelParticipant(row: PlayerDuelRecord, now: Date): { state: Sess
   state.duel = rollDuelPeriods(normalizeDuelState(state.duel, owned), now);
   const progression = new RelicProgressionManager(state);
   const units = state.duel.defense.map(relicId => {
-    const stats = progression.getFinalStats(relicId), progress = state.relicProgress[relicId];
+    const stats = progression.getFinalStats(relicId, { pvp: true }), progress = state.relicProgress[relicId];
     return { relicId, level: progress?.level ?? 1, breakthrough: progress?.breakthrough ?? 0, stats, power: combatPower(stats) };
   });
   return { state, opponent: { id: row.id, displayName: state.playerCard.nickname || t('profile.defaultName'), score: state.duel.score, favoriteRelicId: state.favorite, ...profileFace(state), units, blindOrder: duelBlindOrder(units, state.duel.blindChoice) } };
@@ -42,8 +42,8 @@ export function duelCombatSetup(state: Session, opponentState: Session, attack: 
   const defense = opponentState.duel!.defense;
   const traits = (s: Session, ids: readonly string[]) => partyRuneTraitEffects(ids.map(relicId => ({ relicId, runes: (s.relicProgress[relicId]?.heartGemSlots ?? []).flatMap(id => s.runeInventory.filter(r => r.instanceId === id)) })));
   return {
-    players: attack.map(id => ({ ...getRelic(id), stats: progression.getFinalStats(id) })),
-    enemies: defense.map(id => ({ ...getRelic(id), stats: defenseProgression.getFinalStats(id) })),
+    players: attack.map(id => ({ ...getRelic(id), stats: progression.getFinalStats(id, { pvp: true }) })),
+    enemies: defense.map(id => ({ ...getRelic(id), stats: defenseProgression.getFinalStats(id, { pvp: true }) })),
     arena: battleArena('duel'),
     bonds: Object.fromEntries(attack.map(id => [id, state.relicProgress[id]?.bondLevel ?? 0])),
     breakthroughs: Object.fromEntries(attack.map(id => [id, state.relicProgress[id]?.breakthrough ?? 0])),

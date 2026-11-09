@@ -102,6 +102,8 @@ export interface RelicProgress {
    * 개체의 파편을 써서 올리며, 한 단계마다 레벨 상한과 해금 효과가 함께 열린다.
    */
   breakthrough: number;
+  /** 공명 단계(0~5) — 돌파 V 뒤 중복 파편으로 올리는 오각형 성장(`core/relicResonance.ts`). 없으면 0이다. */
+  resonance?: number;
   /** 플레이어별 유대 레벨. 야성 증가를 완화하며 정적 렐릭 정의에는 두지 않는다. */
   bondLevel: number;
   /** 유대 레벨을 산출하는 누적 경험치다. 애착(favorite) 선택과는 무관하다. */

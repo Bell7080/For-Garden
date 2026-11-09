@@ -238,6 +238,8 @@ export class PartyScene extends Phaser.Scene {
 
   private get guard(): boolean { return this.content.content === "guildGuard"; }
   /** 마주 선 편 없이 아군만 세워 저장하는 편성 — 결투 방어덱과 길드전 방어덱. */
+  /** 결투 편성은 공명을 뺀 전투력으로 읽는다 — 결투에서는 공명이 들지 않는다. */
+  private get pvp(): boolean { return this.content.content === "duel" || this.content.content === "duelDefense"; }
   private get defenseOnly(): boolean { return this.content.content === "duelDefense" || this.content.content === "guildWarDefense"; }
   /**
    * 편성 프리셋을 쓰는 화면 — 세 자리를 손으로 고르는 공격 편성만이다. 수호전 여섯 칸은 제 기억을,
@@ -960,7 +962,7 @@ export class PartyScene extends Phaser.Scene {
     const startY = portraitGridFirstRowY(this.rosterViewport.top, cardH, PORTRAIT_GRID_MASK_GAP);
     content.removeAll(true);
     this.cards.clear();
-    const powerOf = (relic: RelicDef): number => combatPower(relicProgression.getFinalStats(relic.id));
+    const powerOf = (relic: RelicDef): number => combatPower(relicProgression.getFinalStats(relic.id, { pvp: this.pvp }));
     const roster = applyRosterView(relicCollection.owned, this.rosterView, powerOf);
     setDebugGridCards("party", Object.fromEntries(roster.map((relic, i) => [relic.id, {
       x: rosterColumnX(i % cols), y: startY + Math.floor(i / cols) * rowStep,
@@ -1133,7 +1135,7 @@ export class PartyScene extends Phaser.Scene {
         marks.add(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62));
         addBreakthroughGradeMark(this, marks, x + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(id));
         addUnitNameplate(this, marks, x, row + 26, relicProgression.getProgress(id).level, def.name, 30);
-        addUnitPower(this, marks, x, row + 22, combatPower(relicProgression.getFinalStats(id)), 24, COLOR.accentText);
+        addUnitPower(this, marks, x, row + 22, combatPower(relicProgression.getFinalStats(id, { pvp: this.pvp })), 24, COLOR.accentText);
       }
 
       if (!chrome || !plate) return;
@@ -1157,7 +1159,7 @@ export class PartyScene extends Phaser.Scene {
     // 방어덱 편성에는 적 전투력 줄 자체가 없다(`buildPreview`의 `allyOnly`).
     this.enemyPowerText?.setText(t("party.enemyPower", { power: enemyPower.toLocaleString() }));
     if (this.content.content === "duelDefense" && chrome) this.paintBlindChips(chrome, members);
-    const allyPower = members.reduce((sum, id) => sum + combatPower(relicProgression.getFinalStats(id)), 0).toLocaleString();
+    const allyPower = members.reduce((sum, id) => sum + combatPower(relicProgression.getFinalStats(id, { pvp: this.pvp })), 0).toLocaleString();
     // 마주 선 편이 없으면 「N 아군」처럼 VS 오른쪽에 붙던 꼴이 아니라 전투력 한 줄로 선다.
     this.allyPowerText?.setText(this.defenseOnly || this.guard ? t("duel.power", { power: allyPower }) : t("party.allyPower", { power: allyPower }));
 
@@ -1277,7 +1279,7 @@ export class PartyScene extends Phaser.Scene {
    * 자리는 전투력 순으로 저절로 채워지고(흐린 글자), 누르면 그 자리를 직접 고른다(강조색).
    */
   private paintBlindChips(chrome: Phaser.GameObjects.Container, members: readonly string[]): void {
-    const powered = members.map((relicId) => ({ relicId, power: combatPower(relicProgression.getFinalStats(relicId)) }));
+    const powered = members.map((relicId) => ({ relicId, power: combatPower(relicProgression.getFinalStats(relicId, { pvp: this.pvp })) }));
     const order = duelBlindOrder(powered, this.blindChoice);
     this.picked.forEach((id, slot) => {
       if (!id) return;

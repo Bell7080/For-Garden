@@ -12,7 +12,7 @@ export type ArenaRpc=(name:string,args:Record<string,unknown>)=>Promise<unknown>
 export function arenaPlayer(id:string,data:unknown):ArenaPlayer {
   const s=saveManager.parse(data), progression=new RelicProgressionManager(s);
   return { id, name:s.playerCard.nickname || t("profile.defaultName"), roster:[...s.owned].map(relicId=>({
-    def:{...getRelic(relicId),stats:progression.getFinalStats(relicId)},level:s.relicProgress[relicId]?.level??1,
+    def:{...getRelic(relicId),stats:progression.getFinalStats(relicId, { pvp: true })},level:s.relicProgress[relicId]?.level??1,
     breakthrough:s.relicProgress[relicId]?.breakthrough??0,bond:s.relicProgress[relicId]?.bondLevel??0,
     traits:partyRuneTraitEffects([{relicId,runes:(s.relicProgress[relicId]?.heartGemSlots??[]).flatMap(key=>s.runeInventory.filter(r=>r.instanceId===key))}]),
   })) };

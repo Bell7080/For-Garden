@@ -39,6 +39,7 @@ declare
     'public.player_adjustments',
     'public.asset_ledger',
     'public.currency_log',
+    'public.game_events', 'public.game_call_daily',
     'public.mail_claims',
     'public.coupon_redemptions',
     'public.coupon_attempts',

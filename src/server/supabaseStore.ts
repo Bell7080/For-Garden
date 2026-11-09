@@ -14,6 +14,8 @@ import { GameCallError, StateConflictError, type StateStore } from "./gameHandle
 const LEGACY_EXPEDITION_RANK_SALVAGE = [400, 320, 250, 180, 130, 80] as const;
 /** 금칙어는 자주 바뀌지 않는다 — 함수 인스턴스 안에서 5분 동안 같은 목록을 쓴다. */
 let bannedWordsCache: { at: number; words: string[] } | undefined;
+/** 운영 일정은 1분 동안 같은 값을 쓴다 — 어드민에서 바꾼 기간이 늦어도 1분 안에 서버에 닿는다. */
+let scheduleCache: { at: number; rows: unknown } | undefined;
 
 interface Env { url: string; serviceKey: string; fetchImpl?: typeof fetch }
 
@@ -80,6 +82,13 @@ export function createSupabaseStore(env: Env) {
       const words = await rpc("server_banned_words", {}).then((value) => Array.isArray(value) ? value.filter((w): w is string => typeof w === "string") : [], () => [] as string[]);
       bannedWordsCache = { at: Date.now(), words };
       return words;
+    },
+    async liveSchedule() {
+      if (scheduleCache && Date.now() - scheduleCache.at < 60_000) return scheduleCache.rows;
+      // 실패하면(마이그레이션 전 포함) 지난 값, 없으면 빈 일정 — 정의 기간 그대로다.
+      const rows = await rpc("server_live_schedule", {}).then((value) => value ?? [], () => scheduleCache?.rows ?? []);
+      scheduleCache = { at: Date.now(), rows };
+      return rows;
     },
     async load(playerId) {
       const r = (await rpc("server_load_state", { p_player: playerId })) as { revision: string; data: unknown } | null;

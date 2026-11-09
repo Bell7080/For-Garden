@@ -101,7 +101,8 @@ declare
     'public.banned_words',
     -- 아래는 어드민 마이그레이션이 만드는 운영 설정·공개 기록이다.
     'public.website_faqs', 'public.patch_notes', 'public.recurring_mails', 'public.event_contents', 'public.event_rotation',
-    'public.ops_anomaly_rules' -- 어드민 ops_console_v4의 이상 징후 문턱(운영 설정).
+    'public.ops_anomaly_rules', -- 어드민 ops_console_v4의 이상 징후 문턱(운영 설정).
+    'public.live_schedule' -- 배너·상품·이벤트 운영 일정(20261123000000). 오픈 일정이 그대로 남아야 한다.
   ];
   keep_buckets text[] := array['notice-images'];
   confirm_phrase constant text := 'RESET-FORGARDEN-LAUNCH';

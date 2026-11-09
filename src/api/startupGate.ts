@@ -7,6 +7,7 @@
 import { configGate, fetchPublicConfig, type ConfigGate, type PublicConfig } from "./backendConfig";
 import { pingBackend } from "./backendPing";
 import { syncServerClock } from "./serverClock";
+import { setLiveSchedule } from "../core/liveSchedule";
 
 export interface StartupGateResult {
   gate: ConfigGate;
@@ -29,6 +30,8 @@ export async function checkStartupGate(
     void ping.then(pinged => { if (pinged.ok) syncServerClock(pinged.serverNow, before, now()); }).catch(() => undefined);
     const loaded = await (url === undefined ? fetchPublicConfig(fetchImpl) : fetchPublicConfig(fetchImpl, url, key));
     if (!loaded.ok) return OPEN;
+    // 배너·상품·이벤트의 운영 일정은 화면이 열리기 전에 들어와야 연구소·로비가 같은 기간을 읽는다.
+    setLiveSchedule(loaded.config.schedule);
     return { gate: configGate(loaded.config, appVersion), config: loaded.config };
   };
   let timer: ReturnType<typeof setTimeout> | undefined;

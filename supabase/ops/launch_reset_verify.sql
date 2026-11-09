@@ -28,7 +28,7 @@ with
     ('public.account_login_ids'),
     ('public.admin_roles'), ('public.app_config'), ('public.reward_assets'), ('public.currency_alert_rules'),
     ('public.website_notices'), ('public.website_notice_translations'), ('public.website_preregistrations'),
-    ('public.banned_words'), ('public.website_faqs'), ('public.patch_notes'), ('public.recurring_mails'), ('public.event_contents'), ('public.event_rotation'), ('public.ops_anomaly_rules')
+    ('public.banned_words'), ('public.website_faqs'), ('public.patch_notes'), ('public.recurring_mails'), ('public.event_contents'), ('public.event_rotation'), ('public.ops_anomaly_rules'), ('public.live_schedule')
   ),
   count_of as (
     select t, (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %s', t), false, true, '')))[1]::text::bigint as n

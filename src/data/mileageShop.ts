@@ -42,7 +42,7 @@ export const MILEAGE_PICKUP_PRICE = 300;
  * 파편 1장이라 산 값이 돌파 한 단계다. 명함은 20레벨이라 약하고, 마일리지 300은 연구 한 달 남짓의 적립이다.
  *
  * **배너 기간마다 한 번이다.** 새 픽업은 새 배너 ID를 쓰므로(`PITY_GROUP` 규칙과 같다) 상품 ID도 새로 서고, 한도는
- * 기간 키 없이(`refresh: "none"`) 그 ID에 묶인다. 배너 기간이 서버 일정으로 오면 `visibleFrom`·`visibleUntil`이 그 창을 따른다.
+ * 기간 키 없이(`refresh: "none"`) 그 ID에 묶인다. 진열은 그 배너가 열려 있는 동안뿐이다(`bannerId` — 서버 운영 일정을 따른다).
  * 값은 젬 환산 검사 밖이다(개체·파편은 젬 시세가 없다).
  */
 function pickupProducts(): ProductDefinition[] {
@@ -51,7 +51,7 @@ function pickupProducts(): ProductDefinition[] {
     iconKey: "shop-product-enhancement" as const, name: "한정 픽업 렐릭", description: "한정 픽업 렐릭 · 보유 시 파편 1개",
     acquisition: { kind: "currency" as const, currency: "dnaFragments" as const, amount: MILEAGE_PICKUP_PRICE },
     grants: [{ kind: "relic_fragment" as const, relicId, amount: 1 }],
-    defaultQuantity: 1, purchaseLimit: 1, refresh: "none" as const, visibleFrom: FROM, visibleUntil: UNTIL,
+    defaultQuantity: 1, purchaseLimit: 1, refresh: "none" as const, visibleFrom: FROM, visibleUntil: UNTIL, bannerId: banner.id,
   })));
 }
 

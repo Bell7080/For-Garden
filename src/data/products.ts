@@ -169,6 +169,11 @@ export interface ProductDefinition {
    * 같은 칸을 가리키는 상품끼리는 한 기간에 하나만 선다.
    */
   rotationSlot?: string;
+  /**
+   * 이 배너(`src/data/banners.ts`)가 열려 있는 동안만 선다 — 한정 픽업 마일리지 상품이 쓴다. 배너 기간이 서버 운영
+   * 일정으로 바뀌면 상품도 함께 따라가므로 상품 일정을 따로 맞추지 않는다.
+   */
+  bannerId?: string;
 }
 
 /** 프로토타입 운영 카탈로그. 실제 차감과 지급은 이 데이터가 아니라 GameApi만 수행한다. */

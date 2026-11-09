@@ -6,7 +6,7 @@ import { t } from "../i18n";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { addBackButton } from "../ui/IconButton";
 import { drawLayer, HOLO, slantedRect } from "../ui/holo";
-import { lobbyEventRemaining } from "../ui/lobbyEventModel";
+import { lobbyEventRemaining, scheduledLobbyEvent } from "../ui/lobbyEventModel";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { shrinkTextToWidth } from "../ui/textFit";
 import { COLOR, textStyle } from "../ui/theme";
@@ -51,7 +51,7 @@ export class EventScene extends Phaser.Scene {
     shrinkTextToWidth(title, BASE_WIDTH - 120);
     const subtitle = this.add.text(60, EVENT_STAGE.subtitleY, t(event.subtitleKey), textStyle({ role: "body", size: 30, color: COLOR.inkDim })).setOrigin(0, 0.5);
     shrinkTextToWidth(subtitle, BASE_WIDTH - 120);
-    const remaining = lobbyEventRemaining(event.endsAt, Date.now());
+    const remaining = lobbyEventRemaining(scheduledLobbyEvent(event).endsAt, Date.now());
     this.add.text(60, EVENT_STAGE.remainingY, t(`event.remaining.${remaining.unit}`, { value: remaining.value }), textStyle({ role: "emphasis", size: 26, color: COLOR.eventText })).setOrigin(0, 0.5);
 
     // 이벤트 내용이 들어설 자리. 윗변 한 줄만 노랗게 긋고 테두리는 두르지 않는다.

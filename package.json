@@ -1,14 +1,14 @@
 {
   "name": "for-garden",
   "private": true,
-  "version": "0.411.0",
+  "version": "0.412.0",
   "type": "module",
   "description": "For - Garden — 이터널 시티. 멸종 동물 복원 연구 도시를 무대로 한 세로형 모바일 수집형 RPG.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && node scripts/build-site-events.mjs",
+    "build": "tsc --noEmit && vite build && node scripts/build-site-events.mjs && node scripts/build-site-schedule.mjs",
     "build:test": "tsc --noEmit && vite build --mode test",
-    "build:qa": "tsc --noEmit && vite build --mode qa && node scripts/build-site-events.mjs",
+    "build:qa": "tsc --noEmit && vite build --mode qa && node scripts/build-site-events.mjs && node scripts/build-site-schedule.mjs",
     "preview": "vite preview",
     "preview:e2e": "npm run build:test && vite preview",
     "typecheck": "tsc --noEmit",

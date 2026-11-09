@@ -3,6 +3,8 @@
  * 인증 토큰을 다루지 않고 공개 키만 쓰며, 설정이 없는 빌드는 성공을 흉내 내지 않고 `unsupported`를 돌려준다.
  * 점검 중이거나 앱 버전이 최소 버전보다 낮으면 화면이 진입을 막는 데 쓸 판정(`gate`)도 함께 준다.
  */
+import { parseLiveSchedule, type LiveScheduleEntry } from "../core/liveSchedule";
+
 export interface PublicConfig {
   maintenance: boolean;
   maintenanceMessage: string;
@@ -11,6 +13,8 @@ export interface PublicConfig {
   latestAppVersion: string;
   /** 서버가 출시 초기화를 한 세대. 빈 문자열이면 한 번도 하지 않았거나 서버가 값을 주지 않았다. */
   launchEpoch: string;
+  /** 서버 운영 일정 — 배너·상품·이벤트의 기간 덮어쓰기(`src/core/liveSchedule.ts`). 표가 없는 서버는 빈 목록이다. */
+  schedule: LiveScheduleEntry[];
 }
 export type BackendConfigResult =
   | { ok: true; config: PublicConfig }
@@ -59,6 +63,7 @@ export async function fetchPublicConfig(
         minAppVersion: typeof b.min_version === "string" ? b.min_version : "",
         latestAppVersion: typeof b.latest_version === "string" ? b.latest_version : "",
         launchEpoch: typeof b.launch_epoch === "string" ? b.launch_epoch : "",
+        schedule: parseLiveSchedule(b.schedule),
       },
     };
   } catch {

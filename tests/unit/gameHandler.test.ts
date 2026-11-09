@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import { GameCallError, StateConflictError, handleGameCall, type StateStore, type StoredState } from "../../src/server/gameHandler";
 import { SERVER_GAME_METHODS } from "../../src/server/gameMethods";
+import { setLiveSchedule } from "../../src/core/liveSchedule";
 
 function memoryStore() {
   const saves = new Map<string, StoredState>();
@@ -50,6 +51,19 @@ describe("서버 호출 처리기", () => {
     const err = await handleGameCall(P, { method: "rechargeStamina", args: [{ method: "gems", requestId: "req-aaaaaaaa" }] }, { store: m.store, ...fixed }).catch((e) => e);
     expect(err).toBeInstanceOf(GameCallError);
     expect(JSON.stringify(m.saves.get(P))).toBe(before);
+  });
+
+  it("저장소의 운영 일정을 호출 전에 입혀 상품 진열이 그 기간을 따른다", async () => {
+    const m = memoryStore();
+    const store: StateStore = { ...m.store, async liveSchedule() { return [{ kind: "banner", id: "amber", startsAt: null, endsAt: null, enabled: false }]; } };
+    try {
+      const out = await handleGameCall(P, { method: "getProducts", args: ["mileage"] }, { store, ...fixed });
+      expect((out.result as { products: { id: string }[] }).products.map(({ id }) => id)).not.toContain("mileage-pickup-amber-dian");
+    } finally {
+      setLiveSchedule([]);
+    }
+    const open = await handleGameCall(P, { method: "getProducts", args: ["mileage"] }, { store: m.store, ...fixed });
+    expect((open.result as { products: { id: string }[] }).products.map(({ id }) => id)).toContain("mileage-pickup-amber-dian");
   });
 
   it("목록에 없는 메서드와 잘못된 요청 키를 거절한다", () => {

@@ -4,6 +4,7 @@ import { STAGES, getBattleStage } from "../../src/data/stages";
 import { EXPEDITION_SWEEP_MIN_WEEKLY_SCORE, EXPEDITION_SWEEP_SCORE_FLOORS, expeditionBossSalvage, expeditionRankRewards } from "../../src/data/expedition";
 import { calculateExpeditionNodeScore } from "../../src/core/expeditionScore";
 import { FakeServer } from "../../src/api/FakeServer";
+import { setLiveSchedule } from "../../src/core/liveSchedule";
 import { rotationOffer } from "../../src/core/shopRotation";
 import { rotationSlot } from "../../src/data/runeRotation";
 import { breakthroughFragmentCost, BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
@@ -1721,6 +1722,25 @@ describe("FakeServer 마일리지 상점", () => {
     maxed.relicProgress.dian = { level: 1, exp: 0, breakthrough: BREAKTHROUGH_GRADE_CAP - 1, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     await expect(new FakeServer(maxed, { latencyMs: 0, now: () => WEEK }).purchaseProduct({ storefront: "mileage", productId, quantity: 1 })).rejects.toMatchObject({ code: "RELIC_MAX_BREAKTHROUGH" });
     expect(maxed.wallet.dnaFragments).toBe(300);
+  });
+
+  it("운영 일정이 배너를 닫으면 연구도, 그 배너에 묶인 마일리지 픽업도 받지 않는다", async () => {
+    const state = makeSession(); state.wallet.dnaFragments = 600; state.wallet.amber = 10; state.cleared.add("1-5");
+    const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
+    const listed = async () => (await server.getProducts("mileage")).products.map(({ id }) => id);
+    expect(await listed()).toContain("mileage-pickup-amber-dian");
+    setLiveSchedule([{ kind: "banner", id: "amber", startsAt: null, endsAt: WEEK.toISOString(), enabled: true }]);
+    try {
+      expect(await listed()).not.toContain("mileage-pickup-amber-dian");
+      await expect(server.purchaseProduct({ storefront: "mileage", productId: "mileage-pickup-amber-dian", quantity: 1 })).rejects.toMatchObject({ code: "PRODUCT_NOT_VISIBLE" });
+      await expect(server.pullRelics({ bannerId: "amber", count: 1 })).rejects.toMatchObject({ code: "BANNER_NOT_ACTIVE" });
+      // 상품 줄은 그 상품만 덮고, 남은 시간도 덮은 끝을 읽는다.
+      setLiveSchedule([{ kind: "product", id: "mileage-pickup-amber-dian", startsAt: null, endsAt: "2030-06-01T00:00:00Z", enabled: true }]);
+      const pickup = (await server.getProducts("mileage")).products.find(({ id }) => id === "mileage-pickup-amber-dian");
+      expect(pickup?.visibleUntil).toBe("2030-06-01T00:00:00.000Z");
+    } finally {
+      setLiveSchedule([]);
+    }
   });
 
   it("일간 상품은 마일리지를 내고 재화를 받으며 마일리지가 모자라면 막는다", async () => {

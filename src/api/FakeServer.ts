@@ -24,6 +24,7 @@ import { bannerAcceptsCount, bannerActive, canPull, carryoverTenAvailable, carry
 import { socialApi } from "./FakeSocialServer";
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
 import { BANNERS } from "../data/banners";
+import { OPEN_END, OPEN_START, scheduledWindow, windowOpen } from "../core/liveSchedule";
 import { PLAYABLE_RELICS, RELICS } from "../data/relics";
 import { createObservationStory, observationDiscovery } from "../data/observations";
 import { findInteractionJournal, journalsForCity } from "../data/interactionJournals";
@@ -3363,7 +3364,11 @@ export class FakeServer implements GameApi {
   async getEvents(): Promise<EventListResponse> {
     await this.delay();
     const now = this.now();
-    return { events: EVENTS.map((event) => ({ ...event, status: this.eventStatus(event, now) })), serverTime: now.toISOString() };
+    return { events: EVENTS.map((event) => {
+      // 화면의 남은 시간도 운영 일정이 덮은 기간을 읽는다. 열어 둔 끝은 먼 시각으로 적는다(DTO는 문자열을 요구한다).
+      const window = scheduledWindow("event", event.id, event);
+      return { ...event, startsAt: window.startsAt ?? OPEN_START, endsAt: window.endsAt ?? OPEN_END, status: this.eventStatus(event, now) };
+    }), serverTime: now.toISOString() };
   }
 
   /** 이번 주 정기 이벤트 — 서버가 주입한 편성만 돌려주고 클라이언트가 만들어 내지 않는다. */
@@ -3634,7 +3639,7 @@ export class FakeServer implements GameApi {
       // SDK를 붙여도 서버 검증이 준비되지 않았다면 결제를 시작할 수 없다.
       const paymentUnavailable = product.acquisition.kind === "platform_payment" && !this.paymentVerificationAvailable;
       return {
-        ...product, remaining, purchasable: remaining > 0 && !paymentUnavailable, disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : undefined,
+        ...product, visibleUntil: this.productWindow(product).endsAt, remaining, purchasable: remaining > 0 && !paymentUnavailable, disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : undefined,
         ...(this.runePartOf(product, now) !== undefined ? { runePart: this.runePartOf(product, now) } : {}),
         ...(product.firstPurchaseBonus ? { firstBonusAvailable: this.firstBonusAvailable(product) } : {}),
         ...this.subscriptionInfo(product, now),
@@ -4099,8 +4104,22 @@ export class FakeServer implements GameApi {
   }
 
   /** 노출 판정은 클라이언트 시간이 아니라 주입 가능한 서버 시간만 사용한다. */
+  /** 상품 노출 기간 — 서버 운영 일정(`live_schedule`)이 정의의 기간을 덮고, 배너에 묶인 상품은 그 배너 기간 안으로 줄인다. */
+  private productWindow(product: ProductDefinition): { startsAt?: string; endsAt?: string; enabled: boolean } {
+    const own = scheduledWindow("product", product.id, { startsAt: product.visibleFrom, endsAt: product.visibleUntil });
+    const banner = product.bannerId !== undefined ? BANNERS.find(({ id }) => id === product.bannerId) : undefined;
+    if (product.bannerId === undefined) return own;
+    if (!banner) return { enabled: false };
+    const linked = scheduledWindow("banner", banner.id, banner);
+    const later = (a?: string, b?: string) => a === undefined ? b : b === undefined ? a : Date.parse(a) >= Date.parse(b) ? a : b;
+    const earlier = (a?: string, b?: string) => a === undefined ? b : b === undefined ? a : Date.parse(a) <= Date.parse(b) ? a : b;
+    const startsAt = later(own.startsAt, linked.startsAt);
+    const endsAt = earlier(own.endsAt, linked.endsAt);
+    return { ...(startsAt !== undefined ? { startsAt } : {}), ...(endsAt !== undefined ? { endsAt } : {}), enabled: own.enabled && linked.enabled };
+  }
+
   private isVisible(product: ProductDefinition, now: Date): boolean {
-    if (!(now >= new Date(product.visibleFrom) && now < new Date(product.visibleUntil))) return false;
+    if (!windowOpen({ ...this.productWindow(product), overridden: false }, now.getTime())) return false;
     // 로테이션 칸의 상품은 그 기간에 칸이 **이 상품을 골랐을 때만** 선다 — 서버 시각과 기간 키만 읽는다.
     const slot = product.rotationSlot ? rotationSlot(product.rotationSlot) : undefined;
     return !product.rotationSlot || (slot !== undefined && rotationOffer(slot, this.productPeriodKey(product, now)) === product.id);
@@ -4108,8 +4127,11 @@ export class FakeServer implements GameApi {
 
   /** 시작 포함·종료 제외 규칙을 주입된 서버 시각 한 곳에서 계산한다. */
   private eventStatus(event: EventDefinition, now: Date): "upcoming" | "active" | "ended" {
-    if (now < new Date(event.startsAt)) return "upcoming";
-    return now < new Date(event.endsAt) ? "active" : "ended";
+    // 서버 운영 일정이 기간을 덮을 수 있다. 꺼 둔 이벤트는 끝난 것으로 본다.
+    const window = scheduledWindow("event", event.id, event);
+    if (!window.enabled) return "ended";
+    if (window.startsAt !== undefined && now < new Date(window.startsAt)) return "upcoming";
+    return window.endsAt === undefined || now < new Date(window.endsAt) ? "active" : "ended";
   }
 
   /** 이벤트 전투와 구매가 공유하는 기간 가드다. */

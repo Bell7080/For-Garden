@@ -1,7 +1,10 @@
 import type { AttendanceTrackDto } from "../api/contracts";
 import { LOBBY_EVENTS, type LobbyEventDef } from "../data/lobbyEvents";
+import { BANNERS } from "../data/banners";
+import { bannerActive } from "../core/gacha";
 import { isRegularEventActive } from "../core/regularEventRotation";
 import { QA_ALL_EVENTS } from "../core/buildFlavor";
+import { OPEN_END, OPEN_START, scheduledWindow, windowOpen } from "../core/liveSchedule";
 
 /**
  * 로비 이벤트 판의 순수 규칙 — 무엇이 서고, 얼마나 남았고, 판이 얼마나 큰가.
@@ -13,8 +16,29 @@ import { QA_ALL_EVENTS } from "../core/buildFlavor";
 /** 지금 열려 있는 이벤트만 정의 순서대로 돌려준다. 시작 전·끝난 이벤트와 이번 주 차례가 아닌 정규 이벤트는 서지 않는다. */
 export function activeLobbyEvents(now: number, events: readonly LobbyEventDef[] = LOBBY_EVENTS, allEvents: boolean = QA_ALL_EVENTS): LobbyEventDef[] {
   // QA 빌드는 기한·교대와 상관없이 모두 세운다(`QA_ALL_EVENTS`).
-  if (allEvents) return [...events];
-  return events.filter((event) => Date.parse(event.startsAt) <= now && now < Date.parse(event.endsAt) && isRegularEventActive(event.id, now));
+  if (allEvents) return events.map((event) => scheduledLobbyEvent(event));
+  return events.map((event) => ({ event: scheduledLobbyEvent(event), window: scheduledWindow("lobby", event.id, event) }))
+    .filter(({ event, window }) => windowOpen(window, now) && isRegularEventActive(event.id, now) && linkedBannerOpen(event, now))
+    .map(({ event }) => event);
+}
+
+/** 모집으로 가는 카드는 그 배너가 닫히면 함께 내린다 — 눌렀는데 배너가 없으면 카드가 거짓말을 한다. */
+function linkedBannerOpen(event: LobbyEventDef, now: number): boolean {
+  const destination = event.destination;
+  if (destination?.kind !== "lab") return true;
+  const { bannerId } = destination;
+  const banner = BANNERS.find(({ id }) => id === bannerId);
+  return banner !== undefined && bannerActive(banner, new Date(now));
+}
+
+/**
+ * 서버 운영 일정(`live_schedule`)이 덮은 기간을 입힌 사본 — 카드의 기간 시계와 이벤트 화면의 남은 시간이 같은 값을 읽는다.
+ * 일정 줄이 없으면 정의 그대로다. 끝을 열어 둔 줄은 먼 시각(`OPEN_END`)으로 적는다.
+ */
+export function scheduledLobbyEvent(event: LobbyEventDef): LobbyEventDef {
+  const window = scheduledWindow("lobby", event.id, event);
+  if (!window.overridden) return event;
+  return { ...event, startsAt: window.startsAt ?? OPEN_START, endsAt: window.endsAt ?? OPEN_END };
 }
 
 /**

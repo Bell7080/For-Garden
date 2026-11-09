@@ -14,4 +14,6 @@ export const PARTY_ID = {
   "party.noDuplicate": "Relik yang sama tidak bisa mengisi beberapa slot Formasi.",
   "party.selected": "Relik Terpilih",
   "party.notOwned": "Kamu tidak memiliki {name}, jadi tidak bisa masuk formasi.",
+  "party.preset.default": "Formasi {index}",
+  "party.preset.rename": "Nama Formasi",
 } as const;

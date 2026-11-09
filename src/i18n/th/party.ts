@@ -14,4 +14,6 @@ export const PARTY_TH = {
   "party.noDuplicate": "จัดทีมเรลิกตัวเดียวซ้ำไม่ได้",
   "party.selected": "เรลิกที่เลือก",
   "party.notOwned": "ยังไม่มี {name} จึงเข้าร่วมการจัดทีมไม่ได้",
+  "party.preset.default": "จัดทีม {index}",
+  "party.preset.rename": "ชื่อการจัดทีม",
 } as const;

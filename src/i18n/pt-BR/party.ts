@@ -14,4 +14,6 @@ export const PARTY_PT_BR = {
   "party.noDuplicate": "Não é possível repetir uma relíquia na formação.",
   "party.selected": "Relíquias escolhidas",
   "party.notOwned": "Você não possui {name}, então não pode entrar na formação.",
+  "party.preset.default": "Formação {index}",
+  "party.preset.rename": "Nome da formação",
 } as const;

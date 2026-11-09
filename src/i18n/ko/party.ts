@@ -14,4 +14,6 @@ export const PARTY_KO = {
   "party.noDuplicate": "같은 렐릭을 중복 편성할 수 없습니다.",
   "party.selected": "선택한 렐릭",
   "party.notOwned": "{name:을} 보유하고 있지 않아 편성할 수 없습니다.",
+  "party.preset.default": "편성 {index}",
+  "party.preset.rename": "편성 이름",
 } as const;

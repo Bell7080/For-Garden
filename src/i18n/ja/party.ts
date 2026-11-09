@@ -14,4 +14,6 @@ export const PARTY_JA = {
   "party.noDuplicate": "同じレリックを編成に重複配置できません。",
   "party.selected": "選んだレリック",
   "party.notOwned": "{name}は現在所持していないため編成できない。",
+  "party.preset.default": "編成 {index}",
+  "party.preset.rename": "編成名",
 } as const;

@@ -14,4 +14,6 @@ export const PARTY_EN = {
   "party.noDuplicate": "The same Relic cannot occupy multiple Formation slots.",
   "party.selected": "Selected Relics",
   "party.notOwned": "You do not own {name}, so it cannot join the formation.",
+  "party.preset.default": "Formation {index}",
+  "party.preset.rename": "Formation Name",
 } as const;

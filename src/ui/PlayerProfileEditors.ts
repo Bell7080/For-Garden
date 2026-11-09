@@ -230,7 +230,7 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
   });
 }
 
-interface TextEditorOptions {
+export interface TextEditorOptions {
   titleKey: TextKey;
   value: string;
   maxGlyphs: number;
@@ -245,7 +245,7 @@ interface TextEditorOptions {
 }
 
 /** 한 줄을 고치는 창 — 입력 칸, 글자 수, 저장. 누른 요소만 고친다. */
-function openTextEditor(scene: Phaser.Scene, layer: PopupLayer, options: TextEditorOptions, onDone: () => void): void {
+export function openTextEditor(scene: Phaser.Scene, layer: PopupLayer, options: TextEditorOptions, onDone: () => void): void {
   layer.open({ width: TEXT_EDITOR.width, height: TEXT_EDITOR.height, title: t(options.titleKey), dim: true, closeOnBackdrop: true, onClose: onDone }, (body, close) => {
     const count = scene.add.text(TEXT_EDITOR.field.width / 2, TEXT_EDITOR.noteY, "", textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5);
     const error = scene.add.text(-TEXT_EDITOR.field.width / 2, TEXT_EDITOR.noteY, "", textStyle({ role: "body", size: 22, color: COLOR.dangerText })).setOrigin(0, 0.5);

@@ -14,4 +14,6 @@ export const PARTY_VI = {
   "party.noDuplicate": "Không thể đặt trùng Di vật trong Đội hình.",
   "party.selected": "Di vật đã chọn",
   "party.notOwned": "Bạn chưa có {name} nên không thể xếp vào đội hình.",
+  "party.preset.default": "Đội hình {index}",
+  "party.preset.rename": "Tên đội hình",
 } as const;

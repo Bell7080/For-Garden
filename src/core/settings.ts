@@ -1,3 +1,4 @@
+import { normalizePartyPresets, normalizePresetIndex } from "./partyPresets";
 import { DEFAULT_AUTO_REPEAT_OPTIONS, normalizeAutoRepeatOptions } from "./autoRepeat";
 import type { GameSettings } from "../state/session";
 import { DEFAULT_LANGUAGE, normalizeLanguage } from "./language";
@@ -152,7 +153,7 @@ export function createDefaultSettings(): GameSettings {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS } },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS } },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" },
@@ -196,6 +197,8 @@ export function normalizeSettings(value: unknown): GameSettings {
       guildSeen: { war: seenKey(record(g.guildSeen).war), guard: seenKey(record(g.guildSeen).guard), guardReward: seenKey(record(g.guildSeen).guardReward), warResult: seenKey(record(g.guildSeen).warResult) },
       guildLevelSeen: typeof g.guildLevelSeen === "string" && /^[\w-]{1,64}:\d{1,2}$/.test(g.guildLevelSeen) ? g.guildLevelSeen : "",
       // 보유·중복은 편성 화면이 다시 가린다 — 여기서는 여섯 칸 이하의 짧은 ID·빈 칸인지만 본다.
+      partyPresets: normalizePartyPresets(g.partyPresets),
+      partyPresetIndex: normalizePresetIndex(g.partyPresetIndex),
       guardFormation: Array.isArray(g.guardFormation) ? g.guardFormation.slice(0, 6).map((id) => (typeof id === "string" && id.length > 0 && id.length <= 64 ? id : null)) : [],
       ancientResetSeen: typeof g.ancientResetSeen === "string" && /^\d{4}-\d{2}-\d{2}$/.test(g.ancientResetSeen) ? g.ancientResetSeen : "",
       // 동의한 약관·처리방침의 판(`core/legalConsent.ts`의 키). 모르는 모양은 동의하지 않은 것으로 읽는다.

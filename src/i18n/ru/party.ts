@@ -14,4 +14,6 @@ export const PARTY_RU = {
   "party.noDuplicate": "Нельзя повторять одного реликта в построении.",
   "party.selected": "Выбранные реликты",
   "party.notOwned": "У вас нет {name}, поэтому в построение не войти.",
+  "party.preset.default": "Построение {index}",
+  "party.preset.rename": "Название построения",
 } as const;

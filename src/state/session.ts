@@ -72,6 +72,9 @@ export interface GameSettings {
     guildLevelSeen: string;
     /** 수호전 여섯 칸 편성(앞줄 0~2 · 뒷줄 3~5, 빈 칸은 `null`). 마지막으로 출격한 편성을 다시 세운다 — 기기 선호다. */
     guardFormation: (string | null)[];
+    /** 편성 프리셋 다섯 벌(이름 + 세 자리)과 지금 펼친 벌 — 세 자리 편성 화면이 좌우로 넘긴다(`core/partyPresets.ts`). 계정의 값이다. */
+    partyPresets: import("../core/partyPresets").PartyPreset[];
+    partyPresetIndex: number;
     /** 고대 지층 초기화 예고 창을 마지막으로 본 날(`YYYY-MM-DD`, UTC). 하루 한 번만 띄운다 — 기기 선호다. */
     ancientResetSeen: string;
     /** 마지막으로 동의한 약관·처리방침 판의 키(`legalConsentKey`). 비었거나 현재 판과 다르면 첫 로그인에서 다시 동의를 받는다 — 기기 기록이다. */

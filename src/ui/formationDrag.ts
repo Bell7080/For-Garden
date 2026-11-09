@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { presetSwipeDirection } from "../core/partyPresets";
 import { audioManager } from "../managers/AudioManager";
 import { LONG_PRESS, longPressProgress } from "./longPressGauge";
 import { LONG_PRESS_RING_DEPTH, LongPressRing } from "./longPressRing";
@@ -26,6 +27,11 @@ export interface FormationGestureCallbacks {
   dragMove: (slot: number, x: number, y: number) => void;
   drop: (from: number, to: number) => void;
   cancel: (reason: FormationGestureCancelReason, slot?: number) => void;
+  /**
+   * 꾹 누르기 전에 옆으로 길게 민 손(`presetSwipeDirection`). 주면 그 손은 탭이 아니라 넘기기다 —
+   * 편성 프리셋을 SD 위에서 좌우로 넘긴다. 끌어 옮기기는 꾹 누른 뒤에만 시작하므로 둘이 섞이지 않는다.
+   */
+  swipe?: (direction: -1 | 1) => void;
 }
 
 export interface FormationGestureController {
@@ -111,6 +117,10 @@ export function bindFormationDrag(
     const target = formationDropSlot(slots, pointer.worldX, pointer.worldY);
     const kind = classifyFormationGesture({ elapsedMs: scene.time.now - startedAt, startX, startY, x: pointer.worldX, y: pointer.worldY });
     const wasDragging = dragging;
+    if (!wasDragging && callbacks.swipe) {
+      const direction = presetSwipeDirection({ elapsedMs: scene.time.now - startedAt, dx: pointer.worldX - startX, dy: pointer.worldY - startY });
+      if (direction !== 0) { reset(); callbacks.swipe(direction); return; }
+    }
     // 저사양 프레임에서 move 없이 up만 도착해도 콜백 순서는 항상 start → move → drop이다.
     if (!wasDragging && kind === "drag" && options.canDrag?.() !== false) {
       callbacks.dragStart(from, pointer.worldX, pointer.worldY);

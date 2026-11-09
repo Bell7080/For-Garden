@@ -14,4 +14,6 @@ export const PARTY_ZH_HANT = {
   "party.noDuplicate": "同一遺物不能重複編隊。",
   "party.selected": "已選遺物",
   "party.notOwned": "未擁有{name}，無法加入編隊。",
+  "party.preset.default": "編隊 {index}",
+  "party.preset.rename": "編隊名稱",
 } as const;

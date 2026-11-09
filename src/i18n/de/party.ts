@@ -14,4 +14,6 @@ export const PARTY_DE = {
   "party.noDuplicate": "Dasselbe Relikt kann nicht mehrfach in der Formation stehen.",
   "party.selected": "Gewählte Relikte",
   "party.notOwned": "Du besitzt {name} nicht, daher kann es nicht in die Formation.",
+  "party.preset.default": "Formation {index}",
+  "party.preset.rename": "Formationsname",
 } as const;

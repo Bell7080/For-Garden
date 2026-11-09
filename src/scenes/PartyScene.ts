@@ -57,6 +57,10 @@ import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { applyLiftPose, clearLiftPose, createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
 import type { FormationLiftPose } from "../ui/formationDragVisual";
 import { PopupLayer } from "../ui/PopupLayer";
+import { PartyPresetStrip } from "../ui/PartyPresetStrip";
+import { audioManager } from "../managers/AudioManager";
+import { openTextEditor } from "../ui/PlayerProfileEditors";
+import { PARTY_PRESET_NAME_MAX, ownedPresetSlots, presetIsEmpty, presetSwipeDirection, samePresets, stepPresetIndex, withPreset } from "../core/partyPresets";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import { TopBar } from "../ui/TopBar";
 import { openCurrencyGuide } from "../ui/currencyGuideEntry";
@@ -165,6 +169,11 @@ export class PartyScene extends Phaser.Scene {
   private preview!: PartyPreview;
   /** 빈 자리를 `null`로 남기는 고정 세 자리. 빼도 뒤가 당겨지지 않는다. */
   private picked: (string | null)[] = [null, null, null];
+  /** 지금 펼친 편성 프리셋(0~4). 넘길 때마다 바뀌고 계정 설정에 함께 남는다. */
+  private presetIndex = 0;
+  private presetStrip?: PartyPresetStrip;
+  /** 편성을 고칠 때마다 곧바로 저장하지 않고 손이 쉬면 한 번에 남긴다(`savePresets`). */
+  private presetSaveTimer?: ReturnType<typeof setTimeout>;
   /**
    * 목록을 눌렀을 때 캐릭터가 설 자리.
    *
@@ -230,6 +239,11 @@ export class PartyScene extends Phaser.Scene {
   private get guard(): boolean { return this.content.content === "guildGuard"; }
   /** 마주 선 편 없이 아군만 세워 저장하는 편성 — 결투 방어덱과 길드전 방어덱. */
   private get defenseOnly(): boolean { return this.content.content === "duelDefense" || this.content.content === "guildWarDefense"; }
+  /**
+   * 편성 프리셋을 쓰는 화면 — 세 자리를 손으로 고르는 공격 편성만이다. 수호전 여섯 칸은 제 기억을,
+   * 방어덱은 서버의 게시본을 갖는다.
+   */
+  private get presetsOn(): boolean { return !this.guard && !this.defenseOnly; }
   private get slotCount(): number { return this.guard ? GUILD_GUARD.slots : 3; }
   /** 전투 시작에 필요한 인원 — 수호전은 비운 칸이 있어도 한 명부터 나간다. */
   private get requiredMembers(): number { return this.guard ? 1 : 3; }
@@ -303,6 +317,13 @@ export class PartyScene extends Phaser.Scene {
       const seen = new Set<string>();
       this.picked = toFormationSlots(settingsManager.get().game.guardFormation.map((id) => (id && owned.has(id) && !seen.has(id) && seen.add(id) ? id : null)), GUILD_GUARD.slots);
     }
+    // **편성 프리셋** — 지금 펼친 벌을 세운다. 비어 있으면 위에서 고른 시작 편성이 그 벌의 첫 모습이 된다.
+    if (this.presetsOn) {
+      const game = settingsManager.get().game;
+      this.presetIndex = game.partyPresetIndex;
+      const preset = game.partyPresets[this.presetIndex];
+      if (preset && !presetIsEmpty(preset)) this.picked = ownedPresetSlots(preset, owned);
+    }
     this.blindChoice = this.content.content === "duelDefense" ? [...this.content.blindChoice] : [];
     this.selectedSlot = undefined;
     this.cards.clear();
@@ -326,7 +347,9 @@ export class PartyScene extends Phaser.Scene {
     this.preview = partyPreview(this.content, stage);
     this.enemies = this.preview.all;
     // 손상된 런타임 파티만 보유 목록 기반 자동 편성으로 안전하게 대체한다.
-    if (this.guard ? formationMembers(this.picked).length === 0 : formationMembers(this.picked).length !== 3) this.picked = this.autoFormation();
+    // 프리셋에서 몇 명만 잃은 벌은 그 자리만 비운 채 둔다 — 자동 배치로 덮으면 짜 둔 벌이 사라진다.
+    const keptPreset = this.presetsOn && formationMembers(this.picked).length > 0;
+    if (this.guard ? formationMembers(this.picked).length === 0 : formationMembers(this.picked).length !== 3 && !keptPreset) this.picked = this.autoFormation();
     // **전투에 설 SD를 지금부터 읽는다.** 편성을 고르는 동안이 그대로 로딩 시간이 되므로,
     // 출격을 누르는 순간에는 대부분 캐시에서 나온다. 기다리지 않으므로 이 화면은 막히지 않는다.
     this.prefetchBattleSds();
@@ -390,6 +413,8 @@ export class PartyScene extends Phaser.Scene {
         this.refresh();
       },
     });
+
+    if (this.presetsOn) this.buildPresetStrip(this.autoButtonPosition.x - autoButtonWidth / 2 - 16 - hintButtonWidth - 16, this.autoButtonPosition.y);
 
     this.hint = this.add
       .text(cx, 1664, "", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
@@ -566,6 +591,8 @@ export class PartyScene extends Phaser.Scene {
           runInfoTutorialTour(this, this.info, () => { if (this.partyTutorialPhase === "tour") this.partyTutorialPhase = "start"; });
         }
       },
+      // 꾹 누르기 전에 옆으로 민 손은 편성 프리셋을 넘긴다.
+      swipe: this.presetsOn ? (direction) => this.stepPreset(direction) : undefined,
       drop: (from, to) => {
         this.dragVisual?.endDrag();
         this.picked = moveFormationSlot(this.picked, from, to);
@@ -732,6 +759,7 @@ export class PartyScene extends Phaser.Scene {
     if (this.isEnteringBattle || this.info?.isOpen || this.partyTutorialPhase === "move" || this.partyTutorialPhase === "hold" || this.partyTutorialPhase === "tour" || !this.ready()) return;
     this.isEnteringBattle = true;
     this.startButton.setEnabled(false);
+    this.savePresets();
 
     // 결투는 스토리 편성을 저장하지 않는다 — 공격덱은 입장이, 방어덱은 게시가 서버에 남긴다.
     if (this.content.content === "duel" || this.content.content === "guildWar" || this.defenseOnly || this.guard) {
@@ -1144,6 +1172,104 @@ export class PartyScene extends Phaser.Scene {
       selectedSlot: this.selectedSlot,
     });
     this.hint.setText(this.ready() ? t("party.ready") : t("party.needMore", { count: this.requiredMembers - members.length }));
+    this.schedulePresetSave();
+  }
+
+  /** 자동 배치 줄 왼쪽에 프리셋 줄을 세우고, 그 줄과 아군 띠의 빈 곳에서 옆으로 민 손을 넘기기로 받는다. */
+  private buildPresetStrip(right: number, y: number): void {
+    const left = BASE_WIDTH / 2 + formationRosterColumnX(ROSTER_GRID, 0) - ROSTER_GRID.cardWidth / 2;
+    const strip = new PartyPresetStrip(this, {
+      left, right, y,
+      onStep: (direction) => this.stepPreset(direction),
+      onRename: () => this.renamePreset(),
+    });
+    this.presetStrip = strip;
+    this.paintPresetStrip();
+    const slotHits = new Set<Phaser.GameObjects.GameObject>(this.allySlots.map(({ hit }) => hit));
+    const bandTop = PARTY_ALLY_PLATE.top - this.slotLift(0);
+    const bandBottom = this.allyRow + 120;
+    let start: { x: number; y: number } | undefined;
+    const down = (pointer: Phaser.Input.Pointer, objects: Phaser.GameObjects.GameObject[]): void => {
+      // 자리 위에서 시작한 손은 자리의 손짓 판정이 받는다(`bindFormationDrag`의 swipe).
+      const inStrip = strip.bounds().contains(pointer.worldX, pointer.worldY);
+      const inBand = pointer.worldY >= bandTop && pointer.worldY <= bandBottom && !objects.some((object) => slotHits.has(object));
+      start = inStrip || inBand ? { x: pointer.worldX, y: pointer.worldY } : undefined;
+    };
+    const up = (pointer: Phaser.Input.Pointer): void => {
+      if (!start) return;
+      const direction = presetSwipeDirection({ elapsedMs: 0, dx: pointer.worldX - start.x, dy: pointer.worldY - start.y }, false);
+      start = undefined;
+      if (direction !== 0) this.stepPreset(direction);
+    };
+    this.input.on("pointerdown", down);
+    this.input.on("pointerup", up);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.off("pointerdown", down);
+      this.input.off("pointerup", up);
+      this.savePresets();
+    });
+  }
+
+  private paintPresetStrip(): void {
+    const preset = settingsManager.get().game.partyPresets[this.presetIndex];
+    this.presetStrip?.setPreset(this.presetIndex, preset?.name ?? "");
+    this.presetStrip?.setInteractiveEnabled(!this.partyTutorialPhase);
+  }
+
+  /** 다음·이전 벌로 넘긴다. 지금 벌을 먼저 남기고, 새 벌의 자리를 세운다(그새 잃은 렐릭만 비운다). */
+  private stepPreset(direction: -1 | 1): void {
+    if (!this.presetsOn || this.partyTutorialPhase || this.isEnteringBattle || this.info?.isOpen) return;
+    this.savePresets();
+    this.presetIndex = stepPresetIndex(this.presetIndex, direction);
+    const owned = new Set(relicCollection.owned.map(({ id }) => id));
+    const preset = settingsManager.get().game.partyPresets[this.presetIndex];
+    this.picked = preset ? ownedPresetSlots(preset, owned) : [null, null, null];
+    this.selectedSlot = undefined;
+    this.prefetchBattleSds();
+    this.refresh();
+    this.savePresets();
+    this.paintPresetStrip();
+    audioManager?.playUi("formation.place");
+    // 넘긴 쪽에서 표식·칸이 밀려 들어온다 — SD는 같은 렐릭이면 그 자리로 옮겨 서므로 깜빡이지 않는다.
+    if (!settingsManager.get().accessibility.reduceMotion) {
+      for (const layer of [this.allyMarks, this.slotPlate]) {
+        if (!layer) continue;
+        this.tweens.killTweensOf(layer);
+        layer.setX(direction * 60).setAlpha(0.2);
+        this.tweens.add({ targets: layer, x: 0, alpha: 1, duration: 200, ease: "Cubic.easeOut" });
+      }
+    }
+  }
+
+  private renamePreset(): void {
+    if (!this.presetsOn || this.partyTutorialPhase) return;
+    const preset = settingsManager.get().game.partyPresets[this.presetIndex];
+    openTextEditor(this, new PopupLayer(this, 2200), {
+      titleKey: "party.preset.rename",
+      value: preset?.name ?? "",
+      maxGlyphs: PARTY_PRESET_NAME_MAX,
+      save: async (value) => {
+        const game = settingsManager.get().game;
+        settingsManager.update({ game: { partyPresets: withPreset(game.partyPresets, this.presetIndex, { name: value, slots: [...this.picked] }), partyPresetIndex: this.presetIndex } });
+      },
+    }, () => this.paintPresetStrip());
+  }
+
+  private schedulePresetSave(): void {
+    if (!this.presetsOn) return;
+    if (this.presetSaveTimer) clearTimeout(this.presetSaveTimer);
+    // 씬 시계가 아니라 setTimeout이다 — 씬 타이머는 프레임이 돌아야 깨어난다.
+    this.presetSaveTimer = setTimeout(() => this.savePresets(), 600);
+  }
+
+  /** 지금 편성을 펼친 벌에 남긴다. 바뀐 것이 없으면 저장하지 않는다. */
+  private savePresets(): void {
+    if (this.presetSaveTimer) { clearTimeout(this.presetSaveTimer); this.presetSaveTimer = undefined; }
+    if (!this.presetsOn) return;
+    const game = settingsManager.get().game;
+    const next = withPreset(game.partyPresets, this.presetIndex, { slots: [...this.picked] });
+    if (samePresets(next, game.partyPresets) && game.partyPresetIndex === this.presetIndex) return;
+    settingsManager.update({ game: { partyPresets: next, partyPresetIndex: this.presetIndex } });
   }
 
   /**

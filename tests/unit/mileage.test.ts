@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MILEAGE_OVERFLOW_BY_RARITY, MILEAGE_PER_PULL, mileageForPull } from "../../src/core/mileage";
 import { MILEAGE_CLERK_LINE_COUNT, mileageClerkPool, mileageRotatingFragmentId, mileageRotationPool, mileageWeekIndex, mileageWeeklyClerkId } from "../../src/data/mileageClerk";
-import { MILEAGE_PRODUCTS } from "../../src/data/mileageShop";
+import { MILEAGE_PICKUP_PRICE, MILEAGE_PRODUCTS } from "../../src/data/mileageShop";
 import { SHOP_PRODUCTS } from "../../src/data/products";
 import { STAMINA_GEM_PRICING } from "../../src/core/staminaGemPricing";
 import { findItem } from "../../src/data/items";
@@ -62,7 +62,8 @@ describe("마일리지 상점 상품", () => {
     for (const product of MILEAGE_PRODUCTS) {
       expect(product.storefront, product.id).toBe("mileage");
       expect(product.acquisition, product.id).toMatchObject({ kind: "currency", currency: "dnaFragments" });
-      expect(product.refresh, product.id).toBe(product.category);
+      // 한정 픽업 렐릭만 기간 키 없이 배너마다 한 번이다(`refresh: "none"`).
+      expect(product.refresh, product.id).toBe(product.id.startsWith("mileage-pickup-") ? "none" : product.category);
       expect(SHOP_PRODUCTS).toContain(product);
     }
     expect(MILEAGE_PRODUCTS.some((p) => p.category === "weekly")).toBe(true);
@@ -128,9 +129,24 @@ describe("마일리지 상점 상품", () => {
     }
   });
 
-  it("주간 SSR 파편이 주간 구역의 맨 앞에 선다", () => {
+  it("주간 구역은 한정 픽업 렐릭 → 이번 주 SSR 파편 순으로 시작한다", () => {
     const weekly = MILEAGE_PRODUCTS.filter((product) => product.category === "weekly");
-    expect(weekly[0].grants).toEqual([{ kind: "weekly_ssr_fragment", amount: 1 }]);
+    const pickups = weekly.filter((product) => product.id.startsWith("mileage-pickup-"));
+    expect(weekly.slice(0, pickups.length)).toEqual(pickups);
+    expect(weekly[pickups.length].grants).toEqual([{ kind: "weekly_ssr_fragment", amount: 1 }]);
+  });
+
+  it("한정 픽업 배너마다 그 SSR을 마일리지 300에 한 번 판다", () => {
+    const expected = BANNERS.flatMap((banner) => (banner.pickupRelicIds.SSR ?? []).map((relicId) => ({ id: `mileage-pickup-${banner.id}-${relicId}`, relicId })));
+    expect(expected.length).toBeGreaterThan(0);
+    for (const { id, relicId } of expected) {
+      const product = MILEAGE_PRODUCTS.find((entry) => entry.id === id)!;
+      expect(product, id).toBeDefined();
+      expect(product.acquisition).toEqual({ kind: "currency", currency: "dnaFragments", amount: MILEAGE_PICKUP_PRICE });
+      expect(MILEAGE_PICKUP_PRICE).toBe(300);
+      expect(product.purchaseLimit).toBe(1);
+      expect(product.grants).toEqual([{ kind: "relic_fragment", relicId, amount: 1 }]);
+    }
   });
 
   it("DNA 마일리지는 프리미엄·무역·전리품 상점에서 팔지 않는다", () => {

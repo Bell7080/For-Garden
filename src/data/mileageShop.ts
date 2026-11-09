@@ -1,3 +1,4 @@
+import { BANNERS } from "./banners";
 import type { ProductDefinition } from "./products";
 
 const FROM = "2026-01-01T00:00:00Z";
@@ -30,7 +31,33 @@ function mileage(
   };
 }
 
+/** 한정 픽업 렐릭의 마일리지 값 — 스파크(픽업 천장)를 대신한다(응태 결정, 2026-11-09). */
+export const MILEAGE_PICKUP_PRICE = 300;
+
+/**
+ * **한정 픽업 렐릭 — 스파크 대신 마일리지로 산다**(응태 결정, 2026-11-09).
+ *
+ * 픽업 배너(`pickupRelicIds.SSR`)마다 한 줄이 저절로 선다. 미보유면 **본체**를, 보유 중이면 **그 개체 파편 1장**을
+ * 받는다 — 주간 SSR 파편과 같은 `relic_fragment` 경로라 서버가 그 둘을 가른다(첫 한 장은 개체 자체). SSR 돌파 I→II·II→III은
+ * 파편 1장이라 산 값이 돌파 한 단계다. 명함은 20레벨이라 약하고, 마일리지 300은 연구 한 달 남짓의 적립이다.
+ *
+ * **배너 기간마다 한 번이다.** 새 픽업은 새 배너 ID를 쓰므로(`PITY_GROUP` 규칙과 같다) 상품 ID도 새로 서고, 한도는
+ * 기간 키 없이(`refresh: "none"`) 그 ID에 묶인다. 배너 기간이 서버 일정으로 오면 `visibleFrom`·`visibleUntil`이 그 창을 따른다.
+ * 값은 젬 환산 검사 밖이다(개체·파편은 젬 시세가 없다).
+ */
+function pickupProducts(): ProductDefinition[] {
+  return BANNERS.flatMap((banner) => (banner.pickupRelicIds.SSR ?? []).map((relicId) => ({
+    id: `mileage-pickup-${banner.id}-${relicId}`, storefront: "mileage" as const, category: "weekly" as const,
+    iconKey: "shop-product-enhancement" as const, name: "한정 픽업 렐릭", description: "한정 픽업 렐릭 · 보유 시 파편 1개",
+    acquisition: { kind: "currency" as const, currency: "dnaFragments" as const, amount: MILEAGE_PICKUP_PRICE },
+    grants: [{ kind: "relic_fragment" as const, relicId, amount: 1 }],
+    defaultQuantity: 1, purchaseLimit: 1, refresh: "none" as const, visibleFrom: FROM, visibleUntil: UNTIL,
+  })));
+}
+
 export const MILEAGE_PRODUCTS: readonly ProductDefinition[] = [
+  // 한정 픽업 렐릭이 주간 구역의 맨 앞, 그 뒤가 그 주의 SSR 파편이다.
+  ...pickupProducts(),
   // 주간 — 그 주의 SSR 파편이 맨 앞이다.
   mileage("mileage-weekly-ssr", "weekly", "shop-product-enhancement", "이번 주 SSR 파편", "이번 주 점원의 파편 1개", 200, 1, [{ kind: "weekly_ssr_fragment", amount: 1 }]),
   mileage("mileage-weekly-sr", "weekly", "shop-product-enhancement", "이번 주 SR 파편", "이번 주 SR 파편 1개", 40, 1, [{ kind: "rotating_fragment", rarity: "SR", period: "weekly", amount: 1 }]),

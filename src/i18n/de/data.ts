@@ -1828,6 +1828,7 @@ export default {
   "product.loot-amber-exchange.name": "Bernstein",
   "product.loot-rune-random.name": "Zufallsrune",
   "product.loot-rune-random.grant.0": "Zufallsrune",
+  "product.mileage-pickup-amber-dian.name": "Limitiertes Pick-up-Relikt",
   "product.mileage-weekly-ssr.name": "SSR-Splitter der Woche",
   "product.mileage-weekly-sr.name": "SR-Splitter der Woche",
   "product.mileage-weekly-amber.name": "Bernstein-Ausgabe",

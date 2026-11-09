@@ -1864,6 +1864,7 @@ export default {
   "product.loot-amber-exchange.name": "Amber",
   "product.loot-rune-random.name": "Random Rune",
   "product.loot-rune-random.grant.0": "Random Rune",
+  "product.mileage-pickup-amber-dian.name": "Limited Pick Up Relic",
   "product.mileage-weekly-ssr.name": "This Week's SSR Shards",
   "product.mileage-weekly-sr.name": "This Week's SR Shards",
   "product.mileage-weekly-amber.name": "Amber Withdrawal",

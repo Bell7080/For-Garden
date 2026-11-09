@@ -1828,6 +1828,7 @@ export default {
   "product.loot-amber-exchange.name": "Янтарь",
   "product.loot-rune-random.name": "Случайная руна",
   "product.loot-rune-random.grant.0": "Случайная руна",
+  "product.mileage-pickup-amber-dian.name": "Лимитированный реликт с повышенным шансом",
   "product.mileage-weekly-ssr.name": "Фрагменты SSR недели",
   "product.mileage-weekly-sr.name": "Фрагменты SR недели",
   "product.mileage-weekly-amber.name": "Вывоз янтаря",

@@ -262,6 +262,7 @@
 "product.premium-raid-bundle.grant.1": ["自选讨伐券", "ตั๋วเรดแบบเลือก", "Vé đột kích chọn lọc", "Tiket Raid Pilihan", "Boleto de incursión a elección", "Bilhete de raide à escolha", "Wahl-Raid-Ticket", "Билет рейда на выбор"],
 "product.premium-raid-bundle.grant.0": ["讨伐券", "ตั๋วเรด", "Vé đột kích", "Tiket Raid", "Boleto de incursión", "Bilhete de raide", "Raid-Ticket", "Билет рейда"],
 "product.mileage-weekly-ssr.name": ["本周SSR碎片", "เศษ SSR ประจำสัปดาห์", "Mảnh SSR tuần này", "Serpihan SSR Minggu Ini", "Fragmentos SSR de la semana", "Fragmentos SSR da semana", "SSR-Splitter der Woche", "Фрагменты SSR недели"],
+"product.mileage-pickup-amber-dian.name": ["限定UP遗物", "เรลิกขึ้นเรทลิมิเต็ด", "Di vật tăng tỷ lệ giới hạn", "Relik Pick Up Terbatas", "Reliquia destacada limitada", "Relíquia em destaque limitada", "Limitiertes Pick-up-Relikt", "Лимитированный реликт с повышенным шансом"],
 "product.mileage-weekly-sr.name": ["本周SR碎片", "เศษ SR ประจำสัปดาห์", "Mảnh SR tuần này", "Serpihan SR Minggu Ini", "Fragmentos SR de la semana", "Fragmentos SR da semana", "SR-Splitter der Woche", "Фрагменты SR недели"],
 "product.mileage-weekly-amber.name": ["琥珀取出", "นำอำพันออก", "Xuất Hổ phách", "Pengeluaran Amber", "Retiro de Ámbar", "Retirada de Âmbar", "Bernstein-Ausgabe", "Вывоз янтаря"],
 "product.mileage-weekly-fossil.name": ["化石套装", "ชุดฟอสซิล", "Gói Hóa thạch", "Bundel Fosil", "Lote de Fósiles", "Pacote de Fósseis", "Fossil-Bündel", "Набор окаменелостей"],

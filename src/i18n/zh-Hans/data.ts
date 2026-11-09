@@ -1828,6 +1828,7 @@ export default {
   "product.loot-amber-exchange.name": "琥珀",
   "product.loot-rune-random.name": "随机符文",
   "product.loot-rune-random.grant.0": "随机符文",
+  "product.mileage-pickup-amber-dian.name": "限定UP遗物",
   "product.mileage-weekly-ssr.name": "本周SSR碎片",
   "product.mileage-weekly-sr.name": "本周SR碎片",
   "product.mileage-weekly-amber.name": "琥珀取出",

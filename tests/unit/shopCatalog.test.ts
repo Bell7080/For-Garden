@@ -29,6 +29,9 @@ describe("shop catalog", () => {
      */
     for (const { id, storefront, category, refresh } of PRODUCTS) {
       if (storefront === "shop") continue;
+      // 마일리지 상점의 한정 픽업 렐릭은 배너마다 한 번(`none`)이지만 탭이 주간·일간 둘뿐이라 주간 탭 맨 앞에 선다 —
+      // 매주 돌아오지 않는다는 것은 칸의 금빛 테두리(`SHOWCASE_TIER_TONE.none`)와 남은 횟수가 말한다.
+      if (storefront === "mileage" && id.startsWith("mileage-pickup-")) { expect(category, id).toBe("weekly"); continue; }
       const expected = refresh === "daily" ? "daily" : refresh === "weekly" ? "weekly" : "special";
       expect(category, id).toBe(expected);
     }

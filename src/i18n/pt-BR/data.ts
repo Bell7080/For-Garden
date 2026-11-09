@@ -1828,6 +1828,7 @@ export default {
   "product.loot-amber-exchange.name": "Âmbar",
   "product.loot-rune-random.name": "Runa aleatória",
   "product.loot-rune-random.grant.0": "Runa aleatória",
+  "product.mileage-pickup-amber-dian.name": "Relíquia em destaque limitada",
   "product.mileage-weekly-ssr.name": "Fragmentos SSR da semana",
   "product.mileage-weekly-sr.name": "Fragmentos SR da semana",
   "product.mileage-weekly-amber.name": "Retirada de Âmbar",

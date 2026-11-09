@@ -3699,10 +3699,10 @@ export class FakeServer implements GameApi {
       }
     }
     nextRunes.push(...grantedRunes);
-    // 마일리지 상점의 파편(주간 SSR·주간 SR·일간 R)은 개체 파편 장부(`relicFragments`)에 쓴다. 이미 돌파 V인 개체의 파편은
+    // 마일리지 상점의 파편(주간 SSR·주간 SR·일간 R·한정 픽업)은 개체 파편 장부(`relicFragments`)에 쓴다. 이미 돌파 V인 개체의 파편은
     // 쓸 곳이 없어 값을 치르기 전에 거절한다.
     for (const grant of product.grants) {
-      if (grant.kind !== "weekly_ssr_fragment" && grant.kind !== "rotating_fragment") continue;
+      if (grant.kind !== "weekly_ssr_fragment" && grant.kind !== "rotating_fragment" && !(grant.kind === "relic_fragment" && product.storefront === "mileage")) continue;
       const fragmentRelicId = mileageFragmentRelicId(grant, now);
       if (!fragmentRelicId) throw new GameApiError("PRODUCT_NOT_VISIBLE", "현재 교환할 수 있는 파편이 없습니다.");
       const progress = this.state.relicProgress[fragmentRelicId];

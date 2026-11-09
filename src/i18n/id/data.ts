@@ -1828,6 +1828,7 @@ export default {
   "product.loot-amber-exchange.name": "Amber",
   "product.loot-rune-random.name": "Rune acak",
   "product.loot-rune-random.grant.0": "Rune acak",
+  "product.mileage-pickup-amber-dian.name": "Relik Pick Up Terbatas",
   "product.mileage-weekly-ssr.name": "Serpihan SSR Minggu Ini",
   "product.mileage-weekly-sr.name": "Serpihan SR Minggu Ini",
   "product.mileage-weekly-amber.name": "Pengeluaran Amber",

@@ -1828,6 +1828,7 @@ export default {
   "product.loot-amber-exchange.name": "Hổ phách",
   "product.loot-rune-random.name": "Rune ngẫu nhiên",
   "product.loot-rune-random.grant.0": "Rune ngẫu nhiên",
+  "product.mileage-pickup-amber-dian.name": "Di vật tăng tỷ lệ giới hạn",
   "product.mileage-weekly-ssr.name": "Mảnh SSR tuần này",
   "product.mileage-weekly-sr.name": "Mảnh SR tuần này",
   "product.mileage-weekly-amber.name": "Xuất Hổ phách",

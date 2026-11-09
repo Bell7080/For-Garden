@@ -1828,6 +1828,7 @@ export default {
   "product.loot-amber-exchange.name": "อำพัน",
   "product.loot-rune-random.name": "รูนสุ่ม",
   "product.loot-rune-random.grant.0": "รูนสุ่ม",
+  "product.mileage-pickup-amber-dian.name": "เรลิกขึ้นเรทลิมิเต็ด",
   "product.mileage-weekly-ssr.name": "เศษ SSR ประจำสัปดาห์",
   "product.mileage-weekly-sr.name": "เศษ SR ประจำสัปดาห์",
   "product.mileage-weekly-amber.name": "นำอำพันออก",

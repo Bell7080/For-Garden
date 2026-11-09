@@ -70,10 +70,12 @@ export function mileageRotatingFragmentId(rarity: "SR" | "R", period: "weekly" |
   return pool[(mixed >>> 0) % pool.length];
 }
 
-/** 파편 상품의 지급이 구매 순간에 가리키는 개체. 파편 자리표시가 아닌 지급이면 `undefined`. */
+/** 파편 상품의 지급이 구매 순간에 가리키는 개체. 파편 지급이 아니면 `undefined`. */
 export function mileageFragmentRelicId(grant: ProductDefinition["grants"][number], now: Date): string | undefined {
   if (grant.kind === "weekly_ssr_fragment") return mileageWeeklyClerkId(now);
   if (grant.kind === "rotating_fragment") return mileageRotatingFragmentId(grant.rarity, grant.period, now);
+  // 개체가 정해진 파편(한정 픽업 렐릭)도 같은 얼굴 액자·같은 돌파 V 거절을 지난다.
+  if (grant.kind === "relic_fragment") return grant.relicId;
   return undefined;
 }
 

@@ -1698,6 +1698,31 @@ describe("FakeServer 마일리지 상점", () => {
     expect(state.relicFragments[clerk] ?? 0).toBe(0);
   });
 
+  it("한정 픽업 렐릭은 마일리지 300 — 미보유면 본체, 보유면 파편 1장, 배너마다 한 번이다", async () => {
+    const productId = "mileage-pickup-amber-dian";
+    const fresh = makeSession(); fresh.wallet.dnaFragments = 600; fresh.owned.delete("dian"); delete fresh.relicProgress.dian;
+    const server = new FakeServer(fresh, { latencyMs: 0, now: () => WEEK });
+    const first = await server.purchaseProduct({ storefront: "mileage", productId, quantity: 1 });
+    expect(first.newRelicIds).toEqual(["dian"]);
+    expect(fresh.owned.has("dian")).toBe(true);
+    expect(fresh.relicFragments.dian ?? 0).toBe(0);
+    expect(fresh.wallet.dnaFragments).toBe(300);
+    // 주가 바뀌어도 같은 배너 기간에는 다시 살 수 없다.
+    const later = new FakeServer(fresh, { latencyMs: 0, now: () => new Date(WEEK.getTime() + 14 * 86_400_000) });
+    await expect(later.purchaseProduct({ storefront: "mileage", productId, quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
+
+    const owner = makeSession(); owner.wallet.dnaFragments = 300; owner.owned.add("dian");
+    owner.relicProgress.dian = { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    const owned = await new FakeServer(owner, { latencyMs: 0, now: () => WEEK }).purchaseProduct({ storefront: "mileage", productId, quantity: 1 });
+    expect(owned.newRelicIds).toEqual([]);
+    expect(owner.relicFragments.dian).toBe(1);
+
+    const maxed = makeSession(); maxed.wallet.dnaFragments = 300; maxed.owned.add("dian");
+    maxed.relicProgress.dian = { level: 1, exp: 0, breakthrough: BREAKTHROUGH_GRADE_CAP - 1, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    await expect(new FakeServer(maxed, { latencyMs: 0, now: () => WEEK }).purchaseProduct({ storefront: "mileage", productId, quantity: 1 })).rejects.toMatchObject({ code: "RELIC_MAX_BREAKTHROUGH" });
+    expect(maxed.wallet.dnaFragments).toBe(300);
+  });
+
   it("일간 상품은 마일리지를 내고 재화를 받으며 마일리지가 모자라면 막는다", async () => {
     const state = makeSession(); state.wallet.dnaFragments = 5;
     const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });

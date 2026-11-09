@@ -1877,6 +1877,7 @@ export default {
   "product.loot-amber-exchange.name": "琥珀",
   "product.loot-rune-random.name": "ランダムルーン",
   "product.loot-rune-random.grant.0": "ランダムルーン",
+  "product.mileage-pickup-amber-dian.name": "限定ピックアップレリック",
   "product.mileage-weekly-ssr.name": "今週のSSR欠片",
   "product.mileage-weekly-sr.name": "今週のSR欠片",
   "product.mileage-weekly-amber.name": "琥珀の搬出",

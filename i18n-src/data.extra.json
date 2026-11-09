@@ -36,5 +36,20 @@
 "profileFrame.patron.name": ["首次赞助之证", "เครื่องหมายผู้สนับสนุนแรก", "Dấu ấn Tài trợ Đầu", "Tanda Pendukung Pertama", "Insignia del primer mecenas", "Insígnia do primeiro patrono", "Zeichen des ersten Förderers", "Знак первого покровителя"],
 "profileFrame.season.name": ["赛季之翼", "ปีกแห่งซีซัน", "Đôi cánh Mùa giải", "Sayap Musim", "Alas de la temporada", "Asas da temporada", "Flügel der Saison", "Крылья сезона"],
 "product.premium-season-pass.name": ["赛季通行证", "ซีซันพาส", "Season Pass", "Season Pass", "Pase de temporada", "Passe de temporada", "Saisonpass", "Сезонный пропуск"],
-"trade.refresh.season": ["赛季", "ซีซัน", "Mùa", "Musim", "Temporada", "Temporada", "Saison", "Сезон"]
+"trade.refresh.season": ["赛季", "ซีซัน", "Mùa", "Musim", "Temporada", "Temporada", "Saison", "Сезон"],
+"product.offer-breakthrough-ssr.name": ["SSR突破特惠", "ดีลทะลวง SSR", "Ưu đãi đột phá SSR", "Penawaran Terobosan SSR", "Oferta de Avance SSR", "Oferta de Avanço SSR", "SSR-Durchbruch-Angebot", "Акция прорыва SSR"],
+"product.offer-breakthrough-sr.name": ["SR突破特惠", "ดีลทะลวง SR", "Ưu đãi đột phá SR", "Penawaran Terobosan SR", "Oferta de Avance SR", "Oferta de Avanço SR", "SR-Durchbruch-Angebot", "Акция прорыва SR"],
+"product.offer-breakthrough-r.name": ["R突破特惠", "ดีลทะลวง R", "Ưu đãi đột phá R", "Penawaran Terobosan R", "Oferta de Avance R", "Oferta de Avanço R", "R-Durchbruch-Angebot", "Акция прорыва R"],
+"product.offer-stage-loss.name": ["整备特惠", "ดีลตั้งหลักใหม่", "Ưu đãi chỉnh đốn", "Penawaran Atur Ulang", "Oferta de Reagrupación", "Oferta de Reagrupamento", "Neuordnungs-Angebot", "Акция перегруппировки"],
+"product.offer-stamina.name": ["体力特惠", "ดีลสตามินา", "Ưu đãi thể lực", "Penawaran Stamina", "Oferta de Energía", "Oferta de Energia", "Ausdauer-Angebot", "Акция выносливости"],
+"product.offer-pity.name": ["保底前夕特惠", "ดีลใกล้การันตี", "Ưu đãi sắp bảo đảm", "Penawaran Hampir Terjamin", "Oferta Casi Garantizada", "Oferta Quase Garantida", "Fast-garantiert-Angebot", "Акция перед гарантом"],
+"product.offer-level-10.name": ["LV.10达成特惠", "ดีลถึง LV.10", "Ưu đãi đạt LV.10", "Penawaran Capai LV.10", "Oferta por alcanzar LV.10", "Oferta por alcançar LV.10", "LV.10-Meilenstein-Angebot", "Акция за LV.10"],
+"product.offer-level-20.name": ["LV.20达成特惠", "ดีลถึง LV.20", "Ưu đãi đạt LV.20", "Penawaran Capai LV.20", "Oferta por alcanzar LV.20", "Oferta por alcançar LV.20", "LV.20-Meilenstein-Angebot", "Акция за LV.20"],
+"product.offer-level-30.name": ["LV.30达成特惠", "ดีลถึง LV.30", "Ưu đãi đạt LV.30", "Penawaran Capai LV.30", "Oferta por alcanzar LV.30", "Oferta por alcançar LV.30", "LV.30-Meilenstein-Angebot", "Акция за LV.30"],
+"product.offer-level-40.name": ["LV.40达成特惠", "ดีลถึง LV.40", "Ưu đãi đạt LV.40", "Penawaran Capai LV.40", "Oferta por alcanzar LV.40", "Oferta por alcançar LV.40", "LV.40-Meilenstein-Angebot", "Акция за LV.40"],
+"product.offer-ancient.name": ["地层10层突破特惠", "ดีลผ่านชั้นหิน 10", "Ưu đãi vượt tầng 10 Địa tầng", "Penawaran Lantai 10 Strata", "Oferta del Piso 10 de los Estratos", "Oferta do Andar 10 dos Estratos", "Schichten-Ebene-10-Angebot", "Акция 10-го яруса пластов"],
+"product.offer-breakthrough-ssr.grant.0": ["万能SSR碎片", "เศษสากล SSR", "Mảnh vạn năng SSR", "Serpihan Universal SSR", "Fragmento universal SSR", "Fragmento universal SSR", "Universal-SSR-Splitter", "Универсальный осколок SSR"],
+"product.offer-breakthrough-sr.grant.0": ["万能SR碎片", "เศษสากล SR", "Mảnh vạn năng SR", "Serpihan Universal SR", "Fragmento universal SR", "Fragmento universal SR", "Universal-SR-Splitter", "Универсальный осколок SR"],
+"product.offer-breakthrough-r.grant.0": ["万能R碎片", "เศษสากล R", "Mảnh vạn năng R", "Serpihan Universal R", "Fragmento universal R", "Fragmento universal R", "Universal-R-Splitter", "Универсальный осколок R"],
+"product.offer-stamina.grant.0": ["能量饮料+", "เครื่องดื่มชูกำลัง+", "Nước tăng lực+", "Minuman Energi+", "Bebida energética+", "Bebida energética+", "Energydrink+", "Энергетик+"]
 }

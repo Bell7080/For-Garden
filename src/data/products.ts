@@ -1,3 +1,4 @@
+import type { SituationalOfferTrigger } from "../core/situationalOffers";
 import { TRADE_PACKAGES } from "./tradePackages";
 import { MILEAGE_PRODUCTS } from "./mileageShop";
 import { DUEL_PRODUCTS } from "./duelShop";
@@ -175,6 +176,11 @@ export interface ProductDefinition {
    * 일정으로 바뀌면 상품도 함께 따라가므로 상품 일정을 따로 맞추지 않는다.
    */
   bannerId?: string;
+  /**
+   * **상황 특가** — 그 상황이 막 생긴 계정에만, 서버가 연 동안(72시간)만 선다(`core/situationalOffers.ts`).
+   * 노출·남은 수·구매 허락은 상품 기간이 아니라 그 계정의 열린 특가가 정한다.
+   */
+  situational?: SituationalOfferTrigger;
 }
 
 /** 프로토타입 운영 카탈로그. 실제 차감과 지급은 이 데이터가 아니라 GameApi만 수행한다. */

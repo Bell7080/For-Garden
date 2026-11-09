@@ -338,6 +338,7 @@
 - **원석·미지핵(고대 핵류)은 일반 유료 패키지에 넣지 않는다.** 원석은 「고고학 지원 패키지」로만 팔고, 미지핵은 돈으로 팔지 않는다(스테미나 상품은 가능).
 - **시즌 패스는 28일 · 30단계이고 임무 연구도가 올린다**(`core/seasonPass.ts` · 정의 `SEASON_PASS`). 새 카운터를 두지 않고 `claimMissionRewards`가 같은 연구도를 더한다. 구매는 `refresh: "season"`으로 시즌마다 세고, 시즌이 바뀌면 `rollSeasonPassState`가 진행과 받은 칸을 함께 비운다. 보상 표를 바꾸면 `seasonPass.test`를 함께 고친다(응태 승인).
 - **계정 첫 결제 보상은 상품 첫 구매 두 배와 별개로 계정당 한 번이다**(`src/data/firstPaymentGift.ts` — SR 선택권 · 화석 5 · 테두리 `patron`). 지급은 `fulfillPlatformPurchase` 한 곳이고, 선물 테두리(`unlockGift`)는 레벨 나무에 서지 않고 `achievements.giftFrames`로만 연다.
+- **상황 특가는 막힌 순간 그 계정에만 72시간 선다**(`core/situationalOffers.ts` · 상품 `situational`). 동시에 셋 · 하루 하나 · 종류마다 7일 · 같은 키 한 번이고, 판단은 조회 경계(`evaluateSituationalOffers`)가 한다. **전투 중·결과판에 결제 창을 띄우지 않는다** — 「한정」 탭의 붉은 점(`premiumOffer`)만 알린다. 노출·구매는 열린 특가가 정하고 사면 특가를 걷는다. 상황·값을 바꾸면 `situationalOffers.test`를 함께 고친다(응태 승인).
 - 프리미엄 탭은 한정·패스·특가·구독·일간·주간·월간·젬이다(`PREMIUM_TABS`). 무료 보급은 `acquisition: { kind: "free" }`이고 지급은 `purchaseProduct`,
   구독의 매일 몫은 `claimPassDailyBonus`, 광고는 `claimAdReward`(`gem-ad`·`gold-ad`)가 서버 경계다.
 

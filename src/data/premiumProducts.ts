@@ -65,8 +65,33 @@ const freeClaim = (id: string, name: string, premiumCategory: "daily" | "weekly"
   defaultQuantity: 1, purchaseLimit: 1, refresh: premiumCategory, visibleFrom: FROM, visibleUntil: UNTIL,
 });
 
+/**
+ * 상황 특가 한 줄. 상품 기간은 늘 열려 있고(서버가 그 계정의 열린 특가로만 세운다) 한 번 열린 특가마다 한 번 산다.
+ * 구매 기록은 남기지 않고 산 특가를 걷는 것으로 끝낸다 — 같은 상품이 다른 주기에 다시 설 수 있어야 한다.
+ */
+const situational = (id: string, trigger: NonNullable<ProductDefinition["situational"]>, name: string, price: number, grants: readonly ProductGrant[]): ProductDefinition => ({
+  id, storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-supplies", name, description: "",
+  acquisition: pay(id, price), grants, situational: trigger,
+  defaultQuantity: 1, purchaseLimit: 1, refresh: "none", visibleFrom: FROM, visibleUntil: UNTIL,
+});
+
 export const PREMIUM_PRODUCTS: readonly ProductDefinition[] = [
   // ── 한정 — 기간이 끝나면 사라진다. 남은 시간은 카드에 붉게 선다(`visibleUntil`). 운영이 이 갈래에 상품과 종료일을 더한다. ──
+  // ── 상황 특가 — 막힌 순간 그 계정에만 72시간 선다(`core/situationalOffers.ts`). 노출·구매는 서버가 연 특가가 정하고 기간 값은 쓰지 않는다. ──
+  // 가치 장부: 돌파 ₩4,900 — 만능 파편 + 치즈케이크 2,000 + 젬 2,000 + 골드 50만(2.7배) · 연패 ₩4,900 — 치즈케이크 3,000 + 골드 100만 + 젬 500(2.7배)
+  // 스테미나 ₩2,900 — 드링크+ 15 + 젬 1,000(2.8배) · 천장 ₩9,900 — 화석 10 + 젬 5,000(2.6배) · 지층 ₩9,900 — 같은 값
+  // 레벨 10/20/30/40 ₩4,900/9,900/14,900/19,900 — 젬 2,500/5,000/7,500/10,000 + 화석 5/10/15/20(2.6~2.7배)
+  situational("offer-breakthrough-ssr", "breakthroughShort", "SSR 돌파 특가", 4_900, [item("universal-fragment-ssr", "만능 SSR 파편", 1), currency("cheesecake", 2_000), currency("gems", 2_000), currency("gold", 500_000)]),
+  situational("offer-breakthrough-sr", "breakthroughShort", "SR 돌파 특가", 4_900, [item("universal-fragment-sr", "만능 SR 파편", 2), currency("cheesecake", 2_000), currency("gems", 2_000), currency("gold", 500_000)]),
+  situational("offer-breakthrough-r", "breakthroughShort", "R 돌파 특가", 4_900, [item("universal-fragment-r", "만능 R 파편", 3), currency("cheesecake", 2_000), currency("gems", 2_000), currency("gold", 500_000)]),
+  situational("offer-stage-loss", "stageLoss", "재정비 특가", 4_900, [currency("cheesecake", 3_000), currency("gold", 1_000_000), currency("gems", 500)]),
+  situational("offer-stamina", "staminaOut", "스테미나 특가", 2_900, [item("stamina-tonic-large", "에너지 드링크+", 15, 7), currency("gems", 1_000)]),
+  situational("offer-pity", "pityNear", "확정 직전 특가", 9_900, [currency("fossil", 10), currency("gems", 5_000)]),
+  situational("offer-level-10", "playerLevel", "LV.10 달성 특가", 4_900, [currency("gems", 2_500), currency("fossil", 5)]),
+  situational("offer-level-20", "playerLevel", "LV.20 달성 특가", 9_900, [currency("gems", 5_000), currency("fossil", 10)]),
+  situational("offer-level-30", "playerLevel", "LV.30 달성 특가", 14_900, [currency("gems", 7_500), currency("fossil", 15)]),
+  situational("offer-level-40", "playerLevel", "LV.40 달성 특가", 19_900, [currency("gems", 10_000), currency("fossil", 20)]),
+  situational("offer-ancient", "ancientBest", "지층 10층 돌파 특가", 9_900, [currency("gems", 5_000), currency("fossil", 10)]),
   { id: "premium-season-crate", storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-supplies", name: "시즌 한정 표본 상자", description: "", acquisition: pay("premium-season-crate", 6_900), grants: [currency("amber", 10), currency("gems", 2_500), currency("cheesecake", 800)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: "2026-11-01T00:00:00Z" },
   // ── 패스 — 결제는 길을 **열고**, 사는 순간 **즉시 보상**(`grants`)을 받는다. 길의 마디 보상은 닿을 때마다 따로 받는다(`progressPasses.ts`). ──
   { id: "premium-story-pass", storefront: "premium", category: "special", premiumCategory: "pass", iconKey: "shop-product-amber", name: "스토리 패스", description: "", acquisition: pay("premium-story-pass", 9_900), grants: [currency("gems", 3_000), currency("fossil", 5), currency("cheesecake", 500)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },

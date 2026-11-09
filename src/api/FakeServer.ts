@@ -25,6 +25,10 @@ import { socialApi } from "./FakeSocialServer";
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
 import { RESONANCE_CAP, RESONANCE_CHEESECAKE, canResonate, relicFragmentRoom, resonanceFragmentSpend, resonanceOf } from "../core/relicResonance";
 import { BANNERS, STANDARD_POOLS } from "../data/banners";
+import {
+  SITUATIONAL_OFFER_RULES, activeSituationalOffer, consumeSituationalOffer, forgetSituationalOfferKey, issueSituationalOffer, normalizeSituationalOfferState,
+  pruneSituationalOffers, recordStoryResult, situationalWeekKey, storyStageChapter, type SituationalOfferCandidate, type SituationalOfferState,
+} from "../core/situationalOffers";
 import { FIRST_PAYMENT_GIFT } from "../data/firstPaymentGift";
 import { OPEN_END, OPEN_START, scheduledWindow, windowOpen } from "../core/liveSchedule";
 import { PLAYABLE_RELICS, RELICS } from "../data/relics";
@@ -2528,9 +2532,11 @@ export class FakeServer implements GameApi {
     const periodKey = this.productPeriodKey(product, now);
     const current = this.state.productPurchases[product.id];
     const count = (current?.periodKey === periodKey ? current.count : 0) + 1;
-    const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count } };
+    // 상황 특가는 구매 기록을 남기지 않고 산 특가를 걷는다 — 다른 주기에 같은 상품이 다시 설 수 있어야 한다.
+    const nextPurchases = product.situational ? this.state.productPurchases : { ...this.state.productPurchases, [product.id]: { periodKey, count } };
     const candidate = structuredClone(this.state);
     candidate.wallet = nextWallet; candidate.itemInventory = applied.items; candidate.productPurchases = nextPurchases;
+    if (product.situational) candidate.situationalOffers = consumeSituationalOffer(normalizeSituationalOfferState(this.state.situationalOffers), product.id);
     if (firstPaymentGift) candidate.achievements = { ...achievements, firstPaymentGift: true, giftFrames: [...new Set([...(achievements.giftFrames ?? []), FIRST_PAYMENT_GIFT.frameId])] };
     let entitlement: PassEntitlementDto | undefined;
     if (product.passBenefit) {
@@ -2865,10 +2871,12 @@ export class FakeServer implements GameApi {
     // 튜토리얼은 지정 관문 승리와 같은 저장에서만 진행한다. 멈춘 기록은 재클리어로 복구한다.
     const currentTutorial = normalizeTutorialState(this.state.tutorial);
     const nextTutorial = victory && !owningEvent ? advanceTutorialOnStageClear(currentTutorial, stage.id) : currentTutorial;
-    this.persist({ ...this.state, tutorial: nextTutorial, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions, playerResearch: base.playerResearch, itemInventory: base.itemInventory, runeInventory: nextRunes });
+    // 상황 특가의 연패 줄 — 스토리 관문만 센다. 같은 관문을 내리 지면 그 장의 재정비 특가가 선다(전투 중이 아니라 다음 조회에서 붉은 점으로만 알린다).
+    const nextOffers = owningEvent || stage.ancientFloor !== undefined ? this.state.situationalOffers : this.storyLossOffers(stage.id, victory, this.now());
+    this.persist({ ...this.state, situationalOffers: nextOffers, tutorial: nextTutorial, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions, playerResearch: base.playerResearch, itemInventory: base.itemInventory, runeInventory: nextRunes });
     this.state.cleared = nextCleared; this.state.wallet = nextWallet; this.state.relicProgress = nextProgress; this.state.missions = nextMissions;
     this.state.playerResearch = base.playerResearch; this.state.itemInventory = base.itemInventory; this.state.runeInventory = nextRunes;
-    this.state.tutorial = nextTutorial;
+    this.state.tutorial = nextTutorial; this.state.situationalOffers = nextOffers;
     if (admissionId) pending?.delete(admissionId);
     if (pending?.size === 0) this.pendingStageAdmissions.delete(stageId);
     const staminaSpent = spent ? cost : 0;
@@ -3516,6 +3524,7 @@ export class FakeServer implements GameApi {
     await this.delay();
     // 이벤트 입구의 점은 오늘 받을 출석이 남았는가로 켠다.
     const now = this.now();
+    const situationalOfferCount = this.evaluateSituationalOffers(now).active.length;
     const attendance = this.attendanceDto(this.attendanceNow(now), now);
     const mail = this.mailListDto();
     const claimablePassCount = this.progressPassDtos(this.state).reduce((sum, pass) => sum + pass.milestones.filter((stage) => stage.freeState === "claimable" || stage.state === "claimable").length, 0);
@@ -3526,7 +3535,66 @@ export class FakeServer implements GameApi {
     const expedition = this.rollExpedition(now);
     const claimableExpeditionCount = EXPEDITION_BEST_SCORE_REWARD_STAGES.filter(stage => expedition.bestScore >= stage.threshold && !expedition.claimedRewardStageIds.includes(stage.id)).length;
     const claimableRaidCount = this.raidInstances(now).map(row => this.raidDto(row, now)).filter(row => row.status === "completed" && !row.settled && row.settlement.some(reward => reward.amount > 0)).length;
-    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
+    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), situationalOfferCount };
+  }
+
+  /**
+   * **상황 특가를 지금 상태에서 읽어 세운다**(`core/situationalOffers.ts`). 조회(붉은 점·프리미엄 목록)가 부르며, 바뀐 것이 있을 때만 저장한다.
+   * 급한 순서로 후보를 넘기고 규칙(셋까지 · 하루 하나 · 종류마다 7일 · 같은 키 한 번)은 순수 모듈이 지킨다.
+   * 전투 결과판이 아니라 다음 조회에서 서므로, 진 판 위에 결제 창이 뜨는 일은 없다.
+   */
+  private evaluateSituationalOffers(now: Date): SituationalOfferState {
+    const before = normalizeSituationalOfferState(this.state.situationalOffers);
+    let state = pruneSituationalOffers(before, now);
+    const candidates: SituationalOfferCandidate[] = [];
+    // 천장 — 한 바퀴가 돌면(SSR이 나와 천장이 내려가면) 그 키를 지워 다음 바퀴에 다시 설 수 있게 한다.
+    const groups = new Map<string, number>();
+    for (const banner of BANNERS) if (banner.pullLimit === undefined && banner.highestRarityGuarantee > 0 && bannerActive(banner, now)) groups.set(banner.pityGroupId, banner.highestRarityGuarantee);
+    for (const [group, guarantee] of groups) {
+      const pulls = this.state.gachaPityByGroup[group]?.pullsSinceSsr ?? 0;
+      if (pulls >= guarantee - SITUATIONAL_OFFER_RULES.pityWindow) candidates.push({ trigger: "pityNear", key: `pity:${group}`, productId: "offer-pity" });
+      else state = forgetSituationalOfferKey(state, `pity:${group}`);
+    }
+    // 돌파 — 레벨 상한에 닿았는데 파편이 모자란 개체. 높은 등급부터 본다.
+    const short = new Set<string>();
+    for (const relicId of this.state.owned) {
+      const progress = this.state.relicProgress[relicId];
+      const rarity = RELICS.find(({ id }) => id === relicId)?.rarity;
+      if (!progress || !rarity || progress.breakthrough >= BREAKTHROUGH_CAP || progress.level < relicLevelCap(progress.breakthrough)) continue;
+      const universal = this.state.itemInventory.find((stack) => stack.itemId === UNIVERSAL_FRAGMENT_ITEM[rarity])?.quantity ?? 0;
+      if (!breakthroughFragmentSpend(rarity, progress.breakthrough, this.state.relicFragments[relicId] ?? 0, universal).enough) short.add(rarity);
+    }
+    for (const rarity of ["SSR", "SR", "R"] as const) if (short.has(rarity)) candidates.push({ trigger: "breakthroughShort", key: `breakthrough:${rarity}`, productId: `offer-breakthrough-${rarity.toLowerCase()}` });
+    // 스테미나 — 오늘 젬 충전을 다섯 번 넘게 한 주.
+    if (this.staminaGemPurchasedToday("stamina-gems", now) >= SITUATIONAL_OFFER_RULES.staminaGemRecharges) candidates.push({ trigger: "staminaOut", key: `stamina:${situationalWeekKey(now)}`, productId: "offer-stamina" });
+    // 지층 — 이번 달 최고층.
+    this.rollAncientSeasonNow(now);
+    const ancientBest = Math.max(0, ...[...this.state.cleared].map((id) => /^ancient:(\d+)$/.exec(id)).map((match) => match ? Number(match[1]) : 0));
+    if (ancientBest >= SITUATIONAL_OFFER_RULES.ancientFloor) candidates.push({ trigger: "ancientBest", key: `ancient:${this.state.ancientSeason ?? now.toISOString().slice(0, 7)}`, productId: "offer-ancient" });
+    // 연구원 레벨 — 닿은 마디 중 가장 높은 것 하나만. 건너뛴 낮은 마디는 낸 것으로 친다(뒤늦게 LV.10 특가가 서지 않는다).
+    const reached = SITUATIONAL_OFFER_RULES.playerLevels.filter((level) => this.state.playerResearch.level >= level);
+    const top = reached[reached.length - 1];
+    if (top !== undefined) {
+      const skipped = reached.slice(0, -1).map((level) => `level:${level}`).filter((key) => !state.issuedKeys.includes(key));
+      if (skipped.length > 0 && !state.issuedKeys.includes(`level:${top}`)) state = { ...state, issuedKeys: [...state.issuedKeys, ...skipped] };
+      candidates.push({ trigger: "playerLevel", key: `level:${top}`, productId: `offer-level-${top}` });
+    }
+    for (const candidate of candidates) state = issueSituationalOffer(state, candidate, now).state;
+    if (JSON.stringify(state) !== JSON.stringify(this.state.situationalOffers ?? null)) {
+      this.persist({ ...this.state, situationalOffers: state });
+      this.state.situationalOffers = state;
+    }
+    return state;
+  }
+
+  /** 스토리 관문 한 판을 연패 줄에 적고, 셋째 연패면 그 장의 재정비 특가를 세운다. */
+  private storyLossOffers(stageId: string, victory: boolean, now: Date): SituationalOfferState {
+    let state = recordStoryResult(pruneSituationalOffers(normalizeSituationalOfferState(this.state.situationalOffers), now), stageId, victory);
+    const chapter = storyStageChapter(stageId);
+    if (!victory && chapter !== undefined && (state.storyLoss?.count ?? 0) >= SITUATIONAL_OFFER_RULES.lossStreak) {
+      state = issueSituationalOffer(state, { trigger: "stageLoss", key: `stage-loss:${chapter}`, productId: "offer-stage-loss" }, now).state;
+    }
+    return state;
   }
 
   /** 받을 수 있는 무료 보급이 남은 프리미엄 탭 — 목록의 `purchasable`과 같은 판정을 읽는다. */
@@ -3828,13 +3896,14 @@ export class FakeServer implements GameApi {
   async getProducts(storefront: ProductDefinition["storefront"]): Promise<ProductListResponse> {
     await this.delay();
     const now = this.now();
+    if (storefront === "premium") this.evaluateSituationalOffers(now);
     // 목록 단계부터 요청 화면과 일치하는 상품만 반환해 화면별 모델이 섞인 카탈로그를 받지 않는다.
     const products = PRODUCTS.filter((product) => product.storefront === storefront && this.isVisible(product, now)).map((product) => {
       const remaining = this.remaining(product, now);
       // SDK를 붙여도 서버 검증이 준비되지 않았다면 결제를 시작할 수 없다.
       const paymentUnavailable = product.acquisition.kind === "platform_payment" && !this.paymentVerificationAvailable;
       return {
-        ...product, visibleUntil: this.productWindow(product).endsAt, remaining, purchasable: remaining > 0 && !paymentUnavailable, disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : undefined,
+        ...product, visibleUntil: product.situational ? activeSituationalOffer(this.state.situationalOffers, product.id, now)?.expiresAt : this.productWindow(product).endsAt, remaining, purchasable: remaining > 0 && !paymentUnavailable, disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : undefined,
         ...(this.runePartOf(product, now) !== undefined ? { runePart: this.runePartOf(product, now) } : {}),
         ...(product.firstPurchaseBonus ? { firstBonusAvailable: this.firstBonusAvailable(product) } : {}),
         ...this.subscriptionInfo(product, now),
@@ -4314,6 +4383,8 @@ export class FakeServer implements GameApi {
   }
 
   private isVisible(product: ProductDefinition, now: Date): boolean {
+    // 상황 특가는 상품 기간이 아니라 **그 계정에 열린 특가**가 세운다.
+    if (product.situational) return activeSituationalOffer(this.state.situationalOffers, product.id, now) !== undefined;
     if (!windowOpen({ ...this.productWindow(product), overridden: false }, now.getTime())) return false;
     // 로테이션 칸의 상품은 그 기간에 칸이 **이 상품을 골랐을 때만** 선다 — 서버 시각과 기간 키만 읽는다.
     const slot = product.rotationSlot ? rotationSlot(product.rotationSlot) : undefined;
@@ -4353,6 +4424,8 @@ export class FakeServer implements GameApi {
     // 패스는 횟수가 아니라 **활성 권리**가 제한이다 — 영구 횟수로 막으면 만료 뒤 다시 살 수 없고, 활성인 동안
     // 또 사면 기간이 겹쳐 아무것도 얹히지 않은 채 값만 나간다.
     if (product.passBenefit) return this.hasActivePass(product, now) ? 0 : product.purchaseLimit;
+    // 상황 특가는 열린 동안 한 번이다 — 사면 특가가 걷혀 남은 수도 함께 0이 된다.
+    if (product.situational) return activeSituationalOffer(this.state.situationalOffers, product.id, now) ? 1 : 0;
     const record = this.state.productPurchases[product.id];
     const count = record?.periodKey === this.productPeriodKey(product, now) ? record.count : 0;
     return Math.max(0, product.purchaseLimit - count);

@@ -10,6 +10,7 @@ import { emptyServerJournal, type ServerJournal } from "../core/serverJournal";
 import { createEmptyChestForgeState, type ChestForgeState } from "../core/chestForge";
 import { createEmptyDelophyHuntState, type DelophyHuntState } from "../core/delophyHunt";
 import { createEmptyShuteFishingState, type ShuteFishingState } from "../core/shuteFishing";
+import type { SituationalOfferState } from "../core/situationalOffers";
 import { createEmptyRaidTicketDropState, type RaidTicketDropState } from "../core/raidTicketDrops";
 import { createEmptyTutorialState, type TutorialState } from "../core/tutorial";
 import { createEmptyAchievementState, type AchievementState } from "../core/achievementState";
@@ -242,6 +243,8 @@ export interface Session {
   delophyHunt?: DelophyHuntState;
   /** 슈테의 리듬 낚시의 이번 주 쓴 코인과 진행 중인 판(`core/shuteFishing.ts`). 선택 필드다. */
   shuteFishing?: ShuteFishingState;
+  /** 상황 특가 — 지금 열린 특가·이미 낸 키·종류마다 마지막으로 낸 시각·스토리 연패 줄(`core/situationalOffers.ts`). 선택 필드다. */
+  situationalOffers?: SituationalOfferState;
   /** 업적에서 받은 단계와 최고 보유 골드(`core/achievements.ts`). 선택 필드다. */
   achievements?: AchievementState;
   /** 첫 플레이 튜토리얼에서 마친 칸(`core/tutorial.ts`). 선택 필드이며 도입 전 저장은 클리어 기록에서 시작점을 정한다. */
@@ -490,6 +493,8 @@ export interface SaveData {
   chestForge: ChestForgeState;
   delophyHunt: DelophyHuntState;
   shuteFishing: ShuteFishingState;
+  /** 상황 특가. 도입 전 저장에는 없고, 없으면 빈 상태다. */
+  situationalOffers?: SituationalOfferState;
   achievements: AchievementState;
   tutorial: TutorialState;
   serverJournal?: ServerJournal;

@@ -10,6 +10,7 @@ import { burstDiamond } from "./breakthroughBurst";
 import { ensureEffectTextures, EFFECT_TEXTURE } from "./effectTextures";
 import { FEED_LEVEL_UP, type StatGain, feedBannerLetterDelay, feedLevelUpStatGains, feedSpiralPoint } from "./feedLevelUpStyle";
 import { toPoints } from "./holo";
+import { HOLO_SHIMMER, holoGlowColor } from "./holoShimmer";
 import { statToneHex } from "./statTones";
 import { textStyle } from "./theme";
 
@@ -98,7 +99,8 @@ export class FeedLevelUpEffect {
         .text(anchor.x, restY + (calm ? 0 : 14), t("info.levelUp.statPlus", { value: gain.toLocaleString() }), textStyle({ role: "display", size: spec.axisSize, color: statToneHex(key) }))
         .setOrigin(0.5, 1)
         .setStroke("#05070a", 7)
-        .setShadow(0, 0, statToneHex(key), 10, true, false)
+        .setPadding(HOLO_SHIMMER.textGlow.padding)
+        .setShadow(0, 0, holoGlowColor(statToneHex(key), 0.7), HOLO_SHIMMER.textGlow.blur, true, false)
         .setAlpha(0)
         .setScale(calm ? 1 : 0.6);
       layer.add(line);
@@ -181,10 +183,20 @@ export class FeedLevelUpEffect {
     const length = groundY - top;
     const beam = this.scene.add.graphics({ x, y: groundY }).setDepth(depth - 1).setBlendMode(Phaser.BlendModes.ADD);
     // 가운데가 짙고 가장자리로 옅어지는 세 겹. 원이 아니라 곧은 띠라 빛기둥으로 읽힌다.
+    // 윗부분은 가로 띠로 잘게 나눠 위로 갈수록 투명해진다 — 끝이 칼같이 잘리면 위 판 위에서 선이 끊겨 보인다.
     const layers: [number, number][] = [[1, 0.22], [0.62, 0.42], [0.26, 0.9]];
+    const solid = length * (1 - spec.fadeRatio);
+    const bands = spec.fadeBands;
     for (const [ratio, alpha] of layers) {
+      const w = width * ratio;
       beam.fillStyle(spec.color, alpha);
-      beam.fillRect(-(width * ratio) / 2, -length, width * ratio, length);
+      beam.fillRect(-w / 2, -solid, w, solid);
+      const fadeLength = length - solid;
+      for (let i = 0; i < bands; i += 1) {
+        const fade = 1 - (i + 0.5) / bands;
+        beam.fillStyle(spec.color, alpha * fade * fade);
+        beam.fillRect(-w / 2, -solid - (fadeLength * (i + 1)) / bands, w, fadeLength / bands + 0.5);
+      }
     }
     // 발밑에 고이는 납작한 빛.
     beam.fillStyle(spec.color, 0.5);

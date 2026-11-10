@@ -6,7 +6,7 @@ import { COLOR, textStyle } from "./theme";
 import { t, type TextKey } from "../i18n";
 import { motionPolicy } from "../core/settings";
 import { settingsManager } from "../managers/SettingsManager";
-import { HOLO_SHIMMER, holoBreathe, holoSweepPhase, holoWobble, polygonSpans } from "./holoShimmer";
+import { HOLO_SHIMMER, holoBreathe, holoGlowColor, holoSweepPhase, holoWobble, polygonSpans } from "./holoShimmer";
 
 /** 레이더에 표시하는 축은 항상 같은 순서와 상한을 사용한다. */
 const AXES = [
@@ -80,7 +80,8 @@ export class StatRadar extends Phaser.GameObjects.Container {
         .text(0, radius * 0.04, "", textStyle({ role: "display", size: Math.round(radius * 0.34), color: "#ffe9b0" }))
         .setOrigin(0.5)
         .setStroke("#2a1a05", 8)
-        .setShadow(0, 0, COLOR.accentText, 14, true, true);
+        .setPadding(HOLO_SHIMMER.textGlow.padding)
+        .setShadow(0, 0, holoGlowColor(COLOR.accentText), HOLO_SHIMMER.textGlow.blur + 2, true, true);
     } else if (label.power) {
       // 면보다 먼저 그린다. 면의 채움이 숫자 위로 덮여야 숫자가 면 **안에** 잠긴 것처럼 보인다.
       this.powerText = scene.add
@@ -114,7 +115,7 @@ export class StatRadar extends Phaser.GameObjects.Container {
       const value = this.addValue(scene, lx, ly + (index === 0 ? -step : step), valueStyle);
       if (this.holo) {
         // 수치가 판에서 튀어나와야 한다 — 크고 두껍게, 검은 획 위에 제 색 빛을 두른다.
-        value.setFontSize(Math.round(size * 1.12)).setStroke("#05070a", 7).setShadow(0, 0, color ?? COLOR.ink, 12, true, true);
+        value.setFontSize(Math.round(size * 1.12)).setStroke("#05070a", 7).setPadding(HOLO_SHIMMER.textGlow.padding).setShadow(0, 0, holoGlowColor(color ?? COLOR.ink), HOLO_SHIMMER.textGlow.blur, true, true);
       }
       this.valueTexts.push(value);
     });

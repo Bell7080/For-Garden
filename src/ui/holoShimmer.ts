@@ -18,7 +18,18 @@ export const HOLO_SHIMMER = {
   wobble: { ratio: 0.022, periodMs: 1900 },
   /** 전체 밝기의 숨 — 이 폭 안에서 오르내린다. */
   breathe: { min: 0.86, periodMs: 2300 },
+  /**
+   * 수치 둘레의 빛. 글자 캔버스에 여백(`padding`)을 넉넉히 두지 않으면 번진 빛이 글자 상자에서
+   * 네모나게 잘려 **수치 뒤에 판이 하나 깔린 것처럼** 보인다. 빛도 옅게 둔다.
+   */
+  textGlow: { blur: 10, alpha: 0.5, padding: 20 },
 } as const;
+
+/** `#rrggbb`를 그 색의 반투명 `rgba(...)`로 — 글자 빛을 옅게 깔 때 쓴다. */
+export function holoGlowColor(hex: string, alpha: number = HOLO_SHIMMER.textGlow.alpha): string {
+  const value = Number.parseInt(hex.replace("#", "").slice(0, 6), 16);
+  return `rgba(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}, ${alpha})`;
+}
 
 /** 점 목록(평평한 [x0, y0, x1, y1, …])의 도형이 높이 `y`에서 차지하는 가로 구간들. 볼록하지 않아도 된다. */
 export function polygonSpans(flat: readonly number[], y: number): [number, number][] {

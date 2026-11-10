@@ -18,8 +18,8 @@ import { GROWTH_STAT_KEYS } from "../core/relicProgression";
  * 섬광은 상한(0.6)보다 옅고, **난수를 쓰지 않아** 같은 레벨업이 늘 같은 그림을 그린다.
  */
 export const FEED_LEVEL_UP = {
-  /** SD 위로 내리꽂히는 빛기둥. 폭과 높이(`heightRatio`)는 SD 키에 대한 비율이다 — 위 판들을 뚫고 올라가지 않는다. */
-  pillar: { widthRatio: 0.62, topY: 160, heightRatio: 2.6, alpha: 0.5, flashAlpha: 0.58, dropMs: 120, holdMs: 140, narrowMs: 380, color: 0xfff1c2 },
+  /** SD 위로 내리꽂히는 빛기둥. 폭과 높이(`heightRatio`)는 SD 키에 대한 비율이다. 위쪽 `fadeRatio`만큼은 `fadeBands`개의 띠로 나눠 투명하게 녹인다. */
+  pillar: { widthRatio: 0.62, topY: 160, heightRatio: 2.6, fadeRatio: 0.6, fadeBands: 18, alpha: 0.5, flashAlpha: 0.58, dropMs: 120, holdMs: 140, narrowMs: 380, color: 0xfff1c2 },
   /** LEVEL UP! 글자. 한 글자씩 넘쳐 서고, 다 선 뒤 함께 떠오르며 사라진다. */
   banner: { size: 52, gap: 1, letterMs: 46, popMs: 260, overshoot: 1.45, holdMs: 520, rise: 34, fadeMs: 360, aboveHead: 30, color: "#ffe08a", stroke: "#3a2203" },
   /** SD를 감고 오르는 마름모 두 줄기. 한 줄기에 여섯 조각으로 끊는다. */

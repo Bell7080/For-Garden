@@ -36,10 +36,15 @@ export const FEED_TAP = {
   combo: { from: 2, resetMs: 900, punch: 1.32, punchMs: 170, size: 34 },
   /**
    * 꾹 눌렀을 때 되풀이해 먹이는 간격. 한 틱이 한 번의 급여라 틱 사이가 귀와 눈에 읽혀야 한다 —
-   * 16ms까지 줄던 때는 한 덩어리로 「드르르르륵」 몰아 먹여졌다. 150ms에서 시작해 한 번 먹일 때마다
+   * 16ms까지 줄던 때는 한 덩어리로 「드르르르륵」 몰아 먹여졌다. 180ms에서 시작해(85ms 하한은 줄이 따라 오르기 전에 다음 틱이 와 115ms로 늦췄다) 한 번 먹일 때마다
    * `accel`만큼 줄어 `minMs`에서 멈춘다(「드 르 르 르 르」). 게이지는 틱마다 따로 차오른다(`gaugeGlideMs`).
    */
-  hold: { startMs: 150, minMs: 85, accel: 0.9, gaugeGlideMs: 110 },
+  hold: { startMs: 180, minMs: 115, accel: 0.9, gaugeGlideMs: 110 },
+  /**
+   * 먹일 때마다 경험치 줄이 한 번 두근거린다 — 채운 자리가 하얗게 번쩍이고(`flashAlpha`) 위아래로
+   * 부풀었다 돌아오며(`swell`) 줄 전체가 좌우로 짧게 떨린다(`shake` px). 연타 중에는 맥동으로 읽힌다.
+   */
+  gaugePulse: { flashAlpha: 0.45, flashMs: 200, swell: 1.45, swellMs: 220, shake: 3, shakeMs: 160 },
 } as const;
 
 /** 꾹 누른 채 `repeat`번째로 먹일 때까지의 간격(ms). 점점 빨라져 하한에서 멈춘다. */

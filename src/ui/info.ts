@@ -78,7 +78,7 @@ import type { EncounterRole } from "../core/levelDesign";
 import { squeezeTextToWidth } from "./textFit";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
-import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, breakthroughFragmentSpend, type BreakthroughStep, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
+import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, breakthroughFragmentSpend, type BreakthroughStep, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as simulateFeed, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
@@ -92,7 +92,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { FeedTapEffect } from "./feedTapEffect";
 import { FeedLevelUpEffect } from "./feedLevelUpEffect";
 import { FEED_LEVEL_UP } from "./feedLevelUpStyle";
-import { HOLO_SHIMMER, holoBreathe, holoSweepPhase, polygonSpans } from "./holoShimmer";
+import { HOLO_SHIMMER, holoBreathe, holoGlowColor, holoSweepPhase, polygonSpans } from "./holoShimmer";
 import { settingsManager } from "../managers/SettingsManager";
 import { FEED_TAP, FeedHoldRepeater } from "./feedTapStyle";
 import { addSdFootShadow } from "./SdFootShadow";
@@ -521,6 +521,8 @@ export class InfoManager {
   private statRadar?: StatRadar;
   private readonly gemSlots: GemSlot[] = [];
   private readonly skillIcons: Phaser.GameObjects.Container[] = [];
+  /** 처음 여는 판에서 SD가 녹아들며 서야 하는가. */
+  private figureReveal = false;
   /** 스킬 액자를 마지막으로 그린 개체·돌파 단계. 돌파로 `+`가 붙는 순간을 가려 다시 그린다. */
   private skillIconsKey = "";
 
@@ -701,6 +703,20 @@ export class InfoManager {
     scene.tweens.add({ targets: line, alpha: 0, delay: panel.delay + scan.ms * 0.75, duration: scan.ms * 0.25 });
   }
 
+  /** 조립 연출이 끝난 뒤의 자리 — 펼쳐지는 중인 조상의 배율을 잠깐 제자리로 돌려 잰다. */
+  private settledBounds(target: Phaser.GameObjects.Container): Phaser.Geom.Rectangle {
+    const saved: { node: Phaser.GameObjects.Container; scaleX: number; scaleY: number }[] = [];
+    for (let node: Phaser.GameObjects.Container | null = target; node; node = node.parentContainer) {
+      const rest = node.getData?.("assembleRest") as { scaleX: number; scaleY: number } | undefined;
+      if (!rest) continue;
+      saved.push({ node, scaleX: node.scaleX, scaleY: node.scaleY });
+      node.setScale(rest.scaleX, rest.scaleY);
+    }
+    const bounds = target.getBounds();
+    for (const item of saved) item.node.setScale(item.scaleX, item.scaleY);
+    return bounds;
+  }
+
   /** 정보창을 닫는 뒤로가기 버튼 자리. 안내의 마지막 칸이 이곳을 가리킨다. */
   tutorialBackBounds(): { x: number; y: number; width: number; height: number } {
     const size = BACK_BUTTON_SIZE;
@@ -842,7 +858,8 @@ export class InfoManager {
     // 수치는 하트 위로 떠오른다 — 검은 획에 하트 빛을 둘러 투영된 하트와 한 덩어리로 읽힌다.
     this.bondValue = scene.add.text(0, 1, "", textStyle({ role: "display", size: 36 })).setOrigin(0.5)
       .setStroke("#3a0712", 7)
-      .setShadow(0, 0, "#ff7d96", 12, true, true);
+      .setPadding(HOLO_SHIMMER.textGlow.padding)
+      .setShadow(0, 0, holoGlowColor("#ff7d96"), HOLO_SHIMMER.textGlow.blur, true, true);
     bondHeart.add(this.bondValue);
     this.bondBar = new Gauge(scene, COLUMN.x + 40, 718, COLUMN.width - 184, 14, BOND_HEART);
     this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 152, 738, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
@@ -975,6 +992,9 @@ export class InfoManager {
       tapEffect.tap();
       settingsManager.haptic("uiTap");
       this.enqueueFeed(1);
+      // 서버가 답하기 전에 줄이 먼저 따라 오른다 — 연타가 한 번의 요청으로 묶여도 누른 만큼 곧바로 차오른다.
+      this.paintFeedPreview();
+      this.expBar.pulse(this.scene, motionPolicy(session.settings).nonEssentialRepeatFactor === 0, session.settings.accessibility.reduceFlashes);
     };
     hit.on("pointerdown", () => {
       if (!this.canQueueFeed()) return;
@@ -1518,6 +1538,51 @@ export class InfoManager {
     return queued < this.feedsForLevels(cap - progress.level);
   }
 
+  /** 줄에 쌓였거나 서버로 가는 중이라 아직 진행에 들지 않은 급여 수. */
+  private pendingFeeds(): number {
+    if (this.currentDef?.id !== this.feedQueueRelicId) return 0;
+    return this.feedQueue + (this.feeding ? this.feedInFlight : 0);
+  }
+
+  /** 누른 순간의 예상 진행으로 레벨·경험치 줄만 다시 칠한다(나머지 판은 서버 응답 뒤에 칠한다). */
+  private paintFeedPreview(): void {
+    const def = this.currentDef;
+    if (!def || this.publicProfile) return;
+    const progress = relicProgression.getProgress(def.id);
+    this.paintExp(progress, relicLevelCap(progress.breakthrough), true);
+  }
+
+  /** 레벨 숫자·경험치 줄·글자를 예상 진행(확정 + 대기 중인 급여)으로 칠한다. 숫자는 굴러간다. */
+  private paintExp(progress: RelicProgress, cap: number, glide: boolean): void {
+    const shown = previewFeedProgress(progress, this.pendingFeeds());
+    const maxed = shown.level >= cap;
+    const need = maxed ? 0 : relicExpToNext(shown.level);
+    const ratio = maxed ? 1 : shown.exp / need;
+    if (glide && this.expShownLevel >= 0) this.expBar.glideTo(this.scene, ratio, FEED_TAP.hold.gaugeGlideMs, shown.level > this.expShownLevel && !maxed);
+    else this.expBar.setValue(ratio);
+    if (shown.level !== this.expShownLevel) {
+      this.levelValue.setText(String(shown.level));
+      this.levelCap.setX(this.levelValue.x + this.levelValue.width + 14);
+    }
+    this.expShownLevel = shown.level;
+    // 경험치 줄은 "얼마나 컸는가"만 말한다. 급여에 드는 치즈케이크는 바로 아래 버튼이 맡는다.
+    if (maxed) { this.expRoll?.stop(); this.expLabel.setText("MAX"); this.expLabelValue = -1; return; }
+    const from = this.expLabelValue >= 0 && this.expLabelNeed === need && glide ? this.expLabelValue : shown.exp;
+    this.expLabelNeed = need;
+    this.expRoll?.stop();
+    if (from === shown.exp) { this.expLabelValue = shown.exp; this.expLabel.setText(shown.exp + " / " + need + " EXP"); return; }
+    const proxy = { v: from };
+    this.expRoll = this.scene.tweens.add({
+      targets: proxy, v: shown.exp, duration: FEED_TAP.hold.gaugeGlideMs * 1.6, ease: "Sine.Out",
+      onUpdate: () => { this.expLabelValue = Math.round(proxy.v); this.expLabel.setText(this.expLabelValue + " / " + need + " EXP"); },
+      onComplete: () => { this.expLabelValue = shown.exp; this.expLabel.setText(shown.exp + " / " + need + " EXP"); },
+    });
+  }
+
+  private expRoll?: Phaser.Tweens.Tween;
+  private expLabelValue = -1;
+  private expLabelNeed = -1;
+
   private enqueueFeed(count: number): void {
     // 줄은 한 렐릭의 것이다. 쌓인 채로 옆 렐릭으로 넘어가면 그 몫이 엉뚱한 렐릭에게 먹여지므로 버린다.
     const relicId = this.currentDef?.id;
@@ -2033,19 +2098,38 @@ export class InfoManager {
     });
     let back: IconButton | undefined;
     let strip: AppearanceStrip | undefined;
+    // 창이 떠 있는 동안 뒤의 전신·SD는 숨만 쉬게 갱신을 줄인다 — 창 안의 전시 원화가 같은 프레임을 쓴다.
+    this.setBackdropThrottle(true);
     this.popups.open({
       width: layout.width, height: layout.height, title: t("info.skin.title"), dim: true,
       closeOnBackdrop: true, hideCloseButton: true,
-      onClose: () => { strip?.destroy(); strip = undefined; back?.destroy(); back = undefined; onClose(); },
+      onClose: () => { strip?.destroy(); strip = undefined; back?.destroy(); back = undefined; this.setBackdropThrottle(false); onClose(); },
     }, (body, close) => {
       back = addBackButton(this.scene, close).setDepth(this.popups.baseDepth + 500);
       strip = new AppearanceStrip(this.scene, body, def, entries, {
-        onEquipped: () => { void this.loadPortrait(def); void this.loadFigure(def); },
+        // 창 뒤의 인물이 그 자리에서 새 외형으로 스르륵 갈아입는다. 둘을 한 프레임에 세우지 않게 SD는 한 박자 뒤에 읽는다.
+        onEquipped: () => {
+          void this.loadPortrait(def, true).then(() => { if (this.currentDef === def) void this.loadFigure(def, true); });
+        },
         // 값을 치르면 상단 재화 줄도 같은 지갑을 다시 읽어야 한다 — 창을 닫고 나서야 줄어든
         // 수가 보이면 무엇을 치렀는지 그 순간에 확인할 수 없다.
         onWalletChange: () => this.onWalletChange?.(),
       });
     });
+  }
+
+  /** 외형 창이 떠 있는 동안 뒤 인물의 장식 갱신을 줄인다. 새로 세운 인물도 같은 값을 따른다. */
+  private backdropThrottled = false;
+  private setBackdropThrottle(on: boolean): void {
+    this.backdropThrottled = on;
+    const factor = this.puppetUpdateFactor();
+    this.portrait?.setDecorativeUpdateFactor(factor);
+    this.figure?.setDecorativeUpdateFactor(factor);
+  }
+
+  private puppetUpdateFactor(): number {
+    const base = powerSavingPolicy(session.settings).idlePuppetUpdateFactor;
+    return this.backdropThrottled ? Math.min(base, INFO_SWAP.backdropUpdateFactor) : base;
   }
 
   /** SD 피규어가 공중에 뜨지 않도록 받침을 깐다. 대사는 그 위에 뜬다. */
@@ -2123,7 +2207,7 @@ export class InfoManager {
       : relicAppearanceManager.battleAssetFor(def.id);
   }
 
-  private async loadPortrait(def: RelicDef): Promise<void> {
+  private async loadPortrait(def: RelicDef, swap = false): Promise<void> {
     const request = ++this.portraitRequest;
     const asset = this.portraitAssetOf(def);
     this.pendingLoads += 1;
@@ -2135,10 +2219,12 @@ export class InfoManager {
     }).catch(swallowCancelled).finally(() => { this.pendingLoads -= 1; });
     if (!portrait) return;
     // 정보창의 전신 애니메이션만 절전하며 탭과 입력 반응은 원래 속도를 유지한다.
-    portrait.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
+    portrait.setDecorativeUpdateFactor(this.puppetUpdateFactor());
     if (request !== this.portraitRequest) { portrait.destroy(); return; }
     this.portraitPoker?.cancel();
-    this.portrait?.destroy();
+    const previous = this.portrait;
+    if (swap && previous?.active) this.swapOut(previous, -INFO_SWAP.slide);
+    else previous?.destroy();
     this.portrait = portrait;
     this.portraitUrl = asset.url;
     this.portraitSilhouette = !this.ownedNow;
@@ -2151,7 +2237,28 @@ export class InfoManager {
     portrait.setVisible(this.portraitWanted && this.root.visible);
     // 새 인물은 살짝 떠오르며 나타난다. 좌우로 넘길 때 갈아 끼우는 티가 덜 난다.
     portrait.setAlpha(0);
+    if (swap) { this.swapIn(portrait, this.portraitAlpha()); return; }
     this.scene.tweens.add({ targets: portrait, alpha: this.portraitAlpha(), duration: 220 });
+  }
+
+  /**
+   * 외형을 바꾼 순간, 옛 모습은 한쪽으로 스르륵 빠지며 녹고 새 모습이 반대쪽에서 밀려 들어온다.
+   * 툭 갈아 끼우면 무엇이 바뀌었는지보다 "깜빡였다"가 먼저 읽힌다. 움직임 줄이기에서는 겹쳐 녹기만 한다.
+   */
+  private swapOut(target: PuppetCreature, slide: number): void {
+    const still = motionPolicy(session.settings).nonEssentialRepeatFactor === 0;
+    this.scene.tweens.killTweensOf(target);
+    this.scene.tweens.add({
+      targets: target, alpha: 0, x: target.x + (still ? 0 : slide), duration: INFO_SWAP.outMs, ease: "Sine.In",
+      onComplete: () => target.destroy(),
+    });
+  }
+
+  private swapIn(target: PuppetCreature, alpha: number): void {
+    const still = motionPolicy(session.settings).nonEssentialRepeatFactor === 0;
+    const homeX = target.x;
+    target.setAlpha(0).setX(homeX + (still ? 0 : INFO_SWAP.slide));
+    this.scene.tweens.add({ targets: target, alpha, x: homeX, duration: INFO_SWAP.inMs, delay: INFO_SWAP.inDelay, ease: "Cubic.Out" });
   }
 
   /** 제 모습은 온전히, 미보유 실루엣은 반투명하게 선다. */
@@ -2159,7 +2266,7 @@ export class InfoManager {
     return this.ownedNow ? 1 : INFO_SILHOUETTE.alpha;
   }
 
-  private async loadFigure(def: RelicDef): Promise<void> {
+  private async loadFigure(def: RelicDef, swap = false): Promise<void> {
     const request = ++this.figureRequest;
     const asset = this.figureAssetOf(def);
     this.pendingLoads += 1;
@@ -2173,15 +2280,19 @@ export class InfoManager {
     }).catch(swallowCancelled).finally(() => { this.pendingLoads -= 1; });
     if (!figure) return;
     // 비교용 전신도 같은 공용 정책을 소비해 정보창 내부에서 예산이 갈리지 않게 한다.
-    figure.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
+    figure.setDecorativeUpdateFactor(this.puppetUpdateFactor());
     if (request !== this.figureRequest) { figure.destroy(); return; }
-    this.figure?.destroy();
+    const previous = this.figure;
+    if (swap && previous?.active) this.swapOut(previous, -INFO_SWAP.slide * 0.5);
+    else previous?.destroy();
     this.figure = figure;
     this.figureUrl = asset.url;
     setDebugInfoAssetReady({ sd: true });
     if (!this.ownedNow) { tintPuppet(figure, INFO_SILHOUETTE.tint); figure.setAlpha(INFO_SILHOUETTE.alpha); }
     else enableHitOnClick(this.scene, figure);
     figure.setVisible(this.portraitWanted && this.root.visible);
+    if (swap) this.swapIn(figure, this.portraitAlpha());
+    else if (this.figureReveal) { figure.setAlpha(0); this.scene.tweens.add({ targets: figure, alpha: this.portraitAlpha(), duration: 260 }); }
   }
 
   /** 원화 아래 스킬 아이콘 세 개. 누르면 정형 팝업이 뜬다. */
@@ -2371,6 +2482,7 @@ export class InfoManager {
     // 돌파·즐겨찾기)으로 다시 그릴 때마다 전신과 SD를 새로 읽어 녹여 들이면, 인물이 사라졌다
     // 다시 떠올라 **창이 새로고침된 것처럼** 읽혔다. 외형을 바꾼 때만 URL이 달라져 새로 세운다.
     // 실루엣과 제 모습은 같은 원화라도 다르게 선 것이라 서로 이어 쓰지 않는다.
+    const firstOpen = !(this.root.visible && !this.closing);
     const keepPortrait = this.portraitSilhouette === !owned && this.portrait?.active === true && this.portraitUrl === this.portraitAssetOf(def).url;
     const keepFigure = this.portraitSilhouette === !owned && this.figure?.active === true && this.figureUrl === this.figureAssetOf(def).url;
     if (!keepPortrait) this.portrait?.setVisible(false);
@@ -2378,9 +2490,17 @@ export class InfoManager {
     {
       this.assetLoadTimer?.remove(false);
       this.assetLoadTimer = undefined;
+      // 처음 여는 판은 판이 다 조립된 뒤에 인물을 세운다 — 판 조립·전신·SD를 한 프레임에 몰면 그 순간이 끊긴다.
+      // 전신을 먼저, SD는 전신이 선 뒤에 세워 무거운 생성이 한 프레임에 겹치지 않게 한다.
+      const staged = firstOpen && motionPolicy(session.settings).nonEssentialRepeatFactor !== 0;
+      this.figureReveal = staged;
       const load = (): void => {
         this.assetLoadTimer = undefined;
         if (this.currentDef !== def) return;
+        if (staged && !keepPortrait && !keepFigure) {
+          void this.loadPortrait(def).then(() => { if (this.currentDef === def && this.isOpen) void this.loadFigure(def); });
+          return;
+        }
         if (!keepPortrait) void this.loadPortrait(def);
         if (!keepFigure) void this.loadFigure(def);
       };
@@ -2391,6 +2511,7 @@ export class InfoManager {
         if (!keepPortrait) this.portraitRequest += 1;
         if (!keepFigure) this.figureRequest += 1;
         if (this.sliding && this.pendingLoads > 0) this.assetLoadTimer = this.scene.time.delayedCall(SWIPE_SETTLE_MS, load);
+        else if (staged) this.assetLoadTimer = this.scene.time.delayedCall(INFO_ASSEMBLE.portraitDelayMs, load);
         else load();
       }
     }
@@ -2415,9 +2536,11 @@ export class InfoManager {
     // 알린 값을 옛 창이 사라지며 지워 버린다 — 그 뒤로는 아무도 다시 알리지 않는다.
     // 판이 제자리를 잡은 다음 프레임에 재야 기울임과 이동이 반영된 실제 좌표가 나온다.
     // 처음 여는 판은 조립 연출(판이 세로로 펼쳐진다)이 끝난 뒤에 재야 실제 자리가 나온다.
-    this.scene.time.delayedCall(wasOpen ? 0 : INFO_ASSEMBLE_SETTLE_MS, () => {
+    // 조립 연출(판이 세로로 펼쳐진다) 중이면 그 판을 잠깐 제 크기로 되돌려 잰다 — 연출이 끝나길
+    // 기다리면 씬 시계가 느린 기기에서 그만큼 늦게 알려진다.
+    this.scene.time.delayedCall(0, () => {
       if (!this.feedButton.active || !this.isOpen) return;
-      const bounds = this.feedButton.getBounds();
+      const bounds = this.settledBounds(this.feedButton);
       setDebugFeedButton({ x: bounds.centerX, y: bounds.centerY });
     });
   }
@@ -2488,7 +2611,7 @@ export class InfoManager {
     // 사거리는 성장하지 않는 정적 값이지만, 다른 캐릭터로 넘길 때 함께 갈아 끼워야 한다.
     this.reachLabel.setText(`${t("stat.range")} · ${reachLabel(def.reachTier)}`).setColor(reachToneHex(def.reachTier));
     this.paintReachChip(Phaser.Display.Color.HexStringToColor(reachToneHex(def.reachTier)).color);
-    this.levelValue.setText(String(progress.level));
+    this.levelValue.setText(String(previewFeedProgress(progress, this.publicProfile ? 0 : this.pendingFeeds()).level));
     this.levelCap.setText("/ " + cap);
     // 숫자 폭이 자리 수에 따라 달라지므로 붙는 자리도 그릴 때마다 다시 잡는다.
     // 레벨업 때 숫자가 잠깐 부풀어도 상한이 따라 밀리지 않도록 제 배율(가로 1 · 세로 1.16)로 잰다.
@@ -2496,15 +2619,10 @@ export class InfoManager {
     // 상한은 숫자의 **발치**에 붙는다. 숫자 높이는 자리 수와 무관하게 늘 같지만, 글꼴이
     // 늦게 도착하면 처음 그린 높이가 다르므로 그릴 때마다 다시 맞춘다.
     this.levelCap.setY(this.levelValue.y + this.levelValue.height * 1.16 - 4);
-    const need = maxed ? 0 : relicExpToNext(progress.level);
-    const expRatio = maxed ? 1 : progress.exp / need;
-    if (this.glideExp && this.expShownLevel >= 0 && !this.publicProfile) {
-      this.expBar.glideTo(this.scene, expRatio, FEED_TAP.hold.gaugeGlideMs, progress.level > this.expShownLevel && !maxed);
-    } else this.expBar.setValue(expRatio);
+    // 아직 서버로 가는 중인 누름은 이미 먹인 것으로 보여 준다 — 응답이 오기 전 줄이 뒤로 물러나지 않는다.
+    if (!this.publicProfile) this.paintExp(progress, cap, this.glideExp);
+    else { this.expBar.setValue(maxed ? 1 : progress.exp / relicExpToNext(progress.level)); this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + relicExpToNext(progress.level) + " EXP"); }
     this.glideExp = false;
-    this.expShownLevel = progress.level;
-    // 경험치 줄은 "얼마나 컸는가"만 말한다. 급여에 드는 치즈케이크는 바로 아래 버튼이 맡는다.
-    this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP");
     this.paintFeedButton(this.ownedNow && canFeedRelic(progress, session.wallet.cheesecake));
     this.feedLabel.setText(maxed ? t("info.level.max") : t("info.feed"));
     // 급여는 치즈케이크를 먹이는 일이라 버튼이 그 수를 직접 말한다. 상단 줄과 같은 세션 지갑을
@@ -2586,6 +2704,42 @@ class Gauge {
 
   private shown = 0;
   private glide?: Phaser.Tweens.Tween;
+  private shake?: Phaser.Tweens.Tween;
+
+  /**
+   * 먹일 때마다 한 번 — 채움이 하얗게 번쩍이며 위아래로 부풀었다 돌아오고 줄 전체가 짧게 떨린다.
+   * 연타 중에는 매 틱 새로 걸려 줄이 두근두근 맥동한다. 움직임 줄이기에서는 번쩍임만 남는다.
+   */
+  pulse(scene: Phaser.Scene, still: boolean, reduceFlashes: boolean): void {
+    if (!this.track.visible || !scene.sys.isActive()) return;
+    const spec = FEED_TAP.gaugePulse;
+    const s = this.height / 2;
+    const left = -this.width / 2;
+    const filled = this.width * this.shown;
+    if (!this.sweep.alpha || this.sweep.alpha === 0) {
+      // 레벨업 빛살이 도는 중이 아니면 같은 층을 빌려 채운 자리만 하얗게 덮는다.
+      this.sweep.clear();
+      this.sweep.fillStyle(0xffffff, 1);
+      this.sweep.fillPoints(toPoints([left + s, -s, left + Math.max(filled, s * 2) + s, -s, left + Math.max(filled, s * 2) - s, s, left - s, s]), true);
+      this.sweep.setX(this.track.x);
+      scene.tweens.killTweensOf(this.sweep);
+      this.sweep.setAlpha(reduceFlashes ? spec.flashAlpha * 0.4 : spec.flashAlpha);
+      scene.tweens.add({ targets: this.sweep, alpha: 0, duration: spec.flashMs, ease: "Quad.Out" });
+    }
+    if (still) return;
+    scene.tweens.killTweensOf(this.fill);
+    this.fill.setScale(1, spec.swell);
+    scene.tweens.add({ targets: this.fill, scaleY: 1, duration: spec.swellMs, ease: "Back.Out" });
+    this.shake?.remove();
+    const baseX = this.track.x;
+    const parts = [this.track, this.fill, this.flashLayer];
+    const proxy = { t: 0 };
+    this.shake = scene.tweens.add({
+      targets: proxy, t: 1, duration: spec.shakeMs, ease: "Linear",
+      onUpdate: () => { const dx = Math.sin(proxy.t * Math.PI * 4) * spec.shake * (1 - proxy.t); for (const part of parts) part.x = baseX + dx; },
+      onComplete: () => { for (const part of parts) part.x = baseX; },
+    });
+  }
 
   /**
    * 틱마다 값이 차오르게 한다. 레벨이 올라 비율이 되감기면 끝까지 찼다가 비워진 뒤 새 값으로 오른다.
@@ -2787,8 +2941,20 @@ export function addInfoMagnifier(
 }
 
 
+/**
+ * 서버가 아직 답하지 않은 급여까지 먹인 것으로 친 진행 — 표시에만 쓴다. 줄에 넣을 때 지갑과 상한을
+ * 이미 셈했으므로 같은 규칙(`feedRelic`)을 지갑 제한 없이 돌린다. 확정은 여전히 서버가 한다.
+ */
+function previewFeedProgress(progress: RelicProgress, pending: number): { level: number; exp: number } {
+  if (pending <= 0) return { level: progress.level, exp: progress.exp };
+  const result = simulateFeed(progress, Number.MAX_SAFE_INTEGER - (Number.MAX_SAFE_INTEGER % FEED_UNIT.cheesecake), pending).progress;
+  return { level: result.level, exp: result.exp };
+}
+
+/** 외형을 갈아입을 때와 외형 창이 떠 있는 동안의 값. */
+const INFO_SWAP = { slide: 60, outMs: 260, inMs: 380, inDelay: 90, backdropUpdateFactor: 0.34 } as const;
+
 /** 처음 열 때의 조립 연출이 다 서는 시각(ms). */
-const INFO_ASSEMBLE_SETTLE_MS = 1000;
 
 /** 처음 열 때의 조립 연출 값. */
 const INFO_ASSEMBLE = {
@@ -2797,6 +2963,8 @@ const INFO_ASSEMBLE = {
   cap: 520,
   icon: { delay: 220, stagger: 55, ms: 260, fromScale: 0.55 },
   radarMs: 520,
+  /** 판이 거의 다 선 뒤에 전신을 세운다. */
+  portraitDelayMs: 520,
   scan: { color: 0x9ff3ff, alpha: 0.5, height: 3, ms: 620 },
 } as const;
 

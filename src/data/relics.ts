@@ -5043,7 +5043,7 @@ export const RELICS: RelicDef[] = [
        * 단 다음 개체가 저도 모르게 그 몫을 함께 받는다. 공속·이속은 `CLAUDE.md` 그대로 **그
        * 개체의 정체성**이라 제 정의가 갖고, 유형은 몸집만 키운다.
        */
-      attackSpeed: 34,
+      attackSpeed: 28,
       moveSpeed: 30,
       critChance: 8,
       critDamage: 150,
@@ -5098,8 +5098,12 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "sukusuino-basic",
       name: "죽음의 물레",
-      // 보스의 한 방이다. 폰토스(100)보다 높고 공속이 낮아 초당 피해로는 비슷한 자리에 선다.
-      power: 140,
+      /*
+       * **보스의 한 방이다.** 레이드 셋 중 이 몸의 정체성은 "한 번 물리면 크게 빠진다"라, 위력을 셋 중
+       * 가장 높게 두고 그만큼 공속을 깎았다(140·34 → 170·28 — 초당 피해는 그대로다). 맞는 횟수가 적고
+       * 한 번이 크니 공략이 "둔화로 그 간격을 더 벌리고, 그 한 방을 받아 낼 앞줄"로 또렷해진다.
+       */
+      power: 170,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -5210,7 +5214,7 @@ export const RELICS: RelicDef[] = [
        * 수쿠스이노보다 빠르지만 여전히 로스터 아래쪽이다. 한 대는 가볍고 그 사이가 짧아, 조일수록
        * 빨라지는 패시브가 "시간이 지날수록 아프다"를 대신 말한다.
        */
-      attackSpeed: 44,
+      attackSpeed: 40,
       moveSpeed: 40,
       critChance: 8,
       critDamage: 150,
@@ -5240,7 +5244,12 @@ export const RELICS: RelicDef[] = [
       kind: "basicHitAttackSpeedStack",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
-      value: 3,
+      /*
+       * **시작은 느리고 감은 채로 끌수록 빨라진다.** 겹을 3%에서 4%로, 기본 공속을 44에서 40으로 옮겨
+       * 첫 몇 대는 가볍고 열 겹에서는 예전과 같은 손이 된다 — 공속을 깎는 둔화·수압이 그 오르막을
+       * 되돌리는 답이라는 것이 수치로도 읽힌다.
+       */
+      value: 4,
       maxStacks: 10,
       // 전용 분기(`passiveDescription`)가 이 종류의 문장을 짓는다. 이 원문은 표시되지 않는 데이터
       // 문서용 사본이라, 고칠 때는 그 분기도 함께 본다.
@@ -5284,7 +5293,8 @@ export const RELICS: RelicDef[] = [
        */
       selfShieldMaxHpPercent: 3,
     },
-    // 수쿠스이노와 같은 이유로 네 칸 모두 "없음"이다.
+    // 네 칸 모두 "감고 조인다" 한 갈래다 — 둔화된 표적에 더 아프게(평타), 감는 범위가 넓게(궁극기),
+    // 끌어오는 손이 길게(폭주), 겹마다 더 세게(패시브). 회복·보호막은 더하지 않는다.
     breakthroughEffects: {
       basic: { kind: "coiledTarget", damagePercentPerStack: 8 },
       ultimate: { kind: "widenArea", radius: 390 },
@@ -5379,7 +5389,8 @@ export const RELICS: RelicDef[] = [
       effectType: "buff",
       value: 0,
       criticalChancePercent: 25,
-      openingCharge: { withinReachTier: "mid", stunSeconds: 1 },
+      // 첫 급강하가 이 보스의 인사다 — 1.5초를 묶어 "첫 표적은 단단한 앞줄이 맡는다"가 공략이 되게 한다.
+      openingCharge: { withinReachTier: "mid", stunSeconds: 1.5 },
       // 전용 분기(`passiveDescription`)가 문장을 짓는다. 이 원문은 표시되지 않는 데이터 문서용 사본이다.
       desc: "전투가 열리면 표적에게 급강하해 기절시키고, 치명타 확률이 오른다.",
     },
@@ -5419,7 +5430,8 @@ export const RELICS: RelicDef[] = [
       // 회복 대신 그 판 안에서만 남는 보호막을 궁극기 때만 조금 두른다(타보아와 같은 이유).
       selfShieldMaxHpPercent: 3,
     },
-    // 다른 보스와 같은 이유로 네 칸 모두 "없음"이다.
+    // 네 칸 모두 "한 줄·치명타" 한 갈래다 — 뒤에 선 적까지 꿰고(평타), 통로가 넓게(궁극기), 폭주 중
+    // 치명타가 더 잦고(폭주), 치명타가 자세를 무너뜨린다(패시브). 회복·보호막은 더하지 않는다.
     breakthroughEffects: {
       basic: { kind: "piercingBeak", sharePercent: 30, halfWidth: 140 },
       ultimate: { kind: "widenArea", radius: 140 },

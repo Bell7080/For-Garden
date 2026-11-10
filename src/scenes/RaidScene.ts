@@ -44,6 +44,7 @@ import { TopBar } from "../ui/TopBar";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { withBusy } from "../ui/BusyOverlay";
 import { showContentIntro } from "../ui/contentIntro";
+import { addRaidGuideButton } from "../ui/RaidGuidePopup";
 
 /**
  * 지난번에 받은 레이드 목록. 씬이 다시 설 때 이것으로 먼저 그려 빈 목록이 한 박자 서지 않게 한다.
@@ -497,6 +498,8 @@ export class RaidScene extends Phaser.Scene {
       content.add(this.add.text(RAID_HEADER.titleX + 4, RAID_HEADER.attemptsY, t("raid.attempts", { remaining: Math.max(0, raid.attemptsLimit - raid.attemptsUsed), limit: raid.attemptsLimit }), textStyle({ role: "emphasis", size: 25, color: COLOR.sortieText })).setOrigin(0, 0));
     }
 
+    // 보스마다 공략법 창을 연다 — 무엇을 조심하고 누구를 데려갈지는 판에 들어온 바로 그 자리에서 읽혀야 한다.
+    addRaidGuideButton(this, content, this.popups, raid.bossRelicId);
     this.renderHpBar(content, raid);
     this.renderBoard(content, raid.entries);
     this.renderActions(content, raid);

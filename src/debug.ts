@@ -147,6 +147,8 @@ export interface DebugState {
   party?: { autoButton: { x: number; y: number }; visibleAffinityDirections: number; selectedCount?: number; slots?: Array<{ x: number; y: number }>; selectedSlot?: number };
   /** 레이드가 시즌 판인지 편성 단계인지. 두 걸음이 같은 씬 이름을 쓰므로 E2E는 이 값으로 가른다. */
   raidStage?: "list" | "season" | "summon" | "summonReveal";
+  /** 공략법 창의 「이유 보기」 버튼이 선 화면 좌표. 창 높이가 글 길이에서 나오므로 E2E가 여기서 읽는다. */
+  raidGuideWhy?: { x: number; y: number };
   /** 원정 준비 슬롯의 실제 입력 중심과 현재 선택 수만 노출하는 모바일 입력 계약이다. */
   /**
    * `selectedSlot`은 지금 고른 칸이다. 칸은 한 번 누르면 **고르고**, 고른 칸을 한 번 더 누르면 **뺀다**
@@ -381,6 +383,11 @@ export function setDebugBossResult(result: DebugState["bossResult"]): void {
 export function setDebugRaidStage(stage: DebugState["raidStage"]): void {
   if (!QA_TOOLS_ENABLED) return;
   ensure().raidStage = stage;
+}
+
+export function setDebugRaidGuideWhy(point: { x: number; y: number }): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().raidGuideWhy = point;
 }
 
 export function setDebugParty(party: DebugState["party"]): void {

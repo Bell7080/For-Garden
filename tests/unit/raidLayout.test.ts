@@ -2,12 +2,29 @@ import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
   RAID_ACTIONS, RAID_BOARD, RAID_BOARD_PLATE, RAID_BOSS_SPOT, RAID_HP_BAR, RAID_LIST, RAID_LIST_CHROME,
-  RAID_BOSS_PICK, RAID_DIFFICULTY_PICK, RAID_DIFFICULTY_TONE, RAID_LAYER_OWNER, RAID_SUMMON_INTENSITY, RAID_SUMMON_STAGE,
+  RAID_BOSS_PICK, RAID_DIFFICULTY_PICK, RAID_GUIDE_BUTTON, RAID_GUIDE_POPUP, RAID_HEADER, RAID_DIFFICULTY_TONE, RAID_LAYER_OWNER, RAID_SUMMON_INTENSITY, RAID_SUMMON_STAGE,
   raidBoardViewport, raidBossPickHeight, raidLayerStack, raidPickHeight, raidSortieBackGap, raidSummonBackGap,
 } from "../../src/ui/raidLayout";
 import { RAID_DIFFICULTY, RAID_SUMMON_DIFFICULTIES } from "../../src/data/raid";
 
 describe("레이드 배치표", () => {
+  it("공략법 버튼은 화면 안 오른쪽 빈자리에 서고 상단 줄·보스 입력면·체력 줄과 겹치지 않는다", () => {
+    const b = RAID_GUIDE_BUTTON;
+    expect(b.x + b.width / 2).toBeLessThanOrEqual(BASE_WIDTH - 24);
+    // 상단 재화 줄(중심 40, 높이 80 안쪽) 아래에서 시작한다.
+    expect(b.y - b.height / 2).toBeGreaterThan(80);
+    // 보스 원화를 누르는 면보다 위에서 끝난다 — 겹치면 같은 손에 두 창이 열린다.
+    expect(b.y + b.height / 2).toBeLessThan(RAID_BOSS_SPOT.tap.top);
+    // 제목이 서는 왼쪽 띠와 갈라진다(제목 54px 넉 자 남짓 + 여유).
+    expect(b.x - b.width / 2).toBeGreaterThan(RAID_HEADER.titleX + 54 * 9);
+    expect(b.y + b.height / 2).toBeLessThan(RAID_HP_BAR.labelY);
+  });
+
+  it("공략법 창은 화면 폭 안에 서고 글줄은 판보다 좁다", () => {
+    expect(RAID_GUIDE_POPUP.width).toBeLessThanOrEqual(BASE_WIDTH - 80);
+    expect(RAID_GUIDE_POPUP.inner).toBeLessThan(RAID_GUIDE_POPUP.width - 80);
+  });
+
   it("보스는 발끝을 화면 밖으로 내보내고 상반신만 남긴다", () => {
     // 원정 기록 화면과 같은 문법이다 — 상자에 맞춰 줄이면 얼굴보다 여백이 먼저 읽힌다.
     expect(RAID_BOSS_SPOT.groundY).toBeGreaterThan(BASE_HEIGHT);

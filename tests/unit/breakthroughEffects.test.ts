@@ -1868,9 +1868,11 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
     const boss = findFighter(state, "enemy-0")!;
     const ally = findFighter(state, "player-0")!;
     expect(bossDamageMultiplier(boss, ally, false)).toBe(1);
-    boss.bonusAttackSpeed = 3 * 5;
+    // 한 겹의 공속은 패시브 값에서 읽는다 — 공속 오르막을 조정해도 겹 수 계산은 그대로다.
+    const perStack = boss.def.passive.value;
+    boss.bonusAttackSpeed = perStack * 5;
     expect(bossDamageMultiplier(boss, ally, false)).toBeCloseTo(1.06, 5);
-    boss.bonusAttackSpeed = 3 * 40;
+    boss.bonusAttackSpeed = perStack * 40;
     expect(bossDamageMultiplier(boss, ally, false)).toBeCloseTo(1.12, 5);
     expect(bossDamageMultiplier(boss, ally, true)).toBe(1);
   });

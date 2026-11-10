@@ -120,6 +120,32 @@ export const RAID_HP_BAR_COLOR = 0xd2463c;
 /** 시즌 머리글 — 제목, 초기화 시각, 남은 도전 횟수. */
 export const RAID_HEADER = { titleX: 76, titleY: 132, seasonY: 196, attemptsY: 236 } as const;
 
+/**
+ * 시즌 판 오른쪽 위의 「공략법!」 버튼.
+ *
+ * 제목·남은 도전 줄(왼쪽)과 상단 재화 줄(위), 보스 원화의 입력면(`RAID_BOSS_SPOT.tap`) 어느 것과도
+ * 겹치지 않는 오른쪽 빈자리다 — `raidLayout.test`가 그 셋과의 간격을 지킨다.
+ */
+export const RAID_GUIDE_BUTTON = { x: 900, y: 206, width: 236, height: 78 } as const;
+
+/** 공략법 창. 높이는 쌓인 내용에서 거꾸로 구하므로 폭과 줄 간격만 적는다. */
+export const RAID_GUIDE_POPUP = {
+  width: 940,
+  /** 판 안쪽 글줄의 폭. 몸판의 깎인 모서리를 피해 양옆을 비운다. */
+  inner: 820,
+  top: 70,
+  bottom: 64,
+  heroHeight: 236,
+  heroFace: 168,
+  sectionGap: 54,
+  sectionTitleRoom: 58,
+  patternIcon: 116,
+  patternGap: 22,
+  recommendFace: 132,
+  /** 펼쳐 보는 이유 줄의 위아래 여백. */
+  reasonPad: 22,
+} as const;
+
 /** 목록이 흐르는 창의 높이와 중심. 마스크와 입력면이 같은 값을 쓴다. */
 export function raidBoardViewport(): { height: number; centerY: number } {
   const { top, bottom } = RAID_BOARD.viewport;

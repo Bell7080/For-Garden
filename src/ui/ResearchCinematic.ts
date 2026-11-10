@@ -237,6 +237,8 @@ const FACE_BAKE = 192;
  * 더 두었다가 섬광과 함께 바뀐다.
  */
 const SHATTER_DELAY_MS = 900;
+/** SR·SSR은 옆면에 걸렸다 닿고 섬광·고리가 퍼지므로, 그 박자를 다 보고 나서 파편이 된다. */
+const SHATTER_GRADE_DELAY_MS: Readonly<Record<string, number>> = { SR: 350, SSR: 550 };
 
 function imageOf(url: string, className: string): HTMLImageElement {
   const image = document.createElement("img");
@@ -347,6 +349,12 @@ export class ResearchCinematic {
       this.tap();
     });
     root.querySelector(".rc-skip")?.addEventListener("click", () => this.skip());
+    // 카드 공개의 소리 두 겹 — 등급이 SR·SSR로 오를 때 우르릉, SSR이 앞면에 닿을 때 쾅.
+    // 뒤집기 시작의 공개음(`afterAdvance`)과 합쳐 우르릉 → 휙 → 쾅이 된다.
+    root.addEventListener("rc-card-charge", () => { audioManager?.playSfx("story.rumble"); });
+    root.addEventListener("rc-card-land", (event) => {
+      if ((event as CustomEvent<{ level: number }>).detail?.level === 3) audioManager?.playSfx("story.impact");
+    });
 
     this.grades = options.rewards.map(({ rarity }) => rarity);
     this.instance = new bundle.Cinematic(root, {
@@ -796,7 +804,7 @@ export class ResearchCinematic {
     const timer = window.setTimeout(() => {
       this.timers.delete(timer);
       if (!this.closed) this.shatter(index, false);
-    }, SHATTER_DELAY_MS);
+    }, SHATTER_DELAY_MS + (SHATTER_GRADE_DELAY_MS[this.grades[index] ?? ""] ?? 0));
     this.timers.add(timer);
   }
 

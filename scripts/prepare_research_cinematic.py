@@ -188,6 +188,36 @@ EXPORT_TAIL = (
     "xo.prototype.skipToResult=function(){"
     'if(this.destroyed||this.phase==="result")return;'
     "this.stopAudio(),this.finish()};"
+    # 카드 공개를 다섯 겹으로 쌓는다(응태 요청, 2026-11-10 — 카드 공개 연출 릴스).
+    #   ① 빌드업: 등급이 한 칸 오를 때마다 카드가 떠오르며 떨고, 테두리로 등급색이 새어 나온다.
+    #   ② 느린 뒤집기: SR·SSR은 옆면에서 한 박자 걸렸다가(빛나는 모서리) 탁 돌아간다.
+    #   ③ 빛 폭발: 앞면에 닿는 순간 납작한 마름모 섬광과 바닥을 훑는 고리가 퍼진다.
+    #   ④ 포일 광택: SR·SSR 앞면 위로 무지갯빛이 훑고 카드가 천천히 기운다.
+    #   ⑤ 소리: 오를 때(`rc-card-charge`)와 닿을 때(`rc-card-land`) 사건을 내보내고 게임이 효과음을 고른다.
+    # 원본 회전식은 그대로 두고 **덮어 그린다**. 화면의 면 판정은 `rotateY(..)`만 읽으므로 앞에 붙는
+    # translate는 건드리지 않는다. 움직임 줄이기에서는 흔들림·느린 뒤집기를 빼고 사건만 낸다.
+    "var GUP=go.prototype.update;"
+    "go.prototype.update=function(e){var g=GUP.call(this,e);try{FXC(this,g)}catch(x){}return g};"
+    "function FXC(k,g){"
+    "var c=k.cards[g.index];if(!c)return;"
+    "var r=c.querySelector(\".card-rotor\"),L=ft[g.reward.rarity].level,s=g.local,red=k.reduced;"
+    "if(!c._fx){c._fx=1;var f=c.querySelector(\".card-front\");"
+    "if(f){var o=document.createElement(\"i\");o.className=\"card-foil\";f.appendChild(o)}"
+    "[\"card-leak\",\"card-seam\",\"card-flash\",\"card-ring\",\"card-ring card-ring-late\"].forEach(function(n){"
+    "var d=document.createElement(\"i\");d.className=n;c.appendChild(d)});"
+    "var rt=k.root.closest(\".rc-root\");rt&&red&&rt.classList.add(\"rc-still\")}"
+    "if(c.dataset.fx!==String(L))c.dataset.fx=String(L);"
+    "if(g.stageChanged&&g.level>=2&&s<.58)k.root.dispatchEvent(new CustomEvent(\"rc-card-charge\",{bubbles:!0,detail:{index:g.index,level:g.level}}));"
+    "var w=L>=2?.3:.25,p=(s-.58)/w,q=Math.max(0,Math.min(1,p)),a,h1=L>2?.26:.32,h2=L>2?.74:.62;"
+    "if(red)a=0;else if(L<2)a=180*(1-Dg(p));"
+    "else a=q<h1?180-82*(1-Math.pow(1-q/h1,3)):q<h2?98-16*(q-h1)/(h2-h1):82*(1-Math.pow((q-h2)/(1-h2),2));"
+    "var landed=red?s>=.83:p>=1,ch=landed?0:(g.level+1)/4,t=performance.now()/1e3,"
+    "m=!red&&!landed&&(s<.58||q<h2)?g.level*.32:0,x=m*(Math.sin(t*61)+.5*Math.sin(t*37)),y=m*.6*Math.cos(t*53)-(s<.58?2.4*ch:2.4*ch*(1-q));"
+    "r.style.transform=red?\"rotateY(0deg)\":\"translate3d(\"+x.toFixed(2)+\"%,\"+y.toFixed(2)+\"%,0) rotateY(\"+a.toFixed(2)+\"deg)\";"
+    "c.style.setProperty(\"--charge\",ch.toFixed(3));"
+    "c.style.setProperty(\"--seam\",L>=2&&!landed&&!red?Math.max(0,1-Math.abs(a-90)/22).toFixed(3):\"0\");"
+    "if(landed&&!c.classList.contains(\"landed\")){c.classList.add(\"landed\");"
+    "k.root.dispatchEvent(new CustomEvent(\"rc-card-land\",{bubbles:!0,detail:{index:g.index,level:L}}))}}"
     "window.__RESEARCH_CINEMATIC__={Cinematic:xo,text:CT,tiers:ft};})();"
 )
 

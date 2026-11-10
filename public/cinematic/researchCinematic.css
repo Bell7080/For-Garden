@@ -565,3 +565,132 @@
 .rc-root .archive-card .card-back {
   background: repeating-linear-gradient(45deg, #0b1718 0, #142322 4px, #0b1718 8px);
 }
+
+/* ── 카드 공개 다섯 겹 ─────────────────────────────────────────────────── */
+
+/*
+ * 빌드업 → 느린 뒤집기 → 빛 폭발 → 포일 광택 → 소리(게임 효과음).
+ *
+ * 값(`--charge` 0~1, `--seam` 0~1, `data-fx` 최종 등급 0~3, `.landed`)은 묶음 끝의 덧붙임(`FXC`)이
+ * 프레임마다 정하고, 여기서는 그 값을 그리기만 한다. 섬광은 원이 아니라 **납작한 마름모**이고,
+ * 진하기는 상한(0.6) 아래다. 결산 격자(`overview`)와 이미 지나간 칸(`collected`)에서는 서지 않는다.
+ */
+.archive-card { --charge: 0; --seam: 0; }
+.card-leak, .card-seam, .card-flash, .card-ring, .card-foil { position: absolute; pointer-events: none; opacity: 0; }
+
+/* ① 테두리로 새어 나오는 등급색 — 오를수록 넓고 진하다. */
+.card-leak {
+  inset: -9% -14%;
+  z-index: -1;
+  background:
+    repeating-conic-gradient(from 8deg at 50% 50%, transparent 0deg 11deg, color-mix(in srgb, var(--tier) 55%, transparent) 11deg 13deg, transparent 13deg 24deg),
+    radial-gradient(ellipse at center, color-mix(in srgb, var(--tier) 62%, transparent) 30%, transparent 70%);
+  -webkit-mask: radial-gradient(ellipse at center, #000 34%, transparent 72%);
+  mask: radial-gradient(ellipse at center, #000 34%, transparent 72%);
+}
+.cards.opening .archive-card.focused .card-leak { opacity: calc(var(--charge) * 0.85); }
+.cards.opening .archive-card.focused .card-back { box-shadow: inset 0 0 calc(var(--charge) * 9cqw) color-mix(in srgb, var(--tier) 80%, transparent), inset 0 0 26px #02050a; }
+
+/* ② 옆면에 걸린 순간의 빛나는 모서리. */
+.card-seam {
+  left: 50%;
+  top: -3%;
+  bottom: -3%;
+  width: 1cqw;
+  translate: -50% 0;
+  background: linear-gradient(transparent, #fff 16%, #fff 84%, transparent);
+  box-shadow: 0 0 2.4cqw 0.8cqw color-mix(in srgb, var(--tier) 75%, transparent);
+}
+.cards.opening .archive-card.focused .card-seam { opacity: var(--seam); }
+
+/* ③ 앞면에 닿는 순간 — 마름모 섬광과 바닥을 훑는 고리. */
+.card-flash {
+  left: 50%;
+  top: 50%;
+  width: 150%;
+  aspect-ratio: 1;
+  background: radial-gradient(closest-side, #ffffff, color-mix(in srgb, var(--tier) 70%, transparent) 38%, transparent);
+  transform: translate(-50%, -50%) scaleY(0.62) rotate(45deg) scale(0.2);
+}
+.archive-card[data-fx="3"] .card-flash { width: 230%; }
+.card-ring {
+  left: 50%;
+  top: 96%;
+  width: 110%;
+  aspect-ratio: 1;
+  border: 0.55cqw solid var(--tier);
+  box-shadow: 0 0 2.4cqw color-mix(in srgb, var(--tier) 70%, transparent), inset 0 0 2.4cqw color-mix(in srgb, var(--tier) 50%, transparent);
+  transform: translate(-50%, -50%) scaleY(0.3) rotate(45deg) scale(0.3);
+}
+@keyframes rc-card-flash {
+  0% { opacity: 0.6; transform: translate(-50%, -50%) scaleY(0.62) rotate(45deg) scale(0.2); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scaleY(0.62) rotate(45deg) scale(1.25); }
+}
+@keyframes rc-card-ring {
+  0% { opacity: 0.95; transform: translate(-50%, -50%) scaleY(0.3) rotate(45deg) scale(0.3); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scaleY(0.3) rotate(45deg) scale(2.5); }
+}
+@keyframes rc-card-punch { 0% { scale: 1.16; } 45% { scale: 0.97; } 100% { scale: 1; } }
+@keyframes rc-card-flash-soft {
+  0% { opacity: 0.3; transform: translate(-50%, -50%) scaleY(0.62) rotate(45deg) scale(0.2); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scaleY(0.62) rotate(45deg) scale(1); }
+}
+.cards.opening .archive-card.focused.landed[data-fx="1"] .card-flash { animation: rc-card-flash-soft 0.4s ease-out both; }
+.cards.opening .archive-card.focused.landed[data-fx="2"] .card-flash,
+.cards.opening .archive-card.focused.landed[data-fx="3"] .card-flash { animation: rc-card-flash 0.55s ease-out both; }
+.cards.opening .archive-card.focused.landed[data-fx="2"] .card-ring,
+.cards.opening .archive-card.focused.landed[data-fx="3"] .card-ring { animation: rc-card-ring 0.85s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+.cards.opening .archive-card.focused.landed[data-fx="3"] .card-ring-late { animation-delay: 0.16s; }
+.archive-card[data-fx="2"] .card-ring-late { display: none; }
+
+/* ④ 포일 광택 — 무지갯빛이 앞면을 훑고, 카드가 천천히 기운다. */
+.card-foil {
+  inset: 0;
+  z-index: 2;
+  mix-blend-mode: color-dodge;
+  background: linear-gradient(115deg, transparent 18%, #ff7ad966 30%, #ffe36e77 38%, #7affc166 46%, #6fc8ff77 54%, #b77aff66 62%, transparent 76%);
+  background-size: 280% 100%;
+  background-position: 120% 0;
+}
+@keyframes rc-card-foil { 0% { background-position: 120% 0; } 55%, 100% { background-position: -30% 0; } }
+@keyframes rc-card-tilt { 0%, 100% { rotate: 0.2 1 0 -7deg; } 50% { rotate: 0.2 1 0 7deg; } }
+@keyframes rc-card-tilt-soft { 0%, 100% { rotate: 0.2 1 0 -4deg; } 50% { rotate: 0.2 1 0 4deg; } }
+.cards.opening .archive-card.focused.landed[data-fx="2"] .card-foil { opacity: 0.5; animation: rc-card-foil 2.8s ease-in-out 0.3s infinite; }
+.cards.opening .archive-card.focused.landed[data-fx="3"] .card-foil { opacity: 0.85; animation: rc-card-foil 2.2s ease-in-out 0.3s infinite; }
+.cards.opening .archive-card.focused.landed[data-fx="2"] .card-rotor { animation: rc-card-punch 0.4s ease-out, rc-card-tilt-soft 3.6s ease-in-out 0.4s infinite; }
+.cards.opening .archive-card.focused.landed[data-fx="3"] .card-rotor { animation: rc-card-punch 0.5s ease-out, rc-card-tilt 3s ease-in-out 0.5s infinite; }
+
+/* 분위기 — SR·SSR 공개 동안 카드 뒤로 빛줄기가 천천히 돌고 마름모 빛가루가 떠오른다. */
+.rc-aura::before, .rc-aura::after { content: ""; position: absolute; pointer-events: none; opacity: 0; transition: opacity 0.4s; }
+.rc-aura::before {
+  left: 50%;
+  top: 48%;
+  width: 150cqw;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: repeating-conic-gradient(from 0deg, transparent 0deg 9deg, color-mix(in srgb, var(--reveal-color) 22%, transparent) 9deg 12deg, transparent 12deg 20deg);
+  -webkit-mask: radial-gradient(closest-side, #000 18%, transparent 74%);
+  mask: radial-gradient(closest-side, #000 18%, transparent 74%);
+  animation: rc-aura-rays 22s linear infinite;
+}
+.rc-aura::after {
+  inset: 0 28%;
+  background: var(--reveal-color);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 300'%3E%3Cpath d='M30 40l4 7-4 7-4-7z M150 20l3 5-3 5-3-5z M90 120l5 9-5 9-5-9z M170 170l3 6-3 6-3-6z M40 230l4 7-4 7-4-7z M120 270l3 5-3 5-3-5z M70 190l2 4-2 4-2-4z M180 90l2 4-2 4-2-4z'/%3E%3C/svg%3E") 0 0 / 40cqw 60cqw repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 300'%3E%3Cpath d='M30 40l4 7-4 7-4-7z M150 20l3 5-3 5-3-5z M90 120l5 9-5 9-5-9z M170 170l3 6-3 6-3-6z M40 230l4 7-4 7-4-7z M120 270l3 5-3 5-3-5z M70 190l2 4-2 4-2-4z M180 90l2 4-2 4-2-4z'/%3E%3C/svg%3E") 0 0 / 40cqw 60cqw repeat;
+  animation: rc-aura-motes 9s linear infinite;
+}
+@keyframes rc-aura-rays { to { rotate: 360deg; } }
+@keyframes rc-aura-motes { to { -webkit-mask-position: 0 -60cqw; mask-position: 0 -60cqw; } }
+.rc-root[data-tier="SR"][data-phase="reveal"] .rc-aura::before { opacity: 0.55; animation-duration: 30s; }
+.rc-root[data-tier="SSR"][data-phase="reveal"] .rc-aura::before { opacity: 1; }
+.rc-root[data-tier="SR"][data-phase="reveal"] .rc-aura::after { opacity: 0.35; }
+.rc-root[data-tier="SSR"][data-phase="reveal"] .rc-aura::after { opacity: 0.6; animation-duration: 6s; }
+
+/* 움직임 줄이기 — 빛은 서되 돌거나 흔들리거나 터지지 않는다. */
+.rc-root.rc-still .card-flash, .rc-root.rc-still .card-ring { display: none; }
+.rc-root.rc-still .card-rotor, .rc-root.rc-still .card-foil, .rc-root.rc-still .rc-aura::before, .rc-root.rc-still .rc-aura::after { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .card-flash, .card-ring { display: none; }
+  .card-rotor, .card-foil, .rc-aura::before, .rc-aura::after { animation: none !important; }
+}

@@ -1,13 +1,19 @@
 /**
  * 시즌 패스의 시계 — **28일마다 도는 30단계 길**(응태 승인 2026-11-09).
  *
- * 시즌은 2026-11-02(월) 00:00 UTC부터 28일씩 끊는다. 주간 임무 네 바퀴와 맞물리게 월요일에 연다. 키는 `S1`·`S2`…이고,
+ * 시즌은 출시 주의 월요일 00:00 UTC(출시 전에는 2026-11-02)부터 28일씩 끊는다. 주간 임무 네 바퀴와 맞물리게 월요일에 연다. 키는 `S1`·`S2`…이고,
  * 상품 구매 기록의 주기 키(`refresh: "season"`)와 패스의 진행 칸이 같은 키를 읽는다 — 둘이 갈리면 지난 시즌에 산 패스가
  * 이번 시즌에도 열린 것처럼 읽힌다.
  *
  * 단계는 임무 수령이 올리는 연구도를 그대로 센다(`addSeasonPoints`). 새 카운터를 만들지 않고 임무를 받는 그 처리가 함께 올린다.
  */
+import { cycleAnchor } from "./launchAnchor";
+
 export const SEASON_EPOCH_MS = Date.UTC(2026, 10, 2);
+/** 지금 쓰는 시즌 기준점 — 출시 뒤에는 출시 주의 월요일이라 출시 날이 S1이다(`launchAnchor.ts`). */
+export function seasonEpoch(): number {
+  return cycleAnchor(SEASON_EPOCH_MS);
+}
 export const SEASON_DAYS = 28;
 const SEASON_MS = SEASON_DAYS * 86_400_000;
 /** 한 단계에 드는 연구도. 매일 일일 임무를 다 받고 주간을 채우면 22~24일째에 30단계에 닿는다. */
@@ -16,7 +22,7 @@ export const SEASON_TIERS = 30;
 
 export function seasonIndex(now: Date | number): number {
   const at = typeof now === "number" ? now : now.getTime();
-  return Math.max(0, Math.floor((at - SEASON_EPOCH_MS) / SEASON_MS));
+  return Math.max(0, Math.floor((at - seasonEpoch()) / SEASON_MS));
 }
 
 export function seasonKey(now: Date | number): string {
@@ -24,7 +30,7 @@ export function seasonKey(now: Date | number): string {
 }
 
 export function seasonEndsAt(now: Date | number): string {
-  return new Date(SEASON_EPOCH_MS + (seasonIndex(now) + 1) * SEASON_MS).toISOString();
+  return new Date(seasonEpoch() + (seasonIndex(now) + 1) * SEASON_MS).toISOString();
 }
 
 export interface SeasonPassProgress { key: string; points: number }

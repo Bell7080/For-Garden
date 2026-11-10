@@ -86,3 +86,8 @@ insert into public.arena_queue(player_id) values ('00000000-0000-0000-0000-00000
 insert into public.arena_receipts(player_id,request_id,room_id,fingerprint) values (
   '00000000-0000-0000-0000-000000000001','arena-reset-fixture','77777777-7777-7777-7777-777777777777','[]'
 );
+
+-- 행동 계측(20261122000000)과 운영 일정(20261123000000)도 표본을 둔다. 계측은 지우고 일정은 남는 것을 함께 확인한다.
+insert into public.game_events(player_id,kind,detail) values ('00000000-0000-0000-0000-000000000001','stage_clear','1-1');
+insert into public.game_call_daily(day,method,calls) values (current_date,'getProducts',1);
+insert into public.live_schedule(kind,id,ends_at) values ('product','premium-season-crate',now() + interval '30 days');

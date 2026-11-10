@@ -1,3 +1,4 @@
+import { cycleAnchor } from "./launchAnchor";
 import { applyBreakthrough, applyLevelGrowth } from "./relicProgression";
 import type { RelicDef, Stats } from "./types";
 
@@ -110,6 +111,8 @@ export function duelDefenseWinChance(mine: number, theirs: number): number {
 /** 시즌 길이와 기준점(월요일 00:00 UTC). 시즌 번호는 이 기준에서 몇 번째 21일인가다. */
 export const DUEL_SEASON_DAYS = 21;
 const DUEL_SEASON_EPOCH = Date.UTC(2026, 0, 5);
+/** 지금 쓰는 시즌 기준점 — 출시 뒤에는 출시 주의 월요일이라 출시 날이 S1이다(`launchAnchor.ts`). */
+const duelSeasonEpoch = (): number => cycleAnchor(DUEL_SEASON_EPOCH);
 const DAY_MS = 86_400_000;
 
 export function duelTierIndex(score: number): number {
@@ -250,7 +253,7 @@ export function duelDayKey(now: Date): string {
 
 /** 시즌 번호(1부터). 기준점 이전은 1로 수렴한다. */
 export function duelSeasonNumber(now: Date): number {
-  return Math.max(1, Math.floor((now.getTime() - DUEL_SEASON_EPOCH) / (DUEL_SEASON_DAYS * DAY_MS)) + 1);
+  return Math.max(1, Math.floor((now.getTime() - duelSeasonEpoch()) / (DUEL_SEASON_DAYS * DAY_MS)) + 1);
 }
 
 export function duelSeasonId(now: Date): string {
@@ -259,7 +262,7 @@ export function duelSeasonId(now: Date): string {
 
 /** 이 시즌이 끝나는 시각. */
 export function duelSeasonEndsAt(now: Date): Date {
-  return new Date(DUEL_SEASON_EPOCH + duelSeasonNumber(now) * DUEL_SEASON_DAYS * DAY_MS);
+  return new Date(duelSeasonEpoch() + duelSeasonNumber(now) * DUEL_SEASON_DAYS * DAY_MS);
 }
 
 /**

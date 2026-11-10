@@ -29,13 +29,18 @@ const temp = await mkdtemp(resolve(tmpdir(), "fg-site-events-"));
 try {
   const at = (p) => JSON.stringify(resolve(root, p));
   const entry = `import {LOBBY_EVENTS} from ${at("src/data/lobbyEvents.ts")};
-import {REGULAR_EVENT_CYCLE, ROTATION_ANCHOR, WEEK_MS} from ${at("src/core/regularEventRotation.ts")};
+import {REGULAR_EVENT_CYCLE, rotationAnchor, WEEK_MS} from ${at("src/core/regularEventRotation.ts")};
+import {holdsDefinitionEnds, setLaunchAt} from ${at("src/core/launchAnchor.ts")};
+import {OPEN_END} from ${at("src/core/liveSchedule.ts")};
 import {BACKGROUND_ASSETS} from ${at("src/ui/backgroundAssets.ts")};
 import {LOBBY_KO} from ${at("src/i18n/ko/lobby.ts")};
 import {LOBBY_EN} from ${at("src/i18n/en/lobby.ts")};
 import {LOBBY_JA} from ${at("src/i18n/ja/lobby.ts")};
 import * as METADATA from ${at("src/puppets/assetMetadata.ts")};
-export default {events: LOBBY_EVENTS, cycle: REGULAR_EVENT_CYCLE, anchor: ROTATION_ANCHOR, weekMs: WEEK_MS, assets: BACKGROUND_ASSETS, metadata: METADATA, text: {ko: LOBBY_KO, en: LOBBY_EN, ja: LOBBY_JA}};`;
+// 출시 시각(launchAnchor.ts)은 빌드 환경의 FORGARDEN_LAUNCH_AT으로 받는다 — 없으면 출시 전이라 끝 날짜를 걷고 교대는 원래 기준점이다.
+setLaunchAt(process.env.FORGARDEN_LAUNCH_AT ?? null);
+const EVENTS = LOBBY_EVENTS.map((event) => holdsDefinitionEnds() && !event.weekly ? {...event, endsAt: OPEN_END} : event);
+export default {events: EVENTS, cycle: REGULAR_EVENT_CYCLE, anchor: rotationAnchor(), weekMs: WEEK_MS, assets: BACKGROUND_ASSETS, metadata: METADATA, text: {ko: LOBBY_KO, en: LOBBY_EN, ja: LOBBY_JA}};`;
   await build({
     stdin: { contents: entry, resolveDir: root, loader: "ts" },
     bundle: true,

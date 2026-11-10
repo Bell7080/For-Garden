@@ -16,6 +16,7 @@ const LEGACY_EXPEDITION_RANK_SALVAGE = [400, 320, 250, 180, 130, 80] as const;
 let bannedWordsCache: { at: number; words: string[] } | undefined;
 /** 운영 일정은 1분 동안 같은 값을 쓴다 — 어드민에서 바꾼 기간이 늦어도 1분 안에 서버에 닿는다. */
 let scheduleCache: { at: number; rows: unknown } | undefined;
+let launchAtCache: { at: number; value: string | null | undefined } | undefined;
 
 interface Env { url: string; serviceKey: string; fetchImpl?: typeof fetch }
 
@@ -89,6 +90,13 @@ export function createSupabaseStore(env: Env) {
       const rows = await rpc("server_live_schedule", {}).then((value) => value ?? [], () => scheduleCache?.rows ?? []);
       scheduleCache = { at: Date.now(), rows };
       return rows;
+    },
+    async launchAt() {
+      if (launchAtCache && Date.now() - launchAtCache.at < 60_000) return launchAtCache.value;
+      // 마이그레이션(20261124000000) 전 DB에는 함수가 없다 — 그때는 지난 값, 없으면 모른다(`undefined`)로 둔다.
+      const value = await rpc("server_launch_at", {}).then((raw) => typeof raw === "string" && raw.length > 0 ? raw : null, () => launchAtCache?.value);
+      launchAtCache = { at: Date.now(), value };
+      return value;
     },
     async load(playerId) {
       const r = (await rpc("server_load_state", { p_player: playerId })) as { revision: string; data: unknown } | null;

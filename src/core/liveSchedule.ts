@@ -12,6 +12,8 @@
  * DB에서 받아 `setLiveSchedule`로 채운다. 화면과 서버가 같은 함수(`scheduledWindow`)를 지나므로
  * 보여 준 기간과 받아 주는 기간이 갈리지 않는다.
  */
+import { holdsDefinitionEnds } from "./launchAnchor";
+
 export const LIVE_SCHEDULE_KINDS = ["banner", "product", "event", "lobby"] as const;
 export type LiveScheduleKind = (typeof LIVE_SCHEDULE_KINDS)[number];
 
@@ -72,7 +74,8 @@ export function liveSchedule(): readonly LiveScheduleEntry[] {
 /** 정의의 기간에 서버 일정을 덮는다. */
 export function scheduledWindow(kind: LiveScheduleKind, id: string, def: ScheduleWindow, entries: readonly LiveScheduleEntry[] = current): ScheduledWindow {
   const entry = entries.find((row) => row.kind === kind && row.id === id);
-  if (!entry) return { ...(def.startsAt !== undefined ? { startsAt: def.startsAt } : {}), ...(def.endsAt !== undefined ? { endsAt: def.endsAt } : {}), enabled: true, overridden: false };
+  // 출시 전에는 정의의 끝 날짜로 내리지 않는다(`launchAnchor.ts`). 사람이 정한 일정 줄은 그대로 따른다.
+  if (!entry) return { ...(def.startsAt !== undefined ? { startsAt: def.startsAt } : {}), ...(def.endsAt !== undefined && !holdsDefinitionEnds() ? { endsAt: def.endsAt } : {}), enabled: true, overridden: false };
   return { ...(entry.startsAt !== null ? { startsAt: entry.startsAt } : {}), ...(entry.endsAt !== null ? { endsAt: entry.endsAt } : {}), enabled: entry.enabled, overridden: true };
 }
 

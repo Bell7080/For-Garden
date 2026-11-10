@@ -4,7 +4,7 @@
 -- 이 파일은 supabase/migrations에 두지 않는다 — 마이그레이션은 모든 환경에 자동으로 같은 순서로 적용되지만
 -- 이 스크립트는 "그 DB를 비워도 된다"고 사람이 결정한 한 번의 순간에만 직접 실행한다.
 --
--- 쓰는 법: 아래 [실행 값] 네 줄만 고쳐 SQL 편집기(또는 psql)에 통째로 붙여 넣는다. 한 번의 DO 블록이라
+-- 쓰는 법: 아래 [실행 값] 다섯 줄만 고쳐 SQL 편집기(또는 psql)에 통째로 붙여 넣는다. 한 번의 DO 블록이라
 -- 전부 한 트랜잭션이다 — 하나라도 실패하면 아무것도 바뀌지 않는다.
 --   1) 기본값(dry)으로 먼저 돌린다. 지울 건수를 담은 DRY-RUN 오류가 나고, 실제로는 아무것도 바뀌지 않는다.
 --      (지우기까지 실제로 실행한 뒤 되돌리므로 외래키 문제 같은 실패도 이때 드러난다.)
@@ -21,15 +21,18 @@
 -- 인증 계정(auth.users)은 admin_roles에 있는 운영자만 남기고 전부 지운다(세션·토큰·연결 계정은 함께 지워진다).
 -- 남긴 운영자는 새 players 행을 받는다. 공지 이미지 버킷 말고 다른 저장소 파일이 있으면 멈춘다(저장소 API로 먼저 비운다).
 -- 끝에 app_config.launch_epoch를 새 값으로 바꾼다 — 이 값이 달라진 것을 본 클라이언트는 기기에 남은 토큰·저장을 지운다.
+-- 같은 때 app_config.launch_at(출시 시각)을 채운다 — 출시 전 유예가 끝나 이벤트·한정 상품이 제 기간대로 돌고, 시즌 패스·정기
+-- 이벤트 교대·결투 시즌이 이 시각이 든 주의 월요일 00:00(UTC)부터 1회차로 다시 센다(src/core/launchAnchor.ts).
 --
 -- 이 파일의 세 목록은 launch_reset_verify.sql과 같아야 하며 tests/unit/launchReset.test.ts가 지킨다.
 do $reset$
 declare
-  -- ▼▼▼ [실행 값] 실행할 때 이 네 줄만 고친다 ▼▼▼
+  -- ▼▼▼ [실행 값] 실행할 때 이 다섯 줄만 고친다 ▼▼▼
   p_mode text := 'dry';                  -- 'dry'(기본: 건수만 보고하고 되돌림) | 'execute'(진짜 실행)
   p_confirm text := '';                  -- execute일 때만: 정확히 RESET-FORGARDEN-LAUNCH
   p_expect_players bigint := -1;         -- execute일 때만: 지금 이 DB의 players 행 수(dry 결과에 나온 값). 엉뚱한 DB를 막는다.
   p_purge_ops_content boolean := true;   -- false면 우편·쿠폰 정의를 남긴다(사용 흔적은 되돌림)
+  p_launch_at timestamptz := null;       -- 출시 시각. null이면 이 스크립트를 실행한 시각. 시즌은 이 시각이 든 주의 월요일부터 센다.
   -- ▲▲▲ [실행 값] ▲▲▲
 
   reset_tables text[] := array[
@@ -154,6 +157,10 @@ begin
     raise exception 'EPOCH_MIGRATION_MISSING: launch_epoch 마이그레이션(20261020000000)을 먼저 적용하세요.';
   end if;
 
+  if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'app_config' and column_name = 'launch_at') then
+    raise exception 'LAUNCH_AT_MIGRATION_MISSING: launch_at 마이그레이션(20261124000000)을 먼저 적용하세요.';
+  end if;
+
   -- ── 2. 현재 상태와 실행 조건 ───────────────────────────────────────────────────────────
   select count(*) into players_before from public.players;
   select count(*) into admins from auth.users u where exists (select 1 from public.admin_roles a where a.user_id = u.id);
@@ -214,9 +221,9 @@ begin
   insert into public.players (id) select id from auth.users;
 
   epoch := to_char(clock_timestamp() at time zone 'utc', 'YYYYMMDD"T"HH24MISS') || '-' || substr(md5(random()::text || clock_timestamp()::text), 1, 8);
-  update public.app_config set launch_epoch = epoch, updated_at = now() where id = 1;
+  update public.app_config set launch_epoch = epoch, launch_at = coalesce(p_launch_at, now()), updated_at = now() where id = 1;
   insert into public.admin_audit_log (actor, action, target, detail)
-  values (null, 'launch_reset', 'database', jsonb_build_object('mode', p_mode, 'epoch', epoch, 'players_before', players_before, 'purged_ops_content', p_purge_ops_content));
+  values (null, 'launch_reset', 'database', jsonb_build_object('mode', p_mode, 'epoch', epoch, 'launch_at', coalesce(p_launch_at, now()), 'players_before', players_before, 'purged_ops_content', p_purge_ops_content));
 
   -- ── 6. 같은 트랜잭션 안에서 결과 확인: 어긋나면 오류로 전체를 되돌린다 ──────────────────────────────────
   select array_agg(x order by x) into bad from unnest(doomed) x
@@ -242,6 +249,7 @@ begin
   if bad is not null then raise exception 'VERIFY_FAILED: 번호가 처음으로 돌아가지 않은 시퀀스: %', bad; end if;
 
   report := report || format(E'새 launch_epoch = %s\n', epoch);
+  report := report || format(E'출시 시각 launch_at = %s\n', coalesce(p_launch_at, now()));
   if p_mode = 'dry' then
     raise exception E'DRY-RUN 완료: 아무것도 바뀌지 않았습니다(이 오류가 되돌림입니다).\n%\n진짜 실행하려면 p_mode := ''execute'', p_confirm := ''%'', p_expect_players := % 로 고쳐 다시 실행하세요.',
       report, confirm_phrase, players_before;

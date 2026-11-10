@@ -1,5 +1,6 @@
 import { secureRandom } from "./secureRandom";
 import { setLiveSchedule } from "../core/liveSchedule";
+import { setLaunchAt } from "../core/launchAnchor";
 import type { AncientRankingResponse, RegularEventDto, ExpeditionLeaderboardResponse } from "../api/contracts";
 import { isContentUnlocked } from "../core/contentUnlock";
 import { rollDuelPeriods, normalizeDuelState } from "../core/duelState";
@@ -51,6 +52,8 @@ export interface StateStore {
   bannedWords?(): Promise<string[]>;
   /** 배너·상품·이벤트 운영 일정(`live_schedule`). 모든 계정이 같은 값이라 짧게 캐시해도 된다. */
   liveSchedule?(): Promise<unknown>;
+  /** 출시 시각(`app_config.launch_at`). 출시 전이면 `null`, 못 읽었으면 `undefined`(지난 값을 그대로 쓴다). */
+  launchAt?(): Promise<string | null | undefined>;
   findReceipt(playerId: string, requestId: string): Promise<unknown | undefined>;
   /** 상태와 영수증을 한 트랜잭션으로 확정한다. 읽은 revision이 달라졌으면 `StateConflictError`를 던진다. */
   commit(input: {
@@ -143,7 +146,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
     const now = deps.now?.() ?? new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
     const wantsDuel = /^(getDuelStatus|refreshDuelOpponents|setDuelDefense|enterDuel|resolveDuel|buyDuelAttempt|getDuelRanking|claimDuelSeasonReward)$/.test(req.method) && deps.store.duelContext;
-    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords, schedule] = await Promise.all([
+    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords, schedule, launchAt] = await Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : undefined,
       deps.store.load(playerId),
       deps.store.identity ? deps.store.identity(playerId) : undefined,
@@ -155,9 +158,12 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       req.method === "getRegularEvent" && deps.store.regularEvent ? deps.store.regularEvent().catch(() => null) : undefined,
       req.method === "updatePlayerCard" && deps.store.bannedWords ? deps.store.bannedWords().catch(() => []) : undefined,
       deps.store.liveSchedule ? deps.store.liveSchedule().catch(() => undefined) : undefined,
+      deps.store.launchAt ? deps.store.launchAt().catch(() => undefined) : undefined,
     ]);
     // 서버가 받아 주는 배너·상품·이벤트 기간은 클라이언트가 본 것과 같은 운영 일정을 따른다. 못 읽었으면 지난 값을 그대로 쓴다.
     if (schedule !== undefined) setLiveSchedule(schedule);
+    // 시즌 번호·이벤트 교대·출시 전 유예도 클라이언트와 같은 출시 시각으로 센다(`launchAnchor.ts`).
+    if (launchAt !== undefined) setLaunchAt(launchAt);
     if (cached !== undefined) {
       const receipt = cached as GameCallResponse & { _requestFingerprint?: string };
       if (receipt._requestFingerprint !== fingerprint && receipt._requestFingerprint !== legacyFingerprint) throw new GameCallError(409, "request_id_conflict");

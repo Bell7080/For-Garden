@@ -72,6 +72,9 @@ with
     select 'launch_epoch set', exists (select 1 from public.app_config where id = 1 and launch_epoch <> ''),
       'launch_epoch=' || coalesce((select launch_epoch from public.app_config where id = 1), '')
     union all
+    select 'launch_at set', exists (select 1 from public.app_config where id = 1 and launch_at is not null),
+      'launch_at=' || coalesce((select launch_at::text from public.app_config where id = 1), '')
+    union all
     select 'coupon traces cleared', not exists (select 1 from public.coupons where redeemed_count <> 0) and not exists (select 1 from public.coupon_codes where redeemed_by is not null or redeemed_at is not null),
       'coupons/codes with usage marks'
   ),

@@ -237,7 +237,7 @@ export function pullPayment(wallet: Pick<Wallet, "fossil" | "amber" | "gems">, b
 /** 기간이 열려 있는가. 시각은 서버 시계로 넘기고 화면은 기기 시계로 다시 판정하지 않는다. */
 /** 서버 운영 일정(`live_schedule`)에 이 배너의 줄이 있으면 그 기간·켜짐이 정의의 기간을 덮는다. */
 export function bannerActive(banner: Pick<Banner, "startsAt" | "endsAt"> & { readonly id?: string }, now: Date, schedule: readonly LiveScheduleEntry[] = liveSchedule()): boolean {
-  const window = banner.id === undefined ? { ...banner, enabled: true, overridden: false } : scheduledWindow("banner", banner.id, banner, schedule);
+  const window = banner.id === undefined ? scheduledWindow("banner", "", banner, []) : scheduledWindow("banner", banner.id, banner, schedule);
   return windowOpen(window, now.getTime());
 }
 

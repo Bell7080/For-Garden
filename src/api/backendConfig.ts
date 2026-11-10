@@ -13,6 +13,8 @@ export interface PublicConfig {
   latestAppVersion: string;
   /** 서버가 출시 초기화를 한 세대. 빈 문자열이면 한 번도 하지 않았거나 서버가 값을 주지 않았다. */
   launchEpoch: string;
+  /** 출시 시각(`src/core/launchAnchor.ts`). `null`이면 출시 전, `undefined`면 서버가 값을 주지 않았다(마이그레이션 전). */
+  launchAt?: string | null;
   /** 서버 운영 일정 — 배너·상품·이벤트의 기간 덮어쓰기(`src/core/liveSchedule.ts`). 표가 없는 서버는 빈 목록이다. */
   schedule: LiveScheduleEntry[];
 }
@@ -63,6 +65,7 @@ export async function fetchPublicConfig(
         minAppVersion: typeof b.min_version === "string" ? b.min_version : "",
         latestAppVersion: typeof b.latest_version === "string" ? b.latest_version : "",
         launchEpoch: typeof b.launch_epoch === "string" ? b.launch_epoch : "",
+        ...("launch_at" in b ? { launchAt: typeof b.launch_at === "string" ? b.launch_at : null } : {}),
         schedule: parseLiveSchedule(b.schedule),
       },
     };

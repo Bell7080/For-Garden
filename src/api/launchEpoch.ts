@@ -52,3 +52,28 @@ export function reconcileLaunchEpoch(
     return false;
   }
 }
+
+/**
+ * 출시 시각의 기기 사본(`src/core/launchAnchor.ts`). 공개 설정을 못 받은 실행에서도 마지막으로 본 출시 시각으로
+ * 주기를 세어, 출시 뒤 기기가 잠깐 오프라인이라고 시즌 번호·이벤트 교대가 출시 전 기준으로 돌아가지 않게 한다.
+ * 서버가 값을 주지 않으면(`undefined`) 사본을 건드리지 않는다.
+ */
+export const LAUNCH_AT_STORAGE_KEY = "forgarden.launch-at";
+
+export function rememberLaunchAt(value: string | null | undefined, storage: StorageLike | undefined = defaultLocalStorage()): void {
+  if (value === undefined || !storage) return;
+  try {
+    if (value === null) storage.removeItem(LAUNCH_AT_STORAGE_KEY);
+    else storage.setItem(LAUNCH_AT_STORAGE_KEY, value);
+  } catch {
+    // 저장소를 못 쓰는 환경은 매번 서버 값만 쓴다.
+  }
+}
+
+export function storedLaunchAt(storage: StorageLike | undefined = defaultLocalStorage()): string | null {
+  try {
+    return storage?.getItem(LAUNCH_AT_STORAGE_KEY) ?? null;
+  } catch {
+    return null;
+  }
+}

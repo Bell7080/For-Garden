@@ -1,5 +1,6 @@
 import type { TextKey } from "../i18n";
 import { BACKGROUND } from "../ui/backgroundAssets";
+import { OPEN_END } from "../core/liveSchedule";
 
 /**
  * 로비 이벤트 목록.
@@ -51,7 +52,8 @@ export interface LobbyEventDef {
 
 /** 카드의 시계가 세는 시각. 주간 이벤트는 다음 UTC 월요일 00:00이다. */
 export function lobbyEventClockEnd(event: Pick<LobbyEventDef, "endsAt" | "weekly">, now: number): string {
-  if (!event.weekly) return event.endsAt;
+  // 끝을 열어 둔 기간(`OPEN_END`)은 시계를 세우지 않는다 — 빈 값이면 카드가 기한 줄을 비운다.
+  if (!event.weekly) return event.endsAt === OPEN_END ? "" : event.endsAt;
   const today = new Date(now);
   const daysToMonday = (8 - today.getUTCDay()) % 7 || 7;
   return new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + daysToMonday)).toISOString();

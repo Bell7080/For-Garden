@@ -1,3 +1,4 @@
+import { scheduleOpen } from "./liveSchedule";
 /** 서버와 화면이 함께 읽는 일일 돌림판 규칙. 추첨은 서버만 실행한다. */
 export const ROULETTE = {
   id: "research-roulette", adSlot: "roulette-spin", legacyAdSlot: "roulette-chances", counter: "roulette-spins",
@@ -43,7 +44,7 @@ export function rouletteStatus(ledger: { date: string; claimsBySlot: Record<stri
   const legacyBonusClaims = (counts[ROULETTE.legacyAdSlot] ?? 0) > 0 ? ROULETTE.adLimit : 0;
   const bonusClaims = Math.min(ROULETTE.adLimit, Math.max(legacyBonusClaims, counts[ROULETTE.adSlot] ?? 0));
   const bonusRemaining = ROULETTE.adLimit - bonusClaims;
-  return { date, active: now.getTime() >= Date.parse(ROULETTE.startsAt) && now.getTime() < Date.parse(ROULETTE.endsAt),
+  return { date, active: scheduleOpen("lobby", ROULETTE.id, ROULETTE, now.getTime()),
     used, remaining: Math.max(0, ROULETTE.free + bonusClaims * ROULETTE.adBonus - used),
     bonusAvailable: bonusRemaining > 0, bonusRemaining, adFree, resetsAt: new Date(Date.parse(date) + 86400000).toISOString() };
 }

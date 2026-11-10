@@ -37,7 +37,8 @@ function linkedBannerOpen(event: LobbyEventDef, now: number): boolean {
  */
 export function scheduledLobbyEvent(event: LobbyEventDef): LobbyEventDef {
   const window = scheduledWindow("lobby", event.id, event);
-  if (!window.overridden) return event;
+  // 출시 전 유예(`launchAnchor.ts`)로 끝 날짜가 걷혔으면 카드에도 기한 시계를 세우지 않는다.
+  if (!window.overridden) return window.endsAt === undefined && !event.weekly ? { ...event, endsAt: OPEN_END } : event;
   return { ...event, startsAt: window.startsAt ?? OPEN_START, endsAt: window.endsAt ?? OPEN_END };
 }
 

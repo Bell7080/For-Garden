@@ -1,0 +1,65 @@
+-- Isolated database only. Uses temporary fixture accounts and rolls everything back.
+begin;
+set local lock_timeout='5s';
+set local statement_timeout='30s';
+do $verify$
+declare v_owner uuid:=gen_random_uuid();v_operator uuid:=gen_random_uuid();v_viewer uuid:=gen_random_uuid();v_user uuid:=gen_random_uuid();v_cs uuid:=gen_random_uuid();
+ v_result jsonb;v_inbox jsonb;v_action uuid;v_banner uuid;v_tx text:='verify-'||gen_random_uuid();v_period date:=date_trunc('week',now())::date;v_stmt text;
+begin
+ insert into auth.users(id,is_anonymous) values(v_owner,true),(v_operator,true),(v_viewer,true),(v_user,true),(v_cs,true);
+ insert into public.admin_roles(user_id,role) values(v_owner,'owner'),(v_operator,'operator'),(v_viewer,'viewer'),(v_cs,'cs');
+ update public.players set level=30 where id=v_user;
+ perform set_config('request.jwt.claim.sub',v_owner::text,true);
+ perform public.admin_set_banned_word(' Verify Word ',true);
+ if not ('verifyword'=any(public.server_banned_words())) then raise exception 'banned word boundary failed';end if;
+ v_result:=public.admin_reset_profile(v_user,'nickname_reset','verification');
+ select id into v_action from public.player_profile_actions where player_id=v_user and applied_at is null;
+ if v_action is null then raise exception 'profile action not queued';end if;
+ v_result:=public.admin_save_banner(jsonb_build_object('title','Verification','body','fixture','endsAt',now()+interval '1 hour'));
+ v_banner:=(v_result->>'id')::uuid;
+ v_inbox:=public.server_ops_inbox(v_user);
+ if not exists(select 1 from jsonb_array_elements(v_inbox->'profileActions') x where x->>'id'=v_action::text) or not exists(select 1 from jsonb_array_elements(v_inbox->'banners') x where x->>'id'=v_banner::text) then raise exception 'game inbox omitted moderation data';end if;
+ perform public.server_profile_actions_ack(v_user,array[v_action]);
+ if exists(select 1 from jsonb_array_elements(public.server_ops_inbox(v_user)->'profileActions') x where x->>'id'=v_action::text) then raise exception 'profile action ack failed';end if;
+ insert into public.server_competitive_scores values('duel',v_period,v_user,100,now(),true);
+ perform public.admin_remove_competitive_score('duel',v_period,v_user,'verification',true);
+ insert into public.server_competitive_scores values('duel',v_period,v_user,200,now(),true);
+ if exists(select 1 from public.server_competitive_scores where board='duel' and period=v_period and player_id=v_user) then raise exception 'banned score reinserted';end if;
+ perform public.admin_remove_competitive_score('duel',v_period,v_user,'verification',false);
+ insert into public.server_competitive_scores values('duel',v_period,v_user,200,now(),true);
+ if not exists(select 1 from public.server_competitive_scores where board='duel' and period=v_period and player_id=v_user and score=200) then raise exception 'restored score rejected';end if;
+ insert into public.player_saves(player_id,data,data_hash,save_version) values(v_user,
+  jsonb_build_object('wallet',jsonb_build_object('gems',100),'serverJournal',jsonb_build_object('receipts',jsonb_build_object(jsonb_build_array('platformTransaction',v_tx)::text,jsonb_build_object('result',jsonb_build_object('productId','verify-product','granted',jsonb_build_array(jsonb_build_object('kind','currency','currency','gems','amount',10))))))),repeat('a',64),1);
+ if not exists(select 1 from public.purchase_records where transaction_id=v_tx and product_id='verify-product') then raise exception 'receipt trigger failed';end if;
+ perform public.admin_refund_purchase(v_tx,'verification',true);
+ if (select count(*) from public.player_adjustments where player_id=v_user and asset='gems' and delta=-10)<>1 then raise exception 'refund clawback queue failed';end if;
+ begin perform public.admin_refund_purchase(v_tx,'verification',true);raise exception 'duplicate refund accepted';
+ exception when raise_exception then if sqlerrm<>'already_refunded' then raise;end if;end;
+ v_result:=public.admin_mail_segment_preview('{"levelMin":20}');
+ if (v_result->>'count')::integer<>1 then raise exception 'segment selection failed';end if;
+ v_result:=public.admin_send_mail_segment('{"levelMin":20}','Verification','fixture','[]',null,null,false);
+ if (v_result->>'sent')::integer<>1 or (select count(*) from public.mails where target_player=v_user and title='Verification')<>1 then raise exception 'targeted mail failed';end if;
+ begin perform public.admin_mail_segment_preview('{}');raise exception 'unbounded segment accepted';
+ exception when raise_exception then if sqlerrm<>'invalid_segment' then raise;end if;end;
+ perform public.admin_set_anomaly_rule('gain:gems',1);
+ if public.admin_anomalies(false)->'rules'->>'gain:gems'<>'1' then raise exception 'anomaly rule not visible';end if;
+ perform set_config('request.jwt.claim.sub',v_operator::text,true);
+ begin perform public.admin_set_anomaly_rule('gain:gems',2);raise exception 'operator changed owner-only rule';
+ exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claim.sub',v_viewer::text,true);
+ perform public.admin_list_banned_words();
+ begin perform public.admin_set_banned_word('forbidden',true);raise exception 'viewer wrote banned words';
+ exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claim.sub',v_cs::text,true);
+ perform public.admin_reset_profile(v_user,'bio_reset','verification');
+ perform public.admin_ack_anomaly('verify-fixture','verification');
+ begin perform public.admin_set_banned_word('forbidden',true);raise exception 'CS wrote banned words';
+ exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claim.sub',v_user::text,true);
+ foreach v_stmt in array array['select public.admin_list_banned_words()','select public.admin_anomalies(false)','select public.admin_mail_segment_preview(''{"levelMin":20}'')'] loop
+  begin execute v_stmt;raise exception 'ordinary player entered admin RPC';exception when insufficient_privilege then null;end;
+ end loop;
+ if has_function_privilege('anon','public.admin_anomalies(boolean)','EXECUTE') or has_function_privilege('authenticated','public.server_banned_words()','EXECUTE') then raise exception 'RPC grants exposed';end if;
+end $verify$;
+select 'PASS: real-schema moderation inbox/ack, rank exclusion, receipt/refund idempotency, targeted mail, anomaly rules, owner/operator/CS/viewer/player boundaries' as verification;
+rollback;

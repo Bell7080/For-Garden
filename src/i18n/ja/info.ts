@@ -35,6 +35,9 @@ export const INFO_JA = {
   "info.level.cap": "レベル上限",
 
   "info.feed": "給餌する",
+  "info.levelUp.banner": "LEVEL UP!",
+  "info.levelUp.statGain": "{stat} +{value}",
+  "info.levelUp.statPlus": "+{value}",
   "info.feed.bulk": "まとめて給餌",
   "info.feed.one": "1 レベル",
   "info.feed.ten": "10 レベル",

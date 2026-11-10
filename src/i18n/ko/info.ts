@@ -38,6 +38,9 @@ export const INFO_KO = {
   "info.level.cap": "레벨 상한",
 
   "info.feed": "급여하기",
+  "info.levelUp.banner": "LEVEL UP!",
+  "info.levelUp.statGain": "{stat} +{value}",
+  "info.levelUp.statPlus": "+{value}",
   "info.feed.bulk": "한 번에 급여",
   "info.feed.one": "1 레벨",
   "info.feed.ten": "10 레벨",

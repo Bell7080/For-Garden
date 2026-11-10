@@ -90,6 +90,9 @@ import { skinsForRelic } from "../data/relicSkins";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 import { pressIn, pressOut } from "./pressFeedback";
 import { FeedTapEffect } from "./feedTapEffect";
+import { FeedLevelUpEffect } from "./feedLevelUpEffect";
+import { FEED_LEVEL_UP } from "./feedLevelUpStyle";
+import { HOLO_SHIMMER, holoBreathe, holoSweepPhase, polygonSpans } from "./holoShimmer";
 import { settingsManager } from "../managers/SettingsManager";
 import { FEED_TAP, FeedHoldRepeater } from "./feedTapStyle";
 import { addSdFootShadow } from "./SdFootShadow";
@@ -513,6 +516,7 @@ export class InfoManager {
 
   /** 능력치 칸 제목 아래에 서는 사거리 한 줄. */
   private reachLabel!: Phaser.GameObjects.Text;
+  private reachChip!: Phaser.GameObjects.Graphics;
   /** 능력치 칸의 오각형. 숫자는 돋보기로 연 상세가 맡는다. */
   private statRadar?: StatRadar;
   private readonly gemSlots: GemSlot[] = [];
@@ -590,6 +594,8 @@ export class InfoManager {
   onWalletChange?: () => void;
   /** 서버가 확정한 급여가 실제로 경험치·레벨을 올린 직후 불린다(튜토리얼이 첫 급여를 알아챈다). */
   onFed?: (mode: "normal" | "level") => void;
+  /** 급여로 레벨이 오른 순간의 연출(빛기둥·LEVEL UP!·나선·줄 번쩍임·능력치·점프). */
+  private levelUpEffect?: FeedLevelUpEffect;
 
   /** 급여 버튼이 지금 서 있는 자리(씬 좌표). 창이 닫혀 있으면 `undefined`. */
   feedButtonBounds(): Phaser.Geom.Rectangle | undefined {
@@ -636,6 +642,63 @@ export class InfoManager {
       { rect: panelBox("gem"), textKey: "tutorial.info.rune" },
     ];
     return steps.filter((step): step is { rect: NonNullable<typeof step.rect>; textKey: TextKey } => step.rect !== undefined && step.rect.width > 0);
+  }
+
+  /**
+   * 처음 열 때 상태 정보가 "조립되듯" 사사삭 들어선다 — 오른쪽 판·제목이 위에서부터 차례로
+   * 가로줄처럼 펼쳐지며 깜빡여 켜지고, 그 사이 빛줄 하나가 판을 훑어 내려가며, 오각형은 가운데에서
+   * 자라고 스킬 액자는 톡톡 튄다. 다른 개체로 넘길 때는 돌지 않는다(새로고침처럼 읽히면 안 된다).
+   * 움직임 줄이기에서는 완성된 채로 선다.
+   */
+  private playAssembleIntro(): void {
+    const scene = this.scene;
+    const { panel, stagger, cap, scan, icon } = INFO_ASSEMBLE;
+    const still = motionPolicy(session.settings).nonEssentialRepeatFactor === 0;
+    const pieces = [...this.column.list] as (Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Transform & Phaser.GameObjects.Components.Alpha)[];
+    const icons = this.skillIcons.filter((item) => item.active);
+    for (const target of [...pieces, ...icons]) {
+      const rest = target.getData("assembleRest") as { alpha: number; scaleX: number; scaleY: number } | undefined;
+      scene.tweens.killTweensOf(target);
+      if (rest) target.setAlpha(rest.alpha).setScale(rest.scaleX, rest.scaleY);
+    }
+    if (still) { this.statRadar?.reveal(0, 0); return; }
+    // 위에서부터 차례로 — 자리(y)가 차례를 정한다. 판과 그 제목은 거의 같은 높이라 함께 켜진다.
+    const order = pieces.map((piece) => piece.y).sort((a, b) => a - b);
+    for (const piece of pieces) {
+      const rest = { alpha: piece.alpha, scaleX: piece.scaleX, scaleY: piece.scaleY };
+      piece.setData("assembleRest", rest);
+      const delay = panel.delay + Math.min(cap, order.indexOf(piece.y) * stagger);
+      piece.setAlpha(0).setScale(rest.scaleX, rest.scaleY * panel.fromScaleY);
+      scene.tweens.add({ targets: piece, scaleY: rest.scaleY, delay, duration: panel.ms, ease: "Back.Out" });
+      // 켜지는 순간 한 번 깜빡인다 — 투영 장비가 신호를 잡는 결.
+      scene.tweens.chain({
+        targets: piece,
+        tweens: [
+          { alpha: rest.alpha, delay, duration: panel.ms * 0.35, ease: "Linear" },
+          { alpha: rest.alpha * panel.flicker, duration: 40, ease: "Linear" },
+          { alpha: rest.alpha, duration: 70, ease: "Linear" },
+        ],
+      });
+    }
+    icons.forEach((item, index) => {
+      const rest = { alpha: item.alpha, scaleX: item.scaleX, scaleY: item.scaleY };
+      item.setData("assembleRest", rest);
+      item.setAlpha(0).setScale(rest.scaleX * icon.fromScale, rest.scaleY * icon.fromScale);
+      scene.tweens.add({ targets: item, alpha: rest.alpha, scaleX: rest.scaleX, scaleY: rest.scaleY, delay: icon.delay + index * icon.stagger, duration: icon.ms, ease: "Back.Out" });
+    });
+    this.statRadar?.reveal(panel.delay + Math.min(cap, order.length * stagger * 0.6), INFO_ASSEMBLE.radarMs);
+    // 판을 훑어 내려가는 빛줄 — 조립하는 손길이 지나간 자리를 말한다.
+    // 폭은 오른쪽 판 줄만 덮는다 — 열 전체의 경계에는 화면 폭짜리 조각이 섞여 있다.
+    const bounds = this.column.getBounds();
+    const left = COLUMN.x + COLUMN.offsetX - COLUMN.width / 2 - 12;
+    const span = COLUMN.width + 24;
+    const line = scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
+    line.fillStyle(scan.color, scan.alpha).fillRect(left, -scan.height / 2, span, scan.height);
+    line.fillStyle(scan.color, scan.alpha * 0.35).fillRect(left, -scan.height * 2.5, span, scan.height * 5);
+    line.y = bounds.y;
+    this.chrome.add(line);
+    scene.tweens.add({ targets: line, y: bounds.bottom, delay: panel.delay, duration: scan.ms, ease: "Sine.InOut", onComplete: () => line.destroy() });
+    scene.tweens.add({ targets: line, alpha: 0, delay: panel.delay + scan.ms * 0.75, duration: scan.ms * 0.25 });
   }
 
   /** 정보창을 닫는 뒤로가기 버튼 자리. 안내의 마지막 칸이 이곳을 가리킨다. */
@@ -760,12 +823,26 @@ export class InfoManager {
     this.feedLabel = feed.label;
     this.feedButton.setVisible(this.capabilities.mutateProgress);
     this.breakButton.container.setVisible(this.capabilities.mutateProgress);
+    if (this.capabilities.mutateProgress) {
+      this.levelUpEffect = new FeedLevelUpEffect(scene, {
+        figure: () => this.figure,
+        figureSpot: { x: FIGURE.x, groundY: FIGURE.y, height: FIGURE.height, depth: 1004 },
+        levelText: this.levelValue,
+        flashBar: reduceFlashes => this.expBar.flash(scene, reduceFlashes),
+        // 오각형 판 한가운데에서 떠오른다. 기둥이 왼쪽 위로 밀린 만큼 함께 민다.
+        statSpot: { x: COLUMN.x + COLUMN.offsetX, y: 1042 + COLUMN.offsetY - 30, depth: baseDepth + 6 },
+        statAnchor: key => this.statRadar?.valueAnchor(key),
+      });
+    }
 
     // 유대.
     const bondHeart = scene.add.container(COLUMN.x - COLUMN.width / 2 + 92, 710);
     // 하트도 별과 같은 방식이다 — 그림자·빛무리·몸통을 겹으로 쌓고 어두운 선으로 마무리한다.
     bondHeart.add(paintBondHeart(scene, BOND_HEART_SIZE));
-    this.bondValue = scene.add.text(0, 1, "", textStyle({ role: "display", size: 32 })).setOrigin(0.5);
+    // 수치는 하트 위로 떠오른다 — 검은 획에 하트 빛을 둘러 투영된 하트와 한 덩어리로 읽힌다.
+    this.bondValue = scene.add.text(0, 1, "", textStyle({ role: "display", size: 36 })).setOrigin(0.5)
+      .setStroke("#3a0712", 7)
+      .setShadow(0, 0, "#ff7d96", 12, true, true);
     bondHeart.add(this.bondValue);
     this.bondBar = new Gauge(scene, COLUMN.x + 40, 718, COLUMN.width - 184, 14, BOND_HEART);
     this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 152, 738, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
@@ -778,10 +855,14 @@ export class InfoManager {
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 876, (from) => this.openExtraStats(from), statPanel);
     // 사거리는 오각형에 없는 축이라 제목 바로 아래에 이름표처럼 한 줄로만 선다. 색은 상세
     // 팝업이 맡고 여기서는 회색으로 물러난다 — 늘 떠 있는 자리는 균형이 먼저 읽혀야 한다.
+    // 홀로그램 정보창에서는 이름표가 아니라 **투영된 꼬리표**다 — 어두운 유리 칩 위에 사거리 색으로 서고,
+    // 왼쪽의 짧은 빗금이 칩을 판에 묶는다. 칩 폭은 글자 폭에서 다시 구한다(언어마다 길이가 다르다).
+    this.reachChip = scene.add.graphics({ x: COLUMN.x - COLUMN.width / 2 + 34, y: 874 });
     this.reachLabel = scene.add
-      .text(COLUMN.x - COLUMN.width / 2 + 42, 874, "", textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
-      .setOrigin(0, 0.5);
-    attach(statPanel, this.reachLabel);
+      .text(COLUMN.x - COLUMN.width / 2 + 52, 874, "", textStyle({ role: "emphasis", size: 22, color: COLOR.ink }))
+      .setOrigin(0, 0.5)
+      .setStroke("#05070a", 5);
+    attach(statPanel, this.reachChip, this.reachLabel);
     // 칸에는 숫자가 아니라 **오각형**이 선다. 다섯 축의 균형은 숫자 다섯 줄보다 한눈에 읽히고,
     // 정확한 값이 필요할 때만 돋보기로 연다. 축 이름은 굵게 키우고 능력치 색을 입힌다.
     // 판 한가운데(1024)에 두면 위쪽 축만 이름 위에 수치를 한 줄 더 이고 있어 오각형이 판
@@ -792,6 +873,7 @@ export class InfoManager {
       // 축마다 실제 수치를 같은 색으로 적고, 면 안에는 전투력을 옅게 깐다.
       values: true,
       power: true,
+      holo: true,
     });
     attach(statPanel, this.statRadar);
 
@@ -1483,6 +1565,8 @@ export class InfoManager {
     if (!def || !this.ownedNow) return false;
     if (!canFeedRelic(relicProgression.getProgress(def.id), session.wallet.cheesecake)) return false;
     const before = relicProgression.getProgress(def.id);
+    const statsBefore = this.shownStats(def);
+    let leveled = false;
     this.feeding = true;
     let changed = false;
     try {
@@ -1490,6 +1574,7 @@ export class InfoManager {
       addDebugFeedTaps(0, response.feeds);
       const after = relicProgression.getProgress(def.id);
       changed = after.level > before.level || after.exp > before.exp;
+      leveled = after.level > before.level && this.currentDef?.id === def.id;
       if (changed) this.onFed?.(mode);
       // 정보창과 상단 줄 모두 확정된 단일 세션 지갑을 읽도록 성공 직후 알린다.
       this.onWalletChange?.();
@@ -1500,6 +1585,8 @@ export class InfoManager {
       this.glideExp = true;
       this.refreshGrowth();
       this.repaintFeedBulk?.();
+      // 칠한 뒤에 터뜨려야 부푸는 숫자가 이미 새 레벨이다.
+      if (leveled && this.isOpen) this.levelUpEffect?.play(statsBefore, this.shownStats(def));
     }
     return changed;
   }
@@ -2318,13 +2405,17 @@ export class InfoManager {
     }
     this.root.setVisible(true);
     this.chrome.setVisible(true);
-    if (!wasOpen) playFadeIn(this.scene, [this.root, this.chrome]);
+    if (!wasOpen) {
+      playFadeIn(this.scene, [this.root, this.chrome]);
+      this.playAssembleIntro();
+    }
     setDebugInfoOpen(true);
     this.onOpen?.();
     // 급여 버튼 자리를 **열 때마다** 알린다. 만들 때 한 번만 알리면, 씬을 오갈 때 새 창이 먼저
     // 알린 값을 옛 창이 사라지며 지워 버린다 — 그 뒤로는 아무도 다시 알리지 않는다.
     // 판이 제자리를 잡은 다음 프레임에 재야 기울임과 이동이 반영된 실제 좌표가 나온다.
-    this.scene.time.delayedCall(0, () => {
+    // 처음 여는 판은 조립 연출(판이 세로로 펼쳐진다)이 끝난 뒤에 재야 실제 자리가 나온다.
+    this.scene.time.delayedCall(wasOpen ? 0 : INFO_ASSEMBLE_SETTLE_MS, () => {
       if (!this.feedButton.active || !this.isOpen) return;
       const bounds = this.feedButton.getBounds();
       setDebugFeedButton({ x: bounds.centerX, y: bounds.centerY });
@@ -2356,6 +2447,22 @@ export class InfoManager {
   }
 
   /** 레벨·경험치·유대·능력치·젬을 지금 상태로 다시 칠한다. */
+  /** 사거리 꼬리표의 유리 칩. 글자 폭을 따라 늘고, 왼쪽 빗금과 윗변 선이 사거리 색이다. */
+  private paintReachChip(tone: number): void {
+    const g = this.reachChip;
+    const width = this.reachLabel.width + 36;
+    const height = 38;
+    g.clear();
+    g.fillStyle(0x05090e, 0.72);
+    g.fillPoints(toPoints(slantedRect(width, height, 10).map((value, index) => index % 2 === 0 ? value + width / 2 : value)), true);
+    g.fillStyle(tone, 0.16);
+    g.fillPoints(toPoints(slantedRect(width, height, 10).map((value, index) => index % 2 === 0 ? value + width / 2 : value)), true);
+    g.fillStyle(tone, 0.95);
+    g.fillPoints(toPoints([4, -height / 2, 12, -height / 2, 4, height / 2, -4, height / 2]), true);
+    g.lineStyle(2, tone, 0.7);
+    g.lineBetween(14, -height / 2, width + 4, -height / 2);
+  }
+
   private refreshGrowth(): void {
     const def = this.currentDef;
     if (!def) return;
@@ -2379,14 +2486,16 @@ export class InfoManager {
     const maxed = progress.level >= cap;
 
     // 사거리는 성장하지 않는 정적 값이지만, 다른 캐릭터로 넘길 때 함께 갈아 끼워야 한다.
-    this.reachLabel.setText(`${t("stat.range")} · ${reachLabel(def.reachTier)}`);
+    this.reachLabel.setText(`${t("stat.range")} · ${reachLabel(def.reachTier)}`).setColor(reachToneHex(def.reachTier));
+    this.paintReachChip(Phaser.Display.Color.HexStringToColor(reachToneHex(def.reachTier)).color);
     this.levelValue.setText(String(progress.level));
     this.levelCap.setText("/ " + cap);
     // 숫자 폭이 자리 수에 따라 달라지므로 붙는 자리도 그릴 때마다 다시 잡는다.
-    this.levelCap.setX(this.levelValue.x + this.levelValue.displayWidth + 14);
+    // 레벨업 때 숫자가 잠깐 부풀어도 상한이 따라 밀리지 않도록 제 배율(가로 1 · 세로 1.16)로 잰다.
+    this.levelCap.setX(this.levelValue.x + this.levelValue.width + 14);
     // 상한은 숫자의 **발치**에 붙는다. 숫자 높이는 자리 수와 무관하게 늘 같지만, 글꼴이
     // 늦게 도착하면 처음 그린 높이가 다르므로 그릴 때마다 다시 맞춘다.
-    this.levelCap.setY(this.levelValue.y + this.levelValue.displayHeight - 4);
+    this.levelCap.setY(this.levelValue.y + this.levelValue.height * 1.16 - 4);
     const need = maxed ? 0 : relicExpToNext(progress.level);
     const expRatio = maxed ? 1 : progress.exp / need;
     if (this.glideExp && this.expShownLevel >= 0 && !this.publicProfile) {
@@ -2431,16 +2540,48 @@ class Gauge {
   private readonly fill: Phaser.GameObjects.Graphics;
   private readonly track: Phaser.GameObjects.Graphics;
 
+  /** 레벨업 순간에만 서는 두 겹 — 하얗게 넘치는 번쩍임과 줄을 훑는 빛살. 평소에는 비어 있다. */
+  private readonly flashLayer: Phaser.GameObjects.Graphics;
+  private readonly sweep: Phaser.GameObjects.Graphics;
+
   constructor(scene: Phaser.Scene, x: number, y: number, private readonly width: number, private readonly height: number, private readonly color: number) {
     this.track = scene.add.graphics({ x, y });
     this.track.fillStyle(0x000000, 0.55);
     this.track.fillPoints(toPoints(slantedRect(width, height, height)), true);
     this.fill = scene.add.graphics({ x, y });
+    this.flashLayer = scene.add.graphics({ x, y }).setAlpha(0);
+    this.sweep = scene.add.graphics({ x, y }).setAlpha(0);
     this.setValue(0);
   }
 
   get objects(): Phaser.GameObjects.Graphics[] {
-    return [this.track, this.fill];
+    return [this.track, this.fill, this.flashLayer, this.sweep];
+  }
+
+  /**
+   * 레벨이 올랐다 — 줄이 하얗게 번쩍이며 오른쪽으로 한 뼘 넘치고, 빛살 하나가 줄을 훑는다.
+   * 빛살은 줄과 같은 기울기의 띠라 줄 밖으로 비어져 나가지 않도록 줄 폭 안에서만 움직인다.
+   */
+  flash(scene: Phaser.Scene, reduceFlashes: boolean): void {
+    if (!this.track.visible || !scene.sys.isActive()) return;
+    const { overfill, flashAlpha, flashMs, sweepMs, sweepWidth } = FEED_LEVEL_UP.bar;
+    const s = this.height / 2;
+    const left = -this.width / 2;
+    const right = this.width / 2 + overfill;
+    this.flashLayer.clear();
+    this.flashLayer.fillStyle(0xffffff, 1);
+    this.flashLayer.fillPoints(toPoints([left + s, -s, right + s, -s, right - s, s, left - s, s]), true);
+    scene.tweens.killTweensOf([this.flashLayer, this.sweep]);
+    this.flashLayer.setAlpha(reduceFlashes ? flashAlpha * 0.4 : flashAlpha).setScale(1, 1.5);
+    scene.tweens.add({ targets: this.flashLayer, alpha: 0, scaleY: 1, duration: flashMs, ease: "Quad.Out" });
+    this.sweep.clear();
+    this.sweep.fillStyle(0xffffff, 0.85);
+    this.sweep.fillPoints(toPoints([s, -s, sweepWidth * 0.4 + s, -s, sweepWidth * 0.4 - s, s, -s, s]), true);
+    this.sweep.fillStyle(0xffffff, 0.35);
+    this.sweep.fillPoints(toPoints([-sweepWidth * 0.6 + s, -s, s, -s, -s, s, -sweepWidth * 0.6 - s, s]), true);
+    const x0 = this.track.x;
+    this.sweep.setX(x0 + left).setAlpha(1);
+    scene.tweens.add({ targets: this.sweep, x: x0 + this.width / 2, duration: sweepMs, ease: "Cubic.InOut", onComplete: () => this.sweep.setAlpha(0) });
   }
 
   private shown = 0;
@@ -2497,8 +2638,7 @@ class Gauge {
  * 다만 성급 별처럼 화려하게 쌓지는 않는다 — 별은 등급을 자랑하는 자리지만 이것은 게이지
  * 옆의 이름표라, 테두리 없이 옅은 그림자와 한 겹의 빛무리로만 조용히 앉는다.
  */
-function paintBondHeart(scene: Phaser.Scene, size: number): Phaser.GameObjects.Graphics {
-  const g = scene.add.graphics();
+function paintBondHeart(scene: Phaser.Scene, size: number): Phaser.GameObjects.Container {
   const shape = (scale: number, dx = 0, dy = 0): Phaser.Geom.Point[] => {
     const list: Phaser.Geom.Point[] = [];
     for (let i = 0; i <= 72; i += 1) {
@@ -2508,17 +2648,54 @@ function paintBondHeart(scene: Phaser.Scene, size: number): Phaser.GameObjects.G
     }
     return list;
   };
-  // 반투명한 붉은 빛이다. 판때기처럼 꽉 채우지 않고, 옅은 빛이 세 겹 겹쳐 안쪽이 밝게
-  // 남는다. 뒤의 게이지와 글자가 살짝 비쳐야 "빛나는 표시"로 읽힌다.
-  g.fillStyle(BOND_HEART, 0.18);
-  g.fillPoints(shape(1.14), true);
-  g.fillStyle(BOND_HEART, 0.3);
-  g.fillPoints(shape(1.06), true);
-  g.fillStyle(BOND_HEART, 0.5);
-  g.fillPoints(shape(1), true);
-  g.fillStyle(BOND_HEART_CORE, 0.34);
-  g.fillPoints(shape(0.72, 0, -size * 0.02), true);
-  return g;
+  const holder = scene.add.container(0, 0);
+  // **투영된 하트다.** 판때기처럼 꽉 채우지 않고 옅은 빛 두 겹 위에 주사선이 깔리고, 또렷한 윤곽선이
+  // 모양을 쥔다. 밝은 띠 하나가 아래에서 위로 천천히 지나가며 하트 전체가 아주 조금 숨 쉰다.
+  const base = scene.add.graphics();
+  base.fillStyle(BOND_HEART, 0.16);
+  base.fillPoints(shape(1.16), true);
+  base.fillStyle(BOND_HEART, 0.34);
+  base.fillPoints(shape(1), true);
+  base.fillStyle(BOND_HEART_CORE, 0.22);
+  base.fillPoints(shape(0.7, 0, -size * 0.02), true);
+  const outline = shape(1);
+  const flat = outline.flatMap(({ x, y }) => [x, y]);
+  const ys = outline.map(({ y }) => y);
+  const top = Math.min(...ys);
+  const bottom = Math.max(...ys);
+  base.lineStyle(1, 0xffd6dc, HOLO_SHIMMER.scan.alpha * 1.6);
+  for (let y = top + 2; y < bottom; y += HOLO_SHIMMER.scan.gap - 1) {
+    for (const [a, b] of polygonSpans(flat, y)) base.lineBetween(a, y, b, y);
+  }
+  base.lineStyle(7, BOND_HEART, 0.28);
+  base.strokePoints(outline, true);
+  base.lineStyle(2.5, 0xffe3e8, 0.9);
+  base.strokePoints(outline, true);
+  const sweep = scene.add.graphics();
+  holder.add([base, sweep]);
+  const still = (): boolean => motionPolicy(settingsManager.get()).nonEssentialRepeatFactor === 0;
+  const shown = (): boolean => {
+    let node: Phaser.GameObjects.Container | null = holder;
+    while (node) { if (!node.visible || node.alpha <= 0) return false; node = node.parentContainer; }
+    return true;
+  };
+  const tick = (): void => {
+    if (!holder.active || !shown()) return;
+    sweep.clear();
+    if (still()) { holder.setAlpha(1); return; }
+    const now = scene.time.now;
+    holder.setAlpha(holoBreathe(now));
+    const height = bottom - top;
+    const band = height * 0.22;
+    const center = bottom + band - holoSweepPhase(now) * (height + band * 2);
+    for (let y = Math.max(top, center - band / 2); y < Math.min(bottom, center + band / 2); y += 2) {
+      sweep.lineStyle(2, 0xffeef1, 0.3 * (1 - Math.abs(y - center) / (band / 2)));
+      for (const [a, b] of polygonSpans(flat, y)) sweep.lineBetween(a, y, b, y);
+    }
+  };
+  scene.events.on(Phaser.Scenes.Events.UPDATE, tick);
+  holder.once(Phaser.GameObjects.Events.DESTROY, () => scene.events.off(Phaser.Scenes.Events.UPDATE, tick));
+  return holder;
 }
 
 /** 하트 곡선의 세로를 늘리는 비율. 1:1 자리에 꽉 차게 앉힌다. */
@@ -2609,6 +2786,19 @@ export function addInfoMagnifier(
   else parent.add([container, hit]);
 }
 
+
+/** 처음 열 때의 조립 연출이 다 서는 시각(ms). */
+const INFO_ASSEMBLE_SETTLE_MS = 1000;
+
+/** 처음 열 때의 조립 연출 값. */
+const INFO_ASSEMBLE = {
+  panel: { delay: 60, ms: 300, fromScaleY: 0.12, flicker: 0.35 },
+  stagger: 38,
+  cap: 520,
+  icon: { delay: 220, stagger: 55, ms: 260, fromScale: 0.55 },
+  radarMs: 520,
+  scan: { color: 0x9ff3ff, alpha: 0.5, height: 3, ms: 620 },
+} as const;
 
 export function addInfoPanel(
   scene: Phaser.Scene,

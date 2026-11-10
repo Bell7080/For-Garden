@@ -249,6 +249,36 @@
 "Füttern",
 "Кормить"
 ],
+"info.levelUp.banner": [
+"LEVEL UP!",
+"LEVEL UP!",
+"LEVEL UP!",
+"LEVEL UP!",
+"LEVEL UP!",
+"LEVEL UP!",
+"LEVEL UP!",
+"LEVEL UP!"
+],
+"info.levelUp.statGain": [
+"{stat} +{value}",
+"{stat} +{value}",
+"{stat} +{value}",
+"{stat} +{value}",
+"{stat} +{value}",
+"{stat} +{value}",
+"{stat} +{value}",
+"{stat} +{value}"
+],
+"info.levelUp.statPlus": [
+"+{value}",
+"+{value}",
+"+{value}",
+"+{value}",
+"+{value}",
+"+{value}",
+"+{value}",
+"+{value}"
+],
 "info.feed.bulk": [
 "一次喂食",
 "ป้อนทีเดียว",

@@ -153,7 +153,7 @@ describe("소개 장면은 카드가 뒤집히기 전에 돈다", () => {
     expect(baked).toContain("xo.prototype.peekReveal=function()");
 
     const source = readFileSync("src/ui/ResearchCinematic.ts", "utf8");
-    const tap = source.slice(source.indexOf("  private tap(): void {"));
+    const tap = source.slice(source.indexOf("  private tap(event: PointerEvent): void {"));
     // 넘기기 전에 엿보고, 새 렐릭의 뒤집기면 소개가 먼저다.
     expect(tap.indexOf("peekReveal")).toBeGreaterThan(-1);
     expect(tap.indexOf("peekReveal")).toBeLessThan(tap.indexOf("this.instance.advance()"));

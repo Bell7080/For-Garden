@@ -694,3 +694,128 @@
   .card-flash, .card-ring { display: none; }
   .card-rotor, .card-foil, .rc-aura::before, .rc-aura::after { animation: none !important; }
 }
+
+/* ── 밑동에 쌓이는 카드 ─────────────────────────────────────────────────── */
+
+/*
+ * 다 본 카드는 포물선을 그리며 밑동으로 날아가 톡 내려앉고, 먼저 쌓인 카드가 그 쪽부터 차례로
+ * 들썩인다(파도). 새로 쌓인 카드는 반투명하게 꺼지지 않고 한 박자 밝게 남는다.
+ */
+.opening .archive-card.collected {
+  opacity: 0.62;
+  transition: opacity 0.25s, top 0.5s cubic-bezier(0.3, 1.45, 0.55, 1), left 0.42s cubic-bezier(0.4, 0, 0.3, 1), width 0.42s cubic-bezier(0.4, 0, 0.3, 1), transform 0.45s;
+}
+@keyframes rc-stack-wave-a { 0%, 100% { translate: 0 0; } 40% { translate: 0 -32%; } 70% { translate: 0 6%; } }
+@keyframes rc-stack-wave-b { 0%, 100% { translate: 0 0; } 40% { translate: 0 -32%; } 70% { translate: 0 6%; } }
+@keyframes rc-stack-arrive { 0%, 72% { scale: 1; } 84% { scale: 1.35 0.8; } 100% { scale: 1; } }
+.opening .archive-card.collected.rc-wave-a { animation: rc-stack-wave-a 0.42s ease-out var(--wave-delay, 0ms) both; }
+.opening .archive-card.collected.rc-wave-b { animation: rc-stack-wave-b 0.42s ease-out var(--wave-delay, 0ms) both; }
+.opening .archive-card.collected.rc-arrive { opacity: 0.95; animation: rc-stack-arrive 0.62s ease-out both; }
+
+/* ── 건너뛰면 서는 뒤집힌 판 ───────────────────────────────────────────── */
+
+/*
+ * 결산 격자와 같은 자리에 카드가 **뒷면으로** 깔린다. 한 장씩 눌러 열거나, 건너뛰기를 한 번 더
+ * 눌러 촤르륵 연다. 뒷면은 등급을 말하지 않고, 은은한 빛줄기만 차례로 훑는다.
+ */
+@keyframes rc-board-deal { 0% { opacity: 0; translate: 0 18%; scale: 0.82; } 100% { opacity: 1; translate: 0 0; scale: 1; } }
+@keyframes rc-board-sheen { 0%, 62% { background-position: 160% 0; } 100% { background-position: -60% 0; } }
+.cards.board .archive-card { pointer-events: auto; cursor: pointer; filter: drop-shadow(0 0.8cqw 1.4cqw #000000a0); }
+.cards.board .archive-card.rc-dealt { animation: rc-board-deal 0.36s cubic-bezier(0.2, 0.9, 0.3, 1.2) var(--deal, 0ms) both; }
+.cards.board .archive-card .card-back::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, #ffffff1f 48%, #9fe7ff26 52%, transparent 65%);
+  background-size: 260% 100%;
+  animation: rc-board-sheen 3.2s ease-in-out var(--deal, 0ms) infinite;
+}
+.cards.board .archive-card.opened { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--tier) 32%, transparent)); }
+.cards.board .archive-card.landed[data-fx="1"] .card-flash { animation: rc-card-flash-soft 0.4s ease-out both; }
+.cards.board .archive-card.landed[data-fx="2"] .card-flash,
+.cards.board .archive-card.landed[data-fx="3"] .card-flash { animation: rc-card-flash 0.55s ease-out both; }
+.cards.board .archive-card.landed[data-fx="2"] .card-ring,
+.cards.board .archive-card.landed[data-fx="3"] .card-ring { animation: rc-card-ring 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+.cards.board .archive-card.landed[data-fx="3"] .card-ring-late { animation-delay: 0.14s; }
+.cards.board .archive-card.landed[data-fx="2"] .card-foil { opacity: 0.45; animation: rc-card-foil 2.8s ease-in-out 0.3s infinite; }
+.cards.board .archive-card.landed[data-fx="3"] .card-foil { opacity: 0.8; animation: rc-card-foil 2.2s ease-in-out 0.3s infinite; }
+.cards.board .archive-card.landed[data-fx="2"] .card-rotor,
+.cards.board .archive-card.landed[data-fx="3"] .card-rotor { animation: rc-card-punch 0.45s ease-out; }
+/* 찬스 칸이 SR에서 SSR로 튀어 오르는 순간 — 카드 전체가 한 번 크게 튄다. */
+@keyframes rc-board-ping { 0% { scale: 1; } 30% { scale: 1.32; } 60% { scale: 0.94; } 100% { scale: 1; } }
+.cards.board .archive-card.rc-ping { animation: rc-board-ping 0.55s cubic-bezier(0.3, 1.4, 0.5, 1) both; z-index: 2; }
+.rc-root[data-phase="board"] .rc-meta,
+.rc-root[data-phase="board"] .rc-specimen,
+.rc-root[data-phase="board"] .rc-cross,
+.rc-root[data-phase="board"] .rc-reticle,
+.rc-root[data-phase="board"] .rc-sequence { opacity: 0; }
+
+/* ── 뒷배경 장식 ───────────────────────────────────────────────────────── */
+
+/*
+ * 3D 무대 위, 글자·카드 아래에 깔리는 투영 장비의 결. 육각 격자와 천천히 도는 마름모 고리, 양옆으로
+ * 흐르는 기록 코드 줄이다. 가운데(화석·카드 자리)는 비워 두고 가장자리에서만 읽히며, 색은 지금
+ * 등급색(`--reveal-color`)을 따라 물든다.
+ */
+.rc-backdrop { position: absolute; inset: 0; pointer-events: none; overflow: hidden; mix-blend-mode: screen; }
+.rc-backdrop > i { position: absolute; display: block; }
+.rc-hex {
+  inset: 0;
+  opacity: 0.16;
+  background: color-mix(in srgb, var(--reveal-color) 70%, #9fe7ff);
+  -webkit-mask:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 104'%3E%3Cpath d='M30 2 58 18V50L30 66 2 50V18Z M0 70 30 87V104 M60 70 30 87' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E") 0 0 / 9cqw 15.6cqw repeat,
+    radial-gradient(ellipse 62% 48% at 50% 46%, transparent 40%, #000 100%);
+  -webkit-mask-composite: source-in;
+  mask:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 104'%3E%3Cpath d='M30 2 58 18V50L30 66 2 50V18Z M0 70 30 87V104 M60 70 30 87' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E") 0 0 / 9cqw 15.6cqw repeat,
+    radial-gradient(ellipse 62% 48% at 50% 46%, transparent 40%, #000 100%);
+  mask-composite: intersect;
+  animation: rc-hex-drift 40s linear infinite;
+}
+@keyframes rc-hex-drift { to { -webkit-mask-position: 0 -15.6cqw, 0 0; mask-position: 0 -15.6cqw, 0 0; } }
+.rc-ring {
+  left: 50%;
+  top: 46%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border: 0.25cqw solid color-mix(in srgb, var(--reveal-color) 55%, transparent);
+  opacity: 0.22;
+  transform: scaleY(0.55) rotate(45deg);
+}
+.rc-ring::before, .rc-ring::after { content: ""; position: absolute; width: 2.2cqw; aspect-ratio: 1; background: var(--reveal-color); }
+.rc-ring::before { left: -1.1cqw; top: -1.1cqw; }
+.rc-ring::after { right: -1.1cqw; bottom: -1.1cqw; }
+.rc-ring-a { width: 118cqw; animation: rc-ring-spin 60s linear infinite; }
+.rc-ring-b { width: 150cqw; opacity: 0.13; border-style: dashed; animation: rc-ring-spin 90s linear infinite reverse; }
+@keyframes rc-ring-spin { from { transform: scaleY(0.55) rotate(45deg); } to { transform: scaleY(0.55) rotate(405deg); } }
+.rc-code {
+  top: 0;
+  bottom: 0;
+  width: 3cqw;
+  writing-mode: vertical-rl;
+  font-size: 1.6cqw;
+  font-weight: 700;
+  letter-spacing: 0.4em;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--reveal-color) 65%, #9fe7ff);
+  opacity: 0.28;
+  -webkit-mask: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+  mask: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+}
+.rc-code > b { display: block; font-weight: inherit; animation: rc-code-flow 26s linear infinite; }
+.rc-code-l { left: 2.4%; }
+.rc-code-r { right: 2.4%; }
+.rc-code-r > b { animation-direction: reverse; }
+@keyframes rc-code-flow { from { translate: 0 0; } to { translate: 0 -50%; } }
+.rc-root[data-tier="SSR"] .rc-hex { opacity: 0.24; }
+.rc-root[data-tier="SSR"] .rc-ring-a { opacity: 0.32; }
+
+.rc-root.rc-still .rc-backdrop *, .rc-root.rc-still .archive-card { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .rc-backdrop *, .cards .archive-card { animation: none !important; }
+}
+/* 판의 카드는 작다 — 뒷면의 봉인 글자가 큰 카드 기준(7cqw)이면 칸 밖으로 잘린다. */
+.cards.board .back-code { font-size: 3.6cqw; }
+.cards.board .card-back > span { font-size: 0.9cqw; letter-spacing: 0.12em; }

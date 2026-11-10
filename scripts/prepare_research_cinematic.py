@@ -198,14 +198,15 @@ EXPORT_TAIL = (
     # translate는 건드리지 않는다. 움직임 줄이기에서는 흔들림·느린 뒤집기를 빼고 사건만 낸다.
     "var GUP=go.prototype.update;"
     "go.prototype.update=function(e){var g=GUP.call(this,e);try{FXC(this,g)}catch(x){}return g};"
+    # 카드 한 장에 덧그릴 층(포일·새는 빛·모서리·섬광·고리)을 한 번만 붙인다.
+    "function FXL(c){if(c._fx)return;c._fx=1;var f=c.querySelector(\".card-front\");"
+    "if(f){var o=document.createElement(\"i\");o.className=\"card-foil\";f.appendChild(o)}"
+    "[\"card-leak\",\"card-seam\",\"card-flash\",\"card-ring\",\"card-ring card-ring-late\"].forEach(function(n){"
+    "var d=document.createElement(\"i\");d.className=n;c.appendChild(d)})}"
     "function FXC(k,g){"
     "var c=k.cards[g.index];if(!c)return;"
     "var r=c.querySelector(\".card-rotor\"),L=ft[g.reward.rarity].level,s=g.local,red=k.reduced;"
-    "if(!c._fx){c._fx=1;var f=c.querySelector(\".card-front\");"
-    "if(f){var o=document.createElement(\"i\");o.className=\"card-foil\";f.appendChild(o)}"
-    "[\"card-leak\",\"card-seam\",\"card-flash\",\"card-ring\",\"card-ring card-ring-late\"].forEach(function(n){"
-    "var d=document.createElement(\"i\");d.className=n;c.appendChild(d)});"
-    "var rt=k.root.closest(\".rc-root\");rt&&red&&rt.classList.add(\"rc-still\")}"
+    "if(!c._fx){FXL(c);var rt=k.root.closest(\".rc-root\");rt&&red&&rt.classList.add(\"rc-still\")}"
     "if(c.dataset.fx!==String(L))c.dataset.fx=String(L);"
     "if(g.stageChanged&&g.level>=2&&s<.58)k.root.dispatchEvent(new CustomEvent(\"rc-card-charge\",{bubbles:!0,detail:{index:g.index,level:g.level}}));"
     "var w=L>=2?.3:.25,p=(s-.58)/w,q=Math.max(0,Math.min(1,p)),a,h1=L>2?.26:.32,h2=L>2?.74:.62;"
@@ -216,8 +217,27 @@ EXPORT_TAIL = (
     "r.style.transform=red?\"rotateY(0deg)\":\"translate3d(\"+x.toFixed(2)+\"%,\"+y.toFixed(2)+\"%,0) rotateY(\"+a.toFixed(2)+\"deg)\";"
     "c.style.setProperty(\"--charge\",ch.toFixed(3));"
     "c.style.setProperty(\"--seam\",L>=2&&!landed&&!red?Math.max(0,1-Math.abs(a-90)/22).toFixed(3):\"0\");"
+    # 다음 칸으로 넘어간 순간, 밑동에 쌓인 카드가 새로 들어온 쪽부터 차례로 들썩인다(파도).
+    # 묶음이 칸이 바뀔 때마다 클래스를 갈아 끼우므로, 같은 애니메이션을 다시 틀려고 이름을 번갈아 쓴다.
+    "if(k._wi!==g.index){k._wi=g.index;k._wv=k._wv===\"a\"?\"b\":\"a\";if(!red)for(var j=0;j<g.index;j++){var q2=k.cards[j];"
+    "q2.style.setProperty(\"--wave-delay\",((g.index-1-j)*55+(j===g.index-1?0:180))+\"ms\");q2.classList.add(\"rc-wave-\"+k._wv);"
+    "if(j===g.index-1)q2.classList.add(\"rc-arrive\")}}"
     "if(landed&&!c.classList.contains(\"landed\")){c.classList.add(\"landed\");"
     "k.root.dispatchEvent(new CustomEvent(\"rc-card-land\",{bubbles:!0,detail:{index:g.index,level:L}}))}}"
+    # 건너뛰면 결산 대신 **뒤집힌 판**이 선다. 무대의 공개 진행을 멈추고(내부 단계만 result로 —
+    # 프레임이 카드를 다시 칠하지 않는다) 카드를 결산 격자 자리에 늘어놓는다. 이미 연 카드만 앞면이다.
+    # 연출을 마치는 것은 게임이 `endBoard`로 부른다 — 그때 원래 결산(`finish`)으로 넘어간다.
+    "xo.prototype.board=function(){"
+    'if(this.destroyed||this.phase==="result")return null;'
+    'this.stopAudio(),this.phase="result",this.phaseTime=0,this.root.dataset.phase="board";'
+    "var k=this.deck,R=this.rewards,a=k.active,open=[];k.active=-1;k.root.className=\"cards overview board\";"
+    "k.cards.forEach(function(c,i){FXL(c);var L=ft[R[i].rarity].level,on=a>=0&&(i<a||i===a&&c.classList.contains(\"landed\"));"
+    "c.dataset.fx=String(L);c.style.setProperty(\"--tier\",ft[R[i].rarity].color);c.style.setProperty(\"--charge\",\"0\");c.style.setProperty(\"--seam\",\"0\");"
+    "c.style.removeProperty(\"transform\");c.style.setProperty(\"--deal\",i*45+\"ms\");"
+    "c.className=\"archive-card collected rc-dealt\"+(on?\" opened\":\"\");c.setAttribute(\"aria-hidden\",\"false\");"
+    "c.querySelector(\".card-rotor\").style.transform=on?\"rotateY(0deg)\":\"rotateY(180deg)\";on&&open.push(i)});"
+    "return open};"
+    "xo.prototype.endBoard=function(){if(this.destroyed)return;this.phase=\"board-end\",this.finish()};"
     "window.__RESEARCH_CINEMATIC__={Cinematic:xo,text:CT,tiers:ft};})();"
 )
 

@@ -52,6 +52,13 @@ interface CinematicInstance {
   rewards?: ReadonlyArray<{ rarity: string }>;
   /** 열린 카드 한 장의 등급을 올린다(카드 목록이 얼려 있어 새 배열로 갈아 끼운다). */
   promoteReward?(index: number, rarity: string): void;
+  /**
+   * 건너뛴 판 — 남은 카드를 **뒤집힌 채로** 열 장 판에 깔고 공개를 멈춘다. 이미 열린 칸 번호를 돌려준다.
+   * 결산에 닿았거나 판이 죽었으면 `null`이다.
+   */
+  board?(): number[] | null;
+  /** 판의 카드를 다 열었다 — 원래 결산(격자·`onComplete`)으로 넘어간다. */
+  endBoard?(): void;
   destroy(): void;
   getState(): { phase: string; count: number; activeTier: string };
 }
@@ -192,9 +199,16 @@ function supportsWebgl2(): boolean {
  * 바꾸지 않는 글이고, 뽑기 버튼은 이미 연구소 화면이 갖고 있다. 아이디는 에셋이 찾는 이름
  * 그대로여야 하며, 여기 없는 것은 에셋이 붙어 있지 않은 조각에 조용히 쓴다.
  */
+/**
+ * 뒷배경 양옆으로 흐르는 기록 띠의 글. 화면이 읽을 문장이 아니라 결이라 번역하지 않는다.
+ * 같은 글을 두 번 이어 붙여 −50%까지 흘린 뒤 처음으로 돌아가도 이음매가 없다.
+ */
+const BACKDROP_CODE = "RELIC · GENOME ARCHIVE · E.C. 00–20 · FOSSIL RESTORATION · SPECIMEN SYNC · ";
+
 function buildMarkup(text: ResearchCinematicText): string {
   return `
 <div id="stage" aria-hidden="true"></div>
+<div class="rc-backdrop" aria-hidden="true"><i class="rc-hex"></i><i class="rc-ring rc-ring-a"></i><i class="rc-ring rc-ring-b"></i><i class="rc-code rc-code-l"><b>${BACKDROP_CODE}${BACKDROP_CODE}</b></i><i class="rc-code rc-code-r"><b>${BACKDROP_CODE}${BACKDROP_CODE}</b></i></div>
 <div class="rc-vignette"></div>
 <div class="rc-noise"></div>
 <div class="rc-ui">
@@ -237,6 +251,12 @@ const FACE_BAKE = 192;
  * 더 두었다가 섬광과 함께 바뀐다.
  */
 const SHATTER_DELAY_MS = 900;
+/** 건너뛴 판 — 한 장을 뒤집는 시간, 한 번 더 건너뛸 때 다음 장까지의 간격, 찬스 카드가 SR로 선 뒤 오르기까지. */
+const BOARD_FLIP_MS = 420;
+const BOARD_CASCADE_STEP_MS = 110;
+const BOARD_CHANCE_HOLD_MS = 900;
+/** 마지막 장이 열린 뒤 결산으로 넘어가기까지 — 중복이 파편으로 깨지는 박자까지 본다. */
+const BOARD_END_DELAY_MS = 1300;
 /** SR·SSR은 옆면에 걸렸다 닿고 섬광·고리가 퍼지므로, 그 박자를 다 보고 나서 파편이 된다. */
 const SHATTER_GRADE_DELAY_MS: Readonly<Record<string, number>> = { SR: 350, SSR: 550 };
 
@@ -346,7 +366,7 @@ export class ResearchCinematic {
     root.addEventListener("pointerup", (event) => {
       event.stopPropagation();
       if (event.target instanceof Element && event.target.closest(".rc-skip")) return;
-      this.tap();
+      this.tap(event);
     });
     root.querySelector(".rc-skip")?.addEventListener("click", () => this.skip());
     // 카드 공개의 소리 두 겹 — 등급이 SR·SSR로 오를 때 우르릉, SSR이 앞면에 닿을 때 쾅.
@@ -478,10 +498,168 @@ export class ResearchCinematic {
    */
   skip(): void {
     if (this.introducing) return;
-    // 건너뛰기를 누른 순간부터 칩은 할 일이 없다 — 결산까지 남겨 두지 않는다.
+    if (this.phase === "result") { this.root.classList.add("rc-skipped"); this.closeResult(); return; }
+    // 판에서 한 번 더 — 남은 카드가 촤르륵 열린다. 그 뒤로 칩은 할 일이 없다.
+    if (this.phase === "board") { this.root.classList.add("rc-skipped"); void this.cascadeBoard(); return; }
+    /*
+     * 첫 건너뛰기는 결산으로 곧장 가지 않고 **뒤집힌 열 장의 판**을 깐다(응태 요청, 2026-11-10).
+     * 찬스 카드도 여기까지 SR로 보류했다가 판에서 열릴 때 오른다. 칩은 두 번째 건너뛰기를 위해 남긴다.
+     */
+    const opened = this.instance.board?.();
+    if (opened) { this.enterBoard(opened); return; }
     this.root.classList.add("rc-skipped");
-    if (this.phase === "result") { this.closeResult(); return; }
     void this.skipAfterIntroductions();
+  }
+
+  /** 판에서 이미 연 칸. 판에 깔리기 전에 손으로 연 칸도 든다. */
+  private readonly boardOpened = new Set<number>();
+  /** 뒤집히는 중인 칸 수 — 0이 되고 다 열렸을 때만 결산으로 넘어간다. */
+  private boardPending = 0;
+  private cascading = false;
+  private boardEnding = false;
+
+  private enterBoard(opened: readonly number[]): void {
+    for (const index of opened) this.boardOpened.add(index);
+    this.maybeEndBoard();
+  }
+
+  /** 판을 누른 한 번 — 누른 카드를, 카드 밖이면 다음 닫힌 카드를 연다. */
+  private tapBoard(event: PointerEvent): void {
+    if (this.cascading || this.boardEnding) return;
+    const cards = Array.from(this.root.querySelectorAll<HTMLElement>(".archive-card"));
+    const hit = event.target instanceof Element ? event.target.closest<HTMLElement>(".archive-card") : null;
+    const tapped = hit ? cards.indexOf(hit) : -1;
+    const index = tapped >= 0 && !this.boardOpened.has(tapped)
+      ? tapped
+      : cards.findIndex((_, i) => !this.boardOpened.has(i));
+    if (index >= 0) void this.openBoardCard(index);
+  }
+
+  /**
+   * 판의 카드 한 장을 연다. 새 렐릭은 뒤집기 전에 소개하고, 찬스 카드는 SR로 열렸다가 핑! 하고 오른 뒤
+   * 소개하며, 중복은 한 박자 뒤 파편이 된다 — 하나씩 넘길 때와 같은 차례다.
+   */
+  private async openBoardCard(index: number): Promise<void> {
+    if (this.closed || this.boardOpened.has(index)) return;
+    this.boardOpened.add(index);
+    this.boardPending += 1;
+    try {
+      const chance = this.chanceSlots.has(index);
+      if (!chance && this.introduceSlots.has(index)) await this.runIntroduction(index);
+      if (this.closed) return;
+      await this.flipBoardCard(index);
+      if (this.closed) return;
+      if (chance) await this.pingChance(index);
+      else if (this.art[index]?.frame === "face") this.shatterAfter(index);
+    } finally {
+      this.boardPending -= 1;
+    }
+    this.maybeEndBoard();
+  }
+
+  /**
+   * 뒷면에서 앞면으로 돌린다. 회전은 rAF가 회전축의 `rotateY`를 직접 적는다 — 면 판정(`trackCardSides`)이
+   * 그 각도를 읽으므로 CSS 전환으로 돌리면 앞·뒤가 바뀌지 않는다. 닿는 순간 등급의 섬광·고리가 다시 터진다.
+   */
+  private flipBoardCard(index: number): Promise<void> {
+    const card = this.root.querySelectorAll<HTMLElement>(".archive-card")[index];
+    const rotor = card?.querySelector<HTMLElement>(".card-rotor");
+    const grade = this.grades[index];
+    audioManager?.playSfx(grade === "SSR" ? "research.reveal.ssr" : grade === "SR" ? "research.reveal.sr" : "research.reveal.common");
+    if (!card || !rotor) return Promise.resolve();
+    const land = () => {
+      rotor.style.transform = "rotateY(0deg)";
+      card.classList.add("opened");
+      this.restartLanding(card);
+      if (grade === "SSR") audioManager?.playSfx("story.impact");
+    };
+    if (this.reduced) { land(); return Promise.resolve(); }
+    return new Promise<void>((resolve) => {
+      const start = performance.now();
+      const frame = (now: number) => {
+        if (this.closed) { resolve(); return; }
+        const t = Math.min(1, (now - start) / BOARD_FLIP_MS);
+        // 처음엔 빠르게 돌다 끝에서 살짝 넘쳤다 돌아온다.
+        const eased = 1 + 2.2 * (t - 1) ** 3 + 1.2 * (t - 1) ** 2;
+        rotor.style.transform = `rotateY(${(180 * (1 - eased)).toFixed(2)}deg)`;
+        if (t < 1) { requestAnimationFrame(frame); return; }
+        land();
+        resolve();
+      };
+      requestAnimationFrame(frame);
+    });
+  }
+
+  /** 섬광·고리 애니메이션을 처음부터 다시 튼다. */
+  private restartLanding(card: HTMLElement): void {
+    card.classList.remove("landed");
+    void card.offsetWidth;
+    card.classList.add("landed");
+  }
+
+  /** SR로 열린 찬스 카드 — 잠깐 떨며 반짝이다 핑! 하고 SSR로 오르고, 원래 SSR 소개로 넘어간다. */
+  private async pingChance(index: number): Promise<void> {
+    const card = this.root.querySelectorAll<HTMLElement>(".archive-card")[index];
+    this.teaseCard(index);
+    await this.wait(BOARD_CHANCE_HOLD_MS);
+    if (this.closed) return;
+    this.promoteCard(index, "SSR");
+    if (card) {
+      card.dataset.fx = "3";
+      card.classList.remove("rc-ping");
+      this.restartLanding(card);
+      card.classList.add("rc-ping");
+    }
+    audioManager?.playSfx("story.impact");
+    audioManager?.playSfx("research.reveal.ssr");
+    await this.wait(700);
+    if (this.closed) return;
+    await this.runIntroduction(index);
+  }
+
+  /** 한 번 더 건너뛰기 — 남은 카드를 차례로 촤르륵 연다. 찬스·새 렐릭은 그 자리에서 멈춰 제 연출을 다 본다. */
+  private async cascadeBoard(): Promise<void> {
+    if (this.cascading) return;
+    this.cascading = true;
+    while (this.boardPending > 0 && !this.closed) await this.wait(60);
+    for (let index = 0; index < this.grades.length; index += 1) {
+      if (this.closed) return;
+      if (this.boardOpened.has(index)) continue;
+      const special = this.chanceSlots.has(index)
+        || (this.introduce !== undefined && this.introduceSlots.has(index) && !this.introduced.has(index));
+      if (special) await this.openBoardCard(index);
+      else {
+        void this.openBoardCard(index);
+        await this.wait(BOARD_CASCADE_STEP_MS);
+      }
+    }
+  }
+
+  /** 다 열렸으면 한 박자 뒤 결산으로 넘긴다. */
+  private maybeEndBoard(): void {
+    if (this.boardEnding || this.closed || this.boardPending > 0 || this.boardOpened.size < this.grades.length) return;
+    this.boardEnding = true;
+    this.root.classList.add("rc-skipped");
+    void this.wait(BOARD_END_DELAY_MS).then(() => {
+      if (!this.closed) this.instance.endBoard?.();
+    });
+  }
+
+  /** 판이 열린 한 박자 뒤 중복을 파편으로 바꾼다. */
+  private shatterAfter(index: number): void {
+    const timer = window.setTimeout(() => {
+      this.timers.delete(timer);
+      if (!this.closed) this.shatter(index, false);
+    }, SHATTER_DELAY_MS + (SHATTER_GRADE_DELAY_MS[this.grades[index] ?? ""] ?? 0));
+    this.timers.add(timer);
+  }
+
+  /** 판이 닫히면 함께 걷히는 기다림. */
+  private wait(ms: number): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const timer = window.setTimeout(() => { this.timers.delete(timer); resolve(); }, ms);
+      this.timers.add(timer);
+    });
   }
 
   /**
@@ -621,9 +799,10 @@ export class ResearchCinematic {
    * 연출은 시간이 아니라 이 손이 넘긴다 — 스캔에서 균열로, 균열에서 폭발로, 공개에서는
    * **등급 한 칸 → 뒤집기 → 다음 칸** 순서다. 결산에서는 판을 닫는다.
    */
-  private tap(): void {
+  private tap(event: PointerEvent): void {
     if (this.introducing) return;
     if (this.phase === "result") { this.closeResult(); return; }
+    if (this.phase === "board") { this.tapBoard(event); return; }
     const next = this.instance.peekReveal?.();
     if (next?.step === "flip" && this.introduceSlots.has(next.index) && !this.chanceSlots.has(next.index) && !this.introduced.has(next.index) && this.introduce) {
       // 새로 만난 렐릭 — 카드를 뒤집기 **전에** 먼저 소개하고, 돌아와서 뒤집는다.

@@ -847,7 +847,33 @@
 .cards.board .archive-card[data-rarity="SR"] .card-back::before { content: "SR"; }
 .cards.board .archive-card[data-rarity="SSR"] .card-back::before { content: "SSR"; }
 .cards.board .archive-card:not([data-rarity="GRAY"]) .back-code { margin-top: 3cqw; font-size: 2.6cqw; opacity: 0.7; }
-.cards.board .archive-card[data-rarity="SSR"] .card-back { animation: rc-board-ssr-back 1.6s ease-in-out infinite; }
-@keyframes rc-board-ssr-back { 50% { box-shadow: inset 0 0 4.6cqw color-mix(in srgb, var(--tier) 70%, transparent), 0 0 2.6cqw color-mix(in srgb, var(--tier) 60%, transparent); } }
-.rc-root.rc-still .cards.board .archive-card .card-back { animation: none; }
-@media (prefers-reduced-motion: reduce) { .cards.board .archive-card .card-back { animation: none; } }
+
+/*
+ * 닫힌 SR·SSR은 **맥동한다** — 장식을 더하지 않고 이미 있는 빛만 숨 쉬게 해 기대감을 준다(응태 요청).
+ * 뒷면 안쪽 빛·카드 뒤로 번지는 등급빛(`card-leak`)·등급 글자의 빛이 한 박자로 오르내리고, 카드가
+ * 아주 조금 부푼다. SR은 느리고 옅게, SSR은 빠르고 짙게 — 열리면 멈춘다.
+ */
+.cards.board .archive-card[data-rarity="SR"]:not(.opened),
+.cards.board .archive-card[data-rarity="SSR"]:not(.opened) { --pulse-time: 2.2s; --pulse-in: 3.2cqw; --pulse-out: 4.6cqw; --pulse-glow: 2.6cqw; --pulse-grow: 1.015; --pulse-leak: 0.5; }
+.cards.board .archive-card[data-rarity="SSR"]:not(.opened) { --pulse-time: 1.5s; --pulse-in: 5.2cqw; --pulse-out: 3.4cqw; --pulse-glow: 4.4cqw; --pulse-grow: 1.03; --pulse-leak: 0.85; }
+.cards.board .archive-card[data-rarity="SR"]:not(.opened) .card-back,
+.cards.board .archive-card[data-rarity="SSR"]:not(.opened) .card-back { animation: rc-board-pulse-back var(--pulse-time) ease-in-out var(--deal, 0ms) infinite; }
+.cards.board .archive-card[data-rarity="SR"]:not(.opened) .card-leak,
+.cards.board .archive-card[data-rarity="SSR"]:not(.opened) .card-leak { animation: rc-board-pulse-leak var(--pulse-time) ease-in-out var(--deal, 0ms) infinite; }
+.cards.board .archive-card[data-rarity="SR"]:not(.opened) .card-back::before,
+.cards.board .archive-card[data-rarity="SSR"]:not(.opened) .card-back::before { animation: rc-board-pulse-label var(--pulse-time) ease-in-out var(--deal, 0ms) infinite; }
+@keyframes rc-board-pulse-back {
+  0%, 100% { scale: 1; box-shadow: inset 0 0 var(--pulse-in) color-mix(in srgb, var(--tier) 40%, transparent), 0 0 1.2cqw color-mix(in srgb, var(--tier) 35%, transparent); }
+  50% { scale: var(--pulse-grow); box-shadow: inset 0 0 var(--pulse-out) color-mix(in srgb, var(--tier) 72%, transparent), 0 0 var(--pulse-glow) color-mix(in srgb, var(--tier) 70%, transparent); }
+}
+@keyframes rc-board-pulse-leak { 0%, 100% { opacity: 0.08; } 50% { opacity: var(--pulse-leak); } }
+@keyframes rc-board-pulse-label {
+  0%, 100% { text-shadow: 0 0 1cqw color-mix(in srgb, var(--tier) 55%, transparent), 0 0.3cqw 0 #000; }
+  50% { text-shadow: 0 0 2.6cqw var(--tier), 0 0 0.6cqw #fff, 0 0.3cqw 0 #000; }
+}
+.rc-root.rc-still .cards.board .archive-card .card-back,
+.rc-root.rc-still .cards.board .archive-card .card-leak,
+.rc-root.rc-still .cards.board .archive-card .card-back::before { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .cards.board .archive-card .card-back, .cards.board .archive-card .card-leak, .cards.board .archive-card .card-back::before { animation: none; }
+}

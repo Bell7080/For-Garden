@@ -135,7 +135,7 @@ export const SHOP_PT_BR = {
   "shop.premium.firstPayment.title": "Presente da primeira compra",
   "shop.premium.firstPayment.note": "Ativa na sua primeira compra",
   "shop.premium.firstPayment.hint": "Faça sua primeira compra de qualquer item para ativar e resgate aqui.",
-  "shop.premium.firstPayment.claim": "FREE · Resgatar",
+  "shop.premium.firstPayment.claim": "Grátis",
   "shop.purchase.period.season": "Temporada",
   "shop.premium.pass.metric.seasonPoints": "Pesquisa da temporada {progress} / {goal}",
 } as const;

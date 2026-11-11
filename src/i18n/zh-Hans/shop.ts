@@ -135,7 +135,7 @@ export const SHOP_ZH_HANS = {
   "shop.premium.firstPayment.title": "首次付费礼物",
   "shop.premium.firstPayment.note": "首次付费后激活",
   "shop.premium.firstPayment.hint": "首次购买任意商品即可激活，之后在此领取。",
-  "shop.premium.firstPayment.claim": "FREE · 领取",
+  "shop.premium.firstPayment.claim": "免费",
   "shop.purchase.period.season": "赛季",
   "shop.premium.pass.metric.seasonPoints": "赛季研究度 {progress} / {goal}",
 } as const;

@@ -492,7 +492,7 @@ export class PremiumScene extends Phaser.Scene {
   /**
    * 한정 탭 맨 앞의 「첫 결제 선물」 — 받는 것(선택권 · 화석)과 한정 테두리를 씌운 지금 얼굴이 선다.
    * 결제 전에는 「첫 결제 시 활성화」로 잠겨 있고, 첫 결제가 활성화하면(`fulfillPlatformPurchase`) 카드가 숨 쉬며
-   * 「FREE」로 바뀌어 직접 눌러 받는다(`claimFirstPaymentGift`). 받으면 목록에서 걷힌다.
+   * 「무료」로 바뀌어 직접 눌러 받는다(`claimFirstPaymentGift`). 받으면 목록에서 걷힌다.
    */
   private addFirstPaymentGiftCard(gift: NonNullable<ProductListResponse["firstPaymentGift"]>, index: number, kind: PremiumListKind): void {
     const W = PREMIUM_WIDE;
@@ -524,7 +524,7 @@ export class PremiumScene extends Phaser.Scene {
       pressOut(avatar);
       if (this.isTap(pointer)) openProfileFrameGuide(this, this.popups, { frameId: gift.frameId, avatar: avatarContent, descriptionKey: "profile.frameGuide.firstPayment" });
     });
-    // 아래 띠가 지금 할 일을 말한다 — 잠긴 동안은 어두운 유리에 「첫 결제 시 활성화」, 활성화되면 선물 색으로 물든 「FREE · 받기」.
+    // 아래 띠가 지금 할 일을 말한다 — 잠긴 동안은 어두운 유리에 「첫 결제 시 활성화」, 활성화되면 선물 색으로 물든 「무료」.
     const bar = this.add.container(0, S.price.y);
     const barShape = chipPoints(S.price.width + 120, S.price.height, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } });
     bar.add(gift.claimable

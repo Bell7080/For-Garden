@@ -13,6 +13,7 @@ export const LAB_JA = {
   "lab.pity.pickupNext": "次のSSRはピックアップ確定",
   "lab.pull.one": "1回研究",
   "lab.pull.ten": "10回研究",
+  "lab.pull.againHint": "もう一度研究してみる？",
   "lab.networkError": "通信に失敗しました。もう一度お試しください。",
   "lab.policy.pity": "現在SSR未獲得 {since}回 · 確定まで {left}回",
   "lab.policy.pickup": "ピックアップ確定  {state}",

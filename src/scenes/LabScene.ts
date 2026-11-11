@@ -39,7 +39,7 @@ import { motionPolicy } from "../core/settings";
 import { colorAssistPolicy, excavationStageDuration } from "../core/settings";
 import { flashPolicy } from "../ui/signatureEffects";
 import { hasRareExcavationResult } from "../core/hapticPolicy";
-import { ResearchCinematic, researchCinematicEnabled } from "../ui/ResearchCinematic";
+import { ResearchCinematic, researchCinematicEnabled, type ResearchCinematicAgain } from "../ui/ResearchCinematic";
 import { cinematicCardArt, cinematicRewards, isCinematicCount } from "../ui/researchCinematicModel";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { formatCurrency } from "../core/formatCurrency";
@@ -420,6 +420,9 @@ export class LabScene extends Phaser.Scene {
     }, () => { void this.doPull(count); });
   }
 
+  /** 결산의 「한 번 더」가 남긴 다음 연구 — 지금 연구가 끝난(`pullPending`이 풀린) 뒤에 부른다. */
+  private pullAgain?: 1;
+
   private async doPull(count: 1 | 10): Promise<void> {
     const banner = this.banner;
     if (this.pullPending || !canPull(session.wallet, banner, count, this.pityOf(banner))) return;
@@ -440,6 +443,10 @@ export class LabScene extends Phaser.Scene {
       this.pullPending = false;
       this.refresh();
     }
+    // 「한 번 더」는 연구 버튼을 누른 것과 같은 길을 지난다 — 젬이 드는 몫이 있으면 확인 창이 먼저 묻는다.
+    const again = this.pullAgain;
+    this.pullAgain = undefined;
+    if (again && this.scene.isActive()) this.requestPull(again);
   }
 
   /** 임시 API 오류도 게임 테마 안에서 짧게 안내한다. */
@@ -576,6 +583,7 @@ export class LabScene extends Phaser.Scene {
       introduceSlots: showcase.flatMap((relicId, index) => (relicId ? [index] : [])),
       // 찬스로 오른 칸은 SR 뒷면으로 서 있다가 뒤집지 않고 떨리며 SSR로 격상되어 원래 SSR 소개로 넘어간다.
       chanceSlots: upgradeSlot !== undefined ? [upgradeSlot] : [],
+      again: this.pullAgainButton(results.length),
       introduce: async (index) => {
         const relicId = showcase[index];
         if (!relicId || !this.presentation.isCurrent(request)) return;
@@ -600,10 +608,35 @@ export class LabScene extends Phaser.Scene {
     this.audioScope?.play("research.crack");
     await cinematic.done();
     this.cinematic = undefined;
+    if (cinematic.againRequested && this.presentation.isCurrent(request)) {
+      this.pullAgain = 1;
+      if (!settingsManager.get().game.pullAgainTaught) settingsManager.update({ game: { pullAgainTaught: true } });
+    }
     if (!this.presentation.isCurrent(request)) { setDebugResearchBoard(undefined); return true; }
     this.presentation.skipAll();
     setDebugResearchBoard(undefined);
     return true;
+  }
+
+  /**
+   * 단일 연구 결산에 세울 「한 번 더」 — 연구소의 1회 연구 버튼과 같은 라벨·색·값이다.
+   * 한 번 더 돌릴 수 없으면(재화·젬 부족, 한도, 10연 전용) 세우지 않는다. 값은 지갑이 이미 이번 연구를
+   * 치른 뒤라 다음 한 번의 값이다.
+   */
+  private pullAgainButton(count: number): ResearchCinematicAgain | undefined {
+    if (count !== 1) return undefined;
+    const banner = this.banner;
+    const pity = this.pityOf(banner);
+    if (!bannerActive(banner, new Date()) || !canPull(session.wallet, banner, 1, pity)) return undefined;
+    const tone = LAB_CHROME.pull.oneTone;
+    const css = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
+    return {
+      label: t("lab.pull.one"),
+      tone: css(tone),
+      toneDark: css(Phaser.Display.Color.ValueToColor(tone).darken(28).color),
+      cost: pullCostParts(banner, 1, pity),
+      teach: settingsManager.get().game.pullAgainTaught ? undefined : { hint: t("lab.pull.againHint") },
+    };
   }
 
   /**

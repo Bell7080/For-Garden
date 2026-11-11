@@ -109,6 +109,16 @@
 "Nächstes SSR ist das Pickup",
 "Следующий SSR — избранный"
 ],
+"lab.pull.againHint": [
+"再研究一次吧？",
+"วิจัยอีกสักครั้งไหม?",
+"Nghiên cứu thêm một lần nữa?",
+"Riset sekali lagi?",
+"¿Investigar una vez más?",
+"Pesquisar mais uma vez?",
+"Noch einmal forschen?",
+"Исследовать ещё раз?"
+],
 "lab.pull.one": [
 "研究 x1",
 "วิจัย x1",

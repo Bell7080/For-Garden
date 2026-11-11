@@ -61,6 +61,8 @@ export interface GameSettings {
     battleSpeed: 1 | 1.5 | 2 | 3; autoUltimate: boolean;
     /** 전투 편성 칸에 추천 직군을 세우는가. 편성 화면의 끄기 버튼이 뒤집는다. */
     formationRoleHint: boolean;
+    /** 단일 연구 결산의 「한 번 더」를 한 번이라도 눌렀는가. 누르기 전까지 화살표가 그 버튼을 가리킨다 — 기기 선호다. */
+    pullAgainTaught: boolean;
     /** 광고를 봐야 받는 보상(돌림판 광고 보너스 등)에도 붉은 점을 세우는가. 공짜 보상이 아니라 기본은 끔이다 — 기기 선호다. */
     adRewardDot: boolean;
     skipUltimatePresentation: boolean; textSpeed: 0.5 | 1 | 2; language: LanguageId;

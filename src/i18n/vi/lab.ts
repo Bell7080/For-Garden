@@ -13,6 +13,7 @@ export const LAB_VI = {
   "lab.pity.pickupNext": "SSR kế tiếp là nhân vật tăng tỉ lệ",
   "lab.pull.one": "Nghiên cứu x1",
   "lab.pull.ten": "Nghiên cứu x10",
+  "lab.pull.againHint": "Nghiên cứu thêm một lần nữa?",
   "lab.networkError": "Yêu cầu thất bại. Hãy thử lại.",
   "lab.policy.pity": "{since} lượt từ SSR gần nhất · còn {left} lượt đến bảo đảm",
   "lab.policy.pickup": "Bảo đảm tăng tỉ lệ  {state}",

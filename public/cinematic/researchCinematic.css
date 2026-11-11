@@ -231,6 +231,99 @@
 /* 균열을 재촉하는 손을 받는 자리. 화면 전체가 그 손을 받으므로 보이지 않는다. */
 .rc-hidden { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
+/* ── 결산의 「한 번 더」 ────────────────────────────────────────────────── */
+
+/*
+ * 연구소의 연구 버튼(`ResearchPullButton`)과 같은 알약이다 — 크림 면, 제 색의 두꺼운 테, 아래로
+ * 떨어지는 짙은 두께. 크기도 같은 비율이다(420×150 / 1080, 두께 12). 단일 결산에서 카드 아래
+ * 받침 자리에 서고, 누르면 그 두께만큼 내려앉는다.
+ */
+.rc-root .rc-again {
+  position: absolute;
+  left: 50%;
+  top: 84.5%;
+  width: 38.9%;
+  aspect-ratio: 420 / 162;
+  transform: translate(-50%, -50%);
+  display: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rc-root[data-phase="result"] .rc-again { display: block; animation: rc-again-in 0.32s ease-out both; }
+.rc-again::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 7.4%; bottom: 0;
+  border-radius: 999px;
+  background: var(--rc-again-dark);
+  box-shadow: 0.6cqw 1cqw 0 #00000047;
+}
+.rc-again-face {
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 7.4%;
+  border-radius: 999px;
+  background: #fff6e4;
+  border: 0.65cqw solid var(--rc-again-tone);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4cqw;
+  transition: transform 0.06s;
+}
+/* 윗변의 반짝임 한 줄 — 광택이 아니라 얇은 띠 하나다. */
+.rc-again-face::before {
+  content: "";
+  position: absolute;
+  left: 17%; right: 17%; top: 9%;
+  height: 0.75cqw;
+  border-radius: 0.4cqw;
+  background: #ffffffbf;
+}
+.rc-again:active .rc-again-face { transform: translateY(0.67cqw); }
+.rc-again-label { font-size: 3.75cqw; font-weight: 800; color: #3b2a1c; line-height: 1; }
+.rc-again-cost { display: flex; align-items: center; gap: 1.7cqw; }
+.rc-again-part { display: flex; align-items: center; gap: 0.55cqw; }
+.rc-again-icon { width: 5.8cqw; height: 5.8cqw; object-fit: contain; filter: drop-shadow(0.28cqw 0.37cqw 0 #2a1c106b); }
+.rc-again-amount { font-size: 2.8cqw; font-weight: 800; color: #3b2a1c; }
+.rc-again-amount.rc-short { color: #d2463c; }
+@keyframes rc-again-in { from { opacity: 0; transform: translate(-50%, -30%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+
+/* 처음 한 번만 버튼 위에서 화살표가 통통 튀며 가리킨다. 화면을 덮는 막은 깔지 않는다. */
+.rc-again-guide {
+  position: absolute;
+  left: 50%;
+  top: 77.6%;
+  transform: translate(-50%, -50%);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6cqw;
+  pointer-events: none;
+}
+.rc-root[data-phase="result"] .rc-again-guide { display: flex; }
+.rc-again-hint {
+  font-size: 2.9cqw;
+  font-weight: 700;
+  color: var(--rc-accent);
+  white-space: nowrap;
+  text-shadow: 0 0 0.6cqw #000, 0 0.3cqw 0.4cqw #000;
+}
+.rc-again-arrow {
+  width: 4.6cqw;
+  height: 3.2cqw;
+  background: var(--rc-accent);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  filter: drop-shadow(0 0.3cqw 0 #000);
+  animation: rc-again-bob 0.8s ease-in-out infinite;
+}
+@keyframes rc-again-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(1.1cqw); } }
+
 /* ── 카드 ──────────────────────────────────────────────────────────────── */
 
 .cards { position: absolute; inset: 0; pointer-events: none; visibility: hidden; perspective: 1100px; }
@@ -555,6 +648,7 @@
   .rc-root *, .archive-card { transition: none !important; }
   .rc-root[data-phase] #stage { animation: none !important; }
   .card-rotor { will-change: auto; }
+  .rc-again-arrow, .rc-root[data-phase="result"] .rc-again { animation: none !important; }
 }
 
 /*

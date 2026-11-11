@@ -13,6 +13,7 @@ export const LAB_ID = {
   "lab.pity.pickupNext": "SSR berikutnya pasti pickup",
   "lab.pull.one": "Riset x1",
   "lab.pull.ten": "Riset x10",
+  "lab.pull.againHint": "Riset sekali lagi?",
   "lab.networkError": "Permintaan gagal. Coba lagi.",
   "lab.policy.pity": "{since} kali sejak SSR terakhir · {left} lagi hingga jaminan",
   "lab.policy.pickup": "Jaminan Pickup  {state}",

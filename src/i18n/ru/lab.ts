@@ -13,6 +13,7 @@ export const LAB_RU = {
   "lab.pity.pickupNext": "Следующий SSR — избранный",
   "lab.pull.one": "Исследование x1",
   "lab.pull.ten": "Исследование x10",
+  "lab.pull.againHint": "Исследовать ещё раз?",
   "lab.networkError": "Запрос не удался. Повторите попытку.",
   "lab.policy.pity": "{since} с последнего SSR · до гарантии {left}",
   "lab.policy.pickup": "Гарантия избранного  {state}",

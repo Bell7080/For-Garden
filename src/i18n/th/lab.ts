@@ -13,6 +13,7 @@ export const LAB_TH = {
   "lab.pity.pickupNext": "SSR ถัดไปคือตัวเรทอัป",
   "lab.pull.one": "วิจัย x1",
   "lab.pull.ten": "วิจัย x10",
+  "lab.pull.againHint": "วิจัยอีกสักครั้งไหม?",
   "lab.networkError": "คำขอล้มเหลว ลองอีกครั้ง",
   "lab.policy.pity": "ผ่านมา {since} ครั้งหลัง SSR ล่าสุด · อีก {left} ครั้งการันตี",
   "lab.policy.pickup": "การันตีเรทอัป  {state}",

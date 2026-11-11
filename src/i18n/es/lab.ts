@@ -13,6 +13,7 @@ export const LAB_ES = {
   "lab.pity.pickupNext": "El próximo SSR será el destacado",
   "lab.pull.one": "Investigar x1",
   "lab.pull.ten": "Investigar x10",
+  "lab.pull.againHint": "¿Investigar una vez más?",
   "lab.networkError": "La solicitud falló. Inténtalo de nuevo.",
   "lab.policy.pity": "{since} tiradas desde el último SSR · faltan {left} para la garantía",
   "lab.policy.pickup": "Garantía de destacado  {state}",

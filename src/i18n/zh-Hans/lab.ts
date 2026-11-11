@@ -13,6 +13,7 @@ export const LAB_ZH_HANS = {
   "lab.pity.pickupNext": "下个SSR必为UP",
   "lab.pull.one": "研究 x1",
   "lab.pull.ten": "研究 x10",
+  "lab.pull.againHint": "再研究一次吧？",
   "lab.networkError": "请求失败。请重试。",
   "lab.policy.pity": "距上次SSR已{since}次 · 还需{left}次保底",
   "lab.policy.pickup": "UP保底  {state}",

@@ -13,6 +13,7 @@ export const LAB_PT_BR = {
   "lab.pity.pickupNext": "O próximo SSR será o destaque",
   "lab.pull.one": "Pesquisar x1",
   "lab.pull.ten": "Pesquisar x10",
+  "lab.pull.againHint": "Pesquisar mais uma vez?",
   "lab.networkError": "A solicitação falhou. Tente novamente.",
   "lab.policy.pity": "{since} giros desde o último SSR · faltam {left} para a garantia",
   "lab.policy.pickup": "Garantia de destaque  {state}",

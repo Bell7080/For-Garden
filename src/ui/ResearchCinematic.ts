@@ -128,6 +128,23 @@ export interface ResearchCinematicOptions {
    * SSR로 격상되고, 곧바로 원래 SSR 소개(전조 → 목소리 → 무대)로 넘어간다. 소개는 `introduce`가 돈다.
    */
   chanceSlots?: readonly number[];
+  /**
+   * 결산에 서는 「한 번 더」 버튼 — 연구소의 연구 버튼과 **같은 알약**(크림 면 + 제 색의 두꺼운 테 +
+   * 눌린 두께)이다. 단일 연구의 결과를 본 손이 그 자리에서 곧바로 다음 연구로 이어 가게 한다.
+   * 누르면 판이 닫히고 `againRequested`가 참이 된다 — 연구는 씬이 같은 경계(`requestPull`)로 다시 부른다.
+   */
+  again?: ResearchCinematicAgain;
+}
+
+/** 결산의 「한 번 더」 버튼. 값은 연구 버튼이 쓰는 그대로(`ResearchPullCostPart`)다. */
+export interface ResearchCinematicAgain {
+  label: string;
+  /** 판의 제 색과 눌린 두께의 짙은 색(CSS 색). */
+  tone: string;
+  toneDark: string;
+  cost: readonly { iconKey: string; amount: number; short?: boolean }[];
+  /** 처음 한 번은 화살표와 한 줄 안내가 버튼을 가리킨다. 화면을 덮는 막은 깔지 않는다. */
+  teach?: { hint: string };
 }
 
 let assetPromise: Promise<CinematicBundle> | undefined;
@@ -317,6 +334,8 @@ export class ResearchCinematic {
   private readonly introduceSlots: ReadonlySet<number>;
   private readonly chanceSlots: ReadonlySet<number>;
   private readonly reduced: boolean;
+  /** 결산의 「한 번 더」를 눌러 닫았는가 — 씬이 다음 연구를 부를지 읽는다. */
+  private againPressed = false;
 
   private constructor(bundle: CinematicBundle, options: ResearchCinematicOptions) {
     this.canvas = options.canvas;
@@ -366,9 +385,11 @@ export class ResearchCinematic {
     root.addEventListener("pointerup", (event) => {
       event.stopPropagation();
       if (event.target instanceof Element && event.target.closest(".rc-skip")) return;
+      if (event.target instanceof Element && event.target.closest(".rc-again")) { this.pressAgain(); return; }
       this.tap(event);
     });
     root.querySelector(".rc-skip")?.addEventListener("click", () => this.skip());
+    if (options.again) this.mountAgain(options.scene, options.again);
     // 카드 공개의 소리 두 겹 — 등급이 SR·SSR로 오를 때 우르릉, SSR이 앞면에 닿을 때 쾅.
     // 뒤집기 시작의 공개음(`afterAdvance`)과 합쳐 우르릉 → 휙 → 쾅이 된다.
     root.addEventListener("rc-card-charge", () => { audioManager?.playSfx("story.rumble"); });
@@ -482,6 +503,64 @@ export class ResearchCinematic {
     const card = this.root.querySelectorAll<HTMLElement>(".archive-card")[index];
     card?.classList.remove("rc-tease", "rc-calm");
     card?.querySelectorAll(".rc-glint, .rc-halo").forEach((glint) => glint.remove());
+  }
+
+  /** 결산의 「한 번 더」로 닫혔는가. */
+  get againRequested(): boolean {
+    return this.againPressed;
+  }
+
+  /**
+   * 「한 번 더」 버튼을 세운다. 결산에 닿기 전에는 CSS가 감춰 두므로(`data-phase="result"`) 미리 세워도
+   * 연출을 가리지 않는다. 드는 재화 그림은 카드 액자와 같은 굽기(`bakeCinematicIcon`)를 쓴다.
+   */
+  private mountAgain(scene: Phaser.Scene, again: ResearchCinematicAgain): void {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "rc-again";
+    button.style.setProperty("--rc-again-tone", again.tone);
+    button.style.setProperty("--rc-again-dark", again.toneDark);
+    const face = document.createElement("span");
+    face.className = "rc-again-face";
+    const label = document.createElement("span");
+    label.className = "rc-again-label";
+    label.textContent = again.label;
+    const cost = document.createElement("span");
+    cost.className = "rc-again-cost";
+    for (const part of again.cost) {
+      const piece = document.createElement("span");
+      piece.className = "rc-again-part";
+      const url = bakeCinematicIcon(scene, part.iconKey, FACE_BAKE);
+      if (url) piece.appendChild(imageOf(url, "rc-again-icon"));
+      const amount = document.createElement("span");
+      amount.className = part.short ? "rc-again-amount rc-short" : "rc-again-amount";
+      amount.textContent = `× ${part.amount.toLocaleString()}`;
+      piece.appendChild(amount);
+      cost.appendChild(piece);
+    }
+    face.append(label, cost);
+    button.appendChild(face);
+    this.root.querySelector(".rc-ui")?.appendChild(button);
+    if (!again.teach) return;
+    // 안내는 막이 아니라 버튼 위의 화살표와 한 줄뿐이다(튜토리얼 화살표와 같은 결).
+    const guide = document.createElement("div");
+    guide.className = "rc-again-guide";
+    const hint = document.createElement("span");
+    hint.className = "rc-again-hint";
+    hint.textContent = again.teach.hint;
+    const arrow = document.createElement("i");
+    arrow.className = "rc-again-arrow";
+    guide.append(hint, arrow);
+    this.root.querySelector(".rc-ui")?.appendChild(guide);
+  }
+
+  /** 결산의 「한 번 더」 — 막 닿은 직후의 연타는 삼킨다(결산을 닫는 손과 같은 잠금). */
+  private pressAgain(): void {
+    if (this.phase !== "result" || this.introducing) return;
+    if (!canCloseResult(performance.now(), this.resultLockedUntil)) return;
+    audioManager?.playUi("ui.click");
+    this.againPressed = true;
+    this.close();
   }
 
   /** 연출이 끝나고 화면이 닫힐 때까지 기다린다. */

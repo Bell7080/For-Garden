@@ -13,6 +13,7 @@ export const LAB_DE = {
   "lab.pity.pickupNext": "Nächstes SSR ist das Pickup",
   "lab.pull.one": "Forschung x1",
   "lab.pull.ten": "Forschung x10",
+  "lab.pull.againHint": "Noch einmal forschen?",
   "lab.networkError": "Die Anfrage ist fehlgeschlagen. Bitte erneut versuchen.",
   "lab.policy.pity": "{since} Züge seit dem letzten SSR · noch {left} bis zur Garantie",
   "lab.policy.pickup": "Pickup-Garantie  {state}",

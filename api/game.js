@@ -52,7 +52,7 @@ var init_define_import_meta_env = __esm({
   }
 });
 
-// node_modules/tslib/tslib.es6.mjs
+// ../../node_modules/tslib/tslib.es6.mjs
 var tslib_es6_exports = {};
 __export(tslib_es6_exports, {
   __addDisposableResource: () => __addDisposableResource,
@@ -491,7 +491,7 @@ function __rewriteRelativeImportExtension(path, preserveJsx) {
 }
 var extendStatics, __assign, __createBinding, __setModuleDefault, ownKeys, _SuppressedError, tslib_es6_default;
 var init_tslib_es6 = __esm({
-  "node_modules/tslib/tslib.es6.mjs"() {
+  "../../node_modules/tslib/tslib.es6.mjs"() {
     init_define_import_meta_env();
     extendStatics = function(d, b) {
       extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -578,9 +578,9 @@ var init_tslib_es6 = __esm({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js
+// ../../node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js
 var require_websocket_factory = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -690,9 +690,9 @@ Suggested solution: ${env.workaround}`;
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/lib/version.js
+// ../../node_modules/@supabase/realtime-js/dist/main/lib/version.js
 var require_version = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/lib/version.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/lib/version.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -701,9 +701,9 @@ var require_version = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/lib/constants.js
+// ../../node_modules/@supabase/realtime-js/dist/main/lib/constants.js
 var require_constants = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/lib/constants.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/lib/constants.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -752,9 +752,9 @@ var require_constants = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/lib/serializer.js
+// ../../node_modules/@supabase/realtime-js/dist/main/lib/serializer.js
 var require_serializer = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/lib/serializer.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/lib/serializer.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -907,9 +907,9 @@ var require_serializer = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/lib/transformers.js
+// ../../node_modules/@supabase/realtime-js/dist/main/lib/transformers.js
 var require_transformers = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/lib/transformers.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/lib/transformers.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -1087,9 +1087,9 @@ var require_transformers = __commonJS({
   }
 });
 
-// node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js
+// ../../node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js
 var require_phoenix_cjs = __commonJS({
-  "node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js"(exports, module) {
+  "../../node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js"(exports, module) {
     "use strict";
     init_define_import_meta_env();
     var __defProp2 = Object.defineProperty;
@@ -2940,9 +2940,9 @@ var require_phoenix_cjs = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js
+// ../../node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js
 var require_presenceAdapter = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3041,9 +3041,9 @@ var require_presenceAdapter = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js
+// ../../node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js
 var require_RealtimePresence = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3086,9 +3086,9 @@ var require_RealtimePresence = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js
+// ../../node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js
 var require_normalizeChannelError = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3113,9 +3113,9 @@ var require_normalizeChannelError = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js
+// ../../node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js
 var require_channelAdapter = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3221,9 +3221,9 @@ var require_channelAdapter = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js
+// ../../node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js
 var require_RealtimePostgresFilterBuilder = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3346,9 +3346,9 @@ var require_RealtimePostgresFilterBuilder = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js
+// ../../node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js
 var require_RealtimeChannel = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -4102,9 +4102,9 @@ var require_RealtimeChannel = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js
+// ../../node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js
 var require_socketAdapter = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -4224,9 +4224,9 @@ var require_socketAdapter = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+// ../../node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
 var require_RealtimeClient = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -4905,9 +4905,9 @@ var require_RealtimeClient = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/index.js
+// ../../node_modules/@supabase/realtime-js/dist/main/index.js
 var require_main = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/index.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/index.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -5609,6 +5609,10 @@ var INFO_KO = {
   "info.tag.dealer": "\uB51C\uB7EC",
   "info.tag.tank": "\uD0F1\uCEE4",
   "info.tag.support": "\uC11C\uD3EC\uD130",
+  "info.tag.physical": "\uBB3C\uB9AC\uD53C\uD574",
+  "info.tag.magical": "\uB9C8\uBC95\uD53C\uD574",
+  "info.tag.mixed": "\uD63C\uD569\uD53C\uD574",
+  "info.tag.fixed": "\uACE0\uC815\uD53C\uD574",
   "info.tag.area": "\uBC94\uC704\uACF5\uACA9",
   "info.tag.single": "\uB2E8\uC77C\uACF5\uACA9",
   "info.tag.summon": "\uC18C\uD658",
@@ -22109,8 +22113,8 @@ var RELICS = [
     ultimate: {
       id: "noa-ult",
       name: "\uC190\uD1B1 \uB09C\uBB34",
-      iconAssetId: "skill-icon-physical",
-      effectType: "physical",
+      iconAssetId: "skill-icon-fixed",
+      effectType: "fixed",
       cost: 100,
       // 아무도 때리지 않는다. 숨어서 가장 약한 적 곁으로 뛰어들고, 피해는 이어지는 할퀴기 한 번의 몫이다.
       targeting: "self",
@@ -39251,7 +39255,7 @@ function markBountyTierCleared(state, tierId2) {
 init_define_import_meta_env();
 var RELIC_RESET_FREE_MAX_LEVEL = 20;
 var RELIC_RESET_GEM_BAND = 10;
-var RELIC_RESET_GEM_PER_BAND = 100;
+var RELIC_RESET_GEM_PER_BAND = 50;
 function relicInvestedExp(progress) {
   let total = Math.max(0, progress.exp);
   for (let level = 1; level < progress.level; level += 1) total += relicExpToNext(level);
@@ -43191,7 +43195,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.438.0",
+  version: "0.439.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -49407,11 +49411,16 @@ function handleGameCall(playerId, req, deps) {
   return serialize(() => run(playerId, call, deps));
 }
 async function run(playerId, req, deps) {
+  const checkDeadline = () => {
+    if (deps.signal?.aborted) throw new GameCallError(503, "request_timeout");
+  };
+  checkDeadline();
   const attempts = deps.maxAttempts ?? 3;
   const legacyFingerprint = JSON.stringify([req.method, req.args ?? []]);
   const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(legacyFingerprint));
   const fingerprint = "sha256:" + [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, "0")).join("");
   for (let attempt = 1; ; attempt += 1) {
+    checkDeadline();
     const wantsRaid = /^(getRaids|getNotificationSignals|summonRaid|enterRaid|submitRaidDamage|settleRaid)$/.test(req.method) && deps.store.raidContext;
     const now = deps.now?.() ?? /* @__PURE__ */ new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
@@ -49430,6 +49439,7 @@ async function run(playerId, req, deps) {
       deps.store.liveSchedule ? deps.store.liveSchedule().catch(() => void 0) : void 0,
       deps.store.launchAt ? deps.store.launchAt().catch(() => void 0) : void 0
     ]);
+    checkDeadline();
     if (schedule !== void 0) setLiveSchedule(schedule);
     if (launchAt !== void 0) setLaunchAt(launchAt);
     if (cached !== void 0) {
@@ -49506,6 +49516,7 @@ async function run(playerId, req, deps) {
     const response = { ok: true, result: result ?? null, state: data, revision: stored?.revision ?? "0" };
     if (!changed && !fresh && !req.requestId) return response;
     try {
+      checkDeadline();
       const committed = await deps.store.commit({
         playerId,
         expectedRevision: stored?.revision ?? null,
@@ -49531,10 +49542,42 @@ async function run(playerId, req, deps) {
 
 // src/server/supabaseStore.ts
 init_define_import_meta_env();
+
+// src/server/refreshWindow.ts
+init_define_import_meta_env();
+function refreshWindow(intervalMs, capacity = 1024) {
+  const entries = /* @__PURE__ */ new Map();
+  return async (key, refresh) => {
+    const previous = entries.get(key);
+    if (previous?.pending) return previous.pending;
+    if (previous && Date.now() < previous.until) return;
+    if (entries.size >= capacity) {
+      for (const [id, entry2] of entries) {
+        if (!entry2.pending) {
+          entries.delete(id);
+          break;
+        }
+      }
+    }
+    const entry = { until: 0 };
+    entry.pending = Promise.resolve().then(refresh).then(() => {
+      entry.until = Date.now() + intervalMs;
+      entry.pending = void 0;
+    }, (error) => {
+      if (entries.get(key) === entry) entries.delete(key);
+      throw error;
+    });
+    if (entries.size < capacity) entries.set(key, entry);
+    return entry.pending;
+  };
+}
+
+// src/server/supabaseStore.ts
 var LEGACY_EXPEDITION_RANK_SALVAGE = [400, 320, 250, 180, 130, 80];
 var bannedWordsCache;
 var scheduleCache;
 var launchAtCache;
+var refreshRankRewards = refreshWindow(6e4);
 async function sha256Hex(text) {
   const bytes = new TextEncoder().encode(text);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -49547,7 +49590,7 @@ function createSupabaseStore(env) {
       method: "POST",
       headers: { apikey: env.serviceKey, authorization: `Bearer ${env.serviceKey}`, "content-type": "application/json" },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(15e3)
+      signal: env.signal ? AbortSignal.any([env.signal, AbortSignal.timeout(15e3)]) : AbortSignal.timeout(15e3)
     });
     if (res.status === 409 && name === "server_commit_state") throw new StateConflictError();
     if (!res.ok) {
@@ -49583,13 +49626,15 @@ function createSupabaseStore(env) {
       return await rpc("server_raid_context", { p_player: playerId, p_worlds: worldRaidDefinitions(now) });
     },
     async opsInbox(playerId) {
-      await rpc("server_competitive_rewards_v2", { p_player: playerId, p_rules: { duel: WEEKLY_RANK_GEMS, expedition: EXPEDITION_WEEKLY_RANK_POOL } }).catch(() => rpc("server_competitive_rewards", { p_player: playerId, p_rules: WEEKLY_RANK_GEMS.map((row, index) => ({ ...row, salvageRecord: LEGACY_EXPEDITION_RANK_SALVAGE[index] ?? 0 })) }));
-      await rpc("server_arena_weekly_rewards", { p_player: playerId, p_rules: {
-        tiers: ARENA_TIERS.map((tier) => ({ floor: tier.floor, ...tier.weeklyReward })),
-        ranks: ARENA_WEEKLY_RANK_GEMS.map((row) => ({ upTo: row.upTo, gems: row.gems }))
-      } });
-      await rpc("server_ancient_monthly_rewards", { p_player: playerId, p_rules: ANCIENT_MONTHLY_RANK_REWARDS });
-      await rpc("server_guild_weekly_rewards", { p_player: playerId, p_rules: GUILD_WEEKLY_RANK_REWARDS }).catch(() => void 0);
+      await refreshRankRewards(`${env.url}:${playerId}`, async () => {
+        await rpc("server_competitive_rewards_v2", { p_player: playerId, p_rules: { duel: WEEKLY_RANK_GEMS, expedition: EXPEDITION_WEEKLY_RANK_POOL } }).catch(() => rpc("server_competitive_rewards", { p_player: playerId, p_rules: WEEKLY_RANK_GEMS.map((row, index) => ({ ...row, salvageRecord: LEGACY_EXPEDITION_RANK_SALVAGE[index] ?? 0 })) }));
+        await rpc("server_arena_weekly_rewards", { p_player: playerId, p_rules: {
+          tiers: ARENA_TIERS.map((tier) => ({ floor: tier.floor, ...tier.weeklyReward })),
+          ranks: ARENA_WEEKLY_RANK_GEMS.map((row) => ({ upTo: row.upTo, gems: row.gems }))
+        } });
+        await rpc("server_ancient_monthly_rewards", { p_player: playerId, p_rules: ANCIENT_MONTHLY_RANK_REWARDS });
+        await rpc("server_guild_weekly_rewards", { p_player: playerId, p_rules: GUILD_WEEKLY_RANK_REWARDS }).catch(() => void 0);
+      });
       return await rpc("server_ops_inbox", { p_player: playerId });
     },
     async opsAck(playerId, applied, claimedMails) {
@@ -49804,6 +49849,9 @@ async function handler(req, res) {
     res.status(405).json({ ok: false, code: "method_not_allowed" });
     return;
   }
+  const startedAt = Date.now();
+  const deadline = AbortSignal.timeout(25e3);
+  let callMethod = "invalid_request";
   try {
     const raw = typeof req.body === "string" ? req.body : JSON.stringify(req.body ?? null);
     if (Number(req.headers["content-length"] ?? 0) > MAX_BODY_BYTES || new TextEncoder().encode(raw).length > MAX_BODY_BYTES) throw new GameCallError(413, "body_too_large");
@@ -49815,16 +49863,17 @@ async function handler(req, res) {
     }
     if (!validCall(body)) throw new GameCallError(400, "invalid_request");
     if (!["arena.get", "arena.act"].includes(body.method) && !isServerGameMethod(body.method) && !(body.method.startsWith("social.") && isSocialMethod(body.method.slice(7))) && !(body.method.startsWith("guild.") && isGuildApiMethod(body.method.slice(6)))) throw new GameCallError(400, "unknown_method");
+    callMethod = body.method;
     if (!isReadMethod(body.method) && !body.requestId) throw new GameCallError(400, "request_id_required");
     const url = process.env.SUPABASE_URL, serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const anonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? serviceKey;
     if (!url || !serviceKey) throw new GameCallError(503, "server_not_configured");
     const auth = typeof req.headers.authorization === "string" ? req.headers.authorization : "";
     if (!/^Bearer \S+$/.test(auth)) throw new GameCallError(401, "not_authenticated");
-    const who = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anonKey ?? "", authorization: auth }, signal: AbortSignal.timeout(1e4) });
+    const who = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anonKey ?? "", authorization: auth }, signal: AbortSignal.any([deadline, AbortSignal.timeout(1e4)]) });
     const user = who.ok ? await who.json() : null;
     if (!user?.id) throw new GameCallError(401, "not_authenticated");
-    const store = createSupabaseStore({ url, serviceKey });
+    const store = createSupabaseStore({ url, serviceKey, signal: deadline });
     const rate = await store.takeRate(user.id, body.method);
     if (!rate.allowed) {
       res.setHeader("retry-after", String(rate.retryAfter));
@@ -49858,14 +49907,18 @@ async function handler(req, res) {
       if (["getFriends", "getRequests", "searchUsers", "getRecommendations"].includes(method)) await refreshStaleProfileRecords(response?.result, (id) => store.load(id), /* @__PURE__ */ new Date());
       res.status(200).json(response);
     } else {
-      res.status(200).json(await handleGameCall(user.id, body, { store, strict: true, guild, developmentTools: qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS) }));
+      res.status(200).json(await handleGameCall(user.id, body, { store, strict: true, guild, signal: deadline, developmentTools: qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS) }));
     }
   } catch (error) {
     if (error instanceof GameCallError) {
       res.status(error.status).json({ ok: false, code: error.code, message: error.message, ...error.domainCode ? { domainCode: error.domainCode } : {}, ...error.detail ? { detail: error.detail } : {} });
       return;
     }
+    console.error(JSON.stringify({ event: "game_upstream_error", method: callMethod, elapsedMs: Date.now() - startedAt, name: error instanceof Error ? error.name : "Error" }));
     res.status(503).json({ ok: false, code: "service_unavailable" });
+  } finally {
+    const elapsedMs = Date.now() - startedAt;
+    if (elapsedMs >= 2e3) console.warn(JSON.stringify({ event: "slow_game_request", method: callMethod, elapsedMs }));
   }
 }
 export {

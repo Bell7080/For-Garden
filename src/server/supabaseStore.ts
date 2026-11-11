@@ -7,6 +7,7 @@ import { contentUnlockLevel } from "../core/contentUnlock";
 import type { PlayerDuelContext } from "./playerDuels";
 import type { OpsInbox } from "../core/opsInbox";
 import { requestBudget } from "./requestPolicy";
+import { refreshWindow } from "./refreshWindow";
 import { worldRaidDefinitions, type SharedRaidContext } from "./sharedRaids";
 import { GameCallError, StateConflictError, type StateStore } from "./gameHandler";
 
@@ -17,8 +18,10 @@ let bannedWordsCache: { at: number; words: string[] } | undefined;
 /** 운영 일정은 1분 동안 같은 값을 쓴다 — 어드민에서 바꾼 기간이 늦어도 1분 안에 서버에 닿는다. */
 let scheduleCache: { at: number; rows: unknown } | undefined;
 let launchAtCache: { at: number; value: string | null | undefined } | undefined;
+// 알림·가방을 읽을 때 순위 보상 정산까지 반복하지 않는다. 우편함 자체는 항상 최신을 읽는다.
+const refreshRankRewards = refreshWindow(60_000);
 
-interface Env { url: string; serviceKey: string; fetchImpl?: typeof fetch }
+interface Env { url: string; serviceKey: string; fetchImpl?: typeof fetch; signal?: AbortSignal }
 
 async function sha256Hex(text: string): Promise<string> {
   const bytes = new TextEncoder().encode(text);
@@ -34,7 +37,7 @@ export function createSupabaseStore(env: Env) {
       method: "POST",
       headers: { apikey: env.serviceKey, authorization: `Bearer ${env.serviceKey}`, "content-type": "application/json" },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(15000),
+      signal: env.signal ? AbortSignal.any([env.signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000),
     });
     if (res.status === 409 && name === "server_commit_state") throw new StateConflictError();
     if (!res.ok) {
@@ -60,6 +63,7 @@ export function createSupabaseStore(env: Env) {
     async identity(playerId) { return await rpc("server_player_identity", { p_player: playerId }) as { uid: string; createdAt: string }; },
     async raidContext(playerId, now) { return await rpc("server_raid_context", { p_player: playerId, p_worlds: worldRaidDefinitions(now) }) as SharedRaidContext; },
     async opsInbox(playerId) {
+      await refreshRankRewards(`${env.url}:${playerId}`, async () => {
       // 원정은 표준 보상 풀(1,000위 밖 백분율 구간 + 여러 재화)이다 — v2 함수가 받는다. 운영 DB에 v2가 아직 없으면
       // 예전 함수에 예전 표(젬 + 인양 기록, 101위 밖 한 줄)를 넘긴다: 마이그레이션 전후 어느 쪽이든 우편이 끊기지 않는다.
       await rpc("server_competitive_rewards_v2", { p_player: playerId, p_rules: { duel: WEEKLY_RANK_GEMS, expedition: EXPEDITION_WEEKLY_RANK_POOL } })
@@ -73,6 +77,7 @@ export function createSupabaseStore(env: Env) {
       await rpc("server_ancient_monthly_rewards", { p_player: playerId, p_rules: ANCIENT_MONTHLY_RANK_REWARDS });
       // 길드 주간 순위(그 주 기여도 합) — 마이그레이션(20261112) 전의 DB에는 함수가 없으므로 실패해도 우편함은 연다.
       await rpc("server_guild_weekly_rewards", { p_player: playerId, p_rules: GUILD_WEEKLY_RANK_REWARDS }).catch(() => undefined);
+      });
       return await rpc("server_ops_inbox", { p_player: playerId }) as OpsInbox;
     },
     async opsAck(playerId, applied, claimedMails) { await rpc("server_ops_ack", { p_player: playerId, p_applied: applied, p_claimed_mails: claimedMails }); },

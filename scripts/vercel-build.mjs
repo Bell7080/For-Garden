@@ -11,6 +11,8 @@
  * - 그 밖에는 언제나 일반 빌드다 — 모르면 치트가 꺼진 쪽으로 떨어진다.
  */
 import { spawnSync } from "node:child_process";
+import { rmSync, statSync } from "node:fs";
+import { resolve } from "node:path";
 
 const explicit = (process.env.FORGARDEN_BUILD ?? "").trim().toLowerCase();
 const host = (process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "").trim().toLowerCase();
@@ -23,6 +25,13 @@ const server = spawnSync(process.execPath, ["scripts/build-server.mjs", mode], {
 if (server.status !== 0) process.exit(server.status ?? 1);
 const result = spawnSync("npx", ["vite", "build", "--mode", mode], { stdio: "inherit", shell: process.platform === "win32" });
 if (result.status !== 0) process.exit(result.status ?? 1);
+// 효과 제작 도구는 게임에서 읽지 않는 14MB 개발 페이지다. 원본은 보존하고 배포 출력에서만 뺀다.
+const fxTool = resolve("dist/forgarden-fx.html");
+try {
+  const bytes = statSync(fxTool).size;
+  rmSync(fxTool);
+  console.log(`[vercel-build] excluded developer FX tool: ${bytes} bytes`);
+} catch (error) { if (error.code !== "ENOENT") throw error; }
 // 홈페이지 이벤트란이 읽는 공개 피드(`/site/events.json`). 실패하면 낡은 피드로 배포하지 않는다.
 const feed = spawnSync(process.execPath, ["scripts/build-site-events.mjs"], { stdio: "inherit" });
 if (feed.status !== 0) process.exit(feed.status ?? 1);

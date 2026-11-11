@@ -19,6 +19,10 @@ interface Res { status(code: number): Res; json(body: unknown): void; end?(): vo
 export default async function handler(req: Req, res: Res): Promise<void> {
   if (applyApiOriginPolicy(req, res)) return;
   if (req.method !== "POST") { res.setHeader("allow","POST"); res.status(405).json({ ok: false, code: "method_not_allowed" }); return; }
+  const startedAt = Date.now();
+  // 개별 RPC 제한만 두면 여러 번의 조회·재시도와 대기열 시간이 30초를 넘는다.
+  const deadline = AbortSignal.timeout(25_000);
+  let callMethod = "invalid_request";
   try {
     const raw = typeof req.body === "string" ? req.body : JSON.stringify(req.body ?? null);
     if (Number(req.headers["content-length"] ?? 0)>MAX_BODY_BYTES || new TextEncoder().encode(raw).length>MAX_BODY_BYTES) throw new GameCallError(413,"body_too_large");
@@ -26,16 +30,17 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     try { body = JSON.parse(raw); } catch { throw new GameCallError(400,"invalid_json"); }
     if (!validCall(body)) throw new GameCallError(400,"invalid_request");
     if (!["arena.get","arena.act"].includes(body.method) && !isServerGameMethod(body.method) && !(body.method.startsWith("social.") && isSocialMethod(body.method.slice(7))) && !(body.method.startsWith("guild.") && isGuildApiMethod(body.method.slice(6)))) throw new GameCallError(400,"unknown_method");
+    callMethod = body.method;
     if (!isReadMethod(body.method) && !body.requestId) throw new GameCallError(400,"request_id_required");
     const url = process.env.SUPABASE_URL, serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const anonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? serviceKey;
     if (!url || !serviceKey) throw new GameCallError(503,"server_not_configured");
     const auth = typeof req.headers.authorization === "string" ? req.headers.authorization : "";
     if (!/^Bearer \S+$/.test(auth)) throw new GameCallError(401,"not_authenticated");
-    const who = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anonKey ?? "", authorization: auth }, signal: AbortSignal.timeout(10000) });
+    const who = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anonKey ?? "", authorization: auth }, signal: AbortSignal.any([deadline, AbortSignal.timeout(10000)]) });
     const user = who.ok ? await who.json() as { id?: string } : null;
     if (!user?.id) throw new GameCallError(401,"not_authenticated");
-    const store = createSupabaseStore({ url, serviceKey });
+    const store = createSupabaseStore({ url, serviceKey, signal: deadline });
     const rate = await store.takeRate(user.id,body.method);
     if (!rate.allowed) { res.setHeader("retry-after",String(rate.retryAfter)); throw new GameCallError(429,"rate_limited"); }
     const uid = user.id;
@@ -64,10 +69,15 @@ export default async function handler(req: Req, res: Res): Promise<void> {
       if (["getFriends","getRequests","searchUsers","getRecommendations"].includes(method)) await refreshStaleProfileRecords(response?.result, (id) => store.load(id), new Date());
       res.status(200).json(response);
     } else {
-      res.status(200).json(await handleGameCall(user.id,body,{store,strict:true,guild,developmentTools:qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS)}));
+      res.status(200).json(await handleGameCall(user.id,body,{store,strict:true,guild,signal:deadline,developmentTools:qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS)}));
     }
   } catch (error) {
     if (error instanceof GameCallError) { res.status(error.status).json({ ok:false,code:error.code,message:error.message,...(error.domainCode ? {domainCode:error.domainCode} : {}),...(error.detail ? {detail:error.detail} : {}) }); return; }
+    console.error(JSON.stringify({ event:"game_upstream_error",method:callMethod,elapsedMs:Date.now()-startedAt,name:error instanceof Error ? error.name : "Error" }));
     res.status(503).json({ ok:false,code:"service_unavailable" });
+  } finally {
+    const elapsedMs = Date.now() - startedAt;
+    // 사용자·토큰·본문은 남기지 않고 병목이 난 게임 메서드만 식별한다.
+    if (elapsedMs >= 2000) console.warn(JSON.stringify({event:"slow_game_request",method:callMethod,elapsedMs}));
   }
 }

@@ -93,6 +93,8 @@ export class GameCallError extends Error {
 }
 
 export interface GameHandlerDeps {
+  /** HTTP 대기 시간까지 포함하는 전체 호출 한도. 만료된 대기 요청은 규칙·저장을 실행하지 않는다. */
+  signal?: AbortSignal;
   store: StateStore;
   now?: () => Date;
   random?: () => number;
@@ -136,11 +138,14 @@ export function handleGameCall(playerId: string, req: GameCallRequest, deps: Gam
 }
 
 async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps): Promise<GameCallResponse> {
+  const checkDeadline = () => { if (deps.signal?.aborted) throw new GameCallError(503, "request_timeout"); };
+  checkDeadline();
   const attempts = deps.maxAttempts ?? 3;
   const legacyFingerprint = JSON.stringify([req.method, req.args ?? []]);
   const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(legacyFingerprint));
   const fingerprint = "sha256:" + [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, "0")).join("");
   for (let attempt = 1; ; attempt += 1) {
+    checkDeadline();
     // 서로 기다릴 이유가 없는 조회는 한꺼번에 나간다 — 순서대로 부르면 왕복 시간이 그대로 쌓인다.
     const wantsRaid = /^(getRaids|getNotificationSignals|summonRaid|enterRaid|submitRaidDamage|settleRaid)$/.test(req.method) && deps.store.raidContext;
     const now = deps.now?.() ?? new Date();
@@ -160,6 +165,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       deps.store.liveSchedule ? deps.store.liveSchedule().catch(() => undefined) : undefined,
       deps.store.launchAt ? deps.store.launchAt().catch(() => undefined) : undefined,
     ]);
+    checkDeadline();
     // 서버가 받아 주는 배너·상품·이벤트 기간은 클라이언트가 본 것과 같은 운영 일정을 따른다. 못 읽었으면 지난 값을 그대로 쓴다.
     if (schedule !== undefined) setLiveSchedule(schedule);
     // 시즌 번호·이벤트 교대·출시 전 유예도 클라이언트와 같은 출시 시각으로 센다(`launchAnchor.ts`).
@@ -235,6 +241,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
     const response: GameCallResponse = { ok: true, result: result ?? null, state: data, revision: stored?.revision ?? "0" };
     if (!changed && !fresh && !req.requestId) return response;
     try {
+      checkDeadline();
       const committed = await deps.store.commit({
         playerId,
         expectedRevision: stored?.revision ?? null,

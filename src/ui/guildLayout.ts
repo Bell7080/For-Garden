@@ -216,7 +216,7 @@ export function guildSwatchSpot(index: number, count: number, gridTop: number): 
  */
 export const GUILD_WAR_MAP = {
   /** 지도 판이 손을 받는 영역 — 위 조작 줄 아래부터 아래 버튼 줄 위까지. */
-  field: { top: 392, bottom: 1540 },
+  field: { top: 392, bottom: 1510 },
   /** 판 맨 위 안내 한 줄(참가 조건 · 전선 점수). */
   note: 430,
   boss: { x: BASE_WIDTH / 2, y: 720, size: 184 },
@@ -234,10 +234,11 @@ export const GUILD_WAR_MAP = {
   /** 칸 아래 이름줄이 칸 밑변에서 떨어지는 거리. */
   nameGap: 22,
   /**
-   * 지도 아래 버튼 줄 — 방어덱 수정 · 편집(배치 권한만). 편집 중에는 자동 배치 · 완료로 바뀐다. 바로 아래 지부 탭과 같은 납작한
-   * 판이던 때는 탭 줄의 한 칸처럼 읽혀, 아이콘이 박힌 공용 버튼(`Button`)으로 한 뼘 두껍게 선다.
+   * 지도 아래 버튼 줄 — [방어] · 편집(배치 권한만). 편집 중에는 자동 배치 · 완료로 바뀐다. 바로 아래 지부 탭과 같은 납작한
+   * 판이던 때는 탭 줄의 한 칸처럼 읽혀, 공용 버튼(`Button`)으로 한 뼘 크게 선다. 지도 판 밑변(`field.bottom`)을 맨 아래 일반 칸의
+   * 이름줄 바로 아래까지 올리고 버튼 줄을 그만큼 위로 붙여, 지부 탭과의 사이를 넓게 둔다.
    */
-  actions: { y: 1598, width: 340, height: 88, gap: 24 },
+  actions: { y: 1566, width: 380, height: 104, gap: 24 },
 } as const;
 
 /** 칸 하나의 가운데와 크기 — 고른 지부 판 안의 좌표다(지부와 무관하다). */

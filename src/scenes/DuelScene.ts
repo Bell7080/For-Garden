@@ -9,7 +9,7 @@ import { DUEL_DIVISION_SPAN, DUEL_TIERS, duelDivisionNumeral, duelStanding, type
 import { playerProfileDisplay, profileAvatarContent } from "../state/playerProfile";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
-import { Button, DESTRUCTIVE_BUTTON_STYLE } from "../ui/Button";
+import { Button, DEFENSE_BUTTON_STYLE, DESTRUCTIVE_BUTTON_STYLE } from "../ui/Button";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
@@ -47,8 +47,6 @@ const TABS: ReadonlyArray<{ key: DuelTab; labelKey: TextKey }> = [
 ];
 /** 결투 도전권 — 하루 다섯 장이 채워지는 몫의 그림이다(발굴권과 같은 방식). */
 const DUEL_TICKET_ICON = "item-duel-ticket";
-/** [방어] 판의 바탕 — 짙은 남빛 유리. [도전]의 붉은 판(`CONFIRM_DIALOG.destructiveFill`)과 같은 짙기다. */
-const DUEL_DEFENSE_FILL = 0x142338;
 
 /**
  * 결투장 — 3대3 자동전투 방어전.
@@ -269,8 +267,7 @@ export class DuelScene extends Phaser.Scene {
   private paintDefense(status: DuelStatusResponse): void {
     const { y, height, defense } = S.actions;
     const button = new Button(this, defense.x + defense.width / 2, y, {
-      width: defense.width, height, label: t("duel.defense.label"), fontSize: 46, variant: "primary",
-      fill: DUEL_DEFENSE_FILL, accentColor: COLOR.exchange, accentTextColor: COLOR.exchangeText,
+      width: defense.width, height, label: t("duel.defense.label"), fontSize: 46, ...DEFENSE_BUTTON_STYLE,
       onClick: () => {
         if (this.busy) return;
         startScene(this, "party", { content: "duelDefense", defense: status.defense, blindChoice: status.blindChoice });

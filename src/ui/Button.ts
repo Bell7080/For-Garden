@@ -393,3 +393,14 @@ export const DESTRUCTIVE_BUTTON_STYLE = {
   accentColor: COLOR.danger,
   accentTextColor: COLOR.ink,
 } as const;
+
+/**
+ * 지키는 조작의 푸른 버튼 — 결투장 [방어]와 길드전 [방어]가 같은 한 벌을 쓴다(짙은 남빛 유리 + 교류의 푸른 강조).
+ * 붉은 [도전](`DESTRUCTIVE_BUTTON_STYLE`)과 같은 짙기라 둘이 나란히 서도 무게가 같고 색으로만 갈린다.
+ */
+export const DEFENSE_BUTTON_STYLE = {
+  variant: "primary",
+  fill: 0x142338,
+  accentColor: COLOR.exchange,
+  accentTextColor: COLOR.exchangeText,
+} as const;

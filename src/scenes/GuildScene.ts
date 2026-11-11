@@ -13,7 +13,7 @@ import type { GuildGuardStatusResponse, StampGuildAttendanceResponse } from "../
 import { GUILD_GUARD, guardRosterPreview, guardWaveCount, guardWaveLevel } from "../core/guildGuard";
 import type { Element } from "../core/types";
 import { guildGuardRoster } from "../data/guildGuard";
-import { Button, DESTRUCTIVE_BUTTON_STYLE } from "../ui/Button";
+import { Button, DEFENSE_BUTTON_STYLE, DESTRUCTIVE_BUTTON_STYLE } from "../ui/Button";
 import { consumeSceneEntry } from "./sceneEntry";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import {
@@ -1422,26 +1422,28 @@ export class GuildScene extends Phaser.Scene {
   }
 
   /**
-   * 지도 아래 버튼 줄 — 정비일에만 선다. 편집 중에는 자동 배치 · 완료, 아니면 방어덱 수정 · 편집(배치 권한만)이다.
-   * 바로 아래 지부 탭과 같은 납작한 판이던 때는 탭 줄의 한 칸으로 읽혀, 아이콘이 박힌 공용 버튼으로 세운다 — 이 줄의 주 조작
-   * (방어덱 수정 · 자동 배치)은 강조 판(`primary`), 곁 조작(편집 · 완료)은 기본 판이다.
+   * 지도 아래 버튼 줄 — 정비일에만 선다. 편집 중에는 자동 배치 · 완료, 아니면 [방어] · 편집(배치 권한만)이다.
+   * 바로 아래 지부 탭과 같은 납작한 판이던 때는 탭 줄의 한 칸으로 읽혀, 공용 버튼으로 한 뼘 크게 세운다. [방어]는 결투장의
+   * [방어]와 같은 푸른 한 벌(`DEFENSE_BUTTON_STYLE`)이고 아이콘 없이 글자만 선다 — 같은 "지키는 덱을 고친다"가 두 화면에서
+   * 같은 버튼으로 읽혀야 한다. 자동 배치는 강조 판(`primary`), 곁 조작(편집 · 완료)은 기본 판이다.
    */
   private paintWarActions(map: GuildWarMapState, editing: boolean): void {
     if (map.phase !== "prep") return;
     const { y, width, height } = W.actions;
-    const buttons: { label: string; icon: GlyphName; primary: boolean; run: () => void }[] = editing
+    const buttons: { label: string; icon?: GlyphName; primary: boolean; defense?: boolean; run: () => void }[] = editing
       ? [
         { label: t("guild.war.edit.auto"), icon: "auto", primary: true, run: () => this.popups.confirm({ title: t("guild.war.edit.auto"), message: t("guild.war.edit.autoConfirm"), confirmLabel: t("guild.war.edit.auto") }, () => { void this.act(() => guildApi.autoArrangeWar()); }) },
         { label: t("guild.war.edit.done"), icon: "check", primary: false, run: () => { this.warEditing = false; this.warPick = null; this.paint(true); } },
       ]
       : [
-        { label: t("guild.war.deck.edit"), icon: "edit", primary: true, run: () => this.openWarDefense(map, null) },
+        { label: t("duel.defense.label"), primary: true, defense: true, run: () => this.openWarDefense(map, null) },
         ...(map.canArrange ? [{ label: t("guild.war.edit.open"), icon: "settings" as const, primary: false, run: () => { this.warEditing = true; this.warPick = null; this.paint(true); } }] : []),
       ];
     buttons.forEach((button, index) => {
       this.controls.add(new Button(this, guildWarActionX(index, buttons.length), y, {
-        width, height, label: button.label, icon: button.icon, fontSize: 30,
-        ...(button.primary ? { variant: "primary" as const } : {}),
+        width, height, label: button.label, fontSize: 40,
+        ...(button.icon ? { icon: button.icon } : {}),
+        ...(button.defense ? DEFENSE_BUTTON_STYLE : button.primary ? { variant: "primary" as const } : {}),
         onClick: () => { if (!this.busy) button.run(); },
       }));
     });

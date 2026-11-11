@@ -66,8 +66,11 @@ export const INFO_JA = {
   "info.breakthrough.universalNotice": "{name}も{count}個消費されます",
   "info.reset": "リセット",
   "info.reset.title": "レベルリセット",
-  "info.reset.message": "LV.{level} → LV.1\n給餌に使ったチーズケーキをすべて返却します。\n限界突破・絆・ルーンはそのまま残ります。",
   "info.reset.confirm": "リセットする",
+  "info.reset.plea": "あの… 本当にわたしを\n最初に戻しちゃうの？",
+  "info.reset.wallet": "所持通貨の変化",
+  "info.reset.keep": "限界突破・絆・ルーンはそのまま残ります。",
+  "info.reset.free": "無料！",
   "info.reset.noGems": "ジェムが足りません。",
   "info.reset.done": "チーズケーキを{count}個返却しました。",
 

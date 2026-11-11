@@ -70,8 +70,11 @@ export const INFO_KO = {
   "info.breakthrough.universalNotice": "{name} {count}개가 함께 소모됩니다",
   "info.reset": "초기화",
   "info.reset.title": "레벨 초기화",
-  "info.reset.message": "LV.{level} → LV.1\n급여한 치즈케이크를 모두 돌려받습니다.\n한계 돌파·유대·룬은 그대로 남습니다.",
   "info.reset.confirm": "초기화하기",
+  "info.reset.plea": "저… 정말 나를\n처음으로 되돌릴 거야?",
+  "info.reset.wallet": "보유 재화 변화",
+  "info.reset.keep": "한계 돌파·유대·룬은 그대로 남아요.",
+  "info.reset.free": "무료!",
   "info.reset.noGems": "젬이 부족합니다.",
   "info.reset.done": "치즈케이크 {count}개를 돌려받았습니다.",
 

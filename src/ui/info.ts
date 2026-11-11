@@ -85,6 +85,7 @@ import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../cor
 import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveNowKeyword, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, plumeBurstKeyword, prickleReflectKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { SummonInfoPopup } from "./SummonInfoPopup";
+import { openRelicResetPopup } from "./RelicResetPopup";
 import { galleryPortraitPlacement, INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
 import { skinsForRelic } from "../data/relicSkins";
 import { relicSkinManager } from "../managers/RelicSkinManager";
@@ -1077,8 +1078,8 @@ export class InfoManager {
   /**
    * 초기화 확인 창.
    *
-   * 되돌릴 수 없는 조작이라 공용 확인 창(`PopupLayer.confirm`)을 지난다 — 젬이 들면 그 값이 액자로 서고,
-   * 보유 줄은 치즈케이크가 얼마로 늘어나는지를 말한다. 값은 서버와 같은 순수 함수(`core/relicReset.ts`)가 낸다.
+   * 그 아이의 SD가 직접 묻는 전용 창(`RelicResetPopup`)이다 — 확정 버튼 안에 값(무료면 딱지)이 서고,
+   * 재화 판이 보유량이 어떻게 바뀌는지 말한다. 값은 서버와 같은 순수 함수(`core/relicReset.ts`)가 낸다.
    */
   private openRelicReset(): void {
     const def = this.currentDef;
@@ -1087,15 +1088,8 @@ export class InfoManager {
     if (!canResetRelic(progress)) return;
     const gems = relicResetGemCost(progress.level);
     if (session.wallet.gems < gems) { showContentToast(this.scene, t("info.reset.noGems"), "refused"); return; }
-    const refund = relicResetRefund(progress);
-    this.popups.confirm({
-      title: t("info.reset.title"),
-      message: t("info.reset.message", { level: progress.level }),
-      confirmLabel: t("info.reset.confirm"),
-      destructive: true,
-      costs: gems > 0 ? [{ iconKey: CURRENCY_ICON_BY_WALLET.gems, amount: gems }] : undefined,
-      balance: { iconKey: CURRENCY_ICON_BY_WALLET.cheesecake, before: session.wallet.cheesecake, after: session.wallet.cheesecake + refund },
-    }, () => void this.resetRelic(def.id));
+    const asset = this.figureAssetOf(def);
+    openRelicResetPopup(this.scene, this.popups, { asset, level: progress.level, refund: relicResetRefund(progress), gems }, () => void this.resetRelic(def.id));
   }
 
   /** 젬 차감·회수·레벨 확정은 서버가 한 처리로 맡는다. 화면은 결과만 다시 그린다. */

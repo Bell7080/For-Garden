@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { openEventCoinGuide } from "./eventCoinGuide";
 import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import type { ShuteFishingResponse } from "../api/contracts";
@@ -47,7 +48,6 @@ const FISH = {
   width: 940,
   height: 1540,
   coinY: -684,
-  resetY: -618,
   sd: { x: 0, groundY: 130, height: 400 },
   intro: { textY: -500, noteY: 196, howToY: 270, grid: { x: 218, rows: [404, 560], width: 420, height: 138 } },
   play: {
@@ -286,9 +286,8 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
     const mask = popupBodyShapeMask(scene, body, shape);
     paintBackdrop(scene, body, mask, motion());
 
-    const coinText = addCurrencyChip(scene, 0, FISH.coinY, COIN_ICON, { parent: body, width: 280, height: 66, rollKey: "shuteFishing:coins" });
-    const resetText = scene.add.text(0, FISH.resetY, "", textStyle({ role: "body", size: 21, color: INK_SOFT, align: "center", wrap: 840 })).setOrigin(0.5).setStroke(OUTLINE, 4);
-    body.add(resetText);
+    const coinText = addCurrencyChip(scene, 0, FISH.coinY, COIN_ICON, { parent: body, width: 280, height: 66, rollKey: "shuteFishing:coins",
+      onPress: () => openEventCoinGuide(scene, popups, "shute-rhythm-coin", status.coins, status.resetsAt) });
 
     // 첫 쪽 — 위에 안내, 가운데 슈테, 아래에 보스곡 안내·「게임 방법!」과 난이도 패드 넷.
     const introPage = scene.add.container(0, 0);
@@ -551,7 +550,6 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
 
     const refresh = (): void => {
       coinText.setText(status.coins.toLocaleString());
-      resetText.setText(t("shuteFishing.reset", { date: new Date(status.resetsAt).toLocaleString(undefined, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) }));
       const running = status.run !== null;
       introPage.setVisible(!running); playPage.setVisible(running);
       if (running) return;

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { openEventCoinGuide } from "./eventCoinGuide";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import type { DelophyHuntResponse } from "../api/contracts";
@@ -45,7 +46,6 @@ const HUNT = {
   width: 940,
   height: 1540,
   coinY: -684,
-  resetY: -618,
   /** 가운데 델로피 — 두 쪽이 같은 자리에 서서 카드를 돌린다. */
   dealer: { x: 0, groundY: 118, height: 400, orbitRx: 250, orbitRy: 62, orbitCardWidth: 84 },
   intro: { textY: -500, detailY: 200, noteY: 300, howToY: 384, pickerY: 520, pipsY: 606, arrowX: 366 },
@@ -356,9 +356,8 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
     const mask = popupBodyShapeMask(scene, body, shape);
     paintBackdrop(scene, body, mask);
 
-    const coinText = addCurrencyChip(scene, 0, HUNT.coinY, COIN_ICON, { parent: body, width: 280, height: 66, rollKey: "delophyHunt:coins" });
-    const resetText = scene.add.text(0, HUNT.resetY, "", textStyle({ role: "body", size: 21, color: INK_SOFT, align: "center", wrap: 840 })).setOrigin(0.5);
-    body.add(resetText);
+    const coinText = addCurrencyChip(scene, 0, HUNT.coinY, COIN_ICON, { parent: body, width: 280, height: 66, rollKey: "delophyHunt:coins",
+      onPress: () => openEventCoinGuide(scene, popups, "delopi-thief-coin", status.coins, status.resetsAt) });
 
     // 가운데 델로피 — 두 쪽이 함께 쓰는 무대. 카드를 돌리고, 섞는 동안 더 빨리 돌린다.
     const stage = scene.add.container(0, 0);
@@ -652,7 +651,6 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
 
     const refresh = (): void => {
       coinText.setText(status.coins.toLocaleString());
-      resetText.setText(t("delophyHunt.reset", { date: new Date(status.resetsAt).toLocaleString(undefined, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) }));
       const running = status.run !== null;
       introPage.setVisible(!running); playPage.setVisible(running);
       // 판이 도는 동안 첫 쪽은 숨어 있다 — 카드를 고를 때마다 단추 글자를 다시 재지 않는다.

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { openEventCoinGuide } from "./eventCoinGuide";
 import { t } from "../i18n";
 import type { TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
@@ -44,7 +45,6 @@ const FORGE = {
   width: 940,
   height: 1540,
   coinY: -684,
-  resetY: -640,
   intro: { textY: -560, chestY: -250, chestScale: 0.82, previewY: 140, buttonY: 520, howToY: 334, sd: { x: 286, groundY: -112, height: 330 } },
   /**
    * 카드 쪽 — 위에 모은 보상, 가운데 상자와 그 곁에서 응원하는 티아, 아래에 카드. 아래에서 집은 카드가 위의 상자로 날아
@@ -237,9 +237,8 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
     paintBackdrop(scene, body, mask, motion());
 
     // 위 — 코인과 초기화 시각은 두 쪽이 함께 쓴다.
-    const coinText = addCurrencyChip(scene, 0, FORGE.coinY, CHEST_COIN_ICON, { parent: body, ...FORGE.coinChip, rollKey: "chestForge:coins" });
-    const resetText = scene.add.text(0, FORGE.resetY + 10, "", textStyle({ role: "body", size: 21, color: INK_SOFT, align: "center", wrap: 840 })).setOrigin(0.5);
-    body.add(resetText);
+    const coinText = addCurrencyChip(scene, 0, FORGE.coinY, CHEST_COIN_ICON, { parent: body, ...FORGE.coinChip, rollKey: "chestForge:coins",
+      onPress: () => openEventCoinGuide(scene, popups, "tia-treasure-coin", status.coins, status.resetsAt) });
 
     // 첫 쪽 — 등급을 갈아입는 상자, 그 옆의 SD, 대박 카드 미리보기.
     const introPage = scene.add.container(0, 0);
@@ -360,7 +359,6 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
 
     const refresh = (): void => {
       coinText.setText(status.coins.toLocaleString());
-      resetText.setText(t("chestForge.reset", { date: new Date(status.resetsAt).toLocaleString(undefined, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) }));
       const running = status.run !== null;
       introPage.setVisible(!running); pickPage.setVisible(running);
       for (const { box, button } of enters) {

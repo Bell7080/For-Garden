@@ -81,3 +81,17 @@ test("델로피의 보물 찾기 — 로비 이벤트 카드", async ({ page }, 
   await page.waitForTimeout(5000);
   await captureGame(page, info.outputPath("delophy-lobby-card.png"));
 });
+
+test("델로피의 보물 찾기 — 코인 안내", async ({ page }, info) => {
+  test.skip(process.env.PF_E2E_REMOTE_LOOP !== "1", "소스 서버 전용");
+  await setup(page, false);
+  await page.evaluate(async () => {
+    const root = "/src/";
+    const guide = await import(/* @vite-ignore */root + "ui/eventCoinGuide.ts");
+    const layers = await import(/* @vite-ignore */root + "ui/PopupLayer.ts");
+    const scene = (window as any).__FORGE_GAME.scene.getScene("lobby");
+    guide.openEventCoinGuide(scene, new layers.PopupLayer(scene, 3100), "delopi-thief-coin", 1340, new Date(Date.now() + 3 * 86_400_000).toISOString());
+  });
+  await page.waitForTimeout(1500);
+  await captureGame(page, info.outputPath("delophy-coin-guide.png"));
+});

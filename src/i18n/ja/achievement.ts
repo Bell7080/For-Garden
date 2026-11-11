@@ -131,6 +131,8 @@ export const ACHIEVEMENT_JA = {
   "newbieGrowth.sr.hint": "迎えるレリックを1体選んでください。すでにいる場合は欠片1個になります。",
   "newbieGrowth.sr.owned": "所持中・欠片",
   "newbieGrowth.sr.maxed": "突破完了",
+  "newbieGrowth.sr.new": "新しい出会い",
+  "newbieGrowth.sr.holdInfo": "長押しでスキル・情報を見る",
   "newbieGrowth.sr.confirm": "「{name}」を迎えますか？",
   "newbieGrowth.sr.confirmOwned": "「{name}」の欠片を1個受け取りますか？",
   "newbieGrowth.sr.confirmLabel": "受け取る",

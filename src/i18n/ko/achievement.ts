@@ -131,6 +131,8 @@ export const ACHIEVEMENT_KO = {
   "newbieGrowth.sr.hint": "데려올 렐릭 한 명을 고르세요. 이미 함께한다면 파편 1개가 됩니다.",
   "newbieGrowth.sr.owned": "보유 중 · 파편",
   "newbieGrowth.sr.maxed": "돌파 완료",
+  "newbieGrowth.sr.new": "새로운 만남",
+  "newbieGrowth.sr.holdInfo": "꾹 눌러 스킬·정보 보기",
   "newbieGrowth.sr.confirm": "「{name}」{name!을} 데려올까요?",
   "newbieGrowth.sr.confirmOwned": "「{name}」의 파편 1개를 받을까요?",
   "newbieGrowth.sr.confirmLabel": "받기",

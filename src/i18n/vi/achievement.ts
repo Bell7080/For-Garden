@@ -131,6 +131,8 @@ export const ACHIEVEMENT_VI = {
   "newbieGrowth.sr.hint": "Chọn một Di vật để đưa về. Nếu đã có, bạn sẽ nhận 1 Mảnh.",
   "newbieGrowth.sr.owned": "Đã có · Mảnh",
   "newbieGrowth.sr.maxed": "Đã đột phá tối đa",
+  "newbieGrowth.sr.new": "Cuộc gặp gỡ mới",
+  "newbieGrowth.sr.holdInfo": "Nhấn giữ để xem kỹ năng và thông tin",
   "newbieGrowth.sr.confirm": "Đưa \"{name}\" về chứ?",
   "newbieGrowth.sr.confirmOwned": "Nhận 1 Mảnh của \"{name}\"?",
   "newbieGrowth.sr.confirmLabel": "Nhận",

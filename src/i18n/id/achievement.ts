@@ -131,6 +131,8 @@ export const ACHIEVEMENT_ID = {
   "newbieGrowth.sr.hint": "Pilih satu Relik untuk dibawa pulang. Jika sudah punya, kamu mendapat 1 Serpihan.",
   "newbieGrowth.sr.owned": "Dimiliki · Serpihan",
   "newbieGrowth.sr.maxed": "Terobosan maks",
+  "newbieGrowth.sr.new": "Pertemuan baru",
+  "newbieGrowth.sr.holdInfo": "Tahan untuk melihat skill & info",
   "newbieGrowth.sr.confirm": "Bawa \"{name}\" pulang?",
   "newbieGrowth.sr.confirmOwned": "Terima 1 Serpihan \"{name}\"?",
   "newbieGrowth.sr.confirmLabel": "Klaim",

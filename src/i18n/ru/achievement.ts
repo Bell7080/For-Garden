@@ -131,6 +131,8 @@ export const ACHIEVEMENT_RU = {
   "newbieGrowth.sr.hint": "Выберите один реликт. Если он уже есть, вы получите 1 фрагмент.",
   "newbieGrowth.sr.owned": "Есть · фрагмент",
   "newbieGrowth.sr.maxed": "Максимум",
+  "newbieGrowth.sr.new": "Новая встреча",
+  "newbieGrowth.sr.holdInfo": "Удерживайте, чтобы увидеть навыки и сведения",
   "newbieGrowth.sr.confirm": "Взять «{name}»?",
   "newbieGrowth.sr.confirmOwned": "Получить 1 фрагмент «{name}»?",
   "newbieGrowth.sr.confirmLabel": "Забрать",

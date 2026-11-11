@@ -3,7 +3,10 @@ import { attachRoll } from "./RollingValue";
 import { remainingDetail } from "./itemExpiry";
 import { t } from "../i18n";
 import type { ItemDefinition } from "../data/items";
-import { drawLayer, HoloBar, slantedRect } from "./holo";
+import { chipPoints, drawLayer, drawShapeInnerGlow, HoloBar, slantedRect } from "./holo";
+import { dotPattern } from "./Button";
+import { shapeClipMask } from "./popupArt";
+import { settingsManager } from "../managers/SettingsManager";
 import { addItemFrame, ITEM_FRAME } from "./itemFrame";
 import { addItemDefinitionIcon } from "./itemDefinitionIcon";
 import { PopupLayer } from "./PopupLayer";
@@ -12,6 +15,7 @@ import { ITEM_GUIDE, itemGuideHeight, itemGuideSourcesTop } from "./itemGuideLay
 import { itemSourceKeys } from "../data/itemSources";
 import { shrinkTextToWidth } from "./textFit";
 import { pressIn, pressOut } from "./pressFeedback";
+import { clipHit, containerClip } from "./clippedHit";
 import { universalFragmentRarity } from "../core/relicProgression";
 import { addUniversalFragmentArt, addUniversalFragmentGlass, universalFragmentTexture } from "./universalFragmentArt";
 
@@ -93,16 +97,74 @@ export class ItemGuidePopup {
       if (!onUse) return;
       const { use } = ITEM_GUIDE;
       const enabled = quantity > 0;
-      const button = this.scene.add.container(0, height / 2 - use.bottom - use.height / 2).setAlpha(enabled ? 1 : 0.45);
-      button.add(drawLayer(this.scene, 0, 0, slantedRect(use.width, use.height, 18), { fill: 0x273646, alpha: 0.98, edge: COLOR.accent, edgeAlpha: 0.8 }));
-      button.add(this.scene.add.text(0, 0, t("inventory.useButton"), textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0.5));
+      const button = addUseButton(this.scene, 0, height / 2 - use.bottom - use.height / 2, use.width, use.height, enabled);
       body.add(button);
       if (!enabled) return;
-      const hit = this.scene.add.rectangle(0, 0, use.width, use.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const hit = this.scene.add.rectangle(0, 0, use.width, use.height, 0xffffff, 0);
+      clipHit(hit, containerClip(body, -ITEM_GUIDE.width / 2, -height / 2, ITEM_GUIDE.width / 2, height / 2));
       hit.on("pointerdown", () => pressIn(button));
       hit.on("pointerout", () => pressOut(button, "normal", { pop: false }));
       hit.on("pointerup", () => { pressOut(button); close(); onUse(); });
       button.add(hit);
     });
   }
+}
+
+/**
+ * 「사용하기」 — 안내창 밑동의 단 하나의 조작이라 맨 판이 아니라 **불이 들어온 스위치**로 선다.
+ *
+ * 호박빛 몸통(어두운 판 위에 강조색 한 겹) + 양 끝으로 흩어지는 점 무늬 + 안쪽에서 번지는 빛 + 아래 두께선,
+ * 글자 양옆의 빗금 장식, 그리고 몇 초마다 판을 비스듬히 훑는 빛줄기와 숨 쉬는 바깥 빛. 쓸 수 없으면
+ * 빛과 움직임을 모두 끄고 판만 흐리게 남긴다. 움직임 줄이기에서는 훑는 빛·숨쉬기가 서지 않는다.
+ */
+function addUseButton(scene: Phaser.Scene, x: number, y: number, width: number, height: number, enabled: boolean): Phaser.GameObjects.Container {
+  const button = scene.add.container(x, y);
+  const cut = height * 0.46;
+  const shape = chipPoints(width, height, { bevel: { topLeft: cut, topRight: 0, bottomRight: cut, bottomLeft: 0 } });
+  const reduceMotion = settingsManager.get().accessibility.reduceMotion;
+  if (enabled) {
+    // 바깥 빛 — 판보다 한 뼘 큰 같은 실루엣. 숨 쉬듯 진해졌다 옅어진다.
+    const haloShape = chipPoints(width + 26, height + 22, { bevel: { topLeft: cut + 10, topRight: 0, bottomRight: cut + 10, bottomLeft: 0 } });
+    const halo = drawLayer(scene, 0, 0, haloShape, { fill: COLOR.accent, alpha: 0.22, shadow: false }).setBlendMode(Phaser.BlendModes.ADD);
+    button.add(halo);
+    if (!reduceMotion) scene.tweens.add({ targets: halo, alpha: { from: 0.1, to: 0.34 }, duration: 1100, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+  }
+  button.add(drawLayer(scene, 0, 0, shape, { fill: enabled ? 0x2b1c08 : 0x1f2630, alpha: 0.97, edge: enabled ? 0xffe6a8 : COLOR.accent, edgeAlpha: enabled ? 0.95 : 0.4 }));
+  if (enabled) {
+    // 몸통의 호박빛 — 위가 밝고 아래로 가라앉는 두 겹. 광택 그라데이션이 아니라 단색 면 두 장이다.
+    const inner = chipPoints(width - 14, height - 14, { bevel: { topLeft: cut - 6, topRight: 0, bottomRight: cut - 6, bottomLeft: 0 } });
+    button.add(drawLayer(scene, 0, 0, inner, { fill: COLOR.accent, alpha: 0.3, shadow: false }));
+    const upper = chipPoints(width - 14, (height - 14) / 2, { bevel: { topLeft: cut - 6, topRight: 0, bottomRight: 0, bottomLeft: 0 } });
+    button.add(drawLayer(scene, 0, -(height - 14) / 4, upper, { fill: 0xffe2a0, alpha: 0.12, shadow: false }));
+    button.add(dotPattern(scene, shape, 0xffe6a8, { reach: 0.22, alpha: 0.35 }));
+    button.add(drawShapeInnerGlow(scene, 0, 0, shape, { color: COLOR.accent, strength: 0.42 }));
+    const underline = scene.add.graphics();
+    underline.lineStyle(3, 0xffe6a8, 0.7);
+    underline.lineBetween(-width / 2 + cut, height / 2 - 6, width / 2 - cut, height / 2 - 6);
+    button.add(underline);
+  }
+  const label = scene.add.text(0, 0, t("inventory.useButton"), textStyle({ role: "display", size: 32, color: enabled ? "#fff4d6" : COLOR.inkDim }))
+    .setOrigin(0.5).setStroke(enabled ? "#3a2406" : "#05070a", 6).setShadow(0, 3, "#05070a", 4, true, true);
+  button.add(label);
+  // 글자 양옆의 빗금 셋 — 제목표의 빗금(`/`)과 같은 문법을 장식으로 겹쳐 쓴다.
+  const tickColor = enabled ? 0xffe6a8 : 0x6f7681;
+  for (const side of [-1, 1] as const) {
+    for (let index = 0; index < 3; index += 1) {
+      const tickX = side * (label.width / 2 + 22 + index * 13);
+      button.add(drawLayer(scene, tickX, 0, slantedRect(6, 26 - index * 6, 5), { fill: tickColor, alpha: 0.9 - index * 0.25, shadow: false }));
+    }
+  }
+  if (enabled && !reduceMotion) {
+    // 판을 비스듬히 훑는 빛줄기 — 판 실루엣 안에서만 보인다.
+    const shine = scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
+    shine.fillStyle(0xffffff, 0.26);
+    shine.fillPoints([new Phaser.Geom.Point(-18, -height), new Phaser.Geom.Point(26, -height), new Phaser.Geom.Point(4, height), new Phaser.Geom.Point(-40, height)], true);
+    shine.fillStyle(0xffffff, 0.12);
+    shine.fillPoints([new Phaser.Geom.Point(34, -height), new Phaser.Geom.Point(46, -height), new Phaser.Geom.Point(24, height), new Phaser.Geom.Point(12, height)], true);
+    shine.setMask(shapeClipMask(scene, button, shape));
+    shine.x = -width / 2 - 80;
+    button.add(shine);
+    scene.tweens.add({ targets: shine, x: width / 2 + 80, duration: 900, delay: 400, repeatDelay: 1800, repeat: -1, ease: "Sine.easeInOut" });
+  }
+  return button;
 }

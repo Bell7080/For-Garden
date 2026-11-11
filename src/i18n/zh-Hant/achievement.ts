@@ -131,6 +131,8 @@ export const ACHIEVEMENT_ZH_HANT = {
   "newbieGrowth.sr.hint": "請選擇一名要帶回的遺物。若已擁有，則改為獲得1個碎片。",
   "newbieGrowth.sr.owned": "已擁有 · 碎片",
   "newbieGrowth.sr.maxed": "已滿突破",
+  "newbieGrowth.sr.new": "新的相遇",
+  "newbieGrowth.sr.holdInfo": "長按檢視技能與資訊",
   "newbieGrowth.sr.confirm": "要帶回「{name}」嗎？",
   "newbieGrowth.sr.confirmOwned": "要領取1個「{name}」的碎片嗎？",
   "newbieGrowth.sr.confirmLabel": "領取",

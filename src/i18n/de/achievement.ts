@@ -131,6 +131,8 @@ export const ACHIEVEMENT_DE = {
   "newbieGrowth.sr.hint": "Wähle ein Relikt aus. Hast du es schon, erhältst du stattdessen 1 Splitter.",
   "newbieGrowth.sr.owned": "Vorhanden · Splitter",
   "newbieGrowth.sr.maxed": "Maximal",
+  "newbieGrowth.sr.new": "Neue Begegnung",
+  "newbieGrowth.sr.holdInfo": "Gedrückt halten für Fähigkeiten & Infos",
   "newbieGrowth.sr.confirm": "\"{name}\" zu dir holen?",
   "newbieGrowth.sr.confirmOwned": "1 Splitter von \"{name}\" erhalten?",
   "newbieGrowth.sr.confirmLabel": "Abholen",

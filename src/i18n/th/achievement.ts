@@ -131,6 +131,8 @@ export const ACHIEVEMENT_TH = {
   "newbieGrowth.sr.hint": "เลือกเรลิกหนึ่งตัวที่จะพากลับมา หากมีอยู่แล้วจะได้รับเศษ 1 ชิ้นแทน",
   "newbieGrowth.sr.owned": "มีแล้ว · เศษ",
   "newbieGrowth.sr.maxed": "ทะลวงครบแล้ว",
+  "newbieGrowth.sr.new": "การพบกันครั้งใหม่",
+  "newbieGrowth.sr.holdInfo": "กดค้างเพื่อดูสกิลและข้อมูล",
   "newbieGrowth.sr.confirm": "พา \"{name}\" กลับมาไหม?",
   "newbieGrowth.sr.confirmOwned": "รับเศษของ \"{name}\" 1 ชิ้นไหม?",
   "newbieGrowth.sr.confirmLabel": "รับ",

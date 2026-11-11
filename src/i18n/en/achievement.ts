@@ -131,6 +131,8 @@ export const ACHIEVEMENT_EN = {
   "newbieGrowth.sr.hint": "Pick one Relic to bring home. If you already have it, you get 1 Shard instead.",
   "newbieGrowth.sr.owned": "Owned · Shard",
   "newbieGrowth.sr.maxed": "Maxed",
+  "newbieGrowth.sr.new": "New encounter",
+  "newbieGrowth.sr.holdInfo": "Hold to view skills & info",
   "newbieGrowth.sr.confirm": "Bring \"{name}\" home?",
   "newbieGrowth.sr.confirmOwned": "Receive 1 Shard of \"{name}\"?",
   "newbieGrowth.sr.confirmLabel": "Claim",

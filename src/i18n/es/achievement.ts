@@ -131,6 +131,8 @@ export const ACHIEVEMENT_ES = {
   "newbieGrowth.sr.hint": "Elige una Reliquia para traer. Si ya la tienes, recibirás 1 Fragmento.",
   "newbieGrowth.sr.owned": "En posesión · Fragmento",
   "newbieGrowth.sr.maxed": "Máximo",
+  "newbieGrowth.sr.new": "Nuevo encuentro",
+  "newbieGrowth.sr.holdInfo": "Mantén pulsado para ver habilidades e info",
   "newbieGrowth.sr.confirm": "¿Traer a \"{name}\"?",
   "newbieGrowth.sr.confirmOwned": "¿Recibir 1 Fragmento de \"{name}\"?",
   "newbieGrowth.sr.confirmLabel": "Reclamar",

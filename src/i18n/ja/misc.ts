@@ -459,5 +459,7 @@ export const MISC_JA = {
   "profile.edit.frameGift": "限定",
   "profile.unlock.gift.firstPayment": "初回決済ギフトで受け取れます",
   "profile.unlock.gift.seasonPass": "シーズンパス30段階報酬",
+  "profile.frameGuide.kind": "プロフィールフレーム",
+  "profile.frameGuide.firstPayment": "プロフィール写真にかぶせる金色のフレームです。アカウントの初回決済で一度だけ受け取れ、受け取るとプロフィールカスタムのフレーム一覧から選べます。",
   "trade.tag.season": "シーズン",
 } as const;

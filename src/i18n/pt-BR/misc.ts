@@ -437,5 +437,7 @@ export const MISC_PT_BR = {
   "profile.edit.frameGift": "Limitado",
   "profile.unlock.gift.firstPayment": "Obtido com o Presente da primeira compra",
   "profile.unlock.gift.seasonPass": "Recompensa do nível 30 do passe de temporada",
+  "profile.frameGuide.kind": "Moldura de perfil",
+  "profile.frameGuide.firstPayment": "Uma moldura dourada para a foto de perfil. É recebida só uma vez, na primeira compra da conta, e depois aparece na lista de molduras ao personalizar o perfil.",
   "trade.tag.season": "Temporada",
 } as const;

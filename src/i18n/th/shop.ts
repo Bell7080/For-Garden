@@ -133,8 +133,9 @@ export const SHOP_TH = {
   "shop.premium.perk.ticketless": "กวาดล้างโดยไม่ใช้ตั๋ว",
   "shop.premium.firstPayment.tag": "ครั้งเดียว",
   "shop.premium.firstPayment.title": "ของขวัญชำระเงินครั้งแรก",
-  "shop.premium.firstPayment.note": "รับพร้อมการชำระเงินครั้งแรกของสินค้าใดก็ได้",
-  "shop.premium.firstPayment.hint": "คุณจะได้รับพร้อมการชำระเงินครั้งแรกของสินค้าใดก็ได้",
+  "shop.premium.firstPayment.note": "ปลดล็อกเมื่อชำระเงินครั้งแรก",
+  "shop.premium.firstPayment.hint": "ชำระเงินครั้งแรกกับสินค้าใดก็ได้เพื่อปลดล็อก แล้วกดรับที่นี่",
+  "shop.premium.firstPayment.claim": "FREE · รับ",
   "shop.purchase.period.season": "ซีซัน",
   "shop.premium.pass.metric.seasonPoints": "คะแนนวิจัยซีซัน {progress} / {goal}",
 } as const;

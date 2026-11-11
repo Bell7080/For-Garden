@@ -133,8 +133,9 @@ export const SHOP_DE = {
   "shop.premium.perk.ticketless": "Säubern ohne Tickets",
   "shop.premium.firstPayment.tag": "Einmalig",
   "shop.premium.firstPayment.title": "Erstkauf-Geschenk",
-  "shop.premium.firstPayment.note": "Bei deinem ersten Kauf eines beliebigen Artikels dabei",
-  "shop.premium.firstPayment.hint": "Du erhältst es bei deinem ersten Kauf eines beliebigen Artikels.",
+  "shop.premium.firstPayment.note": "Wird mit deinem ersten Kauf aktiviert",
+  "shop.premium.firstPayment.hint": "Tätige deinen ersten Kauf eines beliebigen Artikels, um es zu aktivieren, und hole es dir hier ab.",
+  "shop.premium.firstPayment.claim": "FREE · Abholen",
   "shop.purchase.period.season": "Saison",
   "shop.premium.pass.metric.seasonPoints": "Saison-Forschung {progress} / {goal}",
 } as const;

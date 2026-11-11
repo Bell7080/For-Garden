@@ -73,6 +73,16 @@ describe("상황 특가 상품", () => {
       expect(product.grants.some((grant) => grant.kind === "currency" && grant.currency === "rawStone"), product.id).toBe(false);
     }
   });
+  it("SSR 돌파 특가는 만능 SSR 파편 값을 치른다 — 다른 돌파 특가의 다섯 배 넘는 값, 파편은 한 장뿐", () => {
+    const ssr = offers.find((product) => product.id === "offer-breakthrough-ssr")!;
+    const sr = offers.find((product) => product.id === "offer-breakthrough-sr")!;
+    const price = (product: typeof ssr) => (product.acquisition as { basePriceKrw: number }).basePriceKrw;
+    expect(price(ssr)).toBeGreaterThanOrEqual(price(sr) * 5);
+    expect(ssr.grants.find((grant) => grant.kind === "item" && grant.itemId === "universal-fragment-ssr")).toMatchObject({ amount: 1 });
+    // 파편을 세지 않으면 덤만으로는 값에 못 미친다 — 값의 대부분이 파편이다.
+    const withoutFragment = { ...ssr, grants: ssr.grants.filter((grant) => grant.kind !== "item") };
+    expect(premiumValueMultiple(withoutFragment as unknown as ProductDto, PREMIUM_GEM_PER_KRW) ?? 0).toBeLessThan(1);
+  });
 });
 
 describe("FakeServer 상황 특가", () => {
@@ -93,7 +103,7 @@ describe("FakeServer 상황 특가", () => {
     expect((await api.getNotificationSignals()).situationalOfferCount).toBe(0);
   });
 
-  it("연구원 레벨이 닿은 가장 높은 마디 하나만 서고, 사면 걷힌다", async () => {
+  it("연구원 레벨이 닿은 가장 높은 마디 하나만 서고, 사면 「구매 완료」로 남는다", async () => {
     const { state, api } = setup();
     state.playerResearch = { ...state.playerResearch, level: 23 };
     expect((await api.getNotificationSignals()).situationalOfferCount).toBe(1);
@@ -103,9 +113,13 @@ describe("FakeServer 상황 특가", () => {
     expect(offer.visibleUntil).toBe(at(72).toISOString());
     expect(list.products.some(({ id }) => id === "offer-level-10")).toBe(false);
     const gems = state.wallet.gems;
+    state.achievements = { ...state.achievements, claimed: state.achievements?.claimed ?? {}, goldPeak: state.achievements?.goldPeak ?? 0, firstPaymentGift: true };
     await buy(api, "offer-level-20", "tx-level");
     expect(state.wallet.gems).toBeGreaterThan(gems);
-    expect(await offerIds(api)).toEqual([]);
+    // 산 특가는 남은 기간 동안 목록에 남되 다시 살 수 없고, 붉은 점에서는 빠진다.
+    const bought = (await api.getProducts("premium")).products.find(({ id }) => id === "offer-level-20")!;
+    expect(bought).toMatchObject({ remaining: 0, purchasable: false });
+    expect((await api.getNotificationSignals()).situationalOfferCount).toBe(0);
     await expect(buy(api, "offer-level-20", "tx-level-2")).rejects.toBeTruthy();
     expect(state.situationalOffers?.issuedKeys).toEqual(expect.arrayContaining(["level:10", "level:20"]));
   });

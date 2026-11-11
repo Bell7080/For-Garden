@@ -133,8 +133,9 @@ export const SHOP_ZH_HANS = {
   "shop.premium.perk.ticketless": "无需扫荡券即可扫荡",
   "shop.premium.firstPayment.tag": "限1次",
   "shop.premium.firstPayment.title": "首次付费礼物",
-  "shop.premium.firstPayment.note": "任意商品首次付费时一并发放",
-  "shop.premium.firstPayment.hint": "首次购买任意商品时将一并获得。",
+  "shop.premium.firstPayment.note": "首次付费后激活",
+  "shop.premium.firstPayment.hint": "首次购买任意商品即可激活，之后在此领取。",
+  "shop.premium.firstPayment.claim": "FREE · 领取",
   "shop.purchase.period.season": "赛季",
   "shop.premium.pass.metric.seasonPoints": "赛季研究度 {progress} / {goal}",
 } as const;

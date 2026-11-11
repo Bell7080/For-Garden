@@ -34,6 +34,7 @@ import { TopBar } from "../ui/TopBar";
 import type { PremiumSection } from "./settingsNavigation";
 import { PopupLayer } from "../ui/PopupLayer";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
+import { openProfileFrameGuide } from "../ui/ProfileFrameGuidePopup";
 import { PurchasePopup } from "../ui/PurchasePopup";
 import { session } from "../state/session";
 import { findAdRewardSlot } from "../data/adRewards";
@@ -489,8 +490,9 @@ export class PremiumScene extends Phaser.Scene {
   }
 
   /**
-   * 한정 탭 맨 앞의 「첫 결제 선물」 — 받는 것(선택권 · 화석)과 한정 테두리를 씌운 지금 얼굴이 서고, 누르면 안내만 한다.
-   * 지급은 화면이 아니라 첫 플랫폼 결제를 확정하는 서버(`fulfillPlatformPurchase`)가 같은 거래 안에서 한다.
+   * 한정 탭 맨 앞의 「첫 결제 선물」 — 받는 것(선택권 · 화석)과 한정 테두리를 씌운 지금 얼굴이 선다.
+   * 결제 전에는 「첫 결제 시 활성화」로 잠겨 있고, 첫 결제가 활성화하면(`fulfillPlatformPurchase`) 카드가 숨 쉬며
+   * 「FREE」로 바뀌어 직접 눌러 받는다(`claimFirstPaymentGift`). 받으면 목록에서 걷힌다.
    */
   private addFirstPaymentGiftCard(gift: NonNullable<ProductListResponse["firstPaymentGift"]>, index: number, kind: PremiumListKind): void {
     const W = PREMIUM_WIDE;
@@ -500,6 +502,9 @@ export class PremiumScene extends Phaser.Scene {
     const { x, y } = premiumCardSpot(index, kind);
     const card = this.add.container(x, y);
     paintShowcaseCard(this, card, { width, height, accent: FIRST_PAYMENT_TONE, dim: false, railX: -width / 2 + W.pad, tag: t("shop.premium.firstPayment.tag"), stageY: S.frameY + W.frame / 2 });
+    // 카드 전체의 누름을 먼저 깐다 — 그 위에 서는 액자·테두리가 제 안내창을 먼저 받는다.
+    this.addCardHit(card, width, height, () => gift.claimable ? void this.claimFirstPaymentGift() : this.notice(t("shop.premium.firstPayment.hint")));
+    if (gift.claimable) this.addActivePulse(card, width, height, FIRST_PAYMENT_TONE);
     const left = -width / 2 + W.pad;
     const right = width / 2 - W.pad;
     const name = this.add.text(left, S.nameY, t("shop.premium.firstPayment.title"), textStyle({ role: "display", size: W.nameSize })).setOrigin(0, 0.5).setShadow(3, 4, "#04060a", 0, true, true);
@@ -508,14 +513,48 @@ export class PremiumScene extends Phaser.Scene {
     const xs = premiumWideFrameXs(tiles.length + 1);
     tiles.forEach((tile, i) => this.addGrantFrame(card, xs[i], S.frameY, W.frame, tile.icon, tile.amount));
     const profile = playerProfileDisplay(session);
-    card.add(new ProfileAvatar(this, xs[tiles.length], S.frameY, { size: Math.round(W.frame * 0.72), frameId: gift.frameId, portraitAssetId: profile.avatar?.portraitAssetId, fallback: profileAvatarContent(profile, () => false).fallback }));
+    const avatarContent = { portraitAssetId: profile.avatar?.portraitAssetId, fallback: profileAvatarContent(profile, () => false).fallback };
+    const avatar = new ProfileAvatar(this, xs[tiles.length], S.frameY, { size: Math.round(W.frame * 0.72), frameId: gift.frameId, ...avatarContent });
+    card.add(avatar);
+    // 테두리도 옆 액자처럼 눌러서 무엇인지 읽는다(`openProfileFrameGuide`).
+    const avatarHit = addClippedHit(this, avatar, 0, 0, W.frame, W.frame, premiumGridViewport);
+    avatarHit.on("pointerdown", () => pressIn(avatar));
+    avatarHit.on("pointerout", () => pressOut(avatar, "normal", { pop: false }));
+    avatarHit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      pressOut(avatar);
+      if (this.isTap(pointer)) openProfileFrameGuide(this, this.popups, { frameId: gift.frameId, avatar: avatarContent, descriptionKey: "profile.frameGuide.firstPayment" });
+    });
+    // 아래 띠가 지금 할 일을 말한다 — 잠긴 동안은 어두운 유리에 「첫 결제 시 활성화」, 활성화되면 선물 색으로 물든 「FREE · 받기」.
     const bar = this.add.container(0, S.price.y);
-    bar.add(drawLayer(this, 0, 0, chipPoints(S.price.width + 120, S.price.height, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: FIRST_PAYMENT_TONE, edgeAlpha: 0.8 }));
-    const note = this.add.text(0, 0, t("shop.premium.firstPayment.note"), textStyle({ role: "emphasis", size: Math.round(S.price.height * 0.42), color: COLOR.ink })).setOrigin(0.5);
+    const barShape = chipPoints(S.price.width + 120, S.price.height, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } });
+    bar.add(gift.claimable
+      ? drawLayer(this, 0, 0, barShape, { fill: FIRST_PAYMENT_TONE, alpha: 0.95, edge: 0xffffff, edgeAlpha: 0.7 })
+      : drawLayer(this, 0, 0, barShape, { fill: 0x0d141c, alpha: 0.96, edge: FIRST_PAYMENT_TONE, edgeAlpha: 0.8 }));
+    const noteKey = gift.claimable ? "shop.premium.firstPayment.claim" : "shop.premium.firstPayment.note";
+    const noteStyle = gift.claimable
+      ? textStyle({ role: "display", size: Math.round(S.price.height * 0.5), color: "#1a1205" })
+      : textStyle({ role: "emphasis", size: Math.round(S.price.height * 0.42), color: COLOR.ink });
+    const note = this.add.text(0, 0, t(noteKey), noteStyle).setOrigin(0.5);
     bar.add(squeezeTextToWidth(note, S.price.width + 80));
     card.add(bar);
-    this.addCardHit(card, width, height, () => this.notice(t("shop.premium.firstPayment.hint")));
+    if (gift.claimable && motionPolicy(session.settings).nonEssentialDistanceFactor !== 0) {
+      this.tweens.add({ targets: bar, scale: 1.05, duration: 700, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    }
     this.content?.add(card);
+  }
+
+  /** 활성화된 첫 결제 선물을 받는다 — 지급은 서버 경계 하나(`claimFirstPaymentGift`)다. */
+  private async claimFirstPaymentGift(): Promise<void> {
+    if (this.claiming) return;
+    this.claiming = true;
+    try {
+      const result = await withBusy(this, gameApi.claimFirstPaymentGift({ requestId: globalThis.crypto?.randomUUID?.() ?? `first-gift-${Date.now()}` }));
+      session.wallet = { ...result.wallet };
+      this.topBar?.refresh();
+      openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
+      await this.refresh();
+      void notificationManager.refresh().catch(() => undefined);
+    } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claiming = false; }
   }
 
   /** 젬 탭 끝의 「광고 보고 젬 받기」 칸. */

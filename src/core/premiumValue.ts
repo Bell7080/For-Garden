@@ -15,6 +15,9 @@ export const PREMIUM_ITEM_GEM_VALUE: Readonly<Record<string, number>> = {
   "strata-ticket": 100,
   "raid-ticket": 50,
   "raid-select-ticket": 80,
+  // 만능 SSR 파편 — 어느 SSR에나 드는 파편이라 마일리지 상점의 픽업 SSR 파편 한 장(마일리지 300 × 젬 60)과 같은 값이다.
+  // 이 값을 세지 않으면 SSR 돌파 특가가 파편을 공짜 덤으로 보이게 되어 값이 싸게 매겨졌다(₩4,900).
+  "universal-fragment-ssr": 18_000,
 };
 
 /** 배수를 단 상품의 최소 배수. 이보다 낮으면 "이득"이라 말할 수 없어 배지를 세우지 않는다. */

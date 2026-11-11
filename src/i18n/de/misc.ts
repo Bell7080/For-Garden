@@ -437,5 +437,7 @@ export const MISC_DE = {
   "profile.edit.frameGift": "Limitiert",
   "profile.unlock.gift.firstPayment": "Erhältlich als Erstkauf-Geschenk",
   "profile.unlock.gift.seasonPass": "Saisonpass-Belohnung Stufe 30",
+  "profile.frameGuide.kind": "Profilrahmen",
+  "profile.frameGuide.firstPayment": "Ein goldener Rahmen für dein Profilbild. Es gibt ihn nur einmal, beim ersten Kauf des Kontos; danach steht er in der Rahmenliste der Profilgestaltung zur Auswahl.",
   "trade.tag.season": "Saison",
 } as const;

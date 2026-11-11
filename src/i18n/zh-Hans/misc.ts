@@ -437,5 +437,7 @@ export const MISC_ZH_HANS = {
   "profile.edit.frameGift": "限定",
   "profile.unlock.gift.firstPayment": "通过首次付费礼物获得",
   "profile.unlock.gift.seasonPass": "赛季通行证第30级奖励",
+  "profile.frameGuide.kind": "头像框",
+  "profile.frameGuide.firstPayment": "套在头像照片上的金色头像框。仅在账号首次付费时获得一次，获得后可在个人资料装扮的头像框列表中选择。",
   "trade.tag.season": "赛季",
 } as const;

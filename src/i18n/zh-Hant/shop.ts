@@ -133,8 +133,9 @@ export const SHOP_ZH_HANT = {
   "shop.premium.perk.ticketless": "無需掃蕩券即可掃蕩",
   "shop.premium.firstPayment.tag": "限1次",
   "shop.premium.firstPayment.title": "首次付費禮物",
-  "shop.premium.firstPayment.note": "任意商品首次付費時一併發放",
-  "shop.premium.firstPayment.hint": "首次購買任意商品時將一併獲得。",
+  "shop.premium.firstPayment.note": "首次付費後啟用",
+  "shop.premium.firstPayment.hint": "首次購買任意商品即可啟用，之後在此領取。",
+  "shop.premium.firstPayment.claim": "FREE · 領取",
   "shop.purchase.period.season": "賽季",
   "shop.premium.pass.metric.seasonPoints": "賽季研究度 {progress} / {goal}",
 } as const;

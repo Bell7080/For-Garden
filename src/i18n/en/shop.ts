@@ -133,8 +133,9 @@ export const SHOP_EN = {
   "shop.premium.perk.ticketless": "Sweep without tickets",
   "shop.premium.firstPayment.tag": "One Time",
   "shop.premium.firstPayment.title": "First Purchase Gift",
-  "shop.premium.firstPayment.note": "Included with your first purchase of any item",
-  "shop.premium.firstPayment.hint": "You'll receive this with your first purchase of any item.",
+  "shop.premium.firstPayment.note": "Unlocks with your first purchase",
+  "shop.premium.firstPayment.hint": "Make your first purchase of any item to unlock it, then claim it here.",
+  "shop.premium.firstPayment.claim": "FREE · Claim",
   "shop.purchase.period.season": "Season",
   "shop.premium.pass.metric.seasonPoints": "Season Research {progress} / {goal}",
 } as const;

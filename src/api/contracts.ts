@@ -576,7 +576,7 @@ export interface FulfillPlatformPurchaseResponse extends PurchaseProductResponse
   entitlement?: PassEntitlementDto;
   /** 이번 지급에 첫 구매 보너스가 들어 있는가. */
   firstBonusApplied: boolean;
-  /** 이번 거래가 계정 첫 결제라 첫 결제 선물(`FIRST_PAYMENT_GIFT`)이 `granted`에 함께 들었는가. */
+  /** 이번 거래가 계정 첫 결제라 첫 결제 선물(`FIRST_PAYMENT_GIFT`)을 **활성화**했는가 — 받는 것은 `claimFirstPaymentGift`다. */
   firstPaymentGift?: true;
 }
 /** 진행 패스 마디 하나 — 정적 보상과 서버가 판정한 상태(받음 · 받을 수 있음 · 닿음 · 아직). */
@@ -620,6 +620,14 @@ export interface ClaimInstantAdRewardRequest { entitlementId: string; slotId: st
 export interface ClaimInstantAdRewardResponse extends ClaimAdRewardResponse { entitlement: PassEntitlementDto; dailyBonus?: { currency: "gems"; amount: number }; }
 /** 활성 구독이 매일 얹는 몫(젬 또는 아이템)을 UTC 하루에 한 번 받는다. */
 export interface ClaimPassDailyBonusRequest { productId: string; requestId: string; }
+/** 첫 결제로 활성화된 첫 결제 선물을 받는다. */
+export interface ClaimFirstPaymentGiftRequest { requestId: string; }
+export interface ClaimFirstPaymentGiftResponse extends PlayerStateDto {
+  /** 이번에 들어온 재화·아이템(영수증용). */
+  granted: readonly ProductGrant[];
+  /** 함께 열린 선물 테두리. */
+  frameId: string;
+}
 
 /** 임무 화면에 필요한 진행·보상·수령 상태를 한 행으로 전달한다. */
 export interface MissionDto { id: string; period: MissionPeriod; title: string; progress: number; target: number; reward: MissionReward; researchPoints: number; claimed: boolean; }
@@ -629,7 +637,7 @@ export interface PeriodResearchDto { points: number; maxPoints: number; stages: 
 /** 목록 응답은 로비 배지에서 바로 쓸 미수령 개수를 포함한다. */
 export interface MissionListResponse { missions: MissionDto[]; claimableCount: number; research: Record<MissionPeriod, PeriodResearchDto>; }
 /** 받은 편지함 데이터가 없는 화면이 상태를 추측하지 않도록 마련한 명시적 서버 계약이다. */
-export interface NotificationSignalsResponse { claimableRaidCount?: number; claimableExpeditionCount?: number; pendingFriendRequestCount: number; /** 받을 수 있는 업적 단계 수. */ claimableAchievementCount?: number; unseenEventCount: number; unreadMailCount: number; claimableMailCount?: number; claimablePassCount?: number; /** 아직 받지 않은 무료 보급이 있는 프리미엄 탭(일간·주간·월간). */ freeSupplyCategories: Array<"daily" | "weekly" | "monthly">; /** 지금 열린 상황 특가 수 — 프리미엄 「한정」 탭의 붉은 점. */ situationalOfferCount?: number; /** 운영 도구가 보낸 우편·재화 변동 소식. 한 번 내려가면 서버가 비운다. */ opsNotices?: OpsNotice[]; }
+export interface NotificationSignalsResponse { claimableRaidCount?: number; claimableExpeditionCount?: number; pendingFriendRequestCount: number; /** 받을 수 있는 업적 단계 수. */ claimableAchievementCount?: number; unseenEventCount: number; unreadMailCount: number; claimableMailCount?: number; claimablePassCount?: number; /** 아직 받지 않은 무료 보급이 있는 프리미엄 탭(일간·주간·월간). */ freeSupplyCategories: Array<"daily" | "weekly" | "monthly">; /** 지금 열린 상황 특가 수(받을 첫 결제 선물 포함) — 프리미엄 「한정」 탭의 붉은 점. */ situationalOfferCount?: number; /** 운영 도구가 보낸 우편·재화 변동 소식. 한 번 내려가면 서버가 비운다. */ opsNotices?: OpsNotice[]; }
 /** 일괄 또는 선택 수령 뒤 지급 총액과 최신 상태를 반환한다. */
 export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; claimedResearchStageIds: string[]; /** 임무·연구도 단계가 각각 준 것과 그 합(같은 재화는 한 줄). 상한에 깎인 뒤의 실제 지급분이다. */ rewards: { mission: MissionReward[]; research: MissionReward[] }; granted: MissionReward[]; }
 
@@ -692,7 +700,14 @@ export interface ProductDto { id: string; storefront: ProductStorefront; categor
 export interface ProductListResponse {
   products: ProductDto[]; serverTime: string;
   /** 프리미엄 상점에서만 — 계정 첫 결제 선물(`FIRST_PAYMENT_GIFT`)의 내용과 아직 받을 수 있는가. */
-  firstPaymentGift?: { available: boolean; grants: readonly ProductGrant[]; frameId: string };
+  firstPaymentGift?: {
+    /** 아직 받지 않았다(카드가 선다). */
+    available: boolean;
+    /** 첫 결제를 마쳐 지금 눌러 받을 수 있다. 거짓이면 카드는 「첫 결제 시 활성화」로 잠겨 있다. */
+    claimable: boolean;
+    grants: readonly ProductGrant[];
+    frameId: string;
+  };
 }
 /** 구매 요청은 영속 상품 ID와 사용자가 팝업에서 확정한 묶음 수량을 함께 보낸다. */
 export interface PurchaseProductRequest {
@@ -1303,6 +1318,7 @@ export interface GameApi extends AsyncArenaProfileApi {
   claimInstantAdReward(request: ClaimInstantAdRewardRequest): Promise<ClaimInstantAdRewardResponse>;
   /** 활성 구독의 오늘 몫을 받는다. 하루에 한 번이다. */
   claimPassDailyBonus(request: ClaimPassDailyBonusRequest): Promise<PurchaseProductResponse>;
+  claimFirstPaymentGift(request: ClaimFirstPaymentGiftRequest): Promise<ClaimFirstPaymentGiftResponse>;
   pullRelics(request: PullRequest): Promise<PullResponse>;
   /** 급여로 경험치를 올린다. 횟수를 넘기면 한 번에 여러 번 먹인다. */
   feedRelic(relicId: string, feeds?: number): Promise<FeedRelicResponse>;

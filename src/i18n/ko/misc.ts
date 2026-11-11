@@ -482,5 +482,7 @@ export const MISC_KO = {
   "profile.edit.frameGift": "한정",
   "profile.unlock.gift.firstPayment": "첫 결제 선물로 받습니다",
   "profile.unlock.gift.seasonPass": "시즌 패스 30단계 보상",
+  "profile.frameGuide.kind": "프로필 테두리",
+  "profile.frameGuide.firstPayment": "프로필 사진에 씌우는 금빛 테두리입니다. 계정 첫 결제 때 한 번만 받으며, 받으면 프로필 꾸미기의 테두리 목록에서 고를 수 있습니다.",
   "trade.tag.season": "시즌",
 } as const;

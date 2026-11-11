@@ -40,6 +40,8 @@ export const BATTLE_ES = {
   "battle.chip.autoOff": "Definitiva OFF",
   "battle.chip.skipOn": "Omitir cinemática",
   "battle.chip.skipOff": "Cinemática ON",
+  "battle.chip.skills": "Habilidades",
+  "battle.skillGlance.title": "Habilidades de un vistazo",
   "battle.tutorial.ultimate.intro": "¡La Definitiva es un movimiento especial que puedes usar cuando su barra está llena!",
   "battle.tutorial.ultimate.owner": "Definitiva de {name}",
   "battle.tutorial.ultimate.tap": "Toca la tarjeta brillante para usarla · {step}/{total}",

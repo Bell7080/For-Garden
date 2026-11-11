@@ -42,6 +42,8 @@ export const BATTLE_KO = {
   "battle.chip.autoOff": "궁극 OFF",
   "battle.chip.skipOn": "연출 스킵",
   "battle.chip.skipOff": "연출 ON",
+  "battle.chip.skills": "스킬 보기",
+  "battle.skillGlance.title": "스킬 한눈에 보기",
   "battle.tutorial.ultimate.intro": "궁극기는 게이지가 가득 차면 쓰는 필살기예요!",
   "battle.tutorial.ultimate.owner": "{name}의 궁극기",
   "battle.tutorial.ultimate.tap": "빛나는 카드를 눌러 써 보세요 · {step}/{total}",

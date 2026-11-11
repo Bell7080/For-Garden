@@ -40,6 +40,8 @@ export const BATTLE_ID = {
   "battle.chip.autoOff": "Ultimate OFF",
   "battle.chip.skipOn": "Lewati Cut-in",
   "battle.chip.skipOff": "Cut-in ON",
+  "battle.chip.skills": "Skill",
+  "battle.skillGlance.title": "Ringkasan Skill",
   "battle.tutorial.ultimate.intro": "Ultimate adalah jurus spesial yang bisa dipakai saat gaugenya penuh!",
   "battle.tutorial.ultimate.owner": "Ultimate {name}",
   "battle.tutorial.ultimate.tap": "Ketuk kartu yang bersinar untuk memakainya · {step}/{total}",

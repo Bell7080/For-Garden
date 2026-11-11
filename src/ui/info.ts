@@ -3012,7 +3012,7 @@ export function addInfoFigureStand(scene: Phaser.Scene, parent: Phaser.GameObjec
  * 그림에 속성 색을 그대로 얹지 않는 이유는 이 칸이 개체 구분이 아니라 "야성이 이렇게 터진다"를
  * 알리는 자리이기 때문이다.
  */
-const FEROCITY_BADGE_TONE: SkillIconTone = {
+export const FEROCITY_BADGE_TONE: SkillIconTone = {
   plate: FEROCITY_BADGE,
   inner: 0x180a08,
   edge: 0xf0a58a,
@@ -3306,6 +3306,18 @@ export function openFerocityTraitPopup(
   from: PopupSource,
   options: { breakthroughEffect?: string; summonTags?: readonly KeywordDef[]; summonActions?: Readonly<Record<string, () => void>> } = {},
 ): void {
+  openSkillPopup(scene, popups, keywords, buildFerocityViewModel(def, options), from);
+}
+
+/**
+ * 폭주 쪽지의 내용. 쪽지 한 장(`openFerocityTraitPopup`)과 전투의 스킬 한눈에 보기 판이 **같은 조립기**를
+ * 지난다 — 둘이 따로 문장을 지으면 같은 폭주가 두 화면에서 다른 수치로 읽힌다.
+ */
+export function buildFerocityViewModel(
+  /** 레벨·돌파·룬까지 반영한 정의. */
+  def: RelicDef,
+  options: { breakthroughEffect?: string; summonTags?: readonly KeywordDef[]; summonActions?: Readonly<Record<string, () => void>> } = {},
+): SkillInfoViewModel {
   // 피해 수치가 있는 폭주만 현재 능력치로 환산한다. 토리카의 새 탱커 계약은 자체 실제값을 그대로 보여 준다.
   const { atk: attack, def: defense, ap: abilityPower } = def.stats;
   const defensePercent = def.ferocityTrait.effectId === "splashDamage" ? def.ferocityTrait.defenseDamagePercent : undefined;
@@ -3355,7 +3367,7 @@ export function openFerocityTraitPopup(
   if (guardPercent !== undefined) contextualKeywords.push(...defenseGainKeywords(def.stats, guardPercent));
   // 폭주도 패시브와 같은 정형 상세창을 사용한다. 별도 제목 레이어 없이 아이콘 옆에서
   // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
-  openSkillPopup(scene, popups, keywords, {
+  return {
     name: def.ferocityTrait.name,
     kindLabel: t("info.skill.ferocity"),
     iconAssetId: "skill-icon-buff",
@@ -3372,7 +3384,7 @@ export function openFerocityTraitPopup(
     // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
     description: t("skill.ferocity.head")
       + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp, abilityPower, resistance: def.stats.res }),
-  }, from);
+  };
 }
 
 export function buildSkillViewModel(options: {

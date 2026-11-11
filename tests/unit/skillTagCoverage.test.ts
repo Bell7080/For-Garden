@@ -15,10 +15,7 @@ import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 const dependencies = { ...presentation, ...damage, ...statGain, t, buildSummonKeywords, ferocityMaxOf,
   skillArtFor: () => undefined, skillArtTint: () => 0 };
 const build = sourceFunction("src/ui/info.ts", "buildSkillViewModel", dependencies);
-let captured: SkillInfoViewModel;
-const frenzy = sourceFunction("src/ui/info.ts", "openFerocityTraitPopup", { ...dependencies,
-  openSkillPopup: (_scene: unknown, _layer: unknown, _manager: unknown, model: SkillInfoViewModel) => { captured = model; },
-});
+const frenzy = sourceFunction("src/ui/info.ts", "buildFerocityViewModel", dependencies);
 afterAll(() => setTextLanguage("ko"));
 
 describe("적·아군·소환수 스킬 태그 전수 검사", () => {
@@ -37,7 +34,7 @@ describe("적·아군·소환수 스킬 태그 전수 검사", () => {
         const breakthroughEffect = breakthroughEnhances(def, breakthrough, slot)
           ? presentation.breakthroughEffectText(def, slot, def.stats) : undefined;
         let model: SkillInfoViewModel;
-        if (slot === "ferocity") { frenzy(null, null, null, def, undefined, { breakthroughEffect }); model = captured; }
+        if (slot === "ferocity") model = frenzy(def, { breakthroughEffect });
         else model = build({ def, breakthrough, kindLabel: slot, skill: def[slot], slot, breakthroughEffect });
         const where = `${locale}/${def.id}/${slot}`;
         for (const text of [model.description, model.valueLabel, model.breakthroughEffect]) check(text, model.contextualKeywords, where);

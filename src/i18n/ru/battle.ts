@@ -40,6 +40,8 @@ export const BATTLE_RU = {
   "battle.chip.autoOff": "Ульта ВЫКЛ",
   "battle.chip.skipOn": "Без вставок",
   "battle.chip.skipOff": "Вставки ВКЛ",
+  "battle.chip.skills": "Навыки",
+  "battle.skillGlance.title": "Навыки кратко",
   "battle.tutorial.ultimate.intro": "Ульта — особый приём, который можно использовать, когда шкала заполнена!",
   "battle.tutorial.ultimate.owner": "Ульта: {name}",
   "battle.tutorial.ultimate.tap": "Нажмите на светящуюся карту · {step}/{total}",

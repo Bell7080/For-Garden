@@ -102,6 +102,7 @@ import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
+import { openSkillGlancePopup } from "../ui/SkillGlancePopup";
 import { cakeOperationEnemies, cakeOperationRole, cakeOperationRunCost, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { BATTLE_FIELD_FRAMING, battleArena } from "../core/battleArena";
 import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type DuelBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto, type RaidBattleInputDto } from "../core/expeditionBattle";
@@ -483,6 +484,7 @@ export class BattleScene extends Phaser.Scene {
   private frozenRelics?: Map<string, ExpeditionRelicSnapshot>;
   /** 꾹 눌러 처음 열 때만 만들어지는 아군 창. 만들기 전에는 멈춤 판단에서도 없는 셈이다. */
   private allyInfoRef?: InfoManager;
+  private skillGlanceChip?: ControlChip;
   /** 버프 상세도 전투 씬의 한 PopupLayer에 쌓아 입력·닫기 순서를 통일한다. */
   private buffPopups!: PopupLayer;
   /** 소환수→스킬→강조 용어가 전투의 한 PopupLayer 스택에 계속 쌓이게 하는 공용 키워드 경계다. */
@@ -1122,6 +1124,15 @@ export class BattleScene extends Phaser.Scene {
       icon: "bar-chart", label: t("battle.contribution"), width: CONTRIBUTION_TOGGLE.width, height: CONTRIBUTION_TOGGLE.height,
       onClick: () => { this.contributionPanel?.toggle(); this.refreshContribution(true); this.contributionChip.setActive(this.contributionPanel?.state.expanded ?? false); this.refreshDebug(); this.featureTapped("contribution"); },
     });
+    // **스킬 한눈에 보기는 오른쪽 열의 맨 위**(연출 칩 바로 위)다. 아군의 네 칸을 한 판에서 읽고,
+    // 판이 떠 있는 동안은 다른 창과 같이 전투가 멈춘다(`simulationPaused`).
+    this.skillGlanceChip = new ControlChip(this, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY - BATTLE_CONTROLS.stackGap * 2, {
+      icon: "scroll", label: t("battle.chip.skills"), width,
+      onClick: () => this.openSkillGlance(),
+    });
+    this.skillGlanceChip.setDepth(BATTLE_CONTROLS.depth);
+    // 오프닝 첫 전투는 조작을 모두 감추고 궁극기 하나만 가르친다 — 이 칸도 그 판에서는 서지 않는다.
+    if (this.openingBattle()) this.skillGlanceChip.setVisible(false).disableInteractive();
     // 전장 아래쪽에 서므로 SD·체력 바보다 앞에 둔다.
     for (const chip of [this.speedChip, this.autoChip, this.presentationChip, this.contributionChip]) chip.setDepth(BATTLE_CONTROLS.depth);
     // 튜토리얼이 아직 열지 않은 조작은 칩을 감추고 입력도 받지 않는다(오프닝 첫 전투는 네 개 모두).
@@ -1132,6 +1143,21 @@ export class BattleScene extends Phaser.Scene {
     this.autoChip.setActive(this.autoUltimate);
     refreshPresentationChip();
     this.resolveBattleMembership();
+  }
+
+  /**
+   * 아군 스킬 한눈에 보기. 판은 일시 정지 판과 같은 층(`pausePopups`)에 서서, 둘이 한꺼번에 뜨지 않고
+   * 떠 있는 동안 코어 시간이 멈춘다.
+   */
+  private openSkillGlance(): void {
+    if (this.finished || !this.spawned || this.ultimateSequenceActive) return;
+    const popups = this.pausePopups ??= new PopupLayer(this, 2400);
+    if (popups.isOpen) return;
+    this.skillGlanceChip?.setActive(true);
+    openSkillGlancePopup(this, popups, this.partyFighters().map((fighter) => ({ def: fighter.def, breakthrough: fighter.breakthrough })), {
+      reduceMotion: this.motion.battleUiFactor <= 0,
+      onClose: () => this.skillGlanceChip?.setActive(false),
+    });
   }
 
   /** 배속 칩의 글자와 켜짐 세기. 단계가 오를수록 테두리를 도는 빛이 강해진다. */

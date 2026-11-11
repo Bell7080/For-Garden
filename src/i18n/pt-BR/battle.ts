@@ -40,6 +40,8 @@ export const BATTLE_PT_BR = {
   "battle.chip.autoOff": "Suprema OFF",
   "battle.chip.skipOn": "Pular cinemática",
   "battle.chip.skipOff": "Cinemática ON",
+  "battle.chip.skills": "Habilidades",
+  "battle.skillGlance.title": "Visão geral das habilidades",
   "battle.tutorial.ultimate.intro": "A Suprema é um golpe especial que você usa quando a barra enche!",
   "battle.tutorial.ultimate.owner": "Suprema de {name}",
   "battle.tutorial.ultimate.tap": "Toque no cartão brilhante para usá-la · {step}/{total}",

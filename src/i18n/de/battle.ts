@@ -40,6 +40,8 @@ export const BATTLE_DE = {
   "battle.chip.autoOff": "Ultimativ AUS",
   "battle.chip.skipOn": "Einblendung aus",
   "battle.chip.skipOff": "Einblendung AN",
+  "battle.chip.skills": "Skills",
+  "battle.skillGlance.title": "Skills im Überblick",
   "battle.tutorial.ultimate.intro": "Ein Ultimativ ist ein Spezialangriff, den du nutzen kannst, sobald die Leiste voll ist!",
   "battle.tutorial.ultimate.owner": "Ultimativ: {name}",
   "battle.tutorial.ultimate.tap": "Tippe auf die leuchtende Karte · {step}/{total}",

@@ -40,6 +40,8 @@ export const BATTLE_EN = {
   "battle.chip.autoOff": "Ultimate OFF",
   "battle.chip.skipOn": "Skip Cut-in",
   "battle.chip.skipOff": "Cut-in ON",
+  "battle.chip.skills": "Skills",
+  "battle.skillGlance.title": "Skills at a Glance",
   "battle.tutorial.ultimate.intro": "An Ultimate is a special move you can use once its gauge is full!",
   "battle.tutorial.ultimate.owner": "{name}'s Ultimate",
   "battle.tutorial.ultimate.tap": "Tap the glowing card to use it · {step}/{total}",

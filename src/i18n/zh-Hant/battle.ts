@@ -40,6 +40,8 @@ export const BATTLE_ZH_HANT = {
   "battle.chip.autoOff": "必殺技 OFF",
   "battle.chip.skipOn": "跳過特寫",
   "battle.chip.skipOff": "特寫 ON",
+  "battle.chip.skills": "技能",
+  "battle.skillGlance.title": "技能一覽",
   "battle.tutorial.ultimate.intro": "必殺技是量表充滿後才能使用的大招喔！",
   "battle.tutorial.ultimate.owner": "{name}的必殺技",
   "battle.tutorial.ultimate.tap": "點選發光的卡片來使用 · {step}/{total}",

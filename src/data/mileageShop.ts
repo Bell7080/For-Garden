@@ -61,9 +61,10 @@ export const MILEAGE_PRODUCTS: readonly ProductDefinition[] = [
   // 주간 — 그 주의 SSR 파편이 맨 앞이다.
   mileage("mileage-weekly-ssr", "weekly", "shop-product-enhancement", "이번 주 SSR 파편", "이번 주 점원의 파편 1개", 200, 1, [{ kind: "weekly_ssr_fragment", amount: 1 }]),
   mileage("mileage-weekly-sr", "weekly", "shop-product-enhancement", "이번 주 SR 파편", "이번 주 SR 파편 1개", 40, 1, [{ kind: "rotating_fragment", rarity: "SR", period: "weekly", amount: 1 }]),
-  // 만능 파편 — 이번 주 파편 값의 **2배다**(SR 40 → 80 · R 10 → 20). 개체를 고르지 않아도 되는 값이다.
-  mileage("mileage-weekly-universal-sr", "weekly", "shop-product-enhancement", "만능 SR 파편", "만능 SR 파편 1개", 80, 1, [{ kind: "item", itemId: "universal-fragment-sr", name: "만능 SR 파편", amount: 1 }]),
-  mileage("mileage-weekly-universal-r", "weekly", "shop-product-enhancement", "만능 R 파편", "만능 R 파편 1개", 20, 1, [{ kind: "item", itemId: "universal-fragment-r", name: "만능 R 파편", amount: 1 }]),
+  // 만능 파편 — 뽑기 기대 비용(`PREMIUM_ITEM_GEM_VALUE` — SR 7,500 · R 1,500)을 마일리지 시세(젬 60)로 옮긴 값이다(응태, 2026-11-11 — "만능 파편은 귀하다").
+  //   SR 120 · R 25로 이번 주 파편(40 · 10)의 세 배쯤이다. 개체를 고르지 않아도 되는 값이다.
+  mileage("mileage-weekly-universal-sr", "weekly", "shop-product-enhancement", "만능 SR 파편", "만능 SR 파편 1개", 120, 1, [{ kind: "item", itemId: "universal-fragment-sr", name: "만능 SR 파편", amount: 1 }]),
+  mileage("mileage-weekly-universal-r", "weekly", "shop-product-enhancement", "만능 R 파편", "만능 R 파편 1개", 25, 1, [{ kind: "item", itemId: "universal-fragment-r", name: "만능 R 파편", amount: 1 }]),
   mileage("mileage-weekly-amber", "weekly", "shop-product-amber", "호박석 반출", "호박석 1개", 5, 10, [{ kind: "currency", currency: "amber", amount: 1 }]),
   mileage("mileage-weekly-fossil", "weekly", "shop-product-fossil", "화석 반출", "화석 1개", 5, 10, [{ kind: "currency", currency: "fossil", amount: 1 }]),
   mileage("mileage-weekly-tonic", "weekly", "shop-product-supplies", "고농축 음료 반출", "에너지 드링크+ 2개", 3, 2, [{ kind: "item", itemId: "stamina-tonic-large", name: "에너지 드링크+", amount: 2, expiresInDays: 7 }]),

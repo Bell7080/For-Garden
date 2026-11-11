@@ -20,7 +20,7 @@ import { sceneInfoManager } from "./info";
 import { bindLongPress } from "./longPressInfo";
 import { addClippedHit, clipHit, containerClip } from "./clippedHit";
 import type { PopupLayer } from "./PopupLayer";
-import { shapeClipMask } from "./popupArt";
+import { popupArtShape, shapeClipMask } from "./popupArt";
 import { pressIn, pressOut } from "./pressFeedback";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
@@ -103,7 +103,20 @@ class RelicSelectView {
     const firstOpen = choices.findIndex((choice) => !choice.maxed);
     this.focused = Math.max(0, firstNew >= 0 ? firstNew : firstOpen);
 
-    body.add(scene.add.text(0, RELIC_SELECT.hint.y, t("newbieGrowth.sr.hint"), textStyle({ role: "body", size: RELIC_SELECT.hint.size, color: COLOR.inkDim, align: "center", wrap: RELIC_SELECT.width - 120 })).setOrigin(0.5));
+    /*
+     * **창 전체에 모집 배너 원화를 깐다**(외형 전시관과 같은 문법) — 선택권도 연구소의 화석 모집판에서
+     * 뽑는 것과 같은 풀이라, 판 뒤가 그 배너의 공기로 읽힌다. 몸판 실루엣대로 자르고 가장자리를 누르며,
+     * 아래 띠가 앉는 자리에만 어두운 밑동 판을 깔아 글줄은 원화 위에 제 그림자로 선다.
+     */
+    const artShape = popupArtShape(RELIC_SELECT.width, RELIC_SELECT.height);
+    addPopupBackgroundImage(scene, body, BACKGROUND.recruitFossil, { x: 0, y: 0, width: RELIC_SELECT.width, height: RELIC_SELECT.height, maskShape: artShape, overlayStrength: 0.26 });
+    const bodyClip = shapeClipMask(scene, body, artShape);
+    body.add(drawFrameVignette(scene, 0, 0, RELIC_SELECT.width, RELIC_SELECT.height, { strength: 0.42, spread: 0.2 }).setMask(bodyClip));
+    const pageTop = RELIC_SELECT.strip.y;
+    const pageBottom = RELIC_SELECT.height / 2 - RELIC_SELECT.pad;
+    body.add(drawLayer(scene, 0, (pageTop + pageBottom) / 2, slantedRect(RELIC_SELECT.width - RELIC_SELECT.pad * 2, pageBottom - pageTop, 0), { fill: 0x0b0a16, alpha: 0.64, shadow: false }).setMask(bodyClip));
+    body.add(scene.add.text(0, RELIC_SELECT.hint.y, t("newbieGrowth.sr.hint"), textStyle({ role: "body", size: RELIC_SELECT.hint.size, color: COLOR.ink, align: "center", wrap: RELIC_SELECT.width - 120 }))
+      .setOrigin(0.5).setStroke("#05070a", 5).setShadow(0, 3, "#05070a", 5, true, true));
 
     this.addStage();
     this.badges = scene.add.container(0, 0);
@@ -113,7 +126,7 @@ class RelicSelectView {
     this.name = scene.add.text(0, RELIC_SELECT.name.y, "", textStyle({ role: "display", size: RELIC_SELECT.name.size }))
       .setOrigin(0.5).setStroke("#05070a", 8).setShadow(0, 5, "#05070a", 8, true, true);
     this.state = scene.add.text(0, RELIC_SELECT.state.y, "", textStyle({ role: "emphasis", size: RELIC_SELECT.state.size }))
-      .setOrigin(0.5).setStroke("#05070a", 5);
+      .setOrigin(0.5).setStroke("#05070a", 5).setShadow(0, 3, "#05070a", 5, true, true);
     body.add([this.name, this.state]);
 
     this.rail = scene.add.container(0, RELIC_SELECT.strip.y);
@@ -163,7 +176,8 @@ class RelicSelectView {
     const spot = { x: (rect.left + rect.right) / 2, y: (rect.top + rect.bottom) / 2, width: rect.right - rect.left, height: rect.bottom - rect.top };
     const unit = Math.min(spot.width, spot.height);
     const shape = chipPoints(spot.width, spot.height, { bevel: { topLeft: unit * 0.16, topRight: 0, bottomRight: unit * 0.16, bottomLeft: 0 } });
-    addPopupBackgroundImage(this.scene, this.body, BACKGROUND.info, { x: spot.x, y: spot.y, width: spot.width, height: spot.height, maskShape: shape, overlayStrength: 0.3 });
+    // 칸은 불투명한 판이 아니라 **유리면**이다 — 배너 원화가 비쳐야 한 장의 창을 갈라 놓은 것으로 읽힌다.
+    this.body.add(drawLayer(this.scene, spot.x, spot.y, shape, { fill: 0x120f22, alpha: 0.72, shadow: false }));
     const clip = shapeClipMask(this.scene, this.body, shape, spot);
     if (floorGlow) {
       // 바닥에서 피어오르는 선택권의 보랏빛 — 그 렐릭이 「선택지」 위에 서 있다는 것을 색이 말한다.
@@ -377,9 +391,14 @@ class RelicSelectView {
     const faceSpot = { width: frames.face.right - frames.face.left, height: frames.face.bottom - frames.face.top };
     const alpha = choice.maxed ? 0.5 : 1;
     const asset = portraitAssetFor(choice.def.portraitAssetId);
+    /*
+     * 큰 칸은 **꽉 차게** — 칸보다 크게 세워 발끝과 머리 위 장식이 조금씩 칸 밖으로 잘린다. 발끝까지
+     * 담으면 가는 원화는 칸 위아래가 비고, 여기서 보려는 것은 옷자락이 아니라 그 렐릭이다.
+     */
     const content = { width: asset.content.right - asset.content.left, height: asset.content.bottom - asset.content.top };
-    const inset = 16;
-    const heroHeight = Math.min(heroSpot.height - inset * 2, ((heroSpot.width - inset * 2) * content.height) / content.width);
+    const fit = Math.min(heroSpot.height, (heroSpot.width * content.height) / content.width);
+    const heroHeight = fit * 1.2;
+    const heroGround = heroSpot.height / 2 + heroHeight * 0.07;
     const slideIn = (target: Phaser.GameObjects.Components.Alpha & { x: number }): void => {
       if (direction === 0 || settingsManager.get().accessibility.reduceMotion) return;
       // 넘긴 쪽에서 한 뼘 밀려 들어온다 — 「옆으로 넘겼다」가 움직임으로 읽힌다.
@@ -387,7 +406,7 @@ class RelicSelectView {
       target.setAlpha(0);
       this.scene.tweens.add({ targets: target, x: 0, alpha, duration: 220, ease: "Cubic.easeOut" });
     };
-    void spawnPuppet(this.scene, asset, { x: 0, groundY: heroSpot.height / 2 - inset, height: heroHeight, depth: 0 }).then((puppet) => {
+    void spawnPuppet(this.scene, asset, { x: 0, groundY: heroGround, height: heroHeight, depth: 0 }).then((puppet) => {
       if (token !== this.token || !this.heroLayer.active) { puppet.destroy(); return; }
       puppet.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
       puppet.setAlpha(alpha);

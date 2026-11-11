@@ -1,6 +1,7 @@
 import { findKeyword } from "../data/keywords";
 import type { CombatStatusEffect, EffectType, Passive, Skill, Ultimate } from "../core/types";
 import { t, type TextKey } from "../i18n";
+import { skillDamageKinds, type DamageKind } from "./damageKinds";
 import type { SkillArtSlot } from "./skillArt";
 
 /**
@@ -10,7 +11,8 @@ import type { SkillArtSlot } from "./skillArt";
  * 붙어, 기술마다 무엇이 먼저 서는지 갈리고 "광역인가·오래 가는가·무엇을 거는가"를 한눈에 가를 수
  * 없었다. 지금은 같은 다섯 갈래를 **늘 같은 순서**로 칩 하나씩 세운다:
  *
- *   1. 효과 종류 — 물리·마법·고정 피해 / 회복 / 강화
+ *   1. 효과 종류 — 물리·마법·고정 피해 / 회복 / 강화. 얼굴과 다른 피해를 함께 내면(강화 패시브의 마법 반격,
+ *      물리 평타가 거는 방어 무시 동상) 그 피해 종류가 바로 뒤에 한 칸씩 더 선다(`damageKinds.ts`).
  *   2. 범위 — 단일 · 주위 광역 · 적 전체 · 자신 · 아군 전체 …
  *   3. 시간 — 즉발 · 지속 N초 · 상시(패시브) · 폭주 중
  *   4. 거는 효과 — 제어(기절·도발…) · 약화(출혈·중독…) · 표식(관측…) · 보호막 · 버프
@@ -64,6 +66,8 @@ const EFFECT_TONE: Readonly<Record<EffectType, { tone: SkillTagTone; glyph: Skil
   healing: { tone: "heal", glyph: "contrib-heal" },
   buff: { tone: "buff", glyph: "tag-buff" },
 };
+
+const DAMAGE_ORDER: readonly DamageKind[] = ["physical", "magical", "fixed"];
 
 export type SkillScope = NonNullable<Ultimate["targeting"]>;
 
@@ -191,6 +195,12 @@ export function buildSkillTags(input: SkillTagInput): SkillTag[] {
   const tags: (SkillTag | undefined)[] = [];
   const kind = EFFECT_TONE[input.effectType];
   tags.push({ ...kind, text: t(`skill.effect.${input.effectType}` as TextKey) });
+  if (input.source !== undefined) {
+    const kinds = skillDamageKinds(input.source);
+    for (const damage of DAMAGE_ORDER) {
+      if (damage !== input.effectType && kinds.has(damage)) tags.push({ ...EFFECT_TONE[damage], text: t(`skill.effect.${damage}` as TextKey) });
+    }
+  }
 
   const scope = skillScope(input);
   if (scope !== undefined) tags.push({ tone: "scope", glyph: SCOPE_GLYPH[scope], text: t(`skill.tag.scope.${scope}` as TextKey) });

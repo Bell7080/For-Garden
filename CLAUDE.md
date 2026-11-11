@@ -2056,9 +2056,9 @@
 
 - **스킬 이름 아래 요약은 칩 한 줄이다**(`src/ui/skillTags.ts` + `SkillTagRow.ts`). 순서는 종류 → 범위 → 시간 → 거는 효과 → 수치로
   고정이고, 갈래 색(`SKILL_TAG_TONE`)·그림(`tag-*`)도 그 표 하나가 갖는다. 정보창 쪽지·스킬 한눈에 보기·궁극기 튜토리얼이 같은 칩을 쓰며
-  화면이 요약 문장을 따로 이어 붙이지 않는다. 새 상태이상·대상 계약을 더하면 `STATUS_TAG`·`skillScope`에 한 줄 더하고 `skillTags.test`가 지킨다.
+  화면이 요약 문장을 따로 이어 붙이지 않는다. 새 상태이상·대상 계약을 더하면 `STATUS_TAG`·`skillScope`에 한 줄 더하고 `skillTags.test`가 지킨다. **피해 종류는 `src/ui/damageKinds.ts` 한 곳이 계약 모양에서 모은다** — 얼굴(`effectType`)과 다른 피해를 내는 기술은 그 종류 칩이 첫 칸 뒤에 덧붙고, 혼합은 개체 태그에만 선다. 새 계약이 피해를 내면 그 파일의 표에 한 줄 더한다.
 
-- **정보창 이름 아래 해시태그는 데이터에서만 나온다**(`src/ui/characterTags.ts` + `CharacterTagRow.ts`). 사거리 → 맡은 몫 → 공격 범위 → 특징 둘(`CHARACTER_TRAIT_ORDER`) 순이고 아군·적·소환수 창이 같은 한 장을 쓴다. 개체 이름으로 태그를 고르지 않고, 한 줄을 넘치면 뒤쪽부터 걷는다. 새 특징은 그 순서표와 `info.tag.*`(공백 없는 한 낱말)에 함께 더하고 `characterTags.test`가 지킨다.
+- **정보창 이름 아래 해시태그는 데이터에서만 나온다**(`src/ui/characterTags.ts` + `CharacterTagRow.ts`). 사거리 → 맡은 몫 → 피해 종류(물리·마법·혼합, 방어를 지나는 피해가 있으면 고정이 덧붙는다) → 공격 범위 → 특징 둘(`CHARACTER_TRAIT_ORDER`) 순이고 아군·적·소환수 창이 같은 한 장을 쓴다. 개체 이름으로 태그를 고르지 않고, 한 줄을 넘치면 뒤쪽부터 걷는다. 새 특징은 그 순서표와 `info.tag.*`(공백 없는 한 낱말)에 함께 더하고 `characterTags.test`가 지킨다.
 
 ### 스킬 설명문 작성 규칙 — 야성·패시브·일반 공격·궁극기
 

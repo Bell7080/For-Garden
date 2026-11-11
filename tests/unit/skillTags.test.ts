@@ -14,7 +14,8 @@ const ORDER: readonly SkillTagTone[][] = [
   ["control", "debuff", "mark", "shield", "buff", "heal"],
   ["value"],
 ];
-const group = (tone: SkillTagTone, index: number) => index === 0 ? 0 : ORDER.findIndex((tones, g) => g > 0 && tones.includes(tone));
+// 첫 칸 뒤에 덧붙는 피해 종류 칩(얼굴과 다른 피해)도 첫 갈래다.
+const group = (tone: SkillTagTone, index: number) => index === 0 || ["physical", "magical", "fixed"].includes(tone) ? 0 : ORDER.findIndex((tones, g) => g > 0 && tones.includes(tone));
 
 describe("스킬 요약 칩 규격", () => {
   it("모든 개체의 네 칸이 종류 → 범위 → 시간 → 거는 효과 → 수치 순서로 선다", () => {
@@ -42,6 +43,16 @@ describe("스킬 요약 칩 규격", () => {
     expect(ferocity.find((tag) => tag.text === "대상 +1")?.tone).toBe("buff");
     // 반경으로만 끊는 광역은 인원을 말하지 않는다.
     expect(buildSkillTags({ slot: "basic", effectType: "physical", targeting: "battlefieldEnemies" }).some((tag) => tag.text.startsWith("대상 "))).toBe(false);
+  });
+
+  it("얼굴과 다른 피해를 함께 내면 그 피해 종류가 첫 칸 바로 뒤에 선다", () => {
+    const def = (id: string) => RELICS.find((relic) => relic.id === id)!;
+    const head = (id: string, slot: "passive" | "basic" | "ultimate") => skillTagsFromDef(def(id)[slot], slot).map((tag) => tag.text).slice(0, 2);
+    expect(head("kento", "passive")).toEqual(["강화", "마법 피해"]);
+    expect(head("anka", "passive")).toEqual(["강화", "마법 피해"]);
+    expect(head("yuti", "basic")).toEqual(["물리 피해", "고정 피해"]);
+    expect(head("noa", "ultimate")[0]).toBe("고정 피해");
+    expect(head("rex", "basic")).toEqual(["물리 피해", "단일"]);
   });
 
   it("상태 효과는 갈래 색으로 갈리고 시간을 함께 말한다", () => {

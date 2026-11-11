@@ -3644,8 +3644,8 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "noa-ult",
       name: "손톱 난무",
-      iconAssetId: "skill-icon-physical",
-      effectType: "physical",
+      iconAssetId: "skill-icon-fixed",
+      effectType: "fixed",
       cost: 100,
       // 아무도 때리지 않는다. 숨어서 가장 약한 적 곁으로 뛰어들고, 피해는 이어지는 할퀴기 한 번의 몫이다.
       targeting: "self",

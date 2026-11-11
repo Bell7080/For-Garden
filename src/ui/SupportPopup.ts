@@ -12,7 +12,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { TextInputField } from "./TextInputField";
-import { chipX, supportActionXs, supportContentWidth, supportPopupHeight, supportTabX, SUPPORT_POPUP } from "./supportPopupLayout";
+import { chipX, supportActionXs, supportBackChipX, supportContentWidth, supportPopupHeight, supportTabX, SUPPORT_POPUP } from "./supportPopupLayout";
 import { CONFIRM_DIALOG } from "./confirmDialogLayout";
 
 type Tab = "compose" | "mine";
@@ -280,7 +280,7 @@ export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer, options
       if (ticket.status !== "closed") {
         fieldLabel(c.replyLabelY, t("support.field.reply"));
         view.add(new TextInputField(scene, 0, c.replyFieldY, { width, height: c.replyHeight, value: "", maxGlyphs: TICKET_BODY_MAX, ariaLabel: t("support.field.reply"), multiline: true, fontSize: 26, palette: SUPPORT_FIELD, onChange: (value) => { reply = value; } }));
-        const send = proceed(supportActionXs(2)[1], t("support.reply.send"), () => {
+        const send = proceed(supportActionXs(1)[0], t("support.reply.send"), () => {
           if (reply.trim().length === 0) { failure("invalid_text"); return; }
           send.setEnabled(false);
           void supportApi().addMessage(ticket.id, reply.trim()).then((result) => {
@@ -290,7 +290,9 @@ export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer, options
           });
         });
       }
-      secondary(ticket.status === "closed" ? 0 : supportActionXs(2)[0], action.width, t("support.back"), () => paint());
+      // 목록으로 돌아가는 길은 진행과 나란히 세우지 않고 라벨 줄 오른쪽 끝으로 비켜 둔다.
+      const chip = SUPPORT_POPUP.footer.backChip;
+      actions.add(new Button(scene, supportBackChipX(), SUPPORT_POPUP.footer.tabY, { width: chip.width, height: chip.height, fontSize: 28, label: `‹ ${t("support.back")}`, onClick: () => paint() }));
     };
 
     const paint = (): void => {

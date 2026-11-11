@@ -94,9 +94,6 @@ export function fitsInsidePopupBevel(
   return box.left - margin >= popupLeftEdgeAt(panel.width, panel.height, box.top - margin);
 }
 
-/** 공용 닫기 조작의 판 모서리 기준 배치다. 렌더링과 정적 입력면 검사가 같은 수치를 쓴다. */
-export const POPUP_CLOSE_LAYOUT = { centerInset: 40, hitSize: 84 } as const;
-
 /** 뒤로가기 한 변. 자리를 재는 쪽과 그리는 쪽이 같은 값을 읽어야 빗변 계산이 맞는다. */
 export const BACK_BUTTON_SIZE = 108;
 

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
-import { chipPoints, drawLayer, drawShapeEdge, HOLO } from "./holo";
+import { chipPoints, drawLayer, drawShapeEdge } from "./holo";
 import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
 import { addFramedIcon } from "./itemFrame";
 import { CONFIRM_DIALOG, confirmButtonXs, confirmDialogHeight, confirmPlateHeight } from "./confirmDialogLayout";
@@ -11,8 +11,7 @@ import { COLOR, textStyle } from "./theme";
 import { setDebugPopupTitles } from "../debug";
 import { audioManager } from "../managers/AudioManager";
 import { playPopupClose, playPopupOpen } from "./screenTransition";
-import { BACK_SLOT, POPUP_BACK_BUTTON_DEPTH, POPUP_BODY_BEVEL_RATIO, POPUP_CLOSE_LAYOUT, POPUP_TITLE_SIZE, tiltedPopupSize } from "./popupGeometry";
-import { pressIn, pressOut } from "./pressFeedback";
+import { BACK_SLOT, POPUP_BACK_BUTTON_DEPTH, POPUP_BODY_BEVEL_RATIO, POPUP_TITLE_SIZE, tiltedPopupSize } from "./popupGeometry";
 import { logError } from "../managers/ErrorReporter";
 import { noteBreadcrumb } from "../managers/ErrorReporter";
 
@@ -60,10 +59,11 @@ export interface PopupOptions {
   dimAlpha?: number;
   /** 공용 쪽지 제목보다 더 강한 결과·작업판 제목처럼 시각적 위계가 달라야 할 때만 지정한다. */
   titleSize?: number;
-  /** 화면 자체의 뒤로가기 조작을 쓰는 큰 패널은 팝업 모서리의 중복 X를 숨긴다. */
+  /** 화면 자체의 뒤로가기 조작을 쓰거나(전체 화면 판) 취소 버튼이 닫는 몫을 맡는 판(확인 창)은 판 밖 뒤로가기를 세우지 않는다. */
   hideCloseButton?: boolean;
   /**
-   * 판 **밖** 우하단의 공용 뒤로가기를 세운다. 켜면 모서리 X는 서지 않는다.
+   * 판 **밖** 우하단의 공용 뒤로가기를 세운다. 적지 않으면 제목이 있는 판은 켜진다(`hideCloseButton`이면 꺼진다).
+   * **판 오른쪽 위 X는 어떤 판에도 두지 않는다.**
    *
    * 오른쪽 위 X는 판 안에 있어 읽던 손이 판을 가로질러 올라가야 하고, 판 크기마다 그 자리가
    * 달라진다. 한동안 머무는 작업판은 화면의 뒤로가기와 **같은 자리·같은 모양**으로 닫는다
@@ -352,11 +352,11 @@ export class PopupLayer {
     body.add(drawShapeEdge(this.scene, 0, 0, shape, "bottom", { color: options.accent ?? COLOR.accent, alpha: 0.3, inset: 12 }));
     layer.add(body);
 
-    // 닫기 경로(내부 X·배경·외부 뒤로가기)에 관계없이 정리 콜백은 close() 한 곳에서 정확히 한 번 돈다.
+    // 닫기 경로(배경·외부 뒤로가기)에 관계없이 정리 콜백은 close() 한 곳에서 정확히 한 번 돈다.
     this.onCloseByLayer.set(layer, options.onClose);
     this.canCloseByLayer.set(layer, options.canClose);
     const close = (): void => { this.close(layer); };
-    // 사람이 누른 닫기(X·바깥·뒤로가기)는 어디서 눌렸든 **맨 위 판부터** 닫는다 — 위에 판이 얹혀 있는데 뒷판이
+    // 사람이 누른 닫기(바깥·뒤로가기)는 어디서 눌렸든 **맨 위 판부터** 닫는다 — 위에 판이 얹혀 있는데 뒷판이
     // 먼저 닫히면 위 판이 홀로 남는다. 소유자가 코드로 부르는 `close`는 그대로 그 판을 닫는다.
     const userClose = (): void => { const top = this.stack[this.stack.length - 1]; this.close(top && top !== layer ? top : layer); };
     const titleChrome: Phaser.GameObjects.GameObject[] = [];
@@ -366,24 +366,11 @@ export class PopupLayer {
       // 비동기 조회가 끝난 뒤 본문이 추가되어도 머리글보다 앞에 그려지지 않도록 자식 depth를 고정한다.
       // 발굴 원화처럼 늦게 생성되는 큰 이미지가 `/발굴` 제목표를 덮던 문제도 이 한 규칙으로 막는다.
       titleChrome.push(addSectionTitle(this.scene, -width / 2 + unit * 0.1, -height / 2, options.title, { size: options.titleSize ?? POPUP_TITLE_SIZE.note, parent: body }).setDepth(1000));
-      // 닫기는 기본적으로 오른쪽 위에 두되, 화면 chrome이 닫기를 맡으면 중복 조작을 만들지 않는다.
-      if (!options.hideCloseButton && !options.backButton) {
-        const closeButton = this.scene.add.container(width / 2 - POPUP_CLOSE_LAYOUT.centerInset, -height / 2 + POPUP_CLOSE_LAYOUT.centerInset);
-        const mark = this.scene.add.graphics();
-        mark.lineStyle(HOLO.lineWidth + 1, 0xc9ccd2, 0.9);
-        mark.lineBetween(-13, -13, 13, 13);
-        mark.lineBetween(13, -13, -13, 13);
-        closeButton.add(mark);
-        const hit = this.scene.add.rectangle(width / 2 - POPUP_CLOSE_LAYOUT.centerInset, -height / 2 + POPUP_CLOSE_LAYOUT.centerInset, POPUP_CLOSE_LAYOUT.hitSize, POPUP_CLOSE_LAYOUT.hitSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
-        hit.on("pointerdown", () => pressIn(closeButton));
-        hit.on("pointerout", () => pressOut(closeButton, "normal", { pop: false }));
-        hit.on("pointerup", () => userClose());
-        body.add([closeButton, hit]);
-        closeButton.setDepth(1000); hit.setDepth(1000);
-        titleChrome.push(closeButton, hit);
-      }
     }
-    if (options.backButton) {
+    // **판 오른쪽 위 X는 결코 세우지 않는다**(응태 결정, 2026-11-11). 닫는 길은 판 밖 우하단의 공용
+    // 뒤로가기와 판 밖 누르기 둘뿐이다 — 제목이 있는 판은 따로 말하지 않아도 그 뒤로가기를 단다.
+    const showBack = options.backButton ?? (Boolean(options.title) && !options.hideCloseButton);
+    if (showBack) {
       // 판이 아니라 **화면**에 세운다. 판 안에 두면 판을 옮기거나 기울일 때 함께 돌아가고,
       // 판 밖 우하단이라는 자리 자체가 사라진다. 층이 닫힐 때 같이 지운다.
       // 위에 다른 판(상세·확인 창)이 얹혀 있으면 뒤로가기는 **맨 위 판부터** 닫는다 — 아래 판의 버튼이 먼저 눌려

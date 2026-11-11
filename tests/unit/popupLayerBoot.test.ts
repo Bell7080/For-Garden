@@ -9,12 +9,11 @@ import { describe, expect, it } from "vitest";
 describe("PopupLayer 부팅 계약", () => {
   const source = readFileSync(new URL("../../src/ui/PopupLayer.ts", import.meta.url), "utf8");
 
-  it("사람이 누른 닫기(뒤로가기·X·바깥)는 모두 맨 위 판부터 닫는다", () => {
+  it("사람이 누른 닫기(뒤로가기·바깥)는 모두 맨 위 판부터 닫는다", () => {
     const def = source.slice(source.indexOf("const userClose"), source.indexOf("\n", source.indexOf("const userClose")));
     expect(def).toContain("this.stack[this.stack.length - 1]");
     expect(def).toContain("top !== layer");
     expect(source).toContain("onClick: userClose");
-    expect(source).toContain('hit.on("pointerup", () => userClose())');
     expect(source).toContain('backdrop.on("pointerup", () => userClose())');
   });
 

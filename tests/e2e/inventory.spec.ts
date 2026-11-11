@@ -6,14 +6,13 @@ import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { captureGame, tap, tapUntil, waitForDebugState } from "./canvasInput";
 // 레일 자리는 화면이 소유한 배치표에서 읽는다 — 좌표를 스펙에 베껴 두면 줄이 옮겨질 때 조용히 빗나간다.
 import { LOBBY_RAIL_BOUNDS } from "../../src/ui/lobbyLayout";
-import { CURRENCY_GUIDE_SIZE } from "../../src/ui/currencyGuideLayout";
-import { POPUP_CLOSE_LAYOUT } from "../../src/ui/popupGeometry";
+import { BACK_SLOT } from "../../src/ui/popupGeometry";
 
 const WIDTH = 1080; const HEIGHT = 1920;
 
 /** 재화 안내창의 닫기 X 중심. 창은 화면 한가운데에 선다. */
-const guideCloseX = WIDTH / 2 + CURRENCY_GUIDE_SIZE.width / 2 - POPUP_CLOSE_LAYOUT.centerInset;
-const guideCloseY = HEIGHT / 2 - CURRENCY_GUIDE_SIZE.height / 2 + POPUP_CLOSE_LAYOUT.centerInset;
+const guideCloseX = BACK_SLOT.x;
+const guideCloseY = BACK_SLOT.y;
 
 test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크롤 입력을 받는다", async ({ page }) => {
   // 고해상도 WebGL 캡처가 무GPU CI에서도 완료되도록 이 시각 회귀만 여유 시간을 둔다.

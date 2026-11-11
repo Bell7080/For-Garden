@@ -10,7 +10,7 @@ import { BATTLE_CONTROLS } from "../../src/ui/battleStatusLayout";
 import { BATTLE_CONTRIBUTION_LAYOUT, CONTRIBUTION_TOGGLE } from "../../src/ui/battleContributionLayout";
 import { LAB_CHROME, LAB_TITLE } from "../../src/ui/labLayout";
 import { gachaRatesTierScreenY } from "../../src/ui/gachaRatesLayout";
-import { BACK_SLOT, POPUP_CLOSE_LAYOUT } from "../../src/ui/popupGeometry";
+import { BACK_SLOT } from "../../src/ui/popupGeometry";
 import { DIALOGUE_PANEL_TOP } from "../../src/ui/dialogueStageLayout";
 import { PLAYER_LEVEL_UP_REWARD, playerExpToNext } from "../../src/core/playerLevel";
 import { PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS } from "../../src/ui/partyPreviewLayout";
@@ -43,7 +43,7 @@ test("충전 직후 결과판의 같은 다음 단계 버튼으로 입장한다"
   const guide = currencyGuide("stamina");
   const layout = staminaPopupLayout(Math.max(guide.uses.length, guide.sources.length));
   // 우상단에는 닫기 입력도 남기지 않는다. 돌아가기는 판 밖 우하단 공용 뒤로가기 한 곳이 맡는다.
-  await tap(page, BASE_WIDTH / 2 + layout.width / 2 - POPUP_CLOSE_LAYOUT.centerInset, BASE_HEIGHT / 2 - layout.height / 2 + POPUP_CLOSE_LAYOUT.centerInset);
+  await tap(page, BASE_WIDTH / 2 + layout.width / 2 - 40, BASE_HEIGHT / 2 - layout.height / 2 + 40);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("스테미나");
   await tap(page, BASE_WIDTH / 2 + layout.cell.centers[0], BASE_HEIGHT / 2 + layout.cell.y + STAMINA_CELL.buttonY);
   await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).wallet.stamina, E2E_SAVE_STORAGE_KEY)).toBe(60);

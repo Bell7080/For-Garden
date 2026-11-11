@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chipX, contentBottoms, supportActionXs, supportContentWidth, supportPopupHeight, supportTabX, SUPPORT_POPUP } from "../../src/ui/supportPopupLayout";
+import { chipX, contentBottoms, supportActionXs, supportBackChipX, supportContentWidth, supportPopupHeight, supportTabX, SUPPORT_POPUP } from "../../src/ui/supportPopupLayout";
 import { clipText, glyphCount, paginate, ticketDraftProblem, TICKET_BODY_MAX, TICKET_MESSAGE_CLIP } from "../../src/core/supportDraft";
 
 describe("문의 창 자리", () => {
@@ -36,6 +36,14 @@ describe("문의 창 자리", () => {
     expect(left + right).toBe(0);
     expect(right + action.width / 2).toBeLessThanOrEqual(half);
     expect(supportActionXs(1)).toEqual([0]);
+  });
+
+  it("목록 칩은 라벨 줄 오른쪽 끝에 서고 두 번째 탭과 겹치지 않는다", () => {
+    const half = supportContentWidth() / 2;
+    const { tab, backChip } = SUPPORT_POPUP.footer;
+    const chipLeft = supportBackChipX() - backChip.width / 2;
+    expect(supportBackChipX() + backChip.width / 2).toBeCloseTo(half);
+    expect(supportTabX(1) + tab.width / 2).toBeLessThan(chipLeft);
   });
 
   it("종류 칩 다섯 개가 좌우 여백 안에 든다", () => {

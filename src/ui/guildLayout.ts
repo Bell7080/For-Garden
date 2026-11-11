@@ -12,9 +12,13 @@ export const GUILD_SCREEN = {
   title: { x: 54, y: 168 },
   /**
    * 오른쪽 위 메뉴 아이콘 칩 — 다른 길드 찾기·탈퇴를 여는 창의 입구. 글자 칩이던 때는 같은 줄의 요약 글과 무게가 같아 눌리는
-   * 것으로 읽히지 않았다 — 로비 레일 칩(`RailButton`)과 같은 아이콘 칩으로 선다. 밑변은 요약 줄(244) 위에서 끝난다.
+   * 것으로 읽히지 않았다 — 로비 레일 칩(`RailButton`)과 같은 아이콘 칩으로 선다. 상단 줄의 경계선(`topBarLine`) 바로 밑에 붙여
+   * 두던 때는 칩 윗머리가 그 선에 걸렸다 — 선에서 한 뼘 떨어져 요약 줄과 같은 높이에 서고, 그 줄의 오른쪽 글(남은 시간)은
+   * 칩 왼쪽에서 끝난다(`guildSummaryRight`).
    */
-  menuChip: { right: BASE_WIDTH - 40, y: 176, size: 100 },
+  menuChip: { right: BASE_WIDTH - 40, y: 228, size: 100 },
+  /** 상단 재화 줄(`TopBar` y 40)이 긋는 경계선의 높이 — 그 아래 칩이 이 선에 걸치지 않게 재는 기준. */
+  topBarLine: 136,
   summary: { y: 244 },
   controls: { y: 320, height: 68 },
   /** 길드가 있으면 작은 탭 위까지, 없으면 큰 탭이 없으니 화면 밑동까지 목록이 흐른다. */
@@ -31,6 +35,12 @@ export const GUILD_SCREEN = {
  * 그 아래 한 줄(`noteRoom`)이 이유를 말한다. 좌표는 창 윗변에서 잰다.
  */
 export const GUILD_MENU_POPUP = { width: 760, height: 470, tileTop: 110, tile: { width: 300, height: 280 }, gap: 40, noteRoom: 64 } as const;
+
+/** 요약 줄 오른쪽 글(남은 시간 등)의 오른쪽 끝 — 같은 줄에 선 메뉴 칩 왼쪽에서 끝난다. */
+export function guildSummaryRight(): number {
+  const { right, size } = GUILD_SCREEN.menuChip;
+  return right - size - 18;
+}
 
 /** 작은 탭 `index`의 가운데 x. */
 export function guildTabX(index: number): number {

@@ -53,6 +53,7 @@ import {
   GUILD_ATTENDANCE as A, GUILD_EDITOR as E, guildEditorSpots, guildSwatchSpot, GUILD_GUARD_PAGE as G, GUILD_INFO as I, GUILD_ROW as R, GUILD_SCREEN as S, guildMinScroll,
   GUILD_WAR_MAP as W, guildPageX, guildRowButtonX, guildRowY, guildStampSlot, guildStampRewardPair, guildTabX, guildWarActionX, guildWarNextSpot, guildWarNodeSpot,
   GUILD_MENU_POPUP, guildGuardTraitBarX, guildGuardTraitCellX, guildRankingRows,
+  guildSummaryRight,
 } from "../ui/guildLayout";
 import { guildWarSlotLabel } from "../ui/guildWarLabels";
 import { chipPoints, drawFrameVignette, drawLayer, drawShapeOutline, HoloBar, HOLO } from "../ui/holo";
@@ -1255,7 +1256,7 @@ export class GuildScene extends Phaser.Scene {
     const war = guildWarNow(this.now);
     const battle = war.phase === "battle";
     this.label(this.controls, S.side, S.summary.y, t(battle ? "guild.war.battle" : "guild.war.prep"), { role: "display", size: 40, color: battle ? COLOR.dangerText : COLOR.accentText });
-    const timer = this.label(this.controls, S.side + S.width, S.summary.y, "", { role: "body", size: 26, color: COLOR.inkDim }, [1, 0.5]);
+    const timer = this.label(this.controls, guildSummaryRight(), S.summary.y, "", { role: "body", size: 26, color: COLOR.inkDim }, [1, 0.5]);
     this.tick(timer, () => t(battle ? "guild.war.battleEnds" : "guild.war.prepEnds", { time: hmText(war.endsAt - this.now) }));
     this.label(this.controls, S.side, S.controls.y, guild.warScore === null ? t("guild.war.noScore") : t("guild.war.score", { score: guild.warScore.toLocaleString(), rank: guild.warRank ?? "-" }), { role: "emphasis", size: 28, color: COLOR.ink });
     const map = this.warMap;
@@ -1558,7 +1559,7 @@ export class GuildScene extends Phaser.Scene {
     const element = status?.element ?? guildGuardElement(this.now);
     this.controls.add(new AffinityBadge(this, S.side + 30, S.summary.y, ELEMENT_ICON[element as keyof typeof ELEMENT_ICON], 60, 0.7));
     this.label(this.controls, S.side + 74, S.summary.y, t("guild.guard.today", { element: t(`element.${element}`) }), { role: "display", size: 34, color: COLOR.dangerText });
-    const timer = this.label(this.controls, S.side + S.width, S.summary.y, "", { role: "body", size: 26, color: COLOR.inkDim }, [1, 0.5]);
+    const timer = this.label(this.controls, guildSummaryRight(), S.summary.y, "", { role: "body", size: 26, color: COLOR.inkDim }, [1, 0.5]);
     this.tick(timer, () => t("guild.guard.next", { time: hmText(guildGuardEndsAt(this.now) - this.now) }));
 
     // 왼쪽 옆줄 — 정보 탭의 길드 순위·길드 상점 칩과 같은 자리·같은 양식이다.

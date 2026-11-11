@@ -23,12 +23,28 @@ export interface RaidGuidePattern {
   values: (def: RelicDef) => Record<string, string | number>;
 }
 
+/**
+ * 추천 이유의 한 줄이 무엇을 말하나 — 줄 앞의 색 이름표가 이 갈래를 그대로 말한다.
+ * `element`는 상성, `control`은 보스를 묶거나 느리게 하는 것, `survive`는 버티는 것, `damage`는 깎는 것이다.
+ */
+export type RaidGuidePointKind = "element" | "control" | "survive" | "damage";
+
 export interface RaidGuide {
   bossId: RaidBossId;
   /** 패턴과 대처, 위험한 순서대로 셋. */
   patterns: readonly RaidGuidePattern[];
-  /** 추천 렐릭 하나 — 이유는 `raid.guide.<보스>.reason`이 말한다. 플레이어블이어야 한다. */
+  /** 추천 렐릭 하나. 플레이어블이어야 한다. */
   recommendedRelicId: string;
+  /**
+   * 추천 이유 — 문단이 아니라 갈래별 한 줄씩이다(`raid.guide.<보스>.reason.<갈래>`). 긴 문단 하나는 무엇이
+   * 왜 좋은지 훑어 읽을 수 없었다. 중요한 순서대로 적는다.
+   */
+  reasonPoints: readonly RaidGuidePointKind[];
+  /**
+   * 차선책 — 추천 렐릭이 없을 때 데려갈 렐릭들. 이유는 한 줄(`raid.guide.<보스>.alt.<렐릭>`)이다.
+   * 상성이 유리하거나 그 보스의 패턴을 받아치는 수단을 가진 개체를 고르고, 추천과 겹치지 않는다.
+   */
+  alternativeRelicIds: readonly string[];
 }
 
 const trim = (value: number): string => String(Number(value.toFixed(2)));
@@ -52,6 +68,9 @@ export const RAID_GUIDES: Readonly<Record<RaidBossId, RaidGuide>> = {
       { slot: "ferocity", values: (def) => ({ radius: def.ferocityTrait.effectId === "splashDamage" ? def.ferocityTrait.radius : 0 }) },
     ],
     recommendedRelicId: "maddy",
+    reasonPoints: ["control", "element", "survive"],
+    // 켄토 — 불 탱커, 막과 도발로 턱을 받는다(R이라 구하기 쉽다). 데이 — 불 마법 탱커, 얇은 저항을 판다.
+    alternativeRelicIds: ["kento", "deina"],
   },
   /*
    * 타보아 — 감은 채로 때릴수록 빨라진다. 공속을 깎는 수압·둔화가 그 오르막을 되돌리고, 후열은 몸에서
@@ -65,6 +84,9 @@ export const RAID_GUIDES: Readonly<Record<RaidBossId, RaidGuide>> = {
       { slot: "ferocity", values: () => ({}) },
     ],
     recommendedRelicId: "mosana",
+    reasonPoints: ["control", "element", "survive"],
+    // 아크 — 공포에 빠진 보스는 기본 공격을 못 해 공속이 쌓이지 않는다. 이르나 — 물 물리, 방어를 지나친다.
+    alternativeRelicIds: ["ark", "irna"],
   },
   /*
    * 코아틀 — 첫 순간과 한 줄. 열리자마자 급강하로 묶고, 궁극기는 통로 하나를 뚫는다. 첫 표적을 단단한
@@ -78,6 +100,9 @@ export const RAID_GUIDES: Readonly<Record<RaidBossId, RaidGuide>> = {
       { slot: "ultimate", values: (def) => ({ seconds: stunSeconds(def.ultimate) }) },
     ],
     recommendedRelicId: "pachi",
+    reasonPoints: ["element", "survive", "control"],
+    // 토리카 — 땅 탱커, 첫 급강하를 맡는다. 렉시아 — 불 물리, 출혈 치명타로 얇은 방어를 판다.
+    alternativeRelicIds: ["torika", "rex"],
   },
 };
 

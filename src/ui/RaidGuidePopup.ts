@@ -1,8 +1,8 @@
 import Phaser from "phaser";
 import type { Element, RelicDef } from "../core/types";
-import { raidGuide, raidGuideElements, type RaidGuide, type RaidGuideSlot } from "../data/raidGuides";
+import { raidGuide, raidGuideElements, type RaidGuide, type RaidGuidePointKind, type RaidGuideSlot } from "../data/raidGuides";
 import { getRelic } from "../data/relics";
-import { setDebugRaidGuideWhy } from "../debug";
+import { setDebugRaidGuideAlt, setDebugRaidGuideWhy } from "../debug";
 import { t, type TextKey } from "../i18n";
 import { settingsManager } from "../managers/SettingsManager";
 import { AffinityBadge } from "./AffinityBadge";
@@ -14,6 +14,8 @@ import { elementLabel } from "./info";
 import { PopupLayer } from "./PopupLayer";
 import { pressIn, pressOut } from "./pressFeedback";
 import { RAID_GUIDE_BUTTON, RAID_GUIDE_POPUP as L } from "./raidLayout";
+import { clipHit, containerClip } from "./clippedHit";
+import { attachGuideScroll, GUIDE_MASK_BLEED } from "./raidGuideScroll";
 import { addSectionTitle } from "./SectionTitle";
 import { addSkillIconFrame, skillSlotLabel } from "./SkillIconFrame";
 import { COLOR, textStyle } from "./theme";
@@ -58,7 +60,7 @@ export function addRaidGuideButton(scene: Phaser.Scene, parent: Phaser.GameObjec
   button.add(hit);
   hit.on("pointerdown", () => pressIn(button));
   hit.on("pointerout", () => pressOut(button, "normal", { pop: false }));
-  hit.on("pointerup", () => { pressOut(button); openRaidGuidePopup(scene, popups, guide, false); });
+  hit.on("pointerup", () => { pressOut(button); openRaidGuidePopup(scene, popups, guide); });
 
   if (settingsManager.get().accessibility.reduceMotion) return;
   // 버튼은 제자리에서 살짝 떠올랐다 내려앉고, 반짝이는 그와 엇갈린 박자로 켜졌다 꺼진다.
@@ -83,14 +85,31 @@ function skillName(def: RelicDef, slot: RaidGuideSlot): string {
   return def.ferocityTrait.name;
 }
 
+/** 펼침 상태. 둘은 따로 여닫히고, 갈아 끼운 창은 지난 스크롤을 이어 받는다. */
+export interface RaidGuideView {
+  /** 추천 렐릭의 이유가 펼쳐져 있는가. */
+  why: boolean;
+  /** 차선책이 펼쳐져 있는가. */
+  alt: boolean;
+  /** 지난 창의 스크롤 — 다시 세운 창이 맨 위로 튀지 않게 이어 받는다. */
+  scroll?: number;
+  /** 방금 펼친 칸. 창이 그 칸이 보이도록 스크롤을 옮긴다. */
+  reveal?: "why" | "alt";
+}
+
+/** 이유 줄 앞 이름표의 색. 상성만은 그 렐릭의 속성 색을 쓴다 — 같은 색 아이콘이 카드 위에 이미 서 있다. */
+const POINT_TONE: Readonly<Record<Exclude<RaidGuidePointKind, "element">, number>> = { control: 0x9db8ff, survive: 0x86dba6, damage: 0xffad78 };
+
+
 /**
- * 공략법 창. `expanded`는 추천 렐릭의 이유가 펼쳐져 있는가 — 펼치기는 같은 제목의 창을 다시 여는
- * 갈아 끼우기라 깜빡이지 않는다(`PopupLayer.takeRefreshedLayer`).
+ * 공략법 창. 펼치기는 같은 제목의 창을 다시 여는 갈아 끼우기라 깜빡이지 않는다
+ * (`PopupLayer.takeRefreshedLayer`). 이유와 차선책을 모두 펼쳐 화면보다 길어지면 넘치는 만큼 판 안에서 흐른다.
  */
-export function openRaidGuidePopup(scene: Phaser.Scene, popups: PopupLayer, guide: RaidGuide, expanded: boolean): void {
+export function openRaidGuidePopup(scene: Phaser.Scene, popups: PopupLayer, guide: RaidGuide, view: RaidGuideView = { why: false, alt: false }): void {
   const boss = getRelic(guide.bossId);
   const rec = getRelic(guide.recommendedRelicId);
-  const content = scene.add.container(0, 0);
+  const track = scene.add.container(0, 0);
+  const content = track;
   const half = L.inner / 2;
   const tone = AFFINITY_GLOW[ELEMENT_ICON[boss.element]];
   let y = 0;
@@ -152,11 +171,10 @@ export function openRaidGuidePopup(scene: Phaser.Scene, popups: PopupLayer, guid
   // ── 추천 렐릭 ─────────────────────────────────────────────
   addSectionTitle(scene, -half - 10, y, t("raid.guide.section.recommend"), { size: 30, parent: content });
   y += L.sectionTitleRoom;
-  const reason = expanded
-    ? scene.add.text(-half + 24, 0, t(`raid.guide.${guide.bossId}.reason` as TextKey), textStyle({ role: "body", size: 24, color: COLOR.ink, wrap: L.inner - 48 })).setOrigin(0, 0)
-    : undefined;
   const cardTop = y;
   const headHeight = L.recommendFace + 32;
+  // 이유는 판을 먼저 그려야 그 위에 얹히므로 따로 쌓아 두고 높이부터 잰다.
+  const reason = view.why ? buildReasonPoints(scene, guide, rec) : undefined;
   const cardHeight = headHeight + (reason ? reason.height + L.reasonPad * 2 : 0);
   const recTone = AFFINITY_GLOW[ELEMENT_ICON[rec.element]];
   const card = chipPoints(L.inner + 40, cardHeight, { bevel: { topLeft: 26, topRight: 0, bottomRight: 26, bottomLeft: 0 } });
@@ -173,11 +191,11 @@ export function openRaidGuidePopup(scene: Phaser.Scene, popups: PopupLayer, guid
   // 이유 보기 — 누르면 같은 창이 이유를 펼친 채 다시 선다.
   const whyW = 196;
   const why = scene.add.container(half - whyW / 2, headY);
-  why.add(drawLayer(scene, 0, 0, slantedRect(whyW, 64, 14), { fill: expanded ? 0x2a3442 : COLOR.accent, alpha: 1, edge: 0xffffff, edgeAlpha: 0.5 }));
-  const whyText = scene.add.text(0, 0, `${t(expanded ? "raid.guide.why.close" : "raid.guide.why.open")} ${expanded ? "▴" : "▾"}`, textStyle({ role: "display", size: 25, color: expanded ? COLOR.ink : "#1b1206" })).setOrigin(0.5);
+  why.add(drawLayer(scene, 0, 0, slantedRect(whyW, 64, 14), { fill: view.why ? 0x2a3442 : COLOR.accent, alpha: 1, edge: 0xffffff, edgeAlpha: 0.5 }));
+  const whyText = scene.add.text(0, 0, `${t(view.why ? "raid.guide.why.close" : "raid.guide.why.open")} ${view.why ? "▴" : "▾"}`, textStyle({ role: "display", size: 25, color: view.why ? COLOR.ink : "#1b1206" })).setOrigin(0.5);
   if (whyText.width > whyW - 20) whyText.setScale((whyW - 20) / whyText.width, 1);
   why.add(whyText);
-  const whyHit = scene.add.rectangle(0, 0, whyW + 16, 80, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  const whyHit = scene.add.rectangle(0, 0, whyW + 16, 80, 0xffffff, 0);
   why.add(whyHit);
   content.add(why);
   // 이름이 길면 버튼 앞에서 줄인다.
@@ -186,28 +204,154 @@ export function openRaidGuidePopup(scene: Phaser.Scene, popups: PopupLayer, guid
 
   if (reason) {
     const lineY = cardTop + headHeight;
-    const divider = scene.add.rectangle(0, lineY, L.inner - 20, 2, COLOR.accent, 0.4);
-    content.add(divider);
-    reason.setY(lineY + L.reasonPad);
-    content.add(reason);
+    content.add(scene.add.rectangle(0, lineY, L.inner - 20, 2, COLOR.accent, 0.4));
+    reason.node.setY(lineY + L.reasonPad);
+    content.add(reason.node);
   }
   y = cardTop + cardHeight;
+  const whyRange = { top: cardTop, bottom: y };
 
-  const height = L.top + y + L.bottom;
-  content.setY(-height / 2 + L.top);
+  // ── 차선책 — 화살표 줄을 누르면 펼쳐진다 ─────────────────────────
+  y += 18;
+  const altTop = y;
+  const alternatives = guide.alternativeRelicIds.map((id) => getRelic(id));
+  const altBar = addAlternativeBar(scene, content, y, alternatives, view.alt);
+  y += L.altBar;
+  if (view.alt) {
+    alternatives.forEach((alt) => {
+      y += 12;
+      y += addAlternativeRow(scene, content, y, guide, alt);
+    });
+  }
+  const altRange = { top: altTop, bottom: y };
+
+  // ── 창 높이와 스크롤 ───────────────────────────────────────
+  const total = y;
+  const height = Math.min(L.maxHeight, L.top + total + L.bottom);
+  const viewHeight = height - L.top - L.bottom;
+  const maxScroll = Math.max(0, total - viewHeight);
+  let scroll = Phaser.Math.Clamp(view.scroll ?? 0, 0, maxScroll);
+  // 이유를 펼칠 때는 그 아래 차선책 칸까지 함께 보이게 내린다 — 펼친 뒤에도 다음 화살표가 손 닿는 자리에 남는다.
+  const range = view.reveal === "why" ? { top: whyRange.top, bottom: altTop + L.altBar } : view.reveal === "alt" ? altRange : undefined;
+  if (range) {
+    // 펼친 칸의 밑동이 보이게 내리되, 칸의 머리가 창 위로 넘어가지는 않게 한다.
+    const lo = range.bottom - viewHeight + 12;
+    const hi = range.top - 40;
+    scroll = Phaser.Math.Clamp(lo > hi ? hi : Phaser.Math.Clamp(scroll, lo, hi), 0, maxScroll);
+  }
+  track.setY(-scroll);
+  const frame = scene.add.container(0, -height / 2 + L.top);
+  frame.add(track);
+  // 흐르는 창 밖으로 밀린 버튼은 손을 받지 않는다 — 마스크는 그리기만 자른다.
+  const clip = containerClip(frame, -L.width / 2, -GUIDE_MASK_BLEED, L.width / 2, viewHeight + GUIDE_MASK_BLEED);
+  clipHit(whyHit, clip);
+  clipHit(altBar.hit, clip);
+
+  let dragged = false;
   let close: () => void = () => undefined;
-  whyHit.on("pointerdown", () => pressIn(why));
-  whyHit.on("pointerout", () => pressOut(why, "normal", { pop: false }));
-  whyHit.on("pointerup", () => {
-    pressOut(why);
+  const reopen = (next: RaidGuideView): void => {
     close();
-    openRaidGuidePopup(scene, popups, guide, !expanded);
-  });
+    openRaidGuidePopup(scene, popups, guide, { ...next, scroll });
+  };
+  const bindToggle = (target: Phaser.GameObjects.Container, hit: Phaser.GameObjects.GameObject, next: () => RaidGuideView): void => {
+    hit.on("pointerdown", () => pressIn(target));
+    hit.on("pointerout", () => pressOut(target, "normal", { pop: false }));
+    hit.on("pointerup", () => {
+      pressOut(target);
+      if (dragged) return;
+      reopen(next());
+    });
+  };
+  bindToggle(why, whyHit, () => ({ why: !view.why, alt: view.alt, reveal: view.why ? undefined : "why" }));
+  bindToggle(altBar.node, altBar.hit, () => ({ why: view.why, alt: !view.alt, reveal: view.alt ? undefined : "alt" }));
+
   popups.open({ width: L.width, height, title: t("raid.guide.title"), dim: true, dimAlpha: 0.5, closeOnBackdrop: true, backButton: true }, (body, closeFn) => {
     close = closeFn;
-    body.add(content);
-    setDebugRaidGuideWhy({ x: scene.scale.width / 2 + why.x, y: scene.scale.height / 2 + content.y + why.y });
+    body.add(frame);
+    const publishDebug = (): void => {
+      const screenY = (local: number): number => scene.scale.height / 2 + frame.y - scroll + local;
+      setDebugRaidGuideWhy({ x: scene.scale.width / 2 + why.x, y: screenY(why.y) });
+      setDebugRaidGuideAlt({ x: scene.scale.width / 2 + altBar.node.x, y: screenY(altBar.node.y) });
+    };
+    publishDebug();
+    if (maxScroll > 0) attachGuideScroll(scene, frame, track, viewHeight, maxScroll, () => scroll, (value) => { scroll = value; publishDebug(); }, (value) => { dragged = value; });
   });
+}
+
+/**
+ * 추천 이유 — 갈래별 한 줄. 줄 앞의 같은 폭 색 이름표(상성·제어·생존)가 무엇에 대한 이유인지를 먼저 말하고,
+ * 글줄은 이름표 오른쪽 한 세로줄에서 시작한다. 긴 문단 하나였을 때는 끝까지 읽어야 요점이 나왔다.
+ */
+function buildReasonPoints(scene: Phaser.Scene, guide: RaidGuide, rec: RelicDef): { node: Phaser.GameObjects.Container; height: number } {
+  const half = L.inner / 2;
+  const node = scene.add.container(0, 0);
+  const left = -half + 12;
+  const textLeft = left + L.pointTag + 20;
+  const wrap = half - 12 - textLeft;
+  let y = 0;
+  guide.reasonPoints.forEach((kind, index) => {
+    if (index > 0) y += L.pointGap;
+    const fill = kind === "element" ? AFFINITY_GLOW[ELEMENT_ICON[rec.element]] : POINT_TONE[kind];
+    const text = scene.add.text(textLeft, y, t(`raid.guide.${guide.bossId}.reason.${kind}` as TextKey), textStyle({ role: "body", size: 26, color: COLOR.ink, wrap })).setOrigin(0, 0);
+    const tagH = 42;
+    const tagY = y + Math.min(tagH, text.height) / 2 + 2;
+    node.add(drawLayer(scene, left + L.pointTag / 2, tagY, slantedRect(L.pointTag, tagH, 10), { fill, alpha: 1 }));
+    const label = scene.add.text(left + L.pointTag / 2, tagY, t(`raid.guide.point.${kind}` as TextKey), textStyle({ role: "display", size: 23, color: "#0d1218" })).setOrigin(0.5);
+    if (label.width > L.pointTag - 18) label.setScale((L.pointTag - 18) / label.width, 1);
+    node.add([label, text]);
+    y += Math.max(tagH, text.height);
+  });
+  // 컨테이너는 크기를 갖지 않으므로 쌓은 높이를 함께 돌려준다.
+  return { node, height: y };
+}
+
+/**
+ * 차선책 화살표 줄. 접혀 있으면 차선책들의 작은 얼굴이 미리 서서 "누가 있나"를 먼저 말하고, 오른쪽 꺾쇠가
+ * 아래(펼치기)·위(접기)를 가리킨다.
+ */
+function addAlternativeBar(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, top: number, alternatives: readonly RelicDef[], open: boolean): { node: Phaser.GameObjects.Container; hit: Phaser.GameObjects.Rectangle } {
+  const half = L.inner / 2;
+  const node = scene.add.container(0, top + L.altBar / 2);
+  node.add(drawLayer(scene, 0, 0, slantedRect(L.inner + 40, L.altBar, 16), { fill: open ? 0x18222e : 0x101720, alpha: 0.94, edge: COLOR.accent, edgeAlpha: open ? 0.7 : 0.4 }));
+  const label = scene.add.text(-half + 8, 0, t("raid.guide.alt.title"), textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0, 0.5);
+  node.add(label);
+  // 꺾쇠 — 글자가 아니라 도형이라 어느 언어에서나 같은 모양이다.
+  const arrowX = half - 18;
+  const arrow = scene.add.graphics({ x: arrowX, y: 0 });
+  arrow.lineStyle(7, COLOR.accent, 1).strokePoints([new Phaser.Math.Vector2(-14, -6), new Phaser.Math.Vector2(0, 7), new Phaser.Math.Vector2(14, -6)]);
+  if (open) arrow.setRotation(Math.PI);
+  node.add(arrow);
+  if (!open) {
+    alternatives.forEach((alt, index) => {
+      const x = arrowX - 44 - L.altPeek / 2 - (alternatives.length - 1 - index) * (L.altPeek + 10);
+      node.add(new FaceFrame(scene, x, 0, { portraitAssetId: alt.portraitAssetId, size: L.altPeek, color: AFFINITY_GLOW[ELEMENT_ICON[alt.element]] }));
+    });
+  }
+  // 입력면은 창이 서고 난 뒤 흐르는 창 안에서만 받게 건다(`clipHit`).
+  const hit = scene.add.rectangle(0, 0, L.inner + 40, L.altBar + 12, 0xffffff, 0);
+  node.add(hit);
+  parent.add(node);
+  return { node, hit };
+}
+
+/** 펼친 차선책 한 명 — 얼굴 · 이름 · 속성/직군 · 한 줄 이유. 높이를 돌려준다. */
+function addAlternativeRow(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, top: number, guide: RaidGuide, alt: RelicDef): number {
+  const half = L.inner / 2;
+  const faceX = -half + L.altFace / 2 + 8;
+  const textLeft = -half + L.altFace + 36;
+  const altTone = AFFINITY_GLOW[ELEMENT_ICON[alt.element]];
+  const name = scene.add.text(textLeft, top + 18, alt.name, textStyle({ role: "display", size: 32, color: COLOR.ink })).setOrigin(0, 0);
+  const badgeY = top + 18 + name.height / 2;
+  const badgeX = textLeft + name.width + 30;
+  const element = new AffinityBadge(scene, badgeX, badgeY, ELEMENT_ICON[alt.element], 38, 0.6);
+  const role = new AffinityBadge(scene, badgeX + 44, badgeY, ROLE_ICON[alt.role], 32, 0.6);
+  const text = scene.add.text(textLeft, top + 18 + name.height + 8, t(`raid.guide.${guide.bossId}.alt.${alt.id}` as TextKey), textStyle({ role: "body", size: 24, color: COLOR.ink, wrap: half - 12 - textLeft })).setOrigin(0, 0);
+  const rowH = Math.max(L.altFace + 24, 18 + name.height + 8 + text.height + 18);
+  const shape = chipPoints(L.inner + 20, rowH, { bevel: { topLeft: 18, topRight: 0, bottomRight: 18, bottomLeft: 0 } });
+  parent.add(drawLayer(scene, 0, top + rowH / 2, shape, { fill: 0x0c1218, alpha: 0.9, edge: altTone, edgeAlpha: 0.5 }));
+  parent.add(new FaceFrame(scene, faceX, top + rowH / 2, { portraitAssetId: alt.portraitAssetId, size: L.altFace, color: altTone }));
+  parent.add([name, element, role, text]);
+  return rowH;
 }
 
 /** 유리/불리 한 줄: 색 이름표 + 속성 아이콘들 + 그 줄이 말하는 것. */

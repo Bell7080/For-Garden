@@ -149,6 +149,8 @@ export interface DebugState {
   raidStage?: "list" | "season" | "summon" | "summonReveal";
   /** 공략법 창의 「이유 보기」 버튼이 선 화면 좌표. 창 높이가 글 길이에서 나오므로 E2E가 여기서 읽는다. */
   raidGuideWhy?: { x: number; y: number };
+  /** 공략법 창의 「차선책」 화살표 줄이 선 화면 좌표. */
+  raidGuideAlt?: { x: number; y: number };
   /** 원정 준비 슬롯의 실제 입력 중심과 현재 선택 수만 노출하는 모바일 입력 계약이다. */
   /**
    * `selectedSlot`은 지금 고른 칸이다. 칸은 한 번 누르면 **고르고**, 고른 칸을 한 번 더 누르면 **뺀다**
@@ -388,6 +390,11 @@ export function setDebugRaidStage(stage: DebugState["raidStage"]): void {
 export function setDebugRaidGuideWhy(point: { x: number; y: number }): void {
   if (!QA_TOOLS_ENABLED) return;
   ensure().raidGuideWhy = point;
+}
+
+export function setDebugRaidGuideAlt(point: { x: number; y: number }): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().raidGuideAlt = point;
 }
 
 export function setDebugParty(party: DebugState["party"]): void {

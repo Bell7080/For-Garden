@@ -22,6 +22,25 @@ const BASE = {
   /** 지급 액자 한 칸과 칸 사이. */
   frame: 118,
   frameGap: 18,
+  /**
+   * 창의 최대 높이. 카드가 늘어도 창은 상단 재화 줄과 하단 탭 사이에 머물고 **목록만** 흐른다 —
+   * 쌓인 카드만큼 창을 키우던 때는 판이 하단 탭의 경계선과 우하단 뒤로가기까지 덮었고, 다섯
+   * 장째부터는 화면 밖으로 나가 끌어 볼 길도 없었다.
+   */
+  maxHeight: 1340,
+  /**
+   * 창 중심의 화면 y. 화면 한가운데(960)보다 한 뼘 내려, 왼쪽 위 패스 카드가 판의 깎인 모서리와 제목표
+   * 뒤로 비쳐 판을 뚫고 올라온 것처럼 보이지 않게 한다. 아래는 하단 탭 위에서 멈춘다.
+   */
+  centerY: 1010,
+  /** 목록이 흐르는 창의 위·아래 안쪽 선. 위는 걸터앉은 제목표 아래, 아래는 판 밑변 바로 위다. */
+  viewTop: 58,
+  viewBottom: 30,
+  /**
+   * 끝까지 내렸을 때 마지막 카드 아래에 남기는 숨. 카드 밑변이 흐르지 않는 창의 `bottomPad` 자리에
+   * 멈추게 하는 값이라, 오른쪽 아래 깎인 모서리가 카드 모서리를 베지 않는다.
+   */
+  endGap: 54,
 } as const;
 
 export interface TradePackageCardMetrics {
@@ -46,12 +65,21 @@ export interface TradePackageCardMetrics {
   frameCenters: (count: number) => number[];
 }
 
-export interface TradePackageLayout {
+export interface TradePackageScroll {
+  /** 카드 `count`장이 창 안에서 설 중심 y(스크롤 0 기준). */
+  centers: number[];
+  /** 목록이 보이는 창(판 국소 좌표). 이 밖의 카드는 마스크가 가리고 눌리지도 않는다. */
+  view: { top: number; bottom: number };
+  /** 끝까지 내렸을 때의 오프셋(≤ 0). 0이면 흐를 것이 없다. */
+  min: number;
+}
+
+export interface TradePackageLayout extends TradePackageScroll {
   width: number;
   height: number;
+  /** 창 중심의 화면 y. */
+  centerY: number;
   card: TradePackageCardMetrics;
-  /** 카드 `count`장이 창 안에서 설 중심 y. */
-  centers: number[];
 }
 
 /** 카드 한 장의 내부 자리. 카드 크기가 바뀌면 모든 줄이 함께 따라온다. */
@@ -93,13 +121,30 @@ export function tradePackageCardMetrics(width = BASE.width - BASE.padX * 2, heig
  */
 export function tradePackageLayout(cards: number): TradePackageLayout {
   const count = Math.max(1, cards);
-  const height = BASE.topPad + count * BASE.cardHeight + (count - 1) * BASE.cardGap + BASE.bottomPad;
+  const natural = BASE.topPad + count * BASE.cardHeight + (count - 1) * BASE.cardGap + BASE.bottomPad;
+  const height = Math.min(natural, BASE.maxHeight);
   return {
     width: BASE.width,
     height,
+    centerY: BASE.centerY,
     card: tradePackageCardMetrics(),
-    centers: tradePackageCenters(count, height),
+    ...tradePackageScroll(count, height),
   };
+}
+
+/**
+ * 카드 `cards`장이 높이 `height`인 창 안에서 흐르는 범위.
+ *
+ * 창은 열 때 한 번 정해지고 서버가 돌려준 장수는 그 뒤에 온다. 그래서 자리와 스크롤 한계를 장수마다
+ * 다시 구한다 — 다 들어가면 가운데로 모이고 흐르지 않으며, 넘치면 위에서부터 쌓고 마지막 카드가
+ * 창 밑변 위로 올라올 만큼만 흐른다.
+ */
+export function tradePackageScroll(cards: number, height: number): TradePackageScroll {
+  const view = { top: -height / 2 + BASE.viewTop, bottom: height / 2 - BASE.viewBottom };
+  const centers = tradePackageCenters(cards, height);
+  const last = centers.at(-1);
+  const min = last === undefined ? 0 : Math.min(0, view.bottom - BASE.endGap - (last + BASE.cardHeight / 2));
+  return { centers, view, min };
 }
 
 /**

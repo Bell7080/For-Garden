@@ -10,6 +10,7 @@ import type { TradePackageView } from "./tradePopupModel";
 import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
 import { t } from "../i18n";
+import { onTap } from "./tapGuard";
 
 /**
  * 카드 안쪽 값. 겉모습(그림자·몸판·빛줄기·비네트·빗금·꼬리표)은 프리미엄과 같은 한 벌
@@ -28,7 +29,8 @@ const HOT = 0xe0603a;
 export interface TradePackageCardOptions {
   metrics: TradePackageCardMetrics;
   view: TradePackageView;
-  onClick: () => void;
+  /** 탭으로 끝난 손만 부른다. 누른 자리를 함께 넘겨 화면이 보이는 창 밖의 손을 거를 수 있게 한다. */
+  onClick: (pointer: Phaser.Input.Pointer) => void;
 }
 
 /**
@@ -118,7 +120,8 @@ export class TradePackageCard extends Phaser.GameObjects.Container {
       this.add(hit);
       hit.on("pointerdown", () => pressIn(this));
       hit.on("pointerout", () => pressOut(this, "normal", { pop: false }));
-      hit.on("pointerup", () => { pressOut(this); options.onClick(); });
+      // 무역 목록은 흐르므로, 끌다 놓은 손은 구매를 열지 않고 눌림만 조용히 되돌린다.
+      onTap(hit, (pointer) => { pressOut(this); options.onClick(pointer); }, this);
     }
     scene.add.existing(this);
   }

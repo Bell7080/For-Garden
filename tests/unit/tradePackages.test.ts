@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PRODUCTS } from "../../src/data/shopCatalog";
 import { isTradePackage, TRADE_GEM_RATE, TRADE_PACKAGES, tradeGemValue, tradePackageLimitLabel, tradePackageValuePercent } from "../../src/data/tradePackages";
-import { tradePackageCardMetrics, tradePackageCenters, tradePackageLayout } from "../../src/ui/tradePackageLayout";
+import { tradePackageCardMetrics, tradePackageCenters, tradePackageLayout, tradePackageScroll } from "../../src/ui/tradePackageLayout";
 import { insidePopupBody } from "../../src/ui/staminaPopupLayout";
 import { tradePackageViews } from "../../src/ui/tradePopupModel";
 
@@ -94,15 +94,39 @@ describe("무역 전시장 표시 계약", () => {
 });
 
 describe("무역 전시장 자리", () => {
-  it("은 카드 수에서 창 높이를 구하고 모든 카드를 몸판 안에 세운다", () => {
-    for (const cards of [1, 2, 3, 4]) {
+  it("은 카드 수에서 창 높이를 구하되 상한을 넘으면 목록만 흐르게 하고, 어느 카드든 끌어서 창 안에 세운다", () => {
+    for (const cards of [1, 2, 3, 4, 5, 6]) {
       const layout = tradePackageLayout(cards);
       expect(layout.centers).toHaveLength(cards);
+      // 창은 상단 재화 줄과 하단 탭 사이에 머문다 — 카드만큼 키우던 때는 하단 탭과 뒤로가기까지 덮었다.
+      expect(layout.height).toBeLessThanOrEqual(1340);
+      expect(layout.min).toBeLessThanOrEqual(0);
       for (const y of layout.centers) {
-        // 예전 무역은 높이를 1420이라 적어 두고 줄을 내려놓아 마지막 줄이 판 밖으로 나갔다.
-        expect(insidePopupBody(layout, { y, width: layout.card.width, height: layout.card.height }), `${cards}장 중 y=${y}`).toBe(true);
+        const top = y - layout.card.height / 2;
+        const bottom = y + layout.card.height / 2;
+        // 흐를 수 있는 범위 [min, 0] 안 어딘가에서 카드가 통째로 창 안(곧 몸판 안)에 든다.
+        const low = Math.max(layout.min, layout.view.top - top);
+        const high = Math.min(0, layout.view.bottom - bottom);
+        const shown = low <= high && [0, layout.min, low, high].some((offset) => offset >= low && offset <= high
+          && insidePopupBody(layout, { y: y + offset, width: layout.card.width, height: layout.card.height }));
+        expect(shown, `${cards}장 중 y=${y}`).toBe(true);
       }
     }
+    // 창은 왼쪽 위 패스 카드(아래 끝 ≈ 315) 아래에서 시작해 하단 탭(≈ 1740) 위에서 끝난다.
+    const shell = tradePackageLayout(6);
+    expect(shell.centerY - shell.height / 2).toBeGreaterThanOrEqual(330);
+    expect(shell.centerY + shell.height / 2).toBeLessThanOrEqual(1700);
+    // 다 들어가는 장수에서는 흐를 것이 없다.
+    expect(tradePackageLayout(2).min).toBe(0);
+    // 넘치는 장수에서는 흐른다(꺾쇠가 선다).
+    expect(tradePackageLayout(4).min).toBeLessThan(0);
+  });
+
+  it("은 열 때 정한 창에서 서버가 돌려준 장수만큼 흐르는 범위를 다시 구한다", () => {
+    const shell = tradePackageLayout(4);
+    expect(tradePackageScroll(2, shell.height).min).toBe(0);
+    expect(tradePackageScroll(6, shell.height).min).toBeLessThan(shell.min);
+    expect(tradePackageScroll(0, shell.height)).toMatchObject({ centers: [], min: 0 });
   });
 
   it("은 카드가 줄어들면 남은 자리에서 가운데로 모은다", () => {

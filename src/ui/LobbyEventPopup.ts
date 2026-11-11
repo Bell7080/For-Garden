@@ -84,7 +84,7 @@ export class LobbyEventPopup {
     const layout = lobbyEventListLayout(entries.length, ATTENDANCE_TRACK_IDS.length + LOBBY_EVENTS.length + newbieGrowthEvents(growth).length);
     this.popups.open({
       width: layout.width, height: layout.height, title: t("event.title"), titleSize: POPUP_TITLE_SIZE.workboard,
-      dim: true, closeOnBackdrop: true, hideCloseButton: true, instant: this.options.instant,
+      dim: true, dimAlpha: 0.72, closeOnBackdrop: true, hideCloseButton: true, instant: this.options.instant,
       onClose: () => { this.closeAction = undefined; this.options.onClosed?.(); },
     }, (body, close) => {
       this.closeAction = close;

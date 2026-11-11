@@ -15,9 +15,15 @@ export const PREMIUM_ITEM_GEM_VALUE: Readonly<Record<string, number>> = {
   "strata-ticket": 100,
   "raid-ticket": 50,
   "raid-select-ticket": 80,
-  // 만능 SSR 파편 — 어느 SSR에나 드는 파편이라 마일리지 상점의 픽업 SSR 파편 한 장(마일리지 300 × 젬 60)과 같은 값이다.
-  // 이 값을 세지 않으면 SSR 돌파 특가가 파편을 공짜 덤으로 보이게 되어 값이 싸게 매겨졌다(₩4,900).
-  "universal-fragment-ssr": 18_000,
+  // 만능 파편·선택권은 **뽑기에서 그 한 장을 얻는 기대 비용**으로 센다(응태 지시, 2026-11-11 — "값어치를 더욱 높게").
+  // 연구 한 번은 젬 300, 등급 확률은 SSR 1% · SR 4% · R 20%(`STANDARD_SLOT_RATES`)라 무작위 한 장이 SSR 30,000 · SR 7,500 · R 1,500이다.
+  // 만능 파편은 어느 개체에나 드는 한 장이라 그 값을 받되 **SSR은 매우 귀하다**(응태) — 고르는 몫 1.5배를 얹어 45,000이다.
+  // SR 선택권도 고르는 몫을 얹어 10,000이다.
+  // 마일리지 시세(SSR 파편 300 × 젬 60 = 18,000)로 재던 때는 파편이 덤처럼 싸게 읽혀 상품 값도 낮게 매겨졌다.
+  "universal-fragment-ssr": 45_000,
+  "universal-fragment-sr": 7_500,
+  "universal-fragment-r": 1_500,
+  "sr-select-ticket": 10_000,
 };
 
 /** 배수를 단 상품의 최소 배수. 이보다 낮으면 "이득"이라 말할 수 없어 배지를 세우지 않는다. */

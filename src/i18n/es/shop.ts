@@ -133,8 +133,9 @@ export const SHOP_ES = {
   "shop.premium.perk.ticketless": "Barrido sin billetes",
   "shop.premium.firstPayment.tag": "Única vez",
   "shop.premium.firstPayment.title": "Regalo de primera compra",
-  "shop.premium.firstPayment.note": "Incluido con tu primera compra de cualquier artículo",
-  "shop.premium.firstPayment.hint": "Lo recibirás con tu primera compra de cualquier artículo.",
+  "shop.premium.firstPayment.note": "Se activa con tu primera compra",
+  "shop.premium.firstPayment.hint": "Haz tu primera compra de cualquier artículo para activarlo y recógelo aquí.",
+  "shop.premium.firstPayment.claim": "FREE · Recoger",
   "shop.purchase.period.season": "Temporada",
   "shop.premium.pass.metric.seasonPoints": "Investigación de temporada {progress} / {goal}",
 } as const;

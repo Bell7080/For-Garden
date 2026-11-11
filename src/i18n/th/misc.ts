@@ -437,5 +437,7 @@ export const MISC_TH = {
   "profile.edit.frameGift": "จำกัด",
   "profile.unlock.gift.firstPayment": "ได้รับจากของขวัญชำระเงินครั้งแรก",
   "profile.unlock.gift.seasonPass": "รางวัลซีซันพาสระดับ 30",
+  "profile.frameGuide.kind": "กรอบโปรไฟล์",
+  "profile.frameGuide.firstPayment": "กรอบสีทองสำหรับรูปโปรไฟล์ ได้รับเพียงครั้งเดียวจากการชำระเงินครั้งแรกของบัญชี แล้วจะเลือกได้ในรายการกรอบของการตกแต่งโปรไฟล์",
   "trade.tag.season": "ซีซัน",
 } as const;

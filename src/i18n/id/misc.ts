@@ -437,5 +437,7 @@ export const MISC_ID = {
   "profile.edit.frameGift": "Terbatas",
   "profile.unlock.gift.firstPayment": "Didapat dari Hadiah Pembelian Pertama",
   "profile.unlock.gift.seasonPass": "Hadiah Season Pass tingkat 30",
+  "profile.frameGuide.kind": "Bingkai Profil",
+  "profile.frameGuide.firstPayment": "Bingkai emas untuk foto profil. Hanya diterima sekali pada pembelian pertama akun, lalu bisa dipilih di daftar bingkai pada kustomisasi profil.",
   "trade.tag.season": "Musim",
 } as const;

@@ -133,8 +133,9 @@ export const SHOP_PT_BR = {
   "shop.premium.perk.ticketless": "Varredura sem bilhetes",
   "shop.premium.firstPayment.tag": "Única vez",
   "shop.premium.firstPayment.title": "Presente da primeira compra",
-  "shop.premium.firstPayment.note": "Incluído na sua primeira compra de qualquer item",
-  "shop.premium.firstPayment.hint": "Você receberá com sua primeira compra de qualquer item.",
+  "shop.premium.firstPayment.note": "Ativa na sua primeira compra",
+  "shop.premium.firstPayment.hint": "Faça sua primeira compra de qualquer item para ativar e resgate aqui.",
+  "shop.premium.firstPayment.claim": "FREE · Resgatar",
   "shop.purchase.period.season": "Temporada",
   "shop.premium.pass.metric.seasonPoints": "Pesquisa da temporada {progress} / {goal}",
 } as const;

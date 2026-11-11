@@ -27,7 +27,7 @@ import { RESONANCE_CAP, RESONANCE_CHEESECAKE, canResonate, relicFragmentRoom, re
 import { BANNERS, STANDARD_POOLS } from "../data/banners";
 import {
   SITUATIONAL_OFFER_RULES, activeSituationalOffer, consumeSituationalOffer, forgetSituationalOfferKey, issueSituationalOffer, normalizeSituationalOfferState,
-  pruneSituationalOffers, recordStoryResult, situationalWeekKey, storyStageChapter, type SituationalOfferCandidate, type SituationalOfferState,
+  openSituationalOffers, pruneSituationalOffers, recordStoryResult, situationalWeekKey, storyStageChapter, type SituationalOfferCandidate, type SituationalOfferState,
 } from "../core/situationalOffers";
 import { FIRST_PAYMENT_GIFT } from "../data/firstPaymentGift";
 import { OPEN_END, OPEN_START, scheduledWindow, windowOpen } from "../core/liveSchedule";
@@ -137,7 +137,7 @@ import { nextStaminaGemCost, nextUtcMidnight, staminaGemDayKey } from "../core/s
 import { paidStaminaApplied, settleStamina, STAMINA_HOLD_LIMIT, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
 import type { EnhanceRuneAllRequest, EnhanceRuneAllResponse, EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse, SynthesizeRunesRequest, SynthesizeRunesResponse } from "./contracts";
-import type { FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse } from "./contracts";
+import type { ClaimFirstPaymentGiftRequest, ClaimFirstPaymentGiftResponse, FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, ClaimPassDailyBonusRequest, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { EXCAVATION_CURRENCIES, excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
@@ -2454,6 +2454,31 @@ export class FakeServer implements GameApi {
     return { ...this.snapshot(), productId: product.id, quantity: 1, granted: [{ kind: "currency", currency: "gems", amount }], grantedRunes: [], remaining: 0 };
   }
 
+  /**
+   * 첫 결제로 활성화된 첫 결제 선물을 받는다. 지급과 선물 테두리 개방은 한 저장으로 확정하고, 같은 요청 ID의 재전송은 영수증을 돌려준다.
+   * 재화는 상한에서 깎아 주는 다른 선물과 달리 상품 지급과 같은 규칙(넘치면 거절)을 쓴다 — 받을 수 있는 날이 사라지지 않는다.
+   */
+  async claimFirstPaymentGift(request: ClaimFirstPaymentGiftRequest): Promise<ClaimFirstPaymentGiftResponse> {
+    await this.delay();
+    const cached = this.readReceipt<ClaimFirstPaymentGiftResponse>("firstPaymentGift", request.requestId, "gift");
+    if (cached) return { ...cached, ...this.snapshot() };
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "요청 ID가 필요합니다.");
+    const achievements = normalizeAchievementState(this.state.achievements);
+    if (achievements.firstPaymentGift === true) throw new GameApiError("INVALID_STATE", "첫 결제 선물을 이미 받았습니다.");
+    if (achievements.firstPaymentPaid !== true) throw new GameApiError("INVALID_STATE", "첫 결제 뒤에 받을 수 있습니다.");
+    const now = this.now();
+    const nextWallet = { ...this.state.wallet };
+    const applied = this.applyProductGrants({ grants: FIRST_PAYMENT_GIFT.grants }, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now);
+    const candidate = structuredClone(this.state);
+    candidate.wallet = nextWallet; candidate.itemInventory = applied.items;
+    const { firstPaymentPaid: _paid, ...rest } = achievements;
+    candidate.achievements = { ...rest, firstPaymentGift: true, giftFrames: [...new Set([...(achievements.giftFrames ?? []), FIRST_PAYMENT_GIFT.frameId])] };
+    const result = { granted: applied.granted, frameId: FIRST_PAYMENT_GIFT.frameId };
+    this.recordReceipt(candidate, "firstPaymentGift", request.requestId, "gift", result);
+    this.commitRaidState(candidate);
+    return { ...this.snapshot(), ...result };
+  }
+
   /** 무료 수령을 먼저 받아야 열리는 광고 슬롯(일간 보급의 추가 몫)은 그 상품의 오늘 몫이 소진됐을 때만 받는다. */
   private assertAdPrerequisite(slot: AdRewardSlot, now: Date): void {
     if (slot.id === ROULETTE.adSlot && !this.allEventsOpen() && !rouletteStatus(this.state.dailyAdRewards, now).active) throw new GameApiError("EVENT_NOT_ACTIVE", "이벤트가 종료되었습니다.");
@@ -2521,11 +2546,11 @@ export class FakeServer implements GameApi {
     const now = this.now();
     const renewing = product.passBenefit?.autoRenew ? [...this.entitlements.values()].find((entry) => entry.productId === product.id && (entry.expiresAt === null || Date.parse(entry.expiresAt) > now.getTime())) : undefined;
     if (!renewing && this.remaining(product, now) < 1) throw new GameApiError("PURCHASE_LIMIT_REACHED", "남은 구매 제한을 초과했습니다.");
-    // 계정 첫 결제 선물은 상품의 첫 구매 보너스와 같은 지급 줄에 얹어 한 번에 확정한다(`FIRST_PAYMENT_GIFT`).
+    // 계정 첫 결제는 첫 결제 선물(`FIRST_PAYMENT_GIFT`)을 **활성화**만 한다 — 받는 것은 카드를 눌러 `claimFirstPaymentGift`로.
     const achievements = normalizeAchievementState(this.state.achievements);
-    const firstPaymentGift = achievements.firstPaymentGift !== true;
+    const firstPaymentGift = achievements.firstPaymentGift !== true && achievements.firstPaymentPaid !== true;
     const firstBonus = this.firstBonusAvailable(product);
-    const bonus = [...(firstBonus ? product.firstPurchaseBonus ?? [] : []), ...(firstPaymentGift ? FIRST_PAYMENT_GIFT.grants : [])];
+    const bonus = firstBonus ? product.firstPurchaseBonus ?? [] : [];
     const nextWallet = { ...this.state.wallet };
     const applied = this.applyProductGrants(product, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now, bonus);
 
@@ -2536,8 +2561,8 @@ export class FakeServer implements GameApi {
     const nextPurchases = product.situational ? this.state.productPurchases : { ...this.state.productPurchases, [product.id]: { periodKey, count } };
     const candidate = structuredClone(this.state);
     candidate.wallet = nextWallet; candidate.itemInventory = applied.items; candidate.productPurchases = nextPurchases;
-    if (product.situational) candidate.situationalOffers = consumeSituationalOffer(normalizeSituationalOfferState(this.state.situationalOffers), product.id);
-    if (firstPaymentGift) candidate.achievements = { ...achievements, firstPaymentGift: true, giftFrames: [...new Set([...(achievements.giftFrames ?? []), FIRST_PAYMENT_GIFT.frameId])] };
+    if (product.situational) candidate.situationalOffers = consumeSituationalOffer(normalizeSituationalOfferState(this.state.situationalOffers), product.id, now);
+    if (firstPaymentGift) candidate.achievements = { ...achievements, firstPaymentPaid: true };
     let entitlement: PassEntitlementDto | undefined;
     if (product.passBenefit) {
       const entitlementId = `entitlement-${verification.transactionId}`;
@@ -3524,7 +3549,9 @@ export class FakeServer implements GameApi {
     await this.delay();
     // 이벤트 입구의 점은 오늘 받을 출석이 남았는가로 켠다.
     const now = this.now();
-    const situationalOfferCount = this.evaluateSituationalOffers(now).active.length;
+    // 결제로 활성화된 채 아직 받지 않은 첫 결제 선물도 같은 「한정」 탭의 점을 켠다.
+    const giftWaiting = this.state.achievements?.firstPaymentPaid === true && this.state.achievements.firstPaymentGift !== true;
+    const situationalOfferCount = openSituationalOffers(this.evaluateSituationalOffers(now)).length + Number(giftWaiting);
     const attendance = this.attendanceDto(this.attendanceNow(now), now);
     const mail = this.mailListDto();
     const claimablePassCount = this.progressPassDtos(this.state).reduce((sum, pass) => sum + pass.milestones.filter((stage) => stage.freeState === "claimable" || stage.state === "claimable").length, 0);
@@ -3909,7 +3936,8 @@ export class FakeServer implements GameApi {
         ...this.subscriptionInfo(product, now),
       };
     });
-    const firstPaymentGift = storefront === "premium" ? { available: normalizeAchievementState(this.state.achievements).firstPaymentGift !== true, grants: FIRST_PAYMENT_GIFT.grants, frameId: FIRST_PAYMENT_GIFT.frameId } : undefined;
+    const giftState = normalizeAchievementState(this.state.achievements);
+    const firstPaymentGift = storefront === "premium" ? { available: giftState.firstPaymentGift !== true, claimable: giftState.firstPaymentGift !== true && giftState.firstPaymentPaid === true, grants: FIRST_PAYMENT_GIFT.grants, frameId: FIRST_PAYMENT_GIFT.frameId } : undefined;
     return { products, serverTime: now.toISOString(), ...(firstPaymentGift ? { firstPaymentGift } : {}) };
   }
 
@@ -4425,7 +4453,7 @@ export class FakeServer implements GameApi {
     // 또 사면 기간이 겹쳐 아무것도 얹히지 않은 채 값만 나간다.
     if (product.passBenefit) return this.hasActivePass(product, now) ? 0 : product.purchaseLimit;
     // 상황 특가는 열린 동안 한 번이다 — 사면 특가가 걷혀 남은 수도 함께 0이 된다.
-    if (product.situational) return activeSituationalOffer(this.state.situationalOffers, product.id, now) ? 1 : 0;
+    if (product.situational) { const offer = activeSituationalOffer(this.state.situationalOffers, product.id, now); return offer && offer.purchasedAt === undefined ? 1 : 0; }
     const record = this.state.productPurchases[product.id];
     const count = record?.periodKey === this.productPeriodKey(product, now) ? record.count : 0;
     return Math.max(0, product.purchaseLimit - count);

@@ -134,8 +134,9 @@ export const SHOP_JA = {
   "shop.premium.perk.ticketless": "掃討券なしで掃討",
   "shop.premium.firstPayment.tag": "1回限り",
   "shop.premium.firstPayment.title": "初回決済ギフト",
-  "shop.premium.firstPayment.note": "どの商品でも初回決済で一緒にお届け",
-  "shop.premium.firstPayment.hint": "どの商品でも初めて決済すると一緒に受け取れます。",
+  "shop.premium.firstPayment.note": "初回決済で解放",
+  "shop.premium.firstPayment.hint": "どの商品でも初めて決済すると解放され、ここで受け取れます。",
+  "shop.premium.firstPayment.claim": "FREE · 受け取る",
   "shop.purchase.period.season": "シーズン",
   "shop.premium.pass.metric.seasonPoints": "シーズン研究度 {progress} / {goal}",
 } as const;

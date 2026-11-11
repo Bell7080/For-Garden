@@ -137,8 +137,9 @@ export const SHOP_KO = {
   "shop.premium.perk.ticketless": "소탕권 없이 소탕",
   "shop.premium.firstPayment.tag": "1회 한정",
   "shop.premium.firstPayment.title": "첫 결제 선물",
-  "shop.premium.firstPayment.note": "어떤 상품이든 첫 결제에 함께 지급",
-  "shop.premium.firstPayment.hint": "어떤 상품이든 처음 결제하면 함께 받습니다.",
+  "shop.premium.firstPayment.note": "첫 결제 시 활성화",
+  "shop.premium.firstPayment.hint": "어떤 상품이든 처음 결제하면 활성화되어 직접 받을 수 있습니다.",
+  "shop.premium.firstPayment.claim": "FREE · 받기",
   "shop.purchase.period.season": "시즌",
   "shop.premium.pass.metric.seasonPoints": "시즌 연구도 {progress} / {goal}",
 } as const;

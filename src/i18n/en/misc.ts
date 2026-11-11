@@ -439,5 +439,7 @@ export const MISC_EN = {
   "profile.edit.frameGift": "Limited",
   "profile.unlock.gift.firstPayment": "Received as the First Purchase Gift",
   "profile.unlock.gift.seasonPass": "Season Pass tier 30 reward",
+  "profile.frameGuide.kind": "Profile Frame",
+  "profile.frameGuide.firstPayment": "A golden frame for your profile picture. It's given only once, with your account's first purchase, and then appears in the frame list under Customize Profile.",
   "trade.tag.season": "Season",
 } as const;

@@ -37,6 +37,11 @@ export interface ActiveSituationalOffer {
   key: string;
   issuedAt: string;
   expiresAt: string;
+  /**
+   * 산 시각 — 산 특가는 목록에서 걷지 않고 남은 기간 동안 「구매 완료」 도장을 찍은 채 선다(응태, 2026-11-11).
+   * 동시 상한(`maxActive`)은 아직 살 수 있는 특가만 센다.
+   */
+  purchasedAt?: string;
 }
 
 export interface SituationalOfferState {
@@ -65,7 +70,7 @@ const isIso = (value: unknown): value is string => typeof value === "string" && 
 /** 저장값을 믿지 않고 모양이 맞는 것만 남긴다. 예전 저장은 빈 상태다. */
 export function normalizeSituationalOfferState(value: unknown): SituationalOfferState {
   const source = (value && typeof value === "object" ? value : {}) as Partial<SituationalOfferState>;
-  const active = Array.isArray(source.active) ? source.active.filter((offer): offer is ActiveSituationalOffer => !!offer && typeof offer.productId === "string" && isTrigger(offer.trigger) && typeof offer.key === "string" && isIso(offer.issuedAt) && isIso(offer.expiresAt)).map((offer) => ({ ...offer })) : [];
+  const active = Array.isArray(source.active) ? source.active.filter((offer): offer is ActiveSituationalOffer => !!offer && typeof offer.productId === "string" && isTrigger(offer.trigger) && typeof offer.key === "string" && isIso(offer.issuedAt) && isIso(offer.expiresAt) && (offer.purchasedAt === undefined || isIso(offer.purchasedAt))).map(({ productId, trigger, key, issuedAt, expiresAt, purchasedAt }) => ({ productId, trigger, key, issuedAt, expiresAt, ...(purchasedAt !== undefined ? { purchasedAt } : {}) })) : [];
   const issuedKeys = Array.isArray(source.issuedKeys) ? [...new Set(source.issuedKeys.filter((key): key is string => typeof key === "string"))] : [];
   const lastIssuedAt: SituationalOfferState["lastIssuedAt"] = {};
   if (source.lastIssuedAt && typeof source.lastIssuedAt === "object") {
@@ -102,13 +107,13 @@ export function issueSituationalOffer(state: SituationalOfferState, candidate: S
   const cooldownMs = SITUATIONAL_OFFER_RULES.cooldownDays * 86_400_000;
   const last = pruned.lastIssuedAt[candidate.trigger];
   const blocked = pruned.issuedKeys.includes(candidate.key)
-    || pruned.active.length >= SITUATIONAL_OFFER_RULES.maxActive
+    || openSituationalOffers(pruned).length >= SITUATIONAL_OFFER_RULES.maxActive
     || pruned.active.some(({ productId }) => productId === candidate.productId)
     || Object.values(pruned.lastIssuedAt).some((at) => at?.slice(0, 10) === day)
     || (last !== undefined && now.getTime() - Date.parse(last) < cooldownMs);
   if (blocked) return { state: pruned, issued: false };
   const issuedAt = now.toISOString();
-  const offer: ActiveSituationalOffer = { ...candidate, issuedAt, expiresAt: new Date(now.getTime() + SITUATIONAL_OFFER_RULES.durationHours * 3_600_000).toISOString() };
+  const offer: ActiveSituationalOffer = { productId: candidate.productId, trigger: candidate.trigger, key: candidate.key, issuedAt, expiresAt: new Date(now.getTime() + SITUATIONAL_OFFER_RULES.durationHours * 3_600_000).toISOString() };
   return {
     state: { ...pruned, active: [...pruned.active, offer], issuedKeys: [...pruned.issuedKeys, candidate.key], lastIssuedAt: { ...pruned.lastIssuedAt, [candidate.trigger]: issuedAt } },
     issued: true,
@@ -116,8 +121,13 @@ export function issueSituationalOffer(state: SituationalOfferState, candidate: S
 }
 
 /** 산 특가를 걷는다. */
-export function consumeSituationalOffer(state: SituationalOfferState, productId: string): SituationalOfferState {
-  return { ...state, active: state.active.filter((offer) => offer.productId !== productId) };
+export function consumeSituationalOffer(state: SituationalOfferState, productId: string, now: Date): SituationalOfferState {
+  return { ...state, active: state.active.map((offer) => offer.productId === productId && offer.purchasedAt === undefined ? { ...offer, purchasedAt: now.toISOString() } : offer) };
+}
+
+/** 아직 사지 않은 열린 특가 — 동시 상한·붉은 점·남은 구매가 이것만 센다. */
+export function openSituationalOffers(state: SituationalOfferState): ActiveSituationalOffer[] {
+  return state.active.filter((offer) => offer.purchasedAt === undefined);
 }
 
 /** 한 주기가 다시 돌아 같은 특가를 또 낼 수 있게 키를 지운다(천장이 SSR로 돌아간 때). */

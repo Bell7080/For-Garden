@@ -437,5 +437,7 @@ export const MISC_ZH_HANT = {
   "profile.edit.frameGift": "限定",
   "profile.unlock.gift.firstPayment": "透過首次付費禮物獲得",
   "profile.unlock.gift.seasonPass": "賽季通行證第30級獎勵",
+  "profile.frameGuide.kind": "頭像框",
+  "profile.frameGuide.firstPayment": "套在頭像照片上的金色頭像框。僅在賬號首次付費時獲得一次，獲得後可在個人資料裝扮的頭像框列表中選擇。",
   "trade.tag.season": "賽季",
 } as const;

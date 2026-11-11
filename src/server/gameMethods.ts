@@ -8,7 +8,7 @@ export const SERVER_GAME_METHODS = [
   "prepareCombat", "finishCombat",
   "abandonStrataRun", "activatePass", "answerRelicQuestion", "applyDebugCommand", "applyStoryEffect", "archaeologyState", "beginExpeditionAugment", "breakThroughRelic", "buyDuelAttempt", "buyGuildProduct", "changeGuildBadge", "renameGuild", "createGuild", "stampGuildAttendance", "getGuildGuard", "enterGuildGuard", "submitGuildGuard", "placeGuildWarDefense", "syncGuildWarStandby", "enterGuildWarAttack", "submitGuildWarAttack",
   "claimAchievementRewards", "claimAdReward", "claimAttendance", "claimAttendanceAd", "claimDuelSeasonReward", "claimExpeditionReward", "claimInstantAdReward",
-  "claimInteractionDispatch", "claimMailRewards", "claimMissionRewards", "claimPassDailyBonus", "claimProgressPass", "claimRelicChapter",
+  "claimInteractionDispatch", "claimMailRewards", "claimMissionRewards", "claimPassDailyBonus", "claimFirstPaymentGift", "claimProgressPass", "claimRelicChapter",
   "claimRelicQuestionReward", "chooseExpeditionAugment", "completeBounty", "completeCakeOperation", "completeExpeditionNode", "completeExpeditionRest", "completeObservation", "completeStage", "completeStory", "completeTutorialStep", "digStrataTile",
   "engraveRune", "enhanceRune", "enhanceRuneAll", "enterBounty", "enterCakeOperation", "enterDailyRestoration", "enterDuel", "enterEventStage", "enterRaid",
   "enterStage", "equipProfileModifiers", "equipRelicSkin", "equipRune", "feedRelic", "fulfillPlatformPurchase", "getAchievements", "getNewbieGrowth", "claimNewbieGrowth", "getAdOperationsConfig", "getAsyncArenaServerState", "getAttendance",

@@ -437,5 +437,7 @@ export const MISC_RU = {
   "profile.edit.frameGift": "Ограничено",
   "profile.unlock.gift.firstPayment": "Выдаётся как подарок за первую покупку",
   "profile.unlock.gift.seasonPass": "Награда 30-го уровня сезонного пропуска",
+  "profile.frameGuide.kind": "Рамка профиля",
+  "profile.frameGuide.firstPayment": "Золотая рамка для фото профиля. Выдаётся лишь один раз — при первой покупке на аккаунте, — после чего её можно выбрать в списке рамок при оформлении профиля.",
   "trade.tag.season": "Сезон",
 } as const;

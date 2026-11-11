@@ -26,6 +26,11 @@ export interface AchievementState {
   guildJoined?: true;
   /** 계정 첫 결제 선물을 받았다(`FIRST_PAYMENT_GIFT`) — 어떤 상품이든 플랫폼 결제가 처음 확정된 순간 한 번 켠다. */
   firstPaymentGift?: true;
+  /**
+   * 첫 결제는 했지만 선물을 아직 받지 않았다 — 결제가 선물을 **활성화**하고, 플레이어가 프리미엄 한정 탭의 카드를 눌러
+   * 직접 받는다(`claimFirstPaymentGift` · 응태, 2026-11-11). 받으면 `firstPaymentGift`가 켜지고 이 값은 지운다.
+   */
+  firstPaymentPaid?: true;
   /** 레벨·업적이 아니라 선물로 연 한정 프로필 테두리 ID(첫 결제 · 시즌 패스). */
   giftFrames?: string[];
 }
@@ -52,7 +57,8 @@ export function normalizeAchievementState(value: unknown): AchievementState {
   return {
     claimed, goldPeak: Math.min(LIFETIME_COUNT_CAP, whole(source.goldPeak)), ...(ancientFloorPeak > 0 ? { ancientFloorPeak } : {}),
     ...(growth.length > 0 ? { growth } : {}), ...(source.favoriteChosen === true ? { favoriteChosen: true as const } : {}), ...(source.guildJoined === true ? { guildJoined: true as const } : {}),
-    ...(source.firstPaymentGift === true ? { firstPaymentGift: true as const } : {}), ...(giftFrames.length > 0 ? { giftFrames } : {}),
+    ...(source.firstPaymentGift === true ? { firstPaymentGift: true as const } : {}),
+    ...(source.firstPaymentPaid === true && source.firstPaymentGift !== true ? { firstPaymentPaid: true as const } : {}), ...(giftFrames.length > 0 ? { giftFrames } : {}),
   };
 }
 
@@ -65,6 +71,7 @@ export function isValidAchievementState(value: unknown): value is AchievementSta
   if (state.favoriteChosen !== undefined && state.favoriteChosen !== true) return false;
   if (state.guildJoined !== undefined && state.guildJoined !== true) return false;
   if (state.firstPaymentGift !== undefined && state.firstPaymentGift !== true) return false;
+  if (state.firstPaymentPaid !== undefined && (state.firstPaymentPaid !== true || state.firstPaymentGift === true)) return false;
   if (state.giftFrames !== undefined && (!Array.isArray(state.giftFrames) || state.giftFrames.some((id) => typeof id !== "string" || !GIFT_FRAME_IDS.has(id)))) return false;
   if (!state.claimed || typeof state.claimed !== "object") return false;
   return Object.entries(state.claimed).every(([id, count]) => {

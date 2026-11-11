@@ -17,16 +17,30 @@ async function buy(api: FakeServer, id: string, tx: string) {
 }
 
 describe("계정 첫 결제 선물", () => {
-  it("첫 플랫폼 결제에 선택권·화석 5·한정 테두리를 함께 주고, 두 번째 결제에는 주지 않는다", async () => {
+  it("첫 플랫폼 결제는 선물을 활성화만 하고, 직접 받아야 선택권·화석 5·한정 테두리가 들어온다", async () => {
     const { state, api } = server();
     const before = state.wallet.fossil;
+    await expect(api.claimFirstPaymentGift({ requestId: "claim-early" })).rejects.toMatchObject({ code: "INVALID_STATE" });
     const first = await buy(api, "premium-starter", "tx-1");
     expect(first.firstPaymentGift).toBe(true);
+    // 결제만으로는 아무것도 들어오지 않고, 목록이 「받기」로 바뀌며 한정 탭의 점이 선다.
+    expect(state.itemInventory.find(({ itemId }) => itemId === "sr-select-ticket")).toBeUndefined();
+    expect(state.wallet.fossil).toBe(before);
+    expect((await api.getProducts("premium")).firstPaymentGift).toMatchObject({ available: true, claimable: true });
+    expect((await api.getNotificationSignals()).situationalOfferCount).toBe(1);
+    const claimed = await api.claimFirstPaymentGift({ requestId: "claim-1" });
+    expect(claimed.frameId).toBe(FIRST_PAYMENT_GIFT.frameId);
     expect(state.itemInventory.find(({ itemId }) => itemId === "sr-select-ticket")?.quantity).toBe(1);
     expect(state.wallet.fossil).toBe(before + 5);
     expect(state.achievements?.firstPaymentGift).toBe(true);
+    expect(state.achievements?.firstPaymentPaid).toBeUndefined();
     expect(state.achievements?.giftFrames).toEqual([FIRST_PAYMENT_GIFT.frameId]);
+    // 같은 요청을 다시 보내도 한 번만 들어오고, 새 요청은 거절한다.
+    await api.claimFirstPaymentGift({ requestId: "claim-1" });
+    expect(state.wallet.fossil).toBe(before + 5);
+    await expect(api.claimFirstPaymentGift({ requestId: "claim-2" })).rejects.toBeTruthy();
     expect((await api.getProducts("premium")).firstPaymentGift?.available).toBe(false);
+    expect((await api.getNotificationSignals()).situationalOfferCount).toBe(0);
     const second = await buy(api, "premium-gems-large", "tx-2");
     expect(second.firstPaymentGift).toBeUndefined();
     expect(state.itemInventory.find(({ itemId }) => itemId === "sr-select-ticket")?.quantity).toBe(1);
@@ -35,7 +49,7 @@ describe("계정 첫 결제 선물", () => {
   it("상점 목록은 받기 전까지 선물을 말한다", async () => {
     const { api } = server();
     const list = await api.getProducts("premium");
-    expect(list.firstPaymentGift).toMatchObject({ available: true, frameId: "patron" });
+    expect(list.firstPaymentGift).toMatchObject({ available: true, claimable: false, frameId: "patron" });
     expect((await api.getProducts("shop")).firstPaymentGift).toBeUndefined();
   });
 

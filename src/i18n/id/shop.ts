@@ -133,8 +133,9 @@ export const SHOP_ID = {
   "shop.premium.perk.ticketless": "Sapu tanpa tiket",
   "shop.premium.firstPayment.tag": "Sekali",
   "shop.premium.firstPayment.title": "Hadiah Pembelian Pertama",
-  "shop.premium.firstPayment.note": "Diberikan bersama pembelian pertama apa pun",
-  "shop.premium.firstPayment.hint": "Kamu akan menerimanya pada pembelian pertama apa pun.",
+  "shop.premium.firstPayment.note": "Terbuka saat pembelian pertama",
+  "shop.premium.firstPayment.hint": "Lakukan pembelian pertama apa pun untuk membukanya, lalu klaim di sini.",
+  "shop.premium.firstPayment.claim": "FREE · Klaim",
   "shop.purchase.period.season": "Musim",
   "shop.premium.pass.metric.seasonPoints": "Riset Musim {progress} / {goal}",
 } as const;

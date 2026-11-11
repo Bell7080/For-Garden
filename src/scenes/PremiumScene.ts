@@ -2,7 +2,9 @@ import { showContentToast } from "../ui/ContentToast";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
-import type { ProductDto, ProductListResponse, PurchaseProductResponse } from "../api/contracts";
+import { GameApiError, type ProductDto, type ProductListResponse, type PurchaseProductResponse } from "../api/contracts";
+import { readWithRetry } from "../core/readRetry";
+import { logError } from "../managers/ErrorReporter";
 import { ProfileAvatar } from "../ui/ProfileAvatar";
 import { playerProfileDisplay, profileAvatarContent } from "../state/playerProfile";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -107,6 +109,11 @@ export class PremiumScene extends Phaser.Scene {
   private limitedClocks: { text: Phaser.GameObjects.Text; until: string }[] = [];
   private clockElapsed = 0;
   private claiming = false;
+  /** 목록 조회 차례 — 더 새 조회가 시작되면 옛 답을 버린다. */
+  private refreshSeq = 0;
+  /** 상품 목록을 한 번이라도 받았는가. 못 받은 채 라벨을 누르면 다시 묻는다. */
+  private productsLoaded = false;
+  private closed = false;
 
   constructor() { super("premium"); }
 
@@ -135,8 +142,13 @@ export class PremiumScene extends Phaser.Scene {
     this.installScrollInput();
     // 프리미엄은 핵심 하단 탭의 기존 진입점을 그대로 사용한다.
     new BottomNav(this, "premium");
+    this.closed = false;
+    this.productsLoaded = false;
+    // 지난번에 받은 목록이 있으면 먼저 세운다 — 조회가 늦어도 빈 판으로 기다리지 않고, 답이 오면 그 자리에서 갈아 끼운다.
+    if (this.products.length > 0) this.renderProducts();
     void this.refresh();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.closed = true;
       this.removeScrollInput();
       this.viewportMask?.destroy(); this.viewportMask = undefined;
       this.tabMask?.destroy(); this.tabMask = undefined;
@@ -172,20 +184,37 @@ export class PremiumScene extends Phaser.Scene {
     this.content.setMask(this.viewportMask.createGeometryMask());
   }
 
-  /** 서버가 계산한 노출·제한 상태에서 유료 storefront만 골라 다시 그린다. */
+  /**
+   * 서버가 계산한 노출·제한 상태에서 유료 storefront만 골라 다시 그린다.
+   *
+   * **목록 조회가 한 번 실패해도 빈 판으로 굳지 않는다**(`readWithRetry`). 게임에 막 들어와 곧장 이 화면을 열면
+   * 로비가 내보낸 호출들과 겹쳐 첫 조회가 떨어질 수 있는데, 예전에는 그 실패를 삼킨 채 아무것도 그리지 않았다.
+   * 상품은 **받는 즉시** 그리고, 지갑 맞추기는 그 뒤에 따로 한다 — 지갑 조회가 늦거나 실패해도 상품이 기다리지 않는다.
+   * 더 새 조회가 시작되면 옛 조회의 답은 버린다.
+   */
   private async refresh(): Promise<void> {
-    const response = await withBusy(this, gameApi.getProducts("premium"));
-    if (!this.scene.isActive()) return;
+    const seq = ++this.refreshSeq;
+    const alive = (): boolean => !this.closed && seq === this.refreshSeq;
+    let response: Awaited<ReturnType<typeof gameApi.getProducts>> | undefined;
+    try {
+      response = await readWithRetry(() => withBusy(this, gameApi.getProducts("premium")), { alive, retryable: (error) => !(error instanceof GameApiError) });
+    } catch (error) {
+      if (alive()) logError("premium.products", "[premium] 상품 목록 조회 실패", error);
+      return;
+    }
+    if (!response || !alive() || !this.scene.isActive()) return;
     // storefront 판정은 검증된 모델 하나가 소유한다. 여기서 filter를 다시 쓰면 같은 규칙이
     // 두 곳에 살아, 한쪽만 고쳐도 화면은 조용히 예전 규칙으로 남는다.
     this.products = premiumModel(response.products);
+    this.productsLoaded = true;
     this.firstPaymentGift = response.firstPaymentGift?.available ? response.firstPaymentGift : undefined;
     this.serverOffsetMs = Date.parse(response.serverTime) - Date.now();
-    // 상품을 산 뒤에는 지갑이 바뀌었으므로 상단 줄도 함께 맞춘다.
-    session.wallet = { ...session.wallet, ...(await withBusy(this, gameApi.getPlayerState())).wallet };
-    if (!this.scene.isActive()) return;
-    this.topBar?.refresh();
     this.renderProducts();
+    // 상품을 산 뒤에는 지갑이 바뀌었으므로 상단 줄도 함께 맞춘다.
+    const state = await gameApi.getPlayerState().catch(() => undefined);
+    if (!state || !alive() || !this.scene.isActive()) return;
+    session.wallet = { ...session.wallet, ...state.wallet };
+    this.topBar?.refresh();
   }
 
   /** 현재 라벨의 상품만 그 갈래의 모양(가로 한 줄 · 두 칸 격자)으로 다시 조립하고 스크롤 한계를 계산한다. */
@@ -714,6 +743,8 @@ export class PremiumScene extends Phaser.Scene {
     if (this.content) this.content.y = 0;
     this.createTabs(rowFrom);
     this.renderProducts();
+    // 첫 조회를 끝내 받지 못한 채라면 라벨을 누르는 손이 다시 묻게 한다.
+    if (!this.productsLoaded) void this.refresh();
     if (this.content) slideTabPage(this, [this.content], from, indexOf(category));
   }
 

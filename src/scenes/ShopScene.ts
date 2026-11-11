@@ -6,7 +6,8 @@ import { gameApi } from "../api/FakeServer";
 import { guildApi } from "../api/guildApi";
 import { GuildApiError } from "../api/guildContracts";
 import { reportError } from "../managers/ErrorReporter";
-import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
+import { GameApiError, type ProductDto, type PurchaseProductResponse } from "../api/contracts";
+import { readWithRetry } from "../core/readRetry";
 import { formatCurrency } from "../core/formatCurrency";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene, setDebugShopView, setDebugStorefrontControls } from "../debug";
@@ -77,6 +78,8 @@ const SHOP_VALUE_BADGE = { width: 150, height: 44, size: 24 } as const;
  */
 export class ShopScene extends Phaser.Scene {
   private products: ProductDto[] = [];
+  /** 화면을 떠났는가 — 목록 조회 재시도가 떠난 화면을 붙잡지 않게 한다. */
+  private closed = false;
   /**
    * 지금 열린 목록. 첫 탭은 무대표의 순서에서 정해 화면과 데이터의 기본값이 갈리지 않는다.
    *
@@ -209,8 +212,10 @@ export class ShopScene extends Phaser.Scene {
     // 점원 자산은 별도 표시 데이터에서 고르고 공용 Puppet과 관절 배치 규칙을 그대로 거친다.
     // **묶음을 못 읽어도 말은 선다** — 실패를 삼키면 점원 쪽 문이 영영 닫혀 첫 마디가 사라진다.
     void this.createMerchant().catch(() => this.openMerchantGate());
+    this.closed = false;
     void this.refresh();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.closed = true;
       this.removeScrollInput();
       this.stageMask?.destroy(); this.stageMask = undefined;
       this.viewportMask?.destroy(); this.viewportMask = undefined;
@@ -517,8 +522,10 @@ export class ShopScene extends Phaser.Scene {
       return;
     }
     // 상점에 들어갈 때·산 뒤 목록을 다시 읽을 때 응답이 늦으면 기다림 막이 선다(짧으면 서지 않는다).
-    const response = await withBusy(this, gameApi.getProducts(this.storefront));
-    if (!this.scene.isActive()) return;
+    // 한 번 떨어진 조회로 빈 판이 굳지 않게 다시 묻는다(`readWithRetry`). 규칙이 거절한 답은 다시 묻지 않는다.
+    const storefront = this.storefront;
+    const response = await readWithRetry(() => withBusy(this, gameApi.getProducts(storefront)), { alive: () => !this.closed && this.storefront === storefront, retryable: (error) => !(error instanceof GameApiError) });
+    if (!response || !this.scene.isActive()) return;
     // storefront 판정은 검증된 모델 하나가 소유한다. 여기서 filter를 다시 쓰면 같은 규칙이
     // 두 곳에 살아, 한쪽만 고쳐도 화면은 조용히 예전 규칙으로 남는다.
     this.products = shopModel(response.products, this.storefront);

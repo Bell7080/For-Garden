@@ -43,7 +43,8 @@ import { motionPolicy } from "../core/settings";
 import { openSaveConflictPopup, type SaveConflictChoice } from "../ui/SaveConflictPopup";
 import { saveManager } from "../state/SaveManager";
 import { startLiveOps } from "../managers/liveOps";
-import { TitleActionRow } from "../ui/TitleActionRow";
+import { addTitleSoundButton, TitleActionRow } from "../ui/TitleActionRow";
+import { openTitleSoundPopup } from "../ui/TitleSoundPopup";
 import { TITLE_LOADING_LAYOUT, TITLE_LOGIN_LAYOUT, titleLoginSlots } from "../ui/titleActionLayout";
 import { audioManager } from "../managers/AudioManager";
 import { reportCatch, reportError } from "../managers/ErrorReporter";
@@ -488,6 +489,8 @@ export class TitleScene extends Phaser.Scene {
         onClick: () => this.confirmSwitchAccount(),
       },
     ]);
+    // 소리 조절은 오른쪽 아래의 작은 아이콘 칸 하나다 — 버전 표기(왼쪽 아래)와 짝을 이루고 줄의 라벨 폭을 줄이지 않는다.
+    addTitleSoundButton(this, () => { if (this.popups) openTitleSoundPopup(this, this.popups); });
 
     if (!firstRun) this.tweens.add({
       targets: prompt,

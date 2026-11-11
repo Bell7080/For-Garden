@@ -67,3 +67,25 @@ describe("첫 실행 로그인 버튼 줄", () => {
     expect(titleLoginSlots(0)).toHaveLength(0);
   });
 });
+
+describe("타이틀 소리 조절 칸", () => {
+  it("오른쪽 아래 화면 안에 서고 하단 버튼 줄(두 칸)과 겹치지 않는다", async () => {
+    const { TITLE_SOUND_BUTTON } = await import("../../src/ui/titleActionLayout");
+    const { size, x, y } = TITLE_SOUND_BUTTON;
+    expect(x + size / 2).toBeLessThanOrEqual(BASE_WIDTH);
+    expect(y + size / 2).toBeLessThanOrEqual(BASE_HEIGHT);
+    const slots = titleActionSlots(2);
+    const right = slots[slots.length - 1];
+    expect(x - size / 2 - (right.x + right.width / 2)).toBeGreaterThanOrEqual(40);
+  });
+
+  it("소리 판의 다섯 줄이 판 안에 든다", async () => {
+    const { TITLE_SOUND_POPUP } = await import("../../src/ui/titleSoundPopupLayout");
+    const { width, height, rows, rowLeft, rowWidth, firstRowY, step } = TITLE_SOUND_POPUP;
+    expect(rowLeft).toBeGreaterThanOrEqual(-width / 2);
+    expect(rowLeft + rowWidth).toBeLessThanOrEqual(width / 2);
+    const last = firstRowY + (rows - 1) * step;
+    expect(firstRowY - 44).toBeGreaterThan(-height / 2 + 40);
+    expect(last + 44).toBeLessThan(height / 2 - 40);
+  });
+});

@@ -5,7 +5,7 @@ import { COLOR, textStyle } from "./theme";
 import { activeFontFamily } from "./fonts";
 import { pressIn, pressOut } from "./pressFeedback";
 import { squeezeTextToWidth } from "./textFit";
-import { TITLE_ACTION_ROW, titleActionSlots, titleActionContent } from "./titleActionLayout";
+import { TITLE_ACTION_ROW, TITLE_SOUND_BUTTON, titleActionSlots, titleActionContent } from "./titleActionLayout";
 
 export interface TitleAction {
   readonly icon: GlyphName;
@@ -57,4 +57,23 @@ export class TitleActionRow {
       squeezeTextToWidth(text, width, 0.7);
     });
   }
+}
+
+/** 타이틀 오른쪽 아래의 소리 조절 칸. 버튼 줄과 같은 유리 판·같은 손맛을 쓰고 라벨 없이 아이콘만 선다. */
+export function addTitleSoundButton(scene: Phaser.Scene, onClick: () => void): Phaser.GameObjects.Container {
+  const { size, x, y, iconSize } = TITLE_SOUND_BUTTON;
+  const node = scene.add.container(x, y);
+  node.add(drawLayer(scene, 0, 0, chipPoints(size, size, {
+    bevel: { topLeft: size * 0.3, topRight: 0, bottomRight: size * 0.3, bottomLeft: 0 },
+  }), { fill: 0x1a1f27, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.55 }));
+  node.add(drawGlyph(scene, "sound", 0, 0, iconSize, COLOR.accent));
+  const hit = scene.add.rectangle(0, 0, size + 24, size + 24, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  hit.on("pointerdown", () => pressIn(node));
+  hit.on("pointerout", () => pressOut(node, "normal", { pop: false }));
+  hit.on("pointerup", () => {
+    pressOut(node);
+    onClick();
+  });
+  node.add(hit);
+  return node;
 }

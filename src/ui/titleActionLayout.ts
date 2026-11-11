@@ -20,6 +20,17 @@ export const TITLE_ACTION_ROW = {
   maxButtons: 3,
 } as const;
 
+/**
+ * 오른쪽 아래 소리 조절 칸. 라벨 없는 정사각 아이콘 칸이고 하단 줄과 같은 높이에 선다.
+ * 왼쪽 아래의 버전 표기와 같은 여백(48)만큼 화면 끝에서 들어온다.
+ */
+export const TITLE_SOUND_BUTTON = {
+  size: TITLE_ACTION_ROW.height,
+  x: BASE_WIDTH - 48 - TITLE_ACTION_ROW.height / 2,
+  y: TITLE_ACTION_ROW.centerY,
+  iconSize: 34,
+} as const;
+
 export interface TitleActionSlot {
   readonly x: number;
   readonly width: number;

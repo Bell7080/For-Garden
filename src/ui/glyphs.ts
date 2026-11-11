@@ -27,6 +27,7 @@ export type GlyphName =
   | "exchange"
   | "event"
   | "settings"
+  | "sound"
   | "auto"
   | "pause"
   | "speed"
@@ -412,6 +413,12 @@ export function drawGlyph(
         const angle = (Math.PI / 3) * i;
         g.lineBetween(Math.cos(angle) * r * 0.6, Math.sin(angle) * r * 0.6, Math.cos(angle) * r * 0.95, Math.sin(angle) * r * 0.95);
       }
+      break;
+    case "sound":
+      // 스피커 — 각진 몸통과 나팔, 그 앞으로 퍼지는 꺾인 음파 두 줄.
+      g.strokePoints(points(-r * 0.92, -r * 0.3, -r * 0.5, -r * 0.3, -r * 0.02, -r * 0.78, -r * 0.02, r * 0.78, -r * 0.5, r * 0.3, -r * 0.92, r * 0.3), true);
+      g.strokePoints(points(r * 0.26, -r * 0.34, r * 0.44, 0, r * 0.26, r * 0.34), false);
+      g.strokePoints(points(r * 0.52, -r * 0.7, r * 0.86, 0, r * 0.52, r * 0.7), false);
       break;
     case "pause":
       // 세로 막대 둘 — 멈춤. 어느 화면에서나 같은 뜻으로 읽히는 모양이라 달리 꾸미지 않는다.

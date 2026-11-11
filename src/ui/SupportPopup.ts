@@ -12,7 +12,8 @@ import { pressIn, pressOut } from "./pressFeedback";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { TextInputField } from "./TextInputField";
-import { chipX, supportContentWidth, supportPopupHeight, SUPPORT_POPUP } from "./supportPopupLayout";
+import { chipX, supportActionXs, supportContentWidth, supportPopupHeight, supportTabX, SUPPORT_POPUP } from "./supportPopupLayout";
+import { CONFIRM_DIALOG } from "./confirmDialogLayout";
 
 type Tab = "compose" | "mine";
 
@@ -63,17 +64,24 @@ export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer, options
   layer.open({ width: SUPPORT_POPUP.width, height, title: t("support.title"), dim: true, onClose: () => { alive = false; } }, (body) => {
     const tabs = scene.add.container(0, top);
     const view = scene.add.container(0, top);
-    body.add([tabs, view]);
+    // 조작 줄은 목록과 따로 선다 — 탭을 넘길 때 미끄러지는 것은 내용 판 하나뿐이다.
+    const actions = scene.add.container(0, top);
+    body.add([view, tabs, actions]);
 
     const notice = (title: string, message: string): void => layer.confirm({ title, message, confirmLabel: t("settings.action.confirm"), cancelLabel: false });
     const failure = (error: SupportError): void => notice(t("support.error.title"), t(`support.error.${error}` as TextKey));
 
     const paintTabs = (): void => {
       tabs.removeAll(true);
-      const { y, width, height: tabHeight, gap } = SUPPORT_POPUP.tabs;
+      const { lineY, tabY: y, tab: { width, height: tabHeight } } = SUPPORT_POPUP.footer;
+      // 내용과 밑동을 가르는 얇은 선 한 줄 — 라벨 탭이 그 위로 솟는다.
+      const line = scene.add.graphics();
+      line.lineStyle(2, COLOR.accent, 0.35);
+      line.lineBetween(-supportContentWidth() / 2, lineY, supportContentWidth() / 2, lineY);
+      tabs.add(line);
       ([["compose", "support.tab.compose"], ["mine", "support.tab.mine"]] as const).forEach(([id, labelKey], index) => {
         addCategoryTab(scene, tabs, {
-          x: (index - 0.5) * (width + gap), y, width, height: tabHeight, label: t(labelKey), selected: tab === id, face: "down",
+          x: supportTabX(index), y, width, height: tabHeight, label: t(labelKey), selected: tab === id,
           onSelect: () => {
             if (tab === id) return;
             const order = ["compose", "mine"] as const;
@@ -85,6 +93,21 @@ export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer, options
     };
 
     const width = supportContentWidth();
+    const actionY = SUPPORT_POPUP.footer.actionY;
+    const action = SUPPORT_POPUP.footer.action;
+
+    /** 진행 버튼 — 확인 창의 확정 판과 같은 한 벌(제 색으로 물든 판 + 양 끝 점). 아이콘을 얹지 않는다. */
+    const proceed = (x: number, label: string, onClick: () => void): Button => {
+      const button = new Button(scene, x, actionY, { width: action.width, height: action.height, fontSize: CONFIRM_DIALOG.button.fontSize, label, variant: "primary", fill: CONFIRM_DIALOG.confirmFill, decorDots: true, onClick });
+      actions.add(button);
+      return button;
+    };
+    /** 되돌리기·넘기기 버튼 — 옅은 유리 판. */
+    const secondary = (x: number, w: number, label: string, onClick: () => void): Button => {
+      const button = new Button(scene, x, actionY, { width: w, height: action.height, fontSize: 30, label, onClick });
+      actions.add(button);
+      return button;
+    };
 
     /** 안쪽 유리 판 — 몸판과 같이 왼쪽 위·오른쪽 아래만 깎이고 윗변에 얇은 강조선이 흐른다. */
     const glass = (parent: Phaser.GameObjects.Container, y: number, w: number, h: number, options: { fill?: number; edge?: number; bevel?: number } = {}): void => {
@@ -149,7 +172,7 @@ export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer, options
         width: width - c.form.pad * 2 + 20, height: c.body.height, value: bodyText, maxGlyphs: TICKET_BODY_MAX, ariaLabel: t("support.field.body"), multiline: true, fontSize: 28, palette: SUPPORT_FIELD,
         onChange: (value) => { bodyText = value; bodyCounter?.setText(bodyCount()); },
       }));
-      const submit = new Button(scene, 0, c.submit.y, { width: c.submit.width, height: c.submit.height, label: t("support.submit"), icon: "mail", variant: "primary", onClick: () => {
+      const submit = proceed(supportActionXs(1)[0], t("support.submit"), () => {
         // 비어 있으면 서버를 부르지 않고 같은 오류 문구로 알린다(서버도 같은 판정을 한다).
         if (ticketDraftProblem({ subject, body: bodyText })) { failure("invalid_text"); return; }
         submit.setEnabled(false);
@@ -160,13 +183,12 @@ export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer, options
           notice(t("support.sent.title"), t("support.sent.body", { no: result.value.ticketNo }));
           paint();
         });
-      } });
-      view.add(submit);
+      });
     };
 
     /** 비었거나 불러오는 중 — 판 가운데에 큰 우편 표식과 한 줄. */
     const placeholder = (text: string): void => {
-      const y = SUPPORT_POPUP.list.top + 260;
+      const y = SUPPORT_POPUP.list.top + 300;
       view.add(drawGlyph(scene, "mail", 0, y - 80, 96, COLOR.inkDimHex, 0.45, 4));
       view.add(scene.add.text(0, y + 20, text, textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
     };
@@ -206,14 +228,14 @@ export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer, options
         row.add(hit);
         view.add(row);
       });
-      const pagerY = c.list.top + c.list.rows * (c.list.rowHeight + c.list.rowGap) + c.pager.gapBelow + c.pager.height / 2;
-      const prev = new Button(scene, -240, pagerY, { width: 200, height: c.pager.height, label: t("support.prev"), icon: "page-prev", onClick: () => { page -= 1; paint(); } }).setEnabled(page > 0);
-      const next = new Button(scene, 240, pagerY, { width: 200, height: c.pager.height, label: t("support.next"), icon: "page-next", onClick: () => { page += 1; paint(); } }).setEnabled(page < paged.pages - 1);
-      view.add([prev, next, scene.add.text(0, pagerY, t("support.page", { page: page + 1, pages: paged.pages }), textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5)]);
+      // 넘기기는 조작 줄에 좌우로, 쪽 번호는 그 사이 가운데에 선다.
+      const prev = secondary(-260, 240, t("support.prev"), () => { page -= 1; paint(); }).setEnabled(page > 0);
+      const next = secondary(260, 240, t("support.next"), () => { page += 1; paint(); }).setEnabled(page < paged.pages - 1);
+      actions.add([prev, next, scene.add.text(0, actionY, t("support.page", { page: page + 1, pages: paged.pages }), textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5)]);
     };
 
     const openDetail = (id: string): void => {
-      view.removeAll(true);
+      view.removeAll(true); actions.removeAll(true);
       placeholder(t("support.loading"));
       void supportApi().get(id).then((result) => {
         if (!alive) return;
@@ -223,7 +245,7 @@ export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer, options
     };
 
     const paintDetail = (ticket: TicketDetail): void => {
-      view.removeAll(true);
+      view.removeAll(true); actions.removeAll(true);
       const c = SUPPORT_POPUP.detail;
       const tone = SUPPORT_TONE.status[ticket.status];
       glass(view, c.headY, width, c.headHeight, { edge: tone.edge, bevel: 20 });
@@ -258,7 +280,7 @@ export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer, options
       if (ticket.status !== "closed") {
         fieldLabel(c.replyLabelY, t("support.field.reply"));
         view.add(new TextInputField(scene, 0, c.replyFieldY, { width, height: c.replyHeight, value: "", maxGlyphs: TICKET_BODY_MAX, ariaLabel: t("support.field.reply"), multiline: true, fontSize: 26, palette: SUPPORT_FIELD, onChange: (value) => { reply = value; } }));
-        const send = new Button(scene, 190, c.sendY, { width: 340, height: SUPPORT_POPUP.submit.height, label: t("support.reply.send"), icon: "mail", variant: "primary", onClick: () => {
+        const send = proceed(supportActionXs(2)[1], t("support.reply.send"), () => {
           if (reply.trim().length === 0) { failure("invalid_text"); return; }
           send.setEnabled(false);
           void supportApi().addMessage(ticket.id, reply.trim()).then((result) => {
@@ -266,14 +288,13 @@ export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer, options
             if (!result.ok) { send.setEnabled(true); failure(result.error); return; }
             openDetail(ticket.id);
           });
-        } });
-        view.add(send);
+        });
       }
-      view.add(new Button(scene, ticket.status === "closed" ? 0 : -190, c.backY, { width: 300, height: SUPPORT_POPUP.submit.height, label: t("support.back"), icon: "page-prev", onClick: () => paint() }));
+      secondary(ticket.status === "closed" ? 0 : supportActionXs(2)[0], action.width, t("support.back"), () => paint());
     };
 
     const paint = (): void => {
-      view.removeAll(true);
+      view.removeAll(true); actions.removeAll(true);
       if (tab === "compose") paintCompose(); else paintMine();
     };
 

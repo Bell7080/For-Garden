@@ -78,14 +78,14 @@ const situational = (id: string, trigger: NonNullable<ProductDefinition["situati
 export const PREMIUM_PRODUCTS: readonly ProductDefinition[] = [
   // ── 한정 — 기간이 끝나면 사라진다. 남은 시간은 카드에 붉게 선다(`visibleUntil`). 운영이 이 갈래에 상품과 종료일을 더한다. ──
   // ── 상황 특가 — 막힌 순간 그 계정에만 72시간 선다(`core/situationalOffers.ts`). 노출·구매는 서버가 연 특가가 정하고 기간 값은 쓰지 않는다. ──
-  // 가치 장부: SSR 돌파 ₩29,900 — 만능 SSR 파편(젬 18,000으로 센다 · `PREMIUM_ITEM_GEM_VALUE`) + 젬 3,000 + 치즈케이크 3,000 + 골드 100만(2.7배).
+  // 가치 장부: SSR 돌파 ₩59,900 — 만능 SSR 파편(젬 45,000으로 센다 · `PREMIUM_ITEM_GEM_VALUE`) + 젬 3,000 + 치즈케이크 3,000 + 골드 100만(2.8배).
   //   만능 SSR 파편은 이 특가 말고는 나오지 않는 재화라(응태, 2026-11-11 — "결코 쉽게 안 뿌린다") 값의 대부분이 파편이다. 계정당 한 번이다(`breakthrough:SSR` 키).
-  // SR·R 돌파 ₩4,900 — 만능 파편 + 치즈케이크 2,000 + 젬 2,000 + 골드 50만(파편을 빼고 2.7배) · 연패 ₩4,900 — 치즈케이크 3,000 + 골드 100만 + 젬 500(2.7배)
+  // SR 돌파 ₩19,900 · R 돌파 ₩9,900 — 만능 파편(SR 7,500 · R 1,500) 둘·셋 + 치즈케이크 2,000 + 젬 2,000 + 골드 50만(3.1배 · 2.8배) · 연패 ₩4,900 — 치즈케이크 3,000 + 골드 100만 + 젬 500(2.7배)
   // 스테미나 ₩2,900 — 드링크+ 15 + 젬 1,000(2.8배) · 천장 ₩9,900 — 화석 10 + 젬 5,000(2.6배) · 지층 ₩9,900 — 같은 값
   // 레벨 10/20/30/40 ₩4,900/9,900/14,900/19,900 — 젬 2,500/5,000/7,500/10,000 + 화석 5/10/15/20(2.6~2.7배)
-  situational("offer-breakthrough-ssr", "breakthroughShort", "SSR 돌파 특가", 29_900, [item("universal-fragment-ssr", "만능 SSR 파편", 1), currency("gems", 3_000), currency("cheesecake", 3_000), currency("gold", 1_000_000)]),
-  situational("offer-breakthrough-sr", "breakthroughShort", "SR 돌파 특가", 4_900, [item("universal-fragment-sr", "만능 SR 파편", 2), currency("cheesecake", 2_000), currency("gems", 2_000), currency("gold", 500_000)]),
-  situational("offer-breakthrough-r", "breakthroughShort", "R 돌파 특가", 4_900, [item("universal-fragment-r", "만능 R 파편", 3), currency("cheesecake", 2_000), currency("gems", 2_000), currency("gold", 500_000)]),
+  situational("offer-breakthrough-ssr", "breakthroughShort", "SSR 돌파 특가", 59_900, [item("universal-fragment-ssr", "만능 SSR 파편", 1), currency("gems", 3_000), currency("cheesecake", 3_000), currency("gold", 1_000_000)]),
+  situational("offer-breakthrough-sr", "breakthroughShort", "SR 돌파 특가", 19_900, [item("universal-fragment-sr", "만능 SR 파편", 2), currency("cheesecake", 2_000), currency("gems", 2_000), currency("gold", 500_000)]),
+  situational("offer-breakthrough-r", "breakthroughShort", "R 돌파 특가", 9_900, [item("universal-fragment-r", "만능 R 파편", 3), currency("cheesecake", 2_000), currency("gems", 2_000), currency("gold", 500_000)]),
   situational("offer-stage-loss", "stageLoss", "재정비 특가", 4_900, [currency("cheesecake", 3_000), currency("gold", 1_000_000), currency("gems", 500)]),
   situational("offer-stamina", "staminaOut", "스테미나 특가", 2_900, [item("stamina-tonic-large", "에너지 드링크+", 15, 7), currency("gems", 1_000)]),
   situational("offer-pity", "pityNear", "확정 직전 특가", 9_900, [currency("fossil", 10), currency("gems", 5_000)]),

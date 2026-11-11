@@ -73,11 +73,11 @@ describe("상황 특가 상품", () => {
       expect(product.grants.some((grant) => grant.kind === "currency" && grant.currency === "rawStone"), product.id).toBe(false);
     }
   });
-  it("SSR 돌파 특가는 만능 SSR 파편 값을 치른다 — 다른 돌파 특가의 다섯 배 넘는 값, 파편은 한 장뿐", () => {
+  it("SSR 돌파 특가는 만능 SSR 파편 값을 치른다 — SR 돌파 특가의 세 배 값, 파편은 한 장뿐", () => {
     const ssr = offers.find((product) => product.id === "offer-breakthrough-ssr")!;
     const sr = offers.find((product) => product.id === "offer-breakthrough-sr")!;
     const price = (product: typeof ssr) => (product.acquisition as { basePriceKrw: number }).basePriceKrw;
-    expect(price(ssr)).toBeGreaterThanOrEqual(price(sr) * 5);
+    expect(price(ssr)).toBeGreaterThanOrEqual(price(sr) * 3);
     expect(ssr.grants.find((grant) => grant.kind === "item" && grant.itemId === "universal-fragment-ssr")).toMatchObject({ amount: 1 });
     // 파편을 세지 않으면 덤만으로는 값에 못 미친다 — 값의 대부분이 파편이다.
     const withoutFragment = { ...ssr, grants: ssr.grants.filter((grant) => grant.kind !== "item") };

@@ -4,6 +4,7 @@ import { captureGame, tap, tapBurst } from "./canvasInput";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { archaeologySitePopupLayout } from "../../src/ui/archaeologySitePopupLayout";
 import { ARCHAEOLOGY_SITES } from "../../src/data/archaeologySites";
+import { RATES_SPOT } from "../../src/ui/ratesButtonLayout";
 
 /**
  * 고고학 화면과 그 상점의 눈 검사.
@@ -132,8 +133,8 @@ test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, test
   await page.waitForTimeout(1_500);
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-bench.png`);
 
-  // 오른쪽 위 확률 정보 — 등급 상승 확률과 특성 목록을 한 장에서 읽는다.
-  await tap(page, 984, 262);
+  // 왼쪽 열 확률 정보 버튼(곁 상점 칩 아래) — 등급 상승 확률과 특성 목록을 한 장에서 읽는다.
+  await tap(page, RATES_SPOT.screen.x + 80, RATES_SPOT.screen.y);
   await page.waitForTimeout(700);
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-odds.png`);
   await tap(page, 100, 100);

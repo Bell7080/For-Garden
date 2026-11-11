@@ -10,6 +10,7 @@ import { BATTLE_CONTROLS } from "../../src/ui/battleStatusLayout";
 import { BATTLE_CONTRIBUTION_LAYOUT, CONTRIBUTION_TOGGLE } from "../../src/ui/battleContributionLayout";
 import { LAB_CHROME, LAB_TITLE } from "../../src/ui/labLayout";
 import { gachaRatesTierScreenY } from "../../src/ui/gachaRatesLayout";
+import { RATES_SPOT } from "../../src/ui/ratesButtonLayout";
 import { BACK_SLOT } from "../../src/ui/popupGeometry";
 import { DIALOGUE_PANEL_TOP } from "../../src/ui/dialogueStageLayout";
 import { PLAYER_LEVEL_UP_REWARD, playerExpToNext } from "../../src/core/playerLevel";
@@ -480,7 +481,7 @@ test("연구소 확률표는 등급 줄을 눌러 세부 확률을 펼치고, �
 
   const titles = (): Promise<string[] | undefined> => page.evaluate(() => window.__PF_DEBUG?.popupTitles);
   for (let banner = 0; banner < 3; banner += 1) {
-    await tap(page, LAB_CHROME.rates.x + 60, LAB_CHROME.rates.y);
+    await tap(page, RATES_SPOT.screen.x + 80, RATES_SPOT.screen.y);
     await expect.poll(async () => (await titles())?.length ?? 0).toBe(1);
     // 처음에는 SSR이 펼쳐져 있다. 세 배너의 표가 모두 잘리지 않는지 회귀 이미지로 남긴다.
     await captureGame(page, `test-results/${test.info().project.name}-lab-rates-${banner}-ssr.png`);

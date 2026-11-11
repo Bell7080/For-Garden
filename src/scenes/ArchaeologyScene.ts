@@ -22,7 +22,8 @@ import type { RuneInstance, RunePart, RuneRarity } from "../core/runes";
 import { addResearchBench, type ResearchBenchAction } from "../ui/ResearchBench";
 import { addSceneBackground, BACKGROUND, useBackgroundTexture } from "../ui/backgrounds";
 import { BottomNav } from "../ui/BottomNav";
-import { addRatesLink, addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
+import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
+import { addRatesButton, RATES_SPOT } from "../ui/RatesButton";
 import { Button } from "../ui/Button";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
@@ -86,14 +87,6 @@ const ARCHAEOLOGY = {
   tabY: BASE_HEIGHT - 268,
   tabWidth: 280,
   tabHeight: 84,
-  /**
-   * 확률 정보 — 제목 바로 아래의 **작고 흐린 글줄**이다(연구소와 같은 한 벌, `addRatesLink`).
-   *
-   * 황금빛 아이콘 칩으로 제목 줄 오른쪽에 세우던 때는 이 화면에서 가장 눈에 띄는 조작이 확률
-   * 정보였다 — 누르면 열리는 정보일 뿐 고르는 조작이 아니다. 상점은 그 자리를 떠나 연구소의
-   * 마일리지 상점과 **같은 자리·같은 아이콘 칩**(`SIDE_SHOP.screen`)에 선다.
-   */
-  rates: { x: 58, y: 262 },
   /**
    * 횟수 판.
    *
@@ -333,8 +326,10 @@ export class ArchaeologyScene extends Phaser.Scene {
     // **누른 자리에 붙이지 않는다** — 표 두 장이 든 큰 판이라 위로 붙이면 제목·횟수 줄을 덮는다.
     // 한동안 머무는 판은 화면 가운데에 서고 우하단 뒤로가기로 닫는다.
     // 확률 글줄은 탭마다 제 표를 연다 — 합성 탭에서는 합성 확률, 나머지는 특성 확률이다.
-    this.traitOddsLink = addRatesLink(this, ARCHAEOLOGY.rates.x, ARCHAEOLOGY.rates.y, t("rune.trait.odds"), () => openRuneTraitOdds({ scene: this, popups: this.popups }));
-    this.synthOddsLink = addRatesLink(this, ARCHAEOLOGY.rates.x, ARCHAEOLOGY.rates.y, t("archaeology.synth.oddsTitle"), () => openRuneSynthesisOdds({ scene: this, popups: this.popups }));
+    // 연구소와 같은 자리·같은 청록 버튼(`RATES_SPOT.screen` — 곁 상점 칩 바로 아래)이다.
+    const rates = RATES_SPOT.screen;
+    this.traitOddsLink = addRatesButton(this, rates.x, rates.y, t("rune.trait.odds"), () => openRuneTraitOdds({ scene: this, popups: this.popups }));
+    this.synthOddsLink = addRatesButton(this, rates.x, rates.y, t("archaeology.synth.oddsTitle"), () => openRuneSynthesisOdds({ scene: this, popups: this.popups }));
 
     this.view = this.add.container(0, 0);
     this.tabRow = this.add.container(0, 0);

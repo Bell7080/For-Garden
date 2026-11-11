@@ -13,7 +13,7 @@ import { sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets"
 import { RouletteSpinButton } from "./RouletteSpinButton";
 import { addCurrencyRain, addRouletteWheel, drawSparkle, ROULETTE_TONE, type RouletteWheelParts } from "./rouletteWheel";
 import { openRouletteRates } from "./RouletteRatesPopup";
-import { addRatesLink } from "./sideShop";
+import { addRatesButton } from "./RatesButton";
 import { BACKGROUND } from "./backgroundAssets";
 import { addEventPopupBackdrop } from "./eventBackdrop";
 import { popupArtShape, popupBodyShapeMask } from "./popupArt";
@@ -119,7 +119,7 @@ export async function openRoulettePopup(scene: Phaser.Scene, popups: PopupLayer,
     const burst = addBackdrop(scene, body);
     if (loops()) burstSpin = scene.tweens.add({ targets: burst, angle: 360, duration: 40000, repeat: -1 });
     body.add(scene.add.text(0, WHEEL.introY, t("roulette.intro"), textStyle({ role: "body", size: 26, color: "#283752", wrap: 800, align: "center" })).setOrigin(.5));
-    body.add(addRatesLink(scene, WHEEL.rates.x, WHEEL.rates.y, t("lab.rates"), () => openRouletteRates(scene, popups)));
+    body.add(addRatesButton(scene, WHEEL.rates.x, WHEEL.rates.y, t("lab.rates"), () => openRouletteRates(scene, popups)));
 
     addStand(scene, body);
     const wheelParts = addRouletteWheel(scene, body, 0, WHEEL.centerY, { radius: WHEEL.radius, amounts: true, bulbs: WHEEL.bulbs });

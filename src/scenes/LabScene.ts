@@ -28,7 +28,8 @@ import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openGachaRates } from "../ui/GachaRatesPopup";
 import { ResearchPullButton, type ResearchPullCostPart } from "../ui/ResearchPullButton";
-import { addRatesLink, addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
+import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
+import { addRatesButton, RATES_SPOT } from "../ui/RatesButton";
 import { LAB_CHROME, LAB_TITLE } from "../ui/labLayout";
 import { addBannerArrow, addBannerTitle, drawBannerPages } from "../ui/LabBannerTitle";
 import { WelcomeBannerCast } from "../ui/WelcomeBannerCast";
@@ -175,7 +176,7 @@ export class LabScene extends Phaser.Scene {
     });
     // 마일리지 상점은 로비 상점과 같은 아이콘 칩으로 왼쪽 중상단에 선다(고고학 상점과 같은 자리).
     addSideShopButton(this, SIDE_SHOP.screen.x, SIDE_SHOP.screen.y, SIDE_SHOP.screen.size, t("lab.mileageShop.short"), () => this.openMileageShop());
-    addRatesLink(this, LAB_CHROME.rates.x, LAB_CHROME.rates.y, t("lab.rates"), () => this.showRates());
+    addRatesButton(this, RATES_SPOT.screen.x, RATES_SPOT.screen.y, t("lab.rates"), () => this.showRates()).setDepth(LAB_CHROME.depth.panels);
 
     // 배너 전환 — 판때기가 아니라 옅은 유리 위의 꺾쇠(`addBannerArrow`).
     // **넘김 화살표는 모집판의 SD(첫 복원 연구의 SSR 넷)보다 위에서 손을 받는다.** 바깥 두 마리가 화살표

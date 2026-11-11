@@ -7,7 +7,7 @@ const NAV_TOP = BASE_HEIGHT - 180;
  * 연구소 화면의 자리.
  *
  * 모집 원화가 곧 배경이라 그 위에 탁한 막을 두르지 않고 **양옆만** 누른다(`vignette`). 확률 정보는
- * 왼쪽 위의 흐린 글줄이고, 연구 버튼 둘 위에 **SSR 확정까지** 판이 한 뼘 떠 선다.
+ * 곁 상점 칩 아래의 청록 버튼(`RATES_SPOT.screen`)이고, 연구 버튼 둘 위에 **SSR 확정까지** 판이 한 뼘 떠 선다.
  */
 export const LAB_CHROME = {
   vignette: { band: 260, strength: 0.55 },
@@ -18,7 +18,6 @@ export const LAB_CHROME = {
    * 서서 함께 밝아진다.
    */
   depth: { art: -30, incomingArt: -29, vignette: -28, panels: 5, arrows: 6 },
-  rates: { x: 36, y: 180 },
   pull: { y: NAV_TOP - 240, size: { width: 420, height: 150 }, oneTone: 0x7cc7ef, tenTone: 0xf58fb4 },
   pity: { y: NAV_TOP - 440, width: 560, height: 84 },
   /**
@@ -39,7 +38,7 @@ export function labPityGap(): number {
 /**
  * 모집판 제목 블록과 넘김 조작의 자리.
  *
- * 제목은 상단 재화 줄 바로 아래에서 시작하고, 왼쪽 위의 확률 글줄(`rates`)과 곁 상점 칩을 피하도록
+ * 제목은 상단 재화 줄 바로 아래에서 시작하고, 왼쪽 열의 곁 상점 칩·확률 버튼을 피하도록
  * 폭을 좁혀 가운데에 선다. 화살표는 판때기가 아니라 옅은 유리 위의 꺾쇠이고, 몇 번째 배너인지는
  * 버튼과 하단 탭 사이의 마름모 줄이 말한다.
  */

@@ -201,7 +201,7 @@ export const GUILD_ID = {
   "guild.war.deck.edit": "Ubah Tim Bertahan",
   "guild.war.party.deckTitle": "Tim Bertahan Perang Guild",
   "guild.war.autoPlacedToast": "Ditempatkan di Perang Guild dengan tim bertahan arena duel",
-  "guild.war.edit.open": "Atur",
+  "guild.war.edit.open": "Atur Posisi",
   "guild.war.edit.done": "Selesai",
   "guild.war.edit.auto": "Atur Otomatis",
   "guild.war.edit.autoConfirm": "Menata ulang semua anggota guild yang memasang tim bertahan berdasarkan Kekuatan Tempur pertahanan. Yang terkuat menempati slot pemimpin → elite → biasa.",

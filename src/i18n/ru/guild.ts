@@ -201,7 +201,7 @@ export const GUILD_RU = {
   "guild.war.deck.edit": "Изменить защиту",
   "guild.war.party.deckTitle": "Защита в войне гильдий",
   "guild.war.autoPlacedToast": "Размещено в войне гильдий с защитой арены дуэлей",
-  "guild.war.edit.open": "Правка",
+  "guild.war.edit.open": "Расстановка",
   "guild.war.edit.done": "Готово",
   "guild.war.edit.auto": "Авторасстановка",
   "guild.war.edit.autoConfirm": "Перерасставляет всех участников гильдии с защитой по боевой мощи обороны. Сильнейшие занимают места главаря → элиты → обычные.",

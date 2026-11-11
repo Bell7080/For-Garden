@@ -201,7 +201,7 @@ export const GUILD_EN = {
   "guild.war.deck.edit": "Edit Defense Deck",
   "guild.war.party.deckTitle": "Guild War Defense Deck",
   "guild.war.autoPlacedToast": "Deployed to the Guild War with your Arena defense deck",
-  "guild.war.edit.open": "Edit",
+  "guild.war.edit.open": "Edit Layout",
   "guild.war.edit.done": "Done",
   "guild.war.edit.auto": "Auto Arrange",
   "guild.war.edit.autoConfirm": "Rearranges every guild member with a defense deck by defense Combat Power. The strongest take the Leader slots, then Elite, then Regular.",

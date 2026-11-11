@@ -201,7 +201,7 @@ export const GUILD_VI = {
   "guild.war.deck.edit": "Sửa đội phòng thủ",
   "guild.war.party.deckTitle": "Đội phòng thủ chiến bang hội",
   "guild.war.autoPlacedToast": "Đã bố trí vào chiến bang hội bằng đội phòng thủ đấu trường",
-  "guild.war.edit.open": "Chỉnh sửa",
+  "guild.war.edit.open": "Sửa bố trí",
   "guild.war.edit.done": "Xong",
   "guild.war.edit.auto": "Tự bố trí",
   "guild.war.edit.autoConfirm": "Bố trí lại mọi thành viên bang hội đã đặt đội phòng thủ theo lực chiến phòng thủ. Mạnh nhất đứng ô thủ lĩnh → tinh nhuệ → thường.",

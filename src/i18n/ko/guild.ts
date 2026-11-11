@@ -215,7 +215,7 @@ export const GUILD_KO = {
   "guild.war.deck.edit": "방어덱 수정",
   "guild.war.party.deckTitle": "길드전 방어덱",
   "guild.war.autoPlacedToast": "결투장 방어덱으로 길드전에 배치되었습니다",
-  "guild.war.edit.open": "편집",
+  "guild.war.edit.open": "배치 편집",
   "guild.war.edit.done": "완료",
   "guild.war.edit.auto": "자동 배치",
   "guild.war.edit.autoConfirm": "방어덱을 세운 길드원 모두를 방어 전투력 순으로 다시 세웁니다. 강한 순서대로 우두머리 → 정예 → 일반 칸에 섭니다.",

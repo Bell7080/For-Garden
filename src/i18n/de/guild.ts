@@ -201,7 +201,7 @@ export const GUILD_DE = {
   "guild.war.deck.edit": "Verteidigung ändern",
   "guild.war.party.deckTitle": "Gildenkrieg-Verteidigung",
   "guild.war.autoPlacedToast": "Mit deiner Duell-Verteidigung im Gildenkrieg aufgestellt",
-  "guild.war.edit.open": "Bearbeiten",
+  "guild.war.edit.open": "Aufstellung",
   "guild.war.edit.done": "Fertig",
   "guild.war.edit.auto": "Automatisch aufstellen",
   "guild.war.edit.autoConfirm": "Stellt alle Gildenmitglieder mit Verteidigung nach Kampfkraft neu auf. Die Stärksten besetzen Anführer → Elite → Normal.",

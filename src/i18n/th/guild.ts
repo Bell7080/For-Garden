@@ -201,7 +201,7 @@ export const GUILD_TH = {
   "guild.war.deck.edit": "แก้ไขทีมป้องกัน",
   "guild.war.party.deckTitle": "ทีมป้องกันสงครามกิลด์",
   "guild.war.autoPlacedToast": "วางทีมป้องกันจากสนามประลองในสงครามกิลด์แล้ว",
-  "guild.war.edit.open": "แก้ไข",
+  "guild.war.edit.open": "แก้ไขการจัดวาง",
   "guild.war.edit.done": "เสร็จสิ้น",
   "guild.war.edit.auto": "จัดวางอัตโนมัติ",
   "guild.war.edit.autoConfirm": "จัดสมาชิกกิลด์ทุกคนที่ตั้งทีมป้องกันใหม่ตามพลังต่อสู้ป้องกัน ผู้ที่แข็งแกร่งที่สุดจะยืนช่องหัวหน้า → ชั้นยอด → ทั่วไปตามลำดับ",

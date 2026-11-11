@@ -201,7 +201,7 @@ export const GUILD_ZH_HANS = {
   "guild.war.deck.edit": "修改防守阵容",
   "guild.war.party.deckTitle": "公会战防守阵容",
   "guild.war.autoPlacedToast": "已用决斗场防守阵容部署到公会战",
-  "guild.war.edit.open": "编辑",
+  "guild.war.edit.open": "编辑布阵",
   "guild.war.edit.done": "完成",
   "guild.war.edit.auto": "自动部署",
   "guild.war.edit.autoConfirm": "按防守战斗力重新部署所有已设置防守阵容的公会成员。由强到弱依次站上首领 → 精英 → 普通位置。",

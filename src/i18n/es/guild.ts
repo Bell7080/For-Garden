@@ -201,7 +201,7 @@ export const GUILD_ES = {
   "guild.war.deck.edit": "Editar defensa",
   "guild.war.party.deckTitle": "Defensa de guerra de gremio",
   "guild.war.autoPlacedToast": "Colocado en la guerra de gremio con tu defensa del duelo",
-  "guild.war.edit.open": "Editar",
+  "guild.war.edit.open": "Editar posiciones",
   "guild.war.edit.done": "Listo",
   "guild.war.edit.auto": "Colocación automática",
   "guild.war.edit.autoConfirm": "Recoloca a todos los miembros del gremio con defensa según su poder de combate defensivo. Los más fuertes ocupan jefe → élite → normal.",

@@ -201,7 +201,7 @@ export const GUILD_ZH_HANT = {
   "guild.war.deck.edit": "修改防守陣容",
   "guild.war.party.deckTitle": "公會戰防守陣容",
   "guild.war.autoPlacedToast": "已用決鬥場防守陣容部署到公會戰",
-  "guild.war.edit.open": "編輯",
+  "guild.war.edit.open": "編輯佈陣",
   "guild.war.edit.done": "完成",
   "guild.war.edit.auto": "自動部署",
   "guild.war.edit.autoConfirm": "按防守戰鬥力重新部署所有已設定防守陣容的公會成員。由強到弱依次站上首領 → 精英 → 普通位置。",

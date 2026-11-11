@@ -201,7 +201,7 @@ export const GUILD_JA = {
   "guild.war.deck.edit": "防衛デッキ編集",
   "guild.war.party.deckTitle": "ギルド戦 防衛デッキ",
   "guild.war.autoPlacedToast": "決闘場の防衛デッキでギルド戦に配置されました",
-  "guild.war.edit.open": "編集",
+  "guild.war.edit.open": "配置編集",
   "guild.war.edit.done": "完了",
   "guild.war.edit.auto": "自動配置",
   "guild.war.edit.autoConfirm": "防衛デッキを置いたギルドメンバー全員を防衛戦闘力順に並べ直します。強い順にボス → 精鋭 → 一般の枠に立ちます。",

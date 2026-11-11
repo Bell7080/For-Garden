@@ -2600,14 +2600,14 @@
     "Размещено в войне гильдий с защитой арены дуэлей"
   ],
   "guild.war.edit.open": [
-    "编辑",
-    "แก้ไข",
-    "Chỉnh sửa",
-    "Atur",
-    "Editar",
-    "Editar",
-    "Bearbeiten",
-    "Правка"
+    "编辑布阵",
+    "แก้ไขการจัดวาง",
+    "Sửa bố trí",
+    "Atur Posisi",
+    "Editar posiciones",
+    "Editar posições",
+    "Aufstellung",
+    "Расстановка"
   ],
   "guild.war.edit.done": [
     "完成",

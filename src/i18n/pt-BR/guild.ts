@@ -201,7 +201,7 @@ export const GUILD_PT_BR = {
   "guild.war.deck.edit": "Editar defesa",
   "guild.war.party.deckTitle": "Defesa da guerra de guilda",
   "guild.war.autoPlacedToast": "Posicionado na guerra de guilda com sua defesa do duelo",
-  "guild.war.edit.open": "Editar",
+  "guild.war.edit.open": "Editar posições",
   "guild.war.edit.done": "Concluir",
   "guild.war.edit.auto": "Posicionamento automático",
   "guild.war.edit.autoConfirm": "Reposiciona todos os membros da guilda com defesa pelo Poder de Combate defensivo. Os mais fortes ocupam chefe → elite → comum.",

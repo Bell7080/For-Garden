@@ -1482,6 +1482,8 @@ export const RELICS: RelicDef[] = [
       id: "ark-basic",
       name: "짓누르기",
       power: 240,
+      // 한 방에 제 방어력이 실린다 — 단단할수록 무겁다. 공속 50의 느린 손이라 한 번에 얹는 몫을 크게 둔다.
+      secondaryScaling: { stat: "def", power: 50 },
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -2458,6 +2460,9 @@ export const RELICS: RelicDef[] = [
       name: "발경(發勁)",
       // 순환이 위력·대상·효과를 걸음마다 통째로 정하므로 이 값들은 쓰이지 않는 기본값이다.
       power: 90,
+      // 세 걸음 **모두에** 제 방어력이 실린다(걸음은 기본 공격의 계수를 물려받는다). 세 걸음이 다 광역이라
+      // 맞는 적 수만큼 곱해지므로 아크보다 작게 둔다.
+      secondaryScaling: { stat: "def", power: 40 },
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -4073,6 +4078,8 @@ export const RELICS: RelicDef[] = [
        */
       power: 35,
       scalingStat: "ap",
+      // 캔에 저항력이 실린다 — 탱커 슬롯에서 주문력을 다시 올리지 않고(위 주석) 몸의 값에서 덤을 뽑는다.
+      secondaryScaling: { stat: "res", power: 50 },
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",

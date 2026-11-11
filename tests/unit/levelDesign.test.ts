@@ -126,7 +126,8 @@ function battleStage(id: string): BattleStageDef {
 const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole, BattleArenaMode, number, number][] = [
   ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", "stage", 14.5, 0.84],
   // 적 비공격 궁극기 AI 복구 후 재측정. 능력치/목표 띠는 조정하지 않았다.
-  ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", "stage", 23.9, 0.84],
+  // v0.422.4: 참조 파티의 엘라 발경에 방어력 40%가 실려 23.9 → 19.9초로 줄었다(잔여 체력은 그대로).
+  ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", "stage", 19.9, 0.84],
   ["스토리 1-5 정예", 10, () => getStageEnemies(battleStage("1-5")), "elite", "stage", 11.9, 0.64],
   // 엘라 「금강불괴」의 진입 막이 실제로 지급되면서(v0.250.2) 43.7 → 45.8로 늘었다.
   // v0.308.2: 궁극기 게이지가 비용까지만 차면서(처치 환급 제외) 46.7 → 42.0으로 줄었다. 1-5는 레벨을 15 → 17로 올려 띠를 지켰다.
@@ -138,9 +139,11 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   ["현상수배 1단계", 5, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "normal", "bounty", 5.6, 0.83],
   // v0.362.0: 10단계로 늘리며 최상단(LV60) 첫 라운드가 토비 → 아모로 바뀌어 8.2 → 18.5초로 길어졌다.
   ["현상수배 10단계", 60, () => [bountyRoundEnemy(BOUNTY_TIERS.find(({ order }) => order === 10)!.rounds[0])], "normal", "bounty", 18.5, 0.98],
-  ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 30.1, 0.85],
+  // v0.422.4: 엘라 발경의 방어력 40%는 세 걸음 모두 광역이라 몰려오는 무리에서 크게 든다 — 30.1 → 26.0초.
+  ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 26.0, 0.85],
   // v0.395.4: 전투 코어의 hypot·sin·cos·atan2·exp·pow를 결정적 구현(detMath)으로 바꾸자 열다섯이 엉키는 난전이 마지막 자리부터 달라져 52.8 → 57.3초로 재측정됐다.
-  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 57.3, 0.79],
+  // v0.422.4: 같은 이유로 57.3 → 44.9초 — 무리 띠보다 길던 한 판이 그만큼 가까워졌다.
+  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 44.9, 0.79],
   ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 18.1, 0.95],
   // 정예가 보호막을 깨고(코마) 치유를 깎는 자리가 되어 평균이 37.3 → 29.5로 줄고 띠 안에 들었다.
   ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 12.4, 0.64],
@@ -176,11 +179,12 @@ describe("콘텐츠별 전투 시간 실측", () => {
      * **v0.275.14에서 정예 체력 몫을 ×3.3 → ×8로 올렸다**(응태 결정 — 1-5를 정예답게, 1-10은 직접 깨 보며 조율). 1-5는 12 → 21초로
      * 띠 안에 들어왔고, 1-10은 52초·원정 10층은 67초(사실상 못 깸)로 띠를 벗어났다. 원정 정예는 레벨 디자인을 다시 할 때 함께 본다.
      * **v0.282.9에서 ×8 → ×4로 내렸다**(응태 결정 — R 토비로 직접 떠 보니 1-5를 이기지 못했다). 1-5 14.5초(띠 아래로 되돌아옴)·1-10 46.7초·원정 10층 38.3초(잔여 체력 0.36).
+     * **v0.422.4에서 엘라 발경에 방어력 40%가 실리자** 대작전 1단계가 30.1 → 26.0초로 줄어 무리 띠 안에 들었다.
      */
     const offTarget = AUDIT.filter(([, , , role, , ttk, hp]) => !isEncounterOnTarget(role, { ttkSeconds: ttk, remainingHp: hp }));
     expect(offTarget.map(([label]) => label)).toEqual([
       "스토리 1-9", "스토리 1-5 정예", "스토리 1-10 정예", "스토리 3-9",
-      "현상수배 1단계", "현상수배 10단계", "대작전 1단계", "대작전 8단계", "원정 일반 5층", "원정 정예 10층",
+      "현상수배 1단계", "현상수배 10단계", "대작전 8단계", "원정 일반 5층", "원정 정예 10층",
     ]);
   });
 });

@@ -20,7 +20,7 @@ export type DamagePreview =
       power: number;
       stat: ScalingStatId;
       /** 위력을 두 능력치가 나눠 갖는 스킬만 갖는 여벌 축이다. 태그 문장이 두 축을 함께 말한다. */
-      secondary?: { power: number; stat: ScalingStatId };
+      secondary?: { power: number; stat: ScalingStatId | "res" };
       label: "damage";
     };
 
@@ -99,10 +99,11 @@ export function previewSkillDamage(attacker: Combatant, skill: Skill, target?: C
     return {
       kind: "scaling",
       // 두 축이 나눠 가진 위력은 합친 값이 곧 이 스킬의 피해라, 라벨도 그 합을 보여 준다.
-      amount: Math.round(primary + (secondary ? base(secondary.stat) * secondary.power / 100 : 0)),
+      amount: Math.round(primary + (secondary
+        ? (secondary.stat === "res" ? attacker.def.stats.res : base(secondary.stat)) * secondary.power / 100 : 0)),
       power: skill.power,
       stat: label(skill.scalingStat),
-      secondary: secondary && { power: secondary.power, stat: label(secondary.stat) },
+      secondary: secondary && { power: secondary.power, stat: secondary.stat === "res" ? "res" : label(secondary.stat) },
       label: "damage",
     };
   }

@@ -1435,7 +1435,7 @@ function skillDamagePhrase(skill: DescribedSkill, stats: SkillDescriptionStats):
       : t("skill.damage.value", { amount: composite.term, type });
   }
   if (stats.damage !== undefined) return t("skill.damage.value", { amount: stats.damage, type });
-  const label = (scaling: "atk" | "ap" | "def" | "hp" | undefined): string => statName(scaling === "def" ? "def"
+  const label = (scaling: "atk" | "ap" | "def" | "hp" | "res" | undefined): string => statName(scaling === "def" || scaling === "res" ? scaling
     : scaling === "hp" ? "hp"
       : scaling === "ap" || (scaling === undefined && skill.damageType === "magical") ? "ap"
         : "atk");

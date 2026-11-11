@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { RANKED_ARENA_RULES, ARENA_HIDDEN_BAN, ARENA_SLOTS, startArena, applyArenaAction, arenaTurn, arenaCanAct, arenaPickable, arenaRules, publicArenaRoom, settleArena, arenaPosition, ARENA_ABSENCE_MS, type ArenaRoom, type ArenaRules } from '../../src/core/liveArena';
 import { createDefaultSession, createInitialRelicProgress } from '../../src/state/session';
 import { saveManager } from '../../src/state/SaveManager';
-import { arenaPlayer } from '../../src/server/liveArena';
+import { arenaPlayer, handleArenaCall } from '../../src/server/liveArena';
 function fixture(hidden=false,ban=true,extra:Partial<ArenaRules>={}):ArenaRoom {
  const state=createDefaultSession();state.owned=new Set([...state.owned,'rex','spino','mette','stella']);
  for(const id of state.owned)state.relicProgress[id]=createInitialRelicProgress();state.party=['rex','mette','stella'];state.favorite='rex';
@@ -10,6 +10,21 @@ function fixture(hidden=false,ban=true,extra:Partial<ArenaRules>={}):ArenaRoom {
 }
 const place=(r:ArenaRoom,side:number,id:string,slot:number)=>applyArenaAction(r,r.players[side].id,{kind:'place',relicId:id,slot},1000);
 describe('live arena authoritative preparation',()=>{
+ it('expires invitations on status polling without global room cleanup',()=>{
+  const r={...fixture(),phase:'invited' as const,deadline:1000};
+  expect(applyArenaAction(r,'b',{kind:'tick'},999).phase).toBe('invited');
+  expect(applyArenaAction(r,'a',{kind:'tick'},1000).phase).toBe('declined');
+  expect(r.phase).toBe('invited');
+ });
+ it('polls through the read-only status RPC and still strips private state',async()=>{
+  const rpc=vi.fn(async(name:string)=>name==='server_arena_status'
+   ? {playerId:'a',score:1000,wins:0,losses:0,room:null,incoming:[],records:[{id:'private',data:{secret:true}}],receiptFingerprint:null}
+   : {score:1000,wins:0,losses:0});
+  const out=await handleArenaCall(rpc,'a','get',[]);
+  expect(rpc.mock.calls.map(([name])=>name)).toEqual(['server_arena_status','server_arena_standing']);
+  expect(out).toMatchObject({records:[],room:null});
+  expect(out).not.toHaveProperty('receiptFingerprint');
+ });
  it('requires four owned relics for one ban and a three-person team',()=>{const r=fixture();expect(()=>startArena(r,r.players.map(p=>({...p,roster:p.roster.slice(0,3)})),0)).toThrow('ARENA_ROSTER');});
  it('bans blind and simultaneously, then removes the banned relic from both pools',()=>{
   let r=fixture();expect(arenaCanAct(r,0)).toBe(true);expect(arenaCanAct(r,1)).toBe(true);

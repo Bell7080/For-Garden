@@ -26,7 +26,9 @@ export async function handleArenaCall(rpc:ArenaRpc, player:string, method:string
   if(!['status','queue','cancel','invite','accept','decline','practice','action','finish'].includes(kind??'')) throw Error('ARENA_ACTION');
   let rules=input.rules===undefined?RANKED_ARENA_RULES:arenaRules(input.rules);
   if(kind==='queue') rules=RANKED_ARENA_RULES;
-  let context=await rpc('server_arena_context',{p_player:player,p_kind:kind,p_room:input.roomId??null,p_target:input.target??null,p_rules:rules,p_request:requestId??null}) as ArenaContext;
+  let context=await (kind==='status'
+    ? rpc('server_arena_status',{p_player:player,p_room:input.roomId??null})
+    : rpc('server_arena_context',{p_player:player,p_kind:kind,p_room:input.roomId??null,p_target:input.target??null,p_rules:rules,p_request:requestId??null})) as ArenaContext;
   let room=context.room;
   const fingerprint={call:JSON.stringify([method,args])};
   const applied=context.receiptFingerprint!==null && context.receiptFingerprint!==undefined;

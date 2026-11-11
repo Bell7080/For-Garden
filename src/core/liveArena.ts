@@ -96,7 +96,7 @@ export function applyArenaAction(source: ArenaRoom, actor: string, action: Arena
   const r = structuredClone(source), side = r.players.findIndex(p => p.id === actor);
   if (side < 0) throw Error('ARENA_FORBIDDEN');
   if (['done','declined'].includes(r.phase)) return r;
-  if(r.phase==='invited') { if(action.kind==='forfeit' && side===0) {r.phase='declined';return r;} return r; }
+  if(r.phase==='invited') { if(now>=r.deadline || (action.kind==='forfeit' && side===0)) r.phase='declined'; return r; }
   if (action.kind === 'forfeit') { r.phase='done'; r.winner=1-side; r.reason='forfeit'; return r; }
   if (now >= r.deadline && r.phase !== 'battle') {
     // 동시에 고르는 단계(밴·비공개 배치)는 둘 다 늦으면 무승부, 한쪽만 늦으면 그쪽의 패배다.

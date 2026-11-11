@@ -19,7 +19,7 @@ export const NEWBIE_GROWTH_LAYOUT = {
     finalSize: 124, finalX: 410,
   },
   days: { y: -182, width: 124, height: 96, gap: 8 },
-  list: { firstY: -46, cardWidth: 950, cardHeight: 140, gap: 152, rewardSize: 104 },
+  list: { firstY: -46, cardWidth: 950, cardHeight: 140, gap: 152, rewardSize: 100, rewardGap: 12 },
   claim: { y: 730, width: 420, height: 96 },
 } as const;
 

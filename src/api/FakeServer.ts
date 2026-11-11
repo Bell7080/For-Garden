@@ -3784,7 +3784,7 @@ export class FakeServer implements GameApi {
     const claimed = new Set(normalizeAchievementState(state.achievements).growth ?? []);
     return {
       active: window.active, day: window.day, ...(window.nextDayAt ? { nextDayAt: window.nextDayAt } : {}), endsAt: window.endsAt,
-      goals: NEWBIE_GROWTH_GOALS.map((goal) => ({ id: goal.id, day: goal.day, metric: goal.metric, target: goal.target, value: facts[goal.metric], reward: { ...goal.reward }, state: newbieGrowthGoalState(goal, facts, claimed, window.day) })),
+      goals: NEWBIE_GROWTH_GOALS.map((goal) => ({ id: goal.id, day: goal.day, metric: goal.metric, target: goal.target, value: facts[goal.metric], rewards: goal.rewards.map((reward) => ({ ...reward })), state: newbieGrowthGoalState(goal, facts, claimed, window.day) })),
       milestones: NEWBIE_GROWTH_MILESTONES.map((milestone) => ({ id: milestone.id, goals: milestone.goals, reward: { ...milestone.reward }, state: newbieGrowthMilestoneState(milestone, claimed) })),
       claimedGoals: newbieGrowthClaimedGoalCount(claimed),
       claimableCount: window.active ? newbieGrowthClaimableCount(facts, claimed, window.day) : 0,

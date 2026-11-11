@@ -381,8 +381,10 @@ export class NewbieGrowthPopup {
     stripe.fillStyle(tone, claimed || locked ? 0.35 : 0.95).fillPoints(toPoints(slantedRect(10, list.cardHeight - 46, 8)), true);
     row.add(stripe);
 
-    const rewardX = halfW - 24 - list.rewardSize / 2;
-    const textRight = rewardX - list.rewardSize / 2 - 26;
+    const count = goal.rewards.length;
+    const groupWidth = count * list.rewardSize + (count - 1) * list.rewardGap;
+    const rewardX = halfW - 24 - groupWidth / 2;
+    const textRight = rewardX - groupWidth / 2 - 26;
     const left = -halfW + 60;
     const ink = claimed || locked ? COLOR.inkDim : COLOR.ink;
     const objective = this.scene.add.text(left, -24, objectiveText(goal), textStyle({ role: "display", size: 30, color: ink })).setOrigin(0, 0.5);
@@ -397,13 +399,17 @@ export class NewbieGrowthPopup {
 
     const holder = this.scene.add.container(rewardX, 0);
     row.add(holder);
-    if (claimable) this.addHalo(holder, list.rewardSize);
-    const reward = this.rewardFrame(goal.reward, list.rewardSize, claimed ? "claimed" : claimable ? "claimable" : "normal", claimable ? () => void this.claim([goal.id]) : undefined);
-    if (!claimable && !claimed) reward.setAlpha(locked ? 0.35 : 0.6);
-    holder.add(reward);
-    if (claimed) holder.add(this.checkMark(list.rewardSize * 0.34));
+    goal.rewards.forEach((item, index) => {
+      const slot = this.scene.add.container(-groupWidth / 2 + list.rewardSize / 2 + index * (list.rewardSize + list.rewardGap), 0);
+      holder.add(slot);
+      if (claimable) this.addHalo(slot, list.rewardSize);
+      const reward = this.rewardFrame(item, list.rewardSize, claimed ? "claimed" : claimable ? "claimable" : "normal", claimable ? () => void this.claim([goal.id]) : undefined);
+      if (!claimable && !claimed) reward.setAlpha(locked ? 0.35 : 0.6);
+      slot.add(reward);
+      if (claimed) slot.add(this.checkMark(list.rewardSize * 0.34));
+    });
     if (claimable) {
-      new NotificationDot(this.scene, holder, { x: list.rewardSize / 2 - 8, y: -list.rewardSize / 2 + 8 });
+      new NotificationDot(this.scene, holder, { x: groupWidth / 2 - 8, y: -list.rewardSize / 2 + 8 });
       if (motionPolicy(session.settings).nonEssentialDistanceFactor > 0) this.scene.tweens.add({ targets: holder, scale: { from: 1, to: 1.08 }, duration: 620, yoyo: true, repeat: -1, ease: "Sine.InOut" });
     }
   }

@@ -93,7 +93,7 @@ export function claimNewbieGrowth(facts: NewbieGrowthFacts, claimed: ReadonlySet
     if (newbieGrowthGoalState(goal, facts, next, openDay) !== "claimable") continue;
     next.add(goal.id);
     goalIds.push(goal.id);
-    earned.push(goal.reward);
+    earned.push(...goal.rewards);
   }
   const milestoneIds: string[] = [];
   for (const milestone of NEWBIE_GROWTH_MILESTONES) {

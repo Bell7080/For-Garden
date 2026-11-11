@@ -8,12 +8,13 @@ import type { WalletItemKey } from "./items";
  * 목표는 업적이 이미 읽는 값(`achievementFacts`)을 그대로 쓰고, 그 밖에는 셋만 더한다 — 애착 렐릭 정하기 · 길드 가입 ·
  * 첫 한계 돌파. 차례는 콘텐츠 해금(`CONTENT_UNLOCKS`)을 따라가 그날 열린 목표가 그날 손닿는 곳에 있게 짰다.
  *
- * 보상(승인 2026-11-09, 응태 재구성 2026-11-11): 목표 보상은 **치즈케이크 위주**다 — 날마다 넷은 치즈케이크(60~100, 뒤로 갈수록
- * 오른다), 다섯째는 젬 100. 1일차 첫 목표만 치즈케이크 대신 **토리카 파편 1개**다(가이드가 토리카라 첫날 그 아이의 한계 돌파를
- * 한 걸음 당겨 준다). 누적 마일스톤은 10개 화석 3 · 20개 호박석 3 · 30개 화석 5 · 35개 **SR 렐릭 선택권**(가방 아이템 그대로 —
- * 가방에서 쓰면 같은 고르기 창이 연다).
- * 재화 몫은 치즈케이크 2,100(젬 1,050) + 젬 700 + 화석 8 · 호박석 3(젬 3,300) = 젬 환산 5,050으로 승인 예산과 같다. 토리카 파편과
- * SR 선택권은 응태가 고른 덤이라 이 셈 밖이다. 예산은 `EVENT_REWARD_BUDGET.limited["newbie-growth"]`.
+ * 보상(승인 2026-11-09, 응태 재구성 2026-11-11 · 같은 날 증액): 목표 하나가 두 칸을 준다. 날마다 앞의 넷은 **치즈케이크(60~100,
+ * 뒤로 갈수록 오른다) + 젬 50**, 다섯째는 **젬 100 + 화석 1**이다. 1일차 첫 목표만 치즈케이크 대신 **토리카 파편 1개**다(가이드가
+ * 토리카라 첫날 그 아이의 한계 돌파를 한 걸음 당겨 준다). 누적 마일스톤은 10개 화석 3 · 20개 호박석 3 · 30개 화석 5 · 35개
+ * **SR 렐릭 선택권**(가방 아이템 그대로 — 가방에서 쓰면 같은 고르기 창이 연다).
+ * 재화 몫은 치즈케이크 2,100(젬 1,050) + 젬 2,100 + 화석 7(젬 2,100) + 마디 화석 8 · 호박석 3(젬 3,300) = 젬 환산 8,550이다
+ * ("치즈케이크랑 젬/화석 등도 추가로" — 응태 2026-11-11, 5,050에서 증액). 토리카 파편과 SR 선택권은 응태가 고른 덤이라 이 셈
+ * 밖이다. 예산은 `EVENT_REWARD_BUDGET.limited["newbie-growth"]`.
  *
  * 이 파일은 저장 검증(`achievementState.ts`)이 읽으므로 무거운 표를 import하지 않는다.
  */
@@ -38,7 +39,7 @@ export type NewbieGrowthReward =
   | { readonly kind: "item"; readonly itemId: string; readonly amount: number }
   | { readonly kind: "fragment"; readonly relicId: string; readonly amount: number };
 
-export interface NewbieGrowthGoal { readonly id: string; readonly day: number; readonly metric: NewbieGrowthMetric; readonly target: number; readonly reward: NewbieGrowthReward }
+export interface NewbieGrowthGoal { readonly id: string; readonly day: number; readonly metric: NewbieGrowthMetric; readonly target: number; readonly rewards: readonly NewbieGrowthReward[] }
 
 const DAY_GOALS: ReadonlyArray<ReadonlyArray<readonly [NewbieGrowthMetric, number]>> = [
   [["storyStagesCleared", 5], ["favoriteChosen", 1], ["feedings", 3], ["researchPulls", 10], ["harvests", 1]],
@@ -52,19 +53,25 @@ const DAY_GOALS: ReadonlyArray<ReadonlyArray<readonly [NewbieGrowthMetric, numbe
 
 /** 날마다 치즈케이크 목표 한 칸의 양 — 뒤로 갈수록 급여 값이 커지는 만큼 오른다. */
 const DAY_CHEESECAKE: readonly number[] = [60, 60, 70, 80, 80, 90, 100];
+/** 앞의 네 목표에 함께 붙는 젬. */
+const GOAL_GEMS = 50;
 /** 날마다 마지막 목표의 젬. */
 const DAY_GEMS = 100;
+/** 날마다 마지막 목표에 함께 붙는 화석. */
+const DAY_FOSSIL = 1;
 
 const cheesecake = (amount: number): NewbieGrowthReward => ({ kind: "currency", currency: "cheesecake", amount });
 
-function goalReward(day: number, order: number): NewbieGrowthReward {
-  if (day === 1 && order === 0) return { kind: "fragment", relicId: NEWBIE_GROWTH_GUIDE_RELIC, amount: 1 };
-  if (order === 4) return { kind: "currency", currency: "gems", amount: DAY_GEMS };
-  return cheesecake(DAY_CHEESECAKE[day - 1]);
+const gems = (amount: number): NewbieGrowthReward => ({ kind: "currency", currency: "gems", amount });
+
+function goalRewards(day: number, order: number): readonly NewbieGrowthReward[] {
+  if (order === 4) return [gems(DAY_GEMS), { kind: "currency", currency: "fossil", amount: DAY_FOSSIL }];
+  const first: NewbieGrowthReward = day === 1 && order === 0 ? { kind: "fragment", relicId: NEWBIE_GROWTH_GUIDE_RELIC, amount: 1 } : cheesecake(DAY_CHEESECAKE[day - 1]);
+  return [first, gems(GOAL_GEMS)];
 }
 
 export const NEWBIE_GROWTH_GOALS: readonly NewbieGrowthGoal[] = DAY_GOALS.flatMap((goals, index) =>
-  goals.map(([metric, target], order) => ({ id: `d${index + 1}-${order + 1}`, day: index + 1, metric, target, reward: goalReward(index + 1, order) })));
+  goals.map(([metric, target], order) => ({ id: `d${index + 1}-${order + 1}`, day: index + 1, metric, target, rewards: goalRewards(index + 1, order) })));
 
 export type NewbieGrowthMilestoneReward = NewbieGrowthReward;
 

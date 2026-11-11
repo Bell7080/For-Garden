@@ -680,7 +680,7 @@ export interface AchievementListResponse { series: AchievementSeriesDto[]; claim
 /** 업적 수령 뒤의 상태. 받은 단계·끝난 업적·열린 수식어와 실제 지급분(상한에 깎인 뒤)을 싣는다. */
 export interface ClaimAchievementRewardsResponse extends PlayerStateDto { claimedTiers: Record<string, number[]>; completedSeriesIds: string[]; newModifierIds: string[]; granted: MissionReward[]; }
 /** 신규 7일 성장 가이드 — 목표 하나(`data/newbieGrowth.ts`). 값과 판정은 서버가 낸다. */
-export interface NewbieGrowthGoalDto { id: string; day: number; metric: NewbieGrowthMetric; target: number; value: number; reward: NewbieGrowthReward; state: NewbieGrowthGoalState }
+export interface NewbieGrowthGoalDto { id: string; day: number; metric: NewbieGrowthMetric; target: number; value: number; rewards: NewbieGrowthReward[]; state: NewbieGrowthGoalState }
 export interface NewbieGrowthMilestoneDto { id: string; goals: number; reward: NewbieGrowthMilestoneReward; state: NewbieGrowthMilestoneState }
 export interface NewbieGrowthResponse {
   /** 계정 생성부터 14일 동안만 참이다. */

@@ -37,6 +37,7 @@ export const SETTINGS_PT_BR = {
   "settings.alerts.quietHours": "Horário silencioso",
   "settings.alerts.quietStart": "Início do silêncio",
   "settings.alerts.quietEnd": "Fim do silêncio",
+  "settings.alerts.adRewardDot": "Ponto vermelho de anúncios",
   "settings.section.play": "Apresentação · Jogo",
   "settings.play.screenShake": "Tremor de tela em batalha",
   "settings.play.damageNumbers": "Números de dano",

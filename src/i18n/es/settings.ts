@@ -37,6 +37,7 @@ export const SETTINGS_ES = {
   "settings.alerts.quietHours": "Horas de silencio",
   "settings.alerts.quietStart": "Inicio del silencio",
   "settings.alerts.quietEnd": "Fin del silencio",
+  "settings.alerts.adRewardDot": "Punto rojo de anuncios",
   "settings.section.play": "Presentación · Juego",
   "settings.play.screenShake": "Vibración de pantalla en combate",
   "settings.play.damageNumbers": "Números de daño",

@@ -37,6 +37,7 @@ export const SETTINGS_RU = {
   "settings.alerts.quietHours": "Тихие часы",
   "settings.alerts.quietStart": "Начало тишины",
   "settings.alerts.quietEnd": "Конец тишины",
+  "settings.alerts.adRewardDot": "Красная точка рекламы",
   "settings.section.play": "Показ · Игра",
   "settings.play.screenShake": "Тряска экрана в бою",
   "settings.play.damageNumbers": "Цифры урона",

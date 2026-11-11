@@ -74,3 +74,20 @@ export function rouletteIndexAtPointer(wheelAngle: number): number {
   const local = ((-wheelAngle % 360) + 360 + step / 2) % 360;
   return Math.floor(local / step) % count;
 }
+
+/**
+ * 돌림판이 붉은 점을 세울 만한가 — 로비 이벤트 버튼과 이벤트 목록 카드가 같은 함수를 읽는다.
+ *
+ * 오늘의 무료 회전과 멤버십 보너스는 공짜라 늘 센다. **광고를 봐야 받는 보너스는 받을 수 있는 공짜 보상이
+ * 아니라** 기본으로는 세지 않고, 설정의 「광고 보상 알림 점」(`settings.game.adRewardDot`)을 켠 사람에게만 센다.
+ */
+export function rouletteNeedsAttention(status: Pick<RouletteStatus, "active" | "remaining" | "bonusAvailable" | "adFree">, showAdDot: boolean): boolean {
+  if (!status.active) return false;
+  if (status.remaining > 0) return true;
+  return status.bonusAvailable && (status.adFree || showAdDot);
+}
+
+/** 광고 보너스 하나만 남아 점을 세울지가 설정에 달린 상태인가 — 서버가 따로 세어 넘긴다. */
+export function rouletteAdOnlyAttention(status: Pick<RouletteStatus, "active" | "remaining" | "bonusAvailable" | "adFree">): boolean {
+  return rouletteNeedsAttention(status, true) && !rouletteNeedsAttention(status, false);
+}

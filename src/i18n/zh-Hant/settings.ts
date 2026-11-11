@@ -37,6 +37,7 @@ export const SETTINGS_ZH_HANT = {
   "settings.alerts.quietHours": "免打擾時段",
   "settings.alerts.quietStart": "免打擾開始",
   "settings.alerts.quietEnd": "免打擾結束",
+  "settings.alerts.adRewardDot": "廣告獎勵紅點",
   "settings.section.play": "演出 · 遊戲",
   "settings.play.screenShake": "戰鬥畫面震動",
   "settings.play.damageNumbers": "傷害數字",

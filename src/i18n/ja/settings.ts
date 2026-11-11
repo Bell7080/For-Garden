@@ -41,6 +41,7 @@ export const SETTINGS_JA = {
   "settings.alerts.quietHours": "夜間の通知制限",
   "settings.alerts.quietStart": "制限の開始",
   "settings.alerts.quietEnd": "制限の終了",
+  "settings.alerts.adRewardDot": "広告報酬の通知バッジ",
 
   "settings.section.play": "演出 · ゲーム",
   "settings.play.screenShake": "戦闘画面の揺れ",

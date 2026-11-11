@@ -1,6 +1,6 @@
 import { profileFace } from "../state/playerProfile";
 import { isStoryStageAvailable, newlyUnlockedStoryDifficulty, storyDifficultyOf } from "../core/storyDifficulty";
-import { ROULETTE, ROULETTE_REWARDS, rouletteIndex, rouletteStatus } from "../core/roulette";
+import { ROULETTE, ROULETTE_REWARDS, rouletteAdOnlyAttention, rouletteIndex, rouletteNeedsAttention, rouletteStatus } from "../core/roulette";
 import type { ChestForgeResponse, DelophyHuntResponse, ShuteFishingResponse, SpinRouletteResponse } from "./contracts";
 import {
   DELOPHY_HUNT, HuntFlipError, applyHuntMoves, delophyHuntPlayable, delophyHuntStatus, flipHuntSlot, huntDifficulty, huntTreasure, normalizeDelophyHuntState, rollDelophyHuntWeek,
@@ -3566,11 +3566,11 @@ export class FakeServer implements GameApi {
     const claimableAchievements = claimableAchievementCount(normalizeAchievementState(this.state.achievements), achievementFacts(this.state));
     const growth = newbieGrowthWindow(this.newbieGrowthStart(this.state), now);
     const claimableGrowth = growth.active ? this.newbieGrowthDto(this.state, this.newbieGrowthFactsOf(this.state, await this.newbieGuildJoined()), now).claimableCount : 0;
-    const roulette = rouletteStatus(this.state.dailyAdRewards, now);
+    const roulette = rouletteStatus(this.state.dailyAdRewards, now, this.hasAdFreeMembership(now));
     const expedition = this.rollExpedition(now);
     const claimableExpeditionCount = EXPEDITION_BEST_SCORE_REWARD_STAGES.filter(stage => expedition.bestScore >= stage.threshold && !expedition.claimedRewardStageIds.includes(stage.id)).length;
     const claimableRaidCount = this.raidInstances(now).map(row => this.raidDto(row, now)).filter(row => row.status === "completed" && !row.settled && row.settlement.some(reward => reward.amount > 0)).length;
-    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), situationalOfferCount };
+    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
   }
 
   /**

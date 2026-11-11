@@ -1,5 +1,5 @@
 import { gameApi } from "../api/FakeServer";
-import { ROULETTE, type RouletteStatus } from "../core/roulette";
+import { ROULETTE, rouletteNeedsAttention, type RouletteStatus } from "../core/roulette";
 import { CHEST_FORGE, chestForgePlayable } from "../core/chestForge";
 import { DELOPHY_HUNT, delophyHuntPlayable } from "../core/delophyHunt";
 import { SHUTE_FISHING, shuteFishingPlayable } from "../core/shuteFishing";
@@ -76,7 +76,7 @@ export class LobbyEventPopup {
     const now = Date.now();
     let entries = lobbyEventEntries(tracks, now, LOBBY_EVENTS, newbieGrowthEvents(growth));
     let actionable = new Set(tracks.filter(track => track.claimableToday).map(track => `attendance:${track.id}`));
-    if (roulette?.active && (roulette.remaining > 0 || roulette.bonusAvailable)) actionable.add(ROULETTE.id);
+    if (roulette && rouletteNeedsAttention(roulette, session.settings.game.adRewardDot)) actionable.add(ROULETTE.id);
     // 코인이 한 판 값만큼 모인 정규 이벤트도 점이 서고 위로 올라온다.
     for (const id of playable) actionable.add(id);
     if (growth?.active && growth.claimableCount > 0) actionable.add(NEWBIE_GROWTH_LOBBY_EVENT.id);
@@ -101,7 +101,7 @@ export class LobbyEventPopup {
           const [attendance, roulette, playable, growth] = await Promise.all([attendanceManager.status(), gameApi.getRouletteStatus(), playableRegularEvents(), gameApi.getNewbieGrowth().catch(() => undefined)]);
           if (!body.active) return;
           const ready = new Set(attendance.tracks.filter(track => track.claimableToday).map(track => `attendance:${track.id}`));
-          if (roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)) ready.add(ROULETTE.id);
+          if (rouletteNeedsAttention(roulette, session.settings.game.adRewardDot)) ready.add(ROULETTE.id);
           for (const id of playable) ready.add(id);
           if (growth?.active && growth.claimableCount > 0) ready.add(NEWBIE_GROWTH_LOBBY_EVENT.id);
           const completed = [...actionable].some(id => !ready.has(id));

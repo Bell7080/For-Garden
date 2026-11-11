@@ -37,6 +37,7 @@ export const SETTINGS_TH = {
   "settings.alerts.quietHours": "ช่วงเวลาห้ามรบกวน",
   "settings.alerts.quietStart": "เริ่มห้ามรบกวน",
   "settings.alerts.quietEnd": "สิ้นสุดห้ามรบกวน",
+  "settings.alerts.adRewardDot": "จุดแดงรางวัลโฆษณา",
   "settings.section.play": "การแสดงผล · เกม",
   "settings.play.screenShake": "หน้าจอสั่นในการต่อสู้",
   "settings.play.damageNumbers": "ตัวเลขความเสียหาย",

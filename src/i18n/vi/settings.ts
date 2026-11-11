@@ -37,6 +37,7 @@ export const SETTINGS_VI = {
   "settings.alerts.quietHours": "Giờ yên lặng",
   "settings.alerts.quietStart": "Bắt đầu yên lặng",
   "settings.alerts.quietEnd": "Kết thúc yên lặng",
+  "settings.alerts.adRewardDot": "Chấm đỏ thưởng quảng cáo",
   "settings.section.play": "Trình diễn · Trò chơi",
   "settings.play.screenShake": "Rung màn hình khi chiến đấu",
   "settings.play.damageNumbers": "Số sát thương",

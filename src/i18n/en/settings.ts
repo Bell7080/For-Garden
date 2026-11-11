@@ -37,6 +37,7 @@ export const SETTINGS_EN = {
   "settings.alerts.quietHours": "Quiet Hours",
   "settings.alerts.quietStart": "Quiet Start",
   "settings.alerts.quietEnd": "Quiet End",
+  "settings.alerts.adRewardDot": "Red Dot for Ad Rewards",
   "settings.section.play": "Presentation · Game",
   "settings.play.screenShake": "Battle Screen Shake",
   "settings.play.damageNumbers": "Damage Numbers",

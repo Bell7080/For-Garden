@@ -10,6 +10,10 @@ export interface NotificationConditions {
   excavationHarvestReady: boolean;
   pendingFriendRequestCount: number;
   unseenEventCount: number;
+  /** 광고를 봐야 받는 것만 남은 이벤트 수. `showAdDots`를 켰을 때만 이벤트 점을 세운다. */
+  adOnlyEventCount?: number;
+  /** 설정의 「광고 보상 알림 점」 — 광고 보상은 공짜 보상이 아니라 기본은 끔이다. */
+  showAdDots?: boolean;
   unreadMailCount: number;
   claimableMailCount?: number;
   claimablePassCount?: number;
@@ -33,7 +37,7 @@ export function deriveNotificationState(conditions: NotificationConditions): Not
     missionReward: conditions.claimableMissionCount > 0,
     excavationHarvestReady: conditions.excavationHarvestReady,
     friendRequest: conditions.pendingFriendRequestCount > 0,
-    newEvent: conditions.unseenEventCount > 0,
+    newEvent: conditions.unseenEventCount > 0 || (conditions.showAdDots === true && (conditions.adOnlyEventCount ?? 0) > 0),
     mail: conditions.unreadMailCount > 0 || (conditions.claimableMailCount ?? 0) > 0,
     passReward: (conditions.claimablePassCount ?? 0) > 0,
     achievementReward: (conditions.claimableAchievementCount ?? 0) > 0,

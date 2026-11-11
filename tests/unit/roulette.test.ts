@@ -102,3 +102,34 @@ describe("일일 돌림판", () => {
     });
   });
 });
+
+describe("돌림판 광고 보너스의 붉은 점", () => {
+  const base = { active: true, remaining: 0, bonusAvailable: true, adFree: false };
+
+  it("광고를 봐야 받는 보너스만 남으면 설정을 켰을 때만 점을 세운다", async () => {
+    const { rouletteNeedsAttention, rouletteAdOnlyAttention } = await import("../../src/core/roulette");
+    expect(rouletteNeedsAttention(base, false)).toBe(false);
+    expect(rouletteNeedsAttention(base, true)).toBe(true);
+    expect(rouletteAdOnlyAttention(base)).toBe(true);
+  });
+
+  it("무료 회전과 멤버십 보너스는 설정과 무관하게 점을 세운다", async () => {
+    const { rouletteNeedsAttention, rouletteAdOnlyAttention } = await import("../../src/core/roulette");
+    expect(rouletteNeedsAttention({ ...base, remaining: 1 }, false)).toBe(true);
+    expect(rouletteNeedsAttention({ ...base, adFree: true }, false)).toBe(true);
+    expect(rouletteAdOnlyAttention({ ...base, adFree: true })).toBe(false);
+    expect(rouletteNeedsAttention({ ...base, active: false, remaining: 1 }, true)).toBe(false);
+  });
+
+  it("서버 알림 신호는 광고 보너스를 이벤트 수에 넣지 않고 따로 센다", async () => {
+    const state = createDefaultSession();
+    const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-10-21T12:00:00Z"), random: () => 0 });
+    await api.spinRoulette({ requestId: "spin-dot" });
+    const signals = await api.getNotificationSignals();
+    expect(signals.adOnlyEventCount).toBe(1);
+    const { deriveNotificationState } = await import("../../src/core/notifications");
+    const conditions = { claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0, adOnlyEventCount: signals.adOnlyEventCount };
+    expect(deriveNotificationState({ ...conditions, showAdDots: false }).newEvent).toBe(false);
+    expect(deriveNotificationState({ ...conditions, showAdDots: true }).newEvent).toBe(true);
+  });
+});

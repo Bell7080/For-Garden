@@ -37,6 +37,7 @@ export const SETTINGS_ZH_HANS = {
   "settings.alerts.quietHours": "免打扰时段",
   "settings.alerts.quietStart": "免打扰开始",
   "settings.alerts.quietEnd": "免打扰结束",
+  "settings.alerts.adRewardDot": "广告奖励红点",
   "settings.section.play": "演出 · 游戏",
   "settings.play.screenShake": "战斗画面震动",
   "settings.play.damageNumbers": "伤害数字",

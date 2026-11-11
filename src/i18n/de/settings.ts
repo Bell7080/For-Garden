@@ -37,6 +37,7 @@ export const SETTINGS_DE = {
   "settings.alerts.quietHours": "Ruhezeiten",
   "settings.alerts.quietStart": "Ruhe ab",
   "settings.alerts.quietEnd": "Ruhe bis",
+  "settings.alerts.adRewardDot": "Roter Punkt für Werbung",
   "settings.section.play": "Darstellung · Spiel",
   "settings.play.screenShake": "Bildschirmwackeln im Kampf",
   "settings.play.damageNumbers": "Schadenszahlen",

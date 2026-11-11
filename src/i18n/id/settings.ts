@@ -37,6 +37,7 @@ export const SETTINGS_ID = {
   "settings.alerts.quietHours": "Jam Tenang",
   "settings.alerts.quietStart": "Mulai Tenang",
   "settings.alerts.quietEnd": "Selesai Tenang",
+  "settings.alerts.adRewardDot": "Titik merah hadiah iklan",
   "settings.section.play": "Presentasi · Game",
   "settings.play.screenShake": "Guncangan Layar Pertarungan",
   "settings.play.damageNumbers": "Angka Kerusakan",

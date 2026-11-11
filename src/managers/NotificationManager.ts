@@ -61,6 +61,8 @@ export class NotificationManager {
       excavationHarvestReady: excavation.status === "fulfilled" ? excavation.value.harvestNotice : previous.excavationHarvestReady,
       pendingFriendRequestCount: signals.status === "fulfilled" ? signals.value.pendingFriendRequestCount : Number(previous.friendRequest),
       unseenEventCount: signals.status === "fulfilled" ? signals.value.unseenEventCount : Number(previous.newEvent),
+      adOnlyEventCount: signals.status === "fulfilled" ? signals.value.adOnlyEventCount ?? 0 : 0,
+      showAdDots: session.settings.game.adRewardDot,
       unreadMailCount: signals.status === "fulfilled" ? signals.value.unreadMailCount : Number(previous.mail),
       claimableMailCount: signals.status === "fulfilled" ? signals.value.claimableMailCount ?? 0 : Number(previous.mail),
       claimablePassCount: signals.status === "fulfilled" ? signals.value.claimablePassCount ?? 0 : Number(previous.passReward),

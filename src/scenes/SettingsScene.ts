@@ -35,6 +35,7 @@ import { Button } from "../ui/Button";
 import { UI_ICON } from "../ui/icons";
 import { couponErrorKey, openCouponPopup } from "../ui/CouponPopup";
 import { couponApi } from "../managers/CouponManager";
+import { notificationManager } from "../managers/NotificationManager";
 import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, restartScene, slideTabPage } from "../ui/screenTransition";
 import { attachDragScroll } from "../ui/dragScroll";
@@ -262,6 +263,9 @@ export class SettingsScene extends Phaser.Scene {
       const quietTimes = Array.from({ length: 48 }, (_, index) => `${String(Math.floor(index / 2)).padStart(2, "0")}:${index % 2 ? "30" : "00"}`);
       this.content.add(new SettingsSelectRow(this,this.popups, SETTINGS_ROW.left, y, t("settings.alerts.quietStart"), s.notifications.quietHoursStart, quietTimes, value => void settingsManager.updateNotificationPreferences({ quietHoursStart: value }), String, "clock")); y += SETTINGS_ROW.step; divider();
       this.content.add(new SettingsSelectRow(this,this.popups, SETTINGS_ROW.left, y, t("settings.alerts.quietEnd"), s.notifications.quietHoursEnd, quietTimes, value => void settingsManager.updateNotificationPreferences({ quietHoursEnd: value }), String, "clock")); y += SETTINGS_ROW.step; divider();
+      // 게임 안의 붉은 점 — 광고를 봐야 받는 보상은 공짜가 아니라 기본은 끔이다. 바꾸면 점을 곧바로 다시 판정한다.
+      this.content.add(new SettingsToggle(this, SETTINGS_ROW.left, y, t("settings.alerts.adRewardDot"), s.game.adRewardDot, value => { settingsManager.update({ game: { adRewardDot: value } }); void notificationManager.refresh().catch(() => undefined); }));
+      y += SETTINGS_ROW.step; divider();
     } else if (this.activeTab === "play") {
       section(t("settings.section.play"));
       // 기존 저사양 토글은 품질 선택과 의미가 겹쳐 제거하고, 서로 다른 연출 토글만 남긴다.

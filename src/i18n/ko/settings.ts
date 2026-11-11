@@ -49,6 +49,7 @@ export const SETTINGS_KO = {
   "settings.alerts.quietHours": "야간 알림 제한",
   "settings.alerts.quietStart": "제한 시작",
   "settings.alerts.quietEnd": "제한 종료",
+  "settings.alerts.adRewardDot": "광고 보상 알림 점",
 
   "settings.section.play": "연출 · 게임",
   "settings.play.screenShake": "전투 화면 흔들림",

@@ -36,6 +36,7 @@
 "settings.alerts.quietHours": ["免打扰时段", "ช่วงเวลาห้ามรบกวน", "Giờ yên lặng", "Jam Tenang", "Horas de silencio", "Horário silencioso", "Ruhezeiten", "Тихие часы"],
 "settings.alerts.quietStart": ["免打扰开始", "เริ่มห้ามรบกวน", "Bắt đầu yên lặng", "Mulai Tenang", "Inicio del silencio", "Início do silêncio", "Ruhe ab", "Начало тишины"],
 "settings.alerts.quietEnd": ["免打扰结束", "สิ้นสุดห้ามรบกวน", "Kết thúc yên lặng", "Selesai Tenang", "Fin del silencio", "Fim do silêncio", "Ruhe bis", "Конец тишины"],
+"settings.alerts.adRewardDot": ["广告奖励红点", "จุดแดงรางวัลโฆษณา", "Chấm đỏ thưởng quảng cáo", "Titik merah hadiah iklan", "Punto rojo de anuncios", "Ponto vermelho de anúncios", "Roter Punkt für Werbung", "Красная точка рекламы"],
 "settings.section.play": ["演出 · 游戏", "การแสดงผล · เกม", "Trình diễn · Trò chơi", "Presentasi · Game", "Presentación · Juego", "Apresentação · Jogo", "Darstellung · Spiel", "Показ · Игра"],
 "settings.play.screenShake": ["战斗画面震动", "หน้าจอสั่นในการต่อสู้", "Rung màn hình khi chiến đấu", "Guncangan Layar Pertarungan", "Vibración de pantalla en combate", "Tremor de tela em batalha", "Bildschirmwackeln im Kampf", "Тряска экрана в бою"],
 "settings.play.damageNumbers": ["伤害数字", "ตัวเลขความเสียหาย", "Số sát thương", "Angka Kerusakan", "Números de daño", "Números de dano", "Schadenszahlen", "Цифры урона"],

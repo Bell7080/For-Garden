@@ -28,6 +28,7 @@ export const READ_METHODS = new Set([
   "getNotificationSignals",
   "getPlayerState",
   "getProducts",
+  "getPurchaseHistory",
   "getProgressPasses",
   "getRaids",
   "getStaminaRechargeStatus",

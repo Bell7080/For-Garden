@@ -137,7 +137,8 @@ import { nextStaminaGemCost, nextUtcMidnight, staminaGemDayKey } from "../core/s
 import { paidStaminaApplied, settleStamina, STAMINA_HOLD_LIMIT, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
 import type { EnhanceRuneAllRequest, EnhanceRuneAllResponse, EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse, SynthesizeRunesRequest, SynthesizeRunesResponse } from "./contracts";
-import type { ClaimFirstPaymentGiftRequest, ClaimFirstPaymentGiftResponse, FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse } from "./contracts";
+import type { ClaimFirstPaymentGiftRequest, ClaimFirstPaymentGiftResponse, FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse, PurchaseHistoryResponse } from "./contracts";
+import { purchaseHistoryFromJournal } from "../core/purchaseHistory";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, ClaimPassDailyBonusRequest, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { EXCAVATION_CURRENCIES, excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
@@ -2533,15 +2534,16 @@ export class FakeServer implements GameApi {
    */
   async fulfillPlatformPurchase(request: FulfillPlatformPurchaseRequest): Promise<FulfillPlatformPurchaseResponse> {
     await this.delay();
+    // 같은 거래를 다시 확정한 응답은 모두 `replayed`를 단다 — 구매 복원이 새로 받은 거래만 셀 수 있게.
     const cachedByRequest = this.fulfillResults.get(request.requestId);
-    if (cachedByRequest) return { ...cachedByRequest };
+    if (cachedByRequest) return { ...cachedByRequest, replayed: true };
     const verification = [...this.verifiedTransactions.values()].find(({ verificationId }) => verificationId === request.verificationId);
     const product = verification && PRODUCTS.find(({ id }) => id === verification.productId);
     if (!request.requestId || !verification || !product || product.acquisition.kind !== "platform_payment") throw new GameApiError("RECEIPT_INVALID", "검증된 플랫폼 거래가 아닙니다.");
     const durable = this.readReceipt<FulfillPlatformPurchaseResponse>("platformTransaction", verification.transactionId, product.id);
-    if (durable) return { ...durable, ...this.snapshot() };
+    if (durable) return { ...durable, ...this.snapshot(), replayed: true };
     const cachedByTransaction = this.fulfilledTransactions.get(verification.transactionId);
-    if (cachedByTransaction) { this.fulfillResults.set(request.requestId, cachedByTransaction); return { ...cachedByTransaction }; }
+    if (cachedByTransaction) { this.fulfillResults.set(request.requestId, cachedByTransaction); return { ...cachedByTransaction, replayed: true }; }
 
     const now = this.now();
     const renewing = product.passBenefit?.autoRenew ? [...this.entitlements.values()].find((entry) => entry.productId === product.id && (entry.expiresAt === null || Date.parse(entry.expiresAt) > now.getTime())) : undefined;
@@ -2576,7 +2578,7 @@ export class FakeServer implements GameApi {
       if (claimedDate) this.setSubscriptionBonusDate(candidate, entitlementId, claimedDate);
     }
     this.recordReceipt(candidate, "platformTransaction", verification.transactionId, product.id, {
-      productId: product.id, quantity: 1, granted: applied.granted, grantedRunes: [], remaining: 0, firstBonusApplied: firstBonus,
+      productId: product.id, quantity: 1, granted: applied.granted, grantedRunes: [], remaining: 0, firstBonusApplied: firstBonus, purchasedAt: now.toISOString(),
       ...(firstPaymentGift ? { firstPaymentGift: true as const } : {}), ...(entitlement ? { entitlement } : {}),
     });
     this.commitRaidState(candidate);
@@ -2588,6 +2590,12 @@ export class FakeServer implements GameApi {
     this.fulfilledTransactions.set(verification.transactionId, result);
     this.fulfillResults.set(request.requestId, result);
     return { ...result };
+  }
+
+  /** 결제 기록은 장부의 플랫폼 거래 영수증만 읽는다 — 화면이 기억한 값이 아니라 지급을 확정한 쪽의 기록이다. */
+  async getPurchaseHistory(): Promise<PurchaseHistoryResponse> {
+    await this.delay();
+    return { entries: purchaseHistoryFromJournal(this.state.serverJournal), serverTime: this.now().toISOString() };
   }
 
   /** 광고 시청 경로와 같은 슬롯 정의·UTC 카운터를 사용하되 활성 패스만 토큰 없이 통과시킨다. */

@@ -578,7 +578,24 @@ export interface FulfillPlatformPurchaseResponse extends PurchaseProductResponse
   firstBonusApplied: boolean;
   /** 이번 거래가 계정 첫 결제라 첫 결제 선물(`FIRST_PAYMENT_GIFT`)을 **활성화**했는가 — 받는 것은 `claimFirstPaymentGift`다. */
   firstPaymentGift?: true;
+  /** 이미 지급을 마친 거래를 다시 확정한 응답(구매 복원·재시도). 새로 지급된 것은 없다. */
+  replayed?: true;
 }
+/**
+ * 결제 기록 한 줄 — 서버 장부(`serverJournal`의 플랫폼 거래 영수증)에서 읽는다.
+ *
+ * 거래 ID는 끝 네 자리만 남겨 가린다. 화면은 문의할 때 대조할 꼬리표로만 쓴다.
+ */
+export interface PurchaseHistoryEntryDto {
+  productId: string;
+  /** 가린 거래 ID(`••••1a2b`). */
+  transactionTail: string;
+  /** 지급을 확정한 서버 시각. 이 값이 생기기 전의 거래는 검증 시각으로 채우고, 그것도 없으면 null이다. */
+  purchasedAt: string | null;
+  granted: readonly ProductGrant[];
+  firstBonusApplied: boolean;
+}
+export interface PurchaseHistoryResponse { entries: readonly PurchaseHistoryEntryDto[]; serverTime: string; }
 /** 진행 패스 마디 하나 — 정적 보상과 서버가 판정한 상태(받음 · 받을 수 있음 · 닿음 · 아직). */
 /** 마디 하나 — 왼쪽 무료 칸(`free`·`freeState`)과 오른쪽 유료 칸(`rewards`·`state`). */
 export interface ProgressPassMilestoneDto {
@@ -1308,6 +1325,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   verifyPurchaseReceipt(request: VerifyPurchaseReceiptRequest): Promise<VerifyPurchaseReceiptResponse>;
   /** 검증된 플랫폼 거래를 상품 지급으로 확정한다. 패스·묶음·다이아가 모두 이 경계를 지난다. */
   fulfillPlatformPurchase(request: FulfillPlatformPurchaseRequest): Promise<FulfillPlatformPurchaseResponse>;
+  /** 이 계정에서 지급을 마친 플랫폼 결제 기록(최근 것부터). 읽기만 한다. */
+  getPurchaseHistory(): Promise<PurchaseHistoryResponse>;
   /** 진행 패스 셋의 진행도·열림·마디 상태. */
   getProgressPasses(): Promise<ProgressPassListResponse>;
   /** 닿은 마디의 무료 칸과(연 패스면) 유료 칸을 모두 받는다. */

@@ -40,6 +40,15 @@ import { playSceneEntrance, startScene, restartScene, slideTabPage } from "../ui
 import { attachDragScroll } from "../ui/dragScroll";
 import { addScrollHint } from "../ui/ScrollHint";
 import { pressIn, pressOut } from "../ui/pressFeedback";
+import { AccountProviderButton, type AccountProviderButtonOptions } from "../ui/AccountProviderButton";
+import { ACCOUNT_BUTTON, ACCOUNT_BUTTON_GRID } from "../ui/accountButtonStyle";
+import { openPurchaseHistoryPopup } from "../ui/PurchaseHistoryPopup";
+import { openRewardPopup } from "../ui/RewardPopup";
+import { productGrantsToRewardItems } from "../ui/rewardPopupModel";
+import { runPlatformRestore } from "../api/platformPurchase";
+import { platformPayment } from "../platform/payment";
+import { PRODUCTS } from "../data/shopCatalog";
+import { session } from "../state/session";
 
 /** 행이 흐르는 창 — 마스크와 입력 창이 같은 사각형을 읽는다. */
 const SETTINGS_LIST_WINDOW = { left: 34, top: SETTINGS_HEAD.contentTop - 10, width: 1012, height: 1430 };
@@ -332,20 +341,28 @@ export class SettingsScene extends Phaser.Scene {
       onClick: () => { if (!this.accountBusy) this.openCoupon(); },
     }).fitLabel(coupon.width - 130));
     y += SETTINGS_SUPPORT.accountSummaryRoom;
+    // 로그인 수단은 맨 글자가 아니라 **그 플랫폼의 얼굴을 한 버튼**으로 두 칸씩 선다 — Google은 흰 면에 네 색 G,
+    // Apple은 검은 면에 흰 사과라 읽기 전에 찾는다. 이어진 수단은 오른쪽에 체크가 서고 누르면 해제를 묻는다.
+    const grid = ACCOUNT_BUTTON_GRID;
+    const cell = (index: number): { x: number; y: number } => ({ x: index % 2 === 0 ? grid.leftX : grid.rightX, y: y + ACCOUNT_BUTTON.height / 2 + Math.floor(index / 2) * grid.rowStep });
+    const place = (index: number, options: AccountProviderButtonOptions): void => { const at = cell(index); this.content.add(new AccountProviderButton(this, at.x, at.y, options)); };
+    const guard = (action: () => void) => (): void => { if (!this.accountBusy) action(); };
     const linkedId = this.accountIdentities.some(identity => identity.provider === "password") || account.provider === "password";
-    if (!linkedId) this.addTextAction(90, y, t("settings.account.linkId"), () => this.linkWithId(), false, 280);
-    else this.content.add(this.add.text(90, y, t("account.identity.connected", { provider: "ID" }), textStyle({ role: "body", size: 24, color: COLOR.inkDim })));
+    place(0, linkedId ? { kind: "password", label: t("account.identity.connected", { provider: "ID" }), linked: true } : { kind: "password", label: t("settings.account.linkId"), onClick: guard(() => this.linkWithId()) });
     for (const [index, provider] of (["google", "apple"] as const).entries()) {
       const identity = this.accountIdentities.find(item => item.provider === provider);
       const name = provider === "google" ? "Google" : "Apple";
-      this.addTextAction(400 + index * 280, y, identity ? t("account.identity.unlink", { provider: name }) : t(provider === "google" ? "settings.account.linkGoogle" : "settings.account.linkApple"), () => identity ? this.confirmUnlink(identity) : void this.login(provider), false, 250);
+      place(index + 1, identity
+        ? { kind: provider, label: t("account.identity.connected", { provider: name }), linked: true, onClick: guard(() => this.confirmUnlink(identity)) }
+        : { kind: provider, label: t(provider === "google" ? "settings.account.linkGoogle" : "settings.account.linkApple"), onClick: guard(() => void this.login(provider)) });
     }
-    y += SETTINGS_SUPPORT.actionStep;
     const email = this.accountIdentities.find(identity => identity.provider === "email");
-    if (email) this.content.add(this.add.text(90, y, t("account.identity.connected", { provider: `EMAIL ${email.maskedId}` }), textStyle({ role: "body", size: 24, color: COLOR.inkDim })));
-    else this.addTextAction(90, y, t("account.email.link"), () => openAccountEmailPopup(this, this.popups, "link", () => void this.refreshAccountView()), false, 540);
-    if (account.kind !== "guest") this.addTextAction(680, y, t("settings.account.signOut"), () => this.confirmAccountAction(t("settings.account.signOut"), t("settings.account.signOutNotice"), () => this.signOut()), true, 250);
-    y += SETTINGS_SUPPORT.accountFootRoom;
+    place(3, email ? { kind: "email", label: email.maskedId, linked: true } : { kind: "email", label: t("account.email.link"), onClick: guard(() => openAccountEmailPopup(this, this.popups, "link", () => void this.refreshAccountView())) });
+    // 결제 기록·구매 복원은 계정에 붙는 일이라 같은 판의 마지막 줄에 선다.
+    place(4, { kind: "history", label: t("settings.account.history"), onClick: guard(() => void this.openPurchaseHistory()) });
+    place(5, { kind: "restore", label: t("settings.account.restore"), onClick: guard(() => void this.restorePurchases()) });
+    y = cell(5).y + ACCOUNT_BUTTON.height / 2 + SETTINGS_SUPPORT.accountFootRoom;
+    if (account.kind !== "guest") { this.addTextAction(90, y, t("settings.account.signOut"), () => this.confirmAccountAction(t("settings.account.signOut"), t("settings.account.signOutNotice"), () => this.signOut()), true, 250); y += SETTINGS_SUPPORT.actionStep; }
     // 두 번째 판은 **정해진 자리**에서 시작한다. 계정 판이 언어에 따라 길어지면 그때만
     // 밀려나며(`section`의 `Math.max`), 그 밖에는 줄 자리가 언제나 같아 E2E가 짚을 수 있다.
     y = Math.max(y, SETTINGS_SUPPORT.sectionTop);
@@ -372,6 +389,41 @@ export class SettingsScene extends Phaser.Scene {
     const hit = this.add.rectangle(x + hitWidth / 2, y, hitWidth, 88, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => pressIn(button)); hit.on("pointerout", () => pressOut(button, "normal", { pop: false })); hit.on("pointerup", () => { pressOut(button); if (!this.accountBusy) action(); });
     this.content.add([button, hit]);
+  }
+
+  /** 결제 기록은 서버가 장부에서 읽어 준 그대로 세운다. 실패하면 비우지 않고 안내만 한다. */
+  private async openPurchaseHistory(): Promise<void> {
+    this.accountBusy = true;
+    try {
+      const { entries } = await gameApi.getPurchaseHistory();
+      if (this.scene.isActive()) openPurchaseHistoryPopup(this, this.popups, entries);
+    } catch {
+      this.showRestoreNotice("settings.history.failed");
+    } finally { this.accountBusy = false; }
+  }
+
+  /**
+   * 구매 복원: 스토어가 아직 들고 있는 거래를 서버에 다시 보낸다. 같은 거래는 서버가 한 번만 지급하므로
+   * 이미 받은 것은 다시 오지 않고, 받지 못한 것만 영수증으로 뜬다. 결제 수단이 없는 빌드는 성공을 흉내 내지 않는다.
+   */
+  private async restorePurchases(): Promise<void> {
+    this.accountBusy = true;
+    try {
+      const outcome = await runPlatformRestore(gameApi, platformPayment(), PRODUCTS);
+      if (!this.scene.isActive()) return;
+      if (outcome.status === "restored" && outcome.restored > 0) {
+        session.wallet = { ...session.wallet, ...(await gameApi.getPlayerState()).wallet };
+        openRewardPopup(this, this.popups, { title: t("settings.account.restoreDone", { count: outcome.restored }), items: productGrantsToRewardItems(outcome.granted) });
+        return;
+      }
+      this.showRestoreNotice(outcome.status === "restored" ? "settings.account.restoreNone" : outcome.status === "unsupported" ? "settings.account.restoreUnsupported" : outcome.status === "cancelled" ? "settings.account.restoreCancelled" : "settings.account.restoreFailed");
+    } catch {
+      this.showRestoreNotice("settings.account.restoreFailed");
+    } finally { this.accountBusy = false; }
+  }
+
+  private showRestoreNotice(key: TextKey): void {
+    this.popups.confirm({ title: t("settings.account.notice"), message: t(key), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
   }
 
   /** 캐시는 진행 저장과 분리해 Cache Storage의 다운로드 자산만 지운다. */

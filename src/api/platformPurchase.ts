@@ -52,3 +52,45 @@ export async function runPlatformPurchase(api: GameApi, payment: PlatformPayment
     return { status: "failed", message: error instanceof GameApiError ? error.message : "" };
   }
 }
+
+/** 구매 복원 한 번의 끝. `restored`는 이번에 새로 지급된 거래 수, `checked`는 스토어가 돌려준 거래 수다. */
+export type PlatformRestoreOutcome =
+  | { status: "restored"; restored: number; checked: number; granted: FulfillPlatformPurchaseResponse["granted"] }
+  | { status: "cancelled" }
+  | { status: "unsupported" }
+  | { status: "failed"; message: string };
+
+/**
+ * 구매 복원 — 스토어가 아직 남겨 둔 거래를 결제와 **같은 검증 → 확정 길**로 다시 보낸다.
+ *
+ * 서버는 거래 ID당 한 번만 지급하므로 이미 받은 거래는 `replayed`로 돌아오고 아무것도 늘지 않는다. 요청 ID도
+ * 결제와 같은 규칙(거래 ID의 해시)이라, 결제 도중 끊겨 지급을 못 받은 거래가 여기서 이어 받아진다. 한 거래가
+ * 실패해도 나머지는 계속 확인한다 — 한 장의 오류가 다른 거래의 복원을 막지 않는다.
+ */
+export async function runPlatformRestore(api: GameApi, payment: PlatformPaymentAdapter, products: readonly Pick<ProductDto, "id" | "acquisition">[]): Promise<PlatformRestoreOutcome> {
+  if (payment.supported === false || !payment.restorePurchases || !globalThis.crypto?.subtle) return { status: "unsupported" };
+  let restoreResult;
+  try { restoreResult = await payment.restorePurchases(); } catch { return { status: "failed", message: "" }; }
+  if (restoreResult.status !== "completed") return { status: restoreResult.status };
+  let restored = 0, failures = 0, lastMessage = "";
+  const granted: FulfillPlatformPurchaseResponse["granted"][number][] = [];
+  for (const receipt of restoreResult.receipts) {
+    const platform = PLATFORMS.find((candidate) => candidate === receipt.platform);
+    const product = products.find(({ acquisition }) => acquisition.kind === "platform_payment" && acquisition.platformProductId === receipt.productId);
+    if (!platform || platform === "test" && !QA_TOOLS_ENABLED || !product || typeof receipt.transactionId !== "string" || !receipt.transactionId.trim()
+      || typeof receipt.payload !== "string" || !receipt.payload) { failures += 1; continue; }
+    try {
+      const verificationKey = await requestKey([platform, receipt.transactionId, receipt.payload]);
+      const verified = await api.verifyPurchaseReceipt({ productId: product.id, platform, receipt: receipt.payload, requestId: `verify:${verificationKey}` });
+      if (verified.verified !== true || verified.productId !== product.id || !verified.verificationId || !verified.transactionId) { failures += 1; continue; }
+      const transactionKey = await requestKey([platform, verified.transactionId]);
+      const result = await api.fulfillPlatformPurchase({ verificationId: verified.verificationId, requestId: `fulfill:${transactionKey}` });
+      if (!result.replayed) { restored += 1; granted.push(...result.granted); }
+    } catch (error) {
+      failures += 1;
+      lastMessage = error instanceof GameApiError ? error.message : "";
+    }
+  }
+  if (failures > 0 && restored === 0 && failures === restoreResult.receipts.length) return { status: "failed", message: lastMessage };
+  return { status: "restored", restored, checked: restoreResult.receipts.length, granted };
+}

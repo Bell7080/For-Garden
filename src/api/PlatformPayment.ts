@@ -12,6 +12,15 @@ export type PlatformPaymentResult =
   | { status: "cancelled" }
   | { status: "unsupported" };
 
+/**
+ * 구매 복원의 끝. 스토어가 아직 이 계정에 지급을 마치지 않았다고 기억하는 거래(앱이 지급 전에 죽은 결제,
+ * 다른 기기에서 산 구독)의 영수증을 돌려준다. 지급은 결제와 같은 검증 → 확정 길만 지난다.
+ */
+export type PlatformRestoreResult =
+  | { status: "completed"; receipts: readonly PlatformReceipt[] }
+  | { status: "cancelled" }
+  | { status: "unsupported" };
+
 /** 앱스토어/플레이스토어 SDK를 UI와 게임 서버에서 격리하는 결제 어댑터 경계다. */
 export interface PlatformPaymentAdapter {
   readonly supported?: boolean;
@@ -20,12 +29,17 @@ export interface PlatformPaymentAdapter {
    * SDK를 붙일 때는 이 메서드 하나만 구현하면 된다.
    */
   requestPayment(platformProductId: string): Promise<PlatformPaymentResult>;
+  /** 스토어에 남은 거래를 다시 받는다. 없으면 구매 복원은 `unsupported`다. */
+  restorePurchases?(): Promise<PlatformRestoreResult>;
 }
 
 /** 결제 SDK가 없는 빌드의 기본 구현이다. 결제를 시작하지 않고 `unsupported`만 돌려준다. */
 export class UnsupportedPlatformPaymentAdapter implements PlatformPaymentAdapter {
   readonly supported = false;
   async requestPayment(_platformProductId: string): Promise<PlatformPaymentResult> {
+    return { status: "unsupported" };
+  }
+  async restorePurchases(): Promise<PlatformRestoreResult> {
     return { status: "unsupported" };
   }
 }

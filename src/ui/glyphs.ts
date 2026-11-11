@@ -63,7 +63,41 @@ export type GlyphName =
   | "contrib-attack"
   | "contrib-defense"
   | "contrib-heal"
-  | "report";
+  | "report"
+  | "brand-google"
+  | "brand-apple"
+  | "id-card"
+  | "receipt"
+  | "restore";
+
+/** 3차 베지어 한 마디를 점으로 편다(끝점 포함, 시작점 제외). 상표 실루엣처럼 곡선이 뜻인 그림에만 쓴다. */
+function bezier(out: number[], x0: number, y0: number, c1x: number, c1y: number, c2x: number, c2y: number, x: number, y: number, steps = 10): void {
+  for (let i = 1; i <= steps; i += 1) {
+    const t = i / steps, u = 1 - t;
+    out.push(u * u * u * x0 + 3 * u * u * t * c1x + 3 * u * t * t * c2x + t * t * t * x, u * u * u * y0 + 3 * u * u * t * c1y + 3 * u * t * t * c2y + t * t * t * y);
+  }
+}
+
+/**
+ * 사과 실루엣(몸통·한 입·잎) — 100칸 상자의 마디를 반지름 `r` 좌표로 옮긴 것이다.
+ * 마디는 [끝 x, 끝 y, 제어1 x, 제어1 y, 제어2 x, 제어2 y] 순이다.
+ */
+const APPLE_BODY = [[78, 32, 58, 24, 72, 22], [80, 60, 68, 38, 66, 54], [60, 90, 76, 74, 68, 90], [40, 90, 54, 87, 46, 87], [14, 56, 28, 90, 14, 74], [34, 28, 14, 38, 24, 28], [50, 30, 42, 28, 46, 31]] as const;
+const APPLE_LEAF = [[66, 8, 52, 16, 58, 9], [52, 24, 66, 16, 60, 22]] as const;
+function appleOutline(r: number, start: readonly [number, number], segments: readonly (readonly number[])[]): number[] {
+  const map = (x: number, y: number): [number, number] => [((x - 47) / 50) * r * 1.02, ((y - 50) / 48) * r];
+  const out: number[] = [...map(start[0], start[1])];
+  let [px, py] = start;
+  for (const [x, y, c1x, c1y, c2x, c2y] of segments) {
+    const [mx0, my0] = map(px, py), [m1x, m1y] = map(c1x, c1y), [m2x, m2y] = map(c2x, c2y), [mx, my] = map(x, y);
+    bezier(out, mx0, my0, m1x, m1y, m2x, m2y, mx, my);
+    [px, py] = [x, y];
+  }
+  return out;
+}
+
+/** Google의 네 색. 상표 그림은 색까지 상표의 것이라 `color` 인자를 받지 않는다. */
+const GOOGLE_TONES = { blue: 0x4285f4, green: 0x34a853, yellow: 0xfbbc05, red: 0xea4335 } as const;
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
   const list: Phaser.Geom.Point[] = [];
@@ -161,6 +195,47 @@ export function drawGlyph(
       // 기여도 회복 — 굵은 십자(전장의 회복 연출과 같은 모양).
       g.fillStyle(color, alpha);
       g.fillPoints(points(-r * 0.28, -r * 0.88, r * 0.28, -r * 0.88, r * 0.28, -r * 0.28, r * 0.88, -r * 0.28, r * 0.88, r * 0.28, r * 0.28, r * 0.28, r * 0.28, r * 0.88, -r * 0.28, r * 0.88, -r * 0.28, r * 0.28, -r * 0.88, r * 0.28, -r * 0.88, -r * 0.28, -r * 0.28, -r * 0.28), true);
+      break;
+    case "brand-google": {
+      // Google 「G」 — 네 색 고리와 파란 가로대. 상표라 색을 받지 않는다(로그인 버튼 전용).
+      const ring = r * 0.66, thick = r * 0.34;
+      const deg = (value: number): number => (value * Math.PI) / 180;
+      const arcs: [number, number, number][] = [[GOOGLE_TONES.blue, -8, 48], [GOOGLE_TONES.green, 48, 140], [GOOGLE_TONES.yellow, 140, 212], [GOOGLE_TONES.red, 212, 318]];
+      for (const [tone, from, to] of arcs) {
+        g.lineStyle(thick, tone, alpha);
+        g.beginPath(); g.arc(0, 0, ring, deg(from), deg(to), false); g.strokePath();
+      }
+      g.fillStyle(GOOGLE_TONES.blue, alpha);
+      g.fillRect(-r * 0.02, -thick / 2, ring + thick / 2 + r * 0.02, thick * 0.92);
+      break;
+    }
+    case "brand-apple":
+      // 사과 실루엣 — 한 입 베어 문 몸통과 비스듬한 잎. 채운 덩어리라야 작게 서도 상표로 읽힌다.
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(...appleOutline(r, [50, 30], APPLE_BODY)), true);
+      g.fillPoints(points(...appleOutline(r, [52, 24], APPLE_LEAF)), true);
+      break;
+    case "id-card":
+      // 신분증 — 카드 테두리, 왼쪽 얼굴 칸(마름모 머리 + 어깨), 오른쪽 글줄 둘.
+      g.strokeRect(-r * 0.92, -r * 0.62, r * 1.84, r * 1.24);
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(-r * 0.42, -r * 0.4, -r * 0.2, -r * 0.16, -r * 0.42, r * 0.06, -r * 0.64, -r * 0.16), true);
+      g.fillPoints(points(-r * 0.72, r * 0.42, -r * 0.6, r * 0.14, -r * 0.24, r * 0.14, -r * 0.12, r * 0.42), true);
+      g.lineBetween(r * 0.08, -r * 0.18, r * 0.7, -r * 0.18);
+      g.lineBetween(r * 0.08, r * 0.18, r * 0.52, r * 0.18);
+      break;
+    case "receipt":
+      // 영수증 — 아래가 톱니로 찢긴 종이와 글줄 셋.
+      g.strokePoints(points(-r * 0.62, -r * 0.88, r * 0.62, -r * 0.88, r * 0.62, r * 0.78, r * 0.41, r * 0.6, r * 0.2, r * 0.78, 0, r * 0.6, -r * 0.2, r * 0.78, -r * 0.41, r * 0.6, -r * 0.62, r * 0.78), true);
+      g.lineBetween(-r * 0.36, -r * 0.5, r * 0.36, -r * 0.5);
+      g.lineBetween(-r * 0.36, -r * 0.16, r * 0.36, -r * 0.16);
+      g.lineBetween(-r * 0.36, r * 0.18, r * 0.12, r * 0.18);
+      break;
+    case "restore":
+      // 되돌리기 — 각진 고리를 돌아 시작점으로 돌아오는 화살표.
+      g.strokePoints(points(-r * 0.3, -r * 0.62, r * 0.62, -r * 0.62, r * 0.82, -r * 0.4, r * 0.82, r * 0.42, r * 0.6, r * 0.66, -r * 0.6, r * 0.66, -r * 0.82, r * 0.42, -r * 0.82, -r * 0.1), false);
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(-r * 0.3, -r * 0.94, r * 0.1, -r * 0.62, -r * 0.3, -r * 0.3), true);
       break;
     case "expedition-normal":
       // 교차한 발굴 도구는 일반 조우를 뜻한다.

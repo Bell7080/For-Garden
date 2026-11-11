@@ -112,6 +112,13 @@ export function glossaryForm(id: GlossaryId, language: LanguageId): string | und
  * **비우려고 적지 않는다.** 새로 더할 때는 왜 사전의 표기를 쓰면 안 되는지를 주석으로 남긴다.
  */
 export const GLOSSARY_EXCEPTIONS: Readonly<Record<string, readonly GlossaryId[]>> = {
+  // 구매 복원은 스토어 결제를 다시 받는 플랫폼 용어이지 화석에서 개체를 되살리는 복원이 아니다.
+  "settings.account.restore": ["restoration"],
+  "settings.account.restoreDone": ["restoration"],
+  "settings.account.restoreNone": ["restoration"],
+  "settings.account.restoreUnsupported": ["restoration"],
+  "settings.account.restoreCancelled": ["restoration"],
+  "settings.account.restoreFailed": ["restoration"],
   // 연구원은 플레이어를 가리키며, 확률형 뽑기 기능인 연구가 아니다.
   "storyDifficulty.unlocked.body": ["research"],
   "duel.opponents.empty": ["research"],

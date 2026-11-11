@@ -1,9 +1,9 @@
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { PRODUCTS } from "../data/shopCatalog";
-import { UnsupportedPlatformPaymentAdapter, type PlatformPaymentAdapter, type PlatformPaymentResult } from "../api/PlatformPayment";
+import { UnsupportedPlatformPaymentAdapter, type PlatformPaymentAdapter, type PlatformPaymentResult, type PlatformReceipt, type PlatformRestoreResult } from "../api/PlatformPayment";
 
 /** 네이티브 셸이 주입하는 최소 결제 SDK 계약이다. 웹 단독 빌드는 성공을 가장하지 않는다. */
-interface PaymentBridge { requestPayment(platformProductId: string): Promise<PlatformPaymentResult>; }
+interface PaymentBridge { requestPayment(platformProductId: string): Promise<PlatformPaymentResult>; restorePurchases?(): Promise<PlatformRestoreResult>; }
 
 declare global {
   interface Window { __PF_PAYMENT__?: PaymentBridge; }
@@ -24,12 +24,19 @@ export function platformPayment(): PlatformPaymentAdapter {
 }
 
 let qaTransactionSeq = 0;
+/** QA 결제가 이 기기에서 만든 영수증. 구매 복원이 스토어처럼 다시 내놓는다(이미 받은 거래는 서버가 다시 주지 않는다). */
+const qaReceipts: PlatformReceipt[] = [];
 const qaPaymentAdapter: PlatformPaymentAdapter = {
   async requestPayment(platformProductId: string): Promise<PlatformPaymentResult> {
     // 서버 검증은 스토어 상품 ID가 아니라 게임 상품 ID로 영수증을 대조한다.
     const product = PRODUCTS.find(({ acquisition }) => acquisition.kind === "platform_payment" && acquisition.platformProductId === platformProductId);
     if (!product) return { status: "unsupported" };
     const transactionId = `qa-${Date.now()}-${++qaTransactionSeq}`;
-    return { status: "completed", receipt: { platform: "test", productId: platformProductId, transactionId, payload: `verified-receipt:${product.id}:${transactionId}` } };
+    const receipt = { platform: "test", productId: platformProductId, transactionId, payload: `verified-receipt:${product.id}:${transactionId}` };
+    qaReceipts.push(receipt);
+    return { status: "completed", receipt };
+  },
+  async restorePurchases(): Promise<PlatformRestoreResult> {
+    return { status: "completed", receipts: [...qaReceipts] };
   },
 };

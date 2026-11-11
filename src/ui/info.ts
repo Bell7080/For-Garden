@@ -91,6 +91,7 @@ import { relicSkinManager } from "../managers/RelicSkinManager";
 import { pressIn, pressOut } from "./pressFeedback";
 import { FeedTapEffect } from "./feedTapEffect";
 import { FeedLevelUpEffect } from "./feedLevelUpEffect";
+import { drawFeedPlate, drawFeedWindow, FEED_BUTTON } from "./feedButtonSkin";
 import { FEED_LEVEL_UP } from "./feedLevelUpStyle";
 import { HOLO_SHIMMER, holoBreathe, holoGlowColor, holoSweepPhase, polygonSpans } from "./holoShimmer";
 import { settingsManager } from "../managers/SettingsManager";
@@ -214,13 +215,6 @@ const FEROCITY_BADGE = 0x4b2f2b;
 const BOND_HEART = COLOR.bond;
 /** 하트 안쪽에 한 겹 더 얹는 밝은 심지. */
 const BOND_HEART_CORE = 0xff8a7a;
-/**
- * 급여 버튼의 색.
- *
- * 치즈케이크의 노란빛을 그대로 쓴다. 무엇을 먹이는 버튼인지가 글자를 읽기 전에 보여야 하기
- * 때문이다. 판의 생김새는 다른 판과 같다 — 반투명한 유리에 살짝 기운 면이다.
- */
-const FEED_AMBER = 0xf0b429;
 /** 판 안쪽에 파인 자리의 치즈케이크 수. 그 자리는 어둡게 눌러 두므로 크림빛으로 적는다. */
 const FEED_TEXT = "#ffe9c9";
 
@@ -257,7 +251,8 @@ function feedCostRow(
   rollKey?: string,
 ): { container: Phaser.GameObjects.Container; text: Phaser.GameObjects.Text; layout: () => void } {
   const container = scene.add.container(x, y);
-  container.add(drawLayer(scene, 0, 0, slantedRect(width, height, 8), { fill: 0x1a1408, alpha: 0.66, edge: FEED_AMBER, edgeAlpha: 0.22 }));
+  // 치즈케이크 판(크림 면)에 박힌 짙은 창 — 밝은 값 글자가 그 위에서 또렷하다.
+  container.add(drawFeedWindow(scene, width, height));
   const icon = Math.round(height * 0.86);
   // 아이콘과 수는 바짝 붙는다. 멀리 떼면 "치즈케이크"와 "숫자"가 두 정보로 읽힌다.
   const gap = Math.round(icon * 0.12);
@@ -961,22 +956,13 @@ export class InfoManager {
    */
   private addFeedButton(x: number, y: number, width: number, height: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text } {
     const container = this.scene.add.container(x, y);
-    const shape = slantedRect(width, height, 16);
-    // 켜진 상태와 꺼진 상태를 판 두 장으로 나눠 둔다. 켜진 쪽만 진하게 차오르고 빛나서,
-    // 지금 누를 수 있는지가 글자를 읽기 전에 보인다. 색만 치즈케이크의 노랑이다.
-    const off = drawLayer(this.scene, 0, 0, shape, { fill: 0x1a1710, alpha: 0.55, edge: FEED_AMBER, edgeAlpha: 0.3 });
-    const on = drawLayer(this.scene, 0, 0, shape, {
-      fill: 0x3d2f12,
-      alpha: 0.98,
-      edge: 0xffe08a,
-      edgeAlpha: 1,
-      edgeWidth: 4,
-      glow: { color: FEED_AMBER, strength: 0.45, height: 0.7 },
-    });
+    // 켜진 판과 꺼진 판을 두 장으로 나눠 둔다. 켜진 쪽만 크림빛 치즈케이크 조각으로 서서,
+    // 지금 누를 수 있는지가 글자를 읽기 전에 보인다(`feedButtonSkin.ts`).
+    const { on, off } = drawFeedPlate(this.scene, width, height);
     container.add([off, on]);
-    const label = this.scene.add.text(0, -height / 2 + 22, t("info.feed"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
+    const label = this.scene.add.text(0, -height / 2 + 21, t("info.feed"), textStyle({ role: "display", size: 24, color: FEED_BUTTON.ink })).setOrigin(0.5);
     container.add(label);
-    const row = feedCostRow(this.scene, 0, 16, width - 40, 54, 36, "info-feed:button");
+    const row = feedCostRow(this.scene, 0, 7, Math.round(width * 0.62), 40, 30, "info-feed:button");
     this.feedCost = row.text;
     this.feedCostLayout = row.layout;
     container.add(row.container);
@@ -1421,7 +1407,7 @@ export class InfoManager {
   /** 급여를 지금 할 수 있는지에 따라 버튼의 진하기를 바꾼다. */
   private paintFeedButton(enabled: boolean): void {
     this.feedPlate?.on.setAlpha(enabled ? 1 : 0);
-    this.feedLabel.setColor(enabled ? COLOR.ink : COLOR.inkDim);
+    this.feedLabel.setColor(enabled ? FEED_BUTTON.ink : COLOR.inkDim);
     this.feedButton.setAlpha(enabled ? 1 : 0.7);
   }
 
@@ -1483,10 +1469,14 @@ export class InfoManager {
       const enough = session.wallet.cheesecake >= cost;
       // 칸 하나를 한 덩어리로 묶어야 눌림이 판·이름·값줄을 함께 누른다.
       const option = this.scene.add.container(bx, 0);
-      option.add(drawLayer(this.scene, 0, 0, slantedRect(212, 116, 14), { fill: 0x3d2f12, alpha: 0.92, edge: FEED_AMBER, edgeAlpha: enough ? 0.8 : 0.3 }));
-      option.add(this.scene.add.text(0, -34, label, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
+      // 급여 버튼과 같은 치즈케이크 조각이다. 모자란 칸은 꺼진 판으로 가라앉는다.
+      const plate = drawFeedPlate(this.scene, 212, 116, 14);
+      plate.on.setVisible(enough);
+      plate.off.setVisible(!enough);
+      option.add([plate.off, plate.on]);
+      option.add(this.scene.add.text(0, -36, label, textStyle({ role: "display", size: 22, color: enough ? FEED_BUTTON.ink : COLOR.inkDim })).setOrigin(0.5));
       // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
-      const price = feedCostRow(this.scene, 0, 20, 184, 48, 28, "info-feed-popup:cheesecake");
+      const price = feedCostRow(this.scene, 0, 8, 160, 40, 26, "info-feed-popup:cheesecake");
       price.text.setText(formatCurrency(session.wallet.cheesecake) + "/" + formatCurrency(cost));
       price.text.setColor(enough ? FEED_TEXT : COLOR.dangerText);
       price.layout();

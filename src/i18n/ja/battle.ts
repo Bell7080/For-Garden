@@ -42,7 +42,6 @@ export const BATTLE_JA = {
   "battle.chip.autoOff": "必殺 OFF",
   "battle.chip.skipOn": "演出スキップ",
   "battle.chip.skipOff": "演出 ON",
-  "battle.chip.skills": "スキル",
   "battle.skillGlance.title": "スキル一覧",
   "battle.tutorial.ultimate.intro": "必殺技はゲージが満タンになると使える大技だよ！",
   "battle.tutorial.ultimate.owner": "{name}の必殺技",

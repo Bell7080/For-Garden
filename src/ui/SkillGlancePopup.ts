@@ -15,11 +15,11 @@ import { formatEffectDescription } from "./skillExplanation";
 import { breakthroughEffectText, skillKeywordLayoutOptions } from "./skillPresentation";
 import { skillSummaryTags, type SkillInfoViewModel } from "./SkillPopup";
 import { addSkillTagRow } from "./SkillTagRow";
-import { SKILL_GLANCE, skillGlanceCardHeight, skillGlanceCardRoom, skillGlanceTabX } from "./skillGlanceLayout";
+import { SKILL_GLANCE, skillGlanceCardHeight, skillGlanceCardRoom, skillGlanceCardsTop, skillGlanceTabX } from "./skillGlanceLayout";
 import { shrinkTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 
-/** 판에 세울 아군 한 명 — 전투가 실제로 쓰는 정의(레벨·돌파·룬 반영)와 돌파 단계. */
+/** 판에 세울 렐릭 한 명 — 정보창이 보여 주는 정의(레벨·돌파·룬 반영)와 돌파 단계. */
 export interface SkillGlanceAlly {
   def: RelicDef;
   breakthrough: number;
@@ -55,12 +55,11 @@ function glanceEntries(ally: SkillGlanceAlly): GlanceEntry[] {
 }
 
 /**
- * 전투 중 아군의 스킬을 한 판에 모아 읽는 창.
+ * 렐릭의 스킬 네 칸을 한 판에 모아 읽는 창 — 정보창의 폭주 뱃지 위 작은 버튼이 그 렐릭 하나로 연다.
  *
- * 위 줄의 얼굴을 누르면 그 렐릭의 네 칸이 옆에서 밀려 들어온다. 칸은 튜토리얼의 궁극기 소개 쪽지와 같은 결 —
- * 어두운 유리 위에 윗변 한 줄, 왼쪽 스킬 액자, 오른쪽 이름과 본문 — 이고, 본문의 규칙어는 눌러서 읽는다.
- * 판이 떠 있는 동안 전투가 멈추는 것은 이 판이 아니라 전투 씬이 정한다(`anyPopupOpen`).
- * 닫는 길은 판 밖 우하단 뒤로가기와 판 밖 누르기 둘이다.
+ * 여럿을 넘기면 위 줄의 얼굴을 눌러 그 렐릭의 네 칸이 옆에서 밀려 들어오고, 하나뿐이면 얼굴 줄 없이 칸만 선다.
+ * 칸은 튜토리얼의 궁극기 소개 쪽지와 같은 결 — 어두운 유리 위에 윗변 한 줄, 왼쪽 스킬 액자, 오른쪽 이름과
+ * 본문 — 이고, 본문의 규칙어는 눌러서 읽는다. 닫는 길은 판 밖 우하단 뒤로가기와 판 밖 누르기 둘이다.
  */
 export function openSkillGlancePopup(
   scene: Phaser.Scene,
@@ -74,8 +73,9 @@ export function openSkillGlancePopup(
   let selected = Math.min(Math.max(0, options.initial ?? 0), allies.length - 1);
   // **글자 크기와 판 높이는 아군 전원을 재서 한 번 정한다.** 얼굴을 바꿀 때마다 글자가 커졌다 작아지거나
   // 판이 늘었다 줄면 같은 판이 아니라 다른 창이 열린 것처럼 읽힌다. 내용이 짧으면 판도 그만큼 짧다.
+  const cardsTop = skillGlanceCardsTop(allies.length);
   const { size, cardsHeight } = pickBodySize(scene, keywords, allies);
-  const height = Math.min(L.height, L.cards.top + cardsHeight + L.cards.bottomPad);
+  const height = Math.min(L.height, cardsTop + cardsHeight + L.cards.bottomPad);
 
   popups.open({
     width: L.width, height, y: L.centerY, title: t("battle.skillGlance.title"),
@@ -96,7 +96,7 @@ export function openSkillGlancePopup(
 
     const showCards = (animate: boolean, direction: 1 | -1): void => {
       cards?.destroy(true);
-      cards = buildCards(scene, keywords, allies[selected], top, size);
+      cards = buildCards(scene, keywords, allies[selected], top + cardsTop, size);
       body.add(cards);
       if (!animate || options.reduceMotion) return;
       cards.list.forEach((card, index) => {
@@ -107,7 +107,7 @@ export function openSkillGlancePopup(
       });
     };
 
-    allies.forEach((ally, index) => {
+    if (allies.length > 1) allies.forEach((ally, index) => {
       const root = scene.add.container(skillGlanceTabX(index, allies.length), top + L.tabs.y);
       const rarity = RARITY_TONE[ally.def.rarity];
       // 고른 얼굴만 뒤에 강조색 판이 서고 한 뼘 커진다 — 지금 누구의 칸을 읽는지가 판 하나로 말해진다.
@@ -161,12 +161,12 @@ function pickBodySize(scene: Phaser.Scene, keywords: KeywordManager, allies: rea
   for (const size of SKILL_GLANCE.descSizes) {
     const cardsHeight = Math.max(...allies.map((ally) => measureCards(scene, keywords, ally, size)));
     pick = { size, cardsHeight };
-    if (cardsHeight <= skillGlanceCardRoom()) break;
+    if (cardsHeight <= skillGlanceCardRoom(allies.length)) break;
   }
   return pick;
 }
 
-/** 한 렐릭의 네 칸을 판 안에 쌓는다. */
+/** 한 렐릭의 네 칸을 `top`(판 안 좌표)부터 쌓는다. */
 function buildCards(scene: Phaser.Scene, keywords: KeywordManager, ally: SkillGlanceAlly, top: number, size: number): Phaser.GameObjects.Container {
   const L = SKILL_GLANCE;
   const C = L.cards;
@@ -178,7 +178,7 @@ function buildCards(scene: Phaser.Scene, keywords: KeywordManager, ally: SkillGl
   const bodies = entries.map((entry) => layoutBody(keywords, entry.view, room, size));
 
   const root = scene.add.container(0, 0);
-  let cursor = top + C.top;
+  let cursor = top;
   entries.forEach((entry, index) => {
     const descBody = bodies[index];
     const height = skillGlanceCardHeight(descBody.getData("height") as number, nameHeight);

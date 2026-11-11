@@ -1,10 +1,10 @@
 import { BACK_BUTTON_SIZE, BACK_SLOT } from "./popupGeometry";
 
 /**
- * 전투의 「스킬 한눈에 보기」 판 자리.
+ * 「스킬 한눈에 보기」 판 자리 — 정보창의 폭주 뱃지 위 작은 버튼이 연다.
  *
- * 판은 화면 위쪽에 바짝 붙여 크게 세운다 — 아군 셋의 네 칸(패시브·일반 공격·궁극기·폭주)을 한 번에 읽는
- * 판이라 글자를 줄이기보다 판을 키우는 편이 낫다. 밑변은 판 밖 우하단 뒤로가기의 윗변보다 위에서 끊는다.
+ * 판은 크게 세운다 — 한 렐릭의 네 칸(패시브·일반 공격·궁극기·폭주)을 한 번에 읽는 판이라 글자를 줄이기보다
+ * 판을 키우는 편이 낫다. 여럿을 넘길 때만 위에 얼굴 줄이 서고, 하나뿐이면 칸이 그 자리까지 올라간다. 밑변은 판 밖 우하단 뒤로가기의 윗변보다 위에서 끊는다.
  * 이 표는 Phaser를 읽지 않아 테스트가 같은 값을 잰다.
  */
 export const SKILL_GLANCE = {
@@ -17,16 +17,21 @@ export const SKILL_GLANCE = {
   /** 위 렐릭 고르기 줄 — 얼굴 액자와 이름. */
   tabs: { y: 128, face: 118, gap: 270, plate: 156, nameGap: 84, nameSize: 26 },
   /** 스킬 칸들이 쓰는 세로 띠(판 윗변 기준). */
-  cards: { top: 262, bottomPad: 44, side: 36, gap: 18, pad: 24, icon: 124, textGap: 26, nameSize: 38, nameGap: 12 },
+  cards: { top: 262, soloTop: 84, bottomPad: 44, side: 36, gap: 18, pad: 24, icon: 124, textGap: 26, nameSize: 38, nameGap: 12 },
   /** 본문 글자 크기 사다리 — 큰 것부터 넣어 보고 띠 안에 들 때까지 한 칸씩 낮춘다. */
   descSizes: [31, 29, 27, 25, 23, 22, 21, 20],
   /** 렐릭을 바꿀 때 칸이 옆에서 밀려 들어오는 거리와 칸마다 늦는 시간. */
   slide: { distance: 36, duration: 220, stagger: 45 },
 } as const;
 
+/** 칸들이 시작하는 높이(판 윗변 기준) — 얼굴 줄은 넘길 렐릭이 둘 이상일 때만 선다. */
+export function skillGlanceCardsTop(count: number): number {
+  return count > 1 ? SKILL_GLANCE.cards.top : SKILL_GLANCE.cards.soloTop;
+}
+
 /** 스킬 칸들이 쓸 수 있는 세로 길이. */
-export function skillGlanceCardRoom(): number {
-  return SKILL_GLANCE.height - SKILL_GLANCE.cards.top - SKILL_GLANCE.cards.bottomPad;
+export function skillGlanceCardRoom(count = 1): number {
+  return SKILL_GLANCE.height - skillGlanceCardsTop(count) - SKILL_GLANCE.cards.bottomPad;
 }
 
 /** 칸 하나의 높이 — 아이콘 칸과 (이름 + 본문) 중 큰 쪽에 위아래 여백을 더한다. */

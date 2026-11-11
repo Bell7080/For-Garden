@@ -40,7 +40,6 @@ export const BATTLE_VI = {
   "battle.chip.autoOff": "Tuyệt kỹ TẮT",
   "battle.chip.skipOn": "Bỏ qua cắt cảnh",
   "battle.chip.skipOff": "Cắt cảnh BẬT",
-  "battle.chip.skills": "Kỹ năng",
   "battle.skillGlance.title": "Tổng quan kỹ năng",
   "battle.tutorial.ultimate.intro": "Tuyệt kỹ là chiêu đặc biệt dùng được khi thanh đầy!",
   "battle.tutorial.ultimate.owner": "Tuyệt kỹ của {name}",

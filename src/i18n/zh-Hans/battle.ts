@@ -40,7 +40,6 @@ export const BATTLE_ZH_HANS = {
   "battle.chip.autoOff": "必杀技 OFF",
   "battle.chip.skipOn": "跳过特写",
   "battle.chip.skipOff": "特写 ON",
-  "battle.chip.skills": "技能",
   "battle.skillGlance.title": "技能一览",
   "battle.tutorial.ultimate.intro": "必杀技是量表充满后才能使用的大招哦！",
   "battle.tutorial.ultimate.owner": "{name}的必杀技",

@@ -95,6 +95,7 @@ import { drawFeedPlate, drawFeedWindow, FEED_BUTTON } from "./feedButtonSkin";
 import { FEED_LEVEL_UP } from "./feedLevelUpStyle";
 import { HOLO_SHIMMER, holoBreathe, holoGlowColor, holoSweepPhase, polygonSpans } from "./holoShimmer";
 import { settingsManager } from "../managers/SettingsManager";
+import { openSkillGlancePopup } from "./SkillGlancePopup";
 import { FEED_TAP, FeedHoldRepeater } from "./feedTapStyle";
 import { addSdFootShadow } from "./SdFootShadow";
 import { withBusy } from "./BusyOverlay";
@@ -2460,6 +2461,35 @@ export class InfoManager {
   private addFerocityBadge(x: number, y: number, def: RelicDef): void {
     // 스킬 아이콘과 같은 목록에 담아 미보유 개체에서 함께 숨고 다시 그릴 때 함께 지워진다.
     this.skillIcons.push(addInfoFerocityBadge(this.scene, this.popups, this.chrome, x, y, def, (from) => this.openFerocityTrait(def, from), breakthroughEnhances(def, this.shownBreakthrough(def), "ferocity")));
+    this.addSkillGlanceButton(x, y - INFO_BADGE_SIZE / 2 - SKILL_GLANCE_BUTTON.gap - SKILL_GLANCE_BUTTON.size / 2, def);
+  }
+
+  /**
+   * 폭주 뱃지 위의 작은 「스킬 한눈에 보기」 버튼 — 이 렐릭의 네 칸(패시브·일반 공격·궁극기·폭주)을 한 판에 연다.
+   *
+   * 판의 문장은 스킬 쪽지와 같은 조립기를 지나고, 능력치·돌파는 이 창이 보여 주는 값(공개 프로필·원정
+   * 스냅샷이면 그쪽 값)을 그대로 넘긴다 — 쪽지와 판이 같은 궁극기를 다른 수치로 말하지 않게.
+   */
+  private addSkillGlanceButton(x: number, y: number, def: RelicDef): void {
+    const size = SKILL_GLANCE_BUTTON.size;
+    const container = this.scene.add.container(x, y);
+    container.add(drawLayer(this.scene, 0, 0, chipPoints(size, size, {
+      bevel: { topLeft: size * 0.3, topRight: 0, bottomRight: size * 0.3, bottomLeft: 0 },
+    }), { fill: 0x121820, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.4 }));
+    container.add(drawGlyph(this.scene, "magnifier", 0, 0, size * 0.56, 0xd2d6dc, 1, 4));
+    const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => pressIn(container));
+    hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(container, "normal", { pop: false }); });
+    hit.on("pointerup", () => {
+      pressIn(container);
+      openSkillGlancePopup(this.scene, this.popups, [{ def: { ...def, stats: this.shownStats(def) }, breakthrough: this.shownBreakthrough(def) }], {
+        reduceMotion: motionPolicy(session.settings).nonEssentialRepeatFactor === 0,
+        onClose: () => pressOut(container),
+      });
+    });
+    container.add(hit);
+    this.chrome.add(container);
+    this.skillIcons.push(container);
   }
 
   /** 개체별 폭주 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
@@ -3213,6 +3243,9 @@ function addInfoBadge(
  * 일러스트가 점처럼 뭉갠다.
  */
 export const INFO_BADGE_SIZE = 96;
+
+/** 폭주 뱃지 위 「스킬 한눈에 보기」 버튼 — 뱃지보다 한참 작게 둬 스킬 줄의 위계를 흔들지 않는다. */
+const SKILL_GLANCE_BUTTON = { size: 56, gap: 12 } as const;
 
 /**
  * 역할 칸의 쪽지 — 스킬 쪽지와 **같은 한 장**이다.

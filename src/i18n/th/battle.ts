@@ -40,7 +40,6 @@ export const BATTLE_TH = {
   "battle.chip.autoOff": "ท่าไม้ตาย OFF",
   "battle.chip.skipOn": "ข้ามคัตอิน",
   "battle.chip.skipOff": "คัตอิน ON",
-  "battle.chip.skills": "สกิล",
   "battle.skillGlance.title": "สรุปสกิล",
   "battle.tutorial.ultimate.intro": "ท่าไม้ตายคือท่าพิเศษที่ใช้ได้เมื่อเกจเต็ม!",
   "battle.tutorial.ultimate.owner": "ท่าไม้ตายของ {name}",

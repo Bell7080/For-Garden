@@ -3370,6 +3370,7 @@ export function buildFerocityViewModel(
   return {
     name: def.ferocityTrait.name,
     kindLabel: t("info.skill.ferocity"),
+    slot: "ferocity",
     iconAssetId: "skill-icon-buff",
     art: skillArtFor(def.id, "ferocity"),
     tint: skillArtTint(def.element, def.role),
@@ -3467,6 +3468,9 @@ export function buildSkillViewModel(options: {
     name: skill.name,
     kindLabel,
     iconAssetId: skill.iconAssetId as SkillIconAssetId,
+    // 요약 칩이 시간 갈래와 범위·보호막처럼 낱값에 없는 계약을 정의에서 읽는다.
+    slot: slot ?? ("kind" in skill ? "passive" : undefined),
+    source: skill,
     breakthroughEffect,
     // 전용 일러스트가 있으면 팝업도 같은 그림과 같은 색을 쓴다. 아이콘과 쪽지가 갈라지면
     // 어느 스킬을 눌렀는지 되짚어야 한다.

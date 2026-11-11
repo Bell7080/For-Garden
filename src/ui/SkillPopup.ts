@@ -3,13 +3,16 @@ import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import type { KeywordManager } from "../managers/KeywordManager";
 import type { KeywordDef } from "../data/keywords";
-import type { CombatStatusEffect, EffectType, SkillIconAssetId, Ultimate } from "../core/types";
+import type { CombatStatusEffect, EffectType, Passive, Skill, SkillIconAssetId, Ultimate } from "../core/types";
 import { bakeChipArt, chipArtShape } from "./chipArtTexture";
 import { drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { SKILL_ART_WASH_ALPHA } from "./skillArt";
-import { damageHealingLabel, recoveryLabel, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "./skillPresentation";
+import { skillKeywordLayoutOptions } from "./skillPresentation";
+import { addSkillTagRow } from "./SkillTagRow";
+import { buildSkillTags, type SkillTag } from "./skillTags";
+import type { SkillArtSlot } from "./skillArt";
 import { COLOR, textStyle } from "./theme";
 import { shrinkTextToWidth } from "./textFit";
 
@@ -36,11 +39,15 @@ export interface SkillInfoViewModel {
   /** 속성·직군을 섞은 필터 색. 흰 실루엣 일러스트에만 입힌다. */
   tint?: number;
   effectType: EffectType;
+  /** 어느 칸의 기술인가. 요약 칩의 시간 갈래(상시·폭주 중·즉발/지속)를 정한다. */
+  slot?: SkillArtSlot;
+  /** 전투가 읽는 정의 그대로. 요약 칩이 범위·보호막·은신처럼 낱값에 없는 계약을 읽는다. */
+  source?: Skill | Passive;
   /** 배율이나 예상 피해처럼 한 줄로 읽는 수치. */
   valueLabel?: string;
   /**
-   * 요약 줄을 통째로 갈아 끼운다. 기술이 아닌 칸(역할)은 효과 분류·대상·상태가 없어 그 조립이
-   * "강화"처럼 뜻이 다른 말을 세우므로, 그 칸이 말할 한 줄(배율 목록)을 직접 넘긴다.
+   * 요약 칩을 통째로 갈아 끼운다. 기술이 아닌 칸(역할)은 효과 분류·대상·상태가 없어 그 조립이
+   * "강화"처럼 뜻이 다른 말을 세우므로, 그 칸이 말할 한 줄을 직접 넘긴다(빈 글이면 칩 줄이 없다).
    */
   summary?: string;
   /** 표시 수치를 눌렀을 때 해당 스킬의 능력치 출처와 배율을 설명한다. */
@@ -102,6 +109,25 @@ const ICON_BEVEL = 0.26;
 
 const BREAKTHROUGH_LINE = { gap: 34, labelTop: 8, labelGap: 10, size: 25 } as const;
 
+/** 아이콘 오른쪽 글 칸의 왼쪽 변(판 가운데 기준). 이름·분류·칩이 같은 x에 선다. */
+const SUMMARY_LEFT = -POPUP.width / 2 + 96 + 132 / 2 + 28;
+
+/** 쪽지 모델에서 요약 칩을 짓는다. 다른 화면(전투 한눈에 보기 등)도 같은 칩을 쓰려면 이 함수를 부른다. */
+export function skillSummaryTags(skill: SkillInfoViewModel): SkillTag[] {
+  if (skill.summary !== undefined) return skill.summary === "" ? [] : [{ tone: "value", glyph: "tag-value", text: skill.summary }];
+  return buildSkillTags({
+    slot: skill.slot,
+    source: skill.source,
+    effectType: skill.effectType,
+    targeting: skill.targeting,
+    statusEffects: skill.statusEffects,
+    durationSeconds: skill.durationSeconds,
+    recoveryPercent: skill.recoveryPercent,
+    damageHealingPercent: skill.damageHealingPercent,
+    valueLabel: skill.valueLabel,
+  });
+}
+
 /**
  * 스킬 하나를 설명하는 정형 팝업.
  *
@@ -129,17 +155,12 @@ export function openSkillPopup(
   const breakthroughLabelHeight = breakthrough === undefined ? 0 : Math.round(BREAKTHROUGH_LINE.size * 1.4);
   const breakthroughBlock = breakthrough === undefined ? 0
     : BREAKTHROUGH_LINE.gap + BREAKTHROUGH_LINE.labelTop + breakthroughLabelHeight + BREAKTHROUGH_LINE.labelGap + breakthrough.height;
-  const summary = skill.summary ?? [
-    effectLabel(skill.effectType), skill.valueLabel, targetingLabel(skill.targeting),
-    ...((skill.statusEffects ?? []).map(statusEffectLabel)),
-    skill.durationSeconds === undefined ? undefined : t("skill.duration", { seconds: skill.durationSeconds }),
-    recoveryLabel(skill.recoveryPercent),
-    damageHealingLabel(skill.damageHealingPercent),
-  ].filter(Boolean).join("   ·   ");
-  // 실제 수치도 설명문과 같은 키워드 레이아웃을 써서, 누르면 산출 근거를 확인할 수 있게 한다.
-  const summaryText = keywords.layout(summary, skillKeywordLayoutOptions(skill, {
-    width: 560, size: 24, lineSpacing: 4,
-  }));
+  // 스킬 이름 아래 요약은 **칩 줄**이다 — 효과 종류 · 범위 · 시간 · 거는 효과 · 수치를 늘 같은
+  // 순서와 같은 색으로 세운다(`skillTags.ts`). 수치 칩을 누르면 산출 근거가 열린다.
+  const summaryText = addSkillTagRow(scene, skillSummaryTags(skill), {
+    width: POPUP.width / 2 - SUMMARY_LEFT - POPUP.nameRightGutter, size: 22,
+    keywords, contextualKeywords: skill.contextualKeywords,
+  });
   const descriptionY = skillDescriptionTop(summaryText.height);
   const height = Math.max(
     POPUP.minHeight,
@@ -203,8 +224,8 @@ export function openSkillPopup(
     shrinkTextToWidth(name, POPUP.width / 2 - textLeft - POPUP.nameRightGutter);
     body.add(name);
 
-    // 효과 분류와 수치는 한 줄에 둔다. 둘 다 "얼마나 세게, 어떤 식으로"를 말한다.
-    summaryText.setPosition(textLeft, top + 156);
+    // 요약 칩 줄. 넘치면 여러 줄로 내려가고 본문은 그 아래에서 시작한다(`skillDescriptionTop`).
+    summaryText.setPosition(textLeft, top + 160);
     body.add(summaryText);
 
     body.add(drawHairline(scene, 0, top + descriptionY - 28, POPUP.width - 96, { color: COLOR.accent, alpha: 0.35 }));

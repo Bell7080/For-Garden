@@ -78,7 +78,6 @@ export const MISC_TH = {
   "skill.effect.healing": "ฟื้นฟู",
   "skill.effect.buff": "บัฟ",
   "skill.gauge": "เกจ {cost}",
-  "skill.duration": "{seconds} วินาที",
   "archaeology.shop": "ร้านค้า",
   "archaeology.bench.pick": "เลือกรูน",
   "archaeology.bench.clear": "นำออก",

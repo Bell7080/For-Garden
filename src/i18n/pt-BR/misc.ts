@@ -78,7 +78,6 @@ export const MISC_PT_BR = {
   "skill.effect.healing": "Cura",
   "skill.effect.buff": "Bônus",
   "skill.gauge": "Medidor {cost}",
-  "skill.duration": "Por {seconds} s",
   "archaeology.shop": "Loja",
   "archaeology.bench.pick": "Escolha uma Runa",
   "archaeology.bench.clear": "Remover",

@@ -85,7 +85,6 @@ export const MISC_KO = {
   "skill.effect.healing": "회복",
   "skill.effect.buff": "강화",
   "skill.gauge": "게이지 {cost}",
-  "skill.duration": "{seconds}초 동안",
 
   // 고고학
   "archaeology.shop": "상점",

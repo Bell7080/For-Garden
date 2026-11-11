@@ -78,7 +78,6 @@ export const MISC_VI = {
   "skill.effect.healing": "Hồi máu",
   "skill.effect.buff": "Tăng cường chỉ số",
   "skill.gauge": "Thanh năng lượng {cost}",
-  "skill.duration": "Trong {seconds} giây",
   "archaeology.shop": "Cửa hàng",
   "archaeology.bench.pick": "Chọn Rune",
   "archaeology.bench.clear": "Gỡ ra",

@@ -69,7 +69,19 @@ export type GlyphName =
   | "brand-apple"
   | "id-card"
   | "receipt"
-  | "restore";
+  | "restore"
+  | "tag-buff"
+  | "tag-target"
+  | "tag-area"
+  | "tag-ally"
+  | "tag-self"
+  | "tag-instant"
+  | "tag-duration"
+  | "tag-always"
+  | "tag-control"
+  | "tag-debuff"
+  | "tag-mark"
+  | "tag-value";
 
 /** 3차 베지어 한 마디를 점으로 편다(끝점 포함, 시작점 제외). 상표 실루엣처럼 곡선이 뜻인 그림에만 쓴다. */
 function bezier(out: number[], x0: number, y0: number, c1x: number, c1y: number, c2x: number, c2y: number, x: number, y: number, steps = 10): void {
@@ -538,6 +550,86 @@ export function drawGlyph(
       // 다른 아이콘과 같은 선 두께 체계에 남는다.
       g.lineBetween(0, -r * 0.82, 0, r * 0.72);
       g.strokePoints(points(-r * 0.5, r * 0.18, 0, r * 0.82, r * 0.5, r * 0.18), false);
+      break;
+    // ── 스킬 요약 칩(`skillTags.ts`)의 갈래 표식. 작게 서므로 채운 면 위주로 굵게 짓는다. ──
+    case "tag-buff":
+      // 강화 — 위로 솟는 채운 갈매기 둘.
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(0, -r * 0.92, r * 0.86, -r * 0.1, r * 0.5, -r * 0.1, 0, -r * 0.52, -r * 0.5, -r * 0.1, -r * 0.86, -r * 0.1), true);
+      g.fillPoints(points(0, -r * 0.08, r * 0.86, r * 0.74, r * 0.5, r * 0.74, 0, r * 0.32, -r * 0.5, r * 0.74, -r * 0.86, r * 0.74), true);
+      break;
+    case "tag-debuff":
+      // 약화 — 아래로 꺼지는 채운 갈매기 둘(강화를 뒤집은 모양).
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(0, r * 0.92, r * 0.86, r * 0.1, r * 0.5, r * 0.1, 0, r * 0.52, -r * 0.5, r * 0.1, -r * 0.86, r * 0.1), true);
+      g.fillPoints(points(0, r * 0.08, r * 0.86, -r * 0.74, r * 0.5, -r * 0.74, 0, -r * 0.32, -r * 0.5, -r * 0.74, -r * 0.86, -r * 0.74), true);
+      break;
+    case "tag-target":
+      // 단일 — 조준선. 각진 마름모 고리와 네 갈래 눈금, 가운데 점.
+      g.strokePoints(points(0, -r * 0.64, r * 0.64, 0, 0, r * 0.64, -r * 0.64, 0), true);
+      g.lineBetween(0, -r, 0, -r * 0.4);
+      g.lineBetween(0, r * 0.4, 0, r);
+      g.lineBetween(-r, 0, -r * 0.4, 0);
+      g.lineBetween(r * 0.4, 0, r, 0);
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(0, -r * 0.16, r * 0.16, 0, 0, r * 0.16, -r * 0.16, 0), true);
+      break;
+    case "tag-area":
+      // 광역 — 바깥으로 번지는 마름모 두 겹과 채운 가운데.
+      g.strokePoints(points(0, -r * 0.96, r * 0.96, 0, 0, r * 0.96, -r * 0.96, 0), true);
+      g.strokePoints(points(0, -r * 0.6, r * 0.6, 0, 0, r * 0.6, -r * 0.6, 0), true);
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(0, -r * 0.26, r * 0.26, 0, 0, r * 0.26, -r * 0.26, 0), true);
+      break;
+    case "tag-self":
+      // 자신 — 각진 머리 하나와 어깨.
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(0, -r * 0.92, r * 0.36, -r * 0.56, 0, -r * 0.2, -r * 0.36, -r * 0.56), true);
+      g.fillPoints(points(-r * 0.78, r * 0.86, -r * 0.62, r * 0.18, -r * 0.22, -r * 0.04, r * 0.22, -r * 0.04, r * 0.62, r * 0.18, r * 0.78, r * 0.86), true);
+      break;
+    case "tag-ally":
+      // 아군 — 겹쳐 선 두 사람(뒷사람은 선만).
+      g.strokePoints(points(r * 0.34, -r * 0.94, r * 0.62, -r * 0.64, r * 0.34, -r * 0.34, r * 0.06, -r * 0.64), true);
+      g.strokePoints(points(r * 0.1, -r * 0.2, r * 0.6, -r * 0.2, r * 0.92, r * 0.06, r * 0.98, r * 0.6), false);
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(-r * 0.28, -r * 0.62, r * 0.04, -r * 0.3, -r * 0.28, r * 0.02, -r * 0.6, -r * 0.3), true);
+      g.fillPoints(points(-r * 0.96, r * 0.94, -r * 0.82, r * 0.34, -r * 0.48, r * 0.14, -r * 0.08, r * 0.14, r * 0.26, r * 0.34, r * 0.4, r * 0.94), true);
+      break;
+    case "tag-instant":
+      // 즉발 — 꺾인 번개.
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(r * 0.22, -r * 0.98, -r * 0.62, r * 0.12, -r * 0.06, r * 0.12, -r * 0.24, r * 0.98, r * 0.64, -r * 0.16, r * 0.06, -r * 0.16), true);
+      break;
+    case "tag-duration":
+      // 지속 — 각진 모래시계.
+      g.strokePoints(points(-r * 0.68, -r * 0.92, r * 0.68, -r * 0.92, 0, 0, r * 0.68, r * 0.92, -r * 0.68, r * 0.92, 0, 0), true);
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(-r * 0.44, r * 0.8, r * 0.44, r * 0.8, 0, r * 0.38), true);
+      g.fillPoints(points(-r * 0.3, -r * 0.7, r * 0.3, -r * 0.7, 0, -r * 0.4), true);
+      break;
+    case "tag-always":
+      // 상시 — 맞물린 마름모 고리 둘(끝없이 도는 것).
+      g.strokePoints(points(-r * 0.42, -r * 0.56, r * 0.14, 0, -r * 0.42, r * 0.56, -r * 0.98, 0), true);
+      g.strokePoints(points(r * 0.42, -r * 0.56, r * 0.98, 0, r * 0.42, r * 0.56, -r * 0.14, 0), true);
+      break;
+    case "tag-control":
+      // 제어 — 각진 팔각 정지판과 가로 막대.
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(-r * 0.4, -r * 0.96, r * 0.4, -r * 0.96, r * 0.96, -r * 0.4, r * 0.96, r * 0.4, r * 0.4, r * 0.96, -r * 0.4, r * 0.96, -r * 0.96, r * 0.4, -r * 0.96, -r * 0.4), true);
+      g.fillStyle(0x000000, alpha * 0.7);
+      g.fillRect(-r * 0.56, -r * 0.16, r * 1.12, r * 0.32);
+      break;
+    case "tag-mark":
+      // 표식 — 마름모 고리 안의 채운 점, 위쪽 꼭지에 한 획.
+      g.strokePoints(points(0, -r * 0.76, r * 0.76, 0, 0, r * 0.76, -r * 0.76, 0), true);
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(0, -r * 0.34, r * 0.34, 0, 0, r * 0.34, -r * 0.34, 0), true);
+      g.lineBetween(0, -r * 0.76, 0, -r);
+      break;
+    case "tag-value":
+      // 수치 — 채운 마름모 하나.
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(0, -r * 0.86, r * 0.6, 0, 0, r * 0.86, -r * 0.6, 0), true);
       break;
     case "bookmark": {
       // 즐겨찾기 — 별. 성급 별과 같은 5각이라 "골라 둔 것"으로 바로 읽힌다.

@@ -8,7 +8,10 @@ export function formatEffectDescription(text: string): string {
   return lines.length < 2 ? text : lines.map(line => `• ${restore(line)}`).join("\n\n");
 }
 
-/** 요약이 여러 줄인 기술도 본문·구분선과 겹치지 않는다. */
+/**
+ * 요약 칩 줄이 여러 줄로 내려가도 본문·구분선과 겹치지 않는다.
+ * 칩은 `top + 160`에서 시작하고, 구분선(본문 − 28)이 칩 밑변에서 한 뼘(18) 떨어진다.
+ */
 export function skillDescriptionTop(summaryHeight: number): number {
-  return Math.max(268, 156 + summaryHeight + 36);
+  return Math.max(268, 160 + summaryHeight + 46);
 }

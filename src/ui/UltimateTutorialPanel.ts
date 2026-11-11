@@ -4,6 +4,8 @@ import { t, type TextKey } from "../i18n";
 import { chipPoints, drawLayer } from "./holo";
 import { addSkillIconFrame, skillSlotLabel } from "./SkillIconFrame";
 import { shrinkTextToWidth, fitTextToBox } from "./textFit";
+import { addSkillTagRow } from "./SkillTagRow";
+import { skillTagsFromDef } from "./skillTags";
 import { COLOR, textStyle } from "./theme";
 
 /**
@@ -13,7 +15,7 @@ import { COLOR, textStyle } from "./theme";
  * 갖는데 첫 판에서 그 차이를 볼 길이 없었다. 쪽지 한 장이 그 렐릭의 궁극기 그림·이름·한 줄 효과를 크게 세우고,
  * 밑동에서 몇 번째 소개인지 말한다. 판은 어두운 유리 위에 강조색 윗변 한 줄이고 테두리를 두르지 않는다.
  */
-export const ULTIMATE_TUTORIAL_PANEL = { width: 940, height: 300, icon: 210, pad: 34 } as const;
+export const ULTIMATE_TUTORIAL_PANEL = { width: 940, height: 340, icon: 210, pad: 34 } as const;
 
 /** 오프닝 편성의 한 줄 효과. 이 표에 없는 렐릭은 효과 줄 없이 이름만 선다. */
 const ULTIMATE_TUTORIAL_DESC: Readonly<Record<string, TextKey>> = {
@@ -63,21 +65,28 @@ export function addUltimateTutorialPanel(scene: Phaser.Scene, options: UltimateT
   const name = scene.add.text(textLeft, 0, options.relic.ultimate.name, textStyle({ role: "display", size: 50, color: COLOR.accentText }))
     .setOrigin(0, 0.5).setStroke("#05070a", 8);
   shrinkTextToWidth(name, room);
-  const blocks: Phaser.GameObjects.Text[] = [owner, name];
+  // 이름 아래에는 정보창의 스킬 쪽지와 **같은 요약 칩**(종류·범위·시간·거는 효과)이 선다 — 처음 본 궁극기가
+  // 광역인지, 무엇을 거는지가 쪽지와 같은 색·같은 순서로 먼저 읽힌다. 전투 중이라 눌러 여는 뜻풀이는 없다.
+  const tagRow = addSkillTagRow(scene, skillTagsFromDef(options.relic.ultimate, "ultimate"), { width: room, size: 22 });
+  const blocks: (Phaser.GameObjects.Text | Phaser.GameObjects.Container)[] = [owner, name, tagRow];
   if (descKey) {
     const desc = scene.add.text(textLeft, 0, t(descKey), textStyle({ role: "body", size: 31, color: COLOR.ink, wrap: room, lineSpacing: 6 }))
       .setOrigin(0, 0.5);
-    fitTextToBox(desc, { width: room, height: 112 });
+    fitTextToBox(desc, { width: room, height: 96 });
     blocks.push(desc);
   }
   // 세 줄을 한 덩어리로 재서 판의 세로 가운데에 놓는다 — 효과 줄이 없는 렐릭도 쏠리지 않는다.
   const gap = 12;
-  const total = blocks.reduce((sum, text) => sum + text.displayHeight, 0) + gap * (blocks.length - 1);
+  // 칩 줄은 원점이 왼쪽 위인 컨테이너라 가운데 원점인 글과 놓는 법이 다르다.
+  const blockHeight = (block: Phaser.GameObjects.Text | Phaser.GameObjects.Container) => block instanceof Phaser.GameObjects.Container ? block.height : block.displayHeight;
+  const total = blocks.reduce((sum, block) => sum + blockHeight(block), 0) + gap * (blocks.length - 1);
   let cursor = -total / 2;
-  for (const text of blocks) {
-    text.setY(cursor + text.displayHeight / 2);
-    cursor += text.displayHeight + gap;
-    root.add(text);
+  for (const block of blocks) {
+    const h = blockHeight(block);
+    if (block instanceof Phaser.GameObjects.Container) block.setPosition(textLeft, cursor);
+    else block.setY(cursor + h / 2);
+    cursor += h + gap;
+    root.add(block);
   }
 
   if (options.intro) {

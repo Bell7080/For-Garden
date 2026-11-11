@@ -13,7 +13,8 @@ import { addSkillIconFrame, skillSlotLabel } from "./SkillIconFrame";
 import type { SkillArtSlot } from "./skillArt";
 import { formatEffectDescription } from "./skillExplanation";
 import { breakthroughEffectText, skillKeywordLayoutOptions } from "./skillPresentation";
-import type { SkillInfoViewModel } from "./SkillPopup";
+import { skillSummaryTags, type SkillInfoViewModel } from "./SkillPopup";
+import { addSkillTagRow } from "./SkillTagRow";
 import { SKILL_GLANCE, skillGlanceCardHeight, skillGlanceCardRoom, skillGlanceTabX } from "./skillGlanceLayout";
 import { shrinkTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
@@ -219,8 +220,14 @@ function buildCards(scene: Phaser.Scene, keywords: KeywordManager, ally: SkillGl
 function layoutBody(keywords: KeywordManager, view: SkillInfoViewModel, width: number, size: number): Phaser.GameObjects.Container {
   const lineSpacing = Math.round(size * 0.28);
   const desc = keywords.layout(formatEffectDescription(view.description), skillKeywordLayoutOptions(view, { width, size, lineSpacing }));
-  const box = desc.scene.add.container(0, 0, [desc]);
-  let height = desc.height;
+  const box = desc.scene.add.container(0, 0);
+  // 스킬 쪽지와 같은 요약 칩 줄(종류 · 범위 · 시간 · 효과 · 수치)이 본문 위에 선다.
+  const tags = addSkillTagRow(desc.scene, skillSummaryTags(view), { width, size: Math.max(20, Math.round(size * 0.78)), keywords, contextualKeywords: view.contextualKeywords });
+  const tagsHeight = tags.height > 0 ? tags.height + 14 : 0;
+  box.add(tags);
+  desc.setY(tagsHeight);
+  box.add(desc);
+  let height = tagsHeight + desc.height;
   if (view.breakthroughEffect !== undefined) {
     const extra = keywords.layout(formatEffectDescription(view.breakthroughEffect), skillKeywordLayoutOptions(view, { width, size: size - 1, lineSpacing, color: COLOR.accentText }));
     extra.setY(height + 12);

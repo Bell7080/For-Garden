@@ -78,7 +78,6 @@ export const MISC_RU = {
   "skill.effect.healing": "Лечение",
   "skill.effect.buff": "Бафф",
   "skill.gauge": "Шкала {cost}",
-  "skill.duration": "На {seconds} с",
   "archaeology.shop": "Магазин",
   "archaeology.bench.pick": "Выберите руну",
   "archaeology.bench.clear": "Убрать",

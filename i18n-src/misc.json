@@ -571,16 +571,6 @@
 "Leiste {cost}",
 "Шкала {cost}"
 ],
-"skill.duration": [
-"持续{seconds}秒",
-"{seconds} วินาที",
-"Trong {seconds} giây",
-"Selama {seconds} dtk",
-"Durante {seconds} s",
-"Por {seconds} s",
-"{seconds} s lang",
-"На {seconds} с"
-],
 "archaeology.shop": [
 "商店",
 "ร้านค้า",

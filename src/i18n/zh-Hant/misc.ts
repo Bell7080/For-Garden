@@ -78,7 +78,6 @@ export const MISC_ZH_HANT = {
   "skill.effect.healing": "治療",
   "skill.effect.buff": "增益",
   "skill.gauge": "能量 {cost}",
-  "skill.duration": "持續{seconds}秒",
   "archaeology.shop": "商店",
   "archaeology.bench.pick": "選擇符文",
   "archaeology.bench.clear": "移除",

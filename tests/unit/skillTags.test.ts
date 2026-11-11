@@ -1,0 +1,61 @@
+import { afterAll, describe, expect, it } from "vitest";
+import { RELICS } from "../../src/data/relics";
+import { parseKeywordText } from "../../src/data/keywords";
+import { loadTextCatalog, setTextLanguage } from "../../src/i18n";
+import { LANGUAGE_IDS } from "../../src/core/language";
+import { buildSkillTags, skillTagsFromDef, type SkillTagTone } from "../../src/ui/skillTags";
+
+afterAll(() => setTextLanguage("ko"));
+
+const ORDER: readonly SkillTagTone[][] = [
+  ["physical", "magical", "fixed", "heal", "buff"],
+  ["scope"],
+  ["timing"],
+  ["control", "debuff", "mark", "shield", "buff", "heal"],
+  ["value"],
+];
+const group = (tone: SkillTagTone, index: number) => index === 0 ? 0 : ORDER.findIndex((tones, g) => g > 0 && tones.includes(tone));
+
+describe("스킬 요약 칩 규격", () => {
+  it("모든 개체의 네 칸이 종류 → 범위 → 시간 → 거는 효과 → 수치 순서로 선다", () => {
+    for (const def of RELICS) for (const slot of ["passive", "basic", "ultimate"] as const) {
+      const tags = skillTagsFromDef(def[slot], slot, "피해량 [[damage-value|100]]");
+      const where = `${def.id}/${slot}`;
+      expect(ORDER[0], where).toContain(tags[0].tone);
+      const groups = tags.map((tag, index) => group(tag.tone, index));
+      expect(groups, where).toEqual([...groups].sort((a, b) => a - b));
+      expect(tags.filter((tag) => tag.tone === "timing"), where).toHaveLength(1);
+      // 평타·궁극기는 반드시 범위를 말한다.
+      if (slot !== "passive") expect(tags.some((tag) => tag.tone === "scope"), where).toBe(true);
+      expect(new Set(tags.map((tag) => tag.text)).size, where).toBe(tags.length);
+    }
+  });
+
+  it("상태 효과는 갈래 색으로 갈리고 시간을 함께 말한다", () => {
+    const torika = RELICS.find((def) => def.id === "torika")!;
+    const tags = skillTagsFromDef(torika.ultimate, "ultimate");
+    expect(tags.map((tag) => tag.text)).toEqual(expect.arrayContaining(["[[stun|기절]] 2초", "주위 광역"]));
+    expect(tags.find((tag) => tag.text.startsWith("[[stun"))?.tone).toBe("control");
+  });
+
+  it("시간 갈래: 패시브는 상시, 폭주는 폭주 중, 지속 시간이 있으면 지속 N초", () => {
+    expect(buildSkillTags({ slot: "passive", effectType: "buff" }).map((tag) => tag.text)).toContain("상시");
+    expect(buildSkillTags({ slot: "ferocity", effectType: "buff" }).map((tag) => tag.text)).toContain("폭주 중");
+    expect(buildSkillTags({ slot: "ultimate", effectType: "buff", durationSeconds: 6 }).map((tag) => tag.text)).toContain("지속 6초");
+    expect(buildSkillTags({ slot: "basic", effectType: "physical" }).map((tag) => tag.text)).toEqual(["물리 피해", "단일", "즉발"]);
+  });
+
+  it.each(LANGUAGE_IDS)("%s: 모든 칩 글이 채워지고 규칙어가 사전에서 열린다", async (locale) => {
+    await loadTextCatalog(locale); setTextLanguage(locale);
+    const failures: string[] = [];
+    for (const def of RELICS) for (const slot of ["passive", "basic", "ultimate"] as const) {
+      for (const tag of skillTagsFromDef(def[slot], slot)) {
+        if (/undefined|NaN|\{[A-Za-z]+\}|skill\.tag\./.test(tag.text)) failures.push(`${def.id}/${slot}: ${tag.text}`);
+        for (const match of tag.text.matchAll(/\[\[[^\]]+\]\]/g)) {
+          if (!parseKeywordText(match[0])[0]?.keyword) failures.push(`${def.id}/${slot}: ${match[0]}`);
+        }
+      }
+    }
+    expect(failures).toEqual([]);
+  });
+});

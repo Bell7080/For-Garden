@@ -78,7 +78,6 @@ export const MISC_ID = {
   "skill.effect.healing": "Penyembuhan",
   "skill.effect.buff": "Buff",
   "skill.gauge": "Gauge {cost}",
-  "skill.duration": "Selama {seconds} dtk",
   "archaeology.shop": "Toko",
   "archaeology.bench.pick": "Pilih Rune",
   "archaeology.bench.clear": "Lepas",

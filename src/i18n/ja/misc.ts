@@ -82,7 +82,6 @@ export const MISC_JA = {
   "skill.effect.healing": "回復",
   "skill.effect.buff": "強化",
   "skill.gauge": "ゲージ {cost}",
-  "skill.duration": "{seconds}秒間",
 
   "archaeology.shop": "ショップ",
   "archaeology.bench.pick": "ルーンを選ぶ",

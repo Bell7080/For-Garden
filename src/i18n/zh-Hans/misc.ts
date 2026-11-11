@@ -78,7 +78,6 @@ export const MISC_ZH_HANS = {
   "skill.effect.healing": "治疗",
   "skill.effect.buff": "增益",
   "skill.gauge": "能量 {cost}",
-  "skill.duration": "持续{seconds}秒",
   "archaeology.shop": "商店",
   "archaeology.bench.pick": "选择符文",
   "archaeology.bench.clear": "移除",

@@ -78,7 +78,6 @@ export const MISC_DE = {
   "skill.effect.healing": "Heilung",
   "skill.effect.buff": "Buff",
   "skill.gauge": "Leiste {cost}",
-  "skill.duration": "{seconds} s lang",
   "archaeology.shop": "Shop",
   "archaeology.bench.pick": "Rune wählen",
   "archaeology.bench.clear": "Entfernen",

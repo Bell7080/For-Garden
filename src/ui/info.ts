@@ -98,6 +98,9 @@ import { settingsManager } from "../managers/SettingsManager";
 import { FEED_TAP, FeedHoldRepeater } from "./feedTapStyle";
 import { addSdFootShadow } from "./SdFootShadow";
 import { withBusy } from "./BusyOverlay";
+import { canResetRelic, relicResetGemCost, relicResetRefund } from "../core/relicReset";
+import { showContentToast } from "./ContentToast";
+import { GameApiError } from "../api/contracts";
 import { findItem } from "../data/items";
 import { mountRunePickerGrid } from "./runePickerGrid";
 import { runePickerSize } from "./runePickerLayout";
@@ -299,6 +302,14 @@ const BOND_DETAIL = { width: 820, height: 976, shift: -38 } as const;
 
 /** 돌파 버튼과 팝업이 함께 쓰는 색. 레벨(초록)과 갈라 놓아 다른 종류의 성장임을 알린다. */
 const BREAK_EDGE = 0xa88cf0;
+
+/**
+ * 레벨 초기화 칩 — 레벨 숫자와 **같은 줄의 오른쪽 끝**에 작게 선다.
+ *
+ * 레벨을 1로 되돌리는 조작이라 레벨 칸 안에 있어야 무엇이 되돌아가는지 읽히지만, 급여처럼 자주
+ * 누르는 일이 아니므로 급여 버튼보다 한참 작고 어둡게 물러난다. 기울기는 판이 함께 준다.
+ */
+const RESET_CHIP = { offsetX: 82, y: 330, width: 128, height: 50, icon: 22, size: 22 } as const;
 
 /**
  * 한계 돌파 버튼의 규격.
@@ -568,6 +579,7 @@ export class InfoManager {
   private assetLoadTimer?: Phaser.Time.TimerEvent;
   /** 급여 버튼의 켜짐·꺼짐 판 두 장. */
   /** 돌파 버튼. 레벨 옆에 붙어 지금 뚫을 수 있는지를 진하기로 알린다. */
+  private resetChip?: Phaser.GameObjects.Container;
   private breakButton?: { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Container; arm: Phaser.GameObjects.Graphics };
   /** 돌파할 수 있을 때만 도는 숨. 조건이 풀리면 멈추고 빛을 끈다. */
   private breakPulse?: Phaser.Tweens.Tween;
@@ -801,6 +813,8 @@ export class InfoManager {
     this.feedLabel = feed.label;
     this.feedButton.setVisible(this.capabilities.mutateProgress);
     this.breakButton.container.setVisible(this.capabilities.mutateProgress);
+    this.resetChip = this.addResetChip(COLUMN.x + COLUMN.width / 2 - RESET_CHIP.offsetX, RESET_CHIP.y, levelPanel);
+    this.resetChip.setVisible(this.capabilities.mutateProgress);
     if (this.capabilities.mutateProgress) {
       this.levelUpEffect = new FeedLevelUpEffect(scene, {
         figure: () => this.figure,
@@ -1023,6 +1037,65 @@ export class InfoManager {
     container.add(hit);
     attach(panel, container);
     return { container, label, cost, arm };
+  }
+
+  /** 레벨 초기화 칩. 누르면 회수량·젬 값을 보여 주는 확인 창이 먼저 열린다. */
+  private addResetChip(x: number, y: number, panel: Phaser.GameObjects.Container): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(x, y);
+    const shape = slantedRect(RESET_CHIP.width, RESET_CHIP.height, 8);
+    container.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x161b24, alpha: 0.9, edge: COLOR.danger, edgeAlpha: 0.5 }));
+    const label = this.scene.add.text(0, 0, t("info.reset"), textStyle({ role: "emphasis", size: RESET_CHIP.size, color: COLOR.ink })).setOrigin(0, 0.5);
+    const icon = drawGlyph(this.scene, "restore", 0, 0, RESET_CHIP.icon, 0xe8ecf2, 1, 3);
+    const room = RESET_CHIP.width - 28 - RESET_CHIP.icon - 6;
+    squeezeTextToWidth(label, room);
+    const total = RESET_CHIP.icon + 6 + label.displayWidth;
+    icon.setX(-total / 2 + RESET_CHIP.icon / 2);
+    label.setX(-total / 2 + RESET_CHIP.icon + 6);
+    container.add([icon, label]);
+    const hit = this.scene.add.rectangle(0, 0, RESET_CHIP.width + 12, RESET_CHIP.height + 16, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => pressIn(container));
+    hit.on("pointerout", () => pressOut(container, "normal", { pop: false }));
+    hit.on("pointerup", () => { pressOut(container); this.openRelicReset(); });
+    container.add(hit);
+    attach(panel, container);
+    return container;
+  }
+
+  /**
+   * 초기화 확인 창.
+   *
+   * 되돌릴 수 없는 조작이라 공용 확인 창(`PopupLayer.confirm`)을 지난다 — 젬이 들면 그 값이 액자로 서고,
+   * 보유 줄은 치즈케이크가 얼마로 늘어나는지를 말한다. 값은 서버와 같은 순수 함수(`core/relicReset.ts`)가 낸다.
+   */
+  private openRelicReset(): void {
+    const def = this.currentDef;
+    if (!def || !this.ownedNow || this.feeding || this.pendingFeeds() > 0) return;
+    const progress = relicProgression.getProgress(def.id);
+    if (!canResetRelic(progress)) return;
+    const gems = relicResetGemCost(progress.level);
+    if (session.wallet.gems < gems) { showContentToast(this.scene, t("info.reset.noGems"), "refused"); return; }
+    const refund = relicResetRefund(progress);
+    this.popups.confirm({
+      title: t("info.reset.title"),
+      message: t("info.reset.message", { level: progress.level }),
+      confirmLabel: t("info.reset.confirm"),
+      destructive: true,
+      costs: gems > 0 ? [{ iconKey: CURRENCY_ICON_BY_WALLET.gems, amount: gems }] : undefined,
+      balance: { iconKey: CURRENCY_ICON_BY_WALLET.cheesecake, before: session.wallet.cheesecake, after: session.wallet.cheesecake + refund },
+    }, () => void this.resetRelic(def.id));
+  }
+
+  /** 젬 차감·회수·레벨 확정은 서버가 한 처리로 맡는다. 화면은 결과만 다시 그린다. */
+  private async resetRelic(relicId: string): Promise<void> {
+    try {
+      const response = await withBusy(this.scene, gameApi.resetRelic(relicId));
+      this.onWalletChange?.();
+      if (this.celebratedLevel?.id === relicId) this.celebratedLevel = undefined;
+      showContentToast(this.scene, t("info.reset.done", { count: response.cheesecakeRefunded.toLocaleString() }), "info");
+    } catch (error) {
+      if (error instanceof GameApiError && error.code === "INSUFFICIENT_CURRENCY") showContentToast(this.scene, t("info.reset.noGems"), "refused");
+    }
+    this.refreshGrowth();
   }
 
   /** 돌파할 수 있는 상태인지 알린다. 재료가 모자라도 눌러 무엇이 필요한지 볼 수 있다. */
@@ -2641,6 +2714,8 @@ export class InfoManager {
     this.feedCost?.setColor(!maxed && session.wallet.cheesecake < FEED_UNIT.cheesecake ? COLOR.dangerText : FEED_TEXT);
     this.feedCostLayout?.();
     this.paintBreakButton(progress);
+    // 되돌릴 레벨이 없으면 칩이 가라앉는다. 지금 먹이는 중인 누름이 남아 있을 때도 같다.
+    this.resetChip?.setAlpha(this.ownedNow && canResetRelic(progress) ? 1 : 0.35);
 
     const bondMaxed = progress.bondLevel >= BOND_LEVEL_CAP;
     const bondBase = BOND_TOTAL_XP_BY_LEVEL[progress.bondLevel];

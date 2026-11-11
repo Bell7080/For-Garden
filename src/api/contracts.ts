@@ -849,6 +849,8 @@ export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPE
  * 그때 오른 레벨 수를 함께 돌려준다. 화면은 이 값으로만 연출을 정한다.
  */
 export interface FeedRelicResponse extends PlayerStateDto { relicId: string; feeds: number; cheesecakeSpent: number; levelsGained: number; }
+/** 캐릭터 초기화 결과. 레벨은 1로 돌아가고 돌파·공명·유대·룬은 그대로다. */
+export interface ResetRelicResponse extends PlayerStateDto { relicId: string; /** 초기화 전 레벨. */ previousLevel: number; /** 실제로 지갑에 들어간 치즈케이크(보유 한도에서 깎일 수 있다). */ cheesecakeRefunded: number; gemsSpent: number; }
 /** 돌파 결과. 열린 상한을 함께 돌려줘 화면이 표를 다시 뒤지지 않게 한다. */
 export interface BreakThroughResponse extends PlayerStateDto { relicId: string; breakthrough: number; levelCap: number; /** 돌파 뒤의 별(1~5). */ breakthroughGrade: number; /** 남은 그 개체의 파편. */ fragments: number; /** 모자란 몫을 채우느라 함께 쓴 만능 파편 수(0이면 쓰지 않았다). */ universalFragmentsUsed: number; /** 돌파 V 뒤에는 같은 조작이 공명을 올린다 — 올린 뒤의 공명 단계. */ resonance?: number; }
 /**
@@ -1339,6 +1341,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   feedRelic(relicId: string, feeds?: number): Promise<FeedRelicResponse>;
   /** 레벨 상한을 한 단계 연다. 재료 차감과 단계 확정을 한 처리로 맡는다. */
   breakThroughRelic(relicId: string): Promise<BreakThroughResponse>;
+  /** 레벨을 1로 되돌리고 급여한 치즈케이크를 돌려준다. 21레벨부터는 젬이 든다(`core/relicReset.ts`). */
+  resetRelic(relicId: string): Promise<ResetRelicResponse>;
   /** 패배도 서버에 명시해 승리 전용 보상이 새지 않도록 한다. */
   /** `victory`는 선택이 아니다 — 기본값을 두면 인자를 빠뜨린 호출이 조용히 승리로 기록된다. */
   completeStage(stageId: string, victory: boolean): Promise<CompleteStageResponse>;

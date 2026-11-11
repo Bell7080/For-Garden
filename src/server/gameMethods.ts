@@ -16,7 +16,7 @@ export const SERVER_GAME_METHODS = [
   "getIdleExcavation", "getInteractionCities", "getInteractionDispatch", "getInventory", "getMails", "getMissions", "getNotificationSignals",
   "getPlayerState", "getProducts", "getPurchaseHistory", "getProgressPasses", "getRaids", "getStaminaRechargeStatus", "grantRuneTrait", "harvestExcavation",
   "deleteMails", "interactInLobby", "markAttendanceAutoShown", "markContentIntroSeen", "markInteractionJournalRead", "markMailsRead", "markRune", "prepareExpeditionBoss", "pullRelics", "purchaseProduct", "purchaseRelicSkin",
-  "rechargeStamina", "refreshDuelOpponents", "renameRune", "rerollRuneTrait", "resolveDuel", "resolveRuneTraitReroll", "saveExcavationFormation",
+  "rechargeStamina", "refreshDuelOpponents", "renameRune", "rerollRuneTrait", "resolveDuel", "resolveRuneTraitReroll", "resetRelic", "saveExcavationFormation",
   "selectArchaeologySite", "sellRunes", "setDuelDefense", "setFavorite", "setParty", "setRelicBookmark", "settleExpeditionRun", "settleRaid", "startExpeditionRun", "startInteractionDispatch", "startStrataRun", "submitExpeditionBossScore",
   "submitRaidDamage", "summonRaid", "sweepBounty", "synthesizeRunes", "sweepCakeOperation", "sweepExpedition", "unequipRune", "updateAccountSettings", "updatePlayerCard", "upgradeRuneTrait",
   "useConsumable", "verifyPurchaseReceipt",

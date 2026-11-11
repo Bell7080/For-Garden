@@ -2162,6 +2162,7 @@
 
 - 성장은 레벨업 버튼이 아니라 **급여**다. 치즈케이크를 먹여 경험치를 쌓고 넘치면 레벨이 오른다.
   차감과 확정은 `GameApi.feedRelic`이 한 처리 단위로 맡는다.
+- **레벨 초기화는 레벨·경험치만 1로 되돌리고 급여한 치즈케이크를 100% 돌려준다**(`core/relicReset.ts` · 서버 `resetRelic`). 회수량은 장부 없이 레벨·경험치에서 거꾸로 구하므로 급여 단가나 `relicExpToNext`를 바꾸면 그 등식(`relicReset.test`)을 다시 본다. 20레벨까지 무료, 그 뒤 10레벨 구간마다 젬 100이며 한계 돌파·유대·룬은 건드리지 않는다.
 - 각성은 0~5단계이고 단계별 효과표는 `src/core/relicProgression.ts`의 `AWAKENING_STEPS`
   하나뿐이다. 화면이 문구를 따로 적지 않는다.
 - 레벨 상한은 **돌파**가 연다. 상한을 묻는 곳은 전부 `relicLevelCap(breakthrough)`을 쓰고

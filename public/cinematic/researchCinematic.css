@@ -603,7 +603,7 @@
 }
 .cards.opening .archive-card.focused .card-seam { opacity: var(--seam); }
 
-/* ③ 앞면에 닿는 순간 — 마름모 섬광과 바닥을 훑는 고리. */
+/* ③ 앞면에 닿는 순간 — 마름모 섬광과 카드 뒤에서 퍼지는 고리. 둘 다 카드 가운데에서 터진다 — 고리를 밑변에 두면 섬광이 카드 아래에서 터지는 것처럼 보였다. */
 .card-flash {
   left: 50%;
   top: 50%;
@@ -615,7 +615,8 @@
 .archive-card[data-fx="3"] .card-flash { width: 230%; }
 .card-ring {
   left: 50%;
-  top: 96%;
+  top: 50%;
+  z-index: -1;
   width: 110%;
   aspect-ratio: 1;
   border: 0.55cqw solid var(--tier);
@@ -819,3 +820,34 @@
 /* 판의 카드는 작다 — 뒷면의 봉인 글자가 큰 카드 기준(7cqw)이면 칸 밖으로 잘린다. */
 .cards.board .back-code { font-size: 3.6cqw; }
 .cards.board .card-back > span { font-size: 0.9cqw; letter-spacing: 0.12em; }
+
+/*
+ * 판의 뒷면은 **등급만 먼저 말한다**(응태 요청, 2026-11-11) — 열기 전에 R·SR·SSR이 몇 장 떴는지 훑어보게.
+ * 테두리와 안쪽 빛이 그 등급색이고 위쪽에 등급 글자가 선다. 회색(재화)은 표기 없이 그대로 둔다.
+ * 찬스 카드는 아직 SR이라 SR로 서 있다가, 열리며 핑! 하고 오른다.
+ */
+.cards.board .archive-card:not([data-rarity="GRAY"]) .card-back {
+  border-color: var(--tier);
+  box-shadow: inset 0 0 3.2cqw color-mix(in srgb, var(--tier) 55%, transparent), 0 0 1.6cqw color-mix(in srgb, var(--tier) 45%, transparent);
+}
+.cards.board .archive-card:not([data-rarity="GRAY"]) .card-back svg { stroke: var(--tier); }
+.cards.board .archive-card .card-back::before {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 7%;
+  text-align: center;
+  font-size: 4.2cqw;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--tier);
+  text-shadow: 0 0 1.6cqw color-mix(in srgb, var(--tier) 80%, transparent), 0 0.3cqw 0 #000;
+}
+.cards.board .archive-card[data-rarity="R"] .card-back::before { content: "R"; }
+.cards.board .archive-card[data-rarity="SR"] .card-back::before { content: "SR"; }
+.cards.board .archive-card[data-rarity="SSR"] .card-back::before { content: "SSR"; }
+.cards.board .archive-card:not([data-rarity="GRAY"]) .back-code { margin-top: 3cqw; font-size: 2.6cqw; opacity: 0.7; }
+.cards.board .archive-card[data-rarity="SSR"] .card-back { animation: rc-board-ssr-back 1.6s ease-in-out infinite; }
+@keyframes rc-board-ssr-back { 50% { box-shadow: inset 0 0 4.6cqw color-mix(in srgb, var(--tier) 70%, transparent), 0 0 2.6cqw color-mix(in srgb, var(--tier) 60%, transparent); } }
+.rc-root.rc-still .cards.board .archive-card .card-back { animation: none; }
+@media (prefers-reduced-motion: reduce) { .cards.board .archive-card .card-back { animation: none; } }

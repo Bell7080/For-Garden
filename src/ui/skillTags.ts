@@ -147,6 +147,20 @@ export interface SkillTagInput {
   damageHealingPercent?: number;
   /** 지금 능력치로 환산한 수치 한 줄(`피해량 [[damage-value|138]]`). */
   valueLabel?: string;
+  /**
+   * 이 칸이 **늘려 주는 대상 수**(폭주 중 갈래가 하나 더 갈라지는 유티의 「깃날비」 등).
+   * 범위 칩은 "여럿을 맞힌다"까지만 말하므로, 몇 명이 더 맞는지는 `대상 +N` 칩이 따로 말한다.
+   */
+  extraTargets?: number;
+}
+
+/** 정의가 인원으로 끊는 범위(갈래화살·가까운 N명)면 그 인원. 반경만 있는 광역은 인원이 없다. */
+export function skillTargetCount(input: SkillTagInput, scope: SkillScope | undefined): number | undefined {
+  if (scope !== "splitShot" && scope !== "nearbyEnemies") return undefined;
+  const skill = input.source;
+  if (skill === undefined || "kind" in skill) return undefined;
+  const count = "maxTargets" in skill ? skill.maxTargets as number | undefined : undefined;
+  return count !== undefined && count > 1 ? count : undefined;
 }
 
 /** 이 기술이 효과를 거는 자리. 정의가 말하지 않으면 계약의 모양에서 거꾸로 짚는다. */
@@ -180,6 +194,13 @@ export function buildSkillTags(input: SkillTagInput): SkillTag[] {
 
   const scope = skillScope(input);
   if (scope !== undefined) tags.push({ tone: "scope", glyph: SCOPE_GLYPH[scope], text: t(`skill.tag.scope.${scope}` as TextKey) });
+  // 몇 명을 맞히는지는 범위 칩 바로 뒤에 선다 — "다중"만으로는 둘인지 다섯인지 읽히지 않는다.
+  const targetCount = skillTargetCount(input, scope);
+  if (targetCount !== undefined) tags.push({ tone: "scope", glyph: "tag-target", text: t("skill.tag.targets", { count: targetCount }) });
+  // 대상 수를 늘리는 칸(폭주 등)은 늘어나는 몫을 강화색으로 세운다 — 범위가 아니라 얹히는 효과다.
+  if (input.extraTargets !== undefined && input.extraTargets > 0) {
+    tags.push({ tone: "buff", glyph: "tag-area", text: t("skill.tag.extraTargets", { count: input.extraTargets }) });
+  }
 
   if (input.slot === "passive") tags.push({ tone: "timing", glyph: "tag-always", text: t("skill.tag.timing.passive") });
   else if (input.slot === "ferocity") tags.push({ tone: "timing", glyph: "tag-duration", text: t("skill.tag.timing.ferocity") });

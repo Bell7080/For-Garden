@@ -517,4 +517,6 @@ export const SKILL_RU = {
   "skill.tag.lifesteal": "Вампиризм {percent}%",
   "skill.tag.regen": "Регенерация {percent}%/с",
   "skill.tag.allyHeal": "Лечит союзников",
+  "skill.tag.targets": "Целей: {count}",
+  "skill.tag.extraTargets": "Цели +{count}",
 } as const;

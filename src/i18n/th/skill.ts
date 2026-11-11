@@ -517,4 +517,6 @@ export const SKILL_TH = {
   "skill.tag.lifesteal": "ดูดเลือด {percent}%",
   "skill.tag.regen": "ฟื้นฟู {percent}%/วิ",
   "skill.tag.allyHeal": "ฟื้นฟูพันธมิตร",
+  "skill.tag.targets": "เป้าหมาย {count}",
+  "skill.tag.extraTargets": "เป้าหมาย +{count}",
 } as const;

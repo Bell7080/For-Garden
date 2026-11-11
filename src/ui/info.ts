@@ -3491,6 +3491,8 @@ export function buildFerocityViewModel(
     art: skillArtFor(def.id, "ferocity"),
     tint: skillArtTint(def.element, def.role),
     effectType: "buff",
+    // 폭주 중 갈래가 늘어나는 개체는 요약 칩이 몇 명 더 맞는지 말한다.
+    extraTargets: def.ferocityTrait.effectId === "extraFork" ? def.ferocityTrait.extraForks : undefined,
     valueLabel: guardPercent === undefined ? t("skill.ferocity.valueLabel") : defenseGainSummary(def.stats, guardPercent),
     // 궁극기의 `게이지 N`과 같은 자리 — 폭주가 열리려면 채워야 하는 야성 게이지의 크기다.
     gaugeCost: ferocityMaxOf(def),

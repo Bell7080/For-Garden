@@ -517,4 +517,6 @@ export const SKILL_ZH_HANS = {
   "skill.tag.lifesteal": "吸血 {percent}%",
   "skill.tag.regen": "再生 {percent}%/秒",
   "skill.tag.allyHeal": "治疗友方",
+  "skill.tag.targets": "目标{count}名",
+  "skill.tag.extraTargets": "目标+{count}",
 } as const;

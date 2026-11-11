@@ -64,6 +64,8 @@ export interface SkillInfoViewModel {
   recoveryPercent?: number;
   /** 과잉 피해를 제외한 실제 HP 피해에서 회복하는 비율이다. */
   damageHealingPercent?: number;
+  /** 이 칸이 늘려 주는 대상 수. 요약 칩에 `대상 +N`으로 선다. */
+  extraTargets?: number;
   /** 궁극기만 갖는 소비 게이지. */
   gaugeCost?: number;
   /** `[[keyword]]` 문법을 쓸 수 있는 설명문. */
@@ -125,6 +127,7 @@ export function skillSummaryTags(skill: SkillInfoViewModel): SkillTag[] {
     recoveryPercent: skill.recoveryPercent,
     damageHealingPercent: skill.damageHealingPercent,
     valueLabel: skill.valueLabel,
+    extraTargets: skill.extraTargets,
   });
 }
 

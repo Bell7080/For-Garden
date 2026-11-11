@@ -541,4 +541,6 @@ export const SKILL_JA = {
   "skill.tag.lifesteal": "吸血 {percent}%",
   "skill.tag.regen": "再生 {percent}%/秒",
   "skill.tag.allyHeal": "味方回復",
+  "skill.tag.targets": "対象{count}体",
+  "skill.tag.extraTargets": "対象+{count}",
 } as const;

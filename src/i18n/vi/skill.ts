@@ -517,4 +517,6 @@ export const SKILL_VI = {
   "skill.tag.lifesteal": "Hút máu {percent}%",
   "skill.tag.regen": "Hồi {percent}%/giây",
   "skill.tag.allyHeal": "Hồi máu đồng minh",
+  "skill.tag.targets": "{count} mục tiêu",
+  "skill.tag.extraTargets": "Mục tiêu +{count}",
 } as const;

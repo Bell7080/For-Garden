@@ -566,4 +566,6 @@ export const SKILL_KO = {
   "skill.tag.lifesteal": "흡혈 {percent}%",
   "skill.tag.regen": "재생 {percent}%/초",
   "skill.tag.allyHeal": "아군 회복",
+  "skill.tag.targets": "대상 {count}명",
+  "skill.tag.extraTargets": "대상 +{count}",
 } as const;

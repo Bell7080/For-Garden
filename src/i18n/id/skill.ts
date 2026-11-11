@@ -517,4 +517,6 @@ export const SKILL_ID = {
   "skill.tag.lifesteal": "Curi nyawa {percent}%",
   "skill.tag.regen": "Regenerasi {percent}%/dtk",
   "skill.tag.allyHeal": "Pulihkan sekutu",
+  "skill.tag.targets": "{count} sasaran",
+  "skill.tag.extraTargets": "Sasaran +{count}",
 } as const;

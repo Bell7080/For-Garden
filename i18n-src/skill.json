@@ -515,5 +515,7 @@
 "skill.tag.bulwark": ["代为承受", "รับแทน", "Đỡ đòn thay", "Melindungi sekutu", "Proteger aliados", "Proteger aliados", "Verbündete decken", "Прикрытие союзников"],
 "skill.tag.lifesteal": ["吸血 {percent}%", "ดูดเลือด {percent}%", "Hút máu {percent}%", "Curi nyawa {percent}%", "Robo de vida {percent}%", "Roubo de vida {percent}%", "Lebensraub {percent} %", "Вампиризм {percent}%"],
 "skill.tag.regen": ["再生 {percent}%/秒", "ฟื้นฟู {percent}%/วิ", "Hồi {percent}%/giây", "Regenerasi {percent}%/dtk", "Regeneración {percent}%/s", "Regeneração {percent}%/s", "Regeneration {percent} %/s", "Регенерация {percent}%/с"],
-"skill.tag.allyHeal": ["治疗友方", "ฟื้นฟูพันธมิตร", "Hồi máu đồng minh", "Pulihkan sekutu", "Cura aliados", "Cura aliados", "Heilt Verbündete", "Лечит союзников"]
+"skill.tag.allyHeal": ["治疗友方", "ฟื้นฟูพันธมิตร", "Hồi máu đồng minh", "Pulihkan sekutu", "Cura aliados", "Cura aliados", "Heilt Verbündete", "Лечит союзников"],
+"skill.tag.targets": ["目标{count}名", "เป้าหมาย {count}", "{count} mục tiêu", "{count} sasaran", "{count} objetivos", "{count} alvos", "{count} Ziele", "Целей: {count}"],
+"skill.tag.extraTargets": ["目标+{count}", "เป้าหมาย +{count}", "Mục tiêu +{count}", "Sasaran +{count}", "Objetivos +{count}", "Alvos +{count}", "Ziele +{count}", "Цели +{count}"]
 }

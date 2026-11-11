@@ -31,6 +31,19 @@ describe("스킬 요약 칩 규격", () => {
     }
   });
 
+  it("인원으로 끊는 범위는 대상 수를, 대상을 늘리는 폭주는 늘어나는 몫을 칩으로 말한다", () => {
+    setTextLanguage("ko");
+    const yuti = RELICS.find((def) => def.id === "yuti")!;
+    const basic = skillTagsFromDef(yuti.basic, "basic").map((tag) => tag.text);
+    expect(basic).toContain("다중");
+    expect(basic).toContain("대상 2명");
+    expect(basic.indexOf("대상 2명")).toBe(basic.indexOf("다중") + 1);
+    const ferocity = buildSkillTags({ slot: "ferocity", effectType: "buff", extraTargets: 1 });
+    expect(ferocity.find((tag) => tag.text === "대상 +1")?.tone).toBe("buff");
+    // 반경으로만 끊는 광역은 인원을 말하지 않는다.
+    expect(buildSkillTags({ slot: "basic", effectType: "physical", targeting: "battlefieldEnemies" }).some((tag) => tag.text.startsWith("대상 "))).toBe(false);
+  });
+
   it("상태 효과는 갈래 색으로 갈리고 시간을 함께 말한다", () => {
     const torika = RELICS.find((def) => def.id === "torika")!;
     const tags = skillTagsFromDef(torika.ultimate, "ultimate");

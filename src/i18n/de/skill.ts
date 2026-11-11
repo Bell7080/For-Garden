@@ -517,4 +517,6 @@ export const SKILL_DE = {
   "skill.tag.lifesteal": "Lebensraub {percent} %",
   "skill.tag.regen": "Regeneration {percent} %/s",
   "skill.tag.allyHeal": "Heilt Verbündete",
+  "skill.tag.targets": "{count} Ziele",
+  "skill.tag.extraTargets": "Ziele +{count}",
 } as const;

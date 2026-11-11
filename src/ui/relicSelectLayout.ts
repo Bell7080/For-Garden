@@ -9,18 +9,27 @@ export const RELIC_SELECT = {
   width: 880,
   height: 1500,
   pad: 30,
-  hint: { y: -668, size: 23 },
-  stage: { top: -630, height: 770 },
-  /** 무대 양옆의 넘김 꺾쇠. */
-  arrow: { inset: 54, width: 64, height: 110 },
-  /** 무대 위 왼쪽의 등급·속성·직군, 오른쪽의 정보 칩. */
-  badge: { inset: 60, top: 64, element: 58, role: 46 },
-  info: { size: 78 },
-  name: { y: 198, size: 46 },
-  state: { y: 252, size: 26 },
-  strip: { y: 398, card: 148, gap: 20, padX: 40, dragSlop: 16 },
-  holdHint: { y: 506, size: 21 },
-  action: { y: 606, width: 460, height: 90 },
+  hint: { y: -686, size: 23 },
+  /**
+   * 무대 — 외형 전시관처럼 **웹툰 칸 셋**(큰 칸 전신 · 오른쪽 위 얼굴 · 오른쪽 아래 SD)이 나눠 쓴다.
+   * 아래 글줄·띠·버튼을 촘촘히 모은 만큼 무대가 길어진다 — 이 창에서 보려는 것은 그 렐릭이다.
+   */
+  stage: { top: -652, height: 950 },
+  gutter: 14,
+  /** 왼쪽 큰 칸(전신)이 무대 폭에서 갖는 비율 — 외형 전시관과 같다. */
+  heroRatio: 0.635,
+  /** 오른쪽 위 칸(얼굴)이 무대 높이에서 갖는 비율. */
+  faceRatio: 0.58,
+  /** 큰 칸 위 왼쪽의 등급·속성·직군, 오른쪽의 정보 칩. */
+  badge: { inset: 56, top: 60, element: 54, role: 44 },
+  info: { size: 72 },
+  name: { y: 340, size: 42 },
+  state: { y: 386, size: 24 },
+  /** 띠 — 양옆에 넘김 꺾쇠(`arrow`)가 서므로 창은 그만큼 안쪽에서 끝난다. */
+  strip: { y: 496, card: 136, gap: 18, padX: 92, dragSlop: 16 },
+  arrow: { inset: 48, width: 48, height: 112 },
+  holdHint: { y: 588, size: 20 },
+  action: { y: 664, width: 460, height: 84 },
   /** 무대를 이만큼 밀면 옆 렐릭으로 넘어간다. */
   swipe: 70,
 } as const;
@@ -30,6 +39,25 @@ export interface RelicSelectRect { left: number; top: number; right: number; bot
 export function relicSelectStageRect(): RelicSelectRect {
   const { width, pad, stage } = RELIC_SELECT;
   return { left: -width / 2 + pad, right: width / 2 - pad, top: stage.top, bottom: stage.top + stage.height };
+}
+
+/** 웹툰 칸 셋 — `hero`는 왼쪽 큰 칸(전신), `face`는 오른쪽 위(얼굴), `sd`는 오른쪽 아래(SD)다. */
+export function relicSelectFrames(): { hero: RelicSelectRect; face: RelicSelectRect; sd: RelicSelectRect } {
+  const stage = relicSelectStageRect();
+  const { gutter, heroRatio, faceRatio } = RELIC_SELECT;
+  const heroWidth = Math.round((stage.right - stage.left - gutter) * heroRatio);
+  const columnLeft = stage.left + heroWidth + gutter;
+  const faceHeight = Math.round((stage.bottom - stage.top - gutter) * faceRatio);
+  return {
+    hero: { left: stage.left, right: stage.left + heroWidth, top: stage.top, bottom: stage.bottom },
+    face: { left: columnLeft, right: stage.right, top: stage.top, bottom: stage.top + faceHeight },
+    sd: { left: columnLeft, right: stage.right, top: stage.top + faceHeight + gutter, bottom: stage.bottom },
+  };
+}
+
+/** 띠 양옆 꺾쇠의 가운데 x(왼쪽은 음수). */
+export function relicSelectArrowX(side: -1 | 1): number {
+  return side * (RELIC_SELECT.width / 2 - RELIC_SELECT.arrow.inset);
 }
 
 export function relicSelectStripViewport(): RelicSelectRect {

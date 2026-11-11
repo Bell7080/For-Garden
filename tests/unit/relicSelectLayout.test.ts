@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   RELIC_SELECT, relicSelectCardX, relicSelectMinOffset, relicSelectOffsetFor, relicSelectStageRect,
-  relicSelectStep, relicSelectStripViewport, relicSelectSwipeDelta,
+  relicSelectStep, relicSelectStripViewport, relicSelectSwipeDelta, relicSelectFrames, relicSelectArrowX,
 } from "../../src/ui/relicSelectLayout";
 
 describe("렐릭 선택권 고르기 창 배치", () => {
@@ -16,6 +16,21 @@ describe("렐릭 선택권 고르기 창 배치", () => {
     expect(RELIC_SELECT.action.y - RELIC_SELECT.action.height / 2).toBeGreaterThan(RELIC_SELECT.holdHint.y + RELIC_SELECT.holdHint.size / 2);
     expect(RELIC_SELECT.action.y + RELIC_SELECT.action.height / 2).toBeLessThan(half);
     expect(-half).toBeLessThan(RELIC_SELECT.hint.y - RELIC_SELECT.hint.size);
+  });
+
+  it("무대는 외형처럼 세 칸으로 갈리고, 띠 꺾쇠는 창 밖·몸판 안에 선다", () => {
+    const { hero, face, sd } = relicSelectFrames();
+    const stage = relicSelectStageRect();
+    expect(hero.right).toBeLessThan(face.left);
+    expect(face.bottom).toBeLessThan(sd.top);
+    expect(hero.right - hero.left).toBeGreaterThan(face.right - face.left);
+    expect(face.bottom - face.top).toBeGreaterThan(sd.bottom - sd.top);
+    expect(sd.bottom).toBe(stage.bottom);
+    const view = relicSelectStripViewport();
+    const { arrow, width } = RELIC_SELECT;
+    expect(relicSelectArrowX(1) - arrow.width / 2).toBeGreaterThan(view.right);
+    expect(relicSelectArrowX(-1) + arrow.width / 2).toBeLessThan(view.left);
+    expect(relicSelectArrowX(1) + arrow.width / 2).toBeLessThan(width / 2);
   });
 
   it("칸이 창을 못 채우면 가운데로 모이고, 넘치면 고른 칸이 창 안으로 들어온다", () => {

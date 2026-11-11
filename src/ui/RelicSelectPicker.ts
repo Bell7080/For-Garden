@@ -7,7 +7,8 @@ import { relicFragmentRoom } from "../core/relicResonance";
 import { powerSavingPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { settingsManager } from "../managers/SettingsManager";
-import { portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
+import { battleAssetFor, headCardFrame, loadPortraitTexture, portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
+import { portraitCardZoom } from "./portraitPlacement";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addPopupBackgroundImage, BACKGROUND } from "./backgrounds";
@@ -21,12 +22,12 @@ import { addClippedHit, clipHit, containerClip } from "./clippedHit";
 import type { PopupLayer } from "./PopupLayer";
 import { shapeClipMask } from "./popupArt";
 import { pressIn, pressOut } from "./pressFeedback";
-import { addScrollHint } from "./ScrollHint";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 import {
   RELIC_SELECT, relicSelectCardX, relicSelectContains, relicSelectMinOffset, relicSelectOffsetFor,
   relicSelectStageRect, relicSelectStep, relicSelectStripViewport, relicSelectSwipeDelta,
+  relicSelectArrowX, relicSelectFrames, type RelicSelectRect,
 } from "./relicSelectLayout";
 
 /** SR 선택권의 결 — 7일 가이드 마디와 가방의 선택권이 같은 보랏빛을 쓴다. */
@@ -76,7 +77,11 @@ class RelicSelectView {
   private offset = 0;
   private token = 0;
   private hero?: PuppetCreature;
-  private readonly heroLayer: Phaser.GameObjects.Container;
+  private heroLayer!: Phaser.GameObjects.Container;
+  private faceLayer!: Phaser.GameObjects.Container;
+  private sdLayer!: Phaser.GameObjects.Container;
+  private sd?: PuppetCreature;
+  private face?: Phaser.GameObjects.Image;
   private readonly badges: Phaser.GameObjects.Container;
   private readonly name: Phaser.GameObjects.Text;
   private readonly state: Phaser.GameObjects.Text;
@@ -100,7 +105,7 @@ class RelicSelectView {
 
     body.add(scene.add.text(0, RELIC_SELECT.hint.y, t("newbieGrowth.sr.hint"), textStyle({ role: "body", size: RELIC_SELECT.hint.size, color: COLOR.inkDim, align: "center", wrap: RELIC_SELECT.width - 120 })).setOrigin(0.5));
 
-    this.heroLayer = this.addStage();
+    this.addStage();
     this.badges = scene.add.container(0, 0);
     body.add(this.badges);
     this.addStageChrome();
@@ -117,10 +122,6 @@ class RelicSelectView {
     const viewShape = [view.left, view.top, view.right, view.top, view.right, view.bottom, view.left, view.bottom];
     this.rail.setMask(shapeClipMask(scene, body, viewShape));
     choices.forEach((choice, index) => this.addCard(choice, index));
-    addScrollHint(scene, body, {
-      axis: "x", x: (view.left + view.right) / 2, y: RELIC_SELECT.strip.y, width: view.right - view.left, height: 0,
-      owner: this.rail, read: () => ({ offset: this.offset, min: relicSelectMinOffset(choices.length) }),
-    });
 
     body.add(scene.add.text(0, RELIC_SELECT.holdHint.y, t("newbieGrowth.sr.holdInfo"), textStyle({ role: "body", size: RELIC_SELECT.holdHint.size, color: COLOR.inkDim })).setOrigin(0.5).setAlpha(0.8));
 
@@ -133,7 +134,7 @@ class RelicSelectView {
     this.installSwipe();
     this.offset = relicSelectOffsetFor(this.focused, choices.length, 0);
     this.rail.setX(this.offset);
-    body.once(Phaser.GameObjects.Events.DESTROY, () => { this.token += 1; this.hero?.destroy(); this.hero = undefined; });
+    body.once(Phaser.GameObjects.Events.DESTROY, () => { this.token += 1; this.hero?.destroy(); this.hero = undefined; this.sd?.destroy(); this.sd = undefined; });
     this.paint();
   }
 
@@ -143,57 +144,68 @@ class RelicSelectView {
     return containerClip(this.body, -width / 2, -height / 2, width / 2, height / 2);
   }
 
-  /** 무대 — 정보창과 같은 배경 원화 위에 유리면 한 장. 전신은 판 실루엣대로 잘린다. */
-  private addStage(): Phaser.GameObjects.Container {
-    const rect = relicSelectStageRect();
+  /**
+   * 무대 — 외형 전시관과 같은 **웹툰 칸 셋**. 큰 칸에 전신, 오른쪽 위에 얼굴, 오른쪽 아래에 SD가 서서
+   * 한 렐릭을 세 각도에서 한 번에 보여 준다. 칸은 정보창 배경 원화 위의 유리면이고 둘레는 선택권의 보랏빛이다.
+   */
+  private addStage(): void {
+    const frames = relicSelectFrames();
+    this.heroLayer = this.addFrame(frames.hero, true);
+    this.faceLayer = this.addFrame(frames.face, false);
+    this.sdLayer = this.addFrame(frames.sd, false);
+    // 무대 전체가 꾹 누름을 받는다 — 세 칸 어디를 꾹 눌러도 그 렐릭의 정보창이 열린다.
+    const stage = relicSelectStageRect();
+    const hit = addClippedHit(this.scene, this.body, (stage.left + stage.right) / 2, (stage.top + stage.bottom) / 2, stage.right - stage.left, stage.bottom - stage.top, this.popupClip(), { useHandCursor: false });
+    bindLongPress(this.scene, hit, { onLongPress: () => this.openInfo(this.focused), depth: INFO_DEPTH - 200, allowTap: () => false });
+  }
+
+  private addFrame(rect: RelicSelectRect, floorGlow: boolean): Phaser.GameObjects.Container {
     const spot = { x: (rect.left + rect.right) / 2, y: (rect.top + rect.bottom) / 2, width: rect.right - rect.left, height: rect.bottom - rect.top };
     const unit = Math.min(spot.width, spot.height);
-    const shape = chipPoints(spot.width, spot.height, { bevel: { topLeft: unit * 0.12, topRight: 0, bottomRight: unit * 0.12, bottomLeft: 0 } });
+    const shape = chipPoints(spot.width, spot.height, { bevel: { topLeft: unit * 0.16, topRight: 0, bottomRight: unit * 0.16, bottomLeft: 0 } });
     addPopupBackgroundImage(this.scene, this.body, BACKGROUND.info, { x: spot.x, y: spot.y, width: spot.width, height: spot.height, maskShape: shape, overlayStrength: 0.3 });
     const clip = shapeClipMask(this.scene, this.body, shape, spot);
-    // 바닥에서 피어오르는 선택권의 보랏빛 — 그 렐릭이 「선택지」 위에 서 있다는 것을 색이 말한다.
-    const floor = this.scene.add.graphics().setMask(clip);
-    for (let band = 0; band < 10; band += 1) {
-      const ratio = band / 10;
-      floor.fillStyle(SR_SELECT_TONE, 0.05 * (1 - ratio));
-      floor.fillEllipse(spot.x, rect.bottom - 40, spot.width * (1.2 - ratio * 0.8), 260 * (1 - ratio * 0.6));
+    if (floorGlow) {
+      // 바닥에서 피어오르는 선택권의 보랏빛 — 그 렐릭이 「선택지」 위에 서 있다는 것을 색이 말한다.
+      const floor = this.scene.add.graphics().setMask(clip);
+      for (let band = 0; band < 10; band += 1) {
+        const ratio = band / 10;
+        floor.fillStyle(SR_SELECT_TONE, 0.05 * (1 - ratio));
+        floor.fillEllipse(spot.x, rect.bottom - 40, spot.width * (1.2 - ratio * 0.8), 260 * (1 - ratio * 0.6));
+      }
+      floor.setBlendMode(Phaser.BlendModes.ADD);
+      this.body.add(floor);
     }
-    floor.setBlendMode(Phaser.BlendModes.ADD);
-    this.body.add(floor);
     const content = this.scene.add.container(spot.x, spot.y);
     content.setMask(clip);
     this.body.add(content);
-    this.body.add(drawFrameVignette(this.scene, spot.x, spot.y, spot.width, spot.height, { strength: 0.55, spread: 0.18 }).setMask(clip));
-    this.body.add(drawShapeOutline(this.scene, spot.x, spot.y, shape, { color: SR_SELECT_TONE, alpha: 0.55, width: 3 }));
-
-    // 무대 전체가 꾹 누름을 받는다 — 전신을 꾹 누르면 그 렐릭의 정보창이 열린다.
-    const hit = addClippedHit(this.scene, this.body, spot.x, spot.y, spot.width - 2 * (RELIC_SELECT.arrow.inset + RELIC_SELECT.arrow.width / 2), spot.height - 120, this.popupClip(), { useHandCursor: false });
-    bindLongPress(this.scene, hit, { onLongPress: () => this.openInfo(this.focused), depth: INFO_DEPTH - 200, allowTap: () => false });
+    this.body.add(drawFrameVignette(this.scene, spot.x, spot.y, spot.width, spot.height, { strength: 0.5, spread: 0.18 }).setMask(clip));
+    this.body.add(drawShapeOutline(this.scene, spot.x, spot.y, shape, { color: SR_SELECT_TONE, alpha: 0.62, width: 3 }));
     return content;
   }
 
-  /** 꺾쇠 둘과 정보 칩. 무대의 실루엣을 덮지 않게 가장자리에만 선다. */
+  /** 띠 양옆의 넘김 꺾쇠(`<` `>`)와 큰 칸 오른쪽 위의 정보 칩. */
   private addStageChrome(): void {
-    const rect = relicSelectStageRect();
-    const midY = (rect.top + rect.bottom) / 2;
     const { arrow } = RELIC_SELECT;
     const addArrow = (side: -1 | 1): void => {
-      const x = side < 0 ? rect.left + arrow.inset : rect.right - arrow.inset;
-      const holder = this.scene.add.container(x, midY);
-      holder.add(drawLayer(this.scene, 0, 0, slantedRect(arrow.width, arrow.height, 10), { fill: 0x05070a, alpha: 0.55, shadow: false }));
-      holder.add(drawGlyph(this.scene, side < 0 ? "page-prev" : "page-next", 0, 0, arrow.width * 0.7, 0xffffff));
-      const hit = this.scene.add.rectangle(0, 0, arrow.width + 24, arrow.height + 24, 0xffffff, 0);
+      const holder = this.scene.add.container(relicSelectArrowX(side), RELIC_SELECT.strip.y);
+      holder.add(drawLayer(this.scene, 0, 0, slantedRect(arrow.width, arrow.height, 8), { fill: 0x1a1226, alpha: 0.9, shadow: false }));
+      holder.add(drawShapeOutline(this.scene, 0, 0, slantedRect(arrow.width, arrow.height, 8), { color: SR_SELECT_TONE, alpha: 0.6, width: 2 }));
+      holder.add(drawGlyph(this.scene, side < 0 ? "page-prev" : "page-next", 0, 0, arrow.width * 0.72, SR_SELECT_TONE));
+      const hit = this.scene.add.rectangle(0, 0, arrow.width + 28, arrow.height + 16, 0xffffff, 0);
       clipHit(hit, this.popupClip());
       hit.on("pointerdown", () => pressIn(holder));
       hit.on("pointerout", () => pressOut(holder, "normal", { pop: false }));
       hit.on("pointerup", () => { pressOut(holder); this.focus(relicSelectStep(this.focused, side, this.choices.length)); });
       holder.add(hit);
       this.body.add(holder);
+      if (this.choices.length <= 1) holder.setAlpha(0.35);
     };
-    if (this.choices.length > 1) { addArrow(-1); addArrow(1); }
+    addArrow(-1); addArrow(1);
 
     const { info } = RELIC_SELECT;
-    const chip = this.scene.add.container(rect.right - RELIC_SELECT.badge.inset, rect.top + RELIC_SELECT.badge.top);
+    const hero = relicSelectFrames().hero;
+    const chip = this.scene.add.container(hero.right - RELIC_SELECT.badge.inset + 6, hero.top + RELIC_SELECT.badge.top);
     const chipShape = chipPoints(info.size, info.size, { bevel: { topLeft: info.size * 0.24, topRight: 0, bottomRight: info.size * 0.24, bottomLeft: 0 } });
     chip.add(drawLayer(this.scene, 0, 0, chipShape, { fill: 0x0c1219, alpha: 0.86 }));
     chip.add(drawShapeOutline(this.scene, 0, 0, chipShape, { color: SR_SELECT_TONE, alpha: 0.7, width: 3 }));
@@ -341,11 +353,11 @@ class RelicSelectView {
   /** 무대 왼쪽 위 — 등급 글자와 속성·직군. 정보창 머리의 순서를 그대로 줄인 것이다. */
   private paintBadges(choice: Choice): void {
     this.badges.removeAll(true);
-    const rect = relicSelectStageRect();
+    const rect = relicSelectFrames().hero;
     const { badge } = RELIC_SELECT;
     const x = rect.left + badge.inset;
     const y = rect.top + badge.top;
-    const rarity = this.scene.add.text(x - 20, y, choice.def.rarity, textStyle({ role: "display", size: 48, color: hex(SR_SELECT_TONE) }))
+    const rarity = this.scene.add.text(x - 20, y, choice.def.rarity, textStyle({ role: "display", size: 44, color: hex(SR_SELECT_TONE) }))
       .setOrigin(0, 0.5).setStroke("#05070a", 7).setShadow(0, 4, "#05070a", 6, true, true);
     this.badges.add(rarity);
     const after = x - 20 + rarity.width + 22;
@@ -353,29 +365,60 @@ class RelicSelectView {
     this.badges.add(new AffinityBadge(this.scene, after + badge.element + 12 + badge.role / 2, y, ROLE_ICON[choice.def.role], badge.role, 0.62));
   }
 
-  /** 무대의 전신. 바뀔 때마다 한 세대(`token`)를 올려, 늦게 도착한 원화는 버린다. */
+  /**
+   * 세 칸을 그 렐릭으로 채운다 — 큰 칸 전신, 작은 칸 SD, 중간 칸 얼굴. 셋이 한 세대(`token`)를 나눠 가져
+   * 읽는 사이에 다른 렐릭을 골랐으면 늦게 온 것은 모두 버린다.
+   */
   private loadHero(choice: Choice, direction: number): void {
     const token = ++this.token;
-    const rect = relicSelectStageRect();
-    const stageHeight = rect.bottom - rect.top;
-    const stageWidth = rect.right - rect.left;
+    const frames = relicSelectFrames();
+    const heroSpot = { width: frames.hero.right - frames.hero.left, height: frames.hero.bottom - frames.hero.top };
+    const sdSpot = { width: frames.sd.right - frames.sd.left, height: frames.sd.bottom - frames.sd.top };
+    const faceSpot = { width: frames.face.right - frames.face.left, height: frames.face.bottom - frames.face.top };
+    const alpha = choice.maxed ? 0.5 : 1;
     const asset = portraitAssetFor(choice.def.portraitAssetId);
     const content = { width: asset.content.right - asset.content.left, height: asset.content.bottom - asset.content.top };
-    const inset = 28;
-    const heroHeight = Math.min(stageHeight - 110, ((stageWidth - 2 * (RELIC_SELECT.arrow.inset + RELIC_SELECT.arrow.width)) * content.height) / content.width);
-    void spawnPuppet(this.scene, asset, { x: 0, groundY: stageHeight / 2 - inset, height: heroHeight, depth: 0 }).then((puppet) => {
+    const inset = 16;
+    const heroHeight = Math.min(heroSpot.height - inset * 2, ((heroSpot.width - inset * 2) * content.height) / content.width);
+    const slideIn = (target: Phaser.GameObjects.Components.Alpha & { x: number }): void => {
+      if (direction === 0 || settingsManager.get().accessibility.reduceMotion) return;
+      // 넘긴 쪽에서 한 뼘 밀려 들어온다 — 「옆으로 넘겼다」가 움직임으로 읽힌다.
+      target.x = direction * 70;
+      target.setAlpha(0);
+      this.scene.tweens.add({ targets: target, x: 0, alpha, duration: 220, ease: "Cubic.easeOut" });
+    };
+    void spawnPuppet(this.scene, asset, { x: 0, groundY: heroSpot.height / 2 - inset, height: heroHeight, depth: 0 }).then((puppet) => {
       if (token !== this.token || !this.heroLayer.active) { puppet.destroy(); return; }
       puppet.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
-      puppet.setAlpha(choice.maxed ? 0.5 : 1);
+      puppet.setAlpha(alpha);
       const old = this.hero;
       this.hero = puppet;
       this.heroLayer.add(puppet);
       old?.destroy();
-      if (direction === 0 || settingsManager.get().accessibility.reduceMotion) return;
-      // 넘긴 쪽에서 한 뼘 밀려 들어온다 — 외형 띠와 같이 「옆으로 넘겼다」가 움직임으로 읽힌다.
-      puppet.x = direction * 90;
-      puppet.setAlpha(0);
-      this.scene.tweens.add({ targets: puppet, x: 0, alpha: choice.maxed ? 0.5 : 1, duration: 220, ease: "Cubic.easeOut" });
+      slideIn(puppet);
+    }).catch(() => undefined);
+
+    void spawnPuppet(this.scene, battleAssetFor(choice.def.id), { x: 0, groundY: sdSpot.height / 2 - 12, height: sdSpot.height * 0.9, depth: 0 }).then((puppet) => {
+      if (token !== this.token || !this.sdLayer.active) { puppet.destroy(); return; }
+      puppet.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
+      puppet.setAlpha(alpha);
+      const old = this.sd;
+      this.sd = puppet;
+      this.sdLayer.add(puppet);
+      old?.destroy();
+    }).catch(() => undefined);
+
+    // 중간 칸 — 얼굴. 외형 전시관과 같은 잘라내기(카드 함수)로 얼굴 하나가 칸을 채운다.
+    void loadPortraitTexture(this.scene, asset, this.faceLayer).then(({ key, anchors }) => {
+      if (token !== this.token || !this.faceLayer.active) return;
+      const frame = headCardFrame(asset, anchors, { width: faceSpot.width, height: faceSpot.height, fillRatio: 0.32 / portraitCardZoom(asset), headroom: 0, cardTop: asset.cardTop });
+      const image = this.scene.add.image(-faceSpot.width / 2 - frame.cropX * frame.scale, -faceSpot.height / 2 - frame.cropY * frame.scale, key)
+        .setOrigin(0, 0).setScale(frame.scale).setAlpha(alpha);
+      image.setCrop(frame.cropX, frame.cropY, frame.cropWidth, frame.cropHeight);
+      const old = this.face;
+      this.face = image;
+      this.faceLayer.add(image);
+      old?.destroy();
     }).catch(() => undefined);
   }
 }

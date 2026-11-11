@@ -403,6 +403,7 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
       });
     };
     const arrows: Phaser.GameObjects.Container[] = [];
+    const arrowPulses: { body: Phaser.GameObjects.Container; glow: Phaser.GameObjects.Graphics; tweens: Phaser.Tweens.Tween[] }[] = [];
     const shift = (direction: -1 | 1): void => {
       const next = pick + direction;
       if (busy || swiping || next < 0 || next >= buttons.length) return;
@@ -427,11 +428,23 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
       g.fillStyle(DELO.shade, 0.28).fillPoints([new Phaser.Geom.Point(direction * 30 + 3, 8), new Phaser.Geom.Point(-direction * 24 + 3, -38), new Phaser.Geom.Point(-direction * 24 + 3, 54)], true);
       g.fillStyle(DELO.ink, 1).fillPoints([new Phaser.Geom.Point(direction * 32, 0), new Phaser.Geom.Point(-direction * 26, -48), new Phaser.Geom.Point(-direction * 26, 48)], true);
       g.fillStyle(DELO.gold, 1).fillPoints([new Phaser.Geom.Point(direction * 20, 0), new Phaser.Geom.Point(-direction * 18, -35), new Phaser.Geom.Point(-direction * 18, 35)], true);
+      // 넘길 수 있다는 것이 한눈에 읽히도록 꺾쇠가 바깥으로 숨 쉬듯 맥동하고 뒤에 금빛 빛무리가 번진다.
+      // 누름(`pressIn`)은 바깥 컨테이너의 배율을 쓰므로 맥동은 안쪽 몸(`pulse`)에만 건다.
+      const glow = scene.add.graphics();
+      glow.fillStyle(DELO.gold, 1).fillPoints([new Phaser.Geom.Point(direction * 46, 0), new Phaser.Geom.Point(-direction * 36, -64), new Phaser.Geom.Point(-direction * 36, 64)], true);
+      glow.setAlpha(0);
+      const pulse = scene.add.container(0, 0, [glow, g]);
+      const tweens = motion() > 0 ? [
+        scene.tweens.add({ targets: pulse, x: direction * 12 * motion(), scale: 1.14, duration: 620, ease: "Sine.easeInOut", yoyo: true, repeat: -1 }),
+        scene.tweens.add({ targets: glow, alpha: { from: 0.08, to: 0.42 }, duration: 620, ease: "Sine.easeInOut", yoyo: true, repeat: -1 }),
+      ] : [];
+      if (tweens.length === 0) glow.setAlpha(0.24);
+      arrowPulses.push({ body: pulse, glow, tweens });
       const zone = addClippedHit(scene, arrow, 0, 0, 110, 150, () => ({ left: 0, right: scene.scale.width, top: 0, bottom: scene.scale.height }), { useHandCursor: true });
       zone.on("pointerdown", () => pressIn(arrow));
       zone.on("pointerout", () => pressOut(arrow, "normal", { pop: false }));
       zone.on("pointerup", () => { pressOut(arrow); shift(direction); });
-      arrow.addAt(g, 0);
+      arrow.addAt(pulse, 0);
       arrows.push(arrow);
       introPage.add(arrow);
     }
@@ -650,7 +663,16 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
         button.setContent(t(DIFFICULTY_KEY[entry.id]), entry.entryCost);
         button.setEnabled(index === pick && !busy && !running && status.coins >= entry.entryCost);
       });
-      arrows.forEach((arrow, index) => arrow.setAlpha((index === 0 ? pick > 0 : pick < buttons.length - 1) && !busy ? 1 : 0.3));
+      arrows.forEach((arrow, index) => {
+        const live = (index === 0 ? pick > 0 : pick < buttons.length - 1) && !busy;
+        arrow.setAlpha(live ? 1 : 0.3);
+        // 더 넘길 곳이 없는 꺾쇠는 숨 쉬지 않는다 — 맥동이 곧 「이쪽으로 넘길 수 있다」는 말이다.
+        const pulse = arrowPulses[index];
+        if (!pulse) return;
+        pulse.glow.setVisible(live);
+        for (const tween of pulse.tweens) { if (live) tween.resume(); else tween.pause(); }
+        if (!live) pulse.body.setPosition(0, 0).setScale(1);
+      });
     };
 
     const request = async (key: string, call: (requestId: string) => Promise<DelophyHuntResponse>): Promise<DelophyHuntResponse | undefined> => {

@@ -3559,7 +3559,7 @@ export class FakeServer implements GameApi {
     const now = this.now();
     // 결제로 활성화된 채 아직 받지 않은 첫 결제 선물도 같은 「한정」 탭의 점을 켠다.
     const giftWaiting = this.state.achievements?.firstPaymentPaid === true && this.state.achievements.firstPaymentGift !== true;
-    const situationalOfferCount = openSituationalOffers(this.evaluateSituationalOffers(now)).length + Number(giftWaiting);
+    const situationalOfferCount = this.purchasableSituationalOfferCount(now) + Number(giftWaiting);
     const attendance = this.attendanceDto(this.attendanceNow(now), now);
     const mail = this.mailListDto();
     const claimablePassCount = this.progressPassDtos(this.state).reduce((sum, pass) => sum + pass.milestones.filter((stage) => stage.freeState === "claimable" || stage.state === "claimable").length, 0);
@@ -3620,6 +3620,24 @@ export class FakeServer implements GameApi {
       this.state.situationalOffers = state;
     }
     return state;
+  }
+
+  /**
+   * 「한정」 탭의 붉은 점이 세는 특가 — 목록(`getProducts`)이 **살 수 있다**고 내려 주는 것만 센다.
+   * 열린 특가 수를 그대로 세던 때는 결제 검증이 없어 버튼이 꺼진 빌드에서도, 천장 특가가 선 채 SSR을 뽑은 뒤에도
+   * 탭을 열면 할 것이 없는데 점이 72시간 내내 남았다.
+   */
+  private purchasableSituationalOfferCount(now: Date): number {
+    const state = this.evaluateSituationalOffers(now);
+    return openSituationalOffers(state).filter(({ productId }) => {
+      const product = PRODUCTS.find(({ id }) => id === productId);
+      return product !== undefined && product.storefront === "premium" && this.isVisible(product, now) && this.remaining(product, now) > 0 && !this.paymentUnavailable(product);
+    }).length;
+  }
+
+  /** SDK를 붙여도 서버 검증이 준비되지 않았다면 결제를 시작할 수 없다 — 목록과 붉은 점이 같은 판정을 읽는다. */
+  private paymentUnavailable(product: ProductDefinition): boolean {
+    return product.acquisition.kind === "platform_payment" && !this.paymentVerificationAvailable;
   }
 
   /** 스토리 관문 한 판을 연패 줄에 적고, 셋째 연패면 그 장의 재정비 특가를 세운다. */
@@ -3935,8 +3953,7 @@ export class FakeServer implements GameApi {
     // 목록 단계부터 요청 화면과 일치하는 상품만 반환해 화면별 모델이 섞인 카탈로그를 받지 않는다.
     const products = PRODUCTS.filter((product) => product.storefront === storefront && this.isVisible(product, now)).map((product) => {
       const remaining = this.remaining(product, now);
-      // SDK를 붙여도 서버 검증이 준비되지 않았다면 결제를 시작할 수 없다.
-      const paymentUnavailable = product.acquisition.kind === "platform_payment" && !this.paymentVerificationAvailable;
+      const paymentUnavailable = this.paymentUnavailable(product);
       return {
         ...product, visibleUntil: product.situational ? activeSituationalOffer(this.state.situationalOffers, product.id, now)?.expiresAt : this.productWindow(product).endsAt, remaining, purchasable: remaining > 0 && !paymentUnavailable, disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : undefined,
         ...(this.runePartOf(product, now) !== undefined ? { runePart: this.runePartOf(product, now) } : {}),

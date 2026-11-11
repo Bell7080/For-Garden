@@ -818,7 +818,9 @@ export class InfoManager {
     // 상한은 숫자의 **발치**에 붙는다. 가운데에 두면 현재 레벨과 같은 무게로 읽혀 헷갈린다.
     this.levelCap = scene.add.text(0, 384, "", textStyle({ role: "emphasis", size: 28, color: COLOR.inkDim })).setOrigin(0, 1);
     this.expBar = new Gauge(scene, COLUMN.x, 452, COLUMN.width - 88, 16, COLOR.accent);
-    this.expLabel = scene.add.text(COLUMN.x, 470, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5, 0);
+    // 경험치 수치는 줄 **위 오른쪽 끝**에 붙는다. 레벨 숫자는 왼쪽에 서므로 그 자리가 비어 있고,
+    // 줄 아래를 비워 두어야 급여 버튼이 그만큼 크게 선다.
+    this.expLabel = scene.add.text(COLUMN.x + (COLUMN.width - 88) / 2, 438, "", textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 1);
     attach(levelPanel, this.levelValue, this.levelCap, ...this.expBar.objects, this.expLabel);
     // 경험치는 내가 키우는 렐릭에게만 있는 값이다. 친구·적에게 빈 눈금을 보여 주면 없는
     // 정보를 있는 것처럼 읽게 된다 — 레벨 숫자만 남긴다.
@@ -829,7 +831,7 @@ export class InfoManager {
     // 한계 돌파는 별을 올리는 일이라 레벨 칸이 아니라 **별 옆**에 선다. 파편이 모였는지도
     // 그 자리에서 읽혀야 "지금 초월할 수 있는가"가 한눈에 들어온다.
     this.breakButton = this.addBreakButton(COLUMN.x - 78, 150, this.chrome);
-    const feed = this.addFeedButton(COLUMN.x, 546, COLUMN.width - 130, 98, levelPanel);
+    const feed = this.addFeedButton(COLUMN.x, 528, COLUMN.width - 100, 118, levelPanel);
     this.feedButton = feed.container;
     this.feedLabel = feed.label;
     this.feedButton.setVisible(this.capabilities.mutateProgress);
@@ -960,9 +962,9 @@ export class InfoManager {
     // 지금 누를 수 있는지가 글자를 읽기 전에 보인다(`feedButtonSkin.ts`).
     const { on, off } = drawFeedPlate(this.scene, width, height);
     container.add([off, on]);
-    const label = this.scene.add.text(0, -height / 2 + 21, t("info.feed"), textStyle({ role: "display", size: 24, color: FEED_BUTTON.ink })).setOrigin(0.5);
+    const label = this.scene.add.text(0, -height / 2 + 27, t("info.feed"), textStyle({ role: "display", size: 32, color: FEED_BUTTON.ink })).setOrigin(0.5);
     container.add(label);
-    const row = feedCostRow(this.scene, 0, 7, Math.round(width * 0.62), 40, 30, "info-feed:button");
+    const row = feedCostRow(this.scene, 0, 16, Math.round(width * 0.7), 50, 38, "info-feed:button");
     this.feedCost = row.text;
     this.feedCostLayout = row.layout;
     container.add(row.container);
@@ -1430,10 +1432,10 @@ export class InfoManager {
     if (!canFeed) return;
     this.feedPopupOpen = true;
     this.popups.open({
-      width: 500,
-      height: 190,
+      width: 540,
+      height: 220,
       x: bounds.centerX,
-      y: bounds.bottom + 112,
+      y: bounds.bottom + 126,
       title: t("info.feed.bulk"),
       hideCloseButton: true,
       closeOnBackdrop: true,
@@ -1464,26 +1466,26 @@ export class InfoManager {
     // 다음에 할 일(한계 돌파)은 별 옆의 버튼이 제 자리에서 말한다.
     if (progress.level >= relicLevelCap(progress.breakthrough)) { close(); return; }
     ([[t("info.feed.one"), 1], [t("info.feed.ten"), 10]] as const).forEach(([label, levels], index) => {
-      const bx = index === 0 ? -118 : 118;
+      const bx = index === 0 ? -128 : 128;
       const cost = this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
       const enough = session.wallet.cheesecake >= cost;
       // 칸 하나를 한 덩어리로 묶어야 눌림이 판·이름·값줄을 함께 누른다.
       const option = this.scene.add.container(bx, 0);
       // 급여 버튼과 같은 치즈케이크 조각이다. 모자란 칸은 꺼진 판으로 가라앉는다.
-      const plate = drawFeedPlate(this.scene, 212, 116, 14);
+      const plate = drawFeedPlate(this.scene, 236, 138, 14);
       plate.on.setVisible(enough);
       plate.off.setVisible(!enough);
       option.add([plate.off, plate.on]);
-      option.add(this.scene.add.text(0, -36, label, textStyle({ role: "display", size: 22, color: enough ? FEED_BUTTON.ink : COLOR.inkDim })).setOrigin(0.5));
+      option.add(this.scene.add.text(0, -40, label, textStyle({ role: "display", size: 32, color: enough ? FEED_BUTTON.ink : COLOR.inkDim })).setOrigin(0.5));
       // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
-      const price = feedCostRow(this.scene, 0, 8, 160, 40, 26, "info-feed-popup:cheesecake");
+      const price = feedCostRow(this.scene, 0, 14, 196, 50, 32, "info-feed-popup:cheesecake");
       price.text.setText(formatCurrency(session.wallet.cheesecake) + "/" + formatCurrency(cost));
       price.text.setColor(enough ? FEED_TEXT : COLOR.dangerText);
       price.layout();
       option.add(price.container);
       body.add(option);
       if (!enough) return;
-      const hit = this.scene.add.rectangle(0, 0, 212, 116, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const hit = this.scene.add.rectangle(0, 0, 236, 138, 0xffffff, 0).setInteractive({ useHandCursor: true });
       if (levels === 1) this.feedOneTutorialHit = hit;
       hit.on("pointerdown", () => pressIn(option, "feed"));
       hit.on("pointerout", () => pressOut(option, "feed", { pop: false }));

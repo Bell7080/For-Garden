@@ -106,6 +106,8 @@ import { mountRunePickerGrid } from "./runePickerGrid";
 import { runePickerSize } from "./runePickerLayout";
 import { universalFragmentTexture } from "./universalFragmentArt";
 import { reportCatch } from "../managers/ErrorReporter";
+import { characterTags } from "./characterTags";
+import { addCharacterTagRow } from "./CharacterTagRow";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -143,6 +145,12 @@ const INFO_SILHOUETTE = { tint: 0x06060a, alpha: 0.62 } as const;
 const APPEARANCE_BUTTON = { size: 78, y: FIGURE.y - 206 } as const;
 
 /** 오른쪽 정보 기둥. 캐릭터를 덮지 않도록 화면 오른쪽 절반만 쓴다. */
+/**
+ * 이름 아래 해시태그 줄의 자리. 왼쪽 끝은 이름과 같은 선이고, 오른쪽은 수치 기둥 앞에서 멈춘다 —
+ * 넘치면 줄을 바꾸지 않고 뒤쪽 태그부터 걷힌다(`addCharacterTagRow`).
+ */
+const INFO_TAG_ROW = { x: 48, y: 232, size: 22, maxWidth: 502 } as const;
+
 const COLUMN = {
   x: 818,
   width: 476,
@@ -511,6 +519,8 @@ export class InfoManager {
   /** 상세 대상을 바꿀 때 정책 표식 두 개만 교체하는 고정 앵커 층이다. */
   private readonly colorAssistMarks: Phaser.GameObjects.Container;
   private readonly roleText: Phaser.GameObjects.Text;
+  /** 이름 아래 해시태그 줄(`#원거리 #범위공격 #딜러`). 개체를 열 때마다 다시 세운다. */
+  private readonly tagRow: Phaser.GameObjects.Container;
   private readonly bookmarkBadge: BadgeHandle;
   private readonly favoriteBadge: BadgeHandle;
 
@@ -742,8 +752,10 @@ export class InfoManager {
     // 이름은 같은 글자를 한 겹 어긋나게 깔아 그림자를 만든다. 흐린 그림자보다 또렷하다.
     this.nameShadow = scene.add.text(52, 112, "", textStyle({ role: "display", size: 84, color: "#05070a" })).setOrigin(0, 0).setAlpha(0.85);
     this.nameText = scene.add.text(46, 104, "", textStyle({ role: "display", size: 84 })).setOrigin(0, 0);
-    this.roleText = scene.add.text(50, 206, "", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0);
-    this.chrome.add([this.rarityGlow, this.rarityText, this.nameShadow, this.nameText, this.roleText]);
+    // 이름 바로 아래에 해시태그 줄이, 그 아래에 개체번호 줄이 선다 — 무엇을 하는 몸인지가 번호보다 먼저 읽힌다.
+    this.tagRow = scene.add.container(INFO_TAG_ROW.x, INFO_TAG_ROW.y);
+    this.roleText = scene.add.text(50, 268, "", textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0);
+    this.chrome.add([this.rarityGlow, this.rarityText, this.nameShadow, this.nameText, this.tagRow, this.roleText]);
     // 이름 오른쪽에 속성과 직군을 세운다. 이름 줄에 붙어 있어야 "이 개체가 무엇인지"가 한
     // 덩어리로 읽힌다. 카드와 마찬가지로 속성이 크고 직군이 조금 작다.
     this.elementBadge = new AffinityBadge(scene, 0, 152, ELEMENT_ICON.fire, AFFINITY.main);
@@ -759,11 +771,11 @@ export class InfoManager {
     this.colorAssistMarks = scene.add.container(0, 0);
     this.chrome.add(this.colorAssistMarks);
 
-    this.bookmarkBadge = this.addBadge(84, 300, "bookmark", BOOKMARK_ON, () => this.toggleBookmark());
-    this.favoriteBadge = this.addBadge(176, 300, "heart", FAVORITE_ON, () => this.toggleFavorite());
+    this.bookmarkBadge = this.addBadge(84, 352, "bookmark", BOOKMARK_ON, () => this.toggleBookmark());
+    this.favoriteBadge = this.addBadge(176, 352, "heart", FAVORITE_ON, () => this.toggleFavorite());
     // 관찰 일지와 옷장은 내 렐릭에게만 있다. 친구·적 창에서는 아예 세우지 않는다.
-    if (this.capabilities.mutateProgress) this.addJournalButton(268, 300);
-    this.addMagnifier(84, 392, (from) => this.enterGallery(from.onClose));
+    if (this.capabilities.mutateProgress) this.addJournalButton(268, 352);
+    this.addMagnifier(84, 444, (from) => this.enterGallery(from.onClose));
 
     // 별은 오른쪽, 돌파 버튼은 그 왼쪽이다. 별이 오른쪽 돋보기(돌파 단계표) 바로 옆에 서야
     // 표식과 그 표식을 자세히 보는 입구가 한 덩어리로 읽힌다.
@@ -2549,6 +2561,8 @@ export class InfoManager {
     }
     // 속성과 직군은 옆의 아이콘이 말한다. 같은 것을 글자로 또 적으면 줄만 길어진다.
     this.roleText.setText("NO." + def.specimenNumber + "   " + def.origin);
+    this.tagRow.removeAll(true);
+    this.tagRow.add(addCharacterTagRow(this.scene, characterTags(def), { size: INFO_TAG_ROW.size, maxWidth: INFO_TAG_ROW.maxWidth }));
     this.refreshBadges();
     this.paintStars(def);
     this.buildSkillIcons(def);

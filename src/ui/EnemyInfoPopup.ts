@@ -9,6 +9,8 @@ import { breakthroughEnhances, breakthroughGrade, relicLevelCap } from "../core/
 import type { Passive, RelicDef, Skill, Ultimate } from "../core/types";
 import { KeywordManager } from "../managers/KeywordManager";
 import { AffinityBadge } from "./AffinityBadge";
+import { characterTags } from "./characterTags";
+import { addCharacterTagRow } from "./CharacterTagRow";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { openElementPopup, openRolePopup } from "./affinityPopups";
 import { ENEMY_INFO, enemyInfoPanelCenterY } from "./enemyInfoLayout";
@@ -327,7 +329,7 @@ export interface InfoPopupContext {
 
 /** 두 창이 같은 칸을 세우는 데 필요한 자리. `ENEMY_INFO`와 `SUMMON_INFO`가 모두 이 모양이다. */
 type Widen<T> = T extends number ? number : { readonly [K in keyof T]: Widen<T[K]> };
-export type InfoPopupLayout = Widen<Pick<typeof ENEMY_INFO, "width" | "left" | "rarityY" | "nameY" | "numberY" | "badge" | "nameRight" | "column" | "statPanel" | "radar" | "reach" | "statMagnifier" | "skills" | "ferocityBadgeOffsetY" | "roleBadgeOffsetY">>;
+export type InfoPopupLayout = Widen<Pick<typeof ENEMY_INFO, "width" | "left" | "rarityY" | "nameY" | "tags" | "numberY" | "badge" | "nameRight" | "column" | "statPanel" | "radar" | "reach" | "statMagnifier" | "skills" | "ferocityBadgeOffsetY" | "roleBadgeOffsetY">>;
 
 /** 스킬 액자가 서는 x. 왼쪽 끝에서 같은 간격으로 이어진다. */
 function infoSkillColumns(L: InfoPopupLayout, count: number): number[] {
@@ -360,6 +362,9 @@ export function paintInfoHeader(ctx: InfoPopupContext, chrome: Phaser.GameObject
   shrinkTextToWidth(name, L.nameRight - L.left - (badge.gap + badge.element + 12 + badge.role));
   shadow.setFontSize(name.style.fontSize);
   chrome.add([shadow, name]);
+  // 이름 아래 해시태그 줄 — 아군 정보창과 같은 함수로 짓는다(`characterTags`).
+  const tagRow = addCharacterTagRow(scene, characterTags(def), { size: L.tags.size, maxWidth: L.tags.maxWidth });
+  chrome.add(tagRow.setPosition(L.left + 2, L.tags.y));
   chrome.add(scene.add.text(L.left + 4, L.numberY, `NO.${def.specimenNumber}   ${def.origin}`, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
   // 이름 폭이 개체마다 다르므로 뱃지 자리도 그릴 때마다 이름 끝에서 다시 잡는다.
   const badgeLeft = L.left + name.width + L.badge.gap;

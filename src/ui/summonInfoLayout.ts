@@ -26,6 +26,7 @@ export const SUMMON_INFO = {
   /** 「디안의 소환수」 — 적 창의 등급 글자 자리다. */
   rarityY: ENEMY_INFO.rarityY,
   nameY: ENEMY_INFO.nameY,
+  tags: ENEMY_INFO.tags,
   numberY: ENEMY_INFO.numberY,
   badge: ENEMY_INFO.badge,
   /** 이름과 뱃지는 지휘자 얼굴 앞에서 끝난다. */

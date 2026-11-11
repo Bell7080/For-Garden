@@ -4,7 +4,6 @@ import { storyBaseStageId, storyDifficultyOf } from "../core/storyDifficulty";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { followTutorialTarget } from "../ui/tutorialTarget";
 import { TUTORIAL_SPOTLIGHT_DEPTH } from "../ui/TutorialSpotlight";
-import { runInfoTutorialTour } from "../ui/infoTutorialTour";
 import { tutorialManager } from "../managers/TutorialManager";
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -199,7 +198,12 @@ export class PartyScene extends Phaser.Scene {
   /** 아군 자리의 속성·돌파 표식과 이름줄. 편성이 바뀔 때마다 통째로 다시 그린다. */
   private allyMarks?: Phaser.GameObjects.Container;
   private startButton!: Button;
-  private partyTutorialPhase?: "move" | "hold" | "tour" | "start";
+  /**
+   * 1-2 편성 안내: 렐릭을 끌어 옮겨 보고(`move`) → 탱커 토리카를 가운데로 되돌리는 자동 배치를 눌러 보고(`auto`) → 출전(`start`).
+   */
+  private partyTutorialPhase?: "move" | "auto" | "start";
+  /** 자동 배치 버튼 — 편성 안내의 둘째 칸이 이 자리를 가리킨다. */
+  private autoPlaceButton?: Button;
   private hint!: Phaser.GameObjects.Text;
   /** 자동 배치와 자리별 방향 표식이 함께 참조하는 이번 스테이지의 적 정의다. */
   private enemies: RelicDef[] = [];
@@ -258,9 +262,12 @@ export class PartyScene extends Phaser.Scene {
    * 보인다 — 한 번 그어 본 길을 손이 그대로 따라 하면 된다.
    */
   private moveTutorialGuide(): { from: { x: number; y: number }; to: { x: number; y: number } } | undefined {
-    const filled = [1, 0, 2].find((slot) => this.picked[slot]);
+    // 토리카가 서 있으면 그 칸에서 출발한다 — 다음 칸(자동 배치)이 「탱커는 가운데」로 되돌리는 길이다.
+    const torika = this.picked.indexOf("torika");
+    const filled = torika >= 0 && torika < 3 ? torika : [1, 0, 2].find((slot) => this.picked[slot]);
     if (filled === undefined) return undefined;
-    const target = filled === 2 ? 1 : filled + 1;
+    // 토리카는 가운데를 비우는 쪽(양 끝)으로 보낸다 — 그래야 다음 칸에서 자동 배치가 되돌릴 것이 생긴다.
+    const target = torika >= 0 && torika < 3 ? (filled === 0 ? 2 : filled === 1 ? 2 : 0) : filled === 2 ? 1 : filled + 1;
     const a = this.slotBox(filled), b = this.slotBox(target);
     return { from: { x: a.x, y: a.y - a.height * 0.05 }, to: { x: b.x - b.width * 0.12, y: b.y - b.height * 0.05 } };
   }
@@ -388,13 +395,14 @@ export class PartyScene extends Phaser.Scene {
       view: this.rosterView,
       onChange: (view) => { this.rosterView = view; this.fillRoster(); this.refresh(); },
     });
-    new Button(this, this.autoButtonPosition.x, this.autoButtonPosition.y, {
+    this.autoPlaceButton = new Button(this, this.autoButtonPosition.x, this.autoButtonPosition.y, {
       width: autoButtonWidth,
       height: autoButtonHeight,
       label: t("party.autoPlace"),
       fontSize: 26,
       onClick: () => {
         this.picked = this.autoFormation();
+        if (this.partyTutorialPhase === "auto") this.partyTutorialPhase = "start";
         this.prefetchBattleSds();
         this.selectedSlot = undefined;
         this.refresh();
@@ -452,18 +460,22 @@ export class PartyScene extends Phaser.Scene {
     followTutorialTarget(this, {
       enabled: () => this.partyTutorialPhase !== undefined,
       blocked: () => this.info.isOpen,
+      passive: true,
       rect: () => {
         if (this.partyTutorialPhase === "start") return this.startButton.getBounds();
-        if (this.partyTutorialPhase === "tour") return undefined;
+        if (this.partyTutorialPhase === "auto") return this.autoPlaceButton?.getBounds();
         const boxes = this.allySlots.map(slot => slot.hit.getBounds());
         if (!boxes.length) return undefined;
-        if (this.partyTutorialPhase === "hold") return boxes.find((_, i) => this.picked[i] !== null);
         const x = Math.min(...boxes.map(b => b.x)), y = Math.min(...boxes.map(b => b.y));
         return { x, y, width: Math.max(...boxes.map(b => b.right)) - x, height: Math.max(...boxes.map(b => b.bottom)) - y };
       },
+      // 자동 배치 안내는 버튼 아래(목록 쪽)에 선다 — 위에 서면 방금 옮긴 SD를 덮어 무엇을 되돌리는지 보이지 않는다.
+      side: () => this.partyTutorialPhase === "auto" ? "below" : undefined,
       guide: () => this.partyTutorialPhase === "move" ? this.moveTutorialGuide() : undefined,
-      text: () => this.partyTutorialPhase === "move" ? t("tutorial.party.move") : this.partyTutorialPhase === "hold" ? t("tutorial.party.hold") : t("tutorial.party.start"),
-      onSkip: () => { this.partyTutorialPhase = this.partyTutorialPhase === "move" ? "hold" : this.partyTutorialPhase === "hold" || this.partyTutorialPhase === "tour" ? "start" : undefined; },
+      text: () => this.partyTutorialPhase === "move" ? t("tutorial.party.move")
+        : this.partyTutorialPhase === "auto" ? t("tutorial.party.auto", { name: getRelic("torika").name })
+        : t("tutorial.party.start"),
+      onSkip: () => { this.partyTutorialPhase = this.partyTutorialPhase === "move" ? "auto" : this.partyTutorialPhase === "auto" ? "start" : undefined; },
     });
   }
 
@@ -587,18 +599,18 @@ export class PartyScene extends Phaser.Scene {
         const id = this.picked[slot];
         if (!id) return;
         this.info.showRelic(getRelic(id));
-        // 첫 편성 안내: 연 정보창을 한 칸씩 짚고, 뒤로가기로 닫으면 출전 안내로 넘어간다.
-        if (this.partyTutorialPhase === "hold") {
-          this.partyTutorialPhase = "tour";
-          runInfoTutorialTour(this, this.info, () => { if (this.partyTutorialPhase === "tour") this.partyTutorialPhase = "start"; });
-        }
       },
-      // 꾹 누르기 전에 옆으로 민 손은 편성 프리셋을 넘긴다.
-      swipe: this.presetsOn ? (direction) => this.stepPreset(direction) : undefined,
+      // 꾹 누르기 전에 옆으로 민 손은 편성 프리셋을 넘긴다. 첫 편성 안내 중에는 빠르게 민 손도 자리 옮기기로 읽는다 —
+      // 처음 해 보는 손은 SD를 휙 밀어 옮기는데, 그게 프리셋 넘기기로 삼켜지면 아무 일도 일어나지 않는다.
+      swipe: this.presetsOn && !this.partyTutorialPhase ? (direction) => this.stepPreset(direction) : undefined,
       drop: (from, to) => {
         this.dragVisual?.endDrag();
         this.picked = moveFormationSlot(this.picked, from, to);
-        if (from !== to && this.partyTutorialPhase === "move") this.partyTutorialPhase = "hold";
+        // 첫 편성 안내: 한 번 옮기면 끝이다. 탱커 토리카가 가운데를 비웠으면 「자동 배치로 되돌리기」로 넘어가고,
+        // 이미 가운데에 세웠거나 토리카가 없는 편성이면 되돌릴 것이 없어 곧바로 출격 안내로 간다.
+        if (from !== to && this.partyTutorialPhase === "move") {
+          this.partyTutorialPhase = this.picked.includes("torika") && this.picked[1] !== "torika" ? "auto" : "start";
+        }
         this.selectedSlot = to;
         // 미리보기로 옮겨 둔 SD는 확정 뒤 기존 비동기 재배치 경로가 제자리에 다시 세운다.
         this.refresh();
@@ -758,7 +770,7 @@ export class PartyScene extends Phaser.Scene {
   /** 전투 시작 — 손으로 누른 한 판과 자동 전투의 첫 판이 같은 길을 지난다. */
   private async beginEntry(): Promise<void> {
     // 첫 유효 클릭에서 즉시 잠가 같은 프레임의 빠른 연속 입력도 한 번만 처리한다.
-    if (this.isEnteringBattle || this.info?.isOpen || this.partyTutorialPhase === "move" || this.partyTutorialPhase === "hold" || this.partyTutorialPhase === "tour" || !this.ready()) return;
+    if (this.isEnteringBattle || this.info?.isOpen || this.partyTutorialPhase === "move" || this.partyTutorialPhase === "auto" || !this.ready()) return;
     this.isEnteringBattle = true;
     this.startButton.setEnabled(false);
     this.savePresets();

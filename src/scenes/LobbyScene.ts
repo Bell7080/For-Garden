@@ -774,7 +774,7 @@ export class LobbyScene extends Phaser.Scene {
         }
         if (entry.label === t("lobby.sortie.story")) followTutorialTarget(this, {
           enabled: () => body.active && this.popupLayer?.isOpen === true && tutorialManager.next() !== undefined,
-          rect: () => button.getBounds(), text: () => t("tutorial.lobby.story"),
+          rect: () => button.getBounds(), text: () => t("tutorial.lobby.story"), passive: true,
         });
         // 잠긴 입구는 덮개로 막고 SD도 세우지 않는다. 방금 열린 입구는 덮개의 자물쇠가 터지며 풀리고, SD는 그 뒤에 선다.
         // 레벨이 아닌 「Coming soon」 잠금은 개방 연출이 없고 SD가 흐리게 선다.

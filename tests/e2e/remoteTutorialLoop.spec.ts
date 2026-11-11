@@ -67,7 +67,7 @@ async function scenePoint(page: Page, scene: string, field: string) {
   return page.evaluate(({scene,field})=>{const s=(window as any).__TUTORIAL_GAME.scene.getScene(scene);const b=s[field].getBounds();return {x:b.centerX,y:b.centerY};},{scene,field});
 }
 
-test("1-1 광장 → 출격 → 1-2 편성 이동·길게 눌러 정보 확인", async ({page},info) => {
+test("1-1 광장 → 출격 → 1-2 편성 이동 → 자동 배치로 토리카 가운데 복귀", async ({page},info) => {
   test.skip(process.env.PF_E2E_REMOTE_LOOP!=="1","소스 서버 전용");test.setTimeout(360000);
   const server=await open(page,"navigation");
   // 잠긴 연구소를 직접 열어도 로비로 복귀한다.
@@ -84,17 +84,18 @@ test("1-1 광장 → 출격 → 1-2 편성 이동·길게 눌러 정보 확인",
   expect(await page.evaluate(()=>window.__PF_DEBUG?.scene)).toBe('party');
   expect(server.calls.filter(c=>c.method==='enterStage')).toHaveLength(0);
   const slots=await page.evaluate(()=>{const s=(window as any).__TUTORIAL_GAME.scene.getScene('party');return s.allySlots.map((v:any)=>{const b=v.hit.getBounds();return {x:b.centerX,y:b.centerY};});});
-  const box=await canvasBox(page), from=gamePoint(box,slots[0].x,slots[0].y),to=gamePoint(box,slots[1].x,slots[1].y);
+  // 토리카를 가운데가 아닌 칸으로 옮기면 자동 배치 안내로 넘어간다.
+  const torikaAt=await page.evaluate(()=>(window as any).__TUTORIAL_GAME.scene.getScene('party').picked.indexOf('torika'));
+  const fromSlot=torikaAt>=0?torikaAt:1, toSlot=fromSlot===0?2:0;
+  const box=await canvasBox(page), from=gamePoint(box,slots[fromSlot].x,slots[fromSlot].y),to=gamePoint(box,slots[toSlot].x,slots[toSlot].y);
   await page.mouse.move(from.x,from.y);await page.mouse.down();await page.mouse.move(to.x,to.y,{steps:10});await page.mouse.up();
-  await expect.poll(()=>page.evaluate(()=>(window as any).__TUTORIAL_GAME.scene.getScene('party').partyTutorialPhase)).toBe('hold');
+  await expect.poll(()=>page.evaluate(()=>(window as any).__TUTORIAL_GAME.scene.getScene('party').partyTutorialPhase)).toBe('auto');
   await tap(page,start.x,start.y);
   expect(await page.evaluate(()=>window.__PF_DEBUG?.scene)).toBe('party');
-  await page.mouse.move(from.x,from.y);await page.mouse.down();await page.waitForTimeout(1200);await page.mouse.up();
-  await expect.poll(()=>page.evaluate(()=>(window as any).__TUTORIAL_GAME.scene.getScene('party').info.isOpen), {timeout:15000}).toBe(true);
-  await captureGame(page,info.outputPath('formation-information.png'));
-  // 정보창 버튼 안내를 한 칸씩 넘긴 뒤, 마지막 칸이 가리키는 뒤로가기로 나간다.
-  for(let i=0;i<7;i++){await page.waitForTimeout(600);await tap(page,540,700);}
-  await tap(page,974,1800);
+  await captureGame(page,info.outputPath('formation-auto-place.png'));
+  const auto=await scenePoint(page,'party','autoPlaceButton');
+  await tap(page,auto.x,auto.y);
+  expect(await page.evaluate(()=>(window as any).__TUTORIAL_GAME.scene.getScene('party').picked[1])).toBe('torika');
   await expect.poll(()=>page.evaluate(()=>(window as any).__TUTORIAL_GAME.scene.getScene('party').partyTutorialPhase)).toBe('start');
   expect(server.calls.filter(c=>c.status!==200)).toEqual([]);
 });

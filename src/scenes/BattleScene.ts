@@ -112,6 +112,7 @@ import { settingsManager } from "../managers/SettingsManager";
 import { tutorialManager } from "../managers/TutorialManager";
 import { BATTLE_FEATURE_STEP, lobbyTutorialGateStage, stageClearAdvancesTutorial, type BattleTutorialFeature } from "../core/tutorial";
 import { TutorialSpotlight } from "../ui/TutorialSpotlight";
+import { addUltimateTutorialPanel, ULTIMATE_TUTORIAL_PANEL } from "../ui/UltimateTutorialPanel";
 import { motionPolicy, type MotionPolicy } from "../core/settings";
 import type { CompleteStageResponse, RaidDto, SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
 import { GameApiError } from "../api/contracts";
@@ -452,7 +453,11 @@ export class BattleScene extends Phaser.Scene {
   private teachFeature?: BattleTutorialFeature;
   private featureSpotlight?: TutorialSpotlight;
   private featureTaught = false;
-  private ultimateTutorial: { fighterId: string; done: boolean; active: boolean; layer?: Phaser.GameObjects.GameObject[] } = { fighterId: "", done: false, active: false };
+  /**
+   * 1-1 궁극기 안내. 렐릭마다 처음 궁극기가 찬 순간 한 번씩 멈추고 그 궁극기를 소개한다(`taught`).
+   * 셋을 다 소개하면 `done`이다.
+   */
+  private ultimateTutorial: { fighterId: string; done: boolean; active: boolean; taught: string[]; layer?: Phaser.GameObjects.GameObject[] } = { fighterId: "", done: false, active: false, taught: [] };
   /** 자동 동시 준비를 직렬화하고 오래된 async 완료를 구분하는 순수 상태다. */
   private ultimateSequence: UltimateSequenceState = createUltimateSequenceState();
   /** 현재 컷인. 전투·씬 종료 정리에서 즉시 거두기 위한 참조다. */
@@ -767,7 +772,7 @@ export class BattleScene extends Phaser.Scene {
     // 오프닝 첫 전투는 궁극기를 손으로 쓰는 법을 익히는 판이라 자동도 꺼 둔다.
     // 자동 전투(반복 출격) 중에는 손이 없으므로 궁극기도 자동이다.
     this.autoUltimate = this.battleInput.mode === "duel" || this.battleInput.mode === "guildGuard" || this.battleInput.mode === "guildWar" || this.autoRepeatContent() !== undefined || (this.featureOpen("auto") && battleSettings.autoUltimate);
-    this.ultimateTutorial = { fighterId: "", done: false, active: false };
+    this.ultimateTutorial = { fighterId: "", done: false, active: false, taught: [] };
     this.ultimateSequenceActive = false;
     // 같은 씬이 다음 판을 다시 세우므로 토큰을 처음부터 세지 않는다. 지난 판의 연출이 아직 기다리는 중이면
     // 새 판의 같은 번호를 제 것으로 알고 새 판의 잠금을 풀어 버린다(자동 전투 둘째 판).
@@ -1836,35 +1841,52 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /**
-   * 처음 궁극기가 켜진 카드를 밝히고 나머지를 어둡게 덮는다. 동시에 켜지면 토리카가 먼저다.
-   * 시간은 멈추고(`simulationPaused`), 그 카드를 눌러 궁극기를 쓰면 어둠이 걷히며 이어진다.
+   * 1-1에서 렐릭마다 궁극기가 처음 찬 순간 그 카드를 밝히고 나머지를 어둡게 덮는다. 동시에 켜지면 토리카가 먼저다.
+   * 카드 위에 그 렐릭의 궁극기 쪽지(`addUltimateTutorialPanel`)가 서서 **무엇을** 쓰는지 말하고, 첫 소개만 궁극기가
+   * 무엇인지 한 줄을 더한다. 시간은 멈추고(`simulationPaused`), 그 카드를 눌러 쓰면 어둠이 걷히며 이어진다 —
+   * 다음 렐릭의 게이지가 차면 같은 길로 하나씩 더 쓰게 한다.
    */
   private maybeStartUltimateTutorial(): void {
     const tutorial = this.ultimateTutorial;
     if (!this.openingBattle() || tutorial.done || tutorial.active || this.finished || this.ultimateSequenceActive || performance.now() < this.fightStartsAt) return;
-    const ready = this.profiles.filter((profile) => profile.ready && canFireUltimate(this.state, profile.fighter));
+    const allies = this.profiles.filter((profile) => profile.fighter.side === "player");
+    const ready = allies.filter((profile) => profile.ready && canFireUltimate(this.state, profile.fighter) && !tutorial.taught.includes(profile.fighter.id));
     const pick = ready.find((profile) => profile.fighter.def.id === "torika") ?? ready[0];
     if (!pick) return;
     tutorial.active = true;
     tutorial.fighterId = pick.fighter.id;
-    const dim = this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0x000000, 0.62)
+    const dim = this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0x000000, 0.66)
       .setDepth(TUTORIAL_DEPTH).setInteractive();
-    const text = this.add.text(BASE_WIDTH / 2, PROFILE_TOP - 120, t("battle.tutorial.ultimate"), textStyle({ role: "display", size: 44, color: COLOR.accentText }))
-      .setOrigin(0.5).setDepth(TUTORIAL_DEPTH + 2).setShadow(3, 4, "#05070a", 0, true, true);
+    const panel = addUltimateTutorialPanel(this, {
+      x: BASE_WIDTH / 2,
+      y: PROFILE_TOP - 140 - ULTIMATE_TUTORIAL_PANEL.height / 2,
+      relic: pick.fighter.def,
+      intro: tutorial.taught.length === 0,
+      step: tutorial.taught.length + 1,
+      total: allies.length,
+      depth: TUTORIAL_DEPTH + 2,
+      reduceMotion: this.motion.battleUiFactor <= 0,
+    });
     const arrow = this.add.text(pick.prefab.x, PROFILE_TOP - 40, "▼", textStyle({ role: "display", size: 56, color: COLOR.accentText }))
       .setOrigin(0.5).setDepth(TUTORIAL_DEPTH + 2);
     if (this.motion.battleUiFactor > 0) this.tweens.add({ targets: arrow, y: arrow.y + 18, duration: 520, yoyo: true, repeat: -1, ease: "Sine.InOut" });
     pick.prefab.setDepth(TUTORIAL_DEPTH + 1);
-    tutorial.layer = [dim, text, arrow];
+    tutorial.layer = [dim, panel, arrow];
   }
 
   /** 안내를 걷고 시간을 다시 흘린다. 궁극기를 눌렀을 때와 씬이 닫힐 때 부른다. */
   private endUltimateTutorial(): void {
     const tutorial = this.ultimateTutorial;
-    tutorial.layer?.forEach((object) => { this.tweens.killTweensOf(object); object.destroy(); });
+    tutorial.layer?.forEach((object) => {
+      this.tweens.killTweensOf(object);
+      if (object instanceof Phaser.GameObjects.Container) object.each((child: Phaser.GameObjects.GameObject) => this.tweens.killTweensOf(child));
+      object.destroy();
+    });
     tutorial.layer = undefined;
     tutorial.active = false;
-    tutorial.done = true;
+    if (tutorial.fighterId && !tutorial.taught.includes(tutorial.fighterId)) tutorial.taught.push(tutorial.fighterId);
+    const allies = this.profiles.filter((profile) => profile.fighter.side === "player");
+    tutorial.done = allies.every((profile) => tutorial.taught.includes(profile.fighter.id));
     this.profiles.find((profile) => profile.fighter.id === tutorial.fighterId)?.prefab.setDepth(0);
     this.lastStepAt = performance.now();
     // 조작 체험은 이 판에서만 기억한다. 영구 진행은 승리 저장과 함께 확정한다.

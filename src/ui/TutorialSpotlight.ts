@@ -32,6 +32,11 @@ export interface TutorialSpotlightOptions {
   textGap?: number;
   /** 구멍 둘레가 숨 쉬듯 번진다 — 「마지막으로 여기를 누르면 끝」을 말하는 마무리 칸이 쓴다. */
   pulse?: boolean;
+  /**
+   * 화면을 덮지 않고 **가리키기만** 한다. 어둠도 입력 막도 없어 안내를 따르지 않고 설정이나 다른 화면을 봐도
+   * 된다 — 꼭 막아야 할 조작은 그 화면이 직접 잠근다. 글은 판 위에 서서 밝은 원화 위에서도 읽힌다.
+   */
+  passive?: boolean;
 }
 
 const HOLE_PAD = 14;
@@ -58,10 +63,12 @@ export class TutorialSpotlight {
       if (width <= 0 || height <= 0) return;
       this.objects.push(scene.add.rectangle(x + width / 2, y + height / 2, width, height, 0x000000, DIM_ALPHA).setDepth(depth).setInteractive());
     };
-    dim(0, 0, BASE_WIDTH, top);
-    dim(0, bottom, BASE_WIDTH, BASE_HEIGHT - bottom);
-    dim(0, top, left, bottom - top);
-    dim(right, top, BASE_WIDTH - right, bottom - top);
+    if (!options.passive) {
+      dim(0, 0, BASE_WIDTH, top);
+      dim(0, bottom, BASE_WIDTH, BASE_HEIGHT - bottom);
+      dim(0, top, left, bottom - top);
+      dim(right, top, BASE_WIDTH - right, bottom - top);
+    }
 
     // 구멍 둘레의 얇은 강조선 — 어디까지가 눌러야 할 자리인지 말한다.
     const frame = scene.add.graphics().setDepth(depth + 1);
@@ -69,7 +76,7 @@ export class TutorialSpotlight {
     frame.strokeRect(left, top, right - left, bottom - top);
     this.objects.push(frame);
     const reduceMotion = settingsManager.get().accessibility.reduceMotion;
-    if (options.pulse) {
+    if (options.pulse || options.passive) {
       // 구멍에서 바깥으로 번지는 테두리 — 다른 칸보다 한 번 더 눈을 끌어 "마지막은 여기"를 말한다.
       const glow = scene.add.graphics({ x: (left + right) / 2, y: (top + bottom) / 2 }).setDepth(depth + 1);
       const w = right - left, h = bottom - top;
@@ -98,6 +105,13 @@ export class TutorialSpotlight {
       .setOrigin(0.5).setDepth(depth + 2).setShadow(3, 4, "#05070a", 0, true, true);
     const arrow = scene.add.text(cx, arrowY, side === "above" ? "▼" : "▲", textStyle({ role: "display", size: 56, color: COLOR.accentText }))
       .setOrigin(0.5).setDepth(depth + 2);
+    if (options.passive) {
+      // 어둠이 없으니 글 뒤에 판 한 장을 깐다 — 밝은 원화 위에서도 안내가 떠오른다. 입력은 받지 않는다.
+      const plate = scene.add.rectangle(BASE_WIDTH / 2, textY, Math.min(BASE_WIDTH - 80, label.width + 64), label.height + 30, 0x05070a, 0.78)
+        .setDepth(depth + 1);
+      plate.setStrokeStyle(3, COLOR.accent, 0.55);
+      this.objects.push(plate);
+    }
     this.objects.push(label, arrow);
     if (options.hint) {
       const hintY = side === "above" ? textY - label.height / 2 - 34 : textY + label.height / 2 + 34;

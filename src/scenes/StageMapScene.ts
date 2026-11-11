@@ -205,6 +205,7 @@ export class StageMapScene extends Phaser.Scene {
     followTutorialTarget(this, {
       enabled: () => tutorialManager.battleStage() !== undefined,
       blocked: () => this.enemyPopups.isOpen,
+      passive: true,
       rect: () => this.sortieButton.getBounds(), text: () => t("tutorial.stage.enter", { stage: tutorialManager.battleStage() ?? "" }),
     });
   }

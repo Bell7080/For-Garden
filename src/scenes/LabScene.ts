@@ -234,7 +234,7 @@ export class LabScene extends Phaser.Scene {
       const b = this.tenButton.getBounds();
       this.pullSpotlight = new TutorialSpotlight(this, {
         rect: { x: b.x, y: b.y, width: b.width, height: b.height }, text: t("tutorial.lab.pull"), side: "above",
-        onSkip: () => { this.clearPullSpotlight(); void tutorialManager.complete("pull"); }, skipLabel: t("tutorial.skip"),
+        onSkip: () => { this.clearPullSpotlight(); void tutorialManager.complete("pull"); }, skipLabel: t("tutorial.skip"), passive: true,
       });
       this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.clearPullSpotlight());
     }

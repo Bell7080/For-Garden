@@ -17,6 +17,7 @@ export function startLobbyTutorial(scene: Phaser.Scene, nav: BottomNav, popups: 
   followTutorialTarget(scene, {
     enabled: () => !stopped && tutorialManager.next() !== undefined,
     blocked: anyPopupOpen,
+    passive: true,
     rect: () => {
       const step = tutorialManager.lobbyStep();
       if (step === "feed" || step === "feedLevel") return nav.tabRect("relics");

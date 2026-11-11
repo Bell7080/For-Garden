@@ -10,6 +10,10 @@ export function followTutorialTarget(scene: Phaser.Scene, options: {
   blocked?: () => boolean; onSkip?: () => void;
   /** 끌어 옮길 길이 있는 칸은 휘어진 화살표로 그 길을 긋는다. */
   guide?: () => TutorialSpotlightOptions["guide"];
+  /** 화면을 막지 않고 가리키기만 한다(`TutorialSpotlight.passive`). 기다리는 동안에도 화면을 잠그지 않는다. */
+  passive?: boolean;
+  /** 안내 글이 설 쪽. 없으면 대상이 화면 위쪽이면 아래, 아니면 위다. */
+  side?: () => "above" | "below" | undefined;
 }): () => void {
   let stopped = false, spotlight: TutorialSpotlight | undefined, signature = "";
   let waiting: Phaser.GameObjects.Rectangle | undefined;
@@ -23,6 +27,7 @@ export function followTutorialTarget(scene: Phaser.Scene, options: {
     const rect = modal ? undefined : options.rect();
     if (!rect) {
       clear();
+      if (options.passive) return;
       // 대기 중에도 원래 화면은 잠근다. 열린 팝업은 이 막 위에서 정상 입력을 받는다.
       waiting ??= scene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0, 0).setInteractive();
       waiting.setDepth(modal ? 999 : 6000);
@@ -31,10 +36,10 @@ export function followTutorialTarget(scene: Phaser.Scene, options: {
       waiting?.destroy(); waiting = undefined;
       const text = options.text();
       const guide = options.guide?.();
-      const next = JSON.stringify([rect.x, rect.y, rect.width, rect.height, text, guide]);
+      const next = JSON.stringify([rect.x, rect.y, rect.width, rect.height, text, guide, options.side?.()]);
       if (next !== signature) {
         clear(); signature = next;
-        spotlight = new TutorialSpotlight(scene, { rect, text, guide, side: rect.y < 700 ? "below" : "above", onSkip: options.onSkip, skipLabel: t("tutorial.skip") });
+        spotlight = new TutorialSpotlight(scene, { rect, text, guide, side: options.side?.() ?? (rect.y < 700 ? "below" : "above"), onSkip: options.onSkip, skipLabel: t("tutorial.skip"), passive: options.passive });
       }
     }
   };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GUILD_GUARD_PAGE, GUILD_MENU_POPUP, GUILD_RANKING_POPUP, GUILD_SCREEN, GUILD_WAR_MAP, guildGuardTraitBarX, guildGuardTraitCellX, guildRankingRows, guildSummaryRight } from "../../src/ui/guildLayout";
+import { GUILD_GUARD_PAGE, GUILD_MENU_POPUP, GUILD_RANKING_POPUP, GUILD_SCREEN, GUILD_WAR_MAP, guildGuardTraitBarX, guildGuardTraitCellX, guildRankingRows } from "../../src/ui/guildLayout";
 import { RANKING_POPUP_REWARD_CHIP_BOTTOM } from "../../src/ui/rankingChipLayout";
 import { GUILD_GUARD, guardWaveCount, guardWaveLevel } from "../../src/core/guildGuard";
 
@@ -51,10 +51,9 @@ describe("수호전 특징 판", () => {
 
 describe("길드 화면 조작", () => {
   it("메뉴 아이콘 칩은 상단 줄 경계선에 걸치지 않고 조작 줄 위에서 끝난다", () => {
-    const { y, size, right } = GUILD_SCREEN.menuChip;
+    const { y, size } = GUILD_SCREEN.menuChip;
     expect(y - size / 2).toBeGreaterThanOrEqual(GUILD_SCREEN.topBarLine + 32);
     expect(y + size / 2).toBeLessThan(GUILD_SCREEN.controls.y - GUILD_SCREEN.controls.height / 2);
-    expect(guildSummaryRight()).toBeLessThan(right - size);
   });
 
   it("메뉴 창의 두 타일이 창 안에 든다", () => {

@@ -52,6 +52,7 @@ import { addFramedIcon, addItemFrame } from "./itemFrame";
 import { FaceFrame } from "./FaceFrame";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { session } from "../state/session";
+import { addPageChevrons, type PageChevronPair } from "./PageChevrons";
 import { motionPolicy } from "../core/settings";
 import { RewardFrame } from "./RewardFrame";
 import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
@@ -147,6 +148,12 @@ const COLUMN = {
   offsetX: -26,
   offsetY: -22,
 } as const;
+
+/**
+ * 좌우 넘김 꺾쇠의 자리. 화면 가장자리의 빈 띠(왼쪽은 원화, 오른쪽은 기둥 판 바깥)에 서서 판과
+ * 글을 가리지 않는다. 높이는 화면 한가운데 — 엄지가 어느 쪽에서든 닿는 줄이다.
+ */
+const INFO_PAGE_CHEVRONS = { leftX: 30, rightX: BASE_WIDTH - 26, y: BASE_HEIGHT / 2 } as const;
 
 /** 판 하나하나가 같은 각도로 기울어 한 벌로 읽힌다. */
 const PANEL_TILT = -1.6;
@@ -552,6 +559,10 @@ export class InfoManager {
   private sliding = false;
   /** 호출한 화면이 정한 넘김 순서. 없으면 `PLAYABLE_RELICS`. */
   private neighborDefs?: readonly RelicDef[];
+  /** 옆 개체로 넘길 수 있는 창인가. 전투처럼 그 한 유닛의 창이면 호출한 화면이 끈다. */
+  private browsable = true;
+  /** 양쪽 끝의 반투명 꺾쇠. 넘길 수 있는 창에만 선다. */
+  private pageChevrons?: PageChevronPair;
   /** 넘기는 동안 미뤄 둔 전신·SD 읽기. 새로 열거나 닫으면 지운다. */
   /** 아직 끝나지 않은 전신·SD 읽기 수. 앞선 읽기가 남아 있을 때만 넘김 사이에 쉰다. */
   private pendingLoads = 0;
@@ -751,6 +762,9 @@ export class InfoManager {
     });
     this.root.add(body);
     this.enableSwipe();
+    // 넘길 수 있다는 것을 말하는 꺾쇠 한 쌍. 판(chrome)과 함께 서고 함께 빠진다 — 감상 중에는 판과
+    // 같이 밀려 나가 원화를 가리지 않는다.
+    this.pageChevrons = addPageChevrons(scene, INFO_PAGE_CHEVRONS, (step) => this.slideToNeighbor(step));
 
     // 이름줄은 판때기가 아니라 위에서 내려오는 어둠이다. 배경 원화를 자르지 않는다.
     this.chrome.add(drawGlassFade(scene, BASE_WIDTH / 2, 150, BASE_WIDTH, 420, { topAlpha: 0.92, bottomAlpha: 0 }));
@@ -901,6 +915,7 @@ export class InfoManager {
 
     this.buildFigureStand();
     if (this.capabilities.mutateProgress) this.addAppearanceButton(appearanceButtonX(), APPEARANCE_BUTTON.y);
+    if (this.pageChevrons) this.chrome.add(this.pageChevrons.container);
     this.chrome.add(addBackButton(scene, () => this.hide()));
   }
 
@@ -1824,6 +1839,28 @@ export class InfoManager {
     this.neighborDefs = relics;
   }
 
+  /** 옆 개체로 넘기기(쓸어 넘기기·꺾쇠)를 켜고 끈다. 그 유닛 하나의 창(전투)이면 끈다. */
+  setBrowsable(enabled: boolean): void {
+    this.browsable = enabled;
+    this.refreshPageChevrons();
+  }
+
+  /**
+   * 지금 열린 창에서 옆으로 넘길 수 있는가. 공개 프로필(친구·원정 스냅샷)은 그 한 개체의 것이라
+   * 넘기면 내 렐릭이 그 자리에 선다 — 넘기지 않는다. 순서에 하나뿐이어도 넘길 곳이 없다.
+   */
+  private canBrowse(): boolean {
+    const current = this.currentDef;
+    if (!current || !this.browsable || this.publicProfile) return false;
+    return this.neighborOrder(current.id).length > 1;
+  }
+
+  /** 꺾쇠를 지금 넘길 수 있는지에 맞춘다. 순서는 끝에서 처음으로 돌므로 넘길 수 있으면 양쪽 모두 선다. */
+  private refreshPageChevrons(): void {
+    const open = this.canBrowse();
+    this.pageChevrons?.setEdges(open, open);
+  }
+
   /** 지금 열린 개체가 정해 둔 순서 안에 있을 때만 그 순서를 쓴다(필터로 빠졌으면 기본 순서). */
   private neighborOrder(currentId: string): readonly RelicDef[] {
     const custom = this.neighborDefs;
@@ -1833,7 +1870,7 @@ export class InfoManager {
   /** 옆 캐릭터로 미끄러져 간다. 판이 한쪽으로 빠지고 반대쪽에서 새로 들어온다. */
   private slideToNeighbor(step: 1 | -1): void {
     const current = this.currentDef;
-    if (!current || this.sliding) return;
+    if (!current || this.sliding || !this.canBrowse() || this.popups.isOpen || this.gallery) return;
     const order = this.neighborOrder(current.id);
     const index = order.findIndex((def) => def.id === current.id);
     if (index === -1) return;
@@ -2466,6 +2503,7 @@ export class InfoManager {
     // 기본 외형 하나뿐이거나 소유자 문맥이 아니면 선택 진입점 자체를 노출하지 않는다.
     this.appearanceButton?.setVisible(owned && !this.publicProfile);
     this.popups.closeAll();
+    this.refreshPageChevrons();
 
     // **미보유도 누구인지는 말한다** — 이름·등급·속성·직군·종·스킬까지는 서고, 원화와 SD만 검은
     // 반투명 실루엣으로 선다(`INFO_SILHOUETTE`). 번호와 실루엣만 남기던 때는 뽑기 전에 그 개체가 무엇을

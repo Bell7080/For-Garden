@@ -334,7 +334,11 @@ class RelicSelectView {
   private openInfo(index: number): void {
     const choice = this.choices[index];
     if (!choice) return;
-    sceneInfoManager(this.scene, { key: "relic-select", portraitDepth: INFO_DEPTH + 1, baseDepth: INFO_DEPTH }).showRelic(choice.def, choice.owned);
+    const info = sceneInfoManager(this.scene, { key: "relic-select", portraitDepth: INFO_DEPTH + 1, baseDepth: INFO_DEPTH });
+    // 정보창의 좌우 넘김(꺾쇠·쓸어 넘기기)은 고를 수 있는 후보들 사이에서만 돈다 — 도감 전체로 새면
+    // 선택권으로 받을 수 없는 개체가 이어 선다.
+    info.setNeighborOrder(this.choices.map((item) => item.def));
+    info.showRelic(choice.def, choice.owned);
   }
 
   private confirm(): void {

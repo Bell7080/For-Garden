@@ -1442,6 +1442,8 @@ export class BattleScene extends Phaser.Scene {
    */
   private allyInfo(): InfoManager {
     this.allyInfoRef = sceneInfoManager(this, { key: "battle-ally" });
+    // 전투에서 연 창은 그 유닛의 것이다 — 옆 개체로 넘기지 않는다(꺾쇠도 서지 않는다).
+    this.allyInfoRef.setBrowsable(false);
     return this.allyInfoRef;
   }
 

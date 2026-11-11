@@ -33,7 +33,7 @@ export const SHUTE_FISHING = {
 } as const;
 
 /** 바늘이 빛나는 구간을 지나는 가장 짧은 시간(ms). 이보다 짧아지면 사람의 손으로 맞출 수 없어 운이 된다. */
-export const MIN_WINDOW_MS = 110;
+export const MIN_WINDOW_MS = 130;
 /** 구간의 가운데 이 비율 안이면 PERFECT — 표시만 다르고 보상은 같다. */
 export const PERFECT_RATIO = 0.4;
 /** 한 번 캐치할 때마다 바늘이 이만큼(비율) 빨라진다 — 박자가 쌓일수록 템포가 올라간다. */
@@ -117,15 +117,17 @@ export interface FishingDifficulty {
  * 판을 열면 셋리스트가 팅팅 정해지고 **뒤로 갈수록 좋아지며 마지막 곡(보스)이 난이도에 맞춰 훨씬 좋다**(응태 2026-11-03):
  * 쉬움은 젬 300·화석·호박석, 보통은 젬 500, 어려움은 젬 500~1,000, 매우 어려움은 늘 젬 1,000이다.
  * 구간 폭은 "너무 어렵다"(응태 2026-11-03)는 말에 처음보다 1.4배 남짓 넓혔다.
+ * 2026-11-11 「살짝 낮춰 주자」(응태): 쉬움은 그대로 두고 보통~매우 어려움의 바늘을 5~10% 늦추고 구간을 넓혔으며,
+ * 가장 짧은 판정 창을 110 → 130ms로 올렸다(보스 대박 캐치가 그 바닥에 붙어 있었다).
  */
 export const FISHING_DIFFICULTIES: readonly FishingDifficulty[] = [
   { id: "easy", entryCost: 100, fish: 3, sweepMs: 1300, zone: 0.34,
     tierWeights: { common: 58, fine: 42, rare: 0 }, boss: [["gems-l", 3], ["fossil", 2], ["amber", 2], ["jackpot-500", 1]] },
-  { id: "normal", entryCost: 200, fish: 4, sweepMs: 1120, zone: 0.29,
+  { id: "normal", entryCost: 200, fish: 4, sweepMs: 1180, zone: 0.31,
     tierWeights: { common: 20, fine: 50, rare: 30 }, boss: [["jackpot-500", 1]] },
-  { id: "hard", entryCost: 300, fish: 5, sweepMs: 960, zone: 0.25,
+  { id: "hard", entryCost: 300, fish: 5, sweepMs: 1040, zone: 0.28,
     tierWeights: { common: 0, fine: 45, rare: 55 }, boss: [["jackpot-500", 5], ["jackpot-1000", 1]] },
-  { id: "extreme", entryCost: 400, fish: 6, sweepMs: 820, zone: 0.22,
+  { id: "extreme", entryCost: 400, fish: 6, sweepMs: 900, zone: 0.25,
     tierWeights: { common: 10, fine: 52, rare: 38 }, boss: [["jackpot-1000", 1]] },
 ];
 export function fishingDifficulty(id: unknown): FishingDifficulty | undefined { return FISHING_DIFFICULTIES.find((difficulty) => difficulty.id === id); }

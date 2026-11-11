@@ -103,13 +103,15 @@ export interface HuntDifficulty {
  * 난이도 표(값은 여기 하나). 어려울수록 ① 쌍이 늘고 ② 더 많이, 더 빠르게 섞이며 ③ 값진 보물이 놓일 몫이 커진다.
  * 판에 놓이는 기대 총가치는 입장값에 비례한다 — 200은 100의 약 2배, 300은 약 3배(응태 2026-11-03: "300개는 확실히 3배치 보상").
  * `delophyHunt.test`가 정규 예산 안인지와 그 배수를 함께 잰다.
+ * 응태 2026-11-11 「살짝 낮춰 주자」: 섞는 횟수를 약 ⅔로, 보여 주는 시간을 1초씩 늘리고, 움직임을 조금 느리게 했다
+ * (보상·쌍 수·입장값은 그대로).
  */
 export const HUNT_DIFFICULTIES: readonly HuntDifficulty[] = [
-  { id: "easy", entryCost: 100, pairs: 3, memorizeMs: 5000, swaps: 10, moveMs: 440, doubleChance: 0.1, arc: false, dive: false, jackpotMoves: 4,
+  { id: "easy", entryCost: 100, pairs: 3, memorizeMs: 6000, swaps: 7, moveMs: 500, doubleChance: 0.05, arc: false, dive: false, jackpotMoves: 3,
     tierWeights: { common: 58, fine: 42, rare: 0, jackpot: 5 }, guaranteed: ["gems-m"] },
-  { id: "normal", entryCost: 200, pairs: 4, memorizeMs: 4000, swaps: 16, moveMs: 340, doubleChance: 0.3, arc: true, dive: false, jackpotMoves: 6,
+  { id: "normal", entryCost: 200, pairs: 4, memorizeMs: 5000, swaps: 11, moveMs: 400, doubleChance: 0.2, arc: true, dive: false, jackpotMoves: 4,
     tierWeights: { common: 36, fine: 50, rare: 12, jackpot: 11 }, guaranteed: ["gems-m", "gems-l", "fossil", "amber"] },
-  { id: "hard", entryCost: 300, pairs: 5, memorizeMs: 3000, swaps: 26, moveMs: 270, doubleChance: 0.5, arc: true, dive: true, jackpotMoves: 10,
+  { id: "hard", entryCost: 300, pairs: 5, memorizeMs: 4500, swaps: 15, moveMs: 330, doubleChance: 0.25, arc: true, dive: true, jackpotMoves: 5,
     tierWeights: { common: 24, fine: 44, rare: 30, jackpot: 16 }, guaranteed: ["gems-m", "gems-l", "fossil", "amber"] },
 ];
 export function huntDifficulty(id: unknown): HuntDifficulty | undefined { return HUNT_DIFFICULTIES.find((difficulty) => difficulty.id === id); }

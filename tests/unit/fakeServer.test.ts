@@ -457,8 +457,8 @@ describe("FakeServer", () => {
     expect(state.relicProgress.torika.level).toBe(30);
     const before = { cheesecake: state.wallet.cheesecake, gems: state.wallet.gems };
     const reset = await server.resetRelic("torika");
-    expect(reset).toMatchObject({ previousLevel: 30, cheesecakeRefunded: fed.cheesecakeSpent, gemsSpent: 100 });
-    expect(state.wallet).toMatchObject({ cheesecake: before.cheesecake + fed.cheesecakeSpent, gems: before.gems - 100 });
+    expect(reset).toMatchObject({ previousLevel: 30, cheesecakeRefunded: fed.cheesecakeSpent, gemsSpent: 50 });
+    expect(state.wallet).toMatchObject({ cheesecake: before.cheesecake + fed.cheesecakeSpent, gems: before.gems - 50 });
     expect(state.relicProgress.torika).toMatchObject({ level: 1, exp: 0, breakthrough: 1 });
     // 되돌릴 것이 없으면 거절한다.
     await expect(server.resetRelic("torika")).rejects.toMatchObject({ code: "INVALID_STATE" });
@@ -467,7 +467,7 @@ describe("FakeServer", () => {
     state.relicProgress.torika = { ...state.relicProgress.torika, level: 20, exp: 0 };
     await expect(server.resetRelic("torika")).resolves.toMatchObject({ gemsSpent: 0 });
     // 젬이 모자라면 아무것도 바뀌지 않는다.
-    state.relicProgress.torika = { ...state.relicProgress.torika, level: 25, exp: 0 }; state.wallet.gems = 50;
+    state.relicProgress.torika = { ...state.relicProgress.torika, level: 25, exp: 0 }; state.wallet.gems = 49;
     await expect(server.resetRelic("torika")).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
     expect(state.relicProgress.torika.level).toBe(25);
   });

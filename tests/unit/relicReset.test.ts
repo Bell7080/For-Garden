@@ -13,10 +13,10 @@ describe("레벨 초기화", () => {
     }
   });
 
-  it("20레벨까지는 무료이고 그 뒤로 10레벨 구간마다 젬 100이 오른다", () => {
+  it("20레벨까지는 무료이고 그 뒤로 10레벨 구간마다 젬 50이 오른다", () => {
     expect(relicResetGemCost(1)).toBe(0);
     expect(relicResetGemCost(RELIC_RESET_FREE_MAX_LEVEL)).toBe(0);
-    expect([21, 30, 31, 40, 41, 50, 51, 60].map(relicResetGemCost)).toEqual([100, 100, 200, 200, 300, 300, 400, 400]);
+    expect([21, 30, 31, 40, 41, 50, 51, 60].map(relicResetGemCost)).toEqual([50, 50, 100, 100, 150, 150, 200, 200]);
   });
 
   it("레벨·경험치만 되돌리고 돌파·유대·룬은 그대로 둔다", () => {

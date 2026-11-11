@@ -42,6 +42,8 @@ export function openRelicResetPopup(scene: Phaser.Scene, popups: PopupLayer, opt
   ];
   if (options.gems > 0) rows.push({ icon: CURRENCY_ICON_BY_WALLET.gems, before: session.wallet.gems, after: session.wallet.gems - options.gems });
   const spots = relicResetPopupSpots(rows.length);
+  // 젬이 모자라도 창은 연다 — 무엇이 얼마 드는지 보고, 확정만 꺼진다. 차감은 서버가 다시 판정한다.
+  const short = session.wallet.gems < options.gems;
   const loops = motionPolicy(session.settings).nonEssentialRepeatFactor > 0;
 
   popups.open({ width: L.width, height: spots.height, title: t("info.reset.title"), dim: true, dimAlpha: L.dimAlpha, hideCloseButton: true }, (body, close) => {
@@ -97,12 +99,16 @@ export function openRelicResetPopup(scene: Phaser.Scene, popups: PopupLayer, opt
 
     paintWallet(scene, body, spots.walletTop, spots.walletHeight, rows);
 
-    body.add(scene.add.text(0, spots.noteY, t("info.reset.keep"), textStyle({ role: "body", size: L.noteSize, color: COLOR.inkDim, align: "center" })).setOrigin(0.5));
+    // 젬이 모자라면 남는 것 대신 왜 누를 수 없는지를 붉게 말한다.
+    const note = short
+      ? textStyle({ role: "emphasis", size: L.noteSize, color: COLOR.dangerText, align: "center" })
+      : textStyle({ role: "body", size: L.noteSize, color: COLOR.inkDim, align: "center" });
+    body.add(scene.add.text(0, spots.noteY, short ? t("info.reset.noGems") : t("info.reset.keep"), note).setOrigin(0.5));
 
     const [cancelX, confirmX] = relicResetButtonXs();
     const common = { width: L.button.width, height: L.button.height, fontSize: L.button.fontSize };
     body.add(new Button(scene, cancelX, spots.buttonY, { ...common, label: t("popup.cancel"), onClick: close }));
-    body.add(new Button(scene, confirmX, spots.buttonY, {
+    const confirm = new Button(scene, confirmX, spots.buttonY, {
       ...common,
       label: t("info.reset.confirm"),
       ...DESTRUCTIVE_BUTTON_STYLE,
@@ -110,7 +116,9 @@ export function openRelicResetPopup(scene: Phaser.Scene, popups: PopupLayer, opt
         ? { cost: { icon: CURRENCY_ICON_BY_WALLET.gems, amount: options.gems, affordable: session.wallet.gems >= options.gems } }
         : { ribbon: t("info.reset.free") }),
       onClick: () => { audioManager?.playUi("ui.danger"); close(); onConfirm(); },
-    }));
+    });
+    if (short) confirm.setEnabled(false);
+    body.add(confirm);
   });
 }
 

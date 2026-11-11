@@ -1087,7 +1087,7 @@ export class InfoManager {
     const progress = relicProgression.getProgress(def.id);
     if (!canResetRelic(progress)) return;
     const gems = relicResetGemCost(progress.level);
-    if (session.wallet.gems < gems) { showContentToast(this.scene, t("info.reset.noGems"), "refused"); return; }
+    // 젬이 모자라도 창까지는 연다 — 얼마가 드는지 보여 주고 확정만 막는다(응태 요청, 2026-11-11). 차감은 서버가 다시 판정한다.
     const asset = this.figureAssetOf(def);
     openRelicResetPopup(this.scene, this.popups, { asset, level: progress.level, refund: relicResetRefund(progress), gems }, () => void this.resetRelic(def.id));
   }

@@ -22,7 +22,7 @@ export const RELIC_RESET_FREE_MAX_LEVEL = 20;
 /** 무료 구간을 넘으면 몇 레벨마다 값이 한 칸 오르는가. */
 export const RELIC_RESET_GEM_BAND = 10;
 /** 한 칸에 드는 젬. */
-export const RELIC_RESET_GEM_PER_BAND = 100;
+export const RELIC_RESET_GEM_PER_BAND = 50;
 
 /** 지금 레벨·경험치에 쌓인 경험치 전체. */
 export function relicInvestedExp(progress: Pick<RelicProgress, "level" | "exp">): number {
@@ -39,8 +39,8 @@ export function relicResetRefund(progress: Pick<RelicProgress, "level" | "exp">)
 /**
  * 초기화에 드는 젬.
  *
- * 무료 구간(~20) 뒤로 10레벨 구간마다 100씩 오른다 — 21~30 = 100 · 31~40 = 200 · 41~50 = 300 · 51~60 = 400.
- * 돌려받는 치즈케이크의 젬 환산(무역 시세 젬 1 = 치즈케이크 2)에 견주면 어느 구간에서든 4~5% 남짓이라,
+ * 무료 구간(~20) 뒤로 10레벨 구간마다 50씩 오른다 — 21~30 = 50 · 31~40 = 100 · 41~50 = 150 · 51~60 = 200 (응태 결정, 2026-11-12).
+ * 돌려받는 치즈케이크의 젬 환산(무역 시세 젬 1 = 치즈케이크 2)에 견주면 어느 구간에서든 2~3% 남짓이라,
  * 잘못 키운 개체를 바로잡는 수수료로만 읽히고 회수 자체를 망설이게 하지 않는다.
  */
 export function relicResetGemCost(level: number): number {

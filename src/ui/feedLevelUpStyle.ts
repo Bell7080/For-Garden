@@ -29,7 +29,16 @@ export const FEED_LEVEL_UP = {
   /** 능력치 팝업. 줄 사이 간격과 떠오르는 높이. */
   stat: { size: 30, lineGap: 38, stagger: 90, rise: 64, holdMs: 620, fadeMs: 360, axisSize: 30, axisLift: 22, axisRise: 40 },
   /** 점프 높이와 발밑 파문. 파문은 납작한 마름모다. */
-  hop: { height: 52, upMs: 170, downMs: 230, ring: { from: 40, to: 248, squash: 0.36, thickness: 6, ms: 520, alpha: 0.9, color: 0xffd45a }, glow: { alpha: 0.5, ms: 520, color: 0xffd45a } },
+  hop: { motion: true, height: 52, upMs: 170, downMs: 230, ring: { from: 40, to: 248, squash: 0.36, thickness: 6, ms: 520, alpha: 0.9, color: 0xffd45a }, glow: { alpha: 0.5, ms: 520, color: 0xffd45a } },
+  /**
+   * 전신 원화에도 SD와 같은 결을 입힌다 — 감아 오르는 마름모와 통 튀기·금빛. 원화는 화면을 크게
+   * 차지하므로 튀는 높이를 줄이고, 파문은 판에 가리지 않게 발밑이 아니라 허리께에 둔다.
+   * 빛기둥·LEVEL UP!은 SD 한 곳에만 선다(두 곳이면 어디를 봐야 할지 흐려진다).
+   */
+  portrait: {
+    sparkSize: 52,
+    hop: { motion: false, height: 26, upMs: 170, downMs: 260, ring: { from: 80, to: 420, squash: 0.3, thickness: 7, ms: 560, alpha: 0.55, color: 0xffd45a }, glow: { alpha: 0.42, ms: 620, color: 0xffd45a } },
+  },
   /** 레벨 숫자가 한 번 부풀었다 돌아오는 몫. */
   levelPop: { scale: 1.32, ms: 360 },
   /**
@@ -86,4 +95,15 @@ export function feedBannerLetterDelay(text: string, index: number): number {
   let visible = 0;
   for (let i = 0; i < index; i += 1) if (text[i] !== " ") visible += 1;
   return visible * FEED_LEVEL_UP.banner.letterMs;
+}
+
+/** 몸이 통 튀는 한 번의 값. SD와 전신 원화가 같은 모양을 쓰고 크기만 다르다. */
+export interface FeedHopSpec {
+  /** 몸 동작(포효)을 함께 트는가. 원화는 동작이 없어 끈다. */
+  readonly motion: boolean;
+  readonly height: number;
+  readonly upMs: number;
+  readonly downMs: number;
+  readonly ring: { readonly from: number; readonly to: number; readonly squash: number; readonly thickness: number; readonly ms: number; readonly alpha: number; readonly color: number };
+  readonly glow: { readonly alpha: number; readonly ms: number; readonly color: number };
 }

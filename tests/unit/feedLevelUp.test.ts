@@ -39,3 +39,11 @@ describe("급여 레벨업 연출", () => {
     expect(FEED_LEVEL_UP.hop.glow.alpha).toBeLessThanOrEqual(0.6);
   });
 });
+
+describe("전신 원화 레벨업", () => {
+  it("원화는 SD보다 낮게 튀고 몸 동작을 틀지 않는다", () => {
+    expect(FEED_LEVEL_UP.portrait.hop.height).toBeLessThan(FEED_LEVEL_UP.hop.height);
+    expect(FEED_LEVEL_UP.portrait.hop.motion).toBe(false);
+    expect(FEED_LEVEL_UP.hop.motion).toBe(true);
+  });
+});

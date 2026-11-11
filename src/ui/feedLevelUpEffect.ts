@@ -8,18 +8,31 @@ import { playMotion, type PuppetCreature } from "../puppets/assets";
 import { t } from "../i18n";
 import { burstDiamond } from "./breakthroughBurst";
 import { ensureEffectTextures, EFFECT_TEXTURE } from "./effectTextures";
-import { FEED_LEVEL_UP, type StatGain, feedBannerLetterDelay, feedLevelUpStatGains, feedSpiralPoint } from "./feedLevelUpStyle";
+import { FEED_LEVEL_UP, type FeedHopSpec, type StatGain, feedBannerLetterDelay, feedLevelUpStatGains, feedSpiralPoint } from "./feedLevelUpStyle";
 import { toPoints } from "./holo";
 import { HOLO_SHIMMER, holoGlowColor } from "./holoShimmer";
 import { statToneHex } from "./statTones";
 import { textStyle } from "./theme";
+
+/** 연출이 붙는 몸의 자리 — 발밑·키·층. */
+export interface FeedLevelUpSpot { readonly x: number; readonly groundY: number; readonly height: number; readonly depth: number }
+
+/**
+ * 어느 몫을 터뜨리나. `full`은 전부, `early`는 서버 응답 전 **예상으로 레벨이 넘어간 순간**의 몫
+ * (오른 능력치는 아직 모르므로 빼고), `stats`는 확정된 뒤 오른 능력치만이다.
+ */
+export type FeedLevelUpPart = "full" | "early" | "stats";
 
 /** 레벨업 연출이 붙는 자리들. 정보창이 갖고 있는 것을 빌려 쓴다. */
 export interface FeedLevelUpTargets {
   /** 지금 서 있는 SD. 아직 오지 않았거나 숨어 있으면 SD 쪽 연출은 건너뛴다. */
   readonly figure: () => PuppetCreature | undefined;
   /** SD가 서는 자리(발밑)와 키, 그리고 그 층. */
-  readonly figureSpot: { readonly x: number; readonly groundY: number; readonly height: number; readonly depth: number };
+  readonly figureSpot: FeedLevelUpSpot;
+  /** 크게 서 있는 전신 원화. 주면 SD와 같은 결(감아 오르는 마름모·통 튀기·빛)이 원화에도 붙는다. */
+  readonly portrait?: () => PuppetCreature | undefined;
+  /** 원화의 발밑 기준 자리와 키, 그리고 그 층. */
+  readonly portraitSpot?: FeedLevelUpSpot;
   /** 크게 서 있는 레벨 숫자. 한 번 부풀었다 돌아온다. */
   readonly levelText: Phaser.GameObjects.Text;
   /** 경험치 줄을 번쩍이게 한다(줄은 정보창의 게이지가 그린다). */
@@ -46,18 +59,19 @@ export class FeedLevelUpEffect {
   constructor(private readonly scene: Phaser.Scene, private readonly targets: FeedLevelUpTargets) {}
 
   /** 레벨이 올랐다. `before`·`after`는 오르기 전과 뒤의 최종 능력치다. */
-  play(before: Stats, after: Stats): void {
+  play(before: Stats, after: Stats, part: FeedLevelUpPart = "full"): void {
     if (!this.scene.sys.isActive()) return;
     ensureEffectTextures(this.scene);
     const settings = settingsManager.get();
     const calm = motionPolicy(settings).nonEssentialRepeatFactor === 0;
     const reduceFlashes = settings.accessibility.reduceFlashes;
+    if (part !== "early") this.popStats(feedLevelUpStatGains(before, after), calm);
+    if (part === "stats") return;
     const now = this.scene.time.now;
     const big = now - this.lastBigAt >= FEED_LEVEL_UP.cooldownMs;
 
     this.targets.flashBar(reduceFlashes);
     this.popLevel(calm);
-    this.popStats(feedLevelUpStatGains(before, after), calm);
     if (!big) return;
     this.lastBigAt = now;
     audioManager?.playUi("ui.levelup");
@@ -66,10 +80,20 @@ export class FeedLevelUpEffect {
     const figure = this.targets.figure();
     const standing = figure?.active === true && figure.visible;
     if (standing) this.banner(calm);
-    if (!standing || calm) return;
-    this.pillar(reduceFlashes);
-    this.spiral();
-    this.hop(figure);
+    if (calm) return;
+    if (standing) {
+      const spot = this.targets.figureSpot;
+      this.pillar(reduceFlashes);
+      this.spiral(spot, FEED_LEVEL_UP.spiral.size);
+      this.hop(figure, spot, FEED_LEVEL_UP.hop);
+    }
+    const portrait = this.targets.portrait?.();
+    const portraitSpot = this.targets.portraitSpot;
+    if (portraitSpot && portrait?.active === true && portrait.visible && portrait.alpha > 0.3) {
+      const spec = FEED_LEVEL_UP.portrait;
+      this.spiral(portraitSpot, spec.sparkSize);
+      this.hop(portrait, portraitSpot, spec.hop);
+    }
   }
 
   /** 레벨 숫자가 한 번 부풀었다 제자리로. 세로로 늘인 숫자라 제 배율을 기억해 돌아간다. */
@@ -211,8 +235,8 @@ export class FeedLevelUpEffect {
   }
 
   /** 마름모 두 줄기가 SD를 감고 오른다. 뒤를 돌 때는 SD 뒤 층, 앞을 지날 때는 앞 층에 선다. */
-  private spiral(): void {
-    const { x, groundY, height, depth } = this.targets.figureSpot;
+  private spiral(at: FeedLevelUpSpot, size: number): void {
+    const { x, groundY, height, depth } = at;
     const spec = FEED_LEVEL_UP.spiral;
     const back = this.scene.add.container(x, groundY).setDepth(depth - 1);
     const front = this.scene.add.container(x, groundY).setDepth(depth + 1);
@@ -223,7 +247,7 @@ export class FeedLevelUpEffect {
           .setTint(spec.colors[strand % spec.colors.length])
           .setBlendMode(Phaser.BlendModes.ADD)
           .setAlpha(0);
-        const base = spec.size / spark.width;
+        const base = size / spark.width;
         back.add(spark);
         let inFront = false;
         const flight = { t: 0 };
@@ -248,12 +272,11 @@ export class FeedLevelUpEffect {
   }
 
   /** SD가 통 튀어 오르고 금빛이 번지며, 발밑에서 납작한 마름모 파문이 퍼진다. */
-  private hop(figure: PuppetCreature): void {
-    const { x, groundY, height, depth } = this.targets.figureSpot;
-    const spec = FEED_LEVEL_UP.hop;
+  private hop(figure: PuppetCreature, at: FeedLevelUpSpot, spec: FeedHopSpec): void {
+    const { x, groundY, height, depth } = at;
     const home = (figure.getData("levelUpHomeY") as number | undefined) ?? figure.y;
     figure.setData("levelUpHomeY", home);
-    playMotion(this.scene, figure, "roar");
+    if (spec.motion) playMotion(this.scene, figure, "roar");
     this.scene.tweens.add({
       targets: figure, y: home - spec.height, duration: spec.upMs, ease: "Quad.Out",
       onComplete: () => this.scene.tweens.add({ targets: figure, y: home, duration: spec.downMs, ease: "Bounce.Out", onComplete: () => { if (figure.active) figure.setY(home); } }),

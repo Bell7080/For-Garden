@@ -843,6 +843,9 @@ export class InfoManager {
       this.levelUpEffect = new FeedLevelUpEffect(scene, {
         figure: () => this.figure,
         figureSpot: { x: FIGURE.x, groundY: FIGURE.y, height: FIGURE.height, depth: 1004 },
+        portrait: () => this.portrait,
+        // 원화는 코어(허리께)를 발밑 삼는다 — 실제 발끝은 판 밑변 아래라 그 자리에선 연출이 가린다.
+        portraitSpot: { x: PORTRAIT_FOCUS.x, groundY: PORTRAIT_FOCUS.y + 260, height: 820, depth: Math.max(portraitDepth, baseDepth + 1) },
         levelText: this.levelValue,
         flashBar: reduceFlashes => this.expBar.flash(scene, reduceFlashes),
         // 오각형 판 한가운데에서 떠오른다. 기둥이 왼쪽 위로 밀린 만큼 함께 민다.
@@ -1550,7 +1553,19 @@ export class InfoManager {
     if (!def || this.publicProfile) return;
     const progress = relicProgression.getProgress(def.id);
     this.paintExp(progress, relicLevelCap(progress.breakthrough), true);
+    // 예상으로 레벨이 넘어간 그 누름에서 곧바로 터뜨린다 — 서버 응답까지 기다리면 줄이 이미 넘어간
+    // 뒤에 한 박자 늦게 터졌다. 오른 능력치는 확정된 뒤에 따로 띄운다(`feedNow`).
+    const predicted = previewFeedProgress(progress, this.pendingFeeds()).level;
+    const celebrated = this.celebratedLevel?.id === def.id ? this.celebratedLevel.level : progress.level;
+    if (predicted > Math.max(celebrated, progress.level) && this.isOpen) {
+      this.celebratedLevel = { id: def.id, level: predicted };
+      const stats = this.shownStats(def);
+      this.levelUpEffect?.play(stats, stats, "early");
+    }
   }
+
+  /** 예상으로 이미 터뜨린 레벨. 확정 응답이 같은 레벨을 가져오면 오른 능력치만 띄운다. */
+  private celebratedLevel?: { id: string; level: number };
 
   /** 레벨 숫자·경험치 줄·글자를 예상 진행(확정 + 대기 중인 급여)으로 칠한다. 숫자는 굴러간다. */
   private paintExp(progress: RelicProgress, cap: number, glide: boolean): void {
@@ -1651,7 +1666,18 @@ export class InfoManager {
       this.refreshGrowth();
       this.repaintFeedBulk?.();
       // 칠한 뒤에 터뜨려야 부푸는 숫자가 이미 새 레벨이다.
-      if (leveled && this.isOpen) this.levelUpEffect?.play(statsBefore, this.shownStats(def));
+      if (leveled && this.isOpen) {
+        const reached = relicProgression.getProgress(def.id).level;
+        const early = this.celebratedLevel?.id === def.id && this.celebratedLevel.level >= reached;
+        this.levelUpEffect?.play(statsBefore, this.shownStats(def), early ? "stats" : "full");
+        if (!early) this.celebratedLevel = { id: def.id, level: reached };
+      }
+      // 서버가 예상보다 덜 먹였다면(상한·지갑) 앞서 터뜨린 몫을 지금 기대치로 되돌린다 — 그래야
+      // 다음에 실제로 오를 때 큰 연출이 빠지지 않는다.
+      if (this.celebratedLevel?.id === def.id) {
+        const expected = previewFeedProgress(relicProgression.getProgress(def.id), this.pendingFeeds()).level;
+        if (this.celebratedLevel.level > expected) this.celebratedLevel = { id: def.id, level: expected };
+      }
     }
     return changed;
   }

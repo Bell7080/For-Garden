@@ -201,6 +201,7 @@ export const MISC_ZH_HANS = {
   "profile.record.collection": "图鉴",
   "profile.record.unranked": "未上榜",
   "content.unlocked": "{content} 已开放!",
+  "content.unlockedInSortie": "{content} 已开放！可在出击中前往",
   "profile.nextUnlock": "LV.{level}开放 · {content}",
   "profile.picker.title": "自定义资料",
   "profile.picker.photo": "头像",

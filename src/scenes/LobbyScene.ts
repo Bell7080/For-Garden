@@ -44,7 +44,10 @@ import { BACK_SLOT, IconButton } from "../ui/IconButton";
 import { UI_ICON } from "../ui/icons";
 import { InventoryPopup } from "../ui/InventoryPopup";
 import { bindNotificationDot } from "../ui/NotificationDot";
-import { perspectiveButtonNotificationAnchor } from "../ui/notificationDotStyle";
+import { perspectiveButtonBadgeAnchor, perspectiveButtonNotificationAnchor } from "../ui/notificationDotStyle";
+import { SORTIE_CONTENT } from "../core/contentFresh";
+import { RAIL_BADGE, SORTIE_ENTRY_BADGE } from "../ui/newBadgeStyle";
+import { showContentToast } from "../ui/ContentToast";
 import { notificationManager } from "../managers/NotificationManager";
 import { MissionsPopup } from "../ui/MissionsPopup";
 import { AchievementsPopup } from "../ui/AchievementsPopup";
@@ -69,9 +72,9 @@ import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
 import { profileModifierManager } from "../managers/ProfileModifierManager";
 import { playerProfileDisplay, profileAvatarContent, type PlayerProfileDisplay } from "../state/playerProfile";
 import { openAvatarPicker, openBioEditor, openNicknameEditor } from "../ui/PlayerProfileEditors";
-import { showContentLockedToast, addLockCover, collectUnlockCelebrations, consumeUnlockCelebration, contentOpen, holdUnlockCelebrations, playUnlockSequence, releaseUnlockCelebrations, unlockCover, UNLOCK_POP_TOTAL_MS, whenUnlockGateOpen } from "../ui/contentLock";
+import { showContentLockedToast, addLockCover, addContentNewBadge, collectUnlockCelebrations, consumeUnlockCelebration, contentNameKey, contentOpen, markContentEntered, peekUnlockCelebrations, holdUnlockCelebrations, playUnlockSequence, releaseUnlockCelebrations, unlockCover, UNLOCK_POP_TOTAL_MS, whenUnlockGateOpen } from "../ui/contentLock";
 import { addPadlock } from "../ui/Padlock";
-import { LOCK_DIM } from "../ui/lockStyle";
+import { LOCK_DIM, LOCK_TOAST } from "../ui/lockStyle";
 import type { ContentId } from "../core/contentUnlock";
 import { managerEvents } from "../managers/ManagerEvents";
 import { levelUpAnnouncement } from "../core/levelUpAnnouncement";
@@ -219,6 +222,8 @@ export class LobbyScene extends Phaser.Scene {
   private idleExcavationPopup?: IdleExcavationPopup;
   /** 이번 로비가 들어서자마자 알릴 레벨업. 있으면 판이 뜰 때까지 다른 입력을 막는다. */
   private pendingLevelUp?: { from: number; to: number };
+  /** 이번 로비가 들어오며 새로 열린 콘텐츠(`collectUnlockCelebrations`). */
+  private newlyOpened: ContentId[] = [];
   /** 무역은 로비 수명을 보존하는 패키지 레이어다. */
   private tradePopup?: TradePopup;
   private tradeBackButton?: IconButton;
@@ -288,7 +293,7 @@ export class LobbyScene extends Phaser.Scene {
     this.sortieSdPuppets.clear();
 
     // 그 사이 새로 열린 콘텐츠를 모아 둔다 — 아래 입구들이 제 몫을 가져가 자물쇠가 터지는 연출을 돈다.
-    collectUnlockCelebrations();
+    this.newlyOpened = collectUnlockCelebrations();
     // 열림 연출은 레벨업 알림이 닫힌 뒤에 차례로 돈다 — 입구들이 연출을 걸기 전에 묶어 둔다.
     holdUnlockCelebrations(this);
     this.pendingLevelUp = this.takeLevelUp();
@@ -314,7 +319,7 @@ export class LobbyScene extends Phaser.Scene {
       tilt: -6,
       onClick: this.guarded("duel", () => (PVP_MODE_SELECT_ENABLED ? this.openPvpMenu() : startScene(this, "duel"))),
     });
-    this.gateEntrance("duel", duelButton);
+    this.gateEntrance("duel", duelButton, { width: LOBBY_ACTION_BOUNDS.expedition.width, height: LOBBY_ACTION_BOUNDS.expedition.height, tall: "right", tilt: -6 });
 
     // 출격 — 로비에서 가장 큰 버튼이다. 주황빛 강조로 다른 입구와 구분한다.
     const sortieButton = new Button(this, LOBBY_ACTION_BOUNDS.sortie.x, LOBBY_ACTION_BOUNDS.sortie.y, {
@@ -335,6 +340,7 @@ export class LobbyScene extends Phaser.Scene {
     // 발굴과 같은 규칙으로 원근 판의 실제 우상단 모서리(오른쪽이 긴 변)에 앉힌다 — 고정 좌표였을 때는 판 안쪽 글자 옆에 떠 있었다.
     const sortieDot = perspectiveButtonNotificationAnchor({ width: LOBBY_ACTION_BOUNDS.sortie.width, height: LOBBY_ACTION_BOUNDS.sortie.height, tall: "right", rotation: Phaser.Math.DegToRad(-6), inset: 10 });
     bindNotificationDot(this, sortieButton, sortieDot, listener => notificationManager.subscribe("sortieReward", listener));
+    this.announceSortieUnlocks(sortieButton);
 
     // 교류 — 맞은편이라 기울기와 원근을 뒤집어 `\` 방향으로 눕힌다.
     const interactionButton = new Button(this, 250, NAV_TOP - 400, {
@@ -349,7 +355,7 @@ export class LobbyScene extends Phaser.Scene {
       accentTextColor: "#9fd0f0",
       onClick: this.guarded("interaction", () => startScene(this, "interaction")),
     });
-    this.gateEntrance("interaction", interactionButton);
+    this.gateEntrance("interaction", interactionButton, { width: 292, height: 106, tall: "left", tilt: 6 });
 
     // 발굴 — 출격과 같은 줄에 서지만 크기는 교류와 같다. 왼쪽은 서브 콘텐츠 자리라, 오른쪽의
     // 큰 주황 버튼과 크기로 위계를 가른다. 색도 교류와 같은 푸른 계열로 묶는다.
@@ -368,7 +374,7 @@ export class LobbyScene extends Phaser.Scene {
     // 발굴 저장 상한 판정은 manager가 API 결과로 합성하며 버튼은 공용 점만 구독한다.
     // 외곽 사각형이 아니라 원근으로 짧아진 실제 우상단 변을 회전해 점이 판 밖 허공에 남지 않게 한다.
     const excavationDot = perspectiveButtonNotificationAnchor({ width: 292, height: 106, tall: "left", rotation: Phaser.Math.DegToRad(6), inset: 10 });
-    this.gateEntrance("excavation", excavationButton);
+    this.gateEntrance("excavation", excavationButton, { width: 292, height: 106, tall: "left", tilt: 6 });
     bindNotificationDot(this, excavationButton, excavationDot, (listener) => notificationManager.subscribe("excavationHarvestReady", listener));
 
     const bottomNav = new BottomNav(this, "lobby");
@@ -539,31 +545,67 @@ export class LobbyScene extends Phaser.Scene {
    */
   private lockRailButton(id: ContentId, button: RailButton): void {
     const celebrate = contentOpen(id) && consumeUnlockCelebration(id);
-    if (contentOpen(id) && !celebrate) return;
+    const badge = (pop: boolean) => addContentNewBadge(this, button, [id], { x: RAIL_BADGE.x, y: RAIL_BADGE.y, scale: RAIL_BADGE.scale, pop });
+    if (contentOpen(id) && !celebrate) { badge(false); return; }
     // 꺼진 칩처럼 판·글자가 가라앉고 아이콘 자리에 자물쇠가 선다(`RailButton.setLocked`).
     button.setLocked();
     if (!celebrate) return;
-    whenUnlockGateOpen(this, () => this.time.delayedCall(450, () => { if (button.active) button.unlock(id); }));
+    whenUnlockGateOpen(this, () => this.time.delayedCall(450, () => { if (button.active) button.unlock(id, () => { badge(true); this.flourishEntrance(button); }); }));
+  }
+
+  /**
+   * 출격 판 안의 콘텐츠(대작전·현상수배·레이드·원정·고대 지층)는 판을 열어야 자물쇠가 풀린다. 판을 열기 전에도 무엇이 열렸는지 읽히게,
+   * 로비의 출격 버튼이 「NEW」를 달고 한 번 톡 부풀며 토스트가 「출격에서 만날 수 있다」고 알린다. 강제로 판을 열지는 않는다.
+   */
+  private announceSortieUnlocks(sortieButton: Button): void {
+    const anchor = perspectiveButtonBadgeAnchor({ width: LOBBY_ACTION_BOUNDS.sortie.width, height: LOBBY_ACTION_BOUNDS.sortie.height, tall: "right", rotation: Phaser.Math.DegToRad(-6), inset: 46 });
+    const spot = { ...anchor, angle: -6, scale: 1.15 };
+    const fresh = peekUnlockCelebrations(SORTIE_CONTENT);
+    if (fresh.length === 0) { addContentNewBadge(this, sortieButton, SORTIE_CONTENT, spot); return; }
+    // 로비의 다른 입구도 함께 풀리면 그 토스트가 다 읽힌 뒤에 출격 안내를 세운다 — 한 자리에 서는 토스트가 서로를 덮지 않게.
+    const othersUnlocking = this.newlyOpened.some((id) => !SORTIE_CONTENT.includes(id));
+    whenUnlockGateOpen(this, () => {
+      this.time.delayedCall(600, () => {
+        if (!sortieButton.active) return;
+        addContentNewBadge(this, sortieButton, SORTIE_CONTENT, { ...spot, pop: true });
+        this.flourishEntrance(sortieButton);
+      });
+      this.time.delayedCall(othersUnlocking ? 500 + UNLOCK_POP_TOTAL_MS + LOCK_TOAST.unlockedHoldMs : 700, () => {
+        if (!sortieButton.active) return;
+        const names = fresh.map((id) => t(contentNameKey(id))).join(" · ");
+        showContentToast(this, t("content.unlockedInSortie", { content: names }), "unlocked");
+        audioManager?.playUi("ui.unlock");
+      });
+    });
+  }
+
+  /** 방금 열린 입구가 한 번 톡 부풀었다 돌아온다 — 눈이 그 자리로 가게 한다. 움직임 줄이기에서는 하지 않는다. */
+  private flourishEntrance(target: Phaser.GameObjects.Container): void {
+    if (motionPolicy(session.settings).nonEssentialDistanceFactor <= 0 || !target.active) return;
+    const base = target.scale;
+    this.tweens.add({ targets: target, scale: base * 1.08, duration: 160, yoyo: true, repeat: 1, ease: "Sine.easeOut", onComplete: () => { if (target.active) target.setScale(base); } });
   }
 
   /** 잠긴 입구의 눌림은 동작 대신 개방 레벨을 알린다. */
   private guarded(id: ContentId, action: () => void): () => void {
-    return () => { if (contentOpen(id)) action(); else showContentLockedToast(this, id); };
+    return () => { if (contentOpen(id)) { markContentEntered(id); action(); } else showContentLockedToast(this, id); };
   }
 
   /**
    * 잠긴 입구(교류·발굴·결투)는 숨기지 않고 **반투명하게** 가라앉혀 둔다 — 줄에 무엇이 있는지는 보이되 눈길을 끌지 않는다.
    * 글자 왼쪽에 작은 자물쇠가 서고, 누르면 동작 대신 개방 레벨을 알린다. 방금 열렸으면 입구가 밝아지며 자물쇠가 풀린다.
    */
-  private gateEntrance(id: ContentId, button: Button): void {
+  private gateEntrance(id: ContentId, button: Button, shape: { width: number; height: number; tall: "left" | "right"; tilt: number }): void {
     const celebrate = contentOpen(id) && consumeUnlockCelebration(id);
-    if (contentOpen(id) && !celebrate) return;
+    // 열렸지만 아직 들르지 않은 입구는 좌상단에 「NEW」가 선다. 방금 열린 입구는 자물쇠가 풀리는 순간 톡 튀어나온다.
+    const badge = (pop: boolean) => addContentNewBadge(this, button, [id], { ...perspectiveButtonBadgeAnchor({ width: shape.width, height: shape.height, tall: shape.tall, rotation: Phaser.Math.DegToRad(shape.tilt), inset: 34 }), angle: shape.tilt, pop });
+    if (contentOpen(id) && !celebrate) { badge(false); return; }
     button.setAlpha(LOCK_DIM.entranceAlpha);
     const lock = button.addLabelMark((size) => addPadlock(this, 0, 0, size, { color: LOCK_DIM.lockColor }));
     if (!celebrate) return;
     whenUnlockGateOpen(this, () => this.time.delayedCall(450, () => {
       if (!button.active) return;
-      playUnlockSequence(this, lock, { id, onStart: () => this.tweens.add({ targets: button, alpha: 1, duration: 420, ease: "Sine.easeOut" }) });
+      playUnlockSequence(this, lock, { id, onStart: () => this.tweens.add({ targets: button, alpha: 1, duration: 420, ease: "Sine.easeOut" }), onOpen: () => { badge(true); this.flourishEntrance(button); } });
     }));
   }
 
@@ -765,7 +807,11 @@ export class LobbyScene extends Phaser.Scene {
           width: entry.width, height: entry.height, label: entry.label, labelSize: entry.labelSize, status: entry.status,
           artKey: entry.artKey, accentColor: entry.accentColor, accentTextColor: entry.accentTextColor,
           // 끌어서 굴린 손이 칸 위에서 떨어져도 그 칸이 열리지 않게 한다.
-          sdSide, split: entry.split, onClick: () => { if (this.sortieScroll.moved <= view.slop) entry.onClick(); },
+          sdSide, split: entry.split, onClick: () => {
+            if (this.sortieScroll.moved > view.slop) return;
+            if (entry.content !== undefined && contentOpen(entry.content)) markContentEntered(entry.content);
+            entry.onClick();
+          },
         });
         content.add(button);
         if (entry.content === "raid" || entry.content === "expedition") {
@@ -779,6 +825,10 @@ export class LobbyScene extends Phaser.Scene {
         // 잠긴 입구는 덮개로 막고 SD도 세우지 않는다. 방금 열린 입구는 덮개의 자물쇠가 터지며 풀리고, SD는 그 뒤에 선다.
         // 레벨이 아닌 「Coming soon」 잠금은 개방 연출이 없고 SD가 흐리게 선다.
         const celebrate = entry.content !== undefined && contentOpen(entry.content) && consumeUnlockCelebration(entry.content);
+        // 열렸지만 아직 들르지 않은 칸은 좌상단 모서리에 「NEW」가 선다(우상단은 붉은 점 자리).
+        const badgeSpot = { x: -entry.width / 2 + SORTIE_ENTRY_BADGE.x, y: -entry.height / 2 + SORTIE_ENTRY_BADGE.y };
+        const entryBadge = (pop: boolean) => { if (entry.content !== undefined) addContentNewBadge(this, button, [entry.content], { ...badgeSpot, scale: SORTIE_ENTRY_BADGE.scale, pop }); };
+        if (!celebrate) entryBadge(false);
         const sdDelay = celebrate ? 350 + UNLOCK_POP_TOTAL_MS + 250 : 0;
         if (entry.comingSoon) {
           content.add(addLockCover(this, undefined, entry.width, entry.height, { bevel: sortieEntryBevel(entry.height, entry.split), text: true, message: entry.comingSoon }).setPosition(x, entry.y));
@@ -788,7 +838,7 @@ export class LobbyScene extends Phaser.Scene {
           if (celebrate) {
             // 막은 채 자물쇠가 개방 연출을 돌고, 터진 뒤 덮개가 걷힌다.
             const unlocking = entry.content;
-            this.time.delayedCall(350, () => { if (cover.active) unlockCover(this, cover, unlocking); });
+            this.time.delayedCall(350, () => { if (cover.active) unlockCover(this, cover, unlocking, () => entryBadge(true)); });
           }
           if (!celebrate) return;
         }

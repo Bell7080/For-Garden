@@ -4,9 +4,12 @@ import { t, type TextKey } from "../i18n";
 import { ALL_GATED_CONTENT, CONTENT_STAGE_UNLOCKS, contentUnlockLevel, isContentUnlocked, type ContentId } from "../core/contentUnlock";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
+import { settingsManager } from "../managers/SettingsManager";
+import { anyContentFresh, markContentVisited, observeOpenContent } from "../core/contentFresh";
+import { addNewBadge, popInBadge, type NewBadgeOptions } from "./NewContentBadge";
 import { showContentToast } from "./ContentToast";
 import { chipPoints, drawLayer } from "./holo";
-import { LOCK_COVER, UNLOCK_BURST, UNLOCK_MOTION, UNLOCK_SEQUENCE, UNLOCK_SEQUENCE_TOTAL_MS, padlockGeometry } from "./lockStyle";
+import { LOCK_COVER, LOCK_TOAST, UNLOCK_BURST, UNLOCK_MOTION, UNLOCK_SEQUENCE, UNLOCK_SEQUENCE_TOTAL_MS, padlockGeometry } from "./lockStyle";
 import { addPadlock, padlockParts } from "./Padlock";
 import { COLOR, textStyle } from "./theme";
 
@@ -33,25 +36,74 @@ export function contentLockText(id: ContentId): string {
 }
 
 /**
- * 로비가 들어올 때마다 이전에 본 열림 상태와 지금 상태를 비교해(레벨·스테이지 클리어 어느 쪽이든), 그 사이 새로 열린 콘텐츠를 **한 번씩만** 연출하게 모아 둔다.
+ * 로비가 들어올 때마다 지난번에 본 열림 상태와 지금 상태를 비교해(레벨·스테이지 클리어 어느 쪽이든), 그 사이 새로 열린 콘텐츠를 **한 번씩만** 연출하게 모아 둔다.
  *
- * 메모리에만 둔다 — 앱을 껐다 켠 첫 진입에는 연출 없이 열린 채로 서고, 같은 세션에서 레벨이 오른 뒤 로비로 돌아올 때만
- * 터진다. 연출을 부르는 화면이 `consumeUnlockCelebration`으로 제 몫을 가져가므로 두 번 터지지 않는다.
+ * 지난 상태는 기기 설정(`settings.game.contentSeen`)에 남는다 — 앱을 껐다 켜도 그 사이 열린 것은 다음 로비에서 터진다.
+ * 연출을 부르는 화면이 `consumeUnlockCelebration`으로 제 몫을 가져가므로 두 번 터지지 않는다. 새로 열린 것은 들어가 볼 때까지
+ * 입구에 「NEW」가 선다(`contentFresh`·`addContentNewBadge`).
  */
-let seenOpen: Set<ContentId> | undefined;
 const pendingCelebrations = new Set<ContentId>();
 
-export function collectUnlockCelebrations(): void {
-  const open = new Set(ALL_GATED_CONTENT.filter((id) => contentOpen(id)));
-  const previous = seenOpen;
-  seenOpen = open;
-  if (!previous) return;
-  for (const id of open) if (!previous.has(id)) pendingCelebrations.add(id);
+export function collectUnlockCelebrations(): ContentId[] {
+  const open = ALL_GATED_CONTENT.filter((id) => contentOpen(id));
+  const { state, newly } = observeOpenContent(settingsManager.get().game.contentSeen, session.playerCard.uid, open);
+  settingsManager.rememberContentSeen(state);
+  for (const id of newly) pendingCelebrations.add(id);
+  return newly;
 }
 
 /** 이 콘텐츠의 열림 연출이 남아 있으면 true를 돌려주고 비운다. */
 export function consumeUnlockCelebration(id: ContentId): boolean {
   return pendingCelebrations.delete(id);
+}
+
+/** 이 중 열림 연출이 아직 남은 것(비우지 않는다). 출격 판 안의 콘텐츠처럼 판을 열어야 터지는 것을 로비가 미리 알릴 때 쓴다. */
+export function peekUnlockCelebrations(ids: readonly ContentId[]): ContentId[] {
+  return ids.filter((id) => pendingCelebrations.has(id));
+}
+
+/** 열렸지만 아직 들어가 보지 않은 콘텐츠인지 — 하나라도 그렇다면 true. */
+export function contentFresh(...ids: ContentId[]): boolean {
+  return anyContentFresh(settingsManager.get().game.contentSeen, ids);
+}
+
+/** 입구에 선 「NEW」들. 들어가 보는 순간 그 콘텐츠를 가리키는 표식이 모두 걷힌다(판을 닫고 돌아온 로비에서도). */
+const liveBadges = new Set<{ ids: readonly ContentId[]; badge: Phaser.GameObjects.Container }>();
+
+/** 그 콘텐츠에 들어갔다 — NEW를 지운다. 입구의 눌림이 실제로 그 콘텐츠를 열 때 부른다. */
+export function markContentEntered(id: ContentId): void {
+  const state = settingsManager.get().game.contentSeen;
+  if (!state || !state.fresh.includes(id)) return;
+  settingsManager.rememberContentSeen(markContentVisited(state, id));
+  for (const entry of [...liveBadges]) {
+    if (!entry.ids.includes(id) || contentFresh(...entry.ids)) continue;
+    liveBadges.delete(entry);
+    const { badge } = entry;
+    if (!badge.active) continue;
+    badge.scene.tweens.add({ targets: badge, alpha: 0, scale: badge.scale * 0.6, duration: 180, ease: "Sine.easeIn", onComplete: () => badge.destroy() });
+  }
+}
+
+export interface ContentBadgeSpot extends NewBadgeOptions {
+  x: number;
+  y: number;
+  /** 방금 풀린 입구 — 표식이 톡 튀어나오며 선다. */
+  pop?: boolean;
+}
+
+/**
+ * 입구에 「NEW」를 단다 — `ids` 중 하나라도 새것일 때만. 출격 버튼처럼 여러 콘텐츠를 품은 입구는 그 목록을 모두 넘긴다.
+ * 표식은 대상 컨테이너의 자식이라 함께 움직이고 함께 사라진다.
+ */
+export function addContentNewBadge(scene: Phaser.Scene, target: Phaser.GameObjects.Container, ids: readonly ContentId[], spot: ContentBadgeSpot): Phaser.GameObjects.Container | undefined {
+  if (!target.active || !contentFresh(...ids)) return undefined;
+  const badge = addNewBadge(scene, spot.x, spot.y, spot);
+  target.add(badge);
+  const entry = { ids, badge };
+  liveBadges.add(entry);
+  badge.once(Phaser.GameObjects.Events.DESTROY, () => liveBadges.delete(entry));
+  if (spot.pop) popInBadge(scene, badge);
+  return badge;
 }
 
 /**
@@ -117,7 +169,7 @@ export function playUnlockSequence(scene: Phaser.Scene, lock: Phaser.GameObjects
   const parts = padlockParts(lock);
   const size = parts?.size ?? 60;
   const open = () => {
-    showContentToast(scene, t("content.unlocked", { content: t(contentNameKey(options.id)) }), "unlocked");
+    announceUnlocked(scene, options.id);
     options.onOpen?.();
   };
   const finish = () => { lock.destroy(); cover?.destroy(); };
@@ -172,6 +224,20 @@ export function playUnlockSequence(scene: Phaser.Scene, lock: Phaser.GameObjects
       } });
     } });
   } });
+}
+
+/**
+ * 열림 토스트. 한 레벨에 둘 이상 열리면(상점+무역, 대작전+현상수배) 자물쇠가 거의 함께 풀려 토스트가 서로를 덮었다 —
+ * 앞의 토스트가 떠 있는 동안 풀린 것은 **이름을 이어 붙여** 한 장으로 다시 세운다.
+ */
+const recentUnlocks = new WeakMap<Phaser.Scene, { ids: ContentId[]; at: number }>();
+
+function announceUnlocked(scene: Phaser.Scene, id: ContentId): void {
+  const now = scene.time.now;
+  const last = recentUnlocks.get(scene);
+  const ids = last && now - last.at < LOCK_TOAST.unlockedHoldMs ? [...last.ids.filter((entry) => entry !== id), id] : [id];
+  recentUnlocks.set(scene, { ids, at: now });
+  showContentToast(scene, t("content.unlocked", { content: ids.map((entry) => t(contentNameKey(entry))).join(" · ") }), "unlocked");
 }
 
 /** 잠긴 콘텐츠를 눌렀을 때 뜨는 한 줄. 어느 레벨에 열리는지만 말한다. */

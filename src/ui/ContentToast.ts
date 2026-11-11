@@ -6,6 +6,8 @@ import { session } from "../state/session";
 import { chipPoints, drawLayer } from "./holo";
 import { LOCK_TOAST, toastTextWrap, toastWidth } from "./lockStyle";
 import { addPadlock } from "./Padlock";
+import { addNewBadge } from "./NewContentBadge";
+import { NEW_BADGE } from "./newBadgeStyle";
 import { COLOR, textStyle } from "./theme";
 
 /**
@@ -30,17 +32,25 @@ export function showContentToast(scene: Phaser.Scene, message: string, tone: Con
   live.get(scene)?.destroy();
   const bright = tone === "unlocked" || tone === "info";
   const padlock = tone === "locked";
+  // 막 열린 것은 글자 왼쪽에 「NEW」가 선다 — 입구에 붙는 표식과 같은 한 장이라 토스트를 본 눈이 그 표식을 찾아간다.
+  const fresh = tone === "unlocked";
+  const markRoom = fresh ? NEW_BADGE.width + LOCK_TOAST.iconGap : 0;
   // 막힌 손에는 막혔다는 소리로 답한다. 개방 소리는 자물쇠가 풀리는 연출(`playUnlockSequence`)이 낸다.
   if (!bright) audioManager?.playUi("ui.deny");
-  const label = scene.add.text(0, 0, message, textStyle({ role: "emphasis", size: LOCK_TOAST.fontSize, color: bright ? COLOR.accentText : COLOR.ink, align: "center", wrap: toastTextWrap(padlock) })).setOrigin(0.5);
-  const width = toastWidth(label.width, padlock);
+  const label = scene.add.text(0, 0, message, textStyle({ role: "emphasis", size: LOCK_TOAST.fontSize, color: bright ? COLOR.accentText : COLOR.ink, align: "center", wrap: toastTextWrap(padlock) - markRoom })).setOrigin(0.5);
+  const width = Math.min(BASE_WIDTH - LOCK_TOAST.edgeMargin * 2, toastWidth(label.width, padlock) + markRoom);
   // 긴 거절 사유(소탕권·스테미나 안내)는 두 줄로 접히므로 판도 그만큼 키운다.
   const height = Math.max(LOCK_TOAST.height, Math.ceil(label.height) + LOCK_TOAST.padY * 2);
   const box = scene.add.container(BASE_WIDTH / 2, LOCK_TOAST.y).setDepth(LOCK_TOAST.depth);
   box.add(drawLayer(scene, 0, 0, chipPoints(width, height, { bevel: { topLeft: 22, bottomRight: 22 } }), {
     fill: 0x070b10, alpha: LOCK_TOAST.fillAlpha, edge: COLOR.accent, edgeAlpha: bright ? 0.95 : 0.6,
   }));
-  if (!padlock) {
+  if (fresh) {
+    const contentWidth = NEW_BADGE.width + LOCK_TOAST.iconGap + label.width;
+    box.add(addNewBadge(scene, -contentWidth / 2 + NEW_BADGE.width / 2, 0));
+    label.setOrigin(0, 0.5).setX(-contentWidth / 2 + markRoom);
+    box.add(label);
+  } else if (!padlock) {
     box.add(label);
   } else {
     const iconSize = 40;
@@ -55,7 +65,12 @@ export function showContentToast(scene: Phaser.Scene, message: string, tone: Con
   const factor = motionPolicy(session.settings).nonEssentialDistanceFactor;
   const rise = LOCK_TOAST.riseDistance * factor;
   box.setAlpha(factor > 0 ? 0 : 1).setY(LOCK_TOAST.y + rise);
+  // 개방 토스트는 한 번 톡 부풀며 선다 — 다른 안내와 같은 자리에 서도 「새로 생겼다」가 먼저 읽힌다.
+  if (fresh && factor > 0) {
+    box.setScale(0.86);
+    scene.tweens.add({ targets: box, scale: 1, duration: LOCK_TOAST.riseMs + 120, ease: "Back.easeOut" });
+  }
   scene.tweens.add({ targets: box, alpha: 1, y: LOCK_TOAST.y, duration: factor > 0 ? LOCK_TOAST.riseMs : 1, ease: "Cubic.easeOut" });
-  scene.tweens.add({ targets: box, alpha: 0, delay: LOCK_TOAST.riseMs + LOCK_TOAST.holdMs, duration: LOCK_TOAST.fadeMs, onComplete: () => box.destroy() });
+  scene.tweens.add({ targets: box, alpha: 0, delay: LOCK_TOAST.riseMs + (fresh ? LOCK_TOAST.unlockedHoldMs : LOCK_TOAST.holdMs), duration: LOCK_TOAST.fadeMs, onComplete: () => box.destroy() });
   return box;
 }

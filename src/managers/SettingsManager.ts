@@ -1,5 +1,6 @@
 import type Phaser from "phaser";
 import { createDefaultSettings, normalizeSettings } from "../core/settings";
+import { sameContentSeen, type ContentSeenState } from "../core/contentFresh";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type GameSettings, type Session } from "../state/session";
 import { platformFeedback, type HapticPattern, type PlatformFeedback, type ScheduledNotification } from "../api/PlatformFeedback";
@@ -71,6 +72,12 @@ export class SettingsManager extends EventTarget {
   rememberAncientResetSeen(day: string): void {
     if (this.get().game.ancientResetSeen === day) return;
     this.update({ game: { ancientResetSeen: day } });
+  }
+
+  /** 새로 열린 콘텐츠의 기록을 남긴다(`core/contentFresh.ts`). 같은 값이면 저장하지 않는다. */
+  rememberContentSeen(state: ContentSeenState): void {
+    if (sameContentSeen(this.get().game.contentSeen, state)) return;
+    this.update({ game: { contentSeen: state } });
   }
 
   /** 약관·처리방침 동의를 이 기기에 기록한다(서버 기록은 `LegalConsentApi`가 따로 남긴다). */

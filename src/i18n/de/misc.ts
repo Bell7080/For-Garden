@@ -201,6 +201,7 @@ export const MISC_DE = {
   "profile.record.collection": "Archiv",
   "profile.record.unranked": "Ohne Rang",
   "content.unlocked": "{content} freigeschaltet!",
+  "content.unlockedInSortie": "{content} freigeschaltet! Zu finden unter «Aufbruch»",
   "profile.nextUnlock": "Ab LV.{level} · {content}",
   "profile.picker.title": "Profil anpassen",
   "profile.picker.photo": "Profilbild",

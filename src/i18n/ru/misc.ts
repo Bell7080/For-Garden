@@ -201,6 +201,7 @@ export const MISC_RU = {
   "profile.record.collection": "Архив",
   "profile.record.unranked": "Без места",
   "content.unlocked": "{content} открыто!",
+  "content.unlockedInSortie": "{content} открыто! Ищите в разделе «В бой»",
   "profile.nextUnlock": "Откроется на LV.{level} · {content}",
   "profile.picker.title": "Настройка профиля",
   "profile.picker.photo": "Аватар",

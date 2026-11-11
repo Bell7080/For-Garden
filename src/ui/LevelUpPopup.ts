@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { addNewBadge } from "./NewContentBadge";
 import { audioManager } from "../managers/AudioManager";
 import { t, type TextKey } from "../i18n";
 import { contentUnlockedBetween, type ContentId } from "../core/contentUnlock";
@@ -265,9 +266,7 @@ function unlockKey(unlock: Unlock): LevelUpUnlockKey {
   return unlock.kind === "content" ? unlock.id : "frame";
 }
 
+/** 새 잎의 「NEW」 — 입구에 붙는 표식과 같은 한 장이다. 한 판에 여럿 서므로 숨 쉬지 않는다. */
 function newBadge(scene: Phaser.Scene, x: number, y: number, tone: number): Phaser.GameObjects.Container {
-  const badge = scene.add.container(x, y);
-  badge.add(drawLayer(scene, 0, 0, chipPoints(62, 28, { bevel: { topLeft: 8, bottomRight: 8 } }), { fill: tone, alpha: 0.95 }));
-  badge.add(scene.add.text(0, 0, "NEW", textStyle({ role: "display", size: 18, color: "#05070a" })).setOrigin(0.5));
-  return badge;
+  return addNewBadge(scene, x, y, { tone, pulse: false });
 }

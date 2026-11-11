@@ -96,7 +96,7 @@ export class RailButton extends Phaser.GameObjects.Container {
   }
 
   /** 잠긴 칩을 연다 — 칩이 밝아지는 동안 자물쇠가 풀리고, 놓는 순간 원래 아이콘이 그 자리에 들어선다. */
-  unlock(id: ContentId): void {
+  unlock(id: ContentId, onOpen?: () => void): void {
     const lock = this.padlock;
     if (!lock) return;
     this.padlock = undefined;
@@ -105,6 +105,7 @@ export class RailButton extends Phaser.GameObjects.Container {
       onStart: () => this.scene.tweens.add({ targets: [this.plate, this.labelText], alpha: 1, duration: 420, ease: "Sine.easeOut" }),
       onOpen: () => {
         if (!this.active) return;
+        onOpen?.();
         const scaleX = this.icon.scaleX;
         const scaleY = this.icon.scaleY;
         this.icon.setVisible(true).setAlpha(0).setScale(scaleX * 0.6, scaleY * 0.6);

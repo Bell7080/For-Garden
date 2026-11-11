@@ -43,3 +43,19 @@ export function perspectiveButtonNotificationAnchor(options: {
     rotation: options.rotation,
   });
 }
+
+/**
+ * 원근 버튼의 **좌상단** 모서리 — 「NEW」 표식이 선다. 붉은 점(우상단)과 모서리를 나눠 가져 둘이 함께 서도 겹치지 않는다.
+ * 판의 기울기만큼 함께 돌린다.
+ */
+export function perspectiveButtonBadgeAnchor(options: {
+  width: number;
+  height: number;
+  tall: "left" | "right";
+  rotation: number;
+  inset: number;
+}): { x: number; y: number } {
+  const halfHeight = options.height / 2;
+  const cornerY = options.tall === "left" ? -halfHeight : -halfHeight * (1 - 0.42);
+  return rotatedNotificationAnchor({ x: -options.width / 2 + options.inset, y: cornerY, rotation: options.rotation });
+}

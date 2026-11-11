@@ -201,6 +201,7 @@ export const MISC_PT_BR = {
   "profile.record.collection": "Arquivo",
   "profile.record.unranked": "Sem classificação",
   "content.unlocked": "{content} desbloqueado!",
+  "content.unlockedInSortie": "{content} desbloqueado! Acesse pelo menu «Partir»",
   "profile.nextUnlock": "Abre no LV.{level} · {content}",
   "profile.picker.title": "Personalizar perfil",
   "profile.picker.photo": "Foto de perfil",

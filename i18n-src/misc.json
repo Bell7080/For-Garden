@@ -2922,6 +2922,16 @@
 "{content} freigeschaltet!",
 "{content} открыто!"
 ],
+"content.unlockedInSortie": [
+"{content} 已开放！可在出击中前往",
+"เปิด {content} แล้ว! ไปได้ที่เมนูออกรบ",
+"Đã mở {content}! Vào từ mục Xuất kích",
+"{content} terbuka! Masuk lewat menu Berangkat",
+"¡{content} desbloqueado! Accede desde «Salir»",
+"{content} desbloqueado! Acesse pelo menu «Partir»",
+"{content} freigeschaltet! Zu finden unter «Aufbruch»",
+"{content} открыто! Ищите в разделе «В бой»"
+],
 "stageComplete.exit": [
 "退出",
 "ออก",

@@ -201,6 +201,7 @@ export const MISC_TH = {
   "profile.record.collection": "สมุดภาพ",
   "profile.record.unranked": "ไม่มีอันดับ",
   "content.unlocked": "เปิด {content} แล้ว!",
+  "content.unlockedInSortie": "เปิด {content} แล้ว! ไปได้ที่เมนูออกรบ",
   "profile.nextUnlock": "เปิดที่ LV.{level} · {content}",
   "profile.picker.title": "ปรับแต่งโปรไฟล์",
   "profile.picker.photo": "รูปโปรไฟล์",

@@ -1,3 +1,4 @@
+import { normalizeContentSeen } from "./contentFresh";
 import { normalizePartyPresets, normalizePresetIndex } from "./partyPresets";
 import { DEFAULT_AUTO_REPEAT_OPTIONS, normalizeAutoRepeatOptions } from "./autoRepeat";
 import type { GameSettings } from "../state/session";
@@ -153,7 +154,7 @@ export function createDefaultSettings(): GameSettings {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, adRewardDot: false, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS } },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, adRewardDot: false, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" },
@@ -214,7 +215,9 @@ export function normalizeSettings(value: unknown): GameSettings {
         bookmarkedOnly: bool(record(g.runeBag).bookmarkedOnly, d.game.runeBag.bookmarkedOnly),
       },
       // 필드가 없던 저장은 기본 옵션(10판 · 패배 시 중단 · 드링크 끔)으로 이관한다.
-      autoRepeat: normalizeAutoRepeatOptions(g.autoRepeat) },
+      autoRepeat: normalizeAutoRepeatOptions(g.autoRepeat),
+      // 필드가 없던 저장은 기록 없음(null)이다 — 첫 로비가 지금 열린 것을 「이미 본 것」으로 시작한다.
+      contentSeen: normalizeContentSeen(g.contentSeen) },
     // 인증 토큰은 이 모델에 애초에 자리를 만들지 않아 로컬 저장으로 새는 경로를 차단한다.
     account: { provider: allowed(a.provider, ["guest", "google", "apple"] as const, d.account.provider), displayId: typeof a.displayId === "string" && a.displayId.length <= 80 ? a.displayId : d.account.displayId },
   };

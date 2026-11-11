@@ -201,6 +201,7 @@ export const MISC_VI = {
   "profile.record.collection": "Lưu trữ",
   "profile.record.unranked": "Chưa xếp hạng",
   "content.unlocked": "Đã mở {content}!",
+  "content.unlockedInSortie": "Đã mở {content}! Vào từ mục Xuất kích",
   "profile.nextUnlock": "Mở ở LV.{level} · {content}",
   "profile.picker.title": "Tùy chỉnh hồ sơ",
   "profile.picker.photo": "Ảnh đại diện",

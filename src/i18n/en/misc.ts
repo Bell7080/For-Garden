@@ -202,6 +202,7 @@ export const MISC_EN = {
   "profile.record.collection": "Archive",
   "profile.record.unranked": "Unranked",
   "content.unlocked": "{content} unlocked!",
+  "content.unlockedInSortie": "{content} unlocked! Find it under Sortie",
   "profile.nextUnlock": "Unlocks at LV.{level} · {content}",
   "profile.picker.title": "Customize Profile",
   "profile.picker.photo": "Profile Picture",

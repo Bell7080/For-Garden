@@ -201,6 +201,7 @@ export const MISC_ID = {
   "profile.record.collection": "Arsip",
   "profile.record.unranked": "Belum Berperingkat",
   "content.unlocked": "{content} terbuka!",
+  "content.unlockedInSortie": "{content} terbuka! Masuk lewat menu Berangkat",
   "profile.nextUnlock": "Terbuka di LV.{level} · {content}",
   "profile.picker.title": "Kustomisasi Profil",
   "profile.picker.photo": "Foto Profil",

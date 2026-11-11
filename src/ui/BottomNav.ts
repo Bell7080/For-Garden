@@ -7,7 +7,8 @@ import { COLOR, textStyle } from "./theme";
 import { startNavScene } from "./screenTransition";
 import { NAV_TABS, navTabDirection, type NavKey } from "../core/navTabs";
 import { pressIn, pressOut } from "./pressFeedback";
-import { consumeUnlockCelebration, contentOpen, playUnlockSequence, showContentLockedToast, whenUnlockGateOpen } from "./contentLock";
+import { addContentNewBadge, consumeUnlockCelebration, contentOpen, markContentEntered, playUnlockSequence, showContentLockedToast, whenUnlockGateOpen } from "./contentLock";
+import { NAV_BADGE } from "./newBadgeStyle";
 import { addPadlock } from "./Padlock";
 import { LOCK_DIM } from "./lockStyle";
 import type { ContentId } from "../core/contentUnlock";
@@ -140,6 +141,10 @@ export class BottomNav {
         (step - NAV_LABEL_GUTTER) / ACTIVE_SCALE,
       );
       group.add(label);
+      // 열렸지만 아직 들르지 않은 탭은 아이콘 오른쪽 위에 「NEW」가 선다. 지금 화면인 탭은 이미 들어와 있으니 지운다.
+      if (contentId !== undefined && active && contentOpen(contentId)) markContentEntered(contentId);
+      const navBadge = (pop: boolean) => { if (contentId !== undefined) addContentNewBadge(scene, group, [contentId], { x: NAV_BADGE.x, y: NAV_BADGE.y, scale: NAV_BADGE.scale, pop }); };
+      if (!locked) navBadge(false);
       if (locked && contentId) {
         // 판을 덮지 않고 글자와 아이콘만 가라앉힌다 — 아이콘 자리에는 같은 크기의 회색 자물쇠가 대신 선다.
         icon.setVisible(false);
@@ -155,6 +160,7 @@ export class BottomNav {
               onStart: () => scene.tweens.add({ targets: label, alpha: 1, duration: 420, ease: "Sine.easeOut" }),
               onOpen: () => {
                 locked = false;
+                navBadge(true);
                 if (!icon.active) return;
                 icon.setVisible(true).setAlpha(0).setScale(0.6);
                 scene.tweens.add({ targets: icon, alpha: 1, scale: 1, duration: 320, ease: "Back.easeOut" });
@@ -178,6 +184,7 @@ export class BottomNav {
         hit.on("pointerout", () => pressOut(group, "normal", { pop: false }));
         hit.on("pointerup", () => {
           if (locked && contentId) { showContentLockedToast(scene, contentId); return; }
+          if (contentId !== undefined) markContentEntered(contentId);
           startNavScene(scene, tab.scene, navTabDirection(current, tab.key));
         });
       }

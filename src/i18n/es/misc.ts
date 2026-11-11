@@ -201,6 +201,7 @@ export const MISC_ES = {
   "profile.record.collection": "Archivo",
   "profile.record.unranked": "Sin clasificar",
   "content.unlocked": "¡{content} desbloqueado!",
+  "content.unlockedInSortie": "¡{content} desbloqueado! Accede desde «Salir»",
   "profile.nextUnlock": "Se abre en LV.{level} · {content}",
   "profile.picker.title": "Personalizar perfil",
   "profile.picker.photo": "Foto de perfil",

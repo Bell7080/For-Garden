@@ -201,6 +201,7 @@ export const MISC_ZH_HANT = {
   "profile.record.collection": "圖鑑",
   "profile.record.unranked": "未上榜",
   "content.unlocked": "{content} 已開放!",
+  "content.unlockedInSortie": "{content} 已開放！可在出擊中前往",
   "profile.nextUnlock": "LV.{level}開放 · {content}",
   "profile.picker.title": "自定義資料",
   "profile.picker.photo": "頭像",

@@ -40,6 +40,8 @@ export const LOCK_TOAST = {
   fontSize: 30,
   riseMs: 160,
   holdMs: 1500,
+  /** 개방 토스트는 조금 더 머문다 — 무엇이 열렸는지 읽고 그 입구를 찾을 틈이다. */
+  unlockedHoldMs: 2400,
   fadeMs: 320,
   riseDistance: 22,
 } as const;

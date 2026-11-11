@@ -83,6 +83,10 @@ ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[
     # 토벌권 둘. 가방의 재료지만 레이드 목록 머리에 액자로 서므로 같은 규격으로 굽는다.
     "sprites/items/raid-ticket.webp": ("토벌권.webp", None),
     "sprites/items/raid-select-ticket.webp": ("선택 토벌권.webp", None),
+    # 렐릭 선택권 세 등급. 생성 원본 폴더를 넘기면 같은 규격으로 다시 굽는다.
+    "sprites/items/r-select-ticket.webp": ("r-select-ticket.png", None),
+    "sprites/items/sr-select-ticket.webp": ("sr-select-ticket.png", None),
+    "sprites/items/ssr-select-ticket.webp": ("ssr-select-ticket.png", None),
     # 룬 특성 재료 셋. 임시 글리프(두루마리)로 서 있던 자리다.
     "sprites/items/ancient-core.webp": ("미지의 고대핵.png", None),
     "sprites/items/refined-core.webp": ("정제된 고대핵.webp", None),
@@ -117,6 +121,9 @@ RECENTER: dict[str, float] = {
     # 토벌권은 가로로 긴 표라 긴 변을 조금 더 채운다 — 0.8이면 세로가 얇아 액자 안에서 작아 보인다.
     "sprites/items/raid-ticket.webp": 0.86,
     "sprites/items/raid-select-ticket.webp": 0.86,
+    "sprites/items/r-select-ticket.webp": 0.86,
+    "sprites/items/sr-select-ticket.webp": 0.86,
+    "sprites/items/ssr-select-ticket.webp": 0.86,
     "sprites/items/sweep-ticket.webp": 0.86,
     "sprites/ui/ticket.webp": 0.86,
     "sprites/items/duel-ticket.webp": 0.86,

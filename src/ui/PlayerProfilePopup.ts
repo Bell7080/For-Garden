@@ -75,7 +75,7 @@ export interface ProfileMarks {
   onToggleFavorite: () => void;
   onRemove: () => void;
 }
-const PROFILE_MARK_ON = { favorite: 0xf2c744, remove: 0xe0605a } as const;
+const PROFILE_MARK_ON = { favorite: 0xf2c744, remove: 0xe0605a, report: 0xe8964a } as const;
 
 export class PlayerProfilePopup {
   private opened = false;
@@ -150,7 +150,7 @@ export class PlayerProfilePopup {
 
     const left = header.textLeft;
     // 친구 카드는 이름줄 오른쪽 끝에 표식 칩이 서므로 이름을 그만큼 짧게 끊는다.
-    const name = this.scene.add.text(left, header.nameY, compactProfileText(this.profile.displayName, this.options.marks ? 9 : 12), textStyle({ role: "display", size: 50, color: COLOR.ink }))
+    const name = this.scene.add.text(left, header.nameY, compactProfileText(this.profile.displayName, this.nameGlyphLimit()), textStyle({ role: "display", size: 50, color: COLOR.ink }))
       .setOrigin(0, 0.5).setShadow(0, 3, "#000000", 6, false, true);
     body.add(name);
     if (this.editors) {
@@ -178,16 +178,9 @@ export class PlayerProfilePopup {
       void navigator.clipboard?.writeText(this.profile.displayId).then(() => uid.setText(t("profile.uidCopied")), () => undefined);
       this.scene.time.delayedCall(1200, () => { if (uid.active) uid.setText(t("profile.uid", { uid: this.profile.displayId })); });
     });
-    const reportUid = Number(this.profile.displayId);
-    if (this.options.report && !this.editors && /^\d{1,15}$/.test(this.profile.displayId)) {
-      const report = this.scene.add.text(header.textRight, header.uidY, t("profile.report"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5);
-      body.add(report);
-      report.setInteractive({ useHandCursor: true }).on("pointerup", () => {
-        const target = { uid: reportUid, name: this.profile.displayName };
-        this.close();
-        openSupportPopup(this.scene, this.layer, { report: target });
-      });
-    } else if (this.profile.researchDays !== undefined) {
+    // 신고는 이름줄의 칩이 맡으므로 UID 줄 오른쪽은 연구 일수에 그대로 비켜 둔다.
+    if (this.reportable()) this.buildReport(body);
+    if (this.profile.researchDays !== undefined) {
       body.add(this.scene.add.text(header.textRight, header.uidY, t("profile.researchDays", { days: this.profile.researchDays.toLocaleString() }), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(1, 0.5));
     }
 
@@ -567,6 +560,33 @@ export class PlayerProfilePopup {
    * 친구 카드의 표식 칩 — 즐겨찾기(별)와 삭제(휴지통)가 이름줄 오른쪽 끝에 정보창·룬 쪽지와 같은 칩으로 선다.
    * 밑동 조작 줄에는 친선전처럼 상대와 무엇을 하는 조작만 남는다.
    */
+  /** 남의 카드에서만, 숫자 UID가 있을 때만 신고할 수 있다. */
+  private reportable(): boolean {
+    return Boolean(this.options.report) && !this.editors && /^\d{1,15}$/.test(this.profile.displayId);
+  }
+
+  /** 이름줄 오른쪽 끝에 서는 칩 수만큼 이름을 짧게 끊는다. */
+  private nameGlyphLimit(): number {
+    const chips = (this.options.marks ? 2 : 0) + (this.reportable() ? 1 : 0);
+    return chips >= 3 ? 7 : chips > 0 ? 9 : 12;
+  }
+
+  /**
+   * 신고 칩 — 즐겨찾기·삭제와 같은 크기·같은 줄(이름줄 오른쪽 끝)에 깃발 하나로 선다. 표식 칩이 있으면 그 왼쪽,
+   * 없으면(길드원 카드) 삭제 칩이 서던 맨 끝 자리다. 글자를 적지 않는다 — 깃발이 곧 신고다.
+   */
+  private buildReport(body: Phaser.GameObjects.Container): void {
+    const { header } = PLAYER_PROFILE_LAYOUT;
+    const { size, gap } = header.marks;
+    const x = header.textRight - size / 2 - (this.options.marks ? gap * 2 : 0);
+    const target = { uid: Number(this.profile.displayId), name: this.profile.displayName };
+    const chip = addMarkChip(this.scene, body, x, header.nameY, { glyph: "report", onColor: PROFILE_MARK_ON.report, size, onToggle: () => {
+      this.close();
+      openSupportPopup(this.scene, this.layer, { report: target });
+    } });
+    chip.paint(false);
+  }
+
   private buildMarks(body: Phaser.GameObjects.Container, marks: ProfileMarks): void {
     const { header } = PLAYER_PROFILE_LAYOUT;
     const { size, gap } = header.marks;

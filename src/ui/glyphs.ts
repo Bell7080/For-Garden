@@ -62,7 +62,8 @@ export type GlyphName =
   | "kick"
   | "contrib-attack"
   | "contrib-defense"
-  | "contrib-heal";
+  | "contrib-heal"
+  | "report";
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
   const list: Phaser.Geom.Point[] = [];
@@ -233,6 +234,13 @@ export function drawGlyph(
       // ✕는 "닫는다"를, 휴지통은 "지운다"를 뜻해 자리만 비우는 조작과 섞인다.
       g.lineStyle(Math.max(3, size * 0.16), color, alpha);
       g.lineBetween(-r * 0.56, 0, r * 0.56, 0);
+      break;
+    case "report":
+      // 깃대에 꽂힌 깃발 — 다른 플레이어를 신고하는 조작은 어디서나 이 표식만 쓴다. 깃발 끝은 각지게 파인다.
+      g.lineBetween(-r * 0.62, -r * 0.92, -r * 0.62, r * 0.94);
+      g.fillStyle(color, alpha * 0.35);
+      g.fillPoints(points(-r * 0.62, -r * 0.84, r * 0.82, -r * 0.84, r * 0.42, -r * 0.44, r * 0.82, -r * 0.04, -r * 0.62, -r * 0.04), true);
+      g.strokePoints(points(-r * 0.62, -r * 0.84, r * 0.82, -r * 0.84, r * 0.42, -r * 0.44, r * 0.82, -r * 0.04, -r * 0.62, -r * 0.04), false);
       break;
     case "edit":
       // 각진 연필과 짧은 밑줄. 이름 변경 조작은 모든 씬에서 이 표식만 사용한다.

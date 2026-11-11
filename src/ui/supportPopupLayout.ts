@@ -4,21 +4,18 @@
  */
 export const SUPPORT_POPUP = {
   width: 940,
-  /** 판 안쪽 좌우 여백. */
   margin: 40,
   tabs: { y: 150, width: 300, height: 76, gap: 18 },
-  /** 종류 칩 한 줄. */
-  chips: { y: 262, width: 156, height: 70, gap: 10 },
-  /** `fieldY`는 입력 칸의 **가운데**다(TextInputField가 가운데 기준) — 칸 윗변이 제 이름표 아래에 서야 한다. */
-  subject: { labelY: 340, fieldY: 420, height: 92 },
-  body: { labelY: 500, fieldY: 746, height: 420 },
-  counterY: 990,
-  submit: { y: 1080, width: 360, height: 96 },
-  /** 목록 줄. */
+  /** 작성 화면의 안쪽 유리 판 — 종류 칩부터 내용 칸까지 한 덩어리로 품는다. 보내기는 판 밖 아래에 선다. */
+  form: { top: 214, bottom: 1000, pad: 22 },
+  chips: { y: 268, width: 156, height: 70, gap: 10 },
+  /** 이름표 줄 — 왼쪽에 빗금과 이름, 오른쪽 끝에 글자 수. `fieldY`는 입력 칸의 **가운데**다(TextInputField가 가운데 기준). */
+  subject: { labelY: 346, fieldY: 424, height: 88 },
+  body: { labelY: 506, fieldY: 748, height: 400 },
+  submit: { y: 1084, width: 420, height: 96 },
   list: { top: 230, rowHeight: 118, rowGap: 12, rows: 7 },
   pager: { gapBelow: 40, height: 72 },
-  detail: { headY: 230, textTop: 330, textHeight: 560, replyLabelY: 930, replyFieldY: 1020, replyHeight: 180, sendY: 1170, backY: 1170 },
-  /** 마지막 줄 아래에 남기는 여백. */
+  detail: { headY: 262, headHeight: 104, textTop: 330, textHeight: 562, replyLabelY: 920, replyFieldY: 1030, replyHeight: 160, sendY: 1170, backY: 1170 },
   foot: 90,
 } as const;
 

@@ -10,11 +10,16 @@ describe("문의 창 자리", () => {
     expect(c.tabs.y + c.tabs.height / 2).toBeLessThan(c.chips.y - c.chips.height / 2);
     expect(c.chips.y + c.chips.height / 2).toBeLessThan(c.subject.labelY);
     expect(c.subject.fieldY + c.subject.height / 2).toBeLessThan(c.body.labelY);
-    expect(c.body.fieldY + c.body.height / 2).toBeLessThan(c.counterY);
+    // 안쪽 판은 탭 아래에서 시작해 종류 칩·두 칸을 품고, 보내기 버튼보다 위에서 끝난다.
+    expect(c.form.top).toBeGreaterThan(c.tabs.y + c.tabs.height / 2);
+    expect(c.form.top).toBeLessThan(c.chips.y - c.chips.height / 2);
+    expect(c.body.fieldY + c.body.height / 2).toBeLessThan(c.form.bottom);
+    expect(c.form.bottom).toBeLessThan(c.submit.y - c.submit.height / 2);
+    expect(c.detail.headY - c.detail.headHeight / 2).toBeGreaterThan(c.tabs.y + c.tabs.height / 2);
+    expect(c.detail.headY + c.detail.headHeight / 2).toBeLessThan(c.detail.textTop);
     // 입력 칸은 가운데 기준이라, 칸 윗변이 제 이름표보다 아래여야 이름표와 위 칸을 덮지 않는다.
     expect(c.subject.fieldY - c.subject.height / 2).toBeGreaterThan(c.subject.labelY + 16);
     expect(c.body.fieldY - c.body.height / 2).toBeGreaterThan(c.body.labelY + 16);
-    expect(c.counterY).toBeLessThan(c.submit.y - c.submit.height / 2);
     expect(c.detail.textTop + c.detail.textHeight).toBeLessThan(c.detail.replyLabelY);
     expect(c.detail.replyFieldY + c.detail.replyHeight / 2).toBeLessThan(c.detail.sendY - c.submit.height / 2);
   });

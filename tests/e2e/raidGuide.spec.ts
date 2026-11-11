@@ -13,10 +13,10 @@ const BASE_HEIGHT = 1920;
 const titles = (page: Page) => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? []);
 
 /**
- * 세 보스마다 시즌 판의 「공략법!」 버튼을 눌러 창을 열고, 추천 렐릭의 이유를 펼쳐 본다.
+ * 세 보스마다 시즌 판의 「공략법!」 버튼을 눌러 창을 열고, 추천 렐릭의 이유와 차선책을 펼쳐 본다.
  * 보스는 선택 소환으로 하나씩 세운다 — 월드 폭주는 하루 한 마리라 셋을 다 볼 수 없다.
  */
-test("레이드 공략법 창은 보스마다 패턴·상성·추천 이유를 연다", async ({ page }) => {
+test("레이드 공략법 창은 보스마다 패턴·상성·추천 이유·차선책을 연다", async ({ page }) => {
   test.setTimeout(240_000);
   // 보스 셋을 모두 세울 만큼 선택 토벌권을 쥐고 시작한다.
   await startAfterOpening(page, (state) => {
@@ -57,6 +57,12 @@ test("레이드 공략법 창은 보스마다 패턴·상성·추천 이유를 �
     await tap(page, why!.x, why!.y);
     await page.waitForTimeout(1_500);
     await captureGame(page, `test-results/${project}-raid-guide-${bossId}-why.png`);
+    // 차선책 화살표 줄을 펼친다 — 이유를 펼친 창에서 누르므로 둘 다 펼친 모습(판 안 스크롤)을 함께 본다.
+    const alt = await page.evaluate(() => window.__PF_DEBUG?.raidGuideAlt);
+    expect(alt).toBeTruthy();
+    await tap(page, alt!.x, alt!.y);
+    await page.waitForTimeout(1_500);
+    await captureGame(page, `test-results/${project}-raid-guide-${bossId}-alt.png`);
     await tap(page, 960, BASE_HEIGHT - 120); // 창 닫기
     await expect.poll(() => titles(page)).not.toContain("공략법");
     await tap(page, 960, BASE_HEIGHT - 120); // 판에서 목록으로

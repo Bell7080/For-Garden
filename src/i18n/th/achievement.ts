@@ -126,7 +126,6 @@ export const ACHIEVEMENT_TH = {
   "newbieGrowth.objective.favoriteChosen": "ตั้งเรลิกโปรด",
   "newbieGrowth.objective.guildJoined": "เข้าร่วมกิลด์",
   "newbieGrowth.objective.relicsBrokenThrough": "ทะลวงเรลิก {value} ตัว",
-  "newbieGrowth.sr.label": "เลือก SR",
   "newbieGrowth.sr.title": "สิทธิ์เลือกเรลิก SR",
   "newbieGrowth.sr.hint": "เลือกเรลิกหนึ่งตัวที่จะพากลับมา หากมีอยู่แล้วจะได้รับเศษ 1 ชิ้นแทน",
   "newbieGrowth.sr.owned": "มีแล้ว · เศษ",

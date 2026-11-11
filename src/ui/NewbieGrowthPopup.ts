@@ -3,32 +3,32 @@ import { t, type TextKey } from "../i18n";
 import type { ClaimNewbieGrowthResponse, GameApi, NewbieGrowthGoalDto, NewbieGrowthMilestoneDto, NewbieGrowthResponse } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { NEWBIE_GROWTH_DAYS, NEWBIE_GROWTH_GOAL_GEMS, NEWBIE_GROWTH_GOALS } from "../data/newbieGrowth";
-import { PLAYABLE_RELICS } from "../data/relics";
+import { NEWBIE_GROWTH_DAYS, NEWBIE_GROWTH_GOALS, type NewbieGrowthReward } from "../data/newbieGrowth";
+import { findItem } from "../data/items";
+import { getRelic } from "../data/relics";
 import { formatCurrency } from "../core/formatCurrency";
 import { motionPolicy } from "../core/settings";
 import { logError, reportError } from "../managers/ErrorReporter";
 import { notificationManager } from "../managers/NotificationManager";
-import { settingsManager } from "../managers/SettingsManager";
 import { sdAssetFor, spawnPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { BACKGROUND } from "./backgroundAssets";
 import { addPopupBackgroundImage } from "./backgrounds";
 import { withBusy } from "./BusyOverlay";
 import { Button } from "./Button";
-import { showContentToast } from "./ContentToast";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
+import { FaceFrame } from "./FaceFrame";
 import { chipPoints, drawLayer, drawShapeEdge, drawShapeOutline, HoloBar, HOLO, slantedRect, toPoints } from "./holo";
 import { remainingDetail } from "./itemExpiry";
-import { playNewRelicShowcase } from "./NewRelicShowcase";
 import { NotificationDot } from "./NotificationDot";
 import { NEWBIE_GROWTH_LAYOUT as L, newbieGrowthDayX, newbieGrowthInitialDay, newbieGrowthMilestoneX, newbieGrowthRowY } from "./newbieGrowthLayout";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { pressIn, pressOut } from "./pressFeedback";
 import { startPuppetHop } from "./puppetHop";
-import { RewardFrame } from "./RewardFrame";
-import { openRelicSelectPicker, SR_SELECT_TONE } from "./RelicSelectPicker";
-import { openRewardPopup } from "./RewardPopup";
+import { RARITY_TONE } from "./rarityMark";
+import { RewardFrame, type RewardFrameState } from "./RewardFrame";
+import { SR_SELECT_TONE } from "./RelicSelectPicker";
+import { openRewardPopup, type RewardPopupItem } from "./RewardPopup";
 import { drawSparkle } from "./rouletteWheel";
 import { slideTabPage } from "./screenTransition";
 import { addSdFootShadow } from "./SdFootShadow";
@@ -50,11 +50,16 @@ function objectiveText(goal: Pick<NewbieGrowthGoalDto, "metric" | "target">): st
   return t(key, { value: formatCurrency(goal.target) });
 }
 
-function relicName(id: string): string { return PLAYABLE_RELICS.find((relic) => relic.id === id)?.name ?? id; }
+/** 보상 칸의 그림 — 재화는 재화 그림, 아이템(SR 렐릭 선택권)은 가방 칸과 같은 그림이다. */
+function rewardIcon(reward: Exclude<NewbieGrowthReward, { kind: "fragment" }>): string {
+  if (reward.kind === "currency") return CURRENCY_ICON_BY_WALLET[reward.currency];
+  const icon = findItem(reward.itemId)?.icon;
+  return icon?.kind === "asset" ? icon.key : CURRENCY_ICON_BY_WALLET.gems;
+}
 
 /**
- * 신규 연구원 7일 성장 가이드 — 계정이 선 날부터 하루 다섯 목표가 열리고, 받은 목표 수가 마디를 넘으면 화석·호박석,
- * 서른다섯을 다 받으면 SR 렐릭 한 명을 골라 데려온다(`data/newbieGrowth.ts`).
+ * 신규 연구원 7일 성장 가이드 — 계정이 선 날부터 하루 다섯 목표가 열리고(목표 보상은 치즈케이크 위주, 1일차 첫 칸은 토리카 파편),
+ * 받은 목표 수가 마디를 넘으면 화석·호박석, 서른다섯을 다 받으면 SR 렐릭 선택권이 가방에 들어간다(`data/newbieGrowth.ts`).
  *
  * 판의 머리에는 빈 복원실 원화 위에 토리카가 통통 뛰며 서고, 그 아래 마디 길이 얼마나 왔는지를, 날짜 칩이 어느 날을
  * 보는지를 말한다. 목표 줄의 오른쪽 액자를 누르면 그 목표를, 아래 「모두 받기」는 닿은 모든 목표를 받는다 — 업적 창과 같은 손짓이다.
@@ -186,7 +191,7 @@ export class NewbieGrowthPopup {
     this.list = this.scene.add.container(0, 0);
     dynamic.add(this.list);
     this.paintGoals(this.list, this.data);
-    const claimable = this.data.goals.some(({ state }) => state === "claimable") || this.data.milestones.some(({ state, reward }) => state === "claimable" && reward.kind === "currency");
+    const claimable = this.data.goals.some(({ state }) => state === "claimable") || this.data.milestones.some(({ state }) => state === "claimable");
     const button = new Button(this.scene, 0, L.claim.y, { width: L.claim.width, height: L.claim.height, label: t("newbieGrowth.claimAll"), variant: "primary", onClick: () => void this.claim() });
     button.setEnabled(claimable);
     dynamic.add(button);
@@ -230,45 +235,51 @@ export class NewbieGrowthPopup {
     }
     const claimable = milestone.state === "claimable";
     if (claimable) this.addHalo(holder, size);
-    const onClick = claimable ? () => void (milestone.reward.kind === "srSelect" ? this.openSrPicker() : this.claim([])) : undefined;
-    if (milestone.reward.kind === "currency") {
-      holder.add(new RewardFrame(this.scene, 0, 0, { icon: CURRENCY_ICON_BY_WALLET[milestone.reward.currency], amount: milestone.reward.amount, size, state: milestone.state === "claimed" ? "claimed" : claimable ? "claimable" : "normal", onClick }));
-    } else {
-      holder.add(this.srEmblem(size, milestone.state, onClick));
-    }
+    const onClick = claimable ? () => void this.claim([]) : undefined;
+    const state: RewardFrameState = milestone.state === "claimed" ? "claimed" : claimable ? "claimable" : "normal";
+    // 마지막 큰 액자(SR 렐릭 선택권)는 선택권의 보랏빛 테로 다른 마디와 갈린다.
+    if (final) this.addSrGlow(holder, size, state);
+    holder.add(this.rewardFrame(milestone.reward, size, state, onClick, final ? SR_TONE : undefined));
+    if (milestone.state === "claimed") holder.add(this.checkMark(size * 0.32));
     if (claimable) {
       new NotificationDot(this.scene, holder, { x: size / 2 - 8, y: -size / 2 + 8 });
       if (motionPolicy(session.settings).nonEssentialDistanceFactor > 0) this.scene.tweens.add({ targets: holder, scale: { from: 1, to: 1.08 }, duration: 620, yoyo: true, repeat: -1, ease: "Sine.InOut" });
     }
   }
 
-  /** SR 선택권 액자 — 보랏빛 유리 위에 「SR」과 「선택」, 별 셋. 가이드의 끝이라 다른 액자보다 크고 화려하다. */
-  private srEmblem(size: number, state: NewbieGrowthMilestoneDto["state"], onClick?: () => void): Phaser.GameObjects.Container {
-    const emblem = this.scene.add.container(0, 0);
-    const shape = chipPoints(size, size, { bevel: { topLeft: size * 0.22, topRight: 0, bottomRight: size * 0.22, bottomLeft: 0 } });
-    const claimed = state === "claimed";
-    emblem.add(drawLayer(this.scene, 0, 0, shape, { fill: claimed ? 0x15121c : 0x24123a, alpha: 0.98 }));
-    const glow = this.scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
-    for (let ring = 4; ring >= 1; ring -= 1) glow.fillStyle(SR_TONE, claimed ? 0.03 : 0.07).fillPoints(toPoints(chipPoints(size * ring / 4.4, size * ring / 4.4, { bevel: { topLeft: size * 0.06 * ring, topRight: 0, bottomRight: size * 0.06 * ring, bottomLeft: 0 } })), true);
-    emblem.add(glow);
-    const stars = this.scene.add.graphics();
-    drawSparkle(stars, -size * 0.3, -size * 0.28, size * 0.09, 0xfff2c4, claimed ? 0.35 : 1);
-    drawSparkle(stars, size * 0.32, -size * 0.18, size * 0.07, 0xffffff, claimed ? 0.35 : 1);
-    drawSparkle(stars, size * 0.26, size * 0.3, size * 0.06, 0xfff2c4, claimed ? 0.35 : 1);
-    emblem.add(stars);
-    const rank = this.scene.add.text(0, -size * 0.08, "SR", textStyle({ role: "display", size: Math.round(size * 0.36), color: claimed ? COLOR.inkDim : "#f3e4ff" })).setOrigin(0.5).setStroke("#1a0b2a", 7);
-    const label = this.scene.add.text(0, size * 0.25, t("newbieGrowth.sr.label"), textStyle({ role: "emphasis", size: Math.round(size * 0.17), color: claimed ? COLOR.inkDim : hex(SR_TONE) })).setOrigin(0.5).setStroke("#05070a", 5);
-    squeezeTextToWidth(label, size * 0.84);
-    emblem.add([rank, label]);
-    emblem.add(drawShapeOutline(this.scene, 0, 0, shape, { color: claimed ? 0x68717d : SR_TONE, alpha: claimed ? 0.45 : 0.95, width: state === "claimable" ? 4 : 3 }));
-    if (claimed) emblem.add(this.checkMark(size * 0.32));
-    if (onClick) {
-      emblem.setSize(size, size).setInteractive({ useHandCursor: true });
-      emblem.on("pointerdown", () => pressIn(emblem));
-      emblem.on("pointerout", () => pressOut(emblem, "normal", { pop: false }));
-      emblem.on("pointerup", () => { pressOut(emblem); onClick(); });
+  /** 보상 칸 하나 — 재화·아이템은 공용 보상 액자, 파편은 그 렐릭의 얼굴 유리 조각(`FaceFrame`의 `gem`)이다. */
+  private rewardFrame(reward: NewbieGrowthReward, size: number, state: RewardFrameState, onClick?: () => void, accent?: number): Phaser.GameObjects.Container {
+    if (reward.kind !== "fragment") {
+      return new RewardFrame(this.scene, 0, 0, { icon: rewardIcon(reward), amount: reward.amount, size, state, ...(accent !== undefined && state === "normal" ? { color: accent } : {}), onClick });
     }
-    return emblem;
+    const def = getRelic(reward.relicId);
+    const tone = RARITY_TONE[def.rarity].chip;
+    const holder = this.scene.add.container(0, 0);
+    const face = new FaceFrame(this.scene, 0, 0, { portraitAssetId: def.portraitAssetId, size, color: state === "claimable" ? COLOR.missionClaim : state === "claimed" ? 0x68717d : tone, gem: tone, amount: formatCurrency(reward.amount) });
+    if (state === "claimed") face.setAlpha(0.45);
+    holder.add(face);
+    const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: !!onClick });
+    hit.on("pointerdown", () => pressIn(holder));
+    hit.on("pointerout", () => pressOut(holder, "normal", { pop: false }));
+    hit.on("pointerup", () => { pressOut(holder); onClick?.(); });
+    holder.add(hit);
+    return holder;
+  }
+
+  /** SR 렐릭 선택권 마디 뒤에 번지는 보랏빛 — 가이드의 끝이라 다른 액자보다 한 겹 화려하다. */
+  private addSrGlow(holder: Phaser.GameObjects.Container, size: number, state: RewardFrameState): void {
+    const glow = this.scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
+    const strength = state === "claimed" ? 0.03 : 0.08;
+    for (let ring = 4; ring >= 1; ring -= 1) {
+      const extent = size + ring * 10;
+      glow.fillStyle(SR_TONE, strength).fillPoints(toPoints(chipPoints(extent, extent, { bevel: { topLeft: extent * 0.22, topRight: 0, bottomRight: extent * 0.22, bottomLeft: 0 } })), true);
+    }
+    holder.add(glow);
+    if (state === "claimed") return;
+    const stars = this.scene.add.graphics();
+    drawSparkle(stars, -size * 0.52, -size * 0.46, size * 0.09, 0xfff2c4, 1);
+    drawSparkle(stars, size * 0.54, -size * 0.3, size * 0.07, 0xffffff, 1);
+    holder.add(stars);
   }
 
   private checkMark(size: number): Phaser.GameObjects.Graphics {
@@ -387,7 +398,7 @@ export class NewbieGrowthPopup {
     const holder = this.scene.add.container(rewardX, 0);
     row.add(holder);
     if (claimable) this.addHalo(holder, list.rewardSize);
-    const reward = new RewardFrame(this.scene, 0, 0, { icon: CURRENCY_ICON_BY_WALLET.gems, amount: NEWBIE_GROWTH_GOAL_GEMS, size: list.rewardSize, state: claimed ? "claimed" : claimable ? "claimable" : "normal", onClick: claimable ? () => void this.claim([goal.id]) : undefined });
+    const reward = this.rewardFrame(goal.reward, list.rewardSize, claimed ? "claimed" : claimable ? "claimable" : "normal", claimable ? () => void this.claim([goal.id]) : undefined);
     if (!claimable && !claimed) reward.setAlpha(locked ? 0.35 : 0.6);
     holder.add(reward);
     if (claimed) holder.add(this.checkMark(list.rewardSize * 0.34));
@@ -400,30 +411,26 @@ export class NewbieGrowthPopup {
   // ── 받기 ─────────────────────────────────────────────────────────────────────
 
   /** `goalIds`를 비우면(`[]`) 목표 없이 열린 마디만, 생략하면 닿은 목표 전부와 그로 열린 마디를 받는다. */
-  private async claim(goalIds?: string[], srRelicId?: string): Promise<void> {
+  private async claim(goalIds?: string[]): Promise<void> {
     if (this.claiming) return;
     this.claiming = true;
     try {
       let result: ClaimNewbieGrowthResponse;
-      try { result = await withBusy(this.scene, this.api.claimNewbieGrowth({ ...(goalIds ? { goalIds } : {}), ...(srRelicId ? { srRelicId } : {}) })); }
+      try { result = await withBusy(this.scene, this.api.claimNewbieGrowth(goalIds ? { goalIds } : {})); }
       catch (error) { reportError("newbieGrowth.claim", error); this.data = await this.api.getNewbieGrowth().catch(() => this.data); this.render(); return; }
       this.data = result.growth;
       this.render();
       this.onChanged?.();
       await notificationManager.refresh().catch(() => undefined);
-      const { accessibility } = settingsManager.get();
-      for (const relicId of result.newRelicIds) await playNewRelicShowcase(this.scene, relicId, { depth: 1300, reduceMotion: accessibility.reduceMotion, reduceFlashes: accessibility.reduceFlashes });
-      if (result.srFragmentRelicId) showContentToast(this.scene, t("newbieGrowth.sr.fragmentDone", { name: relicName(result.srFragmentRelicId) }), "info");
-      const items = result.granted.filter(({ amount }) => amount > 0).map(({ currency, amount }) => ({ icon: CURRENCY_ICON_BY_WALLET[currency], amount }));
+      const items: RewardPopupItem[] = [
+        ...result.granted.map(({ currency, amount }) => ({ icon: CURRENCY_ICON_BY_WALLET[currency], amount })),
+        ...result.grantedItems.map(({ itemId, amount }) => ({ icon: rewardIcon({ kind: "item", itemId, amount }), amount })),
+        ...result.grantedFragments.map(({ relicId, amount }) => ({ icon: "", amount, relicId })),
+      ].filter(({ amount }) => amount > 0);
       if (items.length) openRewardPopup(this.scene, this.popups, { title: t("newbieGrowth.rewardTitle"), items });
     } finally {
       this.claiming = false;
     }
-  }
-
-  /** SR 선택권 — 가방의 선택권과 같은 고르기 창(`openRelicSelectPicker`)을 연다. */
-  private openSrPicker(): void {
-    openRelicSelectPicker(this.scene, this.popups, this.data?.srChoices ?? [], (relicId) => void this.claim([], relicId));
   }
 }
 

@@ -126,7 +126,6 @@ export const ACHIEVEMENT_PT_BR = {
   "newbieGrowth.objective.favoriteChosen": "Escolha uma Relíquia favorita",
   "newbieGrowth.objective.guildJoined": "Entre em uma guilda",
   "newbieGrowth.objective.relicsBrokenThrough": "Ruptura de {value} Relíquia",
-  "newbieGrowth.sr.label": "Escolha SR",
   "newbieGrowth.sr.title": "Seletor de Relíquia SR",
   "newbieGrowth.sr.hint": "Escolha uma Relíquia para trazer. Se já a tiver, receberá 1 Fragmento.",
   "newbieGrowth.sr.owned": "Possuída · Fragmento",

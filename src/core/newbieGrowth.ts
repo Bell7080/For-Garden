@@ -1,5 +1,4 @@
-import { NEWBIE_GROWTH_DAYS, NEWBIE_GROWTH_GOAL_GEMS, NEWBIE_GROWTH_GOALS, NEWBIE_GROWTH_MILESTONES, NEWBIE_GROWTH_WINDOW_DAYS, type NewbieGrowthExtraMetric, type NewbieGrowthGoal, type NewbieGrowthMetric, type NewbieGrowthMilestone } from "../data/newbieGrowth";
-import { STANDARD_POOLS } from "../data/banners";
+import { NEWBIE_GROWTH_DAYS, NEWBIE_GROWTH_GOALS, NEWBIE_GROWTH_MILESTONES, NEWBIE_GROWTH_WINDOW_DAYS, type NewbieGrowthExtraMetric, type NewbieGrowthGoal, type NewbieGrowthMetric, type NewbieGrowthMilestone, type NewbieGrowthReward } from "../data/newbieGrowth";
 import type { AchievementFacts } from "./achievements";
 import type { AchievementState } from "./achievementState";
 import type { MissionReward } from "./missions";
@@ -72,41 +71,53 @@ export function newbieGrowthClaimableCount(facts: NewbieGrowthFacts, claimed: Re
 export interface NewbieGrowthClaim {
   goalIds: string[];
   milestoneIds: string[];
+  /** 재화 — 같은 재화는 한 줄로 합친다. */
   rewards: MissionReward[];
-  /** SR 선택권 마디를 이번에 받는가 — 고른 렐릭은 서버가 따로 검증해 지급한다. */
-  srSelect: boolean;
+  /** 가방 아이템(SR 렐릭 선택권). */
+  items: { itemId: string; amount: number }[];
+  /** 그 렐릭의 파편(1일차 토리카). */
+  fragments: { relicId: string; amount: number }[];
 }
 
 /**
  * 받을 수 있는 것을 걷는다. `goalIds`를 주면 그 목표만, 주지 않으면 닿은 목표를 모두 걷는다. 목표를 받아 문턱을 넘은 마디는
- * 같은 요청에서 함께 걷는다 — 다만 SR 선택권은 고를 렐릭(`includeSrSelect`)이 함께 왔을 때만 걷는다.
+ * 같은 요청에서 함께 걷는다.
  */
-export function claimNewbieGrowth(facts: NewbieGrowthFacts, claimed: ReadonlySet<string>, openDay: number, options: { goalIds?: readonly string[]; includeSrSelect?: boolean } = {}): NewbieGrowthClaim {
+export function claimNewbieGrowth(facts: NewbieGrowthFacts, claimed: ReadonlySet<string>, openDay: number, options: { goalIds?: readonly string[] } = {}): NewbieGrowthClaim {
   const requested = options.goalIds ? new Set(options.goalIds) : undefined;
   const next = new Set(claimed);
   const goalIds: string[] = [];
+  const earned: NewbieGrowthReward[] = [];
   for (const goal of NEWBIE_GROWTH_GOALS) {
     if (requested && !requested.has(goal.id)) continue;
     if (newbieGrowthGoalState(goal, facts, next, openDay) !== "claimable") continue;
     next.add(goal.id);
     goalIds.push(goal.id);
+    earned.push(goal.reward);
   }
-  const rewards: MissionReward[] = goalIds.length > 0 ? [{ currency: "gems", amount: goalIds.length * NEWBIE_GROWTH_GOAL_GEMS }] : [];
   const milestoneIds: string[] = [];
-  let srSelect = false;
   for (const milestone of NEWBIE_GROWTH_MILESTONES) {
     if (newbieGrowthMilestoneState(milestone, next) !== "claimable") continue;
-    if (milestone.reward.kind === "srSelect") {
-      if (!options.includeSrSelect) continue;
-      srSelect = true;
-    } else rewards.push({ currency: milestone.reward.currency, amount: milestone.reward.amount });
     next.add(milestone.id);
     milestoneIds.push(milestone.id);
+    earned.push(milestone.reward);
   }
-  return { goalIds, milestoneIds, rewards, srSelect };
+  return { goalIds, milestoneIds, ...sumNewbieGrowthRewards(earned) };
 }
 
-/** SR 선택권으로 고를 수 있는 렐릭 — 상시 연구의 SR 풀(한정 렐릭 제외)과 같다. */
-export function newbieGrowthSrChoices(): readonly string[] {
-  return STANDARD_POOLS.SR;
+/** 보상 칸들을 재화·아이템·파편으로 갈라 같은 것끼리 합친다. */
+export function sumNewbieGrowthRewards(rewards: readonly NewbieGrowthReward[]): Pick<NewbieGrowthClaim, "rewards" | "items" | "fragments"> {
+  const currencies = new Map<MissionReward["currency"], number>();
+  const items = new Map<string, number>();
+  const fragments = new Map<string, number>();
+  for (const reward of rewards) {
+    if (reward.kind === "currency") currencies.set(reward.currency, (currencies.get(reward.currency) ?? 0) + reward.amount);
+    else if (reward.kind === "item") items.set(reward.itemId, (items.get(reward.itemId) ?? 0) + reward.amount);
+    else fragments.set(reward.relicId, (fragments.get(reward.relicId) ?? 0) + reward.amount);
+  }
+  return {
+    rewards: [...currencies].map(([currency, amount]) => ({ currency, amount })),
+    items: [...items].map(([itemId, amount]) => ({ itemId, amount })),
+    fragments: [...fragments].map(([relicId, amount]) => ({ relicId, amount })),
+  };
 }

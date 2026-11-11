@@ -126,7 +126,6 @@ export const ACHIEVEMENT_DE = {
   "newbieGrowth.objective.favoriteChosen": "Favorit-Relikt festlegen",
   "newbieGrowth.objective.guildJoined": "Einer Gilde beitreten",
   "newbieGrowth.objective.relicsBrokenThrough": "Durchbruch bei {value} Relikt",
-  "newbieGrowth.sr.label": "SR-Wahl",
   "newbieGrowth.sr.title": "SR-Relikt-Wahlschein",
   "newbieGrowth.sr.hint": "Wähle ein Relikt aus. Hast du es schon, erhältst du stattdessen 1 Splitter.",
   "newbieGrowth.sr.owned": "Vorhanden · Splitter",

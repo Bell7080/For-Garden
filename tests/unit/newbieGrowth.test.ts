@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { NEWBIE_GROWTH_CLAIM_IDS, NEWBIE_GROWTH_DAYS, NEWBIE_GROWTH_GOAL_GEMS, NEWBIE_GROWTH_GOALS, NEWBIE_GROWTH_MILESTONES, NEWBIE_GROWTH_WINDOW_DAYS } from "../../src/data/newbieGrowth";
-import { claimNewbieGrowth, newbieGrowthClaimableCount, newbieGrowthGoalState, newbieGrowthSrChoices, newbieGrowthWindow, type NewbieGrowthFacts } from "../../src/core/newbieGrowth";
+import { NEWBIE_GROWTH_CLAIM_IDS, NEWBIE_GROWTH_DAYS, NEWBIE_GROWTH_GOALS, NEWBIE_GROWTH_GUIDE_RELIC, NEWBIE_GROWTH_MILESTONES, NEWBIE_GROWTH_SR_TICKET, NEWBIE_GROWTH_WINDOW_DAYS, type NewbieGrowthReward } from "../../src/data/newbieGrowth";
+import { claimNewbieGrowth, newbieGrowthClaimableCount, newbieGrowthGoalState, newbieGrowthWindow, type NewbieGrowthFacts } from "../../src/core/newbieGrowth";
+import { findItem } from "../../src/data/items";
 import { EVENT_REWARD_BUDGET } from "../../src/core/eventRewardBudget";
 import { TRADE_GEM_RATE } from "../../src/data/tradePackages";
 import { RELICS } from "../../src/data/relics";
@@ -36,22 +37,25 @@ describe("신규 7일 성장 가이드", () => {
     }
   });
 
-  it("보상 총량은 승인한 한정 이벤트 예산(젬 5,050)과 같다", () => {
-    const goalGems = NEWBIE_GROWTH_GOALS.length * NEWBIE_GROWTH_GOAL_GEMS;
-    const milestoneGems = NEWBIE_GROWTH_MILESTONES.reduce((sum, { reward }) => {
-      if (reward.kind !== "currency") return sum;
-      const rate = (TRADE_GEM_RATE as Record<string, number>)[reward.currency];
-      return sum + reward.amount / rate;
-    }, 0);
-    expect(goalGems + milestoneGems).toBe(EVENT_REWARD_BUDGET.limited["newbie-growth"].totalGemValue);
-    expect(NEWBIE_GROWTH_MILESTONES.at(-1)?.reward.kind).toBe("srSelect");
-    expect(NEWBIE_GROWTH_MILESTONES.at(-1)?.goals).toBe(35);
+  it("재화 몫의 총량은 승인한 한정 이벤트 예산(젬 5,050)과 같다", () => {
+    const gemValue = (reward: NewbieGrowthReward): number => reward.kind === "currency" ? reward.amount / (TRADE_GEM_RATE as Record<string, number>)[reward.currency] : 0;
+    const total = [...NEWBIE_GROWTH_GOALS.map(({ reward }) => reward), ...NEWBIE_GROWTH_MILESTONES.map(({ reward }) => reward)].reduce((sum, reward) => sum + gemValue(reward), 0);
+    expect(total).toBe(EVENT_REWARD_BUDGET.limited["newbie-growth"].totalGemValue);
   });
 
-  it("SR 선택권은 상시 SR 풀만 고른다", () => {
-    const choices = newbieGrowthSrChoices();
-    expect(choices.length).toBeGreaterThan(0);
-    for (const id of choices) expect(RELICS.find((relic) => relic.id === id)?.rarity).toBe("SR");
+  it("목표 보상은 치즈케이크 위주이고, 1일차 첫 목표는 토리카 파편 1개다", () => {
+    const cheesecake = NEWBIE_GROWTH_GOALS.filter(({ reward }) => reward.kind === "currency" && reward.currency === "cheesecake");
+    expect(cheesecake.length).toBeGreaterThan(NEWBIE_GROWTH_GOALS.length / 2);
+    expect(NEWBIE_GROWTH_GOALS[0]).toMatchObject({ id: "d1-1", reward: { kind: "fragment", relicId: NEWBIE_GROWTH_GUIDE_RELIC, amount: 1 } });
+    expect(NEWBIE_GROWTH_GOALS.filter(({ reward }) => reward.kind === "fragment")).toHaveLength(1);
+    expect(RELICS.find(({ id }) => id === NEWBIE_GROWTH_GUIDE_RELIC)).toBeDefined();
+  });
+
+  it("마지막 마디는 서른다섯 목표의 SR 렐릭 선택권(가방 아이템)이다", () => {
+    const last = NEWBIE_GROWTH_MILESTONES.at(-1)!;
+    expect(last.goals).toBe(35);
+    expect(last.reward).toEqual({ kind: "item", itemId: NEWBIE_GROWTH_SR_TICKET, amount: 1 });
+    expect(findItem(NEWBIE_GROWTH_SR_TICKET)?.useEffect).toEqual({ kind: "select_relic", rarity: "SR" });
   });
 
   it("하루씩 열리고 14일 뒤 닫힌다", () => {
@@ -70,17 +74,22 @@ describe("신규 7일 성장 가이드", () => {
     expect(newbieGrowthClaimableCount(facts, new Set(), 1)).toBe(5);
   });
 
-  it("목표를 받으면 넘은 마디를 함께 걷고, SR 선택권은 고를 렐릭이 올 때만 걷는다", () => {
+  it("목표를 받으면 넘은 마디를 함께 걷고 같은 보상은 합친다", () => {
     const facts = maxedFacts();
     const first = claimNewbieGrowth(facts, new Set(), 7);
     expect(first.goalIds).toHaveLength(35);
-    expect(first.rewards.find(({ currency }) => currency === "gems")?.amount).toBe(35 * NEWBIE_GROWTH_GOAL_GEMS);
-    expect(first.milestoneIds).toEqual(["m10", "m20", "m30"]);
-    expect(first.srSelect).toBe(false);
+    expect(first.milestoneIds).toEqual(["m10", "m20", "m30", "m35"]);
+    expect(first.rewards.find(({ currency }) => currency === "cheesecake")?.amount).toBe(2_100);
+    expect(first.rewards.find(({ currency }) => currency === "gems")?.amount).toBe(700);
+    expect(first.rewards.find(({ currency }) => currency === "fossil")?.amount).toBe(8);
+    expect(first.items).toEqual([{ itemId: NEWBIE_GROWTH_SR_TICKET, amount: 1 }]);
+    expect(first.fragments).toEqual([{ relicId: NEWBIE_GROWTH_GUIDE_RELIC, amount: 1 }]);
     const claimed = new Set([...first.goalIds, ...first.milestoneIds]);
-    const sr = claimNewbieGrowth(facts, claimed, 7, { includeSrSelect: true });
-    expect(sr).toMatchObject({ goalIds: [], milestoneIds: ["m35"], srSelect: true, rewards: [] });
-    expect(claimNewbieGrowth(facts, new Set([...claimed, "m35"]), 7, { includeSrSelect: true }).milestoneIds).toEqual([]);
+    expect(claimNewbieGrowth(facts, claimed, 7)).toMatchObject({ goalIds: [], milestoneIds: [], rewards: [], items: [], fragments: [] });
+  });
+
+  it("1일차 첫 목표만 받으면 토리카 파편 하나만 들어온다", () => {
+    expect(claimNewbieGrowth(maxedFacts(), new Set(), 1, { goalIds: ["d1-1"] })).toMatchObject({ goalIds: ["d1-1"], rewards: [], items: [], fragments: [{ relicId: NEWBIE_GROWTH_GUIDE_RELIC, amount: 1 }] });
   });
 
   it("저장은 모르는 받기 ID를 걷어 낸다", () => {

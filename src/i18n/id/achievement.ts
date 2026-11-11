@@ -126,7 +126,6 @@ export const ACHIEVEMENT_ID = {
   "newbieGrowth.objective.favoriteChosen": "Tetapkan Relik Favorit",
   "newbieGrowth.objective.guildJoined": "Bergabung dengan Guild",
   "newbieGrowth.objective.relicsBrokenThrough": "Terobosan {value} Relik",
-  "newbieGrowth.sr.label": "Pilih SR",
   "newbieGrowth.sr.title": "Tiket Pilih Relik SR",
   "newbieGrowth.sr.hint": "Pilih satu Relik untuk dibawa pulang. Jika sudah punya, kamu mendapat 1 Serpihan.",
   "newbieGrowth.sr.owned": "Dimiliki · Serpihan",

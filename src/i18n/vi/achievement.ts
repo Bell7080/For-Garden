@@ -126,7 +126,6 @@ export const ACHIEVEMENT_VI = {
   "newbieGrowth.objective.favoriteChosen": "Chọn Di vật Yêu thích",
   "newbieGrowth.objective.guildJoined": "Gia nhập Bang hội",
   "newbieGrowth.objective.relicsBrokenThrough": "Đột phá {value} Di vật",
-  "newbieGrowth.sr.label": "Chọn SR",
   "newbieGrowth.sr.title": "Phiếu chọn Di vật SR",
   "newbieGrowth.sr.hint": "Chọn một Di vật để đưa về. Nếu đã có, bạn sẽ nhận 1 Mảnh.",
   "newbieGrowth.sr.owned": "Đã có · Mảnh",

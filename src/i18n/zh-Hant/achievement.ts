@@ -126,7 +126,6 @@ export const ACHIEVEMENT_ZH_HANT = {
   "newbieGrowth.objective.favoriteChosen": "設定最愛遺物",
   "newbieGrowth.objective.guildJoined": "加入公會",
   "newbieGrowth.objective.relicsBrokenThrough": "突破{value}名遺物",
-  "newbieGrowth.sr.label": "SR自選",
   "newbieGrowth.sr.title": "SR遺物自選券",
   "newbieGrowth.sr.hint": "請選擇一名要帶回的遺物。若已擁有，則改為獲得1個碎片。",
   "newbieGrowth.sr.owned": "已擁有 · 碎片",

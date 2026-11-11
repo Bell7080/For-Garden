@@ -126,7 +126,6 @@ export const ACHIEVEMENT_ZH_HANS = {
   "newbieGrowth.objective.favoriteChosen": "设定最爱遗物",
   "newbieGrowth.objective.guildJoined": "加入公会",
   "newbieGrowth.objective.relicsBrokenThrough": "突破{value}名遗物",
-  "newbieGrowth.sr.label": "SR自选",
   "newbieGrowth.sr.title": "SR遗物自选券",
   "newbieGrowth.sr.hint": "请选择一名要带回的遗物。若已拥有，则改为获得1个碎片。",
   "newbieGrowth.sr.owned": "已拥有 · 碎片",

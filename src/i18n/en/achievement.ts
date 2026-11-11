@@ -126,7 +126,6 @@ export const ACHIEVEMENT_EN = {
   "newbieGrowth.objective.favoriteChosen": "Set a Favorite Relic",
   "newbieGrowth.objective.guildJoined": "Join a Guild",
   "newbieGrowth.objective.relicsBrokenThrough": "Breakthrough {value} Relic",
-  "newbieGrowth.sr.label": "SR Pick",
   "newbieGrowth.sr.title": "SR Relic Selector",
   "newbieGrowth.sr.hint": "Pick one Relic to bring home. If you already have it, you get 1 Shard instead.",
   "newbieGrowth.sr.owned": "Owned · Shard",

@@ -126,7 +126,6 @@ export const ACHIEVEMENT_KO = {
   "newbieGrowth.objective.favoriteChosen": "애착 렐릭 정하기",
   "newbieGrowth.objective.guildJoined": "길드 가입하기",
   "newbieGrowth.objective.relicsBrokenThrough": "렐릭 {value}명 한계 돌파",
-  "newbieGrowth.sr.label": "SR 선택",
   "newbieGrowth.sr.title": "SR 렐릭 선택권",
   "newbieGrowth.sr.hint": "데려올 렐릭 한 명을 고르세요. 이미 함께한다면 파편 1개가 됩니다.",
   "newbieGrowth.sr.owned": "보유 중 · 파편",

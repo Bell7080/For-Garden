@@ -126,7 +126,6 @@ export const ACHIEVEMENT_RU = {
   "newbieGrowth.objective.favoriteChosen": "Выбрать любимый реликт",
   "newbieGrowth.objective.guildJoined": "Вступить в гильдию",
   "newbieGrowth.objective.relicsBrokenThrough": "Прорыв {value} реликта",
-  "newbieGrowth.sr.label": "Выбор SR",
   "newbieGrowth.sr.title": "Выбор SR-реликта",
   "newbieGrowth.sr.hint": "Выберите один реликт. Если он уже есть, вы получите 1 фрагмент.",
   "newbieGrowth.sr.owned": "Есть · фрагмент",

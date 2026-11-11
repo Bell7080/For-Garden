@@ -112,7 +112,7 @@ import type { AchievementListResponse, AchievementSeriesDto, ClaimAchievementRew
 import { achievementFacts, claimAchievements, claimableAchievementCount, claimableTierCount, normalizeAchievementState } from "../core/achievements";
 import { ACHIEVEMENT_SERIES } from "../data/achievements";
 import { NEWBIE_GROWTH_GOALS, NEWBIE_GROWTH_MILESTONES } from "../data/newbieGrowth";
-import { claimNewbieGrowth as calculateNewbieGrowthClaim, newbieGrowthClaimableCount, newbieGrowthClaimedGoalCount, newbieGrowthFacts, newbieGrowthGoalState, newbieGrowthMilestoneState, newbieGrowthSrChoices, newbieGrowthWindow, type NewbieGrowthFacts } from "../core/newbieGrowth";
+import { claimNewbieGrowth as calculateNewbieGrowthClaim, newbieGrowthClaimableCount, newbieGrowthClaimedGoalCount, newbieGrowthFacts, newbieGrowthGoalState, newbieGrowthMilestoneState, newbieGrowthWindow, type NewbieGrowthFacts } from "../core/newbieGrowth";
 import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, runeBatchEnhancementTargets, runePartLabel, RUNE_MAIN_STAT_KEYS, type RuneMainStatKey, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
 import { runeBatchEnhancementGoldCost, runeEnhancementGoldCost, runeSellValue } from "../data/runes";
 import { rotationOffer, rotationRunePart } from "../core/shopRotation";
@@ -3760,11 +3760,10 @@ export class FakeServer implements GameApi {
     const claimed = new Set(normalizeAchievementState(state.achievements).growth ?? []);
     return {
       active: window.active, day: window.day, ...(window.nextDayAt ? { nextDayAt: window.nextDayAt } : {}), endsAt: window.endsAt,
-      goals: NEWBIE_GROWTH_GOALS.map((goal) => ({ id: goal.id, day: goal.day, metric: goal.metric, target: goal.target, value: facts[goal.metric], state: newbieGrowthGoalState(goal, facts, claimed, window.day) })),
+      goals: NEWBIE_GROWTH_GOALS.map((goal) => ({ id: goal.id, day: goal.day, metric: goal.metric, target: goal.target, value: facts[goal.metric], reward: { ...goal.reward }, state: newbieGrowthGoalState(goal, facts, claimed, window.day) })),
       milestones: NEWBIE_GROWTH_MILESTONES.map((milestone) => ({ id: milestone.id, goals: milestone.goals, reward: { ...milestone.reward }, state: newbieGrowthMilestoneState(milestone, claimed) })),
       claimedGoals: newbieGrowthClaimedGoalCount(claimed),
       claimableCount: window.active ? newbieGrowthClaimableCount(facts, claimed, window.day) : 0,
-      srChoices: [...newbieGrowthSrChoices()],
     };
   }
 
@@ -3781,8 +3780,8 @@ export class FakeServer implements GameApi {
   }
 
   /**
-   * 닿은 목표와 그로 열린 마디를 받는다. 젬·화석·호박석은 상한까지만 넣고, SR 선택권은 고른 렐릭을 처음 만났으면 그 렐릭을,
-   * 이미 가졌으면 그 렐릭 파편 한 장을 준다(돌파를 끝낸 렐릭은 고를 수 없다). 수령 표시·지급·렐릭을 한 번의 persist로 확정한다.
+   * 닿은 목표와 그로 열린 마디를 받는다. 재화는 상한까지만, 아이템(SR 렐릭 선택권)은 가방 한도까지, 파편(1일차 토리카)은
+   * 그 렐릭이 더 받아 쓸 수 있는 몫까지만 넣는다. 수령 표시와 지급을 한 번의 persist로 확정한다.
    */
   async claimNewbieGrowth(request: ClaimNewbieGrowthRequest): Promise<ClaimNewbieGrowthResponse> {
     await this.delay();
@@ -3790,16 +3789,11 @@ export class FakeServer implements GameApi {
     const window = newbieGrowthWindow(this.newbieGrowthStart(this.state), now);
     if (!window.active) throw new GameApiError("EVENT_NOT_ACTIVE", "신규 성장 가이드 기간이 끝났습니다.");
     for (const id of request.goalIds ?? []) if (!NEWBIE_GROWTH_GOALS.some((goal) => goal.id === id)) throw new GameApiError("NOTHING_TO_CLAIM", "존재하지 않는 목표입니다.");
-    const srRelicId = request.srRelicId;
-    if (srRelicId !== undefined) {
-      if (!newbieGrowthSrChoices().includes(srRelicId)) throw new GameApiError("RELIC_NOT_FOUND", "고를 수 없는 렐릭입니다.");
-      this.assertRelicSelectable(srRelicId);
-    }
     const guildJoined = await this.newbieGuildJoined();
     const facts = this.newbieGrowthFactsOf(this.state, guildJoined);
     const achievements = normalizeAchievementState(this.state.achievements);
     const claimed = new Set(achievements.growth ?? []);
-    const claim = calculateNewbieGrowthClaim(facts, claimed, window.day, { goalIds: request.goalIds, includeSrSelect: srRelicId !== undefined });
+    const claim = calculateNewbieGrowthClaim(facts, claimed, window.day, { goalIds: request.goalIds });
     if (claim.goalIds.length === 0 && claim.milestoneIds.length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "받을 보상이 없습니다.");
     const nextWallet = { ...this.state.wallet };
     const granted = claim.rewards.map(({ currency, amount }) => {
@@ -3807,19 +3801,27 @@ export class FakeServer implements GameApi {
       nextWallet[currency] += applied;
       return { currency, amount: applied };
     });
-    const selection = claim.srSelect && srRelicId ? this.selectRelic(srRelicId, now) : undefined;
-    const newRelicIds = selection?.newRelicIds ?? [];
-    const srFragmentRelicId = selection?.fragmentRelicId;
+    let itemInventory = this.state.itemInventory;
+    const grantedItems = claim.items.map(({ itemId, amount }) => {
+      const result = this.grantItem(itemInventory, itemId, amount, now);
+      itemInventory = result.inventory;
+      return { itemId, amount: result.added };
+    });
+    const relicFragments = { ...this.state.relicFragments };
+    const grantedFragments = claim.fragments.map(({ relicId, amount }) => {
+      const applied = Math.max(0, Math.min(amount, this.relicFragmentRoom(relicId)));
+      relicFragments[relicId] = (relicFragments[relicId] ?? 0) + applied;
+      return { relicId, amount: applied };
+    });
     const nextAchievements = { ...achievements, growth: [...claimed, ...claim.goalIds, ...claim.milestoneIds], ...(guildJoined ? { guildJoined: true as const } : {}) };
-    const candidate = { ...this.state, wallet: nextWallet, achievements: nextAchievements, ...(selection?.state ?? {}) };
-    redeemDeferredStoryBond(candidate, newRelicIds);
+    const candidate = { ...this.state, wallet: nextWallet, itemInventory, relicFragments, achievements: nextAchievements };
     this.persist(candidate);
-    this.state.serverJournal = candidate.serverJournal;
-    this.state.wallet = nextWallet; this.state.achievements = candidate.achievements;
-    if (selection) Object.assign(this.state, selection.state);
+    this.state.wallet = candidate.wallet; this.state.itemInventory = candidate.itemInventory; this.state.relicFragments = candidate.relicFragments; this.state.achievements = candidate.achievements;
     return {
-      ...this.snapshot(), growth: this.newbieGrowthDto(this.state, this.newbieGrowthFactsOf(this.state, guildJoined), now), granted, newRelicIds,
-      ...(srFragmentRelicId ? { srFragmentRelicId } : {}),
+      ...this.snapshot(), growth: this.newbieGrowthDto(this.state, this.newbieGrowthFactsOf(this.state, guildJoined), now),
+      granted: granted.filter(({ amount }) => amount > 0),
+      grantedItems: grantedItems.filter(({ amount }) => amount > 0),
+      grantedFragments: grantedFragments.filter(({ amount }) => amount > 0),
     };
   }
 

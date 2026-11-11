@@ -126,7 +126,6 @@ export const ACHIEVEMENT_JA = {
   "newbieGrowth.objective.favoriteChosen": "お気に入りレリックを決める",
   "newbieGrowth.objective.guildJoined": "ギルドに加入する",
   "newbieGrowth.objective.relicsBrokenThrough": "レリック{value}体を限界突破",
-  "newbieGrowth.sr.label": "SR選択",
   "newbieGrowth.sr.title": "SRレリック選択券",
   "newbieGrowth.sr.hint": "迎えるレリックを1体選んでください。すでにいる場合は欠片1個になります。",
   "newbieGrowth.sr.owned": "所持中・欠片",

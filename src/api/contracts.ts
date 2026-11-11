@@ -9,7 +9,7 @@ import type { AcquisitionResult, GachaPityState, QuantityRewardKind, Wallet } fr
 import type { RelicProgress, RelicSkinId, Stats } from "../core/types";
 import type { MissionPeriod, MissionReward } from "../core/missions";
 import type { AchievementCategory, AchievementMetric } from "../data/achievements";
-import type { NewbieGrowthMetric, NewbieGrowthMilestoneReward } from "../data/newbieGrowth";
+import type { NewbieGrowthMetric, NewbieGrowthMilestoneReward, NewbieGrowthReward } from "../data/newbieGrowth";
 import type { NewbieGrowthGoalState, NewbieGrowthMilestoneState } from "../core/newbieGrowth";
 import type { PassBenefitDefinition, LootCategory, PremiumCategory, ProductAcquisition, ProductGrant, ProductRefresh, ProductStorefront, ShopCategory, ShopProductIconKey } from "../data/products";
 /** storefront와 상점 카테고리는 클라이언트·서버가 함께 쓰는 공용 계약으로 다시 공개한다. */
@@ -680,7 +680,7 @@ export interface AchievementListResponse { series: AchievementSeriesDto[]; claim
 /** 업적 수령 뒤의 상태. 받은 단계·끝난 업적·열린 수식어와 실제 지급분(상한에 깎인 뒤)을 싣는다. */
 export interface ClaimAchievementRewardsResponse extends PlayerStateDto { claimedTiers: Record<string, number[]>; completedSeriesIds: string[]; newModifierIds: string[]; granted: MissionReward[]; }
 /** 신규 7일 성장 가이드 — 목표 하나(`data/newbieGrowth.ts`). 값과 판정은 서버가 낸다. */
-export interface NewbieGrowthGoalDto { id: string; day: number; metric: NewbieGrowthMetric; target: number; value: number; state: NewbieGrowthGoalState }
+export interface NewbieGrowthGoalDto { id: string; day: number; metric: NewbieGrowthMetric; target: number; value: number; reward: NewbieGrowthReward; state: NewbieGrowthGoalState }
 export interface NewbieGrowthMilestoneDto { id: string; goals: number; reward: NewbieGrowthMilestoneReward; state: NewbieGrowthMilestoneState }
 export interface NewbieGrowthResponse {
   /** 계정 생성부터 14일 동안만 참이다. */
@@ -693,22 +693,18 @@ export interface NewbieGrowthResponse {
   milestones: NewbieGrowthMilestoneDto[];
   claimedGoals: number;
   claimableCount: number;
-  /** SR 선택권으로 고를 수 있는 렐릭. */
-  srChoices: string[];
 }
 export interface ClaimNewbieGrowthRequest {
   /** 생략하면 닿은 목표를 모두 받는다. 빈 배열이면 목표는 받지 않는다(마디만). */
   goalIds?: string[];
-  /** SR 선택권 마디를 받을 때 고른 렐릭. */
-  srRelicId?: string;
 }
 export interface ClaimNewbieGrowthResponse extends PlayerStateDto {
   growth: NewbieGrowthResponse;
   granted: MissionReward[];
-  /** SR 선택권으로 처음 만난 렐릭 — 화면이 새 캐릭터 연출을 돈다. */
-  newRelicIds: string[];
-  /** SR 선택권으로 이미 가진 렐릭을 골랐으면 그 렐릭 파편 한 장이 들어간다. */
-  srFragmentRelicId?: string;
+  /** 가방에 실제로 들어간 아이템(SR 렐릭 선택권) — 가방 한도에서 깎인 뒤의 수. */
+  grantedItems: { itemId: string; amount: number }[];
+  /** 실제로 들어간 렐릭 파편(1일차 토리카). */
+  grantedFragments: { relicId: string; amount: number }[];
 }
 
 /** 상품 목록은 정적 정의에 서버가 계산한 현재 구매 가능 횟수를 결합한다. */
@@ -1404,7 +1400,7 @@ export interface GameApi extends AsyncArenaProfileApi {
   claimAchievementRewards(seriesIds?: string[]): Promise<ClaimAchievementRewardsResponse>;
   /** 신규 7일 성장 가이드의 목표·마디와 받을 수를 조회한다. */
   getNewbieGrowth(): Promise<NewbieGrowthResponse>;
-  /** 닿은 목표와 그로 열린 마디를 한 저장 처리로 받는다. SR 선택권은 `srRelicId`가 함께 와야 받는다. */
+  /** 닿은 목표와 그로 열린 마디를 한 저장 처리로 받는다. SR 렐릭 선택권은 가방 아이템으로 들어간다. */
   claimNewbieGrowth(request: ClaimNewbieGrowthRequest): Promise<ClaimNewbieGrowthResponse>;
   /** 서버 시각과 구매 이력을 반영한 공용 카탈로그를 조회한다. */
   getProducts(storefront: ProductStorefront): Promise<ProductListResponse>;

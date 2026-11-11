@@ -12,7 +12,7 @@ export type RewardFrameState = "normal" | "claimable" | "claimed";
 
 /** 아이콘을 액자 안에 두고 굵은 수량을 우하단에 겹치는 공용 보상 프리팹이다. */
 export class RewardFrame extends Phaser.GameObjects.Container {
-  constructor(scene: Phaser.Scene, x: number, y: number, options: { icon: CurrencyIconKey; amount: number; size?: number; state?: RewardFrameState; /** 회색 연구 결과처럼 상태와 별개인 의미색을 주입한다. */ color?: number; onClick?: () => void }) {
+  constructor(scene: Phaser.Scene, x: number, y: number, options: { icon: CurrencyIconKey | string; amount: number; size?: number; state?: RewardFrameState; /** 회색 연구 결과처럼 상태와 별개인 의미색을 주입한다. */ color?: number; onClick?: () => void }) {
     super(scene, x, y);
     scene.add.existing(this);
     const size = options.size ?? 128;

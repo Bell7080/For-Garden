@@ -11,6 +11,9 @@ describe("문의 창 자리", () => {
     expect(c.chips.y + c.chips.height / 2).toBeLessThan(c.subject.labelY);
     expect(c.subject.fieldY + c.subject.height / 2).toBeLessThan(c.body.labelY);
     expect(c.body.fieldY + c.body.height / 2).toBeLessThan(c.counterY);
+    // 입력 칸은 가운데 기준이라, 칸 윗변이 제 이름표보다 아래여야 이름표와 위 칸을 덮지 않는다.
+    expect(c.subject.fieldY - c.subject.height / 2).toBeGreaterThan(c.subject.labelY + 16);
+    expect(c.body.fieldY - c.body.height / 2).toBeGreaterThan(c.body.labelY + 16);
     expect(c.counterY).toBeLessThan(c.submit.y - c.submit.height / 2);
     expect(c.detail.textTop + c.detail.textHeight).toBeLessThan(c.detail.replyLabelY);
     expect(c.detail.replyFieldY + c.detail.replyHeight / 2).toBeLessThan(c.detail.sendY - c.submit.height / 2);

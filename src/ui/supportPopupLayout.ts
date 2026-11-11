@@ -9,10 +9,11 @@ export const SUPPORT_POPUP = {
   tabs: { y: 150, width: 300, height: 76, gap: 18 },
   /** 종류 칩 한 줄. */
   chips: { y: 262, width: 156, height: 70, gap: 10 },
+  /** `fieldY`는 입력 칸의 **가운데**다(TextInputField가 가운데 기준) — 칸 윗변이 제 이름표 아래에 서야 한다. */
   subject: { labelY: 340, fieldY: 420, height: 92 },
-  body: { labelY: 500, fieldY: 560, height: 520 },
-  counterY: 842,
-  submit: { y: 920, width: 360, height: 96 },
+  body: { labelY: 500, fieldY: 746, height: 420 },
+  counterY: 990,
+  submit: { y: 1080, width: 360, height: 96 },
   /** 목록 줄. */
   list: { top: 230, rowHeight: 118, rowGap: 12, rows: 7 },
   pager: { gapBelow: 40, height: 72 },

@@ -29,6 +29,7 @@ import {
   SITUATIONAL_OFFER_RULES, activeSituationalOffer, consumeSituationalOffer, forgetSituationalOfferKey, issueSituationalOffer, normalizeSituationalOfferState,
   openSituationalOffers, pruneSituationalOffers, recordStoryResult, situationalWeekKey, storyStageChapter, type SituationalOfferCandidate, type SituationalOfferState,
 } from "../core/situationalOffers";
+import { appendGachaHistory, type GachaHistorySlot } from "../core/gachaHistory";
 import { FIRST_PAYMENT_GIFT } from "../data/firstPaymentGift";
 import { OPEN_END, OPEN_START, scheduledWindow, windowOpen } from "../core/liveSchedule";
 import { PLAYABLE_RELICS, RELICS } from "../data/relics";
@@ -2673,7 +2674,8 @@ export class FakeServer implements GameApi {
       // 건드리지 않는다 — 별은 플레이어가 파편을 써서 스스로 올린다.
       if (!nextProgress[result.relicId]) nextProgress[result.relicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
     }
-    const nextWallet = { ...spend(this.state.wallet, banner, request.count, currentPity), dnaFragments: this.state.wallet.dnaFragments + mileageGained };
+    const paidWallet = spend(this.state.wallet, banner, request.count, currentPity);
+    const nextWallet = { ...paidWallet, dnaFragments: this.state.wallet.dnaFragments + mileageGained };
     // 비용 차감 뒤 회색 보상을 순서대로 더하며 계정 상한에서 버려지는 양은 저장하지 않는다.
     for (const slot of pulled.slots) if (slot.kind === "currency") {
       nextWallet[slot.currency] = Math.min(WALLET_CAPS[slot.currency], nextWallet[slot.currency] + slot.amount);
@@ -2701,7 +2703,25 @@ export class FakeServer implements GameApi {
     const tutorial = normalizeTutorialState(this.state.tutorial);
     const nextTutorial: TutorialState = nextTutorialStep(tutorial) === "pull"
       ? { ...tutorial, completedStepIds: [...tutorial.completedStepIds, "pull"] } : tutorial;
-    const nextState: Session = { ...this.state, tutorial: nextTutorial, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory };
+    // 연구 기록 — 같은 저장에 남기므로 결과와 기록이 갈리지 않는다. 지우는 길은 없다(`core/gachaHistory.ts`).
+    const nextGachaHistory = (() => {
+      const cost: Record<string, number> = {};
+      for (const key of Object.keys(paidWallet) as (keyof Session["wallet"])[]) {
+        const paid = this.state.wallet[key] - paidWallet[key];
+        if (paid > 0) cost[key] = paid;
+      }
+      let relicIndex = 0;
+      const newIds = new Set(outcome.newRelicIds);
+      const slots: GachaHistorySlot[] = pulled.slots.map((slot) => {
+        if (slot.kind === "currency") return { kind: "currency", currency: slot.currency, amount: slot.amount };
+        const result = outcome.slots[relicIndex++];
+        // 같은 개체가 한 묶음에 둘 나와도 처음 만난 칸 하나만 신규다.
+        const isNew = result.kind === "new" && newIds.delete(result.relicId);
+        return isNew ? { kind: "relic", relicId: result.relicId, isNew: true } : { kind: "relic", relicId: result.relicId };
+      });
+      return appendGachaHistory(this.state.gachaHistory, { at: this.now().toISOString(), bannerId: banner.id, count: request.count, cost, pity: groupPity.pullsSinceSsr, slots });
+    })();
+    const nextState: Session = { ...this.state, tutorial: nextTutorial, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory, gachaHistory: nextGachaHistory };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
     if (forceTenUpgrade) {
@@ -2720,6 +2740,7 @@ export class FakeServer implements GameApi {
     this.state.gachaPityByGroup = nextPity;
     this.state.missions = nextMissions;
     this.state.relicStory = nextRelicStory;
+    this.state.gachaHistory = nextGachaHistory;
     const upgradedSlot = pulled.slots.findIndex((slot) => slot.kind === "relic" && slot.upgraded === true);
     return {
       ...this.snapshot(),

@@ -7,6 +7,7 @@ import { createEmptyChestForgeState, isValidChestForgeState, normalizeChestForge
 import { createEmptyDelophyHuntState, isValidDelophyHuntState, normalizeDelophyHuntState } from "../core/delophyHunt";
 import { createEmptyShuteFishingState, isValidShuteFishingState, normalizeShuteFishingState } from "../core/shuteFishing";
 import { isValidSituationalOfferState, normalizeSituationalOfferState } from "../core/situationalOffers";
+import { isValidGachaHistory, normalizeGachaHistory } from "../core/gachaHistory";
 import { createEmptyRaidTicketDropState, isValidRaidTicketDropState, normalizeRaidTicketDropState } from "../core/raidTicketDrops";
 import { createEmptyAchievementState, isValidAchievementState, normalizeAchievementState } from "../core/achievementState";
 import { cloneDuelState, isValidDuelState, normalizeDuelState } from "../core/duelState";
@@ -366,6 +367,7 @@ export class SaveManager {
       delophyHunt: structuredClone(state.delophyHunt ?? createEmptyDelophyHuntState()),
       shuteFishing: structuredClone(state.shuteFishing ?? createEmptyShuteFishingState()),
       situationalOffers: normalizeSituationalOfferState(state.situationalOffers),
+      gachaHistory: normalizeGachaHistory(state.gachaHistory),
       achievements: normalizeAchievementState(state.achievements ?? createEmptyAchievementState()),
       tutorial: normalizeTutorialState(state.tutorial ?? createEmptyTutorialState()),
       serverJournal: structuredClone(state.serverJournal ?? emptyServerJournal()),
@@ -728,6 +730,7 @@ export class SaveManager {
     if (!isValidDelophyHuntState(data.delophyHunt)) fail("델로피의 보물 찾기 정보가 올바르지 않습니다.");
     if (!isValidShuteFishingState(data.shuteFishing)) fail("슈테의 리듬 낚시 정보가 올바르지 않습니다.");
     if (!isValidSituationalOfferState(data.situationalOffers)) fail("상황 특가 정보가 올바르지 않습니다.");
+    if (!isValidGachaHistory(data.gachaHistory)) fail("연구 기록이 올바르지 않습니다.");
     if (data.missions.lifetime !== undefined && (typeof data.missions.lifetime !== "object" || data.missions.lifetime === null || Object.values(data.missions.lifetime).some((value) => !Number.isInteger(value) || (value as number) < 0))) fail("임무 진행 정보가 올바르지 않습니다.");
     if (data.serverJournal !== undefined && !isValidServerJournal(data.serverJournal)) fail("서버 처리 영수증이 올바르지 않습니다.");
     if (data.expedition.pendingRankRewards !== undefined && (!Array.isArray(data.expedition.pendingRankRewards)
@@ -812,6 +815,7 @@ export class SaveManager {
       delophyHunt: structuredClone(data.delophyHunt),
       shuteFishing: structuredClone(data.shuteFishing),
       situationalOffers: normalizeSituationalOfferState(data.situationalOffers),
+      gachaHistory: normalizeGachaHistory(data.gachaHistory),
       achievements: { ...data.achievements, claimed: { ...data.achievements.claimed }, ...(data.achievements.growth ? { growth: [...data.achievements.growth] } : {}) },
       tutorial: { completedStepIds: [...data.tutorial.completedStepIds], ...(data.tutorial.seenIntroIds ? { seenIntroIds: [...data.tutorial.seenIntroIds] } : {}) },
     };

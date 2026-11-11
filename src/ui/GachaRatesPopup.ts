@@ -45,11 +45,11 @@ export interface GachaRatesContext {
  */
 const GRAY_TIER_LABEL = "RESOURCE";
 
-function tierLabel(tier: RateTier): string {
+export function tierLabel(tier: RateTier): string {
   return tier === "GRAY" ? GRAY_TIER_LABEL : tier;
 }
 
-function tierColor(tier: RateTier): { ink: string; tone: number } {
+export function tierColor(tier: RateTier): { ink: string; tone: number } {
   if (tier === "GRAY") return { ink: "#c9d0d8", tone: 0x8a939e };
   return { ink: RARITY_TONE[tier].halo, tone: RARITY_TONE[tier].chip };
 }

@@ -27,4 +27,6 @@ export const RATES_BUTTON = {
  */
 export const RATES_SPOT = {
   screen: { x: 32, y: 552 },
+  /** 연구소에서 확률 버튼 바로 아래에 붙는 연구 기록 버튼. 같은 열·같은 크기이고 버튼 높이 + 한 뼘만큼 내려선다. */
+  history: { x: 32, y: 552 + 68 + 14 },
 } as const;

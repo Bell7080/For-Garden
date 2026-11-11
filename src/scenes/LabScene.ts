@@ -27,6 +27,7 @@ import { exposeShowcasePreview } from "../testSupport/showcaseHarness";
 import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openGachaRates } from "../ui/GachaRatesPopup";
+import { openGachaHistory } from "../ui/GachaHistoryPopup";
 import { ResearchPullButton, type ResearchPullCostPart } from "../ui/ResearchPullButton";
 import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { addRatesButton, RATES_SPOT } from "../ui/RatesButton";
@@ -177,6 +178,8 @@ export class LabScene extends Phaser.Scene {
     // 마일리지 상점은 로비 상점과 같은 아이콘 칩으로 왼쪽 중상단에 선다(고고학 상점과 같은 자리).
     addSideShopButton(this, SIDE_SHOP.screen.x, SIDE_SHOP.screen.y, SIDE_SHOP.screen.size, t("lab.mileageShop.short"), () => this.openMileageShop());
     addRatesButton(this, RATES_SPOT.screen.x, RATES_SPOT.screen.y, t("lab.rates"), () => this.showRates()).setDepth(LAB_CHROME.depth.panels);
+    // 연구 기록은 확률 바로 아래에 같은 청록 버튼으로 선다 — 무엇이 나올 수 있나와 무엇이 나왔나가 한 열이다.
+    addRatesButton(this, RATES_SPOT.history.x, RATES_SPOT.history.y, t("lab.history.title"), () => this.showHistory(), { glyph: "receipt" }).setDepth(LAB_CHROME.depth.panels);
 
     // 배너 전환 — 판때기가 아니라 옅은 유리 위의 꺾쇠(`addBannerArrow`).
     // **넘김 화살표는 모집판의 SD(첫 복원 연구의 SSR 넷)보다 위에서 손을 받는다.** 바깥 두 마리가 화살표
@@ -461,6 +464,12 @@ export class LabScene extends Phaser.Scene {
     const banner = this.banner;
     const pity = session.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
     openGachaRates({ scene: this, popups: this.popupLayer, banner, pity });
+  }
+
+  /** 연구 기록(`GachaHistoryPopup`). 서버가 연구와 같은 저장에 남긴 기록을 읽기만 한다. */
+  private showHistory(): void {
+    if (!this.popupLayer) return;
+    openGachaHistory({ scene: this, popups: this.popupLayer, history: session.gachaHistory });
   }
 
   /** 현재 단계의 자동 진행을 기다린다. 탭하면 이 Promise만 끝나고 다음 상태로 넘어간다. */

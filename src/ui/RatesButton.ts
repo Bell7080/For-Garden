@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawLayer } from "./holo";
 import { pressIn, pressOut } from "./pressFeedback";
 import { squeezeTextToWidth } from "./textFit";
@@ -12,6 +13,8 @@ export interface RatesButtonOptions {
   anchor?: "left" | "center";
   /** 판 폭의 상한. 넘치는 언어는 글자만 가로로 누른다(`squeezeTextToWidth`). */
   maxWidth?: number;
+  /** `%` 대신 표식 칸에 세울 그림. 확률 버튼과 짝을 이루는 정보 버튼(연구 기록)이 같은 한 장을 쓰되 표식만 바꾼다. */
+  glyph?: GlyphName;
 }
 
 /**
@@ -40,7 +43,9 @@ export function addRatesButton(scene: Phaser.Scene, x: number, y: number, label:
   });
   const iconX = left + spec.padX + spec.icon / 2;
   const badge = drawLayer(scene, iconX, 0, chipPoints(spec.icon, spec.icon, { bevel: { topLeft: 8, bottomRight: 8 } }), { fill: spec.tone, alpha: 1, shadow: false });
-  const mark = scene.add.text(iconX, 1, "%", textStyle({ role: "display", size: spec.markFont, color: spec.markInk })).setOrigin(0.5);
+  const mark = options.glyph
+    ? drawGlyph(scene, options.glyph, iconX, 0, spec.icon * 0.66, 0x0b1a22, 1, 4)
+    : scene.add.text(iconX, 1, "%", textStyle({ role: "display", size: spec.markFont, color: spec.markInk })).setOrigin(0.5);
   text.setPosition(left + spec.padX + spec.icon + spec.gap, 0);
   text.setStroke("#000000", 4);
   button.add([plate, badge, mark, text]);

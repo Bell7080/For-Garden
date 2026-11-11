@@ -69,6 +69,56 @@
 "Garantieregeln",
 "Правила гарантии"
 ],
+"lab.history.title": [
+"研究记录",
+"บันทึกการวิจัย",
+"Lịch sử nghiên cứu",
+"Riwayat Riset",
+"Historial de investigación",
+"Histórico de pesquisas",
+"Forschungsverlauf",
+"История исследований"
+],
+"lab.history.caption": [
+"最近{count}条(最多{limit}条)",
+"ล่าสุด {count} รายการ (สูงสุด {limit})",
+"{count} kết quả gần nhất (tối đa {limit})",
+"{count} hasil terakhir (maks. {limit})",
+"Últimos {count} resultados (máx. {limit})",
+"Últimos {count} resultados (máx. {limit})",
+"Letzte {count} Ergebnisse (max. {limit})",
+"Последние {count} (макс. {limit})"
+],
+"lab.history.amount": [
+"{currency} ×{amount}",
+"{currency} ×{amount}",
+"{currency} ×{amount}",
+"{currency} ×{amount}",
+"{currency} ×{amount}",
+"{currency} ×{amount}",
+"{currency} ×{amount}",
+"{currency} ×{amount}"
+],
+"lab.history.pity": [
+"保底计数 {count}",
+"นับการันตี {count}",
+"Đếm bảo đảm {count}",
+"Hitungan jaminan {count}",
+"Contador de garantía {count}",
+"Contador de garantia {count}",
+"Garantiezähler {count}",
+"Счётчик гарантии {count}"
+],
+"lab.history.unknownBanner": [
+"已结束的研究",
+"การวิจัยที่สิ้นสุดแล้ว",
+"Nghiên cứu đã kết thúc",
+"Riset berakhir",
+"Investigación finalizada",
+"Pesquisa encerrada",
+"Beendete Forschung",
+"Завершённое исследование"
+],
 "lab.mileageShop.short": [
 "里程",
 "ไมล์",
@@ -229,7 +279,16 @@
 "Duplikatbelohnung  +1 Splitter dieses Relikts · Sammle Splitter für den Durchbruch",
 "Награда за повтор  +1 фрагмент этого реликта · Копите фрагменты для прорыва"
 ],
-"lab.policy.duplicateMax": ["突破等级V之后，重复获得转为DNA里程（SSR +30 · SR +8 · R +2）", "หลังทะลวงถึงระดับ V ตัวซ้ำจะแปลงเป็นไมล์ DNA (SSR +30 · SR +8 · R +2)", "Sau Đột phá bậc V, trùng lặp chuyển thành Dặm DNA (SSR +30 · SR +8 · R +2)", "Setelah Terobosan tingkat V, duplikat diubah menjadi Mil DNA (SSR +30 · SR +8 · R +2)", "Tras la Ruptura de grado V, los duplicados se convierten en Millas de ADN (SSR +30 · SR +8 · R +2)", "Após a Ruptura de grau V, duplicatas viram Milhas de DNA (SSR +30 · SR +8 · R +2)", "Nach Durchbruch-Stufe V werden Duplikate zu DNA-Meilen (SSR +30 · SR +8 · R +2)", "После Прорыва V дубликаты превращаются в мили ДНК (SSR +30 · SR +8 · R +2)"],
+"lab.policy.duplicateMax": [
+"突破等级V之后，重复获得转为DNA里程（SSR +30 · SR +8 · R +2）",
+"หลังทะลวงถึงระดับ V ตัวซ้ำจะแปลงเป็นไมล์ DNA (SSR +30 · SR +8 · R +2)",
+"Sau Đột phá bậc V, trùng lặp chuyển thành Dặm DNA (SSR +30 · SR +8 · R +2)",
+"Setelah Terobosan tingkat V, duplikat diubah menjadi Mil DNA (SSR +30 · SR +8 · R +2)",
+"Tras la Ruptura de grado V, los duplicados se convierten en Millas de ADN (SSR +30 · SR +8 · R +2)",
+"Após a Ruptura de grau V, duplicatas viram Milhas de DNA (SSR +30 · SR +8 · R +2)",
+"Nach Durchbruch-Stufe V werden Duplikate zu DNA-Meilen (SSR +30 · SR +8 · R +2)",
+"После Прорыва V дубликаты превращаются в мили ДНК (SSR +30 · SR +8 · R +2)"
+],
 "lab.skipAll": [
 "全部跳过",
 "ข้ามทั้งหมด",
@@ -590,5 +649,14 @@
 "FOSSIL / AMBER",
 "FOSSIL / AMBER"
 ],
-"lab.policy.mileage": ["每次研究DNA里程 +1", "ทุกการวิจัย 1 ครั้ง ได้ไมล์ DNA +1", "Mỗi lượt nghiên cứu +1 Dặm DNA", "Setiap riset +1 Mil DNA", "+1 Milla de ADN por investigación", "+1 Milha de DNA por pesquisa", "+1 DNA-Meile pro Forschung", "+1 миля ДНК за каждое исследование"]
+"lab.policy.mileage": [
+"每次研究DNA里程 +1",
+"ทุกการวิจัย 1 ครั้ง ได้ไมล์ DNA +1",
+"Mỗi lượt nghiên cứu +1 Dặm DNA",
+"Setiap riset +1 Mil DNA",
+"+1 Milla de ADN por investigación",
+"+1 Milha de DNA por pesquisa",
+"+1 DNA-Meile pro Forschung",
+"+1 миля ДНК за каждое исследование"
+]
 }

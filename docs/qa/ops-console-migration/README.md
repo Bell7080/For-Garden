@@ -1,6 +1,6 @@
 # 운영 콘솔·계측·운영 일정·출시 시각 DB 검사
 
-이 폴더는 재실행 가능한 격리 DB 검증 자료다. 적용 결과는 [정식 적용 기록](../../migrations-2026-11-10.md)을 따른다.
+이 폴더는 재실행 가능한 격리 DB 검증 자료다. 적용 결과는 [정식 적용 기록](../../migrations-2026-11-11.md)을 따른다.
 
 ```sh
 node docs/qa/ops-console-migration/local-check.mjs

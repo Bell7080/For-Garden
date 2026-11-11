@@ -1,6 +1,7 @@
 import { missionPeriodKeys, normalizeMissions, type MissionState } from "./missions";
 import { EVENT_REWARD_BUDGET } from "./eventRewardBudget";
 import { chestCurrencyGemValue, type ChestCardCurrency } from "./chestForge";
+import { sameJsonShape } from "./jsonShape";
 
 /**
  * 정규 이벤트 「슈테의 리듬 낚시」 — 코인을 내고 낚싯줄을 던지면 **물고기(보물)가 차례로 물린다**. 물고기 한 마리마다
@@ -334,7 +335,7 @@ export function normalizeShuteFishingState(value: unknown): ShuteFishingState {
 }
 
 export function isValidShuteFishingState(value: unknown): value is ShuteFishingState {
-  return !!value && typeof value === "object" && JSON.stringify(normalizeShuteFishingState(value)) === JSON.stringify(value);
+  return !!value && typeof value === "object" && sameJsonShape(normalizeShuteFishingState(value), value);
 }
 
 /** 주가 바뀌었으면 쓴 코인을 비운다. 진행 중인 판은 남긴다(이미 값을 치렀다). */

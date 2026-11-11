@@ -1,4 +1,5 @@
 import { utcDateKey } from "./dailyContent";
+import { sameJsonShape } from "./jsonShape";
 
 /**
  * 출석의 **저장 모양**과 하루 넘김 규칙 — 신규 7일과 정규 7일 두 줄이다.
@@ -70,7 +71,7 @@ export function normalizeAttendanceState(value: unknown): AttendanceState {
 export function isValidAttendanceState(value: unknown): value is AttendanceState {
   if (!value || typeof value !== "object") return false;
   const normalized = normalizeAttendanceState(value);
-  return JSON.stringify(normalized) === JSON.stringify(value);
+  return sameJsonShape(normalized, value);
 }
 
 export function cloneAttendanceState(state: AttendanceState): AttendanceState {

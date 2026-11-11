@@ -1,5 +1,6 @@
 import { utcDateKey } from "./dailyContent";
 import { RAID_TICKET_ITEM } from "../data/raid";
+import { sameJsonShape } from "./jsonShape";
 
 /**
  * 토벌권이 **가끔** 떨어지는 규칙 — 사서 쓰는 입장권이 아니라 스테미나를 녹이며 놀다 보면 생기는 덤이다.
@@ -41,7 +42,7 @@ export function normalizeRaidTicketDropState(value: unknown): RaidTicketDropStat
 }
 
 export function isValidRaidTicketDropState(value: unknown): value is RaidTicketDropState {
-  return !!value && typeof value === "object" && JSON.stringify(normalizeRaidTicketDropState(value)) === JSON.stringify(value);
+  return !!value && typeof value === "object" && sameJsonShape(normalizeRaidTicketDropState(value), value);
 }
 
 /** 떨어진 덤 한 줄 — 결과판·소탕 영수증이 그대로 그린다. */

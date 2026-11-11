@@ -1,3 +1,4 @@
+import { sameJsonShape } from "./jsonShape";
 /**
  * **상황 특가** — 막힌 순간에 한 번 나타나는 72시간짜리 결제 상품(응태 승인 2026-11-09).
  *
@@ -83,7 +84,7 @@ export function normalizeSituationalOfferState(value: unknown): SituationalOffer
 
 export function isValidSituationalOfferState(value: unknown): boolean {
   if (value === undefined) return true;
-  return JSON.stringify(normalizeSituationalOfferState(value)) === JSON.stringify(value);
+  return sameJsonShape(normalizeSituationalOfferState(value), value);
 }
 
 /** 기한이 지난 특가를 걷는다. 바뀐 것이 없으면 같은 객체를 돌려준다. */

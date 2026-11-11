@@ -1,6 +1,7 @@
 import {
   DUEL_DAILY_ATTEMPTS, DUEL_DEFAULT_DEFENSE, DUEL_OPPONENT_COUNT, DUEL_START_SCORE, DUEL_TIERS, duelDayKey, duelSeasonId, duelSeasonResetScore, duelTier, getDuelTier, type DuelTierId,
 } from "./duelArena";
+import { sameJsonShape } from "./jsonShape";
 
 /**
  * 결투장의 **저장 모양**과 기간 넘김.
@@ -179,7 +180,7 @@ export function normalizeDuelState(value: unknown, ownedRelicIds: readonly strin
 /** 저장 검증 — `normalizeDuelState`를 지나도 그대로인 값만 받아들인다. */
 export function isValidDuelState(value: unknown, ownedRelicIds: readonly string[]): boolean {
   if (!value || typeof value !== "object") return false;
-  return JSON.stringify(normalizeDuelState(value, ownedRelicIds)) === JSON.stringify(value);
+  return sameJsonShape(normalizeDuelState(value, ownedRelicIds), value);
 }
 
 /**

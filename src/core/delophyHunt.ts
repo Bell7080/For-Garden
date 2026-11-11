@@ -1,6 +1,7 @@
 import { missionPeriodKeys, normalizeMissions, type MissionState } from "./missions";
 import { EVENT_REWARD_BUDGET } from "./eventRewardBudget";
 import { chestCurrencyGemValue, type ChestCardCurrency } from "./chestForge";
+import { sameJsonShape } from "./jsonShape";
 
 /**
  * 정규 이벤트 「델로피의 보물 찾기」 — 코인을 내고 판을 열면 **보물 카드 쌍이 앞면으로 잠깐 펼쳐지고**, 다시 엎어져
@@ -368,7 +369,7 @@ export function normalizeDelophyHuntState(value: unknown): DelophyHuntState {
 }
 
 export function isValidDelophyHuntState(value: unknown): value is DelophyHuntState {
-  return !!value && typeof value === "object" && JSON.stringify(normalizeDelophyHuntState(value)) === JSON.stringify(value);
+  return !!value && typeof value === "object" && sameJsonShape(normalizeDelophyHuntState(value), value);
 }
 
 /** 주가 바뀌었으면 쓴 코인을 비운다. 진행 중인 판은 남긴다. */

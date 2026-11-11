@@ -1,5 +1,6 @@
 import { missionPeriodKeys, normalizeMissions, type MissionState } from "./missions";
 import { EVENT_REWARD_BUDGET } from "./eventRewardBudget";
+import { sameJsonShape } from "./jsonShape";
 
 /**
  * 정기 이벤트 「보물상자」 — 코인을 내고 상자를 열면 **카드를 다섯 번 고른다**. 1~4번째는 세 장, 마지막은 네 장이
@@ -246,7 +247,7 @@ export function normalizeChestForgeState(value: unknown): ChestForgeState {
 }
 
 export function isValidChestForgeState(value: unknown): value is ChestForgeState {
-  return !!value && typeof value === "object" && JSON.stringify(normalizeChestForgeState(value)) === JSON.stringify(value);
+  return !!value && typeof value === "object" && sameJsonShape(normalizeChestForgeState(value), value);
 }
 
 /** 주가 바뀌었으면 쓴 코인을 비운다. 진행 중인 상자는 남긴다. */

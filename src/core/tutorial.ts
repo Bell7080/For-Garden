@@ -1,3 +1,4 @@
+import { sameJsonShape } from "./jsonShape";
 /**
  * 첫 플레이 튜토리얼 — 오프닝 1-1에서 곧장 시작해 한 칸씩 조작을 열어 주는 순서표.
  *
@@ -98,7 +99,7 @@ export function normalizeTutorialState(value: unknown): TutorialState {
 }
 
 export function isValidTutorialState(value: unknown): value is TutorialState {
-  return !!value && typeof value === "object" && JSON.stringify(normalizeTutorialState(value)) === JSON.stringify(value);
+  return !!value && typeof value === "object" && sameJsonShape(normalizeTutorialState(value), value);
 }
 
 /**

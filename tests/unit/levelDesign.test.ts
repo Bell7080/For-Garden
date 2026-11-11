@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   ENCOUNTER_ROLE, ENEMY_LEVEL_GROWTH_PERCENT, applyEncounterScaling,
   enemyLevelMultiplier, isEncounterOnTarget, requiredBreakthroughForLevel, type EncounterRole,
+  shownBreakthroughForLevel,
 } from "../../src/core/levelDesign";
-import { BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP, applyLevelGrowth } from "../../src/core/relicProgression";
+import { BREAKTHROUGH_STEPS, RELIC_BASE_LEVEL_CAP, applyLevelGrowth } from "../../src/core/relicProgression";
 import { summarizeStageDifficulty } from "../../src/core/stageDifficulty";
 import { battleArena, type BattleArenaMode } from "../../src/core/battleArena";
 import { CHAPTERS, getStageEnemies, stageEnemyRole } from "../../src/data/stages";
@@ -60,16 +61,18 @@ describe("레벨 디자인 키트", () => {
     // 두었으므로 "내가 18인데 저건 21이네"가 그대로 뜻이 된다.
     expect(enemyLevelMultiplier(1)).toBe(1);
     expect(enemyLevelMultiplier(21)).toBeCloseTo(1 + 20 * ENEMY_LEVEL_GROWTH_PERCENT / 100, 10);
-    const player = applyLevelGrowth(getRelic("ella").stats, 21, "SSR").hp / getRelic("ella").stats.hp;
+    const player = applyLevelGrowth(getRelic("ella").stats, 21, "SSR", 0).hp / getRelic("ella").stats.hp;
     expect(Math.abs(player - enemyLevelMultiplier(21))).toBeLessThan(0.1);
   });
 
   it("은 한계 돌파 사다리 위에 놓인다", () => {
-    // 상한이 20인 사람에게 권장 28짜리 관문을 세우면 그 관문은 막힌 문이다.
-    expect(requiredBreakthroughForLevel(RELIC_LEVEL_CAP)).toBe(0);
-    expect(requiredBreakthroughForLevel(RELIC_LEVEL_CAP + 1)).toBe(1);
-    expect(requiredBreakthroughForLevel(BREAKTHROUGH_STEPS.at(-1)!.levelCap)).toBe(BREAKTHROUGH_STEPS.length);
-    expect(() => requiredBreakthroughForLevel(BREAKTHROUGH_STEPS.at(-1)!.levelCap + 1)).toThrow(RangeError);
+    // 적 사다리는 20·30·40·50·60 경계에서 돌파 단계를 지닌다 — 21~30이 1단계, 51~60이 4단계.
+    expect(requiredBreakthroughForLevel(RELIC_BASE_LEVEL_CAP)).toBe(0);
+    expect(requiredBreakthroughForLevel(RELIC_BASE_LEVEL_CAP + 1)).toBe(1);
+    expect(requiredBreakthroughForLevel(30)).toBe(1);
+    expect(requiredBreakthroughForLevel(31)).toBe(2);
+    expect(requiredBreakthroughForLevel(BREAKTHROUGH_STEPS.at(-1)!.requiredLevel + 10)).toBe(BREAKTHROUGH_STEPS.length);
+    expect(() => requiredBreakthroughForLevel(BREAKTHROUGH_STEPS.at(-1)!.requiredLevel + 11)).toThrow(RangeError);
   });
 
   it("의 목표 띠는 잡졸에서 보스로 갈수록 길고 아프다", () => {
@@ -106,7 +109,8 @@ const REFERENCE_COMBO = ["ella", "maki", "stella"] as const;
 function referenceParty(level: number): RelicDef[] {
   return REFERENCE_COMBO.map((id) => {
     const def = getRelic(id);
-    return { ...def, stats: applyLevelGrowth(def.stats, level, def.rarity) };
+    // 기준 파티는 적 사다리와 같은 돌파 단계를 지닌다 — 그 레벨에 설 때 사다리가 기대하는 성장이다.
+    return { ...def, stats: applyLevelGrowth(def.stats, level, def.rarity, shownBreakthroughForLevel(level)) };
   });
 }
 
@@ -143,11 +147,13 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 26.0, 0.85],
   // v0.395.4: 전투 코어의 hypot·sin·cos·atan2·exp·pow를 결정적 구현(detMath)으로 바꾸자 열다섯이 엉키는 난전이 마지막 자리부터 달라져 52.8 → 57.3초로 재측정됐다.
   // v0.422.4: 같은 이유로 57.3 → 44.9초 — 무리 띠보다 길던 한 판이 그만큼 가까워졌다.
-  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 44.9, 0.79],
+  // 한계 돌파 +10%/단계(2026-11-11): 기준 파티와 적이 함께 사다리 돌파 %를 받는다. 무리 몫은 태생 층과 곱해져 조금 갈려 44.9 → 50.3초.
+  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 50.3, 0.86],
   ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 18.1, 0.95],
   // 정예가 보호막을 깨고(코마) 치유를 깎는 자리가 되어 평균이 37.3 → 29.5로 줄고 띠 안에 들었다.
   ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 12.4, 0.64],
-  ["원정 무리 15층", 29, () => getExpeditionEncounterEnemies("horde", 15), "swarm", "expedition", 15.0, 0.72],
+  // 한계 돌파 +10%/단계(2026-11-11): 15.0초·0.72 → 17.5초·0.78.
+  ["원정 무리 15층", 29, () => getExpeditionEncounterEnemies("horde", 15), "swarm", "expedition", 17.5, 0.78],
 ];
 
 describe("콘텐츠별 전투 시간 실측", () => {

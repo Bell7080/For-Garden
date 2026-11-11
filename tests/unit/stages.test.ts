@@ -8,7 +8,7 @@ import { CHAPTERS, DAILY_RESTORATION, FIXED_STAGE_ENEMIES, SIDE_BATTLE_STAGE, SI
 import { stageFirstClearRewards } from "../../src/core/stageRewards";
 import { isStageUnlockedByProgress, nextBattleStage } from "../../src/core/stageProgress";
 import { stageChapterNavigationLayout } from "../../src/ui/stageChapterLayout";
-import { BREAKTHROUGH_CAP, relicLevelCap } from "../../src/core/relicProgression";
+import { BREAKTHROUGH_CAP } from "../../src/core/relicProgression";
 
 /** 스테이지 편성과 공개 성장 설계가 콘텐츠 수정 중 흐트러지지 않도록 고정한다. */
 describe("stage enemy design", () => {
@@ -202,17 +202,14 @@ describe("stage enemy design", () => {
     expect(elite.enemies[0].level).toBeGreaterThanOrEqual(mob.enemies[0].level);
   });
 
-  it("적 레벨은 한계 돌파로 닿을 수 있는 자리에만 선다", () => {
+  it("적 레벨은 적 사다리의 돌파 경계 안에 선다", () => {
     /*
-     * **레벨 사다리는 돌파 사다리 위에 놓인다.** 상한이 20인 사람에게 권장 28짜리 관문을
-     * 세우면 그 관문은 "더 키우면 된다"가 아니라 막힌 문이다. 1장은 돌파 없이 끝나고,
-     * 뒤 장은 그 시점에 뚫려 있을 만한 단계 안에 든다.
+     * **레벨 사다리는 돌파 사다리 위에 놓인다.** 렐릭 레벨 상한은 연구원 레벨이 열지만
+     * (응태 결정, 2026-11-11), 적 사다리는 20·30·40·50·60 경계마다 돌파 단계를 지닌다.
+     * 1장은 돌파 없이 끝나고, 어느 적도 60을 넘지 않는다(그 너머는 경계가 던진다).
      */
     for (const stage of battles) {
-      for (const enemy of stage.enemies) {
-        const breakthrough = requiredBreakthroughForLevel(enemy.level);
-        expect(enemy.level, stage.id).toBeLessThanOrEqual(relicLevelCap(breakthrough));
-      }
+      for (const enemy of stage.enemies) expect(() => requiredBreakthroughForLevel(enemy.level), stage.id).not.toThrow();
     }
     const chapterOne = battles.filter(({ id }) => id.startsWith("1-"));
     for (const stage of chapterOne) {
@@ -254,9 +251,8 @@ describe("stage enemy design", () => {
       expect(enemy.breakthrough).toBeGreaterThanOrEqual(0);
       expect(enemy.breakthrough).toBeLessThanOrEqual(BREAKTHROUGH_CAP);
       expect(enemy.level).toBeGreaterThanOrEqual(1);
-      // 적은 제 성장 곡선을 쓰므로 플레이어의 돌파 상한에 묶이지 않는다. 게임 전체의
-      // 천장(돌파를 다 뚫은 상한)만 넘지 않으면 된다 — 그 위는 아무도 따라잡을 수 없다.
-      expect(enemy.level).toBeLessThanOrEqual(relicLevelCap(BREAKTHROUGH_CAP));
+      // 적 스토리 사다리의 천장은 60이다(돌파 경계의 끝). 렐릭은 연구원 레벨로 100까지 오른다.
+      expect(enemy.level).toBeLessThanOrEqual(60);
     }
   });
 

@@ -48,7 +48,7 @@ export const INFO_TH = {
   "info.section.rune": "รูน",
   "info.level": "เลเวล",
   "info.level.max": "เลเวลสูงสุด",
-  "info.level.cap": "เพดานเลเวล",
+  "info.breakthrough.growth": "การเติบโตค่าสถานะ",
   "info.feed": "ป้อน",
   "info.levelUp.banner": "LEVEL UP!",
   "info.levelUp.statGain": "{stat} +{value}",

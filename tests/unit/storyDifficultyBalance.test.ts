@@ -17,7 +17,7 @@ function battle(ids: readonly string[], level: number, stageId: string, seed: nu
       for (const option of [...rune.mainStats, ...rune.subStats]) for (let n=0;n<3;n++) rune=enhanceRune(rune,option.key,runeEnhancementIncrease(rune.rarity,option.key),n === 2 ? .99 : 0);
       return rune;
     });
-    return {...def,stats:applyHeartGems(applyLevelGrowth(def.stats,level,def.rarity),gems)};
+    return {...def,stats:applyHeartGems(applyLevelGrowth(def.stats,level,def.rarity,0),gems)};
   });
   const stage = getBattleStage(stageId);
   const state = createSkirmish(players, getStageEnemies(stage), battleArena("stage"), {}, Object.fromEntries(ids.map(id => [id, BREAKTHROUGH_CAP])), { enemyBodyScales: getStageEnemies(stage).map(enemy=>ENCOUNTER_ROLE[enemy.encounterRole!].bodyScale), enemyBreakthroughs: stageEnemyGrowth(stage).map(enemy => enemy.breakthrough) });

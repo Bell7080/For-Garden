@@ -1,4 +1,3 @@
-import { BREAKTHROUGH_CAP, relicLevelCap } from "./relicProgression";
 import { canEngraveRune, type RuneInstance } from "./runes";
 
 /**
@@ -22,6 +21,8 @@ export interface GrowthPathInput {
   runeInventory: readonly RuneInstance[];
   /** 고고학이 열려 있는가. 잠긴 콘텐츠를 길로 세우지 않는다. */
   archaeologyOpen: boolean;
+  /** 지금 연구원 레벨이 연 렐릭 레벨 상한(`relicLevelCap`). 상한에 닿은 개체는 급여 길로 세우지 않는다. */
+  relicLevelCap: number;
 }
 
 /** 편성 중 레벨이 가장 낮고 아직 급여로 올릴 수 있는 렐릭. 같으면 편성 순서가 앞선 쪽이다. */
@@ -29,7 +30,7 @@ export function weakestFeedableRelic(input: GrowthPathInput): string | undefined
   let target: { id: string; level: number } | undefined;
   for (const id of input.party) {
     const progress = input.relicProgress[id];
-    if (!progress || progress.level >= relicLevelCap(Math.min(BREAKTHROUGH_CAP, Math.max(0, progress.breakthrough)))) continue;
+    if (!progress || progress.level >= input.relicLevelCap) continue;
     if (!target || progress.level < target.level) target = { id, level: progress.level };
   }
   return target?.id;

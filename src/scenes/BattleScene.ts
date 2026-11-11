@@ -101,6 +101,7 @@ import {
 import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
+import { relicLevelCap } from "../core/relicProgression";
 import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
 import { cakeOperationEnemies, cakeOperationRole, cakeOperationRunCost, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { BATTLE_FIELD_FRAMING, battleArena } from "../core/battleArena";
@@ -3531,7 +3532,7 @@ export class BattleScene extends Phaser.Scene {
    * 편성 바꾸기가 돌아가는 곳(`defeatPartyRoute`)뿐이다. 고른 길이 있으면 판을 닫는 기본 길은 서지 않는다(`markChosen`).
    */
   private defeatGrowth(markChosen: () => void): { paths: readonly GrowthPath[]; onPick: (path: GrowthPath) => void } {
-    const paths = growthPaths({ party: session.party, relicProgress: session.relicProgress, runeInventory: session.runeInventory, archaeologyOpen: contentOpen("archaeology") });
+    const paths = growthPaths({ party: session.party, relicProgress: session.relicProgress, runeInventory: session.runeInventory, archaeologyOpen: contentOpen("archaeology"), relicLevelCap: relicLevelCap(session.playerResearch.level) });
     return {
       paths,
       onPick: (path) => {

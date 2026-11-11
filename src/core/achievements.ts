@@ -1,6 +1,6 @@
 import { ACHIEVEMENT_SERIES, type AchievementMetric, type AchievementSeries } from "../data/achievements";
 import { BOND_LEVEL_CAP } from "./bond";
-import { BREAKTHROUGH_STEPS, relicLevelCap } from "./relicProgression";
+import { BREAKTHROUGH_STEPS, RELIC_MAX_LEVEL } from "./relicProgression";
 import { DUEL_TIERS } from "./duelArena";
 import { BOUNTY_TIERS } from "../data/bounty";
 import { mergeMissionRewards, type MissionReward } from "./missions";
@@ -34,7 +34,8 @@ export function achievementFacts(state: Session): AchievementFacts {
   const progress = playable.map(({ id }) => state.relicProgress[id]).filter((entry) => entry !== undefined);
   const maxBreakthrough = BREAKTHROUGH_STEPS.length;
   const storyStageIds = CHAPTERS.flatMap(({ stages }) => stages.map(({ id }) => id));
-  const levelCap = relicLevelCap(maxBreakthrough);
+  // 「최대 레벨」은 연구원 레벨이 열 수 있는 끝(100)이다 — 상한이 돌파가 아니라 연구원 레벨을 따른다.
+  const levelCap = RELIC_MAX_LEVEL;
   const ownedDefs = playable;
   const runes = state.runeInventory ?? [];
   const partyDefs = state.party.map((id) => PLAYABLE_RELICS.find((relic) => relic.id === id)).filter((relic) => relic !== undefined);

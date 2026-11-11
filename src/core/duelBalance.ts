@@ -1,5 +1,5 @@
 import { createSkirmish, fireUltimate, isFighterAlive, isPartyFighter, stepSkirmish, type Arena } from "./skirmish";
-import { applyLevelGrowth, BREAKTHROUGH_CAP, relicLevelCap } from "./relicProgression";
+import { applyLevelGrowth, BREAKTHROUGH_CAP } from "./relicProgression";
 import type { RelicDef } from "./types";
 
 /**
@@ -95,10 +95,10 @@ export function simulateDuel(left: RelicDef, right: RelicDef, seed: number): Due
   return runDuel(left, right, seed);
 }
 
-/** 레벨 60·돌파 V의 실제 성장치와 전용 돌파 효과를 모두 켠 한 판이다. */
+/** 레벨 60·돌파 V(4단계)의 실제 성장치와 전용 돌파 효과를 모두 켠 한 판이다. */
 export function simulateMaxedDuel(left: RelicDef, right: RelicDef, seed: number): DuelRun {
-  const level = relicLevelCap(BREAKTHROUGH_CAP);
-  const grown = (def: RelicDef): RelicDef => ({ ...def, stats: applyLevelGrowth(def.stats, level, def.rarity) });
+  const level = 60;
+  const grown = (def: RelicDef): RelicDef => ({ ...def, stats: applyLevelGrowth(def.stats, level, def.rarity, BREAKTHROUGH_CAP) });
   return runDuel(grown(left), grown(right), seed, BREAKTHROUGH_CAP, BREAKTHROUGH_CAP);
 }
 

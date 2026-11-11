@@ -112,7 +112,9 @@ export const RAID_DIFFICULTY: Record<RaidDifficulty, RaidDifficultySpec> = {
   easy: raidDifficulty({ level: 20, bodyHp: 25_000, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 10_000, total: 8, kill: 5, gems: 40 }, run: { sigil: 3, gems: 7, salvage: 2 } }),
   normal: raidDifficulty({ level: 30, bodyHp: 50_000, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15_000, total: 14, kill: 8, gems: 65 }, run: { sigil: 5, gems: 13, salvage: 4 } }),
   hard: raidDifficulty({ level: 40, bodyHp: 100_000, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22_000, total: 22, kill: 12, gems: 85 }, run: { sigil: 8, gems: 17, salvage: 6 } }),
-  rampage: raidDifficulty({ level: 60, bodyHp: 250_000, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45_000, total: 60, kill: 30, gems: 130 }, run: { sigil: 13, gems: 25, salvage: 10 } }),
+  // 렐릭 상한이 연구원 레벨로 100까지 열리며(돌파 +10%p) 만렙 편성의 폭주 피해가 2.6배가 되었다 — 판 체력과 내 몫 목표를
+  // 함께 2.5배로 올려 같은 판 수·같은 보상선을 지킨다(250,000 → 625,000 · 45,000 → 112,500). 쉬움~어려움은 권장 레벨에서 그대로다.
+  rampage: raidDifficulty({ level: 60, bodyHp: 625_000, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 112_500, total: 60, kill: 30, gems: 130 }, run: { sigil: 13, gems: 25, salvage: 10 } }),
 };
 
 /** 저장·진입 데이터에서 온 값이 난이도 표에 있는지. 모르는 값은 어느 몸으로 세울지 알 수 없다. */

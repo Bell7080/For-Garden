@@ -2,7 +2,7 @@ import { getRelic } from "../data/relics";
 import { getBattleStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
 import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
 import { raidBossDef, raidBossPercentHpBasis, raidBossGrowth } from "./raid";
-import { applyLevelGrowth, applyBreakthrough } from "./relicProgression";
+import { applyLevelGrowth } from "./relicProgression";
 import { requiredBreakthroughForLevel } from "./levelDesign";
 import { battleArena } from "./battleArena";
 import { createRaidSkirmishConfig, expeditionBattleEffects } from "./expeditionBattle";
@@ -80,7 +80,7 @@ export function createCcCombatScenario(options: {
   const level = options.level ?? (stage ? Math.max(...stageEnemyGrowth(stage).map(enemy => enemy.level)) : 60);
   const breakthrough = requiredBreakthroughForLevel(level);
   const party = (options.party ?? ["pachi", "mosana", "anka"]).map(id => {
-    const def = getRelic(id); return { ...def, stats: applyBreakthrough(applyLevelGrowth(def.stats, level, def.rarity), breakthrough) };
+    const def = getRelic(id); return { ...def, stats: applyLevelGrowth(def.stats, level, def.rarity, breakthrough) };
   });
   const effects = expeditionBattleEffects(options.selections ?? []);
   const id = `${options.mode}:${stage?.id ?? options.bossId ?? (options.mode === "raid" ? "koma" : "pontos")}:lv${level}`;
@@ -96,7 +96,7 @@ export function createCcCombatScenario(options: {
         return createSkirmish(party, config.enemyDefs, battleArena("raid"), {}, levels, { ...config, automaticUltimates: true, augmentEffects: effects, enemyBreakthroughs: [raidBossGrowth("normal").breakthrough] });
       }
       const base = getRelic(options.bossId ?? "pontos");
-      const boss: RelicDef = { ...base, encounterRole: "endless", stats: applyBreakthrough(applyLevelGrowth(base.stats, level, base.rarity), breakthrough) };
+      const boss: RelicDef = { ...base, encounterRole: "endless", stats: applyLevelGrowth(base.stats, level, base.rarity, breakthrough) };
       return createSkirmish(party, [boss], battleArena("expeditionBoss"), {}, levels, { automaticUltimates: true, augmentEffects: effects,
         boss: { phases: EXPEDITION_BOSS_BALANCE.phases.map(phase => ({ startsAt: phase.startsAtMs / 1000, damagePerSecond: phase.attackPerSecond, label: phase.label })),
           limitSeconds: EXPEDITION_BOSS_BALANCE.maximumDurationMs / 1000, percentHpBasis: boss.stats.hp } });
@@ -153,7 +153,7 @@ export function createCcEngagementScenarios(options: { durationSeconds?: number;
       createState: () => {
         const party = ids.map((id, i) => {
           const def = getRelic(id);
-          const stats = applyBreakthrough(applyLevelGrowth(def.stats, 30, def.rarity), breakthrough);
+          const stats = applyLevelGrowth(def.stats, 30, def.rarity, breakthrough);
           return { ...def, stats: { ...stats, hp: stats.hp * 100, attackSpeed: stats.attackSpeed * speed * [0.8,1,1.2][i],
             moveSpeed: stats.moveSpeed * movement * [1.2,1,0.8][i] } };
         });

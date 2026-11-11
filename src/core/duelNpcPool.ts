@@ -4,7 +4,7 @@ import { PLAYABLE_RELICS } from "../data/relics";
 import { combatPower } from "./combatPower";
 import { duelBlindOrder, duelGrownStats, duelNpcLevel } from "./duelArena";
 import { expeditionRewardRandom } from "./expeditionRewards";
-import { requiredBreakthroughForLevel } from "./levelDesign";
+import { shownBreakthroughForLevel } from "./levelDesign";
 import { arrangeByRole } from "./partyAffinity";
 import type { RelicDef, Stats } from "./types";
 
@@ -62,7 +62,8 @@ function buildNpc(index: number, random: () => number): DuelNpc {
   // 아래쪽이 두껍다 — 티어가 오를수록 사람이 줄어드는 사다리.
   const score = Math.round(DUEL_NPC_TOP_SCORE * Math.pow(random(), 1.6));
   const level = duelNpcLevel(score);
-  const breakthrough = requiredBreakthroughForLevel(level);
+  // 60을 넘는 레벨은 사다리 밖이라 그 레벨까지 열 수 있는 돌파를 모두 연 것으로 본다.
+  const breakthrough = shownBreakthroughForLevel(level);
   const picked = pickTeam(random);
   const units = arrangeByRole(picked).map((def) => {
     const stats = duelGrownStats(def, level, breakthrough);

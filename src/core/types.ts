@@ -2708,7 +2708,7 @@ export interface RelicDef {
    *
    * **문장을 적어 두지 않는다.** 화면 문구는 `breakthroughEffectText`가 이 계약에서 조립하며,
    * 그래야 수치를 고친 뒤 옛 문장이 그대로 남는 일이 없다. 슬롯을 비워 두면 그 별에서는 공용
-   * 보정만 오르고 전용 효과 줄이 서지 않는다 — 아직 설계하지 않은 개체는 비워 둔다.
+   * 성장 몫(+10%p)만 오르고 전용 효과 줄이 서지 않는다 — 아직 설계하지 않은 개체는 비워 둔다.
    */
   breakthroughEffects?: BreakthroughEffects;
 }

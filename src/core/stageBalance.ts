@@ -1,4 +1,6 @@
-import { FEED_UNIT, relicExpToNext, relicLevelCap } from "./relicProgression";
+import { FEED_UNIT, RELIC_BASE_LEVEL_CAP, relicExpToNext, relicLevelCap } from "./relicProgression";
+import { grantPlayerExperience, normalizePlayerLevel, playerExpForStamina } from "./playerLevel";
+import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 
 /**
  * 스토리만 밀었을 때 파티가 실제로 얼마나 자라는가.
@@ -24,9 +26,8 @@ export const STORY_FLOOR = {
  * 급여 단가와 경험치 곡선은 `relicProgression`이 갖고 있으므로 여기서 다시 적지 않고 그대로
  * 되짚는다 — 두 곳이 갈리면 관문 난이도가 실제 성장과 다른 곡선을 보게 된다.
  */
-export function levelFromCheesecake(cheesecake: number): number {
+export function levelFromCheesecake(cheesecake: number, cap: number = RELIC_BASE_LEVEL_CAP): number {
   if (!Number.isFinite(cheesecake) || cheesecake < 0) throw new RangeError("치즈케이크가 올바르지 않습니다.");
-  const cap = relicLevelCap(0);
   let level = 1;
   let spent = 0;
   while (level < cap) {
@@ -37,6 +38,19 @@ export function levelFromCheesecake(cheesecake: number): number {
     level += 1;
   }
   return level;
+}
+
+/**
+ * 그 관문까지 **스토리 첫 클리어만으로** 연 렐릭 레벨 상한.
+ *
+ * 렐릭 상한은 한계 돌파가 아니라 연구원 레벨이 연다(`relicLevelCap`). 바닥은 다른 콘텐츠에 스테미나를
+ * 하나도 쓰지 않았다고 보므로, 이긴 스토리 판의 스테미나(판마다 `normalStage`)가 올린 연구원 레벨만 센다.
+ * 돌파 파편은 뽑기 운이라 바닥에 넣지 않는다 — 바닥 파티는 언제나 돌파 0이다.
+ */
+export function storyFloorLevelCap(clearedStages: number): number {
+  if (!Number.isInteger(clearedStages) || clearedStages < 0) throw new RangeError("클리어 관문 수가 올바르지 않습니다.");
+  const exp = playerExpForStamina(clearedStages * CONTENT_STAMINA_COSTS.normalStage);
+  return relicLevelCap(grantPlayerExperience(normalizePlayerLevel(undefined), exp).progress.level);
 }
 
 /**
@@ -76,15 +90,16 @@ export function storyFloorGrowth(
     throw new RangeError("몰아줄 자리가 편성 범위를 벗어났습니다.");
   }
   const cap = STORY_FLOOR.runeSlots;
+  const levelCap = storyFloorLevelCap(clearedStages);
   if (shape === "carry") {
     const pick = <T>(value: T, other: T): [T, T, T] =>
       [0, 1, 2].map((slot) => slot === carryIndex ? value : other) as [T, T, T];
     return {
-      levels: pick(levelFromCheesecake(cumulativeCheesecakeBefore), 1),
+      levels: pick(levelFromCheesecake(cumulativeCheesecakeBefore, levelCap), 1),
       runes: pick(Math.min(cap, clearedStages), 0),
     };
   }
-  const level = levelFromCheesecake(Math.floor(cumulativeCheesecakeBefore / STORY_FLOOR.partySize));
+  const level = levelFromCheesecake(Math.floor(cumulativeCheesecakeBefore / STORY_FLOOR.partySize), levelCap);
   const runes = Math.min(cap, Math.floor(clearedStages / STORY_FLOOR.partySize));
   return { levels: [level, level, level], runes: [runes, runes, runes] };
 }

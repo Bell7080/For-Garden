@@ -1134,10 +1134,10 @@ describe("단일 난전의 원정 보스 옵션", () => {
     // 플레이어는 통상 1돌파 전 상한인 20레벨, 최종 보스는 20층 boss 보정이 더해진 25레벨이다.
     const party = partyIds.map((id) => {
       const relic = getRelic(id);
-      return { ...relic, stats: applyLevelGrowth(relic.stats, 20, relic.rarity) };
+      return { ...relic, stats: applyLevelGrowth(relic.stats, 20, relic.rarity, 0) };
     });
     const basePontos = getRelic("pontos");
-    const pontos = { ...basePontos, encounterRole: "endless" as const, stats: applyLevelGrowth(basePontos.stats, 25, basePontos.rarity) };
+    const pontos = { ...basePontos, encounterRole: "endless" as const, stats: applyLevelGrowth(basePontos.stats, 25, basePontos.rarity, 0) };
     const state = createSkirmish(party, [pontos], ARENA);
     let firstUltimateAt: number | undefined;
     let survivorsAt30 = 0;

@@ -245,6 +245,7 @@ export const MISC_ZH_HANS = {
   "profile.levelTree.frame": "头像框「{name}」",
   "profile.levelTree.content": "开放 · {content}",
   "profile.levelTree.stamina": "体力上限 {max}",
+  "profile.levelTree.relicCap": "遗物等级上限 {max}",
   "profile.unset": "未设置",
   "profile.arenaTier": "竞技场段位",
   "profile.duelTier": "决斗段位",

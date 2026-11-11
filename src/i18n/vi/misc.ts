@@ -245,6 +245,7 @@ export const MISC_VI = {
   "profile.levelTree.frame": "Khung \"{name}\"",
   "profile.levelTree.content": "Mở · {content}",
   "profile.levelTree.stamina": "Thể lực tối đa {max}",
+  "profile.levelTree.relicCap": "Cấp tối đa Di vật {max}",
   "profile.unset": "Chưa đặt",
   "profile.arenaTier": "Hạng Đấu trường",
   "profile.duelTier": "Hạng Đấu tay đôi",

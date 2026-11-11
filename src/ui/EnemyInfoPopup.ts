@@ -5,7 +5,7 @@ import { galleryPortraitPlacement, infoPortraitPlacement } from "./portraitPlace
 import { battleAssetFor, enableHitOnClick, placePuppet, playMotion, portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugInfoAssetReady } from "../debug";
-import { breakthroughEnhances, breakthroughGrade, relicLevelCap } from "../core/relicProgression";
+import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughGrade } from "../core/relicProgression";
 import type { Passive, RelicDef, Skill, Ultimate } from "../core/types";
 import { KeywordManager } from "../managers/KeywordManager";
 import { AffinityBadge } from "./AffinityBadge";
@@ -232,8 +232,10 @@ export class EnemyInfoPopup {
       .setShadow(3, 8, "#05070a", 10, false, true);
     panel.add(value);
     // 상한은 숫자의 **발치**에 붙는다. 가운데에 두면 현재 레벨과 같은 무게로 읽혀 헷갈린다.
+    // 적에게는 연구원 레벨이 없어 상한은 적 사다리의 돌파 경계(20·30·40·50·60)다 — 다음 돌파의 요구 레벨, 다 뚫었으면 60.
+    const enemyCap = BREAKTHROUGH_STEPS[snapshot.breakthrough]?.requiredLevel ?? (BREAKTHROUGH_STEPS[BREAKTHROUGH_STEPS.length - 1].requiredLevel + 10);
     panel.add(scene.add
-      .text(value.x + value.displayWidth + 14, value.y + value.displayHeight - 4, `/ ${relicLevelCap(snapshot.breakthrough)}`, textStyle({ role: "emphasis", size: 28, color: COLOR.inkDim }))
+      .text(value.x + value.displayWidth + 14, value.y + value.displayHeight - 4, `/ ${enemyCap}`, textStyle({ role: "emphasis", size: 28, color: COLOR.inkDim }))
       .setOrigin(0, 1));
   }
 

@@ -1,10 +1,18 @@
 /** 고대 지층 전용 예산. 스토리/레이드/캐릭터 원본에는 적용하지 않는다. */
-export const ANCIENT_STRATA_MODEL_VERSION = 4;
+export const ANCIENT_STRATA_MODEL_VERSION = 5;
 export const ANCIENT_STRATA_MAX_FLOOR = 200;
 export const ANCIENT_STRATA_TIME_LIMIT_SECONDS = 90;
 export const ANCIENT_STRATA_ENEMY_LEVEL = 20;
 /** 심층 추가 HP만 비례 피해 기준에서 제외한다. */
 export const ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR = 120;
+
+/**
+ * v5(v0.433.0, 응태 요청 — "지층도 맞춰서 올려주자"): 렐릭 상한이 연구원 레벨로 100까지 열리고 돌파가 +10%p씩 성장을
+ * 더하자 60레벨 기준으로 짠 사다리가 5층 남짓 낮아졌다(SSR 60 → 100 성장 배율 ×1.36). 밴드를 다시 짜지 않고 120층까지
+ * 체력·공격에 층마다 이 몫을 한 번 더 곱해 그만큼 되돌린다 — 1층은 그대로, 120층은 약 ×1.35. 121층부터는 120층의 몫에서 멈춘다.
+ */
+export const ANCIENT_GROWTH_CATCHUP_PER_FLOOR = 1.0025;
+export const ANCIENT_GROWTH_CATCHUP_LAST_FLOOR = 120;
 
 export interface AncientDifficultyBand {
   first: number;

@@ -1,7 +1,7 @@
 import { BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL } from "./bond";
 import type { Wallet } from "./gacha";
 import { normalizePlayerLevel, PLAYER_LEVEL_CAP } from "./playerLevel";
-import { BREAKTHROUGH_CAP, relicLevelCap, remainingBreakthroughCost, UNIVERSAL_FRAGMENT_ITEM } from "./relicProgression";
+import { BREAKTHROUGH_CAP, BREAKTHROUGH_STEPS, RELIC_MAX_LEVEL, remainingBreakthroughCost, UNIVERSAL_FRAGMENT_ITEM } from "./relicProgression";
 import type { RelicProgress } from "./types";
 
 /**
@@ -55,10 +55,9 @@ export interface DebugRules {
   bondXpFirstAcquisition: number;
 }
 
-/** 레벨 L을 담을 수 있는 가장 낮은 돌파 단계. */
-export function breakthroughForLevel(level: number): number {
-  for (let b = 0; b <= BREAKTHROUGH_CAP; b += 1) if (relicLevelCap(b) >= level) return b;
-  return BREAKTHROUGH_CAP;
+/** 레벨 L에서 뚫을 수 있었던 가장 높은 돌파 단계 — 돌파 단계의 요구 레벨이 L 이하인 수. */
+export function breakthroughAvailableAt(level: number): number {
+  return BREAKTHROUGH_STEPS.filter(({ requiredLevel }) => requiredLevel <= level).length;
 }
 
 function ownedProgress(target: DebugTarget, relicId: string): RelicProgress {
@@ -115,12 +114,12 @@ export function applyDebugCommand(target: DebugTarget, command: DebugCommand, ru
       return changed;
     }
     case "relicLevel": {
-      const level = integer(command.level, 1, relicLevelCap(BREAKTHROUGH_CAP));
+      const level = integer(command.level, 1, RELIC_MAX_LEVEL);
       let changed = 0;
       for (const id of targets(target, command.relicId)) {
         const p = target.relicProgress[id];
-        // 레벨이 현재 돌파의 상한을 넘으면 그 레벨을 담을 만큼만 돌파를 함께 올린다(만들 수 없는 성장 상태를 만들지 않는다).
-        const breakthrough = Math.max(p.breakthrough, breakthroughForLevel(level));
+        // 레벨을 낮춰 지금 돌파의 요구 레벨 아래로 내려가면 그 레벨에서 가능한 단계까지 돌파를 내린다(만들 수 없는 성장 상태를 만들지 않는다).
+        const breakthrough = Math.min(p.breakthrough, breakthroughAvailableAt(level));
         if (p.level === level && p.breakthrough === breakthrough) continue;
         target.relicProgress[id] = { ...p, level, exp: 0, breakthrough, ...(breakthrough < BREAKTHROUGH_CAP ? { resonance: undefined } : {}) };
         changed += 1;
@@ -132,9 +131,9 @@ export function applyDebugCommand(target: DebugTarget, command: DebugCommand, ru
       let changed = 0;
       for (const id of targets(target, command.relicId)) {
         const p = target.relicProgress[id];
-        // 돌파 단계는 직전 단계의 상한 레벨 이상에서만 성립하므로 레벨을 그 선까지 끌어올린다. 낮추면 상한에 맞춘다.
-        const floor = breakthrough === 0 ? 1 : relicLevelCap(breakthrough - 1);
-        const level = Math.min(relicLevelCap(breakthrough), Math.max(p.level, floor));
+        // 돌파 단계는 그 단계의 요구 레벨 이상에서만 성립하므로 레벨을 그 선까지 끌어올린다.
+        const floor = breakthrough === 0 ? 1 : BREAKTHROUGH_STEPS[breakthrough - 1].requiredLevel;
+        const level = Math.max(p.level, floor);
         if (p.breakthrough === breakthrough && p.level === level) continue;
         target.relicProgress[id] = { ...p, breakthrough, level, exp: level === p.level ? p.exp : 0, ...(breakthrough < BREAKTHROUGH_CAP ? { resonance: undefined } : {}) };
         changed += 1;

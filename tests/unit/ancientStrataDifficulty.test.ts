@@ -97,7 +97,7 @@ describe("고대 지층 200층 난이도 계약", () => {
 });
 
 describe("실제 전투 기반 고대 지층 검수", () => {
-  it("룬 표본은 실제 획득/세공/특성 규칙을 통과하고 60레벨에는 4돌파를 넘긴다", () => {
+  it("룬 표본은 실제 획득/세공/특성 규칙을 통과하고 60레벨에는 4돌파를 넘기고 100레벨까지 받는다", () => {
     for (const equipment of ["bare", "epic", "ceiling"] as const) {
       const party = ancientReferenceParty(["rex", "torika", "mette"], equipment);
       expect(Object.values(party.breakthroughs)).toEqual([4, 4, 4]);
@@ -109,7 +109,8 @@ describe("실제 전투 기반 고대 지층 검수", () => {
     expect(ancientReferenceRunes("rex", "ceiling")[0].engravings).toHaveLength(1);
     expect(() => ancientReferenceParty(["rex", "rex", "mette"], "bare")).toThrow();
     expect(() => ancientReferenceParty(["dimo", "rex", "mette"], "bare")).toThrow();
-    expect(() => ancientReferenceParty(["rex", "torika", "mette"], "bare", 61)).toThrow();
+    expect(Object.values(ancientReferenceParty(["rex", "torika", "mette"], "bare", 100).breakthroughs)).toEqual([4, 4, 4]);
+    expect(() => ancientReferenceParty(["rex", "torika", "mette"], "bare", 101)).toThrow();
   });
 
   it("동일 seed는 재현되고 소환수를 원래 파티 생존자/체력 분모에 더하지 않는다", () => {

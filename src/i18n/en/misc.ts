@@ -246,6 +246,7 @@ export const MISC_EN = {
   "profile.levelTree.frame": "Frame \"{name}\"",
   "profile.levelTree.content": "Unlocks · {content}",
   "profile.levelTree.stamina": "Stamina Max {max}",
+  "profile.levelTree.relicCap": "Relic Level Cap {max}",
   "profile.unset": "Unset",
   "profile.arenaTier": "Arena Tier",
   "profile.duelTier": "Duel Tier",

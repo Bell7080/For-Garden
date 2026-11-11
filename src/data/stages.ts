@@ -2,7 +2,6 @@ import { ancientStageFloor } from "./ancientStrataDifficulty";
 import { getAncientStrataFloor, getAncientStrataStage } from "../core/ancientStrataBattle";
 import { difficultyStageRewards, storyBaseStageId, STORY_DIFFICULTY, storyChapterStatFactor, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
 import { GROWTH_STAT_KEYS } from "../core/relicProgression";
-import { applyBreakthrough } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
 import { applyEncounterScaling, encounterRoleFor, equivalentEnemyLevel, requiredBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
 import { ENEMY_BIRTH_TIERS } from "../core/rarityScaling";
@@ -546,7 +545,7 @@ export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): R
     const enemyRole = enemy.elite === true ? "elite" : role;
     const count = enemy.elite === true ? soloElites : stage.enemies.length;
     // 레벨·유형 뒤 공용 난이도 종족값 보정만 적용한다. 태생 정의와 공속은 바꾸지 않는다.
-    const stats = applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, enemyRole, count, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1), enemy.breakthrough);
+    const stats = applyEncounterScaling(base.stats, enemy.level, enemyRole, count, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1, enemy.breakthrough);
     for (const key of GROWTH_STAT_KEYS) stats[key] = Math.round(stats[key] * (stage.difficultyStatMultiplier ?? 1));
     return { ...base, encounterRole: enemyRole, stats };
   });

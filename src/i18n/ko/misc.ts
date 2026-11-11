@@ -270,6 +270,7 @@ export const MISC_KO = {
   "profile.levelTree.frame": "테두리 「{name}」",
   "profile.levelTree.content": "개방 · {content}",
   "profile.levelTree.stamina": "스테미나 상한 {max}",
+  "profile.levelTree.relicCap": "렐릭 레벨 상한 {max}",
   "profile.unset": "미지정",
   "profile.arenaTier": "아레나 티어",
   "profile.duelTier": "결투장 티어",

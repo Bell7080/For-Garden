@@ -7,7 +7,7 @@ import { FakeServer } from "../../src/api/FakeServer";
 import { setLiveSchedule } from "../../src/core/liveSchedule";
 import { rotationOffer } from "../../src/core/shopRotation";
 import { rotationSlot } from "../../src/data/runeRotation";
-import { breakthroughFragmentCost, BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
+import { breakthroughFragmentCost, BREAKTHROUGH_STEPS, RELIC_BASE_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
 import { createEmptyRaidState, createInitialPlayerResearchProgress, createEmptyPlayerCard, type Session } from "../../src/state/session";
 import { createRuneInstance, enhanceRune as applyRuneEnhancement, runeBatchEnhancementTargets, runeEnhancementIncrease, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
@@ -450,8 +450,9 @@ describe("FakeServer", () => {
   it("레벨 초기화는 급여한 치즈케이크를 돌려주고 돌파는 그대로 둔다(21레벨부터 젬)", async () => {
     const state = makeSession(); state.wallet.cheesecake = 100_000; state.wallet.gems = 1_000;
     state.relicProgress.torika = { ...state.relicProgress.torika, level: 1, exp: 0, breakthrough: 1 };
+    state.playerResearch = { ...state.playerResearch, level: 8 };
     const server = new FakeServer(state, { latencyMs: 0 });
-    // 1레벨에서 30레벨(돌파 1의 상한)까지 먹인 뒤 되돌린다 — 쓴 만큼 정확히 돌아와야 한다.
+    // 1레벨에서 30레벨(연구원 8의 상한)까지 먹인 뒤 되돌린다 — 쓴 만큼 정확히 돌아와야 한다.
     const fed = await server.feedRelic("torika", 10_000);
     expect(state.relicProgress.torika.level).toBe(30);
     const before = { cheesecake: state.wallet.cheesecake, gems: state.wallet.gems };
@@ -471,16 +472,16 @@ describe("FakeServer", () => {
     expect(state.relicProgress.torika.level).toBe(25);
   });
 
-  it("한계 돌파는 그 개체의 파편을 차감하고 별과 상한을 함께 올린다", async () => {
+  it("한계 돌파는 그 개체의 파편을 차감하고 등급을 올린다 — 상한은 연구원 레벨이 연다", async () => {
     const state = makeSession();
     const step = BREAKTHROUGH_STEPS[0];
-    state.relicProgress.torika = { ...state.relicProgress.torika, level: RELIC_LEVEL_CAP, exp: 0 };
+    state.relicProgress.torika = { ...state.relicProgress.torika, level: RELIC_BASE_LEVEL_CAP, exp: 0 };
     // 앙키(토리카)는 SR이라 한 단계에 파편 둘이 든다.
     state.relicFragments.torika = breakthroughFragmentCost("SR", 0); state.wallet.cheesecake = step.cheesecake;
     const server = new FakeServer(state, { latencyMs: 0 });
     await expect(server.feedRelic("torika")).rejects.toMatchObject({ code: "RELIC_MAX_LEVEL" });
     const response = await server.breakThroughRelic("torika");
-    expect(response).toMatchObject({ relicId: "torika", breakthrough: 1, levelCap: step.levelCap, breakthroughGrade: 2, fragments: 0 });
+    expect(response).toMatchObject({ relicId: "torika", breakthrough: 1, levelCap: RELIC_BASE_LEVEL_CAP, breakthroughGrade: 2, fragments: 0 });
     expect(state.relicFragments.torika).toBe(0);
     expect(state.wallet).toMatchObject({ cheesecake: 0 });
     await expect(server.breakThroughRelic("torika")).rejects.toMatchObject({ code: "RELIC_MAX_LEVEL" });
@@ -489,7 +490,7 @@ describe("FakeServer", () => {
   it("한계 돌파는 그 개체의 파편이 모자란 몫만 같은 등급의 만능 파편으로 채운다", async () => {
     const state = makeSession();
     const step = BREAKTHROUGH_STEPS[0];
-    state.relicProgress.torika = { ...state.relicProgress.torika, level: RELIC_LEVEL_CAP, exp: 0 };
+    state.relicProgress.torika = { ...state.relicProgress.torika, level: RELIC_BASE_LEVEL_CAP, exp: 0 };
     // 토리카는 SR이라 파편 둘 — 하나만 있고 만능 SR 파편 셋, 다른 등급(R) 만능 파편은 쓰이지 않는다.
     state.relicFragments.torika = 1; state.wallet.cheesecake = step.cheesecake;
     state.itemInventory = [...state.itemInventory, { itemId: "universal-fragment-sr", quantity: 3 }, { itemId: "universal-fragment-r", quantity: 5 }];

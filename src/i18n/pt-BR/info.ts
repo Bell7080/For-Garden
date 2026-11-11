@@ -48,7 +48,7 @@ export const INFO_PT_BR = {
   "info.section.rune": "Runa",
   "info.level": "Nível",
   "info.level.max": "Nível máx.",
-  "info.level.cap": "Limite de nível",
+  "info.breakthrough.growth": "Crescimento de atributos",
   "info.feed": "Alimentar",
   "info.levelUp.banner": "LEVEL UP!",
   "info.levelUp.statGain": "{stat} +{value}",

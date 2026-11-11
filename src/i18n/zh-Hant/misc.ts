@@ -245,6 +245,7 @@ export const MISC_ZH_HANT = {
   "profile.levelTree.frame": "頭像框「{name}」",
   "profile.levelTree.content": "開放 · {content}",
   "profile.levelTree.stamina": "體力上限 {max}",
+  "profile.levelTree.relicCap": "遺物等級上限 {max}",
   "profile.unset": "未設定",
   "profile.arenaTier": "競技場段位",
   "profile.duelTier": "決鬥段位",

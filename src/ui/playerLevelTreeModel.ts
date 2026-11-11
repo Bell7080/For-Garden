@@ -1,5 +1,6 @@
 import { CONTENT_LEVEL_GATES_ENABLED, CONTENT_UNLOCKS, type ContentId } from "../core/contentUnlock";
 import { PLAYER_LEVEL_CAP } from "../core/playerLevel";
+import { RELIC_LEVEL_CAP_BY_RESEARCH } from "../core/relicProgression";
 import { staminaMaxForResearchLevel } from "../core/stamina";
 import { PROFILE_FRAMES } from "../data/profileFrames";
 
@@ -7,7 +8,8 @@ import { PROFILE_FRAMES } from "../data/profileFrames";
  * 연구원 레벨이 여는 것들을 **가지나무**로 세우기 위한 마디 목록 — Phaser를 모르는 순수 모델이다.
  *
  * 무엇이 몇 레벨에 열리는지는 새로 적지 않고 저마다의 표에서 읽는다 — 테두리는 `PROFILE_FRAMES`,
- * 콘텐츠는 `CONTENT_UNLOCKS`, 스테미나 상한은 `staminaMaxForResearchLevel`. 여기 한 번 더 적으면
+ * 콘텐츠는 `CONTENT_UNLOCKS`, 스테미나 상한은 `staminaMaxForResearchLevel`, 렐릭 레벨 상한은
+ * `RELIC_LEVEL_CAP_BY_RESEARCH`. 여기 한 번 더 적으면
  * 표를 고친 날 나무만 옛 레벨을 말한다.
  *
  * **콘텐츠 개방은 잠금이 켜져 있을 때만 가지에 단다**(`CONTENT_LEVEL_GATES_ENABLED`). 시험 기간에는
@@ -25,6 +27,8 @@ export interface PlayerLevelMilestone {
   unlocks: PlayerLevelUnlock[];
   /** 그 레벨의 스테미나 상한. 모든 마디가 함께 적는다. */
   staminaMax: number;
+  /** 이 레벨에서 렐릭 레벨 상한이 오르면 그 새 상한. 오르지 않는 마디는 비운다. */
+  relicCap?: number;
 }
 
 /** 열 단위 이정표의 간격. */
@@ -35,6 +39,7 @@ export function playerLevelMilestones(gates = CONTENT_LEVEL_GATES_ENABLED): Play
   for (let level = PLAYER_LEVEL_TREE_STEP; level < PLAYER_LEVEL_CAP; level += PLAYER_LEVEL_TREE_STEP) levels.add(level);
   for (const frame of PROFILE_FRAMES) levels.add(frame.unlockLevel);
   if (gates) for (const entry of CONTENT_UNLOCKS) levels.add(entry.level);
+  for (const row of RELIC_LEVEL_CAP_BY_RESEARCH) if (row.researchLevel > 1) levels.add(row.researchLevel);
   return [...levels]
     .filter((level) => level >= 1 && level <= PLAYER_LEVEL_CAP)
     .sort((a, b) => a - b)
@@ -45,5 +50,6 @@ export function playerLevelMilestones(gates = CONTENT_LEVEL_GATES_ENABLED): Play
         ...(gates ? CONTENT_UNLOCKS.filter((entry) => entry.level === level).map((entry) => ({ kind: "content" as const, contentId: entry.id })) : []),
       ],
       staminaMax: staminaMaxForResearchLevel(level),
+      relicCap: level > 1 ? RELIC_LEVEL_CAP_BY_RESEARCH.find((row) => row.researchLevel === level)?.levelCap : undefined,
     }));
 }

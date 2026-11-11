@@ -48,7 +48,7 @@ export const INFO_RU = {
   "info.section.rune": "Руны",
   "info.level": "Уровень",
   "info.level.max": "Макс. уровень",
-  "info.level.cap": "Предел уровня",
+  "info.breakthrough.growth": "Рост характеристик",
   "info.feed": "Кормить",
   "info.levelUp.banner": "LEVEL UP!",
   "info.levelUp.statGain": "{stat} +{value}",

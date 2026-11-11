@@ -37,7 +37,7 @@ describe("원정 노드 적 편성", () => {
     const normalEnemies = getExpeditionEncounterEnemies("normal", 10);
     // 같은 20레벨 비교표를 만들어 레벨 차이가 보스 우위를 대신 설명하지 못하게 한다.
     const normalSsr = [getRelic("rex"), getRelic("spino"), getRelic("mette")]
-      .map((relic) => ({ ...relic, stats: applyLevelGrowth(relic.stats, 20, relic.rarity) }));
+      .map((relic) => ({ ...relic, stats: applyLevelGrowth(relic.stats, 20, relic.rarity, 0) }));
     // 폰토스는 LV.20의 41.8% 성장을 실제 전투와 표시에서 함께 쓴다.
     // **공격 속도와 충전량은 태생 그대로 남는다** — 성장은 오각형의 다섯 주능력치만 올린다
     // (`GROWTH_STAT_KEYS`). 보스도 아군과 같은 규칙을 쓰므로 여기서 예외를 만들지 않는다.

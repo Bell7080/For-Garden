@@ -245,6 +245,7 @@ export const MISC_RU = {
   "profile.levelTree.frame": "Рамка «{name}»",
   "profile.levelTree.content": "Открывается · {content}",
   "profile.levelTree.stamina": "Макс. выносливость {max}",
+  "profile.levelTree.relicCap": "Макс. уровень Реликта {max}",
   "profile.unset": "Не задано",
   "profile.arenaTier": "Ранг арены",
   "profile.duelTier": "Ранг дуэли",

@@ -48,7 +48,7 @@ export const INFO_ZH_HANT = {
   "info.section.rune": "符文",
   "info.level": "等級",
   "info.level.max": "最高等級",
-  "info.level.cap": "等級上限",
+  "info.breakthrough.growth": "屬性成長",
   "info.feed": "餵食",
   "info.levelUp.banner": "LEVEL UP!",
   "info.levelUp.statGain": "{stat} +{value}",

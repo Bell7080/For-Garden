@@ -256,6 +256,7 @@ export const MISC_JA = {
   "profile.levelTree.frame": "フレーム「{name}」",
   "profile.levelTree.content": "解放 · {content}",
   "profile.levelTree.stamina": "スタミナ上限 {max}",
+  "profile.levelTree.relicCap": "レリックレベル上限 {max}",
   "profile.unset": "未設定",
   "profile.arenaTier": "闘技場ティア",
   "profile.duelTier": "決闘ティア",

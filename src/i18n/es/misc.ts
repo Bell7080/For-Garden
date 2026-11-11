@@ -245,6 +245,7 @@ export const MISC_ES = {
   "profile.levelTree.frame": "Marco «{name}»",
   "profile.levelTree.content": "Se abre · {content}",
   "profile.levelTree.stamina": "Estamina máx. {max}",
+  "profile.levelTree.relicCap": "Nivel máx. de Reliquia {max}",
   "profile.unset": "Sin asignar",
   "profile.arenaTier": "Rango de arena",
   "profile.duelTier": "Rango de duelo",

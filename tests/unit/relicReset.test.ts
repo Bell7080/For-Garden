@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { feedRelic } from "../../src/core/relicProgression";
+import { feedRelic, RELIC_MAX_LEVEL } from "../../src/core/relicProgression";
 import { canResetRelic, relicResetGemCost, relicResetRefund, resetRelicProgress, RELIC_RESET_FREE_MAX_LEVEL } from "../../src/core/relicReset";
 import type { RelicProgress } from "../../src/core/types";
 
@@ -8,7 +8,7 @@ const fresh = (breakthrough = 4): RelicProgress => ({ level: 1, exp: 0, breakthr
 describe("레벨 초기화", () => {
   it("돌려받는 치즈케이크는 급여로 쓴 치즈케이크와 정확히 같다(회수율 100%)", () => {
     for (const feeds of [1, 3, 7, 50, 333, 1_000, 5_000]) {
-      const result = feedRelic(fresh(), 10_000_000, feeds);
+      const result = feedRelic(fresh(), 10_000_000, feeds, RELIC_MAX_LEVEL);
       expect(relicResetRefund(result.progress)).toBe(10_000_000 - result.cheesecake);
     }
   });
@@ -20,7 +20,7 @@ describe("레벨 초기화", () => {
   });
 
   it("레벨·경험치만 되돌리고 돌파·유대·룬은 그대로 둔다", () => {
-    const fed = feedRelic(fresh(), 10_000_000, 400).progress;
+    const fed = feedRelic(fresh(), 10_000_000, 400, RELIC_MAX_LEVEL).progress;
     expect(canResetRelic(fed)).toBe(true);
     const reset = resetRelicProgress(fed);
     expect(reset).toEqual({ ...fed, level: 1, exp: 0 });

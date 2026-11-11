@@ -245,6 +245,7 @@ export const MISC_ID = {
   "profile.levelTree.frame": "Bingkai \"{name}\"",
   "profile.levelTree.content": "Terbuka · {content}",
   "profile.levelTree.stamina": "Stamina maks {max}",
+  "profile.levelTree.relicCap": "Level maks Relik {max}",
   "profile.unset": "Belum diatur",
   "profile.arenaTier": "Tingkat Arena",
   "profile.duelTier": "Tingkat Duel",

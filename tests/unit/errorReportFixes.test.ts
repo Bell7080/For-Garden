@@ -17,7 +17,7 @@ describe("오류 보고에서 찾은 문제들", () => {
   });
 
   it("돌파 사다리를 넘는 수호전 웨이브 레벨도 화면 돌파 등급은 던지지 않고 마지막 단계다", () => {
-    const top = BREAKTHROUGH_STEPS[BREAKTHROUGH_STEPS.length - 1].levelCap;
+    const top = BREAKTHROUGH_STEPS[BREAKTHROUGH_STEPS.length - 1].requiredLevel + 10;
     expect(() => requiredBreakthroughForLevel(top + 1)).toThrow(RangeError);
     expect(shownBreakthroughForLevel(top + 1)).toBe(BREAKTHROUGH_STEPS.length);
     expect(shownBreakthroughForLevel(200)).toBe(BREAKTHROUGH_STEPS.length);

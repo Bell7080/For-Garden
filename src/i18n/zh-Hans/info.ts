@@ -48,7 +48,7 @@ export const INFO_ZH_HANS = {
   "info.section.rune": "符文",
   "info.level": "等级",
   "info.level.max": "最高等级",
-  "info.level.cap": "等级上限",
+  "info.breakthrough.growth": "属性成长",
   "info.feed": "喂食",
   "info.levelUp.banner": "LEVEL UP!",
   "info.levelUp.statGain": "{stat} +{value}",

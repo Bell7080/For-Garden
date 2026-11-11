@@ -245,6 +245,7 @@ export const MISC_DE = {
   "profile.levelTree.frame": "Rahmen „{name}“",
   "profile.levelTree.content": "Frei · {content}",
   "profile.levelTree.stamina": "Ausdauer max. {max}",
+  "profile.levelTree.relicCap": "Relikt-Stufenlimit {max}",
   "profile.unset": "Nicht gesetzt",
   "profile.arenaTier": "Arena-Rang",
   "profile.duelTier": "Duell-Rang",

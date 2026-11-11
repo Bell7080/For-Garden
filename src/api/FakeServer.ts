@@ -2760,9 +2760,11 @@ export class FakeServer implements GameApi {
     await this.delay();
     const current = this.state.relicProgress[relicId];
     if (!this.state.owned.has(relicId) || !current) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
-    if (current.level >= relicLevelCap(current.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "이미 최대 레벨입니다.");
-    if (!canFeedRelic(current, this.state.wallet.cheesecake)) throw new GameApiError("INSUFFICIENT_CURRENCY", "치즈케이크가 부족합니다.");
-    const result = calculateFeed(current, this.state.wallet.cheesecake, feeds);
+    // 렐릭 레벨 상한은 연구원 레벨이 연다(응태 결정, 2026-11-11) — 돌파는 상한을 열지 않는다.
+    const levelCap = relicLevelCap(this.state.playerResearch.level);
+    if (current.level >= levelCap) throw new GameApiError("RELIC_MAX_LEVEL", "이미 최대 레벨입니다.");
+    if (!canFeedRelic(current, this.state.wallet.cheesecake, levelCap)) throw new GameApiError("INSUFFICIENT_CURRENCY", "치즈케이크가 부족합니다.");
+    const result = calculateFeed(current, this.state.wallet.cheesecake, feeds, levelCap);
     const nextProgress = { ...this.state.relicProgress, [relicId]: result.progress };
     const nextWallet = { ...this.state.wallet, cheesecake: result.cheesecake };
     const nextMissions = applyMissionEvent(this.state.missions, { type: "salary_given", count: result.feeds }, this.now());
@@ -2806,7 +2808,7 @@ export class FakeServer implements GameApi {
     const step = nextBreakthrough(current.breakthrough);
     // 돌파를 끝낸 개체는 같은 버튼이 **공명**을 올린다(`core/relicResonance.ts`) — 한 단계 위의 성장 축이다.
     if (!step) return this.resonateRelic(relicId, current);
-    if (current.level < relicLevelCap(current.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "레벨을 상한까지 올려야 돌파할 수 있습니다.");
+    if (current.level < step.requiredLevel) throw new GameApiError("RELIC_MAX_LEVEL", "돌파 요구 레벨에 닿아야 돌파할 수 있습니다.");
     const held = this.state.relicFragments[relicId] ?? 0;
     // 파편 수는 **등급**이 정한다(`BREAKTHROUGH_FRAGMENTS`) — SSR은 한 장으로 한 단계지만
     // R은 넷을 모아야 한다. 등급을 모르는 채로는 검사도 차감도 할 수 없다.
@@ -2826,7 +2828,7 @@ export class FakeServer implements GameApi {
     const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake - step.cheesecake };
     this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, itemInventory: nextItems, wallet: nextWallet });
     this.state.relicProgress = nextProgress; this.state.relicFragments = nextFragments; this.state.itemInventory = nextItems; this.state.wallet = nextWallet;
-    return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(breakthrough), breakthroughGrade: breakthroughGrade(breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend.universal };
+    return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(this.state.playerResearch.level), breakthroughGrade: breakthroughGrade(breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend.universal };
   }
 
   /**
@@ -2849,7 +2851,7 @@ export class FakeServer implements GameApi {
     const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake - RESONANCE_CHEESECAKE };
     this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, itemInventory: nextItems, wallet: nextWallet });
     this.state.relicProgress = nextProgress; this.state.relicFragments = nextFragments; this.state.itemInventory = nextItems; this.state.wallet = nextWallet;
-    return { ...this.snapshot(), relicId, breakthrough: current.breakthrough, levelCap: relicLevelCap(current.breakthrough), breakthroughGrade: breakthroughGrade(current.breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend.universal, resonance: resonance + 1 };
+    return { ...this.snapshot(), relicId, breakthrough: current.breakthrough, levelCap: relicLevelCap(this.state.playerResearch.level), breakthroughGrade: breakthroughGrade(current.breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend.universal, resonance: resonance + 1 };
   }
 
   /**
@@ -3640,7 +3642,7 @@ export class FakeServer implements GameApi {
     for (const relicId of this.state.owned) {
       const progress = this.state.relicProgress[relicId];
       const rarity = RELICS.find(({ id }) => id === relicId)?.rarity;
-      if (!progress || !rarity || progress.breakthrough >= BREAKTHROUGH_CAP || progress.level < relicLevelCap(progress.breakthrough)) continue;
+      if (!progress || !rarity || progress.breakthrough >= BREAKTHROUGH_CAP || progress.level < (nextBreakthrough(progress.breakthrough)?.requiredLevel ?? Infinity)) continue;
       const universal = this.state.itemInventory.find((stack) => stack.itemId === UNIVERSAL_FRAGMENT_ITEM[rarity])?.quantity ?? 0;
       if (!breakthroughFragmentSpend(rarity, progress.breakthrough, this.state.relicFragments[relicId] ?? 0, universal).enough) short.add(rarity);
     }

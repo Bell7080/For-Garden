@@ -1,5 +1,5 @@
 import { cycleAnchor } from "./launchAnchor";
-import { applyBreakthrough, applyLevelGrowth } from "./relicProgression";
+import { applyLevelGrowth, RELIC_MAX_LEVEL } from "./relicProgression";
 import type { RelicDef, Stats } from "./types";
 
 /**
@@ -309,12 +309,15 @@ export function pickDuelOpponents<T extends { id: string; score: number }>(pool:
  * 굳힌 최종 능력치(룬 포함)를 그대로 쓴다.
  */
 export function duelGrownStats(def: Pick<RelicDef, "stats" | "rarity">, level: number, breakthrough: number): Stats {
-  return applyBreakthrough(applyLevelGrowth(def.stats, level, def.rarity), breakthrough);
+  return applyLevelGrowth(def.stats, level, def.rarity, breakthrough);
 }
 
-/** 점수대가 세우는 표본 상대의 레벨. 브론즈 바닥이 10, 챌린저 위쪽이 60이다. */
+/**
+ * 점수대가 세우는 표본 상대의 레벨. 브론즈 바닥이 10, 챌린저 위쪽이 렐릭 최대 레벨(100)이다 —
+ * 렐릭 상한이 연구원 레벨로 100까지 열리면서 위쪽 끝을 60에서 함께 올렸다.
+ */
 export function duelNpcLevel(score: number): number {
-  return clamp(Math.round(10 + (score / 3_000) * 50), 8, 60);
+  return clamp(Math.round(10 + (score / 3_000) * (RELIC_MAX_LEVEL - 10)), 8, RELIC_MAX_LEVEL);
 }
 
 function clamp(value: number, min: number, max: number): number {

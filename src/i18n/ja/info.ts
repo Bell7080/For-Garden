@@ -48,7 +48,7 @@ export const INFO_JA = {
   "info.section.rune": "ルーン",
   "info.level": "レベル",
   "info.level.max": "最大レベル",
-  "info.level.cap": "レベル上限",
+  "info.breakthrough.growth": "能力値成長",
 
   "info.feed": "給餌する",
   "info.levelUp.banner": "LEVEL UP!",

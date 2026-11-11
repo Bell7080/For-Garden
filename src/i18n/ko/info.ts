@@ -52,7 +52,7 @@ export const INFO_KO = {
   "info.section.rune": "룬",
   "info.level": "레벨",
   "info.level.max": "최대 레벨",
-  "info.level.cap": "레벨 상한",
+  "info.breakthrough.growth": "능력치 성장",
 
   "info.feed": "급여하기",
   "info.levelUp.banner": "LEVEL UP!",

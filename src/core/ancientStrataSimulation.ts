@@ -2,7 +2,7 @@ import { COMBAT_STEP_MS } from "./combatProtocol";
 import { BOND_LEVEL_CAP } from "./bond";
 import { getRelic } from "../data/relics";
 import { RUNE_STAT_RULES } from "../data/runes";
-import { applyHeartGems, applyLevelGrowth } from "./relicProgression";
+import { applyHeartGems, applyLevelGrowth, BREAKTHROUGH_STEPS, RELIC_MAX_LEVEL } from "./relicProgression";
 import { createRuneInstance, enhanceRune, engraveRune, type RuneInstance, type RuneMainStatKey, type RuneStatKey, type RuneSubStatKey } from "./runes";
 import { partyRuneTraitEffects } from "./runeTraitEffects";
 import { stepAncientStrataBattle, createAncientStrataSkirmish, getAncientStrataFloor } from "./ancientStrataBattle";
@@ -53,17 +53,18 @@ export function ancientReferenceRunes(relicId: string, equipment: AncientEquipme
 
 export function ancientReferenceParty(ids: readonly string[], equipment: AncientEquipment, level = 60, bondLevel = BOND_LEVEL_CAP) {
   if (ids.length !== 3 || new Set(ids).size !== 3) throw new RangeError("서로 다른 렐릭 세 명이 필요합니다.");
-  if (!Number.isInteger(level) || level < 1 || level > 60) throw new RangeError("플레이어 레벨은 1~60입니다.");
+  if (!Number.isInteger(level) || level < 1 || level > RELIC_MAX_LEVEL) throw new RangeError(`플레이어 레벨은 1~${RELIC_MAX_LEVEL}입니다.`);
   if (!Number.isInteger(bondLevel) || bondLevel < 0 || bondLevel > BOND_LEVEL_CAP) throw new RangeError("유대 레벨은 0~10입니다.");
   const equipped = ids.map(relicId => {
     if (getRelic(relicId).enemyOnly || getRelic(relicId).summonOnly) throw new RangeError(`플레이 불가 렐릭: ${relicId}`);
     return { relicId, runes: ancientReferenceRunes(relicId, equipment) };
   });
+  // 그 레벨까지 열 수 있는 돌파를 모두 연 계정으로 본다(요구 레벨 20·30·40·50).
+  const breakthrough = BREAKTHROUGH_STEPS.filter(({ requiredLevel }) => requiredLevel < level).length;
   const players = equipped.map(({ relicId, runes }) => {
     const def = getRelic(relicId);
-    return { ...def, stats: applyHeartGems(applyLevelGrowth(def.stats, level, def.rarity), runes) };
+    return { ...def, stats: applyHeartGems(applyLevelGrowth(def.stats, level, def.rarity, breakthrough), runes) };
   });
-  const breakthrough = level > 50 ? 4 : level > 40 ? 3 : level > 30 ? 2 : level > 20 ? 1 : 0;
   return { players, equipped, breakthroughs: Object.fromEntries(ids.map(id => [id, breakthrough])),
     // 실제 유대 야성 배율도 코어로 전달한다. 원정 증강은 주입하지 않는다.
     bonds: Object.fromEntries(ids.map(id => [id, bondLevel])), augmentEffects: partyRuneTraitEffects(equipped) };

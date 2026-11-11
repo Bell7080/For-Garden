@@ -9,7 +9,7 @@ import { CHAPTERS, SIDE_BATTLE_STAGE, getBattleStage, getStageEnemies } from "..
 import { getRelic, PLAYABLE_RELICS } from "../../src/data/relics";
 import { applyLevelGrowth } from "../../src/core/relicProgression";
 import { RUNE_GENERATION_RULES } from "../../src/core/runes";
-import { levelFromCheesecake, storyFloorGrowth, type InvestmentShape } from "../../src/core/stageBalance";
+import { levelFromCheesecake, storyFloorGrowth, storyFloorLevelCap, type InvestmentShape } from "../../src/core/stageBalance";
 import type { RelicDef, Stats } from "../../src/core/types";
 
 /** 단일 운 좋은 판 대신 치명타 순서를 달리하는 재현 가능한 표본 여덟 개를 공통으로 사용한다. */
@@ -72,7 +72,7 @@ const FLOOR_CARRY_INDEX = 2;
 const GREEN_RUNE = RUNE_GENERATION_RULES.uncommon.mainBase;
 
 function grown(def: RelicDef, level: number, runes: number): RelicDef {
-  const stats = { ...applyLevelGrowth(def.stats, level, def.rarity) };
+  const stats = { ...applyLevelGrowth(def.stats, level, def.rarity, 0) };
   // 세 칸에 체력·공격력·방어력을 하나씩 끼운 상태로 본다.
   const keys: (keyof Stats)[] = ["hp", "atk", "def"];
   for (let index = 0; index < runes; index += 1) {
@@ -98,10 +98,10 @@ function floorParty(globalOrder: number, shape: InvestmentShape, roster: readonl
 /** 세 칸에 룬을 다 끼운 블렌딩 파티. 레벨은 셋이 고르게 나눠 먹는다. */
 function blendedParty(globalOrder: number, roster: readonly string[]): RelicDef[] {
   const budget = Math.floor(cheesecakeBefore(globalOrder) * OUTSIDE_CHEESECAKE_MULTIPLIER / FLOOR_ROSTER.length);
-  const level = levelFromCheesecake(budget);
+  const level = levelFromCheesecake(budget, storyFloorLevelCap(globalOrder));
   return roster.map((id) => {
     const def = getRelic(id);
-    const stats = { ...applyLevelGrowth(def.stats, level, def.rarity) };
+    const stats = { ...applyLevelGrowth(def.stats, level, def.rarity, 0) };
     for (const key of ["hp", "atk", "def"] as (keyof Stats)[]) {
       stats[key] = Math.round(stats[key] * (1 + BLENDED_RUNE_MAIN / 100));
     }
@@ -172,12 +172,12 @@ const BASELINES = {
   "1-10": { win: 1, hp: [0.5, 0.7] },
   // v0.253.2: 2장을 레벨 21~30(돌파 1)으로 다시 그리며 녹화했다 — 잡졸 관문이 한 뼘 더 깎이며 지난다.
   // 적 비공격 궁극기 AI 복구 후 평균 잔여 HP 0.978. 전투가 길어지며 아군 회복도 더 돈다.
-  "2-5": { win: 1, hp: [0.76, 0.88] }, // v0.391.9: 2장 배율 ×1.05로 잔여 체력이 0.82로 내려왔다.
-  "2-10": { win: 1, hp: [0.79, 0.95] },
+  "2-5": { win: 1, hp: [0.86, 0.97] }, // v0.433.0: 적 돌파 몫(+10%)으로 판이 길어져 회복이 더 돌아 0.93. // v0.391.9: 2장 배율 ×1.05로 잔여 체력이 0.82로 내려왔다.
+  "2-10": { win: 1, hp: [0.88, 0.99] }, // v0.433.0: 같은 이유로 0.96.
   // 3-5는 부부대장 아트라가 혼자 서는 정예, 3-10은 행동대장 이카닉시아가 혼자 서는 장 마감 정예다. 3-10은 가운데 조합이 여덟 판 중 한 판만 연다(코마의 1-10과 같다).
   // v0.308.2: 아트라는 레벨을 올려도 거의 다치지 않는다 — 상한 변경 뒤 잔여 체력이 올라 띠를 넓혔다(남은 구멍).
   "3-5": { win: 1, hp: [0.78, 0.9] }, // v0.391.0: 3장 배율 ×1.2로 잔여 체력이 0.9 남짓 → 0.83으로 내려왔다.
-  "3-9": { win: 1, hp: [0.80, 0.92] },
+  "3-9": { win: 1, hp: [0.74, 0.88] }, // v0.433.0: 적 돌파 몫 + 연구원 레벨이 연 바닥 상한 — 0.80.
   "3-10": { win: 0, hp: [0, 0.05] },
   // 4장 — 회수조(태생 1단계 ×1.3)와 테러조가 섞인다. 4-5는 아트라·토비 정예 둘, 4-9는 코마 캐리(미르·펄시가 받친다),
   // 4-10은 코마·이카닉시아 투 캐리로 가운데 조합이 한 판도 열지 못한다(3-10과 같은 마감 벽).
@@ -200,7 +200,8 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
         const entry = STORY_STAGES.find(({ stage }) => stage.id === stageId)!;
         const report = summarizeStageDifficulty(blendedParty(entry.globalOrder, combo), getStageEnemies(entry.stage), SEEDS, "auto");
         // v0.391.9 장 배율(2장 ×1.05 · 3장 ×1.1)로 토리카·렉시아·루카는 2-5를 여덟 판 중 셋, 2-10을 한 판만 열고 3-4에서 막힌다.
-        const walled: Record<string, number> = { "2-5": 0.375, "2-10": 0.125, "3-4": 0 };
+        // v0.433.0 렐릭 성장 개편: 2장 적(LV.21~30)이 돌파 1단계 몫(+10%)을 받아 이 조합은 2-5·2-10을 한 판도 열지 못한다(0.375·0.125 → 0).
+        const walled: Record<string, number> = { "2-5": 0, "2-10": 0, "3-4": 0 };
         const expected = name === "torika+rex+luka" ? walled[stageId] ?? 1 : 1;
         expect(report.winRate, stageId).toBe(expected);
       }

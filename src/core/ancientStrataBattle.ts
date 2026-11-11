@@ -1,7 +1,7 @@
 import { ANCIENT_UNLOCK_STAGE } from "./contentUnlock";
 import { getRelic } from "../data/relics";
 import { getBattleStage, getStageEnemies } from "../data/stages";
-import { ancientStageId, ANCIENT_DIFFICULTY_BANDS, ancientFirstClearReward, ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR, ANCIENT_STRATA_ENEMY_LEVEL, ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
+import { ancientStageId, ANCIENT_DIFFICULTY_BANDS, ANCIENT_GROWTH_CATCHUP_LAST_FLOOR, ANCIENT_GROWTH_CATCHUP_PER_FLOOR, ancientFirstClearReward, ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR, ANCIENT_STRATA_ENEMY_LEVEL, ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import { ANCIENT_ENCOUNTERS, ANCIENT_TRIAL_IDS, ANCIENT_TRIALS, ancientEncounterRole, type AncientTrial } from "../data/ancientStrataEncounters";
 import { ancientSeasonIndex } from "./ancientStrata";
 import { applyEncounterScaling, ENCOUNTER_ROLE } from "./levelDesign";
@@ -37,6 +37,9 @@ export function ancientStrataMultipliers(floor: number): { hp: number; attack: n
     result.attack *= band.attackStep ** steps;
     result.defense *= band.defenseStep ** steps;
   }
+  const catchup = ANCIENT_GROWTH_CATCHUP_PER_FLOOR ** (Math.min(floor, ANCIENT_GROWTH_CATCHUP_LAST_FLOOR) - 1);
+  result.hp *= catchup;
+  result.attack *= catchup;
   return result;
 }
 

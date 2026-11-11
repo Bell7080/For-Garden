@@ -78,7 +78,7 @@ import type { EncounterRole } from "../core/levelDesign";
 import { squeezeTextToWidth } from "./textFit";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
-import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, breakthroughFragmentSpend, type BreakthroughStep, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as simulateFeed, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
+import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, breakthroughFragmentSpend, type BreakthroughStep, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as simulateFeed, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade, breakthroughGrowthPercent, RELIC_MAX_LEVEL } from "../core/relicProgression";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
@@ -1232,7 +1232,7 @@ export class InfoManager {
         return;
       }
       const top = -height / 2;
-      const cap = relicLevelCap(progress.breakthrough);
+      const requiredLevel = step.requiredLevel;
       // **올라가는 것은 별 개수가 아니라 등급이다.** 카드 오른쪽 위에 박히는 로마자와 같은
       // 표식을 그대로 크게 세우고, 그 사이에 화살표만 둔다 — "1 → 2"라고 적으면 화면 어디에도
       // 없는 숫자를 새로 배우게 된다.
@@ -1240,12 +1240,13 @@ export class InfoManager {
       body.add(this.scene.add.text(0, top + BREAK_CONFIRM.gradeY, "▶", textStyle({ role: "display", size: 34, color: COLOR.inkDim })).setOrigin(0.5));
       addBreakthroughGradeMark(this.scene, body, 140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize, breakthroughGrade(progress.breakthrough) + 1);
 
-      // 상한은 이 조작이 실제로 바꾸는 값이라 등급 바로 아래에 같은 무게로 선다.
+      // 오각형 성장 보너스는 이 조작이 실제로 바꾸는 값이라 등급 바로 아래에 같은 무게로 선다
+      // (레벨 상한은 연구원 레벨이 열고, 돌파는 단계마다 오각형 다섯에 +10%를 더한다).
       const capLine = this.scene.add.container(0, top + BREAK_CONFIRM.capY);
-      const capLabel = this.scene.add.text(0, 0, t("info.level.cap"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5);
-      const capFrom = this.scene.add.text(0, 0, String(cap), textStyle({ role: "display", size: 36, color: COLOR.inkDim })).setOrigin(0.5);
+      const capLabel = this.scene.add.text(0, 0, t("info.breakthrough.growth"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5);
+      const capFrom = this.scene.add.text(0, 0, `+${breakthroughGrowthPercent(progress.breakthrough)}%`, textStyle({ role: "display", size: 36, color: COLOR.inkDim })).setOrigin(0.5);
       const capArrow = this.scene.add.text(0, 0, "▶", textStyle({ role: "display", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
-      const capTo = this.scene.add.text(0, 0, String(step.levelCap), textStyle({ role: "display", size: 44, color: COLOR.accentText })).setOrigin(0.5);
+      const capTo = this.scene.add.text(0, 0, `+${breakthroughGrowthPercent(progress.breakthrough + 1)}%`, textStyle({ role: "display", size: 44, color: COLOR.accentText })).setOrigin(0.5);
       const gap = 18;
       const width = capLabel.width + gap + capFrom.width + gap + capArrow.width + gap + capTo.width;
       let cursor = -width / 2;
@@ -1268,7 +1269,7 @@ export class InfoManager {
       const costY = top + BREAK_CONFIRM.costY;
       const universalName = findItem(UNIVERSAL_FRAGMENT_ITEM[def.rarity])?.name ?? "";
       const costs: BreakthroughCost[] = [
-        { kind: "level", label: t("info.level"), need: cap, have: progress.level },
+        { kind: "level", label: t("info.level"), need: requiredLevel, have: progress.level },
         { kind: "fragment", label: t("info.breakthrough.fragment", { name: def.name }), need: fragmentCost, have: held },
         ...(usesUniversal ? [{ kind: "universal" as const, texture: universalFragmentTexture(def.rarity), label: universalName, need: spend.universal, have: universal }] : []),
         { kind: "currency", texture: CURRENCY_ICON_BY_WALLET.cheesecake, label: t("info.breakthrough.cheesecake"), need: step.cheesecake, have: session.wallet.cheesecake },
@@ -1470,7 +1471,7 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def) return;
     const progress = relicProgression.getProgress(def.id);
-    const canFeed = canFeedRelic(progress, session.wallet.cheesecake);
+    const canFeed = canFeedRelic(progress, session.wallet.cheesecake, this.relicCap());
     // Growth actions are derived from the current confirmed state, never from “did this tap level up?”.  At
     // the cap the note becomes an explicit route to breakthrough and explains why it is not yet available.
     // **만렙에서는 쪽지를 열지 않는다.** 먹일 것이 없는 자리에 "레벨 상한 · 한계 돌파"를
@@ -1510,7 +1511,7 @@ export class InfoManager {
     const progress = relicProgression.getProgress(def.id);
     // 상한에 닿는 순간 쪽지가 스스로 닫힌다 — 더 먹일 수 없는 판에 남아 있을 이유가 없고,
     // 다음에 할 일(한계 돌파)은 별 옆의 버튼이 제 자리에서 말한다.
-    if (progress.level >= relicLevelCap(progress.breakthrough)) { close(); return; }
+    if (progress.level >= this.relicCap()) { close(); return; }
     ([[t("info.feed.one"), 1], [t("info.feed.ten"), 10]] as const).forEach(([label, levels], index) => {
       const bx = index === 0 ? -128 : 128;
       const cost = this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
@@ -1548,6 +1549,14 @@ export class InfoManager {
     });
   }
 
+  /**
+   * 지금 렐릭 레벨 상한 — **연구원 레벨이 연다**(응태 결정, 2026-11-11). 돌파는 상한을 열지 않는다.
+   * 친구의 공개 프로필은 그 사람의 연구원 레벨을 모르므로 끝(100)으로 둔다 — 상한이 읽히지 않을 뿐 수치는 그대로다.
+   */
+  private relicCap(): number {
+    return this.publicProfile ? RELIC_MAX_LEVEL : relicLevelCap(session.playerResearch.level);
+  }
+
   /** 지금 레벨에서 목표 레벨까지 필요한 급여 횟수. 팝업의 소모량 표기와 실제 요청이 같은 값을 쓴다. */
   private feedsForLevels(levels: number): number {
     if (!this.currentDef) return 1;
@@ -1555,7 +1564,7 @@ export class InfoManager {
     let need = 0;
     let level = progress.level;
     let exp = progress.exp;
-    const cap = relicLevelCap(progress.breakthrough);
+    const cap = this.relicCap();
     for (let i = 0; i < levels && level < cap; i += 1) {
       need += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp);
       level += 1;
@@ -1574,7 +1583,7 @@ export class InfoManager {
     const progress = relicProgression.getProgress(def.id);
     const queued = this.feedQueue + (this.feeding ? this.feedInFlight : 0);
     if (session.wallet.cheesecake < (queued + 1) * FEED_UNIT.cheesecake) return false;
-    const cap = relicLevelCap(progress.breakthrough);
+    const cap = this.relicCap();
     if (progress.level >= cap) return false;
     return queued < this.feedsForLevels(cap - progress.level);
   }
@@ -1590,10 +1599,10 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def || this.publicProfile) return;
     const progress = relicProgression.getProgress(def.id);
-    this.paintExp(progress, relicLevelCap(progress.breakthrough), true);
+    this.paintExp(progress, this.relicCap(), true);
     // 예상으로 레벨이 넘어간 그 누름에서 곧바로 터뜨린다 — 서버 응답까지 기다리면 줄이 이미 넘어간
     // 뒤에 한 박자 늦게 터졌다. 오른 능력치는 확정된 뒤에 따로 띄운다(`feedNow`).
-    const predicted = previewFeedProgress(progress, this.pendingFeeds()).level;
+    const predicted = previewFeedProgress(progress, this.pendingFeeds(), this.relicCap()).level;
     const celebrated = this.celebratedLevel?.id === def.id ? this.celebratedLevel.level : progress.level;
     if (predicted > Math.max(celebrated, progress.level) && this.isOpen) {
       this.celebratedLevel = { id: def.id, level: predicted };
@@ -1607,7 +1616,7 @@ export class InfoManager {
 
   /** 레벨 숫자·경험치 줄·글자를 예상 진행(확정 + 대기 중인 급여)으로 칠한다. 숫자는 굴러간다. */
   private paintExp(progress: RelicProgress, cap: number, glide: boolean): void {
-    const shown = previewFeedProgress(progress, this.pendingFeeds());
+    const shown = previewFeedProgress(progress, this.pendingFeeds(), this.relicCap());
     const maxed = shown.level >= cap;
     const need = maxed ? 0 : relicExpToNext(shown.level);
     const ratio = maxed ? 1 : shown.exp / need;
@@ -1681,7 +1690,7 @@ export class InfoManager {
   private async feedNow(feeds: number, mode: "normal" | "level" = "normal"): Promise<boolean> {
     const def = this.currentDef;
     if (!def || !this.ownedNow) return false;
-    if (!canFeedRelic(relicProgression.getProgress(def.id), session.wallet.cheesecake)) return false;
+    if (!canFeedRelic(relicProgression.getProgress(def.id), session.wallet.cheesecake, this.relicCap())) return false;
     const before = relicProgression.getProgress(def.id);
     const statsBefore = this.shownStats(def);
     let leveled = false;
@@ -1713,7 +1722,7 @@ export class InfoManager {
       // 서버가 예상보다 덜 먹였다면(상한·지갑) 앞서 터뜨린 몫을 지금 기대치로 되돌린다 — 그래야
       // 다음에 실제로 오를 때 큰 연출이 빠지지 않는다.
       if (this.celebratedLevel?.id === def.id) {
-        const expected = previewFeedProgress(relicProgression.getProgress(def.id), this.pendingFeeds()).level;
+        const expected = previewFeedProgress(relicProgression.getProgress(def.id), this.pendingFeeds(), this.relicCap()).level;
         if (this.celebratedLevel.level > expected) this.celebratedLevel = { id: def.id, level: expected };
       }
     }
@@ -2723,13 +2732,13 @@ export class InfoManager {
       ? { level: this.publicProfile.level, exp: 0, breakthrough: this.shownBreakthrough(def), bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }
       : relicProgression.getProgress(def.id);
     const finalStats = this.shownStats(def);
-    const cap = relicLevelCap(progress.breakthrough);
+    const cap = this.relicCap();
     const maxed = progress.level >= cap;
 
     // 사거리는 성장하지 않는 정적 값이지만, 다른 캐릭터로 넘길 때 함께 갈아 끼워야 한다.
     this.reachLabel.setText(`${t("stat.range")} · ${reachLabel(def.reachTier)}`).setColor(reachToneHex(def.reachTier));
     this.paintReachChip(Phaser.Display.Color.HexStringToColor(reachToneHex(def.reachTier)).color);
-    this.levelValue.setText(String(previewFeedProgress(progress, this.publicProfile ? 0 : this.pendingFeeds()).level));
+    this.levelValue.setText(String(previewFeedProgress(progress, this.publicProfile ? 0 : this.pendingFeeds(), this.relicCap()).level));
     this.levelCap.setText("/ " + cap);
     // 숫자 폭이 자리 수에 따라 달라지므로 붙는 자리도 그릴 때마다 다시 잡는다.
     // 레벨업 때 숫자가 잠깐 부풀어도 상한이 따라 밀리지 않도록 제 배율(가로 1 · 세로 1.16)로 잰다.
@@ -2741,7 +2750,7 @@ export class InfoManager {
     if (!this.publicProfile) this.paintExp(progress, cap, this.glideExp);
     else { this.expBar.setValue(maxed ? 1 : progress.exp / relicExpToNext(progress.level)); this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + relicExpToNext(progress.level) + " EXP"); }
     this.glideExp = false;
-    this.paintFeedButton(this.ownedNow && canFeedRelic(progress, session.wallet.cheesecake));
+    this.paintFeedButton(this.ownedNow && canFeedRelic(progress, session.wallet.cheesecake, this.relicCap()));
     this.feedLabel.setText(maxed ? t("info.level.max") : t("info.feed"));
     // 급여는 치즈케이크를 먹이는 일이라 버튼이 그 수를 직접 말한다. 상단 줄과 같은 세션 지갑을
     // 읽으므로 두 곳의 값이 갈라지지 않는다.
@@ -3065,9 +3074,9 @@ export function addInfoMagnifier(
  * 서버가 아직 답하지 않은 급여까지 먹인 것으로 친 진행 — 표시에만 쓴다. 줄에 넣을 때 지갑과 상한을
  * 이미 셈했으므로 같은 규칙(`feedRelic`)을 지갑 제한 없이 돌린다. 확정은 여전히 서버가 한다.
  */
-function previewFeedProgress(progress: RelicProgress, pending: number): { level: number; exp: number } {
+function previewFeedProgress(progress: RelicProgress, pending: number, levelCap: number): { level: number; exp: number } {
   if (pending <= 0) return { level: progress.level, exp: progress.exp };
-  const result = simulateFeed(progress, Number.MAX_SAFE_INTEGER - (Number.MAX_SAFE_INTEGER % FEED_UNIT.cheesecake), pending).progress;
+  const result = simulateFeed(progress, Number.MAX_SAFE_INTEGER - (Number.MAX_SAFE_INTEGER % FEED_UNIT.cheesecake), pending, levelCap).progress;
   return { level: result.level, exp: result.exp };
 }
 

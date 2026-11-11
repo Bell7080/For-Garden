@@ -4,7 +4,6 @@ import { handleGameCall, StateConflictError, type StateStore, type StoredState }
 import { WALLET_CAPS } from "../../src/data/economy";
 import { PLAYABLE_RELICS } from "../../src/data/relics";
 import { createDefaultSession } from "../../src/state/session";
-import { breakthroughForLevel } from "../../src/core/debugCommand";
 
 const server = (developmentTools = true) => {
   const state = createDefaultSession();
@@ -50,7 +49,8 @@ describe("QA 디버그 명령", () => {
     expect(state.owned.has(target.id)).toBe(true);
     await api.applyDebugCommand({ kind: "relicLevel", relicId: target.id, level: 35 });
     expect(state.relicProgress[target.id].level).toBe(35);
-    expect(state.relicProgress[target.id].breakthrough).toBe(breakthroughForLevel(35));
+    // 레벨 상한은 연구원 레벨이 열므로 레벨만 올려도 돌파는 그대로다.
+    expect(state.relicProgress[target.id].breakthrough).toBe(0);
     await api.applyDebugCommand({ kind: "relicBreakthrough", relicId: target.id, breakthrough: 4 });
     expect(state.relicProgress[target.id]).toMatchObject({ breakthrough: 4, level: 50 });
     await api.applyDebugCommand({ kind: "relicBond", relicId: target.id, level: 3 });

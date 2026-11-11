@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { combatPower } from "../../src/core/combatPower";
-import { applyLevelGrowth, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
+import { applyLevelGrowth, RELIC_BASE_LEVEL_CAP } from "../../src/core/relicProgression";
 import { ENEMY_BIRTH_STAGE_FACTOR, ENEMY_BIRTH_TIERS, COMMON_SECONDARY_STATS, RARITY_LEVEL_GROWTH, RARITY_ORDER, RARITY_STAT_BAND, withinRarityBand } from "../../src/core/rarityScaling";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import type { RelicDef, Stats } from "../../src/core/types";
@@ -162,9 +162,9 @@ describe("등급별 레벨 성장", () => {
 
   it("은 레벨 1에서는 태생 그대로이고 상한에서 등급 차이가 태생보다 벌어진다", () => {
     const base: Stats = { hp: 1000, def: 100, res: 100, atk: 100, ap: 100, attackSpeed: 100, moveSpeed: 100, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 };
-    for (const rarity of RARITY_ORDER) expect(applyLevelGrowth(base, 1, rarity)).toEqual(base);
-    const r = applyLevelGrowth(base, RELIC_LEVEL_CAP, "R").hp;
-    const ssr = applyLevelGrowth(base, RELIC_LEVEL_CAP, "SSR").hp;
+    for (const rarity of RARITY_ORDER) expect(applyLevelGrowth(base, 1, rarity, 0)).toEqual(base);
+    const r = applyLevelGrowth(base, RELIC_BASE_LEVEL_CAP, "R", 0).hp;
+    const ssr = applyLevelGrowth(base, RELIC_BASE_LEVEL_CAP, "SSR", 0).hp;
     // 태생 차이(약 10%)에 성장 차이가 얹혀 상한에서 한 뼘 더 벌어진다.
     expect(ssr).toBeGreaterThan(r);
     expect(ssr / r).toBeGreaterThan(1.05);

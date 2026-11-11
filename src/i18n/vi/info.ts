@@ -48,7 +48,7 @@ export const INFO_VI = {
   "info.section.rune": "Rune",
   "info.level": "Cấp",
   "info.level.max": "Cấp tối đa",
-  "info.level.cap": "Giới hạn cấp",
+  "info.breakthrough.growth": "Tăng trưởng chỉ số",
   "info.feed": "Cho ăn",
   "info.levelUp.banner": "LEVEL UP!",
   "info.levelUp.statGain": "{stat} +{value}",

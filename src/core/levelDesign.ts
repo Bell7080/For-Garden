@@ -1,4 +1,4 @@
-import { BREAKTHROUGH_STEPS, GROWTH_STAT_KEYS, RELIC_LEVEL_CAP } from "./relicProgression";
+import { BREAKTHROUGH_STEPS, GROWTH_STAT_KEYS, RELIC_BASE_LEVEL_CAP, breakthroughGrowthPercent } from "./relicProgression";
 import type { Stats } from "./types";
 
 /**
@@ -305,13 +305,24 @@ export function referenceEnemyLevel(level: number, statFactor: number): number {
 /**
  * 적 하나의 전투 능력치 — **레벨로 자라고 유형으로 몫을 받는다.**
  *
+ * 한계 돌파 보너스(단계마다 오각형 +10%)도 플레이어와 같은 덧셈으로 받는다(응태 결정, 2026-11-11).
+ * 단계는 따로 넘기지 않으면 그 레벨의 사다리상 돌파 단계(`shownBreakthroughForLevel`)이고, 스토리처럼
+ * 개체마다 돌파를 적어 둔 자리는 그 값을 넘긴다.
+ *
  * 성장이 올리는 것은 플레이어와 같은 오각형 다섯뿐이고(`GROWTH_STAT_KEYS`), 공속·이속·치명타
  * 같은 나머지는 그 개체의 정의가 그대로 갖는다. 유형 배수도 **체력과 공격 두 축에만** 걸어
  * 어디서 무엇이 얹혔는지 읽히게 둔다.
  */
-export function applyEncounterScaling(base: Stats, level: number, role: EncounterRole, countOnField: number = ENCOUNTER_ROLE[role].count, birthFactor: number = 1): Stats {
+export function applyEncounterScaling(
+  base: Stats,
+  level: number,
+  role: EncounterRole,
+  countOnField: number = ENCOUNTER_ROLE[role].count,
+  birthFactor: number = 1,
+  breakthrough: number = shownBreakthroughForLevel(level),
+): Stats {
   const spec = ENCOUNTER_ROLE[role];
-  const growth = enemyLevelMultiplier(level) * birthFactor;
+  const growth = (enemyLevelMultiplier(level) + breakthroughGrowthPercent(breakthrough) / 100) * birthFactor;
   const result = { ...base };
   for (const key of GROWTH_STAT_KEYS) result[key] = Math.round(base[key] * growth);
   result.hp = Math.round(result.hp * encounterHpShare(role, countOnField));
@@ -332,17 +343,17 @@ export function encounterHpShare(role: EncounterRole, countOnField: number): num
 }
 
 /**
- * 그 레벨에 닿으려면 한계 돌파를 몇 단계 뚫어야 하는가.
+ * 그 레벨의 **사다리상 돌파 단계** — 적이 그 레벨에 설 때 함께 지니는 돌파.
  *
- * **레벨 사다리는 돌파 사다리 위에 놓인다** — 상한이 20인 사람에게 권장 레벨 28짜리 관문을
- * 세우면 그 관문은 "더 키우면 된다"가 아니라 **막힌 문**이다(`BREAKTHROUGH_STEPS`의 상한은
- * 30·40·50·60이고 돌파 0의 상한이 20이다). 콘텐츠 사다리를 그릴 때 이 함수가 돌려주는 단계가
- * 그 시점에 실제로 뚫려 있을 만한 값인지 반드시 함께 본다.
+ * 렐릭 레벨 상한은 이제 돌파가 아니라 연구원 레벨이 연다(응태 결정, 2026-11-11). 그래도 적 사다리는
+ * 예전 경계(20 · 30 · 40 · 50 · 60)를 그대로 써서 레벨 21~30은 1단계, 31~40은 2단계 … 51~60은
+ * 4단계를 지닌다 — 돌파 단계가 요구 레벨(20·30·40·50)에서 열리므로 그 다음 10레벨 구간이 곧
+ * 그 단계를 뚫은 사람이 서는 자리다. 60을 넘는 적 레벨은 막힌 문이라 던진다.
  */
 export function requiredBreakthroughForLevel(level: number): number {
-  if (level <= RELIC_LEVEL_CAP) return 0;
-  const step = BREAKTHROUGH_STEPS.findIndex(({ levelCap }) => level <= levelCap);
-  if (step < 0) throw new RangeError("한계 돌파를 다 뚫어도 닿지 못하는 레벨입니다.");
+  if (level <= RELIC_BASE_LEVEL_CAP) return 0;
+  const step = BREAKTHROUGH_STEPS.findIndex(({ requiredLevel }) => level <= requiredLevel + 10);
+  if (step < 0) throw new RangeError("적 사다리의 돌파 경계를 넘는 레벨입니다.");
   return step + 1;
 }
 
@@ -352,7 +363,7 @@ export function requiredBreakthroughForLevel(level: number): number {
  * 그리는 자리에서 던지면 전투 프레임이 통째로 멈춘다(오류 보고: 수호전 16웨이브 이후 `onHordeWave`).
  */
 export function shownBreakthroughForLevel(level: number): number {
-  const top = BREAKTHROUGH_STEPS[BREAKTHROUGH_STEPS.length - 1]?.levelCap ?? RELIC_LEVEL_CAP;
+  const top = (BREAKTHROUGH_STEPS[BREAKTHROUGH_STEPS.length - 1]?.requiredLevel ?? RELIC_BASE_LEVEL_CAP) + 10;
   return level > top ? BREAKTHROUGH_STEPS.length : requiredBreakthroughForLevel(level);
 }
 

@@ -5,14 +5,57 @@ import { RARITY_LEVEL_GROWTH } from "./rarityScaling";
 import { resonanceOf, resonanceStatEffect } from "./relicResonance";
 import type { RelicDef, RelicProgress, RelicRarity, Stats } from "./types";
 
-/** 한계 돌파를 하지 않은 렐릭의 레벨 상한. 프로토타입에서도 최대 상태를 금방 볼 수 있게 짧다. */
-export const RELIC_LEVEL_CAP = 20;
+/** 연구원 레벨 1의 렐릭 레벨 상한 — 막 시작한 계정이 1장을 도는 동안의 상한이다. */
+export const RELIC_BASE_LEVEL_CAP = 20;
+
+/** 렐릭 레벨의 끝. 연구원 레벨 만렙(60)에서 열린다. */
+export const RELIC_MAX_LEVEL = 100;
+
+/**
+ * **렐릭 레벨 상한은 한계 돌파가 아니라 연구원 레벨이 연다**(응태 결정, 2026-11-11).
+ *
+ * 돌파가 상한을 열던 때는 "원하는 캐릭터를 뽑았는데 중복이 안 나와 키울 수 없다"가 되었다 — 무과금
+ * 계정에서 아끼는 SSR 하나의 중복은 몇 달에 한 장꼴이라, 2장(권장 21~30)부터 그 개체가 Lv20에 묶였다.
+ * 지금은 계정이 자라는 만큼 **모든 렐릭이 같은 상한**을 받는다. 5레벨 단위로 열리고 연구원 Lv20에 60,
+ * 그 뒤로 연구원 5레벨마다 5씩 올라 연구원 만렙(60)에 100이다. 스토리 권장 레벨보다 조금 앞서 열리도록
+ * 잡았다(2장 21~30 · 3장 36~47 · 4장 48~56). 표를 고치면 `relicProgression.test`가 단조·끝값을 지킨다.
+ */
+export const RELIC_LEVEL_CAP_BY_RESEARCH: readonly { readonly researchLevel: number; readonly levelCap: number }[] = [
+  { researchLevel: 1, levelCap: 20 },
+  { researchLevel: 6, levelCap: 25 },
+  { researchLevel: 8, levelCap: 30 },
+  { researchLevel: 10, levelCap: 35 },
+  { researchLevel: 12, levelCap: 40 },
+  { researchLevel: 14, levelCap: 45 },
+  { researchLevel: 16, levelCap: 50 },
+  { researchLevel: 18, levelCap: 55 },
+  { researchLevel: 20, levelCap: 60 },
+  { researchLevel: 25, levelCap: 65 },
+  { researchLevel: 30, levelCap: 70 },
+  { researchLevel: 35, levelCap: 75 },
+  { researchLevel: 40, levelCap: 80 },
+  { researchLevel: 45, levelCap: 85 },
+  { researchLevel: 50, levelCap: 90 },
+  { researchLevel: 55, levelCap: 95 },
+  { researchLevel: 60, levelCap: 100 },
+];
+
+/**
+ * 한계 돌파 한 단계가 오각형 다섯에 더하는 성장 몫(%p) — **레벨 성장 %에 더한다**(응태 결정, 2026-11-11).
+ *
+ * 레벨 상한을 내려놓은 돌파가 무엇으로 값을 하는가에 대한 답이다. 슬롯 효과(개체의 정체성)는 그대로 열고,
+ * 거기에 **볼륨**을 얹는다 — 돌파 V는 +40%p라 SSR Lv60은 성장 합 153.4% → 193.4%다. 적도 사다리의
+ * 돌파 단계만큼 같은 몫을 받으므로(`applyEncounterScaling`) 사다리대로 뚫은 플레이어에게 난이도는 그대로다.
+ * 공용 배율이지만 예전처럼 "끝까지 키워도 무엇이 달라지는가"를 덮지 않는다 — 그 말은 슬롯 효과가 한다.
+ */
+export const BREAKTHROUGH_STAT_PERCENT = 10;
 
 /**
  * 한계 돌파 = 별.
  *
  * 모든 개체는 별 하나(`I`)로 시작하고, **연구소에서 같은 개체를 다시 획득하면 그 개체의 파편**이 쌓인다.
- * 파편을 모아 한계를 돌파할 때마다 별이 하나 오르고 레벨 상한이 함께 열린다. 별이 다섯(`V`)에
+ * 파편을 모아 한계를 돌파할 때마다 별이 하나 오르고 오각형 성장이 `BREAKTHROUGH_STAT_PERCENT`만큼 더해진다
+ * (레벨 상한은 연구원 레벨이 연다 — `relicLevelCap`). 별이 다섯(`V`)에
  * 닿은 뒤의 중복은 파편이 아니라 공용 DNA 조각(마일리지)이 된다.
  *
  * 표가 하나뿐이므로 화면과 서버가 같은 조건을 본다. 예전에는 중복이 곧바로 "각성" 수치를
@@ -33,27 +76,27 @@ export const RELIC_LEVEL_CAP = 20;
 export type BreakthroughSlot = "basic" | "ultimate" | "ferocity" | "passive";
 
 export interface BreakthroughStep {
-  /** 이 단계를 열었을 때의 레벨 상한. */
-  levelCap: number;
+  /** 이 단계를 뚫는 데 필요한 레벨. 상한은 연구원 레벨이 열고(`relicLevelCap`), 돌파는 이 레벨에 닿은 개체만 한다. */
+  requiredLevel: number;
   /** 이 별에서 열리는 슬롯. 개체별 효과와 전투 분기가 같은 키를 읽는다. */
   slot: BreakthroughSlot;
   cheesecake: number;
 }
 
 /**
- * 단계가 여는 것은 **상한과 슬롯뿐**이다.
+ * 단계가 여는 것은 **슬롯과 공용 성장 몫(+10%p)뿐**이다 — 어느 개체나 같은 수라 레벨처럼 읽힌다.
  *
  * 한때 여기에 `basicDamage`·`ultimateDamage`·`statPercent`·`readyUltimate` 같은 공용 배율이
  * 함께 달려 있었다. 위 주석이 이미 그 방식을 버렸다고 적어 두었는데도 필드는 남아 계속 돌았고,
  * 그래서 **다섯 등급에 닿은 개체는 종류를 가리지 않고 전투를 궁극기가 찬 채로 시작했다**
  * (토리카가 그랬다) — 개체 전용 효과가 말하려던 "이 캐릭터를 끝까지 키우면 무엇이 달라지는가"를
- * 그 공짜 한 방이 덮었다. 돌파가 바꾸는 것은 이제 `RelicDef.breakthroughEffects` 하나뿐이다.
+ * 그 공짜 한 방이 덮었다. 개체마다 다른 것은 `RelicDef.breakthroughEffects` 하나뿐이다.
  */
 export const BREAKTHROUGH_STEPS: readonly BreakthroughStep[] = [
-  { levelCap: 30, slot: "basic", cheesecake: 200 },
-  { levelCap: 40, slot: "ultimate", cheesecake: 500 },
-  { levelCap: 50, slot: "ferocity", cheesecake: 1000 },
-  { levelCap: 60, slot: "passive", cheesecake: 2000 },
+  { requiredLevel: 20, slot: "basic", cheesecake: 200 },
+  { requiredLevel: 30, slot: "ultimate", cheesecake: 500 },
+  { requiredLevel: 40, slot: "ferocity", cheesecake: 1000 },
+  { requiredLevel: 50, slot: "passive", cheesecake: 2000 },
 ];
 
 /**
@@ -137,31 +180,39 @@ export function breakthroughGrade(breakthrough: number): number {
   return breakthrough + 1;
 }
 
-/** 지금 돌파 단계에서의 레벨 상한. 상한을 묻는 곳은 전부 이 함수를 쓴다. */
-export function relicLevelCap(breakthrough: number): number {
-  if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) {
-    throw new RangeError("돌파 단계가 범위를 벗어났습니다.");
-  }
-  return breakthrough === 0 ? RELIC_LEVEL_CAP : BREAKTHROUGH_STEPS[breakthrough - 1].levelCap;
+/**
+ * 지금 연구원 레벨에서의 렐릭 레벨 상한. 상한을 묻는 곳은 전부 이 함수를 쓴다.
+ *
+ * 인자는 **연구원 레벨**이다(예전에는 돌파 단계였다). 모든 렐릭이 같은 상한을 받는다.
+ */
+export function relicLevelCap(researchLevel: number): number {
+  const level = Math.floor(Number.isFinite(researchLevel) ? researchLevel : 1);
+  let cap = RELIC_BASE_LEVEL_CAP;
+  for (const row of RELIC_LEVEL_CAP_BY_RESEARCH) if (level >= row.researchLevel) cap = row.levelCap;
+  return cap;
+}
+
+/** 그 렐릭 레벨 상한을 여는 연구원 레벨. 표 밖이면 `undefined`. 레벨 나무·안내가 읽는다. */
+export function researchLevelForRelicCap(levelCap: number): number | undefined {
+  return RELIC_LEVEL_CAP_BY_RESEARCH.find((row) => row.levelCap >= levelCap)?.researchLevel;
+}
+
+/** 돌파 `breakthrough`단계를 지난 개체가 다음 돌파에 닿는 레벨. 다 뚫었으면 `undefined`. */
+export function breakthroughRequiredLevel(breakthrough: number): number | undefined {
+  return BREAKTHROUGH_STEPS[breakthrough]?.requiredLevel;
 }
 
 /**
  * 그 성장 상태가 **플레이어가 실제로 지날 수 있는 자리인가.**
  *
- * 돌파는 레벨 상한을 채운 뒤에만 뚫린다(`canBreakThrough`). 그러니 돌파 1단계인 개체는
+ * 돌파는 그 단계의 요구 레벨에 닿은 뒤에만 뚫린다(`canBreakThrough`). 그러니 돌파 1단계인 개체는
  * 적어도 한 번 20레벨을 찍은 개체이고, 레벨 10에 돌파 1은 **어느 손으로도 만들 수 없는 값**이다.
- * 적도 플레이어와 같은 성장 축만 쓰므로(스테이지 전용 배율을 두지 않는 이유와 같다) 같은 규칙을
- * 지나야 한다 — 그러지 않으면 정보창이 "LV.10 / 상한 20"과 돌파 등급 II를 함께 세워, 화면이
- * 플레이어에게 만들 수 없는 성장을 가르친다.
- *
- * 위는 지금 단계의 상한, 아래는 **직전 단계의 상한**이다. 돌파해도 레벨은 그대로이므로 뚫은
- * 직후의 자리가 곧 하한이다.
+ * 레벨 쪽 상한은 연구원 레벨이 정하므로 여기서는 렐릭 레벨의 끝(`RELIC_MAX_LEVEL`)만 본다.
  */
 export function isGrowthReachable(level: number, breakthrough: number): boolean {
-  if (!Number.isInteger(level) || level < 1) return false;
+  if (!Number.isInteger(level) || level < 1 || level > RELIC_MAX_LEVEL) return false;
   if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) return false;
-  if (level > relicLevelCap(breakthrough)) return false;
-  return breakthrough === 0 || level >= relicLevelCap(breakthrough - 1);
+  return breakthrough === 0 || level >= BREAKTHROUGH_STEPS[breakthrough - 1].requiredLevel;
 }
 
 /** 다음 돌파에 드는 재료. 이미 별 다섯이면 없다. */
@@ -172,13 +223,12 @@ export function nextBreakthrough(breakthrough: number): BreakthroughStep | undef
 /**
  * 돌파할 수 있는지.
  *
- * 레벨을 상한까지 채운 뒤에만 뚫을 수 있다. 그래야 돌파가 "더 키우고 싶을 때 하는 선택"이
- * 되고, 파편을 미리 태워 두는 낭비가 생기지 않는다. `fragments`는 **그 개체의** 파편 수다.
+ * 그 단계의 요구 레벨(20·30·40·50)에 닿은 뒤에만 뚫을 수 있다. `fragments`는 **그 개체의** 파편 수다.
  */
 export function canBreakThrough(rarity: RelicRarity, progress: RelicProgress, fragments: number, cheesecake: number, universal: number): boolean {
   const step = nextBreakthrough(progress.breakthrough);
   if (!step) return false;
-  if (progress.level < relicLevelCap(progress.breakthrough)) return false;
+  if (progress.level < step.requiredLevel) return false;
   return breakthroughFragmentSpend(rarity, progress.breakthrough, fragments, universal).enough && cheesecake >= step.cheesecake;
 }
 
@@ -228,8 +278,8 @@ export function remainingBreakthroughCost(rarity: RelicRarity, progress: RelicPr
   let level = progress.level;
   let exp = progress.exp;
   for (let step = progress.breakthrough; step < BREAKTHROUGH_CAP; step += 1) {
-    // 그 단계의 상한까지 먹인다. 한 레벨에 드는 급여 횟수는 남은 경험치에서 나온다.
-    const cap = relicLevelCap(step);
+    // 그 단계의 요구 레벨까지 먹인다. 한 레벨에 드는 급여 횟수는 남은 경험치에서 나온다.
+    const cap = BREAKTHROUGH_STEPS[step].requiredLevel;
     while (level < cap) {
       cheesecake += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp) * FEED_UNIT.cheesecake;
       level += 1;
@@ -237,13 +287,6 @@ export function remainingBreakthroughCost(rarity: RelicRarity, progress: RelicPr
     }
     fragments += breakthroughFragmentCost(rarity, step);
     cheesecake += BREAKTHROUGH_STEPS[step].cheesecake;
-  }
-  // 마지막 별을 뚫은 뒤 열리는 상한까지도 채울 수 있게 함께 센다.
-  const finalCap = relicLevelCap(BREAKTHROUGH_CAP);
-  while (level < finalCap) {
-    cheesecake += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp) * FEED_UNIT.cheesecake;
-    level += 1;
-    exp = 0;
   }
   return { fragments, cheesecake };
 }
@@ -258,7 +301,7 @@ export const FEED_UNIT = { cheesecake: 10, exp: 20 } as const;
  * 레벨 하나가 여러 번의 행동을 담을 만큼은 커야 한다. 낮은 레벨은 세 번, 뒤로 갈수록 더 든다.
  */
 export function relicExpToNext(level: number): number {
-  if (!Number.isInteger(level) || level < 1 || level > relicLevelCap(BREAKTHROUGH_CAP)) throw new RangeError("레벨이 성장 범위를 벗어났습니다.");
+  if (!Number.isInteger(level) || level < 1 || level > RELIC_MAX_LEVEL) throw new RangeError("레벨이 성장 범위를 벗어났습니다.");
   return 40 + level * 20;
 }
 
@@ -277,10 +320,10 @@ export interface RelicFeedResult {
  * 남은 경험치는 버리지 않고 그 자리에서 멈춘다 — 치즈케이크만 사라지고 아무 일도 없는 급여를
  * 만들지 않기 위해서다.
  */
-export function feedRelic(progress: RelicProgress, cheesecake: number, feeds: number): RelicFeedResult {
+export function feedRelic(progress: RelicProgress, cheesecake: number, feeds: number, levelCap: number): RelicFeedResult {
   if (!Number.isInteger(feeds) || feeds < 1) throw new RangeError("급여 횟수는 1 이상의 정수여야 합니다.");
   if (!Number.isInteger(cheesecake) || cheesecake < 0) throw new RangeError("치즈케이크가 올바르지 않습니다.");
-  const cap = relicLevelCap(progress.breakthrough);
+  const cap = Math.min(RELIC_MAX_LEVEL, levelCap);
   let level = progress.level;
   let exp = progress.exp;
   let spent = 0;
@@ -306,19 +349,19 @@ export function feedRelic(progress: RelicProgress, cheesecake: number, feeds: nu
   };
 }
 
-/** 급여를 한 번이라도 할 수 있는지. 버튼을 끌지 말지 판단하는 단일 기준이다. */
-export function canFeedRelic(progress: RelicProgress, cheesecake: number): boolean {
-  return progress.level < relicLevelCap(progress.breakthrough) && Number.isInteger(cheesecake) && cheesecake >= FEED_UNIT.cheesecake;
+/** 급여를 한 번이라도 할 수 있는지. 버튼을 끌지 말지 판단하는 단일 기준이다. `levelCap`은 `relicLevelCap(연구원 레벨)`이다. */
+export function canFeedRelic(progress: RelicProgress, cheesecake: number, levelCap: number): boolean {
+  return progress.level < Math.min(RELIC_MAX_LEVEL, levelCap) && Number.isInteger(cheesecake) && cheesecake >= FEED_UNIT.cheesecake;
 }
 /** 레벨 N에서 N+1로 갈 때 드는 치즈케이크다. 선형 비용은 각 레벨 투자의 의미를 쉽게 조정하게 한다. */
 export function relicLevelUpCost(level: number): number {
-  if (!Number.isInteger(level) || level < 1 || level > RELIC_LEVEL_CAP) throw new RangeError("레벨이 성장 범위를 벗어났습니다.");
+  if (!Number.isInteger(level) || level < 1 || level > RELIC_BASE_LEVEL_CAP) throw new RangeError("레벨이 성장 범위를 벗어났습니다.");
   return level * 10;
 }
 
 /** UI와 API가 같은 경계 판정을 쓰도록 현재 성장 상태를 값으로 반환한다. */
 export function canLevelUpRelic(progress: RelicProgress, cheesecake: number): boolean {
-  return progress.level < RELIC_LEVEL_CAP && Number.isInteger(cheesecake) && cheesecake >= relicLevelUpCost(progress.level);
+  return progress.level < RELIC_BASE_LEVEL_CAP && Number.isInteger(cheesecake) && cheesecake >= relicLevelUpCost(progress.level);
 }
 
 export interface RelicLevelUpResult {
@@ -330,7 +373,7 @@ export interface RelicLevelUpResult {
 /** 원본을 변경하지 않고 비용 차감과 새 성장 상태를 함께 계산해 서버가 원자적으로 커밋하게 한다. */
 export function levelUpRelic(progress: RelicProgress, cheesecake: number): RelicLevelUpResult {
   const cost = relicLevelUpCost(progress.level);
-  if (progress.level >= RELIC_LEVEL_CAP) throw new RangeError("이미 최대 레벨입니다.");
+  if (progress.level >= RELIC_BASE_LEVEL_CAP) throw new RangeError("이미 최대 레벨입니다.");
   if (!Number.isInteger(cheesecake) || cheesecake < cost) throw new RangeError("치즈케이크가 부족합니다.");
   return { progress: { ...progress, level: progress.level + 1, heartGemSlots: [...progress.heartGemSlots] as RelicProgress["heartGemSlots"] }, cheesecake: cheesecake - cost, cost };
 }
@@ -365,25 +408,29 @@ function growthPercent(percent: number): HeartGemStatEffect {
   return Object.fromEntries(GROWTH_STAT_KEYS.map((key) => [key, percent])) as HeartGemStatEffect;
 }
 
-/**
- * 레벨 1은 기본치이며 이후 레벨마다 **주능력치 다섯**을 등급이 정한 비율로 높인다.
- *
- * 등급을 받는 자리를 선택이 아니라 필수로 둔 이유는, 기본값을 두면 새 호출부가 등급을
- * 빠뜨린 채 모두 같은 속도로 자라기 때문이다. 비율은 `RARITY_LEVEL_GROWTH` 한 표에만 있다.
- */
-export function applyLevelGrowth(base: Stats, level: number, rarity: RelicRarity): Stats {
-  if (!Number.isInteger(level) || level < 1) throw new RangeError("레벨은 1 이상의 정수여야 합니다.");
-  return applyStatPercent(base, growthPercent((level - 1) * RARITY_LEVEL_GROWTH[rarity]));
+/** 한계 돌파가 더하는 성장 몫(%p). 단계 범위를 지킨다. 적의 유형 배수(`applyEncounterScaling`)도 같은 값을 읽는다. */
+export function breakthroughGrowthPercent(breakthrough: number): number {
+  if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) throw new RangeError("돌파 단계가 범위를 벗어났습니다.");
+  return breakthrough * BREAKTHROUGH_STAT_PERCENT;
 }
 
 /**
- * 돌파 단계는 **능력치를 직접 올리지 않는다.**
+ * 레벨 1은 기본치이며 이후 레벨마다 **주능력치 다섯**을 등급이 정한 비율로 높이고, 뚫은 돌파 단계마다
+ * `BREAKTHROUGH_STAT_PERCENT`를 **같은 성장 %에 더한다**(곱하지 않는다).
  *
- * 예전에는 셋째 돌파가 모든 능력치를 15% 올렸는데, 그러면 어느 개체를 뚫어도 같은 숫자가 올라
- * "이 캐릭터를 끝까지 키우면 무엇이 달라지는가"를 말하지 못했다. 돌파가 바꾸는 것은 그 개체의
- * `breakthroughEffects`뿐이므로 여기서는 범위만 지키고 값은 그대로 통과시킨다 — 함수를 지우지
- * 않는 이유는 적 배치(`stages.ts`)와 성장 파이프라인이 같은 자리에서 단계 범위를 검사하기
- * 때문이다.
+ * 등급과 돌파 단계를 선택이 아니라 필수로 둔 이유는, 기본값을 두면 새 호출부가 빠뜨린 채 모두 같은
+ * 속도로 자라기 때문이다. 비율은 `RARITY_LEVEL_GROWTH` 한 표에만 있다.
+ */
+export function applyLevelGrowth(base: Stats, level: number, rarity: RelicRarity, breakthrough: number): Stats {
+  if (!Number.isInteger(level) || level < 1) throw new RangeError("레벨은 1 이상의 정수여야 합니다.");
+  return applyStatPercent(base, growthPercent((level - 1) * RARITY_LEVEL_GROWTH[rarity] + breakthroughGrowthPercent(breakthrough)));
+}
+
+/**
+ * 돌파 단계의 **범위만** 지키고 능력치는 그대로 통과시킨다.
+ *
+ * 돌파의 능력치 몫은 레벨 성장 %에 더해지므로(`applyLevelGrowth`·`applyEncounterScaling`) 여기서 다시
+ * 곱하면 두 번 든다. 함수를 지우지 않는 이유는 적 배치(`stages.ts`)가 같은 자리에서 단계 범위를 검사하기 때문이다.
  */
 export function applyBreakthrough(stats: Stats, breakthrough: number): Stats {
   if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) throw new RangeError("돌파 단계가 범위를 벗어났습니다.");
@@ -417,7 +464,7 @@ export function applyHeartGems(stats: Stats, gems: readonly RuneInstance[]): Sta
  */
 export function calculateFinalStats(base: Stats, progress: RelicProgress, gems: readonly RuneInstance[], rarity: RelicRarity, options: { resonance?: boolean } = {}): Stats {
   if (progress.heartGemSlots.length !== 3) throw new RangeError("Heart Gem 슬롯은 정확히 3개여야 합니다.");
-  const grown = applyLevelGrowth(base, progress.level, rarity);
+  const grown = applyLevelGrowth(base, progress.level, rarity, progress.breakthrough);
   const resonance = options.resonance === false ? 0 : resonanceOf(progress);
   const resonated = resonance > 0 ? applyStatPercent(grown, resonanceStatEffect(resonance)) : grown;
   return applyHeartGems(applyBreakthrough(resonated, progress.breakthrough), gems);

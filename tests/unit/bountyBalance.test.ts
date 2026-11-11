@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { simulateDuel } from "../../src/core/duelBalance";
 import { applyLevelGrowth } from "../../src/core/relicProgression";
+import { shownBreakthroughForLevel } from "../../src/core/levelDesign";
 import { BOUNTY_TIERS, bountyRoundEnemy } from "../../src/data/bounty";
 import { PLAYABLE_RELICS } from "../../src/data/relics";
 import type { RelicDef } from "../../src/core/types";
@@ -28,7 +29,7 @@ const ASSUMED_LEVEL: Readonly<Record<string, number>> = {
   "bounty-8": 37, "bounty-4": 43, "bounty-9": 49, "bounty-10": 55, "bounty-5": 60,
 };
 
-const grow = (def: RelicDef, level: number): RelicDef => ({ ...def, stats: applyLevelGrowth(def.stats, level, def.rarity) });
+const grow = (def: RelicDef, level: number): RelicDef => ({ ...def, stats: applyLevelGrowth(def.stats, level, def.rarity, shownBreakthroughForLevel(level)) });
 
 /** 세 seed를 모두 이기는 개체 수. 한 판만 이기는 조합은 "낼 수 있는 개체"로 세지 않는다. */
 function reliableWinners(enemy: RelicDef, playerLevel: number): string[] {

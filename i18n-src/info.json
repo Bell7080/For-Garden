@@ -245,15 +245,15 @@
 "Max. Level",
 "Макс. уровень"
 ],
-"info.level.cap": [
-"等级上限",
-"เพดานเลเวล",
-"Giới hạn cấp",
-"Batas Level",
-"Límite de nivel",
-"Limite de nível",
-"Levelgrenze",
-"Предел уровня"
+"info.breakthrough.growth": [
+"属性成长",
+"การเติบโตค่าสถานะ",
+"Tăng trưởng chỉ số",
+"Pertumbuhan Stat",
+"Crecimiento de atributos",
+"Crescimento de atributos",
+"Wertewachstum",
+"Рост характеристик"
 ],
 "info.feed": [
 "喂食",

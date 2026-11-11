@@ -1901,6 +1901,16 @@
 "Frei · {content}",
 "Открывается · {content}"
 ],
+"profile.levelTree.relicCap": [
+"遗物等级上限 {max}",
+"เลเวลสูงสุดของเรลิก {max}",
+"Cấp tối đa Di vật {max}",
+"Level maks Relik {max}",
+"Nivel máx. de Reliquia {max}",
+"Nível máx. de Relíquia {max}",
+"Relikt-Stufenlimit {max}",
+"Макс. уровень Реликта {max}"
+],
 "profile.levelTree.stamina": [
 "体力上限 {max}",
 "สตามินาสูงสุด {max}",

@@ -13,7 +13,7 @@ const PARTIES: readonly (readonly string[])[] = [
   ["torika", "dodo", "parua"], ["ella", "maki", "stella"],
 ];
 const party = (ids: readonly string[], level: number): RelicDef[] => ids.map((id) => {
-  const def = getRelic(id); return { ...def, stats: applyLevelGrowth(def.stats, level, def.rarity) };
+  const def = getRelic(id); return { ...def, stats: applyLevelGrowth(def.stats, level, def.rarity, 0) };
 });
 const ARENA: Arena = { left: 0, right: 1_000, top: 0, bottom: 1_200 };
 

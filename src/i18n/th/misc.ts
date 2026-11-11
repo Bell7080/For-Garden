@@ -245,6 +245,7 @@ export const MISC_TH = {
   "profile.levelTree.frame": "กรอบ \"{name}\"",
   "profile.levelTree.content": "ปลดล็อก · {content}",
   "profile.levelTree.stamina": "สตามินาสูงสุด {max}",
+  "profile.levelTree.relicCap": "เลเวลสูงสุดของเรลิก {max}",
   "profile.unset": "ยังไม่ตั้ง",
   "profile.arenaTier": "ระดับอารีนา",
   "profile.duelTier": "ระดับดวล",

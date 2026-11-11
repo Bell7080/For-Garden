@@ -27,7 +27,7 @@ function preview(
     equippedModifiers: [],
     favoriteRelic: {
       relicId, level: relicLevel, breakthroughGrade,
-      stats: applyLevelGrowth(relic.stats, relicLevel, relic.rarity),
+      stats: applyLevelGrowth(relic.stats, relicLevel, relic.rarity, Math.max(0, breakthroughGrade - 1)),
       skillIds: [`${relicId}-basic`, `${relicId}-passive`, `${relicId}-ultimate`],
     },
     competitiveStats: {},

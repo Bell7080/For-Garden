@@ -5248,6 +5248,7 @@ var SETTINGS_KO = {
   "settings.alerts.quietHours": "\uC57C\uAC04 \uC54C\uB9BC \uC81C\uD55C",
   "settings.alerts.quietStart": "\uC81C\uD55C \uC2DC\uC791",
   "settings.alerts.quietEnd": "\uC81C\uD55C \uC885\uB8CC",
+  "settings.alerts.adRewardDot": "\uAD11\uACE0 \uBCF4\uC0C1 \uC54C\uB9BC \uC810",
   "settings.section.play": "\uC5F0\uCD9C \xB7 \uAC8C\uC784",
   "settings.play.screenShake": "\uC804\uD22C \uD654\uBA74 \uD754\uB4E4\uB9BC",
   "settings.play.damageNumbers": "\uD53C\uD574 \uC22B\uC790",
@@ -5286,6 +5287,18 @@ var SETTINGS_KO = {
   "settings.account.mergeBlocked": "\uAC8C\uC2A4\uD2B8 \uC9C4\uD589\uC744 \uAE30\uC874 \uACC4\uC815\uC5D0 \uD569\uCE60 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "settings.account.conflictCancelled": "\uC800\uC7A5 \uCDA9\uB3CC \uC120\uD0DD\uC744 \uCDE8\uC18C\uD588\uC2B5\uB2C8\uB2E4.",
   "settings.account.stale": "\uB2E4\uB978 \uAE30\uAE30\uC5D0\uC11C \uC800\uC7A5\uC774 \uAC31\uC2E0\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
+  "settings.account.history": "\uACB0\uC81C \uAE30\uB85D",
+  "settings.account.restore": "\uAD6C\uB9E4 \uBCF5\uC6D0",
+  "settings.account.restoreDone": "\uAD6C\uB9E4 {count}\uAC74 \uBCF5\uC6D0",
+  "settings.account.restoreNone": "\uBCF5\uC6D0\uD560 \uAD6C\uB9E4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4. \uBAA8\uB4E0 \uACB0\uC81C\uC758 \uC9C0\uAE09\uC774 \uB05D\uB098 \uC788\uC2B5\uB2C8\uB2E4.",
+  "settings.account.restoreUnsupported": "\uC774 \uAE30\uAE30\uC5D0\uC11C\uB294 \uAD6C\uB9E4 \uBCF5\uC6D0\uC744 \uC4F8 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "settings.account.restoreCancelled": "\uAD6C\uB9E4 \uBCF5\uC6D0\uC774 \uCDE8\uC18C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+  "settings.account.restoreFailed": "\uAD6C\uB9E4 \uBCF5\uC6D0\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
+  "settings.history.title": "\uACB0\uC81C \uAE30\uB85D",
+  "settings.history.empty": "\uACB0\uC81C \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "settings.history.unknownDate": "\uC2DC\uAC01 \uAE30\uB85D \uC5C6\uC74C",
+  "settings.history.firstBonus": "\uCCAB \uAD6C\uB9E4 2\uBC30 \uC801\uC6A9",
+  "settings.history.failed": "\uACB0\uC81C \uAE30\uB85D\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
   "settings.account.errorCode": "\uC624\uB958 \uCF54\uB4DC: {code}",
   "settings.account.unavailable": "\uC11C\uBC84 \uC800\uC7A5\uC744 \uD655\uC778\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "settings.section.support": "\uACE0\uAC1D\uC9C0\uC6D0 \xB7 \uB370\uC774\uD130",
@@ -5388,7 +5401,6 @@ var LOBBY_KO = {
   "event.chestForge.title": "\uD2F0\uC544\uC758 \uBCF4\uBB3C\uC0C1\uC790",
   "event.chestForge.subtitle": "\uD2F0\uC544\uAC00 \uBAA8\uC544 \uB454 \uBC18\uC9DD\uC774\uB97C \uAEBC\uB0B4 \uAC00\uC694!",
   "chestForge.intro": "\uCF54\uC778\uC73C\uB85C \uC0C1\uC790\uB97C \uC5F4\uACE0 \uCE74\uB4DC \uB2E4\uC12F \uC7A5\uC744 \uACE8\uB77C \uB4A4\uC9D1\uC73C\uC138\uC694. \uC2E4\uD328\uD55C \uCE74\uB4DC\uB9CC \uB193\uCCD0\uC694!",
-  "chestForge.reset": "\uCF54\uC778\uC740 \uC774\uAE34 \uC804\uD22C\uC5D0\uC11C \uC4F4 \uC2A4\uD14C\uBBF8\uB098\uB9CC\uD07C \uC313\uC5EC\uC694 \xB7 {date} \uCD08\uAE30\uD654",
   "chestForge.box.small": "\uC791\uC740 \uC0C1\uC790",
   "chestForge.box.large": "\uD070 \uC0C1\uC790",
   "chestForge.box.grand": "\uD669\uAE08 \uC0C1\uC790",
@@ -5423,7 +5435,6 @@ var LOBBY_KO = {
   "delophyHunt.howTo.2": "\uBCF4\uBB3C \uCE74\uB4DC\uB97C \uC7A0\uAE50 \uBCF4\uC5EC \uB4DC\uB9B0 \uB4A4 \uD719\uD719 \uC11E\uC5B4\uC694. \uAC19\uC740 \uADF8\uB9BC \uB450 \uC7A5\uC744 \uCC3E\uC544 \uB4A4\uC9D1\uC73C\uBA74 \uADF8 \uBCF4\uBB3C\uC740 \uC81C\uAC00 \uB4DC\uB9B4\uAC8C\uC694!",
   "delophyHunt.howTo.3": "\uC138 \uBC88 \uD2C0\uB9AC\uBA74 \uC544\uC6C3! \uD558\uC9C0\uB9CC \uC774\uBBF8 \uCC3E\uC740 \uBCF4\uBB3C\uC740 \uC804\uBD80 \uAC00\uC838\uAC00\uC694.",
   "delophyHunt.howTo.4": "\uC88B\uC740 \uBCF4\uBB3C\uC77C\uC218\uB85D \uB354 \uC0AC\uB0A9\uAC8C \uC11E\uC5EC\uC694. \uB300\uBC15 \uCE74\uB4DC\uB294 \uB2E4\uB978 \uCE74\uB4DC \uB4A4\uB85C \uC228\uAE30\uB3C4 \uD558\uB2C8 \uB208\uC744 \uB5BC\uC9C0 \uB9C8\uC138\uC694!",
-  "delophyHunt.reset": "\uCF54\uC778\uC740 \uC774\uAE34 \uC804\uD22C\uC5D0\uC11C \uC4F4 \uC2A4\uD14C\uBBF8\uB098\uB9CC\uD07C \uC313\uC5EC\uC694 \xB7 {date} \uCD08\uAE30\uD654",
   "delophyHunt.difficulty.easy": "\uC26C\uC6C0",
   "delophyHunt.difficulty.normal": "\uBCF4\uD1B5",
   "delophyHunt.difficulty.hard": "\uC5B4\uB824\uC6C0",
@@ -5450,7 +5461,6 @@ var LOBBY_KO = {
   "shuteFishing.howTo.2": "\uBC14\uB298\uC774 \uC88C\uC6B0\uB85C \uC654\uB2E4 \uAC14\uB2E4 \uD574. \uBE5B\uB098\uB294 \uCE78\uC5D0 \uB4E4\uC5B4\uC628 \uC21C\uAC04 \uD0ED\uD558\uBA74 \uCE90\uCE58! \uBB3C\uACE0\uAE30\uB9C8\uB2E4 3~5\uBC88 \uCE90\uCE58\uD574\uC57C \uB09A\uC5EC.",
   "shuteFishing.howTo.3": "\uCE78 \uBC16\uC5D0\uC11C \uB204\uB974\uBA74 \uBBF8\uC2A4. \uD310 \uC804\uCCB4\uC5D0\uC11C \uC138 \uBC88 \uBBF8\uC2A4\uD558\uBA74 \uB05D\uC774\uC9C0\uB9CC \uC774\uBBF8 \uB09A\uC740 \uAC74 \uC138\uC774\uBE0C\uB3FC.",
   "shuteFishing.howTo.4": "\uD070 \uBB3C\uACE0\uAE30\uC77C\uC218\uB85D \uBC15\uC790\uAC00 \uBE60\uB974\uACE0 \uCE78\uC774 \uC881\uC544. \uB9C8\uC9C0\uB9C9 \uACE1\uC774 \uBCF4\uC2A4\uACE1\uC774\uB2C8\uAE4C \uC9D1\uC911\uD574. \uB809 \uD551\uACC4\uB294 \uC548 \uBC1B\uC544.",
-  "shuteFishing.reset": "\uCF54\uC778\uC740 \uC774\uAE34 \uC804\uD22C\uC5D0\uC11C \uC4F4 \uC2A4\uD14C\uBBF8\uB098\uB9CC\uD07C \uC313\uC5EC \xB7 {date} \uCD08\uAE30\uD654",
   "shuteFishing.difficulty.easy": "\uC26C\uC6C0",
   "shuteFishing.difficulty.normal": "\uBCF4\uD1B5",
   "shuteFishing.difficulty.hard": "\uC5B4\uB824\uC6C0",
@@ -5521,7 +5531,10 @@ var LOBBY_KO = {
   "ancient.trialTag.precision": "\uAE09\uC18C",
   "ancient.trialLine": "\u300C{name}\u300D {effect}",
   "event.newbieGrowth.title": "7\uC77C \uC131\uC7A5 \uAC00\uC774\uB4DC",
-  "event.newbieGrowth.subtitle": "\uB9E4\uC77C \uB2E4\uC12F \uBAA9\uD45C, SR \uB810\uB9AD \uC120\uD0DD\uAD8C!"
+  "event.newbieGrowth.subtitle": "\uB9E4\uC77C \uB2E4\uC12F \uBAA9\uD45C, SR \uB810\uB9AD \uC120\uD0DD\uAD8C!",
+  "lobby.pass.mission.seasonPoints": "\uC2DC\uC98C \uC5F0\uAD6C\uB3C4 {threshold} \uB2EC\uC131",
+  "lobby.pass.mission.lead.seasonPoints": "\uC784\uBB34 \uC5F0\uAD6C\uB3C4\uB97C \uBAA8\uC73C\uBA74 \uB808\uBCA8\uC774 \uC624\uB985\uB2C8\uB2E4",
+  "lobby.pass.season.ends": "\uC2DC\uC98C \uC885\uB8CC {time}"
 };
 
 // src/i18n/ko/common.ts
@@ -5589,6 +5602,23 @@ var INFO_KO = {
   "info.summon.resummonHp": "\uCCB4\uB825 {percent}%",
   "info.summon.resummonNone": "\uC5C6\uC74C",
   "info.enemy.reach": "\uC0AC\uAC70\uB9AC \xB7 {tier}",
+  // 정보창 이름 아래 해시태그(`characterTags`). `#` 없이 낱말만 둔다.
+  "info.tag.melee": "\uADFC\uAC70\uB9AC",
+  "info.tag.mid": "\uC911\uAC70\uB9AC",
+  "info.tag.ranged": "\uC6D0\uAC70\uB9AC",
+  "info.tag.dealer": "\uB51C\uB7EC",
+  "info.tag.tank": "\uD0F1\uCEE4",
+  "info.tag.support": "\uC11C\uD3EC\uD130",
+  "info.tag.area": "\uBC94\uC704\uACF5\uACA9",
+  "info.tag.single": "\uB2E8\uC77C\uACF5\uACA9",
+  "info.tag.summon": "\uC18C\uD658",
+  "info.tag.heal": "\uD68C\uBCF5",
+  "info.tag.taunt": "\uB3C4\uBC1C",
+  "info.tag.shield": "\uBCF4\uD638\uB9C9",
+  "info.tag.control": "\uAD70\uC911\uC81C\uC5B4",
+  "info.tag.dot": "\uC9C0\uC18D\uD53C\uD574",
+  "info.tag.stealth": "\uC740\uC2E0",
+  "info.tag.teamBuff": "\uC544\uAD70\uAC15\uD654",
   // 적 정보창의 역할 칸. 쪽지는 그 자리가 바꾸는 것만 말하고, 바꾸는 것이 없으면 그 적의 한마디다.
   "info.enemy.role": "\uC5ED\uD560",
   "info.enemy.role.normal": "\uC7A1\uC878",
@@ -5609,20 +5639,30 @@ var INFO_KO = {
   "info.section.rune": "\uB8EC",
   "info.level": "\uB808\uBCA8",
   "info.level.max": "\uCD5C\uB300 \uB808\uBCA8",
-  "info.level.cap": "\uB808\uBCA8 \uC0C1\uD55C",
+  "info.breakthrough.growth": "\uB2A5\uB825\uCE58 \uC131\uC7A5",
   "info.feed": "\uAE09\uC5EC\uD558\uAE30",
+  "info.levelUp.banner": "LEVEL UP!",
+  "info.levelUp.statGain": "{stat} +{value}",
+  "info.levelUp.statPlus": "+{value}",
   "info.feed.bulk": "\uD55C \uBC88\uC5D0 \uAE09\uC5EC",
   "info.feed.one": "1 \uB808\uBCA8",
   "info.feed.ten": "10 \uB808\uBCA8",
   "info.breakthrough": "\uD55C\uACC4 \uB3CC\uD30C",
   "info.breakthrough.do": "\uB3CC\uD30C\uD558\uAE30",
-  "info.breakthrough.gradeMax": "\uB3CC\uD30C \uCD5C\uB300",
-  "info.breakthrough.alreadyMax": "\uC774\uBBF8 \uB3CC\uD30C \uB4F1\uAE09 {rarity}\uB2E4. \uC911\uBCF5\uC740 DNA \uB9C8\uC77C\uB9AC\uC9C0\uB85C \uC313\uC778\uB2E4.",
   "info.breakthrough.fragment": "{name} \uD30C\uD3B8",
   "info.breakthrough.cheesecake": "\uCE58\uC988\uCF00\uC774\uD06C",
   "info.breakthrough.need": "\uD544\uC694 {count}",
   "info.breakthrough.universalSpend": "\uC18C\uBAA8 {count}",
   "info.breakthrough.universalNotice": "{name} {count}\uAC1C\uAC00 \uD568\uAED8 \uC18C\uBAA8\uB429\uB2C8\uB2E4",
+  "info.reset": "\uCD08\uAE30\uD654",
+  "info.reset.title": "\uB808\uBCA8 \uCD08\uAE30\uD654",
+  "info.reset.confirm": "\uCD08\uAE30\uD654\uD558\uAE30",
+  "info.reset.plea": "\uC800\u2026 \uC815\uB9D0 \uB098\uB97C\n\uCC98\uC74C\uC73C\uB85C \uB418\uB3CC\uB9B4 \uAC70\uC57C?",
+  "info.reset.wallet": "\uBCF4\uC720 \uC7AC\uD654 \uBCC0\uD654",
+  "info.reset.keep": "\uD55C\uACC4 \uB3CC\uD30C\xB7\uC720\uB300\xB7\uB8EC\uC740 \uADF8\uB300\uB85C \uB0A8\uC544\uC694.",
+  "info.reset.free": "\uBB34\uB8CC!",
+  "info.reset.noGems": "\uC82C\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.",
+  "info.reset.done": "\uCE58\uC988\uCF00\uC774\uD06C {count}\uAC1C\uB97C \uB3CC\uB824\uBC1B\uC558\uC2B5\uB2C8\uB2E4.",
   "info.rune.bag": "\uB8EC \uAC00\uBC29 \xB7 {part}",
   "info.rune.empty": "\uBE48 \uC790\uB9AC",
   "info.rune.emptySlot": "   \uBE48 \uC790\uB9AC",
@@ -5690,7 +5730,14 @@ var INFO_KO = {
   "info.story.2": "2\uD654 \xB7 \uC0AC\uC721\uC7A5\uC758 \uBC24",
   "info.story.3": "3\uD654 \xB7 \uC61B \uAE30\uC5B5\uC758 \uC870\uAC01",
   "info.story.4": "4\uD654 \xB7 \uC774\uD130\uB110 \uC2DC\uD2F0\uC758 \uB05D",
-  "info.enemy.role.healingReduction": "\uC774 \uC801\uC774 \uC0B4\uC544 \uC788\uB294 \uB3D9\uC548 \uC544\uAD70\uC774 \uBC1B\uB294 \uD68C\uBCF5\uC774 {base}% \uC904\uACE0, {seconds}\uCD08\uC5D0 \uAC78\uCCD0 \uCD5C\uB300 {max}%\uAE4C\uC9C0 \uB298\uC5B4\uB09C\uB2E4."
+  "info.enemy.role.healingReduction": "\uC774 \uC801\uC774 \uC0B4\uC544 \uC788\uB294 \uB3D9\uC548 \uC544\uAD70\uC774 \uBC1B\uB294 \uD68C\uBCF5\uC774 {base}% \uC904\uACE0, {seconds}\uCD08\uC5D0 \uAC78\uCCD0 \uCD5C\uB300 {max}%\uAE4C\uC9C0 \uB298\uC5B4\uB09C\uB2E4.",
+  "info.resonance": "\uACF5\uBA85",
+  "info.resonance.max": "\uACF5\uBA85 \uC644\uB8CC",
+  "info.resonance.do": "\uACF5\uBA85\uD558\uAE30",
+  "info.resonance.stage": "\uACF5\uBA85 {stage}",
+  "info.resonance.stat": "\uB2A5\uB825\uCE58",
+  "info.resonance.pvpOff": "\uACB0\uD22C\xB7\uC544\uB808\uB098\uC5D0\uC11C\uB294 \uACF5\uBA85\uC774 \uC801\uC6A9\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4",
+  "info.resonance.alreadyMax": "\uC774\uBBF8 \uACF5\uBA85 V\uB2E4. \uC911\uBCF5\uC740 DNA \uB9C8\uC77C\uB9AC\uC9C0\uB85C \uC313\uC778\uB2E4."
 };
 
 // src/i18n/ko/status.ts
@@ -5778,12 +5825,18 @@ var LAB_KO = {
   "lab.rates.range": "{min}~{max}",
   "lab.rates.pickup": "Pick Up!",
   "lab.rates.rules": "\uBCF4\uC7A5 \uADDC\uCE59",
+  "lab.history.title": "\uC5F0\uAD6C \uAE30\uB85D",
+  "lab.history.caption": "\uCD5C\uADFC {count}\uAC74 (\uCD5C\uB300 {limit}\uAC74)",
+  "lab.history.amount": "{currency} \xD7{amount}",
+  "lab.history.pity": "\uCC9C\uC7A5 \uCE74\uC6B4\uD2B8 {count}",
+  "lab.history.unknownBanner": "\uC885\uB8CC\uB41C \uC5F0\uAD6C",
   "lab.mileageShop.short": "\uB9C8\uC77C\uB9AC\uC9C0",
   "lab.pity.label": "SSR \uD655\uC815\uAE4C\uC9C0",
   "lab.pity.unit": "\uD68C",
   "lab.pity.pickupNext": "\uB2E4\uC74C SSR \uD53D\uC5C5 \uD655\uC815",
   "lab.pull.one": "1\uD68C \uC5F0\uAD6C",
   "lab.pull.ten": "10\uD68C \uC5F0\uAD6C",
+  "lab.pull.againHint": "\uD55C \uBC88 \uB354 \uC5F0\uAD6C\uD574 \uBCFC\uAE4C\uC694?",
   "lab.networkError": "\uD1B5\uC2E0\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "lab.policy.pity": "\uD604\uC7AC SSR \uBBF8\uD68D\uB4DD {since}\uD68C \xB7 \uD655\uC815\uAE4C\uC9C0 {left}\uD68C",
   "lab.policy.pickup": "\uD53D\uC5C5 \uD655\uC815  {state}",
@@ -5907,17 +5960,8 @@ var BATTLE_KO = {
   "tutorial.lobby.story": "\uC2A4\uD1A0\uB9AC\uB97C \uC120\uD0DD\uD574 \uB2E4\uC74C \uAD00\uBB38\uC73C\uB85C \uC774\uB3D9\uD558\uC138\uC694.",
   "tutorial.stage.enter": "{stage} \uAD00\uBB38\uC5D0 \uC9C4\uC785\uD574 \uBCFC\uAE4C\uC694?",
   "tutorial.party.move": "\uB810\uB9AD\uC744 \uB2E4\uB978 \uCE78\uC73C\uB85C \uB04C\uC5B4 \uD3B8\uC131\uC744 \uBC14\uAFD4 \uBCF4\uC138\uC694.",
-  "tutorial.party.hold": "\uD3B8\uC131\uB41C \uB810\uB9AD\uC744 \uAFB9 \uB20C\uB7EC \uC815\uBCF4\uB97C \uD655\uC778\uD574 \uBCF4\uC138\uC694.",
+  "tutorial.party.auto": "{name:\uC740} \uD0F1\uCEE4\uB77C\uC11C \uAC00\uC6B4\uB370\uC5D0 \uC11C\uC57C \uB4E0\uB4E0\uD574\uC694! \uC790\uB3D9 \uBC30\uCE58\uB97C \uB20C\uB7EC \uB2E4\uC2DC \uAC00\uC6B4\uB370\uB85C \uBCF4\uB0B4 \uC904\uAE4C\uC694?",
   "tutorial.party.start": "\uD3B8\uC131\uC774 \uC900\uBE44\uB410\uC5B4\uC694. \uCD9C\uC804\uD574 \uBCFC\uAE4C\uC694?",
-  "tutorial.info.badges": "\uC990\uACA8\uCC3E\uAE30\xB7\uC560\uCC29\xB7\uAD00\uCC30 \uC77C\uC9C0\uC608\uC694. \uC544\uB07C\uB294 \uB810\uB9AD\uC744 \uD45C\uC2DC\uD558\uACE0 \uAE30\uB85D\uC744 \uC77D\uC5B4 \uBCF4\uC138\uC694.",
-  "tutorial.info.skills": "\uD328\uC2DC\uBE0C\xB7\uC77C\uBC18 \uACF5\uACA9\xB7\uAD81\uADF9\uAE30\xB7\uD3ED\uC8FC\uC608\uC694. \uB204\uB974\uBA74 \uC2A4\uD0AC \uC124\uBA85\uC774 \uC5F4\uB824\uC694.",
-  "tutorial.info.level": "\uCE58\uC988\uCF00\uC774\uD06C\uB97C \uAE09\uC5EC\uD574 \uB808\uBCA8\uC744 \uC62C\uB824\uC694.",
-  "tutorial.info.break": "\uAC19\uC740 \uB810\uB9AD\uC744 \uB2E4\uC2DC \uB9CC\uB098\uBA74 \uD30C\uD3B8\uC774 \uC313\uC5EC\uC694. \uD55C\uACC4 \uB3CC\uD30C\uB85C \uB808\uBCA8 \uC0C1\uD55C\uC744 \uC5F4\uC5B4\uC694.",
-  "tutorial.info.bond": "\uC720\uB300\uB294 \uD568\uAED8 \uC2F8\uC6B8\uC218\uB85D \uAE4A\uC5B4\uC838\uC694. \uB192\uC744\uC218\uB85D \uD3ED\uC8FC\uAC00 \uBE68\uB9AC \uCC3E\uC544\uC640\uC694.",
-  "tutorial.info.stats": "\uB2A5\uB825\uCE58 \uC624\uAC01\uD615\uC774\uC5D0\uC694. \uB113\uC744\uC218\uB85D \uC804\uD22C\uB825\uC774 \uB192\uACE0, \uB3CB\uBCF4\uAE30\uB85C \uC815\uD655\uD55C \uC218\uCE58\uB97C \uBD10\uC694.",
-  "tutorial.info.rune": "\uB8EC\uC744 \uC138 \uCE78\uC5D0 \uB07C\uC6CC \uB2A5\uB825\uCE58\uB97C \uB354 \uC62C\uB824\uC694.",
-  "tutorial.info.done": "\uC548\uB0B4\uB294 \uC5EC\uAE30\uAE4C\uC9C0\uC608\uC694! \uB4A4\uB85C\uAC00\uAE30\uB97C \uB20C\uB7EC \uD3B8\uC131\uC73C\uB85C \uB3CC\uC544\uAC00\uC138\uC694.",
-  "tutorial.info.next": "\uD654\uBA74\uC744 \uB20C\uB7EC \uACC4\uC18D \xB7 {step}/{total}",
   "tutorial.relics.bulk": "\uAC15\uD654 \uBC84\uD2BC\uC744 \uAFB9 \uB20C\uB7EC \uC989\uC2DC \uAC15\uD654 \uBA54\uB274\uB97C \uC5F4\uC5B4 \uBCF4\uC138\uC694.",
   "tutorial.relics.one": "1\uB808\uBCA8 \uAC15\uD654\uB97C \uB20C\uB7EC \uD1A0\uB9AC\uCE74\uB97C \uD55C \uB808\uBCA8 \uC62C\uB824 \uBCF4\uC138\uC694.",
   "tutorial.relics.return": "\uAC15\uD654\uB97C \uB9C8\uCCE4\uC5B4\uC694. \uAD11\uC7A5\uC73C\uB85C \uB3CC\uC544\uAC00\uC138\uC694.",
@@ -5951,7 +5995,13 @@ var BATTLE_KO = {
   "battle.chip.autoOff": "\uAD81\uADF9 OFF",
   "battle.chip.skipOn": "\uC5F0\uCD9C \uC2A4\uD0B5",
   "battle.chip.skipOff": "\uC5F0\uCD9C ON",
-  "battle.tutorial.ultimate": "\uAD81\uADF9\uAE30\uAC00 \uC900\uBE44\uB410\uC5B4\uC694! \uBE5B\uB098\uB294 \uCE74\uB4DC\uB97C \uB20C\uB7EC \uC0AC\uC6A9\uD558\uC138\uC694",
+  "battle.skillGlance.title": "\uC2A4\uD0AC \uD55C\uB208\uC5D0 \uBCF4\uAE30",
+  "battle.tutorial.ultimate.intro": "\uAD81\uADF9\uAE30\uB294 \uAC8C\uC774\uC9C0\uAC00 \uAC00\uB4DD \uCC28\uBA74 \uC4F0\uB294 \uD544\uC0B4\uAE30\uC608\uC694!",
+  "battle.tutorial.ultimate.owner": "{name}\uC758 \uAD81\uADF9\uAE30",
+  "battle.tutorial.ultimate.tap": "\uBE5B\uB098\uB294 \uCE74\uB4DC\uB97C \uB20C\uB7EC \uC368 \uBCF4\uC138\uC694 \xB7 {step}/{total}",
+  "battle.tutorial.ultimate.desc.torika": "\uC8FC\uC704\uC758 \uC801\uC744 \uB545\uC9F8 \uB0B4\uB9AC\uCC0D\uC5B4 \uD53C\uD574\uB97C \uC8FC\uACE0 \uC7A0\uAE50 \uAE30\uC808\uC2DC\uCF1C\uC694.",
+  "battle.tutorial.ultimate.desc.dodo": "\uACE0\uB978 \uC790\uB9AC\uC758 \uC801\uC5D0\uAC8C \uD53C\uD574\uB97C \uC8FC\uACE0, \uADF8 \uC548\uC758 \uC544\uAD70\uC744 \uD68C\uBCF5\uC2DC\uCF1C\uC694.",
+  "battle.tutorial.ultimate.desc.parua": "\uC7A0\uAE50 \uACF5\uACA9\uC774 \uBE68\uB77C\uC9C0\uACE0 \uD654\uC0B4\uC744 \uB450 \uBC1C\uC529 \uC3D8\uC544\uC694.",
   "battle.gauge.frenzy": "\uD3ED\uC8FC {value} / {max}",
   "battle.gauge.ferocity": "\uC57C\uC131 {value} / {max}",
   "battle.result.saveFailed": "\uACB0\uACFC\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4",
@@ -6353,7 +6403,7 @@ var GUILD_KO = {
   "guild.war.deck.edit": "\uBC29\uC5B4\uB371 \uC218\uC815",
   "guild.war.party.deckTitle": "\uAE38\uB4DC\uC804 \uBC29\uC5B4\uB371",
   "guild.war.autoPlacedToast": "\uACB0\uD22C\uC7A5 \uBC29\uC5B4\uB371\uC73C\uB85C \uAE38\uB4DC\uC804\uC5D0 \uBC30\uCE58\uB418\uC5C8\uC2B5\uB2C8\uB2E4",
-  "guild.war.edit.open": "\uD3B8\uC9D1",
+  "guild.war.edit.open": "\uBC30\uCE58 \uD3B8\uC9D1",
   "guild.war.edit.done": "\uC644\uB8CC",
   "guild.war.edit.auto": "\uC790\uB3D9 \uBC30\uCE58",
   "guild.war.edit.autoConfirm": "\uBC29\uC5B4\uB371\uC744 \uC138\uC6B4 \uAE38\uB4DC\uC6D0 \uBAA8\uB450\uB97C \uBC29\uC5B4 \uC804\uD22C\uB825 \uC21C\uC73C\uB85C \uB2E4\uC2DC \uC138\uC6C1\uB2C8\uB2E4. \uAC15\uD55C \uC21C\uC11C\uB300\uB85C \uC6B0\uB450\uBA38\uB9AC \u2192 \uC815\uC608 \u2192 \uC77C\uBC18 \uCE78\uC5D0 \uC12D\uB2C8\uB2E4.",
@@ -6763,7 +6813,14 @@ var SHOP_KO = {
   "shop.premium.fixedTerm": "{days}\uC77C \uC774\uC6A9",
   "shop.premium.expiresOn": "{date} \uB9CC\uB8CC",
   "shop.premium.noRenewal": "{days}\uC77C\uAC04 \uC774\uC6A9 \xB7 \uC790\uB3D9 \uAC31\uC2E0 \uC5C6\uC74C",
-  "shop.premium.perk.ticketless": "\uC18C\uD0D5\uAD8C \uC5C6\uC774 \uC18C\uD0D5"
+  "shop.premium.perk.ticketless": "\uC18C\uD0D5\uAD8C \uC5C6\uC774 \uC18C\uD0D5",
+  "shop.premium.firstPayment.tag": "1\uD68C \uD55C\uC815",
+  "shop.premium.firstPayment.title": "\uCCAB \uACB0\uC81C \uC120\uBB3C",
+  "shop.premium.firstPayment.note": "\uCCAB \uACB0\uC81C \uC2DC \uD65C\uC131\uD654",
+  "shop.premium.firstPayment.hint": "\uC5B4\uB5A4 \uC0C1\uD488\uC774\uB4E0 \uCC98\uC74C \uACB0\uC81C\uD558\uBA74 \uD65C\uC131\uD654\uB418\uC5B4 \uC9C1\uC811 \uBC1B\uC744 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "shop.premium.firstPayment.claim": "\uBB34\uB8CC",
+  "shop.purchase.period.season": "\uC2DC\uC98C",
+  "shop.premium.pass.metric.seasonPoints": "\uC2DC\uC98C \uC5F0\uAD6C\uB3C4 {progress} / {goal}"
 };
 
 // src/i18n/ko/missions.ts
@@ -6928,7 +6985,6 @@ var MISC_KO = {
   "skill.effect.healing": "\uD68C\uBCF5",
   "skill.effect.buff": "\uAC15\uD654",
   "skill.gauge": "\uAC8C\uC774\uC9C0 {cost}",
-  "skill.duration": "{seconds}\uCD08 \uB3D9\uC548",
   // 고고학
   "archaeology.shop": "\uC0C1\uC810",
   "archaeology.bench.pick": "\uB8EC \uACE0\uB974\uAE30",
@@ -7061,6 +7117,7 @@ var MISC_KO = {
   "profile.record.collection": "\uB3C4\uAC10 \uC218\uC9D1",
   "profile.record.unranked": "\uBBF8\uBC30\uCE58",
   "content.unlocked": "{content} \uAC1C\uBC29!",
+  "content.unlockedInSortie": "{content} \uAC1C\uBC29! \uCD9C\uACA9\uC5D0\uC11C \uB9CC\uB0A0 \uC218 \uC788\uC2B5\uB2C8\uB2E4",
   "profile.nextUnlock": "LV.{level} \uAC1C\uBC29 \xB7 {content}",
   "profile.nextUnlockStage": "\uC2A4\uD14C\uC774\uC9C0 {stage} \uD074\uB9AC\uC5B4 \uC2DC \uAC1C\uBC29 \xB7 {content}",
   "profile.picker.title": "\uD504\uB85C\uD544 \uAFB8\uBBF8\uAE30",
@@ -7107,6 +7164,7 @@ var MISC_KO = {
   "profile.levelTree.frame": "\uD14C\uB450\uB9AC \u300C{name}\u300D",
   "profile.levelTree.content": "\uAC1C\uBC29 \xB7 {content}",
   "profile.levelTree.stamina": "\uC2A4\uD14C\uBBF8\uB098 \uC0C1\uD55C {max}",
+  "profile.levelTree.relicCap": "\uB810\uB9AD \uB808\uBCA8 \uC0C1\uD55C {max}",
   "profile.unset": "\uBBF8\uC9C0\uC815",
   "profile.arenaTier": "\uC544\uB808\uB098 \uD2F0\uC5B4",
   "profile.duelTier": "\uACB0\uD22C\uC7A5 \uD2F0\uC5B4",
@@ -7305,7 +7363,13 @@ var MISC_KO = {
   "stageMap.replay": "\uB2E4\uC2DC \uBCF4\uAE30",
   "stageMap.readRecord": "\uAE30\uB85D \uC77D\uAE30",
   "stageMap.sub": "SUB",
-  "stageMap.subRead": "\uC77D\uC74C"
+  "stageMap.subRead": "\uC77D\uC74C",
+  "profile.edit.frameGift": "\uD55C\uC815",
+  "profile.unlock.gift.firstPayment": "\uCCAB \uACB0\uC81C \uC120\uBB3C\uB85C \uBC1B\uC2B5\uB2C8\uB2E4",
+  "profile.unlock.gift.seasonPass": "\uC2DC\uC98C \uD328\uC2A4 30\uB2E8\uACC4 \uBCF4\uC0C1",
+  "profile.frameGuide.kind": "\uD504\uB85C\uD544 \uD14C\uB450\uB9AC",
+  "profile.frameGuide.firstPayment": "\uD504\uB85C\uD544 \uC0AC\uC9C4\uC5D0 \uC50C\uC6B0\uB294 \uAE08\uBE5B \uD14C\uB450\uB9AC\uC785\uB2C8\uB2E4. \uACC4\uC815 \uCCAB \uACB0\uC81C \uB54C \uD55C \uBC88\uB9CC \uBC1B\uC73C\uBA70, \uBC1B\uC73C\uBA74 \uD504\uB85C\uD544 \uAFB8\uBBF8\uAE30\uC758 \uD14C\uB450\uB9AC \uBAA9\uB85D\uC5D0\uC11C \uACE0\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "trade.tag.season": "\uC2DC\uC98C"
 };
 
 // src/i18n/ko/skill.ts
@@ -7827,7 +7891,27 @@ var SKILL_KO = {
   "skill.breakthrough.effect.passive.saltedIngredient": "\u300C{name}\u300D\uC73C\uB85C \uB178\uB9B0 \uC801\uC774 \uBC1B\uB294 \uD68C\uBCF5\uC774 {percent}% \uC904\uC5B4\uB4E0\uB2E4.",
   "skill.breakthrough.effect.passive.tailHide": "\u300C{name}\u300D\uC73C\uB85C \uB4A4\uB85C \uB6F0\uB294 \uC21C\uAC04 {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4. [[basic-attack|\uC77C\uBC18 \uACF5\uACA9]]\uC744 \uCE58\uBA74 \uD480\uB9B0\uB2E4.",
   "skill.breakthrough.effect.passive.youngestCare": "\u300C{name}\u300D\uC73C\uB85C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uC744 \uB54C \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uB2E4\uB978 \uC544\uAD70\uB3C4 \uADF8 {percent}%\uB97C \uC5BB\uB294\uB2E4.",
-  "skill.breakthrough.effect.passive.chainShrapnel": "\uC790\uBB3C\uC1E0\uAC00 \uD480\uB9AC\uB294 \uC21C\uAC04\uC758 \uD130\uC9D0\uC774 \uC8FC\uC704 \uC801\uC5D0\uAC8C \uACF5\uACA9\uB825\uC758 {percent}% \uD53C\uD574\uB3C4 \uC900\uB2E4."
+  "skill.breakthrough.effect.passive.chainShrapnel": "\uC790\uBB3C\uC1E0\uAC00 \uD480\uB9AC\uB294 \uC21C\uAC04\uC758 \uD130\uC9D0\uC774 \uC8FC\uC704 \uC801\uC5D0\uAC8C \uACF5\uACA9\uB825\uC758 {percent}% \uD53C\uD574\uB3C4 \uC900\uB2E4.",
+  "skill.tag.scope.single": "\uB2E8\uC77C",
+  "skill.tag.scope.nearbyEnemies": "\uC8FC\uC704 \uAD11\uC5ED",
+  "skill.tag.scope.splitShot": "\uB2E4\uC911",
+  "skill.tag.scope.battlefieldEnemies": "\uC801 \uC804\uCCB4",
+  "skill.tag.scope.battlefieldAllies": "\uC544\uAD70 \uC804\uCCB4",
+  "skill.tag.scope.duo": "\uB4C0\uC624",
+  "skill.tag.scope.self": "\uC790\uC2E0",
+  "skill.tag.scope.targetedCircle": "\uC9C0\uC815 \uAD11\uC5ED",
+  "skill.tag.scope.chargeLine": "\uB3CC\uC9C4 \uAD00\uD1B5",
+  "skill.tag.timing.instant": "\uC989\uBC1C",
+  "skill.tag.timing.duration": "\uC9C0\uC18D {seconds}\uCD08",
+  "skill.tag.timing.passive": "\uC0C1\uC2DC",
+  "skill.tag.timing.ferocity": "\uD3ED\uC8FC \uC911",
+  "skill.tag.withSeconds": "{name} {seconds}\uCD08",
+  "skill.tag.bulwark": "\uB300\uC2E0 \uBC1B\uAE30",
+  "skill.tag.lifesteal": "\uD761\uD608 {percent}%",
+  "skill.tag.regen": "\uC7AC\uC0DD {percent}%/\uCD08",
+  "skill.tag.allyHeal": "\uC544\uAD70 \uD68C\uBCF5",
+  "skill.tag.targets": "\uB300\uC0C1 {count}\uBA85",
+  "skill.tag.extraTargets": "\uB300\uC0C1 +{count}"
 };
 
 // src/i18n/ko/system.ts
@@ -7980,6 +8064,56 @@ var RAID_KO = {
   "raid.contribution.empty": "\uC544\uC9C1 \uC544\uBB34\uB3C4 \uBC00\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4",
   "raid.reward.title": "\uD68D\uB4DD \uBCF4\uC0C1",
   "raid.result.score": "\uC810\uC218 {score}",
+  "raid.guide.button": "\uACF5\uB7B5\uBC95!",
+  "raid.guide.title": "\uACF5\uB7B5\uBC95",
+  "raid.guide.weakness": "\uC57D\uC810",
+  "raid.guide.section.element": "\uC18D\uC131 \uC0C1\uC131",
+  "raid.guide.section.pattern": "\uD328\uD134\uACFC \uB300\uCC98",
+  "raid.guide.section.recommend": "\uCD94\uCC9C \uB810\uB9AD",
+  "raid.guide.element.strong": "\uC720\uB9AC",
+  "raid.guide.element.strongNote": "\uB354 \uC544\uD504\uAC8C \uB54C\uB9AC\uACE0 \uB35C \uC544\uD504\uAC8C \uB9DE\uB294\uB2E4",
+  "raid.guide.element.weak": "\uBD88\uB9AC",
+  "raid.guide.element.weakNote": "\uB35C \uB4E4\uC5B4\uAC00\uACE0 \uB354 \uC544\uD504\uAC8C \uB9DE\uB294\uB2E4",
+  "raid.guide.why.open": "\uC774\uC720 \uBCF4\uAE30",
+  "raid.guide.why.close": "\uC811\uAE30",
+  "raid.guide.point.element": "\uC0C1\uC131",
+  "raid.guide.point.control": "\uC81C\uC5B4",
+  "raid.guide.point.survive": "\uC0DD\uC874",
+  "raid.guide.point.damage": "\uD654\uB825",
+  "raid.guide.alt.title": "\uCC28\uC120\uCC45",
+  "raid.guide.sukusuino.headline": "\uD55C \uBC29 \uD55C \uBC29\uC774 \uBB34\uAC70\uC6B4 \uD131",
+  "raid.guide.sukusuino.summary": "\uB290\uB9AC\uAC8C, \uADF8\uB7EC\uB098 \uD06C\uAC8C \uBB38\uB2E4. \uADF8 \uD55C \uBC29\uC744 \uBC1B\uC544 \uB0BC \uC55E\uC904\uACFC \uAC04\uACA9\uC744 \uB354 \uBC8C\uB9AC\uB294 \uB454\uD654\uAC00 \uB2F5\uC774\uB2E4.",
+  "raid.guide.sukusuino.weakness": "\uC800\uD56D\uC774 \uC587\uB2E4 \xB7 \uB9C8\uBC95 \uD53C\uD574",
+  "raid.guide.sukusuino.pattern.basic": "{every}\uBC88\uC9F8 \uD131\uB9C8\uB2E4 \uCD9C\uD608\uACFC \uD568\uAED8 \uB0A0\uB824 \uBCF4\uB0B8\uB2E4. \uCD9C\uD608\uC740 \uBC1B\uB294 \uD68C\uBCF5\uC744 {percent}% \uAE4E\uC73C\uB2C8 \uD68C\uBCF5\uBCF4\uB2E4 \uBCF4\uD638\uB9C9\uC73C\uB85C \uBC84\uD2F0\uC790.",
+  "raid.guide.sukusuino.pattern.ultimate": "\uBC14\uB2E5\uC5D0 \uC6D0\uC774 \uADF8\uB824\uC9C0\uBA74 \uADF8 \uC548\uC774 \uBB3C\uB9AC\uACE0 {seconds}\uCD08 \uAE30\uC808\uD55C\uB2E4. \uC14B\uC774 \uD55C \uC810\uC5D0 \uBB49\uCE58\uC9C0 \uB9D0\uC790.",
+  "raid.guide.sukusuino.pattern.ferocity": "\uD3ED\uC8FC\uD558\uBA74 \uD131\uC774 \uC606\uAE4C\uC9C0 \uCC22\uB294\uB2E4(\uBC18\uACBD {radius}). \uADFC\uAC70\uB9AC\uB294 \uD55C \uBA85\uB9CC \uBD99\uC774\uACE0 \uB098\uBA38\uC9C0\uB294 \uAC70\uB9AC\uB97C \uB450\uC790.",
+  "raid.guide.sukusuino.reason.control": "\uAE30\uBCF8 \uACF5\uACA9\uACFC \uAD81\uADF9\uAE30\uC758 \uB454\uD654\uAC00 \uC313\uC5EC \uB290\uB9B0 \uD131\uC744 \uB354 \uB290\uB9AC\uAC8C \uB9CC\uB4E0\uB2E4.",
+  "raid.guide.sukusuino.reason.element": "\uD328\uC2DC\uBE0C\uAC00 \uC0C1\uC131\uC744 \uC5BC\uC74C\uC73C\uB85C \uBC14\uAFD4 \uD480 \uC18D\uC131 \uBCF4\uC2A4\uC5D0\uAC8C \uB354 \uC544\uD504\uAC8C \uB4E4\uC5B4\uAC04\uB2E4.",
+  "raid.guide.sukusuino.reason.survive": "\uD3ED\uC8FC\uD558\uBA74 \uC0C1\uD0DC\uC774\uC0C1\uC744 \uC53B\uACE0 \uBCF4\uD638\uB9C9\uACFC \uBC29\uC5B4\xB7\uC800\uD56D\uC744 \uB458\uB7EC, \uD68C\uBCF5\uC774 \uAE4E\uC5EC\uB3C4 \uB9C9\uC73C\uB85C \uBC84\uD2F4\uB2E4.",
+  "raid.guide.sukusuino.alt.kento": "\uBD88 \uC18D\uC131 \uD0F1\uCEE4. \uAD81\uADF9\uAE30\uC758 \uB3C4\uBC1C\uACFC \uBCF4\uD638\uB9C9\uC774 \uBB34\uAC70\uC6B4 \uD131\uC744 \uB300\uC2E0 \uBC1B\uACE0, \uB05D\uC5D0 \uAE30\uC808\uB85C \uBC1B\uC544\uCE5C\uB2E4. \uAD6C\uD558\uAE30 \uC27D\uB2E4.",
+  "raid.guide.sukusuino.alt.deina": "\uBD88 \uC18D\uC131 \uB9C8\uBC95 \uD0F1\uCEE4. \uC587\uC740 \uC800\uD56D\uC744 \uB9C8\uBC95 \uD53C\uD574\uB85C \uD30C\uACE0\uB4E4\uACE0, \uAD81\uADF9\uAE30 \uB3D9\uC548 \uAE30\uBCF8 \uACF5\uACA9\uC774 \uAE30\uC808\uC744 \uAC74\uB2E4.",
+  "raid.guide.taboa.headline": "\uAC10\uC73C\uBA74 \uB193\uC9C0 \uC54A\uB294 \uBAB8",
+  "raid.guide.taboa.summary": "\uCC98\uC74C\uC5D4 \uAC00\uBCCD\uC9C0\uB9CC \uAC10\uC740 \uCC44 \uB04C\uC218\uB85D \uBE68\uB77C\uC9C4\uB2E4. \uACF5\uACA9 \uC18D\uB3C4\uB97C \uAE4E\uC544 \uC624\uB974\uB9C9\uC744 \uB418\uB3CC\uB9AC\uACE0, \uD6C4\uC5F4\uC740 \uBAB8\uC5D0\uC11C \uB5A8\uC5B4\uC838 \uC11C\uC790.",
+  "raid.guide.taboa.weakness": "\uBC29\uC5B4\uAC00 \uC800\uD56D\uBCF4\uB2E4 \uC587\uB2E4 \xB7 \uBB3C\uB9AC \uD53C\uD574",
+  "raid.guide.taboa.pattern.passive": "\uAE30\uBCF8 \uACF5\uACA9\uC774 \uB9DE\uC744 \uB54C\uB9C8\uB2E4 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {percent}%\uC529, {max}\uACB9\uAE4C\uC9C0 \uC624\uB978\uB2E4. \uB454\uD654\xB7\uC218\uC555\uCC98\uB7FC \uACF5\uACA9 \uC18D\uB3C4\uB97C \uAE4E\uB294 \uD6A8\uACFC\uAC00 \uAC00\uC7A5 \uC798 \uB4E3\uB294\uB2E4.",
+  "raid.guide.taboa.pattern.ultimate": "\uC81C \uC8FC\uC704\uB97C \uD1B5\uC9F8\uB85C \uAC10\uC544 {seconds}\uCD08 \uAE30\uC808\uC2DC\uD0A8\uB2E4. \uBD99\uC5B4 \uC120 \uADFC\uAC70\uB9AC\uAC00 \uAC00\uC7A5 \uD06C\uAC8C \uB9DE\uC73C\uB2C8 \uD6C4\uC5F4\uC740 \uB5A8\uC5B4\uC838 \uC11C\uC790.",
+  "raid.guide.taboa.pattern.ferocity": "\uD3ED\uC8FC\uD558\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC544\uAD70\uC744 \uBAB8 \uC55E\uC73C\uB85C \uB04C\uC5B4\uC628\uB2E4. \uBC14\uB85C \uB4A4\uC5D0 \uC624\uB294 \uD3EC\uC639\uC5D0 \uB300\uBE44\uD574 \uCCB4\uB825\uC744 \uB109\uB109\uD788 \uB450\uC790.",
+  "raid.guide.taboa.reason.control": "\uC218\uC555\uC774 \uACB9\uB9C8\uB2E4 \uACF5\uACA9\xB7\uC774\uB3D9 \uC18D\uB3C4\uB97C \uAE4E\uC544 \uB2EC\uC544\uC624\uB974\uB294 \uC18D\uB3C4\uB97C \uB418\uB3CC\uB9AC\uACE0, \uAC00\uB4DD \uCC28\uBA74 \uD130\uC838 \uAE30\uC808\uC744 \uAC74\uB2E4.",
+  "raid.guide.taboa.reason.element": "\uBB3C \uC18D\uC131\uC774\uB77C \uBD88 \uC18D\uC131 \uBCF4\uC2A4\uB97C \uC774\uAE30\uACE0, \uB9DE\uC744 \uB54C\uB3C4 \uB35C \uC544\uD504\uB2E4.",
+  "raid.guide.taboa.reason.survive": "\uBC29\uC5B4\xB7\uC800\uD56D\uC774 \uACE0\uB974\uAC8C \uB450\uAEBC\uC6CC \uAC10\uAE34 \uCC44\uB85C\uB3C4 \uC624\uB798 \uBC84\uD2F4\uB2E4.",
+  "raid.guide.taboa.alt.ark": "\uB545 \uC18D\uC131 \uD0F1\uCEE4. \uACF5\uD3EC\uC5D0 \uBE60\uC9C4 \uBCF4\uC2A4\uB294 \uAE30\uBCF8 \uACF5\uACA9\uC744 \uBABB \uD574 \uACF5\uACA9 \uC18D\uB3C4\uAC00 \uC313\uC774\uC9C0 \uC54A\uB294\uB2E4.",
+  "raid.guide.taboa.alt.irna": "\uBB3C \uC18D\uC131 \uBB3C\uB9AC \uC804\uC0AC. \uBC29\uC5B4\uB97C \uC9C0\uB098\uCE58\uB294 \uC800\uACA9\uACFC \uD761\uD608 \uBC29\uBCBD\uC73C\uB85C \uB5A8\uC5B4\uC9C4 \uCC44 \uAFB8\uC900\uD788 \uAE4E\uB294\uB2E4.",
+  "raid.guide.quetzalcoatlus.headline": "\uD558\uB298\uC5D0\uC11C \uAF42\uD788\uB294 \uBD80\uB9AC",
+  "raid.guide.quetzalcoatlus.summary": "\uCCAB \uC21C\uAC04\uACFC \uD55C \uC904\uC744 \uC870\uC2EC\uD558\uC790. \uCCAB \uD45C\uC801\uC740 \uB2E8\uB2E8\uD55C \uC55E\uC904\uC774 \uB9E1\uACE0, \uD769\uC5B4\uC838 \uC11C\uBA74 \uC808\uBC18\uC740 \uBE44\uCF1C \uAC04\uB2E4.",
+  "raid.guide.quetzalcoatlus.weakness": "\uBC29\uC5B4\uAC00 \uC14B \uC911 \uAC00\uC7A5 \uC587\uB2E4 \xB7 \uBB3C\uB9AC \uD53C\uD574",
+  "raid.guide.quetzalcoatlus.pattern.passive": "\uC804\uD22C\uAC00 \uC5F4\uB9AC\uBA74 \uD45C\uC801\uC5D0\uAC8C \uAE09\uAC15\uD558\uD574 {seconds}\uCD08 \uAE30\uC808\uC2DC\uD0A4\uACE0, \uCE58\uBA85\uD0C0\uAC00 \uC7A6\uB2E4. \uCCAB \uD45C\uC801\uC774 \uB2E8\uB2E8\uD574\uC57C \uD310\uC774 \uD754\uB4E4\uB9AC\uC9C0 \uC54A\uB294\uB2E4.",
+  "raid.guide.quetzalcoatlus.pattern.basic": "{every}\uBC88\uC9F8 \uBD80\uB9AC\uC9C8\uB9C8\uB2E4 \uACBD\uC9C1\uC2DC\uD0A8\uB2E4. \uD55C \uBC88\uC5D0 \uBAB0\uC544\uCE58\uB294 \uAD81\uADF9\uAE30\uB294 \uADF8 \uBC15\uC790\uB97C \uD53C\uD574 \uC4F0\uC790.",
+  "raid.guide.quetzalcoatlus.pattern.ultimate": "\uC804\uC7A5\uC744 \uD55C \uC904\uB85C \uB6AB\uACE0 \uC9C0\uB098\uAC00\uBA70 {seconds}\uCD08 \uAE30\uC808\uC2DC\uD0A8\uB2E4. \uAC19\uC740 \uC904\uC5D0 \uB098\uB780\uD788 \uC11C\uC9C0 \uB9D0\uC790.",
+  "raid.guide.quetzalcoatlus.reason.element": "\uB545 \uC18D\uC131 \uBB3C\uB9AC \uC804\uC0AC\uB77C \uBC14\uB78C \uC18D\uC131 \uBCF4\uC2A4\uB97C \uC774\uAE30\uACE0 \uC587\uC740 \uBC29\uC5B4\uB97C \uADF8\uB300\uB85C \uB6AB\uB294\uB2E4.",
+  "raid.guide.quetzalcoatlus.reason.survive": "\uD328\uC2DC\uBE0C\uAC00 \uD55C \uBC88\uC5D0 \uBC1B\uB294 \uD53C\uD574\uB97C \uCD5C\uB300 \uCCB4\uB825\uC758 \uC77C\uBD80\uB85C \uBB36\uC5B4 \uAE09\uAC15\uD558\uC640 \uCE58\uBA85\uD0C0\uB97C \uBC1B\uC544 \uB0B8\uB2E4.",
+  "raid.guide.quetzalcoatlus.reason.control": "\uD718\uB450\uB97C \uB54C\uB9C8\uB2E4 \uAE30\uC808\uACFC \uB1CC\uC9C4\uD0D5\uC744 \uAC78\uACE0, \uB1CC\uC9C4\uD0D5 \uD53C\uD574\uB294 \uBCF4\uD638\uB9C9\uC73C\uB85C \uB3CC\uC544\uC628\uB2E4.",
+  "raid.guide.quetzalcoatlus.alt.torika": "\uB545 \uC18D\uC131 \uD0F1\uCEE4. \uCCAB \uAE09\uAC15\uD558\uB97C \uB300\uC2E0 \uB9E1\uACE0, \uCCB4\uB825\uC774 \uC808\uBC18 \uC544\uB798\uBA74 \uD68C\uBCF5\uACFC \uD3ED\uC8FC\uC758 \uBC29\uC5B4\xB7\uC800\uD56D\uC73C\uB85C \uBC84\uD2F4\uB2E4.",
+  "raid.guide.quetzalcoatlus.alt.rex": "\uBD88 \uC18D\uC131 \uBB3C\uB9AC \uC804\uC0AC. \uCD9C\uD608 \uC911\uC778 \uC801\uC5D0\uAC8C \uCE58\uBA85\uD0C0\uAC00 \uD655\uC815\uB3FC \uC587\uC740 \uBC29\uC5B4 \uC704\uB85C \uD070 \uD53C\uD574\uB97C \uC3DF\uB294\uB2E4.",
   "shop.loot.title": "\uC804\uB9AC\uD488 \uC0C1\uC810"
 };
 
@@ -8407,11 +8541,12 @@ var ACHIEVEMENT_KO = {
   "newbieGrowth.objective.favoriteChosen": "\uC560\uCC29 \uB810\uB9AD \uC815\uD558\uAE30",
   "newbieGrowth.objective.guildJoined": "\uAE38\uB4DC \uAC00\uC785\uD558\uAE30",
   "newbieGrowth.objective.relicsBrokenThrough": "\uB810\uB9AD {value}\uBA85 \uD55C\uACC4 \uB3CC\uD30C",
-  "newbieGrowth.sr.label": "SR \uC120\uD0DD",
   "newbieGrowth.sr.title": "SR \uB810\uB9AD \uC120\uD0DD\uAD8C",
   "newbieGrowth.sr.hint": "\uB370\uB824\uC62C \uB810\uB9AD \uD55C \uBA85\uC744 \uACE0\uB974\uC138\uC694. \uC774\uBBF8 \uD568\uAED8\uD55C\uB2E4\uBA74 \uD30C\uD3B8 1\uAC1C\uAC00 \uB429\uB2C8\uB2E4.",
   "newbieGrowth.sr.owned": "\uBCF4\uC720 \uC911 \xB7 \uD30C\uD3B8",
   "newbieGrowth.sr.maxed": "\uB3CC\uD30C \uC644\uB8CC",
+  "newbieGrowth.sr.new": "\uC0C8\uB85C\uC6B4 \uB9CC\uB0A8",
+  "newbieGrowth.sr.holdInfo": "\uAFB9 \uB20C\uB7EC \uC2A4\uD0AC\xB7\uC815\uBCF4 \uBCF4\uAE30",
   "newbieGrowth.sr.confirm": "\u300C{name}\u300D{name!\uC744} \uB370\uB824\uC62C\uAE4C\uC694?",
   "newbieGrowth.sr.confirmOwned": "\u300C{name}\u300D\uC758 \uD30C\uD3B8 1\uAC1C\uB97C \uBC1B\uC744\uAE4C\uC694?",
   "newbieGrowth.sr.confirmLabel": "\uBC1B\uAE30",
@@ -9321,13 +9456,79 @@ var ENEMY_BIRTH_TIERS = {
   carno: { stage: 3, statFactor: ENEMY_BIRTH_STAGE_FACTOR[3] }
 };
 
+// src/core/relicResonance.ts
+init_define_import_meta_env();
+var RESONANCE_CAP = 5;
+var RESONANCE_STAT_PERCENT = 3;
+var RESONANCE_CHEESECAKE = 2e3;
+var RESONANCE_FRAGMENTS = {
+  SSR: [1, 1, 2, 2, 3],
+  SR: [2, 2, 3, 3, 4],
+  R: [4, 4, 6, 6, 8]
+};
+function resonanceOf(progress) {
+  const value = progress?.resonance ?? 0;
+  return Number.isInteger(value) ? Math.max(0, Math.min(RESONANCE_CAP, value)) : 0;
+}
+function resonanceFragmentCost(rarity, resonance) {
+  return resonance >= RESONANCE_CAP ? 0 : RESONANCE_FRAGMENTS[rarity][Math.max(0, resonance)];
+}
+function remainingResonanceFragments(rarity, resonance) {
+  return RESONANCE_FRAGMENTS[rarity].slice(Math.max(0, resonance)).reduce((sum, cost) => sum + cost, 0);
+}
+function resonanceFragmentRoom(rarity, resonance, held) {
+  return Math.max(0, remainingResonanceFragments(rarity, resonance) - Math.max(0, held));
+}
+function resonanceFragmentSpend(rarity, resonance, own, universal) {
+  const cost = resonanceFragmentCost(rarity, resonance);
+  const fromOwn = Math.min(Math.max(0, own), cost);
+  const fromUniversal = Math.min(Math.max(0, universal), cost - fromOwn);
+  return { own: fromOwn, universal: fromUniversal, enough: cost > 0 && fromOwn + fromUniversal >= cost };
+}
+function canResonate(rarity, progress, breakthroughCap, fragments, cheesecake3, universal) {
+  if (progress.breakthrough < breakthroughCap) return false;
+  const resonance = resonanceOf(progress);
+  if (resonance >= RESONANCE_CAP) return false;
+  return resonanceFragmentSpend(rarity, resonance, fragments, universal).enough && cheesecake3 >= RESONANCE_CHEESECAKE;
+}
+var GROWTH_KEYS = ["hp", "def", "res", "atk", "ap"];
+function resonanceStatEffect(resonance) {
+  const percent = Math.max(0, Math.min(RESONANCE_CAP, resonance)) * RESONANCE_STAT_PERCENT;
+  return Object.fromEntries(GROWTH_KEYS.map((key) => [key, percent]));
+}
+function relicFragmentRoom(rarity, progress, held, breakthroughCap) {
+  if (!progress || progress.breakthrough < breakthroughCap) return Number.POSITIVE_INFINITY;
+  return resonanceFragmentRoom(rarity, resonanceOf(progress), held);
+}
+
 // src/core/relicProgression.ts
-var RELIC_LEVEL_CAP = 20;
+var RELIC_BASE_LEVEL_CAP = 20;
+var RELIC_MAX_LEVEL = 100;
+var RELIC_LEVEL_CAP_BY_RESEARCH = [
+  { researchLevel: 1, levelCap: 20 },
+  { researchLevel: 6, levelCap: 25 },
+  { researchLevel: 8, levelCap: 30 },
+  { researchLevel: 10, levelCap: 35 },
+  { researchLevel: 12, levelCap: 40 },
+  { researchLevel: 14, levelCap: 45 },
+  { researchLevel: 16, levelCap: 50 },
+  { researchLevel: 18, levelCap: 55 },
+  { researchLevel: 20, levelCap: 60 },
+  { researchLevel: 25, levelCap: 65 },
+  { researchLevel: 30, levelCap: 70 },
+  { researchLevel: 35, levelCap: 75 },
+  { researchLevel: 40, levelCap: 80 },
+  { researchLevel: 45, levelCap: 85 },
+  { researchLevel: 50, levelCap: 90 },
+  { researchLevel: 55, levelCap: 95 },
+  { researchLevel: 60, levelCap: 100 }
+];
+var BREAKTHROUGH_STAT_PERCENT = 10;
 var BREAKTHROUGH_STEPS = [
-  { levelCap: 30, slot: "basic", cheesecake: 200 },
-  { levelCap: 40, slot: "ultimate", cheesecake: 500 },
-  { levelCap: 50, slot: "ferocity", cheesecake: 1e3 },
-  { levelCap: 60, slot: "passive", cheesecake: 2e3 }
+  { requiredLevel: 20, slot: "basic", cheesecake: 200 },
+  { requiredLevel: 30, slot: "ultimate", cheesecake: 500 },
+  { requiredLevel: 40, slot: "ferocity", cheesecake: 1e3 },
+  { requiredLevel: 50, slot: "passive", cheesecake: 2e3 }
 ];
 var BREAKTHROUGH_FRAGMENTS = {
   SSR: [1, 1, 2, 3],
@@ -9357,20 +9558,20 @@ function breakthroughGrade(breakthrough) {
   }
   return breakthrough + 1;
 }
-function relicLevelCap(breakthrough) {
-  if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) {
-    throw new RangeError("\uB3CC\uD30C \uB2E8\uACC4\uAC00 \uBC94\uC704\uB97C \uBC97\uC5B4\uB0AC\uC2B5\uB2C8\uB2E4.");
-  }
-  return breakthrough === 0 ? RELIC_LEVEL_CAP : BREAKTHROUGH_STEPS[breakthrough - 1].levelCap;
+function relicLevelCap(researchLevel) {
+  const level = Math.floor(Number.isFinite(researchLevel) ? researchLevel : 1);
+  let cap = RELIC_BASE_LEVEL_CAP;
+  for (const row of RELIC_LEVEL_CAP_BY_RESEARCH) if (level >= row.researchLevel) cap = row.levelCap;
+  return cap;
 }
 function nextBreakthrough(breakthrough) {
   return BREAKTHROUGH_STEPS[breakthrough];
 }
-function canBreakThrough(rarity, progress, fragments, cheesecake2, universal) {
+function canBreakThrough(rarity, progress, fragments, cheesecake3, universal) {
   const step2 = nextBreakthrough(progress.breakthrough);
   if (!step2) return false;
-  if (progress.level < relicLevelCap(progress.breakthrough)) return false;
-  return breakthroughFragmentSpend(rarity, progress.breakthrough, fragments, universal).enough && cheesecake2 >= step2.cheesecake;
+  if (progress.level < step2.requiredLevel) return false;
+  return breakthroughFragmentSpend(rarity, progress.breakthrough, fragments, universal).enough && cheesecake3 >= step2.cheesecake;
 }
 function openedBreakthroughSlots(breakthrough) {
   return BREAKTHROUGH_STEPS.slice(0, Math.max(0, Math.min(BREAKTHROUGH_CAP, breakthrough))).map((step2) => step2.slot);
@@ -9380,43 +9581,37 @@ function isBreakthroughSlotOpen(breakthrough, slot) {
 }
 function remainingBreakthroughCost(rarity, progress) {
   let fragments = 0;
-  let cheesecake2 = 0;
+  let cheesecake3 = 0;
   let level = progress.level;
   let exp = progress.exp;
   for (let step2 = progress.breakthrough; step2 < BREAKTHROUGH_CAP; step2 += 1) {
-    const cap = relicLevelCap(step2);
+    const cap = BREAKTHROUGH_STEPS[step2].requiredLevel;
     while (level < cap) {
-      cheesecake2 += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp) * FEED_UNIT.cheesecake;
+      cheesecake3 += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp) * FEED_UNIT.cheesecake;
       level += 1;
       exp = 0;
     }
     fragments += breakthroughFragmentCost(rarity, step2);
-    cheesecake2 += BREAKTHROUGH_STEPS[step2].cheesecake;
+    cheesecake3 += BREAKTHROUGH_STEPS[step2].cheesecake;
   }
-  const finalCap = relicLevelCap(BREAKTHROUGH_CAP);
-  while (level < finalCap) {
-    cheesecake2 += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp) * FEED_UNIT.cheesecake;
-    level += 1;
-    exp = 0;
-  }
-  return { fragments, cheesecake: cheesecake2 };
+  return { fragments, cheesecake: cheesecake3 };
 }
 var FEED_UNIT = { cheesecake: 10, exp: 20 };
 function relicExpToNext(level) {
-  if (!Number.isInteger(level) || level < 1 || level > relicLevelCap(BREAKTHROUGH_CAP)) throw new RangeError("\uB808\uBCA8\uC774 \uC131\uC7A5 \uBC94\uC704\uB97C \uBC97\uC5B4\uB0AC\uC2B5\uB2C8\uB2E4.");
+  if (!Number.isInteger(level) || level < 1 || level > RELIC_MAX_LEVEL) throw new RangeError("\uB808\uBCA8\uC774 \uC131\uC7A5 \uBC94\uC704\uB97C \uBC97\uC5B4\uB0AC\uC2B5\uB2C8\uB2E4.");
   return 40 + level * 20;
 }
-function feedRelic(progress, cheesecake2, feeds) {
+function feedRelic(progress, cheesecake3, feeds, levelCap) {
   if (!Number.isInteger(feeds) || feeds < 1) throw new RangeError("\uAE09\uC5EC \uD69F\uC218\uB294 1 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  if (!Number.isInteger(cheesecake2) || cheesecake2 < 0) throw new RangeError("\uCE58\uC988\uCF00\uC774\uD06C\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-  const cap = relicLevelCap(progress.breakthrough);
+  if (!Number.isInteger(cheesecake3) || cheesecake3 < 0) throw new RangeError("\uCE58\uC988\uCF00\uC774\uD06C\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  const cap = Math.min(RELIC_MAX_LEVEL, levelCap);
   let level = progress.level;
   let exp = progress.exp;
   let spent = 0;
   let used = 0;
   for (let i = 0; i < feeds; i += 1) {
     if (level >= cap) break;
-    if (cheesecake2 - spent < FEED_UNIT.cheesecake) break;
+    if (cheesecake3 - spent < FEED_UNIT.cheesecake) break;
     spent += FEED_UNIT.cheesecake;
     used += 1;
     exp += FEED_UNIT.exp;
@@ -9428,13 +9623,13 @@ function feedRelic(progress, cheesecake2, feeds) {
   }
   return {
     progress: { ...progress, level, exp, heartGemSlots: [...progress.heartGemSlots] },
-    cheesecake: cheesecake2 - spent,
+    cheesecake: cheesecake3 - spent,
     feeds: used,
     levelsGained: level - progress.level
   };
 }
-function canFeedRelic(progress, cheesecake2) {
-  return progress.level < relicLevelCap(progress.breakthrough) && Number.isInteger(cheesecake2) && cheesecake2 >= FEED_UNIT.cheesecake;
+function canFeedRelic(progress, cheesecake3, levelCap) {
+  return progress.level < Math.min(RELIC_MAX_LEVEL, levelCap) && Number.isInteger(cheesecake3) && cheesecake3 >= FEED_UNIT.cheesecake;
 }
 var STAT_KEYS = ["hp", "def", "res", "atk", "ap", "attackSpeed", "moveSpeed", "critChance", "critDamage", "energyGain", "lifeSteal", "ferocityGain"];
 function applyStatPercent(stats, effect) {
@@ -9446,17 +9641,21 @@ var GROWTH_STAT_KEYS = ["hp", "def", "res", "atk", "ap"];
 function growthPercent(percent) {
   return Object.fromEntries(GROWTH_STAT_KEYS.map((key) => [key, percent]));
 }
-function applyLevelGrowth(base, level, rarity) {
+function breakthroughGrowthPercent(breakthrough) {
+  if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) throw new RangeError("\uB3CC\uD30C \uB2E8\uACC4\uAC00 \uBC94\uC704\uB97C \uBC97\uC5B4\uB0AC\uC2B5\uB2C8\uB2E4.");
+  return breakthrough * BREAKTHROUGH_STAT_PERCENT;
+}
+function applyLevelGrowth(base, level, rarity, breakthrough) {
   if (!Number.isInteger(level) || level < 1) throw new RangeError("\uB808\uBCA8\uC740 1 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  return applyStatPercent(base, growthPercent((level - 1) * RARITY_LEVEL_GROWTH[rarity]));
+  return applyStatPercent(base, growthPercent((level - 1) * RARITY_LEVEL_GROWTH[rarity] + breakthroughGrowthPercent(breakthrough)));
 }
 function applyBreakthrough(stats, breakthrough) {
   if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) throw new RangeError("\uB3CC\uD30C \uB2E8\uACC4\uAC00 \uBC94\uC704\uB97C \uBC97\uC5B4\uB0AC\uC2B5\uB2C8\uB2E4.");
   return { ...stats };
 }
-function applyHeartGems(stats, gems2) {
+function applyHeartGems(stats, gems3) {
   const result = { ...stats };
-  for (const gem of gems2) {
+  for (const gem of gems3) {
     assertValidRuneInstance(gem);
     for (const option of [...gem.mainStats, ...gem.subStats]) {
       const rule = RUNE_STAT_RULES[option.key];
@@ -9469,9 +9668,12 @@ function applyHeartGems(stats, gems2) {
   }
   return result;
 }
-function calculateFinalStats(base, progress, gems2, rarity) {
+function calculateFinalStats(base, progress, gems3, rarity, options = {}) {
   if (progress.heartGemSlots.length !== 3) throw new RangeError("Heart Gem \uC2AC\uB86F\uC740 \uC815\uD655\uD788 3\uAC1C\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  return applyHeartGems(applyBreakthrough(applyLevelGrowth(base, progress.level, rarity), progress.breakthrough), gems2);
+  const grown = applyLevelGrowth(base, progress.level, rarity, progress.breakthrough);
+  const resonance = options.resonance === false ? 0 : resonanceOf(progress);
+  const resonated = resonance > 0 ? applyStatPercent(grown, resonanceStatEffect(resonance)) : grown;
+  return applyHeartGems(applyBreakthrough(resonated, progress.breakthrough), gems3);
 }
 
 // src/core/levelDesign.ts
@@ -9610,9 +9812,9 @@ function equivalentEnemyLevel(referenceLevel, statFactor) {
   const target = enemyLevelMultiplier(referenceLevel) / statFactor;
   return Math.max(1, Math.round((target - 1) * 100 / ENEMY_LEVEL_GROWTH_PERCENT + 1));
 }
-function applyEncounterScaling(base, level, role, countOnField = ENCOUNTER_ROLE[role].count, birthFactor = 1) {
+function applyEncounterScaling(base, level, role, countOnField = ENCOUNTER_ROLE[role].count, birthFactor = 1, breakthrough = shownBreakthroughForLevel(level)) {
   const spec = ENCOUNTER_ROLE[role];
-  const growth = enemyLevelMultiplier(level) * birthFactor;
+  const growth = (enemyLevelMultiplier(level) + breakthroughGrowthPercent(breakthrough) / 100) * birthFactor;
   const result = { ...base };
   for (const key of GROWTH_STAT_KEYS) result[key] = Math.round(base[key] * growth);
   result.hp = Math.round(result.hp * encounterHpShare(role, countOnField));
@@ -9626,10 +9828,14 @@ function encounterHpShare(role, countOnField) {
   return spec.hpMultiplier / Math.max(1, countOnField);
 }
 function requiredBreakthroughForLevel(level) {
-  if (level <= RELIC_LEVEL_CAP) return 0;
-  const step2 = BREAKTHROUGH_STEPS.findIndex(({ levelCap }) => level <= levelCap);
-  if (step2 < 0) throw new RangeError("\uD55C\uACC4 \uB3CC\uD30C\uB97C \uB2E4 \uB6AB\uC5B4\uB3C4 \uB2FF\uC9C0 \uBABB\uD558\uB294 \uB808\uBCA8\uC785\uB2C8\uB2E4.");
+  if (level <= RELIC_BASE_LEVEL_CAP) return 0;
+  const step2 = BREAKTHROUGH_STEPS.findIndex(({ requiredLevel }) => level <= requiredLevel + 10);
+  if (step2 < 0) throw new RangeError("\uC801 \uC0AC\uB2E4\uB9AC\uC758 \uB3CC\uD30C \uACBD\uACC4\uB97C \uB118\uB294 \uB808\uBCA8\uC785\uB2C8\uB2E4.");
   return step2 + 1;
+}
+function shownBreakthroughForLevel(level) {
+  const top = (BREAKTHROUGH_STEPS[BREAKTHROUGH_STEPS.length - 1]?.requiredLevel ?? RELIC_BASE_LEVEL_CAP) + 10;
+  return level > top ? BREAKTHROUGH_STEPS.length : requiredBreakthroughForLevel(level);
 }
 var SWARM_MINIMUM_COUNT = 4;
 function encounterRoleFor(countOnField, options = {}) {
@@ -17800,6 +18006,8 @@ init_define_import_meta_env();
 var ANCIENT_STRATA_MAX_FLOOR = 200;
 var ANCIENT_STRATA_ENEMY_LEVEL = 20;
 var ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR = 120;
+var ANCIENT_GROWTH_CATCHUP_PER_FLOOR = 1.0025;
+var ANCIENT_GROWTH_CATCHUP_LAST_FLOOR = 120;
 var ANCIENT_DIFFICULTY_BANDS = [
   // v3(응태 요청): 1~100층의 층당 상승폭을 1.2배로 키웠다 — 100층 체력×공격이 v2의 약 2배다.
   { first: 1, last: 20, focus: "entry", hpStep: 1.0192, attackStep: 1.018, defenseStep: 1.0072 },
@@ -17863,6 +18071,73 @@ function ancientStageFloor(id) {
 
 // src/core/roulette.ts
 init_define_import_meta_env();
+
+// src/core/liveSchedule.ts
+init_define_import_meta_env();
+
+// src/core/launchAnchor.ts
+init_define_import_meta_env();
+var WEEK_MS = 7 * 864e5;
+var MONDAY_OFFSET_MS = 4 * 864e5;
+var launchAtMs = null;
+var prelaunchHold = true;
+function setLaunchAt(raw) {
+  const parsed = typeof raw === "string" && raw.length > 0 && raw.length <= 40 ? Date.parse(raw) : typeof raw === "number" ? raw : Number.NaN;
+  launchAtMs = Number.isFinite(parsed) ? parsed : null;
+}
+function holdsDefinitionEnds() {
+  return prelaunchHold && launchAtMs === null;
+}
+function mondayOf(time) {
+  return Math.floor((time - MONDAY_OFFSET_MS) / WEEK_MS) * WEEK_MS + MONDAY_OFFSET_MS;
+}
+function cycleAnchor(prelaunchAnchor) {
+  return launchAtMs === null ? prelaunchAnchor : mondayOf(launchAtMs);
+}
+
+// src/core/liveSchedule.ts
+var LIVE_SCHEDULE_KINDS = ["banner", "product", "event", "lobby"];
+var current = [];
+var OPEN_START = "2000-01-01T00:00:00.000Z";
+var OPEN_END = "2099-12-31T23:59:59.000Z";
+var isTime = (value) => typeof value === "string" && value.length <= 40 && Number.isFinite(Date.parse(value));
+function parseLiveSchedule(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const row of raw) {
+    if (!row || typeof row !== "object") continue;
+    const r = row;
+    if (!LIVE_SCHEDULE_KINDS.includes(r.kind)) continue;
+    if (typeof r.id !== "string" || r.id.length === 0 || r.id.length > 96) continue;
+    const startsAt = r.startsAt === null || r.startsAt === void 0 ? null : isTime(r.startsAt) ? new Date(r.startsAt).toISOString() : void 0;
+    const endsAt = r.endsAt === null || r.endsAt === void 0 ? null : isTime(r.endsAt) ? new Date(r.endsAt).toISOString() : void 0;
+    if (startsAt === void 0 || endsAt === void 0) continue;
+    out.push({ kind: r.kind, id: r.id, startsAt, endsAt, enabled: r.enabled !== false });
+  }
+  return out;
+}
+function setLiveSchedule(raw) {
+  current = parseLiveSchedule(raw);
+}
+function liveSchedule() {
+  return current;
+}
+function scheduledWindow(kind, id, def, entries = current) {
+  const entry = entries.find((row) => row.kind === kind && row.id === id);
+  if (!entry) return { ...def.startsAt !== void 0 ? { startsAt: def.startsAt } : {}, ...def.endsAt !== void 0 && !holdsDefinitionEnds() ? { endsAt: def.endsAt } : {}, enabled: true, overridden: false };
+  return { ...entry.startsAt !== null ? { startsAt: entry.startsAt } : {}, ...entry.endsAt !== null ? { endsAt: entry.endsAt } : {}, enabled: entry.enabled, overridden: true };
+}
+function windowOpen(window2, now) {
+  if (!window2.enabled) return false;
+  if (window2.startsAt !== void 0 && now < Date.parse(window2.startsAt)) return false;
+  if (window2.endsAt !== void 0 && now >= Date.parse(window2.endsAt)) return false;
+  return true;
+}
+function scheduleOpen(kind, id, def, now, entries = current) {
+  return windowOpen(scheduledWindow(kind, id, def, entries), now);
+}
+
+// src/core/roulette.ts
 var ROULETTE = {
   id: "research-roulette",
   adSlot: "roulette-spin",
@@ -17895,7 +18170,7 @@ function rouletteStatus(ledger, now, adFree = false) {
   const bonusRemaining = ROULETTE.adLimit - bonusClaims;
   return {
     date,
-    active: now.getTime() >= Date.parse(ROULETTE.startsAt) && now.getTime() < Date.parse(ROULETTE.endsAt),
+    active: scheduleOpen("lobby", ROULETTE.id, ROULETTE, now.getTime()),
     used,
     remaining: Math.max(0, ROULETTE.free + bonusClaims * ROULETTE.adBonus - used),
     bonusAvailable: bonusRemaining > 0,
@@ -17913,6 +18188,14 @@ function rouletteIndex(random) {
     if (roll3 < cumulative) return index;
   }
   return ROULETTE_REWARDS.length - 1;
+}
+function rouletteNeedsAttention(status, showAdDot) {
+  if (!status.active) return false;
+  if (status.remaining > 0) return true;
+  return status.bonusAvailable && (status.adFree || showAdDot);
+}
+function rouletteAdOnlyAttention(status) {
+  return rouletteNeedsAttention(status, true) && !rouletteNeedsAttention(status, false);
 }
 
 // src/core/saveStorage.ts
@@ -19666,6 +19949,8 @@ var RELICS = [
       id: "ark-basic",
       name: "\uC9D3\uB204\uB974\uAE30",
       power: 240,
+      // 한 방에 제 방어력이 실린다 — 단단할수록 무겁다. 공속 50의 느린 손이라 한 번에 얹는 몫을 크게 둔다.
+      secondaryScaling: { stat: "def", power: 50 },
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -20640,6 +20925,9 @@ var RELICS = [
       name: "\uBC1C\uACBD(\u767C\u52C1)",
       // 순환이 위력·대상·효과를 걸음마다 통째로 정하므로 이 값들은 쓰이지 않는 기본값이다.
       power: 90,
+      // 세 걸음 **모두에** 제 방어력이 실린다(걸음은 기본 공격의 계수를 물려받는다). 세 걸음이 다 광역이라
+      // 맞는 적 수만큼 곱해지므로 아크보다 작게 둔다.
+      secondaryScaling: { stat: "def", power: 40 },
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -22286,6 +22574,8 @@ var RELICS = [
        */
       power: 35,
       scalingStat: "ap",
+      // 캔에 저항력이 실린다 — 탱커 슬롯에서 주문력을 다시 올리지 않고(위 주석) 몸의 값에서 덤을 뽑는다.
+      secondaryScaling: { stat: "res", power: 50 },
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
@@ -23275,7 +23565,7 @@ var RELICS = [
        * 단 다음 개체가 저도 모르게 그 몫을 함께 받는다. 공속·이속은 `CLAUDE.md` 그대로 **그
        * 개체의 정체성**이라 제 정의가 갖고, 유형은 몸집만 키운다.
        */
-      attackSpeed: 34,
+      attackSpeed: 28,
       moveSpeed: 30,
       critChance: 8,
       critDamage: 150,
@@ -23333,8 +23623,12 @@ var RELICS = [
     basic: {
       id: "sukusuino-basic",
       name: "\uC8FD\uC74C\uC758 \uBB3C\uB808",
-      // 보스의 한 방이다. 폰토스(100)보다 높고 공속이 낮아 초당 피해로는 비슷한 자리에 선다.
-      power: 140,
+      /*
+       * **보스의 한 방이다.** 레이드 셋 중 이 몸의 정체성은 "한 번 물리면 크게 빠진다"라, 위력을 셋 중
+       * 가장 높게 두고 그만큼 공속을 깎았다(140·34 → 170·28 — 초당 피해는 그대로다). 맞는 횟수가 적고
+       * 한 번이 크니 공략이 "둔화로 그 간격을 더 벌리고, 그 한 방을 받아 낼 앞줄"로 또렷해진다.
+       */
+      power: 170,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -23445,7 +23739,7 @@ var RELICS = [
        * 수쿠스이노보다 빠르지만 여전히 로스터 아래쪽이다. 한 대는 가볍고 그 사이가 짧아, 조일수록
        * 빨라지는 패시브가 "시간이 지날수록 아프다"를 대신 말한다.
        */
-      attackSpeed: 44,
+      attackSpeed: 40,
       moveSpeed: 40,
       critChance: 8,
       critDamage: 150,
@@ -23475,7 +23769,12 @@ var RELICS = [
       kind: "basicHitAttackSpeedStack",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
-      value: 3,
+      /*
+       * **시작은 느리고 감은 채로 끌수록 빨라진다.** 겹을 3%에서 4%로, 기본 공속을 44에서 40으로 옮겨
+       * 첫 몇 대는 가볍고 열 겹에서는 예전과 같은 손이 된다 — 공속을 깎는 둔화·수압이 그 오르막을
+       * 되돌리는 답이라는 것이 수치로도 읽힌다.
+       */
+      value: 4,
       maxStacks: 10,
       // 전용 분기(`passiveDescription`)가 이 종류의 문장을 짓는다. 이 원문은 표시되지 않는 데이터
       // 문서용 사본이라, 고칠 때는 그 분기도 함께 본다.
@@ -23519,7 +23818,8 @@ var RELICS = [
        */
       selfShieldMaxHpPercent: 3
     },
-    // 수쿠스이노와 같은 이유로 네 칸 모두 "없음"이다.
+    // 네 칸 모두 "감고 조인다" 한 갈래다 — 둔화된 표적에 더 아프게(평타), 감는 범위가 넓게(궁극기),
+    // 끌어오는 손이 길게(폭주), 겹마다 더 세게(패시브). 회복·보호막은 더하지 않는다.
     breakthroughEffects: {
       basic: { kind: "coiledTarget", damagePercentPerStack: 8 },
       ultimate: { kind: "widenArea", radius: 390 },
@@ -23614,7 +23914,8 @@ var RELICS = [
       effectType: "buff",
       value: 0,
       criticalChancePercent: 25,
-      openingCharge: { withinReachTier: "mid", stunSeconds: 1 },
+      // 첫 급강하가 이 보스의 인사다 — 1.5초를 묶어 "첫 표적은 단단한 앞줄이 맡는다"가 공략이 되게 한다.
+      openingCharge: { withinReachTier: "mid", stunSeconds: 1.5 },
       // 전용 분기(`passiveDescription`)가 문장을 짓는다. 이 원문은 표시되지 않는 데이터 문서용 사본이다.
       desc: "\uC804\uD22C\uAC00 \uC5F4\uB9AC\uBA74 \uD45C\uC801\uC5D0\uAC8C \uAE09\uAC15\uD558\uD574 \uAE30\uC808\uC2DC\uD0A4\uACE0, \uCE58\uBA85\uD0C0 \uD655\uB960\uC774 \uC624\uB978\uB2E4."
     },
@@ -23654,7 +23955,8 @@ var RELICS = [
       // 회복 대신 그 판 안에서만 남는 보호막을 궁극기 때만 조금 두른다(타보아와 같은 이유).
       selfShieldMaxHpPercent: 3
     },
-    // 다른 보스와 같은 이유로 네 칸 모두 "없음"이다.
+    // 네 칸 모두 "한 줄·치명타" 한 갈래다 — 뒤에 선 적까지 꿰고(평타), 통로가 넓게(궁극기), 폭주 중
+    // 치명타가 더 잦고(폭주), 치명타가 자세를 무너뜨린다(패시브). 회복·보호막은 더하지 않는다.
     breakthroughEffects: {
       basic: { kind: "piercingBeak", sharePercent: 30, halfWidth: 140 },
       ultimate: { kind: "widenArea", radius: 140 },
@@ -24376,6 +24678,9 @@ function ancientStrataMultipliers(floor) {
     result.attack *= band.attackStep ** steps;
     result.defense *= band.defenseStep ** steps;
   }
+  const catchup = ANCIENT_GROWTH_CATCHUP_PER_FLOOR ** (Math.min(floor, ANCIENT_GROWTH_CATCHUP_LAST_FLOOR) - 1);
+  result.hp *= catchup;
+  result.attack *= catchup;
   return result;
 }
 var referenceCache;
@@ -24925,7 +25230,7 @@ function getStageEnemies(stage) {
     const base = getRelic(enemy.relicId);
     const enemyRole = enemy.elite === true ? "elite" : role;
     const count2 = enemy.elite === true ? soloElites : stage.enemies.length;
-    const stats = applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, enemyRole, count2, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1), enemy.breakthrough);
+    const stats = applyEncounterScaling(base.stats, enemy.level, enemyRole, count2, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1, enemy.breakthrough);
     for (const key of GROWTH_STAT_KEYS) stats[key] = Math.round(stats[key] * (stage.difficultyStatMultiplier ?? 1));
     return { ...base, encounterRole: enemyRole, stats };
   });
@@ -24957,6 +25262,20 @@ function consumeRestorationEntry(state, serverNow2) {
   return { ...normalized, restorationEntries: normalized.restorationEntries + 1 };
 }
 
+// src/core/jsonShape.ts
+init_define_import_meta_env();
+function canonicalJson(value) {
+  return JSON.stringify(value, (_key, item3) => {
+    if (!item3 || typeof item3 !== "object" || Array.isArray(item3)) return item3;
+    const sorted = {};
+    for (const key of Object.keys(item3).sort()) sorted[key] = item3[key];
+    return sorted;
+  }) ?? "undefined";
+}
+function sameJsonShape(a, b) {
+  return canonicalJson(a) === canonicalJson(b);
+}
+
 // src/core/attendance.ts
 var ATTENDANCE_DAYS = 7;
 var REGULAR_ATTENDANCE_WINDOW_DAYS = 10;
@@ -24983,7 +25302,7 @@ function normalizeAttendanceState(value) {
 function isValidAttendanceState(value) {
   if (!value || typeof value !== "object") return false;
   const normalized = normalizeAttendanceState(value);
-  return JSON.stringify(normalized) === JSON.stringify(value);
+  return sameJsonShape(normalized, value);
 }
 function cloneAttendanceState(state) {
   return { newcomer: { ...state.newcomer, adClaimed: [...state.newcomer.adClaimed ?? []] }, regular: { ...state.regular, adClaimed: [...state.regular.adClaimed ?? []] }, autoShownDay: state.autoShownDay };
@@ -25117,7 +25436,7 @@ function normalizeTutorialState(value) {
   return seenIntroIds.length > 0 ? { completedStepIds, seenIntroIds } : { completedStepIds };
 }
 function isValidTutorialState(value) {
-  return !!value && typeof value === "object" && JSON.stringify(normalizeTutorialState(value)) === JSON.stringify(value);
+  return !!value && typeof value === "object" && sameJsonShape(normalizeTutorialState(value), value);
 }
 function legacyTutorialState(clearedStageIds) {
   if (clearedStageIds.some((id) => id !== "1-1")) return createCompletedTutorialState();
@@ -25295,8 +25614,8 @@ var EVENT_REWARD_BUDGET = {
     gemValuePer100Stamina: 560
   },
   limited: {
-    /** 신규 7일 성장 가이드 — 목표 35개 × 젬 50(1,750) + 화석 8 · 호박석 3(연구 한 번 = 젬 300, 3,300) = 5,050. SR 선택권은 이 셈 밖의 마지막 마디다. 2026-11-09 응태 승인. */
-    "newbie-growth": { totalGemValue: 5050 }
+    /** 신규 7일 성장 가이드 — 목표 35개(치즈케이크 2,100 = 젬 1,050 · 젬 2,100 · 화석 7 = 2,100) + 마디 화석 8 · 호박석 3(연구 한 번 = 젬 300, 3,300) = 8,550. 2026-11-09 응태 승인(5,050), 2026-11-11 응태 요청으로 젬·화석 증액("치즈케이크랑 젬/화석 등도 추가로"). 토리카 파편 1개(1일차)와 SR 렐릭 선택권(마지막 마디)은 응태가 고른 덤으로 이 셈 밖이다. */
+    "newbie-growth": { totalGemValue: 8550 }
   }
 };
 
@@ -25412,7 +25731,7 @@ function normalizeChestForgeState(value) {
   };
 }
 function isValidChestForgeState(value) {
-  return !!value && typeof value === "object" && JSON.stringify(normalizeChestForgeState(value)) === JSON.stringify(value);
+  return !!value && typeof value === "object" && sameJsonShape(normalizeChestForgeState(value), value);
 }
 function rollChestForgeWeek(state, now) {
   const { weeklyKey } = missionPeriodKeys(now);
@@ -25473,13 +25792,13 @@ var HUNT_DIFFICULTIES = [
     id: "easy",
     entryCost: 100,
     pairs: 3,
-    memorizeMs: 5e3,
-    swaps: 10,
-    moveMs: 440,
-    doubleChance: 0.1,
+    memorizeMs: 6e3,
+    swaps: 7,
+    moveMs: 500,
+    doubleChance: 0.05,
     arc: false,
     dive: false,
-    jackpotMoves: 4,
+    jackpotMoves: 3,
     tierWeights: { common: 58, fine: 42, rare: 0, jackpot: 5 },
     guaranteed: ["gems-m"]
   },
@@ -25487,13 +25806,13 @@ var HUNT_DIFFICULTIES = [
     id: "normal",
     entryCost: 200,
     pairs: 4,
-    memorizeMs: 4e3,
-    swaps: 16,
-    moveMs: 340,
-    doubleChance: 0.3,
+    memorizeMs: 5e3,
+    swaps: 11,
+    moveMs: 400,
+    doubleChance: 0.2,
     arc: true,
     dive: false,
-    jackpotMoves: 6,
+    jackpotMoves: 4,
     tierWeights: { common: 36, fine: 50, rare: 12, jackpot: 11 },
     guaranteed: ["gems-m", "gems-l", "fossil", "amber"]
   },
@@ -25501,13 +25820,13 @@ var HUNT_DIFFICULTIES = [
     id: "hard",
     entryCost: 300,
     pairs: 5,
-    memorizeMs: 3e3,
-    swaps: 26,
-    moveMs: 270,
-    doubleChance: 0.5,
+    memorizeMs: 4500,
+    swaps: 15,
+    moveMs: 330,
+    doubleChance: 0.25,
     arc: true,
     dive: true,
-    jackpotMoves: 10,
+    jackpotMoves: 5,
     tierWeights: { common: 24, fine: 44, rare: 30, jackpot: 16 },
     guaranteed: ["gems-m", "gems-l", "fossil", "amber"]
   }
@@ -25689,7 +26008,7 @@ function normalizeDelophyHuntState(value) {
   };
 }
 function isValidDelophyHuntState(value) {
-  return !!value && typeof value === "object" && JSON.stringify(normalizeDelophyHuntState(value)) === JSON.stringify(value);
+  return !!value && typeof value === "object" && sameJsonShape(normalizeDelophyHuntState(value), value);
 }
 function rollDelophyHuntWeek(state, now) {
   const { weeklyKey } = missionPeriodKeys(now);
@@ -25718,7 +26037,7 @@ var SHUTE_FISHING = {
   /** 판 전체에서 이만큼 미스하면 아웃이다. */
   maxMisses: 3
 };
-var MIN_WINDOW_MS = 110;
+var MIN_WINDOW_MS = 130;
 var PERFECT_RATIO = 0.4;
 var TEMPO_STEP = 0.05;
 var MAX_PRESS_MS = 12e4;
@@ -25767,8 +26086,8 @@ var FISHING_DIFFICULTIES = [
     id: "normal",
     entryCost: 200,
     fish: 4,
-    sweepMs: 1120,
-    zone: 0.29,
+    sweepMs: 1180,
+    zone: 0.31,
     tierWeights: { common: 20, fine: 50, rare: 30 },
     boss: [["jackpot-500", 1]]
   },
@@ -25776,8 +26095,8 @@ var FISHING_DIFFICULTIES = [
     id: "hard",
     entryCost: 300,
     fish: 5,
-    sweepMs: 960,
-    zone: 0.25,
+    sweepMs: 1040,
+    zone: 0.28,
     tierWeights: { common: 0, fine: 45, rare: 55 },
     boss: [["jackpot-500", 5], ["jackpot-1000", 1]]
   },
@@ -25785,8 +26104,8 @@ var FISHING_DIFFICULTIES = [
     id: "extreme",
     entryCost: 400,
     fish: 6,
-    sweepMs: 820,
-    zone: 0.22,
+    sweepMs: 900,
+    zone: 0.25,
     tierWeights: { common: 10, fine: 52, rare: 38 },
     boss: [["jackpot-1000", 1]]
   }
@@ -25921,7 +26240,7 @@ function normalizeShuteFishingState(value) {
   };
 }
 function isValidShuteFishingState(value) {
-  return !!value && typeof value === "object" && JSON.stringify(normalizeShuteFishingState(value)) === JSON.stringify(value);
+  return !!value && typeof value === "object" && sameJsonShape(normalizeShuteFishingState(value), value);
 }
 function rollShuteFishingWeek(state, now) {
   const { weeklyKey } = missionPeriodKeys(now);
@@ -25941,6 +26260,149 @@ function shuteFishingStatus(missions, ledger, now) {
     run: state.run ? structuredClone(state.run) : null,
     resetsAt: new Date(Date.parse(`${state.weekKey}T00:00:00.000Z`) + 7 * 864e5).toISOString()
   };
+}
+
+// src/core/situationalOffers.ts
+init_define_import_meta_env();
+var SITUATIONAL_OFFER_TRIGGERS = ["breakthroughShort", "stageLoss", "staminaOut", "pityNear", "playerLevel", "ancientBest"];
+var SITUATIONAL_OFFER_RULES = {
+  durationHours: 72,
+  maxActive: 3,
+  cooldownDays: 7,
+  /** 같은 관문을 몇 번 내리 지면 연패 특가가 서는가. */
+  lossStreak: 3,
+  /** 스테미나를 젬으로 오늘 몇 번 채우면 스테미나 특가가 서는가. */
+  staminaGemRecharges: 5,
+  /** SSR 천장까지 남은 연구가 이 수 이하이면 천장 특가가 선다. */
+  pityWindow: 10,
+  playerLevels: [10, 20, 30, 40],
+  /** 이번 달 지층 최고층이 이 층에 닿으면 지층 특가가 선다. */
+  ancientFloor: 10
+};
+var isTrigger = (value) => typeof value === "string" && SITUATIONAL_OFFER_TRIGGERS.includes(value);
+var isIso = (value) => typeof value === "string" && Number.isFinite(Date.parse(value));
+function normalizeSituationalOfferState(value) {
+  const source = value && typeof value === "object" ? value : {};
+  const active3 = Array.isArray(source.active) ? source.active.filter((offer) => !!offer && typeof offer.productId === "string" && isTrigger(offer.trigger) && typeof offer.key === "string" && isIso(offer.issuedAt) && isIso(offer.expiresAt) && (offer.purchasedAt === void 0 || isIso(offer.purchasedAt))).map(({ productId, trigger, key, issuedAt, expiresAt, purchasedAt }) => ({ productId, trigger, key, issuedAt, expiresAt, ...purchasedAt !== void 0 ? { purchasedAt } : {} })) : [];
+  const issuedKeys = Array.isArray(source.issuedKeys) ? [...new Set(source.issuedKeys.filter((key) => typeof key === "string"))] : [];
+  const lastIssuedAt = {};
+  if (source.lastIssuedAt && typeof source.lastIssuedAt === "object") {
+    for (const [trigger, at] of Object.entries(source.lastIssuedAt)) if (isTrigger(trigger) && isIso(at)) lastIssuedAt[trigger] = at;
+  }
+  const loss = source.storyLoss;
+  const storyLoss = loss && typeof loss.stageId === "string" && Number.isInteger(loss.count) && loss.count > 0 ? { stageId: loss.stageId, count: loss.count } : void 0;
+  return { active: active3, issuedKeys, lastIssuedAt, ...storyLoss ? { storyLoss } : {} };
+}
+function isValidSituationalOfferState(value) {
+  if (value === void 0) return true;
+  return sameJsonShape(normalizeSituationalOfferState(value), value);
+}
+function pruneSituationalOffers(state, now) {
+  const active3 = state.active.filter(({ expiresAt }) => Date.parse(expiresAt) > now.getTime());
+  return active3.length === state.active.length ? state : { ...state, active: active3 };
+}
+function activeSituationalOffer(state, productId, now) {
+  return state?.active.find((offer) => offer.productId === productId && Date.parse(offer.expiresAt) > now.getTime());
+}
+function issueSituationalOffer(state, candidate, now) {
+  const pruned = pruneSituationalOffers(state, now);
+  const day = now.toISOString().slice(0, 10);
+  const cooldownMs = SITUATIONAL_OFFER_RULES.cooldownDays * 864e5;
+  const last = pruned.lastIssuedAt[candidate.trigger];
+  const blocked = pruned.issuedKeys.includes(candidate.key) || openSituationalOffers(pruned).length >= SITUATIONAL_OFFER_RULES.maxActive || pruned.active.some(({ productId }) => productId === candidate.productId) || Object.values(pruned.lastIssuedAt).some((at) => at?.slice(0, 10) === day) || last !== void 0 && now.getTime() - Date.parse(last) < cooldownMs;
+  if (blocked) return { state: pruned, issued: false };
+  const issuedAt = now.toISOString();
+  const offer = { productId: candidate.productId, trigger: candidate.trigger, key: candidate.key, issuedAt, expiresAt: new Date(now.getTime() + SITUATIONAL_OFFER_RULES.durationHours * 36e5).toISOString() };
+  return {
+    state: { ...pruned, active: [...pruned.active, offer], issuedKeys: [...pruned.issuedKeys, candidate.key], lastIssuedAt: { ...pruned.lastIssuedAt, [candidate.trigger]: issuedAt } },
+    issued: true
+  };
+}
+function consumeSituationalOffer(state, productId, now) {
+  return { ...state, active: state.active.map((offer) => offer.productId === productId && offer.purchasedAt === void 0 ? { ...offer, purchasedAt: now.toISOString() } : offer) };
+}
+function openSituationalOffers(state) {
+  return state.active.filter((offer) => offer.purchasedAt === void 0);
+}
+function forgetSituationalOfferKey(state, key) {
+  return state.issuedKeys.includes(key) ? { ...state, issuedKeys: state.issuedKeys.filter((entry) => entry !== key) } : state;
+}
+function recordStoryResult(state, stageId, victory) {
+  if (victory) {
+    if (!state.storyLoss) return state;
+    const { storyLoss: _cleared, ...rest } = state;
+    return rest;
+  }
+  const count2 = state.storyLoss?.stageId === stageId ? state.storyLoss.count + 1 : 1;
+  return { ...state, storyLoss: { stageId, count: count2 } };
+}
+function storyStageChapter(stageId) {
+  const match = /^(?:[a-z]+:)?(\d+)-\d+/.exec(stageId);
+  return match ? Number(match[1]) : void 0;
+}
+function situationalWeekKey(now) {
+  const date = /* @__PURE__ */ new Date(`${now.toISOString().slice(0, 10)}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() - (date.getUTCDay() + 6) % 7);
+  return date.toISOString().slice(0, 10);
+}
+
+// src/core/gachaHistory.ts
+init_define_import_meta_env();
+var GACHA_HISTORY_SLOT_LIMIT = 100;
+function createEmptyGachaHistory() {
+  return { entries: [] };
+}
+function normalizeSlot(value) {
+  if (!value || typeof value !== "object") return void 0;
+  const slot = value;
+  if (slot.kind === "relic" && typeof slot.relicId === "string" && slot.relicId) {
+    return slot.isNew === true ? { kind: "relic", relicId: slot.relicId, isNew: true } : { kind: "relic", relicId: slot.relicId };
+  }
+  if (slot.kind === "currency" && (slot.currency === "gold" || slot.currency === "cheesecake") && Number.isInteger(slot.amount) && slot.amount >= 0) {
+    return { kind: "currency", currency: slot.currency, amount: slot.amount };
+  }
+  return void 0;
+}
+function normalizeEntry(value) {
+  if (!value || typeof value !== "object") return void 0;
+  const entry = value;
+  if (typeof entry.at !== "string" || Number.isNaN(Date.parse(entry.at))) return void 0;
+  if (typeof entry.bannerId !== "string" || !entry.bannerId) return void 0;
+  if (entry.count !== 1 && entry.count !== 10) return void 0;
+  if (!Array.isArray(entry.slots)) return void 0;
+  const slots = entry.slots.map(normalizeSlot);
+  if (slots.length === 0 || slots.some((slot) => slot === void 0)) return void 0;
+  const cost = {};
+  if (entry.cost && typeof entry.cost === "object" && !Array.isArray(entry.cost)) {
+    for (const [key, amount] of Object.entries(entry.cost)) {
+      if (Number.isInteger(amount) && amount > 0) cost[key] = amount;
+    }
+  }
+  const pity = Number.isInteger(entry.pity) && entry.pity >= 0 ? entry.pity : 0;
+  return { at: entry.at, bannerId: entry.bannerId, count: entry.count, cost, pity, slots };
+}
+function trim(entries) {
+  let total = entries.reduce((sum, entry) => sum + entry.slots.length, 0);
+  let start = 0;
+  while (total > GACHA_HISTORY_SLOT_LIMIT && start < entries.length - 1) {
+    total -= entries[start].slots.length;
+    start += 1;
+  }
+  return entries.slice(start);
+}
+function normalizeGachaHistory(value) {
+  if (!value || typeof value !== "object" || !Array.isArray(value.entries)) return createEmptyGachaHistory();
+  const entries = value.entries.map(normalizeEntry).filter((entry) => entry !== void 0);
+  return { entries: trim(entries) };
+}
+function isValidGachaHistory(value) {
+  if (value === void 0) return true;
+  return !!value && typeof value === "object" && sameJsonShape(normalizeGachaHistory(value), value);
+}
+function appendGachaHistory(state, entry) {
+  const current2 = normalizeGachaHistory(state);
+  const normalized = normalizeEntry(entry);
+  return { entries: trim(normalized ? [...current2.entries, normalized] : current2.entries) };
 }
 
 // src/core/raidTicketDrops.ts
@@ -25973,7 +26435,9 @@ var RAID_DIFFICULTY = {
   easy: raidDifficulty({ level: 20, bodyHp: 25e3, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 1e4, total: 8, kill: 5, gems: 40 }, run: { sigil: 3, gems: 7, salvage: 2 } }),
   normal: raidDifficulty({ level: 30, bodyHp: 5e4, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15e3, total: 14, kill: 8, gems: 65 }, run: { sigil: 5, gems: 13, salvage: 4 } }),
   hard: raidDifficulty({ level: 40, bodyHp: 1e5, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22e3, total: 22, kill: 12, gems: 85 }, run: { sigil: 8, gems: 17, salvage: 6 } }),
-  rampage: raidDifficulty({ level: 60, bodyHp: 25e4, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45e3, total: 60, kill: 30, gems: 130 }, run: { sigil: 13, gems: 25, salvage: 10 } })
+  // 렐릭 상한이 연구원 레벨로 100까지 열리며(돌파 +10%p) 만렙 편성의 폭주 피해가 2.6배가 되었다 — 판 체력과 내 몫 목표를
+  // 함께 2.5배로 올려 같은 판 수·같은 보상선을 지킨다(250,000 → 625,000 · 45,000 → 112,500). 쉬움~어려움은 권장 레벨에서 그대로다.
+  rampage: raidDifficulty({ level: 60, bodyHp: 625e3, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 112500, total: 60, kill: 30, gems: 130 }, run: { sigil: 13, gems: 25, salvage: 10 } })
 };
 function isRaidDifficulty(value) {
   return typeof value === "string" && Object.prototype.hasOwnProperty.call(RAID_DIFFICULTY, value);
@@ -26039,7 +26503,7 @@ function normalizeRaidTicketDropState(value) {
   return { day: typeof source.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(source.day) ? source.day : "", normal: count(source.normal), select: count(source.select) };
 }
 function isValidRaidTicketDropState(value) {
-  return !!value && typeof value === "object" && JSON.stringify(normalizeRaidTicketDropState(value)) === JSON.stringify(value);
+  return !!value && typeof value === "object" && sameJsonShape(normalizeRaidTicketDropState(value), value);
 }
 function rollRaidTicketDrops(state, runs, now, random, raidOpen) {
   if (!raidOpen) return { state, drops: [] };
@@ -26135,7 +26599,8 @@ var ACHIEVEMENT_SERIES = [
 init_define_import_meta_env();
 var NEWBIE_GROWTH_DAYS = 7;
 var NEWBIE_GROWTH_WINDOW_DAYS = 14;
-var NEWBIE_GROWTH_GOAL_GEMS = 50;
+var NEWBIE_GROWTH_SR_TICKET = "sr-select-ticket";
+var NEWBIE_GROWTH_GUIDE_RELIC = "torika";
 var DAY_GOALS = [
   [["storyStagesCleared", 5], ["favoriteChosen", 1], ["feedings", 3], ["researchPulls", 10], ["harvests", 1]],
   [["storyStagesCleared", 10], ["maxRelicLevel", 10], ["archaeologySitesCompleted", 1], ["dailyMissionsClaimed", 5], ["staminaSpent", 100]],
@@ -26145,16 +26610,28 @@ var DAY_GOALS = [
   [["maxRelicLevel", 25], ["raidRuns", 1], ["researchPulls", 20], ["staminaSpent", 600], ["archaeologySitesCompleted", 3]],
   [["storyStagesCleared", 30], ["ancientFloorPeak", 5], ["maxRelicLevel", 30], ["playerLevel", 15], ["researchPulls", 30]]
 ];
-var NEWBIE_GROWTH_GOALS = DAY_GOALS.flatMap((goals, index) => goals.map(([metric, target], order) => ({ id: `d${index + 1}-${order + 1}`, day: index + 1, metric, target })));
+var DAY_CHEESECAKE = [60, 60, 70, 80, 80, 90, 100];
+var GOAL_GEMS = 50;
+var DAY_GEMS = 100;
+var DAY_FOSSIL = 1;
+var cheesecake2 = (amount) => ({ kind: "currency", currency: "cheesecake", amount });
+var gems2 = (amount) => ({ kind: "currency", currency: "gems", amount });
+function goalRewards(day, order) {
+  if (order === 4) return [gems2(DAY_GEMS), { kind: "currency", currency: "fossil", amount: DAY_FOSSIL }];
+  const first = day === 1 && order === 0 ? { kind: "fragment", relicId: NEWBIE_GROWTH_GUIDE_RELIC, amount: 1 } : cheesecake2(DAY_CHEESECAKE[day - 1]);
+  return [first, gems2(GOAL_GEMS)];
+}
+var NEWBIE_GROWTH_GOALS = DAY_GOALS.flatMap((goals, index) => goals.map(([metric, target], order) => ({ id: `d${index + 1}-${order + 1}`, day: index + 1, metric, target, rewards: goalRewards(index + 1, order) })));
 var NEWBIE_GROWTH_MILESTONES = [
   { id: "m10", goals: 10, reward: { kind: "currency", currency: "fossil", amount: 3 } },
   { id: "m20", goals: 20, reward: { kind: "currency", currency: "amber", amount: 3 } },
   { id: "m30", goals: 30, reward: { kind: "currency", currency: "fossil", amount: 5 } },
-  { id: "m35", goals: 35, reward: { kind: "srSelect" } }
+  { id: "m35", goals: 35, reward: { kind: "item", itemId: NEWBIE_GROWTH_SR_TICKET, amount: 1 } }
 ];
 var NEWBIE_GROWTH_CLAIM_IDS = /* @__PURE__ */ new Set([...NEWBIE_GROWTH_GOALS.map(({ id }) => id), ...NEWBIE_GROWTH_MILESTONES.map(({ id }) => id)]);
 
 // src/core/achievementState.ts
+var GIFT_FRAME_IDS = /* @__PURE__ */ new Set(["patron", "season"]);
 function createEmptyAchievementState() {
   return { claimed: {}, goldPeak: 0 };
 }
@@ -26168,6 +26645,7 @@ function normalizeAchievementState(value) {
     if (count2 > 0) claimed[series.id] = count2;
   }
   const ancientFloorPeak = Math.min(ANCIENT_STRATA_MAX_FLOOR, whole(source.ancientFloorPeak));
+  const giftFrames = Array.isArray(source.giftFrames) ? [...new Set(source.giftFrames.filter((id) => typeof id === "string" && GIFT_FRAME_IDS.has(id)))] : [];
   const growth = Array.isArray(source.growth) ? [...new Set(source.growth.filter((id) => typeof id === "string" && NEWBIE_GROWTH_CLAIM_IDS.has(id)))] : [];
   return {
     claimed,
@@ -26175,7 +26653,10 @@ function normalizeAchievementState(value) {
     ...ancientFloorPeak > 0 ? { ancientFloorPeak } : {},
     ...growth.length > 0 ? { growth } : {},
     ...source.favoriteChosen === true ? { favoriteChosen: true } : {},
-    ...source.guildJoined === true ? { guildJoined: true } : {}
+    ...source.guildJoined === true ? { guildJoined: true } : {},
+    ...source.firstPaymentGift === true ? { firstPaymentGift: true } : {},
+    ...source.firstPaymentPaid === true && source.firstPaymentGift !== true ? { firstPaymentPaid: true } : {},
+    ...giftFrames.length > 0 ? { giftFrames } : {}
   };
 }
 function isValidAchievementState(value) {
@@ -26186,6 +26667,9 @@ function isValidAchievementState(value) {
   if (state.growth !== void 0 && (!Array.isArray(state.growth) || state.growth.some((id) => typeof id !== "string" || !NEWBIE_GROWTH_CLAIM_IDS.has(id)))) return false;
   if (state.favoriteChosen !== void 0 && state.favoriteChosen !== true) return false;
   if (state.guildJoined !== void 0 && state.guildJoined !== true) return false;
+  if (state.firstPaymentGift !== void 0 && state.firstPaymentGift !== true) return false;
+  if (state.firstPaymentPaid !== void 0 && (state.firstPaymentPaid !== true || state.firstPaymentGift === true)) return false;
+  if (state.giftFrames !== void 0 && (!Array.isArray(state.giftFrames) || state.giftFrames.some((id) => typeof id !== "string" || !GIFT_FRAME_IDS.has(id)))) return false;
   if (!state.claimed || typeof state.claimed !== "object") return false;
   return Object.entries(state.claimed).every(([id, count2]) => {
     const series = ACHIEVEMENT_SERIES.find((candidate) => candidate.id === id);
@@ -26231,6 +26715,7 @@ function duelDefenseWinChance(mine, theirs) {
 }
 var DUEL_SEASON_DAYS = 21;
 var DUEL_SEASON_EPOCH = Date.UTC(2026, 0, 5);
+var duelSeasonEpoch = () => cycleAnchor(DUEL_SEASON_EPOCH);
 var DAY_MS = 864e5;
 function duelTierIndex(score) {
   let index = 0;
@@ -26304,13 +26789,13 @@ function duelDayKey(now) {
   return now.toISOString().slice(0, 10);
 }
 function duelSeasonNumber(now) {
-  return Math.max(1, Math.floor((now.getTime() - DUEL_SEASON_EPOCH) / (DUEL_SEASON_DAYS * DAY_MS)) + 1);
+  return Math.max(1, Math.floor((now.getTime() - duelSeasonEpoch()) / (DUEL_SEASON_DAYS * DAY_MS)) + 1);
 }
 function duelSeasonId(now) {
   return `S${duelSeasonNumber(now)}`;
 }
 function duelSeasonEndsAt(now) {
-  return new Date(DUEL_SEASON_EPOCH + duelSeasonNumber(now) * DUEL_SEASON_DAYS * DAY_MS);
+  return new Date(duelSeasonEpoch() + duelSeasonNumber(now) * DUEL_SEASON_DAYS * DAY_MS);
 }
 function duelSeasonResetScore(score) {
   return Math.floor(score * 0.6 / DUEL_DIVISION_SPAN) * DUEL_DIVISION_SPAN;
@@ -26333,10 +26818,10 @@ function pickDuelOpponents(pool, myScore, random, exclude = []) {
   return picked.sort((a, b) => a.score - b.score);
 }
 function duelGrownStats(def, level, breakthrough) {
-  return applyBreakthrough(applyLevelGrowth(def.stats, level, def.rarity), breakthrough);
+  return applyLevelGrowth(def.stats, level, def.rarity, breakthrough);
 }
 function duelNpcLevel(score) {
-  return clamp(Math.round(10 + score / 3e3 * 50), 8, 60);
+  return clamp(Math.round(10 + score / 3e3 * (RELIC_MAX_LEVEL - 10)), 8, RELIC_MAX_LEVEL);
 }
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -26413,7 +26898,7 @@ function normalizeDuelState(value, ownedRelicIds) {
 }
 function isValidDuelState(value, ownedRelicIds) {
   if (!value || typeof value !== "object") return false;
-  return JSON.stringify(normalizeDuelState(value, ownedRelicIds)) === JSON.stringify(value);
+  return sameJsonShape(normalizeDuelState(value, ownedRelicIds), value);
 }
 function rollDuelPeriods(state, now) {
   const next = cloneDuelState(state);
@@ -26841,6 +27326,8 @@ var PROFILE_FRAMES = [
   { id: "ancient", style: "strata", displayName: "\uD0DC\uACE0\uC758 \uC9C0\uCE35", unlockLevel: 1, unlockAchievement: { id: "ancient-depth", tiers: 4 }, color: 14200434, wash: 3745816 },
   { id: "conqueror", style: "laurel", displayName: "\uBD88\uAD74\uC758 \uC6D4\uACC4", unlockLevel: 1, unlockAchievement: { id: "hard-frontline", tiers: 4 }, color: 15895451, wash: 4070184 },
   { id: "runic", style: "prism", displayName: "\uB8EC\uC758 \uAD11\uCC44", unlockLevel: 1, unlockAchievement: { id: "rune-refinement", tiers: 4 }, color: 8316382, wash: 1325882 },
+  { id: "patron", style: "sigil", displayName: "\uCCAB \uD6C4\uC6D0\uC758 \uC99D\uD45C", unlockLevel: 1, unlockGift: "firstPayment", color: 16765562, wash: 4139536 },
+  { id: "season", style: "halo", displayName: "\uC2DC\uC98C\uC758 \uB0A0\uAC1C", unlockLevel: 1, unlockGift: "seasonPass", color: 10478591, wash: 1258058 },
   { id: "holo", style: "bracket", displayName: "\uD22C\uC601 \uAD00\uCE21", unlockLevel: 10, color: 6280447, wash: 1521736 },
   { id: "amber", style: "gem", displayName: "\uD638\uBC15 \uD45C\uBCF8", unlockLevel: 20, color: 15905857, wash: 4008978 },
   { id: "abyss", style: "wing", displayName: "\uC2EC\uD574 \uAE30\uB85D", unlockLevel: 30, color: 11566335, wash: 2759748 },
@@ -26853,7 +27340,8 @@ function findProfileFrame(id) {
 function profileFrameOrDefault(id) {
   return findProfileFrame(id) ?? PROFILE_FRAMES[0];
 }
-function isProfileFrameUnlocked(frame, playerLevel, claimed = {}) {
+function isProfileFrameUnlocked(frame, playerLevel, claimed = {}, giftFrames = []) {
+  if (frame.unlockGift) return giftFrames.includes(frame.id);
   return playerLevel >= frame.unlockLevel && (!frame.unlockAchievement || (claimed[frame.unlockAchievement.id] ?? 0) >= frame.unlockAchievement.tiers);
 }
 for (const frame of PROFILE_FRAMES) registerDataText(frame, "displayName", `profileFrame.${frame.id}.name`);
@@ -27175,6 +27663,8 @@ var ITEMS = [
   // 갈아 끼우고(`StaminaPopup`), 그래서 둘의 이름도 같은 낱말에 표시만 다르게 붙인다.
   { id: "stamina-tonic", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 60 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 60 } },
   { id: "stamina-tonic-large", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 120 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic-large" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 120 } },
+  // 계정 첫 결제 선물(`FIRST_PAYMENT_GIFT`)로 받는 선택권. 가방에서 쓰면 7일 가이드와 같은 SR 고르기 창이 열린다.
+  { id: "sr-select-ticket", name: "SR \uB810\uB9AD \uC120\uD0DD\uAD8C", description: "SR \uB810\uB9AD \uD55C \uBA85\uC744 \uACE8\uB77C \uB370\uB824\uC635\uB2C8\uB2E4. \uC774\uBBF8 \uD568\uAED8\uD558\uB294 \uB810\uB9AD\uC744 \uACE0\uB974\uBA74 \uADF8 \uB810\uB9AD\uC758 \uD30C\uD3B8 1\uAC1C\uAC00 \uB429\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-sr-select-ticket" }, maxStack: 99, useEffect: { kind: "select_relic", rarity: "SR" } },
   { id: "ancient-core", name: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575", description: "\uB8EC\uC5D0 \uD2B9\uC131 \uD55C \uC904\uC744 \uC0C8\uB85C \uBD80\uC5EC\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uD2B9\uC131\uC774 \uC788\uC73C\uBA74 \uC9C0\uC6B0\uACE0 \uB2E4\uC2DC \uBD80\uC5EC\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-ancient-core" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "refined-core", name: "\uC815\uC81C\uB41C \uACE0\uB300 \uD575", description: "\uC601\uC6C5 \uC774\uC0C1 \uB4F1\uAE09\uC758 \uD2B9\uC131\uC744 \uD655\uC815\uC73C\uB85C \uBD80\uC5EC\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uC601\uC6C5 \uC774\uC0C1\uC778 \uD2B9\uC131\uC5D0\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-refined-core" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", description: "\uD2B9\uC131\uC758 \uC885\uB958\uB294 \uADF8\uB300\uB85C \uB450\uACE0 \uB4F1\uAE09\uC744 \uC804\uC124\uB85C \uD655\uC815 \uC0C1\uC2B9\uC2DC\uD0B5\uB2C8\uB2E4. \uC774\uBBF8 \uC804\uC124\uC778 \uD2B9\uC131\uC5D0\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-restoration-crystal" }, maxStack: 999, useEffect: { kind: "none" } },
@@ -27729,21 +28219,21 @@ var EXPEDITION_BEST_SCORE_REWARD_STAGES = [
   { id: "best-16k", threshold: 24e3, reward: { currency: "salvageRecord", amount: 15 } },
   { id: "best-20k", threshold: 3e4, reward: { currency: "gems", amount: 40 } },
   { id: "best-24k", threshold: 36e3, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-28k", threshold: 42e3, reward: { currency: "gold", amount: 1e4 } },
-  { id: "best-33k", threshold: 5e4, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-38k", threshold: 57e3, reward: { currency: "fossil", amount: 1 } },
-  { id: "best-44k", threshold: 66e3, reward: { currency: "salvageRecord", amount: 25 } },
-  { id: "best-50k", threshold: 75e3, reward: { currency: "gems", amount: 85 } },
-  { id: "best-57k", threshold: 85e3, reward: { currency: "salvageRecord", amount: 25 } },
-  { id: "best-65k", threshold: 1e5, reward: { currency: "cheesecake", amount: 100 } },
-  { id: "best-74k", threshold: 111e3, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-84k", threshold: 126e3, reward: { currency: "dnaFragments", amount: 10 } },
-  { id: "best-95k", threshold: 145e3, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-110k", threshold: 165e3, reward: { currency: "amber", amount: 1 } },
-  { id: "best-125k", threshold: 19e4, reward: { currency: "salvageRecord", amount: 40 } },
-  { id: "best-145k", threshold: 22e4, reward: { currency: "gems", amount: 170 } },
-  { id: "best-170k", threshold: 255e3, reward: { currency: "salvageRecord", amount: 50 } },
-  { id: "best-200k", threshold: 3e5, reward: { currency: "fossil", amount: 2 } }
+  { id: "best-28k", threshold: 44e3, reward: { currency: "gold", amount: 1e4 } },
+  { id: "best-33k", threshold: 54e3, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-38k", threshold: 63e3, reward: { currency: "fossil", amount: 1 } },
+  { id: "best-44k", threshold: 76e3, reward: { currency: "salvageRecord", amount: 25 } },
+  { id: "best-50k", threshold: 89e3, reward: { currency: "gems", amount: 85 } },
+  { id: "best-57k", threshold: 105e3, reward: { currency: "salvageRecord", amount: 25 } },
+  { id: "best-65k", threshold: 13e4, reward: { currency: "cheesecake", amount: 100 } },
+  { id: "best-74k", threshold: 145e3, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-84k", threshold: 175e3, reward: { currency: "dnaFragments", amount: 10 } },
+  { id: "best-95k", threshold: 21e4, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-110k", threshold: 245e3, reward: { currency: "amber", amount: 1 } },
+  { id: "best-125k", threshold: 295e3, reward: { currency: "salvageRecord", amount: 40 } },
+  { id: "best-145k", threshold: 36e4, reward: { currency: "gems", amount: 170 } },
+  { id: "best-170k", threshold: 435e3, reward: { currency: "salvageRecord", amount: 50 } },
+  { id: "best-200k", threshold: 54e4, reward: { currency: "fossil", amount: 2 } }
 ];
 var EXPEDITION_DAILY_POLICY = { maxPlaysPerDay: 1 };
 var EXPEDITION_WEEKLY_RANK_POOL = {
@@ -27988,6 +28478,23 @@ function highestClearedStage(stages, cleared) {
 // src/core/settings.ts
 init_define_import_meta_env();
 
+// src/core/contentFresh.ts
+init_define_import_meta_env();
+var isContentId = (value) => typeof value === "string" && ALL_GATED_CONTENT.includes(value);
+var uniqueIds = (values) => ALL_GATED_CONTENT.filter((id) => values.includes(id));
+function normalizeContentSeen(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const record2 = value;
+  if (typeof record2.owner !== "string" || record2.owner.length > 64 || !Array.isArray(record2.known)) return null;
+  const known = uniqueIds(record2.known.filter(isContentId));
+  const fresh = Array.isArray(record2.fresh) ? uniqueIds(record2.fresh.filter(isContentId)).filter((id) => known.includes(id)) : [];
+  return { owner: record2.owner, known, fresh };
+}
+function sameContentSeen(a, b) {
+  if (!a || !b) return a === b;
+  return a.owner === b.owner && a.known.join(",") === b.known.join(",") && a.fresh.join(",") === b.fresh.join(",");
+}
+
 // src/core/partyPresets.ts
 init_define_import_meta_env();
 var PARTY_PRESET_COUNT = 5;
@@ -28064,7 +28571,7 @@ function createDefaultSettings() {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS } },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, adRewardDot: false, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" }
@@ -28109,6 +28616,10 @@ function normalizeSettings(value) {
       autoUltimate: bool(g.autoUltimate, d.game.autoUltimate),
       // 필드가 없던 저장은 켜진 쪽으로 이관한다 — 처음 편성하는 사람에게 필요한 안내다.
       formationRoleHint: bool(g.formationRoleHint, d.game.formationRoleHint),
+      // 필드가 없던 저장은 아직 배우지 않은 쪽이다 — 화살표가 한 번 더 가리켜도 해가 없다.
+      pullAgainTaught: bool(g.pullAgainTaught, d.game.pullAgainTaught),
+      // 필드가 없던 저장은 꺼진 쪽이다 — 광고는 받을 수 있는 공짜 보상이 아니다.
+      adRewardDot: bool(g.adRewardDot, d.game.adRewardDot),
       // 새 필드가 없을 때만 옛 `컷인 끄기`를 `전체 궁극 연출 스킵`으로 승격한다. 명시된 새 값이 언제나 우선한다.
       skipUltimatePresentation: typeof g.skipUltimatePresentation === "boolean" ? g.skipUltimatePresentation : p.ultimateCutIn === false,
       textSpeed: allowed(g.textSpeed, TEXT_SPEEDS, d.game.textSpeed),
@@ -28134,7 +28645,9 @@ function normalizeSettings(value) {
         bookmarkedOnly: bool(record(g.runeBag).bookmarkedOnly, d.game.runeBag.bookmarkedOnly)
       },
       // 필드가 없던 저장은 기본 옵션(10판 · 패배 시 중단 · 드링크 끔)으로 이관한다.
-      autoRepeat: normalizeAutoRepeatOptions(g.autoRepeat)
+      autoRepeat: normalizeAutoRepeatOptions(g.autoRepeat),
+      // 필드가 없던 저장은 기록 없음(null)이다 — 첫 로비가 지금 열린 것을 「이미 본 것」으로 시작한다.
+      contentSeen: normalizeContentSeen(g.contentSeen)
     },
     // 인증 토큰은 이 모델에 애초에 자리를 만들지 않아 로컬 저장으로 새는 경로를 차단한다.
     account: { provider: allowed(a.provider, ["guest", "google", "apple"], d.account.provider), displayId: typeof a.displayId === "string" && a.displayId.length <= 80 ? a.displayId : d.account.displayId }
@@ -34389,7 +34902,7 @@ var BOUNTY_TIERS = [
     { relicId: "ikanixia", level: 35 }
   ] },
   { id: "bounty-4", order: 7, name: "\uD604\uC0C1\uC218\uBC30 7\uAE09", rewardGold: 11500, rounds: [
-    { relicId: "mir", level: 41 },
+    { relicId: "pulsi", level: 41 },
     { relicId: "atra", level: 41 },
     { relicId: "ikanixia", level: 41 }
   ] },
@@ -34659,6 +35172,44 @@ for (const city of INTERACTION_CITIES) registerDataText(city, "displayName", `ci
 
 // src/data/progressPasses.ts
 init_define_import_meta_env();
+
+// src/core/seasonPass.ts
+init_define_import_meta_env();
+var SEASON_EPOCH_MS = Date.UTC(2026, 10, 2);
+function seasonEpoch() {
+  return cycleAnchor(SEASON_EPOCH_MS);
+}
+var SEASON_DAYS = 28;
+var SEASON_MS = SEASON_DAYS * 864e5;
+var SEASON_TIER_POINTS = 180;
+var SEASON_TIERS = 30;
+function seasonIndex(now) {
+  const at = typeof now === "number" ? now : now.getTime();
+  return Math.max(0, Math.floor((at - seasonEpoch()) / SEASON_MS));
+}
+function seasonKey(now) {
+  return `S${seasonIndex(now) + 1}`;
+}
+function seasonEndsAt(now) {
+  return new Date(seasonEpoch() + (seasonIndex(now) + 1) * SEASON_MS).toISOString();
+}
+function currentSeasonProgress(saved, now) {
+  const key = seasonKey(now);
+  return saved?.key === key ? { key, points: saved.points } : { key, points: 0 };
+}
+function addSeasonPoints(saved, points, now) {
+  const current2 = currentSeasonProgress(saved, now);
+  return { key: current2.key, points: Math.min(SEASON_TIER_POINTS * SEASON_TIERS, current2.points + Math.max(0, Math.floor(points))) };
+}
+function rollSeasonPassState(passes, now, passId = "season") {
+  const key = seasonKey(now);
+  if (passes.season?.key === key) return passes;
+  const { [passId]: _claimed, ...claimed } = passes.claimed;
+  const { [passId]: _free, ...freeClaimed } = passes.freeClaimed;
+  return { ...passes, claimed, freeClaimed, season: { key, points: 0 } };
+}
+
+// src/data/progressPasses.ts
 var currency = (key, amount) => ({ kind: "currency", currency: key, amount });
 var item = (itemId, amount) => ({
   kind: "item",
@@ -34669,7 +35220,38 @@ var item = (itemId, amount) => ({
   }
 });
 var step = (threshold, free, ...rewards) => ({ threshold, free: [free], rewards });
+var SEASON_PAID_EXTRA = {
+  2: item("stamina-tonic-large", 1),
+  3: currency("fossil", 1),
+  5: item("stamina-tonic-large", 1),
+  6: currency("fossil", 1),
+  8: item("stamina-tonic-large", 1),
+  9: currency("fossil", 1),
+  11: item("stamina-tonic-large", 1),
+  12: currency("fossil", 1),
+  14: currency("amber", 1),
+  16: currency("fossil", 1),
+  18: item("stamina-tonic-large", 1),
+  19: currency("fossil", 1),
+  21: item("universal-fragment-sr", 1),
+  22: currency("fossil", 1),
+  24: item("stamina-tonic-large", 1),
+  26: currency("fossil", 1),
+  28: currency("amber", 1),
+  30: { kind: "profile_decoration", decorationId: "season", get name() {
+    return findProfileFrame("season")?.displayName ?? "season";
+  } }
+};
+var seasonMilestones = () => Array.from({ length: SEASON_TIERS }, (_, index) => {
+  const tier = index + 1;
+  const free = tier % 10 === 0 ? currency("fossil", 1) : tier % 2 === 1 ? currency("gold", 5e3) : currency("cheesecake", 40);
+  const extra = SEASON_PAID_EXTRA[tier];
+  return { threshold: tier * SEASON_TIER_POINTS, free: [free], rewards: [currency("gems", 100), ...extra ? [extra] : []] };
+});
+var SEASON_PASS = { id: "season", productId: "premium-season-pass", metric: "seasonPoints", milestones: seasonMilestones(), seasonal: true };
 var PROGRESS_PASSES = [
+  // 시즌 패스는 맨 앞이다 — 다 받아도 다음 시즌에 다시 사는 유일한 길이라 창을 열면 먼저 선다.
+  SEASON_PASS,
   {
     // 스토리 클리어 수가 곧 관문 순서다(본편이 한 줄로 이어진다) — 화면은 문턱을 「1-1 클리어」처럼 관문 이름으로 읽는다.
     id: "story",
@@ -35058,6 +35640,8 @@ var SaveManager = class {
       chestForge: { ...state.chestForge ?? createEmptyChestForgeState() },
       delophyHunt: structuredClone(state.delophyHunt ?? createEmptyDelophyHuntState()),
       shuteFishing: structuredClone(state.shuteFishing ?? createEmptyShuteFishingState()),
+      situationalOffers: normalizeSituationalOfferState(state.situationalOffers),
+      gachaHistory: normalizeGachaHistory(state.gachaHistory),
       achievements: normalizeAchievementState(state.achievements ?? createEmptyAchievementState()),
       tutorial: normalizeTutorialState(state.tutorial ?? createEmptyTutorialState()),
       serverJournal: structuredClone(state.serverJournal ?? emptyServerJournal())
@@ -35249,7 +35833,7 @@ var SaveManager = class {
     if (!Array.isArray(data.discoveredInteractionJournalIds) || !Array.isArray(data.readInteractionJournalIds) || data.discoveredInteractionJournalIds.some((id) => !journalIds.has(id)) || data.readInteractionJournalIds.some((id) => !data.discoveredInteractionJournalIds.includes(id)) || new Set(data.discoveredInteractionJournalIds).size !== data.discoveredInteractionJournalIds.length || new Set(data.readInteractionJournalIds).size !== data.readInteractionJournalIds.length) fail3("\uAD50\uB958 \uC77C\uC9C0 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!interaction || !Array.isArray(interaction.slots) || interaction.slots.length > INTERACTION_SLOT_LIMIT || new Set(interaction.slots.filter((slot) => slot !== null).map((slot) => slot.dispatchId)).size !== interaction.slots.filter((slot) => slot !== null).length || !Array.isArray(interaction.claimedRequestIds) || interaction.claimedRequestIds.some((id) => typeof id !== "string") || interaction.slots.some((slot) => slot !== null && (typeof slot.dispatchId !== "string" || typeof slot.cityId !== "string" || !Array.isArray(slot.party) || slot.party.length < 1 || slot.party.length > 3 || new Set(slot.party).size !== slot.party.length || slot.party.some((id) => !data.ownedRelicIds.includes(id)) || !Number.isFinite(Date.parse(slot.startedAt)) || !Number.isFinite(Date.parse(slot.completesAt)) || Date.parse(slot.completesAt) <= Date.parse(slot.startedAt) || typeof slot.claimed !== "boolean"))) fail3("\uAD50\uB958 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (typeof data.staminaUpdatedAt !== "string" || data.staminaUpdatedAt !== "" && !Number.isFinite(Date.parse(data.staminaUpdatedAt))) fail3("\uC2A4\uD14C\uBBF8\uB098 \uC815\uC0B0 \uC2DC\uAC01\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.playerCard || typeof data.playerCard !== "object" || JSON.stringify(data.playerCard) !== JSON.stringify(normalizePlayerCard(data.playerCard))) fail3("\uD50C\uB808\uC774\uC5B4 \uCE74\uB4DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.playerCard || typeof data.playerCard !== "object" || !sameJsonShape(data.playerCard, normalizePlayerCard(data.playerCard))) fail3("\uD50C\uB808\uC774\uC5B4 \uCE74\uB4DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.playerResearch || !Number.isInteger(data.playerResearch.level) || data.playerResearch.level < 1 || !Number.isInteger(data.playerResearch.experience) || data.playerResearch.experience < 0 || !Number.isInteger(data.playerResearch.experienceToNext) || data.playerResearch.experienceToNext <= 0 || data.playerResearch.experience >= data.playerResearch.experienceToNext) fail3("\uD50C\uB808\uC774\uC5B4 \uC5F0\uAD6C \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!excavation || !Array.isArray(excavation.assignedRelicIds) || excavation.assignedRelicIds.length !== 3 || excavation.assignedRelicIds.some((id) => id !== null && (!relicIds.has(id) || !data.ownedRelicIds.includes(id))) || excavation.assignedRelicIds.filter(Boolean).length !== new Set(excavation.assignedRelicIds.filter(Boolean)).size || excavation.lastSettledAt !== null && !Number.isFinite(Date.parse(excavation.lastSettledAt)) || !excavation.unclaimed || EXCAVATION_CURRENCIES.some((currency3) => !Number.isFinite(excavation.unclaimed[currency3]) || excavation.unclaimed[currency3] < 0) || !Number.isInteger(excavation.retroactiveExcavationGrantVersion) || excavation.retroactiveExcavationGrantVersion < 0 || excavation.retroactiveExcavationGrantVersion > RETROACTIVE_EXCAVATION_GRANT_VERSION || !Number.isFinite(excavation.baseStorageSeconds) || excavation.baseStorageSeconds <= 0 || !Number.isFinite(excavation.activeProductionMultiplier) || excavation.activeProductionMultiplier <= 0 || excavation.storageExtensionExpiresAt !== null && !Number.isFinite(Date.parse(excavation.storageExtensionExpiresAt))) fail3("\uBC1C\uAD74 \uC0C1\uD0DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (data.saveVersion !== CURRENT_SAVE_VERSION || !Array.isArray(data.ownedRelicIds) || data.ownedRelicIds.some((id) => !relicIds.has(id))) fail3("\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uB810\uB9AD ID\uAC00 \uC788\uC2B5\uB2C8\uB2E4.");
@@ -35259,7 +35843,7 @@ var SaveManager = class {
       return !data.ownedRelicIds.includes(relicId) || !skin || !data.ownedRelicSkinIds.includes(skinId) || skin.relicId !== relicId;
     })) fail3("\uB810\uB9AD \uC2A4\uD0A8 \uC7A5\uCC29 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.earnedProfileModifierIds) || !Array.isArray(data.equippedProfileModifierIds) || data.earnedProfileModifierIds.some((id) => !modifierIds.has(id)) || data.equippedProfileModifierIds.some((id) => !data.earnedProfileModifierIds.includes(id)) || new Set(data.earnedProfileModifierIds).size !== data.earnedProfileModifierIds.length || new Set(data.equippedProfileModifierIds).size !== data.equippedProfileModifierIds.length || data.equippedProfileModifierIds.length > MAX_EQUIPPED_PROFILE_MODIFIERS) fail3("\uD504\uB85C\uD544 \uC218\uC2DD\uC5B4 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (JSON.stringify(data.settings) !== JSON.stringify(normalizeSettings(data.settings))) fail3("\uC124\uC815 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!sameJsonShape(data.settings, normalizeSettings(data.settings))) fail3("\uC124\uC815 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.completedStoryIds) || data.completedStoryIds.some((id) => typeof id !== "string") || new Set(data.completedStoryIds).size !== data.completedStoryIds.length) fail3("\uC644\uB8CC \uC2A4\uD1A0\uB9AC \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.observationRecords) || data.observationRecords.some((record2) => !record2 || typeof record2.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record2.date) || !relicIds.has(record2.relicId) || typeof record2.storyId !== "string" || typeof record2.questionId !== "string" || typeof record2.question !== "string" || typeof record2.choiceId !== "string" || typeof record2.answer !== "string" || typeof record2.personalityTag !== "string" || typeof record2.discoveredHabit !== "string")) fail3("\uAD00\uCC30 \uC778\uD130\uBDF0 \uAE30\uB85D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (new Set(data.observationRecords.map(({ date }) => date)).size !== data.observationRecords.length) fail3("\uD558\uB8E8\uC5D0 \uAD00\uCC30 \uC778\uD130\uBDF0\uB97C \uB450 \uBC88 \uAE30\uB85D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
@@ -35274,7 +35858,7 @@ var SaveManager = class {
     if (!data.relicProgress || typeof data.relicProgress !== "object") fail3("\uC131\uC7A5 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     if (data.ownedRelicIds.some((id) => !data.relicProgress[id]) || Object.keys(data.relicProgress).some((id) => !data.ownedRelicIds.includes(id))) fail3("\uBCF4\uC720 \uB810\uB9AD\uACFC \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     for (const [id, progress] of Object.entries(data.relicProgress)) {
-      if (!relicIds.has(id) || !Number.isInteger(progress.breakthrough) || progress.breakthrough < 0 || progress.breakthrough > BREAKTHROUGH_CAP || !Number.isInteger(progress.exp) || progress.exp < 0 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > 10 || !Number.isInteger(progress.bondXp) || progress.bondXp < 0 || progress.bondXp > 650 || typeof progress.lastLobbyInteractionDate !== "string" || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail3("\uB810\uB9AD \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+      if (!relicIds.has(id) || !Number.isInteger(progress.breakthrough) || progress.breakthrough < 0 || progress.breakthrough > BREAKTHROUGH_CAP || progress.resonance !== void 0 && (!Number.isInteger(progress.resonance) || progress.resonance < 0 || progress.resonance > RESONANCE_CAP || progress.breakthrough < BREAKTHROUGH_CAP) || !Number.isInteger(progress.exp) || progress.exp < 0 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > 10 || !Number.isInteger(progress.bondXp) || progress.bondXp < 0 || progress.bondXp > 650 || typeof progress.lastLobbyInteractionDate !== "string" || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail3("\uB810\uB9AD \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     }
     if (!data.relicFragments || typeof data.relicFragments !== "object" || Object.entries(data.relicFragments).some(([id, count2]) => !data.ownedRelicIds.includes(id) || !Number.isInteger(count2) || count2 < 0)) fail3("\uB810\uB9AD \uD30C\uD3B8 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.runeInventory)) fail3("\uB8EC \uC778\uBCA4\uD1A0\uB9AC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
@@ -35317,6 +35901,8 @@ var SaveManager = class {
     if (!isValidChestForgeState(data.chestForge)) fail3("\uBCF4\uBB3C\uC0C1\uC790 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!isValidDelophyHuntState(data.delophyHunt)) fail3("\uB378\uB85C\uD53C\uC758 \uBCF4\uBB3C \uCC3E\uAE30 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!isValidShuteFishingState(data.shuteFishing)) fail3("\uC288\uD14C\uC758 \uB9AC\uB4EC \uB09A\uC2DC \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidSituationalOfferState(data.situationalOffers)) fail3("\uC0C1\uD669 \uD2B9\uAC00 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidGachaHistory(data.gachaHistory)) fail3("\uC5F0\uAD6C \uAE30\uB85D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (data.missions.lifetime !== void 0 && (typeof data.missions.lifetime !== "object" || data.missions.lifetime === null || Object.values(data.missions.lifetime).some((value) => !Number.isInteger(value) || value < 0))) fail3("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (data.serverJournal !== void 0 && !isValidServerJournal(data.serverJournal)) fail3("\uC11C\uBC84 \uCC98\uB9AC \uC601\uC218\uC99D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (data.expedition.pendingRankRewards !== void 0 && (!Array.isArray(data.expedition.pendingRankRewards) || data.expedition.pendingRankRewards.some((reward) => !reward || typeof reward.weekKey !== "string" || !Number.isInteger(reward.score) || reward.score <= 0 || typeof reward.achievedAt !== "string") || new Set([data.expedition.pendingRankReward, ...data.expedition.pendingRankRewards].filter(Boolean).map((reward) => reward.weekKey)).size !== data.expedition.pendingRankRewards.length + (data.expedition.pendingRankReward ? 1 : 0))) fail3("\uC6D0\uC815 \uC8FC\uAC04 \uBCF4\uC0C1 \uB300\uAE30\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
@@ -35329,6 +35915,9 @@ var SaveManager = class {
       const pass = findProgressPass(id);
       const valid = new Set(pass?.milestones.map(({ threshold }) => threshold) ?? []);
       if (!pass || !Array.isArray(thresholds) || new Set(thresholds).size !== thresholds.length || thresholds.some((value) => !valid.has(value))) throw new SaveDataError("\uC9C4\uD589 \uD328\uC2A4 \uC218\uB839 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    }
+    if (passes.season !== void 0 && (!passes.season || typeof passes.season.key !== "string" || !/^S\d+$/.test(passes.season.key) || !Number.isSafeInteger(passes.season.points) || passes.season.points < 0)) {
+      throw new SaveDataError("\uC2DC\uC98C \uD328\uC2A4 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     }
   }
   /** 답변은 보유한 개체의 실제 질문·선택지만, 한 질문에 한 번만 허용한다. 읽은 장은 정해진 유대 레벨만 허용한다. */
@@ -35400,6 +35989,8 @@ var SaveManager = class {
       chestForge: { ...data.chestForge },
       delophyHunt: structuredClone(data.delophyHunt),
       shuteFishing: structuredClone(data.shuteFishing),
+      situationalOffers: normalizeSituationalOfferState(data.situationalOffers),
+      gachaHistory: normalizeGachaHistory(data.gachaHistory),
       achievements: { ...data.achievements, claimed: { ...data.achievements.claimed }, ...data.achievements.growth ? { growth: [...data.achievements.growth] } : {} },
       tutorial: { completedStepIds: [...data.tutorial.completedStepIds], ...data.tutorial.seenIntroIds ? { seenIntroIds: [...data.tutorial.seenIntroIds] } : {} }
     };
@@ -35407,7 +35998,7 @@ var SaveManager = class {
 };
 function cloneProgressPasses(passes) {
   const copy = (table) => Object.fromEntries(Object.entries(table).map(([id, thresholds]) => [id, [...thresholds]]));
-  return { raidRuns: passes.raidRuns, claimed: copy(passes.claimed), freeClaimed: copy(passes.freeClaimed) };
+  return { raidRuns: passes.raidRuns, claimed: copy(passes.claimed), freeClaimed: copy(passes.freeClaimed), ...passes.season ? { season: { ...passes.season } } : {} };
 }
 function normalizeProgressPasses(value, legacyLevelThresholds = false) {
   const source = value && typeof value === "object" ? value : {};
@@ -35418,7 +36009,8 @@ function normalizeProgressPasses(value, legacyLevelThresholds = false) {
     const thresholds = list.map((threshold) => id === "level" && legacyLevelThresholds ? (oldLevels.indexOf(threshold) + 1) * 2 : threshold);
     return [id, [...new Set(thresholds)].filter((threshold) => valid.has(threshold))];
   }));
-  return { raidRuns, claimed: table(source.claimed), freeClaimed: table(source.freeClaimed) };
+  const season = source.season && typeof source.season === "object" && typeof source.season.key === "string" && /^S\d+$/.test(source.season.key) && Number.isSafeInteger(source.season.points) && source.season.points >= 0 ? { key: source.season.key, points: source.season.points } : void 0;
+  return { raidRuns, claimed: table(source.claimed), freeClaimed: table(source.freeClaimed), ...season ? { season } : {} };
 }
 function cloneRelicStory(story) {
   return { metAt: { ...story.metAt }, answers: story.answers.map((answer) => ({ ...answer })), claimedChapterIds: [...story.claimedChapterIds] };
@@ -35518,11 +36110,11 @@ function favoriteShowcase(state) {
   const relic = RELICS.find(({ id }) => id === state.favorite);
   if (!relic) return null;
   const progress = state.relicProgress[relic.id];
-  const gems2 = (progress?.heartGemSlots ?? []).flatMap((id) => {
+  const gems3 = (progress?.heartGemSlots ?? []).flatMap((id) => {
     const rune = id === null ? void 0 : state.runeInventory.find((candidate) => candidate.instanceId === id);
     return rune ? [rune] : [];
   });
-  const stats = progress ? calculateFinalStats(relic.stats, progress, gems2, relic.rarity) : relic.stats;
+  const stats = progress ? calculateFinalStats(relic.stats, progress, gems3, relic.rarity) : relic.stats;
   return {
     relicId: relic.id,
     displayName: relic.name,
@@ -35587,10 +36179,13 @@ function playerProfileDisplay(state, equippedModifiers = [], arena, now = /* @__
 init_define_import_meta_env();
 var REGULAR_EVENT_CYCLE = ["chest-forge", "delophy-hunt", "shute-fishing"];
 var ROTATION_ANCHOR = Date.UTC(2026, 10, 2);
-var WEEK_MS = 7 * 864e5;
+function rotationAnchor() {
+  return cycleAnchor(ROTATION_ANCHOR);
+}
+var WEEK_MS2 = 7 * 864e5;
 function regularEventWeekIndex(now) {
   const time = typeof now === "number" ? now : now.getTime();
-  const weeks = Math.floor((time - ROTATION_ANCHOR) / WEEK_MS);
+  const weeks = Math.floor((time - rotationAnchor()) / WEEK_MS2);
   const size = REGULAR_EVENT_CYCLE.length;
   return (weeks % size + size) % size;
 }
@@ -35760,7 +36355,7 @@ function duelParticipant(row, now) {
   state.duel = rollDuelPeriods(normalizeDuelState(state.duel, owned), now);
   const progression = new RelicProgressionManager(state);
   const units = state.duel.defense.map((relicId) => {
-    const stats = progression.getFinalStats(relicId), progress = state.relicProgress[relicId];
+    const stats = progression.getFinalStats(relicId, { pvp: true }), progress = state.relicProgress[relicId];
     return { relicId, level: progress?.level ?? 1, breakthrough: progress?.breakthrough ?? 0, stats, power: combatPower(stats) };
   });
   return { state, opponent: { id: row.id, displayName: state.playerCard.nickname || t("profile.defaultName"), score: state.duel.score, favoriteRelicId: state.favorite, ...profileFace(state), units, blindOrder: duelBlindOrder(units, state.duel.blindChoice) } };
@@ -35770,8 +36365,8 @@ function duelCombatSetup(state, opponentState, attack) {
   const defense = opponentState.duel.defense;
   const traits = (s, ids) => partyRuneTraitEffects(ids.map((relicId) => ({ relicId, runes: (s.relicProgress[relicId]?.heartGemSlots ?? []).flatMap((id) => s.runeInventory.filter((r) => r.instanceId === id)) })));
   return {
-    players: attack.map((id) => ({ ...getRelic(id), stats: progression.getFinalStats(id) })),
-    enemies: defense.map((id) => ({ ...getRelic(id), stats: defenseProgression.getFinalStats(id) })),
+    players: attack.map((id) => ({ ...getRelic(id), stats: progression.getFinalStats(id, { pvp: true }) })),
+    enemies: defense.map((id) => ({ ...getRelic(id), stats: defenseProgression.getFinalStats(id, { pvp: true }) })),
     arena: battleArena("duel"),
     bonds: Object.fromEntries(attack.map((id) => [id, state.relicProgress[id]?.bondLevel ?? 0])),
     breakthroughs: Object.fromEntries(attack.map((id) => [id, state.relicProgress[id]?.breakthrough ?? 0])),
@@ -37962,48 +38557,6 @@ function placeholderAdToken(slotId) {
 
 // src/core/gacha.ts
 init_define_import_meta_env();
-
-// src/core/liveSchedule.ts
-init_define_import_meta_env();
-var LIVE_SCHEDULE_KINDS = ["banner", "product", "event", "lobby"];
-var current = [];
-var OPEN_START = "2000-01-01T00:00:00.000Z";
-var OPEN_END = "2099-12-31T23:59:59.000Z";
-var isTime = (value) => typeof value === "string" && value.length <= 40 && Number.isFinite(Date.parse(value));
-function parseLiveSchedule(raw) {
-  if (!Array.isArray(raw)) return [];
-  const out = [];
-  for (const row of raw) {
-    if (!row || typeof row !== "object") continue;
-    const r = row;
-    if (!LIVE_SCHEDULE_KINDS.includes(r.kind)) continue;
-    if (typeof r.id !== "string" || r.id.length === 0 || r.id.length > 96) continue;
-    const startsAt = r.startsAt === null || r.startsAt === void 0 ? null : isTime(r.startsAt) ? new Date(r.startsAt).toISOString() : void 0;
-    const endsAt = r.endsAt === null || r.endsAt === void 0 ? null : isTime(r.endsAt) ? new Date(r.endsAt).toISOString() : void 0;
-    if (startsAt === void 0 || endsAt === void 0) continue;
-    out.push({ kind: r.kind, id: r.id, startsAt, endsAt, enabled: r.enabled !== false });
-  }
-  return out;
-}
-function setLiveSchedule(raw) {
-  current = parseLiveSchedule(raw);
-}
-function liveSchedule() {
-  return current;
-}
-function scheduledWindow(kind, id, def, entries = current) {
-  const entry = entries.find((row) => row.kind === kind && row.id === id);
-  if (!entry) return { ...def.startsAt !== void 0 ? { startsAt: def.startsAt } : {}, ...def.endsAt !== void 0 ? { endsAt: def.endsAt } : {}, enabled: true, overridden: false };
-  return { ...entry.startsAt !== null ? { startsAt: entry.startsAt } : {}, ...entry.endsAt !== null ? { endsAt: entry.endsAt } : {}, enabled: entry.enabled, overridden: true };
-}
-function windowOpen(window2, now) {
-  if (!window2.enabled) return false;
-  if (window2.startsAt !== void 0 && now < Date.parse(window2.startsAt)) return false;
-  if (window2.endsAt !== void 0 && now >= Date.parse(window2.endsAt)) return false;
-  return true;
-}
-
-// src/core/gacha.ts
 var TEN_PULL_SR_UPGRADE_CHANCE = 0.02;
 function carryoverTenAvailable(banner, pity) {
   return banner.carryoverTenCost !== void 0 && (pity?.discountTens ?? 0) > 0;
@@ -38022,11 +38575,11 @@ var RESEARCH_TICKET_GEM_PRICE = 300;
 function pullPayment(wallet, banner, count2, pity) {
   const cost = pullCost(banner, count2, pity);
   const tickets = Math.max(0, Math.min(cost, wallet[banner.currency]));
-  const gems2 = (cost - tickets) * RESEARCH_TICKET_GEM_PRICE;
-  return { tickets, gems: gems2, affordable: wallet.gems >= gems2 };
+  const gems3 = (cost - tickets) * RESEARCH_TICKET_GEM_PRICE;
+  return { tickets, gems: gems3, affordable: wallet.gems >= gems3 };
 }
 function bannerActive(banner, now, schedule = liveSchedule()) {
-  const window2 = banner.id === void 0 ? { ...banner, enabled: true, overridden: false } : scheduledWindow("banner", banner.id, banner, schedule);
+  const window2 = banner.id === void 0 ? scheduledWindow("banner", "", banner, []) : scheduledWindow("banner", banner.id, banner, schedule);
   return windowOpen(window2, now.getTime());
 }
 function bannerPullsRemaining(banner, pity) {
@@ -38107,7 +38660,8 @@ function spend(wallet, banner, count2, pity) {
   const payment = pullPayment(wallet, banner, count2, pity);
   return { ...wallet, [banner.currency]: wallet[banner.currency] - payment.tickets, gems: wallet.gems - payment.gems };
 }
-function resolveAcquisitions(ownedRelicIds, fragmentsById, results, breakthroughGradeById = {}, maxStars = 5, overflowAmountOf = () => 1) {
+function resolveAcquisitions(ownedRelicIds, fragmentsById, results, breakthroughGradeById = {}, maxStars = 5, overflowAmountOf = () => 1, resonanceRoomById = {}) {
+  const room = { ...resonanceRoomById };
   const owned = new Set(ownedRelicIds);
   const fragments = { ...fragmentsById };
   const slots = [];
@@ -38122,12 +38676,13 @@ function resolveAcquisitions(ownedRelicIds, fragmentsById, results, breakthrough
       continue;
     }
     duplicateRelicIds.push(relicId);
-    if ((breakthroughGradeById[relicId] ?? 1) >= maxStars) {
+    if ((breakthroughGradeById[relicId] ?? 1) >= maxStars && (room[relicId] ?? 0) <= 0) {
       const amount = overflowAmountOf(relicId);
       overflowFragments += amount;
       slots.push({ relicId, kind: "overflow", fragments: 0, overflowFragments: amount });
     } else {
       fragments[relicId] = (fragments[relicId] ?? 0) + 1;
+      if ((breakthroughGradeById[relicId] ?? 1) >= maxStars) room[relicId] = (room[relicId] ?? 0) - 1;
       slots.push({ relicId, kind: "fragment", fragments: 1, overflowFragments: 0 });
     }
   }
@@ -38179,7 +38734,7 @@ function preview(id, uid, displayName, level, frameId, status, relicId, relicLev
       relicId,
       level: relicLevel,
       breakthroughGrade: breakthroughGrade2,
-      stats: applyLevelGrowth(relic.stats, relicLevel, relic.rarity),
+      stats: applyLevelGrowth(relic.stats, relicLevel, relic.rarity, Math.max(0, breakthroughGrade2 - 1)),
       skillIds: [`${relicId}-basic`, `${relicId}-passive`, `${relicId}-ultimate`]
     },
     competitiveStats: {}
@@ -38386,6 +38941,16 @@ function mileageForPull(count2, overflowTotal) {
   return count2 * MILEAGE_PER_PULL + overflowTotal;
 }
 
+// src/data/firstPaymentGift.ts
+init_define_import_meta_env();
+var FIRST_PAYMENT_GIFT = {
+  grants: [
+    { kind: "item", itemId: "sr-select-ticket", name: "SR \uB810\uB9AD \uC120\uD0DD\uAD8C", amount: 1 },
+    { kind: "currency", currency: "fossil", amount: 5 }
+  ],
+  frameId: "patron"
+};
+
 // src/data/observations.ts
 init_define_import_meta_env();
 var COMMON_OBSERVATION_QUESTIONS = [
@@ -38571,9 +39136,9 @@ var REACTIONS = {
 };
 function utcDayNumber(utcDate) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(utcDate)) throw new RangeError("\uAD00\uCC30 \uC778\uD130\uBDF0 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-  const timestamp = Date.parse(`${utcDate}T00:00:00Z`);
-  if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== utcDate) throw new RangeError("\uAD00\uCC30 \uC778\uD130\uBDF0 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-  return Math.floor(timestamp / 864e5);
+  const timestamp2 = Date.parse(`${utcDate}T00:00:00Z`);
+  if (!Number.isFinite(timestamp2) || new Date(timestamp2).toISOString().slice(0, 10) !== utcDate) throw new RangeError("\uAD00\uCC30 \uC778\uD130\uBDF0 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  return Math.floor(timestamp2 / 864e5);
 }
 function observationQuestionForDate(utcDate) {
   utcDayNumber(utcDate);
@@ -38682,6 +39247,30 @@ function markBountyTierCleared(state, tierId2) {
   return state.clearedTierIds.includes(tierId2) ? { clearedTierIds: [...state.clearedTierIds] } : { clearedTierIds: [...state.clearedTierIds, tierId2] };
 }
 
+// src/core/relicReset.ts
+init_define_import_meta_env();
+var RELIC_RESET_FREE_MAX_LEVEL = 20;
+var RELIC_RESET_GEM_BAND = 10;
+var RELIC_RESET_GEM_PER_BAND = 100;
+function relicInvestedExp(progress) {
+  let total = Math.max(0, progress.exp);
+  for (let level = 1; level < progress.level; level += 1) total += relicExpToNext(level);
+  return total;
+}
+function relicResetRefund(progress) {
+  return Math.floor(relicInvestedExp(progress) / FEED_UNIT.exp) * FEED_UNIT.cheesecake;
+}
+function relicResetGemCost(level) {
+  if (!Number.isInteger(level) || level <= RELIC_RESET_FREE_MAX_LEVEL) return 0;
+  return Math.ceil((level - RELIC_RESET_FREE_MAX_LEVEL) / RELIC_RESET_GEM_BAND) * RELIC_RESET_GEM_PER_BAND;
+}
+function canResetRelic(progress) {
+  return progress.level > 1 || progress.exp > 0;
+}
+function resetRelicProgress(progress) {
+  return { ...progress, level: 1, exp: 0, heartGemSlots: [...progress.heartGemSlots] };
+}
+
 // src/core/progressPass.ts
 init_define_import_meta_env();
 function progressPassMilestoneStates(pass, progress, owned, claimed) {
@@ -38721,6 +39310,7 @@ var REWARD_PRIORITY = [
   "gold",
   "cheesecake",
   // 성장 재료
+  "sr-select-ticket",
   "restoration-crystal",
   "refined-core",
   "ancient-core",
@@ -39351,7 +39941,8 @@ var REFRESH_LABEL = {
   daily: "\uB9E4\uC77C",
   weekly: "\uC8FC\uAC04",
   monthly: "\uC6D4\uAC04",
-  none: "\uC0C1\uC2DC"
+  none: "\uC0C1\uC2DC",
+  season: "\uC2DC\uC98C"
 };
 var TRADE_PACKAGES = [
   {
@@ -39425,7 +40016,7 @@ for (const key of Object.keys(REFRESH_LABEL)) registerDataText(REFRESH_LABEL, ke
 init_define_import_meta_env();
 var FROM = "2026-01-01T00:00:00Z";
 var UNTIL = "2030-01-01T00:00:00Z";
-function mileage(id, category, iconKey, name, description, price, limit, grants) {
+function mileage(id, category, iconKey, name, description, price, limit, grants2) {
   return {
     id,
     storefront: "mileage",
@@ -39434,7 +40025,7 @@ function mileage(id, category, iconKey, name, description, price, limit, grants)
     name,
     description,
     acquisition: { kind: "currency", currency: "dnaFragments", amount: price },
-    grants,
+    grants: grants2,
     defaultQuantity: 1,
     purchaseLimit: limit,
     refresh: category,
@@ -39467,9 +40058,10 @@ var MILEAGE_PRODUCTS = [
   // 주간 — 그 주의 SSR 파편이 맨 앞이다.
   mileage("mileage-weekly-ssr", "weekly", "shop-product-enhancement", "\uC774\uBC88 \uC8FC SSR \uD30C\uD3B8", "\uC774\uBC88 \uC8FC \uC810\uC6D0\uC758 \uD30C\uD3B8 1\uAC1C", 200, 1, [{ kind: "weekly_ssr_fragment", amount: 1 }]),
   mileage("mileage-weekly-sr", "weekly", "shop-product-enhancement", "\uC774\uBC88 \uC8FC SR \uD30C\uD3B8", "\uC774\uBC88 \uC8FC SR \uD30C\uD3B8 1\uAC1C", 40, 1, [{ kind: "rotating_fragment", rarity: "SR", period: "weekly", amount: 1 }]),
-  // 만능 파편 — 이번 주 파편 값의 **2배다**(SR 40 → 80 · R 10 → 20). 개체를 고르지 않아도 되는 값이다.
-  mileage("mileage-weekly-universal-sr", "weekly", "shop-product-enhancement", "\uB9CC\uB2A5 SR \uD30C\uD3B8", "\uB9CC\uB2A5 SR \uD30C\uD3B8 1\uAC1C", 80, 1, [{ kind: "item", itemId: "universal-fragment-sr", name: "\uB9CC\uB2A5 SR \uD30C\uD3B8", amount: 1 }]),
-  mileage("mileage-weekly-universal-r", "weekly", "shop-product-enhancement", "\uB9CC\uB2A5 R \uD30C\uD3B8", "\uB9CC\uB2A5 R \uD30C\uD3B8 1\uAC1C", 20, 1, [{ kind: "item", itemId: "universal-fragment-r", name: "\uB9CC\uB2A5 R \uD30C\uD3B8", amount: 1 }]),
+  // 만능 파편 — 뽑기 기대 비용(`PREMIUM_ITEM_GEM_VALUE` — SR 7,500 · R 1,500)을 마일리지 시세(젬 60)로 옮긴 값이다(응태, 2026-11-11 — "만능 파편은 귀하다").
+  //   SR 120 · R 25로 이번 주 파편(40 · 10)의 세 배쯤이다. 개체를 고르지 않아도 되는 값이다.
+  mileage("mileage-weekly-universal-sr", "weekly", "shop-product-enhancement", "\uB9CC\uB2A5 SR \uD30C\uD3B8", "\uB9CC\uB2A5 SR \uD30C\uD3B8 1\uAC1C", 120, 1, [{ kind: "item", itemId: "universal-fragment-sr", name: "\uB9CC\uB2A5 SR \uD30C\uD3B8", amount: 1 }]),
+  mileage("mileage-weekly-universal-r", "weekly", "shop-product-enhancement", "\uB9CC\uB2A5 R \uD30C\uD3B8", "\uB9CC\uB2A5 R \uD30C\uD3B8 1\uAC1C", 25, 1, [{ kind: "item", itemId: "universal-fragment-r", name: "\uB9CC\uB2A5 R \uD30C\uD3B8", amount: 1 }]),
   mileage("mileage-weekly-amber", "weekly", "shop-product-amber", "\uD638\uBC15\uC11D \uBC18\uCD9C", "\uD638\uBC15\uC11D 1\uAC1C", 5, 10, [{ kind: "currency", currency: "amber", amount: 1 }]),
   mileage("mileage-weekly-fossil", "weekly", "shop-product-fossil", "\uD654\uC11D \uBC18\uCD9C", "\uD654\uC11D 1\uAC1C", 5, 10, [{ kind: "currency", currency: "fossil", amount: 1 }]),
   mileage("mileage-weekly-tonic", "weekly", "shop-product-supplies", "\uACE0\uB18D\uCD95 \uC74C\uB8CC \uBC18\uCD9C", "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+ 2\uAC1C", 3, 2, [{ kind: "item", itemId: "stamina-tonic-large", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", amount: 2, expiresInDays: 7 }]),
@@ -39487,7 +40079,7 @@ var MILEAGE_PRODUCTS = [
 init_define_import_meta_env();
 var FROM2 = "2026-01-01T00:00:00Z";
 var UNTIL2 = "2030-01-01T00:00:00Z";
-function duel(id, category, iconKey, name, price, limit, grants) {
+function duel(id, category, iconKey, name, price, limit, grants2) {
   return {
     id,
     storefront: "duel",
@@ -39496,7 +40088,7 @@ function duel(id, category, iconKey, name, price, limit, grants) {
     name,
     description: "",
     acquisition: { kind: "currency", currency: "duelEmblem", amount: price },
-    grants,
+    grants: grants2,
     defaultQuantity: 1,
     purchaseLimit: limit,
     refresh: category === "special" ? "monthly" : category,
@@ -39539,8 +40131,8 @@ var SHOP_PRODUCTS = [
    * 젬 1 = 치즈케이크 2 = 골드 500)에서 일일은 100~105%, 특가는 107~156%다.
    */
   { id: "shop-tonic-pack", storefront: "shop", category: "daily", iconKey: "shop-product-supplies", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", description: "", acquisition: { kind: "currency", currency: "gems", amount: 45 }, grants: [{ kind: "item", itemId: "stamina-tonic", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", amount: 1, expiresInDays: 7 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  // 만능 R 파편 — 주간 한 개, **아주 비싼 골드**로만 판다. R 파편 시세(마일리지 10 ≈ 젬 600 ≈ 골드 30만)의 2배다.
-  { id: "shop-universal-r", storefront: "shop", category: "special", iconKey: "shop-product-enhancement", name: "\uB9CC\uB2A5 R \uD30C\uD3B8", description: "", acquisition: { kind: "currency", currency: "gold", amount: 6e5 }, grants: [{ kind: "item", itemId: "universal-fragment-r", name: "\uB9CC\uB2A5 R \uD30C\uD3B8", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  // 만능 R 파편 — 주간 한 개, **아주 비싼 골드**로만 판다. 뽑기 기대 비용(젬 1,500 · `PREMIUM_ITEM_GEM_VALUE`)을 골드 시세(젬 1 = 골드 500)로 옮긴 75만이다.
+  { id: "shop-universal-r", storefront: "shop", category: "special", iconKey: "shop-product-enhancement", name: "\uB9CC\uB2A5 R \uD30C\uD3B8", description: "", acquisition: { kind: "currency", currency: "gold", amount: 75e4 }, grants: [{ kind: "item", itemId: "universal-fragment-r", name: "\uB9CC\uB2A5 R \uD30C\uD3B8", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "shop-tonic-large-pack", storefront: "shop", category: "special", iconKey: "shop-product-supplies", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", description: "", acquisition: { kind: "currency", currency: "gems", amount: 45 }, grants: [{ kind: "item", itemId: "stamina-tonic-large", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **고고학 상점.** 기본 리롤은 언제나 플레이 재화(원석)로 돌아가야 하므로, 여기서 파는 것은
   // 그 바깥의 몫이다 — 원석 자체는 골드로 바꿔 주되 하루 몫으로 끊고, 특성 아이템은 상시
@@ -39632,7 +40224,7 @@ var gemPack = (id, name, amount, price) => ({
   visibleFrom: FROM3,
   visibleUntil: UNTIL3
 });
-var freeClaim = (id, name, premiumCategory, grants) => ({
+var freeClaim = (id, name, premiumCategory, grants2) => ({
   id,
   storefront: "premium",
   category: premiumCategory === "daily" ? "daily" : premiumCategory === "weekly" ? "weekly" : "special",
@@ -39641,18 +40233,54 @@ var freeClaim = (id, name, premiumCategory, grants) => ({
   name,
   description: "",
   acquisition: { kind: "free" },
-  grants,
+  grants: grants2,
   defaultQuantity: 1,
   purchaseLimit: 1,
   refresh: premiumCategory,
   visibleFrom: FROM3,
   visibleUntil: UNTIL3
 });
+var situational = (id, trigger, name, price, grants2) => ({
+  id,
+  storefront: "premium",
+  category: "special",
+  premiumCategory: "limited",
+  iconKey: "shop-product-supplies",
+  name,
+  description: "",
+  acquisition: pay(id, price),
+  grants: grants2,
+  situational: trigger,
+  defaultQuantity: 1,
+  purchaseLimit: 1,
+  refresh: "none",
+  visibleFrom: FROM3,
+  visibleUntil: UNTIL3
+});
 var PREMIUM_PRODUCTS = [
   // ── 한정 — 기간이 끝나면 사라진다. 남은 시간은 카드에 붉게 선다(`visibleUntil`). 운영이 이 갈래에 상품과 종료일을 더한다. ──
+  // ── 상황 특가 — 막힌 순간 그 계정에만 72시간 선다(`core/situationalOffers.ts`). 노출·구매는 서버가 연 특가가 정하고 기간 값은 쓰지 않는다. ──
+  // 가치 장부: SSR 돌파 ₩59,900 — 만능 SSR 파편(젬 45,000으로 센다 · `PREMIUM_ITEM_GEM_VALUE`) + 젬 3,000 + 치즈케이크 3,000 + 골드 100만(2.8배).
+  //   만능 SSR 파편은 이 특가 말고는 나오지 않는 재화라(응태, 2026-11-11 — "결코 쉽게 안 뿌린다") 값의 대부분이 파편이다. 계정당 한 번이다(`breakthrough:SSR` 키).
+  // SR 돌파 ₩19,900 · R 돌파 ₩9,900 — 만능 파편(SR 7,500 · R 1,500) 둘·셋 + 치즈케이크 2,000 + 젬 2,000 + 골드 50만(3.1배 · 2.8배) · 연패 ₩4,900 — 치즈케이크 3,000 + 골드 100만 + 젬 500(2.7배)
+  // 스테미나 ₩2,900 — 드링크+ 15 + 젬 1,000(2.8배) · 천장 ₩9,900 — 화석 10 + 젬 5,000(2.6배) · 지층 ₩9,900 — 같은 값
+  // 레벨 10/20/30/40 ₩4,900/9,900/14,900/19,900 — 젬 2,500/5,000/7,500/10,000 + 화석 5/10/15/20(2.6~2.7배)
+  situational("offer-breakthrough-ssr", "breakthroughShort", "SSR \uB3CC\uD30C \uD2B9\uAC00", 59900, [item2("universal-fragment-ssr", "\uB9CC\uB2A5 SSR \uD30C\uD3B8", 1), currency2("gems", 3e3), currency2("cheesecake", 3e3), currency2("gold", 1e6)]),
+  situational("offer-breakthrough-sr", "breakthroughShort", "SR \uB3CC\uD30C \uD2B9\uAC00", 19900, [item2("universal-fragment-sr", "\uB9CC\uB2A5 SR \uD30C\uD3B8", 2), currency2("cheesecake", 2e3), currency2("gems", 2e3), currency2("gold", 5e5)]),
+  situational("offer-breakthrough-r", "breakthroughShort", "R \uB3CC\uD30C \uD2B9\uAC00", 9900, [item2("universal-fragment-r", "\uB9CC\uB2A5 R \uD30C\uD3B8", 3), currency2("cheesecake", 2e3), currency2("gems", 2e3), currency2("gold", 5e5)]),
+  situational("offer-stage-loss", "stageLoss", "\uC7AC\uC815\uBE44 \uD2B9\uAC00", 4900, [currency2("cheesecake", 3e3), currency2("gold", 1e6), currency2("gems", 500)]),
+  situational("offer-stamina", "staminaOut", "\uC2A4\uD14C\uBBF8\uB098 \uD2B9\uAC00", 2900, [item2("stamina-tonic-large", "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", 15, 7), currency2("gems", 1e3)]),
+  situational("offer-pity", "pityNear", "\uD655\uC815 \uC9C1\uC804 \uD2B9\uAC00", 9900, [currency2("fossil", 10), currency2("gems", 5e3)]),
+  situational("offer-level-10", "playerLevel", "LV.10 \uB2EC\uC131 \uD2B9\uAC00", 4900, [currency2("gems", 2500), currency2("fossil", 5)]),
+  situational("offer-level-20", "playerLevel", "LV.20 \uB2EC\uC131 \uD2B9\uAC00", 9900, [currency2("gems", 5e3), currency2("fossil", 10)]),
+  situational("offer-level-30", "playerLevel", "LV.30 \uB2EC\uC131 \uD2B9\uAC00", 14900, [currency2("gems", 7500), currency2("fossil", 15)]),
+  situational("offer-level-40", "playerLevel", "LV.40 \uB2EC\uC131 \uD2B9\uAC00", 19900, [currency2("gems", 1e4), currency2("fossil", 20)]),
+  situational("offer-ancient", "ancientBest", "\uC9C0\uCE35 10\uCE35 \uB3CC\uD30C \uD2B9\uAC00", 9900, [currency2("gems", 5e3), currency2("fossil", 10)]),
   { id: "premium-season-crate", storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-supplies", name: "\uC2DC\uC98C \uD55C\uC815 \uD45C\uBCF8 \uC0C1\uC790", description: "", acquisition: pay("premium-season-crate", 6900), grants: [currency2("amber", 10), currency2("gems", 2500), currency2("cheesecake", 800)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM3, visibleUntil: "2026-11-01T00:00:00Z" },
   // ── 패스 — 결제는 길을 **열고**, 사는 순간 **즉시 보상**(`grants`)을 받는다. 길의 마디 보상은 닿을 때마다 따로 받는다(`progressPasses.ts`). ──
   { id: "premium-story-pass", storefront: "premium", category: "special", premiumCategory: "pass", iconKey: "shop-product-amber", name: "\uC2A4\uD1A0\uB9AC \uD328\uC2A4", description: "", acquisition: pay("premium-story-pass", 9900), grants: [currency2("gems", 3e3), currency2("fossil", 5), currency2("cheesecake", 500)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM3, visibleUntil: UNTIL3 },
+  // 시즌 패스 — 사는 순간 받는 것은 없고 30단계 유료 줄을 연다. 구매 기록이 시즌 키로 갈려 다음 시즌에 다시 산다.
+  { id: "premium-season-pass", storefront: "premium", category: "special", premiumCategory: "pass", iconKey: "shop-product-amber", name: "\uC2DC\uC98C \uD328\uC2A4", description: "", acquisition: pay("premium-season-pass", 9900), grants: [], defaultQuantity: 1, purchaseLimit: 1, refresh: "season", visibleFrom: FROM3, visibleUntil: UNTIL3 },
   { id: "premium-level-pass", storefront: "premium", category: "special", premiumCategory: "pass", iconKey: "shop-product-enhancement", name: "\uB808\uBCA8 \uD328\uC2A4", description: "", acquisition: pay("premium-level-pass", 9900), grants: [currency2("gems", 3e3), currency2("amber", 5), currency2("gold", 15e4)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM3, visibleUntil: UNTIL3 },
   { id: "premium-archaeology-pass", storefront: "premium", category: "special", premiumCategory: "subscription", iconKey: "shop-product-supplies", name: "\uACE0\uACE0\uD559 \uD328\uC2A4", description: "", acquisition: pay("premium-archaeology-pass", 7900), grants: [currency2("gems", 2500), item2("strata-ticket", "\uBC1C\uAD74\uAD8C", 5), currency2("amber", 5)], passBenefit: { durationDays: 30, dailyBonus: { itemId: "strata-ticket", amount: 1 } }, defaultQuantity: 1, purchaseLimit: 1, refresh: "none", visibleFrom: FROM3, visibleUntil: UNTIL3 },
   // ── 특가 — 상시 열려 있는 가성비 묶음. 계정당 한 번뿐이라 3배 안팎을 주고, ₩5,000 미만은 젬 1,000을 함께 얹는다. ──
@@ -39800,7 +40428,7 @@ function duelNpcPool(seasonId) {
 function buildNpc(index, random) {
   const score = Math.round(DUEL_NPC_TOP_SCORE * Math.pow(random(), 1.6));
   const level = duelNpcLevel(score);
-  const breakthrough = requiredBreakthroughForLevel(level);
+  const breakthrough = shownBreakthroughForLevel(level);
   const picked = pickTeam(random);
   const units = arrangeByRole(picked).map((def) => {
     const stats = duelGrownStats(def, level, breakthrough);
@@ -39877,9 +40505,8 @@ function simulateDuelDefenses(state, now, pool, defensePower, random) {
 
 // src/core/debugCommand.ts
 init_define_import_meta_env();
-function breakthroughForLevel(level) {
-  for (let b = 0; b <= BREAKTHROUGH_CAP; b += 1) if (relicLevelCap(b) >= level) return b;
-  return BREAKTHROUGH_CAP;
+function breakthroughAvailableAt(level) {
+  return BREAKTHROUGH_STEPS.filter(({ requiredLevel }) => requiredLevel <= level).length;
 }
 function ownedProgress(target, relicId) {
   const progress = target.relicProgress[relicId];
@@ -39936,13 +40563,13 @@ function applyDebugCommand(target, command, rules) {
       return changed;
     }
     case "relicLevel": {
-      const level = integer(command.level, 1, relicLevelCap(BREAKTHROUGH_CAP));
+      const level = integer(command.level, 1, RELIC_MAX_LEVEL);
       let changed = 0;
       for (const id of targets(target, command.relicId)) {
         const p = target.relicProgress[id];
-        const breakthrough = Math.max(p.breakthrough, breakthroughForLevel(level));
+        const breakthrough = Math.min(p.breakthrough, breakthroughAvailableAt(level));
         if (p.level === level && p.breakthrough === breakthrough) continue;
-        target.relicProgress[id] = { ...p, level, exp: 0, breakthrough };
+        target.relicProgress[id] = { ...p, level, exp: 0, breakthrough, ...breakthrough < BREAKTHROUGH_CAP ? { resonance: void 0 } : {} };
         changed += 1;
       }
       return changed;
@@ -39952,10 +40579,10 @@ function applyDebugCommand(target, command, rules) {
       let changed = 0;
       for (const id of targets(target, command.relicId)) {
         const p = target.relicProgress[id];
-        const floor = breakthrough === 0 ? 1 : relicLevelCap(breakthrough - 1);
-        const level = Math.min(relicLevelCap(breakthrough), Math.max(p.level, floor));
+        const floor = breakthrough === 0 ? 1 : BREAKTHROUGH_STEPS[breakthrough - 1].requiredLevel;
+        const level = Math.max(p.level, floor);
         if (p.breakthrough === breakthrough && p.level === level) continue;
-        target.relicProgress[id] = { ...p, breakthrough, level, exp: level === p.level ? p.exp : 0 };
+        target.relicProgress[id] = { ...p, breakthrough, level, exp: level === p.level ? p.exp : 0, ...breakthrough < BREAKTHROUGH_CAP ? { resonance: void 0 } : {} };
         changed += 1;
       }
       return changed;
@@ -41682,7 +42309,7 @@ function achievementFacts(state) {
   const progress = playable.map(({ id }) => state.relicProgress[id]).filter((entry) => entry !== void 0);
   const maxBreakthrough = BREAKTHROUGH_STEPS.length;
   const storyStageIds = CHAPTERS.flatMap(({ stages }) => stages.map(({ id }) => id));
-  const levelCap = relicLevelCap(maxBreakthrough);
+  const levelCap = RELIC_MAX_LEVEL;
   const ownedDefs = playable;
   const runes = state.runeInventory ?? [];
   const partyDefs = state.party.map((id) => PLAYABLE_RELICS.find((relic) => relic.id === id)).filter((relic) => relic !== void 0);
@@ -41818,28 +42445,37 @@ function claimNewbieGrowth(facts, claimed, openDay, options = {}) {
   const requested = options.goalIds ? new Set(options.goalIds) : void 0;
   const next = new Set(claimed);
   const goalIds = [];
+  const earned = [];
   for (const goal of NEWBIE_GROWTH_GOALS) {
     if (requested && !requested.has(goal.id)) continue;
     if (newbieGrowthGoalState(goal, facts, next, openDay) !== "claimable") continue;
     next.add(goal.id);
     goalIds.push(goal.id);
+    earned.push(...goal.rewards);
   }
-  const rewards = goalIds.length > 0 ? [{ currency: "gems", amount: goalIds.length * NEWBIE_GROWTH_GOAL_GEMS }] : [];
   const milestoneIds = [];
-  let srSelect = false;
   for (const milestone of NEWBIE_GROWTH_MILESTONES) {
     if (newbieGrowthMilestoneState(milestone, next) !== "claimable") continue;
-    if (milestone.reward.kind === "srSelect") {
-      if (!options.includeSrSelect) continue;
-      srSelect = true;
-    } else rewards.push({ currency: milestone.reward.currency, amount: milestone.reward.amount });
     next.add(milestone.id);
     milestoneIds.push(milestone.id);
+    earned.push(milestone.reward);
   }
-  return { goalIds, milestoneIds, rewards, srSelect };
+  return { goalIds, milestoneIds, ...sumNewbieGrowthRewards(earned) };
 }
-function newbieGrowthSrChoices() {
-  return STANDARD_POOLS.SR;
+function sumNewbieGrowthRewards(rewards) {
+  const currencies = /* @__PURE__ */ new Map();
+  const items = /* @__PURE__ */ new Map();
+  const fragments = /* @__PURE__ */ new Map();
+  for (const reward of rewards) {
+    if (reward.kind === "currency") currencies.set(reward.currency, (currencies.get(reward.currency) ?? 0) + reward.amount);
+    else if (reward.kind === "item") items.set(reward.itemId, (items.get(reward.itemId) ?? 0) + reward.amount);
+    else fragments.set(reward.relicId, (fragments.get(reward.relicId) ?? 0) + reward.amount);
+  }
+  return {
+    rewards: [...currencies].map(([currency3, amount]) => ({ currency: currency3, amount })),
+    items: [...items].map(([itemId, amount]) => ({ itemId, amount })),
+    fragments: [...fragments].map(([relicId, amount]) => ({ relicId, amount }))
+  };
 }
 
 // src/core/shopRotation.ts
@@ -42045,12 +42681,14 @@ function deriveNotificationState(conditions) {
     missionReward: conditions.claimableMissionCount > 0,
     excavationHarvestReady: conditions.excavationHarvestReady,
     friendRequest: conditions.pendingFriendRequestCount > 0,
-    newEvent: conditions.unseenEventCount > 0,
+    newEvent: conditions.unseenEventCount > 0 || conditions.showAdDots === true && (conditions.adOnlyEventCount ?? 0) > 0,
     mail: conditions.unreadMailCount > 0 || (conditions.claimableMailCount ?? 0) > 0,
     passReward: (conditions.claimablePassCount ?? 0) > 0,
     achievementReward: (conditions.claimableAchievementCount ?? 0) > 0,
     // 패스 달성 보상은 로비 패스 카드에서 받으므로 프리미엄 쪽에는 알리지 않는다.
-    premiumNotice: (conditions.freeSupplyCategories?.length ?? 0) > 0,
+    premiumNotice: (conditions.freeSupplyCategories?.length ?? 0) > 0 || (conditions.situationalOfferCount ?? 0) > 0,
+    // 상황 특가는 결과판 위에 창을 띄우지 않고 프리미엄 「한정」 탭의 붉은 점으로만 알린다.
+    premiumOffer: (conditions.situationalOfferCount ?? 0) > 0,
     premiumFree: (conditions.freeSupplyCategories?.length ?? 0) > 0,
     premiumFreeDaily: conditions.freeSupplyCategories?.includes("daily") ?? false,
     premiumFreeWeekly: conditions.freeSupplyCategories?.includes("weekly") ?? false,
@@ -42146,8 +42784,8 @@ var InventoryManager = class {
     else this.publishCurrentInventory();
   }
   /** 소비 명령의 최종 서버 스냅샷까지 같은 경계에서 반영해 화면이 DTO를 보관하지 않게 한다. */
-  async useConsumable(api, itemId, lotExpiresAt2) {
-    const response = await api.useConsumable({ itemId, quantity: 1, ...lotExpiresAt2 !== void 0 ? { lotExpiresAt: lotExpiresAt2 } : {} });
+  async useConsumable(api, itemId, lotExpiresAt2, relicId) {
+    const response = await api.useConsumable({ itemId, quantity: 1, ...lotExpiresAt2 !== void 0 ? { lotExpiresAt: lotExpiresAt2 } : {}, ...relicId !== void 0 ? { relicId } : {} });
     if (!hasRemoteState(response)) this.applySnapshot(response.items, response.wallet);
     else this.publishCurrentInventory();
     return response;
@@ -42335,6 +42973,50 @@ function rechargeRequestId() {
   return globalThis.crypto?.randomUUID?.() ?? `stamina-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+// src/core/purchaseHistory.ts
+init_define_import_meta_env();
+var PURCHASE_HISTORY_LIMIT = 50;
+var TRANSACTION_PREFIX = '["platformTransaction",';
+var VERIFICATION_PREFIX = '["platformVerification",';
+function maskTransactionId(id) {
+  const tail2 = id.replace(/[^A-Za-z0-9]/g, "").slice(-4);
+  return `\u2022\u2022\u2022\u2022${tail2 || "????"}`;
+}
+var timestamp = (value) => typeof value === "string" && Number.isFinite(Date.parse(value)) ? value : null;
+var grants = (value) => Array.isArray(value) ? value.filter((grant) => !!grant && typeof grant === "object" && typeof grant.kind === "string" && Number.isFinite(grant.amount)) : [];
+function purchaseHistoryFromJournal(journal, limit = PURCHASE_HISTORY_LIMIT) {
+  const receipts = journal?.receipts ?? {};
+  const verifiedAt = /* @__PURE__ */ new Map();
+  for (const [key, receipt] of Object.entries(receipts)) {
+    if (!key.startsWith(VERIFICATION_PREFIX)) continue;
+    const { transactionId, serverTime } = receipt.result;
+    const at2 = timestamp(serverTime);
+    if (typeof transactionId === "string" && at2) verifiedAt.set(transactionId, at2);
+  }
+  const entries = [];
+  for (const [key, receipt] of Object.entries(receipts)) {
+    if (!key.startsWith(TRANSACTION_PREFIX)) continue;
+    let transactionId;
+    try {
+      transactionId = JSON.parse(key)[1];
+    } catch {
+      continue;
+    }
+    if (typeof transactionId !== "string") continue;
+    const result = receipt.result;
+    const productId = typeof result.productId === "string" ? result.productId : receipt.identity;
+    entries.push({
+      productId,
+      transactionTail: maskTransactionId(transactionId),
+      purchasedAt: timestamp(result.purchasedAt) ?? verifiedAt.get(transactionId) ?? null,
+      granted: grants(result.granted),
+      firstBonusApplied: result.firstBonusApplied === true
+    });
+  }
+  const at = (entry) => entry.purchasedAt ? Date.parse(entry.purchasedAt) : -Infinity;
+  return entries.sort((a, b) => at(b) - at(a)).slice(0, Math.max(0, limit));
+}
+
 // src/core/greatSuccess.ts
 init_define_import_meta_env();
 var GREAT_SUCCESS = {
@@ -42509,7 +43191,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.413.0",
+  version: "0.438.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -42618,6 +43300,7 @@ var READ_METHODS = /* @__PURE__ */ new Set([
   "getNotificationSignals",
   "getPlayerState",
   "getProducts",
+  "getPurchaseHistory",
   "getProgressPasses",
   "getRaids",
   "getStaminaRechargeStatus",
@@ -42723,6 +43406,7 @@ var SERVER_GAME_METHODS = [
   "claimMailRewards",
   "claimMissionRewards",
   "claimPassDailyBonus",
+  "claimFirstPaymentGift",
   "claimProgressPass",
   "claimRelicChapter",
   "claimRelicQuestionReward",
@@ -42774,6 +43458,7 @@ var SERVER_GAME_METHODS = [
   "getNotificationSignals",
   "getPlayerState",
   "getProducts",
+  "getPurchaseHistory",
   "getProgressPasses",
   "getRaids",
   "getStaminaRechargeStatus",
@@ -42796,6 +43481,7 @@ var SERVER_GAME_METHODS = [
   "rerollRuneTrait",
   "resolveDuel",
   "resolveRuneTraitReroll",
+  "resetRelic",
   "saveExcavationFormation",
   "selectArchaeologySite",
   "sellRunes",
@@ -43121,6 +43807,11 @@ var SettingsManager = class extends EventTarget {
   rememberAncientResetSeen(day) {
     if (this.get().game.ancientResetSeen === day) return;
     this.update({ game: { ancientResetSeen: day } });
+  }
+  /** 새로 열린 콘텐츠의 기록을 남긴다(`core/contentFresh.ts`). 같은 값이면 저장하지 않는다. */
+  rememberContentSeen(state) {
+    if (sameContentSeen(this.get().game.contentSeen, state)) return;
+    this.update({ game: { contentSeen: state } });
   }
   /** 약관·처리방침 동의를 이 기기에 기록한다(서버 기록은 `LegalConsentApi`가 따로 남긴다). */
   rememberLegalConsent(key) {
@@ -44436,6 +45127,7 @@ var FakeServer = class {
     this.settleItemExpiry(this.now());
     const stack = this.state.itemInventory.find(({ itemId }) => itemId === request.itemId);
     if (!stack || stack.quantity < request.quantity) throw new GameApiError("INSUFFICIENT_ITEMS", "\uC544\uC774\uD15C \uC218\uB7C9\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    if (definition.useEffect.kind === "select_relic") return this.useRelicSelector(request, definition.useEffect);
     if (this.state.wallet.stamina >= STAMINA_HOLD_LIMIT) throw new GameApiError("STAMINA_FULL", "\uC2A4\uD14C\uBBF8\uB098\uAC00 \uC774\uBBF8 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4.");
     const requested = definition.useEffect.amount * request.quantity;
     const appliedAmount = paidStaminaApplied(this.state.wallet.stamina, requested);
@@ -44447,6 +45139,58 @@ var FakeServer = class {
     this.state.itemInventory = nextItems;
     const inventory = await this.getInventory();
     return { ...inventory, itemId: request.itemId, quantityUsed: request.quantity, effect: definition.useEffect, appliedAmount, overflowAmount: requested - appliedAmount, wallet: { ...nextWallet }, stamina: this.staminaDto(this.now()) };
+  }
+  /**
+   * 렐릭 선택권 한 장을 쓴다 — 고른 렐릭(그 등급의 상시 풀)을 처음 만났으면 데려오고 이미 있으면 파편 한 장을 준다.
+   * 차감·지급을 한 번의 persist로 확정하고, 돌파를 끝낸 렐릭은 장을 쓰기 전에 거절한다.
+   */
+  async useRelicSelector(request, effect) {
+    if (request.quantity !== 1) throw new GameApiError("INVALID_ITEM_QUANTITY", "\uC120\uD0DD\uAD8C\uC740 \uD55C \uC7A5\uC529 \uC501\uB2C8\uB2E4.");
+    const relicId = request.relicId;
+    if (!relicId || !STANDARD_POOLS[effect.rarity].includes(relicId)) throw new GameApiError("RELIC_NOT_FOUND", "\uACE0\uB97C \uC218 \uC5C6\uB294 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
+    this.assertRelicSelectable(relicId);
+    const nextItems = removeItemLot(this.state.itemInventory, request.itemId, 1);
+    if (!nextItems) throw new GameApiError("INSUFFICIENT_ITEMS", "\uC544\uC774\uD15C \uC218\uB7C9\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    const selection = this.selectRelic(relicId, this.now());
+    const candidate = { ...this.state, itemInventory: nextItems, ...selection.state };
+    redeemDeferredStoryBond(candidate, selection.newRelicIds);
+    this.persist(candidate);
+    this.state.serverJournal = candidate.serverJournal;
+    this.state.itemInventory = nextItems;
+    Object.assign(this.state, selection.state);
+    const inventory = await this.getInventory();
+    return {
+      ...inventory,
+      itemId: request.itemId,
+      quantityUsed: 1,
+      effect,
+      appliedAmount: 0,
+      overflowAmount: 0,
+      wallet: { ...this.state.wallet },
+      stamina: this.staminaDto(this.now()),
+      newRelicIds: selection.newRelicIds,
+      ...selection.fragmentRelicId ? { fragmentRelicId: selection.fragmentRelicId } : {}
+    };
+  }
+  /** 선택 보상으로 고를 수 있는가 — 돌파를 끝낸 렐릭은 파편이 쓸 곳이 없어 거절한다. */
+  assertRelicSelectable(relicId) {
+    const progress = this.state.relicProgress[relicId];
+    if (this.state.owned.has(relicId) && progress && this.relicFragmentRoom(relicId) <= 0) throw new GameApiError("RELIC_MAX_BREAKTHROUGH", "\uC774\uBBF8 \uB3CC\uD30C\xB7\uACF5\uBA85\uC5D0 \uC4F8 \uD30C\uD3B8\uC744 \uBAA8\uB450 \uAC16\uCD98 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
+  }
+  /** 고른 렐릭을 지금 상태의 복제본에 반영한다 — 처음이면 보유·첫 유대·만난 날, 이미 있으면 파편 한 장. */
+  selectRelic(relicId, now) {
+    const owned = new Set(this.state.owned);
+    const relicProgress = { ...this.state.relicProgress };
+    const relicFragments = { ...this.state.relicFragments };
+    let relicStory = this.state.relicStory;
+    if (owned.has(relicId)) {
+      relicFragments[relicId] = (relicFragments[relicId] ?? 0) + 1;
+      return { state: { owned, relicProgress, relicFragments, relicStory }, newRelicIds: [], fragmentRelicId: relicId };
+    }
+    owned.add(relicId);
+    if (!relicProgress[relicId]) relicProgress[relicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
+    if (!(relicId in relicStory.metAt)) relicStory = { ...relicStory, metAt: { ...relicStory.metAt, [relicId]: now.toISOString() } };
+    return { state: { owned, relicProgress, relicFragments, relicStory }, newRelicIds: [relicId] };
   }
   /**
    * 렐릭 추가 외형을 값으로 산다.
@@ -44686,7 +45430,7 @@ var FakeServer = class {
       case "frame": {
         const frame = findProfileFrame(request.frameId);
         if (!frame) return { ok: false, reason: "unknownFrame" };
-        if (!isProfileFrameUnlocked(frame, this.state.playerResearch.level, this.state.achievements?.claimed)) return { ok: false, reason: "frameLocked" };
+        if (!isProfileFrameUnlocked(frame, this.state.playerResearch.level, this.state.achievements?.claimed, this.state.achievements?.giftFrames)) return { ok: false, reason: "frameLocked" };
         next = { ...card, frameId: request.frameId };
         break;
       }
@@ -44751,10 +45495,10 @@ var FakeServer = class {
     await this.delay();
     const stamped = await this.guildBackend.stampAttendance(this.guildActor(), this.guildRequestId("stamp"));
     const { reward } = guildAttendanceDay(stamped.day);
-    const gold2 = reward.gold ?? 0, cheesecake2 = reward.cheesecake ?? 0, gems2 = reward.gems ?? 0;
+    const gold2 = reward.gold ?? 0, cheesecake3 = reward.cheesecake ?? 0, gems3 = reward.gems ?? 0;
     const wallet = { ...this.state.wallet };
     const granted = { gold: 0, cheesecake: 0, gems: 0 };
-    for (const [key, amount] of [["gold", gold2], ["cheesecake", cheesecake2], ["gems", gems2]]) {
+    for (const [key, amount] of [["gold", gold2], ["cheesecake", cheesecake3], ["gems", gems3]]) {
       granted[key] = Math.max(0, Math.min(amount, WALLET_CAPS[key] - wallet[key]));
       wallet[key] += granted[key];
     }
@@ -45437,6 +46181,31 @@ var FakeServer = class {
     this.commitRaidState(candidate);
     return { ...this.snapshot(), productId: product.id, quantity: 1, granted: [{ kind: "currency", currency: "gems", amount }], grantedRunes: [], remaining: 0 };
   }
+  /**
+   * 첫 결제로 활성화된 첫 결제 선물을 받는다. 지급과 선물 테두리 개방은 한 저장으로 확정하고, 같은 요청 ID의 재전송은 영수증을 돌려준다.
+   * 재화는 상한에서 깎아 주는 다른 선물과 달리 상품 지급과 같은 규칙(넘치면 거절)을 쓴다 — 받을 수 있는 날이 사라지지 않는다.
+   */
+  async claimFirstPaymentGift(request) {
+    await this.delay();
+    const cached = this.readReceipt("firstPaymentGift", request.requestId, "gift");
+    if (cached) return { ...cached, ...this.snapshot() };
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "\uC694\uCCAD ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    const achievements = normalizeAchievementState(this.state.achievements);
+    if (achievements.firstPaymentGift === true) throw new GameApiError("INVALID_STATE", "\uCCAB \uACB0\uC81C \uC120\uBB3C\uC744 \uC774\uBBF8 \uBC1B\uC558\uC2B5\uB2C8\uB2E4.");
+    if (achievements.firstPaymentPaid !== true) throw new GameApiError("INVALID_STATE", "\uCCAB \uACB0\uC81C \uB4A4\uC5D0 \uBC1B\uC744 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+    const now = this.now();
+    const nextWallet = { ...this.state.wallet };
+    const applied = this.applyProductGrants({ grants: FIRST_PAYMENT_GIFT.grants }, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now);
+    const candidate = structuredClone(this.state);
+    candidate.wallet = nextWallet;
+    candidate.itemInventory = applied.items;
+    const { firstPaymentPaid: _paid, ...rest } = achievements;
+    candidate.achievements = { ...rest, firstPaymentGift: true, giftFrames: [.../* @__PURE__ */ new Set([...achievements.giftFrames ?? [], FIRST_PAYMENT_GIFT.frameId])] };
+    const result = { granted: applied.granted, frameId: FIRST_PAYMENT_GIFT.frameId };
+    this.recordReceipt(candidate, "firstPaymentGift", request.requestId, "gift", result);
+    this.commitRaidState(candidate);
+    return { ...this.snapshot(), ...result };
+  }
   /** 무료 수령을 먼저 받아야 열리는 광고 슬롯(일간 보급의 추가 몫)은 그 상품의 오늘 몫이 소진됐을 때만 받는다. */
   assertAdPrerequisite(slot, now) {
     if (slot.id === ROULETTE.adSlot && !this.allEventsOpen() && !rouletteStatus(this.state.dailyAdRewards, now).active) throw new GameApiError("EVENT_NOT_ACTIVE", "\uC774\uBCA4\uD2B8\uAC00 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
@@ -45488,31 +46257,36 @@ var FakeServer = class {
   async fulfillPlatformPurchase(request) {
     await this.delay();
     const cachedByRequest = this.fulfillResults.get(request.requestId);
-    if (cachedByRequest) return { ...cachedByRequest };
+    if (cachedByRequest) return { ...cachedByRequest, replayed: true };
     const verification = [...this.verifiedTransactions.values()].find(({ verificationId }) => verificationId === request.verificationId);
     const product = verification && PRODUCTS.find(({ id }) => id === verification.productId);
     if (!request.requestId || !verification || !product || product.acquisition.kind !== "platform_payment") throw new GameApiError("RECEIPT_INVALID", "\uAC80\uC99D\uB41C \uD50C\uB7AB\uD3FC \uAC70\uB798\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
     const durable = this.readReceipt("platformTransaction", verification.transactionId, product.id);
-    if (durable) return { ...durable, ...this.snapshot() };
+    if (durable) return { ...durable, ...this.snapshot(), replayed: true };
     const cachedByTransaction = this.fulfilledTransactions.get(verification.transactionId);
     if (cachedByTransaction) {
       this.fulfillResults.set(request.requestId, cachedByTransaction);
-      return { ...cachedByTransaction };
+      return { ...cachedByTransaction, replayed: true };
     }
     const now = this.now();
     const renewing = product.passBenefit?.autoRenew ? [...this.entitlements.values()].find((entry) => entry.productId === product.id && (entry.expiresAt === null || Date.parse(entry.expiresAt) > now.getTime())) : void 0;
     if (!renewing && this.remaining(product, now) < 1) throw new GameApiError("PURCHASE_LIMIT_REACHED", "\uB0A8\uC740 \uAD6C\uB9E4 \uC81C\uD55C\uC744 \uCD08\uACFC\uD588\uC2B5\uB2C8\uB2E4.");
-    const bonus = this.firstBonusAvailable(product) ? product.firstPurchaseBonus ?? [] : [];
+    const achievements = normalizeAchievementState(this.state.achievements);
+    const firstPaymentGift = achievements.firstPaymentGift !== true && achievements.firstPaymentPaid !== true;
+    const firstBonus = this.firstBonusAvailable(product);
+    const bonus = firstBonus ? product.firstPurchaseBonus ?? [] : [];
     const nextWallet = { ...this.state.wallet };
     const applied = this.applyProductGrants(product, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now, bonus);
     const periodKey = this.productPeriodKey(product, now);
     const current2 = this.state.productPurchases[product.id];
     const count2 = (current2?.periodKey === periodKey ? current2.count : 0) + 1;
-    const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count: count2 } };
+    const nextPurchases = product.situational ? this.state.productPurchases : { ...this.state.productPurchases, [product.id]: { periodKey, count: count2 } };
     const candidate = structuredClone(this.state);
     candidate.wallet = nextWallet;
     candidate.itemInventory = applied.items;
     candidate.productPurchases = nextPurchases;
+    if (product.situational) candidate.situationalOffers = consumeSituationalOffer(normalizeSituationalOfferState(this.state.situationalOffers), product.id, now);
+    if (firstPaymentGift) candidate.achievements = { ...achievements, firstPaymentPaid: true };
     let entitlement;
     if (product.passBenefit) {
       const entitlementId = `entitlement-${verification.transactionId}`;
@@ -45530,7 +46304,9 @@ var FakeServer = class {
       granted: applied.granted,
       grantedRunes: [],
       remaining: 0,
-      firstBonusApplied: bonus.length > 0,
+      firstBonusApplied: firstBonus,
+      purchasedAt: now.toISOString(),
+      ...firstPaymentGift ? { firstPaymentGift: true } : {},
       ...entitlement ? { entitlement } : {}
     });
     this.commitRaidState(candidate);
@@ -45541,12 +46317,18 @@ var FakeServer = class {
       granted: applied.granted,
       grantedRunes: [],
       remaining: this.remaining(product, now),
-      firstBonusApplied: bonus.length > 0,
+      firstBonusApplied: firstBonus,
+      ...firstPaymentGift ? { firstPaymentGift: true } : {},
       ...entitlement ? { entitlement: { ...entitlement } } : {}
     };
     this.fulfilledTransactions.set(verification.transactionId, result);
     this.fulfillResults.set(request.requestId, result);
     return { ...result };
+  }
+  /** 결제 기록은 장부의 플랫폼 거래 영수증만 읽는다 — 화면이 기억한 값이 아니라 지급을 확정한 쪽의 기록이다. */
+  async getPurchaseHistory() {
+    await this.delay();
+    return { entries: purchaseHistoryFromJournal(this.state.serverJournal), serverTime: this.now().toISOString() };
   }
   /** 광고 시청 경로와 같은 슬롯 정의·UTC 카운터를 사용하되 활성 패스만 토큰 없이 통과시킨다. */
   async claimInstantAdReward(request) {
@@ -45612,13 +46394,15 @@ var FakeServer = class {
     const pulled = pull(banner, request.count, currentPity, this.random, { forceTenUpgrade });
     const breakthroughGradeById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, breakthroughGrade(value.breakthrough)]));
     const relicSlots = pulled.slots.filter((slot) => slot.kind === "relic");
-    const outcome = resolveAcquisitions(this.state.owned, this.state.relicFragments, relicSlots.map((slot) => slot.relicId), breakthroughGradeById, BREAKTHROUGH_GRADE_CAP, (id) => MILEAGE_OVERFLOW_BY_RARITY[RELICS.find((relic) => relic.id === id)?.rarity ?? "R"]);
+    const resonanceRoomById = Object.fromEntries([...new Set(relicSlots.map((slot) => slot.relicId))].map((id) => [id, this.relicFragmentRoom(id)]));
+    const outcome = resolveAcquisitions(this.state.owned, this.state.relicFragments, relicSlots.map((slot) => slot.relicId), breakthroughGradeById, BREAKTHROUGH_GRADE_CAP, (id) => MILEAGE_OVERFLOW_BY_RARITY[RELICS.find((relic) => relic.id === id)?.rarity ?? "R"], resonanceRoomById);
     const mileageGained = Math.min(WALLET_CAPS.dnaFragments - this.state.wallet.dnaFragments, mileageForPull(request.count, outcome.overflowFragments));
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, { ...value, heartGemSlots: [...value.heartGemSlots] }]));
     for (const result of outcome.slots) {
       if (!nextProgress[result.relicId]) nextProgress[result.relicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
     }
-    const nextWallet = { ...spend(this.state.wallet, banner, request.count, currentPity), dnaFragments: this.state.wallet.dnaFragments + mileageGained };
+    const paidWallet = spend(this.state.wallet, banner, request.count, currentPity);
+    const nextWallet = { ...paidWallet, dnaFragments: this.state.wallet.dnaFragments + mileageGained };
     for (const slot of pulled.slots) if (slot.kind === "currency") {
       nextWallet[slot.currency] = Math.min(WALLET_CAPS[slot.currency], nextWallet[slot.currency] + slot.amount);
     }
@@ -45638,7 +46422,23 @@ var FakeServer = class {
     const nextRelicStory = outcome.newRelicIds.length === 0 ? this.state.relicStory : { ...this.state.relicStory, metAt: { ...this.state.relicStory.metAt, ...Object.fromEntries(outcome.newRelicIds.filter((id) => !(id in this.state.relicStory.metAt)).map((id) => [id, this.now().toISOString()])) } };
     const tutorial = normalizeTutorialState(this.state.tutorial);
     const nextTutorial = nextTutorialStep(tutorial) === "pull" ? { ...tutorial, completedStepIds: [...tutorial.completedStepIds, "pull"] } : tutorial;
-    const nextState = { ...this.state, tutorial: nextTutorial, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory };
+    const nextGachaHistory = (() => {
+      const cost = {};
+      for (const key of Object.keys(paidWallet)) {
+        const paid = this.state.wallet[key] - paidWallet[key];
+        if (paid > 0) cost[key] = paid;
+      }
+      let relicIndex = 0;
+      const newIds = new Set(outcome.newRelicIds);
+      const slots = pulled.slots.map((slot) => {
+        if (slot.kind === "currency") return { kind: "currency", currency: slot.currency, amount: slot.amount };
+        const result = outcome.slots[relicIndex++];
+        const isNew = result.kind === "new" && newIds.delete(result.relicId);
+        return isNew ? { kind: "relic", relicId: result.relicId, isNew: true } : { kind: "relic", relicId: result.relicId };
+      });
+      return appendGachaHistory(this.state.gachaHistory, { at: this.now().toISOString(), bannerId: banner.id, count: request.count, cost, pity: groupPity.pullsSinceSsr, slots });
+    })();
+    const nextState = { ...this.state, tutorial: nextTutorial, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory, gachaHistory: nextGachaHistory };
     if (forceTenUpgrade) {
       const { qaTenUpgrade: _spent, ...journal } = nextState.serverJournal ?? emptyServerJournal();
       nextState.serverJournal = journal;
@@ -45654,6 +46454,7 @@ var FakeServer = class {
     this.state.gachaPityByGroup = nextPity;
     this.state.missions = nextMissions;
     this.state.relicStory = nextRelicStory;
+    this.state.gachaHistory = nextGachaHistory;
     const upgradedSlot = pulled.slots.findIndex((slot) => slot.kind === "relic" && slot.upgraded === true);
     return {
       ...this.snapshot(),
@@ -45673,9 +46474,10 @@ var FakeServer = class {
     await this.delay();
     const current2 = this.state.relicProgress[relicId];
     if (!this.state.owned.has(relicId) || !current2) throw new GameApiError("RELIC_NOT_FOUND", "\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
-    if (current2.level >= relicLevelCap(current2.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "\uC774\uBBF8 \uCD5C\uB300 \uB808\uBCA8\uC785\uB2C8\uB2E4.");
-    if (!canFeedRelic(current2, this.state.wallet.cheesecake)) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uCE58\uC988\uCF00\uC774\uD06C\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
-    const result = feedRelic(current2, this.state.wallet.cheesecake, feeds);
+    const levelCap = relicLevelCap(this.state.playerResearch.level);
+    if (current2.level >= levelCap) throw new GameApiError("RELIC_MAX_LEVEL", "\uC774\uBBF8 \uCD5C\uB300 \uB808\uBCA8\uC785\uB2C8\uB2E4.");
+    if (!canFeedRelic(current2, this.state.wallet.cheesecake, levelCap)) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uCE58\uC988\uCF00\uC774\uD06C\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    const result = feedRelic(current2, this.state.wallet.cheesecake, feeds, levelCap);
     const nextProgress = { ...this.state.relicProgress, [relicId]: result.progress };
     const nextWallet = { ...this.state.wallet, cheesecake: result.cheesecake };
     const nextMissions = applyMissionEvent(this.state.missions, { type: "salary_given", count: result.feeds }, this.now());
@@ -45684,6 +46486,29 @@ var FakeServer = class {
     this.state.wallet = nextWallet;
     this.state.missions = nextMissions;
     return { ...this.snapshot(), relicId, feeds: result.feeds, cheesecakeSpent: result.feeds * FEED_UNIT.cheesecake, levelsGained: result.levelsGained };
+  }
+  /**
+   * 캐릭터 초기화.
+   *
+   * 레벨·경험치만 1로 되돌리고 그동안 급여한 치즈케이크를 돌려준다. 회수량과 젬 값은 화면과 같은 순수 함수
+   * (`core/relicReset.ts`)가 저장된 진행에서 다시 구하므로 클라이언트가 보내는 수는 없다. 젬 차감과 회수,
+   * 레벨 확정은 한 저장으로 끝난다. 돌려받는 치즈케이크는 보유 한도에서 깎는다(다른 지급과 같은 규칙).
+   */
+  async resetRelic(relicId) {
+    await this.delay();
+    const current2 = this.state.relicProgress[relicId];
+    if (!this.state.owned.has(relicId) || !current2) throw new GameApiError("RELIC_NOT_FOUND", "\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
+    if (!canResetRelic(current2)) throw new GameApiError("INVALID_STATE", "\uCD08\uAE30\uD654\uD560 \uB808\uBCA8\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const gemsSpent = relicResetGemCost(current2.level);
+    if (this.state.wallet.gems < gemsSpent) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uC82C\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    const refund = relicResetRefund(current2);
+    const cheesecakeRefunded = Math.max(0, Math.min(refund, WALLET_CAPS.cheesecake - this.state.wallet.cheesecake));
+    const nextProgress = { ...this.state.relicProgress, [relicId]: resetRelicProgress(current2) };
+    const nextWallet = { ...this.state.wallet, gems: this.state.wallet.gems - gemsSpent, cheesecake: this.state.wallet.cheesecake + cheesecakeRefunded };
+    this.persist({ ...this.state, relicProgress: nextProgress, wallet: nextWallet });
+    this.state.relicProgress = nextProgress;
+    this.state.wallet = nextWallet;
+    return { ...this.snapshot(), relicId, previousLevel: current2.level, cheesecakeRefunded, gemsSpent };
   }
   /**
    * 돌파.
@@ -45695,8 +46520,8 @@ var FakeServer = class {
     const current2 = this.state.relicProgress[relicId];
     if (!this.state.owned.has(relicId) || !current2) throw new GameApiError("RELIC_NOT_FOUND", "\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
     const step2 = nextBreakthrough(current2.breakthrough);
-    if (!step2) throw new GameApiError("RELIC_MAX_LEVEL", "\uB354 \uB6AB\uC744 \uCC9C\uC7A5\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    if (current2.level < relicLevelCap(current2.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "\uB808\uBCA8\uC744 \uC0C1\uD55C\uAE4C\uC9C0 \uC62C\uB824\uC57C \uB3CC\uD30C\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+    if (!step2) return this.resonateRelic(relicId, current2);
+    if (current2.level < step2.requiredLevel) throw new GameApiError("RELIC_MAX_LEVEL", "\uB3CC\uD30C \uC694\uAD6C \uB808\uBCA8\uC5D0 \uB2FF\uC544\uC57C \uB3CC\uD30C\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
     const held = this.state.relicFragments[relicId] ?? 0;
     const rarity = RELICS.find(({ id }) => id === relicId)?.rarity ?? "R";
     const universalItem = UNIVERSAL_FRAGMENT_ITEM[rarity];
@@ -45714,7 +46539,41 @@ var FakeServer = class {
     this.state.relicFragments = nextFragments;
     this.state.itemInventory = nextItems;
     this.state.wallet = nextWallet;
-    return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(breakthrough), breakthroughGrade: breakthroughGrade(breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend2.universal };
+    return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(this.state.playerResearch.level), breakthroughGrade: breakthroughGrade(breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend2.universal };
+  }
+  /**
+   * 공명 한 단계 — 돌파 V 개체의 파편(모자란 몫은 같은 등급 만능 파편)과 치즈케이크를 쓴다. 차감과 단계 확정은 한 저장이다.
+   * 응답 모양은 돌파와 같고 `resonance`가 더 붙는다(돌파 단계는 그대로 V).
+   */
+  resonateRelic(relicId, current2) {
+    const rarity = RELICS.find(({ id }) => id === relicId)?.rarity ?? "R";
+    const resonance = resonanceOf(current2);
+    if (resonance >= RESONANCE_CAP) throw new GameApiError("RELIC_MAX_LEVEL", "\uACF5\uBA85\uC744 \uBAA8\uB450 \uB9C8\uCE5C \uB810\uB9AD\uC785\uB2C8\uB2E4.");
+    const held = this.state.relicFragments[relicId] ?? 0;
+    const universalItem = UNIVERSAL_FRAGMENT_ITEM[rarity];
+    const universal = this.state.itemInventory.find((stack) => stack.itemId === universalItem)?.quantity ?? 0;
+    if (!canResonate(rarity, current2, BREAKTHROUGH_CAP, held, this.state.wallet.cheesecake, universal)) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uACF5\uBA85 \uC7AC\uB8CC\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    const spend2 = resonanceFragmentSpend(rarity, resonance, held, universal);
+    const nextProgress = { ...this.state.relicProgress, [relicId]: { ...current2, resonance: resonance + 1 } };
+    const nextFragments = { ...this.state.relicFragments, [relicId]: held - spend2.own };
+    const nextItems = spend2.universal > 0 ? removeItemLot(this.state.itemInventory, universalItem, spend2.universal) : this.state.itemInventory;
+    if (!nextItems) throw new GameApiError("INSUFFICIENT_ITEMS", "\uB9CC\uB2A5 \uD30C\uD3B8\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake - RESONANCE_CHEESECAKE };
+    this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, itemInventory: nextItems, wallet: nextWallet });
+    this.state.relicProgress = nextProgress;
+    this.state.relicFragments = nextFragments;
+    this.state.itemInventory = nextItems;
+    this.state.wallet = nextWallet;
+    return { ...this.snapshot(), relicId, breakthrough: current2.breakthrough, levelCap: relicLevelCap(this.state.playerResearch.level), breakthroughGrade: breakthroughGrade(current2.breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend2.universal, resonance: resonance + 1 };
+  }
+  /**
+   * 그 렐릭이 파편을 몇 장 더 받아 쓸 수 있는가. 돌파 중이면 끝이 없고(`Infinity`), 돌파 V면 공명 V까지 남은 몫에서 가진 파편을 뺀다.
+   * 연구소 중복·선택권·마일리지 상점 파편이 같은 값을 읽는다.
+   */
+  relicFragmentRoom(relicId) {
+    if (!this.state.owned.has(relicId)) return Number.POSITIVE_INFINITY;
+    const rarity = RELICS.find(({ id }) => id === relicId)?.rarity ?? "R";
+    return relicFragmentRoom(rarity, this.state.relicProgress[relicId], this.state.relicFragments[relicId] ?? 0, BREAKTHROUGH_CAP);
   }
   /** 입장 허가와 비용 차감을 한 처리로 묶고 requestId 재전송에는 최초 영수증을 반환한다. */
   async enterStage(request) {
@@ -45797,7 +46656,8 @@ var FakeServer = class {
     const nextMissions = stage.ancientFloor !== void 0 && !firstClear ? base.missions : applyMissionEvent(base.missions, { type: "battle_completed", victory }, this.now());
     const currentTutorial = normalizeTutorialState(this.state.tutorial);
     const nextTutorial = victory && !owningEvent ? advanceTutorialOnStageClear(currentTutorial, stage.id) : currentTutorial;
-    this.persist({ ...this.state, tutorial: nextTutorial, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions, playerResearch: base.playerResearch, itemInventory: base.itemInventory, runeInventory: nextRunes });
+    const nextOffers = owningEvent || stage.ancientFloor !== void 0 ? this.state.situationalOffers : this.storyLossOffers(stage.id, victory, this.now());
+    this.persist({ ...this.state, situationalOffers: nextOffers, tutorial: nextTutorial, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions, playerResearch: base.playerResearch, itemInventory: base.itemInventory, runeInventory: nextRunes });
     this.state.cleared = nextCleared;
     this.state.wallet = nextWallet;
     this.state.relicProgress = nextProgress;
@@ -45806,6 +46666,7 @@ var FakeServer = class {
     this.state.itemInventory = base.itemInventory;
     this.state.runeInventory = nextRunes;
     this.state.tutorial = nextTutorial;
+    this.state.situationalOffers = nextOffers;
     if (admissionId) pending2?.delete(admissionId);
     if (pending2?.size === 0) this.pendingStageAdmissions.delete(stageId);
     const staminaSpent = spent ? cost : 0;
@@ -46175,7 +47036,7 @@ var FakeServer = class {
   }
   /** 렐릭 하나의 지금 전투력. 블라인드 순서와 순위표의 내 전투력이 같은 값을 읽는다. */
   duelRelicPower(relicId) {
-    return combatPower(new RelicProgressionManager(this.state).getFinalStats(relicId));
+    return combatPower(new RelicProgressionManager(this.state).getFinalStats(relicId, { pvp: true }));
   }
   duelStatusDto(duel2, now) {
     const standing = duelStanding(duel2.score);
@@ -46349,8 +47210,8 @@ var FakeServer = class {
     const wallet = { ...this.state.wallet };
     const emblem = Math.max(0, Math.min(request.won ? DUEL_BATTLE_REWARD.win : DUEL_BATTLE_REWARD.loss, WALLET_CAPS.duelEmblem - wallet.duelEmblem));
     wallet.duelEmblem += emblem;
-    const gems2 = Math.max(0, Math.min(reached.reduce((sum, tier) => sum + tier.firstReachGems, 0), WALLET_CAPS.gems - wallet.gems));
-    wallet.gems += gems2;
+    const gems3 = Math.max(0, Math.min(reached.reduce((sum, tier) => sum + tier.firstReachGems, 0), WALLET_CAPS.gems - wallet.gems));
+    wallet.gems += gems3;
     const entry = {
       at: now.toISOString(),
       opponentName: pending2.opponentName,
@@ -46390,7 +47251,7 @@ var FakeServer = class {
       tierBefore: duelTier(scoreBefore).id,
       tierAfter: duelTier(scoreAfter).id,
       duelEmblem: emblem,
-      gems: gems2,
+      gems: gems3,
       winStreak,
       streakBonus,
       newlyReachedTierIds: reached.map(({ id }) => id)
@@ -46445,14 +47306,14 @@ var FakeServer = class {
     if (!pending2 || !tier) throw new GameApiError("NOTHING_TO_CLAIM", "\uBC1B\uC744 \uC2DC\uC98C \uBCF4\uC0C1\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const wallet = { ...this.state.wallet };
     const emblem = Math.max(0, Math.min(tier.seasonReward.duelEmblem, WALLET_CAPS.duelEmblem - wallet.duelEmblem));
-    const gems2 = Math.max(0, Math.min(tier.seasonReward.gems, WALLET_CAPS.gems - wallet.gems));
+    const gems3 = Math.max(0, Math.min(tier.seasonReward.gems, WALLET_CAPS.gems - wallet.gems));
     wallet.duelEmblem += emblem;
-    wallet.gems += gems2;
+    wallet.gems += gems3;
     const next = { ...duel2, pendingSeasonReward: null };
     this.persist({ ...this.state, wallet, duel: next });
     this.state.wallet = wallet;
     this.state.duel = next;
-    return { ...this.snapshot(), seasonId: pending2.seasonId, tierId: tier.id, duelEmblem: emblem, gems: gems2 };
+    return { ...this.snapshot(), seasonId: pending2.seasonId, tierId: tier.id, duelEmblem: emblem, gems: gems3 };
   }
   /** 정적 이벤트에 서버가 판정한 상태를 결합해 클라이언트 시계 의존을 없앤다. */
   async getEvents() {
@@ -46505,17 +47366,87 @@ var FakeServer = class {
   async getNotificationSignals() {
     await this.delay();
     const now = this.now();
+    const giftWaiting = this.state.achievements?.firstPaymentPaid === true && this.state.achievements.firstPaymentGift !== true;
+    const situationalOfferCount = this.purchasableSituationalOfferCount(now) + Number(giftWaiting);
     const attendance = this.attendanceDto(this.attendanceNow(now), now);
     const mail = this.mailListDto();
     const claimablePassCount = this.progressPassDtos(this.state).reduce((sum, pass) => sum + pass.milestones.filter((stage) => stage.freeState === "claimable" || stage.state === "claimable").length, 0);
     const claimableAchievements = claimableAchievementCount(normalizeAchievementState(this.state.achievements), achievementFacts(this.state));
     const growth = newbieGrowthWindow(this.newbieGrowthStart(this.state), now);
     const claimableGrowth = growth.active ? this.newbieGrowthDto(this.state, this.newbieGrowthFactsOf(this.state, await this.newbieGuildJoined()), now).claimableCount : 0;
-    const roulette = rouletteStatus(this.state.dailyAdRewards, now);
+    const roulette = rouletteStatus(this.state.dailyAdRewards, now, this.hasAdFreeMembership(now));
     const expedition = this.rollExpedition(now);
     const claimableExpeditionCount = EXPEDITION_BEST_SCORE_REWARD_STAGES.filter((stage) => expedition.bestScore >= stage.threshold && !expedition.claimedRewardStageIds.includes(stage.id)).length;
     const claimableRaidCount = this.raidInstances(now).map((row) => this.raidDto(row, now)).filter((row) => row.status === "completed" && !row.settled && row.settlement.some((reward) => reward.amount > 0)).length;
-    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
+    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
+  }
+  /**
+   * **상황 특가를 지금 상태에서 읽어 세운다**(`core/situationalOffers.ts`). 조회(붉은 점·프리미엄 목록)가 부르며, 바뀐 것이 있을 때만 저장한다.
+   * 급한 순서로 후보를 넘기고 규칙(셋까지 · 하루 하나 · 종류마다 7일 · 같은 키 한 번)은 순수 모듈이 지킨다.
+   * 전투 결과판이 아니라 다음 조회에서 서므로, 진 판 위에 결제 창이 뜨는 일은 없다.
+   */
+  evaluateSituationalOffers(now) {
+    const before = normalizeSituationalOfferState(this.state.situationalOffers);
+    let state = pruneSituationalOffers(before, now);
+    const candidates = [];
+    const groups = /* @__PURE__ */ new Map();
+    for (const banner of BANNERS) if (banner.pullLimit === void 0 && banner.highestRarityGuarantee > 0 && bannerActive(banner, now)) groups.set(banner.pityGroupId, banner.highestRarityGuarantee);
+    for (const [group, guarantee] of groups) {
+      const pulls = this.state.gachaPityByGroup[group]?.pullsSinceSsr ?? 0;
+      if (pulls >= guarantee - SITUATIONAL_OFFER_RULES.pityWindow) candidates.push({ trigger: "pityNear", key: `pity:${group}`, productId: "offer-pity" });
+      else state = forgetSituationalOfferKey(state, `pity:${group}`);
+    }
+    const short = /* @__PURE__ */ new Set();
+    for (const relicId of this.state.owned) {
+      const progress = this.state.relicProgress[relicId];
+      const rarity = RELICS.find(({ id }) => id === relicId)?.rarity;
+      if (!progress || !rarity || progress.breakthrough >= BREAKTHROUGH_CAP || progress.level < (nextBreakthrough(progress.breakthrough)?.requiredLevel ?? Infinity)) continue;
+      const universal = this.state.itemInventory.find((stack) => stack.itemId === UNIVERSAL_FRAGMENT_ITEM[rarity])?.quantity ?? 0;
+      if (!breakthroughFragmentSpend(rarity, progress.breakthrough, this.state.relicFragments[relicId] ?? 0, universal).enough) short.add(rarity);
+    }
+    for (const rarity of ["SSR", "SR", "R"]) if (short.has(rarity)) candidates.push({ trigger: "breakthroughShort", key: `breakthrough:${rarity}`, productId: `offer-breakthrough-${rarity.toLowerCase()}` });
+    if (this.staminaGemPurchasedToday("stamina-gems", now) >= SITUATIONAL_OFFER_RULES.staminaGemRecharges) candidates.push({ trigger: "staminaOut", key: `stamina:${situationalWeekKey(now)}`, productId: "offer-stamina" });
+    this.rollAncientSeasonNow(now);
+    const ancientBest = Math.max(0, ...[...this.state.cleared].map((id) => /^ancient:(\d+)$/.exec(id)).map((match) => match ? Number(match[1]) : 0));
+    if (ancientBest >= SITUATIONAL_OFFER_RULES.ancientFloor) candidates.push({ trigger: "ancientBest", key: `ancient:${this.state.ancientSeason ?? now.toISOString().slice(0, 7)}`, productId: "offer-ancient" });
+    const reached = SITUATIONAL_OFFER_RULES.playerLevels.filter((level) => this.state.playerResearch.level >= level);
+    const top = reached[reached.length - 1];
+    if (top !== void 0) {
+      const skipped = reached.slice(0, -1).map((level) => `level:${level}`).filter((key) => !state.issuedKeys.includes(key));
+      if (skipped.length > 0 && !state.issuedKeys.includes(`level:${top}`)) state = { ...state, issuedKeys: [...state.issuedKeys, ...skipped] };
+      candidates.push({ trigger: "playerLevel", key: `level:${top}`, productId: `offer-level-${top}` });
+    }
+    for (const candidate of candidates) state = issueSituationalOffer(state, candidate, now).state;
+    if (JSON.stringify(state) !== JSON.stringify(this.state.situationalOffers ?? null)) {
+      this.persist({ ...this.state, situationalOffers: state });
+      this.state.situationalOffers = state;
+    }
+    return state;
+  }
+  /**
+   * 「한정」 탭의 붉은 점이 세는 특가 — 목록(`getProducts`)이 **살 수 있다**고 내려 주는 것만 센다.
+   * 열린 특가 수를 그대로 세던 때는 결제 검증이 없어 버튼이 꺼진 빌드에서도, 천장 특가가 선 채 SSR을 뽑은 뒤에도
+   * 탭을 열면 할 것이 없는데 점이 72시간 내내 남았다.
+   */
+  purchasableSituationalOfferCount(now) {
+    const state = this.evaluateSituationalOffers(now);
+    return openSituationalOffers(state).filter(({ productId }) => {
+      const product = PRODUCTS.find(({ id }) => id === productId);
+      return product !== void 0 && product.storefront === "premium" && this.isVisible(product, now) && this.remaining(product, now) > 0 && !this.paymentUnavailable(product);
+    }).length;
+  }
+  /** SDK를 붙여도 서버 검증이 준비되지 않았다면 결제를 시작할 수 없다 — 목록과 붉은 점이 같은 판정을 읽는다. */
+  paymentUnavailable(product) {
+    return product.acquisition.kind === "platform_payment" && !this.paymentVerificationAvailable;
+  }
+  /** 스토리 관문 한 판을 연패 줄에 적고, 셋째 연패면 그 장의 재정비 특가를 세운다. */
+  storyLossOffers(stageId, victory, now) {
+    let state = recordStoryResult(pruneSituationalOffers(normalizeSituationalOfferState(this.state.situationalOffers), now), stageId, victory);
+    const chapter = storyStageChapter(stageId);
+    if (!victory && chapter !== void 0 && (state.storyLoss?.count ?? 0) >= SITUATIONAL_OFFER_RULES.lossStreak) {
+      state = issueSituationalOffer(state, { trigger: "stageLoss", key: `stage-loss:${chapter}`, productId: "offer-stage-loss" }, now).state;
+    }
+    return state;
   }
   /** 받을 수 있는 무료 보급이 남은 프리미엄 탭 — 목록의 `purchasable`과 같은 판정을 읽는다. */
   freeSupplyCategories(now) {
@@ -46532,18 +47463,18 @@ var FakeServer = class {
     await this.delay();
     const normalized = normalizeMissions(this.state.missions, this.now());
     const ids = missionIds ?? claimableMissionIds(normalized);
-    const uniqueIds = [...new Set(ids)];
-    for (const id of uniqueIds) {
+    const uniqueIds2 = [...new Set(ids)];
+    for (const id of uniqueIds2) {
       const mission2 = MISSIONS.find((candidate) => candidate.id === id);
       if (!mission2) throw new GameApiError("MISSION_NOT_FOUND", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC784\uBB34\uC785\uB2C8\uB2E4.");
       if (normalized.claimedIds.includes(id)) throw new GameApiError("MISSION_ALREADY_CLAIMED", "\uC774\uBBF8 \uC218\uB839\uD55C \uC784\uBB34\uC785\uB2C8\uB2E4.");
       if ((normalized.progress[id] ?? 0) < mission2.target) throw new GameApiError("MISSION_NOT_COMPLETE", "\uC644\uB8CC\uD558\uC9C0 \uC54A\uC740 \uC784\uBB34\uC785\uB2C8\uB2E4.");
     }
-    const missionRewards = mergeMissionRewards(uniqueIds.map((id) => MISSIONS.find((mission2) => mission2.id === id).reward));
-    let nextMissions = addResearchPoints({ ...normalized, claimedIds: [...normalized.claimedIds, ...uniqueIds] }, researchPointsForClaim(uniqueIds));
-    const dailyClaims = uniqueIds.filter((id) => MISSIONS.find((mission2) => mission2.id === id)?.period === "daily").length;
+    const missionRewards = mergeMissionRewards(uniqueIds2.map((id) => MISSIONS.find((mission2) => mission2.id === id).reward));
+    let nextMissions = addResearchPoints({ ...normalized, claimedIds: [...normalized.claimedIds, ...uniqueIds2] }, researchPointsForClaim(uniqueIds2));
+    const dailyClaims = uniqueIds2.filter((id) => MISSIONS.find((mission2) => mission2.id === id)?.period === "daily").length;
     if (dailyClaims > 0) nextMissions = applyMissionEvent(nextMissions, { type: "daily_mission_claimed", count: dailyClaims }, this.now());
-    const periods = researchPeriod ? [researchPeriod] : [...new Set(uniqueIds.map((id) => MISSIONS.find((mission2) => mission2.id === id)?.period).filter((period) => period !== void 0))];
+    const periods = researchPeriod ? [researchPeriod] : [...new Set(uniqueIds2.map((id) => MISSIONS.find((mission2) => mission2.id === id)?.period).filter((period) => period !== void 0))];
     const claimedResearchStageIds = [];
     const researchRewards = [];
     for (const period of periods) {
@@ -46560,12 +47491,15 @@ var FakeServer = class {
     });
     const mission = credit(missionRewards);
     const research = credit(mergeMissionRewards(researchRewards));
-    const nextState = ProfileModifierManager.applyRewardReceipt({ ...this.state, missions: nextMissions, wallet: nextWallet }, { claimedIds: uniqueIds, claimedResearchStageIds });
+    const rolledPasses = rollSeasonPassState(this.state.progressPasses ?? createEmptyProgressPassState(), this.now());
+    const nextPasses = { ...rolledPasses, season: addSeasonPoints(rolledPasses.season, Object.values(researchPointsForClaim(uniqueIds2)).reduce((sum, points) => sum + points, 0), this.now()) };
+    const nextState = ProfileModifierManager.applyRewardReceipt({ ...this.state, missions: nextMissions, wallet: nextWallet, progressPasses: nextPasses }, { claimedIds: uniqueIds2, claimedResearchStageIds });
     this.persist(nextState);
     this.state.missions = nextMissions;
     this.state.wallet = nextWallet;
     this.state.earnedProfileModifierIds = nextState.earnedProfileModifierIds;
-    return { ...this.snapshot(), claimedIds: uniqueIds, claimedResearchStageIds, rewards: { mission, research }, granted: mergeMissionRewards([...mission, ...research]) };
+    this.state.progressPasses = nextPasses;
+    return { ...this.snapshot(), claimedIds: uniqueIds2, claimedResearchStageIds, rewards: { mission, research }, granted: mergeMissionRewards([...mission, ...research]) };
   }
   /** 업적 목록 — 지금 값과 받은 단계·받을 단계를 서버가 판정한다. */
   async getAchievements() {
@@ -46625,11 +47559,10 @@ var FakeServer = class {
       day: window2.day,
       ...window2.nextDayAt ? { nextDayAt: window2.nextDayAt } : {},
       endsAt: window2.endsAt,
-      goals: NEWBIE_GROWTH_GOALS.map((goal) => ({ id: goal.id, day: goal.day, metric: goal.metric, target: goal.target, value: facts[goal.metric], state: newbieGrowthGoalState(goal, facts, claimed, window2.day) })),
+      goals: NEWBIE_GROWTH_GOALS.map((goal) => ({ id: goal.id, day: goal.day, metric: goal.metric, target: goal.target, value: facts[goal.metric], rewards: goal.rewards.map((reward) => ({ ...reward })), state: newbieGrowthGoalState(goal, facts, claimed, window2.day) })),
       milestones: NEWBIE_GROWTH_MILESTONES.map((milestone) => ({ id: milestone.id, goals: milestone.goals, reward: { ...milestone.reward }, state: newbieGrowthMilestoneState(milestone, claimed) })),
       claimedGoals: newbieGrowthClaimedGoalCount(claimed),
-      claimableCount: window2.active ? newbieGrowthClaimableCount(facts, claimed, window2.day) : 0,
-      srChoices: [...newbieGrowthSrChoices()]
+      claimableCount: window2.active ? newbieGrowthClaimableCount(facts, claimed, window2.day) : 0
     };
   }
   /** 7일 가이드가 시작된 시각 — 계정 카드의 연구 개시일. QA 빌드의 개발 서버는 기한과 상관없이 오늘 시작한 것처럼 연다. */
@@ -46643,8 +47576,8 @@ var FakeServer = class {
     return this.newbieGrowthDto(this.state, this.newbieGrowthFactsOf(this.state, await this.newbieGuildJoined()), this.now());
   }
   /**
-   * 닿은 목표와 그로 열린 마디를 받는다. 젬·화석·호박석은 상한까지만 넣고, SR 선택권은 고른 렐릭을 처음 만났으면 그 렐릭을,
-   * 이미 가졌으면 그 렐릭 파편 한 장을 준다(돌파를 끝낸 렐릭은 고를 수 없다). 수령 표시·지급·렐릭을 한 번의 persist로 확정한다.
+   * 닿은 목표와 그로 열린 마디를 받는다. 재화는 상한까지만, 아이템(SR 렐릭 선택권)은 가방 한도까지, 파편(1일차 토리카)은
+   * 그 렐릭이 더 받아 쓸 수 있는 몫까지만 넣는다. 수령 표시와 지급을 한 번의 persist로 확정한다.
    */
   async claimNewbieGrowth(request) {
     await this.delay();
@@ -46652,17 +47585,11 @@ var FakeServer = class {
     const window2 = newbieGrowthWindow(this.newbieGrowthStart(this.state), now);
     if (!window2.active) throw new GameApiError("EVENT_NOT_ACTIVE", "\uC2E0\uADDC \uC131\uC7A5 \uAC00\uC774\uB4DC \uAE30\uAC04\uC774 \uB05D\uB0AC\uC2B5\uB2C8\uB2E4.");
     for (const id of request.goalIds ?? []) if (!NEWBIE_GROWTH_GOALS.some((goal) => goal.id === id)) throw new GameApiError("NOTHING_TO_CLAIM", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uBAA9\uD45C\uC785\uB2C8\uB2E4.");
-    const srRelicId = request.srRelicId;
-    if (srRelicId !== void 0) {
-      if (!newbieGrowthSrChoices().includes(srRelicId)) throw new GameApiError("RELIC_NOT_FOUND", "\uACE0\uB97C \uC218 \uC5C6\uB294 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
-      const progress = this.state.relicProgress[srRelicId];
-      if (this.state.owned.has(srRelicId) && progress && breakthroughGrade(progress.breakthrough) >= BREAKTHROUGH_GRADE_CAP) throw new GameApiError("RELIC_MAX_BREAKTHROUGH", "\uC774\uBBF8 \uB3CC\uD30C\uB97C \uB05D\uB9C8\uCE5C \uB810\uB9AD\uC785\uB2C8\uB2E4.");
-    }
     const guildJoined = await this.newbieGuildJoined();
     const facts = this.newbieGrowthFactsOf(this.state, guildJoined);
     const achievements = normalizeAchievementState(this.state.achievements);
     const claimed = new Set(achievements.growth ?? []);
-    const claim = claimNewbieGrowth(facts, claimed, window2.day, { goalIds: request.goalIds, includeSrSelect: srRelicId !== void 0 });
+    const claim = claimNewbieGrowth(facts, claimed, window2.day, { goalIds: request.goalIds });
     if (claim.goalIds.length === 0 && claim.milestoneIds.length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "\uBC1B\uC744 \uBCF4\uC0C1\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const nextWallet = { ...this.state.wallet };
     const granted = claim.rewards.map(({ currency: currency3, amount }) => {
@@ -46670,40 +47597,31 @@ var FakeServer = class {
       nextWallet[currency3] += applied;
       return { currency: currency3, amount: applied };
     });
-    const nextOwned = new Set(this.state.owned);
-    const nextProgress = { ...this.state.relicProgress };
-    const nextFragments = { ...this.state.relicFragments };
-    let nextRelicStory = this.state.relicStory;
-    const newRelicIds = [];
-    let srFragmentRelicId;
-    if (claim.srSelect && srRelicId) {
-      if (nextOwned.has(srRelicId)) {
-        nextFragments[srRelicId] = (nextFragments[srRelicId] ?? 0) + 1;
-        srFragmentRelicId = srRelicId;
-      } else {
-        nextOwned.add(srRelicId);
-        newRelicIds.push(srRelicId);
-        if (!nextProgress[srRelicId]) nextProgress[srRelicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
-        if (!(srRelicId in nextRelicStory.metAt)) nextRelicStory = { ...nextRelicStory, metAt: { ...nextRelicStory.metAt, [srRelicId]: now.toISOString() } };
-      }
-    }
+    let itemInventory = this.state.itemInventory;
+    const grantedItems = claim.items.map(({ itemId, amount }) => {
+      const result = this.grantItem(itemInventory, itemId, amount, now);
+      itemInventory = result.inventory;
+      return { itemId, amount: result.added };
+    });
+    const relicFragments = { ...this.state.relicFragments };
+    const grantedFragments = claim.fragments.map(({ relicId, amount }) => {
+      const applied = Math.max(0, Math.min(amount, this.relicFragmentRoom(relicId)));
+      relicFragments[relicId] = (relicFragments[relicId] ?? 0) + applied;
+      return { relicId, amount: applied };
+    });
     const nextAchievements = { ...achievements, growth: [...claimed, ...claim.goalIds, ...claim.milestoneIds], ...guildJoined ? { guildJoined: true } : {} };
-    const candidate = { ...this.state, wallet: nextWallet, achievements: nextAchievements, owned: nextOwned, relicProgress: nextProgress, relicFragments: nextFragments, relicStory: nextRelicStory };
-    redeemDeferredStoryBond(candidate, newRelicIds);
+    const candidate = { ...this.state, wallet: nextWallet, itemInventory, relicFragments, achievements: nextAchievements };
     this.persist(candidate);
-    this.state.serverJournal = candidate.serverJournal;
-    this.state.wallet = nextWallet;
+    this.state.wallet = candidate.wallet;
+    this.state.itemInventory = candidate.itemInventory;
+    this.state.relicFragments = candidate.relicFragments;
     this.state.achievements = candidate.achievements;
-    this.state.owned = nextOwned;
-    this.state.relicProgress = nextProgress;
-    this.state.relicFragments = nextFragments;
-    this.state.relicStory = nextRelicStory;
     return {
       ...this.snapshot(),
       growth: this.newbieGrowthDto(this.state, this.newbieGrowthFactsOf(this.state, guildJoined), now),
-      granted,
-      newRelicIds,
-      ...srFragmentRelicId ? { srFragmentRelicId } : {}
+      granted: granted.filter(({ amount }) => amount > 0),
+      grantedItems: grantedItems.filter(({ amount }) => amount > 0),
+      grantedFragments: grantedFragments.filter(({ amount }) => amount > 0)
     };
   }
   achievementListDto(state) {
@@ -46754,7 +47672,9 @@ var FakeServer = class {
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "\uC218\uB839 \uC694\uCCAD ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const pass = findProgressPass(request.passId);
     if (!pass) throw new GameApiError("PASS_NOT_FOUND", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uD328\uC2A4\uC785\uB2C8\uB2E4.");
-    const passes = this.state.progressPasses ?? createEmptyProgressPassState();
+    const now = this.now();
+    const saved = this.state.progressPasses ?? createEmptyProgressPassState();
+    const passes = pass.seasonal ? rollSeasonPassState(saved, now, pass.id) : saved;
     const owned = this.progressPassOwned(pass);
     const progress = this.progressPassProgress(pass, this.state);
     const claimed = passes.claimed[pass.id] ?? [];
@@ -46762,53 +47682,63 @@ var FakeServer = class {
     const thresholds = claimableProgressPassThresholds(pass, progress, owned, claimed);
     const freeThresholds = claimableProgressPassFreeThresholds(pass, progress, freeClaimed);
     if (thresholds.length === 0 && freeThresholds.length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "\uBC1B\uC744 \uBCF4\uC0C1\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    const now = this.now();
-    const grants = pass.milestones.flatMap(({ threshold, free, rewards }) => [
+    const grants2 = pass.milestones.flatMap(({ threshold, free, rewards }) => [
       ...freeThresholds.includes(threshold) ? free : [],
       ...thresholds.includes(threshold) ? rewards : []
     ]);
     const nextWallet = { ...this.state.wallet };
-    const applied = this.applyProductGrants({ grants }, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now);
+    const applied = this.applyProductGrants({ grants: grants2 }, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now);
     const merge = (list, added) => [...list, ...added].sort((x, y) => x - y);
     const nextPasses = {
       ...passes,
       claimed: { ...passes.claimed, [pass.id]: merge(claimed, thresholds) },
       freeClaimed: { ...passes.freeClaimed ?? {}, [pass.id]: merge(freeClaimed, freeThresholds) }
     };
-    const nextState = { ...this.state, wallet: nextWallet, itemInventory: applied.items, progressPasses: nextPasses };
+    const decorations = grants2.flatMap((grant) => grant.kind === "profile_decoration" ? [grant] : []);
+    const giftFrames = [.../* @__PURE__ */ new Set([...this.state.achievements?.giftFrames ?? [], ...decorations.map(({ decorationId }) => decorationId)])];
+    const achievements = decorations.length > 0 ? { ...this.state.achievements ?? normalizeAchievementState(void 0), giftFrames } : this.state.achievements;
+    const nextState = { ...this.state, wallet: nextWallet, itemInventory: applied.items, progressPasses: nextPasses, ...achievements ? { achievements } : {} };
     this.persist(nextState);
     this.state.wallet = nextWallet;
     this.state.itemInventory = applied.items;
     this.state.progressPasses = nextPasses;
+    if (achievements) this.state.achievements = achievements;
+    const granted = [...applied.granted, ...decorations.map((grant) => ({ kind: "profile_decoration", decorationId: grant.decorationId, name: grant.name }))];
     const response = {
       ...this.snapshot(),
       passId: pass.id,
       claimedThresholds: thresholds,
       claimedFreeThresholds: freeThresholds,
-      granted: applied.granted,
+      granted,
       passes: this.progressPassDtos(this.state)
     };
     this.progressPassClaims.set(request.requestId, structuredClone(response));
     return response;
   }
   progressPassOwned(pass) {
-    return (this.state.productPurchases[pass.productId]?.count ?? 0) > 0;
+    const record2 = this.state.productPurchases[pass.productId];
+    if (pass.seasonal) return record2?.periodKey === seasonKey(this.now()) && record2.count > 0;
+    return (record2?.count ?? 0) > 0;
   }
   /** 패스가 재는 진행도 — 스토리는 본편 관문 클리어 수, 레벨은 연구원 레벨, 레이드는 입장 수다. */
   progressPassProgress(pass, state) {
     if (pass.metric === "storyClears") return CHAPTERS.reduce((sum, { stages }) => sum + stages.filter(({ id }) => state.cleared.has(id)).length, 0);
     if (pass.metric === "playerLevel") return state.playerResearch.level;
     if (pass.metric === "strataDigs") return state.missions.lifetime?.strata_tile_dug ?? 0;
+    if (pass.metric === "seasonPoints") return currentSeasonProgress(state.progressPasses?.season, this.now()).points;
     return state.progressPasses?.raidRuns ?? 0;
   }
   progressPassDtos(state) {
     const cloneGrant = (reward) => ({ ...reward, ...reward.kind === "item" ? { name: reward.name } : {} });
+    const now = this.now();
     return PROGRESS_PASSES.map((pass) => {
       const progress = this.progressPassProgress(pass, state);
       const owned = this.progressPassOwned(pass);
-      const claimed = state.progressPasses?.claimed[pass.id] ?? [];
+      const saved = state.progressPasses ?? createEmptyProgressPassState();
+      const passes = pass.seasonal ? rollSeasonPassState(saved, now, pass.id) : saved;
+      const claimed = passes.claimed[pass.id] ?? [];
       const states = progressPassMilestoneStates(pass, progress, owned, claimed);
-      const freeStates = progressPassFreeStates(pass, progress, state.progressPasses?.freeClaimed?.[pass.id] ?? []);
+      const freeStates = progressPassFreeStates(pass, progress, passes.freeClaimed?.[pass.id] ?? []);
       return {
         id: pass.id,
         productId: pass.productId,
@@ -46816,6 +47746,7 @@ var FakeServer = class {
         progress,
         goal: progressPassGoal(pass),
         owned,
+        ...pass.seasonal ? { season: { key: seasonKey(now), endsAt: seasonEndsAt(now) } } : {},
         milestones: pass.milestones.map(({ threshold, free, rewards }, index) => ({
           threshold,
           free: free.map(cloneGrant),
@@ -46830,12 +47761,13 @@ var FakeServer = class {
   async getProducts(storefront) {
     await this.delay();
     const now = this.now();
+    if (storefront === "premium") this.evaluateSituationalOffers(now);
     const products = PRODUCTS.filter((product) => product.storefront === storefront && this.isVisible(product, now)).map((product) => {
       const remaining = this.remaining(product, now);
-      const paymentUnavailable = product.acquisition.kind === "platform_payment" && !this.paymentVerificationAvailable;
+      const paymentUnavailable = this.paymentUnavailable(product);
       return {
         ...product,
-        visibleUntil: this.productWindow(product).endsAt,
+        visibleUntil: product.situational ? activeSituationalOffer(this.state.situationalOffers, product.id, now)?.expiresAt : this.productWindow(product).endsAt,
         remaining,
         purchasable: remaining > 0 && !paymentUnavailable,
         disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : void 0,
@@ -46844,7 +47776,9 @@ var FakeServer = class {
         ...this.subscriptionInfo(product, now)
       };
     });
-    return { products, serverTime: now.toISOString() };
+    const giftState = normalizeAchievementState(this.state.achievements);
+    const firstPaymentGift = storefront === "premium" ? { available: giftState.firstPaymentGift !== true, claimable: giftState.firstPaymentGift !== true && giftState.firstPaymentPaid === true, grants: FIRST_PAYMENT_GIFT.grants, frameId: FIRST_PAYMENT_GIFT.frameId } : void 0;
+    return { products, serverTime: now.toISOString(), ...firstPaymentGift ? { firstPaymentGift } : {} };
   }
   /** 가격 검증부터 제한 갱신까지 복제 상태에서 끝내고 마지막에 한 번만 확정한다. */
   async purchaseProduct(request) {
@@ -46891,8 +47825,7 @@ var FakeServer = class {
       if (grant.kind !== "weekly_ssr_fragment" && grant.kind !== "rotating_fragment" && !(grant.kind === "relic_fragment" && product.storefront === "mileage")) continue;
       const fragmentRelicId = mileageFragmentRelicId(grant, now);
       if (!fragmentRelicId) throw new GameApiError("PRODUCT_NOT_VISIBLE", "\uD604\uC7AC \uAD50\uD658\uD560 \uC218 \uC788\uB294 \uD30C\uD3B8\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
-      const progress = this.state.relicProgress[fragmentRelicId];
-      if (progress && breakthroughGrade(progress.breakthrough) >= BREAKTHROUGH_GRADE_CAP) throw new GameApiError("RELIC_MAX_BREAKTHROUGH", "\uC774\uBBF8 \uB3CC\uD30C\uB97C \uB05D\uB9C8\uCE5C \uB810\uB9AD\uC785\uB2C8\uB2E4.");
+      if (this.relicFragmentRoom(fragmentRelicId) <= 0) throw new GameApiError("RELIC_MAX_BREAKTHROUGH", "\uC774\uBBF8 \uB3CC\uD30C\xB7\uACF5\uBA85\uC5D0 \uC4F8 \uD30C\uD3B8\uC744 \uBAA8\uB450 \uAC16\uCD98 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
     }
     const nextFragments = { ...this.state.relicFragments };
     const applied = this.applyProductGrants(product, quantity, nextWallet, nextItems, now, [], nextFragments);
@@ -47264,6 +48197,7 @@ var FakeServer = class {
     return { ...startsAt !== void 0 ? { startsAt } : {}, ...endsAt !== void 0 ? { endsAt } : {}, enabled: own.enabled && linked.enabled };
   }
   isVisible(product, now) {
+    if (product.situational) return activeSituationalOffer(this.state.situationalOffers, product.id, now) !== void 0;
     if (!windowOpen({ ...this.productWindow(product), overridden: false }, now.getTime())) return false;
     const slot = product.rotationSlot ? rotationSlot(product.rotationSlot) : void 0;
     return !product.rotationSlot || slot !== void 0 && rotationOffer(slot, this.productPeriodKey(product, now)) === product.id;
@@ -47289,11 +48223,16 @@ var FakeServer = class {
       return date.toISOString().slice(0, 10);
     }
     if (product.refresh === "monthly") return day.slice(0, 7);
+    if (product.refresh === "season") return seasonKey(now);
     return product.refresh === "once" ? "account" : "permanent";
   }
   /** 기간 키가 바뀐 구매 기록은 0회로 간주한다. */
   remaining(product, now) {
     if (product.passBenefit) return this.hasActivePass(product, now) ? 0 : product.purchaseLimit;
+    if (product.situational) {
+      const offer = activeSituationalOffer(this.state.situationalOffers, product.id, now);
+      return offer && offer.purchasedAt === void 0 ? 1 : 0;
+    }
     const record2 = this.state.productPurchases[product.id];
     const count2 = record2?.periodKey === this.productPeriodKey(product, now) ? record2.count : 0;
     return Math.max(0, product.purchaseLimit - count2);
@@ -48103,15 +49042,15 @@ var RelicProgressionManager = class {
     this.persistSharedSession();
   }
   /** UI와 전투가 공유할 최종 능력치를 순수 코어 계산기로 구한다. */
-  getFinalStats(relicId) {
+  getFinalStats(relicId, options = {}) {
     const progress = this.getProgress(relicId);
-    const gems2 = progress.heartGemSlots.flatMap((id) => {
+    const gems3 = progress.heartGemSlots.flatMap((id) => {
       const rune = id === null ? void 0 : this.state.runeInventory.find((candidate) => candidate.instanceId === id);
       if (!rune) return [];
       return [rune];
     });
     const def = getRelic(relicId);
-    return calculateFinalStats(def.stats, progress, gems2, def.rarity);
+    return calculateFinalStats(def.stats, progress, gems3, def.rarity, { resonance: !options.pvp });
   }
   /** 성장 트랜잭션이 끝난 뒤에만 저장해 중간 상태가 남지 않게 한다. */
   persistSharedSession() {
@@ -48124,7 +49063,7 @@ var relicProgression = new RelicProgressionManager();
 function arenaPlayer(id, data) {
   const s = saveManager.parse(data), progression = new RelicProgressionManager(s);
   return { id, name: s.playerCard.nickname || t("profile.defaultName"), roster: [...s.owned].map((relicId) => ({
-    def: { ...getRelic(relicId), stats: progression.getFinalStats(relicId) },
+    def: { ...getRelic(relicId), stats: progression.getFinalStats(relicId, { pvp: true }) },
     level: s.relicProgress[relicId]?.level ?? 1,
     breakthrough: s.relicProgress[relicId]?.breakthrough ?? 0,
     bond: s.relicProgress[relicId]?.bondLevel ?? 0,
@@ -48477,7 +49416,7 @@ async function run(playerId, req, deps) {
     const now = deps.now?.() ?? /* @__PURE__ */ new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
     const wantsDuel = /^(getDuelStatus|refreshDuelOpponents|setDuelDefense|enterDuel|resolveDuel|buyDuelAttempt|getDuelRanking|claimDuelSeasonReward)$/.test(req.method) && deps.store.duelContext;
-    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords, schedule] = await Promise.all([
+    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords, schedule, launchAt] = await Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : void 0,
       deps.store.load(playerId),
       deps.store.identity ? deps.store.identity(playerId) : void 0,
@@ -48488,9 +49427,11 @@ async function run(playerId, req, deps) {
       req.method === "getAncientRanking" && deps.store.ancientRanking ? deps.store.ancientRanking(playerId) : void 0,
       req.method === "getRegularEvent" && deps.store.regularEvent ? deps.store.regularEvent().catch(() => null) : void 0,
       req.method === "updatePlayerCard" && deps.store.bannedWords ? deps.store.bannedWords().catch(() => []) : void 0,
-      deps.store.liveSchedule ? deps.store.liveSchedule().catch(() => void 0) : void 0
+      deps.store.liveSchedule ? deps.store.liveSchedule().catch(() => void 0) : void 0,
+      deps.store.launchAt ? deps.store.launchAt().catch(() => void 0) : void 0
     ]);
     if (schedule !== void 0) setLiveSchedule(schedule);
+    if (launchAt !== void 0) setLaunchAt(launchAt);
     if (cached !== void 0) {
       const receipt = cached;
       if (receipt._requestFingerprint !== fingerprint && receipt._requestFingerprint !== legacyFingerprint) throw new GameCallError(409, "request_id_conflict");
@@ -48593,6 +49534,7 @@ init_define_import_meta_env();
 var LEGACY_EXPEDITION_RANK_SALVAGE = [400, 320, 250, 180, 130, 80];
 var bannedWordsCache;
 var scheduleCache;
+var launchAtCache;
 async function sha256Hex(text) {
   const bytes = new TextEncoder().encode(text);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -48667,6 +49609,12 @@ function createSupabaseStore(env) {
       const rows = await rpc("server_live_schedule", {}).then((value) => value ?? [], () => scheduleCache?.rows ?? []);
       scheduleCache = { at: Date.now(), rows };
       return rows;
+    },
+    async launchAt() {
+      if (launchAtCache && Date.now() - launchAtCache.at < 6e4) return launchAtCache.value;
+      const value = await rpc("server_launch_at", {}).then((raw) => typeof raw === "string" && raw.length > 0 ? raw : null, () => launchAtCache?.value);
+      launchAtCache = { at: Date.now(), value };
+      return value;
     },
     async load(playerId) {
       const r = await rpc("server_load_state", { p_player: playerId });

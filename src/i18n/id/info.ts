@@ -48,7 +48,7 @@ export const INFO_ID = {
   "info.section.rune": "Rune",
   "info.level": "Level",
   "info.level.max": "Level Maks",
-  "info.level.cap": "Batas Level",
+  "info.breakthrough.growth": "Pertumbuhan Stat",
   "info.feed": "Beri Makan",
   "info.levelUp.banner": "LEVEL UP!",
   "info.levelUp.statGain": "{stat} +{value}",

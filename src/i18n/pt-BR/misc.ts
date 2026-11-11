@@ -245,6 +245,7 @@ export const MISC_PT_BR = {
   "profile.levelTree.frame": "Moldura \"{name}\"",
   "profile.levelTree.content": "Abre · {content}",
   "profile.levelTree.stamina": "Estamina máx. {max}",
+  "profile.levelTree.relicCap": "Nível máx. de Relíquia {max}",
   "profile.unset": "Não definido",
   "profile.arenaTier": "Divisão da arena",
   "profile.duelTier": "Divisão de duelo",

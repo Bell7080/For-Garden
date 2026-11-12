@@ -8,6 +8,7 @@ import type { BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, P
 import type { ScalingStatId } from "../core/damage";
 import { t } from "../i18n";
 import { PUP } from "../core/pup";
+import { BLEED } from "../core/skirmish";
 
 /** 능력치 이름은 스킬 본문·태그·돌파 줄이 모두 같은 표에서 고른다. */
 function statName(stat: ScalingStatId | "res"): string {
@@ -33,12 +34,21 @@ export function targetingLabel(targeting?: Ultimate["targeting"]): string | unde
   return t(`skill.target.${targeting}`);
 }
 
+/** 출혈이 공용 시간·비율(`BLEED`) 그대로인가 — 그러면 수치는 태그가 말하므로 본문이 다시 적지 않는다. */
+function isStandardBleed(effect: { seconds: number; maxHpPercentPerSecond: number }): boolean {
+  return effect.seconds === BLEED.seconds && effect.maxHpPercentPerSecond === BLEED.percentPerSecond;
+}
+
 /** 상태 효과 계약을 팝업과 테스트가 함께 쓰는 짧은 문구로 바꾼다. */
 export function statusEffectLabel(effect?: CombatStatusEffect): string | undefined {
   if (effect?.kind === "stun") return t("skill.statusLabel.stun", { seconds: effect.seconds });
   // 경직은 항상 0.1초인 용어 규칙을 키워드 설명이 담당하므로 요약줄에서 시간을 중복하지 않는다.
   if (effect?.kind === "stagger") return t("skill.statusLabel.stagger");
-  if (effect?.kind === "bleed") return t("skill.statusLabel.bleed", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond });
+  // 표준 출혈의 시간·비율은 태그가 말한다. 그 값과 다른 출혈만 요약줄이 수치를 적는다.
+  if (effect?.kind === "bleed") {
+    return isStandardBleed(effect) ? t("skill.statusLabel.bleed")
+      : t("skill.statusLabel.bleedCustom", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond });
+  }
   if (effect?.kind === "poison") return t("skill.statusLabel.poison", { seconds: effect.seconds });
   // 시간이 아니라 듀오의 다음 한 방으로 풀리는 표식이라 초를 적지 않는다.
   if (effect?.kind === "weakpoint") return t("skill.statusLabel.weakpoint");
@@ -1381,14 +1391,19 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   if (effect.kind === "stagger") return t("skill.status.stagger");
   // 날아가는 시간·속도·튕기는 횟수는 화면에서 그대로 보이는 그림이라 본문이 수로 적지 않는다.
   if (effect.kind === "knockback") return t("skill.status.knockback");
+  // 출혈·깊은 출혈의 시간과 매초 비율은 태그가 말한다(공용 값 `BLEED`). 본문은 「부여한다」까지만 적고,
+  // 스킬마다 다른 값(회복 감소, 표준과 다른 시간)만 남긴다. 공용 값과 어긋나는 출혈은
+  // `skillArt.test`가 막고, 막지 못한 평범한 출혈은 수치를 그대로 적는 문장으로 되돌아간다.
   if (effect.kind === "bleed" && effect.deepenOnRepeat) {
-    return t("skill.status.bleedDeepen", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond,
-      deep: effect.maxHpPercentPerSecond * effect.deepenOnRepeat.multiplier, reduction: effect.deepenOnRepeat.healingReceivedReductionPercent });
+    return t("skill.status.bleedDeepen", { reduction: effect.deepenOnRepeat.healingReceivedReductionPercent });
   }
   if (effect.kind === "bleed" && (effect.healingReceivedReductionPercent ?? 0) > 0) {
-    return t("skill.status.bleedHealCut", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond, reduction: effect.healingReceivedReductionPercent ?? 0 });
+    return t("skill.status.bleedHealCut", { seconds: effect.seconds, reduction: effect.healingReceivedReductionPercent ?? 0 });
   }
-  if (effect.kind === "bleed") return t("skill.status.bleed", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond });
+  if (effect.kind === "bleed") {
+    return isStandardBleed(effect) ? t("skill.status.bleed")
+      : t("skill.status.bleedCustom", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond });
+  }
   // 매초 얼마인지는 태그가 말한다(쓰는 개체가 하나뿐이다). 시간만 스킬마다 달라 본문이 적는다.
   if (effect.kind === "poison") return t("skill.status.poison", { seconds: effect.seconds });
   // 겹 상한·감소율·유지 시간은 저주 태그가 말한다(쓰는 개체가 하나뿐이라 태그가 수치를 가진다).
@@ -1570,11 +1585,8 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
       return t("skill.breakthrough.effect.basic.frostBrand", { name: def.basic.name, percent: trim(effect.damagePercentPerStack), max: trim(effect.damagePercentPerStack * max) });
     }
     if (effect.kind === "deepBleed") {
-      const bleed = def.basic.statusEffects?.find((status) => status.kind === "bleed");
-      return t("skill.breakthrough.effect.basic.deepBleed", {
-        percent: trim((bleed?.kind === "bleed" ? bleed.maxHpPercentPerSecond : 0) * effect.bleedMultiplier),
-        reduction: trim(effect.healingReceivedReductionPercent),
-      });
+      // 깊은 출혈의 매초 비율은 태그가 말한다. 본문은 이 돌파만의 회복 감소만 적는다.
+      return t("skill.breakthrough.effect.basic.deepBleed", { reduction: trim(effect.healingReceivedReductionPercent) });
     }
     if (effect.kind === "darkRoast") return t("skill.breakthrough.effect.basic.darkRoast", { percent: trim(effect.defenseIgnorePercent) });
     if (effect.kind === "arrowEcho") {

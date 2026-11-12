@@ -1,4 +1,4 @@
-import { POISON } from "../core/skirmish";
+import { BLEED, POISON } from "../core/skirmish";
 import { registerDataText } from "../i18n";
 import { TORIKA_STORY } from "./relicStories/torika";
 import type { BasicAttack, RelicDef } from "../core/types";
@@ -206,7 +206,7 @@ export const RELICS: RelicDef[] = [
     // 남긴 출혈을 조건으로 삼아, 물어뜯은 자리를 다시 무는 것이 곧 확정 치명타다.
     ferocityTrait: { name: "전투의 여왕은 나야.", effectId: "rexBattleQueen", bleedingGuaranteedCritical: true, allDamageLifeStealPoints: 25 },
     breakthroughEffects: {
-      basic: { kind: "deepBleed", bleedMultiplier: 2, healingReceivedReductionPercent: 40 },
+      basic: { kind: "deepBleed", bleedMultiplier: BLEED.deepMultiplier, healingReceivedReductionPercent: 40 },
       ultimate: { kind: "ultimateLifeSteal", damageHealingPercent: 50 },
       ferocity: { kind: "cleavingBasics", radius: 260 },
       passive: { kind: "battleMaidAscension", durabilityPercent: 25, rechargeOnKill: true },
@@ -3554,7 +3554,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
       statusEffectEvery: 3,
       // 이미 피를 흘리는 적에게 다시 걸면 깊은 출혈(매초 4% · 받는 회복 -30%)이 된다.
-      statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2, deepenOnRepeat: { multiplier: 2, healingReceivedReductionPercent: 30 } }],
+      statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2, deepenOnRepeat: { multiplier: BLEED.deepMultiplier, healingReceivedReductionPercent: 30 } }],
     },
     ultimate: {
       id: "magasa-ult",

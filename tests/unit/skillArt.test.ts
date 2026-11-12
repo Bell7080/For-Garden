@@ -368,7 +368,9 @@ describe("렉시아 스킬 표시 계약", () => {
       "전투 시작 시, [[attack-speed|공격 속도]]·[[atk|공격력]]·치명타 확률·치명타 피해·흡혈이 모두 25% 오른다."
       + " 전투당 한 번, 표적에게 중거리까지 다가서면 그 자리로 [[charge|돌진]]해 1초 동안 [[stun|기절]]시킨다.",
     );
-    expect(statusEffectLabel(rex.basic.statusEffects?.[0])).toBe("[[bleed|출혈]] 3초 · 매초 최대 체력 2%");
+    // 표준 출혈의 시간·비율은 태그가 말하므로 요약줄은 이름만 세운다.
+    expect(statusEffectLabel(rex.basic.statusEffects?.[0])).toBe("[[bleed|출혈]]");
+    expect(statusEffectLabel({ kind: "bleed", seconds: 4, maxHpPercentPerSecond: 1 })).toBe("[[bleed|출혈]] 4초 · 매초 최대 체력 1%");
     expect(targetingLabel(rex.ultimate.targeting)).toBe("적 한 명");
     expect(damageHealingLabel(rex.ultimate.damageHealingPercent)).toBeUndefined();
   });
@@ -1174,7 +1176,7 @@ describe("마키 스킬 표시 계약", () => {
     ]);
     // 겹 상한과 터지는 위력은 태그가 말하므로 본문이 되풀이하지 않는다.
     expect(skillDescription(def.basic, { damage: 209 })).toBe(
-      "적 한 명에게 [[damage-value|209]]의 [[physical-damage|물리 피해]]를 주고 [[butcher|손질]]을 한 겹 쌓는다. 3초 동안 [[bleed|출혈]]시켜 매초 최대 체력의 2%를 잃게 한다.",
+      "적 한 명에게 [[damage-value|209]]의 [[physical-damage|물리 피해]]를 주고 [[butcher|손질]]을 한 겹 쌓는다. [[bleed|출혈]]을 부여한다.",
     );
   });
 

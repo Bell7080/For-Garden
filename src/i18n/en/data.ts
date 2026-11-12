@@ -588,7 +588,7 @@ export default {
   "keyword.minor-bleed.term": "Lesser Bleed",
   "keyword.minor-bleed.description": "Takes fixed damage equal to 1% of max HP each second for 2 seconds. A weaker reapplication does not overwrite a stronger Bleed.",
   "keyword.deep-bleed.term": "Deep Bleed",
-  "keyword.deep-bleed.description": "A [[bleed|Bleed]] cut deeper. Deals fixed damage equal to a larger share of max HP each second and reduces healing received while it lasts.",
+  "keyword.deep-bleed.description": "A [[bleed|Bleed]] cut deeper. Takes fixed damage equal to 4% of max HP each second for 3 seconds. Defense cannot reduce it, and healing received is reduced while it lasts.",
   "keyword.poison.term": "Poison",
   "keyword.poison.description": "Takes [[magical-damage|magical damage]] each second from 22% of the applier's Attack plus 22% of its Ability Power. The amount is fixed when applied, and a stronger Poison overwriting it keeps its own value.",
   "keyword.liquidate.term": "Liquidate",

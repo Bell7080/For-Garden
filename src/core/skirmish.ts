@@ -1209,6 +1209,11 @@ export const BLEED = {
   percentPerSecond: 2,
   /** 작은 출혈은 이름뿐 아니라 실제 공용 수치도 표준과 분리한다. */
   minor: { seconds: 2, percentPerSecond: 1 },
+  /**
+   * 깊은 출혈의 매초 배율. 렉시아(돌파)와 마가사(다지기)가 같은 값을 써서 태그가 「매초 몇 %」를
+   * 말한다 — 스킬 본문은 「깊은 출혈로 강화한다」까지만 적고 개체마다 다른 회복 감소만 적는다.
+   */
+  deepMultiplier: 2,
 } as const;
 
 /**

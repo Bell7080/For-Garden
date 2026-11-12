@@ -182,7 +182,9 @@ describe("돌파 효과 문구", () => {
 
   it("는 렉시아 네 슬롯의 강화 수치와 전투 개념을 모두 표시한다", () => {
     const lexia = getRelic("rex");
-    expect(breakthroughEffectText(lexia, "basic")).toContain("최대 체력의 4%");
+    // 깊은 출혈의 매초 비율은 태그가 말한다 — 본문은 이 돌파만의 회복 감소만 적는다.
+    expect(breakthroughEffectText(lexia, "basic")).toContain("[[deep-bleed|깊은 출혈]]로 강화된다");
+    expect(breakthroughEffectText(lexia, "basic")).not.toContain("최대 체력의 4%");
     expect(breakthroughEffectText(lexia, "basic")).toContain("받는 [[healing-cut|회복량]]을 40% 낮추며");
     expect(breakthroughEffectText(lexia, "ultimate")).toContain("피해의 50%만큼 체력을 회복");
     expect(breakthroughEffectText(lexia, "ferocity")).toContain("조금 넓은 범위");

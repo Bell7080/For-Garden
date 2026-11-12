@@ -742,7 +742,7 @@ describe("스피나 전투 계약", () => {
     const { state, spino } = readySpino();
     const points = spino.def.passive.criticalChancePercent!;
     const chance = spino.def.stats.critChance + points;
-    expect(points).toBe(10);
+    expect(points).toBe(20);
     // 경계 바로 아래 난수는 치명타, 바로 위는 아니다 — 개체 이름이 아니라 적힌 값으로 읽는다.
     expect(stepSkirmish(state, 1 / 60, () => (chance - 1) / 100).find((event) => event.kind === "attack")).toMatchObject({ critical: true });
     const miss = readySpino();

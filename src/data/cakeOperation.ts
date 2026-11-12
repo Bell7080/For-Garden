@@ -46,19 +46,19 @@ export interface CakeOperationTier {
  * 레벨이 한 번도 내려가지 않게 짠다 — 다음 단계가 앞 단계보다
  * 가벼우면 사다리가 아니라 옆길이 된다. 스테미나는 모든 단계가 10이라 **스테미나당 효율이 곧
  * 보상의 크기**이고, 위로 갈수록 크게 좋아진다(1단계 3.0 → 8단계 15.0 케이크/스테미나).
- * 그 대신 **클리어 컷이 효율만큼 올라간다** — 적 성장 3.6%로 다시 푼 사다리(「적은 적이다」, 2026-11-12)에서
- * 8단계는 LV.48이고, 그 세기가 예전 LV.60의 자리다. 높은 단계를 쉽게 밀지 못하게 하는 것은 보상을 깎는 일이 아니라
+ * 그 대신 **클리어 컷이 효율만큼 올라간다** — 적 등급 성장(R 2.5% + 돌파 몫)으로 다시 푼 사다리(「적은 적이다」, 2026-11-12)에서
+ * 8단계는 LV.53이고, 그 세기가 예전 LV.60의 자리다. 높은 단계를 쉽게 밀지 못하게 하는 것은 보상을 깎는 일이 아니라
  * 이 레벨이다.
  */
 export const CAKE_OPERATION_TIERS: readonly CakeOperationTier[] = [
-  { id: "cake-1", name: "1단계", enemyLevel: 3, enemyCount: 10, rewardCheesecake: 30 },
-  { id: "cake-2", name: "2단계", enemyLevel: 8, enemyCount: 10, rewardCheesecake: 44 },
-  { id: "cake-3", name: "3단계", enemyLevel: 13, enemyCount: 11, rewardCheesecake: 58 },
-  { id: "cake-4", name: "4단계", enemyLevel: 20, enemyCount: 12, rewardCheesecake: 72 },
-  { id: "cake-5", name: "5단계", enemyLevel: 28, enemyCount: 13, rewardCheesecake: 88 },
-  { id: "cake-6", name: "6단계", enemyLevel: 36, enemyCount: 14, rewardCheesecake: 108 },
-  { id: "cake-7", name: "7단계", enemyLevel: 43, enemyCount: 15, rewardCheesecake: 128 },
-  { id: "cake-8", name: "8단계", enemyLevel: 48, enemyCount: 15, rewardCheesecake: 150 },
+  { id: "cake-1", name: "1단계", enemyLevel: 4, enemyCount: 10, rewardCheesecake: 30 },
+  { id: "cake-2", name: "2단계", enemyLevel: 11, enemyCount: 10, rewardCheesecake: 44 },
+  { id: "cake-3", name: "3단계", enemyLevel: 18, enemyCount: 11, rewardCheesecake: 58 },
+  { id: "cake-4", name: "4단계", enemyLevel: 24, enemyCount: 12, rewardCheesecake: 72 },
+  { id: "cake-5", name: "5단계", enemyLevel: 32, enemyCount: 13, rewardCheesecake: 88 },
+  { id: "cake-6", name: "6단계", enemyLevel: 41, enemyCount: 14, rewardCheesecake: 108 },
+  { id: "cake-7", name: "7단계", enemyLevel: 49, enemyCount: 15, rewardCheesecake: 128 },
+  { id: "cake-8", name: "8단계", enemyLevel: 53, enemyCount: 15, rewardCheesecake: 150 },
 ];
 
 /**
@@ -126,7 +126,7 @@ export function cakeOperationEnemies(tier: CakeOperationTier): RelicDef[] {
   // 다섯을 각자 키워 둔 뒤 차례로 세운다.
   const grown = CAKE_OPERATION_ENEMY_IDS.map((id) => {
     const base = getRelic(id);
-    return { ...base, encounterRole: role, stats: applyEncounterScaling(base.stats, level, role) } satisfies RelicDef;
+    return { ...base, encounterRole: role, stats: applyEncounterScaling(base.stats, base.rarity, level, role) } satisfies RelicDef;
   });
   // 같은 정의를 여러 몸이 나눠 쓰지 않도록 개체마다 능력치 사본을 세운다.
   return Array.from({ length: tier.enemyCount }, (_, index) => {

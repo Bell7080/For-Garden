@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ENCOUNTER_ROLE, ENEMY_BREAKTHROUGH_LEVELS, ENEMY_LEVEL_GROWTH_PERCENT, applyEncounterScaling,
+  ENCOUNTER_ROLE, ENEMY_BREAKTHROUGH_LEVELS, ENEMY_RARITY_LEVEL_GROWTH, applyEncounterScaling,
   enemyLevelMultiplier, isEncounterOnTarget, requiredBreakthroughForLevel, type EncounterRole,
   shownBreakthroughForLevel,
 } from "../../src/core/levelDesign";
@@ -27,7 +27,7 @@ describe("레벨 디자인 키트", () => {
     for (const role of ROLES) {
       expect(Object.keys(ENCOUNTER_ROLE[role]), role).not.toContain("levelOffset");
       const base = getRelic("toby").stats;
-      expect(applyEncounterScaling(base, 12, role).def).toBe(applyEncounterScaling(base, 12, "normal").def);
+      expect(applyEncounterScaling(base, "R", 12, role).def).toBe(applyEncounterScaling(base, "R", 12, "normal").def);
     }
   });
 
@@ -48,7 +48,7 @@ describe("레벨 디자인 키트", () => {
   it("의 배수는 체력과 공격에만 걸리고 나머지는 그 개체의 것이다", () => {
     // 공속·이속·치명타는 그 개체의 정체성이라 유형이 건드리지 않는다.
     const base = getRelic("toby").stats;
-    const scaled = applyEncounterScaling(base, 1, "elite");
+    const scaled = applyEncounterScaling(base, "R", 1, "elite");
     expect(scaled.hp).toBe(Math.round(base.hp * ENCOUNTER_ROLE.elite.hpMultiplier));
     expect(scaled.atk).toBe(Math.round(base.atk * ENCOUNTER_ROLE.elite.attackMultiplier));
     for (const key of ["attackSpeed", "moveSpeed", "critChance", "critDamage", "lifeSteal"] as const) {
@@ -56,23 +56,29 @@ describe("레벨 디자인 키트", () => {
     }
   });
 
-  it("의 적 곡선은 등급을 가르지 않고 플레이어보다 가파르다", () => {
-    // 적에게 희귀도는 가챠 개념이라 성장률을 가를 이유가 없다. 적은 돌파 몫 없이 레벨 하나로 세기를 내므로
-    // (「적은 적이다」) 레벨당 성장이 플레이어 SSR보다 가파르다 — 마지막 보스가 LV.60 언저리에서 제 세기를 낸다.
-    expect(enemyLevelMultiplier(1)).toBe(1);
-    expect(enemyLevelMultiplier(21)).toBeCloseTo(1 + 20 * ENEMY_LEVEL_GROWTH_PERCENT / 100, 10);
-    const player = applyLevelGrowth(getRelic("ella").stats, 21, "SSR", 0).hp / getRelic("ella").stats.hp;
-    expect(enemyLevelMultiplier(21)).toBeGreaterThan(player);
+  it("의 적 곡선은 아군처럼 등급이 가르고 돌파 몫을 받으며 플레이어보다 가파르다", () => {
+    // 응태 결정(2026-11-12): 적도 등급마다 레벨당 성장이 다르고 돌파 단계마다 +10%p를 받는다.
+    expect(enemyLevelMultiplier(1, "SR")).toBe(1);
+    expect(ENEMY_RARITY_LEVEL_GROWTH.R).toBeLessThan(ENEMY_RARITY_LEVEL_GROWTH.SR);
+    expect(ENEMY_RARITY_LEVEL_GROWTH.SR).toBeLessThan(ENEMY_RARITY_LEVEL_GROWTH.SSR);
+    expect(enemyLevelMultiplier(20, "SR")).toBeCloseTo(1 + 19 * ENEMY_RARITY_LEVEL_GROWTH.SR / 100, 10);
+    // 21에서 돌파 1단계가 열려 +10%p가 얹힌다.
+    expect(enemyLevelMultiplier(21, "SR") - enemyLevelMultiplier(20, "SR")).toBeCloseTo((ENEMY_RARITY_LEVEL_GROWTH.SR + 10) / 100, 10);
+    for (const rarity of ["R", "SR", "SSR"] as const) {
+      const id = { R: "dodo", SR: "torika", SSR: "ella" }[rarity];
+      const player = applyLevelGrowth(getRelic(id).stats, 60, rarity, 4).hp / getRelic(id).stats.hp;
+      expect(enemyLevelMultiplier(60, rarity), rarity).toBeGreaterThan(player);
+    }
   });
 
-  it("의 돌파 단계는 적 사다리 위에 놓인다", () => {
-    // 적의 돌파는 스킬 칸만 연다 — 예전 21·31·41·51을 같은 세기의 레벨(15·21·27·33, 1장은 돌파 없이 끝난다)로 옮긴 경계다.
+  it("의 돌파 단계는 아군의 한계 돌파 문턱 다음 레벨에 선다", () => {
+    expect(ENEMY_BREAKTHROUGH_LEVELS).toEqual([21, 31, 41, 51]);
     expect(ENEMY_BREAKTHROUGH_LEVELS).toHaveLength(BREAKTHROUGH_STEPS.length);
-    expect(requiredBreakthroughForLevel(14)).toBe(0);
-    expect(requiredBreakthroughForLevel(15)).toBe(1);
-    expect(requiredBreakthroughForLevel(21)).toBe(2);
-    expect(requiredBreakthroughForLevel(32)).toBe(3);
-    expect(requiredBreakthroughForLevel(33)).toBe(BREAKTHROUGH_STEPS.length);
+    expect(requiredBreakthroughForLevel(20)).toBe(0);
+    expect(requiredBreakthroughForLevel(21)).toBe(1);
+    expect(requiredBreakthroughForLevel(40)).toBe(2);
+    expect(requiredBreakthroughForLevel(41)).toBe(3);
+    expect(requiredBreakthroughForLevel(51)).toBe(BREAKTHROUGH_STEPS.length);
     // 적 레벨에는 상한이 없다 — 마지막 경계를 넘으면 마지막 단계로 선다.
     expect(requiredBreakthroughForLevel(150)).toBe(BREAKTHROUGH_STEPS.length);
   });

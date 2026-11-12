@@ -64,7 +64,7 @@ describe("정예 둘", () => {
     expect(encounterHpShare("elite", 2)).toBe(spec.hpMultiplier / 2);
     expect(encounterHpShare("normal", 2)).toBe(ENCOUNTER_ROLE.normal.hpMultiplier);
     const base = getRelic("amo").stats;
-    expect(applyEncounterScaling(base, 20, "elite", 2).hp).toBe(Math.round(applyEncounterScaling(base, 20, "elite", 1).hp / 2));
+    expect(applyEncounterScaling(base, "R", 20, "elite", 2).hp).toBe(Math.round(applyEncounterScaling(base, "R", 20, "elite", 1).hp / 2));
   });
 
   it("2-7·2-9는 정예 둘이고 3-5는 아트라, 3-10은 이카닉시아 혼자다", () => {

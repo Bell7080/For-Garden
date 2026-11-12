@@ -53,16 +53,16 @@ function enemyGrowth(relicId: string, level: number, formationSlot: 0 | 1 | 2 | 
  * 혼자 서기 때문이고, 그 몫은 레벨이 아니라 유형 배수가 갖는다.
  */
 const STORY_RECOMMENDED_LEVELS: readonly number[] = [
-  // **적은 적이다**(응태 결정, 2026-11-12) — 적은 레벨마다 3.6%씩 자라고(`ENEMY_LEVEL_GROWTH_PERCENT`) 태생 층·돌파 몫 없이
-  // 이 수 하나가 세기다. 2.2% 시절의 사다리(5 … 90)를 같은 세기의 레벨로 옮긴 값이고, 마지막 보스 카르는 예전 「기준 98」의
-  // 세기를 LV.60에서 낸다. 1-1은 오프닝에서 곧장 들어오는 첫 전투라 막 시작한 레벨 1 편성이 넘어야 한다.
-  3, 5, 7, 8, 11, 11, 12, 13, 14, 14,
-  14, 14, 14, 15, 16, 16, 17, 18, 18, 19,
-  22, 23, 24, 24, 25, 25, 26, 27, 27, 29,
-  30, 30, 30, 32, 32, 32, 32, 32, 33, 35,
-  36, 36, 37, 38, 38, 39, 40, 40, 41, 42,
-  43, 43, 44, 44, 45, 46, 46, 47, 47, 49,
-  49, 50, 50, 51, 52, 52, 53, 54, 54, 60,
+  // **적은 적이다**(응태 결정, 2026-11-12) — 적도 아군처럼 등급마다 레벨당 성장이 다르고(`ENEMY_RARITY_LEVEL_GROWTH`) 돌파
+  // 단계(LV.21·31·41·51)마다 +10%p를 받는다. 3.6% 단일 성장 시절의 세기를 그 관문 적들의 등급 곡선 위로 옮기되
+  // 그 세기를 넘지 않는 가장 높은 레벨을 골랐고(평균), 내려가지 않게 앞 관문 값 이상으로 맞췄다. 마지막 보스 카르(SSR)는 LV.58에서 예전 LV.60의 세기를 낸다.
+  3, 6, 9, 11, 15, 15, 16, 18, 19, 19,
+  19, 19, 19, 20, 20, 20, 20, 21, 21, 22,
+  27, 28, 30, 30, 30, 30, 30, 30, 30, 30,
+  34, 34, 34, 35, 35, 36, 37, 37, 37, 38,
+  40, 40, 40, 42, 42, 42, 43, 43, 44, 44,
+  46, 48, 48, 49, 49, 50, 50, 50, 50, 50,
+  50, 52, 52, 54, 54, 54, 55, 56, 56, 58,
 ];
 
 /**
@@ -385,15 +385,15 @@ export const SUB_STORY_GEM_REWARDS: Readonly<Record<string, number>> = Object.fr
 );
 
 /**
- * 전투 서브 — 1-8 수문 아래에서 아모와 리파가 보급 상자를 두고 길을 막는다. 본편 1-8(LV.13)의 공멸 셋과 달리
- * **둘만 서는 정예 변칙**이고 레벨은 한 칸 낮은 LV.12이다(2-7·2-9 정예 둘과 같은 자리 규칙 — 새 유형을 만들지 않는다).
+ * 전투 서브 — 1-8 수문 아래에서 아모와 리파가 보급 상자를 두고 길을 막는다. 본편 1-8(LV.18)의 공멸 셋과 달리
+ * **둘만 서는 정예 변칙**이고 레벨은 한 칸 낮은 LV.17이다(2-7·2-9 정예 둘과 같은 자리 규칙 — 새 유형을 만들지 않는다).
  * 보상은 젬 50뿐이고 치즈케이크는 주지 않는다 — 난이도 검수가 딛고 선 초회 치즈케이크 곡선(`stageDifficulty.test`)을 건드리지 않는다.
  */
 export const SIDE_BATTLE_STAGE: BattleStageDef = {
   kind: "battle", sub: true, elite: true,
   id: "1-8-side-battle", name: "수문 밑 보급전", chapter: 1, chapterOrder: 8,
   prerequisiteStageIds: ["1-8"],
-  enemies: [enemyGrowth("amo", 12, 0), enemyGrowth("ripa", 12, 2)],
+  enemies: [enemyGrowth("amo", 17, 0), enemyGrowth("ripa", 17, 2)],
   rewards: {
     firstClearCheesecake: 0,
     repeatClearCheesecake: 0,
@@ -510,7 +510,7 @@ export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): R
     const enemyRole = enemy.elite === true ? "elite" : role;
     const count = enemy.elite === true ? soloElites : stage.enemies.length;
     // 레벨·유형 뒤 공용 난이도 종족값 보정만 적용한다. 태생 정의와 공속은 바꾸지 않는다.
-    const stats = applyEncounterScaling(base.stats, enemy.level, enemyRole, count);
+    const stats = applyEncounterScaling(base.stats, base.rarity, enemy.level, enemyRole, count);
     for (const key of GROWTH_STAT_KEYS) stats[key] = Math.round(stats[key] * (stage.difficultyStatMultiplier ?? 1));
     return { ...base, encounterRole: enemyRole, stats };
   });

@@ -1,6 +1,6 @@
-import { GROWTH_STAT_KEYS } from "./relicProgression";
+import { GROWTH_STAT_KEYS, breakthroughGrowthPercent } from "./relicProgression";
 import { combatPower, POWER_COMPARISON_SLOTS } from "./combatPower";
-import type { Stats } from "./types";
+import type { RelicRarity, Stats } from "./types";
 
 /**
  * **레벨 디자인 키트** — 적의 세기를 수치가 아니라 **시간**에서 역산하기 위한 한 표.
@@ -179,8 +179,10 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
     /*
      * 셋이 함께 서는 일반 무리도 표시를 한 뼘 무겁게 둔다(응태 요청, 2026-11-12 — "내 전투력이 더 센데 졌다"가 없어야
      * 한다). 대표 두 조합이 50% 넘게 이기는 아군 전투력은 일반 셋의 표시 전투력의 최대 1.15배였다(7-3).
+     * 적이 등급마다 다르게 자라게 되자(같은 날) 6-6(라자·노아·네우리)에서 엘라·마키·스테라가 표시와 같은
+     * 전투력(1.00배)에서야 반을 이겨 ×1.3으로 한 뼘 더 올렸다 — 적이 더 센데 이기는 것은 괜찮지만 약한데 지면 안 된다.
      */
-    powerWeight: 1.2,
+    powerWeight: 1.3,
     ttkSeconds: [10, 16], remainingHp: [0.72, 0.95],
   },
   swarm: {
@@ -288,25 +290,31 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
 };
 
 /**
- * **적 전용 레벨당 성장률(%).**
+ * **적 전용 레벨당 성장률(%) — 등급마다 다르다.**
  *
- * **적은 적이다**(응태 결정, 2026-11-12). 적의 세기는 레벨 하나가 말한다 — 태생 층으로 표시 레벨을 낮추거나
- * 돌파 몫(+10%p)을 숨겨 얹지 않고, 레벨에 상한도 두지 않는다. 그 대신 적은 레벨마다 플레이어(R 2.2 · SR 2.4 · SSR 2.6)보다
- * 가파르게 자란다(3.6%) — 스토리 마지막 보스 카르가 LV.60 언저리에서 예전 「기준 98」의 세기를 내고, 모든 적이 같은 선 위에
- * 선다. 2.2%이던 때의 레벨 `L`(돌파 몫 포함)은 `1 + 예전 증가분 / 0.036`으로 옮겨 세기를 지켰다.
+ * **적은 적이다**(응태 결정, 2026-11-12). 적의 세기는 레벨 하나가 말하고 레벨에 상한이 없다. 그 위에서 **적도 아군처럼**
+ * 등급이 레벨당 성장을 가르고(아군 R 2.2 · SR 2.4 · SSR 2.6과 같은 비례), 돌파 단계마다 오각형 다섯에 아군과 같은 +10%p를
+ * 받는다(`breakthroughGrowthPercent` — 적의 돌파는 레벨이 정한다, `ENEMY_BREAKTHROUGH_LEVELS`). 값은 아군보다 가팔라
+ * SSR 카르가 LV.60 언저리에서 예전 단일 성장 3.6%의 LV.60과 같은 세기(×3.1)를 낸다. 다른 콘텐츠의 레벨은 3.6% 시절의
+ * 세기를 그 개체 등급의 새 곡선 위로 옮겨 적었다.
  */
-export const ENEMY_LEVEL_GROWTH_PERCENT = 3.6;
+export const ENEMY_RARITY_LEVEL_GROWTH: Readonly<Record<RelicRarity, number>> = {
+  R: 2.5,
+  SR: 2.75,
+  SSR: 3,
+};
 
-/** 레벨 1을 기본치로 두고 레벨당 정해진 비율로 자란 배수다. 플레이어와 같은 선형 누적이다. */
-export function enemyLevelMultiplier(level: number): number {
+/** 레벨 1을 기본치로 두고 등급 성장 + 그 레벨의 돌파 몫으로 자란 배수다. 플레이어와 같은 선형 누적이다. */
+export function enemyLevelMultiplier(level: number, rarity: RelicRarity): number {
   if (!Number.isInteger(level) || level < 1) throw new RangeError("적 레벨은 1 이상의 정수여야 합니다.");
-  return 1 + (level - 1) * ENEMY_LEVEL_GROWTH_PERCENT / 100;
+  return 1 + ((level - 1) * ENEMY_RARITY_LEVEL_GROWTH[rarity] + breakthroughGrowthPercent(requiredBreakthroughForLevel(level))) / 100;
 }
 
 /**
- * 적 하나의 전투 능력치 — **레벨로 자라고 유형으로 몫을 받는다.**
+ * 적 하나의 전투 능력치 — **등급·레벨로 자라고 유형으로 몫을 받는다.**
  *
- * 돌파 등급은 그 레벨이 여는 스킬 칸만 정하고 능력치를 얹지 않는다(「적은 적이다」 — 세기는 레벨 하나가 말한다).
+ * 돌파 등급은 그 레벨이 정하고(스킬 칸과 +10%p씩의 능력치 몫을 함께 연다), 등급은 **필수 인자**다 — 기본값을 두면 새
+ * 호출부가 등급을 빠뜨린 채 모두 같은 속도로 자란다(아군 `applyLevelGrowth`와 같은 이유).
  *
  * 성장이 올리는 것은 플레이어와 같은 오각형 다섯뿐이고(`GROWTH_STAT_KEYS`), 공속·이속·치명타
  * 같은 나머지는 그 개체의 정의가 그대로 갖는다. 유형 배수도 **체력과 공격 두 축에만** 걸어
@@ -314,12 +322,13 @@ export function enemyLevelMultiplier(level: number): number {
  */
 export function applyEncounterScaling(
   base: Stats,
+  rarity: RelicRarity,
   level: number,
   role: EncounterRole,
   countOnField: number = ENCOUNTER_ROLE[role].count,
 ): Stats {
   const spec = ENCOUNTER_ROLE[role];
-  const growth = enemyLevelMultiplier(level);
+  const growth = enemyLevelMultiplier(level, rarity);
   const result = { ...base };
   for (const key of GROWTH_STAT_KEYS) result[key] = Math.round(base[key] * growth);
   result.hp = Math.round(result.hp * encounterHpShare(role, countOnField));
@@ -374,13 +383,10 @@ export function encounterGroupPower(units: readonly { stats: Stats; encounterRol
 }
 
 /**
- * 적의 돌파 단계가 열리는 레벨 — 1 · 2 · 3 · 4단계가 이 레벨부터 선다.
- *
- * 돌파 등급은 적에게 **스킬 칸**만 연다(능력치는 레벨 하나가 낸다). 성장을 3.6%로 올리며 레벨이 눌렸으므로, 예전에 각
- * 단계가 열리던 레벨(21 · 31 · 41 · 51, 성장 2.2%)을 **같은 세기의 레벨**로 옮겨 적었다(1장은 돌파 없이 끝나도록 한 칸 올림) — 그대로 두면 같은 적이 스킬 칸
- * 하나를 잃는다. 적에게는 레벨 상한이 없고 마지막 단계 뒤로는 4단계로 선다.
+ * 적의 돌파 단계가 열리는 레벨 — 1 · 2 · 3 · 4단계가 이 레벨부터 선다(응태 결정 2026-11-12, 아군의 한계 돌파 문턱 20 · 30 · 40 · 50
+ * 바로 다음 레벨). 단계마다 스킬 칸과 오각형 +10%p를 함께 연다. 적에게는 레벨 상한이 없고 마지막 단계 뒤로는 4단계로 선다.
  */
-export const ENEMY_BREAKTHROUGH_LEVELS: readonly number[] = [15, 21, 27, 33];
+export const ENEMY_BREAKTHROUGH_LEVELS: readonly number[] = [21, 31, 41, 51];
 
 /** 그 레벨의 적이 지니는 돌파 단계(`ENEMY_BREAKTHROUGH_LEVELS`). */
 export function requiredBreakthroughForLevel(level: number): number {

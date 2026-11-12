@@ -153,7 +153,6 @@ export const INFO_TH = {
   "info.resonance": "การสั่นพ้อง",
   "info.resonance.max": "สั่นพ้องสูงสุด",
   "info.resonance.do": "สั่นพ้อง",
-  "info.resonance.stage": "สั่นพ้อง {stage}",
   "info.resonance.stat": "ค่าสถานะ",
   "info.resonance.pvpOff": "การสั่นพ้องไม่มีผลในการดวลและอารีนา",
   "info.resonance.alreadyMax": "สั่นพ้องถึง V แล้ว ตัวซ้ำจะกลายเป็นไมล์ DNA",

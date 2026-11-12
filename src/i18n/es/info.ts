@@ -153,7 +153,6 @@ export const INFO_ES = {
   "info.resonance": "Resonancia",
   "info.resonance.max": "Resonancia máx.",
   "info.resonance.do": "Resonar",
-  "info.resonance.stage": "Resonancia {stage}",
   "info.resonance.stat": "Atributos",
   "info.resonance.pvpOff": "La resonancia no se aplica en Duelos ni en la Arena",
   "info.resonance.alreadyMax": "Ya está en Resonancia V. Los duplicados se convierten en Millas de ADN.",

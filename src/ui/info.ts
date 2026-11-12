@@ -47,7 +47,7 @@ import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { openElementPopup, openRolePopup } from "./affinityPopups";
 import { breakthroughEffectText, breakthroughEffectKeywords } from "./skillPresentation";
 import { formatBreakthroughDescription } from "./skillExplanation";
-import { addBreakthroughGradeMark, addResonanceMark, RARITY_TONE, BREAKTHROUGH_GRADE_ROMAN } from "./rarityMark";
+import { addBreakthroughGradeMark, addResonanceGradeMark, addResonanceMark, RARITY_TONE } from "./rarityMark";
 import { RESONANCE_CAP, RESONANCE_CHEESECAKE, RESONANCE_STAT_PERCENT, canResonate, resonanceFragmentCost, resonanceFragmentSpend, resonanceOf } from "../core/relicResonance";
 import { addFramedIcon, addItemFrame } from "./itemFrame";
 import { FaceFrame } from "./FaceFrame";
@@ -1330,20 +1330,18 @@ export class InfoManager {
   /**
    * 공명 확정 — 돌파 확정 창과 같은 판·같은 액자를 쓰고, 오르는 것만 다르다.
    *
-   * 공명은 레벨 상한을 열지 않고 오각형 다섯을 단계마다 3% 올린다. 그래서 등급 글자 자리에 `공명 n ▶ n+1`,
+   * 공명은 레벨 상한을 열지 않고 오각형 다섯을 단계마다 5% 올린다. 그래서 등급 글자 자리에 붉은 로마자 `n ▶ n+1`,
    * 상한 줄 자리에 `능력치 +a% ▶ +b%`가 서고, 레벨 액자는 없다(공명에는 레벨 조건이 없다).
    * 결투·아레나에서는 꺼진다는 것도 그 줄 아래 한 마디로 말한다 — 모르고 올리면 대인전에서 왜 같은지 묻게 된다.
    */
   private paintResonanceConfirm(body: Phaser.GameObjects.Container, close: () => void, def: RelicDef, progress: RelicProgress, height: number): void {
     const top = -height / 2;
     const resonance = resonanceOf(progress);
-    const stage = (value: number, x: number, color: string, size: number): void => {
-      body.add(this.scene.add.text(x, top + BREAK_CONFIRM.gradeY, t("info.resonance.stage", { stage: BREAKTHROUGH_GRADE_ROMAN[value - 1] ?? "0" }), textStyle({ role: "display", size, color })).setOrigin(0.5));
-    };
-    if (resonance > 0) stage(resonance, -170, COLOR.inkDim, 44);
-    else body.add(this.scene.add.text(-170, top + BREAK_CONFIRM.gradeY, "—", textStyle({ role: "display", size: 44, color: COLOR.inkDim })).setOrigin(0.5));
+    // 공명 단계는 「공명 n」 글자가 아니라 붉은 로마자 표식으로 선다 — 정보창의 표식과 같은 한 장이다.
+    if (resonance > 0) addResonanceGradeMark(this.scene, body, -140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize * 0.82, resonance);
+    else body.add(this.scene.add.text(-140, top + BREAK_CONFIRM.gradeY, "—", textStyle({ role: "display", size: 44, color: COLOR.inkDim })).setOrigin(0.5));
     body.add(this.scene.add.text(0, top + BREAK_CONFIRM.gradeY, "▶", textStyle({ role: "display", size: 34, color: COLOR.inkDim })).setOrigin(0.5));
-    stage(resonance + 1, 170, COLOR.accentText, 52);
+    addResonanceGradeMark(this.scene, body, 140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize, resonance + 1);
 
     // 오르는 몫은 능력치 비율이라 상한 줄과 같은 자리·같은 무게로 선다.
     const line = this.scene.add.container(0, top + BREAK_CONFIRM.capY);

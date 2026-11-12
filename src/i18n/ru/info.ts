@@ -153,7 +153,6 @@ export const INFO_RU = {
   "info.resonance": "Резонанс",
   "info.resonance.max": "Резонанс макс.",
   "info.resonance.do": "Резонировать",
-  "info.resonance.stage": "Резонанс {stage}",
   "info.resonance.stat": "Параметры",
   "info.resonance.pvpOff": "Резонанс не действует в дуэлях и на арене",
   "info.resonance.alreadyMax": "Резонанс V уже достигнут. Дубликаты становятся милями ДНК.",

@@ -153,7 +153,6 @@ export const INFO_DE = {
   "info.resonance": "Resonanz",
   "info.resonance.max": "Max. Resonanz",
   "info.resonance.do": "Resonieren",
-  "info.resonance.stage": "Resonanz {stage}",
   "info.resonance.stat": "Werte",
   "info.resonance.pvpOff": "Resonanz gilt nicht in Duellen und der Arena",
   "info.resonance.alreadyMax": "Bereits Resonanz V. Duplikate werden zu DNA-Meilen.",

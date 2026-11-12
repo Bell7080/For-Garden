@@ -153,7 +153,6 @@ export const INFO_ID = {
   "info.resonance": "Resonansi",
   "info.resonance.max": "Resonansi Penuh",
   "info.resonance.do": "Resonansikan",
-  "info.resonance.stage": "Resonansi {stage}",
   "info.resonance.stat": "Statistik",
   "info.resonance.pvpOff": "Resonansi tidak berlaku di Duel dan Arena",
   "info.resonance.alreadyMax": "Sudah di Resonansi V. Duplikat menjadi Mil DNA.",

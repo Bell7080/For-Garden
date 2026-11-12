@@ -166,7 +166,6 @@ export const INFO_KO = {
   "info.resonance": "공명",
   "info.resonance.max": "공명 완료",
   "info.resonance.do": "공명하기",
-  "info.resonance.stage": "공명 {stage}",
   "info.resonance.stat": "능력치",
   "info.resonance.pvpOff": "결투·아레나에서는 공명이 적용되지 않습니다",
   "info.resonance.alreadyMax": "이미 공명 V다. 중복은 DNA 마일리지로 쌓인다.",

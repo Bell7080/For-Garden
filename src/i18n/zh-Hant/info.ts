@@ -153,7 +153,6 @@ export const INFO_ZH_HANT = {
   "info.resonance": "共鳴",
   "info.resonance.max": "共鳴已滿",
   "info.resonance.do": "進行共鳴",
-  "info.resonance.stage": "共鳴{stage}",
   "info.resonance.stat": "能力值",
   "info.resonance.pvpOff": "決鬥與競技場中不生效共鳴",
   "info.resonance.alreadyMax": "已達共鳴V。重複獲得將轉為DNA里程。",

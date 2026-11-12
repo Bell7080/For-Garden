@@ -153,7 +153,6 @@ export const INFO_EN = {
   "info.resonance": "Resonance",
   "info.resonance.max": "Max Resonance",
   "info.resonance.do": "Resonate",
-  "info.resonance.stage": "Resonance {stage}",
   "info.resonance.stat": "Stats",
   "info.resonance.pvpOff": "Resonance does not apply in Duels or the Arena",
   "info.resonance.alreadyMax": "Already at Resonance V. Duplicates become DNA Mileage.",

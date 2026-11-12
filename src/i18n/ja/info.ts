@@ -162,7 +162,6 @@ export const INFO_JA = {
   "info.resonance": "共鳴",
   "info.resonance.max": "共鳴完了",
   "info.resonance.do": "共鳴する",
-  "info.resonance.stage": "共鳴{stage}",
   "info.resonance.stat": "能力値",
   "info.resonance.pvpOff": "決闘・アリーナでは共鳴は適用されません",
   "info.resonance.alreadyMax": "すでに共鳴Vだ。重複はDNAマイレージになる。",

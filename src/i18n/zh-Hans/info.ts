@@ -153,7 +153,6 @@ export const INFO_ZH_HANS = {
   "info.resonance": "共鸣",
   "info.resonance.max": "共鸣已满",
   "info.resonance.do": "进行共鸣",
-  "info.resonance.stage": "共鸣{stage}",
   "info.resonance.stat": "能力值",
   "info.resonance.pvpOff": "决斗与竞技场中不生效共鸣",
   "info.resonance.alreadyMax": "已达共鸣V。重复获得将转为DNA里程。",

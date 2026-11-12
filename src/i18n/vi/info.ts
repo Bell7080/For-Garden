@@ -153,7 +153,6 @@ export const INFO_VI = {
   "info.resonance": "Cộng hưởng",
   "info.resonance.max": "Cộng hưởng tối đa",
   "info.resonance.do": "Cộng hưởng",
-  "info.resonance.stage": "Cộng hưởng {stage}",
   "info.resonance.stat": "Chỉ số",
   "info.resonance.pvpOff": "Cộng hưởng không áp dụng trong Đấu tay đôi và Đấu trường",
   "info.resonance.alreadyMax": "Đã đạt Cộng hưởng V. Trùng lặp sẽ thành Dặm DNA.",

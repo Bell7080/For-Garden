@@ -619,6 +619,8 @@ export default {
   "keyword.charge.description": "It drives straight through without stopping. Move Speed sets the distance, so faster feet cut deeper, and every enemy on the path is hit.",
   "keyword.tailwind.term": "Tailwind",
   "keyword.tailwind.description": "For a set time, Attack Speed and Move Speed each rise by 20%. Receiving Tailwind again refreshes it to whichever duration is longer.",
+  "keyword.presence.term": "Presence",
+  "keyword.presence.description": "How strongly a unit draws enemies when they pick a target. The higher a role's presence, the sooner it is targeted, even from a little farther away (Tank > Warrior > Assassin > Support).",
   "keyword.regeneration.term": "Regeneration",
   "keyword.regeneration.description": "Restores HP at a fixed interval for a set time.",
   "keyword.stun.term": "Stun",

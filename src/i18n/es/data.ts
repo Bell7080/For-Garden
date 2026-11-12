@@ -601,6 +601,8 @@ export default {
   "keyword.charge.description": "Atraviesa en línea recta sin detenerse. La Velocidad de movimiento marca la distancia, así que cuanto más rápido, más hondo llega, y golpea a todos los enemigos del recorrido.",
   "keyword.tailwind.term": "Viento a favor",
   "keyword.tailwind.description": "Durante un tiempo, la Velocidad de ataque y la de movimiento suben un 20% cada una. Recibir Viento a favor de nuevo lo renueva a la duración más larga.",
+  "keyword.presence.term": "Presencia",
+  "keyword.presence.description": "Cuánto atrae una unidad al enemigo cuando este elige objetivo. Cuanta más presencia tenga un rol, antes lo atacan, aunque esté un poco más lejos (Tanque > Guerrero > Asesino > Apoyo).",
   "keyword.regeneration.term": "Regeneración",
   "keyword.regeneration.description": "Recupera PV a intervalos fijos durante un tiempo.",
   "keyword.stun.term": "Aturdimiento",

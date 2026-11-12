@@ -601,6 +601,8 @@ export default {
   "keyword.charge.description": "Avança em linha reta sem parar. A Velocidade de movimento define a distância, então pés mais rápidos vão mais fundo, e todos os inimigos no caminho são atingidos.",
   "keyword.tailwind.term": "Vento a favor",
   "keyword.tailwind.description": "Por um tempo, a Velocidade de ataque e a de movimento sobem 20% cada. Receber Vento a favor de novo renova para a duração mais longa.",
+  "keyword.presence.term": "Presença",
+  "keyword.presence.description": "O quanto uma unidade atrai o inimigo quando ele escolhe um alvo. Quanto maior a presença da função, mais cedo é visada, mesmo um pouco mais longe (Tanque > Guerreiro > Assassino > Suporte).",
   "keyword.regeneration.term": "Regeneração",
   "keyword.regeneration.description": "Recupera PV em intervalos fixos por um tempo.",
   "keyword.stun.term": "Atordoamento",

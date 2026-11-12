@@ -601,6 +601,8 @@ export default {
   "keyword.charge.description": "Menerobos lurus tanpa berhenti. Kecepatan Gerak menentukan jarak, kaki yang lebih cepat menembus lebih dalam, dan semua musuh di jalur terkena.",
   "keyword.tailwind.term": "Angin Buritan",
   "keyword.tailwind.description": "Selama waktu tertentu, Kecepatan Serang dan Kecepatan Gerak masing-masing naik 20%. Menerima Angin Buritan lagi menyegarkan ke durasi yang lebih panjang.",
+  "keyword.presence.term": "Daya Tarik",
+  "keyword.presence.description": "Seberapa kuat unit menarik musuh saat musuh memilih target. Makin besar daya tarik suatu peran, makin cepat ia diincar meski sedikit lebih jauh (Tank > Petarung > Pembunuh > Pendukung).",
   "keyword.regeneration.term": "Regenerasi",
   "keyword.regeneration.description": "Memulihkan HP pada interval tetap selama waktu tertentu.",
   "keyword.stun.term": "Pingsan",

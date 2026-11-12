@@ -13,6 +13,8 @@ import {
 } from "./elementChart";
 import { drawLayer, slantedRect } from "./holo";
 import { PopupLayer } from "./PopupLayer";
+import { KeywordManager } from "../managers/KeywordManager";
+import { findKeyword } from "../data/keywords";
 import { COLOR, textStyle } from "./theme";
 
 /** 배율은 표에서 온다. 화면이 1.25·0.8을 손으로 적으면 상성을 고친 날 그 글자만 남는다. */
@@ -103,7 +105,7 @@ export function openRolePopup(scene: Phaser.Scene, popups: PopupLayer, role: Rol
       body.add(scene.add
         .text(0, -height / 2 + iconTop + ROLE_NOTE.icon + 36, t(`role.desc.${role}`), style)
         .setOrigin(0.5, 0));
-      addPresenceLine(scene, body, -height / 2 + iconTop + ROLE_NOTE.icon + 36 + textHeight + presenceGap, role);
+      addPresenceLine(scene, popups, body, -height / 2 + iconTop + ROLE_NOTE.icon + 36 + textHeight + presenceGap, role);
     },
   );
 }
@@ -112,8 +114,21 @@ export function openRolePopup(scene: Phaser.Scene, popups: PopupLayer, role: Rol
  * 존재감 순서 한 줄 — 이름표 아래에 `탱커 > 전사 > 암살자 > 지원가`가 서고 지금 직군만 강조색이다.
  * 글자 조각을 이어 세우므로 가운데 정렬은 다 세운 뒤 전체 폭에서 맞춘다.
  */
-function addPresenceLine(scene: Phaser.Scene, body: Phaser.GameObjects.Container, top: number, role: Role): void {
-  body.add(scene.add.text(0, top, t("role.presence"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5, 0));
+function addPresenceLine(scene: Phaser.Scene, popups: PopupLayer, body: Phaser.GameObjects.Container, top: number, role: Role): void {
+  // 이름표는 규칙어 태그처럼 강조색·밑줄로 서고, 누르면 존재감이 무엇인지(표적을 고를 때의 끌림) 쪽지가 한 겹 더 뜬다.
+  const label = scene.add.text(0, top, t("role.presence"), textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0.5, 0);
+  body.add(label);
+  const underline = scene.add.graphics();
+  underline.lineStyle(2, COLOR.accent, 0.85);
+  underline.lineBetween(-label.width / 2, top + label.height - 2, label.width / 2, top + label.height - 2);
+  body.add(underline);
+  const keyword = findKeyword("presence");
+  if (keyword) {
+    const hit = scene.add.rectangle(0, top + label.height / 2, label.width + 16, Math.max(label.height, 44), 0xffffff, 0)
+      .setInteractive({ useHandCursor: true });
+    hit.on("pointerup", (pointer: Phaser.Input.Pointer) => new KeywordManager(scene, popups).explain(keyword, { x: pointer.worldX, y: pointer.worldY - 20 }));
+    body.add(hit);
+  }
   const y = top + 30 + 10;
   const parts: Phaser.GameObjects.Text[] = [];
   ROLE_PRESENCE_ORDER.forEach((entry, index) => {

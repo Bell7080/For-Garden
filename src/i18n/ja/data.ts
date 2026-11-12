@@ -784,6 +784,8 @@ export default {
   "keyword.charge.description": "止まらずに突き抜ける。進む距離は移動速度が決めるので足が速いほど深く踏み込み、通り過ぎた道にいた敵はすべて当たる。",
   "keyword.tailwind.term": "追い風",
   "keyword.tailwind.description": "決められた時間、攻撃速度と移動速度がそれぞれ20%上がる。同じ追い風を再び受けると、残り時間の長い方へ更新される。",
+  "keyword.presence.term": "存在感",
+  "keyword.presence.description": "敵が標的を選ぶときに引きつける度合い。存在感の大きい職業ほど、少し遠くにいても近い敵のように先に狙われる(タンク > ウォリアー > アサシン > サポーター)。",
   "keyword.regeneration.term": "継続回復",
   "keyword.regeneration.description": "決められた時間、一定の間隔で体力を回復する。",
   "keyword.stun.term": "気絶",

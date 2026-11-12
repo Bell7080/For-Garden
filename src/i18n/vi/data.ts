@@ -601,6 +601,8 @@ export default {
   "keyword.charge.description": "Lao thẳng không dừng. Tốc chạy quyết định quãng đường, chân càng nhanh càng lao sâu, và mọi kẻ địch trên đường đều trúng.",
   "keyword.tailwind.term": "Gió thuận",
   "keyword.tailwind.description": "Trong một khoảng thời gian, Tốc đánh và Tốc chạy mỗi thứ tăng 20%. Nhận Gió thuận lần nữa sẽ làm mới theo thời lượng dài hơn.",
+  "keyword.presence.term": "Sự hiện diện",
+  "keyword.presence.description": "Mức độ thu hút kẻ địch khi chúng chọn mục tiêu. Hệ có sự hiện diện càng lớn càng bị nhắm trước, dù đứng xa hơn một chút (Đỡ đòn > Chiến binh > Sát thủ > Hỗ trợ).",
   "keyword.regeneration.term": "Tái tạo",
   "keyword.regeneration.description": "Hồi máu theo chu kỳ cố định trong một khoảng thời gian.",
   "keyword.stun.term": "Choáng",

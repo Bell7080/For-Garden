@@ -99,6 +99,13 @@ export const KEYWORDS: readonly KeywordDef[] = [
     kind: "debuff",
     description: `${BLEED.minor.seconds}초 동안 매초 최대 체력의 ${BLEED.minor.percentPerSecond}% 고정 피해를 입는다. 약한 재적용은 더 강한 출혈을 덮지 않는다.`,
   },
+  {
+    // 깊은 출혈은 렉시아(돌파)와 마가사(다지기)가 함께 쓴다 — 배율·회복 감소는 개체마다 달라 태그는 수치를 갖지 않고 본문이 적는다.
+    id: "deep-bleed",
+    term: "깊은 출혈",
+    kind: "debuff",
+    description: "더 깊게 벌어진 [[bleed|출혈]]이다. 매초 더 큰 비율의 고정 피해를 입고, 지속되는 동안 받는 회복량이 줄어든다.",
+  },
   // 중독은 쓰는 개체가 델로피 하나뿐이라 태그가 매초 계수를 가진다. 다만 **시간**은 출혈과
   // 같은 이유로 스킬마다 본문이 적는다 — 시간이 다른 개체가 생기는 순간 태그가 거짓말이 된다.
   {

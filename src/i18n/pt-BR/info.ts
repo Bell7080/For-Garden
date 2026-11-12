@@ -76,7 +76,7 @@ export const INFO_PT_BR = {
   "info.reset": "Redefinir",
   "info.reset.title": "Redefinir nível",
   "info.reset.confirm": "Redefinir",
-  "info.reset.plea": "Hã… você vai mesmo\nme fazer voltar ao início?",
+  "info.reset.plea": "Hã… vai mesmo me fazer\nvoltar ao início?",
   "info.reset.wallet": "Mudança de moedas",
   "info.reset.keep": "Ruptura, Vínculo e Runas são mantidos.",
   "info.reset.free": "Grátis!",

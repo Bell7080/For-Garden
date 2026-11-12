@@ -302,6 +302,7 @@ export const MISC_PT_BR = {
   "role.desc.tank": "O escudo da linha de frente. Provoca os inimigos e absorve seus ataques pelos aliados, no centro da frente da formação.",
   "role.desc.assassin": "Infiltra-se nas linhas inimigas com furtividade e teleportes, abatendo rápido alvos frágeis. Bate forte, mas dura pouco. Fica à esquerda da formação.",
   "role.desc.support": "Vira a batalha com cura, escudos, bônus e penalidades. Mantém os aliados de pé em vez de finalizar inimigos. Fica à direita da formação.",
+  "role.presence": "Presença que atrai os inimigos",
   "trade.value": "Valor {percent}%",
   "trade.tag.once": "Oferta única",
   "trade.tag.daily": "Oferta do dia",

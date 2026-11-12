@@ -76,7 +76,7 @@ export const INFO_RU = {
   "info.reset": "Сброс",
   "info.reset.title": "Сброс уровня",
   "info.reset.confirm": "Сбросить",
-  "info.reset.plea": "Эм… ты правда хочешь\nвернуть меня к началу?",
+  "info.reset.plea": "Эм… вы правда хотите\nвернуть меня к началу?",
   "info.reset.wallet": "Изменение валюты",
   "info.reset.keep": "Прорыв, Связь и Руны сохраняются.",
   "info.reset.free": "Бесплатно!",

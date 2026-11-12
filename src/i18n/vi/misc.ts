@@ -302,6 +302,7 @@ export const MISC_VI = {
   "role.desc.tank": "Tấm khiên ở tuyến đầu. Khiêu khích kẻ địch và gánh đòn thay đồng minh, đứng giữa hàng đầu đội hình.",
   "role.desc.assassin": "Lẻn sâu vào hàng địch bằng tàng hình và dịch chuyển, hạ nhanh mục tiêu yếu. Đánh mạnh nhưng không trụ lâu. Đứng bên trái đội hình.",
   "role.desc.support": "Xoay chuyển trận đấu bằng hồi máu, khiên, buff và debuff. Giữ đồng minh đứng vững hơn là kết liễu kẻ địch. Đứng bên phải đội hình.",
+  "role.presence": "Mức thu hút sự chú ý của địch",
   "trade.value": "Giá trị {percent}%",
   "trade.tag.once": "Ưu đãi một lần",
   "trade.tag.daily": "Ưu đãi hôm nay",

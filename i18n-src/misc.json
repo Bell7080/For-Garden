@@ -2411,6 +2411,16 @@
 "Wendet den Kampf mit Heilung, Schilden, Buffs und Debuffs. Hält Verbündete lieber auf den Beinen, als Gegner zu erledigen. Steht rechts in der Formation.",
 "Меняет ход боя лечением, щитами, баффами и дебаффами. Держит союзников на ногах, а не добивает врагов. Стоит справа в построении."
 ],
+"role.presence": [
+"吸引敌人注意的存在感",
+"ความโดดเด่นที่ดึงความสนใจศัตรู",
+"Mức thu hút sự chú ý của địch",
+"Daya tarik perhatian musuh",
+"Presencia que atrae al enemigo",
+"Presença que atrai os inimigos",
+"Präsenz, die Gegner anzieht",
+"Насколько привлекает внимание врагов"
+],
 "trade.value": [
 "价值 {percent}%",
 "ความคุ้มค่า {percent}%",

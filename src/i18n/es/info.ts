@@ -76,7 +76,7 @@ export const INFO_ES = {
   "info.reset": "Reiniciar",
   "info.reset.title": "Reiniciar nivel",
   "info.reset.confirm": "Reiniciar",
-  "info.reset.plea": "Eh… ¿de verdad vas a\ndevolverme al principio?",
+  "info.reset.plea": "Eh… ¿de verdad me va a\ndevolver al principio?",
   "info.reset.wallet": "Cambio de monedas",
   "info.reset.keep": "La Ruptura, el Vínculo y las Runas se conservan.",
   "info.reset.free": "¡Gratis!",

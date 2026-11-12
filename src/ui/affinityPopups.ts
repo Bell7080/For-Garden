@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import type { Element, Role } from "../core/types";
 import { ELEMENT_ADVANTAGE_MULTIPLIER, ELEMENT_DISADVANTAGE_MULTIPLIER } from "../core/element";
+import { ROLE_PRESENCE_ORDER } from "../core/skirmish";
 import { AffinityBadge } from "./AffinityBadge";
 import { AFFINITY_GLOW, ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import {
@@ -81,9 +82,9 @@ export function openElementPopup(scene: Phaser.Scene, popups: PopupLayer, elemen
 /**
  * 직군 하나의 쪽지.
  *
- * **숨은 보정치를 말하지 않는다** — 직군은 데이터 태그일 뿐이라(`docs/combat-affinities.md`),
- * 여기 적는 것은 그 자리가 전장에서 무엇을 하는 자리인가까지다. 실제 성능은 능력치와 스킬이
- * 정하고 그것들은 제 칸이 이미 말하고 있다.
+ * 그 자리가 전장에서 무엇을 하는 자리인가와, 직군이 전투에 주는 **단 하나의 몫**인 존재감
+ * 순서(적이 먼저 노리는 순서 — `SKIRMISH.rolePull`)를 적는다. 숨은 값으로 남기지 않으려고
+ * 네 직군 모두 같은 줄을 세우고, 지금 보는 직군만 강조색으로 칠한다.
  */
 export function openRolePopup(scene: Phaser.Scene, popups: PopupLayer, role: Role, anchor?: { x: number; y: number }): void {
   // 판 높이는 설명이 실제로 차지한 높이에서 거꾸로 구한다 — 언어마다 줄 수가 다르다.
@@ -92,7 +93,9 @@ export function openRolePopup(scene: Phaser.Scene, popups: PopupLayer, role: Rol
   const textHeight = probe.height;
   probe.destroy();
   const iconTop = 76;
-  const height = iconTop + ROLE_NOTE.icon + 36 + textHeight + 60;
+  const presenceGap = 40;
+  const presenceBlock = 30 + 10 + 36;
+  const height = iconTop + ROLE_NOTE.icon + 36 + textHeight + presenceGap + presenceBlock + 56;
   popups.open(
     { width: ROLE_NOTE.width, height, title: t(`role.${role}`), closeOnBackdrop: true, hideCloseButton: true, ...(anchor ? { anchor } : {}) },
     (body) => {
@@ -100,8 +103,36 @@ export function openRolePopup(scene: Phaser.Scene, popups: PopupLayer, role: Rol
       body.add(scene.add
         .text(0, -height / 2 + iconTop + ROLE_NOTE.icon + 36, t(`role.desc.${role}`), style)
         .setOrigin(0.5, 0));
+      addPresenceLine(scene, body, -height / 2 + iconTop + ROLE_NOTE.icon + 36 + textHeight + presenceGap, role);
     },
   );
+}
+
+/**
+ * 존재감 순서 한 줄 — 이름표 아래에 `탱커 > 전사 > 암살자 > 지원가`가 서고 지금 직군만 강조색이다.
+ * 글자 조각을 이어 세우므로 가운데 정렬은 다 세운 뒤 전체 폭에서 맞춘다.
+ */
+function addPresenceLine(scene: Phaser.Scene, body: Phaser.GameObjects.Container, top: number, role: Role): void {
+  body.add(scene.add.text(0, top, t("role.presence"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5, 0));
+  const y = top + 30 + 10;
+  const parts: Phaser.GameObjects.Text[] = [];
+  ROLE_PRESENCE_ORDER.forEach((entry, index) => {
+    if (index > 0) parts.push(scene.add.text(0, y, " > ", textStyle({ role: "body", size: 24, color: COLOR.inkDim })));
+    const active = entry === role;
+    const style = active
+      ? textStyle({ role: "display", size: 28, color: `#${COLOR.accent.toString(16).padStart(6, "0")}` })
+      : textStyle({ role: "body", size: 24, color: COLOR.ink });
+    parts.push(scene.add.text(0, y, t(`role.${entry}`), style));
+  });
+  // 직군 이름이 긴 언어에서 판 밖으로 나가지 않게 줄 전체를 가로로만 누른다(`squeezeTextToWidth`와 같은 결).
+  const natural = parts.reduce((sum, part) => sum + part.width, 0);
+  const squeeze = Math.min(1, (ROLE_NOTE.width - 80) / natural);
+  let x = -natural * squeeze / 2;
+  for (const part of parts) {
+    part.setOrigin(0, 0).setPosition(x, y + (36 - part.height) / 2).setScale(squeeze, 1);
+    x += part.width * squeeze;
+    body.add(part);
+  }
 }
 
 /** 유리·불리 한 줄. 이름표가 왼쪽, 그 관계의 속성 둘이 오른쪽에 선다. */

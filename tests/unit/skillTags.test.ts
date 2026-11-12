@@ -52,7 +52,10 @@ describe("스킬 요약 칩 규격", () => {
     expect(head("anka", "passive")).toEqual(["강화", "마법 피해"]);
     expect(head("yuti", "basic")).toEqual(["물리 피해", "고정 피해"]);
     expect(head("noa", "ultimate")[0]).toBe("고정 피해");
-    expect(head("rex", "basic")).toEqual(["물리 피해", "단일"]);
+    // 출혈(최대 체력 비례, 방어·저항을 지난다)과 빙결 해제 피해도 고정이다
+    expect(head("rex", "basic")).toEqual(["물리 피해", "고정 피해"]);
+    expect(head("maddy", "passive")).toEqual(["강화", "고정 피해"]);
+    expect(head("irna", "basic")).toEqual(["물리 피해", "단일"]);
   });
 
   it("상태 효과는 갈래 색으로 갈리고 시간을 함께 말한다", () => {
@@ -67,6 +70,15 @@ describe("스킬 요약 칩 규격", () => {
     expect(buildSkillTags({ slot: "ferocity", effectType: "buff" }).map((tag) => tag.text)).toContain("폭주 중");
     expect(buildSkillTags({ slot: "ultimate", effectType: "buff", durationSeconds: 6 }).map((tag) => tag.text)).toContain("지속 6초");
     expect(buildSkillTags({ slot: "basic", effectType: "physical" }).map((tag) => tag.text)).toEqual(["물리 피해", "단일", "즉발"]);
+  });
+
+  it("연발 궁극기(테쿠)는 한 명이 아니라 여럿에게 나눠 맞히는 총 발 수를 말한다", () => {
+    setTextLanguage("ko");
+    const teku = RELICS.find((def) => def.id === "teku")!;
+    const tags = skillTagsFromDef(teku.ultimate, "ultimate").map((tag) => tag.text);
+    expect(tags).toContain("다중");
+    expect(tags).toContain("총 5발");
+    expect(tags).not.toContain("단일");
   });
 
   it.each(LANGUAGE_IDS)("%s: 모든 칩 글이 채워지고 규칙어가 사전에서 열린다", async (locale) => {

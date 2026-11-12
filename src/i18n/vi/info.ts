@@ -76,7 +76,7 @@ export const INFO_VI = {
   "info.reset": "Đặt lại",
   "info.reset.title": "Đặt lại cấp độ",
   "info.reset.confirm": "Đặt lại",
-  "info.reset.plea": "Ừm… bạn thật sự muốn\nđưa tôi về lúc đầu sao?",
+  "info.reset.plea": "Dạ… bạn thật sự muốn\nđưa tôi về lúc đầu ạ?",
   "info.reset.wallet": "Thay đổi tiền tệ",
   "info.reset.keep": "Đột phá, Gắn kết và Rune được giữ nguyên.",
   "info.reset.free": "Miễn phí!",

@@ -461,8 +461,8 @@ export const RELICS: RelicDef[] = [
       effectType: "buff",
       value: 3,
       // 태생 치명타는 전 개체 공통이므로 암살자의 치명타형 정체성은 패시브가 만든다.
-      // 연격이 한 행동에 두 번 판정하므로 렉시아·루카보다 낮은 값으로도 충분히 자주 터진다.
-      criticalChancePercent: 10,
+      // 연격이 한 행동에 두 번 판정해 같은 값도 더 자주 터진다 — 10에서는 치명타형으로 읽히지 않아 20으로 올렸다(응태, 2026-11-12).
+      criticalChancePercent: 20,
       desc: "기본 공격이 적중할 때마다 이번 전투 동안 공격 속도가 3 증가한다.",
     },
     // 스피나의 기본 공격 데이터는 중복 키 없이 BasicAttack 계약을 직접 검증한다.
@@ -1359,7 +1359,7 @@ export const RELICS: RelicDef[] = [
     breakthroughEffects: {
       basic: { kind: "focusFire", damagePercentPerStack: 8, maxStacks: 5 },
       ultimate: { kind: "shrapnel", radius: 300, powerPercent: 30 },
-      ferocity: { kind: "ankleShot", staggerSeconds: 0.5 },
+      ferocity: { kind: "ankleShot", stunSeconds: 0.5 },
       passive: { kind: "highTide", damagePercent: 15 },
     },
     passive: {
@@ -1658,7 +1658,7 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     breakthroughEffects: {
-      basic: { kind: "bitterTaste", defensePercent: 6, seconds: 3, maxStacks: 3 },
+      basic: { kind: "darkRoast", defenseIgnorePercent: 20 },
       ultimate: { kind: "richBlend", shieldFromCriticalPercent: 45, shieldMaxHpPercent: 40 },
       ferocity: { kind: "doubleMag" },
       passive: { kind: "reloadSip", shieldMaxHpPercent: 6, capMaxHpPercent: 12 },
@@ -1877,7 +1877,8 @@ export const RELICS: RelicDef[] = [
       name: "무면허 안전제일",
       kind: "impactCap",
       iconAssetId: "skill-icon-fixed",
-      effectType: "fixed",
+      // 피해를 내지 않는 버티기 패시브다 — 고정 피해는 뇌진탕(일반 공격·궁극기)이 낸다.
+      effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 상한 비율을 그대로 담아 둔다.
       value: 40,
       // 한 방에 들어올 수 있는 피해의 상한(최대 체력 %)이다. 이하의 타격은 그대로 다 맞는다.
@@ -3836,7 +3837,8 @@ export const RELICS: RelicDef[] = [
       targeting: "chargeLine",
       radius: 90,
       chargeReachMultiplier: 1.4,
-      statusEffects: [{ kind: "stagger", seconds: 0.5 }],
+      // 경직은 0.1초 고정이라 0.5초 차단은 기절이다.
+      statusEffects: [{ kind: "stun", seconds: 0.5 }],
       // 전사의 자가 수급 — 길 위에서 들이받은 만큼 몸을 추스른다.
       damageHealingPercent: 20,
     },
@@ -5414,7 +5416,8 @@ export const RELICS: RelicDef[] = [
        * 끊으면 "세 번째에 온다"를 읽고 비킬 수 있다(수쿠스이노의 네 번째 턱과 같은 이유다).
        */
       statusEffectEvery: 3,
-      statusEffects: [{ kind: "stagger", seconds: 1 }],
+      // 경직은 0.1초 고정이라 1초 차단은 기절이다.
+      statusEffects: [{ kind: "stun", seconds: 1 }],
     },
     ultimate: {
       id: "quetzalcoatlus-ult",
@@ -5443,7 +5446,7 @@ export const RELICS: RelicDef[] = [
       basic: { kind: "piercingBeak", sharePercent: 30, halfWidth: 140 },
       ultimate: { kind: "widenArea", radius: 140 },
       ferocity: { kind: "sharpStorm", critChancePoints: 8 },
-      passive: { kind: "pinningPlume", staggerSeconds: 0.5, lockoutSeconds: 3 },
+      passive: { kind: "pinningPlume", stunSeconds: 0.5, lockoutSeconds: 3 },
     },
   },
   {

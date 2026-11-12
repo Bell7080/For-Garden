@@ -302,6 +302,7 @@ export const MISC_DE = {
   "role.desc.tank": "Der Schild ganz vorne. Verspottet Gegner und fängt ihre Angriffe für die Verbündeten ab; steht vorne in der Mitte der Formation.",
   "role.desc.assassin": "Schleicht sich mit Tarnung und Blinzeln tief in die Gegnerreihen und schaltet schwache Ziele schnell aus. Trifft hart, hält aber nicht lange. Steht links in der Formation.",
   "role.desc.support": "Wendet den Kampf mit Heilung, Schilden, Buffs und Debuffs. Hält Verbündete lieber auf den Beinen, als Gegner zu erledigen. Steht rechts in der Formation.",
+  "role.presence": "Präsenz, die Gegner anzieht",
   "trade.value": "Wert {percent}%",
   "trade.tag.once": "Einmaliges Angebot",
   "trade.tag.daily": "Tagesangebot",

@@ -79,7 +79,7 @@ describe("증강 CC 공용 안전장치", () => {
     expect(capExpeditionControl({ kind: "drowsy", seconds: 12, sleepSeconds: 1.8, maxStacks: 3, wakeResistancePower: 1, groggySeconds: 2, groggyAttackSpeedPercent: 8 }, 2)).toMatchObject({ seconds: 12, sleepSeconds: 0.3 });
   });
 
-  it.each([['stagger',1,2], ['stun',4,6], ['chill',4,4], ['fear',6,6], ['frozen',8,8], ['taunt',8,8], ['pressure',10,10], ['drowsy',10,10], ['intimidate',10,10]] as const)("%s의 기본 %i초/궁극기 %i초 대기를 데이터·카드·팝업이 공유한다", (kind, basicSeconds, ultimateSeconds) => {
+  it.each([['stagger',1,1], ['stun',4,6], ['chill',4,4], ['fear',6,6], ['frozen',8,8], ['taunt',8,8], ['pressure',10,10], ['drowsy',10,10], ['intimidate',10,10]] as const)("%s의 기본 %i초/궁극기 %i초 대기를 데이터·카드·팝업이 공유한다", (kind, basicSeconds, ultimateSeconds) => {
     for (const variant of ["basic", "ultimate"]) {
       const seconds = variant === "basic" ? basicSeconds : ultimateSeconds;
       const def = getExpeditionAugment(`tag-${kind}-${variant}`)!;

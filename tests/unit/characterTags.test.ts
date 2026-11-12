@@ -3,7 +3,7 @@ import { RELICS } from "../../src/data/relics";
 import { loadTextCatalog, setTextLanguage, t, type TextKey } from "../../src/i18n";
 import { LANGUAGE_IDS } from "../../src/core/language";
 import { CHARACTER_TRAIT_LIMIT, CHARACTER_TRAIT_ORDER, characterTags, characterTraits } from "../../src/ui/characterTags";
-import { characterDamageKinds } from "../../src/ui/damageKinds";
+import { characterDamageKinds, skillDamageKinds } from "../../src/ui/damageKinds";
 import { ENEMY_INFO } from "../../src/ui/enemyInfoLayout";
 
 afterAll(() => setTextLanguage("ko"));
@@ -44,10 +44,11 @@ describe("정보창 해시태그", () => {
 
   it("피해 종류는 전투가 그 피해를 계산하는 계약에서 읽는다", () => {
     const damage = (id: string) => characterTags(byId(id)).map((tag) => tag.kind).filter((kind) => ["physical", "magical", "mixed", "fixed"].includes(kind));
-    expect(damage("rex")).toEqual(["physical"]);
+    // 출혈은 최대 체력 비례로 매초 방어·저항을 지난다
+    expect(damage("rex")).toEqual(["physical", "fixed"]);
     expect(damage("dodo")).toEqual(["magical"]);
-    // 평타 물리 + 궁극기 마법
-    expect(damage("maddy")).toEqual(["mixed"]);
+    // 평타 물리 + 궁극기 마법, 빙결이 풀리는 순간의 최대 체력 비례 피해는 방어·속성을 지난다
+    expect(damage("maddy")).toEqual(["mixed", "fixed"]);
     // 물리 평타 + 「까칠」의 마법 반격
     expect(damage("kento")).toEqual(["mixed"]);
     // 은신 뒤 방어를 지나는 한 방
@@ -57,6 +58,19 @@ describe("정보창 해시태그", () => {
     expect(damage("yuti")).toEqual(["physical", "fixed"]);
     // 위력을 주문력에서도 뽑을 뿐 피해는 물리다
     expect(damage("dian")).toEqual(["physical"]);
+    // 뇌진탕은 최대 체력 비례로 방어·속성을 지난다
+    expect(damage("koma")).toEqual(["physical", "fixed"]);
+    expect(damage("pachi")).toEqual(["physical", "fixed"]);
+    // 전이로 옮겨 간 몫은 방어·저항을 다시 거치지 않는다
+    expect(damage("luka")).toEqual(["physical", "fixed"]);
+    expect(damage("keris")).toEqual(["magical", "fixed"]);
+    // 마법 딜러 — 패시브의 「반짝!」도 마법이다
+    expect(damage("tia")).toEqual(["magical"]);
+  });
+
+  it("피해를 내지 않는 패시브는 피해 칩을 달지 않는다", () => {
+    // 파치의 안전모는 버티기 패시브다 — 고정 피해는 뇌진탕(일반 공격·궁극기)이 낸다
+    expect([...skillDamageKinds(byId("pachi").passive)]).toEqual([]);
   });
 
   it("특징 순서표는 모든 특징을 한 번씩 갖는다", () => {

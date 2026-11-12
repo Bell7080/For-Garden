@@ -32,7 +32,8 @@ export function expeditionControlCooldown(payload: { kind: string; status?: Comb
   if (payload.kind === "frozen") return 8;
   if (payload.kind !== "status" || !payload.status || !EXPEDITION_CONTROL_TAGS.has(payload.status.kind)) return undefined;
   const kind = payload.status.kind;
-  if (kind === "stagger") return payload.status.kind === "stagger" && payload.status.seconds <= 0.15 ? 1 : 2;
+  // 경직은 0.1초 고정이라 기본·궁극기판의 길이가 같고 대기도 같다.
+  if (kind === "stagger") return 1;
   if (kind === "chill") return 4;
   if (kind === "stun") return payload.status.kind === "stun" && payload.status.seconds <= 0.25 ? 4 : 6;
   if (kind === "fear") return 6;

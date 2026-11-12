@@ -302,6 +302,7 @@ export const MISC_ID = {
   "role.desc.tank": "Perisai di garis paling depan. Memprovokasi musuh dan menyerap serangan agar sekutu aman, berdiri di tengah depan formasi.",
   "role.desc.assassin": "Menyelinap jauh ke barisan musuh dengan siluman dan kedipan, cepat menjatuhkan target lemah. Pukulan keras tapi tak tahan lama. Berdiri di kiri formasi.",
   "role.desc.support": "Membalik jalannya pertarungan dengan penyembuhan, perisai, buff, dan debuff. Menjaga sekutu tetap berdiri alih-alih menghabisi musuh. Berdiri di kanan formasi.",
+  "role.presence": "Daya tarik perhatian musuh",
   "trade.value": "Nilai {percent}%",
   "trade.tag.once": "Penawaran Sekali",
   "trade.tag.daily": "Penawaran Hari Ini",

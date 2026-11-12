@@ -202,8 +202,12 @@ export function buildSkillTags(input: SkillTagInput): SkillTag[] {
     }
   }
 
-  const scope = skillScope(input);
+  // 연발(테쿠)은 대상 계약이 한 명이어도 가까운 적부터 한 발씩 나눠 맞히므로 "다중"과 총 발 수로 말한다 —
+  // "단일"이면 한 명에게 다 꽂는 것으로, 발 수가 없으면 모두에게 그만큼 꽂는 것으로 읽힌다.
+  const barrage = input.source !== undefined && !("kind" in input.source) && "barrage" in input.source ? input.source.barrage : undefined;
+  const scope = barrage !== undefined ? "splitShot" : skillScope(input);
   if (scope !== undefined) tags.push({ tone: "scope", glyph: SCOPE_GLYPH[scope], text: t(`skill.tag.scope.${scope}` as TextKey) });
+  if (barrage !== undefined) tags.push({ tone: "scope", glyph: "tag-target", text: t("skill.tag.shots", { count: barrage.shots }) });
   // 몇 명을 맞히는지는 범위 칩 바로 뒤에 선다 — "다중"만으로는 둘인지 다섯인지 읽히지 않는다.
   const targetCount = skillTargetCount(input, scope);
   if (targetCount !== undefined) tags.push({ tone: "scope", glyph: "tag-target", text: t("skill.tag.targets", { count: targetCount }) });

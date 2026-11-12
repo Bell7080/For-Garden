@@ -830,7 +830,7 @@ export type CombatStatusEffect =
       /** 그 타격이 치명타였을 때 대신 쓰는 비율(%). */
       criticalMaxHpPercent: number;
     }
-  | { kind: "stagger"; /** 기절 저항을 무시하는 순간 행동 차단 시간(초). */ seconds: number }
+  | { kind: "stagger"; /** 순간 행동 차단 시간(초). 경직은 0.1초 기절을 뜻하는 고유 디버프라 `STAGGER_SECONDS`를 넘지 않는다. */ seconds: number }
   | {
       /**
        * 서리깃. 맞을 때마다 한 겹 박히고, 상한에 닿는 순간 **동상으로 바뀌며 겹이 비워진다.**
@@ -2751,12 +2751,9 @@ export type BasicBreakthrough = {
   radius: number;
   stacks: number;
 } | {
-  /** 「마지막 한 방울」을 맞은 적의 방어력이 겹마다 깎인다(테쿠의 「쓴맛」). 1대1에서도 돈다. 겹은 상한에서 멈추고 시간이 지나면 풀린다. */
-  kind: "bitterTaste";
-  /** 겹당 방어력 감소(%). */
-  defensePercent: number;
-  seconds: number;
-  maxStacks: number;
+  /** 일반 공격의 모든 발이 적 방어력의 일부를 무시한다(테쿠의 「다크 로스팅」). 폭주 특성의 방어 무시와 더해진다. */
+  kind: "darkRoast";
+  defenseIgnorePercent: number;
 } | {
   /** 서리깃이 박힌 적에게 주는 일반 공격 피해가 **그 적의 서리깃 겹마다** 늘어난다(유티의 「갈래깃」). */
   kind: "frostBrand";
@@ -2811,7 +2808,7 @@ export type BasicBreakthrough = {
    * 한 겹이 더하는 시간과 상한은 공격 간격보다 짧게 둔다 — 경직이 다음 타격까지 이어지면 영구 경직이 된다.
    */
   kind: "staccatoChain";
-  /** 겹 하나가 더하는 경직(초). */
+  /** 겹 하나가 더하는 차단 시간(초). 둘째 겹부터는 0.1초를 넘으므로 경직이 아니라 기절로 건다. */
   secondsPerStack: number;
   /** 최대 겹 수(첫 타 포함). */
   maxStacks: number;
@@ -2933,10 +2930,11 @@ export type BasicBreakthrough = {
   powerPercentPerSpeedPoint: number;
 } | {
   /**
-   * 평타가 맞힌 적 중 **보스에 가장 가까운 한 명**을 잠깐 경직시킨다(폰토스 「압착」). 광역 평타라 전원에게 걸지 않는다.
-   * 이 효과는 다른 돌파 효과를 읽지 않는다.
+   * 평타가 맞힌 적 중 **보스에 가장 가까운 한 명**을 잠깐 기절시킨다(폰토스 「압착」). 광역 평타라 전원에게 걸지 않는다.
+   * 이 효과는 다른 돌파 효과를 읽지 않는다. 경직은 0.1초짜리 고유 디버프라 그보다 긴 차단은 기절이다(ID는 저장·문구 키라 그대로 둔다).
    */
   kind: "pressStagger";
+  /** 기절 시간(초). */
   seconds: number;
 } | {
   /** 평타가 적중할 때마다 그 적이 받는 모든 피해가 늘어나는 겹이 쌓인다(수쿠스이노 「물린 자국」). 덧칠과 같은 상태 슬롯을 쓴다. */
@@ -2966,7 +2964,7 @@ export type BasicBreakthrough = {
   kind: "pincerPair";
   every: number;
 } | {
-  /** 일반 공격에 맞은 적이 잠깐 경직된다(아모). 적 전용. */
+  /** 일반 공격에 맞은 적이 잠깐 기절한다(아모·뉴리). 적 전용. 경직은 0.1초 고정이라 그보다 긴 차단은 기절이다. */
   kind: "shellKnock";
   seconds: number;
 } | {
@@ -3313,11 +3311,11 @@ export type FerocityBreakthrough = {
   /**
    * 폭주 중 **치명타로 맞은 적**이 잠깐 휘청인다(이르나의 발목 사격). 일반 공격에만 걸리고 궁극기와 엮지 않는다 —
    * 자동 전투에서 폭주와 궁극기가 겹치는 순간을 따로 셈하지 않기 위해서다(`docs/breakthrough-design.md`).
-   * 경직 시간은 공격 간격보다 짧게 둔다.
+   * 기절 시간은 공격 간격보다 짧게 둔다. 경직은 0.1초 고정이라 그보다 긴 차단은 기절이다.
    */
   kind: "ankleShot";
-  /** 경직 시간(초). */
-  staggerSeconds: number;
+  /** 기절 시간(초). */
+  stunSeconds: number;
 } | {
   /**
    * 폭주 중 **주기 치명타가 더 자주 찬다**(루카의 「발톱 폭풍」). 평타 주기만 줄이며 다른 계약은 건드리지 않는다.
@@ -3666,9 +3664,9 @@ export type PassiveBreakthrough = {
   damagePercentPerStack: number;
   maxStacks: number;
 } | {
-  /** 치명타로 적중한 평타가 표적을 경직시킨다. 같은 적에게는 재사용 대기가 있다(코아틀 「눌러 앉히는 깃」). */
+  /** 치명타로 적중한 평타가 표적을 기절시킨다. 같은 적에게는 재사용 대기가 있다(코아틀 「눌러 앉히는 깃」). */
   kind: "pinningPlume";
-  staggerSeconds: number;
+  stunSeconds: number;
   lockoutSeconds: number;
 } | {
   /** 겨울잠이 **한 번 더** 돈다 — 첫 회복이 끝난 뒤 체력이 다시 절반 아래로 내려가면 같은 회복이 한 번 더 시작한다(레이티아). 적 전용. */

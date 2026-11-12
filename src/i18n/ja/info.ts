@@ -77,7 +77,7 @@ export const INFO_JA = {
   "info.reset": "リセット",
   "info.reset.title": "レベルリセット",
   "info.reset.confirm": "リセットする",
-  "info.reset.plea": "あの… 本当にわたしを\n最初に戻しちゃうの？",
+  "info.reset.plea": "あの… 本当にわたしを\n最初に戻してしまうんですか？",
   "info.reset.wallet": "所持通貨の変化",
   "info.reset.keep": "限界突破・絆・ルーンはそのまま残ります。",
   "info.reset.free": "無料！",

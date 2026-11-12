@@ -2,6 +2,7 @@ import { NEWBIE_GROWTH_DAYS, NEWBIE_GROWTH_GOALS, NEWBIE_GROWTH_MILESTONES, NEWB
 import type { AchievementFacts } from "./achievements";
 import type { AchievementState } from "./achievementState";
 import type { MissionReward } from "./missions";
+import { utcDateKey } from "./dailyContent";
 
 /**
  * 신규 7일 성장 가이드의 순수 규칙 — 계정이 몇째 날인지, 어느 목표가 열렸고 닿았고 받았는지, 무엇을 받을 수 있는지.
@@ -23,22 +24,29 @@ export function newbieGrowthFacts(facts: AchievementFacts, achievements: Achieve
 }
 
 export interface NewbieGrowthWindow {
-  /** 이벤트가 서 있는가 — 계정 생성부터 14일. */
+  /** 이벤트가 서 있는가 — 가입 뒤 14일이 지난 첫 UTC 자정까지. */
   active: boolean;
   /** 지금 열린 마지막 날(1~7). 이벤트가 닫혔으면 0. */
   day: number;
-  /** 다음 날이 열리는 시각(이레를 다 열었으면 없다). */
+  /** 다음 날이 열리는 시각 — 다음 UTC 자정(이레를 다 열었으면 없다). */
   nextDayAt?: string;
   endsAt: string;
 }
 
+/**
+ * 날은 다른 일일 갱신(임무·출석·상점)과 같이 **UTC 자정**(한국 오전 9시)에 넘어간다 — 계정을 만든 UTC 날짜가 1일차다.
+ * 가입 시각부터 24시간씩 세던 때는 하루에 갱신 시각이 둘(오전 9시 · 가입 시각) 생겼다. 예전 계산보다 날이 늦게 열리거나
+ * 이벤트가 일찍 닫히는 일은 없다(날은 같거나 하루 빠르다) — 기존 계정의 진행이 되돌아가지 않는다.
+ */
 export function newbieGrowthWindow(createdAt: string | undefined, now: Date): NewbieGrowthWindow {
-  const start = createdAt ? Date.parse(createdAt) : Number.NaN;
-  if (!Number.isFinite(start)) return { active: false, day: 0, endsAt: new Date(0).toISOString() };
-  const elapsed = Math.max(0, now.getTime() - start);
-  const end = start + NEWBIE_GROWTH_WINDOW_DAYS * DAY_MS;
+  const created = createdAt ? new Date(createdAt) : undefined;
+  if (!created || Number.isNaN(created.getTime()) || Number.isNaN(now.getTime())) return { active: false, day: 0, endsAt: new Date(0).toISOString() };
+  const start = Date.parse(`${utcDateKey(created)}T00:00:00.000Z`);
+  const elapsedDays = Math.max(0, Math.floor((now.getTime() - start) / DAY_MS));
+  // 닫히는 것도 UTC 자정이다 — 가입 뒤 14일이 지난 첫 자정이라 예전보다 일찍 닫히는 계정이 없다.
+  const end = start + Math.ceil((created.getTime() - start) / DAY_MS + NEWBIE_GROWTH_WINDOW_DAYS) * DAY_MS;
   const active = now.getTime() < end;
-  const day = active ? Math.min(NEWBIE_GROWTH_DAYS, Math.floor(elapsed / DAY_MS) + 1) : 0;
+  const day = active ? Math.min(NEWBIE_GROWTH_DAYS, elapsedDays + 1) : 0;
   return { active, day, ...(active && day < NEWBIE_GROWTH_DAYS ? { nextDayAt: new Date(start + day * DAY_MS).toISOString() } : {}), endsAt: new Date(end).toISOString() };
 }
 

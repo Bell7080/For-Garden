@@ -808,14 +808,16 @@ describe("이르나 한계 돌파", () => {
     expect(withShrapnel.distant).toBe(0);
   });
 
-  it("은 폭주 중 치명타로 맞힌 적만 휘청이게 한다 — 궁극기와는 엮이지 않는다(별 IV)", () => {
+  it("은 폭주 중 치명타로 맞힌 적만 기절시킨다 — 궁극기와는 엮이지 않는다(별 IV)", () => {
     const crit = (breakthrough: number, fever: boolean): number => {
       const state = irnaBattle(breakthrough);
       const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
       foe.x = 500; foe.y = 1_100;
       findFighter(state, "player-0")!.ferocityFever = fever;
       shoot(state, foe.id, () => 0);
-      return foe.staggeredFor;
+      // 0.5초 차단이라 경직(0.1초 고정)이 아니라 기절이다.
+      expect(foe.staggeredFor).toBe(0);
+      return foe.stunnedFor;
     };
     expect(crit(3, true)).toBeGreaterThan(0);
     expect(crit(3, false)).toBe(0);
@@ -844,7 +846,7 @@ describe("이르나 한계 돌파", () => {
     const irna = getRelic("irna");
     expect(breakthroughEffectText(irna, "basic")).toContain("연속");
     expect(breakthroughEffectText(irna, "ultimate")).toContain("파편");
-    expect(breakthroughEffectText(irna, "ferocity")).toContain("경직");
+    expect(breakthroughEffectText(irna, "ferocity")).toContain("기절");
     expect(breakthroughEffectText(irna, "passive")).toContain("해무 방벽");
   });
 });
@@ -1577,19 +1579,20 @@ describe("전사 한계 돌파 — 파치·케리스·매디", () => {
   });
 
   describe("테쿠", () => {
-    it("은 마지막 한 방울을 맞은 적의 방어력이 겹으로 깎이고 시간이 지나면 풀린다(별 II)", () => {
-      const defOf = (breakthrough: number, shots: number) => {
+    it("은 일반 공격의 모든 발이 적 방어력의 20%를 무시한다(별 II)", () => {
+      const lost = (breakthrough: number, strip: boolean) => {
         const state = setup(["teku"], ["toby"], breakthrough);
         const teku = findFighter(state, "player-0")!;
+        // 같은 성장에서 효과만 걷어 비교한다 — 돌파 단계의 공용 성장 몫은 양쪽이 같다.
+        if (strip) teku.def = { ...teku.def, breakthroughEffects: { ...teku.def.breakthroughEffects, basic: undefined } };
         const foe = findFighter(state, "enemy-0")!;
-        // 한 탄창을 모두 쏘면 마지막 발이 마지막 한 방울이다.
-        for (let i = 0; i < shots; i += 1) { teku.attackCooldown = 0; teku.targetId = foe.id; run(state, 0.1); }
-        return foe.bt.fangShave;
+        const cycle = getRelic("teku").basic.cycle!.length;
+        for (let i = 0; i < cycle; i += 1) { teku.attackCooldown = 0; teku.targetId = foe.id; run(state, 0.1); }
+        return foe.maxHp - foe.hp;
       };
-      const cycle = getRelic("teku").basic.cycle!.length;
-      expect(defOf(1, cycle - 1)).toBeNull();
-      expect(defOf(1, cycle)?.stacks).toBe(1);
-      expect(defOf(0, cycle)).toBeNull();
+      expect(getRelic("teku").breakthroughEffects?.basic).toEqual({ kind: "darkRoast", defenseIgnorePercent: 20 });
+      expect(lost(1, false)).toBeGreaterThan(lost(1, true));
+      expect(lost(0, false)).toBe(lost(0, true));
     });
 
     it("은 폭주로 채운 탄창이 비면 한 번 더 가득 채우고, 한 번의 폭주에 한 번뿐이다(별 IV)", () => {
@@ -1686,7 +1689,7 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
     }
   });
 
-  it("폰토스 II — 광역 평타가 맞힌 적 중 가장 가까운 한 명만 경직시킨다", () => {
+  it("폰토스 II — 광역 평타가 맞힌 적 중 가장 가까운 한 명만 기절시킨다", () => {
     const run = (breakthrough: number) => {
       const state = bossBattle("pontos", ["torika", "amo", "rex"], breakthrough);
       const boss = findFighter(state, "enemy-0")!;
@@ -1697,7 +1700,7 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
         stepSkirmish(state, 0.05);
         for (const ally of state.fighters.filter((f) => f.side === "player")) { ally.attackCooldown = 99; ally.x = ally.x; }
       }
-      return state.fighters.filter((f) => f.side === "player").map((f) => f.staggeredFor > 0);
+      return state.fighters.filter((f) => f.side === "player").map((f) => f.stunnedFor > 0);
     };
     expect(run(0).some(Boolean)).toBe(false);
     const staggered = run(1);

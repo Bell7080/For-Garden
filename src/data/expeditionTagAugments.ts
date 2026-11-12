@@ -37,7 +37,7 @@ export const EXPEDITION_TAG_PLANS = [
   { id: "frenzy", everyN: 6, cooldown: 8, maxTriggers: 4, status: { kind: "frenzy", seconds: 0.4 } },
   { id: "knockback", everyN: 6, cooldown: 8, maxTriggers: 4, status: { kind: "knockback", seconds: 0.25, speed: 140, bounces: 1 } },
   { id: "concussion", everyN: 4, cooldown: 3, maxTriggers: 8, status: { kind: "concussion", maxHpPercent: 0.5, criticalMaxHpPercent: 0.5 } },
-  { id: "stagger", everyN: 4, cooldown: 3, maxTriggers: 8, status: { kind: "stagger", seconds: 0.15 } },
+  { id: "stagger", everyN: 4, cooldown: 3, maxTriggers: 8, status: { kind: "stagger", seconds: 0.1 } },
   { id: "poison", everyN: 3, cooldown: 3, maxTriggers: 8, status: { kind: "poison", seconds: 3, attackPercentPerSecond: 8, abilityPercentPerSecond: 8 } },
   { id: "overpaint", everyN: 4, cooldown: 3, maxTriggers: 8, status: { kind: "overpaint", seconds: 8, damageTakenPercent: 3, maxStacks: 3 } },
   { id: "curse", everyN: 3, cooldown: 3, maxTriggers: 8, status: { kind: "curse", seconds: 6, resistancePercent: 4, maxStacks: 3 } },
@@ -78,7 +78,8 @@ function ultimateStatus(status: CombatStatusEffect): CombatStatusEffect {
   if (status.kind === "frenzy") return { ...status, seconds: 0.6 };
   if (status.kind === "knockback") return { ...status, seconds: 0.4, speed: 180 };
   if (status.kind === "concussion") return { ...status, maxHpPercent: 0.8, criticalMaxHpPercent: 0.8 };
-  if (status.kind === "stagger") return { ...status, seconds: 0.3 };
+  // 경직은 0.1초 기절을 뜻하는 고유 디버프라 궁극기판도 길이가 같다.
+  if (status.kind === "stagger") return { ...status, seconds: 0.1 };
   if (status.kind === "poison") return { ...status, seconds: 4, attackPercentPerSecond: 16, abilityPercentPerSecond: 16 };
   if (status.kind === "curse") return { ...status, seconds: 10, resistancePercent: 6 };
   if (status.kind === "frostPlume") return { ...status, burstPower: 90 };

@@ -7,7 +7,7 @@
  *
  * **MAX 급여 확인 창도 같은 한 장이다**(`openRelicFeedMaxPopup`). 무대·레벨 줄·재화 판은 그대로 두고, 그 아이가
  * 떨지 않고 신이 나서 통통 뛰며 「이걸 전부 저한테 주시는 거예요?!」를 존댓말로 묻는다. 그 창은 취소 버튼 없이 확정 하나만
- * 서고, 닫는 길은 판 밖 우하단의 공용 뒤로가기와 판 밖 누르기다.
+ * 서고, 닫는 길은 판 밖 우하단의 공용 뒤로가기와 판 밖 누르기다. 초기화 창도 같다 — 취소 버튼 없이 확정 하나다.
  */
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -23,7 +23,7 @@ import type { PopupLayer } from "./PopupLayer";
 import { popupArtShape, shapeClipMask } from "./popupArt";
 import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
 import { startPuppetHop } from "./puppetHop";
-import { RELIC_RESET_POPUP, relicResetButtonXs, relicResetPopupSpots, type RelicAskMood, type RelicResetPopupSpots } from "./relicResetPopupLayout";
+import { RELIC_RESET_POPUP, relicResetPopupSpots, type RelicAskMood, type RelicResetPopupSpots } from "./relicResetPopupLayout";
 import { addSdFootShadow } from "./SdFootShadow";
 import { FEED_BULK_PANEL, FEED_BULK_TONES } from "./feedBulkStyle";
 import { COLOR, textStyle } from "./theme";
@@ -63,8 +63,6 @@ interface AskSpec {
   /** 판 테두리·재화 판의 강조 색. */
   edge: number;
   confirm: { label: string; destructive: boolean; ribbon?: string };
-  /** 취소 버튼을 세우는가 — 없으면 판 밖 뒤로가기와 판 밖 누르기가 닫는다. */
-  cancel: boolean;
   /** 몸판의 면·강조선 색. 없으면 공용 판이다(MAX 급여는 쪽지와 같은 사탕빛 판을 입는다). */
   panel?: { fill: number; accent: number };
   /** 확정 버튼의 면 색(강조 버튼일 때만). */
@@ -91,7 +89,6 @@ export function openRelicResetPopup(scene: Phaser.Scene, popups: PopupLayer, opt
     edge: COLOR.danger,
     // 잃는 것이 없으면 확정 버튼에 「무료!」 딱지가 붙는다 — 21레벨까지는 먹인 것을 그대로 돌려받는다.
     confirm: { label: t("info.reset.confirm"), destructive: true, ...(options.loss > 0 ? {} : { ribbon: t("info.reset.free") }) },
-    cancel: true,
   }, onConfirm);
 }
 
@@ -110,7 +107,6 @@ export function openRelicFeedMaxPopup(scene: Phaser.Scene, popups: PopupLayer, o
     // 쪽지의 MAX 칸과 같은 한 벌 — 사탕빛 판, 금빛 테, 불꽃빛 확정 버튼.
     edge: FEED_BULK_TONES.max.rim,
     confirm: { label: t("info.feed.max.confirm"), destructive: false },
-    cancel: false,
     panel: { fill: FEED_BULK_PANEL.fill, accent: FEED_BULK_PANEL.accent },
     confirmFill: FEED_BULK_TONES.max.cream,
   }, onConfirm);
@@ -121,7 +117,7 @@ function openRelicAskPopup(scene: Phaser.Scene, popups: PopupLayer, spec: AskSpe
   const spots = relicResetPopupSpots(spec.rows.length);
   const loops = motionPolicy(session.settings).nonEssentialRepeatFactor > 0;
 
-  popups.open({ width: L.width, height: spots.height, title: spec.title, dim: true, dimAlpha: L.dimAlpha, hideCloseButton: spec.cancel, ...(spec.panel ?? {}) }, (body, close) => {
+  popups.open({ width: L.width, height: spots.height, title: spec.title, dim: true, dimAlpha: L.dimAlpha, ...(spec.panel ?? {}) }, (body, close) => {
     paintBackdrop(scene, body, spots, spec.mood, loops);
     const stage = scene.add.container(0, spots.stageTop);
     body.add(stage);
@@ -181,11 +177,9 @@ function openRelicAskPopup(scene: Phaser.Scene, popups: PopupLayer, spec: AskSpe
 
     body.add(scene.add.text(0, spots.noteY, spec.note, textStyle({ role: "body", size: L.noteSize, color: COLOR.inkDim, align: "center", lineSpacing: 4 })).setOrigin(0.5));
 
-    const [cancelX, confirmX] = spec.cancel ? relicResetButtonXs() : [0, 0];
-    const common = { width: L.button.width, height: L.button.height, fontSize: L.button.fontSize };
-    if (spec.cancel) body.add(new Button(scene, cancelX, spots.buttonY, { ...common, label: t("popup.cancel"), onClick: close }));
-    body.add(new Button(scene, confirmX, spots.buttonY, {
-      ...common,
+    // 취소 버튼은 두지 않는다 — 닫는 길은 판 밖 우하단 뒤로가기와 판 밖 누르기다.
+    body.add(new Button(scene, 0, spots.buttonY, {
+      width: L.button.width, height: L.button.height, fontSize: L.button.fontSize,
       label: spec.confirm.label,
       ...(spec.confirm.destructive ? DESTRUCTIVE_BUTTON_STYLE : { variant: "primary" as const, ...(spec.confirmFill !== undefined ? { fill: spec.confirmFill, decorDots: true } : {}) }),
       ...(spec.confirm.ribbon ? { ribbon: spec.confirm.ribbon } : {}),

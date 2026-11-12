@@ -2,7 +2,7 @@ import { hasRemoteState } from "../api/resultState";
 import { RAID_TICKET_TEST_KIT } from "../data/raid";
 import { previewCompletedRaids, RAID_HISTORY_PREVIEW_PREFIX } from "../core/raid";
 import { SWEEP_TICKET_TEST_KIT } from "../core/dungeonShortcut";
-import { calculateFinalStats, breakthroughGrade, UNIVERSAL_FRAGMENT_ITEM } from "../core/relicProgression";
+import { activeBreakthroughOf, calculateFinalStats, breakthroughGrade, UNIVERSAL_FRAGMENT_ITEM } from "../core/relicProgression";
 import type { RelicProgress, RelicRarity, Stats } from "../core/types";
 import { getRelic } from "../data/relics";
 import { backfillStarterRuneTraits, createStarterRunes, STARTER_RUNE_TRAIT_KIT } from "../data/runes";
@@ -39,6 +39,19 @@ export class RelicProgressionManager {
   /** 지금 별(1~5). 화면은 돌파 단계가 아니라 이 값을 읽는다. */
   getBreakthroughGrade(relicId: string): number {
     return breakthroughGrade(this.getProgress(relicId).breakthrough);
+  }
+
+  /**
+   * 지금 **켜져 있는** 돌파 단계(0~4). 레벨 초기화로 요구 레벨에 못 미치는 단계는 꺼진다(`activeBreakthrough`).
+   * 능력치·전투·스킬 액자의 `+`는 이 값을 읽는다.
+   */
+  getActiveBreakthrough(relicId: string): number {
+    return activeBreakthroughOf(this.getProgress(relicId));
+  }
+
+  /** 뚫어 둔 돌파 중 꺼진 단계가 있는가 — 표식이 회색으로 선다. */
+  isBreakthroughDimmed(relicId: string): boolean {
+    return this.getActiveBreakthrough(relicId) < this.getProgress(relicId).breakthrough;
   }
 
   /** 그 개체의 파편 보유량. 없으면 0이다 — 없는 개체를 위해 표를 만들지 않는다. */

@@ -79,6 +79,7 @@ export const INFO_TH = {
   "info.reset.plea": "เอ่อ… จะรีเซ็ตฉันกลับไป\nเริ่มต้นจริง ๆ หรือคะ?",
   "info.reset.wallet": "การเปลี่ยนแปลงของสกุลเงิน",
   "info.reset.keep": "ทะลวง สายสัมพันธ์ และรูนจะคงอยู่เหมือนเดิม",
+  "info.reset.keepDormant": "สายสัมพันธ์และรูนคงอยู่ ทะลวงจะกลับมาทำงานเมื่อเลเวลถึงอีกครั้ง",
   "info.reset.free": "ฟรี!",
   "info.reset.warn.title": "คืนแค่ 90%!",
   "info.reset.warn.body": "10% ของส่วนที่เกินเลเวล 21 จะไม่ได้คืน",

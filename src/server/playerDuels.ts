@@ -1,3 +1,4 @@
+import { activeBreakthroughOf } from "../core/relicProgression";
 import { combatPower } from '../core/combatPower';
 import { battleArena } from '../core/battleArena';
 import type { CombatSetup } from '../core/combatProtocol';
@@ -31,7 +32,7 @@ export function duelParticipant(row: PlayerDuelRecord, now: Date): { state: Sess
   const progression = new RelicProgressionManager(state);
   const units = state.duel.defense.map(relicId => {
     const stats = progression.getFinalStats(relicId, { pvp: true }), progress = state.relicProgress[relicId];
-    return { relicId, level: progress?.level ?? 1, breakthrough: progress?.breakthrough ?? 0, stats, power: combatPower(stats) };
+    return { relicId, level: progress?.level ?? 1, breakthrough: activeBreakthroughOf(progress), stats, power: combatPower(stats) };
   });
   return { state, opponent: { id: row.id, displayName: state.playerCard.nickname || t('profile.defaultName'), score: state.duel.score, favoriteRelicId: state.favorite, ...profileFace(state), units, blindOrder: duelBlindOrder(units, state.duel.blindChoice) } };
 }
@@ -46,8 +47,8 @@ export function duelCombatSetup(state: Session, opponentState: Session, attack: 
     enemies: defense.map(id => ({ ...getRelic(id), stats: defenseProgression.getFinalStats(id, { pvp: true }) })),
     arena: battleArena('duel'),
     bonds: Object.fromEntries(attack.map(id => [id, state.relicProgress[id]?.bondLevel ?? 0])),
-    breakthroughs: Object.fromEntries(attack.map(id => [id, state.relicProgress[id]?.breakthrough ?? 0])),
-    options: { automaticUltimates: true, augmentEffects: traits(state, attack), enemyAugmentEffects: traits(opponentState, defense), enemyBondLevels: defense.map(id => opponentState.relicProgress[id]?.bondLevel ?? 0), enemyBreakthroughs: defense.map(id => opponentState.relicProgress[id]?.breakthrough ?? 0), enemyBodyScale: 1 },
+    breakthroughs: Object.fromEntries(attack.map(id => [id, activeBreakthroughOf(state.relicProgress[id])])),
+    options: { automaticUltimates: true, augmentEffects: traits(state, attack), enemyAugmentEffects: traits(opponentState, defense), enemyBondLevels: defense.map(id => opponentState.relicProgress[id]?.bondLevel ?? 0), enemyBreakthroughs: defense.map(id => activeBreakthroughOf(opponentState.relicProgress[id])), enemyBodyScale: 1 },
   };
 }
 

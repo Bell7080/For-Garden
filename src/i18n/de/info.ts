@@ -79,6 +79,7 @@ export const INFO_DE = {
   "info.reset.plea": "Ähm… wollen Sie mich wirklich\nauf den Anfang zurücksetzen?",
   "info.reset.wallet": "Währungsänderung",
   "info.reset.keep": "Durchbruch, Bindung und Runen bleiben erhalten.",
+  "info.reset.keepDormant": "Bindung und Runen bleiben; der Durchbruch wird wieder aktiv, sobald das Level erreicht ist.",
   "info.reset.free": "Gratis!",
   "info.reset.warn.title": "Nur 90 % Rückerstattung!",
   "info.reset.warn.body": "10 % über Lv. 21 hinaus gehen verloren",

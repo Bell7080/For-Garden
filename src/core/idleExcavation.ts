@@ -1,3 +1,4 @@
+import { activeBreakthroughOf } from "./relicProgression";
 import type { Wallet } from "./gacha";
 import type { ExcavationProductionCurrency, RelicDef, RelicProgress } from "./types";
 import { WALLET_CAPS } from "../data/economy";
@@ -178,7 +179,7 @@ export function relicExcavationProduction(def: RelicDef, progress: Pick<RelicPro
   const growth = EXCAVATION_GROWTH_BY_CURRENCY[def.excavationTrait.primaryCurrency];
   // 표시 단계에서도 정산과 같은 소수 정규화를 사용해 UI에 부동소수 오차가 새지 않게 한다.
   const levelIncreasePerHour = fixedAmount(basePerHour * Math.max(0, progress.level - 1) * growth.perLevel);
-  const breakthroughIncreasePerHour = fixedAmount(basePerHour * Math.max(0, progress.breakthrough) * growth.perBreakthrough);
+  const breakthroughIncreasePerHour = fixedAmount(basePerHour * activeBreakthroughOf(progress) * growth.perBreakthrough);
   return { relicId: def.id, currency: def.excavationTrait.primaryCurrency, basePerHour: fixedAmount(basePerHour), levelIncreasePerHour, breakthroughIncreasePerHour, totalPerHour: fixedAmount(basePerHour + levelIncreasePerHour + breakthroughIncreasePerHour) };
 }
 

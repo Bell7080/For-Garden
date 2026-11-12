@@ -990,7 +990,7 @@ export class PartyScene extends Phaser.Scene {
         label: relic.name,
         level: relicProgression.getProgress(relic.id).level,
         rarity: relic.rarity,
-        breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id),
+        breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id), breakthroughDimmed: relicProgression.isBreakthroughDimmed(relic.id),
         affinity: { element: relic.element, role: relic.role },
         // 이미 자리에 나가 있는 카드는 떠오르지 않고 눌려 들어간다 — 발광은 "지금 고를 수 있다"로
         // 읽혀 이미 세운 렐릭과 아직 고를 수 있는 렐릭이 같은 무게가 된다.
@@ -1099,7 +1099,7 @@ export class PartyScene extends Phaser.Scene {
       const chosen = at >= 0;
       entry.card.setSelected(chosen);
       entry.card.setSub(chosen ? t("party.slot", { index: at + 1 }) : entry.role);
-      entry.card.setProgress(relicProgression.getProgress(id).level, relicProgression.getBreakthroughGrade(id));
+      entry.card.setProgress(relicProgression.getProgress(id).level, relicProgression.getBreakthroughGrade(id), relicProgression.isBreakthroughDimmed(id));
     }
 
     const plate = this.slotPlate;
@@ -1145,7 +1145,7 @@ export class PartyScene extends Phaser.Scene {
         const badgeTop = row - PREVIEW_HEIGHT + 34;
         marks.add(new AffinityBadge(this, x - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62));
         marks.add(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62));
-        addBreakthroughGradeMark(this, marks, x + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(id));
+        addBreakthroughGradeMark(this, marks, x + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(id), relicProgression.isBreakthroughDimmed(id));
         addUnitNameplate(this, marks, x, row + 26, relicProgression.getProgress(id).level, def.name, 30);
         addUnitPower(this, marks, x, row + 22, combatPower(relicProgression.getFinalStats(id, { pvp: this.pvp })), 24, COLOR.accentText);
       }

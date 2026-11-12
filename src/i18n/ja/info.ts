@@ -80,6 +80,7 @@ export const INFO_JA = {
   "info.reset.plea": "あの… 本当にわたしを\n最初に戻してしまうんですか？",
   "info.reset.wallet": "所持通貨の変化",
   "info.reset.keep": "限界突破・絆・ルーンはそのまま残ります。",
+  "info.reset.keepDormant": "絆・ルーンはそのまま。限界突破はレベルが戻ると再び有効になります。",
   "info.reset.free": "無料！",
   "info.reset.warn.title": "返還は90%だけです！",
   "info.reset.warn.body": "Lv.21を超えた分の10%は戻りません",

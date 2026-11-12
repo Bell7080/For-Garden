@@ -6,7 +6,7 @@ import { PLAYABLE_RELICS, RELICS } from "../data/relics";
 import { STAGES, storyStages } from "../data/stages";
 import { sanitizeStoryClears, storyClearRecords, type StoryClearRecord } from "../core/storyClearRecord";
 import { highestClearedStage } from "../core/stageProgress";
-import { breakthroughGrade, calculateFinalStats } from "../core/relicProgression";
+import { activeBreakthroughOf, breakthroughGrade, calculateFinalStats } from "../core/relicProgression";
 import { combatPower } from "../core/combatPower";
 import { nextContentUnlock, nextStageUnlock, type ContentId } from "../core/contentUnlock";
 import { researchDays } from "../core/playerCard";
@@ -124,7 +124,7 @@ function favoriteShowcase(state: Session): FavoriteRelicShowcase | null {
   const stats = progress ? calculateFinalStats(relic.stats, progress, gems, relic.rarity) : relic.stats;
   return {
     relicId: relic.id, displayName: relic.name, portraitAssetId: relic.portraitAssetId,
-    level: progress?.level ?? 1, breakthroughGrade: breakthroughGrade(progress?.breakthrough ?? 0), bondLevel: progress?.bondLevel ?? 0,
+    level: progress?.level ?? 1, breakthroughGrade: breakthroughGrade(activeBreakthroughOf(progress)), bondLevel: progress?.bondLevel ?? 0,
     rarity: relic.rarity, element: relic.element, role: relic.role, power: combatPower(stats),
   };
 }

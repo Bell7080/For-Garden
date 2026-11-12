@@ -84,6 +84,7 @@ export const INFO_KO = {
   "info.reset.plea": "저… 정말 저를\n처음으로 되돌리실 건가요?",
   "info.reset.wallet": "보유 재화 변화",
   "info.reset.keep": "한계 돌파·유대·룬은 그대로 남아요.",
+  "info.reset.keepDormant": "유대·룬은 그대로, 한계 돌파는 레벨이 다시 닿으면 켜져요.",
   "info.reset.free": "무료!",
   "info.reset.warn.title": "90%만 환급돼요!",
   "info.reset.warn.body": "21레벨 위로 쌓은 몫의 10%는 돌아오지 않아요",

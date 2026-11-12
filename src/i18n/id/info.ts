@@ -79,6 +79,7 @@ export const INFO_ID = {
   "info.reset.plea": "Eh… Anda sungguh ingin\nmengembalikan saya ke awal?",
   "info.reset.wallet": "Perubahan Mata Uang",
   "info.reset.keep": "Terobosan, Ikatan, dan Rune tetap dipertahankan.",
+  "info.reset.keepDormant": "Ikatan dan Rune tetap, Terobosan aktif lagi saat level kembali tercapai.",
   "info.reset.free": "Gratis!",
   "info.reset.warn.title": "Hanya kembali 90%!",
   "info.reset.warn.body": "10% bagian di atas Lv.21 tidak kembali",

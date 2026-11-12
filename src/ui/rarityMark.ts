@@ -53,25 +53,37 @@ export function addBreakthroughGradeMark(
   y: number,
   size: number,
   breakthroughGrade: number,
+  /**
+   * 뚫어 둔 돌파 중 **꺼진 단계가 있으면** 회색으로 선다(`activeBreakthrough` — 레벨 초기화로 요구 레벨에
+   * 못 미친 단계). 글자는 뚫어 둔 등급 그대로라 "잃은 것이 아니라 잠든 것"으로 읽히고, 레벨을 다시 올리면 빛이 돌아온다.
+   */
+  dimmed = false,
 ): void {
   const numeral = BREAKTHROUGH_GRADE_ROMAN[Math.max(1, Math.min(BREAKTHROUGH_GRADE_ROMAN.length, Math.round(breakthroughGrade))) - 1];
-  paintRomanMark(scene, parent, x, y, size, numeral, GRADE_MARK_TONE);
+  paintRomanMark(scene, parent, x, y, size, numeral, GRADE_MARK_TONE, dimmed);
 }
 
 /** 공명 표식의 색 — 돌파 표식(호박)과 갈리는 **붉은** 로마자다. 같은 글자 양식이라 한 덩어리로 읽히고, 색이 축을 가른다. */
 export const RESONANCE_MARK_TONE = { ink: "#ffe1db", halo: "#ff3b2f", frame: 0xff3b2f } as const;
 
 /** 로마자 한 글자를 각진 계단 그림자 + 발광 두 겹으로 박는다. 돌파·공명 표식이 같은 양식을 쓴다. */
-function paintRomanMark(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, size: number, numeral: string, tone: { ink: string; halo: string }): void {
+function paintRomanMark(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, size: number, numeral: string, tone: { ink: string; halo: string }, dimmed = false): void {
   const put = (dx: number, dy: number, color: string, alpha: number, scale: number): void => {
     parent.add(scene.add.text(x + dx, y + dy, numeral, textStyle({ role: "display", size, color })).setOrigin(0.5, 0.5).setAlpha(alpha).setScale(scale, scale * 1.1));
   };
   const step = Math.max(2, size * 0.06);
   for (let i = 3; i >= 1; i -= 1) put(step * i, step * i, "#05070a", 0.6, 1);
+  if (dimmed) {
+    put(0, 0, GRADE_MARK_DIMMED, 1, 1);
+    return;
+  }
   put(0, 0, tone.halo, 0.16, 1.6);
   put(0, 0, tone.halo, 0.3, 1.24);
   put(0, 0, tone.ink, 1, 1);
 }
+
+/** 꺼진 돌파의 표식 색 — 발광 없이 잿빛 글자만 선다. */
+export const GRADE_MARK_DIMMED = "#8a9099";
 
 /**
  * 공명 단계 글자 한 장 — **붉은 로마자**(`I`~`V`)다. 원점은 글자의 한가운데다.
@@ -79,9 +91,9 @@ function paintRomanMark(scene: Phaser.Scene, parent: Phaser.GameObjects.Containe
  * 「공명 1」처럼 낱말과 숫자로 적지 않는다(응태 결정, 2026-11-12). 돌파 등급과 같은 로마자 양식에 색만 붉게 바꿔,
  * 같은 줄에 서도 어느 쪽이 돌파이고 어느 쪽이 공명인지 색으로 갈린다. 확정 창의 「n ▶ n+1」도 이 글자를 쓴다.
  */
-export function addResonanceGradeMark(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, size: number, resonance: number): void {
+export function addResonanceGradeMark(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, size: number, resonance: number, dimmed = false): void {
   const numeral = BREAKTHROUGH_GRADE_ROMAN[Math.max(1, Math.min(BREAKTHROUGH_GRADE_ROMAN.length, Math.round(resonance))) - 1];
-  paintRomanMark(scene, parent, x, y, size, numeral, RESONANCE_MARK_TONE);
+  paintRomanMark(scene, parent, x, y, size, numeral, RESONANCE_MARK_TONE, dimmed);
 }
 
 /**
@@ -99,9 +111,11 @@ export function addResonanceMark(
   size: number,
   resonance: number,
   cap: number,
+  /** 돌파가 꺼져 공명도 함께 꺼진 동안 — 글자와 테가 잿빛으로 가라앉는다. */
+  dimmed = false,
 ): void {
   if (resonance <= 0) return;
-  addResonanceGradeMark(scene, parent, x, y + size * 0.86, size * 0.52, Math.min(cap, resonance));
+  addResonanceGradeMark(scene, parent, x, y + size * 0.86, size * 0.52, Math.min(cap, resonance), dimmed);
   if (resonance >= cap) {
     // 공명 V — 돌파 글자를 두 겹으로 감싸는 붉은 테. 판·칩과 같이 왼쪽 위·오른쪽 아래만 깎는다.
     const g = scene.add.graphics();
@@ -116,6 +130,7 @@ export function addResonanceMark(
         new Phaser.Math.Vector2(x - hw, y + hh), new Phaser.Math.Vector2(x - hw, y - hh + cut),
       ], true);
     }
+    if (dimmed) g.setAlpha(0.35);
     parent.addAt(g, 0);
   }
 }

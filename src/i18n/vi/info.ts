@@ -79,6 +79,7 @@ export const INFO_VI = {
   "info.reset.plea": "Dạ… bạn thật sự muốn\nđưa tôi về lúc đầu ạ?",
   "info.reset.wallet": "Thay đổi tiền tệ",
   "info.reset.keep": "Đột phá, Gắn kết và Rune được giữ nguyên.",
+  "info.reset.keepDormant": "Gắn kết và Rune được giữ nguyên, Đột phá sẽ hoạt động lại khi cấp độ đạt lại.",
   "info.reset.free": "Miễn phí!",
   "info.reset.warn.title": "Chỉ hoàn lại 90%!",
   "info.reset.warn.body": "10% phần vượt cấp 21 sẽ không được hoàn",

@@ -1,3 +1,4 @@
+import { activeBreakthroughOf } from "../core/relicProgression";
 import { t } from "../i18n";
 import { arenaRules, RANKED_ARENA_RULES, startArena, applyArenaAction, settleArena, publicArenaRoom, type ArenaRoom, type ArenaAction, type ArenaPlayer } from '../core/liveArena';
 import { arenaSetup, ARENA_SLOTS } from '../core/liveArena';
@@ -13,7 +14,7 @@ export function arenaPlayer(id:string,data:unknown):ArenaPlayer {
   const s=saveManager.parse(data), progression=new RelicProgressionManager(s);
   return { id, name:s.playerCard.nickname || t("profile.defaultName"), roster:[...s.owned].map(relicId=>({
     def:{...getRelic(relicId),stats:progression.getFinalStats(relicId, { pvp: true })},level:s.relicProgress[relicId]?.level??1,
-    breakthrough:s.relicProgress[relicId]?.breakthrough??0,bond:s.relicProgress[relicId]?.bondLevel??0,
+    breakthrough:activeBreakthroughOf(s.relicProgress[relicId]),bond:s.relicProgress[relicId]?.bondLevel??0,
     traits:partyRuneTraitEffects([{relicId,runes:(s.relicProgress[relicId]?.heartGemSlots??[]).flatMap(key=>s.runeInventory.filter(r=>r.instanceId===key))}]),
   })) };
 }

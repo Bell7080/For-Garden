@@ -79,6 +79,7 @@ export const INFO_PT_BR = {
   "info.reset.plea": "Hã… vai mesmo me fazer\nvoltar ao início?",
   "info.reset.wallet": "Mudança de moedas",
   "info.reset.keep": "Ruptura, Vínculo e Runas são mantidos.",
+  "info.reset.keepDormant": "Vínculo e Runas são mantidos; a Ruptura volta a valer ao recuperar o nível.",
   "info.reset.free": "Grátis!",
   "info.reset.warn.title": "Só 90% de reembolso!",
   "info.reset.warn.body": "10% do que passou do Nv. 21 não volta",

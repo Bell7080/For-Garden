@@ -37,6 +37,8 @@ export interface RelicResetPopupOptions {
   refund: number;
   /** 돌려받지 못하는 치즈케이크(21레벨까지는 0). */
   loss: number;
+  /** 뚫어 둔 한계 돌파가 있으면 레벨이 내려가 꺼진다 — 다시 닿으면 켜진다고 알린다. */
+  dormantBreakthrough?: boolean;
 }
 
 export interface RelicFeedMaxPopupOptions {
@@ -89,7 +91,7 @@ export function openRelicResetPopup(scene: Phaser.Scene, popups: PopupLayer, opt
     to: 1,
     toColor: COLOR.dangerText,
     rows: [{ icon: CURRENCY_ICON_BY_WALLET.cheesecake, before: session.wallet.cheesecake, after: session.wallet.cheesecake + options.refund }],
-    note: t("info.reset.keep"),
+    note: options.dormantBreakthrough ? t("info.reset.keepDormant") : t("info.reset.keep"),
     ...(options.loss > 0 ? { loss: options.loss } : {}),
     mood: "afraid",
     edge: COLOR.danger,

@@ -79,6 +79,7 @@ export const INFO_EN = {
   "info.reset.plea": "Um… are you really going to\nreset me to the start?",
   "info.reset.wallet": "Currency Change",
   "info.reset.keep": "Breakthrough, Bond and Runes stay as they are.",
+  "info.reset.keepDormant": "Bond and Runes stay. Breakthrough turns back on once the Level catches up.",
   "info.reset.free": "FREE!",
   "info.reset.warn.title": "Only 90% refunded!",
   "info.reset.warn.body": "10% of what you fed past Lv.21 won't come back",

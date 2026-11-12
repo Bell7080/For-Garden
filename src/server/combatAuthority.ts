@@ -1,3 +1,4 @@
+import { activeBreakthroughOf } from "../core/relicProgression";
 import { getAncientStrataFloor, setActiveAncientSeason } from "../core/ancientStrataBattle";
 import { isStoryStageAvailable, storyDifficultyOf } from "../core/storyDifficulty";
 import type { Session } from "../state/session";
@@ -188,7 +189,7 @@ export function prepareCombat(
   const breakthroughs = Object.fromEntries(
     party.map((r) => [
       r,
-      frozen?.get(r)?.breakthrough ?? state.relicProgress[r]?.breakthrough ?? 0,
+      frozen?.get(r)?.breakthrough ?? activeBreakthroughOf(state.relicProgress[r]),
     ]),
   );
   const traits = partyRuneTraitEffects(

@@ -1111,7 +1111,7 @@ export class InfoManager {
     if (!canResetRelic(progress)) return;
     // 21레벨 위로 쌓은 몫은 90%만 돌아온다 — 잃는 양을 창이 먼저 말한다. 회수량은 서버가 다시 구한다.
     const asset = this.figureAssetOf(def);
-    openRelicResetPopup(this.scene, this.popups, { asset, level: progress.level, refund: relicResetRefund(progress), loss: relicResetLoss(progress) }, () => void this.resetRelic(def.id));
+    openRelicResetPopup(this.scene, this.popups, { asset, level: progress.level, refund: relicResetRefund(progress), loss: relicResetLoss(progress), dormantBreakthrough: progress.breakthrough > 0 }, () => void this.resetRelic(def.id));
   }
 
   /** 회수·레벨 확정은 서버가 한 처리로 맡는다. 화면은 결과만 다시 그린다. */
@@ -1927,7 +1927,7 @@ export class InfoManager {
   private openBreakthroughSteps(_from: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
-    openBreakthroughStepsPopup(this.scene, this.popups, this.keywords, def, breakthroughGrade(this.shownBreakthrough(def)), this.shownStats(def));
+    openBreakthroughStepsPopup(this.scene, this.popups, this.keywords, def, breakthroughGrade(this.shownBreakthrough(def)), this.shownStats(def), breakthroughGrade(this.shownActiveBreakthrough(def)));
   }
 
 
@@ -2475,7 +2475,7 @@ export class InfoManager {
   /** 원화 아래 스킬 아이콘 세 개. 누르면 정형 팝업이 뜬다. */
   private buildSkillIcons(def: RelicDef): void {
     for (const icon of this.skillIcons.splice(0)) icon.destroy();
-    const breakthrough = this.shownBreakthrough(def);
+    const breakthrough = this.shownActiveBreakthrough(def);
     this.skillIconsKey = this.skillIconsKeyOf(def);
     const entries: [string, Skill, number | undefined, SkillArtSlot][] = [
       [t("info.skill.passive"), { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined, "passive"],
@@ -2521,7 +2521,7 @@ export class InfoManager {
   }
 
   private skillIconsKeyOf(def: RelicDef): string {
-    return `${def.id}:${this.publicProfile ? "public:" : ""}${this.shownBreakthrough(def)}`;
+    return `${def.id}:${this.publicProfile ? "public:" : ""}${this.shownBreakthrough(def)}:${this.shownActiveBreakthrough(def)}`;
   }
 
   /**
@@ -2531,6 +2531,19 @@ export class InfoManager {
    */
   private shownBreakthrough(def: RelicDef): number {
     return this.publicProfile ? Math.max(0, this.publicProfile.breakthroughGrade - 1) : relicProgression.getProgress(def.id).breakthrough;
+  }
+
+  /**
+   * 지금 **켜져 있는** 돌파 단계 — 스킬 액자의 `+`·쪽지의 돌파 줄·폭주 뱃지가 읽는다. 레벨 초기화로 요구 레벨에
+   * 못 미친 단계는 꺼져 있다(`activeBreakthrough`). 공개 프로필은 이미 켜진 등급만 알려 주므로 그대로다.
+   */
+  private shownActiveBreakthrough(def: RelicDef): number {
+    return this.publicProfile ? this.shownBreakthrough(def) : relicProgression.getActiveBreakthrough(def.id);
+  }
+
+  /** 뚫어 둔 돌파 중 꺼진 단계가 있는가 — 등급 표식이 회색으로 선다. */
+  private shownBreakthroughDimmed(def: RelicDef): boolean {
+    return this.shownActiveBreakthrough(def) < this.shownBreakthrough(def);
   }
 
   private shownStats(def: RelicDef): Stats {
@@ -2545,7 +2558,7 @@ export class InfoManager {
    */
   private addFerocityBadge(x: number, y: number, def: RelicDef): void {
     // 스킬 아이콘과 같은 목록에 담아 미보유 개체에서 함께 숨고 다시 그릴 때 함께 지워진다.
-    this.skillIcons.push(addInfoFerocityBadge(this.scene, this.popups, this.chrome, x, y, def, (from) => this.openFerocityTrait(def, from), breakthroughEnhances(def, this.shownBreakthrough(def), "ferocity")));
+    this.skillIcons.push(addInfoFerocityBadge(this.scene, this.popups, this.chrome, x, y, def, (from) => this.openFerocityTrait(def, from), breakthroughEnhances(def, this.shownActiveBreakthrough(def), "ferocity")));
     this.addSkillGlanceButton(x, y - INFO_BADGE_SIZE / 2 - SKILL_GLANCE_BUTTON.gap - SKILL_GLANCE_BUTTON.size / 2, def);
   }
 
@@ -2567,7 +2580,7 @@ export class InfoManager {
     hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(container, "normal", { pop: false }); });
     hit.on("pointerup", () => {
       pressIn(container);
-      openSkillGlancePopup(this.scene, this.popups, [{ def: { ...def, stats: this.shownStats(def) }, breakthrough: this.shownBreakthrough(def) }], {
+      openSkillGlancePopup(this.scene, this.popups, [{ def: { ...def, stats: this.shownStats(def) }, breakthrough: this.shownActiveBreakthrough(def) }], {
         reduceMotion: motionPolicy(session.settings).nonEssentialRepeatFactor === 0,
         onClose: () => pressOut(container),
       });
@@ -2580,7 +2593,7 @@ export class InfoManager {
   /** 개체별 폭주 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
   private openFerocityTrait(def: RelicDef, from: PopupSource): void {
     const finalDef = { ...def, stats: this.shownStats(def) };
-    const breakthrough = this.shownBreakthrough(def);
+    const breakthrough = this.shownActiveBreakthrough(def);
     openFerocityTraitPopup(this.scene, this.popups, this.keywords, finalDef, from, {
       breakthroughEffect: !breakthroughEnhances(def, breakthrough, "ferocity")
         ? undefined : breakthroughEffectText(def, "ferocity", finalDef.stats),
@@ -2593,7 +2606,7 @@ export class InfoManager {
     // 레벨·돌파·장착 룬을 모두 반영한 정의를 넘겨 74 같은 기본치가 성장 후에 남지 않게 한다.
     const def = this.currentDef!;
     const finalDef = { ...def, stats: this.shownStats(def) };
-    const breakthrough = this.shownBreakthrough(def);
+    const breakthrough = this.shownActiveBreakthrough(def);
     // **열린 돌파 등급의 몫만 넘긴다.** 아직 뚫지 않은 단계의 효과를 쪽지에 적으면 지금 싸우는
     // 이 개체가 하지 않는 일을 말하게 된다 — 무엇이 열리는지는 등급 돋보기가 여는 표가 맡는다.
     const breakthroughEffect = slot && breakthroughEnhances(def, breakthrough, slot)
@@ -2773,9 +2786,11 @@ export class InfoManager {
   private paintStars(def: RelicDef): void {
     this.starRow.removeAll(true);
     const stars = breakthroughGrade(this.shownBreakthrough(def));
-    addBreakthroughGradeMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, stars);
-    // 공명은 내 렐릭에게만 있다 — 공개 프로필은 공명을 알려 주지 않으므로 그리지 않는다.
-    if (!this.publicProfile) addResonanceMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, resonanceOf(relicProgression.getProgress(def.id)), RESONANCE_CAP);
+    // 레벨 초기화로 꺼진 단계가 있으면 표식이 회색으로 선다 — 레벨을 다시 올리면 빛이 돌아온다.
+    const dimmed = this.shownBreakthroughDimmed(def);
+    addBreakthroughGradeMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, stars, dimmed);
+    // 공명은 내 렐릭에게만 있다 — 공개 프로필은 공명을 알려 주지 않으므로 그리지 않는다. 돌파 V가 꺼지면 공명도 함께 꺼진다.
+    if (!this.publicProfile) addResonanceMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, resonanceOf(relicProgression.getProgress(def.id)), RESONANCE_CAP, dimmed);
   }
 
   /** 레벨·경험치·유대·능력치·젬을 지금 상태로 다시 칠한다. */
@@ -3367,6 +3382,11 @@ export function openBreakthroughStepsPopup(
   grade: number,
   /** 성장한 능력치. 넘기면 회복처럼 계산 가능한 수치가 실제 값으로 선다. */
   stats?: Stats,
+  /**
+   * 지금 **켜져 있는** 등급. 뚫어 둔 등급(`grade`)보다 낮으면 그 사이 줄은 꺼진 줄(잿빛 + 「필요 LV.N」)로 선다 —
+   * 레벨 초기화로 요구 레벨에 못 미친 단계다. 없으면 뚫어 둔 등급과 같다.
+   */
+  activeGrade: number = grade,
 ): void {
   const textWrap = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length).textWrap;
   // 먼저 실제 문장을 세워 높이를 잰다. 문장이 긴 캐릭터도 글자를 줄이지 않고
@@ -3395,10 +3415,12 @@ export function openBreakthroughStepsPopup(
       const rowGrade = index + 2;
       const y = top + layout.rows[index];
       const reached = grade >= rowGrade;
+      // 뚫어 두었지만 레벨이 요구 레벨에 못 미쳐 꺼진 줄. 레벨을 다시 올리면 저절로 켜진다.
+      const dormant = reached && activeGrade < rowGrade;
       // 열린 줄과 안 열린 줄을 **밝기가 아니라 결**로 가른다(`BREAK_STEPS.tone` 주석 참고).
       // 등급 하나로 시작하는 개체는 네 줄이 모두 안 열린 줄이라, 어둡게 누르면 이 창을 처음
       // 여는 사람이 캄캄한 판 넷을 본다.
-      const tone = reached ? BREAK_STEPS.tone.reached : BREAK_STEPS.tone.locked;
+      const tone = dormant ? BREAK_STEPS.tone.dormant : reached ? BREAK_STEPS.tone.reached : BREAK_STEPS.tone.locked;
       body.add(drawLayer(scene, 0, y, slantedRect(layout.rowWidth, layout.rowHeights[index], 16), {
         fill: tone.fill,
         alpha: tone.alpha,
@@ -3406,10 +3428,18 @@ export function openBreakthroughStepsPopup(
         edgeAlpha: tone.edgeAlpha,
       }));
       const mark = scene.add.container(BREAK_STEPS.gradeMark.x, y);
-      addBreakthroughGradeMark(scene, mark, 0, 0, BREAK_STEPS.gradeMark.size, rowGrade);
+      addBreakthroughGradeMark(scene, mark, 0, 0, BREAK_STEPS.gradeMark.size, rowGrade, dormant);
       // "어디까지 왔는가"는 별이 맡는다 — 글과 그림을 누르지 않는 대신 이 표식만 흐려진다.
       mark.setAlpha(tone.gradeMark);
       body.add(mark);
+      if (dormant) {
+        // 꺼진 줄은 **무엇을 하면 다시 켜지는지**를 표식 아래에 적는다 — 그 단계의 요구 레벨이다.
+        const need = scene.add
+          .text(BREAK_STEPS.gradeMark.x, y + BREAK_STEPS.dormantNeed.dy, t("info.breakthrough.need", { count: `LV.${entry.requiredLevel}` }), textStyle({ role: "emphasis", size: BREAK_STEPS.dormantNeed.size, color: COLOR.inkDim }))
+          .setOrigin(0.5);
+        squeezeTextToWidth(need, BREAK_STEPS.dormantNeed.maxWidth);
+        body.add(need);
+      }
       // **어느 기술이 열리는지는 그 기술의 액자가 말한다.** 정보창 아래 네 칸과 같은 프리팹을
       // 써서 같은 그림·같은 이름으로 서므로, 표를 읽다가 "이게 뭐였지"로 돌아가지 않는다.
       const icon = addSkillIconFrame(scene, {
@@ -3423,9 +3453,9 @@ export function openBreakthroughStepsPopup(
         // 이미 뚫은 줄은 정보창 아래 액자 줄과 **같은 얼굴**로 선다(강조색 + 이름 뒤의 `+`) —
         // 두 자리가 같은 것을 다르게 말하면 표를 읽고 돌아와 다시 맞춰 봐야 한다.
         // "없음"으로 정해 둔 자리는 뚫었어도 `+`를 달지 않는다 — 달라진 것이 없다.
-        enhanced: breakthroughEnhances(def, grade - 1, entry.slot),
+        enhanced: breakthroughEnhances(def, activeGrade - 1, entry.slot),
         // 액자는 그 줄의 주제라 안 열린 줄에서도 어느 기술인지 알아볼 수 있어야 한다.
-        dimAlpha: reached ? undefined : BREAK_STEPS.lockedIconAlpha,
+        dimAlpha: reached && !dormant ? undefined : BREAK_STEPS.lockedIconAlpha,
       });
       icon.setPosition(BREAK_STEPS.icon.x, y);
       body.add(icon);

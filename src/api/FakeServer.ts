@@ -47,7 +47,7 @@ import { isContentUnlocked } from "../core/contentUnlock";
 import { normalizeRaidTicketDropState, rollRaidTicketDrops, type BonusItemDrop } from "../core/raidTicketDrops";
 import { bountyRunCost, isBountyTierCleared, isBountyTierUnlocked, markBountyTierCleared } from "../core/bountyRun";
 import { BOUNTY, getBountyTier, type BountyTierDef } from "../data/bounty";
-import { BREAKTHROUGH_CAP, breakthroughFragmentSpend, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade } from "../core/relicProgression";
+import { BREAKTHROUGH_CAP, breakthroughFragmentSpend, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade, activeBreakthroughOf } from "../core/relicProgression";
 import { canResetRelic, relicResetRefund, resetRelicProgress } from "../core/relicReset";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
 import { MISSIONS, RESEARCH_REWARD_STAGES, maxResearchPoints, mergeMissionRewards, type MissionReward, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, LIFETIME_COUNT_CAP, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
@@ -1070,7 +1070,7 @@ export class FakeServer implements GameApi {
       .flatMap((instanceId) => instanceId === null ? [] : this.state.runeInventory.filter((rune) => rune.instanceId === instanceId));
     return {
       bondLevels: Object.fromEntries(entries.map(({ relicId, snapshot }) => [relicId, snapshot?.bondLevel ?? this.state.relicProgress[relicId]?.bondLevel ?? 0])),
-      breakthroughs: Object.fromEntries(entries.map(({ relicId, snapshot }) => [relicId, snapshot?.breakthrough ?? this.state.relicProgress[relicId]?.breakthrough ?? 0])),
+      breakthroughs: Object.fromEntries(entries.map(({ relicId, snapshot }) => [relicId, snapshot?.breakthrough ?? activeBreakthroughOf(this.state.relicProgress[relicId])])),
       traitEffects: partyRuneTraitEffects(entries.map(({ relicId, snapshot }) => ({ relicId, runes: snapshot?.runes ?? equippedRunes(relicId) }))),
     };
   }

@@ -79,6 +79,7 @@ export const INFO_RU = {
   "info.reset.plea": "Эм… вы правда хотите\nвернуть меня к началу?",
   "info.reset.wallet": "Изменение валюты",
   "info.reset.keep": "Прорыв, Связь и Руны сохраняются.",
+  "info.reset.keepDormant": "Связь и Руны сохраняются, Прорыв снова заработает, когда уровень вернётся.",
   "info.reset.free": "Бесплатно!",
   "info.reset.warn.title": "Вернётся лишь 90%!",
   "info.reset.warn.body": "10% сверх 21 ур. не вернутся",

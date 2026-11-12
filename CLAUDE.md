@@ -1838,6 +1838,7 @@
   렐릭 100(`RELIC_MAX_LEVEL`)이다. 레벨당 성장(SSR 2.6 · SR 2.4 · R 2.2%)은 그대로다. 상한을 묻는 곳은 전부 `relicLevelCap`을 쓰고
   숫자를 적지 않으며, 급여(`feedRelic`·`canFeedRelic`)는 상한을 **필수 인자**로 받는다.
 - 단계별 파편·치즈케이크·**요구 레벨**(20·30·40·50 — `requiredLevel`)·여는 슬롯은 `BREAKTHROUGH_STEPS` 한 표뿐이다.
+- **요구 레벨 밑으로 내려간 돌파는 지우지 않고 꺼진다**(`activeBreakthrough` — 레벨 초기화 뒤). 효과·능력치·공명·전투·서버 재현은 켜진 값을, 다음 돌파 비용과 표식의 등급은 저장 값을 읽는다. 꺼진 몫이 있으면 표식이 회색이고(`isBreakthroughDimmed`), 레벨이 다시 닿으면 저절로 켜진다. 효과를 읽는 새 자리는 `breakthrough`를 직접 읽지 않는다.
 - **돌파는 단계마다 오각형 다섯에 +10%p를 레벨 성장 %에 더한다**(`breakthroughGrowthPercent` — `applyLevelGrowth`의 필수 인자).
   곱하지 않고 더해 레벨 성장과 한 줄로 읽히며, 확정 창은 상한 줄 대신 「능력치 성장 +N% ▶ +N+10%」를 세운다. 이 몫은 레벨처럼
   **어느 개체나 같은 수**이고, 그 밖에 공용 배율을 다시 붙이지 않는다 — 한때 단계마다 `basicDamage`·`ultimateDamage`·

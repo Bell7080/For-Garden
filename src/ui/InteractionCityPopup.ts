@@ -511,7 +511,7 @@ export class InteractionCityPopup {
       const matches = interactionSpecialtyMatches(view.city, relic);
       const card = new PortraitCard(this.scene, x, y, {
         width: ROSTER.cardWidth, height: ROSTER.cardHeight, relicId: relic.id,
-        label: relic.name, level: progress.level, rarity: relic.rarity, breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id),
+        label: relic.name, level: progress.level, rarity: relic.rarity, breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id), breakthroughDimmed: relicProgression.isBreakthroughDimmed(relic.id),
         affinity: { element: relic.element, role: relic.role },
         // 그 도시에 맞는 칸이 있으면 이름 아래에 몇 칸인지 선다 — 누가 더 가져올지가 카드에서 읽힌다.
         ...(matches > 0 ? { sub: t("interaction.specialtyMatch", { count: matches }), subStyle: "accent" as const } : {}),
@@ -549,7 +549,7 @@ export class InteractionCityPopup {
           const info = this.info();
           info.onClose = () => {
             for (const [relicId, shown] of this.rosterCards) {
-              if (shown.active) shown.setProgress(relicProgression.getProgress(relicId).level, relicProgression.getBreakthroughGrade(relicId));
+              if (shown.active) shown.setProgress(relicProgression.getProgress(relicId).level, relicProgression.getBreakthroughGrade(relicId), relicProgression.isBreakthroughDimmed(relicId));
             }
           };
           info.showRelic(relic);

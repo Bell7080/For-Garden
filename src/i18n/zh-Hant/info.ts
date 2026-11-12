@@ -79,6 +79,7 @@ export const INFO_ZH_HANT = {
   "info.reset.plea": "那個……您真的要把我\n變回最初的樣子嗎？",
   "info.reset.wallet": "持有貨幣變化",
   "info.reset.keep": "突破、羈絆與符文保持不變。",
+  "info.reset.keepDormant": "羈絆與符文保持不變，突破會在等級重新達到後恢復生效。",
   "info.reset.free": "免費！",
   "info.reset.warn.title": "只返還90%！",
   "info.reset.warn.body": "超過21級部分的10%不會返還",

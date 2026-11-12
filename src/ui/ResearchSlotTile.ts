@@ -189,7 +189,7 @@ export class ResearchSlotTile extends Phaser.GameObjects.Container {
         relicId: def.id,
         label: def.name,
         rarity: def.rarity,
-        breakthroughGrade: relicProgression.getBreakthroughGrade(def.id),
+        breakthroughGrade: relicProgression.getBreakthroughGrade(def.id), breakthroughDimmed: relicProgression.isBreakthroughDimmed(def.id),
         // 결과판은 칸이 맞물려 서므로 머리를 칩 안에 가둔다.
         head: "inside",
       });

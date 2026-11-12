@@ -385,6 +385,16 @@
 "Benötigt {count}",
 "Нужно {count}"
 ],
+"info.breakthrough.next": [
+"下一阶段",
+"ขั้นถัดไป",
+"Bậc tiếp theo",
+"Tahap berikutnya",
+"Siguiente",
+"Próxima",
+"Nächste Stufe",
+"Следующий"
+],
 "info.rune.bag": [
 "符文背包 · {part}",
 "กระเป๋ารูน · {part}",

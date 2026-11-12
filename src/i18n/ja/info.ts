@@ -72,6 +72,7 @@ export const INFO_JA = {
   "info.breakthrough.fragment": "{name}の欠片",
   "info.breakthrough.cheesecake": "チーズケーキ",
   "info.breakthrough.need": "必要 {count}",
+  "info.breakthrough.next": "次の段階",
   "info.breakthrough.universalSpend": "消費 {count}",
   "info.breakthrough.universalNotice": "{name}も{count}個消費されます",
   "info.reset": "リセット",

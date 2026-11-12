@@ -63,17 +63,26 @@ describe("한계 돌파 표", () => {
     expect(stepsFirstRowClearsBevel(LAYOUT)).toBe(true);
   });
 
-  it("은 돌파 등급 표식·액자·설명이 줄 안에서 차례로 서고 겹치지 않는다", () => {
+  it("은 머리 띠에 돌파 등급 표식과 스킬 이름이, 몸통에 액자와 설명이 차례로 서고 겹치지 않는다", () => {
     const half = LAYOUT.rowWidth / 2;
-    const starLeft = BREAK_STEPS.gradeMark.x - BREAK_STEPS.gradeMark.size;
-    const starRight = BREAK_STEPS.gradeMark.x + BREAK_STEPS.gradeMark.size;
+    const markLeft = BREAK_STEPS.gradeMark.x - BREAK_STEPS.gradeMark.size;
+    const markRight = BREAK_STEPS.gradeMark.x + BREAK_STEPS.gradeMark.size;
+    expect(markLeft).toBeGreaterThan(-half);
+    expect(BREAK_STEPS.headerText.x).toBeGreaterThan(markRight);
     const iconLeft = BREAK_STEPS.icon.x - BREAK_STEPS.icon.size / 2;
     const iconRight = BREAK_STEPS.icon.x + BREAK_STEPS.icon.size / 2;
-    expect(starLeft).toBeGreaterThan(-half);
-    expect(iconLeft).toBeGreaterThan(starRight);
+    expect(iconLeft).toBeGreaterThan(-half);
     expect(BREAK_STEPS.textX).toBeGreaterThan(iconRight);
     // 설명이 줄 오른쪽 변을 넘지 않는다.
     expect(BREAK_STEPS.textX + LAYOUT.textWrap).toBeLessThanOrEqual(half);
+  });
+
+  it("은 카드 머리 띠 아래 몸통에 액자가 온전히 든다", () => {
+    expect(BREAK_STEPS.icon.size).toBeLessThan(BREAK_STEPS.row.height - BREAK_STEPS.header);
+  });
+
+  it("은 다음 단계 이름표가 카드 사이 여백보다 크게 튀어나오지 않는다", () => {
+    expect(BREAK_STEPS.next.tagHeight / 2 + BREAK_STEPS.next.tagLift).toBeLessThanOrEqual(BREAK_STEPS.row.step - BREAK_STEPS.row.height);
   });
 
   it("은 액자가 줄 안에 온전히 든다", () => {
@@ -83,8 +92,8 @@ describe("한계 돌파 표", () => {
   it("은 설명이 줄 높이에 담기는 줄 수로 끊긴다", () => {
     // 한 줄에 들어갈 수 있는 글 줄 수. 넘치면 설명이 줄 판 밖으로 흘러 아래 줄과 겹친다.
     const lineHeight = BREAK_STEPS.textSize + 8;
-    const maxLines = Math.floor((BREAK_STEPS.row.height - 16) / lineHeight);
-    expect(maxLines).toBeGreaterThanOrEqual(3);
+    const maxLines = Math.floor((BREAK_STEPS.row.height - BREAK_STEPS.header - 16) / lineHeight);
+    expect(maxLines).toBeGreaterThanOrEqual(2);
     // 실제 문구가 그 안에 드는지 글자 수로 가늠한다 — 한 줄에 대략 `wrap / 글자폭`자가 들어간다.
     const perLine = Math.floor(LAYOUT.textWrap / (BREAK_STEPS.textSize * 0.92));
     for (const step of BREAKTHROUGH_STEPS) {

@@ -70,7 +70,7 @@ import { showExpeditionRelic } from "../ui/expeditionRelicInfo";
 import { battleAssetFor, cancelMotion, flashHit, placePuppet, playMotion, sdAssetForSkin, spawnPuppet } from "../puppets/assets";
 import { isStageUnlocked, session } from "../state/session";
 import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
-import { battlefieldWashBands, statusAreaColor } from "../ui/groundAreas";
+import { battlefieldWashBands, HOSTILE_AREA_COLOR, statusAreaColor } from "../ui/groundAreas";
 import { Button, DESTRUCTIVE_BUTTON_STYLE } from "../ui/Button";
 import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
 import { PortraitCard } from "../ui/PortraitCard";
@@ -144,7 +144,7 @@ import { ensureEffectTextures } from "../ui/effectTextures";
 import { chargeAfterimageSteps } from "../ui/chargeAfterimage";
 import { FEVER_INK, feverBodyFill, feverFade, feverOutlineDirections, feverOutlineSteps, feverPulse } from "../ui/feverInk";
 import type { PuppetAfterimage } from "../puppets/IndexedPuppetCreature";
-import { attackDamagePopupRequest, DEBUFF_TONE, type DamageFlavor, type DebuffId } from "../ui/damageNumbers";
+import { attackDamagePopupRequest, DAMAGE_FLAVOR_COLOR, DEBUFF_TONE, type DamageFlavor, type DebuffId } from "../ui/damageNumbers";
 import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 import { stepBattleScoreMotion } from "../ui/battleScoreMotion";
@@ -2616,7 +2616,17 @@ export class BattleScene extends Phaser.Scene {
         color: statusAreaColor("submerged"),
       }));
     });
-    this.effects.syncGroundSurfaces(surfaces, this.time.now / 1000);
+    // 플레샤의 유성: 떨어질 자리에 예고 원이 서고 안쪽이 차오른다. 키는 떨어질 자리와 대기 시간으로 짓는다
+    // (앞의 유성이 먼저 떨어져 목록이 당겨져도 같은 원이 다른 원으로 바뀌지 않는다).
+    const starfalls = this.state.fighters.flatMap((fighter) => fighter.starfalls.map((fall) => ({
+      key: `starfall:${fighter.id}:${Math.round(fall.x)}:${Math.round(fall.y)}:${fall.total}`,
+      x: fall.x,
+      y: fall.y,
+      radius: fall.radius,
+      color: this.isAlly(fighter) ? DAMAGE_FLAVOR_COLOR.damage : HOSTILE_AREA_COLOR,
+      progress: fall.total > 0 ? 1 - fall.remaining / fall.total : 1,
+    })));
+    this.effects.syncGroundSurfaces([...surfaces, ...starfalls], this.time.now / 1000);
   }
 
   private syncCombatEffects(): void {

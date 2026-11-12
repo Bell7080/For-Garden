@@ -1705,6 +1705,93 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
+    id: "plesha",
+    squad: "eye",
+    name: "플레샤",
+    specimenNumber: "030",
+    projectName: "NIGHT PICNIC",
+    excavationSite: "영국 도싯 라임리지스 블루 라이어스 해안 절벽",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "폭풍이 깎아 낸 해안 절벽의 회색 석회암 판에서 목이 길게 뻗은 골격이 한 몸째 드러났다. 노처럼 넓은 지느러미발 네 개가 모두 제자리에 남아 있었고, 갈비뼈 안쪽에서는 삼킨 조약돌이 한 줌 나왔다. 몸길이에 비해 머리가 작고 이빨이 가늘어, 큰 먹이를 다투기보다 물고기 떼를 따라 먼 바다를 오래 떠돈 개체로 보았다. 성체에 조금 못 미치는 뼈라 복원은 아성체의 파장을 기준으로 맞췄다.",
+    observationProfile: {
+      originYear: "약 1억 9천만 년 전",
+      // E.C.는 플레샤의 인간형 신체 나잇대이며, 원종 화석의 연대와 독립된 값이다.
+      restorationYear: "E.C. 14년",
+      lifeStage: "아성체",
+      height: "1.55 m",
+      weight: "43 kg",
+    },
+    catalogSummary: "신장 1.55m, 체중 43kg의 인간형 체격에 길게 땋은 머리와 별 무늬 돗자리를 멘 모습이 확인된, 아성체 플레시오사우루스 화석 기반 표본.",
+    // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
+    unlockRecord: { status: "recorded", text: "복원 후 플레샤는 해가 지면 옥상 관측대로 도시락을 들고 올라간다. 돗자리를 펴고 누워 별이 떨어질 때마다 손가락으로 그 자리를 짚고, 수첩에 시각과 방향을 한 줄씩 적는다. 소원을 비는 대신 떨어진 자리를 기억해 두었다가 다음 날 아침 그쪽으로 걸어가 보는 버릇이 있다. 함께 올라간 이가 졸면 담요를 덮어 주고 혼자 남은 별을 끝까지 센다. 관제실 교신을 흉내 내 \"관측 지점 확인, 좌표 이상 없음\" 하고 중얼거리다가, 누가 들으면 얼굴을 붉히고 도시락 뚜껑으로 입을 가린다." },
+    squadNote: "시그널 아이의 야간 관측 담당. 밤마다 떨어지는 별의 좌표를 기록해 아침 정찰 경로에 얹어 두고, 연구원을 \"선배\"라 부른다.",
+    researcherTitle: "선배",
+    rarity: "SSR",
+    ferocityMax: 100,
+    portraitAssetId: "plesha",
+    origin: "플레시오사우루스",
+    element: "water",
+    role: "support",
+    // 긴 목처럼 멀리서 별을 던진다.
+    reachTier: "ranged",
+    // 먼 바다를 떠돌며 조약돌을 삼키던 몸이라 원석을 줍는 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.1, efficiencyMultiplier: 1.12 },
+    // 회복을 맡는 원거리 지원가라 주문력이 화력의 중심이고, 뒤에 서는 만큼 체력·방어는 얇다.
+    stats: {
+      hp: 960,
+      def: 56,
+      res: 100,
+      atk: 48,
+      ap: 178,
+      attackSpeed: 96,
+      moveSpeed: 92,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 한계 돌파는 추천표를 드려 확인받은 뒤 채운다 — 아직 설계하지 않은 자리라 비워 둔다.
+    ferocityTrait: { name: "유성우", effectId: "meteorShower", starfallEvery: 2, radiusBonusPercent: 30 },
+    passive: {
+      id: "plesha-passive",
+      name: "별똥별 도시락",
+      kind: "starfall",
+      iconAssetId: "skill-icon-healing",
+      effectType: "healing",
+      value: 3,
+      durationSeconds: 0,
+      // 예고 원이 먼저 서고 1초 뒤 떨어진다 — 피할 틈이 있는 만큼 범위는 평타보다 넓다.
+      starfall: { every: 3, delaySeconds: 1, radius: 150, power: 100, lowestAllyHealPercent: 40 },
+      desc: "기본 공격 3번째마다 그 자리에 1초 뒤 유성이 떨어져 원 안의 적에게 마법 피해를 주고, 준 피해의 일부만큼 가장 다친 아군을 회복한다.",
+    },
+    basic: {
+      id: "plesha-basic",
+      name: "별빛 조약돌",
+      // 지원가의 평타라 위력을 낮게 두고, 떨어진 자리 둘레만 함께 맞는다.
+      power: 50,
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      targeting: "targetedCircle",
+      radius: 90,
+    },
+    ultimate: {
+      id: "plesha-ult",
+      name: "유성 관측회",
+      // 한 번 떨어질 때의 위력이다. 세 번 떨어지며 그때마다 원 안의 아군을 회복한다.
+      power: 60,
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      cost: 120,
+      allyHealingPower: 60,
+      targeting: "targetedCircle",
+      radius: 200,
+      repeatStrike: { count: 3, intervalSeconds: 0.45 },
+    },
+  },
+  {
     id: "meron",
     squad: "rune",
     name: "메론",

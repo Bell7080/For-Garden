@@ -14,7 +14,7 @@ import { BACKGROUND } from "../ui/backgroundAssets";
  *
  * 간판(렉시아·스피나)은 여기에 넣지 않는다 — 놓친 사람이 게임의 얼굴을 영영 갖지 못한다.
  */
-export const LIMITED_RELIC_IDS: ReadonlySet<string> = new Set(["dian"]);
+export const LIMITED_RELIC_IDS: ReadonlySet<string> = new Set(["dian", "plesha"]);
 
 /** 정적 렐릭 희귀도를 기준으로 구성해 등급 결정 후 다른 등급이 섞이지 않게 한다. 한정 개체는 뺀다. */
 export const STANDARD_POOLS = Object.fromEntries(

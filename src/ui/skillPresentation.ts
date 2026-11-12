@@ -331,6 +331,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     return t("skill.ferocity.rollCallRefusal", { percent: trait.pullRadiusPercent, every: trait.rallyEvery });
   }
   if (trait.effectId === "restraintCollapse") return t("skill.ferocity.restraintCollapse");
+  if (trait.effectId === "meteorShower") return t("skill.ferocity.meteorShower", { every: trait.starfallEvery, percent: trait.radiusBonusPercent });
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? ""
@@ -679,6 +680,12 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     const plan = passive.cellRank;
     return t("skill.passive.cellRank", {
       percent: scaled("shield", "hp", plan.shieldMaxHpPercent, maxHp), seconds: plan.intervalSeconds, cap: scaled("shield", "hp", plan.capMaxHpPercent, maxHp),
+    });
+  }
+  if (passive.kind === "starfall" && passive.starfall !== undefined) {
+    const plan = passive.starfall;
+    return t("skill.passive.starfall", {
+      every: plan.every, seconds: plan.delaySeconds, damage: scaled("damage", "ap", plan.power, own?.ap), percent: plan.lowestAllyHealPercent,
     });
   }
   if (passive.kind === "restraintLocks" && passive.restraintLocks !== undefined) {
@@ -1399,7 +1406,8 @@ function skillTargetPhrase(skill: DescribedSkill): string {
     return t("skill.phrase.splitShot");
   }
   if (targeting === "battlefieldEnemies") return t("skill.phrase.battlefieldEnemies");
-  if (targeting === "targetedCircle") return t("skill.phrase.targetedCircle");
+  // 기본 공격의 원은 플레이어가 고른 자리가 아니라 **투사체가 떨어진 자리**다(플레샤).
+  if (targeting === "targetedCircle") return t("cost" in skill ? "skill.phrase.targetedCircle" : "skill.phrase.landingCircle");
   // 돌진은 시전 시점의 자리가 아니라 지나간 길이 대상이라, 원·전장과 다른 말로 적는다.
   if (targeting === "chargeLine") return t("skill.phrase.chargeLine");
   // 표적 선택 계약이 있는 단일 대상 스킬은 **누구를 고르는지**가 곧 대상이다.

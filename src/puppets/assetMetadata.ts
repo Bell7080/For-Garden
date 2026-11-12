@@ -864,6 +864,27 @@ export const TEKU_SD_METADATA: Omit<PuppetAsset, "url"> = {
   joints: { center: [575, 588], head: [521, 463], eyes: null, feet: [[630, 1219], [399, 1192]] },
 };
 
+/**
+ * 플레샤 전신(char_030): 중심1·머리1·눈1·눈2·발1·발2를 프로젝트에서 읽었다. alpha > 16 경계는 (26,44)–(1007,1496)이다.
+ * 발 관절은 그림 밖에 있어 바닥선은 관절이 아니라 alpha 경계로 잡는다.
+ */
+export const PLESHA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1024,
+  imageHeight: 1536,
+  content: { left: 26, top: 44, right: 1007, bottom: 1496 },
+  joints: { center: [477, 365], head: [445, 281], eyes: [[423, 266], [477, 255]], feet: [[501, 1714], [337, 1702]] },
+  /** 로비 세로 비율: 메론 기준. 1.55 m — 눈(260.5)에서 alpha 아래 경계까지를 그 키로 맞춘다. */
+  lobbyZoom: 0.955,
+};
+
+/** 플레샤 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. alpha > 16 경계는 (177,24)–(1158,1220)이다. */
+export const PLESHA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 177, top: 24, right: 1158, bottom: 1220 },
+  joints: { center: [653, 650], head: [617, 460], eyes: null, feet: [[507, 1216], [685, 1200]] },
+};
+
 /** 아크 SD: 중심1·머리1을 프로젝트에서 읽었으며 눈 관절은 없다. alpha 경계는 (113,31)–(1128,1224)이다. */
 export const ARK_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254,

@@ -55,6 +55,7 @@ export const SKILL_KO = {
   "skill.phrase.splitShot": "표적과 그 주위의 적에게",
   "skill.phrase.battlefieldEnemies": "전장의 모든 적에게",
   "skill.phrase.targetedCircle": "지정한 원 안의 모든 적에게",
+  "skill.phrase.landingCircle": "투사체가 떨어진 자리 주위의 모든 적에게",
   "skill.phrase.chargeLine": "[[charge|돌진]]해 뚫고 지나간 길의 모든 적에게",
 
   // ── 요약줄의 상태이상 ────────────────────────────────────────────────────
@@ -398,6 +399,8 @@ export const SKILL_KO = {
   "skill.ferocity.appetiteFrenzy": "폭주 중 [[attack-speed|공격 속도]]가 {percent}% 오르고, 자신이 건 [[bleed|출혈]]이 피해를 줄 때마다 그 피해의 {heal}%만큼 회복한다.",
   "skill.ferocity.corneredBeast": "폭주 중 [[attack-speed|공격 속도]]가 {attack}%, [[move-speed|이동 속도]]가 {move}% 오르고 등 뒤로 뛰어 물러나는 재사용 대기가 {seconds}초로 줄어든다.",
   "skill.ferocity.rollCallRefusal": "폭주 중 궁극기가 끌어당기는 범위가 {percent}% 넓어지고, [[basic-attack|기본 공격]]의 도발·보호막이 {every}번째마다 터진다.",
+  "skill.passive.starfall": "[[basic-attack|기본 공격]] {every}번째마다 그 자리에 {seconds}초 뒤 「유성」이 떨어져 원 안의 모든 적에게 {damage}의 [[magical-damage|마법 피해]]를 주고, 준 피해의 {percent}%만큼 체력이 가장 낮은 아군을 회복한다.",
+  "skill.ferocity.meteorShower": "폭주 중에는 「유성」이 [[basic-attack|기본 공격]] {every}번째마다 떨어지고 범위가 {percent}% 넓어진다.",
   "skill.ferocity.restraintCollapse": "폭주 중에는 남은 자물쇠가 모두 풀린 것으로 친다. 폭주가 끝나면 원래 수로 돌아간다.",
   "skill.ferocity.huntInstinct": "폭주 중 [[basic-attack|기본 공격]]이 [[intimidation|위압]]을 {stacks}겹씩 쌓고, [[fear|공포]]가 풀린 뒤의 면역이 {seconds}초로 짧아진다.",
   "skill.breakthrough.effect.basic.scoldTaunt": "「{name}」에 맞은 적을 {seconds}초 동안 [[taunt|도발]]한다.",

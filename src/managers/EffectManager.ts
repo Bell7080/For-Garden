@@ -102,6 +102,11 @@ export interface GroundSurface {
   y: number;
   radius: number;
   color: string;
+  /**
+   * 0~1. 있으면 고인 물이 아니라 **떨어질 자리의 예고**다(플레샤의 유성) — 물결 대신 안쪽 마름모가
+   * 경계까지 차오르고, 다 차는 순간이 떨어지는 순간이다. 3배속에서도 "곧 여기"가 한 장에 읽힌다.
+   */
+  progress?: number;
 }
 
 interface SurfaceSlot {
@@ -409,7 +414,15 @@ export class EffectManager {
       graphics.fillPoints(diamond(shown.radius), true);
       graphics.fillStyle(lightenColor(color, INK_AREA.coreLighten), surfaceInk.coreAlpha * alpha);
       graphics.fillPoints(diamond(shown.radius * INK_AREA.coreScale), true);
-      for (let index = 0; index < surfaceInk.ripples; index += 1) {
+      if (shown.progress !== undefined) {
+        // 예고 원: 물결 대신 차오르는 안쪽 한 겹. 판이 다 차는 순간이 낙하다.
+        const fill = diamond(shown.radius * Math.max(0.05, Math.min(1, shown.progress)));
+        graphics.lineStyle(surfaceInk.inkWidth, INK_COLOR, surfaceInk.inkAlpha * slot.fade);
+        graphics.strokePoints(fill, true);
+        graphics.lineStyle(INK_AREA.lineWidth, lightenColor(color, INK_AREA.lineLighten), surfaceInk.lineAlpha * slot.fade);
+        graphics.strokePoints(fill, true);
+      }
+      for (let index = 0; index < (shown.progress === undefined ? surfaceInk.ripples : 0); index += 1) {
         const phase = (nowSeconds / surfaceInk.rippleSeconds + index / surfaceInk.ripples) % 1;
         const ripple = diamond(shown.radius * (surfaceInk.rippleFrom + (1 - surfaceInk.rippleFrom) * phase));
         const rippleAlpha = surfaceInk.rippleAlpha * (1 - phase) * slot.fade;

@@ -10,7 +10,7 @@ import { drainFerocityFever, FEROCITY_RULES, feverDrainPerSecond, ferocityMaxOf,
 import { isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
 import { ENCOUNTER_ROLE, encounterRampFactor, type EncounterDamageReduction, type EncounterTenacity } from "./levelDesign";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, flatStatPoints, highHpDamageMultiplier, lowHpDamageMultiplier, nthBasicBonusMultiplier, openingCritCount, periodicCritEvery, sameTargetStreakMultiplier, shieldedDamageMultiplier, warmUpAttackSpeedPercent, type ExpeditionAugmentEffect, type FlatStatKind, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
-import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Role, Side, Skill, Stats, TeamBuff } from "./types";
+import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, Passive, ReachTier, RelicDef, Role, Side, Skill, Stats, TeamBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX, ultimateEnergyCap } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
 import { PUP } from "./pup";
@@ -165,6 +165,13 @@ export interface Fighter extends Combatant {
   statusHitCount: number;
   /** 기본 공격 호령(`BasicAttack.rally`)의 주기를 세는 타수. */
   rallyHitCount: number;
+  /** 「별똥별 피크닉」(`Passive.starfall`)의 주기를 세는 타수. */
+  starfallHitCount: number;
+  /**
+   * 떨어지고 있는 유성. 자리·반경·남은 시간·전체 시간을 든다 — 씬은 이 목록을 매 프레임 읽어
+   * 예고 원과 떨어지는 별을 그린다(사건으로 쏘면 그 순간에만 그려져 예고가 깜빡인다).
+   */
+  starfalls: { x: number; y: number; radius: number; remaining: number; total: number }[];
   /** 원정 공격 출혈의 명시된 발동 주기만 세며 스킬 상태 주기와 섞지 않는다. */
   augmentBleedHitCount: number;
   /** 조건부 증강별 발동 횟수와 마지막 시각. 키는 전투 입력 배열 순번이라 저장 데이터와 분리된다. */
@@ -1332,6 +1339,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     knockback: null,
     statusHitCount: 0,
     rallyHitCount: 0,
+    starfallHitCount: 0,
+    starfalls: [],
     augmentBleedHitCount: 0,
     augmentRuntime: {},
     augmentActionSerial: 0,
@@ -3385,6 +3394,87 @@ function triggerRally(attacker: Fighter, state: SkirmishState, events: SkirmishE
   grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * rally.shieldMaxHpPercent / 100)), events);
   events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: false, damageType: "physical",
     area: { shape: "radial", x: attacker.x, y: attacker.y, radius: rally.tauntRadius } });
+}
+
+/** 폭주 「유성우」가 켜져 있으면 그 값을, 아니면 패시브의 값을 쓴다. */
+function starfallShape(attacker: Fighter): { every: number; radius: number } | undefined {
+  const starfall = attacker.def.passive.starfall;
+  if (!starfall) return undefined;
+  const trait = attacker.def.ferocityTrait;
+  if (attacker.ferocityFever && trait.effectId === "meteorShower") {
+    return { every: Math.min(starfall.every, trait.starfallEvery), radius: starfall.radius * (1 + trait.radiusBonusPercent / 100) };
+  }
+  return { every: starfall.every, radius: starfall.radius };
+}
+
+/**
+ * 「별똥별 피크닉」(플레샤) — 실제로 나간 기본 공격 N번째마다 **그 표적이 서 있던 자리**에 유성을 예약한다.
+ *
+ * 표적을 따라가지 않는다. 떨어지는 동안 비켜난 적은 맞지 않고, 그 자리로 들어온 적은 맞는다 —
+ * 예고 원이 곧 판정이라 "어디에 떨어지는가"가 화면과 갈리지 않는다. 궁극기는 이 셈을 건드리지 않는다.
+ */
+function callStarfall(attacker: Fighter, target: { x: number; y: number }): void {
+  const starfall = attacker.def.passive.starfall;
+  const shape = starfallShape(attacker);
+  if (!starfall || !shape || !isFighterAlive(attacker)) return;
+  attacker.starfallHitCount += 1;
+  if (attacker.starfallHitCount < shape.every) return;
+  attacker.starfallHitCount = 0;
+  attacker.starfalls.push({ x: target.x, y: target.y, radius: shape.radius, remaining: starfall.delaySeconds, total: starfall.delaySeconds });
+}
+
+/** 떨어지는 유성의 시계. 다 떨어진 자리마다 원 안의 적을 치고 그 피해로 가장 다친 아군을 회복한다. */
+function tickStarfalls(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (fighter.starfalls.length === 0) return;
+  const starfall = fighter.def.passive.starfall;
+  if (!starfall || !isFighterAlive(fighter)) { fighter.starfalls = []; return; }
+  const due: typeof fighter.starfalls = [];
+  fighter.starfalls = fighter.starfalls.filter((fall) => {
+    fall.remaining -= dt;
+    if (fall.remaining > EMERGENCY_RECOVERY.epsilon) return true;
+    due.push(fall);
+    return false;
+  });
+  for (const fall of due) landStarfall(fighter, fall, starfall, state, events);
+}
+
+function landStarfall(
+  fighter: Fighter,
+  fall: { x: number; y: number; radius: number },
+  starfall: NonNullable<Passive["starfall"]>,
+  state: SkirmishState,
+  events: SkirmishEvent[],
+): void {
+  const attacker = { ...fighter, def: offensiveDefinition(fighter) };
+  const foes = aliveFighters(state, fighter.side === "player" ? "enemy" : "player")
+    .filter((foe) => dHypot(foe.x - fall.x, foe.y - fall.y) <= fall.radius);
+  events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: false, damageType: "magical",
+    area: { shape: "radial", x: fall.x, y: fall.y, radius: fall.radius } });
+  let dealt = 0;
+  for (const foe of foes) {
+    const input = { power: starfall.power, damageType: "magical" as const, scalingStat: "ap" as const, isCritical: false, kind: "basic" as const };
+    const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(foe, state), input)));
+    const resolution = resolveReceivedDamage(foe, raw);
+    const hpBefore = foe.hp;
+    const shieldBefore = foe.shield.amount; const shieldProviderId = foe.shield.providerId;
+    applyDamage(foe, resolution.applied, events, state);
+    dealt += Math.max(0, hpBefore - foe.hp);
+    const credited = recordDamageContribution(state, fighter.id, foe, "magical", "ap",
+      computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
+    events.push({ kind: "attack", attackerId: fighter.id, targetId: foe.id, skill: "basic", amount: resolution.applied,
+      contributionAmount: credited, critical: false, animate: false, damageType: "magical", mitigated: resolution.reduced < resolution.raw, followUp: true });
+    if (!isFighterAlive(foe)) {
+      clearDefeatedStatuses(foe);
+      events.push({ kind: "death", fighterId: foe.id, sourceId: fighter.id });
+    }
+  }
+  // 때린 본인은 후보에서 빠진다 — 도디의 회복과 같은 계약이다. 뒤에서 거드는 개체가 제 몸만 고치면 지원가가 아니다.
+  if (dealt <= 0) return;
+  const ally = lowestCurrentHpAlly(state, fighter.side, fighter.id);
+  if (!ally) return;
+  const healed = applyHealing(state, ally, dealt * starfall.lowestAllyHealPercent / 100, fighter.id);
+  pushHeal(events, ally, healed, "passive");
+  grantFeverHealingShield(fighter, ally, healed, events, state);
 }
 
 /**
@@ -8488,7 +8578,7 @@ function strike(
   }
   const basicAim = useUltimate ? undefined : skill.targeting;
   if (ultimateProbing && useUltimate && attacker.def.ultimate.targeting === "single") throw new UltimateProbe(true);
-  if ((useUltimate && attacker.def.ultimate.targeting !== "single") || basicAim === "nearbyEnemies" || basicAim === "splitShot") {
+  if ((useUltimate && attacker.def.ultimate.targeting !== "single") || basicAim === "nearbyEnemies" || basicAim === "splitShot" || basicAim === "targetedCircle") {
     strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint, comboHit !== undefined && !comboHit.grantActionResources);
     return;
   }
@@ -8852,6 +8942,7 @@ function strike(
     if (!useUltimate) applyBasicBreakthrough(attacker, state, events);
   }
   if (!useUltimate && comboHit === undefined) triggerRally(attacker, state, events);
+  if (!useUltimate && comboHit === undefined) callStarfall(attacker, target);
   // 기본 공격 돌파(`poisonPulse`) — 이미 독이 걸려 있던 적은 독 한 틱을 먼저 받는다. 청산하는 타격은 몰아 받으니 제외한다.
   if (!useUltimate && !encoreLiquidation && targetWasPoisoned && isFighterAlive(target) && !resolution.ignored
     && openedBreakthrough(attacker, "basic", (effects) => effects.basic)?.kind === "poisonPulse") {
@@ -9328,6 +9419,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       if (shield > 0) grantShield(state, ally, attacker.id, shield, events);
     }
   }
+  // 투사체가 떨어진 자리도 한 번의 기본 공격으로 센다 — 유성은 그 낙하 지점에 예약된다.
+  if (!useUltimate && !followUp && !free) callStarfall(attacker, center);
   // 되돌아오는 돌진은 이미 치른 한 번의 몫이라 야성을 다시 올리지 않는다.
   if (!attacker.bt.dashBack?.running) gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
 }
@@ -11034,7 +11127,7 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
       drainFerocityFever(fighter, step);
       if (feverBefore && !fighter.ferocityFever) applyFerocityBreakthrough(fighter, state, events);
     });
-    state.fighters.forEach((fighter) => { tickUltimateBreakthrough(fighter, step, state, events); tickTidalEchoes(fighter, step, state, events); tickArrowEchoes(fighter, step, state, events); tickAfterimages(fighter, step, state, events); tickTankBreakthroughs(fighter, step, state, events); tickBossBreakthroughs(fighter, step, state, events); tickAfterglow(fighter, state, events); });
+    state.fighters.forEach((fighter) => { tickUltimateBreakthrough(fighter, step, state, events); tickTidalEchoes(fighter, step, state, events); tickStarfalls(fighter, step, state, events); tickArrowEchoes(fighter, step, state, events); tickAfterimages(fighter, step, state, events); tickTankBreakthroughs(fighter, step, state, events); tickBossBreakthroughs(fighter, step, state, events); tickAfterglow(fighter, state, events); });
     remaining -= step;
   }
   if (state.phase === "fight" && state.timeLimitSeconds !== undefined && state.elapsed >= state.timeLimitSeconds - 1e-8) {

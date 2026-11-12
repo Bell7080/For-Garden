@@ -22,7 +22,7 @@ export const SKILL_ART_SLOTS: readonly SkillArtSlot[] = ["passive", "basic", "ul
 const ART_FOLDERS: readonly string[] = [
   "torika", "rex", "spino", "luka", "dodo", "mette", "stella", "tia", "meron", "pachi", "maki", "keris", "delopi", "nodonia", "ella", "deina",
   "toby", "amo", "ripa", "pontos", "koma", "parua", "sukusuino", "taboa", "raitia",
-  "kento", "mosana", "anka", "irna", "ark", "yuti", "teku", "ikanixia", "atra", "pulsi", "neuri", "mir", "magasa", "noa", "raja", "carno",
+  "kento", "mosana", "anka", "irna", "ark", "yuti", "teku", "plesha", "ikanixia", "atra", "pulsi", "neuri", "mir", "magasa", "noa", "raja", "carno",
   "maddy", "terisa", "shute", "morphe", "dimo", "dian", "kuro", "shiro", "quetzalcoatlus",
 ];
 

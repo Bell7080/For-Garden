@@ -100,6 +100,7 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   yuti: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.98, cutInHoldMs: 140, zoomScale: 1.1, zoomMs: 105, cameraShakeIntensity: 0.006 },
   // 다섯 발을 연달아 쏘는 궁극기라 한 방의 무게보다 연사의 리듬이 읽히도록 흔들림을 낮게 둔다.
   teku: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.98, cutInHoldMs: 140, zoomScale: 1.12, zoomMs: 110, cameraShakeIntensity: 0.006 },
+  plesha: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1, cutInHoldMs: 160, zoomScale: 1.1, zoomMs: 120, cameraShakeIntensity: 0.007 },
   ark: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.96, zoomScale: 1.2, zoomMs: 115, cameraShakeIntensity: 0.009 },
   anka: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.02, zoomScale: 1.16, zoomMs: 120, cameraShakeIntensity: 0.006 },
   "toby": { ...DEFAULT_ULTIMATE_PRESENTATION, cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },

@@ -46,6 +46,7 @@ import {
   ANKA_PORTRAIT_METADATA,
   IRNA_PORTRAIT_METADATA,
   TEKU_PORTRAIT_METADATA,
+  PLESHA_PORTRAIT_METADATA,
   ARK_PORTRAIT_METADATA,
   TIA_PORTRAIT_METADATA,
   TORIKA_PORTRAIT_METADATA,
@@ -375,6 +376,7 @@ const REAL_PORTRAITS = [
   { name: "모사나", metadata: MOSANA_PORTRAIT_METADATA, head: { x: 401, y: 213 }, eyes: [{ x: 381, y: 218 }, { x: 423, y: 177 }] },
   { name: "안카", metadata: ANKA_PORTRAIT_METADATA, head: { x: 401, y: 213 }, eyes: [{ x: 374, y: 220 }, { x: 456, y: 201 }] },
   { name: "테쿠", metadata: TEKU_PORTRAIT_METADATA, head: { x: 451, y: 269 }, eyes: [{ x: 424, y: 261 }, { x: 492, y: 229 }] },
+  { name: "플레샤", metadata: PLESHA_PORTRAIT_METADATA, head: { x: 445, y: 281 }, eyes: [{ x: 423, y: 266 }, { x: 477, y: 255 }] },
   { name: "이르나", metadata: IRNA_PORTRAIT_METADATA, head: { x: 600, y: 254 }, eyes: [{ x: 567, y: 230 }, { x: 623, y: 265 }] },
   { name: "아크", metadata: ARK_PORTRAIT_METADATA, head: { x: 595, y: 338 }, eyes: [{ x: 558, y: 306 }, { x: 620, y: 339 }] },
   // 레이티아 다섯 자매. 같은 몸이지만 묶음마다 캔버스와 여백이 달라 다섯을 모두 건다.

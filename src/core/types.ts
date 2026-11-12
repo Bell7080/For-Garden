@@ -52,7 +52,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno" | "plesha";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -1414,7 +1414,9 @@ export type PassiveKind =
   /** 라자 전용: 자신에게 도발된 적이 때릴 때마다 보호막을 얻는다. */
   | "cellRank"
   /** 카르노 전용: 구속구 넷이 체력 문턱마다 끊어지며 빨라지고, 모두 끊어지면 기본 공격이 주위를 휩쓴다. */
-  | "restraintLocks";
+  | "restraintLocks"
+  /** 플레샤 전용: 기본 공격 몇 번째마다 표적 자리에 유성이 늦게 떨어져 적을 치고, 그 피해로 가장 다친 아군을 회복한다. */
+  | "starfall";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
@@ -1497,7 +1499,9 @@ export type FerocityEffectId =
   /** 라자 전용: 폭주 중 궁극기의 끌어당김 범위가 넓어지고 호령이 더 잦아진다. */
   | "rollCallRefusal"
   /** 카르노 전용: 폭주 중 구속구가 모두 끊어진 것으로 본다. */
-  | "restraintCollapse";
+  | "restraintCollapse"
+  /** 플레샤 전용: 폭주 중 유성이 더 잦고 더 넓게 떨어진다. */
+  | "meteorShower";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -1771,6 +1775,15 @@ export type FerocityTrait = {
   | {
       /** 구속 붕괴(카르노). 폭주 중 남은 구속구가 모두 끊어진 것으로 본다. */
       effectId: "restraintCollapse";
+    }
+  | {
+      /**
+       * 유성우(플레샤). 폭주 중 「별똥별 피크닉」의 유성이 `starfallEvery`번째 기본 공격마다 떨어지고
+       * 낙하 범위가 `radiusBonusPercent`% 넓어진다. 위력과 회복 비율은 건드리지 않는다(공용 야성 규칙이 이미 올린다).
+       */
+      effectId: "meteorShower";
+      starfallEvery: number;
+      radiusBonusPercent: number;
     }
   | {
       /** 광폭한 꼬리(펄시). 폭주 중 공격 속도가 오르고 한 대에 겨누기 겹이 더 쌓인다. */
@@ -2356,6 +2369,18 @@ export interface Passive {
    * `attackSpeedPercent`%·이동 속도 `moveSpeedPercent`%가 오르고 주위 `burstRadius` 안의 적을 날려버린다. 모두 끊어지면
    * 기본 공격이 주위 `liberatedRadius` 안의 모든 적을 친다(「해방」).
    */
+  /**
+   * 「별똥별 피크닉」 계약(플레샤). 실제로 나간 기본 공격 `every`번째마다 그 표적이 서 있던 자리에 유성을 예약하고,
+   * `delaySeconds` 뒤 반경 `radius` 안의 모든 적에게 주문력 `power`%의 마법 피해를 준다. 실제로 깎인 체력의
+   * `lowestAllyHealPercent`%만큼 체력이 가장 낮은 아군(자신 제외)을 회복한다. 떨어지는 동안 표적이 비켜나면 맞지 않는다.
+   */
+  starfall?: {
+    every: number;
+    delaySeconds: number;
+    radius: number;
+    power: number;
+    lowestAllyHealPercent: number;
+  };
   restraintLocks?: {
     thresholds: readonly number[];
     attackSpeedPercent: number;

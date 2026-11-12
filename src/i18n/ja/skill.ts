@@ -44,6 +44,7 @@ export const SKILL_JA = {
   "skill.phrase.splitShot": "標的とその周囲の敵に",
   "skill.phrase.battlefieldEnemies": "戦場のすべての敵に",
   "skill.phrase.targetedCircle": "指定した円の中のすべての敵に",
+  "skill.phrase.landingCircle": "弾が落ちた場所の周りのすべての敵に",
   "skill.phrase.chargeLine": "[[charge|突進]]して駆け抜けた道のすべての敵に",
 
   "skill.statusLabel.stun": "[[stun|気絶]] {seconds}秒",
@@ -72,6 +73,8 @@ export const SKILL_JA = {
   "skill.stack.bonus": "{percent}に当たる物理ダメージを追加で与え",
   "skill.stack.description": "通常攻撃1回ごとに1重ずつ積まれ、{every}重目で弾ける。弾ける一撃は {effects}。弾けた後、重ねは0に戻る。",
   "skill.ferocity.reagentDoping": "暴走に入った瞬間、すべての敵に[[reagent|試薬]]を{stacks}重付ける。暴走中は[[attack-speed|攻撃速度]]が{percent}%増加する。",
+  "skill.passive.starfall": "[[basic-attack|通常攻撃]]{every}回ごとに、その場所に{seconds}秒後「流星」が落ち、円の中のすべての敵に{damage}の[[magical-damage|魔法ダメージ]]を与え、与えたダメージの{percent}%分、体力が最も低い味方を回復する。",
+  "skill.ferocity.meteorShower": "暴走中は「流星」が[[basic-attack|通常攻撃]]{every}回ごとに落ち、範囲が{percent}%広がる。",
   "skill.ferocity.damageReduction": "受けるダメージが{percent}%減る。",
   "skill.ferocity.torikaBulwark": "[[def|防御力]]が{defense}、[[res|抵抗力]]が{resistance}増加する。暴走に入った瞬間、周囲のすべての敵を{seconds}秒間[[taunt|挑発]]する。",
   "skill.ferocity.teamMoveSpeedBonus": "生存中の味方全体の[[move-speed|移動速度]]が{percent}%速くなる。",

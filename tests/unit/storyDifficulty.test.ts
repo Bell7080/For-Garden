@@ -5,7 +5,7 @@ import { partyPreview } from "../../src/data/partyContent";
 import { prepareCombat, combatJournal } from "../../src/server/combatAuthority";
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
-import { STORY_DIFFICULTIES, difficultyStageRewards, isStoryDifficultyUnlocked, newlyUnlockedStoryDifficulty, STORY_DIFFICULTY, storyChapterStatFactor, storyStageId } from "../../src/core/storyDifficulty";
+import { STORY_DIFFICULTIES, difficultyStageRewards, isStoryDifficultyUnlocked, newlyUnlockedStoryDifficulty, STORY_DIFFICULTY, storyStageId } from "../../src/core/storyDifficulty";
 import { nextBattleStage } from "../../src/core/stageProgress";
 import { stageClearAdvancesTutorial } from "../../src/core/tutorial";
 import { getBattleStage, getStageEnemies, STAGES, storyStages } from "../../src/data/stages";
@@ -122,13 +122,11 @@ describe("스토리 확장 난이도", () => {
     }
   });
 
-  it("장 배율은 장마다 하나다", () => {
-    const factor = (id: string) => getBattleStage(id).difficultyStatMultiplier ?? 1;
-    // 쉬움은 4장부터 장 배율을 덜 받는다(응태 결정 2026-11-12 — 6장부터 힘들다). 보통·어려움은 예전 표 그대로다.
-    expect(["1-1", "1-10", "2-1", "3-10", "4-1", "4-10", "5-1", "5-10", "6-1", "7-10"].map(factor)).toEqual([1, 1, 1.05, 1.1, 1.1, 1.1, 1.1, 1.1, 1, 0.95]);
-    const normal = (id: string) => getBattleStage(storyStageId("normal", id)).difficultyStatMultiplier!;
-    expect(["1-1", "2-1", "4-10", "5-1", "6-1", "7-10"].map(normal).map(v => Math.round(v * 100) / 100)).toEqual([2, 2.1, 2.3, 2.4, 2.5, 2.6]);
-    expect(getBattleStage(storyStageId("hard", "7-10")).difficultyStatMultiplier).toBeCloseTo(STORY_DIFFICULTY.hard.statFactor * 1.3);
+  it("장 배율 없이 난이도 배율 하나만 곱한다", () => {
+    // 장 배율은 걷어 냈다(응태 결정 2026-11-12 — 레벨제로 갔으니 필요 없다). 쉬움은 레벨만, 보통·어려움은 statFactor만.
+    expect(["1-1", "2-1", "4-10", "6-1", "7-10"].map(id => getBattleStage(id).difficultyStatMultiplier)).toEqual([undefined, undefined, undefined, undefined, undefined]);
+    expect(["1-1", "4-10", "7-10"].map(id => getBattleStage(storyStageId("normal", id)).difficultyStatMultiplier)).toEqual([2, 2, 2]);
+    expect(getBattleStage(storyStageId("hard", "7-10")).difficultyStatMultiplier).toBe(STORY_DIFFICULTY.hard.statFactor);
   });
 
   it("쉬움의 편성·레벨·돌파·정예를 그대로 상속하고 오각형에만 난이도 종족값을 적용한다", () => {
@@ -140,8 +138,7 @@ describe("스토리 확장 난이도", () => {
         const easy = getStageEnemies(base), grown = getStageEnemies(stage);
         grown.forEach((enemy, i) => {
           for (const key of ["hp", "atk", "ap", "def", "res"] as const) {
-            // 장 배율은 난이도마다 따로라(쉬움만 4장부터 덜 받는다) 쉬움 값에서 그 비만큼 옮긴다. 반올림 몫만큼 어긋날 수 있다.
-            const factor = STORY_DIFFICULTY[difficulty].statFactor * storyChapterStatFactor(base.chapter, difficulty) / storyChapterStatFactor(base.chapter, "easy");
+            const factor = STORY_DIFFICULTY[difficulty].statFactor;
             expect(Math.abs(enemy.stats[key] - easy[i].stats[key] * factor)).toBeLessThanOrEqual(base.difficultyStatMultiplier ? factor : 0.5);
           }
           for (const key of ["attackSpeed", "moveSpeed", "critChance", "critDamage", "energyGain"] as const) expect(enemy.stats[key]).toBe(easy[i].stats[key]);

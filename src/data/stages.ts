@@ -1,6 +1,6 @@
 import { ancientStageFloor } from "./ancientStrataDifficulty";
 import { getAncientStrataFloor, getAncientStrataStage } from "../core/ancientStrataBattle";
-import { difficultyStageRewards, storyBaseStageId, STORY_DIFFICULTY, storyChapterStatFactor, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
+import { difficultyStageRewards, storyBaseStageId, STORY_DIFFICULTY, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
 import { GROWTH_STAT_KEYS } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
 import { applyEncounterScaling, encounterRoleFor, shownBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
@@ -326,8 +326,6 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
       enemies,
       // 혼자 서면 정예다. 화면은 이 표식으로 몸집과 표식만 바꾸고 수치는 건드리지 않는다.
       ...(elite ? { elite: true as const } : {}),
-      // 장 배율이 오각형 다섯에 곱해진다(`storyChapterStatFactor`). 배율 1인 장(1장)은 필드를 두지 않는다.
-      ...(storyChapterStatFactor(chapter, "easy") !== 1 ? { difficultyStatMultiplier: storyChapterStatFactor(chapter, "easy") } : {}),
       rewards: {
         /*
          * 초회 치즈케이크는 **난이도 검수가 딛고 선 값**이라 그대로 둔다. `stageDifficulty.test`가 관문마다
@@ -403,8 +401,7 @@ export const SIDE_BATTLE_STAGE: BattleStageDef = {
 
 /**
  * 2장 이후의 전투 서브 — 1-8과 같은 **정예 둘** 변칙이다. 레벨은 선행 본편 관문의 권장 레벨보다 한 레벨 낮게 서고,
- * 장 배율도 본편과 같은 규칙을 그대로 받는다 — 서브라고 새 손잡이를
- * 만들지 않는다. 보상은 1-8과 같이 젬 50 하나다.
+ * 서브라고 새 손잡이를 만들지 않는다. 보상은 1-8과 같이 젬 50 하나다.
  */
 function sideBattle(anchor: string, name: string, formation: readonly (readonly [string, 0 | 1 | 2])[]): BattleStageDef {
   const [chapter, order] = anchor.split("-").map(Number);
@@ -414,7 +411,6 @@ function sideBattle(anchor: string, name: string, formation: readonly (readonly 
     id: `${anchor}-side-battle`, name, chapter, chapterOrder: order,
     prerequisiteStageIds: [anchor],
     enemies: formation.map(([relicId, slot]) => enemyGrowth(relicId, reference, slot)),
-    ...(storyChapterStatFactor(chapter, "easy") !== 1 ? { difficultyStatMultiplier: storyChapterStatFactor(chapter, "easy") } : {}),
     rewards: {
       firstClearCheesecake: 0,
       repeatClearCheesecake: 0,
@@ -445,8 +441,7 @@ const EXTRA_STORY_STAGES: readonly BattleStageDef[] = (["normal", "hard"] as con
   const prerequisiteStageIds = first ? [storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10")] : base.prerequisiteStageIds.map(id => storyStageId(difficulty, id));
   return { ...base, id: storyStageId(difficulty, base.id), prerequisiteStageIds,
     enemies: base.enemies.map(enemy => ({ ...enemy })),
-    // 보통·어려움은 쉬움의 장 배율이 아니라 제 장 배율 표를 받는다 — 쉬움만 4장부터 덜 받는다(`STORY_EASY_CHAPTER_STAT_FACTOR`).
-    difficultyStatMultiplier: STORY_DIFFICULTY[difficulty].statFactor * storyChapterStatFactor(base.chapter, difficulty), rewards: difficultyStageRewards(base.rewards, difficulty), situation: undefined };
+    difficultyStatMultiplier: STORY_DIFFICULTY[difficulty].statFactor, rewards: difficultyStageRewards(base.rewards, difficulty), situation: undefined };
 }));
 export const ALL_STORY_STAGES: readonly StageDef[] = [...STAGES, ...EXTRA_STORY_STAGES];
 const STAGE_BY_ID = new Map(ALL_STORY_STAGES.map((stage) => [stage.id, stage]));

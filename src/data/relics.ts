@@ -1751,7 +1751,14 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 한계 돌파는 추천표를 드려 확인받은 뒤 채운다 — 아직 설계하지 않은 자리라 비워 둔다.
+    // 한계 돌파(응태 결정 2026-11-12) — 평타가 확률로 유성을 부르고, 궁극기는 한 발 더 떨어지며 회복이 붙고,
+    // 폭주 동안 아군 모두가 빨라지고, 유성 회복이 다친 아군 한 명에게 한 번 더 들어간다.
+    breakthroughEffects: {
+      basic: { kind: "starfallChance", chancePercent: 30 },
+      ultimate: { kind: "meteorEncore", extraStrikes: 1, bonusHealPower: 20 },
+      ferocity: { kind: "starlitCheer", attackSpeedPercent: 30 },
+      passive: { kind: "secondStar", percent: 50 },
+    },
     ferocityTrait: { name: "유성우", effectId: "meteorShower", starfallEvery: 2, radiusBonusPercent: 30 },
     passive: {
       id: "plesha-passive",

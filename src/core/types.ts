@@ -2773,6 +2773,11 @@ export interface BreakthroughNone {
  * (`BasicAttack.statusEffectEvery`)을 그대로 타고 세 번에 한 번만 일어난다.
  */
 export type BasicBreakthrough = {
+  /** 기본 공격마다 이 확률로 그 자리에 유성이 하나 더 떨어진다(플레샤). 주기 유성의 셈은 건드리지 않는다. */
+  kind: "starfallChance";
+  /** 발동 확률(%). */
+  chancePercent: number;
+} | {
   /**
    * 일반 공격 **세 번마다** 병뚜껑이 터져 맞힌 적 주위(맞은 적 포함)의 적에게 냉기가 쌓인다(매디의 「소다 터짐」). 빙결 조건 없이 도는 주기형이다.
    */
@@ -3033,6 +3038,11 @@ export type BasicBreakthrough = {
  * 궁극기가 세 번이 된다(채널링 궁극기와 같은 규칙이다).
  */
 export type UltimateBreakthrough = {
+  /** 되찍는 궁극기가 `extraStrikes`번 더 떨어지고, 떨어질 때마다 원 안의 아군 회복에 주문력 `bonusHealPower`%가 얹힌다(플레샤). */
+  kind: "meteorEncore";
+  extraStrikes: number;
+  bonusHealPower: number;
+} | {
   /**
    * 저주가 걸린 적이 쓰러지면 그 **저주 겹이 주변 적에게 이어진다**(케리스의 「막이 내린 뒤」). 한 번에 이어지는 겹은 `maxCarry`까지이고,
    * 이어받은 적이 다시 쓰러질 때만 다음 연쇄가 일어나므로 처치가 곧 연쇄가 된다.
@@ -3278,6 +3288,10 @@ export type UltimateBreakthrough = {
  * 세져 그 시간만 부풀고, 끝나고 가장 약해지는 자리를 메우지 못한다.
  */
 export type FerocityBreakthrough = {
+  /** 폭주에 들어서는 순간 살아 있는 아군 모두의 공격 속도가 폭주가 이어지는 동안(8초) 오른다(플레샤). */
+  kind: "starlitCheer";
+  attackSpeedPercent: number;
+} | {
   /** 폭주에 들어서는 순간 주변의 적 전원에게 저주가 `stacks`겹 걸린다(케리스의 「독자 몰이」). 진입 즉발이다. */
   kind: "readersGather";
   radius: number;
@@ -3510,6 +3524,10 @@ export type FerocityBreakthrough = {
  * 패시브의 조건(체력 절반 등)을 그대로 타므로 새 발동 조건을 만들지 않는다.
  */
 export type PassiveBreakthrough = {
+  /** 유성 회복이 가장 다친 아군에 더해 **다친 아군 한 명**에게 그 회복량의 `percent`%만큼 한 번 더 들어간다(플레샤). */
+  kind: "secondStar";
+  percent: number;
+} | {
   /**
    * 희열이 **최대 겹**일 때 노도니아의 재생 틱마다 그 회복량의 `sharePercent`%가 다른 살아 있는 아군에게도 돌아간다(노도니아의 「함께 달콤하게」).
    * 노도니아 한 명의 재생에서 나오는 몫이라 합계는 겹 수·최대 체력에 묶인다.

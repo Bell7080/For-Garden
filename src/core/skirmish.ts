@@ -3413,14 +3413,21 @@ function starfallShape(attacker: Fighter): { every: number; radius: number } | u
  * 표적을 따라가지 않는다. 떨어지는 동안 비켜난 적은 맞지 않고, 그 자리로 들어온 적은 맞는다 —
  * 예고 원이 곧 판정이라 "어디에 떨어지는가"가 화면과 갈리지 않는다. 궁극기는 이 셈을 건드리지 않는다.
  */
-function callStarfall(attacker: Fighter, target: { x: number; y: number }): void {
+function callStarfall(attacker: Fighter, target: { x: number; y: number }, rng: () => number): void {
   const starfall = attacker.def.passive.starfall;
   const shape = starfallShape(attacker);
   if (!starfall || !shape || !isFighterAlive(attacker)) return;
+  const drop = () => attacker.starfalls.push({ x: target.x, y: target.y, radius: shape.radius, remaining: starfall.delaySeconds, total: starfall.delaySeconds });
   attacker.starfallHitCount += 1;
-  if (attacker.starfallHitCount < shape.every) return;
-  attacker.starfallHitCount = 0;
-  attacker.starfalls.push({ x: target.x, y: target.y, radius: shape.radius, remaining: starfall.delaySeconds, total: starfall.delaySeconds });
+  if (attacker.starfallHitCount >= shape.every) {
+    attacker.starfallHitCount = 0;
+    drop();
+    return;
+  }
+  // 평타 돌파(`starfallChance`) — 주기가 차지 않은 평타도 확률로 유성을 부른다. 주기의 셈은 그대로 둔다.
+  // 난수는 돌파가 열린 개체만 꺼낸다 — 다른 판의 난수 흐름을 바꾸지 않는다.
+  const chance = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  if (chance?.kind === "starfallChance" && rng() * 100 < chance.chancePercent) drop();
 }
 
 /** 떨어지는 유성의 시계. 다 떨어진 자리마다 원 안의 적을 치고 그 피해로 가장 다친 아군을 회복한다. */
@@ -3472,9 +3479,20 @@ function landStarfall(
   if (dealt <= 0) return;
   const ally = lowestCurrentHpAlly(state, fighter.side, fighter.id);
   if (!ally) return;
-  const healed = applyHealing(state, ally, dealt * starfall.lowestAllyHealPercent / 100, fighter.id);
+  const requested = dealt * starfall.lowestAllyHealPercent / 100;
+  const healed = applyHealing(state, ally, requested, fighter.id);
   pushHeal(events, ally, healed, "passive");
   grantFeverHealingShield(fighter, ally, healed, events, state);
+  // 패시브 돌파(`secondStar`) — 다친 아군 한 명이 그 회복량의 일부를 한 번 더 받는다. 분배가 아니라 얹는 몫이다.
+  const second = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  if (second?.kind !== "secondStar") return;
+  const next = aliveFighters(state, fighter.side)
+    .filter((other) => other.id !== fighter.id && other.id !== ally.id && other.hp < other.maxHp)
+    .reduce<Fighter | undefined>((chosen, other) => chosen === undefined || other.hp < chosen.hp ? other : chosen, undefined);
+  if (!next) return;
+  const extra = applyHealing(state, next, requested * second.percent / 100, fighter.id);
+  pushHeal(events, next, extra, "passive");
+  grantFeverHealingShield(fighter, next, extra, events, state);
 }
 
 /**
@@ -7041,6 +7059,11 @@ export function gainFerocity(fighter: Fighter, base: number, state: SkirmishStat
       fighter.stealthFor = Math.max(fighter.stealthFor, feverBreakthrough.stealthSeconds);
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
     }
+    if (feverBreakthrough?.kind === "starlitCheer") {
+      // 폭주가 이어지는 동안(피버는 늘 같은 시간에 다 닳는다) 아군 모두의 공격 속도만 오른다.
+      const cheer: TeamBuff = { kind: "tailwind", attackSpeedPercent: feverBreakthrough.attackSpeedPercent, moveSpeedPercent: 0, seconds: FEROCITY_RULES.feverSeconds, maxHpRegenPercentPerSecond: 0 };
+      for (const ally of aliveFighters(state, fighter.side)) applyTeamBuff(ally, cheer);
+    }
     if (feverBreakthrough?.kind === "feverGale") {
       const gale: TeamBuff = { kind: "tailwind", attackSpeedPercent: feverBreakthrough.speedPercent, moveSpeedPercent: feverBreakthrough.speedPercent, seconds: feverBreakthrough.seconds, maxHpRegenPercentPerSecond: 0 };
       for (const ally of aliveFighters(state, fighter.side)) applyTeamBuff(ally, gale);
@@ -8942,7 +8965,7 @@ function strike(
     if (!useUltimate) applyBasicBreakthrough(attacker, state, events);
   }
   if (!useUltimate && comboHit === undefined) triggerRally(attacker, state, events);
-  if (!useUltimate && comboHit === undefined) callStarfall(attacker, target);
+  if (!useUltimate && comboHit === undefined) callStarfall(attacker, target, rng);
   // 기본 공격 돌파(`poisonPulse`) — 이미 독이 걸려 있던 적은 독 한 틱을 먼저 받는다. 청산하는 타격은 몰아 받으니 제외한다.
   if (!useUltimate && !encoreLiquidation && targetWasPoisoned && isFighterAlive(target) && !resolution.ignored
     && openedBreakthrough(attacker, "basic", (effects) => effects.basic)?.kind === "poisonPulse") {
@@ -9409,7 +9432,9 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   // 혼합 궁극기의 회복은 같은 원 경계(거리 <= 반경)를 공유하며 주문력 200% 같은 정적 계수를 읽는다.
   const ultimateShield = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
   for (const ally of healingTargets) {
-    const requestedHeal = currentAbilityPower(attacker) * (ultimate?.allyHealingPower ?? 0) / 100;
+    // 궁극기 돌파(`meteorEncore`) — 떨어질 때마다 원 안의 아군 회복에 주문력 몫이 얹힌다.
+    const encoreHeal = ultimateShield?.kind === "meteorEncore" ? ultimateShield.bonusHealPower : 0;
+    const requestedHeal = currentAbilityPower(attacker) * ((ultimate?.allyHealingPower ?? 0) + encoreHeal) / 100;
     const healed = applyHealing(state, ally, requestedHeal, attacker.id);
     pushHeal(events, ally, healed, "passive");
     grantFeverHealingShield(attacker, ally, healed, events, state);
@@ -9420,7 +9445,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     }
   }
   // 투사체가 떨어진 자리도 한 번의 기본 공격으로 센다 — 유성은 그 낙하 지점에 예약된다.
-  if (!useUltimate && !followUp && !free) callStarfall(attacker, center);
+  if (!useUltimate && !followUp && !free) callStarfall(attacker, center, rng);
   // 되돌아오는 돌진은 이미 치른 한 번의 몫이라 야성을 다시 올리지 않는다.
   if (!attacker.bt.dashBack?.running) gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
 }
@@ -10914,8 +10939,11 @@ function fireUltimateCore(
   strike(attacker, target, rng, state, events, true, undefined, targetPoint);
   // 되찍는 궁극기의 시계. 시전 순간이 곧 첫 번째라 남은 횟수만 얹는다.
   const repeat = attacker.def.ultimate.repeatStrike;
-  if (repeat && repeat.count > 1) {
-    attacker.aftershock = { remaining: repeat.count - 1, in: repeat.intervalSeconds };
+  // 궁극기 돌파(`meteorEncore`) — 되찍는 횟수가 늘어난다.
+  const encore = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+  const repeatCount = (repeat?.count ?? 0) + (repeat && encore?.kind === "meteorEncore" ? encore.extraStrikes : 0);
+  if (repeat && repeatCount > 1) {
+    attacker.aftershock = { remaining: repeatCount - 1, in: repeat.intervalSeconds };
   }
   // 시전 순간이 곧 첫 틱이다. 남은 시간만 시계에 얹어 다음 초부터 이어 뿌린다 — 여기서 전체
   // 시간을 그대로 넣으면 같은 초에 두 번 터진다.

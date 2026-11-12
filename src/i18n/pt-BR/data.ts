@@ -1772,7 +1772,7 @@ export default {
   "keyword.intimidation.term": "Intimidação",
   "keyword.intimidation.description": "Uma marca que não causa dano. Cada carga dura 6 segundos e, com 3 cargas, dispara [[fear|Medo]] sozinha e as cargas somem. Não acumula em inimigo que esteja em Medo ou imune.",
   "keyword.fear.term": "Medo",
-  "keyword.fear.description": "Por 2 segundos, foge de quem o causou e não pode usar [[basic-attack|ataques básicos]]. Ainda pode usar supremas. Ao terminar, fica imune a nova Intimidação e Medo por 6 segundos.",
+  "keyword.fear.description": "Por 2 segundos, foge de quem o causou e não pode usar [[basic-attack|ataques básicos]]. Ainda pode usar supremas. Enquanto durar, sua [[def|Defesa]] cai 50%. Ao terminar, fica imune a nova Intimidação e Medo por 6 segundos.",
   "firstMeeting.ark": "Muahahaha! Viu, Mestre? Todo mundo colou na parede. ...Peraí, isso agora foi assustador, né?",
   "firstMeeting.yuti": "A frente deixa com os veteranos. O flanco fica comigo, Chefe.",
   "relic.teku.name": "Teku",

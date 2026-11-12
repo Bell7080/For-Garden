@@ -51,7 +51,7 @@ export const STATUS_DE = {
   "status.intimidation": "Einschüchterung",
   "status.intimidation.detail": "{stacks} / {max} Stapel · Voll: verfällt in Furcht",
   "status.fear": "Furcht",
-  "status.fear.detail": "Flieht · Kein Standardangriff · {time}",
+  "status.fear.detail": "Flieht · Kein Standardangriff · Verteidigung −50 % · {time}",
   "status.plume": "Frostgefieder",
   "status.plume.detail": "{stacks}/{max} Stapel · noch {time}",
   "status.frostbite": "Erfrierung",

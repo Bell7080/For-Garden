@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyCombatStatusEffect, createSkirmish, defensiveDefinition, gainFerocity, fireUltimate, stepSkirmish, type Arena, type Fighter, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
+import { FEAR_DEFENSE_REDUCTION_PERCENT, applyCombatStatusEffect, createSkirmish, defensiveDefinition, gainFerocity, fireUltimate, stepSkirmish, type Arena, type Fighter, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
 import { combatPower } from "../../src/core/combatPower";
 import { ferocityMaxOf } from "../../src/core/ferocity";
 import { withinRarityBand } from "../../src/core/rarityScaling";
@@ -74,6 +74,7 @@ describe("아크 — 규칙어 계약", () => {
     expect(intimidation).toContain(`${INTIMIDATE.maxStacks}겹`);
     expect(fear).toContain(`${INTIMIDATE.fearSeconds}초`);
     expect(fear).toContain(`${INTIMIDATE.immunitySeconds}초`);
+    expect(fear).toContain(`[[def|방어력]]이 ${FEAR_DEFENSE_REDUCTION_PERCENT}%`);
   });
 
   it("의 일반 공격은 패시브와 같은 위압 계약을 쓴다", () => {
@@ -113,6 +114,20 @@ describe("아크 — 거대한 그림자", () => {
     const ids = unitStatusViews(enemy).map((view) => view.id);
     expect(ids).toContain("fear");
     expect(ids).not.toContain("stun");
+  });
+
+  it("은 공포에 빠진 동안 방어력만 절반으로 깎고, 풀리면 되돌린다", () => {
+    const { state, ark, enemies } = setup();
+    const [enemy] = enemies;
+    const before = defensiveDefinition(enemy, state).def.stats;
+    intimidateFully(state, ark, enemy);
+    expect(enemy.fear).not.toBeNull();
+    const during = defensiveDefinition(enemy, state).def.stats;
+    expect(during.def).toBeCloseTo(before.def * (1 - FEAR_DEFENSE_REDUCTION_PERCENT / 100));
+    expect(during.res).toBeCloseTo(before.res);
+    step(state, INTIMIDATE.fearSeconds + 0.2);
+    expect(enemy.fear).toBeNull();
+    expect(defensiveDefinition(enemy, state).def.stats.def).toBeCloseTo(before.def);
   });
 
   it("은 공포가 풀린 뒤 면역 동안 새 위압·공포를 받지 않는다", () => {

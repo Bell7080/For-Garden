@@ -1821,7 +1821,7 @@ export default {
   "keyword.intimidation.term": "威圧",
   "keyword.intimidation.description": "ダメージのない印だ。1重は6秒間残り、3重になると自ら[[fear|恐怖]]が発動して重が消える。恐怖に陥っているか免疫中の敵には積まれない。",
   "keyword.fear.term": "恐怖",
-  "keyword.fear.description": "2秒間、かけた側から逃げ回り[[basic-attack|通常攻撃]]ができない。必殺技は使える。解けた後6秒間、新たな威圧と恐怖に免疫になる。",
+  "keyword.fear.description": "2秒間、かけた側から逃げ回り[[basic-attack|通常攻撃]]ができない。必殺技は使える。その間[[def|防御力]]が50%下がる。解けた後6秒間、新たな威圧と恐怖に免疫になる。",
   "firstMeeting.ark": "ムハハハ！ 見ました、マスター？ みんな壁に張りつきましたよ。……あれ、今のって怖かったですよね？",
   "firstMeeting.yuti": "正面は先輩たちにお任せします。横は私が行きますね、ボス。",
   "relic.teku.name": "テク",

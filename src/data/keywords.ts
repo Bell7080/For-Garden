@@ -170,7 +170,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "fear", term: "공포", kind: "debuff",
-    description: "2초 동안 건 쪽에게서 달아나며 [[basic-attack|기본 공격]]을 하지 못한다. 궁극기는 쓸 수 있다. 풀린 뒤 6초 동안 새 위압과 공포에 면역이 된다.",
+    description: "2초 동안 건 쪽에게서 달아나며 [[basic-attack|기본 공격]]을 하지 못한다. 궁극기는 쓸 수 있다. 그동안 [[def|방어력]]이 50% 낮아진다. 풀린 뒤 6초 동안 새 위압과 공포에 면역이 된다.",
   },
   // 회수조 다섯의 규칙어는 쓰는 개체가 하나씩뿐이라 태그가 수치를 갖는다. 값은 각 패시브 계약과 같아야 하며
   // `raiders.test`가 둘을 맞춰 본다.

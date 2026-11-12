@@ -51,7 +51,7 @@ export const STATUS_ID = {
   "status.intimidation": "Intimidasi",
   "status.intimidation.detail": "{stacks} / {max} tumpuk · Penuh: ketakutan",
   "status.fear": "Ketakutan",
-  "status.fear.detail": "Melarikan diri · Tanpa Serangan Dasar · {time}",
+  "status.fear.detail": "Melarikan diri · Tanpa Serangan Dasar · Pertahanan −50% · {time}",
   "status.plume": "Bulu Embun Beku",
   "status.plume.detail": "{stacks}/{max} tumpuk · sisa {time}",
   "status.frostbite": "Radang Beku",

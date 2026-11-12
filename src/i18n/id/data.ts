@@ -1772,7 +1772,7 @@ export default {
   "keyword.intimidation.term": "Intimidasi",
   "keyword.intimidation.description": "Tanda yang tidak memberi damage. Setiap tumpuk bertahan 6 detik, dan pada 3 tumpuk memicu [[fear|Ketakutan]] dengan sendirinya lalu tumpukan hilang. Tidak menumpuk pada musuh yang sedang ketakutan atau kebal.",
   "keyword.fear.term": "Ketakutan",
-  "keyword.fear.description": "Selama 2 detik, melarikan diri dari pemberinya dan tidak bisa memakai [[basic-attack|Serangan Dasar]]. Ultimate tetap bisa dipakai. Setelah berakhir, kebal terhadap Intimidasi dan Ketakutan baru selama 6 detik.",
+  "keyword.fear.description": "Selama 2 detik, melarikan diri dari pemberinya dan tidak bisa memakai [[basic-attack|Serangan Dasar]]. Ultimate tetap bisa dipakai. Selama itu, [[def|Pertahanan]] turun 50%. Setelah berakhir, kebal terhadap Intimidasi dan Ketakutan baru selama 6 detik.",
   "firstMeeting.ark": "Mwahahaha! Lihat tadi, Tuan? Semua menempel ke dinding. ...Tunggu, barusan itu menakutkan, ya?",
   "firstMeeting.yuti": "Garis depan serahkan pada para senior. Sisi samping biar aku yang urus, Bos.",
   "relic.teku.name": "Teku",

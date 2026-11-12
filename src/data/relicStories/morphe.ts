@@ -14,6 +14,7 @@ import type { RelicStoryProfile } from "../../core/relicStory";
 /** 4 — 한 박자 늦게. 대답이 늦는 아이를 기다리는 장. */
 const CHAPTER_4: DialogueStory = {
   id: "bond.morphe.4",
+  backdrop: "controlRoom",
   startNodeId: "n1",
   titleCard: { title: "한 박자 늦게", subtitle: "모르페 · 애착 이야기 1" },
   nodes: [
@@ -27,7 +28,7 @@ const CHAPTER_4: DialogueStory = {
       { id: "ask", label: "왜 항상 대답이 늦느냐고 묻는다", nextId: "n7b" },
     ] },
     { id: "n7a", speaker: "모르페", body: "…기다려 주는구나. 담당관은… 느긋해서 좋아. 다들 중간에 가 버리니까…", nextId: "n8" },
-    { id: "n7b", speaker: "모르페", body: "…늦는 게 아니라… 먼저 생각하는 거야. 말은 나중에 나와… 늘어나서… 미안해.", nextId: "n8" },
+    { id: "n7b", speaker: "모르페", body: "…미안. 듣고 있었어. 어디부터 보여 줄지 고르고 있었거든… 이제 봐.", nextId: "n8" },
     { id: "n8", speaker: "", body: "드론이 훈련장 위를 지나며 도디의 머리 위에 작은 표식을 하나 남긴다. 도디가 눈을 반짝이며 손을 흔든다.", nextId: "n9" },
     { id: "n9", speaker: "도디", body: "우와! 나 표식 받았어! 모르페, 고마워! 이거 지워지는 거야?", nextId: "n10" },
     { id: "n10", speaker: "모르페", body: "…한 시간 뒤에 사라져. 그때까지는 어디 있는지 다 보여…. 담당관도… 오늘 표식 하나 줄까…" },
@@ -37,6 +38,7 @@ const CHAPTER_4: DialogueStory = {
 /** 6 — 천장의 표식. 어디를 봐야 하는지 물으면 천장을 가리키는 장. */
 const CHAPTER_6: DialogueStory = {
   id: "bond.morphe.6",
+  backdrop: "controlRoom",
   startNodeId: "n1",
   titleCard: { title: "천장의 표식", subtitle: "모르페 · 애착 이야기 2" },
   nodes: [
@@ -52,14 +54,15 @@ const CHAPTER_6: DialogueStory = {
     { id: "n6b", speaker: "모르페", body: "…비 오는 날이 제일 잘 보여. 다들 서둘러 지나가서… 떨어진 게 눈에 띄거든…", nextId: "n7" },
     { id: "n7", speaker: "", body: "파루아가 한참 말없이 서 있다가 작은 목소리로 고개를 숙인다. 모르페는 아직 천장을 보고 있다.", nextId: "n8" },
     { id: "n8", speaker: "파루아", body: "…고마워. 늘 천장 보고 있으니까 모르는 줄 알았는데. 전부 보고 있었구나.", nextId: "n9" },
-    { id: "n9", speaker: "모르페", body: "…눈은 요람에 있고… 마음은 드론에 있어. 그래서 어디든 가 있지… 파루아 곁에도.", nextId: "n10" },
-    { id: "n10", speaker: "모르페", body: "…담당관. 다음에 뭔가 잃어버리면 천장을 올려다봐. 거기에 내가 있어. 항상… 한 박자 먼저." },
+    { id: "n9", speaker: "모르페", body: "…아까 떨어진 데부터 보고 있었어. 젖기 전에 찾았네. 파루아, 이제 바로 챙겨 가.", nextId: "n10" },
+    { id: "n10", speaker: "모르페", body: "…담당관도 뭐 잃어버리면 말해. 마지막으로 본 곳부터 찾아 줄게… 여기서 기다려도 돼." },
   ],
 };
 
 /** 8 — 요람에서 내려오는 날. 처음으로 직접 걷는 장. */
 const CHAPTER_8: DialogueStory = {
   id: "bond.morphe.8",
+  backdrop: "controlRoom",
   startNodeId: "n1",
   titleCard: { title: "요람에서 내려오는 날", subtitle: "모르페 · 애착 이야기 3" },
   nodes: [
@@ -72,7 +75,7 @@ const CHAPTER_8: DialogueStory = {
       { id: "light", label: "손전등으로 바닥을 비춰 길을 만들어 준다", nextId: "n6b" },
     ] },
     { id: "n6a", speaker: "모르페", body: "…손이 따뜻하네. 요람은 늘 따뜻했는데… 이것도 비슷해. 천천히 걸을게… 기다려 줘.", nextId: "n7" },
-    { id: "n6b", speaker: "모르페", body: "…길이 보이네. 천장만 보다가 바닥을 보니까… 신기해. 바닥에도 볼 게 있구나…", nextId: "n7" },
+    { id: "n6b", speaker: "모르페", body: "…거기 턱 있네. 잠깐만… 넘어갈 때까지만 손 잡아 줘. 응, 이제 보여.", nextId: "n7" },
     { id: "n7", speaker: "", body: "모르페가 한 걸음, 또 한 걸음 걷는다. 걸음 소리가 거의 나지 않은 채 복도에 이어진다. 걸음은 느리지만 멈추지 않는다.", nextId: "n8" },
     { id: "n8", speaker: "", body: "복도 끝에서 전원이 돌아오며 비상등이 하나씩 켜진다. 모르페의 어깨 위로 작은 드론이 날아와 앉는다. 불빛이 두 번 깜빡인다.", nextId: "n9" },
     { id: "n9", speaker: "모르페", body: "…걸었네. 열두 걸음. …나쁘지 않아. 다리가 조금 떨리지만… 이상하게 마음은 가벼워.", nextId: "n10" },
@@ -83,6 +86,7 @@ const CHAPTER_8: DialogueStory = {
 /** 10 — 한 박자 먼저. 처음으로 먼저 대답하는 장. */
 const CHAPTER_10: DialogueStory = {
   id: "bond.morphe.10",
+  backdrop: "controlRoom",
   startNodeId: "n1",
   titleCard: { title: "한 박자 먼저", subtitle: "모르페 · 애착 이야기 4" },
   nodes: [
@@ -99,7 +103,7 @@ const CHAPTER_10: DialogueStory = {
     { id: "n7", speaker: "", body: "모르페가 머그잔을 두 손으로 감싸 쥔다. 천장에서 드론이 천천히 내려와 연구원의 어깨 위에 사뿐히 앉는다. 불빛이 두 번 깜빡인다.", nextId: "n8" },
     { id: "n8", speaker: "모르페", body: "…담당관은 내 요람 옆자리를 처음으로 채워 준 사람이야. 의자 하나 더 놓길 잘했어…", nextId: "n9" },
     { id: "n9", speaker: "", body: "창밖에서 아침 해가 비스듬히 들어와 두 의자 위로 길게 떨어진다. 머그잔과 보온병이 나란히 김을 내고 있다.", nextId: "n10" },
-    { id: "n10", speaker: "모르페", body: "…이제 한 박자 늦는 건 안 고칠래. 대신 가끔은 먼저 갈게. …오늘처럼. 그러면 담당관은 항상 늦지 않게 만날 수 있잖아…" },
+    { id: "n10", speaker: "모르페", body: "…담당관, 내일도 이쯤에 와. 차는 내가 끓여 둘게… 식기 전엔 올 거지? 기다릴 거야." },
   ],
 };
 
@@ -111,7 +115,7 @@ export const MORPHE_STORY: RelicStoryProfile = {
     + "그런데 A-Dimo가 움직이는 속도는 그 말투와 정반대라, 한 기가 전장 전체를 훑으며 적마다 표식을 남기는 것을 보고 지켜보던 대원들이 손을 놓은 적이 여러 번이다. "
     + "직접 걷는 일은 거의 없다 — 어디를 봐야 하느냐고 물으면 천장을 가리키고, 그러면 이미 그곳에 A-Dimo가 가 있다.",
   /** 일지 맨 끝에 회색으로 서는, 모르페가 연구원에게 건네는 한마디. 뽑기 대사와 다른 일상의 목소리다. */
-  closingLine: "…담당관… 왔어? 차 식기 전에 마셔… 천장은 내가 볼게…",
+  closingLine: "…담당관… 왔어? 차 식기 전에 마셔… 화면은 나중에 봐도 돼.",
   questions: [
     {
       id: "morphe-cradle",
@@ -195,6 +199,6 @@ export const MORPHE_STORY: RelicStoryProfile = {
     // 9
     ["담당관 옆자리 의자, 아직 있지? 안 치웠지? 그럼 됐어…", "담당관 발소리 들리면 먼저 인사하려고 했는데 또 늦었어… 다음엔 될 거야.", "차를 두 잔 끓일 줄 알게 됐어. 이제 한 잔은 담당관 몫이야…"],
     // 10 — 마음을 연 사이. 한 박자 먼저 대답한 사이.
-    ["오늘은 담당관이 말하기 전에 대답했어. 놀란 얼굴 봤어… 재밌더라.", "요람 옆에 의자가 두 개야. 이제 둘 다 내 자리야…", "다 띄워. 담당관은 내 옆에서 봐. …이제 난 여기서 안 봐도 돼. 같이 보면 되니까."],
+    ["오늘은 담당관이 말하기 전에 대답했어. 놀란 얼굴 봤어… 재밌더라.", "요람 옆에 의자가 두 개야. 이제 둘 다 내 자리야…", "담당관, 오늘은 내 옆에서 봐. 자리 비워 뒀어… 머그잔은 저쪽에 놓고 앉아."],
   ],
 };

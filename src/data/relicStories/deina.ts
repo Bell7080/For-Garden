@@ -14,6 +14,7 @@ import type { RelicStoryProfile } from "../../core/relicStory";
 /** 4 — 하룻밤 사이의 표식. 시치미와 들통의 장. */
 const CHAPTER_4: DialogueStory = {
   id: "bond.deina.4",
+  backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "하룻밤 사이의 표식", subtitle: "데이 · 애착 이야기 1" },
   nodes: [
@@ -37,6 +38,7 @@ const CHAPTER_4: DialogueStory = {
 /** 6 — 얼굴에 남긴 것. 혼나고 눈물짓고 또 하는 장. */
 const CHAPTER_6: DialogueStory = {
   id: "bond.deina.6",
+  backdrop: "controlRoom",
   startNodeId: "n1",
   titleCard: { title: "얼굴에 남긴 것", subtitle: "데이 · 애착 이야기 2" },
   nodes: [
@@ -49,7 +51,7 @@ const CHAPTER_6: DialogueStory = {
       { id: "wipe", label: "얼굴을 닦으며 이유를 묻는다", nextId: "n6b" },
     ] },
     { id: "n6a", speaker: "데이", body: "…알았어. 다시는 안 해. 진짜로! 약속해!", nextId: "n7" },
-    { id: "n6b", speaker: "데이", body: "자는 얼굴이 되게 편해 보여서. 그 얼굴이 사라질까 봐 남겨 두고 싶었어. …이상한 이유지?", nextId: "n7" },
+    { id: "n6b", speaker: "데이", body: "맨날 책상에만 엎드려 있길래… 일어나면 웃을 줄 알았어. 얼굴에 하면 싫은 거였네. 미안, 연구원님.", nextId: "n7" },
     { id: "n7", speaker: "", body: "데이는 소매로 눈가를 훔친다. 손끝이 후드 속에서 천천히 캔을 쥐어짠다. 딸각, 딸각. 연구원은 못 본 척한다.", nextId: "n8" },
     { id: "n8", speaker: "데이", body: "진짜 안 해! 오늘은! 오늘 밤까지는!", nextId: "n9" },
     { id: "n9", speaker: "", body: "그날 밤, 연구원의 방문 앞 복도 벽에 작은 낙서가 하나 생긴다. 책상에 엎드린 사람 모양을 한 귀여운 그림이다. 이번에는 연구원의 얼굴이 아니라 벽에 남아 있다.", nextId: "n10" },
@@ -60,12 +62,13 @@ const CHAPTER_6: DialogueStory = {
 /** 8 — 비어 있는 면. 왜 흰 벽 앞에서 손이 멈추지 않는지가 드러나는 장. */
 const CHAPTER_8: DialogueStory = {
   id: "bond.deina.8",
+  backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "비어 있는 면", subtitle: "데이 · 애착 이야기 3" },
   nodes: [
     { id: "n1", speaker: "", body: "해 질 녘의 창고 뒤편. 새로 칠한 흰 벽 앞에 데이가 혼자 서 있다. 캔을 쥐고 있지만 손이 올라가지 않는다. 평소 같으면 이미 첫 선이 그어졌을 시간이다.", nextId: "n2" },
     { id: "n2", speaker: "연구원", body: "(캔 소리도 나지 않는다. 데이는 벽을 한참 올려다보고 있다.)", nextId: "n3" },
-    { id: "n3", speaker: "데이", body: "연구원님. 비어 있는 거, 싫어. 아무것도 없으면 누가 지나갔는지도 안 남잖아.", nextId: "n4" },
+    { id: "n3", speaker: "데이", body: "새로 칠한 거라 너무 깨끗해. 뭘 그려도 전보다 못할 것 같아. …이런 날도 있네.", nextId: "n4" },
     { id: "n4", speaker: "", body: "데이가 벽 가까이 한 걸음 다가선다. 새 페인트 냄새가 짙다. 후드가 어깨로 내려앉는다.", nextId: "n5" },
     { id: "n5", speaker: "연구원", body: "(데이의 목소리가 평소보다 작다. 벽이 아니라 먼 곳을 보고 있는 눈이다.)", choices: [
       { id: "wait", label: "아무 말 없이 곁에 서 있는다", nextId: "n6a" },
@@ -83,6 +86,7 @@ const CHAPTER_8: DialogueStory = {
 /** 10 — 허락받은 벽. 처음으로 시치미 없이 이름을 새기는 장. */
 const CHAPTER_10: DialogueStory = {
   id: "bond.deina.10",
+  backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "허락받은 벽", subtitle: "데이 · 애착 이야기 4" },
   nodes: [
@@ -97,7 +101,7 @@ const CHAPTER_10: DialogueStory = {
     { id: "n6a", speaker: "데이", body: "약속한 거다! 지우라고 하면 나 진짜 울 거야. 협박 아니고 경고야!", nextId: "n7" },
     { id: "n6b", speaker: "데이", body: "이름? 맨날 시치미 떼느라 안 남겼는데… 이번엔 남길게! 허락받은 거니까!", nextId: "n7" },
     { id: "n7", speaker: "", body: "데이가 상자에서 캔을 꺼내 흔든다. 딸각딸각. 소리가 복도에 길게 울린다. 첫 선이 거침없이 그어진다. 후드가 어깨에서 흘러내린다.", nextId: "n8" },
-    { id: "n8", speaker: "데이", body: "봐, 연구원님! 이건 숨어서 그린 선이 아니야. 처음으로 낮에 그리는 거야!", nextId: "n9" },
+    { id: "n8", speaker: "데이", body: "봐, 연구원님! 이번엔 안 숨어도 되네. 저쪽 문 열어 둬도 돼? 다들 보고 지나가게!", nextId: "n9" },
     { id: "n9", speaker: "", body: "해가 질 무렵 벽 한가운데에 책상에 엎드려 자는 사람이 그려졌다. 그 곁에 캔을 든 작은 아이가 앉아 있다. 그림 한구석에 이름이 선명하게 새겨져 있다. '데이'.", nextId: "n10" },
     { id: "n10", speaker: "데이", body: "연구원님, 이 벽은 내가 지킬게! 다른 벽은… 가끔만 건드릴게. 가끔만! …거짓말 아니야, 진짜야." },
   ],
@@ -182,9 +186,9 @@ export const DEINA_STORY: RelicStoryProfile = {
     // 3
     ["시치미 떼는 거 잘하지? 칭찬 아냐. 그냥 습관이야.", "혼나는 동안에도 캔을 흔들어. 반항 아니야. 손이 안 멈춰서 그래!", "누가 내 그림 보고 웃으면 반은 기쁘고 반은 도망가고 싶어."],
     // 4 — 장 4 이후: 하룻밤 사이의 표식.
-    ["셔터 그림 칭찬해 줘서 이틀 동안 기분 좋았어. 말은 안 했지만!", "도디가 내 이름 아는 것 같아서 좀 놀랐어. 이름은 안 남겼는데?", "다음에 그릴 벽은 벌써 정했어. 아직 비밀! 연구원님은 눈치챌지도 모르지만~"],
+    ["셔터 그림 칭찬해 줘서 이틀 동안 기분 좋았어. 말은 안 했지만!", "도디가 어제 내 그림 앞에서 한참 웃더라. …나도 옆에 서 있었는데 그림만 봤어. 다행이지!", "다음에 그릴 벽은 벌써 정했어. 아직 비밀! 연구원님은 눈치챌지도 모르지만~"],
     // 5
-    ["물감 냄새 괜찮아? 난 이 냄새 나면 안심돼. 이상하지?", "새 캔은 소리가 안 나. 쓰다 남은 게 딸각거려서 좋아.", "연구원님 방 불 켜져 있길래 지나가다 올려다봤어. 아무 일 없어!"],
+    ["물감 냄새 괜찮아? 난 이 냄새 나면 안심돼. 이상하지?", "새 캔 뜯었어. 뚜껑 뺄 때 소리가 엄청 컸는데 못 들었지? …그럼 됐어!", "연구원님 방 불 켜져 있길래 지나가다 올려다봤어. 아무 일 없어!"],
     // 6 — 장 6 이후: 얼굴에 남긴 것.
     ["연구원님 얼굴은 그 뒤로 안 건드렸어. 대신 벽에 그렸으니까 반칙 아니야!", "혼나서 운 거 아니야. …조금은 맞는데, 말하지 마!", "자는 얼굴 그림, 아직 복도에 있지? 지우지 마!"],
     // 7

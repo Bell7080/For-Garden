@@ -630,6 +630,8 @@ export class DialogueStage {
    */
   private async explode(backdrop?: DialogueBackdrop): Promise<void> {
     const spec = DIALOGUE_CUES.explosion;
+    // 섬광이 덮는 동안 다음 장면을 읽는다. 느린 연결에서도 문이 다시 닫힌 채 드러나지 않는다.
+    const backgroundReady = backdrop ? ensureBackgroundTexture(this.scene, DIALOGUE_BACKDROP[backdrop]) : Promise.resolve(false);
     // 폭파는 `playCue`를 지나지 않으므로 소리도 여기서 낸다 — 흔들림·섬광과 같은 프레임이다.
     audioManager?.playSfx("story.explosion");
     this.shake(spec.shakeMs, spec.shakeIntensity);
@@ -645,7 +647,9 @@ export class DialogueStage {
       member.creature.destroy();
     }
     this.cast = [];
-    if (backdrop) this.setBackdrop(backdrop);
+    const ready = await backgroundReady;
+    if (this.terminated) return;
+    if (backdrop && ready) this.setBackdrop(backdrop);
     await this.wait(DIALOGUE_EXPLOSION.holdMs);
     if (this.terminated) return;
     this.scene.tweens.add({

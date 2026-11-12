@@ -3,7 +3,8 @@ import { registerDialogueTexts } from "./registerDialogue";
 
 /** 중앙 정원구에서 회수하는 분기형 현장 기록이다. 원문과 분기는 씬이 아니라 정적 데이터가 소유한다. */
 export const INTERACTION_CENTRAL_JOURNAL: DialogueStory = {
-  id: "interaction-central-dialogue-02", startNodeId: "signal", nodes: [
+  id: "interaction-central-dialogue-02",
+  backdrop: "greenhouse", startNodeId: "signal", nodes: [
     { id: "signal", speaker: "토리카", body: "유리 회랑 아래에서 오래된 호출 신호가 반복되고 있어요.", standing: "torika", act: "lean", nextId: "choice" },
     { id: "choice", speaker: "연구원", body: "기록 장치의 어느 층부터 복원할까?", choices: [
       { id: "voice", label: "음성층을 먼저 복원한다", nextId: "voice-result" },

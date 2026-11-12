@@ -16,41 +16,43 @@ import type { RelicStoryProfile } from "../../core/relicStory";
 /** 4 — 나눠 먹기. 먹보인 아이가 제일 아끼는 것을 내놓는 순간. */
 const CHAPTER_4: DialogueStory = {
   id: "bond.torika.4",
+  backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "보따리 속 마지막 한 조각", subtitle: "토리카 · 애착 이야기 1" },
   nodes: [
     { id: "n1", speaker: "", body: "저녁 배급이 끝난 복도. 토리카가 제 몸만 한 보따리를 끌어안은 채 모퉁이에 서 있다.", standing: "torika", nextId: "n2" },
     { id: "n2", speaker: "토리카", body: "대, 대장님! 마침 잘 오셨어요. 저기… 이거요.", standing: "torika", act: "shrink", nextId: "n3" },
     { id: "n3", speaker: "", body: "내민 손바닥 위에는 반으로 쪼갠 치즈케이크 한 조각이 놓여 있었다.", nextId: "n4" },
-    { id: "n4", speaker: "토리카", body: "오늘 배급에서 남은 거예요. 제 건 벌써 먹었고요! …진짜예요. 두 번 먹었어요. 아, 두 번은 아닌가?", standing: "torika", act: "tremble", nextId: "n5" },
+    { id: "n4", speaker: "토리카", body: "오늘 간식, 조금 남겨 뒀어요. 저는 배 안 고프니까 대장님 드세요. …아, 배에서 난 소리는 못 들으신 걸로 해 주세요.", standing: "torika", act: "tremble", nextId: "n5" },
     { id: "n5", speaker: "연구원", body: "(두 번 먹은 아이가 손에 들고 있기엔 너무 소중하게 쥐고 있다.)", choices: [
       { id: "share", label: "같이 먹자, 토리카", nextId: "n6a" },
       { id: "refuse", label: "토리카가 먹어. 난 괜찮아", nextId: "n6b" },
     ] },
-    { id: "n6a", speaker: "토리카", body: "같이요?! 그럼 큰 쪽은 대장님! …아니 작은 쪽이 대장님… 으으, 어느 쪽이 큰 쪽이지?", standing: "torika", act: "hopTwice", nextId: "n7" },
+    { id: "n6a", speaker: "토리카", body: "같이요? 그럼 제가 나눌게요! …큰 쪽 드려도 돼요? 대장님 오실 때까지 안 먹고 기다렸거든요.", standing: "torika", act: "hopTwice", nextId: "n7" },
     { id: "n6b", speaker: "토리카", body: "그, 그럼 대장님 몫으로 한 조각 더 챙겨 둘게요! 내일 아침까지 제 보따리 맨 위에 꼭 올려 둘 거예요.", standing: "torika", act: "tremble", nextId: "n7" },
     { id: "n7", speaker: "", body: "보따리 안에는 아직도 간식이 가득했다. 그게 전부 누구 몫인지, 그제야 알 것 같았다.", nextId: "n8" },
-    { id: "n8", speaker: "토리카", body: "쁘띠 로그는요, 먹을 게 생기면 일단 모아요. 그래야 누가 배고플 때 바로 줄 수 있으니까요. …이건 비밀이에요!", standing: "torika", act: "nod" },
+    { id: "n8", speaker: "토리카", body: "다음에도 남겨 둘게요. 대장님이랑 같이 먹으면 더 맛있으니까요. …그러니까 간식 시간엔 꼭 오셔야 해요!", standing: "torika", act: "nod" },
   ],
 };
 
 /** 6 — 칭찬이 어려운 날. 칭찬 앞에서 숨고 싶은 아이와 숨길 게 없다고 말하는 아이. */
 const CHAPTER_6: DialogueStory = {
   id: "bond.torika.6",
+  backdrop: "battlefield",
   startNodeId: "n1",
   titleCard: { title: "칭찬이 어려운 날", subtitle: "토리카 · 애착 이야기 2" },
   nodes: [
     { id: "n1", speaker: "", body: "훈련장 한쪽. 도디가 수첩을 펼쳐 놓고 토리카의 뒤를 졸졸 따라다니고 있다.", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "right" }], standing: "dodi", nextId: "n2" },
     { id: "n2", speaker: "도디", body: "토리카, 방금 훈련 기록 봤어! 오늘도 뿔로 막은 횟수가 쁘띠 로그 1등이야. 세기의 대발견이라고 쓸게!", standing: "dodi", act: "hopTwice", nextId: "n3" },
     { id: "n3", speaker: "토리카", body: "아, 아니야! 그건 내가 앞에 서 있었을 뿐이고…", standing: "torika", act: "shrink", nextId: "n4" },
-    { id: "n4", speaker: "도디", body: "어, 안경을 자꾸 고쳐 쓰네! 귀가 새빨개! 기록해야지, 기록해야지…", standing: "dodi", act: "lean", nextId: "n5" },
+    { id: "n4", speaker: "도디", body: "어, 귀 빨개졌어. 그렇게 좋았어? 대장님한테도 보여 드릴까?", standing: "dodi", act: "lean", nextId: "n5" },
     { id: "n5", speaker: "토리카", body: "기록하지 마아!", standing: "torika", act: "shake", nextId: "n6" },
     { id: "n6", speaker: "연구원", body: "(토리카가 노란 안경테를 두 손으로 붙잡고 얼굴을 가리고 있다. 가린다고 가려지는 크기가 아니다.)", choices: [
       { id: "praise", label: "정말 대단했어, 토리카", nextId: "n7a" },
       { id: "snack", label: "안 보고 있을게. 간식 먹을래?", nextId: "n7b" },
     ] },
     { id: "n7a", speaker: "토리카", body: "…대장님이 그렇게 말해 주시면 도망갈 곳이 없어요. 저, 이 말 오늘 밤에 열 번쯤 꺼내 볼 거예요.", standing: "torika", act: "shrink", nextId: "n8" },
-    { id: "n7b", speaker: "토리카", body: "먹을래요! …아, 근데 간식 얘기를 하면 또 몸무게 얘기가 나올 것 같은데. 저 186킬로예요. 숨기는 거 아니에요! 그냥 말하면 대장님이 안아 들 때 힘드실까 봐…", standing: "torika", act: "tremble", nextId: "n8" },
+    { id: "n7b", speaker: "토리카", body: "먹을래요! …근데 정말 안 보고 계시면 좀 그래요. 한 입 드릴 테니까, 그냥 옆에 앉아 계시면 안 돼요?", standing: "torika", act: "tremble", nextId: "n8" },
     { id: "n8", speaker: "", body: "도디가 슬그머니 수첩을 덮었다. 그 줄만은 기록하지 않기로 한 모양이다.", nextId: "n9" },
     { id: "n9", speaker: "토리카", body: "칭찬받는 건 아직 어색해요. 그래도… 부끄러운 거랑 싫은 건 달라요. 그건 알아 두세요, 대장님.", standing: "torika", act: "nod" },
   ],
@@ -59,6 +61,7 @@ const CHAPTER_6: DialogueStory = {
 /** 8 — 한 걸음 물러난 밤. 겁이 없는 게 아니라 겁이 나도 서 있는 것. */
 const CHAPTER_8: DialogueStory = {
   id: "bond.torika.8",
+  backdrop: "quartersNight",
   startNodeId: "n1",
   titleCard: { title: "한 걸음 물러난 밤", subtitle: "토리카 · 애착 이야기 3" },
   nodes: [
@@ -66,21 +69,22 @@ const CHAPTER_8: DialogueStory = {
     { id: "n2", speaker: "", body: "토리카는 연구원의 앞에 서 있었다. 다리가 눈에 띄게 떨리고 있었다.", standing: "torika", act: "tremble", nextId: "n3" },
     { id: "n3", speaker: "토리카", body: "대, 대장님은 제 뒤에… 제 뒤에 계세요. 무서운 거 아니에요. 아니, 조금 무서워요.", standing: "torika", act: "tremble", nextId: "n4" },
     { id: "n4", speaker: "", body: "그림자가 한 걸음 더 다가오자, 토리카가 반 걸음 물러섰다. 그리고 멈췄다.", cue: "impact", nextId: "n5" },
-    { id: "n5", speaker: "토리카", body: "…물러났어요, 지금. 하지만 더는 안 물러나요. 여기까지가 제 자리예요.", standing: "torika", act: "nod", nextId: "n6" },
-    { id: "n6", speaker: "", body: "그림자의 정체는 야간 순찰 중이던 코마의 짐수레였다. 경보는 오작동이었다.", nextId: "n7" },
+    { id: "n5", speaker: "토리카", body: "…여기서 막을게요. 대장님은 뒤로 가세요. 조금만 더, 뒤로요.", standing: "torika", act: "nod", nextId: "n6" },
+    { id: "n6", speaker: "", body: "그림자가 불빛 아래로 들어왔다. 보급반이 밀고 오던 짐수레였다. 경보는 오작동이었다.", nextId: "n7" },
     { id: "n7", speaker: "연구원", body: "(토리카의 다리는 아직도 떨리고 있다.)", choices: [
       { id: "stay", label: "말없이 옆에 같이 앉는다", nextId: "n8a" },
       { id: "thanks", label: "무서웠을 텐데 고마워, 토리카", nextId: "n8b" },
     ] },
     { id: "n8a", speaker: "토리카", body: "…옆에 계시니까 다리가 좀 덜 떨려요. 신기하죠? 아무것도 안 하셨는데.", standing: "torika", act: "lean", nextId: "n9" },
     { id: "n8b", speaker: "토리카", body: "고맙다는 말은 겁이 다 풀린 다음에 듣고 싶었는데요… 지금 들으니까 풀렸어요. 이상하다, 순서가 반대인데.", standing: "torika", act: "hop", nextId: "n9" },
-    { id: "n9", speaker: "토리카", body: "무서운 건 안 없어져요. 근데요, 대장님 뒤만큼은 안 없어지게 하고 싶어요. 그러면 서 있을 수 있어요.", standing: "torika", act: "nod" },
+    { id: "n9", speaker: "토리카", body: "다음에 또 무서우면, 손 좀 잡아 주실래요? 그러면 저… 다시 앞에 설 수 있을 것 같아요.", standing: "torika", act: "nod" },
   ],
 };
 
 /** 10 — 대장님 앞은 제가. 보따리를 진 아이가 마음까지 지겠다고 말하는 마지막 장. */
 const CHAPTER_10: DialogueStory = {
   id: "bond.torika.10",
+  backdrop: "rooftopDawn",
   startNodeId: "n1",
   titleCard: { title: "대장님 앞은 제가", subtitle: "토리카 · 애착 이야기 4" },
   nodes: [
@@ -180,11 +184,11 @@ export const TORIKA_STORY: RelicStoryProfile = {
     // 5
     ["대장님 앞에서는 말이 자꾸 꼬여요. 연습했는데도요!", "오늘 훈련 어땠어요? 저는요, 뿔로 세 번 막았어요!", "무서운 게 오면 제 뒤로… 아니, 제가 앞에 서 있을게요!"],
     // 6
-    ["대장님 곁에 있으면 안 무서워요. 신기하죠?", "칭찬해 주셔도 돼요… 아니, 조금만요. 심장이 못 따라가요.", "다 같이 밥 먹는 시간이 제일 좋아요. 대장님도 그렇죠?"],
+    ["대장님, 저쪽으로 같이 가요. 오늘은 제가 길 안 헤매고 안내할 수 있어요!", "칭찬해 주셔도 돼요… 아니, 조금만요. 심장이 못 따라가요.", "다 같이 밥 먹는 시간이 제일 좋아요. 대장님도 그렇죠?"],
     // 7
     ["오늘은 뭐든 막을 수 있을 것 같아요. 대장님이 계시니까요!", "대장님이 웃으시면 저도 따라 웃게 돼요. 이유는 모르겠어요!", "무서운 날엔 말해 주세요. 제가 먼저 서 있을게요."],
     // 8
-    ["대장님 뒤는 제가 끝까지 지킬 거예요. 약속이에요!", "무리하지 말라고 해 주셔서… 그 말 듣고 오늘은 일찍 잤어요.", "저 노트에 오늘도 적었어요. 대장님과 함께한 하루라고요."],
+    ["대장님 뒤는 제가 끝까지 지킬 거예요. 약속이에요!", "무리하지 말라고 해 주셔서… 그 말 듣고 오늘은 일찍 잤어요.", "오늘은 조금 일찍 와 봤어요. 대장님 기다리시게 안 하려고요."],
     // 9
     ["대장님, 오늘도 같이 있어 줘서 고마워요. 이런 말 하니까 좀 쑥스럽네요.", "다리가 아직 좀 떨리긴 해요. 근데 대장님이 보고 계시니까 괜찮아요!", "대장님 앞은 제가, 이건 제가 제일 잘하는 일이에요!"],
     // 10 — 완전히 마음을 연 사이. 말이 길어지고 장난이 늘어난다.

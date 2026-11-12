@@ -23,6 +23,7 @@ const ROGUE_THREE: readonly DialogueCastMember[] = [
 /** 4 — 소매를 잡던 날. 소리쳐 알리지 못하는 아이가 소매 하나로 말하는 방법을 처음 들키는 장. */
 const CHAPTER_4: DialogueStory = {
   id: "bond.parua.4",
+  backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "소매를 잡던 날", subtitle: "파루아 · 애착 이야기 1" },
   nodes: [
@@ -34,16 +35,17 @@ const CHAPTER_4: DialogueStory = {
       { id: "look", label: "고마워, 파루아. 같이 보자", nextId: "n6a" },
       { id: "wait", label: "아무 말 없이 가만히 소매를 맡겨 둔다", nextId: "n6b" },
     ] },
-    { id: "n6a", speaker: "파루아", body: "같이요? …네. 옆에서 보면 이 정도 멀리도 덜 멀게 느껴져요. 이상하죠.", standing: "parua", act: "nod", nextId: "n7" },
-    { id: "n6b", speaker: "파루아", body: "…안 놓아도 되죠? 놓으면 말을 못 해서요. 이렇게 잡고 있으면 말하는 거나 마찬가지예요.", standing: "parua", act: "lean", nextId: "n7" },
+    { id: "n6a", speaker: "파루아", body: "같이요? …좋아요. 아직 멀리 있으니까, 조금만 더 보고 가요.", standing: "parua", act: "nod", nextId: "n7" },
+    { id: "n6b", speaker: "파루아", body: "…조금만 더 잡고 있어도 돼요? 아직 할 말이 있어서요.", standing: "parua", act: "lean", nextId: "n7" },
     { id: "n7", speaker: "", body: "수레가 언덕 위에 닿을 때까지 둘은 말없이 창밖을 보았다. 소매는 끝내 놓이지 않았다.", nextId: "n8" },
-    { id: "n8", speaker: "파루아", body: "다음에도 당길게요. 세게 당겨도 놀라지 마세요. …그게 제 말이에요, 대장님.", standing: "parua", act: "nod" },
+    { id: "n8", speaker: "파루아", body: "다음에 또 뭐가 보이면 알려 드릴게요. …불러도 못 들으시면, 그때는 당길 거예요.", standing: "parua", act: "nod" },
   ],
 };
 
 /** 6 — 먼 곳이 보이는 이유. 가까운 곳이 어색해 먼 곳을 보던 아이가 가까운 얼굴들을 한 번 본다. */
 const CHAPTER_6: DialogueStory = {
   id: "bond.parua.6",
+  backdrop: "battlefield",
   startNodeId: "n1",
   titleCard: { title: "먼 곳이 보이는 이유", subtitle: "파루아 · 애착 이야기 2" },
   nodes: [
@@ -66,6 +68,7 @@ const CHAPTER_6: DialogueStory = {
 /** 8 — 처음 낸 소리. 소리쳐 부르지 못하는 아이의 볏이 바람을 지나 처음 사람 목소리를 낸 밤. */
 const CHAPTER_8: DialogueStory = {
   id: "bond.parua.8",
+  backdrop: "assembly",
   startNodeId: "n1",
   titleCard: { title: "처음 낸 소리", subtitle: "파루아 · 애착 이야기 3" },
   nodes: [
@@ -79,7 +82,7 @@ const CHAPTER_8: DialogueStory = {
       { id: "thanks", label: "방금 소리 덕분에 도디가 멈췄어, 파루아", nextId: "n8a" },
       { id: "breathe", label: "괜찮아. 숨부터 쉬어", nextId: "n8b" },
     ] },
-    { id: "n8a", speaker: "파루아", body: "…이 소리, 싫어했거든요. 사람 같은 목소리가 나는 게 이상해서요. 근데 오늘은… 쓸모가 있었어요. 처음으로요.", standing: "parua", act: "nod", nextId: "n9" },
+    { id: "n8a", speaker: "파루아", body: "…제 볏에서 난 소리예요. 놀라셨죠? 저도 깜짝 놀랐어요. 도디가 피해서, 다행이에요.", standing: "parua", act: "nod", nextId: "n9" },
     { id: "n8b", speaker: "파루아", body: "…후, 하. 대장님이 옆에 계시니까 숨이 돌아와요. 도디는 괜찮아요? 안 다쳤어요?", standing: "parua", act: "lean", nextId: "n9" },
     { id: "n9", speaker: "도디", body: "파루아 덕분에 안 다쳤어! 그 소리, 일지에 적어도 돼? 아니, 안 적을게. 내 기억에만 둘게.", standing: "dodi", act: "hop", nextId: "n10" },
     { id: "n10", speaker: "파루아", body: "…소리 내는 거, 조금은 해 볼 수 있을 것 같아요. 아주 조금요, 대장님.", standing: "parua", act: "nod" },
@@ -89,6 +92,7 @@ const CHAPTER_8: DialogueStory = {
 /** 10 — 뒤가 아니라 옆에서. 늘 한 걸음 뒤에서 걷던 아이가 처음으로 소매 대신 이름을 부르는 마지막 장. */
 const CHAPTER_10: DialogueStory = {
   id: "bond.parua.10",
+  backdrop: "battlefield",
   startNodeId: "n1",
   titleCard: { title: "뒤가 아니라 옆에서", subtitle: "파루아 · 애착 이야기 4" },
   nodes: [
@@ -187,13 +191,13 @@ export const PARUA_STORY: RelicStoryProfile = {
     // 2
     ["대장님 오늘은 걸음이 조금 느리세요. …피곤하신가 해서요.", "도디가 또 일지에 제 얘기를 쓰고 있어요. 막지는 않았어요.", "…오늘은 두 걸음까지 다가와도 괜찮을 것 같아요."],
     // 3
-    ["…대장님 발소리, 알아요. 오른발을 조금 끌어요. 멀리서도 들려요.", "소매 잡아도 돼요? …아, 말을 안 했네요. 이미 잡았어요.", "토리카가 케이크 반으로 나눠 줬어요. 반의 반은 대장님 거예요."],
+    ["…오시는 소리 들었어요. 문 열어 놓을까 하다가, 직접 마중 나왔어요.", "소매 잡아도 돼요? …아, 말을 안 했네요. 이미 잡았어요.", "토리카가 케이크 반으로 나눠 줬어요. 반의 반은 대장님 거예요."],
     // 4
-    ["대장님, 저쪽에 새가 줄지어 가요. 열한 마리요. 같이 세 주세요.", "…대장님, 오늘은 소매 말고 팔로 신호 줘 볼까 했는데 역시 소매가 쉬워요.", "저 이제 한 걸음 안 물러나고 대답할 수 있어요. 한 번만 보여 드릴게요."],
+    ["대장님, 저쪽에 새가 줄지어 가요. 열한 마리요. 같이 세 주세요.", "…대장님, 오늘은 소매 말고 팔로 신호 줘 볼까 했는데 역시 소매가 쉬워요.", "…대장님, 오늘은 여기 앉으세요. 저 옆자리 비워 뒀어요."],
     // 5
     ["…오늘 쏜 것 중에 하나는 대장님이 보고 계신 걸 알았어요. 그 화살만 안 떨렸어요.", "도디가 제 활 쏘는 모습을 한 줄로 적었대요. 내용은 안 알려 줬지만… 싫지는 않아요.", "…대장님이랑 있으면 말이 줄어도 괜찮아요. 그게 제일 편해요."],
     // 6 — 장 6 이후: 가까운 얼굴을 본다.
-    ["먼 데도 좋지만, 가까운 데도 좋아졌어요. 도디 코의 잉크 자국도 이제 먼저 알아봐요.", "…대장님 얼굴 본 지 오래됐네요. 오늘은 제대로 볼게요.", "토리카랑 도디랑 간식 먹는 시간이 좋아요. 다들 입에 뭐가 들어 있어서 조용해도 괜찮거든요."],
+    ["도디 코에 잉크가 묻어 있더라고요. …닦아 주려니까 도망가서, 아직 있을 거예요.", "…대장님 얼굴 본 지 오래됐네요. 오늘은 제대로 볼게요.", "토리카랑 도디랑 간식 먹는 시간이 좋아요. 다들 입에 뭐가 들어 있어서 조용해도 괜찮거든요."],
     // 7
     ["…볏이 울릴 것 같은 날이에요. 이상하게 무섭지 않아요.", "대장님 옆에서는 숨 쉬는 게 천천히 돼요. 그래서 활도 더 오래 겨눌 수 있어요.", "오늘은 대장님이 먼저 옆자리를 내주셨어요. …앉아도 되는 거죠?"],
     // 8

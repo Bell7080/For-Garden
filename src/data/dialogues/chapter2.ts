@@ -26,7 +26,7 @@ const PAIR = (id: "amo" | "toby" | "ripa" | "koma" | "lexia" | "dodi", other: "t
 export const STAGE_2_1_PRE: DialogueStory = {
   id: "stage-2-1-pre",
   startNodeId: "enter",
-  backdrop: "battlefield",
+  backdrop: "pressureBroken",
   nodes: linear([
     { id: "enter", speaker: "렉시아", body: "문은 제가 열었어요, 마스터. 이제부터는 제가 앞장서요!", standing: "lexia", cast: PAIR("lexia"), act: "hop" },
     { id: "rule", speaker: "토리카", body: "렉시아 님, 문은 뽑는 게 아니라 여는 거예요.", standing: "torika", act: "lean" },
@@ -41,14 +41,14 @@ export const STAGE_2_1_PRE: DialogueStory = {
 export const STAGE_2_2_POST: DialogueStory = {
   id: "stage-2-2-post",
   startNodeId: "line",
-  backdrop: "battlefield",
+  backdrop: "assembly",
   nodes: linear([
     { id: "line", speaker: "", body: "멈춰 있던 조립 라인이 덜컹, 하고 돌기 시작한다. 레버 앞에 토비가 서 있다.", standing: "toby", cast: PAIR("toby"), act: "squash", cue: "rumble" },
     { id: "denial", speaker: "토비", body: "이, 이건 아니야! 기대어 섰는데 저절로 내려간 거라고!", standing: "toby", act: "shake" },
-    { id: "radio", speaker: "스피나", body: "…무전 확인. 라인이 돌고 있으니 소리가 다 퍼진다. 연구원, 상자를 받아라. 이쪽에서 보내는 보급이다.", cast: VOICE("seira", "torika", "toby"), act: "nod" },
+    { id: "radio", speaker: "스피나", body: "…들리세요? 라인이 돌아가서 소리가 다 퍼져요. 연구원님, 이쪽에서 보급 상자를 보낼게요. 받아 주세요.", cast: VOICE("seira", "torika", "toby"), act: "nod" },
     { id: "box", speaker: "", body: "컨베이어를 타고 상자 하나가 연구원 발치까지 흘러온다. 안에는 갓 구운 치즈케이크 시제품이 들어 있다.", standing: "torika" },
     { id: "torika", speaker: "토리카", body: "치즈케이크예요! 누가 보내신 거죠?", standing: "torika", act: "hopTwice" },
-    { id: "spina", speaker: "스피나", body: "나이트 기어의 인사다. 이 회랑에서는 조용히, 빨리가 규칙이다. 토비라는 아이에게도 전해라." },
+    { id: "spina", speaker: "스피나", body: "…스피나예요. 여기선 되도록 소리 내지 말아 주세요. 오래 머물러도 안 돼요." },
     { id: "toby", speaker: "토비", body: "…다 들었거든?! 나도 조용히 할 수 있어!", standing: "toby", act: "rage" },
   ]),
 };
@@ -64,7 +64,7 @@ export const STAGE_2_4_PRE: DialogueStory = {
     { id: "parua", speaker: "파루아", body: "…도디, 숨소리가 셋이에요. 우리 숨소리 말고.", standing: "parua", act: "tremble" },
     { id: "light", speaker: "", body: "스위치 소리와 함께 불이 들어온다. 눈앞에 아모와 토비, 리파가 나란히 서 있다.", cast: RAID_TRIO, cue: "impact" },
     { id: "toby", speaker: "토비", body: "으악! 불 켜지 말랬잖아!", standing: "toby", act: "fright" },
-    { id: "ripa", speaker: "리파", body: "먼저 켠 건 쟤네잖아? 아, 그냥 얼굴 보니까 반갑다.", standing: "ripa", act: "hop" },
+    { id: "ripa", speaker: "리파", body: "또 너희네? 이번엔 코마가 오기 전에 붙잡아 둘까.", standing: "ripa", act: "hop" },
     { id: "amo", speaker: "아모", body: "…싸워야 하지? 정말 싸워야 해?", standing: "amo", act: "shrink" },
   ]),
 };
@@ -92,7 +92,7 @@ export const STAGE_2_5_POST: DialogueStory = {
     { id: "down", speaker: "", body: "아모가 무릎을 꿇은 채 숨을 고른다. 눌러 쓴 두건이 흘러내린다.", standing: "amo", cast: PAIR("amo", "parua") },
     { id: "hood", speaker: "아모", body: "…이걸 벗은 적이 없었어. 표식이 보일까 봐.", standing: "amo", act: "shrink" },
     { id: "see", speaker: "파루아", body: "…지금은 안 보여요. 보이는 건 아모 씨 얼굴이에요.", standing: "parua", act: "lean" },
-    { id: "up", speaker: "아모", body: "…그렇구나. 그럼 계속 올려 둘까.", standing: "amo", act: "nod" },
+    { id: "up", speaker: "아모", body: "…그럼 됐어. 더 보지는 마.", standing: "amo", act: "nod" },
     { id: "pass", speaker: "아모", body: "지나가도 돼. 대신… 토비가 다치지 않게 해 줘.", standing: "amo", act: "hop" },
   ]),
 };
@@ -101,13 +101,13 @@ export const STAGE_2_5_POST: DialogueStory = {
 export const STAGE_2_6_POST: DialogueStory = {
   id: "stage-2-6-post",
   startNodeId: "belt",
-  backdrop: "battlefield",
+  backdrop: "assembly",
   nodes: linear([
     { id: "belt", speaker: "", body: "아무도 없는 생산선이 상자를 쉬지 않고 내보낸다. 상자마다 같은 표식이 붙어 있다.", standing: "dodi", cast: PAIR("dodi", "parua") },
-    { id: "delopi", speaker: "델로피", body: "으히히, 라인을 거꾸로 돌렸더니 상자가 다 웃으면서 돌아오네? 연구원, 놀랐지?", cast: VOICE("delopi", "parua", "dodi"), act: "bounce" },
+    { id: "delopi", speaker: "델로피", body: "짜잔, 연구원님! 반대로 돌렸더니 아까 그 상자가 돌아왔어요! …어? 잠깐만, 이거 왜 안 멈추죠?", cast: VOICE("delopi", "parua", "dodi"), act: "bounce" },
     { id: "parua", speaker: "파루아", body: "…델로피 씨, 그건 저희를 위험하게 해요.", standing: "parua", act: "tremble" },
-    { id: "luka", speaker: "루카", body: "델로피는 내가 맡겠다. 연구원, 이제부터는 내 신호를 따라와라. 말 없이, 빨리.", cast: VOICE("luka", "parua", "dodi"), act: "nod" },
-    { id: "hush", speaker: "도디", body: "그, 그럼 숨 죽이고… 이건 \"침묵 이동\"으로 적어 둘게요!", standing: "dodi", act: "hop" },
+    { id: "luka", speaker: "루카", body: "델로피는 내가 볼게. 연구원님, 저쪽으로 가. 내가 먼저 갈 테니까 발소리 맞춰 따라오면 돼.", cast: VOICE("luka", "parua", "dodi"), act: "nod" },
+    { id: "hush", speaker: "도디", body: "알겠어요. 대장님, 제 발자국 따라오세요. 상자는 밟으면 소리가 나요.", standing: "dodi", act: "hop" },
     { id: "quiet", speaker: "루카", body: "그 소리가 제일 크다.", act: "lean" },
     { id: "tail", speaker: "", body: "천장 배관 사이로 마디진 꼬리 하나가 지나간다. 끝이 갈고리처럼 휜 그림자가 벽을 훑고 사라진다.", cast: [{ id: "dodi", slot: "left" }, { id: "pulsi", slot: "right", veiled: true }], cue: "rumble" },
     { id: "saw", speaker: "도디", body: "대, 대장님! 방금 위에서 꼬리가 지나갔어요! 이렇게, 이렇게 휘어진 거요!", standing: "dodi", act: "hopTwice" },
@@ -120,12 +120,12 @@ export const STAGE_2_6_POST: DialogueStory = {
 export const STAGE_2_7_PRE: DialogueStory = {
   id: "stage-2-7-pre",
   startNodeId: "room",
-  backdrop: "battlefield",
+  backdrop: "pressureClosed",
   nodes: linear([
     { id: "room", speaker: "", body: "압력 격실에 들어서는 순간 등 뒤에서 문이 닫힌다. 안쪽에는 연구원 혼자다.", cast: [], cue: "impact" },
     { id: "toby", speaker: "토비", body: "어, 어! 문이 닫혔어! 안에서 소리가 안 나, 열어! 열라고!", standing: "toby", cast: RAID_TRIO, act: "shake" },
     { id: "amo", speaker: "아모", body: "…내가 안 그랬어. 레버는 안 건드렸어.", standing: "amo", act: "shrink" },
-    { id: "ripa", speaker: "리파", body: "설비가 오작동한 거야. 우리가 싸우려던 것도 아닌데?", standing: "ripa", act: "recoil" },
+    { id: "ripa", speaker: "리파", body: "저 문, 우리가 잠근 거 아니야. 안쪽에 연구원 있는 거 맞아?", standing: "ripa", act: "recoil" },
     { id: "toby2", speaker: "토비", body: "비켜 봐! 내가 열게!", standing: "toby", act: "rage", cue: "rumble" },
   ]),
 };
@@ -134,14 +134,14 @@ export const STAGE_2_7_PRE: DialogueStory = {
 export const STAGE_2_7_POST: DialogueStory = {
   id: "stage-2-7-post",
   startNodeId: "tear",
-  backdrop: "battlefield",
+  backdrop: "pressureClosed",
   nodes: linear([
-    { id: "tear", speaker: "", body: "경첩째 뽑힌 격실 문이 바닥에 쓰러진다. 문 앞에 토비가 숨을 몰아쉬며 서 있다.", standing: "toby", cast: PAIR("toby"), cue: "explosion" },
-    { id: "safe", speaker: "토비", body: "괘, 괜찮아?! 다친 데는 없지?", standing: "toby", act: "fright" },
+    { id: "tear", speaker: "", body: "경첩째 뽑힌 격실 문이 바닥에 쓰러진다. 문 앞에 토비가 숨을 몰아쉬며 서 있다.", backdrop: "pressureBroken", cast: [], cue: "explosion" },
+    { id: "safe", speaker: "토비", body: "괘, 괜찮아?! 다친 데는 없지?", standing: "toby", cast: PAIR("toby"), act: "fright" },
     { id: "torika", speaker: "토리카", body: "토비 씨가 문을 뜯었어요… 대장님을 구하려고요.", standing: "torika", act: "lean" },
-    { id: "awkward", speaker: "토비", body: "그, 그게 아니라! 문이 거슬려서 그런 거야! …별 뜻 없어!", standing: "toby", act: "tremble" },
+    { id: "awkward", speaker: "토비", body: "…다치면 안 된다고 했어. 붙잡으랬지, 저 안에 가두랬냐고.", standing: "toby", act: "tremble" },
     { id: "silence", speaker: "", body: "아무도 말하지 않는다. 뽑힌 문짝만 천천히 쓰러진 자리에서 식는다." },
-    { id: "thanks", speaker: "토리카", body: "고마워요, 토비 씨. 이제 가요.", standing: "torika", act: "nod" },
+    { id: "thanks", speaker: "토리카", body: "…고마워요. 그렇지만 대장님을 데려가게 둘 순 없어요.", standing: "torika", act: "nod" },
   ]),
 };
 
@@ -149,7 +149,7 @@ export const STAGE_2_7_POST: DialogueStory = {
 export const STAGE_2_8_PRE: DialogueStory = {
   id: "stage-2-8-pre",
   startNodeId: "furnace",
-  backdrop: "battlefield",
+  backdrop: "assembly",
   nodes: linear([
     { id: "furnace", speaker: "", body: "꺼져 가는 용광로 곁. 코마가 쪼그려 앉아 벽의 폐기 표식을 닦고 있다.", standing: "koma", cast: SOLO("koma") },
     { id: "see", speaker: "코마", body: "…왔나.", standing: "koma", act: "nod" },
@@ -165,7 +165,7 @@ export const STAGE_2_8_PRE: DialogueStory = {
 export const STAGE_2_8_POST: DialogueStory = {
   id: "stage-2-8-post",
   startNodeId: "drop",
-  backdrop: "battlefield",
+  backdrop: "assembly",
   nodes: linear([
     { id: "drop", speaker: "", body: "용광로 위 파이프에서 가벼운 날갯소리가 난다. 잠자리의 날개를 접은 그림자와, 몸집만 한 턱을 가진 그림자가 사뿐히 내려선다.", cast: [{ id: "koma", slot: "left" }, { id: "neuri", slot: "center" }, { id: "mir", slot: "right" }], cue: "impact" },
     { id: "hello", speaker: "네우리", body: "후훗… 당신이… 연구원님이시군요? 역시… 듣던 대로… 어흠.", standing: "neuri", act: "hop" },
@@ -183,7 +183,7 @@ export const STAGE_2_8_POST: DialogueStory = {
 export const STAGE_2_9_POST: DialogueStory = {
   id: "stage-2-9-post",
   startNodeId: "hole",
-  backdrop: "battlefield",
+  backdrop: "assembly",
   nodes: linear([
     { id: "hole", speaker: "", body: "컨베이어가 끝나는 곳에 바닥이 없다. 폐기 표식이 붙은 상자들이 소리 없이 어둠으로 떨어진다.", standing: "dodi", cast: PAIR("dodi", "lexia") },
     { id: "dodi", speaker: "도디", body: "다들 이 아래로 흘러간 거예요. 쓸 수 없음이라고 적힌 채로…", standing: "dodi", act: "shrink" },
@@ -203,8 +203,8 @@ export const STAGE_2_10_PRE: DialogueStory = {
     { id: "gate", speaker: "", body: "잔향 지구의 관문. 아모와 토비, 리파가 나란히 서서 길을 막고 있다. 코마는 보이지 않는다.", cast: RAID_TRIO },
     { id: "toby", speaker: "토비", body: "코마한테 안 물어봤어. 우리가 정했어. 여기서 막자고.", standing: "toby", act: "puff" },
     { id: "amo", speaker: "아모", body: "…나랑 토비랑 리파, 셋이서.", standing: "amo", act: "nod" },
-    { id: "ripa", speaker: "리파", body: "이기려는 게 아니야. 확인하려는 거야. 우리가 정말 우리인지.", standing: "ripa", act: "lean" },
-    { id: "torika", speaker: "토리카", body: "…알겠어요. 받아 낼게요.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "nod" },
+    { id: "ripa", speaker: "리파", body: "지나갈 수 있을지는 우리가 정할 거야. 이번엔 누구 명령도 아니고.", standing: "ripa", act: "lean" },
+    { id: "torika", speaker: "토리카", body: "…대장님 뒤로는 못 보내요. 정말 싸울 거면, 저부터 상대해요.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "nod" },
   ]),
 };
 
@@ -216,9 +216,9 @@ export const STAGE_2_10_POST: DialogueStory = {
   nodes: [
     { id: "lose", speaker: "", body: "셋은 쓰러지지 않고 서로를 붙든 채 앉는다. 아무도 도망치지 않는다.", cast: RAID_TRIO, nextId: "toby" },
     { id: "toby", speaker: "토비", body: "…졌네. 그런데 이상하다. 되게 안 분해.", standing: "toby", act: "shrink", nextId: "ripa" },
-    { id: "ripa", speaker: "리파", body: "우리끼리 막아 낸 건 이번이 처음이야. 그래서 그런가.", standing: "ripa", act: "nod", nextId: "amo" },
+    { id: "ripa", speaker: "리파", body: "코마가 시키지도 않았는데 끝까지 버텼네. 우리 셋 다.", standing: "ripa", act: "nod", nextId: "amo" },
     { id: "amo", speaker: "아모", body: "…연구원.", standing: "amo", act: "tremble", nextId: "ask" },
-    { id: "ask", speaker: "아모", body: "우리, 따라가도 돼? 아직 「그래」라고는 못 하겠는데… 그래도 따라가도 돼?", standing: "amo", act: "lean", nextId: "choose" },
+    { id: "ask", speaker: "아모", body: "우리도 같이 가면 안 돼? 네 말을 다 믿는 건 아니야. 그냥… 더 들어 보고 싶어.", standing: "amo", act: "lean", nextId: "choose" },
     {
       id: "choose", speaker: "토리카", body: "대장님, 뭐라고 하실 거예요?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "amo", slot: "right" }],
       choices: [

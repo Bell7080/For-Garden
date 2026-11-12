@@ -18,7 +18,7 @@ export const STAGE_4_1_PRE: DialogueStory = {
   nodes: linear([
     { id: "radio", speaker: "", body: "승강장 스피커에서 낮은 안내가 흐른다. 「합동 추격 개시. 대상 확보 후 코마 조 복귀.」", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "alarm" },
     { id: "ika", speaker: "이카닉시아", body: "두 무리가 한 선로에 서는 일이 흔하지는 않죠. 서두를 이유는 없지만, 이번에는 누구도 놓치지 않을 거예요.", standing: "ikanixia", act: "lean" },
-    { id: "lexia", speaker: "렉시아", body: "합동이라니, 숫자가 늘었다는 소리잖아! 그래도 한 줄로 서면 똑같이 뚫으면 돼!", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "ikanixia", slot: "right" }], act: "hop" },
+    { id: "lexia", speaker: "렉시아", body: "둘이 같이 오든 말든 상관없어! 마스터, 제 뒤에서 떨어지지 마요.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "ikanixia", slot: "right" }], act: "hop" },
   ]),
 };
 
@@ -70,8 +70,8 @@ export const STAGE_4_8_POST: DialogueStory = {
   nodes: linear([
     { id: "snap", speaker: "", body: "승강기 줄이 끊어지는 소리. 바닥 표시등이 깜빡이며 아래로, 아래로 숫자를 지워 나간다.", cast: [{ id: "lexia", slot: "left" }, { id: "torika", slot: "right" }], cue: "explosion" },
     { id: "lexia", speaker: "렉시아", body: "마스터, 손잡이 꽉 잡아요! 제가 앞에서 받을게요!", standing: "lexia", act: "shake" },
-    { id: "radio", speaker: "스피나", body: "…무전 확인. 그 아래는 지도에 없다. 떨어지면 거기가 어디든, 소리부터 죽여라.", standing: "seira", cast: [{ id: "lexia", slot: "left" }, { id: "seira", slot: "right", remote: true }], act: "nod", cue: "rumble" },
-    { id: "torika", speaker: "토리카", body: "지도에 없는 곳이요? 그럼 우리가 처음 그리는 거네요!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "hop" },
+    { id: "radio", speaker: "스피나", body: "…그 아래는 지도에 없어요. 어디로 떨어지든, 먼저 숨을 곳부터 찾으세요.", standing: "seira", cast: [{ id: "lexia", slot: "left" }, { id: "seira", slot: "right", remote: true }], act: "nod", cue: "rumble" },
+    { id: "torika", speaker: "토리카", body: "렉시아 님, 손 놓치면 안 돼요! 대장님, 저도 꽉 잡아 주세요!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "hop" },
   ]),
 };
 

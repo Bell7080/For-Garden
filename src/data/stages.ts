@@ -3,8 +3,7 @@ import { getAncientStrataFloor, getAncientStrataStage } from "../core/ancientStr
 import { difficultyStageRewards, storyBaseStageId, STORY_DIFFICULTY, storyChapterStatFactor, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
 import { GROWTH_STAT_KEYS } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
-import { applyEncounterScaling, encounterRoleFor, equivalentEnemyLevel, requiredBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
-import { ENEMY_BIRTH_TIERS } from "../core/rarityScaling";
+import { applyEncounterScaling, encounterRoleFor, shownBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
 import { type BattleStageDef, type ChapterDef, type RelicDef, type StageBonusReward, type StageDef, type StageEnemyDef } from "../core/types";
 import { getRelic } from "./relics";
 
@@ -20,25 +19,8 @@ export const FIXED_STAGE_ENEMIES = ["toby", "amo", "ripa"] as const;
  */
 const STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"] as const;
 
-/** 스테이지 난이도를 캐릭터 수치가 아닌 공개 성장 축과 검증 가능한 배치로만 표현한다. */
 /**
- * 사다리의 눈금(`STORY_RECOMMENDED_LEVELS`)은 테러조 기준이다. 태생 층이 한 띠 위인 개체(회수조)는
- * 같은 자리에서 **같은 세기가 되는 더 낮은 레벨**로 서고, 돌파도 그 레벨에서 나온다.
- */
-function tieredEnemy(relicId: string, referenceLevel: number, slot: 0 | 1 | 2 | 3 | 4, levelBonus: number = 0): StageEnemyDef {
-  const tier = ENEMY_BIRTH_TIERS[relicId];
-  const level = (tier ? equivalentEnemyLevel(referenceLevel, tier.statFactor) : referenceLevel) + (tier ? levelBonus : 0);
-  return enemyGrowth(relicId, level, requiredBreakthroughForLevel(level), slot);
-}
-
-/**
- * 4장의 회수조는 태생 보정으로 낮춘 눈금에서 이만큼 더 높은 레벨로 선다(응태 결정, v0.320.1) — 같은 자리의 테러조보다
- * 조금 더 센 정예 부대라는 뜻이다. 테러조는 이 값을 받지 않는다.
- */
-const CHAPTER_FOUR_RAIDER_LEVEL_BONUS = 3;
-
-/**
- * 같은 관문에서 **개체 하나만** 정예 자리에 서는 경우(4-6·4-9의 코마). 관문의 `elite`(혼자·둘이 서는 정예 관문)와 달리
+ * 4-6·4-9처럼 같은 관문에서 **개체 하나만** 정예 자리에 서는 경우. 관문의 `elite`(혼자·둘이 서는 정예 관문)와 달리
  * 편성은 그대로 두고 그 개체의 유형(`encounterRole`)만 정예가 된다 — 나머지는 보통 유형 그대로다.
  */
 const SOLO_ELITE_ENEMIES: Readonly<Record<string, readonly string[]>> = {
@@ -46,8 +28,12 @@ const SOLO_ELITE_ENEMIES: Readonly<Record<string, readonly string[]>> = {
   "4-9": ["koma"],
 };
 
-function enemyGrowth(relicId: string, level: number, breakthrough: number, formationSlot: 0 | 1 | 2 | 3 | 4): StageEnemyDef {
-  return { relicId, level, breakthrough, formationSlot };
+/**
+ * **적은 적이다 — 세기는 레벨 하나가 말한다**(응태 결정, 2026-11-12). 돌파 등급은 그 레벨이 여는 스킬 칸만 정하고
+ * 능력치를 얹지 않으며(`getStageEnemies`가 돌파 0으로 키운다), 레벨에는 상한이 없다.
+ */
+function enemyGrowth(relicId: string, level: number, formationSlot: 0 | 1 | 2 | 3 | 4): StageEnemyDef {
+  return { relicId, level, breakthrough: shownBreakthroughForLevel(level), formationSlot };
 }
 
 /**
@@ -58,10 +44,8 @@ function enemyGrowth(relicId: string, level: number, breakthrough: number, forma
  * 107레벨이었다. 그다음에는 유형마다 레벨을 얹었는데 그것도 같은 병이었다 — 1-5 정예가
  * LV.19인데 1-6 잡졸이 LV.15라, 사다리를 오르는 동안 수가 뒤로 갔다.
  *
- * **한계 돌파 사다리 위에 놓는다.** 돌파 0의 상한은 20이고 한 단계마다 30·40·50·60으로
- * 열리므로(`BREAKTHROUGH_STEPS`), 1장은 상한 20 안에서 끝나고 2장 중반부터 1단계, 3장이
- * 2~3단계를 전제한다 — 상한을 넘는 레벨을 권장으로 적으면 그 관문은 "더 키우면 된다"가
- * 아니라 **막힌 문**이 된다.
+ * **적의 레벨에는 상한이 없다**(응태 결정, 2026-11-12 — 「적은 적이다」). 돌파 등급은 그 레벨이 여는 스킬 칸만
+ * 정하고(`shownBreakthroughForLevel`) 능력치를 얹지 않으므로, 화면의 `LV`가 곧 그 개체의 세기다.
  *
  * **뒤로 가지 않는다.** 같은 수가 이어지는 구간은 있어도 내려가는 자리는 없다 — 장을 넘는
  * 순간이든 정예 관문을 지난 순간이든, 적 레벨이 내려가면 그때까지 쌓은 긴장이 풀린다.
@@ -69,22 +53,16 @@ function enemyGrowth(relicId: string, level: number, breakthrough: number, forma
  * 혼자 서기 때문이고, 그 몫은 레벨이 아니라 유형 배수가 갖는다.
  */
 const STORY_RECOMMENDED_LEVELS: readonly number[] = [
-  // 1-1은 오프닝에서 곧장 들어오는 첫 전투라 막 시작한 레벨 1 편성이 넘어야 한다 — 7이던 때는
-  // 아슬아슬했고 3이던 때는 싸움이 되지 않았다. 5는 1-2(8)와의 턱도 크지 않다.
-  // 사다리는 여기서부터 오르기만 한다. 1-3~2-2는 검수를 실제 전장 크기로 옮기며(v0.172.6) 한 뼘씩
-  // 올렸다 — 넓은 틀에서 재던 때는 같은 관문이 실제보다 훨씬 어렵게 읽혀 사다리가 낮게 잡혀 있었다.
-  5, 8, 11, 13, 17, 17, 18, 19, 20, 20,
-  // 2장은 21~30 — 돌파 1단계(상한 30) 안에서 끝난다. 1장 끝(20)에서 한 칸씩 오르는 곡선이다.
-  21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-  36, 37, 38, 39, 40, 41, 42, 43, 44, 47,
-  // 4장은 테러조 기준 48~56이다. 57~60은 5·6장이 쓴다 — 레벨 사다리는 60에서 멈추므로 아껴 쓴다.
-  // 회수조는 태생 층이 한 띠 위라 같은 자리에서 더 낮은 레벨로 선다(`tieredEnemy`).
-  48, 48, 49, 51, 51, 51, 51, 51, 54, 56,
-  // 5~7장은 눈금이 60을 넘는다 — 실제 레벨은 60에서 멈추므로 이 구간은 **태생 층이 높은 개체**(회수조 ×1.3 · 감금조 ×1.7 ·
-  // 카르 ×3)가 같은 세기를 더 낮은 레벨로 선다(`tieredEnemy`). 테러조와 코마는 태생 보정이 없어 60을 넘는 자리에 세우지 않는다.
-  58, 59, 60, 61, 62, 63, 64, 65, 66, 68,
-  69, 70, 71, 72, 73, 74, 75, 76, 77, 79,
-  80, 81, 82, 83, 84, 85, 86, 87, 88, 90,
+  // **적은 적이다**(응태 결정, 2026-11-12) — 적은 레벨마다 3.6%씩 자라고(`ENEMY_LEVEL_GROWTH_PERCENT`) 태생 층·돌파 몫 없이
+  // 이 수 하나가 세기다. 2.2% 시절의 사다리(5 … 90)를 같은 세기의 레벨로 옮긴 값이고, 마지막 보스 카르는 예전 「기준 98」의
+  // 세기를 LV.60에서 낸다. 1-1은 오프닝에서 곧장 들어오는 첫 전투라 막 시작한 레벨 1 편성이 넘어야 한다.
+  3, 5, 7, 8, 11, 11, 12, 13, 14, 14,
+  14, 14, 14, 15, 16, 16, 17, 18, 18, 19,
+  22, 23, 24, 24, 25, 25, 26, 27, 27, 29,
+  30, 30, 30, 32, 32, 32, 32, 32, 33, 35,
+  36, 36, 37, 38, 38, 39, 40, 40, 41, 42,
+  43, 43, 44, 44, 45, 46, 46, 47, 47, 49,
+  49, 50, 50, 51, 52, 52, 53, 54, 54, 60,
 ];
 
 /**
@@ -168,14 +146,6 @@ const LATE_CHAPTER_FORMATIONS: Readonly<Record<string, readonly (readonly [strin
   "7-10": [["carno", 1]],
 };
 
-/**
- * 관문 하나에서 **그 개체만** 눈금보다 더 높은 레벨로 서는 몫. 카르는 태생 ×3이라 7-10의 눈금에서 레벨 1로 떨어진다 — 몇 레벨을
- * 얹어 「낮은 레벨에서도 강한 보스」로 세운다(응태 결정, 낮은 LV가 긴장을 만든다).
- */
-const STAGE_ENEMY_LEVEL_BONUS: Readonly<Record<string, Readonly<Record<string, number>>>> = {
-  "7-10": { carno: 2 },
-};
-
 /** 정예 둘이 서는 관문. 하나만 서는 정예는 적 수로 가른다. */
 const ELITE_DUO_STAGE_IDS: ReadonlySet<string> = new Set(["2-7", "2-9", "4-4", "4-5", "4-10", "6-10"]);
 
@@ -192,8 +162,8 @@ const CHAPTER_ONE_ENEMIES: readonly (readonly StageEnemyDef[])[] =
     const chapterOrder = index + 1;
     const eliteId = CHAPTER_ONE_ELITES[chapterOrder];
     // 홀로 서는 정예는 가운데 자리(1)를 쓴다 — 왼쪽 끝에 세우면 빈 두 자리가 편성 실수처럼 보인다.
-    if (eliteId) return [enemyGrowth(eliteId, recommended, 0, 1)];
-    return STAGE_ENEMY_FORMATION.map((id, slot) => enemyGrowth(id, recommended, 0, slot as 0 | 1 | 2));
+    if (eliteId) return [enemyGrowth(eliteId, recommended, 1)];
+    return STAGE_ENEMY_FORMATION.map((id, slot) => enemyGrowth(id, recommended, slot as 0 | 1 | 2));
   });
 
 /**
@@ -334,20 +304,16 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
     const laterChapterIds = [...STAGE_ENEMY_FORMATION];
     const lateFormation = LATE_CHAPTER_FORMATIONS[`${chapter}-${chapterOrder}`];
     /*
-     * **돌파는 레벨에서 나온다**(`requiredBreakthroughForLevel`). 2장은 21~30이라 전 관문이 돌파 1단계
-     * (상한 30)이고, 화면의 `LV`와 돌파 등급이 맞는다. 1단계가 여는 것은 평타 효과 하나뿐이라
-     * "기본기가 한층 강해진다"가 2장의 몫이다. 3장(36~47)도 같은 함수로 2~3단계가 나온다 — 0으로 적어 두었을 때는
-     * 정보창이 `LV.40 / 상한 20`을 세웠다. 돌파는 늘 그 레벨이 요구하는 단계 이상이어야 한다.
+     * **돌파 등급은 레벨에서 나온다**(`shownBreakthroughForLevel`) — 그 레벨이 여는 스킬 칸만 정하고 능력치는 레벨이 낸다.
      */
     const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
     const laterChapterEnemies = lateFormation
       ? lateFormation.map(([relicId, slot]) => {
-        const levelBonus = (chapter === 4 ? CHAPTER_FOUR_RAIDER_LEVEL_BONUS : 0) + (STAGE_ENEMY_LEVEL_BONUS[`${chapter}-${chapterOrder}`]?.[relicId] ?? 0);
-        const enemy = tieredEnemy(relicId, laterChapterLevel, slot, levelBonus);
+        const enemy = enemyGrowth(relicId, laterChapterLevel, slot);
         return SOLO_ELITE_ENEMIES[`${chapter}-${chapterOrder}`]?.includes(relicId) ? { ...enemy, elite: true as const } : enemy;
       })
       : laterChapterIds.map((relicId, slot) =>
-        enemyGrowth(relicId, laterChapterLevel, requiredBreakthroughForLevel(laterChapterLevel), slot as 0 | 1 | 2));
+        enemyGrowth(relicId, laterChapterLevel, slot as 0 | 1 | 2));
     const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
     const id = `${chapter}-${chapterOrder}`;
     const elite = enemies.length === 1 || ELITE_DUO_STAGE_IDS.has(id);
@@ -419,15 +385,15 @@ export const SUB_STORY_GEM_REWARDS: Readonly<Record<string, number>> = Object.fr
 );
 
 /**
- * 전투 서브 — 1-8 수문 아래에서 아모와 리파가 보급 상자를 두고 길을 막는다. 본편 1-8(LV.19)의 공멸 셋과 달리
- * **둘만 서는 정예 변칙**이고 레벨은 한 칸 낮은 LV.18이다(2-7·2-9 정예 둘과 같은 자리 규칙 — 새 유형을 만들지 않는다).
+ * 전투 서브 — 1-8 수문 아래에서 아모와 리파가 보급 상자를 두고 길을 막는다. 본편 1-8(LV.13)의 공멸 셋과 달리
+ * **둘만 서는 정예 변칙**이고 레벨은 한 칸 낮은 LV.12이다(2-7·2-9 정예 둘과 같은 자리 규칙 — 새 유형을 만들지 않는다).
  * 보상은 젬 50뿐이고 치즈케이크는 주지 않는다 — 난이도 검수가 딛고 선 초회 치즈케이크 곡선(`stageDifficulty.test`)을 건드리지 않는다.
  */
 export const SIDE_BATTLE_STAGE: BattleStageDef = {
   kind: "battle", sub: true, elite: true,
   id: "1-8-side-battle", name: "수문 밑 보급전", chapter: 1, chapterOrder: 8,
   prerequisiteStageIds: ["1-8"],
-  enemies: [enemyGrowth("amo", 18, 0, 0), enemyGrowth("ripa", 18, 0, 2)],
+  enemies: [enemyGrowth("amo", 12, 0), enemyGrowth("ripa", 12, 2)],
   rewards: {
     firstClearCheesecake: 0,
     repeatClearCheesecake: 0,
@@ -436,19 +402,18 @@ export const SIDE_BATTLE_STAGE: BattleStageDef = {
 };
 
 /**
- * 2장 이후의 전투 서브 — 1-8과 같은 **정예 둘** 변칙이다. 레벨은 선행 본편 관문의 권장 레벨보다 한 칸 낮은 눈금에서
- * 태생 층대로 내려 서고(`tieredEnemy`), 4장 회수조 가산과 장 배율도 본편과 같은 규칙을 그대로 받는다 — 서브라고 새 손잡이를
+ * 2장 이후의 전투 서브 — 1-8과 같은 **정예 둘** 변칙이다. 레벨은 선행 본편 관문의 권장 레벨보다 한 레벨 낮게 서고,
+ * 장 배율도 본편과 같은 규칙을 그대로 받는다 — 서브라고 새 손잡이를
  * 만들지 않는다. 보상은 1-8과 같이 젬 50 하나다.
  */
 function sideBattle(anchor: string, name: string, formation: readonly (readonly [string, 0 | 1 | 2])[]): BattleStageDef {
   const [chapter, order] = anchor.split("-").map(Number);
   const reference = (STORY_RECOMMENDED_LEVELS[(chapter - 1) * 10 + order - 1] ?? 1) - 1;
-  const bonus = chapter === 4 ? CHAPTER_FOUR_RAIDER_LEVEL_BONUS : 0;
   return {
     kind: "battle", sub: true, elite: true,
     id: `${anchor}-side-battle`, name, chapter, chapterOrder: order,
     prerequisiteStageIds: [anchor],
-    enemies: formation.map(([relicId, slot]) => tieredEnemy(relicId, reference, slot, bonus)),
+    enemies: formation.map(([relicId, slot]) => enemyGrowth(relicId, reference, slot)),
     ...(storyChapterStatFactor(chapter) !== 1 ? { difficultyStatMultiplier: storyChapterStatFactor(chapter) } : {}),
     rewards: {
       firstClearCheesecake: 0,
@@ -545,7 +510,7 @@ export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): R
     const enemyRole = enemy.elite === true ? "elite" : role;
     const count = enemy.elite === true ? soloElites : stage.enemies.length;
     // 레벨·유형 뒤 공용 난이도 종족값 보정만 적용한다. 태생 정의와 공속은 바꾸지 않는다.
-    const stats = applyEncounterScaling(base.stats, enemy.level, enemyRole, count, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1, enemy.breakthrough);
+    const stats = applyEncounterScaling(base.stats, enemy.level, enemyRole, count);
     for (const key of GROWTH_STAT_KEYS) stats[key] = Math.round(stats[key] * (stage.difficultyStatMultiplier ?? 1));
     return { ...base, encounterRole: enemyRole, stats };
   });

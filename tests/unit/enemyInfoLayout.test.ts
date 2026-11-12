@@ -92,8 +92,8 @@ describe("적 정보 팝업 배치", () => {
     const stage = getBattleStage("1-1");
     const enemies = getStageEnemies(stage);
     const placed = placedEnemyIndex({ mode: "expedition", nodeType: "elite", floor: 7 } as never, stage, enemies);
-    // 층 7의 레벨(14) 그대로다 — 노드 종류는 레벨을 바꾸지 않고, 스테이지의 레벨 표를 섞어 읽지도 않는다.
-    expect(placed.get("enemy-0")?.level).toBe(14);
+    // 층 7의 레벨(9) 그대로다 — 노드 종류는 레벨을 바꾸지 않고, 스테이지의 레벨 표를 섞어 읽지도 않는다.
+    expect(placed.get("enemy-0")?.level).toBe(9);
     expect(placed.get("enemy-0")?.breakthrough).toBe(0);
   });
 

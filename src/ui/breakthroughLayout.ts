@@ -93,6 +93,11 @@ export const BREAK_STEPS = {
   tone: {
     reached: { fill: 0x2a2418, alpha: 0.95, edgeAlpha: 0.9, gradeMark: 1 },
     locked: { fill: 0x161d27, alpha: 0.92, edgeAlpha: 0.42, gradeMark: 0.5 },
+    /**
+     * 뚫어 두었지만 **꺼진** 줄 — 레벨 초기화로 요구 레벨에 못 미친 단계(`activeBreakthrough`).
+     * 호박빛도 남색도 아닌 잿빛이라 "아직 안 뚫음"과도 "켜져 있음"과도 갈린다. 레벨을 다시 올리면 호박빛으로 돌아온다.
+     */
+    dormant: { fill: 0x1e2024, alpha: 0.94, edgeAlpha: 0.28, gradeMark: 1 },
   },
   /**
    * 아직 안 열린 줄의 스킬 액자 진하기.
@@ -103,6 +108,8 @@ export const BREAK_STEPS = {
   lockedIconAlpha: 0.82,
   /** 줄 안에서 돌파 등급 표식이 서는 자리와 크기. */
   gradeMark: { x: -368, size: 32 },
+  /** 꺼진 줄에서 표식 아래 서는 「필요 LV.N」 — 표식 가운데에 맞추고 액자에 닿지 않는 폭 안에서 줄인다. */
+  dormantNeed: { dy: 40, size: 19, maxWidth: 118 },
   /** 줄 안에서 스킬 액자가 서는 자리와 크기. */
   icon: { x: -262, size: 108 },
   /** 설명 글이 시작하는 x와 줄 오른쪽 변에서 남기는 여백. */

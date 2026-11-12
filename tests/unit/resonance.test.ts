@@ -44,14 +44,14 @@ describe("공명 규칙", () => {
     expect(resonanceFragmentRoom("SSR", RESONANCE_CAP, 0)).toBe(0);
   });
 
-  it("단계마다 오각형 다섯만 3%씩 더해 오르고, PvP 선택은 공명을 끈다", () => {
-    expect(resonanceStatEffect(2)).toEqual({ hp: 6, def: 6, res: 6, atk: 6, ap: 6 });
+  it("단계마다 오각형 다섯만 5%씩 더해 오르고, PvP 선택은 공명을 끈다", () => {
+    expect(resonanceStatEffect(2)).toEqual({ hp: 10, def: 10, res: 10, atk: 10, ap: 10 });
     const def = RELICS.find(({ id }) => id === "torika")!;
-    const progress = { level: 1, exp: 0, breakthrough: BREAKTHROUGH_CAP, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] as [null, null, null] };
+    const progress = { level: 50, exp: 0, breakthrough: BREAKTHROUGH_CAP, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] as [null, null, null] };
     const plain = calculateFinalStats(def.stats, progress, [], def.rarity);
     const resonated = calculateFinalStats(def.stats, { ...progress, resonance: 5 }, [], def.rarity);
     const pvp = calculateFinalStats(def.stats, { ...progress, resonance: 5 }, [], def.rarity, { resonance: false });
-    expect(resonated.hp).toBeCloseTo(plain.hp * 1.15, -1);
+    expect(resonated.hp).toBeCloseTo(plain.hp * 1.25, -1);
     expect(resonated.atk).toBeGreaterThan(plain.atk);
     expect(resonated.attackSpeed).toBe(plain.attackSpeed);
     expect(pvp).toEqual(plain);

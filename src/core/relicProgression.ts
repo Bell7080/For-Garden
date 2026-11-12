@@ -215,6 +215,29 @@ export function isGrowthReachable(level: number, breakthrough: number): boolean 
   return breakthrough === 0 || level >= BREAKTHROUGH_STEPS[breakthrough - 1].requiredLevel;
 }
 
+/**
+ * 지금 레벨에서 **실제로 켜져 있는** 돌파 단계 — 뚫어 둔 단계 중 요구 레벨(20·30·40·50)에 닿은 앞쪽 몫이다.
+ *
+ * 레벨 초기화(`resetRelic`)는 레벨만 1로 되돌리고 뚫어 둔 돌파는 지우지 않는다(응태 결정 2026-11-12).
+ * 그러면 1레벨에 돌파 V가 생기는데, 그 몫을 그대로 두면 초기화가 곧 「낮은 레벨에 돌파 효과」라는
+ * 공짜 조합이 된다. 그래서 **요구 레벨에 못 미치는 단계는 꺼 둔다** — 성장 몫·슬롯 효과·공명이 함께
+ * 꺼지고, 레벨을 다시 그 요구 레벨까지 올리면 저절로 켜진다. 저장된 단계는 그대로다.
+ *
+ * 능력치·전투·전투력·스냅샷이 돌파를 읽는 곳은 저장값이 아니라 반드시 이 값을 읽는다. 저장값은
+ * 다음 돌파의 재료(`nextBreakthrough`)와 표식의 「어디까지 뚫었나」에만 쓴다.
+ */
+export function activeBreakthrough(level: number, breakthrough: number): number {
+  const stored = Math.max(0, Math.min(BREAKTHROUGH_CAP, Math.floor(breakthrough)));
+  let active = 0;
+  while (active < stored && level >= BREAKTHROUGH_STEPS[active].requiredLevel) active += 1;
+  return active;
+}
+
+/** `activeBreakthrough`의 진행 상태판. 저장이 없으면 0이다. */
+export function activeBreakthroughOf(progress: Pick<RelicProgress, "level" | "breakthrough"> | undefined): number {
+  return progress ? activeBreakthrough(progress.level, progress.breakthrough) : 0;
+}
+
 /** 다음 돌파에 드는 재료. 이미 별 다섯이면 없다. */
 export function nextBreakthrough(breakthrough: number): BreakthroughStep | undefined {
   return BREAKTHROUGH_STEPS[breakthrough];
@@ -465,8 +488,10 @@ export function applyHeartGems(stats: Stats, gems: readonly RuneInstance[]): Sta
  */
 export function calculateFinalStats(base: Stats, progress: RelicProgress, gems: readonly RuneInstance[], rarity: RelicRarity, options: { resonance?: boolean } = {}): Stats {
   if (progress.heartGemSlots.length !== 3) throw new RangeError("Heart Gem 슬롯은 정확히 3개여야 합니다.");
-  const grown = applyLevelGrowth(base, progress.level, rarity, progress.breakthrough);
-  const resonance = options.resonance === false ? 0 : resonanceOf(progress);
+  // 요구 레벨에 못 미치는 돌파는 꺼져 있다(`activeBreakthrough`) — 성장 몫도, 돌파 V 뒤의 공명도 함께 꺼진다.
+  const breakthrough = activeBreakthroughOf(progress);
+  const grown = applyLevelGrowth(base, progress.level, rarity, breakthrough);
+  const resonance = options.resonance === false || breakthrough < BREAKTHROUGH_CAP ? 0 : resonanceOf(progress);
   const resonated = resonance > 0 ? applyStatPercent(grown, resonanceStatEffect(resonance)) : grown;
-  return applyHeartGems(applyBreakthrough(resonated, progress.breakthrough), gems);
+  return applyHeartGems(applyBreakthrough(resonated, breakthrough), gems);
 }

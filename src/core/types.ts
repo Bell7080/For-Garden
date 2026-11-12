@@ -885,6 +885,11 @@ export type CombatStatusEffect =
        * 받는 회복량을 낮춘다. 배율은 늘 이 정의의 원래 값에 곱하므로 다시 걸어도 겹쳐 불어나지 않는다.
        */
       deepenOnRepeat?: { multiplier: number; healingReceivedReductionPercent: number };
+      /**
+       * 처음부터 **깊은 출혈**로 건다(수쿠스이노의 네 번째 턱). 매초 비율에 공용 깊은 출혈 배율(`BLEED.deepMultiplier`)을
+       * 곱하므로 정의에는 표준 출혈 값을 적는다 — 깊은 출혈 태그가 말하는 수와 늘 같다.
+       */
+      deep?: true;
     }
   | {
       /**

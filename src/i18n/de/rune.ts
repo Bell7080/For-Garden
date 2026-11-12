@@ -127,4 +127,6 @@ export const RUNE_DE = {
   "rune.traitReroll.upgraded": "Stufe erhöht",
   "rune.traitReroll.pity": "Aufstiegsgarantie {done} / {total}",
   "rune.traitReroll.discardHigher": "Das neue Merkmal dieser Rune hat eine höhere Stufe als das aktuelle. Wenn du neu deutest, ohne es anzuwenden, geht es verloren. Trotzdem neu deuten?",
+  "rune.free.craft": "Gratis veredeln",
+  "rune.free.craftAll": "Alles gratis veredeln",
 } as const;

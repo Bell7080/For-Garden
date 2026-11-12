@@ -52,8 +52,10 @@ export const GUILD_GUARD = {
    * 웨이브마다 레벨이 4씩 오른다(2026-10-29 응태 요청 — 2 → 4, 상한 100 → 200). 적당히 오른 웨이브에서 이미 확실히 강해져
    * 아주 긴 웨이브를 밀지 않아도 점수가 크게 쌓이고, 상한을 풀어 깊은 웨이브에서도 계속 세진다.
    */
+  // 적이 등급마다 다르게 자라고 돌파 몫을 받게 되며(「적은 적이다」, 2026-11-12) 예전 3.6% 시절의 웨이브당 3레벨·상한 134와
+  // 같은 세기(SR 곡선 기준)로 옮겼다.
   levelPerWave: 4,
-  maxLevel: 200,
+  maxLevel: 160,
   /**
    * 머릿수: 5 + 웨이브의 사분의 일, 상한 10. 상한(18)이 치즈케이크 대작전 한 판(10~15)을 조금 넘는 무리라, 한 웨이브가
    * 그 절반 남짓이어야 "다 못 치우면 쌓인다"가 몇 웨이브에 걸쳐 일어난다(한 번에 15씩 오면 두 웨이브 만에 끝났다).
@@ -137,7 +139,7 @@ function guardPick(index: number, slot: number): number {
 
 function grownUnit(base: RelicDef, role: EncounterRole, level: number, score: number): HordeUnit {
   return {
-    def: { ...base, encounterRole: role, stats: applyEncounterScaling(base.stats, level, role, 1) },
+    def: { ...base, encounterRole: role, stats: applyEncounterScaling(base.stats, base.rarity, level, role, 1) },
     role,
     bodyScale: ENCOUNTER_ROLE[role].bodyScale,
     score,

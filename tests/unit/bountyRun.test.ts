@@ -65,7 +65,7 @@ describe("현상수배 등급 표", () => {
     const round = getBountyTier("bounty-3").rounds[0];
     const base = getRelic(round.relicId);
     const grown = bountyRoundEnemy(round);
-    expect(grown.stats).toEqual(applyEncounterScaling(base.stats, bountyRoundLevel(round), BOUNTY_ROLE));
+    expect(grown.stats).toEqual(applyEncounterScaling(base.stats, base.rarity, bountyRoundLevel(round), BOUNTY_ROLE));
     // 사본만 자란다 — 정적 정의가 함께 오르면 스토리의 같은 개체까지 세진다.
     expect(base.stats).toEqual(getRelic(round.relicId).stats);
   });

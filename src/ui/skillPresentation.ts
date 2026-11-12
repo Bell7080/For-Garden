@@ -8,6 +8,7 @@ import type { BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, P
 import type { ScalingStatId } from "../core/damage";
 import { t } from "../i18n";
 import { PUP } from "../core/pup";
+import { BLEED } from "../core/skirmish";
 
 /** 능력치 이름은 스킬 본문·태그·돌파 줄이 모두 같은 표에서 고른다. */
 function statName(stat: ScalingStatId | "res"): string {
@@ -33,12 +34,22 @@ export function targetingLabel(targeting?: Ultimate["targeting"]): string | unde
   return t(`skill.target.${targeting}`);
 }
 
+/** 출혈이 공용 시간·비율(`BLEED`) 그대로인가 — 그러면 수치는 태그가 말하므로 본문이 다시 적지 않는다. */
+function isStandardBleed(effect: { seconds: number; maxHpPercentPerSecond: number }): boolean {
+  return effect.seconds === BLEED.seconds && effect.maxHpPercentPerSecond === BLEED.percentPerSecond;
+}
+
 /** 상태 효과 계약을 팝업과 테스트가 함께 쓰는 짧은 문구로 바꾼다. */
 export function statusEffectLabel(effect?: CombatStatusEffect): string | undefined {
   if (effect?.kind === "stun") return t("skill.statusLabel.stun", { seconds: effect.seconds });
   // 경직은 항상 0.1초인 용어 규칙을 키워드 설명이 담당하므로 요약줄에서 시간을 중복하지 않는다.
   if (effect?.kind === "stagger") return t("skill.statusLabel.stagger");
-  if (effect?.kind === "bleed") return t("skill.statusLabel.bleed", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond });
+  // 표준 출혈의 시간·비율은 태그가 말한다. 그 값과 다른 출혈만 요약줄이 수치를 적는다.
+  if (effect?.kind === "bleed" && effect.deep && isStandardBleed(effect)) return t("skill.statusLabel.deepBleed");
+  if (effect?.kind === "bleed") {
+    return isStandardBleed(effect) ? t("skill.statusLabel.bleed")
+      : t("skill.statusLabel.bleedCustom", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond });
+  }
   if (effect?.kind === "poison") return t("skill.statusLabel.poison", { seconds: effect.seconds });
   // 시간이 아니라 듀오의 다음 한 방으로 풀리는 표식이라 초를 적지 않는다.
   if (effect?.kind === "weakpoint") return t("skill.statusLabel.weakpoint");
@@ -354,21 +365,35 @@ export function elationKeyword(passive: Passive): KeywordDef | undefined {
 }
 
 /**
- * 「서리깃」 태그(유티). 평타·궁극기가 쌓는 겹이 상한에서 동상로 바뀌는 규칙을 말한다.
- * 수치는 일반 공격이 거는 상태 계약에서 읽어 조정하면 팝업도 함께 바뀐다.
+ * 「서리깃」 태그(유티). 평타·궁극기가 쌓는 겹이 상한에서 동상으로 바뀌는 데까지만 말한다.
+ * 동상이 무엇을 하는지는 「동상」 태그(`frostbiteKeyword`)가 갖는다 — 한 쪽지에 둘을 다 적으면
+ * 깃털이 쌓이는 규칙과 상태 이상의 효과가 한 덩어리로 읽힌다.
  */
-export function plumeKeyword(def: RelicDef, atk?: number): KeywordDef | undefined {
+export function plumeKeyword(def: RelicDef, _atk?: number): KeywordDef | undefined {
   const plume = def.basic.statusEffects?.find((effect) => effect.kind === "frostPlume");
   if (plume === undefined || plume.kind !== "frostPlume") return undefined;
-  const base = t("skill.keyword.plume.description", {
-    max: plume.maxStacks, hold: plume.holdSeconds, percent: plume.burstPower,
-    seconds: plume.burstSeconds, slowSeconds: plume.slowSeconds, slowPercent: plume.slowPercent,
-  });
   return {
     id: "yuti-plume",
     term: t("skill.keyword.plume.term"),
     kind: "rule",
-    // 공격력을 아는 자리에서는 지금 능력치로 환산한 총 피해를 태그로 덧붙인다(레벨·룬이 바뀌면 함께 바뀐다).
+    description: t("skill.keyword.plume.description", { max: plume.maxStacks, hold: plume.holdSeconds }),
+  };
+}
+
+/**
+ * 「동상」 태그(유티). 서리깃이 상한에서 거는 상태 이상의 효과 — 둔화와 방어를 지나는 지속 피해.
+ * 쓰는 개체가 하나뿐이라 수치를 갖고, 공격력을 아는 자리에서는 지금 능력치로 환산한 총 피해를 덧붙인다.
+ */
+export function frostbiteKeyword(def: RelicDef, atk?: number): KeywordDef | undefined {
+  const plume = def.basic.statusEffects?.find((effect) => effect.kind === "frostPlume");
+  if (plume === undefined || plume.kind !== "frostPlume") return undefined;
+  const base = t("skill.keyword.frostbite.description", {
+    percent: plume.burstPower, seconds: plume.burstSeconds, slowSeconds: plume.slowSeconds, slowPercent: plume.slowPercent,
+  });
+  return {
+    id: "yuti-frostbite",
+    term: t("status.frostbite"),
+    kind: "debuff",
     description: atk === undefined ? base : `${base} ${t("skill.keyword.nowValue", { value: `[[plume-burst|${Math.round(atk * plume.burstPower / 100)}]]` })}`,
   };
 }
@@ -837,6 +862,7 @@ export type DescribedSkill = Skill | BasicAttack | Ultimate | (BasicAttack & Pic
 
 const SHIMMER_BURST_DAMAGE_ID = "shimmer-burst-damage";
 const SHIMMER_BURST_SHIELD_ID = "shimmer-burst-shield";
+const SHIMMER_SPLASH_ID = "tia-splash";
 
 type ShimmerBurstPlan = { power: number; shieldMaxHpPercent: number };
 
@@ -845,13 +871,25 @@ function shimmerBurstNowValues(burst: ShimmerBurstPlan, stats?: { ap?: number; m
   return { damage: Math.round(stats.ap * burst.power / 100), shield: Math.round(stats.maxHp * burst.shieldMaxHpPercent / 100) };
 }
 
-/** 반짝 폭발 절 끝 태그의 산출 근거. 쪽지 사전에 함께 실려야 눌러 읽을 수 있다. */
+/**
+ * 「첨벙!」 태그(티아)와 그 쪽지 끝 수치 태그. 반짝을 남기는 것은 패시브, 터뜨리는 것은 일반 공격이고,
+ * 터질 때 무엇이 일어나는지는 이 태그가 갖는다 — 일반 공격 본문은 "터진다"까지만 말한다.
+ */
 export function shimmerBurstKeywords(skill: unknown, stats?: { ap?: number; maxHp?: number }): KeywordDef[] {
-  const burst = (skill as { shimmerBurst?: ShimmerBurstPlan }).shimmerBurst;
+  const burst = (skill as { shimmerBurst?: ShimmerBurstPlan & { capMaxHpPercent: number } }).shimmerBurst;
   if (burst === undefined) return [];
   const now = shimmerBurstNowValues(burst, stats);
-  if (now === undefined) return [];
+  const base = t("skill.keyword.splash.description", { percent: trim(burst.power), shield: trim(burst.shieldMaxHpPercent), cap: trim(burst.capMaxHpPercent) });
+  const splash: KeywordDef = {
+    id: SHIMMER_SPLASH_ID,
+    term: t("skill.keyword.splash.term"),
+    kind: "rule",
+    description: now === undefined ? base
+      : `${base} ${t("skill.keyword.nowValue", { value: `[[${SHIMMER_BURST_DAMAGE_ID}|${now.damage}]] · [[${SHIMMER_BURST_SHIELD_ID}|${now.shield}]]` })}`,
+  };
+  if (now === undefined) return [splash];
   return [
+    splash,
     { id: SHIMMER_BURST_DAMAGE_ID, term: String(now.damage), kind: "rule", description: t("skill.keyword.damage.bonus", { stat: statName("ap"), percent: trim(burst.power) }) },
     { id: SHIMMER_BURST_SHIELD_ID, term: String(now.shield), kind: "rule", description: t("skill.keyword.shield.fromMaxHp", { percent: trim(burst.shieldMaxHpPercent) }) },
   ];
@@ -1259,17 +1297,13 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
     });
   }
   /*
-   * 반짝은 **쓰는 개체가 하나뿐인 규칙어**라 무엇이고 다시 맞으면 어떻게 되는지를 태그가 갖고,
-   * 남기는 것은 패시브가 말한다. 본문이 적는 것은 둘 다 말하지 않는 몫, 곧 **지워지는 순간에
-   * 무엇이 함께 터지는가**뿐이다 — 일반 공격과 궁극기가 서로 달라 태그에 못 박으면 한쪽
-   * 설명이 거짓말이 된다.
+   * 티아의 몫은 셋으로 나뉜다 — 반짝을 **남기는** 것은 패시브, 반짝이 무엇인지는 「반짝!」 태그,
+   * 터뜨리는 스킬은 "첨벙!이 터진다"까지만 적고 **터질 때 무엇이 일어나는지**는 「첨벙!」 태그가
+   * 갖는다. 본문에 폭발 수치까지 다 적던 때는 일반 공격 쪽지가 패시브의 설명까지 떠안았다.
    */
   if ("shimmerBurst" in skill && skill.shimmerBurst !== undefined) {
-    const burst = skill.shimmerBurst;
-    const now = shimmerBurstNowValues(burst, stats);
-    // 비율은 그대로 적고, 지금 능력치로 환산한 폭발 피해·보호막을 끝에 태그로 덧붙인다.
-    const tail = now === undefined ? "" : ` ${t("skill.keyword.nowValue", { value: `[[${SHIMMER_BURST_DAMAGE_ID}|${now.damage}]] · [[${SHIMMER_BURST_SHIELD_ID}|${now.shield}]]` })}`;
-    clauses.push({ text: t("skill.clause.shimmerBurst", { percent: burst.power, shield: burst.shieldMaxHpPercent, cap: burst.capMaxHpPercent }) + tail, standalone: true });
+    // 터질 때 무엇이 일어나는지는 「첨벙!」 태그가 말한다(`shimmerBurstKeywords`).
+    clauses.push({ text: t("skill.clause.shimmerBurst"), standalone: true });
   }
   // 순간이동해서 쓴다는 것은 대상을 고르는 규칙 자체라, 대상 문구가 말하지 못하는 몫을 적는다.
   if ("blinkToLowestDefense" in skill && skill.blinkToLowestDefense === true) {
@@ -1358,11 +1392,22 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   if (effect.kind === "stagger") return t("skill.status.stagger");
   // 날아가는 시간·속도·튕기는 횟수는 화면에서 그대로 보이는 그림이라 본문이 수로 적지 않는다.
   if (effect.kind === "knockback") return t("skill.status.knockback");
+  // 출혈·깊은 출혈의 시간과 매초 비율은 태그가 말한다(공용 값 `BLEED`). 본문은 「부여한다」까지만 적고,
+  // 스킬마다 다른 값(회복 감소, 표준과 다른 시간)만 남긴다. 공용 값과 어긋나는 출혈은
+  // `skillArt.test`가 막고, 막지 못한 평범한 출혈은 수치를 그대로 적는 문장으로 되돌아간다.
   if (effect.kind === "bleed" && effect.deepenOnRepeat) {
-    return t("skill.status.bleedDeepen", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond,
-      deep: effect.maxHpPercentPerSecond * effect.deepenOnRepeat.multiplier, reduction: effect.deepenOnRepeat.healingReceivedReductionPercent });
+    return t("skill.status.bleedDeepen", { reduction: effect.deepenOnRepeat.healingReceivedReductionPercent });
   }
-  if (effect.kind === "bleed") return t("skill.status.bleed", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond });
+  if (effect.kind === "bleed" && effect.deep && isStandardBleed(effect)) {
+    return t("skill.status.bleedDeep", { reduction: effect.healingReceivedReductionPercent ?? 0 });
+  }
+  if (effect.kind === "bleed" && (effect.healingReceivedReductionPercent ?? 0) > 0) {
+    return t("skill.status.bleedHealCut", { seconds: effect.seconds, reduction: effect.healingReceivedReductionPercent ?? 0 });
+  }
+  if (effect.kind === "bleed") {
+    return isStandardBleed(effect) ? t("skill.status.bleed")
+      : t("skill.status.bleedCustom", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond });
+  }
   // 매초 얼마인지는 태그가 말한다(쓰는 개체가 하나뿐이다). 시간만 스킬마다 달라 본문이 적는다.
   if (effect.kind === "poison") return t("skill.status.poison", { seconds: effect.seconds });
   // 겹 상한·감소율·유지 시간은 저주 태그가 말한다(쓰는 개체가 하나뿐이라 태그가 수치를 가진다).
@@ -1544,11 +1589,8 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
       return t("skill.breakthrough.effect.basic.frostBrand", { name: def.basic.name, percent: trim(effect.damagePercentPerStack), max: trim(effect.damagePercentPerStack * max) });
     }
     if (effect.kind === "deepBleed") {
-      const bleed = def.basic.statusEffects?.find((status) => status.kind === "bleed");
-      return t("skill.breakthrough.effect.basic.deepBleed", {
-        percent: trim((bleed?.kind === "bleed" ? bleed.maxHpPercentPerSecond : 0) * effect.bleedMultiplier),
-        reduction: trim(effect.healingReceivedReductionPercent),
-      });
+      // 깊은 출혈의 매초 비율은 태그가 말한다. 본문은 이 돌파만의 회복 감소만 적는다.
+      return t("skill.breakthrough.effect.basic.deepBleed", { reduction: trim(effect.healingReceivedReductionPercent) });
     }
     if (effect.kind === "darkRoast") return t("skill.breakthrough.effect.basic.darkRoast", { percent: trim(effect.defenseIgnorePercent) });
     if (effect.kind === "arrowEcho") {

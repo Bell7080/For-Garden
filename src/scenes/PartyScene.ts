@@ -19,7 +19,7 @@ import { bindLongPress } from "../ui/longPressInfo";
 import type { PuppetCreature } from "../puppets/assets";
 import { placePuppet, spawnPuppet } from "../puppets/assets";
 import { getBattleStage } from "../data/stages";
-import { ENCOUNTER_ROLE, requiredBreakthroughForLevel } from "../core/levelDesign";
+import { ENCOUNTER_ROLE, encounterEliteCount, encounterGroupPower, encounterUnitPower, requiredBreakthroughForLevel } from "../core/levelDesign";
 import { addStageEliteMark } from "../ui/stageEliteMark";
 import { session } from "../state/session";
 import { gameApi } from "../api/FakeServer";
@@ -743,7 +743,7 @@ export class PartyScene extends Phaser.Scene {
     // 두 총 전투력이다. 이름줄은 노드 미리보기와 같은 프리팹을 쓴다(레벨 강조색·이름 흰색).
     addUnitNameplate(this, undefined, x, ENEMY_ROW + 26, enemy.level, def.name, crowded ? 24 : 30);
     // 개체 하나의 전투력은 이름줄 바로 위, 발밑에 선다. 대치선의 총합이 누가 짊어진 무게인지 말해 준다.
-    addUnitPower(this, undefined, x, ENEMY_ROW + 22, combatPower(def.stats), crowded ? 20 : 24, COLOR.dangerText).setDepth(3);
+    addUnitPower(this, undefined, x, ENEMY_ROW + 22, encounterUnitPower(def.stats, def.encounterRole, encounterEliteCount(this.enemies)), crowded ? 20 : 24, COLOR.dangerText).setDepth(3);
     // **적을 누르면 상세가 열린다.** 옆에 물음표를 하나 더 세우면 SD와 표식 사이에 눌러야 할
     // 것이 둘이 되고, 정작 크게 서 있는 SD는 눌러도 아무 일이 없다.
     this.add.rectangle(x, ENEMY_ROW - PREVIEW_HEIGHT / 2, crowded ? 170 : 210, PREVIEW_HEIGHT + 70, 0xffffff, 0)
@@ -990,7 +990,7 @@ export class PartyScene extends Phaser.Scene {
         label: relic.name,
         level: relicProgression.getProgress(relic.id).level,
         rarity: relic.rarity,
-        breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id),
+        breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id), breakthroughDimmed: relicProgression.isBreakthroughDimmed(relic.id),
         affinity: { element: relic.element, role: relic.role },
         // 이미 자리에 나가 있는 카드는 떠오르지 않고 눌려 들어간다 — 발광은 "지금 고를 수 있다"로
         // 읽혀 이미 세운 렐릭과 아직 고를 수 있는 렐릭이 같은 무게가 된다.
@@ -1099,7 +1099,7 @@ export class PartyScene extends Phaser.Scene {
       const chosen = at >= 0;
       entry.card.setSelected(chosen);
       entry.card.setSub(chosen ? t("party.slot", { index: at + 1 }) : entry.role);
-      entry.card.setProgress(relicProgression.getProgress(id).level, relicProgression.getBreakthroughGrade(id));
+      entry.card.setProgress(relicProgression.getProgress(id).level, relicProgression.getBreakthroughGrade(id), relicProgression.isBreakthroughDimmed(id));
     }
 
     const plate = this.slotPlate;
@@ -1145,7 +1145,7 @@ export class PartyScene extends Phaser.Scene {
         const badgeTop = row - PREVIEW_HEIGHT + 34;
         marks.add(new AffinityBadge(this, x - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62));
         marks.add(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62));
-        addBreakthroughGradeMark(this, marks, x + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(id));
+        addBreakthroughGradeMark(this, marks, x + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(id), relicProgression.isBreakthroughDimmed(id));
         addUnitNameplate(this, marks, x, row + 26, relicProgression.getProgress(id).level, def.name, 30);
         addUnitPower(this, marks, x, row + 22, combatPower(relicProgression.getFinalStats(id, { pvp: this.pvp })), 24, COLOR.accentText);
       }
@@ -1167,7 +1167,7 @@ export class PartyScene extends Phaser.Scene {
     for (const { creature } of moving.values()) creature.destroy();
 
     // 어느 편이 센지는 두 수가 마주 보는 것으로 말한다. 표시·정렬 전용 값이라 전투에는 쓰지 않는다.
-    const enemyPower = this.preview.totalPower ?? groupCombatPower(this.enemies.map((def) => def.stats));
+    const enemyPower = this.preview.totalPower ?? encounterGroupPower(this.enemies);
     // 방어덱 편성에는 적 전투력 줄 자체가 없다(`buildPreview`의 `allyOnly`).
     this.enemyPowerText?.setText(t("party.enemyPower", { power: enemyPower.toLocaleString() }));
     if (this.content.content === "duelDefense" && chrome) this.paintBlindChips(chrome, members);

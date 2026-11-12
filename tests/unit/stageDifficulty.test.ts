@@ -1,6 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { referenceEnemyLevel } from "../../src/core/levelDesign";
-import { ENEMY_BIRTH_TIERS } from "../../src/core/rarityScaling";
 import {
   CHAPTER_ONE_DIFFICULTY_GOALS, STAGE_DIFFICULTY_ADJUSTMENT_ORDER, inspectStageDifficulty,
   selectReferenceParties, selectableRPartyPairs, summarizeStageDifficulty,
@@ -172,7 +170,7 @@ const BASELINES = {
   "1-10": { win: 1, hp: [0.5, 0.7] },
   // v0.253.2: 2장을 레벨 21~30(돌파 1)으로 다시 그리며 녹화했다 — 잡졸 관문이 한 뼘 더 깎이며 지난다.
   // 적 비공격 궁극기 AI 복구 후 평균 잔여 HP 0.978. 전투가 길어지며 아군 회복도 더 돈다.
-  "2-5": { win: 1, hp: [0.86, 0.97] }, // v0.433.0: 적 돌파 몫(+10%)으로 판이 길어져 회복이 더 돌아 0.93. // v0.391.9: 2장 배율 ×1.05로 잔여 체력이 0.82로 내려왔다.
+  "2-5": { win: 1, hp: [0.72, 0.86] }, // 「적은 적이다」 등급 성장(2026-11-12): 2-5가 LV.20(돌파 전)에 서며 0.79. // v0.433.0: 적 돌파 몫(+10%)으로 판이 길어져 회복이 더 돌아 0.93. // v0.391.9: 2장 배율 ×1.05로 잔여 체력이 0.82로 내려왔다.
   "2-10": { win: 1, hp: [0.88, 0.99] }, // v0.433.0: 같은 이유로 0.96.
   // 3-5는 부부대장 아트라가 혼자 서는 정예, 3-10은 행동대장 이카닉시아가 혼자 서는 장 마감 정예다. 3-10은 가운데 조합이 여덟 판 중 한 판만 연다(코마의 1-10과 같다).
   // v0.308.2: 아트라는 레벨을 올려도 거의 다치지 않는다 — 상한 변경 뒤 잔여 체력이 올라 띠를 넓혔다(남은 구멍).
@@ -181,7 +179,7 @@ const BASELINES = {
   "3-10": { win: 0, hp: [0, 0.05] },
   // 4장 — 회수조(태생 1단계 ×1.3)와 테러조가 섞인다. 4-5는 아트라·토비 정예 둘, 4-9는 코마 캐리(미르·펄시가 받친다),
   // 4-10은 코마·이카닉시아 투 캐리로 가운데 조합이 한 판도 열지 못한다(3-10과 같은 마감 벽).
-  "4-5": { win: 1, hp: [0.72, 0.85] }, // v0.391.9: 4장 배율 ×1.15 — 정예 둘을 여덟 판 모두 넘고 잔여 체력 0.79(×1.3에서는 다섯 판, ×1.4에서는 전패).
+  "4-5": { win: 1, hp: [0.84, 0.96] }, // 「적은 적이다」(2026-11-12): 정예 둘이 돌파 몫 없이 서며 0.79 → 0.91. v0.391.9: 4장 배율 ×1.15 — 정예 둘을 여덟 판 모두 넘고 잔여 체력 0.79(×1.3에서는 다섯 판, ×1.4에서는 전패).
   // v0.320.1: 회수조 레벨 +3 · 코마만 정예(체력 ×3)로 올려 여덟 판 중 두 판만 연다(0.75 → 0.25).
   // v0.323.3: 도발·빙결·감속·끌어당김에도 강인함을 적용한 현재 전투 규칙의 기록이다.
   "4-9": { win: 0, hp: [0, 0.05] },
@@ -201,7 +199,9 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
         const report = summarizeStageDifficulty(blendedParty(entry.globalOrder, combo), getStageEnemies(entry.stage), SEEDS, "auto");
         // v0.391.9 장 배율(2장 ×1.05 · 3장 ×1.1)로 토리카·렉시아·루카는 2-5를 여덟 판 중 셋, 2-10을 한 판만 열고 3-4에서 막힌다.
         // v0.433.0 렐릭 성장 개편: 2장 적(LV.21~30)이 돌파 1단계 몫(+10%)을 받아 이 조합은 2-5·2-10을 한 판도 열지 못한다(0.375·0.125 → 0).
-        const walled: Record<string, number> = { "2-5": 0, "2-10": 0, "3-4": 0 };
+        // 「적은 적이다」(2026-11-12): 적이 돌파 몫 없이 레벨 하나로 서며 2-5를 여덟 판 중 여섯, 2-10을 넷 연다. 3-4는 벽으로 남긴다(응태 결정).
+        // 같은 날 적도 등급 성장 + 돌파 몫(LV.21·31·41·51)을 받게 되며(응태 결정) 2-5는 전승, 2-10은 여덟 판 중 여섯이다.
+        const walled: Record<string, number> = { "2-10": 0.75, "3-4": 0 };
         const expected = name === "torika+rex+luka" ? walled[stageId] ?? 1 : 1;
         expect(report.winRate, stageId).toBe(expected);
       }
@@ -236,9 +236,9 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
      * **잡졸은 길이고 정예가 관문이다.** 바닥 파티도 1장의 잡졸 줄은 대체로 흐르고, 장을
      * 닫는 정예에서 멈춘다 — 길에서 막으면 "더 키우면 된다"가 아니라 "여기서 끝"이 된다.
      */
-    for (const stageId of ["1-1", "1-7"]) expect(winRateAt(stageId), stageId).toBeGreaterThan(0);
-    // 아모가 실제 궁극기를 사용하는 현재 엔진에서는 균등 육성의 1-9가 0/8, 몰아주기가 1/8이다.
-    expect(winRateAt("1-9")).toBe(shape === "spread" ? 0 : 1 / 8);
+    for (const stageId of ["1-1", "1-2"]) expect(winRateAt(stageId), stageId).toBeGreaterThan(0);
+    // 「적은 적이다」(2026-11-12): 1장 후반 사다리가 반올림으로 겹치지 않게 한 칸씩 띄워져 바닥 파티는 1-7 언저리에서 멈춘다 — 1-9는 둘 다 닫힌다.
+    expect(winRateAt("1-9")).toBe(0);
     // 장을 닫는 정예는 거의 열리지 않는다 — 바닥 파티는 여덟 판 중 한 판을 넘기 어렵다(v0.308.6: 정예 ×3).
     expect(winRateAt("1-10")).toBeLessThanOrEqual(0.25);
     // 2장은 네 판 중 한 판이 열릴까 말까 하고, 3장은 완전히 닫힌다.
@@ -327,9 +327,9 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
   it("적 레벨은 관문 순서를 따라 단조 증가한다", () => {
     // **정예 관문은 이 줄 밖이다.** 혼자 서는 몫을 유형 배수가 내므로 레벨이 잡졸 줄과
     // 나란히 오르지 않는다(`docs/level-design.md`).
-    const levels = BATTLE_STAGES.filter(({ stage }) => stage.elite !== true).map(({ stage }) => Math.max(...stage.enemies.map((enemy) => referenceEnemyLevel(enemy.level, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1))));
+    const levels = BATTLE_STAGES.filter(({ stage }) => stage.elite !== true).map(({ stage }) => Math.max(...stage.enemies.map((enemy) => enemy.level)));
     for (let index = 1; index < levels.length; index += 1) {
-      expect(levels[index], `${index}번째 잡졸 관문`).toBeGreaterThanOrEqual(levels[index - 1] - 0.6);
+      expect(levels[index], `${index}번째 잡졸 관문`).toBeGreaterThanOrEqual(levels[index - 1]);
     }
     // 곡선이 실제로 크게 그려지는지 — 처음과 끝이 여섯 배 넘게 벌어진다.
     expect(levels[levels.length - 1] / levels[0]).toBeGreaterThan(6);
@@ -410,7 +410,8 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     // v0.323.3: 강인함 통합과 비행 마지막 틱 보정 후 켄토·안카 조합이 최악으로 집계된다.
     // v0.326.6: 티아의 반짝 폭발 막이 8%로 늘며 최악 조합이 토리카·도디·안카로 옮겨 갔다.
     // v0.326.6: 티아의 막 12%·상한 36%로 티아 조합이 더 나아져 최악 조합이 다시 토리카·켄토·안카로 돌아왔다.
-    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["torika", "kento", "anka"]);
+    // 「적은 적이다」 등급 성장(2026-11-12): 1장 적 레벨이 다시 풀리며 최악 조합이 토리카·도디·안카로 옮겨 갔다.
+    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["torika", "dodo", "anka"]);
   }, 30_000);
 
   it("장 목표와 허용 조정 순서를 전용 배율 없이 공개한다", () => {

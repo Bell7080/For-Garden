@@ -47,7 +47,7 @@ import { isContentUnlocked } from "../core/contentUnlock";
 import { normalizeRaidTicketDropState, rollRaidTicketDrops, type BonusItemDrop } from "../core/raidTicketDrops";
 import { bountyRunCost, isBountyTierCleared, isBountyTierUnlocked, markBountyTierCleared } from "../core/bountyRun";
 import { BOUNTY, getBountyTier, type BountyTierDef } from "../data/bounty";
-import { BREAKTHROUGH_CAP, breakthroughFragmentSpend, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade } from "../core/relicProgression";
+import { BREAKTHROUGH_CAP, breakthroughFragmentSpend, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade, activeBreakthroughOf } from "../core/relicProgression";
 import { canResetRelic, relicResetRefund, resetRelicProgress } from "../core/relicReset";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
 import { MISSIONS, RESEARCH_REWARD_STAGES, maxResearchPoints, mergeMissionRewards, type MissionReward, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, LIFETIME_COUNT_CAP, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
@@ -102,11 +102,11 @@ import { replayGuildWar } from "../core/guildWarBattle";
 import { guildGuardElement, guildGuardEndsAt } from "../core/guildPages";
 import { guildGuardRoster } from "../data/guildGuard";
 import { guildQaClockShift } from "./guildQaClock";
-import { nextTutorialStep, advanceTutorialOnStageClear, canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialState } from "../core/tutorial";
+import { endFreeRuneCraft, FREE_RUNE_CRAFT_STAGE, isFreeRuneCraft, nextTutorialStep, advanceTutorialOnStageClear, canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialState } from "../core/tutorial";
 import { mileageFragmentRelicId } from "../data/mileageClerk";
 import { BOND_STORY_GEM_REWARD, BOND_STORY_LEVELS, DIARY_QUESTION_GEM_REWARD, bondChapterId, diaryQuestionUnlockAt, type BondStoryLevel } from "../core/relicStory";
 import { relicStoryFor } from "../data/relicStories";
-import type { AnswerRelicQuestionRequest, AnswerRelicQuestionResponse, ClaimRelicChapterRequest, CompleteTutorialStepRequest, CompleteTutorialStepResponse, MarkContentIntroSeenRequest, MarkContentIntroSeenResponse, ClaimRelicChapterResponse, ClaimRelicQuestionRewardRequest, ClaimRelicQuestionRewardResponse } from "./contracts";
+import type { AnswerRelicQuestionRequest, AnswerRelicQuestionResponse, ClaimRelicChapterRequest, CompleteTutorialStepRequest, CompleteTutorialStepResponse, MarkContentIntroSeenRequest, MarkContentIntroSeenResponse, DismissFreeRuneCraftRequest, DismissFreeRuneCraftResponse, ClaimRelicChapterResponse, ClaimRelicQuestionRewardRequest, ClaimRelicQuestionRewardResponse } from "./contracts";
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
 import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse, RegularEventDto, RegularEventResponse } from "./contracts";
@@ -1070,7 +1070,7 @@ export class FakeServer implements GameApi {
       .flatMap((instanceId) => instanceId === null ? [] : this.state.runeInventory.filter((rune) => rune.instanceId === instanceId));
     return {
       bondLevels: Object.fromEntries(entries.map(({ relicId, snapshot }) => [relicId, snapshot?.bondLevel ?? this.state.relicProgress[relicId]?.bondLevel ?? 0])),
-      breakthroughs: Object.fromEntries(entries.map(({ relicId, snapshot }) => [relicId, snapshot?.breakthrough ?? this.state.relicProgress[relicId]?.breakthrough ?? 0])),
+      breakthroughs: Object.fromEntries(entries.map(({ relicId, snapshot }) => [relicId, snapshot?.breakthrough ?? activeBreakthroughOf(this.state.relicProgress[relicId])])),
       traitEffects: partyRuneTraitEffects(entries.map(({ relicId, snapshot }) => ({ relicId, runes: snapshot?.runes ?? equippedRunes(relicId) }))),
     };
   }
@@ -2919,6 +2919,8 @@ export class FakeServer implements GameApi {
      */
     const nextWallet = { ...base.wallet };
     let nextRunes = this.state.runeInventory;
+    /** 1-5 초회 룬 — 무료 각인 체험의 대상이 된다(`TutorialState.freeRuneCraft`). */
+    let freeRuneId: string | undefined;
     const firstClearRewards: StageClearGrantDto[] = [];
     let cheesecakeGranted = 0;
     if (firstClear) {
@@ -2930,6 +2932,7 @@ export class FakeServer implements GameApi {
           const rune: RuneInstance = reward.trait ? { ...base, trait: rollRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: "uncommon", random: this.random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE }) } : base;
           assertValidRuneInstance(rune);
           nextRunes = [...nextRunes, rune];
+          if (stage.id === FREE_RUNE_CRAFT_STAGE && victory) freeRuneId ??= rune.instanceId;
           firstClearRewards.push({ kind: "rune", rarity: rune.rarity, part: rune.part, instanceId: rune.instanceId, name: rune.customName ?? rune.baseName, trait: rune.trait !== undefined });
           continue;
         }
@@ -2948,7 +2951,10 @@ export class FakeServer implements GameApi {
     const nextMissions = stage.ancientFloor !== undefined && !firstClear ? base.missions : applyMissionEvent(base.missions, { type: "battle_completed", victory }, this.now());
     // 튜토리얼은 지정 관문 승리와 같은 저장에서만 진행한다. 멈춘 기록은 재클리어로 복구한다.
     const currentTutorial = normalizeTutorialState(this.state.tutorial);
-    const nextTutorial = victory && !owningEvent ? advanceTutorialOnStageClear(currentTutorial, stage.id) : currentTutorial;
+    const advancedTutorial = victory && !owningEvent ? advanceTutorialOnStageClear(currentTutorial, stage.id) : currentTutorial;
+    // 체험은 그 관문을 처음 깬 저장에서만 선다 — 이미 지난 계정에 새로 걸지 않는다.
+    const nextTutorial = freeRuneId !== undefined && !owningEvent && advancedTutorial.freeRuneCraft === undefined
+      ? { ...advancedTutorial, freeRuneCraft: { runeInstanceId: freeRuneId } } : advancedTutorial;
     // 상황 특가의 연패 줄 — 스토리 관문만 센다. 같은 관문을 내리 지면 그 장의 재정비 특가가 선다(전투 중이 아니라 다음 조회에서 붉은 점으로만 알린다).
     const nextOffers = owningEvent || stage.ancientFloor !== undefined ? this.state.situationalOffers : this.storyLossOffers(stage.id, victory, this.now());
     this.persist({ ...this.state, situationalOffers: nextOffers, tutorial: nextTutorial, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions, playerResearch: base.playerResearch, itemInventory: base.itemInventory, runeInventory: nextRunes });
@@ -4188,7 +4194,8 @@ export class FakeServer implements GameApi {
     if (!optionExists) throw new GameApiError("RUNE_STAT_EXHAUSTED", "룬에 존재하지 않는 능력치입니다.");
     if (current.enhancementComplete) throw new GameApiError("RUNE_ENHANCEMENT_COMPLETE", "모든 일반 강화를 완료한 룬입니다.");
     if (!canEnhanceRune(current, request.statId)) throw new GameApiError("RUNE_STAT_EXHAUSTED", "이 능력치의 강화 횟수를 모두 사용했습니다.");
-    const goldSpent = runeEnhancementGoldCost(current.rarity, runeEnhancementAttempts(current));
+    // 무료 각인 체험 룬은 골드를 받지 않는다. 판정·증가량은 평소와 같다.
+    const goldSpent = isFreeRuneCraft(this.state.tutorial, current.instanceId) ? 0 : runeEnhancementGoldCost(current.rarity, runeEnhancementAttempts(current));
     if (this.state.wallet.gold < goldSpent) throw new GameApiError("INSUFFICIENT_GOLD", "룬 강화에 필요한 골드가 부족합니다.");
 
     // 성공 여부와 등급별 고정 증가량은 모두 서버 규칙이 소유하며 요청은 선택만 전달한다.
@@ -4209,7 +4216,7 @@ export class FakeServer implements GameApi {
     const current = this.ownedRune(request.runeInstanceId);
     if (current.enhancementComplete) throw new GameApiError("RUNE_ENHANCEMENT_COMPLETE", "모든 일반 강화를 완료한 룬입니다.");
     const targets = runeBatchEnhancementTargets(current);
-    const goldSpent = runeBatchEnhancementGoldCost(current);
+    const goldSpent = isFreeRuneCraft(this.state.tutorial, current.instanceId) ? 0 : runeBatchEnhancementGoldCost(current);
     if (this.state.wallet.gold < goldSpent) throw new GameApiError("INSUFFICIENT_GOLD", "룬 강화에 필요한 골드가 부족합니다.");
     let rune = current;
     const results: boolean[] = [];
@@ -4236,9 +4243,13 @@ export class FakeServer implements GameApi {
     // 더한다 — 되돌릴 수 없는 마지막 조작의 결과가 운에 갈리면 무엇을 고를지 정할 수 없다.
     const rune = applyRuneEngraving(current, { statKey: request.statId, valueAdded: runeEnhancementIncrease(current.rarity, request.statId) });
     const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
-    const nextState = { ...this.state, runeInventory: nextRunes };
+    // 체험 룬의 각인이 곧 체험의 끝이다 — 같은 저장에서 체험 표시를 걷는다.
+    const currentTutorial = normalizeTutorialState(this.state.tutorial);
+    const nextTutorial = isFreeRuneCraft(currentTutorial, rune.instanceId) ? endFreeRuneCraft(currentTutorial) : currentTutorial;
+    const nextState = { ...this.state, runeInventory: nextRunes, tutorial: nextTutorial };
     this.persist(nextState);
     this.state.runeInventory = nextRunes;
+    this.state.tutorial = nextTutorial;
     return { rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
   }
 
@@ -4341,6 +4352,18 @@ export class FakeServer implements GameApi {
     const current = normalizeTutorialState(this.state.tutorial);
     if (!isContentIntroSeen(current, request.introId)) {
       const tutorial = normalizeTutorialState({ ...current, seenIntroIds: [...(current.seenIntroIds ?? []), request.introId] });
+      this.persist({ ...this.state, tutorial });
+      this.state.tutorial = tutorial;
+    }
+    return { tutorial: normalizeTutorialState(this.state.tutorial), serverTime: this.now().toISOString() };
+  }
+
+  /** 무료 각인 체험을 건너뛴다. 룬·지갑은 건드리지 않고 체험 표시만 걷는다. */
+  async dismissFreeRuneCraft(_request: DismissFreeRuneCraftRequest): Promise<DismissFreeRuneCraftResponse> {
+    await this.delay();
+    const current = normalizeTutorialState(this.state.tutorial);
+    if (current.freeRuneCraft !== undefined) {
+      const tutorial = endFreeRuneCraft(current);
       this.persist({ ...this.state, tutorial });
       this.state.tutorial = tutorial;
     }

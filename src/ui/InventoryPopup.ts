@@ -19,7 +19,8 @@ import { addFrameAmount, addItemFrame, ITEM_FRAME } from "./itemFrame";
 import { INVENTORY_TAB_CLEARANCE, INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "./inventoryTabs";
 import { addCategoryTab } from "./CategoryTab";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
-import { equippedRuneSlot, openRuneInfoPopup } from "./RunePopup";
+import { equippedRuneSlot, openRuneInfoPopup, openRunePopup } from "./RunePopup";
+import { offerFreeRuneCraft } from "./freeRuneCraftTutorial";
 import { createRuneListState, RuneListControls, visibleRuneList, type RuneListState } from "./RuneListControls";
 import { RUNE_LIST_CONTROLS } from "./runeListControlsLayout";
 import { addRuneCard, runeTexture } from "./runeIcons";
@@ -128,6 +129,8 @@ export class InventoryPopup {
       void this.inventory.refresh(this.api).then(() => {
         if (this.view !== view || !view.active) return;
         this.render(view, true);
+        // 1-5에서 받은 체험 룬이 남아 있으면 앱을 켠 동안 한 번 무료 세공 체험을 권한다.
+        offerFreeRuneCraft(this.scene, this.popups, (runeInstanceId) => openRunePopup(this.scene, this.popups, { runeInstanceId, api: this.api }));
         // 초기 응답 이후에는 DTO 대신 manager의 인벤토리 확정 신호만 받아 현재 표시 모델을 다시 읽는다.
         if (!this.body || !this.view) return;
         this.unsubscribeInventory = managerEvents.subscribe("inventory", () => { this.inventoryDirty = true; });

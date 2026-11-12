@@ -223,6 +223,9 @@ export interface CompleteTutorialStepResponse { tutorial: import("../core/tutori
 /** 콘텐츠 첫 방문 안내를 봤다고 확정한다. 순서 없이 한 번만 기록되고 선물은 없다. */
 export interface MarkContentIntroSeenRequest { introId: string; }
 export interface MarkContentIntroSeenResponse { tutorial: import("../core/tutorial").TutorialState; serverTime: string; }
+/** 무료 각인 체험을 건너뛴다. 대상 룬은 그대로 남고 이후 세공은 평소처럼 골드가 든다. */
+export interface DismissFreeRuneCraftRequest { readonly reason?: "skip"; }
+export interface DismissFreeRuneCraftResponse { tutorial: import("../core/tutorial").TutorialState; serverTime: string; }
 /** 애착 스토리 한 장을 처음 읽은 것을 확정한다. 유대 레벨은 서버가 자기 상태로 확인한다. */
 export interface ClaimRelicChapterRequest { relicId: string; level: number; }
 export interface ClaimRelicChapterResponse { gemsGranted: number; wallet: Wallet; serverTime: string; }
@@ -1428,6 +1431,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   completeTutorialStep(request: CompleteTutorialStepRequest): Promise<CompleteTutorialStepResponse>;
   /** 콘텐츠 첫 방문 안내를 봤다고 남긴다. */
   markContentIntroSeen(request: MarkContentIntroSeenRequest): Promise<MarkContentIntroSeenResponse>;
+  /** 무료 각인 체험(1-5 룬)을 건너뛴다. 이미 끝났으면 그대로 돌려준다. */
+  dismissFreeRuneCraft(request: DismissFreeRuneCraftRequest): Promise<DismissFreeRuneCraftResponse>;
   /** 유대 레벨이 닿은 애착 스토리 한 장의 해금 젬을 한 번만 받는다. */
   claimRelicChapter(request: ClaimRelicChapterRequest): Promise<ClaimRelicChapterResponse>;
   /** 한 룬이 전체 장착표에서 정확히 한 슬롯에만 있도록 장착한다. */

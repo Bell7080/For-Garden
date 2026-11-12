@@ -12,6 +12,7 @@ import { SKILL_ART_WASH_ALPHA } from "./skillArt";
 import { skillKeywordLayoutOptions } from "./skillPresentation";
 import { addSkillTagRow } from "./SkillTagRow";
 import { buildSkillTags, type SkillTag } from "./skillTags";
+import { newBreakthroughTags } from "./breakthroughTags";
 import type { SkillArtSlot } from "./skillArt";
 import { COLOR, textStyle } from "./theme";
 import { shrinkTextToWidth } from "./textFit";
@@ -78,6 +79,11 @@ export interface SkillInfoViewModel {
    * 열리지 않은 별의 효과는 여기 오지 않는다(`isBreakthroughSlotOpen`).
    */
   breakthroughEffect?: string;
+  /**
+   * 돌파 줄에 따로 서는 칩 — 그 돌파가 **새로 얹는** 상태·피해 종류·막(`breakthroughTags.ts`).
+   * 기본 칩 줄에 섞으면 처음부터 있던 효과로 읽혀 따로 둔다. 기본 칩에 이미 선 것은 그릴 때 걸러 낸다.
+   */
+  breakthroughTags?: readonly SkillTag[];
 }
 
 /**
@@ -109,7 +115,7 @@ const POPUP = {
 /** 쪽지 아이콘 액자가 깎이는 깊이. 굽는 쪽과 그리는 쪽이 같은 값을 읽는다. */
 const ICON_BEVEL = 0.26;
 
-const BREAKTHROUGH_LINE = { gap: 34, labelTop: 8, labelGap: 10, size: 25 } as const;
+const BREAKTHROUGH_LINE = { gap: 34, labelTop: 8, labelGap: 10, size: 25, chipGap: 18 } as const;
 
 /** 아이콘 오른쪽 글 칸의 왼쪽 변(판 가운데 기준). 이름·분류·칩이 같은 x에 선다. */
 const SUMMARY_LEFT = -POPUP.width / 2 + 96 + 132 / 2 + 28;
@@ -155,12 +161,24 @@ export function openSkillPopup(
   const breakthrough = skill.breakthroughEffect === undefined ? undefined : keywords.layout(formatEffectDescription(skill.breakthroughEffect), skillKeywordLayoutOptions(skill, {
     width: POPUP.width - 120, size: 26, lineSpacing: 10, color: COLOR.accentText,
   }));
-  const breakthroughLabelHeight = breakthrough === undefined ? 0 : Math.round(BREAKTHROUGH_LINE.size * 1.4);
-  const breakthroughBlock = breakthrough === undefined ? 0
-    : BREAKTHROUGH_LINE.gap + BREAKTHROUGH_LINE.labelTop + breakthroughLabelHeight + BREAKTHROUGH_LINE.labelGap + breakthrough.height;
   // 스킬 이름 아래 요약은 **칩 줄**이다 — 효과 종류 · 범위 · 시간 · 거는 효과 · 수치를 늘 같은
   // 순서와 같은 색으로 세운다(`skillTags.ts`). 수치 칩을 누르면 산출 근거가 열린다.
-  const summaryText = addSkillTagRow(scene, skillSummaryTags(skill), {
+  const summaryTags = skillSummaryTags(skill);
+  // 돌파가 새로 얹는 칩은 「한계 돌파」 이름표 오른쪽에 따로 선다 — 기본 칩 줄에 섞지 않는다.
+  const breakthroughMark = breakthrough === undefined ? undefined : scene.add
+    .text(0, 0, t("info.breakthrough"), textStyle({ role: "display", size: BREAKTHROUGH_LINE.size, color: COLOR.accentText }))
+    .setOrigin(0, 0);
+  const breakthroughChips = breakthroughMark === undefined ? [] : newBreakthroughTags(skill.breakthroughTags ?? [], summaryTags);
+  const breakthroughChipRow = breakthroughMark === undefined || breakthroughChips.length === 0 ? undefined
+    : addSkillTagRow(scene, breakthroughChips, {
+      width: POPUP.width - 120 - breakthroughMark.width - BREAKTHROUGH_LINE.chipGap, size: 22,
+      keywords, contextualKeywords: skill.contextualKeywords,
+    });
+  const breakthroughMarkHeight = Math.round(BREAKTHROUGH_LINE.size * 1.4);
+  const breakthroughLabelHeight = breakthrough === undefined ? 0 : Math.max(breakthroughMarkHeight, breakthroughChipRow?.height ?? 0);
+  const breakthroughBlock = breakthrough === undefined ? 0
+    : BREAKTHROUGH_LINE.gap + BREAKTHROUGH_LINE.labelTop + breakthroughLabelHeight + BREAKTHROUGH_LINE.labelGap + breakthrough.height;
+  const summaryText = addSkillTagRow(scene, summaryTags, {
     width: POPUP.width / 2 - SUMMARY_LEFT - POPUP.nameRightGutter, size: 22,
     keywords, contextualKeywords: skill.contextualKeywords,
   });
@@ -243,10 +261,13 @@ export function openSkillPopup(
     if (breakthrough) {
       const gapY = description.y + description.height + BREAKTHROUGH_LINE.gap;
       body.add(drawHairline(scene, 0, gapY - 12, POPUP.width - 96, { color: COLOR.accent, alpha: 0.28 }));
-      const mark = scene.add
-        .text(left + 60, gapY + BREAKTHROUGH_LINE.labelTop, t("info.breakthrough"), textStyle({ role: "display", size: BREAKTHROUGH_LINE.size, color: COLOR.accentText }))
-        .setOrigin(0, 0);
-      body.add(mark);
+      const labelY = gapY + BREAKTHROUGH_LINE.labelTop;
+      if (breakthroughMark) body.add(breakthroughMark.setPosition(left + 60, labelY));
+      if (breakthroughMark && breakthroughChipRow) {
+        // 칩이 한 줄이면 이름표와 가운데를 맞추고, 여러 줄이면 윗선을 맞춘다.
+        const offset = Math.max(0, (breakthroughMarkHeight - breakthroughChipRow.height) / 2);
+        body.add(breakthroughChipRow.setPosition(left + 60 + breakthroughMark.width + BREAKTHROUGH_LINE.chipGap, labelY + offset));
+      }
       body.add(breakthrough.setPosition(left + 60, gapY + BREAKTHROUGH_LINE.labelTop + breakthroughLabelHeight + BREAKTHROUGH_LINE.labelGap));
     }
   });

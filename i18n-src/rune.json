@@ -1268,5 +1268,7 @@
 "A cada {value} ataques básicos o golpe é sempre crítico. Cada cópia adicional desta runa reduz a contagem em 1 (mínimo {min}).",
 "Alle {value} Basisangriffe sind immer kritische Treffer. Jede weitere Kopie dieser Rune senkt die Anzahl um 1 (mindestens {min}).",
 "Каждые {value} базовых атаки всегда наносят критический удар. Каждая дополнительная такая руна уменьшает число на 1 (минимум {min})."
-]
+],
+"rune.free.craft": ["免费打磨", "เจียระไนฟรี", "Mài miễn phí", "Asah gratis", "Tallar gratis", "Lapidar grátis", "Gratis veredeln", "Бесплатная огранка"],
+"rune.free.craftAll": ["免费一键打磨", "เจียระไนทั้งหมดฟรี", "Mài tất cả miễn phí", "Asah semua gratis", "Tallar todo gratis", "Lapidar tudo grátis", "Alles gratis veredeln", "Огранить всё бесплатно"]
 }

@@ -7,14 +7,14 @@ import type { RelicProgress, RelicRarity, Stats } from "./types";
  * 돌파를 끝낸 개체의 중복은 예전에는 곧바로 DNA 마일리지가 되었다. 이제는 그 개체의 파편으로 남아 공명을 한 단계씩 올리고,
  * 공명 V까지 드는 파편을 다 갖춘 뒤의 중복만 마일리지가 된다(`resonanceFragmentRoom`).
  *
- * 공명은 **새 효과를 열지 않고 오각형 다섯만 단계마다 3% 올린다**(`RESONANCE_STAT_PERCENT`). 돌파가 이미 그 개체만의 효과를 다
+ * 공명은 **새 효과를 열지 않고 오각형 다섯만 단계마다 5% 올린다**(`RESONANCE_STAT_PERCENT` — 2026-11-12 응태 결정으로 3% → 5%). 돌파가 이미 그 개체만의 효과를 다
  * 열었으므로 그 위에 또 효과를 얹으면 "끝까지 키운 개체"의 모양이 흐려진다 — 공명은 같은 개체를 계속 만나는 사람에게 숫자로만 답한다.
  * **PvP(결투·아레나)에서는 꺼진다**(`calculateFinalStats`의 `resonance: false`) — 중복을 많이 만난 계정이 대인전을 숫자로 누르지 않게 한다.
  */
 export const RESONANCE_CAP = 5;
 
 /** 공명 한 단계가 오각형 다섯에 얹는 몫(%). 단계마다 더한다(곱하지 않는다). */
-export const RESONANCE_STAT_PERCENT = 3;
+export const RESONANCE_STAT_PERCENT = 5;
 
 /** 공명 한 단계에 드는 치즈케이크 — 돌파 마지막 단계와 같은 값이다. */
 export const RESONANCE_CHEESECAKE = 2_000;

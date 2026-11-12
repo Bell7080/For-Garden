@@ -1,4 +1,4 @@
-import { calculateFinalStats } from "./relicProgression";
+import { calculateFinalStats, activeBreakthroughOf } from "./relicProgression";
 import type { RuneInstance } from "./runes";
 import type { RelicDef, RelicProgress, RelicSkinId, Stats } from "./types";
 
@@ -34,7 +34,8 @@ export function captureExpeditionRelicSnapshot(
   });
   return {
     level: progress.level,
-    breakthrough: progress.breakthrough,
+    // 원정은 떠난 순간 **켜져 있던** 돌파로 싸운다 — 레벨 초기화로 꺼진 단계는 굳히지 않는다.
+    breakthrough: activeBreakthroughOf(progress),
     bondLevel: progress.bondLevel,
     stats: { ...calculateFinalStats(def.stats, progress, runes, def.rarity) },
     runes,

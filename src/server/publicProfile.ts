@@ -7,7 +7,7 @@ import type { FriendProfile } from "../data/friends";
 import { ancientHighestCleared } from "../core/ancientStrata";
 import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import { profileFace, publicDuelScore } from "../state/playerProfile";
-import { breakthroughGrade } from "../core/relicProgression";
+import { activeBreakthroughOf, breakthroughGrade } from "../core/relicProgression";
 import { highestClearedStage } from "../core/stageProgress";
 import { STAGES, storyStages } from "../data/stages";
 import { storyClearRecords } from "../core/storyClearRecord";
@@ -41,7 +41,8 @@ export function publicProfile(
       ...(skinId ? { equippedSkinId: skinId } : {}),
       level: progress?.level ?? 1,
       // 공개 값은 표식에 서는 등급(I~V)이다 — 돌파 단계(0~4)를 그대로 실으면 친구 카드가 한 등급 낮게 선다.
-      breakthroughGrade: breakthroughGrade(progress?.breakthrough ?? 0),
+      // 꺼진 돌파(레벨 초기화 뒤 요구 레벨 미달)는 남에게 보이는 등급에 들지 않는다 — 능력치와 같은 값을 말한다.
+      breakthroughGrade: breakthroughGrade(activeBreakthroughOf(progress)),
       stats: new RelicProgressionManager(state).getFinalStats(relic.id),
       skillIds: [relic.basic.id, relic.passive.id, relic.ultimate.id],
     },

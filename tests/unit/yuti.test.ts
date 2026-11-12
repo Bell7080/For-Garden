@@ -42,7 +42,9 @@ describe("유티 — 정체성과 문장", () => {
     const keyword = plumeKeyword(YUTI)!;
     expect(keyword.id).toBe("yuti-plume");
     expect(keyword.description).toContain("5겹");
-    expect(keyword.description).not.toContain("[[");
+    // 동상이 무엇을 하는지는 동상 태그가 말한다 — 서리깃 쪽지는 그 태그 하나만 단다.
+    expect(keyword.description).toContain("[[yuti-frostbite|동상]]");
+    expect(keyword.description).not.toContain("%");
     expect(findKeyword("yuti-plume") ?? keyword).toBeDefined();
     expect(passiveDescription(YUTI.passive)).toContain("4초");
     const basic = skillDescription(YUTI.basic);

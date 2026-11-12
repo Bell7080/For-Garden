@@ -16,10 +16,16 @@ export const RELIC_RESET_POPUP = {
     height: 330,
     sd: { x: -232, ground: 300, height: 262, shadow: 150 },
     /** 말풍선 — 꼬리는 왼쪽 아래에서 SD 머리 쪽을 가리킨다. */
-    bubble: { x: 128, y: 110, width: 480, height: 156, tail: 34, textSize: 30, textWrap: 420 },
-    /** 말풍선 아래의 `LV.30 → LV.1`. */
+    bubble: { x: 128, y: 84, width: 480, height: 156, tail: 34, textSize: 30, textWrap: 420 },
+    /**
+     * 말풍선 아래의 `LV 30 → LV 1` — 이 창이 말하는 핵심이라 크게 세운다(응태 요청). 프로필 레벨 칩과 같은 문법으로
+     * `LV`는 작고 흐리게, 수는 크게 선다. 도착 레벨은 한 뼘 더 크다.
+     */
     levelY: 252,
-    levelSize: 46,
+    levelSize: 72,
+    levelTargetSize: 96,
+    /** `LV` 꼬리표 크기 — 수 크기에 대한 비율. */
+    levelTagRatio: 0.36,
     /** 이마에서 흘러내리는 땀방울. SD 발끝 기준. */
     sweat: { dx: 78, rise: 214, size: 22 },
   },
@@ -29,14 +35,31 @@ export const RELIC_RESET_POPUP = {
     padY: 26,
     headerHeight: 40,
     headerSize: 24,
-    rowHeight: 64,
-    icon: 48,
-    valueSize: 34,
-    deltaSize: 26,
-    /** 칸 — 그림 · 지금 값(오른쪽 맞춤) · 화살표 · 뒤의 값(왼쪽 맞춤) · 증감(오른쪽 맞춤). */
-    columns: { icon: -318, before: -54, arrow: 0, after: 54, delta: 340 },
+    rowHeight: 84,
+    icon: 64,
+    valueSize: 44,
+    deltaSize: 30,
+    /** 증감 알약 — 글자 둘레 여백과 높이. */
+    deltaPill: { padX: 20, height: 52 },
+    /** 칸 — 그림 · 지금 값(오른쪽 맞춤) · 화살표 · 뒤의 값(왼쪽 맞춤) · 증감 알약(오른쪽 맞춤). */
+    columns: { icon: -306, before: -40, arrow: 0, after: 40, delta: 350 },
   },
-  /** 재화 판 아래 한 줄 — 남는 것(돌파·유대·룬). */
+  /**
+   * 「90%만 환급」 경고 띠 — 21레벨 위로 키운 개체를 되돌릴 때만 재화 판 아래에 선다(응태 요청, 2026-11-12).
+   * 왼쪽 붉은 `!` 마름모가 경고를, 오른쪽 붉은 알약이 잃는 치즈케이크 수(`−N`)를 크게 말한다 — 안내 줄의 흐린 글자로
+   * 두던 때는 무엇을 잃는지 눈에 들지 않았다.
+   */
+  warning: {
+    gap: 24,
+    height: 132,
+    badge: { x: -296, size: 66, glyphSize: 46 },
+    textX: -244,
+    titleSize: 32,
+    bodySize: 24,
+    /** 잃는 몫 알약 — 오른쪽 끝에 맞춘다(재화 판의 증감 알약과 같은 열). */
+    pill: { right: 350, height: 64, padX: 18, icon: 44, gap: 8, textSize: 34 },
+  },
+  /** 재화 판(또는 경고 띠) 아래 한 줄 — 남는 것(돌파·유대·룬). */
   noteGap: 40,
   noteSize: 24,
   /** 안내 줄 가운데에서 버튼 가운데까지. */
@@ -46,19 +69,22 @@ export const RELIC_RESET_POPUP = {
   dimAlpha: CONFIRM_DIALOG.dimAlpha,
   /**
    * 판 뒷배경의 색감 — 되돌리는 창은 울먹이는 장밋빛, 먹이는 창은 들뜬 호박빛이다.
-   * 위가 그 색으로 물들고 아래로 갈수록 판의 남색으로 가라앉아, 재화 판·버튼은 늘 같은 바탕 위에서 읽힌다.
-   * 무대에는 SD 뒤로 퍼지는 빛살·마름모 점 무늬·떠오르는 반짝임이 같은 색으로 얹힌다.
+   * 위가 그 색으로 물들고 아래로 갈수록 그 색의 짙은 결(`deep`)로 가라앉는다 — 남색으로 꺼뜨리면 아래 절반이 꾸미지 않은
+   * 판으로 읽혔다(응태 지적). 다만 진하기는 잔잔하게 둔다 — 빛살·점 무늬가 세면 SD와 레벨 줄보다 먼저 읽힌다(응태 요청). 무대에는 SD 뒤로 퍼지는 빛살·마름모 점 무늬·떠오르는 반짝임이, 아래에는 밑동에서 피어오르는
+   * 점 무늬·확정 버튼 뒤 후광·밑변 반짝이가 같은 색으로 얹힌다. 재화 판도 그 색의 짙은 판(`panel`)이다.
    */
   backdrop: {
-    afraid: { wash: 0x6b2a4f, deep: 0x1a1830, ray: 0xff8fb8, dot: 0xffb3cf, spark: 0xffd0e2 },
-    excited: { wash: 0x7a5418, deep: 0x16222c, ray: 0xffd36b, dot: 0xffe39a, spark: 0xfff1b8 },
+    afraid: { wash: 0x6b2a4f, deep: 0x3a1636, panel: 0x22101f, ray: 0xff8fb8, dot: 0xffb3cf, spark: 0xffd0e2 },
+    excited: { wash: 0x7a5418, deep: 0x40240c, panel: 0x241509, ray: 0xffd36b, dot: 0xffe39a, spark: 0xfff1b8 },
     /** 위 물들임의 진하기 · 빛살 수와 진하기 · 점 무늬 간격. */
-    washAlpha: 0.62,
-    rays: 14,
-    rayAlpha: 0.11,
-    dotStep: 34,
-    dotAlpha: 0.2,
-    sparks: 9,
+    washAlpha: 0.48,
+    rays: 12,
+    rayAlpha: 0.055,
+    dotStep: 38,
+    dotAlpha: 0.11,
+    sparks: 6,
+    /** 빛살이 한 바퀴 도는 시간(ms) — 느릴수록 잔잔하다. */
+    spinMs: { afraid: 70000, excited: 50000 },
   },
 } as const;
 
@@ -76,19 +102,23 @@ export interface RelicResetPopupSpots {
   stageTop: number;
   walletTop: number;
   walletHeight: number;
+  /** 경고 띠의 가운데 y — 띠가 없으면 `undefined`. */
+  warningY?: number;
   noteY: number;
   buttonY: number;
 }
 
-export function relicResetPopupSpots(rows: number): RelicResetPopupSpots {
+export function relicResetPopupSpots(rows: number, warning = false): RelicResetPopupSpots {
   const L = RELIC_RESET_POPUP;
   const walletHeight = relicResetWalletHeight(rows);
-  const stack = L.topRoom + L.stage.height + walletHeight + L.noteGap + L.buttonRoom + L.button.height / 2 + L.bottomPad;
+  const warningRoom = warning ? L.warning.gap + L.warning.height : 0;
+  const stack = L.topRoom + L.stage.height + walletHeight + warningRoom + L.noteGap + L.buttonRoom + L.button.height / 2 + L.bottomPad;
   const top = -stack / 2;
   const stageTop = top + L.topRoom;
   const walletTop = stageTop + L.stage.height;
-  const noteY = walletTop + walletHeight + L.noteGap;
-  return { height: stack, stageTop, walletTop, walletHeight, noteY, buttonY: noteY + L.buttonRoom };
+  const warningY = warning ? walletTop + walletHeight + L.warning.gap + L.warning.height / 2 : undefined;
+  const noteY = walletTop + walletHeight + warningRoom + L.noteGap;
+  return { height: stack, stageTop, walletTop, walletHeight, ...(warningY !== undefined ? { warningY } : {}), noteY, buttonY: noteY + L.buttonRoom };
 }
 
 /** 두 버튼의 x — 취소가 왼쪽, 확정이 오른쪽. */

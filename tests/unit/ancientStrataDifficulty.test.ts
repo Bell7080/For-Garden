@@ -20,7 +20,7 @@ describe("고대 지층 200층 난이도 계약", () => {
     expect(definition.trialId).toBe("endurance");
     expect(definition.enemies.reduce((sum,e)=>sum+e.stats.hp,0) / reference).toBeCloseTo(1.183, 2);
     expect(definition.enemyBreakthroughs).toEqual([0,0,0]);
-    expect(definition.level).toBe(20);
+    expect(definition.level).toBe(17);
     expect(definition.multipliers).toEqual({ hp: 1, attack: 1, defense: 1 });
     const party = ancientReferenceParty(["rex", "torika", "mette"], "bare");
     expect(createAncientStrataSkirmish(1, party.players, party).boss).toBeUndefined();

@@ -23,7 +23,7 @@ describe("성장 변화의 즉시 반영", () => {
 
   it("카드는 다시 세우지 않고 레벨·돌파 등급만 갈아 끼운다", () => {
     const card = read("src/ui/PortraitCard.ts");
-    expect(card).toContain("setProgress(level: number | undefined, breakthroughGrade: number | undefined): this {");
+    expect(card).toContain("setProgress(level: number | undefined, breakthroughGrade: number | undefined, breakthroughDimmed = false): this {");
     expect(card).toContain("this.gradeMark.removeAll(true);");
   });
 

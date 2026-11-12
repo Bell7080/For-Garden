@@ -368,7 +368,9 @@ describe("렉시아 스킬 표시 계약", () => {
       "전투 시작 시, [[attack-speed|공격 속도]]·[[atk|공격력]]·치명타 확률·치명타 피해·흡혈이 모두 25% 오른다."
       + " 전투당 한 번, 표적에게 중거리까지 다가서면 그 자리로 [[charge|돌진]]해 1초 동안 [[stun|기절]]시킨다.",
     );
-    expect(statusEffectLabel(rex.basic.statusEffects?.[0])).toBe("[[bleed|출혈]] 3초 · 매초 최대 체력 2%");
+    // 표준 출혈의 시간·비율은 태그가 말하므로 요약줄은 이름만 세운다.
+    expect(statusEffectLabel(rex.basic.statusEffects?.[0])).toBe("[[bleed|출혈]]");
+    expect(statusEffectLabel({ kind: "bleed", seconds: 4, maxHpPercentPerSecond: 1 })).toBe("[[bleed|출혈]] 4초 · 매초 최대 체력 1%");
     expect(targetingLabel(rex.ultimate.targeting)).toBe("적 한 명");
     expect(damageHealingLabel(rex.ultimate.damageHealingPercent)).toBeUndefined();
   });
@@ -490,7 +492,8 @@ describe("티아 스킬 표시 계약", () => {
     // 능력치를 모르는 자리에서도 어느 능력치에서 나오는 배율인지 말한다.
     expect(skillDescription(def.basic)).toBe(
       `적 한 명에게 주문력의 ${def.basic.power}% [[magical-damage|마법 피해]]를 준다.`
-      + " [[shimmer|반짝!]]이 사라질 때 그 자리에서 터져 주위 적에게 [[ap|주문력]]의 50%만큼 [[magical-damage|마법 피해]]를 입히고, 자신의 최대 체력 12%만큼 [[shield|보호막]]을 얻는다 (최대 체력의 36%까지 쌓인다).",
+      // 터질 때의 피해·보호막은 「첨벙!」 태그가 말한다.
+      + " [[shimmer|반짝!]]이 사라질 때 그 자리에서 [[tia-splash|첨벙!]]이 터진다.",
     );
   });
 
@@ -1070,13 +1073,12 @@ describe("수쿠스이노 스킬 표시 계약", () => {
     expect(encounterRoleDescription("boss")).not.toContain("damage-reduction");
   });
 
-  it("의 기본 공격은 주기 하나에 출혈과 날려버림을 함께 싣는다", () => {
+  it("의 기본 공격은 주기 하나에 깊은 출혈과 날려버림을 함께 싣는다", () => {
     const def = boss();
     expect(def.basic.statusEffectEvery).toBe(4);
-    // 출혈은 여러 개체가 함께 쓰는 규칙어라 시간·비율을 **본문이** 적고 태그는 그것이
-    // 무엇인지만 말한다. 회복 감소도 그 절에 함께 붙는다.
+    // 처음부터 깊은 출혈이다 — 수치는 태그가 말하고, 회복 감소는 그 절에 함께 붙는다.
     expect(skillDescription(def.basic, { damage: 210 })).toContain("매 4번째 공격마다");
-    expect(skillDescription(def.basic, { damage: 210 })).toContain("[[bleed|출혈]]");
+    expect(skillDescription(def.basic, { damage: 210 })).toContain("[[deep-bleed|깊은 출혈]]");
     expect(skillDescription(def.basic, { damage: 210 })).toContain("[[knockback|날려버린다]]");
   });
 
@@ -1173,7 +1175,7 @@ describe("마키 스킬 표시 계약", () => {
     ]);
     // 겹 상한과 터지는 위력은 태그가 말하므로 본문이 되풀이하지 않는다.
     expect(skillDescription(def.basic, { damage: 209 })).toBe(
-      "적 한 명에게 [[damage-value|209]]의 [[physical-damage|물리 피해]]를 주고 [[butcher|손질]]을 한 겹 쌓는다. 3초 동안 [[bleed|출혈]]시켜 매초 최대 체력의 2%를 잃게 한다.",
+      "적 한 명에게 [[damage-value|209]]의 [[physical-damage|물리 피해]]를 주고 [[butcher|손질]]을 한 겹 쌓는다. [[bleed|출혈]]을 부여한다.",
     );
   });
 

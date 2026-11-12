@@ -27,7 +27,7 @@ describe("수호전 웨이브", () => {
 
   it("웨이브마다 레벨이 확실히 오르고, 깊이 갈수록 한 마리 점수가 가파르게 커진다", () => {
     expect(guardWaveLevel(2) - guardWaveLevel(1)).toBe(GUILD_GUARD.levelPerWave);
-    expect(guardWaveLevel(10)).toBeGreaterThanOrEqual(GUILD_GUARD.startLevel + 36);
+    expect(guardWaveLevel(10)).toBeGreaterThanOrEqual(GUILD_GUARD.startLevel + 27);
     expect(guardUnitScore(1)).toBe(GUILD_GUARD.gruntScore + GUILD_GUARD.gruntScorePerWave);
     expect(guardUnitScore(20)).toBeGreaterThan(guardUnitScore(10) * 1.5);
   });

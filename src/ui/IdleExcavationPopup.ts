@@ -1,3 +1,4 @@
+import { activeBreakthroughOf } from "../core/relicProgression";
 import { hasRemoteState } from "../api/resultState";
 import { playFormationTapSound } from "./formationSound";
 import { audioManager } from "../managers/AudioManager";
@@ -562,7 +563,7 @@ export class IdleExcavationPopup {
       if (!card.active) continue;
       const progress = session.relicProgress[relicId];
       const detail = excavationProductionDisplayModel([relicId, null, null], RELICS, session.relicProgress).relics[0];
-      card.setProgress(progress?.level ?? 1, (progress?.breakthrough ?? 0) + 1).setSub(formatRate(detail?.totalPerHour ?? 0));
+      card.setProgress(progress?.level ?? 1, (progress?.breakthrough ?? 0) + 1, activeBreakthroughOf(progress) < (progress?.breakthrough ?? 0)).setSub(formatRate(detail?.totalPerHour ?? 0));
     }
   }
 
@@ -620,7 +621,7 @@ export class IdleExcavationPopup {
       const progress = session.relicProgress[relic.id];
       const card = new PortraitCard(this.scene, x, y, {
         width: ROSTER.cardWidth, height: ROSTER.cardHeight, relicId: relic.id,
-        label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, breakthroughGrade: (progress?.breakthrough ?? 0) + 1,
+        label: relic.name, level: progress?.level ?? 1, rarity: relic.rarity, breakthroughGrade: (progress?.breakthrough ?? 0) + 1, breakthroughDimmed: activeBreakthroughOf(progress) < (progress?.breakthrough ?? 0),
         subIcon: CURRENCY_ICON_BY_WALLET[relic.excavationTrait.primaryCurrency], sub: formatRate(detail?.totalPerHour ?? 0), subStyle: "currency",
         // 이미 칸에 나가 있는 카드는 떠오르지 않고 눌려 들어간다. 튀어나온 머리 몫은
         // PortraitCard가 원화 알파 그대로 복제해 겹치므로 여기서는 양식만 고른다.

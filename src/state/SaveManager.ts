@@ -817,7 +817,7 @@ export class SaveManager {
       situationalOffers: normalizeSituationalOfferState(data.situationalOffers),
       gachaHistory: normalizeGachaHistory(data.gachaHistory),
       achievements: { ...data.achievements, claimed: { ...data.achievements.claimed }, ...(data.achievements.growth ? { growth: [...data.achievements.growth] } : {}) },
-      tutorial: { completedStepIds: [...data.tutorial.completedStepIds], ...(data.tutorial.seenIntroIds ? { seenIntroIds: [...data.tutorial.seenIntroIds] } : {}) },
+      tutorial: { completedStepIds: [...data.tutorial.completedStepIds], ...(data.tutorial.seenIntroIds ? { seenIntroIds: [...data.tutorial.seenIntroIds] } : {}), ...(data.tutorial.freeRuneCraft ? { freeRuneCraft: { ...data.tutorial.freeRuneCraft } } : {}) },
     };
   }
 }

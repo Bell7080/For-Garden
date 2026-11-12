@@ -15,6 +15,7 @@ import { formatEffectDescription } from "./skillExplanation";
 import { breakthroughEffectText, skillKeywordLayoutOptions } from "./skillPresentation";
 import { skillSummaryTags, type SkillInfoViewModel } from "./SkillPopup";
 import { addSkillTagRow } from "./SkillTagRow";
+import { newBreakthroughTags } from "./breakthroughTags";
 import { SKILL_GLANCE, skillGlanceCardHeight, skillGlanceCardRoom, skillGlanceCardsTop, skillGlanceTabX } from "./skillGlanceLayout";
 import { shrinkTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
@@ -229,10 +230,18 @@ function layoutBody(keywords: KeywordManager, view: SkillInfoViewModel, width: n
   box.add(desc);
   let height = tagsHeight + desc.height;
   if (view.breakthroughEffect !== undefined) {
+    // 돌파가 새로 얹는 칩은 노란 줄 바로 위에 따로 한 줄 선다 — 기본 칩 줄에 섞지 않는다.
+    const chips = newBreakthroughTags(view.breakthroughTags ?? [], skillSummaryTags(view));
+    if (chips.length > 0) {
+      const row = addSkillTagRow(desc.scene, chips, { width, size: Math.max(20, Math.round(size * 0.78)), keywords, contextualKeywords: view.contextualKeywords });
+      row.setY(height + 12);
+      box.add(row);
+      height += 12 + row.height;
+    }
     const extra = keywords.layout(formatEffectDescription(view.breakthroughEffect), skillKeywordLayoutOptions(view, { width, size: size - 1, lineSpacing, color: COLOR.accentText }));
-    extra.setY(height + 12);
+    extra.setY(height + (chips.length > 0 ? 8 : 12));
     box.add(extra);
-    height += 12 + extra.height;
+    height += (chips.length > 0 ? 8 : 12) + extra.height;
   }
   box.setData("height", height);
   return box;

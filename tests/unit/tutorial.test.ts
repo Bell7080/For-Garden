@@ -10,6 +10,9 @@ describe("첫 플레이 튜토리얼 순서표", () => {
     expect(normalizeTutorialState({ completedStepIds: ["speed"] }).completedStepIds).toEqual([]);
     expect(normalizeTutorialState({ completedStepIds: ["ultimate", "ultimate", "???"] }).completedStepIds).toEqual(["ultimate"]);
     expect(normalizeTutorialState(undefined)).toEqual(createEmptyTutorialState());
+    // 1-5 무료 세공 체험 표시는 정규화를 지나도 남고, 모양이 틀리면 버려진다.
+    expect(normalizeTutorialState({ completedStepIds: [], freeRuneCraft: { runeInstanceId: "r1" } }).freeRuneCraft).toEqual({ runeInstanceId: "r1" });
+    expect(normalizeTutorialState({ completedStepIds: [], freeRuneCraft: { runeInstanceId: 3 } }).freeRuneCraft).toBeUndefined();
   });
 
   it("은 지금 차례인 칸과 이미 마친 칸만 마칠 수 있다", () => {

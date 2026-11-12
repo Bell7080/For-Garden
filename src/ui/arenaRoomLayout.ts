@@ -22,16 +22,22 @@ export const ARENA_ROOM_LAYOUT = {
   slotX: [250, 540, 830] as const,
   slot: { width: 230, height: 262, card: { width: 178, height: 222 } },
   hint: { y: 524 },
-  grid: { left: 180, right: 1056, top: 566, bottom: 1300, columns: 5 },
+  grid: { left: 180, right: 1056, top: 566, bottom: 1290, columns: 5 },
   /** 왼쪽 밴 띠. `y[0]`이 상대 밴(위), `y[1]`이 내 밴(아래) — 화면 전체가 위는 상대, 아래는 나다. */
   banColumn: { x: 88, y: [770, 1070] as const, card: { width: 132, height: 165 } },
-  confirm: { x: 618, y: 1374, width: 560, height: 112 },
+  /**
+   * 픽 확정 — 격자 밑변(1290)과 내 칸의 고른 빛 윗변(1405) 사이의 띠에 든다. `glow`는 눌러야 할 때 뒤에 번지는
+   * 빛의 여백이고 커지지 않는다. 예전(가운데 1374·높이 112·빛 +40/+34에 세로 1.12배 맥동)은 아래로 내 칸을,
+   * 왼쪽으로 되돌리기 버튼을 덮었다 — `arenaRoomLayout.test`가 그 간격을 지킨다.
+   */
+  confirm: { x: 650, y: 1350, width: 500, height: 96, glow: { x: 14, y: 6 } },
   /**
    * 밴 단계에는 내 1·2·3 칸 자리가 통째로 밴 칸 하나다 — 확정 버튼이 그 안에 선다. 밴이 끝나면 이 판이
    * 세 칸으로 갈라지며 픽 단계가 시작된다. 폭은 세 칸이 차지하는 폭과 같다.
    */
   banSlot: { x: 540, y: 1548, width: 810, height: 262 },
-  banConfirm: { x: 540, y: 1548, width: 640, height: 132 },
-  undo: { x: 236, y: 1374, width: 250, height: 96 },
+  banConfirm: { x: 540, y: 1548, width: 640, height: 132, glow: { x: 14, y: 8 } },
+  /** 비공개 배치의 되돌리기 — 확정과 같은 줄 왼쪽(밴 띠 아래). 확정의 빛과 떨어져 선다. */
+  undo: { x: 186, y: 1350, width: 232, height: 88 },
   error: { y: 1846 },
 } as const;

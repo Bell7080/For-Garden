@@ -79,9 +79,12 @@ describe("렐릭 성장 규칙", () => {
     expect(calculateFinalStats(BASE, early, [rune], "SR").hp).toBe(111);
 
     // **돌파는 레벨 성장 %에 단계마다 +10%를 더한다**(응태 결정, 2026-11-11) — 곱하지 않고 더한다.
-    // 101 × (1 + 2.4% + 30%) = 133.7 → 134 → 룬 8%.
-    const broken: RelicProgress = { ...early, breakthrough: 3 };
-    expect(calculateFinalStats(BASE, broken, [rune], "SR").hp).toBe(calculateFinalStats({ ...BASE, hp: 134 }, { ...early, level: 1 }, [rune], "SR").hp);
+    // 요구 레벨(20·30·40)에 못 미치면 뚫어 둔 돌파는 꺼져 있다 — 2레벨의 돌파 III은 돌파 0과 같다.
+    const dormant: RelicProgress = { ...early, breakthrough: 3 };
+    expect(calculateFinalStats(BASE, dormant, [rune], "SR").hp).toBe(111);
+    const flat = calculateFinalStats(BASE, { ...early, level: 40 }, [rune], "SR").hp;
+    const broken = calculateFinalStats(BASE, { ...early, level: 40, breakthrough: 3 }, [rune], "SR").hp;
+    expect(broken).toBeGreaterThan(flat);
   });
 
   it("룬 교체 계산은 렐릭 기본 객체를 변경하지 않고 실패 강화는 수치를 올리지 않는다", () => {

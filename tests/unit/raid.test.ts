@@ -190,16 +190,16 @@ describe("정산", () => {
 });
 
 describe("난이도", () => {
-  it("는 쉬움·보통·어려움이 20·30·40레벨이고 폭주가 만렙이다", () => {
-    expect(RAID_SUMMON_DIFFICULTIES.map((difficulty) => RAID_DIFFICULTY[difficulty].level)).toEqual([20, 30, 40]);
-    expect(RAID_DIFFICULTY.rampage.level).toBe(60);
+  it("는 쉬움·보통·어려움이 15·23·31레벨이고 폭주가 48레벨이다", () => {
+    expect(RAID_SUMMON_DIFFICULTIES.map((difficulty) => RAID_DIFFICULTY[difficulty].level)).toEqual([15, 23, 31]);
+    expect(RAID_DIFFICULTY.rampage.level).toBe(48);
     // 폭주는 시스템만 연다.
     expect(RAID_SUMMON_DIFFICULTIES as readonly string[]).not.toContain("rampage");
   });
 
   it("의 돌파는 그 레벨에 닿을 수 있는 칸이다", () => {
-    expect(raidBossGrowth("easy")).toEqual({ level: 20, breakthrough: 0 });
-    expect(raidBossGrowth("rampage")).toEqual({ level: 60, breakthrough: 4 });
+    expect(raidBossGrowth("easy")).toEqual({ level: 15, breakthrough: 0 });
+    expect(raidBossGrowth("rampage")).toEqual({ level: 48, breakthrough: 3 });
   });
 
   it("는 모르는 값을 받아들이지 않는다", () => {
@@ -267,9 +267,9 @@ describe("월드 폭주의 날짜 경계", () => {
     expect(raidDayProgress(new Date("2026-09-19T12:00:00Z"))).toBeCloseTo(0.5);
   });
 
-  it("의 보스는 만렙이고 돌파 네 칸이 모두 열린다", () => {
-    expect(RAID_SEASON_BOSS.level).toBe(60);
-    expect(RAID_SEASON_BOSS.breakthrough).toBe(4);
+  it("의 보스는 LV.48이고 돌파 세 칸이 열린다(넷째는 LV.51)", () => {
+    expect(RAID_SEASON_BOSS.level).toBe(48);
+    expect(RAID_SEASON_BOSS.breakthrough).toBe(3);
     expect(RAID_ATTEMPTS_PER_RAID).toBe(2);
   });
 });
@@ -283,7 +283,7 @@ describe("레이드 보스", () => {
     // 레이드 전용 배율을 만들지 않는다 — 관문을 조일 손잡이가 둘이 되면 화면에 선 레벨과
     // 실제로 맞는 수치가 갈린다.
     const base = getRelic(RAID_SEASON_BOSS.relicId);
-    const scaled = applyEncounterScaling(base.stats, RAID_SEASON_BOSS.level, "endless");
+    const scaled = applyEncounterScaling(base.stats, base.rarity, RAID_SEASON_BOSS.level, "endless");
     for (const key of ["def", "res", "atk", "ap"] as const) expect(raidBossDef(base).stats[key]).toBe(scaled[key]);
   });
 
@@ -316,7 +316,7 @@ describe("레이드 보스", () => {
     const base = getRelic(RAID_SEASON_BOSS.relicId);
     const basis = raidBossPercentHpBasis(base);
     const level = RAID_SEASON_BOSS.level;
-    expect(basis).toBe(Math.round(applyEncounterScaling(base.stats, level, "endless").hp));
+    expect(basis).toBe(Math.round(applyEncounterScaling(base.stats, base.rarity, level, "endless").hp));
     expect(basis).toBeLessThan(raidBossDef(base).stats.hp);
   });
 
@@ -443,7 +443,7 @@ describe("레이드 서버 경계", () => {
     const world = raids[0]!;
     expect(world.kind).toBe("world");
     expect(world.id).toBe("world-2026-09-16");
-    expect(world.bossLevel).toBe(60);
+    expect(world.bossLevel).toBe(48);
     expect(world.totalHp).toBe(RAID_SEASON_TOTAL_HP);
     expect(world.remainingHp).toBe(world.totalHp - world.dealtDamage);
     expect(raids.some(({ kind, summonerName }) => kind === "summon" && summonerName)).toBe(true);

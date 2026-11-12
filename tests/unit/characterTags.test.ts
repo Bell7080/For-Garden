@@ -42,6 +42,22 @@ describe("정보창 해시태그", () => {
     expect(characterTags(byId("irna")).map((tag) => tag.kind).slice(0, 4)).toEqual(["ranged", "dealer", "physical", "single"]);
   });
 
+  it("맨 위 계약이 아닌 곳에서 나오는 범위·막·은신·회복도 읽는다(전투 대조로 찾은 누락)", () => {
+    const scope = (id: string) => characterTags(byId(id)).find((tag) => tag.kind === "area" || tag.kind === "single")?.kind;
+    // 순환 걸음의 휘두르기·갈래화살, 여울 도약, 나눠 꽂는 연발
+    for (const id of ["ella", "parua", "spino", "teku"]) expect(scope(id), id).toBe("area");
+    // 자신에게만 거는 궁극기의 충격파·포효는 공격이 아니다
+    for (const id of ["kento", "ark", "anka"]) expect(scope(id), id).toBe("single");
+    expect(characterTraits(byId("pachi"))).toContain("shield");
+    expect(characterTraits(byId("irna"))).toContain("shield");
+    expect(characterTraits(byId("tia"))).toContain("shield");
+    expect(characterTraits(byId("teku"))).toContain("shield");
+    expect(characterTraits(byId("luka"))).toContain("stealth");
+    expect(characterTraits(byId("yuti"))).toContain("stealth");
+    expect(characterTraits(byId("shute"))).toEqual(expect.arrayContaining(["heal", "stealth"]));
+    expect(characterTraits(byId("anka"))).toEqual(expect.arrayContaining(["heal", "control"]));
+  });
+
   it("피해 종류는 전투가 그 피해를 계산하는 계약에서 읽는다", () => {
     const damage = (id: string) => characterTags(byId(id)).map((tag) => tag.kind).filter((kind) => ["physical", "magical", "mixed", "fixed"].includes(kind));
     // 출혈은 최대 체력 비례로 매초 방어·저항을 지난다

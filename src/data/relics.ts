@@ -1,4 +1,4 @@
-import { POISON } from "../core/skirmish";
+import { BLEED, POISON } from "../core/skirmish";
 import { registerDataText } from "../i18n";
 import { TORIKA_STORY } from "./relicStories/torika";
 import type { BasicAttack, RelicDef } from "../core/types";
@@ -206,7 +206,7 @@ export const RELICS: RelicDef[] = [
     // 남긴 출혈을 조건으로 삼아, 물어뜯은 자리를 다시 무는 것이 곧 확정 치명타다.
     ferocityTrait: { name: "전투의 여왕은 나야.", effectId: "rexBattleQueen", bleedingGuaranteedCritical: true, allDamageLifeStealPoints: 25 },
     breakthroughEffects: {
-      basic: { kind: "deepBleed", bleedMultiplier: 2, healingReceivedReductionPercent: 40 },
+      basic: { kind: "deepBleed", bleedMultiplier: BLEED.deepMultiplier, healingReceivedReductionPercent: 40 },
       ultimate: { kind: "ultimateLifeSteal", damageHealingPercent: 50 },
       ferocity: { kind: "cleavingBasics", radius: 260 },
       passive: { kind: "battleMaidAscension", durabilityPercent: 25, rechargeOnKill: true },
@@ -3099,7 +3099,9 @@ export const RELICS: RelicDef[] = [
       effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 반향이 남는 시간(초)을 담아 둔다.
       value: 5,
-      echoLocation: { shieldMaxHpPercent: 6, capMaxHpPercent: 30 },
+      // v0.442.7(응태 요청 — 3-10이 너무 단단하다): 6% · 상한 30% → 3% · 15%. 혼자 서는 3-10에서 이 막이 한 판에 최대 체력의
+      // 0.9~1.6배를 둘러 깎인 체력보다 4~10배 많았다. 반으로 줄여도 막이 여전히 가장 큰 버티기 몫이다.
+      echoLocation: { shieldMaxHpPercent: 3, capMaxHpPercent: 15 },
       // 몸 주위를 맴도는 박쥐가 초마다 가까운 둘을 훑는다 — 지속 피해와 회복의 뼈대다. v0.391.1: 위력 30 → 26.
       batSwarm: { radius: 240, intervalSeconds: 1, powerPercent: 26, maxTargets: 2, healPercent: 30 },
       desc: "박쥐 떼가 주위의 가까운 적 둘을 매초 훑는다. 기본 공격과 궁극기가 적중한 적에게 반향을 건다. 반향이 든 적을 친 아군은 보호막을 두른다.",
@@ -3554,7 +3556,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
       statusEffectEvery: 3,
       // 이미 피를 흘리는 적에게 다시 걸면 깊은 출혈(매초 4% · 받는 회복 -30%)이 된다.
-      statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2, deepenOnRepeat: { multiplier: 2, healingReceivedReductionPercent: 30 } }],
+      statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2, deepenOnRepeat: { multiplier: BLEED.deepMultiplier, healingReceivedReductionPercent: 30 } }],
     },
     ultimate: {
       id: "magasa-ult",
@@ -5128,7 +5130,7 @@ export const RELICS: RelicDef[] = [
        */
       statusEffectEvery: 4,
       statusEffects: [
-        { kind: "bleed", seconds: 4, maxHpPercentPerSecond: 2, healingReceivedReductionPercent: 30 },
+        { kind: "bleed", seconds: BLEED.seconds, maxHpPercentPerSecond: BLEED.percentPerSecond, deep: true, healingReceivedReductionPercent: 30 },
         { kind: "knockback", seconds: 1, speed: 1500, bounces: 2 },
       ],
     },

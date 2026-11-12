@@ -101,7 +101,7 @@ import {
 import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
-import { relicLevelCap } from "../core/relicProgression";
+import { relicLevelCap, activeBreakthroughOf } from "../core/relicProgression";
 import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
 import { cakeOperationEnemies, cakeOperationRole, cakeOperationRunCost, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { BATTLE_FIELD_FRAMING, battleArena } from "../core/battleArena";
@@ -669,7 +669,7 @@ export class BattleScene extends Phaser.Scene {
     const frozen = this.frozenRelics;
     const bonds = Object.fromEntries(partyIds.map((id) => [id, frozen?.get(id)?.bondLevel ?? session.relicProgress[id]?.bondLevel ?? 0]));
     // 각성 단계도 같은 방식으로 스냅샷을 넘긴다. 전투 코어는 저장 상태를 직접 읽지 않는다.
-    const breakthroughs = Object.fromEntries(partyIds.map((id) => [id, frozen?.get(id)?.breakthrough ?? session.relicProgress[id]?.breakthrough ?? 0]));
+    const breakthroughs = Object.fromEntries(partyIds.map((id) => [id, frozen?.get(id)?.breakthrough ?? activeBreakthroughOf(session.relicProgress[id])]));
     // UI와 같은 성장 계산기의 스냅샷을 복사해 전투가 룬 수치를 다시 계산하지 않게 한다.
     // 공명은 PvE에서만 든다 — 결투는 서버 재현(`duelCombatSetup`)과 같이 공명을 뺀 값으로 싸운다.
     const players = partyIds.map((id) => ({ ...getRelic(id), stats: frozen?.get(id)?.stats ?? relicProgression.getFinalStats(id, { pvp: this.battleInput.mode === "duel" }) }));

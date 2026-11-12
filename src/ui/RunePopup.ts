@@ -32,6 +32,8 @@ import { contentOpen, showContentLockedToast } from "./contentLock";
 import { LOCK_DIM } from "./lockStyle";
 import { startNavScene } from "./screenTransition";
 import { NAV_TABS, navTabDirection } from "../core/navTabs";
+import { tutorialManager } from "../managers/TutorialManager";
+import { guideFreeRuneCraft, unionRects } from "./freeRuneCraftTutorial";
 
 /**
  * 룬 옵션 키의 공용 표시명이다.
@@ -495,6 +497,8 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
   let landed: { statKey: RuneStatKey; slot: number; kind: RuneCraftImpactKind } | undefined;
   /** 일괄 세공으로 막 박힌 칸들의 순서(위 줄부터). 이 그림에서만 차례로 박히고 곧 비운다. */
   let batchLanded: Map<string, number> | undefined;
+  /** 이 룬이 무료 각인 체험 중인가 — 값 표기·골드 확인·안내가 함께 읽는다. 서버도 같은 기록으로 골드를 받지 않는다. */
+  const freeNow = (): boolean => tutorialManager.freeRuneId() === rune?.instanceId;
   const stopCrafting = (): void => { closed = true; queued = 0; };
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, stopCrafting);
   popups.open({ width: panel.width, height: layout.height, title: t("rune.craftTitle"), y: panel.centerY, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true, onClose: () => { closed = true; queued = 0; scene.events.off(Phaser.Scenes.Events.SHUTDOWN, stopCrafting); options.onClose?.(); } }, (body) => {
@@ -520,8 +524,10 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       if (!selected || current.engravings.length > 0) return false;
       if (current.enhancementComplete) return canEngraveRune(current);
       if (!canEnhanceRune(current, selected)) return false;
-      return session.wallet.gold >= runeEnhancementGoldCost(current.rarity, runeEnhancementAttempts(current));
+      return freeNow() || session.wallet.gold >= runeEnhancementGoldCost(current.rarity, runeEnhancementAttempts(current));
     };
+    /** 안내가 가리킬 옵션 줄의 입력면. 다시 그릴 때마다 새로 모은다. */
+    let rowHits: { hit: Phaser.GameObjects.Rectangle; main: boolean }[] = [];
 
     /**
      * 결과 하나를 제자리에 박는다.
@@ -564,6 +570,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       const statKey = selected;
       if (closed || !statKey || !craftable()) { queued = 0; return; }
       const engraving = rune!.enhancementComplete;
+      const wasFree = freeNow();
       pending = true;
       try {
         // 세공·각인은 반드시 manager를 지난다 — 그래야 가방 목록도 같은 순간에 다시 그려진다.
@@ -584,6 +591,13 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         pending = false;
         audioManager?.playUi(engraving ? "rune.engrave" : succeeded ? "rune.success" : "rune.fail");
         render(engraving ? t("rune.completed") : succeeded ? t("rune.craftSuccess") : t("rune.craftFail"));
+        // 체험 룬에 각인을 새기면 체험이 끝난다 — 무엇을 해냈는지와 다음부터는 골드가 든다는 것을 한 번 알린다.
+        if (engraving && wasFree) {
+          scene.time.delayedCall(700, () => {
+            if (closed) return;
+            popups.confirm({ title: t("tutorial.rune.done.title"), message: t("tutorial.rune.done.body"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
+          });
+        }
       } catch (error) {
         pending = false;
         queued = 0;
@@ -628,6 +642,8 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
     /** 일괄 세공은 골드를 한꺼번에 쓰므로 총액과 남는 골드를 확인 창에서 먼저 보여 준다. */
     const confirmCraftAll = (): void => {
       const current = rune!;
+      // 체험 룬은 치를 골드가 없어 확인 창을 거치지 않는다.
+      if (freeNow()) { if (!closed && !pending && !current.enhancementComplete) void craftAll(); return; }
       const total = runeBatchEnhancementGoldCost(current);
       if (closed || pending || total <= 0 || session.wallet.gold < total) return;
       popups.confirm({
@@ -655,6 +671,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       content.removeAll(true);
       content.setX(0);
       empties.clear();
+      rowHits = [];
       const current = rune!;
       const accent = RUNE_ACCENT[current.rarity];
       const rarity = runeRarityLabel(current.rarity);
@@ -771,6 +788,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         if (usable) bindPressFlash(hit, 0.12);
         hit.on("pointerup", () => { if (!pending && usable) { selected = stat.key; render(); } });
         content.add(hit);
+        if (usable) rowHits.push({ hit, main });
       };
 
       content.add(scene.add.text(-half + 44, top + panel.mainLabelY, t("rune.mainOption"), textStyle({ role: "emphasis", size: 21, color: hex(accent) })).setOrigin(0, 0.5));
@@ -783,10 +801,11 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
 
       content.add(drawHairline(scene, 0, top + layout.hairlineY, layout.rowWidth, { color: accent, alpha: 0.4 }));
       const engraved = current.engravings.length > 0;
-      const cost = completed ? 0 : runeEnhancementGoldCost(current.rarity, runeEnhancementAttempts(current));
-      const affordable = completed || session.wallet.gold >= cost;
-      const batchCost = completed ? 0 : runeBatchEnhancementGoldCost(current);
-      const batchAffordable = session.wallet.gold >= batchCost;
+      const free = freeNow();
+      const cost = completed || free ? 0 : runeEnhancementGoldCost(current.rarity, runeEnhancementAttempts(current));
+      const affordable = completed || free || session.wallet.gold >= cost;
+      const batchCost = completed || free ? 0 : runeBatchEnhancementGoldCost(current);
+      const batchAffordable = free || session.wallet.gold >= batchCost;
       const reason = engraved
         ? t("rune.allCrafted")
         : completed
@@ -822,15 +841,48 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       }
       // 세공 단계에서는 두 버튼이 나란히 서고, 각인만 남으면 각인 버튼이 가운데로 돌아온다.
       action.setX(completed ? 0 : -panel.button.pairOffset);
-      batchAction!.setVisible(!completed).setCost({ amount: batchCost, affordable: batchAffordable }).setEnabled(!completed && !engraved && batchAffordable && batchCost > 0);
+      // 체험 룬은 값 대신 「무료」를 라벨에 싣는다 — 0골드를 적으면 고장 난 값으로 읽힌다.
+      batchAction!.setVisible(!completed).setLabel(free ? t("rune.free.craftAll") : t("rune.craftAll")).setCost(free ? undefined : { amount: batchCost, affordable: batchAffordable })
+        .setEnabled(!completed && !engraved && batchAffordable && (free || batchCost > 0));
+      batchAction!.fitLabel(panel.button.width - (free ? 60 : 150));
       // 응답 도중 눌린 버튼을 파괴하면 pointerup이 유실된다. 같은 입력면·누름 연출을 유지한다.
-      action.setLabel(completed ? t("rune.engraveConfirm") : t("rune.craft"))
-        .setCost(completed ? undefined : { amount: cost, affordable })
+      action.setLabel(completed ? t("rune.engraveConfirm") : free ? t("rune.free.craft") : t("rune.craft"))
+        .setCost(completed || free ? undefined : { amount: cost, affordable })
         .setEnabled(!!selected && !engraved && affordable);
       // 박힘은 이 그림에서만 한 번 일어난다. 지우지 않으면 줄을 고를 때마다 같은 표식이 다시 꽂힌다.
       landed = undefined;
       batchLanded = undefined;
     };
     render();
+    // 무료 각인 체험: 고를 줄 → 세공 → 모두 세공 → 각인할 줄 → 각인 확정을 한 칸씩 가리킨다. 판이 제자리를 잡은 뒤 건다.
+    if (freeNow()) {
+      const bounds = (object: { getBounds: () => Phaser.Geom.Rectangle } | undefined) => {
+        if (!object) return undefined;
+        const rect = object.getBounds();
+        return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+      };
+      scene.time.delayedCall(380, () => {
+        if (closed || !freeNow()) return;
+        guideFreeRuneCraft(scene, {
+          active: () => !closed && freeNow(),
+          covered: () => !popups.isTop(body),
+          stage: () => {
+            const current = rune!;
+            if (current.engravings.length > 0) return undefined;
+            if (current.enhancementComplete) return selected ? "engrave" : "engravePick";
+            if (runeEnhancementAttempts(current) === 0) return selected ? "craft" : "pick";
+            return "craftAll";
+          },
+          firstRow: () => bounds(rowHits.find(({ main }) => main)?.hit ?? rowHits[0]?.hit),
+          allRows: () => unionRects(rowHits.map(({ hit }) => bounds(hit)!)),
+          craftButton: () => bounds(action),
+          craftAllButton: () => bounds(batchAction),
+          onSkip: () => {
+            if (pending) return;
+            void tutorialManager.dismissFreeRune().then(() => { if (!closed) render(); });
+          },
+        });
+      });
+    }
   });
 }

@@ -5,13 +5,13 @@ import { CAKE_OPERATION_TIERS } from "../../src/data/cakeOperation";
 import { CHAPTERS } from "../../src/data/stages";
 import { RAID_SEASON_BOSS } from "../../src/data/raid";
 import type { BattleStageDef } from "../../src/core/types";
-import { isGrowthReachable } from "../../src/core/relicProgression";
+import { requiredBreakthroughForLevel } from "../../src/core/levelDesign";
 
 const STAGE = CHAPTERS.flatMap(({ stages }) => stages).find((stage): stage is BattleStageDef => stage.kind === "battle")!;
 
 describe("편성 화면의 콘텐츠", () => {
-  it("정보창에 서는 적의 레벨은 제 돌파 상한을 넘지 않는다", () => {
-    // 레이드 보스가 LV.48에 돌파 2(상한 40)로 서 있었다 — 만들 수 없는 성장을 화면이 말했다.
+  it("정보창에 서는 적의 돌파 등급은 그 레벨의 적 사다리를 따른다", () => {
+    // 적에게는 레벨 상한이 없다(「적은 적이다」) — 돌파 등급은 그 레벨이 여는 스킬 칸(`ENEMY_BREAKTHROUGH_LEVELS`) 그대로다.
     const contents = [
       ...(["easy", "normal", "hard", "rampage"] as const).map((difficulty) => ({ content: "raid", raidId: `r-${difficulty}`, bossRelicId: RAID_SEASON_BOSS.relicId, difficulty }) as const),
       ...BOUNTY_TIERS.map((tier) => ({ content: "bounty", tierId: tier.id }) as const),
@@ -19,7 +19,7 @@ describe("편성 화면의 콘텐츠", () => {
     ];
     for (const content of contents) {
       for (const { def, level, breakthrough } of partyPreview(content, STAGE).shown) {
-        expect(isGrowthReachable(level, breakthrough), `${content.content} ${def?.id} LV.${level} 돌파 ${breakthrough}`).toBe(true);
+        expect(breakthrough, `${content.content} ${def?.id} LV.${level}`).toBe(requiredBreakthroughForLevel(level));
       }
     }
   });
@@ -63,7 +63,7 @@ describe("편성 화면의 콘텐츠", () => {
     const preview = partyPreview({ content: "raid", raidId: "r1", bossRelicId: RAID_SEASON_BOSS.relicId, difficulty: "normal" }, STAGE);
     expect(preview.shown).toHaveLength(1);
     expect(preview.shown[0].def?.id).toBe(RAID_SEASON_BOSS.relicId);
-    expect(preview.shown[0].level).toBe(30);
+    expect(preview.shown[0].level).toBe(23);
     expect(partyPreview({ content: "raid", raidId: "w", bossRelicId: RAID_SEASON_BOSS.relicId, difficulty: "rampage" }, STAGE).shown[0].level).toBe(RAID_SEASON_BOSS.level);
     // 판 안에서 눕지 않아도 공유 체력은 끝내 깎여 죽는다 — 불사가 아니라 보스(강인함만)다.
     expect(preview.role).toBe("boss");

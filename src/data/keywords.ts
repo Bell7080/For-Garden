@@ -100,11 +100,12 @@ export const KEYWORDS: readonly KeywordDef[] = [
     description: `${BLEED.minor.seconds}초 동안 매초 최대 체력의 ${BLEED.minor.percentPerSecond}% 고정 피해를 입는다. 약한 재적용은 더 강한 출혈을 덮지 않는다.`,
   },
   {
-    // 깊은 출혈은 렉시아(돌파)와 마가사(다지기)가 함께 쓴다 — 배율·회복 감소는 개체마다 달라 태그는 수치를 갖지 않고 본문이 적는다.
+    // 깊은 출혈은 렉시아(돌파)와 마가사(다지기)가 함께 쓴다. 시간·매초 비율은 둘이 같은 공용 값(`BLEED.deepMultiplier`)이라
+    // 태그가 말하고, 개체마다 다른 회복 감소만 스킬 본문이 적는다.
     id: "deep-bleed",
     term: "깊은 출혈",
     kind: "debuff",
-    description: "더 깊게 벌어진 [[bleed|출혈]]이다. 매초 더 큰 비율의 고정 피해를 입고, 지속되는 동안 받는 회복량이 줄어든다.",
+    description: `더 깊게 벌어진 [[bleed|출혈]]이다. ${BLEED.seconds}초 동안 매초 최대 체력의 ${BLEED.percentPerSecond * BLEED.deepMultiplier}% 고정 피해를 입는다. 방어력으로 줄일 수 없고, 지속되는 동안 받는 회복량이 줄어든다.`,
   },
   // 중독은 쓰는 개체가 델로피 하나뿐이라 태그가 매초 계수를 가진다. 다만 **시간**은 출혈과
   // 같은 이유로 스킬마다 본문이 적는다 — 시간이 다른 개체가 생기는 순간 태그가 거짓말이 된다.
@@ -174,7 +175,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   // `raiders.test`가 둘을 맞춰 본다.
   {
     id: "echo", term: "반향", kind: "debuff",
-    description: "피해가 없는 표식이다. 5초 동안 남고, 반향이 든 적을 친 이카닉시아 편 아군은 최대 체력의 6%만큼 [[shield|보호막]]을 두른다. 막은 최대 체력의 30%까지만 쌓인다.",
+    description: "피해가 없는 표식이다. 5초 동안 남고, 반향이 든 적을 친 이카닉시아 편 아군은 최대 체력의 3%만큼 [[shield|보호막]]을 두른다. 막은 최대 체력의 15%까지만 쌓인다.",
   },
   {
     id: "segment-barrier", term: "마디 방벽", kind: "buff",
@@ -233,6 +234,11 @@ export const KEYWORDS: readonly KeywordDef[] = [
   {
     id: "tailwind", term: "순풍", kind: "buff",
     description: "정해진 시간 동안 공격 속도와 이동 속도가 각각 20% 오른다. 같은 순풍을 다시 받으면 남은 시간이 더 긴 쪽으로 갱신된다.",
+  },
+  // 직군 쪽지의 「적의 눈길을 끄는 존재감」이 연다(`SKIRMISH.rolePull`). 확률이 아니라 표적을 고를 때 거리에 얹는 끌림이다.
+  {
+    id: "presence", term: "존재감", kind: "rule",
+    description: "적이 표적을 고를 때 끌리는 정도다. 존재감이 큰 직군일수록 조금 더 멀리 있어도 가까운 적처럼 먼저 노려진다(탱커 > 전사 > 암살자 > 지원가).",
   },
   {
     id: "regeneration", term: "지속 회복", kind: "buff",
@@ -396,6 +402,11 @@ export const KEYWORDS: readonly KeywordDef[] = [
     // 불사 자리만 갖는다(`ENCOUNTER_ROLE.endless.damageReduction`). 수치는 역할 칸이 적는다.
     id: "damage-reduction", term: "경감", kind: "rule",
     description: "체력이 깎일수록 받는 모든 피해가 줄어든다. 경감을 지난 피해가 아주 작으면 아예 들어가지 않는다. 쓰러지지 않는 불사 자리의 적만 갖는다.",
+  },
+  {
+    // 출혈·깊은 출혈·정예 자리·생존 오라·돌파가 함께 쓰는 말이라 수치를 갖지 않는다 — 얼마인지는 본문·역할 칸이 적는다.
+    id: "healing-cut", term: "치유 감소", kind: "debuff",
+    description: "받는 모든 체력 회복이 줄어든다. 여러 곳에서 함께 걸리면 가장 큰 것 하나만 든다.",
   },
   {
     // 아모의 조가비와 같은 겹 계약(`shellGuard`)이지만 겹의 이름은 이 개체의 것이다.

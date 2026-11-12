@@ -82,6 +82,13 @@ export class ArenaRoomScene extends Phaser.Scene {
   private roomId = '';
   private status?: ArenaStatus;
   private busy = false;
+  /** 조회 중인 요청 — 확정을 누른 손이 그 조회에 막혀 버려지지 않고 끝나기를 기다렸다 보낸다. */
+  private fetching?: Promise<void>;
+  /** 행동(밴·배치·잠금·되돌리기)을 보내는 중. 같은 손이 두 번 보내지 않게 막는다. */
+  private acting = false;
+  /** 칸·확정 버튼을 마지막으로 그린 상태. 같으면 다시 세우지 않는다 — 누르는 도중 조회가 버튼을 갈아 끼우면 그 손이 사라진다. */
+  private slotsKey = '';
+  private controlsKey = '';
   private transitioning = false;
   private signature = '';
   private clock!: Phaser.GameObjects.Text;
@@ -109,7 +116,6 @@ export class ArenaRoomScene extends Phaser.Scene {
   private gridMinScroll = 0;
   private dragOrigin = 0;
   private dragging = false;
-  private dragged = 0;
   /** 이번 판에서 고르는 중인 렐릭과 칸. 확정을 누르기 전에는 서버에 가지 않는다. */
   private selectedRelic = '';
   private selectedSlot = -1;
@@ -123,6 +129,10 @@ export class ArenaRoomScene extends Phaser.Scene {
   create(): void {
     this.status = undefined;
     this.busy = false;
+    this.fetching = undefined;
+    this.acting = false;
+    this.slotsKey = '';
+    this.controlsKey = '';
     this.transitioning = false;
     this.signature = '';
     this.gridKey = '';
@@ -219,21 +229,30 @@ export class ArenaRoomScene extends Phaser.Scene {
     this.leave();
   }
 
-  private async fetchStatus(): Promise<void> {
-    if (this.busy || this.transitioning) return;
+  private fetchStatus(): Promise<void> {
+    if (this.busy || this.acting || this.transitioning) return this.fetching ?? Promise.resolve();
     this.busy = true;
-    try {
-      const s = await arenaCall('status', { roomId: this.roomId });
-      if (this.scene.isActive()) this.adopt(s);
-    } catch (e) {
-      if (this.scene.isActive()) this.error.setText(arenaError(e));
-    } finally { this.busy = false; }
+    this.fetching = (async () => {
+      try {
+        const s = await arenaCall('status', { roomId: this.roomId });
+        if (this.scene.isActive() && !this.acting) this.adopt(s);
+      } catch (e) {
+        if (this.scene.isActive()) this.error.setText(arenaError(e));
+      } finally { this.busy = false; this.fetching = undefined; }
+    })();
+    return this.fetching;
   }
 
+  /**
+   * 행동을 보낸다. 2초마다 도는 조회·실시간 신호가 묻는 중이라고 누른 손을 버리지 않는다 — 그 조회가 끝나기를
+   * 기다렸다 보낸다(예전에는 조회와 같은 `busy`에 막혀 확정을 한 번 눌러도 아무 일이 없는 때가 있었다).
+   */
   private async act(action: ArenaAction): Promise<void> {
-    if (this.busy || this.transitioning) return;
-    this.busy = true;
+    if (this.acting || this.transitioning) return;
+    this.acting = true;
     try {
+      if (this.fetching) await this.fetching;
+      if (!this.scene.isActive() || this.transitioning) return;
       const s = await arenaCall('action', { roomId: this.roomId, action });
       if (this.scene.isActive()) {
         this.selectedRelic = '';
@@ -244,12 +263,15 @@ export class ArenaRoomScene extends Phaser.Scene {
       }
     } catch (e) {
       if (this.scene.isActive()) this.error.setText(arenaError(e));
-    } finally { this.busy = false; }
+    } finally { this.acting = false; }
   }
 
   private side(r: ArenaRoom, playerId: string): number { return Math.max(0, r.players.findIndex((p) => p.id === playerId)); }
 
   private adopt(s: ArenaStatus): void {
+    // 행동의 응답보다 늦게 도착한 조회는 옛 판이다 — 그것으로 되돌려 그리면 방금 확정한 것이 사라진 듯 보인다.
+    const prev = this.status?.room;
+    if (prev && s.room && prev.id === s.room.id && s.room.version < prev.version) return;
     this.status = s;
     const r = s.room;
     if (!r) return;
@@ -281,7 +303,6 @@ export class ArenaRoomScene extends Phaser.Scene {
 
   private paint(r: ArenaRoom, side: number): void {
     this.frame.removeAll(true);
-    this.controls.removeAll(true);
     const L = ARENA_ROOM_LAYOUT;
     const mine = r.players[side], opponent = r.players[1 - side];
     this.forfeitButton.setVisible(r.phase === 'ban' || r.phase === 'place');
@@ -292,6 +313,9 @@ export class ArenaRoomScene extends Phaser.Scene {
     if (r.phase === 'invited' || r.phase === 'done' || r.phase === 'declined') {
       this.clearGrid();
       this.slots.removeAll(true);
+      this.controls.removeAll(true);
+      this.slotsKey = '';
+      this.controlsKey = '';
       this.banColumn.removeAll(true);
       this.hint.setText('');
       this.title.setText(r.ranked ? t("arena.room.ranked") : t("arena.room.friendly"));
@@ -388,10 +412,14 @@ export class ArenaRoomScene extends Phaser.Scene {
    * 밴이 끝나면 그 판이 세 칸으로 갈라지며(`unfold`) 픽이 시작된다. 칸마다 컨테이너 하나라 함께 움직인다.
    */
   private paintSlots(r: ArenaRoom, side: number, pickable: boolean, ban: boolean): void {
-    this.slots.removeAll(true);
     const L = ARENA_ROOM_LAYOUT;
     const reduce = session.settings.accessibility.reduceMotion;
     const banRow = ban || this.revealing;
+    // 칸에 서는 것이 그대로면 다시 세우지 않는다 — 상대의 행동으로 판 번호만 오른 조회가 누르던 칸을 갈아 끼우지 않게.
+    const key = JSON.stringify([side, r.rules.ban, r.picks, pickable, banRow, this.unfold, this.selectedSlot, this.selectedRelic]);
+    if (key === this.slotsKey) return;
+    this.slotsKey = key;
+    this.slots.removeAll(true);
     ([[1 - side, L.enemyRow, ARENA_TONE.foe], [side, L.allyRow, ARENA_TONE.ally]] as const).forEach(([owner, y, tone]) => {
       const mineRow = owner === side;
       if (mineRow && banRow) {
@@ -474,27 +502,41 @@ export class ArenaRoomScene extends Phaser.Scene {
     const placed = r.picks[side].length;
     const lockReady = !ban && hidden && placed >= 3 && !r.locked[side];
     const ready = act && (ban ? this.selectedRelic !== '' : lockReady || (this.selectedRelic !== '' && this.selectedSlot >= 0));
+    const showUndo = !ban && hidden && placed > 0 && !r.locked[side];
+    // 버튼은 모양이 바뀔 때만 다시 세운다. 누르는 사이(누름 → 뗌) 2초 조회가 버튼을 갈아 끼우면 뗀 손이 옛 버튼에 닿아 버려졌다.
+    const key = this.revealing ? 'revealing' : JSON.stringify([ban, lockReady, ready, placed, showUndo]);
+    if (key === this.controlsKey) return;
+    this.controlsKey = key;
+    this.controls.removeAll(true);
     if (this.revealing) return;
     const label = ban ? t("arena.ban.confirm") : lockReady ? t("arena.placement.lock") : t("arena.pick.confirm", { p0: placed });
     // 밴 확정은 내 1·2·3 칸 자리(밴 칸) 안에, 픽 확정은 격자와 내 칸 사이에 선다.
     const at = ban ? L.banConfirm : L.confirm;
     // 눌러야 할 때만 숨 쉬는 빛이 버튼 뒤에서 번진다(버튼 자체의 눌림 배율과 다투지 않도록 따로 세운다).
     if (ready) {
-      const glow = drawLayer(this, at.x, at.y, chipPoints(at.width + 40, at.height + 34), { fill: ban ? ARENA_TONE.ban : ARENA_TONE.glow, alpha: .45 });
+      // 빛은 커지지 않고 진하기만 숨 쉰다 — 배율로 부풀던 때는 위의 격자·아래의 내 칸과 되돌리기 버튼 위로 번졌다.
+      const glow = drawLayer(this, at.x, at.y, chipPoints(at.width + at.glow.x * 2, at.height + at.glow.y * 2), { fill: ban ? ARENA_TONE.ban : ARENA_TONE.glow, alpha: .45 });
       this.controls.add(glow);
-      if (!session.settings.accessibility.reduceMotion) this.tweens.add({ targets: glow, alpha: .05, scaleX: 1.04, scaleY: 1.12, duration: 640, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      if (!session.settings.accessibility.reduceMotion) this.tweens.add({ targets: glow, alpha: .08, duration: 640, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
     const button = new Button(this, at.x, at.y, {
       width: at.width, height: at.height, label, fontSize: ban ? 46 : 40, variant: 'primary', decorDots: true,
       fill: ban ? 0xb02844 : ARENA_TONE.confirm, accentColor: ban ? ARENA_TONE.ban : ARENA_TONE.accent, accentTextColor: COLOR.ink,
-      onClick: () => this.confirm(r, side),
+      onClick: () => this.confirmCurrent(),
     });
     button.setName('arena-confirm');
     button.setEnabled(ready);
     this.controls.add(button);
-    if (!ban && hidden && placed > 0 && !r.locked[side]) {
+    if (showUndo) {
       this.controls.add(new Button(this, L.undo.x, L.undo.y, { width: L.undo.width, height: L.undo.height, label: t("arena.placement.undo"), fontSize: 26, onClick: () => void this.act({ kind: 'undo' }) }));
     }
+  }
+
+  /** 버튼은 다시 세우지 않고 남을 수 있으므로, 누른 순간의 판을 읽는다(세울 때 붙잡은 판은 낡았을 수 있다). */
+  private confirmCurrent(): void {
+    const r = this.status?.room;
+    if (!r || !this.status) return;
+    this.confirm(r, this.side(r, this.status.playerId));
   }
 
   private confirm(r: ArenaRoom, side: number): void {
@@ -558,7 +600,8 @@ export class ArenaRoomScene extends Phaser.Scene {
       const dimLabel = this.add.text(0, 0, '', textStyle({ role: "display", size: 30, color: COLOR.ink })).setOrigin(.5).setStroke('#000000', 6);
       dim.add(dimLabel);
       const banMark = addBanMark(this, card, GRID.cardWidth, GRID.cardHeight).setVisible(false);
-      card.hit.on('pointerup', () => { if (this.dragged < 12) this.tapCard(unit.def.id); });
+      // 누른 자리와 뗀 자리의 거리로 끌기를 가른다(공용 탭 판정). 속도를 쌓아 재던 때는 손끝이 조금만 떨려도 탭이 버려졌다.
+      onTap(card.hit, () => this.tapCard(unit.def.id));
       this.gridCards.set(unit.def.id, { card, banMark, dim, dimLabel });
     });
     this.gridContent = content;
@@ -620,9 +663,9 @@ export class ArenaRoomScene extends Phaser.Scene {
       read: () => ({ offset: this.gridScroll, min: this.gridMinScroll }),
     });
     const inside = (p: Phaser.Input.Pointer): boolean => p.worldY >= G.top && p.worldY <= G.bottom && p.worldX >= G.left - 20;
-    const onDown = (p: Phaser.Input.Pointer): void => { if (!inside(p) || this.gridMinScroll === 0) return; this.dragging = true; this.dragged = 0; this.dragOrigin = this.gridScroll - p.y; };
-    const onMove = (p: Phaser.Input.Pointer): void => { if (!this.dragging || !p.isDown) return; this.dragged += Math.abs(p.velocity.y); this.scrollGridTo(this.dragOrigin + p.y); };
-    const onUp = (): void => { this.dragging = false; this.time.delayedCall(0, () => { this.dragged = 0; }); };
+    const onDown = (p: Phaser.Input.Pointer): void => { if (!inside(p) || this.gridMinScroll === 0) return; this.dragging = true; this.dragOrigin = this.gridScroll - p.y; };
+    const onMove = (p: Phaser.Input.Pointer): void => { if (!this.dragging || !p.isDown) return; this.scrollGridTo(this.dragOrigin + p.y); };
+    const onUp = (): void => { this.dragging = false; };
     const onWheel = (p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number): void => { if (inside(p)) this.scrollGridTo(this.gridScroll - dy); };
     this.input.on('pointerdown', onDown);
     this.input.on('pointermove', onMove);

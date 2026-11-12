@@ -170,14 +170,14 @@
 "Глубокое кровотечение"
 ],
 "keyword.deep-bleed.description": [
-"更深的[[bleed|出血]]。每秒受到相当于最大生命更高比例的固定伤害，持续期间受到的治疗减少。",
-"[[bleed|เลือดไหล]]ที่ลึกขึ้น ได้รับความเสียหายคงที่ในสัดส่วนของ HP สูงสุดที่มากขึ้นทุกวินาที และได้รับการฟื้นฟูน้อยลงระหว่างที่ยังมีผล",
-"[[bleed|Chảy máu]] sâu hơn. Mỗi giây chịu sát thương cố định theo tỉ lệ HP tối đa lớn hơn, và giảm hồi máu nhận được khi còn hiệu lực.",
-"[[bleed|Pendarahan]] yang lebih dalam. Tiap detik menerima kerusakan tetap dengan porsi HP maks yang lebih besar, dan penyembuhan yang diterima berkurang selama aktif.",
-"Un [[bleed|Sangrado]] más hondo. Cada segundo inflige daño fijo con una proporción mayor de los PV máx. y reduce la curación recibida mientras dura.",
-"Um [[bleed|Sangramento]] mais fundo. A cada segundo causa dano fixo com uma fração maior do PV máx. e reduz a cura recebida enquanto durar.",
-"Eine tiefer gerissene [[bleed|Blutung]]. Verursacht jede Sekunde fixen Schaden in Höhe eines größeren Anteils des max. Lebens und senkt erhaltene Heilung, solange sie wirkt.",
-"Более глубокое [[bleed|кровотечение]]. Каждую секунду наносит фиксированный урон с большей долей макс. ОЗ и снижает получаемое лечение, пока действует."
+"更深的[[bleed|出血]]。3秒内每秒受到相当于最大生命4%的固定伤害。防御力无法减免，持续期间受到的治疗减少。",
+"[[bleed|เลือดไหล]]ที่ลึกขึ้น ได้รับความเสียหายคงที่เท่ากับ 4% ของ HP สูงสุดทุกวินาทีเป็นเวลา 3 วินาที พลังป้องกันลดไม่ได้ และได้รับการฟื้นฟูน้อยลงระหว่างที่ยังมีผล",
+"[[bleed|Chảy máu]] sâu hơn. Mỗi giây trong 3 giây chịu sát thương cố định bằng 4% HP tối đa. Thủ không giảm được, và giảm hồi máu nhận được khi còn hiệu lực.",
+"[[bleed|Pendarahan]] yang lebih dalam. Menerima kerusakan tetap sebesar 4% HP maks tiap detik selama 3 detik. Pertahanan tidak bisa menguranginya, dan penyembuhan yang diterima berkurang selama aktif.",
+"Un [[bleed|Sangrado]] más hondo. Recibe cada segundo, durante 3 segundos, daño fijo igual al 4% de los PV máx. La Defensa no lo reduce, y la curación recibida disminuye mientras dura.",
+"Um [[bleed|Sangramento]] mais fundo. Recebe a cada segundo, por 3 segundos, dano fixo igual a 4% do PV máx. A Defesa não o reduz, e a cura recebida diminui enquanto durar.",
+"Eine tiefer gerissene [[bleed|Blutung]]. Erleidet 3 Sekunden lang jede Sekunde fixen Schaden in Höhe von 4% des max. Lebens. Verteidigung mindert ihn nicht, und erhaltene Heilung sinkt, solange sie wirkt.",
+"Более глубокое [[bleed|кровотечение]]. 3 секунды каждую секунду получает фиксированный урон в 4% макс. ОЗ. Защита его не снижает, а получаемое лечение снижено, пока оно действует."
 ],
 "keyword.poison.term": [
 "中毒",
@@ -458,6 +458,26 @@
 "Por um tempo, a Velocidade de ataque e a de movimento sobem 20% cada. Receber Vento a favor de novo renova para a duração mais longa.",
 "Für eine Weile steigen Angriffs- und Lauftempo um je 20%. Erneuter Rückenwind frischt auf die jeweils längere Dauer auf.",
 "На время скорость атаки и движения растут на 20% каждая. Повторный попутный ветер обновляет время до большего из двух."
+],
+"keyword.presence.term": [
+"存在感",
+"ความโดดเด่น",
+"Sự hiện diện",
+"Daya Tarik",
+"Presencia",
+"Presença",
+"Präsenz",
+"Заметность"
+],
+"keyword.presence.description": [
+"敌人选择目标时被吸引的程度。存在感越高的职业，即使稍远一些也会像近处的敌人一样被优先锁定（坦克 > 战士 > 刺客 > 辅助）。",
+"ระดับที่ดึงดูดศัตรูเมื่อศัตรูเลือกเป้าหมาย สายอาชีพที่โดดเด่นกว่าจะถูกเล็งก่อน แม้อยู่ไกลกว่าเล็กน้อยก็ตาม (แทงก์ > นักรบ > นักฆ่า > ซัพพอร์ต)",
+"Mức độ thu hút kẻ địch khi chúng chọn mục tiêu. Hệ có sự hiện diện càng lớn càng bị nhắm trước, dù đứng xa hơn một chút (Đỡ đòn > Chiến binh > Sát thủ > Hỗ trợ).",
+"Seberapa kuat unit menarik musuh saat musuh memilih target. Makin besar daya tarik suatu peran, makin cepat ia diincar meski sedikit lebih jauh (Tank > Petarung > Pembunuh > Pendukung).",
+"Cuánto atrae una unidad al enemigo cuando este elige objetivo. Cuanta más presencia tenga un rol, antes lo atacan, aunque esté un poco más lejos (Tanque > Guerrero > Asesino > Apoyo).",
+"O quanto uma unidade atrai o inimigo quando ele escolhe um alvo. Quanto maior a presença da função, mais cedo é visada, mesmo um pouco mais longe (Tanque > Guerreiro > Assassino > Suporte).",
+"Wie stark eine Einheit Gegner bei der Zielwahl anzieht. Je größer die Präsenz einer Rolle, desto früher wird sie anvisiert, auch wenn sie etwas weiter weg steht (Tank > Krieger > Assassine > Unterstützer).",
+"Насколько сильно боец притягивает врагов при выборе цели. Чем выше заметность роли, тем раньше её выбирают целью, даже если она чуть дальше (Танк > Воин > Убийца > Поддержка)."
 ],
 "keyword.regeneration.term": [
 "再生",
@@ -1078,6 +1098,26 @@
 "Todo dano recebido diminui conforme a Vida cai. Dano minúsculo após a redução não entra. Só o têm inimigos na posição Imortal, que nunca cai.",
 "Aller erlittene Schaden schrumpft, je weiter das Leben sinkt. Nach der Minderung winziger Schaden kommt gar nicht an. Nur Gegner auf der unsterblichen Stelle, die nie fällt, besitzen sie.",
 "Весь получаемый урон уменьшается по мере падения здоровья. Крошечный после снижения урон не проходит совсем. Есть только у врагов на бессмертной позиции, которая не падает."
+],
+"keyword.healing-cut.term": [
+"治疗削减",
+"การรักษาลดลง",
+"Giảm hồi phục",
+"Pemulihan Berkurang",
+"Curación reducida",
+"Cura reduzida",
+"Heilung gesenkt",
+"Снижение лечения"
+],
+"keyword.healing-cut.description": [
+"受到的所有生命回复都会减少。同时受到多个时，只计算最大的一个。",
+"การฟื้นฟูพลังชีวิตทั้งหมดที่ได้รับจะลดลง หากโดนหลายแหล่งพร้อมกัน จะนับเฉพาะค่าที่มากที่สุดเพียงค่าเดียว",
+"Mọi lượng hồi Máu nhận vào đều bị giảm. Nếu dính nhiều nguồn cùng lúc, chỉ tính nguồn lớn nhất.",
+"Semua pemulihan Nyawa yang diterima berkurang. Jika beberapa berlaku sekaligus, hanya yang terbesar yang dihitung.",
+"Toda la recuperación de Salud recibida se reduce. Si se aplican varias a la vez, solo cuenta la mayor.",
+"Toda recuperação de Vida recebida é reduzida. Se várias se aplicarem ao mesmo tempo, só a maior conta.",
+"Jede erhaltene Lebensheilung wird verringert. Wirken mehrere zugleich, zählt nur die stärkste.",
+"Всё получаемое восстановление здоровья уменьшается. Если действует несколько сразу, учитывается только самое сильное."
 ],
 "keyword.scar.term": [
 "伤痕",

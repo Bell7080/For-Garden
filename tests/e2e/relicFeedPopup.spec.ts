@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { FEED_UNIT, relicExpToNext } from "../../src/core/relicProgression";
+import { feedBulkNoteCenter, feedBulkSpots } from "../../src/ui/feedBulkStyle";
 import { startAfterOpening } from "./openingSave";
 import { canvasBox, captureGame, gamePoint, tapUntil } from "./canvasInput";
 
@@ -113,10 +114,11 @@ test("한 번에 급여 아래 줄의 MAX는 그 아이가 묻는 확인 창을 
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["한 번에 급여"]);
   await page.waitForTimeout(400);
   await captureGame(page, `test-results/${testInfo.project.name}-relic-feed-bulk-two-rows.png`);
-  // 쪽지의 가운데는 급여 버튼 밑변 + 202(`FEED_BULK_NOTE`), MAX는 그 오른쪽 아래 칸이다.
-  const noteY = spot.bottom! + 126 + 76;
+  // 쪽지 자리와 MAX 칸은 화면과 같은 배치표에서 읽는다(`feedBulkStyle.ts`).
+  const note = feedBulkNoteCenter({ centerX: spot.x, bottom: spot.bottom! }, BASE_WIDTH);
+  const maxSpot = feedBulkSpots().find((option) => option.levels === "max")!;
   const levelBefore = await page.evaluate(() => window.__PF_DEBUG?.feedTaps?.confirmed ?? 0);
-  await clickGame(page, spot.x + 128, noteY + 76);
+  await clickGame(page, note.x + maxSpot.x, note.y + maxSpot.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles), { timeout: 10_000 }).toEqual(["MAX 급여"]);
   // SD가 서고 말풍선이 뜬 뒤를 남긴다(소프트웨어 GPU에서는 SD를 세우는 데 몇 초 걸린다).
   await page.waitForTimeout(4_000);

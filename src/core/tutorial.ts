@@ -29,20 +29,56 @@ export const TUTORIAL_STEPS = [
 export type TutorialStepId = (typeof TUTORIAL_STEPS)[number];
 
 /**
- * 콘텐츠 첫 방문 안내 — 처음 들어온 화면에서 한 번만 뜨는 짧은 쪽지. 순서가 없고(레벨이 열어 주는 순서가 사람마다
+ * 콘텐츠 첫 방문 안내 — 처음 들어온 화면에서 한 번만 뜨는 안내. 순서가 없고(레벨이 열어 주는 순서가 사람마다
  * 다르다), 첫 플레이 튜토리얼을 모두 마친 뒤에만 뜬다(진행 중인 안내와 겹치지 않게).
+ *
+ * 대부분은 그림 한 장과 한두 문장을 넘겨 보는 아이콘 쪽지(`IconIntroPopup` · 쪽 표 `contentIntroPages.ts`)다.
+ * 고고학만 화면을 직접 짚는 안내형 튜토리얼이고 두 번에 나뉜다 — 지도(`archaeologyTour`)와 처음 연 판
+ * (`archaeologyBoard`). 예전 고고학 쪽지 ID(`archaeology`·`archaeologyGuide`)는 정규화가 걷어, 그 쪽지를 본 계정도
+ * 안내형을 한 번은 본다.
  */
 export const CONTENT_INTRO_IDS = [
-  "stageMap", "party", "shop", "cakeOperation", "bounty", "interaction", "duel", "friends", "raid", "expedition", "archaeology", "premium",
+  "stageMap", "party", "shop", "cakeOperation", "bounty", "interaction", "duel", "friends", "raid", "expedition", "archaeologyTour", "archaeologyBoard", "premium",
 ] as const;
 
+/** 화면을 짚는 안내형 첫 방문 안내. 나머지는 모두 아이콘 쪽지다. */
+export const GUIDED_INTRO_IDS = ["archaeologyTour", "archaeologyBoard"] as const;
+
+export type GuidedIntroId = (typeof GUIDED_INTRO_IDS)[number];
+
 export type ContentIntroId = (typeof CONTENT_INTRO_IDS)[number];
+
+/** 아이콘 쪽지로 뜨는 첫 방문 안내. */
+export type IconIntroId = Exclude<ContentIntroId, GuidedIntroId>;
 
 export interface TutorialState {
   /** 마친 칸의 ID. 순서대로 쌓이며 앞 칸이 비면 뒤 칸이 들어올 수 없다. */
   completedStepIds: TutorialStepId[];
   /** 이미 본 첫 방문 안내. 비어 있으면 필드 자체를 두지 않는다(저장 모양을 늘리지 않는다). */
   seenIntroIds?: ContentIntroId[];
+  /**
+   * 무료 각인 체험 — 1-5 초회 보상으로 받은 룬 하나(`FREE_RUNE_CRAFT_STAGE`). 이 필드가 있는 동안 그 룬의 세공은
+   * 골드가 들지 않고, 각인을 확정하거나 건너뛰면 필드째 사라진다. 첫 플레이 순서(`completedStepIds`)와 따로 돈다 —
+   * 가방을 언제 여는지는 사람마다 달라 순서에 끼우면 연구소 안내를 막는다.
+   */
+  freeRuneCraft?: { runeInstanceId: string };
+}
+
+/** 무료 각인 체험 룬을 주는 관문. 그 관문의 초회 룬이 체험 대상이 된다. */
+export const FREE_RUNE_CRAFT_STAGE = "1-5";
+
+/** 체험 대상 룬 ID. 없으면 체험이 없다. */
+export function freeRuneCraftId(state: TutorialState | undefined): string | undefined { return state?.freeRuneCraft?.runeInstanceId; }
+
+/** 이 룬의 세공·각인이 무료인가 — 서버의 골드 계산과 화면의 값 표기가 같은 함수를 읽는다. */
+export function isFreeRuneCraft(state: TutorialState | undefined, runeInstanceId: string): boolean {
+  return freeRuneCraftId(state) === runeInstanceId;
+}
+
+/** 체험을 끝낸 상태(각인 확정·건너뛰기). 필드를 지워 저장 모양을 늘리지 않는다. */
+export function endFreeRuneCraft(state: TutorialState): TutorialState {
+  const { freeRuneCraft: _ended, ...rest } = state;
+  return rest;
 }
 
 const INTRO_SET: ReadonlySet<string> = new Set(CONTENT_INTRO_IDS);
@@ -95,7 +131,13 @@ export function normalizeTutorialState(value: unknown): TutorialState {
   const rawIntros = (value && typeof value === "object" ? (value as { seenIntroIds?: unknown }).seenIntroIds : undefined);
   const seen = new Set(Array.isArray(rawIntros) ? rawIntros.filter(isContentIntroId) : []);
   const seenIntroIds = CONTENT_INTRO_IDS.filter((id) => seen.has(id));
-  return seenIntroIds.length > 0 ? { completedStepIds, seenIntroIds } : { completedStepIds };
+  const rawFree = (value && typeof value === "object" ? (value as { freeRuneCraft?: unknown }).freeRuneCraft : undefined);
+  const freeId = rawFree && typeof rawFree === "object" ? (rawFree as { runeInstanceId?: unknown }).runeInstanceId : undefined;
+  return {
+    completedStepIds,
+    ...(seenIntroIds.length > 0 ? { seenIntroIds } : {}),
+    ...(typeof freeId === "string" && freeId.length > 0 ? { freeRuneCraft: { runeInstanceId: freeId } } : {}),
+  };
 }
 
 export function isValidTutorialState(value: unknown): value is TutorialState {

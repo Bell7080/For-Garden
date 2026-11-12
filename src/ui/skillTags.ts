@@ -1,5 +1,5 @@
 import { findKeyword } from "../data/keywords";
-import type { CombatStatusEffect, EffectType, Passive, Skill, Ultimate } from "../core/types";
+import type { BasicAttack, CombatStatusEffect, EffectType, Passive, Skill, Ultimate } from "../core/types";
 import { t, type TextKey } from "../i18n";
 import { skillDamageKinds, type DamageKind } from "./damageKinds";
 import type { SkillArtSlot } from "./skillArt";
@@ -120,6 +120,11 @@ const STATUS_GLYPH: Readonly<Record<"control" | "debuff" | "mark", SkillTagGlyph
 /** 상태 하나의 칩. 사전에 없는 상태도 빠지지 않도록 전용 문구로 되돌아간다. */
 export function statusTag(effect: CombatStatusEffect): SkillTag {
   const spec = STATUS_TAG[effect.kind];
+  // 처음부터 깊게 거는 출혈은 깊은 출혈 태그로 선다 — 수치는 그 태그가 말한다.
+  if (effect.kind === "bleed" && effect.deep) {
+    const deep = findKeyword("deep-bleed");
+    if (deep) return { tone: spec.tone, glyph: STATUS_GLYPH[spec.tone], text: `[[${deep.id}|${deep.term}]]` };
+  }
   const keyword = spec.keyword === undefined ? undefined : findKeyword(spec.keyword);
   // 서리깃만 전역 사전 밖(개체 전용 규칙어)이라 그 표기를 문구 표에서 읽는다.
   const name = keyword ? `[[${keyword.id}|${keyword.term}]]` : t("skill.keyword.plume.term");
@@ -131,11 +136,88 @@ export function statusTag(effect: CombatStatusEffect): SkillTag {
   };
 }
 
-function keywordTag(id: string, tone: SkillTagTone, glyph: SkillTagGlyph, seconds?: number): SkillTag | undefined {
+/** 피해 종류 하나의 칩 — 첫 칸 뒤에 덧붙는 갈래와 같은 모양이다. */
+export function damageKindTag(kind: DamageKind): SkillTag {
+  return { ...EFFECT_TONE[kind], text: t(`skill.effect.${kind}` as TextKey) };
+}
+
+export function keywordTag(id: string, tone: SkillTagTone, glyph: SkillTagGlyph, seconds?: number): SkillTag | undefined {
   const keyword = findKeyword(id);
   if (!keyword) return undefined;
   const name = `[[${keyword.id}|${keyword.term}]]`;
   return { tone, glyph, text: seconds === undefined ? name : t("skill.tag.withSeconds", { name, seconds }) };
+}
+
+/** 받는 회복을 깎는 상태인가 — 출혈의 회복 감소와 거듭 걸면 깊어지는 출혈. */
+function allyHealTag(): SkillTag { return { tone: "heal", glyph: "contrib-heal", text: t("skill.tag.allyHeal") }; }
+function cutsHealing(effect: CombatStatusEffect): boolean {
+  return effect.kind === "bleed" && ((effect.healingReceivedReductionPercent ?? 0) > 0 || effect.deepenOnRepeat !== undefined);
+}
+
+/** 치유 감소 칩. 출처마다 수치가 달라 칩은 수를 갖지 않고, 얼마인지는 본문이 적는다. */
+export function healingCutTag(): SkillTag | undefined {
+  return keywordTag("healing-cut", "debuff", "tag-debuff");
+}
+
+/**
+ * `statusEffects` 밖에 **제 이름의 필드**로 상태를 거는 계약. 패시브의 돌진 기절(`openingCharge`)·밀물
+ * (`tidalSurge`)·최대 둔화 빙결(`freezeAtMaxChill`)·시약 반응의 중독, 평타의 호령(`rally`)·순환 걸음(`cycle`)·시약
+ * (`reagentStacks`), 채널링 궁극기의 평타 상태(`channel.basicStatusEffects`)가 그렇다 — 목록만 읽으면 전투가 거는 상태가 칩에서 빠진다(`skillTagsCombat.test`).
+ */
+function contractTags(source: Skill | Passive | undefined): { tags: (SkillTag | undefined)[]; after: (SkillTag | undefined)[]; shield: boolean } {
+  const tags: (SkillTag | undefined)[] = [];
+  const after: (SkillTag | undefined)[] = [];
+  let shield = false;
+  if (source === undefined) return { tags, after, shield };
+  if ("kind" in source) {
+    if (source.openingCharge) tags.push(statusTag({ kind: "stun", seconds: source.openingCharge.stunSeconds }));
+    if (source.tidalSurge) tags.push(statusTag({ kind: "knockback", ...source.tidalSurge.knockback }));
+    if (source.freezeAtMaxChill) tags.push(keywordTag("frozen", "control", "tag-control"));
+    if (source.undyingKnockback) tags.push(statusTag({ kind: "knockback", ...source.undyingKnockback }));
+    // 시약이 가득 차 터지는 반응이 중독을 건다.
+    if (source.reagentReaction) tags.push(keywordTag("poison", "debuff", "tag-debuff", source.reagentReaction.reactionPoisonSeconds));
+    // 살아 있는 동안 상대 편 전체의 회복을 깎는 오라(도디).
+    if ((source.enemyHealingReceivedReductionPercent ?? 0) > 0) tags.push(healingCutTag());
+    // 백색소음(안카)은 주위 적에게 졸음을 쌓고 주위 아군을 채운다.
+    if (source.whiteNoise) {
+      tags.push(statusTag(source.whiteNoise.drowsy));
+      after.push(allyHealTag());
+    }
+    // 가장 지친 아군을 채우는 반응(리파).
+    if ((source.reagentReaction?.lowestHpAllyHealMaxHpPercent ?? 0) > 0) after.push(allyHealTag());
+    // 패시브가 두르는 막 — 계약마다 이름이 달라 한곳에서 모은다.
+    shield = source.lifeStealShield !== undefined || source.echoLocation !== undefined || source.segmentBarrier !== undefined
+      || (source.shellGuard?.selfShieldMaxHpPercent ?? 0) > 0 || (source.shellGuard?.lowestHpAllyShieldMaxHpPercent ?? 0) > 0
+      || (source.concussionShieldPercent ?? 0) > 0;
+    // 패시브가 거는 은신 — 시작할 때 · 체력이 낮아질 때 · 피해를 줄 때.
+    const stealth = source.openingStealthSeconds ?? source.lowHpStealth?.seconds ?? source.damageStealthSeconds;
+    if (stealth !== undefined) after.push(keywordTag("stealth", "buff", "tag-buff", stealth));
+    // 짝이 건강한 동안(슈테) · 늑대가 살아 있는 동안(디안) 숨는다 — 시간이 아니라 조건이 정한다.
+    else if (source.duoLink !== undefined || source.kind === "summonCommander") after.push(keywordTag("stealth", "buff", "tag-buff"));
+    return { tags, after, shield };
+  }
+  const basic = source as Partial<BasicAttack> & { reagentStacks?: number };
+  if (basic.rally) {
+    tags.push(statusTag({ kind: "taunt", seconds: basic.rally.tauntSeconds }));
+    shield = true;
+  }
+  for (const step of basic.cycle ?? []) {
+    for (const effect of step.statusEffects ?? []) tags.push(statusTag(effect));
+    if ((step.statusEffects ?? []).some(cutsHealing)) tags.push(healingCutTag());
+    if (step.pull) tags.push(keywordTag("pull", "control", "tag-control"));
+    if (step.shieldFromDamagePercent !== undefined) shield = true;
+    if (step.selfStealthSeconds !== undefined) after.push(keywordTag("stealth", "buff", "tag-buff", step.selfStealthSeconds));
+  }
+  if (basic.reagentStacks !== undefined) tags.push(keywordTag("reagent", "debuff", "tag-debuff"));
+  // 반짝이 터질 때 두르는 막(티아) · 연발의 확정 치명타가 두르는 막(테쿠).
+  if ((basic.shimmerBurst?.shieldMaxHpPercent ?? 0) > 0) shield = true;
+  if ((("barrage" in source ? (source as { barrage?: { shieldFromCriticalPercent: number } }).barrage?.shieldFromCriticalPercent : undefined) ?? 0) > 0) shield = true;
+  // 약점이 터질 때 짝을 채운다(슈테).
+  if ([...(basic.statusEffects ?? []), ...(basic.cycle ?? []).flatMap((step) => step.statusEffects ?? [])]
+    .some((effect) => effect.kind === "weakpoint" && (effect.duoHealPercent ?? 0) > 0)) after.push(allyHealTag());
+  // 채널링 궁극기가 도는 동안 평타가 더 거는 상태(데이나의 기절)도 그 궁극기의 칩이다.
+  for (const effect of (source as Partial<Ultimate>).channel?.basicStatusEffects ?? []) tags.push(statusTag(effect));
+  return { tags, after, shield };
 }
 
 /** 칩을 짓는 데 필요한 것. 정보창의 쪽지 모델과 튜토리얼이 같은 입력을 넘긴다. */
@@ -198,7 +280,7 @@ export function buildSkillTags(input: SkillTagInput): SkillTag[] {
   if (input.source !== undefined) {
     const kinds = skillDamageKinds(input.source);
     for (const damage of DAMAGE_ORDER) {
-      if (damage !== input.effectType && kinds.has(damage)) tags.push({ ...EFFECT_TONE[damage], text: t(`skill.effect.${damage}` as TextKey) });
+      if (damage !== input.effectType && kinds.has(damage)) tags.push(damageKindTag(damage));
     }
   }
 
@@ -231,13 +313,19 @@ export function buildSkillTags(input: SkillTagInput): SkillTag[] {
   if (skill?.selfLullaby) tags.push(statusTag({ kind: "taunt", seconds: skill.selfLullaby.tauntSeconds }));
   if (skill?.selfRoar) tags.push(statusTag(skill.selfRoar.fear));
   for (const effect of input.statusEffects ?? []) tags.push(statusTag(effect));
+  // 회복을 깎는 출혈(받는 회복 감소·깊은 출혈)은 출혈 칩 옆에 치유 감소를 하나 더 세운다.
+  if ((input.statusEffects ?? []).some(cutsHealing)) tags.push(healingCutTag());
+  const contract = contractTags(input.source);
+  tags.push(...contract.tags);
   if (skill?.selfGuard?.shockwave) tags.push(statusTag({ kind: "stun", seconds: skill.selfGuard.shockwave.stunSeconds }));
 
   const shield = (skill?.selfGuard !== undefined && !skill.selfGuard.pullOnly) || skill?.selfLullaby !== undefined
     || skill?.selfRoar !== undefined || (skill !== undefined && "selfShieldMaxHpPercent" in skill && skill.selfShieldMaxHpPercent !== undefined)
-    || (skill !== undefined && "allyShieldFromDamagePercent" in skill && skill.allyShieldFromDamagePercent !== undefined);
+    || (skill !== undefined && "allyShieldFromDamagePercent" in skill && skill.allyShieldFromDamagePercent !== undefined)
+    || contract.shield;
   if (shield) tags.push(keywordTag("shield", "shield", "contrib-defense"));
   if (skill?.selfSetup) tags.push(keywordTag("stealth", "buff", "tag-buff", skill.selfSetup.stealthSeconds));
+  tags.push(...contract.after);
   if (skill?.teamBuff?.kind === "tailwind") tags.push(keywordTag("tailwind", "buff", "tag-buff"));
   if (skill?.teamBuff?.kind === "resonance") tags.push(keywordTag("resonance", "buff", "tag-buff"));
   if (skill?.selfBulwark) tags.push({ tone: "buff", glyph: "tag-buff", text: t("skill.tag.bulwark") });

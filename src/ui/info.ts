@@ -1,4 +1,5 @@
 import { audioManager } from "../managers/AudioManager";
+import { breakthroughTags as breakthroughSkillTags } from "./breakthroughTags";
 import { attachRoll } from "./RollingValue";
 import { defenseGainKeywords, defenseGainSummary } from "./statGainKeywords";
 import { buildSummonKeywords } from "./summonKeywords";
@@ -46,7 +47,7 @@ import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { openElementPopup, openRolePopup } from "./affinityPopups";
 import { breakthroughEffectText, breakthroughEffectKeywords } from "./skillPresentation";
 import { formatBreakthroughDescription } from "./skillExplanation";
-import { addBreakthroughGradeMark, addResonanceMark, RARITY_TONE, BREAKTHROUGH_GRADE_ROMAN } from "./rarityMark";
+import { addBreakthroughGradeMark, addResonanceGradeMark, addResonanceMark, RARITY_TONE } from "./rarityMark";
 import { RESONANCE_CAP, RESONANCE_CHEESECAKE, RESONANCE_STAT_PERCENT, canResonate, resonanceFragmentCost, resonanceFragmentSpend, resonanceOf } from "../core/relicResonance";
 import { addFramedIcon, addItemFrame } from "./itemFrame";
 import { FaceFrame } from "./FaceFrame";
@@ -59,7 +60,8 @@ import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { addMarkChip } from "./MarkChip";
 import { addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
 import { reachLabel, STAT_TONE, reachToneHex } from "./statTones";
-import { openRuneInfoPopup, runeStatLabel } from "./RunePopup";
+import { openRuneInfoPopup, openRunePopup, runeStatLabel } from "./RunePopup";
+import { offerFreeRuneCraft } from "./freeRuneCraftTutorial";
 import { t, type TextKey } from "../i18n";
 import { combatPower } from "../core/combatPower";
 import { StatRadar } from "./StatRadar";
@@ -83,7 +85,7 @@ import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, bre
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveNowKeyword, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, plumeBurstKeyword, prickleReflectKeyword, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveNowKeyword, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, plumeBurstKeyword, frostbiteKeyword, prickleReflectKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { SummonInfoPopup } from "./SummonInfoPopup";
 import { openRelicFeedMaxPopup, openRelicResetPopup } from "./RelicResetPopup";
@@ -94,6 +96,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { FeedTapEffect } from "./feedTapEffect";
 import { FeedLevelUpEffect } from "./feedLevelUpEffect";
 import { drawFeedPlate, drawFeedWindow, FEED_BUTTON } from "./feedButtonSkin";
+import { FEED_BULK_PANEL, FEED_BULK_TONES, feedBulkNoteCenter, feedBulkSparkles, feedBulkSpots } from "./feedBulkStyle";
 import { FEED_LEVEL_UP } from "./feedLevelUpStyle";
 import { HOLO_SHIMMER, holoBreathe, holoGlowColor, holoSweepPhase, polygonSpans } from "./holoShimmer";
 import { settingsManager } from "../managers/SettingsManager";
@@ -237,7 +240,6 @@ const BOND_HEART_CORE = 0xff8a7a;
 /** 판 안쪽에 파인 자리의 치즈케이크 수. 그 자리는 어둡게 눌러 두므로 크림빛으로 적는다. */
 const FEED_TEXT = "#ffe9c9";
 /** 한 번에 급여 쪽지 — 위 줄(1·10레벨)과 아래 줄(5레벨·MAX). 칸 높이 138에 사이 14. */
-const FEED_BULK_NOTE = { height: 372, rowY: [-76, 76] } as const;
 
 /**
  * 급여에 쓰는 치즈케이크 한 조각.
@@ -262,6 +264,24 @@ function cheesecakeIcon(scene: Phaser.Scene, x: number, y: number, size: number)
  * 판 안에 한 겹 더 파인 자리를 두는 이유는 이 줄이 버튼 라벨보다 크기 때문이다 — 눌러야 할
  * 판과 읽어야 할 수가 같은 높이에 있으면 어느 쪽이 버튼인지 흐려진다.
  */
+/**
+ * 한 번에 급여 쪽지의 반짝이 한 장 — 칸 사이 빈 띠와 가장자리에만 흩는 마름모와 네 갈래 별이다.
+ * 자리·색은 `feedBulkSparkles`가 정하고 여기서는 그리기만 한다(칸 아래에 깔린다).
+ */
+function drawFeedBulkSparkles(scene: Phaser.Scene): Phaser.GameObjects.Graphics {
+  const g = scene.add.graphics();
+  for (const spark of feedBulkSparkles()) {
+    const { x, y, size } = spark;
+    const points = spark.kind === "star"
+      ? [x, y - size, x + size * 0.22, y - size * 0.22, x + size, y, x + size * 0.22, y + size * 0.22, x, y + size, x - size * 0.22, y + size * 0.22, x - size, y, x - size * 0.22, y - size * 0.22]
+      : [x, y - size, x + size * 0.78, y - 1, x, y + size * 0.9, x - size * 0.7, y + 1];
+    const shadow = points.map((value, index) => value + (index % 2 === 0 ? 2 : 3));
+    g.fillStyle(0x05070a, 0.45).fillPoints(toPoints(shadow), true);
+    g.fillStyle(spark.color, 0.85).fillPoints(toPoints(points), true);
+  }
+  return g;
+}
+
 function feedCostRow(
   scene: Phaser.Scene,
   x: number,
@@ -270,10 +290,11 @@ function feedCostRow(
   height: number,
   size: number,
   rollKey?: string,
+  windowColor?: number,
 ): { container: Phaser.GameObjects.Container; text: Phaser.GameObjects.Text; layout: () => void } {
   const container = scene.add.container(x, y);
   // 치즈케이크 판(크림 면)에 박힌 짙은 창 — 밝은 값 글자가 그 위에서 또렷하다.
-  container.add(drawFeedWindow(scene, width, height));
+  container.add(drawFeedWindow(scene, width, height, windowColor));
   const icon = Math.round(height * 0.86);
   // 아이콘과 수는 바짝 붙는다. 멀리 떼면 "치즈케이크"와 "숫자"가 두 정보로 읽힌다.
   const gap = Math.round(icon * 0.12);
@@ -1090,7 +1111,7 @@ export class InfoManager {
     if (!canResetRelic(progress)) return;
     // 21레벨 위로 쌓은 몫은 90%만 돌아온다 — 잃는 양을 창이 먼저 말한다. 회수량은 서버가 다시 구한다.
     const asset = this.figureAssetOf(def);
-    openRelicResetPopup(this.scene, this.popups, { asset, level: progress.level, refund: relicResetRefund(progress), loss: relicResetLoss(progress) }, () => void this.resetRelic(def.id));
+    openRelicResetPopup(this.scene, this.popups, { asset, level: progress.level, refund: relicResetRefund(progress), loss: relicResetLoss(progress), dormantBreakthrough: progress.breakthrough > 0 }, () => void this.resetRelic(def.id));
   }
 
   /** 회수·레벨 확정은 서버가 한 처리로 맡는다. 화면은 결과만 다시 그린다. */
@@ -1310,20 +1331,18 @@ export class InfoManager {
   /**
    * 공명 확정 — 돌파 확정 창과 같은 판·같은 액자를 쓰고, 오르는 것만 다르다.
    *
-   * 공명은 레벨 상한을 열지 않고 오각형 다섯을 단계마다 3% 올린다. 그래서 등급 글자 자리에 `공명 n ▶ n+1`,
+   * 공명은 레벨 상한을 열지 않고 오각형 다섯을 단계마다 5% 올린다. 그래서 등급 글자 자리에 붉은 로마자 `n ▶ n+1`,
    * 상한 줄 자리에 `능력치 +a% ▶ +b%`가 서고, 레벨 액자는 없다(공명에는 레벨 조건이 없다).
    * 결투·아레나에서는 꺼진다는 것도 그 줄 아래 한 마디로 말한다 — 모르고 올리면 대인전에서 왜 같은지 묻게 된다.
    */
   private paintResonanceConfirm(body: Phaser.GameObjects.Container, close: () => void, def: RelicDef, progress: RelicProgress, height: number): void {
     const top = -height / 2;
     const resonance = resonanceOf(progress);
-    const stage = (value: number, x: number, color: string, size: number): void => {
-      body.add(this.scene.add.text(x, top + BREAK_CONFIRM.gradeY, t("info.resonance.stage", { stage: BREAKTHROUGH_GRADE_ROMAN[value - 1] ?? "0" }), textStyle({ role: "display", size, color })).setOrigin(0.5));
-    };
-    if (resonance > 0) stage(resonance, -170, COLOR.inkDim, 44);
-    else body.add(this.scene.add.text(-170, top + BREAK_CONFIRM.gradeY, "—", textStyle({ role: "display", size: 44, color: COLOR.inkDim })).setOrigin(0.5));
+    // 공명 단계는 「공명 n」 글자가 아니라 붉은 로마자 표식으로 선다 — 정보창의 표식과 같은 한 장이다.
+    if (resonance > 0) addResonanceGradeMark(this.scene, body, -140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize * 0.82, resonance);
+    else body.add(this.scene.add.text(-140, top + BREAK_CONFIRM.gradeY, "—", textStyle({ role: "display", size: 44, color: COLOR.inkDim })).setOrigin(0.5));
     body.add(this.scene.add.text(0, top + BREAK_CONFIRM.gradeY, "▶", textStyle({ role: "display", size: 34, color: COLOR.inkDim })).setOrigin(0.5));
-    stage(resonance + 1, 170, COLOR.accentText, 52);
+    addResonanceGradeMark(this.scene, body, 140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize, resonance + 1);
 
     // 오르는 몫은 능력치 비율이라 상한 줄과 같은 자리·같은 무게로 선다.
     const line = this.scene.add.container(0, top + BREAK_CONFIRM.capY);
@@ -1479,12 +1498,17 @@ export class InfoManager {
     // 적어 두면 같은 말을 별 옆의 돌파 버튼이 이미 하고 있고, 그 쪽지에는 누를 것도 없다.
     if (!canFeed) return;
     this.feedPopupOpen = true;
+    const P = FEED_BULK_PANEL;
+    const center = feedBulkNoteCenter(bounds, this.scene.scale.width);
     this.popups.open({
-      width: 540,
-      height: FEED_BULK_NOTE.height,
-      x: bounds.centerX,
-      y: bounds.bottom + 126 + (FEED_BULK_NOTE.height - 220) / 2,
+      width: P.width,
+      height: P.height,
+      x: center.x,
+      y: center.y,
       title: t("info.feed.bulk"),
+      // 사탕빛 판 — 급여는 정보창에서 가장 즐거운 조작이라 쪽지도 그 결을 입는다.
+      fill: P.fill,
+      accent: P.accent,
       hideCloseButton: true,
       closeOnBackdrop: true,
       inputPassthrough: { x: bounds.x - 8, y: bounds.y - 8, width: bounds.width + 16, height: bounds.height + 16 },
@@ -1494,6 +1518,7 @@ export class InfoManager {
       // 누를 때마다 닫히면 같은 자리를 다시 길게 눌러 쪽지를 여는 손이 매번 더 든다. 값과
       // 남은 여력만 다시 적고 그대로 남아, 화면의 다른 곳을 누를 때까지 이어서 누를 수 있다.
       // 본문만 갱신해 공용 제목·입력 차단판·날아가는 조각은 유지한다.
+      body.add(drawFeedBulkSparkles(this.scene));
       const content = this.scene.add.container(0, 0);
       body.add(content);
       const burst = new FeedTapEffect(this.scene, body, { x: 0, y: 0 });
@@ -1513,35 +1538,36 @@ export class InfoManager {
     // 상한에 닿는 순간 쪽지가 스스로 닫힌다 — 더 먹일 수 없는 판에 남아 있을 이유가 없고,
     // 다음에 할 일(한계 돌파)은 별 옆의 버튼이 제 자리에서 말한다.
     if (progress.level >= this.relicCap()) { close(); return; }
-    // 두 줄 — 위가 1·10레벨, 아래가 5레벨·MAX다. MAX는 지금 치즈케이크로 상한까지 갈 수 있는 만큼 먹이고, 누르면
-    // 그 아이가 묻는 확인 창이 먼저 뜬다(한 번에 큰 몫이 나가는 칸이라 손이 한 번 더 들어간다).
+    // 두 줄 — 1 → 5 → 10 → MAX 차례로 위 줄 1·5, 아래 줄 10·MAX다. 차례가 곧 세기라 색도 같은 차례로 강렬해지고,
+    // 칸 사이에는 엄지가 옆 칸을 함께 누르지 않을 여백을 둔다(`feedBulkStyle.ts`). MAX는 지금 치즈케이크로 상한까지
+    // 갈 수 있는 만큼 먹이고, 누르면 그 아이가 묻는 확인 창이 먼저 뜬다.
     const max = this.feedMaxPlan();
-    const options: { label: string; levels: number | "max"; x: number; y: number }[] = [
-      { label: t("info.feed.one"), levels: 1, x: -128, y: FEED_BULK_NOTE.rowY[0] },
-      { label: t("info.feed.ten"), levels: 10, x: 128, y: FEED_BULK_NOTE.rowY[0] },
-      { label: t("info.feed.five"), levels: 5, x: -128, y: FEED_BULK_NOTE.rowY[1] },
-      { label: t("info.feed.max"), levels: "max", x: 128, y: FEED_BULK_NOTE.rowY[1] },
-    ];
-    options.forEach(({ label, levels, x: bx, y: by }) => {
+    const P = FEED_BULK_PANEL;
+    const labelKeys = { one: "info.feed.one", five: "info.feed.five", ten: "info.feed.ten", max: "info.feed.max" } as const;
+    feedBulkSpots().forEach(({ tier, levels, x: bx, y: by }) => {
+      const tone = FEED_BULK_TONES[tier];
       const cost = levels === "max" ? max.feeds * FEED_UNIT.cheesecake : this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
       const enough = levels === "max" ? max.feeds > 0 : session.wallet.cheesecake >= cost;
       // 칸 하나를 한 덩어리로 묶어야 눌림이 판·이름·값줄을 함께 누른다.
       const option = this.scene.add.container(bx, by);
-      // 급여 버튼과 같은 치즈케이크 조각이다. 모자란 칸은 꺼진 판으로 가라앉는다.
-      const plate = drawFeedPlate(this.scene, 236, 138, 14);
+      // 급여 버튼과 같은 덩어리에 단계의 색을 입힌다. 모자란 칸은 꺼진 판으로 가라앉는다.
+      const plate = drawFeedPlate(this.scene, P.button.width, P.button.height, 14, tone);
       plate.on.setVisible(enough);
       plate.off.setVisible(!enough);
       option.add([plate.off, plate.on]);
-      option.add(this.scene.add.text(0, -40, label, textStyle({ role: "display", size: 32, color: enough ? FEED_BUTTON.ink : COLOR.inkDim })).setOrigin(0.5));
+      const label = this.scene.add.text(0, P.labelY, t(labelKeys[tier]), textStyle({ role: "display", size: 34, color: enough ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5);
+      // 진한 색 판 위의 흰 글자 — 제 색의 가장 짙은 결을 획으로 둘러 판과 떼어 놓는다.
+      if (enough) label.setStroke(tone.stroke, 7);
+      option.add(squeezeTextToWidth(label, P.button.width - 40));
       // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
-      const price = feedCostRow(this.scene, 0, 14, 196, 50, 32, `info-feed-popup:cheesecake:${levels}`);
+      const price = feedCostRow(this.scene, 0, P.priceY, P.priceWidth, 50, 32, `info-feed-popup:cheesecake:${levels}`, enough ? tone.window : undefined);
       price.text.setText(formatCurrency(session.wallet.cheesecake) + "/" + formatCurrency(cost));
       price.text.setColor(enough ? FEED_TEXT : COLOR.dangerText);
       price.layout();
       option.add(price.container);
       body.add(option);
       if (!enough) return;
-      const hit = this.scene.add.rectangle(0, 0, 236, 138, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const hit = this.scene.add.rectangle(0, 0, P.button.width, P.button.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
       if (levels === 1) this.feedOneTutorialHit = hit;
       hit.on("pointerdown", () => pressIn(option, "feed"));
       hit.on("pointerout", () => pressOut(option, "feed", { pop: false }));
@@ -1565,7 +1591,7 @@ export class InfoManager {
   }
 
   /**
-   * MAX 급여가 먹일 횟수와 닿는 레벨 — 지금 치즈케이크로 상한까지 갈 수 있는 만큼이다. 쪽지의 값줄·확인 창·실제
+   * MAX 급여가 먹일 횟수와 닿는 레벨 — 지금 치즈케이크로 끝까지 올릴 수 있는 마지막 레벨까지다(상한에서 멈춘다). 쪽지의 값줄·확인 창·실제
    * 요청이 같은 값을 쓴다.
    */
   private feedMaxPlan(): { feeds: number; targetLevel: number } {
@@ -1574,8 +1600,13 @@ export class InfoManager {
     const progress = relicProgression.getProgress(def.id);
     const cap = this.relicCap();
     if (progress.level >= cap) return { feeds: 0, targetLevel: progress.level };
-    const feeds = Math.min(this.feedsForLevels(cap - progress.level), Math.floor(session.wallet.cheesecake / FEED_UNIT.cheesecake));
-    return { feeds, targetLevel: previewFeedProgress(progress, feeds, cap).level };
+    // **마지막으로 다 올릴 수 있는 레벨까지만** 먹인다(응태 요청) — 남는 치즈케이크로 다음 레벨의 경험치를 조금 채워
+    // 두지 않는다. 그 몫은 레벨을 올리지 못한 채 묶이기만 한다.
+    const affordable = Math.floor(session.wallet.cheesecake / FEED_UNIT.cheesecake);
+    let levels = 0;
+    while (progress.level + levels < cap && this.feedsForLevels(levels + 1) <= affordable) levels += 1;
+    const feeds = levels > 0 ? this.feedsForLevels(levels) : 0;
+    return { feeds, targetLevel: progress.level + levels };
   }
 
   /** MAX 급여 확인 창 — 그 아이가 묻고, 나가는 치즈케이크와 닿는 레벨을 보여 준다. */
@@ -1868,6 +1899,8 @@ export class InfoManager {
         }),
       });
     });
+    // 렐릭의 룬 가방도 룬을 보는 자리라, 체험 룬이 남아 있으면 같은 무료 세공 체험을 권한다.
+    offerFreeRuneCraft(this.scene, this.popups, (runeInstanceId) => openRunePopup(this.scene, this.popups, { runeInstanceId, onChanged: () => this.refreshGrowth() }));
   }
 
   /**
@@ -1894,7 +1927,7 @@ export class InfoManager {
   private openBreakthroughSteps(_from: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
-    openBreakthroughStepsPopup(this.scene, this.popups, this.keywords, def, breakthroughGrade(this.shownBreakthrough(def)), this.shownStats(def));
+    openBreakthroughStepsPopup(this.scene, this.popups, this.keywords, def, breakthroughGrade(this.shownBreakthrough(def)), this.shownStats(def), breakthroughGrade(this.shownActiveBreakthrough(def)));
   }
 
 
@@ -2442,7 +2475,7 @@ export class InfoManager {
   /** 원화 아래 스킬 아이콘 세 개. 누르면 정형 팝업이 뜬다. */
   private buildSkillIcons(def: RelicDef): void {
     for (const icon of this.skillIcons.splice(0)) icon.destroy();
-    const breakthrough = this.shownBreakthrough(def);
+    const breakthrough = this.shownActiveBreakthrough(def);
     this.skillIconsKey = this.skillIconsKeyOf(def);
     const entries: [string, Skill, number | undefined, SkillArtSlot][] = [
       [t("info.skill.passive"), { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined, "passive"],
@@ -2488,7 +2521,7 @@ export class InfoManager {
   }
 
   private skillIconsKeyOf(def: RelicDef): string {
-    return `${def.id}:${this.publicProfile ? "public:" : ""}${this.shownBreakthrough(def)}`;
+    return `${def.id}:${this.publicProfile ? "public:" : ""}${this.shownBreakthrough(def)}:${this.shownActiveBreakthrough(def)}`;
   }
 
   /**
@@ -2498,6 +2531,19 @@ export class InfoManager {
    */
   private shownBreakthrough(def: RelicDef): number {
     return this.publicProfile ? Math.max(0, this.publicProfile.breakthroughGrade - 1) : relicProgression.getProgress(def.id).breakthrough;
+  }
+
+  /**
+   * 지금 **켜져 있는** 돌파 단계 — 스킬 액자의 `+`·쪽지의 돌파 줄·폭주 뱃지가 읽는다. 레벨 초기화로 요구 레벨에
+   * 못 미친 단계는 꺼져 있다(`activeBreakthrough`). 공개 프로필은 이미 켜진 등급만 알려 주므로 그대로다.
+   */
+  private shownActiveBreakthrough(def: RelicDef): number {
+    return this.publicProfile ? this.shownBreakthrough(def) : relicProgression.getActiveBreakthrough(def.id);
+  }
+
+  /** 뚫어 둔 돌파 중 꺼진 단계가 있는가 — 등급 표식이 회색으로 선다. */
+  private shownBreakthroughDimmed(def: RelicDef): boolean {
+    return this.shownActiveBreakthrough(def) < this.shownBreakthrough(def);
   }
 
   private shownStats(def: RelicDef): Stats {
@@ -2512,7 +2558,7 @@ export class InfoManager {
    */
   private addFerocityBadge(x: number, y: number, def: RelicDef): void {
     // 스킬 아이콘과 같은 목록에 담아 미보유 개체에서 함께 숨고 다시 그릴 때 함께 지워진다.
-    this.skillIcons.push(addInfoFerocityBadge(this.scene, this.popups, this.chrome, x, y, def, (from) => this.openFerocityTrait(def, from), breakthroughEnhances(def, this.shownBreakthrough(def), "ferocity")));
+    this.skillIcons.push(addInfoFerocityBadge(this.scene, this.popups, this.chrome, x, y, def, (from) => this.openFerocityTrait(def, from), breakthroughEnhances(def, this.shownActiveBreakthrough(def), "ferocity")));
     this.addSkillGlanceButton(x, y - INFO_BADGE_SIZE / 2 - SKILL_GLANCE_BUTTON.gap - SKILL_GLANCE_BUTTON.size / 2, def);
   }
 
@@ -2534,7 +2580,7 @@ export class InfoManager {
     hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(container, "normal", { pop: false }); });
     hit.on("pointerup", () => {
       pressIn(container);
-      openSkillGlancePopup(this.scene, this.popups, [{ def: { ...def, stats: this.shownStats(def) }, breakthrough: this.shownBreakthrough(def) }], {
+      openSkillGlancePopup(this.scene, this.popups, [{ def: { ...def, stats: this.shownStats(def) }, breakthrough: this.shownActiveBreakthrough(def) }], {
         reduceMotion: motionPolicy(session.settings).nonEssentialRepeatFactor === 0,
         onClose: () => pressOut(container),
       });
@@ -2547,7 +2593,7 @@ export class InfoManager {
   /** 개체별 폭주 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
   private openFerocityTrait(def: RelicDef, from: PopupSource): void {
     const finalDef = { ...def, stats: this.shownStats(def) };
-    const breakthrough = this.shownBreakthrough(def);
+    const breakthrough = this.shownActiveBreakthrough(def);
     openFerocityTraitPopup(this.scene, this.popups, this.keywords, finalDef, from, {
       breakthroughEffect: !breakthroughEnhances(def, breakthrough, "ferocity")
         ? undefined : breakthroughEffectText(def, "ferocity", finalDef.stats),
@@ -2560,7 +2606,7 @@ export class InfoManager {
     // 레벨·돌파·장착 룬을 모두 반영한 정의를 넘겨 74 같은 기본치가 성장 후에 남지 않게 한다.
     const def = this.currentDef!;
     const finalDef = { ...def, stats: this.shownStats(def) };
-    const breakthrough = this.shownBreakthrough(def);
+    const breakthrough = this.shownActiveBreakthrough(def);
     // **열린 돌파 등급의 몫만 넘긴다.** 아직 뚫지 않은 단계의 효과를 쪽지에 적으면 지금 싸우는
     // 이 개체가 하지 않는 일을 말하게 된다 — 무엇이 열리는지는 등급 돋보기가 여는 표가 맡는다.
     const breakthroughEffect = slot && breakthroughEnhances(def, breakthrough, slot)
@@ -2740,9 +2786,11 @@ export class InfoManager {
   private paintStars(def: RelicDef): void {
     this.starRow.removeAll(true);
     const stars = breakthroughGrade(this.shownBreakthrough(def));
-    addBreakthroughGradeMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, stars);
-    // 공명은 내 렐릭에게만 있다 — 공개 프로필은 공명을 알려 주지 않으므로 그리지 않는다.
-    if (!this.publicProfile) addResonanceMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, resonanceOf(relicProgression.getProgress(def.id)), RESONANCE_CAP);
+    // 레벨 초기화로 꺼진 단계가 있으면 표식이 회색으로 선다 — 레벨을 다시 올리면 빛이 돌아온다.
+    const dimmed = this.shownBreakthroughDimmed(def);
+    addBreakthroughGradeMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, stars, dimmed);
+    // 공명은 내 렐릭에게만 있다 — 공개 프로필은 공명을 알려 주지 않으므로 그리지 않는다. 돌파 V가 꺼지면 공명도 함께 꺼진다.
+    if (!this.publicProfile) addResonanceMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, resonanceOf(relicProgression.getProgress(def.id)), RESONANCE_CAP, dimmed);
   }
 
   /** 레벨·경험치·유대·능력치·젬을 지금 상태로 다시 칠한다. */
@@ -3334,6 +3382,11 @@ export function openBreakthroughStepsPopup(
   grade: number,
   /** 성장한 능력치. 넘기면 회복처럼 계산 가능한 수치가 실제 값으로 선다. */
   stats?: Stats,
+  /**
+   * 지금 **켜져 있는** 등급. 뚫어 둔 등급(`grade`)보다 낮으면 그 사이 줄은 꺼진 줄(잿빛 + 「필요 LV.N」)로 선다 —
+   * 레벨 초기화로 요구 레벨에 못 미친 단계다. 없으면 뚫어 둔 등급과 같다.
+   */
+  activeGrade: number = grade,
 ): void {
   const textWrap = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length).textWrap;
   // 먼저 실제 문장을 세워 높이를 잰다. 문장이 긴 캐릭터도 글자를 줄이지 않고
@@ -3362,10 +3415,12 @@ export function openBreakthroughStepsPopup(
       const rowGrade = index + 2;
       const y = top + layout.rows[index];
       const reached = grade >= rowGrade;
+      // 뚫어 두었지만 레벨이 요구 레벨에 못 미쳐 꺼진 줄. 레벨을 다시 올리면 저절로 켜진다.
+      const dormant = reached && activeGrade < rowGrade;
       // 열린 줄과 안 열린 줄을 **밝기가 아니라 결**로 가른다(`BREAK_STEPS.tone` 주석 참고).
       // 등급 하나로 시작하는 개체는 네 줄이 모두 안 열린 줄이라, 어둡게 누르면 이 창을 처음
       // 여는 사람이 캄캄한 판 넷을 본다.
-      const tone = reached ? BREAK_STEPS.tone.reached : BREAK_STEPS.tone.locked;
+      const tone = dormant ? BREAK_STEPS.tone.dormant : reached ? BREAK_STEPS.tone.reached : BREAK_STEPS.tone.locked;
       body.add(drawLayer(scene, 0, y, slantedRect(layout.rowWidth, layout.rowHeights[index], 16), {
         fill: tone.fill,
         alpha: tone.alpha,
@@ -3373,10 +3428,18 @@ export function openBreakthroughStepsPopup(
         edgeAlpha: tone.edgeAlpha,
       }));
       const mark = scene.add.container(BREAK_STEPS.gradeMark.x, y);
-      addBreakthroughGradeMark(scene, mark, 0, 0, BREAK_STEPS.gradeMark.size, rowGrade);
+      addBreakthroughGradeMark(scene, mark, 0, 0, BREAK_STEPS.gradeMark.size, rowGrade, dormant);
       // "어디까지 왔는가"는 별이 맡는다 — 글과 그림을 누르지 않는 대신 이 표식만 흐려진다.
       mark.setAlpha(tone.gradeMark);
       body.add(mark);
+      if (dormant) {
+        // 꺼진 줄은 **무엇을 하면 다시 켜지는지**를 표식 아래에 적는다 — 그 단계의 요구 레벨이다.
+        const need = scene.add
+          .text(BREAK_STEPS.gradeMark.x, y + BREAK_STEPS.dormantNeed.dy, t("info.breakthrough.need", { count: `LV.${entry.requiredLevel}` }), textStyle({ role: "emphasis", size: BREAK_STEPS.dormantNeed.size, color: COLOR.inkDim }))
+          .setOrigin(0.5);
+        squeezeTextToWidth(need, BREAK_STEPS.dormantNeed.maxWidth);
+        body.add(need);
+      }
       // **어느 기술이 열리는지는 그 기술의 액자가 말한다.** 정보창 아래 네 칸과 같은 프리팹을
       // 써서 같은 그림·같은 이름으로 서므로, 표를 읽다가 "이게 뭐였지"로 돌아가지 않는다.
       const icon = addSkillIconFrame(scene, {
@@ -3390,9 +3453,9 @@ export function openBreakthroughStepsPopup(
         // 이미 뚫은 줄은 정보창 아래 액자 줄과 **같은 얼굴**로 선다(강조색 + 이름 뒤의 `+`) —
         // 두 자리가 같은 것을 다르게 말하면 표를 읽고 돌아와 다시 맞춰 봐야 한다.
         // "없음"으로 정해 둔 자리는 뚫었어도 `+`를 달지 않는다 — 달라진 것이 없다.
-        enhanced: breakthroughEnhances(def, grade - 1, entry.slot),
+        enhanced: breakthroughEnhances(def, activeGrade - 1, entry.slot),
         // 액자는 그 줄의 주제라 안 열린 줄에서도 어느 기술인지 알아볼 수 있어야 한다.
-        dimAlpha: reached ? undefined : BREAK_STEPS.lockedIconAlpha,
+        dimAlpha: reached && !dormant ? undefined : BREAK_STEPS.lockedIconAlpha,
       });
       icon.setPosition(BREAK_STEPS.icon.x, y);
       body.add(icon);
@@ -3523,7 +3586,7 @@ export function buildFerocityViewModel(
     id: "damage-value", term: String(convertedDamage), kind: "rule",
     description: t("skill.keyword.damage.bonus", { stat: damageSourceLabel, percent: defensePercent ?? attackPercent ?? abilityPercent }),
   });
-  for (const tag of [plumeKeyword(def, attack), plumeBurstKeyword(def, attack)]) if (tag) contextualKeywords.push(tag);
+  for (const tag of [plumeKeyword(def, attack), frostbiteKeyword(def, attack), plumeBurstKeyword(def, attack)]) if (tag) contextualKeywords.push(tag);
   // 전장의 열기는 희열의 회복량을 키우므로 그 태그를 이 쪽지에서도 눌러 읽게 한다.
   if (def.ferocityTrait.effectId === "battleHeat") {
     const elation = elationKeyword(def.passive);
@@ -3563,6 +3626,7 @@ export function buildFerocityViewModel(
     keywordActions: options.summonActions,
     // 폭주도 돌파가 효과를 붙이는 슬롯이라 같은 노란 줄을 얻는다.
     breakthroughEffect: options.breakthroughEffect,
+    breakthroughTags: options.breakthroughEffect === undefined ? undefined : breakthroughSkillTags(def, "ferocity"),
     // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
     description: t("skill.ferocity.head")
       + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp, abilityPower, resistance: def.stats.res }),
@@ -3653,6 +3717,7 @@ export function buildSkillViewModel(options: {
     slot: slot ?? ("kind" in skill ? "passive" : undefined),
     source: skill,
     breakthroughEffect,
+    breakthroughTags: breakthroughEffect && slot ? breakthroughSkillTags(finalDef, slot) : undefined,
     // 전용 일러스트가 있으면 팝업도 같은 그림과 같은 색을 쓴다. 아이콘과 쪽지가 갈라지면
     // 어느 스킬을 눌렀는지 되짚어야 한다.
     art: slot ? skillArtFor(finalDef.id, slot) : undefined,
@@ -3671,6 +3736,7 @@ export function buildSkillViewModel(options: {
       "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
       // 서리깃은 유티의 평타·궁극기 본문이 가리키는 개체 전용 규칙어라 그 쪽지에서 눌러 읽게 한다.
       plumeKeyword(finalDef, finalDef.stats.atk),
+      frostbiteKeyword(finalDef, finalDef.stats.atk),
       plumeBurstKeyword(finalDef, finalDef.stats.atk),
       // 리필·마지막 한 방울은 테쿠의 패시브·평타·궁극기 본문이 가리키는 개체 전용 규칙어다.
       refillKeyword(finalDef),

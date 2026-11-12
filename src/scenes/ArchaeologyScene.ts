@@ -32,7 +32,7 @@ import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, HoloBar }
 import { addSectionTitle } from "../ui/SectionTitle";
 import { addFramedIcon, guideForIcon } from "../ui/itemFrame";
 import { KeywordManager } from "../managers/KeywordManager";
-import { PopupLayer } from "../ui/PopupLayer";
+import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
 import { openRuneTraitReroll } from "../ui/RuneTraitPopup";
 import { openRuneTraitOdds } from "../ui/RuneTraitOddsPopup";
 import { playTraitEffect, type TraitEffectKind } from "../ui/traitEffects";
@@ -65,6 +65,7 @@ import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransit
 import { consumeSceneEntry } from "./sceneEntry";
 import { withBusy } from "../ui/BusyOverlay";
 import { showContentIntro } from "../ui/contentIntro";
+import { runGuidedTour, type GuidedTourStep } from "../ui/guidedTour";
 import { reportCatch } from "../managers/ErrorReporter";
 
 /**
@@ -186,6 +187,13 @@ export class ArchaeologyScene extends Phaser.Scene {
   private tab: ArchaeologyTab = "strata";
   private traitOddsLink: Phaser.GameObjects.Container | null = null;
   private synthOddsLink: Phaser.GameObjects.Container | null = null;
+  private guideLink: Phaser.GameObjects.Container | null = null;
+  /** 지금 지도에 서 있는 유적 지도. 안내형 튜토리얼이 노드 자리를 묻는다. 판·다른 탭에서는 없다. */
+  private mapView: ArchaeologyMapView | null = null;
+  /** 진행 중인 안내형 튜토리얼을 끝내는 손잡이. 한 번에 하나만 돈다. */
+  private stopTour: (() => void) | null = null;
+  /** 이 화면에서 판 안내를 이미 걸어 두었나 — 판을 다시 그릴 때마다 첫 방문 판정을 되풀이하지 않는다. */
+  private boardTourQueued = false;
   /**
    * 합성대 꼭짓점 셋에 넣은 룬 ID. 특성 연구대처럼 **인스턴스가 아니라 ID를 든다** — 팔거나 바뀐
    * 룬을 다시 그릴 때 저장에서 다시 찾아 지금 값을 쓴다.
@@ -330,6 +338,10 @@ export class ArchaeologyScene extends Phaser.Scene {
     const rates = RATES_SPOT.screen;
     this.traitOddsLink = addRatesButton(this, rates.x, rates.y, t("rune.trait.odds"), () => openRuneTraitOdds({ scene: this, popups: this.popups }));
     this.synthOddsLink = addRatesButton(this, rates.x, rates.y, t("archaeology.synth.oddsTitle"), () => openRuneSynthesisOdds({ scene: this, popups: this.popups }));
+    // 첫 방문에 저절로 뜨는 지층 탐사 안내를 언제든 다시 여는 자리. 확률 버튼 바로 아래 같은 열(연구소의 연구 기록 자리)이다.
+    this.guideLink = addRatesButton(this, RATES_SPOT.history.x, RATES_SPOT.history.y, t("archaeology.guide.button"), () => this.startMapTour(), { glyph: "scroll" })
+      // 지도는 화면 전체를 끌어 움직이는 입력면을 깔므로, 그 위에 세워야 버튼이 손을 받는다.
+      .setDepth(5);
 
     this.view = this.add.container(0, 0);
     this.tabRow = this.add.container(0, 0);
@@ -350,7 +362,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
-    showContentIntro(this, "archaeology");
+    showContentIntro(this, "archaeologyTour", () => this.startMapTour());
   }
 
   /**
@@ -439,10 +451,12 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.pops.forEach((pop) => pop.destroy()); this.pops.clear(); this.flying.clear();
     this.destroyFog();
     this.view.removeAll(true);
-    this.chargeValueText = null; this.chargeNoteText = null;
+    this.chargeValueText = null; this.chargeNoteText = null; this.mapView = null;
     setDebugArchaeologyMap(undefined);
     this.traitOddsLink?.setVisible(this.tab !== "synth");
     this.synthOddsLink?.setVisible(this.tab === "synth");
+    // 판을 파는 동안에는 판과 범례가 주인공이라 지도 안내를 걷는다.
+    this.guideLink?.setVisible(this.tab === "strata" && this.board === null);
     if (this.tab === "strata") this.paintStrata();
     else if (this.tab === "research") this.paintResearch();
     else this.paintSynthesis();
@@ -529,6 +543,7 @@ export class ArchaeologyScene extends Phaser.Scene {
         onLayout: (nodes) => setDebugArchaeologyMap({ nodes: nodes.map(({ siteId, x, y, state }) => ({ siteId, x, y, state })) }),
       });
       this.view.add(map);
+      this.mapView = map;
       return;
     }
 
@@ -615,6 +630,83 @@ export class ArchaeologyScene extends Phaser.Scene {
 
     this.paintStrataHaul(board);
     this.publishDigDebug();
+    if (!this.boardTourQueued) {
+      this.boardTourQueued = true;
+      showContentIntro(this, "archaeologyBoard", () => this.startBoardTour());
+    }
+  }
+
+  /* ── 안내형 튜토리얼 ───────────────────────────────────────────────────────── */
+
+  /** 지도 안내가 설 수 있는 때: 지층 탭에서 판 없이 지도가 서 있다. */
+  private mapShown(): boolean { return this.tab === "strata" && this.board === null && this.mapView !== null && this.mapView.active; }
+
+  /**
+   * 지도 안내 — 탐사 횟수 → 깊은 유적 → 낮은 유적(결정) → 첫 유적을 직접 눌러 보기.
+   *
+   * **깊은 곳이 좋다는 말만 남기지 않는다.** 깊은 유적은 오래 잠기고, 그동안 오래 쉬게 둔 낮은 유적에 결정이 맺혀
+   * 굴착과 원석이 크게 늘어난다 — 낮은 유적을 돌아야 하는 이유를 실제 노드 위에서 짚어 준다.
+   */
+  private startMapTour(): void {
+    if (!this.mapShown() || this.stopTour) return;
+    const unlocked = new Set(this.siteStates.filter((state) => state.unlocked).map((state) => state.siteId));
+    const shallow = ARCHAEOLOGY_SITES.find((site) => (site.crystal?.length ?? 0) > 0 && unlocked.has(site.id))
+      ?? ARCHAEOLOGY_SITES.find((site) => (site.crystal?.length ?? 0) > 0);
+    const deep = [...ARCHAEOLOGY_SITES].sort((a, b) => b.recommendedLevel - a.recommendedLevel)[0];
+    const pan = (siteId: string | undefined) => (ready: () => void): void => {
+      if (!siteId || !this.mapView) { ready(); return; }
+      this.mapView.panToSite(siteId, ready);
+    };
+    const siteRect = (siteId: string | undefined) => () => (siteId && this.mapShown() ? this.mapView?.siteRect(siteId) : undefined);
+    const panel = ARCHAEOLOGY.chargePanel;
+    const steps: GuidedTourStep[] = [
+      {
+        rect: () => (this.mapShown() ? { x: BASE_WIDTH / 2 - panel.width / 2, y: panel.y - panel.height / 2, width: panel.width, height: panel.height } : undefined),
+        text: () => t("archaeology.tour.charge"),
+        side: "below",
+      },
+      { enter: pan(deep?.id), rect: siteRect(deep?.id), text: () => t("archaeology.tour.deep") },
+      { enter: pan(shallow?.id), rect: siteRect(shallow?.id), text: () => t("archaeology.tour.shallow") },
+    ];
+    // 직접 눌러 보는 칸은 지금 들어갈 수 있는 낮은 유적에만 건다 — 잠긴 노드를 누르게 하면 아무것도 시작되지 않는다.
+    if (shallow && unlocked.has(shallow.id)) {
+      steps.push({
+        rect: siteRect(shallow.id),
+        text: () => t("archaeology.tour.start"),
+        // 노드를 눌러 미리보기가 열리면 그 판에서 들어가는 법이 바로 보이므로 안내는 거기서 끝난다.
+        done: () => !this.mapShown() || anyPopupOpen(),
+      });
+    }
+    this.stopTour = runGuidedTour(this, steps, () => { this.stopTour = null; });
+  }
+
+  /** 판 안내 — 남은 굴착 → 안개 색과 범례 → 칸 하나를 직접 파 보기. 처음 판을 연 때 한 번만 돈다. */
+  private startBoardTour(): void {
+    const board = this.board;
+    if (this.tab !== "strata" || board === null || this.stopTour) return;
+    const boardShown = (): boolean => this.tab === "strata" && this.board !== null && this.strataGrid !== null;
+    const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
+    const layer = findStrataLayer(board.layerId);
+    const legendRows = layer ? strataLegend(layer, board.zones.map((zone) => zone.tone)).length : 0;
+    const legend = legendRows > 0 ? strataLegendFrame(frame, legendRows, BASE_WIDTH) : undefined;
+    const digs = ARCHAEOLOGY.digsPanel;
+    const requests = this.digRequests;
+    const steps: GuidedTourStep[] = [
+      {
+        rect: () => (boardShown() ? { x: BASE_WIDTH / 2 - digs.width / 2, y: digs.y - digs.height / 2, width: digs.width, height: digs.height } : undefined),
+        text: () => t("archaeology.tour.digs"),
+      },
+      {
+        rect: () => (boardShown() && legend ? { x: legend.centerX - legend.width / 2, y: legend.top, width: legend.width, height: legend.height } : undefined),
+        text: () => t("archaeology.tour.legend"),
+      },
+      {
+        rect: () => (boardShown() ? { x: frame.centerX - frame.width / 2, y: frame.centerY - frame.height / 2, width: frame.width, height: frame.height } : undefined),
+        text: () => t("archaeology.tour.dig"),
+        done: () => !boardShown() || this.digRequests !== requests,
+      },
+    ];
+    this.stopTour = runGuidedTour(this, steps, () => { this.stopTour = null; });
   }
 
   /**

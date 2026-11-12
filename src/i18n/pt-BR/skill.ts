@@ -164,7 +164,7 @@ export const SKILL_PT_BR = {
   "skill.sentence.teamMissingHpHeal": "Todos os aliados vivos recuperam {percent}% do próprio [[missing-hp|PV perdido]].",
   "skill.sentence.selfBulwark": "Por {seconds} s, recebe o dano que todos os aliados receberiam e, enquanto isso, recupera {percent} a cada segundo.",
   "skill.sentence.selfBulwarkElation": "Por {seconds} s recebe o dano que cada aliado receberia e, enquanto isso, a cura de [[nodonia-elation|Euforia]] aumenta {percent}%.",
-  "skill.sentence.overpaintDetonation": "Explode a [[overpaint|Repintura]] acumulada em {target}, causando {damage} por acúmulo, e depois a remove.",
+  "skill.sentence.overpaintDetonation": "Explode a [[overpaint|Repintura]] acumulada em {target}, causando {damage} por acúmulo. A Repintura permanece.",
   "skill.sentence.channel": "Por {seconds} s, causa {damage} a {target} a cada segundo e {effects}.",
   "skill.sentence.channel.rider": "{tick} Enquanto isso, inimigos atingidos pelo [[basic-attack|ataque básico]] dele {effects}.",
   "skill.sentence.cycleHeader": "Repete em ordem os {count} passos a seguir.",

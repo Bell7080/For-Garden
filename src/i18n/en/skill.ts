@@ -165,7 +165,7 @@ export const SKILL_EN = {
   "skill.sentence.teamMissingHpHeal": "Every living ally restores {percent}% of their own [[missing-hp|missing HP]].",
   "skill.sentence.selfBulwark": "For {seconds}s it takes the damage every ally would receive, restoring {percent} each second meanwhile.",
   "skill.sentence.selfBulwarkElation": "For {seconds}s, takes the damage every ally would receive, and meanwhile [[nodonia-elation|Elation]] healing is increased by {percent}%.",
-  "skill.sentence.overpaintDetonation": "Bursts the [[overpaint|Overpaint]] stacked on {target}, dealing {damage} per stack, then clears that Overpaint.",
+  "skill.sentence.overpaintDetonation": "Bursts the [[overpaint|Overpaint]] stacked on {target}, dealing {damage} per stack. The Overpaint remains.",
   "skill.sentence.channel": "For {seconds}s, deals {damage} to {target} each second and {effects}.",
   "skill.sentence.channel.rider": "{tick} Meanwhile, enemies hit by its [[basic-attack|basic attack]] {effects}.",
   "skill.sentence.cycleHeader": "Repeats the following {count} steps in order.",

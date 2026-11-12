@@ -35,7 +35,7 @@ export const STATUS_ZH_HANS = {
   "status.submerged": "浸水",
   "status.submerged.detail": "移动速度 -{percent}% · 离开浅滩时解除",
   "status.vandalism": "破坏",
-  "status.vandalism.detail": "{stacks} / {max}层 · 攻击力与法术强度 -{percent}% · 叠满时当场引爆",
+  "status.vandalism.detail": "{stacks} / {max}层 · 攻击力与法术强度 -{percent}% · 叠满时引爆，层数保留",
   "status.pressure": "水压",
   "status.pressure.detail": "{stacks} / {max}层 · 攻击与移动速度 -{percent}% · 叠满时爆发并眩晕",
   "status.drowsy": "困意",

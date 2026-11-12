@@ -608,7 +608,8 @@ export interface Fighter extends Combatant {
    *
    * `sourceId`를 함께 드는 이유는 터질 때의 피해가 **칠한 쪽의 주문력**에서 나오기 때문이다.
    */
-  vandalism: { stacks: number; percentPerStack: number; maxStacks: number; burstPower: number; sourceId?: string } | null;
+  /** `lockFor` — 터진 뒤 다시 터지기까지 남은 시간(초). 겹은 터져도 남는다(`VANDALISM_REBURST_SECONDS`). */
+  vandalism: { stacks: number; percentPerStack: number; maxStacks: number; burstPower: number; sourceId?: string; lockFor: number } | null;
   /**
    * 시간을 두고 되풀이되는 궁극기가 아직 남긴 틱.
    *
@@ -2451,18 +2452,20 @@ function applyVandalism(
   state: SkirmishState,
   sourceId?: string,
 ): void {
-  // 폭주 돌파(`closeUp`) — 폭주 중에는 낙서가 더 적은 겹에 터진다.
+  // 폭주 돌파(`closeUp`) — 폭주 중에는 낙서가 더 적은 겹에 터진다. 겹 자체는 상한까지 계속 쌓인다 —
+  // 문턱만 낮추는 것이라 이미 다섯 겹인 적이 폭주 한 번에 세 겹으로 줄어들지 않는다.
   const painter = sourceId ? findFighter(state, sourceId) : undefined;
   const heat = painter?.ferocityFever ? openedBreakthrough(painter, "ferocity", (effects) => effects.ferocity) : undefined;
   const cap = heat?.kind === "closeUp" ? Math.min(effect.maxStacks, heat.maxStacks) : effect.maxStacks;
-  const stacks = Math.min(cap, (target.vandalism?.stacks ?? 0) + 1);
+  const stacks = Math.min(effect.maxStacks, (target.vandalism?.stacks ?? 0) + 1);
+  const lockFor = target.vandalism?.lockFor ?? 0;
   target.vandalism = {
-    stacks, percentPerStack: effect.offenseShredPercent, maxStacks: cap, burstPower: effect.burstPower, sourceId,
+    stacks, percentPerStack: effect.offenseShredPercent, maxStacks: effect.maxStacks, burstPower: effect.burstPower, sourceId, lockFor,
   };
-  if (stacks < cap) return;
-  // 터진 뒤에는 겹만 0으로 돌아가고 슬롯은 지운다 — 0겹짜리 칩이 머리 위에 남으면 아무것도
-  // 하지 않는 상태가 계속 서 있게 된다.
-  target.vandalism = null;
+  if (stacks < cap || lockFor > EMERGENCY_RECOVERY.epsilon) return;
+  // **터져도 겹은 남는다**(응태 결정 2026-11-12 — "묻히려고 쌓은 디버프가 터지면서 사라지는 게 애매하다").
+  // 다시 터지려면 `VANDALISM_REBURST_SECONDS`가 지나야 한다 — 상한에 머문 채 맞을 때마다 터지면 평타가 곧 폭발이 된다.
+  target.vandalism = { ...target.vandalism, lockFor: VANDALISM_REBURST_SECONDS };
 
   const attacker = sourceId ? findFighter(state, sourceId) : undefined;
   if (!attacker) return;
@@ -2481,6 +2484,9 @@ function applyVandalism(
     events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
   }
 }
+
+/** 밴덜리즘이 터진 뒤 같은 적에게서 다시 터지기까지의 시간(초). 겹은 그동안에도 상한에 머물러 약화를 유지한다. */
+export const VANDALISM_REBURST_SECONDS = 4;
 
 /**
  * 수압을 한 겹 쌓고, 상한에 닿으면 **그 자리에서 터뜨린다.**
@@ -4531,7 +4537,8 @@ function tickArtChannel(fighter: Fighter, dt: number, state: SkirmishState, even
       for (const other of state.fighters) {
         if (other.side === fighter.side || !isFighterAlive(other) || !other.vandalism) continue;
         const paint = other.vandalism;
-        other.vandalism = { ...paint, stacks: paint.maxStacks - 1 };
+        // 서명은 재폭발 대기를 무시하고 지금 한 번 터뜨린다 — 겹은 상한으로 채운 채 남는다.
+        other.vandalism = { ...paint, stacks: paint.maxStacks - 1, lockFor: 0 };
         applyVandalism(other, { kind: "vandalism", offenseShredPercent: paint.percentPerStack, maxStacks: paint.maxStacks, burstPower: paint.burstPower }, events, state, fighter.id);
       }
     }
@@ -9235,12 +9242,9 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     sharedShieldSource += hpBefore - target.hp;
     siphonOverpaintHealing(attacker, target, hpBefore - target.hp, state, events);
     triggerDuoBreakthroughRegen(state, attacker, hpBefore - target.hp, events);
-    // 완성작을 공개하고 나면 그림은 지워진다 — 쌓아 두고 매번 터뜨릴 수 있으면 상시 배율이 된다.
-    if (detonation) {
-      const had = target.overpaint?.stacks ?? 0;
-      target.overpaint = null;
-      splashPaint(attacker, target, had, state);
-    }
+    // **완성작을 공개해도 덧칠은 남는다**(응태 결정 2026-11-12). 궁극기는 게이지가 차야만 다시 나가므로 쌓아 둔 겹이
+    // 매번 터지는 상시 배율이 되지 않고, 남은 덧칠은 제 시계(10초)대로 마른다.
+    if (detonation) splashPaint(attacker, target, target.overpaint?.stacks ?? 0, state);
     if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state, events);
     // 광역으로 맞은 쪽도 희열이 오른다. 단일과 광역에서 규칙이 갈리면 같은 한 대가 어느
     // 스킬에 맞았느냐에 따라 겹을 주기도 하고 안 주기도 한다.
@@ -10065,6 +10069,9 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     if (fighter.bt.quarry) {
       const remaining = fighter.bt.quarry.remaining - dt;
       fighter.bt.quarry = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.bt.quarry, remaining };
+    }
+    if (fighter.vandalism && fighter.vandalism.lockFor > 0) {
+      fighter.vandalism = { ...fighter.vandalism, lockFor: Math.max(0, fighter.vandalism.lockFor - dt) };
     }
     if (isFighterAlive(fighter) && fighter.overpaint) {
       const remaining = fighter.overpaint.remaining - dt;

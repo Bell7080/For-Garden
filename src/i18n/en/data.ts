@@ -605,7 +605,7 @@ export default {
   "keyword.butcher.description": "At 3 stacks it bursts on the spot for physical damage equal to 120% of Attack. Stacks return to 0 afterwards and never expire with time.",
   "keyword.vandalism.term": "Vandalism",
   "keyword.observation.term": "Spotting",
-  "keyword.vandalism.description": "Each stack lowers that enemy's Attack and Ability Power by 5% and never expires with time. On the 5th stack it bursts on the spot for magical damage equal to 125% of the painter's Ability Power and stacks return to 0.",
+  "keyword.vandalism.description": "Each stack lowers that enemy's Attack and Ability Power by 3% and never expires with time. On the 5th stack it bursts on the spot for magical damage equal to 125% of the painter's Ability Power. The stacks remain after the burst, and it cannot burst again for 4 seconds.",
   "keyword.observation.description": "A mark that deals no damage. Stacks build, and reapplying refreshes the duration. Morphe's Basic Attack fires these stacks when it hits.",
   "keyword.curse.term": "Curse",
   "keyword.curse.description": "Each stack lowers that enemy's Resistance by 15%. It builds up to 3 stacks and lasts 8 seconds, and recasting restarts the duration. Since it only lowers Resistance, it affects magical damage alone.",

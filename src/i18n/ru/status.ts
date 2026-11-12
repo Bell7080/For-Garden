@@ -35,7 +35,7 @@ export const STATUS_RU = {
   "status.submerged": "В воде",
   "status.submerged.detail": "Скорость движения -{percent}% · Проходит на выходе с мелководья",
   "status.vandalism": "Вандализм",
-  "status.vandalism.detail": "{stacks} / {max} зар. · Атака и сила магии -{percent}% · Взрывается при заполнении",
+  "status.vandalism.detail": "{stacks} / {max} зар. · Атака и сила магии -{percent}% · Взрывается при заполнении, заряды сохраняются",
   "status.pressure": "Давление",
   "status.pressure.detail": "{stacks} / {max} зар. · Скор. атаки и движения -{percent}% · При заполнении взрыв и оглушение",
   "status.drowsy": "Сонливость",

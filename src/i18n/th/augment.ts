@@ -38,7 +38,7 @@ export const AUGMENT_TH = {
   "augment.tag.detail.curse": "แต่ละชั้นลดความต้านทาน {resistancePercent}% สูงสุด {maxStacks} ชั้น นาน {seconds} วินาที ใช้ซ้ำรีเฟรชเวลา",
   "augment.tag.detail.butcher": "ครบ {maxStacks} ชั้นจะใช้ทั้งหมด สร้างความเสียหายกายภาพเท่ากับพลังโจมตีผู้ใช้ {burstPower}% ชั้นไม่หมดตามเวลา",
   "augment.tag.detail.frostPlume": "ครบ {maxStacks} ชั้นใน {holdSeconds} วินาทีจะใช้ทั้งหมด สร้างความเสียหายรวม {burstPower}% ของพลังโจมตีใน {burstSeconds} วินาที ลดความเร็วโจมตีและเคลื่อนที่ {slowPercent}% นาน {slowSeconds} วินาที",
-  "augment.tag.detail.vandalism": "แต่ละชั้นลดพลังโจมตีและพลังเวท {offenseShredPercent}% ครบ {maxStacks} ชั้นจะใช้ทั้งหมด สร้างความเสียหายเวทเท่ากับพลังเวทผู้ใช้ {burstPower}% ชั้นไม่หมดตามเวลา",
+  "augment.tag.detail.vandalism": "แต่ละชั้นลดพลังโจมตีและพลังเวท {offenseShredPercent}% ครบ {maxStacks} ชั้นจะระเบิด สร้างความเสียหายเวทเท่ากับพลังเวทผู้ใช้ {burstPower}% ชั้นยังคงอยู่และจะไม่ระเบิดซ้ำภายใน 4 วินาที ชั้นไม่หมดตามเวลา",
   "augment.tag.detail.pressure": "แต่ละชั้นลดความเร็วโจมตีและเคลื่อนที่ {speedPercentPerStack}% ครบ {maxStacks} ชั้นใน {seconds} วินาทีจะใช้ทั้งหมด ทำให้มึนงง {stunSeconds} วินาที และเสียหายกายภาพจากพลังป้องกันผู้ใช้ {defensePower}% + ความต้านทาน {resistancePower}% หลังมึนงงไม่สะสมใหม่ {lockoutSeconds} วินาที",
   "augment.tag.detail.drowsy": "ครบ {maxStacks} ชั้นใน {seconds} วินาทีจะหลับ {sleepSeconds} วินาที ความเสียหายปลุกให้ตื่น รับความเสียหายเวทจากความต้านทานผู้ใช้ {wakeResistancePower}% และลดความเร็วโจมตี {groggyAttackSpeedPercent}% นาน {groggySeconds} วินาที",
   "augment.tag.detail.intimidate": "ครบ {maxStacks} ชั้นใน {seconds} วินาทีจะใช้ทั้งหมด ทำให้กลัว {fearSeconds} วินาที หลังจากนั้นต้านทานการข่มขู่และความกลัว {immunitySeconds} วินาที",

@@ -587,7 +587,7 @@ export default {
   "keyword.butcher.description": "叠至3层时当场爆发，造成相当于攻击力120%的物理伤害。之后层数归零，不会随时间消失。",
   "keyword.vandalism.term": "破坏",
   "keyword.observation.term": "观测",
-  "keyword.vandalism.description": "每层使该敌人的攻击力与法术强度降低5%，不会随时间消失。叠至第5层时当场爆发，造成相当于涂鸦者法术强度125%的魔法伤害，层数归零。",
+  "keyword.vandalism.description": "每层使该敌人的攻击力与法术强度降低3%，不会随时间消失。叠至第5层时当场爆发，造成相当于涂鸦者法术强度125%的魔法伤害。爆发后层数仍会保留，之后4秒内不会再次爆发。",
   "keyword.observation.description": "不造成伤害的标记。层数会叠加，再次施加会刷新持续时间。莫尔菲的普通攻击命中时会发动这些层数。",
   "keyword.curse.term": "诅咒",
   "keyword.curse.description": "每层使该敌人的抗性降低15%。最多叠加3层，持续8秒，再次施放会重置持续时间。由于只降低抗性，只影响魔法伤害。",

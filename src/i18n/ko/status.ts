@@ -54,7 +54,7 @@ export const STATUS_KO = {
   "status.sleep.detail": "행동 불가 · 피해를 받으면 깬다 · {time}",
   "status.groggy": "잠이 덜 깸",
   "status.groggy.detail": "공격 속도 -{percent}% · {time}",
-  "status.vandalism.detail": "{stacks} / {max}겹 · 공격력·주문력 -{percent}% · 다 차면 그 자리에서 터진다",
+  "status.vandalism.detail": "{stacks} / {max}겹 · 공격력·주문력 -{percent}% · 다 차면 터지고 겹은 남는다",
   "status.butcher": "손질",
   "status.butcher.detail": "{stacks} / {max}겹 · 다 차면 그 자리에서 터진다",
   "status.intimidation": "위압",

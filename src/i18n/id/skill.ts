@@ -164,7 +164,7 @@ export const SKILL_ID = {
   "skill.sentence.teamMissingHpHeal": "Setiap sekutu hidup memulihkan {percent}% [[missing-hp|HP yang hilang]] miliknya.",
   "skill.sentence.selfBulwark": "Selama {seconds} dtk, ia menerima kerusakan yang seharusnya diterima semua sekutu, sambil memulihkan {percent} tiap detik.",
   "skill.sentence.selfBulwarkElation": "Selama {seconds} detik, menerima kerusakan yang seharusnya diterima semua sekutu, dan selama itu pemulihan [[nodonia-elation|Kegembiraan]] meningkat {percent}%.",
-  "skill.sentence.overpaintDetonation": "Meledakkan [[overpaint|Timpa Cat]] yang menumpuk pada {target}, memberi {damage} per tumpuk, lalu menghapus Timpa Cat itu.",
+  "skill.sentence.overpaintDetonation": "Meledakkan [[overpaint|Timpa Cat]] yang menumpuk pada {target}, memberi {damage} per tumpuk. Timpa Cat tetap tersisa.",
   "skill.sentence.channel": "Selama {seconds} dtk, memberi {damage} kepada {target} setiap detik dan {effects}.",
   "skill.sentence.channel.rider": "{tick} Sementara itu, musuh yang terkena [[basic-attack|serangan dasar]]-nya {effects}.",
   "skill.sentence.cycleHeader": "Mengulang {count} langkah berikut secara berurutan.",

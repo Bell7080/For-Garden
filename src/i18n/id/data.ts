@@ -587,7 +587,7 @@ export default {
   "keyword.butcher.description": "Pada 3 tumpuk meledak di tempat dengan kerusakan fisik sebesar 120% Serangan. Setelah itu kembali ke 0 dan tak kedaluwarsa oleh waktu.",
   "keyword.vandalism.term": "Vandalisme",
   "keyword.observation.term": "Pengintaian",
-  "keyword.vandalism.description": "Setiap tumpuk menurunkan Serangan dan Kekuatan Magis musuh itu 5% dan tak kedaluwarsa. Pada tumpuk ke-5 meledak di tempat dengan kerusakan magis sebesar 125% Kekuatan Magis pelukis dan tumpukan kembali ke 0.",
+  "keyword.vandalism.description": "Setiap tumpuk menurunkan Serangan dan Kekuatan Magis musuh itu 3% dan tak kedaluwarsa. Pada tumpuk ke-5 meledak di tempat dengan kerusakan magis sebesar 125% Kekuatan Magis pelukis. Tumpukan tetap tersisa setelah meledak, dan tidak bisa meledak lagi selama 4 detik.",
   "keyword.observation.description": "Tanda tanpa kerusakan. Tumpukannya bertambah, dan menerapkannya lagi memperbarui durasi. Saat serangan dasar Morphe mengenai, tumpukan ini diaktifkan.",
   "keyword.curse.term": "Kutukan",
   "keyword.curse.description": "Setiap tumpuk menurunkan Resistensi musuh itu 15%. Menumpuk hingga 3, bertahan 8 detik, dan merapal ulang mengulang durasi. Karena hanya menurunkan Resistensi, hanya berpengaruh pada kerusakan magis.",

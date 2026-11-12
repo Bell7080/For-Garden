@@ -35,7 +35,7 @@ export const STATUS_EN = {
   "status.submerged": "Submerged",
   "status.submerged.detail": "Move Speed -{percent}% · Ends on leaving the Shallows",
   "status.vandalism": "Vandalism",
-  "status.vandalism.detail": "{stacks} / {max} stacks · Attack & Ability Power -{percent}% · Bursts on the spot when full",
+  "status.vandalism.detail": "{stacks} / {max} stacks · Attack & Ability Power -{percent}% · Bursts when full, stacks remain",
   "status.pressure": "Pressure",
   "status.pressure.detail": "{stacks} / {max} stacks · Attack & Move Speed -{percent}% · Bursts into a stun when full",
   "status.drowsy": "Drowsy",

@@ -42,7 +42,7 @@ export const AUGMENT_KO = {
   "augment.tag.detail.curse": "한 겹마다 저항력이 {resistancePercent}% 감소한다. 최대 {maxStacks}겹, {seconds}초 유지. 다시 부여하면 시간이 갱신된다.",
   "augment.tag.detail.butcher": "{maxStacks}겹이 되면 모두 소비해 시전자 공격력의 {burstPower}%에 해당하는 물리 피해를 준다. 겹은 시간으로 사라지지 않는다.",
   "augment.tag.detail.frostPlume": "{holdSeconds}초 안에 {maxStacks}겹을 쌓으면 모두 소비한다. {burstSeconds}초에 걸쳐 공격력의 총 {burstPower}% 피해를 주고, {slowSeconds}초 동안 공격·이동 속도를 {slowPercent}% 낮춘다.",
-  "augment.tag.detail.vandalism": "한 겹마다 공격력과 주문력이 {offenseShredPercent}% 감소한다. {maxStacks}겹에서 소비해 시전자 주문력의 {burstPower}% 마법 피해를 준다. 겹은 시간으로 사라지지 않는다.",
+  "augment.tag.detail.vandalism": "한 겹마다 공격력과 주문력이 {offenseShredPercent}% 감소한다. {maxStacks}겹에서 터져 시전자 주문력의 {burstPower}% 마법 피해를 주며, 겹은 남고 4초 동안 다시 터지지 않는다. 겹은 시간으로 사라지지 않는다.",
   "augment.tag.detail.pressure": "한 겹마다 공격·이동 속도가 {speedPercentPerStack}% 감소한다. {seconds}초 안에 {maxStacks}겹이 되면 소비해 {stunSeconds}초 기절과 시전자 방어력의 {defensePower}%와 저항력의 {resistancePower}%를 더한 물리 피해를 준다. 기절 후 {lockoutSeconds}초 동안 다시 쌓이지 않는다.",
   "augment.tag.detail.drowsy": "{seconds}초 안에 {maxStacks}겹이 되면 {sleepSeconds}초 잠든다. 피해를 받으면 깨며 시전자 저항력의 {wakeResistancePower}% 마법 피해를 받고, {groggySeconds}초 동안 공격 속도가 {groggyAttackSpeedPercent}% 감소한다.",
   "augment.tag.detail.intimidate": "{seconds}초 안에 {maxStacks}겹이 되면 소비해 {fearSeconds}초 공포를 일으킨다. 공포 후 {immunitySeconds}초 동안 위압·공포에 면역이다.",

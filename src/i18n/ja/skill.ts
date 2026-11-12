@@ -194,7 +194,7 @@ export const SKILL_JA = {
   "skill.damageType.physical": "[[physical-damage|物理ダメージ]]",
   "skill.damageType.magical": "[[magical-damage|魔法ダメージ]]",
 
-  "skill.sentence.overpaintDetonation": "{target}積まれた[[overpaint|重ね塗り]]を弾けさせ、1重ごとに{damage}を与え、その重ね塗りを消す。",
+  "skill.sentence.overpaintDetonation": "{target}積まれた[[overpaint|重ね塗り]]を弾けさせ、1重ごとに{damage}を与える。重ね塗りはそのまま残る。",
   "skill.sentence.channel": "{target}{seconds}秒間、毎秒{damage}を与え、{effects}。",
   "skill.sentence.channel.rider": "{tick} その間、[[basic-attack|通常攻撃]]に当たった敵を{effects}。",
   "skill.sentence.cycleHeader": "次の{count}つを順番に繰り返す。",

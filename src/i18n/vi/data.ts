@@ -587,7 +587,7 @@ export default {
   "keyword.butcher.description": "Đủ 3 tầng thì nổ tại chỗ, gây sát thương vật lý bằng 120% Công. Sau đó tầng về 0 và không hết hạn theo thời gian.",
   "keyword.vandalism.term": "Phá hoại",
   "keyword.observation.term": "Quan trắc",
-  "keyword.vandalism.description": "Mỗi tầng giảm Công và Phép của kẻ địch đó 5% và không hết hạn theo thời gian. Ở tầng thứ 5 nổ tại chỗ, gây sát thương phép bằng 125% Phép của người vẽ và tầng về 0.",
+  "keyword.vandalism.description": "Mỗi tầng giảm Công và Phép của kẻ địch đó 3% và không hết hạn theo thời gian. Ở tầng thứ 5 nổ tại chỗ, gây sát thương phép bằng 125% Phép của người vẽ. Sau khi nổ các tầng vẫn còn, và không thể nổ lại trong 4 giây.",
   "keyword.observation.description": "Dấu hiệu không gây sát thương. Các tầng cộng dồn, gán lại sẽ làm mới thời gian. Khi đòn đánh thường của Morphe trúng, các tầng này được kích hoạt.",
   "keyword.curse.term": "Nguyền rủa",
   "keyword.curse.description": "Mỗi tầng giảm Kháng của kẻ địch đó 15%. Tích tối đa 3 tầng, kéo dài 8 giây, thi triển lại sẽ làm mới thời gian. Vì chỉ giảm Kháng nên chỉ ảnh hưởng sát thương phép.",

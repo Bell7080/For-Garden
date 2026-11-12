@@ -164,7 +164,7 @@ export const SKILL_RU = {
   "skill.sentence.teamMissingHpHeal": "Все живые союзники восстанавливают {percent}% своего [[missing-hp|потерянного здоровья]].",
   "skill.sentence.selfBulwark": "На {seconds} с принимает урон, предназначенный всем союзникам, и тем временем восстанавливает {percent} в секунду.",
   "skill.sentence.selfBulwarkElation": "На {seconds} с принимает урон, который получили бы все союзники; в это время лечение от [[nodonia-elation|упоения]] увеличено на {percent}%.",
-  "skill.sentence.overpaintDetonation": "Взрывает [[overpaint|перекраску]], накопленную на {target}, нанося {damage} за заряд, и затем снимает её.",
+  "skill.sentence.overpaintDetonation": "Взрывает [[overpaint|перекраску]], накопленную на {target}, нанося {damage} за заряд. Перекраска сохраняется.",
   "skill.sentence.channel": "В течение {seconds} с каждую секунду наносит {target} {damage} и {effects}.",
   "skill.sentence.channel.rider": "{tick} Тем временем по врагам, задетым его [[basic-attack|обычной атакой]]: {effects}.",
   "skill.sentence.cycleHeader": "Повторяет по порядку следующие {count} шага.",

@@ -38,7 +38,7 @@ export const AUGMENT_ZH_HANS = {
   "augment.tag.detail.curse": "每层抗性－{resistancePercent}%。最多{maxStacks}层，持续{seconds}秒，再次施加刷新时间。",
   "augment.tag.detail.butcher": "达到{maxStacks}层时全部消耗，造成施加者攻击力{burstPower}%的物理伤害。层数不会随时间消失。",
   "augment.tag.detail.frostPlume": "在{holdSeconds}秒内达到{maxStacks}层时全部消耗，在{burstSeconds}秒内造成总计攻击力{burstPower}%的伤害，并降低攻速和移速{slowPercent}%，持续{slowSeconds}秒。",
-  "augment.tag.detail.vandalism": "每层降低攻击力和法强{offenseShredPercent}%。达到{maxStacks}层时消耗，造成施加者法强{burstPower}%的魔法伤害。层数不会随时间消失。",
+  "augment.tag.detail.vandalism": "每层降低攻击力和法强{offenseShredPercent}%。达到{maxStacks}层时爆发，造成施加者法强{burstPower}%的魔法伤害，层数保留且4秒内不会再次爆发。层数不会随时间消失。",
   "augment.tag.detail.pressure": "每层降低攻速和移速{speedPercentPerStack}%。在{seconds}秒内达到{maxStacks}层时消耗，眩晕{stunSeconds}秒，并造成施加者防御{defensePower}%＋抗性{resistancePower}%的物理伤害。眩晕后{lockoutSeconds}秒内无法叠层。",
   "augment.tag.detail.drowsy": "在{seconds}秒内达到{maxStacks}层时睡眠{sleepSeconds}秒。受伤时醒来，受到施加者抗性{wakeResistancePower}%的魔法伤害，攻速降低{groggyAttackSpeedPercent}%，持续{groggySeconds}秒。",
   "augment.tag.detail.intimidate": "在{seconds}秒内达到{maxStacks}层时消耗，恐惧{fearSeconds}秒，之后免疫威压和恐惧{immunitySeconds}秒。",

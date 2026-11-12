@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import ts from "typescript";
 import PREPARE_ICONS from "../../scripts/prepare_icons.py?raw";
 import { RELICS } from "../../src/data/relics";
-import { FOCUS } from "../../src/core/skirmish";
+import { FOCUS, VANDALISM_REBURST_SECONDS } from "../../src/core/skirmish";
 import { KEYWORDS } from "../../src/data/keywords";
 import type { BasicAttack, Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
@@ -232,7 +232,7 @@ describe("데이 스킬 표시 계약", () => {
     // 이 규칙어를 갖게 되면 출혈처럼 시간·비율을 본문으로 옮긴다.
     const keyword = KEYWORDS.find((entry) => entry.id === "vandalism")!;
     const effect = deina.basic.statusEffects!.find((e) => e.kind === "vandalism")!;
-    expect(effect).toMatchObject({ offenseShredPercent: 5, maxStacks: 5, burstPower: 125 });
+    expect(effect).toMatchObject({ offenseShredPercent: 3, maxStacks: 5, burstPower: 125 });
     // 시간으로 사라지지 않는다는 것이 이 규칙어의 전부라, 태그가 그 사실을 직접 말한다.
     expect(effect).not.toHaveProperty("seconds");
     // 태그 본문의 수치는 실제 전투가 읽는 필드와 같아야 한다 — 갈리면 조정 뒤 옛 문장이 남는다.
@@ -240,6 +240,8 @@ describe("데이 스킬 표시 계약", () => {
     expect(keyword.description).toContain("시간이 흘러 사라지지 않는다");
     expect(keyword.description).toContain("5겹째");
     expect(keyword.description).toContain("125%");
+    // 터져도 겹이 남고 재폭발 대기가 있다는 것을 태그가 직접 말한다(대기 초는 전투 상수와 같다).
+    expect(keyword.description).toContain(`터진 뒤 ${VANDALISM_REBURST_SECONDS}초 동안은 다시 터지지 않는다`);
     // 태그 팝업 안에는 또 다른 태그를 두지 않는다 — 눌러도 아무것도 열리지 않는다.
     expect(keyword.description).not.toMatch(/\[\[/);
   });
@@ -889,13 +891,13 @@ describe("메론 스킬 표시 계약", () => {
 
   it("의 궁극기는 총 피해가 아니라 겹당 피해로 말한다", () => {
     const def = meron();
-    expect(def.ultimate).toMatchObject({ targeting: "battlefieldEnemies", overpaintDetonation: true, power: 60 });
+    expect(def.ultimate).toMatchObject({ targeting: "battlefieldEnemies", overpaintDetonation: true, power: 50 });
     // "적 전체에 얼마"로 적으면 한 겹 칠한 적과 다섯 겹 칠한 적이 같은 수를 맞는 것처럼 읽힌다.
     expect(skillDescription(def.ultimate, { damage: 172 })).toBe(
-      "전장의 모든 적에게 쌓인 [[overpaint|덧칠]]을 터뜨려 한 겹마다 [[damage-value|172]]의 [[magical-damage|마법 피해]]를 주고, 그 덧칠을 지운다.",
+      "전장의 모든 적에게 쌓인 [[overpaint|덧칠]]을 터뜨려 한 겹마다 [[damage-value|172]]의 [[magical-damage|마법 피해]]를 준다. 덧칠은 그대로 남는다.",
     );
     // 능력치를 모르는 도감에서는 어느 능력치에서 나오는 배율인지 함께 말한다.
-    expect(skillDescription(def.ultimate)).toContain("주문력의 60%");
+    expect(skillDescription(def.ultimate)).toContain("주문력의 50%");
     // 다섯 겹을 다 칠해야 렉시아의 단일 대상 궁극기와 같은 300%다 — 전장 전체를 때리는
     // 지원가가 최상위 딜러의 한 방을 넘지 않게 하는 상한이라 함께 고정한다.
     const rex = RELICS.find((relic) => relic.id === "rex")!;

@@ -35,7 +35,7 @@ export const STATUS_ES = {
   "status.submerged": "Sumergido",
   "status.submerged.detail": "Velocidad de movimiento -{percent}% · Termina al salir de los Bajíos",
   "status.vandalism": "Vandalismo",
-  "status.vandalism.detail": "{stacks} / {max} cargas · Ataque y Poder mágico -{percent}% · Estalla al llenarse",
+  "status.vandalism.detail": "{stacks} / {max} cargas · Ataque y Poder mágico -{percent}% · Estalla al llenarse; las cargas se mantienen",
   "status.pressure": "Presión",
   "status.pressure.detail": "{stacks} / {max} cargas · Vel. de ataque y mov. -{percent}% · Al llenarse estalla y aturde",
   "status.drowsy": "Somnolencia",

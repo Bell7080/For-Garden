@@ -587,7 +587,7 @@ export default {
   "keyword.butcher.description": "Con 3 cargas estalla al instante e inflige daño físico igual al 120% del Ataque. Después vuelve a 0 y no caduca con el tiempo.",
   "keyword.vandalism.term": "Vandalismo",
   "keyword.observation.term": "Avistamiento",
-  "keyword.vandalism.description": "Cada carga reduce un 5% el Ataque y el Poder mágico de ese enemigo y no caduca con el tiempo. En la 5.ª carga estalla al instante con daño mágico igual al 125% del Poder mágico de quien pinta y vuelve a 0.",
+  "keyword.vandalism.description": "Cada carga reduce un 3% el Ataque y el Poder mágico de ese enemigo y no caduca con el tiempo. En la 5.ª carga estalla al instante con daño mágico igual al 125% del Poder mágico de quien pinta. Las cargas se mantienen tras el estallido y no puede volver a estallar durante 4 segundos.",
   "keyword.observation.description": "Una marca que no causa daño. Las cargas se acumulan y volver a aplicarla renueva la duración. Cuando impacta el ataque básico de Morphe, estas cargas se activan.",
   "keyword.curse.term": "Maldición",
   "keyword.curse.description": "Cada carga reduce un 15% la Resistencia de ese enemigo. Acumula hasta 3 cargas, dura 8 segundos y volver a lanzarla reinicia la duración. Como solo reduce la Resistencia, afecta únicamente al daño mágico.",

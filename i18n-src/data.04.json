@@ -330,14 +330,14 @@
 "Вандализм"
 ],
 "keyword.vandalism.description": [
-"每层使该敌人的攻击力与法术强度降低5%，不会随时间消失。叠至第5层时当场爆发，造成相当于涂鸦者法术强度125%的魔法伤害，层数归零。",
-"แต่ละชั้นลดพลังโจมตีและพลังเวทของศัตรูนั้น 5% และไม่หมดไปตามเวลา ที่ชั้นที่ 5 จะระเบิดทันที สร้างความเสียหายเวทเท่ากับ 125% ของพลังเวทของผู้พ่นสี และชั้นกลับเป็น 0",
-"Mỗi tầng giảm Công và Phép của kẻ địch đó 5% và không hết hạn theo thời gian. Ở tầng thứ 5 nổ tại chỗ, gây sát thương phép bằng 125% Phép của người vẽ và tầng về 0.",
-"Setiap tumpuk menurunkan Serangan dan Kekuatan Magis musuh itu 5% dan tak kedaluwarsa. Pada tumpuk ke-5 meledak di tempat dengan kerusakan magis sebesar 125% Kekuatan Magis pelukis dan tumpukan kembali ke 0.",
-"Cada carga reduce un 5% el Ataque y el Poder mágico de ese enemigo y no caduca con el tiempo. En la 5.ª carga estalla al instante con daño mágico igual al 125% del Poder mágico de quien pinta y vuelve a 0.",
-"Cada acúmulo reduz em 5% o Ataque e o Poder mágico desse inimigo e não expira com o tempo. No 5º acúmulo explode na hora, com dano mágico igual a 125% do Poder mágico de quem pinta, e volta a 0.",
-"Jeder Stapel senkt Angriff und Zauberkraft des Gegners um 5% und läuft nie ab. Beim 5. Stapel platzt es sofort für magischen Schaden in Höhe von 125% der Zauberkraft des Malenden, und die Stapel fallen auf 0.",
-"Каждый заряд снижает атаку и силу магии врага на 5% и не истекает. На 5-м заряде взрывается на месте, нанося магический урон в 125% силы магии рисовавшего, заряды обнуляются."
+"每层使该敌人的攻击力与法术强度降低3%，不会随时间消失。叠至第5层时当场爆发，造成相当于涂鸦者法术强度125%的魔法伤害。爆发后层数仍会保留，之后4秒内不会再次爆发。",
+"แต่ละชั้นลดพลังโจมตีและพลังเวทของศัตรูนั้น 3% และไม่หมดไปตามเวลา ที่ชั้นที่ 5 จะระเบิดทันที สร้างความเสียหายเวทเท่ากับ 125% ของพลังเวทของผู้พ่นสี ชั้นยังคงอยู่หลังระเบิด และจะไม่ระเบิดซ้ำภายใน 4 วินาที",
+"Mỗi tầng giảm Công và Phép của kẻ địch đó 3% và không hết hạn theo thời gian. Ở tầng thứ 5 nổ tại chỗ, gây sát thương phép bằng 125% Phép của người vẽ. Sau khi nổ các tầng vẫn còn, và không thể nổ lại trong 4 giây.",
+"Setiap tumpuk menurunkan Serangan dan Kekuatan Magis musuh itu 3% dan tak kedaluwarsa. Pada tumpuk ke-5 meledak di tempat dengan kerusakan magis sebesar 125% Kekuatan Magis pelukis. Tumpukan tetap tersisa setelah meledak, dan tidak bisa meledak lagi selama 4 detik.",
+"Cada carga reduce un 3% el Ataque y el Poder mágico de ese enemigo y no caduca con el tiempo. En la 5.ª carga estalla al instante con daño mágico igual al 125% del Poder mágico de quien pinta. Las cargas se mantienen tras el estallido y no puede volver a estallar durante 4 segundos.",
+"Cada acúmulo reduz em 3% o Ataque e o Poder mágico desse inimigo e não expira com o tempo. No 5º acúmulo explode na hora, com dano mágico igual a 125% do Poder mágico de quem pinta. Os acúmulos permanecem após a explosão, e ela não pode explodir de novo por 4 segundos.",
+"Jeder Stapel senkt Angriff und Zauberkraft des Gegners um 3% und läuft nie ab. Beim 5. Stapel platzt es sofort für magischen Schaden in Höhe von 125% der Zauberkraft des Malenden. Die Stapel bleiben danach erhalten, und es kann 4 Sekunden lang nicht erneut platzen.",
+"Каждый заряд снижает атаку и силу магии врага на 3% и не истекает. На 5-м заряде взрывается на месте, нанося магический урон в 125% силы магии рисовавшего. После взрыва заряды сохраняются, а повторный взрыв невозможен 4 секунды."
 ],
 "keyword.curse.term": [
 "诅咒",

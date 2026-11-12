@@ -40,6 +40,7 @@ import {
   FOCUS,
   sidestep,
   vandalismOffenseShred,
+  VANDALISM_REBURST_SECONDS,
   orbitStep,
   applyCombatStatusEffect,
 } from "../../src/core/skirmish";
@@ -2950,8 +2951,8 @@ describe("메론 정적 전투 계약", () => {
     const one = cast(1);
     const four = cast(4);
     expect(four.dealt / one.dealt).toBeCloseTo(4, 5);
-    // 완성작을 공개한 자리에는 밑그림이 남지 않는다.
-    expect(four.enemy.overpaint).toBeNull();
+    // 터뜨려도 덧칠은 그대로 남는다(응태 결정 2026-11-12) — 묻힌 약화가 궁극기 한 번에 사라지지 않는다.
+    expect(four.enemy.overpaint?.stacks).toBe(4);
   });
 
   it("의 패시브는 표적의 덧칠이 가득 차면 다른 적으로 옮겨 간다", () => {
@@ -4018,7 +4019,7 @@ describe("데이", () => {
 
   it("의 밴덜리즘은 공격력·주문력을 함께 깎고 상한에서 터진다", () => {
     const effect = getRelic("deina").basic.statusEffects!.find((e) => e.kind === "vandalism")!;
-    expect(effect).toMatchObject({ kind: "vandalism", offenseShredPercent: 5, maxStacks: 5 });
+    expect(effect).toMatchObject({ kind: "vandalism", offenseShredPercent: 3, maxStacks: 5 });
     // **시계를 달지 않는다.** 표적을 매 타격마다 갈아타는 개체라 시간을 두면 한 바퀴를 돌고
     // 돌아왔을 때 이미 말라, 몇 겹을 칠하든 영영 1~2겹에 머문다(유지 시간 8초로 두고 재현했을
     // 때 평타만으로는 한 번도 터지지 않았다). `seconds`가 다시 생기면 여기서 걸린다.
@@ -4038,11 +4039,30 @@ describe("데이", () => {
         shredAtPeak = vandalismOffenseShred(enemy);
       }
     }
-    // 겹은 상한 직전까지 오르며, 한 겹이 공격력·주문력을 5%씩 깎는다.
-    expect(peak).toBeGreaterThanOrEqual(4);
-    expect(shredAtPeak).toBeCloseTo(peak * 0.05, 5);
-    // 상한에 닿은 프레임에 스스로 터지고 겹이 0으로 돌아간다.
+    // 겹은 상한까지 오르며, 한 겹이 공격력·주문력을 3%씩 깎는다.
+    expect(peak).toBe(5);
+    expect(shredAtPeak).toBeCloseTo(peak * 0.03, 5);
+    // 상한에 닿은 프레임에 스스로 터지고, 겹은 남는다(응태 결정 2026-11-12).
     expect(events.some((event) => event.kind === "vandalismBurst")).toBe(true);
+    expect(enemy.vandalism?.stacks).toBe(5);
+  });
+
+  it("의 밴덜리즘은 터진 뒤 4초 동안 다시 터지지 않는다", () => {
+    expect(VANDALISM_REBURST_SECONDS).toBe(4);
+    const state = createSkirmish([getRelic("deina")], [getRelic("amo")], arena);
+    const [deina, enemy] = state.fighters;
+    deina.x = 400; deina.y = 700; enemy.x = 480; enemy.y = 700;
+    enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
+    const rng = seeded(9);
+    const bursts: number[] = [];
+    let t = 0;
+    for (; t < 14 && state.phase === "fight"; t += 0.05) {
+      for (const event of stepSkirmish(state, 0.05, rng)) if (event.kind === "vandalismBurst") bursts.push(t);
+    }
+    // 상한에 머문 채 맞을 때마다 터지지 않는다 — 터짐 사이가 대기 시간보다 짧지 않다.
+    expect(bursts.length).toBeGreaterThanOrEqual(2);
+    for (let i = 1; i < bursts.length; i++) expect(bursts[i] - bursts[i - 1]).toBeGreaterThanOrEqual(VANDALISM_REBURST_SECONDS - 0.06);
+    expect(enemy.vandalism?.stacks).toBe(5);
   });
 
   it("의 밴덜리즘은 시간이 흘러도 지워지지 않는다", () => {
@@ -4061,7 +4081,7 @@ describe("데이", () => {
     deina.stunnedFor = 30;
     for (let t = 0; t < 12 && state.phase === "fight"; t += 0.05) stepSkirmish(state, 0.05, rng);
     expect(enemy.vandalism?.stacks).toBe(painted);
-    expect(vandalismOffenseShred(enemy)).toBeCloseTo(painted * 0.05, 5);
+    expect(vandalismOffenseShred(enemy)).toBeCloseTo(painted * 0.03, 5);
   });
 
   it("의 짧은 도발은 때린 적만 자기 쪽으로 돌린다", () => {

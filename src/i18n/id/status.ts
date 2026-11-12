@@ -35,7 +35,7 @@ export const STATUS_ID = {
   "status.submerged": "Terendam",
   "status.submerged.detail": "Kecepatan Gerak -{percent}% · Berakhir saat keluar dari Perairan Dangkal",
   "status.vandalism": "Vandalisme",
-  "status.vandalism.detail": "{stacks} / {max} tumpuk · Serangan & Kekuatan Magis -{percent}% · Meledak saat penuh",
+  "status.vandalism.detail": "{stacks} / {max} tumpuk · Serangan & Kekuatan Magis -{percent}% · Meledak saat penuh, tumpukan tetap",
   "status.pressure": "Tekanan Air",
   "status.pressure.detail": "{stacks} / {max} tumpuk · Kecepatan serang & gerak -{percent}% · Penuh: meledak dan pingsan",
   "status.drowsy": "Kantuk",

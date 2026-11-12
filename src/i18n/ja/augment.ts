@@ -38,7 +38,7 @@ export const AUGMENT_JA = {
   "augment.tag.detail.curse": "1層ごとに耐性－{resistancePercent}%。最大{maxStacks}層、{seconds}秒。再付与で時間更新。",
   "augment.tag.detail.butcher": "{maxStacks}層で全消費し、使用者の攻撃力{burstPower}%の物理ダメージ。層は時間で消えない。",
   "augment.tag.detail.frostPlume": "{holdSeconds}秒以内に{maxStacks}層で全消費。{burstSeconds}秒かけて攻撃力の合計{burstPower}%のダメージ。{slowSeconds}秒間、攻撃・移動速度－{slowPercent}%。",
-  "augment.tag.detail.vandalism": "1層ごとに攻撃力・魔力－{offenseShredPercent}%。{maxStacks}層で全消費し、使用者の魔力{burstPower}%の魔法ダメージ。層は時間で消えない。",
+  "augment.tag.detail.vandalism": "1層ごとに攻撃力・魔力－{offenseShredPercent}%。{maxStacks}層で弾け、使用者の魔力{burstPower}%の魔法ダメージ。層は残り、4秒間は再び弾けない。層は時間で消えない。",
   "augment.tag.detail.pressure": "1層ごとに攻撃・移動速度－{speedPercentPerStack}%。{seconds}秒以内に{maxStacks}層で全消費し、{stunSeconds}秒気絶、使用者の防御力{defensePower}%＋耐性{resistancePower}%の物理ダメージ。気絶後{lockoutSeconds}秒は蓄積不可。",
   "augment.tag.detail.drowsy": "{seconds}秒以内に{maxStacks}層で{sleepSeconds}秒睡眠。被ダメージで起き、使用者の耐性{wakeResistancePower}%の魔法ダメージを受け、{groggySeconds}秒間攻撃速度－{groggyAttackSpeedPercent}%。",
   "augment.tag.detail.intimidate": "{seconds}秒以内に{maxStacks}層で全消費し、{fearSeconds}秒恐怖。その後{immunitySeconds}秒は威圧・恐怖無効。",

@@ -164,7 +164,7 @@ export const SKILL_TH = {
   "skill.sentence.teamMissingHpHeal": "พันธมิตรที่มีชีวิตทุกตัวฟื้นฟู {percent}% ของ[[missing-hp|HP ที่เสียไป]]ของตัวเอง",
   "skill.sentence.selfBulwark": "เป็นเวลา {seconds} วินาที จะรับความเสียหายแทนพันธมิตรทุกตัว และฟื้นฟู {percent}ทุกวินาทีระหว่างนั้น",
   "skill.sentence.selfBulwarkElation": "รับความเสียหายแทนพันธมิตรทุกคนเป็นเวลา {seconds} วินาที ระหว่างนั้นปริมาณการฟื้นฟูของ[[nodonia-elation|ปีติ]]เพิ่มขึ้น {percent}%",
-  "skill.sentence.overpaintDetonation": "ระเบิด[[overpaint|ทาทับ]]ที่สะสมบน{target} สร้าง{damage}ต่อชั้น แล้วล้างทาทับนั้น",
+  "skill.sentence.overpaintDetonation": "ระเบิด[[overpaint|ทาทับ]]ที่สะสมบน{target} สร้าง{damage}ต่อชั้น ทาทับยังคงอยู่",
   "skill.sentence.channel": "เป็นเวลา {seconds} วินาที สร้าง{damage}ให้{target}ทุกวินาที และ{effects}",
   "skill.sentence.channel.rider": "{tick} ระหว่างนั้น ศัตรูที่โดน[[basic-attack|การโจมตีปกติ]]จะ{effects}",
   "skill.sentence.cycleHeader": "ทำ {count} ขั้นต่อไปนี้ซ้ำตามลำดับ",

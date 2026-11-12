@@ -1794,7 +1794,8 @@ export const RELICS: RelicDef[] = [
       // 폭발형 궁극기라 이 위력은 총량이 아니라 **덧칠 한 겹당** 값이다. 네 겹을 다 칠해도
       // 렉시아의 단일 대상 궁극기(300%)에 못 미치고, 한 겹도 없는 적은 대상에서 빠진다 —
       // 전장 전체를 때리는 지원가가 최상위 딜러의 한 방을 넘지 않게 하는 상한이다.
-      power: 60,
+      // 터뜨려도 덧칠이 남게 된 뒤(v0.447.1) 다음 평타부터 배율이 이어지므로 60 → 50으로 덜었다.
+      power: 50,
       overpaintDetonation: true,
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
@@ -4023,7 +4024,7 @@ export const RELICS: RelicDef[] = [
       // 이 들어가 평타 한 대씩 돌던 것이 한 번에 끝나므로, 피해는 평타보다도 얕게 둔다.
       auraDamagePercent: 25,
       radius: 240,
-      vandalism: { kind: "vandalism", offenseShredPercent: 5, maxStacks: 5, burstPower: 125 },
+      vandalism: { kind: "vandalism", offenseShredPercent: 3, maxStacks: 5, burstPower: 125 },
       // 평타를 놓아도 도발은 그대로 걸린다 — 도발이 "때린다"가 아니라 "피해가 들어간다"에
       // 붙어 있어, 달리는 것 자체가 어그로인 개체의 탱킹이 폭주 중에 꺼지지 않는다.
       taunt: { kind: "taunt", seconds: 0.75 },
@@ -4098,7 +4099,7 @@ export const RELICS: RelicDef[] = [
        * 이 개체의 탱킹이라, 길게 걸면 종이 방어로 그 시간을 다 맞는다.
        */
       statusEffects: [
-        { kind: "vandalism", offenseShredPercent: 5, maxStacks: 5, burstPower: 125 },
+        { kind: "vandalism", offenseShredPercent: 3, maxStacks: 5, burstPower: 125 },
         { kind: "taunt", seconds: 0.75 },
       ],
     },
@@ -4130,7 +4131,7 @@ export const RELICS: RelicDef[] = [
         // 전장이 한꺼번에 받는 틱과 달리, 이쪽은 그 5초 안에 실제로 손이 닿은 적만 받는다.
         basicStatusEffects: [{ kind: "stun", seconds: 1 }],
       },
-      statusEffects: [{ kind: "vandalism", offenseShredPercent: 5, maxStacks: 5, burstPower: 125 }],
+      statusEffects: [{ kind: "vandalism", offenseShredPercent: 3, maxStacks: 5, burstPower: 125 }],
     },
   },
   {

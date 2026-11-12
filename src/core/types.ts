@@ -1006,7 +1006,7 @@ export type CombatStatusEffect =
       kind: "vandalism";
       /** 중첩 하나가 깎는 공격력·주문력 비율(%). */
       offenseShredPercent: number;
-      /** 쌓을 수 있는 최대 중첩. 이 겹에 닿으면 터지고 0으로 돌아간다. */
+      /** 쌓을 수 있는 최대 중첩. 이 겹에 닿으면 터지지만 겹은 남고, 재폭발 대기(`VANDALISM_REBURST_SECONDS`) 동안 다시 터지지 않는다. */
       maxStacks: number;
       /** 터질 때 시전자 주문력에서 뽑는 마법 피해 비율(%). */
       burstPower: number;

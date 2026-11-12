@@ -587,7 +587,7 @@ export default {
   "keyword.butcher.description": "Bei 3 Stapeln platzt es sofort für physischen Schaden in Höhe von 120% des Angriffs. Danach fallen die Stapel auf 0 und laufen nie zeitlich ab.",
   "keyword.vandalism.term": "Vandalismus",
   "keyword.observation.term": "Sichtung",
-  "keyword.vandalism.description": "Jeder Stapel senkt Angriff und Zauberkraft des Gegners um 5% und läuft nie ab. Beim 5. Stapel platzt es sofort für magischen Schaden in Höhe von 125% der Zauberkraft des Malenden, und die Stapel fallen auf 0.",
+  "keyword.vandalism.description": "Jeder Stapel senkt Angriff und Zauberkraft des Gegners um 3% und läuft nie ab. Beim 5. Stapel platzt es sofort für magischen Schaden in Höhe von 125% der Zauberkraft des Malenden. Die Stapel bleiben danach erhalten, und es kann 4 Sekunden lang nicht erneut platzen.",
   "keyword.observation.description": "Eine Markierung ohne eigenen Schaden. Stapel bauen sich auf, erneutes Anwenden erneuert die Dauer. Trifft Morphes Normalangriff, lösen diese Stapel aus.",
   "keyword.curse.term": "Fluch",
   "keyword.curse.description": "Jeder Stapel senkt den Widerstand des Gegners um 15%. Bis zu 3 Stapel, 8 Sekunden Dauer; erneutes Wirken startet die Dauer neu. Da nur der Widerstand sinkt, betrifft er nur magischen Schaden.",

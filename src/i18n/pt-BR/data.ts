@@ -587,7 +587,7 @@ export default {
   "keyword.butcher.description": "Com 3 acúmulos explode na hora e causa dano físico igual a 120% do Ataque. Depois volta a 0 e não expira com o tempo.",
   "keyword.vandalism.term": "Vandalismo",
   "keyword.observation.term": "Avistamento",
-  "keyword.vandalism.description": "Cada acúmulo reduz em 5% o Ataque e o Poder mágico desse inimigo e não expira com o tempo. No 5º acúmulo explode na hora, com dano mágico igual a 125% do Poder mágico de quem pinta, e volta a 0.",
+  "keyword.vandalism.description": "Cada acúmulo reduz em 3% o Ataque e o Poder mágico desse inimigo e não expira com o tempo. No 5º acúmulo explode na hora, com dano mágico igual a 125% do Poder mágico de quem pinta. Os acúmulos permanecem após a explosão, e ela não pode explodir de novo por 4 segundos.",
   "keyword.observation.description": "Uma marca que não causa dano. Os acúmulos se somam e reaplicá-la renova a duração. Quando o ataque básico de Morphe acerta, esses acúmulos são disparados.",
   "keyword.curse.term": "Maldição",
   "keyword.curse.description": "Cada acúmulo reduz em 15% a Resistência desse inimigo. Acumula até 3, dura 8 segundos e lançar de novo reinicia a duração. Como só reduz a Resistência, afeta apenas o dano mágico.",

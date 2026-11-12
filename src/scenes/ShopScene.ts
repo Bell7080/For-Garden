@@ -225,7 +225,8 @@ export class ShopScene extends Phaser.Scene {
     const shopView = shopGridViewport();
     addScrollHint(this, undefined, { x: (shopView.left + shopView.right) / 2, y: (shopView.top + shopView.bottom) / 2, width: shopView.right - shopView.left, height: shopView.bottom - shopView.top, depth: 45, read: () => ({ offset: this.content?.y ?? 0, min: this.minScrollY }) });
     playSceneEntrance(this);
-    showContentIntro(this, "shop");
+    // 일반 상점만 — 같은 씬을 쓰는 고고학·결투·마일리지 상점에서 일일·특가·골드 탭 이야기를 하면 맞지 않는다.
+    if (this.storefront === "shop") showContentIntro(this, "shop");
   }
 
   /** 관성은 프레임 시간에 맞춰 감쇠해 고주사율에서도 같은 거리로 멈춘다. */

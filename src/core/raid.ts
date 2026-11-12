@@ -189,7 +189,7 @@ export function raidBossGrowth(difficulty: RaidDifficulty): { level: number; bre
  * 보여 준 `LV.n`과 실제로 맞는 수치가 갈린다. 세기의 손잡이는 난이도의 레벨 하나다.
  */
 function raidBossScaledStats(base: RelicDef, difficulty: RaidDifficulty): RelicDef["stats"] {
-  return applyEncounterScaling(base.stats, raidBossGrowth(difficulty).level, RAID_BOSS_ROLE);
+  return applyEncounterScaling(base.stats, base.rarity, raidBossGrowth(difficulty).level, RAID_BOSS_ROLE);
 }
 
 /**

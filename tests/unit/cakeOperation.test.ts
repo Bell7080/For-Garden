@@ -48,7 +48,7 @@ describe("치즈케이크 대작전 단계 표", () => {
     const tier = getCakeOperationTier("cake-6");
     const enemies = cakeOperationEnemies(tier);
     const base = getRelic(CAKE_OPERATION_ENEMY_IDS[0]);
-    const expected = applyEncounterScaling(base.stats, cakeOperationEnemyDisplayLevel(tier).level, cakeOperationRole(tier));
+    const expected = applyEncounterScaling(base.stats, base.rarity, cakeOperationEnemyDisplayLevel(tier).level, cakeOperationRole(tier));
     expect(enemies[0].stats).toEqual(expected);
     // 같은 몸을 여러 전투원이 나눠 쓰면 한쪽의 피해가 다른 쪽에 묻는다.
     expect(enemies[0].stats).not.toBe(enemies[1].stats);

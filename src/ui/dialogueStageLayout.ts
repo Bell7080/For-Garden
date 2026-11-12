@@ -410,14 +410,30 @@ export function explosionShards(count: number = DIALOGUE_EXPLOSION.shardCount): 
 /** 이야기가 부르는 배경 이름과 원화 키의 대응. 새 무대는 여기 한 줄을 더한다. */
 export const DIALOGUE_BACKDROP: Readonly<Record<DialogueBackdrop, string>> = {
   train: BACKGROUND.storyTrain,
-  // 폭파 뒤 전장은 1-1이 실제로 싸우는 스토리 전장이다 — 오프닝이 끝나는 자리가 곧 첫 관문이다.
   battlefield: BACKGROUND.combat,
   // 3장부터는 그 장의 전투가 서는 전장 원화를 그대로 무대로 쓴다(`stageFieldBackground`와 같은 장 경계).
   deepField: BACKGROUND.combatDeep,
   prisonField: BACKGROUND.combatPrisonApproach,
   thirdBranchField: BACKGROUND.combatThirdBranch,
-  // 배경을 정하지 않은 이야기(애착·곁 이야기 등)의 기본 무대 — 렐릭 도감 탭과 같은 원화다.
   relics: BACKGROUND.relics,
+  wreck: BACKGROUND.storyWreck,
+  // 닫힌 문은 기존 전장 원화다. 파손 후 그림도 이 원화를 직접 편집해 구조와 시점을 맞춘다.
+  pressureClosed: BACKGROUND.combatPrisonApproach,
+  pressureBroken: BACKGROUND.storyPressureBroken,
+  assembly: BACKGROUND.storyAssembly,
+  detention: BACKGROUND.storyDetention,
+  restraint: BACKGROUND.storyRestraint,
+  quarters: BACKGROUND.storyQuarters,
+  careRoom: BACKGROUND.storyCareRoom,
+  careRoomNight: BACKGROUND.storyCareRoomNight,
+  quartersNight: BACKGROUND.storyQuartersNight,
+  library: BACKGROUND.storyLibrary,
+  controlRoom: BACKGROUND.storyControlRoom,
+  lounge: BACKGROUND.storyLounge,
+  canal: BACKGROUND.storyCanal,
+  rooftopDawn: BACKGROUND.storyRooftopDawn,
+  rooftopNight: BACKGROUND.storyRooftopNight,
+  greenhouse: BACKGROUND.lobby,
 };
 
 /**

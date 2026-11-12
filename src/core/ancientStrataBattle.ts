@@ -66,7 +66,7 @@ export function getAncientStrataFloor(floor: number, season: string = activeSeas
   const trialId = ANCIENT_TRIAL_IDS[(floor - 1 + block + month) % ANCIENT_TRIAL_IDS.length], trial: AncientTrial = ANCIENT_TRIALS[trialId];
   const reference = ancientReferenceBudget();
   const roles = roster.map((_, index) => ancientEncounterRole(template.kind, index));
-  const raw = roster.map((id, index) => applyEncounterScaling(getRelic(id).stats, ANCIENT_STRATA_ENEMY_LEVEL, roles[index], roles.filter(role => role === roles[index]).length));
+  const raw = roster.map((id, index) => applyEncounterScaling(getRelic(id).stats, getRelic(id).rarity, ANCIENT_STRATA_ENEMY_LEVEL, roles[index], roles.filter(role => role === roles[index]).length));
   const rawHp = raw.reduce((sum, stats) => sum + stats.hp, 0);
   const pressure = (stats: Stats) => Math.max(stats.atk, stats.ap) * stats.attackSpeed / 100;
   const rawPressure = raw.reduce((sum, stats) => sum + pressure(stats), 0);

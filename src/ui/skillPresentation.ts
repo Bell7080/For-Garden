@@ -1277,7 +1277,11 @@ function statusClausesWithoutRally(skill: DescribedSkill): SkillEffectClause[] {
   // 문장 둘이 나란히 선다. 어미를 잘라 붙이지 않고 이어지는 형태를 표가 통째로 갖는다.
   const knockback = effects.find((effect) => effect.kind === "knockback");
   const merged = concussion !== undefined && stun !== undefined && knockback !== undefined;
+  // 깊은 출혈과 날려버림도 한 절이다 — 따로 세우면 「부여한다 날려버린다」가 나란히 선다(수쿠스이노).
+  const deepBleed = effects.find((effect) => effect.kind === "bleed" && effect.deep && isStandardBleed(effect));
+  const bleedKnock = !merged && deepBleed !== undefined && knockback !== undefined;
   const texts: string[] = [];
+  if (bleedKnock) texts.push(t("skill.status.deepBleedKnockback"));
   // 뇌진탕이 있으면 기절을 그 뒤에 이어 붙여 한 덩어리로 만든다. 어미를 잘라 붙이지 않고
   // 이어지는 형태를 직접 적는다 — 잘라 붙이면 "입힌고" 같은 어형이 나온다.
   if (concussion && stun && stun.kind === "stun") {
@@ -1287,6 +1291,7 @@ function statusClausesWithoutRally(skill: DescribedSkill): SkillEffectClause[] {
   }
   for (const effect of effects) {
     if (merged && effect === knockback) continue;
+    if (bleedKnock && (effect === knockback || effect === deepBleed)) continue;
     if (concussion && stun && (effect === concussion || effect === stun)) continue;
     const text = statusEffectClause(effect);
     if (text) texts.push(text);
@@ -1334,10 +1339,10 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   // 스킬마다 다른 값(회복 감소, 표준과 다른 시간)만 남긴다. 공용 값과 어긋나는 출혈은
   // `skillArt.test`가 막고, 막지 못한 평범한 출혈은 수치를 그대로 적는 문장으로 되돌아간다.
   if (effect.kind === "bleed" && effect.deepenOnRepeat) {
-    return t("skill.status.bleedDeepen", { reduction: effect.deepenOnRepeat.healingReceivedReductionPercent });
+    return t("skill.status.bleedDeepen");
   }
   if (effect.kind === "bleed" && effect.deep && isStandardBleed(effect)) {
-    return t("skill.status.bleedDeep", { reduction: effect.healingReceivedReductionPercent ?? 0 });
+    return t("skill.status.bleedDeep");
   }
   if (effect.kind === "bleed" && (effect.healingReceivedReductionPercent ?? 0) > 0) {
     return t("skill.status.bleedHealCut", { seconds: effect.seconds, reduction: effect.healingReceivedReductionPercent ?? 0 });
@@ -1492,8 +1497,8 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
       return t("skill.breakthrough.effect.basic.frostBrand", { name: def.basic.name, percent: trim(effect.damagePercentPerStack), max: trim(effect.damagePercentPerStack * max) });
     }
     if (effect.kind === "deepBleed") {
-      // 깊은 출혈의 매초 비율은 태그가 말한다. 본문은 이 돌파만의 회복 감소만 적는다.
-      return t("skill.breakthrough.effect.basic.deepBleed", { reduction: trim(effect.healingReceivedReductionPercent) });
+      // 깊은 출혈의 매초 비율과 회복 감소는 태그가 말한다.
+      return t("skill.breakthrough.effect.basic.deepBleed");
     }
     if (effect.kind === "darkRoast") return t("skill.breakthrough.effect.basic.darkRoast", { percent: trim(effect.defenseIgnorePercent) });
     if (effect.kind === "arrowEcho") {

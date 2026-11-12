@@ -882,9 +882,10 @@ export type CombatStatusEffect =
       healingReceivedReductionPercent?: number;
       /**
        * 이미 출혈 중인 적에게 다시 걸면 **깊은 출혈**로 강화된다(마가사의 「다지기」). 매초 비율에 배율을 곱하고
-       * 받는 회복량을 낮춘다. 배율은 늘 이 정의의 원래 값에 곱하므로 다시 걸어도 겹쳐 불어나지 않는다.
+       * 받는 회복량을 공용 값(`BLEED.deepHealingCutPercent`)만큼 낮춘다. 배율은 늘 이 정의의 원래 값에 곱하므로
+       * 다시 걸어도 겹쳐 불어나지 않는다.
        */
-      deepenOnRepeat?: { multiplier: number; healingReceivedReductionPercent: number };
+      deepenOnRepeat?: { multiplier: number };
       /**
        * 처음부터 **깊은 출혈**로 건다(수쿠스이노의 네 번째 턱). 매초 비율에 공용 깊은 출혈 배율(`BLEED.deepMultiplier`)을
        * 곱하므로 정의에는 표준 출혈 값을 적는다 — 깊은 출혈 태그가 말하는 수와 늘 같다.
@@ -2775,8 +2776,8 @@ export type BasicBreakthrough = {
   tauntSeconds: number;
 } | {
   kind: "deepBleed";
+  /** 회복 감소는 공용 깊은 출혈 값(`BLEED.deepHealingCutPercent`)이라 여기 적지 않는다. */
   bleedMultiplier: number;
-  healingReceivedReductionPercent: number;
 } | {
   /**
    * 평타가 가장 다친 아군에게 주는 회복의 일부를 **두 번째로 다친 아군**에게도 보낸다(도디의 「깃펜 톡톡」).

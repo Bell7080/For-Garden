@@ -1,6 +1,6 @@
-import { GROWTH_STAT_KEYS } from "./relicProgression";
+import { GROWTH_STAT_KEYS, breakthroughGrowthPercent } from "./relicProgression";
 import { combatPower, POWER_COMPARISON_SLOTS } from "./combatPower";
-import type { Stats } from "./types";
+import type { RelicRarity, Stats } from "./types";
 
 /**
  * **레벨 디자인 키트** — 적의 세기를 수치가 아니라 **시간**에서 역산하기 위한 한 표.
@@ -179,8 +179,10 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
     /*
      * 셋이 함께 서는 일반 무리도 표시를 한 뼘 무겁게 둔다(응태 요청, 2026-11-12 — "내 전투력이 더 센데 졌다"가 없어야
      * 한다). 대표 두 조합이 50% 넘게 이기는 아군 전투력은 일반 셋의 표시 전투력의 최대 1.15배였다(7-3).
+     * 적이 등급마다 다르게 자라게 되자(같은 날) 6-6(라자·노아·네우리)에서 엘라·마키·스테라가 표시와 같은
+     * 전투력(1.00배)에서야 반을 이겨 ×1.3으로 한 뼘 더 올렸다 — 적이 더 센데 이기는 것은 괜찮지만 약한데 지면 안 된다.
      */
-    powerWeight: 1.2,
+    powerWeight: 1.3,
     ttkSeconds: [10, 16], remainingHp: [0.72, 0.95],
   },
   swarm: {
@@ -232,8 +234,8 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
     healingReduction: { basePercent: 5, maxPercent: 40, rampSeconds: 60 },
     /*
      * **혼자 선 정예는 전투력이 더 무겁게 읽힌다**(응태 요청, 2026-11-12 — "왜 내 전투력이 더 센데 져"가 없어야 한다).
-     * 강인함과 치유 감소는 능력치에 없어 몫만 덜어 셀 때 정예가 실제보다 가볍게 섰다. 대표 두 조합이 정예 하나를 50% 넘게
-     * 이기는 아군 전투력을 재 보니 표시 전투력의 0.55~1.25배였다. 1.4로는 정예 둘이 선 4-10이 아직 1.09배라 1.6으로 둔다.
+     * 강인함과 치유 감소는 능력치에 없어 실제 능력치만 세면 정예가 가볍게 선다. 1-5 토비가 이기는 아군 선(약 6,200~6,700)을
+     * 표시가 그대로 말하도록 실제 능력치 전투력에 1.6을 곱한다(`encounterUnitPower`).
      */
     powerWeight: 1.6,
   },
@@ -288,25 +290,31 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
 };
 
 /**
- * **적 전용 레벨당 성장률(%).**
+ * **적 전용 레벨당 성장률(%) — 등급마다 다르다.**
  *
- * **적은 적이다**(응태 결정, 2026-11-12). 적의 세기는 레벨 하나가 말한다 — 태생 층으로 표시 레벨을 낮추거나
- * 돌파 몫(+10%p)을 숨겨 얹지 않고, 레벨에 상한도 두지 않는다. 그 대신 적은 레벨마다 플레이어(R 2.2 · SR 2.4 · SSR 2.6)보다
- * 가파르게 자란다(3.6%) — 스토리 마지막 보스 카르가 LV.60 언저리에서 예전 「기준 98」의 세기를 내고, 모든 적이 같은 선 위에
- * 선다. 2.2%이던 때의 레벨 `L`(돌파 몫 포함)은 `1 + 예전 증가분 / 0.036`으로 옮겨 세기를 지켰다.
+ * **적은 적이다**(응태 결정, 2026-11-12). 적의 세기는 레벨 하나가 말하고 레벨에 상한이 없다. 그 위에서 **적도 아군처럼**
+ * 등급이 레벨당 성장을 가르고(아군 R 2.2 · SR 2.4 · SSR 2.6과 같은 비례), 돌파 단계마다 오각형 다섯에 아군과 같은 +10%p를
+ * 받는다(`breakthroughGrowthPercent` — 적의 돌파는 레벨이 정한다, `ENEMY_BREAKTHROUGH_LEVELS`). 값은 아군보다 가팔라
+ * SSR 카르가 LV.60 언저리에서 예전 단일 성장 3.6%의 LV.60과 같은 세기(×3.1)를 낸다. 다른 콘텐츠의 레벨은 3.6% 시절의
+ * 세기를 그 개체 등급의 새 곡선 위로 옮겨 적었다.
  */
-export const ENEMY_LEVEL_GROWTH_PERCENT = 3.6;
+export const ENEMY_RARITY_LEVEL_GROWTH: Readonly<Record<RelicRarity, number>> = {
+  R: 2.5,
+  SR: 2.75,
+  SSR: 3,
+};
 
-/** 레벨 1을 기본치로 두고 레벨당 정해진 비율로 자란 배수다. 플레이어와 같은 선형 누적이다. */
-export function enemyLevelMultiplier(level: number): number {
+/** 레벨 1을 기본치로 두고 등급 성장 + 그 레벨의 돌파 몫으로 자란 배수다. 플레이어와 같은 선형 누적이다. */
+export function enemyLevelMultiplier(level: number, rarity: RelicRarity): number {
   if (!Number.isInteger(level) || level < 1) throw new RangeError("적 레벨은 1 이상의 정수여야 합니다.");
-  return 1 + (level - 1) * ENEMY_LEVEL_GROWTH_PERCENT / 100;
+  return 1 + ((level - 1) * ENEMY_RARITY_LEVEL_GROWTH[rarity] + breakthroughGrowthPercent(requiredBreakthroughForLevel(level))) / 100;
 }
 
 /**
- * 적 하나의 전투 능력치 — **레벨로 자라고 유형으로 몫을 받는다.**
+ * 적 하나의 전투 능력치 — **등급·레벨로 자라고 유형으로 몫을 받는다.**
  *
- * 돌파 등급은 그 레벨이 여는 스킬 칸만 정하고 능력치를 얹지 않는다(「적은 적이다」 — 세기는 레벨 하나가 말한다).
+ * 돌파 등급은 그 레벨이 정하고(스킬 칸과 +10%p씩의 능력치 몫을 함께 연다), 등급은 **필수 인자**다 — 기본값을 두면 새
+ * 호출부가 등급을 빠뜨린 채 모두 같은 속도로 자란다(아군 `applyLevelGrowth`와 같은 이유).
  *
  * 성장이 올리는 것은 플레이어와 같은 오각형 다섯뿐이고(`GROWTH_STAT_KEYS`), 공속·이속·치명타
  * 같은 나머지는 그 개체의 정의가 그대로 갖는다. 유형 배수도 **체력과 공격 두 축에만** 걸어
@@ -314,12 +322,13 @@ export function enemyLevelMultiplier(level: number): number {
  */
 export function applyEncounterScaling(
   base: Stats,
+  rarity: RelicRarity,
   level: number,
   role: EncounterRole,
   countOnField: number = ENCOUNTER_ROLE[role].count,
 ): Stats {
   const spec = ENCOUNTER_ROLE[role];
-  const growth = enemyLevelMultiplier(level);
+  const growth = enemyLevelMultiplier(level, rarity);
   const result = { ...base };
   for (const key of GROWTH_STAT_KEYS) result[key] = Math.round(base[key] * growth);
   result.hp = Math.round(result.hp * encounterHpShare(role, countOnField));
@@ -343,8 +352,10 @@ export function encounterHpShare(role: EncounterRole, countOnField: number): num
  * **자리를 아는 전투력** — 적 한 무리의 개체별 표시 전투력(응태 요청, 2026-11-12: 정예가 전투력보다 훨씬 세다).
  *
  * 정예의 체력 몫(×3)은 「셋이 나눠 내던 몫을 혼자 대신한다」는 뜻인데, 전투력 식은 체력을 선형으로 낮게 세어 혼자 선
- * 정예가 실제 세기의 절반쯤으로 읽혔다. 그래서 정예만 **몫을 덜어 낸 한 몸의 전투력 × 그 몸이 대신하는 머릿수**로 센다 —
- * 정예 하나는 셋, 정예 둘은 각자 하나 반이다 — 거기에 자리 몫(`powerWeight`)을 얹는다. 다른 자리는 능력치 그대로에 제 자리 몫만 곱한다. 표시 전용이며 전투에는 쓰지 않는다.
+ * 정예가 실제 세기의 절반쯤으로 읽혔다. 한때 몫을 덜어 낸 한 몸 × 머릿수로 셌더니 방어·저항·주문력까지 4.8배로 불어 1-5 토비가
+ * 아군 두 배(12,900)로 읽혔다(응태: 「수치 표기가 높다」). 지금은 **실제 능력치(몫이 든 값)의 전투력 × 자리 몫**(정예 1.6 · 일반 1.3)이다 —
+ * 토비가 실제로 이기는 아군 선(약 6,200~6,700)과 맞는다. 이카닉시아·코마가 선 벽(1-10·3-10·4-10·7-5)은 편성 상성 때문에 이 표시보다 세다.
+ * 표시 전용이며 전투에는 쓰지 않는다.
  */
 export function encounterUnitPowers(units: readonly { stats: Stats; encounterRole?: EncounterRole }[]): number[] {
   const elites = encounterEliteCount(units);
@@ -358,11 +369,8 @@ export function encounterEliteCount(units: readonly { encounterRole?: EncounterR
 
 /** 개체 하나의 자리를 아는 전투력(`encounterUnitPowers`의 한 칸). `elites`는 그 무리에 선 정예 수다. */
 export function encounterUnitPower(stats: Stats, encounterRole: EncounterRole | undefined, elites: number): number {
-  if (encounterRole !== "elite") return Math.round(combatPower(stats) * ((encounterRole && ENCOUNTER_ROLE[encounterRole].powerWeight) ?? 1));
-  const spec = ENCOUNTER_ROLE.elite;
-  const share = encounterHpShare("elite", elites);
-  const attack = spec.attackMultiplier;
-  return Math.round(combatPower({ ...stats, hp: stats.hp / share, atk: stats.atk / attack, ap: stats.ap / attack }) * share * (spec.powerWeight ?? 1));
+  void elites;
+  return Math.round(combatPower(stats) * ((encounterRole && ENCOUNTER_ROLE[encounterRole].powerWeight) ?? 1));
 }
 
 /** `encounterUnitPowers`의 합 — 셋보다 많이 서면 `groupCombatPower`처럼 평균 × 셋이다. */
@@ -374,13 +382,10 @@ export function encounterGroupPower(units: readonly { stats: Stats; encounterRol
 }
 
 /**
- * 적의 돌파 단계가 열리는 레벨 — 1 · 2 · 3 · 4단계가 이 레벨부터 선다.
- *
- * 돌파 등급은 적에게 **스킬 칸**만 연다(능력치는 레벨 하나가 낸다). 성장을 3.6%로 올리며 레벨이 눌렸으므로, 예전에 각
- * 단계가 열리던 레벨(21 · 31 · 41 · 51, 성장 2.2%)을 **같은 세기의 레벨**로 옮겨 적었다(1장은 돌파 없이 끝나도록 한 칸 올림) — 그대로 두면 같은 적이 스킬 칸
- * 하나를 잃는다. 적에게는 레벨 상한이 없고 마지막 단계 뒤로는 4단계로 선다.
+ * 적의 돌파 단계가 열리는 레벨 — 1 · 2 · 3 · 4단계가 이 레벨부터 선다(응태 결정 2026-11-12, 아군의 한계 돌파 문턱 20 · 30 · 40 · 50
+ * 바로 다음 레벨). 단계마다 스킬 칸과 오각형 +10%p를 함께 연다. 적에게는 레벨 상한이 없고 마지막 단계 뒤로는 4단계로 선다.
  */
-export const ENEMY_BREAKTHROUGH_LEVELS: readonly number[] = [15, 21, 27, 33];
+export const ENEMY_BREAKTHROUGH_LEVELS: readonly number[] = [21, 31, 41, 51];
 
 /** 그 레벨의 적이 지니는 돌파 단계(`ENEMY_BREAKTHROUGH_LEVELS`). */
 export function requiredBreakthroughForLevel(level: number): number {

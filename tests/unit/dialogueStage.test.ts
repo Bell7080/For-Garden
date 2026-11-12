@@ -166,13 +166,13 @@ describe("1장 오프닝 — 추락하는 방주", () => {
     for (const { node } of stages.filter(({ node }) => node.standing === "koma")) expect(node.speaker).toBe("???");
   });
 
-  it("은 폭파와 함께 전장으로 넘어가고 1-1의 적 셋과 맞선다", () => {
+  it("은 폭파와 함께 열차 잔해로 넘어가고 1-1의 적 셋과 맞선다", () => {
     const blast = stages.findIndex(({ node }) => node.cue === "explosion");
     expect(blast).toBeGreaterThan(0);
-    expect(stages[blast].node.backdrop).toBe("battlefield");
+    expect(stages[blast].node.backdrop).toBe("wreck");
     expect(stages[blast].cast).toEqual([]);
     for (const { backdrop } of stages.slice(0, blast)) expect(backdrop).toBe("train");
-    for (const { backdrop } of stages.slice(blast)) expect(backdrop).toBe("battlefield");
+    for (const { backdrop } of stages.slice(blast)) expect(backdrop).toBe("wreck");
 
     // 오프닝이 끝나는 자리가 곧 첫 관문이다 — 폭파 뒤 선 공멸 셋이 1-1의 적 편성과 같다.
     const firstStage = CHAPTERS[0].stages[0];

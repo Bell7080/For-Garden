@@ -101,12 +101,12 @@ export const KEYWORDS: readonly KeywordDef[] = [
     description: `${BLEED.minor.seconds}초 동안 매초 최대 체력의 ${BLEED.minor.percentPerSecond}% 고정 피해를 입는다. 약한 재적용은 더 강한 출혈을 덮지 않는다.`,
   },
   {
-    // 깊은 출혈은 렉시아(돌파)와 마가사(다지기)가 함께 쓴다. 시간·매초 비율은 둘이 같은 공용 값(`BLEED.deepMultiplier`)이라
-    // 태그가 말하고, 개체마다 다른 회복 감소만 스킬 본문이 적는다.
+    // 깊은 출혈은 렉시아(돌파)·마가사(다지기)·수쿠스이노가 함께 쓴다. 시간·매초 비율·회복 감소가 모두 공용 값이라
+    // 태그가 말하고, 스킬 본문은 「깊은 출혈을 부여한다」까지만 적는다.
     id: "deep-bleed",
     term: "깊은 출혈",
     kind: "debuff",
-    description: `더 깊게 벌어진 [[bleed|출혈]]이다. ${BLEED.seconds}초 동안 매초 최대 체력의 ${BLEED.percentPerSecond * BLEED.deepMultiplier}% 고정 피해를 입는다. 방어력으로 줄일 수 없고, 지속되는 동안 받는 회복량이 줄어든다.`,
+    description: `더 깊게 벌어진 [[bleed|출혈]]이다. ${BLEED.seconds}초 동안 매초 최대 체력의 ${BLEED.percentPerSecond * BLEED.deepMultiplier}% 고정 피해를 입는다. 방어력으로 줄일 수 없고, 지속되는 동안 받는 회복량이 ${BLEED.deepHealingCutPercent}% 줄어든다.`,
   },
   // 중독은 쓰는 개체가 델로피 하나뿐이라 태그가 매초 계수를 가진다. 다만 **시간**은 출혈과
   // 같은 이유로 스킬마다 본문이 적는다 — 시간이 다른 개체가 생기는 순간 태그가 거짓말이 된다.
@@ -235,6 +235,11 @@ export const KEYWORDS: readonly KeywordDef[] = [
   {
     id: "tailwind", term: "순풍", kind: "buff",
     description: "정해진 시간 동안 공격 속도와 이동 속도가 각각 20% 오른다. 같은 순풍을 다시 받으면 남은 시간이 더 긴 쪽으로 갱신된다.",
+  },
+  // 직군 쪽지의 「적의 눈길을 끄는 존재감」이 연다(`SKIRMISH.rolePull`). 확률이 아니라 표적을 고를 때 거리에 얹는 끌림이다.
+  {
+    id: "presence", term: "존재감", kind: "rule",
+    description: "적이 표적을 고를 때 끌리는 정도다. 존재감이 큰 직군일수록 조금 더 멀리 있어도 가까운 적처럼 먼저 노려진다(탱커 > 전사 > 암살자 > 지원가).",
   },
   {
     id: "regeneration", term: "지속 회복", kind: "buff",

@@ -13,7 +13,7 @@ describe("원정 노드 적 편성", () => {
     // 초를 싸우고도 파티 체력이 한 점도 깎이지 않았다.
     expect(elite.map(({ id }) => id)).toEqual(["koma", "amo", "ripa"]);
     // 노드 종류가 레벨을 바꾸지 않는다 — 층이 곧 레벨이고 무게는 유형 배수가 낸다.
-    expect(expeditionEnemyLevel("elite", 4)).toBe(5);
+    expect(expeditionEnemyLevel("elite", 4)).toBe(7);
     // 같은 원본도 더 높은 조우 레벨에서는 실제 전투 수치가 함께 높아져야 한다.
     expect(elite[0].stats.hp).toBeGreaterThan(normal[1].stats.hp);
   });
@@ -38,10 +38,10 @@ describe("원정 노드 적 편성", () => {
     // 같은 20레벨 비교표를 만들어 레벨 차이가 보스 우위를 대신 설명하지 못하게 한다.
     const normalSsr = [getRelic("rex"), getRelic("spino"), getRelic("mette")]
       .map((relic) => ({ ...relic, stats: applyLevelGrowth(relic.stats, 20, relic.rarity, 0) }));
-    // 폰토스는 LV.13의 43.2% 성장(3.6% × 12)을 실제 전투와 표시에서 함께 쓴다.
+    // 폰토스는 SSR이라 LV.15의 42% 성장(3.0% × 14)을 실제 전투와 표시에서 함께 쓴다.
     // **공격 속도와 충전량은 태생 그대로 남는다** — 성장은 오각형의 다섯 주능력치만 올린다
     // (`GROWTH_STAT_KEYS`). 보스도 아군과 같은 규칙을 쓰므로 여기서 예외를 만들지 않는다.
-    expect(pontos.stats).toMatchObject({ hp: 4010, def: 258, res: 186, ap: 372, attackSpeed: 55, energyGain: 30 });
+    expect(pontos.stats).toMatchObject({ hp: 3976, def: 256, res: 185, ap: 369, attackSpeed: 55, energyGain: 30 });
     // 생존 축은 최종 보스가 일반 적 전체를 넘는다.
     for (const key of ["hp", "def", "res"] as const) {
       expect(pontos.stats[key]).toBeGreaterThan(Math.max(...normalEnemies.map((enemy) => enemy.stats[key])));
@@ -55,9 +55,9 @@ describe("원정 노드 적 편성", () => {
     expect(pontos.stats.ap).toBeLessThan(10_000);
   });
 
-  it("폰토스의 실제 성장·표시·스킬 등급은 LV.13 / I다", () => {
-    expect(expeditionBossGrowth()).toEqual({ level: 13, breakthrough: 0 });
-    expect(expeditionEnemyLevel("boss", 20)).toBe(13);
-    expect(expeditionEnemyLevel("normal", 19)).toBe(29);
+  it("폰토스의 실제 성장·표시·스킬 등급은 LV.15 / I다", () => {
+    expect(expeditionBossGrowth()).toEqual({ level: 15, breakthrough: 0 });
+    expect(expeditionEnemyLevel("boss", 20)).toBe(15);
+    expect(expeditionEnemyLevel("normal", 19)).toBe(33);
   });
 });

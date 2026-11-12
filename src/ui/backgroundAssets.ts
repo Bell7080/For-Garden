@@ -151,6 +151,21 @@ export const BACKGROUND = {
    * 이야기 무대가 어느 원화를 쓰는지는 `dialogueStageLayout.ts`의 `DIALOGUE_BACKDROP`이 정한다.
    */
   storyTrain: "background-story-train",
+  storyWreck: "background-story-wreck",
+  storyPressureBroken: "background-story-pressure-broken",
+  storyAssembly: "background-story-assembly",
+  storyDetention: "background-story-detention",
+  storyRestraint: "background-story-restraint",
+  storyQuarters: "background-story-quarters",
+  storyCareRoom: "background-story-care-room",
+  storyCareRoomNight: "background-story-care-room-night",
+  storyQuartersNight: "background-story-quarters-night",
+  storyLibrary: "background-story-library",
+  storyControlRoom: "background-story-control-room",
+  storyLounge: "background-story-lounge",
+  storyCanal: "background-story-canal",
+  storyRooftopDawn: "background-story-rooftop-dawn",
+  storyRooftopNight: "background-story-rooftop-night",
   /** 3·4장 스테이지 지도 — 뿌리 온실 회랑이다. 1·2장은 `stageMap`을 쓴다(`stageMapBackground`). */
   stageMapDeep: "background-stage-map-deep",
   /** 3·4장 스테이지 전장 — 수로와 환승로다. 1·2장은 `combat`을 쓴다(`stageFieldBackground`). */
@@ -263,6 +278,22 @@ export const BACKGROUND_ASSETS = [
   // 로비로 넘어간 뒤 25MB를 내리고, 되돌아왔을 때 다시 읽을 수 있다.
   [BACKGROUND.title, "sprites/background/background_011.webp"],
   [BACKGROUND.storyTrain, "sprites/background/story_train.webp"],
+  // 대사 장면 전용 원화는 부트에 넣지 않고 그 무대를 열 때만 읽는다.
+  [BACKGROUND.storyWreck, "sprites/background/story_wreck.webp"],
+  [BACKGROUND.storyPressureBroken, "sprites/background/story_pressure_broken.webp"],
+  [BACKGROUND.storyAssembly, "sprites/background/story_assembly.webp"],
+  [BACKGROUND.storyDetention, "sprites/background/story_detention.webp"],
+  [BACKGROUND.storyRestraint, "sprites/background/story_restraint.webp"],
+  [BACKGROUND.storyQuarters, "sprites/background/story_quarters.webp"],
+  [BACKGROUND.storyCareRoom, "sprites/background/story_care_room.webp"],
+  [BACKGROUND.storyCareRoomNight, "sprites/background/story_care_room_night.webp"],
+  [BACKGROUND.storyQuartersNight, "sprites/background/story_quarters_night.webp"],
+  [BACKGROUND.storyLibrary, "sprites/background/story_library.webp"],
+  [BACKGROUND.storyControlRoom, "sprites/background/story_control.webp"],
+  [BACKGROUND.storyLounge, "sprites/background/story_lounge.webp"],
+  [BACKGROUND.storyCanal, "sprites/background/story_canal.webp"],
+  [BACKGROUND.storyRooftopDawn, "sprites/background/story_rooftop_dawn.webp"],
+  [BACKGROUND.storyRooftopNight, "sprites/background/story_rooftop_night.webp"],
 ] as const;
 
 /**

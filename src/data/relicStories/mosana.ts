@@ -14,13 +14,14 @@ import type { RelicStoryProfile } from "../../core/relicStory";
 /** 4 — 불빛 두 번. 대답을 불빛으로 하는 아이의 신호를 배우는 장. */
 const CHAPTER_4: DialogueStory = {
   id: "bond.mosana.4",
+  backdrop: "deepField",
   startNodeId: "n1",
   titleCard: { title: "불빛 두 번", subtitle: "모사나 · 애착 이야기 1" },
   nodes: [
     { id: "n1", speaker: "", body: "수조실의 새벽. 물속 깊은 곳에서 작은 불빛 하나가 깜빡거린다. 수면 위로 올라온 모사나가 마스크를 쓴 채 고개만 가볍게 내밀었다.", nextId: "n2" },
     { id: "n2", speaker: "도디", body: "모사나, 어제 어디서 잤어? 같이 아침 먹을래? 밥이야, 밥!", nextId: "n3" },
     { id: "n3", speaker: "", body: "모사나는 대답하지 않는다. 대신 어깨 옆에 뜬 작은 드론의 불빛이 두 번 깜빡인다. 도디가 눈을 껌뻑인다.", nextId: "n4" },
-    { id: "n4", speaker: "도디", body: "…그게 좋다는 거야? 싫다는 거야? 모르겠어. 연구원님, 이게 뭐야?", nextId: "n5" },
+    { id: "n4", speaker: "도디", body: "…그게 같이 먹겠다는 뜻이야? 대장님, 혹시 아세요?", nextId: "n5" },
     { id: "n5", speaker: "연구원", body: "(모사나가 연구원을 바라본다. 마스크 안쪽에서 낮은 숨소리가 새어 나온다.)", choices: [
       { id: "guess", label: "두 번은 승낙이 아니냐고 추측해 본다", nextId: "n6a" },
       { id: "ask", label: "신호를 직접 알려 달라고 부탁한다", nextId: "n6b" },
@@ -37,6 +38,7 @@ const CHAPTER_4: DialogueStory = {
 /** 6 — 잔해 목록. 하나도 빠뜨리지 않고 적는 이유가 드러나는 장. */
 const CHAPTER_6: DialogueStory = {
   id: "bond.mosana.6",
+  backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "잔해 목록", subtitle: "모사나 · 애착 이야기 2" },
   nodes: [
@@ -48,18 +50,19 @@ const CHAPTER_6: DialogueStory = {
       { id: "read", label: "목록을 소리 내어 끝까지 읽어 본다", nextId: "n6a" },
       { id: "ask", label: "누가 찾을지 모르는데 왜 적느냐고 묻는다", nextId: "n6b" },
     ] },
-    { id: "n6a", speaker: "모사나", body: "…읽어 주는 사람이 있어서 좋아. 적기만 하고 읽는 사람 없으면 목록이 아니야. 그냥 종이야.", nextId: "n7" },
-    { id: "n6b", speaker: "모사나", body: "누가 올지 몰라. 그래도 적어 두면 올 수 있어. 안 적으면 오고 싶어도 못 와. 길이 없으니까.", nextId: "n7" },
+    { id: "n6a", speaker: "모사나", body: "…읽어 봤어? 빠진 건 없었지. 찾는 거 있으면 말해.", nextId: "n7" },
+    { id: "n6b", speaker: "모사나", body: "누가 찾으러 올지 모르니까. 적어 두면 어디 뒀는지 바로 알 수 있잖아.", nextId: "n7" },
     { id: "n7", speaker: "", body: "모사나가 목록 한 줄을 손가락으로 짚는다. '구멍 난 장갑 한 켤레'. 그 옆에 아주 작은 글씨로 '아직 따뜻함'이라 적혀 있다.", nextId: "n8" },
     { id: "n8", speaker: "파루아", body: "…이 장갑, 어제 내가 잃어버린 거야. 아직 거기 있었구나. 고마워, 모사나.", nextId: "n9" },
     { id: "n9", speaker: "", body: "모사나의 드론이 불빛을 두 번 깜빡인다. 그리고 마스크 속에서 아주 작게 웃는 소리가 난다.", nextId: "n10" },
-    { id: "n10", speaker: "모사나", body: "…봐. 적어 두면 돌아와. 당신도 그런 줄 알아야 해. 잃어버려도 내가 적어 놓을 테니까." },
+    { id: "n10", speaker: "모사나", body: "…찾아서 다행이네. 당신도 뭐 잃어버리면 말해. 눈에 띄면 챙겨 둘게." },
   ],
 };
 
 /** 8 — 끊어진 줄. 말없이 다시 내려가는 아이를 따라가는 장. */
 const CHAPTER_8: DialogueStory = {
   id: "bond.mosana.8",
+  backdrop: "deepField",
   startNodeId: "n1",
   titleCard: { title: "끊어진 줄", subtitle: "모사나 · 애착 이야기 3" },
   nodes: [
@@ -71,8 +74,8 @@ const CHAPTER_8: DialogueStory = {
       { id: "rope", label: "줄 끝을 대신 잡아 주겠다고 말한다", nextId: "n6a" },
       { id: "rest", label: "오늘은 쉬고 내일 같이 내려가자고 말한다", nextId: "n6b" },
     ] },
-    { id: "n6a", speaker: "모사나", body: "…줄을 잡아 준다고? 지금까지 줄 끝에 사람이 있던 적 없어. 놓치면 안 건져 줘, 당신.", nextId: "n7" },
-    { id: "n6b", speaker: "모사나", body: "…내일은 늦어. 물이 차오르면 그 아이는 못 나와. …하지만 같이라면… 한 번만 생각해 볼게.", nextId: "n7" },
+    { id: "n6a", speaker: "모사나", body: "…그럼 난 혼자 내려갈게. 당신은 여기서 줄만 잡아 줘. 버틸 수 있겠어?", nextId: "n7" },
+    { id: "n6b", speaker: "모사나", body: "…물이 더 차면 그 상자까지 잠겨. 지금 가야 해. 당신이 여기 있어 준다면… 올라올 수 있을 것 같아.", nextId: "n7" },
     { id: "n7", speaker: "", body: "연구원이 줄 끝을 손에 감자 모사나가 천천히 물 아래로 내려간다. 줄이 한 뼘씩 풀려 나간다. 드론의 불빛이 수면 아래에서 작게 깜빡인다.", nextId: "n8" },
     { id: "n8", speaker: "", body: "한참 뒤 줄이 세 번 당겨진다. 세 번은 거의 안 쓰는 신호다. 연구원이 있는 힘껏 줄을 감아올린다.", nextId: "n9" },
     { id: "n9", speaker: "", body: "물 위로 모사나가 올라온다. 품에는 낡은 금속 상자 하나가 안겨 있다. 숨을 몰아쉬는 소리가 마스크 너머로 길게 이어진다.", nextId: "n10" },
@@ -83,6 +86,7 @@ const CHAPTER_8: DialogueStory = {
 /** 10 — 줄 끝의 사람. 마스크를 벗는 장. */
 const CHAPTER_10: DialogueStory = {
   id: "bond.mosana.10",
+  backdrop: "deepField",
   startNodeId: "n1",
   titleCard: { title: "줄 끝의 사람", subtitle: "모사나 · 애착 이야기 4" },
   nodes: [
@@ -177,7 +181,7 @@ export const MOSANA_STORY: RelicStoryProfile = {
     // 0 — 낯선 사이.
     ["…당신이 연구원이야? 수심 확인. 여기는 얕아.", "말은 짧게 할게. 불빛이 대신 말해 줄 거야. 두 번이면 응.", "수조 옆에 앉아도 돼. 물은 안 튀게 할게. 아마."],
     // 1
-    ["오늘은 물이 맑아. 이런 날은 깊이까지 보여.", "마스크 안은 조용해. 그래서 좋아. 근데 가끔 답답해.", "당신, 이름 부르는 소리 작게 하면 잘 들려. 크게 하면 물이 흔들려."],
+    ["오늘은 물이 맑아. 이런 날은 깊이까지 보여.", "마스크 안은 조용해. 그래서 좋아. 근데 가끔 답답해.", "당신, 조금만 작게 불러 줘. 여기선 소리가 울려서 다 들려."],
     // 2
     ["건져 올린 건 목록에 적어 뒀어. 관제실 앞에 붙였어. 읽어 줘.", "수조 가장자리에 도디가 자주 와. 말은 많은데, 밥은 잘 챙겨 줘.", "인양은 하나씩 올리는 거야. 서두르면 줄이 엉켜."],
     // 3
@@ -189,7 +193,7 @@ export const MOSANA_STORY: RelicStoryProfile = {
     // 6 — 장 6 이후: 잔해 목록.
     ["파루아 장갑, 말려서 돌려줬어. 손가락 끝이 아직 접혀 있었어.", "양말 한 짝에도 주인이 있어. 이제 당신도 알지?", "잃어버려도 적어 놓을게. 당신 것도."],
     // 7
-    ["드론이 오늘은 내 어깨에서 안 내려와. 졸린가 봐. 나도 그래.", "물이 차가워. 손끝이 시려서 건진 장갑을 껴 봤어. 작아.", "당신이 목록 읽는 소리가 좋아. 낮고 느려서 물속 같아."],
+    ["드론이 오늘은 내 어깨에서 안 내려와. 졸린가 봐. 나도 그래.", "물이 차가워. 손끝이 시려서 건진 장갑을 껴 봤어. 작아.", "목록 읽어 봤어? 맨 밑 줄은 오늘 아침에 쓴 거야. …당신이 두고 간 컵, 옆에 놨어."],
     // 8 — 장 8 이후: 끊어진 줄.
     ["그날 줄 끝에 사람이 있다는 게 어떤 건지 알았어. 무게가 달라.", "혼자 내려가는 건 그대로야. 근데 올라올 때 발이 좀 빨라졌어.", "세 번 당겼을 때 곧바로 올려 준 거 고마워. 말 안 해도 알았잖아."],
     // 9

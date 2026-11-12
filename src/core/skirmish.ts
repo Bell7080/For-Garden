@@ -1210,10 +1210,15 @@ export const BLEED = {
   /** 작은 출혈은 이름뿐 아니라 실제 공용 수치도 표준과 분리한다. */
   minor: { seconds: 2, percentPerSecond: 1 },
   /**
-   * 깊은 출혈의 매초 배율. 렉시아(돌파)와 마가사(다지기)가 같은 값을 써서 태그가 「매초 몇 %」를
-   * 말한다 — 스킬 본문은 「깊은 출혈로 강화한다」까지만 적고 개체마다 다른 회복 감소만 적는다.
+   * 깊은 출혈의 매초 배율. 렉시아(돌파)·마가사(다지기)·수쿠스이노가 같은 값을 써서 태그가 「매초 몇 %」를
+   * 말한다 — 스킬 본문은 「깊은 출혈을 부여한다」까지만 적는다.
    */
   deepMultiplier: 2,
+  /**
+   * 깊은 출혈이 거는 받는 회복량 감소(%). **개체마다 다르게 두지 않는다**(응태 결정, 2026-11-12) — 회복 감소는
+   * 깊은 출혈 태그가 말하는 공용 성질이라, 개체마다 수가 다르면 본문이 그 수를 매번 따로 적어야 했다.
+   */
+  deepHealingCutPercent: 30,
 } as const;
 
 /**
@@ -2103,7 +2108,7 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
     const deepen = effect.deepenOnRepeat !== undefined && (fighter.bleed?.remaining ?? 0) > 0 ? effect.deepenOnRepeat : undefined;
     const multiplier = deepen?.multiplier ?? (effect.deep ? BLEED.deepMultiplier : 1);
     refreshBleed(fighter, effect.seconds * potency, effect.maxHpPercentPerSecond * multiplier, events, sourceId,
-      deepen?.healingReceivedReductionPercent ?? effect.healingReceivedReductionPercent);
+      deepen || effect.deep ? BLEED.deepHealingCutPercent : effect.healingReceivedReductionPercent);
   }
   if (effect.kind === "poison") {
     // 세기는 바른 쪽에서 나오므로 시전자를 찾지 못하면 바를 것도 없다.
@@ -4858,7 +4863,7 @@ function breakthroughSkillBase(attacker: Fighter, useUltimate: boolean): Skill {
     skill = { ...skill, statusEffects: skill.statusEffects?.map((effect) => effect.kind === "bleed" ? {
       ...effect,
       maxHpPercentPerSecond: effect.maxHpPercentPerSecond * basic.bleedMultiplier,
-      healingReceivedReductionPercent: basic.healingReceivedReductionPercent,
+      healingReceivedReductionPercent: BLEED.deepHealingCutPercent,
     } : effect) };
   }
   if (basic?.kind === "scoldTaunt") {

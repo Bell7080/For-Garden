@@ -31,10 +31,10 @@ export const STAGE_3_1_PRE: DialogueStory = {
     { id: "atra", speaker: "아트라", body: "아, 안 돼요… 선, 선배는 아직… 회수 전이라서…", standing: "atra", cast: [{ id: "koma", slot: "left" }, { id: "atra", slot: "center" }, { id: "ikanixia", slot: "right" }], act: "tremble" },
     { id: "smile", speaker: "이카닉시아", body: "어머, 우리 아트라는 상냥하기도 하지. 그럼 선배는 마지막에 모시죠.", standing: "ikanixia", act: "nod" },
     { id: "haul", speaker: "", body: "아트라의 마디진 꼬리 끝에 세 그림자가 묶인 채 끌려 나온다. 아모, 토비, 리파다.", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], cue: "impact" },
-    { id: "toby", speaker: "토비", body: "놔, 놔 봐! 우리 따라가기로 했다니까! 진짜라고!", standing: "toby", act: "shake" },
+    { id: "toby", speaker: "토비", body: "놔! 우리가 알아서 간다고 했잖아. 묶어 갈 필요는 없다고!", standing: "toby", act: "shake" },
     { id: "rule", speaker: "이카닉시아", body: "실패한 팀은 거두어 오는 게 회수조의 일이랍니다. 세 분은 한 번만 더 일해 주셔야겠어요.", standing: "ikanixia", cast: [{ id: "toby", slot: "left" }, { id: "ikanixia", slot: "right" }], act: "lean" },
     { id: "ripa", speaker: "리파", body: "…이번에도 위에서 정했네. 우리가 정한 게 아니고.", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "amo", slot: "right" }], act: "shrink" },
-    { id: "amo", speaker: "아모", body: "…연구원, 미안. 따라간다고 했는데, 아직 못 갔어.", standing: "amo", act: "tremble" },
+    { id: "amo", speaker: "아모", body: "…연구원, 오지 마. 얘들은 너까지 데려갈 거야.", standing: "amo", act: "tremble" },
     { id: "you", speaker: "이카닉시아", body: "연구원님이시군요. 소문은 많이 들었어요. 이번에는 제가 정중히 모셔 가겠습니다.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
   ]),
 };
@@ -45,10 +45,10 @@ export const STAGE_3_4_POST: DialogueStory = {
   startNodeId: "radio",
   backdrop: "deepField",
   nodes: linear([
-    { id: "radio", speaker: "스피나", body: "…무전 확인. 3번 통로의 조명을 내렸다. 눈이 적응하면 오른쪽으로 빠져라.", standing: "seira", cast: REMOTE_PAIR("seira", "torika"), act: "nod", cue: "alarm" },
+    { id: "radio", speaker: "스피나", body: "…3번 통로 조명을 껐어요. 눈이 익으면 오른쪽으로 빠져 주세요.", standing: "seira", cast: REMOTE_PAIR("seira", "torika"), act: "nod", cue: "alarm" },
     { id: "luka", speaker: "루카", body: "문 잠금은 내가 풀어 놨어. 대신 소리는 내지 마. 쟤네 귀가 좋거든.", standing: "luka", cast: REMOTE_PAIR("luka", "dodi"), act: "lean" },
     { id: "thanks", speaker: "토리카", body: "고맙습니다! 그런데 두 분은 어디 계세요?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "right" }], act: "hop" },
-    { id: "gone", speaker: "스피나", body: "…어둠 속이다. 그것이 우리 일이다.", standing: "seira", cast: REMOTE_PAIR("seira", "torika"), act: "shrink" },
+    { id: "gone", speaker: "스피나", body: "…바로 옆 통로예요. 여기도 들키면 길이 막혀요. 계속 움직여 주세요.", standing: "seira", cast: REMOTE_PAIR("seira", "torika"), act: "shrink" },
   ]),
 };
 
@@ -71,7 +71,7 @@ export const STAGE_3_5_POST: DialogueStory = {
   startNodeId: "down",
   backdrop: "deepField",
   nodes: linear([
-    { id: "down", speaker: "아트라", body: "…아, 아프지 않아요. 지, 진짜… 지네는 마디가 많아서… 괜, 괜찮아요…", standing: "atra", cast: [{ id: "atra", slot: "center" }], act: "faint" },
+    { id: "down", speaker: "아트라", body: "…아, 아프지 않아요. 이 정도는… 윽. 잠깐만, 움직이지 마세요.", standing: "atra", cast: [{ id: "atra", slot: "center" }], act: "faint" },
     { id: "koma", speaker: "코마", body: "…그만 일어나라.", standing: "koma", cast: [{ id: "atra", slot: "left" }, { id: "koma", slot: "right" }], act: "lean" },
     { id: "atra", speaker: "아트라", body: "선, 선배… 저, 저 졌어요… 그래도 선배보다는… 오래 버텼죠?", standing: "atra", act: "hop" },
     { id: "koma2", speaker: "코마", body: "…그건 맞다.", standing: "koma", act: "shrink" },
@@ -101,8 +101,8 @@ export const STAGE_3_8_POST: DialogueStory = {
   nodes: linear([
     { id: "ambush", speaker: "펄시", body: "깜짝 선물이야, 연구원! 받아!", standing: "pulsi", cast: [{ id: "pulsi", slot: "right" }, { id: "torika", slot: "left" }], act: "hop", cue: "impact" },
     { id: "block", speaker: "엘라", body: "…연구원님, 뒤로. 이쪽은 제가 막겠습니다.", standing: "ella", cast: [{ id: "ella", slot: "center" }], act: "lean" },
-    { id: "neuri", speaker: "네우리", body: "후훗… 방벽이라니, 정말 존경스럽네요. 다 부수고 나면 어떤 서류가 나올지 기대돼요.", standing: "neuri", cast: [{ id: "ella", slot: "left" }, { id: "neuri", slot: "right" }], act: "nod" },
-    { id: "ella", speaker: "엘라", body: "그 서류는 제가 쓰겠습니다. 이번 달 시말서는 이미 다 정해 두었거든요.", standing: "ella", act: "shake" },
+    { id: "neuri", speaker: "네우리", body: "후훗… 끝까지 막아 주실 셈인가요? 얼마나 버티시는지 볼게요.", standing: "neuri", cast: [{ id: "ella", slot: "left" }, { id: "neuri", slot: "right" }], act: "nod" },
+    { id: "ella", speaker: "엘라", body: "오래 기다리실 필요 없습니다. 연구원님, 그쪽 통로로 가십시오.", standing: "ella", act: "shake" },
   ]),
 };
 
@@ -114,7 +114,7 @@ export const STAGE_3_9_POST: DialogueStory = {
   nodes: linear([
     { id: "split", speaker: "네우리", body: "어흠, 그건 그렇고… 어머, 왼쪽에서 오는 저 소리는 뭘까요?", standing: "neuri", cast: [{ id: "neuri", slot: "left" }, { id: "mir", slot: "right" }], act: "lean", cue: "rumble" },
     { id: "yuti", speaker: "유티", body: "보, 보스! 아니 연구원님! 제가 옆에서 갈라 놓을게요!", standing: "yuti", cast: [{ id: "yuti", slot: "center" }], act: "bounce", cue: "impact" },
-    { id: "ark", speaker: "아크", body: "…더는 못 지나갑니다. 마스터, 앞은 제가 서겠습니다.", standing: "ark", cast: [{ id: "ark", slot: "left" }, { id: "yuti", slot: "right" }], act: "nod" },
+    { id: "ark", speaker: "아크", body: "마스터, 제 뒤로 와요. …므하하, 여기서부턴 내가 상대해 주지!", standing: "ark", cast: [{ id: "ark", slot: "left" }, { id: "yuti", slot: "right" }], act: "nod" },
     { id: "mir", speaker: "미르", body: "에이, 놓쳤네요! 근데 이 사람들 진짜 튼튼하다!", standing: "mir", cast: [{ id: "mir", slot: "center" }], act: "hopTwice" },
   ]),
 };
@@ -129,7 +129,7 @@ export const STAGE_3_10_PRE: DialogueStory = {
     { id: "ika", speaker: "이카닉시아", body: "여기까지 오셨군요, 연구원님. 이제 쫓는 시간은 끝이에요. 제 앞에 서 주세요.", standing: "ikanixia", act: "lean" },
     { id: "lexia", speaker: "렉시아", body: "그 부탁은 거절이야! 앱솔루트 팽, 전열 정렬!", standing: "lexia", cast: [{ id: "lexia", slot: "center" }], act: "hop" },
     { id: "line", speaker: "", body: "연구원의 앞에 렉시아, 엘라, 파치, 아크, 유티가 한 줄로 나란히 선다.", cast: [{ id: "ella", slot: "left" }, { id: "lexia", slot: "center" }, { id: "pachi", slot: "right" }], cue: "impact" },
-    { id: "ika2", speaker: "이카닉시아", body: "어머, 줄까지 서 주시다니. 정말 정중하시네요… 이겠지요.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "nod" },
+    { id: "ika2", speaker: "이카닉시아", body: "어머, 다들 비켜 주실 생각은 없나 보네요. 그럼 함께 모시죠.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "nod" },
   ]),
 };
 

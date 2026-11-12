@@ -14,6 +14,7 @@ import type { RelicStoryProfile } from "../../core/relicStory";
 /** 4 — 반납일이 지난 책. 연구원이 읽은 책을 따로 쌓아 두는 이유의 첫 장. */
 const CHAPTER_4: DialogueStory = {
   id: "bond.keris.4",
+  backdrop: "library",
   startNodeId: "n1",
   titleCard: { title: "반납일이 지난 책", subtitle: "케리스 · 애착 이야기 1" },
   nodes: [
@@ -26,7 +27,7 @@ const CHAPTER_4: DialogueStory = {
       { id: "ask", label: "왜 서가에 안 꽂았는지 가만히 묻는다", nextId: "n6b" },
     ] },
     { id: "n6a", speaker: "케리스", body: "고, 고맙다고요…? 저는 그냥… 선배가 읽던 데를 잃어버리면 안 될 것 같아서요. 이어 읽으시려면 그 자리가 필요하잖아요.", nextId: "n7" },
-    { id: "n6b", speaker: "케리스", body: "…서가에 꽂으면 다른 책이랑 섞이잖아요. 섞이면 선배가 읽던 흔적이 사라져요. 그게 싫었어요.", nextId: "n7" },
+    { id: "n6b", speaker: "케리스", body: "…이어 읽으실까 봐요. 책갈피 넣어 뒀어요. 선배가 두고 가신 자리 그대로요.", nextId: "n7" },
     { id: "n7", speaker: "", body: "케리스가 조심조심 책 한 권을 두 손으로 내민다. 손끝이 가늘게 떨린다. 눈은 책등만 보고 있다.", nextId: "n8" },
     { id: "n8", speaker: "케리스", body: "…이어서 읽으세요, 선배. 반납일은 제가 늘려 둘게요. 아무한테도 말 안 할 테니까요.", nextId: "n9" },
     { id: "n9", speaker: "", body: "연구원이 책을 받아 들자 케리스의 어깨가 천천히 내려간다. 입꼬리가 아주 작게 올라갔다가 급히 숨는다.", nextId: "n10" },
@@ -37,6 +38,7 @@ const CHAPTER_4: DialogueStory = {
 /** 6 — 대출 공책. 목록에 담긴 것이 책 제목만이 아님을 보는 장. */
 const CHAPTER_6: DialogueStory = {
   id: "bond.keris.6",
+  backdrop: "library",
   startNodeId: "n1",
   titleCard: { title: "대출 공책", subtitle: "케리스 · 애착 이야기 2" },
   nodes: [
@@ -60,6 +62,7 @@ const CHAPTER_6: DialogueStory = {
 /** 8 — 로맨스 소설. 좋아하는 것을 한마디로 답하던 아이가 속마음의 연습을 들키는 장. */
 const CHAPTER_8: DialogueStory = {
   id: "bond.keris.8",
+  backdrop: "library",
   startNodeId: "n1",
   titleCard: { title: "로맨스 소설", subtitle: "케리스 · 애착 이야기 3" },
   nodes: [
@@ -83,6 +86,7 @@ const CHAPTER_8: DialogueStory = {
 /** 10 — 마지막 장을 같이. 처음으로 눈을 맞추는 장. */
 const CHAPTER_10: DialogueStory = {
   id: "bond.keris.10",
+  backdrop: "library",
   startNodeId: "n1",
   titleCard: { title: "마지막 장을 같이", subtitle: "케리스 · 애착 이야기 4" },
   nodes: [
@@ -97,7 +101,7 @@ const CHAPTER_10: DialogueStory = {
     { id: "n6a", speaker: "케리스", body: "…같이요? 그럼 제 목소리가 틀려도 선배 목소리에 묻히겠네요. 그래서 좋아요. …하나, 둘, 셋 하면 읽어요.", nextId: "n7" },
     { id: "n6b", speaker: "케리스", body: "…기다려 주시는 거예요? 제가 먼저요? 그럼 용기 내 볼게요. 천천히 읽을게요. 천천히요.", nextId: "n7" },
     { id: "n7", speaker: "", body: "두 목소리가 겹쳐 같은 줄을 읽는다. 마지막 줄에서 케리스가 처음으로 눈을 들어 연구원의 눈을 똑바로 마주 본다. 그 눈이 크게 반짝인다.", nextId: "n8" },
-    { id: "n8", speaker: "케리스", body: "…눈 마주친 거, 지금 처음이죠? 계속 도망 다녔는데요. 이상하게 지금은 안 무서워요.", nextId: "n9" },
+    { id: "n8", speaker: "케리스", body: "…선배, 제가 읽는 동안 보고 계셨죠? 오늘은 안 피했어요. 다음 줄도… 같이 읽어 주실래요?", nextId: "n9" },
     { id: "n9", speaker: "", body: "케리스가 탁자 위의 공책을 열어 새 줄에 날짜를 적는다. 오늘 읽은 쪽수가 아니라 '선배와 같이 마지막 장을 읽음'이라고 적는다.", nextId: "n10" },
     { id: "n10", speaker: "케리스", body: "…선배. 이 공책, 이제 한 줄씩 같이 써도 돼요. 다음 줄은 선배가 채워요." },
   ],
@@ -175,11 +179,11 @@ export const KERIS_STORY: RelicStoryProfile = {
   bondStories: { 4: CHAPTER_4, 6: CHAPTER_6, 8: CHAPTER_8, 10: CHAPTER_10 },
   bondLines: [
     // 0 — 낯선 사이. 눈을 못 맞추고 책등만 본다.
-    ["…처음 뵙겠어요. 케리스예요. 도서관에 계속 있어요. 책 찾으시면 말씀해 주세요.", "선배라고 불러도 되죠? …이름보다 먼저 떠올랐어요. 이유는 모르겠어요.", "눈은 못 맞춰도 이야기는 들어요. 책이 대신 맞춰 줘요."],
+    ["…처음 뵙겠어요. 케리스예요. 도서관에 계속 있어요. 책 찾으시면 말씀해 주세요.", "선배라고 불러도 되죠? …이름보다 먼저 떠올랐어요. 이유는 모르겠어요.", "…고개 숙이고 있어도 듣고 있어요. 책 찾으시는 거면, 여기 앉아서 말씀해 주세요."],
     // 1
     ["오늘은 서가 정리를 했어요. 먼지 쌓인 칸에서 책 한 권이 몇 해째 잠들어 있더라고요.", "선배가 빌려 간 책 반납일은 제가 챙겨 둘게요. 걱정하지 마세요.", "어깨 위 책들은 신경 쓰지 마세요. 그냥 같이 다니는 거예요."],
     // 2
-    ["어제는 비가 와서 도서관이 조용했어요. 비 오는 날은 책이 더 잘 읽혀요.", "도디가 오늘도 책을 거꾸로 들고 있더라고요. 그래도 열심히 읽는 거 같아서 좋았어요.", "공책에는 오늘도 한 줄 적었어요. 무슨 줄인지는 비밀이에요."],
+    ["어제는 비가 와서 도서관이 조용했어요. 비 오는 날은 책이 더 잘 읽혀요.", "도디가 책을 한 아름 빌려 갔어요. 궁금한 게 많나 봐요. …다 읽으면 저한테도 얘기해 달라고 했어요.", "공책에는 오늘도 한 줄 적었어요. 무슨 줄인지는 비밀이에요."],
     // 3
     ["로맨스 소설 읽을 때는 말을 안 걸어 주세요. 조용히 있어 주는 게 제일 고마워요.", "선배 지나가는 소리가 나면 책을 한 줄 더 읽는 척해요. 들켰을까요.", "선배가 책장을 넘기는 소리, 좋아해요. 말하고 나니 이상하네요."],
     // 4 — 장 4 이후: 반납일이 지난 책.

@@ -1,4 +1,5 @@
 import { defenseGainKeywords, statGainAlias } from "./statGainKeywords";
+import { formatEffectDescription } from "./skillExplanation";
 import type { DamagePreview } from "../core/damage";
 import { findKeyword, type KeywordDef } from "../data/keywords";
 import type { KeywordTextOptions } from "../managers/KeywordManager";
@@ -353,21 +354,35 @@ export function elationKeyword(passive: Passive): KeywordDef | undefined {
 }
 
 /**
- * 「서리깃」 태그(유티). 평타·궁극기가 쌓는 겹이 상한에서 동상로 바뀌는 규칙을 말한다.
- * 수치는 일반 공격이 거는 상태 계약에서 읽어 조정하면 팝업도 함께 바뀐다.
+ * 「서리깃」 태그(유티). 평타·궁극기가 쌓는 겹이 상한에서 동상으로 바뀌는 데까지만 말한다.
+ * 동상이 무엇을 하는지는 「동상」 태그(`frostbiteKeyword`)가 갖는다 — 한 쪽지에 둘을 다 적으면
+ * 깃털이 쌓이는 규칙과 상태 이상의 효과가 한 덩어리로 읽힌다.
  */
-export function plumeKeyword(def: RelicDef, atk?: number): KeywordDef | undefined {
+export function plumeKeyword(def: RelicDef, _atk?: number): KeywordDef | undefined {
   const plume = def.basic.statusEffects?.find((effect) => effect.kind === "frostPlume");
   if (plume === undefined || plume.kind !== "frostPlume") return undefined;
-  const base = t("skill.keyword.plume.description", {
-    max: plume.maxStacks, hold: plume.holdSeconds, percent: plume.burstPower,
-    seconds: plume.burstSeconds, slowSeconds: plume.slowSeconds, slowPercent: plume.slowPercent,
-  });
   return {
     id: "yuti-plume",
     term: t("skill.keyword.plume.term"),
     kind: "rule",
-    // 공격력을 아는 자리에서는 지금 능력치로 환산한 총 피해를 태그로 덧붙인다(레벨·룬이 바뀌면 함께 바뀐다).
+    description: t("skill.keyword.plume.description", { max: plume.maxStacks, hold: plume.holdSeconds }),
+  };
+}
+
+/**
+ * 「동상」 태그(유티). 서리깃이 상한에서 거는 상태 이상의 효과 — 둔화와 방어를 지나는 지속 피해.
+ * 쓰는 개체가 하나뿐이라 수치를 갖고, 공격력을 아는 자리에서는 지금 능력치로 환산한 총 피해를 덧붙인다.
+ */
+export function frostbiteKeyword(def: RelicDef, atk?: number): KeywordDef | undefined {
+  const plume = def.basic.statusEffects?.find((effect) => effect.kind === "frostPlume");
+  if (plume === undefined || plume.kind !== "frostPlume") return undefined;
+  const base = t("skill.keyword.frostbite.description", {
+    percent: plume.burstPower, seconds: plume.burstSeconds, slowSeconds: plume.slowSeconds, slowPercent: plume.slowPercent,
+  });
+  return {
+    id: "yuti-frostbite",
+    term: t("status.frostbite"),
+    kind: "debuff",
     description: atk === undefined ? base : `${base} ${t("skill.keyword.nowValue", { value: `[[plume-burst|${Math.round(atk * plume.burstPower / 100)}]]` })}`,
   };
 }
@@ -836,6 +851,7 @@ export type DescribedSkill = Skill | BasicAttack | Ultimate | (BasicAttack & Pic
 
 const SHIMMER_BURST_DAMAGE_ID = "shimmer-burst-damage";
 const SHIMMER_BURST_SHIELD_ID = "shimmer-burst-shield";
+const SHIMMER_SPLASH_ID = "tia-splash";
 
 type ShimmerBurstPlan = { power: number; shieldMaxHpPercent: number };
 
@@ -844,13 +860,25 @@ function shimmerBurstNowValues(burst: ShimmerBurstPlan, stats?: { ap?: number; m
   return { damage: Math.round(stats.ap * burst.power / 100), shield: Math.round(stats.maxHp * burst.shieldMaxHpPercent / 100) };
 }
 
-/** 반짝 폭발 절 끝 태그의 산출 근거. 쪽지 사전에 함께 실려야 눌러 읽을 수 있다. */
+/**
+ * 「첨벙!」 태그(티아)와 그 쪽지 끝 수치 태그. 반짝을 남기는 것은 패시브, 터뜨리는 것은 일반 공격이고,
+ * 터질 때 무엇이 일어나는지는 이 태그가 갖는다 — 일반 공격 본문은 "터진다"까지만 말한다.
+ */
 export function shimmerBurstKeywords(skill: unknown, stats?: { ap?: number; maxHp?: number }): KeywordDef[] {
-  const burst = (skill as { shimmerBurst?: ShimmerBurstPlan }).shimmerBurst;
+  const burst = (skill as { shimmerBurst?: ShimmerBurstPlan & { capMaxHpPercent: number } }).shimmerBurst;
   if (burst === undefined) return [];
   const now = shimmerBurstNowValues(burst, stats);
-  if (now === undefined) return [];
+  const base = t("skill.keyword.splash.description", { percent: trim(burst.power), shield: trim(burst.shieldMaxHpPercent), cap: trim(burst.capMaxHpPercent) });
+  const splash: KeywordDef = {
+    id: SHIMMER_SPLASH_ID,
+    term: t("skill.keyword.splash.term"),
+    kind: "rule",
+    description: now === undefined ? base
+      : `${base} ${t("skill.keyword.nowValue", { value: `[[${SHIMMER_BURST_DAMAGE_ID}|${now.damage}]] · [[${SHIMMER_BURST_SHIELD_ID}|${now.shield}]]` })}`,
+  };
+  if (now === undefined) return [splash];
   return [
+    splash,
     { id: SHIMMER_BURST_DAMAGE_ID, term: String(now.damage), kind: "rule", description: t("skill.keyword.damage.bonus", { stat: statName("ap"), percent: trim(burst.power) }) },
     { id: SHIMMER_BURST_SHIELD_ID, term: String(now.shield), kind: "rule", description: t("skill.keyword.shield.fromMaxHp", { percent: trim(burst.shieldMaxHpPercent) }) },
   ];
@@ -1258,17 +1286,13 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
     });
   }
   /*
-   * 반짝은 **쓰는 개체가 하나뿐인 규칙어**라 무엇이고 다시 맞으면 어떻게 되는지를 태그가 갖고,
-   * 남기는 것은 패시브가 말한다. 본문이 적는 것은 둘 다 말하지 않는 몫, 곧 **지워지는 순간에
-   * 무엇이 함께 터지는가**뿐이다 — 일반 공격과 궁극기가 서로 달라 태그에 못 박으면 한쪽
-   * 설명이 거짓말이 된다.
+   * 티아의 몫은 셋으로 나뉜다 — 반짝을 **남기는** 것은 패시브, 반짝이 무엇인지는 「반짝!」 태그,
+   * 터뜨리는 스킬은 "첨벙!이 터진다"까지만 적고 **터질 때 무엇이 일어나는지**는 「첨벙!」 태그가
+   * 갖는다. 본문에 폭발 수치까지 다 적던 때는 일반 공격 쪽지가 패시브의 설명까지 떠안았다.
    */
   if ("shimmerBurst" in skill && skill.shimmerBurst !== undefined) {
-    const burst = skill.shimmerBurst;
-    const now = shimmerBurstNowValues(burst, stats);
-    // 비율은 그대로 적고, 지금 능력치로 환산한 폭발 피해·보호막을 끝에 태그로 덧붙인다.
-    const tail = now === undefined ? "" : ` ${t("skill.keyword.nowValue", { value: `[[${SHIMMER_BURST_DAMAGE_ID}|${now.damage}]] · [[${SHIMMER_BURST_SHIELD_ID}|${now.shield}]]` })}`;
-    clauses.push({ text: t("skill.clause.shimmerBurst", { percent: burst.power, shield: burst.shieldMaxHpPercent, cap: burst.capMaxHpPercent }) + tail, standalone: true });
+    // 터질 때 무엇이 일어나는지는 「첨벙!」 태그가 말한다(`shimmerBurstKeywords`).
+    clauses.push({ text: t("skill.clause.shimmerBurst"), standalone: true });
   }
   // 순간이동해서 쓴다는 것은 대상을 고르는 규칙 자체라, 대상 문구가 말하지 못하는 몫을 적는다.
   if ("blinkToLowestDefense" in skill && skill.blinkToLowestDefense === true) {
@@ -1478,7 +1502,11 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
   const body = breakthroughEffectBody(def, slot, stats);
   const now = body === undefined ? undefined : breakthroughNowValue(def, slot, stats);
   // 스탯 비례 효과는 지금 능력치로 환산한 값을 끝에 태그로 덧붙인다(레벨·룬이 바뀌면 함께 바뀐다).
-  return now === undefined ? body : `${body} ${t("skill.keyword.nowValue", { value: `[[${BREAKTHROUGH_NOW_ID}|${now.amount}]]` })}`;
+  if (now === undefined || body === undefined) return body;
+  const value = t("skill.keyword.nowValue", { value: `[[${BREAKTHROUGH_NOW_ID}|${now.amount}]]` });
+  // 자신·아군 보호막이 함께 적힌 효과에서 자기 수치가 아군 수치처럼 붙지 않게 한다.
+  return def.breakthroughEffects?.[slot]?.kind === "thickShell"
+    ? `${formatEffectDescription(body)}\n${t("skill.target.self")} ${value}` : `${body} ${value}`;
 }
 
 /** 돌파 문장 끝의 「현재 N」 태그 ID. 한 쪽지에는 슬롯 하나의 효과만 서므로 하나면 된다. */

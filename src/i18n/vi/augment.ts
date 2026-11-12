@@ -81,4 +81,8 @@ export const AUGMENT_VI = {
   "augment.stat.detail.lifeSteal": "Hồi thêm {points}% HP địch thực sự mất từ đòn có thể hút máu. Cộng vào hút máu hiện có. Không tính hấp thụ khiên hay sát thương dư; áp dụng giảm hồi máu.",
   "augment.tag.controlCooldown": "Hồi khống chế: {cooldown} giây",
   "augment.tag.controlRecovery": "Khống chế Tăng cường kéo dài tối đa {cap} giây. Sau đó mục tiêu kháng khống chế trong {gap} giây và phải thực hiện một đòn tấn công mới lên kẻ địch. Đòn đầu tiên đó cũng cho {gap} giây hồi phục. Mọi nguồn và loại dùng chung quy tắc.",
+  "augment.tag.activation": "Điều kiện kích hoạt",
+  "augment.tag.rules": "Quy tắc áp dụng",
+  "augment.tag.rulesLink": "Xem quy tắc chi tiết",
+  "augment.tag.controlSummary": "Khống chế từ Tăng cường: tối đa {cap} giây · cách nhau ít nhất {gap} giây.",
 } as const;

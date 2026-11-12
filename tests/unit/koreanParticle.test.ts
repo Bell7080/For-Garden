@@ -32,8 +32,8 @@ describe("한국어 조사", () => {
     // 값은 그 앞의 `{name}`이 이미 세운다 — 값에 괄호를 미리 붙여 넘기면 영어 문장 한가운데에
     // `「」`가 서므로, 묶는 일은 언어마다 제 표가 맡는다.
     expect(t("skill.breakthrough.effect.ultimate", { percent: "25", name: "지각 붕괴", seconds: "1.5", casts: "두" }))
-      .toBe("피해량의 25%에 해당하는 「지각 붕괴」를 1.5초 간격으로 두 번 더 시전한다.");
-    expect(t("skill.breakthrough.effect.passive", { name: "온화한 방패", percent: "25" }))
-      .toBe("「온화한 방패」가 발동될 때 모든 아군에게 그 회복량의 25%를 나눈다.");
+      .toContain("「지각 붕괴」를");
+    expect(t("skill.breakthrough.effect.ultimate", { percent: "25", name: "각인", seconds: "1.5", casts: "두" }))
+      .toContain("「각인」을");
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatEffectDescription, skillDescriptionTop } from "../../src/ui/skillExplanation";
+import { formatBreakthroughDescription, formatEffectDescription, skillDescriptionTop } from "../../src/ui/skillExplanation";
 import { defenseGainKeywords, defenseGainSummary } from "../../src/ui/statGainKeywords";
 import { getRelic } from "../../src/data/relics";
 import { buildSummonKeywords } from "../../src/ui/summonKeywords";
@@ -15,6 +15,10 @@ describe("효과 설명의 가독성과 계산 근거", () => {
   it("긴 요약을 본문과 구분선이 침범하지 않는다", () => {
     expect(skillDescriptionTop(32)).toBe(268);
     expect(skillDescriptionTop(200)).toBeGreaterThanOrEqual(156 + 200 + 36);
+  });
+  it("돌파 표는 수치·태그와 기존 문단을 보존하며 문장 사이 빈 줄을 줄인다", () => {
+    const text = "1.5초 뒤 [[bleed|출혈]]을 건다. 위력은 20%다.\n현재 [[breakthrough-now|150]]";
+    expect(formatBreakthroughDescription(text)).toBe("• 1.5초 뒤 [[bleed|출혈]]을 건다.\n• 위력은 20%다.\n현재 [[breakthrough-now|150]]");
   });
   it("방어·저항의 서로 다른 기준값을 각각 계산하며 합계는 이 효과만 적용한 값이라고 명시한다", () => {
     const tags = defenseGainKeywords({ def: 120, res: 50 }, 25);

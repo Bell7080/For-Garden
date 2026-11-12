@@ -30,6 +30,19 @@ describe("한계 돌파 표", () => {
     }
   });
 
+  it("은 긴 설명의 높이에 맞춰 늘어나며 다음 행과 여백을 유지한다", () => {
+    const measured = [80, 260, 190, 90];
+    const layout = breakthroughStepsLayout(measured.length, measured);
+    for (let index = 0; index < measured.length; index++) {
+      expect(layout.rowHeights[index]).toBeGreaterThanOrEqual(measured[index] + BREAK_STEPS.textPadY * 2);
+      if (index > 0) {
+        const previousBottom = layout.rows[index - 1] + layout.rowHeights[index - 1] / 2;
+        expect(layout.rows[index] - layout.rowHeights[index] / 2 - previousBottom).toBe(32);
+      }
+    }
+    expect(layout.height).toBe(layout.rows.at(-1)! + layout.rowHeights.at(-1)! / 2 + BREAK_STEPS.bottomMargin);
+  });
+
   it("은 화면 가운데에 서고 판이 화면 안에 든다", () => {
     // 돋보기 자리에 붙이지 않는다 — 네 줄이 설명을 이고 있어 판이 한쪽으로 쏠리면 잘린다.
     expect(BREAK_STEPS.centerY).toBe(BASE_HEIGHT / 2);
@@ -162,9 +175,9 @@ describe("한계 돌파 표의 열림 표시", () => {
   it("은 설명을 두 줄 다 같은 잉크로 적는다", () => {
     // 어느 쪽이든 읽으러 온 내용이라 안 열린 줄의 설명도 흐리게 적지 않는다. 줄은 스킬 쪽지와
     // 같은 경계(`keywords.layout`)로 그리므로 색을 따로 고르지 않고 기본 잉크를 그대로 받는다.
-    const call = INFO_SOURCE.slice(INFO_SOURCE.indexOf("const line = keywords.layout(opens, {"));
-    expect(call.startsWith("const line = keywords.layout(opens, {")).toBe(true);
-    expect(call.slice(0, call.indexOf("});"))).not.toContain("color:");
+    const call = INFO_SOURCE.slice(INFO_SOURCE.indexOf("const lines = BREAKTHROUGH_STEPS.map"));
+    expect(call.startsWith("const lines = BREAKTHROUGH_STEPS.map")).toBe(true);
+    expect(call.slice(0, call.indexOf("const layout ="))).not.toContain("color:");
     expect(INFO_SOURCE).not.toContain("reached ? COLOR.ink : COLOR.inkDim");
   });
 });

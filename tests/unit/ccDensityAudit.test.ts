@@ -88,6 +88,7 @@ describe("증강 CC 공용 안전장치", () => {
       expect(def.effect.limits.cooldownSeconds).toBe(seconds);
       expect(expeditionAugmentEffectLabel(def)).toContain(`${seconds}초`);
       expect(expeditionAugmentKeywords(def)[0].description).toContain("2.4초");
+      expect(expeditionAugmentKeywords(def)[0].sections?.[0].text).toContain(`${seconds}초`);
     }
   });
 

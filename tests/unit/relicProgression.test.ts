@@ -323,18 +323,15 @@ describe("도달 가능한 성장 자리", () => {
 });
 
 describe("\"없음\"이라는 한계 돌파 효과", () => {
-  it("는 표에는 서지만 강화로 치지 않는다 — 적 전용 개체는 네 칸 모두 없음이다", async () => {
+  it("는 표에는 서지만 강화로 치지 않는다 — 실제 효과가 있는 적 슬롯만 강화된다", async () => {
     const { breakthroughEnhances } = await import("../../src/core/relicProgression");
     const { getRelic } = await import("../../src/data/relics");
     const { breakthroughEffectText } = await import("../../src/ui/skillPresentation");
-    // 적 전용 개체는 보스도 잡졸도 네 칸 모두 제 효과를 갖는다 — "없음"은 효과를 정해 두지 않은 자리에만 남는다.
+    // 현재 적 전용 개체는 보스도 잡졸도 네 칸 모두 제 효과를 갖는다.
     const { RELICS } = await import("../../src/data/relics");
     const enemyIds = RELICS.filter((relic) => relic.enemyOnly).map(({ id }) => id);
     expect(enemyIds).toEqual(expect.arrayContaining(["sukusuino", "pontos", "toby", "koma", "amo", "ripa", "raitia-grass"]));
-    // 회수조 다섯의 돌파 효과는 한계 돌파 설계 절차(`docs/breakthrough-design.md`)대로 추천안을 확인받은 뒤 채운다.
-    // 감금조 넷도 같은 절차를 기다린다 — 몇 칸만 임시로 채웠고 나머지는 "없음"이다.
-    const PENDING_DESIGN = ["ikanixia", "atra", "pulsi", "neuri", "mir", "magasa", "noa", "raja", "carno"];
-    for (const id of enemyIds.filter((enemyId) => !PENDING_DESIGN.includes(enemyId))) {
+    for (const id of enemyIds) {
       const def = getRelic(id);
       for (const slot of ["basic", "ultimate", "ferocity", "passive"] as const) {
         expect(def.breakthroughEffects?.[slot]?.kind, `${id} ${slot}`).not.toBe("none");
@@ -345,8 +342,8 @@ describe("\"없음\"이라는 한계 돌파 효과", () => {
         expect(text, `${id} ${slot}`).not.toContain("skill.breakthrough");
       }
     }
-    // 아직 설계하지 않은 빈 슬롯은 예전대로 열리면 강화로 읽힌다.
-    expect(breakthroughEnhances({}, BREAKTHROUGH_CAP, "basic")).toBe(true);
+    // 정의가 없는 슬롯도 전투에서 추가 효과가 없으므로 강화 표시를 만들지 않는다.
+    expect(breakthroughEnhances({}, BREAKTHROUGH_CAP, "basic")).toBe(false);
     expect(breakthroughEnhances({}, 0, "basic")).toBe(false);
   });
 });

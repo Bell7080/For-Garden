@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { relicResetRefund } from "../../src/core/relicReset";
 import { stageFirstClearRewards } from "../../src/core/stageRewards";
 import { STAGES, getBattleStage } from "../../src/data/stages";
 import { EXPEDITION_SWEEP_MIN_WEEKLY_SCORE, EXPEDITION_SWEEP_SCORE_FLOORS, expeditionBossSalvage, expeditionRankRewards } from "../../src/data/expedition";
@@ -447,29 +448,27 @@ describe("FakeServer", () => {
     await expect(server.feedRelic("torika")).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
   });
 
-  it("레벨 초기화는 급여한 치즈케이크를 돌려주고 돌파는 그대로 둔다(21레벨부터 젬)", async () => {
+  it("레벨 초기화는 급여한 치즈케이크를 돌려주고 돌파는 그대로 둔다(21레벨 위 몫은 90%, 젬 없음)", async () => {
     const state = makeSession(); state.wallet.cheesecake = 100_000; state.wallet.gems = 1_000;
     state.relicProgress.torika = { ...state.relicProgress.torika, level: 1, exp: 0, breakthrough: 1 };
     state.playerResearch = { ...state.playerResearch, level: 8 };
     const server = new FakeServer(state, { latencyMs: 0 });
-    // 1레벨에서 30레벨(연구원 8의 상한)까지 먹인 뒤 되돌린다 — 쓴 만큼 정확히 돌아와야 한다.
+    // 1레벨에서 30레벨(연구원 8의 상한)까지 먹인 뒤 되돌린다.
     const fed = await server.feedRelic("torika", 10_000);
     expect(state.relicProgress.torika.level).toBe(30);
     const before = { cheesecake: state.wallet.cheesecake, gems: state.wallet.gems };
+    const progressBefore = { ...state.relicProgress.torika };
     const reset = await server.resetRelic("torika");
-    expect(reset).toMatchObject({ previousLevel: 30, cheesecakeRefunded: fed.cheesecakeSpent, gemsSpent: 50 });
-    expect(state.wallet).toMatchObject({ cheesecake: before.cheesecake + fed.cheesecakeSpent, gems: before.gems - 50 });
+    // 30레벨은 21레벨 위로 쌓은 몫만 90%로 돌아오고, 젬은 들지 않는다.
+    expect(reset).toMatchObject({ previousLevel: 30, cheesecakeRefunded: relicResetRefund(progressBefore) });
+    expect(reset.cheesecakeRefunded).toBeLessThan(fed.cheesecakeSpent);
+    expect(state.wallet).toMatchObject({ cheesecake: before.cheesecake + reset.cheesecakeRefunded, gems: before.gems });
     expect(state.relicProgress.torika).toMatchObject({ level: 1, exp: 0, breakthrough: 1 });
     // 되돌릴 것이 없으면 거절한다.
     await expect(server.resetRelic("torika")).rejects.toMatchObject({ code: "INVALID_STATE" });
-    // 20레벨까지는 젬이 들지 않는다.
-    await server.feedRelic("torika", 10_000);
-    state.relicProgress.torika = { ...state.relicProgress.torika, level: 20, exp: 0 };
-    await expect(server.resetRelic("torika")).resolves.toMatchObject({ gemsSpent: 0 });
-    // 젬이 모자라면 아무것도 바뀌지 않는다.
-    state.relicProgress.torika = { ...state.relicProgress.torika, level: 25, exp: 0 }; state.wallet.gems = 49;
-    await expect(server.resetRelic("torika")).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
-    expect(state.relicProgress.torika.level).toBe(25);
+    // 21레벨까지는 먹인 것을 다 돌려받는다.
+    const small = await server.feedRelic("torika", 10);
+    await expect(server.resetRelic("torika")).resolves.toMatchObject({ cheesecakeRefunded: small.cheesecakeSpent });
   });
 
   it("한계 돌파는 그 개체의 파편을 차감하고 등급을 올린다 — 상한은 연구원 레벨이 연다", async () => {

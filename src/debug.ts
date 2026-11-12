@@ -100,7 +100,7 @@ export interface DebugState {
   /** 룬 쪽지의 "세공" 버튼 중심. 줄 구성(장착·해제·판매)에 따라 자리가 달라진다. */
   runeNoteCraft?: DebugPoint;
   /** 정보창 급여 버튼의 중심. 레벨 칸의 줄 구성에 따라 자리가 달라진다. */
-  feedButton?: DebugPoint;
+  feedButton?: DebugPoint & { bottom?: number };
   /**
    * 급여 버튼이 받아 준 누름 수와 서버가 확정한 급여 수. 연타가 헛손질 없이 모두 먹여졌는지를
    * 화면이 아니라 값으로 확인한다 — 두드리는 사이 요청이 돌고 있어도 둘은 결국 같아야 한다.
@@ -599,7 +599,7 @@ export function addDebugFeedTaps(served: number, confirmed: number): void {
   state.feedTaps = { served: current.served + served, confirmed: current.confirmed + confirmed };
 }
 
-export function setDebugFeedButton(point: { x: number; y: number } | undefined): void {
+export function setDebugFeedButton(point: { x: number; y: number; bottom?: number } | undefined): void {
   if (!QA_TOOLS_ENABLED) return;
   ensure().feedButton = point;
 }

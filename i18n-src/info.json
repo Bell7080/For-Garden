@@ -329,6 +329,12 @@
 "10 Level",
 "10 уровней"
 ],
+"info.feed.five": ["5级", "5 เลเวล", "5 cấp", "5 Level", "5 niveles", "5 níveis", "5 Level", "5 уровней"],
+"info.feed.max": ["MAX", "MAX", "MAX", "MAX", "MAX", "MAX", "MAX", "MAX"],
+"info.feed.max.title": ["最大喂食", "ป้อนสูงสุด", "Cho ăn tối đa", "Beri Makan MAX", "Alimentar al MÁX.", "Alimentar no MÁX.", "MAX füttern", "Покормить по максимуму"],
+"info.feed.max.plea": ["哇……这些\n全都给我吗？！", "ว้าว… ทั้งหมดนี่\nให้เราจริงเหรอ?!", "Oa… tất cả chỗ này\nđều cho mình sao?!", "Wah… semua ini\nbuat aku?!", "¡Guau…! ¿Todo esto\nes para mí?", "Uau… tudo isso\né pra mim?!", "Wow… ist das alles\nwirklich für mich?!", "Ого… это всё\nправда мне?!"],
+"info.feed.max.note": ["一口气提升{count}级！", "เลเวลขึ้นรวดเดียว {count} เลเวล!", "Tăng {count} cấp chỉ trong một lần!", "Naik {count} level sekaligus!", "¡Sube {count} niveles de una vez!", "Sobe {count} níveis de uma vez!", "Steigt auf einen Schlag um {count} Level!", "Уровень вырастет сразу на {count}!"],
+"info.feed.max.confirm": ["喂食", "ป้อน", "Cho ăn", "Beri Makan", "Alimentar", "Alimentar", "Füttern", "Покормить"],
 "info.breakthrough": [
 "极限突破",
 "ทะลวงขีดจำกัด",
@@ -1085,7 +1091,7 @@
 "info.reset.wallet": ["持有货币变化", "การเปลี่ยนแปลงของสกุลเงิน", "Thay đổi tiền tệ", "Perubahan Mata Uang", "Cambio de monedas", "Mudança de moedas", "Währungsänderung", "Изменение валюты"],
 "info.reset.keep": ["突破、羁绊与符文保持不变。", "ทะลวง สายสัมพันธ์ และรูนจะคงอยู่เหมือนเดิม", "Đột phá, Gắn kết và Rune được giữ nguyên.", "Terobosan, Ikatan, dan Rune tetap dipertahankan.", "La Ruptura, el Vínculo y las Runas se conservan.", "Ruptura, Vínculo e Runas são mantidos.", "Durchbruch, Bindung und Runen bleiben erhalten.", "Прорыв, Связь и Руны сохраняются."],
 "info.reset.free": ["免费！", "ฟรี!", "Miễn phí!", "Gratis!", "¡Gratis!", "Grátis!", "Gratis!", "Бесплатно!"],
-"info.reset.noGems": ["宝石不足。", "เจมไม่พอ", "Không đủ Ngọc.", "Permata tidak cukup.", "No tienes suficientes Gemas.", "Gemas insuficientes.", "Nicht genug Juwelen.", "Недостаточно самоцветов."],
+"info.reset.loss": ["超过21级的部分只返还90%（−{count}）", "ส่วนที่เกินเลเวล 21 ได้คืนแค่ 90% (−{count})", "Phần vượt cấp 21 chỉ hoàn lại 90% (−{count})", "Bagian di atas Lv.21 hanya kembali 90% (−{count})", "Lo invertido tras Nv. 21 solo devuelve el 90 % (−{count})", "O que passou do Nv. 21 volta só 90% (−{count})", "Über Lv. 21 hinaus kommen nur 90 % zurück (−{count})", "Сверх 21 ур. вернётся лишь 90% (−{count})"],
 "info.reset.done": ["已返还{count}个芝士蛋糕。", "ได้รับชีสเค้กคืน {count} ชิ้น", "Đã hoàn lại {count} Bánh phô mai.", "{count} Cheesecake dikembalikan.", "Se devolvió Tarta de queso ×{count}.", "{count} Cheesecake devolvidos.", "{count} Käsekuchen zurückerhalten.", "Возвращено чизкейков: {count}."],
 "info.breakthrough.universalNotice": [
 "还将消耗{count}个{name}",

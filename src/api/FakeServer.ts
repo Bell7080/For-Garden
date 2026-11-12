@@ -48,7 +48,7 @@ import { normalizeRaidTicketDropState, rollRaidTicketDrops, type BonusItemDrop }
 import { bountyRunCost, isBountyTierCleared, isBountyTierUnlocked, markBountyTierCleared } from "../core/bountyRun";
 import { BOUNTY, getBountyTier, type BountyTierDef } from "../data/bounty";
 import { BREAKTHROUGH_CAP, breakthroughFragmentSpend, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade } from "../core/relicProgression";
-import { canResetRelic, relicResetGemCost, relicResetRefund, resetRelicProgress } from "../core/relicReset";
+import { canResetRelic, relicResetRefund, resetRelicProgress } from "../core/relicReset";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
 import { MISSIONS, RESEARCH_REWARD_STAGES, maxResearchPoints, mergeMissionRewards, type MissionReward, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, LIFETIME_COUNT_CAP, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
 import { CHAPTERS, DAILY_RESTORATION, getStage, STAGES, SUB_STORY_GEM_REWARDS } from "../data/stages";
@@ -2776,24 +2776,22 @@ export class FakeServer implements GameApi {
   /**
    * 캐릭터 초기화.
    *
-   * 레벨·경험치만 1로 되돌리고 그동안 급여한 치즈케이크를 돌려준다. 회수량과 젬 값은 화면과 같은 순수 함수
-   * (`core/relicReset.ts`)가 저장된 진행에서 다시 구하므로 클라이언트가 보내는 수는 없다. 젬 차감과 회수,
-   * 레벨 확정은 한 저장으로 끝난다. 돌려받는 치즈케이크는 보유 한도에서 깎는다(다른 지급과 같은 규칙).
+   * 레벨·경험치만 1로 되돌리고 그동안 급여한 치즈케이크를 돌려준다(21레벨 위로 쌓은 몫은 90%). 회수량은 화면과
+   * 같은 순수 함수(`core/relicReset.ts`)가 저장된 진행에서 다시 구하므로 클라이언트가 보내는 수는 없다. 젬은
+   * 들지 않고, 회수와 레벨 확정은 한 저장으로 끝난다. 돌려받는 치즈케이크는 보유 한도에서 깎는다(다른 지급과 같은 규칙).
    */
   async resetRelic(relicId: string): Promise<ResetRelicResponse> {
     await this.delay();
     const current = this.state.relicProgress[relicId];
     if (!this.state.owned.has(relicId) || !current) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
     if (!canResetRelic(current)) throw new GameApiError("INVALID_STATE", "초기화할 레벨이 없습니다.");
-    const gemsSpent = relicResetGemCost(current.level);
-    if (this.state.wallet.gems < gemsSpent) throw new GameApiError("INSUFFICIENT_CURRENCY", "젬이 부족합니다.");
     const refund = relicResetRefund(current);
     const cheesecakeRefunded = Math.max(0, Math.min(refund, WALLET_CAPS.cheesecake - this.state.wallet.cheesecake));
     const nextProgress = { ...this.state.relicProgress, [relicId]: resetRelicProgress(current) };
-    const nextWallet = { ...this.state.wallet, gems: this.state.wallet.gems - gemsSpent, cheesecake: this.state.wallet.cheesecake + cheesecakeRefunded };
+    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake + cheesecakeRefunded };
     this.persist({ ...this.state, relicProgress: nextProgress, wallet: nextWallet });
     this.state.relicProgress = nextProgress; this.state.wallet = nextWallet;
-    return { ...this.snapshot(), relicId, previousLevel: current.level, cheesecakeRefunded, gemsSpent };
+    return { ...this.snapshot(), relicId, previousLevel: current.level, cheesecakeRefunded };
   }
 
   /**

@@ -85,7 +85,7 @@ import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../cor
 import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveNowKeyword, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, plumeBurstKeyword, prickleReflectKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { SummonInfoPopup } from "./SummonInfoPopup";
-import { openRelicResetPopup } from "./RelicResetPopup";
+import { openRelicFeedMaxPopup, openRelicResetPopup } from "./RelicResetPopup";
 import { galleryPortraitPlacement, INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
 import { skinsForRelic } from "../data/relicSkins";
 import { relicSkinManager } from "../managers/RelicSkinManager";
@@ -100,14 +100,13 @@ import { openSkillGlancePopup } from "./SkillGlancePopup";
 import { FEED_TAP, FeedHoldRepeater } from "./feedTapStyle";
 import { addSdFootShadow } from "./SdFootShadow";
 import { withBusy } from "./BusyOverlay";
-import { canResetRelic, relicResetGemCost, relicResetRefund } from "../core/relicReset";
+import { canResetRelic, relicResetLoss, relicResetRefund } from "../core/relicReset";
 import { showContentToast } from "./ContentToast";
-import { GameApiError } from "../api/contracts";
 import { findItem } from "../data/items";
 import { mountRunePickerGrid } from "./runePickerGrid";
 import { runePickerSize } from "./runePickerLayout";
 import { universalFragmentTexture } from "./universalFragmentArt";
-import { reportCatch } from "../managers/ErrorReporter";
+import { logError, reportCatch } from "../managers/ErrorReporter";
 import { characterTags } from "./characterTags";
 import { addCharacterTagRow } from "./CharacterTagRow";
 
@@ -236,6 +235,8 @@ const BOND_HEART = COLOR.bond;
 const BOND_HEART_CORE = 0xff8a7a;
 /** 판 안쪽에 파인 자리의 치즈케이크 수. 그 자리는 어둡게 눌러 두므로 크림빛으로 적는다. */
 const FEED_TEXT = "#ffe9c9";
+/** 한 번에 급여 쪽지 — 위 줄(1·10레벨)과 아래 줄(5레벨·MAX). 칸 높이 138에 사이 14. */
+const FEED_BULK_NOTE = { height: 372, rowY: [-76, 76] } as const;
 
 /**
  * 급여에 쓰는 치즈케이크 한 조각.
@@ -1086,13 +1087,12 @@ export class InfoManager {
     if (!def || !this.ownedNow || this.feeding || this.pendingFeeds() > 0) return;
     const progress = relicProgression.getProgress(def.id);
     if (!canResetRelic(progress)) return;
-    const gems = relicResetGemCost(progress.level);
-    // 젬이 모자라도 창까지는 연다 — 얼마가 드는지 보여 주고 확정만 막는다(응태 요청, 2026-11-11). 차감은 서버가 다시 판정한다.
+    // 21레벨 위로 쌓은 몫은 90%만 돌아온다 — 잃는 양을 창이 먼저 말한다. 회수량은 서버가 다시 구한다.
     const asset = this.figureAssetOf(def);
-    openRelicResetPopup(this.scene, this.popups, { asset, level: progress.level, refund: relicResetRefund(progress), gems }, () => void this.resetRelic(def.id));
+    openRelicResetPopup(this.scene, this.popups, { asset, level: progress.level, refund: relicResetRefund(progress), loss: relicResetLoss(progress) }, () => void this.resetRelic(def.id));
   }
 
-  /** 젬 차감·회수·레벨 확정은 서버가 한 처리로 맡는다. 화면은 결과만 다시 그린다. */
+  /** 회수·레벨 확정은 서버가 한 처리로 맡는다. 화면은 결과만 다시 그린다. */
   private async resetRelic(relicId: string): Promise<void> {
     try {
       const response = await withBusy(this.scene, gameApi.resetRelic(relicId));
@@ -1100,7 +1100,7 @@ export class InfoManager {
       if (this.celebratedLevel?.id === relicId) this.celebratedLevel = undefined;
       showContentToast(this.scene, t("info.reset.done", { count: response.cheesecakeRefunded.toLocaleString() }), "info");
     } catch (error) {
-      if (error instanceof GameApiError && error.code === "INSUFFICIENT_CURRENCY") showContentToast(this.scene, t("info.reset.noGems"), "refused");
+      logError("relic.reset", "레벨 초기화 실패", error);
     }
     this.refreshGrowth();
   }
@@ -1480,9 +1480,9 @@ export class InfoManager {
     this.feedPopupOpen = true;
     this.popups.open({
       width: 540,
-      height: 220,
+      height: FEED_BULK_NOTE.height,
       x: bounds.centerX,
-      y: bounds.bottom + 126,
+      y: bounds.bottom + 126 + (FEED_BULK_NOTE.height - 220) / 2,
       title: t("info.feed.bulk"),
       hideCloseButton: true,
       closeOnBackdrop: true,
@@ -1512,12 +1512,20 @@ export class InfoManager {
     // 상한에 닿는 순간 쪽지가 스스로 닫힌다 — 더 먹일 수 없는 판에 남아 있을 이유가 없고,
     // 다음에 할 일(한계 돌파)은 별 옆의 버튼이 제 자리에서 말한다.
     if (progress.level >= this.relicCap()) { close(); return; }
-    ([[t("info.feed.one"), 1], [t("info.feed.ten"), 10]] as const).forEach(([label, levels], index) => {
-      const bx = index === 0 ? -128 : 128;
-      const cost = this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
-      const enough = session.wallet.cheesecake >= cost;
+    // 두 줄 — 위가 1·10레벨, 아래가 5레벨·MAX다. MAX는 지금 치즈케이크로 상한까지 갈 수 있는 만큼 먹이고, 누르면
+    // 그 아이가 묻는 확인 창이 먼저 뜬다(한 번에 큰 몫이 나가는 칸이라 손이 한 번 더 들어간다).
+    const max = this.feedMaxPlan();
+    const options: { label: string; levels: number | "max"; x: number; y: number }[] = [
+      { label: t("info.feed.one"), levels: 1, x: -128, y: FEED_BULK_NOTE.rowY[0] },
+      { label: t("info.feed.ten"), levels: 10, x: 128, y: FEED_BULK_NOTE.rowY[0] },
+      { label: t("info.feed.five"), levels: 5, x: -128, y: FEED_BULK_NOTE.rowY[1] },
+      { label: t("info.feed.max"), levels: "max", x: 128, y: FEED_BULK_NOTE.rowY[1] },
+    ];
+    options.forEach(({ label, levels, x: bx, y: by }) => {
+      const cost = levels === "max" ? max.feeds * FEED_UNIT.cheesecake : this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
+      const enough = levels === "max" ? max.feeds > 0 : session.wallet.cheesecake >= cost;
       // 칸 하나를 한 덩어리로 묶어야 눌림이 판·이름·값줄을 함께 누른다.
-      const option = this.scene.add.container(bx, 0);
+      const option = this.scene.add.container(bx, by);
       // 급여 버튼과 같은 치즈케이크 조각이다. 모자란 칸은 꺼진 판으로 가라앉는다.
       const plate = drawFeedPlate(this.scene, 236, 138, 14);
       plate.on.setVisible(enough);
@@ -1525,7 +1533,7 @@ export class InfoManager {
       option.add([plate.off, plate.on]);
       option.add(this.scene.add.text(0, -40, label, textStyle({ role: "display", size: 32, color: enough ? FEED_BUTTON.ink : COLOR.inkDim })).setOrigin(0.5));
       // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
-      const price = feedCostRow(this.scene, 0, 14, 196, 50, 32, "info-feed-popup:cheesecake");
+      const price = feedCostRow(this.scene, 0, 14, 196, 50, 32, `info-feed-popup:cheesecake:${levels}`);
       price.text.setText(formatCurrency(session.wallet.cheesecake) + "/" + formatCurrency(cost));
       price.text.setColor(enough ? FEED_TEXT : COLOR.dangerText);
       price.layout();
@@ -1540,12 +1548,52 @@ export class InfoManager {
       // 달라지므로, 남겨 두기만 하고 값을 그대로 두면 화면이 거짓말을 한다.
       hit.on("pointerup", () => {
         pressOut(option, "feed");
-        burst.from({ x: body.x + bx, y: body.y - 40 }).feast(levels >= 10 ? FEED_TAP.pieces.tenLevels : FEED_TAP.pieces.level);
         settingsManager.haptic("uiTap");
+        if (levels === "max") {
+          // 쪽지를 닫고 확인 창을 연다 — 두드려 쌓인 몫이 먼저 나가야 창이 셈한 값이 맞는다.
+          close();
+          void this.flushFeeds().then(() => this.openFeedMax());
+          return;
+        }
+        burst.from({ x: body.x + bx, y: body.y + by - 40 }).feast(levels >= 10 ? FEED_TAP.pieces.tenLevels : FEED_TAP.pieces.level);
         // 버튼으로 두드려 쌓인 몫이 먼저 나가야 이 칸이 셈한 값이 맞는다.
         void this.flushFeeds().then(() => this.feedLevels(levels)).then(repaint);
       });
       option.add(hit);
+    });
+  }
+
+  /**
+   * MAX 급여가 먹일 횟수와 닿는 레벨 — 지금 치즈케이크로 상한까지 갈 수 있는 만큼이다. 쪽지의 값줄·확인 창·실제
+   * 요청이 같은 값을 쓴다.
+   */
+  private feedMaxPlan(): { feeds: number; targetLevel: number } {
+    const def = this.currentDef;
+    if (!def) return { feeds: 0, targetLevel: 1 };
+    const progress = relicProgression.getProgress(def.id);
+    const cap = this.relicCap();
+    if (progress.level >= cap) return { feeds: 0, targetLevel: progress.level };
+    const feeds = Math.min(this.feedsForLevels(cap - progress.level), Math.floor(session.wallet.cheesecake / FEED_UNIT.cheesecake));
+    return { feeds, targetLevel: previewFeedProgress(progress, feeds, cap).level };
+  }
+
+  /** MAX 급여 확인 창 — 그 아이가 묻고, 나가는 치즈케이크와 닿는 레벨을 보여 준다. */
+  private openFeedMax(): void {
+    const def = this.currentDef;
+    if (!def || !this.ownedNow || this.popups.isOpen) return;
+    const plan = this.feedMaxPlan();
+    if (plan.feeds <= 0) return;
+    const progress = relicProgression.getProgress(def.id);
+    openRelicFeedMaxPopup(this.scene, this.popups, {
+      asset: this.figureAssetOf(def),
+      level: progress.level,
+      targetLevel: plan.targetLevel,
+      cost: plan.feeds * FEED_UNIT.cheesecake,
+    }, () => {
+      if (this.currentDef?.id !== def.id) return;
+      // 창을 보는 사이 값이 바뀌었을 수 있다 — 다시 셈해 보낸다(서버도 넘치는 몫은 깎는다).
+      const feeds = this.feedMaxPlan().feeds;
+      if (feeds > 0) void this.feed(feeds, "level");
     });
   }
 
@@ -2668,7 +2716,7 @@ export class InfoManager {
     this.scene.time.delayedCall(0, () => {
       if (!this.feedButton.active || !this.isOpen) return;
       const bounds = this.settledBounds(this.feedButton);
-      setDebugFeedButton({ x: bounds.centerX, y: bounds.centerY });
+      setDebugFeedButton({ x: bounds.centerX, y: bounds.centerY, bottom: bounds.bottom });
     });
   }
 

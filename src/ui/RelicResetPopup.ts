@@ -4,6 +4,10 @@
  * 위 무대에 그 개체의 SD가 땀을 흘리며 부들부들 떨고, 말풍선이 「정말 나를 처음으로 되돌릴 거야?」를 묻는다.
  * 아래 유리 판은 보유 재화가 어떻게 바뀌는지를 재화마다 한 줄로 적고(`지금 → 뒤 · 증감`), 확정 버튼 안에
  * 값이 박힌다 — 무료면 값 대신 모서리 딱지가 붙는다. 자리는 `relicResetPopupLayout.ts`가 갖는다.
+ *
+ * **MAX 급여 확인 창도 같은 한 장이다**(`openRelicFeedMaxPopup`). 무대·레벨 줄·재화 판은 그대로 두고, 그 아이가
+ * 떨지 않고 신이 나서 통통 뛰며 「이걸 전부 나한테 주는 거야?!」를 묻는다. 그 창은 취소 버튼 없이 확정 하나만
+ * 서고, 닫는 길은 판 밖 우하단의 공용 뒤로가기와 판 밖 누르기다.
  */
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -28,25 +32,85 @@ export interface RelicResetPopupOptions {
   level: number;
   /** 돌려받는 치즈케이크. */
   refund: number;
-  /** 드는 젬(무료면 0). */
-  gems: number;
+  /** 돌려받지 못하는 치즈케이크(21레벨까지는 0). */
+  loss: number;
+}
+
+export interface RelicFeedMaxPopupOptions {
+  asset?: PuppetAsset;
+  level: number;
+  /** 다 먹인 뒤 닿는 레벨. */
+  targetLevel: number;
+  /** 나가는 치즈케이크. */
+  cost: number;
+}
+
+/** 두 창이 갈리는 자리 — 나머지(무대·레벨 줄·재화 판·버튼 줄)는 한 벌이다. */
+interface AskSpec {
+  asset?: PuppetAsset;
+  title: string;
+  plea: string;
+  from: number;
+  to: number;
+  /** 도착 레벨의 색 — 되돌리면 붉고 키우면 강조색이다. */
+  toColor: string;
+  rows: { icon: string; before: number; after: number }[];
+  note: string;
+  /** 무대의 그 아이 — 떨며 땀을 흘리거나, 신이 나서 통통 뛴다. */
+  mood: "afraid" | "excited";
+  /** 판 테두리·재화 판의 강조 색. */
+  edge: number;
+  confirm: { label: string; destructive: boolean; ribbon?: string };
+  /** 취소 버튼을 세우는가 — 없으면 판 밖 뒤로가기와 판 밖 누르기가 닫는다. */
+  cancel: boolean;
 }
 
 const BUBBLE_INK = "#20242b";
 const SWEAT_COLOR = 0x9fd8ff;
 
 export function openRelicResetPopup(scene: Phaser.Scene, popups: PopupLayer, options: RelicResetPopupOptions, onConfirm: () => void): void {
+  const note = options.loss > 0 ? t("info.reset.loss", { count: options.loss.toLocaleString() }) + "\n" + t("info.reset.keep") : t("info.reset.keep");
+  openRelicAskPopup(scene, popups, {
+    asset: options.asset,
+    title: t("info.reset.title"),
+    plea: t("info.reset.plea"),
+    from: options.level,
+    to: 1,
+    toColor: COLOR.dangerText,
+    rows: [{ icon: CURRENCY_ICON_BY_WALLET.cheesecake, before: session.wallet.cheesecake, after: session.wallet.cheesecake + options.refund }],
+    note,
+    mood: "afraid",
+    edge: COLOR.danger,
+    // 잃는 것이 없으면 확정 버튼에 「무료!」 딱지가 붙는다 — 21레벨까지는 먹인 것을 그대로 돌려받는다.
+    confirm: { label: t("info.reset.confirm"), destructive: true, ...(options.loss > 0 ? {} : { ribbon: t("info.reset.free") }) },
+    cancel: true,
+  }, onConfirm);
+}
+
+/** MAX 급여 확인 창 — 그 아이가 신이 나서 묻고, 나가는 치즈케이크와 닿는 레벨을 보여 준다. */
+export function openRelicFeedMaxPopup(scene: Phaser.Scene, popups: PopupLayer, options: RelicFeedMaxPopupOptions, onConfirm: () => void): void {
+  openRelicAskPopup(scene, popups, {
+    asset: options.asset,
+    title: t("info.feed.max.title"),
+    plea: t("info.feed.max.plea"),
+    from: options.level,
+    to: options.targetLevel,
+    toColor: COLOR.accentText,
+    rows: [{ icon: CURRENCY_ICON_BY_WALLET.cheesecake, before: session.wallet.cheesecake, after: session.wallet.cheesecake - options.cost }],
+    note: t("info.feed.max.note", { count: (options.targetLevel - options.level).toLocaleString() }),
+    mood: "excited",
+    edge: COLOR.accent,
+    confirm: { label: t("info.feed.max.confirm"), destructive: false },
+    cancel: false,
+  }, onConfirm);
+}
+
+function openRelicAskPopup(scene: Phaser.Scene, popups: PopupLayer, spec: AskSpec, onConfirm: () => void): void {
   const L = RELIC_RESET_POPUP;
-  const rows: { icon: string; before: number; after: number }[] = [
-    { icon: CURRENCY_ICON_BY_WALLET.cheesecake, before: session.wallet.cheesecake, after: session.wallet.cheesecake + options.refund },
-  ];
-  if (options.gems > 0) rows.push({ icon: CURRENCY_ICON_BY_WALLET.gems, before: session.wallet.gems, after: session.wallet.gems - options.gems });
-  const spots = relicResetPopupSpots(rows.length);
-  // 젬이 모자라도 창은 연다 — 무엇이 얼마 드는지 보고, 확정만 꺼진다. 차감은 서버가 다시 판정한다.
-  const short = session.wallet.gems < options.gems;
+  const spots = relicResetPopupSpots(spec.rows.length);
   const loops = motionPolicy(session.settings).nonEssentialRepeatFactor > 0;
 
-  popups.open({ width: L.width, height: spots.height, title: t("info.reset.title"), dim: true, dimAlpha: L.dimAlpha, hideCloseButton: true }, (body, close) => {
+  popups.open({ width: L.width, height: spots.height, title: spec.title, dim: true, dimAlpha: L.dimAlpha, hideCloseButton: spec.cancel }, (body, close) => {
     const stage = scene.add.container(0, spots.stageTop);
     body.add(stage);
     const S = L.stage;
@@ -62,18 +126,18 @@ export function openRelicResetPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       new Phaser.Math.Vector2(-B.width / 2 - B.tail * 0.4, B.height / 2 + B.tail),
     ], true);
     bubble.add(tail);
-    bubble.add(scene.add.text(0, 0, t("info.reset.plea"), textStyle({ role: "emphasis", size: B.textSize, color: BUBBLE_INK, align: "center", lineSpacing: 6, wrap: B.textWrap })).setOrigin(0.5));
+    bubble.add(scene.add.text(0, 0, spec.plea, textStyle({ role: "emphasis", size: B.textSize, color: BUBBLE_INK, align: "center", lineSpacing: 6, wrap: B.textWrap })).setOrigin(0.5));
     stage.add(bubble);
     if (loops) {
       bubble.setScale(0.6).setAlpha(0);
       scene.tweens.add({ targets: bubble, scale: 1, alpha: 1, duration: 320, delay: 160, ease: "Back.Out" });
     }
 
-    // `LV.30 → LV.1` — 지금 레벨은 흰색, 돌아갈 자리는 붉다.
+    // `LV.30 → LV.1` — 지금 레벨은 흰색, 도착하는 자리는 창마다 제 색이다.
     const level = scene.add.container(B.x, S.levelY);
-    const from = scene.add.text(0, 0, `LV.${options.level}`, textStyle({ role: "display", size: S.levelSize, color: COLOR.ink })).setOrigin(0, 0.5);
+    const from = scene.add.text(0, 0, `LV.${spec.from}`, textStyle({ role: "display", size: S.levelSize, color: COLOR.ink })).setOrigin(0, 0.5);
     const arrow = scene.add.text(0, 0, "→", textStyle({ role: "display", size: S.levelSize * 0.8, color: COLOR.inkDim })).setOrigin(0, 0.5);
-    const to = scene.add.text(0, 0, "LV.1", textStyle({ role: "display", size: S.levelSize, color: COLOR.dangerText })).setOrigin(0, 0.5);
+    const to = scene.add.text(0, 0, `LV.${spec.to}`, textStyle({ role: "display", size: S.levelSize, color: spec.toColor })).setOrigin(0, 0.5);
     const gap = 18;
     let lx = -(from.width + arrow.width + to.width + gap * 2) / 2;
     from.setX(lx); lx += from.width + gap;
@@ -82,43 +146,39 @@ export function openRelicResetPopup(scene: Phaser.Scene, popups: PopupLayer, opt
     level.add([from, arrow, to]);
     stage.add(level);
 
-    // SD — 발밑 그림자 위에 서서 떨고, 이마에서 땀방울이 흘러내린다.
-    if (options.asset) {
+    // SD — 발밑 그림자 위에 선다. 되돌릴 때는 떨며 땀을 흘리고, 먹일 때는 통통 뛴다.
+    if (spec.asset) {
       stage.add(addSdFootShadow(scene, S.sd.x, S.sd.ground, S.sd.shadow));
-      void spawnPuppet(scene, options.asset, { x: S.sd.x, groundY: S.sd.ground, height: S.sd.height, depth: 0 })
+      void spawnPuppet(scene, spec.asset, { x: S.sd.x, groundY: S.sd.ground, height: S.sd.height, depth: 0 })
         .then((puppet) => {
           if (!stage.active) { puppet.destroy(); return; }
           puppet.disableInteractive();
           stage.add(puppet);
           stage.bringToTop(bubble);
-          if (loops) tremble(scene, puppet, S.sd.x);
+          if (spec.mood === "afraid") { if (loops) tremble(scene, puppet, S.sd.x); }
+          else {
+            const hop = startPuppetHop(scene, puppet, 0);
+            puppet.once(Phaser.GameObjects.Events.DESTROY, () => hop.remove());
+          }
         })
-        .catch((error) => logError("puppet.display", "레벨 초기화 SD 표시 실패", error));
-      addSweat(scene, stage, S.sd.x + S.sweat.dx, S.sd.ground - S.sweat.rise, S.sweat.size, loops);
+        .catch((error) => logError("puppet.display", "레벨 확인 창 SD 표시 실패", error));
+      if (spec.mood === "afraid") addSweat(scene, stage, S.sd.x + S.sweat.dx, S.sd.ground - S.sweat.rise, S.sweat.size, loops);
     }
 
-    paintWallet(scene, body, spots.walletTop, spots.walletHeight, rows);
+    paintWallet(scene, body, spots.walletTop, spots.walletHeight, spec.rows, spec.edge);
 
-    // 젬이 모자라면 남는 것 대신 왜 누를 수 없는지를 붉게 말한다.
-    const note = short
-      ? textStyle({ role: "emphasis", size: L.noteSize, color: COLOR.dangerText, align: "center" })
-      : textStyle({ role: "body", size: L.noteSize, color: COLOR.inkDim, align: "center" });
-    body.add(scene.add.text(0, spots.noteY, short ? t("info.reset.noGems") : t("info.reset.keep"), note).setOrigin(0.5));
+    body.add(scene.add.text(0, spots.noteY, spec.note, textStyle({ role: "body", size: L.noteSize, color: COLOR.inkDim, align: "center", lineSpacing: 4 })).setOrigin(0.5));
 
-    const [cancelX, confirmX] = relicResetButtonXs();
+    const [cancelX, confirmX] = spec.cancel ? relicResetButtonXs() : [0, 0];
     const common = { width: L.button.width, height: L.button.height, fontSize: L.button.fontSize };
-    body.add(new Button(scene, cancelX, spots.buttonY, { ...common, label: t("popup.cancel"), onClick: close }));
-    const confirm = new Button(scene, confirmX, spots.buttonY, {
+    if (spec.cancel) body.add(new Button(scene, cancelX, spots.buttonY, { ...common, label: t("popup.cancel"), onClick: close }));
+    body.add(new Button(scene, confirmX, spots.buttonY, {
       ...common,
-      label: t("info.reset.confirm"),
-      ...DESTRUCTIVE_BUTTON_STYLE,
-      ...(options.gems > 0
-        ? { cost: { icon: CURRENCY_ICON_BY_WALLET.gems, amount: options.gems, affordable: session.wallet.gems >= options.gems } }
-        : { ribbon: t("info.reset.free") }),
-      onClick: () => { audioManager?.playUi("ui.danger"); close(); onConfirm(); },
-    });
-    if (short) confirm.setEnabled(false);
-    body.add(confirm);
+      label: spec.confirm.label,
+      ...(spec.confirm.destructive ? DESTRUCTIVE_BUTTON_STYLE : { variant: "primary" as const }),
+      ...(spec.confirm.ribbon ? { ribbon: spec.confirm.ribbon } : {}),
+      onClick: () => { audioManager?.playUi(spec.confirm.destructive ? "ui.danger" : "ui.confirm"); close(); onConfirm(); },
+    }));
   });
 }
 
@@ -157,11 +217,11 @@ function dropPoints(size: number, dx: number, dy: number): Phaser.Math.Vector2[]
 }
 
 /** 보유 재화 변화 — 재화마다 `그림 · 지금 → 뒤 · 증감` 한 줄. */
-function paintWallet(scene: Phaser.Scene, body: Phaser.GameObjects.Container, top: number, height: number, rows: readonly { icon: string; before: number; after: number }[]): void {
+function paintWallet(scene: Phaser.Scene, body: Phaser.GameObjects.Container, top: number, height: number, rows: readonly { icon: string; before: number; after: number }[], edge: number): void {
   const W = RELIC_RESET_POPUP.wallet;
   const width = RELIC_RESET_POPUP.width - W.inset * 2;
   const unit = Math.min(width, height) * POPUP_BODY_BEVEL_RATIO;
-  body.add(drawLayer(scene, 0, top + height / 2, chipPoints(width, height, { bevel: { topLeft: unit, bottomRight: unit } }), { fill: 0x121821, alpha: 0.92, edge: COLOR.danger, edgeAlpha: 0.8 }));
+  body.add(drawLayer(scene, 0, top + height / 2, chipPoints(width, height, { bevel: { topLeft: unit, bottomRight: unit } }), { fill: 0x121821, alpha: 0.92, edge, edgeAlpha: 0.8 }));
   body.add(scene.add.text(-width / 2 + 36, top + W.padY + W.headerHeight / 2, t("info.reset.wallet"), textStyle({ role: "emphasis", size: W.headerSize, color: COLOR.inkDim })).setOrigin(0, 0.5));
   const C = W.columns;
   rows.forEach((row, index) => {

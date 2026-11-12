@@ -103,3 +103,26 @@ test("급여 버튼을 연달아 두드리면 누른 것을 하나도 버리지 
     }, { timeout: 30_000 })
     .toBe(true);
 });
+
+test("한 번에 급여 아래 줄의 MAX는 그 아이가 묻는 확인 창을 거쳐 상한까지 먹인다", async ({ page }, testInfo) => {
+  await page.waitForTimeout(900);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.feedButton?.bottom !== undefined), { timeout: 15_000 }).toBe(true);
+  const spot = (await page.evaluate(() => window.__PF_DEBUG!.feedButton!))!;
+  // 길게 누르지 않고 한 번만 눌러 쪽지를 연다(한 번 먹이는 것은 괜찮다).
+  await clickGame(page, spot.x, spot.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["한 번에 급여"]);
+  await page.waitForTimeout(400);
+  await captureGame(page, `test-results/${testInfo.project.name}-relic-feed-bulk-two-rows.png`);
+  // 쪽지의 가운데는 급여 버튼 밑변 + 202(`FEED_BULK_NOTE`), MAX는 그 오른쪽 아래 칸이다.
+  const noteY = spot.bottom! + 126 + 76;
+  const levelBefore = await page.evaluate(() => window.__PF_DEBUG?.feedTaps?.confirmed ?? 0);
+  await clickGame(page, spot.x + 128, noteY + 76);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles), { timeout: 10_000 }).toEqual(["MAX 급여"]);
+  // SD가 서고 말풍선이 뜬 뒤를 남긴다(소프트웨어 GPU에서는 SD를 세우는 데 몇 초 걸린다).
+  await page.waitForTimeout(4_000);
+  await captureGame(page, `test-results/${testInfo.project.name}-relic-feed-max-confirm.png`);
+  // 판 밖을 누르면 먹이지 않고 닫힌다.
+  await clickGame(page, 120, 120);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeUndefined();
+  expect(await page.evaluate(() => window.__PF_DEBUG?.feedTaps?.confirmed ?? 0)).toBe(levelBefore);
+});

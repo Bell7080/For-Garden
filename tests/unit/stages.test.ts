@@ -249,8 +249,8 @@ describe("stage enemy design", () => {
       expect(enemy.breakthrough).toBeGreaterThanOrEqual(0);
       expect(enemy.breakthrough).toBeLessThanOrEqual(BREAKTHROUGH_CAP);
       expect(enemy.level).toBeGreaterThanOrEqual(1);
-      // 적 스토리 사다리의 천장은 60이다(돌파 경계의 끝). 렐릭은 연구원 레벨로 100까지 오른다.
-      expect(enemy.level).toBeLessThanOrEqual(60);
+      // 잡졸 사다리의 천장은 60이다. 보스 관문만 사다리 밖에 서고(응태 결정 2026-11-12 — 7-10 카르 LV.85) 렐릭 상한 100은 넘지 않는다.
+      expect(enemy.level).toBeLessThanOrEqual(stage.elite ? 100 : 60);
     }
   });
 

@@ -146,6 +146,20 @@ const LATE_CHAPTER_FORMATIONS: Readonly<Record<string, readonly (readonly [strin
   "7-10": [["carno", 1]],
 };
 
+/**
+ * **보스 관문은 사다리 밖 레벨에 선다**(응태 결정 2026-11-12 — 「카르·이카닉시아·코마 같은 애들은 레벨 곡선에서 벗어나서 더 세도 된다.
+ * 보스층에 걸맞게, 정예인 걸 감안해 너무 강하게는 말고」). 혼자·둘이 서는 정예라 사다리 레벨로는 그 장 잡졸 관문보다 쉬웠다
+ * (7-10 카르 LV.58이 7-9보다 스무 레벨 낮은 파티에 열렸다). 숨은 배율 없이 **레벨 하나만** 올리고 화면의 `LV`가 그 값이다.
+ * 목표는 그 장의 가장 무거운 잡졸 관문과 비슷하거나 한 뼘 위다 — 측정은 VERSION.md v0.449.1.
+ * 정예 관문만 이 표에 오르며, 다음 관문의 레벨은 사다리 그대로라 보스를 지나면 수가 내려간다(보스는 사다리의 예외).
+ */
+const STORY_BOSS_LEVELS: Readonly<Record<string, number>> = {
+  "4-10": 41, // 코마·이카닉시아 투 캐리 — 사다리 38
+  "5-10": 50, // 간부 마가사 — 사다리 44
+  "7-5": 60, // 간부 이카닉시아의 저지선 — 사다리 54
+  "7-10": 85, // 부대장 카르 — 사다리 58
+};
+
 /** 정예 둘이 서는 관문. 하나만 서는 정예는 적 수로 가른다. */
 const ELITE_DUO_STAGE_IDS: ReadonlySet<string> = new Set(["2-7", "2-9", "4-4", "4-5", "4-10", "6-10"]);
 
@@ -306,7 +320,7 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
     /*
      * **돌파 등급은 레벨에서 나온다**(`shownBreakthroughForLevel`) — 그 레벨이 여는 스킬 칸만 정하고 능력치는 레벨이 낸다.
      */
-    const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
+    const laterChapterLevel = STORY_BOSS_LEVELS[`${chapter}-${chapterOrder}`] ?? STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
     const laterChapterEnemies = lateFormation
       ? lateFormation.map(([relicId, slot]) => {
         const enemy = enemyGrowth(relicId, laterChapterLevel, slot);

@@ -19,19 +19,31 @@ const NOT_TRIGGERED_ALONE: Readonly<Record<string, readonly DamageKind[]>> = {
   ark: ["physical"], // 위압이 공포를 걸어 표적이 달아나는 동안 이 모의에서는 닿지 않는다
 };
 
+/** 받은 쪽의 출혈·동상·뇌진탕을 건 쪽이 이 개체인가. 빙결 해제는 출처를 남기지 않아 이 개체 것으로 본다. */
+function fixedSourceIsMe(state: ReturnType<typeof createSkirmish>, targetId: string, meId: string): boolean {
+  const target = state.fighters.find((fighter) => fighter.id === targetId)!;
+  const source = target.bleed?.sourceId ?? target.frostbite?.sourceId;
+  if (source === undefined) return !state.fighters.some((fighter) => fighter.side === "player" && fighter.id !== meId);
+  return source === meId;
+}
+
 function observedKinds(defId: string): Set<DamageKind> {
   const def = RELICS.find((relic) => relic.id === defId)!;
   const dummy = RELICS.find((relic) => relic.id === "torika")!;
   const state = createSkirmish([def], [dummy, dummy, dummy], ARENA);
   const me = state.fighters.find((fighter) => fighter.side === "player")!;
   for (const fighter of state.fighters) if (fighter.side === "enemy") { fighter.maxHp = 1e9; fighter.hp = 1e9; }
+  const enemyIds = new Set(state.fighters.filter((fighter) => fighter.side === "enemy").map((fighter) => fighter.id));
   const kinds = new Set<DamageKind>();
   for (let tick = 0; tick < 800; tick += 1) {
     me.ferocity = 0; me.ferocityFever = false; me.hp = me.maxHp;
     let events = stepSkirmish(state, 0.05);
     if (tick % 40 === 0 && tick < 400) { me.energy = 9999; events = events.concat(fireUltimate(state, me.id)); }
     for (const event of events) {
-      if (event.kind === "concussion" && "attackerId" in event && event.attackerId === me.id) kinds.add("fixed");
+      // 지속·즉발 고정 피해(뇌진탕·빙결 해제·출혈·동상)는 사건에 때린 쪽을 싣지 않는다 — 적이 받은 그 피해 중
+      // 이 개체(소환수는 빼고)가 건 것만 센다. 중독은 걸 때 저항을 거친 마법 피해라 고정이 아니다.
+      if ((event.kind === "concussion" || event.kind === "bleed") && enemyIds.has(event.fighterId)
+        && !("started" in event && event.started) && event.amount > 0 && fixedSourceIsMe(state, event.fighterId, me.id)) kinds.add("fixed");
       if (event.kind !== "attack" || event.attackerId !== me.id) continue;
       kinds.add(event.damageType === "true" ? "fixed" : event.damageType === "magical" ? "magical" : "physical");
     }

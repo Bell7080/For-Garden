@@ -16,8 +16,16 @@ export const STORY_DIFFICULTY = {
  * 체감하며 조정하는 값이라 이 표 하나만 고친다.
  */
 export const STORY_CHAPTER_STAT_FACTOR: Readonly<Record<number, number>> = { 2: 1.05, 3: 1.1, 4: 1.15, 5: 1.2, 6: 1.25, 7: 1.3, 8: 1.35 };
-export function storyChapterStatFactor(chapter: number | undefined): number {
-  return STORY_CHAPTER_STAT_FACTOR[chapter ?? 0] ?? 1;
+/**
+ * **쉬움만 4장부터 장 배율을 덜 받는다**(응태 결정, 2026-11-12 — 「보통에서 확 어려워질 테니 쉬움은 밀 만해야 한다. 특히 6장부터 힘들다」).
+ * 균등 레벨 검수에서 6장 후반·7장이 적 레벨보다 10~30레벨 높은 파티를 요구했다(5장은 적 레벨보다 낮은 파티로 열렸다).
+ * 보통·어려움은 위 표를 그대로 쓰므로 쉬움을 낮춰도 보통의 세기는 바뀌지 않는다 — 쉬움과 보통 사이의 계단만 넓어진다.
+ * 관문별 예외는 두지 않고 장마다 하나다.
+ */
+export const STORY_EASY_CHAPTER_STAT_FACTOR: Readonly<Record<number, number>> = { 2: 1.05, 3: 1.1, 4: 1.1, 5: 1.1, 6: 1.0, 7: 0.95, 8: 0.95 };
+export function storyChapterStatFactor(chapter: number | undefined, difficulty: StoryDifficulty): number {
+  const table = difficulty === "easy" ? STORY_EASY_CHAPTER_STAT_FACTOR : STORY_CHAPTER_STAT_FACTOR;
+  return table[chapter ?? 0] ?? 1;
 }
 export function storyDifficultyOf(id: string | null | undefined): StoryDifficulty {
   return id?.startsWith("normal:") ? "normal" : id?.startsWith("hard:") ? "hard" : "easy";

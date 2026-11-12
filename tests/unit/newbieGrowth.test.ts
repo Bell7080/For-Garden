@@ -68,6 +68,32 @@ describe("신규 7일 성장 가이드", () => {
     expect(newbieGrowthWindow(created, new Date(start + DAY * NEWBIE_GROWTH_WINDOW_DAYS + 1)).active).toBe(false);
   });
 
+  it("날은 가입 시각이 아니라 UTC 자정(한국 오전 9시)에 넘어간다", () => {
+    const created = "2026-11-01T11:00:00.000Z"; // 한국 저녁 8시 가입
+    expect(newbieGrowthWindow(created, new Date("2026-11-01T23:59:59.000Z"))).toMatchObject({ day: 1, nextDayAt: "2026-11-02T00:00:00.000Z" });
+    expect(newbieGrowthWindow(created, new Date("2026-11-02T00:00:00.000Z"))).toMatchObject({ day: 2, nextDayAt: "2026-11-03T00:00:00.000Z" });
+    expect(newbieGrowthWindow(created, new Date("2026-11-07T00:00:00.000Z"))).toMatchObject({ day: 7 });
+    expect(newbieGrowthWindow(created, new Date("2026-11-07T00:00:00.000Z")).nextDayAt).toBeUndefined();
+    expect(newbieGrowthWindow(created, new Date("2026-11-15T23:59:59.000Z")).active).toBe(true);
+    expect(newbieGrowthWindow(created, new Date("2026-11-16T00:00:00.000Z"))).toMatchObject({ active: false, day: 0, endsAt: "2026-11-16T00:00:00.000Z" });
+  });
+
+  it("예전 24시간 계산보다 날이 늦게 열리거나 일찍 닫히지 않는다(기존 계정 진행 보존)", () => {
+    const created = Date.parse("2026-11-01T17:23:00.000Z");
+    for (let hour = 0; hour < 24 * 16; hour += 1) {
+      const now = created + hour * 3_600_000;
+      const elapsed = now - created;
+      const oldActive = elapsed < NEWBIE_GROWTH_WINDOW_DAYS * DAY;
+      const oldDay = oldActive ? Math.min(7, Math.floor(elapsed / DAY) + 1) : 0;
+      const next = newbieGrowthWindow(new Date(created).toISOString(), new Date(now));
+      if (oldActive) {
+        expect(next.active).toBe(true);
+        expect(next.day).toBeGreaterThanOrEqual(oldDay);
+        expect(next.day - oldDay).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
   it("열리지 않은 날의 목표는 다 해도 받을 수 없다", () => {
     const facts = maxedFacts();
     const day2 = NEWBIE_GROWTH_GOALS.find((goal) => goal.day === 2)!;

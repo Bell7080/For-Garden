@@ -320,7 +320,7 @@
 - 예산은 **이벤트 종류마다 갈린다.** 정규(매주 도는 이벤트)는 쓴 스테미나 100당 젬 환산 상한(`regular.gemValuePer100Stamina`), 한정(픽업·시즌)은 이벤트마다 기간 총량을 `limited`에 한 줄 더한다. 새 이벤트는 자기 상한 테스트가 그 값을 읽는다(`chestForge.test`).
 - **화끈한 한 칸은 수치가 아니라 나오는 확률로 묶는다** — 돌림판의 젬 1,000 칸, 보물상자의 젬 1,000·3,000 카드가 그 결이다. 예산 값을 바꾸는 것은 여전히 응태 승인이 필요하고, 값만 올려 테스트를 통과시키지 않는다.
 
-- **신규 7일 성장 가이드는 계정마다 기간이 다른 한정 이벤트다**(`data/newbieGrowth.ts` + 규칙 `core/newbieGrowth.ts`, 예산 `limited["newbie-growth"]`). 공용 목록(`LOBBY_EVENTS`)에 넣지 않고 서버가 열렸다고 답할 때만 로비 판에 선다. 목표는 업적의 사실을 읽고, 새 측정이 필요하면 업적 사실이 아니라 `NewbieGrowthExtraMetric`에 더한다. 목표·마디를 바꾸면 예산 줄과 `newbieGrowth.test`를 함께 고친다(응태 승인).
+- **신규 7일 성장 가이드는 계정마다 기간이 다른 한정 이벤트다**(`data/newbieGrowth.ts` + 규칙 `core/newbieGrowth.ts`, 예산 `limited["newbie-growth"]`). 공용 목록(`LOBBY_EVENTS`)에 넣지 않고 서버가 열렸다고 답할 때만 로비 판에 선다. 하루는 다른 일일 갱신과 같이 **UTC 자정(오전 9시)**에 넘어간다 — 가입한 UTC 날짜가 1일차, 닫힘은 가입 뒤 14일이 지난 첫 자정(`newbieGrowthWindow`). 목표는 업적의 사실을 읽고, 새 측정이 필요하면 업적 사실이 아니라 `NewbieGrowthExtraMetric`에 더한다. 목표·마디를 바꾸면 예산 줄과 `newbieGrowth.test`를 함께 고친다(응태 승인).
 
 ## 원석 수급 규칙
 

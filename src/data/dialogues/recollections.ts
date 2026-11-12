@@ -1,5 +1,6 @@
 import type { DialogueStory } from "../../core/dialogue";
 import { registerDialogueTexts } from "./registerDialogue";
+import { registerReviewedStoryBodies } from "./reviewedStoryBodies";
 import { GREAT_AUK_REPORT } from "./greatAukReport";
 import { OPENING_TRAIN } from "./openingTrain";
 import { GREENHOUSE_ECHO } from "./greenhouseEcho";
@@ -27,5 +28,6 @@ export function getRecollectionStory(storyId: string): DialogueStory {
   return story;
 }
 
-// 본편 1~3장·서브 대사는 원고가 확정되기 전이라 번역을 등록하지 않는다(다른 언어에서는 한국어로 보인다).
+// 본편·서브는 검수와 11개 언어 번역을 마친 본문부터 등록한다.
 for (const story of TRANSLATED_STORIES) registerDialogueTexts(story);
+registerReviewedStoryBodies(RECOLLECTION_STORIES);

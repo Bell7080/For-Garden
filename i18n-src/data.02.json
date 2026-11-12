@@ -1560,16 +1560,7 @@
 "…Egal wo, solange ich das Wasser höre.",
 "…Где угодно, лишь бы слышать воду."
 ],
-"firstMeeting.luka": [
-"跑步是我的强项。仅次于沙发。",
-"วิ่งคือของถนัด รองจากโซฟาน่ะนะ",
-"Chạy là nghề của tôi. Chỉ sau cái sofa.",
-"Lari itu keahlianku. Setelah sofa, sih.",
-"Correr es lo mío. Justo después del sofá.",
-"Correr é comigo. Logo depois do sofá.",
-"Rennen ist mein Ding. Gleich nach dem Sofa.",
-"Бег — моё. Сразу после дивана."
-],
+"firstMeeting.luka": ["研究员？不是急事的话，我再躺一会儿。", "นักวิจัยเหรอ? ถ้าไม่ใช่เรื่องด่วน ขอนอนต่ออีกหน่อยนะ", "Nhà nghiên cứu à? Không gấp thì tôi nằm thêm chút nhé.", "Periset? Kalau tak mendesak, aku rebahan sebentar lagi.", "¿Investigador? Si no es urgente, me quedo tumbada otro poco.", "Pesquisador? Se não é urgente, vou ficar deitada mais um pouquinho.", "Forscher? Wenn es nicht dringend ist, bleibe ich noch ein bisschen liegen.", "Исследователь? Если не срочно, я ещё немного полежу."],
 "firstMeeting.dodo": [
 "队长，快看这个！世纪大发现！",
 "กัปตัน ดูนี่สิ! การค้นพบแห่งศตวรรษ!",
@@ -1580,16 +1571,7 @@
 "Captain, sieh dir das an! Die Entdeckung des Jahrhunderts!",
 "Капитан, гляди! Открытие века!"
 ],
-"firstMeeting.tia": [
-"闪闪发亮的东西全都是我的！",
-"ของวิบวับทั้งหมดเป็นของฉัน!",
-"Mọi thứ lấp lánh đều là của tôi!",
-"Semua yang berkilau itu milikku!",
-"¡Todo lo que brilla es mío!",
-"Tudo o que brilha é meu!",
-"Alles, was glitzert, gehört mir!",
-"Всё, что блестит, — моё!"
-],
+"firstMeeting.tia": ["研究员，看见那个亮晶晶的东西了吗？我能去捡吗？", "นักวิจัย เห็นของแวววาวตรงนั้นไหมคะ? ฉันไปเก็บมาได้ไหม?", "Nhà nghiên cứu, thấy cái lấp lánh kia không? Tôi nhặt về được chứ?", "Periset, lihat yang berkilau itu? Boleh kuambil?", "Investigador, ¿vio eso que brilla? ¿Puedo ir a recogerlo?", "Pesquisador, viu aquilo brilhando? Posso ir pegar?", "Forscher, haben Sie das Glitzern da gesehen? Darf ich es holen?", "Исследователь, видите, что там блестит? Можно я подберу?"],
 "firstMeeting.stella": [
 "风向我已经读好了，前辈。",
 "ฉันอ่านทิศลมไว้แล้วค่ะ รุ่นพี่",
@@ -1600,7 +1582,7 @@
 "Ich habe den Wind schon gelesen, Senpai.",
 "Я уже прочла ветер, сэмпай."
 ],
-"firstMeeting.meron": ["咦？您……不喜欢吗……？", "เอ๋? คุณ… ไม่ถูกใจหรือคะ…?", "Dạ? Bạn… không thích ạ…?", "Eh? Anda… tidak suka…?", "¿Eh? ¿No… te gusta…?", "Hã? Você… não gostou…?", "Hm? Ihr… mögt es nicht…?", "А? Вам… не нравится…?"],
+"firstMeeting.meron": ["那个，我是梅隆……想给你画幅画，能让我看看你的脸吗？", "เอ่อ เมรอนค่ะ… อยากวาดให้ ช่วยให้ดูหน้าหน่อยได้ไหมคะ?", "Tôi là Meron… Muốn vẽ tặng, cho tôi xem gương mặt nhé?", "Anu, saya Meron… Mau menggambarmu. Boleh lihat wajahnya?", "Esto, soy Meron… Me gustaría dibujarle. ¿Me deja verle la cara?", "É, sou Meron… Queria desenhar você. Posso ver seu rosto?", "Ähm, ich bin Meron… Ich würde Sie gern zeichnen. Zeigen Sie mir Ihr Gesicht?", "Я Мерон… Хочу вас нарисовать. Можно посмотреть на ваше лицо?"],
 "firstMeeting.pachi": [
 "喂，让开！我在给老大开路。",
 "เฮ้ หลบไป! ฉันกำลังเปิดทางให้บอส",
@@ -1621,16 +1603,7 @@
 "Erst mal die Diagnose, miau. Ich seh vielleicht so aus, bin aber Arzt, miau!",
 "Сначала диагноз, мяу. Выгляжу так, но я врач, мяу!"
 ],
-"firstMeeting.keris": [
-"只看着我吧，前辈。",
-"มองแค่ฉันคนเดียวนะคะ รุ่นพี่",
-"Chỉ nhìn mình em thôi, tiền bối.",
-"Lihat aku saja, senpai.",
-"Mírame solo a mí, senpai.",
-"Olhe só para mim, senpai.",
-"Sieh nur mich an, Senpai.",
-"Смотри только на меня, сэмпай."
-],
+"firstMeeting.keris": ["前辈，有想找的书吗？我给你带路。", "รุ่นพี่ หาหนังสืออยู่เหรอคะ? ฉันจะพาไปค่ะ", "Tiền bối đang tìm sách à? Để tôi dẫn đi.", "Senior, sedang mencari buku? Biar kutunjukkan tempatnya.", "Senpai, ¿busca algún libro? Yo le guío.", "Senpai, está procurando algum livro? Eu mostro o caminho.", "Senpai, suchen Sie ein Buch? Ich zeige Ihnen, wo es steht.", "Сэмпай, ищете книгу? Я покажу, где она."],
 "firstMeeting.delopi": [
 "锵锵！这是你的钥匙，研究员。",
 "แท่นแท๊น! นี่กุญแจของคุณค่ะ นักวิจัย",
@@ -1681,16 +1654,7 @@
 "Ich bin Dei! Diese Wand ist ja noch leer. Darf ich was draufmalen?",
 "Я Дей! Эта стена ещё пустая. Можно на ней порисовать?"
 ],
-"firstMeeting.maddy": [
-"空调开到最强，拜托了。",
-"เปิดแอร์แรงสุดเลย ขอร้อง",
-"Bật điều hòa mức tối đa giùm.",
-"Tolong AC-nya paling dingin.",
-"Aire acondicionado al máximo, por favor.",
-"Ar-condicionado no máximo, por favor.",
-"Klimaanlage auf volle Leistung, bitte.",
-"Кондиционер на максимум, пожалуйста."
-],
+"firstMeeting.maddy": ["我是玛蒂，研究员。这里有点热，能把冷气开大些吗？", "แมดดี้ค่ะ นักวิจัย ที่นี่ร้อนหน่อยนะคะ เปิดระบบทำความเย็นแรงขึ้นได้ไหมคะ?", "Tôi là Maddy, Nhà nghiên cứu. Ở đây hơi nóng. Bật làm mát mạnh hơn được không?", "Saya Maddy, Periset. Di sini agak panas. Boleh kubesarkan pendinginnya?", "Soy Maddy, Investigador. Aquí hace un poco de calor. ¿Puedo subir el aire?", "Sou Maddy, Pesquisador. Está meio quente aqui. Posso aumentar o ar?", "Ich bin Maddy, Forscher. Es ist etwas heiß hier. Darf ich die Kühlung stärker stellen?", "Я Мэдди, Исследователь. Здесь жарковато. Можно усилить охлаждение?"],
 "firstMeeting.terisa": [
 "要是哪里破了……我帮你缝好，小家伙。",
 "ถ้ามีตรงไหนขาด… ฉันจะเย็บให้นะ เจ้าตัวน้อย",
@@ -1721,16 +1685,7 @@
 "Ich sagte, nicht das! Folge meinem Befehl.",
 "Я же сказала — не то! Следуй моему приказу."
 ],
-"firstMeeting.morphe": [
-"全部放出去吧。我就在这里看着。",
-"ปล่อยออกไปให้หมด ฉันจะดูอยู่ตรงนี้",
-"Thả hết ra đi. Ta sẽ xem từ đây.",
-"Lepaskan semuanya. Aku akan menonton dari sini.",
-"Suéltalos a todos. Yo miraré desde aquí.",
-"Solte todos. Eu assisto daqui.",
-"Lass sie alle los. Ich sehe von hier aus zu.",
-"Выпускай всех. Я посмотрю отсюда."
-],
+"firstMeeting.morphe": ["……管理员？来得正好。稍等……我把画面调出来。", "…ผู้ดูแล? มาพอดีเลย รอหน่อยนะ… จะเปิดจอให้", "…Người điều phối? Tới đúng lúc lắm. Chờ chút… Tôi mở màn hình cho.", "…Pengendali? Senang kamu datang. Sebentar… kutampilkan layarnya.", "…¿Controlador? Me alegra verte. Un momento… Te pongo la pantalla.", "…Controlador? Que bom que veio. Só um instante… Vou abrir a tela.", "…Leitstelle? Schön, dass du da bist. Moment… Ich zeige dir den Bildschirm.", "…Куратор? Хорошо, что ты здесь. Подожди… Выведу экран."],
 "firstMeeting.dian": ["我会保护你的，队长！……啊，克罗！希罗！", "ฉันจะปกป้องคุณเองค่ะ กัปตัน! …อ๊ะ คุโระ! ชิโระ!", "Em sẽ bảo vệ anh, Đội trưởng! …A, Kuro! Shiro!", "Aku akan melindungimu, Kapten! …Ah, Kuro! Shiro!", "¡Yo te protegeré, Capitán! …¡Ah, Kuro! ¡Shiro!", "Eu vou te proteger, Capitão! …Ah, Kuro! Shiro!", "Ich beschütze dich, Captain! …Ah, Kuro! Shiro!", "Я защищу тебя, капитан! …Ой, Куро! Широ!"],
 "event.greatAuk.stage.name": [
 "大海雀海岸发掘地",

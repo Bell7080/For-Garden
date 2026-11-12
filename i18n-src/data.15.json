@@ -309,16 +309,7 @@
 "Torika",
 "Торика"
 ],
-"dialogue.opening-train.window.body": [
-"看到那些像白骨一样耸立的塔了吗？那就是建立在灭绝记忆之上的永恒之城。",
-"เห็นหอคอยที่ตั้งตระหง่านเหมือนกระดูกสีขาวไหม? นั่นคือนครนิรันดร์ที่สร้างบนความทรงจำของการสูญพันธุ์",
-"Thấy những ngọn tháp vươn lên như xương trắng kia không? Đó là Thành phố Vĩnh Hằng, xây trên ký ức của sự tuyệt chủng.",
-"Lihat menara-menara yang menjulang seperti tulang putih itu? Itulah Kota Abadi, dibangun di atas kenangan kepunahan.",
-"¿Ves esas torres que se alzan como huesos blancos? Es la Ciudad Eterna, construida sobre la memoria de la extinción.",
-"Vê aquelas torres que se erguem como ossos brancos? É a Cidade Eterna, construída sobre a memória da extinção.",
-"Siehst du die Türme, die wie weiße Knochen aufragen? Das ist die Ewige Stadt, erbaut auf der Erinnerung an das Aussterben.",
-"Видишь башни, что встают, словно белые кости? Это Вечный город, построенный на памяти о вымирании."
-],
+"dialogue.opening-train.window.body": ["看，窗外那些塔，你看见了吗？那里就是永恒之城。我们快到了。", "เห็นหอคอยนอกหน้าต่างไหมคะ? นั่นคืออีเทอร์นัลซิตี ใกล้ถึงแล้วค่ะ", "Thấy những tòa tháp ngoài cửa sổ không? Đó là Thành phố Vĩnh Hằng. Sắp tới rồi.", "Lihat menara di luar jendela itu? Itulah Eternal City. Kita hampir sampai.", "¿Ve esas torres por la ventana? Eso es Eternal City. Ya casi llegamos.", "Está vendo aquelas torres pela janela? Ali é Eternal City. Já estamos chegando.", "Sehen Sie die Türme vor dem Fenster? Das ist Eternal City. Wir sind fast da.", "Видите башни за окном? Это Вечный город. Мы почти приехали."],
 "dialogue.opening-train.answer.speaker": [
 "托莉卡",
 "โทริกะ",
@@ -369,16 +360,7 @@
 "Torika",
 "Торика"
 ],
-"dialogue.opening-train.warm.body": [
-"嘿嘿，那我先说！我喜欢的东西是零食，还有……研究员你旁边的位子！",
-"ฮิฮิ งั้นฉันก่อนนะ! สิ่งที่ชอบคือขนม แล้วก็… ที่นั่งข้าง ๆ นักวิจัย!",
-"Hihi, vậy để mình trước! Thứ mình thích là đồ ăn vặt và… chỗ ngồi cạnh bạn đó!",
-"Hehe, kalau begitu aku duluan! Yang kusuka itu camilan dan... kursi di sebelahmu, periset!",
-"¡Jeje, entonces empiezo yo! Lo que me gusta son los aperitivos y… ¡el asiento a tu lado!",
-"Hehe, então eu começo! Eu gosto de lanchinhos e… do lugar do seu lado!",
-"Hehe, dann fange ich an! Was ich mag, sind Snacks und … der Platz neben dir!",
-"Хе-хе, тогда я первая! Я люблю вкусняшки и… место рядом с тобой!"
-],
+"dialogue.opening-train.warm.body": ["那我来介绍！到了之后，我们一起去打招呼吧。", "งั้นฉันจะแนะนำให้เองค่ะ! ไปถึงแล้วไปทักทายด้วยกันนะคะ", "Vậy tôi sẽ giới thiệu cho! Tới nơi rồi cùng đi chào hỏi nhé.", "Kalau begitu, biar saya perkenalkan! Sesampainya nanti, ayo menyapa bersama.", "¡Entonces haré las presentaciones! Cuando lleguemos, iremos a saludar juntos.", "Então eu faço as apresentações! Quando chegarmos, vamos cumprimentar todo mundo juntos.", "Dann stelle ich Sie vor! Wenn wir ankommen, sagen wir zusammen Hallo.", "Тогда я вас познакомлю! Приедем - пойдём вместе поздороваемся."],
 "dialogue.opening-train.ready.speaker": [
 "托莉卡",
 "โทริกะ",
@@ -509,16 +491,7 @@
 "???",
 "???"
 ],
-"dialogue.opening-train.halt.body": [
-"多蒂。你太近了。研究员都往后仰了。",
-"โดดี ใกล้เกินไปแล้ว นักวิจัยเอนตัวหนีแล้วนะ",
-"Dodi. Cậu đứng gần quá. Nhà nghiên cứu đang ngả người ra sau kìa.",
-"Dodi. Kau terlalu dekat. Perisetnya sampai condong ke belakang.",
-"Dodi. Estás demasiado cerca. Se está echando hacia atrás.",
-"Dodi. Você está perto demais. Está se inclinando para trás.",
-"Dodi. Du bist zu nah. Die Forschungsleitung lehnt sich schon nach hinten.",
-"Доди. Ты слишком близко. Исследователь уже отклоняется назад."
-],
+"dialogue.opening-train.halt.body": ["多蒂，往旁边挪一点。研究员都没地方坐了。", "โดดี ขยับออกมาหน่อยสิ นักวิจัยไม่มีที่นั่งแล้วนะ", "Dodi, xích ra một chút. Nhà nghiên cứu chẳng còn chỗ ngồi kìa.", "Dodi, beri ruang sedikit. Periset sampai tak punya tempat duduk.", "Dodi, deja un poco de espacio. No hay ni sitio para que se siente el Investigador.", "Dodi, dá um espacinho. O Pesquisador nem tem onde sentar.", "Dodi, rutsch ein Stück. Der Forscher hat ja gar keinen Platz zum Sitzen.", "Доди, отодвинься немного. Исследователю даже сесть негде."],
 "dialogue.opening-train.sorry.speaker": [
 "多蒂",
 "โดดี",
@@ -560,7 +533,7 @@
 "Parua",
 "Паруа"
 ],
-"dialogue.opening-train.sniff.body": ["不过好奇怪。你身上的气味和其他研究员不一样。……我可以再靠近一点看看吗？", "แต่แปลกจัง กลิ่นของคุณต่างจากนักวิจัยคนอื่น …ขอดูใกล้ ๆ อีกนิดได้ไหม?", "Nhưng lạ thật. Mùi của bạn khác với những nhà nghiên cứu khác. …Tớ nhìn gần hơn chút nữa được không?", "Tapi aneh. Baumu berbeda dari periset lain. ...Boleh aku lihat sedikit lebih dekat?", "Pero es raro. Hueles distinto a los demás investigadores. …¿Puedo mirarte un poquito más de cerca?", "Mas é estranho. Seu cheiro é diferente dos outros pesquisadores. …Posso olhar só um pouquinho mais de perto?", "Aber seltsam. Du riechst anders als die anderen Forscher. … Darf ich noch ein bisschen genauer hinsehen?", "Но странно. Ты пахнешь не так, как другие исследователи. …Можно взглянуть чуть поближе?"],
+"dialogue.opening-train.sniff.body": ["有没有晕车？一路上应该挺颠的……要我帮你开点窗吗？", "เมารถหรือเปล่าคะ? ทางมาคงสั่นไม่น้อย… เปิดหน้าต่างให้ไหมคะ?", "Có bị say xe không? Dọc đường chắc xóc lắm… Tôi mở cửa sổ nhé?", "Tidak mabuk perjalanan? Perjalanannya pasti berguncang cukup keras… Mau saya bukakan jendela?", "¿No se ha mareado? El viaje habrá dado bastantes sacudidas… ¿Le abro un poco la ventana?", "Não ficou com enjoo? A viagem deve ter sacudido bastante… Quer que eu abra a janela?", "Ist Ihnen übel geworden? Die Fahrt muss ziemlich holprig gewesen sein… Soll ich das Fenster öffnen?", "Вас не укачало? Дорога была довольно тряской… Открыть вам окно?"],
 "dialogue.opening-train.scold.speaker": [
 "托莉卡",
 "โทริกะ",
@@ -571,16 +544,7 @@
 "Torika",
 "Торика"
 ],
-"dialogue.opening-train.scold.body": [
-"连帕鲁娅你也这样！研究员都不自在了啦！",
-"ปารัวก็ด้วยเหรอ! ทำให้นักวิจัยอึดอัดแล้วนะ!",
-"Cả Parua cũng vậy nữa! Làm nhà nghiên cứu khó xử rồi kìa!",
-"Kau juga, Parua! Kau membuat perisetnya tidak nyaman!",
-"¡Tú también, Parua! ¡Lo estás incomodando!",
-"Você também, Parua! Está deixando quem pesquisa desconfortável!",
-"Du auch noch, Parua! Du machst das ganz unangenehm!",
-"И ты туда же, Паруа! Исследователю же неловко!"
-],
+"dialogue.opening-train.scold.body": ["再忍一下。到了车站就能马上下车了！", "ทนอีกนิดนะคะ พอถึงสถานีก็ลงได้ทันทีเลย!", "Ráng thêm một chút thôi. Tới ga là có thể xuống ngay!", "Sabar sebentar lagi. Kita bisa langsung turun begitu tiba di stasiun!", "Aguante un poquito más. ¡Podremos bajar en cuanto lleguemos a la estación!", "Aguente só mais um pouco. Assim que chegarmos à estação, podemos descer!", "Nur noch ein bisschen. Sobald wir am Bahnhof sind, können wir aussteigen!", "Потерпите ещё немного. На станции сразу выйдем!"],
 "dialogue.opening-train.quake.body": [
 "轰隆隆……！！整节车厢剧烈晃动。",
 "ครืนนน…!! ทั้งตู้รถไฟโยกอย่างรุนแรง",
@@ -722,16 +686,7 @@
 "Dodi",
 "Доди"
 ],
-"dialogue.opening-train.record.body": [
-"队、队长平安！得记录……记录下来……不对，现在不是做这个的时候！",
-"ก-กัปตันปลอดภัย! ต้องบันทึก… บันทึกไว้… ไม่สิ ตอนนี้ไม่ใช่เวลาทำแบบนั้น!",
-"Đ-Đội trưởng an toàn! Phải ghi lại… ghi lại… Không, giờ đâu phải lúc làm thế!",
-"K-Kapten selamat! Aku harus mencatat... mencatat ini... Bukan, sekarang bukan waktunya!",
-"¡E-el Capitán está a salvo! Tengo que registrar… registrar esto… ¡No, no es momento para eso!",
-"O-o Capitão está a salvo! Preciso registrar… registrar isto… Não, não é hora para isso!",
-"D-der Captain ist in Sicherheit! Ich muss das festhalten … festhalten … Nein, dafür ist jetzt keine Zeit!",
-"К-Капитан цел! Надо записать… записать это… Нет, сейчас не до этого!"
-],
+"dialogue.opening-train.record.body": ["队长没事！帕鲁娅，帮我扶住这边。得先离开这里！", "กัปตันปลอดภัยค่ะ! ปารัว ช่วยจับตรงนี้หน่อย ต้องออกจากที่นี่ก่อน!", "Đội trưởng vẫn an toàn! Parua, giữ chỗ này giúp tớ. Phải ra khỏi đây trước đã!", "Kapten selamat! Parua, bantu pegang sebelah sini. Kita harus keluar dulu!", "¡El Capitán está a salvo! Parua, ayúdame a sujetar esto. ¡Primero tenemos que salir de aquí!", "O Capitão está bem! Parua, me ajuda a segurar aqui. Primeiro precisamos sair daqui!", "Dem Captain geht es gut! Parua, hilf mir hier. Wir müssen erst mal raus!", "Капитан в порядке! Паруа, подержи тут. Сначала надо выбраться!"],
 "dialogue.opening-train.three.speaker": [
 "帕鲁娅",
 "ปารัว",
@@ -853,16 +808,7 @@
 "Dodi",
 "Доди"
 ],
-"dialogue.opening-train.brave.body": [
-"我、我很害怕，可是……我要写下守护队长的第一份记录！",
-"ฉ-ฉันกลัว แต่… ฉันจะเขียนบันทึกแรกของการปกป้องกัปตัน!",
-"T-tớ sợ lắm, nhưng… tớ sẽ viết bản ghi chép đầu tiên về việc bảo vệ Đội trưởng!",
-"A-aku takut, tapi... aku akan menulis catatan pertama tentang melindungi Kapten!",
-"T-tengo miedo, pero… ¡voy a escribir el primer registro de proteger al Capitán!",
-"E-eu estou com medo, mas… vou escrever o primeiro registro de proteger o Capitão!",
-"I-ich habe Angst, aber … ich schreibe den ersten Bericht darüber, wie wir den Captain beschützen!",
-"М-мне страшно, но… я напишу первую запись о том, как мы защищаем Капитана!"
-],
+"dialogue.opening-train.brave.body": ["我、我也来一起挡住。队长，请退后！", "ฉะ ฉันจะช่วยกันไว้ด้วยค่ะ กัปตัน ถอยไปข้างหลังนะคะ!", "T-tôi cũng sẽ giúp chặn lại. Đội trưởng, xin hãy lùi ra sau!", "S-saya ikut menahan mereka. Kapten, tolong mundur!", "Y-yo también los detendré. ¡Capitán, retroceda!", "E-eu também ajudo a segurar. Capitão, recue, por favor!", "I-ich helfe auch, sie aufzuhalten. Captain, gehen Sie bitte zurück!", "Я-я тоже помогу их сдержать. Капитан, отойдите назад!"],
 "dialogue.opening-train.aim.speaker": [
 "帕鲁娅",
 "ปารัว",
@@ -1024,16 +970,7 @@
 "Dodi",
 "Доди"
 ],
-"dialogue.opening-retreat.log.body": [
-"第一份战斗记录，完成！敌人变成了天上的星星……我就这么写！",
-"บันทึกการต่อสู้ครั้งแรก เสร็จสมบูรณ์! ศัตรูกลายเป็นดาวบนฟ้า… จะเขียนแบบนี้แหละ!",
-"Bản ghi trận đầu tiên, hoàn tất! Kẻ địch đã thành ngôi sao trên trời… tớ sẽ viết thế!",
-"Catatan pertempuran pertama, selesai! Musuh menjadi bintang di langit... itu yang akan kutulis!",
-"¡Primer registro de combate, completo! El enemigo se convirtió en una estrella en el cielo… ¡eso escribiré!",
-"Primeiro registro de batalha, completo! O inimigo virou uma estrela no céu… é isso que vou escrever!",
-"Erster Kampfbericht, fertig! Der Feind wurde zu einem Stern am Himmel … das schreibe ich!",
-"Первая боевая запись готова! Враг стал звездой на небе… так и напишу!"
-],
+"dialogue.opening-retreat.log.body": ["队长，能让我看看胳膊吗？刚才玻璃碎片飞过来了……太好了，没有受伤。", "กัปตัน ขอดูแขนหน่อยได้ไหมคะ? เมื่อกี้มีเศษกระจกกระเด็น… โล่งอกค่ะ ไม่เป็นแผลเลย", "Đội trưởng, cho tôi xem cánh tay nhé? Lúc nãy mảnh kính văng ra… May quá, không bị thương.", "Kapten, boleh saya lihat lengannya? Tadi ada pecahan kaca beterbangan… Syukurlah, tak ada luka.", "Capitán, ¿puedo verle el brazo? Antes saltaron cristales… Menos mal, no tiene heridas.", "Capitão, posso ver seu braço? Voaram cacos de vidro antes… Que bom, não se machucou.", "Captain, darf ich Ihren Arm sehen? Vorhin sind Glassplitter geflogen… Zum Glück, Sie sind unverletzt.", "Капитан, можно вашу руку? Там летели осколки стекла… Как хорошо, вы не поранились."],
 "dialogue.opening-retreat.watch.speaker": [
 "帕鲁娅",
 "ปารัว",

@@ -68,6 +68,8 @@ export const BACKGROUND = {
   recruitFossil: "background-recruit-fossil",
   /** 호박석 연구 — 디안 한정 픽업의 모집 원화. */
   recruitDian: "background-recruit-dian",
+  /** 다음 픽업 예정 — 플레시오사우루스 모티브의 해저 달빛 피크닉. */
+  recruitMoonPicnic: "background-recruit-moon-picnic",
   /** 첫 복원 연구 — 비워 둔 방에 확정 SSR 넷의 SD가 선다(`WelcomeBannerCast`). */
   recruitWelcome: "background-recruit-welcome",
   /**
@@ -238,6 +240,7 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.duelShop, "sprites/background/duel_shop.webp"],
   [BACKGROUND.recruitFossil, "sprites/background/background_017.webp"],
   [BACKGROUND.recruitDian, "sprites/background/recruit_dian.webp"],
+  [BACKGROUND.recruitMoonPicnic, "sprites/background/recruit_moon_picnic.webp"],
   [BACKGROUND.recruitWelcome, "sprites/background/recruit_welcome.webp"],
   [BACKGROUND.strataBase, "sprites/background/strata_base.webp"],
   // 겉장은 한 번 탐사할 때마다 그중 한 장이 뽑힌다. 키 이름은 `strataLayerTextureKey`가 짓는다.

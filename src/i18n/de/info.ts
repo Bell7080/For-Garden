@@ -76,7 +76,7 @@ export const INFO_DE = {
   "info.reset": "Zurücksetzen",
   "info.reset.title": "Level zurücksetzen",
   "info.reset.confirm": "Zurücksetzen",
-  "info.reset.plea": "Ähm… willst du mich wirklich\nauf den Anfang zurücksetzen?",
+  "info.reset.plea": "Ähm… wollen Sie mich wirklich\nauf den Anfang zurücksetzen?",
   "info.reset.wallet": "Währungsänderung",
   "info.reset.keep": "Durchbruch, Bindung und Runen bleiben erhalten.",
   "info.reset.free": "Gratis!",

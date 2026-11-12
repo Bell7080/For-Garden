@@ -76,7 +76,7 @@ export const INFO_ZH_HANT = {
   "info.reset": "重置",
   "info.reset.title": "等級重置",
   "info.reset.confirm": "重置",
-  "info.reset.plea": "那個……真的要把我\n變回最初的樣子嗎？",
+  "info.reset.plea": "那個……您真的要把我\n變回最初的樣子嗎？",
   "info.reset.wallet": "持有貨幣變化",
   "info.reset.keep": "突破、羈絆與符文保持不變。",
   "info.reset.free": "免費！",

@@ -81,7 +81,7 @@ export const INFO_KO = {
   "info.reset": "초기화",
   "info.reset.title": "레벨 초기화",
   "info.reset.confirm": "초기화하기",
-  "info.reset.plea": "저… 정말 나를\n처음으로 되돌릴 거야?",
+  "info.reset.plea": "저… 정말 저를\n처음으로 되돌리실 건가요?",
   "info.reset.wallet": "보유 재화 변화",
   "info.reset.keep": "한계 돌파·유대·룬은 그대로 남아요.",
   "info.reset.free": "무료!",

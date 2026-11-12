@@ -76,7 +76,7 @@ export const INFO_EN = {
   "info.reset": "Reset",
   "info.reset.title": "Level Reset",
   "info.reset.confirm": "Reset",
-  "info.reset.plea": "Um… are you really\nresetting me to the start?",
+  "info.reset.plea": "Um… are you really going to\nreset me to the start?",
   "info.reset.wallet": "Currency Change",
   "info.reset.keep": "Breakthrough, Bond and Runes stay as they are.",
   "info.reset.free": "FREE!",

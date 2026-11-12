@@ -76,7 +76,7 @@ export const INFO_ID = {
   "info.reset": "Atur Ulang",
   "info.reset.title": "Atur Ulang Level",
   "info.reset.confirm": "Atur Ulang",
-  "info.reset.plea": "Eh… kamu sungguh mau\nmengembalikanku ke awal?",
+  "info.reset.plea": "Eh… Anda sungguh ingin\nmengembalikan saya ke awal?",
   "info.reset.wallet": "Perubahan Mata Uang",
   "info.reset.keep": "Terobosan, Ikatan, dan Rune tetap dipertahankan.",
   "info.reset.free": "Gratis!",

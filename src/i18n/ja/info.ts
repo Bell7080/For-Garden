@@ -81,7 +81,8 @@ export const INFO_JA = {
   "info.reset.wallet": "所持通貨の変化",
   "info.reset.keep": "限界突破・絆・ルーンはそのまま残ります。",
   "info.reset.free": "無料！",
-  "info.reset.loss": "Lv.21を超えた分は90%だけ戻ります（−{count}）",
+  "info.reset.warn.title": "返還は90%だけです！",
+  "info.reset.warn.body": "Lv.21を超えた分の10%は戻りません",
   "info.reset.done": "チーズケーキを{count}個返却しました。",
 
   "info.rune.bag": "ルーンバッグ · {part}",

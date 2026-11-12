@@ -44,7 +44,22 @@ export const RELIC_RESET_POPUP = {
     /** 칸 — 그림 · 지금 값(오른쪽 맞춤) · 화살표 · 뒤의 값(왼쪽 맞춤) · 증감 알약(오른쪽 맞춤). */
     columns: { icon: -306, before: -40, arrow: 0, after: 40, delta: 350 },
   },
-  /** 재화 판 아래 한 줄 — 남는 것(돌파·유대·룬). */
+  /**
+   * 「90%만 환급」 경고 띠 — 21레벨 위로 키운 개체를 되돌릴 때만 재화 판 아래에 선다(응태 요청, 2026-11-12).
+   * 왼쪽 붉은 `!` 마름모가 경고를, 오른쪽 붉은 알약이 잃는 치즈케이크 수(`−N`)를 크게 말한다 — 안내 줄의 흐린 글자로
+   * 두던 때는 무엇을 잃는지 눈에 들지 않았다.
+   */
+  warning: {
+    gap: 24,
+    height: 132,
+    badge: { x: -296, size: 66, glyphSize: 46 },
+    textX: -244,
+    titleSize: 32,
+    bodySize: 24,
+    /** 잃는 몫 알약 — 오른쪽 끝에 맞춘다(재화 판의 증감 알약과 같은 열). */
+    pill: { right: 350, height: 64, padX: 18, icon: 44, gap: 8, textSize: 34 },
+  },
+  /** 재화 판(또는 경고 띠) 아래 한 줄 — 남는 것(돌파·유대·룬). */
   noteGap: 40,
   noteSize: 24,
   /** 안내 줄 가운데에서 버튼 가운데까지. */
@@ -87,19 +102,23 @@ export interface RelicResetPopupSpots {
   stageTop: number;
   walletTop: number;
   walletHeight: number;
+  /** 경고 띠의 가운데 y — 띠가 없으면 `undefined`. */
+  warningY?: number;
   noteY: number;
   buttonY: number;
 }
 
-export function relicResetPopupSpots(rows: number): RelicResetPopupSpots {
+export function relicResetPopupSpots(rows: number, warning = false): RelicResetPopupSpots {
   const L = RELIC_RESET_POPUP;
   const walletHeight = relicResetWalletHeight(rows);
-  const stack = L.topRoom + L.stage.height + walletHeight + L.noteGap + L.buttonRoom + L.button.height / 2 + L.bottomPad;
+  const warningRoom = warning ? L.warning.gap + L.warning.height : 0;
+  const stack = L.topRoom + L.stage.height + walletHeight + warningRoom + L.noteGap + L.buttonRoom + L.button.height / 2 + L.bottomPad;
   const top = -stack / 2;
   const stageTop = top + L.topRoom;
   const walletTop = stageTop + L.stage.height;
-  const noteY = walletTop + walletHeight + L.noteGap;
-  return { height: stack, stageTop, walletTop, walletHeight, noteY, buttonY: noteY + L.buttonRoom };
+  const warningY = warning ? walletTop + walletHeight + L.warning.gap + L.warning.height / 2 : undefined;
+  const noteY = walletTop + walletHeight + warningRoom + L.noteGap;
+  return { height: stack, stageTop, walletTop, walletHeight, ...(warningY !== undefined ? { warningY } : {}), noteY, buttonY: noteY + L.buttonRoom };
 }
 
 /** 두 버튼의 x — 취소가 왼쪽, 확정이 오른쪽. */

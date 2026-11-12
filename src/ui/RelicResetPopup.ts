@@ -26,6 +26,7 @@ import { startPuppetHop } from "./puppetHop";
 import { RELIC_RESET_POPUP, relicResetPopupSpots, type RelicAskMood, type RelicResetPopupSpots } from "./relicResetPopupLayout";
 import { addSdFootShadow } from "./SdFootShadow";
 import { FEED_BULK_PANEL, FEED_BULK_TONES } from "./feedBulkStyle";
+import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 
 export interface RelicResetPopupOptions {
@@ -58,6 +59,8 @@ interface AskSpec {
   toColor: string;
   rows: { icon: string; before: number; after: number }[];
   note: string;
+  /** 잃는 치즈케이크 — 있으면 재화 판 아래 붉은 경고 띠가 「90%만 환급」과 그 수를 크게 말한다. */
+  loss?: number;
   /** 무대의 그 아이 — 떨며 땀을 흘리거나, 신이 나서 통통 뛴다. */
   mood: RelicAskMood;
   /** 판 테두리·재화 판의 강조 색. */
@@ -73,9 +76,11 @@ const BUBBLE_INK = "#20242b";
 /** MAX 급여의 도착 레벨 — 금빛 테와 같은 결. */
 const MAX_GOLD_TEXT = "#ffd34d";
 const SWEAT_COLOR = 0x9fd8ff;
+/** 경고 띠 — 짙은 장밋빛 면과 밝은 다홍 제목. */
+const WARNING_FILL = 0x3d0d18;
+const WARNING_TITLE = "#ff8a8a";
 
 export function openRelicResetPopup(scene: Phaser.Scene, popups: PopupLayer, options: RelicResetPopupOptions, onConfirm: () => void): void {
-  const note = options.loss > 0 ? t("info.reset.loss", { count: options.loss.toLocaleString() }) + "\n" + t("info.reset.keep") : t("info.reset.keep");
   openRelicAskPopup(scene, popups, {
     asset: options.asset,
     title: t("info.reset.title"),
@@ -84,7 +89,8 @@ export function openRelicResetPopup(scene: Phaser.Scene, popups: PopupLayer, opt
     to: 1,
     toColor: COLOR.dangerText,
     rows: [{ icon: CURRENCY_ICON_BY_WALLET.cheesecake, before: session.wallet.cheesecake, after: session.wallet.cheesecake + options.refund }],
-    note,
+    note: t("info.reset.keep"),
+    ...(options.loss > 0 ? { loss: options.loss } : {}),
     mood: "afraid",
     edge: COLOR.danger,
     // 잃는 것이 없으면 확정 버튼에 「무료!」 딱지가 붙는다 — 21레벨까지는 먹인 것을 그대로 돌려받는다.
@@ -114,7 +120,7 @@ export function openRelicFeedMaxPopup(scene: Phaser.Scene, popups: PopupLayer, o
 
 function openRelicAskPopup(scene: Phaser.Scene, popups: PopupLayer, spec: AskSpec, onConfirm: () => void): void {
   const L = RELIC_RESET_POPUP;
-  const spots = relicResetPopupSpots(spec.rows.length);
+  const spots = relicResetPopupSpots(spec.rows.length, spec.loss !== undefined);
   const loops = motionPolicy(session.settings).nonEssentialRepeatFactor > 0;
 
   popups.open({ width: L.width, height: spots.height, title: spec.title, dim: true, dimAlpha: L.dimAlpha, ...(spec.panel ?? {}) }, (body, close) => {
@@ -183,6 +189,8 @@ function openRelicAskPopup(scene: Phaser.Scene, popups: PopupLayer, spec: AskSpe
     }
 
     paintWallet(scene, body, spots.walletTop, spots.walletHeight, spec.rows, spec.edge, RELIC_RESET_POPUP.backdrop[spec.mood].panel);
+
+    if (spec.loss !== undefined && spots.warningY !== undefined) paintLossWarning(scene, body, spots.warningY, spec.loss, loops);
 
     body.add(scene.add.text(0, spots.noteY, spec.note, textStyle({ role: "body", size: L.noteSize, color: COLOR.inkDim, align: "center", lineSpacing: 4 })).setOrigin(0.5));
 
@@ -277,6 +285,54 @@ function paintWallet(scene: Phaser.Scene, body: Phaser.GameObjects.Container, to
     body.add(drawLayer(scene, pillX, y, chipPoints(pillWidth, P.height, { bevel: { topLeft: P.height * 0.3, bottomRight: P.height * 0.3 } }), { fill: pillColor, alpha: 0.85, shadow: { x: 4, y: 6 } }));
     body.add(deltaText.setPosition(pillX, y));
   });
+}
+
+/**
+ * 「90%만 환급」 경고 띠 — 붉은 `!` 마름모 + 굵은 제목 + 한 줄 풀이, 오른쪽에 잃는 치즈케이크 알약(`그림 −N`).
+ * 띠는 짙은 장밋빛 유리에 붉은 강조선을 두르고, `!`만 천천히 숨 쉰다(움직임 줄이기에서는 멈춘다).
+ */
+function paintLossWarning(scene: Phaser.Scene, body: Phaser.GameObjects.Container, y: number, loss: number, loops: boolean): void {
+  const W = RELIC_RESET_POPUP.warning;
+  const width = RELIC_RESET_POPUP.width - RELIC_RESET_POPUP.wallet.inset * 2;
+  const unit = Math.min(width, W.height) * POPUP_BODY_BEVEL_RATIO;
+  body.add(drawLayer(scene, 0, y, chipPoints(width, W.height, { bevel: { topLeft: unit, bottomRight: unit } }), { fill: WARNING_FILL, alpha: 0.92, edge: COLOR.danger, edgeAlpha: 1, shadow: { x: 8, y: 12 } }));
+
+  // `!` 마름모 — 붉은 면에 흰 느낌표, 검은 획.
+  const B = W.badge;
+  const badge = scene.add.container(B.x, y);
+  const r = B.size / 2;
+  badge.add(scene.add.graphics()
+    .fillStyle(0x05070a, 0.6).fillPoints(diamond(r, 3, 5), true)
+    .fillStyle(COLOR.danger, 1).fillPoints(diamond(r, 0, 0), true)
+    .lineStyle(3, 0xffffff, 0.85).strokePoints(diamond(r - 4, 0, 0), true));
+  badge.add(scene.add.text(0, 2, "!", textStyle({ role: "display", size: B.glyphSize, color: COLOR.ink })).setOrigin(0.5).setStroke("#05070a", 6));
+  body.add(badge);
+  if (loops) {
+    const pulse = scene.tweens.add({ targets: badge, scale: 1.12, duration: 620, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+    badge.once(Phaser.GameObjects.Events.DESTROY, () => pulse.remove());
+  }
+
+  // 오른쪽 알약 — 잃는 치즈케이크 수.
+  const P = W.pill;
+  const amount = scene.add.text(0, 0, `−${loss.toLocaleString()}`, textStyle({ role: "display", size: P.textSize, color: COLOR.ink })).setOrigin(0, 0.5).setStroke("#05070a", 5);
+  const pillWidth = P.padX * 2 + P.icon + P.gap + amount.width;
+  const pillX = P.right - pillWidth / 2;
+  body.add(drawLayer(scene, pillX, y, chipPoints(pillWidth, P.height, { bevel: { topLeft: P.height * 0.3, bottomRight: P.height * 0.3 } }), { fill: COLOR.danger, alpha: 0.9, shadow: { x: 4, y: 6 } }));
+  const iconX = P.right - pillWidth + P.padX + P.icon / 2;
+  body.add(scene.add.image(iconX, y, CURRENCY_ICON_BY_WALLET.cheesecake).setDisplaySize(P.icon, P.icon));
+  body.add(amount.setPosition(iconX + P.icon / 2 + P.gap, y));
+
+  // 제목·풀이 — 알약 왼쪽 자리 안에서만. 넘치면 가로로 누른다.
+  const textRoom = P.right - pillWidth - 20 - W.textX;
+  const title = scene.add.text(W.textX, y - 18, t("info.reset.warn.title"), textStyle({ role: "display", size: W.titleSize, color: WARNING_TITLE })).setOrigin(0, 0.5).setStroke("#05070a", 5);
+  const line = scene.add.text(W.textX, y + 24, t("info.reset.warn.body"), textStyle({ role: "body", size: W.bodySize, color: COLOR.ink })).setOrigin(0, 0.5);
+  squeezeTextToWidth(title, textRoom);
+  squeezeTextToWidth(line, textRoom);
+  body.add([title, line]);
+}
+
+function diamond(r: number, dx: number, dy: number): Phaser.Math.Vector2[] {
+  return [new Phaser.Math.Vector2(dx, dy - r), new Phaser.Math.Vector2(dx + r, dy), new Phaser.Math.Vector2(dx, dy + r), new Phaser.Math.Vector2(dx - r, dy)];
 }
 
 /**

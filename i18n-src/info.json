@@ -1091,7 +1091,8 @@
 "info.reset.wallet": ["持有货币变化", "การเปลี่ยนแปลงของสกุลเงิน", "Thay đổi tiền tệ", "Perubahan Mata Uang", "Cambio de monedas", "Mudança de moedas", "Währungsänderung", "Изменение валюты"],
 "info.reset.keep": ["突破、羁绊与符文保持不变。", "ทะลวง สายสัมพันธ์ และรูนจะคงอยู่เหมือนเดิม", "Đột phá, Gắn kết và Rune được giữ nguyên.", "Terobosan, Ikatan, dan Rune tetap dipertahankan.", "La Ruptura, el Vínculo y las Runas se conservan.", "Ruptura, Vínculo e Runas são mantidos.", "Durchbruch, Bindung und Runen bleiben erhalten.", "Прорыв, Связь и Руны сохраняются."],
 "info.reset.free": ["免费！", "ฟรี!", "Miễn phí!", "Gratis!", "¡Gratis!", "Grátis!", "Gratis!", "Бесплатно!"],
-"info.reset.loss": ["超过21级的部分只返还90%（−{count}）", "ส่วนที่เกินเลเวล 21 ได้คืนแค่ 90% (−{count})", "Phần vượt cấp 21 chỉ hoàn lại 90% (−{count})", "Bagian di atas Lv.21 hanya kembali 90% (−{count})", "Lo invertido tras Nv. 21 solo devuelve el 90 % (−{count})", "O que passou do Nv. 21 volta só 90% (−{count})", "Über Lv. 21 hinaus kommen nur 90 % zurück (−{count})", "Сверх 21 ур. вернётся лишь 90% (−{count})"],
+"info.reset.warn.title": ["只返还90%！", "คืนแค่ 90%!", "Chỉ hoàn lại 90%!", "Hanya kembali 90%!", "¡Solo se devuelve el 90 %!", "Só 90% de reembolso!", "Nur 90 % Rückerstattung!", "Вернётся лишь 90%!"],
+"info.reset.warn.body": ["超过21级部分的10%不会返还", "10% ของส่วนที่เกินเลเวล 21 จะไม่ได้คืน", "10% phần vượt cấp 21 sẽ không được hoàn", "10% bagian di atas Lv.21 tidak kembali", "El 10 % de lo invertido tras Nv. 21 se pierde", "10% do que passou do Nv. 21 não volta", "10 % über Lv. 21 hinaus gehen verloren", "10% сверх 21 ур. не вернутся"],
 "info.reset.done": ["已返还{count}个芝士蛋糕。", "ได้รับชีสเค้กคืน {count} ชิ้น", "Đã hoàn lại {count} Bánh phô mai.", "{count} Cheesecake dikembalikan.", "Se devolvió Tarta de queso ×{count}.", "{count} Cheesecake devolvidos.", "{count} Käsekuchen zurückerhalten.", "Возвращено чизкейков: {count}."],
 "info.breakthrough.universalNotice": [
 "还将消耗{count}个{name}",

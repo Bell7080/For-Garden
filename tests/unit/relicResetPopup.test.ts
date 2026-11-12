@@ -34,4 +34,18 @@ describe("레벨 초기화 창 배치", () => {
     expect(right - left).toBe(button.width + button.gap);
     expect(right + button.width / 2).toBeLessThan(width / 2);
   });
+
+  it("잃는 몫이 있으면 재화 판 아래 경고 띠가 서고, 안내·버튼이 그만큼 내려간다", () => {
+    const plain = relicResetPopupSpots(1);
+    const warned = relicResetPopupSpots(1, true);
+    const W = RELIC_RESET_POPUP.warning;
+    expect(plain.warningY).toBeUndefined();
+    expect(warned.height - plain.height).toBe(W.gap + W.height);
+    expect(warned.warningY! - W.height / 2).toBeGreaterThan(warned.walletTop + warned.walletHeight);
+    expect(warned.noteY).toBeGreaterThan(warned.warningY! + W.height / 2);
+    expect(warned.buttonY + RELIC_RESET_POPUP.button.height / 2).toBeLessThan(warned.height / 2);
+    const inner = RELIC_RESET_POPUP.width / 2 - RELIC_RESET_POPUP.wallet.inset;
+    expect(W.badge.x - W.badge.size / 2).toBeGreaterThan(-inner);
+    expect(W.pill.right).toBeLessThan(inner);
+  });
 });

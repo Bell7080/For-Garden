@@ -85,7 +85,8 @@ export const INFO_KO = {
   "info.reset.wallet": "보유 재화 변화",
   "info.reset.keep": "한계 돌파·유대·룬은 그대로 남아요.",
   "info.reset.free": "무료!",
-  "info.reset.loss": "21레벨 위로 쌓은 몫은 90%만 돌아와요 (−{count})",
+  "info.reset.warn.title": "90%만 환급돼요!",
+  "info.reset.warn.body": "21레벨 위로 쌓은 몫의 10%는 돌아오지 않아요",
   "info.reset.done": "치즈케이크 {count}개를 돌려받았습니다.",
 
   "info.rune.bag": "룬 가방 · {part}",

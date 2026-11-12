@@ -2101,7 +2101,8 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
   if (effect.kind === "bleed") {
     // 깊은 출혈 — 이미 피를 흘리는 적에게 다시 걸면 매초 비율이 커지고 받는 회복량이 준다(마가사).
     const deepen = effect.deepenOnRepeat !== undefined && (fighter.bleed?.remaining ?? 0) > 0 ? effect.deepenOnRepeat : undefined;
-    refreshBleed(fighter, effect.seconds * potency, effect.maxHpPercentPerSecond * (deepen?.multiplier ?? 1), events, sourceId,
+    const multiplier = deepen?.multiplier ?? (effect.deep ? BLEED.deepMultiplier : 1);
+    refreshBleed(fighter, effect.seconds * potency, effect.maxHpPercentPerSecond * multiplier, events, sourceId,
       deepen?.healingReceivedReductionPercent ?? effect.healingReceivedReductionPercent);
   }
   if (effect.kind === "poison") {

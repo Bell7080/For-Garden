@@ -1073,13 +1073,12 @@ describe("수쿠스이노 스킬 표시 계약", () => {
     expect(encounterRoleDescription("boss")).not.toContain("damage-reduction");
   });
 
-  it("의 기본 공격은 주기 하나에 출혈과 날려버림을 함께 싣는다", () => {
+  it("의 기본 공격은 주기 하나에 깊은 출혈과 날려버림을 함께 싣는다", () => {
     const def = boss();
     expect(def.basic.statusEffectEvery).toBe(4);
-    // 출혈은 여러 개체가 함께 쓰는 규칙어라 시간·비율을 **본문이** 적고 태그는 그것이
-    // 무엇인지만 말한다. 회복 감소도 그 절에 함께 붙는다.
+    // 처음부터 깊은 출혈이다 — 수치는 태그가 말하고, 회복 감소는 그 절에 함께 붙는다.
     expect(skillDescription(def.basic, { damage: 210 })).toContain("매 4번째 공격마다");
-    expect(skillDescription(def.basic, { damage: 210 })).toContain("[[bleed|출혈]]");
+    expect(skillDescription(def.basic, { damage: 210 })).toContain("[[deep-bleed|깊은 출혈]]");
     expect(skillDescription(def.basic, { damage: 210 })).toContain("[[knockback|날려버린다]]");
   });
 

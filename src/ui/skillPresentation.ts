@@ -45,6 +45,7 @@ export function statusEffectLabel(effect?: CombatStatusEffect): string | undefin
   // 경직은 항상 0.1초인 용어 규칙을 키워드 설명이 담당하므로 요약줄에서 시간을 중복하지 않는다.
   if (effect?.kind === "stagger") return t("skill.statusLabel.stagger");
   // 표준 출혈의 시간·비율은 태그가 말한다. 그 값과 다른 출혈만 요약줄이 수치를 적는다.
+  if (effect?.kind === "bleed" && effect.deep && isStandardBleed(effect)) return t("skill.statusLabel.deepBleed");
   if (effect?.kind === "bleed") {
     return isStandardBleed(effect) ? t("skill.statusLabel.bleed")
       : t("skill.statusLabel.bleedCustom", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond });
@@ -1396,6 +1397,9 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   // `skillArt.test`가 막고, 막지 못한 평범한 출혈은 수치를 그대로 적는 문장으로 되돌아간다.
   if (effect.kind === "bleed" && effect.deepenOnRepeat) {
     return t("skill.status.bleedDeepen", { reduction: effect.deepenOnRepeat.healingReceivedReductionPercent });
+  }
+  if (effect.kind === "bleed" && effect.deep && isStandardBleed(effect)) {
+    return t("skill.status.bleedDeep", { reduction: effect.healingReceivedReductionPercent ?? 0 });
   }
   if (effect.kind === "bleed" && (effect.healingReceivedReductionPercent ?? 0) > 0) {
     return t("skill.status.bleedHealCut", { seconds: effect.seconds, reduction: effect.healingReceivedReductionPercent ?? 0 });

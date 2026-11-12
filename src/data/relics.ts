@@ -5130,7 +5130,7 @@ export const RELICS: RelicDef[] = [
        */
       statusEffectEvery: 4,
       statusEffects: [
-        { kind: "bleed", seconds: 4, maxHpPercentPerSecond: 2, healingReceivedReductionPercent: 30 },
+        { kind: "bleed", seconds: BLEED.seconds, maxHpPercentPerSecond: BLEED.percentPerSecond, deep: true, healingReceivedReductionPercent: 30 },
         { kind: "knockback", seconds: 1, speed: 1500, bounces: 2 },
       ],
     },

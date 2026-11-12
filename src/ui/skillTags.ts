@@ -120,6 +120,11 @@ const STATUS_GLYPH: Readonly<Record<"control" | "debuff" | "mark", SkillTagGlyph
 /** 상태 하나의 칩. 사전에 없는 상태도 빠지지 않도록 전용 문구로 되돌아간다. */
 export function statusTag(effect: CombatStatusEffect): SkillTag {
   const spec = STATUS_TAG[effect.kind];
+  // 처음부터 깊게 거는 출혈은 깊은 출혈 태그로 선다 — 수치는 그 태그가 말한다.
+  if (effect.kind === "bleed" && effect.deep) {
+    const deep = findKeyword("deep-bleed");
+    if (deep) return { tone: spec.tone, glyph: STATUS_GLYPH[spec.tone], text: `[[${deep.id}|${deep.term}]]` };
+  }
   const keyword = spec.keyword === undefined ? undefined : findKeyword(spec.keyword);
   // 서리깃만 전역 사전 밖(개체 전용 규칙어)이라 그 표기를 문구 표에서 읽는다.
   const name = keyword ? `[[${keyword.id}|${keyword.term}]]` : t("skill.keyword.plume.term");

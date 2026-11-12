@@ -28,8 +28,14 @@ describe("출혈 태그 계약", () => {
       expect(effect.maxHpPercentPerSecond, id).toBe(BLEED.percentPerSecond);
       // 회복 감소가 없는 평범한 출혈은 시간도 태그 값이어야 한다 — 그래야 「출혈을 부여한다」 한 마디로 끝난다.
       if (!effect.healingReceivedReductionPercent && !effect.deepenOnRepeat) expect(effect.seconds, id).toBe(BLEED.seconds);
-      if (effect.deepenOnRepeat) expect(effect.seconds, id).toBe(BLEED.seconds);
+      if (effect.deepenOnRepeat || effect.deep) expect(effect.seconds, id).toBe(BLEED.seconds);
     }
+  });
+
+  it("수쿠스이노의 네 번째 턱은 처음부터 깊은 출혈이다", () => {
+    const deep = effects.filter(({ id, effect }) => id === "sukusuino" && effect.kind === "bleed");
+    expect(deep.length).toBeGreaterThan(0);
+    for (const { effect } of deep) expect(effect.deep).toBe(true);
   });
 
   it("깊은 출혈은 개체마다 같은 배율이라 태그가 매초 비율을 말한다", () => {

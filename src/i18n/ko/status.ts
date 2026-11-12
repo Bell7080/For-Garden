@@ -67,7 +67,7 @@ export const STATUS_KO = {
   "status.frostbite.detail": "총 {amount} 피해 · 둔화 {slow}% · {time} 남음",
   "status.biteMark": "물린 자국",
   "status.biteMark.detail": "{stacks}겹 · 받는 피해 +{percent}% · {time} 남음",
-  "status.healCut": "회복 저하",
+  "status.healCut": "치유 감소",
   "status.healCut.detail": "받는 회복 −{percent}% · {time} 남음",
   "status.sunken": "가라앉는 무게",
   "status.sunken.detail": "이동·공격 속도 −{percent}% · {time} 남음",

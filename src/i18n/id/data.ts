@@ -671,6 +671,8 @@ export default {
   "keyword.tenacity.description": "Menumpuk saat menerima kontrol. Mengurangi durasi Pingsan, Goyah, Beku, Tidur, Takut, Kegilaan, Provokasi, Terpental dan perlambatan berwaktu. Kontrol di bawah durasi minimum setelah resistensi diabaikan. Mengurangi kekuatan perlambatan tanpa durasi dan tarikan, serta kecepatan Terpental. Pada resistensi penuh, kontrol baru tidak berpengaruh.",
   "keyword.damage-reduction.term": "Reduksi Kerusakan",
   "keyword.damage-reduction.description": "Semua kerusakan yang diterima menyusut seiring Nyawa turun. Kerusakan yang sangat kecil setelah reduksi tidak masuk sama sekali. Hanya musuh di posisi Abadi yang tak pernah tumbang yang memilikinya.",
+  "keyword.healing-cut.term": "Pemulihan Berkurang",
+  "keyword.healing-cut.description": "Semua pemulihan Nyawa yang diterima berkurang. Jika beberapa berlaku sekaligus, hanya yang terbesar yang dihitung.",
   "keyword.scar.term": "Bekas Luka",
   "keyword.scar.description": "Buff Sucusuino yang didapat dengan bertahan dari kerusakan. Memakai tumpukan penuh memberi perisai kepada dirinya.",
   "relic.rex.excavationSite": "Mongolia, Formasi Nemegt Zona 7",

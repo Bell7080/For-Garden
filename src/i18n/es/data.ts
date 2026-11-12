@@ -671,6 +671,8 @@ export default {
   "keyword.tenacity.description": "Se acumula al recibir control. Reduce la duración de Aturdimiento, Tambaleo, Congelación, Sueño, Miedo, Frenesí, Provocación, Empuje y ralentizaciones temporales. El control que queda bajo la duración mínima se ignora. Reduce la fuerza de ralentizaciones sin tiempo y atracciones, y la velocidad del Empuje. Al resistencia total, el nuevo control no tiene efecto.",
   "keyword.damage-reduction.term": "Reducción de daño",
   "keyword.damage-reduction.description": "Todo el daño recibido se reduce a medida que baja la Salud. El daño minúsculo tras la reducción no entra en absoluto. Solo lo tienen los enemigos en la posición Inmortal, que nunca cae.",
+  "keyword.healing-cut.term": "Curación reducida",
+  "keyword.healing-cut.description": "Toda la recuperación de Salud recibida se reduce. Si se aplican varias a la vez, solo cuenta la mayor.",
   "keyword.scar.term": "Cicatriz",
   "keyword.scar.description": "El potenciador de Sucusuino, obtenido al sobrevivir al daño. Consumir el máximo de cargas le da un escudo.",
   "relic.rex.excavationSite": "Formación Nemegt, Zona 7, Mongolia",

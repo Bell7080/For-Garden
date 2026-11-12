@@ -671,6 +671,8 @@ export default {
   "keyword.tenacity.description": "Steigt bei eingehender Kontrolle. Verkürzt Betäubung, Taumeln, Einfrieren, Schlaf, Furcht, Raserei, Spott, Rückstoß und zeitbegrenzte Verlangsamung. Kontrolle unter der Mindestdauer nach Widerstand wird ignoriert. Schwächt dauerhafte Verlangsamung und Heranziehen sowie die Rückstoßgeschwindigkeit. Bei vollständigem Widerstand wirkt neue Kontrolle nicht.",
   "keyword.damage-reduction.term": "Schadensminderung",
   "keyword.damage-reduction.description": "Aller erlittene Schaden schrumpft, je weiter das Leben sinkt. Nach der Minderung winziger Schaden kommt gar nicht an. Nur Gegner auf der unsterblichen Stelle, die nie fällt, besitzen sie.",
+  "keyword.healing-cut.term": "Heilung gesenkt",
+  "keyword.healing-cut.description": "Jede erhaltene Lebensheilung wird verringert. Wirken mehrere zugleich, zählt nur die stärkste.",
   "keyword.scar.term": "Narbe",
   "keyword.scar.description": "Sucusuinos Buff, den er durch überstandenen Schaden erhält. Das Verbrauchen voller Stapel gibt ihm einen Schild.",
   "relic.rex.excavationSite": "Nemegt-Formation, Zone 7, Mongolei",

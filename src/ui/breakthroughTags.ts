@@ -3,7 +3,7 @@ import type {
   BasicBreakthrough, FerocityBreakthrough, PassiveBreakthrough, RelicDef, UltimateBreakthrough,
 } from "../core/types";
 import { t } from "../i18n";
-import { damageKindTag, keywordTag, statusTag, type SkillTag } from "./skillTags";
+import { damageKindTag, healingCutTag, keywordTag, statusTag, type SkillTag } from "./skillTags";
 
 /**
  * 한계 돌파가 그 기술에 **새로 얹는** 칩.
@@ -72,6 +72,9 @@ const BREAKTHROUGH_TAGS: { readonly [K in Kind]?: (effect: Of<K>) => readonly (S
   afterglow: () => [keyword("curse", "debuff")],
   doubleDab: () => [keyword("reagent", "debuff")],
   richBomb: () => [keyword("reagent", "debuff")],
+  deepBleed: () => [keyword("deep-bleed", "debuff"), healingCutTag()],
+  unhealedMark: () => [healingCutTag()],
+  saltedIngredient: () => [healingCutTag()],
   paintSpill: () => [keyword("overpaint", "mark")],
   splashPaint: () => [keyword("overpaint", "mark")],
   paintChain: () => [keyword("overpaint", "mark")],

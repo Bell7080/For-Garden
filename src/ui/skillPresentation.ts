@@ -1385,6 +1385,9 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
     return t("skill.status.bleedDeepen", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond,
       deep: effect.maxHpPercentPerSecond * effect.deepenOnRepeat.multiplier, reduction: effect.deepenOnRepeat.healingReceivedReductionPercent });
   }
+  if (effect.kind === "bleed" && (effect.healingReceivedReductionPercent ?? 0) > 0) {
+    return t("skill.status.bleedHealCut", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond, reduction: effect.healingReceivedReductionPercent ?? 0 });
+  }
   if (effect.kind === "bleed") return t("skill.status.bleed", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond });
   // 매초 얼마인지는 태그가 말한다(쓰는 개체가 하나뿐이다). 시간만 스킬마다 달라 본문이 적는다.
   if (effect.kind === "poison") return t("skill.status.poison", { seconds: effect.seconds });

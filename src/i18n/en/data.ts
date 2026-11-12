@@ -689,6 +689,8 @@ export default {
   "keyword.tenacity.description": "Builds with incoming control. Reduces the duration of Stun, Stagger, Freeze, Sleep, Fear, Frenzy, Taunt, Knockback and timed slows. Control below the minimum duration after resistance is ignored. Reduces the strength of untimed slows and pulls, and also Knockback speed. At full resistance, new control has no effect.",
   "keyword.damage-reduction.term": "Damage Reduction",
   "keyword.damage-reduction.description": "All damage taken shrinks as Health falls. Damage that is tiny after reduction does not land at all. Only enemies in the Undying spot, which never falls, have it.",
+  "keyword.healing-cut.term": "Healing Cut",
+  "keyword.healing-cut.description": "All Health recovery received is reduced. When several apply at once, only the largest one counts.",
   "keyword.scar.term": "Scar",
   "keyword.scar.description": "Sucusuino's buff, gained by surviving damage. Consuming max stacks grants itself a shield.",
 

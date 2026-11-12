@@ -141,7 +141,7 @@ export const INFO_VI = {
   "info.story.2": "Tập 2 · Đêm trong chuồng",
   "info.story.3": "Tập 3 · Mảnh ký ức xưa",
   "info.story.4": "Tập 4 · Tận cùng Thành phố Vĩnh Hằng",
-  "info.enemy.role.healingReduction": "Khi kẻ địch này còn sống, lượng hồi phục đồng minh nhận giảm {base}% và tăng dần đến tối đa {max}% trong {seconds} giây.",
+  "info.enemy.role.healingReduction": "Khi kẻ địch này còn sống, lượng [[healing-cut|hồi phục]] đồng minh nhận giảm {base}% và tăng dần đến tối đa {max}% trong {seconds} giây.",
   "info.diary.answerChip": "Câu trả lời {n}",
   "info.diary.locked": "Câu hỏi này sẽ mở sau {days} ngày.",
   "info.diary.reward": "Trả lời để nhận {gems} Ngọc",

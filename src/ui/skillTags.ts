@@ -143,6 +143,17 @@ export function keywordTag(id: string, tone: SkillTagTone, glyph: SkillTagGlyph,
   return { tone, glyph, text: seconds === undefined ? name : t("skill.tag.withSeconds", { name, seconds }) };
 }
 
+/** 받는 회복을 깎는 상태인가 — 출혈의 회복 감소와 거듭 걸면 깊어지는 출혈. */
+function allyHealTag(): SkillTag { return { tone: "heal", glyph: "contrib-heal", text: t("skill.tag.allyHeal") }; }
+function cutsHealing(effect: CombatStatusEffect): boolean {
+  return effect.kind === "bleed" && ((effect.healingReceivedReductionPercent ?? 0) > 0 || effect.deepenOnRepeat !== undefined);
+}
+
+/** 치유 감소 칩. 출처마다 수치가 달라 칩은 수를 갖지 않고, 얼마인지는 본문이 적는다. */
+export function healingCutTag(): SkillTag | undefined {
+  return keywordTag("healing-cut", "debuff", "tag-debuff");
+}
+
 /**
  * `statusEffects` 밖에 **제 이름의 필드**로 상태를 거는 계약. 패시브의 돌진 기절(`openingCharge`)·밀물
  * (`tidalSurge`)·최대 둔화 빙결(`freezeAtMaxChill`)·시약 반응의 중독, 평타의 호령(`rally`)·순환 걸음(`cycle`)·시약
@@ -160,6 +171,24 @@ function contractTags(source: Skill | Passive | undefined): { tags: (SkillTag | 
     if (source.undyingKnockback) tags.push(statusTag({ kind: "knockback", ...source.undyingKnockback }));
     // 시약이 가득 차 터지는 반응이 중독을 건다.
     if (source.reagentReaction) tags.push(keywordTag("poison", "debuff", "tag-debuff", source.reagentReaction.reactionPoisonSeconds));
+    // 살아 있는 동안 상대 편 전체의 회복을 깎는 오라(도디).
+    if ((source.enemyHealingReceivedReductionPercent ?? 0) > 0) tags.push(healingCutTag());
+    // 백색소음(안카)은 주위 적에게 졸음을 쌓고 주위 아군을 채운다.
+    if (source.whiteNoise) {
+      tags.push(statusTag(source.whiteNoise.drowsy));
+      after.push(allyHealTag());
+    }
+    // 가장 지친 아군을 채우는 반응(리파).
+    if ((source.reagentReaction?.lowestHpAllyHealMaxHpPercent ?? 0) > 0) after.push(allyHealTag());
+    // 패시브가 두르는 막 — 계약마다 이름이 달라 한곳에서 모은다.
+    shield = source.lifeStealShield !== undefined || source.echoLocation !== undefined || source.segmentBarrier !== undefined
+      || (source.shellGuard?.selfShieldMaxHpPercent ?? 0) > 0 || (source.shellGuard?.lowestHpAllyShieldMaxHpPercent ?? 0) > 0
+      || (source.concussionShieldPercent ?? 0) > 0;
+    // 패시브가 거는 은신 — 시작할 때 · 체력이 낮아질 때 · 피해를 줄 때.
+    const stealth = source.openingStealthSeconds ?? source.lowHpStealth?.seconds ?? source.damageStealthSeconds;
+    if (stealth !== undefined) after.push(keywordTag("stealth", "buff", "tag-buff", stealth));
+    // 짝이 건강한 동안(슈테) · 늑대가 살아 있는 동안(디안) 숨는다 — 시간이 아니라 조건이 정한다.
+    else if (source.duoLink !== undefined || source.kind === "summonCommander") after.push(keywordTag("stealth", "buff", "tag-buff"));
     return { tags, after, shield };
   }
   const basic = source as Partial<BasicAttack> & { reagentStacks?: number };
@@ -169,11 +198,18 @@ function contractTags(source: Skill | Passive | undefined): { tags: (SkillTag | 
   }
   for (const step of basic.cycle ?? []) {
     for (const effect of step.statusEffects ?? []) tags.push(statusTag(effect));
+    if ((step.statusEffects ?? []).some(cutsHealing)) tags.push(healingCutTag());
     if (step.pull) tags.push(keywordTag("pull", "control", "tag-control"));
     if (step.shieldFromDamagePercent !== undefined) shield = true;
     if (step.selfStealthSeconds !== undefined) after.push(keywordTag("stealth", "buff", "tag-buff", step.selfStealthSeconds));
   }
   if (basic.reagentStacks !== undefined) tags.push(keywordTag("reagent", "debuff", "tag-debuff"));
+  // 반짝이 터질 때 두르는 막(티아) · 연발의 확정 치명타가 두르는 막(테쿠).
+  if ((basic.shimmerBurst?.shieldMaxHpPercent ?? 0) > 0) shield = true;
+  if ((("barrage" in source ? (source as { barrage?: { shieldFromCriticalPercent: number } }).barrage?.shieldFromCriticalPercent : undefined) ?? 0) > 0) shield = true;
+  // 약점이 터질 때 짝을 채운다(슈테).
+  if ([...(basic.statusEffects ?? []), ...(basic.cycle ?? []).flatMap((step) => step.statusEffects ?? [])]
+    .some((effect) => effect.kind === "weakpoint" && (effect.duoHealPercent ?? 0) > 0)) after.push(allyHealTag());
   // 채널링 궁극기가 도는 동안 평타가 더 거는 상태(데이나의 기절)도 그 궁극기의 칩이다.
   for (const effect of (source as Partial<Ultimate>).channel?.basicStatusEffects ?? []) tags.push(statusTag(effect));
   return { tags, after, shield };
@@ -272,6 +308,8 @@ export function buildSkillTags(input: SkillTagInput): SkillTag[] {
   if (skill?.selfLullaby) tags.push(statusTag({ kind: "taunt", seconds: skill.selfLullaby.tauntSeconds }));
   if (skill?.selfRoar) tags.push(statusTag(skill.selfRoar.fear));
   for (const effect of input.statusEffects ?? []) tags.push(statusTag(effect));
+  // 회복을 깎는 출혈(받는 회복 감소·깊은 출혈)은 출혈 칩 옆에 치유 감소를 하나 더 세운다.
+  if ((input.statusEffects ?? []).some(cutsHealing)) tags.push(healingCutTag());
   const contract = contractTags(input.source);
   tags.push(...contract.tags);
   if (skill?.selfGuard?.shockwave) tags.push(statusTag({ kind: "stun", seconds: skill.selfGuard.shockwave.stunSeconds }));

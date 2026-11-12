@@ -1079,6 +1079,26 @@
 "Aller erlittene Schaden schrumpft, je weiter das Leben sinkt. Nach der Minderung winziger Schaden kommt gar nicht an. Nur Gegner auf der unsterblichen Stelle, die nie fällt, besitzen sie.",
 "Весь получаемый урон уменьшается по мере падения здоровья. Крошечный после снижения урон не проходит совсем. Есть только у врагов на бессмертной позиции, которая не падает."
 ],
+"keyword.healing-cut.term": [
+"治疗削减",
+"การรักษาลดลง",
+"Giảm hồi phục",
+"Pemulihan Berkurang",
+"Curación reducida",
+"Cura reduzida",
+"Heilung gesenkt",
+"Снижение лечения"
+],
+"keyword.healing-cut.description": [
+"受到的所有生命回复都会减少。同时受到多个时，只计算最大的一个。",
+"การฟื้นฟูพลังชีวิตทั้งหมดที่ได้รับจะลดลง หากโดนหลายแหล่งพร้อมกัน จะนับเฉพาะค่าที่มากที่สุดเพียงค่าเดียว",
+"Mọi lượng hồi Máu nhận vào đều bị giảm. Nếu dính nhiều nguồn cùng lúc, chỉ tính nguồn lớn nhất.",
+"Semua pemulihan Nyawa yang diterima berkurang. Jika beberapa berlaku sekaligus, hanya yang terbesar yang dihitung.",
+"Toda la recuperación de Salud recibida se reduce. Si se aplican varias a la vez, solo cuenta la mayor.",
+"Toda recuperação de Vida recebida é reduzida. Se várias se aplicarem ao mesmo tempo, só a maior conta.",
+"Jede erhaltene Lebensheilung wird verringert. Wirken mehrere zugleich, zählt nur die stärkste.",
+"Всё получаемое восстановление здоровья уменьшается. Если действует несколько сразу, учитывается только самое сильное."
+],
 "keyword.scar.term": [
 "伤痕",
 "แผลเป็น",

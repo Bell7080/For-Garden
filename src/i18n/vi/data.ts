@@ -671,6 +671,8 @@ export default {
   "keyword.tenacity.description": "Tích lũy khi nhận khống chế. Giảm thời gian Choáng, Khựng, Đóng băng, Ngủ, Sợ hãi, Cuồng loạn, Khiêu khích, Hất văng và làm chậm có thời hạn. Khống chế còn dưới thời gian tối thiểu bị bỏ qua. Giảm cường độ làm chậm không thời hạn và kéo, cùng tốc độ Hất văng. Ở kháng hoàn toàn, khống chế mới không có hiệu lực.",
   "keyword.damage-reduction.term": "Giảm sát thương",
   "keyword.damage-reduction.description": "Máu càng giảm, mọi sát thương nhận vào càng thu nhỏ. Sát thương quá nhỏ sau khi giảm sẽ không có tác dụng. Chỉ kẻ địch ở vị trí Bất tử không bao giờ gục mới có.",
+  "keyword.healing-cut.term": "Giảm hồi phục",
+  "keyword.healing-cut.description": "Mọi lượng hồi Máu nhận vào đều bị giảm. Nếu dính nhiều nguồn cùng lúc, chỉ tính nguồn lớn nhất.",
   "keyword.scar.term": "Sẹo",
   "keyword.scar.description": "Buff của Sucusuino, nhận khi sống sót sau đòn đánh. Tiêu tầng tối đa để trao khiên cho bản thân.",
   "relic.rex.excavationSite": "Mông Cổ, Hệ tầng Nemegt, Khu 7",

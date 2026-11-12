@@ -671,6 +671,8 @@ export default {
   "keyword.tenacity.description": "Acumula ao receber controle. Reduz a duração de Atordoamento, Cambaleio, Congelamento, Sono, Medo, Frenesi, Provocação, Repulsão e lentidão temporária. Controle abaixo da duração mínima após resistência é ignorado. Reduz a força de lentidões sem duração e puxões, e a velocidade de Repulsão. A resistência total, novos controles não têm efeito.",
   "keyword.damage-reduction.term": "Redução de dano",
   "keyword.damage-reduction.description": "Todo dano recebido diminui conforme a Vida cai. Dano minúsculo após a redução não entra. Só o têm inimigos na posição Imortal, que nunca cai.",
+  "keyword.healing-cut.term": "Cura reduzida",
+  "keyword.healing-cut.description": "Toda recuperação de Vida recebida é reduzida. Se várias se aplicarem ao mesmo tempo, só a maior conta.",
   "keyword.scar.term": "Cicatriz",
   "keyword.scar.description": "O bônus de Sucusuino, obtido ao sobreviver a dano. Consumir o máximo de acúmulos lhe dá um escudo.",
   "relic.rex.excavationSite": "Formação Nemegt, Zona 7, Mongólia",

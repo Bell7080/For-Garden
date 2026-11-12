@@ -141,7 +141,7 @@ export const INFO_EN = {
   "info.story.2": "Ep. 2 · Night in the Enclosure",
   "info.story.3": "Ep. 3 · A Shard of Old Memory",
   "info.story.4": "Ep. 4 · The End of Eternal City",
-  "info.enemy.role.healingReduction": "While it lives, healing received by allies is reduced by {base}%, rising to {max}% over {seconds}s.",
+  "info.enemy.role.healingReduction": "While it lives, [[healing-cut|healing received]] by allies is reduced by {base}%, rising to {max}% over {seconds}s.",
   "info.diary.answerChip": "Answer {n}",
   "info.diary.locked": "This question opens in {days} days.",
   "info.diary.reward": "Answer to earn {gems} Gems",

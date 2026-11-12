@@ -854,6 +854,8 @@ export default {
   "keyword.tenacity.description": "行動妨害を受けるたびに蓄積し、気絶・硬直・凍結・睡眠・恐怖・狂乱・挑発・吹き飛ばし・時間制減速の持続時間を短縮する。抵抗後に最低時間以下となる妨害は無効。時間のない減速と引き寄せは強度を、吹き飛ばしは速度も低下させる。完全耐性では新しい行動妨害を受けない。",
   "keyword.damage-reduction.term": "軽減",
   "keyword.damage-reduction.description": "体力が削れるほど受けるすべてのダメージが減る。軽減を経たダメージがごく小さければ、まったく入らない。倒れない不死の立場の敵だけが持つ。",
+  "keyword.healing-cut.term": "回復低下",
+  "keyword.healing-cut.description": "受けるすべての体力回復が減る。複数かかっている場合は、最も大きいもの一つだけが適用される。",
   "keyword.scar.term": "傷痕",
   "keyword.scar.description": "ダメージを受けて生き残ったときに積まれるスクスイノのバフだ。最大重複を消費すると自分にシールドを与える。",
 

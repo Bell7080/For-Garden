@@ -671,6 +671,8 @@ export default {
   "keyword.tenacity.description": "受到控制时累积，缩短眩晕、硬直、冻结、睡眠、恐惧、狂乱、嘲讽、击飞和限时减速的持续时间。抵抗后不超过最短时间的控制无效。无时限减速和拉拽降低强度，击飞也降低速度。完全抵抗时新控制无效。",
   "keyword.damage-reduction.term": "伤害减免",
   "keyword.damage-reduction.description": "随着生命降低，受到的所有伤害都会缩小。减免后极小的伤害完全无效。只有占据永不倒下的不死位置的敌人拥有。",
+  "keyword.healing-cut.term": "治疗削减",
+  "keyword.healing-cut.description": "受到的所有生命回复都会减少。同时受到多个时，只计算最大的一个。",
   "keyword.scar.term": "伤痕",
   "keyword.scar.description": "苏库斯伊诺的增益，承受伤害存活后获得。消耗满层时为自身提供护盾。",
   "relic.rex.excavationSite": "蒙古 耐梅盖特组 第7区",

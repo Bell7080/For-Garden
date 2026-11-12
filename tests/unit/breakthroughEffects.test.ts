@@ -183,7 +183,7 @@ describe("돌파 효과 문구", () => {
   it("는 렉시아 네 슬롯의 강화 수치와 전투 개념을 모두 표시한다", () => {
     const lexia = getRelic("rex");
     expect(breakthroughEffectText(lexia, "basic")).toContain("최대 체력의 4%");
-    expect(breakthroughEffectText(lexia, "basic")).toContain("받는 회복량을 40% 낮추며");
+    expect(breakthroughEffectText(lexia, "basic")).toContain("받는 [[healing-cut|회복량]]을 40% 낮추며");
     expect(breakthroughEffectText(lexia, "ultimate")).toContain("피해의 50%만큼 체력을 회복");
     expect(breakthroughEffectText(lexia, "ferocity")).toContain("조금 넓은 범위");
     expect(breakthroughEffectText(lexia, "passive")).toContain("최대 체력·[[def|방어력]]·[[res|저항력]]이 25% 증가");

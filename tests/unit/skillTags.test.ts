@@ -69,6 +69,15 @@ describe("스킬 요약 칩 규격", () => {
     expect(buildSkillTags({ slot: "basic", effectType: "physical" }).map((tag) => tag.text)).toEqual(["물리 피해", "단일", "즉발"]);
   });
 
+  it("연발 궁극기(테쿠)는 한 명이 아니라 여럿에게 나눠 맞히는 총 발 수를 말한다", () => {
+    setTextLanguage("ko");
+    const teku = RELICS.find((def) => def.id === "teku")!;
+    const tags = skillTagsFromDef(teku.ultimate, "ultimate").map((tag) => tag.text);
+    expect(tags).toContain("다중");
+    expect(tags).toContain("총 5발");
+    expect(tags).not.toContain("단일");
+  });
+
   it.each(LANGUAGE_IDS)("%s: 모든 칩 글이 채워지고 규칙어가 사전에서 열린다", async (locale) => {
     await loadTextCatalog(locale); setTextLanguage(locale);
     const failures: string[] = [];

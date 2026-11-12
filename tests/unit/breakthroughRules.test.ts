@@ -59,7 +59,7 @@ const CATEGORY: Record<EffectKind, Category> = {
   stealthStrike: "stealth",
   splitHealing: "survival",
   arrowEcho: "damage",
-  bitterTaste: "damage",
+  darkRoast: "damage",
   richBlend: "survival",
   doubleMag: "damage",
   reloadSip: "survival",

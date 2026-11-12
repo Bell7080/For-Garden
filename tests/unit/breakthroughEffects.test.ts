@@ -1577,19 +1577,20 @@ describe("전사 한계 돌파 — 파치·케리스·매디", () => {
   });
 
   describe("테쿠", () => {
-    it("은 마지막 한 방울을 맞은 적의 방어력이 겹으로 깎이고 시간이 지나면 풀린다(별 II)", () => {
-      const defOf = (breakthrough: number, shots: number) => {
+    it("은 일반 공격의 모든 발이 적 방어력의 20%를 무시한다(별 II)", () => {
+      const lost = (breakthrough: number, strip: boolean) => {
         const state = setup(["teku"], ["toby"], breakthrough);
         const teku = findFighter(state, "player-0")!;
+        // 같은 성장에서 효과만 걷어 비교한다 — 돌파 단계의 공용 성장 몫은 양쪽이 같다.
+        if (strip) teku.def = { ...teku.def, breakthroughEffects: { ...teku.def.breakthroughEffects, basic: undefined } };
         const foe = findFighter(state, "enemy-0")!;
-        // 한 탄창을 모두 쏘면 마지막 발이 마지막 한 방울이다.
-        for (let i = 0; i < shots; i += 1) { teku.attackCooldown = 0; teku.targetId = foe.id; run(state, 0.1); }
-        return foe.bt.fangShave;
+        const cycle = getRelic("teku").basic.cycle!.length;
+        for (let i = 0; i < cycle; i += 1) { teku.attackCooldown = 0; teku.targetId = foe.id; run(state, 0.1); }
+        return foe.maxHp - foe.hp;
       };
-      const cycle = getRelic("teku").basic.cycle!.length;
-      expect(defOf(1, cycle - 1)).toBeNull();
-      expect(defOf(1, cycle)?.stacks).toBe(1);
-      expect(defOf(0, cycle)).toBeNull();
+      expect(getRelic("teku").breakthroughEffects?.basic).toEqual({ kind: "darkRoast", defenseIgnorePercent: 20 });
+      expect(lost(1, false)).toBeGreaterThan(lost(1, true));
+      expect(lost(0, false)).toBe(lost(0, true));
     });
 
     it("은 폭주로 채운 탄창이 비면 한 번 더 가득 채우고, 한 번의 폭주에 한 번뿐이다(별 IV)", () => {

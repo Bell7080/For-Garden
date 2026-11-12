@@ -1658,7 +1658,7 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     breakthroughEffects: {
-      basic: { kind: "bitterTaste", defensePercent: 6, seconds: 3, maxStacks: 3 },
+      basic: { kind: "darkRoast", defenseIgnorePercent: 20 },
       ultimate: { kind: "richBlend", shieldFromCriticalPercent: 45, shieldMaxHpPercent: 40 },
       ferocity: { kind: "doubleMag" },
       passive: { kind: "reloadSip", shieldMaxHpPercent: 6, capMaxHpPercent: 12 },

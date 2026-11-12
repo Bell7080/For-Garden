@@ -1545,10 +1545,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
         reduction: trim(effect.healingReceivedReductionPercent),
       });
     }
-    if (effect.kind === "bitterTaste") {
-      const cycle = def.basic.cycle;
-      return t("skill.breakthrough.effect.basic.bitterTaste", { name: cycle?.[cycle.length - 1]?.name ?? def.basic.name, percent: trim(effect.defensePercent), seconds: trim(effect.seconds), max: trim(effect.maxStacks) });
-    }
+    if (effect.kind === "darkRoast") return t("skill.breakthrough.effect.basic.darkRoast", { percent: trim(effect.defenseIgnorePercent) });
     if (effect.kind === "arrowEcho") {
       const arrow = def.basic.cycle?.find((step) => step.targeting === "splitShot");
       return t("skill.breakthrough.effect.basic.arrowEcho", { name: arrow?.name ?? def.basic.name, seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });

@@ -7350,9 +7350,13 @@ function damageHealingRate(attacker: Fighter, skill: Skill, attackingInFever: bo
 }
 
 /** 「폭풍 속의 조준」 — 폭주 중인 이르나의 **기본 공격**이 방어를 더 지나치는 몫(%). 궁극기에는 얹지 않는다. */
-function stormAimIgnorePercent(attacker: Fighter, attackingInFever: boolean, useUltimate: boolean): number {
+function basicDefenseIgnorePercent(attacker: Fighter, attackingInFever: boolean, useUltimate: boolean): number {
+  if (useUltimate) return 0;
   const trait = attacker.def.ferocityTrait;
-  return attackingInFever && !useUltimate && trait.effectId === "stormAim" ? trait.defenseIgnorePercent : 0;
+  // 평타 돌파(`darkRoast`, 테쿠의 「다크 로스팅」) — 일반 공격의 모든 발이 늘 방어를 일부 지나친다.
+  const roast = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  return (attackingInFever && trait.effectId === "stormAim" ? trait.defenseIgnorePercent : 0)
+    + (roast?.kind === "darkRoast" ? roast.defenseIgnorePercent : 0);
 }
 
 /**
@@ -8327,17 +8331,6 @@ function strikeShrapnel(attacker: Fighter, target: Fighter, input: DamageInput, 
   splashAround(attacker, target, input, critical, state, events, effect.radius, effect.powerPercent, "ultimate");
 }
 
-/**
- * 평타 돌파(`bitterTaste`) — 「마지막 한 방울」을 맞은 적의 방어력이 겹마다 깎인다. 폭주로 채운 탄창은 모든 발이 마지막 한 방울이다.
- * 깎임은 적 돌파 `fangShave`와 같은 몸 상태를 쓴다 — 방어력만 깎고 저항은 건드리지 않는다.
- */
-function strikeBitterTaste(attacker: Fighter, target: Fighter, wasLastDrop: boolean): void {
-  const effect = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
-  if (effect?.kind !== "bitterTaste" || !wasLastDrop || !isFighterAlive(target)) return;
-  const stacks = Math.min(effect.maxStacks, (target.bt.fangShave?.stacks ?? 0) + 1);
-  target.bt.fangShave = { remaining: effect.seconds, stacks, percentPerStack: effect.defensePercent, total: effect.seconds };
-}
-
 function splashAround(attacker: Fighter, target: Fighter, input: DamageInput, critical: boolean, state: SkirmishState, events: SkirmishEvent[], radius: number, percent: number, skillSlot: "basic" | "ultimate"): void {
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
   const shard = { ...input, power: input.power * percent / 100, isCritical: critical };
@@ -8527,7 +8520,7 @@ function strike(
     // 강화된 한 방만 방어·저항을 지나간다. 속성 상성과 대상 경감은 그대로 거친다.
     ignoresDefense: empowered,
     // 방어를 일부 지나치는 한 방. 스킬이 적은 값에 폭주 특성(「폭풍 속의 조준」)이 기본 공격에 더하는 몫을 합친다.
-    defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + stormAimIgnorePercent(attacker, attackingInFever, useUltimate)),
+    defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + basicDefenseIgnorePercent(attacker, attackingInFever, useUltimate)),
   };
   const offense = offensiveDefinition(attacker);
   // 패시브 돌파(`huntMark`) — 다른 아군이 함께 노리는 적에게는 치명타 피해가 늘어난다.
@@ -8768,7 +8761,6 @@ function strike(
     if (card?.kind === "extraCard") throwExtraCard(attacker, target, damageInput, card, damageInput.damageType, state, events);
   }
   if (useUltimate) { strikeShrapnel(attacker, target, damageInput, critical, state, events); strikeSideDish(attacker, target, damageInput as Parameters<typeof strikeSecondary>[2], critical, state, events); }
-  else strikeBitterTaste(attacker, target, lastDropShot);
   // 궁극기 돌파(`afterimageSlash`) — 꿰뚫은 적에게 잔상이 늦게 한 번 더 따라붙는다. 연격 둘째 타나 잔상 자신은 다시 예약하지 않는다.
   if (useUltimate && !comboHit && isFighterAlive(target)) {
     const slash = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
@@ -9167,7 +9159,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     const scaled = plumePower === 1 || detonated.power === undefined ? detonated : { ...detonated, power: detonated.power * plumePower };
     const damageInput = { ...scaled, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const,
       ignoresDefense: false,
-      defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + stormAimIgnorePercent(attacker, attackingInFever, useUltimate)) };
+      defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + basicDefenseIgnorePercent(attacker, attackingInFever, useUltimate)) };
     const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput)
       * traitDamageMultiplier(state, attacker, target)
       * (traitSplashBasic ? nthBasicBonusMultiplier(effectsFor(state, attacker), attacker.def.id, attacker.traitBasicCount) : 1)));

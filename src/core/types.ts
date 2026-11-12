@@ -2751,12 +2751,9 @@ export type BasicBreakthrough = {
   radius: number;
   stacks: number;
 } | {
-  /** 「마지막 한 방울」을 맞은 적의 방어력이 겹마다 깎인다(테쿠의 「쓴맛」). 1대1에서도 돈다. 겹은 상한에서 멈추고 시간이 지나면 풀린다. */
-  kind: "bitterTaste";
-  /** 겹당 방어력 감소(%). */
-  defensePercent: number;
-  seconds: number;
-  maxStacks: number;
+  /** 일반 공격의 모든 발이 적 방어력의 일부를 무시한다(테쿠의 「다크 로스팅」). 폭주 특성의 방어 무시와 더해진다. */
+  kind: "darkRoast";
+  defenseIgnorePercent: number;
 } | {
   /** 서리깃이 박힌 적에게 주는 일반 공격 피해가 **그 적의 서리깃 겹마다** 늘어난다(유티의 「갈래깃」). */
   kind: "frostBrand";

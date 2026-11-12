@@ -122,19 +122,15 @@ describe("테쿠 — 궁극기와 폭주", () => {
 });
 
 describe("테쿠 — 한계 돌파", () => {
-  it("II: 마지막 한 방울을 맞은 적의 방어력이 겹으로 깎이고, 돌파 전에는 깎이지 않는다", () => {
-    for (const [breakthrough, shaved] of [[0, false], [1, true]] as const) {
-      const { state, teku, enemies } = setup(["toby"], breakthrough);
-      teku.attackCooldown = 0;
-      enemies[0].x = 480; enemies[0].y = 700;
-      let seen = 0;
-      for (let tick = 0; tick < 280; tick += 1) {
-        stepSkirmish(state, 0.05);
-        seen = Math.max(seen, enemies[0].bt.fangShave?.stacks ?? 0);
-      }
-      expect(seen > 0, `돌파 ${breakthrough}`).toBe(shaved);
-      expect(seen).toBeLessThanOrEqual(3);
+  it("II: 일반 공격이 방어를 일부 지나치고, 적 방어력을 깎는 겹은 더 남기지 않는다", () => {
+    const { state, teku, enemies } = setup(["toby"], 1);
+    teku.attackCooldown = 0;
+    enemies[0].x = 480; enemies[0].y = 700;
+    for (let tick = 0; tick < 280; tick += 1) {
+      stepSkirmish(state, 0.05);
+      expect(enemies[0].bt.fangShave ?? null).toBeNull();
     }
+    expect(teku.def.breakthroughEffects?.basic).toEqual({ kind: "darkRoast", defenseIgnorePercent: 20 });
   });
 
   it("III: 궁극기 보호막이 더 크고 한도도 오른다", () => {

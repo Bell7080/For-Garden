@@ -569,6 +569,8 @@ export default {
   "keyword.bleed.description": "Menerima kerusakan tetap sebesar 2% HP maks tiap detik selama 3 detik. Pertahanan tidak bisa menguranginya.",
   "keyword.minor-bleed.term": "Pendarahan Ringan",
   "keyword.minor-bleed.description": "Menerima kerusakan tetap sebesar 1% HP maks tiap detik selama 2 detik. Pemberian ulang yang lebih lemah tidak menimpa Pendarahan yang lebih kuat.",
+  "keyword.deep-bleed.term": "Pendarahan Dalam",
+  "keyword.deep-bleed.description": "[[bleed|Pendarahan]] yang lebih dalam. Tiap detik menerima kerusakan tetap dengan porsi HP maks yang lebih besar, dan penyembuhan yang diterima berkurang selama aktif.",
   "keyword.poison.term": "Racun",
   "keyword.poison.description": "Menerima [[magical-damage|kerusakan magis]] tiap detik sebesar 22% Serangan ditambah 22% Kekuatan Magis pemberi. Nilainya ditetapkan saat diterapkan, dan racun yang lebih kuat yang menimpanya mempertahankan nilainya sendiri.",
   "keyword.liquidate.term": "Likuidasi",

@@ -76,7 +76,7 @@ export const INFO_TH = {
   "info.reset": "รีเซ็ต",
   "info.reset.title": "รีเซ็ตเลเวล",
   "info.reset.confirm": "รีเซ็ต",
-  "info.reset.plea": "เอ่อ… จะรีเซ็ตฉัน\nกลับไปเริ่มต้นจริง ๆ เหรอ?",
+  "info.reset.plea": "เอ่อ… จะรีเซ็ตฉันกลับไป\nเริ่มต้นจริง ๆ หรือคะ?",
   "info.reset.wallet": "การเปลี่ยนแปลงของสกุลเงิน",
   "info.reset.keep": "ทะลวง สายสัมพันธ์ และรูนจะคงอยู่เหมือนเดิม",
   "info.reset.free": "ฟรี!",

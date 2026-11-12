@@ -46,6 +46,29 @@ export interface TutorialState {
   completedStepIds: TutorialStepId[];
   /** 이미 본 첫 방문 안내. 비어 있으면 필드 자체를 두지 않는다(저장 모양을 늘리지 않는다). */
   seenIntroIds?: ContentIntroId[];
+  /**
+   * 무료 각인 체험 — 1-5 초회 보상으로 받은 룬 하나(`FREE_RUNE_CRAFT_STAGE`). 이 필드가 있는 동안 그 룬의 세공은
+   * 골드가 들지 않고, 각인을 확정하거나 건너뛰면 필드째 사라진다. 첫 플레이 순서(`completedStepIds`)와 따로 돈다 —
+   * 가방을 언제 여는지는 사람마다 달라 순서에 끼우면 연구소 안내를 막는다.
+   */
+  freeRuneCraft?: { runeInstanceId: string };
+}
+
+/** 무료 각인 체험 룬을 주는 관문. 그 관문의 초회 룬이 체험 대상이 된다. */
+export const FREE_RUNE_CRAFT_STAGE = "1-5";
+
+/** 체험 대상 룬 ID. 없으면 체험이 없다. */
+export function freeRuneCraftId(state: TutorialState | undefined): string | undefined { return state?.freeRuneCraft?.runeInstanceId; }
+
+/** 이 룬의 세공·각인이 무료인가 — 서버의 골드 계산과 화면의 값 표기가 같은 함수를 읽는다. */
+export function isFreeRuneCraft(state: TutorialState | undefined, runeInstanceId: string): boolean {
+  return freeRuneCraftId(state) === runeInstanceId;
+}
+
+/** 체험을 끝낸 상태(각인 확정·건너뛰기). 필드를 지워 저장 모양을 늘리지 않는다. */
+export function endFreeRuneCraft(state: TutorialState): TutorialState {
+  const { freeRuneCraft: _ended, ...rest } = state;
+  return rest;
 }
 
 const INTRO_SET: ReadonlySet<string> = new Set(CONTENT_INTRO_IDS);
@@ -98,7 +121,13 @@ export function normalizeTutorialState(value: unknown): TutorialState {
   const rawIntros = (value && typeof value === "object" ? (value as { seenIntroIds?: unknown }).seenIntroIds : undefined);
   const seen = new Set(Array.isArray(rawIntros) ? rawIntros.filter(isContentIntroId) : []);
   const seenIntroIds = CONTENT_INTRO_IDS.filter((id) => seen.has(id));
-  return seenIntroIds.length > 0 ? { completedStepIds, seenIntroIds } : { completedStepIds };
+  const rawFree = (value && typeof value === "object" ? (value as { freeRuneCraft?: unknown }).freeRuneCraft : undefined);
+  const freeId = rawFree && typeof rawFree === "object" ? (rawFree as { runeInstanceId?: unknown }).runeInstanceId : undefined;
+  return {
+    completedStepIds,
+    ...(seenIntroIds.length > 0 ? { seenIntroIds } : {}),
+    ...(typeof freeId === "string" && freeId.length > 0 ? { freeRuneCraft: { runeInstanceId: freeId } } : {}),
+  };
 }
 
 export function isValidTutorialState(value: unknown): value is TutorialState {

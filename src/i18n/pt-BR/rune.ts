@@ -127,4 +127,6 @@ export const RUNE_PT_BR = {
   "rune.traitReroll.upgraded": "Grau aumentado",
   "rune.traitReroll.pity": "Garantia de aumento {done} / {total}",
   "rune.traitReroll.discardHigher": "O novo traço desta Runa tem um grau superior ao atual. Reinterpretar sem aplicá-lo vai descartá-lo. Reinterpretar mesmo assim?",
+  "rune.free.craft": "Lapidar grátis",
+  "rune.free.craftAll": "Lapidar tudo grátis",
 } as const;

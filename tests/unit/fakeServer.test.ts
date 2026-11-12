@@ -1867,3 +1867,37 @@ describe("FakeServer 이야기 서브 보상", () => {
     expect(result.wallet?.gems).toBe(WALLET_CAPS.gems);
   });
 });
+
+describe("1-5 무료 세공·각인 체험", () => {
+  it("1-5 첫 승리가 받은 룬에 체험을 세우고, 세공·일괄 세공은 골드를 받지 않으며 각인이 체험을 닫는다", async () => {
+    const state = makeSession(); state.wallet.gold = 0;
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    await server.completeStage("1-5", true);
+    state.wallet.gold = 0; // 초회 보상 골드를 비워 세공이 정말 골드 없이 도는지 본다.
+    const runeId = state.runeInventory.at(-1)!.instanceId;
+    expect(state.tutorial?.freeRuneCraft).toEqual({ runeInstanceId: runeId });
+    const statId = state.runeInventory.at(-1)!.mainStats[0].key;
+    const single = await server.enhanceRune({ runeInstanceId: runeId, statId });
+    expect(single.goldSpent).toBe(0);
+    const all = await server.enhanceRuneAll({ runeInstanceId: runeId });
+    expect(all.goldSpent).toBe(0);
+    expect(state.wallet.gold).toBe(0);
+    await server.engraveRune({ runeInstanceId: runeId, statId });
+    expect(state.tutorial?.freeRuneCraft).toBeUndefined();
+    // 두 번째 1-5 승리는 체험을 다시 세우지 않는다.
+    await server.completeStage("1-5", true);
+    expect(state.tutorial?.freeRuneCraft).toBeUndefined();
+  });
+
+  it("다른 룬은 여전히 골드가 들고, 건너뛰기는 체험만 걷는다", async () => {
+    const state = makeSession(); state.wallet.gold = 0;
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    await server.completeStage("1-5", true);
+    state.wallet.gold = 0;
+    state.runeInventory = [...state.runeInventory, makeRune("other")];
+    await expect(server.enhanceRune({ runeInstanceId: "other", statId: state.runeInventory.at(-1)!.mainStats[0].key })).rejects.toMatchObject({ code: "INSUFFICIENT_GOLD" });
+    const dismissed = await server.dismissFreeRuneCraft({ reason: "skip" });
+    expect(dismissed.tutorial.freeRuneCraft).toBeUndefined();
+    expect(state.tutorial?.freeRuneCraft).toBeUndefined();
+  });
+});

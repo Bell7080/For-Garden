@@ -60,7 +60,8 @@ import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { addMarkChip } from "./MarkChip";
 import { addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
 import { reachLabel, STAT_TONE, reachToneHex } from "./statTones";
-import { openRuneInfoPopup, runeStatLabel } from "./RunePopup";
+import { openRuneInfoPopup, openRunePopup, runeStatLabel } from "./RunePopup";
+import { offerFreeRuneCraft } from "./freeRuneCraftTutorial";
 import { t, type TextKey } from "../i18n";
 import { combatPower } from "../core/combatPower";
 import { StatRadar } from "./StatRadar";
@@ -1898,6 +1899,8 @@ export class InfoManager {
         }),
       });
     });
+    // 렐릭의 룬 가방도 룬을 보는 자리라, 체험 룬이 남아 있으면 같은 무료 세공 체험을 권한다.
+    offerFreeRuneCraft(this.scene, this.popups, (runeInstanceId) => openRunePopup(this.scene, this.popups, { runeInstanceId, onChanged: () => this.refreshGrowth() }));
   }
 
   /**

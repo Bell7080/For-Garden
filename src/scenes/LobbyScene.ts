@@ -58,6 +58,7 @@ import { LOBBY_ACTION_BOUNDS, LOBBY_BOND_MARK, LOBBY_DIALOGUE, LOBBY_RAIL_BOUNDS
 import { DialogueBubble } from "../ui/DialogueBubble";
 import { showBondGain, type BondGain } from "../ui/bondGainMark";
 import { createLobbyUtilityRail } from "../ui/lobbyUtilityRail";
+import { bindFreeRuneBagHint } from "../ui/freeRuneBagHint";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
@@ -1086,6 +1087,8 @@ export class LobbyScene extends Phaser.Scene {
       if (item.icon === "friends") this.lockRailButton("friends", button);
       if (item.icon === "guild") this.lockRailButton("guild", button);
       if (key) bindNotificationDot(this, button, { x: 42, y: -42 }, (listener) => notificationManager.subscribe(key, listener));
+      // 1-5에서 받은 체험 룬이 남아 있으면 가방에 점과 말풍선을 단다(누르게 하지는 않는다).
+      if (item.icon === "bag") bindFreeRuneBagHint(this, button, item.bounds.width);
     });
   }
 

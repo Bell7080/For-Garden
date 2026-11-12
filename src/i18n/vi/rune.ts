@@ -127,4 +127,6 @@ export const RUNE_VI = {
   "rune.traitReroll.upgraded": "Đã tăng cấp bậc",
   "rune.traitReroll.pity": "Bảo đảm nâng bậc {done} / {total}",
   "rune.traitReroll.discardHigher": "Đặc tính mới của Rune này có bậc cao hơn đặc tính hiện tại. Nếu diễn giải lại mà không áp dụng, đặc tính mới sẽ mất. Vẫn diễn giải lại?",
+  "rune.free.craft": "Mài miễn phí",
+  "rune.free.craftAll": "Mài tất cả miễn phí",
 } as const;

@@ -52,7 +52,7 @@ var init_define_import_meta_env = __esm({
   }
 });
 
-// ../../node_modules/tslib/tslib.es6.mjs
+// node_modules/tslib/tslib.es6.mjs
 var tslib_es6_exports = {};
 __export(tslib_es6_exports, {
   __addDisposableResource: () => __addDisposableResource,
@@ -491,7 +491,7 @@ function __rewriteRelativeImportExtension(path, preserveJsx) {
 }
 var extendStatics, __assign, __createBinding, __setModuleDefault, ownKeys, _SuppressedError, tslib_es6_default;
 var init_tslib_es6 = __esm({
-  "../../node_modules/tslib/tslib.es6.mjs"() {
+  "node_modules/tslib/tslib.es6.mjs"() {
     init_define_import_meta_env();
     extendStatics = function(d, b) {
       extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -578,9 +578,9 @@ var init_tslib_es6 = __esm({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js
+// node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js
 var require_websocket_factory = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -690,9 +690,9 @@ Suggested solution: ${env.workaround}`;
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/lib/version.js
+// node_modules/@supabase/realtime-js/dist/main/lib/version.js
 var require_version = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/lib/version.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/lib/version.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -701,9 +701,9 @@ var require_version = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/lib/constants.js
+// node_modules/@supabase/realtime-js/dist/main/lib/constants.js
 var require_constants = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/lib/constants.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/lib/constants.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -752,9 +752,9 @@ var require_constants = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/lib/serializer.js
+// node_modules/@supabase/realtime-js/dist/main/lib/serializer.js
 var require_serializer = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/lib/serializer.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/lib/serializer.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -907,9 +907,9 @@ var require_serializer = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/lib/transformers.js
+// node_modules/@supabase/realtime-js/dist/main/lib/transformers.js
 var require_transformers = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/lib/transformers.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/lib/transformers.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -1087,9 +1087,9 @@ var require_transformers = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js
+// node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js
 var require_phoenix_cjs = __commonJS({
-  "../../node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js"(exports, module) {
+  "node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js"(exports, module) {
     "use strict";
     init_define_import_meta_env();
     var __defProp2 = Object.defineProperty;
@@ -2940,9 +2940,9 @@ var require_phoenix_cjs = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js
+// node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js
 var require_presenceAdapter = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3041,9 +3041,9 @@ var require_presenceAdapter = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js
+// node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js
 var require_RealtimePresence = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3086,9 +3086,9 @@ var require_RealtimePresence = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js
+// node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js
 var require_normalizeChannelError = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3113,9 +3113,9 @@ var require_normalizeChannelError = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js
+// node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js
 var require_channelAdapter = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3221,9 +3221,9 @@ var require_channelAdapter = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js
+// node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js
 var require_RealtimePostgresFilterBuilder = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3346,9 +3346,9 @@ var require_RealtimePostgresFilterBuilder = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js
+// node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js
 var require_RealtimeChannel = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -4102,9 +4102,9 @@ var require_RealtimeChannel = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js
+// node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js
 var require_socketAdapter = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -4224,9 +4224,9 @@ var require_socketAdapter = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+// node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
 var require_RealtimeClient = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -4905,9 +4905,9 @@ var require_RealtimeClient = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/index.js
+// node_modules/@supabase/realtime-js/dist/main/index.js
 var require_main = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/index.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/index.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -5651,6 +5651,12 @@ var INFO_KO = {
   "info.feed.bulk": "\uD55C \uBC88\uC5D0 \uAE09\uC5EC",
   "info.feed.one": "1 \uB808\uBCA8",
   "info.feed.ten": "10 \uB808\uBCA8",
+  "info.feed.five": "5 \uB808\uBCA8",
+  "info.feed.max": "MAX",
+  "info.feed.max.title": "MAX \uAE09\uC5EC",
+  "info.feed.max.plea": "\uC640\uC544\u2026 \uC774\uAC78 \uC804\uBD80\n\uC800\uD55C\uD14C \uC8FC\uC2DC\uB294 \uAC70\uC608\uC694?!",
+  "info.feed.max.note": "\uB2E8\uC228\uC5D0 {count}\uB808\uBCA8\uC774 \uC62C\uB77C\uC694!",
+  "info.feed.max.confirm": "\uAE09\uC5EC\uD558\uAE30",
   "info.breakthrough": "\uD55C\uACC4 \uB3CC\uD30C",
   "info.breakthrough.do": "\uB3CC\uD30C\uD558\uAE30",
   "info.breakthrough.fragment": "{name} \uD30C\uD3B8",
@@ -5661,11 +5667,12 @@ var INFO_KO = {
   "info.reset": "\uCD08\uAE30\uD654",
   "info.reset.title": "\uB808\uBCA8 \uCD08\uAE30\uD654",
   "info.reset.confirm": "\uCD08\uAE30\uD654\uD558\uAE30",
-  "info.reset.plea": "\uC800\u2026 \uC815\uB9D0 \uB098\uB97C\n\uCC98\uC74C\uC73C\uB85C \uB418\uB3CC\uB9B4 \uAC70\uC57C?",
+  "info.reset.plea": "\uC800\u2026 \uC815\uB9D0 \uC800\uB97C\n\uCC98\uC74C\uC73C\uB85C \uB418\uB3CC\uB9AC\uC2E4 \uAC74\uAC00\uC694?",
   "info.reset.wallet": "\uBCF4\uC720 \uC7AC\uD654 \uBCC0\uD654",
   "info.reset.keep": "\uD55C\uACC4 \uB3CC\uD30C\xB7\uC720\uB300\xB7\uB8EC\uC740 \uADF8\uB300\uB85C \uB0A8\uC544\uC694.",
   "info.reset.free": "\uBB34\uB8CC!",
-  "info.reset.noGems": "\uC82C\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.",
+  "info.reset.warn.title": "90%\uB9CC \uD658\uAE09\uB3FC\uC694!",
+  "info.reset.warn.body": "21\uB808\uBCA8 \uC704\uB85C \uC313\uC740 \uBAAB\uC758 10%\uB294 \uB3CC\uC544\uC624\uC9C0 \uC54A\uC544\uC694",
   "info.reset.done": "\uCE58\uC988\uCF00\uC774\uD06C {count}\uAC1C\uB97C \uB3CC\uB824\uBC1B\uC558\uC2B5\uB2C8\uB2E4.",
   "info.rune.bag": "\uB8EC \uAC00\uBC29 \xB7 {part}",
   "info.rune.empty": "\uBE48 \uC790\uB9AC",
@@ -5734,11 +5741,10 @@ var INFO_KO = {
   "info.story.2": "2\uD654 \xB7 \uC0AC\uC721\uC7A5\uC758 \uBC24",
   "info.story.3": "3\uD654 \xB7 \uC61B \uAE30\uC5B5\uC758 \uC870\uAC01",
   "info.story.4": "4\uD654 \xB7 \uC774\uD130\uB110 \uC2DC\uD2F0\uC758 \uB05D",
-  "info.enemy.role.healingReduction": "\uC774 \uC801\uC774 \uC0B4\uC544 \uC788\uB294 \uB3D9\uC548 \uC544\uAD70\uC774 \uBC1B\uB294 \uD68C\uBCF5\uC774 {base}% \uC904\uACE0, {seconds}\uCD08\uC5D0 \uAC78\uCCD0 \uCD5C\uB300 {max}%\uAE4C\uC9C0 \uB298\uC5B4\uB09C\uB2E4.",
+  "info.enemy.role.healingReduction": "\uC774 \uC801\uC774 \uC0B4\uC544 \uC788\uB294 \uB3D9\uC548 \uC544\uAD70\uC774 \uBC1B\uB294 [[healing-cut|\uD68C\uBCF5]]\uC774 {base}% \uC904\uACE0, {seconds}\uCD08\uC5D0 \uAC78\uCCD0 \uCD5C\uB300 {max}%\uAE4C\uC9C0 \uB298\uC5B4\uB09C\uB2E4.",
   "info.resonance": "\uACF5\uBA85",
   "info.resonance.max": "\uACF5\uBA85 \uC644\uB8CC",
   "info.resonance.do": "\uACF5\uBA85\uD558\uAE30",
-  "info.resonance.stage": "\uACF5\uBA85 {stage}",
   "info.resonance.stat": "\uB2A5\uB825\uCE58",
   "info.resonance.pvpOff": "\uACB0\uD22C\xB7\uC544\uB808\uB098\uC5D0\uC11C\uB294 \uACF5\uBA85\uC774 \uC801\uC6A9\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4",
   "info.resonance.alreadyMax": "\uC774\uBBF8 \uACF5\uBA85 V\uB2E4. \uC911\uBCF5\uC740 DNA \uB9C8\uC77C\uB9AC\uC9C0\uB85C \uC313\uC778\uB2E4."
@@ -5807,7 +5813,7 @@ var STATUS_KO = {
   "status.frostbite.detail": "\uCD1D {amount} \uD53C\uD574 \xB7 \uB454\uD654 {slow}% \xB7 {time} \uB0A8\uC74C",
   "status.biteMark": "\uBB3C\uB9B0 \uC790\uAD6D",
   "status.biteMark.detail": "{stacks}\uACB9 \xB7 \uBC1B\uB294 \uD53C\uD574 +{percent}% \xB7 {time} \uB0A8\uC74C",
-  "status.healCut": "\uD68C\uBCF5 \uC800\uD558",
+  "status.healCut": "\uCE58\uC720 \uAC10\uC18C",
   "status.healCut.detail": "\uBC1B\uB294 \uD68C\uBCF5 \u2212{percent}% \xB7 {time} \uB0A8\uC74C",
   "status.sunken": "\uAC00\uB77C\uC549\uB294 \uBB34\uAC8C",
   "status.sunken.detail": "\uC774\uB3D9\xB7\uACF5\uACA9 \uC18D\uB3C4 \u2212{percent}% \xB7 {time} \uB0A8\uC74C",
@@ -6022,7 +6028,19 @@ var BATTLE_KO = {
   "tutorial.relics.feed": "\uCE58\uC988\uCF00\uC774\uD06C\uB97C \uBA39\uC5EC\uC11C \uB810\uB9AD\uC744 \uD0A4\uC6CC \uBCF4\uC138\uC694!",
   "tutorial.gift.title": "\uBCF5\uC6D0 \uC7AC\uB8CC \uC120\uBB3C",
   "tutorial.lobby.lab": "\uBC1B\uC740 \uD654\uC11D\uC73C\uB85C \uC0C8 \uB810\uB9AD\uC744 \uB9CC\uB098 \uBCFC\uAE4C\uC694? \uC5F0\uAD6C\uC18C\uB97C \uB20C\uB7EC \uC8FC\uC138\uC694",
-  "tutorial.lab.pull": "\uCCAB \uBCF5\uC6D0 \uC5F0\uAD6C\uC608\uC694! 10\uD68C \uBC84\uD2BC\uC744 \uB20C\uB7EC \uBCF4\uC138\uC694"
+  "tutorial.lab.pull": "\uCCAB \uBCF5\uC6D0 \uC5F0\uAD6C\uC608\uC694! 10\uD68C \uBC84\uD2BC\uC744 \uB20C\uB7EC \uBCF4\uC138\uC694",
+  "tutorial.rune.bag": "\uC0C8 \uB8EC\uC774 \uB3C4\uCC29\uD588\uC5B4\uC694!",
+  "tutorial.rune.intro.title": "\uBB34\uB8CC \uC138\uACF5 \uCCB4\uD5D8",
+  "tutorial.rune.intro.body": "1-5\uC5D0\uC11C \uBC1B\uC740 \uB8EC\uC73C\uB85C \uC138\uACF5\uACFC \uAC01\uC778\uC744 \uACE8\uB4DC \uC5C6\uC774 \uCCB4\uD5D8\uD574 \uBCFC\uAE4C\uC694? \uAC01\uC778\uAE4C\uC9C0 \uB9C8\uCE58\uBA74 \uB8EC\uC774 \uC644\uC131\uB3FC\uC694.",
+  "tutorial.rune.intro.start": "\uCCB4\uD5D8\uD558\uAE30",
+  "tutorial.rune.intro.later": "\uB098\uC911\uC5D0",
+  "tutorial.rune.pick": "\uC138\uACF5\uD560 \uB2A5\uB825\uCE58 \uC904\uC744 \uB20C\uB7EC \uACE8\uB77C \uC8FC\uC138\uC694",
+  "tutorial.rune.craft": "\uC138\uACF5 \uBC84\uD2BC\uC744 \uB20C\uB7EC \uBCF4\uC138\uC694. \uC9C0\uAE08\uC740 \uACE8\uB4DC\uAC00 \uB4E4\uC9C0 \uC54A\uC544\uC694",
+  "tutorial.rune.craftAll": "\uC77C\uAD04 \uC138\uACF5\uC73C\uB85C \uB0A8\uC740 \uC138\uACF5\uC744 \uD55C \uBC88\uC5D0 \uB05D\uB0B4 \uBCFC\uAE4C\uC694?",
+  "tutorial.rune.engravePick": "\uAC01\uC778\uD560 \uB2A5\uB825\uCE58\uB97C \uD558\uB098 \uACE8\uB77C \uC8FC\uC138\uC694",
+  "tutorial.rune.engrave": "\uAC01\uC778 \uD655\uC815\uC744 \uB20C\uB7EC \uB8EC\uC744 \uC644\uC131\uD574 \uC8FC\uC138\uC694",
+  "tutorial.rune.done.title": "\uB8EC \uC644\uC131!",
+  "tutorial.rune.done.body": "\uC138\uACF5\uACFC \uAC01\uC778\uC744 \uBAA8\uB450 \uB9C8\uCCE4\uC5B4\uC694. \uB2E4\uC74C\uBD80\uD130\uB294 \uC138\uACF5\uC5D0 \uACE8\uB4DC\uAC00 \uB4E4\uC5B4\uC694."
 };
 
 // src/i18n/ko/cakeOperation.ts
@@ -6086,6 +6104,10 @@ var AUGMENT_KO = {
   "augment.lowHpDefense": "\uCCB4\uB825 {threshold}% \uC774\uD558\n\uBC29\uC5B4\xB7\uC800\uD56D +{percent}%",
   "augment.healOnKill": "\uCC98\uCE58 \uC2DC \uCCB4\uB825 +{percent}%",
   "augment.effect": "\uD6A8\uACFC",
+  "augment.tag.activation": "\uBC1C\uB3D9 \uC870\uAC74",
+  "augment.tag.rules": "\uC0C1\uC138 \uC801\uC6A9 \uADDC\uCE59",
+  "augment.tag.rulesLink": "\uC0C1\uC138 \uADDC\uCE59 \uBCF4\uAE30",
+  "augment.tag.controlSummary": "\uC99D\uAC15 \uC81C\uC5B4: \uCD5C\uB300 {cap}\uCD08 \xB7 \uC7AC\uC81C\uC5B4 \uAC04\uACA9 \uCD5C\uC18C {gap}\uCD08.",
   "augment.meta": "{rarity} \xB7 {target}",
   "augment.target.party": "\uC804\uCCB4",
   "augment.target.single": "\uAC1C\uC778",
@@ -6605,7 +6627,9 @@ var RUNE_KO = {
   "rune.traitReroll.again": "\uAE30\uC874 \uC720\uC9C0 \uD6C4 \uC7AC\uD574\uC11D",
   "rune.traitReroll.upgraded": "\uB4F1\uAE09 \uC0C1\uC2B9",
   "rune.traitReroll.pity": "\uB4F1\uAE09 \uC0C1\uC2B9 \uBCF4\uC815 {done} / {total}",
-  "rune.traitReroll.discardHigher": "\uC9C0\uAE08 \uB8EC\uBCF4\uB2E4 \uB192\uC740 \uB4F1\uAE09\uC758 \uD2B9\uC131\uC774 \uB098\uC640 \uC788\uC2B5\uB2C8\uB2E4. \uC801\uC6A9\uD558\uC9C0 \uC54A\uACE0 \uB2E4\uC2DC \uB3CC\uB9AC\uBA74 \uC774 \uD2B9\uC131\uC740 \uC0AC\uB77C\uC9D1\uB2C8\uB2E4. \uC815\uB9D0 \uB3CC\uB9AC\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?"
+  "rune.traitReroll.discardHigher": "\uC9C0\uAE08 \uB8EC\uBCF4\uB2E4 \uB192\uC740 \uB4F1\uAE09\uC758 \uD2B9\uC131\uC774 \uB098\uC640 \uC788\uC2B5\uB2C8\uB2E4. \uC801\uC6A9\uD558\uC9C0 \uC54A\uACE0 \uB2E4\uC2DC \uB3CC\uB9AC\uBA74 \uC774 \uD2B9\uC131\uC740 \uC0AC\uB77C\uC9D1\uB2C8\uB2E4. \uC815\uB9D0 \uB3CC\uB9AC\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?",
+  "rune.free.craft": "\uBB34\uB8CC \uC138\uACF5",
+  "rune.free.craftAll": "\uBB34\uB8CC \uC77C\uAD04 \uC138\uACF5"
 };
 
 // src/i18n/ko/party.ts
@@ -6991,6 +7015,19 @@ var MISC_KO = {
   "skill.gauge": "\uAC8C\uC774\uC9C0 {cost}",
   // 고고학
   "archaeology.shop": "\uC0C1\uC810",
+  "archaeology.guide.title": "\uC9C0\uCE35 \uD0D0\uC0AC \uC548\uB0B4",
+  "archaeology.guide.button": "\uD0D0\uC0AC \uC548\uB0B4",
+  "archaeology.guide.enter.heading": "\uC720\uC801\uC744 \uACE8\uB77C \uB4E4\uC5B4\uAC00\uC694",
+  "archaeology.guide.enter.body": "\uC9C0\uB3C4\uC5D0\uC11C \uC720\uC801\uC744 \uACE0\uB974\uBA74 \uD0D0\uC0AC \uD69F\uC218 \uD55C \uBC88\uC73C\uB85C \uB4E4\uC5B4\uAC08 \uC218 \uC788\uC5B4\uC694. \uACE1\uAD2D\uC774\uB85C \uCE78\uC744 \uD558\uB098\uC529 \uD30C\uBA74 \uC6D0\uC11D, \uB8EC, \uC7AC\uD654\uAC00 \uB098\uC640\uC694. \uBE48 \uCE78\uC740 \uC5C6\uC73C\uB2C8 \uB9C8\uC74C\uAECF \uD30C \uBCF4\uC138\uC694!",
+  "archaeology.guide.fog.heading": "\uC548\uAC1C \uC0C9\uC744 \uC77D\uC5B4 \uBCF4\uC138\uC694",
+  "archaeology.guide.fog.body": "\uD310\uC744 \uB36E\uC740 \uC548\uAC1C\uC758 \uC0C9\uC740 \uADF8 \uAD6C\uC5ED\uC5D0\uC11C \uC798 \uB098\uC624\uB294 \uBCF4\uC0C1\uC758 \uD78C\uD2B8\uC608\uC694. \uC624\uB978\uCABD \uBC94\uB840\uB97C \uBCF4\uACE0 \uC6D0\uD558\uB294 \uC0C9\uBD80\uD130 \uD30C \uBCF4\uC138\uC694. \uD55C \uD310\uC5D0 \uD718\uB450\uB97C \uC218 \uC788\uB294 \uD69F\uC218\uB294 \uC815\uD574\uC838 \uC788\uC5B4\uC694.",
+  "archaeology.guide.deep.heading": "\uAE4A\uC740 \uC720\uC801\uC77C\uC218\uB85D \uB109\uB109\uD574\uC694",
+  "archaeology.guide.deep.body": "\uB808\uBCA8\uC774 \uC624\uB974\uBA74 \uB354 \uAE4A\uC740 \uC720\uC801\uC774 \uC5F4\uB824\uC694. \uAE4A\uC740 \uACF3\uC77C\uC218\uB85D \uD55C \uBC88\uC5D0 \uB354 \uB9CE\uC774 \uC8FC\uC9C0\uB9CC, \uD55C \uBC88 \uD310 \uB4A4 \uB2E4\uC2DC \uC5F4\uB9AC\uAE30\uAE4C\uC9C0 \uB354 \uC624\uB798 \uAE30\uB2E4\uB824\uC57C \uD574\uC694.",
+  "archaeology.guide.shallow.heading": "\uB0AE\uC740 \uC720\uC801\uB3C4 \uAF2D \uB4E4\uB7EC \uC8FC\uC138\uC694",
+  "archaeology.guide.shallow.body": "\uC624\uB798 \uC26C\uAC8C \uB454 \uB0AE\uC740 \uC720\uC801\uC5D0\uB294 \uACB0\uC815\uC774 \uB9FA\uD600\uC694. \uACB0\uC815\uC774 \uB9FA\uD788\uBA74 \uAD74\uCC29 \uD69F\uC218\uAC00 \uB298\uACE0 \uC6D0\uC11D\uC774 \uD6E8\uC52C \uB9CE\uC774 \uB098\uC640\uC694. \uAE4A\uC740 \uC720\uC801\uC774 \uC7A0\uACA8 \uC788\uB294 \uB3D9\uC548 \uB0AE\uC740 \uC720\uC801\uB3C4 \uD568\uAED8 \uB3CC\uC544 \uC8FC\uC138\uC694!",
+  "archaeology.guide.prev": "\uC774\uC804",
+  "archaeology.guide.next": "\uB2E4\uC74C",
+  "archaeology.guide.done": "\uC2DC\uC791\uD574\uC694",
   "archaeology.bench.pick": "\uB8EC \uACE0\uB974\uAE30",
   "archaeology.bench.clear": "\uBE7C\uAE30",
   "archaeology.bench.empty": "\uB8EC\uC744 \uB07C\uC6CC \uC8FC\uC138\uC694",
@@ -7230,6 +7267,7 @@ var MISC_KO = {
   "role.desc.tank": "\uCD5C\uC804\uBC29\uC5D0\uC11C \uC801\uC744 \uB3C4\uBC1C\uD558\uACE0 \uACF5\uACA9\uC744 \uBC1B\uC544 \uB0B4\uB294 \uBC29\uD328\uC785\uB2C8\uB2E4. \uD2BC\uD2BC\uD55C \uCCB4\uB825\uC73C\uB85C \uC544\uAD70\uC774 \uB9DE\uC744 \uD53C\uD574\uB97C \uB300\uC2E0 \uC9CA\uC5B4\uC9C0\uBA70, \uD3B8\uC131\uC758 \uAC00\uC6B4\uB370 \uC55E\uC790\uB9AC\uC5D0 \uC12D\uB2C8\uB2E4.",
   "role.desc.assassin": "\uC740\uC2E0\uACFC \uC21C\uAC04\uC774\uB3D9\uC73C\uB85C \uC801\uC9C4 \uAE4A\uC219\uC774 \uD30C\uACE0\uB4E4\uC5B4 \uC57D\uD55C \uC801\uBD80\uD130 \uBE60\uB974\uAC8C \uC4F0\uB7EC\uB728\uB9BD\uB2C8\uB2E4. \uD55C \uBC29\uC740 \uAC15\uD558\uC9C0\uB9CC \uC624\uB798 \uBC84\uD2F0\uC9C0\uB294 \uBABB\uD558\uBA70, \uD3B8\uC131\uC758 \uC67C\uCABD\uC5D0 \uC12D\uB2C8\uB2E4.",
   "role.desc.support": "\uD68C\uBCF5\uACFC \uBCF4\uD638\uB9C9, \uAC15\uD654\uC640 \uC57D\uD654\uB85C \uC2F8\uC6C0\uC758 \uD750\uB984\uC744 \uBC14\uAFC9\uB2C8\uB2E4. \uC9C1\uC811 \uC4F0\uB7EC\uB728\uB9AC\uAE30\uBCF4\uB2E4 \uC544\uAD70\uC744 \uC624\uB798 \uC138\uC6CC \uB450\uB294 \uC5ED\uD560\uC774\uBA70, \uD3B8\uC131\uC758 \uC624\uB978\uCABD\uC5D0 \uC12D\uB2C8\uB2E4.",
+  "role.presence": "\uC801\uC758 \uB208\uAE38\uC744 \uB044\uB294 \uC874\uC7AC\uAC10",
   // 무역·점수 상세
   "trade.value": "\uAC00\uCE58 {percent}%",
   "trade.tag.once": "\uACC4\uC815\uB2F9 \uD55C\uC815",
@@ -7331,7 +7369,6 @@ var MISC_KO = {
   "intro.friends": "\uCE5C\uAD6C\uB97C \uCD94\uAC00\uD558\uBA74 \uC11C\uB85C\uC758 \uD504\uB85C\uD544\uC744 \uBCFC \uC218 \uC788\uC5B4\uC694. \uCE5C\uAD6C \uCE74\uB4DC\uC5D0\uC11C \uC560\uCC29 \uB810\uB9AD\uC744 \uB20C\uB7EC \uC815\uBCF4\uB97C \uD655\uC778\uD574 \uBCF4\uC138\uC694.",
   "intro.raid": "\uB808\uC774\uB4DC\uB294 \uC5EC\uB7FF\uC774 \uD55C \uBCF4\uC2A4\uC758 \uCCB4\uB825\uC744 \uD568\uAED8 \uAE4E\uB294 \uCF58\uD150\uCE20\uC608\uC694. \uD310\uB9C8\uB2E4 \uB3C4\uC804\uC740 \uB450 \uBC88\uC774\uACE0, \uCE5C \uB9CC\uD07C \uC810\uC218\uC640 \uBCF4\uC0C1\uC774 \uC313\uC5EC\uC694. \uD310\uC774 \uB05D\uB098\uBA74 \uC644\uB8CC \uD0ED\uC5D0\uC11C \uBCF4\uC0C1\uC744 \uBC1B\uC73C\uC138\uC694.",
   "intro.expedition": "\uC6D0\uC815\uC740 \uD558\uB8E8\uC5D0 \uD55C \uBC88 \uB3C4\uB294 \uC2A4\uBB34 \uCE35\uC9DC\uB9AC \uAE38\uC774\uC5D0\uC694. \uB5A0\uB09C \uC21C\uAC04\uC758 \uBAA8\uC2B5\uC73C\uB85C \uB05D\uAE4C\uC9C0 \uC2F8\uC6B0\uB2C8, \uCD9C\uBC1C \uC804\uC5D0 \uD3B8\uC131\uACFC \uC131\uC7A5\uC744 \uB9C8\uCE58\uC138\uC694.",
-  "intro.archaeology": "\uACE0\uACE0\uD559\uC740 \uC9C0\uCE35\uC744 \uD30C\uC11C \uC6D0\uC11D, \uB8EC, \uC7AC\uD654\uB97C \uC5BB\uB294 \uD0D0\uC0AC\uC608\uC694. \uC548\uAC1C \uC0C9\uC740 \uC798 \uB098\uC624\uB294 \uBCF4\uC0C1\uC758 \uD78C\uD2B8\uC774\uACE0, \uD55C \uBC88 \uD310 \uC720\uC801\uC740 \uC2DC\uAC04\uC774 \uC9C0\uB098\uC57C \uB2E4\uC2DC \uC5F4\uB824\uC694.",
   "intro.premium": "\uD504\uB9AC\uBBF8\uC5C4\uC5D0\uC11C\uB294 \uD328\uC2A4, \uAD6C\uB3C5, \uD2B9\uAC00 \uC0C1\uD488\uC744 \uBCFC \uC218 \uC788\uC5B4\uC694. \uBB34\uB8CC \uBCF4\uAE09\uC740 \uBD89\uC740 \uC810\uC73C\uB85C \uC54C\uB824 \uB4DC\uB824\uC694.",
   "rail.guild": "\uAE38\uB4DC",
   // 하단 탭·레일
@@ -7419,7 +7456,8 @@ var SKILL_KO = {
   // ── 요약줄의 상태이상 ────────────────────────────────────────────────────
   "skill.statusLabel.stun": "[[stun|\uAE30\uC808]] {seconds}\uCD08",
   "skill.statusLabel.stagger": "[[stagger|\uACBD\uC9C1]]",
-  "skill.statusLabel.bleed": "[[bleed|\uCD9C\uD608]] {seconds}\uCD08 \xB7 \uB9E4\uCD08 \uCD5C\uB300 \uCCB4\uB825 {percent}%",
+  "skill.statusLabel.bleed": "[[bleed|\uCD9C\uD608]]",
+  "skill.statusLabel.bleedCustom": "[[bleed|\uCD9C\uD608]] {seconds}\uCD08 \xB7 \uB9E4\uCD08 \uCD5C\uB300 \uCCB4\uB825 {percent}%",
   "skill.statusLabel.poison": "[[poison|\uC911\uB3C5]] {seconds}\uCD08",
   "skill.statusLabel.weakpoint": "[[weakpoint|\uC57D\uC810 \uD3EC\uCC29]]",
   "skill.statusLabel.vandalism": "[[vandalism|\uBC34\uB35C\uB9AC\uC998]]",
@@ -7614,7 +7652,7 @@ var SKILL_KO = {
   "skill.clause.commandsPack": "\uC0B4\uC544 \uC788\uB294 [[summon-kuro|\uCFE0\uB85C]]\uC640 [[summon-shiro|\uC2DC\uB85C]]\uAC00 \uADF8 \uD45C\uC801\uC5D0\uAC8C \uACE7\uBC14\uB85C \uAD81\uADF9\uAE30\uB97C \uC4F4\uB2E4",
   "skill.clause.shallows": "\uC801 \uC8FC\uC704\uC5D0 [[shallows|\uC5EC\uC6B8]]\uC774 \uACE0\uC774\uACE0, [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] {count}\uD68C\uB9C8\uB2E4 [[dive|\uAC15\uD558]]\uD574 {damage}\uB97C \uC900\uB2E4",
   "skill.clause.detonateShallows": "\uAE54\uB9B0 [[shallows|\uC5EC\uC6B8]]\uC774 \uBAA8\uB450 \uD130\uC838 \uD310\uB9C8\uB2E4 {damage}\uB97C \uC900\uB2E4",
-  "skill.clause.shimmerBurst": "[[shimmer|\uBC18\uC9DD!]]\uC774 \uC0AC\uB77C\uC9C8 \uB54C \uADF8 \uC790\uB9AC\uC5D0\uC11C \uD130\uC838 \uC8FC\uC704 \uC801\uC5D0\uAC8C [[ap|\uC8FC\uBB38\uB825]]\uC758 {percent}%\uB9CC\uD07C [[magical-damage|\uB9C8\uBC95 \uD53C\uD574]]\uB97C \uC785\uD788\uACE0, \uC790\uC2E0\uC758 \uCD5C\uB300 \uCCB4\uB825 {shield}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4 (\uCD5C\uB300 \uCCB4\uB825\uC758 {cap}%\uAE4C\uC9C0 \uC313\uC778\uB2E4)",
+  "skill.clause.shimmerBurst": "[[shimmer|\uBC18\uC9DD!]]\uC774 \uC0AC\uB77C\uC9C8 \uB54C \uADF8 \uC790\uB9AC\uC5D0\uC11C [[tia-splash|\uCCA8\uBC99!]]\uC774 \uD130\uC9C4\uB2E4",
   "skill.clause.blinkToLowestDefense": "\uC4F0\uB294 \uC21C\uAC04 [[def|\uBC29\uC5B4\uB825]]\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC801\uC5D0\uAC8C [[teleport|\uC21C\uAC04\uC774\uB3D9]]\uD574 \uADF8 \uC801\uC5D0\uAC8C \uC4F4\uB2E4",
   "skill.clause.chargeStartsAtHp": "\uCCB4\uB825\uC774 {percent}% \uC774\uD558\uAC00 \uB418\uBA74 \uCDA9\uC804\uC744 \uC2DC\uC791\uD55C\uB2E4",
   "skill.clause.periodicStack": "[[{id}|{term}]]\uC744 \uD55C \uACB9 \uC313\uB294\uB2E4",
@@ -7629,8 +7667,10 @@ var SKILL_KO = {
   "skill.status.butcher": "[[butcher|\uC190\uC9C8]]\uC744 \uD55C \uACB9 \uC313\uB294\uB2E4",
   "skill.status.knockback": "[[knockback|\uB0A0\uB824\uBC84\uB9B0\uB2E4]]",
   "skill.status.stagger": "[[stagger|\uACBD\uC9C1]]\uC2DC\uD0A8\uB2E4",
-  "skill.status.bleed": "{seconds}\uCD08 \uB3D9\uC548 [[bleed|\uCD9C\uD608]]\uC2DC\uCF1C \uB9E4\uCD08 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB97C \uC783\uAC8C \uD55C\uB2E4",
-  "skill.status.bleedDeepen": "{seconds}\uCD08 \uB3D9\uC548 [[bleed|\uCD9C\uD608]]\uC2DC\uCF1C \uB9E4\uCD08 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB97C \uC783\uAC8C \uD558\uACE0, \uC774\uBBF8 \uCD9C\uD608 \uC911\uC778 \uC801\uC774\uBA74 \uB9E4\uCD08 {deep}%\uB97C \uC783\uACE0 \uBC1B\uB294 \uD68C\uBCF5\uB7C9\uC774 {reduction}% \uC904\uC5B4\uB4DC\uB294 \uAE4A\uC740 \uCD9C\uD608\uB85C \uAC15\uD654\uD55C\uB2E4",
+  "skill.status.bleed": "[[bleed|\uCD9C\uD608]]\uC744 \uBD80\uC5EC\uD55C\uB2E4",
+  "skill.status.bleedCustom": "{seconds}\uCD08 \uB3D9\uC548 [[bleed|\uCD9C\uD608]]\uC2DC\uCF1C \uB9E4\uCD08 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB97C \uC783\uAC8C \uD55C\uB2E4",
+  "skill.status.bleedHealCut": "{seconds}\uCD08 \uB3D9\uC548 [[bleed|\uCD9C\uD608]]\uC744 \uBD80\uC5EC\uD558\uACE0 \uADF8\uB3D9\uC548 \uBC1B\uB294 [[healing-cut|\uD68C\uBCF5\uB7C9]]\uC744 {reduction}% \uB0AE\uCD98\uB2E4",
+  "skill.status.bleedDeepen": "[[bleed|\uCD9C\uD608]]\uC744 \uBD80\uC5EC\uD558\uACE0, \uC774\uBBF8 \uCD9C\uD608 \uC911\uC778 \uC801\uC774\uBA74 \uBC1B\uB294 [[healing-cut|\uD68C\uBCF5\uB7C9]]\uC744 {reduction}% \uB0AE\uCD94\uB294 [[deep-bleed|\uAE4A\uC740 \uCD9C\uD608]]\uB85C \uAC15\uD654\uD55C\uB2E4",
   "skill.status.poison": "{seconds}\uCD08 \uB3D9\uC548 [[poison|\uC911\uB3C5]]\uC2DC\uD0A8\uB2E4",
   "skill.status.curse": "[[curse|\uC800\uC8FC]]\uB97C \uD55C \uACB9 \uC50C\uC6B4\uB2E4",
   "skill.status.chill": "[[chill|\uB454\uD654]]\uB97C \uD55C \uACB9 \uC313\uC544 \uCD5C\uB300 {stacks}\uACB9\uAE4C\uC9C0 \uACB9\uB9C8\uB2E4 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uC640 [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uB97C {percent}% \uB0AE\uCD98\uB2E4",
@@ -7646,12 +7686,12 @@ var SKILL_KO = {
   "skill.breakthrough.ferocity": "\uD3ED\uC8FC \uAC15\uD654",
   "skill.breakthrough.passive": "\uD328\uC2DC\uBE0C \uAC15\uD654",
   "skill.breakthrough.effect.none": "\uC5C6\uC74C",
-  "skill.breakthrough.effect.basic": "\u300C{trigger}\u300D \uBC1C\uB3D9 \uC2DC {stat}\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 [[hp|\uCCB4\uB825]]\uC744 \uD68C\uBCF5\uD558\uACE0 \uB113\uC740 \uBC94\uC704\uC758 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]\uD55C\uB2E4.",
-  "skill.breakthrough.effect.basicValue": "\u300C{trigger}\u300D \uBC1C\uB3D9 \uC2DC {heal}\uB9CC\uD07C [[hp|\uCCB4\uB825]]\uC744 \uD68C\uBCF5\uD558\uACE0 \uB113\uC740 \uBC94\uC704\uC758 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]\uD55C\uB2E4.",
-  "skill.breakthrough.effect.ultimate": "\uD53C\uD574\uB7C9\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 \u300C{name}\u300D{name!\uC744} {seconds}\uCD08 \uAC04\uACA9\uC73C\uB85C {casts} \uBC88 \uB354 \uC2DC\uC804\uD55C\uB2E4.",
-  "skill.breakthrough.effect.ferocity": "[[ferocity|\uD3ED\uC8FC]]\uAC00 \uB05D\uB0A0 \uB54C, \uD3ED\uC8FC \uB3D9\uC548 \uBC1B\uC740 \uD53C\uD574\uB7C9\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uACE0 \uB113\uC740 \uBC94\uC704\uC758 \uC801\uC5D0\uAC8C {seconds}\uCD08 \uB3D9\uC548 \uD55C \uBC88 \uB354 [[taunt|\uB3C4\uBC1C]]\uD55C\uB2E4.",
-  "skill.breakthrough.effect.passive": "\u300C{name}\u300D{name!\uC774} \uBC1C\uB3D9\uB420 \uB54C \uBAA8\uB4E0 \uC544\uAD70\uC5D0\uAC8C \uADF8 \uD68C\uBCF5\uB7C9\uC758 {percent}%\uB97C \uB098\uB208\uB2E4.",
-  "skill.breakthrough.effect.basic.deepBleed": "\uC77C\uBC18 \uACF5\uACA9\uC758 [[bleed|\uCD9C\uD608]]\uC774 \uB9E4\uCD08 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB97C \uC783\uB294 \uAE4A\uC740 \uCD9C\uD608\uB85C \uAC15\uD654\uB41C\uB2E4. \uAE4A\uC740 \uCD9C\uD608 \uB3D9\uC548 \uB300\uC0C1\uC774 \uBC1B\uB294 \uD68C\uBCF5\uB7C9\uC744 {reduction}% \uB0AE\uCD94\uBA70, \uB2E4\uB978 \uCD9C\uD608\uBCF4\uB2E4 \uC6B0\uC120\uD55C\uB2E4.",
+  "skill.breakthrough.effect.basic": "\u300C{trigger}\u300D \uBC1C\uB3D9 \uC2DC\n\u2022 {stat}\uC758 {percent}%\uB9CC\uD07C [[hp|\uCCB4\uB825]] \uD68C\uBCF5\n\u2022 \uB113\uC740 \uBC94\uC704\uC758 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]",
+  "skill.breakthrough.effect.basicValue": "\u300C{trigger}\u300D \uBC1C\uB3D9 \uC2DC\n\u2022 [[hp|\uCCB4\uB825]] {heal} \uD68C\uBCF5\n\u2022 \uB113\uC740 \uBC94\uC704\uC758 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]",
+  "skill.breakthrough.effect.ultimate": "\u300C{name}\u300D{name!\uC744} {seconds}\uCD08 \uAC04\uACA9\uC73C\uB85C {casts} \uBC88 \uCD94\uAC00 \uC2DC\uC804\uD55C\uB2E4. \uAC01 \uCD94\uAC00 \uC2DC\uC804\uC758 \uD53C\uD574\uB7C9\uC740 \uC6D0\uBCF8\uC758 {percent}%\uB2E4.",
+  "skill.breakthrough.effect.ferocity": "[[ferocity|\uD3ED\uC8FC]] \uC885\uB8CC \uC2DC\n\u2022 \uD3ED\uC8FC \uC911 \uBC1B\uC740 \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]] \uD68D\uB4DD\n\u2022 \uB113\uC740 \uBC94\uC704\uC758 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 \uB2E4\uC2DC [[taunt|\uB3C4\uBC1C]]",
+  "skill.breakthrough.effect.passive": "\u300C{name}\u300D \uBC1C\uB3D9 \uC2DC\n\u2022 \uD68C\uBCF5\uB7C9\uC758 {percent}%\uB97C \uBAA8\uB4E0 \uC544\uAD70\uC5D0\uAC8C \uB098\uB208\uB2E4.",
+  "skill.breakthrough.effect.basic.deepBleed": "\uC77C\uBC18 \uACF5\uACA9\uC758 [[bleed|\uCD9C\uD608]]\uC774 [[deep-bleed|\uAE4A\uC740 \uCD9C\uD608]]\uB85C \uAC15\uD654\uB41C\uB2E4. \uAE4A\uC740 \uCD9C\uD608 \uB3D9\uC548 \uB300\uC0C1\uC774 \uBC1B\uB294 [[healing-cut|\uD68C\uBCF5\uB7C9]]\uC744 {reduction}% \uB0AE\uCD94\uBA70, \uB2E4\uB978 \uCD9C\uD608\uBCF4\uB2E4 \uC6B0\uC120\uD55C\uB2E4.",
   "skill.breakthrough.effect.ultimate.ultimateLifeSteal": "\uC785\uD78C \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C \uCCB4\uB825\uC744 \uD68C\uBCF5\uD55C\uB2E4",
   "skill.breakthrough.effect.ferocity.cleavingBasics": "[[ferocity|\uD3ED\uC8FC]] \uC911 \uC77C\uBC18 \uACF5\uACA9\uC774 \uC870\uAE08 \uB113\uC740 \uBC94\uC704\uC758 \uC801\uC744 \uBAA8\uB450 \uACF5\uACA9\uD55C\uB2E4.",
   "skill.breakthrough.effect.passive.battleMaidAscension": "\uCD5C\uB300 \uCCB4\uB825\xB7[[def|\uBC29\uC5B4\uB825]]\xB7[[res|\uC800\uD56D\uB825]]\uC774 {percent}% \uC99D\uAC00\uD558\uACE0, \uC801 \uCC98\uCE58 \uC2DC \uB2E4\uC74C \uD45C\uC801\uC5D0\uAC8C \uB2E4\uC2DC [[charge|\uB3CC\uC9C4]]\uD55C\uB2E4.",
@@ -7659,7 +7699,7 @@ var SKILL_KO = {
   "skill.breakthrough.effect.ultimate.healingShield": "\uD68C\uBCF5\uC744 \uBC1B\uC740 \uC544\uAD70\uB9C8\uB2E4 \uADF8 \uD68C\uBCF5\uB7C9\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4. \uC774\uBBF8 \uCCB4\uB825\uC774 \uAC00\uB4DD \uCC2C \uC544\uAD70\uB3C4 \uBCF4\uD638\uB9C9\uC740 \uC5BB\uB294\uB2E4.",
   "skill.breakthrough.effect.ferocity.feverShare": "[[ferocity|\uD3ED\uC8FC]]\uAC00 \uB05D\uB0A0 \uB54C, \uD3ED\uC8FC \uB3D9\uC548 \uC900 \uD68C\uBCF5\uB7C9\uC758 {percent}%\uB97C \uC0B4\uC544 \uC788\uB294 \uC544\uAD70 \uBAA8\uB450\uAC00 \uB611\uAC19\uC774 \uB098\uB220 [[shield|\uBCF4\uD638\uB9C9]]\uC73C\uB85C \uC5BB\uB294\uB2E4.",
   "skill.breakthrough.effect.passive.rescueShield": "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uC544\uAD70\uC758 \uCCB4\uB825\uC774 {hp}% \uC774\uD558\uB85C \uB0B4\uB824\uAC00\uBA74 \uADF8 \uC544\uAD70\uC774 \uC8FC\uBB38\uB825\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4.",
-  "skill.breakthrough.effect.basic.staccatoChain": "\uAC19\uC740 \uC801\uC744 \uC5F0\uC18D\uC73C\uB85C \uB9DE\uD788\uBA74 \u300C{name}\u300D\uC758 [[stagger|\uACBD\uC9C1]]\uC774 \uD55C \uBC88\uB9C8\uB2E4 {seconds}\uCD08\uC529 \uAE38\uC5B4\uC9C4\uB2E4. \uCD5C\uB300 {max}\uBC88\uC9F8\uAE4C\uC9C0\uC774\uACE0 \uB2E4\uB978 \uC801\uC73C\uB85C \uC62E\uAE30\uBA74 \uCC98\uC74C\uBD80\uD130\uB2E4.",
+  "skill.breakthrough.effect.basic.staccatoChain": "\uAC19\uC740 \uC801\uC744 \uC5F0\uC18D\uC73C\uB85C \uB9DE\uD788\uBA74 \u300C{name}\u300D\uC758 [[stagger|\uACBD\uC9C1]]\uC774 [[stun|\uAE30\uC808]]\uB85C \uBC14\uB00C\uC5B4 \uD55C \uBC88\uB9C8\uB2E4 {seconds}\uCD08\uC529 \uAE38\uC5B4\uC9C4\uB2E4. \uCD5C\uB300 {max}\uBC88\uC9F8\uAE4C\uC9C0\uC774\uACE0 \uB2E4\uB978 \uC801\uC73C\uB85C \uC62E\uAE30\uBA74 \uCC98\uC74C\uBD80\uD130\uB2E4.",
   "skill.breakthrough.effect.ultimate.lightChorus": "\u300C{name}\u300D\uC758 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uAC00 {cost} \uC904\uACE0, \uCCB4\uB825\uC774 \uAC00\uB4DD \uCC28 \uD68C\uBCF5\uD560 \uBAAB\uC774 \uC5C6\uB294 \uC544\uAD70\uC740 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4.",
   "skill.breakthrough.effect.basic.farPing": "\u300C{name}\u300D{name!\uC774} \uC6D0\uAC70\uB9AC\uAE4C\uC9C0 \uB2FF\uACE0, [[duo|\uB4C0\uC624]]\uC640 \uBA40\uB9AC \uB5A8\uC5B4\uC9C4 \uCC44\uB85C\uB3C4 \uC9C0\uC6D0\uC744 \uC774\uC5B4 \uAC04\uB2E4.",
   "skill.breakthrough.effect.ultimate.orderStrike": "\uC624\uB354\uAC00 \uAC78\uB9B0 \uB3D9\uC548 [[duo|\uB4C0\uC624]]\uAC00 \uCC98\uC74C \uB54C\uB9AC\uB294 \uC801\uB9C8\uB2E4 [[weakpoint|\uC57D\uC810 \uD3EC\uCC29]]\uC774 \uC989\uC2DC \uCC0D\uD600 \uD130\uC9C4\uB2E4.",
@@ -7677,7 +7717,10 @@ var SKILL_KO = {
   "skill.keyword.staccato.term": "\uC2A4\uD0C0\uCE74\uD1A0",
   "skill.keyword.staccato.description": "\uBA54\uD14C\uC758 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uACFC \uAC19\uC740 \uB9C8\uBC95 \uCD94\uAC00\uD0C0\uB2E4. \uC801\uC911\uD55C \uB300\uC0C1\uC744 [[stagger|\uACBD\uC9C1]]\uC2DC\uD0A8\uB2E4.",
   "skill.keyword.plume.term": "\uC11C\uB9AC\uAE43",
-  "skill.keyword.plume.description": "\uC801\uC5D0\uAC8C \uBC15\uD788\uB294 \uAE43\uD138\uC774\uB2E4. \uC801\uB9C8\uB2E4 \uCD5C\uB300 {max}\uACB9\uAE4C\uC9C0 \uC313\uC774\uACE0 {hold}\uCD08 \uB3D9\uC548 \uB0A8\uC73C\uBA70, \uC0C8 \uACB9\uC774 \uBC15\uD790 \uB54C\uB9C8\uB2E4 \uC2DC\uAC04\uC774 \uB2E4\uC2DC \uC138\uC5B4\uC9C4\uB2E4. {max}\uACB9\uC774 \uB418\uBA74 \uAE43\uD138\uC774 \uC0AC\uB77C\uC9C0\uACE0 {slowSeconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uC640 \uC774\uB3D9 \uC18D\uB3C4\uB97C {slowPercent}% \uB0AE\uCD94\uB294 \uB3D9\uC0C1\uC73C\uB85C \uBC14\uB00C\uC5B4, {seconds}\uCD08\uC5D0 \uAC78\uCCD0 \uAC74 \uCABD \uACF5\uACA9\uB825\uC758 {percent}%\uB9CC\uD07C \uD53C\uD574\uB97C \uC900\uB2E4. \uB3D9\uC0C1\uC740 \uACB9\uCE58\uC9C0 \uC54A\uACE0 \uB2E4\uC2DC \uAC78\uB9AC\uBA74 \uAC31\uC2E0\uB41C\uB2E4.",
+  "skill.keyword.plume.description": "\uC801\uC5D0\uAC8C \uBC15\uD788\uB294 \uAE43\uD138\uC774\uB2E4. \uC801\uB9C8\uB2E4 \uCD5C\uB300 {max}\uACB9\uAE4C\uC9C0 \uC313\uC774\uACE0 {hold}\uCD08 \uB3D9\uC548 \uB0A8\uC73C\uBA70, \uC0C8 \uACB9\uC774 \uBC15\uD790 \uB54C\uB9C8\uB2E4 \uC2DC\uAC04\uC774 \uB2E4\uC2DC \uC138\uC5B4\uC9C4\uB2E4. {max}\uACB9\uC774 \uB418\uBA74 \uAE43\uD138\uC774 \uC0AC\uB77C\uC9C0\uACE0 [[yuti-frostbite|\uB3D9\uC0C1]]\uC744 \uAC74\uB2E4.",
+  "skill.keyword.splash.description": "[[shimmer|\uBC18\uC9DD!]]\uC774 \uD130\uC9C0\uB294 \uBB3C\uBCF4\uB77C\uB2E4. \uC8FC\uC704 \uC801\uC5D0\uAC8C [[ap|\uC8FC\uBB38\uB825]]\uC758 {percent}%\uB9CC\uD07C [[magical-damage|\uB9C8\uBC95 \uD53C\uD574]]\uB97C \uC8FC\uACE0, \uC790\uC2E0\uC740 \uCD5C\uB300 \uCCB4\uB825\uC758 {shield}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4(\uCD5C\uB300 \uCCB4\uB825\uC758 {cap}%\uAE4C\uC9C0 \uC313\uC778\uB2E4).",
+  "skill.keyword.splash.term": "\uCCA8\uBC99!",
+  "skill.keyword.frostbite.description": "{slowSeconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uC640 \uC774\uB3D9 \uC18D\uB3C4\uAC00 {slowPercent}% \uB0AE\uC544\uC9C0\uACE0, {seconds}\uCD08\uC5D0 \uAC78\uCCD0 \uAC74 \uCABD \uACF5\uACA9\uB825\uC758 {percent}%\uB9CC\uD07C \uBC29\uC5B4\uB825\uC73C\uB85C \uC904\uC77C \uC218 \uC5C6\uB294 \uD53C\uD574\uB97C \uC785\uB294\uB2E4. \uACB9\uCE58\uC9C0 \uC54A\uACE0 \uB2E4\uC2DC \uAC78\uB9AC\uBA74 \uAC31\uC2E0\uB41C\uB2E4.",
   "skill.keyword.summon.description": "{owner}\uC758 {stat}{stat!\uC774} {stat}\xB7\uCCB4\uB825\xB7\uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825\uC744 \uC815\uD558\uB294 \uADFC\uAC70\uB9AC \uC18C\uD658\uC218\uB2E4. \uC2A4\uC2A4\uB85C \uD45C\uC801\uC744 \uACE0\uB974\uACE0 \uC81C \uAC8C\uC774\uC9C0\uB85C \uAD81\uADF9\uAE30\uB97C \uC4F4\uB2E4.{resummon}",
   "skill.keyword.summon.resummon": " \uC4F0\uB7EC\uC9C0\uBA74 {seconds}\uCD08 \uB4A4 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB85C \uB2E4\uC2DC \uC120\uB2E4.",
   "skill.ferocity.valueLabel": "\uC57C\uC131 \uBC1C\uD604",
@@ -7712,7 +7755,7 @@ var SKILL_KO = {
   "skill.breakthrough.effect.ultimate.richBlend": "\u300C{name}\u300D\uC73C\uB85C \uB450\uB974\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC774 \uC900 \uD53C\uD574\uC758 {percent}%\uB85C \uB298\uACE0, \uD569\uACC4 \uD55C\uB3C4\uAC00 \uCD5C\uB300 \uCCB4\uB825\uC758 {cap}%\uB85C \uC624\uB978\uB2E4.",
   "skill.breakthrough.effect.passive.reloadSip": "\uC7A5\uC804\uC744 \uC2DC\uC791\uD560 \uB54C \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4. \uC774 \uBCF4\uD638\uB9C9\uC740 \uCD5C\uB300 \uCCB4\uB825\uC758 {cap}%\uAE4C\uC9C0\uB9CC \uC313\uC778\uB2E4.",
   "skill.breakthrough.effect.ultimate.shrapnel": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801 \uC8FC\uC704\uC758 \uB2E4\uB978 \uC801\uC5D0\uAC8C\uB3C4 \uD30C\uD3B8\uC774 \uD280\uC5B4 {percent}%\uC758 \uD53C\uD574\uB97C \uC900\uB2E4.",
-  "skill.breakthrough.effect.ferocity.ankleShot": "[[ferocity|\uD3ED\uC8FC]] \uC911 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uCE58\uBA85\uD0C0\uB85C \uC801\uC911\uD558\uBA74 \uB9DE\uC740 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[stagger|\uACBD\uC9C1]]\uC2DC\uD0A8\uB2E4.",
+  "skill.breakthrough.effect.ferocity.ankleShot": "[[ferocity|\uD3ED\uC8FC]] \uC911 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uCE58\uBA85\uD0C0\uB85C \uC801\uC911\uD558\uBA74 \uB9DE\uC740 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[stun|\uAE30\uC808]]\uC2DC\uD0A8\uB2E4.",
   "skill.breakthrough.effect.passive.highTide": "[[fog-guard|\uD574\uBB34 \uBC29\uBCBD]]\uC774 \uC0C1\uD55C\uAE4C\uC9C0 \uCC28 \uC788\uB294 \uB3D9\uC548 \uBAA8\uB4E0 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4.",
   "skill.status.intimidate": "[[intimidation|\uC704\uC555]]\uC744 \uD55C \uACB9 \uC313\uB294\uB2E4",
   "skill.passive.echoLocation": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uACFC \uAD81\uADF9\uAE30\uAC00 \uC801\uC911\uD55C \uC801\uC5D0\uAC8C [[echo|\uBC18\uD5A5]]\uC744 \uAC74\uB2E4. \uBC18\uD5A5\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uC740 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978\uB2E4.",
@@ -7747,8 +7790,8 @@ var SKILL_KO = {
   "skill.breakthrough.effect.ferocity.frenzyClaws": "[[ferocity|\uD3ED\uC8FC]] \uC911 \u300C{name}\u300D\uC758 \uCE58\uBA85\uD0C0 \uC8FC\uAE30\uAC00 {from}\uBC88\uC9F8 \uACF5\uACA9\uC5D0\uC11C {to}\uBC88\uC9F8 \uACF5\uACA9\uB9C8\uB2E4\uB85C \uC9E7\uC544\uC9C4\uB2E4.",
   "skill.breakthrough.effect.passive.huntMark": "\uB2E4\uB978 \uC544\uAD70\uC774 \uD568\uAED8 \uB178\uB9AC\uB294 \uC801\uC5D0\uAC8C\uB294 \uCE58\uBA85\uD0C0 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.passive.windEcho": "\u300C{name}\u300D{name!\uC774} \uBC1C\uB3D9\uD574 [[stealth|\uC740\uC2E0]]\uC5D0 \uB4E4\uC5B4\uAC00\uB294 \uC21C\uAC04 \uC0B4\uC544 \uC788\uB294 \uC544\uAD70 \uBAA8\uB450\uAC00 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uB97C {energy} \uC5BB\uB294\uB2E4.",
-  "skill.breakthrough.effect.basic.pressureConduct": "[[pressure|\uC218\uC555]]\uC774 \uC0C1\uD55C\uC5D0\uC11C \uD130\uC9C8 \uB54C \uD130\uC9C4 \uC801\uC5D0\uAC8C\uC11C \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uB2E4\uB978 \uC801\uC5D0\uAC8C {stacks}\uACB9\uC774 \uC62E\uACA8 \uAC04\uB2E4. \uC62E\uACA8 \uAC04 \uACB9\uC740 \uC0C1\uD55C \uC544\uB798\uC5D0\uC11C \uBA48\uCDB0 \uADF8 \uC790\uB9AC\uC5D0\uC11C \uB610 \uD130\uC9C0\uC9C0 \uC54A\uB294\uB2E4.",
-  "skill.breakthrough.effect.basic.thornJab": "\u300C{name}\u300D{name!\uC774} \uC801\uC911\uD558\uBA74 \uC9C0\uAE08 \uC313\uC778 [[kento-prickle|\uAE4C\uCE60]] \uACB9 \uC218\uC5D0 \uB530\uB978 \uBC18\uACA9 \uAC12\uC758 {percent}%\uB97C \uAC19\uC740 \uC801\uC5D0\uAC8C \uD55C \uBC88 \uB354 \uC900\uB2E4.",
+  "skill.breakthrough.effect.basic.pressureConduct": "[[pressure|\uC218\uC555]] \uD3ED\uBC1C \uC2DC \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uB2E4\uB978 \uC801\uC5D0\uAC8C {stacks}\uACB9\uC744 \uC62E\uAE34\uB2E4. \uC804\uC774\uB41C \uC218\uC555\uC740 \uC0C1\uD55C \uBBF8\uB9CC\uAE4C\uC9C0\uB9CC \uC313\uC774\uBA70 \uC989\uC2DC \uD3ED\uBC1C\uD558\uC9C0 \uC54A\uB294\uB2E4.",
+  "skill.breakthrough.effect.basic.thornJab": "\u300C{name}\u300D \uC801\uC911 \uC2DC \uAC19\uC740 \uC801\uC5D0\uAC8C \uD604\uC7AC [[kento-prickle|\uAE4C\uCE60]] \uBC18\uACA9 \uD53C\uD574\uC758 {percent}%\uB97C \uCD94\uAC00\uB85C \uC900\uB2E4.",
   "skill.breakthrough.effect.basic.sleepPounce": "[[sleep|\uC218\uBA74]] \uC911\uC778 \uC801\uC744 \uB54C\uB9AC\uB294 \uC544\uAD70\uC758 \uD0C0\uACA9\uC774 {percent}% \uB354 \uC138\uB2E4. \uADF8 \uD0C0\uACA9\uC774 \uC801\uC744 \uAE68\uC6B4\uB2E4.",
   "skill.breakthrough.effect.ultimate.deepSink": "\u300C{name}\u300D\uC5D0 \uB04C\uB824\uC640 [[taunt|\uB3C4\uBC1C]]\uB2F9\uD55C \uC801\uC740 \uB3C4\uBC1C\uC774 \uC774\uC5B4\uC9C0\uB294 \uB3D9\uC548 \uB9E4\uCD08 [[pressure|\uC218\uC555]]\uC774 {stacks}\uACB9\uC529 \uC313\uC778\uB2E4.",
   "skill.breakthrough.effect.ultimate.wallReflect": "\u300C{name}\u300D\uC758 [[taunt|\uB3C4\uBC1C]]\uC774 \uC774\uC5B4\uC9C0\uB294 \uB3D9\uC548 \uC790\uC2E0\uC758 [[shield|\uBCF4\uD638\uB9C9]]\uC774 \uD761\uC218\uD55C \uD53C\uD574\uC758 {percent}%\uB97C \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uC801\uC5D0\uAC8C [[magical-damage|\uB9C8\uBC95 \uD53C\uD574]]\uB85C \uB418\uB3CC\uB9B0\uB2E4.",
@@ -7772,8 +7815,8 @@ var SKILL_KO = {
   "skill.breakthrough.effect.basic.paintSpill": "[[overpaint|\uB367\uCE60]]\uC774 \uCD5C\uB300 \uACB9\uC778 \uC801\uC744 \uB54C\uB9AC\uBA74 \uADF8 \uADFC\uCC98\uC758 \uB2E4\uB978 \uC801\uC5D0\uAC8C [[overpaint|\uB367\uCE60]]\uC774 {stacks}\uACB9 \uBC88\uC9C4\uB2E4.",
   "skill.breakthrough.effect.basic.tightStitch": "\u300C{name}\u300D{name!\uC774} \uD53C\uD574\uC758 {percent}%\uB97C [[shield|\uBCF4\uD638\uB9C9]]\uC73C\uB85C \uC62E\uAE34\uB2E4. \uD55C \uBC88\uC5D0 \uB450\uB974\uB294 \uC0C1\uD55C\uC740 \uADF8\uB300\uB85C\uB2E4.",
   "skill.breakthrough.effect.basic.poisonPulse": "[[poison|\uC911\uB3C5]]\uC774 \uAC78\uB9B0 \uC801\uC744 \uAE30\uBCF8 \uACF5\uACA9\uC73C\uB85C \uB9DE\uD788\uBA74 \uC911\uB3C5 \uD53C\uD574 \uD55C \uD2F1\uC774 \uC989\uC2DC \uB4E4\uC5B4\uAC04\uB2E4.",
-  "skill.breakthrough.effect.basic.pupLitter": "\u300C{name}\u300D{name!\uC744} {every}\uBC88 \uC4F8 \uB54C\uB9C8\uB2E4 \uC0C8\uB07C \uB291\uB300 \uD55C \uB9C8\uB9AC\uAC00 \uB098\uC640 \uD568\uAED8 \uC2F8\uC6B4\uB2E4. \uC0C8\uB07C\uB294 {seconds}\uCD08 \uB4A4 \uC0AC\uB77C\uC9C0\uACE0 \uB3D9\uC2DC\uC5D0 \uC5F4 \uB9C8\uB9AC\uAE4C\uC9C0 \uC124 \uC218 \uC788\uB2E4.",
-  "skill.breakthrough.effect.ferocity.pupFrenzy": "[[ferocity|\uD3ED\uC8FC]] \uC911 \u300C{name}\u300D{name!\uC744} {every}\uBC88 \uC4F8 \uB54C\uB9C8\uB2E4 \uC0C8\uB07C \uB291\uB300 \uD55C \uB9C8\uB9AC\uAC00 \uB098\uC640 \uD568\uAED8 \uC2F8\uC6B4\uB2E4. \uC0C8\uB07C\uB294 {seconds}\uCD08 \uB4A4 \uC0AC\uB77C\uC9C0\uACE0 \uB3D9\uC2DC\uC5D0 \uC5F4 \uB9C8\uB9AC\uAE4C\uC9C0 \uC124 \uC218 \uC788\uB2E4.",
+  "skill.breakthrough.effect.basic.pupLitter": "\u300C{name}\u300D {every}\uD68C \uC0AC\uC6A9\uB9C8\uB2E4 \uC0C8\uB07C \uB291\uB300 1\uB9C8\uB9AC\uB97C \uC18C\uD658\uD55C\uB2E4. {seconds}\uCD08 \uB3D9\uC548 \uD568\uAED8 \uC2F8\uC6B0\uBA70, \uB3D9\uC2DC\uC5D0 \uCD5C\uB300 10\uB9C8\uB9AC\uAE4C\uC9C0 \uC720\uC9C0\uB41C\uB2E4.",
+  "skill.breakthrough.effect.ferocity.pupFrenzy": "[[ferocity|\uD3ED\uC8FC]] \uC911 \u300C{name}\u300D {every}\uD68C \uC0AC\uC6A9\uB9C8\uB2E4 \uC0C8\uB07C \uB291\uB300 1\uB9C8\uB9AC\uB97C \uC18C\uD658\uD55C\uB2E4. {seconds}\uCD08 \uB3D9\uC548 \uD568\uAED8 \uC2F8\uC6B0\uBA70, \uB3D9\uC2DC\uC5D0 \uCD5C\uB300 10\uB9C8\uB9AC\uAE4C\uC9C0 \uC720\uC9C0\uB41C\uB2E4.",
   "skill.breakthrough.effect.ferocity.adamantShield": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC124 \uB54C \uB450\uB974\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC774 \uCD5C\uB300 \uCCB4\uB825\uC758 {from}%\uC5D0\uC11C {to}%\uB85C \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.ferocity.paintChain": "[[ferocity|\uD3ED\uC8FC]] \uC911 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uB9DE\uD78C \uC801\uC5D0\uAC8C\uC11C \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uB2E4\uB978 \uC801\uC5D0\uAC8C {hops}\uBC88 \uC62E\uACA8 \uAC00, \uCD5C\uB300 {total}\uBA85\uC5D0\uAC8C [[overpaint|\uB367\uCE60]]\uC744 \uD55C \uBC88\uC5D0 \uAC74\uB2E4. \uC774\uBBF8 \uCE60\uD574\uC9C4 \uC801\uC740 \uAC74\uB108\uB6F4\uB2E4.",
   "skill.breakthrough.effect.passive.undyingBulwark": "\u300C{name}\u300D\uC758 \uD68C\uBCF5 \uCD1D\uB7C9\uC774 \uCD5C\uB300 \uCCB4\uB825\uC758 {from}%\uC5D0\uC11C {to}%\uB85C \uB298\uC5B4\uB09C\uB2E4. [[invulnerable|\uBB34\uC801]]\uC774 \uB05D\uB098\uBA74 {seconds}\uCD08 \uB3D9\uC548 {guard}.",
@@ -7820,24 +7863,24 @@ var SKILL_KO = {
   "skill.keyword.nowValue": "(\uD604\uC7AC {value})",
   "skill.passive.refillMagazine": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 {magazine}\uBC1C\uC9DC\uB9AC \uD0C4\uCC3D\uC73C\uB85C \uB098\uAC00\uACE0 \uBE44\uBA74 {seconds}\uCD08 \uB3D9\uC548 \uC7A5\uC804\uD55C\uB2E4. [[teku-refill|\uB9AC\uD544]]\uB85C \uACF5\uACA9 \uC18D\uB3C4\uB294 \uACE0\uC815\uB418\uACE0, \uB354\uD574\uC9C0\uB294 \uACF5\uACA9 \uC18D\uB3C4\uB294 \uAC19\uC740 \uBE44\uC728\uC758 [[atk|\uACF5\uACA9\uB825]]\uC774 \uB41C\uB2E4.",
   "skill.ferocity.overtimeRefusal": "\uD3ED\uC8FC\uC5D0 \uB4E4\uC5B4\uAC00\uB294 \uC21C\uAC04 [[teku-refill|\uB9AC\uD544]]\uB418\uACE0, \uADF8 \uD0C4\uCC3D\uC758 \uBAA8\uB4E0 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 [[teku-last-drop|\uB9C8\uC9C0\uB9C9 \uD55C \uBC29\uC6B8]]\uB85C \uB098\uAC04\uB2E4.",
-  "skill.sentence.barrage": "\uC804\uC7A5\uC758 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C \uAC00\uAE4C\uC6B4 \uC21C\uC11C\uB300\uB85C {damage}\uB97C {shots}\uBC88 \uC900\uB2E4. {from}\uBC1C\uC9F8\uBD80\uD130\uB294 \uBC18\uB4DC\uC2DC \uCE58\uBA85\uD0C0\uC774\uBA70 \uC900 \uD53C\uD574\uC758 {shield}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4(\uCD5C\uB300 \uCCB4\uB825\uC758 {cap}%\uAE4C\uC9C0). \uC3DC \uB4A4 [[teku-refill|\uB9AC\uD544]]\uB41C\uB2E4.",
-  "skill.breakthrough.effect.basic.pressStagger": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uB9DE\uD78C \uC801 \uC911 \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uD55C \uBA85\uC744 {seconds}\uCD08 \uB3D9\uC548 [[stagger|\uACBD\uC9C1]]\uC2DC\uD0A8\uB2E4.",
+  "skill.sentence.barrage": "\uC801 \uD55C \uBA85\uC5D0\uAC8C {damage}\uB97C \uC900\uB2E4. \uC774 \uD0C4\uD658\uC744 \uAC00\uAE4C\uC6B4 \uC801\uBD80\uD130 \uD55C \uBA85\uC529 \uCC28\uB840\uB85C \uCD1D {shots}\uBC1C \uC3D8\uBA70, \uC801\uC774 {shots}\uBA85\uBCF4\uB2E4 \uC801\uC73C\uBA74 \uAC00\uAE4C\uC6B4 \uC801\uBD80\uD130 \uB2E4\uC2DC \uB9DE\uD78C\uB2E4. {from}\uBC1C\uC9F8\uBD80\uD130\uB294 \uBC18\uB4DC\uC2DC \uCE58\uBA85\uD0C0\uC774\uBA70 \uC900 \uD53C\uD574\uC758 {shield}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4(\uCD5C\uB300 \uCCB4\uB825\uC758 {cap}%\uAE4C\uC9C0). \uC3DC \uB4A4 [[teku-refill|\uB9AC\uD544]]\uB41C\uB2E4.",
+  "skill.breakthrough.effect.basic.pressStagger": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uB9DE\uD78C \uC801 \uC911 \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uD55C \uBA85\uC744 {seconds}\uCD08 \uB3D9\uC548 [[stun|\uAE30\uC808]]\uC2DC\uD0A8\uB2E4.",
   "skill.breakthrough.effect.basic.biteMark": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 \uADF8 \uC801\uC774 \uBC1B\uB294 \uBAA8\uB4E0 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4. \uCD5C\uB300 {max}\uBC88 \uC313\uC774\uBA70 {seconds}\uCD08 \uB3D9\uC548 \uC720\uC9C0\uB41C\uB2E4.",
   "skill.breakthrough.effect.basic.coiledTarget": "[[chill|\uB454\uD654]]\uC5D0 \uAC78\uB9B0 \uC801\uC744 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC73C\uB85C \uB9DE\uD788\uBA74 \uADF8 [[chill|\uB454\uD654]] \uD55C \uACB9\uB9C8\uB2E4 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.basic.piercingBeak": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uC801\uC911\uD558\uBA74 \uD45C\uC801 \uB4A4\uC5D0 \uC11C \uC788\uB294 \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uC801 \uD55C \uBA85\uB3C4 \uAC19\uC740 \uD53C\uD574\uC758 {percent}%\uB97C \uBC1B\uB294\uB2E4.",
   "skill.breakthrough.effect.ultimate.widenArea": "\uAD81\uADF9\uAE30\uC758 \uBC94\uC704\uAC00 {percent}% \uB113\uC5B4\uC9C4\uB2E4.",
   "skill.breakthrough.effect.ultimate.sunkenWeight": "\uAD81\uADF9\uAE30\uC5D0 \uB9DE\uC740 \uC801\uC740 [[stun|\uAE30\uC808]]\uC774 \uD480\uB9B0 \uB4A4 {seconds}\uCD08 \uB3D9\uC548 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uC640 [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {percent}% \uB290\uB824\uC9C4\uB2E4.",
-  "skill.breakthrough.effect.ultimate.unhealedMark": "\uAD81\uADF9\uAE30\uC5D0 \uB9DE\uC740 \uC801\uC740 {seconds}\uCD08 \uB3D9\uC548 \uBC1B\uB294 \uD68C\uBCF5\uC774 {percent}% \uC904\uC5B4\uB4E0\uB2E4.",
+  "skill.breakthrough.effect.ultimate.unhealedMark": "\uAD81\uADF9\uAE30\uC5D0 \uB9DE\uC740 \uC801\uC740 {seconds}\uCD08 \uB3D9\uC548 \uBC1B\uB294 [[healing-cut|\uD68C\uBCF5]]\uC774 {percent}% \uC904\uC5B4\uB4E0\uB2E4.",
   "skill.breakthrough.effect.ferocity.feverWidenBasic": "[[ferocity|\uD3ED\uC8FC]] \uC911 \uAE30\uBCF8 \uACF5\uACA9\uC758 \uBC94\uC704\uAC00 {percent}% \uB113\uC5B4\uC9C4\uB2E4.",
   "skill.breakthrough.effect.ferocity.hungryStride": "[[ferocity|\uD3ED\uC8FC]] \uC911 [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB978\uB2E4.",
-  "skill.breakthrough.effect.basic.fangShave": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801\uC758 [[def|\uBC29\uC5B4\uB825]]\uC774 {percent}% \uAE4E\uC778\uB2E4. {seconds}\uCD08 \uB3D9\uC548 \uC720\uC9C0\uB418\uBA70 \uCD5C\uB300 {max}\uBC88 \uC313\uC778\uB2E4.",
-  "skill.breakthrough.effect.basic.pincerPair": "\u300C{name}\u300D\uC774 {every}\uBC88 \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 \uAC19\uC740 \uD53C\uD574\uAC00 \uD55C \uBC88 \uB354 \uB4E4\uC5B4\uAC04\uB2E4.",
-  "skill.breakthrough.effect.basic.shellKnock": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801\uC774 {seconds}\uCD08 \uB3D9\uC548 [[stagger|\uACBD\uC9C1]]\uD55C\uB2E4.",
-  "skill.breakthrough.effect.basic.doubleDab": "\u300C{name}\u300D\uC774 [[reagent|\uC2DC\uC57D]]\uC744 {stacks}\uACB9 \uBB3B\uD78C\uB2E4.",
+  "skill.breakthrough.effect.basic.fangShave": "\u300C{name}\u300D \uC801\uC911 \uC2DC \uB300\uC0C1\uC758 [[def|\uBC29\uC5B4\uB825]]\uC774 {percent}% \uAC10\uC18C\uD55C\uB2E4. \uC9C0\uC18D {seconds}\uCD08 \xB7 \uCD5C\uB300 {max}\uC911\uCCA9.",
+  "skill.breakthrough.effect.basic.pincerPair": "\u300C{name}\u300D {every}\uD68C \uC801\uC911\uB9C8\uB2E4 \uAC19\uC740 \uD53C\uD574\uB97C \uD55C \uBC88 \uB354 \uC900\uB2E4.",
+  "skill.breakthrough.effect.basic.shellKnock": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801\uC774 {seconds}\uCD08 \uB3D9\uC548 [[stun|\uAE30\uC808]]\uD55C\uB2E4.",
+  "skill.breakthrough.effect.basic.doubleDab": "\u300C{name}\u300D \uC801\uC911 \uC2DC [[reagent|\uC2DC\uC57D]]\uC744 {stacks}\uACB9 \uBD80\uC5EC\uD55C\uB2E4.",
   "skill.breakthrough.effect.basic.bleedingSmash": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801\uC5D0\uAC8C [[bleed|\uCD9C\uD608]]\uC744 \uB0A8\uAE34\uB2E4.",
-  "skill.breakthrough.effect.ultimate.cheekShield": "\u300C{name}\u300D\uC744 \uC4F0\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4.",
-  "skill.breakthrough.effect.ultimate.bigShell": "\u300C{name}\u300D\uC774 \uB450\uB974\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC774 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB85C \uB298\uC5B4\uB09C\uB2E4.",
-  "skill.breakthrough.effect.ultimate.richBomb": "\u300C{name}\u300D\uC774 [[reagent|\uC2DC\uC57D]]\uC744 {stacks}\uACB9 \uBB3B\uD78C\uB2E4.",
+  "skill.breakthrough.effect.ultimate.cheekShield": "\u300C{name}\u300D \uC0AC\uC6A9 \uC2DC \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4.",
+  "skill.breakthrough.effect.ultimate.bigShell": "\u300C{name}\u300D\uC758 [[shield|\uBCF4\uD638\uB9C9]]\uC774 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB85C \uC99D\uAC00\uD55C\uB2E4.",
+  "skill.breakthrough.effect.ultimate.richBomb": "\u300C{name}\u300D \uC801\uC911 \uC2DC [[reagent|\uC2DC\uC57D]]\uC744 {stacks}\uACB9 \uBD80\uC5EC\uD55C\uB2E4.",
   "skill.breakthrough.effect.ultimate.chasingBlink": "\u300C{name}\u300D\uC744 \uC4F4 \uC9C1\uD6C4 \uACE7\uBC14\uB85C \uAC00\uC7A5 \uC57D\uD55C \uC801\uC5D0\uAC8C [[teleport|\uC21C\uAC04\uC774\uB3D9]]\uD55C\uB2E4.",
   "skill.breakthrough.effect.passive.lingeringVenom": "\u300C{name}\u300D\uC774 \uBC14\uB974\uB294 [[poison|\uC911\uB3C5]]\uC774 {seconds}\uCD08\uB85C \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.passive.deeperMarch": "[[worker-march|\uD589\uB82C]]\uC758 \uC7AC\uC0DD\uC774 \uC544\uAD70 \uD55C \uBA85\uB2F9 \uCD08\uB2F9 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB85C \uB298\uC5B4\uB09C\uB2E4.",
@@ -7849,9 +7892,9 @@ var SKILL_KO = {
   "skill.breakthrough.effect.ferocity.feverGuard": "[[ferocity|\uD3ED\uC8FC]] \uC911 \uC544\uAD70\uC774 \uBC1B\uB294 \uD53C\uD574\uC758 {percent}%\uB97C \uB300\uC2E0 \uBC1B\uB294\uB2E4.",
   "skill.breakthrough.effect.ferocity.quickReaction": "[[ferocity|\uD3ED\uC8FC]] \uC911 [[reagent|\uC2DC\uC57D]]\uC774 {max}\uACB9\uC5D0 \uB2FF\uC73C\uBA74 \uBC18\uC751\uC774 \uC77C\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.ferocity.quickBlink": "[[ferocity|\uD3ED\uC8FC]] \uC911 \u300C{name}\u300D\uC758 [[teleport|\uC21C\uAC04\uC774\uB3D9]] \uC8FC\uAE30\uAC00 {seconds}\uCD08\uB85C \uC904\uC5B4\uB4E0\uB2E4.",
-  "skill.breakthrough.effect.passive.lightSleeper": "\u300C{name}\u300D\uC774 \uD55C \uBC88 \uB354 \uBC1C\uB3D9\uD55C\uB2E4. \uCCAB \uD68C\uBCF5\uC774 \uB05D\uB09C \uB4A4 \uCCB4\uB825\uC774 \uB2E4\uC2DC \uC808\uBC18 \uC544\uB798\uAC00 \uB418\uBA74 \uAC19\uC740 \uD68C\uBCF5\uC774 \uC2DC\uC791\uB41C\uB2E4.",
+  "skill.breakthrough.effect.passive.lightSleeper": "\u300C{name}\u300D\uC758 \uBC1C\uB3D9 \uD69F\uC218\uAC00 1\uD68C \uB298\uC5B4\uB09C\uB2E4. \uCCAB \uD68C\uBCF5\uC774 \uB05D\uB09C \uB4A4 \uCCB4\uB825\uC774 \uB2E4\uC2DC \uC808\uBC18 \uBBF8\uB9CC\uC774\uBA74 \uAC19\uC740 \uD68C\uBCF5\uC744 \uB2E4\uC2DC \uC2DC\uC791\uD55C\uB2E4.",
   "skill.breakthrough.effect.passive.rageGain": "\u300C{name}\u300D\uC758 \uC801\uC911\uB2F9 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]] \uC99D\uAC00\uAC00 {value}\uB9CC\uD07C \uB354 \uB298\uC5B4\uB09C\uB2E4.",
-  "skill.breakthrough.effect.passive.thickShell": "\u300C{name}\u300D\uC758 [[shield|\uBCF4\uD638\uB9C9]]\uC774 \uCEE4\uC9C4\uB2E4. \uC790\uC2E0\uC740 \uCD5C\uB300 \uCCB4\uB825\uC758 {self}%, \uAC00\uC7A5 \uC57D\uD55C \uC544\uAD70\uC740 {ally}%\uB97C \uC5BB\uB294\uB2E4.",
+  "skill.breakthrough.effect.passive.thickShell": "\u300C{name}\u300D\uC758 [[shield|\uBCF4\uD638\uB9C9]] \uAC15\uD654\n\u2022 \uC790\uC2E0: \uCD5C\uB300 \uCCB4\uB825\uC758 {self}%\n\u2022 \uAC00\uC7A5 \uC57D\uD55C \uC544\uAD70: \uD574\uB2F9 \uC544\uAD70 \uCD5C\uB300 \uCCB4\uB825\uC758 {ally}%",
   "skill.breakthrough.effect.passive.potentReaction": "\u300C{name}\u300D\uC758 \uBC18\uC751\uC774 \uAC70\uB294 [[poison|\uC911\uB3C5]]\uC774 {seconds}\uCD08\uB85C \uAE38\uC5B4\uC9C4\uB2E4.",
   "skill.breakthrough.effect.passive.doubleAmbush": "\u300C{name}\u300D\uC73C\uB85C \uB0B4\uB824\uC120 \uB4A4 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] {crits}\uBC88\uC774 \uC5F0\uB2EC\uC544 \uD655\uC815 \uCE58\uBA85\uD0C0\uAC00 \uB41C\uB2E4.",
   "skill.breakthrough.effect.ferocity.longFeast": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4 \uB54C \uC801\uC744 [[pull|\uB04C\uC5B4\uB2F9\uAE30\uB294]] \uBC94\uC704\uAC00 {percent}% \uB113\uC5B4\uC9C4\uB2E4.",
@@ -7859,7 +7902,7 @@ var SKILL_KO = {
   "skill.breakthrough.effect.passive.pressureCrack": "{seconds}\uCD08\uB9C8\uB2E4 \uAC00\uC7A5 \uBA3C \uC801 \uD55C \uBA85\uC5D0\uAC8C [[ap|\uC8FC\uBB38\uB825]]\uC758 {percent}%\uB9CC\uD07C [[magical-damage|\uB9C8\uBC95 \uD53C\uD574]]\uB97C \uC900\uB2E4.",
   "skill.breakthrough.effect.passive.scarMight": "[[scar|\uD749\uD130]] \uD55C \uACB9\uB9C8\uB2E4 \uC8FC\uB294 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.passive.warmBody": "\u300C{name}\u300D{name!\uC774} \uC313\uC740 \uC801\uC911 \uD55C \uBC88\uB9C8\uB2E4 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4. \uCD5C\uB300 {max}\uBC88\uAE4C\uC9C0 \uC13C\uB2E4.",
-  "skill.breakthrough.effect.passive.pinningPlume": "\uCE58\uBA85\uD0C0\uB85C \uC801\uC911\uD55C [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uD45C\uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[stagger|\uACBD\uC9C1]]\uC2DC\uD0A8\uB2E4. \uAC19\uC740 \uC801\uC5D0\uAC8C\uB294 {lock}\uCD08\uC5D0 \uD55C \uBC88\uB9CC \uBC1C\uB3D9\uD55C\uB2E4.",
+  "skill.breakthrough.effect.passive.pinningPlume": "\uCE58\uBA85\uD0C0\uB85C \uC801\uC911\uD55C [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uD45C\uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[stun|\uAE30\uC808]]\uC2DC\uD0A8\uB2E4. \uAC19\uC740 \uC801\uC5D0\uAC8C\uB294 {lock}\uCD08\uC5D0 \uD55C \uBC88\uB9CC \uBC1C\uB3D9\uD55C\uB2E4.",
   "skill.breakthrough.effect.ferocity.feverGale": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC0B4\uC544 \uC788\uB294 \uC544\uAD70 \uBAA8\uB450\uC5D0\uAC8C {seconds}\uCD08 \uB3D9\uC548 [[tailwind|\uC21C\uD48D]]\uC744 \uAC74\uB2E4. \uC774\uBBF8 \uB354 \uAE34 [[tailwind|\uC21C\uD48D]]\uC774 \uAC78\uB9B0 \uC544\uAD70\uC740 \uC81C\uC678\uD55C\uB2E4.",
   "skill.breakthrough.effect.ferocity.frenzyLeap": "[[ferocity|\uD3ED\uC8FC]] \uB3D9\uC548 [[shallows|\uC5EC\uC6B8]] \uB3C4\uC57D \uC8FC\uAE30\uAC00 \uAE30\uBCF8 \uACF5\uACA9 {hits}\uD68C\uB85C \uC904\uC5B4\uB4E0\uB2E4.",
   "skill.breakthrough.effect.passive.leapVeil": "[[shallows|\uC5EC\uC6B8]]\uB85C \uB3C4\uC57D\uD574 \uB0B4\uB824\uC11C\uBA74 {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4. (\uC7AC\uC0AC\uC6A9 {cooldown}\uCD08)",
@@ -7875,7 +7918,7 @@ var SKILL_KO = {
   "skill.breakthrough.effect.ferocity.emberRush": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 [[nodonia-elation|\uD76C\uC5F4]]\uC774 \uC989\uC2DC {stacks}\uACB9 \uC313\uC778\uB2E4.",
   "skill.breakthrough.effect.passive.sweetShare": "[[nodonia-elation|\uD76C\uC5F4]]\uC774 \uCD5C\uB300\uB85C \uC313\uC5EC \uC788\uB294 \uB3D9\uC548, \uB9E4\uCD08 \uB3CC\uB9AC\uB294 \uC7AC\uC0DD\uB7C9\uC758 {percent}%\uB97C \uB2E4\uB978 \uC544\uAD70 \uC804\uC6D0\uB3C4 \uBC1B\uB294\uB2E4.",
   "skill.breakthrough.effect.basic.preyScale": "\u300C{name}\u300D{name!\uC774} \uC774\uBBF8 [[intimidation|\uC704\uC555]]\uC774 \uAC78\uB824 \uC788\uB358 \uC801\uC744 \uB9DE\uD788\uBA74, \uC9C0\uAE08 \uC704\uC555\uC5D0 \uAC78\uB824 \uC788\uB294 \uC801 \uD55C \uBA85\uB2F9 \uC790\uAE30 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%(\uCD5C\uB300 {max}\uBA85)\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978\uB2E4. {seconds}\uCD08\uC5D0 \uD55C \uBC88\uB9CC \uBC1C\uB3D9\uD55C\uB2E4.",
-  "skill.breakthrough.effect.basic.bitterTaste": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801\uC758 \uBC29\uC5B4\uB825\uC774 {percent}% \uC904\uC5B4\uB4E0\uB2E4. {seconds}\uCD08 \uB3D9\uC548 \uC720\uC9C0\uB418\uBA70 \uCD5C\uB300 {max}\uACB9\uAE4C\uC9C0 \uC313\uC778\uB2E4.",
+  "skill.breakthrough.effect.basic.darkRoast": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uC801 [[def|\uBC29\uC5B4\uB825]]\uC758 {percent}%\uB97C \uBB34\uC2DC\uD55C\uB2E4.",
   "skill.breakthrough.effect.ferocity.roarEntry": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801 \uC804\uC6D0\uC5D0\uAC8C [[intimidation|\uC704\uC555]]\uC774 {stacks}\uACB9 \uC313\uC778\uB2E4.",
   "skill.breakthrough.effect.ferocity.chainEntry": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801\uC744 \uD55C\uAEBC\uBC88\uC5D0 \uD295\uACA8 \uB0B8\uB2E4. \uB0A0\uC544\uAC00\uB2E4 \uB2E4\uB978 \uC801\uC5D0\uAC8C \uBD80\uB52A\uD788\uBA74 \uBD80\uB52A\uD78C \uC801\uC5D0\uAC8C [[concussion|\uB1CC\uC9C4\uD0D5]]\uC774 \uAC78\uB9B0\uB2E4. \uD55C \uBC88 \uD295\uAE38 \uB54C \uD55C \uC801\uC529\uC774\uB2E4.",
   "skill.breakthrough.effect.ferocity.doubleMag": "[[ferocity|\uD3ED\uC8FC]]\uB85C \uCC44\uC6B4 \uD0C4\uCC3D\uC774 \uBE44\uBA74 \uC26C\uC9C0 \uC54A\uACE0 \uD55C \uBC88 \uB354 \uAC00\uB4DD \uCC44\uC6CC \uBAA8\uB4E0 \uBC1C\uC774 \u300C\uB9C8\uC9C0\uB9C9 \uD55C \uBC29\uC6B8\u300D\uC774 \uB41C\uB2E4. \uD55C \uBC88\uC758 \uD3ED\uC8FC\uC5D0 \uD55C \uBC88\uB9CC \uBC1C\uB3D9\uD55C\uB2E4.",
@@ -7892,7 +7935,7 @@ var SKILL_KO = {
   "skill.breakthrough.effect.ferocity.clawFlurry": "[[ferocity|\uD3ED\uC8FC]] \uC911 \u300C{name}\u300D\uC758 [[combo|\uC5F0\uACA9]]\uC774 {hits}\uBC88 \uB354 \uB098\uAC04\uB2E4.",
   "skill.breakthrough.effect.ferocity.ironBarSweep": "[[ferocity|\uD3ED\uC8FC]] \uC911 \u300C{name}\u300D\uC758 [[stagger|\uACBD\uC9C1]]\uC774 \uB9DE\uC740 \uC801 \uC8FC\uC704\uC758 \uC801 \uCD5C\uB300 {count}\uBA85\uC5D0\uAC8C\uB3C4 \uBC88\uC9C4\uB2E4.",
   "skill.breakthrough.effect.ferocity.chainSwing": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801 \uC804\uC6D0\uC774 \uACF5\uACA9\uB825\uC758 {percent}% \uBB3C\uB9AC \uD53C\uD574\uB97C \uBC1B\uACE0 {seconds}\uCD08 \uB3D9\uC548 [[stun|\uAE30\uC808]]\uD55C\uB2E4.",
-  "skill.breakthrough.effect.passive.saltedIngredient": "\u300C{name}\u300D\uC73C\uB85C \uB178\uB9B0 \uC801\uC774 \uBC1B\uB294 \uD68C\uBCF5\uC774 {percent}% \uC904\uC5B4\uB4E0\uB2E4.",
+  "skill.breakthrough.effect.passive.saltedIngredient": "\u300C{name}\u300D\uC73C\uB85C \uB178\uB9B0 \uC801\uC774 \uBC1B\uB294 [[healing-cut|\uD68C\uBCF5]]\uC774 {percent}% \uC904\uC5B4\uB4E0\uB2E4.",
   "skill.breakthrough.effect.passive.tailHide": "\u300C{name}\u300D\uC73C\uB85C \uB4A4\uB85C \uB6F0\uB294 \uC21C\uAC04 {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4. [[basic-attack|\uC77C\uBC18 \uACF5\uACA9]]\uC744 \uCE58\uBA74 \uD480\uB9B0\uB2E4.",
   "skill.breakthrough.effect.passive.youngestCare": "\u300C{name}\u300D\uC73C\uB85C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uC744 \uB54C \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uB2E4\uB978 \uC544\uAD70\uB3C4 \uADF8 {percent}%\uB97C \uC5BB\uB294\uB2E4.",
   "skill.breakthrough.effect.passive.chainShrapnel": "\uC790\uBB3C\uC1E0\uAC00 \uD480\uB9AC\uB294 \uC21C\uAC04\uC758 \uD130\uC9D0\uC774 \uC8FC\uC704 \uC801\uC5D0\uAC8C \uACF5\uACA9\uB825\uC758 {percent}% \uD53C\uD574\uB3C4 \uC900\uB2E4.",
@@ -7915,6 +7958,7 @@ var SKILL_KO = {
   "skill.tag.regen": "\uC7AC\uC0DD {percent}%/\uCD08",
   "skill.tag.allyHeal": "\uC544\uAD70 \uD68C\uBCF5",
   "skill.tag.targets": "\uB300\uC0C1 {count}\uBA85",
+  "skill.tag.shots": "\uCD1D {count}\uBC1C",
   "skill.tag.extraTargets": "\uB300\uC0C1 +{count}"
 };
 
@@ -8871,7 +8915,7 @@ function expeditionControlCooldown(payload) {
   if (payload.kind === "frozen") return 8;
   if (payload.kind !== "status" || !payload.status || !EXPEDITION_CONTROL_TAGS.has(payload.status.kind)) return void 0;
   const kind = payload.status.kind;
-  if (kind === "stagger") return payload.status.kind === "stagger" && payload.status.seconds <= 0.15 ? 1 : 2;
+  if (kind === "stagger") return 1;
   if (kind === "chill") return 4;
   if (kind === "stun") return payload.status.kind === "stun" && payload.status.seconds <= 0.25 ? 4 : 6;
   if (kind === "fear") return 6;
@@ -9447,23 +9491,11 @@ var RARITY_LEVEL_GROWTH = {
   SR: 2.4,
   SSR: 2.6
 };
-var ENEMY_BIRTH_STAGE_FACTOR = { 0: 1, 1: 1.3, 2: 1.85, 3: 3 };
-var ENEMY_BIRTH_TIERS = {
-  mir: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
-  pulsi: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
-  neuri: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
-  atra: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
-  ikanixia: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
-  magasa: { stage: 2, statFactor: ENEMY_BIRTH_STAGE_FACTOR[2] },
-  noa: { stage: 2, statFactor: ENEMY_BIRTH_STAGE_FACTOR[2] },
-  raja: { stage: 2, statFactor: ENEMY_BIRTH_STAGE_FACTOR[2] },
-  carno: { stage: 3, statFactor: ENEMY_BIRTH_STAGE_FACTOR[3] }
-};
 
 // src/core/relicResonance.ts
 init_define_import_meta_env();
 var RESONANCE_CAP = 5;
-var RESONANCE_STAT_PERCENT = 3;
+var RESONANCE_STAT_PERCENT = 5;
 var RESONANCE_CHEESECAKE = 2e3;
 var RESONANCE_FRAGMENTS = {
   SSR: [1, 1, 2, 2, 3],
@@ -9682,6 +9714,28 @@ function calculateFinalStats(base, progress, gems3, rarity, options = {}) {
 
 // src/core/levelDesign.ts
 init_define_import_meta_env();
+
+// src/core/combatPower.ts
+init_define_import_meta_env();
+var WEIGHTS = {
+  hp: 0.5,
+  def: 2.4,
+  res: 2.4,
+  atk: 3.4,
+  ap: 3.4,
+  attackSpeed: 3,
+  moveSpeed: 1.2,
+  critChance: 4,
+  critDamage: 1.6,
+  energyGain: 2,
+  lifeSteal: 3,
+  ferocityGain: 2
+};
+function combatPower(stats) {
+  return Math.round(Object.keys(WEIGHTS).reduce((sum, key) => sum + stats[key] * WEIGHTS[key], 0));
+}
+
+// src/core/levelDesign.ts
 function encounterRampFactor(ramp, elapsedSeconds) {
   const start = ramp.startPercent / 100;
   const whole2 = Math.max(0, Math.floor(elapsedSeconds));
@@ -9695,6 +9749,11 @@ var ENCOUNTER_ROLE = {
     bodyScale: 1,
     hpMultiplier: 1,
     attackMultiplier: 1,
+    /*
+     * 셋이 함께 서는 일반 무리도 표시를 한 뼘 무겁게 둔다(응태 요청, 2026-11-12 — "내 전투력이 더 센데 졌다"가 없어야
+     * 한다). 대표 두 조합이 50% 넘게 이기는 아군 전투력은 일반 셋의 표시 전투력의 최대 1.15배였다(7-3).
+     */
+    powerWeight: 1.2,
     ttkSeconds: [10, 16],
     remainingHp: [0.72, 0.95]
   },
@@ -9750,7 +9809,13 @@ var ENCOUNTER_ROLE = {
      * (10%에서 50%까지 40초에 올렸더니 원정 정예 10층의 권장 파티 승률이 75%에서 25%로 떨어졌다).
      */
     tenacity: { basePercent: 20, perControlPercent: 10, maxPercent: 80, controlIgnoreAtOrBelowSeconds: 0.05 },
-    healingReduction: { basePercent: 5, maxPercent: 40, rampSeconds: 60 }
+    healingReduction: { basePercent: 5, maxPercent: 40, rampSeconds: 60 },
+    /*
+     * **혼자 선 정예는 전투력이 더 무겁게 읽힌다**(응태 요청, 2026-11-12 — "왜 내 전투력이 더 센데 져"가 없어야 한다).
+     * 강인함과 치유 감소는 능력치에 없어 몫만 덜어 셀 때 정예가 실제보다 가볍게 섰다. 대표 두 조합이 정예 하나를 50% 넘게
+     * 이기는 아군 전투력을 재 보니 표시 전투력의 0.55~1.25배였다. 1.4로는 정예 둘이 선 4-10이 아직 1.09배라 1.6으로 둔다.
+     */
+    powerWeight: 1.6
   },
   boss: {
     /*
@@ -9807,18 +9872,14 @@ var ENCOUNTER_ROLE = {
     ramp: { startPercent: 25, seconds: 30, lateGrowthPercentPerSecond: 2 }
   }
 };
-var ENEMY_LEVEL_GROWTH_PERCENT = 2.2;
+var ENEMY_LEVEL_GROWTH_PERCENT = 3.6;
 function enemyLevelMultiplier(level) {
   if (!Number.isInteger(level) || level < 1) throw new RangeError("\uC801 \uB808\uBCA8\uC740 1 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
   return 1 + (level - 1) * ENEMY_LEVEL_GROWTH_PERCENT / 100;
 }
-function equivalentEnemyLevel(referenceLevel, statFactor) {
-  const target = enemyLevelMultiplier(referenceLevel) / statFactor;
-  return Math.max(1, Math.round((target - 1) * 100 / ENEMY_LEVEL_GROWTH_PERCENT + 1));
-}
-function applyEncounterScaling(base, level, role, countOnField = ENCOUNTER_ROLE[role].count, birthFactor = 1, breakthrough = shownBreakthroughForLevel(level)) {
+function applyEncounterScaling(base, level, role, countOnField = ENCOUNTER_ROLE[role].count) {
   const spec = ENCOUNTER_ROLE[role];
-  const growth = (enemyLevelMultiplier(level) + breakthroughGrowthPercent(breakthrough) / 100) * birthFactor;
+  const growth = enemyLevelMultiplier(level);
   const result = { ...base };
   for (const key of GROWTH_STAT_KEYS) result[key] = Math.round(base[key] * growth);
   result.hp = Math.round(result.hp * encounterHpShare(role, countOnField));
@@ -9831,15 +9892,12 @@ function encounterHpShare(role, countOnField) {
   if (role !== "elite") return spec.hpMultiplier;
   return spec.hpMultiplier / Math.max(1, countOnField);
 }
+var ENEMY_BREAKTHROUGH_LEVELS = [15, 21, 27, 33];
 function requiredBreakthroughForLevel(level) {
-  if (level <= RELIC_BASE_LEVEL_CAP) return 0;
-  const step2 = BREAKTHROUGH_STEPS.findIndex(({ requiredLevel }) => level <= requiredLevel + 10);
-  if (step2 < 0) throw new RangeError("\uC801 \uC0AC\uB2E4\uB9AC\uC758 \uB3CC\uD30C \uACBD\uACC4\uB97C \uB118\uB294 \uB808\uBCA8\uC785\uB2C8\uB2E4.");
-  return step2 + 1;
+  return ENEMY_BREAKTHROUGH_LEVELS.filter((threshold) => level >= threshold).length;
 }
 function shownBreakthroughForLevel(level) {
-  const top = (BREAKTHROUGH_STEPS[BREAKTHROUGH_STEPS.length - 1]?.requiredLevel ?? RELIC_BASE_LEVEL_CAP) + 10;
-  return level > top ? BREAKTHROUGH_STEPS.length : requiredBreakthroughForLevel(level);
+  return requiredBreakthroughForLevel(level);
 }
 var SWARM_MINIMUM_COUNT = 4;
 function encounterRoleFor(countOnField, options = {}) {
@@ -9966,7 +10024,7 @@ var EXPEDITION_TAG_PLANS = [
   { id: "frenzy", everyN: 6, cooldown: 8, maxTriggers: 4, status: { kind: "frenzy", seconds: 0.4 } },
   { id: "knockback", everyN: 6, cooldown: 8, maxTriggers: 4, status: { kind: "knockback", seconds: 0.25, speed: 140, bounces: 1 } },
   { id: "concussion", everyN: 4, cooldown: 3, maxTriggers: 8, status: { kind: "concussion", maxHpPercent: 0.5, criticalMaxHpPercent: 0.5 } },
-  { id: "stagger", everyN: 4, cooldown: 3, maxTriggers: 8, status: { kind: "stagger", seconds: 0.15 } },
+  { id: "stagger", everyN: 4, cooldown: 3, maxTriggers: 8, status: { kind: "stagger", seconds: 0.1 } },
   { id: "poison", everyN: 3, cooldown: 3, maxTriggers: 8, status: { kind: "poison", seconds: 3, attackPercentPerSecond: 8, abilityPercentPerSecond: 8 } },
   { id: "overpaint", everyN: 4, cooldown: 3, maxTriggers: 8, status: { kind: "overpaint", seconds: 8, damageTakenPercent: 3, maxStacks: 3 } },
   { id: "curse", everyN: 3, cooldown: 3, maxTriggers: 8, status: { kind: "curse", seconds: 6, resistancePercent: 4, maxStacks: 3 } },
@@ -10011,7 +10069,7 @@ function ultimateStatus(status) {
   if (status.kind === "frenzy") return { ...status, seconds: 0.6 };
   if (status.kind === "knockback") return { ...status, seconds: 0.4, speed: 180 };
   if (status.kind === "concussion") return { ...status, maxHpPercent: 0.8, criticalMaxHpPercent: 0.8 };
-  if (status.kind === "stagger") return { ...status, seconds: 0.3 };
+  if (status.kind === "stagger") return { ...status, seconds: 0.1 };
   if (status.kind === "poison") return { ...status, seconds: 4, attackPercentPerSecond: 16, abilityPercentPerSecond: 16 };
   if (status.kind === "curse") return { ...status, seconds: 10, resistancePercent: 6 };
   if (status.kind === "frostPlume") return { ...status, burstPower: 90 };
@@ -10315,8 +10373,9 @@ var GUILD_GUARD = {
    * 웨이브마다 레벨이 4씩 오른다(2026-10-29 응태 요청 — 2 → 4, 상한 100 → 200). 적당히 오른 웨이브에서 이미 확실히 강해져
    * 아주 긴 웨이브를 밀지 않아도 점수가 크게 쌓이고, 상한을 풀어 깊은 웨이브에서도 계속 세진다.
    */
-  levelPerWave: 4,
-  maxLevel: 200,
+  // 적이 레벨마다 3.6%로 자라게 되며(「적은 적이다」, 2026-11-12) 예전 4레벨·상한 200(2.2% + 돌파 몫)과 같은 세기로 옮겼다.
+  levelPerWave: 3,
+  maxLevel: 134,
   /**
    * 머릿수: 5 + 웨이브의 사분의 일, 상한 10. 상한(18)이 치즈케이크 대작전 한 판(10~15)을 조금 넘는 무리라, 한 웨이브가
    * 그 절반 남짓이어야 "다 못 치우면 쌓인다"가 몇 웨이브에 걸쳐 일어난다(한 번에 15씩 오면 두 웨이브 만에 끝났다).
@@ -10545,8 +10604,13 @@ var SKIRMISH = {
   blockBackflowRatio: 0.55,
   /** 좌우를 뒤집기 전에 필요한 최소 가로 거리(px). 상대와 세로로 겹칠 때 깜빡이지 않게 한다. */
   facingDeadzone: 16,
-  /** 이미 그 상대에게 붙은 아군 한 명당 더해지는 거리 가중치. 셋이 한 명에게 몰리지 않는다. */
-  crowdPenalty: 240,
+  /**
+   * 이미 그 상대에게 붙은 아군 한 명당 더해지는 거리 가중치.
+   *
+   * 240이던 때는 셋이 거의 늘 셋으로 갈라져, 한 명을 함께 몰아 끝내는 그림이 나오지 않았다.
+   * 반으로 덜어 가까운 적이면 둘이 함께 붙어도 되게 한다(응태 결정 2026-11-12).
+   */
+  crowdPenalty: 120,
   /**
    * 표적을 다시 고르기까지의 간격(초).
    *
@@ -10569,6 +10633,15 @@ var SKIRMISH = {
    * 먼 적을 고른다. 다만 손이 닿는 상대가 있는데 그를 지나쳐 걸어가지는 않는다.
    */
   inReachBonus: 320,
+  /**
+   * 직군이 적의 눈을 끄는 몫(px 상당 — 거리 점수에서 뺀다). 탱커 → 전사 → 암살자 → 지원가 순이다
+   * (응태 결정 2026-11-12). 도발 없이도 앞에 선 몸이 먼저 맞도록 기울이는 약한 끌림이라, 거리 차가
+   * 이보다 크면 여전히 가까운 쪽을 노린다. 정보창의 역할 칸이 아니라 이 표 한 곳만 값을 갖는다.
+   *
+   * **양쪽 모두, 작게 끌린다**(응태 결정). 120·80·40으로 크게 두었더니 아군 딜러가 적 탱커만 두드리고 적
+   * 지원가를 놓쳐 1-8 서브(아모+리파)가 0승, 1-10 정예도 전패로 뒤집혔다. 30·20·10이면 기울기만 남는다.
+   */
+  rolePull: { tank: 30, warrior: 20, assassin: 10, support: 0 },
   /** 상대에게 곧장 가지 않고 옆으로 흐르는 정도. 패싸움처럼 보이게 한다. */
   swirl: 0.32,
   /** 때리는 순간 상대 쪽으로 튀어나가는 거리(px). */
@@ -10603,6 +10676,7 @@ var SKIRMISH = {
   /** 무한 공속 누적이 0초 간격과 한 프레임 무한 공격을 만들지 않게 하는 안전 하한이다. */
   minimumAttackInterval: 0.12
 };
+var ROLE_PRESENCE_ORDER = Object.keys(SKIRMISH.rolePull).sort((a, b) => SKIRMISH.rolePull[b] - SKIRMISH.rolePull[a]);
 var REACH_TIER = {
   melee: SKIRMISH.reach,
   /*
@@ -10632,7 +10706,12 @@ var BLEED = {
   /** 1초마다 깎는 최대 체력 비율(%). */
   percentPerSecond: 2,
   /** 작은 출혈은 이름뿐 아니라 실제 공용 수치도 표준과 분리한다. */
-  minor: { seconds: 2, percentPerSecond: 1 }
+  minor: { seconds: 2, percentPerSecond: 1 },
+  /**
+   * 깊은 출혈의 매초 배율. 렉시아(돌파)와 마가사(다지기)가 같은 값을 써서 태그가 「매초 몇 %」를
+   * 말한다 — 스킬 본문은 「깊은 출혈로 강화한다」까지만 적고 개체마다 다른 회복 감소만 적는다.
+   */
+  deepMultiplier: 2
 };
 var POISON = {
   /** 매 틱 시전자 공격력에서 뽑는 비율(%). */
@@ -11214,9 +11293,10 @@ function applyStun(fighter, seconds, state) {
   if (!wasStunned && state) cleanseControlWithAdagio(state, fighter, events);
   return events;
 }
+var STAGGER_SECONDS = 0.1;
 function applyStagger(fighter, seconds, state) {
   if (!isFighterAlive(fighter) || !Number.isFinite(seconds) || seconds <= 0) return [];
-  const resisted = controlDuration(fighter, seconds);
+  const resisted = controlDuration(fighter, Math.min(STAGGER_SECONDS, seconds));
   if (resisted <= 0) return [];
   const wasStaggered = fighter.staggeredFor > 0;
   fighter.staggeredFor = Math.max(fighter.staggeredFor, resisted);
@@ -13491,7 +13571,7 @@ function pressNearestStruck(attacker, struck, state, events) {
   const plan = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   if (plan?.kind !== "pressStagger") return;
   const nearest = struck.filter((fighter) => isFighterAlive(fighter)).reduce((chosen, fighter) => chosen === void 0 || distance(attacker, fighter) < distance(attacker, chosen) ? fighter : chosen, void 0);
-  if (nearest) events.push(...applyStagger(nearest, plan.seconds * attacker.statusPotencyMultiplier, state));
+  if (nearest) events.push(...applyStun(nearest, plan.seconds * attacker.statusPotencyMultiplier, state));
 }
 function strikeBossBasicBreakthrough(attacker, target, input, critical, state, events) {
   const basic = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
@@ -13513,7 +13593,7 @@ function strikeBossBasicBreakthrough(attacker, target, input, critical, state, e
   const passive = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
   if (passive?.kind === "pinningPlume" && critical && isFighterAlive(target) && (attacker.bt.pinnedUntil[target.id] ?? 0) <= state.elapsed) {
     attacker.bt.pinnedUntil[target.id] = state.elapsed + passive.lockoutSeconds;
-    events.push(...applyStagger(target, passive.staggerSeconds * attacker.statusPotencyMultiplier, state));
+    events.push(...applyStun(target, passive.stunSeconds * attacker.statusPotencyMultiplier, state));
   }
 }
 function strikeEnemyBasicBreakthrough(attacker, target, input, critical, state, events, comboFinisher = false) {
@@ -13538,7 +13618,7 @@ function strikeEnemyBasicBreakthrough(attacker, target, input, critical, state, 
     const stacks = Math.min(basic.maxStacks, (target.bt.fangShave?.stacks ?? 0) + 1);
     target.bt.fangShave = { remaining: basic.seconds, stacks, percentPerStack: basic.defensePercent, total: basic.seconds };
   }
-  if (basic.kind === "shellKnock") events.push(...applyStagger(target, basic.seconds * attacker.statusPotencyMultiplier, state));
+  if (basic.kind === "shellKnock") events.push(...applyStun(target, basic.seconds * attacker.statusPotencyMultiplier, state));
   if (basic.kind === "bleedingSmash") refreshBleed(target, BLEED.seconds * attacker.statusPotencyMultiplier, BLEED.percentPerSecond, events, attacker.id);
   if (basic.kind === "pincerPair") {
     attacker.bt.pincerCount += 1;
@@ -14411,7 +14491,7 @@ function resolveTarget(state, fighter, reconsider = false) {
     const gap = distance(fighter, other);
     const inReach = gap <= fighterReach(fighter);
     const distanceScore = fighter.def.passive.kind === "farthestFocus" && inReach ? -gap : gap;
-    const score = distanceScore + crowd * SKIRMISH.crowdPenalty - (other.id === fighter.targetId ? SKIRMISH.targetStickiness : 0) - (inReach ? SKIRMISH.inReachBonus : 0);
+    const score = distanceScore + crowd * SKIRMISH.crowdPenalty - (other.id === fighter.targetId ? SKIRMISH.targetStickiness : 0) - (inReach ? SKIRMISH.inReachBonus : 0) - SKIRMISH.rolePull[other.def.role];
     if (score < bestScore) {
       chosen = other;
       bestScore = score;
@@ -15108,9 +15188,11 @@ function damageHealingRate(attacker, skill, attackingInFever, target) {
   const ultimateHealing = ultimate?.kind === "ultimateLifeSteal" ? ultimate.damageHealingPercent : 0;
   return ultimateHealing + attacker.def.stats.lifeSteal + (attacker.def.passive.lifeStealPoints ?? 0) + (blood?.kind === "bloodFever" ? blood.lifeStealPoints : 0) + fever + frozenBonus + (activeOrder(attacker)?.lifeStealPoints ?? 0) + (skill.damageHealingPercent ?? 0);
 }
-function stormAimIgnorePercent(attacker, attackingInFever, useUltimate) {
+function basicDefenseIgnorePercent(attacker, attackingInFever, useUltimate) {
+  if (useUltimate) return 0;
   const trait = attacker.def.ferocityTrait;
-  return attackingInFever && !useUltimate && trait.effectId === "stormAim" ? trait.defenseIgnorePercent : 0;
+  const roast = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  return (attackingInFever && trait.effectId === "stormAim" ? trait.defenseIgnorePercent : 0) + (roast?.kind === "darkRoast" ? roast.defenseIgnorePercent : 0);
 }
 function drainFromDamage(state, attacker, dealt, rate, events) {
   const total = dealt * rate / 100;
@@ -15786,7 +15868,11 @@ function staccatoChainSkill(attacker, target, skill, useUltimate) {
   const streak = attacker.bt.staccatoStreak?.targetId === target.id ? attacker.bt.staccatoStreak.count + 1 : 1;
   attacker.bt.staccatoStreak = { targetId: target.id, count: streak };
   const stacks = Math.min(chain2.maxStacks, streak);
-  return { ...skill, statusEffects: skill.statusEffects?.map((effect) => effect.kind === "stagger" ? { ...effect, seconds: effect.seconds + (stacks - 1) * chain2.secondsPerStack } : effect) };
+  return { ...skill, statusEffects: skill.statusEffects?.map((effect) => {
+    if (effect.kind !== "stagger") return effect;
+    const seconds = effect.seconds + (stacks - 1) * chain2.secondsPerStack;
+    return seconds > STAGGER_SECONDS + 1e-9 ? { kind: "stun", seconds } : effect;
+  }) };
 }
 function irnaBreakthroughSkill(attacker, target, skill, useUltimate) {
   let multiplier = 1;
@@ -15816,12 +15902,6 @@ function strikeShrapnel(attacker, target, input, critical, state, events) {
   const effect = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
   if (effect?.kind !== "shrapnel") return;
   splashAround(attacker, target, input, critical, state, events, effect.radius, effect.powerPercent, "ultimate");
-}
-function strikeBitterTaste(attacker, target, wasLastDrop) {
-  const effect = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
-  if (effect?.kind !== "bitterTaste" || !wasLastDrop || !isFighterAlive(target)) return;
-  const stacks = Math.min(effect.maxStacks, (target.bt.fangShave?.stacks ?? 0) + 1);
-  target.bt.fangShave = { remaining: effect.seconds, stacks, percentPerStack: effect.defensePercent, total: effect.seconds };
 }
 function splashAround(attacker, target, input, critical, state, events, radius, percent, skillSlot) {
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
@@ -15947,7 +16027,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     // 강화된 한 방만 방어·저항을 지나간다. 속성 상성과 대상 경감은 그대로 거친다.
     ignoresDefense: empowered,
     // 방어를 일부 지나치는 한 방. 스킬이 적은 값에 폭주 특성(「폭풍 속의 조준」)이 기본 공격에 더하는 몫을 합친다.
-    defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + stormAimIgnorePercent(attacker, attackingInFever, useUltimate))
+    defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + basicDefenseIgnorePercent(attacker, attackingInFever, useUltimate))
   };
   const offense = offensiveDefinition(attacker);
   const markBonus = critical ? huntMarkCriticalDamage(attacker, target, state) : 0;
@@ -16143,7 +16223,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   if (useUltimate) {
     strikeShrapnel(attacker, target, damageInput, critical, state, events);
     strikeSideDish(attacker, target, damageInput, critical, state, events);
-  } else strikeBitterTaste(attacker, target, lastDropShot);
+  }
   if (useUltimate && !comboHit && isFighterAlive(target)) {
     const slash = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
     if (slash?.kind === "afterimageSlash") attacker.bt.afterimages.push({ targetId: target.id, remaining: slash.delaySeconds });
@@ -16170,7 +16250,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   }
   if (attackingInFever && !useUltimate && critical && isFighterAlive(target) && !resolution.ignored) {
     const ankle = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
-    if (ankle?.kind === "ankleShot") events.push(...applyStagger(target, ankle.staggerSeconds * attacker.statusPotencyMultiplier, state));
+    if (ankle?.kind === "ankleShot") events.push(...applyStun(target, ankle.stunSeconds * attacker.statusPotencyMultiplier, state));
   }
   if (!useUltimate && !resolution.ignored) strikeBossBasicBreakthrough(attacker, target, damageInput, critical, state, events);
   if (!useUltimate && !resolution.ignored) strikeEnemyBasicBreakthrough(attacker, target, damageInput, critical, state, events, comboHit !== void 0 && !comboHit.grantActionResources);
@@ -16421,7 +16501,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
       isCritical: critical,
       kind: useUltimate ? "ultimate" : "basic",
       ignoresDefense: false,
-      defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + stormAimIgnorePercent(attacker, attackingInFever, useUltimate))
+      defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + basicDefenseIgnorePercent(attacker, attackingInFever, useUltimate))
     };
     const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput) * traitDamageMultiplier(state, attacker, target) * (traitSplashBasic ? nthBasicBonusMultiplier(effectsFor(state, attacker), attacker.def.id, attacker.traitBasicCount) : 1)));
     const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput));
@@ -18005,7 +18085,7 @@ init_define_import_meta_env();
 // src/data/ancientStrataDifficulty.ts
 init_define_import_meta_env();
 var ANCIENT_STRATA_MAX_FLOOR = 200;
-var ANCIENT_STRATA_ENEMY_LEVEL = 20;
+var ANCIENT_STRATA_ENEMY_LEVEL = 13;
 var ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR = 120;
 var ANCIENT_GROWTH_CATCHUP_PER_FLOOR = 1.0025;
 var ANCIENT_GROWTH_CATCHUP_LAST_FLOOR = 120;
@@ -18664,7 +18744,7 @@ var RELICS = [
     // 남긴 출혈을 조건으로 삼아, 물어뜯은 자리를 다시 무는 것이 곧 확정 치명타다.
     ferocityTrait: { name: "\uC804\uD22C\uC758 \uC5EC\uC655\uC740 \uB098\uC57C.", effectId: "rexBattleQueen", bleedingGuaranteedCritical: true, allDamageLifeStealPoints: 25 },
     breakthroughEffects: {
-      basic: { kind: "deepBleed", bleedMultiplier: 2, healingReceivedReductionPercent: 40 },
+      basic: { kind: "deepBleed", bleedMultiplier: BLEED.deepMultiplier, healingReceivedReductionPercent: 40 },
       ultimate: { kind: "ultimateLifeSteal", damageHealingPercent: 50 },
       ferocity: { kind: "cleavingBasics", radius: 260 },
       passive: { kind: "battleMaidAscension", durabilityPercent: 25, rechargeOnKill: true }
@@ -18919,8 +18999,8 @@ var RELICS = [
       effectType: "buff",
       value: 3,
       // 태생 치명타는 전 개체 공통이므로 암살자의 치명타형 정체성은 패시브가 만든다.
-      // 연격이 한 행동에 두 번 판정하므로 렉시아·루카보다 낮은 값으로도 충분히 자주 터진다.
-      criticalChancePercent: 10,
+      // 연격이 한 행동에 두 번 판정해 같은 값도 더 자주 터진다 — 10에서는 치명타형으로 읽히지 않아 20으로 올렸다(응태, 2026-11-12).
+      criticalChancePercent: 20,
       desc: "\uAE30\uBCF8 \uACF5\uACA9\uC774 \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 \uC774\uBC88 \uC804\uD22C \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uAC00 3 \uC99D\uAC00\uD55C\uB2E4."
     },
     // 스피나의 기본 공격 데이터는 중복 키 없이 BasicAttack 계약을 직접 검증한다.
@@ -19828,7 +19908,7 @@ var RELICS = [
     breakthroughEffects: {
       basic: { kind: "focusFire", damagePercentPerStack: 8, maxStacks: 5 },
       ultimate: { kind: "shrapnel", radius: 300, powerPercent: 30 },
-      ferocity: { kind: "ankleShot", staggerSeconds: 0.5 },
+      ferocity: { kind: "ankleShot", stunSeconds: 0.5 },
       passive: { kind: "highTide", damagePercent: 15 }
     },
     passive: {
@@ -20125,7 +20205,7 @@ var RELICS = [
       ferocityGain: 0
     },
     breakthroughEffects: {
-      basic: { kind: "bitterTaste", defensePercent: 6, seconds: 3, maxStacks: 3 },
+      basic: { kind: "darkRoast", defenseIgnorePercent: 20 },
       ultimate: { kind: "richBlend", shieldFromCriticalPercent: 45, shieldMaxHpPercent: 40 },
       ferocity: { kind: "doubleMag" },
       passive: { kind: "reloadSip", shieldMaxHpPercent: 6, capMaxHpPercent: 12 }
@@ -20343,7 +20423,8 @@ var RELICS = [
       name: "\uBB34\uBA74\uD5C8 \uC548\uC804\uC81C\uC77C",
       kind: "impactCap",
       iconAssetId: "skill-icon-fixed",
-      effectType: "fixed",
+      // 피해를 내지 않는 버티기 패시브다 — 고정 피해는 뇌진탕(일반 공격·궁극기)이 낸다.
+      effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 상한 비율을 그대로 담아 둔다.
       value: 40,
       // 한 방에 들어올 수 있는 피해의 상한(최대 체력 %)이다. 이하의 타격은 그대로 다 맞는다.
@@ -21564,7 +21645,9 @@ var RELICS = [
       effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 반향이 남는 시간(초)을 담아 둔다.
       value: 5,
-      echoLocation: { shieldMaxHpPercent: 6, capMaxHpPercent: 30 },
+      // v0.442.7(응태 요청 — 3-10이 너무 단단하다): 6% · 상한 30% → 3% · 15%. 혼자 서는 3-10에서 이 막이 한 판에 최대 체력의
+      // 0.9~1.6배를 둘러 깎인 체력보다 4~10배 많았다. 반으로 줄여도 막이 여전히 가장 큰 버티기 몫이다.
+      echoLocation: { shieldMaxHpPercent: 3, capMaxHpPercent: 15 },
       // 몸 주위를 맴도는 박쥐가 초마다 가까운 둘을 훑는다 — 지속 피해와 회복의 뼈대다. v0.391.1: 위력 30 → 26.
       batSwarm: { radius: 240, intervalSeconds: 1, powerPercent: 26, maxTargets: 2, healPercent: 30 },
       desc: "\uBC15\uC950 \uB5BC\uAC00 \uC8FC\uC704\uC758 \uAC00\uAE4C\uC6B4 \uC801 \uB458\uC744 \uB9E4\uCD08 \uD6D1\uB294\uB2E4. \uAE30\uBCF8 \uACF5\uACA9\uACFC \uAD81\uADF9\uAE30\uAC00 \uC801\uC911\uD55C \uC801\uC5D0\uAC8C \uBC18\uD5A5\uC744 \uAC74\uB2E4. \uBC18\uD5A5\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uC740 \uBCF4\uD638\uB9C9\uC744 \uB450\uB978\uB2E4."
@@ -22019,7 +22102,7 @@ var RELICS = [
       targeting: "single",
       statusEffectEvery: 3,
       // 이미 피를 흘리는 적에게 다시 걸면 깊은 출혈(매초 4% · 받는 회복 -30%)이 된다.
-      statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2, deepenOnRepeat: { multiplier: 2, healingReceivedReductionPercent: 30 } }]
+      statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2, deepenOnRepeat: { multiplier: BLEED.deepMultiplier, healingReceivedReductionPercent: 30 } }]
     },
     ultimate: {
       id: "magasa-ult",
@@ -22306,7 +22389,8 @@ var RELICS = [
       targeting: "chargeLine",
       radius: 90,
       chargeReachMultiplier: 1.4,
-      statusEffects: [{ kind: "stagger", seconds: 0.5 }],
+      // 경직은 0.1초 고정이라 0.5초 차단은 기절이다.
+      statusEffects: [{ kind: "stun", seconds: 0.5 }],
       // 전사의 자가 수급 — 길 위에서 들이받은 만큼 몸을 추스른다.
       damageHealingPercent: 20
     },
@@ -23933,7 +24017,8 @@ var RELICS = [
        * 끊으면 "세 번째에 온다"를 읽고 비킬 수 있다(수쿠스이노의 네 번째 턱과 같은 이유다).
        */
       statusEffectEvery: 3,
-      statusEffects: [{ kind: "stagger", seconds: 1 }]
+      // 경직은 0.1초 고정이라 1초 차단은 기절이다.
+      statusEffects: [{ kind: "stun", seconds: 1 }]
     },
     ultimate: {
       id: "quetzalcoatlus-ult",
@@ -23962,7 +24047,7 @@ var RELICS = [
       basic: { kind: "piercingBeak", sharePercent: 30, halfWidth: 140 },
       ultimate: { kind: "widenArea", radius: 140 },
       ferocity: { kind: "sharpStorm", critChancePoints: 8 },
-      passive: { kind: "pinningPlume", staggerSeconds: 0.5, lockoutSeconds: 3 }
+      passive: { kind: "pinningPlume", stunSeconds: 0.5, lockoutSeconds: 3 }
     }
   },
   {
@@ -24822,99 +24907,87 @@ function difficultyStageRewards(rewards, difficulty) {
 
 // src/data/stages.ts
 var STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"];
-function tieredEnemy(relicId, referenceLevel, slot, levelBonus = 0) {
-  const tier = ENEMY_BIRTH_TIERS[relicId];
-  const level = (tier ? equivalentEnemyLevel(referenceLevel, tier.statFactor) : referenceLevel) + (tier ? levelBonus : 0);
-  return enemyGrowth(relicId, level, requiredBreakthroughForLevel(level), slot);
-}
-var CHAPTER_FOUR_RAIDER_LEVEL_BONUS = 3;
 var SOLO_ELITE_ENEMIES = {
   "4-6": ["koma"],
   "4-9": ["koma"]
 };
-function enemyGrowth(relicId, level, breakthrough, formationSlot) {
-  return { relicId, level, breakthrough, formationSlot };
+function enemyGrowth(relicId, level, formationSlot) {
+  return { relicId, level, breakthrough: shownBreakthroughForLevel(level), formationSlot };
 }
 var STORY_RECOMMENDED_LEVELS = [
-  // 1-1은 오프닝에서 곧장 들어오는 첫 전투라 막 시작한 레벨 1 편성이 넘어야 한다 — 7이던 때는
-  // 아슬아슬했고 3이던 때는 싸움이 되지 않았다. 5는 1-2(8)와의 턱도 크지 않다.
-  // 사다리는 여기서부터 오르기만 한다. 1-3~2-2는 검수를 실제 전장 크기로 옮기며(v0.172.6) 한 뼘씩
-  // 올렸다 — 넓은 틀에서 재던 때는 같은 관문이 실제보다 훨씬 어렵게 읽혀 사다리가 낮게 잡혀 있었다.
+  // **적은 적이다**(응태 결정, 2026-11-12) — 적은 레벨마다 3.6%씩 자라고(`ENEMY_LEVEL_GROWTH_PERCENT`) 태생 층·돌파 몫 없이
+  // 이 수 하나가 세기다. 2.2% 시절의 사다리(5 … 90)를 같은 세기의 레벨로 옮긴 값이고, 마지막 보스 카르는 예전 「기준 98」의
+  // 세기를 LV.60에서 낸다. 1-1은 오프닝에서 곧장 들어오는 첫 전투라 막 시작한 레벨 1 편성이 넘어야 한다.
+  3,
   5,
+  7,
   8,
   11,
+  11,
+  12,
   13,
-  17,
+  14,
+  14,
+  14,
+  14,
+  14,
+  15,
+  16,
+  16,
   17,
   18,
+  18,
   19,
-  20,
-  20,
-  // 2장은 21~30 — 돌파 1단계(상한 30) 안에서 끝난다. 1장 끝(20)에서 한 칸씩 오르는 곡선이다.
-  21,
   22,
   23,
   24,
+  24,
+  25,
   25,
   26,
   27,
-  28,
+  27,
   29,
   30,
+  30,
+  30,
+  32,
+  32,
+  32,
+  32,
+  32,
+  33,
+  35,
+  36,
   36,
   37,
   38,
+  38,
   39,
+  40,
   40,
   41,
   42,
   43,
+  43,
   44,
+  44,
+  45,
+  46,
+  46,
   47,
-  // 4장은 테러조 기준 48~56이다. 57~60은 5·6장이 쓴다 — 레벨 사다리는 60에서 멈추므로 아껴 쓴다.
-  // 회수조는 태생 층이 한 띠 위라 같은 자리에서 더 낮은 레벨로 선다(`tieredEnemy`).
-  48,
-  48,
+  47,
   49,
+  49,
+  50,
+  50,
   51,
-  51,
-  51,
-  51,
-  51,
+  52,
+  52,
+  53,
   54,
-  56,
-  // 5~7장은 눈금이 60을 넘는다 — 실제 레벨은 60에서 멈추므로 이 구간은 **태생 층이 높은 개체**(회수조 ×1.3 · 감금조 ×1.7 ·
-  // 카르 ×3)가 같은 세기를 더 낮은 레벨로 선다(`tieredEnemy`). 테러조와 코마는 태생 보정이 없어 60을 넘는 자리에 세우지 않는다.
-  58,
-  59,
-  60,
-  61,
-  62,
-  63,
-  64,
-  65,
-  66,
-  68,
-  69,
-  70,
-  71,
-  72,
-  73,
-  74,
-  75,
-  76,
-  77,
-  79,
-  80,
-  81,
-  82,
-  83,
-  84,
-  85,
-  86,
-  87,
-  88,
-  90
+  54,
+  60
 ];
 var CHAPTER_ONE_ELITES = {
   5: "toby",
@@ -24977,15 +25050,12 @@ var LATE_CHAPTER_FORMATIONS = {
   "7-9": [["raja", 0], ["magasa", 1], ["noa", 2]],
   "7-10": [["carno", 1]]
 };
-var STAGE_ENEMY_LEVEL_BONUS = {
-  "7-10": { carno: 2 }
-};
 var ELITE_DUO_STAGE_IDS = /* @__PURE__ */ new Set(["2-7", "2-9", "4-4", "4-5", "4-10", "6-10"]);
 var CHAPTER_ONE_ENEMIES = STORY_RECOMMENDED_LEVELS.slice(0, 10).map((recommended, index) => {
   const chapterOrder = index + 1;
   const eliteId = CHAPTER_ONE_ELITES[chapterOrder];
-  if (eliteId) return [enemyGrowth(eliteId, recommended, 0, 1)];
-  return STAGE_ENEMY_FORMATION.map((id, slot) => enemyGrowth(id, recommended, 0, slot));
+  if (eliteId) return [enemyGrowth(eliteId, recommended, 1)];
+  return STAGE_ENEMY_FORMATION.map((id, slot) => enemyGrowth(id, recommended, slot));
 });
 var STORY_RUNE_REWARDS = {
   "1-5": { kind: "rune", rarity: "uncommon", part: 0 },
@@ -25069,10 +25139,9 @@ var CHAPTERS = CHAPTER_CONTENT.map((content, chapterIndex) => {
     const lateFormation = LATE_CHAPTER_FORMATIONS[`${chapter}-${chapterOrder}`];
     const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
     const laterChapterEnemies = lateFormation ? lateFormation.map(([relicId, slot]) => {
-      const levelBonus = (chapter === 4 ? CHAPTER_FOUR_RAIDER_LEVEL_BONUS : 0) + (STAGE_ENEMY_LEVEL_BONUS[`${chapter}-${chapterOrder}`]?.[relicId] ?? 0);
-      const enemy = tieredEnemy(relicId, laterChapterLevel, slot, levelBonus);
+      const enemy = enemyGrowth(relicId, laterChapterLevel, slot);
       return SOLO_ELITE_ENEMIES[`${chapter}-${chapterOrder}`]?.includes(relicId) ? { ...enemy, elite: true } : enemy;
-    }) : laterChapterIds.map((relicId, slot) => enemyGrowth(relicId, laterChapterLevel, requiredBreakthroughForLevel(laterChapterLevel), slot));
+    }) : laterChapterIds.map((relicId, slot) => enemyGrowth(relicId, laterChapterLevel, slot));
     const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
     const id = `${chapter}-${chapterOrder}`;
     const elite = enemies.length === 1 || ELITE_DUO_STAGE_IDS.has(id);
@@ -25137,7 +25206,7 @@ var SIDE_BATTLE_STAGE = {
   chapter: 1,
   chapterOrder: 8,
   prerequisiteStageIds: ["1-8"],
-  enemies: [enemyGrowth("amo", 18, 0, 0), enemyGrowth("ripa", 18, 0, 2)],
+  enemies: [enemyGrowth("amo", 12, 0), enemyGrowth("ripa", 12, 2)],
   rewards: {
     firstClearCheesecake: 0,
     repeatClearCheesecake: 0,
@@ -25147,7 +25216,6 @@ var SIDE_BATTLE_STAGE = {
 function sideBattle(anchor, name, formation) {
   const [chapter, order] = anchor.split("-").map(Number);
   const reference = (STORY_RECOMMENDED_LEVELS[(chapter - 1) * 10 + order - 1] ?? 1) - 1;
-  const bonus = chapter === 4 ? CHAPTER_FOUR_RAIDER_LEVEL_BONUS : 0;
   return {
     kind: "battle",
     sub: true,
@@ -25157,7 +25225,7 @@ function sideBattle(anchor, name, formation) {
     chapter,
     chapterOrder: order,
     prerequisiteStageIds: [anchor],
-    enemies: formation.map(([relicId, slot]) => tieredEnemy(relicId, reference, slot, bonus)),
+    enemies: formation.map(([relicId, slot]) => enemyGrowth(relicId, reference, slot)),
     ...storyChapterStatFactor(chapter) !== 1 ? { difficultyStatMultiplier: storyChapterStatFactor(chapter) } : {},
     rewards: {
       firstClearCheesecake: 0,
@@ -25231,7 +25299,7 @@ function getStageEnemies(stage) {
     const base = getRelic(enemy.relicId);
     const enemyRole = enemy.elite === true ? "elite" : role;
     const count2 = enemy.elite === true ? soloElites : stage.enemies.length;
-    const stats = applyEncounterScaling(base.stats, enemy.level, enemyRole, count2, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1, enemy.breakthrough);
+    const stats = applyEncounterScaling(base.stats, enemy.level, enemyRole, count2);
     for (const key of GROWTH_STAT_KEYS) stats[key] = Math.round(stats[key] * (stage.difficultyStatMultiplier ?? 1));
     return { ...base, encounterRole: enemyRole, stats };
   });
@@ -25398,9 +25466,20 @@ var CONTENT_INTRO_IDS = [
   "friends",
   "raid",
   "expedition",
-  "archaeology",
+  "archaeologyGuide",
   "premium"
 ];
+var FREE_RUNE_CRAFT_STAGE = "1-5";
+function freeRuneCraftId(state) {
+  return state?.freeRuneCraft?.runeInstanceId;
+}
+function isFreeRuneCraft(state, runeInstanceId) {
+  return freeRuneCraftId(state) === runeInstanceId;
+}
+function endFreeRuneCraft(state) {
+  const { freeRuneCraft: _ended, ...rest } = state;
+  return rest;
+}
 var INTRO_SET = new Set(CONTENT_INTRO_IDS);
 function isContentIntroId(value) {
   return typeof value === "string" && INTRO_SET.has(value);
@@ -25434,7 +25513,13 @@ function normalizeTutorialState(value) {
   const rawIntros = value && typeof value === "object" ? value.seenIntroIds : void 0;
   const seen = new Set(Array.isArray(rawIntros) ? rawIntros.filter(isContentIntroId) : []);
   const seenIntroIds = CONTENT_INTRO_IDS.filter((id) => seen.has(id));
-  return seenIntroIds.length > 0 ? { completedStepIds, seenIntroIds } : { completedStepIds };
+  const rawFree = value && typeof value === "object" ? value.freeRuneCraft : void 0;
+  const freeId = rawFree && typeof rawFree === "object" ? rawFree.runeInstanceId : void 0;
+  return {
+    completedStepIds,
+    ...seenIntroIds.length > 0 ? { seenIntroIds } : {},
+    ...typeof freeId === "string" && freeId.length > 0 ? { freeRuneCraft: { runeInstanceId: freeId } } : {}
+  };
 }
 function isValidTutorialState(value) {
   return !!value && typeof value === "object" && sameJsonShape(normalizeTutorialState(value), value);
@@ -26411,7 +26496,7 @@ init_define_import_meta_env();
 
 // src/data/raid.ts
 init_define_import_meta_env();
-var RAID_SEASON_BOSS_LEVEL = 60;
+var RAID_SEASON_BOSS_LEVEL = 48;
 var RAID_SEASON_BOSS = {
   relicId: "sukusuino",
   level: RAID_SEASON_BOSS_LEVEL,
@@ -26433,12 +26518,12 @@ var RAID_BOSS_BALANCE = {
 };
 var raidDifficulty = (spec) => ({ ...spec, totalHp: spec.bodyHp * spec.kills });
 var RAID_DIFFICULTY = {
-  easy: raidDifficulty({ level: 20, bodyHp: 25e3, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 1e4, total: 8, kill: 5, gems: 40 }, run: { sigil: 3, gems: 7, salvage: 2 } }),
-  normal: raidDifficulty({ level: 30, bodyHp: 5e4, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15e3, total: 14, kill: 8, gems: 65 }, run: { sigil: 5, gems: 13, salvage: 4 } }),
-  hard: raidDifficulty({ level: 40, bodyHp: 1e5, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22e3, total: 22, kill: 12, gems: 85 }, run: { sigil: 8, gems: 17, salvage: 6 } }),
+  easy: raidDifficulty({ level: 13, bodyHp: 25e3, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 1e4, total: 8, kill: 5, gems: 40 }, run: { sigil: 3, gems: 7, salvage: 2 } }),
+  normal: raidDifficulty({ level: 22, bodyHp: 5e4, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15e3, total: 14, kill: 8, gems: 65 }, run: { sigil: 5, gems: 13, salvage: 4 } }),
+  hard: raidDifficulty({ level: 30, bodyHp: 1e5, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22e3, total: 22, kill: 12, gems: 85 }, run: { sigil: 8, gems: 17, salvage: 6 } }),
   // 렐릭 상한이 연구원 레벨로 100까지 열리며(돌파 +10%p) 만렙 편성의 폭주 피해가 2.6배가 되었다 — 판 체력과 내 몫 목표를
   // 함께 2.5배로 올려 같은 판 수·같은 보상선을 지킨다(250,000 → 625,000 · 45,000 → 112,500). 쉬움~어려움은 권장 레벨에서 그대로다.
-  rampage: raidDifficulty({ level: 60, bodyHp: 625e3, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 112500, total: 60, kill: 30, gems: 130 }, run: { sigil: 13, gems: 25, salvage: 10 } })
+  rampage: raidDifficulty({ level: 48, bodyHp: 625e3, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 112500, total: 60, kill: 30, gems: 130 }, run: { sigil: 13, gems: 25, salvage: 10 } })
 };
 function isRaidDifficulty(value) {
   return typeof value === "string" && Object.prototype.hasOwnProperty.call(RAID_DIFFICULTY, value);
@@ -29426,14 +29511,14 @@ function sweepRefusal(input) {
 
 // src/data/cakeOperation.ts
 var CAKE_OPERATION_TIERS = [
-  { id: "cake-1", name: "1\uB2E8\uACC4", enemyLevel: 5, enemyCount: 10, rewardCheesecake: 30 },
-  { id: "cake-2", name: "2\uB2E8\uACC4", enemyLevel: 12, enemyCount: 10, rewardCheesecake: 44 },
-  { id: "cake-3", name: "3\uB2E8\uACC4", enemyLevel: 20, enemyCount: 11, rewardCheesecake: 58 },
-  { id: "cake-4", name: "4\uB2E8\uACC4", enemyLevel: 28, enemyCount: 12, rewardCheesecake: 72 },
-  { id: "cake-5", name: "5\uB2E8\uACC4", enemyLevel: 36, enemyCount: 13, rewardCheesecake: 88 },
-  { id: "cake-6", name: "6\uB2E8\uACC4", enemyLevel: 44, enemyCount: 14, rewardCheesecake: 108 },
-  { id: "cake-7", name: "7\uB2E8\uACC4", enemyLevel: 52, enemyCount: 15, rewardCheesecake: 128 },
-  { id: "cake-8", name: "8\uB2E8\uACC4", enemyLevel: 60, enemyCount: 15, rewardCheesecake: 150 }
+  { id: "cake-1", name: "1\uB2E8\uACC4", enemyLevel: 3, enemyCount: 10, rewardCheesecake: 30 },
+  { id: "cake-2", name: "2\uB2E8\uACC4", enemyLevel: 8, enemyCount: 10, rewardCheesecake: 44 },
+  { id: "cake-3", name: "3\uB2E8\uACC4", enemyLevel: 13, enemyCount: 11, rewardCheesecake: 58 },
+  { id: "cake-4", name: "4\uB2E8\uACC4", enemyLevel: 20, enemyCount: 12, rewardCheesecake: 72 },
+  { id: "cake-5", name: "5\uB2E8\uACC4", enemyLevel: 28, enemyCount: 13, rewardCheesecake: 88 },
+  { id: "cake-6", name: "6\uB2E8\uACC4", enemyLevel: 36, enemyCount: 14, rewardCheesecake: 108 },
+  { id: "cake-7", name: "7\uB2E8\uACC4", enemyLevel: 43, enemyCount: 15, rewardCheesecake: 128 },
+  { id: "cake-8", name: "8\uB2E8\uACC4", enemyLevel: 48, enemyCount: 15, rewardCheesecake: 150 }
 ];
 var CAKE_OPERATION_ENEMY_IDS = [
   "raitia-grass",
@@ -34871,57 +34956,58 @@ var BOUNTY = {
 var BOUNTY_TIERS = [
   // 1급은 스토리 1장을 막 민 파티(레벨 15 언저리)가 들어서는 자리다.
   { id: "bounty-1", order: 1, name: "\uD604\uC0C1\uC218\uBC30 1\uAE09", rewardGold: 1200, rounds: [
-    { relicId: "neuri", level: 5 },
-    { relicId: "pulsi", level: 5 },
-    { relicId: "amo", level: 5 }
+    { relicId: "neuri", level: 3 },
+    { relicId: "pulsi", level: 3 },
+    { relicId: "amo", level: 3 }
   ] },
   { id: "bounty-6", order: 2, name: "\uD604\uC0C1\uC218\uBC30 2\uAE09", rewardGold: 2200, rounds: [
-    { relicId: "ripa", level: 11 },
-    { relicId: "toby", level: 11 },
-    { relicId: "amo", level: 11 }
+    { relicId: "ripa", level: 7 },
+    { relicId: "toby", level: 7 },
+    { relicId: "amo", level: 7 }
   ] },
   { id: "bounty-2", order: 3, name: "\uD604\uC0C1\uC218\uBC30 3\uAE09", rewardGold: 3200, rounds: [
-    { relicId: "mir", level: 17 },
-    { relicId: "pulsi", level: 17 },
-    { relicId: "koma", level: 17 }
+    { relicId: "mir", level: 11 },
+    { relicId: "pulsi", level: 11 },
+    { relicId: "koma", level: 11 }
   ] },
   // 4급부터 돌파 없는 상한(20)을 넘는다.
   { id: "bounty-7", order: 4, name: "\uD604\uC0C1\uC218\uBC30 4\uAE09", rewardGold: 4400, rounds: [
-    { relicId: "toby", level: 23 },
-    { relicId: "amo", level: 23 },
-    { relicId: "koma", level: 23 }
+    { relicId: "toby", level: 17 },
+    { relicId: "amo", level: 17 },
+    { relicId: "koma", level: 17 }
   ] },
   { id: "bounty-3", order: 5, name: "\uD604\uC0C1\uC218\uBC30 5\uAE09", rewardGold: 5700, rounds: [
-    { relicId: "neuri", level: 29 },
-    { relicId: "atra", level: 29 },
-    { relicId: "koma", level: 29 }
+    { relicId: "neuri", level: 21 },
+    { relicId: "atra", level: 21 },
+    { relicId: "koma", level: 21 }
   ] },
-  // 6급부터 이카닉시아가 마지막 라운드의 벽으로 선다.
+  // 6급~9급은 이카닉시아가 마지막 라운드의 벽으로 선다(10급은 아모).
   { id: "bounty-8", order: 6, name: "\uD604\uC0C1\uC218\uBC30 6\uAE09", rewardGold: 7800, rounds: [
-    { relicId: "pulsi", level: 35 },
-    { relicId: "amo", level: 35 },
-    { relicId: "ikanixia", level: 35 }
+    { relicId: "pulsi", level: 27 },
+    { relicId: "amo", level: 27 },
+    { relicId: "ikanixia", level: 27 }
   ] },
   { id: "bounty-4", order: 7, name: "\uD604\uC0C1\uC218\uBC30 7\uAE09", rewardGold: 11500, rounds: [
-    { relicId: "pulsi", level: 41 },
-    { relicId: "atra", level: 41 },
-    { relicId: "ikanixia", level: 41 }
+    { relicId: "pulsi", level: 34 },
+    { relicId: "atra", level: 34 },
+    { relicId: "ikanixia", level: 34 }
   ] },
   { id: "bounty-9", order: 8, name: "\uD604\uC0C1\uC218\uBC30 8\uAE09", rewardGold: 15e3, rounds: [
-    { relicId: "ripa", level: 47 },
-    { relicId: "atra", level: 47 },
-    { relicId: "ikanixia", level: 47 }
+    { relicId: "ripa", level: 37 },
+    { relicId: "atra", level: 37 },
+    { relicId: "ikanixia", level: 37 }
   ] },
   { id: "bounty-10", order: 9, name: "\uD604\uC0C1\uC218\uBC30 9\uAE09", rewardGold: 2e4, rounds: [
-    { relicId: "ripa", level: 53 },
-    { relicId: "koma", level: 53 },
-    { relicId: "ikanixia", level: 53 }
+    { relicId: "ripa", level: 44 },
+    { relicId: "koma", level: 44 },
+    { relicId: "ikanixia", level: 44 }
   ] },
-  // 10급은 돌파로 상한을 연 만렙 셋, 그것도 가장 무거운 셋의 자리다.
+  // 10급은 돌파로 상한을 연 만렙 셋, 그것도 가장 무거운 셋의 자리다. LV.48에서는 아모가 가장 좁은 벽이라 마지막에 선다
+  // (v0.442.7 — 이카닉시아의 반향 막을 반으로 줄이자 이카닉시아·코마를 확실히 이기는 개체 수가 11종으로 같아져 아모와 자리를 바꿨다).
   { id: "bounty-5", order: 10, name: "\uD604\uC0C1\uC218\uBC30 10\uAE09", rewardGold: 28e3, rounds: [
-    { relicId: "amo", level: 60 },
-    { relicId: "koma", level: 60 },
-    { relicId: "ikanixia", level: 60 }
+    { relicId: "ikanixia", level: 48 },
+    { relicId: "koma", level: 48 },
+    { relicId: "amo", level: 48 }
   ] }
 ];
 var BOUNTY_TIER_BY_ID = new Map(BOUNTY_TIERS.map((tier) => [tier.id, tier]));
@@ -35993,7 +36079,7 @@ var SaveManager = class {
       situationalOffers: normalizeSituationalOfferState(data.situationalOffers),
       gachaHistory: normalizeGachaHistory(data.gachaHistory),
       achievements: { ...data.achievements, claimed: { ...data.achievements.claimed }, ...data.achievements.growth ? { growth: [...data.achievements.growth] } : {} },
-      tutorial: { completedStepIds: [...data.tutorial.completedStepIds], ...data.tutorial.seenIntroIds ? { seenIntroIds: [...data.tutorial.seenIntroIds] } : {} }
+      tutorial: { completedStepIds: [...data.tutorial.completedStepIds], ...data.tutorial.seenIntroIds ? { seenIntroIds: [...data.tutorial.seenIntroIds] } : {}, ...data.tutorial.freeRuneCraft ? { freeRuneCraft: { ...data.tutorial.freeRuneCraft } } : {} }
     };
   }
 };
@@ -36080,26 +36166,6 @@ function storyClearRecords(stagesOf, cleared) {
     const highest = open ? highestClearedStage(stagesOf(difficulty), cleared) : void 0;
     return { difficulty, open, ...highest ? { stageId: storyBaseStageId(highest.id) } : {} };
   });
-}
-
-// src/core/combatPower.ts
-init_define_import_meta_env();
-var WEIGHTS = {
-  hp: 0.5,
-  def: 2.4,
-  res: 2.4,
-  atk: 3.4,
-  ap: 3.4,
-  attackSpeed: 3,
-  moveSpeed: 1.2,
-  critChance: 4,
-  critDamage: 1.6,
-  energyGain: 2,
-  lifeSteal: 3,
-  ferocityGain: 2
-};
-function combatPower(stats) {
-  return Math.round(Object.keys(WEIGHTS).reduce((sum, key) => sum + stats[key] * WEIGHTS[key], 0));
 }
 
 // src/state/playerProfile.ts
@@ -36414,12 +36480,13 @@ function expeditionNodeRole(type, floor) {
   return encounterRoleFor(type === "horde" ? ENCOUNTER_HORDE_COUNT : 3, { elite: type === "elite" });
 }
 function expeditionRecommendedLevel(floor) {
-  return Math.max(1, Math.round(floor * EXPEDITION_LEVEL_PER_FLOOR));
+  const index = Math.max(1, Math.round(floor)) - 1;
+  return EXPEDITION_FLOOR_LEVELS[Math.min(index, EXPEDITION_FLOOR_LEVELS.length - 1)];
 }
-var EXPEDITION_LEVEL_PER_FLOOR = 2;
+var EXPEDITION_FLOOR_LEVELS = [2, 3, 4, 5, 6, 8, 9, 10, 11, 13, 17, 18, 19, 20, 22, 26, 27, 28, 29, 30];
 var ENCOUNTER_HORDE_COUNT = 5;
 function expeditionEnemyLevel(type, floor) {
-  if (type === "boss" && floor === 20) return 20;
+  if (type === "boss" && floor === 20) return 13;
   return expeditionRecommendedLevel(floor);
 }
 function getExpeditionNodeEnemies(type, floor) {
@@ -39250,20 +39317,20 @@ function markBountyTierCleared(state, tierId2) {
 
 // src/core/relicReset.ts
 init_define_import_meta_env();
-var RELIC_RESET_FREE_MAX_LEVEL = 20;
-var RELIC_RESET_GEM_BAND = 10;
-var RELIC_RESET_GEM_PER_BAND = 50;
+var RELIC_RESET_FULL_REFUND_LEVEL = 21;
+var RELIC_RESET_REFUND_PERCENT = 90;
 function relicInvestedExp(progress) {
   let total = Math.max(0, progress.exp);
   for (let level = 1; level < progress.level; level += 1) total += relicExpToNext(level);
   return total;
 }
-function relicResetRefund(progress) {
+function relicInvestedCheesecake(progress) {
   return Math.floor(relicInvestedExp(progress) / FEED_UNIT.exp) * FEED_UNIT.cheesecake;
 }
-function relicResetGemCost(level) {
-  if (!Number.isInteger(level) || level <= RELIC_RESET_FREE_MAX_LEVEL) return 0;
-  return Math.ceil((level - RELIC_RESET_FREE_MAX_LEVEL) / RELIC_RESET_GEM_BAND) * RELIC_RESET_GEM_PER_BAND;
+function relicResetRefund(progress) {
+  const invested = relicInvestedCheesecake(progress);
+  const safe = Math.min(invested, relicInvestedCheesecake({ level: RELIC_RESET_FULL_REFUND_LEVEL, exp: 0 }));
+  return safe + Math.floor((invested - safe) * RELIC_RESET_REFUND_PERCENT / 100);
 }
 function canResetRelic(progress) {
   return progress.level > 1 || progress.exp > 0;
@@ -42417,12 +42484,13 @@ function newbieGrowthFacts(facts, achievements, relicsBrokenThrough) {
   return { ...facts, ...extra };
 }
 function newbieGrowthWindow(createdAt, now) {
-  const start = createdAt ? Date.parse(createdAt) : Number.NaN;
-  if (!Number.isFinite(start)) return { active: false, day: 0, endsAt: (/* @__PURE__ */ new Date(0)).toISOString() };
-  const elapsed = Math.max(0, now.getTime() - start);
-  const end = start + NEWBIE_GROWTH_WINDOW_DAYS * DAY_MS5;
+  const created = createdAt ? new Date(createdAt) : void 0;
+  if (!created || Number.isNaN(created.getTime()) || Number.isNaN(now.getTime())) return { active: false, day: 0, endsAt: (/* @__PURE__ */ new Date(0)).toISOString() };
+  const start = Date.parse(`${utcDateKey(created)}T00:00:00.000Z`);
+  const elapsedDays = Math.max(0, Math.floor((now.getTime() - start) / DAY_MS5));
+  const end = start + Math.ceil((created.getTime() - start) / DAY_MS5 + NEWBIE_GROWTH_WINDOW_DAYS) * DAY_MS5;
   const active3 = now.getTime() < end;
-  const day = active3 ? Math.min(NEWBIE_GROWTH_DAYS, Math.floor(elapsed / DAY_MS5) + 1) : 0;
+  const day = active3 ? Math.min(NEWBIE_GROWTH_DAYS, elapsedDays + 1) : 0;
   return { active: active3, day, ...active3 && day < NEWBIE_GROWTH_DAYS ? { nextDayAt: new Date(start + day * DAY_MS5).toISOString() } : {}, endsAt: new Date(end).toISOString() };
 }
 function newbieGrowthGoalState(goal, facts, claimed, openDay) {
@@ -43192,7 +43260,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.439.0",
+  version: "0.443.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -43466,6 +43534,7 @@ var SERVER_GAME_METHODS = [
   "grantRuneTrait",
   "harvestExcavation",
   "deleteMails",
+  "dismissFreeRuneCraft",
   "interactInLobby",
   "markAttendanceAutoShown",
   "markContentIntroSeen",
@@ -46491,25 +46560,23 @@ var FakeServer = class {
   /**
    * 캐릭터 초기화.
    *
-   * 레벨·경험치만 1로 되돌리고 그동안 급여한 치즈케이크를 돌려준다. 회수량과 젬 값은 화면과 같은 순수 함수
-   * (`core/relicReset.ts`)가 저장된 진행에서 다시 구하므로 클라이언트가 보내는 수는 없다. 젬 차감과 회수,
-   * 레벨 확정은 한 저장으로 끝난다. 돌려받는 치즈케이크는 보유 한도에서 깎는다(다른 지급과 같은 규칙).
+   * 레벨·경험치만 1로 되돌리고 그동안 급여한 치즈케이크를 돌려준다(21레벨 위로 쌓은 몫은 90%). 회수량은 화면과
+   * 같은 순수 함수(`core/relicReset.ts`)가 저장된 진행에서 다시 구하므로 클라이언트가 보내는 수는 없다. 젬은
+   * 들지 않고, 회수와 레벨 확정은 한 저장으로 끝난다. 돌려받는 치즈케이크는 보유 한도에서 깎는다(다른 지급과 같은 규칙).
    */
   async resetRelic(relicId) {
     await this.delay();
     const current2 = this.state.relicProgress[relicId];
     if (!this.state.owned.has(relicId) || !current2) throw new GameApiError("RELIC_NOT_FOUND", "\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
     if (!canResetRelic(current2)) throw new GameApiError("INVALID_STATE", "\uCD08\uAE30\uD654\uD560 \uB808\uBCA8\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    const gemsSpent = relicResetGemCost(current2.level);
-    if (this.state.wallet.gems < gemsSpent) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uC82C\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
     const refund = relicResetRefund(current2);
     const cheesecakeRefunded = Math.max(0, Math.min(refund, WALLET_CAPS.cheesecake - this.state.wallet.cheesecake));
     const nextProgress = { ...this.state.relicProgress, [relicId]: resetRelicProgress(current2) };
-    const nextWallet = { ...this.state.wallet, gems: this.state.wallet.gems - gemsSpent, cheesecake: this.state.wallet.cheesecake + cheesecakeRefunded };
+    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake + cheesecakeRefunded };
     this.persist({ ...this.state, relicProgress: nextProgress, wallet: nextWallet });
     this.state.relicProgress = nextProgress;
     this.state.wallet = nextWallet;
-    return { ...this.snapshot(), relicId, previousLevel: current2.level, cheesecakeRefunded, gemsSpent };
+    return { ...this.snapshot(), relicId, previousLevel: current2.level, cheesecakeRefunded };
   }
   /**
    * 돌파.
@@ -46629,6 +46696,7 @@ var FakeServer = class {
     const base = spent ?? { wallet: { ...this.state.wallet }, playerResearch: this.state.playerResearch, missions: this.state.missions, itemInventory: this.state.itemInventory, playerExp: void 0 };
     const nextWallet = { ...base.wallet };
     let nextRunes = this.state.runeInventory;
+    let freeRuneId;
     const firstClearRewards = [];
     let cheesecakeGranted = 0;
     if (firstClear) {
@@ -46638,6 +46706,7 @@ var FakeServer = class {
           const rune = reward.trait ? { ...base2, trait: grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: "uncommon", random: this.random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE }) } : base2;
           assertValidRuneInstance(rune);
           nextRunes = [...nextRunes, rune];
+          if (stage.id === FREE_RUNE_CRAFT_STAGE && victory) freeRuneId ??= rune.instanceId;
           firstClearRewards.push({ kind: "rune", rarity: rune.rarity, part: rune.part, instanceId: rune.instanceId, name: rune.customName ?? rune.baseName, trait: rune.trait !== void 0 });
           continue;
         }
@@ -46656,7 +46725,8 @@ var FakeServer = class {
     ]));
     const nextMissions = stage.ancientFloor !== void 0 && !firstClear ? base.missions : applyMissionEvent(base.missions, { type: "battle_completed", victory }, this.now());
     const currentTutorial = normalizeTutorialState(this.state.tutorial);
-    const nextTutorial = victory && !owningEvent ? advanceTutorialOnStageClear(currentTutorial, stage.id) : currentTutorial;
+    const advancedTutorial = victory && !owningEvent ? advanceTutorialOnStageClear(currentTutorial, stage.id) : currentTutorial;
+    const nextTutorial = freeRuneId !== void 0 && !owningEvent && advancedTutorial.freeRuneCraft === void 0 ? { ...advancedTutorial, freeRuneCraft: { runeInstanceId: freeRuneId } } : advancedTutorial;
     const nextOffers = owningEvent || stage.ancientFloor !== void 0 ? this.state.situationalOffers : this.storyLossOffers(stage.id, victory, this.now());
     this.persist({ ...this.state, situationalOffers: nextOffers, tutorial: nextTutorial, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions, playerResearch: base.playerResearch, itemInventory: base.itemInventory, runeInventory: nextRunes });
     this.state.cleared = nextCleared;
@@ -47927,7 +47997,7 @@ var FakeServer = class {
     if (!optionExists) throw new GameApiError("RUNE_STAT_EXHAUSTED", "\uB8EC\uC5D0 \uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uB2A5\uB825\uCE58\uC785\uB2C8\uB2E4.");
     if (current2.enhancementComplete) throw new GameApiError("RUNE_ENHANCEMENT_COMPLETE", "\uBAA8\uB4E0 \uC77C\uBC18 \uAC15\uD654\uB97C \uC644\uB8CC\uD55C \uB8EC\uC785\uB2C8\uB2E4.");
     if (!canEnhanceRune(current2, request.statId)) throw new GameApiError("RUNE_STAT_EXHAUSTED", "\uC774 \uB2A5\uB825\uCE58\uC758 \uAC15\uD654 \uD69F\uC218\uB97C \uBAA8\uB450 \uC0AC\uC6A9\uD588\uC2B5\uB2C8\uB2E4.");
-    const goldSpent = runeEnhancementGoldCost(current2.rarity, runeEnhancementAttempts(current2));
+    const goldSpent = isFreeRuneCraft(this.state.tutorial, current2.instanceId) ? 0 : runeEnhancementGoldCost(current2.rarity, runeEnhancementAttempts(current2));
     if (this.state.wallet.gold < goldSpent) throw new GameApiError("INSUFFICIENT_GOLD", "\uB8EC \uAC15\uD654\uC5D0 \uD544\uC694\uD55C \uACE8\uB4DC\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
     const rune = enhanceRune(current2, request.statId, runeEnhancementIncrease(current2.rarity, request.statId), this.random());
     const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
@@ -47945,7 +48015,7 @@ var FakeServer = class {
     const current2 = this.ownedRune(request.runeInstanceId);
     if (current2.enhancementComplete) throw new GameApiError("RUNE_ENHANCEMENT_COMPLETE", "\uBAA8\uB4E0 \uC77C\uBC18 \uAC15\uD654\uB97C \uC644\uB8CC\uD55C \uB8EC\uC785\uB2C8\uB2E4.");
     const targets2 = runeBatchEnhancementTargets(current2);
-    const goldSpent = runeBatchEnhancementGoldCost(current2);
+    const goldSpent = isFreeRuneCraft(this.state.tutorial, current2.instanceId) ? 0 : runeBatchEnhancementGoldCost(current2);
     if (this.state.wallet.gold < goldSpent) throw new GameApiError("INSUFFICIENT_GOLD", "\uB8EC \uAC15\uD654\uC5D0 \uD544\uC694\uD55C \uACE8\uB4DC\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
     let rune = current2;
     const results = [];
@@ -47969,9 +48039,12 @@ var FakeServer = class {
     if (![...current2.mainStats, ...current2.subStats].some(({ key }) => key === request.statId)) throw new GameApiError("RUNE_ENGRAVING_NOT_ALLOWED", "\uB8EC\uC5D0 \uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uB2A5\uB825\uCE58\uC785\uB2C8\uB2E4.");
     const rune = engraveRune(current2, { statKey: request.statId, valueAdded: runeEnhancementIncrease(current2.rarity, request.statId) });
     const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
-    const nextState = { ...this.state, runeInventory: nextRunes };
+    const currentTutorial = normalizeTutorialState(this.state.tutorial);
+    const nextTutorial = isFreeRuneCraft(currentTutorial, rune.instanceId) ? endFreeRuneCraft(currentTutorial) : currentTutorial;
+    const nextState = { ...this.state, runeInventory: nextRunes, tutorial: nextTutorial };
     this.persist(nextState);
     this.state.runeInventory = nextRunes;
+    this.state.tutorial = nextTutorial;
     return { rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
   }
   /** 이름을 trim한 뒤 빈 값·길이·제어문자를 서버 경계에서 거부한다. */
@@ -48068,6 +48141,17 @@ var FakeServer = class {
     const current2 = normalizeTutorialState(this.state.tutorial);
     if (!isContentIntroSeen(current2, request.introId)) {
       const tutorial = normalizeTutorialState({ ...current2, seenIntroIds: [...current2.seenIntroIds ?? [], request.introId] });
+      this.persist({ ...this.state, tutorial });
+      this.state.tutorial = tutorial;
+    }
+    return { tutorial: normalizeTutorialState(this.state.tutorial), serverTime: this.now().toISOString() };
+  }
+  /** 무료 각인 체험을 건너뛴다. 룬·지갑은 건드리지 않고 체험 표시만 걷는다. */
+  async dismissFreeRuneCraft(_request) {
+    await this.delay();
+    const current2 = normalizeTutorialState(this.state.tutorial);
+    if (current2.freeRuneCraft !== void 0) {
+      const tutorial = endFreeRuneCraft(current2);
       this.persist({ ...this.state, tutorial });
       this.state.tutorial = tutorial;
     }

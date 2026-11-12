@@ -58,6 +58,8 @@ export const LAB_JA = {
   "lab.banner.fossil.title": "化石研究",
   "lab.banner.amber.eyebrow": "LIMITED PICK UP",
   "lab.banner.amber.subtitle": "ドタバタ狼カフェのアルバイト",
+  "lab.banner.moonlit.eyebrow": "LIMITED PICK UP",
+  "lab.banner.moonlit.subtitle": "月夜のピクニックで星を拾う後輩",
   "lab.tag.standard": "常設研究",
   "lab.tag.limited": "期間限定",
   "lab.tag.once": "アカウント1回限り",

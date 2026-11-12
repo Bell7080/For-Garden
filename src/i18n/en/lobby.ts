@@ -31,6 +31,8 @@ export const LOBBY_EN = {
   "event.remaining.minutes": "{value}m left",
   "event.wolfCafe.title": "The Clumsy Wolf Café",
   "event.wolfCafe.subtitle": "Limited-time Dian Pick-Up Event!",
+  "event.moonPicnic.title": "Picnic Under the Night Sky",
+  "event.moonPicnic.subtitle": "Limited-time Plesha Pick-Up Event!",
   "event.attendance.newcomer.title": "New Researcher 7-Day Check-in",
   "event.attendance.noDeadline": "No deadline!",
   "event.attendance.regular.title": "Daily Check-in",

@@ -20,10 +20,10 @@ describe("연구소 모집판의 얼굴", () => {
     }
   });
 
-  it("한정 배너만 반짝이고 가장 크게 선다", () => {
+  it("한정 픽업 배너(디안·플레샤)만 반짝이고 가장 크게 선다", () => {
     const sizes = BANNERS.map((candidate) => BANNER_PRESENTATION[candidate.id].titleSize);
     expect(BANNER_PRESENTATION.amber.titleSize).toBe(Math.max(...sizes));
-    expect(BANNERS.filter((candidate) => BANNER_PRESENTATION[candidate.id].sparkles).map(({ id }) => id)).toEqual(["amber"]);
+    expect(BANNERS.filter((candidate) => BANNER_PRESENTATION[candidate.id].sparkles).map(({ id }) => id)).toEqual(["amber", "moonlit"]);
   });
 
   it("라벨은 배너의 성질에서 나온다", () => {

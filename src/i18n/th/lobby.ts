@@ -26,6 +26,8 @@ export const LOBBY_TH = {
   "event.remaining.minutes": "เหลือ {value} นาที",
   "event.wolfCafe.title": "คาเฟ่หมาป่าจอมวุ่นวาย",
   "event.wolfCafe.subtitle": "อีเวนต์ Pick Up เดียนจำกัดเวลา!",
+  "event.moonPicnic.title": "ปิกนิกใต้ท้องฟ้ายามค่ำคืน",
+  "event.moonPicnic.subtitle": "อีเวนต์ Pick Up เพลชาจำกัดเวลา!",
   "event.attendance.newcomer.title": "เช็กอิน 7 วันนักวิจัยใหม่",
   "event.attendance.noDeadline": "ไม่มีกำหนดเวลา!",
   "event.attendance.regular.title": "เช็กอินประจำวัน",

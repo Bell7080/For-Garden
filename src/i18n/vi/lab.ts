@@ -52,6 +52,8 @@ export const LAB_VI = {
   "lab.banner.fossil.title": "Nghiên cứu Hóa thạch",
   "lab.banner.amber.eyebrow": "LIMITED PICK UP",
   "lab.banner.amber.subtitle": "Cô nhân viên vụng về của Quán cà phê Sói",
+  "lab.banner.moonlit.eyebrow": "LIMITED PICK UP",
+  "lab.banner.moonlit.subtitle": "Cô hậu bối nhặt sao trong buổi dã ngoại dưới trăng",
   "lab.tag.standard": "Nghiên cứu thường trực",
   "lab.tag.limited": "Có thời hạn",
   "lab.tag.once": "1 lần mỗi tài khoản",

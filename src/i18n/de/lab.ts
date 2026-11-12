@@ -52,6 +52,8 @@ export const LAB_DE = {
   "lab.banner.fossil.title": "Fossilforschung",
   "lab.banner.amber.eyebrow": "LIMITED PICK UP",
   "lab.banner.amber.subtitle": "Die tollpatschige Aushilfe im Wolfscafé",
+  "lab.banner.moonlit.eyebrow": "LIMITED PICK UP",
+  "lab.banner.moonlit.subtitle": "Die sternensammelnde Juniorin beim Mondscheinpicknick",
   "lab.tag.standard": "Standardforschung",
   "lab.tag.limited": "Zeitlich begrenzt",
   "lab.tag.once": "Einmal pro Konto",

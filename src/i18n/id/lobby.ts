@@ -26,6 +26,8 @@ export const LOBBY_ID = {
   "event.remaining.minutes": "Sisa {value} menit",
   "event.wolfCafe.title": "Kafe Serigala yang Heboh",
   "event.wolfCafe.subtitle": "Event Pick Up Terbatas Dian!",
+  "event.moonPicnic.title": "Piknik di Bawah Langit Malam",
+  "event.moonPicnic.subtitle": "Event Pick Up Terbatas Plesha!",
   "event.attendance.newcomer.title": "Absen 7 Hari Periset Baru",
   "event.attendance.noDeadline": "Tanpa batas waktu!",
   "event.attendance.regular.title": "Absen Harian",

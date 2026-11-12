@@ -35,6 +35,8 @@ function pickupPools(pickups: Partial<Record<RelicRarity, string[]>>): Record<Re
 }
 
 const AMBER_PICKUP = { SSR: ["dian"] } as const satisfies Partial<Record<RelicRarity, string[]>>;
+/** 디안 다음 한정 픽업 — 물 SSR 지원가 플레샤(「밤하늘의 피크닉」). */
+const MOONLIT_PICKUP = { SSR: ["plesha"] } as const satisfies Partial<Record<RelicRarity, string[]>>;
 
 /**
  * **모든 연구가 같은 확률·같은 회색 보상을 쓴다.** 화석과 호박석의 한 번이 같은 값(젬 300)이려면
@@ -61,7 +63,7 @@ const STANDARD_GRAY_REWARDS = [
  * 같은 값을 쓰는 배너끼리만 천장·픽업 확정을 나눠 쓰는 운영 그룹이다. **새 픽업은 그룹을 새로 만든다** —
  * 이전 픽업의 천장은 이월하지 않는다(`banners.test`가 픽업 배너마다 그룹이 다른지 지킨다).
  */
-export const PITY_GROUP = { WELCOME: "welcome", STANDARD: "standard-fossil", LIMITED_PICKUP: "limited-pickup" } as const;
+export const PITY_GROUP = { WELCOME: "welcome", STANDARD: "standard-fossil", LIMITED_PICKUP: "limited-pickup", MOONLIT_PICKUP: "limited-pickup-moonlit" } as const;
 
 /**
  * 첫 복원 연구의 SSR 풀 — 네 직군이 한 명씩이다.
@@ -138,6 +140,20 @@ export const BANNERS: Banner[] = [
     relicPools: pickupPools(AMBER_PICKUP), pickupRelicIds: { SSR: [...AMBER_PICKUP.SSR] }, pickupRate: 0.5,
     highestRarityGuarantee: 120,
   },
+  {
+    /*
+     * **플레샤 한정 픽업**(응태 요청, 2026-11-12) — 디안 픽업과 나란히 서는 두 번째 호박석 연구다. 값·확률은 호박석
+     * 연구와 같고, **천장은 이월하지 않으므로 그룹이 따로다**(`bannerSchedule.test`) — 저장 이관이 현재 배너의 그룹을
+     * 모두 기본값으로 채운다. 다른 것은 픽업 대상과 원화(달빛 피크닉)뿐이다.
+     */
+    id: "moonlit", pityGroupId: PITY_GROUP.MOONLIT_PICKUP, name: "호박석 연구", featuredRelicId: "plesha",
+    artKey: BACKGROUND.recruitMoonPicnic,
+    currency: "amber", costOne: 1, costTen: 10,
+    slotRates: STANDARD_SLOT_RATES,
+    grayRewards: STANDARD_GRAY_REWARDS,
+    relicPools: pickupPools(MOONLIT_PICKUP), pickupRelicIds: { SSR: [...MOONLIT_PICKUP.SSR] }, pickupRate: 0.5,
+    highestRarityGuarantee: 120,
+  },
 ];
 
 /**
@@ -147,10 +163,6 @@ export const BANNERS: Banner[] = [
  * `researchBanners(false)`가 `BANNERS`만 돌려준다.
  */
 const AMBER_BANNER = BANNERS.find(({ id }) => id === "amber")!;
-/** 정식 배너가 서기 전, QA 픽업 배너가 먼저 깔 모집 원화. 정식 배너를 만들면 그 배너의 `artKey`로 옮긴다. */
-const QA_PICKUP_ART: Readonly<Record<string, string>> = {
-  plesha: BACKGROUND.recruitMoonPicnic,
-};
 export const QA_PICKUP_BANNER_PREFIX = "qa-pickup-";
 export const QA_PICKUP_BANNERS: readonly Banner[] = [...LIMITED_RELIC_IDS]
   .filter((relicId) => !BANNERS.some((banner) => Object.values(banner.pickupRelicIds).some((ids) => ids?.includes(relicId))))
@@ -159,7 +171,9 @@ export const QA_PICKUP_BANNERS: readonly Banner[] = [...LIMITED_RELIC_IDS]
     if (!relic) return [];
     const pickups = { [relic.rarity]: [relicId] } as Partial<Record<RelicRarity, string[]>>;
     return [{
-      ...AMBER_BANNER, id: `${QA_PICKUP_BANNER_PREFIX}${relicId}`, featuredRelicId: relicId, artKey: QA_PICKUP_ART[relicId],
+      ...AMBER_BANNER, id: `${QA_PICKUP_BANNER_PREFIX}${relicId}`, featuredRelicId: relicId,
+      // 다른 픽업의 원화를 빌리지 않는다 — 정식 배너가 서기 전에는 연구소 설비 원화가 자리를 메운다.
+      artKey: undefined,
       startsAt: undefined, endsAt: undefined, relicPools: pickupPools(pickups), pickupRelicIds: pickups,
     } satisfies Banner];
   });

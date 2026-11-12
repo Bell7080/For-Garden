@@ -10,7 +10,9 @@ describe("QA 전용 한정 픽업 배너", () => {
     const featured = new Set(BANNERS.flatMap((banner) => Object.values(banner.pickupRelicIds).flat()));
     const missing = [...LIMITED_RELIC_IDS].filter((id) => !featured.has(id));
     expect(QA_PICKUP_BANNERS.map((banner) => banner.featuredRelicId).sort()).toEqual(missing.sort());
-    expect(missing).toContain("plesha");
+    // 플레샤는 정식 픽업(`moonlit`)이 서서 QA 픽업에서 빠진다.
+    expect(featured.has("plesha")).toBe(true);
+    expect(missing).not.toContain("plesha");
     const amber = BANNERS.find(({ id }) => id === "amber")!;
     for (const banner of QA_PICKUP_BANNERS) {
       expect(banner.currency).toBe("amber");

@@ -26,6 +26,8 @@ export const LOBBY_ZH_HANT = {
   "event.remaining.minutes": "剩餘{value}分鐘",
   "event.wolfCafe.title": "手忙腳亂的狼咖啡店",
   "event.wolfCafe.subtitle": "蒂安限定UP活動！",
+  "event.moonPicnic.title": "夜空下的野餐",
+  "event.moonPicnic.subtitle": "普蕾莎限定UP活動！",
   "event.attendance.newcomer.title": "新人研究員7日簽到",
   "event.attendance.noDeadline": "沒有期限！",
   "event.attendance.regular.title": "每日簽到",

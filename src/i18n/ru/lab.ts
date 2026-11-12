@@ -52,6 +52,8 @@ export const LAB_RU = {
   "lab.banner.fossil.title": "Исследование окаменелостей",
   "lab.banner.amber.eyebrow": "LIMITED PICK UP",
   "lab.banner.amber.subtitle": "Неуклюжая подработчица «Волчьего кафе»",
+  "lab.banner.moonlit.eyebrow": "LIMITED PICK UP",
+  "lab.banner.moonlit.subtitle": "Младшая, собирающая звёзды на лунном пикнике",
   "lab.tag.standard": "Постоянное исследование",
   "lab.tag.limited": "Ограниченное время",
   "lab.tag.once": "Раз на аккаунт",

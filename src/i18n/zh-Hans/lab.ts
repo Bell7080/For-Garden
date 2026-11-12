@@ -52,6 +52,8 @@ export const LAB_ZH_HANS = {
   "lab.banner.fossil.title": "化石研究",
   "lab.banner.amber.eyebrow": "LIMITED PICK UP",
   "lab.banner.amber.subtitle": "手忙脚乱的狼咖啡店打工生",
+  "lab.banner.moonlit.eyebrow": "LIMITED PICK UP",
+  "lab.banner.moonlit.subtitle": "月夜野餐中拾星的学妹",
   "lab.tag.standard": "常驻研究",
   "lab.tag.limited": "限时",
   "lab.tag.once": "每个账号限1次",

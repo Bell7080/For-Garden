@@ -52,6 +52,8 @@ export const LAB_PT_BR = {
   "lab.banner.fossil.title": "Pesquisa de Fósseis",
   "lab.banner.amber.eyebrow": "LIMITED PICK UP",
   "lab.banner.amber.subtitle": "A atrapalhada atendente do Café do Lobo",
+  "lab.banner.moonlit.eyebrow": "LIMITED PICK UP",
+  "lab.banner.moonlit.subtitle": "A caloura que colhe estrelas no piquenique ao luar",
   "lab.tag.standard": "Pesquisa padrão",
   "lab.tag.limited": "Tempo limitado",
   "lab.tag.once": "Uma vez por conta",

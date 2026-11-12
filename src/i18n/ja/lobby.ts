@@ -34,6 +34,8 @@ export const LOBBY_JA = {
   "event.remaining.minutes": "残り{value}分",
   "event.wolfCafe.title": "ドタバタ狼カフェ",
   "event.wolfCafe.subtitle": "ディアン限定ピックアップイベント！",
+  "event.moonPicnic.title": "夜空のピクニック",
+  "event.moonPicnic.subtitle": "プレシャ限定ピックアップイベント！",
   "event.attendance.newcomer.title": "新人研究員 7日間ログイン",
   "event.attendance.noDeadline": "期限なし！",
   "event.attendance.regular.title": "通常ログイン",

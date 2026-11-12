@@ -26,6 +26,8 @@ export const LOBBY_PT_BR = {
   "event.remaining.minutes": "Restam {value} min",
   "event.wolfCafe.title": "O atrapalhado Café do Lobo",
   "event.wolfCafe.subtitle": "Evento de Pick Up limitado de Dian!",
+  "event.moonPicnic.title": "Piquenique sob o céu noturno",
+  "event.moonPicnic.subtitle": "Evento de Pick Up limitado de Plesha!",
   "event.attendance.newcomer.title": "Presença de 7 dias: novo pesquisador",
   "event.attendance.noDeadline": "Sem prazo!",
   "event.attendance.regular.title": "Presença diária",

@@ -52,6 +52,8 @@ export const LAB_TH = {
   "lab.banner.fossil.title": "วิจัยฟอสซิล",
   "lab.banner.amber.eyebrow": "LIMITED PICK UP",
   "lab.banner.amber.subtitle": "พนักงานพาร์ตไทม์ซุ่มซ่ามแห่งคาเฟ่หมาป่า",
+  "lab.banner.moonlit.eyebrow": "LIMITED PICK UP",
+  "lab.banner.moonlit.subtitle": "รุ่นน้องผู้เก็บดวงดาวแห่งปิกนิกใต้แสงจันทร์",
   "lab.tag.standard": "วิจัยถาวร",
   "lab.tag.limited": "จำกัดเวลา",
   "lab.tag.once": "บัญชีละ 1 ครั้ง",

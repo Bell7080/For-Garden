@@ -35,6 +35,8 @@ export const LOBBY_KO = {
   "event.remaining.minutes": "{value}분 남음",
   "event.wolfCafe.title": "우당탕탕 늑대 카페",
   "event.wolfCafe.subtitle": "디안 한정 픽업 이벤트!",
+  "event.moonPicnic.title": "밤하늘의 피크닉",
+  "event.moonPicnic.subtitle": "플레샤 한정 픽업 이벤트!",
   "event.attendance.newcomer.title": "신규 연구원 7일 출석",
   "event.attendance.noDeadline": "기한 없음!",
   "event.attendance.regular.title": "정규 출석",

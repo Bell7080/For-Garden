@@ -299,6 +299,7 @@ describe("운영 배너 데이터", () => {
       // 첫 복원 연구는 확률·회색 보상이 화석 연구와 같다. 다른 것은 풀·값·한도·확정뿐이다.
       welcome: { relicRPlus: [0.249, 0.251], gold: [3_499, 3_501], cheesecake: [26.24, 26.26] },
       amber: { relicRPlus: [0.249, 0.251], gold: [3_499, 3_501], cheesecake: [26.24, 26.26] },
+      moonlit: { relicRPlus: [0.249, 0.251], gold: [3_499, 3_501], cheesecake: [26.24, 26.26] },
     } as const;
 
     for (const candidate of BANNERS) {

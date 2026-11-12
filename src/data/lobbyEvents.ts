@@ -78,6 +78,19 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     endsAt: "2026-12-31T23:59:59+09:00",
   },
   {
+    // 플레샤 픽업 — 디안 카드와 같은 양식으로, 플레샤가 선 달빛 호박석 연구(`moonlit`)로 곧장 간다.
+    id: "moon-picnic",
+    titleKey: "event.moonPicnic.title",
+    subtitleKey: "event.moonPicnic.subtitle",
+    backdropKey: BACKGROUND.recruitMoonPicnic,
+    // 얼굴이 디안 원화보다 높고 조금 왼쪽에 있다 — 같은 배율로 두고 얼굴이 디안 카드와 같은 자리에 오게 더 내리고 옮긴다.
+    backdropFrame: { zoom: 1.22, offsetX: 170, offsetY: 515 },
+    sd: { relicId: "plesha", side: "right" },
+    destination: { kind: "lab", bannerId: "moonlit" },
+    startsAt: "2026-11-12T00:00:00+09:00",
+    endsAt: "2026-12-31T23:59:59+09:00",
+  },
+  {
     id: "research-roulette",
     titleKey: "event.roulette.title",
     subtitleKey: "event.roulette.subtitle",

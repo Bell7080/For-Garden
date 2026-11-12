@@ -16,7 +16,7 @@ import { bannerGuaranteePending, bannerPullsRemaining, pullCost, type Banner, ty
 import type { TextKey } from "../i18n";
 import { QA_PICKUP_BANNER_PREFIX } from "../data/banners";
 
-export type BannerTone = "welcome" | "standard" | "limited";
+export type BannerTone = "welcome" | "standard" | "limited" | "moonlit";
 
 export interface BannerToneStyle {
   /** 제목 글자에 위 → 가운데 → 아래로 흐르는 색. */
@@ -33,11 +33,14 @@ export interface BannerToneStyle {
  * - 상시(화석): 화석과 모래의 따뜻한 상아빛 — 늘 있는 판이라 들뜨지 않게.
  * - 한정(호박석): 호박의 금빛에서 다홍으로 — 가장 화려하다.
  * - 첫 복원: 모집 원화(크림 벽·버건디 리본·금 장식)에서 고른 크림 → 장미 → 와인빛. 한정의 금빛·상시의 상아빛과 갈린다.
+ * - 달빛(플레샤 픽업): 모집 원화(남빛 밤하늘·라벤더 풀밭)에서 고른 달빛 크림 → 페리윙클 → 보랏빛. 눈썹 줄·반짝이만
+ *   별빛 노랑이라 남보라 원화 위에서 떠오른다. 한정이라 반짝이는 디안 픽업과 같이 켠다.
  */
 export const BANNER_TONE: Record<BannerTone, BannerToneStyle> = {
   welcome: { gradient: ["#fff3e6", "#f7b6c6", "#c2456a"], accent: 0xf29ab2, tagFill: 0x9c3552 },
   standard: { gradient: ["#fffaf0", "#f1dcae", "#b98a4a"], accent: 0xe8c68a, tagFill: 0x8a6331 },
   limited: { gradient: ["#fff6cc", "#ffc247", "#e2582c"], accent: 0xffc247, tagFill: 0xc8452f },
+  moonlit: { gradient: ["#fffbea", "#c9d3ff", "#8a6fe8"], accent: 0xffe08a, tagFill: 0x5a46b4 },
 };
 
 /**
@@ -67,6 +70,10 @@ export const BANNER_PRESENTATION: Record<string, BannerPresentation> = {
   fossil: { tone: "standard", eyebrowKey: "lab.banner.fossil.eyebrow", title: { kind: "key", key: "lab.banner.fossil.title" }, titleSize: 76, sparkles: false },
   amber: {
     tone: "limited", eyebrowKey: "lab.banner.amber.eyebrow", title: { kind: "pickup" }, subtitleKey: "lab.banner.amber.subtitle",
+    titleSize: 104, sparkles: true,
+  },
+  moonlit: {
+    tone: "moonlit", eyebrowKey: "lab.banner.moonlit.eyebrow", title: { kind: "pickup" }, subtitleKey: "lab.banner.moonlit.subtitle",
     titleSize: 104, sparkles: true,
   },
 };

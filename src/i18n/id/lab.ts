@@ -52,6 +52,8 @@ export const LAB_ID = {
   "lab.banner.fossil.title": "Riset Fosil",
   "lab.banner.amber.eyebrow": "LIMITED PICK UP",
   "lab.banner.amber.subtitle": "Pekerja Paruh Waktu Ceroboh di Kafe Serigala",
+  "lab.banner.moonlit.eyebrow": "LIMITED PICK UP",
+  "lab.banner.moonlit.subtitle": "Adik Kelas Pemungut Bintang di Piknik Cahaya Bulan",
   "lab.tag.standard": "Riset Standar",
   "lab.tag.limited": "Waktu Terbatas",
   "lab.tag.once": "Sekali per Akun",

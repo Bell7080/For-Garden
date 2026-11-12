@@ -26,6 +26,8 @@ export const LOBBY_DE = {
   "event.remaining.minutes": "Noch {value} Min.",
   "event.wolfCafe.title": "Das chaotische Wolfscafé",
   "event.wolfCafe.subtitle": "Limitiertes Dian-Pick-Up-Event!",
+  "event.moonPicnic.title": "Picknick unter dem Nachthimmel",
+  "event.moonPicnic.subtitle": "Limitiertes Plesha-Pick-Up-Event!",
   "event.attendance.newcomer.title": "7-Tage-Anmeldung für neue Forschende",
   "event.attendance.noDeadline": "Keine Frist!",
   "event.attendance.regular.title": "Tägliche Anmeldung",

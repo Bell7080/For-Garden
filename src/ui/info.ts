@@ -85,7 +85,7 @@ import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, bre
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveNowKeyword, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, plumeBurstKeyword, frostbiteKeyword, prickleReflectKeyword, skillDescription } from "./skillPresentation";
+import { attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, periodicStackKeyword, plumeKeyword, frostbiteKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { SummonInfoPopup } from "./SummonInfoPopup";
 import { openRelicFeedMaxPopup, openRelicResetPopup } from "./RelicResetPopup";
@@ -3562,34 +3562,12 @@ export function buildFerocityViewModel(
 ): SkillInfoViewModel {
   // 피해 수치가 있는 폭주만 현재 능력치로 환산한다. 토리카의 새 탱커 계약은 자체 실제값을 그대로 보여 준다.
   const { atk: attack, def: defense, ap: abilityPower } = def.stats;
-  const defensePercent = def.ferocityTrait.effectId === "splashDamage" ? def.ferocityTrait.defenseDamagePercent : undefined;
-  const attackPercent = def.ferocityTrait.effectId === "crescendoStaccato" ? def.ferocityTrait.damagePercent
-    : def.ferocityTrait.effectId === "overclock" ? def.ferocityTrait.auraDamagePercent : undefined;
-  const abilityPercent = def.ferocityTrait.effectId === "graffitiRun" ? def.ferocityTrait.auraDamagePercent : undefined;
-  // 남아 있는 공격형 폭주 추가 피해도 일반 스킬과 같은 수치 링크를 써서 별도 팝업을 만들지 않는다.
-  const convertedDamage = defensePercent !== undefined ? Math.round(defense * defensePercent / 100)
-    : attackPercent !== undefined ? Math.round(attack * attackPercent / 100)
-    : abilityPercent !== undefined ? Math.round(abilityPower * abilityPercent / 100) : undefined;
-  const damageSourceLabel = t(defensePercent !== undefined ? "skill.stat.def" : abilityPercent !== undefined ? "skill.stat.ap" : "skill.stat.atk");
   // 무리를 함께 폭주시키는 지휘자는 **무엇이 오르는지를 늑대 쪽지가 말한다.** 이름을 눌러 열 수 있어야 한다.
   const contextualKeywords: KeywordDef[] = [...(options.summonTags ?? buildSummonKeywords(def, def.stats))];
-  // 금강불괴가 덮는 막도 퍼센트가 아니라 실제로 덮이는 값으로 보여 준다.
-  if (def.ferocityTrait.effectId === "adamantBody" || def.ferocityTrait.effectId === "furCoat") contextualKeywords.push({
-    id: "shield-value", term: String(Math.round(def.stats.hp * def.ferocityTrait.shieldMaxHpPercent / 100)), kind: "rule",
-    description: t("skill.keyword.shield.fromMaxHp", { percent: def.ferocityTrait.shieldMaxHpPercent }),
-  });
-  if (def.ferocityTrait.effectId === "overclock") contextualKeywords.push({
-    id: "shield-value", term: String(Math.round(attack * def.ferocityTrait.shieldAttackPercent / 100)), kind: "rule",
-    description: t("skill.keyword.shield.fromAttack", { percent: def.ferocityTrait.shieldAttackPercent }),
-  });
-  if (convertedDamage !== undefined) contextualKeywords.push({
-    id: "damage-value", term: String(convertedDamage), kind: "rule",
-    description: t("skill.keyword.damage.bonus", { stat: damageSourceLabel, percent: defensePercent ?? attackPercent ?? abilityPercent }),
-  });
-  for (const tag of [plumeKeyword(def, attack), frostbiteKeyword(def, attack), plumeBurstKeyword(def, attack)]) if (tag) contextualKeywords.push(tag);
+  for (const tag of [plumeKeyword(def, attack), frostbiteKeyword(def, attack)]) if (tag) contextualKeywords.push(tag);
   // 전장의 열기는 희열의 회복량을 키우므로 그 태그를 이 쪽지에서도 눌러 읽게 한다.
   if (def.ferocityTrait.effectId === "battleHeat") {
-    const elation = elationKeyword(def.passive);
+    const elation = elationKeyword(def.passive, def.stats.hp);
     if (elation) contextualKeywords.push(elation);
   }
   // 야근, 싫어는 리필과 마지막 한 방울을 가리키므로 그 태그를 이 쪽지에서도 눌러 읽게 한다.
@@ -3598,7 +3576,8 @@ export function buildFerocityViewModel(
   }
   // 카페인 풍선껌은 까칠이 쌓이는 속도를 바꾸므로 그 태그를 이 쪽지에서도 눌러 읽게 한다.
   if (def.ferocityTrait.effectId === "caffeineBubble") {
-    for (const tag of [prickleKeyword(def.passive, abilityPower), prickleReflectKeyword(def.passive, abilityPower)]) if (tag) contextualKeywords.push(tag);
+    const prickle = prickleKeyword(def.passive, { ap: abilityPower, maxHp: def.stats.hp });
+    if (prickle) contextualKeywords.push(prickle);
   }
   // 메테의 스타카토 추가타는 기본 공격과 같은 효과를 다시 부르는 것이므로 그 뜻을 여기서 짧게 설명한다.
   if (def.ferocityTrait.effectId === "crescendoStaccato") contextualKeywords.push({
@@ -3654,19 +3633,9 @@ export function buildSkillViewModel(options: {
     energy: 0, ferocity: 0, bondLevel: 0, ferocityFever: false,
     breakthrough: options.breakthrough,
   };
-  // 최대 체력 비례 보호막은 **퍼센트가 아니라 실제로 덮이는 값**으로 보여 준다. 성장한
-  // 정의를 읽으므로 레벨·룬으로 체력이 변하면 그 숫자도 함께 변한다.
+  // 비례 보호막·회복은 본문이 실제 수치 태그로 세운다(누르면 산출 근거가 열린다).
   const maxHp = attacker?.def.stats.hp;
-  const guardShield = "selfGuard" in skill && skill.selfGuard !== undefined && !skill.selfGuard.pullOnly && maxHp !== undefined
-    ? Math.round(maxHp * skill.selfGuard.shieldMaxHpPercent / 100) : undefined;
-  // 저항력에서 나오는 막(자장가)과 회복(백색소음)도 실제 값으로 보여 준다.
   const resistance = attacker?.def.stats.res;
-  const lullabyShield = "selfLullaby" in skill && skill.selfLullaby !== undefined && resistance !== undefined
-    ? Math.round(resistance * skill.selfLullaby.shieldResistancePercent / 100) : undefined;
-  const roar = "selfRoar" in skill ? skill.selfRoar : undefined;
-  const whiteNoise = "kind" in skill ? (skill as Passive).whiteNoise : undefined;
-  const whiteNoiseHeal = whiteNoise !== undefined && resistance !== undefined
-    ? Math.round(resistance * whiteNoise.healResistancePercent / 100) : undefined;
   // 공격 속도 복합 궁극기(스피나 등)는 위력만 보는 previewSkillDamage로는 실제 한 방의
   // 절반만 계산되므로, 상단 라벨과 본문이 같은 하나의 합산 수치를 쓰도록 먼저 따로 구한다.
   const attackSpeedPower = "attackSpeedPower" in skill ? (skill as Ultimate).attackSpeedPower : undefined;
@@ -3698,9 +3667,6 @@ export function buildSkillViewModel(options: {
   // 돌파 줄이 실제 값으로 말하는 수는 그 자리에서 산출 근거를 물을 수 있어야 한다. 스킬 본문의
   // `heal-value`와 ID가 달라 한 쪽지에 두 회복 수치가 함께 서도 서로 덮어쓰지 않는다.
   const breakthroughTags = breakthroughEffect && slot ? breakthroughEffectKeywords(finalDef, slot, finalDef.stats) : [];
-  const shieldDetail = "kind" in skill ? passiveShieldKeyword(skill as Passive, attacker?.def.stats.atk) : undefined;
-  const allyHealingPower = "allyHealingPower" in skill ? (skill as Ultimate).allyHealingPower : undefined;
-  const healDetail = allyHealingPower !== undefined ? allyHealPowerKeyword(allyHealingPower, attacker?.def.stats.ap) : undefined;
   const guardPercent = "kind" in skill && skill.kind === "droneLink" ? (skill as Passive).droneLink?.defenseResistancePercent : undefined;
   const valueLabel = compositeDamage
     ? t("skill.label.compositeDamage", { amount: compositeDamage.term })
@@ -3730,55 +3696,28 @@ export function buildSkillViewModel(options: {
       ...summonTags,
       ...(guardPercent === undefined ? [] : defenseGainKeywords(finalDef.stats, guardPercent)),
       ...breakthroughTags,
-      damageDetail, shieldDetail, healDetail,
+      damageDetail,
       ...shimmerBurstKeywords(skill, attacker === undefined ? undefined : { ap: attacker.def.stats.ap, maxHp: attacker.def.stats.hp }),
-      "kind" in skill ? passiveNowKeyword(skill as Passive, attacker === undefined ? undefined : { ap: attacker.def.stats.ap, maxHp: attacker.def.stats.hp }) : undefined,
-      "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
+      "kind" in skill ? undefined : periodicStackKeyword(skill as Skill, finalDef.stats),
       // 서리깃은 유티의 평타·궁극기 본문이 가리키는 개체 전용 규칙어라 그 쪽지에서 눌러 읽게 한다.
       plumeKeyword(finalDef, finalDef.stats.atk),
       frostbiteKeyword(finalDef, finalDef.stats.atk),
-      plumeBurstKeyword(finalDef, finalDef.stats.atk),
       // 리필·마지막 한 방울은 테쿠의 패시브·평타·궁극기 본문이 가리키는 개체 전용 규칙어다.
       refillKeyword(finalDef),
       lastDropKeyword(finalDef),
       // 희열은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다. 궁극기(끝까지 채운다)와
       // 기본 공격(겹마다 피해가 오른다)도 같은 태그를 가리키므로 그 쪽지에도 실린다.
       "kind" in skill
-        ? elationKeyword(skill as Passive)
+        ? elationKeyword(skill as Passive, finalDef.stats.hp)
         : ("selfBulwark" in skill && skill.selfBulwark?.passiveHealBonusPercent !== undefined)
           || ("elationDamagePercentPerStack" in skill && skill.elationDamagePercentPerStack !== undefined)
-          ? elationKeyword(finalDef.passive) : undefined,
+          ? elationKeyword(finalDef.passive, finalDef.stats.hp) : undefined,
       // 까칠은 패시브 본문이 가리키는 태그라 그 쪽지에도 실리고, 평타·궁극기가 겹을 쌓을 때도 같은 태그를 가리킨다.
       "kind" in skill
-        ? prickleKeyword(skill as Passive, finalDef.stats.ap)
+        ? prickleKeyword(skill as Passive, { ap: finalDef.stats.ap, maxHp: finalDef.stats.hp })
         : ("prickleGain" in skill && skill.prickleGain !== undefined)
           || ("selfGuard" in skill && skill.selfGuard?.prickleGain !== undefined)
-          ? prickleKeyword(finalDef.passive, finalDef.stats.ap) : undefined,
-      prickleReflectKeyword("kind" in skill ? skill as Passive : finalDef.passive, finalDef.stats.ap),
-      "selfShieldMaxHpPercent" in skill && skill.selfShieldMaxHpPercent !== undefined ? {
-        id: "shield-value", term: String(Math.round(finalDef.stats.hp * skill.selfShieldMaxHpPercent / 100)), kind: "rule" as const,
-        description: t("skill.keyword.shield.fromMaxHp", { percent: skill.selfShieldMaxHpPercent }),
-      } : undefined,
-      // 「인」이 덮는 막도 실제 값으로 보여 주고, 어디서 나온 수인지 눌러 읽게 한다.
-      guardShield === undefined || !("selfGuard" in skill) || skill.selfGuard === undefined ? undefined : {
-        id: "shield-value", term: String(guardShield), kind: "rule" as const,
-        description: t("skill.keyword.shield.fromMaxHp", { percent: skill.selfGuard.shieldMaxHpPercent }),
-      },
-      lullabyShield === undefined || !("selfLullaby" in skill) || skill.selfLullaby === undefined ? undefined : {
-        id: "shield-value", term: String(lullabyShield), kind: "rule" as const,
-        description: t("skill.keyword.shield.fromStat", { stat: t("skill.stat.res"), percent: skill.selfLullaby.shieldResistancePercent }),
-      },
-      // 포효의 막은 기본 몫과 한 명당 몫이 함께 서므로 태그 하나가 둘을 한 문장으로 말한다(같은 id는 첫 항목만 읽힌다).
-      roar === undefined || maxHp === undefined ? undefined : {
-        id: "shield-value", term: String(Math.round(maxHp * roar.shieldMaxHpPercent / 100)), kind: "rule" as const,
-        description: t("skill.keyword.shield.fromRoar", {
-          base: roar.shieldMaxHpPercent, per: roar.shieldPerFearedMaxHpPercent, max: roar.shieldMaxFeared,
-        }),
-      },
-      whiteNoiseHeal === undefined || whiteNoise === undefined ? undefined : {
-        id: "heal-value", term: String(whiteNoiseHeal), kind: "rule" as const,
-        description: t("skill.keyword.heal.fromStat", { stat: t("skill.stat.res"), percent: whiteNoise.healResistancePercent }),
-      },
+          ? prickleKeyword(finalDef.passive, { ap: finalDef.stats.ap, maxHp: finalDef.stats.hp }) : undefined,
     ].filter((item): item is KeywordDef => item !== undefined),
     keywordActions: options.summonActions,
     // 정적 문장에서 수치를 재해석하지 않고 전투 정의를 그대로 팝업에 넘긴다.

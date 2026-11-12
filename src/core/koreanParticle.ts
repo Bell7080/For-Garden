@@ -34,6 +34,8 @@ const DIGITS_WITH_FINAL = new Set(["0", "1", "3", "6", "7", "8"]);
 
 /** 마지막 글자에 받침이 있는가. 판단할 글자가 없으면 없는 쪽으로 본다. */
 export function hasFinalConsonant(value: string): boolean {
+  // `30%`는 「퍼센트」로 읽으므로 받침이 없다.
+  if (/%[^0-9A-Za-z가-힣%]*$/.test(value)) return false;
   const char = lastSpokenChar(value);
   if (char === undefined) return false;
   if (DIGITS_WITH_FINAL.has(char)) return true;

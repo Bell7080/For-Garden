@@ -8,7 +8,7 @@ describe("전체 개체의 돌파·기본 스킬 설명", () => {
   it("아모의 보호막 현재 수치는 자신 기준임을 아군 보호막과 구분한다", () => {
     const def = getRelic("amo");
     const text = breakthroughEffectText(def, "passive", { ...def.stats, hp: 1000 });
-    expect(text).toContain("자신 (현재 [[breakthrough-now|160]])");
+    expect(text).toContain("자신: [[v-shield-hp-16-1000|160]]");
     expect(text).toContain("해당 아군 최대 체력의 8%");
   });
 

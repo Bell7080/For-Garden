@@ -24,86 +24,95 @@ describe("설명문 수치 강조 조각", () => {
 
 import { RELICS } from "../../src/data/relics";
 import { parseKeywordText } from "../../src/data/keywords";
-import { frostbiteKeyword, plumeBurstKeyword, plumeKeyword, prickleKeyword, prickleReflectKeyword } from "../../src/ui/skillPresentation";
+import { resolveValueTag, valueTag } from "../../src/data/valueTags";
+import {
+  breakthroughEffectText, frostbiteKeyword, passiveDescription, plumeKeyword, prickleKeyword, shimmerBurstKeywords, skillDescription,
+} from "../../src/ui/skillPresentation";
 
-describe("개체 전용 쪽지의 현재 수치 태그", () => {
-  it("유티 동상 쪽지는 공격력으로 환산한 피해를 태그로 달고, 서리깃 쪽지는 동상 태그로 넘긴다", () => {
-    const yuti = RELICS.find((relic) => relic.id === "yuti")!;
-    const burst = plumeBurstKeyword(yuti, 500)!;
-    expect(burst.term).toBe("600");
-    const frost = frostbiteKeyword(yuti, 500)!;
-    const tagged = parseKeywordText(frost.description, [burst]).find((segment) => segment.keyword?.id === "plume-burst");
-    expect(tagged?.text).toBe("600");
-    expect(frostbiteKeyword(yuti)!.description).not.toContain("plume-burst");
-    const plume = plumeKeyword(yuti, 500)!;
-    expect(parseKeywordText(plume.description, [frost]).some((segment) => segment.keyword?.id === "yuti-frostbite")).toBe(true);
-    expect(plume.description).not.toContain("%");
-    expect(plumeBurstKeyword(yuti)).toBeUndefined();
+describe("능력치 환산 수치 태그", () => {
+  it("는 근거를 ID에 싣고 다녀 문맥 사전 없이도 쪽지가 열린다", () => {
+    const tag = valueTag("shield", "ap", 30, 420);
+    expect(tag).toBe("[[v-shield-ap-30-420|126]]");
+    const segment = parseKeywordText(`막 ${tag}`).find((entry) => entry.keyword !== undefined);
+    expect(segment?.text).toBe("126");
+    expect(segment?.keyword?.description).toContain("30%");
+    expect(segment?.keyword?.description).toContain("420");
   });
 
-  it("켄토 까칠 쪽지는 주문력으로 환산한 겹당 반격 피해를 태그로 단다", () => {
-    const kento = RELICS.find((relic) => relic.passive.kind === "prickly")!;
-    const percent = kento.passive.prickle!.reflectApPercentPerStack;
-    const reflect = prickleReflectKeyword(kento.passive, 400)!;
-    expect(reflect.term).toBe(String(Math.round(400 * percent / 100)));
-    expect(prickleKeyword(kento.passive, 400)!.description).toContain("[[prickle-reflect|");
-    expect(prickleKeyword(kento.passive)!.description).not.toContain("prickle-reflect");
+  it("는 소수점 비율을 p로 실어 되읽는다", () => {
+    const tag = valueTag("heal", "hp", 0.3, 2000);
+    expect(tag).toBe("[[v-heal-hp-0p3-2000|6]]");
+    const def = resolveValueTag("v-heal-hp-0p3-2000")!;
+    expect(def.term).toBe("6");
+    expect(def.description).toContain("0.3%");
+    expect(resolveValueTag("v-heal-mp-10-100")).toBeUndefined();
+    expect(resolveValueTag("shield-value")).toBeUndefined();
   });
 });
 
-import { breakthroughEffectKeywords, breakthroughEffectText } from "../../src/ui/skillPresentation";
+describe("개체 전용 쪽지의 현재 수치 태그", () => {
+  it("유티 동상 쪽지는 공격력으로 환산한 피해를 수치 태그로 달고, 능력치를 모르면 비율로 말한다", () => {
+    const yuti = RELICS.find((relic) => relic.id === "yuti")!;
+    const frost = frostbiteKeyword(yuti, 500)!;
+    expect(frost.description).toMatch(/\[\[v-damage-atk-[\dp]+-500\|600\]\]/);
+    expect(frostbiteKeyword(yuti)!.description).not.toContain("[[v-");
+    const plume = plumeKeyword(yuti, 500)!;
+    expect(parseKeywordText(plume.description, [frost]).some((segment) => segment.keyword?.id === "yuti-frostbite")).toBe(true);
+    expect(plume.description).not.toContain("%");
+  });
 
-describe("돌파 효과의 현재 수치 태그", () => {
+  it("켄토 까칠 쪽지는 주문력으로 환산한 겹당 반격 피해를 수치 태그로 단다", () => {
+    const kento = RELICS.find((relic) => relic.passive.kind === "prickly")!;
+    const percent = kento.passive.prickle!.reflectApPercentPerStack;
+    const text = prickleKeyword(kento.passive, { ap: 400, maxHp: 1000 })!.description;
+    expect(text).toContain(`|${Math.round(400 * percent / 100)}]]`);
+    expect(text).toContain("[[v-damage-ap-");
+    expect(prickleKeyword(kento.passive)!.description).not.toContain("[[v-");
+  });
+});
+
+describe("돌파·패시브의 수치 태그", () => {
   const slots = ["basic", "ultimate", "passive"] as const;
-  it("능력치 비례 효과는 문장 끝 태그와 쪽지 사전이 같은 수를 가진다", () => {
+  it("능력치 비례 돌파 효과는 능력치가 있을 때만 수치 태그가 서고, 태그는 제 근거로 풀린다", () => {
     let checked = 0;
     for (const relic of RELICS) {
       for (const slot of slots) {
         const text = breakthroughEffectText(relic, slot, relic.stats);
-        const tagged = text?.match(/\[\[breakthrough-now\|(\d+)\]\]/);
-        if (!tagged) continue;
+        const tags = [...(text ?? "").matchAll(/\[\[(v-[^|\]]+)\|(\d+)\]\]/g)];
+        if (tags.length === 0) continue;
         checked++;
-        const keyword = breakthroughEffectKeywords(relic, slot, relic.stats).find((entry) => entry.id === "breakthrough-now");
-        expect(keyword?.term).toBe(tagged[1]);
-        expect(breakthroughEffectText(relic, slot)).not.toContain("breakthrough-now");
+        for (const [, id, shown] of tags) expect(resolveValueTag(id)?.term, `${relic.id} ${slot}`).toBe(shown);
+        expect(breakthroughEffectText(relic, slot)).not.toContain("[[v-");
       }
     }
     expect(checked).toBeGreaterThan(5);
   });
-});
 
-import { passiveDescription, passiveNowKeyword } from "../../src/ui/skillPresentation";
-
-describe("패시브의 현재 수치 태그", () => {
-  it("능력치 비례 패시브는 문장 끝 태그와 사전이 같은 수를 가진다", () => {
+  it("능력치 비례 패시브는 능력치가 있을 때만 수치 태그가 선다", () => {
     const own = { ap: 400, maxHp: 1000 };
     let checked = 0;
     for (const relic of RELICS) {
       const text = passiveDescription(relic.passive, relic.stats.atk, undefined, own);
-      const tagged = text.match(/\[\[passive-now\|(\d+)\]\]/);
-      if (!tagged) continue;
+      const tags = [...text.matchAll(/\[\[(v-[^|\]]+)\|(\d+)\]\]/g)];
+      if (tags.length === 0) continue;
       checked++;
-      expect(passiveNowKeyword(relic.passive, own)?.term).toBe(tagged[1]);
-      expect(passiveDescription(relic.passive, relic.stats.atk)).not.toContain("passive-now");
+      for (const [, id, shown] of tags) expect(resolveValueTag(id)?.term).toBe(shown);
     }
     expect(checked).toBeGreaterThanOrEqual(3);
   });
 });
 
-import { skillDescription, shimmerBurstKeywords } from "../../src/ui/skillPresentation";
-
 describe("티아 첨벙! 태그", () => {
-  it("일반 공격 본문은 첨벙!을 가리키기만 하고, 수치와 현재 값은 그 태그가 갖는다", () => {
+  it("일반 공격 본문은 첨벙!을 가리키기만 하고, 수치는 그 태그가 환산해 갖는다", () => {
     const skill = RELICS.flatMap((relic) => [relic.basic, relic.ultimate]).find((entry) => "shimmerBurst" in entry && entry.shimmerBurst !== undefined)!;
     const stats = { ap: 400, maxHp: 1000 };
     const text = skillDescription(skill, stats);
     const keywords = shimmerBurstKeywords(skill, stats);
-    expect(keywords.map((keyword) => keyword.id)).toEqual(["tia-splash", "shimmer-burst-damage", "shimmer-burst-shield"]);
-    const [splash, ...values] = keywords;
+    expect(keywords.map((keyword) => keyword.id)).toEqual(["tia-splash"]);
+    const [splash] = keywords;
     expect(text).toContain(`[[tia-splash|${splash.term}]]`);
     expect(text).not.toContain("50%");
-    for (const keyword of values) expect(splash.description).toContain(`[[${keyword.id}|${keyword.term}]]`);
-    expect(shimmerBurstKeywords(skill).map((keyword) => keyword.id)).toEqual(["tia-splash"]);
-    expect(shimmerBurstKeywords(skill)[0].description).not.toContain("shimmer-burst");
+    expect(splash.description).toContain("[[v-damage-ap-");
+    expect(shimmerBurstKeywords(skill)[0].description).not.toContain("[[v-");
   });
 });

@@ -1,5 +1,4 @@
 import { defenseGainKeywords, statGainAlias } from "./statGainKeywords";
-import { formatEffectDescription } from "./skillExplanation";
 import type { DamagePreview } from "../core/damage";
 import { findKeyword, type KeywordDef } from "../data/keywords";
 import type { KeywordTextOptions } from "../managers/KeywordManager";
@@ -9,10 +8,20 @@ import type { ScalingStatId } from "../core/damage";
 import { t } from "../i18n";
 import { PUP } from "../core/pup";
 import { BLEED } from "../core/skirmish";
+import { valueTag, type ValueTagKind, type ValueTagStat } from "../data/valueTags";
 
 /** 능력치 이름은 스킬 본문·태그·돌파 줄이 모두 같은 표에서 고른다. */
 function statName(stat: ScalingStatId | "res"): string {
   return t(`skill.stat.${stat}`);
+}
+
+/**
+ * 능력치 비례 수치 하나 — 능력치를 알면 실제 값을 수치 태그로(누르면 「주문력의 30% (주문력 420 기준)」),
+ * 모르면(도감 등) 「주문력의 30%」로 적는다. 비례 수치를 받는 문구 자리는 모두 이 함수를 지난다.
+ */
+function scaled(kind: ValueTagKind, stat: ValueTagStat, percent: number, base?: number): string {
+  const trimmed = Math.round(percent * 1000) / 1000;
+  return base === undefined ? t("skill.value.scaling", { stat: statName(stat), percent: trimmed }) : valueTag(kind, stat, trimmed, base);
 }
 
 /**
@@ -80,7 +89,7 @@ function attackDamageTerm(power: number, stats: SkillDescriptionStats): string {
   const type = t("skill.damageType.physical");
   return stats.atk === undefined
     ? t("skill.damage.scaling", { stat: statName("atk"), percent: power, type })
-    : t("skill.damage.value", { amount: Math.round(stats.atk.atk * power / 100), type });
+    : t("skill.damage.amount", { amount: valueTag("damage", "atk", power, stats.atk.atk), type });
 }
 
 export function damageKeyword(preview?: DamagePreview): KeywordDef | undefined {
@@ -107,7 +116,7 @@ export function damageKeyword(preview?: DamagePreview): KeywordDef | undefined {
  * **태그 본문에는 또 다른 태그를 두지 않는다** — 태그 팝업이 여는 설명은 화면의 임시 사전을
  * 물려받지 못해, 그 안의 동적 태그는 눌러도 아무것도 열리지 않는다. 덧칠·손질처럼 낱말만 적는다.
  */
-export function periodicStackKeyword(skill: DescribedSkill): KeywordDef | undefined {
+export function periodicStackKeyword(skill: DescribedSkill, stats?: Partial<Record<ValueTagStat, number>>): KeywordDef | undefined {
   if (!("statusEffectStackName" in skill)) return undefined;
   const name = skill.statusEffectStackName;
   const every = skill.statusEffectEvery;
@@ -115,7 +124,7 @@ export function periodicStackKeyword(skill: DescribedSkill): KeywordDef | undefi
   const parts: string[] = [];
   const bonus = skill.periodicBonusScaling;
   if (bonus !== undefined) {
-    parts.push(t("skill.stack.bonus", { stat: statName(bonus.stat), percent: bonus.power }));
+    parts.push(t("skill.stack.bonus", { percent: scaled("damage", bonus.stat, bonus.power, stats?.[bonus.stat]) }));
   }
   for (const effect of skill.statusEffects ?? []) {
     const text = statusEffectClause(effect);
@@ -180,10 +189,9 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   }
   if (trait.effectId === "packHunt") return t("skill.ferocity.packHunt", { seconds: trait.stealthDurationSeconds, percent: trait.sharedTargetAttackSpeedPercent });
   if (trait.effectId === "crescendoStaccato") {
-    const converted = stats === undefined ? undefined : Math.round(stats.attack * trait.damagePercent / 100);
-    const damage = converted === undefined
+    const damage = stats === undefined
       ? t("skill.ferocity.crescendoStaccato.power", { percent: trait.damagePercent })
-      : t("skill.ferocity.crescendoStaccato.amount", { amount: converted });
+      : t("skill.ferocity.crescendoStaccato.amount", { amount: valueTag("damage", "atk", trait.damagePercent, stats.attack) });
     return t("skill.ferocity.crescendoStaccato", { damage });
   }
   if (trait.effectId === "pontusRage") return t("skill.ferocity.pontusRage", { percent: trait.maxHpDamagePercentPerSecond });
@@ -199,7 +207,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "adamantBody") {
     const shield = stats?.maxHp === undefined
       ? t("skill.ferocity.adamantBody.shieldPercent", { percent: trait.shieldMaxHpPercent })
-      : `[[shield-value|${Math.round(stats.maxHp * trait.shieldMaxHpPercent / 100)}]]`;
+      : valueTag("shield", "hp", trait.shieldMaxHpPercent, stats.maxHp);
     return t("skill.ferocity.adamantBody", { shield, attacks: trait.hastenedAttacks, percent: trait.attackSpeedPercent });
   }
   if (trait.effectId === "venomousEncore") {
@@ -218,23 +226,20 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   // 것이고, 그 뒤에 서 있는 동안의 지속 피해와 희열의 회복 증가가 온다.
   if (trait.effectId === "battleHeat") {
     return t("skill.ferocity.battleHeat", {
-      percent: trait.auraDamageMaxHpPercent, seconds: trait.taunt.seconds,
+      percent: scaled("damage", "hp", trait.auraDamageMaxHpPercent, stats?.maxHp), seconds: trait.taunt.seconds,
       healPercent: trait.elationHealBonusPercent,
     });
   }
   // 때리지 않는다는 것을 먼저 말한다 — 이 폭주에서 플레이어가 화면으로 확인할 첫 변화가
   // "평타가 멈췄다"이고, 그래서 도발도 함께 멈춘다. 뒤에 붙는 절이 그 대가로 무엇을 얻는지다.
   if (trait.effectId === "graffitiRun") {
-    const converted = stats?.abilityPower === undefined ? undefined : Math.round(stats.abilityPower * trait.auraDamagePercent / 100);
-    const damage = converted === undefined
-      ? t("skill.value.scaling", { stat: statName("ap"), percent: trait.auraDamagePercent })
-      : `[[damage-value|${converted}]]`;
+    const damage = scaled("damage", "ap", trait.auraDamagePercent, stats?.abilityPower);
     // 도발이 평타가 아니라 이 지속 피해에 붙어 있다는 것이 이 폭주의 전부라, 한 문장에 함께 적는다.
     return t("skill.ferocity.graffitiRun", { percent: trait.moveSpeedPercent, damage, seconds: trait.taunt.seconds });
   }
   if (trait.effectId === "furCoat") {
     if (stats?.maxHp !== undefined && stats.resistance !== undefined) return t("skill.ferocity.furCoat.actual", {
-      shield: `[[shield-value|${Math.round(stats.maxHp * trait.shieldMaxHpPercent / 100)}]]`,
+      shield: valueTag("shield", "hp", trait.shieldMaxHpPercent, stats.maxHp),
       defense: statGainAlias("def", stats.defense, trait.defenseResistancePercent),
       resistance: statGainAlias("res", stats.resistance, trait.defenseResistancePercent),
     });
@@ -275,10 +280,10 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     // 보호막·광역 피해 모두 **모르페 자신의 공격력**에서 나온다 — 능력치를 알면 실제 값으로, 모르면 비율로 적는다.
     const shield = stats === undefined
       ? t("skill.ferocity.overclock.shieldPercent", { percent: trait.shieldAttackPercent })
-      : `[[shield-value|${Math.round(stats.attack * trait.shieldAttackPercent / 100)}]]`;
+      : valueTag("shield", "atk", trait.shieldAttackPercent, stats.attack);
     const damage = stats === undefined
       ? t("skill.damage.scaling", { stat: statName("atk"), percent: trait.auraDamagePercent, type: t("skill.damageType.physical") })
-      : t("skill.damage.value", { amount: Math.round(stats.attack * trait.auraDamagePercent / 100), type: t("skill.damageType.physical") });
+      : t("skill.damage.amount", { amount: valueTag("damage", "atk", trait.auraDamagePercent, stats.attack), type: t("skill.damageType.physical") });
     return t("skill.ferocity.overclock", { percent: trait.attackSpeedPercent, shield, damage });
   }
   if (trait.effectId === "caffeineBubble") {
@@ -332,7 +337,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     : t("skill.ferocity.splash.speed", { percent: trait.attackSpeedBonusPercent });
   const converted = trait.defenseDamagePercent === undefined || stats === undefined
     ? undefined
-    : Math.round(stats.defense * trait.defenseDamagePercent / 100);
+    : valueTag("damage", "def", trait.defenseDamagePercent, stats.defense);
   const bonus = trait.defenseDamagePercent === undefined
     ? t("skill.ferocity.splash.bonusRatio", { percent: trait.damagePercent })
     : converted === undefined
@@ -351,7 +356,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
  * 주입한다 — 메테의 스타카토와 같은 자리다. 문장은 실제 전투가 읽는 필드에서 지으므로
  * 겹 상한이나 비율을 조정하면 팝업도 함께 바뀐다.
  */
-export function elationKeyword(passive: Passive): KeywordDef | undefined {
+export function elationKeyword(passive: Passive, maxHp?: number): KeywordDef | undefined {
   const plan = passive.elation;
   if (passive.kind !== "painfulElation" || plan === undefined) return undefined;
   return {
@@ -359,7 +364,7 @@ export function elationKeyword(passive: Passive): KeywordDef | undefined {
     term: t("skill.keyword.elation.term"),
     kind: "buff",
     description: t("skill.keyword.elation.description", {
-      percent: plan.maxHpRegenPercentPerStack, stacks: plan.maxStacks, seconds: plan.seconds,
+      percent: scaled("heal", "hp", plan.maxHpRegenPercentPerStack, maxHp), stacks: plan.maxStacks, seconds: plan.seconds,
     }),
   };
 }
@@ -387,24 +392,14 @@ export function plumeKeyword(def: RelicDef, _atk?: number): KeywordDef | undefin
 export function frostbiteKeyword(def: RelicDef, atk?: number): KeywordDef | undefined {
   const plume = def.basic.statusEffects?.find((effect) => effect.kind === "frostPlume");
   if (plume === undefined || plume.kind !== "frostPlume") return undefined;
-  const base = t("skill.keyword.frostbite.description", {
-    percent: plume.burstPower, seconds: plume.burstSeconds, slowSeconds: plume.slowSeconds, slowPercent: plume.slowPercent,
-  });
   return {
     id: "yuti-frostbite",
     term: t("status.frostbite"),
     kind: "debuff",
-    description: atk === undefined ? base : `${base} ${t("skill.keyword.nowValue", { value: `[[plume-burst|${Math.round(atk * plume.burstPower / 100)}]]` })}`,
-  };
-}
-
-/** 서리깃 쪽지가 가리키는 폭발 피해 태그. 서리깃 쪽지와 함께 문맥 사전에 실어야 눌린다. */
-export function plumeBurstKeyword(def: RelicDef, atk?: number): KeywordDef | undefined {
-  const plume = def.basic.statusEffects?.find((effect) => effect.kind === "frostPlume");
-  if (plume === undefined || plume.kind !== "frostPlume" || atk === undefined) return undefined;
-  return {
-    id: "plume-burst", term: String(Math.round(atk * plume.burstPower / 100)), kind: "rule",
-    description: t("skill.keyword.damage.bonus", { stat: t("skill.stat.atk"), percent: plume.burstPower }),
+    // 공격력을 아는 자리에서는 총 피해가 곧 수치 태그다 — 누르면 무엇에서 나온 값인지 열린다.
+    description: t("skill.keyword.frostbite.description", {
+      percent: scaled("damage", "atk", plume.burstPower, atk), seconds: plume.burstSeconds, slowSeconds: plume.slowSeconds, slowPercent: plume.slowPercent,
+    }),
   };
 }
 
@@ -440,39 +435,24 @@ export function lastDropKeyword(def: RelicDef): KeywordDef | undefined {
  * 쓰는 개체가 하나뿐이라 태그가 수치를 가져도 되며, 본문은 그 수치를 되풀이하지 않는다. 문장은 실제
  * 전투가 읽는 필드에서 지으므로 상한·비율을 조정하면 팝업도 함께 바뀐다.
  */
-export function prickleKeyword(passive: Passive, ap?: number): KeywordDef | undefined {
+export function prickleKeyword(passive: Passive, own?: { ap?: number; maxHp?: number }): KeywordDef | undefined {
   const plan = passive.prickle;
   if (passive.kind !== "prickly" || plan === undefined) return undefined;
-  const base = t("skill.keyword.prickle.description", {
-    percent: plan.reflectApPercentPerStack, stacks: plan.maxStacks, seconds: plan.seconds,
-    tauntSeconds: plan.overflow?.tauntSeconds ?? 0, shield: plan.overflow?.shieldMaxHpPercent ?? 0,
-    regen: plan.overflow?.regenMaxHpPercentPerSecond ?? 0, regenSeconds: plan.overflow?.regenSeconds ?? 0,
-  });
   return {
     id: "kento-prickle",
     term: t("skill.keyword.prickle.term"),
     kind: "buff",
-    // 겹 하나가 되돌리는 피해를 지금 주문력으로 환산해 덧붙인다.
-    description: ap === undefined ? base : `${base} ${t("skill.keyword.nowValue", { value: `[[prickle-reflect|${Math.round(ap * plan.reflectApPercentPerStack / 100)}]]` })}`,
-  };
-}
-
-/** 까칠 쪽지가 가리키는 겹당 반격 피해 태그. */
-export function prickleReflectKeyword(passive: Passive, ap?: number): KeywordDef | undefined {
-  const plan = passive.prickle;
-  if (passive.kind !== "prickly" || plan === undefined || ap === undefined) return undefined;
-  return {
-    id: "prickle-reflect", term: String(Math.round(ap * plan.reflectApPercentPerStack / 100)), kind: "rule",
-    description: t("skill.keyword.damage.bonus", { stat: t("skill.stat.ap"), percent: plan.reflectApPercentPerStack }),
+    // 겹 하나가 되돌리는 피해·가득 찼을 때의 막과 회복은 능력치를 아는 자리에서 실제 수치 태그로 선다.
+    description: t("skill.keyword.prickle.description", {
+      percent: scaled("damage", "ap", plan.reflectApPercentPerStack, own?.ap), stacks: plan.maxStacks, seconds: plan.seconds,
+      tauntSeconds: plan.overflow?.tauntSeconds ?? 0,
+      shield: scaled("shield", "hp", plan.overflow?.shieldMaxHpPercent ?? 0, own?.maxHp),
+      regen: scaled("heal", "hp", plan.overflow?.regenMaxHpPercentPerSecond ?? 0, own?.maxHp), regenSeconds: plan.overflow?.regenSeconds ?? 0,
+    }),
   };
 }
 
 /** 아다지오의 무게 보호막처럼 패시브가 실제 능력치에서 계산하는 수치를 조회 가능한 태그로 만든다. */
-export function passiveShieldKeyword(passive: Passive, atk?: number): KeywordDef | undefined {
-  if (passive.kind !== "adagioWeight" || passive.cleanseShieldAttackPercent === undefined || atk === undefined) return undefined;
-  const amount = Math.round(atk * passive.cleanseShieldAttackPercent / 100);
-  return { id: "shield-value", term: String(amount), kind: "rule", description: t("skill.keyword.shield.fromAttack", { percent: passive.cleanseShieldAttackPercent }) };
-}
 
 /**
  * 복합 능력 패시브를 각 구조화 수치에서 문장화해 데이터 변경이 본문에도 즉시 반영되게 한다.
@@ -484,44 +464,14 @@ export function passiveShieldKeyword(passive: Passive, atk?: number): KeywordDef
 export function passiveDescription(
   passive: Passive, atk?: number, guard?: { defense: number; resistance: number }, own?: { ap: number; maxHp: number },
 ): string {
-  const now = passiveNowValue(passive, own);
   return [
-    passiveOpeningStealthClause(passive), passiveHead(passive, atk, guard),
+    passiveOpeningStealthClause(passive), passiveHead(passive, atk, guard, own),
     passiveFrenzyDrainClause(passive), passiveTauntHealClause(passive),
     passiveLowHpStealthClause(passive), passiveCriticalClause(passive),
-    // 스탯 비례 수치는 지금 능력치로 환산한 값을 끝에 태그로 덧붙인다.
-    now === undefined ? "" : t("skill.keyword.nowValue", { value: `[[${PASSIVE_NOW_ID}|${now.amount}]]` }),
   ].filter(Boolean).join(" ");
 }
 
 /** 패시브 문장 끝의 「현재 N」 태그 ID. */
-const PASSIVE_NOW_ID = "passive-now";
-
-interface PassiveNowValue { kind: "damage" | "shield"; stat: "ap" | "hp"; percent: number; amount: number }
-
-/** 능력치 비례 패시브 수치를 지금 능력치로 환산한다. 문장과 태그가 같은 정의 필드를 읽는다. */
-function passiveNowValue(passive: Passive, own?: { ap: number; maxHp: number }): PassiveNowValue | undefined {
-  if (own === undefined) return undefined;
-  const make = (kind: "damage" | "shield", stat: "ap" | "hp", percent: number): PassiveNowValue =>
-    ({ kind, stat, percent, amount: Math.round((stat === "ap" ? own.ap : own.maxHp) * percent / 100) });
-  if (passive.kind === "salvageCatch" && passive.salvageCatch !== undefined) return make("shield", "hp", passive.salvageCatch.shieldMaxHpPercent);
-  if (passive.kind === "shimmerMark") return make("damage", "ap", passive.value);
-  if (passive.kind === "echoLocation" && passive.batSwarm !== undefined) return make("damage", "ap", passive.batSwarm.powerPercent);
-  return undefined;
-}
-
-/** 패시브 문장 끝 태그의 산출 근거. 쪽지 사전에 함께 실려야 눌러 읽을 수 있다. */
-export function passiveNowKeyword(passive: Passive, own?: { ap: number; maxHp: number }): KeywordDef | undefined {
-  const now = passiveNowValue(passive, own);
-  if (now === undefined) return undefined;
-  const percent = trim(now.percent);
-  return {
-    id: PASSIVE_NOW_ID, term: String(now.amount), kind: "rule",
-    description: now.kind === "damage"
-      ? t("skill.keyword.damage.bonus", { stat: statName("ap"), percent })
-      : t("skill.keyword.shield.fromMaxHp", { percent }),
-  };
-}
 
 /**
  * 전투를 여는 은신의 공통 절.
@@ -594,7 +544,11 @@ function passiveCriticalClause(passive: Passive): string {
   return "";
 }
 
-function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; resistance: number }): string {
+function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; resistance: number }, own?: { ap: number; maxHp: number }): string {
+  const maxHp = own?.maxHp;
+  if (passive.kind === "emergencyRecovery" && passive.durationSeconds !== undefined) {
+    return t("skill.passive.emergencyRecovery", { seconds: passive.durationSeconds, heal: scaled("heal", "hp", passive.value, maxHp) });
+  }
   if (passive.kind === "droneLink" && passive.droneLink !== undefined) {
     // 방어력·저항력은 퍼센트가 아니라 실제로 오르는 값으로 보여 준다 — 같은 비율도 두 능력치의 오르는 양이 다르다.
     const percent = passive.droneLink.defenseResistancePercent;
@@ -603,7 +557,7 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
       : t("skill.passive.droneLink.guardAmount", {
         defense: statGainAlias("def", guard.defense, percent), resistance: statGainAlias("res", guard.resistance, percent),
       });
-    return t("skill.passive.droneLink", { guard: amount, regen: passive.droneLink.regenMaxHpPercentPerSecond });
+    return t("skill.passive.droneLink", { guard: amount, regen: scaled("heal", "hp", passive.droneLink.regenMaxHpPercentPerSecond, maxHp) });
   }
   if (passive.kind === "reagentReaction" && passive.reagentReaction !== undefined) {
     // 이름이 아니라 공용 계약을 문장화하므로 다른 캐릭터가 같은 메커니즘을 선언해도 그대로 읽힌다.
@@ -642,10 +596,9 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     return t("skill.passive.farthestFocus");
   }
   if (passive.kind === "adagioWeight") {
-    const shield = passiveShieldKeyword(passive, atk);
-    const shieldText = shield === undefined
+    const shieldText = atk === undefined || passive.cleanseShieldAttackPercent === undefined
       ? t("skill.passive.adagioWeight.shieldPercent", { percent: passive.cleanseShieldAttackPercent })
-      : t("skill.passive.adagioWeight.shieldAmount", { amount: shield.term });
+      : t("skill.passive.adagioWeight.shieldAmount", { amount: valueTag("shield", "atk", passive.cleanseShieldAttackPercent, atk) });
     return t("skill.passive.adagioWeight", { percent: passive.teamAttackSpeedPercent, shield: shieldText, cooldown: passive.cleanseCooldownSeconds ?? 0 });
   }
   if (passive.kind === "tidalSurge") {
@@ -666,7 +619,7 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     const shield = passive.concussionShieldPercent === undefined ? ""
       : t("skill.passive.impactCap.shield", { percent: passive.concussionShieldPercent })
         + (passive.concussionShieldCapMaxHpPercent === undefined ? ""
-          : t("skill.passive.impactCap.shieldCap", { percent: passive.concussionShieldCapMaxHpPercent }));
+          : t("skill.passive.impactCap.shieldCap", { percent: scaled("shield", "hp", passive.concussionShieldCapMaxHpPercent, maxHp) }));
     return t("skill.passive.impactCap", { percent: passive.impactCapMaxHpPercent, shield });
   }
   if (passive.kind === "overpaintSiphon") return t("skill.passive.overpaintSiphon", { percent: passive.value });
@@ -682,7 +635,7 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   if (passive.kind === "undyingTalisman") {
     // 무적·행동불가·회복·밀어냄이 한 덩어리로 일어나므로 한 문장에 순서대로 담는다.
     const blast = passive.undyingKnockback === undefined ? "" : t("skill.passive.undyingTalisman.blast");
-    return t("skill.passive.undyingTalisman", { seconds: passive.durationSeconds, percent: passive.value, blast });
+    return t("skill.passive.undyingTalisman", { seconds: passive.durationSeconds, percent: scaled("heal", "hp", passive.value, maxHp), blast });
   }
   if (passive.kind === "prickly" && passive.prickle !== undefined) return t("skill.passive.prickly");
   if (passive.kind === "refillMagazine" && passive.refill !== undefined) {
@@ -690,7 +643,9 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   }
   // 수압이 무엇이고 언제 기절시키는지는 태그가 말한다. 본문은 막이 얼마이고 어디까지 차는지만 적는다.
   if (passive.kind === "salvageCatch" && passive.salvageCatch !== undefined) {
-    return t("skill.passive.salvageCatch", { percent: passive.salvageCatch.shieldMaxHpPercent, cap: passive.salvageCatch.capMaxHpPercent });
+    return t("skill.passive.salvageCatch", {
+      percent: scaled("shield", "hp", passive.salvageCatch.shieldMaxHpPercent, maxHp), cap: scaled("shield", "hp", passive.salvageCatch.capMaxHpPercent, maxHp),
+    });
   }
   if (passive.kind === "painfulElation" && passive.elation !== undefined) {
     return t("skill.passive.painfulElation");
@@ -704,7 +659,7 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   if (passive.kind === "echoLocation" && passive.echoLocation !== undefined) {
     const swarm = passive.batSwarm;
     if (swarm === undefined) return t("skill.passive.echoLocation");
-    return t("skill.passive.echoBatSwarm", { seconds: swarm.intervalSeconds, power: swarm.powerPercent, count: swarm.maxTargets, heal: swarm.healPercent });
+    return t("skill.passive.echoBatSwarm", { seconds: swarm.intervalSeconds, power: scaled("damage", "ap", swarm.powerPercent, own?.ap), count: swarm.maxTargets, heal: swarm.healPercent });
   }
   if (passive.kind === "segmentBarrier" && passive.segmentBarrier !== undefined) return t("skill.passive.segmentBarrier");
   if (passive.kind === "vitalAim" && passive.vitalAim !== undefined) return t("skill.passive.vitalAim");
@@ -715,14 +670,16 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   // 감금 무리 넷은 규칙어를 새로 만들지 않았다 — 쓰는 개체가 하나뿐인 규칙이라 수치를 본문이 직접 적는다.
   if (passive.kind === "todaysIngredient" && passive.todaysIngredient !== undefined) {
     const plan = passive.todaysIngredient;
-    return t("skill.passive.todaysIngredient", { damage: plan.damagePercent, heal: plan.killHealMaxHpPercent, attack: plan.attackPercentPerStack, stacks: plan.maxStacks });
+    return t("skill.passive.todaysIngredient", { damage: plan.damagePercent, heal: scaled("heal", "hp", plan.killHealMaxHpPercent, maxHp), attack: plan.attackPercentPerStack, stacks: plan.maxStacks });
   }
   if (passive.kind === "flinchBlink" && passive.flinchBlink !== undefined) {
     return t("skill.passive.flinchBlink", { percent: passive.flinchBlink.burstMaxHpPercent, seconds: passive.flinchBlink.cooldownSeconds });
   }
   if (passive.kind === "cellRank" && passive.cellRank !== undefined) {
     const plan = passive.cellRank;
-    return t("skill.passive.cellRank", { percent: plan.shieldMaxHpPercent, seconds: plan.intervalSeconds, cap: plan.capMaxHpPercent });
+    return t("skill.passive.cellRank", {
+      percent: scaled("shield", "hp", plan.shieldMaxHpPercent, maxHp), seconds: plan.intervalSeconds, cap: scaled("shield", "hp", plan.capMaxHpPercent, maxHp),
+    });
   }
   if (passive.kind === "restraintLocks" && passive.restraintLocks !== undefined) {
     const plan = passive.restraintLocks;
@@ -735,7 +692,7 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     const plan = passive.whiteNoise;
     const heal = guard === undefined
       ? t("skill.passive.whiteNoise.healPercent", { percent: plan.healResistancePercent })
-      : `[[heal-value|${Math.round(guard.resistance * plan.healResistancePercent / 100)}]]`;
+      : valueTag("heal", "res", plan.healResistancePercent, guard.resistance);
     return t("skill.passive.whiteNoise", { seconds: plan.intervalSeconds, heal });
   }
   if (passive.kind === "shellGuard" && passive.shellGuard !== undefined) {
@@ -750,12 +707,12 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     const body = shell.lowestHpAllyShieldMaxHpPercent > 0
       ? t("skill.passive.shellGuard", {
         stack, stackName, seconds: shell.durationSeconds, stacks: shell.maxStacks,
-        selfPercent: shell.selfShieldMaxHpPercent, allyPercent: shell.lowestHpAllyShieldMaxHpPercent,
+        selfPercent: scaled("shield", "hp", shell.selfShieldMaxHpPercent, maxHp), allyPercent: shell.lowestHpAllyShieldMaxHpPercent,
         cooldown: shell.cooldownSeconds,
       })
       : t("skill.passive.shellGuard.selfOnly", {
         stack, stackName, seconds: shell.durationSeconds, stacks: shell.maxStacks,
-        selfPercent: shell.selfShieldMaxHpPercent, cooldown: shell.cooldownSeconds,
+        selfPercent: scaled("shield", "hp", shell.selfShieldMaxHpPercent, maxHp), cooldown: shell.cooldownSeconds,
       });
     return body;
   }
@@ -781,10 +738,10 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   if (passive.kind === "sutureStitch" && passive.suture !== undefined) {
     // 자신도 받는다는 말을 함께 적는다 — 근거리에서 제일 많이 맞는 몸이 본인이라, 그 한 줄이
     // 없으면 "남만 꿰매 주고 자기는 그냥 맞는 개체"로 읽힌다.
-    return t("skill.passive.sutureStitch", { seconds: passive.suture.intervalSeconds, power: passive.suture.bonusPower, percent: passive.suture.shieldPercent, capPercent: passive.suture.maxHpCapPercent });
+    return t("skill.passive.sutureStitch", { seconds: passive.suture.intervalSeconds, power: scaled("damage", "atk", passive.suture.bonusPower, atk), percent: passive.suture.shieldPercent, capPercent: passive.suture.maxHpCapPercent });
   }
   // 표식을 남기는 것이 이 패시브의 전부다. 무엇이고 다시 맞으면 어떻게 되는지는 태그가 말한다.
-  if (passive.kind === "shimmerMark") return t("skill.passive.shimmerMark", { percent: passive.value });
+  if (passive.kind === "shimmerMark") return t("skill.passive.shimmerMark", { percent: scaled("damage", "ap", passive.value, own?.ap) });
   if (passive.kind === "frostboundDominion") return t("skill.passive.frostboundDominion");
   if (passive.kind !== "battleMaidMastery") return passive.desc;
   /*
@@ -843,13 +800,6 @@ export function overpaintDetonationDamageKeyword(perStackDamage?: number, maxSta
   };
 }
 
-/** 아군 전체 회복형 궁극기(도디 등)가 실제 주문력에서 계산하는 회복량을 조회 가능한 태그로 만든다. */
-export function allyHealPowerKeyword(percent: number, ap?: number): KeywordDef | undefined {
-  if (ap === undefined) return undefined;
-  const amount = Math.round(ap * percent / 100);
-  return { id: "heal-value", term: String(amount), kind: "rule", description: t("skill.keyword.heal.fromAp", { percent }) };
-}
-
 /** 추가 타격 계약을 본문용 키워드 문장으로 바꿔 확률·횟수·회복 수치가 데이터와 함께 바뀌게 한다. */
 /**
  * 설명문이 문장을 지을 수 있는 것들.
@@ -860,16 +810,10 @@ export function allyHealPowerKeyword(percent: number, ap?: number): KeywordDef |
  */
 export type DescribedSkill = Skill | BasicAttack | Ultimate | (BasicAttack & Pick<BasicAttackStep, "shieldFromDamagePercent" | "selfStealthSeconds" | "pull">);
 
-const SHIMMER_BURST_DAMAGE_ID = "shimmer-burst-damage";
-const SHIMMER_BURST_SHIELD_ID = "shimmer-burst-shield";
 const SHIMMER_SPLASH_ID = "tia-splash";
 
 type ShimmerBurstPlan = { power: number; shieldMaxHpPercent: number };
 
-function shimmerBurstNowValues(burst: ShimmerBurstPlan, stats?: { ap?: number; maxHp?: number }): { damage: number; shield: number } | undefined {
-  if (stats?.ap === undefined || stats.maxHp === undefined) return undefined;
-  return { damage: Math.round(stats.ap * burst.power / 100), shield: Math.round(stats.maxHp * burst.shieldMaxHpPercent / 100) };
-}
 
 /**
  * 「첨벙!」 태그(티아)와 그 쪽지 끝 수치 태그. 반짝을 남기는 것은 패시브, 터뜨리는 것은 일반 공격이고,
@@ -878,21 +822,16 @@ function shimmerBurstNowValues(burst: ShimmerBurstPlan, stats?: { ap?: number; m
 export function shimmerBurstKeywords(skill: unknown, stats?: { ap?: number; maxHp?: number }): KeywordDef[] {
   const burst = (skill as { shimmerBurst?: ShimmerBurstPlan & { capMaxHpPercent: number } }).shimmerBurst;
   if (burst === undefined) return [];
-  const now = shimmerBurstNowValues(burst, stats);
-  const base = t("skill.keyword.splash.description", { percent: trim(burst.power), shield: trim(burst.shieldMaxHpPercent), cap: trim(burst.capMaxHpPercent) });
-  const splash: KeywordDef = {
+  return [{
     id: SHIMMER_SPLASH_ID,
     term: t("skill.keyword.splash.term"),
     kind: "rule",
-    description: now === undefined ? base
-      : `${base} ${t("skill.keyword.nowValue", { value: `[[${SHIMMER_BURST_DAMAGE_ID}|${now.damage}]] · [[${SHIMMER_BURST_SHIELD_ID}|${now.shield}]]` })}`,
-  };
-  if (now === undefined) return [splash];
-  return [
-    splash,
-    { id: SHIMMER_BURST_DAMAGE_ID, term: String(now.damage), kind: "rule", description: t("skill.keyword.damage.bonus", { stat: statName("ap"), percent: trim(burst.power) }) },
-    { id: SHIMMER_BURST_SHIELD_ID, term: String(now.shield), kind: "rule", description: t("skill.keyword.shield.fromMaxHp", { percent: trim(burst.shieldMaxHpPercent) }) },
-  ];
+    description: t("skill.keyword.splash.description", {
+      percent: scaled("damage", "ap", burst.power, stats?.ap),
+      shield: scaled("shield", "hp", burst.shieldMaxHpPercent, stats?.maxHp),
+      cap: scaled("shield", "hp", burst.capMaxHpPercent, stats?.maxHp),
+    }),
+  }];
 }
 
 export interface SkillDescriptionStats {
@@ -965,7 +904,7 @@ export function skillDescription(
       if (plan.passiveHealBonusPercent !== undefined) {
         return t("skill.sentence.selfBulwarkElation", { seconds: plan.seconds, percent: plan.passiveHealBonusPercent });
       }
-      return t("skill.sentence.selfBulwark", { seconds: plan.seconds, percent: plan.maxHpRegenPercentPerSecond ?? 0 });
+      return t("skill.sentence.selfBulwark", { seconds: plan.seconds, percent: scaled("heal", "hp", plan.maxHpRegenPercentPerSecond ?? 0, stats.maxHp) });
     }
     // 버티는 궁극기. 끌어당겨 붙잡아 두고 덜 맞은 만큼을 끝나고 돌려받는다.
     if ("selfGuard" in skill && skill.selfGuard !== undefined) {
@@ -973,7 +912,7 @@ export function skillDescription(
       if (guard.pullOnly) return t(guard.dashToFarthest !== undefined ? "skill.sentence.selfGuard.dashPull" : "skill.sentence.selfGuard.pullOnly");
       const shield = stats.maxHp === undefined
         ? t("skill.sentence.selfGuard.shieldPercent", { percent: guard.shieldMaxHpPercent })
-        : `[[shield-value|${Math.round(stats.maxHp * guard.shieldMaxHpPercent / 100)}]]`;
+        : valueTag("shield", "hp", guard.shieldMaxHpPercent, stats.maxHp);
       const reset = guard.resetShellGuardCooldown === true ? t("skill.sentence.selfGuard.reset") : "";
       // 까칠을 더 쌓고 끝에 충격파가 터지는 궁극기는 그 두 절이 같은 문장 끝에 붙는다.
       const prickle = guard.prickleGain === undefined ? "" : t("skill.sentence.selfGuard.prickle", { count: guard.prickleGain });
@@ -988,7 +927,7 @@ export function skillDescription(
       const plan = skill.selfRoar;
       const amount = (percent: number): string => stats.maxHp === undefined
         ? t("skill.sentence.roar.percent", { percent })
-        : `[[shield-value|${Math.round(stats.maxHp * percent / 100)}]]`;
+        : valueTag("shield", "hp", percent, stats.maxHp);
       return t("skill.sentence.roar", {
         base: amount(plan.shieldMaxHpPercent), per: amount(plan.shieldPerFearedMaxHpPercent), max: plan.shieldMaxFeared,
       });
@@ -998,7 +937,7 @@ export function skillDescription(
       const plan = skill.selfLullaby;
       const shield = stats.resistance === undefined
         ? t("skill.sentence.lullaby.shieldPercent", { percent: plan.shieldResistancePercent })
-        : `[[shield-value|${Math.round(stats.resistance * plan.shieldResistancePercent / 100)}]]`;
+        : valueTag("shield", "res", plan.shieldResistancePercent, stats.resistance);
       return t("skill.sentence.lullaby", { seconds: plan.tauntSeconds, shield });
     }
     // 때리지 않고 자리만 잡는 궁극기. 위력을 적지 않는 이유는 그 피해가 이어질 일반 공격의
@@ -1122,7 +1061,7 @@ export function skillDescription(
     const { barrage } = skill;
     return t("skill.sentence.barrage", {
       damage: skillDamagePhrase(skill, stats), shots: barrage.shots, from: barrage.criticalFromShot,
-      shield: barrage.shieldFromCriticalPercent, cap: barrage.shieldMaxHpPercent,
+      shield: barrage.shieldFromCriticalPercent, cap: scaled("shield", "hp", barrage.shieldMaxHpPercent, stats.maxHp),
     });
   }
   const repeat = "repeatStrike" in skill ? skill.repeatStrike : undefined;
@@ -1212,10 +1151,9 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
     clauses.push({ text: t("skill.clause.lowestHpAllyHealing", { percent: skill.lowestHpAllyHealingFromDamagePercent }), joinWithComma: true });
   }
   if ("allyHealingPower" in skill && skill.allyHealingPower !== undefined) {
-    const heal = allyHealPowerKeyword(skill.allyHealingPower, stats.ap);
-    const healText = heal === undefined
+    const healText = stats.ap === undefined
       ? t("skill.clause.allyHealing.percent", { percent: skill.allyHealingPower })
-      : t("skill.clause.allyHealing.amount", { amount: heal.term });
+      : t("skill.clause.allyHealing.amount", { amount: valueTag("heal", "ap", skill.allyHealingPower, stats.ap) });
     clauses.push({ text: t("skill.clause.allyHealing", { heal: healText }), joinWithComma: true });
   }
   if ("selfShieldMaxHpPercent" in skill && skill.selfShieldMaxHpPercent !== undefined) {
@@ -1223,7 +1161,7 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
     const percent = skill.selfShieldMaxHpPercent;
     const shield = stats.maxHp === undefined
       ? t("skill.sentence.selfGuard.shieldPercent", { percent })
-      : `[[shield-value|${Math.round(stats.maxHp * percent / 100)}]]`;
+      : valueTag("shield", "hp", percent, stats.maxHp);
     clauses.push({ text: t("skill.clause.selfShield", { shield }), standalone: true });
   }
   if (skill.allyEnergyGain !== undefined) {
@@ -1240,7 +1178,7 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
       standalone: true,
     });
   }
-  clauses.push(...statusClauses(skill));
+  clauses.push(...statusClauses(skill, stats));
   if ("damageTransfer" in skill && skill.damageTransfer) {
     clauses.push({ text: t("skill.clause.damageTransfer", { percent: skill.damageTransfer.percent }), standalone: true });
   }
@@ -1323,12 +1261,12 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
  * 되짚지 않고 **앞에서 "매 N번째 공격마다"로 묶는다** — "위 상태는"이라고 가리키면 어디까지가
  * 그 상태인지 다시 세어야 한다.
  */
-function statusClauses(skill: DescribedSkill): SkillEffectClause[] {
+function statusClauses(skill: DescribedSkill, stats: SkillDescriptionStats = {}): SkillEffectClause[] {
   // 호령(라자)은 상태 주기와 따로 도는 제 문장이라 다른 절 뒤에 붙인다.
   const rally = "rally" in skill ? skill.rally : undefined;
   const clauses = statusClausesWithoutRally(skill);
   if (rally === undefined) return clauses;
-  return [...clauses, { text: t("skill.clause.rally", { every: rally.every, seconds: rally.tauntSeconds, percent: rally.shieldMaxHpPercent }), standalone: true }];
+  return [...clauses, { text: t("skill.clause.rally", { every: rally.every, seconds: rally.tauntSeconds, percent: scaled("shield", "hp", rally.shieldMaxHpPercent, stats.maxHp) }), standalone: true }];
 }
 
 function statusClausesWithoutRally(skill: DescribedSkill): SkillEffectClause[] {
@@ -1521,50 +1459,15 @@ export function breakthroughSlotLabel(slot: BreakthroughSlot): string {
  * 개체에 "효과 없음"이라고 적으면 없는 규칙을 말하는 셈이다.
  */
 export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, stats?: Stats): string | undefined {
-  const body = breakthroughEffectBody(def, slot, stats);
-  const now = body === undefined ? undefined : breakthroughNowValue(def, slot, stats);
-  // 스탯 비례 효과는 지금 능력치로 환산한 값을 끝에 태그로 덧붙인다(레벨·룬이 바뀌면 함께 바뀐다).
-  if (now === undefined || body === undefined) return body;
-  const value = t("skill.keyword.nowValue", { value: `[[${BREAKTHROUGH_NOW_ID}|${now.amount}]]` });
-  // 자신·아군 보호막이 함께 적힌 효과에서 자기 수치가 아군 수치처럼 붙지 않게 한다.
-  return def.breakthroughEffects?.[slot]?.kind === "thickShell"
-    ? `${formatEffectDescription(body)}\n${t("skill.target.self")} ${value}` : `${body} ${value}`;
-}
-
-/** 돌파 문장 끝의 「현재 N」 태그 ID. 한 쪽지에는 슬롯 하나의 효과만 서므로 하나면 된다. */
-const BREAKTHROUGH_NOW_ID = "breakthrough-now";
-
-interface BreakthroughNowValue {
-  kind: "damage" | "shield";
-  stat: "atk" | "ap" | "hp";
-  percent: number;
-  amount: number;
-}
-
-/**
- * 능력치 비례 돌파 효과를 **지금 능력치로 환산한 한 수**로 바꾼다. 문장은 비율을 그대로 적고,
- * 이 수가 끝에 태그로 붙는다 — 문장과 태그가 같은 정의 필드를 읽으므로 갈라지지 않는다.
- * 대상이 따로 있어 비례 기준이 달라지는 효과(아군 체력 비례 등)는 환산하지 않는다.
- */
-function breakthroughNowValue(def: RelicDef, slot: BreakthroughSlot, stats?: Stats): BreakthroughNowValue | undefined {
-  const effect = def.breakthroughEffects?.[slot];
-  if (stats === undefined || effect === undefined) return undefined;
-  const make = (kind: "damage" | "shield", stat: "atk" | "ap" | "hp", percent: number): BreakthroughNowValue =>
-    ({ kind, stat, percent, amount: Math.round(stats[stat] * percent / 100) });
-  if (effect.kind === "helmetBash") return make("damage", "atk", effect.attackPercent);
-  if (effect.kind === "freshSight") return make("damage", "atk", effect.percentPerStack);
-  if (effect.kind === "cheekShield" || effect.kind === "bigShell") return make("shield", "hp", effect.shieldMaxHpPercent);
-  if (effect.kind === "reloadSip") return make("shield", "hp", effect.shieldMaxHpPercent);
-  if (effect.kind === "pressureCrack") return make("damage", "ap", effect.powerPercent);
-  if (effect.kind === "thickShell") return make("shield", "hp", effect.selfShieldMaxHpPercent);
-  if (effect.kind === "iceShatter") return make("damage", "atk", effect.attackPercent);
-  if (effect.kind === "rescueShield") return make("shield", "ap", effect.apPercent);
-  return undefined;
+  // 능력치 비례 수치는 본문 자리에서 곧바로 수치 태그로 선다(`scaled`) — 누르면 무엇에서 나온 값인지 열린다.
+  return breakthroughEffectBody(def, slot, stats);
 }
 
 function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: Stats): string | undefined {
   const effects = def.breakthroughEffects;
   if (!effects) return undefined;
+  // 능력치 비례 수치는 능력치를 알면 실제 수치 태그로, 모르면(도감) 「최대 체력의 N%」로 선다.
+  const sv = (kind: ValueTagKind, stat: "atk" | "ap" | "hp", percent: number): string => scaled(kind, stat, percent, stats?.[stat]);
   // "없음"도 정해 둔 효과 하나다 — 비워 둔 슬롯(아직 설계하지 않은 자리)과 달리 표에 그대로 적는다.
   if (effects[slot]?.kind === "none") return t("skill.breakthrough.effect.none");
   if (slot === "basic" && effects.basic) {
@@ -1603,18 +1506,18 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "scoldTaunt") return t("skill.breakthrough.effect.basic.scoldTaunt", { name: def.basic.name, seconds: trim(effect.tauntSeconds) });
     if (effect.kind === "clawBleed") return t("skill.breakthrough.effect.basic.clawBleed", { name: def.basic.name });
     if (effect.kind === "windStep") return t("skill.breakthrough.effect.basic.windStep", { name: def.basic.name, percent: trim(effect.moveSpeedPercent), seconds: trim(effect.seconds) });
-    if (effect.kind === "preyScale") return t("skill.breakthrough.effect.basic.preyScale", { name: def.basic.name, percent: trim(effect.shieldPercentPerEnemy), max: trim(effect.maxEnemies), seconds: trim(effect.cooldownSeconds) });
+    if (effect.kind === "preyScale") return t("skill.breakthrough.effect.basic.preyScale", { name: def.basic.name, percent: sv("shield", "hp", effect.shieldPercentPerEnemy), max: trim(effect.maxEnemies), seconds: trim(effect.cooldownSeconds) });
     if (effect.kind === "pressureConduct") return t("skill.breakthrough.effect.basic.pressureConduct", { stacks: trim(effect.stacks) });
     if (effect.kind === "thornJab") return t("skill.breakthrough.effect.basic.thornJab", { name: def.basic.name, percent: trim(effect.powerPercent) });
     if (effect.kind === "sleepPounce") return t("skill.breakthrough.effect.basic.sleepPounce", { percent: trim(effect.damagePercent) });
-    if (effect.kind === "helmetBash") return t("skill.breakthrough.effect.basic.helmetBash", { every: trim(effect.everyHits), percent: trim(effect.attackPercent) });
+    if (effect.kind === "helmetBash") return t("skill.breakthrough.effect.basic.helmetBash", { every: trim(effect.everyHits), percent: sv("damage", "atk", effect.attackPercent) });
     if (effect.kind === "underline") return t("skill.breakthrough.effect.basic.underline", { name: def.passive.name, stacks: trim(effect.stacks) });
     if (effect.kind === "sodaPop") return t("skill.breakthrough.effect.basic.sodaPop", { every: trim(effect.everyHits), stacks: trim(effect.stacks) });
     if (effect.kind === "wetMark") return t("skill.breakthrough.effect.basic.wetMark", { percent: trim(effect.takenPercent) });
     if (effect.kind === "poisonPulse") return t("skill.breakthrough.effect.basic.poisonPulse");
     if (effect.kind === "pupLitter") return t("skill.breakthrough.effect.basic.pupLitter", { name: def.basic.name, every: trim(effect.every), seconds: trim(PUP.lifeSeconds) });
     if (effect.kind === "releaseShield") return t("skill.breakthrough.effect.basic.releaseShield", { name: def.basic.cycle?.find((step) => step.pull)?.name ?? def.basic.name, percent: trim(effect.shieldPercent) });
-    if (effect.kind === "freshSight") return t("skill.breakthrough.effect.basic.freshSight", { seconds: trim(effect.windowSeconds), percent: trim(effect.percentPerStack) });
+    if (effect.kind === "freshSight") return t("skill.breakthrough.effect.basic.freshSight", { seconds: trim(effect.windowSeconds), percent: sv("damage", "atk", effect.percentPerStack) });
     if (effect.kind === "speedGraffiti") return t("skill.breakthrough.effect.basic.speedGraffiti", { name: def.basic.name, seconds: trim(effect.seconds), percent: trim(effect.moveSpeedPercent), power: trim(effect.powerPercentPerSpeedPoint) });
     if (effect.kind === "bleedSettle") return t("skill.breakthrough.effect.basic.bleedSettle");
     if (effect.kind === "paintSpill") return t("skill.breakthrough.effect.basic.paintSpill", { stacks: trim(effect.stacks) });
@@ -1645,7 +1548,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "forestSight") return t("skill.breakthrough.effect.ultimate.forestSight", { hits: trim(def.ultimate.selfVolley ? def.ultimate.selfVolley.hitCount + effect.extraHits : effect.extraHits), seconds: trim(effect.extraSeconds) });
     if (effect.kind === "lightChorus") return t("skill.breakthrough.effect.ultimate.lightChorus", { name: def.ultimate.name, cost: trim(effect.costReduction), percent: trim(effect.fullHpShieldPercent) });
     if (effect.kind === "orderStrike") return t("skill.breakthrough.effect.ultimate.orderStrike");
-    if (effect.kind === "heatBurst") return t("skill.breakthrough.effect.ultimate.heatBurst", { name: def.ultimate.name, threshold: trim(effect.thresholdPercent), pulse: trim(effect.pulsePercent), max: trim(effect.maxPulses) });
+    if (effect.kind === "heatBurst") return t("skill.breakthrough.effect.ultimate.heatBurst", { name: def.ultimate.name, threshold: trim(effect.thresholdPercent), pulse: sv("damage", "hp", effect.pulsePercent), max: trim(effect.maxPulses) });
     if (effect.kind === "afterimageSlash") return t("skill.breakthrough.effect.ultimate.afterimageSlash", { name: def.ultimate.name, seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
     if (effect.kind === "gustEnergy") return t("skill.breakthrough.effect.ultimate.gustEnergy", { name: def.ultimate.name, energy: trim(effect.energy) });
     if (effect.kind === "quarryMark") return t("skill.breakthrough.effect.ultimate.quarryMark", { name: def.ultimate.name, seconds: trim(effect.seconds), percent: trim(effect.damageTakenPercent) });
@@ -1654,21 +1557,21 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "lullabyGaze") return t("skill.breakthrough.effect.ultimate.lullabyGaze", { name: def.ultimate.name, stacks: trim(effect.stacksPerHit) });
     if (effect.kind === "dashBack") return t("skill.breakthrough.effect.ultimate.dashBack", { name: def.ultimate.name, seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
     if (effect.kind === "afterglow") return t("skill.breakthrough.effect.ultimate.afterglow", { max: trim(effect.maxCarry) });
-    if (effect.kind === "coolingVent") return t("skill.breakthrough.effect.ultimate.coolingVent", { name: def.ultimate.name, percent: trim(effect.healMaxHpPercentPerFrozen), max: trim(effect.maxFrozenCounted) });
+    if (effect.kind === "coolingVent") return t("skill.breakthrough.effect.ultimate.coolingVent", { name: def.ultimate.name, percent: sv("heal", "hp", effect.healMaxHpPercentPerFrozen), max: trim(effect.maxFrozenCounted) });
     if (effect.kind === "splashCharge") return t("skill.breakthrough.effect.ultimate.splashCharge", { energy: trim(effect.energy), ally: trim(effect.allyEnergy) });
     if (effect.kind === "extraCard") return t("skill.breakthrough.effect.ultimate.extraCard", { name: def.ultimate.name, percent: trim(effect.powerPercent) });
     if (effect.kind === "pupRush") return t("skill.breakthrough.effect.ultimate.pupRush", { name: def.ultimate.name, count: trim(effect.count) });
     if (effect.kind === "shareShield") return t("skill.breakthrough.effect.ultimate.shareShield", { name: def.ultimate.name, percent: trim(effect.sharePercent) });
     if (effect.kind === "jointObservation") return t("skill.breakthrough.effect.ultimate.jointObservation", { name: def.ultimate.name, stacks: trim(effect.stacks) });
-    if (effect.kind === "cheekShield") return t("skill.breakthrough.effect.ultimate.cheekShield", { name: def.ultimate.name, percent: trim(effect.shieldMaxHpPercent) });
-    if (effect.kind === "bigShell") return t("skill.breakthrough.effect.ultimate.bigShell", { name: def.ultimate.name, percent: trim(effect.shieldMaxHpPercent) });
+    if (effect.kind === "cheekShield") return t("skill.breakthrough.effect.ultimate.cheekShield", { name: def.ultimate.name, percent: sv("shield", "hp", effect.shieldMaxHpPercent) });
+    if (effect.kind === "bigShell") return t("skill.breakthrough.effect.ultimate.bigShell", { name: def.ultimate.name, percent: sv("shield", "hp", effect.shieldMaxHpPercent) });
     if (effect.kind === "richBomb") return t("skill.breakthrough.effect.ultimate.richBomb", { name: def.ultimate.name, stacks: trim(effect.stacks) });
     if (effect.kind === "chasingBlink") return t("skill.breakthrough.effect.ultimate.chasingBlink", { name: def.ultimate.name });
     if (effect.kind === "longGust") return t("skill.breakthrough.effect.ultimate.longGust", { name: def.ultimate.name, seconds: trim(effect.seconds) });
     if (effect.kind === "signatureBurst") return t("skill.breakthrough.effect.ultimate.signatureBurst", { name: def.ultimate.name });
     if (effect.kind === "bleedFeast") return t("skill.breakthrough.effect.ultimate.bleedFeast", { name: def.ultimate.name, percent: trim(effect.damagePercent) });
     if (effect.kind === "splashPaint") return t("skill.breakthrough.effect.ultimate.splashPaint", { name: def.ultimate.name, percent: trim(effect.sharePercent) });
-    if (effect.kind === "richBlend") return t("skill.breakthrough.effect.ultimate.richBlend", { name: def.ultimate.name, percent: trim(effect.shieldFromCriticalPercent), cap: trim(effect.shieldMaxHpPercent) });
+    if (effect.kind === "richBlend") return t("skill.breakthrough.effect.ultimate.richBlend", { name: def.ultimate.name, percent: trim(effect.shieldFromCriticalPercent), cap: sv("shield", "hp", effect.shieldMaxHpPercent) });
     if (effect.kind === "shrapnel") return t("skill.breakthrough.effect.ultimate.shrapnel", { name: def.ultimate.name, percent: trim(effect.powerPercent) });
     if (effect.kind === "tidalEcho") return t("skill.breakthrough.effect.ultimate.tidalEcho", { seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
     if (effect.kind === "healingShield") return t("skill.breakthrough.effect.ultimate.healingShield", { percent: trim(effect.shieldPercentOfHealing) });
@@ -1693,7 +1596,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "critPlume") return t("skill.breakthrough.effect.ferocity.critPlume", { count: trim(effect.extraStacks) });
     if (effect.kind === "cleavingBasics") return t("skill.breakthrough.effect.ferocity.cleavingBasics");
     if (effect.kind === "feverAmbush") return t("skill.breakthrough.effect.ferocity.feverAmbush", { seconds: trim(effect.stealthSeconds) });
-    if (effect.kind === "overture") return t("skill.breakthrough.effect.ferocity.overture", { power: trim(effect.powerPercent) });
+    if (effect.kind === "overture") return t("skill.breakthrough.effect.ferocity.overture", { power: sv("damage", "atk", effect.powerPercent) });
     if (effect.kind === "pingBurst") return t("skill.breakthrough.effect.ferocity.pingBurst", { name: def.basic.name });
     if (effect.kind === "frenzyLeap") return t("skill.breakthrough.effect.ferocity.frenzyLeap", { hits: effect.everyHits });
     if (effect.kind === "emberRush") return t("skill.breakthrough.effect.ferocity.emberRush", { stacks: trim(effect.stacks) });
@@ -1716,7 +1619,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "pupFrenzy") return t("skill.breakthrough.effect.ferocity.pupFrenzy", { name: def.basic.name, every: trim(effect.every), seconds: trim(PUP.lifeSeconds) });
     if (effect.kind === "adamantShield") {
       const base = def.ferocityTrait.effectId === "adamantBody" ? def.ferocityTrait.shieldMaxHpPercent : 0;
-      return t("skill.breakthrough.effect.ferocity.adamantShield", { from: trim(base), to: trim(effect.shieldMaxHpPercent) });
+      return t("skill.breakthrough.effect.ferocity.adamantShield", { from: sv("shield", "hp", base), to: sv("shield", "hp", effect.shieldMaxHpPercent) });
     }
     if (effect.kind === "droneOverheat") return t("skill.breakthrough.effect.ferocity.droneOverheat", { multiplier: trim(effect.stackMultiplier) });
     if (effect.kind === "closeUp") return t("skill.breakthrough.effect.ferocity.closeUp", { stacks: trim(effect.maxStacks) });
@@ -1728,15 +1631,15 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "servingCall") return t("skill.breakthrough.effect.ferocity.servingCall");
     if (effect.kind === "clawFlurry") return t("skill.breakthrough.effect.ferocity.clawFlurry", { name: def.basic.name, hits: trim(effect.extraHits) });
     if (effect.kind === "ironBarSweep") return t("skill.breakthrough.effect.ferocity.ironBarSweep", { name: def.basic.name, count: trim(effect.maxTargets) });
-    if (effect.kind === "chainSwing") return t("skill.breakthrough.effect.ferocity.chainSwing", { percent: trim(effect.powerPercent), seconds: trim(effect.stunSeconds) });
+    if (effect.kind === "chainSwing") return t("skill.breakthrough.effect.ferocity.chainSwing", { percent: sv("damage", "atk", effect.powerPercent), seconds: trim(effect.stunSeconds) });
     return t("skill.breakthrough.effect.ferocity", {
       percent: trim(effect.shieldPercentOfDamageTaken), seconds: trim(effect.tauntSeconds),
     });
   }
   if (slot === "passive" && effects.passive) {
     if (effects.passive.kind === "none") return undefined;
-    if (effects.passive.kind === "reloadSip") return t("skill.breakthrough.effect.passive.reloadSip", { percent: trim(effects.passive.shieldMaxHpPercent), cap: trim(effects.passive.capMaxHpPercent) });
-    if (effects.passive.kind === "pressureCrack") return t("skill.breakthrough.effect.passive.pressureCrack", { seconds: trim(effects.passive.intervalSeconds), percent: trim(effects.passive.powerPercent) });
+    if (effects.passive.kind === "reloadSip") return t("skill.breakthrough.effect.passive.reloadSip", { percent: sv("shield", "hp", effects.passive.shieldMaxHpPercent), cap: sv("shield", "hp", effects.passive.capMaxHpPercent) });
+    if (effects.passive.kind === "pressureCrack") return t("skill.breakthrough.effect.passive.pressureCrack", { seconds: trim(effects.passive.intervalSeconds), percent: sv("damage", "ap", effects.passive.powerPercent) });
     if (effects.passive.kind === "scarMight") return t("skill.breakthrough.effect.passive.scarMight", { percent: trim(effects.passive.damagePercentPerStack) });
     if (effects.passive.kind === "lightSleeper") return t("skill.breakthrough.effect.passive.lightSleeper", { name: def.passive.name });
     if (effects.passive.kind === "lingeringVenom") return t("skill.breakthrough.effect.passive.lingeringVenom", { name: def.passive.name, seconds: trim(effects.passive.poisonSeconds) });
@@ -1745,7 +1648,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effects.passive.kind === "twinHum") return t("skill.breakthrough.effect.passive.twinHum", { name: def.passive.name });
     if (effects.passive.kind === "swarmDeepen") return t("skill.breakthrough.effect.passive.swarmDeepen", { name: def.passive.name, count: trim(effects.passive.extraTargets) });
     if (effects.passive.kind === "rageGain") return t("skill.breakthrough.effect.passive.rageGain", { name: def.passive.name, value: trim(effects.passive.extraPerHit) });
-    if (effects.passive.kind === "thickShell") return t("skill.breakthrough.effect.passive.thickShell", { name: def.passive.name, self: trim(effects.passive.selfShieldMaxHpPercent), ally: trim(effects.passive.allyShieldMaxHpPercent) });
+    if (effects.passive.kind === "thickShell") return t("skill.breakthrough.effect.passive.thickShell", { name: def.passive.name, self: sv("shield", "hp", effects.passive.selfShieldMaxHpPercent), ally: trim(effects.passive.allyShieldMaxHpPercent) });
     if (effects.passive.kind === "potentReaction") return t("skill.breakthrough.effect.passive.potentReaction", { name: def.passive.name, seconds: trim(effects.passive.poisonSeconds) });
     if (effects.passive.kind === "doubleAmbush") return t("skill.breakthrough.effect.passive.doubleAmbush", { name: def.passive.name, crits: trim(effects.passive.crits) });
     if (effects.passive.kind === "warmBody") return t("skill.breakthrough.effect.passive.warmBody", { name: def.passive.name, percent: trim(effects.passive.damagePercentPerStack), max: trim(effects.passive.maxStacks) });
@@ -1759,7 +1662,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
       return t("skill.breakthrough.effect.passive.fullFocusCrit", { name: arrow?.name ?? def.basic.name });
     }
     if (effects.passive.kind === "resonantShield") {
-      return t("skill.breakthrough.effect.passive.resonantShield", { power: trim(effects.passive.powerPercent), cooldown: trim(effects.passive.cooldownSeconds) });
+      return t("skill.breakthrough.effect.passive.resonantShield", { power: sv("damage", "atk", effects.passive.powerPercent), cooldown: trim(effects.passive.cooldownSeconds) });
     }
     if (effects.passive.kind === "highTide") return t("skill.breakthrough.effect.passive.highTide", { percent: trim(effects.passive.damagePercent) });
     if (effects.passive.kind === "sweetShare") return t("skill.breakthrough.effect.passive.sweetShare", { percent: trim(effects.passive.sharePercent) });
@@ -1771,7 +1674,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effects.passive.kind === "softBreath") return t("skill.breakthrough.effect.passive.softBreath", { name: def.passive.name, percent: trim(effects.passive.healPercentPerSleeper), max: trim(effects.passive.maxSleepers) });
     if (effects.passive.kind === "impactCapTighten") return t("skill.breakthrough.effect.passive.impactCapTighten", { name: def.passive.name, percent: trim(effects.passive.maxHpPercent) });
     if (effects.passive.kind === "extraChapter") return t("skill.breakthrough.effect.passive.extraChapter", { name: def.passive.name, stacks: trim(effects.passive.extraStacks) });
-    if (effects.passive.kind === "iceShatter") return t("skill.breakthrough.effect.passive.iceShatter", { percent: trim(effects.passive.attackPercent) });
+    if (effects.passive.kind === "iceShatter") return t("skill.breakthrough.effect.passive.iceShatter", { percent: sv("damage", "atk", effects.passive.attackPercent) });
     if (effects.passive.kind === "touchBurst") return t("skill.breakthrough.effect.passive.touchBurst");
     if (effects.passive.kind === "blightedFoe") return t("skill.breakthrough.effect.passive.blightedFoe", { percent: trim(effects.passive.takenPercent) });
     if (effects.passive.kind === "landingAmbush") return t("skill.breakthrough.effect.passive.landingAmbush");
@@ -1782,7 +1685,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
       const guard = stats === undefined
         ? t("skill.breakthrough.effect.passive.undyingBulwark.guardPercent", { percent: trim(bulwark.defenseResistancePercent) })
         : t("skill.breakthrough.effect.passive.undyingBulwark.guardAmount", { def: statGainAlias("def", stats.def, bulwark.defenseResistancePercent), res: statGainAlias("res", stats.res, bulwark.defenseResistancePercent) });
-      return t("skill.breakthrough.effect.passive.undyingBulwark", { name: def.passive.name, from: trim(def.passive.value ?? 0), to: trim(bulwark.healPercent), seconds: trim(bulwark.seconds), guard });
+      return t("skill.breakthrough.effect.passive.undyingBulwark", { name: def.passive.name, from: sv("heal", "hp", def.passive.value ?? 0), to: sv("heal", "hp", bulwark.healPercent), seconds: trim(bulwark.seconds), guard });
     }
     if (effects.passive.kind === "manyEyes") return t("skill.breakthrough.effect.passive.manyEyes", { percent: trim(effects.passive.attackSpeedPercentPerObserved) });
     if (effects.passive.kind === "muralHide") {
@@ -1796,10 +1699,10 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effects.passive.kind === "saltedIngredient") return t("skill.breakthrough.effect.passive.saltedIngredient", { name: def.passive.name, percent: trim(effects.passive.reductionPercent) });
     if (effects.passive.kind === "tailHide") return t("skill.breakthrough.effect.passive.tailHide", { name: def.passive.name, seconds: trim(effects.passive.seconds) });
     if (effects.passive.kind === "youngestCare") return t("skill.breakthrough.effect.passive.youngestCare", { name: def.passive.name, percent: trim(effects.passive.sharePercent) });
-    if (effects.passive.kind === "chainShrapnel") return t("skill.breakthrough.effect.passive.chainShrapnel", { name: def.passive.name, percent: trim(effects.passive.powerPercent) });
+    if (effects.passive.kind === "chainShrapnel") return t("skill.breakthrough.effect.passive.chainShrapnel", { name: def.passive.name, percent: sv("damage", "atk", effects.passive.powerPercent) });
     if (effects.passive.kind === "leapVeil") return t("skill.breakthrough.effect.passive.leapVeil", { seconds: effects.passive.stealthSeconds, cooldown: effects.passive.cooldownSeconds });
     if (effects.passive.kind === "rescueShield") {
-      return t("skill.breakthrough.effect.passive.rescueShield", { hp: trim(effects.passive.belowHpPercent), percent: trim(effects.passive.apPercent) });
+      return t("skill.breakthrough.effect.passive.rescueShield", { hp: trim(effects.passive.belowHpPercent), percent: sv("shield", "ap", effects.passive.apPercent) });
     }
     return t("skill.breakthrough.effect.passive", { name: def.passive.name, percent: trim(effects.passive.percent) });
   }
@@ -1827,24 +1730,14 @@ export function breakthroughEffectKeywords(def: RelicDef, slot: BreakthroughSlot
   const own: KeywordDef[] = [];
   const effectOfSlot = def.breakthroughEffects?.[slot];
   if (effectOfSlot && effectOfSlot.kind !== "none") {
-    const prickle = prickleKeyword(def.passive);
+    const prickle = prickleKeyword(def.passive, stats === undefined ? undefined : { ap: stats.ap, maxHp: stats.hp });
     if (prickle) own.push(prickle);
-    const elation = elationKeyword(def.passive);
+    const elation = elationKeyword(def.passive, stats?.hp);
     if (elation) own.push(elation);
   }
   if (stats && slot === "passive" && effectOfSlot) {
     if (effectOfSlot.kind === "undyingBulwark") own.push(...defenseGainKeywords(stats, effectOfSlot.defenseResistancePercent));
     if (effectOfSlot.kind === "muralHide") own.push(...defenseGainKeywords(stats, effectOfSlot.defenseResistancePercentPerTagged));
-  }
-  const now = breakthroughNowValue(def, slot, stats);
-  if (now !== undefined) {
-    const percent = trim(now.percent);
-    own.push({
-      id: BREAKTHROUGH_NOW_ID, term: String(now.amount), kind: "rule",
-      description: now.kind === "damage"
-        ? t("skill.keyword.damage.bonus", { stat: statName(now.stat === "ap" ? "ap" : "atk"), percent })
-        : now.stat === "hp" ? t("skill.keyword.shield.fromMaxHp", { percent }) : t("skill.keyword.shield.fromStat", { stat: statName("ap"), percent }),
-    });
   }
   const effect = slot === "basic" ? def.breakthroughEffects?.basic : undefined;
   if (!effect || effect.kind !== "periodicGuard") return own;

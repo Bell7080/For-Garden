@@ -7,7 +7,7 @@ import { FOCUS } from "../../src/core/skirmish";
 import { KEYWORDS } from "../../src/data/keywords";
 import type { BasicAttack, Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, elationKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, elationKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 import { ENCOUNTER_ROLE } from "../../src/core/levelDesign";
 import { ENCOUNTER_ROLE_ICON_ASSETS, encounterRoleDescription, encounterRoleIcon, encounterRoleMultipliers, encounterRoleName } from "../../src/ui/encounterRolePresentation";
@@ -163,7 +163,7 @@ describe("노도니아 스킬 표시 계약", () => {
     const tag = elationKeyword(nodonia.passive)!;
     expect(tag).toMatchObject({ id: "nodonia-elation", term: "희열", kind: "buff" });
     expect(tag.description).toBe(
-      "한 겹마다 매초 최대 체력의 0.3%를 회복하며 최대 10겹까지 쌓인다."
+      "한 겹마다 매초 최대 체력의 0.3%만큼 회복하며 최대 10겹까지 쌓인다."
       + " 5초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
     );
     // **터지지 않는다.** 겹 하나하나가 곧 재생이라 채워 두는 것이 목적이지, 채워서 다른 일을
@@ -276,7 +276,7 @@ describe("데이 스킬 표시 계약", () => {
     // 도발이 그 뒤에 붙는 것이 이 폭주의 핵심이다 — 손을 놓아도 어그로는 꺼지지 않는다.
     expect(ferocityTraitDescription(deina.ferocityTrait, { attack: deina.stats.atk, defense: deina.stats.def, abilityPower: deina.stats.ap })).toBe(
       "[[move-speed|이동 속도]]가 100% 증가하고 [[basic-attack|기본 공격]]을 하지 않는다."
-      + " 매초 자신의 주위 모든 적에게 [[damage-value|18]]의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓으며 0.75초 동안 [[taunt|도발]]한다.",
+      + " 매초 자신의 주위 모든 적에게 [[v-damage-ap-25-70|18]]의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓으며 0.75초 동안 [[taunt|도발]]한다.",
     );
   });
 
@@ -329,7 +329,7 @@ describe("엘라 스킬 표시 계약", () => {
     // 불러 놓고 그 자리에서 덮는다 — 도발과 보호막이 한 조작에 든다.
     expect(ella.ultimate.selfGuard).toMatchObject({ tauntSeconds: 5, shieldMaxHpPercent: 35 });
     expect(skillDescription(ella.ultimate, { maxHp: ella.stats.hp }))
-      .toBe("주위 모든 적을 [[pull|끌어당겨]] 5초 동안 [[taunt|도발]]하고, [[shield-value|525]]만큼 [[shield|보호막]]을 얻는다.");
+      .toBe("주위 모든 적을 [[pull|끌어당겨]] 5초 동안 [[taunt|도발]]하고, [[v-shield-hp-35-1500|525]]만큼 [[shield|보호막]]을 얻는다.");
     // 능력치를 모르는 자리(도감)에서만 비율로 되돌아간다.
     expect(skillDescription(ella.ultimate)).toContain("최대 체력의 35%만큼 [[shield|보호막]]");
     // 버티는 궁극기가 최종 피해 감쇠를 쓰지 않는 것은 그대로다 — 뚫을 창이 있으면 뚫려야 한다.
@@ -337,11 +337,11 @@ describe("엘라 스킬 표시 계약", () => {
 
     expect(passiveDescription(ella.passive, ella.stats.atk)).toBe(
       "전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 4초 동안 [[invulnerable|무적]]이 되는 대신 아무 행동도 하지 못한다."
-      + " 그동안 최대 체력의 30%를 매초 나누어 회복한다. 이때 주위 적을 [[knockback|날려버린다]].",
+      + " 그동안 최대 체력의 30%만큼 매초 나누어 회복한다. 이때 주위 적을 [[knockback|날려버린다]].",
     );
     expect(ella.ferocityTrait).toMatchObject({ effectId: "adamantBody", shieldMaxHpPercent: 25, hastenedAttacks: 3, attackSpeedPercent: 150 });
     expect(ferocityTraitDescription(ella.ferocityTrait, { attack: ella.stats.atk, defense: ella.stats.def, maxHp: ella.stats.hp }))
-      .toBe("[[shield-value|375]]만큼 [[shield|보호막]]을 얻는다. 이후 [[basic-attack|기본 공격]] 3회 동안 [[attack-speed|공격 속도]]가 150% 오른다.");
+      .toBe("[[v-shield-hp-25-1500|375]]만큼 [[shield|보호막]]을 얻는다. 이후 [[basic-attack|기본 공격]] 3회 동안 [[attack-speed|공격 속도]]가 150% 오른다.");
     expect(ferocityTraitDescription(ella.ferocityTrait, { attack: ella.stats.atk, defense: ella.stats.def }))
       .toContain("최대 체력의 25%만큼 [[shield|보호막]]");
   });
@@ -391,11 +391,10 @@ describe("메테 스킬 표시 계약", () => {
   it("은 폭주·패시브의 % 수치를 실제 능력치로 환산한 태그로 만든다", () => {
     const mette = RELICS.find((def) => def.id === "mette")!;
     expect(ferocityTraitDescription(mette.ferocityTrait, { attack: 200, defense: 0 })).toBe(
-      "폭주 중 아군 [[basic-attack|기본 공격]] 적중마다 [[damage-value|100]]의 피해량을 가진 [[mette-staccato|스타카토]]가 추가로 발동한다.",
+      "폭주 중 아군 [[basic-attack|기본 공격]] 적중마다 [[v-damage-atk-50-200|100]]의 피해량을 가진 [[mette-staccato|스타카토]]가 추가로 발동한다.",
     );
-    expect(passiveShieldKeyword(mette.passive, 200)).toMatchObject({ id: "shield-value", term: "200" });
     expect(passiveDescription(mette.passive, 200)).toBe(
-      "생존 중 아군 [[attack-speed|공격 속도]]를 20% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 [[shield-value|200]] [[shield|보호막]]을 부여한다. 재사용 대기 7초.",
+      "생존 중 아군 [[attack-speed|공격 속도]]를 20% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 [[v-shield-atk-100-200|200]] [[shield|보호막]]을 부여한다. 재사용 대기 7초.",
     );
   });
 
@@ -417,10 +416,9 @@ describe("메테 스킬 표시 계약", () => {
 describe("도디 스킬 표시 계약", () => {
   it("은 궁극기의 아군 회복 %를 실제 주문력 수치로 환산한 태그로 만든다", () => {
     const dodo = RELICS.find((def) => def.id === "dodo")!;
-    expect(allyHealPowerKeyword(dodo.ultimate.allyHealingPower!, 150)).toMatchObject({ id: "heal-value", term: "150" });
     expect(skillDescription(dodo.ultimate, { ap: 150, damage: 400 })).toBe(
       "지정한 원 안의 모든 적에게 [[damage-value|400]]의 [[magical-damage|마법 피해]]를 주고, "
-      + "모든 생존 아군의 체력을 [[heal-value|150]]만큼 회복한다.",
+      + "모든 생존 아군의 체력을 [[v-heal-ap-100-150|150]]만큼 회복한다.",
     );
   });
 
@@ -521,7 +519,7 @@ describe("티아 스킬 표시 계약", () => {
     expect(def.basic.shimmerBurst).toMatchObject({ power: 50, radius: 260, shieldMaxHpPercent: 12, capMaxHpPercent: 36 });
     expect(def.ultimate.shimmerBurst).toBeUndefined();
     expect(passiveDescription(def.passive)).toBe(
-      `적을 타격하면 [[shimmer|반짝!]] 표식을 부여하고 [[ap|주문력]]의 ${def.passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`,
+      `적을 타격하면 [[shimmer|반짝!]] 표식을 부여하고 주문력의 ${def.passive.value}%의 [[magical-damage|마법 피해]]를 추가로 입힌다.`,
     );
   });
 });
@@ -820,8 +818,8 @@ describe("스피나 스킬 표시 계약", () => {
     expect(skillDescription(spino.ultimate)).toContain("깔린 [[shallows|여울]]이 모두 터져 판마다 공격력의 165% [[physical-damage|물리 피해]]를 준다");
     // 능력치를 알면 두 둘째 피해도 주 피해와 같은 실제 수치 태그로 선다.
     const withStats = { damage: 430, atk: { atk: spino.stats.atk, attackSpeed: spino.stats.attackSpeed } };
-    expect(skillDescription(spino.basic, withStats)).toContain(`[[dive|강하]]해 [[damage-value|${Math.round(spino.stats.atk * 140 / 100)}]]`);
-    expect(skillDescription(spino.ultimate, withStats)).toContain(`판마다 [[damage-value|${Math.round(spino.stats.atk * 165 / 100)}]]`);
+    expect(skillDescription(spino.basic, withStats)).toContain(`[[dive|강하]]해 [[v-damage-atk-140-${spino.stats.atk}|${Math.round(spino.stats.atk * 140 / 100)}]]`);
+    expect(skillDescription(spino.ultimate, withStats)).toContain(`판마다 [[v-damage-atk-165-${spino.stats.atk}|${Math.round(spino.stats.atk * 165 / 100)}]]`);
     expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, statusEffects: [{ kind: "stun", seconds: 3 }] });
     // 능력치를 모르면(대상 없이 도감만 보는 경우) 옛 %-표기로 되돌아간다.
     expect(skillDescription(spino.ultimate)).toContain("현재 [[attack-speed|공격 속도]]의 150%");

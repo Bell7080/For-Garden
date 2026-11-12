@@ -205,10 +205,10 @@ describe("안카 — 잠투정", () => {
 describe("안카 — 설명문", () => {
   it("은 패시브·궁극기·폭주를 구조화 필드에서 짓고 실제 값을 태그로 세운다", () => {
     const passive = passiveDescription(ANKA.passive, ANKA.stats.atk, { defense: ANKA.stats.def, resistance: ANKA.stats.res });
-    expect(passive).toContain(`[[heal-value|${Math.round(ANKA.stats.res * WHITE_NOISE.healResistancePercent / 100)}]]`);
+    expect(passive).toContain(`[[v-heal-res-${WHITE_NOISE.healResistancePercent}-${ANKA.stats.res}|${Math.round(ANKA.stats.res * WHITE_NOISE.healResistancePercent / 100)}]]`);
     expect(passive).toContain("[[drowsy|");
     const ultimate = skillDescription(ANKA.ultimate, { resistance: ANKA.stats.res });
-    expect(ultimate).toContain(`[[shield-value|${Math.round(ANKA.stats.res * ANKA.ultimate.selfLullaby!.shieldResistancePercent / 100)}]]`);
+    expect(ultimate).toContain(`[[v-shield-res-${ANKA.ultimate.selfLullaby!.shieldResistancePercent}-${ANKA.stats.res}|${Math.round(ANKA.stats.res * ANKA.ultimate.selfLullaby!.shieldResistancePercent / 100)}]]`);
     expect(ultimate).toContain("[[sleep|");
     expect(ferocityTraitDescription(ANKA.ferocityTrait)).toContain("40%");
     for (const text of [passive, ultimate]) expect(text).not.toMatch(/undefined|\{\w+\}/);

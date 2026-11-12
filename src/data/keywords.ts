@@ -1,4 +1,5 @@
 import { BLEED, FROZEN, POISON } from "../core/skirmish";
+import { resolveValueTag } from "./valueTags";
 import { registerDataText } from "../i18n";
 
 /**
@@ -434,7 +435,7 @@ export function parseKeywordText(text: string, contextualKeywords: readonly Keyw
   for (let match = pattern.exec(text); match !== null; match = pattern.exec(text)) {
     if (match.index > cursor) segments.push({ text: text.slice(cursor, match.index) });
     // 피해 수치처럼 스킬마다 설명이 달라지는 용어는 호출 화면이 넘긴 정의를 먼저 사용한다.
-    const keyword = contextualKeywords.find((candidate) => candidate.id === match[1]) ?? findKeyword(match[1]);
+    const keyword = contextualKeywords.find((candidate) => candidate.id === match[1]) ?? findKeyword(match[1]) ?? resolveValueTag(match[1]);
     segments.push({ text: match[2] ?? keyword?.term ?? match[1], keyword });
     cursor = match.index + match[0].length;
   }

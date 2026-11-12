@@ -16,10 +16,11 @@ export const RELIC_RESET_POPUP = {
     height: 330,
     sd: { x: -232, ground: 300, height: 262, shadow: 150 },
     /** 말풍선 — 꼬리는 왼쪽 아래에서 SD 머리 쪽을 가리킨다. */
-    bubble: { x: 128, y: 110, width: 480, height: 156, tail: 34, textSize: 30, textWrap: 420 },
-    /** 말풍선 아래의 `LV.30 → LV.1`. */
-    levelY: 252,
-    levelSize: 46,
+    bubble: { x: 128, y: 84, width: 480, height: 156, tail: 34, textSize: 30, textWrap: 420 },
+    /** 말풍선 아래의 `LV.30 → LV.1` — 이 창이 말하는 핵심이라 크게 세운다(응태 요청). 도착 레벨은 한 뼘 더 크다. */
+    levelY: 250,
+    levelSize: 64,
+    levelTargetSize: 80,
     /** 이마에서 흘러내리는 땀방울. SD 발끝 기준. */
     sweat: { dx: 78, rise: 214, size: 22 },
   },
@@ -46,12 +47,13 @@ export const RELIC_RESET_POPUP = {
   dimAlpha: CONFIRM_DIALOG.dimAlpha,
   /**
    * 판 뒷배경의 색감 — 되돌리는 창은 울먹이는 장밋빛, 먹이는 창은 들뜬 호박빛이다.
-   * 위가 그 색으로 물들고 아래로 갈수록 판의 남색으로 가라앉아, 재화 판·버튼은 늘 같은 바탕 위에서 읽힌다.
-   * 무대에는 SD 뒤로 퍼지는 빛살·마름모 점 무늬·떠오르는 반짝임이 같은 색으로 얹힌다.
+   * 위가 그 색으로 물들고 아래로 갈수록 그 색의 짙은 결(`deep`)로 가라앉는다 — 남색으로 꺼뜨리면 아래 절반이 꾸미지 않은
+   * 판으로 읽혔다(응태 지적). 무대에는 SD 뒤로 퍼지는 빛살·마름모 점 무늬·떠오르는 반짝임이, 아래에는 밑동에서 피어오르는
+   * 점 무늬·확정 버튼 뒤 후광·밑변 반짝이가 같은 색으로 얹힌다. 재화 판도 그 색의 짙은 판(`panel`)이다.
    */
   backdrop: {
-    afraid: { wash: 0x6b2a4f, deep: 0x1a1830, ray: 0xff8fb8, dot: 0xffb3cf, spark: 0xffd0e2 },
-    excited: { wash: 0x7a5418, deep: 0x16222c, ray: 0xffd36b, dot: 0xffe39a, spark: 0xfff1b8 },
+    afraid: { wash: 0x6b2a4f, deep: 0x3a1636, panel: 0x22101f, ray: 0xff8fb8, dot: 0xffb3cf, spark: 0xffd0e2 },
+    excited: { wash: 0x7a5418, deep: 0x40240c, panel: 0x241509, ray: 0xffd36b, dot: 0xffe39a, spark: 0xfff1b8 },
     /** 위 물들임의 진하기 · 빛살 수와 진하기 · 점 무늬 간격. */
     washAlpha: 0.62,
     rays: 14,

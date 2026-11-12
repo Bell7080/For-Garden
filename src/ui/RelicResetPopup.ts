@@ -147,15 +147,24 @@ function openRelicAskPopup(scene: Phaser.Scene, popups: PopupLayer, spec: AskSpe
 
     // `LV.30 → LV.1` — 지금 레벨은 흰색, 도착하는 자리는 창마다 제 색이다.
     const level = scene.add.container(B.x, S.levelY);
-    const from = scene.add.text(0, 0, `LV.${spec.from}`, textStyle({ role: "display", size: S.levelSize, color: COLOR.ink })).setOrigin(0, 0.5);
-    const arrow = scene.add.text(0, 0, "→", textStyle({ role: "display", size: S.levelSize * 0.8, color: COLOR.inkDim })).setOrigin(0, 0.5);
-    const to = scene.add.text(0, 0, `LV.${spec.to}`, textStyle({ role: "display", size: S.levelSize, color: spec.toColor })).setOrigin(0, 0.5);
+    const from = scene.add.text(0, 0, `LV.${spec.from}`, textStyle({ role: "display", size: S.levelSize, color: COLOR.ink })).setOrigin(0, 0.5).setStroke("#05070a", 8);
+    const arrow = scene.add.text(0, 0, "→", textStyle({ role: "display", size: S.levelSize * 0.8, color: COLOR.ink })).setOrigin(0, 0.5).setStroke("#05070a", 6);
+    const to = scene.add.text(0, 0, `LV.${spec.to}`, textStyle({ role: "display", size: S.levelTargetSize, color: spec.toColor })).setOrigin(0, 0.5).setStroke("#05070a", 9);
     const gap = 18;
-    let lx = -(from.width + arrow.width + to.width + gap * 2) / 2;
+    const span = from.width + arrow.width + to.width + gap * 2;
+    let lx = -span / 2;
     from.setX(lx); lx += from.width + gap;
     arrow.setX(lx); lx += arrow.width + gap;
     to.setX(lx);
     level.add([from, arrow, to]);
+    // 세 자리 레벨이면 한 줄이 판 오른쪽 끝에 닿는다 — 넘칠 때만 통째로 줄인다(왼쪽 SD 쪽으로도 넘지 않게).
+    const room = (L.width / 2 - 36 - B.x) * 2;
+    if (span > room) level.setScale(room / span);
+    // 도착 레벨이 한 번 톡 부풀었다 자리 잡는다 — 이 창이 말하는 핵심이 거기 있다.
+    if (loops) {
+      to.setScale(0.6);
+      scene.tweens.add({ targets: to, scale: 1, duration: 420, delay: 260, ease: "Back.Out" });
+    }
     stage.add(level);
 
     // SD — 발밑 그림자 위에 선다. 되돌릴 때는 떨며 땀을 흘리고, 먹일 때는 통통 뛴다.
@@ -177,7 +186,7 @@ function openRelicAskPopup(scene: Phaser.Scene, popups: PopupLayer, spec: AskSpe
       if (spec.mood === "afraid") addSweat(scene, stage, S.sd.x + S.sweat.dx, S.sd.ground - S.sweat.rise, S.sweat.size, loops);
     }
 
-    paintWallet(scene, body, spots.walletTop, spots.walletHeight, spec.rows, spec.edge);
+    paintWallet(scene, body, spots.walletTop, spots.walletHeight, spec.rows, spec.edge, RELIC_RESET_POPUP.backdrop[spec.mood].panel);
 
     body.add(scene.add.text(0, spots.noteY, spec.note, textStyle({ role: "body", size: L.noteSize, color: COLOR.inkDim, align: "center", lineSpacing: 4 })).setOrigin(0.5));
 
@@ -229,11 +238,11 @@ function dropPoints(size: number, dx: number, dy: number): Phaser.Math.Vector2[]
 }
 
 /** 보유 재화 변화 — 재화마다 `그림 · 지금 → 뒤 · 증감` 한 줄. */
-function paintWallet(scene: Phaser.Scene, body: Phaser.GameObjects.Container, top: number, height: number, rows: readonly { icon: string; before: number; after: number }[], edge: number): void {
+function paintWallet(scene: Phaser.Scene, body: Phaser.GameObjects.Container, top: number, height: number, rows: readonly { icon: string; before: number; after: number }[], edge: number, fill: number): void {
   const W = RELIC_RESET_POPUP.wallet;
   const width = RELIC_RESET_POPUP.width - W.inset * 2;
   const unit = Math.min(width, height) * POPUP_BODY_BEVEL_RATIO;
-  body.add(drawLayer(scene, 0, top + height / 2, chipPoints(width, height, { bevel: { topLeft: unit, bottomRight: unit } }), { fill: 0x121821, alpha: 0.86, edge, edgeAlpha: 0.8, shadow: { x: 8, y: 12 } }));
+  body.add(drawLayer(scene, 0, top + height / 2, chipPoints(width, height, { bevel: { topLeft: unit, bottomRight: unit } }), { fill, alpha: 0.9, edge, edgeAlpha: 0.8, shadow: { x: 8, y: 12 } }));
   body.add(scene.add.text(-width / 2 + 36, top + W.padY + W.headerHeight / 2, t("info.reset.wallet"), textStyle({ role: "emphasis", size: W.headerSize, color: COLOR.inkDim })).setOrigin(0, 0.5));
   const C = W.columns;
   rows.forEach((row, index) => {
@@ -269,11 +278,13 @@ function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, 
   const unit = Math.min(width, height) * POPUP_BODY_BEVEL_RATIO;
   const stageMask = shapeClipMask(scene, body, chipPoints(width, stageHeight, { bevel: { topLeft: unit } }), { x: 0, y: top + stageHeight / 2 });
 
-  // 물들임 — 무대 높이까지 그 색, 그 아래로 남색에 가라앉는다.
+  // 물들임 — 무대 높이까지 그 색, 아래로 그 색의 짙은 결에 가라앉았다가 밑동에서 다시 은은히 물든다.
   const wash = scene.add.graphics();
+  const lowTop = stageBottom + 40;
   wash.fillGradientStyle(tone.wash, tone.wash, tone.deep, tone.deep, D.washAlpha, D.washAlpha, D.washAlpha * 0.9, D.washAlpha * 0.9);
-  wash.fillRect(-width / 2, top, width, stageBottom - top + 40);
-  wash.fillStyle(tone.deep, D.washAlpha * 0.9).fillRect(-width / 2, stageBottom + 40, width, height / 2 - stageBottom - 40);
+  wash.fillRect(-width / 2, top, width, lowTop - top);
+  wash.fillGradientStyle(tone.deep, tone.deep, tone.wash, tone.wash, D.washAlpha * 0.9, D.washAlpha * 0.9, D.washAlpha * 0.75, D.washAlpha * 0.75);
+  wash.fillRect(-width / 2, lowTop, width, height / 2 - lowTop);
   wash.setMask(mask);
   body.add(wash);
 
@@ -329,6 +340,44 @@ function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, 
   floor.fillRect(0, stageBottom - 6, width / 2, 2);
   floor.setMask(mask);
   body.add(floor);
+
+  // 아래 — 밑동에서 피어오르는 점 무늬(위로 갈수록 옅어져 안내 줄 둘레는 비운다).
+  const lowDots = scene.add.graphics();
+  const bottom = height / 2;
+  const rise = bottom - (spots.noteY + 20);
+  for (let row = 0, y = bottom - gap / 2; y > spots.noteY + 20; row += 1, y -= gap) {
+    const fade = 1 - (bottom - y) / rise;
+    lowDots.fillStyle(tone.dot, D.dotAlpha * 1.1 * fade);
+    for (let x = -width / 2 + (row % 2 === 0 ? gap / 2 : gap); x < width / 2; x += gap) {
+      lowDots.fillPoints([new Phaser.Math.Vector2(x, y - 3.5), new Phaser.Math.Vector2(x + 3.5, y), new Phaser.Math.Vector2(x, y + 3.5), new Phaser.Math.Vector2(x - 3.5, y)], true);
+    }
+  }
+  lowDots.setMask(mask);
+  body.add(lowDots);
+
+  // 확정 버튼 뒤의 납작한 마름모 후광 — 누를 자리로 눈이 모인다.
+  const glow = scene.add.graphics({ x: 0, y: spots.buttonY });
+  glow.setBlendMode(Phaser.BlendModes.ADD);
+  for (let i = 0; i < 5; i += 1) {
+    const r = 150 + i * 46;
+    glow.fillStyle(tone.ray, 0.06);
+    glow.fillPoints([new Phaser.Math.Vector2(0, -r * 0.42), new Phaser.Math.Vector2(r * 1.5, 0), new Phaser.Math.Vector2(0, r * 0.42), new Phaser.Math.Vector2(-r * 1.5, 0)], true);
+  }
+  glow.setMask(mask);
+  body.add(glow);
+
+  // 밑변 반짝이 줄 — 무대 바닥선과 같은 결의 빛 한 줄과 양 끝의 작은 마름모.
+  const hem = scene.add.graphics();
+  hem.fillGradientStyle(tone.ray, tone.ray, tone.ray, tone.ray, 0, 0.4, 0, 0.4);
+  hem.fillRect(-width / 2, bottom - 18, width / 2, 2);
+  hem.fillGradientStyle(tone.ray, tone.ray, tone.ray, tone.ray, 0.4, 0, 0.4, 0);
+  hem.fillRect(0, bottom - 18, width / 2, 2);
+  hem.fillStyle(tone.spark, 0.9);
+  for (const [hx, size] of [[-width / 2 + 48, 8], [-width / 2 + 76, 5], [width / 2 - 120, 6], [width / 2 - 94, 9]] as const) {
+    hem.fillPoints([new Phaser.Math.Vector2(hx, bottom - 17 - size), new Phaser.Math.Vector2(hx + size * 0.8, bottom - 17), new Phaser.Math.Vector2(hx, bottom - 17 + size * 0.9), new Phaser.Math.Vector2(hx - size * 0.7, bottom - 17)], true);
+  }
+  hem.setMask(mask);
+  body.add(hem);
 
   // 반짝임 — 난수 없이 번호에서 자리·박자를 정한다. 무대 안에서 떠오르며 숨 쉰다.
   for (let i = 0; i < D.sparks; i += 1) {

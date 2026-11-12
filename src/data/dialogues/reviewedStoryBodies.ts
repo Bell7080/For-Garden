@@ -1,7 +1,7 @@
 import type { DialogueStory } from "../../core/dialogue";
 import { registerDataText } from "../../i18n";
 
-/** 본편·서브 원고 중 v0.447.2에서 검수와 11개 언어 번역을 함께 마친 본문만 등록한다. */
+/** 본편·서브 원고 중 v0.449.6에서 검수와 11개 언어 번역을 함께 마친 본문만 등록한다. */
 export const REVIEWED_STORY_BODIES: Readonly<Record<string, readonly string[]>> = {
   "stage-1-2-post": ["heard", "log"],
   "stage-1-4-pre": ["habit", "train"],

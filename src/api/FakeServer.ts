@@ -24,7 +24,7 @@ import { bannerAcceptsCount, bannerActive, canPull, carryoverTenAvailable, carry
 import { socialApi } from "./FakeSocialServer";
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
 import { RESONANCE_CAP, RESONANCE_CHEESECAKE, canResonate, relicFragmentRoom, resonanceFragmentSpend, resonanceOf } from "../core/relicResonance";
-import { BANNERS, STANDARD_POOLS } from "../data/banners";
+import { BANNERS, STANDARD_POOLS, researchBanners } from "../data/banners";
 import {
   SITUATIONAL_OFFER_RULES, activeSituationalOffer, consumeSituationalOffer, forgetSituationalOfferKey, issueSituationalOffer, normalizeSituationalOfferState,
   openSituationalOffers, pruneSituationalOffers, recordStoryResult, situationalWeekKey, storyStageChapter, type SituationalOfferCandidate, type SituationalOfferState,
@@ -2645,9 +2645,11 @@ export class FakeServer implements GameApi {
     }
 
     if (!isContentUnlocked("lab", this.state.playerResearch.level, true, this.state.cleared)) throw new GameApiError("INVALID_STATE", "1-5 클리어 후 연구소가 열립니다.");
-    const banner = BANNERS.find((candidate) => candidate.id === request.bannerId);
+    // QA 개발 서버는 기간과 상관없이 모든 배너와 한정 픽업 배너를 받는다(응태 요청, 2026-11-12). 정식 서버는 늘 거짓이다.
+    const qaOpen = this.allEventsOpen();
+    const banner = researchBanners(qaOpen).find((candidate) => candidate.id === request.bannerId);
     if (!banner) throw new GameApiError("BANNER_NOT_FOUND", "존재하지 않는 배너입니다.");
-    if (!bannerActive(banner, this.now())) throw new GameApiError("BANNER_NOT_ACTIVE", "진행 중인 연구가 아닙니다.");
+    if (!qaOpen && !bannerActive(banner, this.now())) throw new GameApiError("BANNER_NOT_ACTIVE", "진행 중인 연구가 아닙니다.");
     const currentPity = this.state.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
     // 10연 전용·계정당 횟수 제한은 재화보다 먼저 본다 — 화면이 버튼을 감춰도 요청은 올 수 있다.
     if (!bannerAcceptsCount(banner, request.count, currentPity)) {

@@ -18,6 +18,7 @@ import {
   ANKA_PORTRAIT_METADATA,
   IRNA_PORTRAIT_METADATA,
   TEKU_PORTRAIT_METADATA,
+  PLESHA_PORTRAIT_METADATA,
   ARK_PORTRAIT_METADATA,
   TERISA_PORTRAIT_METADATA,
   MAKI_PORTRAIT_METADATA,
@@ -73,6 +74,7 @@ const JOINTS: Readonly<Record<string, { eyes: readonly [readonly [number, number
   anka: { eyes: [[374, 220], [456, 201]], core: [426, 324] },
   irna: { eyes: [[567, 230], [623, 265]], core: [549, 332] },
   teku: { eyes: [[424, 261], [492, 229]], core: [477, 361] },
+  plesha: { eyes: [[423, 266], [477, 255]], core: [477, 365] },
   ark: { eyes: [[558, 306], [620, 339]], core: [577, 437] },
 };
 
@@ -110,6 +112,7 @@ const PORTRAITS: Readonly<Record<string, Omit<PuppetAsset, "url">>> = {
   anka: ANKA_PORTRAIT_METADATA,
   irna: IRNA_PORTRAIT_METADATA,
   teku: TEKU_PORTRAIT_METADATA,
+  plesha: PLESHA_PORTRAIT_METADATA,
   ark: ARK_PORTRAIT_METADATA,
 };
 

@@ -14,6 +14,7 @@
 
 import { bannerGuaranteePending, bannerPullsRemaining, pullCost, type Banner, type GachaPityState } from "../core/gacha";
 import type { TextKey } from "../i18n";
+import { QA_PICKUP_BANNER_PREFIX } from "../data/banners";
 
 export type BannerTone = "welcome" | "standard" | "limited";
 
@@ -72,6 +73,8 @@ export const BANNER_PRESENTATION: Record<string, BannerPresentation> = {
 
 /** 표에 없는 배너가 새로 들어와도 제목 없이 서지 않게 하는 기본값. 이름은 배너 데이터에서 읽는다. */
 export function bannerPresentation(banner: Banner): BannerPresentation | undefined {
+  // QA 전용 한정 픽업 배너는 호박석 픽업의 결을 빌리되, 디안을 꾸미는 부제는 떼어 낸다.
+  if (banner.id.startsWith(QA_PICKUP_BANNER_PREFIX)) return { ...BANNER_PRESENTATION.amber, subtitleKey: undefined };
   return BANNER_PRESENTATION[banner.id];
 }
 

@@ -14,7 +14,7 @@ import { BACKGROUND } from "../ui/backgroundAssets";
  *
  * 간판(렉시아·스피나)은 여기에 넣지 않는다 — 놓친 사람이 게임의 얼굴을 영영 갖지 못한다.
  */
-export const LIMITED_RELIC_IDS: ReadonlySet<string> = new Set(["dian"]);
+export const LIMITED_RELIC_IDS: ReadonlySet<string> = new Set(["dian", "plesha"]);
 
 /** 정적 렐릭 희귀도를 기준으로 구성해 등급 결정 후 다른 등급이 섞이지 않게 한다. 한정 개체는 뺀다. */
 export const STANDARD_POOLS = Object.fromEntries(
@@ -139,6 +139,31 @@ export const BANNERS: Banner[] = [
     highestRarityGuarantee: 120,
   },
 ];
+
+/**
+ * **QA 빌드 전용 픽업 배너**(응태 요청, 2026-11-12) — 지금 어느 배너에도 픽업으로 서 있지 않은 한정 렐릭마다 호박석 픽업
+ * 하나를 세워, 기간·차례를 기다리지 않고 새 한정 개체(플레샤 등)를 뽑아 볼 수 있게 한다. 값·확률·천장 그룹은 호박석 연구와
+ * 같다(천장 그룹을 새로 만들면 저장 검증이 그 그룹을 모른다). **일반 빌드·정식 서버는 이 목록을 읽지 않는다** —
+ * `researchBanners(false)`가 `BANNERS`만 돌려준다.
+ */
+const AMBER_BANNER = BANNERS.find(({ id }) => id === "amber")!;
+export const QA_PICKUP_BANNER_PREFIX = "qa-pickup-";
+export const QA_PICKUP_BANNERS: readonly Banner[] = [...LIMITED_RELIC_IDS]
+  .filter((relicId) => !BANNERS.some((banner) => Object.values(banner.pickupRelicIds).some((ids) => ids?.includes(relicId))))
+  .flatMap((relicId) => {
+    const relic = PLAYABLE_RELICS.find(({ id }) => id === relicId);
+    if (!relic) return [];
+    const pickups = { [relic.rarity]: [relicId] } as Partial<Record<RelicRarity, string[]>>;
+    return [{
+      ...AMBER_BANNER, id: `${QA_PICKUP_BANNER_PREFIX}${relicId}`, featuredRelicId: relicId, artKey: undefined,
+      startsAt: undefined, endsAt: undefined, relicPools: pickupPools(pickups), pickupRelicIds: pickups,
+    } satisfies Banner];
+  });
+
+/** 지금 연구소에 설 수 있는 배너 목록. QA(`qa`)면 한정 픽업 배너가 뒤에 붙는다. */
+export function researchBanners(qa: boolean): readonly Banner[] {
+  return qa ? [...BANNERS, ...QA_PICKUP_BANNERS] : BANNERS;
+}
 
 export function getBanner(id: string): Banner {
   const found = BANNERS.find((banner) => banner.id === id);

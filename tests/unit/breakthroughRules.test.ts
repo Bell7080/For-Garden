@@ -33,6 +33,11 @@ type Category =
 
 const CATEGORY: Record<EffectKind, Category> = {
   none: "none",
+  // 플레샤 — 유성
+  starfallChance: "damage",
+  meteorEncore: "survival",
+  starlitCheer: "support",
+  secondStar: "survival",
   // 감금조 — 마가사·노아·라자·카르(적 전용)
   seasoning: "damage",
   snagClaw: "control",

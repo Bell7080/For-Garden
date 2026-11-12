@@ -53,7 +53,7 @@ export function breakConfirmHeight(): number {
 }
 
 /**
- * 표 — **별마다 무엇이 열리는가**만 읽는 창이다.
+ * 표 — **돌파 단계마다 무엇이 열리는가**를 카드 넷으로 읽는 창이다.
  *
  * 여기에는 파편 수도, 가진 파편도, 별 몇 개인지도 적지 않는다. 그 셋은 **확정 창**이 이미
  * 말하고(액자 셋과 `필요 N`), 여기서 다시 말하면 같은 수가 두 창에 서서 어느 쪽이 맞는지
@@ -69,59 +69,55 @@ export const BREAK_STEPS = {
   centerY: BASE_HEIGHT / 2,
   /** 줄 판이 판 좌우에서 안으로 들어오는 여백(양쪽 합). */
   rowInset: 88,
-  /** 첫 줄 가운데. 제목표 띠와 깎인 모서리를 함께 피한다. */
-  firstRowY: 196,
+  /** 첫 카드 가운데(최소 높이 기준). 제목표 띠와 깎인 모서리를 함께 피한다. */
+  firstRowY: 212,
   /**
-   * 줄 한 장의 높이와 줄 간격.
+   * 카드 한 장의 최소 높이와 카드 간격.
    *
-   * height는 최소 높이다. 실제 효과 문장의 높이와 위아래 여백을 재서 더 긴 행만 늘린다.
-   * step과 height의 차이는 행 사이 여백으로 유지하므로 설명이 길어져도 다음 행과 겹치지 않는다.
+   * 카드는 **머리 띠 + 몸통**이다. 머리 띠(`header`)에는 돌파 등급 · 슬롯 이름 · 스킬 이름 · 능력치 성장 ·
+   * 요구 레벨이 한 줄로 서고, 몸통에는 스킬 액자와 열리는 효과 문장이 선다. height는 최소 높이이고 실제
+   * 효과 문장의 높이와 위아래 여백을 재서 더 긴 카드만 늘린다. step과 height의 차이가 카드 사이 여백이다.
    */
-  row: { height: 168, step: 200 },
-  textPadY: 24,
+  row: { height: 184, step: 216 },
+  /** 카드 머리 띠의 높이. */
+  header: 56,
+  textPadY: 20,
   /**
-   * 열린 줄과 아직 안 열린 줄의 색.
+   * 열린 카드와 아직 안 열린 카드의 색.
    *
-   * **아직 안 열린 줄도 또렷하게 읽혀야 한다.** 별 하나로 시작하는 개체는 네 줄이 **모두**
-   * 안 열린 줄이라, 그 줄을 어둡게 눌러 두면 이 창을 처음 여는 사람이 캄캄한 판 넷을 본다 —
-   * 정작 여기서 읽어야 하는 것이 "다섯까지 키우면 무엇을 얻는가"인데 그것만 안 보이는 셈이다.
-   *
-   * 그래서 **가른 것은 밝기가 아니라 결**이다: 열린 줄은 따뜻한 호박빛 면과 밝은 윗선을 얻고,
-   * 안 열린 줄은 차가운 남색 면에 흐린 윗선을 얻는다. 글과 그림의 진하기는 둘이 거의 같다 —
-   * 어느 쪽이든 읽으러 온 내용이기 때문이다. "어디까지 왔는가"는 별 표식이 말한다.
+   * **아직 안 열린 카드도 또렷하게 읽혀야 한다.** 돌파 등급 I로 시작하는 개체는 넷이 **모두** 안 열린
+   * 카드라, 어둡게 눌러 두면 이 창을 처음 여는 사람이 캄캄한 판 넷을 본다. 그래서 **가른 것은 밝기가 아니라
+   * 결**이다: 열린 카드는 따뜻한 호박빛 면과 밝은 머리 띠, 안 열린 카드는 차가운 남색 면에 흐린 머리 띠를
+   * 얻는다. 글과 그림의 진하기는 둘이 거의 같다 — 어느 쪽이든 읽으러 온 내용이다.
    */
   tone: {
-    reached: { fill: 0x2a2418, alpha: 0.95, edgeAlpha: 0.9, gradeMark: 1 },
-    locked: { fill: 0x161d27, alpha: 0.92, edgeAlpha: 0.42, gradeMark: 0.5 },
+    reached: { fill: 0x2a2418, alpha: 0.95, edgeAlpha: 0.9, gradeMark: 1, header: 0x4a3b1c, headerAlpha: 0.85 },
+    locked: { fill: 0x161d27, alpha: 0.92, edgeAlpha: 0.42, gradeMark: 0.55, header: 0x1f2a38, headerAlpha: 0.9 },
     /**
-     * 뚫어 두었지만 **꺼진** 줄 — 레벨 초기화로 요구 레벨에 못 미친 단계(`activeBreakthrough`).
-     * 호박빛도 남색도 아닌 잿빛이라 "아직 안 뚫음"과도 "켜져 있음"과도 갈린다. 레벨을 다시 올리면 호박빛으로 돌아온다.
+     * 뚫어 두었지만 **꺼진** 카드 — 레벨 초기화로 요구 레벨에 못 미친 단계(`activeBreakthrough`).
+     * 호박빛도 남색도 아닌 잿빛이라 "아직 안 뚫음"과도 "켜져 있음"과도 갈린다.
      */
-    dormant: { fill: 0x1e2024, alpha: 0.94, edgeAlpha: 0.28, gradeMark: 1 },
+    dormant: { fill: 0x1e2024, alpha: 0.94, edgeAlpha: 0.28, gradeMark: 1, header: 0x2c2f35, headerAlpha: 0.9 },
   },
-  /**
-   * 아직 안 열린 줄의 스킬 액자 진하기.
-   *
-   * 액자는 그 줄의 **주제**라 알아볼 수 있어야 한다. 예전 0.42는 어느 기술이 열리는지 그림으로
-   * 읽을 수 없었다 — 이 창에서 액자를 세운 이유가 사라진다.
-   */
+  /** 다음에 뚫을 카드 — 테두리 안쪽에서 강조 빛이 느리게 숨 쉰다(움직임 줄이기에서는 멈춘 빛). */
+  next: { glowStrength: 0.42, breatheMs: 1100, tagHeight: 34, tagSize: 20, tagPadX: 18, tagLift: 5 },
+  /** 아직 안 열린 카드의 스킬 액자 진하기 — 액자는 그 카드의 주제라 알아볼 수 있어야 한다. */
   lockedIconAlpha: 0.82,
-  /** 줄 안에서 돌파 등급 표식이 서는 자리와 크기. */
-  gradeMark: { x: -368, size: 32 },
-  /** 꺼진 줄에서 표식 아래 서는 「필요 LV.N」 — 표식 가운데에 맞추고 액자에 닿지 않는 폭 안에서 줄인다. */
-  dormantNeed: { dy: 40, size: 19, maxWidth: 118 },
-  /** 줄 안에서 스킬 액자가 서는 자리와 크기. */
-  icon: { x: -262, size: 108 },
+  /** 머리 띠 안에서 돌파 등급 표식이 서는 자리와 크기. */
+  gradeMark: { x: -402, size: 30 },
+  /** 머리 띠의 글 — 슬롯 이름(작고 흐림)과 스킬 이름(크고 굵게). */
+  headerText: { x: -360, slotSize: 21, nameSize: 28, gap: 12 },
+  /** 머리 띠 오른쪽 — 요구 레벨 칩과 능력치 성장. 오른쪽 변에서 남기는 여백과 둘 사이 간격. */
+  headerRight: { margin: 22, levelSize: 24, growthSize: 20, gap: 22 },
+  /** 꺼진 카드의 「필요 LV.N」 크기. 요구 레벨 칩 자리에 선다. */
+  dormantNeed: { size: 20 },
+  /** 몸통 안에서 스킬 액자가 서는 자리와 크기. */
+  icon: { x: -380, size: 100 },
   /** 설명 글이 시작하는 x와 줄 오른쪽 변에서 남기는 여백. */
-  textX: -176,
+  textX: -310,
   textRightMargin: 26,
-  /**
-   * 설명 글 크기.
-   *
-   * 이 창에서 읽으러 온 것이 **그 문장 하나**다. 23px은 판이 980이나 되는데도 네 줄이 작은
-   * 각주처럼 보였다 — 줄 사이를 넓히고(step) 글을 키운 만큼 판이 세로로 함께 자란다.
-   */
-  textSize: 27,
+  /** 설명 글 크기 — 이 창에서 읽으러 온 것이 그 문장 하나다. */
+  textSize: 26,
   /** 마지막 줄 아래끝에서 판 밑변까지. */
   bottomMargin: 56,
 } as const;
@@ -140,7 +136,7 @@ export interface BreakthroughStepsLayout {
 export function breakthroughStepsLayout(stepCount: number, textHeights: readonly number[] = []): BreakthroughStepsLayout {
   const panel = BREAK_STEPS;
   const rowHeights = Array.from({ length: Math.max(0, stepCount) }, (_, index) =>
-    Math.max(panel.row.height, Math.ceil((textHeights[index] ?? 0) + panel.textPadY * 2)));
+    Math.max(panel.row.height, panel.header + Math.ceil((textHeights[index] ?? 0) + panel.textPadY * 2)));
   const rows: number[] = [];
   let nextTop = panel.firstRowY - panel.row.height / 2;
   for (const height of rowHeights) {

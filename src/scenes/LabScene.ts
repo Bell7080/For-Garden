@@ -9,7 +9,8 @@ import { bannerAcceptsCount, bannerActive, bannerGuaranteePending, bannerPullsRe
 import { serverNow } from "../api/serverClock";
 import { ResearchPresentationController, highestRarity, researchSlotViews, showcaseRelicIds } from "../core/researchPresentation";
 import { consumeSceneEntry } from "./sceneEntry";
-import { BANNERS, LIMITED_RELIC_IDS } from "../data/banners";
+import { LIMITED_RELIC_IDS, researchBanners } from "../data/banners";
+import { QA_ALL_EVENTS } from "../core/buildFlavor";
 import { getRelic } from "../data/relics";
 import { session } from "../state/session";
 import { BottomNav } from "../ui/BottomNav";
@@ -134,7 +135,8 @@ export class LabScene extends Phaser.Scene {
    * 순서는 데이터 순서 그대로다 — 첫 복원 연구가 맨 앞이라 처음 들어온 사람이 먼저 만난다.
    */
   private get banners(): Banner[] {
-    return BANNERS.filter((banner) => bannerActive(banner, serverNow()) && bannerPullsRemaining(banner, this.pityOf(banner)) > 0);
+    // QA 빌드는 기간과 상관없이 모든 배너와 한정 픽업 배너를 세운다(`QA_ALL_EVENTS` — 응태 요청, 2026-11-12).
+    return researchBanners(QA_ALL_EVENTS).filter((banner) => (QA_ALL_EVENTS || bannerActive(banner, serverNow())) && bannerPullsRemaining(banner, this.pityOf(banner)) > 0);
   }
 
   private get banner(): Banner {
@@ -637,7 +639,7 @@ export class LabScene extends Phaser.Scene {
     if (count !== 1) return undefined;
     const banner = this.banner;
     const pity = this.pityOf(banner);
-    if (!bannerActive(banner, new Date()) || !canPull(session.wallet, banner, 1, pity)) return undefined;
+    if ((!QA_ALL_EVENTS && !bannerActive(banner, new Date())) || !canPull(session.wallet, banner, 1, pity)) return undefined;
     const tone = LAB_CHROME.pull.oneTone;
     const css = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
     return {

@@ -27,6 +27,10 @@ export class FaceFrame extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number, options: {
     portraitAssetId: PortraitAssetId;
     tint?: number;
+    /** 얼굴 그림만의 투명도. 미보유 렐릭을 검은 실루엣(`tint`와 함께)으로 세울 때만 낮춘다. */
+    faceAlpha?: number;
+    /** 액자 면 색. 비우면 공용 액자 색이다. 검은 실루엣이 읽히도록 미보유 칸만 밝은 면을 깐다. */
+    fill?: number;
     size?: number;
     /** 사방 외곽선 색. 비우면 강조색이다. 등급을 알리는 자리만 넘긴다. */
     color?: number;
@@ -52,7 +56,7 @@ export class FaceFrame extends Phaser.GameObjects.Container {
     const shape = chipPoints(size, size, {
       bevel: { topLeft: size * ITEM_FRAME.bevel, topRight: 0, bottomRight: size * ITEM_FRAME.bevel, bottomLeft: 0 },
     });
-    if (!options.bare) this.add(drawLayer(scene, 0, 0, shape, { fill: ITEM_FRAME.fill, alpha: ITEM_FRAME.fillAlpha }));
+    if (!options.bare) this.add(drawLayer(scene, 0, 0, shape, { fill: options.fill ?? ITEM_FRAME.fill, alpha: ITEM_FRAME.fillAlpha }));
     void this.loadFace(scene, options, size);
     if (options.bare) {
       this.once(Phaser.GameObjects.Events.DESTROY, () => { this.disposed = true; });
@@ -78,7 +82,7 @@ export class FaceFrame extends Phaser.GameObjects.Container {
     this.once(Phaser.GameObjects.Events.DESTROY, () => { this.disposed = true; });
   }
 
-  private async loadFace(scene: Phaser.Scene, options: { portraitAssetId: PortraitAssetId; tint?: number }, size: number): Promise<void> {
+  private async loadFace(scene: Phaser.Scene, options: { portraitAssetId: PortraitAssetId; tint?: number; faceAlpha?: number }, size: number): Promise<void> {
     // **이미 구운 얼굴이면 기다리지 않고 그 자리에서 세운다.** 목록을 다시 그릴 때마다(던전 단계를
     // 고르거나 탭을 바꿀 때) 원본을 새로 읽는 비동기 길을 타면, 액자가 한 프레임 빈 채로 섰다가
     // 얼굴이 톡 들어와 **화면이 새로고침된 것처럼** 깜빡였다. 구운 텍스처는 전역에 남으므로
@@ -86,7 +90,7 @@ export class FaceFrame extends Phaser.GameObjects.Container {
     const cacheKey = `${options.portraitAssetId}:${Math.round(size)}`;
     const cached = BAKED_FACE_KEYS.get(cacheKey);
     if (cached && scene.textures.exists(cached)) {
-      this.placeFace(scene, cached, size, options.tint);
+      this.placeFace(scene, cached, size, options.tint, options.faceAlpha);
       return;
     }
     const asset = portraitAssetFor(options.portraitAssetId);
@@ -110,12 +114,13 @@ export class FaceFrame extends Phaser.GameObjects.Container {
     if (!built) return;
     BAKED_FACE_KEYS.set(cacheKey, built);
     if (this.disposed) return;
-    this.placeFace(scene, built, size, options.tint);
+    this.placeFace(scene, built, size, options.tint, options.faceAlpha);
   }
 
-  private placeFace(scene: Phaser.Scene, key: string, size: number, tint: number | undefined): void {
+  private placeFace(scene: Phaser.Scene, key: string, size: number, tint: number | undefined, alpha: number | undefined): void {
     const image = scene.add.image(0, 0, key).setDisplaySize(size, size);
-    if (tint) image.setTint(tint);
+    if (tint !== undefined) image.setTint(tint);
+    if (alpha !== undefined) image.setAlpha(alpha);
     // 액자를 깐 경우 면 바로 위(1번)에, 그림만 세우는 경우 그대로 맨 앞에 놓는다.
     this.addAt(image, this.length > 0 ? 1 : 0);
   }

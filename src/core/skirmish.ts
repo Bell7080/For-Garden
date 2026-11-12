@@ -10,7 +10,7 @@ import { drainFerocityFever, FEROCITY_RULES, feverDrainPerSecond, ferocityMaxOf,
 import { isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
 import { ENCOUNTER_ROLE, encounterRampFactor, type EncounterDamageReduction, type EncounterTenacity } from "./levelDesign";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, flatStatPoints, highHpDamageMultiplier, lowHpDamageMultiplier, nthBasicBonusMultiplier, openingCritCount, periodicCritEvery, sameTargetStreakMultiplier, shieldedDamageMultiplier, warmUpAttackSpeedPercent, type ExpeditionAugmentEffect, type FlatStatKind, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
-import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Role, Side, Skill, Stats, TeamBuff } from "./types";
+import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, Passive, ReachTier, RelicDef, Role, Side, Skill, Stats, TeamBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX, ultimateEnergyCap } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
 import { PUP } from "./pup";
@@ -165,6 +165,13 @@ export interface Fighter extends Combatant {
   statusHitCount: number;
   /** 기본 공격 호령(`BasicAttack.rally`)의 주기를 세는 타수. */
   rallyHitCount: number;
+  /** 「별똥별 피크닉」(`Passive.starfall`)의 주기를 세는 타수. */
+  starfallHitCount: number;
+  /**
+   * 떨어지고 있는 유성. 자리·반경·남은 시간·전체 시간을 든다 — 씬은 이 목록을 매 프레임 읽어
+   * 예고 원과 떨어지는 별을 그린다(사건으로 쏘면 그 순간에만 그려져 예고가 깜빡인다).
+   */
+  starfalls: { x: number; y: number; radius: number; remaining: number; total: number }[];
   /** 원정 공격 출혈의 명시된 발동 주기만 세며 스킬 상태 주기와 섞지 않는다. */
   augmentBleedHitCount: number;
   /** 조건부 증강별 발동 횟수와 마지막 시각. 키는 전투 입력 배열 순번이라 저장 데이터와 분리된다. */
@@ -600,8 +607,8 @@ export interface Fighter extends Combatant {
   /**
    * 지금 묻어 있는 밴덜리즘. 묻은 겹만큼 **공격력과 주문력이 함께 깎인다.**
    *
-   * **시계가 없다 — 손질과 같은 축이다.** 시간이 흘러 사라지지 않고, 겹을 비우는 것은 상한에
-   * 닿아 터지는 것뿐이다. 그래서 `remaining`·`total`을 들지 않는다.
+   * **시계가 없다.** 시간이 흘러 사라지지 않고, 상한에 닿아 터져도 겹은 그대로 남는다(v0.447.1) —
+   * 걷어 내는 것은 정화와 쓰러짐뿐이다. 그래서 `remaining`·`total`을 들지 않는다.
    *
    * 저주·덧칠과 같은 이유로 슬롯은 하나뿐이다 — 여럿이 겹쳐 묻으면 어느 쪽 수치가 도는지
    * 화면과 계산이 갈린다.
@@ -1332,6 +1339,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     knockback: null,
     statusHitCount: 0,
     rallyHitCount: 0,
+    starfallHitCount: 0,
+    starfalls: [],
     augmentBleedHitCount: 0,
     augmentRuntime: {},
     augmentActionSerial: 0,
@@ -2435,11 +2444,12 @@ function attackerCanInstantlyButcher(sourceId: string | undefined, state: Skirmi
 }
 
 /**
- * 낙서를 한 겹 덧칠하고, 겹이 상한에 닿으면 **그 자리에서 터뜨린다.**
+ * 낙서를 한 겹 덧칠하고, 겹이 상한에 닿으면 **그 자리에서 터뜨린다.** 터져도 겹은 남고
+ * `VANDALISM_REBURST_SECONDS` 동안 다시 터지지 않는다 — 묻혀 둔 약화가 터지는 순간 사라지면
+ * 쌓은 값이 피해 한 번으로 바뀌어 버린다(응태 결정 2026-11-12).
  *
  * 저주(비율로 깎기)와 손질(상한에서 터지기)을 하나씩 나눠 가진 상태라 둘 중 어느 함수도
- * 재사용하지 않는다 — 저주는 터지지 않고 손질은 시간이 흐르지 않는다. 다시 칠하면 시간이
- * 처음부터 흐르고 겹만 하나 오르는 것은 덧칠·저주와 같다.
+ * 재사용하지 않는다 — 저주는 터지지 않고, 손질은 터지면 0으로 돌아간다.
  *
  * 터지는 피해가 **칠한 쪽의 주문력**에서 나오는 이유는 마키의 손질과 같다 — 깎인 쪽의 수치로
  * 재면 공격력이 낮은 보스에게 사실상 아무 일도 일어나지 않아, 화면에 뜨는 숫자가 그 상태가
@@ -3384,6 +3394,118 @@ function triggerRally(attacker: Fighter, state: SkirmishState, events: SkirmishE
   grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * rally.shieldMaxHpPercent / 100)), events);
   events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: false, damageType: "physical",
     area: { shape: "radial", x: attacker.x, y: attacker.y, radius: rally.tauntRadius } });
+}
+
+/** 폭주 「유성우」가 켜져 있으면 그 값을, 아니면 패시브의 값을 쓴다. */
+function starfallShape(attacker: Fighter): { every: number; radius: number } | undefined {
+  const starfall = attacker.def.passive.starfall;
+  if (!starfall) return undefined;
+  const trait = attacker.def.ferocityTrait;
+  if (attacker.ferocityFever && trait.effectId === "meteorShower") {
+    return { every: Math.min(starfall.every, trait.starfallEvery), radius: starfall.radius * (1 + trait.radiusBonusPercent / 100) };
+  }
+  return { every: starfall.every, radius: starfall.radius };
+}
+
+/**
+ * 「별똥별 피크닉」(플레샤) — 실제로 나간 기본 공격 N번째마다 **그 표적이 서 있던 자리**에 유성을 예약한다.
+ *
+ * 표적을 따라가지 않는다. 떨어지는 동안 비켜난 적은 맞지 않고, 그 자리로 들어온 적은 맞는다 —
+ * 예고 원이 곧 판정이라 "어디에 떨어지는가"가 화면과 갈리지 않는다. 궁극기는 이 셈을 건드리지 않는다.
+ */
+function callStarfall(attacker: Fighter, target: { x: number; y: number }, rng: () => number): void {
+  const starfall = attacker.def.passive.starfall;
+  const shape = starfallShape(attacker);
+  if (!starfall || !shape || !isFighterAlive(attacker)) return;
+  const drop = () => attacker.starfalls.push({ x: target.x, y: target.y, radius: shape.radius, remaining: starfall.delaySeconds, total: starfall.delaySeconds });
+  attacker.starfallHitCount += 1;
+  if (attacker.starfallHitCount >= shape.every) {
+    attacker.starfallHitCount = 0;
+    drop();
+    return;
+  }
+  // 평타 돌파(`starfallChance`) — 주기가 차지 않은 평타도 확률로 유성을 부른다. 주기의 셈은 그대로 둔다.
+  // 난수는 돌파가 열린 개체만 꺼낸다 — 다른 판의 난수 흐름을 바꾸지 않는다.
+  const chance = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  if (chance?.kind === "starfallChance" && rng() * 100 < chance.chancePercent) drop();
+}
+
+/** 떨어지는 유성의 시계. 다 떨어진 자리마다 원 안의 적을 치고 그 피해로 가장 다친 아군을 회복한다. */
+function tickStarfalls(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (fighter.starfalls.length === 0) return;
+  const starfall = fighter.def.passive.starfall;
+  if (!starfall || !isFighterAlive(fighter)) { fighter.starfalls = []; return; }
+  const due: typeof fighter.starfalls = [];
+  fighter.starfalls = fighter.starfalls.filter((fall) => {
+    fall.remaining -= dt;
+    if (fall.remaining > EMERGENCY_RECOVERY.epsilon) return true;
+    due.push(fall);
+    return false;
+  });
+  for (const fall of due) landStarfall(fighter, fall, starfall, state, events);
+}
+
+function landStarfall(
+  fighter: Fighter,
+  fall: { x: number; y: number; radius: number },
+  starfall: NonNullable<Passive["starfall"]>,
+  state: SkirmishState,
+  events: SkirmishEvent[],
+): void {
+  const attacker = { ...fighter, def: offensiveDefinition(fighter) };
+  const foes = aliveFighters(state, fighter.side === "player" ? "enemy" : "player")
+    .filter((foe) => dHypot(foe.x - fall.x, foe.y - fall.y) <= fall.radius);
+  events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: false, damageType: "magical",
+    area: { shape: "radial", x: fall.x, y: fall.y, radius: fall.radius } });
+  let dealt = 0;
+  for (const foe of foes) {
+    const input = { power: starfall.power, damageType: "magical" as const, scalingStat: "ap" as const, isCritical: false, kind: "basic" as const };
+    const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(foe, state), input)));
+    const resolution = resolveReceivedDamage(foe, raw);
+    const hpBefore = foe.hp;
+    const shieldBefore = foe.shield.amount; const shieldProviderId = foe.shield.providerId;
+    applyDamage(foe, resolution.applied, events, state);
+    dealt += Math.max(0, hpBefore - foe.hp);
+    const credited = recordDamageContribution(state, fighter.id, foe, "magical", "ap",
+      computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
+    events.push({ kind: "attack", attackerId: fighter.id, targetId: foe.id, skill: "basic", amount: resolution.applied,
+      contributionAmount: credited, critical: false, animate: false, damageType: "magical", mitigated: resolution.reduced < resolution.raw, followUp: true });
+    if (!isFighterAlive(foe)) {
+      clearDefeatedStatuses(foe);
+      events.push({ kind: "death", fighterId: foe.id, sourceId: fighter.id });
+    }
+  }
+  healFromStarfall(fighter, dealt, starfall, state, events);
+}
+
+/**
+ * 유성이 준 피해로 가장 다친 아군을 회복한다 — 패시브 유성과 궁극기 유성이 같은 규칙을 지난다.
+ * 때린 본인은 후보에서 빠진다 — 도디의 회복과 같은 계약이다. 뒤에서 거드는 개체가 제 몸만 고치면 지원가가 아니다.
+ */
+function healFromStarfall(
+  fighter: Fighter,
+  dealt: number,
+  starfall: NonNullable<Passive["starfall"]>,
+  state: SkirmishState,
+  events: SkirmishEvent[],
+): void {
+  if (dealt <= 0) return;
+  const ally = lowestCurrentHpAlly(state, fighter.side, fighter.id);
+  if (!ally) return;
+  const requested = dealt * starfall.lowestAllyHealPercent / 100;
+  const healed = applyHealing(state, ally, requested, fighter.id);
+  pushHeal(events, ally, healed, "passive");
+  grantFeverHealingShield(fighter, ally, healed, events, state);
+  // 패시브 돌파(`secondStar`) — 다친 아군 한 명이 그 회복량의 일부를 한 번 더 받는다. 분배가 아니라 얹는 몫이다.
+  const second = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  if (second?.kind !== "secondStar") return;
+  const next = aliveFighters(state, fighter.side)
+    .filter((other) => other.id !== fighter.id && other.id !== ally.id && other.hp < other.maxHp)
+    .reduce<Fighter | undefined>((chosen, other) => chosen === undefined || other.hp < chosen.hp ? other : chosen, undefined);
+  if (!next) return;
+  const extra = applyHealing(state, next, requested * second.percent / 100, fighter.id);
+  pushHeal(events, next, extra, "passive");
+  grantFeverHealingShield(fighter, next, extra, events, state);
 }
 
 /**
@@ -6950,6 +7072,11 @@ export function gainFerocity(fighter: Fighter, base: number, state: SkirmishStat
       fighter.stealthFor = Math.max(fighter.stealthFor, feverBreakthrough.stealthSeconds);
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
     }
+    if (feverBreakthrough?.kind === "starlitCheer") {
+      // 폭주가 이어지는 동안(피버는 늘 같은 시간에 다 닳는다) 아군 모두의 공격 속도만 오른다.
+      const cheer: TeamBuff = { kind: "tailwind", attackSpeedPercent: feverBreakthrough.attackSpeedPercent, moveSpeedPercent: 0, seconds: FEROCITY_RULES.feverSeconds, maxHpRegenPercentPerSecond: 0 };
+      for (const ally of aliveFighters(state, fighter.side)) applyTeamBuff(ally, cheer);
+    }
     if (feverBreakthrough?.kind === "feverGale") {
       const gale: TeamBuff = { kind: "tailwind", attackSpeedPercent: feverBreakthrough.speedPercent, moveSpeedPercent: feverBreakthrough.speedPercent, seconds: feverBreakthrough.seconds, maxHpRegenPercentPerSecond: 0 };
       for (const ally of aliveFighters(state, fighter.side)) applyTeamBuff(ally, gale);
@@ -8205,7 +8332,7 @@ function tickTidalEchoes(fighter: Fighter, dt: number, state: SkirmishState, eve
     due.push(echo);
     return false;
   });
-  for (const echo of due) burstShallowPool(fighter, echo, echo.power, state, events);
+  for (const echo of due) burstShallowPool(fighter, echo, echo.power, state, events, true);
 }
 
 /**
@@ -8298,6 +8425,8 @@ function burstShallowPool(
   power: number,
   state: SkirmishState,
   events: SkirmishEvent[],
+  /** 궁극기(와 그 돌파의 두 번째 파도)가 터뜨린 판인가. 판정과 무관하게 화면이 잔향을 남기는 표식이다. */
+  ultimate = false,
 ): void {
   const shallows = fighter.def.basic.shallows;
   if (!shallows) return;
@@ -8324,7 +8453,7 @@ function burstShallowPool(
       events.push({ kind: "death", fighterId: foe.id, sourceId: fighter.id });
     }
   }
-  events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: false, damageType: "physical",
+  events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate, damageType: "physical",
     area: { shape: "radial", x: pool.x, y: pool.y, radius: shallows.radius } });
 }
 
@@ -8485,7 +8614,7 @@ function strike(
   }
   const basicAim = useUltimate ? undefined : skill.targeting;
   if (ultimateProbing && useUltimate && attacker.def.ultimate.targeting === "single") throw new UltimateProbe(true);
-  if ((useUltimate && attacker.def.ultimate.targeting !== "single") || basicAim === "nearbyEnemies" || basicAim === "splitShot") {
+  if ((useUltimate && attacker.def.ultimate.targeting !== "single") || basicAim === "nearbyEnemies" || basicAim === "splitShot" || basicAim === "targetedCircle") {
     strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint, comboHit !== undefined && !comboHit.grantActionResources);
     return;
   }
@@ -8849,6 +8978,7 @@ function strike(
     if (!useUltimate) applyBasicBreakthrough(attacker, state, events);
   }
   if (!useUltimate && comboHit === undefined) triggerRally(attacker, state, events);
+  if (!useUltimate && comboHit === undefined) callStarfall(attacker, target, rng);
   // 기본 공격 돌파(`poisonPulse`) — 이미 독이 걸려 있던 적은 독 한 틱을 먼저 받는다. 청산하는 타격은 몰아 받으니 제외한다.
   if (!useUltimate && !encoreLiquidation && targetWasPoisoned && isFighterAlive(target) && !resolution.ignored
     && openedBreakthrough(attacker, "basic", (effects) => effects.basic)?.kind === "poisonPulse") {
@@ -9131,7 +9261,10 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   if (skill.repeatOnLone === true && skill.targeting === "splitShot" && distinctTargets > 0 && distinctTargets < forkCount) {
     for (let fill = 0; targets.length < forkCount; fill += 1) targets.push(targets[fill % distinctTargets]);
   }
-  const healingTargets = ultimate?.targeting === "targetedCircle" && ultimate.allyHealingPower !== undefined
+  // 궁극기 돌파(`meteorEncore`) — 유성에 맞은 아군이 회복된다. 기본 궁극기에 없는 회복이라 원 안의 아군을 여기서 함께 고른다.
+  const encorePlan = ultimate ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : undefined;
+  const encoreHeal = encorePlan?.kind === "meteorEncore" ? encorePlan.allyHealPower : 0;
+  const healingTargets = ultimate?.targeting === "targetedCircle" && (ultimate.allyHealingPower !== undefined || encoreHeal > 0)
     ? aliveFighters(state, attacker.side).filter(inCircle) : [];
   // 시험 발사는 여기서 멈춘다 — 이 아래부터가 실제로 판을 바꾸는 일이다.
   if (ultimateProbing && useUltimate) throw new UltimateProbe(targets.length > 0 || healingTargets.length > 0);
@@ -9188,6 +9321,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
   // 「성의 재단」이 아군에게 나눠 두를 몫의 원천. 대상별이 아니라 이 기술의 총량이다.
   let sharedShieldSource = 0;
+  // 궁극기 유성도 패시브 유성과 같이 준 피해로 가장 다친 아군을 회복한다(플레샤 — `Passive.starfall`).
+  let ultimateMeteorDealt = 0;
   // 「가봉」 — 강화 여부는 행동 하나에 한 번 정하고, 막은 맞은 모든 적의 피해 총량으로 한 번만 꿰맨다.
   const sutured = !useUltimate && !free && consumeSutureReady(attacker);
   let suturedTotal = 0;
@@ -9240,6 +9375,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     if (!useUltimate) grantShieldFromDamage(attacker, hpBefore - target.hp, events, state);
     // 나눠 두르는 몫은 대상마다가 아니라 이 기술의 총량에서 나오므로 여기서 모으기만 한다.
     sharedShieldSource += hpBefore - target.hp;
+    if (useUltimate) ultimateMeteorDealt += hpBefore - target.hp;
     siphonOverpaintHealing(attacker, target, hpBefore - target.hp, state, events);
     triggerDuoBreakthroughRegen(state, attacker, hpBefore - target.hp, events);
     // **완성작을 공개해도 덧칠은 남는다**(응태 결정 2026-11-12). 궁극기는 게이지가 차야만 다시 나가므로 쌓아 둔 겹이
@@ -9315,7 +9451,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   // 혼합 궁극기의 회복은 같은 원 경계(거리 <= 반경)를 공유하며 주문력 200% 같은 정적 계수를 읽는다.
   const ultimateShield = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
   for (const ally of healingTargets) {
-    const requestedHeal = currentAbilityPower(attacker) * (ultimate?.allyHealingPower ?? 0) / 100;
+    const requestedHeal = currentAbilityPower(attacker) * ((ultimate?.allyHealingPower ?? 0) + encoreHeal) / 100;
     const healed = applyHealing(state, ally, requestedHeal, attacker.id);
     pushHeal(events, ally, healed, "passive");
     grantFeverHealingShield(attacker, ally, healed, events, state);
@@ -9325,6 +9461,9 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       if (shield > 0) grantShield(state, ally, attacker.id, shield, events);
     }
   }
+  if (useUltimate && attacker.def.passive.starfall) healFromStarfall(attacker, ultimateMeteorDealt, attacker.def.passive.starfall, state, events);
+  // 투사체가 떨어진 자리도 한 번의 기본 공격으로 센다 — 유성은 그 낙하 지점에 예약된다.
+  if (!useUltimate && !followUp && !free) callStarfall(attacker, center, rng);
   // 되돌아오는 돌진은 이미 치른 한 번의 몫이라 야성을 다시 올리지 않는다.
   if (!attacker.bt.dashBack?.running) gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
 }
@@ -10802,7 +10941,7 @@ function fireUltimateCore(
     // 궁극기 돌파(`tidalEcho`) — 터진 자리마다 두 번째 파도를 예약한다. 기절은 없고 위력만 줄어든다.
     const wave = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
     for (const pool of [...attacker.shallowPools]) {
-      burstShallowPool(attacker, pool, detonate.power, state, events);
+      burstShallowPool(attacker, pool, detonate.power, state, events, true);
       if (wave?.kind === "tidalEcho") {
         attacker.bt.tidalEchoes.push({ x: pool.x, y: pool.y, remaining: wave.delaySeconds, power: detonate.power * wave.powerPercent / 100 });
       }
@@ -10818,8 +10957,11 @@ function fireUltimateCore(
   strike(attacker, target, rng, state, events, true, undefined, targetPoint);
   // 되찍는 궁극기의 시계. 시전 순간이 곧 첫 번째라 남은 횟수만 얹는다.
   const repeat = attacker.def.ultimate.repeatStrike;
-  if (repeat && repeat.count > 1) {
-    attacker.aftershock = { remaining: repeat.count - 1, in: repeat.intervalSeconds };
+  // 궁극기 돌파(`meteorEncore`) — 되찍는 횟수가 늘어난다.
+  const encore = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+  const repeatCount = (repeat?.count ?? 0) + (repeat && encore?.kind === "meteorEncore" ? encore.extraStrikes : 0);
+  if (repeat && repeatCount > 1) {
+    attacker.aftershock = { remaining: repeatCount - 1, in: repeat.intervalSeconds };
   }
   // 시전 순간이 곧 첫 틱이다. 남은 시간만 시계에 얹어 다음 초부터 이어 뿌린다 — 여기서 전체
   // 시간을 그대로 넣으면 같은 초에 두 번 터진다.
@@ -11031,7 +11173,7 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
       drainFerocityFever(fighter, step);
       if (feverBefore && !fighter.ferocityFever) applyFerocityBreakthrough(fighter, state, events);
     });
-    state.fighters.forEach((fighter) => { tickUltimateBreakthrough(fighter, step, state, events); tickTidalEchoes(fighter, step, state, events); tickArrowEchoes(fighter, step, state, events); tickAfterimages(fighter, step, state, events); tickTankBreakthroughs(fighter, step, state, events); tickBossBreakthroughs(fighter, step, state, events); tickAfterglow(fighter, state, events); });
+    state.fighters.forEach((fighter) => { tickUltimateBreakthrough(fighter, step, state, events); tickTidalEchoes(fighter, step, state, events); tickStarfalls(fighter, step, state, events); tickArrowEchoes(fighter, step, state, events); tickAfterimages(fighter, step, state, events); tickTankBreakthroughs(fighter, step, state, events); tickBossBreakthroughs(fighter, step, state, events); tickAfterglow(fighter, state, events); });
     remaining -= step;
   }
   if (state.phase === "fight" && state.timeLimitSeconds !== undefined && state.elapsed >= state.timeLimitSeconds - 1e-8) {

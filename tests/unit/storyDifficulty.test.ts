@@ -78,9 +78,13 @@ describe("스토리 확장 난이도", () => {
     expect(manager.load()?.cleared).toEqual(state.cleared);
     expect(manager.load()?.selectedStageId).toBe("normal:1-2");
   });
-  it("난이도 전환은 이전 4-10과 다음 1-1의 표시 전투력을 챌린지 배율(보통 2·어려움 4)만큼 벌어지되 20% 안에서 이어 간다", () => {
+  it("난이도 전환은 이전 4-10에서 다음 1-1로 넘어갈 때 표시 전투력이 튀어 오르지 않는다", () => {
     const power = (id: string) => getStageEnemies(getBattleStage(id)).reduce((sum, enemy) => sum + combatPower(enemy.stats), 0);
-    for (const [end, start] of [["4-10", "normal:1-1"], ["normal:4-10", "hard:1-1"]]) expect(Math.abs(power(start) / power(end) - 1)).toBeLessThan(.21);
+    // 보통 ×1.5 · 어려움 ×2(응태 결정 2026-11-12 — 4배는 과하다)와 4-10 보스 레벨(LV.41)로 다음 1-1은 이전 4-10보다 15~25% 가볍게 시작한다.
+    for (const [end, start] of [["4-10", "normal:1-1"], ["normal:4-10", "hard:1-1"]]) {
+      expect(power(start) / power(end)).toBeLessThan(1.21);
+      expect(power(start) / power(end)).toBeGreaterThan(0.7);
+    }
     expect(power("hard:4-10")).toBeGreaterThan(power("normal:4-10"));
   });
 
@@ -122,10 +126,11 @@ describe("스토리 확장 난이도", () => {
     }
   });
 
-  it("장 배율은 장마다 하나다", () => {
-    const factor = (id: string) => getBattleStage(id).difficultyStatMultiplier ?? 1;
-    expect(["1-1", "1-10", "2-1", "3-10", "4-1", "4-10", "5-1", "5-10", "6-1", "7-10"].map(factor)).toEqual([1, 1, 1.05, 1.1, 1.15, 1.15, 1.2, 1.2, 1.25, 1.3]);
-    expect(getBattleStage(storyStageId("normal", "7-10")).difficultyStatMultiplier).toBeCloseTo(STORY_DIFFICULTY.normal.statFactor * 1.3);
+  it("장 배율 없이 난이도 배율 하나만 곱한다", () => {
+    // 장 배율은 걷어 냈다(응태 결정 2026-11-12 — 레벨제로 갔으니 필요 없다). 쉬움은 레벨만, 보통·어려움은 statFactor만.
+    expect(["1-1", "2-1", "4-10", "6-1", "7-10"].map(id => getBattleStage(id).difficultyStatMultiplier)).toEqual([undefined, undefined, undefined, undefined, undefined]);
+    expect(["1-1", "4-10", "7-10"].map(id => getBattleStage(storyStageId("normal", id)).difficultyStatMultiplier)).toEqual([1.5, 1.5, 1.5]);
+    expect(getBattleStage(storyStageId("hard", "7-10")).difficultyStatMultiplier).toBe(STORY_DIFFICULTY.hard.statFactor);
   });
 
   it("쉬움의 편성·레벨·돌파·정예를 그대로 상속하고 오각형에만 난이도 종족값을 적용한다", () => {
@@ -137,7 +142,6 @@ describe("스토리 확장 난이도", () => {
         const easy = getStageEnemies(base), grown = getStageEnemies(stage);
         grown.forEach((enemy, i) => {
           for (const key of ["hp", "atk", "ap", "def", "res"] as const) {
-            // 장 배율이 붙은 관문은 쉬움 값이 이미 한 번 반올림되어 있어 1~2만큼 어긋날 수 있다.
             const factor = STORY_DIFFICULTY[difficulty].statFactor;
             expect(Math.abs(enemy.stats[key] - easy[i].stats[key] * factor)).toBeLessThanOrEqual(base.difficultyStatMultiplier ? factor : 0.5);
           }

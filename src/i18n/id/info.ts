@@ -71,6 +71,7 @@ export const INFO_ID = {
   "info.breakthrough.fragment": "Serpihan {name}",
   "info.breakthrough.cheesecake": "Cheesecake",
   "info.breakthrough.need": "Butuh {count}",
+  "info.breakthrough.next": "Tahap berikutnya",
   "info.breakthrough.universalSpend": "Pakai {count}",
   "info.breakthrough.universalNotice": "{count} {name} juga akan terpakai",
   "info.reset": "Atur Ulang",

@@ -1,6 +1,6 @@
 import { ancientStageFloor } from "./ancientStrataDifficulty";
 import { getAncientStrataFloor, getAncientStrataStage } from "../core/ancientStrataBattle";
-import { difficultyStageRewards, storyBaseStageId, STORY_DIFFICULTY, storyChapterStatFactor, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
+import { difficultyStageRewards, storyBaseStageId, STORY_DIFFICULTY, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
 import { GROWTH_STAT_KEYS } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
 import { applyEncounterScaling, encounterRoleFor, shownBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
@@ -144,6 +144,20 @@ const LATE_CHAPTER_FORMATIONS: Readonly<Record<string, readonly (readonly [strin
   "7-8": [["raja", 0], ["atra", 1], ["magasa", 2], ["noa", 3], ["neuri", 4]],
   "7-9": [["raja", 0], ["magasa", 1], ["noa", 2]],
   "7-10": [["carno", 1]],
+};
+
+/**
+ * **보스 관문은 사다리 밖 레벨에 선다**(응태 결정 2026-11-12 — 「카르·이카닉시아·코마 같은 애들은 레벨 곡선에서 벗어나서 더 세도 된다.
+ * 보스층에 걸맞게, 정예인 걸 감안해 너무 강하게는 말고」). 혼자·둘이 서는 정예라 사다리 레벨로는 그 장 잡졸 관문보다 쉬웠다
+ * (7-10 카르 LV.58이 7-9보다 스무 레벨 낮은 파티에 열렸다). 숨은 배율 없이 **레벨 하나만** 올리고 화면의 `LV`가 그 값이다.
+ * 목표는 그 장의 가장 무거운 잡졸 관문과 비슷하거나 한 뼘 위다 — 측정은 VERSION.md v0.449.1.
+ * 정예 관문만 이 표에 오르며, 다음 관문의 레벨은 사다리 그대로라 보스를 지나면 수가 내려간다(보스는 사다리의 예외).
+ */
+const STORY_BOSS_LEVELS: Readonly<Record<string, number>> = {
+  "4-10": 41, // 코마·이카닉시아 투 캐리 — 사다리 38
+  "5-10": 50, // 간부 마가사 — 사다리 44
+  "7-5": 60, // 간부 이카닉시아의 저지선 — 사다리 54
+  "7-10": 85, // 부대장 카르 — 사다리 58
 };
 
 /** 정예 둘이 서는 관문. 하나만 서는 정예는 적 수로 가른다. */
@@ -306,7 +320,7 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
     /*
      * **돌파 등급은 레벨에서 나온다**(`shownBreakthroughForLevel`) — 그 레벨이 여는 스킬 칸만 정하고 능력치는 레벨이 낸다.
      */
-    const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
+    const laterChapterLevel = STORY_BOSS_LEVELS[`${chapter}-${chapterOrder}`] ?? STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
     const laterChapterEnemies = lateFormation
       ? lateFormation.map(([relicId, slot]) => {
         const enemy = enemyGrowth(relicId, laterChapterLevel, slot);
@@ -326,8 +340,6 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
       enemies,
       // 혼자 서면 정예다. 화면은 이 표식으로 몸집과 표식만 바꾸고 수치는 건드리지 않는다.
       ...(elite ? { elite: true as const } : {}),
-      // 장 배율이 오각형 다섯에 곱해진다(`storyChapterStatFactor`). 배율 1인 장(1장)은 필드를 두지 않는다.
-      ...(storyChapterStatFactor(chapter) !== 1 ? { difficultyStatMultiplier: storyChapterStatFactor(chapter) } : {}),
       rewards: {
         /*
          * 초회 치즈케이크는 **난이도 검수가 딛고 선 값**이라 그대로 둔다. `stageDifficulty.test`가 관문마다
@@ -403,8 +415,7 @@ export const SIDE_BATTLE_STAGE: BattleStageDef = {
 
 /**
  * 2장 이후의 전투 서브 — 1-8과 같은 **정예 둘** 변칙이다. 레벨은 선행 본편 관문의 권장 레벨보다 한 레벨 낮게 서고,
- * 장 배율도 본편과 같은 규칙을 그대로 받는다 — 서브라고 새 손잡이를
- * 만들지 않는다. 보상은 1-8과 같이 젬 50 하나다.
+ * 서브라고 새 손잡이를 만들지 않는다. 보상은 1-8과 같이 젬 50 하나다.
  */
 function sideBattle(anchor: string, name: string, formation: readonly (readonly [string, 0 | 1 | 2])[]): BattleStageDef {
   const [chapter, order] = anchor.split("-").map(Number);
@@ -414,7 +425,6 @@ function sideBattle(anchor: string, name: string, formation: readonly (readonly 
     id: `${anchor}-side-battle`, name, chapter, chapterOrder: order,
     prerequisiteStageIds: [anchor],
     enemies: formation.map(([relicId, slot]) => enemyGrowth(relicId, reference, slot)),
-    ...(storyChapterStatFactor(chapter) !== 1 ? { difficultyStatMultiplier: storyChapterStatFactor(chapter) } : {}),
     rewards: {
       firstClearCheesecake: 0,
       repeatClearCheesecake: 0,
@@ -445,7 +455,7 @@ const EXTRA_STORY_STAGES: readonly BattleStageDef[] = (["normal", "hard"] as con
   const prerequisiteStageIds = first ? [storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10")] : base.prerequisiteStageIds.map(id => storyStageId(difficulty, id));
   return { ...base, id: storyStageId(difficulty, base.id), prerequisiteStageIds,
     enemies: base.enemies.map(enemy => ({ ...enemy })),
-    difficultyStatMultiplier: STORY_DIFFICULTY[difficulty].statFactor * (base.difficultyStatMultiplier ?? 1), rewards: difficultyStageRewards(base.rewards, difficulty), situation: undefined };
+    difficultyStatMultiplier: STORY_DIFFICULTY[difficulty].statFactor, rewards: difficultyStageRewards(base.rewards, difficulty), situation: undefined };
 }));
 export const ALL_STORY_STAGES: readonly StageDef[] = [...STAGES, ...EXTRA_STORY_STAGES];
 const STAGE_BY_ID = new Map(ALL_STORY_STAGES.map((stage) => [stage.id, stage]));

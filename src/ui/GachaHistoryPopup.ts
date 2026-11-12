@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import { GACHA_HISTORY_SLOT_LIMIT, gachaHistoryNewestFirst, gachaHistorySlotCount, type GachaHistoryEntry, type GachaHistorySlot, type GachaHistoryState } from "../core/gachaHistory";
 import type { RateTier } from "../core/gachaRateTable";
-import { BANNERS } from "../data/banners";
+import { researchBanners } from "../data/banners";
 import { RELICS } from "../data/relics";
 import { addClippedHit } from "./clippedHit";
 import type { ClipRect } from "./clipRect";
@@ -113,7 +113,7 @@ function addHeaderRow(scene: Phaser.Scene, width: number, entry: GachaHistoryEnt
   const right = width / 2 - 28;
   const date = scene.add.text(right, -L.height / 4 + 2, formatGachaHistoryTime(entry.at), textStyle({ role: "emphasis", size: L.dateSize, color: COLOR.inkDim })).setOrigin(1, 0.5);
   node.add(date);
-  const bannerName = BANNERS.find((banner) => banner.id === entry.bannerId)?.name ?? t("lab.history.unknownBanner");
+  const bannerName = researchBanners(true).find((banner) => banner.id === entry.bannerId)?.name ?? t("lab.history.unknownBanner");
   const title = scene.add.text(left, -L.height / 4 + 2, bannerName, textStyle({ role: "display", size: L.titleSize, color: COLOR.ink })).setOrigin(0, 0.5);
   shrinkTextToWidth(title, right - date.width - 24 - left);
   node.add(title);

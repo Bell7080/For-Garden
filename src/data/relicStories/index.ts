@@ -28,6 +28,7 @@ import { SHUTE_STORY } from "./shute";
 import { MORPHE_STORY } from "./morphe";
 import { IRNA_STORY } from "./irna";
 import { TEKU_STORY } from "./teku";
+import { PLESHA_STORY } from "./plesha";
 import { registerRelicStoryTexts } from "./registerStory";
 
 /**
@@ -64,6 +65,7 @@ export const RELIC_STORIES: Readonly<Record<string, RelicStoryProfile>> = {
   morphe: MORPHE_STORY,
   irna: IRNA_STORY,
   teku: TEKU_STORY,
+  plesha: PLESHA_STORY,
 };
 
 for (const story of Object.values(RELIC_STORIES)) registerRelicStoryTexts(story);

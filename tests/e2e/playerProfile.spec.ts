@@ -3,6 +3,7 @@ import { E2E_SAVE_STORAGE_KEY, startAfterOpening } from "./openingSave";
 import { AVATAR_PICKER, avatarPickerHeight, PLAYER_PROFILE_LAYOUT } from "../../src/ui/playerProfileLayout";
 import { PROFILE_FRAMES } from "../../src/data/profileFrames";
 import { PROFILE_MODIFIERS } from "../../src/data/profileModifiers";
+import { PLAYABLE_RELICS } from "../../src/data/relics";
 import { BACK_SLOT } from "../../src/ui/popupGeometry";
 import { captureGame, tap } from "./canvasInput";
 
@@ -20,7 +21,7 @@ test("업적 테두리는 미리보기와 장착을 거쳐 저장된다", async 
   const { avatar } = PLAYER_PROFILE_LAYOUT.header;
   await tap(page, WIDTH / 2 + avatar.x, HEIGHT / 2 + avatar.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("프로필 꾸미기");
-  const top = HEIGHT / 2 - avatarPickerHeight(6, PROFILE_FRAMES.length, PROFILE_MODIFIERS.length) / 2;
+  const top = HEIGHT / 2 - avatarPickerHeight(PLAYABLE_RELICS.length, PROFILE_FRAMES.length, PROFILE_MODIFIERS.length) / 2;
   await tap(page, WIDTH / 2, top + AVATAR_PICKER.tabs.y);
   await page.waitForTimeout(700);
   const frameIndex = PROFILE_FRAMES.findIndex(({ id }) => id === "ancient");
@@ -65,8 +66,8 @@ test("프로필 얼굴을 누르면 사진·테두리 선택창이 뜨고 라벨
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles?.includes("프로필 꾸미기"))).toBe(true);
   await page.waitForTimeout(800);
   await captureGame(page, `test-results/${test.info().project.name}-player-profile-photo.png`);
-  // 시작 편성의 보유 렐릭 수(6)와 세 목록으로 창 높이를 구해 라벨 자리를 얻는다.
-  const top = HEIGHT / 2 - avatarPickerHeight(6, PROFILE_FRAMES.length, PROFILE_MODIFIERS.length) / 2;
+  // 사진 목록은 미보유 렐릭까지 서므로 도감 전체 수와 세 목록으로 창 높이를 구해 라벨 자리를 얻는다.
+  const top = HEIGHT / 2 - avatarPickerHeight(PLAYABLE_RELICS.length, PROFILE_FRAMES.length, PROFILE_MODIFIERS.length) / 2;
   // 세 라벨은 가운데를 중심으로 사진·테두리·수식어 순이다.
   const tabStep = AVATAR_PICKER.tabs.width + AVATAR_PICKER.tabs.gap;
   await tap(page, WIDTH / 2, top + AVATAR_PICKER.tabs.y);
@@ -75,6 +76,17 @@ test("프로필 얼굴을 누르면 사진·테두리 선택창이 뜨고 라벨
   await tap(page, WIDTH / 2 + tabStep, top + AVATAR_PICKER.tabs.y);
   await page.waitForTimeout(800);
   await captureGame(page, `test-results/${test.info().project.name}-player-profile-modifiers.png`);
+  // 「보유만 보기」를 켜면 세 목록 모두 가진 것만 남는다.
+  const toggle = AVATAR_PICKER.ownedToggle;
+  await tap(page, WIDTH / 2 + AVATAR_PICKER.width / 2 - toggle.right - toggle.width / 2, top + toggle.y);
+  await page.waitForTimeout(500);
+  await captureGame(page, `test-results/${test.info().project.name}-player-profile-modifiers-owned.png`);
+  await tap(page, WIDTH / 2, top + AVATAR_PICKER.tabs.y);
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${test.info().project.name}-player-profile-frames-owned.png`);
+  await tap(page, WIDTH / 2 - tabStep, top + AVATAR_PICKER.tabs.y);
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${test.info().project.name}-player-profile-photo-owned.png`);
 });
 
 test("레벨 칩은 레벨별 개방 가지나무를, 경험치 줄은 얼마 중 얼마인지 말풍선을 연다", async ({ page }) => {

@@ -71,6 +71,7 @@ export const INFO_TH = {
   "info.breakthrough.fragment": "เศษ{name}",
   "info.breakthrough.cheesecake": "ชีสเค้ก",
   "info.breakthrough.need": "ต้องใช้ {count}",
+  "info.breakthrough.next": "ขั้นถัดไป",
   "info.breakthrough.universalSpend": "ใช้ {count}",
   "info.breakthrough.universalNotice": "จะใช้ {name} {count} ชิ้นด้วย",
   "info.reset": "รีเซ็ต",

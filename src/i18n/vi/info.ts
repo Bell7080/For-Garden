@@ -71,6 +71,7 @@ export const INFO_VI = {
   "info.breakthrough.fragment": "Mảnh {name}",
   "info.breakthrough.cheesecake": "Bánh phô mai",
   "info.breakthrough.need": "Cần {count}",
+  "info.breakthrough.next": "Bậc tiếp theo",
   "info.breakthrough.universalSpend": "Dùng {count}",
   "info.breakthrough.universalNotice": "Sẽ dùng thêm {count} {name}",
   "info.reset": "Đặt lại",

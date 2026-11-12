@@ -4,9 +4,11 @@ import { audioManager } from "../managers/AudioManager";
 import { t, type TextKey } from "../i18n";
 import { contentUnlockedBetween, type ContentId } from "../core/contentUnlock";
 import { PLAYER_LEVEL_UP_REWARD } from "../core/playerLevel";
+import { relicLevelCap } from "../core/relicProgression";
 import { motionPolicy, powerSavingPolicy } from "../core/settings";
 import { staminaMaxForResearchLevel } from "../core/stamina";
 import { findItem } from "../data/items";
+import { getRelic } from "../data/relics";
 import { PROFILE_FRAMES } from "../data/profileFrames";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { settingsManager } from "../managers/SettingsManager";
@@ -17,11 +19,12 @@ import { drawIcon } from "./BottomNav";
 import { Button } from "./Button";
 import { latinEcho } from "./latinEcho";
 import { ExpeditionEntryButton } from "./ExpeditionEntryButton";
+import { FaceFrame } from "./FaceFrame";
 import { contentNameKey } from "./contentLock";
 import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawLayer } from "./holo";
 import { addFramedIcon } from "./itemFrame";
-import { LEVEL_UP_ENTRANCE, LEVEL_UP_POPUP as L, levelUpPopupHeight, levelUpRewardHeight, levelUpUnlockPlan, type LevelUpUnlockKey } from "./levelUpPopupLayout";
+import { LEVEL_UP_ENTRANCE, LEVEL_UP_POPUP as L, levelUpPopupHeight, levelUpRewardHeight, levelUpShrink, levelUpUnlockPlan, type LevelUpUnlockKey } from "./levelUpPopupLayout";
 import type { PopupLayer } from "./PopupLayer";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { startPuppetHop } from "./puppetHop";
@@ -82,7 +85,8 @@ export function openLevelUpPopup(scene: Phaser.Scene, popups: PopupLayer, option
     ...PROFILE_FRAMES.filter((frame) => !frame.unlockAchievement && !frame.unlockGift && frame.unlockLevel > from && frame.unlockLevel <= to)
       .map((frame) => ({ kind: "frame" as const, frameId: frame.id, name: frame.displayName })),
   ];
-  const height = levelUpPopupHeight(unlocks.map(unlockKey));
+  const relicCapRaised = relicLevelCap(to) > relicLevelCap(from);
+  const height = levelUpPopupHeight(unlocks.map(unlockKey), relicCapRaised);
   const reduced = motionPolicy(settingsManager.get()).nonEssentialRepeatFactor === 0;
   let hint: Phaser.GameObjects.Text | undefined;
   popups.open({
@@ -96,8 +100,8 @@ export function openLevelUpPopup(scene: Phaser.Scene, popups: PopupLayer, option
     buildHero(scene, body, y, from, to, reduced);
     y += L.hero.height + L.section.gap;
     buildRewards(scene, body, y, from, to, reduced);
-    y += levelUpRewardHeight();
-    if (unlocks.length > 0) buildUnlocks(scene, body, y + L.section.gap, unlocks, options, reduced);
+    y += levelUpRewardHeight(relicCapRaised);
+    if (unlocks.length > 0) buildUnlocks(scene, body, y + L.section.gap, unlocks, options, relicCapRaised, reduced);
     hint = scene.add.text(scene.scale.width / 2, scene.scale.height - 130, t("reward.tapHint"), textStyle({ role: "emphasis", size: 30, color: COLOR.ink }))
       .setOrigin(0.5).setAlpha(0.62).setDepth(4000).setShadow(0, 3, "#000000", 4, false, true);
   });
@@ -150,26 +154,44 @@ function buildHero(scene: Phaser.Scene, body: Phaser.GameObjects.Container, top:
   }).catch((error) => logError("puppet.display", "레벨업 SD 표시 실패", error));
 }
 
-/** 레벨업 보상 — 에너지 드링크 액자 + 스테미나 상한 액자. */
+/**
+ * 레벨업 보상 — 에너지 드링크 액자 + 스테미나 상한 액자, 그리고 이번 레벨업이 **렐릭 레벨 상한을 열었을 때만** 애착 렐릭
+ * 얼굴 액자에 「렐릭 레벨 상한 / LV.a → LV.b」를 단다. 상한이 그대로인 레벨업에는 서지 않는다 — 늘 서 있으면 열린 것인지 읽히지 않는다.
+ */
 function buildRewards(scene: Phaser.Scene, body: Phaser.GameObjects.Container, top: number, from: number, to: number, reduced: boolean): void {
   const R = L.reward;
   addSectionTitle(scene, -L.width / 2 + 56, top + L.section.titleSize / 2, t("profile.levelUp.rewards"), { parent: body, size: L.section.titleSize });
   const frameY = top + L.section.titleRoom + R.frame / 2;
   const item = findItem(PLAYER_LEVEL_UP_REWARD.itemId);
-  const cells: Array<{ texture: string; amount?: string; caption: string; limit?: boolean }> = [];
+  const cells: Array<{ texture?: string; amount?: string; caption: string; limit?: boolean; range?: string }> = [];
   if (item?.icon.kind === "asset") cells.push({ texture: item.icon.key, amount: String((to - from) * PLAYER_LEVEL_UP_REWARD.quantity), caption: item.name });
   // 상한은 액자 수로 적지 않는다 — 아래 줄이 「스테미나 상한 +N」으로 이미 말한다(한 창에 같은 수를 두 번 적지 않는다).
   cells.push({ texture: "currency-stamina", limit: true, caption: t("profile.levelUp.stamina", { amount: staminaMaxForResearchLevel(to) - staminaMaxForResearchLevel(from) }) });
+  const capFrom = relicLevelCap(from);
+  const capTo = relicLevelCap(to);
+  if (capTo > capFrom) cells.push({ caption: t("profile.levelUp.relicCap"), range: `LV.${capFrom}  →  LV.${capTo}` });
+  // 칸이 셋이면 이름이 이웃 칸까지 번지지 않게 한 칸의 폭 안에 가둔다.
+  const captionWidth = cells.length > 2 ? Math.min(R.captionWidth, R.frame + R.spacing - 16) : R.captionWidth;
   const total = cells.length * R.frame + (cells.length - 1) * R.spacing;
   cells.forEach((cell, index) => {
     const x = -total / 2 + R.frame / 2 + index * (R.frame + R.spacing);
     const holder = scene.add.container(x, frameY);
     body.add(holder);
-    const frame = addFramedIcon(scene, holder, 0, 0, R.frame, cell.texture, cell.amount ? { amount: cell.amount } : {});
-    // 상한 칸은 그림 뒤에 큰 「MAX」를 비스듬히 깐다 — 「무엇이 늘었나」(최대치)를 숫자 없이 그림이 말한다.
-    if (cell.limit) frame.addAt(limitMark(scene, R.frame), 1);
-    const caption = squeezeTextToWidth(scene.add.text(0, R.frame / 2 + R.captionGap, cell.caption, textStyle({ role: "emphasis", size: R.captionSize, color: COLOR.ink })).setOrigin(0.5), R.captionWidth);
+    if (cell.texture) {
+      const frame = addFramedIcon(scene, holder, 0, 0, R.frame, cell.texture, cell.amount ? { amount: cell.amount } : {});
+      // 상한 칸은 그림 뒤에 큰 「MAX」를 비스듬히 깐다 — 「무엇이 늘었나」(최대치)를 숫자 없이 그림이 말한다.
+      if (cell.limit) frame.addAt(limitMark(scene, R.frame), 1);
+    } else {
+      // 렐릭 레벨 상한 — 누구의 상한인지 그림이 말하도록 애착 렐릭의 얼굴 액자를 세운다.
+      holder.add(new FaceFrame(scene, 0, 0, { portraitAssetId: getRelic(session.favorite).portraitAssetId, size: R.frame }));
+    }
+    const caption = squeezeTextToWidth(scene.add.text(0, R.frame / 2 + R.captionGap, cell.caption, textStyle({ role: "emphasis", size: R.captionSize, color: COLOR.ink })).setOrigin(0.5), captionWidth);
     holder.add(caption);
+    if (cell.range) {
+      const range = squeezeTextToWidth(scene.add.text(0, R.frame / 2 + R.captionGap + R.rangeLine, cell.range, textStyle({ role: "display", size: R.rangeSize, color: COLOR.accentText }))
+        .setOrigin(0.5).setStroke("#05070a", 6), captionWidth);
+      holder.add(range);
+    }
     if (reduced) return;
     holder.setAlpha(0).setY(frameY - 40);
     scene.tweens.add({ targets: holder, alpha: 1, y: frameY, duration: 280, delay: 320 + index * 120, ease: "Back.Out" });
@@ -216,11 +238,12 @@ function entrancePanel(scene: Phaser.Scene, id: ContentId): Phaser.GameObjects.C
  * 새로 열린 것 — **아이콘 칸 → 로비 버튼 → 출격판 칸** 세 무리로 갈라 쌓는다. 아이콘 칸은 그 입구의 그림(테두리는 지금 얼굴에 씌운 모습),
  * 버튼 판이 입구인 콘텐츠는 그 판을 원본 비율 그대로 길게 세운다.
  */
-function buildUnlocks(scene: Phaser.Scene, body: Phaser.GameObjects.Container, top: number, unlocks: readonly Unlock[], options: LevelUpPopupOptions, reduced: boolean): void {
+function buildUnlocks(scene: Phaser.Scene, body: Phaser.GameObjects.Container, top: number, unlocks: readonly Unlock[], options: LevelUpPopupOptions, relicCapRaised: boolean, reduced: boolean): void {
   const U = L.unlock;
   addSectionTitle(scene, -L.width / 2 + 56, top + L.section.titleSize / 2, t("profile.levelUp.unlocks"), { parent: body, size: L.section.titleSize });
   const gridTop = top + L.section.titleRoom;
-  const { placements } = levelUpUnlockPlan(unlocks.map(unlockKey));
+  const keys = unlocks.map(unlockKey);
+  const { placements } = levelUpUnlockPlan(keys, levelUpShrink(keys, relicCapRaised));
   placements.forEach((place, order) => {
     const unlock = unlocks[place.index]!;
     const holder = scene.add.container(place.x, gridTop + place.y).setScale(place.scale);

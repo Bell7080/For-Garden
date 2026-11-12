@@ -71,6 +71,7 @@ export const INFO_PT_BR = {
   "info.breakthrough.fragment": "Fragmento de {name}",
   "info.breakthrough.cheesecake": "Cheesecake",
   "info.breakthrough.need": "Precisa de {count}",
+  "info.breakthrough.next": "Próxima",
   "info.breakthrough.universalSpend": "Usa {count}",
   "info.breakthrough.universalNotice": "Também serão consumidos {count} {name}",
   "info.reset": "Redefinir",

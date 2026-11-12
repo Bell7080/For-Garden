@@ -90,6 +90,9 @@ const BREAKTHROUGH_TAGS: { readonly [K in Kind]?: (effect: Of<K>) => readonly (S
   // 막·은신·회복·강화
   rescueShield: () => [shield()],
   healingShield: () => [shield()],
+  meteorEncore: () => [heal()],
+  secondStar: () => [heal()],
+  starfallChance: () => [damageKindTag("magical")],
   feverShare: () => [shield()],
   preyScale: () => [shield()],
   reloadSip: () => [shield()],
@@ -106,6 +109,7 @@ const BREAKTHROUGH_TAGS: { readonly [K in Kind]?: (effect: Of<K>) => readonly (S
   tailHide: (effect) => [stealth(effect.seconds)],
   feverAmbush: (effect) => [stealth(effect.stealthSeconds)],
   feverGale: () => [keyword("tailwind", "buff")],
+  starlitCheer: () => [keyword("attack-speed", "buff")],
   longGust: () => [keyword("tailwind", "buff")],
   twinHum: () => [keyword("resonance", "buff")],
   feverGuard: () => [bulwark()],

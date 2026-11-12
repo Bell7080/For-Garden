@@ -52,7 +52,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno" | "plesha";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -987,10 +987,10 @@ export type CombatStatusEffect =
   | {
       /**
        * 밴덜리즘. 묻은 겹만큼 그 적의 **공격력과 주문력이 함께 깎이고**, 겹이 상한에 닿는
-       * 순간 낙서가 통째로 터지며 겹이 0으로 돌아간다.
+       * 순간 낙서가 터진다. 터져도 겹은 그대로 남고 잠시 다시 터지지 않는다(v0.447.1).
        *
-       * **시간이 흘러 사라지지 않는다 — 손질과 같은 축이고 저주·덧칠과는 다르다.** 지우는
-       * 것은 시간이 아니라 터지는 것뿐이다. 시간을 두면 이 개체에서만 규칙이 성립하지
+       * **시간이 흘러 사라지지 않는다 — 저주·덧칠과는 다르다.** 걷어 내는 것은 정화와
+       * 쓰러짐뿐이다. 시간을 두면 이 개체에서만 규칙이 성립하지
        * 않는다: 표적을 매 타격마다 갈아타므로 한 바퀴를 돌고 돌아왔을 때 이미 말라, 몇 겹을
        * 칠하든 영영 1~2겹에 머문다(실제로 유지 시간 8초로 두고 재현했을 때 표준 전투에서
        * 최대 4겹이었고 평타만으로는 한 번도 터지지 않았다). 칠하는 것이 이 개체의 값이므로
@@ -1414,7 +1414,9 @@ export type PassiveKind =
   /** 라자 전용: 자신에게 도발된 적이 때릴 때마다 보호막을 얻는다. */
   | "cellRank"
   /** 카르노 전용: 구속구 넷이 체력 문턱마다 끊어지며 빨라지고, 모두 끊어지면 기본 공격이 주위를 휩쓴다. */
-  | "restraintLocks";
+  | "restraintLocks"
+  /** 플레샤 전용: 기본 공격 몇 번째마다 표적 자리에 유성이 늦게 떨어져 적을 치고, 그 피해로 가장 다친 아군을 회복한다. */
+  | "starfall";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
@@ -1497,7 +1499,9 @@ export type FerocityEffectId =
   /** 라자 전용: 폭주 중 궁극기의 끌어당김 범위가 넓어지고 호령이 더 잦아진다. */
   | "rollCallRefusal"
   /** 카르노 전용: 폭주 중 구속구가 모두 끊어진 것으로 본다. */
-  | "restraintCollapse";
+  | "restraintCollapse"
+  /** 플레샤 전용: 폭주 중 유성이 더 잦고 더 넓게 떨어진다. */
+  | "meteorShower";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -1771,6 +1775,15 @@ export type FerocityTrait = {
   | {
       /** 구속 붕괴(카르노). 폭주 중 남은 구속구가 모두 끊어진 것으로 본다. */
       effectId: "restraintCollapse";
+    }
+  | {
+      /**
+       * 유성우(플레샤). 폭주 중 「별똥별 피크닉」의 유성이 `starfallEvery`번째 기본 공격마다 떨어지고
+       * 낙하 범위가 `radiusBonusPercent`% 넓어진다. 위력과 회복 비율은 건드리지 않는다(공용 야성 규칙이 이미 올린다).
+       */
+      effectId: "meteorShower";
+      starfallEvery: number;
+      radiusBonusPercent: number;
     }
   | {
       /** 광폭한 꼬리(펄시). 폭주 중 공격 속도가 오르고 한 대에 겨누기 겹이 더 쌓인다. */
@@ -2356,6 +2369,18 @@ export interface Passive {
    * `attackSpeedPercent`%·이동 속도 `moveSpeedPercent`%가 오르고 주위 `burstRadius` 안의 적을 날려버린다. 모두 끊어지면
    * 기본 공격이 주위 `liberatedRadius` 안의 모든 적을 친다(「해방」).
    */
+  /**
+   * 「별똥별 피크닉」 계약(플레샤). 실제로 나간 기본 공격 `every`번째마다 그 표적이 서 있던 자리에 유성을 예약하고,
+   * `delaySeconds` 뒤 반경 `radius` 안의 모든 적에게 주문력 `power`%의 마법 피해를 준다. 실제로 깎인 체력의
+   * `lowestAllyHealPercent`%만큼 체력이 가장 낮은 아군(자신 제외)을 회복한다. 떨어지는 동안 표적이 비켜나면 맞지 않는다.
+   */
+  starfall?: {
+    every: number;
+    delaySeconds: number;
+    radius: number;
+    power: number;
+    lowestAllyHealPercent: number;
+  };
   restraintLocks?: {
     thresholds: readonly number[];
     attackSpeedPercent: number;
@@ -2748,6 +2773,11 @@ export interface BreakthroughNone {
  * (`BasicAttack.statusEffectEvery`)을 그대로 타고 세 번에 한 번만 일어난다.
  */
 export type BasicBreakthrough = {
+  /** 기본 공격마다 이 확률로 그 자리에 유성이 하나 더 떨어진다(플레샤). 주기 유성의 셈은 건드리지 않는다. */
+  kind: "starfallChance";
+  /** 발동 확률(%). */
+  chancePercent: number;
+} | {
   /**
    * 일반 공격 **세 번마다** 병뚜껑이 터져 맞힌 적 주위(맞은 적 포함)의 적에게 냉기가 쌓인다(매디의 「소다 터짐」). 빙결 조건 없이 도는 주기형이다.
    */
@@ -3008,6 +3038,11 @@ export type BasicBreakthrough = {
  * 궁극기가 세 번이 된다(채널링 궁극기와 같은 규칙이다).
  */
 export type UltimateBreakthrough = {
+  /** 되찍는 궁극기가 `extraStrikes`번 더 떨어지고, 떨어질 때마다 원 안의 아군이 주문력 `allyHealPower`%만큼 회복한다(플레샤 — 기본 궁극기에는 아군 회복이 없다). */
+  kind: "meteorEncore";
+  extraStrikes: number;
+  allyHealPower: number;
+} | {
   /**
    * 저주가 걸린 적이 쓰러지면 그 **저주 겹이 주변 적에게 이어진다**(케리스의 「막이 내린 뒤」). 한 번에 이어지는 겹은 `maxCarry`까지이고,
    * 이어받은 적이 다시 쓰러질 때만 다음 연쇄가 일어나므로 처치가 곧 연쇄가 된다.
@@ -3253,6 +3288,10 @@ export type UltimateBreakthrough = {
  * 세져 그 시간만 부풀고, 끝나고 가장 약해지는 자리를 메우지 못한다.
  */
 export type FerocityBreakthrough = {
+  /** 폭주에 들어서는 순간 살아 있는 아군 모두의 공격 속도가 폭주가 이어지는 동안(8초) 오른다(플레샤). */
+  kind: "starlitCheer";
+  attackSpeedPercent: number;
+} | {
   /** 폭주에 들어서는 순간 주변의 적 전원에게 저주가 `stacks`겹 걸린다(케리스의 「독자 몰이」). 진입 즉발이다. */
   kind: "readersGather";
   radius: number;
@@ -3485,6 +3524,10 @@ export type FerocityBreakthrough = {
  * 패시브의 조건(체력 절반 등)을 그대로 타므로 새 발동 조건을 만들지 않는다.
  */
 export type PassiveBreakthrough = {
+  /** 유성 회복이 가장 다친 아군에 더해 **다친 아군 한 명**에게 그 회복량의 `percent`%만큼 한 번 더 들어간다(플레샤). */
+  kind: "secondStar";
+  percent: number;
+} | {
   /**
    * 희열이 **최대 겹**일 때 노도니아의 재생 틱마다 그 회복량의 `sharePercent`%가 다른 살아 있는 아군에게도 돌아간다(노도니아의 「함께 달콤하게」).
    * 노도니아 한 명의 재생에서 나오는 몫이라 합계는 겹 수·최대 체력에 묶인다.

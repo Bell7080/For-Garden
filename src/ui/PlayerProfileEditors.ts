@@ -6,6 +6,8 @@ import { BIO_MAX_LENGTH } from "../core/playerCard";
 import { playerCardManager } from "../managers/PlayerCardManager";
 import { profileModifierManager, MAX_EQUIPPED_PROFILE_MODIFIERS } from "../managers/ProfileModifierManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
+import { PLAYABLE_RELICS } from "../data/relics";
+import { ControlChip } from "./ControlChip";
 import { chipPoints, drawLayer, drawShapeInnerGlow, drawShapeOutline, HOLO } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, PROFILE_MODIFIER_RARITY_COLOR, textStyle } from "./theme";
@@ -24,6 +26,9 @@ import { frameUnlockText, modifierUnlockText } from "./profileUnlockText";
 
 const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
 
+/** 「보유만 보기」 — 창을 닫았다 다시 열어도 이번 실행 동안은 고른 대로 남는다. 세 탭이 함께 쓴다. */
+let ownedOnly = false;
+
 /**
  * 프로필 카드의 요소를 하나씩 고치는 작은 창들.
  *
@@ -39,9 +44,13 @@ const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`
  */
 export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone: () => void, startTab: "photo" | "frame" | "modifier" = "photo"): void {
   const owned = relicCollection.owned;
+  // 사진 목록은 도감에 서는 모든 렐릭이다 — 가진 것이 먼저, 아직 없는 것은 검은 실루엣으로 뒤에 선다.
+  const ownedIds = new Set(owned.map(({ id }) => id));
+  const allRelics = [...owned, ...PLAYABLE_RELICS.filter(({ id }) => !ownedIds.has(id))];
   const frames = playerCardManager.frames();
   const modifiers = PROFILE_MODIFIERS;
-  const height = avatarPickerHeight(owned.length, frames.length, modifiers.length);
+  // 창 높이는 「보유만 보기」를 꺼 둔 가장 긴 목록에서 구한다 — 칩을 눌러도 창이 늘었다 줄었다 하지 않는다.
+  const height = avatarPickerHeight(allRelics.length, frames.length, modifiers.length);
   const top = -height / 2;
   let tab = startTab;
   // 목록에서 마지막으로 누른 것 — 미리보기와 아래 문장이 이것을 따라간다. 없으면 지금 입은 것이다.
@@ -90,9 +99,10 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
       const profile = current();
       let name = ""; let line = ""; let tone: string = COLOR.inkDim; let nameTone: string = COLOR.ink;
       if (tab === "photo") {
-        const relic = owned.find((candidate) => candidate.id === (focusRelicId ?? profile.avatar?.relicId));
+        const relic = allRelics.find((candidate) => candidate.id === (focusRelicId ?? profile.avatar?.relicId));
         name = relic?.name ?? "";
         if (relic && profile.avatar?.relicId === relic.id) line = t("profile.picker.equipped");
+        else if (relic && !ownedIds.has(relic.id)) { line = t("profile.picker.notOwned"); tone = COLOR.dangerText; }
       } else if (tab === "frame") {
         const frame = focusedFrame();
         if (frame) {
@@ -117,6 +127,14 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
     };
     const repaintTop = (): void => { paintPreview(); paintInfo(); };
 
+    const toggleSpec = AVATAR_PICKER.ownedToggle;
+    const toggle = new ControlChip(scene, AVATAR_PICKER.width / 2 - toggleSpec.right - toggleSpec.width / 2, top + toggleSpec.y, {
+      icon: "check", label: t("profile.picker.ownedOnly"), width: toggleSpec.width, height: toggleSpec.height,
+      onClick: () => { ownedOnly = !ownedOnly; toggle.setActive(ownedOnly); paintList(); },
+    });
+    toggle.setActive(ownedOnly);
+    body.add(toggle);
+
     const paintTabs = (): void => {
       tabs.removeAll(true);
       const { width, height: tabHeight, gap } = AVATAR_PICKER.tabs;
@@ -134,24 +152,29 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
       const profile = current();
       if (tab === "photo") {
         const { columns, cell, gap } = AVATAR_PICKER.photos;
-        owned.forEach((relic, index) => {
+        (ownedOnly ? owned : allRelics).forEach((relic, index) => {
+          const has = ownedIds.has(relic.id);
           const x = ((index % columns) - (columns - 1) / 2) * (cell + gap);
           const y = AVATAR_PICKER.photos.top + cell / 2 + Math.floor(index / columns) * (cell + gap);
           const chosen = profile.avatar?.relicId === relic.id;
           const item = scene.add.container(x, y);
-          item.add(new FaceFrame(scene, 0, 0, { portraitAssetId: relic.portraitAssetId, size: cell, color: chosen ? COLOR.accent : COLOR.inkDimHex }));
+          const { missing } = AVATAR_PICKER;
+          item.add(new FaceFrame(scene, 0, 0, {
+            portraitAssetId: relic.portraitAssetId, size: cell, color: chosen ? COLOR.accent : COLOR.inkDimHex,
+            ...(has ? {} : { tint: missing.silhouetteTint, faceAlpha: missing.silhouetteAlpha, fill: missing.silhouetteFill }),
+          }));
           if (chosen) {
             const shape = chipPoints(cell + 10, cell + 10, { bevel: { topLeft: (cell + 10) * 0.24, topRight: 0, bottomRight: (cell + 10) * 0.24, bottomLeft: 0 } });
             item.add(drawShapeInnerGlow(scene, 0, 0, shape, { color: COLOR.accent, strength: 0.6, bands: 5 }));
             item.add(drawShapeOutline(scene, 0, 0, shape, { color: COLOR.accent, alpha: 1, width: 5 }));
           }
-          const hit = scene.add.rectangle(0, 0, cell, cell, 0xffffff, 0).setInteractive({ useHandCursor: true });
+          const hit = scene.add.rectangle(0, 0, cell, cell, 0xffffff, 0).setInteractive({ useHandCursor: has });
           hit.on("pointerdown", () => pressIn(item));
           hit.on("pointerout", () => pressOut(item, "normal", { pop: false }));
           hit.on("pointerup", () => {
             pressOut(item);
             focusRelicId = relic.id; repaintTop();
-            if (chosen) return;
+            if (chosen || !has) return;
             void playerCardManager.setAvatar(relic.id).then(() => { focusRelicId = undefined; repaintTop(); paintList(); }, () => undefined);
           });
           item.add(hit);
@@ -164,7 +187,7 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
         const { columns, width, height: cellHeight, gap } = AVATAR_PICKER.modifiers;
         const earnedIds = new Set(profileModifierManager.earned().map(({ id }) => id));
         const equippedIds = profileModifierManager.equipped().map(({ id }) => id);
-        modifiers.forEach((modifier, index) => {
+        (ownedOnly ? modifiers.filter(({ id }) => earnedIds.has(id)) : modifiers).forEach((modifier, index) => {
           const x = ((index % columns) - (columns - 1) / 2) * (width + gap);
           const y = AVATAR_PICKER.modifiers.top + cellHeight / 2 + Math.floor(index / columns) * (cellHeight + gap);
           const unlocked = earnedIds.has(modifier.id);
@@ -173,10 +196,11 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
           const color = PROFILE_MODIFIER_RARITY_COLOR[modifier.rarity];
           const shape = chipPoints(width, cellHeight, { bevel: { topLeft: 14, topRight: 0, bottomRight: 14, bottomLeft: 0 } });
           const item = scene.add.container(x, y);
-          item.add(drawLayer(scene, 0, 0, shape, { fill: 0x161d26, alpha: on ? 0.96 : HOLO.glass, edge: color, edgeAlpha: on ? 1 : unlocked ? 0.4 : 0.2 }));
+          // 얻은 것은 그 등급 색 이름이 밝게, 못 얻은 것은 칸째 어둠에 잠긴다 — 둘이 같은 잿빛이면 무엇을 가졌는지 읽히지 않았다.
+          item.add(drawLayer(scene, 0, 0, shape, { fill: unlocked ? 0x1b2633 : 0x05070a, alpha: on ? 0.96 : unlocked ? 0.9 : 0.92, edge: color, edgeAlpha: on ? 1 : unlocked ? 0.75 : 0.12 }));
           if (on) item.add(drawShapeOutline(scene, 0, 0, shape, { color, alpha: 0.9, width: 3 }));
-          const label = scene.add.text(unlocked ? 0 : 12, 0, compactProfileText(modifier.displayName, 9), textStyle({ role: "emphasis", size: 24, color: on ? hex(color) : COLOR.inkDim })).setOrigin(0.5);
-          if (!unlocked) { label.setAlpha(0.55); item.add(drawGlyph(scene, "lock", -width / 2 + 34, 0, 22, COLOR.inkDimHex)); }
+          const label = scene.add.text(unlocked ? 0 : 12, 0, compactProfileText(modifier.displayName, 9), textStyle({ role: "emphasis", size: 24, color: unlocked ? hex(color) : COLOR.inkDim })).setOrigin(0.5);
+          if (!unlocked) { label.setAlpha(AVATAR_PICKER.missing.labelAlpha); item.add(drawGlyph(scene, "lock", -width / 2 + 34, 0, 22, COLOR.inkDimHex).setAlpha(0.6)); }
           item.add(label);
           const hit = scene.add.rectangle(0, 0, width, cellHeight, 0xffffff, 0).setInteractive({ useHandCursor: unlocked });
           hit.on("pointerup", () => {
@@ -193,7 +217,7 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
         return;
       }
       const { columns, width, height: cellHeight, gap, avatarSize } = AVATAR_PICKER.frames;
-      frames.forEach(({ frame, unlocked }, index) => {
+      (ownedOnly ? frames.filter(({ unlocked }) => unlocked) : frames).forEach(({ frame, unlocked }, index) => {
         const x = ((index % columns) - (columns - 1) / 2) * (width + gap);
         const y = AVATAR_PICKER.frames.top + cellHeight / 2 + Math.floor(index / columns) * (cellHeight + gap);
         const chosen = profile.frameId === frame.id;
@@ -205,10 +229,15 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
           size: avatarSize, frameId: frame.id, portraitAssetId: profile.avatar?.portraitAssetId,
           fallback: profileAvatarContent(profile, () => false).fallback,
         });
-        if (!unlocked) sample.setAlpha(0.55);
         item.add(sample);
-        item.add(scene.add.text(0, cellHeight / 2 - 58, frame.displayName, textStyle({ role: "emphasis", size: 24, color: chosen ? hex(frame.color) : COLOR.ink })).setOrigin(0.5));
+        const frameName = scene.add.text(0, cellHeight / 2 - 58, frame.displayName, textStyle({ role: "emphasis", size: 24, color: chosen ? hex(frame.color) : COLOR.ink })).setOrigin(0.5);
+        item.add(frameName);
         if (!unlocked) {
+          // 못 얻은 테두리는 칸 실루엣 그대로 어둠을 덮는다 — 견본만 옅게 하던 때는 얻은 것과 분간되지 않았다.
+          const { missing } = AVATAR_PICKER;
+          sample.setAlpha(missing.sampleAlpha);
+          frameName.setAlpha(missing.labelAlpha);
+          item.add(drawLayer(scene, 0, 0, plate, { fill: 0x000000, alpha: missing.dim, shadow: false }));
           item.add(drawGlyph(scene, "lock", -30, cellHeight / 2 - 24, 22, COLOR.inkDimHex));
           const lockText = scene.add.text(-12, cellHeight / 2 - 24, frame.unlockGift ? t("profile.edit.frameGift") : frame.unlockAchievement ? t("achievement.tier", { current: frame.unlockAchievement.tiers, total: frame.unlockAchievement.tiers }) : t("profile.edit.frameLocked", { level: frame.unlockLevel }), textStyle({ role: "emphasis", size: 20, color: COLOR.inkDim })).setOrigin(0, 0.5);
           item.add(lockText);

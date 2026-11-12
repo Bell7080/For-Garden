@@ -151,7 +151,7 @@ export function keywordTag(id: string, tone: SkillTagTone, glyph: SkillTagGlyph,
 /** 받는 회복을 깎는 상태인가 — 출혈의 회복 감소와 거듭 걸면 깊어지는 출혈. */
 function allyHealTag(): SkillTag { return { tone: "heal", glyph: "contrib-heal", text: t("skill.tag.allyHeal") }; }
 function cutsHealing(effect: CombatStatusEffect): boolean {
-  return effect.kind === "bleed" && ((effect.healingReceivedReductionPercent ?? 0) > 0 || effect.deepenOnRepeat !== undefined);
+  return effect.kind === "bleed" && ((effect.healingReceivedReductionPercent ?? 0) > 0 || effect.deepenOnRepeat !== undefined || effect.deep === true);
 }
 
 /** 치유 감소 칩. 출처마다 수치가 달라 칩은 수를 갖지 않고, 얼마인지는 본문이 적는다. */

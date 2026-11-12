@@ -753,7 +753,7 @@ export default {
   "keyword.minor-bleed.term": "小さな出血",
   "keyword.minor-bleed.description": "2秒間、毎秒 最大体力の1%の固定ダメージを受ける。弱い再付与はより強い出血を上書きしない。",
   "keyword.deep-bleed.term": "深い出血",
-  "keyword.deep-bleed.description": "より深く開いた[[bleed|出血]]。3秒間、毎秒 最大体力の4%の固定ダメージを受ける。防御力では減らせず、持続中は受ける回復量が減る。",
+  "keyword.deep-bleed.description": "より深く開いた[[bleed|出血]]。3秒間、毎秒 最大体力の4%の固定ダメージを受ける。防御力では減らせず、持続中は受ける回復量が30%減る。",
   "keyword.poison.term": "毒",
   "keyword.poison.description": "付与者の攻撃力22%と魔力22%を合わせた[[magical-damage|魔法ダメージ]]を毎秒受ける。値は付与した瞬間に決まり、より痛い毒が上書きするとその値が残る。",
   "keyword.liquidate.term": "清算",

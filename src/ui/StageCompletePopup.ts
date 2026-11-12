@@ -111,7 +111,8 @@ export interface StageCompletePopupOptions {
    */
   replay?: StageCompleteAction;
   /**
-   * 이긴 스토리 관문의 **가로 한 줄**(다음 단계 · 다시 하기 · 나가기). 있으면 `replay` 자리를 대신한다.
+   * 이긴 판의 **가로 한 줄**(다음 단계 · 다시 하기 · 나가기). 있으면 `replay` 자리를 대신한다 —
+   * 스토리 관문과, 다음 단계가 열린 치즈케이크 대작전(다음 단계 · 다시 하기)이 쓴다.
    * 판은 화면 아무 곳이나 눌러도 닫히므로, 나가기는 그 닫힘이 부르는 기본 길과 같다.
    */
   clearActions?: readonly StageCompleteAction[];
@@ -344,6 +345,7 @@ export class StageCompletePopup {
         this.buildLoot(body, loot, options.score ? undefined : options.reward.footnote, options.greatSuccess === true);
         if (options.score) this.buildScore(body, options.score);
         if (options.extras && options.extras.length > 0) this.buildExtras(body, options.extras);
+        else if (options.clearActions) this.buildClearActions(body, close, options.clearActions);
         else if (options.replay) this.buildReplay(body, close, options.replay);
       }
 

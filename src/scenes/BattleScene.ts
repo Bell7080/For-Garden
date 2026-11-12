@@ -103,7 +103,7 @@ import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { relicLevelCap, activeBreakthroughOf } from "../core/relicProgression";
 import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
-import { cakeOperationEnemies, cakeOperationRole, cakeOperationRunCost, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
+import { CAKE_OPERATION_TIERS, cakeOperationEnemies, cakeOperationRole, cakeOperationRunCost, cakeOperationTierIndex, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { BATTLE_FIELD_FRAMING, battleArena } from "../core/battleArena";
 import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type DuelBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto, type RaidBattleInputDto } from "../core/expeditionBattle";
 import { raidBossDef, raidBossGrowth, raidBossPercentHpBasis } from "../core/raid";
@@ -3262,6 +3262,15 @@ export class BattleScene extends Phaser.Scene {
       const go = (run: () => void) => () => { chosen = true; run(); };
       const replayable = isCakeTierUnlocked(input.tierId, session.cakeOperation.clearedIndex)
         && session.wallet.stamina >= cakeOperationRunCost(getCakeOperationTier(input.tierId)).staminaCost;
+      // 이긴 판이면 바로 위 단계로 이어 갈 수 있다 — 입장값은 모든 단계가 같고, 이 판의 승리로 막 열렸을 수도 있다.
+      const nextTier = CAKE_OPERATION_TIERS[cakeOperationTierIndex(input.tierId) + 1];
+      const advanceable = won && nextTier !== undefined && isCakeTierUnlocked(nextTier.id, session.cakeOperation.clearedIndex)
+        && session.wallet.stamina >= cakeOperationRunCost(nextTier).staminaCost;
+      const replay = replayable ? { label: t("stageComplete.replay"), onPress: go(() => this.replayContent({ content: "cake", tierId: input.tierId }, back)) } : undefined;
+      const clearActions: StageCompleteAction[] | undefined = advanceable ? [
+        { label: t("stageComplete.next"), primary: true, onPress: go(() => this.replayContent({ content: "cake", tierId: nextTier.id }, () => startScene(this, "cakeOperation", { tierId: nextTier.id }))) },
+        ...(replay ? [replay] : []),
+      ] : undefined;
       new StageCompletePopup(this, popups).open({
         // 진 판은 받은 것이 없으므로 보상 자리 대신 강해지러 가는 길이 선다.
         reward: won ? { kind: "loot", items } : {
@@ -3272,7 +3281,8 @@ export class BattleScene extends Phaser.Scene {
         },
         growth: won ? undefined : this.defeatGrowth(() => { chosen = true; }),
         theme: this.resultTheme(),
-        replay: replayable ? { label: t("stageComplete.replay"), onPress: go(() => this.replayContent({ content: "cake", tierId: input.tierId }, back)) } : undefined,
+        replay,
+        clearActions,
         staminaRefunded: result.staminaRefunded,
         greatSuccess: won && result.greatSuccess === true,
         autoRepeat: this.autoRepeatBanner(input.requestId, { content: "cake", tierId: input.tierId }, won, () => cakeOperationRunCost(getCakeOperationTier(input.tierId)).staminaCost, back, () => { chosen = true; }),

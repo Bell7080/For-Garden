@@ -63,7 +63,7 @@ describe("편성 화면의 콘텐츠", () => {
     const preview = partyPreview({ content: "raid", raidId: "r1", bossRelicId: RAID_SEASON_BOSS.relicId, difficulty: "normal" }, STAGE);
     expect(preview.shown).toHaveLength(1);
     expect(preview.shown[0].def?.id).toBe(RAID_SEASON_BOSS.relicId);
-    expect(preview.shown[0].level).toBe(22);
+    expect(preview.shown[0].level).toBe(23);
     expect(partyPreview({ content: "raid", raidId: "w", bossRelicId: RAID_SEASON_BOSS.relicId, difficulty: "rampage" }, STAGE).shown[0].level).toBe(RAID_SEASON_BOSS.level);
     // 판 안에서 눕지 않아도 공유 체력은 끝내 깎여 죽는다 — 불사가 아니라 보스(강인함만)다.
     expect(preview.role).toBe("boss");

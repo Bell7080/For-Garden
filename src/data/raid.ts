@@ -34,8 +34,8 @@ import { requiredBreakthroughForLevel } from "../core/levelDesign";
  * `LV.n`과 실제로 맞는 수치가 갈리기 때문이다. **여기 적힌 수가 곧 화면에 서는 레벨이다** —
  * 유형이 레벨을 얹던 때(`endless` +8)는 40이라 적어 두고 48이 서 있었다.
  *
- * **월드 폭주는 만렙(60)이다.** 돌파 네 칸이 모두 열리는 자리라, 보스가 한계 돌파로 얻는 기술이
- * 전부 드러나는 유일한 판이다(보스마다 네 칸이 그 보스의 한 갈래를 민다 — 공략법 `raidGuides.ts`).
+ * **월드 폭주는 LV.48(돌파 3)이다** — 예전 만렙 자리의 세기를 SSR 보스의 등급 성장 곡선 위로 옮긴 값이다.
+ * 넷째 칸은 LV.51에서 열리므로 아직 닫혀 있다(보스마다 칸이 그 보스의 한 갈래를 민다 — 공략법 `raidGuides.ts`).
  *
  * **몸집과 걸음은 여기 적지 않는다.** 거대하고 느린 것은 이 개체의 성질이 아니라 **레이드라는
  * 자리의 성질**이라 유형 표(`ENCOUNTER_ROLE.boss`)가 갖는다 — 개체에 적으면 같은 몸이
@@ -75,9 +75,9 @@ export const RAID_BOSS_BALANCE = {
 /**
  * 난이도 — 레벨·체력·수명·정산이 한 줄이다.
  *
- * **레벨은 한계 돌파 사다리 위에 선다**(`requiredBreakthroughForLevel`). 쉬움 20(돌파 0) · 보통
- * 30(돌파 1: 일반 공격) · 어려움 40(돌파 2: 궁극기) · 폭주 60(돌파 4: 네 칸 전부)이라, 난이도가
- * 오를 때마다 보스가 돌파로 여는 기술이 하나씩 드러난다.
+ * **레벨은 한계 돌파 사다리 위에 선다**(`requiredBreakthroughForLevel` — LV.21·31·41·51). 쉬움 15(돌파 0) ·
+ * 보통 23(돌파 1: 일반 공격) · 어려움 31(돌파 2: 궁극기) · 폭주 48(돌파 3)이라, 난이도가 오를 때마다
+ * 보스가 돌파로 여는 기술이 하나씩 드러난다. 레벨은 SSR 보스의 등급 성장(3.0%)과 돌파 몫 위에서 예전 세기를 넘지 않게 골랐다.
  *
  * **체력은 함께 치는 사람 수에서 거꾸로 구한다.** 한 판의 피해는 실측으로 0.8만~2.6만이고 한
  * 사람이 판마다 두 번 친다. 소환 레이드는 친구 몇 명이 하루 안에 잡을 무게이고, 월드 폭주는
@@ -109,9 +109,9 @@ const raidDifficulty = (spec: Omit<RaidDifficultySpec, "totalHp">): RaidDifficul
 
 /** 단일 공유 HP 풀이다. 여러 몸을 처치하거나 부활시키는 단계는 없다. */
 export const RAID_DIFFICULTY: Record<RaidDifficulty, RaidDifficultySpec> = {
-  easy: raidDifficulty({ level: 13, bodyHp: 25_000, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 10_000, total: 8, kill: 5, gems: 40 }, run: { sigil: 3, gems: 7, salvage: 2 } }),
-  normal: raidDifficulty({ level: 22, bodyHp: 50_000, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15_000, total: 14, kill: 8, gems: 65 }, run: { sigil: 5, gems: 13, salvage: 4 } }),
-  hard: raidDifficulty({ level: 30, bodyHp: 100_000, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22_000, total: 22, kill: 12, gems: 85 }, run: { sigil: 8, gems: 17, salvage: 6 } }),
+  easy: raidDifficulty({ level: 15, bodyHp: 25_000, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 10_000, total: 8, kill: 5, gems: 40 }, run: { sigil: 3, gems: 7, salvage: 2 } }),
+  normal: raidDifficulty({ level: 23, bodyHp: 50_000, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15_000, total: 14, kill: 8, gems: 65 }, run: { sigil: 5, gems: 13, salvage: 4 } }),
+  hard: raidDifficulty({ level: 31, bodyHp: 100_000, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22_000, total: 22, kill: 12, gems: 85 }, run: { sigil: 8, gems: 17, salvage: 6 } }),
   // 렐릭 상한이 연구원 레벨로 100까지 열리며(돌파 +10%p) 만렙 편성의 폭주 피해가 2.6배가 되었다 — 판 체력과 내 몫 목표를
   // 함께 2.5배로 올려 같은 판 수·같은 보상선을 지킨다(250,000 → 625,000 · 45,000 → 112,500). 쉬움~어려움은 권장 레벨에서 그대로다.
   rampage: raidDifficulty({ level: 48, bodyHp: 625_000, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 112_500, total: 60, kill: 30, gems: 130 }, run: { sigil: 13, gems: 25, salvage: 10 } }),

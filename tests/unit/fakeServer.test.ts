@@ -1869,7 +1869,7 @@ describe("FakeServer 이야기 서브 보상", () => {
 });
 
 describe("1-5 무료 세공·각인 체험", () => {
-  it("1-5 첫 승리가 받은 룬에 체험을 세우고, 세공·일괄 세공은 골드를 받지 않으며 각인이 체험을 닫는다", async () => {
+  it("1-5 첫 승리가 받은 룬에 체험을 세우고, 세공은 골드를 받지 않고 일괄 세공은 무료가 아니며 각인이 체험을 닫는다", async () => {
     const state = makeSession(); state.wallet.gold = 0;
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
     await server.completeStage("1-5", true);
@@ -1879,8 +1879,13 @@ describe("1-5 무료 세공·각인 체험", () => {
     const statId = state.runeInventory.at(-1)!.mainStats[0].key;
     const single = await server.enhanceRune({ runeInstanceId: runeId, statId });
     expect(single.goldSpent).toBe(0);
-    const all = await server.enhanceRuneAll({ runeInstanceId: runeId });
-    expect(all.goldSpent).toBe(0);
+    // 체험은 한 줄씩 세공하는 것이라 일괄 세공은 값을 그대로 받는다(골드 0이면 거절).
+    await expect(server.enhanceRuneAll({ runeInstanceId: runeId })).rejects.toMatchObject({ code: "INSUFFICIENT_GOLD" });
+    while (!state.runeInventory.find((rune) => rune.instanceId === runeId)!.enhancementComplete) {
+      const rune = state.runeInventory.find((candidate) => candidate.instanceId === runeId)!;
+      const next = runeBatchEnhancementTargets(rune)[0];
+      expect((await server.enhanceRune({ runeInstanceId: runeId, statId: next })).goldSpent).toBe(0);
+    }
     expect(state.wallet.gold).toBe(0);
     await server.engraveRune({ runeInstanceId: runeId, statId });
     expect(state.tutorial?.freeRuneCraft).toBeUndefined();

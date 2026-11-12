@@ -133,5 +133,4 @@ export const RUNE_JA = {
   "rune.traitReroll.pity": "等級上昇補正 {done} / {total}",
   "rune.traitReroll.discardHigher": "このルーンの新しい特性は、現在より高い等級です。適用せずに再解釈すると破棄されます。再解釈しますか？",
   "rune.free.craft": "無料研磨",
-  "rune.free.craftAll": "無料一括研磨",
 } as const;

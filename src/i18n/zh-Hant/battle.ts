@@ -67,7 +67,6 @@ export const BATTLE_ZH_HANT = {
   "tutorial.rune.bag": "新符文到了！",
   "tutorial.rune.pick": "請點選要打磨的屬性行",
   "tutorial.rune.craft": "請點選打磨按鈕。現在不消耗金幣",
-  "tutorial.rune.craftAll": "用一鍵打磨一次完成剩下的打磨吧",
   "tutorial.rune.engravePick": "請選擇一個要刻印的屬性",
   "tutorial.rune.engrave": "請點選確認刻印來完成符文",
   "tutorial.rune.done.title": "符文完成！",

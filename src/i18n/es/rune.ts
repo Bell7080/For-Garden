@@ -128,5 +128,4 @@ export const RUNE_ES = {
   "rune.traitReroll.pity": "Garantía de subida {done} / {total}",
   "rune.traitReroll.discardHigher": "El nuevo rasgo de esta Runa es de un grado superior al actual. Reinterpretar sin aplicarlo lo descartará. ¿Reinterpretar de todos modos?",
   "rune.free.craft": "Tallar gratis",
-  "rune.free.craftAll": "Tallar todo gratis",
 } as const;

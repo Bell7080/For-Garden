@@ -128,5 +128,4 @@ export const RUNE_RU = {
   "rune.traitReroll.pity": "Гарантия повышения {done} / {total}",
   "rune.traitReroll.discardHigher": "Новая особенность этой Руны выше по рангу, чем текущая. Если переосмыслить, не применив её, она будет потеряна. Всё равно переосмыслить?",
   "rune.free.craft": "Бесплатная огранка",
-  "rune.free.craftAll": "Огранить всё бесплатно",
 } as const;

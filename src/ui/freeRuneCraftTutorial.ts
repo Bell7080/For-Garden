@@ -35,11 +35,10 @@ export interface FreeRuneCraftTargets {
   active: () => boolean;
   /** 지금 화면이 다른 판에 덮였나. 덮이면 안내를 걷는다. */
   covered: () => boolean;
-  stage: () => "pick" | "craft" | "craftAll" | "engravePick" | "engrave" | undefined;
+  stage: () => "pick" | "craft" | "engravePick" | "engrave" | undefined;
   firstRow: () => Rect | undefined;
   allRows: () => Rect | undefined;
   craftButton: () => Rect | undefined;
-  craftAllButton: () => Rect | undefined;
   onSkip: () => void;
 }
 
@@ -62,7 +61,6 @@ export function guideFreeRuneCraft(scene: Phaser.Scene, targets: FreeRuneCraftTa
       switch (targets.stage()) {
         case "pick": return targets.firstRow();
         case "craft": case "engrave": return targets.craftButton();
-        case "craftAll": return targets.craftAllButton();
         case "engravePick": return targets.allRows();
         default: return undefined;
       }
@@ -71,7 +69,6 @@ export function guideFreeRuneCraft(scene: Phaser.Scene, targets: FreeRuneCraftTa
       switch (targets.stage()) {
         case "pick": return t("tutorial.rune.pick");
         case "craft": return t("tutorial.rune.craft");
-        case "craftAll": return t("tutorial.rune.craftAll");
         case "engravePick": return t("tutorial.rune.engravePick");
         default: return t("tutorial.rune.engrave");
       }

@@ -4216,7 +4216,8 @@ export class FakeServer implements GameApi {
     const current = this.ownedRune(request.runeInstanceId);
     if (current.enhancementComplete) throw new GameApiError("RUNE_ENHANCEMENT_COMPLETE", "모든 일반 강화를 완료한 룬입니다.");
     const targets = runeBatchEnhancementTargets(current);
-    const goldSpent = isFreeRuneCraft(this.state.tutorial, current.instanceId) ? 0 : runeBatchEnhancementGoldCost(current);
+    // 무료 각인 체험은 한 줄씩 세공하는 것이라 일괄 세공은 무료가 아니다.
+    const goldSpent = runeBatchEnhancementGoldCost(current);
     if (this.state.wallet.gold < goldSpent) throw new GameApiError("INSUFFICIENT_GOLD", "룬 강화에 필요한 골드가 부족합니다.");
     let rune = current;
     const results: boolean[] = [];

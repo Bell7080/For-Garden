@@ -128,5 +128,4 @@ export const RUNE_ID = {
   "rune.traitReroll.pity": "Jaminan naik tingkat {done} / {total}",
   "rune.traitReroll.discardHigher": "Sifat baru Rune ini bertingkat lebih tinggi daripada yang sekarang. Menafsir ulang tanpa menerapkannya akan membuangnya. Tetap menafsir ulang?",
   "rune.free.craft": "Asah gratis",
-  "rune.free.craftAll": "Asah semua gratis",
 } as const;

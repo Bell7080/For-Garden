@@ -67,7 +67,6 @@ export const BATTLE_VI = {
   "tutorial.rune.bag": "Rune mới đã đến!",
   "tutorial.rune.pick": "Hãy chạm vào dòng chỉ số muốn Mài",
   "tutorial.rune.craft": "Hãy chạm nút Mài. Lúc này không tốn Vàng",
-  "tutorial.rune.craftAll": "Dùng Mài tất cả để hoàn thành phần còn lại một lần",
   "tutorial.rune.engravePick": "Hãy chọn một chỉ số để Khắc",
   "tutorial.rune.engrave": "Hãy chạm Xác nhận Khắc để hoàn thiện Rune",
   "tutorial.rune.done.title": "Rune hoàn thiện!",

@@ -128,5 +128,4 @@ export const RUNE_ZH_HANS = {
   "rune.traitReroll.pity": "升级保底 {done} / {total}",
   "rune.traitReroll.discardHigher": "该符文的新特性等级高于当前特性。不应用直接重新解析会将其舍弃。确定要重新解析吗？",
   "rune.free.craft": "免费打磨",
-  "rune.free.craftAll": "免费一键打磨",
 } as const;

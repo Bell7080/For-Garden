@@ -643,7 +643,8 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
     const confirmCraftAll = (): void => {
       const current = rune!;
       // 체험 룬은 치를 골드가 없어 확인 창을 거치지 않는다.
-      if (freeNow()) { if (!closed && !pending && !current.enhancementComplete) void craftAll(); return; }
+      // 무료 각인 체험 중에는 일괄 세공을 막는다 — 한 줄씩 직접 세공해 보는 것이 체험이다.
+      if (freeNow()) return;
       const total = runeBatchEnhancementGoldCost(current);
       if (closed || pending || total <= 0 || session.wallet.gold < total) return;
       popups.confirm({
@@ -840,11 +841,10 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         body.add(batchAction);
       }
       // 세공 단계에서는 두 버튼이 나란히 서고, 각인만 남으면 각인 버튼이 가운데로 돌아온다.
-      action.setX(completed ? 0 : -panel.button.pairOffset);
-      // 체험 룬은 값 대신 「무료」를 라벨에 싣는다 — 0골드를 적으면 고장 난 값으로 읽힌다.
-      batchAction!.setVisible(!completed).setLabel(free ? t("rune.free.craftAll") : t("rune.craftAll")).setCost(free ? undefined : { amount: batchCost, affordable: batchAffordable })
-        .setEnabled(!completed && !engraved && batchAffordable && (free || batchCost > 0));
-      batchAction!.fitLabel(panel.button.width - (free ? 60 : 150));
+      // 무료 각인 체험 중에는 일괄 세공을 세우지 않고 세공 버튼 하나가 가운데에 선다.
+      action.setX(completed || free ? 0 : -panel.button.pairOffset);
+      batchAction!.setVisible(!completed && !free).setCost({ amount: batchCost, affordable: batchAffordable })
+        .setEnabled(!completed && !free && !engraved && batchAffordable && batchCost > 0);
       // 응답 도중 눌린 버튼을 파괴하면 pointerup이 유실된다. 같은 입력면·누름 연출을 유지한다.
       action.setLabel(completed ? t("rune.engraveConfirm") : free ? t("rune.free.craft") : t("rune.craft"))
         .setCost(completed || free ? undefined : { amount: cost, affordable })
@@ -854,7 +854,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       batchLanded = undefined;
     };
     render();
-    // 무료 각인 체험: 고를 줄 → 세공 → 모두 세공 → 각인할 줄 → 각인 확정을 한 칸씩 가리킨다. 판이 제자리를 잡은 뒤 건다.
+    // 무료 각인 체험: 고를 줄 → 세공(한 줄씩) → 각인할 줄 → 각인 확정을 한 칸씩 가리킨다. 판이 제자리를 잡은 뒤 건다.
     if (freeNow()) {
       const bounds = (object: { getBounds: () => Phaser.Geom.Rectangle } | undefined) => {
         if (!object) return undefined;
@@ -870,13 +870,11 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
             const current = rune!;
             if (current.engravings.length > 0) return undefined;
             if (current.enhancementComplete) return selected ? "engrave" : "engravePick";
-            if (runeEnhancementAttempts(current) === 0) return selected ? "craft" : "pick";
-            return "craftAll";
+            return selected ? "craft" : "pick";
           },
           firstRow: () => bounds(rowHits.find(({ main }) => main)?.hit ?? rowHits[0]?.hit),
           allRows: () => unionRects(rowHits.map(({ hit }) => bounds(hit)!)),
           craftButton: () => bounds(action),
-          craftAllButton: () => bounds(batchAction),
           onSkip: () => {
             if (pending) return;
             void tutorialManager.dismissFreeRune().then(() => { if (!closed) render(); });

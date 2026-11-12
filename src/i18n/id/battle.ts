@@ -67,7 +67,6 @@ export const BATTLE_ID = {
   "tutorial.rune.bag": "Rune baru telah tiba!",
   "tutorial.rune.pick": "Ketuk baris stat yang ingin diasah",
   "tutorial.rune.craft": "Ketuk tombol Asah. Saat ini tidak memakai Emas",
-  "tutorial.rune.craftAll": "Selesaikan sisa asahan sekaligus dengan Asah semua",
   "tutorial.rune.engravePick": "Pilih satu stat untuk diukir",
   "tutorial.rune.engrave": "Ketuk Konfirmasi Ukiran untuk menyempurnakan Rune",
   "tutorial.rune.done.title": "Rune sempurna!",

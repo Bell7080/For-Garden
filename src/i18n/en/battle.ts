@@ -67,7 +67,6 @@ export const BATTLE_EN = {
   "tutorial.rune.bag": "A new Rune has arrived!",
   "tutorial.rune.pick": "Tap a stat line to Polish",
   "tutorial.rune.craft": "Tap Polish. It costs no Gold right now",
-  "tutorial.rune.craftAll": "Finish the remaining Polishes at once with Polish All",
   "tutorial.rune.engravePick": "Choose one stat to Engrave",
   "tutorial.rune.engrave": "Tap Confirm Engraving to complete the Rune",
   "tutorial.rune.done.title": "Rune Complete!",

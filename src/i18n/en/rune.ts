@@ -131,5 +131,4 @@ export const RUNE_EN = {
   "rune.traitReroll.pity": "Grade-up pity {done} / {total}",
   "rune.traitReroll.discardHigher": "This Rune's new trait is a higher grade than its current one. Rerolling without applying it will discard it. Reroll anyway?",
   "rune.free.craft": "Free Polish",
-  "rune.free.craftAll": "Free Polish All",
 } as const;

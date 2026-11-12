@@ -67,7 +67,6 @@ export const BATTLE_ES = {
   "tutorial.rune.bag": "¡Ha llegado una Runa nueva!",
   "tutorial.rune.pick": "Toca la línea de atributo que quieres tallar",
   "tutorial.rune.craft": "Toca Tallar. Ahora no cuesta Oro",
-  "tutorial.rune.craftAll": "Termina los tallados restantes de una vez con Tallar todo",
   "tutorial.rune.engravePick": "Elige un atributo para grabar",
   "tutorial.rune.engrave": "Toca Confirmar grabado para completar la Runa",
   "tutorial.rune.done.title": "¡Runa completa!",

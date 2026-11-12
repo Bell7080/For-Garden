@@ -67,7 +67,6 @@ export const BATTLE_RU = {
   "tutorial.rune.bag": "Прибыла новая руна!",
   "tutorial.rune.pick": "Нажмите на строку характеристики для огранки",
   "tutorial.rune.craft": "Нажмите «Огранка». Сейчас золото не тратится",
-  "tutorial.rune.craftAll": "Завершите оставшуюся огранку разом через «Огранить всё»",
   "tutorial.rune.engravePick": "Выберите характеристику для гравировки",
   "tutorial.rune.engrave": "Нажмите «Подтвердить гравировку», чтобы завершить руну",
   "tutorial.rune.done.title": "Руна готова!",

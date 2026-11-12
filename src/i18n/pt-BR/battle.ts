@@ -67,7 +67,6 @@ export const BATTLE_PT_BR = {
   "tutorial.rune.bag": "Uma nova Runa chegou!",
   "tutorial.rune.pick": "Toque na linha de atributo que deseja lapidar",
   "tutorial.rune.craft": "Toque em Lapidar. Agora não custa Ouro",
-  "tutorial.rune.craftAll": "Termine as lapidações restantes de uma vez com Lapidar tudo",
   "tutorial.rune.engravePick": "Escolha um atributo para gravar",
   "tutorial.rune.engrave": "Toque em Confirmar gravação para completar a Runa",
   "tutorial.rune.done.title": "Runa completa!",

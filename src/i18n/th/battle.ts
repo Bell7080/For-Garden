@@ -67,7 +67,6 @@ export const BATTLE_TH = {
   "tutorial.rune.bag": "รูนใหม่มาถึงแล้ว!",
   "tutorial.rune.pick": "แตะแถวค่าสถานะที่จะเจียระไน",
   "tutorial.rune.craft": "แตะปุ่มเจียระไน ตอนนี้ไม่ใช้ทอง",
-  "tutorial.rune.craftAll": "ใช้เจียระไนทั้งหมดเพื่อทำส่วนที่เหลือในครั้งเดียว",
   "tutorial.rune.engravePick": "เลือกค่าสถานะที่จะสลักหนึ่งอย่าง",
   "tutorial.rune.engrave": "แตะยืนยันการสลักเพื่อทำให้รูนสมบูรณ์",
   "tutorial.rune.done.title": "รูนสมบูรณ์!",

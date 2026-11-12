@@ -67,7 +67,6 @@ export const BATTLE_DE = {
   "tutorial.rune.bag": "Eine neue Rune ist da!",
   "tutorial.rune.pick": "Tippe auf die Wertezeile, die du veredeln möchtest",
   "tutorial.rune.craft": "Tippe auf Veredeln. Gerade kostet es kein Gold",
-  "tutorial.rune.craftAll": "Erledige die restlichen Veredelungen auf einmal mit Alles veredeln",
   "tutorial.rune.engravePick": "Wähle einen Wert zum Gravieren",
   "tutorial.rune.engrave": "Tippe auf Gravur bestätigen, um die Rune zu vollenden",
   "tutorial.rune.done.title": "Rune vollendet!",

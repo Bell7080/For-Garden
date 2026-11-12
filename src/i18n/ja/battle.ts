@@ -70,7 +70,6 @@ export const BATTLE_JA = {
   "tutorial.rune.bag": "新しいルーンが届きました！",
   "tutorial.rune.pick": "研磨する能力値の行をタップしてください",
   "tutorial.rune.craft": "研磨ボタンをタップしてください。今はゴールドがかかりません",
-  "tutorial.rune.craftAll": "一括研磨で残りの研磨を一度に終えてみましょう",
   "tutorial.rune.engravePick": "刻印する能力値を一つ選んでください",
   "tutorial.rune.engrave": "刻印を確定して、ルーンを完成させてください",
   "tutorial.rune.done.title": "ルーン完成！",

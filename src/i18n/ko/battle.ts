@@ -70,7 +70,6 @@ export const BATTLE_KO = {
   "tutorial.rune.bag": "새 룬이 도착했어요!",
   "tutorial.rune.pick": "세공할 능력치 줄을 눌러 골라 주세요",
   "tutorial.rune.craft": "세공 버튼을 눌러 보세요. 지금은 골드가 들지 않아요",
-  "tutorial.rune.craftAll": "일괄 세공으로 남은 세공을 한 번에 끝내 볼까요?",
   "tutorial.rune.engravePick": "각인할 능력치를 하나 골라 주세요",
   "tutorial.rune.engrave": "각인 확정을 눌러 룬을 완성해 주세요",
   "tutorial.rune.done.title": "룬 완성!",

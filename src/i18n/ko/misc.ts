@@ -88,6 +88,19 @@ export const MISC_KO = {
 
   // 고고학
   "archaeology.shop": "상점",
+  "archaeology.guide.title": "지층 탐사 안내",
+  "archaeology.guide.button": "탐사 안내",
+  "archaeology.guide.enter.heading": "유적을 골라 들어가요",
+  "archaeology.guide.enter.body": "지도에서 유적을 고르면 탐사 횟수 한 번으로 들어갈 수 있어요. 곡괭이로 칸을 하나씩 파면 원석, 룬, 재화가 나와요. 빈 칸은 없으니 마음껏 파 보세요!",
+  "archaeology.guide.fog.heading": "안개 색을 읽어 보세요",
+  "archaeology.guide.fog.body": "판을 덮은 안개의 색은 그 구역에서 잘 나오는 보상의 힌트예요. 오른쪽 범례를 보고 원하는 색부터 파 보세요. 한 판에 휘두를 수 있는 횟수는 정해져 있어요.",
+  "archaeology.guide.deep.heading": "깊은 유적일수록 넉넉해요",
+  "archaeology.guide.deep.body": "레벨이 오르면 더 깊은 유적이 열려요. 깊은 곳일수록 한 번에 더 많이 주지만, 한 번 판 뒤 다시 열리기까지 더 오래 기다려야 해요.",
+  "archaeology.guide.shallow.heading": "낮은 유적도 꼭 들러 주세요",
+  "archaeology.guide.shallow.body": "오래 쉬게 둔 낮은 유적에는 결정이 맺혀요. 결정이 맺히면 굴착 횟수가 늘고 원석이 훨씬 많이 나와요. 깊은 유적이 잠겨 있는 동안 낮은 유적도 함께 돌아 주세요!",
+  "archaeology.guide.prev": "이전",
+  "archaeology.guide.next": "다음",
+  "archaeology.guide.done": "시작해요",
   "archaeology.bench.pick": "룬 고르기",
   "archaeology.bench.clear": "빼기",
   "archaeology.bench.empty": "룬을 끼워 주세요",
@@ -441,7 +454,6 @@ export const MISC_KO = {
   "intro.friends": "친구를 추가하면 서로의 프로필을 볼 수 있어요. 친구 카드에서 애착 렐릭을 눌러 정보를 확인해 보세요.",
   "intro.raid": "레이드는 여럿이 한 보스의 체력을 함께 깎는 콘텐츠예요. 판마다 도전은 두 번이고, 친 만큼 점수와 보상이 쌓여요. 판이 끝나면 완료 탭에서 보상을 받으세요.",
   "intro.expedition": "원정은 하루에 한 번 도는 스무 층짜리 길이에요. 떠난 순간의 모습으로 끝까지 싸우니, 출발 전에 편성과 성장을 마치세요.",
-  "intro.archaeology": "고고학은 지층을 파서 원석, 룬, 재화를 얻는 탐사예요. 안개 색은 잘 나오는 보상의 힌트이고, 한 번 판 유적은 시간이 지나야 다시 열려요.",
   "intro.premium": "프리미엄에서는 패스, 구독, 특가 상품을 볼 수 있어요. 무료 보급은 붉은 점으로 알려 드려요.",
   "rail.guild": "길드",
 

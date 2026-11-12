@@ -9,8 +9,11 @@ import { anyPopupOpen, PopupLayer } from "./PopupLayer";
  *
  * 첫 플레이 튜토리얼이 끝나기 전에는 뜨지 않고(진행 중인 안내와 겹치지 않게), 다른 팝업이 떠 있으면 비는 순간까지
  * 기다린다. 뜨는 순간 본 것으로 남겨, 확인 전에 나가도 같은 쪽지가 되풀이되지 않는다.
+ *
+ * `open`을 주면 한 줄 쪽지 대신 그 화면의 안내판을 연다(고고학의 네 쪽짜리 지층 탐사 안내). 언제 뜨고 언제 본 것으로
+ * 남는지는 쪽지와 같다 — 화면마다 첫 방문 판정을 따로 만들지 않는다.
  */
-export function showContentIntro(scene: Phaser.Scene, id: ContentIntroId): void {
+export function showContentIntro(scene: Phaser.Scene, id: ContentIntroId, open?: () => void): void {
   if (!tutorialManager.shouldShowIntro(id)) return;
   let stopped = false;
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { stopped = true; });
@@ -18,6 +21,7 @@ export function showContentIntro(scene: Phaser.Scene, id: ContentIntroId): void 
     if (stopped || !scene.scene.isActive() || !tutorialManager.shouldShowIntro(id)) return;
     if (anyPopupOpen()) { scene.time.delayedCall(600, attempt); return; }
     void tutorialManager.markIntroSeen(id);
+    if (open) { open(); return; }
     new PopupLayer(scene, 2650).confirm({
       title: t("intro.title"),
       message: t(`intro.${id}` as TextKey),

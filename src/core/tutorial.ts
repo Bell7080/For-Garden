@@ -31,9 +31,12 @@ export type TutorialStepId = (typeof TUTORIAL_STEPS)[number];
 /**
  * 콘텐츠 첫 방문 안내 — 처음 들어온 화면에서 한 번만 뜨는 짧은 쪽지. 순서가 없고(레벨이 열어 주는 순서가 사람마다
  * 다르다), 첫 플레이 튜토리얼을 모두 마친 뒤에만 뜬다(진행 중인 안내와 겹치지 않게).
+ *
+ * `archaeologyGuide`는 한 줄 쪽지가 아니라 네 쪽짜리 지층 탐사 안내(`ArchaeologyGuidePopup`)다. 예전 한 줄 쪽지의
+ * ID(`archaeology`)를 새 이름으로 바꿔, 그 쪽지를 이미 본 계정도 낮은 유적 안내를 한 번은 보게 한다(옛 ID는 정규화가 걷는다).
  */
 export const CONTENT_INTRO_IDS = [
-  "stageMap", "party", "shop", "cakeOperation", "bounty", "interaction", "duel", "friends", "raid", "expedition", "archaeology", "premium",
+  "stageMap", "party", "shop", "cakeOperation", "bounty", "interaction", "duel", "friends", "raid", "expedition", "archaeologyGuide", "premium",
 ] as const;
 
 export type ContentIntroId = (typeof CONTENT_INTRO_IDS)[number];

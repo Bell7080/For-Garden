@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyCombatStatusEffect, createSkirmish, currentAttackSpeed, effectiveLocksBroken, fireUltimate, ingredientHastePoints, moveSpeed, stepSkirmish, type Arena } from "../../src/core/skirmish";
 import { getRelic } from "../../src/data/relics";
-import { ENEMY_BIRTH_TIERS } from "../../src/core/rarityScaling";
 
 /** 감금조(마가사·노아·라자·카르노) — 지하 감금동에서 풀려난 공멸의 넷째 무리. */
 const ARENA: Arena = { left: 0, right: 1_000, top: 0, bottom: 1_200 };
@@ -18,12 +17,11 @@ function run(state: ReturnType<typeof setup>["state"], seconds: number) {
 }
 
 describe("감금조 정체성", () => {
-  it("넷 모두 공멸이고 태생 층은 감금 3인방 ×1.85 · 카르노 ×3이다", () => {
+  it("넷 모두 공멸이고 적 전용이다", () => {
     for (const id of ["magasa", "noa", "raja", "carno"]) {
       expect(getRelic(id).squad, id).toBe("annihilation");
       expect(getRelic(id).enemyOnly, id).toBe(true);
     }
-    expect(ENEMY_BIRTH_TIERS.carno.statFactor).toBe(3);
     expect(getRelic("magasa").element).toBe("fire");
     expect(getRelic("noa").role).toBe("assassin");
     expect(getRelic("raja").role).toBe("tank");

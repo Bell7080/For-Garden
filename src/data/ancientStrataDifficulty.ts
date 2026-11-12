@@ -2,7 +2,7 @@
 export const ANCIENT_STRATA_MODEL_VERSION = 5;
 export const ANCIENT_STRATA_MAX_FLOOR = 200;
 export const ANCIENT_STRATA_TIME_LIMIT_SECONDS = 90;
-export const ANCIENT_STRATA_ENEMY_LEVEL = 20;
+export const ANCIENT_STRATA_ENEMY_LEVEL = 13;
 /** 심층 추가 HP만 비례 피해 기준에서 제외한다. */
 export const ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR = 120;
 

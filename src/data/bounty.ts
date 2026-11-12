@@ -66,43 +66,43 @@ export const BOUNTY = {
  *
  * 골드는 예전 다섯 자리(1,200 · 3,300 · 6,400 · 14,400 · 26,400)의 레벨-골드 곡선 위에 새 레벨을 얹어
  * 다시 읽었다. 스테미나는 모든 등급이 10이라 위 등급일수록 1당 골드가 크게 좋아진다(120 → 2,800).
- * 맨 위는 예전 5급과 같은 LV.60에 더 무거운 셋이 서는 자리라 한 판 몫을 6%만 얹었다(26,400 → 28,000 —
+ * 맨 위는 예전 5급과 같은 세기(지금 사다리의 LV.48)에 더 무거운 셋이 서는 자리라 한 판 몫을 6%만 얹었다(26,400 → 28,000 —
  * 반복 보상 승인선 20% 안).
  */
 export const BOUNTY_TIERS: readonly BountyTierDef[] = [
   // 1급은 스토리 1장을 막 민 파티(레벨 15 언저리)가 들어서는 자리다.
   { id: "bounty-1", order: 1, name: "현상수배 1급", rewardGold: 1_200, rounds: [
-    { relicId: "neuri", level: 5 }, { relicId: "pulsi", level: 5 }, { relicId: "amo", level: 5 },
+    { relicId: "neuri", level: 3 }, { relicId: "pulsi", level: 3 }, { relicId: "amo", level: 3 },
   ] },
   { id: "bounty-6", order: 2, name: "현상수배 2급", rewardGold: 2_200, rounds: [
-    { relicId: "ripa", level: 11 }, { relicId: "toby", level: 11 }, { relicId: "amo", level: 11 },
+    { relicId: "ripa", level: 7 }, { relicId: "toby", level: 7 }, { relicId: "amo", level: 7 },
   ] },
   { id: "bounty-2", order: 3, name: "현상수배 3급", rewardGold: 3_200, rounds: [
-    { relicId: "mir", level: 17 }, { relicId: "pulsi", level: 17 }, { relicId: "koma", level: 17 },
+    { relicId: "mir", level: 11 }, { relicId: "pulsi", level: 11 }, { relicId: "koma", level: 11 },
   ] },
   // 4급부터 돌파 없는 상한(20)을 넘는다.
   { id: "bounty-7", order: 4, name: "현상수배 4급", rewardGold: 4_400, rounds: [
-    { relicId: "toby", level: 23 }, { relicId: "amo", level: 23 }, { relicId: "koma", level: 23 },
+    { relicId: "toby", level: 17 }, { relicId: "amo", level: 17 }, { relicId: "koma", level: 17 },
   ] },
   { id: "bounty-3", order: 5, name: "현상수배 5급", rewardGold: 5_700, rounds: [
-    { relicId: "neuri", level: 29 }, { relicId: "atra", level: 29 }, { relicId: "koma", level: 29 },
+    { relicId: "neuri", level: 21 }, { relicId: "atra", level: 21 }, { relicId: "koma", level: 21 },
   ] },
   // 6급부터 이카닉시아가 마지막 라운드의 벽으로 선다.
   { id: "bounty-8", order: 6, name: "현상수배 6급", rewardGold: 7_800, rounds: [
-    { relicId: "pulsi", level: 35 }, { relicId: "amo", level: 35 }, { relicId: "ikanixia", level: 35 },
+    { relicId: "pulsi", level: 27 }, { relicId: "amo", level: 27 }, { relicId: "ikanixia", level: 27 },
   ] },
   { id: "bounty-4", order: 7, name: "현상수배 7급", rewardGold: 11_500, rounds: [
-    { relicId: "pulsi", level: 41 }, { relicId: "atra", level: 41 }, { relicId: "ikanixia", level: 41 },
+    { relicId: "pulsi", level: 34 }, { relicId: "atra", level: 34 }, { relicId: "ikanixia", level: 34 },
   ] },
   { id: "bounty-9", order: 8, name: "현상수배 8급", rewardGold: 15_000, rounds: [
-    { relicId: "ripa", level: 47 }, { relicId: "atra", level: 47 }, { relicId: "ikanixia", level: 47 },
+    { relicId: "ripa", level: 37 }, { relicId: "atra", level: 37 }, { relicId: "ikanixia", level: 37 },
   ] },
   { id: "bounty-10", order: 9, name: "현상수배 9급", rewardGold: 20_000, rounds: [
-    { relicId: "ripa", level: 53 }, { relicId: "koma", level: 53 }, { relicId: "ikanixia", level: 53 },
+    { relicId: "ripa", level: 44 }, { relicId: "koma", level: 44 }, { relicId: "ikanixia", level: 44 },
   ] },
   // 10급은 돌파로 상한을 연 만렙 셋, 그것도 가장 무거운 셋의 자리다.
   { id: "bounty-5", order: 10, name: "현상수배 10급", rewardGold: 28_000, rounds: [
-    { relicId: "amo", level: 60 }, { relicId: "koma", level: 60 }, { relicId: "ikanixia", level: 60 },
+    { relicId: "amo", level: 48 }, { relicId: "koma", level: 48 }, { relicId: "ikanixia", level: 48 },
   ] },
 ];
 

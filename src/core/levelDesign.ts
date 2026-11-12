@@ -1,4 +1,5 @@
-import { BREAKTHROUGH_STEPS, GROWTH_STAT_KEYS, RELIC_BASE_LEVEL_CAP, breakthroughGrowthPercent } from "./relicProgression";
+import { GROWTH_STAT_KEYS } from "./relicProgression";
+import { combatPower, POWER_COMPARISON_SLOTS } from "./combatPower";
 import type { Stats } from "./types";
 
 /**
@@ -151,6 +152,11 @@ export interface EncounterRoleSpec {
    * **비율 피해만** 줄이므로 무엇으로 때리면 되는지는 그대로 읽힌다.
    */
   percentHpResistance?: number;
+  /**
+   * **전투력 표시에 얹는 자리 몫** — 능력치가 말하지 못하는 그 자리의 무게(강인함·치유 감소)를 전투력 숫자에 싣는다.
+   * 표시 전용이며 전투에는 들지 않는다(`encounterUnitPower`). 없으면 1이다.
+   */
+  powerWeight?: number;
 }
 
 /**
@@ -170,6 +176,11 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
   normal: {
     count: 3, bodyScale: 1,
     hpMultiplier: 1, attackMultiplier: 1,
+    /*
+     * 셋이 함께 서는 일반 무리도 표시를 한 뼘 무겁게 둔다(응태 요청, 2026-11-12 — "내 전투력이 더 센데 졌다"가 없어야
+     * 한다). 대표 두 조합이 50% 넘게 이기는 아군 전투력은 일반 셋의 표시 전투력의 최대 1.15배였다(7-3).
+     */
+    powerWeight: 1.2,
     ttkSeconds: [10, 16], remainingHp: [0.72, 0.95],
   },
   swarm: {
@@ -219,6 +230,12 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      */
     tenacity: { basePercent: 20, perControlPercent: 10, maxPercent: 80, controlIgnoreAtOrBelowSeconds: 0.05 },
     healingReduction: { basePercent: 5, maxPercent: 40, rampSeconds: 60 },
+    /*
+     * **혼자 선 정예는 전투력이 더 무겁게 읽힌다**(응태 요청, 2026-11-12 — "왜 내 전투력이 더 센데 져"가 없어야 한다).
+     * 강인함과 치유 감소는 능력치에 없어 몫만 덜어 셀 때 정예가 실제보다 가볍게 섰다. 대표 두 조합이 정예 하나를 50% 넘게
+     * 이기는 아군 전투력을 재 보니 표시 전투력의 0.55~1.25배였다. 1.4로는 정예 둘이 선 4-10이 아직 1.09배라 1.6으로 둔다.
+     */
+    powerWeight: 1.6,
   },
   boss: {
     /*
@@ -273,13 +290,12 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
 /**
  * **적 전용 레벨당 성장률(%).**
  *
- * 플레이어는 등급이 성장률을 가르지만(R 2.2 · SR 2.4 · SSR 2.6) **적에게 희귀도는 가챠
- * 개념이라 성장률을 가를 이유가 없다.** 한 값으로 두면 같은 `LV.n`이 어느 콘텐츠에서나 같은
- * 세기이고, 플레이어 곡선의 R(2.2)과 같은 자리에 두었다. 아군이 SR 2.4·SSR 2.6이라 같은 레벨이면 아군이 조금 앞서고
- * (LV20 +2.7%), 그 덕에 레벨이 모자란 신규 파티가 1장에서 막히지 않는다. **적 레벨과 내 레벨을 나란히 읽을 수
- * 있다** — "내가 18인데 저건 21이네"가 그대로 뜻이 된다.
+ * **적은 적이다**(응태 결정, 2026-11-12). 적의 세기는 레벨 하나가 말한다 — 태생 층으로 표시 레벨을 낮추거나
+ * 돌파 몫(+10%p)을 숨겨 얹지 않고, 레벨에 상한도 두지 않는다. 그 대신 적은 레벨마다 플레이어(R 2.2 · SR 2.4 · SSR 2.6)보다
+ * 가파르게 자란다(3.6%) — 스토리 마지막 보스 카르가 LV.60 언저리에서 예전 「기준 98」의 세기를 내고, 모든 적이 같은 선 위에
+ * 선다. 2.2%이던 때의 레벨 `L`(돌파 몫 포함)은 `1 + 예전 증가분 / 0.036`으로 옮겨 세기를 지켰다.
  */
-export const ENEMY_LEVEL_GROWTH_PERCENT = 2.2;
+export const ENEMY_LEVEL_GROWTH_PERCENT = 3.6;
 
 /** 레벨 1을 기본치로 두고 레벨당 정해진 비율로 자란 배수다. 플레이어와 같은 선형 누적이다. */
 export function enemyLevelMultiplier(level: number): number {
@@ -288,26 +304,9 @@ export function enemyLevelMultiplier(level: number): number {
 }
 
 /**
- * 태생 층이 더 높은 적이 **테러조 기준 레벨과 같은 세기가 되는 레벨.** 층이 올린 오각형 배수
- * (`statFactor`)만큼 레벨 배수를 덜어 낸다. 사다리(`STORY_RECOMMENDED_LEVELS`)는 기준 개체
- * 하나의 눈금이고, 층이 높은 개체는 같은 자리에서 더 낮은 레벨로 선다.
- */
-export function equivalentEnemyLevel(referenceLevel: number, statFactor: number): number {
-  const target = enemyLevelMultiplier(referenceLevel) / statFactor;
-  return Math.max(1, Math.round((target - 1) * 100 / ENEMY_LEVEL_GROWTH_PERCENT + 1));
-}
-
-/** `equivalentEnemyLevel`의 거꾸로 — 그 개체의 레벨을 **기준(테러조) 눈금**으로 되돌린다. 사다리 단조 검수가 쓴다. */
-export function referenceEnemyLevel(level: number, statFactor: number): number {
-  return (enemyLevelMultiplier(level) * statFactor - 1) * 100 / ENEMY_LEVEL_GROWTH_PERCENT + 1;
-}
-
-/**
  * 적 하나의 전투 능력치 — **레벨로 자라고 유형으로 몫을 받는다.**
  *
- * 한계 돌파 보너스(단계마다 오각형 +10%)도 플레이어와 같은 덧셈으로 받는다(응태 결정, 2026-11-11).
- * 단계는 따로 넘기지 않으면 그 레벨의 사다리상 돌파 단계(`shownBreakthroughForLevel`)이고, 스토리처럼
- * 개체마다 돌파를 적어 둔 자리는 그 값을 넘긴다.
+ * 돌파 등급은 그 레벨이 여는 스킬 칸만 정하고 능력치를 얹지 않는다(「적은 적이다」 — 세기는 레벨 하나가 말한다).
  *
  * 성장이 올리는 것은 플레이어와 같은 오각형 다섯뿐이고(`GROWTH_STAT_KEYS`), 공속·이속·치명타
  * 같은 나머지는 그 개체의 정의가 그대로 갖는다. 유형 배수도 **체력과 공격 두 축에만** 걸어
@@ -318,11 +317,9 @@ export function applyEncounterScaling(
   level: number,
   role: EncounterRole,
   countOnField: number = ENCOUNTER_ROLE[role].count,
-  birthFactor: number = 1,
-  breakthrough: number = shownBreakthroughForLevel(level),
 ): Stats {
   const spec = ENCOUNTER_ROLE[role];
-  const growth = (enemyLevelMultiplier(level) + breakthroughGrowthPercent(breakthrough) / 100) * birthFactor;
+  const growth = enemyLevelMultiplier(level);
   const result = { ...base };
   for (const key of GROWTH_STAT_KEYS) result[key] = Math.round(base[key] * growth);
   result.hp = Math.round(result.hp * encounterHpShare(role, countOnField));
@@ -343,28 +340,56 @@ export function encounterHpShare(role: EncounterRole, countOnField: number): num
 }
 
 /**
- * 그 레벨의 **사다리상 돌파 단계** — 적이 그 레벨에 설 때 함께 지니는 돌파.
+ * **자리를 아는 전투력** — 적 한 무리의 개체별 표시 전투력(응태 요청, 2026-11-12: 정예가 전투력보다 훨씬 세다).
  *
- * 렐릭 레벨 상한은 이제 돌파가 아니라 연구원 레벨이 연다(응태 결정, 2026-11-11). 그래도 적 사다리는
- * 예전 경계(20 · 30 · 40 · 50 · 60)를 그대로 써서 레벨 21~30은 1단계, 31~40은 2단계 … 51~60은
- * 4단계를 지닌다 — 돌파 단계가 요구 레벨(20·30·40·50)에서 열리므로 그 다음 10레벨 구간이 곧
- * 그 단계를 뚫은 사람이 서는 자리다. 60을 넘는 적 레벨은 막힌 문이라 던진다.
+ * 정예의 체력 몫(×3)은 「셋이 나눠 내던 몫을 혼자 대신한다」는 뜻인데, 전투력 식은 체력을 선형으로 낮게 세어 혼자 선
+ * 정예가 실제 세기의 절반쯤으로 읽혔다. 그래서 정예만 **몫을 덜어 낸 한 몸의 전투력 × 그 몸이 대신하는 머릿수**로 센다 —
+ * 정예 하나는 셋, 정예 둘은 각자 하나 반이다 — 거기에 자리 몫(`powerWeight`)을 얹는다. 다른 자리는 능력치 그대로에 제 자리 몫만 곱한다. 표시 전용이며 전투에는 쓰지 않는다.
  */
-export function requiredBreakthroughForLevel(level: number): number {
-  if (level <= RELIC_BASE_LEVEL_CAP) return 0;
-  const step = BREAKTHROUGH_STEPS.findIndex(({ requiredLevel }) => level <= requiredLevel + 10);
-  if (step < 0) throw new RangeError("적 사다리의 돌파 경계를 넘는 레벨입니다.");
-  return step + 1;
+export function encounterUnitPowers(units: readonly { stats: Stats; encounterRole?: EncounterRole }[]): number[] {
+  const elites = encounterEliteCount(units);
+  return units.map(({ stats, encounterRole }) => encounterUnitPower(stats, encounterRole, elites));
+}
+
+/** 한 무리에 선 정예의 수 — 개체 하나만 그릴 때도 몫을 같은 값으로 나누도록 따로 둔다. */
+export function encounterEliteCount(units: readonly { encounterRole?: EncounterRole }[]): number {
+  return units.filter((unit) => unit.encounterRole === "elite").length;
+}
+
+/** 개체 하나의 자리를 아는 전투력(`encounterUnitPowers`의 한 칸). `elites`는 그 무리에 선 정예 수다. */
+export function encounterUnitPower(stats: Stats, encounterRole: EncounterRole | undefined, elites: number): number {
+  if (encounterRole !== "elite") return Math.round(combatPower(stats) * ((encounterRole && ENCOUNTER_ROLE[encounterRole].powerWeight) ?? 1));
+  const spec = ENCOUNTER_ROLE.elite;
+  const share = encounterHpShare("elite", elites);
+  const attack = spec.attackMultiplier;
+  return Math.round(combatPower({ ...stats, hp: stats.hp / share, atk: stats.atk / attack, ap: stats.ap / attack }) * share * (spec.powerWeight ?? 1));
+}
+
+/** `encounterUnitPowers`의 합 — 셋보다 많이 서면 `groupCombatPower`처럼 평균 × 셋이다. */
+export function encounterGroupPower(units: readonly { stats: Stats; encounterRole?: EncounterRole }[], slots: number = POWER_COMPARISON_SLOTS): number {
+  const powers = encounterUnitPowers(units);
+  if (powers.length === 0) return 0;
+  const total = powers.reduce((sum, power) => sum + power, 0);
+  return powers.length <= slots ? total : Math.round(total * slots / powers.length);
 }
 
 /**
- * 화면에 세울 돌파 등급 — 돌파 사다리를 넘는 레벨(수호전 웨이브는 200까지 오른다)은 마지막 단계로 본다.
- * `requiredBreakthroughForLevel`은 콘텐츠 사다리의 막힌 문을 잡으려 던지지만, 이미 정해진 적의 레벨을
- * 그리는 자리에서 던지면 전투 프레임이 통째로 멈춘다(오류 보고: 수호전 16웨이브 이후 `onHordeWave`).
+ * 적의 돌파 단계가 열리는 레벨 — 1 · 2 · 3 · 4단계가 이 레벨부터 선다.
+ *
+ * 돌파 등급은 적에게 **스킬 칸**만 연다(능력치는 레벨 하나가 낸다). 성장을 3.6%로 올리며 레벨이 눌렸으므로, 예전에 각
+ * 단계가 열리던 레벨(21 · 31 · 41 · 51, 성장 2.2%)을 **같은 세기의 레벨**로 옮겨 적었다(1장은 돌파 없이 끝나도록 한 칸 올림) — 그대로 두면 같은 적이 스킬 칸
+ * 하나를 잃는다. 적에게는 레벨 상한이 없고 마지막 단계 뒤로는 4단계로 선다.
  */
+export const ENEMY_BREAKTHROUGH_LEVELS: readonly number[] = [15, 21, 27, 33];
+
+/** 그 레벨의 적이 지니는 돌파 단계(`ENEMY_BREAKTHROUGH_LEVELS`). */
+export function requiredBreakthroughForLevel(level: number): number {
+  return ENEMY_BREAKTHROUGH_LEVELS.filter((threshold) => level >= threshold).length;
+}
+
+/** 화면에 세울 적의 돌파 등급 — `requiredBreakthroughForLevel`과 같은 값이다(어느 레벨에서도 던지지 않는다). */
 export function shownBreakthroughForLevel(level: number): number {
-  const top = (BREAKTHROUGH_STEPS[BREAKTHROUGH_STEPS.length - 1]?.requiredLevel ?? RELIC_BASE_LEVEL_CAP) + 10;
-  return level > top ? BREAKTHROUGH_STEPS.length : requiredBreakthroughForLevel(level);
+  return requiredBreakthroughForLevel(level);
 }
 
 /** 실측값이 그 유형의 목표 띠 안에 드는지. 검수가 같은 판정을 쓰도록 순수 함수로 둔다. */

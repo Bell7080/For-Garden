@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  ENCOUNTER_ROLE, ENEMY_LEVEL_GROWTH_PERCENT, applyEncounterScaling,
+  ENCOUNTER_ROLE, ENEMY_BREAKTHROUGH_LEVELS, ENEMY_LEVEL_GROWTH_PERCENT, applyEncounterScaling,
   enemyLevelMultiplier, isEncounterOnTarget, requiredBreakthroughForLevel, type EncounterRole,
   shownBreakthroughForLevel,
 } from "../../src/core/levelDesign";
-import { BREAKTHROUGH_STEPS, RELIC_BASE_LEVEL_CAP, applyLevelGrowth } from "../../src/core/relicProgression";
+import { BREAKTHROUGH_STEPS, applyLevelGrowth } from "../../src/core/relicProgression";
 import { summarizeStageDifficulty } from "../../src/core/stageDifficulty";
 import { battleArena, type BattleArenaMode } from "../../src/core/battleArena";
 import { CHAPTERS, getStageEnemies, stageEnemyRole } from "../../src/data/stages";
@@ -56,23 +56,25 @@ describe("레벨 디자인 키트", () => {
     }
   });
 
-  it("의 적 곡선은 등급을 가르지 않고 플레이어와 나란히 읽힌다", () => {
-    // 적에게 희귀도는 가챠 개념이라 성장률을 가를 이유가 없고, 플레이어 곡선과 같은 자리에
-    // 두었으므로 "내가 18인데 저건 21이네"가 그대로 뜻이 된다.
+  it("의 적 곡선은 등급을 가르지 않고 플레이어보다 가파르다", () => {
+    // 적에게 희귀도는 가챠 개념이라 성장률을 가를 이유가 없다. 적은 돌파 몫 없이 레벨 하나로 세기를 내므로
+    // (「적은 적이다」) 레벨당 성장이 플레이어 SSR보다 가파르다 — 마지막 보스가 LV.60 언저리에서 제 세기를 낸다.
     expect(enemyLevelMultiplier(1)).toBe(1);
     expect(enemyLevelMultiplier(21)).toBeCloseTo(1 + 20 * ENEMY_LEVEL_GROWTH_PERCENT / 100, 10);
     const player = applyLevelGrowth(getRelic("ella").stats, 21, "SSR", 0).hp / getRelic("ella").stats.hp;
-    expect(Math.abs(player - enemyLevelMultiplier(21))).toBeLessThan(0.1);
+    expect(enemyLevelMultiplier(21)).toBeGreaterThan(player);
   });
 
-  it("은 한계 돌파 사다리 위에 놓인다", () => {
-    // 적 사다리는 20·30·40·50·60 경계에서 돌파 단계를 지닌다 — 21~30이 1단계, 51~60이 4단계.
-    expect(requiredBreakthroughForLevel(RELIC_BASE_LEVEL_CAP)).toBe(0);
-    expect(requiredBreakthroughForLevel(RELIC_BASE_LEVEL_CAP + 1)).toBe(1);
-    expect(requiredBreakthroughForLevel(30)).toBe(1);
-    expect(requiredBreakthroughForLevel(31)).toBe(2);
-    expect(requiredBreakthroughForLevel(BREAKTHROUGH_STEPS.at(-1)!.requiredLevel + 10)).toBe(BREAKTHROUGH_STEPS.length);
-    expect(() => requiredBreakthroughForLevel(BREAKTHROUGH_STEPS.at(-1)!.requiredLevel + 11)).toThrow(RangeError);
+  it("의 돌파 단계는 적 사다리 위에 놓인다", () => {
+    // 적의 돌파는 스킬 칸만 연다 — 예전 21·31·41·51을 같은 세기의 레벨(15·21·27·33, 1장은 돌파 없이 끝난다)로 옮긴 경계다.
+    expect(ENEMY_BREAKTHROUGH_LEVELS).toHaveLength(BREAKTHROUGH_STEPS.length);
+    expect(requiredBreakthroughForLevel(14)).toBe(0);
+    expect(requiredBreakthroughForLevel(15)).toBe(1);
+    expect(requiredBreakthroughForLevel(21)).toBe(2);
+    expect(requiredBreakthroughForLevel(32)).toBe(3);
+    expect(requiredBreakthroughForLevel(33)).toBe(BREAKTHROUGH_STEPS.length);
+    // 적 레벨에는 상한이 없다 — 마지막 경계를 넘으면 마지막 단계로 선다.
+    expect(requiredBreakthroughForLevel(150)).toBe(BREAKTHROUGH_STEPS.length);
   });
 
   it("의 목표 띠는 잡졸에서 보스로 갈수록 길고 아프다", () => {
@@ -128,7 +130,8 @@ function battleStage(id: string): BattleStageDef {
 
 /** [이름, 권장 파티 레벨, 적, 그 조우의 역할, 전장, 실측 전투 시간(초), 실측 잔여 체력] */
 const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole, BattleArenaMode, number, number][] = [
-  ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", "stage", 14.5, 0.84],
+  // 「적은 적이다」(2026-11-12): 적 레벨 사다리 재정렬 · 성장 3.6% — 1-1 14.5초·0.84 → 12.1초·0.81.
+  ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", "stage", 12.1, 0.81],
   // 적 비공격 궁극기 AI 복구 후 재측정. 능력치/목표 띠는 조정하지 않았다.
   // v0.422.4: 참조 파티의 엘라 발경에 방어력 40%가 실려 23.9 → 19.9초로 줄었다(잔여 체력은 그대로).
   ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", "stage", 19.9, 0.84],
@@ -139,7 +142,8 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   ["스토리 1-10 정예", 15, () => getStageEnemies(battleStage("1-10")), "elite", "stage", 13.7, 0.58],
   // 3-9는 회수조(아트라·펄시·네우리)로 바뀌었다 — 참조 파티가 거의 다치지 않아 잔여 체력이 띠 위로 올라갔다.
   // v0.391.0: 3장 배율 ×1.2로 20.8초·0.97 → 25.2초·0.85. v0.391.9: ×1.1로 22.6초·0.91.
-  ["스토리 3-9", 44, () => getStageEnemies(battleStage("3-9")), "normal", "stage", 22.6, 0.91],
+  // 「적은 적이다」(2026-11-12): 3-9 22.6초·0.91 → 17.3초·0.96.
+  ["스토리 3-9", 44, () => getStageEnemies(battleStage("3-9")), "normal", "stage", 17.3, 0.96],
   // v0.441.0 직군 존재감(탱커 30 > 전사 20 > 암살자 10)·몰림 벌점 240 → 120: 5.6초·0.83 → 4.9초·0.95.
   ["현상수배 1단계", 5, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "normal", "bounty", 4.9, 0.95],
   // v0.362.0: 10단계로 늘리며 최상단(LV60) 첫 라운드가 토비 → 아모로 바뀌어 8.2 → 18.5초로 길어졌다.

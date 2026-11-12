@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { referenceEnemyLevel, requiredBreakthroughForLevel } from "../../src/core/levelDesign";
-import { ENEMY_BIRTH_TIERS } from "../../src/core/rarityScaling";
+import { requiredBreakthroughForLevel } from "../../src/core/levelDesign";
 import type { BattleStageDef } from "../../src/core/types";
 
 import { getRelic } from "../../src/data/relics";
@@ -88,19 +87,18 @@ describe("stage enemy design", () => {
      * (`ENCOUNTER_ROLE.elite`)의 체력·공격 배수가 낸다.
      */
     expect(ladder).toEqual([
-      // 1-1은 오프닝에서 곧장 들어오는 첫 전투라 레벨 1 기본 편성이 넘되 1-2(8)와 턱이 크지 않도록 5다.
+      // 「적은 적이다」(2026-11-12): 적은 레벨마다 3.6%씩 자라 2.2% 시절의 사다리(5 … 20)를 같은 세기의 레벨로 옮겼다.
+      // 1-6~1-9는 반올림으로 같은 수가 겹치지 않게 한 칸씩 띄웠다(연속 관문마다 관찰 가능한 차이).
+      { 아모: [3, 0], 토비: [3, 0], 리파: [3, 0] },
       { 아모: [5, 0], 토비: [5, 0], 리파: [5, 0] },
+      { 아모: [7, 0], 토비: [7, 0], 리파: [7, 0] },
       { 아모: [8, 0], 토비: [8, 0], 리파: [8, 0] },
-      // 1-3부터는 실제 전장 크기로 잰 검수에 맞춰 한 뼘씩 올렸다(v0.172.6) — 키우지 않은
-      // 파티가 1장 중반부터 조이고 후반에 막히는 선이다.
+      { 토비: [11, 0] },
       { 아모: [11, 0], 토비: [11, 0], 리파: [11, 0] },
+      { 아모: [12, 0], 토비: [12, 0], 리파: [12, 0] },
       { 아모: [13, 0], 토비: [13, 0], 리파: [13, 0] },
-      { 토비: [17, 0] },
-      { 아모: [17, 0], 토비: [17, 0], 리파: [17, 0] },
-      { 아모: [18, 0], 토비: [18, 0], 리파: [18, 0] },
-      { 아모: [19, 0], 토비: [19, 0], 리파: [19, 0] },
-      { 아모: [20, 0], 토비: [20, 0], 리파: [20, 0] },
-      { 코마: [20, 0] },
+      { 아모: [14, 0], 토비: [14, 0], 리파: [14, 0] },
+      { 코마: [14, 0] },
     ]);
     /*
      * **레벨은 관문을 따라 내려가지 않는다.** 1-10까지 마지막 관문이 직전보다 쉬운 구간이
@@ -228,9 +226,9 @@ describe("stage enemy design", () => {
     for (const stage of battles) {
       for (const enemy of stage.enemies) expect(Number.isInteger(enemy.level), stage.id).toBe(true);
       if (stage.kind === "battle" && stage.elite === true) continue;
-      // 태생 층이 높은 개체(회수조)는 같은 세기를 더 낮은 레벨로 서므로 기준(테러조) 눈금으로 되돌려 비교한다.
-      const level = Math.max(...stage.enemies.map((enemy) => referenceEnemyLevel(enemy.level, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1)));
-      expect(level + 0.6, stage.id).toBeGreaterThanOrEqual(previous);
+      // 적은 적이다 — 태생 층 없이 레벨 하나가 세기라 그대로 비교한다.
+      const level = Math.max(...stage.enemies.map((enemy) => enemy.level));
+      expect(level, stage.id).toBeGreaterThanOrEqual(previous);
       previous = Math.max(previous, level);
     }
   });
@@ -309,8 +307,8 @@ describe("stage enemy design", () => {
     expect(sub.rewards.repeatClearCheesecake).toBe(0);
     // 모든 서브(이야기·전투, 어느 장이든)의 초회 젬은 50 하나다.
     for (const gems of Object.values(SUB_STORY_GEM_REWARDS)) expect(gems).toBe(50);
-    // 아모·리파 정예 둘이 1-8(LV.19)보다 한 칸 낮은 LV.18로 선다.
-    expect(sub.enemies.map(({ relicId, level }) => [relicId, level])).toEqual([["amo", 18], ["ripa", 18]]);
+    // 아모·리파 정예 둘이 1-8(LV.13)보다 한 칸 낮은 LV.12로 선다.
+    expect(sub.enemies.map(({ relicId, level }) => [relicId, level])).toEqual([["amo", 12], ["ripa", 12]]);
     expect(sub.elite).toBe(true);
     // 선행 목록에 들지 않아 본편이 막히지 않고, 「다음 단계」는 본편의 다음이다.
     expect(STAGES.some((stage) => stage.prerequisiteStageIds.includes(sub.id))).toBe(false);

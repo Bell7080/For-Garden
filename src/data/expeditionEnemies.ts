@@ -42,11 +42,15 @@ export function expeditionNodeRole(type: ExpeditionNodeType, floor: number): Enc
 
 /** 원정의 권장 레벨 사다리 — 층이 곧 그 자리다. 유형은 레벨을 건드리지 않는다. */
 export function expeditionRecommendedLevel(floor: number): number {
-  return Math.max(1, Math.round(floor * EXPEDITION_LEVEL_PER_FLOOR));
+  const index = Math.max(1, Math.round(floor)) - 1;
+  return EXPEDITION_FLOOR_LEVELS[Math.min(index, EXPEDITION_FLOOR_LEVELS.length - 1)];
 }
 
-/** 한 층을 오를 때마다 권장 레벨이 얼마나 오르는가. 스무 층이 곧 한 판이라 두 배로 잡는다. */
-const EXPEDITION_LEVEL_PER_FLOOR = 2;
+/**
+ * 층마다의 적 레벨(1~20층). 적이 레벨마다 3.6%씩 자라게 되며(「적은 적이다」, 2026-11-12) 예전 사다리(층 × 2, 2.2% + 돌파 몫)의
+ * 세기를 그대로 옮긴 값이다 — 11층에서 한 번 크게 뛰는 것은 예전 21레벨의 돌파 몫이 레벨에 녹은 자리다.
+ */
+const EXPEDITION_FLOOR_LEVELS: readonly number[] = [2, 3, 4, 5, 6, 8, 9, 10, 11, 13, 17, 18, 19, 20, 22, 26, 27, 28, 29, 30];
 
 /** 무리 노드에 서는 수. 유형을 고르는 자리와 실제로 세우는 자리가 같은 값을 읽는다. */
 const ENCOUNTER_HORDE_COUNT = 5;
@@ -59,7 +63,7 @@ const ENCOUNTER_HORDE_COUNT = 5;
  * 무거운지는 유형 배수(`ENCOUNTER_ROLE`)가 말한다.
  */
 export function expeditionEnemyLevel(type: ExpeditionNodeType, floor: number): number {
-  if (type === "boss" && floor === 20) return 20;
+  if (type === "boss" && floor === 20) return 13;
   return expeditionRecommendedLevel(floor);
 }
 

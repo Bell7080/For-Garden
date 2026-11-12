@@ -141,17 +141,17 @@ function openRelicAskPopup(scene: Phaser.Scene, popups: PopupLayer, spec: AskSpe
       scene.tweens.add({ targets: bubble, scale: 1, alpha: 1, duration: 320, delay: 160, ease: "Back.Out" });
     }
 
-    // `LV.30 → LV.1` — 지금 레벨은 흰색, 도착하는 자리는 창마다 제 색이다.
+    // `LV 30 → LV 1` — 프로필 레벨 칩처럼 `LV`는 작고 흐리게, 수는 크게. 지금 레벨은 흰색, 도착하는 자리는 창마다 제 색이다.
     const level = scene.add.container(B.x, S.levelY);
-    const from = scene.add.text(0, 0, `LV.${spec.from}`, textStyle({ role: "display", size: S.levelSize, color: COLOR.ink })).setOrigin(0, 0.5).setStroke("#05070a", 8);
-    const arrow = scene.add.text(0, 0, "→", textStyle({ role: "display", size: S.levelSize * 0.8, color: COLOR.ink })).setOrigin(0, 0.5).setStroke("#05070a", 6);
-    const to = scene.add.text(0, 0, `LV.${spec.to}`, textStyle({ role: "display", size: S.levelTargetSize, color: spec.toColor })).setOrigin(0, 0.5).setStroke("#05070a", 9);
-    const gap = 18;
+    const from = levelMark(scene, spec.from, S.levelSize, COLOR.ink);
+    const arrow = scene.add.text(0, 0, "→", textStyle({ role: "display", size: S.levelSize * 0.7, color: COLOR.inkDim })).setOrigin(0, 0.5).setStroke("#05070a", 6);
+    const to = levelMark(scene, spec.to, S.levelTargetSize, spec.toColor);
+    const gap = 22;
     const span = from.width + arrow.width + to.width + gap * 2;
     let lx = -span / 2;
-    from.setX(lx); lx += from.width + gap;
+    from.setX(lx + from.width / 2); lx += from.width + gap;
     arrow.setX(lx); lx += arrow.width + gap;
-    to.setX(lx);
+    to.setX(lx + to.width / 2);
     level.add([from, arrow, to]);
     // 세 자리 레벨이면 한 줄이 판 오른쪽 끝에 닿는다 — 넘칠 때만 통째로 줄인다(왼쪽 SD 쪽으로도 넘지 않게).
     const room = (L.width / 2 - 36 - B.x) * 2;
@@ -195,6 +195,25 @@ function openRelicAskPopup(scene: Phaser.Scene, popups: PopupLayer, spec: AskSpe
       onClick: () => { audioManager?.playUi(spec.confirm.destructive ? "ui.danger" : "ui.confirm"); close(); onConfirm(); },
     }));
   });
+}
+
+/**
+ * `LV` 꼬리표 + 큰 수 한 덩어리 — 프로필 카드의 레벨 칩과 같은 문법이다. 둘의 밑선을 맞춰 꼬리표가 수 아래쪽에 붙는다.
+ * 돌려주는 컨테이너의 `width`는 덩어리 전체 폭이고, 자식은 가운데(0)를 기준으로 선다 — 부풀리는 연출이 제자리에서 커진다.
+ */
+function levelMark(scene: Phaser.Scene, value: number, size: number, color: string): Phaser.GameObjects.Container {
+  const tagSize = Math.round(size * RELIC_RESET_POPUP.stage.levelTagRatio);
+  const tag = scene.add.text(0, 0, "LV", textStyle({ role: "display", size: tagSize, color: COLOR.inkDim })).setOrigin(0, 1).setStroke("#05070a", 5);
+  const number = scene.add.text(0, 0, String(value), textStyle({ role: "display", size, color })).setOrigin(0, 1).setStroke("#05070a", Math.round(size / 9));
+  const tagGap = Math.round(size * 0.08);
+  const width = tag.width + tagGap + number.width;
+  // 글자 상자의 밑선이 아니라 획의 밑선이 맞도록 — 상자 아래 여백(내림)은 글자 크기에 비례한다.
+  const bottom = number.height / 2;
+  number.setPosition(-width / 2 + tag.width + tagGap, bottom);
+  tag.setPosition(-width / 2, bottom - (number.height - tag.height) * 0.2);
+  const mark = scene.add.container(0, 0, [tag, number]);
+  mark.setSize(width, size);
+  return mark;
 }
 
 /** 부들부들 — 짧게 좌우로 떨고 한 숨 쉰 뒤 다시 떤다. 처음 한 번은 움찔 뛰어오른다. */
@@ -248,8 +267,15 @@ function paintWallet(scene: Phaser.Scene, body: Phaser.GameObjects.Container, to
     body.add(scene.add.text(C.before, y, row.before.toLocaleString(), textStyle({ role: "display", size: W.valueSize, color: COLOR.ink })).setOrigin(1, 0.5));
     body.add(scene.add.text(C.arrow, y, "→", textStyle({ role: "display", size: W.valueSize, color: COLOR.inkDim })).setOrigin(0.5));
     body.add(scene.add.text(C.after, y, row.after.toLocaleString(), textStyle({ role: "display", size: W.valueSize, color: tone })).setOrigin(0, 0.5));
+    // 증감은 제 색으로 물든 알약 — 얼마가 나가고 들어오는지가 줄에서 가장 먼저 읽힌다.
     const delta = row.after - row.before;
-    body.add(scene.add.text(C.delta, y, `${delta >= 0 ? "+" : "−"}${Math.abs(delta).toLocaleString()}`, textStyle({ role: "emphasis", size: W.deltaSize, color: tone })).setOrigin(1, 0.5));
+    const deltaText = scene.add.text(0, 0, `${delta >= 0 ? "+" : "−"}${Math.abs(delta).toLocaleString()}`, textStyle({ role: "display", size: W.deltaSize, color: COLOR.ink })).setOrigin(0.5).setStroke("#05070a", 5);
+    const P = W.deltaPill;
+    const pillWidth = deltaText.width + P.padX * 2;
+    const pillX = C.delta - pillWidth / 2;
+    const pillColor = rising ? COLOR.accent : COLOR.danger;
+    body.add(drawLayer(scene, pillX, y, chipPoints(pillWidth, P.height, { bevel: { topLeft: P.height * 0.3, bottomRight: P.height * 0.3 } }), { fill: pillColor, alpha: 0.85, shadow: { x: 4, y: 6 } }));
+    body.add(deltaText.setPosition(pillX, y));
   });
 }
 
@@ -288,7 +314,7 @@ function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, 
   const cy = spots.stageTop + S.sd.ground - S.sd.height * 0.55;
   const rays = scene.add.graphics({ x: cx, y: cy });
   rays.setBlendMode(Phaser.BlendModes.ADD);
-  const reach = width * 1.2;
+  const reach = width * 1.1;
   const step = (Math.PI * 2) / D.rays;
   for (let i = 0; i < D.rays; i += 1) {
     const a = i * step;
@@ -298,7 +324,7 @@ function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, 
   rays.setMask(stageMask);
   body.add(rays);
   if (loops) {
-    const spin = scene.tweens.add({ targets: rays, angle: mood === "excited" ? 360 : -360, duration: mood === "excited" ? 24000 : 40000, repeat: -1 });
+    const spin = scene.tweens.add({ targets: rays, angle: mood === "excited" ? 360 : -360, duration: D.spinMs[mood], repeat: -1 });
     rays.once(Phaser.GameObjects.Events.DESTROY, () => spin.remove());
   }
 
@@ -307,7 +333,7 @@ function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, 
   halo.setBlendMode(Phaser.BlendModes.ADD);
   for (let i = 0; i < 6; i += 1) {
     const r = 70 + i * 34;
-    halo.fillStyle(tone.ray, 0.07);
+    halo.fillStyle(tone.ray, 0.04);
     halo.fillPoints([new Phaser.Math.Vector2(0, -r), new Phaser.Math.Vector2(r * 1.15, 0), new Phaser.Math.Vector2(0, r), new Phaser.Math.Vector2(-r * 1.15, 0)], true);
   }
   halo.setMask(stageMask);
@@ -328,9 +354,9 @@ function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, 
 
   // 무대 바닥선 — 재화 판 위로 얇은 빛 한 줄이 무대와 아래를 가른다.
   const floor = scene.add.graphics();
-  floor.fillGradientStyle(tone.ray, tone.ray, tone.ray, tone.ray, 0, 0.35, 0, 0.35);
+  floor.fillGradientStyle(tone.ray, tone.ray, tone.ray, tone.ray, 0, 0.25, 0, 0.25);
   floor.fillRect(-width / 2, stageBottom - 6, width / 2, 2);
-  floor.fillGradientStyle(tone.ray, tone.ray, tone.ray, tone.ray, 0.35, 0, 0.35, 0);
+  floor.fillGradientStyle(tone.ray, tone.ray, tone.ray, tone.ray, 0.25, 0, 0.25, 0);
   floor.fillRect(0, stageBottom - 6, width / 2, 2);
   floor.setMask(mask);
   body.add(floor);
@@ -341,7 +367,7 @@ function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, 
   const rise = bottom - (spots.noteY + 20);
   for (let row = 0, y = bottom - gap / 2; y > spots.noteY + 20; row += 1, y -= gap) {
     const fade = 1 - (bottom - y) / rise;
-    lowDots.fillStyle(tone.dot, D.dotAlpha * 1.1 * fade);
+    lowDots.fillStyle(tone.dot, D.dotAlpha * 0.8 * fade);
     for (let x = -width / 2 + (row % 2 === 0 ? gap / 2 : gap); x < width / 2; x += gap) {
       lowDots.fillPoints([new Phaser.Math.Vector2(x, y - 3.5), new Phaser.Math.Vector2(x + 3.5, y), new Phaser.Math.Vector2(x, y + 3.5), new Phaser.Math.Vector2(x - 3.5, y)], true);
     }
@@ -354,7 +380,7 @@ function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, 
   glow.setBlendMode(Phaser.BlendModes.ADD);
   for (let i = 0; i < 5; i += 1) {
     const r = 150 + i * 46;
-    glow.fillStyle(tone.ray, 0.06);
+    glow.fillStyle(tone.ray, 0.035);
     glow.fillPoints([new Phaser.Math.Vector2(0, -r * 0.42), new Phaser.Math.Vector2(r * 1.5, 0), new Phaser.Math.Vector2(0, r * 0.42), new Phaser.Math.Vector2(-r * 1.5, 0)], true);
   }
   glow.setMask(mask);
@@ -362,11 +388,11 @@ function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, 
 
   // 밑변 반짝이 줄 — 무대 바닥선과 같은 결의 빛 한 줄과 양 끝의 작은 마름모.
   const hem = scene.add.graphics();
-  hem.fillGradientStyle(tone.ray, tone.ray, tone.ray, tone.ray, 0, 0.4, 0, 0.4);
+  hem.fillGradientStyle(tone.ray, tone.ray, tone.ray, tone.ray, 0, 0.25, 0, 0.25);
   hem.fillRect(-width / 2, bottom - 18, width / 2, 2);
-  hem.fillGradientStyle(tone.ray, tone.ray, tone.ray, tone.ray, 0.4, 0, 0.4, 0);
+  hem.fillGradientStyle(tone.ray, tone.ray, tone.ray, tone.ray, 0.25, 0, 0.25, 0);
   hem.fillRect(0, bottom - 18, width / 2, 2);
-  hem.fillStyle(tone.spark, 0.9);
+  hem.fillStyle(tone.spark, 0.55);
   for (const [hx, size] of [[-width / 2 + 48, 8], [-width / 2 + 76, 5], [width / 2 - 120, 6], [width / 2 - 94, 9]] as const) {
     hem.fillPoints([new Phaser.Math.Vector2(hx, bottom - 17 - size), new Phaser.Math.Vector2(hx + size * 0.8, bottom - 17), new Phaser.Math.Vector2(hx, bottom - 17 + size * 0.9), new Phaser.Math.Vector2(hx - size * 0.7, bottom - 17)], true);
   }
@@ -380,16 +406,16 @@ function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, 
     const size = 5 + (i % 3) * 2.5;
     const spark = scene.add.graphics({ x, y });
     spark.setBlendMode(Phaser.BlendModes.ADD);
-    spark.fillStyle(tone.spark, 0.85);
+    spark.fillStyle(tone.spark, 0.7);
     spark.fillPoints([new Phaser.Math.Vector2(0, -size * 1.6), new Phaser.Math.Vector2(size * 0.4, -size * 0.4), new Phaser.Math.Vector2(size * 1.6, 0), new Phaser.Math.Vector2(size * 0.4, size * 0.4), new Phaser.Math.Vector2(0, size * 1.6), new Phaser.Math.Vector2(-size * 0.4, size * 0.4), new Phaser.Math.Vector2(-size * 1.6, 0), new Phaser.Math.Vector2(-size * 0.4, -size * 0.4)], true);
     spark.setMask(mask);
     body.add(spark);
     if (!loops) { spark.setAlpha(0.5); continue; }
     spark.setAlpha(0).setScale(0.4);
-    const rise = mood === "excited" ? 46 : 22;
+    const rise = mood === "excited" ? 30 : 16;
     const twinkle = scene.tweens.add({
-      targets: spark, alpha: { from: 0, to: 0.9 }, scale: { from: 0.4, to: 1 }, y: { from: y, to: y - rise },
-      duration: 1100 + (i % 4) * 220, yoyo: true, repeat: -1, delay: (i * 370) % 1800, ease: "Sine.InOut",
+      targets: spark, alpha: { from: 0, to: 0.7 }, scale: { from: 0.4, to: 1 }, y: { from: y, to: y - rise },
+      duration: 1600 + (i % 4) * 300, yoyo: true, repeat: -1, delay: (i * 370) % 1800, ease: "Sine.InOut",
     });
     spark.once(Phaser.GameObjects.Events.DESTROY, () => twinkle.remove());
   }

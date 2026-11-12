@@ -1592,7 +1592,7 @@ export class InfoManager {
   }
 
   /**
-   * MAX 급여가 먹일 횟수와 닿는 레벨 — 지금 치즈케이크로 상한까지 갈 수 있는 만큼이다. 쪽지의 값줄·확인 창·실제
+   * MAX 급여가 먹일 횟수와 닿는 레벨 — 지금 치즈케이크로 끝까지 올릴 수 있는 마지막 레벨까지다(상한에서 멈춘다). 쪽지의 값줄·확인 창·실제
    * 요청이 같은 값을 쓴다.
    */
   private feedMaxPlan(): { feeds: number; targetLevel: number } {
@@ -1601,8 +1601,13 @@ export class InfoManager {
     const progress = relicProgression.getProgress(def.id);
     const cap = this.relicCap();
     if (progress.level >= cap) return { feeds: 0, targetLevel: progress.level };
-    const feeds = Math.min(this.feedsForLevels(cap - progress.level), Math.floor(session.wallet.cheesecake / FEED_UNIT.cheesecake));
-    return { feeds, targetLevel: previewFeedProgress(progress, feeds, cap).level };
+    // **마지막으로 다 올릴 수 있는 레벨까지만** 먹인다(응태 요청) — 남는 치즈케이크로 다음 레벨의 경험치를 조금 채워
+    // 두지 않는다. 그 몫은 레벨을 올리지 못한 채 묶이기만 한다.
+    const affordable = Math.floor(session.wallet.cheesecake / FEED_UNIT.cheesecake);
+    let levels = 0;
+    while (progress.level + levels < cap && this.feedsForLevels(levels + 1) <= affordable) levels += 1;
+    const feeds = levels > 0 ? this.feedsForLevels(levels) : 0;
+    return { feeds, targetLevel: progress.level + levels };
   }
 
   /** MAX 급여 확인 창 — 그 아이가 묻고, 나가는 치즈케이크와 닿는 레벨을 보여 준다. */

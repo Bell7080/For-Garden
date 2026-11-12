@@ -2002,10 +2002,16 @@ export function clearStun(fighter: Fighter): void {
   fighter.stunnedFor = 0;
 }
 
+/**
+ * 경직의 길이(초). **경직은 0.1초 기절을 뜻하는 고유 디버프**라 이보다 긴 경직은 없다 — 더 길게 막아야 하는
+ * 기술은 경직이 아니라 기절을 건다. 상태 위력(`statusPotencyMultiplier`)이 곱해져도 이 값을 넘지 않는다.
+ */
+export const STAGGER_SECONDS = 0.1;
+
 /** 경직도 기절과 **같은 강인함**을 지난다. 행동을 막는 일은 하나이므로 규칙도 하나다. */
 export function applyStagger(fighter: Fighter, seconds: number, state?: SkirmishState): SkirmishEvent[] {
   if (!isFighterAlive(fighter) || !Number.isFinite(seconds) || seconds <= 0) return [];
-  const resisted = controlDuration(fighter, seconds);
+  const resisted = controlDuration(fighter, Math.min(STAGGER_SECONDS, seconds));
   if (resisted <= 0) return [];
   const wasStaggered = fighter.staggeredFor > 0;
   fighter.staggeredFor = Math.max(fighter.staggeredFor, resisted);
@@ -4914,16 +4920,16 @@ function markUltimateVictim(attacker: Fighter, target: Fighter): void {
   if (plan?.kind === "unhealedMark") target.bt.healCut = { remaining: plan.seconds, total: plan.seconds, percent: plan.reductionPercent };
 }
 
-/** 폰토스 평타 돌파(`pressStagger`) — 맞힌 적 중 가장 가까운 한 명을 잠깐 경직시킨다. */
+/** 폰토스 평타 돌파(`pressStagger`) — 맞힌 적 중 가장 가까운 한 명을 잠깐 기절시킨다. */
 function pressNearestStruck(attacker: Fighter, struck: Fighter[], state: SkirmishState, events: SkirmishEvent[]): void {
   const plan = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   if (plan?.kind !== "pressStagger") return;
   const nearest = struck.filter((fighter) => isFighterAlive(fighter))
     .reduce<Fighter | undefined>((chosen, fighter) => chosen === undefined || distance(attacker, fighter) < distance(attacker, chosen) ? fighter : chosen, undefined);
-  if (nearest) events.push(...applyStagger(nearest, plan.seconds * attacker.statusPotencyMultiplier, state));
+  if (nearest) events.push(...applyStun(nearest, plan.seconds * attacker.statusPotencyMultiplier, state));
 }
 
-/** 보스 평타 돌파 셋 — 물린 자국(받는 피해 겹)·꿰뚫는 부리(뒤의 적에게 일부 피해)·눌러 앉히는 깃(치명타 경직). */
+/** 보스 평타 돌파 셋 — 물린 자국(받는 피해 겹)·꿰뚫는 부리(뒤의 적에게 일부 피해)·눌러 앉히는 깃(치명타 기절). */
 function strikeBossBasicBreakthrough(attacker: Fighter, target: Fighter, input: Parameters<typeof computeDamage>[2] & { scalingStat?: "hp" | "atk" | "ap" | "def" }, critical: boolean,
   state: SkirmishState, events: SkirmishEvent[]): void {
   const basic = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
@@ -4948,12 +4954,12 @@ function strikeBossBasicBreakthrough(attacker: Fighter, target: Fighter, input: 
   const passive = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
   if (passive?.kind === "pinningPlume" && critical && isFighterAlive(target) && (attacker.bt.pinnedUntil[target.id] ?? 0) <= state.elapsed) {
     attacker.bt.pinnedUntil[target.id] = state.elapsed + passive.lockoutSeconds;
-    events.push(...applyStagger(target, passive.staggerSeconds * attacker.statusPotencyMultiplier, state));
+    events.push(...applyStun(target, passive.stunSeconds * attacker.statusPotencyMultiplier, state));
   }
 }
 
 /**
- * 적 전용 평타 돌파 넷 — 앞니 갉기(방어 깎기)·집게 두 번(N번째 적중이 한 번 더)·껍질 쿵(경직)·후려치기 출혈.
+ * 적 전용 평타 돌파 넷 — 앞니 갉기(방어 깎기)·집게 두 번(N번째 적중이 한 번 더)·껍질 쿵(기절)·후려치기 출혈.
  * 열린 계약만 읽고 개체 이름으로 분기하지 않는다. 시약을 더 바르는 `doubleDab`는 시약 훅(`reagentStacksFor`)이 읽는다.
  */
 function strikeEnemyBasicBreakthrough(attacker: Fighter, target: Fighter, input: Parameters<typeof computeDamage>[2] & { scalingStat?: "hp" | "atk" | "ap" | "def" }, critical: boolean,
@@ -4983,7 +4989,7 @@ function strikeEnemyBasicBreakthrough(attacker: Fighter, target: Fighter, input:
     const stacks = Math.min(basic.maxStacks, (target.bt.fangShave?.stacks ?? 0) + 1);
     target.bt.fangShave = { remaining: basic.seconds, stacks, percentPerStack: basic.defensePercent, total: basic.seconds };
   }
-  if (basic.kind === "shellKnock") events.push(...applyStagger(target, basic.seconds * attacker.statusPotencyMultiplier, state));
+  if (basic.kind === "shellKnock") events.push(...applyStun(target, basic.seconds * attacker.statusPotencyMultiplier, state));
   if (basic.kind === "bleedingSmash") refreshBleed(target, BLEED.seconds * attacker.statusPotencyMultiplier, BLEED.percentPerSecond, events, attacker.id);
   if (basic.kind === "pincerPair") {
     attacker.bt.pincerCount += 1;
@@ -8294,7 +8300,7 @@ function burstShallowPool(
 }
 
 /**
- * 평타 돌파(`staccatoChain`) — 같은 적을 연속으로 맞힐수록 경직이 겹쳐 길어진다. 다른 적으로 옮기면 처음부터 센다.
+ * 평타 돌파(`staccatoChain`) — 같은 적을 연속으로 맞힐수록 차단이 길어진다(둘째부터는 경직이 아니라 기절). 다른 적으로 옮기면 처음부터 센다.
  * 스킬 사본만 돌려주고 `strike` 안의 `skill`은 상수로 둔다 — 매 타격 지나는 길이라 재할당을 끼우지 않는다.
  */
 function staccatoChainSkill(attacker: Fighter, target: Fighter, skill: Skill, useUltimate: boolean): Skill {
@@ -8304,8 +8310,12 @@ function staccatoChainSkill(attacker: Fighter, target: Fighter, skill: Skill, us
   const streak = attacker.bt.staccatoStreak?.targetId === target.id ? attacker.bt.staccatoStreak.count + 1 : 1;
   attacker.bt.staccatoStreak = { targetId: target.id, count: streak };
   const stacks = Math.min(chain.maxStacks, streak);
-  return { ...skill, statusEffects: skill.statusEffects?.map((effect) => effect.kind === "stagger"
-    ? { ...effect, seconds: effect.seconds + (stacks - 1) * chain.secondsPerStack } : effect) } as Skill;
+  // 경직은 0.1초 고정이라 겹이 늘린 차단은 경직이 아니라 기절로 건다.
+  return { ...skill, statusEffects: skill.statusEffects?.map((effect) => {
+    if (effect.kind !== "stagger") return effect;
+    const seconds = effect.seconds + (stacks - 1) * chain.secondsPerStack;
+    return seconds > STAGGER_SECONDS + 1e-9 ? { kind: "stun", seconds } : effect;
+  }) } as Skill;
 }
 
 /**
@@ -8815,10 +8825,10 @@ function strike(
     && openedBreakthrough(attacker, "basic", (effects) => effects.basic)?.kind === "poisonPulse") {
     pulsePoison(target, state, events);
   }
-  // 폭주 돌파(`ankleShot`) — 폭주 중 일반 공격이 치명타로 들어가면 맞은 적이 잠깐 휘청인다. 궁극기와는 엮지 않는다.
+  // 폭주 돌파(`ankleShot`) — 폭주 중 일반 공격이 치명타로 들어가면 맞은 적이 잠깐 기절한다. 궁극기와는 엮지 않는다.
   if (attackingInFever && !useUltimate && critical && isFighterAlive(target) && !resolution.ignored) {
     const ankle = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
-    if (ankle?.kind === "ankleShot") events.push(...applyStagger(target, ankle.staggerSeconds * attacker.statusPotencyMultiplier, state));
+    if (ankle?.kind === "ankleShot") events.push(...applyStun(target, ankle.stunSeconds * attacker.statusPotencyMultiplier, state));
   }
   // 보스 평타 돌파(`biteMark`·`piercingBeak`·`pinningPlume`) — 적중한 한 대에 얹힌다.
   if (!useUltimate && !resolution.ignored) strikeBossBasicBreakthrough(attacker, target, damageInput, critical, state, events);
@@ -9270,7 +9280,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     if (sutured) suturedTotal += hpBefore - target.hp + sutureBonusStrike(attacker, target, state, events);
   }
   if (sutured) stitchSuture(attacker, suturedTotal, state, events);
-  // 폰토스 평타 돌파(`pressStagger`) — 광역 평타가 맞힌 적 중 가장 가까운 한 명만 경직시킨다.
+  // 폰토스 평타 돌파(`pressStagger`) — 광역 평타가 맞힌 적 중 가장 가까운 한 명만 기절시킨다.
   if (!useUltimate) pressNearestStruck(attacker, targets, state, events);
   // 광역 걸음도 같은 자리에서 사라진다 — 경로가 갈리면 같은 걸음이 대상 수에 따라 다른 일을 한다.
   if (!useUltimate) stealthAfterStep(attacker, state);

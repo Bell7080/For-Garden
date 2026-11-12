@@ -808,14 +808,16 @@ describe("이르나 한계 돌파", () => {
     expect(withShrapnel.distant).toBe(0);
   });
 
-  it("은 폭주 중 치명타로 맞힌 적만 휘청이게 한다 — 궁극기와는 엮이지 않는다(별 IV)", () => {
+  it("은 폭주 중 치명타로 맞힌 적만 기절시킨다 — 궁극기와는 엮이지 않는다(별 IV)", () => {
     const crit = (breakthrough: number, fever: boolean): number => {
       const state = irnaBattle(breakthrough);
       const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
       foe.x = 500; foe.y = 1_100;
       findFighter(state, "player-0")!.ferocityFever = fever;
       shoot(state, foe.id, () => 0);
-      return foe.staggeredFor;
+      // 0.5초 차단이라 경직(0.1초 고정)이 아니라 기절이다.
+      expect(foe.staggeredFor).toBe(0);
+      return foe.stunnedFor;
     };
     expect(crit(3, true)).toBeGreaterThan(0);
     expect(crit(3, false)).toBe(0);
@@ -844,7 +846,7 @@ describe("이르나 한계 돌파", () => {
     const irna = getRelic("irna");
     expect(breakthroughEffectText(irna, "basic")).toContain("연속");
     expect(breakthroughEffectText(irna, "ultimate")).toContain("파편");
-    expect(breakthroughEffectText(irna, "ferocity")).toContain("경직");
+    expect(breakthroughEffectText(irna, "ferocity")).toContain("기절");
     expect(breakthroughEffectText(irna, "passive")).toContain("해무 방벽");
   });
 });
@@ -1687,7 +1689,7 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
     }
   });
 
-  it("폰토스 II — 광역 평타가 맞힌 적 중 가장 가까운 한 명만 경직시킨다", () => {
+  it("폰토스 II — 광역 평타가 맞힌 적 중 가장 가까운 한 명만 기절시킨다", () => {
     const run = (breakthrough: number) => {
       const state = bossBattle("pontos", ["torika", "amo", "rex"], breakthrough);
       const boss = findFighter(state, "enemy-0")!;
@@ -1698,7 +1700,7 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
         stepSkirmish(state, 0.05);
         for (const ally of state.fighters.filter((f) => f.side === "player")) { ally.attackCooldown = 99; ally.x = ally.x; }
       }
-      return state.fighters.filter((f) => f.side === "player").map((f) => f.staggeredFor > 0);
+      return state.fighters.filter((f) => f.side === "player").map((f) => f.stunnedFor > 0);
     };
     expect(run(0).some(Boolean)).toBe(false);
     const staggered = run(1);

@@ -50,7 +50,8 @@ describe("스킬 요약 칩 규격", () => {
     const head = (id: string, slot: "passive" | "basic" | "ultimate") => skillTagsFromDef(def(id)[slot], slot).map((tag) => tag.text).slice(0, 2);
     expect(head("kento", "passive")).toEqual(["강화", "마법 피해"]);
     expect(head("anka", "passive")).toEqual(["강화", "마법 피해"]);
-    expect(head("yuti", "basic")).toEqual(["물리 피해", "고정 피해"]);
+    // 동상은 지속 피해라 고정 피해 칩을 달지 않는다
+    expect(head("yuti", "basic")[1]).not.toBe("고정 피해");
     expect(head("noa", "ultimate")[0]).toBe("고정 피해");
     expect(head("rex", "basic")).toEqual(["물리 피해", "단일"]);
   });

@@ -1359,7 +1359,7 @@ export const RELICS: RelicDef[] = [
     breakthroughEffects: {
       basic: { kind: "focusFire", damagePercentPerStack: 8, maxStacks: 5 },
       ultimate: { kind: "shrapnel", radius: 300, powerPercent: 30 },
-      ferocity: { kind: "ankleShot", staggerSeconds: 0.5 },
+      ferocity: { kind: "ankleShot", stunSeconds: 0.5 },
       passive: { kind: "highTide", damagePercent: 15 },
     },
     passive: {
@@ -3837,7 +3837,8 @@ export const RELICS: RelicDef[] = [
       targeting: "chargeLine",
       radius: 90,
       chargeReachMultiplier: 1.4,
-      statusEffects: [{ kind: "stagger", seconds: 0.5 }],
+      // 경직은 0.1초 고정이라 0.5초 차단은 기절이다.
+      statusEffects: [{ kind: "stun", seconds: 0.5 }],
       // 전사의 자가 수급 — 길 위에서 들이받은 만큼 몸을 추스른다.
       damageHealingPercent: 20,
     },
@@ -5415,7 +5416,8 @@ export const RELICS: RelicDef[] = [
        * 끊으면 "세 번째에 온다"를 읽고 비킬 수 있다(수쿠스이노의 네 번째 턱과 같은 이유다).
        */
       statusEffectEvery: 3,
-      statusEffects: [{ kind: "stagger", seconds: 1 }],
+      // 경직은 0.1초 고정이라 1초 차단은 기절이다.
+      statusEffects: [{ kind: "stun", seconds: 1 }],
     },
     ultimate: {
       id: "quetzalcoatlus-ult",
@@ -5444,7 +5446,7 @@ export const RELICS: RelicDef[] = [
       basic: { kind: "piercingBeak", sharePercent: 30, halfWidth: 140 },
       ultimate: { kind: "widenArea", radius: 140 },
       ferocity: { kind: "sharpStorm", critChancePoints: 8 },
-      passive: { kind: "pinningPlume", staggerSeconds: 0.5, lockoutSeconds: 3 },
+      passive: { kind: "pinningPlume", stunSeconds: 0.5, lockoutSeconds: 3 },
     },
   },
   {

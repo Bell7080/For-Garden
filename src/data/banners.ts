@@ -147,6 +147,10 @@ export const BANNERS: Banner[] = [
  * `researchBanners(false)`가 `BANNERS`만 돌려준다.
  */
 const AMBER_BANNER = BANNERS.find(({ id }) => id === "amber")!;
+/** 정식 배너가 서기 전, QA 픽업 배너가 먼저 깔 모집 원화. 정식 배너를 만들면 그 배너의 `artKey`로 옮긴다. */
+const QA_PICKUP_ART: Readonly<Record<string, string>> = {
+  plesha: BACKGROUND.recruitMoonPicnic,
+};
 export const QA_PICKUP_BANNER_PREFIX = "qa-pickup-";
 export const QA_PICKUP_BANNERS: readonly Banner[] = [...LIMITED_RELIC_IDS]
   .filter((relicId) => !BANNERS.some((banner) => Object.values(banner.pickupRelicIds).some((ids) => ids?.includes(relicId))))
@@ -155,7 +159,7 @@ export const QA_PICKUP_BANNERS: readonly Banner[] = [...LIMITED_RELIC_IDS]
     if (!relic) return [];
     const pickups = { [relic.rarity]: [relicId] } as Partial<Record<RelicRarity, string[]>>;
     return [{
-      ...AMBER_BANNER, id: `${QA_PICKUP_BANNER_PREFIX}${relicId}`, featuredRelicId: relicId, artKey: undefined,
+      ...AMBER_BANNER, id: `${QA_PICKUP_BANNER_PREFIX}${relicId}`, featuredRelicId: relicId, artKey: QA_PICKUP_ART[relicId],
       startsAt: undefined, endsAt: undefined, relicPools: pickupPools(pickups), pickupRelicIds: pickups,
     } satisfies Banner];
   });

@@ -302,6 +302,7 @@ export const MISC_ZH_HANS = {
   "role.desc.tank": "最前线的盾牌。嘲讽敌人、代替队友承受攻击，站在编队前排中央。",
   "role.desc.assassin": "以隐身与闪现深入敌阵，迅速击倒脆弱目标。伤害高但难以久战。站在编队左侧。",
   "role.desc.support": "以治疗、护盾、增益与减益扭转战局。比起终结敌人，更擅长让队友屹立不倒。站在编队右侧。",
+  "role.presence": "吸引敌人注意的存在感",
   "trade.value": "价值 {percent}%",
   "trade.tag.once": "限购一次",
   "trade.tag.daily": "今日特惠",

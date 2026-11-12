@@ -304,6 +304,7 @@ export const MISC_EN = {
   "role.desc.tank": "The shield on the very front line. Taunts enemies and soaks up their attacks so allies don't have to, standing in the front center of the formation.",
   "role.desc.assassin": "Slips deep into enemy lines with stealth and blinks, taking down weak targets fast. Hits hard but can't last long. Stands on the left of the formation.",
   "role.desc.support": "Turns the fight with healing, shields, buffs and debuffs. Keeps allies standing rather than finishing enemies. Stands on the right of the formation.",
+  "role.presence": "Presence that draws enemy attention",
   "trade.value": "Value {percent}%",
   "trade.tag.once": "One-Time Deal",
   "trade.tag.daily": "Today's Deal",

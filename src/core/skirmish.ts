@@ -10,7 +10,7 @@ import { drainFerocityFever, FEROCITY_RULES, feverDrainPerSecond, ferocityMaxOf,
 import { isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
 import { ENCOUNTER_ROLE, encounterRampFactor, type EncounterDamageReduction, type EncounterTenacity } from "./levelDesign";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, flatStatPoints, highHpDamageMultiplier, lowHpDamageMultiplier, nthBasicBonusMultiplier, openingCritCount, periodicCritEvery, sameTargetStreakMultiplier, shieldedDamageMultiplier, warmUpAttackSpeedPercent, type ExpeditionAugmentEffect, type FlatStatKind, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
-import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, Stats, TeamBuff } from "./types";
+import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Role, Side, Skill, Stats, TeamBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX, ultimateEnergyCap } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
 import { PUP } from "./pup";
@@ -1067,8 +1067,13 @@ export const SKIRMISH = {
   blockBackflowRatio: 0.55,
   /** 좌우를 뒤집기 전에 필요한 최소 가로 거리(px). 상대와 세로로 겹칠 때 깜빡이지 않게 한다. */
   facingDeadzone: 16,
-  /** 이미 그 상대에게 붙은 아군 한 명당 더해지는 거리 가중치. 셋이 한 명에게 몰리지 않는다. */
-  crowdPenalty: 240,
+  /**
+   * 이미 그 상대에게 붙은 아군 한 명당 더해지는 거리 가중치.
+   *
+   * 240이던 때는 셋이 거의 늘 셋으로 갈라져, 한 명을 함께 몰아 끝내는 그림이 나오지 않았다.
+   * 반으로 덜어 가까운 적이면 둘이 함께 붙어도 되게 한다(응태 결정 2026-11-12).
+   */
+  crowdPenalty: 120,
   /**
    * 표적을 다시 고르기까지의 간격(초).
    *
@@ -1091,6 +1096,15 @@ export const SKIRMISH = {
    * 먼 적을 고른다. 다만 손이 닿는 상대가 있는데 그를 지나쳐 걸어가지는 않는다.
    */
   inReachBonus: 320,
+  /**
+   * 직군이 적의 눈을 끄는 몫(px 상당 — 거리 점수에서 뺀다). 탱커 → 전사 → 암살자 → 지원가 순이다
+   * (응태 결정 2026-11-12). 도발 없이도 앞에 선 몸이 먼저 맞도록 기울이는 약한 끌림이라, 거리 차가
+   * 이보다 크면 여전히 가까운 쪽을 노린다. 정보창의 역할 칸이 아니라 이 표 한 곳만 값을 갖는다.
+   *
+   * **양쪽 모두, 작게 끌린다**(응태 결정). 120·80·40으로 크게 두었더니 아군 딜러가 적 탱커만 두드리고 적
+   * 지원가를 놓쳐 1-8 서브(아모+리파)가 0승, 1-10 정예도 전패로 뒤집혔다. 30·20·10이면 기울기만 남는다.
+   */
+  rolePull: { tank: 30, warrior: 20, assassin: 10, support: 0 } as const satisfies Readonly<Record<Role, number>>,
   /** 상대에게 곧장 가지 않고 옆으로 흐르는 정도. 패싸움처럼 보이게 한다. */
   swirl: 0.32,
   /** 때리는 순간 상대 쪽으로 튀어나가는 거리(px). */
@@ -1125,6 +1139,10 @@ export const SKIRMISH = {
   /** 무한 공속 누적이 0초 간격과 한 프레임 무한 공격을 만들지 않게 하는 안전 하한이다. */
   minimumAttackInterval: 0.12,
 } as const;
+
+/** 적의 눈길을 끄는 순서 — 직군 끌림(`SKIRMISH.rolePull`)이 큰 쪽부터. 직군 쪽지가 이 순서를 그대로 적는다. */
+export const ROLE_PRESENCE_ORDER: readonly Role[] = (Object.keys(SKIRMISH.rolePull) as Role[])
+  .sort((a, b) => SKIRMISH.rolePull[b] - SKIRMISH.rolePull[a]);
 
 /**
  * 사거리 단계가 정하는 실제 거리(px).
@@ -6495,7 +6513,8 @@ function resolveTarget(state: SkirmishState, fighter: Fighter, reconsider = fals
     const distanceScore = fighter.def.passive.kind === "farthestFocus" && inReach ? -gap : gap;
     const score = distanceScore + crowd * SKIRMISH.crowdPenalty
       - (other.id === fighter.targetId ? SKIRMISH.targetStickiness : 0)
-      - (inReach ? SKIRMISH.inReachBonus : 0);
+      - (inReach ? SKIRMISH.inReachBonus : 0)
+      - SKIRMISH.rolePull[other.def.role];
     if (score < bestScore) {
       chosen = other;
       bestScore = score;

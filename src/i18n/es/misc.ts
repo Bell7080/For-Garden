@@ -302,6 +302,7 @@ export const MISC_ES = {
   "role.desc.tank": "El escudo de la primera línea. Provoca a los enemigos y absorbe sus ataques para proteger a los aliados, en el centro delantero de la formación.",
   "role.desc.assassin": "Se cuela en las líneas enemigas con sigilo y teletransportes para abatir rápido a los objetivos débiles. Golpea fuerte pero aguanta poco. Se sitúa a la izquierda de la formación.",
   "role.desc.support": "Cambia el rumbo del combate con curación, escudos, mejoras y penalizaciones. Mantiene en pie a los aliados más que rematar enemigos. Se sitúa a la derecha de la formación.",
+  "role.presence": "Presencia que atrae al enemigo",
   "trade.value": "Valor {percent}%",
   "trade.tag.once": "Oferta única",
   "trade.tag.daily": "Oferta del día",

@@ -68,7 +68,7 @@ export const INFO_KO = {
   "info.feed.five": "5 레벨",
   "info.feed.max": "MAX",
   "info.feed.max.title": "MAX 급여",
-  "info.feed.max.plea": "와아… 이걸 전부\n나한테 주는 거야?!",
+  "info.feed.max.plea": "와아… 이걸 전부\n저한테 주시는 거예요?!",
   "info.feed.max.note": "단숨에 {count}레벨이 올라요!",
   "info.feed.max.confirm": "급여하기",
   "info.breakthrough": "한계 돌파",

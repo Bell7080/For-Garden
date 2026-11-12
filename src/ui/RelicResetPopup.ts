@@ -6,7 +6,7 @@
  * 값이 박힌다 — 무료면 값 대신 모서리 딱지가 붙는다. 자리는 `relicResetPopupLayout.ts`가 갖는다.
  *
  * **MAX 급여 확인 창도 같은 한 장이다**(`openRelicFeedMaxPopup`). 무대·레벨 줄·재화 판은 그대로 두고, 그 아이가
- * 떨지 않고 신이 나서 통통 뛰며 「이걸 전부 나한테 주는 거야?!」를 묻는다. 그 창은 취소 버튼 없이 확정 하나만
+ * 떨지 않고 신이 나서 통통 뛰며 「이걸 전부 저한테 주시는 거예요?!」를 존댓말로 묻는다. 그 창은 취소 버튼 없이 확정 하나만
  * 서고, 닫는 길은 판 밖 우하단의 공용 뒤로가기와 판 밖 누르기다.
  */
 import Phaser from "phaser";
@@ -24,6 +24,7 @@ import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
 import { startPuppetHop } from "./puppetHop";
 import { RELIC_RESET_POPUP, relicResetButtonXs, relicResetPopupSpots } from "./relicResetPopupLayout";
 import { addSdFootShadow } from "./SdFootShadow";
+import { FEED_BULK_PANEL, FEED_BULK_TONES } from "./feedBulkStyle";
 import { COLOR, textStyle } from "./theme";
 
 export interface RelicResetPopupOptions {
@@ -63,9 +64,15 @@ interface AskSpec {
   confirm: { label: string; destructive: boolean; ribbon?: string };
   /** 취소 버튼을 세우는가 — 없으면 판 밖 뒤로가기와 판 밖 누르기가 닫는다. */
   cancel: boolean;
+  /** 몸판의 면·강조선 색. 없으면 공용 판이다(MAX 급여는 쪽지와 같은 사탕빛 판을 입는다). */
+  panel?: { fill: number; accent: number };
+  /** 확정 버튼의 면 색(강조 버튼일 때만). */
+  confirmFill?: number;
 }
 
 const BUBBLE_INK = "#20242b";
+/** MAX 급여의 도착 레벨 — 금빛 테와 같은 결. */
+const MAX_GOLD_TEXT = "#ffd34d";
 const SWEAT_COLOR = 0x9fd8ff;
 
 export function openRelicResetPopup(scene: Phaser.Scene, popups: PopupLayer, options: RelicResetPopupOptions, onConfirm: () => void): void {
@@ -95,13 +102,16 @@ export function openRelicFeedMaxPopup(scene: Phaser.Scene, popups: PopupLayer, o
     plea: t("info.feed.max.plea"),
     from: options.level,
     to: options.targetLevel,
-    toColor: COLOR.accentText,
+    toColor: MAX_GOLD_TEXT,
     rows: [{ icon: CURRENCY_ICON_BY_WALLET.cheesecake, before: session.wallet.cheesecake, after: session.wallet.cheesecake - options.cost }],
     note: t("info.feed.max.note", { count: (options.targetLevel - options.level).toLocaleString() }),
     mood: "excited",
-    edge: COLOR.accent,
+    // 쪽지의 MAX 칸과 같은 한 벌 — 사탕빛 판, 금빛 테, 불꽃빛 확정 버튼.
+    edge: FEED_BULK_TONES.max.rim,
     confirm: { label: t("info.feed.max.confirm"), destructive: false },
     cancel: false,
+    panel: { fill: FEED_BULK_PANEL.fill, accent: FEED_BULK_PANEL.accent },
+    confirmFill: FEED_BULK_TONES.max.cream,
   }, onConfirm);
 }
 
@@ -110,7 +120,7 @@ function openRelicAskPopup(scene: Phaser.Scene, popups: PopupLayer, spec: AskSpe
   const spots = relicResetPopupSpots(spec.rows.length);
   const loops = motionPolicy(session.settings).nonEssentialRepeatFactor > 0;
 
-  popups.open({ width: L.width, height: spots.height, title: spec.title, dim: true, dimAlpha: L.dimAlpha, hideCloseButton: spec.cancel }, (body, close) => {
+  popups.open({ width: L.width, height: spots.height, title: spec.title, dim: true, dimAlpha: L.dimAlpha, hideCloseButton: spec.cancel, ...(spec.panel ?? {}) }, (body, close) => {
     const stage = scene.add.container(0, spots.stageTop);
     body.add(stage);
     const S = L.stage;
@@ -175,7 +185,7 @@ function openRelicAskPopup(scene: Phaser.Scene, popups: PopupLayer, spec: AskSpe
     body.add(new Button(scene, confirmX, spots.buttonY, {
       ...common,
       label: spec.confirm.label,
-      ...(spec.confirm.destructive ? DESTRUCTIVE_BUTTON_STYLE : { variant: "primary" as const }),
+      ...(spec.confirm.destructive ? DESTRUCTIVE_BUTTON_STYLE : { variant: "primary" as const, ...(spec.confirmFill !== undefined ? { fill: spec.confirmFill, decorDots: true } : {}) }),
       ...(spec.confirm.ribbon ? { ribbon: spec.confirm.ribbon } : {}),
       onClick: () => { audioManager?.playUi(spec.confirm.destructive ? "ui.danger" : "ui.confirm"); close(); onConfirm(); },
     }));

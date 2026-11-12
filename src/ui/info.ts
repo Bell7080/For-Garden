@@ -93,6 +93,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { FeedTapEffect } from "./feedTapEffect";
 import { FeedLevelUpEffect } from "./feedLevelUpEffect";
 import { drawFeedPlate, drawFeedWindow, FEED_BUTTON } from "./feedButtonSkin";
+import { FEED_BULK_PANEL, FEED_BULK_TONES, feedBulkNoteCenter, feedBulkSparkles, feedBulkSpots } from "./feedBulkStyle";
 import { FEED_LEVEL_UP } from "./feedLevelUpStyle";
 import { HOLO_SHIMMER, holoBreathe, holoGlowColor, holoSweepPhase, polygonSpans } from "./holoShimmer";
 import { settingsManager } from "../managers/SettingsManager";
@@ -236,7 +237,6 @@ const BOND_HEART_CORE = 0xff8a7a;
 /** 판 안쪽에 파인 자리의 치즈케이크 수. 그 자리는 어둡게 눌러 두므로 크림빛으로 적는다. */
 const FEED_TEXT = "#ffe9c9";
 /** 한 번에 급여 쪽지 — 위 줄(1·10레벨)과 아래 줄(5레벨·MAX). 칸 높이 138에 사이 14. */
-const FEED_BULK_NOTE = { height: 372, rowY: [-76, 76] } as const;
 
 /**
  * 급여에 쓰는 치즈케이크 한 조각.
@@ -261,6 +261,24 @@ function cheesecakeIcon(scene: Phaser.Scene, x: number, y: number, size: number)
  * 판 안에 한 겹 더 파인 자리를 두는 이유는 이 줄이 버튼 라벨보다 크기 때문이다 — 눌러야 할
  * 판과 읽어야 할 수가 같은 높이에 있으면 어느 쪽이 버튼인지 흐려진다.
  */
+/**
+ * 한 번에 급여 쪽지의 반짝이 한 장 — 칸 사이 빈 띠와 가장자리에만 흩는 마름모와 네 갈래 별이다.
+ * 자리·색은 `feedBulkSparkles`가 정하고 여기서는 그리기만 한다(칸 아래에 깔린다).
+ */
+function drawFeedBulkSparkles(scene: Phaser.Scene): Phaser.GameObjects.Graphics {
+  const g = scene.add.graphics();
+  for (const spark of feedBulkSparkles()) {
+    const { x, y, size } = spark;
+    const points = spark.kind === "star"
+      ? [x, y - size, x + size * 0.22, y - size * 0.22, x + size, y, x + size * 0.22, y + size * 0.22, x, y + size, x - size * 0.22, y + size * 0.22, x - size, y, x - size * 0.22, y - size * 0.22]
+      : [x, y - size, x + size * 0.78, y - 1, x, y + size * 0.9, x - size * 0.7, y + 1];
+    const shadow = points.map((value, index) => value + (index % 2 === 0 ? 2 : 3));
+    g.fillStyle(0x05070a, 0.45).fillPoints(toPoints(shadow), true);
+    g.fillStyle(spark.color, 0.85).fillPoints(toPoints(points), true);
+  }
+  return g;
+}
+
 function feedCostRow(
   scene: Phaser.Scene,
   x: number,
@@ -269,10 +287,11 @@ function feedCostRow(
   height: number,
   size: number,
   rollKey?: string,
+  windowColor?: number,
 ): { container: Phaser.GameObjects.Container; text: Phaser.GameObjects.Text; layout: () => void } {
   const container = scene.add.container(x, y);
   // 치즈케이크 판(크림 면)에 박힌 짙은 창 — 밝은 값 글자가 그 위에서 또렷하다.
-  container.add(drawFeedWindow(scene, width, height));
+  container.add(drawFeedWindow(scene, width, height, windowColor));
   const icon = Math.round(height * 0.86);
   // 아이콘과 수는 바짝 붙는다. 멀리 떼면 "치즈케이크"와 "숫자"가 두 정보로 읽힌다.
   const gap = Math.round(icon * 0.12);
@@ -1478,12 +1497,17 @@ export class InfoManager {
     // 적어 두면 같은 말을 별 옆의 돌파 버튼이 이미 하고 있고, 그 쪽지에는 누를 것도 없다.
     if (!canFeed) return;
     this.feedPopupOpen = true;
+    const P = FEED_BULK_PANEL;
+    const center = feedBulkNoteCenter(bounds, this.scene.scale.width);
     this.popups.open({
-      width: 540,
-      height: FEED_BULK_NOTE.height,
-      x: bounds.centerX,
-      y: bounds.bottom + 126 + (FEED_BULK_NOTE.height - 220) / 2,
+      width: P.width,
+      height: P.height,
+      x: center.x,
+      y: center.y,
       title: t("info.feed.bulk"),
+      // 사탕빛 판 — 급여는 정보창에서 가장 즐거운 조작이라 쪽지도 그 결을 입는다.
+      fill: P.fill,
+      accent: P.accent,
       hideCloseButton: true,
       closeOnBackdrop: true,
       inputPassthrough: { x: bounds.x - 8, y: bounds.y - 8, width: bounds.width + 16, height: bounds.height + 16 },
@@ -1493,6 +1517,7 @@ export class InfoManager {
       // 누를 때마다 닫히면 같은 자리를 다시 길게 눌러 쪽지를 여는 손이 매번 더 든다. 값과
       // 남은 여력만 다시 적고 그대로 남아, 화면의 다른 곳을 누를 때까지 이어서 누를 수 있다.
       // 본문만 갱신해 공용 제목·입력 차단판·날아가는 조각은 유지한다.
+      body.add(drawFeedBulkSparkles(this.scene));
       const content = this.scene.add.container(0, 0);
       body.add(content);
       const burst = new FeedTapEffect(this.scene, body, { x: 0, y: 0 });
@@ -1512,35 +1537,36 @@ export class InfoManager {
     // 상한에 닿는 순간 쪽지가 스스로 닫힌다 — 더 먹일 수 없는 판에 남아 있을 이유가 없고,
     // 다음에 할 일(한계 돌파)은 별 옆의 버튼이 제 자리에서 말한다.
     if (progress.level >= this.relicCap()) { close(); return; }
-    // 두 줄 — 위가 1·10레벨, 아래가 5레벨·MAX다. MAX는 지금 치즈케이크로 상한까지 갈 수 있는 만큼 먹이고, 누르면
-    // 그 아이가 묻는 확인 창이 먼저 뜬다(한 번에 큰 몫이 나가는 칸이라 손이 한 번 더 들어간다).
+    // 두 줄 — 1 → 5 → 10 → MAX 차례로 위 줄 1·5, 아래 줄 10·MAX다. 차례가 곧 세기라 색도 같은 차례로 강렬해지고,
+    // 칸 사이에는 엄지가 옆 칸을 함께 누르지 않을 여백을 둔다(`feedBulkStyle.ts`). MAX는 지금 치즈케이크로 상한까지
+    // 갈 수 있는 만큼 먹이고, 누르면 그 아이가 묻는 확인 창이 먼저 뜬다.
     const max = this.feedMaxPlan();
-    const options: { label: string; levels: number | "max"; x: number; y: number }[] = [
-      { label: t("info.feed.one"), levels: 1, x: -128, y: FEED_BULK_NOTE.rowY[0] },
-      { label: t("info.feed.ten"), levels: 10, x: 128, y: FEED_BULK_NOTE.rowY[0] },
-      { label: t("info.feed.five"), levels: 5, x: -128, y: FEED_BULK_NOTE.rowY[1] },
-      { label: t("info.feed.max"), levels: "max", x: 128, y: FEED_BULK_NOTE.rowY[1] },
-    ];
-    options.forEach(({ label, levels, x: bx, y: by }) => {
+    const P = FEED_BULK_PANEL;
+    const labelKeys = { one: "info.feed.one", five: "info.feed.five", ten: "info.feed.ten", max: "info.feed.max" } as const;
+    feedBulkSpots().forEach(({ tier, levels, x: bx, y: by }) => {
+      const tone = FEED_BULK_TONES[tier];
       const cost = levels === "max" ? max.feeds * FEED_UNIT.cheesecake : this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
       const enough = levels === "max" ? max.feeds > 0 : session.wallet.cheesecake >= cost;
       // 칸 하나를 한 덩어리로 묶어야 눌림이 판·이름·값줄을 함께 누른다.
       const option = this.scene.add.container(bx, by);
-      // 급여 버튼과 같은 치즈케이크 조각이다. 모자란 칸은 꺼진 판으로 가라앉는다.
-      const plate = drawFeedPlate(this.scene, 236, 138, 14);
+      // 급여 버튼과 같은 덩어리에 단계의 색을 입힌다. 모자란 칸은 꺼진 판으로 가라앉는다.
+      const plate = drawFeedPlate(this.scene, P.button.width, P.button.height, 14, tone);
       plate.on.setVisible(enough);
       plate.off.setVisible(!enough);
       option.add([plate.off, plate.on]);
-      option.add(this.scene.add.text(0, -40, label, textStyle({ role: "display", size: 32, color: enough ? FEED_BUTTON.ink : COLOR.inkDim })).setOrigin(0.5));
+      const label = this.scene.add.text(0, P.labelY, t(labelKeys[tier]), textStyle({ role: "display", size: 34, color: enough ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5);
+      // 진한 색 판 위의 흰 글자 — 제 색의 가장 짙은 결을 획으로 둘러 판과 떼어 놓는다.
+      if (enough) label.setStroke(tone.stroke, 7);
+      option.add(squeezeTextToWidth(label, P.button.width - 40));
       // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
-      const price = feedCostRow(this.scene, 0, 14, 196, 50, 32, `info-feed-popup:cheesecake:${levels}`);
+      const price = feedCostRow(this.scene, 0, P.priceY, P.priceWidth, 50, 32, `info-feed-popup:cheesecake:${levels}`, enough ? tone.window : undefined);
       price.text.setText(formatCurrency(session.wallet.cheesecake) + "/" + formatCurrency(cost));
       price.text.setColor(enough ? FEED_TEXT : COLOR.dangerText);
       price.layout();
       option.add(price.container);
       body.add(option);
       if (!enough) return;
-      const hit = this.scene.add.rectangle(0, 0, 236, 138, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const hit = this.scene.add.rectangle(0, 0, P.button.width, P.button.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
       if (levels === 1) this.feedOneTutorialHit = hit;
       hit.on("pointerdown", () => pressIn(option, "feed"));
       hit.on("pointerout", () => pressOut(option, "feed", { pop: false }));

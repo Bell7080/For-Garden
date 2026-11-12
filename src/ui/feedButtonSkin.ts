@@ -46,9 +46,21 @@ export interface FeedPlate {
   readonly off: Phaser.GameObjects.Graphics;
 }
 
+/**
+ * 판의 색 한 벌. 기본은 치즈케이크(크림·버터·껍질)이고, 한 번에 급여 쪽지는 단계마다 제 색을 입힌다
+ * (`feedBulkStyle.ts`의 `FEED_BULK_TONES`). 모양·두께·반짝이는 그대로라 같은 덩어리로 읽힌다.
+ */
+export interface FeedPlatePalette {
+  cream: number;
+  rim: number;
+  crust: number;
+  crustLine: number;
+  base: number;
+}
+
 /** 치즈케이크 판 한 장. 가운데를 (0, 0)으로 그린다. */
-export function drawFeedPlate(scene: Phaser.Scene, width: number, height: number, slant: number = FEED_BUTTON.slant): FeedPlate {
-  const spec = FEED_BUTTON;
+export function drawFeedPlate(scene: Phaser.Scene, width: number, height: number, slant: number = FEED_BUTTON.slant, palette?: FeedPlatePalette): FeedPlate {
+  const spec = { ...FEED_BUTTON, ...palette };
   const shape = slantedRect(width, height, slant);
   const inner = slantedRect(width - spec.rimWidth * 2, height - spec.rimWidth * 2, slant * 0.8);
 
@@ -82,10 +94,10 @@ export function drawFeedPlate(scene: Phaser.Scene, width: number, height: number
 }
 
 /** 값줄을 담는 창 — 크림 면에 박힌 짙은 갈색 판. 밝은 값 글자가 그 위에서 또렷하다. */
-export function drawFeedWindow(scene: Phaser.Scene, width: number, height: number): Phaser.GameObjects.Graphics {
+export function drawFeedWindow(scene: Phaser.Scene, width: number, height: number, color: number = FEED_BUTTON.window): Phaser.GameObjects.Graphics {
   const g = scene.add.graphics();
   const shape = slantedRect(width, height, 8);
-  g.fillStyle(FEED_BUTTON.window, 0.92).fillPoints(toPoints(shape), true);
+  g.fillStyle(color, 0.92).fillPoints(toPoints(shape), true);
   g.fillStyle(0xffffff, 0.12).fillRect(-width / 2 + 10, -height / 2 + 3, width - 24, 3);
   return g;
 }

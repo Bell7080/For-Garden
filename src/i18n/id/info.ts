@@ -63,7 +63,7 @@ export const INFO_ID = {
   "info.feed.five": "5 Level",
   "info.feed.max": "MAX",
   "info.feed.max.title": "Beri Makan MAX",
-  "info.feed.max.plea": "Wah… semua ini\nbuat aku?!",
+  "info.feed.max.plea": "Wah… semua ini\nuntuk saya?!",
   "info.feed.max.note": "Naik {count} level sekaligus!",
   "info.feed.max.confirm": "Beri Makan",
   "info.breakthrough": "Terobosan",

@@ -63,7 +63,7 @@ export const INFO_VI = {
   "info.feed.five": "5 cấp",
   "info.feed.max": "MAX",
   "info.feed.max.title": "Cho ăn tối đa",
-  "info.feed.max.plea": "Oa… tất cả chỗ này\nđều cho mình sao?!",
+  "info.feed.max.plea": "Oa… tất cả chỗ này\nđều là cho em ạ?!",
   "info.feed.max.note": "Tăng {count} cấp chỉ trong một lần!",
   "info.feed.max.confirm": "Cho ăn",
   "info.breakthrough": "Đột phá",

@@ -63,7 +63,7 @@ export const INFO_ZH_HANT = {
   "info.feed.five": "5級",
   "info.feed.max": "MAX",
   "info.feed.max.title": "最大餵食",
-  "info.feed.max.plea": "哇……這些\n全都給我嗎？！",
+  "info.feed.max.plea": "哇……這些\n您全都要給我嗎？！",
   "info.feed.max.note": "一口氣提升{count}級！",
   "info.feed.max.confirm": "餵食",
   "info.breakthrough": "極限突破",

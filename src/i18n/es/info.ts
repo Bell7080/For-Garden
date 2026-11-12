@@ -63,7 +63,7 @@ export const INFO_ES = {
   "info.feed.five": "5 niveles",
   "info.feed.max": "MAX",
   "info.feed.max.title": "Alimentar al MÁX.",
-  "info.feed.max.plea": "¡Guau…! ¿Todo esto\nes para mí?",
+  "info.feed.max.plea": "¡Guau…! ¿Todo esto\nme lo da a mí?",
   "info.feed.max.note": "¡Sube {count} niveles de una vez!",
   "info.feed.max.confirm": "Alimentar",
   "info.breakthrough": "Ruptura",

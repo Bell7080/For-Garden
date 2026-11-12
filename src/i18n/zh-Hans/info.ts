@@ -63,7 +63,7 @@ export const INFO_ZH_HANS = {
   "info.feed.five": "5级",
   "info.feed.max": "MAX",
   "info.feed.max.title": "最大喂食",
-  "info.feed.max.plea": "哇……这些\n全都给我吗？！",
+  "info.feed.max.plea": "哇……这些\n您全都要给我吗？！",
   "info.feed.max.note": "一口气提升{count}级！",
   "info.feed.max.confirm": "喂食",
   "info.breakthrough": "极限突破",

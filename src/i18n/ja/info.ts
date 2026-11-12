@@ -64,7 +64,7 @@ export const INFO_JA = {
   "info.feed.five": "5 レベル",
   "info.feed.max": "MAX",
   "info.feed.max.title": "MAX給餌",
-  "info.feed.max.plea": "わあ…これ全部\nもらっていいの？！",
+  "info.feed.max.plea": "わあ…これ全部\nいただいていいんですか？！",
   "info.feed.max.note": "一気に{count}レベル上がります！",
   "info.feed.max.confirm": "給餌する",
   "info.breakthrough": "限界突破",

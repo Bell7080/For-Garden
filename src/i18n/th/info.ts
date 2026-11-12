@@ -63,7 +63,7 @@ export const INFO_TH = {
   "info.feed.five": "5 เลเวล",
   "info.feed.max": "MAX",
   "info.feed.max.title": "ป้อนสูงสุด",
-  "info.feed.max.plea": "ว้าว… ทั้งหมดนี่\nให้เราจริงเหรอ?!",
+  "info.feed.max.plea": "ว้าว… ทั้งหมดนี่\nมอบให้ฉันจริงๆ หรือ?!",
   "info.feed.max.note": "เลเวลขึ้นรวดเดียว {count} เลเวล!",
   "info.feed.max.confirm": "ป้อน",
   "info.breakthrough": "ทะลวงขีดจำกัด",

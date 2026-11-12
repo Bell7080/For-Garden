@@ -8206,7 +8206,7 @@ function tickTidalEchoes(fighter: Fighter, dt: number, state: SkirmishState, eve
     due.push(echo);
     return false;
   });
-  for (const echo of due) burstShallowPool(fighter, echo, echo.power, state, events);
+  for (const echo of due) burstShallowPool(fighter, echo, echo.power, state, events, true);
 }
 
 /**
@@ -8299,6 +8299,8 @@ function burstShallowPool(
   power: number,
   state: SkirmishState,
   events: SkirmishEvent[],
+  /** 궁극기(와 그 돌파의 두 번째 파도)가 터뜨린 판인가. 판정과 무관하게 화면이 잔향을 남기는 표식이다. */
+  ultimate = false,
 ): void {
   const shallows = fighter.def.basic.shallows;
   if (!shallows) return;
@@ -8325,7 +8327,7 @@ function burstShallowPool(
       events.push({ kind: "death", fighterId: foe.id, sourceId: fighter.id });
     }
   }
-  events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: false, damageType: "physical",
+  events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate, damageType: "physical",
     area: { shape: "radial", x: pool.x, y: pool.y, radius: shallows.radius } });
 }
 
@@ -10803,7 +10805,7 @@ function fireUltimateCore(
     // 궁극기 돌파(`tidalEcho`) — 터진 자리마다 두 번째 파도를 예약한다. 기절은 없고 위력만 줄어든다.
     const wave = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
     for (const pool of [...attacker.shallowPools]) {
-      burstShallowPool(attacker, pool, detonate.power, state, events);
+      burstShallowPool(attacker, pool, detonate.power, state, events, true);
       if (wave?.kind === "tidalEcho") {
         attacker.bt.tidalEchoes.push({ x: pool.x, y: pool.y, remaining: wave.delaySeconds, power: detonate.power * wave.powerPercent / 100 });
       }

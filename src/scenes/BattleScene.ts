@@ -2098,7 +2098,8 @@ export class BattleScene extends Phaser.Scene {
         supportive: event.supportive,
         status: event.status,
         ultimate: event.ultimate,
-      });
+      // 궁극기 범위는 꺼진 자리에 그 개체의 색으로 잔향을 남긴다 — 배속을 올려도 썼다는 것이 보이게.
+      }, caster ? { key: caster.fighter.id, palette: this.palette(caster) } : undefined);
       return undefined;
     }
     if (event.kind === "teamBuff") {

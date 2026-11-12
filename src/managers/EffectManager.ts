@@ -9,6 +9,7 @@ import { lashPoints } from "../ui/reachStrikeShape";
 import { flatDiamondPoints, flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_INK_WIDTH, SIGNATURE_SPECS, waveCrestPoints, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
 import { allowStatusCue, cueAngle, STATUS_CUE, stunOrbit, type StatusCueId } from "../ui/statusCueEffects";
 import { damagePopupStyle, risingAlpha, shouldShowDamagePopup, type DamagePopupRequest } from "../ui/damageNumbers";
+import { echoMarkPoints, laneEchoMarks, radialEchoMarks, ULTIMATE_ECHO, ultimateEchoFrame, type EchoMark, type EchoPoint } from "../ui/ultimateEcho";
 import { battlefieldWashBands, groundAreaStyle, laneAreaPoints, radialAreaPoints, type GroundAreaRequest, type GroundAreaShape, type GroundAreaStyle } from "../ui/groundAreas";
 import { COLOR, textStyle } from "../ui/theme";
 import { motionPolicy, presentationPolicy, type GraphicsQuality, type MotionPolicy } from "../core/settings";
@@ -108,6 +109,20 @@ interface SurfaceSlot {
   /** 0에서 1로 녹아들고, 사라질 때 같은 시간에 걸쳐 되돌아간다. */
   fade: number;
   last?: GroundSurface;
+}
+
+/** 궁극기 잔향 한 자리. 한 개체가 한 자리만 가지므로 시전자 키로 맞춘다. */
+interface EchoSlot {
+  graphics: Phaser.GameObjects.Graphics;
+  tween?: Phaser.Tweens.Tween;
+  openedAt: number;
+}
+
+/** 궁극기 범위가 남길 잔향의 주인. 색은 그 개체의 두 색(`combatPalette`)이다. */
+export interface UltimateEchoSource {
+  /** 같은 개체의 새 잔향이 옛 것을 갈아 끼우는 키(시전자 ID). */
+  key: string;
+  palette: CombatPalette;
 }
 
 interface RingSlot {
@@ -227,6 +242,9 @@ export class EffectManager {
   /** 몸을 두른 보호막. 전투원마다 한 장이고 두께 단계가 바뀐 프레임에만 다시 그린다. */
   private lastFocusAt: number | undefined;
   private readonly feverMarks = new Map<string, { siren: Phaser.GameObjects.Graphics; anger: Phaser.GameObjects.Image }>();
+  private readonly echoes = new Map<string, EchoSlot>();
+  /** 비필수 이동 거리 배율. 움직임 줄이기에서 잔향의 번짐·가라앉음을 멈춘다. */
+  private readonly distanceFactor: number;
   private readonly shieldAuras = new Map<string, { graphics: Phaser.GameObjects.Graphics; key: string }>();
   private frame = -1;
   private openedThisFrame = 0;
@@ -245,6 +263,7 @@ export class EffectManager {
     });
     this.shakeEnabled = motion.cameraShakeFactor > 0;
     this.shakeFactor = motion.cameraShakeFactor;
+    this.distanceFactor = motion.nonEssentialDistanceFactor;
     this.groundDepth = options.groundDepth ?? this.depth - 400;
     this.bodyDepth = options.bodyDepth ?? this.depth - 1;
     this.quality = presentationPolicy(options.graphicsQuality ?? "high");
@@ -417,8 +436,10 @@ export class EffectManager {
    * 무늬가 아니라 **색**이 말하고(`groundAreas.ts`), 순간과 지속은 남아 있는 시간이 가른다.
    * 모양은 판정이 쓴 것을 그대로 받는다 — 돌진을 원으로 그리면 보여 준 범위와 맞은 범위가 갈린다.
    */
-  groundArea(shape: GroundAreaShape, request: GroundAreaRequest): void {
+  groundArea(shape: GroundAreaShape, request: GroundAreaRequest, echo?: UltimateEchoSource): void {
     const now = this.rollFrame();
+    // 잔향은 예산과 따로 센다 — 같은 프레임에 타격이 몰려 본 범위가 밀려도, 궁극기를 썼다는 자국은 남아야 한다.
+    if (request.ultimate && echo) this.ultimateEcho(shape, echo, now);
     if (this.openedThisFrame >= EFFECT_BUDGET.perFrame) return;
     this.openedThisFrame += 1;
     const style = groundAreaStyle(request);
@@ -452,6 +473,131 @@ export class EffectManager {
       onComplete: () => {
         graphics.clear().setVisible(false);
         slot.tween = undefined;
+      },
+    });
+  }
+
+  /**
+   * 장판형 궁극기가 지나간 자리의 **잔향**(`ultimateEcho.ts`).
+   *
+   * 본 범위가 빠지기 시작할 때 그 아래에서 녹아들어 실제 시간으로 한동안 머문다 — 배속을 올려
+   * 두면 0.5초짜리 범위는 다른 타격 사이에 묻혀 궁극기를 썼다는 것조차 지나간다. 색은 그 개체의
+   * 속성(면)·직군(선)이고 결은 전장의 잉크 결이다. 같은 개체가 다시 쓰면(채널링의 다음 틱 포함)
+   * 같은 자리를 갈아 끼워 자국이 겹겹이 쌓이지 않는다.
+   */
+  private ultimateEcho(shape: GroundAreaShape, source: UltimateEchoSource, now: number): void {
+    // 한 번에 여러 판을 터뜨리는 궁극기(스피나의 여울)는 같은 프레임의 자국끼리 서로 갈아 끼우지 않는다.
+    let key = source.key;
+    for (let index = 1; this.echoes.get(key)?.openedAt === now && this.echoes.get(key)?.tween; index += 1) key = `${source.key}#${index}`;
+    let slot = this.echoes.get(key);
+    if (slot) {
+      slot.tween?.stop();
+    } else {
+      if (this.echoes.size >= ULTIMATE_ECHO.max) {
+        const [oldestKey, oldest] = [...this.echoes].reduce((old, entry) => (entry[1].openedAt < old[1].openedAt ? entry : old));
+        oldest.tween?.stop();
+        oldest.graphics.destroy();
+        this.echoes.delete(oldestKey);
+      }
+      slot = { graphics: this.scene.add.graphics(), openedAt: now };
+      this.echoes.set(key, slot);
+    }
+    slot.openedAt = now;
+    // 본 범위보다 한 겹 아래 — 그 위에서 막 터진 범위가 먼저 읽힌다.
+    const graphics = slot.graphics.clear().setAlpha(1).setDepth(this.groundDepth - 0.5).setVisible(true);
+    const fill = source.palette.main;
+    const line = lightenColor(source.palette.sub, ULTIMATE_ECHO.lineLighten);
+    const squash = AREA_IMPACT.squash;
+    const distance = this.distanceFactor;
+    let paint: (t: number) => void;
+    if (shape.shape === "battlefield") {
+      const arena = this.arena;
+      if (!arena) return;
+      graphics.setPosition(0, 0);
+      paint = (t) => {
+        const frame = ultimateEchoFrame(t, distance);
+        const width = arena.right - arena.left;
+        const height = arena.bottom - arena.top;
+        const short = Math.min(width, height);
+        graphics.clear();
+        for (const band of battlefieldWashBands()) {
+          const inset = short * band.inset;
+          graphics.fillStyle(fill, ULTIMATE_ECHO.washAlpha * band.alpha * frame.alpha * 0.4);
+          graphics.fillRect(arena.left, arena.top, width, inset);
+          graphics.fillRect(arena.left, arena.bottom - inset, width, inset);
+          graphics.fillRect(arena.left, arena.top, inset, height);
+          graphics.fillRect(arena.right - inset, arena.top, inset, height);
+        }
+        // 가장 바깥 띠의 안쪽 경계에 직군 색 선 한 줄 — 어느 개체의 기술이 판을 덮었는지 남는다.
+        const inner = short * battlefieldWashBands()[0]!.inset;
+        graphics.lineStyle(ULTIMATE_ECHO.inkWidth, INK_COLOR, ULTIMATE_ECHO.inkAlpha * frame.alpha * 0.6);
+        graphics.strokeRect(arena.left + inner, arena.top + inner, width - inner * 2, height - inner * 2);
+        graphics.lineStyle(ULTIMATE_ECHO.lineWidth, line, ULTIMATE_ECHO.lineAlpha * frame.alpha);
+        graphics.strokeRect(arena.left + inner, arena.top + inner, width - inner * 2, height - inner * 2);
+      };
+    } else {
+      const radial = shape.shape === "radial";
+      graphics.setPosition(radial ? shape.x : 0, radial ? shape.y : 0);
+      const outline = (scale: number): Phaser.Geom.Point[] => (radial
+        ? radialAreaPoints(shape.radius * scale)
+        : laneAreaPoints(shape.from, shape.to, shape.halfWidth * scale)
+      ).map((point) => new Phaser.Geom.Point(point.x, point.y));
+      // 통로의 가라앉는 겹은 반폭만 줄이면 길이는 그대로라 길쭉한 선이 남는다 — 가운데로 모이도록 양 끝도 함께 당긴다.
+      const settleOutline = (scale: number): Phaser.Geom.Point[] => {
+        if (radial) return outline(scale);
+        const mid = { x: (shape.from.x + shape.to.x) / 2, y: (shape.from.y + shape.to.y) / 2 };
+        const toward = (point: EchoPoint): EchoPoint => ({ x: mid.x + (point.x - mid.x) * scale, y: mid.y + (point.y - mid.y) * scale });
+        return laneAreaPoints(toward(shape.from), toward(shape.to), shape.halfWidth * scale).map((point) => new Phaser.Geom.Point(point.x, point.y));
+      };
+      const marks: EchoMark[] = radial
+        ? radialEchoMarks(shape.radius, squash)
+        : laneEchoMarks(shape.from, shape.to, shape.halfWidth, squash);
+      const markShapes = marks.map((mark) => echoMarkPoints(mark, squash).map((point) => new Phaser.Geom.Point(point.x, point.y)));
+      const markFill = lightenColor(fill, ULTIMATE_ECHO.marks.lighten);
+      const settleColor = lightenColor(fill, ULTIMATE_ECHO.settle.lighten);
+      paint = (t) => {
+        const frame = ultimateEchoFrame(t, distance);
+        const edge = outline(frame.edgeScale);
+        graphics.clear();
+        graphics.fillStyle(COLOR.void, ULTIMATE_ECHO.backdropAlpha * frame.alpha);
+        graphics.fillPoints(edge, true);
+        graphics.fillStyle(fill, ULTIMATE_ECHO.fillAlpha * frame.alpha);
+        graphics.fillPoints(edge, true);
+        for (const ring of frame.settle) {
+          if (ring.alpha <= 0) continue;
+          const points = settleOutline(ring.scale);
+          graphics.lineStyle(ULTIMATE_ECHO.settle.width + 2, INK_COLOR, ring.alpha * 0.5);
+          graphics.strokePoints(points, true);
+          graphics.lineStyle(ULTIMATE_ECHO.settle.width, settleColor, ring.alpha);
+          graphics.strokePoints(points, true);
+        }
+        // 바닥에 스민 자국 — 먹선으로 쥔 속성 색 조각이라 밝은 바닥 위에서도 떨어져 나온다.
+        for (const points of markShapes) {
+          graphics.fillStyle(markFill, ULTIMATE_ECHO.marks.alpha * frame.alpha);
+          graphics.fillPoints(points, true);
+          graphics.lineStyle(ULTIMATE_ECHO.marks.inkWidth, INK_COLOR, ULTIMATE_ECHO.marks.alpha * frame.alpha);
+          graphics.strokePoints(points, true);
+        }
+        graphics.lineStyle(ULTIMATE_ECHO.inkWidth, INK_COLOR, ULTIMATE_ECHO.inkAlpha * frame.alpha);
+        graphics.strokePoints(edge, true);
+        graphics.lineStyle(ULTIMATE_ECHO.lineWidth, line, ULTIMATE_ECHO.lineAlpha * frame.alpha);
+        graphics.strokePoints(edge, true);
+      };
+    }
+    paint(0);
+    const state = { t: 0 };
+    const owned = slot;
+    owned.tween = this.scene.tweens.add({
+      targets: state,
+      t: 1,
+      // 본 범위가 빠지기 시작할 때부터 이어받는다 — 겹쳐 시작하면 본 범위가 두 겹으로 진해진다.
+      delay: AREA_IMPACT.ultimateMs * INK_AREA.holdUntil,
+      duration: ULTIMATE_ECHO.ms,
+      ease: "Linear",
+      onUpdate: () => paint(state.t),
+      onComplete: () => {
+        owned.graphics.clear().setVisible(false);
+        owned.tween = undefined;
       },
     });
   }
@@ -1737,6 +1883,8 @@ export class EffectManager {
     this.emitters.forEach((emitter) => emitter.destroy());
     this.emitters.clear();
     this.rings.forEach((slot) => { slot.tween?.stop(); slot.graphics.destroy(); });
+    this.echoes.forEach((slot) => { slot.tween?.stop(); slot.graphics.destroy(); });
+    this.echoes.clear();
     this.rings.length = 0;
     this.numbers.forEach((slot) => { slot.tweens.forEach((tween) => tween.stop()); slot.label.destroy(); });
     this.numbers.length = 0;

@@ -87,7 +87,7 @@ export const BOUNTY_TIERS: readonly BountyTierDef[] = [
   { id: "bounty-3", order: 5, name: "현상수배 5급", rewardGold: 5_700, rounds: [
     { relicId: "neuri", level: 21 }, { relicId: "atra", level: 21 }, { relicId: "koma", level: 21 },
   ] },
-  // 6급부터 이카닉시아가 마지막 라운드의 벽으로 선다.
+  // 6급~9급은 이카닉시아가 마지막 라운드의 벽으로 선다(10급은 아모).
   { id: "bounty-8", order: 6, name: "현상수배 6급", rewardGold: 7_800, rounds: [
     { relicId: "pulsi", level: 27 }, { relicId: "amo", level: 27 }, { relicId: "ikanixia", level: 27 },
   ] },
@@ -100,9 +100,10 @@ export const BOUNTY_TIERS: readonly BountyTierDef[] = [
   { id: "bounty-10", order: 9, name: "현상수배 9급", rewardGold: 20_000, rounds: [
     { relicId: "ripa", level: 44 }, { relicId: "koma", level: 44 }, { relicId: "ikanixia", level: 44 },
   ] },
-  // 10급은 돌파로 상한을 연 만렙 셋, 그것도 가장 무거운 셋의 자리다.
+  // 10급은 돌파로 상한을 연 만렙 셋, 그것도 가장 무거운 셋의 자리다. LV.48에서는 아모가 가장 좁은 벽이라 마지막에 선다
+  // (v0.442.7 — 이카닉시아의 반향 막을 반으로 줄이자 이카닉시아·코마를 확실히 이기는 개체 수가 11종으로 같아져 아모와 자리를 바꿨다).
   { id: "bounty-5", order: 10, name: "현상수배 10급", rewardGold: 28_000, rounds: [
-    { relicId: "amo", level: 48 }, { relicId: "koma", level: 48 }, { relicId: "ikanixia", level: 48 },
+    { relicId: "ikanixia", level: 48 }, { relicId: "koma", level: 48 }, { relicId: "amo", level: 48 },
   ] },
 ];
 

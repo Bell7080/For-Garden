@@ -147,7 +147,8 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   // v0.441.0 직군 존재감(탱커 30 > 전사 20 > 암살자 10)·몰림 벌점 240 → 120: 5.6초·0.83 → 4.9초·0.95.
   ["현상수배 1단계", 5, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "normal", "bounty", 4.9, 0.95],
   // v0.362.0: 10단계로 늘리며 최상단(LV60) 첫 라운드가 토비 → 아모로 바뀌어 8.2 → 18.5초로 길어졌다.
-  ["현상수배 10단계", 60, () => [bountyRoundEnemy(BOUNTY_TIERS.find(({ order }) => order === 10)!.rounds[0])], "normal", "bounty", 18.5, 0.98],
+  // v0.442.7: 10급의 아모가 첫 라운드에서 마지막 라운드로 옮겨 갔다 — 같은 아모 조우를 계속 잰다.
+  ["현상수배 10단계", 60, () => [bountyRoundEnemy(BOUNTY_TIERS.find(({ order }) => order === 10)!.rounds.find(({ relicId }) => relicId === "amo")!)], "normal", "bounty", 18.5, 0.98],
   // v0.422.4: 엘라 발경의 방어력 40%는 세 걸음 모두 광역이라 몰려오는 무리에서 크게 든다 — 30.1 → 26.0초.
   // v0.441.0 직군 존재감(탱커 30 > 전사 20 > 암살자 10)·몰림 벌점 240 → 120: 둘씩 붙어 26.0 → 23.7초.
   ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 23.7, 0.85],

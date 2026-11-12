@@ -699,7 +699,7 @@ export type BasicAttack = AttackSkill & {
    *
    * 한 틱은 자기 공격력의 `percentPerStack`%이고 **방어를 지난다**(낮게 두어 고방어 적에게 1로
    * 수렴하지 않게 한다). 10겹이면 100%가 열 번에 나뉘어 들어간다. 틱을 다 넣는 시간은 겹 수와
-   * 무관하게 `windowSeconds` 안에 끝난다 — 25겹을 같은 간격으로 두면 발동이 다음 공격보다 길어진다.
+   * 무관하게 `windowSeconds` 안에 끝난다 — 상한까지 쌓인 겹을 같은 간격으로 두면 발동이 다음 공격보다 길어진다.
    */
   observationVolley?: { percentPerStack: number; windowSeconds: number };
   /** 실제 기본 공격 행동 수를 세어 주기 끝 타격을 난수 소비 없이 확정 치명타로 만든다. */

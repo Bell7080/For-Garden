@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  OBSERVATION_MAX_STACKS,
   applyCombatStatusEffect,
   attackInterval,
   createSkirmish,
@@ -22,7 +23,7 @@ import { getRelic } from "../../src/data/relics";
  * 디모는 쿠로·시로와 같은 귀속 소환수지만 앞을 막는 몸이 아니라 정해진 표적 없이 떠다니는 눈이다.
  */
 const ARENA: Arena = { left: 0, right: 1_000, top: 0, bottom: 1_200 };
-const OBSERVATION = { kind: "observation", seconds: 8, maxStacks: 25 } as const;
+const OBSERVATION = { kind: "observation", seconds: 8, maxStacks: OBSERVATION_MAX_STACKS } as const;
 
 /** 모든 전투원의 자동 행동을 끄고 시계·상태만 흐르게 한다. 시험할 손만 따로 연다. */
 function quiet(state: SkirmishState): void {
@@ -109,7 +110,9 @@ describe("관측", () => {
   it("은 겹이 쌓이고 상한에서 멈추며 다시 걸면 시간이 갱신되고 다하면 통째로 사라진다", () => {
     const { state, enemies } = setup();
     observe(enemies[0], state, 30);
-    expect(enemies[0].observation?.stacks).toBe(25);
+    expect(enemies[0].observation?.stacks).toBe(15);
+    expect(OBSERVATION_MAX_STACKS).toBe(15);
+    expect(getRelic("dimo").basic.statusEffects).toEqual([OBSERVATION]);
     step(state, 5);
     expect(enemies[0].observation?.remaining).toBeCloseTo(3, 1);
     observe(enemies[0], state, 1);
@@ -152,7 +155,7 @@ describe("모르페 — 산개 사격", () => {
       return hp - enemies[0].hp;
     };
     expect(damageAfter(10)).toBeGreaterThan(damageAfter(0));
-    expect(damageAfter(25)).toBeGreaterThan(damageAfter(10));
+    expect(damageAfter(15)).toBeGreaterThan(damageAfter(10));
   });
 
   it("의 틱은 방어를 지나간다 — 방어가 아무리 높아도 겹만큼 들어간다", () => {
@@ -184,15 +187,16 @@ describe("모르페 — 정조준 관측", () => {
       return { dealt: hp - highest.hp, left: highest.observation?.stacks ?? 0 };
     };
     const none = shot(0);
-    const many = shot(20);
+    const many = shot(15);
     expect(many.dealt).toBeGreaterThan(none.dealt);
     // 겹은 소모되지 않는다.
-    expect(many.left).toBe(20);
+    expect(many.left).toBe(15);
   });
 
   it("의 합산은 50겹까지만 인정한다", () => {
     const damageWith = (each: number) => {
-      const { state, morphe, enemies } = setup(["amo", "toby", "ripa"]);
+      // 한 적의 상한이 15겹이라 셋으로는 45겹에 그친다 — 넷이 서야 합산 상한 50에 닿는다.
+      const { state, morphe, enemies } = setup(["amo", "toby", "ripa", "amo"]);
       for (const enemy of enemies) { observe(enemy, state, each); enemy.hp = enemy.maxHp; }
       enemies[0].hp = enemies[0].maxHp * 2;
       morphe.energy = 300;
@@ -200,9 +204,9 @@ describe("모르페 — 정조준 관측", () => {
       fireUltimate(state, morphe.id);
       return hp - enemies[0].hp;
     };
-    // 3기 × 25겹 = 75겹이든 3기 × 20겹 = 60겹이든 합산 50에서 같다.
-    expect(damageWith(25)).toBeGreaterThan(0);
-    expect(damageWith(20)).toBe(damageWith(25));
+    // 4기 × 15겹 = 60겹이든 4기 × 13겹 = 52겹이든 합산 50에서 같다.
+    expect(damageWith(15)).toBeGreaterThan(0);
+    expect(damageWith(13)).toBe(damageWith(15));
   });
 });
 
@@ -283,11 +287,11 @@ describe("모르페 — 오버클럭", () => {
     return context;
   }
 
-  it("은 모르페와 디모가 함께 끓고 모르페 공격력의 500%를 각자 막으로 두른다", () => {
+  it("은 모르페와 디모가 함께 끓고 모르페 공격력의 250%를 각자 막으로 두른다", () => {
     const { morphe, dimo } = enterFever();
     expect(morphe.ferocityFever).toBe(true);
     expect(dimo.ferocityFever).toBe(true);
-    const expected = Math.round(morphe.def.stats.atk * 5);
+    const expected = Math.round(morphe.def.stats.atk * 2.5);
     expect(morphe.shield.amount).toBeGreaterThan(expected * 0.9);
     expect(dimo.shield.amount).toBeGreaterThan(expected * 0.9);
   });

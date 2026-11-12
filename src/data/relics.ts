@@ -1,4 +1,4 @@
-import { BLEED, POISON } from "../core/skirmish";
+import { BLEED, OBSERVATION_MAX_STACKS, POISON } from "../core/skirmish";
 import { registerDataText } from "../i18n";
 import { TORIKA_STORY } from "./relicStories/torika";
 import type { BasicAttack, RelicDef } from "../core/types";
@@ -135,13 +135,13 @@ const DIMO_DEF: RelicDef = {
   basic: {
     id: "dimo-basic", name: "다중 관측", power: 40, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical",
     targeting: "single", targetSelection: "fewestObservation",
-    statusEffects: [{ kind: "observation", seconds: 8, maxStacks: 25 }],
+    statusEffects: [{ kind: "observation", seconds: 8, maxStacks: OBSERVATION_MAX_STACKS }],
   },
   // 게이지는 스스로 채운다. 현재 체력이 가장 높은 적에게 한꺼번에 다섯 겹을 쌓는다.
   ultimate: {
     id: "dimo-ult", name: "위험 신호 관측", power: 60, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical",
     cost: 80, targeting: "single", targetSelection: "highestCurrentHp",
-    statusEffects: [{ kind: "observation", seconds: 8, maxStacks: 25, stacks: 5 }],
+    statusEffects: [{ kind: "observation", seconds: 8, maxStacks: OBSERVATION_MAX_STACKS, stacks: 5 }],
   },
 };
 
@@ -4682,7 +4682,7 @@ export const RELICS: RelicDef[] = [
      * 틱으로 켜진다(겹은 소모하지 않는다). 궁극기는 적 전원의 관측 합산에 비례한다. 그래서 디모가 살아서
      * 많이 걸수록 모르페가 세지고, 디모를 잃으면 방어·저항과 회복도 함께 꺼진다.
      */
-    ferocityTrait: { name: "오버클럭 ON", effectId: "overclock", shieldAttackPercent: 500, attackSpeedPercent: 50, auraDamagePercent: 50, auraRadius: 300 },
+    ferocityTrait: { name: "오버클럭 ON", effectId: "overclock", shieldAttackPercent: 250, attackSpeedPercent: 50, auraDamagePercent: 50, auraRadius: 300 },
     summons: [
       {
         def: DIMO_DEF, growthStat: "atk",

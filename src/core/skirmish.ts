@@ -1202,6 +1202,9 @@ export const FOCUS = {
  * 방어력을 거치지 않고 최대 체력 비율로 깎으므로, 단단한 상대일수록 상대적으로 아프다.
  * 수치는 데이터가 아니라 규칙이라 여기 한 곳에만 둔다.
  */
+/** 한 적에게 쌓이는 관측의 상한이다. 디모의 두 슬롯과 모르페의 돌파(공동 관측)가 같은 값을 읽는다(v0.447.0 25 → 15). */
+export const OBSERVATION_MAX_STACKS = 15;
+
 export const BLEED = {
   /** 지속 시간(초). */
   seconds: 3,
@@ -8548,7 +8551,7 @@ function strike(
   // 정조준 관측 — 적 전원의 관측 겹 합산(상한까지)이 바닥 위력 위에 겹마다 얹힌다. 겹은 소모하지 않는다.
   const joint = useUltimate ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : undefined;
   if (joint?.kind === "jointObservation" && livingDrones(state, attacker).length > 0) {
-    applyCombatStatusEffect(target, { kind: "observation", seconds: 8, maxStacks: 25, stacks: joint.stacks }, events, state, attacker.id);
+    applyCombatStatusEffect(target, { kind: "observation", seconds: 8, maxStacks: OBSERVATION_MAX_STACKS, stacks: joint.stacks }, events, state, attacker.id);
   }
   const observationPlan = useUltimate ? attacker.def.ultimate.observationStrike : undefined;
   const observationPower = observationPlan

@@ -569,6 +569,8 @@ export default {
   "keyword.bleed.description": "Recebe a cada segundo, por 3 segundos, dano fixo igual a 2% do PV máx. A Defesa não o reduz.",
   "keyword.minor-bleed.term": "Sangramento leve",
   "keyword.minor-bleed.description": "Recebe a cada segundo, por 2 segundos, dano fixo igual a 1% do PV máx. Uma reaplicação mais fraca não substitui um Sangramento mais forte.",
+  "keyword.deep-bleed.term": "Sangramento profundo",
+  "keyword.deep-bleed.description": "Um [[bleed|Sangramento]] mais fundo. A cada segundo causa dano fixo com uma fração maior do PV máx. e reduz a cura recebida enquanto durar.",
   "keyword.poison.term": "Veneno",
   "keyword.poison.description": "Recebe [[magical-damage|dano mágico]] a cada segundo igual a 22% do Ataque mais 22% do Poder mágico de quem aplica. O valor é fixado na aplicação, e um veneno mais forte que o sobrescreva mantém o próprio valor.",
   "keyword.liquidate.term": "Liquidar",

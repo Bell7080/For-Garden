@@ -569,6 +569,8 @@ export default {
   "keyword.bleed.description": "Erleidet 3 Sekunden lang jede Sekunde fixen Schaden in Höhe von 2% des max. Lebens. Verteidigung mindert ihn nicht.",
   "keyword.minor-bleed.term": "Leichte Blutung",
   "keyword.minor-bleed.description": "Erleidet 2 Sekunden lang jede Sekunde fixen Schaden in Höhe von 1% des max. Lebens. Eine schwächere Wiederholung überschreibt keine stärkere Blutung.",
+  "keyword.deep-bleed.term": "Tiefe Blutung",
+  "keyword.deep-bleed.description": "Eine tiefer gerissene [[bleed|Blutung]]. Verursacht jede Sekunde fixen Schaden in Höhe eines größeren Anteils des max. Lebens und senkt erhaltene Heilung, solange sie wirkt.",
   "keyword.poison.term": "Gift",
   "keyword.poison.description": "Erleidet jede Sekunde [[magical-damage|magischen Schaden]] in Höhe von 22 % des Angriffs plus 22 % der Zauberkraft des Verursachers. Der Wert wird beim Auftragen festgelegt; ein stärkeres Gift, das ihn überschreibt, behält seinen eigenen Wert.",
   "keyword.liquidate.term": "Liquidieren",

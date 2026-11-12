@@ -83,7 +83,7 @@ import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, bre
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveNowKeyword, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, plumeBurstKeyword, prickleReflectKeyword, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveNowKeyword, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, plumeBurstKeyword, frostbiteKeyword, prickleReflectKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { SummonInfoPopup } from "./SummonInfoPopup";
 import { openRelicFeedMaxPopup, openRelicResetPopup } from "./RelicResetPopup";
@@ -3523,7 +3523,7 @@ export function buildFerocityViewModel(
     id: "damage-value", term: String(convertedDamage), kind: "rule",
     description: t("skill.keyword.damage.bonus", { stat: damageSourceLabel, percent: defensePercent ?? attackPercent ?? abilityPercent }),
   });
-  for (const tag of [plumeKeyword(def, attack), plumeBurstKeyword(def, attack)]) if (tag) contextualKeywords.push(tag);
+  for (const tag of [plumeKeyword(def, attack), frostbiteKeyword(def, attack), plumeBurstKeyword(def, attack)]) if (tag) contextualKeywords.push(tag);
   // 전장의 열기는 희열의 회복량을 키우므로 그 태그를 이 쪽지에서도 눌러 읽게 한다.
   if (def.ferocityTrait.effectId === "battleHeat") {
     const elation = elationKeyword(def.passive);
@@ -3671,6 +3671,7 @@ export function buildSkillViewModel(options: {
       "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
       // 서리깃은 유티의 평타·궁극기 본문이 가리키는 개체 전용 규칙어라 그 쪽지에서 눌러 읽게 한다.
       plumeKeyword(finalDef, finalDef.stats.atk),
+      frostbiteKeyword(finalDef, finalDef.stats.atk),
       plumeBurstKeyword(finalDef, finalDef.stats.atk),
       // 리필·마지막 한 방울은 테쿠의 패시브·평타·궁극기 본문이 가리키는 개체 전용 규칙어다.
       refillKeyword(finalDef),

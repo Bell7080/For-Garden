@@ -24,17 +24,20 @@ describe("설명문 수치 강조 조각", () => {
 
 import { RELICS } from "../../src/data/relics";
 import { parseKeywordText } from "../../src/data/keywords";
-import { plumeBurstKeyword, plumeKeyword, prickleKeyword, prickleReflectKeyword } from "../../src/ui/skillPresentation";
+import { frostbiteKeyword, plumeBurstKeyword, plumeKeyword, prickleKeyword, prickleReflectKeyword } from "../../src/ui/skillPresentation";
 
 describe("개체 전용 쪽지의 현재 수치 태그", () => {
-  it("유티 서리깃 쪽지는 공격력으로 환산한 폭발 피해를 태그로 단다", () => {
+  it("유티 동상 쪽지는 공격력으로 환산한 피해를 태그로 달고, 서리깃 쪽지는 동상 태그로 넘긴다", () => {
     const yuti = RELICS.find((relic) => relic.id === "yuti")!;
     const burst = plumeBurstKeyword(yuti, 500)!;
     expect(burst.term).toBe("600");
-    const plume = plumeKeyword(yuti, 500)!;
-    const tagged = parseKeywordText(plume.description, [burst]).find((segment) => segment.keyword?.id === "plume-burst");
+    const frost = frostbiteKeyword(yuti, 500)!;
+    const tagged = parseKeywordText(frost.description, [burst]).find((segment) => segment.keyword?.id === "plume-burst");
     expect(tagged?.text).toBe("600");
-    expect(plumeKeyword(yuti)!.description).not.toContain("plume-burst");
+    expect(frostbiteKeyword(yuti)!.description).not.toContain("plume-burst");
+    const plume = plumeKeyword(yuti, 500)!;
+    expect(parseKeywordText(plume.description, [frost]).some((segment) => segment.keyword?.id === "yuti-frostbite")).toBe(true);
+    expect(plume.description).not.toContain("%");
     expect(plumeBurstKeyword(yuti)).toBeUndefined();
   });
 
@@ -89,15 +92,18 @@ describe("패시브의 현재 수치 태그", () => {
 
 import { skillDescription, shimmerBurstKeywords } from "../../src/ui/skillPresentation";
 
-describe("반짝 폭발 절의 현재 수치 태그", () => {
-  it("문장 끝 태그와 쪽지 사전이 같은 수를 가진다", () => {
+describe("티아 첨벙! 태그", () => {
+  it("일반 공격 본문은 첨벙!을 가리키기만 하고, 수치와 현재 값은 그 태그가 갖는다", () => {
     const skill = RELICS.flatMap((relic) => [relic.basic, relic.ultimate]).find((entry) => "shimmerBurst" in entry && entry.shimmerBurst !== undefined)!;
     const stats = { ap: 400, maxHp: 1000 };
     const text = skillDescription(skill, stats);
     const keywords = shimmerBurstKeywords(skill, stats);
-    expect(keywords).toHaveLength(2);
-    for (const keyword of keywords) expect(text).toContain(`[[${keyword.id}|${keyword.term}]]`);
-    expect(skillDescription(skill, {})).not.toContain("shimmer-burst");
-    expect(shimmerBurstKeywords(skill)).toEqual([]);
+    expect(keywords.map((keyword) => keyword.id)).toEqual(["tia-splash", "shimmer-burst-damage", "shimmer-burst-shield"]);
+    const [splash, ...values] = keywords;
+    expect(text).toContain(`[[tia-splash|${splash.term}]]`);
+    expect(text).not.toContain("50%");
+    for (const keyword of values) expect(splash.description).toContain(`[[${keyword.id}|${keyword.term}]]`);
+    expect(shimmerBurstKeywords(skill).map((keyword) => keyword.id)).toEqual(["tia-splash"]);
+    expect(shimmerBurstKeywords(skill)[0].description).not.toContain("shimmer-burst");
   });
 });

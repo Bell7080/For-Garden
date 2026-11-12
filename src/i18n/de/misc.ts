@@ -216,6 +216,8 @@ export const MISC_DE = {
   "profile.unlock.achievement": "Erhältlich durch alle Stufen der Errungenschaft „{name}“",
   "profile.picker.equipped": "Angelegt",
   "profile.picker.unlocked": "Freigeschaltet",
+  "profile.picker.ownedOnly": "Nur Besitz",
+  "profile.picker.notOwned": "Nicht im Besitz",
   "profile.nickname.create.title": "Willkommen im Forschungsteam!",
   "profile.nickname.create.question": "Wie heißt du, Forschungskraft?",
   "profile.nickname.create.save": "Mit diesem Namen starten",

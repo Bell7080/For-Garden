@@ -216,6 +216,8 @@ export const MISC_ZH_HANS = {
   "profile.unlock.achievement": "完成成就「{name}」全部阶段后获得",
   "profile.picker.equipped": "使用中",
   "profile.picker.unlocked": "已解锁",
+  "profile.picker.ownedOnly": "仅显示已拥有",
+  "profile.picker.notOwned": "未拥有",
   "profile.nickname.create.title": "欢迎你，研究员！",
   "profile.nickname.create.question": "研究员，你叫什么名字呢？",
   "profile.nickname.create.save": "用这个名字开始",

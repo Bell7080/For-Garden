@@ -216,6 +216,8 @@ export const MISC_ID = {
   "profile.unlock.achievement": "Didapat setelah menamatkan semua tingkat pencapaian 「{name}」",
   "profile.picker.equipped": "Dipakai",
   "profile.picker.unlocked": "Terbuka",
+  "profile.picker.ownedOnly": "Hanya dimiliki",
+  "profile.picker.notOwned": "Belum dimiliki",
   "profile.nickname.create.title": "Selamat datang, Peneliti Riset!",
   "profile.nickname.create.question": "Siapa nama Anda, Peneliti Riset?",
   "profile.nickname.create.save": "Mulai dengan nama ini",

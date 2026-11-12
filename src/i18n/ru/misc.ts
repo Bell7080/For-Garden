@@ -216,6 +216,8 @@ export const MISC_RU = {
   "profile.unlock.achievement": "Выдаётся за все ступени достижения «{name}»",
   "profile.picker.equipped": "Надето",
   "profile.picker.unlocked": "Открыто",
+  "profile.picker.ownedOnly": "Только моё",
+  "profile.picker.notOwned": "Нет в наличии",
   "profile.nickname.create.title": "Добро пожаловать, исследователь!",
   "profile.nickname.create.question": "Как вас зовут, исследователь?",
   "profile.nickname.create.save": "Начать с этим именем",

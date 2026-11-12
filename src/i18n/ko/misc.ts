@@ -241,6 +241,8 @@ export const MISC_KO = {
   "profile.unlock.achievementTier": "업적 「{name}」 {tier}단계 보상 수령 시 획득",
   "profile.picker.equipped": "착용 중",
   "profile.picker.unlocked": "해금 완료",
+  "profile.picker.ownedOnly": "보유만 보기",
+  "profile.picker.notOwned": "미보유",
   "profile.nickname.create.title": "반가워요, 연구원 님!",
   "profile.nickname.create.question": "연구원 님의 이름은 무엇인가요?",
   "profile.nickname.create.save": "이 이름으로 시작하기",

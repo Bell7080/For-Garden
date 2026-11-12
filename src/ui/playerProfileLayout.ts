@@ -84,6 +84,13 @@ export const AVATAR_PICKER = {
   /** 미리보기 바로 아래 — 고른 것의 이름과 해금 조건. 수식어 탭의 미리보기는 얼굴 대신 수식어 칩이다. */
   info: { nameY: 340, conditionY: 386, previewChip: { width: 320, height: 76 } },
   tabs: { y: 474, width: 280, height: 70, gap: 18 },
+  /**
+   * 「보유만 보기」 칩 — 라벨 줄과 목록 사이의 빈 띠 오른쪽 끝. 세 탭이 같은 값을 함께 쓴다.
+   * 칩 아랫변(y + height/2)이 목록 첫 줄(`photos.top`)보다 위에 있어야 한다.
+   */
+  ownedToggle: { y: 548, width: 250, height: 50, right: 40 },
+  /** 미보유 칸을 누르는 어둠 — 칸과 같은 실루엣으로 덮는다. 미보유 얼굴은 정보창처럼 검은 실루엣이고, 어두운 액자 면에 묻히지 않게 그 칸만 밝은 면을 깐다. */
+  missing: { dim: 0.62, labelAlpha: 0.38, sampleAlpha: 0.3, silhouetteTint: 0x000000, silhouetteAlpha: 0.88, silhouetteFill: 0x4a5a6e },
   photos: { top: 588, columns: 5, cell: 150, gap: 24 },
   frames: { top: 598, columns: 3, width: 272, height: 256, gap: 18, avatarSize: 124 },
   modifiers: { top: 598, columns: 3, width: 272, height: 76, gap: 18 },

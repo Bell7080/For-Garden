@@ -227,6 +227,8 @@ export const MISC_JA = {
   "profile.unlock.achievement": "実績「{name}」を最後まで達成すると獲得",
   "profile.picker.equipped": "装備中",
   "profile.picker.unlocked": "解放済み",
+  "profile.picker.ownedOnly": "所持のみ表示",
+  "profile.picker.notOwned": "未所持",
   "profile.nickname.create.title": "ようこそ、研究員さん！",
   "profile.nickname.create.question": "研究員さんのお名前は？",
   "profile.nickname.create.save": "この名前ではじめる",

@@ -217,6 +217,8 @@ export const MISC_EN = {
   "profile.unlock.achievement": "Earned by completing every tier of \"{name}\"",
   "profile.picker.equipped": "Equipped",
   "profile.picker.unlocked": "Unlocked",
+  "profile.picker.ownedOnly": "Owned only",
+  "profile.picker.notOwned": "Not owned",
   "profile.nickname.create.title": "Welcome, Researcher!",
   "profile.nickname.create.question": "What should we call you, Researcher?",
   "profile.nickname.create.save": "Start with this name",

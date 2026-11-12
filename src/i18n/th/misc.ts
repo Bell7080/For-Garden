@@ -216,6 +216,8 @@ export const MISC_TH = {
   "profile.unlock.achievement": "รับเมื่อทำความสำเร็จ「{name}」ครบทุกขั้น",
   "profile.picker.equipped": "กำลังใช้",
   "profile.picker.unlocked": "ปลดล็อกแล้ว",
+  "profile.picker.ownedOnly": "เฉพาะที่มี",
+  "profile.picker.notOwned": "ยังไม่มี",
   "profile.nickname.create.title": "ยินดีต้อนรับ นักวิจัย!",
   "profile.nickname.create.question": "นักวิจัยชื่ออะไรเอ่ย?",
   "profile.nickname.create.save": "เริ่มด้วยชื่อนี้",

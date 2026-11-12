@@ -1734,6 +1734,26 @@
 "Freigeschaltet",
 "Открыто"
 ],
+"profile.picker.ownedOnly": [
+"仅显示已拥有",
+"เฉพาะที่มี",
+"Chỉ đã sở hữu",
+"Hanya dimiliki",
+"Solo obtenidos",
+"Só obtidos",
+"Nur Besitz",
+"Только моё"
+],
+"profile.picker.notOwned": [
+"未拥有",
+"ยังไม่มี",
+"Chưa sở hữu",
+"Belum dimiliki",
+"No obtenido",
+"Não obtido",
+"Nicht im Besitz",
+"Нет в наличии"
+],
 "profile.edit.frameLocked": [
 "LV.{level}",
 "LV.{level}",

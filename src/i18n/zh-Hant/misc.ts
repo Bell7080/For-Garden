@@ -216,6 +216,8 @@ export const MISC_ZH_HANT = {
   "profile.unlock.achievement": "完成成就「{name}」全部階段後獲得",
   "profile.picker.equipped": "使用中",
   "profile.picker.unlocked": "已解鎖",
+  "profile.picker.ownedOnly": "僅顯示已擁有",
+  "profile.picker.notOwned": "未擁有",
   "profile.nickname.create.title": "歡迎你，研究員！",
   "profile.nickname.create.question": "研究員，你叫什麼名字呢？",
   "profile.nickname.create.save": "用這個名字開始",

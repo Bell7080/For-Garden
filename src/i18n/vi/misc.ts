@@ -216,6 +216,8 @@ export const MISC_VI = {
   "profile.unlock.achievement": "Nhận khi hoàn thành mọi bậc của thành tựu 「{name}」",
   "profile.picker.equipped": "Đang dùng",
   "profile.picker.unlocked": "Đã mở khóa",
+  "profile.picker.ownedOnly": "Chỉ đã sở hữu",
+  "profile.picker.notOwned": "Chưa sở hữu",
   "profile.nickname.create.title": "Chào mừng nhà nghiên cứu!",
   "profile.nickname.create.question": "Nhà nghiên cứu tên là gì nhỉ?",
   "profile.nickname.create.save": "Bắt đầu với tên này",

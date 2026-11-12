@@ -216,6 +216,8 @@ export const MISC_ES = {
   "profile.unlock.achievement": "Se obtiene al completar todos los niveles del logro «{name}»",
   "profile.picker.equipped": "Equipado",
   "profile.picker.unlocked": "Desbloqueado",
+  "profile.picker.ownedOnly": "Solo obtenidos",
+  "profile.picker.notOwned": "No obtenido",
   "profile.nickname.create.title": "¡Bienvenido, Investigador!",
   "profile.nickname.create.question": "¿Cómo te llamas, investigador?",
   "profile.nickname.create.save": "Empezar con este nombre",

@@ -51,7 +51,7 @@ export const STATUS_RU = {
   "status.intimidation": "Устрашение",
   "status.intimidation.detail": "{stacks} / {max} зар. · При заполнении впадает в страх",
   "status.fear": "Страх",
-  "status.fear.detail": "Бежит · Без обычной атаки · Защита −50% · {time}",
+  "status.fear.detail": "Бежит · Без обычной атаки · Защита·Сопротивление −50% · {time}",
   "status.plume": "Ледяное перо",
   "status.plume.detail": "{stacks}/{max} зар. · осталось {time}",
   "status.frostbite": "Обморожение",

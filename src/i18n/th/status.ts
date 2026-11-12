@@ -51,7 +51,7 @@ export const STATUS_TH = {
   "status.intimidation": "ความข่มขวัญ",
   "status.intimidation.detail": "{stacks} / {max} ชั้น · เต็มแล้วจะตกอยู่ในความหวาดกลัว",
   "status.fear": "ความหวาดกลัว",
-  "status.fear.detail": "กำลังหนี · โจมตีปกติไม่ได้ · พลังป้องกัน −50% · {time}",
+  "status.fear.detail": "กำลังหนี · โจมตีปกติไม่ได้ · ป้องกัน·ต้านทาน −50% · {time}",
   "status.plume": "ขนน้ำค้างแข็ง",
   "status.plume.detail": "{stacks} / {max} ชั้น · เหลือ {time}",
   "status.frostbite": "หิมะกัด",

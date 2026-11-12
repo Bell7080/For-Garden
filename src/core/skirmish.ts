@@ -2762,8 +2762,8 @@ function applyFear(
 }
 
 /**
- * 공포에 빠져 있는 동안 깎이는 방어력(%). 공포를 거는 길(아크의 위압·포효, 원정 증강)이 모두 같은 상태를 지나므로
- * 값은 공포 자체가 갖는다 — 규칙어 `fear`가 이 수를 적고 `ark.test`가 둘을 맞춰 본다. 저항력은 건드리지 않는다.
+ * 공포에 빠져 있는 동안 깎이는 방어력·저항력(%). 공포를 거는 길(아크의 위압·포효, 원정 증강)이 모두 같은 상태를 지나므로
+ * 값은 공포 자체가 갖는다 — 규칙어 `fear`가 이 수를 적고 `ark.test`가 둘을 맞춰 본다.
  */
 export const FEAR_DEFENSE_REDUCTION_PERCENT = 50;
 
@@ -6044,13 +6044,13 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   const bulwark = undyingGuardPercent(target);
   // 적 돌파(`fangShave`) — 앞니에 갉인 몸은 방어력이 겹마다 깎인다. 저항은 건드리지 않는다.
   const fang = target.bt.fangShave ? Math.max(0, 1 - target.bt.fangShave.stacks * target.bt.fangShave.percentPerStack / 100) : 1;
-  // 공포에 빠진 몸은 달아나는 동안 방어력이 깎인다(`FEAR_DEFENSE_REDUCTION_PERCENT`). 저항은 건드리지 않는다.
+  // 공포에 빠진 몸은 달아나는 동안 방어력·저항력이 함께 깎인다(`FEAR_DEFENSE_REDUCTION_PERCENT`).
   const feared = target.fear !== null ? 1 - FEAR_DEFENSE_REDUCTION_PERCENT / 100 : 1;
   if (fang === 1 && feared === 1 && bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && mural <= 0 && bulwark <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
     def: target.def.stats.def * fang * feared * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
     // 시약 반응은 정적 정의가 아닌 런타임 실제 감소량이며, 여러 제공자가 있어도 유효 저항은 0 아래로 내리지 않는다.
-    res: Math.max(0, target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + target.augmentResistancePercent / 100) * shred - reagentReduction + (torika?.resistanceBonus ?? 0)),
+    res: Math.max(0, target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + target.augmentResistancePercent / 100) * shred * feared - reagentReduction + (torika?.resistanceBonus ?? 0)),
   } } };
 }
 

@@ -1772,7 +1772,7 @@ export default {
   "keyword.intimidation.term": "威壓",
   "keyword.intimidation.description": "不造成傷害的標記。每層持續6秒，疊到3層時會自動觸發[[fear|恐懼]]並清除層數。已陷入恐懼或處於免疫的敵人不會疊加。",
   "keyword.fear.term": "恐懼",
-  "keyword.fear.description": "持續2秒，會從施加者身邊逃開且無法進行[[basic-attack|普通攻擊]]，但仍可使用必殺技。在此期間[[def|防禦力]]降低50%。結束後6秒內對新的威壓和恐懼免疫。",
+  "keyword.fear.description": "持續2秒，會從施加者身邊逃開且無法進行[[basic-attack|普通攻擊]]，但仍可使用必殺技。在此期間[[def|防禦力]]和[[res|抗性]]降低50%。結束後6秒內對新的威壓和恐懼免疫。",
   "firstMeeting.ark": "嘿哈哈哈！您看到了嗎，主人？大家都貼到牆上去了。……等等，剛才那樣很嚇人吧？",
   "firstMeeting.yuti": "正面交給前輩們吧。側面由我來，老大。",
   "relic.teku.name": "特庫",

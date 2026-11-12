@@ -74,7 +74,7 @@ describe("아크 — 규칙어 계약", () => {
     expect(intimidation).toContain(`${INTIMIDATE.maxStacks}겹`);
     expect(fear).toContain(`${INTIMIDATE.fearSeconds}초`);
     expect(fear).toContain(`${INTIMIDATE.immunitySeconds}초`);
-    expect(fear).toContain(`[[def|방어력]]이 ${FEAR_DEFENSE_REDUCTION_PERCENT}%`);
+    expect(fear).toContain(`[[def|방어력]]과 [[res|저항력]]이 ${FEAR_DEFENSE_REDUCTION_PERCENT}%`);
   });
 
   it("의 일반 공격은 패시브와 같은 위압 계약을 쓴다", () => {
@@ -116,7 +116,7 @@ describe("아크 — 거대한 그림자", () => {
     expect(ids).not.toContain("stun");
   });
 
-  it("은 공포에 빠진 동안 방어력만 절반으로 깎고, 풀리면 되돌린다", () => {
+  it("은 공포에 빠진 동안 방어력·저항력을 절반으로 깎고, 풀리면 되돌린다", () => {
     const { state, ark, enemies } = setup();
     const [enemy] = enemies;
     const before = defensiveDefinition(enemy, state).def.stats;
@@ -124,7 +124,7 @@ describe("아크 — 거대한 그림자", () => {
     expect(enemy.fear).not.toBeNull();
     const during = defensiveDefinition(enemy, state).def.stats;
     expect(during.def).toBeCloseTo(before.def * (1 - FEAR_DEFENSE_REDUCTION_PERCENT / 100));
-    expect(during.res).toBeCloseTo(before.res);
+    expect(during.res).toBeCloseTo(before.res * (1 - FEAR_DEFENSE_REDUCTION_PERCENT / 100));
     step(state, INTIMIDATE.fearSeconds + 0.2);
     expect(enemy.fear).toBeNull();
     expect(defensiveDefinition(enemy, state).def.stats.def).toBeCloseTo(before.def);

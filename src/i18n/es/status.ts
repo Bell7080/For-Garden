@@ -51,7 +51,7 @@ export const STATUS_ES = {
   "status.intimidation": "Intimidación",
   "status.intimidation.detail": "{stacks} / {max} cargas · Al llenarse entra en miedo",
   "status.fear": "Miedo",
-  "status.fear.detail": "Huyendo · Sin ataque básico · Defensa −50% · {time}",
+  "status.fear.detail": "Huyendo · Sin ataque básico · Defensa·Resistencia −50% · {time}",
   "status.plume": "Plumaescarcha",
   "status.plume.detail": "{stacks}/{max} cargas · quedan {time}",
   "status.frostbite": "Quemadura gélida",

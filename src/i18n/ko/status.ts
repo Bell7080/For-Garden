@@ -60,7 +60,7 @@ export const STATUS_KO = {
   "status.intimidation": "위압",
   "status.intimidation.detail": "{stacks} / {max}겹 · 다 차면 공포에 빠진다",
   "status.fear": "공포",
-  "status.fear.detail": "달아나는 중 · 기본 공격 불가 · 방어력 −50% · {time}",
+  "status.fear.detail": "달아나는 중 · 기본 공격 불가 · 방어·저항 −50% · {time}",
   "status.plume": "서리깃",
   "status.plume.detail": "{stacks} / {max}겹 · {time} 남음",
   "status.frostbite": "동상",

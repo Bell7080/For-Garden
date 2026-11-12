@@ -1772,7 +1772,7 @@ export default {
   "keyword.intimidation.term": "Einschüchterung",
   "keyword.intimidation.description": "Eine Markierung ohne Schaden. Jeder Stapel hält 6 Sekunden, und bei 3 Stapeln löst er von selbst [[fear|Furcht]] aus und die Stapel verschwinden. Bei Gegnern in Furcht oder mit Immunität bauen sich keine Stapel auf.",
   "keyword.fear.term": "Furcht",
-  "keyword.fear.description": "Fliehe 2 Sekunden lang vor dem Verursacher und kann keine [[basic-attack|Standardangriffe]] einsetzen. Ultimativen Fähigkeiten bleiben möglich. Währenddessen sinkt die [[def|Verteidigung]] um 50 %. Danach ist der Gegner 6 Sekunden lang immun gegen neue Einschüchterung und Furcht.",
+  "keyword.fear.description": "Fliehe 2 Sekunden lang vor dem Verursacher und kann keine [[basic-attack|Standardangriffe]] einsetzen. Ultimativen Fähigkeiten bleiben möglich. Währenddessen sinken [[def|Verteidigung]] und [[res|Widerstand]] um 50 %. Danach ist der Gegner 6 Sekunden lang immun gegen neue Einschüchterung und Furcht.",
   "firstMeeting.ark": "Muhahaha! Hast du das gesehen, Meister? Alle drücken sich an die Wand. ...Moment, das eben war gruselig, oder?",
   "firstMeeting.yuti": "Die Front überlassen wir den Älteren. Die Flanke übernehme ich, Boss.",
   "relic.teku.name": "Teku",

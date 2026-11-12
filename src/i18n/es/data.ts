@@ -1772,7 +1772,7 @@ export default {
   "keyword.intimidation.term": "Intimidación",
   "keyword.intimidation.description": "Una marca que no inflige daño. Cada carga dura 6 segundos y, con 3 cargas, desencadena [[fear|Miedo]] por sí sola y las cargas desaparecen. No se acumula en un enemigo que esté en Miedo o inmune.",
   "keyword.fear.term": "Miedo",
-  "keyword.fear.description": "Durante 2 segundos, huye de quien lo causó y no puede usar [[basic-attack|ataques básicos]]. Aún puede usar definitivas. Mientras dura, su [[def|Defensa]] baja un 50%. Al terminar, es inmune a nueva Intimidación y Miedo durante 6 segundos.",
+  "keyword.fear.description": "Durante 2 segundos, huye de quien lo causó y no puede usar [[basic-attack|ataques básicos]]. Aún puede usar definitivas. Mientras dura, su [[def|Defensa]] y [[res|Resistencia]] bajan un 50%. Al terminar, es inmune a nueva Intimidación y Miedo durante 6 segundos.",
   "firstMeeting.ark": "¡Muajajaja! ¿Lo has visto, Amo? Todos pegados a la pared. ...Espera, eso de ahora daba miedo, ¿verdad?",
   "firstMeeting.yuti": "El frente que lo lleven los veteranos. El flanco me lo quedo yo, Jefe.",
   "relic.teku.name": "Teku",

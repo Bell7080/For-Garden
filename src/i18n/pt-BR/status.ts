@@ -51,7 +51,7 @@ export const STATUS_PT_BR = {
   "status.intimidation": "Intimidação",
   "status.intimidation.detail": "{stacks} / {max} acúmulos · Ao encher entra em medo",
   "status.fear": "Medo",
-  "status.fear.detail": "Fugindo · Sem ataque básico · Defesa −50% · {time}",
+  "status.fear.detail": "Fugindo · Sem ataque básico · Defesa·Resistência −50% · {time}",
   "status.plume": "Pluma-Geada",
   "status.plume.detail": "{stacks}/{max} cargas · restam {time}",
   "status.frostbite": "Queimadura de gelo",

@@ -1,4 +1,5 @@
 import { ELEMENT_COUNTERS } from "../core/element";
+import { BLEED } from "../core/skirmish";
 import type { CombatStatusEffect, Element, RelicDef } from "../core/types";
 import { RAID_BOSS_POOL } from "./raid";
 
@@ -63,7 +64,7 @@ export const RAID_GUIDES: Readonly<Record<RaidBossId, RaidGuide>> = {
   sukusuino: {
     bossId: "sukusuino",
     patterns: [
-      { slot: "basic", values: (def) => ({ every: def.basic.statusEffectEvery ?? 4, percent: statusOf(def.basic, "bleed")?.healingReceivedReductionPercent ?? 0 }) },
+      { slot: "basic", values: (def) => ({ every: def.basic.statusEffectEvery ?? 4, percent: BLEED.deepHealingCutPercent }) },
       { slot: "ultimate", values: (def) => ({ seconds: stunSeconds(def.ultimate) }) },
       { slot: "ferocity", values: (def) => ({ radius: def.ferocityTrait.effectId === "splashDamage" ? def.ferocityTrait.radius : 0 }) },
     ],

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { unitStatusViews } from "../../src/ui/unitStatusModel";
-import { applyCombatStatusEffect, gainElation, bossDamageMultiplier, breakthroughSkill, currentAttackSpeed, gainFerocity, moveSpeed, receivedDamage, createSkirmish, fighterReach, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, tryTriggerLowHpVanish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
+import { BLEED, applyCombatStatusEffect, gainElation, bossDamageMultiplier, breakthroughSkill, currentAttackSpeed, gainFerocity, moveSpeed, receivedDamage, createSkirmish, fighterReach, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, tryTriggerLowHpVanish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
 import { FEROCITY_RULES, ferocityMaxOf } from "../../src/core/ferocity";
 import { BREAKTHROUGH_STEPS, isBreakthroughSlotOpen } from "../../src/core/relicProgression";
 import { getRelic, RELICS } from "../../src/data/relics";
@@ -182,10 +182,10 @@ describe("돌파 효과 문구", () => {
 
   it("는 렉시아 네 슬롯의 강화 수치와 전투 개념을 모두 표시한다", () => {
     const lexia = getRelic("rex");
-    // 깊은 출혈의 매초 비율은 태그가 말한다 — 본문은 이 돌파만의 회복 감소만 적는다.
-    expect(breakthroughEffectText(lexia, "basic")).toContain("[[deep-bleed|깊은 출혈]]로 강화된다");
+    // 깊은 출혈의 매초 비율과 회복 감소는 태그가 말한다 — 본문은 강화된다는 것까지만 적는다.
+    expect(breakthroughEffectText(lexia, "basic")).toContain("[[deep-bleed|깊은 출혈]]로 강화되며");
     expect(breakthroughEffectText(lexia, "basic")).not.toContain("최대 체력의 4%");
-    expect(breakthroughEffectText(lexia, "basic")).toContain("받는 [[healing-cut|회복량]]을 40% 낮추며");
+    expect(breakthroughEffectText(lexia, "basic")).not.toContain("[[healing-cut|");
     expect(breakthroughEffectText(lexia, "ultimate")).toContain("피해의 50%만큼 체력을 회복");
     expect(breakthroughEffectText(lexia, "ferocity")).toContain("조금 넓은 범위");
     expect(breakthroughEffectText(lexia, "passive")).toContain("최대 체력·[[def|방어력]]·[[res|저항력]]이 25% 증가");
@@ -224,15 +224,15 @@ describe("렉시아 한계 돌파", () => {
     expect(lexia.def.stats.res).toBeCloseTo(getRelic("rex").stats.res * 1.25);
     torika.attackCooldown = 999; lexia.attackCooldown = 0;
     stepSkirmish(state, 0.05, () => 0.99);
-    expect(torika.bleed).toMatchObject({ percent: 4, healingReceivedReductionPercent: 40, sourceId: lexia.id });
+    expect(torika.bleed).toMatchObject({ percent: 4, healingReceivedReductionPercent: BLEED.deepHealingCutPercent, sourceId: lexia.id });
     // 더 약한 출혈은 깊은 출혈의 강도·회복 감소·출처를 덮지 않는다.
     torika.bleed!.remaining = 1;
     const events: SkirmishEvent[] = [];
     refreshBleed(torika, 3, 2, events, "other-source");
-    expect(torika.bleed).toMatchObject({ remaining: 3, percent: 4, healingReceivedReductionPercent: 40, sourceId: lexia.id });
+    expect(torika.bleed).toMatchObject({ remaining: 3, percent: 4, healingReceivedReductionPercent: BLEED.deepHealingCutPercent, sourceId: lexia.id });
   });
 
-  it("는 깊은 출혈 중 토리카가 받는 회복량을 40% 낮춘다", () => {
+  it("는 깊은 출혈 중 토리카가 받는 회복량을 공용 깊은 출혈 값만큼 낮춘다", () => {
     const state = lexiaBattle(); engage(state);
     const lexia = findFighter(state, "player-0")!;
     const torika = findFighter(state, "enemy-0")!;
@@ -243,7 +243,7 @@ describe("렉시아 한계 돌파", () => {
     expect(tryTriggerEmergencyRecovery(torika, state)).toBe(true);
     const before = torika.hp;
     for (let tick = 0; tick < 5; tick += 1) stepSkirmish(state, 0.25, () => 0.99);
-    expect(torika.hp - before).toBeCloseTo(torika.maxHp * 0.035 * 0.6, 4);
+    expect(torika.hp - before).toBeCloseTo(torika.maxHp * 0.035 * (1 - BLEED.deepHealingCutPercent / 100), 4);
   });
 
   it("는 궁극기에 50% 흡혈을 더하고 처치해도 고정 피해 전환이나 게이지 환급을 주지 않는다", () => {

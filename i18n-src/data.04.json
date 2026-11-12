@@ -170,14 +170,14 @@
 "Глубокое кровотечение"
 ],
 "keyword.deep-bleed.description": [
-"更深的[[bleed|出血]]。3秒内每秒受到相当于最大生命4%的固定伤害。防御力无法减免，持续期间受到的治疗减少。",
-"[[bleed|เลือดไหล]]ที่ลึกขึ้น ได้รับความเสียหายคงที่เท่ากับ 4% ของ HP สูงสุดทุกวินาทีเป็นเวลา 3 วินาที พลังป้องกันลดไม่ได้ และได้รับการฟื้นฟูน้อยลงระหว่างที่ยังมีผล",
-"[[bleed|Chảy máu]] sâu hơn. Mỗi giây trong 3 giây chịu sát thương cố định bằng 4% HP tối đa. Thủ không giảm được, và giảm hồi máu nhận được khi còn hiệu lực.",
-"[[bleed|Pendarahan]] yang lebih dalam. Menerima kerusakan tetap sebesar 4% HP maks tiap detik selama 3 detik. Pertahanan tidak bisa menguranginya, dan penyembuhan yang diterima berkurang selama aktif.",
-"Un [[bleed|Sangrado]] más hondo. Recibe cada segundo, durante 3 segundos, daño fijo igual al 4% de los PV máx. La Defensa no lo reduce, y la curación recibida disminuye mientras dura.",
-"Um [[bleed|Sangramento]] mais fundo. Recebe a cada segundo, por 3 segundos, dano fixo igual a 4% do PV máx. A Defesa não o reduz, e a cura recebida diminui enquanto durar.",
-"Eine tiefer gerissene [[bleed|Blutung]]. Erleidet 3 Sekunden lang jede Sekunde fixen Schaden in Höhe von 4% des max. Lebens. Verteidigung mindert ihn nicht, und erhaltene Heilung sinkt, solange sie wirkt.",
-"Более глубокое [[bleed|кровотечение]]. 3 секунды каждую секунду получает фиксированный урон в 4% макс. ОЗ. Защита его не снижает, а получаемое лечение снижено, пока оно действует."
+"更深的[[bleed|出血]]。3秒内每秒受到相当于最大生命4%的固定伤害。防御力无法减免，持续期间受到的治疗减少30%。",
+"[[bleed|เลือดไหล]]ที่ลึกขึ้น ได้รับความเสียหายคงที่เท่ากับ 4% ของ HP สูงสุดทุกวินาทีเป็นเวลา 3 วินาที พลังป้องกันลดไม่ได้ และได้รับการฟื้นฟูน้อยลง 30%ระหว่างที่ยังมีผล",
+"[[bleed|Chảy máu]] sâu hơn. Mỗi giây trong 3 giây chịu sát thương cố định bằng 4% HP tối đa. Thủ không giảm được, và giảm 30% hồi máu nhận được khi còn hiệu lực.",
+"[[bleed|Pendarahan]] yang lebih dalam. Menerima kerusakan tetap sebesar 4% HP maks tiap detik selama 3 detik. Pertahanan tidak bisa menguranginya, dan penyembuhan yang diterima berkurang 30% selama aktif.",
+"Un [[bleed|Sangrado]] más hondo. Recibe cada segundo, durante 3 segundos, daño fijo igual al 4% de los PV máx. La Defensa no lo reduce, y la curación recibida disminuye un 30% mientras dura.",
+"Um [[bleed|Sangramento]] mais fundo. Recebe a cada segundo, por 3 segundos, dano fixo igual a 4% do PV máx. A Defesa não o reduz, e a cura recebida diminui 30% enquanto durar.",
+"Eine tiefer gerissene [[bleed|Blutung]]. Erleidet 3 Sekunden lang jede Sekunde fixen Schaden in Höhe von 4% des max. Lebens. Verteidigung mindert ihn nicht, und erhaltene Heilung sinkt um 30%, solange sie wirkt.",
+"Более глубокое [[bleed|кровотечение]]. 3 секунды каждую секунду получает фиксированный урон в 4% макс. ОЗ. Защита его не снижает, а получаемое лечение снижено на 30%, пока оно действует."
 ],
 "keyword.poison.term": [
 "中毒",

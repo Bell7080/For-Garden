@@ -570,7 +570,7 @@ export default {
   "keyword.minor-bleed.term": "轻微出血",
   "keyword.minor-bleed.description": "2秒内每秒受到相当于最大生命1%的固定伤害。较弱的重复施加不会覆盖较强的出血。",
   "keyword.deep-bleed.term": "深度出血",
-  "keyword.deep-bleed.description": "更深的[[bleed|出血]]。3秒内每秒受到相当于最大生命4%的固定伤害。防御力无法减免，持续期间受到的治疗减少。",
+  "keyword.deep-bleed.description": "更深的[[bleed|出血]]。3秒内每秒受到相当于最大生命4%的固定伤害。防御力无法减免，持续期间受到的治疗减少30%。",
   "keyword.poison.term": "中毒",
   "keyword.poison.description": "每秒受到相当于施加者攻击力22%与法术强度22%之和的[[magical-damage|魔法伤害]]。数值在施加瞬间确定，更强的毒覆盖时保留其数值。",
   "keyword.liquidate.term": "清算",

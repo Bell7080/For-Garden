@@ -81,4 +81,8 @@ export const AUGMENT_EN = {
   "augment.stat.detail.lifeSteal": "Heal additionally for {points}% of actual enemy HP lost to lifesteal-eligible attacks. Adds to existing lifesteal. Shield absorption and overkill do not count; existing healing reduction applies.",
   "augment.tag.controlCooldown": "CC cooldown: {cooldown}s",
   "augment.tag.controlRecovery": "Augment control lasts at most {cap}s. The target resists further augment control for {gap}s after it ends and must make one new hostile attack. That first attack also grants {gap}s of recovery. All sources and types share this rule.",
+  "augment.tag.activation": "Activation",
+  "augment.tag.rules": "Application rules",
+  "augment.tag.rulesLink": "View detailed rules",
+  "augment.tag.controlSummary": "Augment control: up to {cap}s · at least {gap}s between controls.",
 } as const;

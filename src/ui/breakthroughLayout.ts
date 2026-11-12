@@ -74,11 +74,11 @@ export const BREAK_STEPS = {
   /**
    * 줄 한 장의 높이와 줄 간격.
    *
-   * 글을 키운 만큼 줄이 함께 자란다 — 27px 넉 줄이 들어가야 가장 긴 설명(폭주 돌파)이 줄 판
-   * 밖으로 흐르지 않고, 줄 사이도 그만큼 벌려야 네 장이 한 덩어리로 뭉쳐 보이지 않는다.
-   * 판 높이는 이 둘에서 거꾸로 나오므로 값을 키우면 창이 저절로 세로로 늘어난다.
+   * height는 최소 높이다. 실제 효과 문장의 높이와 위아래 여백을 재서 더 긴 행만 늘린다.
+   * step과 height의 차이는 행 사이 여백으로 유지하므로 설명이 길어져도 다음 행과 겹치지 않는다.
    */
   row: { height: 168, step: 200 },
+  textPadY: 24,
   /**
    * 열린 줄과 아직 안 열린 줄의 색.
    *
@@ -124,15 +124,23 @@ export interface BreakthroughStepsLayout {
   height: number;
   rowWidth: number;
   rows: readonly number[];
+  rowHeights: readonly number[];
   /** 설명 글이 넘지 않아야 하는 폭. */
   textWrap: number;
 }
 
 /** 단계 수에서 표의 높이와 모든 줄 자리를 구한다. */
-export function breakthroughStepsLayout(stepCount: number): BreakthroughStepsLayout {
+export function breakthroughStepsLayout(stepCount: number, textHeights: readonly number[] = []): BreakthroughStepsLayout {
   const panel = BREAK_STEPS;
-  const rows = Array.from({ length: Math.max(0, stepCount) }, (_, index) => panel.firstRowY + index * panel.row.step);
-  const lastBottom = (rows.at(-1) ?? panel.firstRowY) + panel.row.height / 2;
+  const rowHeights = Array.from({ length: Math.max(0, stepCount) }, (_, index) =>
+    Math.max(panel.row.height, Math.ceil((textHeights[index] ?? 0) + panel.textPadY * 2)));
+  const rows: number[] = [];
+  let nextTop = panel.firstRowY - panel.row.height / 2;
+  for (const height of rowHeights) {
+    rows.push(nextTop + height / 2);
+    nextTop += height + panel.row.step - panel.row.height;
+  }
+  const lastBottom = (rows.at(-1) ?? panel.firstRowY) + (rowHeights.at(-1) ?? panel.row.height) / 2;
   const rowWidth = panel.width - panel.rowInset;
   return {
     height: lastBottom + panel.bottomMargin,
@@ -140,6 +148,7 @@ export function breakthroughStepsLayout(stepCount: number): BreakthroughStepsLay
     // 설명은 줄 판 안에서 오른쪽 여백까지만 흐른다.
     textWrap: rowWidth / 2 - panel.textRightMargin - panel.textX,
     rows,
+    rowHeights,
   };
 }
 
@@ -151,7 +160,7 @@ export function breakthroughStepsLayout(stepCount: number): BreakthroughStepsLay
  */
 export function stepsFirstRowClearsBevel(layout: BreakthroughStepsLayout): boolean {
   const bevel = Math.min(BREAK_STEPS.width, layout.height) * POPUP_BODY_BEVEL_RATIO;
-  const rowTop = (layout.rows[0] ?? BREAK_STEPS.firstRowY) - BREAK_STEPS.row.height / 2;
+  const rowTop = (layout.rows[0] ?? BREAK_STEPS.firstRowY) - (layout.rowHeights[0] ?? BREAK_STEPS.row.height) / 2;
   const markLeft = BREAK_STEPS.gradeMark.x - BREAK_STEPS.gradeMark.size;
   // 깎임보다 아래에서 시작하면 왼쪽 변이 직선이므로 줄 판 폭만 지키면 된다.
   if (rowTop >= bevel) return markLeft >= -BREAK_STEPS.width / 2;

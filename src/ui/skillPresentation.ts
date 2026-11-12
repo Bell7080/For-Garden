@@ -1,4 +1,5 @@
 import { defenseGainKeywords, statGainAlias } from "./statGainKeywords";
+import { formatEffectDescription } from "./skillExplanation";
 import type { DamagePreview } from "../core/damage";
 import { findKeyword, type KeywordDef } from "../data/keywords";
 import type { KeywordTextOptions } from "../managers/KeywordManager";
@@ -1478,7 +1479,11 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
   const body = breakthroughEffectBody(def, slot, stats);
   const now = body === undefined ? undefined : breakthroughNowValue(def, slot, stats);
   // 스탯 비례 효과는 지금 능력치로 환산한 값을 끝에 태그로 덧붙인다(레벨·룬이 바뀌면 함께 바뀐다).
-  return now === undefined ? body : `${body} ${t("skill.keyword.nowValue", { value: `[[${BREAKTHROUGH_NOW_ID}|${now.amount}]]` })}`;
+  if (now === undefined || body === undefined) return body;
+  const value = t("skill.keyword.nowValue", { value: `[[${BREAKTHROUGH_NOW_ID}|${now.amount}]]` });
+  // 자신·아군 보호막이 함께 적힌 효과에서 자기 수치가 아군 수치처럼 붙지 않게 한다.
+  return def.breakthroughEffects?.[slot]?.kind === "thickShell"
+    ? `${formatEffectDescription(body)}\n${t("skill.target.self")} ${value}` : `${body} ${value}`;
 }
 
 /** 돌파 문장 끝의 「현재 N」 태그 ID. 한 쪽지에는 슬롯 하나의 효과만 서므로 하나면 된다. */

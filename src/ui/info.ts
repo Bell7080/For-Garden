@@ -44,7 +44,8 @@ import { addObservationJournalButton, openObservationJournal } from "./Observati
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { openElementPopup, openRolePopup } from "./affinityPopups";
-import { breakthroughSlotLabel, breakthroughEffectText, breakthroughEffectKeywords } from "./skillPresentation";
+import { breakthroughEffectText, breakthroughEffectKeywords } from "./skillPresentation";
+import { formatBreakthroughDescription } from "./skillExplanation";
 import { addBreakthroughGradeMark, addResonanceMark, RARITY_TONE, BREAKTHROUGH_GRADE_ROMAN } from "./rarityMark";
 import { RESONANCE_CAP, RESONANCE_CHEESECAKE, RESONANCE_STAT_PERCENT, canResonate, resonanceFragmentCost, resonanceFragmentSpend, resonanceOf } from "../core/relicResonance";
 import { addFramedIcon, addItemFrame } from "./itemFrame";
@@ -3334,7 +3335,16 @@ export function openBreakthroughStepsPopup(
   /** 성장한 능력치. 넘기면 회복처럼 계산 가능한 수치가 실제 값으로 선다. */
   stats?: Stats,
 ): void {
-  const layout = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length);
+  const textWrap = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length).textWrap;
+  // 먼저 실제 문장을 세워 높이를 잰다. 문장이 긴 캐릭터도 글자를 줄이지 않고
+  // 문장마다 끊어 읽으며, 설명에 맞춰 해당 행과 판이 함께 자란다.
+  const lines = BREAKTHROUGH_STEPS.map(entry => keywords.layout(
+    formatBreakthroughDescription(breakthroughEffectText(def, entry.slot, stats) ?? t("skill.breakthrough.effect.none")), {
+      width: textWrap, size: BREAK_STEPS.textSize, lineSpacing: 8,
+      contextualKeywords: breakthroughEffectKeywords(def, entry.slot, stats),
+    },
+  ));
+  const layout = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length, lines.map(line => line.height));
   // **돋보기 자리에 붙이지 않고 화면 가운데에 선다.** 네 줄이 저마다 설명을 이고 있어 판이
   // 길어지는데, 돋보기에 붙이면 그 판이 화면 한쪽으로 쏠려 위나 아래가 잘린다.
   popups.open({
@@ -3356,7 +3366,7 @@ export function openBreakthroughStepsPopup(
       // 등급 하나로 시작하는 개체는 네 줄이 모두 안 열린 줄이라, 어둡게 누르면 이 창을 처음
       // 여는 사람이 캄캄한 판 넷을 본다.
       const tone = reached ? BREAK_STEPS.tone.reached : BREAK_STEPS.tone.locked;
-      body.add(drawLayer(scene, 0, y, slantedRect(layout.rowWidth, BREAK_STEPS.row.height, 16), {
+      body.add(drawLayer(scene, 0, y, slantedRect(layout.rowWidth, layout.rowHeights[index], 16), {
         fill: tone.fill,
         alpha: tone.alpha,
         edge: COLOR.accent,
@@ -3380,22 +3390,18 @@ export function openBreakthroughStepsPopup(
         // 이미 뚫은 줄은 정보창 아래 액자 줄과 **같은 얼굴**로 선다(강조색 + 이름 뒤의 `+`) —
         // 두 자리가 같은 것을 다르게 말하면 표를 읽고 돌아와 다시 맞춰 봐야 한다.
         // "없음"으로 정해 둔 자리는 뚫었어도 `+`를 달지 않는다 — 달라진 것이 없다.
-        enhanced: reached && def.breakthroughEffects?.[entry.slot]?.kind !== "none",
+        enhanced: breakthroughEnhances(def, grade - 1, entry.slot),
         // 액자는 그 줄의 주제라 안 열린 줄에서도 어느 기술인지 알아볼 수 있어야 한다.
         dimAlpha: reached ? undefined : BREAK_STEPS.lockedIconAlpha,
       });
       icon.setPosition(BREAK_STEPS.icon.x, y);
       body.add(icon);
       // 열리는 것은 **이 개체의** 효과다. 문구는 정의에서 조립하므로 화면이 따로 적지 않고,
-      // 아직 설계하지 않은 개체는 어느 슬롯이 열리는지만 말한다.
-      const opens = breakthroughEffectText(def, entry.slot, stats) ?? breakthroughSlotLabel(entry.slot);
+      // 정의가 없는 슬롯도 추가 효과가 없으므로 "없음"으로 표시한다.
       // **이 표의 문장도 스킬 쪽지와 같은 것이다.** 그래서 강조된 말도 같은 경계로 그려 눌리게
       // 한다 — 맨 글자로 그리면 `[[taunt|도발]]` 같은 표기가 그대로 보이고, 같은 문장이 창마다
       // 다른 것을 말하게 된다. 세로 가운데 맞춤은 컨테이너 높이를 재서 직접 올린다.
-      const line = keywords.layout(opens, {
-        width: layout.textWrap, size: BREAK_STEPS.textSize, lineSpacing: 8,
-        contextualKeywords: breakthroughEffectKeywords(def, entry.slot, stats),
-      });
+      const line = lines[index];
       line.setPosition(BREAK_STEPS.textX, y - line.height / 2);
       body.add(line);
     });

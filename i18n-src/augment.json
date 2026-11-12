@@ -1,4 +1,8 @@
 {
+"augment.tag.activation": ["触发条件","เงื่อนไขการทำงาน","Điều kiện kích hoạt","Syarat aktivasi","Activación","Ativação","Auslösebedingungen","Условия активации"],
+"augment.tag.rules": ["应用规则","กฎการใช้งาน","Quy tắc áp dụng","Aturan penerapan","Reglas de aplicación","Regras de aplicação","Anwendungsregeln","Правила применения"],
+"augment.tag.rulesLink": ["查看详细规则","ดูกฎโดยละเอียด","Xem quy tắc chi tiết","Lihat aturan lengkap","Ver reglas detalladas","Ver regras detalhadas","Detaillierte Regeln ansehen","Подробные правила"],
+"augment.tag.controlSummary": ["增幅控制：最长{cap}秒・再次控制至少间隔{gap}秒。","การควบคุมจากเสริมพลัง: สูงสุด {cap} วินาที · ห่างกันอย่างน้อย {gap} วินาที","Khống chế từ Tăng cường: tối đa {cap} giây · cách nhau ít nhất {gap} giây.","Kontrol augment: hingga {cap} dtk · jeda minimal {gap} dtk.","Control de mejora: hasta {cap} s · intervalo mínimo de {gap} s.","Controle de Aprimoramento: até {cap} s · intervalo mínimo de {gap} s.","Verstärkungskontrolle: maximal {cap} s · mindestens {gap} s Abstand.","Контроль усиления: до {cap} с · интервал не менее {gap} с."],
 "augment.stat.maxHp": ["最大生命", "HP สูงสุด", "HP tối đa", "HP Maks", "PV máx.", "PV máx.", "Max. LP", "Макс. ОЗ"],
 "augment.stat.initialShield": ["初始护盾", "โล่เริ่มต้น", "Khiên ban đầu", "Perisai Awal", "Escudo inicial", "Escudo inicial", "Startschild", "Начальный щит"],
 "augment.stat.statusPotency": ["状态效力", "ความแรงสถานะ", "Hiệu lực trạng thái", "Potensi Status", "Potencia de estado", "Potência de status", "Statuswirkung", "Сила эффектов"],

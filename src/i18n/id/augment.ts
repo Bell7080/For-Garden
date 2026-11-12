@@ -81,4 +81,8 @@ export const AUGMENT_ID = {
   "augment.stat.detail.lifeSteal": "Pulihkan tambahan {points}% dari HP musuh yang benar-benar hilang akibat serangan yang memenuhi syarat curi nyawa. Ditambah ke curi nyawa yang ada. Serapan perisai dan kerusakan berlebih tidak dihitung; pengurangan penyembuhan berlaku.",
   "augment.tag.controlCooldown": "Jeda CC: {cooldown} dtk",
   "augment.tag.controlRecovery": "CC augment berlangsung maksimal {cap} dtk. Setelah berakhir, target menahan CC augment selama {gap} dtk dan harus melakukan satu serangan baru ke musuh. Serangan pertama itu juga memberi pemulihan {gap} dtk. Semua sumber dan jenis berbagi aturan ini.",
+  "augment.tag.activation": "Syarat aktivasi",
+  "augment.tag.rules": "Aturan penerapan",
+  "augment.tag.rulesLink": "Lihat aturan lengkap",
+  "augment.tag.controlSummary": "Kontrol augment: hingga {cap} dtk · jeda minimal {gap} dtk.",
 } as const;

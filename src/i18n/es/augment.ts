@@ -81,4 +81,8 @@ export const AUGMENT_ES = {
   "augment.stat.detail.lifeSteal": "Cura adicional del {points}% de los PV enemigos realmente perdidos por ataques aptos para robo de vida. Se suma al robo existente. No cuentan escudos ni daño sobrante; se aplica reducción de curación.",
   "augment.tag.controlCooldown": "Recarga de control: {cooldown}s",
   "augment.tag.controlRecovery": "El control de Mejoras dura como máximo {cap}s. Tras terminar, el objetivo resiste nuevo control durante {gap}s y debe realizar un nuevo ataque enemigo. Ese primer ataque también concede {gap}s de recuperación. Todas las fuentes y tipos comparten esta regla.",
+  "augment.tag.activation": "Activación",
+  "augment.tag.rules": "Reglas de aplicación",
+  "augment.tag.rulesLink": "Ver reglas detalladas",
+  "augment.tag.controlSummary": "Control de mejora: hasta {cap} s · intervalo mínimo de {gap} s.",
 } as const;

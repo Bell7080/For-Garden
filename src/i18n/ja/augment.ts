@@ -81,4 +81,8 @@ export const AUGMENT_JA = {
   "augment.stat.detail.lifeSteal": "吸血対象の攻撃で実際に減った敵HPの{points}%を追加回復。既存の吸血に加算。シールド吸収・超過ダメージは含めず、既存の回復減少を適用。",
   "augment.tag.controlCooldown": "CC再発動：{cooldown}秒ごと",
   "augment.tag.controlRecovery": "オーグメントCCは1回最大{cap}秒。終了後{gap}秒は再制御されない。対象が新たに敵を1回攻撃する必要があり、その最初の攻撃後も{gap}秒を保証する。発動者と種類で共有。",
+  "augment.tag.activation": "発動条件",
+  "augment.tag.rules": "適用ルール",
+  "augment.tag.rulesLink": "詳しいルールを見る",
+  "augment.tag.controlSummary": "オーグメントの行動妨害：最大{cap}秒・再付与まで最低{gap}秒。",
 } as const;

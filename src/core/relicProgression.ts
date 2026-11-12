@@ -251,11 +251,12 @@ export function isBreakthroughSlotOpen(breakthrough: number, slot: BreakthroughS
  * 그 슬롯의 돌파가 **강화로 읽히는가** — 열려 있고, 그 자리의 효과가 "없음"이 아닌가.
  *
  * "없음"(`BreakthroughNone`)은 효과를 정해 둔 자리라 표에는 그대로 적히지만, 액자의 `+`나 스킬
- * 쪽지의 노란 줄은 **실제로 무언가 달라진 칸**만 갖는다. 아직 설계하지 않은 빈 슬롯은 예전대로
- * 열리면 강화로 읽힌다 — 판정은 개체 종류가 아니라 그 자리의 효과 하나로만 한다.
+ * 쪽지의 노란 줄은 **실제로 무언가 달라진 칸**만 갖는다. 정의가 없는 슬롯도 전투에서
+ * 추가 효과가 없으므로 강화로 표시하지 않는다.
  */
 export function breakthroughEnhances(def: Pick<RelicDef, "breakthroughEffects">, breakthrough: number, slot: BreakthroughSlot): boolean {
-  return isBreakthroughSlotOpen(breakthrough, slot) && def.breakthroughEffects?.[slot]?.kind !== "none";
+  const effect = def.breakthroughEffects?.[slot];
+  return isBreakthroughSlotOpen(breakthrough, slot) && effect !== undefined && effect.kind !== "none";
 }
 
 /** 그 슬롯을 여는 돌파 등급(로마자로 세는 수). 화면이 "몇 등급에서 열리는가"를 적을 때 쓴다. */

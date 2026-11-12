@@ -64,12 +64,21 @@ describe("범용 원정 태그 증강", () => {
 
   it.each(EXPEDITION_TAG_AUGMENTS)("$id: 원본 태그 팝업 대신 실제 증강 수치와 제한을 표시한다", def => {
     const keywords = expeditionAugmentKeywords(def);
-    expect(keywords).toHaveLength(1);
-    expect(keywords[0].description).not.toMatch(/\{\w+\}|augment\.tag\./);
+    const [effect, rules] = keywords;
+    for (const keyword of keywords) expect(keyword.description).not.toMatch(/\{\w+\}|augment\.tag\./);
     const linked = parseKeywordText(expeditionAugmentEffectLabel(def), keywords).filter(segment => segment.keyword);
     expect(linked).toHaveLength(1);
     expect(linked[0].keyword).toBe(keywords[0]);
-    expect(keywords[0].description).toContain("전투당 최대");
+    // 핵심 효과와 발동 제한을 분리해도 실제 계약의 수치와 규칙 링크는 남는다.
+    expect(effect.description).not.toContain("전투당 최대");
+    expect(def.effect.kind).toBe("triggered");
+    if (def.effect.kind !== "triggered") return;
+    const activation = effect.sections![0].text;
+    expect(activation).toContain(`전투당 최대 ${def.effect.limits.maxTriggers}회`);
+    expect(activation).toContain(`${def.effect.limits.cooldownSeconds}초`);
+    const rulesLink = parseKeywordText(activation, keywords).find(segment => segment.keyword);
+    expect(rulesLink?.keyword).toBe(rules);
+    expect(rules.description).toContain("전투마다 초기화");
   });
 
   it("4타 주기·쿨다운·대상 변경을 실제 전투에서 지킨다", () => {

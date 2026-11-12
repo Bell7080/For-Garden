@@ -81,4 +81,8 @@ export const AUGMENT_DE = {
   "augment.stat.detail.lifeSteal": "Zusätzlich um {points}% der tatsächlich verlorenen Gegner-LP durch lebensraubfähige Angriffe heilen. Addiert sich zu vorhandenem Lebensraub. Schildabsorption und überschüssiger Schaden zählen nicht. Heilungsreduktion gilt.",
   "augment.tag.controlCooldown": "CC-Abklingzeit: {cooldown}s",
   "augment.tag.controlRecovery": "Verstärkungs-CC dauert höchstens {cap}s. Danach ist das Ziel {gap}s geschützt und muss einen neuen Angriff gegen einen Gegner ausführen. Dieser erste Angriff gewährt ebenfalls {gap}s Erholung. Alle Quellen und Typen teilen diese Regel.",
+  "augment.tag.activation": "Auslösebedingungen",
+  "augment.tag.rules": "Anwendungsregeln",
+  "augment.tag.rulesLink": "Detaillierte Regeln ansehen",
+  "augment.tag.controlSummary": "Verstärkungskontrolle: maximal {cap} s · mindestens {gap} s Abstand.",
 } as const;

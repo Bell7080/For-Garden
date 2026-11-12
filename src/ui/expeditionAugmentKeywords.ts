@@ -4,6 +4,7 @@ import { expeditionTagTerm, expeditionPayloadTag } from "../data/expeditionTagAu
 import { type KeywordDef } from "../data/keywords";
 import type { ExpeditionAugmentDef } from "../data/expeditionAugments";
 import { t } from "../i18n";
+import { formatEffectDescription } from "./skillExplanation";
 
 
 const DETAIL_KEYS = {
@@ -35,10 +36,20 @@ export function expeditionAugmentKeywords(def: ExpeditionAugmentDef): KeywordDef
     detail = t(DETAIL_KEYS[kind as keyof typeof DETAIL_KEYS], { healingReceivedReductionPercent: 0, ...(values as unknown as Readonly<Record<string, string | number | undefined>>) });
   }
   const limits = t("augment.tag.limits", { max: effect.limits.maxTriggers, cooldown: effect.limits.cooldownSeconds });
-  const control = expeditionControlCooldown(payload) === undefined ? "" : `\n${t("augment.tag.controlRecovery", { cap: EXPEDITION_CC_POLICY.maxSeconds, gap: EXPEDITION_CC_POLICY.recoverySeconds })}`;
+  const controlValues = { cap: EXPEDITION_CC_POLICY.maxSeconds, gap: EXPEDITION_CC_POLICY.recoverySeconds };
+  const hasControl = expeditionControlCooldown(payload) !== undefined;
+  const control = hasControl ? t("augment.tag.controlSummary", controlValues) : "";
   const rule = t(effect.limits.target === "self" && payload.kind !== "shell" ? "augment.tag.selfRule" : effect.trigger === "onDamaged" ? "augment.tag.receivedRule" : "augment.tag.attackRule");
+  // 효과는 먼저 읽고, 발동 제한은 별도 칸에서 확인한다. 공격 계산의 예외는
+  // 한 겹 더 눌러 읽는다. 공용 스킬 용어 팝업의 칸 배치와 문장 강조를 재사용한다.
+  const rulesId = "augment-rules";
   return [{ id: "augment-tag", term: expeditionTagTerm(kind),
-    kind: effect.limits.target === "self" ? "buff" : "debuff", description: `${detail}\n${limits}\n${rule}${control}` }];
+    kind: effect.limits.target === "self" ? "buff" : "debuff",
+    description: formatEffectDescription([detail, control].filter(Boolean).join(" ")),
+    sections: [{ label: t("augment.tag.activation"), name: "", text: `${formatEffectDescription(limits)}\n\n[[${rulesId}|${t("augment.tag.rulesLink")}]]` }],
+  }, { id: rulesId, term: t("augment.tag.rules"), kind: "rule",
+    description: [rule, hasControl ? t("augment.tag.controlRecovery", controlValues) : ""].filter(Boolean).join(" "),
+  }];
 }
 
 export function expeditionTagAugmentLabel(def: ExpeditionAugmentDef): string | undefined {

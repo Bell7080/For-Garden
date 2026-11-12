@@ -81,4 +81,8 @@ export const AUGMENT_PT_BR = {
   "augment.stat.detail.lifeSteal": "Cura adicional de {points}% dos PV inimigos realmente perdidos por ataques aptos para roubo de vida. Soma ao roubo existente. Escudos e dano excedente não contam; redução de cura se aplica.",
   "augment.tag.controlCooldown": "Recarga de controle: {cooldown}s",
   "augment.tag.controlRecovery": "O controle de Aprimoramentos dura no máximo {cap}s. Após terminar, o alvo resiste a novo controle por {gap}s e deve realizar um novo ataque inimigo. Esse primeiro ataque também concede {gap}s de recuperação. Todas as fontes e tipos compartilham essa regra.",
+  "augment.tag.activation": "Ativação",
+  "augment.tag.rules": "Regras de aplicação",
+  "augment.tag.rulesLink": "Ver regras detalhadas",
+  "augment.tag.controlSummary": "Controle de Aprimoramento: até {cap} s · intervalo mínimo de {gap} s.",
 } as const;

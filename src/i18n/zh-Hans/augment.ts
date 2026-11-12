@@ -81,4 +81,8 @@ export const AUGMENT_ZH_HANS = {
   "augment.stat.detail.lifeSteal": "额外恢复可吸血攻击实际扣除敌方生命的{points}%。与现有吸血相加，护盾吸收与溢出伤害不计入，应用现有治疗降低。",
   "augment.tag.controlCooldown": "控制冷却：每{cooldown}秒",
   "augment.tag.controlRecovery": "增幅控制单次最多{cap}秒。结束后{gap}秒内不再受到增幅控制。目标必须新完成一次对敌攻击，该次攻击后也保障{gap}秒恢复期。所有来源与类型共享。",
+  "augment.tag.activation": "触发条件",
+  "augment.tag.rules": "应用规则",
+  "augment.tag.rulesLink": "查看详细规则",
+  "augment.tag.controlSummary": "增幅控制：最长{cap}秒・再次控制至少间隔{gap}秒。",
 } as const;

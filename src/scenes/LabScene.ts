@@ -426,8 +426,8 @@ export class LabScene extends Phaser.Scene {
     }, () => { void this.doPull(count); });
   }
 
-  /** 결산의 「한 번 더」가 남긴 다음 연구 — 지금 연구가 끝난(`pullPending`이 풀린) 뒤에 부른다. */
-  private pullAgain?: 1;
+  /** 결산의 이어 연구가 남긴 다음 연구(1회·10회) — 지금 연구가 끝난(`pullPending`이 풀린) 뒤에 부른다. */
+  private pullAgain?: 1 | 10;
 
   private async doPull(count: 1 | 10): Promise<void> {
     const banner = this.banner;
@@ -595,7 +595,7 @@ export class LabScene extends Phaser.Scene {
       introduceSlots: showcase.flatMap((relicId, index) => (relicId ? [index] : [])),
       // 찬스로 오른 칸은 SR 뒷면으로 서 있다가 뒤집지 않고 떨리며 SSR로 격상되어 원래 SSR 소개로 넘어간다.
       chanceSlots: upgradeSlot !== undefined ? [upgradeSlot] : [],
-      again: this.pullAgainButton(results.length),
+      again: this.pullAgainButtons(results.length),
       introduce: async (index) => {
         const relicId = showcase[index];
         if (!relicId || !this.presentation.isCurrent(request)) return;
@@ -620,8 +620,8 @@ export class LabScene extends Phaser.Scene {
     this.audioScope?.play("research.crack");
     await cinematic.done();
     this.cinematic = undefined;
-    if (cinematic.againRequested && this.presentation.isCurrent(request)) {
-      this.pullAgain = 1;
+    if (cinematic.againCount && this.presentation.isCurrent(request)) {
+      this.pullAgain = cinematic.againCount;
       if (!settingsManager.get().game.pullAgainTaught) settingsManager.update({ game: { pullAgainTaught: true } });
     }
     if (!this.presentation.isCurrent(request)) { setDebugResearchBoard(undefined); return true; }
@@ -631,24 +631,31 @@ export class LabScene extends Phaser.Scene {
   }
 
   /**
-   * 단일 연구 결산에 세울 「한 번 더」 — 연구소의 1회 연구 버튼과 같은 라벨·색·값이다.
-   * 한 번 더 돌릴 수 없으면(재화·젬 부족, 한도, 10연 전용) 세우지 않는다. 값은 지갑이 이미 이번 연구를
-   * 치른 뒤라 다음 한 번의 값이다.
+   * 결산에 세울 이어 연구 버튼 — 연구소의 1회·10회 연구 버튼과 같은 라벨·색·값·순서다. 1회 결과든 10회
+   * 결과든 둘 다 선다. 그 배너가 그 횟수를 받지 않으면(10연 전용, 남은 한도) 그 버튼은 세우지 않고,
+   * 재화가 모자라면 꺼진 채 선다(연구소의 버튼과 같다). 값은 지갑이 이미 이번 연구를 치른 뒤라 다음 값이다.
+   * 처음 한 번의 안내는 단일 결산의 1회 버튼만 가리킨다 — 열 장 격자 위에서는 카드를 덮는다.
    */
-  private pullAgainButton(count: number): ResearchCinematicAgain | undefined {
-    if (count !== 1) return undefined;
+  private pullAgainButtons(count: number): ResearchCinematicAgain[] {
     const banner = this.banner;
     const pity = this.pityOf(banner);
-    if ((!QA_ALL_EVENTS && !bannerActive(banner, new Date())) || !canPull(session.wallet, banner, 1, pity)) return undefined;
-    const tone = LAB_CHROME.pull.oneTone;
+    if (!QA_ALL_EVENTS && !bannerActive(banner, new Date())) return [];
     const css = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
-    return {
-      label: t("lab.pull.one"),
-      tone: css(tone),
-      toneDark: css(Phaser.Display.Color.ValueToColor(tone).darken(28).color),
-      cost: pullCostParts(banner, 1, pity),
-      teach: settingsManager.get().game.pullAgainTaught ? undefined : { hint: t("lab.pull.againHint") },
-    };
+    const taught = settingsManager.get().game.pullAgainTaught;
+    const buttons: ResearchCinematicAgain[] = [];
+    for (const [next, tone, labelKey] of [[1, LAB_CHROME.pull.oneTone, "lab.pull.one"], [10, LAB_CHROME.pull.tenTone, "lab.pull.ten"]] as const) {
+      if (!bannerAcceptsCount(banner, next, pity)) continue;
+      buttons.push({
+        count: next,
+        label: t(labelKey),
+        enabled: canPull(session.wallet, banner, next, pity),
+        tone: css(tone),
+        toneDark: css(Phaser.Display.Color.ValueToColor(tone).darken(28).color),
+        cost: pullCostParts(banner, next, pity),
+        teach: !taught && count === 1 && next === 1 ? { hint: t("lab.pull.againHint") } : undefined,
+      });
+    }
+    return buttons;
   }
 
   /**

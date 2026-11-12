@@ -15,7 +15,7 @@
 import type Phaser from "phaser";
 import { CLOSE_INPUT_GUARD_MS } from "./closeInputGuard";
 import { audioManager } from "../managers/AudioManager";
-import { activeFontFamily, FONT_FALLBACK } from "./fonts";
+import { activeFontFamily, fontStyleFor } from "./fonts";
 import { bakeCinematicFace, bakeCinematicIcon, bakeCinematicPortrait, prewarmCinematicArt } from "./researchCinematicArt";
 import { canCloseResult, RESULT_TAP_LOCK_MS, type CinematicCardArt, type CinematicReward } from "./researchCinematicModel";
 
@@ -129,16 +129,19 @@ export interface ResearchCinematicOptions {
    */
   chanceSlots?: readonly number[];
   /**
-   * 결산에 서는 「한 번 더」 버튼 — 연구소의 연구 버튼과 **같은 알약**(크림 면 + 제 색의 두꺼운 테 +
-   * 눌린 두께)이다. 단일 연구의 결과를 본 손이 그 자리에서 곧바로 다음 연구로 이어 가게 한다.
-   * 누르면 판이 닫히고 `againRequested`가 참이 된다 — 연구는 씬이 같은 경계(`requestPull`)로 다시 부른다.
+   * 결산에 서는 이어 연구 버튼들 — 연구소의 1회·10회 연구 버튼과 **같은 알약**(크림 면 + 제 색의 두꺼운
+   * 테 + 눌린 두께)이 같은 순서로 나란히 선다. 결과를 본 손이 1회든 10회든 그 자리에서 곧바로 이어 간다.
+   * 누르면 판이 닫히고 `againCount`가 그 횟수가 된다 — 연구는 씬이 같은 경계(`requestPull`)로 다시 부른다.
    */
-  again?: ResearchCinematicAgain;
+  again?: readonly ResearchCinematicAgain[];
 }
 
-/** 결산의 「한 번 더」 버튼. 값은 연구 버튼이 쓰는 그대로(`ResearchPullCostPart`)다. */
+/** 결산의 이어 연구 버튼 하나. 값은 연구 버튼이 쓰는 그대로(`ResearchPullCostPart`)다. */
 export interface ResearchCinematicAgain {
+  count: 1 | 10;
   label: string;
+  /** 재화가 모자라면 꺼진 채 선다 — 연구소의 버튼과 같다(모자란 젬 수가 붉다). */
+  enabled: boolean;
   /** 판의 제 색과 눌린 두께의 짙은 색(CSS 색). */
   tone: string;
   toneDark: string;
@@ -262,6 +265,21 @@ const PORTRAIT_BAKE = { width: 440, height: 667 } as const;
 const FACE_BAKE = 192;
 
 /**
+ * 이어 연구 알약의 글자가 들어가는 폭(글자 크기의 배수). 알약 폭 38.9cqw에서 둥근 양 끝과 테를 뺀
+ * 약 30cqw를 글자 크기 3.75cqw로 나눈 값이다 — CSS의 `.rc-again`·`.rc-again-label`과 짝이다.
+ */
+const AGAIN_LABEL_ROOM_EM = 8;
+
+/** 이어 연구 라벨을 가로로 누를 배율(1 이하). 재는 일은 캔버스가 하고, 판의 크기와 무관하게 em으로 잰다. */
+function againLabelFit(label: string, family: string): number {
+  const context = document.createElement("canvas").getContext("2d");
+  if (!context) return 1;
+  context.font = `${fontStyleFor("display")} 100px ${family}`;
+  const em = context.measureText(label).width / 100;
+  return em > AGAIN_LABEL_ROOM_EM ? Math.max(0.55, AGAIN_LABEL_ROOM_EM / em) : 1;
+}
+
+/**
  * 중복이 파편으로 바뀌기까지.
  *
  * 뒤집히는 순간 곧바로 파편이면 누구를 만났는지 읽을 새가 없다. 뒤집힘(0.45초)이 끝나고 한 박자
@@ -335,7 +353,7 @@ export class ResearchCinematic {
   private readonly chanceSlots: ReadonlySet<number>;
   private readonly reduced: boolean;
   /** 결산의 「한 번 더」를 눌러 닫았는가 — 씬이 다음 연구를 부를지 읽는다. */
-  private againPressed = false;
+  private againPressed?: 1 | 10;
 
   private constructor(bundle: CinematicBundle, options: ResearchCinematicOptions) {
     this.canvas = options.canvas;
@@ -362,7 +380,9 @@ export class ResearchCinematic {
     const root = document.createElement("div");
     root.className = "rc-root";
     root.dataset.phase = "idle";
-    root.style.setProperty("--rc-font", `"${activeFontFamily()}", ${FONT_FALLBACK}`);
+    // `activeFontFamily()`는 이미 따옴표 친 **스택**이다. 통째로 다시 따옴표로 감싸면 값이 깨져 변수가
+    // 무효가 되고, 판의 글자가 언어 글꼴(일본어·중국어·베트남어) 없이 페이지 기본 글꼴로 섰다.
+    root.style.setProperty("--rc-font", activeFontFamily());
     root.innerHTML = buildMarkup(options.text);
     document.body.appendChild(root);
     this.root = root;
@@ -385,11 +405,12 @@ export class ResearchCinematic {
     root.addEventListener("pointerup", (event) => {
       event.stopPropagation();
       if (event.target instanceof Element && event.target.closest(".rc-skip")) return;
-      if (event.target instanceof Element && event.target.closest(".rc-again")) { this.pressAgain(); return; }
+      const again = event.target instanceof Element ? event.target.closest<HTMLElement>(".rc-again") : null;
+      if (again) { this.pressAgain(again); return; }
       this.tap(event);
     });
     root.querySelector(".rc-skip")?.addEventListener("click", () => this.skip());
-    if (options.again) this.mountAgain(options.scene, options.again);
+    if (options.again?.length) this.mountAgain(options.scene, options.again);
     // 카드 공개의 소리 두 겹 — 등급이 SR·SSR로 오를 때 우르릉, SSR이 앞면에 닿을 때 쾅.
     // 뒤집기 시작의 공개음(`afterAdvance`)과 합쳐 우르릉 → 휙 → 쾅이 된다.
     root.addEventListener("rc-card-charge", () => { audioManager?.playSfx("story.rumble"); });
@@ -505,61 +526,74 @@ export class ResearchCinematic {
     card?.querySelectorAll(".rc-glint, .rc-halo").forEach((glint) => glint.remove());
   }
 
-  /** 결산의 「한 번 더」로 닫혔는가. */
-  get againRequested(): boolean {
+  /** 결산의 이어 연구로 닫혔으면 그 횟수. */
+  get againCount(): 1 | 10 | undefined {
     return this.againPressed;
   }
 
   /**
-   * 「한 번 더」 버튼을 세운다. 결산에 닿기 전에는 CSS가 감춰 두므로(`data-phase="result"`) 미리 세워도
+   * 이어 연구 버튼 줄을 세운다. 결산에 닿기 전에는 CSS가 감춰 두므로(`data-phase="result"`) 미리 세워도
    * 연출을 가리지 않는다. 드는 재화 그림은 카드 액자와 같은 굽기(`bakeCinematicIcon`)를 쓴다.
+   * 줄의 자리는 결산 모양(`data-mode` — 한 장 / 열 장 격자)이 CSS에서 정한다.
    */
-  private mountAgain(scene: Phaser.Scene, again: ResearchCinematicAgain): void {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "rc-again";
-    button.style.setProperty("--rc-again-tone", again.tone);
-    button.style.setProperty("--rc-again-dark", again.toneDark);
-    const face = document.createElement("span");
-    face.className = "rc-again-face";
-    const label = document.createElement("span");
-    label.className = "rc-again-label";
-    label.textContent = again.label;
-    const cost = document.createElement("span");
-    cost.className = "rc-again-cost";
-    for (const part of again.cost) {
-      const piece = document.createElement("span");
-      piece.className = "rc-again-part";
-      const url = bakeCinematicIcon(scene, part.iconKey, FACE_BAKE);
-      if (url) piece.appendChild(imageOf(url, "rc-again-icon"));
-      const amount = document.createElement("span");
-      amount.className = part.short ? "rc-again-amount rc-short" : "rc-again-amount";
-      amount.textContent = `× ${part.amount.toLocaleString()}`;
-      piece.appendChild(amount);
-      cost.appendChild(piece);
+  private mountAgain(scene: Phaser.Scene, buttons: readonly ResearchCinematicAgain[]): void {
+    const row = document.createElement("div");
+    row.className = "rc-again-row";
+    const family = activeFontFamily();
+    for (const again of buttons) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "rc-again";
+      button.dataset.count = String(again.count);
+      button.disabled = !again.enabled;
+      button.style.setProperty("--rc-again-tone", again.tone);
+      button.style.setProperty("--rc-again-dark", again.toneDark);
+      const face = document.createElement("span");
+      face.className = "rc-again-face";
+      const label = document.createElement("span");
+      label.className = "rc-again-label";
+      label.textContent = again.label;
+      // 언어마다 낱말 길이가 다르다(「1회 연구」 ↔ «Исследование x1»). 알약을 넓히지 않고 글자만 가로로 누른다.
+      label.style.setProperty("--rc-again-fit", String(againLabelFit(again.label, family)));
+      const cost = document.createElement("span");
+      cost.className = "rc-again-cost";
+      for (const part of again.cost) {
+        const piece = document.createElement("span");
+        piece.className = "rc-again-part";
+        const url = bakeCinematicIcon(scene, part.iconKey, FACE_BAKE);
+        if (url) piece.appendChild(imageOf(url, "rc-again-icon"));
+        const amount = document.createElement("span");
+        amount.className = part.short ? "rc-again-amount rc-short" : "rc-again-amount";
+        amount.textContent = `× ${part.amount.toLocaleString()}`;
+        piece.appendChild(amount);
+        cost.appendChild(piece);
+      }
+      face.append(label, cost);
+      button.appendChild(face);
+      if (again.teach) {
+        // 안내는 막이 아니라 그 버튼 위의 화살표와 한 줄뿐이다(튜토리얼 화살표와 같은 결).
+        const guide = document.createElement("span");
+        guide.className = "rc-again-guide";
+        const hint = document.createElement("span");
+        hint.className = "rc-again-hint";
+        hint.textContent = again.teach.hint;
+        const arrow = document.createElement("i");
+        arrow.className = "rc-again-arrow";
+        guide.append(hint, arrow);
+        button.appendChild(guide);
+      }
+      row.appendChild(button);
     }
-    face.append(label, cost);
-    button.appendChild(face);
-    this.root.querySelector(".rc-ui")?.appendChild(button);
-    if (!again.teach) return;
-    // 안내는 막이 아니라 버튼 위의 화살표와 한 줄뿐이다(튜토리얼 화살표와 같은 결).
-    const guide = document.createElement("div");
-    guide.className = "rc-again-guide";
-    const hint = document.createElement("span");
-    hint.className = "rc-again-hint";
-    hint.textContent = again.teach.hint;
-    const arrow = document.createElement("i");
-    arrow.className = "rc-again-arrow";
-    guide.append(hint, arrow);
-    this.root.querySelector(".rc-ui")?.appendChild(guide);
+    this.root.querySelector(".rc-ui")?.appendChild(row);
   }
 
-  /** 결산의 「한 번 더」 — 막 닿은 직후의 연타는 삼킨다(결산을 닫는 손과 같은 잠금). */
-  private pressAgain(): void {
+  /** 결산의 이어 연구 — 막 닿은 직후의 연타는 삼킨다(결산을 닫는 손과 같은 잠금). */
+  private pressAgain(button: HTMLElement): void {
     if (this.phase !== "result" || this.introducing) return;
+    if (button instanceof HTMLButtonElement && button.disabled) return;
     if (!canCloseResult(performance.now(), this.resultLockedUntil)) return;
     audioManager?.playUi("ui.click");
-    this.againPressed = true;
+    this.againPressed = button.dataset.count === "10" ? 10 : 1;
     this.close();
   }
 

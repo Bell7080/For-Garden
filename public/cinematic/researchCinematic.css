@@ -231,29 +231,39 @@
 /* 균열을 재촉하는 손을 받는 자리. 화면 전체가 그 손을 받으므로 보이지 않는다. */
 .rc-hidden { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
-/* ── 결산의 「한 번 더」 ────────────────────────────────────────────────── */
+/* ── 결산의 이어 연구 ───────────────────────────────────────────────────── */
 
 /*
- * 연구소의 연구 버튼(`ResearchPullButton`)과 같은 알약이다 — 크림 면, 제 색의 두꺼운 테, 아래로
- * 떨어지는 짙은 두께. 크기도 같은 비율이다(420×150 / 1080, 두께 12). 단일 결산에서 카드 아래
- * 받침 자리에 서고, 누르면 그 두께만큼 내려앉는다.
+ * 연구소의 1회·10회 연구 버튼(`ResearchPullButton`)과 같은 알약이 **같은 순서로 나란히** 선다 — 크림 면,
+ * 제 색의 두꺼운 테, 아래로 떨어지는 짙은 두께. 크기도 같은 비율이다(420×150 / 1080, 두께 12).
+ * 한 장짜리 결산은 카드 아래 받침 자리에, 열 장짜리 결산은 격자 아래 밑동에 선다(격자가 그만큼 올라간다).
  */
-.rc-root .rc-again {
+.rc-root .rc-again-row {
   position: absolute;
   left: 50%;
   top: 84.5%;
-  width: 38.9%;
-  aspect-ratio: 420 / 162;
   transform: translate(-50%, -50%);
   display: none;
+  gap: 5cqw;
+  pointer-events: none;
+}
+.rc-root[data-mode="10"] .rc-again-row { top: 92.6%; }
+.rc-root[data-phase="result"] .rc-again-row { display: flex; animation: rc-again-in 0.32s ease-out both; }
+.rc-root .rc-again {
+  position: relative;
+  width: 38.9cqw;
+  aspect-ratio: 420 / 162;
+  display: block;
   padding: 0;
   border: 0;
   background: none;
   font: inherit;
   cursor: pointer;
+  pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
 }
-.rc-root[data-phase="result"] .rc-again { display: block; animation: rc-again-in 0.32s ease-out both; }
+/* 재화가 모자란 버튼은 연구소의 꺼진 버튼처럼 가라앉고 손을 받지 않는다. */
+.rc-root .rc-again[disabled] { opacity: 0.5; filter: saturate(0.4); cursor: default; }
 .rc-again::before {
   content: "";
   position: absolute;
@@ -273,33 +283,49 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.4cqw;
+  gap: 0.6cqw;
   transition: transform 0.06s;
 }
-/* 윗변의 반짝임 한 줄 — 광택이 아니라 얇은 띠 하나다. */
+/*
+ * 윗변의 반짝임 한 줄 — 광택이 아니라 얇은 띠 하나다. **글자 뒤에 깐다**: 위에 두면 띠가 라벨의
+ * 윗줄을 덮어 글자가 위에서 잘린 것처럼 보였다(「1회 연구」의 받침 위가 흰 줄에 묻혔다).
+ */
 .rc-again-face::before {
   content: "";
   position: absolute;
-  left: 17%; right: 17%; top: 9%;
-  height: 0.75cqw;
+  left: 17%; right: 17%; top: 7%;
+  height: 0.65cqw;
   border-radius: 0.4cqw;
   background: #ffffffbf;
+  z-index: 0;
 }
-.rc-again:active .rc-again-face { transform: translateY(0.67cqw); }
-.rc-again-label { font-size: 3.75cqw; font-weight: 800; color: #3b2a1c; line-height: 1; }
-.rc-again-cost { display: flex; align-items: center; gap: 1.7cqw; }
+.rc-root .rc-again:not([disabled]):active .rc-again-face { transform: translateY(0.67cqw); }
+.rc-again-label {
+  position: relative;
+  z-index: 1;
+  display: block;
+  font-size: 3.75cqw;
+  font-weight: 800;
+  color: #3b2a1c;
+  /* 글꼴의 윗선·아랫선이 줄 상자 밖으로 나가지 않게 한 뼘 넉넉히 둔다. */
+  line-height: 1.25;
+  white-space: nowrap;
+  /* 긴 언어는 알약을 넓히지 않고 가로로만 누른다(`againLabelFit`). */
+  transform: scaleX(var(--rc-again-fit, 1));
+}
+.rc-again-cost { position: relative; z-index: 1; display: flex; align-items: center; gap: 1.7cqw; }
 .rc-again-part { display: flex; align-items: center; gap: 0.55cqw; }
 .rc-again-icon { width: 5.8cqw; height: 5.8cqw; object-fit: contain; filter: drop-shadow(0.28cqw 0.37cqw 0 #2a1c106b); }
-.rc-again-amount { font-size: 2.8cqw; font-weight: 800; color: #3b2a1c; }
+.rc-again-amount { font-size: 2.8cqw; font-weight: 800; color: #3b2a1c; line-height: 1.2; white-space: nowrap; }
 .rc-again-amount.rc-short { color: #d2463c; }
 @keyframes rc-again-in { from { opacity: 0; transform: translate(-50%, -30%); } to { opacity: 1; transform: translate(-50%, -50%); } }
 
-/* 처음 한 번만 버튼 위에서 화살표가 통통 튀며 가리킨다. 화면을 덮는 막은 깔지 않는다. */
+/* 처음 한 번만 그 버튼 위에서 화살표가 통통 튀며 가리킨다. 화면을 덮는 막은 깔지 않는다. */
 .rc-again-guide {
   position: absolute;
   left: 50%;
-  top: 77.6%;
-  transform: translate(-50%, -50%);
+  bottom: 104%;
+  transform: translateX(-50%);
   display: none;
   flex-direction: column;
   align-items: center;
@@ -534,10 +560,13 @@
  */
 .overview[data-count="10"] .archive-card {
   opacity: 1;
-  /* 한 칸의 높이(폭 ÷ 0.66)가 세로의 17.05%라, 줄 간격은 그보다 넓어야 칸이 겹치지 않는다. */
-  width: 20%;
-  left: calc(28% + var(--col) * 24%);
-  top: calc(7.5% + var(--row) * 17.6%);
+  /*
+   * 밑동(87% 아래)은 이어 연구 버튼 줄의 자리라 칸을 한 뼘 줄여 위로 모았다. 한 칸의 높이(폭 ÷ 0.66)가
+   * 세로의 15.77%라 줄 간격 16%면 겹치지 않고, 마지막 줄의 밑변이 86.8%에서 멈춘다.
+   */
+  width: 18.5%;
+  left: calc(28.75% + var(--col) * 24%);
+  top: calc(7% + var(--row) * 16%);
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--tier) 32%, transparent));
 }
 .overview[data-count="10"] .card-grade { font-size: 4.6cqw; }
@@ -648,7 +677,7 @@
   .rc-root *, .archive-card { transition: none !important; }
   .rc-root[data-phase] #stage { animation: none !important; }
   .card-rotor { will-change: auto; }
-  .rc-again-arrow, .rc-root[data-phase="result"] .rc-again { animation: none !important; }
+  .rc-again-arrow, .rc-root[data-phase="result"] .rc-again-row { animation: none !important; }
 }
 
 /*

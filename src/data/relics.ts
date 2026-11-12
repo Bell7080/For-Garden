@@ -1759,10 +1759,10 @@ export const RELICS: RelicDef[] = [
       ferocity: { kind: "starlitCheer", attackSpeedPercent: 30 },
       passive: { kind: "secondStar", percent: 50 },
     },
-    ferocityTrait: { name: "유성우", effectId: "meteorShower", starfallEvery: 2, radiusBonusPercent: 30 },
+    ferocityTrait: { name: "소원은… 비밀이에요", effectId: "meteorShower", starfallEvery: 2, radiusBonusPercent: 30 },
     passive: {
       id: "plesha-passive",
-      name: "별똥별 도시락",
+      name: "선배, 방금 하나 떨어졌어요!",
       kind: "starfall",
       iconAssetId: "skill-icon-healing",
       effectType: "healing",
@@ -1774,7 +1774,7 @@ export const RELICS: RelicDef[] = [
     },
     basic: {
       id: "plesha-basic",
-      name: "별빛 조약돌",
+      name: "반짝, 조약돌 콩!",
       // 지원가의 평타라 위력을 낮게 두고, 떨어진 자리 둘레만 함께 맞는다.
       power: 50,
       iconAssetId: "skill-icon-magical",
@@ -1785,7 +1785,7 @@ export const RELICS: RelicDef[] = [
     },
     ultimate: {
       id: "plesha-ult",
-      name: "유성 관측회",
+      name: "별이 아름답네요, 선배",
       // 한 번 떨어질 때의 위력이다. 세 번 떨어진다 — 원 안 아군 회복은 한계 돌파(III)가 연다.
       power: 60,
       iconAssetId: "skill-icon-magical",

@@ -269,7 +269,7 @@ export const SKILL_VI = {
   "skill.breakthrough.effect.passive.battleMaidAscension": "HP tối đa, [[def|Thủ]] và [[res|Kháng]] tăng {percent}%, và hạ gục kẻ địch sẽ sẵn sàng [[charge|xung phong]] vào mục tiêu kế tiếp lần nữa.",
   "skill.breakthrough.effect.basic.splitHealing": "Chuyển thêm {percent}% lượng hồi đã dành cho đồng minh bị thương nặng nhất sang đồng minh bị thương nặng thứ hai.",
   "skill.breakthrough.effect.basic.starfallChance": "Mỗi [[basic-attack|đòn đánh thường]] có {percent}% cơ hội gọi thêm một sao băng rơi xuống vị trí đó.",
-  "skill.breakthrough.effect.ultimate.meteorEncore": "\"{name}\" rơi thêm {count} sao băng, mỗi lần rơi hồi thêm {heal} cho đồng minh trong vòng.",
+  "skill.breakthrough.effect.ultimate.meteorEncore": "\"{name}\" rơi thêm {count} sao băng, mỗi lần rơi hồi {heal} cho đồng minh trong vòng.",
   "skill.breakthrough.effect.ferocity.starlitCheer": "Trong khi [[ferocity|Cuồng bạo]], [[attack-speed|Tốc đánh]] của mọi đồng minh tăng {percent}%.",
   "skill.breakthrough.effect.passive.secondStar": "Lượng hồi từ sao băng còn đến thêm một đồng minh bị thương, bằng {percent}% lượng hồi đó.",
   "skill.breakthrough.effect.ultimate.healingShield": "Mỗi đồng minh được hồi máu còn nhận thêm [[shield|khiên]] bằng {percent}% lượng hồi đó, kể cả khi đã đầy HP.",

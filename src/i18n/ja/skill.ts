@@ -289,7 +289,7 @@ export const SKILL_JA = {
   "skill.breakthrough.effect.passive.battleMaidAscension": "最大体力・[[def|防御力]]・[[res|抵抗力]]が{percent}%上がり、敵を倒すと次の標的へもう一度[[charge|突進]]する。",
   "skill.breakthrough.effect.basic.splitHealing": "最も傷ついた味方に与える回復量の{percent}%を、2番目に傷ついた味方にも分け与える。",
   "skill.breakthrough.effect.basic.starfallChance": "[[basic-attack|通常攻撃]]のたびに{percent}%の確率で、その場所に流星がもう1つ落ちる。",
-  "skill.breakthrough.effect.ultimate.meteorEncore": "「{name}」の流星が{count}回多く落ち、落ちるたびに円の中の味方が{heal}多く回復する。",
+  "skill.breakthrough.effect.ultimate.meteorEncore": "「{name}」の流星が{count}回多く落ち、落ちるたびに円の中の味方を{heal}回復する。",
   "skill.breakthrough.effect.ferocity.starlitCheer": "[[ferocity|暴走]]している間、味方全員の[[attack-speed|攻撃速度]]が{percent}%上がる。",
   "skill.breakthrough.effect.passive.secondStar": "流星の回復が、傷ついた味方1人にもその回復量の{percent}%分もう一度届く。",
   "skill.breakthrough.effect.ultimate.healingShield": "回復を受けた味方は、その回復量の{percent}%の[[shield|シールド]]も得る。体力が満タンの味方も得られる。",

@@ -270,7 +270,7 @@ export const SKILL_EN = {
   "skill.breakthrough.effect.passive.battleMaidAscension": "Max HP, [[def|Defense]], and [[res|Resistance]] increase by {percent}%, and defeating an enemy readies the [[charge|charge]] toward the next target again.",
   "skill.breakthrough.effect.basic.splitHealing": "Also passes {percent}% of the healing given to the most wounded ally to the second most wounded ally.",
   "skill.breakthrough.effect.basic.starfallChance": "Each [[basic-attack|basic attack]] has a {percent}% chance to call down one more meteor on that spot.",
-  "skill.breakthrough.effect.ultimate.meteorEncore": "\"{name}\" drops {count} more meteor(s), and each meteor heals allies in the circle for an extra {heal}.",
+  "skill.breakthrough.effect.ultimate.meteorEncore": "\"{name}\" drops {count} more meteor(s), and each meteor heals allies in the circle for {heal}.",
   "skill.breakthrough.effect.ferocity.starlitCheer": "While in [[ferocity|Frenzy]], all allies gain {percent}% [[attack-speed|Attack Speed]].",
   "skill.breakthrough.effect.passive.secondStar": "Meteor healing also reaches one more wounded ally for {percent}% of that healing.",
   "skill.breakthrough.effect.ultimate.healingShield": "Each ally healed also gains a [[shield|shield]] equal to {percent}% of that healing, even if already at full HP.",

@@ -269,7 +269,7 @@ export const SKILL_PT_BR = {
   "skill.breakthrough.effect.passive.battleMaidAscension": "PV máx., [[def|Defesa]] e [[res|Resistência]] sobem {percent}%, e derrotar um inimigo prepara de novo a [[charge|investida]] rumo ao próximo alvo.",
   "skill.breakthrough.effect.basic.splitHealing": "Também repassa {percent}% da cura dada ao aliado mais ferido ao segundo aliado mais ferido.",
   "skill.breakthrough.effect.basic.starfallChance": "Cada [[basic-attack|ataque básico]] tem {percent}% de chance de fazer cair mais um meteoro naquele ponto.",
-  "skill.breakthrough.effect.ultimate.meteorEncore": "\"{name}\" faz cair mais {count} meteoro(s), e cada meteoro cura {heal} extra aos aliados no círculo.",
+  "skill.breakthrough.effect.ultimate.meteorEncore": "\"{name}\" faz cair mais {count} meteoro(s), e cada meteoro cura {heal} aos aliados no círculo.",
   "skill.breakthrough.effect.ferocity.starlitCheer": "Durante o [[ferocity|Frenesi]], a [[attack-speed|Velocidade de ataque]] de todos os aliados aumenta {percent}%.",
   "skill.breakthrough.effect.passive.secondStar": "A cura do meteoro também chega a mais um aliado ferido, em {percent}% dessa cura.",
   "skill.breakthrough.effect.ultimate.healingShield": "Cada aliado curado também ganha um [[shield|escudo]] de {percent}% dessa cura, mesmo com a vida cheia.",

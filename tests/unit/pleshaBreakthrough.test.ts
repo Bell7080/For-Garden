@@ -58,6 +58,25 @@ describe("플레샤 한계 돌파", () => {
     expect(run(4).strikes).toBe(run(0).strikes + 1);
   });
 
+  it("궁극기 유성은 기본부터 준 피해로 가장 다친 아군을 회복하고, 원 안 아군 회복은 돌파에서만 붙는다", () => {
+    const heals = (breakthrough: number, inCircle: boolean) => {
+      const state = setup(breakthrough);
+      const self = plesha(state);
+      const ally = state.fighters.find((fighter) => fighter.def.id === "torika")!;
+      const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+      ally.hp = Math.round(ally.maxHp * 0.2);
+      if (inCircle) { ally.x = foe.x; ally.y = foe.y; }
+      self.energy = 1_000;
+      const events = fireUltimate(state, self.id);
+      return events.filter((event) => event.kind === "heal" && event.fighterId === ally.id && event.amount > 0).length;
+    };
+    // 원 밖이어도 유성 피해에서 나온 회복이 가장 다친 아군에게 간다.
+    expect(heals(0, false)).toBeGreaterThan(0);
+    // 기본 궁극기는 원 안에 서 있다고 더 받지 않는다 — 원 안 회복은 돌파 몫이다.
+    expect(heals(0, true)).toBe(heals(0, false));
+    expect(heals(4, true)).toBeGreaterThan(heals(0, true));
+  });
+
   it("폭주 돌파는 폭주에 들어서는 순간 아군 모두의 공격 속도를 올린다", () => {
     const state = setup(4);
     const self = plesha(state);

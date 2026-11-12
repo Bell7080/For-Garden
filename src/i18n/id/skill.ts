@@ -269,7 +269,7 @@ export const SKILL_ID = {
   "skill.breakthrough.effect.passive.battleMaidAscension": "HP maks, [[def|Pertahanan]], dan [[res|Resistensi]] naik {percent}%, dan mengalahkan musuh menyiapkan [[charge|serbuan]] ke target berikutnya lagi.",
   "skill.breakthrough.effect.basic.splitHealing": "Meneruskan {percent}% penyembuhan yang diberikan ke sekutu paling terluka kepada sekutu terluka kedua.",
   "skill.breakthrough.effect.basic.starfallChance": "Setiap [[basic-attack|serangan dasar]] berpeluang {percent}% menjatuhkan satu meteor lagi di titik itu.",
-  "skill.breakthrough.effect.ultimate.meteorEncore": "\"{name}\" menjatuhkan {count} meteor lagi, dan setiap meteor memulihkan sekutu di dalam lingkaran sebesar {heal} tambahan.",
+  "skill.breakthrough.effect.ultimate.meteorEncore": "\"{name}\" menjatuhkan {count} meteor lagi, dan setiap meteor memulihkan sekutu di dalam lingkaran sebesar {heal}.",
   "skill.breakthrough.effect.ferocity.starlitCheer": "Selama [[ferocity|Amukan]], [[attack-speed|Kecepatan Serang]] semua sekutu naik {percent}%.",
   "skill.breakthrough.effect.passive.secondStar": "Penyembuhan meteor juga mencapai satu sekutu terluka lagi sebesar {percent}% dari penyembuhan itu.",
   "skill.breakthrough.effect.ultimate.healingShield": "Setiap sekutu yang disembuhkan juga mendapat [[shield|perisai]] sebesar {percent}% penyembuhan itu, meski HP-nya sudah penuh.",

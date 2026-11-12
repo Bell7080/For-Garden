@@ -1755,7 +1755,7 @@ export const RELICS: RelicDef[] = [
     // 폭주 동안 아군 모두가 빨라지고, 유성 회복이 다친 아군 한 명에게 한 번 더 들어간다.
     breakthroughEffects: {
       basic: { kind: "starfallChance", chancePercent: 30 },
-      ultimate: { kind: "meteorEncore", extraStrikes: 1, bonusHealPower: 20 },
+      ultimate: { kind: "meteorEncore", extraStrikes: 1, allyHealPower: 60 },
       ferocity: { kind: "starlitCheer", attackSpeedPercent: 30 },
       passive: { kind: "secondStar", percent: 50 },
     },
@@ -1786,13 +1786,12 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "plesha-ult",
       name: "유성 관측회",
-      // 한 번 떨어질 때의 위력이다. 세 번 떨어지며 그때마다 원 안의 아군을 회복한다.
+      // 한 번 떨어질 때의 위력이다. 세 번 떨어진다 — 원 안 아군 회복은 한계 돌파(III)가 연다.
       power: 60,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
       cost: 120,
-      allyHealingPower: 60,
       targeting: "targetedCircle",
       radius: 200,
       repeatStrike: { count: 3, intervalSeconds: 0.45 },

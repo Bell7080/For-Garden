@@ -269,7 +269,7 @@ export const SKILL_RU = {
   "skill.breakthrough.effect.passive.battleMaidAscension": "Макс. ОЗ, [[def|защита]] и [[res|сопротивление]] растут на {percent}%, а убийство врага снова готовит [[charge|рывок]] к следующей цели.",
   "skill.breakthrough.effect.basic.splitHealing": "Также передаёт {percent}% лечения, полученного самым раненым союзником, второму по степени ранения союзнику.",
   "skill.breakthrough.effect.basic.starfallChance": "Каждая [[basic-attack|обычная атака]] с шансом {percent}% обрушивает на это место ещё один метеор.",
-  "skill.breakthrough.effect.ultimate.meteorEncore": "«{name}» обрушивает ещё {count} метеор(а), и каждый метеор дополнительно исцеляет союзников в круге на {heal}.",
+  "skill.breakthrough.effect.ultimate.meteorEncore": "«{name}» обрушивает ещё {count} метеор(а), и каждый метеор исцеляет союзников в круге на {heal}.",
   "skill.breakthrough.effect.ferocity.starlitCheer": "Во время [[ferocity|неистовства]] [[attack-speed|скорость атаки]] всех союзников повышается на {percent}%.",
   "skill.breakthrough.effect.passive.secondStar": "Лечение от метеора также достаётся ещё одному раненому союзнику в размере {percent}% от этого лечения.",
   "skill.breakthrough.effect.ultimate.healingShield": "Каждый исцелённый союзник также получает [[shield|щит]] в {percent}% этого лечения, даже если его здоровье полное.",

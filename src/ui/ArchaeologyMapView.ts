@@ -182,6 +182,36 @@ export class ArchaeologyMapView extends Phaser.GameObjects.Container {
     }
   }
 
+  /**
+   * 그 유적 노드(이름표까지)가 지금 화면에 서 있는 상자. 안내형 튜토리얼이 이 자리를 밝힌다.
+   * 지도 창 밖으로 흘러간 노드는 `undefined`다 — 보이지 않는 곳을 가리키지 않는다.
+   */
+  siteRect(siteId: string): { x: number; y: number; width: number; height: number } | undefined {
+    const site = this.options.sites.find((entry) => entry.id === siteId);
+    if (!site) return undefined;
+    const size = ARCHAEOLOGY_MAP_LAYOUT.nodeSize;
+    const cx = this.world.x + site.x, cy = this.y + this.world.y + site.y;
+    const width = size + 70, top = cy - size / 2, bottom = cy + size / 2 + NODE_LABEL.nameGap + NODE_LABEL.nameSize / 2;
+    if (bottom < this.options.top || top > this.options.bottom || cx < 0 || cx > this.scene.scale.width) return undefined;
+    return { x: cx - width / 2, y: top, width, height: bottom - top };
+  }
+
+  /** 그 유적이 지도 창 가운데로 오도록 민다(가장자리에서는 지도 끝에서 멈춘다). 다 밀면 `onDone`을 부른다. */
+  panToSite(siteId: string, onDone: () => void): void {
+    const site = this.options.sites.find((entry) => entry.id === siteId);
+    if (!site || !this.active) { onDone(); return; }
+    const viewportHeight = this.options.bottom - this.options.top;
+    const target = clampArchaeologyMapOffset(this.scene.scale.width / 2 - site.x, viewportHeight / 2 - site.y, this.scene.scale.width, viewportHeight);
+    const from = { x: this.world.x, y: this.world.y };
+    if (!motionOn() || (Math.abs(target.x - from.x) < 1 && Math.abs(target.y - from.y) < 1)) { this.setOffset(target.x, target.y); onDone(); return; }
+    const proxy = { t: 0 };
+    this.scene.tweens.add({
+      targets: proxy, t: 1, duration: 420, ease: "Cubic.easeInOut",
+      onUpdate: () => { if (this.active) this.setOffset(from.x + (target.x - from.x) * proxy.t, from.y + (target.y - from.y) * proxy.t); },
+      onComplete: () => onDone(),
+    });
+  }
+
   /** 지도를 옮길 때마다 지금 노드가 선 화면 좌표를 다시 알린다. */
   private publishLayout(): void {
     this.options.onLayout?.(this.options.sites.map((site) => ({

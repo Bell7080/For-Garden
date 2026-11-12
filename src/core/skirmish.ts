@@ -3475,7 +3475,20 @@ function landStarfall(
       events.push({ kind: "death", fighterId: foe.id, sourceId: fighter.id });
     }
   }
-  // 때린 본인은 후보에서 빠진다 — 도디의 회복과 같은 계약이다. 뒤에서 거드는 개체가 제 몸만 고치면 지원가가 아니다.
+  healFromStarfall(fighter, dealt, starfall, state, events);
+}
+
+/**
+ * 유성이 준 피해로 가장 다친 아군을 회복한다 — 패시브 유성과 궁극기 유성이 같은 규칙을 지난다.
+ * 때린 본인은 후보에서 빠진다 — 도디의 회복과 같은 계약이다. 뒤에서 거드는 개체가 제 몸만 고치면 지원가가 아니다.
+ */
+function healFromStarfall(
+  fighter: Fighter,
+  dealt: number,
+  starfall: NonNullable<Passive["starfall"]>,
+  state: SkirmishState,
+  events: SkirmishEvent[],
+): void {
   if (dealt <= 0) return;
   const ally = lowestCurrentHpAlly(state, fighter.side, fighter.id);
   if (!ally) return;
@@ -9248,7 +9261,10 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   if (skill.repeatOnLone === true && skill.targeting === "splitShot" && distinctTargets > 0 && distinctTargets < forkCount) {
     for (let fill = 0; targets.length < forkCount; fill += 1) targets.push(targets[fill % distinctTargets]);
   }
-  const healingTargets = ultimate?.targeting === "targetedCircle" && ultimate.allyHealingPower !== undefined
+  // 궁극기 돌파(`meteorEncore`) — 유성에 맞은 아군이 회복된다. 기본 궁극기에 없는 회복이라 원 안의 아군을 여기서 함께 고른다.
+  const encorePlan = ultimate ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : undefined;
+  const encoreHeal = encorePlan?.kind === "meteorEncore" ? encorePlan.allyHealPower : 0;
+  const healingTargets = ultimate?.targeting === "targetedCircle" && (ultimate.allyHealingPower !== undefined || encoreHeal > 0)
     ? aliveFighters(state, attacker.side).filter(inCircle) : [];
   // 시험 발사는 여기서 멈춘다 — 이 아래부터가 실제로 판을 바꾸는 일이다.
   if (ultimateProbing && useUltimate) throw new UltimateProbe(targets.length > 0 || healingTargets.length > 0);
@@ -9305,6 +9321,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
   // 「성의 재단」이 아군에게 나눠 두를 몫의 원천. 대상별이 아니라 이 기술의 총량이다.
   let sharedShieldSource = 0;
+  // 궁극기 유성도 패시브 유성과 같이 준 피해로 가장 다친 아군을 회복한다(플레샤 — `Passive.starfall`).
+  let ultimateMeteorDealt = 0;
   // 「가봉」 — 강화 여부는 행동 하나에 한 번 정하고, 막은 맞은 모든 적의 피해 총량으로 한 번만 꿰맨다.
   const sutured = !useUltimate && !free && consumeSutureReady(attacker);
   let suturedTotal = 0;
@@ -9357,6 +9375,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     if (!useUltimate) grantShieldFromDamage(attacker, hpBefore - target.hp, events, state);
     // 나눠 두르는 몫은 대상마다가 아니라 이 기술의 총량에서 나오므로 여기서 모으기만 한다.
     sharedShieldSource += hpBefore - target.hp;
+    if (useUltimate) ultimateMeteorDealt += hpBefore - target.hp;
     siphonOverpaintHealing(attacker, target, hpBefore - target.hp, state, events);
     triggerDuoBreakthroughRegen(state, attacker, hpBefore - target.hp, events);
     // **완성작을 공개해도 덧칠은 남는다**(응태 결정 2026-11-12). 궁극기는 게이지가 차야만 다시 나가므로 쌓아 둔 겹이
@@ -9432,8 +9451,6 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   // 혼합 궁극기의 회복은 같은 원 경계(거리 <= 반경)를 공유하며 주문력 200% 같은 정적 계수를 읽는다.
   const ultimateShield = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
   for (const ally of healingTargets) {
-    // 궁극기 돌파(`meteorEncore`) — 떨어질 때마다 원 안의 아군 회복에 주문력 몫이 얹힌다.
-    const encoreHeal = ultimateShield?.kind === "meteorEncore" ? ultimateShield.bonusHealPower : 0;
     const requestedHeal = currentAbilityPower(attacker) * ((ultimate?.allyHealingPower ?? 0) + encoreHeal) / 100;
     const healed = applyHealing(state, ally, requestedHeal, attacker.id);
     pushHeal(events, ally, healed, "passive");
@@ -9444,6 +9461,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       if (shield > 0) grantShield(state, ally, attacker.id, shield, events);
     }
   }
+  if (useUltimate && attacker.def.passive.starfall) healFromStarfall(attacker, ultimateMeteorDealt, attacker.def.passive.starfall, state, events);
   // 투사체가 떨어진 자리도 한 번의 기본 공격으로 센다 — 유성은 그 낙하 지점에 예약된다.
   if (!useUltimate && !followUp && !free) callStarfall(attacker, center, rng);
   // 되돌아오는 돌진은 이미 치른 한 번의 몫이라 야성을 다시 올리지 않는다.

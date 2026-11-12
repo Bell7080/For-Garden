@@ -3038,10 +3038,10 @@ export type BasicBreakthrough = {
  * 궁극기가 세 번이 된다(채널링 궁극기와 같은 규칙이다).
  */
 export type UltimateBreakthrough = {
-  /** 되찍는 궁극기가 `extraStrikes`번 더 떨어지고, 떨어질 때마다 원 안의 아군 회복에 주문력 `bonusHealPower`%가 얹힌다(플레샤). */
+  /** 되찍는 궁극기가 `extraStrikes`번 더 떨어지고, 떨어질 때마다 원 안의 아군이 주문력 `allyHealPower`%만큼 회복한다(플레샤 — 기본 궁극기에는 아군 회복이 없다). */
   kind: "meteorEncore";
   extraStrikes: number;
-  bonusHealPower: number;
+  allyHealPower: number;
 } | {
   /**
    * 저주가 걸린 적이 쓰러지면 그 **저주 겹이 주변 적에게 이어진다**(케리스의 「막이 내린 뒤」). 한 번에 이어지는 겹은 `maxCarry`까지이고,

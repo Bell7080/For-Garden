@@ -269,7 +269,7 @@ export const SKILL_ZH_HANT = {
   "skill.breakthrough.effect.passive.battleMaidAscension": "最大生命、[[def|防禦力]]與[[res|抗性]]提升{percent}%，擊倒敵人時再次準備好向下一個目標[[charge|衝鋒]]。",
   "skill.breakthrough.effect.basic.splitHealing": "將給予最受傷隊友的治療量的{percent}%，同時分給受傷第二重的隊友。",
   "skill.breakthrough.effect.basic.starfallChance": "每次[[basic-attack|普通攻擊]]有{percent}%的機率在該位置再落下一顆流星。",
-  "skill.breakthrough.effect.ultimate.meteorEncore": "「{name}」多落下{count}次流星，每次落下時圓圈內的友方額外恢復{heal}。",
+  "skill.breakthrough.effect.ultimate.meteorEncore": "「{name}」多落下{count}次流星，每次落下時為圓圈內的友方恢復{heal}。",
   "skill.breakthrough.effect.ferocity.starlitCheer": "[[ferocity|暴走]]期間，所有友方的[[attack-speed|攻擊速度]]提高{percent}%。",
   "skill.breakthrough.effect.passive.secondStar": "流星的治療還會再給一名受傷的友方，數值為該治療量的{percent}%。",
   "skill.breakthrough.effect.ultimate.healingShield": "每個獲得治療的隊友，還會獲得相當於該治療量{percent}%的[[shield|護盾]]，生命值已滿的隊友同樣可獲得。",

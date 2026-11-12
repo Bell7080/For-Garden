@@ -1588,7 +1588,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "richBlend") return t("skill.breakthrough.effect.ultimate.richBlend", { name: def.ultimate.name, percent: trim(effect.shieldFromCriticalPercent), cap: sv("shield", "hp", effect.shieldMaxHpPercent) });
     if (effect.kind === "shrapnel") return t("skill.breakthrough.effect.ultimate.shrapnel", { name: def.ultimate.name, percent: trim(effect.powerPercent) });
     if (effect.kind === "tidalEcho") return t("skill.breakthrough.effect.ultimate.tidalEcho", { seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
-    if (effect.kind === "meteorEncore") return t("skill.breakthrough.effect.ultimate.meteorEncore", { name: def.ultimate.name, count: trim(effect.extraStrikes), heal: sv("heal", "ap", effect.bonusHealPower) });
+    if (effect.kind === "meteorEncore") return t("skill.breakthrough.effect.ultimate.meteorEncore", { name: def.ultimate.name, count: trim(effect.extraStrikes), heal: sv("heal", "ap", effect.allyHealPower) });
     if (effect.kind === "healingShield") return t("skill.breakthrough.effect.ultimate.healingShield", { percent: trim(effect.shieldPercentOfHealing) });
     if (effect.kind === "sideDish") return t("skill.breakthrough.effect.ultimate.sideDish", { name: def.ultimate.name, percent: trim(effect.sharePercent) });
     if (effect.kind === "startledLeap") return t("skill.breakthrough.effect.ultimate.startledLeap", { name: def.ultimate.name, seconds: trim(effect.stunSeconds), lockout: trim(effect.lockoutSeconds) });

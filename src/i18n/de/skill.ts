@@ -269,7 +269,7 @@ export const SKILL_DE = {
   "skill.breakthrough.effect.passive.battleMaidAscension": "Max. Leben, [[def|Verteidigung]] und [[res|Widerstand]] steigen um {percent}%, und das Besiegen eines Gegners macht den [[charge|Sturmangriff]] auf das nächste Ziel wieder bereit.",
   "skill.breakthrough.effect.basic.splitHealing": "Gibt zusätzlich {percent}% der Heilung, die der am stärksten verwundete Verbündete erhält, an den am zweitstärksten verwundeten Verbündeten weiter.",
   "skill.breakthrough.effect.basic.starfallChance": "Jeder [[basic-attack|Normalangriff]] lässt mit {percent}% Wahrscheinlichkeit einen weiteren Meteor auf diese Stelle fallen.",
-  "skill.breakthrough.effect.ultimate.meteorEncore": "„{name}“ lässt {count} Meteor(e) mehr fallen, und jeder Meteor heilt Verbündete im Kreis um zusätzlich {heal}.",
+  "skill.breakthrough.effect.ultimate.meteorEncore": "„{name}“ lässt {count} Meteor(e) mehr fallen, und jeder Meteor heilt Verbündete im Kreis um {heal}.",
   "skill.breakthrough.effect.ferocity.starlitCheer": "Während der [[ferocity|Raserei]] steigt das [[attack-speed|Angriffstempo]] aller Verbündeten um {percent}%.",
   "skill.breakthrough.effect.passive.secondStar": "Die Meteorheilung erreicht zusätzlich einen weiteren verwundeten Verbündeten mit {percent}% dieser Heilung.",
   "skill.breakthrough.effect.ultimate.healingShield": "Jeder geheilte Verbündete erhält zusätzlich einen [[shield|Schild]] von {percent}% dieser Heilung, auch bei vollem Leben.",

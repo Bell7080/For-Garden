@@ -269,7 +269,7 @@ export const SKILL_TH = {
   "skill.breakthrough.effect.passive.battleMaidAscension": "HP สูงสุด [[def|พลังป้องกัน]] และ[[res|ต้านทาน]]เพิ่มขึ้น {percent}% และเมื่อกำจัดศัตรูได้ จะพร้อม[[charge|พุ่งชน]]เป้าหมายถัดไปอีกครั้ง",
   "skill.breakthrough.effect.basic.splitHealing": "ส่งต่อ {percent}% ของการฟื้นฟูที่ให้พันธมิตรที่บาดเจ็บมากที่สุด ไปยังพันธมิตรที่บาดเจ็บมากเป็นอันดับสองด้วย",
   "skill.breakthrough.effect.basic.starfallChance": "ทุก [[basic-attack|การโจมตีพื้นฐาน]] มีโอกาส {percent}% ที่ดาวตกจะตกลงที่จุดนั้นเพิ่มอีกหนึ่งดวง",
-  "skill.breakthrough.effect.ultimate.meteorEncore": "\"{name}\" มีดาวตกตกเพิ่มอีก {count} ครั้ง และทุกครั้งที่ตก พันธมิตรในวงจะฟื้นฟูเพิ่ม {heal}",
+  "skill.breakthrough.effect.ultimate.meteorEncore": "\"{name}\" มีดาวตกตกเพิ่มอีก {count} ครั้ง และทุกครั้งที่ตก จะฟื้นฟูพันธมิตรในวง {heal}",
   "skill.breakthrough.effect.ferocity.starlitCheer": "ระหว่าง[[ferocity|คลั่ง]] [[attack-speed|ความเร็วโจมตี]]ของพันธมิตรทั้งหมดเพิ่มขึ้น {percent}%",
   "skill.breakthrough.effect.passive.secondStar": "การฟื้นฟูจากดาวตกจะส่งถึงพันธมิตรที่บาดเจ็บอีกหนึ่งคนด้วย เท่ากับ {percent}% ของการฟื้นฟูนั้น",
   "skill.breakthrough.effect.ultimate.healingShield": "พันธมิตรแต่ละตัวที่ได้รับการฟื้นฟูจะได้รับ[[shield|โล่]]เท่ากับ {percent}% ของการฟื้นฟูนั้นด้วย แม้ HP เต็มอยู่แล้วก็ตาม",

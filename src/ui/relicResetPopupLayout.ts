@@ -44,7 +44,25 @@ export const RELIC_RESET_POPUP = {
   button: { width: 340, height: 104, gap: 40, fontSize: 32 },
   bottomPad: 64,
   dimAlpha: CONFIRM_DIALOG.dimAlpha,
+  /**
+   * 판 뒷배경의 색감 — 되돌리는 창은 울먹이는 장밋빛, 먹이는 창은 들뜬 호박빛이다.
+   * 위가 그 색으로 물들고 아래로 갈수록 판의 남색으로 가라앉아, 재화 판·버튼은 늘 같은 바탕 위에서 읽힌다.
+   * 무대에는 SD 뒤로 퍼지는 빛살·마름모 점 무늬·떠오르는 반짝임이 같은 색으로 얹힌다.
+   */
+  backdrop: {
+    afraid: { wash: 0x6b2a4f, deep: 0x1a1830, ray: 0xff8fb8, dot: 0xffb3cf, spark: 0xffd0e2 },
+    excited: { wash: 0x7a5418, deep: 0x16222c, ray: 0xffd36b, dot: 0xffe39a, spark: 0xfff1b8 },
+    /** 위 물들임의 진하기 · 빛살 수와 진하기 · 점 무늬 간격. */
+    washAlpha: 0.62,
+    rays: 14,
+    rayAlpha: 0.11,
+    dotStep: 34,
+    dotAlpha: 0.2,
+    sparks: 9,
+  },
 } as const;
+
+export type RelicAskMood = "afraid" | "excited";
 
 /** 재화 판의 높이 — 줄이 하나(치즈케이크)면 짧고, 젬이 들면 한 줄 더 선다. */
 export function relicResetWalletHeight(rows: number): number {

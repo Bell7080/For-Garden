@@ -1,6 +1,6 @@
 import { CONTENT_LEVEL_GATES_ENABLED, CONTENT_UNLOCKS, type ContentId } from "../core/contentUnlock";
 import { PLAYER_LEVEL_CAP } from "../core/playerLevel";
-import { RELIC_LEVEL_CAP_BY_RESEARCH } from "../core/relicProgression";
+import { RELIC_LEVEL_CAP_BY_RESEARCH, relicLevelCap } from "../core/relicProgression";
 import { staminaMaxForResearchLevel } from "../core/stamina";
 import { PROFILE_FRAMES } from "../data/profileFrames";
 
@@ -29,6 +29,8 @@ export interface PlayerLevelMilestone {
   staminaMax: number;
   /** 이 레벨에서 렐릭 레벨 상한이 오르면 그 새 상한. 오르지 않는 마디는 비운다. */
   relicCap?: number;
+  /** 그 레벨 바로 전까지의 렐릭 레벨 상한 — 잎이 「A → B」로 무엇이 풀렸는지 말한다. */
+  relicCapFrom?: number;
 }
 
 /** 열 단위 이정표의 간격. */
@@ -51,5 +53,6 @@ export function playerLevelMilestones(gates = CONTENT_LEVEL_GATES_ENABLED): Play
       ],
       staminaMax: staminaMaxForResearchLevel(level),
       relicCap: level > 1 ? RELIC_LEVEL_CAP_BY_RESEARCH.find((row) => row.researchLevel === level)?.levelCap : undefined,
+      relicCapFrom: level > 1 ? relicLevelCap(level - 1) : undefined,
     }));
 }

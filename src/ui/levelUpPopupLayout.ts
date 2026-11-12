@@ -30,6 +30,8 @@ export const LEVEL_UP_POPUP = {
   section: { titleSize: 26, titleRoom: 66, gap: 26 },
   reward: {
     frame: 128, spacing: 72, captionGap: 34, captionSize: 22, captionWidth: 220,
+    /** 렐릭 레벨 상한 칸만 이름 아래 한 줄 더 「LV.a → LV.b」를 적는다 — 그 줄의 높이와 글자 크기. */
+    rangeLine: 34, rangeSize: 26,
     /** 스테미나 상한 액자 뒤의 「MAX」 무늬 — 스테미나 그림과 같은 연두 계열을 옅게. */
     limitColor: "#9be86a", limitAlpha: 0.38,
   },
@@ -136,9 +138,10 @@ export function levelUpUnlockPlan(keys: readonly LevelUpUnlockKey[], shrink = le
   return { placements, height: y };
 }
 
-export function levelUpRewardHeight(): number {
+/** `relicCapRaised` — 이번 레벨업이 렐릭 레벨 상한을 열었는지. 열었으면 그 칸의 「LV.a → LV.b」 줄만큼 높다. */
+export function levelUpRewardHeight(relicCapRaised = false): number {
   const { section, reward } = LEVEL_UP_POPUP;
-  return section.titleRoom + reward.frame + reward.captionGap + reward.captionSize;
+  return section.titleRoom + reward.frame + reward.captionGap + reward.captionSize + (relicCapRaised ? reward.rangeLine : 0);
 }
 
 export function levelUpUnlockHeight(keys: readonly LevelUpUnlockKey[], shrink = levelUpShrink(keys)): number {
@@ -147,19 +150,19 @@ export function levelUpUnlockHeight(keys: readonly LevelUpUnlockKey[], shrink = 
   return section.gap + section.titleRoom + levelUpUnlockPlan(keys, shrink).height;
 }
 
-export function levelUpPopupHeight(keys: readonly LevelUpUnlockKey[], shrink = levelUpShrink(keys)): number {
+export function levelUpPopupHeight(keys: readonly LevelUpUnlockKey[], relicCapRaised = false, shrink = levelUpShrink(keys, relicCapRaised)): number {
   const L = LEVEL_UP_POPUP;
-  return L.topRoom + L.hero.height + L.section.gap + levelUpRewardHeight() + levelUpUnlockHeight(keys, shrink) + L.bottomRoom;
+  return L.topRoom + L.hero.height + L.section.gap + levelUpRewardHeight(relicCapRaised) + levelUpUnlockHeight(keys, shrink) + L.bottomRoom;
 }
 
 /**
  * 한꺼번에 많이 열려 판이 화면을 넘을 때 버튼·출격판 칸에 곱할 배율. 비율은 그대로 두고 크기만 줄인다 —
  * 판을 화면 밖으로 내보내면 닫는 손이 판 위를 누르는지 밖을 누르는지 흐려진다.
  */
-export function levelUpShrink(keys: readonly LevelUpUnlockKey[]): number {
+export function levelUpShrink(keys: readonly LevelUpUnlockKey[], relicCapRaised = false): number {
   const { maxHeight, minShrink } = LEVEL_UP_POPUP;
   let shrink = 1;
-  while (shrink > minShrink && levelUpPopupHeight(keys, shrink) > maxHeight) shrink = Math.round((shrink - 0.02) * 100) / 100;
+  while (shrink > minShrink && levelUpPopupHeight(keys, relicCapRaised, shrink) > maxHeight) shrink = Math.round((shrink - 0.02) * 100) / 100;
   return shrink;
 }
 

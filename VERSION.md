@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.447.5**
+현재 버전: **v0.448.1**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,13 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.448.1 — 레벨업 판과 레벨 나무가 렐릭 레벨 상한이 열린 것을 말한다
+
+- 응태 요청: 연구원 레벨이 올라 렐릭 레벨 상한이 풀려도 레벨업 판에는 아무 표시가 없었다.
+- 레벨업 판(`LevelUpPopup`)의 「레벨업 보상」 줄에, 이번 레벨업이 상한을 **열었을 때만** 애착 렐릭 얼굴 액자 + 「렐릭 레벨 상한 / LV.20 → LV.25」 칸이 선다(`relicLevelCap(from)` → `relicLevelCap(to)`). 상한이 그대로인 레벨업에는 서지 않고, 판 높이도 그 줄만큼만 는다(`levelUpRewardHeight(relicCapRaised)`). 칸이 셋이면 이름이 이웃 칸으로 번지지 않게 폭을 좁힌다.
+- 레벨 나무(`PlayerLevelTreePopup`)의 잎도 「렐릭 레벨 상한 60」 대신 「렐릭 레벨 상한 55 → 60」처럼 바로 전 상한에서 출발한다(`relicCapFrom`).
+- 열한 언어 모두 반영(`profile.levelUp.relicCap` 새 키 · `profile.levelTree.relicCap`에 `{from}`). 회귀 테스트 `tests/unit/levelUpRelicCap.test.ts`.
 
 ## v0.448.0 — 새 렐릭 플레샤(030) — 유성을 부르는 회복형 원거리 지원가
 

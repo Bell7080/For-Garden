@@ -148,7 +148,7 @@ export class PlayerLevelTreePopup {
     const lines: Array<{ text: string; color: string }> = milestone.unlocks.map((unlock) => unlock.kind === "frame"
       ? { text: t("profile.levelTree.frame", { name: profileFrameOrDefault(unlock.frameId).displayName }), color: reached ? COLOR.accentText : COLOR.ink }
       : { text: t("profile.levelTree.content", { content: t(contentNameKey(unlock.contentId)) }), color: reached ? COLOR.sortieText : COLOR.ink });
-    if (milestone.relicCap !== undefined) lines.push({ text: t("profile.levelTree.relicCap", { max: milestone.relicCap }), color: reached ? COLOR.accentText : COLOR.ink });
+    if (milestone.relicCap !== undefined) lines.push({ text: t("profile.levelTree.relicCap", { from: milestone.relicCapFrom ?? milestone.relicCap, max: milestone.relicCap }), color: reached ? COLOR.accentText : COLOR.ink });
     lines.push({ text: t("profile.levelTree.stamina", { max: milestone.staminaMax }), color: COLOR.inkDim });
     const avatarSpace = frameUnlock ? L.avatar + L.avatarGap : 0;
     const height = Math.max(L.avatar + L.padY * 2, lines.length * L.lineHeight + L.padY * 2);

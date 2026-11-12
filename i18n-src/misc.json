@@ -1794,6 +1794,16 @@
 "Forscher-Levelaufstieg",
 "Уровень исследователя повышен"
 ],
+"profile.levelUp.relicCap": [
+"遗物等级上限",
+"เลเวลสูงสุดของเรลิก",
+"Cấp tối đa Di vật",
+"Level maks Relik",
+"Nivel máx. de Reliquia",
+"Nível máx. de Relíquia",
+"Relikt-Stufenlimit",
+"Макс. уровень Реликта"
+],
 "profile.levelUp.stamina": [
 "体力上限 +{amount}",
 "สตามินาสูงสุด +{amount}",
@@ -1905,14 +1915,14 @@
 "Открывается · {content}"
 ],
 "profile.levelTree.relicCap": [
-"遗物等级上限 {max}",
-"เลเวลสูงสุดของเรลิก {max}",
-"Cấp tối đa Di vật {max}",
-"Level maks Relik {max}",
-"Nivel máx. de Reliquia {max}",
-"Nível máx. de Relíquia {max}",
-"Relikt-Stufenlimit {max}",
-"Макс. уровень Реликта {max}"
+"遗物等级上限 {from} → {max}",
+"เลเวลสูงสุดของเรลิก {from} → {max}",
+"Cấp tối đa Di vật {from} → {max}",
+"Level maks Relik {from} → {max}",
+"Nivel máx. de Reliquia {from} → {max}",
+"Nível máx. de Relíquia {from} → {max}",
+"Relikt-Stufenlimit {from} → {max}",
+"Макс. уровень Реликта {from} → {max}"
 ],
 "profile.levelTree.stamina": [
 "体力上限 {max}",

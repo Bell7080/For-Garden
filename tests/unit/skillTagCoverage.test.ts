@@ -10,9 +10,10 @@ import { t, loadTextCatalog, setTextLanguage } from "../../src/i18n";
 import { ferocityMaxOf } from "../../src/core/ferocity";
 import { breakthroughEnhances } from "../../src/core/relicProgression";
 import { LANGUAGE_IDS } from "../../src/core/language";
+import { breakthroughTags as breakthroughSkillTags } from "../../src/ui/breakthroughTags";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 
-const dependencies = { ...presentation, ...damage, ...statGain, t, buildSummonKeywords, ferocityMaxOf,
+const dependencies = { ...presentation, ...damage, ...statGain, t, buildSummonKeywords, ferocityMaxOf, breakthroughSkillTags,
   skillArtFor: () => undefined, skillArtTint: () => 0 };
 const build = sourceFunction("src/ui/info.ts", "buildSkillViewModel", dependencies);
 const frenzy = sourceFunction("src/ui/info.ts", "buildFerocityViewModel", dependencies);
@@ -37,7 +38,7 @@ describe("적·아군·소환수 스킬 태그 전수 검사", () => {
         if (slot === "ferocity") model = frenzy(def, { breakthroughEffect });
         else model = build({ def, breakthrough, kindLabel: slot, skill: def[slot], slot, breakthroughEffect });
         const where = `${locale}/${def.id}/${slot}`;
-        for (const text of [model.description, model.valueLabel, model.breakthroughEffect]) check(text, model.contextualKeywords, where);
+        for (const text of [model.description, model.valueLabel, model.breakthroughEffect, ...(model.breakthroughTags ?? []).map(tag => tag.text)]) check(text, model.contextualKeywords, where);
         for (const keyword of model.contextualKeywords ?? []) {
           check(keyword.description, model.contextualKeywords, `${where}/${keyword.id}`);
           for (const section of keyword.sections ?? []) check(section.text, [...(section.contextualKeywords ?? []), ...(model.contextualKeywords ?? [])], `${where}/${keyword.id}`);

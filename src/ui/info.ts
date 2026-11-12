@@ -1,4 +1,5 @@
 import { audioManager } from "../managers/AudioManager";
+import { breakthroughTags as breakthroughSkillTags } from "./breakthroughTags";
 import { attachRoll } from "./RollingValue";
 import { defenseGainKeywords, defenseGainSummary } from "./statGainKeywords";
 import { buildSummonKeywords } from "./summonKeywords";
@@ -3589,6 +3590,7 @@ export function buildFerocityViewModel(
     keywordActions: options.summonActions,
     // 폭주도 돌파가 효과를 붙이는 슬롯이라 같은 노란 줄을 얻는다.
     breakthroughEffect: options.breakthroughEffect,
+    breakthroughTags: options.breakthroughEffect === undefined ? undefined : breakthroughSkillTags(def, "ferocity"),
     // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
     description: t("skill.ferocity.head")
       + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp, abilityPower, resistance: def.stats.res }),
@@ -3679,6 +3681,7 @@ export function buildSkillViewModel(options: {
     slot: slot ?? ("kind" in skill ? "passive" : undefined),
     source: skill,
     breakthroughEffect,
+    breakthroughTags: breakthroughEffect && slot ? breakthroughSkillTags(finalDef, slot) : undefined,
     // 전용 일러스트가 있으면 팝업도 같은 그림과 같은 색을 쓴다. 아이콘과 쪽지가 갈라지면
     // 어느 스킬을 눌렀는지 되짚어야 한다.
     art: slot ? skillArtFor(finalDef.id, slot) : undefined,

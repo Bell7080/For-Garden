@@ -1877,7 +1877,8 @@ export const RELICS: RelicDef[] = [
       name: "무면허 안전제일",
       kind: "impactCap",
       iconAssetId: "skill-icon-fixed",
-      effectType: "fixed",
+      // 피해를 내지 않는 버티기 패시브다 — 고정 피해는 뇌진탕(일반 공격·궁극기)이 낸다.
+      effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 상한 비율을 그대로 담아 둔다.
       value: 40,
       // 한 방에 들어올 수 있는 피해의 상한(최대 체력 %)이다. 이하의 타격은 그대로 다 맞는다.

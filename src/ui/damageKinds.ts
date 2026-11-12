@@ -23,6 +23,7 @@ const STATUS_DAMAGE: Readonly<Partial<Record<string, DamageKind>>> = {
   pressure: "physical", // 수압 폭발 — 방어·저항에서 나온 물리 피해
   butcher: "physical", // 손질 폭발 — 물리 피해
   frostPlume: "fixed", // 동상 — 방어를 지나는 피해
+  concussion: "fixed", // 뇌진탕 — 최대 체력 비례, 방어·속성을 지나 한 번에 들어간다
 };
 
 /** 상태가 아니라 제 이름의 필드로 피해를 내는 계약. */
@@ -30,6 +31,8 @@ const FIELD_DAMAGE: Readonly<Partial<Record<string, DamageKind>>> = {
   prickle: "magical", // 까칠 반격 — 주문력 마법 피해
   batSwarm: "magical", // 박쥐 떼 — 주문력 마법 피해
   observationVolley: "fixed", // 관측 발동 — 방어·저항을 지난다
+  damageTransfer: "fixed", // 궁극기 전이 — 옮겨 간 몫은 방어·저항을 다시 거치지 않는다
+  curseTransfer: "fixed", // 저주 전이 — 같은 이유
 };
 
 function walk(value: unknown, into: Set<DamageKind>, depth: number): void {

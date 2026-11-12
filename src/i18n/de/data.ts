@@ -601,6 +601,8 @@ export default {
   "keyword.charge.description": "Stürmt geradewegs durch, ohne anzuhalten. Das Lauftempo bestimmt die Distanz – schnellere Füße dringen tiefer ein –, und jeder Gegner auf dem Weg wird getroffen.",
   "keyword.tailwind.term": "Rückenwind",
   "keyword.tailwind.description": "Für eine Weile steigen Angriffs- und Lauftempo um je 20%. Erneuter Rückenwind frischt auf die jeweils längere Dauer auf.",
+  "keyword.presence.term": "Präsenz",
+  "keyword.presence.description": "Wie stark eine Einheit Gegner bei der Zielwahl anzieht. Je größer die Präsenz einer Rolle, desto früher wird sie anvisiert, auch wenn sie etwas weiter weg steht (Tank > Krieger > Assassine > Unterstützer).",
   "keyword.regeneration.term": "Regeneration",
   "keyword.regeneration.description": "Stellt für eine Weile in festen Abständen Leben wieder her.",
   "keyword.stun.term": "Betäubung",

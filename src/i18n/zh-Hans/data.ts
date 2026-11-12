@@ -601,6 +601,8 @@ export default {
   "keyword.charge.description": "一路直冲不停下。移动速度决定距离，脚越快冲得越深，路径上的所有敌人都会被击中。",
   "keyword.tailwind.term": "顺风",
   "keyword.tailwind.description": "在一定时间内，攻击速度与移动速度各提升20%。再次获得顺风时，刷新为较长的持续时间。",
+  "keyword.presence.term": "存在感",
+  "keyword.presence.description": "敌人选择目标时被吸引的程度。存在感越高的职业，即使稍远一些也会像近处的敌人一样被优先锁定（坦克 > 战士 > 刺客 > 辅助）。",
   "keyword.regeneration.term": "再生",
   "keyword.regeneration.description": "在一定时间内按固定间隔恢复生命。",
   "keyword.stun.term": "眩晕",

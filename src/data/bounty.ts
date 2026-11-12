@@ -98,7 +98,7 @@ export const BOUNTY_TIERS: readonly BountyTierDef[] = [
     { relicId: "ripa", level: 41 }, { relicId: "atra", level: 40 }, { relicId: "ikanixia", level: 40 },
   ] },
   { id: "bounty-10", order: 9, name: "현상수배 9급", rewardGold: 20_000, rounds: [
-    { relicId: "ripa", level: 50 }, { relicId: "koma", level: 46 }, { relicId: "ikanixia", level: 46 },
+    { relicId: "ripa", level: 49 }, { relicId: "koma", level: 46 }, { relicId: "ikanixia", level: 46 },
   ] },
   // 10급은 돌파 4단계를 다 연 가장 무거운 셋의 자리다. 아모가 가장 좁은 벽이라 마지막에 선다
   // (v0.442.7 — 이카닉시아의 반향 막을 반으로 줄이자 이카닉시아·코마를 확실히 이기는 개체 수가 11종으로 같아져 아모와 자리를 바꿨다).

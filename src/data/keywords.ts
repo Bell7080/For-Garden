@@ -235,6 +235,11 @@ export const KEYWORDS: readonly KeywordDef[] = [
     id: "tailwind", term: "순풍", kind: "buff",
     description: "정해진 시간 동안 공격 속도와 이동 속도가 각각 20% 오른다. 같은 순풍을 다시 받으면 남은 시간이 더 긴 쪽으로 갱신된다.",
   },
+  // 직군 쪽지의 「적의 눈길을 끄는 존재감」이 연다(`SKIRMISH.rolePull`). 확률이 아니라 표적을 고를 때 거리에 얹는 끌림이다.
+  {
+    id: "presence", term: "존재감", kind: "rule",
+    description: "적이 표적을 고를 때 끌리는 정도다. 존재감이 큰 직군일수록 조금 더 멀리 있어도 가까운 적처럼 먼저 노려진다(탱커 > 전사 > 암살자 > 지원가).",
+  },
   {
     id: "regeneration", term: "지속 회복", kind: "buff",
     description: "정해진 시간 동안 일정한 간격으로 체력을 회복한다.",

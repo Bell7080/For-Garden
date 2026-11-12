@@ -601,6 +601,8 @@ export default {
   "keyword.charge.description": "一路直衝不停下。移動速度決定距離，腳越快衝得越深，路徑上的所有敵人都會被擊中。",
   "keyword.tailwind.term": "順風",
   "keyword.tailwind.description": "在一定時間內，攻擊速度與移動速度各提升20%。再次獲得順風時，重新整理為較長的持續時間。",
+  "keyword.presence.term": "存在感",
+  "keyword.presence.description": "敵人選擇目標時被吸引的程度。存在感越高的職業，即使稍遠一些也會像近處的敵人一樣被優先鎖定（坦克 > 戰士 > 刺客 > 輔助）。",
   "keyword.regeneration.term": "再生",
   "keyword.regeneration.description": "在一定時間內按固定間隔恢復生命。",
   "keyword.stun.term": "眩暈",

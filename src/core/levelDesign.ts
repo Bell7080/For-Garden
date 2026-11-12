@@ -234,8 +234,8 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
     healingReduction: { basePercent: 5, maxPercent: 40, rampSeconds: 60 },
     /*
      * **혼자 선 정예는 전투력이 더 무겁게 읽힌다**(응태 요청, 2026-11-12 — "왜 내 전투력이 더 센데 져"가 없어야 한다).
-     * 강인함과 치유 감소는 능력치에 없어 몫만 덜어 셀 때 정예가 실제보다 가볍게 섰다. 대표 두 조합이 정예 하나를 50% 넘게
-     * 이기는 아군 전투력을 재 보니 표시 전투력의 0.55~1.25배였다. 1.4로는 정예 둘이 선 4-10이 아직 1.09배라 1.6으로 둔다.
+     * 강인함과 치유 감소는 능력치에 없어 실제 능력치만 세면 정예가 가볍게 선다. 1-5 토비가 이기는 아군 선(약 6,200~6,700)을
+     * 표시가 그대로 말하도록 실제 능력치 전투력에 1.6을 곱한다(`encounterUnitPower`).
      */
     powerWeight: 1.6,
   },
@@ -352,8 +352,10 @@ export function encounterHpShare(role: EncounterRole, countOnField: number): num
  * **자리를 아는 전투력** — 적 한 무리의 개체별 표시 전투력(응태 요청, 2026-11-12: 정예가 전투력보다 훨씬 세다).
  *
  * 정예의 체력 몫(×3)은 「셋이 나눠 내던 몫을 혼자 대신한다」는 뜻인데, 전투력 식은 체력을 선형으로 낮게 세어 혼자 선
- * 정예가 실제 세기의 절반쯤으로 읽혔다. 그래서 정예만 **몫을 덜어 낸 한 몸의 전투력 × 그 몸이 대신하는 머릿수**로 센다 —
- * 정예 하나는 셋, 정예 둘은 각자 하나 반이다 — 거기에 자리 몫(`powerWeight`)을 얹는다. 다른 자리는 능력치 그대로에 제 자리 몫만 곱한다. 표시 전용이며 전투에는 쓰지 않는다.
+ * 정예가 실제 세기의 절반쯤으로 읽혔다. 한때 몫을 덜어 낸 한 몸 × 머릿수로 셌더니 방어·저항·주문력까지 4.8배로 불어 1-5 토비가
+ * 아군 두 배(12,900)로 읽혔다(응태: 「수치 표기가 높다」). 지금은 **실제 능력치(몫이 든 값)의 전투력 × 자리 몫**(정예 1.6 · 일반 1.3)이다 —
+ * 토비가 실제로 이기는 아군 선(약 6,200~6,700)과 맞는다. 이카닉시아·코마가 선 벽(1-10·3-10·4-10·7-5)은 편성 상성 때문에 이 표시보다 세다.
+ * 표시 전용이며 전투에는 쓰지 않는다.
  */
 export function encounterUnitPowers(units: readonly { stats: Stats; encounterRole?: EncounterRole }[]): number[] {
   const elites = encounterEliteCount(units);
@@ -367,11 +369,8 @@ export function encounterEliteCount(units: readonly { encounterRole?: EncounterR
 
 /** 개체 하나의 자리를 아는 전투력(`encounterUnitPowers`의 한 칸). `elites`는 그 무리에 선 정예 수다. */
 export function encounterUnitPower(stats: Stats, encounterRole: EncounterRole | undefined, elites: number): number {
-  if (encounterRole !== "elite") return Math.round(combatPower(stats) * ((encounterRole && ENCOUNTER_ROLE[encounterRole].powerWeight) ?? 1));
-  const spec = ENCOUNTER_ROLE.elite;
-  const share = encounterHpShare("elite", elites);
-  const attack = spec.attackMultiplier;
-  return Math.round(combatPower({ ...stats, hp: stats.hp / share, atk: stats.atk / attack, ap: stats.ap / attack }) * share * (spec.powerWeight ?? 1));
+  void elites;
+  return Math.round(combatPower(stats) * ((encounterRole && ENCOUNTER_ROLE[encounterRole].powerWeight) ?? 1));
 }
 
 /** `encounterUnitPowers`의 합 — 셋보다 많이 서면 `groupCombatPower`처럼 평균 × 셋이다. */

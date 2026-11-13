@@ -287,7 +287,7 @@ export const SKILL_DE = {
   "skill.breakthrough.effect.ferocity.feverAmbush": "Beim Eintritt in die [[ferocity|Raserei]] wird es {seconds} s lang durch [[stealth|Tarnung]] verborgen.",
   "skill.breakthrough.effect.passive.fullFocusCrit": "Solange der [[focus|Fokus]] voll ist, ist „{name}“ immer ein kritischer Treffer.",
   "skill.clause.stunLockout": "Ein bereits betäubter Gegner wird {seconds} s lang nicht erneut durch diese Fähigkeit betäubt",
-  "skill.clause.rally": "Jeder {every}. [[basic-attack|Basisangriff]] [[taunt|verspottet]] Gegner in der Nähe {seconds} s lang und gewährt einen [[shield|Schild]] in Höhe von {percent}.",
+  "skill.clause.rally": "Jeder {every}. [[basic-attack|Basisangriff]] [[taunt|verspottet]] Gegner in der Nähe {seconds} s lang und gewährt einen [[shield|Schild]] in Höhe von {percent}",
   "skill.breakthrough.effect.ultimate.forestSight": "Solange der Effekt aktiv ist, treffen Normalangriffe {hits}-mal, und er hält {seconds} s länger an.",
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "Ein zusätzlicher magischer Treffer, identisch mit Mettes [[basic-attack|Normalangriff]]. Er lässt das getroffene Ziel [[stagger|taumeln]].",

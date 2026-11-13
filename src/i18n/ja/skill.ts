@@ -307,7 +307,7 @@ export const SKILL_JA = {
   "skill.breakthrough.effect.ferocity.feverAmbush": "[[ferocity|暴走]]に入る瞬間、{seconds}秒間[[stealth|隠密]]する。",
   "skill.breakthrough.effect.passive.fullFocusCrit": "[[focus|集中]]が満タンの間、「{name}」が必ずクリティカルになる。",
   "skill.clause.stunLockout": "一度気絶した敵は、{seconds}秒間この気絶を再び受けない",
-  "skill.clause.rally": "[[basic-attack|基本攻撃]]{every}回ごとに周囲の敵を{seconds}秒間[[taunt|挑発]]し、{percent}の[[shield|シールド]]を得る。",
+  "skill.clause.rally": "[[basic-attack|基本攻撃]]{every}回ごとに周囲の敵を{seconds}秒間[[taunt|挑発]]し、{percent}の[[shield|シールド]]を得る",
   "skill.breakthrough.effect.ultimate.forestSight": "効果中、通常攻撃が{hits}回命中し、効果時間が{seconds}秒延びる。",
 
   "skill.keyword.staccato.term": "スタッカート",

@@ -287,7 +287,7 @@ export const SKILL_ZH_HANS = {
   "skill.breakthrough.effect.ferocity.feverAmbush": "进入[[ferocity|暴走]]的瞬间，{seconds}秒内[[stealth|隐身]]。",
   "skill.breakthrough.effect.passive.fullFocusCrit": "[[focus|专注]]叠满时，「{name}」必定暴击。",
   "skill.clause.stunLockout": "同一敌人被击晕后，{seconds}秒内不会再次受到该眩晕",
-  "skill.clause.rally": "每第{every}次[[basic-attack|普通攻击]]会[[taunt|嘲讽]]周围敌人{seconds}秒，并获得{percent}的[[shield|护盾]]。",
+  "skill.clause.rally": "每第{every}次[[basic-attack|普通攻击]]会[[taunt|嘲讽]]周围敌人{seconds}秒，并获得{percent}的[[shield|护盾]]",
   "skill.breakthrough.effect.ultimate.forestSight": "效果持续期间，普通攻击命中{hits}次，且效果时间延长{seconds}秒。",
   "skill.keyword.staccato.term": "断奏",
   "skill.keyword.staccato.description": "与梅特的[[basic-attack|普通攻击]]相同的追加魔法打击。会使命中的目标[[stagger|硬直]]。",

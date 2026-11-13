@@ -335,7 +335,7 @@ export const SKILL_KO = {
   "skill.breakthrough.effect.ferocity.feverAmbush": "[[ferocity|폭주]]에 들어서는 순간 {seconds}초 동안 [[stealth|은신]]한다.",
   "skill.breakthrough.effect.passive.fullFocusCrit": "[[focus|집중]]이 가득 차 있는 동안 「{name}」{name!이} 반드시 치명타가 된다.",
   "skill.clause.stunLockout": "같은 적은 한 번 기절한 뒤 {seconds}초 동안 이 기절을 다시 받지 않는다",
-  "skill.clause.rally": "[[basic-attack|기본 공격]] {every}번째마다 주위의 적을 {seconds}초 동안 [[taunt|도발]]하고 {percent}만큼 [[shield|보호막]]을 얻는다.",
+  "skill.clause.rally": "[[basic-attack|기본 공격]] {every}번째마다 주위의 적을 {seconds}초 동안 [[taunt|도발]]하고 {percent}만큼 [[shield|보호막]]을 얻는다",
   "skill.breakthrough.effect.ultimate.forestSight": "효과 동안 일반 공격이 {hits}번 적중하고, 효과가 {seconds}초 더 이어진다.",
 
   // ── 정보창이 스킬 쪽지에 주입하는 문맥 사전 ─────────────────────────────

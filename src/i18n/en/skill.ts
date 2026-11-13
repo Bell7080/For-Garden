@@ -288,7 +288,7 @@ export const SKILL_EN = {
   "skill.breakthrough.effect.ferocity.feverAmbush": "When entering [[ferocity|Frenzy]], gains [[stealth|Stealth]] for {seconds}s.",
   "skill.breakthrough.effect.passive.fullFocusCrit": "While [[focus|Focus]] is full, \"{name}\" is always a critical hit.",
   "skill.clause.stunLockout": "an enemy already stunned by this cannot be stunned by it again for {seconds}s",
-  "skill.clause.rally": "Every {every}th [[basic-attack|Basic Attack]] [[taunt|Taunts]] nearby enemies for {seconds}s and gains a [[shield|shield]] equal to {percent}.",
+  "skill.clause.rally": "Every {every}th [[basic-attack|Basic Attack]] [[taunt|Taunts]] nearby enemies for {seconds}s and gains a [[shield|shield]] equal to {percent}",
   "skill.breakthrough.effect.ultimate.forestSight": "While active, basic attacks hit {hits} times, and the effect lasts {seconds}s longer.",
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "An extra magical hit identical to Mette's [[basic-attack|basic attack]]. It [[stagger|Staggers]] the target it lands on.",

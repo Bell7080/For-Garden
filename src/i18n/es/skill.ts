@@ -287,7 +287,7 @@ export const SKILL_ES = {
   "skill.breakthrough.effect.ferocity.feverAmbush": "Al entrar en [[ferocity|Frenesí]], obtiene [[stealth|Sigilo]] durante {seconds} s.",
   "skill.breakthrough.effect.passive.fullFocusCrit": "Mientras la [[focus|Concentración]] esté al máximo, «{name}» es siempre un golpe crítico.",
   "skill.clause.stunLockout": "un enemigo ya aturdido no vuelve a sufrir este aturdimiento durante {seconds} s",
-  "skill.clause.rally": "Cada {every} [[basic-attack|ataques básicos]] [[taunt|Provoca]] a los enemigos cercanos durante {seconds} s y obtiene un [[shield|escudo]] de {percent}.",
+  "skill.clause.rally": "Cada {every} [[basic-attack|ataques básicos]] [[taunt|Provoca]] a los enemigos cercanos durante {seconds} s y obtiene un [[shield|escudo]] de {percent}",
   "skill.breakthrough.effect.ultimate.forestSight": "Mientras dura, los ataques básicos aciertan {hits} veces y el efecto dura {seconds} s más.",
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "Un golpe mágico adicional idéntico al [[basic-attack|ataque básico]] de Mette. Hace [[stagger|Tambalearse]] al objetivo que alcanza.",

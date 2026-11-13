@@ -387,12 +387,21 @@ export function encounterUnitPower(stats: Stats, encounterRole: EncounterRole | 
   return Math.round(combatPower(stats, base) * ((encounterRole && ENCOUNTER_ROLE[encounterRole].powerWeight) ?? 1));
 }
 
-/** `encounterUnitPowers`의 합 — 셋보다 많이 서면 `groupCombatPower`처럼 평균 × 셋이다. */
-export function encounterGroupPower(units: readonly { stats: Stats; encounterRole?: EncounterRole; base?: Stats }[], slots: number = POWER_COMPARISON_SLOTS): number {
+/**
+ * `encounterUnitPowers`의 합 — **화면에 서는 개체 전부를 그대로 더한다**(응태 2026-11-13: 「나보다 약한데 내가 진다」).
+ *
+ * 한때 셋보다 많이 서면 평균 × 셋으로 줄였는데, 스토리의 넷·다섯 무리는 그 몸이 전부 동시에 싸운다 — 7-4가 지도에서는
+ * 19,962, 편성 화면에서는 14,972로 서서 아군이 그보다 높아도 졌다(모의: 무리 넷은 표시 ×1.0에서 승률 56~90%,
+ * 다섯은 24~33%. 셋이 서는 관문은 78~96%). 합 그대로 적으면 머릿수와 무관하게 「표시가 같으면 대개 이긴다」로 맞는다.
+ * **열다섯이 몰려오는 던전(`horde`)만** 아군 셋과 같은 머릿수로 맞춘다(`groupCombatPower`) — 한 번에 맞붙지 않는 몸까지
+ * 더하면 숫자만 부푼다. 표시 전용이며 전투에는 쓰지 않는다.
+ */
+export function encounterGroupPower(units: readonly { stats: Stats; encounterRole?: EncounterRole; base?: Stats }[], options: { horde?: boolean } = {}): number {
   const powers = encounterUnitPowers(units);
   if (powers.length === 0) return 0;
   const total = powers.reduce((sum, power) => sum + power, 0);
-  return powers.length <= slots ? total : Math.round(total * slots / powers.length);
+  const slots = POWER_COMPARISON_SLOTS;
+  return options.horde !== true || powers.length <= slots ? total : Math.round(total * slots / powers.length);
 }
 
 /**

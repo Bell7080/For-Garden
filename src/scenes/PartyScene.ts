@@ -1194,7 +1194,7 @@ export class PartyScene extends Phaser.Scene {
     for (const { creature } of moving.values()) creature.destroy();
 
     // 어느 편이 센지는 두 수가 마주 보는 것으로 말한다. 표시·정렬 전용 값이라 전투에는 쓰지 않는다.
-    const enemyPower = this.preview.totalPower ?? encounterGroupPower(withBaseStats(this.enemies));
+    const enemyPower = this.preview.totalPower ?? encounterGroupPower(withBaseStats(this.enemies), { horde: this.preview.hordeCount !== undefined });
     // 방어덱 편성에는 적 전투력 줄 자체가 없다(`buildPreview`의 `allyOnly`).
     this.enemyPowerText?.setText(t("party.enemyPower", { power: enemyPower.toLocaleString() }));
     if (this.content.content === "duelDefense" && chrome) this.paintBlindChips(chrome, members);

@@ -1,3 +1,4 @@
+import { onAccountSwitch } from "../core/accountScope";
 import { fitTextToBox } from "../ui/textFit";
 import { openSettingsOver } from "./settingsOverlay";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
@@ -57,6 +58,7 @@ const STAGE_MAP_TITLE = { titleY: 205, subtitleY: 278, titleSize: 62, subtitleSi
  * 다음 입장은 다시 가장 최근에 열린 관문으로 올라간다. 모듈 변수라 저장에 섞이지 않는다.
  */
 let resumeStageId: string | undefined;
+onAccountSwitch(() => { resumeStageId = undefined; });
 
 /** 제목·출전·뒤로가기가 앉는 깊이. 비네트(40)보다 위, 적 편성 팝업(60)보다 아래다. */
 const CHROME_DEPTH = 50;

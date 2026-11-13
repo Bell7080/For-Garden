@@ -1,3 +1,4 @@
+import { onAccountSwitch } from "./accountScope";
 /**
  * 재화 숫자가 굴러가는 중간 글자를 짓는 순수 규칙이다.
  *
@@ -49,3 +50,5 @@ const rollMemory = new Map<string, string>();
 export function recallRoll(key: string): string | undefined { return rollMemory.get(key); }
 export function rememberRoll(key: string, text: string): void { rollMemory.set(key, text); }
 export function clearRollMemory(): void { rollMemory.clear(); }
+// 로그인으로 다른 계정이 얹히면 그 계정의 값에서 다시 굴린다(앞 계정의 값에서 굴러 오지 않게).
+onAccountSwitch(clearRollMemory);

@@ -1,3 +1,4 @@
+import { onAccountSwitch } from "../core/accountScope";
 import { bindNotificationDot } from "../ui/NotificationDot";
 import { openSettingsOver } from "./settingsOverlay";
 import { notificationManager } from "../managers/NotificationManager";
@@ -52,6 +53,8 @@ import { addRaidGuideButton } from "../ui/RaidGuidePopup";
  * 화면이 들고 있을 뿐 판정에는 쓰지 않는다 — 조작은 전부 서버 응답을 다시 받는다.
  */
 let lastRaidList: RaidListResponse | undefined;
+// 다른 계정의 목록으로 먼저 그리지 않는다.
+onAccountSwitch(() => { lastRaidList = undefined; });
 
 /** 목록의 두 탭. 진행 중인 판을 치고, 끝난 판을 정산한다. */
 export type RaidListTab = "active" | "completed";

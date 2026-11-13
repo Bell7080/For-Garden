@@ -1,4 +1,5 @@
 import type { PlayerExpReceipt } from "../core/playerLevel";
+import { onAccountSwitch } from "../core/accountScope";
 
 /**
  * 방금 치른 판이 올린 연구원 경험치 — 결과판이 한 번 꺼내 쓰고 비운다.
@@ -11,6 +12,8 @@ import type { PlayerExpReceipt } from "../core/playerLevel";
  * **두 영수증을 이어 붙인다** — 앞 판에서 오른 레벨과 받은 병이 조용히 사라지지 않게 한다.
  */
 let pending: PlayerExpReceipt | undefined;
+// 앞 계정의 영수증을 새 계정의 결과판이 꺼내지 않게 한다.
+onAccountSwitch(() => { pending = undefined; });
 
 export function rememberPlayerExp(receipt: PlayerExpReceipt | undefined): void {
   if (!receipt) return;

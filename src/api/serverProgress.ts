@@ -1,5 +1,6 @@
 import { installArenaApi } from "./arenaApi";
 import { setActiveAncientSeason } from "../core/ancientStrataBattle";
+import { observeAccountOwner } from "../core/accountScope";
 /**
  * 서버가 진행을 소유하도록 켠다. 타이틀에서 한 번 부르고, 성공하면 `gameApi`가 서버 호출로 바뀌어
  * 이후 모든 조작이 `/api/game`을 지난다. 연결할 서버가 없는 빌드(설정·보안 저장소 없음, E2E)는
@@ -75,6 +76,8 @@ export function applyServerState(target: Session, next: Session, saves: Pick<Sav
   Object.assign(target, next, { settings, selectedStageId });
   // 서버가 넘긴 달의 명단·시련으로 지층 지도와 전투가 선다.
   setActiveAncientSeason(target.ancientSeason ?? "");
+  // 계정 변경 뒤 로그인으로 다른 계정이 얹혔으면 이전 계정 기준의 메모리 상태(레벨업 기준 등)를 비운다.
+  if (target === session) observeAccountOwner(target.playerCard.uid);
   saves.save(target);
 }
 

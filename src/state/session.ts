@@ -28,6 +28,7 @@ import { isStageUnlockedByProgress } from "../core/stageProgress";
 import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
 import type { MissionState } from "../core/missions";
 import type { RuneInstance } from "../core/runes";
+import { observeAccountOwner } from "../core/accountScope";
 import type { RuneTraitView } from "../core/runeListFilter";
 import { createDefaultSettings } from "../core/settings";
 import type { LanguageId } from "../core/language";
@@ -663,6 +664,8 @@ export const session: Session = createDefaultSession();
 /** 공유 객체 참조를 유지한 채 부트에서 검증된 상태만 주입한다. */
 export function replaceSession(next: Session): void {
   Object.assign(session, next);
+  // 다른 계정이 얹혔으면 그 계정의 지난 값과 비교하던 메모리 상태(레벨업 기준 등)를 비운다.
+  observeAccountOwner(session.playerCard.uid);
 }
 
 /** 첫 스테이지와, 직전 스테이지를 깬 스테이지만 들어갈 수 있다. */

@@ -2,6 +2,7 @@ import type { GameApi } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
 import { deriveNotificationState, EMPTY_NOTIFICATION_STATE, type NotificationKey, type NotificationState } from "../core/notifications";
 import { session } from "../state/session";
+import { onAccountSwitch } from "../core/accountScope";
 import { managerEvents, type ManagerEvents } from "./ManagerEvents";
 
 const FREE_CATEGORIES = ["daily", "weekly", "monthly"] as const;
@@ -18,6 +19,8 @@ export class NotificationManager {
     // 받을 임무 보상 수가 바뀌면 곧바로 다시 읽는다 — 로비 판 위에서 급여·수확으로 임무가 차도 점이 선다.
     api.subscribeMissionNotice?.(() => this.queueRefresh());
     events.subscribe("inventory", () => this.queueRefresh());
+    // 계정이 바뀌면 앞 계정의 점을 지우고 새 계정으로 다시 읽는다.
+    onAccountSwitch(() => { this.state = EMPTY_NOTIFICATION_STATE; this.refreshGeneration += 1; this.queueRefresh(); });
     // 부분 영수증(우편 등)도 구독 UI의 유무와 무관하게 다음 조회의 기준 상태로 보관한다.
     events.subscribe("notification", ({ state }) => { this.state = { ...state }; this.refreshGeneration += 1; });
   }

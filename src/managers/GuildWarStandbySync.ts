@@ -1,4 +1,5 @@
 import { gameApi } from "../api/FakeServer";
+import { onAccountSwitch } from "../core/accountScope";
 
 /**
  * 길드전 대기 방어덱을 하루(UTC) 한 번 서버에 넣어 둔다 — 길드전 화면을 열지 않는 길드원도 준비일에 자동으로 배치되도록.
@@ -13,6 +14,8 @@ let inFlight: Promise<boolean> | undefined;
 /** 마지막으로 넣어 본 시각 — 넣지 못하는 계정(렐릭이 셋 안 됨)이 화면을 다시 그릴 때마다 요청을 보내지 않게 한다. */
 let lastAttemptAt = Number.NEGATIVE_INFINITY;
 const RETRY_GAP_MS = 60_000;
+// 「오늘 넣었다」는 그 계정의 기록이다 — 앞 계정이 넣은 날이라고 새 계정의 대기 덱을 건너뛰지 않는다.
+onAccountSwitch(() => { syncedDay = undefined; lastAttemptAt = Number.NEGATIVE_INFINITY; });
 
 const dayOf = (now: number): number => Math.floor(now / 86_400_000);
 

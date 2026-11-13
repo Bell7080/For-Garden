@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
+import { onAccountSwitch } from "../core/accountScope";
 import { tutorialManager } from "../managers/TutorialManager";
 import type { PopupLayer } from "./PopupLayer";
 import { followTutorialTarget } from "./tutorialTarget";
@@ -13,6 +14,7 @@ import { followTutorialTarget } from "./tutorialTarget";
  * 켜 가방을 열면 다시 이어진다. 영영 끝내는 길은 세공 화면의 「건너뛰기」와 각인 확정 둘뿐이다.
  */
 let offeredThisRun = false;
+onAccountSwitch(() => { offeredThisRun = false; });
 
 export function offerFreeRuneCraft(scene: Phaser.Scene, _popups: PopupLayer, openCraft: (runeInstanceId: string) => void): void {
   if (offeredThisRun || tutorialManager.freeRuneId() === undefined) return;

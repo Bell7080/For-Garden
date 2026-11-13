@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
+import { onAccountSwitch } from "../core/accountScope";
 import { session } from "../state/session";
 import { chipPoints, drawLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
@@ -17,6 +18,7 @@ export const SOLD_OUT_STAMP = { dim: 0.58, size: 58, tilt: -0.2, startScale: 2.4
  * 새로 팔린 것처럼 읽히므로, 처음 찍은 뒤에는 이미 찍힌 채로 선다. 다시 살 수 있게 되면 잊어 다음 매진에 또 찍힌다.
  */
 const stampedProducts = new Set<string>();
+onAccountSwitch(() => stampedProducts.clear());
 
 export function forgetSoldOutStamp(key: string): void {
   stampedProducts.delete(key);
@@ -52,6 +54,7 @@ export function styleLimitCount(text: Phaser.GameObjects.Text, soldOut: boolean)
  */
 export const STATUS_STICKER = { size: 54, tilt: -0.12, startScale: 2.2, durationMs: 170, padX: 26, padY: 10 } as const;
 const stickedProducts = new Set<string>();
+onAccountSwitch(() => stickedProducts.clear());
 
 export function addStatusSticker(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, label: string, tone: { text: string; line: number }, key: string): Phaser.GameObjects.Container {
   const sticker = scene.add.container(x, y);

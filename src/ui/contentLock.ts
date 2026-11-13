@@ -1,3 +1,4 @@
+import { onAccountSwitch } from "../core/accountScope";
 import Phaser from "phaser";
 import { audioManager } from "../managers/AudioManager";
 import { t, type TextKey } from "../i18n";
@@ -43,6 +44,8 @@ export function contentLockText(id: ContentId): string {
  * 입구에 「NEW」가 선다(`contentFresh`·`addContentNewBadge`).
  */
 const pendingCelebrations = new Set<ContentId>();
+// 앞 계정에서 터지지 못한 열림 연출을 새 계정의 로비가 터뜨리지 않는다.
+onAccountSwitch(() => pendingCelebrations.clear());
 
 export function collectUnlockCelebrations(): ContentId[] {
   const open = ALL_GATED_CONTENT.filter((id) => contentOpen(id));

@@ -1,3 +1,4 @@
+import { onAccountSwitch } from "../core/accountScope";
 import { hasRemoteState } from "../api/resultState";
 import { setDebugMissionsPeriod } from "../debug";
 import Phaser from "phaser";
@@ -30,6 +31,8 @@ import { MISSIONS_POPUP_LAYOUT, missionListContentHeight, missionRowY, missionsT
  * 「방금 본 순서」라 메모리에만 둔다.
  */
 const MISSION_ORDER_MEMORY = new Map<string, MissionOrderMemory>();
+// 줄 순서 기억은 그 계정의 임무 목록에서 나온 것이다.
+onAccountSwitch(() => MISSION_ORDER_MEMORY.clear());
 import { shapeClipMask } from "./popupArt";
 import { clipInteractiveTree, containerClip } from "./clippedHit";
 import { withBusy } from "./BusyOverlay";

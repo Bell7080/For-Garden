@@ -79,6 +79,7 @@ import { LOCK_DIM, LOCK_TOAST } from "../ui/lockStyle";
 import type { ContentId } from "../core/contentUnlock";
 import { managerEvents } from "../managers/ManagerEvents";
 import { levelUpAnnouncement } from "../core/levelUpAnnouncement";
+import { onAccountSwitch } from "../core/accountScope";
 import { openLevelUpPopup } from "../ui/LevelUpPopup";
 import { MailPopup } from "../ui/MailPopup";
 import { openPassPopup } from "../ui/PassPopup";
@@ -109,6 +110,8 @@ import { logError } from "../managers/ErrorReporter";
 const LOBBY_PORTRAIT_DEPTH = -20;
 /** 마지막으로 알린 연구원 레벨. 앱을 켠 뒤 처음 선 로비가 기준을 잡고, 그 뒤로 오른 만큼만 알린다(`levelUpAnnouncement`). */
 let announcedPlayerLevel: number | undefined;
+// 기준은 같은 계정 안에서만 잇는다 — 2레벨 계정에서 20레벨 계정으로 바꿔 들어오면 오른 것이 아니다.
+onAccountSwitch(() => { announcedPlayerLevel = undefined; });
 
 /** 교류의 강조색. 값은 테마 한 곳이 갖는다 — 레이드의 상점 입구도 같은 값을 읽는다. */
 const EXCHANGE_BLUE = COLOR.exchange;

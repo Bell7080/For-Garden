@@ -1,4 +1,5 @@
 import { bindNotificationDot } from "../ui/NotificationDot";
+import { openSettingsOver } from "./settingsOverlay";
 import { notificationManager } from "../managers/NotificationManager";
 import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
@@ -118,7 +119,7 @@ export class RaidScene extends Phaser.Scene {
     // 씬이 다시 시작될 때 원화와 마스크가 남지 않게 한 곳에서 걷는다.
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.dispose());
     // 한 판이 스테미나를 쓰므로 목록과 판 모두 위에 남은 양을 세우고, 누르면 충전 창이 열린다.
-    new TopBar(this, 40, { profile: false, currencies: "stamina", depth: 60, onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency) });
+    new TopBar(this, 40, { profile: false, currencies: "stamina", depth: 60, onSettings: () => openSettingsOver(this, "raid"), onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency) });
     if (!this.raidId) {
       this.add.text(RAID_HEADER.titleX, RAID_HEADER.titleY, t("raid.title"), textStyle({ role: "display", size: 54, color: COLOR.sortieText })).setOrigin(0, 0);
       this.buildListChrome();

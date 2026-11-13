@@ -287,7 +287,7 @@ export const SKILL_VI = {
   "skill.breakthrough.effect.ferocity.feverAmbush": "Khi vào [[ferocity|Cuồng bạo]], [[stealth|Tàng hình]] trong {seconds} giây.",
   "skill.breakthrough.effect.passive.fullFocusCrit": "Khi [[focus|Tập trung]] đầy, \"{name}\" chắc chắn chí mạng.",
   "skill.clause.stunLockout": "kẻ địch đã bị choáng sẽ không bị choáng lại bởi chiêu này trong {seconds} giây",
-  "skill.clause.rally": "Mỗi {every} lần [[basic-attack|Đánh thường]], [[taunt|Khiêu khích]] kẻ địch xung quanh {seconds} giây và nhận [[shield|khiên]] bằng {percent}.",
+  "skill.clause.rally": "Mỗi {every} lần [[basic-attack|Đánh thường]], [[taunt|Khiêu khích]] kẻ địch xung quanh {seconds} giây và nhận [[shield|khiên]] bằng {percent}",
   "skill.breakthrough.effect.ultimate.forestSight": "Trong thời gian hiệu lực, đòn đánh thường trúng {hits} lần và hiệu lực kéo dài thêm {seconds} giây.",
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "Một đòn phép thêm giống hệt [[basic-attack|đòn đánh thường]] của Mette. Nó làm mục tiêu trúng đòn [[stagger|Khựng]].",

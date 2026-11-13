@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { openSettingsOver } from "./settingsOverlay";
 import { t } from "../i18n";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
@@ -83,7 +84,7 @@ export class CakeOperationScene extends Phaser.Scene {
 
     addSceneBackground(this, BACKGROUND.sortieCake);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.72 });
-    new TopBar(this, 40, { profile: false, onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency) });
+    new TopBar(this, 40, { profile: false, onSettings: () => openSettingsOver(this, "cakeOperation"), onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency) });
     addSectionTitle(this, DUNGEON_LOBBY.title.x, DUNGEON_LOBBY.title.y, t("cake.title"));
     this.popups = new PopupLayer(this, 2200);
     // 소탕 창의 스테미나·소탕권 그림도 같은 안내창으로 이어진다(`addFramedIcon`·`guideForIcon`).

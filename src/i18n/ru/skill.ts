@@ -287,7 +287,7 @@ export const SKILL_RU = {
   "skill.breakthrough.effect.ferocity.feverAmbush": "При входе в [[ferocity|неистовство]] на {seconds} с становится скрытым ([[stealth|Невидимость]]).",
   "skill.breakthrough.effect.passive.fullFocusCrit": "Пока [[focus|Сосредоточенность]] максимальна, «{name}» всегда наносит критический удар.",
   "skill.clause.stunLockout": "уже оглушённый враг не оглушается этим умением повторно в течение {seconds} с",
-  "skill.clause.rally": "Каждая {every}-я [[basic-attack|базовая атака]] [[taunt|провоцирует]] ближних врагов на {seconds} с и даёт [[shield|щит]] в {percent}.",
+  "skill.clause.rally": "Каждая {every}-я [[basic-attack|базовая атака]] [[taunt|провоцирует]] ближних врагов на {seconds} с и даёт [[shield|щит]] в {percent}",
   "skill.breakthrough.effect.ultimate.forestSight": "Пока эффект активен, обычные атаки попадают {hits} раз(а), а сам эффект длится на {seconds} с дольше.",
   "skill.keyword.staccato.term": "Стаккато",
   "skill.keyword.staccato.description": "Дополнительный магический удар, как [[basic-attack|обычная атака]] Метте. [[stagger|Ошеломляет]] задетую цель.",

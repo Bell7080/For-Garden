@@ -1,4 +1,5 @@
 import { ancientStageFloor } from "../data/ancientStrataDifficulty";
+import { openSettingsOver } from "./settingsOverlay";
 import { playFormationTapSound } from "../ui/formationSound";
 import { storyBaseStageId, storyDifficultyOf } from "../core/storyDifficulty";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
@@ -368,7 +369,7 @@ export class PartyScene extends Phaser.Scene {
     if (staminaContent) {
       // 가운데 제목이 오른쪽 스테미나 칸(왼쪽 끝 826px)을 넘지 않게 폭을 지킨다.
       shrinkTextToWidth(titleText, 560);
-      new TopBar(this, 40, { profile: false, currencies: "stamina", depth: 60, onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: new PopupLayer(this, 2200) }, currency) });
+      new TopBar(this, 40, { profile: false, currencies: "stamina", depth: 60, onSettings: () => openSettingsOver(this, "party"), onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: new PopupLayer(this, 2200) }, currency) });
     }
     this.buildPreview(this.preview);
     this.buildRoster();

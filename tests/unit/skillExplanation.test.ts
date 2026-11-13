@@ -41,3 +41,14 @@ describe("효과 설명의 가독성과 계산 근거", () => {
     }
   });
 });
+
+describe("따옴표로 묶은 이름", () => {
+  it("이름 안의 느낌표·물음표에서 문장을 끊지 않는다", () => {
+    expect(formatBreakthroughDescription("「찰싹! 시약 묻히기」 적중 시 [[reagent|시약]]을 2겹 부여한다."))
+      .toBe("「찰싹! 시약 묻히기」 적중 시 [[reagent|시약]]을 2겹 부여한다.");
+    expect(formatBreakthroughDescription("\"Splat! Reagent Dab\" applies 2 stacks."))
+      .toBe("\"Splat! Reagent Dab\" applies 2 stacks.");
+    expect(formatEffectDescription("「뭐가 들었게? 약물 폭탄」이 강해진다. 시약을 더 묻힌다."))
+      .toBe("• 「뭐가 들었게? 약물 폭탄」이 강해진다.\n\n• 시약을 더 묻힌다.");
+  });
+});

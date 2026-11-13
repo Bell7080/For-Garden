@@ -100,7 +100,7 @@ export const BREAK_STEPS = {
     dormant: { fill: 0x1e2024, alpha: 0.94, edgeAlpha: 0.28, gradeMark: 1, header: 0x2c2f35, headerAlpha: 0.9 },
   },
   /** 다음에 뚫을 카드 — 테두리 안쪽에서 강조 빛이 느리게 숨 쉰다(움직임 줄이기에서는 멈춘 빛). */
-  next: { glowStrength: 0.42, breatheMs: 1100, tagHeight: 34, tagSize: 20, tagPadX: 18, tagLift: 5 },
+  next: { haloAlpha: 0.28, haloWidth: 10, lineWidth: 3, breatheMs: 1100, tagHeight: 34, tagSize: 20, tagPadX: 18, tagLift: 5 },
   /** 아직 안 열린 카드의 스킬 액자 진하기 — 액자는 그 카드의 주제라 알아볼 수 있어야 한다. */
   lockedIconAlpha: 0.82,
   /** 머리 띠 안에서 돌파 등급 표식이 서는 자리와 크기. */

@@ -38,7 +38,7 @@ import {
 } from "../puppets/assets";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
 import { addBackButton, IconButton } from "./IconButton";
-import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawShapeInnerGlow, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawShapeInnerGlow, drawShapeOutline, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
 import { addObservationJournalButton, openObservationJournal } from "./ObservationJournal";
@@ -3458,8 +3458,11 @@ export function openBreakthroughStepsPopup(
       band.lineBetween(-half + shiftAt(headerBottom), -cardHeight / 2 + headerBottom, half + shiftAt(headerBottom), -cardHeight / 2 + headerBottom);
       body.add(band);
       if (next) {
-        // 다음 카드만 테두리 안쪽에서 빛이 번지고 느리게 숨 쉰다 — 어디까지 왔고 무엇이 다음인지가 한눈에 읽힌다.
-        const glow = drawShapeInnerGlow(scene, 0, y, cardShape, { color: COLOR.accent, strength: BREAK_STEPS.next.glowStrength });
+        // 다음 카드만 **테두리가** 빛나고 느리게 숨 쉰다 — 어디까지 왔고 무엇이 다음인지가 한눈에 읽힌다.
+        // 안쪽으로 겹겹이 번지던 빛은 카드 글자까지 덮어 과했다(응태 2026-11-13). 넓고 옅은 선 위에 가는 선 하나만 긋는다.
+        const glow = scene.add.container(0, y);
+        glow.add(drawShapeOutline(scene, 0, 0, cardShape, { color: COLOR.accent, alpha: BREAK_STEPS.next.haloAlpha, width: BREAK_STEPS.next.haloWidth }));
+        glow.add(drawShapeOutline(scene, 0, 0, cardShape, { color: COLOR.accent, alpha: 0.95, width: BREAK_STEPS.next.lineWidth }));
         body.add(glow);
         if (breathe) {
           const tween = scene.tweens.add({ targets: glow, alpha: { from: 1, to: 0.35 }, duration: BREAK_STEPS.next.breatheMs, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });

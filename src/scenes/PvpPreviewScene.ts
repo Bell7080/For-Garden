@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { openSettingsOver } from "./settingsOverlay";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { getPvpMode, type PvpModeId } from "../data/pvpModes";
 import { setDebugScene } from "../debug";
@@ -26,7 +27,7 @@ export class PvpPreviewScene extends Phaser.Scene {
     setDebugScene("pvpPreview", mode.title);
     addSceneBackground(this, BACKGROUND.lobby);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.64).setDepth(-20);
-    new TopBar(this, 40, { currencies: "none", profile: false });
+    new TopBar(this, 40, { currencies: "none", profile: false, onSettings: () => openSettingsOver(this, "pvpPreview") });
 
     this.add.text(60, 210, mode.title, textStyle({ role: "display", size: 58, color: COLOR.accentText })).setOrigin(0, 0);
     // 단색 유리판과 윗변 한 줄만 사용해 구현 상태 문구 없이 전투 범위에 시선을 모은다.

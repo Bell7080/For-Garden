@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { openSettingsOver } from "./settingsOverlay";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { findLobbyEvent } from "../data/lobbyEvents";
 import { setDebugScene } from "../debug";
@@ -45,7 +46,7 @@ export class EventScene extends Phaser.Scene {
     setDebugScene("event", event.id);
     addSceneBackground(this, BACKGROUND.lobby);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.6).setDepth(-20);
-    new TopBar(this, 40, { currencies: "none", profile: false });
+    new TopBar(this, 40, { currencies: "none", profile: false, onSettings: () => openSettingsOver(this, "event") });
 
     const title = this.add.text(60, EVENT_STAGE.titleY, t(event.titleKey), textStyle({ role: "display", size: 58, color: COLOR.eventText })).setOrigin(0, 0.5);
     shrinkTextToWidth(title, BASE_WIDTH - 120);

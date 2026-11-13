@@ -2,7 +2,9 @@
 export function formatEffectDescription(text: string): string {
   if (text.includes("\n")) return text;
   const protectedTags: string[] = [];
-  const plain = text.replace(/\[\[[\s\S]*?\]\]/g, tag => `\u0000${protectedTags.push(tag) - 1}\u0000`);
+  // 규칙어 태그와 **따옴표로 묶은 이름**은 문장 끝으로 보지 않는다. 「찰싹! 시약 묻히기」처럼 이름 안의
+  // 느낌표·물음표에서 끊으면 한 문장이 두 줄로 갈라진다(리파의 돌파 표가 그랬다).
+  const plain = text.replace(/\[\[[\s\S]*?\]\]|「[^」\n]*」|『[^』\n]*』|"[^"\n]*"|“[^”\n]*”|„[^“\n]*“|«[^»\n]*»/g, tag => `\u0000${protectedTags.push(tag) - 1}\u0000`);
   const lines = plain.split(/(?<=[.!?])\s+|(?<=[。！？])\s*/u).map(s => s.trim()).filter(Boolean);
   const restore = (line: string) => line.replace(/\u0000(\d+)\u0000/g, (_, i) => protectedTags[Number(i)]);
   return lines.length < 2 ? text : lines.map(line => `• ${restore(line)}`).join("\n\n");

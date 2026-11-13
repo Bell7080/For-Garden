@@ -287,7 +287,7 @@ export const SKILL_ID = {
   "skill.breakthrough.effect.ferocity.feverAmbush": "Saat memasuki [[ferocity|Amukan]], menjadi [[stealth|Siluman]] selama {seconds} dtk.",
   "skill.breakthrough.effect.passive.fullFocusCrit": "Saat [[focus|Fokus]] penuh, \"{name}\" pasti kritis.",
   "skill.clause.stunLockout": "musuh yang sudah pingsan tidak akan pingsan lagi oleh serangan ini selama {seconds} dtk",
-  "skill.clause.rally": "Setiap [[basic-attack|Serangan Dasar]] ke-{every} [[taunt|Memprovokasi]] musuh di sekitar selama {seconds} dtk dan mendapat [[shield|perisai]] sebesar {percent}.",
+  "skill.clause.rally": "Setiap [[basic-attack|Serangan Dasar]] ke-{every} [[taunt|Memprovokasi]] musuh di sekitar selama {seconds} dtk dan mendapat [[shield|perisai]] sebesar {percent}",
   "skill.breakthrough.effect.ultimate.forestSight": "Selama aktif, serangan dasar mengenai {hits} kali dan durasi efek bertambah {seconds} dtk.",
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "Serangan magis tambahan yang sama dengan [[basic-attack|serangan dasar]] Mette. Membuat target yang terkena [[stagger|Goyah]].",

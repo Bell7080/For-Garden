@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { openSettingsOver } from "./settingsOverlay";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { bountyRoundEnemy, bountyRoundLevel, BOUNTY_TIERS, getBountyTier } from "../data/bounty";
@@ -82,7 +83,7 @@ export class BountyScene extends Phaser.Scene {
     if (!openRows.some(({ tier }) => tier.id === this.selectedTierId)) this.selectedTierId = openRows[openRows.length - 1]?.tier.id ?? BOUNTY_TIERS[0].id;
     addSceneBackground(this, BACKGROUND.sortieBounty);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.7 });
-    new TopBar(this, 40, { profile: false, onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency) });
+    new TopBar(this, 40, { profile: false, onSettings: () => openSettingsOver(this, "bounty"), onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency) });
     addSectionTitle(this, DUNGEON_LOBBY.title.x, DUNGEON_LOBBY.title.y, t("bounty.title"));
     this.popups = new PopupLayer(this, 2200);
     // 소탕 창의 스테미나·소탕권 그림도 같은 안내창으로 이어진다(`addFramedIcon`·`guideForIcon`).

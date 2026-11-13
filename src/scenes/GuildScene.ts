@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { openSettingsOver } from "./settingsOverlay";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
@@ -226,7 +227,7 @@ export class GuildScene extends Phaser.Scene {
     this.popups = new PopupLayer(this);
     this.guardEnemyInfo = new EnemyInfoPopup(this, new PopupLayer(this, 2200));
     this.topBar = new TopBar(this, 40, {
-      profile: false, currencies: "guild", guildCoin: () => (this.state ? this.state.me?.coin ?? 0 : undefined),
+      profile: false, currencies: "guild", onSettings: () => openSettingsOver(this, "guild"), guildCoin: () => (this.state ? this.state.me?.coin ?? 0 : undefined),
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
     });
     this.add.text(S.title.x, S.title.y, t("guild.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0.5).setShadow(0, 4, "#05070a", 6, false, true);

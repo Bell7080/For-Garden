@@ -12,18 +12,24 @@ export interface SettingsEntryData {
   /** 탭을 바꿔 다시 세울 때 떠난 탭의 자리 — 새 내용이 그쪽 반대편에서 밀려 들어온다(`slideTabPage`). */
   slideFrom?: number;
   /**
-   * 설정을 그 씬 **위에 겹쳐** 열었다는 표시 — 지금은 전투뿐이다. 전투는 설정 씬으로 넘어가면 판이 통째로
-   * 사라지므로, 그 씬은 잠들어 기다리고 설정이 닫히며 다시 깨운다(`BattleScene.openSettingsOverlay`).
+   * 설정을 그 씬 **위에 겹쳐** 열었다는 표시. 전투는 설정 씬으로 넘어가면 판이 통째로 사라지고, 편성·지도·던전
+   * 입구처럼 진입 데이터를 들고 선 화면은 설정에서 돌아올 길(`returnScene`)이 없다 — 그래서 그 씬은 잠들어
+   * 기다리고 설정이 닫히며 다시 깨운다(`BattleScene.openSettingsOverlay` · `openSettingsOver`).
    */
   overlayOf?: SettingsOverlayHost;
 }
 
 /** 설정을 겹쳐 열 수 있는 씬. 외부 입력이 임의 씬을 깨우지 못하게 목록으로 받는다. */
-export type SettingsOverlayHost = "battle";
+export const SETTINGS_OVERLAY_HOSTS = [
+  "battle", "party", "stageMap", "raid", "bounty", "cakeOperation", "duel", "guild", "event", "pvpPreview",
+] as const;
+export type SettingsOverlayHost = typeof SETTINGS_OVERLAY_HOSTS[number];
 
 /** 겹쳐 연 씬만 검증해 돌려준다. 모르는 값은 겹치지 않은 것으로 본다. */
 export function validateSettingsOverlay(data: unknown): SettingsOverlayHost | undefined {
-  return data && typeof data === "object" && (data as Record<string, unknown>).overlayOf === "battle" ? "battle" : undefined;
+  if (!data || typeof data !== "object") return undefined;
+  const host = (data as Record<string, unknown>).overlayOf;
+  return SETTINGS_OVERLAY_HOSTS.includes(host as SettingsOverlayHost) ? host as SettingsOverlayHost : undefined;
 }
 
 const RETURN_SCENES: readonly SettingsReturnScene[] = ["lobby", "interaction", "archaeology", "relics", "lab", "premium"];

@@ -1162,6 +1162,8 @@ export type Ultimate = Skill & {
     count: number;
     /** 다음 타격까지의 간격(초). */
     intervalSeconds: number;
+    /** 타격 하나하나를 [[meteor|유성]]으로 설명한다(플레샤). 전투 규칙은 바꾸지 않는다. */
+    meteor?: true;
   };
   /**
    * 쓰는 순간 **방어력이 가장 낮은 적**에게 순간이동해 그 적에게 쓰는가.

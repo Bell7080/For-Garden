@@ -1772,6 +1772,8 @@ export default {
   "relic.yuti.ultimate.name": "Alvoroço de nevasca",
   "keyword.intimidation.term": "Intimidação",
   "keyword.intimidation.description": "Uma marca que não causa dano. Cada carga dura 6 segundos e, com 3 cargas, dispara [[fear|Medo]] sozinha e as cargas somem. Não acumula em inimigo que esteja em Medo ou imune.",
+  "keyword.meteor.term": "Meteoro",
+  "keyword.meteor.description": "Causa dano mágico a todos os inimigos no círculo onde cai e cura o aliado com menos vida em 40% do dano causado. Nunca cura quem o invoca.",
   "keyword.fear.term": "Medo",
   "keyword.fear.description": "Por 2 segundos, foge de quem o causou e não pode usar [[basic-attack|ataques básicos]]. Ainda pode usar supremas. Enquanto durar, sua [[def|Defesa]] e [[res|Resistência]] caem 50%. Ao terminar, fica imune a nova Intimidação e Medo por 6 segundos.",
   "firstMeeting.ark": "Muahahaha! Viu, Mestre? Todo mundo colou na parede. ...Peraí, isso agora foi assustador, né?",

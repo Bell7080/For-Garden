@@ -1772,6 +1772,8 @@ export default {
   "relic.yuti.ultimate.name": "Kekacauan Badai Salju",
   "keyword.intimidation.term": "Intimidasi",
   "keyword.intimidation.description": "Tanda yang tidak memberi damage. Setiap tumpuk bertahan 6 detik, dan pada 3 tumpuk memicu [[fear|Ketakutan]] dengan sendirinya lalu tumpukan hilang. Tidak menumpuk pada musuh yang sedang ketakutan atau kebal.",
+  "keyword.meteor.term": "Meteor",
+  "keyword.meteor.description": "Memberi kerusakan magis ke semua musuh di lingkaran tempatnya jatuh dan memulihkan sekutu dengan HP terendah sebesar 40% kerusakan yang diberikan. Pemanggilnya tidak ikut dipulihkan.",
   "keyword.fear.term": "Ketakutan",
   "keyword.fear.description": "Selama 2 detik, melarikan diri dari pemberinya dan tidak bisa memakai [[basic-attack|Serangan Dasar]]. Ultimate tetap bisa dipakai. Selama itu, [[def|Pertahanan]] dan [[res|Resistensi]] turun 50%. Setelah berakhir, kebal terhadap Intimidasi dan Ketakutan baru selama 6 detik.",
   "firstMeeting.ark": "Mwahahaha! Lihat tadi, Tuan? Semua menempel ke dinding. ...Tunggu, barusan itu menakutkan, ya?",

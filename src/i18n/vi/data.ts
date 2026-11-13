@@ -1772,6 +1772,8 @@ export default {
   "relic.yuti.ultimate.name": "Náo loạn bão tuyết",
   "keyword.intimidation.term": "Uy hiếp",
   "keyword.intimidation.description": "Dấu hiệu không gây sát thương. Mỗi tầng kéo dài 6 giây, đủ 3 tầng sẽ tự kích hoạt [[fear|Hoảng sợ]] và các tầng biến mất. Không cộng dồn lên kẻ địch đang Hoảng sợ hoặc đang miễn nhiễm.",
+  "keyword.meteor.term": "Sao băng",
+  "keyword.meteor.description": "Gây sát thương phép lên mọi kẻ địch trong vòng nơi nó rơi xuống và hồi máu cho đồng minh có HP thấp nhất bằng 40% sát thương gây ra. Người gọi sao băng không tự hồi cho mình.",
   "keyword.fear.term": "Hoảng sợ",
   "keyword.fear.description": "Trong 2 giây, chạy trốn khỏi kẻ gây ra và không thể dùng [[basic-attack|đòn đánh thường]]. Vẫn có thể dùng tuyệt chiêu. Trong thời gian đó, [[def|Thủ]] và [[res|Kháng]] giảm 50%. Sau khi kết thúc, miễn nhiễm Uy hiếp và Hoảng sợ mới trong 6 giây.",
   "firstMeeting.ark": "Mwahahaha! Chủ nhân thấy chưa? Ai cũng dán sát vào tường rồi. ...Khoan, vừa nãy đáng sợ lắm phải không ạ?",

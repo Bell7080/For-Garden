@@ -1808,6 +1808,8 @@ export default {
   "relic.yuti.ultimate.name": "Blizzard Ruckus",
   "keyword.intimidation.term": "Intimidation",
   "keyword.intimidation.description": "A mark that deals no damage. Each stack lasts 6 seconds, and at 3 stacks it triggers [[fear|Fear]] by itself and the stacks disappear. No stacks build on an enemy that is in Fear or immune.",
+  "keyword.meteor.term": "Meteor",
+  "keyword.meteor.description": "Deals magical damage to every enemy in the circle where it lands, and heals the ally with the lowest HP for 40% of the damage dealt. It never heals the one who called it down.",
   "keyword.fear.term": "Fear",
   "keyword.fear.description": "For 2 seconds, flees from whoever inflicted it and cannot use [[basic-attack|Basic Attacks]]. Ultimates can still be used. Meanwhile, [[def|Defense]] and [[res|Resistance]] are reduced by 50%. After it ends, the enemy is immune to new Intimidation and Fear for 6 seconds.",
   "firstMeeting.ark": "Mwahahaha! Did you see that, Master? Everyone pressed against the wall. ...Wait, that was scary just now, wasn't it?",

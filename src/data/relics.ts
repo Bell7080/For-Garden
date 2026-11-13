@@ -1794,7 +1794,7 @@ export const RELICS: RelicDef[] = [
       cost: 120,
       targeting: "targetedCircle",
       radius: 200,
-      repeatStrike: { count: 3, intervalSeconds: 0.45 },
+      repeatStrike: { count: 3, intervalSeconds: 0.45, meteor: true },
     },
   },
   {

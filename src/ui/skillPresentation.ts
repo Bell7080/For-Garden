@@ -685,7 +685,7 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   if (passive.kind === "starfall" && passive.starfall !== undefined) {
     const plan = passive.starfall;
     return t("skill.passive.starfall", {
-      every: plan.every, seconds: plan.delaySeconds, damage: scaled("damage", "ap", plan.power, own?.ap), percent: plan.lowestAllyHealPercent,
+      every: plan.every, seconds: plan.delaySeconds, damage: scaled("damage", "ap", plan.power, own?.ap),
     });
   }
   if (passive.kind === "restraintLocks" && passive.restraintLocks !== undefined) {
@@ -1074,7 +1074,7 @@ export function skillDescription(
   const repeat = "repeatStrike" in skill ? skill.repeatStrike : undefined;
   const repeatParts = repeat === undefined ? undefined : { ...parts, seconds: repeat.intervalSeconds, count: repeat.count };
   sentences.push(joined === undefined
-    ? t(repeatParts ? "skill.sentence.repeat" : "skill.sentence.damage", repeatParts ?? parts)
+    ? t(repeatParts ? (repeat?.meteor ? "skill.sentence.meteorRepeat" : "skill.sentence.repeat") : "skill.sentence.damage", repeatParts ?? parts)
     : t(repeatParts ? "skill.sentence.repeatAnd" : joined.joinWithComma ? "skill.sentence.damageAndComma" : "skill.sentence.damageAnd",
       { ...(repeatParts ?? parts), effect: joined.text }));
   for (const clause of clauses) if (clause !== joined) sentences.push(t("skill.sentence.clause", { text: clause.text }));

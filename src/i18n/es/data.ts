@@ -1772,6 +1772,8 @@ export default {
   "relic.yuti.ultimate.name": "Alboroto de ventisca",
   "keyword.intimidation.term": "Intimidación",
   "keyword.intimidation.description": "Una marca que no inflige daño. Cada carga dura 6 segundos y, con 3 cargas, desencadena [[fear|Miedo]] por sí sola y las cargas desaparecen. No se acumula en un enemigo que esté en Miedo o inmune.",
+  "keyword.meteor.term": "Meteoro",
+  "keyword.meteor.description": "Inflige daño mágico a todos los enemigos del círculo donde cae y cura al aliado con menos vida un 40% del daño infligido. Nunca cura a quien lo invoca.",
   "keyword.fear.term": "Miedo",
   "keyword.fear.description": "Durante 2 segundos, huye de quien lo causó y no puede usar [[basic-attack|ataques básicos]]. Aún puede usar definitivas. Mientras dura, su [[def|Defensa]] y [[res|Resistencia]] bajan un 50%. Al terminar, es inmune a nueva Intimidación y Miedo durante 6 segundos.",
   "firstMeeting.ark": "¡Muajajaja! ¿Lo has visto, Amo? Todos pegados a la pared. ...Espera, eso de ahora daba miedo, ¿verdad?",

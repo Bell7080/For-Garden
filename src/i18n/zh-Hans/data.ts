@@ -1772,6 +1772,8 @@ export default {
   "relic.yuti.ultimate.name": "暴风雪大骚动",
   "keyword.intimidation.term": "威压",
   "keyword.intimidation.description": "不造成伤害的标记。每层持续6秒，叠到3层时会自动触发[[fear|恐惧]]并清除层数。已陷入恐惧或处于免疫的敌人不会叠加。",
+  "keyword.meteor.term": "流星",
+  "keyword.meteor.description": "对落点圆圈内的所有敌人造成魔法伤害，并按造成伤害的40%治疗生命值最低的友方。施放者自身不会被治疗。",
   "keyword.fear.term": "恐惧",
   "keyword.fear.description": "持续2秒，会从施加者身边逃开且无法进行[[basic-attack|普通攻击]]，但仍可使用必杀技。在此期间[[def|防御力]]和[[res|抗性]]降低50%。结束后6秒内对新的威压和恐惧免疫。",
   "firstMeeting.ark": "嘿哈哈哈！您看到了吗，主人？大家都贴到墙上去了。……等等，刚才那样很吓人吧？",

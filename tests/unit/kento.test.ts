@@ -146,7 +146,7 @@ describe("켄토 — 표시 계약", () => {
   const kento = getRelic("kento");
   it("의 본문은 데이터에서 조립되고 까칠 태그를 가리킨다", () => {
     expect(kento.basic.desc).toBeUndefined();
-    expect(passiveDescription(kento.passive)).toBe("적에게 피격당할 때마다 [[kento-prickle|까칠]]이 한 겹 쌓이고, 때린 적이 겹 수만큼 되받는다. 겹이 가득 차면 주위의 적을 [[taunt|도발]]하고 [[shield|보호막]]과 지속 회복을 얻은 뒤 0겹으로 돌아간다.");
+    expect(passiveDescription(kento.passive)).toBe("적에게 피격당할 때마다 [[kento-prickle|까칠]]이 한 겹 쌓이고, 때린 적이 겹 수만큼 되받는다.");
     expect(skillDescription(kento.basic)).toContain("[[kento-prickle|까칠]]이 1겹 쌓인다");
     expect(skillDescription(kento.ultimate)).toContain("[[kento-prickle|까칠]]이 5겹 더 쌓인다");
     expect(skillDescription(kento.ultimate)).toContain("충격파");

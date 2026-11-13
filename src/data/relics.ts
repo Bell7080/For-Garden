@@ -3398,6 +3398,8 @@ export const RELICS: RelicDef[] = [
       id: "pulsi-basic",
       name: "콕콕 찌르기",
       power: 100,
+      // 네 번째 찌르기는 늘 급소에 박힌다 — 겨누기 겹과 별개로 정해진 주기의 확정 치명타다.
+      periodicCritical: { every: 4 },
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -3486,6 +3488,8 @@ export const RELICS: RelicDef[] = [
       damageType: "magical",
       targeting: "single",
       allyEnergyGain: 4,
+      // 파동이 지나간 몫의 일부가 가장 다친 동료에게 돌아간다. 도디(30%)보다 낮게 둔다 — 주문력이 훨씬 높다.
+      lowestHpAllyHealingFromDamagePercent: 20,
     },
     ultimate: {
       id: "neuri-ult",
@@ -3563,6 +3567,8 @@ export const RELICS: RelicDef[] = [
       id: "mir-basic",
       name: "냠냠 깨물기",
       power: 100,
+      // 문 자리에 개미산이 남는다 — 아트라와 같은 공용 중독 값을 쓴다.
+      statusEffects: [{ kind: "poison", seconds: 3, attackPercentPerSecond: POISON.attackPercentPerSecond, abilityPercentPerSecond: POISON.abilityPercentPerSecond }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -3918,6 +3924,9 @@ export const RELICS: RelicDef[] = [
       id: "carno-basic",
       name: "쌍뿔 치기",
       power: 110,
+      // 네 번째 들이받기가 표적을 뒤로 날린다. 매 타격이면 붙을 틈이 없어 주기로 둔다.
+      statusEffectEvery: 4,
+      statusEffects: [{ kind: "knockback", seconds: 0.5, speed: 1000, bounces: 1 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -5174,10 +5183,10 @@ export const RELICS: RelicDef[] = [
      * 있다고 가정하지 않는다), 시즌 게이지가 공유라 회복·보호막·경감·강인함은 더하지 않는다.
      */
     breakthroughEffects: {
-      basic: { kind: "pressStagger", seconds: 0.3 },
-      ultimate: { kind: "sunkenWeight", stacks: 2, speedPercentPerStack: 8, seconds: 6 },
-      ferocity: { kind: "feverWidenBasic", radius: 620 },
-      passive: { kind: "pressureCrack", intervalSeconds: 15, powerPercent: 100 },
+      basic: { kind: "pressStagger", seconds: 0.5 },
+      ultimate: { kind: "sunkenWeight", stacks: 2, speedPercentPerStack: 12, seconds: 6 },
+      ferocity: { kind: "feverWidenBasic", radius: 700 },
+      passive: { kind: "pressureCrack", intervalSeconds: 10, powerPercent: 150 },
     },
   },
   {
@@ -5421,10 +5430,10 @@ export const RELICS: RelicDef[] = [
       atk: 198,
       ap: 0,
       /*
-       * 수쿠스이노보다 빠르지만 여전히 로스터 아래쪽이다. 한 대는 가볍고 그 사이가 짧아, 조일수록
-       * 빨라지는 패시브가 "시간이 지날수록 아프다"를 대신 말한다.
+       * 수쿠스이노보다 빠르지만 여전히 로스터 아래쪽이다. 공속 누적 패시브를 「숨통 조이기」로 바꾸며
+       * 잃은 오르막 몫을 기본값으로 조금 옮겼다(40 → 48, 응태 2026-11-13).
        */
-      attackSpeed: 40,
+      attackSpeed: 48,
       moveSpeed: 40,
       critChance: 8,
       critDamage: 150,
@@ -5443,27 +5452,22 @@ export const RELICS: RelicDef[] = [
      */
     ferocityTrait: { name: "대식가의 식탁", effectId: "selfAttackSpeedMultiplier", bonusPercent: 25, pullOnEntry: { radius: 480, distance: 150 } },
     /*
-     * **달아오르는 몸.** 감은 채로 때릴수록 공격 속도가 쌓인다(토비·스피나와 같은 공용 계약).
+     * **숨통 조이기.** 평타가 둔화를 쌓고, 둔화가 꽉 찬 적을 다시 감으면 숨이 막혀 멈춘다.
      *
-     * **회복을 주지 않는다** — 시즌 게이지는 참가자 전원이 함께 깎은 줄이라 되돌리면 어제 민 몫이
-     * 사라진다(수쿠스이노와 같은 이유). 버티는 대신 **점점 아파진다**.
+     * 예전 「달아오르는 몸」(평타마다 공속 누적)은 토비의 패시브와 같은 계약이라 둘이 같은 보스로 읽혔다
+     * (응태 2026-11-13). 이제 이 보스의 답은 "한 명이 오래 붙잡히지 않게 돌려 맞는다"이다 — 같은 적은
+     * 재사용 대기 동안 다시 묶이지 않는다. 회복은 여전히 주지 않는다(시즌 게이지를 되돌리지 않는다).
      */
     passive: {
       id: "taboa-passive",
-      name: "달아오르는 몸",
-      kind: "basicHitAttackSpeedStack",
+      name: "숨통 조이기",
+      kind: "coilSqueeze",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
-      /*
-       * **시작은 느리고 감은 채로 끌수록 빨라진다.** 겹을 3%에서 4%로, 기본 공속을 44에서 40으로 옮겨
-       * 첫 몇 대는 가볍고 열 겹에서는 예전과 같은 손이 된다 — 공속을 깎는 둔화·수압이 그 오르막을
-       * 되돌리는 답이라는 것이 수치로도 읽힌다.
-       */
-      value: 4,
-      maxStacks: 10,
-      // 전용 분기(`passiveDescription`)가 이 종류의 문장을 짓는다. 이 원문은 표시되지 않는 데이터
-      // 문서용 사본이라, 고칠 때는 그 분기도 함께 본다.
-      desc: "기본 공격이 적중할 때마다 이번 전투 동안 공격 속도가 증가한다.",
+      value: 0,
+      coilSqueeze: { stunSeconds: 1.2, lockoutSeconds: 6 },
+      // 전용 분기(`passiveDescription`)가 문장을 짓는다. 이 원문은 표시되지 않는 데이터 문서용 사본이다.
+      desc: "둔화가 가득 찬 적을 기본 공격으로 맞히면 기절시킨다. 같은 적에게는 6초에 한 번만 발동한다.",
     },
     basic: {
       id: "taboa-basic",
@@ -5504,12 +5508,13 @@ export const RELICS: RelicDef[] = [
       selfShieldMaxHpPercent: 3,
     },
     // 네 칸 모두 "감고 조인다" 한 갈래다 — 둔화된 표적에 더 아프게(평타), 감는 범위가 넓게(궁극기),
-    // 끌어오는 손이 길게(폭주), 겹마다 더 세게(패시브). 회복·보호막은 더하지 않는다.
+    // 끌어오는 손이 길게(폭주), 숨통 조이기가 더 오래 묶게(패시브). 회복·보호막은 더하지 않는다.
+    // 체감되는 값으로 올렸다(응태 2026-11-13 — 끌어당김 +2%·범위 +15%는 돌파가 열린 줄도 몰랐다).
     breakthroughEffects: {
-      basic: { kind: "coiledTarget", damagePercentPerStack: 8 },
-      ultimate: { kind: "widenArea", radius: 390 },
-      ferocity: { kind: "longFeast", radius: 490 },
-      passive: { kind: "warmBody", damagePercentPerStack: 1.2, maxStacks: 10 },
+      basic: { kind: "coiledTarget", damagePercentPerStack: 12 },
+      ultimate: { kind: "widenArea", radius: 440 },
+      ferocity: { kind: "longFeast", radius: 640 },
+      passive: { kind: "tightCoil", stunSeconds: 1.8 },
     },
   },
   {
@@ -5644,9 +5649,9 @@ export const RELICS: RelicDef[] = [
     // 네 칸 모두 "한 줄·치명타" 한 갈래다 — 뒤에 선 적까지 꿰고(평타), 통로가 넓게(궁극기), 폭주 중
     // 치명타가 더 잦고(폭주), 치명타가 자세를 무너뜨린다(패시브). 회복·보호막은 더하지 않는다.
     breakthroughEffects: {
-      basic: { kind: "piercingBeak", sharePercent: 30, halfWidth: 140 },
-      ultimate: { kind: "widenArea", radius: 140 },
-      ferocity: { kind: "sharpStorm", critChancePoints: 8 },
+      basic: { kind: "piercingBeak", sharePercent: 50, halfWidth: 140 },
+      ultimate: { kind: "widenArea", radius: 180 },
+      ferocity: { kind: "sharpStorm", critChancePoints: 20 },
       passive: { kind: "pinningPlume", stunSeconds: 0.5, lockoutSeconds: 3 },
     },
   },
@@ -5744,6 +5749,11 @@ export const RELICS: RelicDef[] = [
       name: "앞니 갉기",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
+      /*
+       * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
+       * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
+       */
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 3 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -5864,6 +5874,11 @@ export const RELICS: RelicDef[] = [
       name: "앞니 갉기",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
+      /*
+       * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
+       * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
+       */
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 3 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -5984,6 +5999,11 @@ export const RELICS: RelicDef[] = [
       name: "앞니 갉기",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
+      /*
+       * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
+       * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
+       */
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 3 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -6104,6 +6124,11 @@ export const RELICS: RelicDef[] = [
       name: "앞니 갉기",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
+      /*
+       * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
+       * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
+       */
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 3 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -6224,6 +6249,11 @@ export const RELICS: RelicDef[] = [
       name: "앞니 갉기",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
+      /*
+       * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
+       * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
+       */
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 3 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",

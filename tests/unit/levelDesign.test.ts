@@ -164,7 +164,7 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   // v0.422.4: 같은 이유로 57.3 → 44.9초 — 무리 띠보다 길던 한 판이 그만큼 가까워졌다.
   // 한계 돌파 +10%/단계(2026-11-11): 기준 파티와 적이 함께 사다리 돌파 %를 받는다. 무리 몫은 태생 층과 곱해져 조금 갈려 44.9 → 50.3초.
   // v0.441.0 직군 존재감(탱커 30 > 전사 20 > 암살자 10)·몰림 벌점 240 → 120: 50.3초·0.86 → 54.0초·0.77.
-  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 51.7, 0.77], // v0.451.2 평타 상향: 54.0 → 51.7초.
+  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 49.3, 0.77], // v0.451.2 평타 상향: 54.0 → 51.7초. 레이티아 평타 둔화(2026-11-13): 51.7 → 49.3초.
   ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 15.3, 0.95], // v0.451.2 평타 상향: 18.1 → 15.3초.
   // 정예가 보호막을 깨고(코마) 치유를 깎는 자리가 되어 평균이 37.3 → 29.5로 줄고 띠 안에 들었다.
   ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 12.4, 0.64],

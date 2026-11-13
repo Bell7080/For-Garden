@@ -1348,6 +1348,7 @@ export type PassiveKind =
   | "battleMaidMastery"
   /** 스피나 전용: 기본 공격의 실제 적중마다 공속을 전투 한정으로 영구 누적한다. */
   | "basicHitAttackSpeedStack"
+  | "coilSqueeze"
   /** 폰토스 전용: 일정 간격마다 밀물이 전장의 모든 적을 뒤로 날린다. 시간에 따른 세기 상승은 패시브가 아니라 자리(`ENCOUNTER_ROLE.*.ramp`)가 갖는다. */
   | "tidalSurge"
   | "tidyUp"
@@ -2513,6 +2514,11 @@ export interface Passive {
   maxStacks?: number;
   /** 밀물 전용: 몇 초마다 어떤 날려버림으로 밀어내는가. 살아 있는 모든 적에게 같은 계약(`knockback`)으로 건다. */
   tidalSurge?: { intervalSeconds: number; knockback: { seconds: number; speed: number; bounces: number } };
+  /**
+   * 숨통 조이기 전용(타보아): [[chill|둔화]]가 상한까지 찬 적을 기본 공격으로 맞히면 기절시킨다. 같은 적에게는
+   * `lockoutSeconds`에 한 번만 — 매 타격이 묶으면 전투가 아니라 구속이 된다. 겹은 지우지 않는다(돌파 평타가 읽는다).
+   */
+  coilSqueeze?: { stunSeconds: number; lockoutSeconds: number };
   /** 고품격 식재료 전용: 다시 표적을 고르고 도약하기까지의 간격(초). 적을 처치하면 즉시 앞당긴다. */
   huntCooldownSeconds?: number;
   /**
@@ -3785,10 +3791,9 @@ export type PassiveBreakthrough = {
   kind: "scarMight";
   damagePercentPerStack: number;
 } | {
-  /** 평타가 적중해 쌓인 횟수(`basicHitAttackSpeedStack`의 누적)마다 평타 피해가 늘어난다(타보아 「달아오른 몸」). 상한은 이 효과가 갖는다. */
-  kind: "warmBody";
-  damagePercentPerStack: number;
-  maxStacks: number;
+  /** 「숨통 조이기」(`Passive.coilSqueeze`)가 거는 기절이 이 길이가 된다(타보아). */
+  kind: "tightCoil";
+  stunSeconds: number;
 } | {
   /** 치명타로 적중한 평타가 표적을 기절시킨다. 같은 적에게는 재사용 대기가 있다(코아틀 「눌러 앉히는 깃」). */
   kind: "pinningPlume";

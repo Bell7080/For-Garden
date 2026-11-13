@@ -772,24 +772,24 @@
 "146 кг"
 ],
 "relic.taboa.passive.desc": [
-"每次普通攻击命中时，本场战斗的攻击速度提升。",
-"ทุกครั้งที่โจมตีปกติโดน ความเร็วโจมตีจะเพิ่มขึ้นตลอดการต่อสู้นี้",
-"Mỗi lần đánh thường trúng, Tốc đánh tăng trong trận này.",
-"Setiap serangan dasar mengenai, Kecepatan Serang naik selama pertarungan ini.",
-"Cada vez que acierta un ataque básico, la Velocidad de ataque aumenta durante este combate.",
-"Cada vez que um ataque básico acerta, a Velocidade de ataque aumenta nesta batalha.",
-"Jedes Mal, wenn ein Normalangriff trifft, steigt das Angriffstempo für diesen Kampf.",
-"Каждое попадание обычной атаки повышает скорость атаки до конца боя."
+"对减速叠满的敌人用普通攻击命中时，使其眩晕。对同一敌人每6秒只触发一次。",
+"เมื่อโจมตีปกติโดนศัตรูที่ชะลอเต็ม จะทำให้มึนงง ทำงานกับศัตรูเดียวกันได้ครั้งเดียวทุก 6 วินาที",
+"Khi đánh thường trúng kẻ địch đã đầy Làm chậm, làm Choáng mục tiêu. Với cùng một kẻ địch chỉ kích hoạt mỗi 6 giây một lần.",
+"Saat serangan dasar mengenai musuh dengan Perlambatan penuh, musuh itu Pingsan. Pada musuh yang sama hanya aktif sekali tiap 6 detik.",
+"Cuando un ataque básico golpea a un enemigo con Ralentización al máximo, lo aturde. Solo una vez cada 6 s por enemigo.",
+"Quando um ataque básico atinge um inimigo com Lentidão no máximo, ele fica atordoado. Só uma vez a cada 6 s por inimigo.",
+"Trifft ein Normalangriff einen Gegner mit voller Verlangsamung, wird er betäubt. Beim selben Gegner höchstens einmal alle 6 Sekunden.",
+"Когда обычная атака попадает по врагу с полным замедлением, он оглушается. На одного врага — раз в 6 с."
 ],
 "relic.taboa.passive.name": [
-"升温之躯",
-"ร่างที่ร้อนขึ้น",
-"Thân nóng dần",
-"Tubuh yang Memanas",
-"Cuerpo que se caldea",
-"Corpo que esquenta",
-"Sich aufheizender Körper",
-"Раскаляющееся тело"
+"勒紧咽喉",
+"รัดลมหายใจ",
+"Siết nghẹt thở",
+"Cekikan Napas",
+"Asfixia",
+"Asfixia",
+"Würgegriff",
+"Удушающий захват"
 ],
 "relic.taboa.ferocity.name": [
 "大胃王的餐桌",

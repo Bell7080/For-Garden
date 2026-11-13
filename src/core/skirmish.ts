@@ -5165,7 +5165,7 @@ function breakthroughSkillBase(attacker: Fighter, useUltimate: boolean): Skill {
   return skill;
 }
 
-/** 보스 돌파(`coiledTarget`·`warmBody`·`scarMight`)가 한 타격에 곱하는 피해 배수. 열린 계약만 읽고 다른 돌파 효과는 읽지 않는다. */
+/** 보스 돌파(`coiledTarget`·`scarMight`)가 한 타격에 곱하는 피해 배수. 열린 계약만 읽고 다른 돌파 효과는 읽지 않는다. */
 export function bossDamageMultiplier(attacker: Fighter, target: Fighter, useUltimate: boolean): number {
   let multiplier = 1;
   // 오늘의 재료(마가사) — 표식을 건 적에게만 더 깊이 들어간다. 평타·궁극기 모두다.
@@ -5177,10 +5177,6 @@ export function bossDamageMultiplier(attacker: Fighter, target: Fighter, useUlti
     if (basic?.kind === "seasoning" && target.bleed) multiplier *= 1 + basic.damagePercent / 100;
   }
   const passive = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
-  if (passive?.kind === "warmBody" && !useUltimate && attacker.def.passive.kind === "basicHitAttackSpeedStack") {
-    const stacks = Math.min(passive.maxStacks, Math.floor(attacker.bonusAttackSpeed / Math.max(1, attacker.def.passive.value)));
-    multiplier *= 1 + stacks * passive.damagePercentPerStack / 100;
-  }
   if (passive?.kind === "scarMight") multiplier *= 1 + (attacker.shellGuard?.stacks ?? 0) * passive.damagePercentPerStack / 100;
   return multiplier;
 }
@@ -5233,6 +5229,14 @@ function strikeBossBasicBreakthrough(attacker: Fighter, target: Fighter, input: 
     if (behind) strikeSecondary(attacker, behind, input, basic.sharePercent, critical, state, events);
   }
   const passive = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
+  // 숨통 조이기(타보아) — 둔화가 꽉 찬 적을 평타로 맞히면 기절. 같은 적은 재사용 대기 동안 다시 묶지 않는다.
+  const coil = attacker.def.passive.coilSqueeze;
+  const coilKey = `coil:${target.id}`;
+  if (coil && isFighterAlive(target) && target.chill && target.chill.stacks >= target.chill.maxStacks && (attacker.bt.pinnedUntil[coilKey] ?? 0) <= state.elapsed) {
+    attacker.bt.pinnedUntil[coilKey] = state.elapsed + coil.lockoutSeconds;
+    const seconds = passive?.kind === "tightCoil" ? passive.stunSeconds : coil.stunSeconds;
+    events.push(...applyStun(target, seconds * attacker.statusPotencyMultiplier, state));
+  }
   if (passive?.kind === "pinningPlume" && critical && isFighterAlive(target) && (attacker.bt.pinnedUntil[target.id] ?? 0) <= state.elapsed) {
     attacker.bt.pinnedUntil[target.id] = state.elapsed + passive.lockoutSeconds;
     events.push(...applyStun(target, passive.stunSeconds * attacker.statusPotencyMultiplier, state));

@@ -1723,7 +1723,7 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
     for (let tick = 0; tick < 200 && ally.stunnedFor > 0; tick += 1) stepSkirmish(state, 0.05);
     stepSkirmish(state, 0.05);
     expect(ally.stunnedFor).toBe(0);
-    expect(moveSpeed(ally)).toBeCloseTo(baseSpeed * (1 - 0.16), 3);
+    expect(moveSpeed(ally)).toBeCloseTo(baseSpeed * (1 - 0.24), 3);
     expect(currentAttackSpeed(ally)).toBeLessThan(ally.def.stats.attackSpeed);
     // 시간이 다하면 풀린다.
     for (let tick = 0; tick < 200; tick += 1) stepSkirmish(state, 0.05);
@@ -1745,10 +1745,10 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
     boss.ferocityFever = true;
     const fever = breakthroughSkill(boss, false) as { radius: number };
     expect(normal.radius).toBe(520);
-    expect(fever.radius).toBe(620);
+    expect(fever.radius).toBe(700);
   });
 
-  it("폰토스 V — 15초마다 가장 먼 적에게 마법 피해가 떨어진다", () => {
+  it("폰토스 V — 10초마다 가장 먼 적에게 마법 피해가 떨어진다", () => {
     const run = (breakthrough: number) => {
       const state = bossBattle("pontos", ["torika", "amo"], breakthrough);
       const boss = findFighter(state, "enemy-0")!;
@@ -1821,7 +1821,7 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
     const ally = findFighter(state, "player-0")!;
     expect(bossDamageMultiplier(boss, ally, false)).toBe(1);
     ally.chill = { stacks: 3, remaining: 5, total: 5, speedPercentPerStack: 8, maxStacks: 3 } as typeof ally.chill;
-    expect(bossDamageMultiplier(boss, ally, false)).toBeCloseTo(1.24, 5);
+    expect(bossDamageMultiplier(boss, ally, false)).toBeCloseTo(1.36, 5);
     // 궁극기는 이 효과를 읽지 않는다.
     expect(bossDamageMultiplier(boss, ally, true)).toBe(1);
   });
@@ -1843,11 +1843,11 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
     const taboa = bossBattle("taboa", ["torika"], 2);
     const boss = findFighter(taboa, "enemy-0")!;
     const wide = breakthroughSkill(boss, true) as { radius: number; statusEffects: readonly { kind: string; seconds?: number }[] };
-    expect(wide.radius).toBe(390);
+    expect(wide.radius).toBe(440);
     expect(wide.statusEffects.find((e) => e.kind === "stun")?.seconds).toBe(1.5);
     const coatl = bossBattle("quetzalcoatlus", ["torika"], 2);
     const lane = breakthroughSkill(findFighter(coatl, "enemy-0")!, true) as { radius: number; statusEffects: readonly { kind: string; seconds?: number }[] };
-    expect(lane.radius).toBe(140);
+    expect(lane.radius).toBe(180);
     expect(lane.statusEffects.find((e) => e.kind === "stun")?.seconds).toBe(1.5);
     const closed = bossBattle("taboa", ["torika"], 1);
     expect((breakthroughSkill(findFighter(closed, "enemy-0")!, true) as { radius: number }).radius).toBe(340);
@@ -1868,18 +1868,34 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
     expect(run(3)).toBeGreaterThan(50);
   });
 
-  it("타보아 V — 평타가 쌓은 횟수마다 평타 피해가 늘고 상한이 있다", () => {
-    const state = bossBattle("taboa", ["torika"], 4);
-    const boss = findFighter(state, "enemy-0")!;
-    const ally = findFighter(state, "player-0")!;
-    expect(bossDamageMultiplier(boss, ally, false)).toBe(1);
-    // 한 겹의 공속은 패시브 값에서 읽는다 — 공속 오르막을 조정해도 겹 수 계산은 그대로다.
-    const perStack = boss.def.passive.value;
-    boss.bonusAttackSpeed = perStack * 5;
-    expect(bossDamageMultiplier(boss, ally, false)).toBeCloseTo(1.06, 5);
-    boss.bonusAttackSpeed = perStack * 40;
-    expect(bossDamageMultiplier(boss, ally, false)).toBeCloseTo(1.12, 5);
-    expect(bossDamageMultiplier(boss, ally, true)).toBe(1);
+  it("타보아 V — 숨통 조이기의 기절이 길어지고, 같은 적은 재사용 대기 동안 다시 묶이지 않는다", () => {
+    const run = (breakthrough: number) => {
+      const state = bossBattle("taboa", ["torika"], breakthrough);
+      const boss = findFighter(state, "enemy-0")!;
+      const ally = findFighter(state, "player-0")!;
+      place(state, "enemy-0", 500, 700); place(state, "player-0", 500, 740);
+      ally.attackCooldown = 999;
+      ally.chill = { stacks: 3, speedPercentPerStack: 8, maxStacks: 3 };
+      const stuns: number[] = [];
+      for (let tick = 0; tick < 80; tick += 1) {
+        boss.attackCooldown = Math.min(boss.attackCooldown, 0.05);
+        ally.chill = { stacks: 3, speedPercentPerStack: 8, maxStacks: 3 };
+        boss.energy = 0; boss.ferocity = 0;
+        const before = ally.stunnedFor;
+        stepSkirmish(state, 0.05);
+        ally.hp = ally.maxHp;
+        if (ally.stunnedFor > before + 0.05) stuns.push(ally.stunnedFor);
+      }
+      return stuns;
+    };
+    // 4초 동안 평타가 여러 번 꽉 찬 둔화를 때려도 재사용 대기(6초) 때문에 한 번만 묶인다.
+    const closed = run(3);
+    expect(closed).toHaveLength(1);
+    expect(closed[0]).toBeLessThanOrEqual(1.2 + 1e-6);
+    expect(closed[0]).toBeGreaterThan(1);
+    const open = run(4);
+    expect(open).toHaveLength(1);
+    expect(open[0]).toBeGreaterThan(1.6);
   });
 
   it("코아틀 II — 표적 뒤 선 위의 가장 가까운 적도 피해의 일부를 받는다", () => {

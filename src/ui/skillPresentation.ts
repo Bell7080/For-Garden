@@ -589,6 +589,7 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   if (passive.kind === "stalkerBlink") return t("skill.passive.stalkerBlink", { seconds: passive.value });
   if (passive.kind === "openingDive" && passive.openingCharge !== undefined) return t("skill.passive.openingCharge", { seconds: passive.openingCharge.stunSeconds });
   if (passive.kind === "basicHitAttackSpeedStack") return t("skill.passive.basicHitAttackSpeedStack", { value: passive.value });
+  if (passive.kind === "coilSqueeze" && passive.coilSqueeze) return t("skill.passive.coilSqueeze", { seconds: trim(passive.coilSqueeze.stunSeconds), lock: trim(passive.coilSqueeze.lockoutSeconds) });
   // 흡혈 수치는 여기서, 나뉘는 비율·상한은 태그(`fog-guard`)가 말한다 — 쓰는 개체가 하나뿐인 규칙어라 태그가 수치를 갖는다.
   // 치명타 확률 가산은 공통 절(`passiveCriticalClause`)이 뒤에 붙인다.
   if (passive.kind === "tideSight") return t("skill.passive.tideSight", { percent: passive.lifeStealPoints });
@@ -1699,7 +1700,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effects.passive.kind === "thickShell") return t("skill.breakthrough.effect.passive.thickShell", { name: def.passive.name, self: sv("shield", "hp", effects.passive.selfShieldMaxHpPercent), ally: trim(effects.passive.allyShieldMaxHpPercent) });
     if (effects.passive.kind === "potentReaction") return t("skill.breakthrough.effect.passive.potentReaction", { name: def.passive.name, seconds: trim(effects.passive.poisonSeconds) });
     if (effects.passive.kind === "doubleAmbush") return t("skill.breakthrough.effect.passive.doubleAmbush", { name: def.passive.name, crits: trim(effects.passive.crits) });
-    if (effects.passive.kind === "warmBody") return t("skill.breakthrough.effect.passive.warmBody", { name: def.passive.name, percent: trim(effects.passive.damagePercentPerStack), max: trim(effects.passive.maxStacks) });
+    if (effects.passive.kind === "tightCoil") return t("skill.breakthrough.effect.passive.tightCoil", { name: def.passive.name, seconds: trim(effects.passive.stunSeconds) });
     if (effects.passive.kind === "pinningPlume") return t("skill.breakthrough.effect.passive.pinningPlume", { seconds: trim(effects.passive.stunSeconds), lock: trim(effects.passive.lockoutSeconds) });
     if (effects.passive.kind === "stealthStrike") return t("skill.breakthrough.effect.passive.stealthStrike", { percent: trim(effects.passive.damagePercent) });
     if (effects.passive.kind === "battleMaidAscension") {

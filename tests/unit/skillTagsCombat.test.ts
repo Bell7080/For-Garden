@@ -37,7 +37,9 @@ const OUTSIDE: Readonly<Record<string, readonly string[]>> = {
 
 function observedStatuses(defId: string): Set<string> {
   const def = RELICS.find((relic) => relic.id === defId)!;
-  const dummy = RELICS.find((relic) => relic.id === "mir")!;
+  // 허수아비는 아무것도 걸지 않아야 한다 — 미르의 개미산(중독)을 맞은 쪽이 옮겨 거는 상태까지 세지 않게 평타 효과를 걷는다.
+  const mir = RELICS.find((relic) => relic.id === "mir")!;
+  const dummy = { ...mir, basic: { ...mir.basic, statusEffects: undefined } };
   const state = createSkirmish([def], [dummy, dummy, dummy], ARENA);
   const me = state.fighters.find((fighter) => fighter.side === "player")!;
   for (const fighter of state.fighters) if (fighter.side === "enemy") { fighter.maxHp = 1e9; fighter.hp = 1e9; }

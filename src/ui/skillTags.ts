@@ -172,6 +172,7 @@ function contractTags(source: Skill | Passive | undefined): { tags: (SkillTag | 
   if ("kind" in source) {
     if (source.openingCharge) tags.push(statusTag({ kind: "stun", seconds: source.openingCharge.stunSeconds }));
     if (source.tidalSurge) tags.push(statusTag({ kind: "knockback", ...source.tidalSurge.knockback }));
+    if (source.coilSqueeze) tags.push(statusTag({ kind: "stun", seconds: source.coilSqueeze.stunSeconds }));
     if (source.freezeAtMaxChill) tags.push(keywordTag("frozen", "control", "tag-control"));
     if (source.undyingKnockback) tags.push(statusTag({ kind: "knockback", ...source.undyingKnockback }));
     // 시약이 가득 차 터지는 반응이 중독을 건다.

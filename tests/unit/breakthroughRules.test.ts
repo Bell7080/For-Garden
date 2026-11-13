@@ -196,7 +196,7 @@ const CATEGORY: Record<EffectKind, Category> = {
   sharpStorm: "crit",
   pressureCrack: "damage",
   scarMight: "damage",
-  warmBody: "damage",
+  tightCoil: "control",
   pinningPlume: "control",
   // 적 전용 — 레이티아·토비·아모·리파·코마. 적은 버텨야 하므로 직군과 무관하게 생존 몫을 가질 수 있다.
   fangShave: "damage",

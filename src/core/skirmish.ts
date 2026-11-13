@@ -8858,10 +8858,15 @@ function strike(
     : skill.power) + observationPower;
   // 희열이 오른 만큼 벌이 무거워진다 — 맞아서 쌓인 겹이 손으로도 돌아온다. 이번 타격 시작 시점의 겹이다.
   const elationPerStack = !useUltimate ? attacker.def.basic.elationDamagePercentPerStack ?? 0 : 0;
-  const compositePower = basePower * (1 + (attacker.elation?.stacks ?? 0) * elationPerStack / 100);
+  const elationFactor = 1 + (attacker.elation?.stacks ?? 0) * elationPerStack / 100;
+  const compositePower = basePower * elationFactor;
   const damageInput = {
     ...skill,
     power: compositePower,
+    // 희열은 한 방 전체를 무겁게 한다 — 두 번째 계수(노도니아의 공격력 몫)도 같은 배수를 받는다.
+    secondaryScaling: skill.secondaryScaling && elationFactor !== 1
+      ? { ...skill.secondaryScaling, power: skill.secondaryScaling.power * elationFactor }
+      : skill.secondaryScaling,
     isCritical: critical,
     kind: useUltimate ? "ultimate" as const : "basic" as const,
     // 강화된 한 방만 방어·저항을 지나간다. 속성 상성과 대상 경감은 그대로 거친다.

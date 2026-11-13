@@ -192,10 +192,9 @@ describe("노도니아 스킬 표시 계약", () => {
     expect(nodonia.basic).toMatchObject({ name: "나쁜 아이에게는 벌을", scalingStat: "hp", power: 5, elationDamagePercentPerStack: 12 });
     expect(nodonia.basic.desc).toBeUndefined();
     // 겹마다 오르는 몫은 곱하는 비율이라 %로 남고, 주어가 "이 피해"라 제 문장으로 선다.
-    expect(skillDescription(nodonia.basic)).toBe("적 한 명에게 최대 체력의 5% [[physical-damage|물리 피해]]를 준다."
+    expect(skillDescription(nodonia.basic)).toBe("적 한 명에게 최대 체력의 5%와 공격력의 80%를 더한 [[physical-damage|물리 피해]]를 준다."
       + " [[nodonia-elation|희열]] 한 겹마다 이 피해가 12% 오른다.");
-    // 공격력은 어디에도 쓰이지 않으므로 플레이어블 로스터 최저다 — 쓰지 않는 능력치를 높게
-    // 적지 않는다. 적 전용 리파처럼 주문력만 쓰는 개체는 같은 원칙으로 더 낮을 수 있다.
+    // 공격력은 평타의 덤(80%, v0.451.2)으로만 쓰이므로 여전히 플레이어블 로스터 최저다 — 손은 체력이 정한다. 적 전용 리파처럼 주문력만 쓰는 개체는 같은 원칙으로 더 낮을 수 있다.
     // 소환 전용 개체는 쓰지 않는 축이 0이라 같은 이유로 비교에서 뺀다.
     const playable = RELICS.filter((def) => def.enemyOnly !== true && def.summonOnly !== true);
     expect(Math.min(...playable.map((def) => def.stats.atk))).toBe(nodonia.stats.atk);
@@ -291,7 +290,7 @@ describe("데이 스킬 표시 계약", () => {
     // 초안이 주문력 152·평타 70%였고 표준 5인 파티 재현에서 적 체력의 30%를 혼자 깎아
     // 렉시아(22%)·스피나(28%)를 넘었다. 지금은 16%로 마키(17%) 자리다. 되돌리면 여기서 걸린다.
     expect(deina.stats.ap).toBeLessThan(RELICS.find((def) => def.id === "keris")!.stats.ap);
-    expect(deina.basic.power).toBeLessThanOrEqual(40);
+    expect(deina.basic.power).toBeLessThanOrEqual(80);  // v0.451.2 응태 결정: 35 → 80.
     // **방어·저항은 로스터 탱커 최저다.** 체력은 노도니아 다음으로 높지만 방어를 곱한 실효
     // 체력은 여전히 넷 중 가장 얇다 — 맞아도 되는 몸이 아니라 한 번 더 달릴 수 있는 몸이다.
     // 아군 탱커끼리만 견준다. 이름을 손으로 적어 두면 적 탱커가 늘 때마다 그 목록이 낡는다.
@@ -521,7 +520,7 @@ describe("티아 스킬 표시 계약", () => {
     );
     // 남기는 것은 패시브, 지워질 때 터지는 것은 그 타격을 낸 스킬이다.
     expect(def.passive.kind).toBe("shimmerMark");
-    expect(def.basic.shimmerBurst).toMatchObject({ power: 65, radius: 260, shieldMaxHpPercent: 12, capMaxHpPercent: 36 });
+    expect(def.basic.shimmerBurst).toMatchObject({ power: 80, radius: 260, shieldMaxHpPercent: 12, capMaxHpPercent: 36 });
     expect(def.ultimate.shimmerBurst).toBeUndefined();
     expect(passiveDescription(def.passive)).toBe(
       `적을 타격하면 [[shimmer|반짝!]] 표식을 부여하고 주문력의 ${def.passive.value}%의 [[magical-damage|마법 피해]]를 추가로 입힌다.`,
@@ -591,7 +590,7 @@ describe("델로피 스킬 표시 계약", () => {
     expect(damageKeyword(preview)?.description).toBe("현재 공격력의 50%와 주문력의 50%를 더해 계산한 피해 수치다.");
     // 능력치를 아는 자리는 태그 하나로, 모르는 자리(도감)는 두 축을 모두 말하는 %로 되돌아간다.
     expect(skillDescription(delopi.basic, { damage: 114 })).toBe("적 한 명에게 [[damage-value|114]]의 [[physical-damage|물리 피해]]를 주고 3초 동안 [[poison|중독]]시킨다.");
-    expect(skillDescription(delopi.basic)).toContain("공격력의 50%와 주문력의 50%를 더한");
+    expect(skillDescription(delopi.basic)).toContain("공격력의 60%와 주문력의 60%를 더한");
   });
 
   it("은 중독의 시간만 본문이 적고 매초 수치는 태그에 맡긴다", () => {
@@ -800,7 +799,7 @@ describe("스피나 스킬 표시 계약", () => {
     expect(passiveDescription(spino.passive)).toContain(`치명타 확률이 ${spino.passive.criticalChancePercent}% 오른다`);
     // 연격에 달려 있던 회복은 걷어 냈다 — 암살자는 보장된 자가 수급을 갖지 않는다는 직군
     // 계약 때문이고, 그 몫은 여울에 잠긴 적에게 주는 피해로 옮겼다.
-    expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 96, combo: { chancePercent: 40, hitCount: 2 } });
+    expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 90, combo: { chancePercent: 40, hitCount: 2 } });
     expect(spino.basic.combo).not.toHaveProperty("missingHpHealingPercentPerHit");
     expect(skillDescription(spino.basic, { damage: 100 })).toBe(
       // 회복 절이 사라지면서 쉼표도 함께 빠진다 — 쉼표는 절이 길 때만 둔다는 문장 규칙 그대로다.

@@ -137,7 +137,8 @@ function battleStage(id: string): BattleStageDef {
 /** [이름, 권장 파티 레벨, 적, 그 조우의 역할, 전장, 실측 전투 시간(초), 실측 잔여 체력] */
 const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole, BattleArenaMode, number, number][] = [
   // 「적은 적이다」(2026-11-12): 적 레벨 사다리 재정렬 · 성장 3.6% — 1-1 14.5초·0.84 → 12.1초·0.81.
-  ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", "stage", 12.1, 0.81],
+  // v0.451.2 평타 상향 일괄(응태 결정): 12.1초 → 10.0초.
+  ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", "stage", 10.0, 0.81],
   // 적 비공격 궁극기 AI 복구 후 재측정. 능력치/목표 띠는 조정하지 않았다.
   // v0.422.4: 참조 파티의 엘라 발경에 방어력 40%가 실려 23.9 → 19.9초로 줄었다(잔여 체력은 그대로).
   ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", "stage", 19.9, 0.84],
@@ -163,8 +164,8 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   // v0.422.4: 같은 이유로 57.3 → 44.9초 — 무리 띠보다 길던 한 판이 그만큼 가까워졌다.
   // 한계 돌파 +10%/단계(2026-11-11): 기준 파티와 적이 함께 사다리 돌파 %를 받는다. 무리 몫은 태생 층과 곱해져 조금 갈려 44.9 → 50.3초.
   // v0.441.0 직군 존재감(탱커 30 > 전사 20 > 암살자 10)·몰림 벌점 240 → 120: 50.3초·0.86 → 54.0초·0.77.
-  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 54.0, 0.77],
-  ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 18.1, 0.95],
+  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 51.7, 0.77], // v0.451.2 평타 상향: 54.0 → 51.7초.
+  ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 15.3, 0.95], // v0.451.2 평타 상향: 18.1 → 15.3초.
   // 정예가 보호막을 깨고(코마) 치유를 깎는 자리가 되어 평균이 37.3 → 29.5로 줄고 띠 안에 들었다.
   ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 12.4, 0.64],
   // 한계 돌파 +10%/단계(2026-11-11): 15.0초·0.72 → 17.5초·0.78.
@@ -204,11 +205,12 @@ describe("콘텐츠별 전투 시간 실측", () => {
      * **v0.422.4에서 엘라 발경에 방어력 40%가 실리자** 대작전 1단계가 30.1 → 26.0초로 줄어 무리 띠 안에 들었다.
      * **v0.441.0에서 직군 끌림(탱커 30 · 전사 20 · 암살자 10)을 넣고 몰림 벌점을 절반(120)으로 덜자** 적이 한 명에게 더 모여
      * 원정 무리 15층이 17.5 → 13.0초로 짧아져 무리 띠 아래로 나갔다.
+     * **v0.451.2 평타 상향 일괄**로 원정 일반 5층이 18.1 → 15.3초로 줄어 잡졸 띠 안에 들었다.
      */
     const offTarget = AUDIT.filter(([, , , role, , ttk, hp]) => !isEncounterOnTarget(role, { ttkSeconds: ttk, remainingHp: hp }));
     expect(offTarget.map(([label]) => label)).toEqual([
       "스토리 1-9", "스토리 1-5 정예", "스토리 1-10 정예", "스토리 3-9",
-      "현상수배 1단계", "현상수배 10단계", "대작전 8단계", "원정 일반 5층", "원정 정예 10층", "원정 무리 15층",
+      "현상수배 1단계", "현상수배 10단계", "대작전 8단계", "원정 정예 10층", "원정 무리 15층",
     ]);
   });
 });

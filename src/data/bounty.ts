@@ -57,7 +57,7 @@ export const BOUNTY = {
  *
  * 값은 눈대중이 아니라 `tests/unit/bountyBalance.test.ts`가 `duelBalance`로 다시 잰다 — 등급마다 상정한
  * 성장 수준에서 세 라운드 모두 낼 개체가 셋 이상 남는지, 그리고 **레벨 20 파티를 세워 두고 등급만
- * 올렸을 때 낼 수 있는 개체가 줄곧 줄어드는지**(70 → 68 → 60 → 40 → 37 → 19 → 14 → 12 → 8 → 1)다. 렐릭 성장 개편(돌파 +10%p)으로 적도 사다리 돌파 몫을 받게 되자 7급 1라운드의 미르가 6급보다 쉬워져 펄시로 바꿨다.
+ * 올렸을 때 낼 수 있는 개체가 줄곧 줄어드는지**(75 → 70 → 64 → 46 → 39 → 23 → 14 → 12 → 10 → 1)다. v0.451.2 평타 상향으로 7급·8급이 14로 같아져 8급 아트라를 LV.41(돌파 문턱)로 올렸다. 렐릭 성장 개편(돌파 +10%p)으로 적도 사다리 돌파 몫을 받게 되자 7급 1라운드의 미르가 6급보다 쉬워져 펄시로 바꿨다.
  *
  * **ID는 저장 키라 순서와 따로 논다.** 다섯 등급이던 때의 `bounty-1`~`bounty-5`는 같은 레벨대의 새 자리
  * (1 · 3 · 5 · 7 · 10급)로 옮겨 앉고, 그 사이에 새로 선 다섯이 `bounty-6`~`bounty-10`이다 — 이미 깬 등급이
@@ -95,7 +95,7 @@ export const BOUNTY_TIERS: readonly BountyTierDef[] = [
     { relicId: "pulsi", level: 40 }, { relicId: "atra", level: 37 }, { relicId: "ikanixia", level: 37 },
   ] },
   { id: "bounty-9", order: 8, name: "현상수배 8급", rewardGold: 15_000, rounds: [
-    { relicId: "ripa", level: 41 }, { relicId: "atra", level: 40 }, { relicId: "ikanixia", level: 40 },
+    { relicId: "ripa", level: 41 }, { relicId: "atra", level: 41 }, { relicId: "ikanixia", level: 40 },
   ] },
   { id: "bounty-10", order: 9, name: "현상수배 9급", rewardGold: 20_000, rounds: [
     { relicId: "ripa", level: 49 }, { relicId: "koma", level: 46 }, { relicId: "ikanixia", level: 46 },

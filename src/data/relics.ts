@@ -469,7 +469,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "spino-basic",
       name: "악어턱 물어뜯기",
-      power: 96,
+      power: 90,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -828,7 +828,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "tia-basic",
       name: "물장구",
-      power: 75,
+      power: 100,
       // 물살은 주먹이 아니라 마력이다. 마법 피해지만 계수는 주문력에서 나온다.
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
@@ -839,7 +839,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
       // 반짝이 묻은 적을 때리면 그 자리에서 터뜨려 주위까지 함께 적신다. 터질 때마다 제 최대
       // 체력의 일부를 막으로 두른다 — 피해에 비례하던 때는 한 번이 평균 3%라 한 방도 못 막았다.
-      shimmerBurst: { power: 65, radius: 260, shieldMaxHpPercent: 12, capMaxHpPercent: 36 },
+      shimmerBurst: { power: 80, radius: 260, shieldMaxHpPercent: 12, capMaxHpPercent: 36 },
     },
     ultimate: {
       id: "tia-ult",
@@ -1679,16 +1679,16 @@ export const RELICS: RelicDef[] = [
       id: "teku-basic",
       name: "카페인 수혈",
       // 순환이 위력을 걸음마다 정하므로 이 값은 쓰이지 않는 기본값이다.
-      power: 80,
+      power: 120,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
       cycle: [
-        { name: "카페인 수혈", power: 80 },
-        { name: "카페인 수혈", power: 80 },
-        { name: "카페인 수혈", power: 80 },
-        { name: "마지막 한 방울", keywordId: "teku-last-drop", power: 90, guaranteedCritical: true, damageHealingPercent: 25 },
+        { name: "카페인 수혈", power: 120 },
+        { name: "카페인 수혈", power: 120 },
+        { name: "카페인 수혈", power: 120 },
+        { name: "마지막 한 방울", keywordId: "teku-last-drop", power: 150, guaranteedCritical: true, damageHealingPercent: 25 },
       ],
     },
     ultimate: {
@@ -1776,7 +1776,7 @@ export const RELICS: RelicDef[] = [
       id: "plesha-basic",
       name: "반짝, 조약돌 콩!",
       // 지원가의 평타라 위력을 낮게 두고, 떨어진 자리 둘레만 함께 맞는다.
-      power: 50,
+      power: 80,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
@@ -1987,7 +1987,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "pachi-basic",
       name: "철거 스윙",
-      power: 90,
+      power: 110,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -2100,7 +2100,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "maki-basic",
       name: "부위별 손질",
-      power: 80,
+      power: 110,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -2218,7 +2218,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "keris-basic",
       name: "첫 사랑은 무슨 맛일까요?",
-      power: 80,
+      power: 100,
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
@@ -2325,10 +2325,10 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "delopi-basic",
       name: "트릭 카드",
-      power: 50,
+      power: 60,
       scalingStat: "atk",
       // 카드에 발라 둔 독이 손끝 힘과 함께 실린다 — 위력을 두 능력치가 반씩 나눠 갖는다.
-      secondaryScaling: { stat: "ap", power: 50 },
+      secondaryScaling: { stat: "ap", power: 60 },
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -2453,6 +2453,7 @@ export const RELICS: RelicDef[] = [
       // 유일한 축이 체력이라 몸집이 곧 손이 된다.
       power: 5,
       scalingStat: "hp",
+      secondaryScaling: { stat: "atk", power: 80 },
       // 맞아서 쌓인 희열이 손으로 돌아온다 — 열 겹이면 한 방이 두 배를 넘는다(+120%). 앞에 서서 오래
       // 버틸수록 세게 치므로, 맞는 자리에 서 있는 이유가 재생 하나로 끝나지 않는다.
       elationDamagePercentPerStack: 12,
@@ -4174,7 +4175,7 @@ export const RELICS: RelicDef[] = [
        * **이 한 방의 값은 피해가 아니라 낙서와 도발이다.** 그래서 로스터 최저 수준까지 내려
        * 둔다 — 여기를 올리면 낙서를 묻히러 다니는 개체가 아니라 빠른 마법 딜러가 된다.
        */
-      power: 35,
+      power: 80,
       scalingStat: "ap",
       // 캔에 저항력이 실린다 — 탱커 슬롯에서 주문력을 다시 올리지 않고(위 주석) 몸의 값에서 덤을 뽑는다.
       secondaryScaling: { stat: "res", power: 50 },

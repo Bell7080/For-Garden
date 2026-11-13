@@ -1,3 +1,4 @@
+import { combatPower } from "../core/combatPower";
 import { hasRemoteState } from "../api/resultState";
 import { RAID_TICKET_TEST_KIT } from "../data/raid";
 import { previewCompletedRaids, RAID_HISTORY_PREVIEW_PREFIX } from "../core/raid";
@@ -169,6 +170,11 @@ export class RelicProgressionManager {
       progress.heartGemSlots = [...equipment.slots];
     }
     this.persistSharedSession();
+  }
+
+  /** 표시 전투력 — 최종 능력치를 태생 능력치와 함께 잰다(공속이 공격 능력치와 함께 자란다, `combatPower`). */
+  getCombatPower(relicId: string, options: { pvp?: boolean } = {}): number {
+    return combatPower(this.getFinalStats(relicId, options), getRelic(relicId).stats);
   }
 
   /** UI와 전투가 공유할 최종 능력치를 순수 코어 계산기로 구한다. */

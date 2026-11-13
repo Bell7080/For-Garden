@@ -17,7 +17,7 @@ import { previewSkillDamage } from "../core/damage";
 import type { BasicAttack, Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
 import { setDebugFeedButton, setDebugInfoAssetReady, setDebugInfoGemSlots, setDebugInfoOpen, addDebugFeedTaps } from "../debug";
 import { formatCurrency } from "../core/formatCurrency";
-import { PLAYABLE_RELICS, RELICS } from "../data/relics";
+import { baseStatsOf, PLAYABLE_RELICS, RELICS } from "../data/relics";
 import { KeywordManager } from "../managers/KeywordManager";
 import { relicStories } from "../managers/RelicStoryManager";
 import { BOND_STORY_GEM_REWARD, type BondStoryLevel } from "../core/relicStory";
@@ -2872,7 +2872,7 @@ export class InfoManager {
     const boost = Math.round((BOND_FEROCITY_MULTIPLIER[progress.bondLevel] - 1) * 100);
     this.bondLabel.setText(`${bondMaxed ? "MAX" : `${progress.bondXp} / ${bondNext} EXP`}   ·   ${t("info.bond.ferocityGain")} +${boost}%`);
 
-    this.statRadar?.draw(finalStats, STAT_RADAR_RADIUS);
+    this.statRadar?.draw(finalStats, STAT_RADAR_RADIUS, baseStatsOf(def.id));
 
     progress.heartGemSlots.forEach((id, index) => this.gemSlots[index].paint(id));
     // 칠한 결과를 그대로 알린다. 조각을 누르는 자동화가 "언제 칠해지는가"를 시간으로 짐작하지
@@ -3591,7 +3591,7 @@ export function openExtraStatsPopup(
     body.add(scene.add.text(-edge, top + 100, t("info.stats.power"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
     body.add(
       scene.add
-        .text(edge, top + 100, combatPower(stats).toLocaleString(), textStyle({ role: "display", size: 52 }))
+        .text(edge, top + 100, combatPower(stats, baseStatsOf(def.id)).toLocaleString(), textStyle({ role: "display", size: 52 }))
         .setOrigin(1, 0.5)
         .setScale(1, 1.12)
         .setShadow(3, 6, "#05070a", 8, false, true),

@@ -143,12 +143,12 @@ export class BountyScene extends Phaser.Scene {
           const level = bountyRoundLevel(round);
           return {
             def, relicId: round.relicId, name: def.name, level, round: index + 1,
-            element: def.element, role: def.role, breakthrough: requiredBreakthroughForLevel(level), power: combatPower(def.stats),
+            element: def.element, role: def.role, breakthrough: requiredBreakthroughForLevel(level), power: combatPower(def.stats, getRelic(round.relicId).stats),
           };
         }),
         elements: distinctElements(row.tier.rounds.map((round) => getRelic(round.relicId).element)),
         reward: { icon: "currency-gold", amount: row.tier.rewardGold },
-        enemyPower: row.tier.rounds.reduce((sum, round) => sum + combatPower(bountyRoundEnemy(round).stats), 0),
+        enemyPower: row.tier.rounds.reduce((sum, round) => sum + combatPower(bountyRoundEnemy(round).stats, getRelic(round.relicId).stats), 0),
         unlocked: row.unlocked,
         cleared: row.cleared,
       })),

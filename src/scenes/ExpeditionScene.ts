@@ -19,7 +19,6 @@ import { showExpeditionRelic } from "../ui/expeditionRelicInfo";
 import { expeditionManager, type StartExpeditionFailure } from "../managers/ExpeditionManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import type { RelicDef } from "../core/types";
-import { combatPower } from "../core/combatPower";
 import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
 import { RosterControls, ROSTER_CONTROLS } from "../ui/RosterControls";
 import { session } from "../state/session";
@@ -931,7 +930,7 @@ export class ExpeditionScene extends Phaser.Scene {
   private fillRosterGrid(): void {
     const content = this.rosterContent;
     if (!content) return;
-    const powerOf = (relic: RelicDef): number => combatPower(relicProgression.getFinalStats(relic.id));
+    const powerOf = (relic: RelicDef): number => relicProgression.getCombatPower(relic.id);
     const owned = applyRosterView([...session.owned].map(getRelic), this.rosterView, powerOf);
     const rowStep = ROSTER.rowStep;
     // 머리가 칩 밖으로 나오므로 첫 줄은 도감·발굴과 같은 공용 안전 영역만큼 내려 세운다.
@@ -1053,7 +1052,7 @@ export class ExpeditionScene extends Phaser.Scene {
         chrome.add(new AffinityBadge(this, x - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62));
         chrome.add(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62));
         addBreakthroughGradeMark(this, chrome, x + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(relicId), relicProgression.isBreakthroughDimmed(relicId));
-        addUnitPower(this, chrome, x, groundY + 22, combatPower(relicProgression.getFinalStats(relicId)), 24, COLOR.accentText);
+        addUnitPower(this, chrome, x, groundY + 22, relicProgression.getCombatPower(relicId), 24, COLOR.accentText);
         addUnitNameplate(this, chrome, x, groundY + 26, relicProgression.getProgress(relicId).level, def.name, 30);
       }
       // 공용 슬롯 면은 SD보다 위에서 입력을 맡고, SD 자체는 계속 비대화형으로 둔다.
@@ -1066,7 +1065,7 @@ export class ExpeditionScene extends Phaser.Scene {
     }
     // 세 자리 아래, 목록 조작 줄 위에 선 아군 총 전투력 — 스토리 편성의 대치선 판과 같은 판이다(원정은
     // 적이 정해져 있지 않아 아군 쪽만 선다).
-    const totalPower = formationMembers(this.selected).reduce((sum, id) => sum + combatPower(relicProgression.getFinalStats(id)), 0);
+    const totalPower = formationMembers(this.selected).reduce((sum, id) => sum + relicProgression.getCombatPower(id), 0);
     layer.add(drawLayer(this, BASE_WIDTH / 2, FORMATION_POWER_Y, slantedRect(PARTY_POWER_PLATE.width, PARTY_POWER_PLATE.height), { fill: COLOR.panel, alpha: HOLO.glass, edge: COLOR.panelEdge, edgeAlpha: 0.85 }));
     layer.add(this.add.text(BASE_WIDTH / 2, FORMATION_POWER_Y, t("party.allyPower", { power: totalPower.toLocaleString() }), textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0.5).setShadow(0, 3, "#05070a", 4, false, true));
     // Puppet이 컨테이너 좌표를 물려받지 않으므로 공용 표현기에 기존 화면 좌표 배치기를 주입한다.

@@ -1,7 +1,7 @@
 import { BLEED, OBSERVATION_MAX_STACKS, POISON } from "../core/skirmish";
 import { registerDataText } from "../i18n";
 import { TORIKA_STORY } from "./relicStories/torika";
-import type { BasicAttack, RelicDef } from "../core/types";
+import type { BasicAttack, RelicDef, Stats } from "../core/types";
 
 /**
  * 렐릭 정의. 최종 30종을 목표로 하되, 지금은 파티 편성과 전투 규칙을 검증할 만큼만 둔다.
@@ -1643,13 +1643,14 @@ export const RELICS: RelicDef[] = [
     // 어금니로 씹는 입이라 초목 재료를 모으는 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 130, efficiencyMultiplier: 1.08 },
     // 등급 띠(SR)의 안에서 화력과 체력을 고르게 짠다. 공속은 패시브가 고정하므로 태생 값은 기준선이다.
+    // v0.453.0(응태 — 「너무 약하다」): 고정 공속 100 → 160. 띠를 지키려 쓰지 않는 주문력 44 → 20, 체력 1000 → 900.
     stats: {
-      hp: 1000,
+      hp: 900,
       def: 58,
       res: 56,
       atk: 172,
-      ap: 44,
-      attackSpeed: 100,
+      ap: 20,
+      attackSpeed: 160,
       moveSpeed: 108,
       critChance: 10,
       critDamage: 150,
@@ -1672,7 +1673,7 @@ export const RELICS: RelicDef[] = [
       effectType: "buff",
       value: 4,
       durationSeconds: 0,
-      refill: { magazine: 4, reloadSeconds: 1.2, fixedAttackSpeed: 100 },
+      refill: { magazine: 4, reloadSeconds: 1.2, fixedAttackSpeed: 160 },
       desc: "기본 공격이 4발짜리 탄창으로 나가고, 비면 장전한다. 공격 속도는 고정이며 추가 공격 속도는 같은 비율의 공격력으로 바뀐다.",
     },
     basic: {
@@ -6276,6 +6277,16 @@ export function sortRelicsByRarity(relics: readonly RelicDef[]): RelicDef[] {
 validateSpecimenNumbers(RELICS);
 
 const BY_ID = new Map(RELICS.map((r) => [r.id, r]));
+
+/** 그 개체의 태생 능력치 — 전투력의 공속 성장(`combatPower`의 `base`)이 읽는다. 모르는 id면 `undefined`. */
+export function baseStatsOf(id: string): Stats | undefined {
+  return BY_ID.get(id)?.stats;
+}
+
+/** 무리 전투력(`encounterUnitPowers`)에 넘길 태생 능력치를 붙인다. */
+export function withBaseStats<T extends { id: string }>(units: readonly T[]): (T & { base?: Stats })[] {
+  return units.map((unit) => ({ ...unit, base: baseStatsOf(unit.id) }));
+}
 
 export function getRelic(id: string): RelicDef {
   const found = BY_ID.get(id);

@@ -38,7 +38,7 @@ describe("성장 변화의 즉시 반영", () => {
   it("도감은 외형과 전투력순 순서까지 바뀐 것으로 센다", () => {
     const relics = read("src/scenes/RelicsScene.ts");
     expect(relics).toContain("relicSkinManager.equippedFor(id)");
-    expect(relics).toContain('this.sortMode === "power" ? combatPower(relicProgression.getFinalStats(id))');
+    expect(relics).toContain('this.sortMode === "power" ? relicProgression.getCombatPower(id)');
   });
 
   it("원정은 떠날 때의 모습으로 싸우고 지도·정보창도 그 모습을 읽는다", () => {

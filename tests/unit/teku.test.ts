@@ -75,10 +75,10 @@ describe("테쿠 — 탄창과 마지막 한 방울", () => {
     const base = currentAttackSpeed(teku, state);
     expect(base).toBe(REFILL.fixedAttackSpeed);
     expect(refillAttackRatio(teku, state)).toBe(1);
-    teku.bonusAttackSpeed = 50;
+    teku.bonusAttackSpeed = base / 2;
     expect(currentAttackSpeed(teku, state)).toBe(base);
     expect(refillAttackRatio(teku, state)).toBeCloseTo(1.5, 5);
-    teku.bonusAttackSpeed = 100;
+    teku.bonusAttackSpeed = base;
     expect(refillAttackRatio(teku, state)).toBeCloseTo(2, 5);
   });
 

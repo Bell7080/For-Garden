@@ -371,9 +371,9 @@ export function encounterHpShare(role: EncounterRole, countOnField: number): num
  * 토비가 실제로 이기는 아군 선(약 6,200~6,700)과 맞는다. 이카닉시아·코마가 선 벽(1-10·3-10·4-10·7-5)은 편성 상성 때문에 이 표시보다 세다.
  * 표시 전용이며 전투에는 쓰지 않는다.
  */
-export function encounterUnitPowers(units: readonly { stats: Stats; encounterRole?: EncounterRole }[]): number[] {
+export function encounterUnitPowers(units: readonly { stats: Stats; encounterRole?: EncounterRole; base?: Stats }[]): number[] {
   const elites = encounterEliteCount(units);
-  return units.map(({ stats, encounterRole }) => encounterUnitPower(stats, encounterRole, elites));
+  return units.map(({ stats, encounterRole, base }) => encounterUnitPower(stats, encounterRole, elites, base));
 }
 
 /** 한 무리에 선 정예의 수 — 개체 하나만 그릴 때도 몫을 같은 값으로 나누도록 따로 둔다. */
@@ -382,13 +382,13 @@ export function encounterEliteCount(units: readonly { encounterRole?: EncounterR
 }
 
 /** 개체 하나의 자리를 아는 전투력(`encounterUnitPowers`의 한 칸). `elites`는 그 무리에 선 정예 수다. */
-export function encounterUnitPower(stats: Stats, encounterRole: EncounterRole | undefined, elites: number): number {
+export function encounterUnitPower(stats: Stats, encounterRole: EncounterRole | undefined, elites: number, base?: Stats): number {
   void elites;
-  return Math.round(combatPower(stats) * ((encounterRole && ENCOUNTER_ROLE[encounterRole].powerWeight) ?? 1));
+  return Math.round(combatPower(stats, base) * ((encounterRole && ENCOUNTER_ROLE[encounterRole].powerWeight) ?? 1));
 }
 
 /** `encounterUnitPowers`의 합 — 셋보다 많이 서면 `groupCombatPower`처럼 평균 × 셋이다. */
-export function encounterGroupPower(units: readonly { stats: Stats; encounterRole?: EncounterRole }[], slots: number = POWER_COMPARISON_SLOTS): number {
+export function encounterGroupPower(units: readonly { stats: Stats; encounterRole?: EncounterRole; base?: Stats }[], slots: number = POWER_COMPARISON_SLOTS): number {
   const powers = encounterUnitPowers(units);
   if (powers.length === 0) return 0;
   const total = powers.reduce((sum, power) => sum + power, 0);

@@ -23,7 +23,6 @@ import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
 import { clipHit, containerClip } from "./clippedHit";
 import { PortraitCard } from "./PortraitCard";
-import { combatPower } from "../core/combatPower";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
 import { RosterControls } from "./RosterControls";
@@ -604,7 +603,7 @@ export class IdleExcavationPopup {
         this.renderEditor();
       },
     }));
-    const powerOf = (relic: RelicDef): number => combatPower(relicProgression.getFinalStats(relic.id));
+    const powerOf = (relic: RelicDef): number => relicProgression.getCombatPower(relic.id);
     const owned = applyRosterView(RELICS.filter((relic) => session.owned.has(relic.id)), this.rosterView, powerOf);
     // 그리드에 붙는 줄 — 도감과 같은 필터·정렬. 바뀌면 목록만 다시 세운다(편성 초안은 그대로다).
     new RosterControls(this.scene, {

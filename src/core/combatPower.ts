@@ -26,9 +26,30 @@ const WEIGHTS: Readonly<Record<keyof Stats, number>> = {
   ferocityGain: 2,
 };
 
-/** 표시용 전투력. 정수로 떨어뜨려 같은 능력치가 늘 같은 수로 보이게 한다. */
-export function combatPower(stats: Stats): number {
-  return Math.round((Object.keys(WEIGHTS) as (keyof Stats)[]).reduce((sum, key) => sum + stats[key] * WEIGHTS[key], 0));
+/**
+ * 공격 속도가 공격력·주문력과 함께 자라는 배율 — 지금 공격 능력치 합 ÷ 태생 합.
+ *
+ * 성장은 오각형 다섯만 올리고 공속은 그대로라(`GROWTH_STAT_KEYS`), 공속을 고정 가중으로만 세던 때는 레벨이 오를수록
+ * 공속형(암살자)의 몫이 줄고 오각형이 두꺼운 탱커만 가파르게 올라갔다 — 레벨 100에서 R 켄토가 SR 루카보다, SR 토리카가
+ * SSR 스피나보다 높게 읽혔다(2026-11-13 검토). 실제 피해는 공격력 × 공속이라 **공속 한 점의 값어치도 공격 능력치가 큰 만큼
+ * 커져야** 한다(응태 결정 2026-11-13). 태생이 없으면(1) 예전 값 그대로라 레벨 1·등급 띠는 움직이지 않는다.
+ */
+export function offenseGrowth(stats: Stats, base?: Stats): number {
+  if (!base) return 1;
+  const born = base.atk + base.ap;
+  return born > 0 ? Math.max(0, (stats.atk + stats.ap) / born) : 1;
+}
+
+/**
+ * 표시용 전투력. 정수로 떨어뜨려 같은 능력치가 늘 같은 수로 보이게 한다.
+ *
+ * `base`는 그 개체의 **태생 능력치**(`RelicDef.stats`, 적도 유형 몫을 얹기 전 값)다. 주면 공속이 공격 능력치와 함께 자란다
+ * (`offenseGrowth`). 적과 아군이 같은 규칙으로 잰다 — 성장한 개체의 전투력을 셀 때는 늘 넘긴다.
+ */
+export function combatPower(stats: Stats, base?: Stats): number {
+  const speedGrowth = offenseGrowth(stats, base);
+  return Math.round((Object.keys(WEIGHTS) as (keyof Stats)[])
+    .reduce((sum, key) => sum + stats[key] * WEIGHTS[key] * (key === "attackSpeed" ? speedGrowth : 1), 0));
 }
 
 /** 편성이 한 번에 맞서는 자리 수. 아군 전투력 합은 이 수만큼의 개체로 셈한다. */
@@ -42,8 +63,8 @@ export const POWER_COMPARISON_SLOTS = 3;
  * 않는다. 셋 이하로 서는 자리(스토리·정예·보스)는 예전처럼 합 그대로이고, 셋보다 많이 서면
  * 개체 평균 × 셋이다. 표시 전용이며 전투에는 쓰지 않는다.
  */
-export function groupCombatPower(stats: readonly Stats[], slots: number = POWER_COMPARISON_SLOTS): number {
+export function groupCombatPower(stats: readonly Stats[], slots: number = POWER_COMPARISON_SLOTS, bases?: readonly Stats[]): number {
   if (stats.length === 0) return 0;
-  const total = stats.reduce((sum, entry) => sum + combatPower(entry), 0);
+  const total = stats.reduce((sum, entry, index) => sum + combatPower(entry, bases?.[index]), 0);
   return stats.length <= slots ? total : Math.round(total * slots / stats.length);
 }

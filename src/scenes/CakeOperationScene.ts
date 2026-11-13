@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { getRelic } from "../data/relics";
 import { openSettingsOver } from "./settingsOverlay";
 import { t } from "../i18n";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -133,12 +134,12 @@ export class CakeOperationScene extends Phaser.Scene {
           // 몰려오는 수 그대로 세운다 — 다섯 자매가 차례로 되풀이되므로 앞줄 다섯이 곧 이 판의 얼굴 전부다.
           lineup: enemies.map((def) => ({
             def, relicId: def.id, name: def.name, level,
-            element: def.element, role: def.role, breakthrough: requiredBreakthroughForLevel(level), power: combatPower(def.stats),
+            element: def.element, role: def.role, breakthrough: requiredBreakthroughForLevel(level), power: combatPower(def.stats, getRelic(def.id).stats),
           })),
           hordeCount: enemies.length,
           elements: distinctElements(enemies.map((def) => def.element)),
           reward: { icon: "currency-cheesecake", amount: entry.rewardCheesecake },
-          enemyPower: groupCombatPower(enemies.map((def) => def.stats)),
+          enemyPower: groupCombatPower(enemies.map((def) => def.stats), undefined, enemies.map((def) => getRelic(def.id).stats)),
           unlocked: isCakeTierUnlocked(entry.id, clearedIndex),
           cleared: index <= clearedIndex,
         };

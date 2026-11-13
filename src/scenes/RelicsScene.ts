@@ -344,7 +344,7 @@ export class RelicsScene extends Phaser.Scene {
    * 넘긴다 — 미보유는 성장이 없으므로 기본 능력치로 줄을 세운다.
    */
   private sortRelics(catalog: readonly RelicDef[]): RelicDef[] {
-    const powerOf = (relic: RelicDef): number => combatPower(relicCollection.owns(relic.id) ? relicProgression.getFinalStats(relic.id) : relic.stats);
+    const powerOf = (relic: RelicDef): number => relicCollection.owns(relic.id) ? relicProgression.getCombatPower(relic.id) : combatPower(relic.stats);
     return sortRelicsBy(catalog, this.sortMode, this.descending, powerOf);
   }
 
@@ -439,7 +439,7 @@ export class RelicsScene extends Phaser.Scene {
         // 카드 원화는 입은 외형을 따르고, 전투력순이면 룬 하나로도 줄 순서가 바뀐다. 둘 다 창에서
         // 바꿀 수 있으므로 함께 센다 — 빠지면 외형을 갈아입고 닫아도 격자는 옛 옷을 입고 있다.
         const skin = relicSkinManager.equippedFor(id) ?? "";
-        const power = this.sortMode === "power" ? combatPower(relicProgression.getFinalStats(id)) : "";
+        const power = this.sortMode === "power" ? relicProgression.getCombatPower(id) : "";
         return `${id}:${progress.level}:${progress.breakthrough}:${skin}:${power}`;
       }),
     ]);

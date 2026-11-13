@@ -11,7 +11,7 @@ import { t } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { setDebugGridCards, setDebugGridOffset, setDebugParty, setDebugScene } from "../debug";
 import type { RelicDef } from "../core/types";
-import { getRelic } from "../data/relics";
+import { baseStatsOf, getRelic, withBaseStats } from "../data/relics";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { CharacterInfoManager, roleLabel } from "../managers/CharacterInfoManager";
@@ -44,7 +44,7 @@ import { AffinityBadge } from "../ui/AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "../ui/affinityIcons";
 import { addBreakthroughGradeMark } from "../ui/rarityMark";
 import { addUnitNameplate, addUnitPower } from "../ui/unitNameplate";
-import { combatPower, groupCombatPower } from "../core/combatPower";
+import { groupCombatPower } from "../core/combatPower";
 import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
 import { RosterControls, ROSTER_CONTROLS } from "../ui/RosterControls";
 import { dropRosterRelic, formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
@@ -677,7 +677,7 @@ export class PartyScene extends Phaser.Scene {
     const groups = [entries];
     const layout = guardRosterPopupLayout(groups.map((group) => group.length));
     const L = PARTY_GUARD_ROSTER;
-    const power = groupCombatPower(firstWave.units.map((unit) => unit.def.stats), firstWave.units.length);
+    const power = groupCombatPower(firstWave.units.map((unit) => unit.def.stats), firstWave.units.length, firstWave.units.map((unit) => baseStatsOf(unit.def.id) ?? unit.def.stats));
     this.guardPopups ??= new PopupLayer(this, 2100);
     this.guardPopups.open({ width: L.width, height: layout.height, title: t("guild.guard.preview.title"), dim: true, closeOnBackdrop: true }, (body) => {
       body.add(this.add.text(0, layout.info[0], t("guild.guard.preview.power", { power: power.toLocaleString() }), textStyle({ role: "display", size: 32, color: COLOR.dangerText })).setOrigin(0.5));
@@ -768,7 +768,7 @@ export class PartyScene extends Phaser.Scene {
     // 두 총 전투력이다. 이름줄은 노드 미리보기와 같은 프리팹을 쓴다(레벨 강조색·이름 흰색).
     addUnitNameplate(this, undefined, x, ENEMY_ROW + 26, enemy.level, def.name, crowded ? 24 : 30);
     // 개체 하나의 전투력은 이름줄 바로 위, 발밑에 선다. 대치선의 총합이 누가 짊어진 무게인지 말해 준다.
-    addUnitPower(this, undefined, x, ENEMY_ROW + 22, encounterUnitPower(def.stats, def.encounterRole, encounterEliteCount(this.enemies)), crowded ? 20 : 24, COLOR.dangerText).setDepth(3);
+    addUnitPower(this, undefined, x, ENEMY_ROW + 22, encounterUnitPower(def.stats, def.encounterRole, encounterEliteCount(this.enemies), baseStatsOf(def.id)), crowded ? 20 : 24, COLOR.dangerText).setDepth(3);
     // **적을 누르면 상세가 열린다.** 옆에 물음표를 하나 더 세우면 SD와 표식 사이에 눌러야 할
     // 것이 둘이 되고, 정작 크게 서 있는 SD는 눌러도 아무 일이 없다.
     this.add.rectangle(x, ENEMY_ROW - PREVIEW_HEIGHT / 2, crowded ? 170 : 210, PREVIEW_HEIGHT + 70, 0xffffff, 0)
@@ -999,7 +999,7 @@ export class PartyScene extends Phaser.Scene {
     const startY = portraitGridFirstRowY(this.rosterViewport.top, cardH, PORTRAIT_GRID_MASK_GAP);
     content.removeAll(true);
     this.cards.clear();
-    const powerOf = (relic: RelicDef): number => combatPower(relicProgression.getFinalStats(relic.id, { pvp: this.pvp }));
+    const powerOf = (relic: RelicDef): number => relicProgression.getCombatPower(relic.id, { pvp: this.pvp });
     const roster = applyRosterView(relicCollection.owned, this.rosterView, powerOf);
     setDebugGridCards("party", Object.fromEntries(roster.map((relic, i) => [relic.id, {
       x: rosterColumnX(i % cols), y: startY + Math.floor(i / cols) * rowStep,
@@ -1174,7 +1174,7 @@ export class PartyScene extends Phaser.Scene {
         marks.add(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62));
         addBreakthroughGradeMark(this, marks, x + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(id), relicProgression.isBreakthroughDimmed(id));
         addUnitNameplate(this, marks, x, row + 26, relicProgression.getProgress(id).level, def.name, 30);
-        addUnitPower(this, marks, x, row + 22, combatPower(relicProgression.getFinalStats(id, { pvp: this.pvp })), 24, COLOR.accentText);
+        addUnitPower(this, marks, x, row + 22, relicProgression.getCombatPower(id, { pvp: this.pvp }), 24, COLOR.accentText);
       }
 
       if (!chrome || !plate) return;
@@ -1194,11 +1194,11 @@ export class PartyScene extends Phaser.Scene {
     for (const { creature } of moving.values()) creature.destroy();
 
     // 어느 편이 센지는 두 수가 마주 보는 것으로 말한다. 표시·정렬 전용 값이라 전투에는 쓰지 않는다.
-    const enemyPower = this.preview.totalPower ?? encounterGroupPower(this.enemies);
+    const enemyPower = this.preview.totalPower ?? encounterGroupPower(withBaseStats(this.enemies));
     // 방어덱 편성에는 적 전투력 줄 자체가 없다(`buildPreview`의 `allyOnly`).
     this.enemyPowerText?.setText(t("party.enemyPower", { power: enemyPower.toLocaleString() }));
     if (this.content.content === "duelDefense" && chrome) this.paintBlindChips(chrome, members);
-    const allyPower = members.reduce((sum, id) => sum + combatPower(relicProgression.getFinalStats(id, { pvp: this.pvp })), 0).toLocaleString();
+    const allyPower = members.reduce((sum, id) => sum + relicProgression.getCombatPower(id, { pvp: this.pvp }), 0).toLocaleString();
     // 마주 선 편이 없으면 「N 아군」처럼 VS 오른쪽에 붙던 꼴이 아니라 전투력 한 줄로 선다.
     this.allyPowerText?.setText(this.defenseOnly || this.guard ? t("duel.power", { power: allyPower }) : t("party.allyPower", { power: allyPower }));
 
@@ -1319,7 +1319,7 @@ export class PartyScene extends Phaser.Scene {
    * 자리는 전투력 순으로 저절로 채워지고(흐린 글자), 누르면 그 자리를 직접 고른다(강조색).
    */
   private paintBlindChips(chrome: Phaser.GameObjects.Container, members: readonly string[]): void {
-    const powered = members.map((relicId) => ({ relicId, power: combatPower(relicProgression.getFinalStats(relicId, { pvp: this.pvp })) }));
+    const powered = members.map((relicId) => ({ relicId, power: relicProgression.getCombatPower(relicId, { pvp: this.pvp }) }));
     const order = duelBlindOrder(powered, this.blindChoice);
     this.picked.forEach((id, slot) => {
       if (!id) return;

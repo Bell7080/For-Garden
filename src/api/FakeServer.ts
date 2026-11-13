@@ -80,7 +80,6 @@ import { applyDuelScore, DUEL_BATTLE_REWARD, DUEL_MAX_BLIND, DUEL_OPPONENT_COUNT
 import { DUEL_HISTORY_LIMIT, normalizeDuelState, duelAttemptsLeft, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
 import { duelNpcPool } from "../core/duelNpcPool";
 import { simulateDuelDefenses } from "../core/duelDefense";
-import { combatPower } from "../core/combatPower";
 import { ancientHighestCleared, rollAncientSeason } from "../core/ancientStrata";
 import { setActiveAncientSeason } from "../core/ancientStrataBattle";
 import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
@@ -3298,7 +3297,7 @@ export class FakeServer implements GameApi {
 
   /** 렐릭 하나의 지금 전투력. 블라인드 순서와 순위표의 내 전투력이 같은 값을 읽는다. */
   private duelRelicPower(relicId: string): number {
-    return combatPower(new RelicProgressionManager(this.state).getFinalStats(relicId, { pvp: true }));
+    return new RelicProgressionManager(this.state).getCombatPower(relicId, { pvp: true });
   }
 
   private duelStatusDto(duel: DuelState, now: Date): DuelStatusResponse {

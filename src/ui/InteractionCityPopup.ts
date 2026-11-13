@@ -49,7 +49,6 @@ import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
 import { COLOR, textStyle } from "./theme";
 import { currencyRecordToRewardItems, openRewardPopup } from "./RewardPopup";
 import { interactionRemainingLabel, relicsAwayOnInteraction, autoAssignInteractionParty, interactionLayerViews, type InteractionLayerView } from "./interactionLayerModel";
-import { combatPower } from "../core/combatPower";
 import type { RelicDef } from "../core/types";
 import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
 import { RosterControls } from "./RosterControls";
@@ -467,7 +466,7 @@ export class InteractionCityPopup {
     // 못한다. 고를 수 있는 이가 먼저 서고, 나가 있는 이는 뒤에서 덮인 채 남은 시간을 든다.
     const owned = RELICS.filter((relic) => session.owned.has(relic.id));
     const available = owned.filter((relic) => !away.has(relic.id));
-    const powerOf = (relic: RelicDef): number => combatPower(relicProgression.getFinalStats(relic.id));
+    const powerOf = (relic: RelicDef): number => relicProgression.getCombatPower(relic.id);
     const shown = applyRosterView(owned, this.rosterView, powerOf);
     const roster = [...shown.filter((relic) => !away.has(relic.id)), ...shown.filter((relic) => away.has(relic.id))];
     const awayUntil = new Map<string, number>();
@@ -484,7 +483,7 @@ export class InteractionCityPopup {
       onClick: () => {
         // 그 도시에 맞는 칸이 많은 이부터 세운다 — 같은 수끼리만 전투력으로 가른다.
         this.party = toFormationSlots(autoAssignInteractionParty(
-          available.map((relic) => ({ id: relic.id, power: combatPower(relicProgression.getFinalStats(relic.id)), specialty: interactionSpecialtyMatches(view.city, relic) })),
+          available.map((relic) => ({ id: relic.id, power: relicProgression.getCombatPower(relic.id), specialty: interactionSpecialtyMatches(view.city, relic) })),
           view.city.partySize.max,
         ), 3);
         this.selectedSlot = undefined;

@@ -32,7 +32,7 @@ export function duelParticipant(row: PlayerDuelRecord, now: Date): { state: Sess
   const progression = new RelicProgressionManager(state);
   const units = state.duel.defense.map(relicId => {
     const stats = progression.getFinalStats(relicId, { pvp: true }), progress = state.relicProgress[relicId];
-    return { relicId, level: progress?.level ?? 1, breakthrough: activeBreakthroughOf(progress), stats, power: combatPower(stats) };
+    return { relicId, level: progress?.level ?? 1, breakthrough: activeBreakthroughOf(progress), stats, power: combatPower(stats, getRelic(relicId).stats) };
   });
   return { state, opponent: { id: row.id, displayName: state.playerCard.nickname || t('profile.defaultName'), score: state.duel.score, favoriteRelicId: state.favorite, ...profileFace(state), units, blindOrder: duelBlindOrder(units, state.duel.blindChoice) } };
 }

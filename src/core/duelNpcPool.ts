@@ -67,7 +67,7 @@ function buildNpc(index: number, random: () => number): DuelNpc {
   const picked = pickTeam(random);
   const units = arrangeByRole(picked).map((def) => {
     const stats = duelGrownStats(def, level, breakthrough);
-    return { relicId: def.id, level, breakthrough, stats, power: combatPower(stats) };
+    return { relicId: def.id, level, breakthrough, stats, power: combatPower(stats, def.stats) };
   });
   const name = DUEL_NPC_NAMES[index % DUEL_NPC_NAMES.length];
   const house = Math.floor(index / DUEL_NPC_NAMES.length) + 1;

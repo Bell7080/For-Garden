@@ -54,6 +54,7 @@ export class StatRadar extends Phaser.GameObjects.Container {
   private readonly powerLabel?: Phaser.GameObjects.Text;
   private readonly holo: boolean;
   private readonly axisColors: number[] = [];
+  private base?: Stats;
   private stats: Stats = { hp: 0, def: 0, res: 0, atk: 0, ap: 0 } as Stats;
   private radius: number;
   /** 0이면 면이 가운데 한 점, 1이면 제 크기다. 처음 펼쳐질 때만 0에서 오른다. */
@@ -186,8 +187,10 @@ export class StatRadar extends Phaser.GameObjects.Container {
   }
 
   /** 각 수치를 공용 상한으로 제한·정규화한 뒤 비교 가능한 면을 그린다. */
-  draw(stats: Stats, radius = 112): void {
+  /** `base`는 태생 능력치 — 주면 전투력의 공속이 공격 능력치와 함께 자란다(`combatPower`). */
+  draw(stats: Stats, radius = 112, base?: Stats): void {
     this.stats = stats;
+    this.base = base;
     this.radius = radius;
     if (this.holo) { this.paint(this.scene.time.now); return; }
     this.graph.clear();
@@ -208,7 +211,7 @@ export class StatRadar extends Phaser.GameObjects.Container {
     AXES.forEach(([key], index) => this.valueTexts[index]?.setText(stats[key].toLocaleString()));
     // 면이 넓을수록 숫자도 함께 커진다. 전투력은 곧 이 면의 넓이라, 크기가 값을 한 번 더 말한다.
     const fill = ratios.reduce((sum, ratio) => sum + ratio, 0) / ratios.length;
-    this.powerText?.setText(combatPower(stats).toLocaleString()).setScale(0.8 + fill * 0.34);
+    this.powerText?.setText(combatPower(stats, base).toLocaleString()).setScale(0.8 + fill * 0.34);
   }
 
   /** 홀로그램 결 한 장. `timeMs`가 주사선·빛띠·일렁임의 박자를 정한다. */
@@ -264,6 +267,6 @@ export class StatRadar extends Phaser.GameObjects.Container {
     });
     g.setAlpha(1);
     AXES.forEach(([key], index) => this.valueTexts[index]?.setText(Math.round(stats[key] * this.grow).toLocaleString()));
-    this.powerText?.setText(Math.round(combatPower(stats) * this.grow).toLocaleString());
+    this.powerText?.setText(Math.round(combatPower(stats, this.base) * this.grow).toLocaleString());
   }
 }

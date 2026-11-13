@@ -474,7 +474,7 @@ class NewRelicShowcase {
       values: true,
       power: true,
     });
-    radar.draw(relicProgression.getFinalStats(def.id), I.radar.radius);
+    radar.draw(relicProgression.getFinalStats(def.id), I.radar.radius, def.stats);
     pieces.push(radar);
 
     addInfoFigureStand(scene, info, I.sd.x, I.sd.groundY);

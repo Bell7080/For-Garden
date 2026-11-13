@@ -31,6 +31,7 @@ import type { SkillArtSlot } from "./skillArt";
 import { StatRadar } from "./StatRadar";
 import { reachLabel, STAT_TONE } from "./statTones";
 import { COLOR, textStyle } from "./theme";
+import { baseStatsOf } from "../data/relics";
 import { t } from "../i18n";
 import { pressIn, pressOut } from "./pressFeedback";
 import { motionPolicy } from "../core/settings";
@@ -395,7 +396,7 @@ export function paintInfoStats(ctx: InfoPopupContext, chrome: Phaser.GameObjects
   panel.add(chart);
   // 스테이지가 성장시킨 정의를 그대로 읽는다 — 창이 레벨 보정을 다시 하면 지도·편성·전투가
   // 같은 적을 다른 수치로 말한다.
-  chart.draw(def.stats, radar.radius);
+  chart.draw(def.stats, radar.radius, baseStatsOf(def.id));
 }
 
 /**

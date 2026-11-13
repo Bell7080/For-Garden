@@ -208,7 +208,7 @@ export const LOBBY_VI = {
   "ancient.trialLine": "{name}: {effect}",
   "event.newbieGrowth.title": "Hướng dẫn phát triển 7 ngày",
   "event.newbieGrowth.subtitle": "Năm mục tiêu mỗi ngày, chọn Di vật SR!",
-  "lobby.pass.mission.seasonPoints": "Đạt {threshold} điểm nghiên cứu mùa",
+  "lobby.pass.mission.seasonPoints": "Đạt {threshold} điểm nghiên cứu nhiệm vụ",
   "lobby.pass.mission.lead.seasonPoints": "Thu thập điểm nghiên cứu nhiệm vụ để lên cấp",
   "lobby.pass.season.ends": "Mùa kết thúc {time}",
 } as const;

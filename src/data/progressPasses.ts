@@ -67,8 +67,8 @@ const step = (threshold: number, free: ProductGrant, ...rewards: ProductGrant[])
 /**
  * 시즌 패스 — 28일 · 30단계 · 유료 ₩9,900(응태 승인 2026-11-09, 8번 설계안).
  *
- * 무료 줄은 단계마다 골드·치즈케이크가 번갈아 서고 10·20·30단계가 화석 1이다. 유료 줄은 단계마다 젬 100(합 3,000)에
- * 화석 8 · 호박석 2 · 만능 SR 파편 1 · 에너지 드링크+ 6을 흩어 얹고, 30단계에 시즌 테두리(「시즌의 날개」)가 선다.
+ * 무료 줄은 단계마다 골드·치즈케이크가 번갈아 서고 10·20단계가 화석 1, 30단계가 화석 3이다. 유료 줄은 단계마다 젬 100(30단계만 젬 500 — 합 3,400)에
+ * 화석 8 · 호박석 2 · 만능 SR 파편 1 · 에너지 드링크+ 6을 흩어 얹고, 30단계에 화석 10(10연 한 판)과 시즌 테두리(「시즌의 날개」)가 선다.
  * 단계 하나는 연구도 `SEASON_TIER_POINTS`다. 표를 고치면 `seasonPass.test`의 합계를 함께 고친다.
  */
 const SEASON_PAID_EXTRA: Readonly<Record<number, ProductGrant>> = {
@@ -80,11 +80,21 @@ const SEASON_PAID_EXTRA: Readonly<Record<number, ProductGrant>> = {
   30: { kind: "profile_decoration", decorationId: "season", get name(): string { return findProfileFrame("season")?.displayName ?? "season"; } },
 };
 
+/**
+ * 길 끝(30단계)은 **10연 한 판**이다 — 유료 화석 10 + 젬 500, 무료 화석 3(응태 결정 2026-11-13, A안).
+ * 다른 단계와 같은 크기면 마지막 칸이 목표로 읽히지 않는다.
+ */
+const SEASON_FINAL_GEMS = 500;
+const SEASON_FINAL_FOSSILS = 10;
+const SEASON_FINAL_FREE_FOSSILS = 3;
+
 const seasonMilestones = (): ProgressPassMilestone[] => Array.from({ length: SEASON_TIERS }, (_, index) => {
   const tier = index + 1;
-  const free = tier % 10 === 0 ? currency("fossil", 1) : tier % 2 === 1 ? currency("gold", 5_000) : currency("cheesecake", 40);
+  const free = tier === SEASON_TIERS ? currency("fossil", SEASON_FINAL_FREE_FOSSILS) : tier % 10 === 0 ? currency("fossil", 1) : tier % 2 === 1 ? currency("gold", 5_000) : currency("cheesecake", 40);
   const extra = SEASON_PAID_EXTRA[tier];
-  return { threshold: tier * SEASON_TIER_POINTS, free: [free], rewards: [currency("gems", 100), ...(extra ? [extra] : [])] };
+  return { threshold: tier * SEASON_TIER_POINTS, free: [free], rewards: tier === SEASON_TIERS
+    ? [currency("fossil", SEASON_FINAL_FOSSILS), currency("gems", SEASON_FINAL_GEMS), ...(extra ? [extra] : [])]
+    : [currency("gems", 100), ...(extra ? [extra] : [])] };
 });
 
 export const SEASON_PASS: ProgressPassDefinition = { id: "season", productId: "premium-season-pass", metric: "seasonPoints", milestones: seasonMilestones(), seasonal: true };

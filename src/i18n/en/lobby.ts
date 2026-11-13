@@ -208,7 +208,7 @@ export const LOBBY_EN = {
   "ancient.trialLine": "{name}: {effect}",
   "event.newbieGrowth.title": "7-Day Growth Guide",
   "event.newbieGrowth.subtitle": "Five goals a day, pick an SR Relic!",
-  "lobby.pass.mission.seasonPoints": "Reach {threshold} Season Research",
+  "lobby.pass.mission.seasonPoints": "Reach {threshold} Mission Research",
   "lobby.pass.mission.lead.seasonPoints": "Collect mission research points to level up",
   "lobby.pass.season.ends": "Season ends {time}",
 } as const;

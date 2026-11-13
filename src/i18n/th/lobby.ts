@@ -208,7 +208,7 @@ export const LOBBY_TH = {
   "ancient.trialLine": "{name}: {effect}",
   "event.newbieGrowth.title": "คู่มือเติบโต 7 วัน",
   "event.newbieGrowth.subtitle": "5 เป้าหมายทุกวัน เลือกเรลิก SR!",
-  "lobby.pass.mission.seasonPoints": "คะแนนวิจัยซีซันถึง {threshold}",
+  "lobby.pass.mission.seasonPoints": "คะแนนวิจัยภารกิจถึง {threshold}",
   "lobby.pass.mission.lead.seasonPoints": "สะสมคะแนนวิจัยจากภารกิจเพื่อเลื่อนระดับ",
   "lobby.pass.season.ends": "ซีซันสิ้นสุด {time}",
 } as const;

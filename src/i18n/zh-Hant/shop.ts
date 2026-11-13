@@ -137,5 +137,5 @@ export const SHOP_ZH_HANT = {
   "shop.premium.firstPayment.hint": "首次購買任意商品即可啟用，之後在此領取。",
   "shop.premium.firstPayment.claim": "免費",
   "shop.purchase.period.season": "賽季",
-  "shop.premium.pass.metric.seasonPoints": "賽季研究度 {progress} / {goal}",
+  "shop.premium.pass.metric.seasonPoints": "任務研究度 {progress} / {goal}",
 } as const;

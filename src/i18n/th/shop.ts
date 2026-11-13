@@ -137,5 +137,5 @@ export const SHOP_TH = {
   "shop.premium.firstPayment.hint": "ชำระเงินครั้งแรกกับสินค้าใดก็ได้เพื่อปลดล็อก แล้วกดรับที่นี่",
   "shop.premium.firstPayment.claim": "ฟรี",
   "shop.purchase.period.season": "ซีซัน",
-  "shop.premium.pass.metric.seasonPoints": "คะแนนวิจัยซีซัน {progress} / {goal}",
+  "shop.premium.pass.metric.seasonPoints": "คะแนนวิจัยภารกิจ {progress} / {goal}",
 } as const;

@@ -137,5 +137,5 @@ export const SHOP_ID = {
   "shop.premium.firstPayment.hint": "Lakukan pembelian pertama apa pun untuk membukanya, lalu klaim di sini.",
   "shop.premium.firstPayment.claim": "Gratis",
   "shop.purchase.period.season": "Musim",
-  "shop.premium.pass.metric.seasonPoints": "Riset Musim {progress} / {goal}",
+  "shop.premium.pass.metric.seasonPoints": "Riset Misi {progress} / {goal}",
 } as const;

@@ -213,7 +213,7 @@ export const LOBBY_JA = {
   "ancient.trialLine": "「{name}」 {effect}",
   "event.newbieGrowth.title": "7日間成長ガイド",
   "event.newbieGrowth.subtitle": "毎日5つの目標、SRレリック選択券！",
-  "lobby.pass.mission.seasonPoints": "シーズン研究度 {threshold} 達成",
+  "lobby.pass.mission.seasonPoints": "ミッション研究度 {threshold} 達成",
   "lobby.pass.mission.lead.seasonPoints": "ミッションの研究度を集めるとレベルが上がります",
   "lobby.pass.season.ends": "シーズン終了 {time}",
 } as const;

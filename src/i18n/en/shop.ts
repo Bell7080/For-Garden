@@ -137,5 +137,5 @@ export const SHOP_EN = {
   "shop.premium.firstPayment.hint": "Make your first purchase of any item to unlock it, then claim it here.",
   "shop.premium.firstPayment.claim": "FREE",
   "shop.purchase.period.season": "Season",
-  "shop.premium.pass.metric.seasonPoints": "Season Research {progress} / {goal}",
+  "shop.premium.pass.metric.seasonPoints": "Mission Research {progress} / {goal}",
 } as const;

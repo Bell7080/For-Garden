@@ -21,14 +21,16 @@ describe("시즌 패스 정의", () => {
   it("30단계 · 단계마다 연구도 180이고 유료 길의 합이 승인한 표와 같다", () => {
     expect(SEASON_PASS.milestones).toHaveLength(SEASON_TIERS);
     expect(SEASON_PASS.milestones.map(({ threshold }) => threshold)).toEqual(Array.from({ length: 30 }, (_, i) => (i + 1) * SEASON_TIER_POINTS));
-    expect(total("paid", (g) => g.kind === "currency" && g.currency === "gems")).toBe(3_000);
-    expect(total("paid", (g) => g.kind === "currency" && g.currency === "fossil")).toBe(8);
+    expect(total("paid", (g) => g.kind === "currency" && g.currency === "gems")).toBe(3_400);
+    expect(total("paid", (g) => g.kind === "currency" && g.currency === "fossil")).toBe(18);
     expect(total("paid", (g) => g.kind === "currency" && g.currency === "amber")).toBe(2);
     expect(total("paid", (g) => g.kind === "item" && g.itemId === "universal-fragment-sr", "quantity")).toBe(1);
     expect(total("paid", (g) => g.kind === "item" && g.itemId === "stamina-tonic-large", "quantity")).toBe(6);
     const last = SEASON_PASS.milestones[SEASON_TIERS - 1]!.rewards;
     expect(last.some((g) => g.kind === "profile_decoration" && g.decorationId === "season")).toBe(true);
-    expect(total("free", (g) => g.kind === "currency" && g.currency === "fossil")).toBe(3);
+    expect(last).toContainEqual({ kind: "currency", currency: "fossil", amount: 10 });
+    expect(last).toContainEqual({ kind: "currency", currency: "gems", amount: 500 });
+    expect(total("free", (g) => g.kind === "currency" && g.currency === "fossil")).toBe(5);
   });
 
   it("상품은 ₩9,900 시즌 주기이고 프리미엄 패스 칸 목록에는 따로 서지 않는다", () => {
@@ -83,7 +85,7 @@ describe("FakeServer 시즌 패스", () => {
     const result = await api.claimProgressPass({ passId: "season", requestId: "season-all" });
     expect(result.claimedThresholds).toHaveLength(30);
     expect(result.claimedFreeThresholds).toHaveLength(30);
-    expect(state.wallet.gems).toBe(gems + 3_000);
+    expect(state.wallet.gems).toBe(gems + 3_400);
     expect(state.achievements?.giftFrames).toContain("season");
 
     // 다음 시즌 — 지난 시즌의 구매는 열지 않고 받은 칸·진행은 처음부터다.

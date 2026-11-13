@@ -138,5 +138,5 @@ export const SHOP_JA = {
   "shop.premium.firstPayment.hint": "どの商品でも初めて決済すると解放され、ここで受け取れます。",
   "shop.premium.firstPayment.claim": "無料",
   "shop.purchase.period.season": "シーズン",
-  "shop.premium.pass.metric.seasonPoints": "シーズン研究度 {progress} / {goal}",
+  "shop.premium.pass.metric.seasonPoints": "ミッション研究度 {progress} / {goal}",
 } as const;

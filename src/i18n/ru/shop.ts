@@ -137,5 +137,5 @@ export const SHOP_RU = {
   "shop.premium.firstPayment.hint": "Совершите первую покупку любого товара, чтобы открыть подарок, и заберите его здесь.",
   "shop.premium.firstPayment.claim": "Бесплатно",
   "shop.purchase.period.season": "Сезон",
-  "shop.premium.pass.metric.seasonPoints": "Исследования сезона {progress} / {goal}",
+  "shop.premium.pass.metric.seasonPoints": "Исследования заданий {progress} / {goal}",
 } as const;

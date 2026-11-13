@@ -137,5 +137,5 @@ export const SHOP_VI = {
   "shop.premium.firstPayment.hint": "Nạp lần đầu với bất kỳ gói nào để mở khóa, rồi nhận tại đây.",
   "shop.premium.firstPayment.claim": "Miễn phí",
   "shop.purchase.period.season": "Mùa",
-  "shop.premium.pass.metric.seasonPoints": "Điểm nghiên cứu mùa {progress} / {goal}",
+  "shop.premium.pass.metric.seasonPoints": "Điểm nghiên cứu nhiệm vụ {progress} / {goal}",
 } as const;

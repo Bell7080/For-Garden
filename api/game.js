@@ -5367,6 +5367,8 @@ var LOBBY_KO = {
   "event.remaining.minutes": "{value}\uBD84 \uB0A8\uC74C",
   "event.wolfCafe.title": "\uC6B0\uB2F9\uD0D5\uD0D5 \uB291\uB300 \uCE74\uD398",
   "event.wolfCafe.subtitle": "\uB514\uC548 \uD55C\uC815 \uD53D\uC5C5 \uC774\uBCA4\uD2B8!",
+  "event.moonPicnic.title": "\uBC24\uD558\uB298\uC758 \uD53C\uD06C\uB2C9",
+  "event.moonPicnic.subtitle": "\uD50C\uB808\uC0E4 \uD55C\uC815 \uD53D\uC5C5 \uC774\uBCA4\uD2B8!",
   "event.attendance.newcomer.title": "\uC2E0\uADDC \uC5F0\uAD6C\uC6D0 7\uC77C \uCD9C\uC11D",
   "event.attendance.noDeadline": "\uAE30\uD55C \uC5C6\uC74C!",
   "event.attendance.regular.title": "\uC815\uADDC \uCD9C\uC11D",
@@ -5438,12 +5440,12 @@ var LOBBY_KO = {
   "chestForge.error": "\uCC98\uB9AC\uD558\uC9C0 \uBABB\uD588\uC5B4\uC694. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "event.delophyHunt.title": "\uB378\uB85C\uD53C\uC758 \uBCF4\uBB3C \uCC3E\uAE30",
   "event.delophyHunt.subtitle": "\uAC19\uC740 \uBCF4\uBB3C \uB458\uC744 \uCC3E\uC544 \uC8FC\uC138\uC694!",
-  "delophyHunt.intro": "\uBCF4\uBB3C \uCE74\uB4DC\uB97C \uC678\uC6E0\uB2E4\uAC00, \uC11E\uC774\uACE0 \uB098\uBA74 \uAC19\uC740 \uADF8\uB9BC \uB458\uC744 \uCC3E\uC544\uB0B4\uC138\uC694. \uC138 \uBC88 \uD2C0\uB9AC\uBA74 \uC544\uC6C3\uC774\uC5D0\uC694!",
+  "delophyHunt.intro": "\uBCF4\uBB3C \uCE74\uB4DC\uB97C \uC678\uC6E0\uB2E4\uAC00, \uC11E\uC774\uACE0 \uB098\uBA74 \uAC19\uC740 \uADF8\uB9BC \uB458\uC744 \uCC3E\uC544\uB0B4\uC138\uC694. \uB124 \uBC88 \uD2C0\uB9AC\uBA74 \uC544\uC6C3\uC774\uC5D0\uC694!",
   "delophyHunt.howTo.title": "\uAC8C\uC784 \uBC29\uBC95",
   "delophyHunt.howTo.button": "\uAC8C\uC784 \uBC29\uBC95!",
   "delophyHunt.howTo.1": "\uC5F0\uAD6C\uC6D0\uB2D8, \uC81C \uCE74\uB4DC \uB9C8\uC220 \uAD6C\uACBD \uC624\uC138\uC694! \uCF54\uC778\uC73C\uB85C \uB09C\uC774\uB3C4\uB97C \uACE8\uB77C \uC2DC\uC791\uD574\uC694.",
   "delophyHunt.howTo.2": "\uBCF4\uBB3C \uCE74\uB4DC\uB97C \uC7A0\uAE50 \uBCF4\uC5EC \uB4DC\uB9B0 \uB4A4 \uD719\uD719 \uC11E\uC5B4\uC694. \uAC19\uC740 \uADF8\uB9BC \uB450 \uC7A5\uC744 \uCC3E\uC544 \uB4A4\uC9D1\uC73C\uBA74 \uADF8 \uBCF4\uBB3C\uC740 \uC81C\uAC00 \uB4DC\uB9B4\uAC8C\uC694!",
-  "delophyHunt.howTo.3": "\uC138 \uBC88 \uD2C0\uB9AC\uBA74 \uC544\uC6C3! \uD558\uC9C0\uB9CC \uC774\uBBF8 \uCC3E\uC740 \uBCF4\uBB3C\uC740 \uC804\uBD80 \uAC00\uC838\uAC00\uC694.",
+  "delophyHunt.howTo.3": "\uB124 \uBC88 \uD2C0\uB9AC\uBA74 \uC544\uC6C3! \uD558\uC9C0\uB9CC \uC774\uBBF8 \uCC3E\uC740 \uBCF4\uBB3C\uC740 \uC804\uBD80 \uAC00\uC838\uAC00\uC694.",
   "delophyHunt.howTo.4": "\uC88B\uC740 \uBCF4\uBB3C\uC77C\uC218\uB85D \uB354 \uC0AC\uB0A9\uAC8C \uC11E\uC5EC\uC694. \uB300\uBC15 \uCE74\uB4DC\uB294 \uB2E4\uB978 \uCE74\uB4DC \uB4A4\uB85C \uC228\uAE30\uB3C4 \uD558\uB2C8 \uB208\uC744 \uB5BC\uC9C0 \uB9C8\uC138\uC694!",
   "delophyHunt.difficulty.easy": "\uC26C\uC6C0",
   "delophyHunt.difficulty.normal": "\uBCF4\uD1B5",
@@ -5889,6 +5891,8 @@ var LAB_KO = {
   "lab.banner.fossil.title": "\uD654\uC11D \uC5F0\uAD6C",
   "lab.banner.amber.eyebrow": "LIMITED PICK UP",
   "lab.banner.amber.subtitle": "\uC6B0\uB2F9\uD0D5\uD0D5 \uB291\uB300 \uCE74\uD398 \uC54C\uBC14\uC0DD",
+  "lab.banner.moonlit.eyebrow": "LIMITED PICK UP",
+  "lab.banner.moonlit.subtitle": "\uB2EC\uBE5B \uD53C\uD06C\uB2C9\uC758 \uBCC4 \uC90D\uB294 \uD6C4\uBC30",
   "lab.tag.standard": "\uC0C1\uC2DC \uC5F0\uAD6C",
   "lab.tag.limited": "\uAE30\uAC04 \uD55C\uC815",
   "lab.tag.once": "\uACC4\uC815\uB2F9 1\uD68C",
@@ -7169,6 +7173,8 @@ var MISC_KO = {
   "profile.unlock.achievementTier": "\uC5C5\uC801 \u300C{name}\u300D {tier}\uB2E8\uACC4 \uBCF4\uC0C1 \uC218\uB839 \uC2DC \uD68D\uB4DD",
   "profile.picker.equipped": "\uCC29\uC6A9 \uC911",
   "profile.picker.unlocked": "\uD574\uAE08 \uC644\uB8CC",
+  "profile.picker.ownedOnly": "\uBCF4\uC720\uB9CC \uBCF4\uAE30",
+  "profile.picker.notOwned": "\uBBF8\uBCF4\uC720",
   "profile.nickname.create.title": "\uBC18\uAC00\uC6CC\uC694, \uC5F0\uAD6C\uC6D0 \uB2D8!",
   "profile.nickname.create.question": "\uC5F0\uAD6C\uC6D0 \uB2D8\uC758 \uC774\uB984\uC740 \uBB34\uC5C7\uC778\uAC00\uC694?",
   "profile.nickname.create.save": "\uC774 \uC774\uB984\uC73C\uB85C \uC2DC\uC791\uD558\uAE30",
@@ -7631,6 +7637,7 @@ var SKILL_KO = {
   "skill.sentence.damageAnd": "{target} {damage}\uB97C \uC8FC\uACE0 {effect}.",
   "skill.sentence.repeat": "{target} {seconds}\uCD08 \uAC04\uACA9\uC73C\uB85C {damage}\uB97C {count}\uBC88 \uC900\uB2E4.",
   "skill.sentence.repeatAnd": "{target} {seconds}\uCD08 \uAC04\uACA9\uC73C\uB85C {damage}\uB97C {count}\uBC88 \uC8FC\uACE0 {effect}.",
+  "skill.sentence.meteorRepeat": "{target} {seconds}\uCD08 \uAC04\uACA9\uC73C\uB85C [[meteor|\uC720\uC131]]\uC744 {count}\uBC88 \uB5A8\uC5B4\uB728\uB824, \uB5A8\uC5B4\uC9C8 \uB54C\uB9C8\uB2E4 {damage}\uB97C \uC900\uB2E4.",
   "skill.sentence.damageAndComma": "{target} {damage}\uB97C \uC8FC\uACE0, {effect}.",
   "skill.sentence.clause": "{text}.",
   "skill.sentence.teamMissingHpHeal": "\uBAA8\uB4E0 \uC0DD\uC874 \uC544\uAD70\uC774 \uAC01\uC790 [[missing-hp|\uC783\uC740 \uCCB4\uB825]]\uC758 {percent}%\uB97C \uD68C\uBCF5\uD55C\uB2E4.",
@@ -7744,10 +7751,10 @@ var SKILL_KO = {
   "skill.breakthrough.effect.ferocity.cleavingBasics": "[[ferocity|\uD3ED\uC8FC]] \uC911 \uC77C\uBC18 \uACF5\uACA9\uC774 \uC870\uAE08 \uB113\uC740 \uBC94\uC704\uC758 \uC801\uC744 \uBAA8\uB450 \uACF5\uACA9\uD55C\uB2E4.",
   "skill.breakthrough.effect.passive.battleMaidAscension": "\uCD5C\uB300 \uCCB4\uB825\xB7[[def|\uBC29\uC5B4\uB825]]\xB7[[res|\uC800\uD56D\uB825]]\uC774 {percent}% \uC99D\uAC00\uD558\uACE0, \uC801 \uCC98\uCE58 \uC2DC \uB2E4\uC74C \uD45C\uC801\uC5D0\uAC8C \uB2E4\uC2DC [[charge|\uB3CC\uC9C4]]\uD55C\uB2E4.",
   "skill.breakthrough.effect.basic.splitHealing": "\uAC00\uC7A5 \uB2E4\uCE5C \uC544\uAD70\uC5D0\uAC8C \uC8FC\uB294 \uD68C\uBCF5\uB7C9\uC758 {percent}%\uB97C \uB450 \uBC88\uC9F8\uB85C \uB2E4\uCE5C \uC544\uAD70\uC5D0\uAC8C\uB3C4 \uC804\uB2EC\uD55C\uB2E4.",
-  "skill.breakthrough.effect.basic.starfallChance": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uB9C8\uB2E4 {percent}% \uD655\uB960\uB85C \uADF8 \uC790\uB9AC\uC5D0 \uC720\uC131\uC774 \uD558\uB098 \uB354 \uB5A8\uC5B4\uC9C4\uB2E4.",
-  "skill.breakthrough.effect.ultimate.meteorEncore": "\u300C{name}\u300D\uC758 \uC720\uC131\uC774 {count}\uBC88 \uB354 \uB5A8\uC5B4\uC9C0\uACE0, \uB5A8\uC5B4\uC9C8 \uB54C\uB9C8\uB2E4 \uC6D0 \uC548\uC758 \uC544\uAD70\uC744 {heal}\uB9CC\uD07C \uD68C\uBCF5\uD55C\uB2E4.",
+  "skill.breakthrough.effect.basic.starfallChance": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uB9C8\uB2E4 {percent}% \uD655\uB960\uB85C \uADF8 \uC790\uB9AC\uC5D0 [[meteor|\uC720\uC131]]\uC774 \uD558\uB098 \uB354 \uB5A8\uC5B4\uC9C4\uB2E4.",
+  "skill.breakthrough.effect.ultimate.meteorEncore": "\u300C{name}\u300D\uC758 [[meteor|\uC720\uC131]]\uC774 {count}\uBC88 \uB354 \uB5A8\uC5B4\uC9C0\uACE0, \uB5A8\uC5B4\uC9C8 \uB54C\uB9C8\uB2E4 \uC6D0 \uC548\uC758 \uC544\uAD70\uC744 {heal}\uB9CC\uD07C \uD68C\uBCF5\uD55C\uB2E4.",
   "skill.breakthrough.effect.ferocity.starlitCheer": "[[ferocity|\uD3ED\uC8FC]]\uD558\uB294 \uB3D9\uC548 \uC544\uAD70 \uBAA8\uB450\uC758 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB978\uB2E4.",
-  "skill.breakthrough.effect.passive.secondStar": "\uC720\uC131\uC758 \uD68C\uBCF5\uC774 \uB2E4\uCE5C \uC544\uAD70 \uD55C \uBA85\uC5D0\uAC8C\uB3C4 \uADF8 \uD68C\uBCF5\uB7C9\uC758 {percent}%\uB9CC\uD07C \uD55C \uBC88 \uB354 \uB4E4\uC5B4\uAC04\uB2E4.",
+  "skill.breakthrough.effect.passive.secondStar": "[[meteor|\uC720\uC131]]\uC758 \uD68C\uBCF5\uC774 \uB2E4\uCE5C \uC544\uAD70 \uD55C \uBA85\uC5D0\uAC8C\uB3C4 \uADF8 \uD68C\uBCF5\uB7C9\uC758 {percent}%\uB9CC\uD07C \uD55C \uBC88 \uB354 \uB4E4\uC5B4\uAC04\uB2E4.",
   "skill.breakthrough.effect.ultimate.healingShield": "\uD68C\uBCF5\uC744 \uBC1B\uC740 \uC544\uAD70\uB9C8\uB2E4 \uADF8 \uD68C\uBCF5\uB7C9\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4. \uC774\uBBF8 \uCCB4\uB825\uC774 \uAC00\uB4DD \uCC2C \uC544\uAD70\uB3C4 \uBCF4\uD638\uB9C9\uC740 \uC5BB\uB294\uB2E4.",
   "skill.breakthrough.effect.ferocity.feverShare": "[[ferocity|\uD3ED\uC8FC]]\uAC00 \uB05D\uB0A0 \uB54C, \uD3ED\uC8FC \uB3D9\uC548 \uC900 \uD68C\uBCF5\uB7C9\uC758 {percent}%\uB97C \uC0B4\uC544 \uC788\uB294 \uC544\uAD70 \uBAA8\uB450\uAC00 \uB611\uAC19\uC774 \uB098\uB220 [[shield|\uBCF4\uD638\uB9C9]]\uC73C\uB85C \uC5BB\uB294\uB2E4.",
   "skill.breakthrough.effect.passive.rescueShield": "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uC544\uAD70\uC758 \uCCB4\uB825\uC774 {hp}% \uC774\uD558\uB85C \uB0B4\uB824\uAC00\uBA74 \uADF8 \uC544\uAD70\uC774 {percent}\uC5D0 \uD574\uB2F9\uD558\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4.",
@@ -7828,8 +7835,8 @@ var SKILL_KO = {
   "skill.ferocity.appetiteFrenzy": "\uD3ED\uC8FC \uC911 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB974\uACE0, \uC790\uC2E0\uC774 \uAC74 [[bleed|\uCD9C\uD608]]\uC774 \uD53C\uD574\uB97C \uC904 \uB54C\uB9C8\uB2E4 \uADF8 \uD53C\uD574\uC758 {heal}%\uB9CC\uD07C \uD68C\uBCF5\uD55C\uB2E4.",
   "skill.ferocity.corneredBeast": "\uD3ED\uC8FC \uC911 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {attack}%, [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {move}% \uC624\uB974\uACE0 \uB4F1 \uB4A4\uB85C \uB6F0\uC5B4 \uBB3C\uB7EC\uB098\uB294 \uC7AC\uC0AC\uC6A9 \uB300\uAE30\uAC00 {seconds}\uCD08\uB85C \uC904\uC5B4\uB4E0\uB2E4.",
   "skill.ferocity.rollCallRefusal": "\uD3ED\uC8FC \uC911 \uAD81\uADF9\uAE30\uAC00 \uB04C\uC5B4\uB2F9\uAE30\uB294 \uBC94\uC704\uAC00 {percent}% \uB113\uC5B4\uC9C0\uACE0, [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC758 \uB3C4\uBC1C\xB7\uBCF4\uD638\uB9C9\uC774 {every}\uBC88\uC9F8\uB9C8\uB2E4 \uD130\uC9C4\uB2E4.",
-  "skill.passive.starfall": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] {every}\uBC88\uC9F8\uB9C8\uB2E4 \uADF8 \uC790\uB9AC\uC5D0 {seconds}\uCD08 \uB4A4 \u300C\uC720\uC131\u300D\uC774 \uB5A8\uC5B4\uC838 \uC6D0 \uC548\uC758 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C {damage}\uC758 [[magical-damage|\uB9C8\uBC95 \uD53C\uD574]]\uB97C \uC8FC\uACE0, \uC900 \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC544\uAD70\uC744 \uD68C\uBCF5\uD55C\uB2E4.",
-  "skill.ferocity.meteorShower": "\uD3ED\uC8FC \uC911\uC5D0\uB294 \u300C\uC720\uC131\u300D\uC774 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] {every}\uBC88\uC9F8\uB9C8\uB2E4 \uB5A8\uC5B4\uC9C0\uACE0 \uBC94\uC704\uAC00 {percent}% \uB113\uC5B4\uC9C4\uB2E4.",
+  "skill.passive.starfall": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] {every}\uBC88\uC9F8\uB9C8\uB2E4 \uADF8 \uC790\uB9AC\uC5D0 {seconds}\uCD08 \uB4A4 [[meteor|\uC720\uC131]]\uC774 \uB5A8\uC5B4\uC838 \uC6D0 \uC548\uC758 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C {damage}\uC758 [[magical-damage|\uB9C8\uBC95 \uD53C\uD574]]\uB97C \uC900\uB2E4.",
+  "skill.ferocity.meteorShower": "\uD3ED\uC8FC \uC911\uC5D0\uB294 [[meteor|\uC720\uC131]]\uC774 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] {every}\uBC88\uC9F8\uB9C8\uB2E4 \uB5A8\uC5B4\uC9C0\uACE0 \uBC94\uC704\uAC00 {percent}% \uB113\uC5B4\uC9C4\uB2E4.",
   "skill.ferocity.restraintCollapse": "\uD3ED\uC8FC \uC911\uC5D0\uB294 \uB0A8\uC740 \uC790\uBB3C\uC1E0\uAC00 \uBAA8\uB450 \uD480\uB9B0 \uAC83\uC73C\uB85C \uCE5C\uB2E4. \uD3ED\uC8FC\uAC00 \uB05D\uB098\uBA74 \uC6D0\uB798 \uC218\uB85C \uB3CC\uC544\uAC04\uB2E4.",
   "skill.ferocity.huntInstinct": "\uD3ED\uC8FC \uC911 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 [[intimidation|\uC704\uC555]]\uC744 {stacks}\uACB9\uC529 \uC313\uACE0, [[fear|\uACF5\uD3EC]]\uAC00 \uD480\uB9B0 \uB4A4\uC758 \uBA74\uC5ED\uC774 {seconds}\uCD08\uB85C \uC9E7\uC544\uC9C4\uB2E4.",
   "skill.breakthrough.effect.basic.scoldTaunt": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]\uD55C\uB2E4.",
@@ -20502,10 +20509,10 @@ var RELICS = [
       ferocity: { kind: "starlitCheer", attackSpeedPercent: 30 },
       passive: { kind: "secondStar", percent: 50 }
     },
-    ferocityTrait: { name: "\uC720\uC131\uC6B0", effectId: "meteorShower", starfallEvery: 2, radiusBonusPercent: 30 },
+    ferocityTrait: { name: "\uC18C\uC6D0\uC740\u2026 \uBE44\uBC00\uC774\uC5D0\uC694", effectId: "meteorShower", starfallEvery: 2, radiusBonusPercent: 30 },
     passive: {
       id: "plesha-passive",
-      name: "\uBCC4\uB625\uBCC4 \uB3C4\uC2DC\uB77D",
+      name: "\uC120\uBC30, \uBC29\uAE08 \uD558\uB098 \uB5A8\uC5B4\uC84C\uC5B4\uC694!",
       kind: "starfall",
       iconAssetId: "skill-icon-healing",
       effectType: "healing",
@@ -20517,7 +20524,7 @@ var RELICS = [
     },
     basic: {
       id: "plesha-basic",
-      name: "\uBCC4\uBE5B \uC870\uC57D\uB3CC",
+      name: "\uBC18\uC9DD, \uC870\uC57D\uB3CC \uCF69!",
       // 지원가의 평타라 위력을 낮게 두고, 떨어진 자리 둘레만 함께 맞는다.
       power: 50,
       iconAssetId: "skill-icon-magical",
@@ -20528,7 +20535,7 @@ var RELICS = [
     },
     ultimate: {
       id: "plesha-ult",
-      name: "\uC720\uC131 \uAD00\uCE21\uD68C",
+      name: "\uBCC4\uC774 \uC544\uB984\uB2F5\uB124\uC694, \uC120\uBC30",
       // 한 번 떨어질 때의 위력이다. 세 번 떨어진다 — 원 안 아군 회복은 한계 돌파(III)가 연다.
       power: 60,
       iconAssetId: "skill-icon-magical",
@@ -20537,7 +20544,7 @@ var RELICS = [
       cost: 120,
       targeting: "targetedCircle",
       radius: 200,
-      repeatStrike: { count: 3, intervalSeconds: 0.45 }
+      repeatStrike: { count: 3, intervalSeconds: 0.45, meteor: true }
     }
   },
   {
@@ -26138,7 +26145,7 @@ init_define_import_meta_env();
 var DELOPHY_HUNT = {
   id: "delophy-hunt",
   /** 이만큼 틀리면 아웃이다. */
-  maxMisses: 3
+  maxMisses: 4
 };
 var MIN_MOVE_MS = 260;
 var HUNT_TIER_ORDER = ["common", "fine", "rare", "jackpot"];
@@ -27378,6 +27385,8 @@ var BACKGROUND = {
   recruitFossil: "background-recruit-fossil",
   /** 호박석 연구 — 디안 한정 픽업의 모집 원화. */
   recruitDian: "background-recruit-dian",
+  /** 다음 픽업 예정 — 플레시오사우루스 모티브의 해저 달빛 피크닉. */
+  recruitMoonPicnic: "background-recruit-moon-picnic",
   /** 첫 복원 연구 — 비워 둔 방에 확정 SSR 넷의 SD가 선다(`WelcomeBannerCast`). */
   recruitWelcome: "background-recruit-welcome",
   /**
@@ -27538,6 +27547,7 @@ var BACKGROUND_ASSETS = [
   [BACKGROUND.duelShop, "sprites/background/duel_shop.webp"],
   [BACKGROUND.recruitFossil, "sprites/background/background_017.webp"],
   [BACKGROUND.recruitDian, "sprites/background/recruit_dian.webp"],
+  [BACKGROUND.recruitMoonPicnic, "sprites/background/recruit_moon_picnic.webp"],
   [BACKGROUND.recruitWelcome, "sprites/background/recruit_welcome.webp"],
   [BACKGROUND.strataBase, "sprites/background/strata_base.webp"],
   // 겉장은 한 번 탐사할 때마다 그중 한 장이 뽑힌다. 키 이름은 `strataLayerTextureKey`가 짓는다.
@@ -27628,12 +27638,13 @@ function pickupPools(pickups) {
   );
 }
 var AMBER_PICKUP = { SSR: ["dian"] };
+var MOONLIT_PICKUP = { SSR: ["plesha"] };
 var STANDARD_SLOT_RATES = { R: 0.2, SR: 0.04, SSR: 0.01, GRAY: 0.75 };
 var STANDARD_GRAY_REWARDS = [
   { kind: "gold", min: 4e3, max: 1e4, weight: 2 },
   { kind: "cheesecake", min: 60, max: 150, weight: 1 }
 ];
-var PITY_GROUP = { WELCOME: "welcome", STANDARD: "standard-fossil", LIMITED_PICKUP: "limited-pickup" };
+var PITY_GROUP = { WELCOME: "welcome", STANDARD: "standard-fossil", LIMITED_PICKUP: "limited-pickup", MOONLIT_PICKUP: "limited-pickup-moonlit" };
 var WELCOME_SSR_POOL = ["rex", "spino", "nodonia", "mette"];
 var BANNERS = [
   {
@@ -27720,6 +27731,27 @@ var BANNERS = [
     pickupRelicIds: { SSR: [...AMBER_PICKUP.SSR] },
     pickupRate: 0.5,
     highestRarityGuarantee: 120
+  },
+  {
+    /*
+     * **플레샤 한정 픽업**(응태 요청, 2026-11-12) — 디안 픽업과 나란히 서는 두 번째 호박석 연구다. 값·확률은 호박석
+     * 연구와 같고, **천장은 이월하지 않으므로 그룹이 따로다**(`bannerSchedule.test`) — 저장 이관이 현재 배너의 그룹을
+     * 모두 기본값으로 채운다. 다른 것은 픽업 대상과 원화(달빛 피크닉)뿐이다.
+     */
+    id: "moonlit",
+    pityGroupId: PITY_GROUP.MOONLIT_PICKUP,
+    name: "\uD638\uBC15\uC11D \uC5F0\uAD6C",
+    featuredRelicId: "plesha",
+    artKey: BACKGROUND.recruitMoonPicnic,
+    currency: "amber",
+    costOne: 1,
+    costTen: 10,
+    slotRates: STANDARD_SLOT_RATES,
+    grayRewards: STANDARD_GRAY_REWARDS,
+    relicPools: pickupPools(MOONLIT_PICKUP),
+    pickupRelicIds: { SSR: [...MOONLIT_PICKUP.SSR] },
+    pickupRate: 0.5,
+    highestRarityGuarantee: 120
   }
 ];
 var AMBER_BANNER = BANNERS.find(({ id }) => id === "amber");
@@ -27732,6 +27764,7 @@ var QA_PICKUP_BANNERS = [...LIMITED_RELIC_IDS].filter((relicId) => !BANNERS.some
     ...AMBER_BANNER,
     id: `${QA_PICKUP_BANNER_PREFIX}${relicId}`,
     featuredRelicId: relicId,
+    // 다른 픽업의 원화를 빌리지 않는다 — 정식 배너가 서기 전에는 연구소 설비 원화가 자리를 메운다.
     artKey: void 0,
     startsAt: void 0,
     endsAt: void 0,
@@ -37448,6 +37481,70 @@ init_define_import_meta_env();
 // src/data/dialogues/recollections.ts
 init_define_import_meta_env();
 
+// src/data/dialogues/reviewedStoryBodies.ts
+init_define_import_meta_env();
+var REVIEWED_STORY_BODIES = {
+  "stage-1-2-post": ["heard", "log"],
+  "stage-1-4-pre": ["habit", "train"],
+  "stage-1-5-pre": ["hi", "torn", "guard", "fight"],
+  "stage-1-5-post": ["tidy", "excuse", "label"],
+  "stage-1-6-post": ["parua"],
+  "stage-1-8-pre": ["useless", "droop", "oops", "cheer"],
+  "stage-1-10-post": ["drop"],
+  "stage-2-2-post": ["radio", "spina"],
+  "stage-2-4-pre": ["ripa"],
+  "stage-2-5-post": ["up"],
+  "stage-2-6-post": ["delopi", "luka", "hush"],
+  "stage-2-7-pre": ["ripa"],
+  "stage-2-7-post": ["awkward", "thanks"],
+  "stage-2-10-pre": ["ripa", "torika"],
+  "stage-2-10-post": ["ripa", "ask"],
+  "stage-3-1-pre": ["toby", "amo"],
+  "stage-3-4-post": ["radio", "gone"],
+  "stage-3-5-post": ["down"],
+  "stage-3-8-post": ["neuri", "ella"],
+  "stage-3-9-post": ["ark"],
+  "stage-3-10-pre": ["ika2"],
+  "stage-4-1-pre": ["lexia"],
+  "stage-4-8-post": ["radio", "torika"],
+  "stage-5-1-pre": ["radio"],
+  "stage-5-5-pre": ["mosana"],
+  "stage-5-6-post": ["water"],
+  "stage-5-8-post": ["radio", "maki"],
+  "stage-5-10-pre": ["maki", "magasa2"],
+  "stage-6-1-pre": ["morphe", "kento", "stella"],
+  "stage-6-8-post": ["irna"],
+  "stage-6-10-pre": ["stella"],
+  "stage-6-10-post": ["koma"],
+  "stage-7-1-pre": ["nodonia", "terisa"],
+  "stage-7-4-post": ["nodonia"],
+  "stage-7-5-pre": ["anka"],
+  "stage-7-7-post": ["dodi"],
+  "stage-7-8-post": ["ella"],
+  "stage-7-10-post": ["carno"],
+  "stage-1-5-greenhouse-echo": ["calm", "wet", "fine"],
+  "stage-3-8-apology": ["ark", "yuti", "pachi2"],
+  "stage-1-8-side-post": ["sniff"],
+  "stage-2-4-side-pre": ["wall"],
+  "stage-4-7-side-post": ["mean"],
+  "stage-5-2-side-pre": ["salvage"],
+  "stage-5-2-side-post": ["returnA"],
+  "stage-5-8-youngest-share": ["burn"],
+  "stage-6-4-side-post": ["up"],
+  "stage-6-7-claw-marks": ["record"],
+  "stage-7-3-mended-sleeve": ["path", "catchA", "hush"],
+  "stage-7-6-side-post": ["fridge"]
+};
+function registerReviewedStoryBodies(stories) {
+  for (const story of stories) {
+    const reviewed = REVIEWED_STORY_BODIES[story.id];
+    if (!reviewed) continue;
+    for (const node of story.nodes) {
+      if (reviewed.includes(node.id)) registerDataText(node, "body", `dialogue.${story.id}.${node.id}.body`);
+    }
+  }
+}
+
 // src/data/dialogues/greatAukReport.ts
 init_define_import_meta_env();
 var GREAT_AUK_REPORT = {
@@ -39188,6 +39285,7 @@ function getRecollectionStory(storyId) {
   return story;
 }
 for (const story of TRANSLATED_STORIES) registerDialogueTexts(story);
+registerReviewedStoryBodies(RECOLLECTION_STORIES);
 
 // src/api/contracts.ts
 init_define_import_meta_env();
@@ -43917,7 +44015,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.449.4",
+  version: "0.450.2",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {

@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import { chipPoints, drawHairline, drawLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
-import { anchorEnemyPreview, NODE_ENEMY_PREVIEW } from "./nodeEnemyPreviewLayout";
+import { anchorEnemyPreview, NODE_ENEMY_PREVIEW, NODE_PREVIEW_GLASS_ALPHA } from "./nodeEnemyPreviewLayout";
 
 /** 서브 노드 판의 배치 — 전투 판의 제목·줄거리 칸에서 캐릭터를 뺀 모양이다. */
 export const NODE_STORY_PREVIEW = { titleY: 34, titleSize: 32, dividerGap: 18, labelSize: 22, textSize: 26, textGap: 16, bottom: 36, bevel: 30, inset: 56 } as const;
@@ -53,7 +53,7 @@ export class NodeStoryPreview extends Phaser.GameObjects.Container {
     const top = -height / 2;
     const { y, above } = anchorEnemyPreview(nodeY, this.options.top, this.options.bottom, height);
     this.setY(y);
-    this.add(drawLayer(this.scene, 0, 0, chipPoints(width, height, { bevel: { topLeft: spec.bevel, bottomRight: spec.bevel } }), { fill: 0x0b0f15, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.55 }));
+    this.add(drawLayer(this.scene, 0, 0, chipPoints(width, height, { bevel: { topLeft: spec.bevel, bottomRight: spec.bevel } }), { fill: 0x0b0f15, alpha: NODE_PREVIEW_GLASS_ALPHA, edge: COLOR.accent, edgeAlpha: 0.55 }));
     this.tail = this.scene.add.graphics(); this.add(this.tail); this.drawTail(above);
     this.add(this.scene.add.text(left, top + spec.titleY, this.options.title, textStyle({ role: "display", size: spec.titleSize })).setOrigin(0, 0));
     if (this.options.read) this.add(this.scene.add.text(width / 2 - 40, top + spec.titleY + 6, t("stageMap.subRead"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0));

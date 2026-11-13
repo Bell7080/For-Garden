@@ -180,6 +180,8 @@ export interface DebugState {
   };
   /** 노드 편성판의 안전 영역·꼬리 방향·적 입력 중심만 노출하는 모바일 시각 회귀 계약이다. */
   enemyPreview?: { top: number; bottom: number; panelTop: number; panelBottom: number; above: boolean; enemyTargets: Array<{ x: number; y: number }> };
+  /** 스토리 지도에서 지금 고른 노드의 화면 중심 — 미리보기는 노드를 눌러야 올라오므로 E2E가 그 자리를 누른다. */
+  stageMapSelected?: { x: number; y: number };
   /** 상점군 E2E가 Canvas 구현을 복제하지 않고 실제 입력면만 누르는 최소 좌표 계약이다. */
   storefrontControls?: {
     lobby?: { mission: DebugPoint; missionBack: DebugPoint; shop: DebugPoint; trade: DebugPoint; interaction: DebugPoint };
@@ -507,6 +509,11 @@ export function setDebugPlayerProfileOpen(open: boolean): void {
 }
 
 /** Canvas 밖 E2E가 공용 노드 편성판의 실제 렌더 지오메트리만 읽게 한다. */
+export function setDebugStageMapSelected(point: DebugState["stageMapSelected"]): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().stageMapSelected = point;
+}
+
 export function setDebugEnemyPreview(preview: DebugState["enemyPreview"]): void {
   if (!QA_TOOLS_ENABLED) return;
   ensure().enemyPreview = preview;

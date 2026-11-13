@@ -12,7 +12,7 @@ import { addBreakthroughGradeMark } from "./rarityMark";
 
 import { ENCOUNTER_ROLE, encounterEliteCount, encounterRoleFor, encounterUnitPower, encounterUnitPowers } from "../core/levelDesign";
 import { addStageEliteMark } from "./stageEliteMark";
-import { anchorEnemyPreview, enemyPreviewColumns, enemyPreviewRow, NODE_ENEMY_PREVIEW, NODE_ENEMY_SITUATION, NODE_ENEMY_SLOT, STORY_PREVIEW, storyPreviewLayout, storyPreviewRewardColumns } from "./nodeEnemyPreviewLayout";
+import { anchorEnemyPreview, enemyPreviewColumns, enemyPreviewRow, NODE_ENEMY_PREVIEW, NODE_ENEMY_SITUATION, NODE_ENEMY_SLOT, NODE_PREVIEW_GLASS_ALPHA, STORY_PREVIEW, storyPreviewLayout, storyPreviewRewardColumns } from "./nodeEnemyPreviewLayout";
 import { addSdFootShadow } from "./SdFootShadow";
 import type { StageFirstClearReward } from "../core/stageRewards";
 import { drawGlyph } from "./glyphs";
@@ -113,7 +113,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     const { y, above } = anchorEnemyPreview(nodeY, this.options.top, this.options.bottom);
     this.setY(y);
     const bevel = Math.min(NODE_ENEMY_PREVIEW.width, NODE_ENEMY_PREVIEW.height) * 0.16;
-    this.add(drawLayer(this.scene, 0, 0, chipPoints(NODE_ENEMY_PREVIEW.width, NODE_ENEMY_PREVIEW.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0x0b0f15, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.55 }));
+    this.add(drawLayer(this.scene, 0, 0, chipPoints(NODE_ENEMY_PREVIEW.width, NODE_ENEMY_PREVIEW.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0x0b0f15, alpha: NODE_PREVIEW_GLASS_ALPHA, edge: COLOR.accent, edgeAlpha: 0.55 }));
     this.tail = this.scene.add.graphics(); this.add(this.tail); this.drawTail(above);
     const titleLeft = -NODE_ENEMY_PREVIEW.width / 2 + bevel * 0.7;
     this.add(this.scene.add.text(titleLeft, NODE_ENEMY_SLOT.titleY, this.options.title, textStyle({ role: "display", size: 32 })).setOrigin(0, 0));
@@ -227,7 +227,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     this.setY(y);
     // 깎임은 판 높이가 아니라 고정값이다 — 높이를 따르면 줄거리를 펼칠 때 깎임이 커져 글줄의 왼쪽 시작점이 함께 안쪽으로 밀린다.
     const bevel = STORY_PREVIEW.bevel;
-    this.add(drawLayer(this.scene, 0, 0, chipPoints(width, layout.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0x0b0f15, alpha: 0.92, edge: this.options.backdrop?.tone ?? COLOR.accent, edgeAlpha: this.options.backdrop ? ANCIENT_TRIAL_BACKDROP.edgeAlpha : 0.55 }));
+    this.add(drawLayer(this.scene, 0, 0, chipPoints(width, layout.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0x0b0f15, alpha: NODE_PREVIEW_GLASS_ALPHA, edge: this.options.backdrop?.tone ?? COLOR.accent, edgeAlpha: this.options.backdrop ? ANCIENT_TRIAL_BACKDROP.edgeAlpha : 0.55 }));
     if (this.options.backdrop) this.paintBackdrop(this.options.backdrop, width, layout.height, bevel);
     this.tail = this.scene.add.graphics(); this.add(this.tail); this.drawTail(above);
     const left = -width / 2 + Math.max(56, bevel * 0.7);

@@ -13,7 +13,7 @@ import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import type { StageDef } from "../core/types";
-import { setDebugScene } from "../debug";
+import { setDebugScene, setDebugStageMapSelected } from "../debug";
 import { CHAPTERS, getBattleStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
 import { latestUnlockedStage } from "../core/stageProgress";
 import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
@@ -196,7 +196,9 @@ export class StageMapScene extends Phaser.Scene {
       x: BASE_WIDTH / 2, y: (WINDOW.top + WINDOW.bottom) / 2, width: BASE_WIDTH, height: WINDOW.bottom - WINDOW.top, depth: 45,
       read: () => ({ offset: this.map.y - this.scrollMax, min: this.scrollMin - this.scrollMax }),
     });
-    this.select(latest, true);
+    // **들어올 때는 미리보기를 내려 둔다** — 판이 곧바로 지도 가운데를 덮으면 그 옆의 서브(SUB) 노드가
+    // 눈에 들지 않았다(응태 2026-11-13). 노드는 고른 채로 두어 출전 버튼은 그대로 선다.
+    this.select(latest, true, false);
     this.refreshDifficultyButton();
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
@@ -240,7 +242,7 @@ export class StageMapScene extends Phaser.Scene {
     this.enemyPreview.dismiss(); this.storyPreview.dismiss();
     this.tweens.killTweensOf(this.map);
     this.map.destroy(true); this.nodes.clear();
-    this.buildMap(); this.select(latest, true); this.refreshDifficultyButton();
+    this.buildMap(); this.select(latest, true, false); this.refreshDifficultyButton();
   }
 
   /** 잠금 검증을 통과한 챕터로만 이동하고 그 챕터의 첫 도전 가능 노드를 선택한다. */
@@ -249,7 +251,7 @@ export class StageMapScene extends Phaser.Scene {
     if (!chapter || (chapter.prerequisiteStageId && !session.cleared.has(chapter.prerequisiteStageId))) return;
     this.rebuildChapter(chapterId);
     const target = [...chapter.stages].reverse().find((stage) => isStageUnlocked(stage.id)) ?? chapter.stages[0];
-    this.select(target, true);
+    this.select(target, true, false);
   }
 
   /** 그 구역의 지도를 새로 세운다. 고르는 일은 부르는 쪽이 한다. */
@@ -416,13 +418,17 @@ export class StageMapScene extends Phaser.Scene {
     const index = chapterStages.findIndex((stage) => stage.id === this.selected);
     if (index < 0) return;
     const nodeY = this.map.y - this.rowOf(chapterStages[index], index) * NODE_GAP;
+    setDebugStageMapSelected({ x: this.nodeX(chapterStages[index], index), y: nodeY });
     const visible = isEnemyPreviewNodeVisible(nodeY, WINDOW.top, WINDOW.bottom);
     if (chapterStages[index]?.kind === "story") this.storyPreview.trackNode(nodeY, visible);
     else this.enemyPreview.trackNode(nodeY, visible);
   }
 
-  /** 고른 스테이지를 중앙으로 옮기고 공용 노드 미리보기의 내용과 꼬리를 함께 갱신한다. */
-  private select(stage: StageDef, instant = false): void {
+  /**
+   * 고른 스테이지를 중앙으로 옮기고 공용 노드 미리보기의 내용과 꼬리를 함께 갱신한다.
+   * `preview`가 꺼져 있으면 노드만 고르고 판은 내려 둔다 — 화면에 들어오거나 구역·난이도를 바꿀 때다.
+   */
+  private select(stage: StageDef, instant = false, preview = true): void {
     this.selected = stage.id;
     resumeStageId = stage.id;
     // 저장의 전투 선택에는 스토리 노드를 넣지 않아 BattleScene이 잘못 열 가능성을 없앤다.
@@ -449,9 +455,10 @@ export class StageMapScene extends Phaser.Scene {
     const story = stage.kind === "story";
     this.sortieButton.setVisible(!story).setEnabled(!story);
     this.storyButton.setVisible(story).setEnabled(story);
+    if (stage.kind === "story") this.storyButton.setLabel(storyManager.isCompleted(stage.storyId) ? t("stageMap.replay") : t("stageMap.readRecord"));
+    if (!preview) { this.enemyPreview.dismiss(); this.storyPreview.dismiss(); return; }
     if (stage.kind === "story") {
       this.enemyPreview.dismiss();
-      this.storyButton.setLabel(storyManager.isCompleted(stage.storyId) ? t("stageMap.replay") : t("stageMap.readRecord"));
       // 전투 판에서 캐릭터를 뺀 모양 — 이름과 줄거리가 판으로 선다.
       this.storyPreview.showAt(scroll - visualIndex * NODE_GAP, {
         title: `${t("stageMap.sub")}  ${stage.name}`,

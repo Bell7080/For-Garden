@@ -3,6 +3,7 @@ import { startAfterOpening } from "./openingSave";
 import { captureGame, tap, waitForDebugState } from "./canvasInput";
 import { ENEMY_INFO } from "../../src/ui/enemyInfoLayout";
 import { sortieEntryScreenPoint } from "../../src/ui/sortieMenuLayout";
+import { openSelectedStagePreview } from "./stageMapPreview";
 /** 출격판 칸 자리는 화면과 같은 표(`sortieMenuLayout`)에서 읽는다. */
 const STORY_ENTRY = sortieEntryScreenPoint("story");
 
@@ -22,6 +23,8 @@ test("적을 누르면 정보창을 줄인 팝업이 열린다", async ({ page }
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("출격");
   await tap(page, STORY_ENTRY.x, STORY_ENTRY.y); // 스토리
   await expect.poll(() => scene(page)).toBe("stageMap");
+  // 들어올 때 판은 내려가 있다 — 고른 노드를 눌러 올린다.
+  await openSelectedStagePreview(page);
 
   // 미리보기 SD가 실제로 붙은 뒤에 누른다 — 판이 비동기로 그려지기 때문이다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview?.enemyTargets?.length ?? 0), { timeout: 60_000 }).toBeGreaterThan(0);

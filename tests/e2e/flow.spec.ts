@@ -20,6 +20,7 @@ import { staminaPopupLayout, STAMINA_CELL } from "../../src/ui/staminaPopupLayou
 import { currencyGuide } from "../../src/data/currencyGuide";
 import { CONTENT_STAMINA_COSTS } from "../../src/data/contentCosts";
 import { sortieEntryScreenPoint } from "../../src/ui/sortieMenuLayout";
+import { openSelectedStagePreview } from "./stageMapPreview";
 /** 출격판 칸 자리는 화면과 같은 표(`sortieMenuLayout`)에서 읽는다. */
 const STORY_ENTRY = sortieEntryScreenPoint("story");
 
@@ -353,6 +354,8 @@ test("출전 전 지도와 편성에서도 같은 적 분석창이 열린다", a
   // 출격 선택판은 스토리와 원정을 분리하므로 지도 검증은 스토리를 명시해 들어간다.
   await tap(page, STORY_ENTRY.x, STORY_ENTRY.y);
   await expect.poll(() => scene(page)).toBe("stageMap");
+  // 들어올 때 판은 내려가 있다 — 고른 노드를 눌러 올린다.
+  await openSelectedStagePreview(page);
 
   // 지도의 적 편성 팝업에서 첫 칸을 누른다. 성장 입력이 없는 적 전용 창이 떠야 한다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview?.enemyTargets.length ?? 0),

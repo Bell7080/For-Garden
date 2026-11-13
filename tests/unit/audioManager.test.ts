@@ -27,7 +27,7 @@ class FakeBackend implements AudioBackend {
   fade(sound: ManagedSound, volume: number, _durationMs: number, done?: () => void): void {
     sound.setVolume(volume); this.fades.push({ sound: sound as FakeSound, volume }); done?.();
   }
-  cancelFade(): void { /* 가짜 페이드는 즉시 끝나므로 취소할 예약 작업이 없다. */ }
+  cancelFade(_sound: ManagedSound): void { /* 가짜 페이드는 즉시 끝나므로 취소할 예약 작업이 없다. */ }
 }
 
 /** 저장 부작용 없이 실제 SettingsManager 변경 이벤트를 사용하는 테스트 조립 함수다. */
@@ -81,7 +81,8 @@ describe("AudioManager", () => {
     audio.playMusic("bgm-a");
     const first = backend.sounds[0];
     audio.playMusic("bgm-b");
-    expect(first).toMatchObject({ stopped: true, destroyed: true });
+    // 떠난 곡은 버리지 않고 소리만 내린 채 멈춰 세워 둔다(돌아오면 이어 튼다).
+    expect(first).toMatchObject({ isPlaying: false, destroyed: false, volume: 0 });
     const second = backend.sounds[1];
     audio.setHidden(true);
     expect(second.isPlaying).toBe(false);
@@ -89,6 +90,52 @@ describe("AudioManager", () => {
     audio.setHidden(false);
     expect(second.isPlaying).toBe(true);
     expect(second.volume).toBeCloseTo(0.1);
+    // 세워 둔 앞 곡은 복귀해도 다시 틀지 않는다.
+    expect(first.isPlaying).toBe(false);
+  });
+
+  it("조금 전에 떠난 곡으로 돌아오면 새로 만들지 않고 멈춘 자리에서 이어 튼다", () => {
+    const { audio, backend } = setup();
+    audio.playMusic("bgm-a");
+    audio.playMusic("bgm-b");
+    audio.playMusic("bgm-a");
+    expect(backend.sounds).toHaveLength(2);
+    expect(backend.sounds[0]).toMatchObject({ isPlaying: true, stopped: false, destroyed: false });
+    expect(backend.sounds[0].volume).toBeGreaterThan(0);
+    expect(backend.sounds[1]).toMatchObject({ isPlaying: false, destroyed: false });
+  });
+
+  it("세워 두는 곡 수를 넘기면 가장 오래 떠난 곡부터 버린다", () => {
+    const { audio, backend } = setup();
+    for (const key of ["bgm-a", "bgm-b", "bgm-c", "bgm-d", "bgm-e"]) audio.playMusic(key);
+    expect(backend.sounds[0].destroyed).toBe(true);
+    expect(backend.sounds.slice(1).every((sound) => !sound.destroyed)).toBe(true);
+  });
+
+  it("앞 곡이 내려가는 동안 설정이 바뀌어도 앞 곡을 되살리지 않는다(두 곡 겹침)", () => {
+    const settings = new SettingsManager(createDefaultSession(), { save: vi.fn() });
+    const fades = new Map<ManagedSound, () => void>();
+    const pending = { splice: () => { const runs = [...fades.values()]; fades.clear(); return runs; } };
+    class SlowBackend extends FakeBackend {
+      override fade(sound: ManagedSound, volume: number, _durationMs: number, done?: () => void): void {
+        fades.set(sound, () => { sound.setVolume(volume); done?.(); });
+      }
+      override cancelFade(sound: ManagedSound): void { fades.delete(sound); }
+    }
+    const backend = new SlowBackend();
+    const audio = new AudioManager(backend, settings, 250, false);
+    audio.playMusic("bgm-a");
+    pending.splice().forEach((run) => run());
+    const first = backend.sounds[0];
+    const before = first.volume;
+    audio.playMusic("bgm-b");
+    // 교차가 끝나기 전에 화면이 설정을 저장한다(뽑기 뒤 화면을 옮길 때 실제로 그랬다).
+    settings.update({ sound: { musicVolume: 0.9 } });
+    // 내려가는 앞 곡의 볼륨은 페이드만 만진다 — 설정 반영이 새 볼륨으로 되살리지 않는다.
+    expect(first.volume).toBe(before);
+    pending.splice().forEach((run) => run());
+    expect(first).toMatchObject({ isPlaying: false, volume: 0 });
+    expect(backend.sounds[1].volume).toBeCloseTo(audio.volume("music"));
   });
 });
 

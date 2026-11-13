@@ -183,12 +183,27 @@ const CUES: Record<AudioCue, { key: string; bus: AudioBus; gain?: number; minGap
   "story.hop": { key: "sweep-hop", bus: "sfx", gain: 0.5, minGapMs: 120 },
 };
 
+/** 배경음 교차 시간. 하단 탭을 오가며 곡이 툭 갈리지 않을 만큼 길고, 다음 화면의 첫 소리를 덮지 않을 만큼 짧다. */
+export const MUSIC_FADE_MS = 650;
+/** 떠난 뒤에도 이어 틀 수 있게 세워 두는 곡 수(지금 곡 제외). 흘려 재생하는 곡이라 하나에 몇 MB뿐이다. */
+export const PARKED_MUSIC_LIMIT = 3;
+/** 이보다 오래 떠나 있던 곡은 버리고 다음엔 처음부터 튼다. */
+export const PARKED_MUSIC_TTL_MS = 5 * 60_000;
+
 /** master × category × mute 공식을 유일하게 계산하고 Phaser Sound 수명을 소유한다. */
 export class AudioManager {
   private readonly sounds = new Map<ManagedSound, AudioBus>();
   private music?: ManagedSound;
   private musicKey?: string;
   private musicGain = 1;
+  /**
+   * 떠난 배경음은 곧바로 버리지 않고 소리만 내린 채 **세워 둔다**(키마다 하나, 최근 `PARKED_MUSIC_LIMIT`곡).
+   * 하단 탭을 오가면 고고학·도감·로비·연구소·상점이 저마다 다른 곡이라, 버리면 돌아올 때마다 처음부터 다시 받아
+   * 틀어 "같은 곡인데 끊겼다가 다시 나오는" 것으로 들렸다. 세워 둔 곡은 멈춘 자리에서 이어 흐른다.
+   * 여기 든 소리는 지금 곡이 아니므로 설정 변경·앱 복귀가 볼륨을 되살리지 않는다 — 되살리면 내려가던 앞 곡이
+   * 그대로 남아 두 곡이 겹쳐 흘렀다(뽑기 뒤 화면을 옮길 때 설정이 저장되며 그랬다).
+   */
+  private readonly parked = new Map<string, { sound: ManagedSound; gain: number; at: number }>();
   /** 한 번 울리는 소리(UI·전투)는 큐마다 사운드 하나를 재사용한다 — 연타하면 앞 소리를 끊고 다시 울려 인스턴스가 쌓이지 않는다. */
   private readonly uiSounds = new Map<AudioCue, ManagedSound>();
   private readonly lastPlayedAt = new Map<AudioCue, number>();
@@ -199,7 +214,7 @@ export class AudioManager {
   private readonly onSettings = (event: Event): void => this.applySettings((event as CustomEvent<GameSettings>).detail);
   private readonly onVisibility = (): void => this.setHidden(document.hidden);
 
-  constructor(private readonly backend: AudioBackend, private readonly settings: SettingsManager = settingsManager, private readonly fadeMs = 250, watchDocument = true) {
+  constructor(private readonly backend: AudioBackend, private readonly settings: SettingsManager = settingsManager, private readonly fadeMs = MUSIC_FADE_MS, watchDocument = true) {
     this.settings.addEventListener("change", this.onSettings);
     if (watchDocument && typeof document !== "undefined") document.addEventListener("visibilitychange", this.onVisibility);
   }
@@ -263,31 +278,81 @@ export class AudioManager {
   get currentMusicKey(): string | undefined { return this.musicKey; }
 
   /**
-   * 배경음을 짧게 교차 전환하며 음소거 중인 새 트랙도 0에서 시작시킨다. 같은 트랙을 다시 부르면
-   * 처음부터 되감지 않고 그대로 둔다(화면이 바뀌어도 같은 곡이면 이어 흐른다). `gain`은 트랙별 크기 보정이다.
+   * 배경음을 교차 전환하며 음소거 중인 새 트랙도 0에서 시작시킨다. 같은 트랙을 다시 부르면
+   * 처음부터 되감지 않고 그대로 둔다(화면이 바뀌어도 같은 곡이면 이어 흐른다). 조금 전에 떠난 곡으로 돌아오면
+   * 세워 둔 그 곡을 멈춘 자리에서 다시 올린다. `gain`은 트랙별 크기 보정이다.
    */
   playMusic(key: string, gain = 1): boolean {
     if (this.disposed || !this.backend.has(key)) return false;
     if (this.music && this.musicKey === key) return true;
     const previous = this.music;
-    const next = this.backend.create(key, true);
+    const previousKey = this.musicKey;
+    const previousGain = this.musicGain;
+    this.pruneParked(performance.now());
+    const resumed = this.parked.get(key);
+    let next: ManagedSound;
+    if (resumed) {
+      this.parked.delete(key);
+      next = resumed.sound;
+      this.backend.cancelFade(next);
+    } else {
+      next = this.backend.create(key, true);
+      next.setVolume(0);
+      this.sounds.set(next, "music");
+    }
     this.music = next;
     this.musicKey = key;
     this.musicGain = gain;
-    this.sounds.set(next, "music");
     const target = this.hidden ? 0 : this.volume("music") * gain;
-    next.setVolume(0);
-    next.play();
-    if (this.hidden) next.pause(); else this.backend.fade(next, target, this.fadeMs);
-    if (previous) this.backend.fade(previous, 0, this.fadeMs, () => this.remove(previous));
+    if (this.hidden) {
+      next.setVolume(0);
+      if (!resumed) { next.play(); next.pause(); }
+    } else {
+      if (!resumed) next.play();
+      else if (!next.isPlaying) next.resume();
+      this.backend.fade(next, target, this.fadeMs);
+    }
+    if (previous && previousKey) this.park(previousKey, previous, previousGain);
     return true;
+  }
+
+  /** 떠나는 곡을 내리며 세워 둔다. 다 내려가면 멈추기만 하고(자리는 지킨다), 넘치는 오래된 곡은 버린다. */
+  private park(key: string, sound: ManagedSound, gain: number): void {
+    const stale = this.parked.get(key);
+    if (stale && stale.sound !== sound) this.remove(stale.sound);
+    this.parked.set(key, { sound, gain, at: performance.now() });
+    const settle = (): void => {
+      const entry = this.parked.get(key);
+      if (entry?.sound !== sound) return;
+      sound.setVolume(0);
+      sound.pause();
+    };
+    if (this.hidden) { this.backend.cancelFade(sound); settle(); }
+    else this.backend.fade(sound, 0, this.fadeMs, settle);
+    while (this.parked.size > PARKED_MUSIC_LIMIT) {
+      const oldest = this.parked.keys().next().value as string;
+      this.remove(this.parked.get(oldest)!.sound);
+    }
+  }
+
+  /** 오래 떠나 있던 곡은 이어 트는 맛보다 붙잡는 값이 크다 — 버리고 다음엔 처음부터 튼다. */
+  private pruneParked(now: number): void {
+    for (const entry of [...this.parked.values()]) if (now - entry.at > PARKED_MUSIC_TTL_MS) this.remove(entry.sound);
+  }
+
+  private isParked(sound: ManagedSound): boolean {
+    for (const entry of this.parked.values()) if (entry.sound === sound) return true;
+    return false;
   }
 
   /** 앱 숨김/복귀 상태를 반영하고 복귀 시 현재 사용자 설정으로만 출력을 복원한다. */
   setHidden(hidden: boolean): void {
     if (this.hidden === hidden || this.disposed) return;
     this.hidden = hidden;
+    // 세워 둔 곡은 숨는 순간 내리기를 끝내 두고, 돌아와도 다시 틀지 않는다 — 지금 곡만 되살린다.
+    if (hidden) for (const { sound } of this.parked.values()) { this.backend.cancelFade(sound); sound.setVolume(0); sound.pause(); }
     for (const sound of this.sounds.keys()) {
+      if (this.isParked(sound)) continue;
       if (hidden && sound.isPlaying) sound.pause();
       else if (!hidden && !sound.isPlaying) sound.resume();
     }
@@ -315,6 +380,8 @@ export class AudioManager {
 
   private applySettings(value: GameSettings): void {
     for (const [sound, bus] of this.sounds) {
+      // 내려가는(세워 둔) 앞 곡의 페이드를 끊으면 그 곡이 제 볼륨으로 되살아나 두 곡이 겹친다.
+      if (this.isParked(sound)) continue;
       this.backend.cancelFade(sound);
       sound.setVolume(this.hidden ? 0 : this.volume(bus, value) * this.gainOf(sound));
     }
@@ -329,6 +396,7 @@ export class AudioManager {
 
   private remove(sound: ManagedSound): void {
     for (const [cue, ui] of this.uiSounds) if (ui === sound) this.uiSounds.delete(cue);
+    for (const [key, entry] of this.parked) if (entry.sound === sound) this.parked.delete(key);
     this.backend.cancelFade(sound);
     sound.stop();
     sound.destroy();
@@ -339,7 +407,7 @@ export class AudioManager {
 
 /** Phaser의 생성·Tween 세부 구현을 중앙 관리자가 쓰는 작은 계약으로 변환한다. */
 export class PhaserAudioBackend implements AudioBackend {
-  private readonly fades = new Map<ManagedSound, number>();
+  private readonly fades = new Map<ManagedSound, { frame: number; timer: ReturnType<typeof setTimeout> }>();
   private readonly streams = new Map<string, string>();
   constructor(private readonly game: Phaser.Game) {}
 
@@ -358,25 +426,44 @@ export class PhaserAudioBackend implements AudioBackend {
 
   registerStream(key: string, url: string): void { this.streams.set(key, url); }
 
-  /** 씬과 독립된 애니메이션 프레임으로 볼륨을 전환하고 완료 콜백을 한 번 전달한다. */
+  /**
+   * 씬과 독립된 애니메이션 프레임으로 볼륨을 전환하고 완료 콜백을 한 번 전달한다. 프레임이 멎어도(앱이 숨었거나
+   * 3D 연출이 메인 스레드를 붙잡았을 때) 끝은 시계가 보장한다 — 끝나지 않으면 내리던 앞 곡이 남아 겹친다.
+   */
   fade(sound: ManagedSound, volume: number, durationMs: number, done?: () => void): void {
     this.cancelFade(sound);
     const initial = sound.volume;
     const startedAt = performance.now();
+    const finish = (): void => {
+      const pending = this.fades.get(sound);
+      if (!pending) return;
+      cancelAnimationFrame(pending.frame);
+      clearTimeout(pending.timer);
+      this.fades.delete(sound);
+      sound.setVolume(volume);
+      done?.();
+    };
     // 특정 씬의 TweenManager에 기대지 않아 배경음이 씬 전환 중에도 끊김 없이 교차한다.
     const step = (now: number): void => {
+      const pending = this.fades.get(sound);
+      if (!pending) return;
       const progress = Math.min(1, (now - startedAt) / durationMs);
-      sound.setVolume(initial + (volume - initial) * progress);
-      if (progress < 1) this.fades.set(sound, requestAnimationFrame(step));
-      else { this.fades.delete(sound); done?.(); }
+      if (progress >= 1) { finish(); return; }
+      // 같은 힘(equal-power) 곡선 — 들어오는 곡은 sin, 나가는 곡은 cos로 움직여 교차하는 동안 합친 크기가 꺼지지 않는다.
+      // 직선으로 섞으면 한가운데에서 두 곡이 함께 작아져 "끊겼다가 다시 나오는" 구멍이 들린다.
+      const moved = volume > initial ? Math.sin((progress * Math.PI) / 2) : 1 - Math.cos((progress * Math.PI) / 2);
+      sound.setVolume(initial + (volume - initial) * moved);
+      pending.frame = requestAnimationFrame(step);
     };
-    this.fades.set(sound, requestAnimationFrame(step));
+    this.fades.set(sound, { frame: requestAnimationFrame(step), timer: setTimeout(finish, durationMs + 120) });
   }
 
   /** 설정 변경이나 정지 시 진행 중인 페이드가 새 볼륨을 덮어쓰지 않도록 취소한다. */
   cancelFade(sound: ManagedSound): void {
-    const frame = this.fades.get(sound);
-    if (frame !== undefined) cancelAnimationFrame(frame);
+    const pending = this.fades.get(sound);
+    if (!pending) return;
+    cancelAnimationFrame(pending.frame);
+    clearTimeout(pending.timer);
     this.fades.delete(sound);
   }
 }

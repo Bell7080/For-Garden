@@ -44,7 +44,7 @@ export const SUMMON_INFO = {
    * 재소환 칸 — 능력치 칸 아래 같은 기둥. 윗변 제목표가 능력치 칸 밑변과 겹치지 않을 만큼 띄우고,
    * 오른쪽 아래 깎인 모서리 안에서 끝난다.
    */
-  resummonPanel: { top: 344, height: 140 },
+  resummonPanel: { top: 348, height: 136 },
   journalButton: ENEMY_INFO.journalButton,
   skills: ENEMY_INFO.skills,
   ferocityBadgeOffsetY: ENEMY_INFO.ferocityBadgeOffsetY,

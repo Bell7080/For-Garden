@@ -312,6 +312,19 @@ export function enemyLevelMultiplier(level: number, rarity: RelicRarity): number
 }
 
 /**
+ * 배율 하나를 레벨로 옮긴다 — `factor`배 세기를 넘지 않는 가장 높은 레벨(응태 결정 2026-11-13, 보통·어려움 스토리).
+ * 넘지 않는 쪽으로 자르고, 레벨이 오르며 함께 열리는 돌파 스킬 칸은 수에 들지 않으므로 새로 연 단계 하나마다 한 레벨씩 더
+ * 내려 선다. 적 레벨에는 상한이 없어 100을 넘을 수 있다.
+ */
+export function equivalentEnemyLevel(level: number, rarity: RelicRarity, factor: number): number {
+  const target = factor * enemyLevelMultiplier(level, rarity);
+  let next = level;
+  while (enemyLevelMultiplier(next + 1, rarity) <= target + 1e-9) next++;
+  // 새로 연 돌파 단계마다 스킬 칸이 하나씩 붙는다 — 그 몫만큼 한 레벨씩 내려 세기가 배수를 넘지 않게 한다.
+  return Math.max(level + 1, next - (requiredBreakthroughForLevel(next) - requiredBreakthroughForLevel(level)));
+}
+
+/**
  * 적 하나의 전투 능력치 — **등급·레벨로 자라고 유형으로 몫을 받는다.**
  *
  * 돌파 등급은 그 레벨이 정하고(스킬 칸과 +10%p씩의 능력치 몫을 함께 연다), 등급은 **필수 인자**다 — 기본값을 두면 새

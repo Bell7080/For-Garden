@@ -1,9 +1,8 @@
 import { ancientStageFloor } from "./ancientStrataDifficulty";
 import { getAncientStrataFloor, getAncientStrataStage } from "../core/ancientStrataBattle";
 import { difficultyStageRewards, storyBaseStageId, STORY_DIFFICULTY, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
-import { GROWTH_STAT_KEYS } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
-import { applyEncounterScaling, encounterRoleFor, shownBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
+import { applyEncounterScaling, encounterRoleFor, equivalentEnemyLevel, shownBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
 import { type BattleStageDef, type ChapterDef, type RelicDef, type StageBonusReward, type StageDef, type StageEnemyDef } from "../core/types";
 import { getRelic } from "./relics";
 
@@ -450,12 +449,20 @@ export const SUB_STAGES: readonly StageDef[] = [...SUB_STORY_STAGES, SIDE_BATTLE
 export const STAGES: readonly StageDef[] = [...CHAPTERS.flatMap(({ stages }) => stages), ...SUB_STAGES];
 /** 확장 난이도는 별도 ID로 기록해 기존 쉬움 진행과 초회 보상을 보존한다. */
 export function storyStages(difficulty: StoryDifficulty): readonly StageDef[] { return difficulty === "easy" ? STAGES : EXTRA_STORY_STAGES.filter(stage => stage.id.startsWith(`${difficulty}:`)); }
+/**
+ * 보통·어려움의 적은 배율이 아니라 **그 난이도의 레벨**에 선다(응태 결정 2026-11-13 — 눈에 보이는 난이도 곡선).
+ * 개체·인원·배치·정예는 쉬움 그대로이고, 레벨만 `statFactor`배 세기를 넘지 않는 가장 높은 레벨로 옮긴다. 100을 넘어도 된다.
+ */
+function difficultyEnemy(enemy: StageEnemyDef, difficulty: StoryDifficulty): StageEnemyDef {
+  const level = equivalentEnemyLevel(enemy.level, getRelic(enemy.relicId).rarity, STORY_DIFFICULTY[difficulty].statFactor);
+  return { ...enemy, level, breakthrough: shownBreakthroughForLevel(level) };
+}
 const EXTRA_STORY_STAGES: readonly BattleStageDef[] = (["normal", "hard"] as const).flatMap(difficulty => STAGES.filter((stage): stage is BattleStageDef => stage.kind === "battle").map(base => {
   const first = base.id === "1-1";
   const prerequisiteStageIds = first ? [storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10")] : base.prerequisiteStageIds.map(id => storyStageId(difficulty, id));
   return { ...base, id: storyStageId(difficulty, base.id), prerequisiteStageIds,
-    enemies: base.enemies.map(enemy => ({ ...enemy })),
-    difficultyStatMultiplier: STORY_DIFFICULTY[difficulty].statFactor, rewards: difficultyStageRewards(base.rewards, difficulty), situation: undefined };
+    enemies: base.enemies.map(enemy => difficultyEnemy(enemy, difficulty)),
+    rewards: difficultyStageRewards(base.rewards, difficulty), situation: undefined };
 }));
 export const ALL_STORY_STAGES: readonly StageDef[] = [...STAGES, ...EXTRA_STORY_STAGES];
 const STAGE_BY_ID = new Map(ALL_STORY_STAGES.map((stage) => [stage.id, stage]));
@@ -519,9 +526,8 @@ export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): R
     // 편성 중 일부만 정예인 관문: 정예 몫은 그 개체들이 나눠 갖고, 나머지는 관문의 유형 그대로다.
     const enemyRole = enemy.elite === true ? "elite" : role;
     const count = enemy.elite === true ? soloElites : stage.enemies.length;
-    // 레벨·유형 뒤 공용 난이도 종족값 보정만 적용한다. 태생 정의와 공속은 바꾸지 않는다.
+    // 레벨·유형으로만 자란다 — 보통·어려움도 그 난이도의 레벨에 선다. 태생 정의와 공속은 바꾸지 않는다.
     const stats = applyEncounterScaling(base.stats, base.rarity, enemy.level, enemyRole, count);
-    for (const key of GROWTH_STAT_KEYS) stats[key] = Math.round(stats[key] * (stage.difficultyStatMultiplier ?? 1));
     return { ...base, encounterRole: enemyRole, stats };
   });
 }

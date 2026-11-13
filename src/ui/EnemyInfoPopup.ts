@@ -226,8 +226,8 @@ export class EnemyInfoPopup {
     const panel = addInfoPanel(scene, chrome, column.x, enemyInfoPanelCenterY(levelPanel), column.width, levelPanel.height);
     addSectionTitle(scene, column.x - column.width / 2, levelPanel.top - 4, t("info.level"), { parent: chrome });
     const value = scene.add
-      .text(-column.width / 2 + 54, -66, String(snapshot.level), textStyle({ role: "display", size: 96 }))
-      .setOrigin(0, 0)
+      .text(-column.width / 2 + 54, ENEMY_INFO.levelValueY, String(snapshot.level), textStyle({ role: "display", size: 96 }))
+      .setOrigin(0, 0.5)
       .setScale(1, 1.16)
       .setShadow(3, 8, "#05070a", 10, false, true);
     // 적에게는 레벨 상한이 없다(「적은 적이다」 — 2026-11-12) — 숫자 하나가 곧 그 개체의 세기다.

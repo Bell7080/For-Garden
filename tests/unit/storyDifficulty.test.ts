@@ -1,6 +1,8 @@
 import { combatState } from "../../src/core/combatProtocol";
 import { combatPower } from "../../src/core/combatPower";
-import { ENCOUNTER_ROLE } from "../../src/core/levelDesign";
+import { ENCOUNTER_ROLE, enemyLevelMultiplier, shownBreakthroughForLevel } from "../../src/core/levelDesign";
+import { getRelic } from "../../src/data/relics";
+import type { BattleStageDef } from "../../src/core/types";
 import { partyPreview } from "../../src/data/partyContent";
 import { prepareCombat, combatJournal } from "../../src/server/combatAuthority";
 import { describe, expect, it } from "vitest";
@@ -126,29 +128,31 @@ describe("스토리 확장 난이도", () => {
     }
   });
 
-  it("장 배율 없이 난이도 배율 하나만 곱한다", () => {
-    // 장 배율은 걷어 냈다(응태 결정 2026-11-12 — 레벨제로 갔으니 필요 없다). 쉬움은 레벨만, 보통·어려움은 statFactor만.
-    expect(["1-1", "2-1", "4-10", "6-1", "7-10"].map(id => getBattleStage(id).difficultyStatMultiplier)).toEqual([undefined, undefined, undefined, undefined, undefined]);
-    expect(["1-1", "4-10", "7-10"].map(id => getBattleStage(storyStageId("normal", id)).difficultyStatMultiplier)).toEqual([1.5, 1.5, 1.5]);
-    expect(getBattleStage(storyStageId("hard", "7-10")).difficultyStatMultiplier).toBe(STORY_DIFFICULTY.hard.statFactor);
-  });
-
-  it("쉬움의 편성·레벨·돌파·정예를 그대로 상속하고 오각형에만 난이도 종족값을 적용한다", () => {
+  it("보통·어려움은 배율이 아니라 그 난이도의 레벨에 선다", () => {
+    // 응태 결정 2026-11-13 — 숨은 배율 대신 화면의 LV가 난이도를 말한다. 100을 넘는 적도 허락한다.
     for (const difficulty of ["normal", "hard"] as const) {
-      for (const base of STAGES.filter(stage => stage.kind === "battle")) {
+      const factor = STORY_DIFFICULTY[difficulty].statFactor;
+      for (const base of STAGES.filter((stage): stage is BattleStageDef => stage.kind === "battle")) {
         const stage = getBattleStage(storyStageId(difficulty, base.id));
-        expect(stage.enemies).toEqual(base.enemies);
         expect(stage.enemies).not.toBe(base.enemies);
+        expect(stage.enemies.map(e => [e.relicId, e.formationSlot, e.elite])).toEqual(base.enemies.map(e => [e.relicId, e.formationSlot, e.elite]));
+        stage.enemies.forEach((enemy, i) => {
+          const rarity = getRelic(enemy.relicId).rarity, from = base.enemies[i].level;
+          expect(enemy.level).toBeGreaterThan(from);
+          expect(enemy.breakthrough).toBe(shownBreakthroughForLevel(enemy.level));
+          // 쉬움의 factor배를 넘지 않고, 그 상한에서 새로 연 돌파 단계(스킬 칸) 수만큼만 내려 선다.
+          expect(enemyLevelMultiplier(enemy.level, rarity)).toBeLessThanOrEqual(factor * enemyLevelMultiplier(from, rarity) + 1e-9);
+          let ceiling = from;
+          while (enemyLevelMultiplier(ceiling + 1, rarity) <= factor * enemyLevelMultiplier(from, rarity) + 1e-9) ceiling++;
+          expect(enemy.level).toBe(Math.max(from + 1, ceiling - (shownBreakthroughForLevel(ceiling) - shownBreakthroughForLevel(from))));
+        });
         const easy = getStageEnemies(base), grown = getStageEnemies(stage);
         grown.forEach((enemy, i) => {
-          for (const key of ["hp", "atk", "ap", "def", "res"] as const) {
-            const factor = STORY_DIFFICULTY[difficulty].statFactor;
-            expect(Math.abs(enemy.stats[key] - easy[i].stats[key] * factor)).toBeLessThanOrEqual(base.difficultyStatMultiplier ? factor : 0.5);
-          }
           for (const key of ["attackSpeed", "moveSpeed", "critChance", "critDamage", "energyGain"] as const) expect(enemy.stats[key]).toBe(easy[i].stats[key]);
           expect(enemy.encounterRole).toBe(easy[i].encounterRole);
         });
       }
     }
+    expect(getBattleStage(storyStageId("hard", "7-10")).enemies[0].level).toBeGreaterThan(100);
   });
 });

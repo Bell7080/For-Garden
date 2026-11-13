@@ -52,6 +52,11 @@ describe("적 정보 팝업 배치", () => {
     expect(levelPanel.top - 4 - titleHalf).toBeGreaterThan(nameY + badge.element / 2);
     // 이름과 뱃지가 끝나는 선은 돌파 등급 표식 앞이다.
     expect(nameRight).toBeLessThan(gradeRow.x - gradeRow.size / 2);
+    // 레벨 숫자(96 × 1.16)는 제목표 밑동 아래에서 시작하고 칸 안에서 끝난다 — 제목과 겹치지 않는다.
+    const digitHalf = (96 * 1.16) / 2 * 0.8;
+    const valueY = enemyInfoPanelCenterY(levelPanel) + ENEMY_INFO.levelValueY;
+    expect(valueY - digitHalf).toBeGreaterThan(levelPanel.top - 4 + titleHalf + 8);
+    expect(valueY + digitHalf).toBeLessThan(levelPanel.top + levelPanel.height);
     // 능력치 칸을 내린 만큼 SD의 머리 위에 걸리지 않는다.
     expect(statPanel.top + statPanel.height).toBeLessThan(figure.groundY - figure.height);
   });

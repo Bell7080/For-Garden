@@ -3913,8 +3913,6 @@ export interface BattleStageDef extends StageBase {
    * 있으므로 스토리도 같은 모양을 쓴다. 자리는 배열 순서가 아니라 `formationSlot`이 정한다.
    */
   enemies: readonly StageEnemyDef[];
-  /** 스토리 난이도 종족값 보정. 원본 레벨·돌파·공속·치명타는 바꾸지 않는다. */
-  difficultyStatMultiplier?: number;
   /**
    * **단일 정예 관문**이라는 표식.
    *

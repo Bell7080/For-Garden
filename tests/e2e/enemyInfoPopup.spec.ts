@@ -38,7 +38,7 @@ test("적을 누르면 정보창을 줄인 팝업이 열린다", async ({ page }
   await captureGame(page, `test-results/${test.info().project.name}-enemy-info.png`);
 
   // 능력치 칸의 돋보기는 정보창의 그것과 **같은 함수**가 연다. 창 위에 창이 쌓이는지까지 본다.
-  await tap(page, 891, 839);
+  await tap(page, 891, 861); // 능력치 돋보기 — 레벨 칸을 키워 능력치 칸이 22 내려갔다(v0.451.5)
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["정보창", "능력치 상세"]);
   await tap(page, 540, 300);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["정보창"]);

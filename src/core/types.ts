@@ -2512,6 +2512,18 @@ export interface Passive {
   tidyUp?: { every: number; cleanseHealPower: number; fallbackHealPower: number };
   /** 전투 한정 누적 패시브가 쌓을 수 있는 최대 횟수. 상한이 없으면 한 판이 길수록 끝없이 자란다. */
   maxStacks?: number;
+  /**
+   * 평타 적중마다 공속이 쌓이는 패시브(`basicHitAttackSpeedStack`)의 **겹 이름**(규칙어 ID). 없으면 이름 없는 누적이다.
+   *
+   * 계약은 같아도 그 겹이 무엇인지는 개체의 것이다 — 토비의 「난동」, 타보아의 「열기」. 이름이 있으면 겹이 무엇을
+   * 하는지·몇 겹까지인지는 그 태그가 말하고 패시브 본문은 "한 겹 쌓인다"만 적는다.
+   */
+  stackTag?: "rampage";
+  /**
+   * 「웅크린 무리」 계약(아모). 반경 안의 **다른 아군** 한 명마다(최대 `maxAllies`명) 방어력·저항력이
+   * `defenseResistancePercentPerAlly`% 오른다. 등 뒤에 지킬 몸이 있을수록 단단해진다.
+   */
+  huddle?: { radius: number; maxAllies: number; defenseResistancePercentPerAlly: number };
   /** 밀물 전용: 몇 초마다 어떤 날려버림으로 밀어내는가. 살아 있는 모든 적에게 같은 계약(`knockback`)으로 건다. */
   tidalSurge?: { intervalSeconds: number; knockback: { seconds: number; speed: number; bounces: number } };
   /**

@@ -431,6 +431,59 @@ export function lastDropKeyword(def: RelicDef): KeywordDef | undefined {
   };
 }
 
+/** 평타 공속 겹(`basicHitAttackSpeedStack`)의 이름이 가리키는 규칙어 ID. */
+export function attackSpeedStackTagId(_tag: NonNullable<Passive["stackTag"]>): string {
+  return "toby-rampage";
+}
+
+/** 그 겹의 이름(난동). 겹 이름이 늘면 여기에 갈래를 더한다. */
+function attackSpeedStackTagName(_tag: NonNullable<Passive["stackTag"]>): string {
+  return t("skill.keyword.rampage.term");
+}
+
+/**
+ * 패시브가 쌓는 **이름 있는 겹**의 태그 — 조가비·흉터·시약·시약 반응·난동.
+ *
+ * 겹이 몇 초 남는지, 몇 겹까지인지, 가득 차면 무엇을 하는지는 태그가 계약에서 지어 말하고 패시브 본문은
+ * "한 겹 쌓인다"만 적는다(응태 2026-11-13 — 「어차피 다 조가비 효과잖아?」). 전역 사전에도 같은 ID의
+ * 공통 설명이 있지만 이 문맥 태그가 앞선다. 태그 팝업 안에서는 다른 태그를 열 수 없으므로 문장에
+ * 규칙어 표기를 넣지 않는다.
+ */
+export function passiveStackKeywords(passive: Passive): KeywordDef[] {
+  const tags: KeywordDef[] = [];
+  const shell = passive.kind === "shellGuard" ? passive.shellGuard : undefined;
+  if (shell !== undefined) {
+    const id = shell.stackId ?? "shell";
+    const common = { seconds: shell.durationSeconds, stacks: shell.maxStacks, selfPercent: shell.selfShieldMaxHpPercent, cooldown: shell.cooldownSeconds };
+    tags.push({
+      id, term: findKeyword(id)?.term ?? id, kind: "buff",
+      description: shell.lowestHpAllyShieldMaxHpPercent > 0
+        ? t("skill.keyword.shellGuard.description", { ...common, allyPercent: shell.lowestHpAllyShieldMaxHpPercent })
+        : t("skill.keyword.shellGuard.selfOnly", common),
+    });
+  }
+  const reagent = passive.kind === "reagentReaction" ? passive.reagentReaction : undefined;
+  if (reagent !== undefined) {
+    tags.push({
+      id: "reagent", term: findKeyword("reagent")?.term ?? "reagent", kind: "state",
+      description: t("skill.keyword.reagent.description", { stacks: reagent.maxStacks, seconds: reagent.seconds }),
+    }, {
+      id: "reagent-reaction", term: findKeyword("reagent-reaction")?.term ?? "reagent-reaction", kind: "rule",
+      description: t("skill.keyword.reagentReaction.description", {
+        poisonSeconds: reagent.reactionPoisonSeconds, resistanceSeconds: reagent.resistanceReductionSeconds,
+        resistancePercent: reagent.resistanceReductionPercent, healPercent: reagent.lowestHpAllyHealMaxHpPercent,
+      }),
+    });
+  }
+  if (passive.kind === "basicHitAttackSpeedStack" && passive.stackTag !== undefined && passive.maxStacks !== undefined) {
+    tags.push({
+      id: attackSpeedStackTagId(passive.stackTag), term: attackSpeedStackTagName(passive.stackTag), kind: "buff",
+      description: t("skill.keyword.attackSpeedStack.description", { value: passive.value, stacks: passive.maxStacks }),
+    });
+  }
+  return tags;
+}
+
 /**
  * 「까칠」 태그(켄토). 겹이 어떻게 쌓이고 누가 얼마를 되받는지를 한 자리에서 말한다.
  *
@@ -562,16 +615,8 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     return t("skill.passive.droneLink", { guard: amount, regen: scaled("heal", "hp", passive.droneLink.regenMaxHpPercentPerSecond, maxHp) });
   }
   if (passive.kind === "reagentReaction" && passive.reagentReaction !== undefined) {
-    // 이름이 아니라 공용 계약을 문장화하므로 다른 캐릭터가 같은 메커니즘을 선언해도 그대로 읽힌다.
-    const reagent = passive.reagentReaction;
-    return t("skill.passive.reagentReaction", {
-      basic: reagent.basicStacks, ultimate: reagent.ultimateStacks,
-      stacks: reagent.maxStacks, seconds: reagent.seconds,
-      poisonSeconds: reagent.reactionPoisonSeconds,
-      resistanceSeconds: reagent.resistanceReductionSeconds,
-      resistancePercent: reagent.resistanceReductionPercent,
-      healPercent: reagent.lowestHpAllyHealMaxHpPercent,
-    });
+    // 몇 겹·몇 초·반응이 무엇을 하는지는 「시약」·「시약 반응」 태그가 계약에서 지어 말한다(`passiveStackKeywords`).
+    return t("skill.passive.reagentReaction");
   }
   if (passive.kind === "summonCommander") {
     /*
@@ -588,7 +633,15 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   // 그 한 방의 세기는 치명타 피해가 이미 말한다.
   if (passive.kind === "stalkerBlink") return t("skill.passive.stalkerBlink", { seconds: passive.value });
   if (passive.kind === "openingDive" && passive.openingCharge !== undefined) return t("skill.passive.openingCharge", { seconds: passive.openingCharge.stunSeconds });
-  if (passive.kind === "basicHitAttackSpeedStack") return t("skill.passive.basicHitAttackSpeedStack", { value: passive.value });
+  if (passive.kind === "basicHitAttackSpeedStack") {
+    // 겹에 이름이 있으면 무엇이 얼마나 오르는지는 그 태그가 말한다 — 본문은 쌓인다는 것만 적는다.
+    // 상한이 없는 누적은 태그가 "최대 N겹"을 말할 수 없으므로 예전 문장으로 남는다.
+    if (passive.stackTag !== undefined && passive.maxStacks !== undefined) {
+      const tagName = attackSpeedStackTagName(passive.stackTag);
+      return t("skill.passive.basicHitAttackSpeedStack.tagged", { tag: attackSpeedStackTagId(passive.stackTag), tagName });
+    }
+    return t("skill.passive.basicHitAttackSpeedStack", { value: passive.value });
+  }
   if (passive.kind === "coilSqueeze" && passive.coilSqueeze) return t("skill.passive.coilSqueeze", { seconds: trim(passive.coilSqueeze.stunSeconds), lock: trim(passive.coilSqueeze.lockoutSeconds) });
   // 흡혈 수치는 여기서, 나뉘는 비율·상한은 태그(`fog-guard`)가 말한다 — 쓰는 개체가 하나뿐인 규칙어라 태그가 수치를 갖는다.
   // 치명타 확률 가산은 공통 절(`passiveCriticalClause`)이 뒤에 붙인다.
@@ -709,21 +762,18 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     // 계약은 같아도 겹의 이름은 개체의 것이다 — 아모의 조가비, 수쿠스이노의 흉터.
     const stack = shell.stackId ?? "shell";
     const stackName = findKeyword(stack)?.term ?? stack;
-    /*
-     * **혼자 서는 개체는 아군 절을 말하지 않는다.** 받을 상대가 없는데 "가장 낮은 아군에게"를
-     * 적으면 화면이 일어나지 않는 일을 말한다 — 시즌 보스가 그 자리다.
-     */
-    const body = shell.lowestHpAllyShieldMaxHpPercent > 0
-      ? t("skill.passive.shellGuard", {
-        stack, stackName, seconds: shell.durationSeconds, stacks: shell.maxStacks,
-        selfPercent: scaled("shield", "hp", shell.selfShieldMaxHpPercent, maxHp), allyPercent: shell.lowestHpAllyShieldMaxHpPercent,
-        cooldown: shell.cooldownSeconds,
-      })
-      : t("skill.passive.shellGuard.selfOnly", {
-        stack, stackName, seconds: shell.durationSeconds, stacks: shell.maxStacks,
-        selfPercent: scaled("shield", "hp", shell.selfShieldMaxHpPercent, maxHp), cooldown: shell.cooldownSeconds,
+    // 겹이 몇 초 남고 터지면 무엇을 주는지는 그 겹의 태그가 말한다(`passiveStackKeywords`).
+    const body = t("skill.passive.shellGuard", { stack, stackName });
+    const huddle = passive.huddle;
+    if (huddle === undefined) return body;
+    // 방어력·저항력은 퍼센트가 아니라 실제로 오르는 값으로 보여 준다(모르페의 요람 연결과 같은 결).
+    const amount = guard === undefined
+      ? t("skill.passive.huddle.guardPercent", { percent: huddle.defenseResistancePercentPerAlly })
+      : t("skill.passive.huddle.guardAmount", {
+        defense: statGainAlias("def", guard.defense, huddle.defenseResistancePercentPerAlly),
+        resistance: statGainAlias("res", guard.resistance, huddle.defenseResistancePercentPerAlly),
       });
-    return body;
+    return `${body} ${t("skill.passive.huddle", { guard: amount, allies: huddle.maxAllies })}`;
   }
   if (passive.kind === "tagAndRun") {
     // 세 절이 각각 다른 일을 한다 — 표적을 돌리고, 멈추지 않고, 달린 만큼 찬다. 한 문장에
@@ -1791,6 +1841,7 @@ export function breakthroughEffectKeywords(def: RelicDef, slot: BreakthroughSlot
     if (prickle) own.push(prickle);
     const elation = elationKeyword(def.passive, stats?.hp);
     if (elation) own.push(elation);
+    own.push(...passiveStackKeywords(def.passive));
   }
   if (stats && slot === "passive" && effectOfSlot) {
     if (effectOfSlot.kind === "undyingBulwark") own.push(...defenseGainKeywords(stats, effectOfSlot.defenseResistancePercent));

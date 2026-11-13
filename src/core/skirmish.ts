@@ -6307,6 +6307,15 @@ function muralHidePercent(state: SkirmishState, fighter: Fighter): number {
   return plan.defenseResistancePercentPerTagged * tagged;
 }
 
+/** 「웅크린 무리」(아모) — 곁에 선 다른 아군 한 명당 방어·저항 증가(%). 계약이 없으면 0이다. */
+export function huddlePercent(state: SkirmishState, fighter: Fighter): number {
+  const plan = fighter.def.passive.huddle;
+  if (!plan) return 0;
+  const near = state.fighters.filter((ally) => ally.id !== fighter.id && ally.side === fighter.side && isFighterAlive(ally)
+    && ally.def.summonOnly !== true && distance(fighter, ally) <= plan.radius).length;
+  return Math.min(plan.maxAllies, near) * plan.defenseResistancePercentPerAlly;
+}
+
 /** 피해 공식에만 생존 오라의 방어력·저항력 배율을 투영하고 원본 정적 정의는 변경하지 않는다. */
 export function defensiveDefinition(target: Fighter, state: SkirmishState): Fighter {
   const bonus = strongestLivingAura(state, target.side, "teamDefenseResistancePercent");
@@ -6326,17 +6335,18 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   const linked = droneLinkDefensePercent(state, target);
   const mural = muralHidePercent(state, target);
   const bulwark = undyingGuardPercent(target);
+  const huddle = huddlePercent(state, target);
   // 적 돌파(`fangShave`) — 앞니에 갉인 몸은 방어력이 겹마다 깎인다. 저항은 건드리지 않는다.
   const fang = target.bt.fangShave ? Math.max(0, 1 - target.bt.fangShave.stacks * target.bt.fangShave.percentPerStack / 100) : 1;
   // 공포에 빠진 몸은 달아나는 동안 방어력·저항력이 함께 깎인다(`FEAR_DEFENSE_REDUCTION_PERCENT`).
   const feared = target.fear !== null ? 1 - FEAR_DEFENSE_REDUCTION_PERCENT / 100 : 1;
   // 「대청소」(아르테) — 그 시간 동안 방어력·저항력이 함께 오른다. 오라와 같은 자리에서 곱한다.
   const scrubbed = 1 + (target.scrub?.defenseResistancePercent ?? 0) / 100;
-  if (scrubbed === 1 && fang === 1 && feared === 1 && bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && mural <= 0 && bulwark <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
+  if (scrubbed === 1 && fang === 1 && feared === 1 && bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && mural <= 0 && bulwark <= 0 && huddle <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
-    def: target.def.stats.def * scrubbed * fang * feared * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
+    def: target.def.stats.def * scrubbed * fang * feared * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + huddle / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
     // 시약 반응은 정적 정의가 아닌 런타임 실제 감소량이며, 여러 제공자가 있어도 유효 저항은 0 아래로 내리지 않는다.
-    res: Math.max(0, target.def.stats.res * scrubbed * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + target.augmentResistancePercent / 100) * shred * feared - reagentReduction + (torika?.resistanceBonus ?? 0)),
+    res: Math.max(0, target.def.stats.res * scrubbed * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + huddle / 100) * (1 + target.augmentResistancePercent / 100) * shred * feared - reagentReduction + (torika?.resistanceBonus ?? 0)),
   } } };
 }
 
@@ -9057,7 +9067,11 @@ function strike(
     // **여울이 메워 준 한 대만 빠진다** — 「전투의 환희」는 이 개체의 성장 축 전체라, 그 대까지
     // 세면 물가에 선 동안 공속이 두 배 속도로 자라 판 하나가 개체의 성장률을 갈아 치운다.
     const rage = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
-    attacker.bonusAttackSpeed += attacker.def.passive.value + (rage?.kind === "rageGain" ? rage.extraPerHit : 0);
+    const perHit = attacker.def.passive.value + (rage?.kind === "rageGain" ? rage.extraPerHit : 0);
+    // 상한이 적힌 개체는 그 겹 수에서 멈춘다 — 태그가 "최대 N겹"이라 말하는데 끝없이 자라면 태그가 거짓말이 된다.
+    const cap = attacker.def.passive.maxStacks;
+    if (cap === undefined || perHit <= 0) attacker.bonusAttackSpeed += perHit;
+    else attacker.bonusAttackSpeed = Math.min(cap * perHit, attacker.bonusAttackSpeed + perHit);
   }
   if (!useUltimate && attacker.def.passive.kind === "farthestFocus") {
     // **적중마다** 쌓으므로 갈래화살 한 발이 셋을 맞히면 겹도 셋 오른다 — 그래서 초반 서너

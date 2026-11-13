@@ -141,7 +141,8 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", "stage", 10.0, 0.81],
   // 적 비공격 궁극기 AI 복구 후 재측정. 능력치/목표 띠는 조정하지 않았다.
   // v0.422.4: 참조 파티의 엘라 발경에 방어력 40%가 실려 23.9 → 19.9초로 줄었다(잔여 체력은 그대로).
-  ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", "stage", 19.9, 0.84],
+  // 토비·아모·리파 개편(2026-11-13): 토비 공속 겹이 상한(8겹)을 실제로 지키며 19.9 → 17.3초.
+  ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", "stage", 17.3, 0.84],
   ["스토리 1-5 정예", 10, () => getStageEnemies(battleStage("1-5")), "elite", "stage", 11.9, 0.64],
   // 엘라 「금강불괴」의 진입 막이 실제로 지급되면서(v0.250.2) 43.7 → 45.8로 늘었다.
   // v0.308.2: 궁극기 게이지가 비용까지만 차면서(처치 환급 제외) 46.7 → 42.0으로 줄었다. 1-5는 레벨을 15 → 17로 올려 띠를 지켰다.

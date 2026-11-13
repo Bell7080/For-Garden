@@ -2683,8 +2683,11 @@ export const RELICS: RelicDef[] = [
       kind: "basicHitAttackSpeedStack",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
+      // 겹의 이름은 「난동」이고 무엇이 몇 겹까지 오르는지는 그 태그가 말한다(응태 2026-11-13). 3으로 올리면 2-5·4-5가
+      // 기준 밖으로 나가 2에 두고, 대신 상한(8겹)을 실제로 지킨다.
       value: 2,
       maxStacks: 8,
+      stackTag: "rampage",
       // 전용 분기(`passiveDescription`)가 이 종류의 문장을 짓는다. 이 원문은 표시되지 않는 데이터
       // 문서용 사본이라, 고칠 때는 그 분기도 함께 본다.
       desc: "기본 공격이 적중할 때마다 이번 전투 동안 공격 속도가 증가한다.",
@@ -2697,6 +2700,9 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
+      // 평타마다 붙는 제 몫(응태 2026-11-13 — 「아군 렐릭 보면 뭐가 그래도 좀 있잖아」). 집게가 껍질을 비집고 든다.
+      // 모의 승률에는 거의 영향이 없어 작게 시작한다(30은 2-5·4-5 지표를 기준 밖으로 밀었다).
+      defenseIgnorePercent: 10,
     },
     ultimate: {
       id: "toby-ult",
@@ -2808,8 +2814,11 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       value: 0,
-      // 요청 수치의 절반인 자기 6%·아군 3%로 시작해 R 탱커의 반복 보호막 과잉을 막는다.
-      shellGuard: { maxStacks: 3, durationSeconds: 6, cooldownSeconds: 6, selfShieldMaxHpPercent: 10, lowestHpAllyShieldMaxHpPercent: 5 },
+      // 아군 5 → 8%(응태 2026-11-13 — 「조가비가 너무 약한 감이 있다」). 자기 막은 1장 대표 조합의 1-9·3-4를 가르는
+      // 값이라(12%면 1-9 3/8 · 3-4 0/8) 10%에 둔다.
+      shellGuard: { maxStacks: 3, durationSeconds: 6, cooldownSeconds: 6, selfShieldMaxHpPercent: 10, lowestHpAllyShieldMaxHpPercent: 8 },
+      // 조가비 말고도 하나 더 — 등 뒤에 지킬 몸이 있을수록 단단해진다(웅크린 무리).
+      huddle: { radius: 240, maxAllies: 2, defenseResistancePercentPerAlly: 8 },
       // 실제 문구는 shellGuard 수치에서 생성하며, 수동 원문은 의도적으로 비워 둔다.
       desc: "",
     },
@@ -2820,6 +2829,8 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
+      // 껍질의 무게로 친다 — 방어력 비례 추가 피해(응태 2026-11-13).
+      secondaryScaling: { stat: "def", power: 25 },
     },
     ultimate: {
       id: "amo-ult",
@@ -2836,7 +2847,7 @@ export const RELICS: RelicDef[] = [
       basic: { kind: "shellKnock", seconds: 0.6 },
       ultimate: { kind: "bigShell", shieldMaxHpPercent: 50 },
       ferocity: { kind: "feverGuard", percent: 30 },
-      passive: { kind: "thickShell", selfShieldMaxHpPercent: 16, allyShieldMaxHpPercent: 8 },
+      passive: { kind: "thickShell", selfShieldMaxHpPercent: 16, allyShieldMaxHpPercent: 11 },
     },
   },
   {
@@ -2922,12 +2933,10 @@ export const RELICS: RelicDef[] = [
         basicStacks: 1,
         // 궁극기 2겹은 비용 100의 광역 준비 가치를 주되 단독 즉발 반응은 만들지 않는다.
         ultimateStacks: 2,
-        // 중독 4초는 공용 POISON 네 틱만 빌려 R등급 직접 피해가 주력 딜러를 넘지 않게 한다.
-        reactionPoisonSeconds: 4,
-        // 단일 아군 최대 HP 5%는 광역 회복보다 좁은 대신 반복 가능한 R 지원 예산이다.
-        lowestHpAllyHealMaxHpPercent: 5,
-        // 원본 저항 12%는 후반 기여의 첫 조정점이며 3겹 규칙을 건드리지 않고 낮출 수 있다.
-        resistanceReductionPercent: 12,
+        // 중독 4 → 5초·회복 5 → 8%·저항 감소 12 → 16%(응태 2026-11-13 — 「시약이 너무 약한 감이 있다」).
+        reactionPoisonSeconds: 5,
+        lowestHpAllyHealMaxHpPercent: 8,
+        resistanceReductionPercent: 16,
         // 5초는 후속 아군 공격을 받되 다음 반응까지 상시 유지되기 어렵게 둔 가동 창이다.
         resistanceReductionSeconds: 5,
       },
@@ -2945,6 +2954,9 @@ export const RELICS: RelicDef[] = [
       // 패시브 수치와 일치하며 이후 공용 적중 후 경로가 캐릭터 ID 없이 읽을 부여량이다.
       // 1겹은 패시브 계약과 같은 기본 공격 몫이며 숫자를 두 경로가 함께 검증한다.
       reagentStacks: 1,
+      // 평타마다 붙는 제 몫 — 준 피해의 5%가 체력 비율이 가장 낮은 아군에게 돌아간다(응태 2026-11-13).
+      // 2장 관문을 가르는 값이라 작게 둔다(20%면 2-10이 6/8).
+      lowestHpAllyHealingFromDamagePercent: 5,
     },
     ultimate: {
       id: "ripa-ult",
@@ -2968,7 +2980,7 @@ export const RELICS: RelicDef[] = [
       basic: { kind: "doubleDab", stacks: 2 },
       ultimate: { kind: "richBomb", stacks: 3 },
       ferocity: { kind: "quickReaction", maxStacks: 2 },
-      passive: { kind: "potentReaction", poisonSeconds: 7 },
+      passive: { kind: "potentReaction", poisonSeconds: 8 },
     },
   },
   {

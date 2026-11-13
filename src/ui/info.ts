@@ -85,7 +85,7 @@ import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, bre
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, periodicStackKeyword, plumeKeyword, frostbiteKeyword, skillDescription } from "./skillPresentation";
+import { attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, periodicStackKeyword, plumeKeyword, frostbiteKeyword, skillDescription, passiveStackKeywords } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { SummonInfoPopup } from "./SummonInfoPopup";
 import { openRelicFeedMaxPopup, openRelicResetPopup } from "./RelicResetPopup";
@@ -3679,6 +3679,8 @@ export function buildFerocityViewModel(
   });
   const guardPercent = "defenseResistancePercent" in def.ferocityTrait ? def.ferocityTrait.defenseResistancePercent : undefined;
   if (guardPercent !== undefined) contextualKeywords.push(...defenseGainKeywords(def.stats, guardPercent));
+  // 폭주 본문이 조가비·시약 같은 패시브 겹을 가리키면 그 태그를 이 쪽지에서도 눌러 읽게 한다.
+  contextualKeywords.push(...passiveStackKeywords(def.passive));
   // 폭주도 패시브와 같은 정형 상세창을 사용한다. 별도 제목 레이어 없이 아이콘 옆에서
   // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
   return {
@@ -3798,6 +3800,11 @@ export function buildSkillViewModel(options: {
       // 리필·마지막 한 방울은 테쿠의 패시브·평타·궁극기 본문이 가리키는 개체 전용 규칙어다.
       refillKeyword(finalDef),
       lastDropKeyword(finalDef),
+      // 조가비·흉터·시약·난동처럼 패시브가 쌓는 이름 있는 겹은 평타·궁극기·패시브 어느 본문이 가리켜도 같은 태그로 연다.
+      ...passiveStackKeywords(finalDef.passive),
+      // 웅크린 무리(아모)가 실제로 올리는 방어·저항 값을 눌러 산출 근거를 읽는다.
+      ...("kind" in skill && (skill as Passive).huddle !== undefined
+        ? defenseGainKeywords(finalDef.stats, (skill as Passive).huddle!.defenseResistancePercentPerAlly) : []),
       // 희열은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다. 궁극기(끝까지 채운다)와
       // 기본 공격(겹마다 피해가 오른다)도 같은 태그를 가리키므로 그 쪽지에도 실린다.
       "kind" in skill

@@ -7,7 +7,7 @@ import { FOCUS, VANDALISM_REBURST_SECONDS } from "../../src/core/skirmish";
 import { KEYWORDS } from "../../src/data/keywords";
 import type { BasicAttack, Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, elationKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, elationKeyword, ferocityTraitDescription, passiveDescription, passiveStackKeywords, overpaintDetonationDamageKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 import { ENCOUNTER_ROLE } from "../../src/core/levelDesign";
 import { ENCOUNTER_ROLE_ICON_ASSETS, encounterRoleDescription, encounterRoleIcon, encounterRoleMultipliers, encounterRoleName } from "../../src/ui/encounterRolePresentation";
@@ -951,7 +951,8 @@ describe("리파 시약 표시 계약", () => {
     expect(def.basic.name).toBe("찰싹! 시약 묻히기");
     expect(def.ultimate.name).toBe("뭐가 들었게? 약물 폭탄");
     expect(skillDescription(def.basic, { damage: 160 })).toBe(
-      "적 한 명에게 [[damage-value|160]]의 [[magical-damage|마법 피해]]를 주고 [[reagent|시약]]을 1겹 묻힌다.",
+      "적 한 명에게 [[damage-value|160]]의 [[magical-damage|마법 피해]]를 주고 [[reagent|시약]]을 1겹 묻힌다."
+      + " 입힌 피해의 5%만큼 현재 체력이 가장 낮은 생존 아군을 회복한다.",
     );
     expect(skillDescription(def.ultimate, { damage: 200 })).toBe(
       "전장의 모든 적에게 [[damage-value|200]]의 [[magical-damage|마법 피해]]를 주고 [[reagent|시약]]을 2겹 묻힌다.",
@@ -960,11 +961,18 @@ describe("리파 시약 표시 계약", () => {
 
   it("은 패시브와 폭주의 모든 수치를 캐릭터 ID가 아닌 계약에서 설명한다", () => {
     const def = ripa();
+    // 몇 겹·몇 초·반응의 수치는 태그가 말하고 본문은 되풀이하지 않는다(응태 2026-11-13).
     expect(passiveDescription(def.passive)).toBe(
-      "공격이 적중한 적에게 [[reagent|시약]]을 묻힌다. 시약은 최대 3겹까지 쌓이고 8초 동안 남는다."
-      + " 가득 차면 [[reagent-reaction|시약 반응]]이 일어나 그 적을 4초 동안 [[poison|중독]]시키고 5초 동안 [[res|저항력]]을 12% 낮추며,"
-      + " 체력 비율이 가장 낮은 아군 한 명이 최대 체력의 5%를 회복한다.",
+      "공격이 적중한 적에게 [[reagent|시약]]을 묻힌다. 시약이 가득 찬 적에게는 [[reagent-reaction|시약 반응]]이 일어난다.",
     );
+    const tags = passiveStackKeywords(def.passive);
+    expect(tags.find((tag) => tag.id === "reagent")?.description).toContain("최대 3겹까지 쌓이고 8초 동안 남으며");
+    expect(tags.find((tag) => tag.id === "reagent-reaction")?.description).toBe(
+      "가득 찬 시약이 터지는 순간이다. 그 적을 5초 동안 중독시키고 5초 동안 저항력을 16% 낮추며,"
+      + " 체력 비율이 가장 낮은 아군 한 명이 최대 체력의 8%를 회복한다.",
+    );
+    // 태그 팝업 안에서는 다른 태그를 열 수 없으므로 규칙어 표기를 넣지 않는다.
+    for (const tag of tags) expect(tag.description).not.toContain("[[");
     expect(ferocityTraitDescription(def.ferocityTrait)).toBe(
       "폭주에 들어가는 순간 모든 적에게 [[reagent|시약]]을 1겹 묻힌다. 폭주 중 [[attack-speed|공격 속도]]가 40% 증가한다.",
     );
@@ -1201,6 +1209,27 @@ describe("마키 스킬 표시 계약", () => {
   });
 });
 
+describe("이름 있는 겹 태그", () => {
+  it("토비의 공속 겹(난동)은 태그가 겹당 값과 상한을 말하고 본문은 되풀이하지 않는다", () => {
+    for (const [id, tagId, term] of [["toby", "toby-rampage", "난동"]] as const) {
+      const def = RELICS.find((relic) => relic.id === id)!;
+      const body = passiveDescription(def.passive);
+      expect(body).toContain(`[[${tagId}|${term}]]`);
+      expect(body).not.toContain("공격 속도");
+      const tag = passiveStackKeywords(def.passive).find((entry) => entry.id === tagId)!;
+      expect(tag.description).toContain(`공격 속도가 ${def.passive.value} 오른다`);
+      expect(tag.description).toContain(`최대 ${def.passive.maxStacks}겹`);
+    }
+  });
+
+  it("수쿠스이노의 흉터도 아군 절 없이 태그가 수치를 갖는다", () => {
+    const def = RELICS.find((relic) => relic.id === "sukusuino")!;
+    expect(passiveDescription(def.passive)).toBe("피해를 받을 때마다 [[scar|흉터]]가 한 겹 쌓인다.");
+    const scar = passiveStackKeywords(def.passive).find((tag) => tag.id === "scar")!;
+    expect(scar.description).not.toContain("아군");
+  });
+});
+
 describe("아모 조가비 표시 계약", () => {
   const amo = RELICS.find((def) => def.id === "amo")!;
 
@@ -1210,7 +1239,15 @@ describe("아모 조가비 표시 계약", () => {
     expect(amo.basic.name).toBe("껍질로 쿵");
     expect(amo.ultimate.name).toBe("다들 내 뒤로!");
     expect(passiveDescription(amo.passive)).toContain("[[shell|조가비]]");
-    expect(passiveDescription(amo.passive)).toContain("최대 체력의 10%");
+    // 조가비가 무엇을 하는지는 태그가 말한다 — 본문은 쌓인다는 것과 웅크린 무리만 적는다.
+    expect(passiveDescription(amo.passive)).not.toContain("보호막");
+    expect(passiveDescription(amo.passive, undefined, { defense: 128, resistance: 104 })).toContain(
+      "곁에 선 다른 아군 한 명당 [[def|방어력]]이 [[stat-bonus-def|+10]], [[res|저항력]]이 [[stat-bonus-res|+8]] 오른다(최대 2명).",
+    );
+    const shell = passiveStackKeywords(amo.passive).find((tag) => tag.id === "shell")!;
+    expect(shell.description).toContain("자신은 최대 체력의 10%");
+    expect(shell.description).toContain("최대 체력의 8%만큼 보호막");
+    expect(skillDescription(amo.basic)).toContain("방어력의 25%");
     expect(ferocityTraitDescription(amo.ferocityTrait)).toContain("조가비]]를 3겹");
     expect(skillDescription(amo.ultimate)).toContain("조가비]]가 곧바로 다시 터질 수 있게 된다");
   });

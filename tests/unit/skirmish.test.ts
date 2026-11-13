@@ -2020,7 +2020,8 @@ describe("궁극기", () => {
       target.attackCooldown = 99;
     });
     first.def = { ...first.def, element: "fire", stats: { ...first.def.stats, def: 0 } };
-    armored.def = { ...armored.def, element: "fire", stats: { ...armored.def.stats, def: 300 } };
+    // 아모의 웅크림(곁 아군당 방어 상승)은 상태를 읽는 경로라 여기서는 빼고 방어 300 그대로 잰다.
+    armored.def = { ...armored.def, element: "fire", stats: { ...armored.def.stats, def: 300 }, passive: { ...armored.def.passive, huddle: undefined } };
     disadvantaged.def = { ...disadvantaged.def, element: "water", stats: { ...disadvantaged.def.stats, def: 0 } };
     first.hp = 1; // 첫 처리 대상이 죽어도 뒤의 두 대상을 계속 정산해야 한다.
     torika.energy = torika.def.ultimate.cost;
@@ -4598,6 +4599,18 @@ describe("리파 — 제공자별 시약 반응", () => {
     return { state, providers, targets };
   }
 
+  /** 평타 회복(준 피해의 일부)을 빼 반응 회복만 잰다 — 평타 회복은 따로 검사한다. */
+  function withoutBasicHeal(provider: Fighter) {
+    provider.def = { ...provider.def, basic: { ...provider.def.basic, lowestHpAllyHealingFromDamagePercent: undefined } };
+  }
+
+  /** 반응 수치는 데이터에서 읽는다 — 손으로 적으면 조정 뒤 이 검사만 옛 값으로 남는다. */
+  function reagentReactionOf(provider: Fighter) {
+    const reaction = provider.def.passive.reagentReaction;
+    if (!reaction) throw new Error("시약 반응 계약이 필요합니다.");
+    return reaction;
+  }
+
   /** 지정 리파가 첫 적에게 기본 공격 한 번만 적중하게 한다. */
   function basicHit(state: SkirmishState, provider: Fighter, target: Fighter) {
     provider.targetId = target.id;
@@ -4608,6 +4621,8 @@ describe("리파 — 제공자별 시약 반응", () => {
 
   it("는 1→2→3겹에서만 소비·공용 중독·저항 감소·회복을 일으키고 초과 겹을 남기지 않는다", () => {
     const { state, providers: [ripa], targets: [target] } = reagentFight(["ripa", "rex"], ["amo"]);
+    withoutBasicHeal(ripa);
+    const reaction = reagentReactionOf(ripa);
     const ally = state.fighters.find((fighter) => fighter.def.id === "rex")!;
     ally.hp = ally.maxHp * 0.5;
     const originalResistance = target.def.stats.res;
@@ -4619,12 +4634,12 @@ describe("리파 — 제공자별 시약 반응", () => {
     const events = basicHit(state, ripa, target);
 
     expect(target.reagents[ripa.id]).toBeUndefined();
-    expect(target.poison?.remaining).toBeCloseTo(4, 1);
+    expect(target.poison?.remaining).toBeCloseTo(reaction.reactionPoisonSeconds, 1);
     expect(target.poison?.sourceId).toBe(ripa.id);
     expect(target.poison?.amountPerSecond).toBeGreaterThan(0);
-    expect(target.reagentResistanceReductions[ripa.id].amount).toBeCloseTo(originalResistance * 0.12, 8);
+    expect(target.reagentResistanceReductions[ripa.id].amount).toBeCloseTo(originalResistance * reaction.resistanceReductionPercent / 100, 8);
     expect(defensiveDefinition(target, state).def.stats.res).toBeGreaterThanOrEqual(0);
-    expect(ally.hp).toBeCloseTo(ally.maxHp * 0.55, 8);
+    expect(ally.hp).toBeCloseTo(ally.maxHp * (0.5 + reaction.lowestHpAllyHealMaxHpPercent / 100), 8);
     expect(events).toContainEqual(expect.objectContaining({ kind: "heal", fighterId: ally.id }));
     // 세 칸 소비 하나가 수포 사건 하나다. 뒤따르는 독 시작과 회복이 이를 복제하지 않는다.
     expect(events.filter((event) => event.kind === "combatEffect" && event.effect.tag === "reagentReaction")).toHaveLength(1);
@@ -4676,13 +4691,15 @@ describe("리파 — 제공자별 시약 반응", () => {
 
   it("는 최저 HP 비율 동률이면 편성 앞 아군을 고르고 회복은 최대 HP를 넘지 않는다", () => {
     const { state, providers: [ripa, first, second], targets: [target] } = reagentFight(["ripa", "rex", "dodo"], ["amo"]);
+    withoutBasicHeal(ripa);
+    const reaction = reagentReactionOf(ripa);
     first.hp = first.maxHp * 0.5;
     second.hp = second.maxHp * 0.5;
     for (let hit = 0; hit < 3; hit += 1) basicHit(state, ripa, target);
-    expect(first.hp).toBeCloseTo(first.maxHp * 0.55, 8);
+    expect(first.hp).toBeCloseTo(first.maxHp * (0.5 + reaction.lowestHpAllyHealMaxHpPercent / 100), 8);
     expect(second.hp).toBe(second.maxHp * 0.5);
 
-    // 다음 반응은 99%인 첫 편성 리파만 결손 상태이므로 5% 요청도 실제 1%까지만 회복한다.
+    // 다음 반응은 99%인 첫 편성 리파만 결손 상태이므로 회복 요청도 실제 1%까지만 채운다.
     ripa.hp = ripa.maxHp * 0.99;
     first.hp = first.maxHp;
     second.hp = second.maxHp;

@@ -9,7 +9,7 @@ describe("전체 개체의 돌파·기본 스킬 설명", () => {
     const def = getRelic("amo");
     const text = breakthroughEffectText(def, "passive", { ...def.stats, hp: 1000 });
     expect(text).toContain("자신: [[v-shield-hp-16-1000|160]]");
-    expect(text).toContain("해당 아군 최대 체력의 8%");
+    expect(text).toContain("해당 아군 최대 체력의 11%");
   });
 
   it("명시적으로 효과가 없는 슬롯도 등급에 관계없이 강화 표시를 만들지 않는다", () => {

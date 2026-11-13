@@ -48,6 +48,7 @@ const KIT_VISUAL: Readonly<Record<string, Omit<BattleBuffVisual, "fallback"> & {
   fortress: { category: "defense", glyph: "skill", fallback: "guard" },
   undying: { category: "defense", glyph: "skill", fallback: "guard" },
   prickle: { category: "defense", glyph: "skill", fallback: "guard" },
+  scrub: { category: "defense", glyph: "skill", fallback: "guard" },
   "augment-low-hp-attack": { category: "attack", glyph: "rage" },
   "augment-streak": { category: "attack", glyph: "streak" },
   "vital-aim": { category: "attack", glyph: "streak" },

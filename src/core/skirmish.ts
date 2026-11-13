@@ -372,6 +372,12 @@ export interface Fighter extends Combatant {
    * 때문이다 — 분모를 화면이 스킬 정의에서 다시 찾지 않게 코어가 들고 온다.
    */
   volley: { remaining: number; total: number; hitCount: number; attackSpeedPercent: number } | null;
+  /** 「대청소」(아르테)가 남긴 강화 — 방어력·저항력 증가와 돌파가 얹은 공격 속도. 순풍 슬롯과 따로 선다. */
+  scrub: { remaining: number; total: number; defenseResistancePercent: number; attackSpeedPercent: number; sourceId: string } | null;
+  /** 「뒷정리」(아르테)가 센 일반 공격 행동 수. 주기에 닿으면 0으로 돌아간다. */
+  tidyCount: number;
+  /** 「강력 세척」(아르테 평타 돌파)이 센 일반 공격 행동 수. */
+  washCount: number;
   /**
    * 전장에 깔린 여울(`BasicAttack.shallows`). **여러 곳이 동시에 남는다.**
    *
@@ -647,7 +653,8 @@ export interface Fighter extends Combatant {
    * 만들 이유가 없고, 매디의 패시브가 최대 중첩을 소모해 빙결로 바꾸는 순간과도 겹치지 않아야
    * 한다.
    */
-  chill: { stacks: number; speedPercentPerStack: number; maxStacks: number } | null;
+  /** `remaining`이 없으면 풀리지 않는 둔화(매디)다. 있으면 다 마르는 순간 겹째 사라진다(아르테). */
+  chill: { stacks: number; speedPercentPerStack: number; maxStacks: number; remaining?: number; total?: number } | null;
   /**
    * 「수압」 겹(모사나). 공격 속도·이동 속도를 겹마다 깎고, 상한에 닿는 순간 터진다. 터지는 피해·기절은
    * 건 쪽(`sourceId`)의 몸에서 나오므로 계약을 통째로 들고 있다. 시간이 다하면 한꺼번에 사라진다.
@@ -1414,6 +1421,9 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     barrageShieldGranted: 0,
     focus: 0,
     volley: null,
+    scrub: null,
+    tidyCount: 0,
+    washCount: 0,
     shallowPools: [],
     shallowLeapCount: 0,
     tauntHealBudget: def.passive.tauntHeal?.maxPerSecond ?? 0,
@@ -2069,10 +2079,15 @@ function cleanseControlWithAdagio(state: SkirmishState, target: Fighter, events:
 }
 
 /** 둔화 재적용. 저주·덧칠과 같은 자리라 슬롯 하나만 두고 중첩만 오른다. 빙결 중에는 걸리지 않는다. */
-function refreshChill(target: Fighter, effect: Extract<CombatStatusEffect, { kind: "chill" }>): void {
+function refreshChill(target: Fighter, effect: Extract<CombatStatusEffect, { kind: "chill" }>, add = 1): void {
   if (!isFighterAlive(target) || target.frozen !== null) return;
-  const stacks = Math.min(effect.maxStacks, (target.chill?.stacks ?? 0) + 1);
-  target.chill = { stacks, speedPercentPerStack: effect.speedPercentPerStack, maxStacks: effect.maxStacks };
+  const previous = target.chill;
+  const stacks = Math.min(effect.maxStacks, (previous?.stacks ?? 0) + add);
+  // 시간이 있는 둔화는 더 긴 쪽으로 갱신한다. 이미 풀리지 않는 둔화가 걸려 있거나 이번 것이 풀리지 않으면 풀리지 않는다.
+  const timed = effect.seconds !== undefined && (previous === null || previous.remaining !== undefined);
+  const remaining = timed ? Math.max(previous?.remaining ?? 0, effect.seconds!) : undefined;
+  target.chill = { stacks, speedPercentPerStack: effect.speedPercentPerStack, maxStacks: effect.maxStacks,
+    ...(remaining !== undefined ? { remaining, total: Math.max(previous?.total ?? 0, remaining) } : {}) };
   gainTenacity(target);
 }
 
@@ -2155,7 +2170,12 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
     const extra = caster ? extraChapterStacks(caster) : 0;
     refreshCurse(fighter, { ...effect, seconds: effect.seconds * potency, maxStacks: effect.maxStacks + extra });
   }
-  if (effect.kind === "chill") refreshChill(fighter, effect);
+  if (effect.kind === "chill") {
+    // 「깃털 먼지」(아르테 폭주) — 폭주한 시전자의 둔화는 한 번에 여러 겹씩 쌓인다.
+    const caster = sourceId ? findFighter(state, sourceId) : undefined;
+    const dust = caster?.ferocityFever && caster.def.ferocityTrait.effectId === "featherDust" ? caster.def.ferocityTrait.chillStacksPerHit : 1;
+    refreshChill(fighter, effect, dust);
+  }
   if (effect.kind === "drowsy" && sourceId) applyDrowsy(fighter, { ...effect, sleepSeconds: effect.sleepSeconds * potency }, events, state, sourceId);
   if (effect.kind === "intimidate" && sourceId) applyIntimidate(fighter, effect, events, state, sourceId, true);
   if (effect.kind === "fear" && sourceId) applyFear(fighter, effect.seconds, effect.immunitySeconds, events, state, sourceId, false);
@@ -4957,6 +4977,92 @@ function pullStruck(attacker: Fighter, target: Fighter, state: SkirmishState, ev
   events.push({ kind: "combatEffect", fighterId: target.id, effect: { tag: "shieldHit", intensity: 1 } });
 }
 
+/**
+ * 맞은 적을 시전자에게서 바깥으로 민다(아르테의 「대걸레질」). 끌어당김과 같이 보간 없이 같은 프레임에 옮기고
+ * 강인함 경계를 지난다. `wash`가 있으면 그 한 번은 밀어내기 대신 날려버림이다(「강력 세척」).
+ */
+function pushStruck(attacker: Fighter, target: Fighter, skill: Skill, wash: { seconds: number; speed: number; bounces: number } | undefined,
+  state: SkirmishState, events: SkirmishEvent[]): void {
+  if (!isFighterAlive(target)) return;
+  if (wash) {
+    applyCombatStatusEffect(target, { kind: "knockback", ...wash }, events, state, attacker.id, false);
+    return;
+  }
+  const plan = skill.push;
+  if (!plan) return;
+  const dx = target.x - attacker.x; const dy = target.y - attacker.y; const gap = dHypot(dx, dy) || 1;
+  displaceByControl(target, target.x + dx / gap * plan.distance, target.y + dy / gap * plan.distance, state);
+}
+
+/** 「강력 세척」 — 미는 평타의 행동 수를 세어 이번 행동이 날려버림 차례면 그 궤적을 돌려준다. */
+function powerWashThisAction(attacker: Fighter, skill: Skill): { seconds: number; speed: number; bounces: number } | undefined {
+  if (!skill.push) return undefined;
+  const plan = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  if (plan?.kind !== "powerWash") return undefined;
+  attacker.washCount += 1;
+  if (attacker.washCount < plan.every) return undefined;
+  attacker.washCount = 0;
+  return plan.knockback;
+}
+
+/** 해로운 효과 한 칸 — 남은 시간이 없는(풀리지 않는) 것은 무한으로 센다. */
+type DebuffSlot = { remaining: number; clear: () => void };
+const TIMED_DEBUFF_KEYS = ["frozen", "chill", "bleed", "poison", "curse", "overpaint", "vandalism", "pressure", "drowsy", "groggy",
+  "butcher", "frostPlume", "frostbite", "frenzy", "taunted", "observation", "echo", "intimidation", "fear"] as const;
+const BT_DEBUFF_KEYS = ["biteMark", "healCut", "sunken", "fangShave"] as const;
+
+/** 지금 걸린 해로운 효과를 한 칸씩 늘어놓는다. `cleanseAllDebuffs`가 걷는 것과 같은 칸이다. */
+function debuffSlots(fighter: Fighter): DebuffSlot[] {
+  const slots: DebuffSlot[] = [];
+  // 잠은 기절 슬롯으로 막으므로 잠을 걷으면 그 기절도 함께 걷는다.
+  if (fighter.stunnedFor > 0) slots.push({ remaining: fighter.stunnedFor, clear: () => { fighter.stunnedFor = 0; fighter.sleep = null; } });
+  if (fighter.staggeredFor > 0) slots.push({ remaining: fighter.staggeredFor, clear: () => { fighter.staggeredFor = 0; } });
+  for (const key of TIMED_DEBUFF_KEYS) {
+    const slot = fighter[key] as { remaining?: number } | null;
+    if (slot !== null) slots.push({ remaining: slot.remaining ?? Infinity, clear: () => { fighter[key] = null; } });
+  }
+  for (const key of BT_DEBUFF_KEYS) {
+    const slot = fighter.bt[key] as { remaining?: number } | null;
+    if (slot !== null) slots.push({ remaining: slot.remaining ?? Infinity, clear: () => { fighter.bt[key] = null; } });
+  }
+  return slots;
+}
+
+/**
+ * 「뒷정리」(아르테 패시브). 일반 공격 행동을 세어 주기에 닿으면, 해로운 효과가 가장 많은 아군에게서 가장 오래 남은
+ * 것 하나를 걷고 조금 회복시킨다. 걷을 것이 아무에게도 없으면 체력 비율이 가장 낮은 아군을 크게 회복시킨다.
+ * 「프로의 손길」(돌파)은 같은 일을 여러 명에게 하되 한 명 몫의 계수를 줄인다.
+ */
+function tidyUpAfterBasic(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = fighter.def.passive.tidyUp;
+  if (!plan || !isFighterAlive(fighter)) return;
+  const trait = fighter.def.ferocityTrait;
+  const every = fighter.ferocityFever && trait.effectId === "featherDust" ? trait.tidyEvery : plan.every;
+  fighter.tidyCount += 1;
+  if (fighter.tidyCount < every) return;
+  fighter.tidyCount = 0;
+  const pro = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  const count = pro?.kind === "proTouch" ? pro.targets : 1;
+  const scale = pro?.kind === "proTouch" ? pro.healPercent / 100 : 1;
+  const ap = fighter.def.stats.ap;
+  const allies = aliveFighters(state, fighter.side).filter((ally) => ally.summonOwnerId === null);
+  const ratio = (ally: Fighter): number => ally.hp / Math.max(1, ally.maxHp);
+  const dirty = allies.map((ally) => ({ ally, slots: debuffSlots(ally) })).filter((entry) => entry.slots.length > 0)
+    .sort((a, b) => b.slots.length - a.slots.length || ratio(a.ally) - ratio(b.ally));
+  const tended = new Set<Fighter>();
+  for (const { ally, slots } of dirty.slice(0, count)) {
+    slots.reduce((longest, slot) => slot.remaining > longest.remaining ? slot : longest).clear();
+    const amount = applyHealing(state, ally, ap * plan.cleanseHealPower / 100 * scale, fighter.id);
+    pushHeal(events, ally, amount, "passive");
+    tended.add(ally);
+  }
+  if (dirty.length > 0) return;
+  for (const ally of [...allies].sort((a, b) => ratio(a) - ratio(b)).slice(0, count)) {
+    const amount = applyHealing(state, ally, ap * plan.fallbackHealPower / 100 * scale, fighter.id);
+    pushHeal(events, ally, amount, "passive");
+  }
+}
+
 /** 지금 걸음의 원본 계약. 걸음만 갖는 값(보호막 전환 등)을 읽을 때 쓴다. */
 function currentBasicStep(attacker: Fighter): BasicAttackStep | undefined {
   const cycle = attacker.def.basic.cycle;
@@ -5824,6 +5930,20 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       timing: { kind: "timed", remainingSeconds: fighter.undying.remaining, totalSeconds: fighter.undying.total },
     });
   }
+  if (fighter.scrub) {
+    const source = findFighter(state, fighter.scrub.sourceId);
+    buffs.push({
+      id: `scrub:${fighter.id}`,
+      sourceFighterId: fighter.scrub.sourceId,
+      targetFighterId: fighter.id,
+      skillId: source?.def.ultimate.id ?? "scrub",
+      name: source?.def.ultimate.name ?? "",
+      description: fighter.scrub.attackSpeedPercent > 0
+        ? `방어력·저항력 +${fighter.scrub.defenseResistancePercent}% · 공격 속도 +${fighter.scrub.attackSpeedPercent}%`
+        : `방어력·저항력 +${fighter.scrub.defenseResistancePercent}%`,
+      timing: { kind: "timed", remainingSeconds: fighter.scrub.remaining, totalSeconds: fighter.scrub.total },
+    });
+  }
   if (fighter.volley) {
     buffs.push({
       id: `volley:${fighter.id}`,
@@ -6037,6 +6157,8 @@ function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: numb
   const tailwindPercent = fighter.tailwindFor > 0 ? fighter.tailwind?.attackSpeedPercent ?? 0 : 0;
   // 쏟아붓기는 자기 궁극기가 건 시간제한 강화라 같은 자리에서 곱한다.
   const volleyPercent = fighter.volley?.attackSpeedPercent ?? 0;
+  // 「마무리 광택」(아르테 궁극기 돌파) — 대청소가 도는 동안 함께 오른 공격 속도.
+  const scrubPercent = fighter.scrub?.attackSpeedPercent ?? 0;
   // 시약 도핑은 폭주한 제공자 자신의 손만 빠르게 하며 팀 오라로 퍼지지 않는다.
   const reagentDopingPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "reagentDoping"
     ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
@@ -6064,7 +6186,7 @@ function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: numb
   const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
   const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100)
-    * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
+    * (1 + volleyPercent / 100) * (1 + scrubPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
     * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100);
   return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed + ingredientHastePoints(fighter), boost: boostFactor, slow: slowFactor };
 }
@@ -6204,11 +6326,13 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   const fang = target.bt.fangShave ? Math.max(0, 1 - target.bt.fangShave.stacks * target.bt.fangShave.percentPerStack / 100) : 1;
   // 공포에 빠진 몸은 달아나는 동안 방어력·저항력이 함께 깎인다(`FEAR_DEFENSE_REDUCTION_PERCENT`).
   const feared = target.fear !== null ? 1 - FEAR_DEFENSE_REDUCTION_PERCENT / 100 : 1;
-  if (fang === 1 && feared === 1 && bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && mural <= 0 && bulwark <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
+  // 「대청소」(아르테) — 그 시간 동안 방어력·저항력이 함께 오른다. 오라와 같은 자리에서 곱한다.
+  const scrubbed = 1 + (target.scrub?.defenseResistancePercent ?? 0) / 100;
+  if (scrubbed === 1 && fang === 1 && feared === 1 && bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && mural <= 0 && bulwark <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
-    def: target.def.stats.def * fang * feared * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
+    def: target.def.stats.def * scrubbed * fang * feared * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
     // 시약 반응은 정적 정의가 아닌 런타임 실제 감소량이며, 여러 제공자가 있어도 유효 저항은 0 아래로 내리지 않는다.
-    res: Math.max(0, target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + target.augmentResistancePercent / 100) * shred * feared - reagentReduction + (torika?.resistanceBonus ?? 0)),
+    res: Math.max(0, target.def.stats.res * scrubbed * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + target.augmentResistancePercent / 100) * shred * feared - reagentReduction + (torika?.resistanceBonus ?? 0)),
   } } };
 }
 
@@ -6296,7 +6420,7 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
       // 원본의 강한 강화·이동·회복을 약한 증강으로 덮어쓰지 않는다.
       const current = owner.tailwindFor > 0 ? owner.tailwind : null;
       const incoming = payload.buff;
-      const protectedBuff = current && (current.attackSpeedPercent > incoming.attackSpeedPercent
+      const protectedBuff = current && ((current.attackSpeedPercent ?? 0) > (incoming.attackSpeedPercent ?? 0)
         || (current.kind === "order" && (incoming.kind !== "order" || current.criticalChancePoints > incoming.criticalChancePoints || current.lifeStealPoints > incoming.lifeStealPoints))
         || (current.kind === "tailwind" && (incoming.kind !== "tailwind" || current.moveSpeedPercent > incoming.moveSpeedPercent || (current.maxHpRegenPercentPerSecond ?? 0) > (incoming.maxHpRegenPercentPerSecond ?? 0))));
       if (!protectedBuff) applyTeamBuff(owner, { ...incoming, ...(incoming.kind === "resonance" ? { sourceId: owner.id } : {}) });
@@ -7149,6 +7273,10 @@ export function gainFerocity(fighter: Fighter, base: number, state: SkirmishStat
       }
       events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: false, damageType: "physical",
         area: { shape: "radial", x: fighter.x, y: fighter.y, radius: feverBreakthrough.entryRadius } });
+    }
+    if (feverBreakthrough?.kind === "protectiveGear") {
+      // 보호복 착용 — 폭주에 드는 순간 제 몸에 한 겹. 진입 순간 한 번뿐이다.
+      grantProvidedShield(state, fighter, fighter, feverBreakthrough.shieldMaxHpPercent, events);
     }
     if (feverBreakthrough?.kind === "hemStitch") {
       // 밑단 시침 — 폭주에 드는 순간 자신을 뺀 모든 아군에게 한 겹씩 덧댄다(자기 막은 가봉이 맡는다). 진입 순간 한 번뿐이다.
@@ -9362,6 +9490,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   const traitSplashBasic = !useUltimate && !followUp;
   if (traitSplashBasic) attacker.traitBasicCount += 1;
   const traitSplashCritical = traitSplashBasic && traitForcedCritical(state, attacker);
+  // 「강력 세척」 — 행동 하나에 한 번 센다. 광역으로 여럿을 맞혀도 한 번이다.
+  const washKnockback = !useUltimate && !followUp && !free ? powerWashThisAction(attacker, skill) : undefined;
 
   for (const [index, target] of targets.entries()) {
     if (index >= distinctTargets && !isFighterAlive(target)) continue;
@@ -9423,6 +9553,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   reactRaiders(target, attacker, state, events, useUltimate);
     // 광역 걸음도 같은 규칙으로 끌어당긴다 — 단일과 광역에서 갈리면 같은 걸음이 대상 수에 따라 다른 일을 한다.
     if (!useUltimate) pullStruck(attacker, target, state, events);
+    if (!useUltimate) pushStruck(attacker, target, skill, washKnockback, state, events);
     // 집중도 **적중마다** 쌓는다. 단일 타격 쪽에만 두면 갈래화살이 셋을 맞혀도 겹이 하나도
     // 오르지 않아, 가장 많이 맞히는 걸음이 성장에는 전혀 기여하지 않는 거꾸로가 된다.
     if (!useUltimate && attacker.def.passive.kind === "farthestFocus") {
@@ -10244,6 +10375,16 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     if (fighter.vandalism && fighter.vandalism.lockFor > 0) {
       fighter.vandalism = { ...fighter.vandalism, lockFor: Math.max(0, fighter.vandalism.lockFor - dt) };
     }
+    // 시간이 있는 둔화(아르테)도 같은 공용 시계로 마른다. 풀리지 않는 둔화(매디)는 시계가 없다.
+    if (isFighterAlive(fighter) && fighter.chill?.remaining !== undefined) {
+      const remaining = fighter.chill.remaining - dt;
+      if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.chill = null;
+      else fighter.chill = { ...fighter.chill, remaining };
+    }
+    if (fighter.scrub) {
+      const remaining = fighter.scrub.remaining - dt;
+      fighter.scrub = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.scrub, remaining };
+    }
     if (isFighterAlive(fighter) && fighter.overpaint) {
       const remaining = fighter.overpaint.remaining - dt;
       if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.overpaint = null;
@@ -10555,6 +10696,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       // 빗나가거나 광역으로 여럿을 맞혀도 한 번은 한 번이다.
       if (!firedUltimate) {
         advanceBasicCycle(fighter);
+        tidyUpAfterBasic(fighter, state, events);
         /*
          * 물은 **적 주위에** 고인다. 공격 뒤에 깔므로 첫 한 방은 마른 땅에서 나간다.
          *
@@ -10770,6 +10912,20 @@ function fireUltimateCore(
     attacker.energy -= ultimateCost(state, attacker, true);
     // 궁극기 돌파(`gustEnergy`) — 지나가는 바람이 아군 전원에게 게이지를 한 번 건넨다. 시전 한 번에 한 번이다.
     const gust = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    const clean = teamUltimate.teamBuff;
+    if (clean.kind === "deepClean") {
+      // 「대청소」 — 아군 전원의 해로운 효과를 걷고, 주문력 비례 막을 두르고, 그 시간 동안 방어·저항을 올린다.
+      const polish = gust?.kind === "finishingPolish" ? gust.attackSpeedPercent : 0;
+      for (const ally of aliveFighters(state, attacker.side)) {
+        cleanseAllDebuffs(ally);
+        grantShield(state, ally, attacker.id, Math.max(1, Math.round(attacker.def.stats.ap * clean.shieldPower / 100)), events);
+        ally.scrub = { remaining: clean.seconds, total: clean.seconds, defenseResistancePercent: clean.defenseResistancePercent,
+          attackSpeedPercent: polish, sourceId: attacker.id };
+        events.push({ kind: "teamBuff", fighterId: ally.id, buff: clean, sourceId: attacker.id });
+      }
+      attacker.attackCooldown = attackInterval(attacker, state);
+      return events;
+    }
     for (const ally of aliveFighters(state, attacker.side)) {
       applyTeamBuff(ally, teamUltimate.teamBuff);
       events.push({ kind: "teamBuff", fighterId: ally.id, buff: teamUltimate.teamBuff, sourceId: attacker.id });

@@ -52,7 +52,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno" | "plesha";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno" | "plesha" | "arte";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -190,6 +190,11 @@ interface SkillBase {
   /** 실제 HP에서 감소한 피해의 이 비율(%)을 시전자가 회복한다. 과잉 피해는 계산하지 않으며 능력치·폭주 흡혈과 합산한다. */
   /** 맞은 적의 보호막을 피해가 박히기 **전에** 전부 깨뜨린다(코마의 궁극기). 막을 깬 몫은 피해로 세지 않는다. */
   breaksShield?: true;
+  /**
+   * 맞은 적을 시전자에게서 **바깥으로 이만큼(px) 민다**(아르테의 「대걸레질」). 날려버림이 아니라 짧은 자리 옮김이라
+   * 행동을 막지 않고, 강인함 경계(`displaceByControl`)를 지난다. 끌어당김(`BasicAttackStep.pull`)과 방향만 반대다.
+   */
+  push?: { distance: number };
   damageHealingPercent?: number;
   /** 매디 전용: 대상이 [[frozen|빙결]] 상태일 때만, 실제 HP에서 감소한 피해의 이 비율(%)을 시전자가 회복한다. */
   damageHealingPercentIfFrozen?: number;
@@ -622,6 +627,21 @@ export type TeamBuff =
       seconds: number;
       /** 공명을 건 개체의 전투 내 ID. 정의에는 적지 않는다. */
       sourceId?: string;
+    }
+  | {
+      /**
+       * 「대청소」(아르테). 아군 전원의 해로운 효과를 걷고 주문력 비례 보호막을 두르며, 그 시간 동안 방어력·저항력을 올린다.
+       *
+       * 순풍·오더·공명과 **다른 슬롯**(`Fighter.scrub`)에 선다 — 같은 칸을 쓰면 스테라의 순풍과 서로 덮어쓴다.
+       */
+      kind: "deepClean";
+      /** 보호막 = 시전자 주문력의 이 비율(%). */
+      shieldPower: number;
+      /** 방어력·저항력에 곱하는 비율(%). */
+      defenseResistancePercent: number;
+      /** 유지 시간(초). */
+      seconds: number;
+      attackSpeedPercent?: never;
     };
 
 /** 모든 스킬의 판별 유니온이며 `damageType in skill`로 공격 여부를 좁힌다. */
@@ -976,6 +996,11 @@ export type CombatStatusEffect =
       speedPercentPerStack: number;
       /** 쌓을 수 있는 최대 중첩. */
       maxStacks: number;
+      /**
+       * 유지 시간(초). 없으면 풀리지 않는다(매디). 있으면 다시 걸릴 때마다 남은 시간이 더 긴 쪽으로 갱신되고,
+       * 다 마르면 겹이 통째로 사라진다(아르테).
+       */
+      seconds?: number;
     }
   | {
       /**
@@ -1325,6 +1350,7 @@ export type PassiveKind =
   | "basicHitAttackSpeedStack"
   /** 폰토스 전용: 일정 간격마다 밀물이 전장의 모든 적을 뒤로 날린다. 시간에 따른 세기 상승은 패시브가 아니라 자리(`ENCOUNTER_ROLE.*.ramp`)가 갖는다. */
   | "tidalSurge"
+  | "tidyUp"
   /** 도디 전용: 제공자 생존 여부로 팀 방어와 적 회복을 동시에 조절한다. */
   | "guardianNestAura"
   /** 케리스 전용: 저주에 걸린 적을 직접 때릴 때마다 주문력을 전투 한정으로 누적한다. */
@@ -1531,6 +1557,12 @@ export type FerocityTrait = {
       reachBonus: number;
     }
   | { effectId: "damageReduction"; reductionPercent: number }
+  | {
+      /** 「깃털 먼지」(아르테) — 폭주 동안 「뒷정리」 주기가 `tidyEvery`로 줄고, 일반 공격의 둔화가 한 번에 `chillStacksPerHit`겹씩 쌓인다. */
+      effectId: "featherDust";
+      tidyEvery: number;
+      chillStacksPerHit: number;
+    }
   | {
       /** 토리카 전용 탱커 폭주. 정적 종족값을 바꾸지 않고 전투 계산에만 투영한다. */
       effectId: "torikaBulwark";
@@ -2471,6 +2503,12 @@ export interface Passive {
     /** 한 번에 붙을 수 있는 보호막의 상한(대상 최대 체력 %). */
     maxHpCapPercent: number;
   };
+  /**
+   * 「뒷정리」 계약(아르테). 일반 공격 행동 `every`번마다 해로운 효과가 가장 많은 아군 하나에게서 **가장 오래 남은**
+   * 해로운 효과 하나를 걷고 그 아군을 주문력 `cleanseHealPower`%만큼 회복시킨다. 걷을 것이 아무에게도 없으면 체력
+   * 비율이 가장 낮은 아군을 `fallbackHealPower`%만큼 회복시킨다. 행동을 세므로 광역 평타가 여럿을 맞혀도 한 번이다.
+   */
+  tidyUp?: { every: number; cleanseHealPower: number; fallbackHealPower: number };
   /** 전투 한정 누적 패시브가 쌓을 수 있는 최대 횟수. 상한이 없으면 한 판이 길수록 끝없이 자란다. */
   maxStacks?: number;
   /** 밀물 전용: 몇 초마다 어떤 날려버림으로 밀어내는가. 살아 있는 모든 적에게 같은 계약(`knockback`)으로 건다. */
@@ -2954,6 +2992,11 @@ export type BasicBreakthrough = {
   kind: "tightStitch";
   damagePercentPoints: number;
 } | {
+  /** 일반 공격 행동 `every`번째마다 밀어내기가 날려버림으로 바뀐다(아르테 「강력 세척」). */
+  kind: "powerWash";
+  every: number;
+  knockback: { seconds: number; speed: number; bounces: number };
+} | {
   /** 독이 걸린 적을 평타로 맞히면 독 한 틱이 즉시 들어간다(델로피). 청산하는 타격은 이미 몰아 받으므로 제외한다. */
   kind: "poisonPulse";
 } | {
@@ -3236,6 +3279,10 @@ export type UltimateBreakthrough = {
    */
   kind: "fullLining";
 } | {
+  /** 「대청소」가 같은 시간 동안 아군 전원의 공격 속도도 이 비율만큼 올린다(아르테 「마무리 광택」). */
+  kind: "finishingPolish";
+  attackSpeedPercent: number;
+} | {
   /** 궁극기를 쏘기 직전 소환수가 살아 있으면 표적에 관측이 이 수만큼 먼저 쌓인다(모르페). */
   kind: "jointObservation";
   stacks: number;
@@ -3454,6 +3501,10 @@ export type FerocityBreakthrough = {
 } | {
   /** 폭주에 드는 순간 모든 아군에게 최대 체력의 이 비율만큼 보호막을 두른다(테리사 「밑단 시침」). */
   kind: "hemStitch";
+  shieldMaxHpPercent: number;
+} | {
+  /** 폭주에 드는 순간 자신에게 최대 체력의 이 비율만큼 보호막을 두른다(아르테 「보호복 착용」). */
+  kind: "protectiveGear";
   shieldMaxHpPercent: number;
 } | {
   /** 폭주 중 독을 터뜨린 같은 타격에서 독을 다시 바른다(델로피). */
@@ -3690,6 +3741,11 @@ export type PassiveBreakthrough = {
   kind: "stitchedMight";
   damagePercent: number;
   sutureIntervalSeconds?: number;
+} | {
+  /** 「뒷정리」가 한 번에 `targets`명에게 들어가고, 회복 계수는 이 비율(%)로 곱해진다(아르테 「프로의 손길」). */
+  kind: "proTouch";
+  targets: number;
+  healPercent: number;
 } | {
   /** 독이 걸려 있는 동안 그 적이 아군 누구에게나 받는 피해가 이 비율만큼 늘어난다. 독이 풀리면 끝난다(델로피). */
   kind: "blightedFoe";

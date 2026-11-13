@@ -885,6 +885,27 @@ export const PLESHA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   joints: { center: [653, 650], head: [617, 460], eyes: null, feet: [[507, 1216], [685, 1200]] },
 };
 
+/**
+ * 아르테 전신(char_031): 중심1·머리1·눈1·눈2·발1·발2를 프로젝트에서 읽었다. alpha > 16 경계는 (44,22)–(1045,1417)이다.
+ * 발 관절은 그림 밖에 있어 바닥선은 관절이 아니라 alpha 경계로 잡는다.
+ */
+export const ARTE_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 44, top: 22, right: 1045, bottom: 1417 },
+  joints: { center: [559, 305], head: [579, 204], eyes: [[547, 189], [607, 223]], feet: [[592, 2256], [506, 1504]] },
+  /** 로비 세로 비율: 메론 기준. 1.54 m — 눈(206)에서 alpha 아래 경계까지를 그 키로 맞춘다. */
+  lobbyZoom: 0.93,
+};
+
+/** 아르테 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. alpha > 16 경계는 (150,14)–(1127,1227)이다. */
+export const ARTE_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 150, top: 14, right: 1127, bottom: 1227 },
+  joints: { center: [701, 532], head: [735, 406], eyes: null, feet: [[629, 1204], [798, 1183]] },
+};
+
 /** 아크 SD: 중심1·머리1을 프로젝트에서 읽었으며 눈 관절은 없다. alpha 경계는 (113,31)–(1128,1224)이다. */
 export const ARK_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254,

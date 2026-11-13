@@ -152,6 +152,11 @@ const CATEGORY: Record<EffectKind, Category> = {
   touchBurst: "damage",
   vitalSketch: "crit",
   stitchedMight: "damage",
+  // 아르테 — 청소
+  powerWash: "control",
+  finishingPolish: "support",
+  protectiveGear: "survival",
+  proTouch: "support",
   poisonPulse: "damage",
   bleedSettle: "damage",
   extraCard: "damage",

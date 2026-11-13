@@ -56,6 +56,7 @@ const BREAKTHROUGH_TAGS: { readonly [K in Kind]?: (effect: Of<K>) => readonly (S
   yawnContagion: () => [keyword("drowsy", "control")],
   deepSink: () => [keyword("pressure", "control")],
   pressureConduct: () => [keyword("pressure", "control")],
+  powerWash: () => [keyword("knockback", "control")],
   // 약화·표식
   bleedingSmash: () => [bleed()],
   clawBleed: () => [bleed()],
@@ -107,6 +108,7 @@ const BREAKTHROUGH_TAGS: { readonly [K in Kind]?: (effect: Of<K>) => readonly (S
   lightChorus: () => [shield()],
   hemStitch: () => [shield()],
   fullLining: () => [shield()],
+  protectiveGear: () => [shield()],
   leapVeil: (effect) => [stealth(effect.stealthSeconds)],
   tailHide: (effect) => [stealth(effect.seconds)],
   feverAmbush: (effect) => [stealth(effect.stealthSeconds)],

@@ -4456,6 +4456,103 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
+    id: "arte",
+    squad: "gear",
+    name: "아르테",
+    specimenNumber: "031",
+    projectName: "CLEAN SWEEP",
+    excavationSite: "독일 졸른호펜 석회암 채석장",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "결이 고운 석회암 판 한 장을 갈라내자 날개깃 자국이 부채처럼 펼쳐진 채 찍혀 있었다. 깃 한 올의 결과 깃대의 굵기까지 남아 있어, 발굴진은 판을 쪼개지 않고 받침째 들어 옮겼다. 앞다리 끝에는 갈고리발톱 세 개가 깃 사이로 드러나 있었고, 날기보다 짧게 활공하며 땅 위를 부지런히 오간 몸으로 보았다. 뼈가 다 자란 성체였으나 몸집이 작아, 복원은 깃의 배열을 먼저 맞추고 체격을 거기에 맞췄다.",
+    observationProfile: {
+      originYear: "약 1억 5천만 년 전",
+      // 입사한 지 얼마 안 된 신입이라는 자리에 맞춰 열다섯 언저리의 외형·정서에 둔다.
+      restorationYear: "E.C. 15년",
+      lifeStage: "성체",
+      height: "1.54 m",
+      weight: "41 kg",
+    },
+    catalogSummary: "신장 1.54m, 체중 41kg의 인간형 체격에 팔 끝까지 이어진 날개깃이 확인된 성체 아르카이옵테릭스 화석 기반 표본.",
+    unlockRecord: { status: "recorded", text: "복원 후 아르테는 청소 용역 A-CLEAN의 명찰을 달고 작전이 끝난 현장에 가장 먼저 도착한다. 대걸레를 한 번 크게 돌려 흙탕물을 한쪽으로 몰고, 동료의 소매에 튄 얼룩은 깃털 먼지떨이로 톡톡 털어 준다. 일을 마치면 현장 사진을 한 장 찍어 사진첩에 끼우는데, 처음에는 자국 하나 없는 사진만 골랐다. 요즘은 화살표나 들꽃 한 송이가 남은 사진도 섞여 있다. 칭찬을 들으면 또박또박하던 보고 말투가 무너지고, 쉬는 날에는 할 일을 몰라 팔 끝의 깃만 고른다." },
+    squadNote: "작전 뒤 현장 정리 담당. A-CLEAN 소속으로 나이트 기어의 인양이 끝난 구역에 파견되어 흔적을 지운다.",
+    researcherTitle: "연구원님",
+    rarity: "SR",
+    portraitAssetId: "arte",
+    origin: "아르카이옵테릭스",
+    // 바람은 깃털 먼지떨이에서 온다 — 털어 낸 먼지가 바람을 타고 흩어진다.
+    element: "wind",
+    role: "support",
+    // 대걸레가 닿는 거리에서 일하는 청소부라 근거리 지원가다.
+    reachTier: "melee",
+    strike: "smash",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 132.5, efficiencyMultiplier: 1.07 },
+    /*
+     * 근거리 지원가라 테리사와 같은 자리(전투력 약 2,308, SR 띠 안)에 선다.
+     * 대걸레질의 피해는 덤이라 공격력을 낮게 두고, 뒷정리 회복·대청소 보호막이 쓰는 주문력에 몫을 준다.
+     * 주기형 패시브라 공속을 높이면 회복이 넘치므로 중간에 두고, 현장을 바쁘게 도는 청소부라 이속을 높인다.
+     */
+    stats: {
+      hp: 1260,
+      def: 108,
+      res: 72,
+      atk: 66,
+      ap: 80,
+      attackSpeed: 96,
+      moveSpeed: 108,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 한계 돌파: 강력 세척 · 마무리 광택 · 보호복 착용 · 프로의 손길.
+    breakthroughEffects: {
+      basic: { kind: "powerWash", every: 3, knockback: { seconds: 0.6, speed: 1100, bounces: 1 } },
+      ultimate: { kind: "finishingPolish", attackSpeedPercent: 20 },
+      ferocity: { kind: "protectiveGear", shieldMaxHpPercent: 30 },
+      // 두 명에게 들어가는 만큼 한 명당 몫을 덜어 총량이 두 배가 되지 않게 한다.
+      passive: { kind: "proTouch", targets: 2, healPercent: 75 },
+    },
+    ferocityTrait: { name: "깃털 먼지", effectId: "featherDust", tidyEvery: 2, chillStacksPerHit: 2 },
+    passive: {
+      // kind가 tidyUp인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "arte-passive",
+      name: "뒷정리",
+      kind: "tidyUp",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 0,
+      tidyUp: { every: 3, cleanseHealPower: 100, fallbackHealPower: 250 },
+      desc: "기본 행동 3번마다 해로운 효과가 가장 많은 아군에게서 가장 오래 남은 해로운 효과 하나를 지우고 주문력의 100%만큼 회복시킨다. 해로운 효과가 걸린 아군이 없으면 체력 비율이 가장 낮은 아군을 주문력의 250%만큼 회복시킨다.",
+    },
+    basic: {
+      id: "arte-basic",
+      name: "대걸레질",
+      power: 70,
+      scalingStat: "atk",
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "nearbyEnemies",
+      radius: 150,
+      // 막을 두르는 적(레이드 보스·결계 시련)을 상대하는 카운터 자리다.
+      breaksShield: true,
+      // 날려버림이 아니라 짧게 밀어내는 것이라 강인함 경계를 지나는 자리 옮기기만 한다.
+      push: { distance: 60 },
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 8, maxStacks: 3, seconds: 3 }],
+    },
+    ultimate: {
+      id: "arte-ult",
+      name: "대청소",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 110,
+      targeting: "battlefieldAllies",
+      teamBuff: { kind: "deepClean", shieldPower: 160, defenseResistancePercent: 20, seconds: 4 },
+    },
+  },
+  {
     id: "parua",
     squad: "rogue",
     name: "파루아",

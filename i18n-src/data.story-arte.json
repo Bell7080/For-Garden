@@ -1,0 +1,1742 @@
+{
+ "relic.arte.name": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "relic.arte.origin": [
+  "始祖鸟",
+  "อาร์คีออปเทอริกซ์",
+  "Archaeopteryx",
+  "Archaeopteryx",
+  "Archaeopteryx",
+  "Arqueópterix",
+  "Archaeopteryx",
+  "Археоптерикс"
+ ],
+ "relic.arte.excavationSite": [
+  "德国索伦霍芬石灰岩采石场",
+  "เหมืองหินปูนโซลน์โฮเฟิน ประเทศเยอรมนี",
+  "Mỏ đá vôi Solnhofen, Đức",
+  "Tambang batu kapur Solnhofen, Jerman",
+  "Cantera de caliza de Solnhofen, Alemania",
+  "Pedreira de calcário de Solnhofen, Alemanha",
+  "Kalksteinbruch Solnhofen, Deutschland",
+  "Известняковый карьер Зольнхофен, Германия"
+ ],
+ "relic.arte.fossilRecord": [
+  "劈开一块纹理细腻的石灰岩板，里面印着扇形展开的翅羽痕迹。连每一根羽毛的纹理和羽轴的粗细都保留了下来，发掘队没有劈碎石板，而是连同底座一起整块抬走。前肢末端有三只钩爪从羽毛间露出，研究人员认为这具身体与其说会飞，不如说是短距离滑翔、在地面上勤快地来回奔走。骨骼已是成年，但体型很小，因此复原时先对齐羽毛的排列，再让体格去配合。",
+  "เมื่อผ่าแผ่นหินปูนเนื้อละเอียดออกหนึ่งแผ่น ข้างในมีรอยขนปีกแผ่กว้างเหมือนพัดประทับอยู่ ลายของขนแต่ละเส้นไปจนถึงความหนาของแกนขนยังคงอยู่ ทีมขุดค้นจึงไม่ผ่าแผ่นหินแต่ยกไปทั้งฐาน ที่ปลายขาหน้ามีกรงเล็บโค้งสามอันโผล่ออกมาระหว่างขน จึงสันนิษฐานว่าเป็นร่างที่ร่อนในระยะสั้นมากกว่าบิน และวิ่งไปมาบนพื้นอย่างขยันขันแข็ง กระดูกโตเต็มวัยแล้วแต่ตัวเล็ก การฟื้นคืนจึงจัดเรียงขนก่อนแล้วจึงปรับรูปร่างให้เข้ากัน",
+  "Khi tách một phiến đá vôi hạt mịn, bên trong in dấu lông cánh xòe ra như chiếc quạt. Từ thớ của từng sợi lông đến độ dày của cuống lông đều còn nguyên, nên đội khai quật không tách phiến đá mà nhấc nguyên cả đế đi. Ở đầu chi trước có ba móng vuốt cong lộ ra giữa lông vũ, họ cho rằng đây là cơ thể lướt ngắn hơn là bay, cần mẫn chạy qua lại trên mặt đất. Xương đã trưởng thành nhưng thân hình nhỏ, nên khi phục hồi, người ta khớp cách sắp xếp lông trước rồi mới chỉnh vóc dáng theo đó.",
+  "Saat sebuah lempeng batu kapur berbutir halus dibelah, di dalamnya tercetak jejak bulu sayap yang terbentang seperti kipas. Serat tiap helai bulu hingga tebal tangkainya masih utuh, sehingga tim penggali tidak membelah lempeng itu dan mengangkatnya bersama alasnya. Di ujung tungkai depan tampak tiga cakar bengkok di sela bulu, dan mereka menilai tubuh ini lebih banyak melayang singkat daripada terbang, sibuk mondar-mandir di darat. Tulangnya sudah dewasa tetapi tubuhnya kecil, jadi pemulihan dimulai dengan menyelaraskan susunan bulu, lalu menyesuaikan perawakannya.",
+  "Al partir una losa de caliza de grano fino, apareció la huella de unas plumas de ala desplegadas como un abanico. Se conservaban hasta la veta de cada pluma y el grosor de cada raquis, así que el equipo de excavación no partió la losa y la levantó entera con su soporte. En el extremo de las extremidades anteriores asomaban tres garras curvas entre las plumas, y se dedujo que era un cuerpo que más que volar planeaba en tramos cortos, yendo y viniendo con diligencia por el suelo. Los huesos eran de adulto, pero el cuerpo era pequeño, así que la restauración ajustó primero la disposición de las plumas y adaptó la complexión a ella.",
+  "Ao partir uma laje de calcário de grão fino, surgiu a impressão de penas de asa abertas como um leque. Até o veio de cada pena e a espessura de cada raque estavam preservados, então a equipe de escavação não partiu a laje e a ergueu inteira com o suporte. Na ponta dos membros anteriores, três garras curvas apareciam entre as penas, e concluiu-se que era um corpo que mais planava em trechos curtos do que voava, indo e vindo sem parar pelo chão. Os ossos eram de adulto, mas o corpo era pequeno, por isso a restauração alinhou primeiro a disposição das penas e ajustou o porte a ela.",
+  "Als eine feinkörnige Kalksteinplatte aufgespalten wurde, lag darin der Abdruck fächerförmig ausgebreiteter Flügelfedern. Selbst die Maserung jeder Feder und die Dicke jedes Kiels waren erhalten, deshalb spaltete das Grabungsteam die Platte nicht, sondern hob sie samt Unterlage im Ganzen heraus. An den Enden der Vordergliedmaßen ragten drei gebogene Krallen zwischen den Federn hervor; man hielt es für einen Körper, der eher in kurzen Strecken glitt als flog und eifrig über den Boden lief. Die Knochen waren ausgewachsen, der Körper aber klein, daher richtete die Restaurierung zuerst die Federanordnung aus und passte den Körperbau daran an.",
+  "Когда раскололи плиту мелкозернистого известняка, внутри оказался отпечаток маховых перьев, раскрытых веером. Сохранились даже бородки каждого пера и толщина стержней, поэтому раскопщики не стали раскалывать плиту, а подняли её целиком вместе с основанием. На концах передних конечностей между перьями виднелись три изогнутых когтя, и решили, что это тело не столько летало, сколько планировало на короткие расстояния, деловито снуя по земле. Кости были взрослыми, но тело — маленьким, поэтому при восстановлении сначала выровняли расположение перьев, а телосложение подогнали под него."
+ ],
+ "relic.arte.catalogSummary": [
+  "以成年始祖鸟化石为基础的标本：人形体格，身高1.54m、体重41kg，确认有一直延伸到手臂末端的翼羽。",
+  "ตัวอย่างจากฟอสซิลอาร์คีออปเทอริกซ์โตเต็มวัย รูปร่างแบบมนุษย์ สูง 1.54 ม. หนัก 41 กก. พบขนปีกยาวต่อเนื่องไปจนถึงปลายแขน",
+  "Mẫu vật dựa trên hóa thạch Archaeopteryx trưởng thành: vóc dáng hình người cao 1,54 m, nặng 41 kg, xác nhận có lông cánh kéo dài tới đầu cánh tay.",
+  "Spesimen berbasis fosil Archaeopteryx dewasa: tubuh humanoid setinggi 1,54 m dan seberat 41 kg, dengan bulu sayap yang terkonfirmasi memanjang hingga ujung lengan.",
+  "Espécimen basado en un fósil de Archaeopteryx adulto: complexión humanoide de 1,54 m y 41 kg, con plumas de ala confirmadas hasta la punta de los brazos.",
+  "Espécime baseado em um fóssil de Arqueópterix adulto: porte humanoide de 1,54 m e 41 kg, com penas de asa confirmadas até a ponta dos braços.",
+  "Exemplar auf Grundlage eines adulten Archaeopteryx-Fossils: humanoider Körperbau, 1,54 m groß und 41 kg schwer, mit Flügelfedern, die bis zu den Armspitzen reichen.",
+  "Экземпляр на основе окаменелости взрослого археоптерикса: человекоподобное телосложение, рост 1,54 м, вес 41 кг, маховые перья подтверждены до самых кончиков рук."
+ ],
+ "relic.arte.squadNote": [
+  "负责行动结束后的现场清理。隶属A-CLEAN，被派往夜之齿轮完成打捞的区域，抹去痕迹。",
+  "ผู้รับผิดชอบเก็บกวาดหน้างานหลังปฏิบัติการ สังกัด A-CLEAN ถูกส่งไปยังพื้นที่ที่เฟืองรัตติกาลกู้ซากเสร็จแล้วเพื่อลบร่องรอย",
+  "Phụ trách dọn dẹp hiện trường sau tác chiến. Thuộc A-CLEAN, được cử tới các khu vực Bánh Răng Đêm đã trục vớt xong để xóa dấu vết.",
+  "Bertugas membereskan lokasi setelah operasi. Bagian dari A-CLEAN, dikirim ke zona tempat Gir Malam selesai menyelamatkan puing untuk menghapus jejaknya.",
+  "Encargada de limpiar el lugar tras las operaciones. Pertenece a A-CLEAN y la envían a las zonas donde Engranaje Nocturno terminó el rescate para borrar las huellas.",
+  "Responsável pela limpeza do local após as operações. Faz parte da A-CLEAN e é enviada às zonas onde a Engrenagem Noturna terminou o resgate para apagar os vestígios.",
+  "Zuständig für das Aufräumen nach Einsätzen. Gehört zu A-CLEAN und wird in Zonen geschickt, in denen Nachtgetriebe die Bergung beendet hat, um die Spuren zu beseitigen.",
+  "Отвечает за уборку места после операций. Работает в A-CLEAN и выезжает в зоны, где Ночная Шестерня закончила подъём обломков, чтобы стереть следы."
+ ],
+ "relic.arte.researcherTitle": [
+  "研究员",
+  "นักวิจัย",
+  "Nhà nghiên cứu",
+  "Periset",
+  "Investigador",
+  "Pesquisador",
+  "Forscher",
+  "Исследователь"
+ ],
+ "relic.arte.unlockRecord": [
+  "复原后的阿尔缇别上清洁服务公司A-CLEAN的名牌，总是第一个抵达作战结束后的现场。她把拖把大大地抡一圈，将泥水赶到一边，同事袖子上溅到的污渍则用羽毛掸子轻轻拍掉。收工后她会拍一张现场照片夹进相册，起初只挑一点痕迹都没有的照片。如今相册里也混进了留着一个箭头或一朵野花的照片。一被夸奖，她那一板一眼的汇报腔就会垮掉；到了休息日不知道该做什么，只会一直梳理手臂末端的羽毛。",
+  "หลังฟื้นคืน อาร์เตติดป้ายชื่อของบริการทำความสะอาด A-CLEAN และไปถึงหน้างานที่ปฏิบัติการจบแล้วเป็นคนแรกเสมอ เธอเหวี่ยงไม้ถูพื้นครั้งใหญ่ทีเดียวต้อนน้ำโคลนไปข้างหนึ่ง ส่วนคราบที่กระเด็นติดแขนเสื้อเพื่อนร่วมงานก็ใช้ไม้ปัดขนนกปัดออกเบาๆ เสร็จงานแล้วจะถ่ายรูปหน้างานหนึ่งใบใส่อัลบั้ม ตอนแรกเลือกแต่รูปที่ไม่มีรอยเหลือเลย ช่วงนี้มีรูปที่เหลือลูกศรหรือดอกไม้ป่าสักดอกปะปนอยู่ด้วย พอโดนชม น้ำเสียงรายงานที่ฉะฉานก็พังทลาย และในวันหยุดก็ไม่รู้จะทำอะไรจนได้แต่ไซ้ขนที่ปลายแขน",
+  "Sau khi phục hồi, Arte đeo bảng tên của dịch vụ vệ sinh A-CLEAN và luôn là người đến hiện trường đầu tiên khi tác chiến kết thúc. Cô quét cây lau một vòng thật lớn để dồn nước bùn về một phía, còn vết bẩn bắn lên tay áo đồng nghiệp thì dùng phất trần lông vũ phủi nhẹ. Xong việc, cô chụp một tấm ảnh hiện trường kẹp vào album; lúc đầu chỉ chọn những tấm không còn chút dấu vết nào. Dạo này cũng xen lẫn những tấm còn lại một mũi tên hay một bông hoa dại. Được khen là giọng báo cáo rành mạch của cô sụp đổ, còn ngày nghỉ thì không biết làm gì nên chỉ chải lông vũ ở đầu cánh tay.",
+  "Setelah dipulihkan, Arte memakai papan nama layanan kebersihan A-CLEAN dan selalu menjadi yang pertama tiba di lokasi setelah operasi berakhir. Ia mengayunkan pelnya sekali dengan lebar untuk menggiring air lumpur ke satu sisi, dan noda yang terciprat di lengan baju rekannya ditepuk-tepuk dengan kemoceng bulu. Setelah selesai, ia memotret lokasi satu kali dan menyelipkannya ke album; awalnya ia hanya memilih foto tanpa satu jejak pun. Belakangan, foto yang masih menyisakan sebuah panah atau setangkai bunga liar juga ikut terselip. Kalau dipuji, nada laporannya yang rapi langsung runtuh, dan di hari libur ia tidak tahu harus berbuat apa sehingga hanya merapikan bulu di ujung lengannya.",
+  "Tras la restauración, Arte se prendió la placa de A-CLEAN, la empresa de limpieza, y es la primera en llegar al lugar cuando termina una operación. Da una gran pasada con la fregona para arrear el agua embarrada a un lado y, con un plumero, sacude a golpecitos las manchas que salpican las mangas de sus compañeros. Al acabar, hace una foto del sitio y la mete en su álbum; al principio solo elegía fotos en las que no quedaba ni una marca. Hoy también se cuelan fotos con una flecha o una flor silvestre. Si la elogian, su tono de informe tan formal se desmorona, y en los días libres no sabe qué hacer y solo se arregla las plumas del extremo de los brazos.",
+  "Após a restauração, Arte prendeu o crachá da A-CLEAN, a empresa de limpeza, e é sempre a primeira a chegar ao local quando uma operação termina. Dá uma grande passada com o esfregão para tocar a água lamacenta para um lado e, com um espanador, tira com batidinhas as manchas que respingam nas mangas dos colegas. Ao terminar, tira uma foto do local e a coloca no álbum; no começo só escolhia fotos sem nenhuma marca. Hoje também aparecem fotos com uma seta ou uma flor silvestre. Quando recebe elogios, seu tom de relatório certinho desmorona, e nos dias de folga não sabe o que fazer e só fica ajeitando as penas da ponta dos braços.",
+  "Nach ihrer Wiederherstellung steckte sich Arte das Namensschild des Reinigungsdienstes A-CLEAN an und ist stets die Erste am Einsatzort, sobald eine Operation vorbei ist. Mit einem großen Schwung des Mops treibt sie das Schlammwasser zur Seite, und Flecken auf den Ärmeln ihrer Kollegen klopft sie mit dem Federwedel aus. Ist die Arbeit getan, macht sie ein Foto vom Einsatzort und steckt es ins Album; anfangs wählte sie nur Fotos, auf denen keine einzige Spur übrig war. Inzwischen mischen sich auch Fotos mit einem Pfeil oder einer einzelnen Wildblume darunter. Wird sie gelobt, bricht ihr akkurater Berichtston zusammen, und an freien Tagen weiß sie nichts mit sich anzufangen und ordnet nur die Federn an ihren Armenden.",
+  "После восстановления Арте прикрепила бейдж клининговой службы A-CLEAN и всегда первой прибывает на место, когда операция окончена. Одним широким взмахом швабры она сгоняет мутную воду в сторону, а пятна на рукавах коллег похлопывает метёлкой из перьев. Закончив работу, делает один снимок места и вкладывает его в альбом; поначалу она выбирала только фото, где не осталось ни следа. Теперь среди них попадаются и снимки, где осталась стрелка или один полевой цветок. Стоит её похвалить, как чёткий тон доклада рассыпается, а в выходные она не знает, чем заняться, и только перебирает перья на концах рук."
+ ],
+ "relic.arte.observation.originYear": [
+  "约1亿5千万年前",
+  "ประมาณ 150 ล้านปีก่อน",
+  "Khoảng 150 triệu năm trước",
+  "Sekitar 150 juta tahun lalu",
+  "Hace unos 150 millones de años",
+  "Há cerca de 150 milhões de anos",
+  "Vor etwa 150 Millionen Jahren",
+  "Около 150 млн лет назад"
+ ],
+ "relic.arte.observation.restorationYear": [
+  "E.C. 15年",
+  "E.C. 15",
+  "E.C. 15",
+  "E.C. 15",
+  "E.C. 15",
+  "E.C. 15",
+  "E.C. 15",
+  "E.C. 15"
+ ],
+ "relic.arte.observation.lifeStage": [
+  "成年",
+  "โตเต็มวัย",
+  "Trưởng thành",
+  "Dewasa",
+  "Adulta",
+  "Adulta",
+  "Adult",
+  "Взрослая"
+ ],
+ "relic.arte.observation.height": [
+  "1.54 m",
+  "1.54 m",
+  "1.54 m",
+  "1.54 m",
+  "1.54 m",
+  "1.54 m",
+  "1.54 m",
+  "1.54 m"
+ ],
+ "relic.arte.observation.weight": [
+  "41 kg",
+  "41 kg",
+  "41 kg",
+  "41 kg",
+  "41 kg",
+  "41 kg",
+  "41 kg",
+  "41 kg"
+ ],
+ "relic.arte.passive.name": [
+  "善后清理",
+  "เก็บกวาด",
+  "Dọn dẹp",
+  "Beres-Beres",
+  "Recoger",
+  "Arrumação",
+  "Aufräumen",
+  "Уборка"
+ ],
+ "relic.arte.passive.desc": [
+  "每进行3次基本行动，移除有害效果最多的友方身上持续最久的一个有害效果，并为其恢复相当于法术强度100%的生命。若没有友方带有有害效果，则为生命比例最低的友方恢复相当于法术强度250%的生命。",
+  "ทุก 3 การกระทำพื้นฐาน จะลบผลเสียที่อยู่นานที่สุด 1 อย่างออกจากพันธมิตรที่มีผลเสียมากที่สุด และฟื้นฟูให้เท่ากับ 100% ของพลังเวท หากไม่มีพันธมิตรที่ติดผลเสีย จะฟื้นฟูพันธมิตรที่มีสัดส่วนพลังชีวิตต่ำที่สุดเท่ากับ 250% ของพลังเวท",
+  "Cứ mỗi 3 hành động cơ bản, xóa một hiệu ứng có hại kéo dài lâu nhất khỏi đồng minh mang nhiều hiệu ứng có hại nhất và hồi máu cho họ bằng 100% Sức mạnh Phép. Nếu không đồng minh nào bị hiệu ứng có hại, hồi cho đồng minh có tỉ lệ máu thấp nhất bằng 250% Sức mạnh Phép.",
+  "Setiap 3 aksi dasar, menghapus satu efek merugikan yang paling lama tersisa dari sekutu dengan efek merugikan terbanyak dan memulihkannya sebesar 100% Kekuatan Magis. Jika tak ada sekutu yang terkena efek merugikan, memulihkan sekutu dengan rasio HP terendah sebesar 250% Kekuatan Magis.",
+  "Cada 3 acciones básicas, elimina el efecto perjudicial más duradero del aliado con más efectos perjudiciales y lo cura un 100% del poder mágico. Si ningún aliado tiene efectos perjudiciales, cura al aliado con menor proporción de vida un 250% del poder mágico.",
+  "A cada 3 ações básicas, remove o efeito nocivo mais duradouro do aliado com mais efeitos nocivos e o cura em 100% do poder mágico. Se nenhum aliado tiver efeitos nocivos, cura o aliado com a menor proporção de vida em 250% do poder mágico.",
+  "Alle 3 Grundaktionen wird beim Verbündeten mit den meisten schädlichen Effekten der am längsten anhaltende entfernt und er um 100 % der Zauberkraft geheilt. Hat kein Verbündeter einen schädlichen Effekt, wird der Verbündete mit dem niedrigsten Lebensanteil um 250 % der Zauberkraft geheilt.",
+  "Каждые 3 базовых действия снимает самый продолжительный вредный эффект с союзника, у которого их больше всего, и лечит его на 100% силы магии. Если вредных эффектов ни у кого нет, лечит союзника с наименьшей долей здоровья на 250% силы магии."
+ ],
+ "relic.arte.ferocity.name": [
+  "羽毛掸尘",
+  "ฝุ่นขนนก",
+  "Bụi lông vũ",
+  "Debu Bulu",
+  "Polvo de plumas",
+  "Pó de penas",
+  "Federstaub",
+  "Пёрышко-пылесборник"
+ ],
+ "relic.arte.basic.name": [
+  "拖地",
+  "ถูพื้น",
+  "Lau sàn",
+  "Mengepel",
+  "Fregado",
+  "Esfregada",
+  "Wischen",
+  "Мытьё шваброй"
+ ],
+ "relic.arte.ultimate.name": [
+  "大扫除",
+  "ทำความสะอาดครั้งใหญ่",
+  "Tổng vệ sinh",
+  "Bersih-Bersih Besar",
+  "Limpieza a fondo",
+  "Faxina geral",
+  "Großputz",
+  "Генеральная уборка"
+ ],
+ "relic.arte.projectName": [
+  "CLEAN SWEEP",
+  "CLEAN SWEEP",
+  "CLEAN SWEEP",
+  "CLEAN SWEEP",
+  "CLEAN SWEEP",
+  "CLEAN SWEEP",
+  "CLEAN SWEEP",
+  "CLEAN SWEEP"
+ ],
+ "story.arte.closingLine": [
+  "研究员，桌上我来帮你收拾。不过便条我不会扔掉。研究员的字，是要留下来的那一类。",
+  "นักวิจัย บนโต๊ะเดี๋ยวฉันจัดให้นะคะ แต่กระดาษโน้ตจะไม่ทิ้งค่ะ ลายมือของนักวิจัยเป็นของที่ต้องเก็บไว้",
+  "Nhà nghiên cứu, trên bàn để em dọn giúp nhé. Nhưng giấy ghi chú thì em không vứt đâu. Chữ của nhà nghiên cứu thuộc loại phải giữ lại ạ.",
+  "Periset, meja Anda biar saya yang rapikan. Tapi kertas catatannya tidak akan saya buang. Tulisan tangan Periset termasuk yang saya simpan.",
+  "Investigador, yo le ordeno el escritorio. Pero las notas no las tiro. Su letra es de las cosas que se guardan.",
+  "Pesquisador, eu arrumo a sua mesa. Mas os bilhetes eu não jogo fora. A sua letra é do tipo que se guarda.",
+  "Forscher, ich räume den Schreibtisch für Sie auf. Aber die Notizzettel werfe ich nicht weg. Ihre Handschrift gehört zu dem, was ich aufhebe.",
+  "Исследователь, стол я вам приберу. Но записки не выброшу. Ваш почерк — из тех вещей, что я оставляю."
+ ],
+ "story.arte.q.arte-mop.prompt": [
+  "阿尔缇为什么总是拿着拖把？",
+  "ทำไมอาร์เตถึงถือไม้ถูพื้นติดตัวตลอด?",
+  "Sao Arte lúc nào cũng mang theo cây lau nhà?",
+  "Kenapa Arte selalu membawa pel ke mana-mana?",
+  "¿Por qué Arte siempre lleva una fregona encima?",
+  "Por que a Arte sempre anda com um esfregão?",
+  "Warum trägt Arte immer einen Wischmopp bei sich?",
+  "Почему Арте всегда носит с собой швабру?"
+ ],
+ "story.arte.q.arte-mop.heavy.label": [
+  "问她重不重",
+  "ถามว่าหนักไหม",
+  "Hỏi có nặng không",
+  "Tanya apakah berat",
+  "Preguntar si pesa",
+  "Perguntar se é pesado",
+  "Fragen, ob er schwer ist",
+  "Спросить, не тяжело ли"
+ ],
+ "story.arte.q.arte-mop.heavy.reply": [
+  "很重。不过随身带着就能马上擦。去拿再回来的工夫，污渍就干了。",
+  "หนักค่ะ แต่ถ้าถือไว้ก็เช็ดได้ทันที ระหว่างที่ไปหยิบแล้วกลับมา คราบก็แห้งไปแล้ว",
+  "Nặng lắm ạ. Nhưng mang theo thì lau được ngay. Trong lúc đi lấy rồi quay lại, vết bẩn đã khô mất rồi.",
+  "Berat. Tapi kalau dibawa, saya bisa langsung mengepel. Selama pergi mengambilnya lalu kembali, nodanya sudah keburu kering.",
+  "Pesa. Pero si la llevo encima, puedo limpiar enseguida. Mientras voy a buscarla y vuelvo, la mancha se seca.",
+  "É pesado. Mas, se eu carrego, consigo limpar na hora. No tempo de ir buscar e voltar, a mancha já secou.",
+  "Ist er. Aber wenn ich ihn dabeihabe, kann ich sofort wischen. Bis ich ihn geholt habe, ist der Fleck schon getrocknet.",
+  "Тяжело. Но если носить с собой, можно сразу вытереть. Пока сходишь за ней и вернёшься, пятно уже высохнет."
+ ],
+ "story.arte.q.arte-mop.heavy.note": [
+  "问拖把重不重，她说重。去拿的工夫污渍就会干，所以她总是随身带着。",
+  "เมื่อถามว่าไม้ถูพื้นหนักไหม เธอตอบว่าหนัก แต่ถือติดตัวตลอดเพราะระหว่างไปหยิบ คราบจะแห้งเสียก่อน",
+  "Khi hỏi cây lau nhà có nặng không, cô nói có. Cô luôn mang theo vì trong lúc đi lấy, vết bẩn sẽ khô mất.",
+  "Saat ditanya apakah pelnya berat, ia bilang berat. Ia selalu membawanya karena noda keburu kering selama pergi mengambilnya.",
+  "Al preguntarle si la fregona pesaba, dijo que sí. La lleva siempre porque la mancha se seca mientras va a buscarla.",
+  "Ao perguntar se o esfregão era pesado, ela disse que sim. Leva sempre consigo porque a mancha seca no tempo de ir buscá-lo.",
+  "Auf die Frage, ob der Mopp schwer sei, sagte sie ja. Sie trägt ihn immer bei sich, weil ein Fleck trocknet, bis man ihn geholt hat.",
+  "На вопрос, не тяжела ли швабра, ответила, что тяжела. Носит её всегда, потому что пятно высыхает, пока за ней сходишь."
+ ],
+ "story.arte.q.arte-mop.name.label": [
+  "问她有没有给它起名字",
+  "ถามว่าตั้งชื่อให้มันหรือยัง",
+  "Hỏi đã đặt tên cho nó chưa",
+  "Tanya apakah sudah diberi nama",
+  "Preguntar si le ha puesto nombre",
+  "Perguntar se deu um nome a ele",
+  "Fragen, ob er einen Namen hat",
+  "Спросить, дала ли она ей имя"
+ ],
+ "story.arte.q.arte-mop.name.reply": [
+  "名字？有备品编号。A-C 0417号。……名字倒是没想过。可以起名字吗？",
+  "ชื่อเหรอคะ? มีเลขครุภัณฑ์ค่ะ A-C 0417 …ไม่เคยคิดเรื่องชื่อเลย ตั้งได้ด้วยเหรอคะ?",
+  "Tên ạ? Có số hiệu vật tư ạ. A-C 0417. …Em chưa từng nghĩ tới tên. Đặt tên cũng được sao ạ?",
+  "Nama? Ada nomor inventarisnya. A-C 0417. …Saya belum pernah memikirkan nama. Memangnya boleh diberi nama?",
+  "¿Un nombre? Tiene número de inventario. A-C 0417. …Nunca he pensado en un nombre. ¿Se le puede poner uno?",
+  "Um nome? Tem número de patrimônio. A-C 0417. …Nunca pensei num nome. Pode dar nome a ele?",
+  "Einen Namen? Er hat eine Inventarnummer. A-C 0417. …An einen Namen habe ich nie gedacht. Darf man ihm denn einen geben?",
+  "Имя? У неё есть инвентарный номер. A-C 0417. …Об имени я никогда не думала. А ей можно дать имя?"
+ ],
+ "story.arte.q.arte-mop.name.note": [
+  "问她有没有给拖把起名，她报出了备品编号。似乎为了能不能起名字犹豫了好一阵。",
+  "เมื่อถามว่าตั้งชื่อไม้ถูพื้นหรือยัง เธอบอกเลขครุภัณฑ์ แล้วดูเหมือนจะครุ่นคิดอยู่นานว่าตั้งชื่อได้หรือไม่",
+  "Khi hỏi đã đặt tên cho cây lau nhà chưa, cô đọc số hiệu vật tư. Có vẻ cô đã băn khoăn khá lâu xem có được đặt tên hay không.",
+  "Saat ditanya apakah pelnya sudah diberi nama, ia menyebut nomor inventarisnya. Ia tampak lama menimbang apakah boleh memberinya nama.",
+  "Al preguntarle si le había puesto nombre a la fregona, dio su número de inventario. Pareció pensar un buen rato si estaba permitido ponerle uno.",
+  "Ao perguntar se tinha dado nome ao esfregão, ela citou o número de patrimônio. Pareceu pensar por um bom tempo se era permitido dar um nome.",
+  "Auf die Frage, ob der Mopp einen Namen habe, nannte sie die Inventarnummer. Sie schien lange zu überlegen, ob man ihm überhaupt einen Namen geben darf.",
+  "На вопрос, есть ли у швабры имя, назвала инвентарный номер. Похоже, долго раздумывала, можно ли вообще давать ей имя."
+ ],
+ "story.arte.q.arte-mop.fight.label": [
+  "问她打架时也用它吗",
+  "ถามว่าตอนสู้ก็ใช้มันด้วยไหม",
+  "Hỏi khi chiến đấu có dùng nó không",
+  "Tanya apakah dipakai juga saat bertarung",
+  "Preguntar si también la usa al pelear",
+  "Perguntar se também o usa nas lutas",
+  "Fragen, ob sie ihn auch im Kampf benutzt",
+  "Спросить, использует ли она её в бою"
+ ],
+ "story.arte.q.arte-mop.fight.reply": [
+  "嗯，照样用。推开敌人和推地板，手腕的用法是一样的。只是打完之后一定会把柄擦干净。",
+  "ใช่ค่ะ ใช้อันเดิมเลย ผลักศัตรูกับผลักพื้น ใช้ข้อมือแบบเดียวกัน แค่หลังสู้เสร็จต้องเช็ดด้ามทุกครั้งค่ะ",
+  "Vâng, dùng y nguyên ạ. Đẩy kẻ địch hay đẩy sàn thì cách dùng cổ tay đều giống nhau. Chỉ là đánh xong em nhất định lau cán ạ.",
+  "Ya, yang sama. Mendorong musuh dan mendorong lantai, cara memakai pergelangan tangannya sama. Hanya saja setelah bertarung, gagangnya pasti saya lap.",
+  "Sí, la misma. Empujar a un enemigo y empujar el suelo usa la misma muñeca. Eso sí, después de pelear siempre limpio el palo.",
+  "Sim, o mesmo. Empurrar um inimigo e empurrar o chão usam o mesmo pulso. Só que, depois de lutar, sempre limpo o cabo.",
+  "Ja, genau den. Einen Gegner wegschieben und einen Boden wischen braucht dasselbe Handgelenk. Nach dem Kampf putze ich nur jedes Mal den Stiel.",
+  "Да, ту же самую. Отталкивать врага и толкать пол — одно и то же движение запястья. Только после боя я всегда протираю рукоять."
+ ],
+ "story.arte.q.arte-mop.fight.note": [
+  "问她打架时也用拖把吗，她说照样用。推敌人和推地板用的是同一个手腕。",
+  "เมื่อถามว่าตอนสู้ก็ใช้ไม้ถูพื้นไหม เธอตอบว่าใช้อันเดิม ผลักศัตรูกับผลักพื้นใช้ข้อมือแบบเดียวกัน",
+  "Khi hỏi lúc chiến đấu có dùng cây lau nhà không, cô nói dùng y nguyên. Đẩy kẻ địch hay đẩy sàn đều cùng một cổ tay.",
+  "Saat ditanya apakah pel dipakai saat bertarung, ia bilang dipakai apa adanya. Mendorong musuh dan mendorong lantai memakai pergelangan yang sama, katanya.",
+  "Al preguntarle si usa la fregona al pelear, dijo que la usa tal cual. Empujar a un enemigo y empujar el suelo es la misma muñeca, dijo.",
+  "Ao perguntar se usa o esfregão nas lutas, disse que usa do jeito que está. Empurrar um inimigo e o chão é o mesmo pulso, disse.",
+  "Auf die Frage, ob sie den Mopp auch im Kampf benutzt, sagte sie, sie benutze ihn genau so. Gegner und Boden wegschieben brauche dasselbe Handgelenk.",
+  "На вопрос, пользуется ли она шваброй в бою, ответила, что да, как есть. Толкать врага и пол — одно и то же запястье, сказала она."
+ ],
+ "story.arte.q.arte-photo.prompt": [
+  "阿尔缇为什么要拍现场照片？",
+  "ทำไมอาร์เตถึงถ่ายรูปหน้างาน?",
+  "Sao Arte lại chụp ảnh hiện trường?",
+  "Kenapa Arte memotret lokasi kerja?",
+  "¿Por qué Arte fotografía los lugares?",
+  "Por que a Arte fotografa os locais?",
+  "Warum fotografiert Arte die Einsatzorte?",
+  "Зачем Арте фотографирует места уборки?"
+ ],
+ "story.arte.q.arte-photo.check.label": [
+  "问是不是用来确认的",
+  "ถามว่าถ่ายไว้ตรวจเช็กหรือเปล่า",
+  "Hỏi có phải để kiểm tra không",
+  "Tanya apakah untuk memeriksa",
+  "Preguntar si es para comprobar",
+  "Perguntar se é para conferir",
+  "Fragen, ob es zur Kontrolle ist",
+  "Спросить, для проверки ли это"
+ ],
+ "story.arte.q.arte-photo.check.reply": [
+  "一开始是的。为了看是不是都擦干净了。可是用照片看，总能发现一样用肉眼漏掉的东西。",
+  "ตอนแรกก็ใช่ค่ะ ไว้ดูว่าเช็ดหมดหรือยัง แต่พอดูในรูป จะเห็นสิ่งที่ตาเปล่ามองข้ามไปอย่างน้อยหนึ่งอย่างทุกครั้ง",
+  "Lúc đầu là vậy ạ. Để xem đã lau sạch hết chưa. Nhưng nhìn qua ảnh thì lần nào cũng thấy một chỗ mắt thường bỏ sót.",
+  "Awalnya iya. Untuk melihat apakah semuanya sudah bersih. Tapi kalau dilihat di foto, pasti ada satu hal yang terlewat oleh mata telanjang.",
+  "Al principio, sí. Para ver si todo quedó limpio. Pero en la foto siempre veo algo que se me escapó a simple vista.",
+  "No começo, sim. Para ver se tudo ficou limpo. Mas na foto sempre aparece alguma coisa que deixei passar a olho nu.",
+  "Am Anfang schon. Um zu sehen, ob alles weg ist. Aber auf dem Foto entdecke ich jedes Mal etwas, das ich mit bloßem Auge übersehen habe.",
+  "Сначала да. Чтобы видеть, всё ли стёрто. Но на фото я всегда замечаю что-то одно, что пропустила невооружённым глазом."
+ ],
+ "story.arte.q.arte-photo.check.note": [
+  "问是不是用来确认的，她说一开始是。用照片看，总能看到一样肉眼漏掉的东西。",
+  "เมื่อถามว่าถ่ายไว้ตรวจเช็กหรือเปล่า เธอว่าตอนแรกใช่ ดูในรูปแล้วจะเห็นสิ่งที่ตาเปล่ามองข้ามอย่างน้อยหนึ่งอย่างเสมอ",
+  "Khi hỏi có phải để kiểm tra không, cô nói lúc đầu là vậy. Nhìn qua ảnh lúc nào cũng thấy một chỗ mắt thường bỏ sót.",
+  "Saat ditanya apakah fotonya untuk memeriksa, ia bilang awalnya begitu. Di foto selalu terlihat satu hal yang terlewat oleh mata telanjang.",
+  "Al preguntarle si las fotos eran para comprobar, dijo que al principio sí. En la foto siempre ve algo que se le escapó a simple vista.",
+  "Ao perguntar se as fotos eram para conferir, disse que no começo eram. Na foto sempre aparece algo que deixou passar a olho nu.",
+  "Auf die Frage, ob die Fotos zur Kontrolle seien, sagte sie, anfangs schon. Auf dem Foto sehe sie immer etwas, das sie übersehen habe.",
+  "На вопрос, для проверки ли снимки, ответила, что сначала да. На фото она всегда видит что-то, что пропустила глазами."
+ ],
+ "story.arte.q.arte-photo.show.label": [
+  "问能不能给我看看",
+  "ถามว่าขอดูได้ไหม",
+  "Hỏi có thể cho xem không",
+  "Tanya apakah boleh melihatnya",
+  "Preguntar si puede enseñarlas",
+  "Perguntar se pode mostrar",
+  "Fragen, ob sie sie zeigen kann",
+  "Спросить, можно ли посмотреть"
+ ],
+ "story.arte.q.arte-photo.show.reply": [
+  "前面全是地板的照片，你会觉得没意思。从后面开始看吧。越往后越没那么干净。那样更好。",
+  "หน้าแรกๆ เป็นรูปพื้นทั้งหมด คงน่าเบื่อค่ะ ดูจากด้านหลังนะคะ ยิ่งไปด้านหลังยิ่งสะอาดน้อยลงหน่อย แบบนั้นดีกว่าค่ะ",
+  "Mấy trang đầu toàn ảnh sàn nhà, chắc chán lắm ạ. Xem từ phía sau nhé. Càng về sau càng bớt sạch một chút. Như thế lại hay hơn.",
+  "Halaman depan isinya foto lantai semua, pasti membosankan. Lihat dari belakang saja. Makin ke belakang makin kurang bersih. Itu justru lebih bagus.",
+  "Las primeras son todas fotos del suelo, le aburrirán. Empiece por el final. Cuanto más atrás, un poco menos limpias. Eso es mejor.",
+  "As primeiras são todas fotos de chão, vão te entediar. Comece pelo fim. Quanto mais para trás, menos limpas. Isso é melhor.",
+  "Vorne sind nur Bodenfotos, das wird Sie langweilen. Fangen Sie hinten an. Je weiter hinten, desto weniger sauber. Das ist besser so.",
+  "В начале одни фото пола, вам будет скучно. Смотрите с конца. Чем дальше, тем они чуть менее чистые. Так даже лучше."
+ ],
+ "story.arte.q.arte-photo.show.note": [
+  "请她给我看照片，她让我从后面看。越往后越不干净，她说那样更好。",
+  "เมื่อขอดูรูป เธอบอกให้ดูจากด้านหลัง ยิ่งหลังยิ่งสะอาดน้อยลง และเธอบอกว่าแบบนั้นดีกว่า",
+  "Khi xin xem ảnh, cô bảo xem từ phía sau. Càng về sau càng bớt sạch, và cô nói như thế lại hay hơn.",
+  "Saat diminta menunjukkan fotonya, ia menyuruh melihat dari belakang. Makin ke belakang makin kurang bersih, dan katanya itu lebih bagus.",
+  "Al pedirle ver las fotos, dijo que empezara por el final. Cuanto más atrás, menos limpias, y según ella eso es mejor.",
+  "Ao pedir para ver as fotos, disse para começar pelo fim. Quanto mais para trás, menos limpas, e segundo ela isso é melhor.",
+  "Auf die Bitte, die Fotos zu zeigen, sagte sie, man solle hinten anfangen. Je weiter hinten, desto weniger sauber, und das sei besser.",
+  "Когда попросили показать снимки, сказала смотреть с конца. Чем дальше, тем менее чисто, и, по её словам, так лучше."
+ ],
+ "story.arte.q.arte-photo.favorite.label": [
+  "问她最喜欢哪张照片",
+  "ถามถึงรูปที่ชอบที่สุด",
+  "Hỏi tấm ảnh cô thích nhất",
+  "Tanya foto favoritnya",
+  "Preguntar por su foto favorita",
+  "Perguntar pela foto favorita",
+  "Nach ihrem Lieblingsfoto fragen",
+  "Спросить о любимом снимке"
+ ],
+ "story.arte.q.arte-photo.favorite.reply": [
+  "水渠墙上留着一个箭头的那张。那是我第一次没擦掉的东西。要对黛依保密哦。",
+  "รูปกำแพงริมคลองที่เหลือลูกศรอยู่อันเดียวค่ะ นั่นเป็นสิ่งแรกที่ฉันไม่ได้ลบ อย่าบอกเดย์นะคะ",
+  "Tấm bức tường bên kênh còn sót một mũi tên ạ. Đó là thứ đầu tiên em không xóa. Giữ bí mật với Dei nhé.",
+  "Foto tembok kanal yang masih menyisakan satu panah. Itu hal pertama yang tidak saya hapus. Rahasiakan dari Dei, ya.",
+  "La del muro del canal con una sola flecha. Es lo primero que no borré. Que Dei no se entere.",
+  "A do muro do canal com uma única seta. Foi a primeira coisa que eu não apaguei. Segredo para a Dei.",
+  "Das von der Kanalmauer, auf der ein einzelner Pfeil geblieben ist. Das ist das Erste, was ich nicht weggewischt habe. Verraten Sie es Dei nicht.",
+  "Та, где на стене у канала остался один указатель. Это первое, что я не стёрла. Только Дей не говорите."
+ ],
+ "story.arte.q.arte-photo.favorite.note": [
+  "问她最喜欢哪张照片，她挑了留着箭头的那面墙。她说那是第一次没擦掉的东西。",
+  "เมื่อถามถึงรูปที่ชอบที่สุด เธอเลือกรูปกำแพงที่เหลือลูกศรไว้ บอกว่าเป็นสิ่งแรกที่ไม่ได้ลบ",
+  "Khi hỏi tấm ảnh thích nhất, cô chọn ảnh bức tường còn mũi tên. Cô nói đó là thứ đầu tiên mình không xóa.",
+  "Saat ditanya foto favoritnya, ia memilih foto tembok yang masih ada panahnya. Katanya itu hal pertama yang tidak ia hapus.",
+  "Al preguntarle por su foto favorita, eligió la del muro con la flecha. Dijo que fue lo primero que no borró.",
+  "Ao perguntar pela foto favorita, escolheu a do muro com a seta. Disse que foi a primeira coisa que não apagou.",
+  "Nach ihrem Lieblingsfoto gefragt, wählte sie die Mauer mit dem Pfeil. Es sei das Erste gewesen, was sie nicht weggewischt habe.",
+  "На вопрос о любимом снимке выбрала стену с указателем. Сказала, что это первое, что она не стёрла."
+ ],
+ "story.arte.q.arte-rookie.prompt": [
+  "阿尔缇在公司是个什么样的新人？",
+  "อาร์เตเป็นพนักงานใหม่แบบไหนที่บริษัท?",
+  "Ở công ty Arte là nhân viên mới thế nào?",
+  "Arte itu karyawan baru yang seperti apa di kantornya?",
+  "¿Qué clase de novata es Arte en su empresa?",
+  "Que tipo de novata a Arte é na empresa?",
+  "Was für eine Neue ist Arte in ihrer Firma?",
+  "Какой новичок Арте в своей компании?"
+ ],
+ "story.arte.q.arte-rookie.score.label": [
+  "问她现场评分多少",
+  "ถามคะแนนประเมินหน้างาน",
+  "Hỏi điểm đánh giá hiện trường",
+  "Tanya nilai evaluasi lapangannya",
+  "Preguntar su nota de campo",
+  "Perguntar a nota de campo",
+  "Nach ihrer Einsatzbewertung fragen",
+  "Спросить её полевую оценку"
+ ],
+ "story.arte.q.arte-rookie.score.reply": [
+  "那是对外保密的。……我只能说是最高的。啊，这不是炫耀。是如实汇报。",
+  "เป็นความลับของบริษัทค่ะ …บอกได้แค่ว่าสูงที่สุด อ๊ะ นี่ไม่ได้อวดนะคะ เป็นการรายงานข้อเท็จจริงค่ะ",
+  "Cái đó là bí mật nội bộ ạ. …Em chỉ nói là cao nhất thôi. À, không phải khoe đâu ạ. Là báo cáo sự thật.",
+  "Itu rahasia perusahaan. …Saya hanya bisa bilang itu yang tertinggi. Eh, ini bukan pamer. Ini laporan fakta.",
+  "Eso es confidencial. …Solo diré que es la más alta. Ah, no es presumir. Es un informe de hechos.",
+  "Isso é confidencial. …Só vou dizer que é a mais alta. Ah, não é para me gabar. É um relatório dos fatos.",
+  "Das ist vertraulich. …Ich sage nur, dass sie die höchste ist. Ach, das ist keine Angeberei. Das ist ein Sachbericht.",
+  "Это служебная тайна. …Скажу только, что самая высокая. Ой, это не хвастовство. Это доклад о фактах."
+ ],
+ "story.arte.q.arte-rookie.score.note": [
+  "问她现场评分，她说对外保密。只补充说最高这一点是如实汇报。",
+  "เมื่อถามคะแนนประเมินหน้างาน เธอตอบว่าเป็นความลับ แต่เสริมว่าที่สูงที่สุดนั้นเป็นการรายงานข้อเท็จจริง",
+  "Khi hỏi điểm đánh giá hiện trường, cô nói là bí mật nội bộ. Chỉ thêm rằng việc cao nhất là báo cáo sự thật.",
+  "Saat ditanya nilai evaluasi lapangannya, ia bilang rahasia. Ia hanya menambahkan bahwa nilainya tertinggi, sebagai laporan fakta.",
+  "Al preguntarle por su nota de campo, dijo que era confidencial. Solo añadió, como informe de hechos, que era la más alta.",
+  "Ao perguntar a nota de campo, disse que era confidencial. Só acrescentou, como relatório dos fatos, que era a mais alta.",
+  "Nach ihrer Einsatzbewertung gefragt, nannte sie sie vertraulich. Als Sachbericht fügte sie nur hinzu, dass sie die höchste sei.",
+  "На вопрос о полевой оценке сказала, что это тайна. Лишь добавила, как доклад о фактах, что она самая высокая."
+ ],
+ "story.arte.q.arte-rookie.why.label": [
+  "问她为什么选择清洁工作",
+  "ถามว่าทำไมถึงเลือกงานทำความสะอาด",
+  "Hỏi vì sao chọn nghề dọn dẹp",
+  "Tanya kenapa memilih pekerjaan bersih-bersih",
+  "Preguntar por qué eligió la limpieza",
+  "Perguntar por que escolheu a limpeza",
+  "Fragen, warum sie das Putzen gewählt hat",
+  "Спросить, почему она выбрала уборку"
+ ],
+ "story.arte.q.arte-rookie.why.reply": [
+  "我喜欢把已经结束的地方恢复成最初的样子。那样下一个来的人就能从头开始了嘛。",
+  "ชอบทำให้ที่ที่จบงานแล้วกลับไปเหมือนตอนแรกค่ะ แบบนั้นคนที่มาต่อก็เริ่มใหม่ได้ตั้งแต่ต้นไงคะ",
+  "Em thích đưa một nơi đã xong việc về lại như ban đầu ạ. Như vậy người đến sau có thể bắt đầu lại từ đầu mà.",
+  "Saya suka mengembalikan tempat yang sudah selesai ke keadaan semula. Dengan begitu, orang berikutnya bisa mulai dari awal.",
+  "Me gusta devolver un lugar terminado a como estaba al principio. Así, quien venga después puede empezar desde cero.",
+  "Gosto de devolver um lugar terminado ao estado inicial. Assim, quem vier depois pode começar do zero.",
+  "Ich mag es, einen fertigen Ort wieder in den Anfangszustand zu bringen. Dann kann, wer als Nächstes kommt, von vorn anfangen.",
+  "Мне нравится возвращать закончившееся место в начальный вид. Тогда тот, кто придёт следующим, сможет начать с самого начала."
+ ],
+ "story.arte.q.arte-rookie.why.note": [
+  "问她为什么选择清洁，她说把结束的地方恢复原状，下一个人才能从头开始。",
+  "เมื่อถามว่าทำไมเลือกงานทำความสะอาด เธอตอบว่าต้องทำให้ที่ที่จบงานกลับเป็นเหมือนเดิม คนต่อไปจึงจะเริ่มใหม่ได้",
+  "Khi hỏi vì sao chọn nghề dọn dẹp, cô nói phải đưa nơi đã xong việc về như ban đầu thì người sau mới bắt đầu lại được.",
+  "Saat ditanya kenapa memilih bersih-bersih, ia bilang tempat yang sudah selesai harus dikembalikan seperti semula agar orang berikutnya bisa mulai dari awal.",
+  "Al preguntarle por qué eligió la limpieza, dijo que hay que devolver un lugar terminado a su inicio para que el siguiente empiece desde cero.",
+  "Ao perguntar por que escolheu a limpeza, disse que é preciso devolver o lugar terminado ao início para o próximo começar do zero.",
+  "Auf die Frage, warum sie das Putzen gewählt habe, sagte sie, ein fertiger Ort müsse zurückgesetzt werden, damit der Nächste von vorn beginnen kann.",
+  "На вопрос, почему она выбрала уборку, ответила: место нужно вернуть к началу, чтобы следующий мог начать сначала."
+ ],
+ "story.arte.q.arte-rookie.tired.label": [
+  "问她累不累",
+  "ถามว่าเหนื่อยไหม",
+  "Hỏi có vất vả không",
+  "Tanya apakah melelahkan",
+  "Preguntar si es duro",
+  "Perguntar se é cansativo",
+  "Fragen, ob es anstrengend ist",
+  "Спросить, не тяжело ли ей"
+ ],
+ "story.arte.q.arte-rookie.tired.reply": [
+  "也有累的日子。那种日子我会把休息室的桌子擦一遍。这样就好像一天被整理好了一格。",
+  "มีวันที่เหนื่อยค่ะ วันแบบนั้นจะเช็ดโต๊ะห้องพักสักรอบ แล้วรู้สึกเหมือนวันนั้นถูกจัดเข้าที่ไปหนึ่งช่อง",
+  "Cũng có ngày vất vả ạ. Những hôm đó em lau bàn phòng nghỉ một lượt. Thế là thấy như một ngày được dọn gọn thêm một ô.",
+  "Ada hari yang berat. Di hari seperti itu saya mengelap meja ruang istirahat sekali. Rasanya harinya jadi rapi satu petak.",
+  "Hay días duros. Esos días limpio una vez la mesa de la sala de descanso. Así siento que el día queda ordenado un casillero más.",
+  "Tem dias difíceis. Nesses dias eu limpo a mesa da sala de descanso uma vez. Aí parece que o dia ficou arrumado mais um pouquinho.",
+  "Es gibt harte Tage. An solchen Tagen wische ich einmal den Tisch im Pausenraum. Dann fühlt es sich an, als wäre der Tag ein Fach weiter aufgeräumt.",
+  "Бывают тяжёлые дни. В такие дни я разок протираю стол в комнате отдыха. И кажется, будто день прибрался ещё на одну клеточку."
+ ],
+ "story.arte.q.arte-rookie.tired.note": [
+  "问她累不累，她说也有累的日子。那种日子她会擦擦桌子，把一天整理好一格。",
+  "เมื่อถามว่าเหนื่อยไหม เธอตอบว่ามีวันที่เหนื่อย วันแบบนั้นจะเช็ดโต๊ะเพื่อจัดวันนั้นให้เข้าที่ไปหนึ่งช่อง",
+  "Khi hỏi có vất vả không, cô nói cũng có ngày như vậy. Những hôm đó cô lau bàn để dọn gọn một ngày thêm một ô.",
+  "Saat ditanya apakah berat, ia bilang ada hari seperti itu. Di hari itu ia mengelap meja dan merapikan harinya satu petak.",
+  "Al preguntarle si es duro, dijo que hay días así. Esos días limpia una mesa y ordena el día un casillero más.",
+  "Ao perguntar se é cansativo, disse que tem dias assim. Nesses dias limpa uma mesa e arruma o dia mais um pouquinho.",
+  "Auf die Frage, ob es anstrengend sei, sagte sie, manche Tage schon. Dann wische sie einen Tisch und räume den Tag ein Fach weiter auf.",
+  "На вопрос, не тяжело ли, ответила, что бывает. В такие дни она протирает стол и прибирает день ещё на клеточку."
+ ],
+ "story.arte.line.0.0": [
+  "我是A-CLEAN的阿尔缇。有需要整理的地方请叫我，研究员。",
+  "อาร์เตจาก A-CLEAN ค่ะ ถ้ามีที่ต้องเก็บกวาดเรียกได้เลยนะคะ นักวิจัย",
+  "Em là Arte của A-CLEAN. Có chỗ nào cần dọn thì cứ gọi em, nhà nghiên cứu.",
+  "Saya Arte dari A-CLEAN. Kalau ada tempat yang perlu dibereskan, panggil saya, Periset.",
+  "Soy Arte, de A-CLEAN. Si algo necesita orden, llámeme, investigador.",
+  "Sou a Arte, da A-CLEAN. Se algum lugar precisar de arrumação, me chame, pesquisador.",
+  "Ich bin Arte von A-CLEAN. Wenn irgendwo aufgeräumt werden muss, rufen Sie mich, Forscher.",
+  "Я Арте из A-CLEAN. Если где-то нужно прибраться, зовите, исследователь."
+ ],
+ "story.arte.line.0.1": [
+  "请注意脚下。那里刚擦过。",
+  "ระวังเท้าด้วยค่ะ ตรงนั้นเพิ่งเช็ดไป",
+  "Xin để ý dưới chân ạ. Chỗ đó em vừa lau.",
+  "Hati-hati langkahnya. Di situ baru saya pel.",
+  "Cuidado dónde pisa. Acabo de fregar ahí.",
+  "Cuidado onde pisa. Acabei de limpar aí.",
+  "Bitte auf die Schritte achten. Da habe ich gerade gewischt.",
+  "Осторожно, смотрите под ноги. Там я только что вытерла."
+ ],
+ "story.arte.line.0.2": [
+  "正在确认现场。马上就好。请稍等一下。",
+  "กำลังตรวจหน้างานค่ะ เดี๋ยวก็เสร็จ รอสักครู่นะคะ",
+  "Đang kiểm tra hiện trường ạ. Xong ngay thôi. Xin chờ một lát.",
+  "Sedang memeriksa lokasi. Sebentar lagi selesai. Mohon tunggu sebentar.",
+  "Revisando el lugar. Termino enseguida. Espere un momento, por favor.",
+  "Verificando o local. Já termino. Aguarde um momento, por favor.",
+  "Ich prüfe gerade den Einsatzort. Bin gleich fertig. Einen Moment bitte.",
+  "Проверяю место. Скоро закончу. Подождите минутку, пожалуйста."
+ ],
+ "story.arte.line.1.0": [
+  "今天跑了三个地方。其中两个十五分钟内就完成了。",
+  "วันนี้ไปมาสามที่ค่ะ สองที่เสร็จภายในสิบห้านาที",
+  "Hôm nay em đi ba chỗ. Hai chỗ xong trong mười lăm phút.",
+  "Hari ini saya ke tiga lokasi. Dua di antaranya selesai dalam lima belas menit.",
+  "Hoy recorrí tres sitios. Dos los terminé en menos de quince minutos.",
+  "Hoje passei por três locais. Dois terminei em menos de quinze minutos.",
+  "Heute war ich an drei Einsatzorten. Zwei davon waren in fünfzehn Minuten erledigt.",
+  "Сегодня обошла три объекта. Два закончила меньше чем за пятнадцать минут."
+ ],
+ "story.arte.line.1.1": [
+  "研究员的桌面，我可以整理一下吗？文件的顺序我不会动。",
+  "ขอจัดโต๊ะของนักวิจัยได้ไหมคะ? ลำดับเอกสารจะไม่แตะเลยค่ะ",
+  "Em dọn bàn của nhà nghiên cứu được không ạ? Thứ tự giấy tờ em sẽ không động vào.",
+  "Boleh saya rapikan meja Periset? Urutan dokumennya tidak akan saya ubah.",
+  "¿Puedo ordenar su escritorio, investigador? No tocaré el orden de los papeles.",
+  "Posso arrumar sua mesa, pesquisador? Não vou mexer na ordem dos papéis.",
+  "Darf ich Ihren Schreibtisch aufräumen, Forscher? Die Reihenfolge der Unterlagen fasse ich nicht an.",
+  "Можно прибрать ваш стол, исследователь? Порядок бумаг я не трону."
+ ],
+ "story.arte.line.1.2": [
+  "拖把杆我每天都擦。手碰到的地方最先脏。",
+  "ด้ามไม้ถูพื้นเช็ดทุกวันค่ะ ตรงที่มือจับจะสกปรกก่อนที่อื่น",
+  "Cán cây lau nhà em lau mỗi ngày. Chỗ tay chạm vào là bẩn trước nhất.",
+  "Gagang pel saya lap setiap hari. Bagian yang tersentuh tangan paling cepat kotor.",
+  "Limpio el palo de la fregona todos los días. Lo que tocan las manos es lo primero que se ensucia.",
+  "Limpo o cabo do esfregão todo dia. O que as mãos tocam é o primeiro a sujar.",
+  "Den Mopstiel wische ich jeden Tag. Wo die Hände hinfassen, wird es zuerst schmutzig.",
+  "Ручку швабры я протираю каждый день. Где касаются руки, грязнеет раньше всего."
+ ],
+ "story.arte.line.2.0": [
+  "污渍要在干之前掸掉。干了就得费两倍力气。",
+  "คราบต้องปัดออกก่อนแห้งค่ะ ถ้าแห้งแล้วจะเหนื่อยเป็นสองเท่า",
+  "Vết bẩn phải phủi trước khi khô. Khô rồi là vất vả gấp đôi.",
+  "Noda harus dibersihkan sebelum kering. Kalau sudah kering, kerjanya dua kali lipat.",
+  "Las manchas hay que quitarlas antes de que se sequen. Secas cuestan el doble.",
+  "Mancha tem que sair antes de secar. Seca, dá o dobro de trabalho.",
+  "Flecken muss man ausklopfen, bevor sie trocknen. Getrocknet ist es doppelt so mühsam.",
+  "Пятно нужно стряхнуть, пока не высохло. Высохнет — вдвое больше мороки."
+ ],
+ "story.arte.line.2.1": [
+  "羽毛掸子不是用我的羽毛做的。是公司发的。因为常常有人问。",
+  "ไม้ปัดขนนกไม่ได้ทำจากขนของฉันนะคะ เป็นของบริษัทแจก ถูกถามบ่อยเลยบอกไว้ค่ะ",
+  "Cây phất trần lông vũ không làm từ lông của em đâu. Là đồ công ty cấp. Vì hay bị hỏi nên em nói trước.",
+  "Kemoceng bulu itu bukan dari bulu saya. Itu barang dari kantor. Soalnya sering ditanya.",
+  "El plumero no está hecho con mis plumas. Es material de la empresa. Me lo preguntan a menudo.",
+  "O espanador não é feito das minhas penas. É material da empresa. Me perguntam muito.",
+  "Der Federwedel ist nicht aus meinen Federn. Firmeneigentum. Das werde ich oft gefragt.",
+  "Метёлка не из моих перьев. Это служебный инвентарь. Просто меня часто спрашивают."
+ ],
+ "story.arte.line.2.2": [
+  "休息室的杯印是我擦掉的。是谁留下的我就不问了。",
+  "รอยแก้วในห้องพัก ฉันเช็ดออกแล้วค่ะ ใครทิ้งไว้จะไม่ถามนะคะ",
+  "Vết cốc ở phòng nghỉ em lau rồi. Ai để lại thì em không hỏi đâu.",
+  "Bekas gelas di ruang istirahat sudah saya lap. Saya tidak akan tanya siapa yang meninggalkannya.",
+  "Quité las marcas de taza en la sala de descanso. No preguntaré quién las dejó.",
+  "Limpei as marcas de copo na sala de descanso. Não vou perguntar quem deixou.",
+  "Die Tassenränder im Pausenraum habe ich weggewischt. Wer sie hinterlassen hat, frage ich nicht.",
+  "Следы от чашек в комнате отдыха я стёрла. Кто их оставил, спрашивать не буду."
+ ],
+ "story.arte.line.3.0": [
+  "今天接受了考核。结果嘛……我只说不算差。",
+  "วันนี้โดนประเมินค่ะ ผลออกมา… ขอบอกแค่ว่าไม่แย่นะคะ",
+  "Hôm nay em được đánh giá. Kết quả thì… em chỉ nói là không tệ thôi.",
+  "Hari ini saya dinilai. Hasilnya… saya cuma bilang tidak buruk.",
+  "Hoy me evaluaron. El resultado… solo diré que no estuvo mal.",
+  "Hoje fui avaliada. O resultado… só vou dizer que não foi ruim.",
+  "Heute hatte ich meine Bewertung. Das Ergebnis … ich sage nur: nicht schlecht.",
+  "Сегодня меня оценивали. Результат… скажу только, что неплохой."
+ ],
+ "story.arte.line.3.1": [
+  "研究员，你的鞋带松了。啊，帮你系不在我的业务范围内。",
+  "นักวิจัย เชือกรองเท้าหลุดค่ะ อ๊ะ การผูกให้ไม่อยู่ในขอบเขตงานนะคะ",
+  "Nhà nghiên cứu, dây giày bị tuột rồi. À, buộc giúp thì không thuộc phạm vi công việc của em.",
+  "Periset, tali sepatunya lepas. Oh, mengikatkannya bukan bagian dari tugas saya.",
+  "Investigador, tiene el cordón desatado. Ah, atárselo no entra en mis funciones.",
+  "Pesquisador, seu cadarço desamarrou. Ah, amarrar não faz parte das minhas funções.",
+  "Forscher, Ihr Schnürsenkel ist offen. Oh, ihn zuzubinden gehört nicht zu meinem Aufgabenbereich.",
+  "Исследователь, у вас шнурок развязался. Ой, завязывать — не в моих служебных обязанностях."
+ ],
+ "story.arte.line.3.2": [
+  "相册拍满一整本了。全是地板的照片。要看吗？……还是算了，没意思的。",
+  "อัลบั้มเต็มไปหนึ่งเล่มแล้วค่ะ เป็นรูปพื้นทั้งหมด อยากดูไหมคะ? …ไม่เป็นไรค่ะ คงไม่สนุก",
+  "Em chụp đầy một cuốn album rồi. Toàn là ảnh sàn nhà. Muốn xem không ạ? …Thôi, chắc chán lắm.",
+  "Satu album foto sudah penuh. Semuanya foto lantai. Mau lihat? …Tidak usah, pasti membosankan.",
+  "Llené un álbum entero. Todo son fotos de suelos. ¿Quiere verlas? …No, olvídelo. Son aburridas.",
+  "Enchi um álbum inteiro. São todas fotos de chão. Quer ver? …Não, deixa. São chatas.",
+  "Ein Fotoalbum ist voll. Lauter Bodenfotos. Wollen Sie sie sehen? … Nein, schon gut. Die sind langweilig.",
+  "Целый фотоальбом заполнила. Сплошь фото пола. Посмотрите? …Нет, не надо. Скучно же."
+ ],
+ "story.arte.line.4.0": [
+  "那天袖子上的泥，可别再沾上了。不然我还得再帮你掸。",
+  "โคลนที่แขนเสื้อวันนั้น อย่าให้เปื้อนอีกนะคะ เดี๋ยวก็ต้องปัดให้อีก",
+  "Bùn dính tay áo hôm đó, đừng để dính lại nữa nhé. Em lại phải phủi giúp đấy.",
+  "Lumpur di lengan baju hari itu, jangan sampai kena lagi ya. Nanti saya bersihkan lagi.",
+  "No vuelva a mancharse la manga de barro como aquel día. Se la volveré a sacudir.",
+  "Não vá sujar a manga de barro de novo como naquele dia. Vou ter que limpar outra vez.",
+  "Bekommen Sie bloß nicht wieder Schlamm an den Ärmel wie an dem Tag. Sonst klopfe ich ihn wieder aus.",
+  "Не пачкайте больше рукав грязью, как в тот день. Иначе опять буду отряхивать."
+ ],
+ "story.arte.line.4.1": [
+  "你觉不觉得我工作做得好，还没回答我呢。没关系。我会等。",
+  "ยังไม่ได้ตอบเลยนะคะว่าคิดว่าฉันทำงานเก่งไหม ไม่เป็นไรค่ะ จะรอ",
+  "Nhà nghiên cứu vẫn chưa trả lời em có làm việc giỏi không. Không sao đâu. Em sẽ chờ.",
+  "Periset belum menjawab apakah menurut Periset saya kerjanya bagus. Tidak apa-apa. Saya tunggu.",
+  "Todavía no me ha dicho si cree que hago bien mi trabajo. No pasa nada. Esperaré.",
+  "Você ainda não me disse se acha que eu trabalho bem. Tudo bem. Eu espero.",
+  "Sie haben mir immer noch nicht gesagt, ob ich meine Arbeit gut mache. Schon gut. Ich warte.",
+  "Вы так и не ответили, хорошо ли я работаю. Ничего. Я подожду."
+ ],
+ "story.arte.line.4.2": [
+  "要告诉你我下一个行程吗？有些地方和研究员的路线重叠。",
+  "บอกตารางงานถัดไปให้ไหมคะ? มีบางที่ทับกับเส้นทางของนักวิจัย",
+  "Em báo lịch tiếp theo nhé? Có chỗ trùng với lộ trình của nhà nghiên cứu.",
+  "Mau saya beri tahu jadwal berikutnya? Ada yang bersinggungan dengan rute Periset.",
+  "¿Le digo mi próximo horario? Hay sitios que coinciden con su ruta, investigador.",
+  "Quer que eu diga minha próxima agenda? Tem lugares que cruzam com sua rota, pesquisador.",
+  "Soll ich Ihnen meinen nächsten Einsatzplan sagen? Ein paar Orte liegen auf Ihrem Weg, Forscher.",
+  "Сказать вам мой следующий график? Кое-где он пересекается с вашим маршрутом, исследователь."
+ ],
+ "story.arte.line.5.0": [
+  "医生嘱咐我别让手腕太累。所以今天我也试着用左手擦了。",
+  "ได้ใบสั่งว่าอย่าฝืนข้อมือค่ะ วันนี้เลยลองเช็ดด้วยมือซ้ายด้วย",
+  "Em được dặn đừng để cổ tay quá sức. Nên hôm nay em thử lau bằng cả tay trái.",
+  "Saya diberi resep supaya tidak memaksakan pergelangan tangan. Jadi hari ini saya coba mengelap pakai tangan kiri juga.",
+  "Me recetaron no forzar la muñeca. Así que hoy probé a limpiar también con la izquierda.",
+  "Me receitaram não forçar o pulso. Então hoje tentei limpar com a mão esquerda também.",
+  "Mir wurde verordnet, das Handgelenk zu schonen. Also habe ich heute auch mit links gewischt.",
+  "Мне прописали не перенапрягать запястье. Так что сегодня попробовала протирать и левой рукой."
+ ],
+ "story.arte.line.5.1": [
+  "莫萨娜拉上来的残骸总是滴着水。那块地方归我负责。",
+  "ซากที่คุณโมซานาลากขึ้นมามีน้ำหยดติ๋งๆ ตลอดค่ะ ตรงนั้นเป็นหน้าที่ของฉัน",
+  "Đống mảnh vỡ chị Mosana kéo lên lúc nào cũng nhỏ nước tong tong. Chỗ đó là phần của em.",
+  "Puing yang ditarik Mosana selalu meneteskan air. Tempat itu tanggung jawab saya.",
+  "Los restos que saca Mosana siempre gotean agua. Ese sitio es responsabilidad mía.",
+  "Os destroços que a Mosana puxa sempre pingam água. Aquele lugar é responsabilidade minha.",
+  "Die Trümmer, die Mosana heraufzieht, tropfen immer. Diese Stelle ist mein Zuständigkeitsbereich.",
+  "С обломков, которые вытаскивает Мосана, всегда капает вода. Это место — моя зона."
+ ],
+ "story.arte.line.5.2": [
+  "表扬请写在报告里。要是当面说……我会不知道怎么回答。",
+  "คำชมเขียนไว้ในรายงานนะคะ ถ้าพูดออกมา… ฉันจะตอบไม่ถูก",
+  "Lời khen xin hãy ghi vào báo cáo. Nói thành lời thì… em không biết đáp sao.",
+  "Pujian tolong ditulis di laporan. Kalau diucapkan… saya tidak bisa menjawab.",
+  "Los elogios, póngalos en un informe. Si me los dice en voz alta… no sabré qué contestar.",
+  "Elogios, coloque no relatório. Se disser em voz alta… não vou saber responder.",
+  "Lob schreiben Sie bitte in einen Bericht. Wenn Sie es aussprechen … weiß ich nicht, was ich sagen soll.",
+  "Похвалу, пожалуйста, пишите в отчёт. Если скажете вслух… я не найду, что ответить."
+ ],
+ "story.arte.line.6.0": [
+  "水渠边的箭头还在。每次经过我都只擦它周围。",
+  "ลูกศรที่ทางน้ำยังอยู่นะคะ เดินผ่านทีไรก็เช็ดแค่รอบๆ",
+  "Mũi tên ở kênh nước vẫn còn đó. Mỗi lần đi qua em chỉ lau xung quanh thôi.",
+  "Panah di kanal masih ada. Tiap lewat, saya cuma mengelap sekelilingnya.",
+  "La flecha del canal sigue ahí. Cada vez que paso, solo limpio alrededor.",
+  "A seta do canal ainda está lá. Toda vez que passo, só limpo em volta.",
+  "Der Pfeil am Kanal ist noch da. Jedes Mal, wenn ich vorbeikomme, wische ich nur drumherum.",
+  "Стрелка у канала всё ещё там. Каждый раз, проходя мимо, протираю только вокруг неё."
+ ],
+ "story.arte.line.6.1": [
+  "清单上多了一栏「现场判断保留」。是我加的。",
+  "ในรายการมีช่อง 「เก็บไว้ตามดุลยพินิจหน้างาน」 แล้วค่ะ ช่องที่ฉันทำเอง",
+  "Trong danh sách giờ có mục “Giữ lại theo phán đoán tại chỗ”. Mục em tự lập đấy.",
+  "Di daftar sekarang ada kolom “Dipertahankan atas penilaian lapangan”. Kolom buatan saya.",
+  "Ahora la lista tiene una casilla de «Conservado por criterio in situ». La creé yo.",
+  "Agora a lista tem uma coluna “Preservado por decisão no local”. Fui eu que criei.",
+  "Auf der Liste gibt es jetzt eine Spalte „Vor Ort entschieden: erhalten“. Die habe ich angelegt.",
+  "В списке появилась графа «Сохранено по решению на месте». Это я её завела."
+ ],
+ "story.arte.line.6.2": [
+  "黛依又叫我一起画。我不画。……周围我倒是会帮着擦。",
+  "คุณเดย์ชวนไปวาดด้วยกันอีกแล้วค่ะ ไม่วาดหรอก …แต่จะเช็ดรอบๆ ให้นะ",
+  "Chị Dei lại rủ em vẽ cùng. Em không vẽ đâu. …Nhưng xung quanh thì em sẽ lau giúp.",
+  "Dei mengajak menggambar lagi. Saya tidak mau. …Tapi sekelilingnya akan saya lap.",
+  "Dei insiste en que dibujemos juntas. No pienso dibujar. …Aunque limpiaré alrededor.",
+  "A Dei fica me chamando para desenhar junto. Não vou. …Mas vou limpar em volta.",
+  "Dei will schon wieder mit mir zeichnen. Mache ich nicht. … Drumherum wische ich aber.",
+  "Дей опять зовёт рисовать вместе. Не буду. …Но вокруг протру."
+ ],
+ "story.arte.line.7.0": [
+  "最近擦之前我会再看一眼。看看是不是该留下的。",
+  "ช่วงนี้ก่อนเช็ดจะดูอีกรอบค่ะ ว่าเป็นอะไรที่ควรเก็บไว้หรือเปล่า",
+  "Dạo này trước khi lau em nhìn lại thêm một lần. Xem có phải thứ nên giữ lại không.",
+  "Belakangan ini sebelum menghapus saya lihat sekali lagi. Apakah itu sesuatu yang perlu dibiarkan.",
+  "Últimamente miro una vez más antes de limpiar. Por si es algo que debería quedarse.",
+  "Ultimamente olho mais uma vez antes de limpar. Para ver se é algo que deve ficar.",
+  "In letzter Zeit schaue ich vor dem Wischen noch einmal hin. Ob es etwas ist, das bleiben sollte.",
+  "Теперь перед тем, как стереть, смотрю ещё раз. Не нужно ли это оставить."
+ ],
+ "story.arte.line.7.1": [
+  "休息日快到了。研究员休息的时候都做什么？我想参考一下。",
+  "วันหยุดใกล้มาแล้วค่ะ นักวิจัยวันหยุดทำอะไรคะ? ขอเอาไว้อ้างอิง",
+  "Sắp đến ngày nghỉ rồi. Nhà nghiên cứu ngày nghỉ thường làm gì ạ? Em muốn tham khảo.",
+  "Hari libur sudah dekat. Periset biasanya ngapain kalau libur? Buat referensi.",
+  "Se acerca mi día libre. ¿Qué hace usted en sus días libres, investigador? Para tomar nota.",
+  "Minha folga está chegando. O que você faz nas folgas, pesquisador? Para eu tomar como referência.",
+  "Mein freier Tag rückt näher. Was machen Sie an freien Tagen, Forscher? Zur Orientierung.",
+  "Скоро выходной. А что вы делаете в выходные, исследователь? Хочу взять на заметку."
+ ],
+ "story.arte.line.7.2": [
+  "整理羽毛是我的习惯。介意的话请告诉我。我会试着停下。",
+  "การไซ้ขนเป็นนิสัยค่ะ ถ้ารำคาญบอกได้นะคะ จะลองหยุดดู",
+  "Chải lông vũ là thói quen của em. Nếu thấy khó chịu thì cứ nói ạ. Em sẽ thử dừng.",
+  "Merapikan bulu itu kebiasaan saya. Kalau mengganggu, bilang saja. Akan saya coba hentikan.",
+  "Arreglarme las plumas es una manía. Si le molesta, dígamelo. Intentaré parar.",
+  "Ajeitar as penas é mania minha. Se incomodar, me diga. Vou tentar parar.",
+  "Das Federnordnen ist eine Angewohnheit. Wenn es Sie stört, sagen Sie es. Ich versuche aufzuhören.",
+  "Перебирать перья — моя привычка. Если мешает, скажите. Попробую перестать."
+ ],
+ "story.arte.line.8.0": [
+  "那天坐在沙发上，是我第一次的休假记录。我觉得休息得还挺好。",
+  "วันนั้นที่นั่งอยู่บนโซฟา เป็นบันทึกวันหยุดครั้งแรกของฉันค่ะ คิดว่าพักได้ดีทีเดียว",
+  "Hôm đó ngồi trên sofa là kỷ lục ngày nghỉ đầu tiên của em. Em nghĩ mình nghỉ khá tốt.",
+  "Duduk di sofa hari itu adalah catatan hari libur pertama saya. Rasanya saya istirahat cukup baik.",
+  "Aquel día en el sofá es mi primer registro de descanso. Creo que descansé bastante bien.",
+  "Ficar no sofá naquele dia foi meu primeiro registro de folga. Acho que descansei bem.",
+  "Der Tag auf dem Sofa ist mein erster Ruhetag-Eintrag. Ich glaube, ich habe ganz gut ausgeruht.",
+  "Тот день на диване — моя первая запись о выходном. Кажется, я неплохо отдохнула."
+ ],
+ "story.arte.line.8.1": [
+  "我的化石的事，从没跟别人说过。研究员是第一个。",
+  "เรื่องฟอสซิลของฉัน ไม่เคยเล่าให้ใครฟังเลยค่ะ นักวิจัยเป็นคนแรก",
+  "Chuyện hóa thạch của em, em chưa kể với ai bao giờ. Nhà nghiên cứu là người đầu tiên.",
+  "Cerita fosil saya belum pernah saya ceritakan ke siapa pun. Periset yang pertama.",
+  "Nunca le había contado a nadie lo de mi fósil. Es la primera persona a la que se lo cuento, investigador.",
+  "Nunca tinha contado a ninguém sobre o meu fóssil. Você foi a primeira pessoa, pesquisador.",
+  "Von meinem Fossil hatte ich noch niemandem erzählt. Sie sind die erste Person, Forscher.",
+  "Про свою окаменелость я никому не рассказывала. Вы первый человек, которому я рассказала, исследователь."
+ ],
+ "story.arte.line.8.2": [
+  "听说因为痕迹留下来了，我才会在这里。一想到这个，擦东西的手就会慢一点。",
+  "เขาว่าเพราะร่องรอยยังอยู่ ฉันถึงได้อยู่ที่นี่ค่ะ พอคิดแบบนั้น มือที่เช็ดก็ช้าลงนิดหน่อย",
+  "Người ta bảo vì dấu vết còn lại nên em mới có mặt ở đây. Nghĩ đến đó, tay lau của em chậm lại một chút.",
+  "Katanya saya ada di sini karena jejaknya tertinggal. Kalau ingat itu, tangan saya mengelap sedikit lebih pelan.",
+  "Dicen que estoy aquí porque las marcas se conservaron. Cuando lo pienso, mi mano limpia un poco más despacio.",
+  "Dizem que estou aqui porque as marcas ficaram. Quando penso nisso, minha mão limpa um pouco mais devagar.",
+  "Es heißt, ich bin hier, weil die Abdrücke geblieben sind. Wenn ich daran denke, wischt meine Hand ein bisschen langsamer.",
+  "Говорят, я здесь потому, что следы сохранились. Как подумаю об этом, рука протирает чуть медленнее."
+ ],
+ "story.arte.line.9.0": [
+  "相册只剩最后一页了。要拍什么我还没决定。",
+  "อัลบั้มเหลือแค่หน้าสุดท้ายค่ะ ยังคิดไม่ออกว่าจะถ่ายอะไร",
+  "Album chỉ còn trang cuối thôi. Em vẫn chưa quyết sẽ chụp gì.",
+  "Album tinggal halaman terakhir. Saya belum memutuskan mau memotret apa.",
+  "Solo queda la última página del álbum. Todavía no sé qué fotografiar.",
+  "Só falta a última página do álbum. Ainda não decidi o que fotografar.",
+  "Im Album ist nur noch die letzte Seite frei. Was ich fotografiere, weiß ich noch nicht.",
+  "В альбоме осталась только последняя страница. Ещё не решила, что сфотографировать."
+ ],
+ "story.arte.line.9.1": [
+  "研究员，下周深夜有空吗？我有事要汇报。不是工作上的。",
+  "นักวิจัย สัปดาห์หน้าดึกๆ ว่างไหมคะ? มีเรื่องจะรายงาน ไม่ใช่เรื่องงานค่ะ",
+  "Nhà nghiên cứu, tuần sau vào đêm muộn có rảnh không ạ? Em có chuyện cần báo cáo. Không phải công việc.",
+  "Periset, minggu depan larut malam ada waktu? Ada yang ingin saya laporkan. Bukan soal kerja.",
+  "Investigador, ¿tiene tiempo la semana que viene, tarde por la noche? Tengo algo que informar. No es de trabajo.",
+  "Pesquisador, tem um tempo semana que vem, tarde da noite? Tenho algo para relatar. Não é trabalho.",
+  "Forscher, haben Sie nächste Woche spätabends Zeit? Ich habe etwas zu berichten. Nichts Dienstliches.",
+  "Исследователь, у вас найдётся время на следующей неделе поздно вечером? Мне нужно кое-что доложить. Не по работе."
+ ],
+ "story.arte.line.9.2": [
+  "今天把控制室的地板擦得格外亮。原因到那天再告诉你。",
+  "พื้นห้องควบคุมวันนี้เช็ดจนเงาวับเป็นพิเศษค่ะ เหตุผลไว้บอกวันนั้นนะคะ",
+  "Sàn phòng điều khiển hôm nay em lau bóng loáng hơn mọi khi. Lý do thì hôm đó em sẽ nói.",
+  "Lantai ruang kendali hari ini saya pel sampai mengilap sekali. Alasannya akan saya ceritakan hari itu.",
+  "Hoy dejé el suelo de la sala de control especialmente reluciente. El porqué se lo diré ese día.",
+  "Hoje deixei o chão da sala de controle especialmente brilhante. O motivo eu conto naquele dia.",
+  "Den Boden im Kontrollraum habe ich heute besonders blank gewischt. Warum, sage ich Ihnen an dem Tag.",
+  "Пол в диспетчерской сегодня натёрла до особого блеска. Почему — скажу в тот день."
+ ],
+ "story.arte.line.10.0": [
+  "相册的最后一页，我每天都会看一次。研究员的鞋印是主角。",
+  "หน้าสุดท้ายของอัลบั้ม ดูวันละครั้งทุกวันค่ะ รอยรองเท้าของนักวิจัยเป็นตัวเอก",
+  "Trang cuối của album, ngày nào em cũng xem một lần. Dấu giày của nhà nghiên cứu là nhân vật chính.",
+  "Halaman terakhir album itu saya lihat sekali setiap hari. Jejak sepatu Periset jadi bintangnya.",
+  "Miro la última página del álbum una vez al día. Su huella es la protagonista, investigador.",
+  "Olho a última página do álbum uma vez por dia. Sua pegada é a protagonista, pesquisador.",
+  "Die letzte Seite im Album sehe ich mir jeden Tag einmal an. Ihr Schuhabdruck ist die Hauptfigur, Forscher.",
+  "Последнюю страницу альбома я смотрю раз в день. Ваш след от ботинка там главный герой, исследователь."
+ ],
+ "story.arte.line.10.1": [
+  "我买了新相册。第一页空着。是留着和研究员一起拍的位置。",
+  "ซื้ออัลบั้มใหม่แล้วค่ะ หน้าแรกเว้นว่างไว้ เป็นที่สำหรับรูปที่ถ่ายกับนักวิจัย",
+  "Em mua album mới rồi. Trang đầu em để trống. Là chỗ để chụp cùng nhà nghiên cứu.",
+  "Saya beli album foto baru. Halaman pertamanya saya kosongkan. Itu tempat untuk foto bersama Periset.",
+  "Compré un álbum nuevo. Dejé la primera página en blanco. Es para una foto con usted, investigador.",
+  "Comprei um álbum novo. Deixei a primeira página em branco. É o lugar da foto com você, pesquisador.",
+  "Ich habe ein neues Album gekauft. Die erste Seite habe ich frei gelassen. Die ist für ein Foto mit Ihnen, Forscher.",
+  "Купила новый альбом. Первую страницу оставила пустой. Это место для снимка с вами, исследователь."
+ ],
+ "story.arte.line.10.2": [
+  "现场整理完毕，研究员。……今天留下的比擦掉的还多。",
+  "เก็บกวาดหน้างานเสร็จแล้วค่ะ นักวิจัย …วันนี้สิ่งที่เก็บไว้มีมากกว่าที่ลบออกไปอีก",
+  "Dọn dẹp hiện trường hoàn tất, thưa nhà nghiên cứu. …Hôm nay thứ em giữ lại nhiều hơn thứ em xóa đi.",
+  "Pembersihan lokasi selesai, Periset. …Hari ini yang saya biarkan lebih banyak daripada yang saya hapus.",
+  "Limpieza del lugar completada, investigador. …Hoy dejé más de lo que borré.",
+  "Limpeza do local concluída, pesquisador. …Hoje deixei mais do que apaguei.",
+  "Einsatzort aufgeräumt, Forscher. … Heute habe ich mehr stehen lassen als weggewischt.",
+  "Уборка на месте завершена, исследователь. …Сегодня я оставила больше, чем стёрла."
+ ],
+ "dialogue.bond.arte.4.title": [
+  "抵达现场",
+  "ถึงหน้างาน",
+  "Có mặt tại hiện trường",
+  "Tiba di Lokasi",
+  "Llegada al lugar",
+  "Chegada ao local",
+  "Am Einsatzort eingetroffen",
+  "Прибытие на место"
+ ],
+ "dialogue.bond.arte.4.subtitle": [
+  "阿尔缇 · 最爱故事 1",
+  "อาร์เต · เรื่องราวโปรด 1",
+  "Arte · Câu chuyện yêu thích 1",
+  "Arte · Kisah Favorit 1",
+  "Arte · Historia favorita 1",
+  "Arte · História favorita 1",
+  "Arte · Favoriten-Geschichte 1",
+  "Арте · Любимая история 1"
+ ],
+ "dialogue.bond.arte.4.n1.body": [
+  "打捞结束后的残骸区。碎裂的铁板之间积着泥水，脚印乱糟糟地散向四方。",
+  "เขตซากหลังการกู้เสร็จ น้ำโคลนขังอยู่ระหว่างแผ่นเหล็กที่แตก รอยเท้าเกลื่อนไปทุกทิศ",
+  "Khu mảnh vỡ sau khi trục vớt. Nước bùn đọng giữa những tấm thép vỡ, dấu chân lộn xộn khắp nơi.",
+  "Zona puing selepas pengangkatan. Air lumpur menggenang di sela pelat baja yang patah, jejak kaki berserakan ke segala arah.",
+  "Una zona de restos tras el rescate. Entre placas de acero rotas se estanca agua embarrada, y las huellas se dispersan en todas direcciones.",
+  "Uma zona de destroços após o resgate. Água lamacenta se acumula entre chapas de aço quebradas, e pegadas se espalham em todas as direções.",
+  "Ein Trümmerfeld nach der Bergung. Zwischen zerbrochenen Stahlplatten steht schlammiges Wasser, Fußspuren laufen kreuz und quer.",
+  "Зона обломков после подъёма. Между разбитыми стальными листами стоит мутная вода, следы разбегаются во все стороны."
+ ],
+ "dialogue.bond.arte.4.n2.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.4.n2.body": [
+  "A-CLEAN阿尔缇，抵达现场！研究员，你不能站在那里。我正要从那里开始擦。",
+  "A-CLEAN อาร์เต ถึงหน้างานแล้วค่ะ! นักวิจัย ยืนตรงนั้นไม่ได้นะคะ จะเริ่มเช็ดจากตรงนั้นพอดี",
+  "Arte của A-CLEAN đã có mặt! Nhà nghiên cứu, không được đứng đó đâu. Em sắp lau từ chỗ đó trước.",
+  "Arte dari A-CLEAN, tiba di lokasi! Periset, jangan berdiri di situ. Saya mau mulai mengepel dari situ.",
+  "¡Arte de A-CLEAN, en el lugar! Investigador, no puede quedarse ahí. Justo voy a empezar a fregar por ahí.",
+  "Arte da A-CLEAN, no local! Pesquisador, não pode ficar aí. É exatamente por aí que vou começar a limpar.",
+  "Arte von A-CLEAN, vor Ort! Forscher, da dürfen Sie nicht stehen. Genau da fange ich gleich an zu wischen.",
+  "Арте из A-CLEAN на месте! Исследователь, там стоять нельзя. Я как раз оттуда начну мыть."
+ ],
+ "dialogue.bond.arte.4.n3.body": [
+  "拖把在地上扫过一次。泥水被推到一边，铁板原本的颜色露了出来。",
+  "ไม้ถูพื้นกวาดผ่านไปหนึ่งครั้ง น้ำโคลนถูกต้อนไปข้างหนึ่ง เผยให้เห็นสีเดิมของแผ่นเหล็ก",
+  "Cây lau quét qua sàn một lượt. Nước bùn dồn về một bên, để lộ màu gốc của tấm thép.",
+  "Pel menyapu lantai sekali. Air lumpur terkumpul ke satu sisi, dan warna asli pelat baja pun terlihat.",
+  "La fregona barre el suelo una vez. El agua embarrada se junta a un lado y asoma el color original del acero.",
+  "O esfregão passa pelo chão uma vez. A água lamacenta se junta de um lado, e a cor original do aço aparece.",
+  "Der Mop fährt einmal über den Boden. Das Schlammwasser sammelt sich an einer Seite, darunter kommt die ursprüngliche Farbe des Stahls zum Vorschein.",
+  "Швабра проходит по полу один раз. Мутная вода сбивается в сторону, и проступает настоящий цвет стали."
+ ],
+ "dialogue.bond.arte.4.n4.speaker": [
+  "研究员",
+  "นักวิจัย",
+  "Nhà nghiên cứu",
+  "Periset",
+  "Investigador",
+  "Pesquisador",
+  "Forscher",
+  "Исследователь"
+ ],
+ "dialogue.bond.arte.4.n4.body": [
+  "（袖口溅上了泥。阿尔缇的视线停在了那里。）",
+  "(ปลายแขนเสื้อมีโคลนกระเด็นติดอยู่ สายตาของอาร์เตหยุดอยู่ตรงนั้น)",
+  "(Cổ tay áo bị bắn bùn. Ánh mắt Arte dừng lại ở đó.)",
+  "(Ujung lengan baju terciprat lumpur. Tatapan Arte berhenti di sana.)",
+  "(El puño de la manga tiene salpicaduras de barro. La mirada de Arte se detiene ahí.)",
+  "(A ponta da manga está respingada de lama. O olhar de Arte para ali.)",
+  "(Am Ärmelende klebt Schlamm. Artes Blick bleibt daran hängen.)",
+  "(На краю рукава брызги грязи. Взгляд Арте останавливается на них.)"
+ ],
+ "dialogue.bond.arte.4.n4.choice.0": [
+  "把袖子伸过去",
+  "ยื่นแขนเสื้อให้",
+  "Chìa tay áo ra",
+  "Mengulurkan lengan baju",
+  "Ofrecerle la manga",
+  "Estender a manga",
+  "Den Ärmel hinhalten",
+  "Протянуть рукав"
+ ],
+ "dialogue.bond.arte.4.n4.choice.1": [
+  "问拖把重不重",
+  "ถามว่าไม้ถูพื้นหนักไหม",
+  "Hỏi cây lau có nặng không",
+  "Bertanya apakah pelnya berat",
+  "Preguntar si la fregona pesa",
+  "Perguntar se o esfregão é pesado",
+  "Fragen, ob der Mop schwer ist",
+  "Спросить, не тяжёлая ли швабра"
+ ],
+ "dialogue.bond.arte.4.n5a.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.4.n5a.body": [
+  "失礼了。……好，弄掉了。泥要在干之前掸掉，才不会留下印子。",
+  "ขออนุญาตนะคะ …ค่ะ ออกแล้ว โคลนต้องปัดก่อนแห้งถึงจะไม่ทิ้งรอย",
+  "Xin phép ạ. …Vâng, sạch rồi. Bùn phải phủi trước khi khô thì mới không để lại vết.",
+  "Permisi. …Ya, sudah bersih. Lumpur kalau dibersihkan sebelum kering tidak akan meninggalkan bekas.",
+  "Con permiso. …Listo, ya no está. Si sacudes el barro antes de que se seque, no deja marca.",
+  "Com licença. …Pronto, saiu. Se tirar a lama antes de secar, não fica marca.",
+  "Entschuldigung. … So, weg ist es. Wenn man Schlamm ausklopft, bevor er trocknet, bleibt kein Fleck.",
+  "Прошу прощения. …Вот, всё. Если стряхнуть грязь до того, как высохнет, следа не останется."
+ ],
+ "dialogue.bond.arte.4.n5b.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.4.n5b.body": [
+  "因为是公司发的，所以有点重。不过重一点一次能推得更多。……啊，袖子也借我一下。",
+  "เป็นของบริษัทแจกเลยหนักหน่อยค่ะ แต่ยิ่งหนักยิ่งดันได้เยอะในทีเดียว …อ๊ะ ขอแขนเสื้อแป๊บนึงนะคะ",
+  "Đồ công ty cấp nên hơi nặng một chút. Nhưng nặng thì đẩy được nhiều một lần hơn. …À, cho em mượn tay áo một chút.",
+  "Karena dari kantor, agak berat. Tapi yang berat bisa mendorong lebih banyak sekaligus. …Oh, lengan bajunya sebentar.",
+  "Es material de la empresa, así que pesa un poco. Pero la pesada empuja más de una vez. …Ah, déjeme la manga un momento.",
+  "É material da empresa, então é meio pesado. Mas o pesado empurra mais de uma vez. …Ah, me dá a manga um instante.",
+  "Er ist Firmeneigentum, deshalb ein bisschen schwer. Aber ein schwerer schiebt auf einmal mehr weg. … Ach, geben Sie mir kurz Ihren Ärmel.",
+  "Она служебная, поэтому тяжеловата. Зато тяжёлой за раз сгоняешь больше. …Ой, дайте-ка рукав на секунду."
+ ],
+ "dialogue.bond.arte.4.n6.body": [
+  "阿尔缇从围裙口袋里拿出羽毛掸子，轻轻拍打袖子。手法又快又准。",
+  "อาร์เตหยิบไม้ปัดขนนกจากกระเป๋าผ้ากันเปื้อน ปัดแขนเสื้อเบาๆ มือไวและแม่นยำ",
+  "Arte lấy cây phất trần lông vũ từ túi tạp dề, phủi nhẹ tay áo. Động tác nhanh và chính xác.",
+  "Arte mengambil kemoceng bulu dari saku celemeknya dan menepuk-nepuk lengan baju. Gerakannya cepat dan tepat.",
+  "Arte saca un plumero del bolsillo del delantal y sacude la manga a golpecitos. Sus manos son rápidas y precisas.",
+  "Arte tira um espanador do bolso do avental e dá batidinhas na manga. As mãos são rápidas e precisas.",
+  "Arte zieht einen Federwedel aus der Schürzentasche und klopft den Ärmel ab. Ihre Handgriffe sind schnell und genau.",
+  "Арте достаёт из кармана фартука метёлку из перьев и похлопывает по рукаву. Движения быстрые и точные."
+ ],
+ "dialogue.bond.arte.4.n7.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.4.n7.body": [
+  "这个区域十五分钟就能搞定。完了我只拍一张照片。是用来确认是否都擦干净的。",
+  "เขตนี้สิบห้านาทีก็เสร็จค่ะ เสร็จแล้วจะถ่ายรูปแค่ใบเดียว เอาไว้ตรวจว่าเช็ดออกหมดหรือยัง",
+  "Khu này mười lăm phút là xong. Xong em chỉ chụp một tấm ảnh thôi. Để kiểm tra xem đã lau sạch hết chưa.",
+  "Zona ini selesai dalam lima belas menit. Setelah itu saya ambil satu foto saja. Untuk memastikan semuanya sudah bersih.",
+  "Esta zona se acaba en quince minutos. Cuando termine, haré solo una foto. Es para comprobar que todo quedó limpio.",
+  "Esta zona leva quinze minutos. Quando terminar, tiro só uma foto. É para conferir se tudo foi limpo.",
+  "Dieser Bereich dauert fünfzehn Minuten. Danach mache ich nur ein Foto. Zur Kontrolle, ob alles weg ist.",
+  "Эта зона — пятнадцать минут. Когда закончу, сделаю всего один снимок. Чтобы проверить, что всё смыто."
+ ],
+ "dialogue.bond.arte.4.n8.body": [
+  "十四分钟后，地面干净得像刚铺好一样。阿尔缇拍下照片，盯着屏幕看了很久。",
+  "สิบสี่นาทีต่อมา พื้นสะอาดเหมือนเพิ่งปูใหม่ อาร์เตถ่ายรูปแล้วจ้องหน้าจออยู่นาน",
+  "Mười bốn phút sau, sàn sạch bóng như mới lát. Arte chụp ảnh rồi nhìn màn hình rất lâu.",
+  "Empat belas menit kemudian, lantainya bersih seperti baru dipasang. Arte memotret lalu lama menatap layarnya.",
+  "Catorce minutos después, el suelo está impecable, como recién puesto. Arte hace la foto y se queda mirando la pantalla un buen rato.",
+  "Catorze minutos depois, o chão está impecável, como recém-colocado. Arte tira a foto e fica olhando a tela por um bom tempo.",
+  "Vierzehn Minuten später ist der Boden blitzblank wie frisch verlegt. Arte macht das Foto und schaut lange auf den Bildschirm.",
+  "Через четырнадцать минут пол сияет, словно его только что постелили. Арте делает снимок и долго смотрит на экран."
+ ],
+ "dialogue.bond.arte.4.n9.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.4.n9.body": [
+  "现场整理完毕。……那个，你是不是觉得我工作挺能干的？看你的表情像是这样。",
+  "เก็บกวาดหน้างานเสร็จแล้วค่ะ …เอ่อ คิดว่าฉันทำงานเก่งหรือเปล่าคะ? หน้าดูเป็นแบบนั้น",
+  "Dọn dẹp hiện trường hoàn tất. …À, có phải nhà nghiên cứu nghĩ em làm việc giỏi không? Nhìn mặt thấy vậy.",
+  "Pembersihan lokasi selesai. …Eh, apa Periset pikir saya kerjanya bagus? Wajahnya kelihatan begitu.",
+  "Limpieza del lugar completada. …Esto, ¿pensó que hago bien mi trabajo? Por la cara que ponía.",
+  "Limpeza do local concluída. …Hum, você achou que eu trabalho bem? Sua cara parecia dizer isso.",
+  "Einsatzort aufgeräumt. … Ähm, fanden Sie etwa, dass ich gute Arbeit mache? Ihr Gesicht sah so aus.",
+  "Уборка на месте завершена. …Скажите, вы подумали, что я хорошо работаю? Лицо у вас было такое."
+ ],
+ "dialogue.bond.arte.4.n10.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.4.n10.body": [
+  "啊，没什么。不用回答也没关系。下一个现场再见，研究员。到时候注意脚下。",
+  "อ๊ะ ไม่เป็นไรค่ะ ไม่ต้องตอบก็ได้ แล้วเจอกันที่หน้างานถัดไปนะคะ นักวิจัย ตอนนั้นระวังเท้าด้วย",
+  "À, không có gì. Không cần trả lời đâu ạ. Hẹn gặp ở hiện trường tiếp theo, nhà nghiên cứu. Lúc đó nhớ để ý dưới chân.",
+  "Oh, tidak apa-apa. Tidak perlu dijawab. Sampai jumpa di lokasi berikutnya, Periset. Nanti hati-hati langkahnya.",
+  "Ah, no, olvídelo. No hace falta que responda. Nos vemos en el próximo sitio, investigador. Y cuidado dónde pisa entonces.",
+  "Ah, não, deixa. Não precisa responder. Até o próximo local, pesquisador. Cuidado onde pisa da próxima vez.",
+  "Ach, nein, schon gut. Sie müssen nicht antworten. Bis zum nächsten Einsatzort, Forscher. Achten Sie dann auf Ihre Schritte.",
+  "Ой, нет, ничего. Можете не отвечать. Увидимся на следующем объекте, исследователь. Тогда смотрите под ноги."
+ ],
+ "dialogue.bond.arte.6.title": [
+  "没有擦掉的箭头",
+  "ลูกศรที่ไม่ได้ลบ",
+  "Mũi tên không bị xóa",
+  "Panah yang Tak Dihapus",
+  "La flecha que no borré",
+  "A seta que não apaguei",
+  "Der Pfeil, der blieb",
+  "Нестёртая стрелка"
+ ],
+ "dialogue.bond.arte.6.subtitle": [
+  "阿尔缇 · 最爱故事 2",
+  "อาร์เต · เรื่องราวโปรด 2",
+  "Arte · Câu chuyện yêu thích 2",
+  "Arte · Kisah Favorit 2",
+  "Arte · Historia favorita 2",
+  "Arte · História favorita 2",
+  "Arte · Favoriten-Geschichte 2",
+  "Арте · Любимая история 2"
+ ],
+ "dialogue.bond.arte.6.n1.body": [
+  "水渠旁的墙上。一个用荧光漆画的箭头指向水流下游。阿尔缇放下了清洁剂桶。",
+  "กำแพงข้างทางน้ำ ลูกศรที่วาดด้วยสีเรืองแสงชี้ไปทางปลายน้ำ อาร์เตวางถังน้ำยาลง",
+  "Bức tường cạnh kênh nước. Một mũi tên vẽ bằng sơn huỳnh quang chỉ xuống hạ lưu. Arte đặt thùng nước tẩy xuống.",
+  "Tembok di samping kanal. Satu panah bercat neon menunjuk ke hilir. Arte meletakkan ember deterjennya.",
+  "Un muro junto al canal. Una flecha pintada con pintura fluorescente señala aguas abajo. Arte deja el cubo de detergente.",
+  "Um muro ao lado do canal. Uma seta pintada com tinta fluorescente aponta rio abaixo. Arte pousa o balde de detergente.",
+  "Eine Mauer am Kanal. Ein Pfeil in Leuchtfarbe zeigt flussabwärts. Arte stellt den Reinigungseimer ab.",
+  "Стена у канала. Стрелка, нарисованная флуоресцентной краской, указывает вниз по течению. Арте ставит ведро с моющим средством."
+ ],
+ "dialogue.bond.arte.6.n2.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.6.n2.body": [
+  "作业清单上写着「清除墙上涂鸦」。所以应该擦掉才对，可是……。",
+  "ในรายการงานเขียนว่า 「ลบรอยขีดเขียนบนกำแพง」 ค่ะ ก็คือต้องลบ แต่ว่า….",
+  "Danh sách công việc ghi “Xóa vẽ bậy trên tường”. Vậy là phải xóa, nhưng mà….",
+  "Di daftar kerja tertulis “Hapus coretan di tembok”. Jadi harus dihapus, tapi….",
+  "En la lista de tareas pone «Eliminar grafiti del muro». O sea que hay que borrarlo, pero….",
+  "Na lista de tarefas diz “Remover pichação do muro”. Então tenho que apagar, mas….",
+  "Auf der Arbeitsliste steht „Graffiti an der Mauer entfernen“. Also müsste ich es wegmachen, aber …",
+  "В рабочем списке написано: «Удалить граффити со стены». Значит, надо стереть, но…"
+ ],
+ "dialogue.bond.arte.6.n3.speaker": [
+  "黛依",
+  "เดย์",
+  "Dei",
+  "Dei",
+  "Dei",
+  "Dei",
+  "Dei",
+  "Дей"
+ ],
+ "dialogue.bond.arte.6.n3.body": [
+  "等等等等！阿尔缇，那是我的。不是涂鸦，是路标。擦掉了下一组就找不到水道了。",
+  "เดี๋ยวๆ! อาร์เต นั่นของฉันนะ ไม่ใช่รอยขีดเขียน เป็นป้ายบอกทาง ลบไปทีมต่อไปจะหาทางน้ำไม่เจอ",
+  "Khoan khoan! Arte, cái đó của chị. Không phải vẽ bậy, là dấu chỉ đường. Xóa đi là tổ sau không tìm được đường nước đâu.",
+  "Tunggu, tunggu! Arte, itu punyaku. Bukan coretan, itu penanda jalan. Kalau dihapus, regu berikutnya tidak bisa menemukan jalur air.",
+  "¡Espera, espera! Arte, eso es mío. No es grafiti, es una señal. Si la borras, el siguiente equipo no encontrará el canal.",
+  "Espera, espera! Arte, isso é meu. Não é pichação, é um sinal de caminho. Se apagar, a próxima equipe não acha o canal.",
+  "Warte, warte! Arte, das ist meiner. Kein Graffiti, eine Wegmarkierung. Wenn du ihn wegmachst, findet der nächste Trupp den Wasserweg nicht.",
+  "Стой, стой! Арте, это моё. Не граффити, а указатель. Сотрёшь — следующая группа не найдёт протоку."
+ ],
+ "dialogue.bond.arte.6.n4.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.6.n4.body": [
+  "黛依，清单上的东西都得擦掉。留着的话，我的现场考核会被记上「未处理」。",
+  "คุณเดย์ อะไรที่อยู่ในรายการต้องลบค่ะ ถ้าเหลือไว้ การประเมินหน้างานของฉันจะติด 「ยังไม่ดำเนินการ」",
+  "Chị Dei, cái gì có trong danh sách thì phải xóa. Để lại là đánh giá hiện trường của em bị ghi “Chưa xử lý”.",
+  "Dei, yang ada di daftar harus dihapus. Kalau dibiarkan, penilaian lapangan saya dapat tanda “Belum ditangani”.",
+  "Dei, lo que está en la lista hay que borrarlo. Si lo dejo, mi evaluación de campo se marca como «Sin tramitar».",
+  "Dei, o que está na lista tem que ser apagado. Se eu deixar, minha avaliação de campo ganha um “Não processado”.",
+  "Dei, was auf der Liste steht, muss weg. Wenn ich es lasse, bekommt meine Einsatzbewertung den Vermerk „Unerledigt“.",
+  "Дей, всё, что в списке, нужно стереть. Если оставлю, в моей оценке на объекте появится «Не обработано»."
+ ],
+ "dialogue.bond.arte.6.n5.speaker": [
+  "研究员",
+  "นักวิจัย",
+  "Nhà nghiên cứu",
+  "Periset",
+  "Investigador",
+  "Pesquisador",
+  "Forscher",
+  "Исследователь"
+ ],
+ "dialogue.bond.arte.6.n5.body": [
+  "（阿尔缇握着刷子的手停住了。她来回看着箭头和清单。）",
+  "(มือของอาร์เตหยุดค้างทั้งที่ถือแปรงอยู่ มองสลับไปมาระหว่างลูกศรกับรายการ)",
+  "(Tay Arte cầm bàn chải dừng lại giữa chừng. Cô nhìn qua lại giữa mũi tên và danh sách.)",
+  "(Tangan Arte berhenti sambil masih menggenggam sikat. Ia menatap panah dan daftar bergantian.)",
+  "(La mano de Arte se queda quieta, aún con el cepillo. Mira alternativamente la flecha y la lista.)",
+  "(A mão de Arte para, ainda segurando a escova. Ela olha da seta para a lista e de volta.)",
+  "(Artes Hand hält inne, die Bürste noch umklammert. Ihr Blick wandert zwischen Pfeil und Liste hin und her.)",
+  "(Рука Арте замирает, всё ещё сжимая щётку. Она переводит взгляд со стрелки на список и обратно.)"
+ ],
+ "dialogue.bond.arte.6.n5.choice.0": [
+  "告诉她箭头可以留下",
+  "บอกว่าเก็บลูกศรไว้ได้",
+  "Bảo cô ấy cứ giữ mũi tên lại",
+  "Bilang panahnya boleh dibiarkan",
+  "Decirle que la flecha puede quedarse",
+  "Dizer que a seta pode ficar",
+  "Sagen, dass der Pfeil bleiben darf",
+  "Сказать, что стрелку можно оставить"
+ ],
+ "dialogue.bond.arte.6.n5.choice.1": [
+  "说由阿尔缇决定就好",
+  "บอกว่าให้อาร์เตตัดสินใจ",
+  "Nói rằng Arte tự quyết là được",
+  "Bilang Arte yang memutuskan",
+  "Decirle que lo decida ella",
+  "Dizer que a decisão é da Arte",
+  "Sagen, dass Arte das entscheiden soll",
+  "Сказать, что решать Арте"
+ ],
+ "dialogue.bond.arte.6.n6a.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.6.n6a.body": [
+  "……既然研究员这么说，那就算是确认过了。清单上我会写「现场判断保留」。",
+  "…ถ้านักวิจัยว่าอย่างนั้น ถือว่าได้รับการยืนยันแล้วนะคะ ในรายการจะเขียนว่า 「เก็บไว้ตามดุลยพินิจหน้างาน」",
+  "…Nếu nhà nghiên cứu đã nói vậy, em sẽ coi như đã được xác nhận. Trong danh sách em sẽ ghi “Giữ lại theo phán đoán tại chỗ”.",
+  "…Kalau Periset bilang begitu, saya anggap sudah dikonfirmasi. Di daftar akan saya tulis “Dipertahankan atas penilaian lapangan”.",
+  "…Si usted lo dice, investigador, lo daré por confirmado. En la lista pondré «Conservado por criterio in situ».",
+  "…Se você diz, pesquisador, vou considerar confirmado. Na lista, escrevo “Preservado por decisão no local”.",
+  "… Wenn Sie das sagen, Forscher, gilt das als bestätigt. Auf die Liste schreibe ich „Vor Ort entschieden: erhalten“.",
+  "…Раз вы так говорите, исследователь, буду считать это подтверждённым. В списке запишу: «Сохранено по решению на месте»."
+ ],
+ "dialogue.bond.arte.6.n6b.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.6.n6b.body": [
+  "我？不是清单，是我？……那，我只留下箭头。其余晕开的痕迹擦掉。",
+  "ฉันเหรอคะ? ไม่ใช่รายการ แต่เป็นฉัน? …งั้นจะเก็บไว้แค่ลูกศรค่ะ ส่วนรอยสีที่เลอะที่เหลือจะลบออก",
+  "Em ạ? Không phải danh sách mà là em? …Vậy em chỉ giữ lại mũi tên. Mấy vết sơn lem còn lại thì xóa.",
+  "Saya? Bukan daftarnya, tapi saya? …Kalau begitu, saya biarkan panahnya saja. Sisa noda catnya saya hapus.",
+  "¿Yo? ¿No la lista, sino yo? …Entonces dejaré solo la flecha. Lo demás que se corrió, lo borro.",
+  "Eu? Não a lista, eu? …Então deixo só a seta. O resto da tinta borrada eu apago.",
+  "Ich? Nicht die Liste, sondern ich? … Dann lasse ich nur den Pfeil. Die übrigen verlaufenen Stellen mache ich weg.",
+  "Я? Не список, а я? …Тогда оставлю только стрелку. Остальные потёки сотру."
+ ],
+ "dialogue.bond.arte.6.n7.body": [
+  "阿尔缇只把箭头周围晕开的油漆仔细擦掉。箭头反而比刚才更清晰了。",
+  "อาร์เตเช็ดเฉพาะสีที่เลอะรอบลูกศรออกอย่างละเอียด ลูกศรกลับดูชัดกว่าเดิมเสียอีก",
+  "Arte cẩn thận lau sạch chỉ những vệt sơn lem quanh mũi tên. Mũi tên trái lại còn rõ nét hơn lúc nãy.",
+  "Arte dengan teliti mengelap hanya cat yang meluber di sekitar panah. Panahnya malah tampak lebih jelas dari tadi.",
+  "Arte limpia con cuidado solo la pintura corrida alrededor de la flecha. La flecha queda incluso más nítida que antes.",
+  "Arte limpa com cuidado só a tinta que escorreu em volta da seta. A seta fica até mais nítida do que antes.",
+  "Arte wischt sorgfältig nur die Farbe weg, die um den Pfeil verlaufen ist. Der Pfeil wirkt dadurch sogar schärfer als vorher.",
+  "Арте аккуратно стирает только расплывшуюся вокруг стрелки краску. Стрелка становится даже чётче, чем была."
+ ],
+ "dialogue.bond.arte.6.n8.speaker": [
+  "黛依",
+  "เดย์",
+  "Dei",
+  "Dei",
+  "Dei",
+  "Dei",
+  "Dei",
+  "Дей"
+ ],
+ "dialogue.bond.arte.6.n8.body": [
+  "哦，更清楚了嘛！阿尔缇，你有这方面的天赋。下次一起画吧。",
+  "โอ้ เห็นชัดขึ้นอีก! อาร์เต มีพรสวรรค์นะเนี่ย คราวหน้ามาวาดด้วยกันเถอะ",
+  "Ồ, dễ nhìn hơn rồi! Arte, em có năng khiếu đấy. Lần sau vẽ cùng nhau đi.",
+  "Wah, jadi lebih kelihatan! Arte, kamu berbakat. Lain kali kita menggambar bareng.",
+  "¡Anda, se ve todavía mejor! Arte, tienes talento. La próxima vez dibujamos juntas.",
+  "Opa, ficou ainda mais visível! Arte, você leva jeito. Da próxima vez, vamos desenhar juntas.",
+  "Oh, jetzt sieht man ihn noch besser! Arte, du hast Talent. Nächstes Mal zeichnen wir zusammen.",
+  "О, так даже лучше видно! Арте, у тебя талант. В следующий раз рисуем вместе."
+ ],
+ "dialogue.bond.arte.6.n9.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.6.n9.body": [
+  "我不画。我是负责擦的人。……不过这次我会拍张照片。把箭头拍进去。",
+  "ไม่วาดค่ะ ฉันเป็นคนลบ …แต่ครั้งนี้จะถ่ายรูปเก็บไว้ ให้ติดลูกศรด้วย",
+  "Em không vẽ đâu. Em là người xóa mà. …Nhưng lần này em sẽ chụp ảnh lại. Có cả mũi tên.",
+  "Saya tidak mau menggambar. Saya ini orang yang menghapus. …Tapi kali ini saya foto. Dengan panahnya ikut.",
+  "No voy a dibujar. Yo soy de las que borran. …Pero esta vez sí haré una foto. Con la flecha dentro.",
+  "Não vou desenhar. Eu sou a que apaga. …Mas desta vez vou tirar uma foto. Com a seta aparecendo.",
+  "Ich zeichne nicht. Ich bin die, die wegwischt. … Aber diesmal mache ich ein Foto. Mit dem Pfeil drauf.",
+  "Не буду рисовать. Я та, кто стирает. …Но в этот раз сфотографирую. Так, чтобы стрелка попала в кадр."
+ ],
+ "dialogue.bond.arte.6.n10.body": [
+  "那天，相册里第一次夹进了一张留下了某样东西的照片。阿尔缇翻到那一页时，又多看了一眼。",
+  "วันนั้น อัลบั้มได้รูปที่มีบางอย่างหลงเหลืออยู่เป็นครั้งแรก อาร์เตเปิดผ่านหน้านั้นแล้วหยุดมองอีกครั้ง",
+  "Hôm đó, lần đầu tiên album được kẹp một tấm ảnh còn lưu lại thứ gì đó. Lật đến trang ấy, Arte dừng lại nhìn thêm lần nữa.",
+  "Hari itu, untuk pertama kalinya album diselipi foto yang masih menyisakan sesuatu. Saat membalik halamannya, Arte berhenti dan menatapnya sekali lagi.",
+  "Ese día, por primera vez, el álbum recibe una foto en la que queda algo. Al pasar las páginas, Arte se detiene a mirarla otra vez.",
+  "Naquele dia, pela primeira vez, uma foto com algo deixado nela entra no álbum. Folheando, Arte para e olha mais uma vez.",
+  "An diesem Tag kommt zum ersten Mal ein Foto ins Album, auf dem etwas geblieben ist. Beim Umblättern hält Arte inne und sieht es sich noch einmal an.",
+  "В тот день в альбом впервые попадает снимок, на котором что-то осталось. Листая страницы, Арте задерживается на нём ещё раз."
+ ],
+ "dialogue.bond.arte.8.title": [
+  "休息日",
+  "วันหยุด",
+  "Ngày nghỉ",
+  "Hari Libur",
+  "Día libre",
+  "Dia de folga",
+  "Freier Tag",
+  "Выходной"
+ ],
+ "dialogue.bond.arte.8.subtitle": [
+  "阿尔缇 · 最爱故事 3",
+  "อาร์เต · เรื่องราวโปรด 3",
+  "Arte · Câu chuyện yêu thích 3",
+  "Arte · Kisah Favorit 3",
+  "Arte · Historia favorita 3",
+  "Arte · História favorita 3",
+  "Arte · Favoriten-Geschichte 3",
+  "Арте · Любимая история 3"
+ ],
+ "dialogue.bond.arte.8.n1.body": [
+  "午后的休息室。阿尔缇没穿围裙，换了便服坐在沙发一端。她的手不停地在空桌面上来回擦。",
+  "ห้องพักยามบ่าย อาร์เตสวมชุดลำลองแทนผ้ากันเปื้อน นั่งอยู่ที่ปลายโซฟา มือคอยถูโต๊ะว่างไปมาไม่หยุด",
+  "Phòng nghỉ buổi chiều. Arte mặc thường phục thay cho tạp dề, ngồi ở mép sofa. Tay cô cứ chà đi chà lại trên mặt bàn trống.",
+  "Ruang istirahat di sore hari. Arte duduk di ujung sofa memakai baju santai, bukan celemek. Tangannya terus mengusap meja yang kosong.",
+  "La sala de descanso por la tarde. Arte está sentada en el extremo del sofá, con ropa de calle en vez del delantal. Su mano no deja de frotar la mesa vacía.",
+  "A sala de descanso à tarde. Arte está sentada na ponta do sofá, com roupas casuais em vez do avental. A mão dela não para de esfregar a mesa vazia.",
+  "Der Pausenraum am Nachmittag. Arte sitzt in Freizeitkleidung statt Schürze am Ende des Sofas. Ihre Hand reibt immer wieder über den leeren Tisch.",
+  "Комната отдыха днём. Арте сидит на краю дивана — не в фартуке, а в повседневной одежде. Её рука то и дело трёт пустой стол."
+ ],
+ "dialogue.bond.arte.8.n2.speaker": [
+  "玛琪",
+  "มากิ",
+  "Maki",
+  "Maki",
+  "Maki",
+  "Maki",
+  "Maki",
+  "Маки"
+ ],
+ "dialogue.bond.arte.8.n2.body": [
+  "这是处方喵。今天一整天禁止拖把。抹布也禁止。那双手给我放在膝盖上喵。",
+  "ใบสั่งยาเมี้ยว วันนี้ทั้งวันห้ามจับไม้ถูพื้น ผ้าเช็ดโต๊ะก็ห้าม มือนั่นวางไว้บนเข่าเมี้ยว",
+  "Đơn thuốc đây meo. Cả hôm nay cấm cây lau nhà. Khăn lau cũng cấm. Hai tay đặt lên đầu gối đi meo.",
+  "Ini resep, nyan. Hari ini seharian dilarang pegang pel. Lap juga dilarang. Tangan itu taruh di atas lutut, nyan.",
+  "Receta médica, miau. Hoy, nada de fregona en todo el día. Ni de trapo. Esas manos, sobre las rodillas, miau.",
+  "Receita médica, miau. Hoje o dia inteiro, nada de esfregão. Nem de pano. Essas mãos ficam em cima dos joelhos, miau.",
+  "Ärztliche Verordnung, miau. Heute den ganzen Tag kein Mop. Auch kein Lappen. Die Hände bleiben auf den Knien, miau.",
+  "Предписание, мяу. Сегодня весь день никакой швабры. И тряпки тоже. Руки держи на коленях, мяу."
+ ],
+ "dialogue.bond.arte.8.n3.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.8.n3.body": [
+  "玛琪医生，这也太过分了。休息日该做什么，我真的不知道。这是我入职以来第一次休假。",
+  "คุณหมอมากิ แบบนั้นมันเกินไปค่ะ วันหยุดต้องทำอะไรฉันไม่รู้จริงๆ เป็นวันหยุดแรกตั้งแต่เข้าบริษัทเลย",
+  "Bác sĩ Maki, vậy thì quá đáng lắm. Ngày nghỉ làm gì em thật sự không biết. Đây là ngày nghỉ đầu tiên từ khi em vào công ty.",
+  "Dokter Maki, itu keterlaluan. Saya benar-benar tidak tahu harus ngapain di hari libur. Ini libur pertama sejak saya masuk kerja.",
+  "Doctor Maki, eso es demasiado. De verdad no sé qué se hace en un día libre. Es el primero que tengo desde que entré en la empresa.",
+  "Doutor Maki, assim é demais. Eu realmente não sei o que se faz numa folga. É a primeira que tenho desde que entrei na empresa.",
+  "Doktor Maki, das ist zu viel. Ich weiß wirklich nicht, was man an einem freien Tag macht. Es ist mein erster seit meinem Arbeitsantritt.",
+  "Доктор Маки, это уж слишком. Я правда не знаю, что делают в выходной. Это мой первый с тех пор, как я пришла в компанию."
+ ],
+ "dialogue.bond.arte.8.n4.body": [
+  "玛琪甩了一下尾巴走了出去。阿尔缇把手放在膝盖上，没多久又开始用手指梳理手臂末端的羽毛。",
+  "มากิสะบัดหางทีหนึ่งแล้วเดินออกไป อาร์เตวางมือไว้บนเข่า ไม่นานก็เริ่มใช้นิ้วไซ้ขนที่ปลายแขน",
+  "Maki vẫy đuôi một cái rồi đi ra. Arte đặt tay lên đầu gối, chẳng bao lâu lại bắt đầu dùng ngón tay chải lông vũ ở đầu cánh tay.",
+  "Maki mengibaskan ekornya sekali lalu pergi. Arte menaruh tangan di lutut, lalu tak lama mulai merapikan bulu di ujung lengannya dengan jari.",
+  "Maki agita la cola una vez y se va. Arte apoya las manos en las rodillas y enseguida empieza a arreglarse con los dedos las plumas del extremo de los brazos.",
+  "Maki balança o rabo uma vez e sai. Arte apoia as mãos nos joelhos e logo começa a ajeitar com os dedos as penas da ponta dos braços.",
+  "Maki schlägt einmal mit dem Schwanz und geht hinaus. Arte legt die Hände auf die Knie und beginnt bald, mit den Fingern die Federn an ihren Armenden zu ordnen.",
+  "Маки разок взмахивает хвостом и выходит. Арте кладёт руки на колени, но вскоре начинает перебирать пальцами перья на концах рук."
+ ],
+ "dialogue.bond.arte.8.n5.speaker": [
+  "研究员",
+  "นักวิจัย",
+  "Nhà nghiên cứu",
+  "Periset",
+  "Investigador",
+  "Pesquisador",
+  "Forscher",
+  "Исследователь"
+ ],
+ "dialogue.bond.arte.8.n5.body": [
+  "（梳理羽毛的手指很快。看起来像是不安时才会冒出来的习惯。）",
+  "(นิ้วที่ไซ้ขนเคลื่อนไหวเร็ว ดูเหมือนนิสัยที่โผล่มาเวลากังวล)",
+  "(Ngón tay chải lông rất nhanh. Trông như một thói quen hiện ra khi bất an.)",
+  "(Jari yang merapikan bulu bergerak cepat. Tampaknya kebiasaan yang muncul saat ia cemas.)",
+  "(Los dedos se mueven rápido entre las plumas. Parece una manía que le sale cuando está nerviosa.)",
+  "(Os dedos passam rápido pelas penas. Parece uma mania que aparece quando ela está ansiosa.)",
+  "(Die Finger fahren schnell durch die Federn. Es wirkt wie eine Angewohnheit, die sich zeigt, wenn sie unruhig ist.)",
+  "(Пальцы быстро перебирают перья. Похоже на привычку, которая проявляется, когда ей тревожно.)"
+ ],
+ "dialogue.bond.arte.8.n5.choice.0": [
+  "说她的羽毛很漂亮",
+  "บอกว่าขนสวย",
+  "Khen lông vũ đẹp",
+  "Bilang bulunya cantik",
+  "Decirle que sus plumas son bonitas",
+  "Dizer que as penas são bonitas",
+  "Sagen, dass ihre Federn hübsch sind",
+  "Сказать, что перья красивые"
+ ],
+ "dialogue.bond.arte.8.n5.choice.1": [
+  "说什么都不做也没关系",
+  "บอกว่าไม่ต้องทำอะไรก็ได้",
+  "Bảo không làm gì cũng được",
+  "Bilang tidak perlu melakukan apa-apa",
+  "Decirle que no tiene que hacer nada",
+  "Dizer que ela não precisa fazer nada",
+  "Sagen, dass sie nichts tun muss",
+  "Сказать, что можно ничего не делать"
+ ],
+ "dialogue.bond.arte.8.n6a.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.8.n6a.body": [
+  "这个吗？……听说我的化石连一根羽毛的痕迹都完整保留着。就那样印在石头上。所以我才被复原成这样。",
+  "อันนี้เหรอคะ? …เขาว่าฟอสซิลของฉันมีรอยขนเหลืออยู่ครบทุกเส้น ประทับอยู่ในหินแบบนั้นเลย ถึงได้ฟื้นคืนออกมาเป็นแบบนี้",
+  "Cái này ạ? …Người ta bảo hóa thạch của em còn lưu lại đủ từng sợi lông vũ. In nguyên trên đá. Nên em mới được phục hồi thế này.",
+  "Ini? …Katanya fosil saya menyimpan jejak bulu sampai helai terakhir. Tercetak di batu begitu saja. Makanya saya dipulihkan seperti ini.",
+  "¿Estas? …Dicen que en mi fósil se conservó la marca de cada pluma, una por una. Impresa en la piedra. Por eso me restauraron así.",
+  "Estas? …Dizem que meu fóssil guardou a marca de cada pena, uma por uma. Gravada na pedra. Por isso fui restaurada assim.",
+  "Die hier? … Angeblich waren in meinem Fossil die Abdrücke jeder einzelnen Feder erhalten. Direkt im Stein. Deshalb wurde ich so wiederhergestellt.",
+  "Эти? …Говорят, в моей окаменелости сохранился отпечаток каждого пёрышка. Прямо в камне. Поэтому меня так и восстановили."
+ ],
+ "dialogue.bond.arte.8.n6b.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.8.n6b.body": [
+  "什么都不做？那才是最难的。……啊，你是说这些羽毛？听说我的化石连一根羽毛的痕迹都留了下来。",
+  "ไม่ต้องทำอะไรเลยเหรอคะ? นั่นยากที่สุดเลย …อ๊ะ หมายถึงขนพวกนี้เหรอ? เขาว่าฟอสซิลของฉันมีรอยขนเหลืออยู่ครบทุกเส้น",
+  "Không làm gì cả ạ? Đó là điều khó nhất. …À, ý là lông vũ này ạ? Người ta bảo hóa thạch của em còn lưu lại đủ từng sợi lông.",
+  "Tidak melakukan apa-apa? Itu yang paling sulit. …Oh, maksudnya bulu ini? Katanya fosil saya menyimpan jejak bulu sampai helai terakhir.",
+  "¿Nada de nada? Eso es lo más difícil. …Ah, ¿lo dice por las plumas? Dicen que en mi fósil se conservó la marca de cada una.",
+  "Nada mesmo? Isso é o mais difícil. …Ah, você fala destas penas? Dizem que meu fóssil guardou a marca de cada uma.",
+  "Gar nichts? Das ist das Schwerste. … Ach, Sie meinen die Federn? In meinem Fossil sollen die Abdrücke jeder einzelnen erhalten gewesen sein.",
+  "Совсем ничего? Это труднее всего. …А, вы про эти перья? Говорят, в моей окаменелости сохранился отпечаток каждого."
+ ],
+ "dialogue.bond.arte.8.n7.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.8.n7.body": [
+  "很好笑吧。我每天都在擦掉痕迹，可我会在这里，是因为痕迹没有被抹去。",
+  "ตลกดีนะคะ ฉันลบรอยทุกวัน แต่เหตุที่ฉันอยู่ตรงนี้ได้ก็เพราะรอยไม่ถูกลบไป",
+  "Buồn cười nhỉ. Ngày nào em cũng xóa dấu vết, vậy mà em có mặt ở đây là vì dấu vết không bị xóa đi.",
+  "Lucu, ya. Setiap hari saya menghapus jejak, tapi saya ada di sini justru karena jejak itu tidak terhapus.",
+  "Qué gracioso, ¿no? Borro marcas todos los días, pero estoy aquí porque una marca no se borró.",
+  "Engraçado, né? Apago marcas todo dia, mas estou aqui porque uma marca não foi apagada.",
+  "Komisch, oder? Ich wische jeden Tag Spuren weg, und dabei bin ich nur hier, weil eine Spur nicht weggewischt wurde.",
+  "Смешно, правда? Я каждый день стираю следы, а сама здесь потому, что след не стёрся."
+ ],
+ "dialogue.bond.arte.8.n8.body": [
+  "阿尔缇的手停了下来。一根羽毛服服帖帖地回到原位。",
+  "มือของอาร์เตหยุดลง ขนเส้นหนึ่งเอนกลับเข้าที่อย่างเรียบร้อย",
+  "Tay Arte dừng lại. Một sợi lông vũ nằm ngay ngắn về chỗ cũ.",
+  "Tangan Arte berhenti. Sehelai bulu rebah rapi kembali ke tempatnya.",
+  "La mano de Arte se detiene. Una pluma vuelve a su sitio, bien alineada.",
+  "A mão de Arte para. Uma pena volta certinha para o lugar.",
+  "Artes Hand hält inne. Eine Feder legt sich sauber an ihren Platz zurück.",
+  "Рука Арте замирает. Одно перо ровно ложится на место."
+ ],
+ "dialogue.bond.arte.8.n9.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.8.n9.body": [
+  "所以最近擦之前我会再看一眼。看看是不是该留下的痕迹。……这也算工作了呢。明明是休息日。",
+  "เพราะงั้นช่วงนี้ก่อนลบจะดูอีกรอบค่ะ ว่าเป็นรอยที่ควรเก็บไว้หรือเปล่า …นี่ก็เป็นงานเหมือนกันนะ ทั้งที่เป็นวันหยุด",
+  "Thế nên dạo này trước khi lau em nhìn lại thêm một lần. Xem có phải dấu vết nên giữ lại không. …Cái này cũng là công việc nhỉ. Dù là ngày nghỉ.",
+  "Makanya belakangan ini sebelum menghapus saya lihat sekali lagi. Apakah itu jejak yang perlu dibiarkan atau tidak. …Ini juga kerja, ya. Padahal hari libur.",
+  "Por eso últimamente miro una vez más antes de limpiar. Si es una marca que debería quedarse o no. …Eso también es trabajo, ¿verdad? En mi día libre.",
+  "Por isso ultimamente olho mais uma vez antes de limpar. Se é uma marca que deve ficar ou não. …Isso também é trabalho, né? Logo na folga.",
+  "Deshalb schaue ich in letzter Zeit vor dem Wischen noch einmal hin. Ob die Spur bleiben sollte oder nicht. … Das ist auch Arbeit, oder? Am freien Tag.",
+  "Поэтому теперь перед тем, как стереть, я смотрю ещё раз. Нужно ли оставить этот след. …Это ведь тоже работа. А у меня выходной."
+ ],
+ "dialogue.bond.arte.8.n10.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.8.n10.body": [
+  "研究员，明天可以照常上班吧？今天我就坐在这里。坐在研究员旁边。那可不算工作。",
+  "นักวิจัย พรุ่งนี้กลับไปทำงานได้ใช่ไหมคะ? วันนี้จะนั่งอยู่ตรงนี้แทน ข้างๆ นักวิจัย อันนั้นไม่ใช่งานนี่คะ",
+  "Nhà nghiên cứu, mai em đi làm lại được chứ ạ? Hôm nay em sẽ ngồi đây thay vào đó. Bên cạnh nhà nghiên cứu. Cái đó đâu phải công việc.",
+  "Periset, besok saya boleh masuk kerja lagi, kan? Hari ini saya duduk di sini saja. Di samping Periset. Itu kan bukan kerja.",
+  "Investigador, mañana puedo volver al trabajo, ¿verdad? Hoy, a cambio, me quedaré sentada aquí. A su lado. Eso no es trabajo.",
+  "Pesquisador, amanhã posso voltar ao trabalho, né? Hoje, em vez disso, vou ficar sentada aqui. Do seu lado. Isso não é trabalho.",
+  "Forscher, morgen darf ich doch wieder arbeiten, oder? Heute bleibe ich stattdessen hier sitzen. Neben Ihnen. Das ist ja keine Arbeit.",
+  "Исследователь, завтра ведь можно снова на работу? А сегодня я посижу здесь. Рядом с вами. Это ведь не работа."
+ ],
+ "dialogue.bond.arte.10.title": [
+  "现场相册",
+  "อัลบั้มหน้างาน",
+  "Album hiện trường",
+  "Album Lokasi",
+  "El álbum de campo",
+  "O álbum de campo",
+  "Das Einsatzalbum",
+  "Альбом с объектов"
+ ],
+ "dialogue.bond.arte.10.subtitle": [
+  "阿尔缇 · 最爱故事 4",
+  "อาร์เต · เรื่องราวโปรด 4",
+  "Arte · Câu chuyện yêu thích 4",
+  "Arte · Kisah Favorit 4",
+  "Arte · Historia favorita 4",
+  "Arte · História favorita 4",
+  "Arte · Favoriten-Geschichte 4",
+  "Арте · Любимая история 4"
+ ],
+ "dialogue.bond.arte.10.n1.body": [
+  "深夜的控制室。阿尔缇双手抱着一本厚厚的相册站在门口。封面上贴着CLEAN的名牌。",
+  "ห้องควบคุมยามดึก อาร์เตกอดอัลบั้มเล่มหนาไว้ด้วยสองมือ ยืนอยู่หน้าประตู ปกติดป้ายชื่อ CLEAN",
+  "Phòng điều khiển lúc đêm khuya. Arte ôm một cuốn album dày bằng hai tay, đứng trước cửa. Trên bìa dán bảng tên CLEAN.",
+  "Ruang kendali larut malam. Arte berdiri di depan pintu, memeluk album foto tebal dengan kedua tangan. Di sampulnya tertempel papan nama CLEAN.",
+  "La sala de control, tarde por la noche. Arte está en la puerta abrazando con ambas manos un grueso álbum de fotos. En la tapa lleva pegada una placa de CLEAN.",
+  "A sala de controle tarde da noite. Arte está na porta, segurando com as duas mãos um álbum grosso. Na capa há um crachá da CLEAN colado.",
+  "Der Kontrollraum spät in der Nacht. Arte steht an der Tür und hält mit beiden Händen ein dickes Fotoalbum. Auf dem Umschlag klebt ein CLEAN-Namensschild.",
+  "Диспетчерская поздно ночью. Арте стоит у двери, обеими руками прижимая к себе толстый фотоальбом. На обложке приклеен бейдж CLEAN."
+ ],
+ "dialogue.bond.arte.10.n2.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.10.n2.body": [
+  "研究员，现在有空吗？我有事要汇报。不是工作汇报。",
+  "นักวิจัย ว่างสักครู่ไหมคะ? มีเรื่องจะรายงาน ไม่ใช่รายงานงานนะคะ",
+  "Nhà nghiên cứu, có rảnh một chút không ạ? Em có chuyện muốn báo cáo. Không phải báo cáo công việc đâu.",
+  "Periset, ada waktu sebentar? Ada yang ingin saya laporkan. Bukan laporan kerja.",
+  "Investigador, ¿tiene un momento? Tengo algo que informar. No es un informe de trabajo.",
+  "Pesquisador, tem um minutinho? Tenho algo para relatar. Não é relatório de trabalho.",
+  "Forscher, haben Sie kurz Zeit? Ich habe etwas zu berichten. Kein Dienstbericht.",
+  "Исследователь, у вас найдётся минутка? Мне нужно кое-что доложить. Не рабочий отчёт."
+ ],
+ "dialogue.bond.arte.10.n3.body": [
+  "翻开相册。前面全是干干净净的地板和墙。从中间开始，混进了一个箭头、一朵插着的野花、有人坐过的痕迹。",
+  "เปิดอัลบั้มดู ช่วงแรกมีแต่พื้นกับผนังสะอาดเอี่ยม ตั้งแต่กลางเล่มเริ่มมีลูกศรหนึ่งอัน ดอกไม้ป่าที่เสียบไว้หนึ่งดอก และรอยที่ใครสักคนเคยนั่งปะปนอยู่",
+  "Lật album. Mấy trang đầu chỉ toàn sàn và tường sạch bong. Từ giữa trở đi xen lẫn một mũi tên, một bông hoa dại được cài lại, dấu vết ai đó từng ngồi.",
+  "Album dibalik. Halaman-halaman awal hanya berisi lantai dan dinding yang bersih. Mulai dari tengah, terselip satu panah, setangkai bunga liar yang ditancapkan, dan bekas seseorang yang pernah duduk.",
+  "Pasas las páginas del álbum. Al principio solo hay suelos y paredes limpios. A partir de la mitad se cuelan una flecha, una flor silvestre colocada y la marca de alguien que estuvo sentado.",
+  "Você folheia o álbum. No começo, só chão e paredes limpos. Do meio em diante, aparecem uma seta, uma flor silvestre encaixada e a marca de alguém que se sentou ali.",
+  "Du blätterst das Album durch. Vorne nur saubere Böden und Wände. Ab der Mitte mischen sich ein Pfeil, eine hingesteckte Wildblume und der Abdruck einer Person, die dort gesessen hat, darunter.",
+  "Листаешь альбом. В начале — только чистые полы и стены. С середины среди них появляются стрелка, воткнутый полевой цветок, след того, кто здесь сидел."
+ ],
+ "dialogue.bond.arte.10.n4.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.10.n4.body": [
+  "一开始我只挑什么都没有的照片。可最近的照片里总是留着点什么。是我留下的。",
+  "แรกๆ เลือกแต่รูปที่ไม่มีอะไรเลยค่ะ แต่ช่วงนี้ในรูปมีอะไรหลงเหลืออยู่ตลอด เป็นสิ่งที่ฉันเก็บไว้เอง",
+  "Lúc đầu em chỉ chọn ảnh không có gì cả. Nhưng ảnh dạo này cứ còn lại thứ gì đó. Là thứ em để lại.",
+  "Awalnya saya hanya memilih foto yang tidak ada apa-apanya. Tapi belakangan selalu ada sesuatu yang tersisa di foto. Yang saya biarkan.",
+  "Al principio solo elegía fotos en las que no hubiera nada. Pero últimamente en mis fotos siempre queda algo. Cosas que dejé yo.",
+  "No começo eu só escolhia fotos sem nada. Mas ultimamente sempre sobra alguma coisa nas fotos. Coisas que eu deixei.",
+  "Anfangs habe ich nur Fotos ausgesucht, auf denen nichts zu sehen war. Aber in letzter Zeit bleibt auf meinen Fotos immer etwas zurück. Dinge, die ich stehen gelassen habe.",
+  "Сначала я выбирала только снимки, на которых ничего нет. А в последнее время на фото всё время что-то остаётся. То, что я оставила."
+ ],
+ "dialogue.bond.arte.10.n5.speaker": [
+  "研究员",
+  "นักวิจัย",
+  "Nhà nghiên cứu",
+  "Periset",
+  "Investigador",
+  "Pesquisador",
+  "Forscher",
+  "Исследователь"
+ ],
+ "dialogue.bond.arte.10.n5.body": [
+  "（最后一页是空的。只剩下一个放照片的位置。）",
+  "(หน้าสุดท้ายว่างเปล่า เหลือที่ใส่รูปไว้แค่ช่องเดียว)",
+  "(Trang cuối còn trống. Chỉ còn đúng một chỗ để kẹp ảnh.)",
+  "(Halaman terakhir kosong. Hanya tersisa satu tempat untuk menyelipkan foto.)",
+  "(La última página está vacía. Solo queda un hueco para una foto.)",
+  "(A última página está vazia. Só resta um espaço para uma foto.)",
+  "(Die letzte Seite ist leer. Nur noch ein Platz für ein Foto ist frei.)",
+  "(Последняя страница пуста. Осталось место только для одной фотографии.)"
+ ],
+ "dialogue.bond.arte.10.n5.choice.0": [
+  "问她最后一页要拍什么",
+  "ถามว่าหน้าสุดท้ายจะถ่ายอะไร",
+  "Hỏi trang cuối sẽ chụp gì",
+  "Bertanya mau memotret apa untuk halaman terakhir",
+  "Preguntar qué fotografiará para la última página",
+  "Perguntar o que ela vai fotografar para a última página",
+  "Fragen, was sie für die letzte Seite fotografiert",
+  "Спросить, что она снимет для последней страницы"
+ ],
+ "dialogue.bond.arte.10.n5.choice.1": [
+  "提议一起拍",
+  "ชวนถ่ายด้วยกัน",
+  "Rủ chụp cùng nhau",
+  "Mengajak memotret bersama",
+  "Proponer hacerla juntos",
+  "Propor tirar juntos",
+  "Vorschlagen, es gemeinsam zu machen",
+  "Предложить сняться вместе"
+ ],
+ "dialogue.bond.arte.10.n6a.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.10.n6a.body": [
+  "我就是来问这个的。……研究员，能站到这里吗？啊，站上去之前我先把地板擦一下。那是习惯。",
+  "มาเพื่อถามเรื่องนั้นแหละค่ะ …นักวิจัย ช่วยยืนตรงนี้ได้ไหมคะ? อ๊ะ ก่อนยืนขอเช็ดพื้นก่อนนะ นั่นเป็นนิสัยค่ะ",
+  "Em đến để hỏi chuyện đó đấy. …Nhà nghiên cứu, đứng vào đây được không ạ? À, trước khi đứng em lau sàn đã. Đó là thói quen thôi.",
+  "Justru itu yang mau saya tanyakan. …Periset, bisa berdiri di sini? Oh, sebelum berdiri, lantainya saya pel dulu. Itu kebiasaan.",
+  "Eso es justo lo que vine a preguntarle. …Investigador, ¿se pondría aquí? Ah, antes friego el suelo. Es la costumbre.",
+  "Foi isso que eu vim perguntar. …Pesquisador, pode ficar aqui? Ah, antes vou limpar o chão. É costume.",
+  "Genau das wollte ich fragen. … Forscher, würden Sie sich hierhin stellen? Ach, vorher wische ich noch den Boden. Das ist Gewohnheit.",
+  "Я как раз пришла спросить об этом. …Исследователь, встанете вот сюда? Ой, сначала я протру пол. Это просто привычка."
+ ],
+ "dialogue.bond.arte.10.n6b.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.10.n6b.body": [
+  "一起？我也要入镜吗？现场照片里我从来没出现过。……好吧。先让我把地板擦了。",
+  "ด้วยกันเหรอคะ? ฉันก็อยู่ในรูปด้วยเหรอ? ในรูปหน้างานไม่เคยมีฉันเลยสักครั้ง …ได้ค่ะ ขอเช็ดพื้นก่อนนะคะ",
+  "Cùng nhau ạ? Em cũng có trong ảnh sao? Trong ảnh hiện trường em chưa từng xuất hiện lần nào. …Được ạ. Để em lau sàn trước đã.",
+  "Bersama? Saya juga ikut difoto? Saya belum pernah sekali pun muncul di foto lokasi. …Baiklah. Lantainya saya pel dulu.",
+  "¿Juntos? ¿Yo también salgo? Nunca he salido en una foto de campo. …Vale. Déjeme fregar el suelo primero.",
+  "Juntos? Eu também apareço? Nunca saí numa foto de campo. …Tudo bem. Só deixa eu limpar o chão primeiro.",
+  "Zusammen? Ich bin auch drauf? Auf einem Einsatzfoto war ich noch nie. … Gut. Ich wische nur erst den Boden.",
+  "Вместе? Я тоже буду в кадре? Я ни разу не попадала на снимки с объектов. …Хорошо. Только сначала протру пол."
+ ],
+ "dialogue.bond.arte.10.n7.body": [
+  "阿尔缇把地板擦了一遍，研究员站了上去。鞋印清清楚楚地印在平整的地板上。",
+  "อาร์เตเช็ดพื้นหนึ่งรอบ นักวิจัยก้าวขึ้นไปยืน รอยรองเท้าประทับชัดเจนบนพื้นที่เรียบเอี่ยม",
+  "Arte lau sàn một lượt, nhà nghiên cứu bước lên đứng. Dấu giày in rõ trên mặt sàn phẳng lì.",
+  "Arte mengepel lantai sekali, lalu periset berdiri di atasnya. Jejak sepatu tercetak jelas di lantai yang rapi.",
+  "Arte friega el suelo una vez y la persona investigadora se pone encima. Una huella de zapato queda bien marcada sobre el suelo impecable.",
+  "Arte limpa o chão uma vez, e quem pesquisa pisa ali. Uma pegada de sapato fica nítida no chão impecável.",
+  "Arte wischt den Boden einmal, und die forschende Person stellt sich darauf. Ein Schuhabdruck zeichnet sich deutlich auf dem blanken Boden ab.",
+  "Арте один раз протирает пол, и исследователь встаёт на него. На чистом полу отчётливо отпечатывается след ботинка."
+ ],
+ "dialogue.bond.arte.10.n8.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.10.n8.body": [
+  "那个印子我不会擦。今天的照片，它是主角。",
+  "รอยนั้นจะไม่ลบค่ะ วันนี้มันเป็นตัวเอกของรูป",
+  "Dấu đó em sẽ không xóa. Hôm nay nó là nhân vật chính của tấm ảnh.",
+  "Jejak itu tidak akan saya hapus. Itu bintang foto hari ini.",
+  "Esa marca no la voy a borrar. Es la protagonista de la foto de hoy.",
+  "Essa marca eu não vou apagar. É a protagonista da foto de hoje.",
+  "Diesen Abdruck wische ich nicht weg. Er ist die Hauptfigur des heutigen Fotos.",
+  "Этот след я не сотру. Сегодня он — главный на снимке."
+ ],
+ "dialogue.bond.arte.10.n9.body": [
+  "咔嚓。照片里有擦干净的地板和一个鞋印，还有在旁边第一次看着镜头微笑的阿尔缇。",
+  "แชะ ในรูปมีพื้นที่เช็ดแล้ว รอยรองเท้าหนึ่งรอย และข้างๆ คืออาร์เตที่มองกล้องแล้วยิ้มเป็นครั้งแรก",
+  "Tách. Trong ảnh có sàn nhà đã lau, một dấu giày, và bên cạnh là Arte lần đầu tiên nhìn vào ống kính mỉm cười.",
+  "Cekrek. Di foto itu ada lantai yang sudah dipel, satu jejak sepatu, dan di sampingnya Arte yang untuk pertama kalinya tersenyum menatap kamera.",
+  "Clic. En la foto hay un suelo recién fregado, una huella de zapato y, a su lado, Arte, mirando a la cámara y sonriendo por primera vez.",
+  "Clique. Na foto há um chão recém-limpo, uma pegada de sapato e, ao lado, Arte, olhando para a câmera e sorrindo pela primeira vez.",
+  "Klick. Auf dem Foto sind ein frisch gewischter Boden, ein einzelner Schuhabdruck und daneben Arte, die zum ersten Mal in die Kamera lächelt.",
+  "Щёлк. На снимке — вымытый пол, один след ботинка и рядом Арте, впервые улыбающаяся в камеру."
+ ],
+ "dialogue.bond.arte.10.n10.speaker": [
+  "阿尔缇",
+  "อาร์เต",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Arte",
+  "Арте"
+ ],
+ "dialogue.bond.arte.10.n10.body": [
+  "现场整理完毕。……这次的现场，不是要擦掉，而是要留下呢。研究员，下一页也请和我一起填满。",
+  "เก็บกวาดหน้างานเสร็จแล้วค่ะ …หน้างานครั้งนี้ไม่ใช่การลบ แต่เป็นการเก็บไว้สินะ นักวิจัย หน้าถัดไปก็ช่วยเติมด้วยกันนะคะ",
+  "Dọn dẹp hiện trường hoàn tất. …Hiện trường lần này không phải để xóa, mà là để giữ lại nhỉ. Nhà nghiên cứu, trang sau cũng cùng em lấp đầy nhé.",
+  "Pembersihan lokasi selesai. …Lokasi kali ini ternyata bukan untuk dihapus, tapi untuk ditinggalkan. Periset, halaman berikutnya juga isi bersama saya, ya.",
+  "Limpieza del lugar completada. …Esta vez no se trataba de borrar, sino de dejar algo. Investigador, ayúdeme a llenar también la siguiente página.",
+  "Limpeza do local concluída. …Desta vez não era para apagar, era para deixar. Pesquisador, me ajude a preencher a próxima página também.",
+  "Einsatzort aufgeräumt. … Bei diesem Einsatz ging es nicht ums Wegwischen, sondern ums Hinterlassen. Forscher, füllen Sie auch die nächste Seite mit mir.",
+  "Уборка на месте завершена. …На этот раз нужно было не стереть, а оставить. Исследователь, давайте и следующую страницу заполним вместе."
+ ],
+ "firstMeeting.arte": [
+  "A-CLEAN的阿尔缇，抵达现场！研究员，请注意脚下。",
+  "อาร์เตจาก A-CLEAN มาถึงหน้างานแล้วค่ะ! นักวิจัย ระวังเท้าด้วยนะคะ",
+  "Arte của A-CLEAN, đã tới hiện trường! Nhà nghiên cứu, xin để ý dưới chân ạ.",
+  "Arte dari A-CLEAN, tiba di lokasi! Periset, hati-hati langkahnya.",
+  "¡Arte de A-CLEAN, llegando al lugar! Investigador, cuidado dónde pisa.",
+  "Arte da A-CLEAN, chegando ao local! Pesquisador, cuidado onde pisa.",
+  "Arte von A-CLEAN, vor Ort eingetroffen! Forscher, bitte auf die Schritte achten.",
+  "Арте из A-CLEAN, прибыла на место! Исследователь, осторожно, смотрите под ноги."
+ ]
+}

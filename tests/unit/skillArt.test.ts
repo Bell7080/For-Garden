@@ -1268,8 +1268,8 @@ describe("테리사 표시 계약", () => {
     const suture = terisa.passive.suture!;
     expect(body).toContain(`${suture.intervalSeconds}초마다`);
     expect(body).toContain(`공격력의 ${suture.bonusPower}%만큼 [[physical-damage|물리 피해]]를 추가로`);
-    expect(body).toContain("자신과 체력 비율이 가장 낮은 생존 아군");
-    expect(body).toContain(`입힌 피해(추가 피해 포함)의 ${suture.shieldPercent}%`);
+    expect(body).toContain(`입힌 피해(추가 피해 포함)의 ${suture.shieldPercent}%만큼 체력 비율이 가장 낮은 생존 아군에게`);
+    expect(body).toContain(`${suture.selfShieldPercent}%만큼 자신에게`);
     expect(body).toContain(`최대 체력의 ${terisa.passive.suture!.maxHpCapPercent}%`);
     // 버티기를 보호막으로만 짠다 — 숨은 배율로 덜 맞게 만드는 문장이 섞이면 안 된다.
     expect(body).not.toContain("감소");
@@ -1296,7 +1296,8 @@ describe("테리사 표시 계약", () => {
     const body = skillDescription(ultimate, { damage: 162 });
     expect(body).toContain("자신의 주위 모든 적에게");
     expect(body).toContain(`입힌 피해의 총합 중 ${ultimate.allyShieldFromDamagePercent}%`);
-    expect(body).toContain("똑같이 나눠 [[shield|보호막]]으로 얻는다");
+    expect(body).toContain("나눠 [[shield|보호막]]으로 얻는다");
+    expect(body).toContain("자신은 다른 아군 몫의 50%만 받는다");
   });
 
   it("의 평타는 세 걸음이 저마다 다른 일을 해 제 줄을 갖는다", () => {

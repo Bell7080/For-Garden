@@ -52,4 +52,17 @@ describe("마키 한계 돌파", () => {
     expect(events.some((e) => e.kind === "attack" && e.attackerId === "player-0" && e.critical)).toBe(true);
     expect(maki.bt.ambushCritReady).toBe(false);
   });
+
+  it("는 착지 뒤 첫 평타가 손질을 한 번에 채워 그 자리에서 터뜨린다(별 V 제철 식재료)", () => {
+    const state = setup(["maki"], ["amo"], 4);
+    const maki = findFighter(state, "player-0")!;
+    maki.bt.ambushCritReady = true;
+    maki.bt.seasonalCutReady = true;
+    const events = swing(state, "player-0", "enemy-0");
+    expect(events.some((e) => e.kind === "butcherBurst" && e.attackerId === "player-0")).toBe(true);
+    expect(maki.bt.seasonalCutReady).toBe(false);
+    // 다음 칼질은 평소대로 한 겹만 쌓는다.
+    const next = swing(state, "player-0", "enemy-0");
+    expect(next.some((e) => e.kind === "butcherBurst")).toBe(false);
+  });
 });

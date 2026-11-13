@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSkirmish, findFighter, fireUltimate, resolveReceivedDamage, stepSkirmish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
+import { createSkirmish, findFighter, fireUltimate, gainFerocity, resolveReceivedDamage, stepSkirmish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
 import { ferocityMaxOf } from "../../src/core/ferocity";
 import { getRelic } from "../../src/data/relics";
 import { breakthroughEffectText } from "../../src/ui/skillPresentation";
@@ -170,7 +170,7 @@ describe("테리사 한계 돌파", () => {
   const terisaBattle = (breakthrough: number) => setup(["terisa", "torika", "dodo"], ["amo"], breakthrough);
   const shields = (events: SkirmishEvent[], fighterId: string) => events.flatMap((event) => event.kind === "shieldGranted" && event.fighterId === fighterId ? [event.amount] : []);
 
-  it("는 가봉이 옮기는 비율이 50%에서 65%로 오른다(별 II)", () => {
+  it("는 가봉이 아군에게 옮기는 비율이 75%에서 90%로 오른다(별 II)", () => {
     const granted = (breakthrough: number) => {
       const state = terisaBattle(breakthrough);
       findFighter(state, "player-1")!.hp = 1;
@@ -178,34 +178,54 @@ describe("테리사 한계 돌파", () => {
       return shields(swing(state, "player-0", "enemy-0"), "player-1").reduce((a, b) => a + b, 0);
     };
     expect(granted(0)).toBeGreaterThan(0);
-    expect(granted(1) / granted(0)).toBeCloseTo(65 / 50, 1);
+    expect(granted(1) / granted(0)).toBeCloseTo(90 / 75, 1);
   });
 
-  it("는 성의의 범위를 넓혀 더 먼 적까지 벤다(별 III)", () => {
-    expect(getRelic("terisa").breakthroughEffects?.ultimate).toEqual({ kind: "widenArea", radius: 270 });
-    expect(breakthroughEffectText(getRelic("terisa"), "ultimate")).toContain("%");
+  it("는 가봉의 자기 몫이 아군 몫보다 작다", () => {
+    const state = terisaBattle(0);
+    findFighter(state, "player-1")!.hp = 1;
+    findFighter(state, "player-0")!.bt.sutureIn = 0;
+    const events = swing(state, "player-0", "enemy-0");
+    const ally = shields(events, "player-1").reduce((a, b) => a + b, 0);
+    const self = shields(events, "player-0").reduce((a, b) => a + b, 0);
+    expect(self).toBeGreaterThan(0);
+    expect(self / ally).toBeCloseTo(35 / 75, 1);
   });
 
-  it("는 폭주 중 둘째로 다친 아군에게도 막의 절반을 준다(별 IV)", () => {
-    const second = (breakthrough: number, fever: boolean) => {
+  it("는 성의의 막을 머릿수로 나누지 않고 아군마다 통째로 두른다(별 III)", () => {
+    const ult = (breakthrough: number) => {
       const state = terisaBattle(breakthrough);
-      findFighter(state, "player-1")!.hp = 1;
-      findFighter(state, "player-2")!.hp = findFighter(state, "player-2")!.maxHp * 0.3;
-      if (fever) enterFever(state, "player-0");
-      findFighter(state, "player-0")!.bt.sutureIn = 0;
-      const events = swing(state, "player-0", "enemy-0");
-      return {
-        first: shields(events, "player-1").reduce((a, b) => a + b, 0),
-        healed: events.flatMap((event) => event.kind === "heal" && event.fighterId === "player-1" ? [event.amount] : []).reduce((a, b) => a + b, 0),
-        second: shields(events, "player-2").reduce((a, b) => a + b, 0),
-      };
+      const terisa = findFighter(state, "player-0")!;
+      terisa.energy = terisa.def.ultimate.cost;
+      const events = fireUltimate(state, terisa.id);
+      return { ally: shields(events, "player-1").reduce((a, b) => a + b, 0), self: shields(events, "player-0").reduce((a, b) => a + b, 0) };
     };
-    // 폭주 중 첫째는 막이 아니라 회복을 받으므로, 같은 타격의 몫은 돌파가 없는 폭주의 회복량과 견준다.
-    const open = second(3, true);
-    expect(open.second).toBeGreaterThan(0);
-    expect(Math.abs(open.second - second(2, true).healed / 2)).toBeLessThanOrEqual(1);
-    expect(second(2, true).second).toBe(0);
-    expect(second(3, false).second).toBe(0);
+    const closed = ult(1);
+    const open = ult(2);
+    expect(closed.ally).toBeGreaterThan(0);
+    // 아군 둘 + 자신 절반 = 2.5몫으로 나누던 것을 나누지 않는다.
+    expect(open.ally / closed.ally).toBeGreaterThan(2.3);
+    expect(open.ally / closed.ally).toBeLessThan(2.7);
+    // 자기 몫은 다른 아군의 절반이다.
+    expect(closed.self / closed.ally).toBeCloseTo(0.5, 1);
+    expect(breakthroughEffectText(getRelic("terisa"), "ultimate")).toContain("통째로");
+  });
+
+  it("는 폭주에 드는 순간 자신을 뺀 모든 아군에게 최대 체력 15% 막을 두른다(별 IV)", () => {
+    const entry = (breakthrough: number) => {
+      const state = terisaBattle(breakthrough);
+      const terisa = findFighter(state, "player-0")!;
+      terisa.ferocity = ferocityMaxOf(terisa.def) - 1;
+      const events: SkirmishEvent[] = [];
+      gainFerocity(terisa, 10_000, state, events);
+      expect(terisa.ferocityFever).toBe(true);
+      return state.fighters.filter((fighter) => fighter.side === "player").map((fighter) => ({ fighter, amount: shields(events, fighter.id).reduce((a, b) => a + b, 0) }));
+    };
+    for (const { fighter, amount } of entry(3)) {
+      if (fighter.id === "player-0") expect(amount).toBe(0);
+      else expect(Math.abs(amount - Math.round(fighter.maxHp * 0.15))).toBeLessThanOrEqual(1);
+    }
+    for (const { amount } of entry(2)) expect(amount).toBe(0);
   });
 
   it("는 테리사의 막을 두른 아군이 주는 피해가 15% 늘어난다(별 V)", () => {
@@ -221,6 +241,12 @@ describe("테리사 한계 돌파", () => {
     // 다른 이가 두른 막은 해당 없다.
     expect(damage(4, null)).toBe(damage(3, null));
   });
+
+  it("는 별 V에서 가봉 주기가 4초에서 3초로 줄어든다", () => {
+    expect(findFighter(terisaBattle(3), "player-0")!.bt.sutureIn).toBe(4);
+    expect(findFighter(terisaBattle(4), "player-0")!.bt.sutureIn).toBe(3);
+    expect(breakthroughEffectText(getRelic("terisa"), "passive")).toContain("3초");
+  });
 });
 
 describe("4차 돌파 문구", () => {
@@ -233,7 +259,7 @@ describe("4차 돌파 문구", () => {
       }
     }
     expect(breakthroughEffectText(getRelic("tia"), "basic")).toContain("12%");
-    expect(breakthroughEffectText(getRelic("terisa"), "basic")).toContain("65%");
+    expect(breakthroughEffectText(getRelic("terisa"), "basic")).toContain("90%");
     expect(breakthroughEffectText(getRelic("meron"), "passive")).toContain("25%");
   });
 });

@@ -424,6 +424,10 @@ export interface Fighter extends Combatant {
     rescueUsed: boolean;
     /** 폭주·패시브 돌파(`landingAmbush`) — 다음 일반 공격이 반드시 치명타인가. 한 번 쓰면 꺼진다. */
     ambushCritReady: boolean;
+    /** 패시브 돌파(`landingAmbush`) — 착지 뒤 첫 일반 공격이 손질을 한 번에 채워 터뜨리는가. 그 공격이 쓴다. */
+    seasonalCutReady: boolean;
+    /** 이번 일반 공격이 그 몫을 쥐었는가. 손질을 거는 순간 쓰고, 행동이 끝나면 지운다. */
+    seasonalCutNow: boolean;
     /** 패시브 돌파(`leapVeil`) — 다음 도약 은신이 다시 열리는 시각(`state.elapsed`). */
     leapVeilReadyAt: number;
     /** 적 돌파(`fangShave`) — 이 몸이 깎인 방어력의 겹·남은 시간·겹당 비율. */
@@ -1423,6 +1427,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       feverHealingDone: 0,
       rescueUsed: false,
       ambushCritReady: false,
+      seasonalCutReady: false,
+      seasonalCutNow: false,
       leapVeilReadyAt: 0,
       fangShave: null,
       pincerCount: 0,
@@ -1460,7 +1466,10 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       undyingGuard: 0,
       shareShieldIn: -1,
       manyEyesPercent: 0,
-      sutureIn: def.passive.kind === "sutureStitch" ? def.passive.suture?.intervalSeconds ?? 0 : 0,
+      sutureIn: def.passive.kind === "sutureStitch"
+        ? Math.min(def.passive.suture?.intervalSeconds ?? 0, isBreakthroughSlotOpen(breakthrough, "passive") && def.breakthroughEffects?.passive?.kind === "stitchedMight"
+          ? def.breakthroughEffects.passive.sutureIntervalSeconds ?? Infinity : Infinity)
+        : 0,
       sleepPouncePercent: isBreakthroughSlotOpen(breakthrough, "basic") && def.breakthroughEffects?.basic?.kind === "sleepPounce" ? def.breakthroughEffects.basic.damagePercent : 0,
       pressureCrackIn: isBreakthroughSlotOpen(breakthrough, "passive") && def.breakthroughEffects?.passive?.kind === "pressureCrack" ? def.breakthroughEffects.passive.intervalSeconds : -1,
       tidalSurgeIn: def.passive.kind === "tidalSurge" ? def.passive.tidalSurge?.intervalSeconds ?? -1 : -1,
@@ -2433,6 +2442,11 @@ function applyFrostPlume(
 /** 폭주 진입으로 받은 확정 손질권을 실제 손질 적중에서만 하나 소비한다. */
 function attackerCanInstantlyButcher(sourceId: string | undefined, state: SkirmishState): boolean {
   const attacker = sourceId ? findFighter(state, sourceId) : undefined;
+  // 제철 식재료 — 착지 뒤 첫 칼질은 폭주와 무관하게 손질을 한 번에 채운다.
+  if (attacker?.bt.seasonalCutNow) {
+    attacker.bt.seasonalCutNow = false;
+    return true;
+  }
   if (attacker?.instantButcherPending) {
     attacker.instantButcherPending = false;
     return false;
@@ -3259,7 +3273,11 @@ function tickGourmetHunt(fighter: Fighter, dt: number, state: SkirmishState): vo
   // 자리를 옮기는 것 자체가 화면에서 보이는 신호라 따로 표시 사건을 만들지 않는다.
   const landed = leapToLowestHpEnemy(fighter, state, fighterReach(fighter) * 0.8);
   // 패시브 돌파(`landingAmbush`) — 도약해 내려선 뒤의 첫 일반 공격이 확정 치명타다. 쓰면 꺼진다.
-  if (landed && openedBreakthrough(fighter, "passive", (effects) => effects.passive)?.kind === "landingAmbush") fighter.bt.ambushCritReady = true;
+  // 제철 식재료 — 그 한 번은 손질도 최대 겹까지 채워 그 자리에서 터뜨린다.
+  if (landed && openedBreakthrough(fighter, "passive", (effects) => effects.passive)?.kind === "landingAmbush") {
+    fighter.bt.ambushCritReady = true;
+    fighter.bt.seasonalCutReady = true;
+  }
 }
 
 /**
@@ -4295,8 +4313,15 @@ function lowestHpRatioAlly(state: SkirmishState, side: Side): Fighter | undefine
 function consumeSutureReady(attacker: Fighter): boolean {
   const plan = attacker.def.passive.suture;
   if (attacker.def.passive.kind !== "sutureStitch" || plan === undefined || attacker.bt.sutureIn > 0) return false;
-  attacker.bt.sutureIn = plan.intervalSeconds;
+  attacker.bt.sutureIn = sutureIntervalSeconds(attacker);
   return true;
+}
+
+/** 「가봉」 주기. 패시브 돌파(`stitchedMight`)가 열리면 그 값으로 줄어든다. */
+function sutureIntervalSeconds(fighter: Fighter): number {
+  const base = fighter.def.passive.suture?.intervalSeconds ?? 0;
+  const might = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  return might?.kind === "stitchedMight" && might.sutureIntervalSeconds !== undefined ? Math.min(base, might.sutureIntervalSeconds) : base;
 }
 
 /** 강화 평타가 얹는 추가 물리 피해. 실제로 깎인 HP를 돌려준다 — 막이 먹은 몫은 세지 않는다. */
@@ -4324,25 +4349,18 @@ function stitchSuture(attacker: Fighter, dealt: number, state: SkirmishState, ev
   const ally = lowestHpRatioAlly(state, attacker.side);
   if (ally === undefined) return;
   const tight = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
-  const percent = plan.shieldPercent + (tight?.kind === "tightStitch" ? tight.damagePercentPoints : 0);
+  const bonus = tight?.kind === "tightStitch" ? tight.damagePercentPoints : 0;
   const cautery = attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "cautery";
   const receivers = ally.id === attacker.id ? [attacker] : [ally, attacker];
-  // 폭주 돌파(`doubleNeedle`) — 두 번째로 체력 비율이 낮은 아군에게도 그 막의 일부를 둘러 준다.
-  const needle = attacker.ferocityFever ? openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity) : undefined;
-  let firstAmount = 0;
   for (const receiver of receivers) {
+    // 아군 몫과 자기 몫은 비율이 다르다 — 자기 몫을 덜어 막이 제 몸에 고이지 않게 한다.
+    const percent = (receiver.id === attacker.id ? plan.selfShieldPercent ?? plan.shieldPercent : plan.shieldPercent) + bonus;
     const amount = Math.min(Math.round(dealt * percent / 100), Math.round(receiver.maxHp * plan.maxHpCapPercent / 100));
     if (amount <= 0) continue;
-    firstAmount = Math.max(firstAmount, amount);
     if (cautery) {
       const healed = applyHealing(state, receiver, amount, attacker.id);
       pushHeal(events, receiver, healed, "passive");
     } else grantShield(state, receiver, attacker.id, amount, events);
-  }
-  if (needle?.kind === "doubleNeedle" && firstAmount > 0) {
-    const second = aliveFighters(state, attacker.side).filter((candidate) => !receivers.includes(candidate))
-      .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
-    if (second) grantShield(state, second, attacker.id, Math.round(firstAmount * needle.sharePercent / 100), events);
   }
 }
 
@@ -4352,12 +4370,20 @@ function stitchSuture(attacker: Fighter, dealt: number, state: SkirmishState, ev
  * 대상마다 따로 나누지 않는 이유는 한 번에 여럿을 벨수록 팀이 두꺼워지는 것이 이 궁극기의
  * 전부이기 때문이다 — 대상별로 한 명당 값을 주면 적이 하나든 여섯이든 아군이 받는 몫이 같다.
  */
-function shareShieldFromDamage(attacker: Fighter, percent: number | undefined, dealt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+function shareShieldFromDamage(attacker: Fighter, skill: Skill, dealt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const percent = "allyShieldFromDamagePercent" in skill ? skill.allyShieldFromDamagePercent : undefined;
   if (percent === undefined || percent <= 0 || dealt <= 0) return;
   const allies = aliveFighters(state, attacker.side);
   if (allies.length === 0) return;
-  const share = Math.round(dealt * percent / 100 / allies.length);
-  for (const ally of allies) grantShield(state, ally, attacker.id, share, events);
+  // 시전자는 `allyShieldSelfWeight`만큼만 받는다. 궁극기 돌파(`fullLining`)가 열리면 머릿수로 나누지 않는다.
+  const selfWeight = ("allyShieldSelfWeight" in skill ? skill.allyShieldSelfWeight : undefined) ?? 1;
+  const lining = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate)?.kind === "fullLining";
+  const weights = allies.reduce((sum, ally) => sum + (ally.id === attacker.id ? selfWeight : 1), 0);
+  const unit = dealt * percent / 100 / (lining ? 1 : Math.max(1, weights));
+  for (const ally of allies) {
+    const amount = Math.round(unit * (ally.id === attacker.id ? selfWeight : 1));
+    if (amount > 0) grantShield(state, ally, attacker.id, amount, events);
+  }
 }
 
 /** 조가비 상한 소비는 겹을 먼저 비우고 쿨다운을 건 뒤 보호막을 준다. 보호막 후속 피해가 같은 발동을 재귀 호출하지 않게 하는 순서다. */
@@ -7124,6 +7150,10 @@ export function gainFerocity(fighter: Fighter, base: number, state: SkirmishStat
       events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: false, damageType: "physical",
         area: { shape: "radial", x: fighter.x, y: fighter.y, radius: feverBreakthrough.entryRadius } });
     }
+    if (feverBreakthrough?.kind === "hemStitch") {
+      // 밑단 시침 — 폭주에 드는 순간 자신을 뺀 모든 아군에게 한 겹씩 덧댄다(자기 막은 가봉이 맡는다). 진입 순간 한 번뿐이다.
+      for (const ally of aliveFighters(state, fighter.side)) if (ally !== fighter) grantProvidedShield(state, fighter, ally, feverBreakthrough.shieldMaxHpPercent, events);
+    }
     if (feverBreakthrough?.kind === "bloodTaste") {
       // 피 맛 — 주변 모든 적에게 출혈과 손질 한 겹. 손질이 상한에 닿으면 평소처럼 스스로 터진다.
       const bleed = fighter.def.basic.statusEffects?.find((effect) => effect.kind === "bleed");
@@ -8675,6 +8705,8 @@ function strike(
   // 폭주 돌파(`ambushCrit`) — 폭주에 들어선 뒤 첫 일반 공격이 반드시 치명타다. 쓰면 꺼진다.
   const ambush = !useUltimate && attacker.bt.ambushCritReady;
   if (ambush) attacker.bt.ambushCritReady = false;
+  attacker.bt.seasonalCutNow = ambush && attacker.bt.seasonalCutReady;
+  if (ambush) attacker.bt.seasonalCutReady = false;
   const blinkCrit = !useUltimate && !empowered && attacker.bt.blinkCrits > 0;
   if (blinkCrit) attacker.bt.blinkCrits -= 1;
   // 룬 특성의 확정 치명타(첫 일격·정조준). 행동마다 한 번만 센다 — 연격 둘째 타 이후는 같은 행동이다.
@@ -8853,7 +8885,7 @@ function strike(
   if (sutured) stitchSuture(attacker, targetHpBefore - target.hp + sutureBonusStrike(attacker, target, state, events), state, events);
   if (!useUltimate) stealthAfterStep(attacker, state);
   // 단일 타격으로 들어와도 같은 계약이 돈다 — 경로가 갈리면 같은 기술이 대상 수에 따라 다른 일을 한다.
-  shareShieldFromDamage(attacker, skill.allyShieldFromDamagePercent, targetHpBefore - target.hp, state, events);
+  shareShieldFromDamage(attacker, skill, targetHpBefore - target.hp, state, events);
   if (!useUltimate && attacker.def.basic.lowestHpAllyHealingFromDamagePercent !== undefined) {
     // **때린 본인은 후보에서 빠진다.** 자기도 후보면 앞줄이 멀쩡한 동안 깎인 제 몸에 회복이
     // 계속 돌아와, 뒤에서 거드는 개체가 저 혼자 버티는 몸이 된다 — 이 회복은 남을 고치는 값이다.
@@ -9447,7 +9479,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   // 광역 걸음도 같은 자리에서 사라진다 — 경로가 갈리면 같은 걸음이 대상 수에 따라 다른 일을 한다.
   if (!useUltimate) stealthAfterStep(attacker, state);
   // 이 계약은 공격 스킬만 갖는다. 좁히지 않고 읽으면 지원 궁극기까지 같은 자리를 지나간다.
-  shareShieldFromDamage(attacker, "allyShieldFromDamagePercent" in skill ? skill.allyShieldFromDamagePercent : undefined, sharedShieldSource, state, events);
+  shareShieldFromDamage(attacker, skill, sharedShieldSource, state, events);
   // 혼합 궁극기의 회복은 같은 원 경계(거리 <= 반경)를 공유하며 주문력 200% 같은 정적 계수를 읽는다.
   const ultimateShield = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
   for (const ally of healingTargets) {

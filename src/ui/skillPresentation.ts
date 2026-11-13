@@ -745,7 +745,7 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   if (passive.kind === "sutureStitch" && passive.suture !== undefined) {
     // 자신도 받는다는 말을 함께 적는다 — 근거리에서 제일 많이 맞는 몸이 본인이라, 그 한 줄이
     // 없으면 "남만 꿰매 주고 자기는 그냥 맞는 개체"로 읽힌다.
-    return t("skill.passive.sutureStitch", { seconds: passive.suture.intervalSeconds, power: scaled("damage", "atk", passive.suture.bonusPower, atk), percent: passive.suture.shieldPercent, capPercent: passive.suture.maxHpCapPercent });
+    return t("skill.passive.sutureStitch", { seconds: passive.suture.intervalSeconds, power: scaled("damage", "atk", passive.suture.bonusPower, atk), percent: passive.suture.shieldPercent, selfPercent: passive.suture.selfShieldPercent ?? passive.suture.shieldPercent, capPercent: passive.suture.maxHpCapPercent });
   }
   // 표식을 남기는 것이 이 패시브의 전부다. 무엇이고 다시 맞으면 어떻게 되는지는 태그가 말한다.
   if (passive.kind === "shimmerMark") return t("skill.passive.shimmerMark", { percent: scaled("damage", "ap", passive.value, own?.ap) });
@@ -1147,7 +1147,13 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   if ("allyShieldFromDamagePercent" in skill && skill.allyShieldFromDamagePercent !== undefined) {
     // 나눠 갖는다는 말이 핵심이다 — 여럿을 함께 벨수록 한 명이 받는 몫이 커지는 것이 아니라
     // 총량이 커지고, 그 총량을 아군 수로 나눈다.
-    clauses.push({ text: t("skill.clause.allyShieldFromDamage", { percent: skill.allyShieldFromDamagePercent }), joinWithComma: true });
+    const selfWeight = "allyShieldSelfWeight" in skill ? skill.allyShieldSelfWeight : undefined;
+    clauses.push({
+      text: selfWeight !== undefined && selfWeight !== 1
+        ? t("skill.clause.allyShieldFromDamage.selfWeighted", { percent: skill.allyShieldFromDamagePercent, selfPercent: Math.round(selfWeight * 100) })
+        : t("skill.clause.allyShieldFromDamage", { percent: skill.allyShieldFromDamagePercent }),
+      joinWithComma: true,
+    });
   }
   // 몇 초 날아가고 몇 번 튕기는지는 적지 않는다 — 날아가는 그림이 곧 그 답이고, 태그가
   // "날아가는 동안 움직이지도 때리지도 못한다"까지 이미 말한다.
@@ -1594,6 +1600,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "startledLeap") return t("skill.breakthrough.effect.ultimate.startledLeap", { name: def.ultimate.name, seconds: trim(effect.stunSeconds), lockout: trim(effect.lockoutSeconds) });
     if (effect.kind === "cageIn") return t("skill.breakthrough.effect.ultimate.cageIn", { name: def.ultimate.name, seconds: trim(effect.tauntSeconds) });
     if (effect.kind === "dustCloud") return t("skill.breakthrough.effect.ultimate.dustCloud", { name: def.ultimate.name, stacks: trim(effect.stacks) });
+    if (effect.kind === "fullLining") return t("skill.breakthrough.effect.ultimate.fullLining", { name: def.ultimate.name });
     // 피해량의 몇 %는 **명중 시점의 상대값**이라 실제 수로 바꾸지 않는다(대상마다 달라진다).
     return t("skill.breakthrough.effect.ultimate", {
       percent: trim(effect.powerPercent), name: def.ultimate.name,
@@ -1639,7 +1646,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "droneOverheat") return t("skill.breakthrough.effect.ferocity.droneOverheat", { multiplier: trim(effect.stackMultiplier) });
     if (effect.kind === "closeUp") return t("skill.breakthrough.effect.ferocity.closeUp", { stacks: trim(effect.maxStacks) });
     if (effect.kind === "paintChain") return t("skill.breakthrough.effect.ferocity.paintChain", { hops: trim(effect.hops), total: trim(effect.hops + 1) });
-    if (effect.kind === "doubleNeedle") return t("skill.breakthrough.effect.ferocity.doubleNeedle", { name: def.passive.name, percent: trim(effect.sharePercent) });
+    if (effect.kind === "hemStitch") return t("skill.breakthrough.effect.ferocity.hemStitch", { percent: sv("shield", "hp", effect.shieldMaxHpPercent) });
     if (effect.kind === "starlitCheer") return t("skill.breakthrough.effect.ferocity.starlitCheer", { percent: trim(effect.attackSpeedPercent) });
     if (effect.kind === "feverGale") return t("skill.breakthrough.effect.ferocity.feverGale", { seconds: trim(effect.seconds) });
     if (effect.kind === "ankleShot") return t("skill.breakthrough.effect.ferocity.ankleShot", { seconds: trim(effect.stunSeconds) });
@@ -1711,7 +1718,13 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
         : t("skill.breakthrough.effect.passive.muralHide.actual", { defense: statGainAlias("def", stats.def, percent), resistance: statGainAlias("res", stats.res, percent) });
     }
     if (effects.passive.kind === "vitalSketch") return t("skill.breakthrough.effect.passive.vitalSketch", { points: trim(effects.passive.critPoints) });
-    if (effects.passive.kind === "stitchedMight") return t("skill.breakthrough.effect.passive.stitchedMight", { percent: trim(effects.passive.damagePercent) });
+    if (effects.passive.kind === "stitchedMight") {
+      const might = effects.passive;
+      const base = def.passive.suture?.intervalSeconds;
+      return might.sutureIntervalSeconds !== undefined && base !== undefined
+        ? t("skill.breakthrough.effect.passive.stitchedMight.faster", { percent: trim(might.damagePercent), name: def.passive.name, from: trim(base), to: trim(might.sutureIntervalSeconds) })
+        : t("skill.breakthrough.effect.passive.stitchedMight", { percent: trim(might.damagePercent) });
+    }
     if (effects.passive.kind === "twinDuo") return t("skill.breakthrough.effect.passive.twinDuo");
     if (effects.passive.kind === "saltedIngredient") return t("skill.breakthrough.effect.passive.saltedIngredient", { name: def.passive.name, percent: trim(effects.passive.reductionPercent) });
     if (effects.passive.kind === "tailHide") return t("skill.breakthrough.effect.passive.tailHide", { name: def.passive.name, seconds: trim(effects.passive.seconds) });

@@ -4976,7 +4976,7 @@ describe("테리사 「겉감」의 짧은 은신", () => {
 describe("테리사 「성의」", () => {
   const VESTMENT_ARENA: Arena = { left: 0, right: 600, top: 0, bottom: 1_000 };
 
-  it("은 낸 피해의 총합을 아군 전원이 똑같이 나눠 두른다", () => {
+  it("은 낸 피해의 총합을 나눠 두르되 테리사 자신은 다른 아군 몫의 절반만 받는다", () => {
     const state = createSkirmish(
       [getRelic("terisa"), getRelic("torika")],
       [getRelic("amo"), getRelic("toby")],
@@ -4991,9 +4991,11 @@ describe("테리사 「성의」", () => {
     const events = fireUltimate(state, terisa.id);
     const granted = events.filter((event) => event.kind === "shieldGranted" && event.providerId === terisa.id);
     expect(granted.length).toBe(allies.length);
-    // 한 명당 값이 아니라 총량을 나눈 값이라 모두가 같은 몫을 받는다.
-    const amounts = granted.map((event) => event.kind === "shieldGranted" ? event.amount : 0);
-    expect(new Set(amounts).size).toBe(1);
+    // 한 명당 값이 아니라 총량을 나눈 값이다. 다른 아군끼리는 같은 몫이고 테리사만 그 절반이다.
+    const amountOf = (id: string) => granted.reduce((sum, event) => sum + (event.kind === "shieldGranted" && event.fighterId === id ? event.amount : 0), 0);
+    const others = allies.filter((ally) => ally !== terisa).map((ally) => amountOf(ally.id));
+    expect(new Set(others).size).toBe(1);
+    expect(Math.abs(amountOf(terisa.id) - others[0] / 2)).toBeLessThanOrEqual(1);
     for (const ally of allies) expect(ally.shield.amount).toBeGreaterThan(before.get(ally.id)!);
   });
 });

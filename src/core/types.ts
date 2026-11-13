@@ -328,6 +328,11 @@ export type AttackSkill = SkillBase & {
    * 비례해 갈리지 않고 한 명당 값이 그대로 남기 때문이다. 시전자도 아군 후보에 포함된다.
    */
   allyShieldFromDamagePercent?: number;
+  /**
+   * `allyShieldFromDamagePercent`를 나눌 때 **시전자 자신**이 받는 몫의 비중(다른 아군 = 1). 빠지면 1이다.
+   * 지원가의 막이 제 몸에 고이지 않게 덜어 두는 손잡이다 — 덜어 낸 만큼 다른 아군의 몫이 커진다.
+   */
+  allyShieldSelfWeight?: number;
   healing?: never;
   teamBuff?: never;
   selfSetup?: never;
@@ -2454,8 +2459,15 @@ export interface Passive {
     intervalSeconds: number;
     /** 강화 평타가 적중할 때 얹는 추가 물리 피해의 공격력 계수(%). */
     bonusPower: number;
-    /** 강화 평타가 입힌 피해(기본+추가)의 몇 %를 보호막으로 옮기는가. */
+    /** 강화 평타가 입힌 피해(기본+추가)의 몇 %를 **아군**에게 보호막으로 옮기는가. */
     shieldPercent: number;
+    /**
+     * 같은 피해의 몇 %를 **자신**에게 두르는가. 빠지면 `shieldPercent`와 같다.
+     *
+     * 아군 몫과 갈라 둔 이유는 지원가의 막이 제 몸에 70%씩 남던 때(전수 조사 2026-11-13) 아군에게 가는 몫이
+     * 메테의 절반이었기 때문이다 — 자기 몫을 덜고 그만큼 아군 몫을 키운다.
+     */
+    selfShieldPercent?: number;
     /** 한 번에 붙을 수 있는 보호막의 상한(대상 최대 체력 %). */
     maxHpCapPercent: number;
   };
@@ -3218,6 +3230,12 @@ export type UltimateBreakthrough = {
   kind: "shareShield";
   sharePercent: number;
 } | {
+  /**
+   * 「성의」가 낸 피해 몫을 머릿수로 나누지 않고 **아군마다 통째로** 두른다(테리사 「덧대기」). 자기 몫의 비중
+   * (`allyShieldSelfWeight`)은 그대로 따른다.
+   */
+  kind: "fullLining";
+} | {
   /** 궁극기를 쏘기 직전 소환수가 살아 있으면 표적에 관측이 이 수만큼 먼저 쌓인다(모르페). */
   kind: "jointObservation";
   stacks: number;
@@ -3434,9 +3452,9 @@ export type FerocityBreakthrough = {
   kind: "paintChain";
   hops: number;
 } | {
-  /** 폭주 중 가봉 막의 일부를 두 번째로 체력 비율이 낮은 아군에게도 준다(테리사). */
-  kind: "doubleNeedle";
-  sharePercent: number;
+  /** 폭주에 드는 순간 모든 아군에게 최대 체력의 이 비율만큼 보호막을 두른다(테리사 「밑단 시침」). */
+  kind: "hemStitch";
+  shieldMaxHpPercent: number;
 } | {
   /** 폭주 중 독을 터뜨린 같은 타격에서 독을 다시 바른다(델로피). */
   kind: "rePoison";
@@ -3668,15 +3686,16 @@ export type PassiveBreakthrough = {
   kind: "vitalSketch";
   critPoints: number;
 } | {
-  /** 이 개체의 막을 두른 아군이 주는 피해가 이 비율만큼 늘어난다(테리사). */
+  /** 이 개체의 막을 두른 아군이 주는 피해가 이 비율만큼 늘어난다(테리사). `sutureIntervalSeconds`가 있으면 「가봉」 주기도 그 값으로 줄어든다. */
   kind: "stitchedMight";
   damagePercent: number;
+  sutureIntervalSeconds?: number;
 } | {
   /** 독이 걸려 있는 동안 그 적이 아군 누구에게나 받는 피해가 이 비율만큼 늘어난다. 독이 풀리면 끝난다(델로피). */
   kind: "blightedFoe";
   takenPercent: number;
 } | {
-  /** 도약 착지 뒤 첫 일반 공격이 확정 치명타다(마키). */
+  /** 도약 착지 뒤 첫 일반 공격이 손질을 최대 겹까지 한 번에 채워 그 자리에서 터뜨리고, 확정 치명타로 들어간다(마키 「제철 식재료」). */
   kind: "landingAmbush";
 } | {
   /** 서 있는 늑대(쿠로·시로·새끼) 한 마리마다 디안이 주는 피해가 이 비율만큼 늘어난다(디안). */

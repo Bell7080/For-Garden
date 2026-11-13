@@ -1769,7 +1769,7 @@ export const RELICS: RelicDef[] = [
       value: 3,
       durationSeconds: 0,
       // 예고 원이 먼저 서고 1초 뒤 떨어진다 — 피할 틈이 있는 만큼 범위는 평타보다 넓다.
-      starfall: { every: 3, delaySeconds: 1, radius: 150, power: 100, lowestAllyHealPercent: 40 },
+      starfall: { every: 3, delaySeconds: 1, radius: 150, power: 100, lowestAllyHealPercent: 65 },
       desc: "기본 공격 3번째마다 그 자리에 1초 뒤 유성이 떨어져 원 안의 적에게 마법 피해를 주고, 준 피해의 일부만큼 가장 다친 아군을 회복한다.",
     },
     basic: {
@@ -4388,9 +4388,12 @@ export const RELICS: RelicDef[] = [
     breakthroughEffects: {
       basic: { kind: "tightStitch", damagePercentPoints: 15 },
       // 「성의」는 벤 적의 수만큼 팀이 두꺼워지는 궁극기라, 범위를 넓히면 한 번에 더 많이 베어 막이 곧바로 커진다.
-      ultimate: { kind: "widenArea", radius: 270 },
-      ferocity: { kind: "doubleNeedle", sharePercent: 50 },
-      passive: { kind: "stitchedMight", damagePercent: 15 },
+      // 덧대기 — 「성의」의 막을 머릿수로 나누지 않고 아군마다 통째로 두른다. 아군이 셋이면 세 배다.
+      ultimate: { kind: "fullLining" },
+      // 밑단 시침 — 폭주에 드는 순간 모든 아군에게 한 겹. 폭주 중에만 도는 효과는 모의에서 작게 나왔다.
+      ferocity: { kind: "hemStitch", shieldMaxHpPercent: 15 },
+      // 막을 늘 걸어 두도록 「가봉」 주기를 4초에서 3초로 당긴다.
+      passive: { kind: "stitchedMight", damagePercent: 15, sutureIntervalSeconds: 3 },
     },
     ferocityTrait: { name: "지짐", effectId: "cautery", attackSpeedPercent: 40 },
     passive: {
@@ -4404,8 +4407,9 @@ export const RELICS: RelicDef[] = [
       value: 0,
       // 4초마다 기본 공격 한 번이 강화된다. 매 적중 40%를 잘게 두르던 때는 한 번이 1.6%로 한 대도 못
       // 막았다 — 드물게 한 덩어리로 바꾼 값이다.
-      suture: { intervalSeconds: 4, bonusPower: 100, shieldPercent: 50, maxHpCapPercent: 25 },
-      desc: "4초마다 기본 공격 한 번이 강화된다. 강화된 기본 공격이 적중하면 공격력의 100%만큼 물리 피해를 추가로 입히고, 입힌 피해의 50%만큼 자신과 현재 HP 비율이 가장 낮은 생존 아군에게 보호막을 부여한다. 한 번에 부여하는 보호막은 그 아군 최대 체력의 25%를 넘지 않는다.",
+      // 아군 몫 75% · 자기 몫 35% — 같은 50%를 나눠 두던 때 막의 70%가 제 몸에 고였다(2026-11-13 조사).
+      suture: { intervalSeconds: 4, bonusPower: 100, shieldPercent: 75, selfShieldPercent: 35, maxHpCapPercent: 25 },
+      desc: "4초마다 기본 공격 한 번이 강화된다. 강화된 기본 공격이 적중하면 공격력의 100%만큼 물리 피해를 추가로 입히고, 입힌 피해의 75%만큼 현재 HP 비율이 가장 낮은 생존 아군에게, 35%만큼 자신에게 보호막을 부여한다. 한 번에 부여하는 보호막은 받는 쪽 최대 체력의 25%를 넘지 않는다.",
     },
     basic: {
       id: "terisa-basic",
@@ -4447,6 +4451,8 @@ export const RELICS: RelicDef[] = [
       // 한 번에 여럿을 벨수록 팀이 두꺼워지는 것이 이 궁극기의 전부다. 그래서 적 한가운데로
       // 파고들 이유가 생기고, 그것이 이 지원가가 근거리인 두 번째 이유다.
       allyShieldFromDamagePercent: 90,
+      // 자기 몫은 다른 아군의 절반 — 덜어 낸 만큼이 아군에게 간다.
+      allyShieldSelfWeight: 0.5,
     },
   },
   {

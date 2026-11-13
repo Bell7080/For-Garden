@@ -19,6 +19,7 @@ import type { StageFirstClearReward } from "../core/stageRewards";
 import { drawGlyph } from "./glyphs";
 import { addStageRewardFrame } from "./stageRewardFrame";
 import { ANCIENT_TRIAL_BACKDROP, type TrialBackdrop } from "./ancientTrialTheme";
+import { addNodePreviewArt } from "./nodePreviewArt";
 
 /**
  * 스토리 판의 두 칸이 열려 있는가. **관문을 옮겨 다녀도 그대로 남는다** — 줄거리를 접어 둔 손이
@@ -51,6 +52,8 @@ export interface NodeEnemyPreviewOptions {
     /** 룬 액자를 누르면 부른다 — 받기 전의 룬은 등급·자리만 알려 주는 미리보기 쪽지를 연다. */
     onRuneClick?: (reward: Extract<StageFirstClearReward, { kind: "rune" }>, point: { x: number; y: number }) => void;
   };
+  /** 판 안에 옅게 비치는 그 관문의 전장 원화 — 결과판과 같은 원화다(`addNodePreviewArt`). 비우면 바탕만 선다. */
+  art?: string;
   /** 렌더된 적과 같은 슬롯 순서의 공개 성장 상태다. */
   growth: readonly Pick<StageEnemyDef, "level" | "breakthrough">[];
   enemies: readonly RelicDef[];
@@ -102,9 +105,9 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   }
 
   /** 새 노드의 제목·레벨·편성을 원자적으로 갈아 끼우고 노드에 꼬리를 붙인다. */
-  showAt(nodeY: number, options: Partial<Pick<NodeEnemyPreviewOptions, "title" | "situation" | "growth" | "enemies" | "elite" | "backdrop" | "onEnemyClick" | "sections">> = {}): void {
+  showAt(nodeY: number, options: Partial<Pick<NodeEnemyPreviewOptions, "title" | "situation" | "growth" | "enemies" | "elite" | "backdrop" | "art" | "onEnemyClick" | "sections">> = {}): void {
     // 넘기지 않은 칸 구성이 직전 노드의 것으로 남지 않게 한다.
-    this.options = { ...this.options, sections: undefined, backdrop: undefined, ...options };
+    this.options = { ...this.options, sections: undefined, backdrop: undefined, art: undefined, ...options };
     this.nodeY = nodeY;
     this.nodeVisible = true;
     if (this.options.sections) { this.renderSectioned(false); this.reveal(); return; }
@@ -114,7 +117,9 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     const { y, above } = anchorEnemyPreview(nodeY, this.options.top, this.options.bottom);
     this.setY(y);
     const bevel = Math.min(NODE_ENEMY_PREVIEW.width, NODE_ENEMY_PREVIEW.height) * 0.16;
-    this.add(drawLayer(this.scene, 0, 0, chipPoints(NODE_ENEMY_PREVIEW.width, NODE_ENEMY_PREVIEW.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0x0b0f15, alpha: NODE_PREVIEW_GLASS_ALPHA, edge: COLOR.accent, edgeAlpha: 0.55 }));
+    const plainShape = chipPoints(NODE_ENEMY_PREVIEW.width, NODE_ENEMY_PREVIEW.height, { bevel: { topLeft: bevel, bottomRight: bevel } });
+    this.add(drawLayer(this.scene, 0, 0, plainShape, { fill: 0x0b0f15, alpha: NODE_PREVIEW_GLASS_ALPHA, edge: COLOR.accent, edgeAlpha: 0.6 }));
+    if (this.options.art) addNodePreviewArt(this.scene, this, this.options.art, NODE_ENEMY_PREVIEW.width, NODE_ENEMY_PREVIEW.height, plainShape);
     this.tail = this.scene.add.graphics(); this.add(this.tail); this.drawTail(above);
     const titleLeft = -NODE_ENEMY_PREVIEW.width / 2 + bevel * 0.7;
     this.add(this.scene.add.text(titleLeft, NODE_ENEMY_SLOT.titleY, this.options.title, textStyle({ role: "display", size: 32 })).setOrigin(0, 0));
@@ -228,7 +233,9 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     this.setY(y);
     // 깎임은 판 높이가 아니라 고정값이다 — 높이를 따르면 줄거리를 펼칠 때 깎임이 커져 글줄의 왼쪽 시작점이 함께 안쪽으로 밀린다.
     const bevel = STORY_PREVIEW.bevel;
-    this.add(drawLayer(this.scene, 0, 0, chipPoints(width, layout.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0x0b0f15, alpha: NODE_PREVIEW_GLASS_ALPHA, edge: this.options.backdrop?.tone ?? COLOR.accent, edgeAlpha: this.options.backdrop ? ANCIENT_TRIAL_BACKDROP.edgeAlpha : 0.55 }));
+    const panelShape = chipPoints(width, layout.height, { bevel: { topLeft: bevel, bottomRight: bevel } });
+    this.add(drawLayer(this.scene, 0, 0, panelShape, { fill: 0x0b0f15, alpha: NODE_PREVIEW_GLASS_ALPHA, edge: this.options.backdrop?.tone ?? COLOR.accent, edgeAlpha: this.options.backdrop ? ANCIENT_TRIAL_BACKDROP.edgeAlpha : 0.6 }));
+    if (this.options.art) addNodePreviewArt(this.scene, this, this.options.art, width, layout.height, panelShape);
     if (this.options.backdrop) this.paintBackdrop(this.options.backdrop, width, layout.height, bevel);
     this.tail = this.scene.add.graphics(); this.add(this.tail); this.drawTail(above);
     const left = -width / 2 + Math.max(56, bevel * 0.7);

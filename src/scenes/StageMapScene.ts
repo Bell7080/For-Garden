@@ -24,7 +24,7 @@ import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { chipPoints, drawLayer, drawVignette } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
-import { useBackgroundTexture, stageMapBackground } from "../ui/backgrounds";
+import { battleFieldBackground, useBackgroundTexture, stageMapBackground } from "../ui/backgrounds";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
 import { NodeStoryPreview } from "../ui/NodeStoryPreview";
 import { isEnemyPreviewNodeVisible } from "../ui/nodeEnemyPreviewLayout";
@@ -465,6 +465,8 @@ export class StageMapScene extends Phaser.Scene {
         title: `${t("stageMap.sub")}  ${stage.name}`,
         summary: t(`recollection.summary.${stage.storyId}` as TextKey),
         read: storyManager.isCompleted(stage.storyId),
+        // 이야기도 그 장의 전장에서 벌어진다 — 전투 판과 같은 원화가 옅게 비친다.
+        art: battleFieldBackground("stage", stage.id),
       });
       return;
     }
@@ -476,6 +478,8 @@ export class StageMapScene extends Phaser.Scene {
       title: stage.sub ? `${t("stageMap.sub")}  ${stage.name}` : `${storyBaseStageId(stage.id)}  ${stage.name}`, growth: stageEnemyGrowth(stage), enemies, elite: stage.elite === true,
       // 서사가 없는 관문은 `undefined`가 그대로 넘어가 직전 노드의 줄이 남지 않는다.
       situation: stage.situation,
+      // 결과판과 같은 그 관문의 전장 원화가 판 안에 옅게 비친다.
+      art: battleFieldBackground("stage", stage.id),
       // 초회 보상은 판 맨 아래 한 줄로 늘 선다. 이미 깬 관문이면 받은 표시(검은 막 + 노란 체크)다.
       sections: {
         rewards: stageFirstClearRewards(stage), rewardsClaimed: session.cleared.has(stage.id),

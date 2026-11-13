@@ -16,6 +16,12 @@ export const NODE_ENEMY_PREVIEW = { width: 900, height: 560, sdHeight: 200, tail
 export const NODE_PREVIEW_GLASS_ALPHA = 0.72;
 
 /**
+ * 판 안에 비치는 전장 원화의 결 — 결과판과 같은 원화를 같은 자리에 깔되(`addNodePreviewArt`), 쪽지라
+ * 그보다 한 뼘 옅다. `imageAlpha`는 원화, `vignette`는 가장자리 누르기의 세기다.
+ */
+export const NODE_PREVIEW_ART = { imageAlpha: 0.26, vignette: 0.5 } as const;
+
+/**
  * 관문 상황 한 줄이 서는 자리 — **제목 바로 아래이고, 판 아래가 아니다.**
  *
  * 판 아래 구획은 이미 "이 편성이 얼마나 센가"(총 전투력)가 맡고 있다. 거기에 서사를 붙이면

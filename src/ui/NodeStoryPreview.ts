@@ -3,6 +3,7 @@ import { t } from "../i18n";
 import { chipPoints, drawHairline, drawLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { anchorEnemyPreview, NODE_ENEMY_PREVIEW, NODE_PREVIEW_GLASS_ALPHA } from "./nodeEnemyPreviewLayout";
+import { addNodePreviewArt } from "./nodePreviewArt";
 
 /** 서브 노드 판의 배치 — 전투 판의 제목·줄거리 칸에서 캐릭터를 뺀 모양이다. */
 export const NODE_STORY_PREVIEW = { titleY: 34, titleSize: 32, dividerGap: 18, labelSize: 22, textSize: 26, textGap: 16, bottom: 36, bevel: 30, inset: 56 } as const;
@@ -13,6 +14,8 @@ export interface NodeStoryPreviewOptions {
   summary: string;
   /** 이미 읽은 서브는 제목 오른쪽에 「읽음」이 선다. */
   read: boolean;
+  /** 판 안에 옅게 비치는 원화 — 전투 판과 같은 결이다(`addNodePreviewArt`). */
+  art?: string;
   top: number;
   bottom: number;
 }
@@ -37,7 +40,7 @@ export class NodeStoryPreview extends Phaser.GameObjects.Container {
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.destroy());
   }
 
-  showAt(nodeY: number, options: Partial<Pick<NodeStoryPreviewOptions, "title" | "summary" | "read">>): void {
+  showAt(nodeY: number, options: Partial<Pick<NodeStoryPreviewOptions, "title" | "summary" | "read" | "art">>): void {
     this.options = { ...this.options, ...options };
     this.removeAll(true);
     const spec = NODE_STORY_PREVIEW;
@@ -53,7 +56,9 @@ export class NodeStoryPreview extends Phaser.GameObjects.Container {
     const top = -height / 2;
     const { y, above } = anchorEnemyPreview(nodeY, this.options.top, this.options.bottom, height);
     this.setY(y);
-    this.add(drawLayer(this.scene, 0, 0, chipPoints(width, height, { bevel: { topLeft: spec.bevel, bottomRight: spec.bevel } }), { fill: 0x0b0f15, alpha: NODE_PREVIEW_GLASS_ALPHA, edge: COLOR.accent, edgeAlpha: 0.55 }));
+    const shape = chipPoints(width, height, { bevel: { topLeft: spec.bevel, bottomRight: spec.bevel } });
+    this.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x0b0f15, alpha: NODE_PREVIEW_GLASS_ALPHA, edge: COLOR.accent, edgeAlpha: 0.6 }));
+    addNodePreviewArt(this.scene, this, this.options.art, width, height, shape);
     this.tail = this.scene.add.graphics(); this.add(this.tail); this.drawTail(above);
     this.add(this.scene.add.text(left, top + spec.titleY, this.options.title, textStyle({ role: "display", size: spec.titleSize })).setOrigin(0, 0));
     if (this.options.read) this.add(this.scene.add.text(width / 2 - 40, top + spec.titleY + 6, t("stageMap.subRead"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0));

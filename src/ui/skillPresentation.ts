@@ -745,10 +745,19 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   }
   if (passive.kind === "restraintLocks" && passive.restraintLocks !== undefined) {
     const plan = passive.restraintLocks;
-    return t("skill.passive.restraintLocks", {
+    const body = t("skill.passive.restraintLocks", {
       count: plan.thresholds.length, thresholds: plan.thresholds.join("·"),
       attack: plan.attackSpeedPercent, move: plan.moveSpeedPercent, reach: plan.chargeReachPercentPerLock,
     });
+    // 방어력·저항력은 퍼센트가 아니라 실제로 오르는 값으로 보여 준다(「웅크린 무리」와 같은 문구).
+    const percent = plan.defenseResistancePercentPerLock;
+    const amount = guard === undefined
+      ? t("skill.passive.huddle.guardPercent", { percent })
+      : t("skill.passive.huddle.guardAmount", {
+        defense: statGainAlias("def", guard.defense, percent),
+        resistance: statGainAlias("res", guard.resistance, percent),
+      });
+    return `${body} ${t("skill.passive.restraintLocks.guard", { guard: amount })}`;
   }
   if (passive.kind === "whiteNoise" && passive.whiteNoise !== undefined) {
     const plan = passive.whiteNoise;

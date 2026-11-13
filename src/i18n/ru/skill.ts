@@ -484,6 +484,7 @@ export const SKILL_RU = {
   "skill.passive.flinchBlink": "Потеряв за короткое время {percent}% макс. здоровья или больше, прыгает за спину ближайшего врага, и следующая [[basic-attack|базовая атака]] гарантированно критическая. Перезарядка {seconds} с.",
   "skill.passive.cellRank": "Получив удар от врага, на которого наложена его [[taunt|провокация]], получает [[shield|щит]] в {percent}. Раз в {seconds} с; накопленный так щит — не больше {cap}.",
   "skill.passive.restraintLocks": "Сражается с {count} замками. Каждый раз, когда здоровье падает ниже {thresholds}%, один замок слетает: [[attack-speed|скорость атаки]] +{attack}%, [[move-speed|скорость передвижения]] +{move}%, а ближние враги [[knockback|отбрасываются]]. Каждый слетевший замок удлиняет рывок на {reach}%, а когда слетят все, [[basic-attack|базовая атака]] бьёт всех врагов рядом.",
+  "skill.passive.restraintLocks.guard": "За каждый слетевший замок {guard}.",
   "skill.ferocity.thornBristle": "В неистовстве сегменты [[segment-barrier|Сегментного барьера]] увеличены на {size}% и восстанавливаются на {speed}% быстрее.",
   "skill.ferocity.frenzyTail": "В неистовстве скорость атаки выше на {percent}%, а [[basic-attack|базовая атака]] добавляет {stacks} слоя [[vital-aim|Прицела]].",
   "skill.ferocity.swiftFlight": "В неистовстве интервал наложения [[resonance|Резонанса]] сокращён на {percent}%.",

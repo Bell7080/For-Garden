@@ -484,6 +484,7 @@ export const SKILL_VI = {
   "skill.passive.flinchBlink": "Khi mất từ {percent}% máu tối đa trong thời gian ngắn, nhảy ra sau lưng kẻ địch gần nhất và [[basic-attack|Đánh thường]] kế tiếp chắc chắn chí mạng. Hồi chiêu {seconds} giây.",
   "skill.passive.cellRank": "Khi bị kẻ địch đang bị mình [[taunt|Khiêu khích]] đánh trúng, nhận [[shield|Khiên]] bằng {percent}. Mỗi {seconds} giây một lần; khiên tích theo cách này tối đa {cap}.",
   "skill.passive.restraintLocks": "Chiến đấu khi còn đeo {count} ổ khóa. Mỗi lần máu xuống dưới {thresholds}%, một ổ bung ra: [[attack-speed|Tốc đánh]] tăng {attack}%, [[move-speed|Tốc chạy]] tăng {move}% và [[knockback|hất văng]] kẻ địch xung quanh. Mỗi ổ bung giúp cú lao xa thêm {reach}%; khi bung hết, [[basic-attack|Đánh thường]] trúng mọi kẻ địch xung quanh.",
+  "skill.passive.restraintLocks.guard": "Mỗi ổ khóa bung ra, {guard}.",
   "skill.ferocity.thornBristle": "Trong Cuồng bạo, đốt [[segment-barrier|Rào chắn phân đốt]] lớn hơn {size}% và hồi nhanh hơn {speed}%.",
   "skill.ferocity.frenzyTail": "Trong Cuồng bạo, tốc đánh tăng {percent}% và mỗi [[basic-attack|Đánh thường]] thêm {stacks} tầng [[vital-aim|Ngắm yếu điểm]].",
   "skill.ferocity.swiftFlight": "Trong Cuồng bạo, chu kỳ trao [[resonance|Cộng hưởng]] giảm {percent}%.",

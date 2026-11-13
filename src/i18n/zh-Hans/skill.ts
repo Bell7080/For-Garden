@@ -484,6 +484,7 @@ export const SKILL_ZH_HANS = {
   "skill.passive.flinchBlink": "短时间内失去最大生命的{percent}%以上时，跃至最近敌人的背后，下一次[[basic-attack|普通攻击]]必定暴击。冷却{seconds}秒。",
   "skill.passive.cellRank": "受到被自己[[taunt|嘲讽]]的敌人攻击时，获得{percent}的[[shield|护盾]]。每{seconds}秒一次，以此累积的护盾最多为{cap}。",
   "skill.passive.restraintLocks": "带着{count}把锁战斗。生命每降到{thresholds}%以下时解开一把，[[attack-speed|攻击速度]]提高{attack}%，[[move-speed|移动速度]]提高{move}%，并[[knockback|击飞]]周围敌人。每解开一把锁，冲刺距离增加{reach}%；全部解开后，[[basic-attack|普通攻击]]会打击周围所有敌人。",
+  "skill.passive.restraintLocks.guard": "每解开一把锁，{guard}。",
   "skill.ferocity.thornBristle": "暴走期间，[[segment-barrier|分节屏障]]节段增大{size}%，恢复速度提高{speed}%。",
   "skill.ferocity.frenzyTail": "暴走期间攻击速度提高{percent}%，每次[[basic-attack|普通攻击]]额外叠加{stacks}层[[vital-aim|瞄准]]。",
   "skill.ferocity.swiftFlight": "暴走期间，施加[[resonance|共鸣]]的间隔缩短{percent}%。",

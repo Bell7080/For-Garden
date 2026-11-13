@@ -486,6 +486,7 @@ export const SKILL_EN = {
   "skill.passive.flinchBlink": "After losing {percent}% or more of max HP in a short span, leaps behind the nearest enemy, and the next [[basic-attack|Basic Attack]] is a guaranteed critical hit. Cooldown {seconds}s.",
   "skill.passive.cellRank": "When hit by an enemy it has [[taunt|Taunted]], gains a [[shield|Shield]] equal to {percent}. Once every {seconds}s; shields built this way cap at {cap}.",
   "skill.passive.restraintLocks": "Fights wearing {count} locks. Each time HP drops below {thresholds}%, one lock breaks: [[attack-speed|Attack Speed]] rises by {attack}%, [[move-speed|Move Speed]] by {move}%, and nearby enemies are [[knockback|knocked away]]. Each broken lock extends the charge by {reach}%, and once all break, [[basic-attack|Basic Attacks]] hit every nearby enemy.",
+  "skill.passive.restraintLocks.guard": "For each broken lock, {guard}.",
   "skill.ferocity.thornBristle": "During Frenzy, [[segment-barrier|Segment Barrier]] segments grow by {size}% and recover {speed}% faster.",
   "skill.ferocity.frenzyTail": "During Frenzy, Attack Speed rises by {percent}% and each [[basic-attack|Basic Attack]] adds {stacks} extra [[vital-aim|Aim]] stacks.",
   "skill.ferocity.swiftFlight": "During Frenzy, the interval between [[resonance|Resonance]] applications is reduced by {percent}%.",

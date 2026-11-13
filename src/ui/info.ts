@@ -3805,6 +3805,9 @@ export function buildSkillViewModel(options: {
       // 웅크린 무리(아모)가 실제로 올리는 방어·저항 값을 눌러 산출 근거를 읽는다.
       ...("kind" in skill && (skill as Passive).huddle !== undefined
         ? defenseGainKeywords(finalDef.stats, (skill as Passive).huddle!.defenseResistancePercentPerAlly) : []),
+      // 구속복(카르)이 풀린 자물쇠 하나마다 올리는 방어·저항 값도 같은 태그로 연다.
+      ...("kind" in skill && (skill as Passive).restraintLocks !== undefined
+        ? defenseGainKeywords(finalDef.stats, (skill as Passive).restraintLocks!.defenseResistancePercentPerLock) : []),
       // 희열은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다. 궁극기(끝까지 채운다)와
       // 기본 공격(겹마다 피해가 오른다)도 같은 태그를 가리키므로 그 쪽지에도 실린다.
       "kind" in skill

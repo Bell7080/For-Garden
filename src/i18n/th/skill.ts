@@ -484,6 +484,7 @@ export const SKILL_TH = {
   "skill.passive.flinchBlink": "เมื่อเสียพลังชีวิต {percent}% ของพลังชีวิตสูงสุดขึ้นไปในเวลาสั้นๆ จะกระโดดไปด้านหลังศัตรูที่ใกล้ที่สุด และ[[basic-attack|โจมตีปกติ]]ครั้งถัดไปติดคริติคอลแน่นอน คูลดาวน์ {seconds} วินาที",
   "skill.passive.cellRank": "เมื่อถูกศัตรูที่ตนเองใช้[[taunt|ยั่วยุ]]โจมตี จะได้รับ[[shield|โล่]] {percent} ทุก {seconds} วินาทีครั้ง และโล่ที่สะสมแบบนี้สูงสุด {cap}",
   "skill.passive.restraintLocks": "สู้ทั้งที่ยังติดแม่กุญแจ {count} ดอก ทุกครั้งที่พลังชีวิตลดต่ำกว่า {thresholds}% จะหลุดหนึ่งดอก [[attack-speed|ความเร็วโจมตี]]เพิ่ม {attack}% [[move-speed|ความเร็วเคลื่อนที่]]เพิ่ม {move}% และ[[knockback|ซัดกระเด็น]]ศัตรูรอบตัว กุญแจที่หลุดแต่ละดอกทำให้การพุ่งไกลขึ้น {reach}% และเมื่อหลุดครบ [[basic-attack|โจมตีปกติ]]จะโดนศัตรูรอบตัวทั้งหมด",
+  "skill.passive.restraintLocks.guard": "กุญแจที่หลุดแต่ละดอก {guard}",
   "skill.ferocity.thornBristle": "ขณะคลั่ง ปล้อง[[segment-barrier|กำแพงเป็นปล้อง]]ใหญ่ขึ้น {size}% และฟื้นเร็วขึ้น {speed}%",
   "skill.ferocity.frenzyTail": "ขณะคลั่ง ความเร็วโจมตีเพิ่ม {percent}% และ[[basic-attack|โจมตีปกติ]]แต่ละครั้งเพิ่ม[[vital-aim|เล็งจุดตาย]]อีก {stacks} ชั้น",
   "skill.ferocity.swiftFlight": "ขณะคลั่ง ช่วงเวลามอบ[[resonance|ก้องประสาน]]สั้นลง {percent}%",

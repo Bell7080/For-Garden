@@ -508,6 +508,7 @@ export const SKILL_JA = {
   "skill.passive.flinchBlink": "短い間に最大体力の{percent}%以上を失うと、最も近い敵の背後へ跳んで退き、次の[[basic-attack|基本攻撃]]が必ず会心になる。再使用待機{seconds}秒。",
   "skill.passive.cellRank": "自分に[[taunt|挑発]]された敵から攻撃を受けると、{percent}分の[[shield|シールド]]を得る。{seconds}秒に1回で、こうして重ねるシールドは{cap}までだ。",
   "skill.passive.restraintLocks": "錠前を{count}個つけたまま戦う。体力が{thresholds}%を下回るたびに1つ外れ、[[attack-speed|攻撃速度]]が{attack}%、[[move-speed|移動速度]]が{move}%上がり、周囲の敵を[[knockback|吹き飛ばす]]。外れた錠前ごとに突進が{reach}%遠くまで届き、すべて外れると[[basic-attack|基本攻撃]]が周囲の敵すべてを打つ。",
+  "skill.passive.restraintLocks.guard": "外れた錠前1つにつき{guard}。",
   "skill.ferocity.thornBristle": "暴走中、[[segment-barrier|節の障壁]]の節が{size}%大きくなり、再生が{speed}%早くなる。",
   "skill.ferocity.frenzyTail": "暴走中、攻撃速度が{percent}%上がり、[[basic-attack|基本攻撃]]1回で[[vital-aim|狙い]]が追加で{stacks}重なる。",
   "skill.ferocity.swiftFlight": "暴走中、[[resonance|共鳴]]を付与する間隔が{percent}%短くなる。",

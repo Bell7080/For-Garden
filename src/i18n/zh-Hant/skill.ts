@@ -484,6 +484,7 @@ export const SKILL_ZH_HANT = {
   "skill.passive.flinchBlink": "短時間內失去最大生命的{percent}%以上時，躍至最近敵人的背後，下一次[[basic-attack|普通攻擊]]必定暴擊。冷卻{seconds}秒。",
   "skill.passive.cellRank": "受到被自己[[taunt|嘲諷]]的敵人攻擊時，獲得{percent}的[[shield|護盾]]。每{seconds}秒一次，以此累積的護盾最多為{cap}。",
   "skill.passive.restraintLocks": "帶著{count}把鎖戰鬥。生命每降到{thresholds}%以下時解開一把，[[attack-speed|攻擊速度]]提高{attack}%，[[move-speed|移動速度]]提高{move}%，並[[knockback|擊飛]]周圍敵人。每解開一把鎖，衝刺距離增加{reach}%；全部解開後，[[basic-attack|普通攻擊]]會打擊周圍所有敵人。",
+  "skill.passive.restraintLocks.guard": "每解開一把鎖，{guard}。",
   "skill.ferocity.thornBristle": "暴走期間，[[segment-barrier|分節屏障]]節段增大{size}%，恢復速度提高{speed}%。",
   "skill.ferocity.frenzyTail": "暴走期間攻擊速度提高{percent}%，每次[[basic-attack|普通攻擊]]額外疊加{stacks}層[[vital-aim|瞄準]]。",
   "skill.ferocity.swiftFlight": "暴走期間，施加[[resonance|共鳴]]的間隔縮短{percent}%。",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyCombatStatusEffect, createSkirmish, currentAttackSpeed, effectiveLocksBroken, fireUltimate, ingredientHastePoints, moveSpeed, stepSkirmish, type Arena } from "../../src/core/skirmish";
+import { applyCombatStatusEffect, createSkirmish, currentAttackSpeed, defensiveDefinition, effectiveLocksBroken, fireUltimate, ingredientHastePoints, moveSpeed, stepSkirmish, type Arena } from "../../src/core/skirmish";
 import { getRelic } from "../../src/data/relics";
 
 /** 감금조(마가사·노아·라자·카르노) — 지하 감금동에서 풀려난 공멸의 넷째 무리. */
@@ -179,6 +179,18 @@ describe("카르노 「구속복」", () => {
     expect(effectiveLocksBroken(hero)).toBe(0);
     hero.ferocityFever = true;
     expect(effectiveLocksBroken(hero)).toBe(4);
+  });
+
+  it("풀린 자물쇠마다 방어력·저항력이 20%씩 오른다", () => {
+    const { state, hero } = setup("carno", ["toby"]);
+    expect(hero.def.passive.restraintLocks?.defenseResistancePercentPerLock).toBe(20);
+    const base = defensiveDefinition(hero, state).def.stats;
+    hero.locksBroken = 2;
+    const two = defensiveDefinition(hero, state).def.stats;
+    expect(two.def).toBeCloseTo(base.def * 1.4, 6);
+    expect(two.res).toBeCloseTo(base.res * 1.4, 6);
+    hero.locksBroken = 4;
+    expect(defensiveDefinition(hero, state).def.stats.def).toBeCloseTo(base.def * 1.8, 6);
   });
 });
 

@@ -484,6 +484,7 @@ export const SKILL_ID = {
   "skill.passive.flinchBlink": "Setelah kehilangan {percent}% HP maksimal atau lebih dalam waktu singkat, melompat ke belakang musuh terdekat, dan [[basic-attack|Serangan Dasar]] berikutnya pasti kritis. Cooldown {seconds} dtk.",
   "skill.passive.cellRank": "Saat dipukul musuh yang sedang terkena [[taunt|Provokasi]] darinya, mendapat [[shield|Perisai]] sebesar {percent}. Sekali tiap {seconds} dtk; perisai dari cara ini maks. {cap}.",
   "skill.passive.restraintLocks": "Bertarung dengan {count} gembok terpasang. Tiap kali HP turun di bawah {thresholds}%, satu gembok lepas: [[attack-speed|Kecepatan Serang]] naik {attack}%, [[move-speed|Kecepatan Gerak]] naik {move}%, dan musuh sekitar [[knockback|terpental]]. Tiap gembok lepas memperjauh terjangan {reach}%, dan setelah semua lepas, [[basic-attack|Serangan Dasar]] mengenai semua musuh sekitar.",
+  "skill.passive.restraintLocks.guard": "Untuk setiap gembok yang lepas, {guard}.",
   "skill.ferocity.thornBristle": "Saat Amuk, segmen [[segment-barrier|Penghalang Segmen]] membesar {size}% dan pulih {speed}% lebih cepat.",
   "skill.ferocity.frenzyTail": "Saat Amuk, kecepatan serang naik {percent}% dan tiap [[basic-attack|Serangan Dasar]] menambah {stacks} tumpukan [[vital-aim|Bidikan]].",
   "skill.ferocity.swiftFlight": "Saat Amuk, jeda pemberian [[resonance|Resonansi]] berkurang {percent}%.",

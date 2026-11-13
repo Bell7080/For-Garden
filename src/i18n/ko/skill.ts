@@ -405,6 +405,7 @@ export const SKILL_KO = {
   "skill.passive.flinchBlink": "짧은 사이에 최대 체력의 {percent}% 이상을 잃으면 가장 가까운 적의 등 뒤로 뛰어 물러나고, 다음 [[basic-attack|기본 공격]]이 반드시 치명타로 들어간다. 재사용 대기 {seconds}초.",
   "skill.passive.cellRank": "자신에게 [[taunt|도발]]된 적에게 맞으면 {percent}만큼 [[shield|보호막]]을 얻는다. {seconds}초에 한 번이며, 이렇게 쌓는 막은 {cap}까지다.",
   "skill.passive.restraintLocks": "자물쇠 {count}개를 단 채 싸운다. 체력이 {thresholds}% 아래로 떨어질 때마다 하나씩 풀리며 [[attack-speed|공격 속도]]가 {attack}%, [[move-speed|이동 속도]]가 {move}% 오르고 주위 적을 [[knockback|날려버린다]]. 풀린 자물쇠마다 질주가 {reach}% 더 멀리 나아가고, 모두 풀리면 [[basic-attack|기본 공격]]이 주위의 모든 적을 친다.",
+  "skill.passive.restraintLocks.guard": "풀린 자물쇠 하나마다 {guard} 오른다.",
   "skill.passive.looming": "{seconds}초마다 주위 모든 적에게 [[intimidation|위압]]을 한 겹 쌓는다.",
   "skill.sentence.roar": "주위 모든 적을 곧바로 [[fear|공포]]에 빠뜨린다. {base}의 [[shield|보호막]]을 얻고, 공포에 빠진 적 한 명마다 {per}씩 더한다(최대 {max}명).",
   "skill.sentence.roar.percent": "최대 체력의 {percent}%",

@@ -484,6 +484,7 @@ export const SKILL_PT_BR = {
   "skill.passive.flinchBlink": "Ao perder {percent}% ou mais da vida máxima em pouco tempo, salta para trás do inimigo mais próximo e o próximo [[basic-attack|ataque básico]] é crítico garantido. Recarga: {seconds} s.",
   "skill.passive.cellRank": "Ao ser atingido por um inimigo que ele [[taunt|provocou]], ganha um [[shield|escudo]] de {percent}. Uma vez a cada {seconds} s; o escudo acumulado assim chega no máximo a {cap}.",
   "skill.passive.restraintLocks": "Luta com {count} cadeados presos. Sempre que a vida cai abaixo de {thresholds}%, um se rompe: a [[attack-speed|velocidade de ataque]] sobe {attack}%, a [[move-speed|velocidade de movimento]] sobe {move}% e os inimigos próximos são [[knockback|arremessados]]. Cada cadeado rompido estende a investida em {reach}%, e com todos rompidos o [[basic-attack|ataque básico]] atinge todos os inimigos próximos.",
+  "skill.passive.restraintLocks.guard": "Para cada cadeado rompido, {guard}.",
   "skill.ferocity.thornBristle": "Durante Frenesi, segmentos da [[segment-barrier|Barreira segmentada]] crescem {size}% e se recuperam {speed}% mais rápido.",
   "skill.ferocity.frenzyTail": "Durante Frenesi, a velocidade de ataque sobe {percent}% e cada [[basic-attack|ataque básico]] adiciona {stacks} cargas de [[vital-aim|Mira]].",
   "skill.ferocity.swiftFlight": "Durante Frenesi, o intervalo de [[resonance|Ressonância]] diminui {percent}%.",

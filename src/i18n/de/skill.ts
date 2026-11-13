@@ -484,6 +484,7 @@ export const SKILL_DE = {
   "skill.passive.flinchBlink": "Verliert in kurzer Zeit {percent}% oder mehr der max. LP und springt hinter den nächsten Gegner; der nächste [[basic-attack|Basisangriff]] ist ein garantierter kritischer Treffer. Abklingzeit {seconds} s.",
   "skill.passive.cellRank": "Wird es von einem Gegner getroffen, den es [[taunt|verspottet]] hat, erhält es einen [[shield|Schild]] von {percent}. Einmal alle {seconds} s; so aufgebaute Schilde reichen bis {cap}.",
   "skill.passive.restraintLocks": "Kämpft mit {count} angelegten Schlössern. Jedes Mal, wenn die LP unter {thresholds}% fallen, springt eines auf: [[attack-speed|Angriffstempo]] +{attack}%, [[move-speed|Bewegungstempo]] +{move}%, und nahe Gegner werden [[knockback|weggeschleudert]]. Jedes offene Schloss verlängert den Ansturm um {reach}%; sind alle offen, trifft der [[basic-attack|Basisangriff]] alle nahen Gegner.",
+  "skill.passive.restraintLocks.guard": "Für jedes offene Schloss {guard}.",
   "skill.ferocity.thornBristle": "In Raserei wachsen Segmente der [[segment-barrier|Segmentbarriere]] um {size}% und erholen sich {speed}% schneller.",
   "skill.ferocity.frenzyTail": "In Raserei steigt das Angriffstempo um {percent}% und jeder [[basic-attack|Basisangriff]] fügt {stacks} zusätzliche Stapel [[vital-aim|Zielen]] hinzu.",
   "skill.ferocity.swiftFlight": "In Raserei verkürzt sich das Intervall für [[resonance|Resonanz]] um {percent}%.",

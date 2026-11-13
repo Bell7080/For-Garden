@@ -3861,6 +3861,12 @@ export function ingredientHastePoints(fighter: Fighter): number {
   return plan ? fighter.ingredientHaste * plan.hastePointsPerHit : 0;
 }
 
+/** 「구속복」(카르) — 풀린 자물쇠마다 오르는 방어·저항(%). 자물쇠가 없는 개체는 0이다. */
+function lockGuardPercent(fighter: Fighter): number {
+  const locks = fighter.def.passive.restraintLocks;
+  return locks ? effectiveLocksBroken(fighter) * locks.defenseResistancePercentPerLock : 0;
+}
+
 /** 풀린 자물쇠마다 질주가 더 멀리 나아가는 배율. 자물쇠가 없는 개체는 1이다. */
 function lockChargeReachFactor(fighter: Fighter): number {
   const locks = fighter.def.passive.restraintLocks;
@@ -6335,7 +6341,8 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   const linked = droneLinkDefensePercent(state, target);
   const mural = muralHidePercent(state, target);
   const bulwark = undyingGuardPercent(target);
-  const huddle = huddlePercent(state, target);
+  // 「구속복」(카르) — 풀린 자물쇠마다 방어·저항이 오른다. 웅크린 무리와 같은 자리에서 곱한다.
+  const huddle = huddlePercent(state, target) + lockGuardPercent(target);
   // 적 돌파(`fangShave`) — 앞니에 갉인 몸은 방어력이 겹마다 깎인다. 저항은 건드리지 않는다.
   const fang = target.bt.fangShave ? Math.max(0, 1 - target.bt.fangShave.stacks * target.bt.fangShave.percentPerStack / 100) : 1;
   // 공포에 빠진 몸은 달아나는 동안 방어력·저항력이 함께 깎인다(`FEAR_DEFENSE_REDUCTION_PERCENT`).

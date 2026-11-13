@@ -2430,6 +2430,8 @@ export interface Passive {
     liberatedRadius: number;
     /** 끊어진 구속구 하나마다 궁극기 돌진 거리가 이만큼(%) 늘어난다. */
     chargeReachPercentPerLock: number;
+    /** 끊어진 구속구 하나마다 방어력·저항력이 이만큼(%) 오른다(더해서 쌓는다 — 넷이면 +80%). */
+    defenseResistancePercentPerLock: number;
   };
   prickle?: {
     /** 겹 상한. */

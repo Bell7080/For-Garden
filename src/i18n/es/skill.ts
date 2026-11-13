@@ -484,6 +484,7 @@ export const SKILL_ES = {
   "skill.passive.flinchBlink": "Al perder un {percent}% o más de la vida máxima en poco tiempo, salta tras el enemigo más cercano y su siguiente [[basic-attack|ataque básico]] es crítico seguro. Enfriamiento: {seconds} s.",
   "skill.passive.cellRank": "Al recibir un golpe de un enemigo al que ha [[taunt|provocado]], obtiene un [[shield|escudo]] de {percent}. Una vez cada {seconds} s; el escudo así acumulado llega como máximo a {cap}.",
   "skill.passive.restraintLocks": "Lucha con {count} candados puestos. Cada vez que su vida baja del {thresholds}%, se rompe uno: la [[attack-speed|velocidad de ataque]] sube un {attack}%, la [[move-speed|velocidad de movimiento]] un {move}% y los enemigos cercanos salen [[knockback|despedidos]]. Cada candado roto alarga la carga un {reach}%, y al romperse todos, el [[basic-attack|ataque básico]] golpea a todos los enemigos cercanos.",
+  "skill.passive.restraintLocks.guard": "Por cada candado roto, {guard}.",
   "skill.ferocity.thornBristle": "Durante Frenesí, los segmentos de [[segment-barrier|Barrera segmentada]] crecen {size}% y se recuperan {speed}% más rápido.",
   "skill.ferocity.frenzyTail": "Durante Frenesí, la velocidad de ataque sube {percent}% y cada [[basic-attack|ataque básico]] añade {stacks} cargas de [[vital-aim|Puntería]].",
   "skill.ferocity.swiftFlight": "Durante Frenesí, el intervalo de [[resonance|Resonancia]] se reduce {percent}%.",

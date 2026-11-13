@@ -3929,6 +3929,8 @@ export const RELICS: RelicDef[] = [
         knockback: { seconds: 0.6, speed: 1200, bounces: 1 },
         liberatedRadius: 180,
         chargeReachPercentPerLock: 15,
+        // 응태 요청(2026-11-13) — 자물쇠가 풀릴 때마다 방어·저항이 20%씩 오른다.
+        defenseResistancePercentPerLock: 20,
       },
       desc: "체력이 깎일 때마다 자물쇠가 풀리며 빨라지고, 모두 풀리면 기본 공격이 주위를 휩쓴다.",
     },

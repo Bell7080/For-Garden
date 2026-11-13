@@ -2,6 +2,7 @@ import type { AttendanceTrackDto } from "../api/contracts";
 import { LOBBY_EVENTS, type LobbyEventDef } from "../data/lobbyEvents";
 import { BANNERS } from "../data/banners";
 import { bannerActive } from "../core/gacha";
+import { currentPickupBannerId, currentPickupWindow, inPickupRotation } from "../core/pickupRotation";
 import { isRegularEventActive } from "../core/regularEventRotation";
 import { QA_ALL_EVENTS } from "../core/buildFlavor";
 import { OPEN_END, OPEN_START, scheduledWindow, windowOpen } from "../core/liveSchedule";
@@ -16,8 +17,8 @@ import { OPEN_END, OPEN_START, scheduledWindow, windowOpen } from "../core/liveS
 /** 지금 열려 있는 이벤트만 정의 순서대로 돌려준다. 시작 전·끝난 이벤트와 이번 주 차례가 아닌 정규 이벤트는 서지 않는다. */
 export function activeLobbyEvents(now: number, events: readonly LobbyEventDef[] = LOBBY_EVENTS, allEvents: boolean = QA_ALL_EVENTS): LobbyEventDef[] {
   // QA 빌드는 기한·교대와 상관없이 모두 세운다(`QA_ALL_EVENTS`).
-  if (allEvents) return events.map((event) => scheduledLobbyEvent(event));
-  return events.map((event) => ({ event: scheduledLobbyEvent(event), window: scheduledWindow("lobby", event.id, event) }))
+  if (allEvents) return events.map((event) => scheduledLobbyEvent(event, now));
+  return events.map((event) => ({ event: scheduledLobbyEvent(event, now), window: scheduledWindow("lobby", event.id, event) }))
     .filter(({ event, window }) => windowOpen(window, now) && isRegularEventActive(event.id, now) && linkedBannerOpen(event, now))
     .map(({ event }) => event);
 }
@@ -35,8 +36,14 @@ function linkedBannerOpen(event: LobbyEventDef, now: number): boolean {
  * 서버 운영 일정(`live_schedule`)이 덮은 기간을 입힌 사본 — 카드의 기간 시계와 이벤트 화면의 남은 시간이 같은 값을 읽는다.
  * 일정 줄이 없으면 정의 그대로다. 끝을 열어 둔 줄은 먼 시각(`OPEN_END`)으로 적는다.
  */
-export function scheduledLobbyEvent(event: LobbyEventDef): LobbyEventDef {
+export function scheduledLobbyEvent(event: LobbyEventDef, now: number = Date.now()): LobbyEventDef {
   const window = scheduledWindow("lobby", event.id, event);
+  // 교대로 서는 한정 픽업으로 가는 카드는 그 차례가 끝나는 시각을 기한으로 단다(`pickupRotation.ts`).
+  const destination = event.destination;
+  if (!window.overridden && destination?.kind === "lab" && inPickupRotation(destination.bannerId) && currentPickupBannerId(now) === destination.bannerId) {
+    const banner = BANNERS.find(({ id }) => id === destination.bannerId);
+    if (banner && !scheduledWindow("banner", banner.id, banner).overridden) return { ...event, endsAt: currentPickupWindow(now).endsAt };
+  }
   // 출시 전 유예(`launchAnchor.ts`)로 끝 날짜가 걷혔으면 카드에도 기한 시계를 세우지 않는다.
   if (!window.overridden) return window.endsAt === undefined && !event.weekly ? { ...event, endsAt: OPEN_END } : event;
   return { ...event, startsAt: window.startsAt ?? OPEN_START, endsAt: window.endsAt ?? OPEN_END };

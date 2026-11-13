@@ -20,6 +20,7 @@ import type { SharedRaidContext } from "../server/sharedRaids";
 import { serverNow } from "./serverClock";
 import { QA_ALL_EVENTS, QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { PLACEHOLDER_AD_ENABLED, TEMP_AD_REWARD_ENABLED, placeholderAdToken, tempAdToken } from "../core/tempAd";
+import { currentPickupBannerId, currentPickupWindow, inPickupRotation } from "../core/pickupRotation";
 import { bannerAcceptsCount, bannerActive, canPull, carryoverTenAvailable, carryoverTensOnClose, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { socialApi } from "./FakeSocialServer";
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
@@ -4009,7 +4010,7 @@ export class FakeServer implements GameApi {
       const remaining = this.remaining(product, now);
       const paymentUnavailable = this.paymentUnavailable(product);
       return {
-        ...product, visibleUntil: product.situational ? activeSituationalOffer(this.state.situationalOffers, product.id, now)?.expiresAt : this.productWindow(product).endsAt, remaining, purchasable: remaining > 0 && !paymentUnavailable, disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : undefined,
+        ...product, visibleUntil: product.situational ? activeSituationalOffer(this.state.situationalOffers, product.id, now)?.expiresAt : this.productWindow(product, now).endsAt, remaining, purchasable: remaining > 0 && !paymentUnavailable, disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : undefined,
         ...(this.runePartOf(product, now) !== undefined ? { runePart: this.runePartOf(product, now) } : {}),
         ...(product.firstPurchaseBonus ? { firstBonusAvailable: this.firstBonusAvailable(product) } : {}),
         ...this.subscriptionInfo(product, now),
@@ -4494,12 +4495,15 @@ export class FakeServer implements GameApi {
 
   /** 노출 판정은 클라이언트 시간이 아니라 주입 가능한 서버 시간만 사용한다. */
   /** 상품 노출 기간 — 서버 운영 일정(`live_schedule`)이 정의의 기간을 덮고, 배너에 묶인 상품은 그 배너 기간 안으로 줄인다. */
-  private productWindow(product: ProductDefinition): { startsAt?: string; endsAt?: string; enabled: boolean } {
+  private productWindow(product: ProductDefinition, now: Date): { startsAt?: string; endsAt?: string; enabled: boolean } {
     const own = scheduledWindow("product", product.id, { startsAt: product.visibleFrom, endsAt: product.visibleUntil });
     const banner = product.bannerId !== undefined ? BANNERS.find(({ id }) => id === product.bannerId) : undefined;
     if (product.bannerId === undefined) return own;
     if (!banner) return { enabled: false };
-    const linked = scheduledWindow("banner", banner.id, banner);
+    const scheduled = scheduledWindow("banner", banner.id, banner);
+    // 교대로 서는 한정 픽업(`pickupRotation.ts`)은 그 배너의 차례 안에서만 판다. 운영 일정 줄이 덮으면 그 기간을 따른다.
+    const rotating = !scheduled.overridden && inPickupRotation(banner.id);
+    const linked = !rotating ? scheduled : currentPickupBannerId(now.getTime()) !== banner.id ? { ...scheduled, enabled: false } : { ...scheduled, ...currentPickupWindow(now.getTime()) };
     const later = (a?: string, b?: string) => a === undefined ? b : b === undefined ? a : Date.parse(a) >= Date.parse(b) ? a : b;
     const earlier = (a?: string, b?: string) => a === undefined ? b : b === undefined ? a : Date.parse(a) <= Date.parse(b) ? a : b;
     const startsAt = later(own.startsAt, linked.startsAt);
@@ -4510,7 +4514,7 @@ export class FakeServer implements GameApi {
   private isVisible(product: ProductDefinition, now: Date): boolean {
     // 상황 특가는 상품 기간이 아니라 **그 계정에 열린 특가**가 세운다.
     if (product.situational) return activeSituationalOffer(this.state.situationalOffers, product.id, now) !== undefined;
-    if (!windowOpen({ ...this.productWindow(product), overridden: false }, now.getTime())) return false;
+    if (!windowOpen({ ...this.productWindow(product, now), overridden: false }, now.getTime())) return false;
     // 로테이션 칸의 상품은 그 기간에 칸이 **이 상품을 골랐을 때만** 선다 — 서버 시각과 기간 키만 읽는다.
     const slot = product.rotationSlot ? rotationSlot(product.rotationSlot) : undefined;
     return !product.rotationSlot || (slot !== undefined && rotationOffer(slot, this.productPeriodKey(product, now)) === product.id);

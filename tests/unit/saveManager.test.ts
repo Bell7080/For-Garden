@@ -510,7 +510,6 @@ describe("SaveManager", () => {
       welcome: { pullsSinceSsr: 0, pickupGuaranteed: false },
       "standard-fossil": { pullsSinceSsr: 12, pickupGuaranteed: false },
       "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false },
-      "limited-pickup-moonlit": { pullsSinceSsr: 0, pickupGuaranteed: false },
     });
   });
 

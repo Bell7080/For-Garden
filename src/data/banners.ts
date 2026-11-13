@@ -60,10 +60,11 @@ const STANDARD_GRAY_REWARDS = [
 ] as const;
 
 /**
- * 같은 값을 쓰는 배너끼리만 천장·픽업 확정을 나눠 쓰는 운영 그룹이다. **새 픽업은 그룹을 새로 만든다** —
- * 이전 픽업의 천장은 이월하지 않는다(`banners.test`가 픽업 배너마다 그룹이 다른지 지킨다).
+ * 같은 값을 쓰는 배너끼리만 천장·픽업 확정을 나눠 쓰는 운영 그룹이다. **한정 픽업은 모두 한 그룹이다** — 천장과 픽업
+ * 확정이 다음 픽업으로 이월된다(응태 결정, 2026-11-14 · `bannerSchedule.test`). 픽업끼리는 교대로 서므로
+ * (`core/pickupRotation.ts`) 한 그룹을 두 배너가 동시에 쓰는 일은 없다.
  */
-export const PITY_GROUP = { WELCOME: "welcome", STANDARD: "standard-fossil", LIMITED_PICKUP: "limited-pickup", MOONLIT_PICKUP: "limited-pickup-moonlit" } as const;
+export const PITY_GROUP = { WELCOME: "welcome", STANDARD: "standard-fossil", LIMITED_PICKUP: "limited-pickup" } as const;
 
 /**
  * 첫 복원 연구의 SSR 풀 — 네 직군이 한 명씩이다.
@@ -142,11 +143,10 @@ export const BANNERS: Banner[] = [
   },
   {
     /*
-     * **플레샤 한정 픽업**(응태 요청, 2026-11-12) — 디안 픽업과 나란히 서는 두 번째 호박석 연구다. 값·확률은 호박석
-     * 연구와 같고, **천장은 이월하지 않으므로 그룹이 따로다**(`bannerSchedule.test`) — 저장 이관이 현재 배너의 그룹을
-     * 모두 기본값으로 채운다. 다른 것은 픽업 대상과 원화(달빛 피크닉)뿐이다.
+     * **플레샤 한정 픽업**(응태 요청, 2026-11-12) — 디안 픽업과 교대로 서는 두 번째 호박석 연구다(`pickupRotation.ts`).
+     * 값·확률·천장 그룹은 호박석 연구와 같아 **천장이 이월된다**. 다른 것은 픽업 대상과 원화(달빛 피크닉)뿐이다.
      */
-    id: "moonlit", pityGroupId: PITY_GROUP.MOONLIT_PICKUP, name: "호박석 연구", featuredRelicId: "plesha",
+    id: "moonlit", pityGroupId: PITY_GROUP.LIMITED_PICKUP, name: "호박석 연구", featuredRelicId: "plesha",
     artKey: BACKGROUND.recruitMoonPicnic,
     currency: "amber", costOne: 1, costTen: 10,
     slotRates: STANDARD_SLOT_RATES,

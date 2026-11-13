@@ -1,6 +1,7 @@
 /** Phaser와 상태 변경을 모르는 결정적 가챠 규칙. 모든 난수는 호출자가 주입한다. */
 import type { RelicRarity } from "./types";
 import { liveSchedule, scheduledWindow, windowOpen, type LiveScheduleEntry } from "./liveSchedule";
+import { pickupRotationOpen } from "./pickupRotation";
 
 /** 재화. 화석은 흔하고, 호박석은 귀하다. */
 export interface Wallet {
@@ -124,8 +125,8 @@ export interface Banner {
   tenOnly?: boolean;
   /**
    * 기간 한정 배너의 열리는 시각(ISO). 없으면 처음부터 열려 있다.
-   * **천장은 배너마다 따로 센다** — 새 픽업은 제 `pityGroupId`를 쓰고 이전 픽업의 천장·픽업 확정을
-   * 이어받지 않는다(응태 결정, 2026-11-02). 이월은 첫 복원 연구 → 화석 연구의 `carryoverTo`뿐이다.
+   * **한정 픽업의 천장은 이월한다**(응태 결정, 2026-11-14 — 2026-11-02의 「이월하지 않는다」를 뒤집었다). 픽업 배너는 모두
+   * 같은 `PITY_GROUP.LIMITED_PICKUP`을 써서 천장·픽업 확정이 다음 픽업으로 넘어간다. 언제 서는지는 교대(`pickupRotation.ts`)가 정한다.
    */
   startsAt?: string;
   /** 기간 한정 배너가 닫히는 시각(ISO, 이 시각부터 닫힘). 없으면 닫히지 않는다. */
@@ -238,6 +239,8 @@ export function pullPayment(wallet: Pick<Wallet, "fossil" | "amber" | "gems">, b
 /** 서버 운영 일정(`live_schedule`)에 이 배너의 줄이 있으면 그 기간·켜짐이 정의의 기간을 덮는다. */
 export function bannerActive(banner: Pick<Banner, "startsAt" | "endsAt"> & { readonly id?: string }, now: Date, schedule: readonly LiveScheduleEntry[] = liveSchedule()): boolean {
   const window = banner.id === undefined ? scheduledWindow("banner", "", banner, []) : scheduledWindow("banner", banner.id, banner, schedule);
+  // 한정 픽업은 한 번에 하나만 선다(`pickupRotation.ts`). 운영 일정 줄이 덮은 배너는 사람이 정한 기간을 따른다.
+  if (banner.id !== undefined && !window.overridden && !pickupRotationOpen(banner.id, now.getTime())) return false;
   return windowOpen(window, now.getTime());
 }
 

@@ -1759,9 +1759,13 @@ describe("FakeServer 마일리지 상점", () => {
       await expect(server.purchaseProduct({ storefront: "mileage", productId: "mileage-pickup-amber-dian", quantity: 1 })).rejects.toMatchObject({ code: "PRODUCT_NOT_VISIBLE" });
       await expect(server.pullRelics({ bannerId: "amber", count: 1 })).rejects.toMatchObject({ code: "BANNER_NOT_ACTIVE" });
       // 상품 줄은 그 상품만 덮고, 남은 시간도 덮은 끝을 읽는다.
-      setLiveSchedule([{ kind: "product", id: "mileage-pickup-amber-dian", startsAt: null, endsAt: "2030-06-01T00:00:00Z", enabled: true }]);
+      // 교대(`pickupRotation`)가 아니라 사람이 정한 배너 줄이 그 픽업을 열어 두면, 상품의 끝은 상품 줄이 정한다.
+      setLiveSchedule([{ kind: "banner", id: "amber", startsAt: null, endsAt: null, enabled: true }, { kind: "product", id: "mileage-pickup-amber-dian", startsAt: null, endsAt: "2030-06-01T00:00:00Z", enabled: true }]);
       const pickup = (await server.getProducts("mileage")).products.find(({ id }) => id === "mileage-pickup-amber-dian");
       expect(pickup?.visibleUntil).toBe("2030-06-01T00:00:00.000Z");
+      // 줄이 없으면 교대 차례가 끝나는 시각(플레샤로 넘어가는 2026-11-13)이 상품의 끝이다.
+      setLiveSchedule([{ kind: "product", id: "mileage-pickup-amber-dian", startsAt: null, endsAt: "2030-06-01T00:00:00Z", enabled: true }]);
+      expect((await server.getProducts("mileage")).products.find(({ id }) => id === "mileage-pickup-amber-dian")?.visibleUntil).toBe("2026-11-13T00:00:00.000Z");
     } finally {
       setLiveSchedule([]);
     }

@@ -47,7 +47,8 @@ import { addUnitNameplate, addUnitPower } from "../ui/unitNameplate";
 import { combatPower, groupCombatPower } from "../core/combatPower";
 import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
 import { RosterControls, ROSTER_CONTROLS } from "../ui/RosterControls";
-import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
+import { dropRosterRelic, formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
+import { bindRosterDragPick, type RosterDragPick } from "../ui/rosterDragPick";
 import { prefetchBattlePuppets as prefetchBattleSds } from "../puppets/battlePrefetch";
 import { moveFormationSlot } from "../core/formation";
 import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "../ui/formationSlotChrome";
@@ -293,6 +294,10 @@ export class PartyScene extends Phaser.Scene {
   private isEnteringBattle = false;
   /** 세 화면에서 같은 감광·드롭 칸·미리보기 수명을 사용하는 공용 표현기다. */
   private dragVisual?: FormationDragVisualController;
+  /** 목록 카드를 끌어 칸에 놓는 손. 칸끼리 끄는 손과 같은 표현기를 쓴다. */
+  private rosterPick?: RosterDragPick;
+  /** 누른 순간의 목록 스크롤 — 가로로 집은 손이 그 사이 굴린 몫을 되돌린다. */
+  private rosterScrollAtPress = 0;
   /** 그리드를 담아 함께 움직이는 층과 그 창을 오려 내는 마스크다. */
   private rosterContent?: Phaser.GameObjects.Container;
   private rosterMask?: Phaser.GameObjects.Graphics;
@@ -584,7 +589,26 @@ export class PartyScene extends Phaser.Scene {
       shadowOffsetY: PREVIEW_HEIGHT / 2 + 26,
       liftDepth: () => this.tutorialLiftDepth(),
       renderPreview: ({ preview, pointer, lift }) => this.placeDragPreview(preview, pointer.x, pointer.y, lift),
+      renderExternal: (frame) => this.rosterPick?.render(frame),
       restore: () => this.restoreDragPuppets(),
+    });
+    // 목록 카드도 끌어서 칸에 놓는다. 세로 끌기는 스크롤, 가로로 끌거나 창 위로 끌어 올리면 SD가 튀어나온다.
+    this.rosterPick = bindRosterDragPick({
+      scene: this, visual: () => this.dragVisual, color: COLOR.ally,
+      viewportTop: () => this.rosterViewport.top,
+      scrollable: () => this.rosterMinScroll < 0,
+      onPickStart: () => { this.rosterDragging = false; this.scrollRosterTo(this.rosterScrollAtPress); },
+      spawn: (relicId) => this.standSD(relicId, -400, -400, false),
+      place: (creature, relicId, x, y, lift) => placePuppet(creature, relicAppearanceManager.battleAssetFor(relicId), { x, groundY: y + PREVIEW_HEIGHT / 2 - lift.raise, height: PREVIEW_HEIGHT * lift.scale, flipX: false }),
+      slotCreatures: () => this.allySlots.map((slot) => slot.creature),
+      liftDepth: () => this.tutorialLiftDepth(),
+      enabled: () => !this.partyTutorialPhase && !this.isEnteringBattle && !this.info?.isOpen,
+      drop: (relicId, slot) => {
+        const result = dropRosterRelic(this.picked, relicId, slot);
+        this.picked = result.formation;
+        this.selectedSlot = result.selectedSlot;
+        this.refresh();
+      },
     });
     // 보유 카드의 상세 정보 장기 누름과 겹치지 않도록 드래그 시작점은 이 상단 SD 입력면뿐이다.
     bindFormationDrag(this, this.allySlots.map((slot, index) => ({ hit: slot.hit, ...this.slotBox(index) })), {
@@ -1017,13 +1041,14 @@ export class PartyScene extends Phaser.Scene {
     const inViewport = (pointer: Phaser.Input.Pointer): boolean =>
       pointer.worldY >= this.rosterViewport.top && pointer.worldY <= this.rosterViewport.bottom;
     const onDown = (pointer: Phaser.Input.Pointer): void => {
+      this.rosterScrollAtPress = this.rosterScrollY;
       if (!inViewport(pointer) || this.rosterMinScroll === 0) return;
       this.rosterDragging = true;
       this.rosterDraggedDistance = 0;
       this.rosterDragOrigin = this.rosterScrollY - pointer.y;
     };
     const onMove = (pointer: Phaser.Input.Pointer): void => {
-      if (!this.rosterDragging || !pointer.isDown) return;
+      if (!this.rosterDragging || !pointer.isDown || this.rosterPick?.active()) return;
       this.rosterDraggedDistance += Math.abs(pointer.velocity.y);
       this.scrollRosterTo(this.rosterDragOrigin + pointer.y);
     };
@@ -1070,11 +1095,12 @@ export class PartyScene extends Phaser.Scene {
    * 달면 어디서는 열리고 어디서는 열리지 않는 그리드가 남는다.
    */
   private bindCardInput(box: Phaser.GameObjects.Rectangle, relic: RelicDef): void {
+    box.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.rosterPick?.press(relic.id, pointer));
     bindLongPress(this, box, {
       onLongPress: () => this.info.showRelic(relic),
       onTap: () => this.toggle(relic.id),
       // 끌어 내리다 손을 뗀 자리의 카드가 편성되지 않게 한다.
-      allowTap: () => this.rosterDraggedDistance <= ROSTER_DRAG_SLOP,
+      allowTap: () => this.rosterDraggedDistance <= ROSTER_DRAG_SLOP && !this.rosterPick?.consumed(),
       depth: 900,
     });
   }
@@ -1185,6 +1211,7 @@ export class PartyScene extends Phaser.Scene {
       // 입력면 중심을 공개해 E2E가 SD 로딩이나 하드코딩 좌표에 의존하지 않게 한다.
       slots: this.allySlots.map((_slot, index) => ({ x: this.slotX(index), y: this.slotRow(index) - PREVIEW_HEIGHT / 2 })),
       selectedSlot: this.selectedSlot,
+      members: [...this.picked],
     });
     this.hint.setText(this.ready() ? t("party.ready") : t("party.needMore", { count: this.requiredMembers - members.length }));
     this.schedulePresetSave();

@@ -1149,9 +1149,12 @@ const PUPPET_RETRY_DELAY_MS = 800;
  */
 export const PUPPET_PRELOAD_GROUPS: ReadonlyArray<readonly PuppetAsset[]> = [
   // 전신은 PortraitCard와 정보창이 처음 열릴 때 파싱하지 않도록 중앙 전신 단계에 둔다.
-  [TORIKA_ASSET, TORIKA_SKIN_001_ASSET, LEXIA_ASSET, SEIRA_ASSET, LUKA_ASSET, PONTOS_ASSET],
+  // 원정 보스 폰토스·레이드 보스 수쿠스이노는 레벨로 잠긴 끝 콘텐츠라 여기서 읽지 않는다 — 읽은 묶음은 처음 세워질
+  // 때까지 디코드된 그림(한 장 6.5MB)을 붙잡으므로, 첫 실행에서 볼 일 없는 보스가 타이틀부터 메모리를 차지했다.
+  // 그 판에 들어가는 화면이 `prefetchBattlePuppets`로 미리 읽는다. 로비 출격판에 서는 폰토스 SD만 남긴다.
+  [TORIKA_ASSET, TORIKA_SKIN_001_ASSET, LEXIA_ASSET, SEIRA_ASSET, LUKA_ASSET],
   // SD 역시 씬 로더가 아니라 타이틀의 공용 Puppet 단계에서 미리 해석한다.
-  [TORIKA_SD_ASSET, TORIKA_SKIN_001_SD_ASSET, LEXIA_SD_ASSET, SEIRA_SD_ASSET, LUKA_SD_ASSET, ...ENEMY_SD_ASSETS, PONTOS_SD_ASSET, SUKUSUINO_SD_ASSET, SUKUSUINO_ASSET, TOBY_ASSET, AMO_ASSET, RIPA_ASSET],
+  [TORIKA_SD_ASSET, TORIKA_SKIN_001_SD_ASSET, LEXIA_SD_ASSET, SEIRA_SD_ASSET, LUKA_SD_ASSET, ...ENEMY_SD_ASSETS, PONTOS_SD_ASSET, TOBY_ASSET, AMO_ASSET, RIPA_ASSET],
 ];
 
 /**

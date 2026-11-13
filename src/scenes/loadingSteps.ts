@@ -232,20 +232,26 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
     // 뽑기의 3D 시네마틱과 SSR 전조 무대는 합쳐 1MB 남짓한 스크립트라, 첫 뽑기에서 받으면 그
     // 자리에서 화면이 멎는다. 여기서 받아 파싱까지 끝내 둔다.
     //
-    // 새로 만난 렐릭의 소개 장면이 세울 원화(뽑을 수 있는 개체의 전신·SD)는 **기다리지 않고**
-    // 내려받기만 걸어 둔다 — 합쳐 수십 MB라 타이틀을 붙잡으면 게임에 들어가는 길이 그만큼 멀어지고,
-    // 받아 둔 것은 브라우저 캐시에 남아 소개 장면이 일꾼에게 넘길 때 네트워크를 건너뛴다. 파싱·
-    // 디코드는 하지 않는다(GPU·메모리를 쓰는 것은 세울 때뿐이어야 한다 — 거주 규칙).
+    // 새로 만난 렐릭의 소개 장면이 세울 원화(뽑을 수 있는 개체의 전신·SD)는 여기서 받지 않는다 — 합쳐 35MB
+    // 남짓이라, 타이틀에서 걸어 두었을 때는 첫 실행의 오프닝·1-1·튜토리얼 내내 그 내려받기가 망을 나눠 먹었다
+    // (실측: 타이틀이 준비된 뒤 15초 동안 35MB가 더 내려왔다). 연구소에 들어갈 때 건다(`prefetchGachaPuppetFiles`).
     label: "뽑기 연출",
     run: async () => {
-      prefetchGachaPuppetFiles();
       await Promise.all([preloadResearchCinematic(), preloadSsrOmen()?.then(() => undefined, () => undefined)]);
     },
   },
 ];
 
-/** 뽑을 수 있는 개체의 전신·SD ZIP을 내려받아 캐시에만 둔다. 한 번에 두 개씩, 뒤에서. */
-function prefetchGachaPuppetFiles(): void {
+let gachaPuppetFilesRequested = false;
+
+/**
+ * 뽑을 수 있는 개체의 전신·SD ZIP을 내려받아 캐시에만 둔다. 한 번에 두 개씩, 뒤에서. 연구소가 들어설 때 부르며
+ * 한 실행에 한 번만 건다. 받아 둔 것은 브라우저 캐시에 남아 소개 장면이 일꾼에게 넘길 때 네트워크를 건너뛴다.
+ * 파싱·디코드는 하지 않는다(GPU·메모리를 쓰는 것은 세울 때뿐이어야 한다 — 거주 규칙).
+ */
+export function prefetchGachaPuppetFiles(): void {
+  if (gachaPuppetFilesRequested) return;
+  gachaPuppetFilesRequested = true;
   const urls = [...new Set(PLAYABLE_RELICS.flatMap((relic) => [
     relicAppearanceManager.portraitAssetFor(relic.id).url,
     relicAppearanceManager.battleAssetFor(relic.id).url,

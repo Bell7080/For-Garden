@@ -79,6 +79,12 @@ const game = new Phaser.Game({
     // 컨테이너 자체는 입력을 통과시키므로 겹쳐 둔 칸 밖의 조작은 그대로 캔버스가 받는다.
     createContainer: true,
   },
+  loader: {
+    // Phaser는 안드로이드에서만 동시 내려받기를 6개로 묶고, 빈 자리는 **프레임마다 한 번** 채운다. 타이틀 로딩은 아이콘·
+    // 스킬 그림만 수백 장이라 그 묶음이 통째로 줄을 섰다 — 실측(Pixel 7 흉내)에서 「조작·스킬 아이콘」 한 단계가 7초를
+    // 넘었고 그동안 메인 스레드는 놀고 있었다. 배포는 HTTP/2라 호스트당 6개 제한도 없으므로 기기와 무관하게 넉넉히 연다.
+    maxParallelDownloads: 32,
+  },
   input: {
     // 멀티터치 환경에서도 Phaser pointer 이벤트가 touchstart/touchend를 안정적으로 추적한다.
     activePointers: 3,

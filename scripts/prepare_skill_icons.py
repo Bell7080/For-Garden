@@ -61,7 +61,7 @@ RELICS = {
 # 예: python scripts/prepare_skill_icons.py output/skill-icons-complete/originals
 #     kento/passive.png · kento/basic.png · kento/ultimate.png · kento/ferocity.png
 RELICS.update({relic: relic for relic in (
-    "kento", "mosana", "anka", "irna", "ark", "yuti", "teku",
+    "kento", "mosana", "anka", "irna", "ark", "yuti", "teku", "plesha",
     "ikanixia", "atra", "pulsi", "neuri", "mir", "magasa", "noa", "raja", "carno",
     "maddy", "terisa", "shute", "morphe", "dimo", "dian", "kuro", "shiro", "quetzalcoatlus",
 )})

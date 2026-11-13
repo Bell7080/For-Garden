@@ -49,9 +49,9 @@ describe("새로 열린 콘텐츠의 기록", () => {
   });
 
   it("입구는 열린 콘텐츠를 실제로 열 때 NEW를 지운다", () => {
-    const lobby = readFileSync("src/scenes/LobbyScene.ts", "utf8");
+    const lobby = readFileSync("src/scenes/LobbyScene.ts", "utf8").replace(/\r\n/g, "\n");
     expect(lobby).toMatch(/if \(contentOpen\(id\)\) \{ markContentEntered\(id\); action\(\); \}/);
-    const nav = readFileSync("src/ui/BottomNav.ts", "utf8");
+    const nav = readFileSync("src/ui/BottomNav.ts", "utf8").replace(/\r\n/g, "\n");
     expect(nav).toContain("markContentEntered(contentId);\n          startNavScene");
   });
 });

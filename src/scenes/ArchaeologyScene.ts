@@ -187,7 +187,6 @@ export class ArchaeologyScene extends Phaser.Scene {
   private tab: ArchaeologyTab = "strata";
   private traitOddsLink: Phaser.GameObjects.Container | null = null;
   private synthOddsLink: Phaser.GameObjects.Container | null = null;
-  private guideLink: Phaser.GameObjects.Container | null = null;
   /** 지금 지도에 서 있는 유적 지도. 안내형 튜토리얼이 노드 자리를 묻는다. 판·다른 탭에서는 없다. */
   private mapView: ArchaeologyMapView | null = null;
   /** 진행 중인 안내형 튜토리얼을 끝내는 손잡이. 한 번에 하나만 돈다. */
@@ -338,10 +337,6 @@ export class ArchaeologyScene extends Phaser.Scene {
     const rates = RATES_SPOT.screen;
     this.traitOddsLink = addRatesButton(this, rates.x, rates.y, t("rune.trait.odds"), () => openRuneTraitOdds({ scene: this, popups: this.popups }));
     this.synthOddsLink = addRatesButton(this, rates.x, rates.y, t("archaeology.synth.oddsTitle"), () => openRuneSynthesisOdds({ scene: this, popups: this.popups }));
-    // 첫 방문에 저절로 뜨는 지층 탐사 안내를 언제든 다시 여는 자리. 확률 버튼 바로 아래 같은 열(연구소의 연구 기록 자리)이다.
-    this.guideLink = addRatesButton(this, RATES_SPOT.history.x, RATES_SPOT.history.y, t("archaeology.guide.button"), () => this.startMapTour(), { glyph: "scroll" })
-      // 지도는 화면 전체를 끌어 움직이는 입력면을 깔므로, 그 위에 세워야 버튼이 손을 받는다.
-      .setDepth(5);
 
     this.view = this.add.container(0, 0);
     this.tabRow = this.add.container(0, 0);
@@ -456,7 +451,6 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.traitOddsLink?.setVisible(this.tab !== "synth");
     this.synthOddsLink?.setVisible(this.tab === "synth");
     // 판을 파는 동안에는 판과 범례가 주인공이라 지도 안내를 걷는다.
-    this.guideLink?.setVisible(this.tab === "strata" && this.board === null);
     if (this.tab === "strata") this.paintStrata();
     else if (this.tab === "research") this.paintResearch();
     else this.paintSynthesis();

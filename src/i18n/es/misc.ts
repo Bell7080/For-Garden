@@ -79,7 +79,6 @@ export const MISC_ES = {
   "skill.effect.buff": "Mejora temporal",
   "skill.gauge": "Medidor {cost}",
   "archaeology.shop": "Tienda",
-  "archaeology.guide.button": "Guía",
   "intro.prev": "Atrás",
   "intro.next": "Siguiente",
   "archaeology.bench.pick": "Elige una Runa",

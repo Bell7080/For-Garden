@@ -79,7 +79,6 @@ export const MISC_PT_BR = {
   "skill.effect.buff": "Bônus",
   "skill.gauge": "Medidor {cost}",
   "archaeology.shop": "Loja",
-  "archaeology.guide.button": "Guia",
   "intro.prev": "Voltar",
   "intro.next": "Próximo",
   "archaeology.bench.pick": "Escolha uma Runa",

@@ -79,7 +79,6 @@ export const MISC_ZH_HANS = {
   "skill.effect.buff": "增益",
   "skill.gauge": "能量 {cost}",
   "archaeology.shop": "商店",
-  "archaeology.guide.button": "探查指南",
   "intro.prev": "上一页",
   "intro.next": "下一页",
   "archaeology.bench.pick": "选择符文",

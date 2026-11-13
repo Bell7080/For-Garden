@@ -79,7 +79,6 @@ export const MISC_RU = {
   "skill.effect.buff": "Бафф",
   "skill.gauge": "Шкала {cost}",
   "archaeology.shop": "Магазин",
-  "archaeology.guide.button": "Гид",
   "intro.prev": "Назад",
   "intro.next": "Далее",
   "archaeology.bench.pick": "Выберите руну",

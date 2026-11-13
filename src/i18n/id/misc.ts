@@ -79,7 +79,6 @@ export const MISC_ID = {
   "skill.effect.buff": "Buff",
   "skill.gauge": "Gauge {cost}",
   "archaeology.shop": "Toko",
-  "archaeology.guide.button": "Panduan",
   "intro.prev": "Kembali",
   "intro.next": "Lanjut",
   "archaeology.bench.pick": "Pilih Rune",

@@ -88,7 +88,6 @@ export const MISC_KO = {
 
   // 고고학
   "archaeology.shop": "상점",
-  "archaeology.guide.button": "탐사 안내",
   "intro.prev": "이전",
   "intro.next": "다음",
   "archaeology.bench.pick": "룬 고르기",

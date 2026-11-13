@@ -84,7 +84,6 @@ export const MISC_JA = {
   "skill.gauge": "ゲージ {cost}",
 
   "archaeology.shop": "ショップ",
-  "archaeology.guide.button": "探査ガイド",
   "intro.prev": "戻る",
   "intro.next": "次へ",
   "archaeology.bench.pick": "ルーンを選ぶ",

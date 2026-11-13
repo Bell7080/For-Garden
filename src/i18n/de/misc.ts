@@ -79,7 +79,6 @@ export const MISC_DE = {
   "skill.effect.buff": "Buff",
   "skill.gauge": "Leiste {cost}",
   "archaeology.shop": "Shop",
-  "archaeology.guide.button": "Leitfaden",
   "intro.prev": "Zurück",
   "intro.next": "Weiter",
   "archaeology.bench.pick": "Rune wählen",

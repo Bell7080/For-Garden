@@ -79,7 +79,6 @@ export const MISC_EN = {
   "skill.effect.buff": "Buff",
   "skill.gauge": "Gauge {cost}",
   "archaeology.shop": "Shop",
-  "archaeology.guide.button": "Survey Guide",
   "intro.prev": "Back",
   "intro.next": "Next",
   "archaeology.bench.pick": "Choose a Rune",

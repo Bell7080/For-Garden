@@ -79,7 +79,6 @@ export const MISC_TH = {
   "skill.effect.buff": "บัฟ",
   "skill.gauge": "เกจ {cost}",
   "archaeology.shop": "ร้านค้า",
-  "archaeology.guide.button": "คู่มือสำรวจ",
   "intro.prev": "ก่อนหน้า",
   "intro.next": "ถัดไป",
   "archaeology.bench.pick": "เลือกรูน",

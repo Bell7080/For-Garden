@@ -79,7 +79,6 @@ export const MISC_VI = {
   "skill.effect.buff": "Tăng cường chỉ số",
   "skill.gauge": "Thanh năng lượng {cost}",
   "archaeology.shop": "Cửa hàng",
-  "archaeology.guide.button": "Hướng dẫn",
   "intro.prev": "Trước",
   "intro.next": "Tiếp",
   "archaeology.bench.pick": "Chọn Rune",

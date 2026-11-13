@@ -11,7 +11,8 @@ import { t } from "../i18n";
 import type { AdPresentationResult, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
 import { motionPolicy, powerSavingPolicy } from "../core/settings";
 import { clampExcavationStorage, emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageFillOfBase, excavationStorageLimitSeconds, STORAGE_EXTENSION_MULTIPLIER, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
-import { tapFormationSlot, tapRosterRelic } from "../core/formationSlots";
+import { dropRosterRelic, tapFormationSlot, tapRosterRelic } from "../core/formationSlots";
+import { bindRosterDragPick, type RosterDragPick } from "./rosterDragPick";
 import { RELICS } from "../data/relics";
 import type { RelicDef } from "../core/types";
 import { placePuppet, spawnPuppet, type PuppetAsset, type PuppetCreature } from "../puppets/assets";
@@ -175,6 +176,12 @@ export class IdleExcavationPopup {
   private readonly rosterCards = new Map<string, PortraitCard>();
   private gridScrollY = 0;
   private gridDragging = false;
+  /** 목록 카드를 끌어 칸에 놓는 손. 편집이 처음 열릴 때 한 번 묶고 판이 닫히면 푼다. */
+  private rosterPick?: RosterDragPick;
+  /** 누른 순간의 스크롤. 카드를 집으면 그 자리로 되돌린다(집기 전 몇 픽셀 굴러간 몫). */
+  private gridScrollAtPress = 0;
+  private gridMinScroll = 0;
+  private gridScrollTo?: (value: number) => void;
   private gridDragOrigin = 0;
   private gridDragMoved = 0;
   private gridMask?: Phaser.GameObjects.Graphics;
@@ -270,7 +277,47 @@ export class IdleExcavationPopup {
     if (this.gridPointerUpHandler) this.scene.input.off("pointerup", this.gridPointerUpHandler);
     this.gridWheelHandler = undefined;
     this.gridPointerDownHandler = undefined; this.gridPointerMoveHandler = undefined; this.gridPointerUpHandler = undefined;
+    this.gridScrollTo = undefined; this.gridMinScroll = 0;
     this.ticker?.remove(false); this.ticker = undefined;
+  }
+
+  /**
+   * 목록 카드를 끌어 칸에 놓는 손을 한 번만 묶는다(편성 화면과 같은 `bindRosterDragPick`).
+   *
+   * 칸 좌표·감광은 지금 서 있는 표현기(`formationDragVisual`)가 그대로 맡고, 든 SD는 칸의 SD와
+   * 같은 레이어에 세워 팝업의 변환을 함께 물려받는다. 놓는 규칙은 `dropRosterRelic` 하나다.
+   */
+  private bindRosterPick(content: Phaser.GameObjects.Container): void {
+    if (this.rosterPick) return;
+    this.rosterPick = bindRosterDragPick({
+      scene: this.scene, visual: () => this.formationDragVisual, color: COLOR.accent,
+      viewportTop: () => (this.content ?? content).getWorldTransformMatrix().transformPoint(0, GRID_VIEW.top).y,
+      scrollable: () => this.gridMinScroll < 0,
+      onPickStart: () => { this.gridDragging = false; this.gridScrollTo?.(this.gridScrollAtPress); },
+      spawn: async (relicId) => {
+        const layer = this.sdContainer;
+        if (!layer) return undefined;
+        const puppet = await this.puppetLoader.spawn(this.scene, this.puppetLoader.assetFor(relicId), { x: 0, groundY: -2000, height: 205, depth: SD_DEPTH + 2 });
+        if (!this.body || layer !== this.sdContainer || !layer.active) { puppet.destroy(); return undefined; }
+        puppet.disableInteractive();
+        layer.add(puppet);
+        return puppet;
+      },
+      place: (creature, relicId, x, y, lift) => {
+        const local = layerScreenToLocal(this.sdContainer, x, y);
+        placePuppet(creature, this.puppetLoader.assetFor(relicId), { x: local.x, groundY: local.y + 245 / 2 - lift.raise, height: 205 * lift.scale });
+      },
+      slotCreatures: () => (this.draft ?? [null, null, null]).map((id) => (id ? this.sdPuppetByRelicId.get(id) : undefined)),
+      liftDepth: () => SD_DEPTH + 2,
+      enabled: () => Boolean(this.draft) && !this.saving && this.formationDragVisual !== undefined,
+      drop: (relicId, slot) => {
+        if (!this.draft || this.saving) return;
+        const result = dropRosterRelic(this.draft, relicId, slot);
+        this.draft = result.formation as Formation;
+        this.selectedSlot = result.selectedSlot;
+        this.refreshEditorSlots();
+      },
+    });
   }
 
   /**
@@ -611,6 +658,7 @@ export class IdleExcavationPopup {
       onChange: (view) => { this.rosterView = view; this.gridScrollY = 0; this.renderEditor(); },
     });
     this.rosterCards.clear();
+    this.bindRosterPick(content);
     const grid = this.scene.add.container(0, GRID_VIEW.top + this.gridScrollY);
     owned.forEach((relic, index) => {
       const x = formationRosterColumnX(ROSTER, index % ROSTER.columns);
@@ -630,6 +678,8 @@ export class IdleExcavationPopup {
       this.rosterCards.set(relic.id, card);
       // 마스크와 같은 사각형 안에서만 손을 받는다 — 창 밖으로 흘러간 카드가 아래 버튼·위 슬롯을 덮지 않게.
       clipHit(card.hit, containerClip(content, GRID_VIEW.left, GRID_VIEW.top, GRID_VIEW.right, GRID_VIEW.bottom));
+      // 가로로 끌거나 목록 창 위로 끌어 올리면 SD가 튀어나와 손끝을 따라간다(편성 화면과 같은 손).
+      card.hit.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.rosterPick?.press(relic.id, pointer));
       // 짧은 탭은 배치, 꾹 누름은 상세다. 편성 그리드와 같은 조작이라 화면마다 다르게 익히지 않는다.
       bindLongPress(this.scene, card.hit, {
         onTap: () => {
@@ -644,7 +694,7 @@ export class IdleExcavationPopup {
           if (moved) this.refreshEditorSlots();
           else this.paintSlotSelection();
         },
-        allowTap: () => this.gridDragMoved <= GRID_DRAG_SLOP,
+        allowTap: () => this.gridDragMoved <= GRID_DRAG_SLOP && !this.rosterPick?.consumed(),
         onLongPress: () => this.openRelicInfo(relic),
         // 팝업 판(2000) 위에 게이지가 보여야 한다.
         depth: 2400,
@@ -672,6 +722,7 @@ export class IdleExcavationPopup {
     // 밑변이 마스크 경계에 정확히 겹쳐 앤티에일리어싱에 한 줄이 깎여 보인다.
     const minScroll = Math.min(0, viewportHeight - contentHeight - 28);
     this.gridScrollY = Phaser.Math.Clamp(this.gridScrollY, minScroll, 0);
+    this.gridMinScroll = minScroll;
     grid.setY(GRID_VIEW.top + this.gridScrollY);
 
     // 마스크는 부모 Container의 등장 배율을 물려받지 않으므로 매 프레임 월드 좌표에 동기화한다.
@@ -710,6 +761,7 @@ export class IdleExcavationPopup {
       thumb.setY(GRID_VIEW.top + thumbHeight / 2 + progress * (viewportHeight - thumbHeight));
     };
     scrollTo(this.gridScrollY);
+    this.gridScrollTo = scrollTo;
 
     const inViewport = (pointer: Phaser.Input.Pointer): boolean => {
       const matrix = parent.getWorldTransformMatrix();
@@ -719,11 +771,12 @@ export class IdleExcavationPopup {
     };
     // 전역 포인터를 쓰면 카드 위에서 시작한 손짓도 자연스럽게 스크롤로 승격할 수 있다.
     this.gridPointerDownHandler = (pointer: Phaser.Input.Pointer) => {
+      this.gridScrollAtPress = this.gridScrollY;
       if (!inViewport(pointer) || minScroll === 0) return;
       this.gridDragging = true; this.gridDragMoved = 0; this.gridDragOrigin = this.gridScrollY - pointer.y;
     };
     this.gridPointerMoveHandler = (pointer: Phaser.Input.Pointer) => {
-      if (!this.gridDragging || !pointer.isDown) return;
+      if (!this.gridDragging || !pointer.isDown || this.rosterPick?.active()) return;
       this.gridDragMoved += Math.abs(pointer.velocity.y); scrollTo(this.gridDragOrigin + pointer.y);
     };
     this.gridPointerUpHandler = (pointer?: Phaser.Input.Pointer, objects?: Phaser.GameObjects.GameObject[]) => {
@@ -842,6 +895,7 @@ export class IdleExcavationPopup {
         puppet.setDepth(SD_DEPTH).setAlpha(1);
         clearLiftPose(puppet);
       }),
+      renderExternal: (frame) => this.rosterPick?.render(frame),
       onVisualState: (state) => setDebugFormationDragVisual(state ? { owner: "excavation", ...state } : undefined),
     });
     bindFormationDrag(this.scene, dragSlots, {
@@ -1022,6 +1076,7 @@ export class IdleExcavationPopup {
 
   /** 타이머와 임시 편성을 버리며 서버에서 받은 confirmed 객체는 외부 상태에 역으로 쓰지 않는다. */
   private dispose(): void {
+    this.rosterPick?.destroy(); this.rosterPick = undefined;
     this.formationDragVisual?.destroy(); this.formationDragVisual = undefined; setDebugFormationDragVisual(undefined);
     this.requestGeneration++; this.statusBackground?.destroy(); this.statusBackground = undefined; this.clearStatusSD(); this.ticker?.remove(false); this.ticker = undefined;
     // PopupLayer가 본체를 먼저 파괴하므로 씬에 직접 등록한 스크롤 자원은 종료 콜백에서 별도로 치운다.

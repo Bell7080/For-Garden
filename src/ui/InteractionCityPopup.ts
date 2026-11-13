@@ -52,7 +52,10 @@ import { interactionRemainingLabel, relicsAwayOnInteraction, autoAssignInteracti
 import type { RelicDef } from "../core/types";
 import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
 import { RosterControls } from "./RosterControls";
-import { tapFormationSlot, tapRosterRelic, toFormationSlots, formationMembers } from "../core/formationSlots";
+import { dropRosterRelic, tapFormationSlot, tapRosterRelic, toFormationSlots, formationMembers } from "../core/formationSlots";
+import { bindRosterDragPick, type RosterDragPick } from "./rosterDragPick";
+import { clearLiftPose, createFormationDragVisualController, type FormationDragVisualController } from "./formationDragVisualController";
+import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { bindLongPress } from "./longPressInfo";
 import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
 import { startPuppetHop } from "./puppetHop";
@@ -137,6 +140,12 @@ export class InteractionCityPopup {
   private chromeLayer?: Phaser.GameObjects.Container;
   private gridMask?: Phaser.GameObjects.Graphics;
   private detachGrid?: () => void;
+  /** 목록 카드를 끌어 칸에 놓는 손과, 놓을 칸을 알리는 공용 표현기. 배치 중에만 선다. */
+  private rosterPick?: RosterDragPick;
+  private formationDragVisual?: FormationDragVisualController;
+  private gridMinScroll = 0;
+  /** 카드를 집는 순간 굴리던 손을 멈추고 누를 때의 스크롤로 되돌린다. */
+  private cancelGridDrag?: () => void;
   /** 판 뒤에 은은하게 깔리는 그 도시의 원화. 판을 닫을 때 마스크와 함께 걷어 낸다. */
   private backdrop?: PopupBackgroundImage;
   /** 아래 칸 안내가 세우는 원화. 아래 칸이 그리드로 바뀔 때마다 함께 걷힌다. */
@@ -226,6 +235,7 @@ export class InteractionCityPopup {
     this.chromeLayer?.removeAll(true);
     const editable = view.state === "idle";
     this.releaseUnusedPuppets();
+    this.formationDragVisual?.destroy(); this.formationDragVisual = undefined;
 
     this.remainingLabel = undefined;
     if (view.state === "away") {
@@ -253,6 +263,69 @@ export class InteractionCityPopup {
       // 빼는 표식은 SD보다 앞선 층에 선다 — 같은 컨테이너에 두면 머리에 가린다.
       if (index === this.selectedSlot && relicId && this.chromeLayer) addFormationRemoveChip(this.scene, this.chromeLayer, box, () => this.tapSlot(index, "clear"));
     });
+    if (editable && this.editing) this.createDragVisual();
+  }
+
+  /**
+   * 목록 카드를 끌어올 때 놓을 칸을 알리는 표현기(네모칸·감광·그림자). 칸끼리 끌어 옮기는 손은
+   * 이 판에 없으므로 칸 미리보기는 그리지 않고, 끌어온 몸만 `renderExternal`이 그린다.
+   */
+  private createDragVisual(): void {
+    const layerDepth = this.body?.parentContainer?.depth ?? 2000;
+    const center = { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 };
+    const party = (): readonly (string | null)[] => this.party;
+    this.formationDragVisual = createFormationDragVisualController({
+      scene: this.scene, color: BLUE, formation: party,
+      slots: [0, 1, 2].map((index) => ({ x: center.x + (index - 1) * SLOT.step, y: center.y + SLOT.y, width: SLOT.width, height: SLOT.height })),
+      zoneDepth: layerDepth + 0.5, dimDepth: layerDepth - 0.5,
+      shadowOffsetY: SLOT.height / 2 + 26,
+      liftDepth: () => layerDepth + 1,
+      renderPreview: () => undefined,
+      renderExternal: (frame) => this.rosterPick?.render(frame),
+      restore: () => { for (const puppet of this.puppets.values()) { puppet.setAlpha(1); clearLiftPose(puppet); } },
+    });
+  }
+
+  /** 목록 카드를 끌어 칸에 놓는 손을 한 번만 묶는다(편성 화면과 같은 `bindRosterDragPick`). */
+  private bindRosterPick(): void {
+    if (this.rosterPick) return;
+    this.rosterPick = bindRosterDragPick({
+      scene: this.scene, visual: () => this.formationDragVisual, color: BLUE,
+      viewportTop: () => (this.lower?.getWorldTransformMatrix().transformPoint(0, ROSTER_VIEW.top).y ?? 0),
+      scrollable: () => this.gridMinScroll < 0,
+      onPickStart: () => this.cancelGridDrag?.(),
+      spawn: async (relicId) => {
+        const layer = this.sdLayer;
+        if (!layer) return undefined;
+        const puppet = await spawnPuppet(this.scene, relicAppearanceManager.sdAssetFor(relicId), { x: 0, groundY: -2000, height: 205, depth: SD_DEPTH + 1 });
+        if (!this.body || layer !== this.sdLayer || !layer.active) { puppet.destroy(); return undefined; }
+        puppet.disableInteractive();
+        layer.add(puppet);
+        return puppet;
+      },
+      place: (creature, relicId, x, y, lift) => {
+        const local = this.sdLayer?.getWorldTransformMatrix().applyInverse(x, y) ?? { x, y };
+        placePuppet(creature, relicAppearanceManager.sdAssetFor(relicId), { x: local.x, groundY: local.y + SLOT.height / 2 - lift.raise, height: 205 * lift.scale });
+      },
+      slotCreatures: () => this.party.map((id) => (id ? this.puppets.get(id) : undefined)),
+      liftDepth: () => SD_DEPTH + 1,
+      enabled: () => this.editing && !this.busy && this.formationDragVisual !== undefined,
+      drop: (relicId, slot) => {
+        if (this.busy || !this.view) return;
+        const result = dropRosterRelic(this.party, relicId, slot);
+        this.party = result.formation;
+        this.selectedSlot = result.selectedSlot;
+        this.refreshPartyEdit(this.view);
+      },
+    });
+  }
+
+  /** 편성이 바뀐 뒤 칸·조작·안내 줄·카드 눌림만 맞춘다. 목록은 다시 만들지 않는다. */
+  private refreshPartyEdit(view: InteractionLayerView): void {
+    this.renderSlots(view);
+    this.renderActions(view);
+    this.rosterHint?.setText(this.rosterHintText());
+    for (const [relicId, card] of this.rosterCards) card.setSelected(this.party.includes(relicId));
   }
 
   /**
@@ -501,6 +574,7 @@ export class InteractionCityPopup {
       return;
     }
 
+    this.bindRosterPick();
     const grid = this.scene.add.container(0, ROSTER_VIEW.top + this.gridScrollY);
     parent.add(grid);
     roster.forEach((relic, index) => {
@@ -526,6 +600,8 @@ export class InteractionCityPopup {
       }
       // 마스크와 같은 사각형 안에서만 손을 받는다 — 창 밖으로 흘러간 카드가 아래 버튼·위 슬롯을 덮지 않게.
       clipHit(card.hit, containerClip(parent, ROSTER_VIEW.left, ROSTER_VIEW.top, ROSTER_VIEW.right, ROSTER_VIEW.bottom));
+      // 가로로 끌거나 목록 창 위로 끌어 올리면 SD가 튀어나와 손끝을 따라간다. 나가 있는 이는 집지 않는다.
+      if (until === undefined) card.hit.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.rosterPick?.press(relic.id, pointer));
       bindLongPress(this.scene, card.hit, {
         onTap: () => {
           // 다른 도시에 나가 있는 이는 고를 수 없다 — 덮개와 남은 시간이 이미 그 이유를 말한다.
@@ -535,14 +611,11 @@ export class InteractionCityPopup {
           playFormationTapSound(this.party, result.formation, relic.id);
           this.party = result.formation;
           this.selectedSlot = result.selectedSlot;
-          this.renderSlots(view);
-          this.renderActions(view);
-          // 카드를 누른 뒤 고른 칸이 옆으로 옮겨 가므로 그 줄도 함께 따라간다 — 목록을 통째로
+          // 카드를 누른 뒤 고른 칸이 옆으로 옮겨 가므로 안내 줄도 함께 따라간다 — 목록을 통째로
           // 다시 만들면 방금 누른 카드가 눈앞에서 사라졌다 돌아온다.
-          this.rosterHint?.setText(this.rosterHintText());
-          for (const [relicId, card] of this.rosterCards) card.setSelected(this.party.includes(relicId));
+          this.refreshPartyEdit(view);
         },
-        allowTap: () => this.gridDragMoved <= GRID_DRAG_SLOP,
+        allowTap: () => this.gridDragMoved <= GRID_DRAG_SLOP && !this.rosterPick?.consumed(),
         onLongPress: () => {
           // 창에서 급여·한계 돌파를 하고 닫으면 목록 카드의 레벨·돌파 등급을 곧바로 고친다.
           const info = this.info();
@@ -673,6 +746,7 @@ export class InteractionCityPopup {
     const contentHeight = PORTRAIT_GRID_MASK_GAP + portraitGridContentHeight(rows, ROSTER.rowStep, ROSTER.cardHeight);
     const minScroll = Math.min(0, viewportHeight - contentHeight - 28);
     this.gridScrollY = Phaser.Math.Clamp(this.gridScrollY, minScroll, 0);
+    this.gridMinScroll = minScroll;
     grid.setY(ROSTER_VIEW.top + this.gridScrollY);
 
     // 기하 마스크는 컨테이너 이동을 물려받지 않으므로 팝업 판이 자리를 잡은 뒤 월드 좌표로 맞춘다.
@@ -707,12 +781,15 @@ export class InteractionCityPopup {
     };
     let dragging = false;
     let originY = 0;
+    let scrollAtPress = this.gridScrollY;
+    this.cancelGridDrag = () => { dragging = false; scrollTo(scrollAtPress); };
     const onDown = (pointer: Phaser.Input.Pointer): void => {
+      scrollAtPress = this.gridScrollY;
       if (!inside(pointer) || minScroll === 0) return;
       dragging = true; originY = this.gridScrollY - pointer.y; this.gridDragMoved = 0;
     };
     const onMove = (pointer: Phaser.Input.Pointer): void => {
-      if (!dragging || !pointer.isDown) return;
+      if (!dragging || !pointer.isDown || this.rosterPick?.active()) return;
       this.gridDragMoved = Math.max(this.gridDragMoved, Math.abs(pointer.y - pointer.downY));
       scrollTo(originY + pointer.y);
     };
@@ -742,10 +819,14 @@ export class InteractionCityPopup {
   private teardownGrid(): void {
     this.detachGrid?.();
     this.detachGrid = undefined;
+    this.cancelGridDrag = undefined;
+    this.gridMinScroll = 0;
   }
 
   /** 팝업이 닫히면 SD와 전역 리스너까지 남김없이 정리한다. */
   private dispose(): void {
+    this.rosterPick?.destroy(); this.rosterPick = undefined;
+    this.formationDragVisual?.destroy(); this.formationDragVisual = undefined;
     this.teardownGrid();
     this.teardownBriefArt();
     this.backdrop?.destroy(); this.backdrop = undefined;

@@ -45,6 +45,8 @@ export interface RosterDragPick {
   consumed(): boolean;
   /** 공용 표현기의 `renderExternal`로 넘긴다. */
   render(frame: { pointer: { x: number; y: number }; hovered?: number; lift: FormationLiftPose }): void;
+  /** 팝업처럼 씬보다 먼저 사라지는 화면이 닫힐 때 부른다. 씬이 끝나면 저절로 풀린다. */
+  destroy(): void;
 }
 
 export function bindRosterDragPick(options: RosterDragPickOptions): RosterDragPick {
@@ -122,20 +124,24 @@ export function bindRosterDragPick(options: RosterDragPickOptions): RosterDragPi
     if (target !== undefined) { audioManager?.playUi("formation.place"); options.drop(relicId, target); }
   };
 
-  scene.input.on("pointermove", onMove);
-  scene.input.on("pointerup", onUp);
-  scene.input.on("pointerupoutside", onUp);
-  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+  const destroy = (): void => {
     scene.input.off("pointermove", onMove);
     scene.input.off("pointerup", onUp);
     scene.input.off("pointerupoutside", onUp);
+    scene.events.off(Phaser.Scenes.Events.SHUTDOWN, destroy);
+    press = undefined;
     release();
-  });
+  };
+  scene.input.on("pointermove", onMove);
+  scene.input.on("pointerup", onUp);
+  scene.input.on("pointerupoutside", onUp);
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, destroy);
 
   return {
     press: (relicId, pointer) => { used = false; press = { relicId, x: pointer.worldX, y: pointer.worldY, scrolling: false }; },
     active: () => held !== undefined,
     consumed: () => used,
     render,
+    destroy,
   };
 }

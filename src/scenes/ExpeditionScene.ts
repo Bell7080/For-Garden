@@ -66,7 +66,8 @@ import { groundedPortraitBounds } from "../ui/portraitPlacement";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
 import { BattleProfile } from "../ui/BattleProfile";
 import { BATTLE_PROFILE_LAYOUT } from "../ui/battleStatusLayout";
-import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
+import { dropRosterRelic, formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
+import { bindRosterDragPick, type RosterDragPick } from "../ui/rosterDragPick";
 import { moveFormationSlot } from "../core/formation";
 import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "../ui/formationSlotChrome";
 import { bindFormationDrag, type FormationDragSlot } from "../ui/formationDrag";
@@ -147,14 +148,19 @@ export class ExpeditionScene extends Phaser.Scene {
   private rosterDragOrigin = 0;
   /** 카드 탭과 스크롤 드래그를 가르는 누적 이동 거리다. 슬롯을 넘으면 탭으로 보지 않는다. */
   private rosterDraggedDistance = 0;
+  /** 목록 카드를 끌어 칸에 놓는 손(스토리 편성과 같은 한 벌). */
+  private rosterPick?: RosterDragPick;
+  /** 누른 순간의 목록 스크롤 — 가로로 집은 손이 그 사이 굴린 몫을 되돌린다. */
+  private rosterScrollAtPress = 0;
   private readonly onRosterPointerDown = (pointer: Phaser.Input.Pointer): void => {
     this.rosterDraggedDistance = 0;
+    this.rosterScrollAtPress = this.rosterScrollY;
     if (pointer.y < ROSTER_VIEWPORT.top || pointer.y >= ROSTER_VIEWPORT.bottom || this.rosterMinScroll === 0) return;
     this.rosterDragging = true;
     this.rosterDragOrigin = this.rosterScrollY - pointer.y;
   };
   private readonly onRosterPointerMove = (pointer: Phaser.Input.Pointer): void => {
-    if (!this.rosterDragging || !pointer.isDown) return;
+    if (!this.rosterDragging || !pointer.isDown || this.rosterPick?.active()) return;
     this.rosterDraggedDistance += Math.abs(pointer.velocity.y);
     this.scrollRosterTo(this.rosterDragOrigin + pointer.y);
   };
@@ -880,6 +886,28 @@ export class ExpeditionScene extends Phaser.Scene {
       onChange: (view) => { this.rosterView = view; this.fillRosterGrid(); this.refreshPreparationSelection(); },
     });
 
+    // 목록 카드도 끌어서 칸에 놓는다. 세로 끌기는 스크롤, 가로로 끌거나 창 위로 끌어 올리면 SD가 튀어나온다.
+    this.rosterPick ??= bindRosterDragPick({
+      scene: this, visual: () => this.formationDragVisual, color: COLOR.sortie,
+      viewportTop: () => ROSTER_VIEWPORT.top,
+      scrollable: () => this.rosterMinScroll < 0,
+      onPickStart: () => { this.rosterDragging = false; this.scrollRosterTo(this.rosterScrollAtPress); },
+      spawn: async (relicId) => {
+        const puppet = await spawnPuppet(this, relicAppearanceManager.sdAssetFor(relicId), { x: -400, groundY: -400, height: 250, depth: 20 });
+        if (!this.scene.isActive()) { puppet.destroy(); return undefined; }
+        puppet.disableInteractive();
+        return puppet;
+      },
+      place: (creature, relicId, x, y, lift) => placePuppet(creature, relicAppearanceManager.sdAssetFor(relicId), { x, groundY: y + FORMATION.height / 2 - lift.raise, height: 250 * lift.scale }),
+      slotCreatures: () => this.selected.map((id) => (id ? this.formationPuppets.get(id) : undefined)),
+      enabled: () => this.formationDragVisual !== undefined && !this.nodeTransitionPending,
+      drop: (relicId, slot) => {
+        const result = dropRosterRelic(this.selected, relicId, slot);
+        this.selected = result.formation;
+        this.selectedSlot = result.selectedSlot;
+        this.refreshPreparationSelection();
+      },
+    });
     this.input.on("pointerdown", this.onRosterPointerDown);
     this.input.on("pointermove", this.onRosterPointerMove);
     this.input.on("pointerup", this.onRosterPointerUp);
@@ -893,6 +921,7 @@ export class ExpeditionScene extends Phaser.Scene {
       this.input.off("pointerup", this.onRosterPointerUp);
       this.input.off("pointerupoutside", this.onRosterPointerUp);
       this.input.off("wheel", this.onRosterWheel);
+      this.rosterPick = undefined;
       this.rosterTicker?.remove(false); this.rosterTicker = undefined;
       this.rosterMask?.destroy(); this.rosterMask = undefined;
     });
@@ -927,10 +956,11 @@ export class ExpeditionScene extends Phaser.Scene {
       clipHit(card.hit, () => ({ left: 0, right: BASE_WIDTH, top: ROSTER_VIEWPORT.top, bottom: ROSTER_VIEWPORT.bottom }));
       // 카드는 선택만 바꾸며 Session을 쓰지 않는다. 시작 버튼에서 매니저가 최종 소유 검증을 반복한다.
       // 짧은 탭은 편성 토글, 꾹 누름은 상세다. 끌어서 스크롤한 손가락은 둘 다 아니다.
+      card.hit.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.rosterPick?.press(relic.id, pointer));
       bindLongPress(this, card.hit, {
         onTap: () => this.toggle(relic.id),
         onLongPress: () => this.ally().showRelic(relic),
-        allowTap: () => this.rosterDraggedDistance <= ROSTER_DRAG_SLOP,
+        allowTap: () => this.rosterDraggedDistance <= ROSTER_DRAG_SLOP && !this.rosterPick?.consumed(),
         depth: 900,
       });
       this.cards.set(relic.id, card);
@@ -1044,6 +1074,7 @@ export class ExpeditionScene extends Phaser.Scene {
       scene: this, slots: dragSlots, formation: () => this.selected, color: COLOR.sortie,
       zoneDepth: 3, dimDepth: 1,
       shadowOffsetY: FORMATION.height / 2 + 26,
+      renderExternal: (frame) => this.rosterPick?.render(frame),
       renderPreview: ({ preview, pointer, lift }) => {
         this.selected.forEach((relicId, index) => {
           if (!relicId) return;

@@ -50,6 +50,11 @@ export interface FormationDragVisualOptions {
   /** 이름표처럼 확정값을 말하는 장식은 드래그 동안 함께 흐리게 한다. */
   labels?: readonly (Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Alpha)[];
   renderPreview: (frame: FormationPreviewFrame) => void;
+  /**
+   * 칸 밖(목록 카드)에서 끌어온 몸을 그린다. 든 몸은 화면이 따로 세우고, 가리킨 칸에 서 있던
+   * 렐릭은 갈아 끼워질 것이라 흐리게 둔다. 없으면 목록 끌기를 쓰지 않는 화면이다.
+   */
+  renderExternal?: (frame: { pointer: { x: number; y: number }; hovered?: number; lift: FormationLiftPose }) => void;
   /** 손끝(화면 좌표)에서 바닥 그림자까지의 거리. 화면의 SD 높이 절반쯤이다. */
   shadowOffsetY?: number;
   /** 든 SD의 그림자 깊이. 튜토리얼 막 위로 SD를 띄울 때 그림자도 함께 올린다. */
@@ -61,10 +66,17 @@ export interface FormationDragVisualOptions {
 
 export interface FormationDragVisualController {
   beginDrag(from: number, x: number, y: number): void;
+  /** 칸이 아니라 목록 카드에서 끌어온 몸. 이후 `moveDrag(EXTERNAL_DRAG, …)`로 옮긴다. */
+  beginExternalDrag(x: number, y: number): void;
+  /** 지금 손끝이 가리키는 칸. 놓을 자리를 화면이 따로 셈하지 않게 한다. */
+  hovered(): number | undefined;
   moveDrag(from: number, x: number, y: number): void;
   endDrag(): void;
   destroy(): void;
 }
+
+/** 목록 카드에서 끌어온 몸의 `from` 자리. 어느 칸에서도 오지 않았다는 뜻이다. */
+export const EXTERNAL_DRAG = -1;
 
 /**
  * 세 편성 화면이 공유하는 Phaser 표현 수명이다.
@@ -92,10 +104,14 @@ export function createFormationDragVisualController(options: FormationDragVisual
 
   const render = (): void => {
     if (!active) return;
-    const picked = options.formation().map((id) => id ?? undefined);
-    const preview = formationDragPreview(picked, active.from, active.hovered, slots.length);
     const lift = formationLiftPose(scene.time.now - active.startedAt, active.vx, reduceMotion());
     paintShadow(active.x, active.y, lift.raise);
+    if (active.from === EXTERNAL_DRAG) {
+      options.renderExternal?.({ pointer: { x: active.x, y: active.y }, hovered: active.hovered, lift });
+      return;
+    }
+    const picked = options.formation().map((id) => id ?? undefined);
+    const preview = formationDragPreview(picked, active.from, active.hovered, slots.length);
     options.renderPreview({ preview, pointer: { x: active.x, y: active.y }, from: active.from, hovered: active.hovered, lift });
   };
   // 손이 멈춰 있어도 쥔 몸은 숨 쉬듯 흔들리고 속도는 가라앉는다.
@@ -131,6 +147,10 @@ export function createFormationDragVisualController(options: FormationDragVisual
     active.vx = active.vx * 0.7 + ((x - active.x) / dt) * 0.3;
     active.x = x; active.y = y; active.lastAt = now;
     render();
+    if (from === EXTERNAL_DRAG) {
+      options.onVisualState?.({ hovered: active.hovered, replacementVisible: active.hovered !== undefined && options.formation()[active.hovered] != null });
+      return;
+    }
     const picked = options.formation().map((id) => id ?? undefined);
     const preview = formationDragPreview(picked, from, active.hovered, slots.length);
     options.onVisualState?.({ hovered: active.hovered, replacementVisible: preview.some((entry) => entry.moved) });
@@ -146,7 +166,7 @@ export function createFormationDragVisualController(options: FormationDragVisual
   };
 
   const beginDrag = (from: number, x: number, y: number): void => {
-    if (active || options.formation()[from] == null) return;
+    if (active || (from !== EXTERNAL_DRAG && options.formation()[from] == null)) return;
     const bounds = options.dimBounds ?? (() => {
       const left = Math.min(...slots.map((slot) => slot.x - slot.width / 2));
       const right = Math.max(...slots.map((slot) => slot.x + slot.width / 2));
@@ -164,6 +184,8 @@ export function createFormationDragVisualController(options: FormationDragVisual
 
   return {
     beginDrag, moveDrag, endDrag,
+    beginExternalDrag: (x, y) => beginDrag(EXTERNAL_DRAG, x, y),
+    hovered: () => active?.hovered,
     destroy: () => { endDrag(); scene.events.off(Phaser.Scenes.Events.UPDATE, ticker); shadow.destroy(); zones.forEach((zone) => zone.destroy()); },
   };
 }

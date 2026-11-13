@@ -5,6 +5,7 @@ import {
   nextEmptySlot,
   tapFormationSlot,
   tapRosterRelic,
+  dropRosterRelic,
   toFormationSlots,
 } from "../../src/core/formationSlots";
 
@@ -49,11 +50,22 @@ describe("목록의 카드를 누름", () => {
     expect(result.selectedSlot).toBe(2);
   });
 
-  it("고른 자리에 누가 서 있으면 그대로 갈아 끼운다", () => {
-    const result = tapRosterRelic(["rex", "torika", null], 1, "spino");
-    expect(result.formation).toEqual(["rex", "spino", null]);
-    // 갈아 끼운 뒤에도 남은 빈 칸이 있으면 그리로 넘어간다.
-    expect(result.selectedSlot).toBe(2);
+  it("고른 자리에 누가 서 있어도 빈 칸이 남았으면 빈 칸부터 채운다", () => {
+    // 1·3번이 서고 3번이 골라져 있어도 2번이 비었으면 2번에 선다.
+    const result = tapRosterRelic(["rex", null, "torika"], 2, "spino");
+    expect(result.formation).toEqual(["rex", "spino", "torika"]);
+    expect(result.selectedSlot).toBe(1);
+  });
+
+  it("빈 칸이 여럿이면 앞 번호부터 채운다", () => {
+    const result = tapRosterRelic([null, null, "torika"], 2, "spino");
+    expect(result.formation).toEqual(["spino", null, "torika"]);
+  });
+
+  it("빈 칸이 없을 때만 고른 자리를 갈아 끼운다", () => {
+    const result = tapRosterRelic(["rex", "torika", "dodi"], 1, "spino");
+    expect(result.formation).toEqual(["rex", "spino", "dodi"]);
+    expect(result.selectedSlot).toBe(1);
   });
 
   it("이미 어느 칸에 선 렐릭을 누르면 옮기지 않고 그 칸을 고른다", () => {
@@ -139,5 +151,27 @@ describe("다음 빈 칸", () => {
 
   it("는 빈 칸이 없으면 아무 칸도 고르지 않는다", () => {
     expect(nextEmptySlot(["rex", "torika", "spino"], 1)).toBeUndefined();
+  });
+});
+
+describe("목록 카드를 끌어 칸에 놓음", () => {
+  it("빈 칸 우선을 따르지 않고 놓은 칸에 선다", () => {
+    const result = dropRosterRelic(["rex", null, "torika"], "spino", 2);
+    expect(result.formation).toEqual(["rex", null, "spino"]);
+    expect(result.selectedSlot).toBe(1);
+  });
+
+  it("빈 칸에 놓으면 그 칸을 채운다", () => {
+    expect(dropRosterRelic([null, null, null], "spino", 1).formation).toEqual([null, "spino", null]);
+  });
+
+  it("이미 다른 칸에 선 렐릭은 두 자리를 맞바꾼다", () => {
+    const result = dropRosterRelic(["rex", null, "spino"], "spino", 0);
+    expect(result.formation).toEqual(["spino", null, "rex"]);
+    expect(result.selectedSlot).toBe(0);
+  });
+
+  it("범위 밖 칸은 아무것도 바꾸지 않는다", () => {
+    expect(dropRosterRelic(["rex", null, null], "spino", 4).formation).toEqual(["rex", null, null]);
   });
 });

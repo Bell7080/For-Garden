@@ -54,7 +54,10 @@ export function nextEmptySlot(formation: FormationSlots, from: number): number |
  * 이미 나가 있는 얼굴을 누르는 손은 대개 "쟤가 몇 번이지"를 확인하거나 그 자리를 손보려는
  * 것이지, 다른 칸으로 옮기려는 것이 아니다. 옮기는 일은 칸을 끌어서 한다.
  *
- * 아직 어디에도 없는 렐릭은 **고른 칸**에 선다. 그 칸에 누가 서 있었다면 그대로 갈아 끼운다.
+ * 아직 어디에도 없는 렐릭은 **빈 칸이 먼저다**(응태 결정 2026-11-13). 고른 칸이 비어 있으면 그 칸에,
+ * 고른 칸에 누가 서 있는데 다른 빈 칸이 남아 있으면 **앞 번호의 빈 칸**에 선다 — 1·3번이 서고 3번이
+ * 골라진 채 목록을 누르는 손은 대개 비어 있는 2번을 채우려는 손이지 3번을 물리려는 손이 아니다.
+ * 빈 칸이 하나도 없을 때만 고른 칸의 렐릭을 갈아 끼운다.
  * 채운 뒤에는 **옆의 빈 칸으로 선택이 옮겨 간다** — 셋을 채우는 동안에는 목록만 세 번 누르면
  * 편성이 끝나야 하고, 칸을 한 번 누르고 카드를 한 번 누르는 두 박자를 세 번 되풀이하게 하면
  * 손이 두 배로 든다. 빈 칸이 남지 않았을 때만 방금 채운 자리에 머문다 — 그때는 다음에 오는
@@ -68,10 +71,31 @@ export function tapRosterRelic(formation: FormationSlots, selectedSlot: number |
   // 상관없어 칸을 먼저 누르게 하는 것이 손만 늘리는 일이기 때문이다. 반대로 이미 다 찼다면
   // 누구를 물릴지는 사람이 정해야 하므로 아무 일도 하지 않는다 — 마지막 칸을 임의로 바꾸면
   // 누르지 않은 자리의 캐릭터가 사라진다.
-  const target = selectedSlot ?? next.indexOf(null);
+  const firstEmpty = next.indexOf(null);
+  const selectedOccupied = selectedSlot !== undefined && inRange(formation, selectedSlot) && next[selectedSlot] !== null;
+  const target = selectedSlot === undefined || (selectedOccupied && firstEmpty >= 0) ? firstEmpty : selectedSlot;
   if (!inRange(formation, target)) return { formation: next, selectedSlot, cleared: false };
   next[target] = relicId;
   return { formation: next, selectedSlot: nextEmptySlot(next, target) ?? target, cleared: false };
+}
+
+/**
+ * 목록의 카드를 **끌어서 칸에 놓은** 결과.
+ *
+ * 끌어 놓은 손은 자리를 직접 가리킨 것이라 빈 칸 우선을 따르지 않고 **놓은 칸**에 선다. 누가 서
+ * 있었다면 탭과 같이 갈아 끼운다. 이미 다른 칸에 선 렐릭을 끌어 놓으면 칸끼리 끄는 것과 같이 두
+ * 자리를 맞바꾼다 — 같은 렐릭이 두 칸에 서는 일은 없다. 놓은 뒤의 선택은 탭과 같은 규칙이다.
+ */
+export function dropRosterRelic(formation: FormationSlots, relicId: string, slot: number): FormationSlotTap {
+  const next = copy(formation);
+  if (!inRange(formation, slot)) return { formation: next, selectedSlot: undefined, cleared: false };
+  const placedAt = formation.indexOf(relicId);
+  if (placedAt >= 0) {
+    [next[placedAt], next[slot]] = [next[slot], next[placedAt]];
+    return { formation: next, selectedSlot: slot, cleared: false };
+  }
+  next[slot] = relicId;
+  return { formation: next, selectedSlot: nextEmptySlot(next, slot) ?? slot, cleared: false };
 }
 
 /**

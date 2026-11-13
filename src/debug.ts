@@ -144,7 +144,7 @@ export interface DebugState {
   mailPopup?: { open: boolean; unreadCount: number; claimableCount: number };
   owned?: string[];
   /** 캔버스 내부 편성 UI의 위치/표시 상태를 모바일 E2E가 읽는 최소 정보다. */
-  party?: { autoButton: { x: number; y: number }; visibleAffinityDirections: number; selectedCount?: number; slots?: Array<{ x: number; y: number }>; selectedSlot?: number };
+  party?: { autoButton: { x: number; y: number }; visibleAffinityDirections: number; selectedCount?: number; slots?: Array<{ x: number; y: number }>; selectedSlot?: number; members?: Array<string | null> };
   /** 레이드가 시즌 판인지 편성 단계인지. 두 걸음이 같은 씬 이름을 쓰므로 E2E는 이 값으로 가른다. */
   raidStage?: "list" | "season" | "summon" | "summonReveal";
   /** 공략법 창의 「이유 보기」 버튼이 선 화면 좌표. 창 높이가 글 길이에서 나오므로 E2E가 여기서 읽는다. */

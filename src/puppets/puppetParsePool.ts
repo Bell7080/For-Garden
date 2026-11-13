@@ -15,6 +15,8 @@ import type { PuppetParseRequest, PuppetParseResponse } from "./puppetParseWorke
 export interface ParsedPuppet {
   readonly project: PuppetProject;
   readonly bitmap: ImageBitmap;
+  /** 그림이 걸친 셀의 삼각형만 남긴 인덱스(`drawableCells.ts`). 없으면 전체 격자를 그린다. */
+  readonly drawable?: Uint16Array;
 }
 
 /**
@@ -58,8 +60,8 @@ let unavailable = false;
 function spawnWorker(): Worker {
   const worker = new Worker(new URL("./puppetParseWorker.ts", import.meta.url), { type: "module" });
   worker.onmessage = (event: MessageEvent<PuppetParseResponse>) => {
-    const { project, bitmap } = event.data;
-    finish(worker, project && bitmap ? { project, bitmap } : null);
+    const { project, bitmap, drawable } = event.data;
+    finish(worker, project && bitmap ? { project, bitmap, drawable } : null);
   };
   // 일꾼 자체가 죽으면 그 일감은 영영 돌아오지 않는다. 기다리던 쪽을 풀어 메인 스레드 경로로 보내고,
   // 죽은 일꾼은 무리에 되돌리지 않고 내려서 새 일꾼으로 갈아 끼운다 — 되돌리면 다음 일감도 같이 죽는다.

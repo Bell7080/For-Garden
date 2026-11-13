@@ -1117,6 +1117,10 @@ async function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
       const puppet = Puppet.fromProject(parsed.project);
       const { registerDecodedTexture } = await import("./IndexedPuppetCreature");
       registerDecodedTexture(puppet.name, parsed.bitmap);
+      if (parsed.drawable && puppet.mesh) {
+        const { drawableKey, registerDrawableIndices } = await import("./drawableCells");
+        registerDrawableIndices(drawableKey(puppet.name, puppet.project.character.texture, puppet.mesh.cols, puppet.mesh.rows), parsed.drawable);
+      }
       return puppet;
     };
     // **실패한 약속을 캐시에 남기지 않는다.** 한 번의 네트워크 끊김이 거부된 약속으로 `loaded`에 굳으면

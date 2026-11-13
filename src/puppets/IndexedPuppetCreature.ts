@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import type { PlayOptions, Puppet } from "puppetforge";
 import { advancePuppet, puppetElapsedMs } from "./runtimeStep";
+import { drawableKey, lookupDrawableIndices } from "./drawableCells";
 import { countDebugPuppetUpdate, debugPerfEnabled } from "../debug";
 import { puppetAffineUniform, puppetOffsetUniform, puppetShaderAlpha } from "./renderTransform";
 
@@ -235,7 +236,11 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     super(scene, 0, 0, textureKey);
     if (!puppet.mesh) throw new Error(`Mesh가 없는 Puppet은 그릴 수 없습니다: ${puppet.name}`);
     this.puppet = puppet;
-    this.indices = new Uint16Array(puppet.mesh.indices);
+    // 투명 셀의 삼각형은 그리지 않는다(PuppetForge v0.42.0 런타임과 같은 판정, `drawableCells.ts`).
+    // 정점·UV 배열은 그대로라 변형과 가중치는 바뀌지 않는다. 일꾼이 고르지 못했으면 전체 격자다.
+    const mesh = puppet.mesh;
+    this.indices = lookupDrawableIndices(drawableKey(puppet.name, puppet.project.character.texture, mesh.cols, mesh.rows))
+      ?? new Uint16Array(mesh.indices);
     this.uvs = new Float32Array(puppet.uv);
     this.positions = new Float32Array(puppet.restVertices);
     this.setOrigin(0.5);

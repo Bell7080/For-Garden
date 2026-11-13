@@ -13,6 +13,7 @@
 import { timeoutSignal } from "../core/timeoutSignal";
 import { Puppet } from "puppetforge";
 import type { PuppetProject } from "puppetforge";
+import { drawableIndices } from "./drawableCells";
 
 /** 메인 스레드가 보내는 일감. `id`는 응답을 짝지을 때만 쓴다. */
 export interface PuppetParseRequest {
@@ -30,6 +31,8 @@ export interface PuppetParseResponse {
   readonly id: number;
   readonly project?: PuppetProject;
   readonly bitmap?: ImageBitmap;
+  /** 그림이 걸친 셀의 삼각형만 남긴 인덱스. 픽셀을 읽지 못하면 없다(전체 격자를 그린다). */
+  readonly drawable?: Uint16Array;
   readonly error?: string;
 }
 
@@ -44,10 +47,34 @@ self.onmessage = async (event: MessageEvent<PuppetParseRequest>) => {
     if (!texture) throw new Error("묶음에 원화가 없습니다.");
     // Blob 타입은 SharedArrayBuffer 가능성을 받지 않으므로 독립 복사본으로 감싼다.
     const bitmap = await createImageBitmap(new Blob([Uint8Array.from(texture.data)], { type: texture.type }));
-    const done: PuppetParseResponse = { id, project: puppet.project, bitmap };
-    (self as unknown as Worker).postMessage(done, [bitmap]);
+    const drawable = readDrawable(puppet, bitmap);
+    const done: PuppetParseResponse = { id, project: puppet.project, bitmap, drawable };
+    (self as unknown as Worker).postMessage(done, drawable ? [bitmap, drawable.buffer] : [bitmap]);
   } catch (error) {
     const failed: PuppetParseResponse = { id, error: error instanceof Error ? error.message : String(error) };
     (self as unknown as Worker).postMessage(failed);
   }
 };
+
+/**
+ * 투명 셀을 그리지 않도록 그릴 삼각형을 여기서 고른다(`drawableCells.ts`). 픽셀을 읽는 일이
+ * 메인 스레드에 남으면 묶음을 처음 세울 때마다 큰 원화 한 장의 `getImageData`만큼 화면이 멎는다.
+ * OffscreenCanvas가 없거나 크기가 맞지 않으면 고르지 않는다 — 전체 격자를 그리면 그림은 같다.
+ */
+function readDrawable(puppet: Puppet, bitmap: ImageBitmap): Uint16Array | undefined {
+  try {
+    const mesh = puppet.mesh;
+    if (!mesh || typeof OffscreenCanvas === "undefined") return undefined;
+    if (bitmap.width !== puppet.width || bitmap.height !== puppet.height) return undefined;
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) return undefined;
+    context.drawImage(bitmap, 0, 0);
+    const { data } = context.getImageData(0, 0, bitmap.width, bitmap.height);
+    const alpha = new Uint8Array(bitmap.width * bitmap.height);
+    for (let i = 0; i < alpha.length; i += 1) alpha[i] = data[i * 4 + 3] ?? 0;
+    return drawableIndices(mesh, alpha, bitmap.width, bitmap.height) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}

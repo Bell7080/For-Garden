@@ -521,7 +521,7 @@ describe("티아 스킬 표시 계약", () => {
     );
     // 남기는 것은 패시브, 지워질 때 터지는 것은 그 타격을 낸 스킬이다.
     expect(def.passive.kind).toBe("shimmerMark");
-    expect(def.basic.shimmerBurst).toMatchObject({ power: 50, radius: 260, shieldMaxHpPercent: 12, capMaxHpPercent: 36 });
+    expect(def.basic.shimmerBurst).toMatchObject({ power: 65, radius: 260, shieldMaxHpPercent: 12, capMaxHpPercent: 36 });
     expect(def.ultimate.shimmerBurst).toBeUndefined();
     expect(passiveDescription(def.passive)).toBe(
       `적을 타격하면 [[shimmer|반짝!]] 표식을 부여하고 주문력의 ${def.passive.value}%의 [[magical-damage|마법 피해]]를 추가로 입힌다.`,

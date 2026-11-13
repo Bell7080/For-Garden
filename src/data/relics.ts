@@ -828,7 +828,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "tia-basic",
       name: "물장구",
-      power: 62,
+      power: 75,
       // 물살은 주먹이 아니라 마력이다. 마법 피해지만 계수는 주문력에서 나온다.
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
@@ -839,7 +839,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
       // 반짝이 묻은 적을 때리면 그 자리에서 터뜨려 주위까지 함께 적신다. 터질 때마다 제 최대
       // 체력의 일부를 막으로 두른다 — 피해에 비례하던 때는 한 번이 평균 3%라 한 방도 못 막았다.
-      shimmerBurst: { power: 50, radius: 260, shieldMaxHpPercent: 12, capMaxHpPercent: 36 },
+      shimmerBurst: { power: 65, radius: 260, shieldMaxHpPercent: 12, capMaxHpPercent: 36 },
     },
     ultimate: {
       id: "tia-ult",
@@ -4529,7 +4529,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "arte-basic",
       name: "대걸레질",
-      power: 70,
+      power: 90,
       scalingStat: "atk",
       iconAssetId: "skill-icon-physical",
       effectType: "physical",

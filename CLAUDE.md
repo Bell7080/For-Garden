@@ -2864,6 +2864,7 @@
 - 이야기 선택은 `storyId`·`nodeId`·`choiceId`만 보내고 서버가 실제 원고의 효과·선행 관문을 검증한다. 같은 노드의 보상은 `serverJournal.storyChoices`에서 최초 한 번만 확정한다. 완료 전에 미확인 선택을 재시도하며, 저장 실패를 삼키고 다음 장면으로 넘어가지 않는다.
 - 미보유 렐릭의 선택 유대는 `serverJournal.pendingStoryBondXp`에 적립하고 최초 획득의 복제 상태에서 지급·소진한다. 새 획득 경로는 `redeemDeferredStoryBond`를 같은 저장 전에 호출해야 한다. 두 장부는 선택 JSON 필드이며 구 저장은 빈 장부다. 과거 완료분의 선택을 추측해 소급 지급하지 않는다.
 
+- **한 계정은 한 기기에서만 플레이한다 — 나중에 접속한 기기가 이긴다**(`src/api/deviceSession.ts` · 표 `player_device_sessions`). 서버 연결이 서는 순간 `session.claim`이 앱을 띄울 때마다 새로 만든 기기 표식을 그 계정의 지금 기기로 세우고, 모든 `/api/game` 호출은 본문의 `device`로 표식을 싣는다. 표식이 다르면 `vercelEntry`가 규칙을 돌리기 전에 `409 session_replaced`로 거절해 밀려난 기기의 조작은 하나도 저장되지 않는다. 호출이 없어도 45초마다·앱이 앞으로 돌아올 때 `session.check`가 묻고, 겹 화면(`EffectOverlayScene`)이 모든 씬을 멈춘 뒤 「다른 기기에서 접속됨 · 다시 접속」 창을 띄운다(다시 접속은 새로 띄워 부트부터 지난다). **새 `/api/game` 호출 경로를 만들면 `deviceSessionField()`를 본문에 싣고 `noteDeviceSessionResponse`로 응답을 읽는다.** 표식이 없거나 표·함수가 없으면 막지 않는다(예전 클라이언트·마이그레이션 전). 표식은 인증 수단이 아니고 저장하지 않는다.
 - 친구·공유 레이드·전투 검증·속도 제한은 `docs/server-release.md`의 계약을 따른다. 새 RPC 마이그레이션을 먼저 적용한 뒤 서버/클라이언트를 같은 버전으로 배포한다.
 - **전투 코어는 엔진이 정의하는 수학 함수를 쓰지 않는다**(`src/core/detMath.ts`). `Math.hypot`·`sin`·`cos`·`atan2`·`exp`·`pow`는 V8(서버)과 JavaScriptCore(iOS)에서 마지막 자리가 달라질 수 있고, 그 한 자리가 사거리 비교를 뒤집으면 서버 재현이 어긋나 정상 승리가 `COMBAT_REJECTED`로 끝난다. `skirmish.ts`에는 `dHypot` 등 결정적 구현만 쓰며 `detMath.test`가 소스 모양으로 지킨다. 거절 사유는 응답 `detail`로 `client_errors`에 남는다.
 - 정식 서버의 승패·피해·HP·라운드는 클라이언트가 확정하지 않는다. 서버가 발급한 `CombatLease` 설정과 고정 틱 입력을 재현한다. 런타임 함수가 든 `SkirmishState`를 저장/전송하지 말고 `combatState`로 복원한다.

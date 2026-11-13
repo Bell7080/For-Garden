@@ -13,6 +13,7 @@ import { GameApiError, type ApiErrorCode, type GameApi } from "./contracts";
 import { markRemoteStateResult } from "./resultState";
 import { reportAccountDeleted } from "./accountDeleted";
 import { apiFailureSink } from "./apiFailureSink";
+import { deviceSessionField, noteDeviceSessionResponse, SESSION_REPLACED_CODE } from "./deviceSession";
 
 export interface RemoteGameApiOptions {
   endpoint?: string;
@@ -31,7 +32,7 @@ const READ_REUSE_MS = 1500;
 function reportApiFailure(method: string, error: unknown): void {
   const status = error instanceof RemoteGameApiError ? error.status : 0;
   const code = error instanceof RemoteGameApiError ? error.code : "";
-  if (status === 0 || status === 401 || status === 403 || status === 408 || code === "save_conflict" || code === "stale_response") return;
+  if (status === 0 || status === 401 || status === 403 || status === 408 || code === "save_conflict" || code === "stale_response" || code === SESSION_REPLACED_CODE) return;
   const detail = error instanceof RemoteGameApiError ? error.detail : undefined;
   apiFailureSink.report?.(`api.${status >= 500 ? "5xx" : "4xx"}`, error, { method, status, code, ...(detail ? { detail } : {}) });
 }
@@ -68,7 +69,7 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
     const kept = retryIds.get(callKey);
     const requestId = isReadMethod(method) ? undefined : (kept ?? newId());
     if (requestId && callKey) retryIds.set(callKey, requestId);
-    const body = JSON.stringify({ method, args, ...(requestId ? { requestId } : {}) });
+    const body = JSON.stringify({ method, args, ...(requestId ? { requestId } : {}), ...deviceSessionField() });
     let lastError: unknown;
     const signal = timeoutSignal(35000);
     // 네트워크 단절은 같은 requestId로 재전송해도 서버가 한 번만 반영한다.
@@ -89,6 +90,8 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
           || (res.ok && json === null);
         if (res.status >= 400 && res.status < 500 && !retryable && callKey) retryIds.delete(callKey);
         if (res.status === 403 && json?.code === "account_deleted") reportAccountDeleted();
+        // 다른 기기가 이 계정을 가져갔다 — 다시 보내지 않고 겹 화면이 「다른 기기에서 접속됨」을 띄운다.
+        noteDeviceSessionResponse(res.status, json?.code);
         if (res.status === 422 && json?.domainCode) throw new GameApiError(json.domainCode, json.message ?? json.domainCode);
         const error = new RemoteGameApiError(res.status, json?.code ?? "request_failed", json?.message, typeof json?.detail === "string" ? json.detail.slice(0, 80) : undefined);
         if (retryable && attempt === 0 && !signal.aborted) {

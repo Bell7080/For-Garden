@@ -1,3 +1,4 @@
+import { deviceSessionField, noteDeviceSessionResponse } from "./deviceSession";
 import type { ProfileFaceDto } from "./contracts";
 import { timeoutSignal } from "../core/timeoutSignal";
 import { apiUrl } from "../core/apiBase";
@@ -61,7 +62,7 @@ async function arenaRequest(kind: string, options: Record<string, unknown> = {})
         throw Error('ARENA_OFFLINE');
     lastToken = token;
     const read = READ_KINDS.has(kind);
-    const body = JSON.stringify({ method: read ? 'arena.get' : 'arena.act', args: [{ kind, ...options }], ...(read ? {} : { requestId: crypto.randomUUID() }) });
+    const body = JSON.stringify({ method: read ? 'arena.get' : 'arena.act', args: [{ kind, ...options }], ...(read ? {} : { requestId: crypto.randomUUID() }), ...deviceSessionField() });
     let last: unknown;
     for (let i = 0; i < 2; i++) {
         try {
@@ -72,6 +73,7 @@ async function arenaRequest(kind: string, options: Record<string, unknown> = {})
                 result: unknown;
             };
             if (!response.ok || !data.ok) {
+                noteDeviceSessionResponse(response.status, data.code);
                 if (response.status >= 500 && i === 0)
                     continue;
                 throw Error(data.code ?? 'ARENA_NETWORK');
@@ -95,7 +97,7 @@ async function arenaRequest(kind: string, options: Record<string, unknown> = {})
  */
 export function arenaForfeitOnExit(roomId: string): void {
     if (!lastToken) return;
-    const body = JSON.stringify({ method: 'arena.act', args: [{ kind: 'action', roomId, action: { kind: 'forfeit' } }], requestId: crypto.randomUUID() });
+    const body = JSON.stringify({ method: 'arena.act', args: [{ kind: 'action', roomId, action: { kind: 'forfeit' } }], requestId: crypto.randomUUID(), ...deviceSessionField() });
     void fetch(apiUrl('/api/game'), { method: 'POST', keepalive: true, headers: { authorization: `Bearer ${lastToken}`, 'content-type': 'application/json' }, body }).catch(() => undefined);
 }
 export function arenaError(error: unknown): string {

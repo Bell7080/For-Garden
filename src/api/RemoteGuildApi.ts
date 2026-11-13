@@ -1,3 +1,4 @@
+import { deviceSessionField, noteDeviceSessionResponse } from "./deviceSession";
 import { isReadMethod } from "../server/requestPolicy";
 import { apiUrl } from "../core/apiBase";
 import { GUILD_API_METHODS, GuildApiError, type GuildApi, type GuildErrorCode } from "./guildContracts";
@@ -15,7 +16,7 @@ export function createRemoteGuildApi(options: {
       if (!token) throw new Error("not_authenticated");
       const method = `guild.${name}`;
       const requestId = isReadMethod(method) ? undefined : (options.newRequestId?.() ?? crypto.randomUUID());
-      const body = JSON.stringify({ method, args, ...(requestId ? { requestId } : {}) });
+      const body = JSON.stringify({ method, args, ...(requestId ? { requestId } : {}), ...deviceSessionField() });
       let response: Response | undefined;
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
@@ -24,6 +25,7 @@ export function createRemoteGuildApi(options: {
         } catch (error) { if (attempt === 1) throw error; }
       }
       const json = (await response!.json().catch(() => ({}))) as { ok?: boolean; code?: string; result?: unknown };
+      if (!response!.ok || !json.ok) noteDeviceSessionResponse(response!.status, json.code);
       if (!response!.ok || !json.ok) throw new GuildApiError((json.code ?? "UNAVAILABLE") as GuildErrorCode, json.code ?? "request_failed");
       return json.result;
     };

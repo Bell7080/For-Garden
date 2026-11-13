@@ -26,6 +26,8 @@ import { installGuildApi } from "./guildApi";
 import { createRemoteGameApi, RemoteGameApiError } from "./RemoteGameApi";
 import type { GameApi } from "./contracts";
 import { defaultLocalStorage } from "../core/safeStorage";
+import { apiUrl } from "../core/apiBase";
+import { checkDeviceSession, claimDeviceSession, resetDeviceSession, startDeviceSessionWatch } from "./deviceSession";
 
 /** 연결에 필요한 계정 쪽 능력만 좁힌 모양이다. `SupabaseAccountApi`가 그대로 맞는다. */
 export type ServerProgressAccount = AccountApi & {
@@ -102,6 +104,12 @@ export async function connectServerProgress(deps: ServerProgressDeps): Promise<S
     const token = await account.accessToken();
     return deps.isCurrent?.() === false ? null : token;
   };
+  // 나중에 접속한 기기가 이긴다 — 첫 조회보다 먼저 이 기기를 그 계정의 지금 기기로 세운다(`deviceSession.ts`).
+  resetDeviceSession();
+  const endpoint = apiUrl("/api/game");
+  const claimToken = await accessToken();
+  if (claimToken) await claimDeviceSession(claimToken, endpoint, deps.fetchImpl ?? fetch);
+  if(deps.isCurrent?.() === false)return {ok:false,code:"network-error"};
   const remote=createRemoteGameApi({getAccessToken:accessToken,applyState:next=>{if(deps.isCurrent?.() === false)return;applyServerState(target,next,deps.saves);signalRemoteMissionNotice(target);},fetchImpl:deps.fetchImpl});
   try { await remote.getPlayerState(); }
   catch (error) { return {ok:false,code:"network-error",detail:describeGameFailure(error)}; }
@@ -112,6 +120,7 @@ export async function connectServerProgress(deps: ServerProgressDeps): Promise<S
   installArenaApi(accessToken);
   installGuildApi(createRemoteGuildApi({getAccessToken:accessToken,fetchImpl:deps.fetchImpl}));
   void social.getRequests().catch(()=>undefined);
+  startDeviceSessionWatch(async () => checkDeviceSession(await accessToken(), endpoint, deps.fetchImpl ?? fetch));
   deps.marker.set(userId);
   return {ok:true,mode:"server"};
 }

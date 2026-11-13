@@ -136,6 +136,21 @@ export function createSupabaseStore(env: Env) {
       }
       return { allowed: true, retryAfter: 0 };
     },
+    /**
+     * 이 기기를 그 계정의 지금 기기로 세운다. 표식이 없거나 DB에 함수가 아직 없으면(마이그레이션 20261125000000 전)
+     * 막지 않는다 — 기기 확인이 없던 때와 같다.
+     */
+    async claimDeviceSession(playerId: string, device: string | null): Promise<boolean> {
+      if (!device) return true;
+      await rpc("server_claim_device_session", { p_player: playerId, p_session: device }).catch(() => undefined);
+      return true;
+    },
+    /** 표식이 지금 기기와 같은가. 표식이 없거나, 세운 기기가 없거나, 함수가 없으면 지난다. */
+    async deviceSessionAllowed(playerId: string, device: string | null): Promise<boolean> {
+      if (!device) return true;
+      const active = await rpc("server_device_session", { p_player: playerId }).catch(() => null);
+      return typeof active !== "string" || active.length === 0 || active === device;
+    },
     async guildCall(playerId: string, method: string, actor: unknown, args: unknown[], requestId: string | null) {
       return rpc("server_guild_call", { p_player: playerId, p_method: method, p_actor: actor, p_args: args, p_request: requestId });
     },

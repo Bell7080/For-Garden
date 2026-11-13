@@ -1,5 +1,6 @@
 import { isReadMethod } from "../server/requestPolicy";
 import { apiUrl } from "../core/apiBase";
+import { deviceSessionField, noteDeviceSessionResponse } from "./deviceSession";
 import {
   SocialApiError,
   type SocialApi,
@@ -58,6 +59,7 @@ export function createRemoteSocialApi(options: {
         method,
         args,
         ...(requestId ? { requestId } : {}),
+        ...deviceSessionField(),
       });
       let response: Response | undefined;
       for (let attempt = 0; attempt < 2; attempt++) {
@@ -81,11 +83,13 @@ export function createRemoteSocialApi(options: {
         result?: unknown;
         incomingCount?: number;
       };
-      if (!response!.ok || !json.ok)
+      if (!response!.ok || !json.ok) {
+        noteDeviceSessionResponse(response!.status, json.code);
         throw new SocialApiError(
           json.code as SocialErrorCode,
           json.code ?? "request_failed",
         );
+      }
       if (
         typeof json.incomingCount === "number" &&
         incoming !== json.incomingCount

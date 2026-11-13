@@ -60,6 +60,7 @@ declare
     'public.server_friend_favorites',
     'public.server_social_wallets',
     'public.server_rate_windows',
+    'public.player_device_sessions',
     'public.server_social_receipts',
     'public.server_competitive_scores',
     'public.server_competitive_results',

@@ -1,3 +1,4 @@
+import { resetDeviceSession } from "./deviceSession";
 import { APP_TARGET } from "../core/appRuntime";
 import { installArenaApi } from "./arenaApi";
 import { createWebOAuthBridge, type OAuthBridge } from "./webOAuth";
@@ -49,5 +50,7 @@ export function disconnectProgress(): void {
   installSocialApi(null);
   installArenaApi(null);
   installGuildApi(null);
+  // 끊은 계정의 기기 확인도 멈춘다. 다음 연결이 새 표식으로 다시 세운다.
+  resetDeviceSession();
   createLinkMarker().set(null);
 }

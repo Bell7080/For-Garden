@@ -12,6 +12,14 @@ import { createSupabaseGuildBackend } from "../api/SupabaseGuildBackend";
 import { saveManager } from "../state/SaveManager";
 import { createDefaultSession } from "../state/session";
 import { isReadMethod, MAX_BODY_BYTES, validCall } from "./requestPolicy";
+import { DEVICE_SESSION_PATTERN, SESSION_REPLACED_CODE } from "../api/deviceSession";
+
+const DEVICE_SESSION_METHODS = ["session.claim", "session.check"];
+/** 본문의 기기 표식. 모양이 틀렸거나 없으면 없는 것으로 본다(예전 클라이언트는 표식 없이 예전처럼 지난다). */
+function deviceSessionOf(body: unknown): string | null {
+  const value = (body as { device?: unknown }).device;
+  return typeof value === "string" && DEVICE_SESSION_PATTERN.test(value) ? value : null;
+}
 
 interface Req { method?: string; headers: Record<string, string | string[] | undefined>; body?: unknown }
 interface Res { status(code: number): Res; json(body: unknown): void; end?(): void; setHeader(k: string, v: string): void }
@@ -29,7 +37,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     let body: unknown;
     try { body = JSON.parse(raw); } catch { throw new GameCallError(400,"invalid_json"); }
     if (!validCall(body)) throw new GameCallError(400,"invalid_request");
-    if (!["arena.get","arena.act"].includes(body.method) && !isServerGameMethod(body.method) && !(body.method.startsWith("social.") && isSocialMethod(body.method.slice(7))) && !(body.method.startsWith("guild.") && isGuildApiMethod(body.method.slice(6)))) throw new GameCallError(400,"unknown_method");
+    if (!["arena.get","arena.act",...DEVICE_SESSION_METHODS].includes(body.method) && !isServerGameMethod(body.method) && !(body.method.startsWith("social.") && isSocialMethod(body.method.slice(7))) && !(body.method.startsWith("guild.") && isGuildApiMethod(body.method.slice(6)))) throw new GameCallError(400,"unknown_method");
     callMethod = body.method;
     if (!isReadMethod(body.method) && !body.requestId) throw new GameCallError(400,"request_id_required");
     const url = process.env.SUPABASE_URL, serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -41,9 +49,16 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     const user = who.ok ? await who.json() as { id?: string } : null;
     if (!user?.id) throw new GameCallError(401,"not_authenticated");
     const store = createSupabaseStore({ url, serviceKey, signal: deadline });
-    const rate = await store.takeRate(user.id,body.method);
+    // 나중에 접속한 기기가 이긴다(`deviceSession.ts`). 기기 확인은 속도 제한과 함께 나가 왕복을 늘리지 않는다.
+    const device = deviceSessionOf(body);
+    const [rate, deviceOk] = await Promise.all([
+      store.takeRate(user.id,body.method),
+      body.method === "session.claim" ? store.claimDeviceSession(user.id, device) : store.deviceSessionAllowed(user.id, device),
+    ]);
     if (!rate.allowed) { res.setHeader("retry-after",String(rate.retryAfter)); throw new GameCallError(429,"rate_limited"); }
+    if (!deviceOk) throw new GameCallError(409, SESSION_REPLACED_CODE);
     const uid = user.id;
+    if (body.method === "session.claim" || body.method === "session.check") { res.status(200).json({ ok: true, result: null }); return; }
     const guild: GuildBackend = createSupabaseGuildBackend(async (actor, method, args, requestId) => store.guildCall(uid, method, actor, args, requestId));
     if (body.method.startsWith("arena.")) {
       try { res.status(200).json({ ok:true, result:await handleArenaCall(store.arenaRpc,user.id,body.method.slice(6),body.args??[],body.requestId) }); }

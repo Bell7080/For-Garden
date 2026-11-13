@@ -9,6 +9,7 @@ import { opsNoticeMessages, opsNoticeReceipt } from "../ui/opsNoticeText";
 import { openRewardPopup } from "../ui/RewardPopup";
 import { managerEvents } from "../managers/ManagerEvents";
 import { onAccountDeleted } from "../api/accountDeleted";
+import { onSessionReplaced } from "../api/deviceSession";
 import { accountApi } from "../api/AccountApi";
 import { disconnectProgress } from "../api/backendSession";
 import { saveManager } from "../state/SaveManager";
@@ -121,6 +122,16 @@ export class EffectOverlayScene extends Phaser.Scene {
         void accountApi.logout().then(leave, leave);
       });
     });
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { offNotice(); offDeleted(); });
+    // 다른 기기가 이 계정으로 접속했다 — 이 기기의 화면을 멈추고(조작은 서버가 이미 거절한다) 다시 접속할지만 묻는다.
+    // 다시 접속은 새로 띄워 부트의 저장 검증·연결을 처음부터 지난다(그 연결이 이 기기를 다시 지금 기기로 세운다).
+    const offReplaced = onSessionReplaced(() => {
+      stopLiveOps();
+      for (const scene of this.scene.manager.getScenes(true)) if (scene !== this) scene.scene.pause();
+      this.scene.bringToTop();
+      popups.confirm({ title: t("session.replaced.title"), message: t("session.replaced.body"), confirmLabel: t("session.replaced.reconnect"), cancelLabel: false }, () => {
+        window.location.reload();
+      });
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { offNotice(); offDeleted(); offReplaced(); });
   }
 }

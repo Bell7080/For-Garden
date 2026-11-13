@@ -24,7 +24,8 @@ export type { TopBarCurrencyContext };
 
 /** 상단 줄에는 공개 표시 모델과 공개 동작만 들어오며 인증 비밀을 받을 자리가 없다. */
 export interface TopBarOptions {
-  onSettings?: () => void; onProfile?: (profile: PlayerProfileDisplay) => void; onCurrency?: (currency: WalletItemKey) => void; currencies?: TopBarCurrencyContext; profile?: boolean;
+  /** 오른쪽 끝 설정 아이콘. 필수다 — 빠뜨린 화면에서 아이콘만 서고 눌리지 않던 일이 여러 화면에 있었다. */
+  onSettings: () => void; onProfile?: (profile: PlayerProfileDisplay) => void; onCurrency?: (currency: WalletItemKey) => void; currencies?: TopBarCurrencyContext; profile?: boolean;
   /** 결투 도전권 칸의 누름. 지갑 칸이 아니라 `onCurrency`로 넘길 수 없다. */
   onDuelTicket?: () => void;
   /**
@@ -81,7 +82,7 @@ export class TopBar {
   private avatarKey?: string;
   private readonly readGuildCoin?: () => number | undefined;
 
-  constructor(scene: Phaser.Scene, y = 40, options: TopBarOptions = {}) {
+  constructor(scene: Phaser.Scene, y: number, options: TopBarOptions) {
     this.readGuildCoin = options.guildCoin;
     // 줄이 세우는 조각은 여럿이라 하나씩 깊이를 적지 않고, 이 생성자가 더한 것만 골라 한 번에 올린다.
     const before = options.depth === undefined ? undefined : new Set(scene.children.list);
@@ -101,16 +102,14 @@ export class TopBar {
       this.slots.push({ slot, text: this.buildSlot(scene, first + index * (SLOT.width + SLOT.gap), y + 46, slot, options) });
     });
 
-    // 설정 — 오른쪽 끝. 콜백이 없는 장면에서는 장식만 남기고 보이지 않는 입력면을 만들지
-    // 않는다. 눌러도 반응 없는 아이콘을 인터랙티브 컨트롤처럼 노출하지 않기 위해서다.
+    // 설정 — 오른쪽 끝. 어느 화면에서나 눌린다(편성·지도처럼 돌아올 자리를 다시 세울 수 없는 화면은
+    // `openSettingsOver`로 겹쳐 연다). 서 있는데 눌리지 않는 아이콘을 다시 만들지 않는다.
     const settings = scene.add.container(BASE_WIDTH - 58, y + 46);
     settings.add(drawGlyph(scene, "settings", 0, 0, 42, 0xc9ccd2));
-    if (options.onSettings) {
-      const hit = scene.add.rectangle(BASE_WIDTH - 58, y + 46, 84, 84, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => pressIn(settings));
-      hit.on("pointerout", () => pressOut(settings, "normal", { pop: false }));
-      hit.on("pointerup", () => { pressOut(settings); options.onSettings?.(); });
-    } else settings.setAlpha(0.38);
+    const hit = scene.add.rectangle(BASE_WIDTH - 58, y + 46, 84, 84, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => pressIn(settings));
+    hit.on("pointerout", () => pressOut(settings, "normal", { pop: false }));
+    hit.on("pointerup", () => { pressOut(settings); options.onSettings(); });
 
     if (before && options.depth !== undefined) {
       for (const child of scene.children.list) if (!before.has(child)) (child as unknown as Phaser.GameObjects.Components.Depth).setDepth?.(options.depth);

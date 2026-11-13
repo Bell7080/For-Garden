@@ -1,4 +1,5 @@
 import { fitTextToBox } from "../ui/textFit";
+import { openSettingsOver } from "./settingsOverlay";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { stageMapRow } from "../core/stageMapDirection";
 import { STORY_DIFFICULTY, isStoryDifficultyUnlocked, storyBaseStageId, storyDifficultyOf, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
@@ -135,7 +136,7 @@ export class StageMapScene extends Phaser.Scene {
     // 스테미나 칸을 누르면 그 자리에서 충전 창이 열린다. 제목은 그 줄 아래로 내려선다.
     // 제목 뒤에 위에서 내려오는 어둠을 한 겹 깐다 — 판때기 없이 가장자리가 스며들어 원화 위에서도 글이 먼저 읽힌다.
     drawTitleShade(this);
-    new TopBar(this, 40, { profile: false, depth: CHROME_DEPTH, onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.enemyPopups }, currency) });
+    new TopBar(this, 40, { profile: false, depth: CHROME_DEPTH, onSettings: () => openSettingsOver(this, "stageMap"), onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.enemyPopups }, currency) });
     this.chapterTitle = this.add.text(cx, STAGE_MAP_TITLE.titleY, "", textStyle({ role: "display", size: STAGE_MAP_TITLE.titleSize })).setOrigin(0.5).setDepth(CHROME_DEPTH).setShadow(0, 4, "#05070a", 8, false, true);
     this.chapterSubtitle = this.add
       .text(cx, STAGE_MAP_TITLE.subtitleY, "", textStyle({ role: "emphasis", size: STAGE_MAP_TITLE.subtitleSize, color: COLOR.ink }))

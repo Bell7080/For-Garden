@@ -1,4 +1,5 @@
 import { showContentToast } from "../ui/ContentToast";
+import { openSettingsOver } from "./settingsOverlay";
 import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -89,7 +90,7 @@ export class DuelScene extends Phaser.Scene {
     this.tabRow = this.add.container(0, 0);
     // 상단은 휘장과 **오늘 남은 도전권**이다. 도전권 칸을 누르면 젬 구매·광고 충전이 있는 창이 열린다.
     new TopBar(this, 40, {
-      profile: false, currencies: "duelArena", onDuelTicket: () => this.openTicketPopup(),
+      profile: false, currencies: "duelArena", onSettings: () => openSettingsOver(this, "duel"), onDuelTicket: () => this.openTicketPopup(),
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
     });
     this.add.text(S.side, S.title.y, t("lobby.duel"), textStyle({ role: "display", size: 54, color: COLOR.ink })).setOrigin(0, 0.5)

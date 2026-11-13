@@ -239,8 +239,12 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     // 투명 셀의 삼각형은 그리지 않는다(PuppetForge v0.42.0 런타임과 같은 판정, `drawableCells.ts`).
     // 정점·UV 배열은 그대로라 변형과 가중치는 바뀌지 않는다. 일꾼이 고르지 못했으면 전체 격자다.
     const mesh = puppet.mesh;
-    this.indices = lookupDrawableIndices(drawableKey(puppet.name, puppet.project.character.texture, mesh.cols, mesh.rows))
-      ?? new Uint16Array(mesh.indices);
+    const drawable = lookupDrawableIndices(drawableKey(puppet.name, puppet.project.character.texture, mesh.cols, mesh.rows));
+    this.indices = drawable ?? new Uint16Array(mesh.indices);
+    // 그리지 않는 정점은 매 프레임 변형 계산도 건너뛴다(PuppetForge v0.43.0). 그 정점의 좌표를 읽는
+    // 곳은 이 렌더러뿐이고(잔상·폭주 테두리도 같은 인덱스로 다시 그린다), 그리는 정점의 값은 같다.
+    // 변형된 정점 좌표를 다른 용도(판정·경계·굽기)로 읽게 되면 이 줄을 먼저 다시 본다.
+    if (drawable) puppet.setDrawIndices(drawable);
     this.uvs = new Float32Array(puppet.uv);
     this.positions = new Float32Array(puppet.restVertices);
     this.setOrigin(0.5);

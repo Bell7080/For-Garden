@@ -1339,8 +1339,10 @@ export class InfoManager {
     const top = -height / 2;
     const resonance = resonanceOf(progress);
     // 공명 단계는 「공명 n」 글자가 아니라 붉은 로마자 표식으로 선다 — 정보창의 표식과 같은 한 장이다.
+    // **첫 공명의 왼쪽은 「—」가 아니라 돌파 V다**(응태 2026-11-13). 공명은 돌파 V 다음 칸이라 `V ▶ I`로 읽혀야 하고,
+    // 「— ▶ I」는 공명이 없던 개체가 공명으로 「바뀌는」 것처럼 읽혔다. 호박 V와 붉은 I가 색으로 축이 이어짐을 말한다.
     if (resonance > 0) addResonanceGradeMark(this.scene, body, -140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize * 0.82, resonance);
-    else body.add(this.scene.add.text(-140, top + BREAK_CONFIRM.gradeY, "—", textStyle({ role: "display", size: 44, color: COLOR.inkDim })).setOrigin(0.5));
+    else addBreakthroughGradeMark(this.scene, body, -140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize * 0.82, breakthroughGrade(progress.breakthrough));
     body.add(this.scene.add.text(0, top + BREAK_CONFIRM.gradeY, "▶", textStyle({ role: "display", size: 34, color: COLOR.inkDim })).setOrigin(0.5));
     addResonanceGradeMark(this.scene, body, 140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize, resonance + 1);
 

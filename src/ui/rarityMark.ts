@@ -63,11 +63,17 @@ export function addBreakthroughGradeMark(
   paintRomanMark(scene, parent, x, y, size, numeral, GRADE_MARK_TONE, dimmed);
 }
 
-/** 공명 표식의 색 — 돌파 표식(호박)과 갈리는 **붉은** 로마자다. 같은 글자 양식이라 한 덩어리로 읽히고, 색이 축을 가른다. */
-export const RESONANCE_MARK_TONE = { ink: "#ffe1db", halo: "#ff3b2f", frame: 0xff3b2f } as const;
+/**
+ * 공명 표식의 색 — 돌파 표식(호박)과 갈리는 **붉은** 로마자다. 같은 글자 양식이라 한 덩어리로 읽히고, 색이 축을 가른다.
+ *
+ * **글자 자체가 진한 다홍이다**(응태 2026-11-13). 글자를 연분홍(`#ffe1db`)으로 두고 붉은 빛무리만 두르던 때는
+ * 밝은 글자가 빛보다 먼저 읽혀 붉은 표식인지 알기 어려웠다. 빛무리도 한 톤 어둡고 옅게 눌러 형광기를 덜고,
+ * 색이 글자에서 먼저 읽히게 한다.
+ */
+export const RESONANCE_MARK_TONE = { ink: "#ff3a2c", halo: "#c8100c", haloAlpha: [0.12, 0.26], frame: 0xd81e16 } as const;
 
 /** 로마자 한 글자를 각진 계단 그림자 + 발광 두 겹으로 박는다. 돌파·공명 표식이 같은 양식을 쓴다. */
-function paintRomanMark(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, size: number, numeral: string, tone: { ink: string; halo: string }, dimmed = false): void {
+function paintRomanMark(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, size: number, numeral: string, tone: { ink: string; halo: string; haloAlpha?: readonly [number, number] }, dimmed = false): void {
   const put = (dx: number, dy: number, color: string, alpha: number, scale: number): void => {
     parent.add(scene.add.text(x + dx, y + dy, numeral, textStyle({ role: "display", size, color })).setOrigin(0.5, 0.5).setAlpha(alpha).setScale(scale, scale * 1.1));
   };
@@ -77,8 +83,9 @@ function paintRomanMark(scene: Phaser.Scene, parent: Phaser.GameObjects.Containe
     put(0, 0, GRADE_MARK_DIMMED, 1, 1);
     return;
   }
-  put(0, 0, tone.halo, 0.16, 1.6);
-  put(0, 0, tone.halo, 0.3, 1.24);
+  const [outer, inner] = tone.haloAlpha ?? [0.16, 0.3];
+  put(0, 0, tone.halo, outer, 1.6);
+  put(0, 0, tone.halo, inner, 1.24);
   put(0, 0, tone.ink, 1, 1);
 }
 

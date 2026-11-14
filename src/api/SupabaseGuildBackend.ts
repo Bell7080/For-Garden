@@ -2,7 +2,7 @@ import { GUILD_NOTICE_MAX, findGuildProduct, guildGlyphCount, guildNameKey, vali
 import type { GuildJoinMode, GuildRole } from "../core/guild";
 import { isGuildBadge, type GuildBadge } from "../core/guildBadge";
 import { GUILD_WAR_DECK_SIZE, parseGuildWarSlotId } from "../core/guildWarMap";
-import { GuildApiError, type GuildActor, type GuildBackend } from "./guildContracts";
+import { GuildApiError, isGuildErrorCode, type GuildActor, type GuildBackend } from "./guildContracts";
 
 /** DB 함수 `server_guild_call`을 부르는 얇은 호출자다(서비스 롤 키는 서버 환경에만 있다). */
 export type GuildCaller = (actor: GuildActor, method: string, args: unknown[], requestId: string | null) => Promise<unknown>;
@@ -10,6 +10,12 @@ export type GuildCaller = (actor: GuildActor, method: string, args: unknown[], r
 const ASSIGNABLE_ROLES: readonly string[] = ["vice", "officer", "member"];
 const invalid = (): never => { throw new GuildApiError("INVALID_REQUEST", "INVALID_REQUEST"); };
 const isJoinMode = (value: unknown): value is GuildJoinMode => value === "open" || value === "approval";
+const asGuildError = (error: unknown): unknown => {
+  if (error instanceof GuildApiError || !(error instanceof Error)) return error;
+  const code = (error as { code?: unknown }).code;
+  const named = typeof code === "string" && isGuildErrorCode(code) ? code : isGuildErrorCode(error.message) ? error.message : undefined;
+  return named ? new GuildApiError(named) : error;
+};
 const isId = (value: unknown): value is string => typeof value === "string" && value.length > 0 && value.length <= 64;
 
 /**
@@ -17,8 +23,11 @@ const isId = (value: unknown): value is string => typeof value === "string" && v
  * (DB 정규식이 `\p{L}`을 모르므로) 여기서 먼저 끝낸 값만 DB 함수로 넘긴다. DB 함수는 정원·직위·중복·멱등을 판정한다.
  */
 export function createSupabaseGuildBackend(call: GuildCaller): GuildBackend {
-  const run = <T>(actor: GuildActor, method: string, args: unknown[] = [], requestId: string | null = null) =>
-    call(actor, method, args, requestId) as Promise<T>;
+  // DB 함수의 거절은 HTTP 오류(`GameCallError`)로 올라온다. 길드 규칙 코드면 `GuildApiError`로 되돌려야 게임 서버가 코드로 가른다 —
+  // 그러지 않으면 길드가 없는 계정의 하루 한 번 대기 덱 맞추기(`syncGuildWarStandby`)가 `NOT_IN_GUILD`를 그대로 흘려
+  // 로비에 들어올 때마다 거절로 기록됐다(운영 오류 기록 1위).
+  const run = <T>(actor: GuildActor, method: string, args: unknown[] = [], requestId: string | null = null): Promise<T> =>
+    (call(actor, method, args, requestId) as Promise<T>).catch((error: unknown) => { throw asGuildError(error); });
   return {
     getGuild: (actor) => run(actor, "getGuild"),
     searchGuilds: (actor, query) => run(actor, "searchGuilds", [typeof query === "string" ? query.slice(0, 40) : ""]),

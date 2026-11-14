@@ -432,6 +432,12 @@ export class LabScene extends Phaser.Scene {
   /** 결산의 이어 연구가 남긴 다음 연구(1회·10회) — 지금 연구가 끝난(`pullPending`이 풀린) 뒤에 부른다. */
   private pullAgain?: 1 | 10;
 
+  /** 씬이 끝나지 않았는가 — 설정을 겹쳐 잠든 동안(`sleep`)은 살아 있다. 끝난 뒤에는 표시 객체가 이미 부서졌다. */
+  private get alive(): boolean {
+    const status = this.sys.settings.status;
+    return status >= Phaser.Scenes.RUNNING && status <= Phaser.Scenes.SLEEPING;
+  }
+
   private async doPull(count: 1 | 10): Promise<void> {
     const banner = this.banner;
     if (this.pullPending || !canPull(session.wallet, banner, count, this.pityOf(banner))) return;
@@ -441,16 +447,18 @@ export class LabScene extends Phaser.Scene {
     try {
       // 결과와 비용은 클라이언트에서 계산하지 않고 API 응답만 화면에 반영한다.
       const response = await gameApi.pullRelics({ bannerId: banner.id, count });
+      // 응답을 기다리는 사이 화면을 떠났으면 부서진 판을 다시 칠하지 않는다(운영 오류 기록 — `setCost`의 `add` undefined).
+      if (!this.alive) return;
       this.topBar.refresh();
       // 첫 연구 튜토리얼은 연구 결과와 같은 서버 저장에서 완료된다. 별도 완료 요청을 보내지 않는다.
       // API가 상태 반영과 저장까지 끝낸 뒤 응답하므로 이후 건너뛰기는 보상에 영향을 주지 않는다.
       await this.playPresentation(response.results, response.mileageGained, response.rarityUpgradeSlot);
     } catch (error) {
       const message = error instanceof GameApiError ? error.message : t("lab.networkError");
-      this.showNotice(message);
+      if (this.alive) this.showNotice(message);
     } finally {
       this.pullPending = false;
-      this.refresh();
+      if (this.alive) this.refresh();
     }
     // 「한 번 더」는 연구 버튼을 누른 것과 같은 길을 지난다 — 젬이 드는 몫이 있으면 확인 창이 먼저 묻는다.
     const again = this.pullAgain;

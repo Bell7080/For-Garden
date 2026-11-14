@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.459.0**
+현재 버전: **v0.459.1**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,23 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.459.1 — 운영 오류 기록 정리: 길드 거절 코드·화면 떠난 뒤 다시 칠하기·전투 거절 사유
+
+운영 `client_errors`의 열린 항목 12종(70회)을 훑어 원인이 코드에 있는 것을 고쳤다.
+
+- **`NOT_IN_GUILD` 거절이 로비마다 기록되던 것**(44회 · 19명, 최신판에서도 발생, 1위) — 길드가 없는 계정도 로비가 하루 한 번
+  `syncGuildWarStandby`를 부르고, 게임 서버는 `GuildApiError("NOT_IN_GUILD")`면 `synced: false`로 조용히 끝내게 되어 있었다. 그런데 운영
+  길드 백엔드(`SupabaseGuildBackend`)는 DB 함수의 거절을 HTTP 오류(`GameCallError`) 그대로 흘려 `instanceof GuildApiError`가 늘 거짓이었다.
+  이제 길드 규칙 코드면 `GuildApiError`로 되돌린다 — 같은 검사를 하는 다른 길드 경로도 함께 바르게 갈린다(`supabaseGuildErrors.test`).
+- 서버 번들(`api/game.js`)을 다시 구웠다 — v0.456.0 이후 서버 쪽 변경도 함께 실린다.
+- **급여 응답이 오기 전에 화면을 떠나면 터지던 것**(`drawImage`·`glTexture` null, 7회 · 4명) — `feedNow`의 `finally`가 이미 부서진 정보창 글자에
+  `setColor`를 불렀다. 표시 객체가 살아 있을 때만(`alive`) 다시 칠한다.
+- **연구 응답이 오기 전에 연구소를 떠나면 터지던 것**(`setCost`의 `add` undefined) — 씬이 살아 있을 때만 다시 칠한다.
+- **전투 준비 거절이 모두 `unspecified`로 남던 것**(`COMBAT_REJECTED` 4회) — `prepareCombat`의 거절마다 사유(`no_ticket`·`ticket_target:…`·`party`·
+  `stage_locked`·`too_many_leases` 등)를 붙였다. 다음 기록부터 어느 검사에서 막혔는지 읽힌다.
+- 고치지 않은 것(노이즈): 접속 실패(`boot.connect network-error`)·시간 초과(`signal timed out`, 설정 계정 저장 포함)·`request_failed`(응답 200) 1회 —
+  네트워크 끊김이다. `newRelicIds is not iterable`(v0.426.7)은 이미 `?? []`로 고쳐져 있다.
 
 ## v0.459.0 — 한계 돌파·공명은 파편만 든다
 

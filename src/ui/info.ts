@@ -1757,21 +1757,25 @@ export class InfoManager {
       // 치즈케이크 부족·상한은 화면에서 이미 막는다. 실패하면 상태만 다시 그린다.
     } finally {
       this.feeding = false;
-      this.glideExp = true;
-      this.refreshGrowth();
-      this.repaintFeedBulk?.();
-      // 칠한 뒤에 터뜨려야 부푸는 숫자가 이미 새 레벨이다.
-      if (leveled && this.isOpen) {
-        const reached = relicProgression.getProgress(def.id).level;
-        const early = this.celebratedLevel?.id === def.id && this.celebratedLevel.level >= reached;
-        this.levelUpEffect?.play(statsBefore, this.shownStats(def), early ? "stats" : "full");
-        if (!early) this.celebratedLevel = { id: def.id, level: reached };
-      }
-      // 서버가 예상보다 덜 먹였다면(상한·지갑) 앞서 터뜨린 몫을 지금 기대치로 되돌린다 — 그래야
-      // 다음에 실제로 오를 때 큰 연출이 빠지지 않는다.
-      if (this.celebratedLevel?.id === def.id) {
-        const expected = previewFeedProgress(relicProgression.getProgress(def.id), this.pendingFeeds(), this.relicCap()).level;
-        if (this.celebratedLevel.level > expected) this.celebratedLevel = { id: def.id, level: expected };
+      // 응답을 기다리는 사이 화면을 떠났으면(씬 종료로 글자가 이미 부서졌다) 다시 칠하지 않는다 — 부서진 Text에
+      // `setColor`를 부르면 `drawImage`·`glTexture` null로 터졌다(운영 오류 기록, v0.439~0.446).
+      if (this.alive) {
+        this.glideExp = true;
+        this.refreshGrowth();
+        this.repaintFeedBulk?.();
+        // 칠한 뒤에 터뜨려야 부푸는 숫자가 이미 새 레벨이다.
+        if (leveled && this.isOpen) {
+          const reached = relicProgression.getProgress(def.id).level;
+          const early = this.celebratedLevel?.id === def.id && this.celebratedLevel.level >= reached;
+          this.levelUpEffect?.play(statsBefore, this.shownStats(def), early ? "stats" : "full");
+          if (!early) this.celebratedLevel = { id: def.id, level: reached };
+        }
+        // 서버가 예상보다 덜 먹였다면(상한·지갑) 앞서 터뜨린 몫을 지금 기대치로 되돌린다 — 그래야
+        // 다음에 실제로 오를 때 큰 연출이 빠지지 않는다.
+        if (this.celebratedLevel?.id === def.id) {
+          const expected = previewFeedProgress(relicProgression.getProgress(def.id), this.pendingFeeds(), this.relicCap()).level;
+          if (this.celebratedLevel.level > expected) this.celebratedLevel = { id: def.id, level: expected };
+        }
       }
     }
     return changed;
@@ -2763,9 +2767,14 @@ export class InfoManager {
     g.lineBetween(14, -height / 2, width + 4, -height / 2);
   }
 
+  /** 정보창의 표시 객체가 아직 살아 있는가 — 씬이 끝나면 `scene`이 비워진다. */
+  private get alive(): boolean {
+    return this.root.scene !== undefined && this.levelValue.scene !== undefined;
+  }
+
   private refreshGrowth(): void {
     const def = this.currentDef;
-    if (!def) return;
+    if (!def || !this.alive) return;
     // **돌파 등급도 함께 다시 칠한다.** 예전에는 창을 열 때 한 번만 그려서, 그 자리에서 한계를
     // 돌파하고 파문이 터져도 로마자는 `I`에 머물렀다 — 올라간 것이 바로 그 글자인데 연출만
     // 돌고 표기는 창을 닫았다 열어야 바뀌었다.

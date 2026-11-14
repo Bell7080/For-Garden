@@ -5672,7 +5672,6 @@ var INFO_KO = {
   "info.breakthrough": "\uD55C\uACC4 \uB3CC\uD30C",
   "info.breakthrough.do": "\uB3CC\uD30C\uD558\uAE30",
   "info.breakthrough.fragment": "{name} \uD30C\uD3B8",
-  "info.breakthrough.cheesecake": "\uCE58\uC988\uCF00\uC774\uD06C",
   "info.breakthrough.need": "\uD544\uC694 {count}",
   "info.breakthrough.next": "\uB2E4\uC74C \uB2E8\uACC4",
   "info.breakthrough.universalSpend": "\uC18C\uBAA8 {count}",
@@ -5683,7 +5682,6 @@ var INFO_KO = {
   "info.reset.plea": "\uC800\u2026 \uC815\uB9D0 \uC800\uB97C\n\uCC98\uC74C\uC73C\uB85C \uB418\uB3CC\uB9AC\uC2E4 \uAC74\uAC00\uC694?",
   "info.reset.wallet": "\uBCF4\uC720 \uC7AC\uD654 \uBCC0\uD654",
   "info.reset.keep": "\uD55C\uACC4 \uB3CC\uD30C\xB7\uC720\uB300\xB7\uB8EC\uC740 \uADF8\uB300\uB85C \uB0A8\uC544\uC694.",
-  "info.reset.keepDormant": "\uC720\uB300\xB7\uB8EC\uC740 \uADF8\uB300\uB85C, \uD55C\uACC4 \uB3CC\uD30C\uB294 \uB808\uBCA8\uC774 \uB2E4\uC2DC \uB2FF\uC73C\uBA74 \uCF1C\uC838\uC694.",
   "info.reset.free": "\uBB34\uB8CC!",
   "info.reset.warn.title": "90%\uB9CC \uD658\uAE09\uB3FC\uC694!",
   "info.reset.warn.body": "21\uB808\uBCA8 \uC704\uB85C \uC313\uC740 \uBAAB\uC758 10%\uB294 \uB3CC\uC544\uC624\uC9C0 \uC54A\uC544\uC694",
@@ -5854,6 +5852,12 @@ var LAB_KO = {
   "lab.history.amount": "{currency} \xD7{amount}",
   "lab.history.pity": "\uCC9C\uC7A5 \uCE74\uC6B4\uD2B8 {count}",
   "lab.history.unknownBanner": "\uC885\uB8CC\uB41C \uC5F0\uAD6C",
+  "lab.history.tab.pickup": "\uD55C\uC815 \uD53D\uC5C5",
+  "lab.history.tab.standard": "\uC0C1\uC2DC",
+  "lab.history.tab.welcome": "\uCCAB \uBCF5\uC6D0",
+  "lab.history.pickupName": "{name} \uD53D\uC5C5",
+  "lab.history.count": "\uCC9C\uC7A5 \uCE74\uC6B4\uD2B8 {count} / {total}",
+  "lab.history.carryover": "\uCC9C\uC7A5\uACFC \uD53D\uC5C5 \uD655\uC815\uC740 \uB2E4\uC74C \uD53D\uC5C5\uC73C\uB85C \uC774\uC6D4\uB429\uB2C8\uB2E4",
   "lab.mileageShop.short": "\uB9C8\uC77C\uB9AC\uC9C0",
   "lab.pity.label": "SSR \uD655\uC815\uAE4C\uC9C0",
   "lab.pity.unit": "\uD68C",
@@ -7303,6 +7307,7 @@ var MISC_KO = {
   "title.login.email": "\uC774\uBA54\uC77C\uB85C \uACC4\uC18D",
   "title.switchAccount": "\uACC4\uC815 \uBCC0\uACBD",
   "title.switchAccount.body": "\uB2E4\uB978 \uACC4\uC815\uC73C\uB85C \uC2DC\uC791\uD569\uB2C8\uB2E4. \uC774 \uAE30\uAE30\uC758 \uB85C\uCEEC \uC800\uC7A5 \uB370\uC774\uD130\uAC00 \uC0AD\uC81C\uB429\uB2C8\uB2E4. \uC11C\uBC84\uC5D0 \uC5F0\uB3D9\uB41C \uC9C4\uD589\uC740 \uC720\uC9C0\uB429\uB2C8\uB2E4.",
+  "title.switchAccount.guestBody": "\uAC8C\uC2A4\uD2B8 \uACC4\uC815\uC740 \uC774 \uAE30\uAE30\uB97C \uB5A0\uB098\uBA74 \uB2E4\uC2DC \uB4E4\uC5B4\uC62C \uC218 \uC5C6\uC5B4 \uC9C4\uD589\uC774 \uC601\uAD6C\uD788 \uC0AD\uC81C\uB429\uB2C8\uB2E4. \uC9C4\uD589\uC744 \uC9C0\uD0A4\uB824\uBA74 \uBA3C\uC800 \uD658\uACBD\uC124\uC815\uC5D0\uC11C \uACC4\uC815\uC744 \uC5F0\uB3D9\uD574 \uC8FC\uC138\uC694.",
   "title.gate.maintenance.title": "\uC810\uAC80 \uC911",
   "title.gate.maintenance.default": "\uC11C\uBC84 \uC810\uAC80 \uC911\uC785\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "title.gate.maintenance.until": "\uC885\uB8CC \uC608\uC815: {time}",
@@ -8029,14 +8034,14 @@ var SKILL_KO = {
   "skill.tag.targets": "\uB300\uC0C1 {count}\uBA85",
   "skill.tag.shots": "\uCD1D {count}\uBC1C",
   "skill.tag.extraTargets": "\uB300\uC0C1 +{count}",
-  "skill.ferocity.featherDust": "\uD3ED\uC8FC \uC911\uC5D0\uB294 \u300C\uB4B7\uC815\uB9AC\u300D\uAC00 \uAE30\uBCF8 \uD589\uB3D9 {every}\uBC88\uC9F8\uB9C8\uB2E4 \uB3CC\uACE0, [[chill|\uB454\uD654]]\uAC00 \uD55C \uBC88\uC5D0 {stacks}\uACB9\uC529 \uC313\uC778\uB2E4.",
+  "skill.ferocity.featherDust": "\uD3ED\uC8FC \uC911\uC5D0\uB294 \u300C\uB4B7\uC815\uB9AC\u300D\uAC00 \uAE30\uBCF8 \uD589\uB3D9 {every}\uBC88\uC9F8\uB9C8\uB2E4 \uB3C8\uB2E4.",
   "skill.breakthrough.effect.basic.powerWash": "\u300C{name}\u300D {every}\uBC88\uC9F8\uB9C8\uB2E4 \uBC00\uC5B4\uB0B4\uAE30\uAC00 [[knockback|\uB0A0\uB824\uBC84\uB9BC]]\uC774 \uB41C\uB2E4.",
-  "skill.breakthrough.effect.ultimate.finishingPolish": "\u300C{name}\u300D{name!\uC774} \uBAA8\uB4E0 \uC544\uAD70\uC758 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uB3C4 {percent}% \uB192\uC778\uB2E4.",
+  "skill.breakthrough.effect.ultimate.spotlessFinish": "\u300C{name}\u300D{name!\uC774} \uBAA8\uB4E0 \uC0DD\uC874 \uC544\uAD70\uC758 \uD574\uB85C\uC6B4 \uD6A8\uACFC\uB3C4 \uBAA8\uB450 \uC9C0\uC6B4\uB2E4.",
   "skill.breakthrough.effect.ferocity.protectiveGear": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4DC\uB294 \uC21C\uAC04 \uC790\uC2E0\uC5D0\uAC8C {percent}\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978\uB2E4.",
   "skill.breakthrough.effect.passive.proTouch": "\u300C{name}\u300D{name!\uC774} \uC544\uAD70 {targets}\uBA85\uC744 \uD568\uAED8 \uB3CC\uBCF4\uACE0, \uD55C \uBA85\uC5D0\uAC8C \uB4DC\uB294 \uD68C\uBCF5\uC740 {percent}%\uAC00 \uB41C\uB2E4.",
   "skill.passive.tidyUp": "\uAE30\uBCF8 \uD589\uB3D9 {every}\uBC88\uB9C8\uB2E4 \uD574\uB85C\uC6B4 \uD6A8\uACFC\uAC00 \uAC00\uC7A5 \uB9CE\uC740 \uC544\uAD70\uC5D0\uAC8C\uC11C \uAC00\uC7A5 \uC624\uB798 \uB0A8\uC740 \uD574\uB85C\uC6B4 \uD6A8\uACFC \uD558\uB098\uB97C \uC9C0\uC6B0\uACE0 {heal}\uB9CC\uD07C \uD68C\uBCF5\uC2DC\uD0A8\uB2E4. \uD574\uB85C\uC6B4 \uD6A8\uACFC\uAC00 \uAC78\uB9B0 \uC544\uAD70\uC774 \uC5C6\uC73C\uBA74 \uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC544\uAD70\uC744 {fallback}\uB9CC\uD07C \uD68C\uBCF5\uC2DC\uD0A8\uB2E4.",
-  "skill.sentence.deepClean": "\uBAA8\uB4E0 \uC0DD\uC874 \uC544\uAD70\uC758 \uD574\uB85C\uC6B4 \uD6A8\uACFC\uB97C \uBAA8\uB450 \uC9C0\uC6B0\uACE0 {shield}\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978 \uB4A4 {seconds}\uCD08 \uB3D9\uC548 [[def|\uBC29\uC5B4\uB825]]\uACFC [[res|\uC800\uD56D\uB825]]\uC744 {percent}% \uB192\uC778\uB2E4.",
-  "skill.sentence.deepClean.shieldPercent": "[[ap|\uC8FC\uBB38\uB825]]\uC758 {percent}%",
+  "skill.clause.deepClean": "\uBAA8\uB4E0 \uC0DD\uC874 \uC544\uAD70\uC740 {shield}\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uACE0 {seconds}\uCD08 \uB3D9\uC548 [[def|\uBC29\uC5B4\uB825]]\uACFC [[res|\uC800\uD56D\uB825]]\uC774 {percent}% \uC624\uB978\uB2E4",
+  "skill.clause.deepClean.shieldPercent": "[[ap|\uC8FC\uBB38\uB825]]\uC758 {percent}%",
   "skill.clause.push": "\uC8FC\uC704\uB85C \uC870\uAE08 \uBC00\uC5B4\uB0B8\uB2E4",
   "skill.status.chillTimed": "{seconds}\uCD08 \uB3D9\uC548 [[chill|\uB454\uD654]]\uB97C \uD55C \uACB9 \uC313\uC544 \uCD5C\uB300 {stacks}\uACB9\uAE4C\uC9C0 \uACB9\uB9C8\uB2E4 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uC640 [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uB97C {percent}% \uB0AE\uCD98\uB2E4"
 };
@@ -9247,7 +9252,6 @@ var RARITY_LEVEL_GROWTH = {
 init_define_import_meta_env();
 var RESONANCE_CAP = 5;
 var RESONANCE_STAT_PERCENT = 5;
-var RESONANCE_CHEESECAKE = 2e3;
 var RESONANCE_FRAGMENTS = {
   SSR: [1, 1, 2, 2, 3],
   SR: [2, 2, 3, 3, 4],
@@ -9272,11 +9276,11 @@ function resonanceFragmentSpend(rarity, resonance, own, universal) {
   const fromUniversal = Math.min(Math.max(0, universal), cost - fromOwn);
   return { own: fromOwn, universal: fromUniversal, enough: cost > 0 && fromOwn + fromUniversal >= cost };
 }
-function canResonate(rarity, progress, breakthroughCap, fragments, cheesecake3, universal) {
+function canResonate(rarity, progress, breakthroughCap, fragments, universal) {
   if (progress.breakthrough < breakthroughCap) return false;
   const resonance = resonanceOf(progress);
   if (resonance >= RESONANCE_CAP) return false;
-  return resonanceFragmentSpend(rarity, resonance, fragments, universal).enough && cheesecake3 >= RESONANCE_CHEESECAKE;
+  return resonanceFragmentSpend(rarity, resonance, fragments, universal).enough;
 }
 var GROWTH_KEYS = ["hp", "def", "res", "atk", "ap"];
 function resonanceStatEffect(resonance) {
@@ -9312,11 +9316,12 @@ var RELIC_LEVEL_CAP_BY_RESEARCH = [
 ];
 var BREAKTHROUGH_STAT_PERCENT = 10;
 var BREAKTHROUGH_STEPS = [
-  { requiredLevel: 20, slot: "basic", cheesecake: 200 },
-  { requiredLevel: 30, slot: "ultimate", cheesecake: 500 },
-  { requiredLevel: 40, slot: "ferocity", cheesecake: 1e3 },
-  { requiredLevel: 50, slot: "passive", cheesecake: 2e3 }
+  { slot: "basic" },
+  { slot: "ultimate" },
+  { slot: "ferocity" },
+  { slot: "passive" }
 ];
+var BREAKTHROUGH_REFERENCE_LEVELS = [20, 30, 40, 50];
 var BREAKTHROUGH_FRAGMENTS = {
   SSR: [1, 1, 2, 3],
   SR: [2, 2, 3, 4],
@@ -9351,23 +9356,15 @@ function relicLevelCap(researchLevel) {
   for (const row of RELIC_LEVEL_CAP_BY_RESEARCH) if (level >= row.researchLevel) cap = row.levelCap;
   return cap;
 }
-function activeBreakthrough(level, breakthrough) {
-  const stored = Math.max(0, Math.min(BREAKTHROUGH_CAP, Math.floor(breakthrough)));
-  let active3 = 0;
-  while (active3 < stored && level >= BREAKTHROUGH_STEPS[active3].requiredLevel) active3 += 1;
-  return active3;
-}
 function activeBreakthroughOf(progress) {
-  return progress ? activeBreakthrough(progress.level, progress.breakthrough) : 0;
+  return progress ? Math.max(0, Math.min(BREAKTHROUGH_CAP, Math.floor(progress.breakthrough))) : 0;
 }
 function nextBreakthrough(breakthrough) {
   return BREAKTHROUGH_STEPS[breakthrough];
 }
-function canBreakThrough(rarity, progress, fragments, cheesecake3, universal) {
-  const step2 = nextBreakthrough(progress.breakthrough);
-  if (!step2) return false;
-  if (progress.level < step2.requiredLevel) return false;
-  return breakthroughFragmentSpend(rarity, progress.breakthrough, fragments, universal).enough && cheesecake3 >= step2.cheesecake;
+function canBreakThrough(rarity, progress, fragments, universal) {
+  if (!nextBreakthrough(progress.breakthrough)) return false;
+  return breakthroughFragmentSpend(rarity, progress.breakthrough, fragments, universal).enough;
 }
 function openedBreakthroughSlots(breakthrough) {
   return BREAKTHROUGH_STEPS.slice(0, Math.max(0, Math.min(BREAKTHROUGH_CAP, breakthrough))).map((step2) => step2.slot);
@@ -9375,22 +9372,10 @@ function openedBreakthroughSlots(breakthrough) {
 function isBreakthroughSlotOpen(breakthrough, slot) {
   return openedBreakthroughSlots(breakthrough).includes(slot);
 }
-function remainingBreakthroughCost(rarity, progress) {
+function remainingBreakthroughFragments(rarity, breakthrough) {
   let fragments = 0;
-  let cheesecake3 = 0;
-  let level = progress.level;
-  let exp = progress.exp;
-  for (let step2 = progress.breakthrough; step2 < BREAKTHROUGH_CAP; step2 += 1) {
-    const cap = BREAKTHROUGH_STEPS[step2].requiredLevel;
-    while (level < cap) {
-      cheesecake3 += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp) * FEED_UNIT.cheesecake;
-      level += 1;
-      exp = 0;
-    }
-    fragments += breakthroughFragmentCost(rarity, step2);
-    cheesecake3 += BREAKTHROUGH_STEPS[step2].cheesecake;
-  }
-  return { fragments, cheesecake: cheesecake3 };
+  for (let step2 = Math.max(0, breakthrough); step2 < BREAKTHROUGH_CAP; step2 += 1) fragments += breakthroughFragmentCost(rarity, step2);
+  return fragments;
 }
 var FEED_UNIT = { cheesecake: 10, exp: 20 };
 function relicExpToNext(level) {
@@ -11505,11 +11490,7 @@ function applyCombatStatusEffect(fighter, effect, events, state, sourceId, criti
     const extra = caster ? extraChapterStacks(caster) : 0;
     refreshCurse(fighter, { ...effect, seconds: effect.seconds * potency, maxStacks: effect.maxStacks + extra });
   }
-  if (effect.kind === "chill") {
-    const caster = sourceId ? findFighter(state, sourceId) : void 0;
-    const dust = caster?.ferocityFever && caster.def.ferocityTrait.effectId === "featherDust" ? caster.def.ferocityTrait.chillStacksPerHit : 1;
-    refreshChill(fighter, effect, dust);
-  }
+  if (effect.kind === "chill") refreshChill(fighter, effect);
   if (effect.kind === "drowsy" && sourceId) applyDrowsy(fighter, { ...effect, sleepSeconds: effect.sleepSeconds * potency }, events, state, sourceId);
   if (effect.kind === "intimidate" && sourceId) applyIntimidate(fighter, effect, events, state, sourceId, true);
   if (effect.kind === "fear" && sourceId) applyFear(fighter, effect.seconds, effect.immunitySeconds, events, state, sourceId, false);
@@ -14436,7 +14417,6 @@ function attackSpeedParts(fighter, state) {
   })) : 0;
   const tailwindPercent = fighter.tailwindFor > 0 ? fighter.tailwind?.attackSpeedPercent ?? 0 : 0;
   const volleyPercent = fighter.volley?.attackSpeedPercent ?? 0;
-  const scrubPercent = fighter.scrub?.attackSpeedPercent ?? 0;
   const reagentDopingPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "reagentDoping" ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
   const tidalVigorPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "tidalVigor" ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
   const chillPercent = fighter.chill ? controlMagnitude(fighter, fighter.chill.stacks * fighter.chill.speedPercentPerStack) : 0;
@@ -14448,7 +14428,7 @@ function attackSpeedParts(fighter, state) {
   const traitHastePercent = (fighter.traitHaste?.attackSpeedPercent ?? 0) + (state === void 0 ? 0 : warmUpAttackSpeedPercent(effectsFor(state, fighter), fighter.def.id, state.elapsed));
   const killHastePercent = fighter.killHaste?.attackSpeedPercent ?? 0;
   const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
-  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + scrubPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100);
+  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100);
   return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed + ingredientHastePoints(fighter), boost: boostFactor, slow: slowFactor };
 }
 function currentAttackSpeed(fighter, state) {
@@ -16776,6 +16756,15 @@ function refillNow(fighter, state) {
   const ready = attackInterval(fighter, state);
   if (fighter.attackCooldown > ready) fighter.attackCooldown = ready;
 }
+function applyAllyScrub(attacker, clean, state, events) {
+  const spotless = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate)?.kind === "spotlessFinish";
+  for (const ally of aliveFighters(state, attacker.side)) {
+    if (spotless) cleanseAllDebuffs(ally);
+    grantShield(state, ally, attacker.id, Math.max(1, Math.round(attacker.def.stats.ap * clean.shieldPower / 100)), events);
+    ally.scrub = { remaining: clean.seconds, total: clean.seconds, defenseResistancePercent: clean.defenseResistancePercent, sourceId: attacker.id };
+    events.push({ kind: "teamBuff", fighterId: ally.id, buff: clean, sourceId: attacker.id });
+  }
+}
 function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint, followUp = false, free = false) {
   if (!followUp && !free) attacker.augmentActionSerial += 1;
   const skill = breakthroughSkill(attacker, useUltimate);
@@ -16986,6 +16975,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
       if (shield > 0) grantShield(state, ally, attacker.id, shield, events);
     }
   }
+  if (useUltimate && ultimate && "allyScrub" in ultimate && ultimate.allyScrub) applyAllyScrub(attacker, ultimate.allyScrub, state, events);
   if (useUltimate && attacker.def.passive.starfall) healFromStarfall(attacker, ultimateMeteorDealt, attacker.def.passive.starfall, state, events);
   if (!useUltimate && !followUp && !free) callStarfall(attacker, center, rng);
   if (!attacker.bt.dashBack?.running) gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
@@ -17897,24 +17887,6 @@ function fireUltimateCore(state, fighterId, rng = NO_CRIT, targetPoint) {
   if (teamUltimate.targeting === "battlefieldAllies" && teamUltimate.teamBuff !== void 0) {
     attacker.energy -= ultimateCost(state, attacker, true);
     const gust = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
-    const clean = teamUltimate.teamBuff;
-    if (clean.kind === "deepClean") {
-      const polish = gust?.kind === "finishingPolish" ? gust.attackSpeedPercent : 0;
-      for (const ally of aliveFighters(state, attacker.side)) {
-        cleanseAllDebuffs(ally);
-        grantShield(state, ally, attacker.id, Math.max(1, Math.round(attacker.def.stats.ap * clean.shieldPower / 100)), events);
-        ally.scrub = {
-          remaining: clean.seconds,
-          total: clean.seconds,
-          defenseResistancePercent: clean.defenseResistancePercent,
-          attackSpeedPercent: polish,
-          sourceId: attacker.id
-        };
-        events.push({ kind: "teamBuff", fighterId: ally.id, buff: clean, sourceId: attacker.id });
-      }
-      attacker.attackCooldown = attackInterval(attacker, state);
-      return events;
-    }
     for (const ally of aliveFighters(state, attacker.side)) {
       applyTeamBuff(ally, teamUltimate.teamBuff);
       events.push({ kind: "teamBuff", fighterId: ally.id, buff: teamUltimate.teamBuff, sourceId: attacker.id });
@@ -20140,7 +20112,7 @@ var RELICS = [
         kind: "pressure",
         speedPercentPerStack: 8,
         maxStacks: 3,
-        seconds: 4,
+        seconds: 5,
         stunSeconds: 2,
         defensePower: 140,
         resistancePower: 140,
@@ -20448,7 +20420,7 @@ var RELICS = [
       looming: {
         intervalSeconds: 2.5,
         radius: 240,
-        intimidate: { kind: "intimidate", maxStacks: 3, seconds: 6, fearSeconds: 2, immunitySeconds: 6 }
+        intimidate: { kind: "intimidate", maxStacks: 3, seconds: 8, fearSeconds: 2, immunitySeconds: 6 }
       },
       desc: "2.5\uCD08\uB9C8\uB2E4 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C \uC704\uC555\uC774 \uD55C \uACB9 \uC313\uC778\uB2E4. \uD53C\uD574\uB294 \uC8FC\uC9C0 \uC54A\uB294\uB2E4."
     },
@@ -20462,7 +20434,7 @@ var RELICS = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      statusEffects: [{ kind: "intimidate", maxStacks: 3, seconds: 6, fearSeconds: 2, immunitySeconds: 6 }]
+      statusEffects: [{ kind: "intimidate", maxStacks: 3, seconds: 8, fearSeconds: 2, immunitySeconds: 6 }]
     },
     ultimate: {
       id: "ark-ult",
@@ -23533,15 +23505,16 @@ var RELICS = [
       lifeSteal: 0,
       ferocityGain: 0
     },
-    // 한계 돌파: 강력 세척 · 마무리 광택 · 보호복 착용 · 프로의 손길.
+    // 한계 돌파: 강력 세척 · 티끌 하나 없이 · 보호복 착용 · 프로의 손길.
     breakthroughEffects: {
       basic: { kind: "powerWash", every: 3, knockback: { seconds: 0.6, speed: 1100, bounces: 1 } },
-      ultimate: { kind: "finishingPolish", attackSpeedPercent: 20 },
+      // 대청소가 막을 두르기 전에 아군 전원의 해로운 효과를 걷는다 — 기본 궁극기에서 덜어 낸 정화가 돌파로 돌아온다.
+      ultimate: { kind: "spotlessFinish" },
       ferocity: { kind: "protectiveGear", shieldMaxHpPercent: 30 },
       // 두 명에게 들어가는 만큼 한 명당 몫을 덜어 총량이 두 배가 되지 않게 한다.
       passive: { kind: "proTouch", targets: 2, healPercent: 75 }
     },
-    ferocityTrait: { name: "\uAE43\uD138 \uBA3C\uC9C0", effectId: "featherDust", tidyEvery: 2, chillStacksPerHit: 2 },
+    ferocityTrait: { name: "\uAE43\uD138 \uBA3C\uC9C0", effectId: "featherDust", tidyEvery: 2 },
     passive: {
       // kind가 tidyUp인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -23567,17 +23540,25 @@ var RELICS = [
       // 막을 두르는 적(레이드 보스·결계 시련)을 상대하는 카운터 자리다.
       breaksShield: true,
       // 날려버림이 아니라 짧게 밀어내는 것이라 강인함 경계를 지나는 자리 옮기기만 한다.
-      push: { distance: 60 },
-      statusEffects: [{ kind: "chill", speedPercentPerStack: 8, maxStacks: 3, seconds: 3 }]
+      push: { distance: 60 }
+      // 둔화는 걷어 냈다(응태 2026-11-14) — 미는 걸음과 막 깨기만으로 자리를 정리한다.
     },
     ultimate: {
       id: "arte-ult",
       name: "\uB300\uCCAD\uC18C",
-      iconAssetId: "skill-icon-buff",
-      effectType: "buff",
+      /*
+       * 지정한 원을 한 번에 쓸어 내는 강한 광역이다(도디 궁극기와 같은 원 · 같은 반경). 해로운 효과를 걷던 몫은
+       * 궁극기 돌파(`spotlessFinish`)로 옮겼고, 그 자리를 피해가 채운다. 막과 방어·저항 강화는 그대로 아군에게 남는다.
+       */
+      power: 240,
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      scalingStat: "ap",
       cost: 110,
-      targeting: "battlefieldAllies",
-      teamBuff: { kind: "deepClean", shieldPower: 160, defenseResistancePercent: 20, seconds: 4 }
+      targeting: "targetedCircle",
+      radius: 360,
+      allyScrub: { kind: "deepClean", shieldPower: 160, defenseResistancePercent: 20, seconds: 4 }
     }
   },
   {
@@ -24405,7 +24386,7 @@ var RELICS = [
      * 있다고 가정하지 않는다), 시즌 게이지가 공유라 회복·보호막·경감·강인함은 더하지 않는다.
      */
     breakthroughEffects: {
-      basic: { kind: "biteMark", seconds: 8, damageTakenPercent: 4, maxStacks: 3 },
+      basic: { kind: "biteMark", seconds: 12, damageTakenPercent: 4, maxStacks: 3 },
       ultimate: { kind: "unhealedMark", seconds: 6, reductionPercent: 40 },
       ferocity: { kind: "hungryStride", moveSpeedPercent: 50 },
       passive: { kind: "scarMight", damagePercentPerStack: 5 }
@@ -24792,7 +24773,7 @@ var RELICS = [
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
        */
-      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 3 }],
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 6 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -24813,7 +24794,7 @@ var RELICS = [
     },
     // 레이티아 다섯 종은 같은 스킬이라 같은 한계 돌파를 쓴다.
     breakthroughEffects: {
-      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 6 },
+      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 8 },
       ultimate: { kind: "cheekShield", shieldMaxHpPercent: 30 },
       ferocity: { kind: "swiftHands", attackSpeedPercent: 40 },
       passive: { kind: "lightSleeper" }
@@ -24917,7 +24898,7 @@ var RELICS = [
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
        */
-      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 3 }],
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 6 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -24938,7 +24919,7 @@ var RELICS = [
     },
     // 레이티아 다섯 종은 같은 스킬이라 같은 한계 돌파를 쓴다.
     breakthroughEffects: {
-      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 6 },
+      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 8 },
       ultimate: { kind: "cheekShield", shieldMaxHpPercent: 30 },
       ferocity: { kind: "swiftHands", attackSpeedPercent: 40 },
       passive: { kind: "lightSleeper" }
@@ -25042,7 +25023,7 @@ var RELICS = [
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
        */
-      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 3 }],
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 6 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -25063,7 +25044,7 @@ var RELICS = [
     },
     // 레이티아 다섯 종은 같은 스킬이라 같은 한계 돌파를 쓴다.
     breakthroughEffects: {
-      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 6 },
+      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 8 },
       ultimate: { kind: "cheekShield", shieldMaxHpPercent: 30 },
       ferocity: { kind: "swiftHands", attackSpeedPercent: 40 },
       passive: { kind: "lightSleeper" }
@@ -25167,7 +25148,7 @@ var RELICS = [
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
        */
-      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 3 }],
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 6 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -25188,7 +25169,7 @@ var RELICS = [
     },
     // 레이티아 다섯 종은 같은 스킬이라 같은 한계 돌파를 쓴다.
     breakthroughEffects: {
-      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 6 },
+      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 8 },
       ultimate: { kind: "cheekShield", shieldMaxHpPercent: 30 },
       ferocity: { kind: "swiftHands", attackSpeedPercent: 40 },
       passive: { kind: "lightSleeper" }
@@ -25292,7 +25273,7 @@ var RELICS = [
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
        */
-      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 3 }],
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 6 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -25313,7 +25294,7 @@ var RELICS = [
     },
     // 레이티아 다섯 종은 같은 스킬이라 같은 한계 돌파를 쓴다.
     breakthroughEffects: {
-      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 6 },
+      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 8 },
       ultimate: { kind: "cheekShield", shieldMaxHpPercent: 30 },
       ferocity: { kind: "swiftHands", attackSpeedPercent: 40 },
       passive: { kind: "lightSleeper" }
@@ -27037,6 +27018,11 @@ var SITUATIONAL_OFFER_RULES = {
   /** SSR 천장까지 남은 연구가 이 수 이하이면 천장 특가가 선다. */
   pityWindow: 10,
   playerLevels: [10, 20, 30, 40],
+  /**
+   * 돌파 특가가 보는 「키우는 중인 개체」의 레벨 — 다음 돌파 단계(0~3)마다 이 레벨에 닿았는데 파편이 모자라면 선다.
+   * 돌파 자체는 레벨과 무관해졌지만(파편만 든다) 아직 키우지 않은 개체마다 특가가 서면 안 되므로 기준 진행표를 읽는다.
+   */
+  breakthroughShortLevels: BREAKTHROUGH_REFERENCE_LEVELS,
   /** 이번 달 지층 최고층이 이 층에 닿으면 지층 특가가 선다. */
   ancientFloor: 10
 };
@@ -28018,7 +28004,7 @@ var STANDARD_GRAY_REWARDS = [
   { kind: "gold", min: 4e3, max: 1e4, weight: 2 },
   { kind: "cheesecake", min: 60, max: 150, weight: 1 }
 ];
-var PITY_GROUP = { WELCOME: "welcome", STANDARD: "standard-fossil", LIMITED_PICKUP: "limited-pickup", MOONLIT_PICKUP: "limited-pickup-moonlit" };
+var PITY_GROUP = { WELCOME: "welcome", STANDARD: "standard-fossil", LIMITED_PICKUP: "limited-pickup" };
 var WELCOME_SSR_POOL = ["rex", "spino", "nodonia", "mette"];
 var BANNERS = [
   {
@@ -28108,12 +28094,11 @@ var BANNERS = [
   },
   {
     /*
-     * **플레샤 한정 픽업**(응태 요청, 2026-11-12) — 디안 픽업과 나란히 서는 두 번째 호박석 연구다. 값·확률은 호박석
-     * 연구와 같고, **천장은 이월하지 않으므로 그룹이 따로다**(`bannerSchedule.test`) — 저장 이관이 현재 배너의 그룹을
-     * 모두 기본값으로 채운다. 다른 것은 픽업 대상과 원화(달빛 피크닉)뿐이다.
+     * **플레샤 한정 픽업**(응태 요청, 2026-11-12) — 디안 픽업과 교대로 서는 두 번째 호박석 연구다(`pickupRotation.ts`).
+     * 값·확률·천장 그룹은 호박석 연구와 같아 **천장이 이월된다**. 다른 것은 픽업 대상과 원화(달빛 피크닉)뿐이다.
      */
     id: "moonlit",
-    pityGroupId: PITY_GROUP.MOONLIT_PICKUP,
+    pityGroupId: PITY_GROUP.LIMITED_PICKUP,
     name: "\uD638\uBC15\uC11D \uC5F0\uAD6C",
     featuredRelicId: "plesha",
     artKey: BACKGROUND.recruitMoonPicnic,
@@ -37883,24 +37868,24 @@ function combatJournal(state) {
 }
 function combatKey(input) {
   const b = input.input;
-  return b.mode === "stage" ? `stage:${input.stageId}` : b.mode === "expedition" ? `expedition:${b.runId}:${b.nodeId}` : b.mode === "duel" ? `duel:${b.requestId}` : b.mode === "cake" || b.mode === "bounty" ? `${b.mode}:${b.requestId}` : fail();
+  return b.mode === "stage" ? `stage:${input.stageId}` : b.mode === "expedition" ? `expedition:${b.runId}:${b.nodeId}` : b.mode === "duel" ? `duel:${b.requestId}` : b.mode === "cake" || b.mode === "bounty" ? `${b.mode}:${b.requestId}` : fail("bad_mode");
 }
 function prepareCombat(state, request, now, id) {
   if (request?.input?.mode === "duel") {
     const key2 = combatKey(request), records2 = combatJournal(state), ticket2 = records2.tickets[key2];
-    if (!ticket2?.duel || ticket2.kind !== "duel") return fail();
+    if (!ticket2?.duel || ticket2.kind !== "duel") return fail("no_duel_ticket");
     const active4 = Object.values(records2.records).find((row) => combatKey(row.input) === key2 && Date.parse(row.lease.expiresAt) > now.getTime());
     if (active4) return structuredClone(active4.lease);
     const setup2 = structuredClone(ticket2.duel.setup);
     if (request.automaticUltimates !== true && setup2.options) delete setup2.options.automaticUltimates;
     const lease2 = { id, seed: id, setup: setup2, expiresAt: new Date(now.getTime() + 36e5).toISOString() };
     records2.records = Object.fromEntries(Object.entries(records2.records).filter(([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()));
-    if (Object.keys(records2.records).length >= 8) return fail();
+    if (Object.keys(records2.records).length >= 8) return fail("too_many_leases");
     records2.records[id] = { lease: lease2, input: structuredClone(request), issuedAt: now.toISOString() };
     return structuredClone(lease2);
   }
   if (!request || !request.input || !["stage", "cake", "bounty", "expedition"].includes(request.input.mode))
-    return fail();
+    return fail("bad_input");
   const records = combatJournal(state), input = structuredClone(request), key = combatKey(input), mode = input.input.mode;
   const active3 = Object.values(records.records).find(
     (row) => combatKey(row.input) === key && (row.input.input.mode !== "bounty" || input.input.mode !== "bounty" || row.input.input.round === input.input.round) && Date.parse(row.lease.expiresAt) > now.getTime()
@@ -37908,22 +37893,22 @@ function prepareCombat(state, request, now, id) {
   if (active3) return structuredClone(active3.lease);
   let b = input.input;
   const ticket = records.tickets[key];
-  if (mode !== "expedition" && !ticket) return fail();
+  if (mode !== "expedition" && !ticket) return fail("no_ticket");
   if (b.mode === "stage" && ticket.target !== input.stageId || (b.mode === "cake" || b.mode === "bounty") && ticket.target !== b.tierId)
-    return fail();
+    return fail(`ticket_target:${ticket.target}`);
   if (b.mode === "bounty") {
     const bounty = b;
-    if (!Number.isInteger(b.round) || b.round < 0 || b.round > 2) return fail();
+    if (!Number.isInteger(b.round) || b.round < 0 || b.round > 2) return fail("bad_round");
     if (b.round > 0 && !Object.values(records.records).some(
       (row) => row.input.input.mode === "bounty" && row.input.input.requestId === bounty.requestId && row.input.input.round === bounty.round - 1 && row.verdict?.victory
     ))
-      return fail();
+      return fail("round_locked");
   }
   if (b.mode === "expedition") {
     const expeditionInput = b;
     const run2 = state.expedition.run, node = run2?.nodes.find((n) => n.id === expeditionInput.nodeId), prev = run2?.nodes.find((n) => n.id === run2.currentNodeId);
     if (!run2 || run2.runId !== b.runId || run2.settled || !node || !["normal", "elite", "horde"].includes(node.type) || run2.visitedNodeIds.includes(node.id) || (!prev ? node.floor !== 1 : !prev.successorIds.includes(node.id)))
-      return fail();
+      return fail("expedition_node");
     b = {
       mode: "expedition",
       runId: run2.runId,
@@ -37937,7 +37922,7 @@ function prepareCombat(state, request, now, id) {
   }
   const party = b.mode === "expedition" ? b.relics.map((r) => r.relicId) : b.mode === "bounty" ? [state.party[b.round]] : state.party;
   if (party.some((r) => !r || !state.owned.has(r)) || new Set(party).size !== party.length)
-    return fail();
+    return fail("party");
   const progression = new RelicProgressionManager(state);
   const frozen = b.mode === "expedition" ? new Map(
     state.expedition.run.relics.map((r) => [r.relicId, r.snapshot])
@@ -37970,7 +37955,7 @@ function prepareCombat(state, request, now, id) {
   );
   setActiveAncientSeason(state.ancientSeason ?? "");
   const stage = getBattleStage(input.stageId ?? state.selectedStageId ?? "1-1");
-  if (b.mode === "stage" && (stage.ancientFloor !== void 0 || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, state.cleared)) return fail();
+  if (b.mode === "stage" && (stage.ancientFloor !== void 0 || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, state.cleared)) return fail("stage_locked");
   const cake = b.mode === "cake" ? getCakeOperationTier(b.tierId) : void 0;
   const enemies = cake ? cakeOperationEnemies(cake) : b.mode === "bounty" ? [bountyRoundEnemy(getBountyTier(b.tierId).rounds[b.round])] : b.mode === "expedition" ? getExpeditionNodeEnemies(b.nodeType, b.floor) : getStageEnemies(stage);
   const expedition = b.mode === "expedition" ? createExpeditionSkirmishConfig(b, players, enemies) : void 0;
@@ -38009,7 +37994,7 @@ function prepareCombat(state, request, now, id) {
       ([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()
     )
   );
-  if (Object.keys(records.records).length >= 8) return fail();
+  if (Object.keys(records.records).length >= 8) return fail("too_many_leases");
   records.records[id] = {
     lease: structuredClone(lease),
     input,
@@ -39974,6 +39959,34 @@ function placeholderAdToken(slotId) {
   return `placeholder-ad:${slotId}`;
 }
 
+// src/core/pickupRotation.ts
+init_define_import_meta_env();
+var DAY_MS3 = 864e5;
+var PICKUP_ROTATION = {
+  anchor: Date.parse("2026-11-13T00:00:00Z"),
+  periodDays: 21,
+  bannerIds: ["moonlit", "amber"]
+};
+function inPickupRotation(bannerId, rotation = PICKUP_ROTATION) {
+  return rotation.bannerIds.includes(bannerId);
+}
+function turnIndex(now, rotation) {
+  return Math.floor((now - rotation.anchor) / (rotation.periodDays * DAY_MS3));
+}
+function currentPickupBannerId(now, rotation = PICKUP_ROTATION) {
+  const length = rotation.bannerIds.length;
+  const turn = turnIndex(now, rotation);
+  return turn < 0 ? rotation.bannerIds[length - 1] : rotation.bannerIds[turn % length];
+}
+function currentPickupWindow(now, rotation = PICKUP_ROTATION) {
+  if (turnIndex(now, rotation) < 0) return { endsAt: new Date(rotation.anchor).toISOString() };
+  const start = rotation.anchor + turnIndex(now, rotation) * rotation.periodDays * DAY_MS3;
+  return { startsAt: new Date(start).toISOString(), endsAt: new Date(start + rotation.periodDays * DAY_MS3).toISOString() };
+}
+function pickupRotationOpen(bannerId, now, rotation = PICKUP_ROTATION) {
+  return !inPickupRotation(bannerId, rotation) || currentPickupBannerId(now, rotation) === bannerId;
+}
+
 // src/core/gacha.ts
 init_define_import_meta_env();
 var TEN_PULL_SR_UPGRADE_CHANCE = 0.02;
@@ -39999,6 +40012,7 @@ function pullPayment(wallet, banner, count2, pity) {
 }
 function bannerActive(banner, now, schedule = liveSchedule()) {
   const window2 = banner.id === void 0 ? scheduledWindow("banner", "", banner, []) : scheduledWindow("banner", banner.id, banner, schedule);
+  if (banner.id !== void 0 && !window2.overridden && !pickupRotationOpen(banner.id, now.getTime())) return false;
   return windowOpen(window2, now.getTime());
 }
 function bannerPullsRemaining(banner, pity) {
@@ -41924,9 +41938,6 @@ function simulateDuelDefenses(state, now, pool, defensePower, random) {
 
 // src/core/debugCommand.ts
 init_define_import_meta_env();
-function breakthroughAvailableAt(level) {
-  return BREAKTHROUGH_STEPS.filter(({ requiredLevel }) => requiredLevel <= level).length;
-}
 function ownedProgress(target, relicId) {
   const progress = target.relicProgress[relicId];
   if (!target.owned.has(relicId) || !progress) throw new Error(`\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4: ${relicId}`);
@@ -41986,9 +41997,8 @@ function applyDebugCommand(target, command, rules) {
       let changed = 0;
       for (const id of targets(target, command.relicId)) {
         const p = target.relicProgress[id];
-        const breakthrough = Math.min(p.breakthrough, breakthroughAvailableAt(level));
-        if (p.level === level && p.breakthrough === breakthrough) continue;
-        target.relicProgress[id] = { ...p, level, exp: 0, breakthrough, ...breakthrough < BREAKTHROUGH_CAP ? { resonance: void 0 } : {} };
+        if (p.level === level) continue;
+        target.relicProgress[id] = { ...p, level, exp: 0 };
         changed += 1;
       }
       return changed;
@@ -41998,10 +42008,8 @@ function applyDebugCommand(target, command, rules) {
       let changed = 0;
       for (const id of targets(target, command.relicId)) {
         const p = target.relicProgress[id];
-        const floor = breakthrough === 0 ? 1 : BREAKTHROUGH_STEPS[breakthrough - 1].requiredLevel;
-        const level = Math.max(p.level, floor);
-        if (p.breakthrough === breakthrough && p.level === level) continue;
-        target.relicProgress[id] = { ...p, breakthrough, level, exp: level === p.level ? p.exp : 0, ...breakthrough < BREAKTHROUGH_CAP ? { resonance: void 0 } : {} };
+        if (p.breakthrough === breakthrough) continue;
+        target.relicProgress[id] = { ...p, breakthrough, ...breakthrough < BREAKTHROUGH_CAP ? { resonance: void 0 } : {} };
         changed += 1;
       }
       return changed;
@@ -42028,10 +42036,9 @@ function applyDebugCommand(target, command, rules) {
       const progress = ownedProgress(target, command.relicId);
       const rarity = rules.playable.find((relic) => relic.id === command.relicId)?.rarity;
       if (!rarity) throw new Error("\uD50C\uB808\uC774 \uAC00\uB2A5\uD55C \uB810\uB9AD\uC774 \uC544\uB2D9\uB2C8\uB2E4.");
-      const cost = remainingBreakthroughCost(rarity, progress);
-      if (cost.fragments === 0 && cost.cheesecake === 0) return 0;
-      target.relicFragments[command.relicId] = (target.relicFragments[command.relicId] ?? 0) + cost.fragments;
-      target.wallet.cheesecake = Math.min(rules.walletCaps.cheesecake, target.wallet.cheesecake + cost.cheesecake);
+      const fragments = remainingBreakthroughFragments(rarity, progress.breakthrough);
+      if (fragments === 0) return 0;
+      target.relicFragments[command.relicId] = (target.relicFragments[command.relicId] ?? 0) + fragments;
       return 1;
     }
     case "universalFragments": {
@@ -42339,9 +42346,9 @@ function guildWarNow(now) {
 
 // src/api/guildQaClock.ts
 init_define_import_meta_env();
-var DAY_MS3 = 864e5;
+var DAY_MS4 = 864e5;
 var dayShift = 0;
-var guildQaClockShift = () => QA_TOOLS_ENABLED ? dayShift * DAY_MS3 : 0;
+var guildQaClockShift = () => QA_TOOLS_ENABLED ? dayShift * DAY_MS4 : 0;
 
 // src/core/guildRankRewards.ts
 init_define_import_meta_env();
@@ -42351,6 +42358,45 @@ function rankGuildScores(entries) {
 
 // src/api/guildContracts.ts
 init_define_import_meta_env();
+var GUILD_ERROR_CODES = [
+  "UNAVAILABLE",
+  "LEVEL_LOCKED",
+  "ALREADY_IN_GUILD",
+  "NOT_IN_GUILD",
+  "NAME_INVALID",
+  "NAME_TAKEN",
+  "NAME_BLOCKED",
+  "BADGE_INVALID",
+  "GUILD_NOT_FOUND",
+  "GUILD_FULL",
+  "LEAVE_COOLDOWN",
+  "REQUEST_EXISTS",
+  "REQUEST_NOT_FOUND",
+  "MEMBER_NOT_FOUND",
+  "NO_PERMISSION",
+  "ROLE_FULL",
+  "INVALID_TARGET",
+  "LEADER_CANNOT_LEAVE",
+  "ALREADY_STAMPED",
+  "PRODUCT_NOT_FOUND",
+  "PRODUCT_LIMIT",
+  "INSUFFICIENT_COINS",
+  "INSUFFICIENT_GEMS",
+  "INVALID_REQUEST",
+  "GUARD_LIMIT",
+  "GUARD_NOT_ENTERED",
+  "WAR_LOCKED",
+  "SLOT_INVALID",
+  "SLOT_TAKEN",
+  "SLOT_FULL",
+  "GUILD_LEVEL_LOW",
+  "WAR_NO_OPPONENT",
+  "WAR_NO_ATTACKS",
+  "WAR_NEW_MEMBER",
+  "SLOT_CLOSED",
+  "WAR_NOT_ENTERED"
+];
+var isGuildErrorCode = (value) => GUILD_ERROR_CODES.includes(value);
 var GuildApiError = class extends Error {
   constructor(code, message = code) {
     super(message);
@@ -43598,10 +43644,10 @@ function guildGuardRoster(element) {
 
 // src/data/mileageClerk.ts
 init_define_import_meta_env();
-var DAY_MS4 = 864e5;
-var FIRST_MONDAY_MS = 4 * DAY_MS4;
+var DAY_MS5 = 864e5;
+var FIRST_MONDAY_MS = 4 * DAY_MS5;
 function mileageWeekIndex(now) {
-  return Math.floor((now.getTime() - FIRST_MONDAY_MS) / (7 * DAY_MS4));
+  return Math.floor((now.getTime() - FIRST_MONDAY_MS) / (7 * DAY_MS5));
 }
 function mileageClerkPool() {
   const pickups = new Set(BANNERS.flatMap((banner) => banner.pickupRelicIds.SSR ?? []));
@@ -43617,7 +43663,7 @@ function mileageRotationPool(rarity) {
   return PLAYABLE_RELICS.filter((relic) => relic.rarity === rarity && !LIMITED_RELIC_IDS.has(relic.id) && !pickups.has(relic.id)).map((relic) => relic.id);
 }
 function mileageDayIndex(now) {
-  return Math.floor(now.getTime() / DAY_MS4);
+  return Math.floor(now.getTime() / DAY_MS5);
 }
 function mileageRotatingFragmentId(rarity, period, now) {
   const pool = mileageRotationPool(rarity);
@@ -43825,7 +43871,7 @@ function claimAchievements(state, facts, seriesIds) {
 
 // src/core/newbieGrowth.ts
 init_define_import_meta_env();
-var DAY_MS5 = 864e5;
+var DAY_MS6 = 864e5;
 function newbieGrowthFacts(facts, achievements, relicsBrokenThrough) {
   const extra = {
     favoriteChosen: achievements.favoriteChosen ? 1 : 0,
@@ -43838,11 +43884,11 @@ function newbieGrowthWindow(createdAt, now) {
   const created = createdAt ? new Date(createdAt) : void 0;
   if (!created || Number.isNaN(created.getTime()) || Number.isNaN(now.getTime())) return { active: false, day: 0, endsAt: (/* @__PURE__ */ new Date(0)).toISOString() };
   const start = Date.parse(`${utcDateKey(created)}T00:00:00.000Z`);
-  const elapsedDays = Math.max(0, Math.floor((now.getTime() - start) / DAY_MS5));
-  const end = start + Math.ceil((created.getTime() - start) / DAY_MS5 + NEWBIE_GROWTH_WINDOW_DAYS) * DAY_MS5;
+  const elapsedDays = Math.max(0, Math.floor((now.getTime() - start) / DAY_MS6));
+  const end = start + Math.ceil((created.getTime() - start) / DAY_MS6 + NEWBIE_GROWTH_WINDOW_DAYS) * DAY_MS6;
   const active3 = now.getTime() < end;
   const day = active3 ? Math.min(NEWBIE_GROWTH_DAYS, elapsedDays + 1) : 0;
-  return { active: active3, day, ...active3 && day < NEWBIE_GROWTH_DAYS ? { nextDayAt: new Date(start + day * DAY_MS5).toISOString() } : {}, endsAt: new Date(end).toISOString() };
+  return { active: active3, day, ...active3 && day < NEWBIE_GROWTH_DAYS ? { nextDayAt: new Date(start + day * DAY_MS6).toISOString() } : {}, endsAt: new Date(end).toISOString() };
 }
 function newbieGrowthGoalState(goal, facts, claimed, openDay) {
   if (claimed.has(goal.id)) return "claimed";
@@ -44611,7 +44657,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.456.0",
+  version: "0.459.1",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -47944,7 +47990,7 @@ var FakeServer = class {
   /**
    * 돌파.
    *
-   * 재료 검사와 차감, 단계 확정을 한 처리 단위로 끝낸다. 화면은 결과만 받아 다시 그린다.
+   * 파편 검사와 차감, 단계 확정을 한 처리 단위로 끝낸다. 레벨·치즈케이크는 들지 않는다(응태 결정 2026-11-15). 화면은 결과만 받아 다시 그린다.
    */
   async breakThroughRelic(relicId) {
     await this.delay();
@@ -47952,28 +47998,25 @@ var FakeServer = class {
     if (!this.state.owned.has(relicId) || !current2) throw new GameApiError("RELIC_NOT_FOUND", "\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
     const step2 = nextBreakthrough(current2.breakthrough);
     if (!step2) return this.resonateRelic(relicId, current2);
-    if (current2.level < step2.requiredLevel) throw new GameApiError("RELIC_MAX_LEVEL", "\uB3CC\uD30C \uC694\uAD6C \uB808\uBCA8\uC5D0 \uB2FF\uC544\uC57C \uB3CC\uD30C\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
     const held = this.state.relicFragments[relicId] ?? 0;
     const rarity = RELICS.find(({ id }) => id === relicId)?.rarity ?? "R";
     const universalItem = UNIVERSAL_FRAGMENT_ITEM[rarity];
     const universal = this.state.itemInventory.find((stack) => stack.itemId === universalItem)?.quantity ?? 0;
-    if (!canBreakThrough(rarity, current2, held, this.state.wallet.cheesecake, universal)) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uB3CC\uD30C \uC7AC\uB8CC\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    if (!canBreakThrough(rarity, current2, held, universal)) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uB3CC\uD30C \uC7AC\uB8CC\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
     const spend2 = breakthroughFragmentSpend(rarity, current2.breakthrough, held, universal);
     const breakthrough = current2.breakthrough + 1;
     const nextProgress = { ...this.state.relicProgress, [relicId]: { ...current2, breakthrough } };
     const nextFragments = { ...this.state.relicFragments, [relicId]: held - spend2.own };
     const nextItems = spend2.universal > 0 ? removeItemLot(this.state.itemInventory, universalItem, spend2.universal) : this.state.itemInventory;
     if (!nextItems) throw new GameApiError("INSUFFICIENT_ITEMS", "\uB9CC\uB2A5 \uD30C\uD3B8\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
-    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake - step2.cheesecake };
-    this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, itemInventory: nextItems, wallet: nextWallet });
+    this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, itemInventory: nextItems });
     this.state.relicProgress = nextProgress;
     this.state.relicFragments = nextFragments;
     this.state.itemInventory = nextItems;
-    this.state.wallet = nextWallet;
     return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(this.state.playerResearch.level), breakthroughGrade: breakthroughGrade(breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend2.universal };
   }
   /**
-   * 공명 한 단계 — 돌파 V 개체의 파편(모자란 몫은 같은 등급 만능 파편)과 치즈케이크를 쓴다. 차감과 단계 확정은 한 저장이다.
+   * 공명 한 단계 — 돌파 V 개체의 파편(모자란 몫은 같은 등급 만능 파편)만 쓴다. 차감과 단계 확정은 한 저장이다.
    * 응답 모양은 돌파와 같고 `resonance`가 더 붙는다(돌파 단계는 그대로 V).
    */
   resonateRelic(relicId, current2) {
@@ -47983,18 +48026,16 @@ var FakeServer = class {
     const held = this.state.relicFragments[relicId] ?? 0;
     const universalItem = UNIVERSAL_FRAGMENT_ITEM[rarity];
     const universal = this.state.itemInventory.find((stack) => stack.itemId === universalItem)?.quantity ?? 0;
-    if (!canResonate(rarity, current2, BREAKTHROUGH_CAP, held, this.state.wallet.cheesecake, universal)) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uACF5\uBA85 \uC7AC\uB8CC\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    if (!canResonate(rarity, current2, BREAKTHROUGH_CAP, held, universal)) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uACF5\uBA85 \uC7AC\uB8CC\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
     const spend2 = resonanceFragmentSpend(rarity, resonance, held, universal);
     const nextProgress = { ...this.state.relicProgress, [relicId]: { ...current2, resonance: resonance + 1 } };
     const nextFragments = { ...this.state.relicFragments, [relicId]: held - spend2.own };
     const nextItems = spend2.universal > 0 ? removeItemLot(this.state.itemInventory, universalItem, spend2.universal) : this.state.itemInventory;
     if (!nextItems) throw new GameApiError("INSUFFICIENT_ITEMS", "\uB9CC\uB2A5 \uD30C\uD3B8\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
-    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake - RESONANCE_CHEESECAKE };
-    this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, itemInventory: nextItems, wallet: nextWallet });
+    this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, itemInventory: nextItems });
     this.state.relicProgress = nextProgress;
     this.state.relicFragments = nextFragments;
     this.state.itemInventory = nextItems;
-    this.state.wallet = nextWallet;
     return { ...this.snapshot(), relicId, breakthrough: current2.breakthrough, levelCap: relicLevelCap(this.state.playerResearch.level), breakthroughGrade: breakthroughGrade(current2.breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend2.universal, resonance: resonance + 1 };
   }
   /**
@@ -48834,7 +48875,7 @@ var FakeServer = class {
     for (const relicId of this.state.owned) {
       const progress = this.state.relicProgress[relicId];
       const rarity = RELICS.find(({ id }) => id === relicId)?.rarity;
-      if (!progress || !rarity || progress.breakthrough >= BREAKTHROUGH_CAP || progress.level < (nextBreakthrough(progress.breakthrough)?.requiredLevel ?? Infinity)) continue;
+      if (!progress || !rarity || progress.breakthrough >= BREAKTHROUGH_CAP || progress.level < (SITUATIONAL_OFFER_RULES.breakthroughShortLevels[progress.breakthrough] ?? Infinity)) continue;
       const universal = this.state.itemInventory.find((stack) => stack.itemId === UNIVERSAL_FRAGMENT_ITEM[rarity])?.quantity ?? 0;
       if (!breakthroughFragmentSpend(rarity, progress.breakthrough, this.state.relicFragments[relicId] ?? 0, universal).enough) short.add(rarity);
     }
@@ -49201,7 +49242,7 @@ var FakeServer = class {
       const paymentUnavailable = this.paymentUnavailable(product);
       return {
         ...product,
-        visibleUntil: product.situational ? activeSituationalOffer(this.state.situationalOffers, product.id, now)?.expiresAt : this.productWindow(product).endsAt,
+        visibleUntil: product.situational ? activeSituationalOffer(this.state.situationalOffers, product.id, now)?.expiresAt : this.productWindow(product, now).endsAt,
         remaining,
         purchasable: remaining > 0 && !paymentUnavailable,
         disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : void 0,
@@ -49632,12 +49673,14 @@ var FakeServer = class {
   }
   /** 노출 판정은 클라이언트 시간이 아니라 주입 가능한 서버 시간만 사용한다. */
   /** 상품 노출 기간 — 서버 운영 일정(`live_schedule`)이 정의의 기간을 덮고, 배너에 묶인 상품은 그 배너 기간 안으로 줄인다. */
-  productWindow(product) {
+  productWindow(product, now) {
     const own = scheduledWindow("product", product.id, { startsAt: product.visibleFrom, endsAt: product.visibleUntil });
     const banner = product.bannerId !== void 0 ? BANNERS.find(({ id }) => id === product.bannerId) : void 0;
     if (product.bannerId === void 0) return own;
     if (!banner) return { enabled: false };
-    const linked = scheduledWindow("banner", banner.id, banner);
+    const scheduled = scheduledWindow("banner", banner.id, banner);
+    const rotating = !scheduled.overridden && inPickupRotation(banner.id);
+    const linked = !rotating ? scheduled : currentPickupBannerId(now.getTime()) !== banner.id ? { ...scheduled, enabled: false } : { ...scheduled, ...currentPickupWindow(now.getTime()) };
     const later = (a, b) => a === void 0 ? b : b === void 0 ? a : Date.parse(a) >= Date.parse(b) ? a : b;
     const earlier = (a, b) => a === void 0 ? b : b === void 0 ? a : Date.parse(a) <= Date.parse(b) ? a : b;
     const startsAt = later(own.startsAt, linked.startsAt);
@@ -49646,7 +49689,7 @@ var FakeServer = class {
   }
   isVisible(product, now) {
     if (product.situational) return activeSituationalOffer(this.state.situationalOffers, product.id, now) !== void 0;
-    if (!windowOpen({ ...this.productWindow(product), overridden: false }, now.getTime())) return false;
+    if (!windowOpen({ ...this.productWindow(product, now), overridden: false }, now.getTime())) return false;
     const slot = product.rotationSlot ? rotationSlot(product.rotationSlot) : void 0;
     return !product.rotationSlot || slot !== void 0 && rotationOffer(slot, this.productPeriodKey(product, now)) === product.id;
   }
@@ -50381,17 +50424,6 @@ var RelicProgressionManager = class {
   /** 지금 별(1~5). 화면은 돌파 단계가 아니라 이 값을 읽는다. */
   getBreakthroughGrade(relicId) {
     return breakthroughGrade(this.getProgress(relicId).breakthrough);
-  }
-  /**
-   * 지금 **켜져 있는** 돌파 단계(0~4). 레벨 초기화로 요구 레벨에 못 미치는 단계는 꺼진다(`activeBreakthrough`).
-   * 능력치·전투·스킬 액자의 `+`는 이 값을 읽는다.
-   */
-  getActiveBreakthrough(relicId) {
-    return activeBreakthroughOf(this.getProgress(relicId));
-  }
-  /** 뚫어 둔 돌파 중 꺼진 단계가 있는가 — 표식이 회색으로 선다. */
-  isBreakthroughDimmed(relicId) {
-    return this.getActiveBreakthrough(relicId) < this.getProgress(relicId).breakthrough;
   }
   /** 그 개체의 파편 보유량. 없으면 0이다 — 없는 개체를 위해 표를 만들지 않는다. */
   getFragments(relicId) {
@@ -51217,9 +51249,17 @@ var invalid = () => {
   throw new GuildApiError("INVALID_REQUEST", "INVALID_REQUEST");
 };
 var isJoinMode = (value) => value === "open" || value === "approval";
+var asGuildError = (error) => {
+  if (error instanceof GuildApiError || !(error instanceof Error)) return error;
+  const code = error.code;
+  const named = typeof code === "string" && isGuildErrorCode(code) ? code : isGuildErrorCode(error.message) ? error.message : void 0;
+  return named ? new GuildApiError(named) : error;
+};
 var isId = (value) => typeof value === "string" && value.length > 0 && value.length <= 64;
 function createSupabaseGuildBackend(call) {
-  const run2 = (actor, method, args = [], requestId = null) => call(actor, method, args, requestId);
+  const run2 = (actor, method, args = [], requestId = null) => call(actor, method, args, requestId).catch((error) => {
+    throw asGuildError(error);
+  });
   return {
     getGuild: (actor) => run2(actor, "getGuild"),
     searchGuilds: (actor, query) => run2(actor, "searchGuilds", [typeof query === "string" ? query.slice(0, 40) : ""]),

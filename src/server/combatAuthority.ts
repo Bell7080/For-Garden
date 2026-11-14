@@ -64,7 +64,7 @@ export function combatKey(input: CombatPrepare): string {
       : b.mode === "duel" ? `duel:${b.requestId}`
       : b.mode === "cake" || b.mode === "bounty"
         ? `${b.mode}:${b.requestId}`
-        : fail();
+        : fail("bad_mode");
 }
 
 /** 적·편성·성장·노드는 서버 저장과 정적 정의에서만 복원한다. */
@@ -76,7 +76,7 @@ export function prepareCombat(
 ): CombatLease {
   if (request?.input?.mode === "duel") {
     const key = combatKey(request), records = combatJournal(state), ticket = records.tickets[key];
-    if (!ticket?.duel || ticket.kind !== "duel") return fail();
+    if (!ticket?.duel || ticket.kind !== "duel") return fail("no_duel_ticket");
     const active = Object.values(records.records).find(row => combatKey(row.input) === key && Date.parse(row.lease.expiresAt) > now.getTime());
     if (active) return structuredClone(active.lease);
     const setup = structuredClone(ticket.duel.setup);
@@ -84,7 +84,7 @@ export function prepareCombat(
     if (request.automaticUltimates !== true && setup.options) delete setup.options.automaticUltimates;
     const lease: CombatLease = { id, seed: id, setup, expiresAt: new Date(now.getTime() + 3600000).toISOString() };
     records.records = Object.fromEntries(Object.entries(records.records).filter(([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()));
-    if (Object.keys(records.records).length >= 8) return fail();
+    if (Object.keys(records.records).length >= 8) return fail("too_many_leases");
     records.records[id] = { lease, input: structuredClone(request), issuedAt: now.toISOString() };
     return structuredClone(lease);
   }
@@ -93,7 +93,7 @@ export function prepareCombat(
     !request.input ||
     !["stage", "cake", "bounty", "expedition"].includes(request.input.mode)
   )
-    return fail();
+    return fail("bad_input");
   const records = combatJournal(state),
     input = structuredClone(request),
     key = combatKey(input),
@@ -109,15 +109,15 @@ export function prepareCombat(
   if (active) return structuredClone(active.lease);
   let b = input.input;
   const ticket = records.tickets[key];
-  if (mode !== "expedition" && !ticket) return fail();
+  if (mode !== "expedition" && !ticket) return fail("no_ticket");
   if (
     (b.mode === "stage" && ticket.target !== input.stageId) ||
     ((b.mode === "cake" || b.mode === "bounty") && ticket.target !== b.tierId)
   )
-    return fail();
+    return fail(`ticket_target:${ticket.target}`);
   if (b.mode === "bounty") {
     const bounty = b;
-    if (!Number.isInteger(b.round) || b.round < 0 || b.round > 2) return fail();
+    if (!Number.isInteger(b.round) || b.round < 0 || b.round > 2) return fail("bad_round");
     if (
       b.round > 0 &&
       !Object.values(records.records).some(
@@ -128,7 +128,7 @@ export function prepareCombat(
           row.verdict?.victory,
       )
     )
-      return fail();
+      return fail("round_locked");
   }
   if (b.mode === "expedition") {
     const expeditionInput = b;
@@ -144,7 +144,7 @@ export function prepareCombat(
       run.visitedNodeIds.includes(node.id) ||
       (!prev ? node.floor !== 1 : !prev.successorIds.includes(node.id))
     )
-      return fail();
+      return fail("expedition_node");
     b = {
       mode: "expedition",
       runId: run.runId,
@@ -166,7 +166,7 @@ export function prepareCombat(
     party.some((r) => !r || !state.owned.has(r)) ||
     new Set(party).size !== party.length
   )
-    return fail();
+    return fail("party");
   const progression = new RelicProgressionManager(state);
   const frozen =
     b.mode === "expedition"
@@ -205,7 +205,7 @@ export function prepareCombat(
   // 고대 지층은 달마다 명단·시련이 바뀐다 — 이 계정이 지금 서 있는 달로 적을 짓는다.
   setActiveAncientSeason(state.ancientSeason ?? "");
   const stage = getBattleStage(input.stageId ?? state.selectedStageId ?? "1-1");
-  if (b.mode === "stage" && (stage.ancientFloor !== undefined || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, state.cleared)) return fail();
+  if (b.mode === "stage" && (stage.ancientFloor !== undefined || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, state.cleared)) return fail("stage_locked");
   const cake = b.mode === "cake" ? getCakeOperationTier(b.tierId) : undefined;
   const enemies = cake
     ? cakeOperationEnemies(cake)
@@ -263,7 +263,7 @@ export function prepareCombat(
       ([, r]) => Date.parse(r.lease.expiresAt) > now.getTime(),
     ),
   );
-  if (Object.keys(records.records).length >= 8) return fail();
+  if (Object.keys(records.records).length >= 8) return fail("too_many_leases");
   records.records[id] = {
     lease: structuredClone(lease),
     input,

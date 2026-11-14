@@ -31,7 +31,7 @@ select public.purge_inactive_guests(180, false);
 ```
 
 정기 실행이 필요하면 승인된 일수로 pg_cron에 건다(예: `cron.schedule('purge-inactive-guests', '30 3 * * *', 'select public.purge_inactive_guests(180, false)')`).
-지금은 **예약하지 않았다.**
+2026-11-14 사용자 승인으로 운영에 **예약했다**: `purge-inactive-guests`, 매일 03:30 UTC(12:30 KST), 180일 기준, 활성 상태. QA에는 자동 삭제 예약을 등록하지 않았다. 적용·검증 기록은 [마이그레이션 기록](migrations-2026-11-14.md).
 
 ## 업계에서는
 

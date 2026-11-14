@@ -119,6 +119,66 @@
 "Beendete Forschung",
 "Завершённое исследование"
 ],
+"lab.history.tab.pickup": [
+"限定UP",
+"เรทอัปจำกัด",
+"Tăng tỉ lệ giới hạn",
+"Pickup Terbatas",
+"Destacado limitado",
+"Destaque limitado",
+"Limitiertes Pickup",
+"Ограниченный избранный"
+],
+"lab.history.tab.standard": [
+"常驻",
+"วิจัยถาวร",
+"Thường trực",
+"Standar",
+"Estándar",
+"Padrão",
+"Standard",
+"Постоянное"
+],
+"lab.history.tab.welcome": [
+"首次复原",
+"ฟื้นคืนครั้งแรก",
+"Phục hồi sơ khởi",
+"Restorasi Pertama",
+"Primera restauración",
+"Primeira restauração",
+"Erste Restaurierung",
+"Первое восстановление"
+],
+"lab.history.pickupName": [
+"{name} UP",
+"เรทอัป {name}",
+"Tăng tỉ lệ {name}",
+"Pickup {name}",
+"Destacado: {name}",
+"Destaque: {name}",
+"{name}-Pickup",
+"Избранный: {name}"
+],
+"lab.history.count": [
+"保底计数 {count} / {total}",
+"นับการันตี {count} / {total}",
+"Đếm bảo đảm {count} / {total}",
+"Hitungan jaminan {count} / {total}",
+"Contador de garantía {count} / {total}",
+"Contador de garantia {count} / {total}",
+"Garantiezähler {count} / {total}",
+"Счётчик гарантии {count} / {total}"
+],
+"lab.history.carryover": [
+"保底与UP必得将继承至下一期UP",
+"การันตีและเรทอัปการันตีจะยกไปยังเรทอัปถัดไป",
+"Bảo đảm và tăng tỉ lệ chắc chắn được chuyển sang đợt kế tiếp",
+"Jaminan dan pickup pasti terbawa ke pickup berikutnya",
+"La garantía y el destacado asegurado pasan al siguiente destacado",
+"A garantia e o destaque garantido passam para o próximo destaque",
+"Garantie und Pickup-Garantie gehen auf das nächste Pickup über",
+"Гарантия и избранный переносятся на следующий баннер"
+],
 "lab.mileageShop.short": [
 "里程",
 "ไมล์",

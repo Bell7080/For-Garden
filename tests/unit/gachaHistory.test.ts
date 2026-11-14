@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
-import { getBanner } from "../../src/data/banners";
+import { getBanner, researchBanners } from "../../src/data/banners";
 import { appendGachaHistory, GACHA_HISTORY_SLOT_LIMIT, gachaHistoryNewestFirst, gachaHistorySlotCount, isValidGachaHistory, normalizeGachaHistory, type GachaHistoryEntry } from "../../src/core/gachaHistory";
 import { canonicalJson } from "../../src/core/jsonShape";
 import { SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession } from "../../src/state/session";
-import { formatGachaHistoryTime, gachaHistoryRows, GACHA_HISTORY } from "../../src/ui/gachaHistoryLayout";
+import { formatGachaHistoryTime, gachaHistoryRows, gachaHistoryTabX, GACHA_HISTORY } from "../../src/ui/gachaHistoryLayout";
+import { gachaHistoryEntriesOf, gachaHistoryEntryTint, gachaHistoryPickupRelicId, gachaHistorySectionOfBanner, gachaHistorySummary, visibleGachaHistorySections } from "../../src/ui/gachaHistorySections";
 
 function entry(count: 1 | 10, at = "2026-11-11T09:00:00.000Z"): GachaHistoryEntry {
   return { at, bannerId: "fossil", count, cost: { fossil: count }, pity: 3, slots: Array.from({ length: count }, () => ({ kind: "relic" as const, relicId: "torika" })) };
@@ -66,5 +67,45 @@ describe("연구 기록", () => {
     const L = GACHA_HISTORY;
     expect(height).toBe(L.header.height * 2 + L.header.gap * 2 + L.slot.height * 11 + L.groupGap);
     expect(formatGachaHistoryTime("2026-11-11T09:05:00")).toBe("2026.11.11 09:05");
+  });
+});
+
+describe("연구 기록 — 뽑기별 갈래", () => {
+  const banners = researchBanners(true);
+  const at = (bannerId: string): GachaHistoryEntry => ({ ...entry(1), bannerId });
+
+  it("천장 그룹을 따라 상시·한정 픽업·첫 복원으로 가르고, 두 픽업은 한 갈래다", () => {
+    expect(gachaHistorySectionOfBanner("fossil", banners)).toBe("standard");
+    expect(gachaHistorySectionOfBanner("amber", banners)).toBe("pickup");
+    expect(gachaHistorySectionOfBanner("moonlit", banners)).toBe("pickup");
+    expect(gachaHistorySectionOfBanner("welcome", banners)).toBe("welcome");
+    const entries = [at("moonlit"), at("fossil"), at("amber")];
+    expect(gachaHistoryEntriesOf("pickup", entries, banners).map((item) => item.bannerId)).toEqual(["moonlit", "amber"]);
+  });
+
+  it("첫 복원 탭은 기록이 있거나 그 배너를 볼 때만 선다", () => {
+    expect(visibleGachaHistorySections([at("fossil")], banners, "standard")).toEqual(["pickup", "standard"]);
+    expect(visibleGachaHistorySections([at("welcome")], banners, "standard")).toEqual(["pickup", "standard", "welcome"]);
+    expect(visibleGachaHistorySections([], banners, "welcome")).toEqual(["pickup", "standard", "welcome"]);
+  });
+
+  it("탭 머리 판은 그 갈래의 천장 그룹 값을 읽고, 한정 픽업만 이월을 말한다", () => {
+    const pity = { [getBanner("amber").pityGroupId]: { pullsSinceSsr: 83, pickupGuaranteed: true }, [getBanner("fossil").pityGroupId]: { pullsSinceSsr: 5, pickupGuaranteed: false } };
+    expect(gachaHistorySummary("pickup", banners, pity)).toEqual({ count: 83, total: 120, left: 37, pickupNext: true, carriesOver: true });
+    expect(gachaHistorySummary("standard", banners, pity)).toEqual({ count: 5, total: 120, left: 115, pickupNext: false, carriesOver: false });
+  });
+
+  it("디안·플레샤 픽업은 머리줄 색과 얼굴로 갈린다", () => {
+    expect(gachaHistoryEntryTint("amber", banners).accent).not.toBe(gachaHistoryEntryTint("moonlit", banners).accent);
+    expect(gachaHistoryPickupRelicId("amber", banners)).toBe("dian");
+    expect(gachaHistoryPickupRelicId("moonlit", banners)).toBe("plesha");
+    expect(gachaHistoryPickupRelicId("fossil", banners)).toBeUndefined();
+  });
+
+  it("갈래 탭은 창 안에 들고 오른쪽 아래 구석(뒤로가기 자리)과 겹치지 않는다", () => {
+    const last = gachaHistoryTabX(2) + GACHA_HISTORY.tabs.width / 2;
+    expect(last).toBeLessThanOrEqual(GACHA_HISTORY.width / 2 - GACHA_HISTORY.padding);
+    expect(GACHA_HISTORY.summary.top + GACHA_HISTORY.summary.height).toBeLessThan(GACHA_HISTORY.viewportTop);
+    expect(GACHA_HISTORY.height - GACHA_HISTORY.viewportBottom).toBeLessThan(GACHA_HISTORY.height - GACHA_HISTORY.tabs.bottom - GACHA_HISTORY.tabs.height / 2);
   });
 });

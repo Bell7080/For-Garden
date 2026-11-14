@@ -12,11 +12,18 @@ export const GACHA_HISTORY = {
   padding: 40,
   /** 창 윗변에서 머리글(최근 N건) 줄까지. 제목표가 윗변에 걸터앉으므로 그만큼 비운다. */
   captionY: 74,
+  /**
+   * 탭 머리 판 — 그 갈래의 지금 천장(확정까지 남은 수 · 카운트 · 픽업 확정 · 이월). 목록과 함께 흐르지 않는다 —
+   * 기록을 내려 읽는 동안에도 「이 천장이 어느 연구의 것인가」가 위에 남아야 한다.
+   */
+  summary: { top: 112, height: 150, leftSize: 46, unitSize: 26, lineSize: 23 },
   /** 창 윗변에서 흐르는 목록 창 윗변까지. */
-  viewportTop: 116,
-  /** 창 밑변에서 흐르는 목록 창 밑변까지. */
-  viewportBottom: 40,
-  header: { height: 100, gap: 14, titleSize: 30, subSize: 23, dateSize: 23 },
+  viewportTop: 280,
+  /** 창 밑변에서 흐르는 목록 창 밑변까지 — 그 사이에 갈래 탭이 선다. */
+  viewportBottom: 140,
+  /** 갈래 탭 — 목록 아래, 왼쪽부터(오른쪽 아래 구석은 판 밖 뒤로가기의 자리다). 창 밑변에서 탭 줄 가운데까지. */
+  tabs: { bottom: 70, width: 262, height: 76, gap: 12 },
+  header: { height: 100, gap: 14, titleSize: 30, subSize: 23, dateSize: 23, face: 72, band: 8 },
   slot: { height: 82, icon: 66, indent: 26, nameSize: 28, tagSize: 22, tierSize: 26 },
   /** 묶음과 묶음 사이. */
   groupGap: 26,
@@ -60,4 +67,10 @@ export function formatGachaHistoryTime(iso: string): string {
   if (Number.isNaN(date.getTime())) return "";
   const pad = (value: number): string => String(value).padStart(2, "0");
   return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** 갈래 탭 `index`의 가운데 x(창 가운데 기준). */
+export function gachaHistoryTabX(index: number): number {
+  const { width, padding, tabs } = GACHA_HISTORY;
+  return -width / 2 + padding + tabs.width / 2 + index * (tabs.width + tabs.gap);
 }

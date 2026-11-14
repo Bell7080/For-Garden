@@ -10,7 +10,7 @@ import { drainFerocityFever, FEROCITY_RULES, feverDrainPerSecond, ferocityMaxOf,
 import { isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
 import { ENCOUNTER_ROLE, encounterRampFactor, type EncounterDamageReduction, type EncounterTenacity } from "./levelDesign";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, flatStatPoints, highHpDamageMultiplier, lowHpDamageMultiplier, nthBasicBonusMultiplier, openingCritCount, periodicCritEvery, sameTargetStreakMultiplier, shieldedDamageMultiplier, warmUpAttackSpeedPercent, type ExpeditionAugmentEffect, type FlatStatKind, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
-import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, Passive, ReachTier, RelicDef, Role, Side, Skill, Stats, TeamBuff } from "./types";
+import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, Passive, ReachTier, RelicDef, Role, Side, Skill, Stats, TeamBuff, DeepCleanBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX, ultimateEnergyCap } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
 import { PUP } from "./pup";
@@ -373,7 +373,7 @@ export interface Fighter extends Combatant {
    */
   volley: { remaining: number; total: number; hitCount: number; attackSpeedPercent: number } | null;
   /** 「대청소」(아르테)가 남긴 강화 — 방어력·저항력 증가와 돌파가 얹은 공격 속도. 순풍 슬롯과 따로 선다. */
-  scrub: { remaining: number; total: number; defenseResistancePercent: number; attackSpeedPercent: number; sourceId: string } | null;
+  scrub: { remaining: number; total: number; defenseResistancePercent: number; sourceId: string } | null;
   /** 「뒷정리」(아르테)가 센 일반 공격 행동 수. 주기에 닿으면 0으로 돌아간다. */
   tidyCount: number;
   /** 「강력 세척」(아르테 평타 돌파)이 센 일반 공격 행동 수. */
@@ -2170,12 +2170,7 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
     const extra = caster ? extraChapterStacks(caster) : 0;
     refreshCurse(fighter, { ...effect, seconds: effect.seconds * potency, maxStacks: effect.maxStacks + extra });
   }
-  if (effect.kind === "chill") {
-    // 「깃털 먼지」(아르테 폭주) — 폭주한 시전자의 둔화는 한 번에 여러 겹씩 쌓인다.
-    const caster = sourceId ? findFighter(state, sourceId) : undefined;
-    const dust = caster?.ferocityFever && caster.def.ferocityTrait.effectId === "featherDust" ? caster.def.ferocityTrait.chillStacksPerHit : 1;
-    refreshChill(fighter, effect, dust);
-  }
+  if (effect.kind === "chill") refreshChill(fighter, effect);
   if (effect.kind === "drowsy" && sourceId) applyDrowsy(fighter, { ...effect, sleepSeconds: effect.sleepSeconds * potency }, events, state, sourceId);
   if (effect.kind === "intimidate" && sourceId) applyIntimidate(fighter, effect, events, state, sourceId, true);
   if (effect.kind === "fear" && sourceId) applyFear(fighter, effect.seconds, effect.immunitySeconds, events, state, sourceId, false);
@@ -5948,9 +5943,7 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       targetFighterId: fighter.id,
       skillId: source?.def.ultimate.id ?? "scrub",
       name: source?.def.ultimate.name ?? "",
-      description: fighter.scrub.attackSpeedPercent > 0
-        ? `방어력·저항력 +${fighter.scrub.defenseResistancePercent}% · 공격 속도 +${fighter.scrub.attackSpeedPercent}%`
-        : `방어력·저항력 +${fighter.scrub.defenseResistancePercent}%`,
+      description: `방어력·저항력 +${fighter.scrub.defenseResistancePercent}%`,
       timing: { kind: "timed", remainingSeconds: fighter.scrub.remaining, totalSeconds: fighter.scrub.total },
     });
   }
@@ -6167,8 +6160,6 @@ function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: numb
   const tailwindPercent = fighter.tailwindFor > 0 ? fighter.tailwind?.attackSpeedPercent ?? 0 : 0;
   // 쏟아붓기는 자기 궁극기가 건 시간제한 강화라 같은 자리에서 곱한다.
   const volleyPercent = fighter.volley?.attackSpeedPercent ?? 0;
-  // 「마무리 광택」(아르테 궁극기 돌파) — 대청소가 도는 동안 함께 오른 공격 속도.
-  const scrubPercent = fighter.scrub?.attackSpeedPercent ?? 0;
   // 시약 도핑은 폭주한 제공자 자신의 손만 빠르게 하며 팀 오라로 퍼지지 않는다.
   const reagentDopingPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "reagentDoping"
     ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
@@ -6196,7 +6187,7 @@ function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: numb
   const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
   const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100)
-    * (1 + volleyPercent / 100) * (1 + scrubPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
+    * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
     * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100);
   return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed + ingredientHastePoints(fighter), boost: boostFactor, slow: slowFactor };
 }
@@ -9367,6 +9358,20 @@ function refillNow(fighter: Fighter, state?: SkirmishState): void {
 }
 
 /**
+ * 「대청소」가 아군에게 남기는 몫. 주문력 비례 막을 두르고 그 시간 동안 방어·저항을 올린다.
+ * 궁극기 돌파(`spotlessFinish`)가 열려 있으면 막을 두르기 전에 해로운 효과를 모두 걷는다.
+ */
+function applyAllyScrub(attacker: Fighter, clean: DeepCleanBuff, state: SkirmishState, events: SkirmishEvent[]): void {
+  const spotless = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate)?.kind === "spotlessFinish";
+  for (const ally of aliveFighters(state, attacker.side)) {
+    if (spotless) cleanseAllDebuffs(ally);
+    grantShield(state, ally, attacker.id, Math.max(1, Math.round(attacker.def.stats.ap * clean.shieldPower / 100)), events);
+    ally.scrub = { remaining: clean.seconds, total: clean.seconds, defenseResistancePercent: clean.defenseResistancePercent, sourceId: attacker.id };
+    events.push({ kind: "teamBuff", fighterId: ally.id, buff: clean, sourceId: attacker.id });
+  }
+}
+
+/**
  * 원형 광역 기본 공격 또는 궁극기를 한 번 실행한다.
  *
  * "주위"는 시전자 중심 px 반경이고, battlefieldEnemies만 좌표와 무관한 전장 전체다. 공격 시작 전에 대상을
@@ -9654,6 +9659,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       if (shield > 0) grantShield(state, ally, attacker.id, shield, events);
     }
   }
+  // 「대청소」(아르테) — 원을 쓸어 낸 뒤 생존 아군 전원에게 막과 방어·저항 강화를 남긴다.
+  if (useUltimate && ultimate && "allyScrub" in ultimate && ultimate.allyScrub) applyAllyScrub(attacker, ultimate.allyScrub, state, events);
   if (useUltimate && attacker.def.passive.starfall) healFromStarfall(attacker, ultimateMeteorDealt, attacker.def.passive.starfall, state, events);
   // 투사체가 떨어진 자리도 한 번의 기본 공격으로 센다 — 유성은 그 낙하 지점에 예약된다.
   if (!useUltimate && !followUp && !free) callStarfall(attacker, center, rng);
@@ -10942,20 +10949,6 @@ function fireUltimateCore(
     attacker.energy -= ultimateCost(state, attacker, true);
     // 궁극기 돌파(`gustEnergy`) — 지나가는 바람이 아군 전원에게 게이지를 한 번 건넨다. 시전 한 번에 한 번이다.
     const gust = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
-    const clean = teamUltimate.teamBuff;
-    if (clean.kind === "deepClean") {
-      // 「대청소」 — 아군 전원의 해로운 효과를 걷고, 주문력 비례 막을 두르고, 그 시간 동안 방어·저항을 올린다.
-      const polish = gust?.kind === "finishingPolish" ? gust.attackSpeedPercent : 0;
-      for (const ally of aliveFighters(state, attacker.side)) {
-        cleanseAllDebuffs(ally);
-        grantShield(state, ally, attacker.id, Math.max(1, Math.round(attacker.def.stats.ap * clean.shieldPower / 100)), events);
-        ally.scrub = { remaining: clean.seconds, total: clean.seconds, defenseResistancePercent: clean.defenseResistancePercent,
-          attackSpeedPercent: polish, sourceId: attacker.id };
-        events.push({ kind: "teamBuff", fighterId: ally.id, buff: clean, sourceId: attacker.id });
-      }
-      attacker.attackCooldown = attackInterval(attacker, state);
-      return events;
-    }
     for (const ally of aliveFighters(state, attacker.side)) {
       applyTeamBuff(ally, teamUltimate.teamBuff);
       events.push({ kind: "teamBuff", fighterId: ally.id, buff: teamUltimate.teamBuff, sourceId: attacker.id });

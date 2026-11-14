@@ -4530,15 +4530,16 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 한계 돌파: 강력 세척 · 마무리 광택 · 보호복 착용 · 프로의 손길.
+    // 한계 돌파: 강력 세척 · 티끌 하나 없이 · 보호복 착용 · 프로의 손길.
     breakthroughEffects: {
       basic: { kind: "powerWash", every: 3, knockback: { seconds: 0.6, speed: 1100, bounces: 1 } },
-      ultimate: { kind: "finishingPolish", attackSpeedPercent: 20 },
+      // 대청소가 막을 두르기 전에 아군 전원의 해로운 효과를 걷는다 — 기본 궁극기에서 덜어 낸 정화가 돌파로 돌아온다.
+      ultimate: { kind: "spotlessFinish" },
       ferocity: { kind: "protectiveGear", shieldMaxHpPercent: 30 },
       // 두 명에게 들어가는 만큼 한 명당 몫을 덜어 총량이 두 배가 되지 않게 한다.
       passive: { kind: "proTouch", targets: 2, healPercent: 75 },
     },
-    ferocityTrait: { name: "깃털 먼지", effectId: "featherDust", tidyEvery: 2, chillStacksPerHit: 2 },
+    ferocityTrait: { name: "깃털 먼지", effectId: "featherDust", tidyEvery: 2 },
     passive: {
       // kind가 tidyUp인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -4565,16 +4566,24 @@ export const RELICS: RelicDef[] = [
       breaksShield: true,
       // 날려버림이 아니라 짧게 밀어내는 것이라 강인함 경계를 지나는 자리 옮기기만 한다.
       push: { distance: 60 },
-      statusEffects: [{ kind: "chill", speedPercentPerStack: 8, maxStacks: 3, seconds: 3 }],
+      // 둔화는 걷어 냈다(응태 2026-11-14) — 미는 걸음과 막 깨기만으로 자리를 정리한다.
     },
     ultimate: {
       id: "arte-ult",
       name: "대청소",
-      iconAssetId: "skill-icon-buff",
-      effectType: "buff",
+      /*
+       * 지정한 원을 한 번에 쓸어 내는 강한 광역이다(도디 궁극기와 같은 원 · 같은 반경). 해로운 효과를 걷던 몫은
+       * 궁극기 돌파(`spotlessFinish`)로 옮겼고, 그 자리를 피해가 채운다. 막과 방어·저항 강화는 그대로 아군에게 남는다.
+       */
+      power: 240,
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      scalingStat: "ap",
       cost: 110,
-      targeting: "battlefieldAllies",
-      teamBuff: { kind: "deepClean", shieldPower: 160, defenseResistancePercent: 20, seconds: 4 },
+      targeting: "targetedCircle",
+      radius: 360,
+      allyScrub: { kind: "deepClean", shieldPower: 160, defenseResistancePercent: 20, seconds: 4 },
     },
   },
   {

@@ -483,6 +483,7 @@ export const MISC_VI = {
   "stageMap.subRead": "Đã đọc",
   "title.switchAccount": "Đổi tài khoản",
   "title.switchAccount.body": "Bắt đầu với tài khoản khác. Bản lưu cục bộ trên thiết bị sẽ bị xóa. Tiến trình đã liên kết máy chủ được giữ lại.",
+  "title.switchAccount.guestBody": "Tài khoản khách không thể đăng nhập lại sau khi rời thiết bị này, nên tiến trình sẽ bị xóa vĩnh viễn. Để giữ tiến trình, hãy liên kết tài khoản trong Cài đặt trước.",
   "profile.edit.frameGift": "Giới hạn",
   "profile.unlock.gift.firstPayment": "Nhận từ Quà nạp lần đầu",
   "profile.unlock.gift.seasonPass": "Thưởng Season Pass bậc 30",

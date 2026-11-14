@@ -505,6 +505,7 @@ export const MISC_JA = {
   "stageMap.subRead": "既読",
   "title.switchAccount": "アカウント切替",
   "title.switchAccount.body": "別のアカウントで開始します。この端末のローカルセーブは削除されます。サーバー連携済みの進行は保持されます。",
+  "title.switchAccount.guestBody": "ゲストアカウントはこの端末を離れると再びログインできず、進行は完全に削除されます。進行を残すには、先に設定でアカウントを連携してください。",
   "profile.edit.frameGift": "限定",
   "profile.unlock.gift.firstPayment": "初回決済ギフトで受け取れます",
   "profile.unlock.gift.seasonPass": "シーズンパス30段階報酬",

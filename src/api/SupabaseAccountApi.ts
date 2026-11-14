@@ -91,6 +91,14 @@ export class SupabaseAccountApi implements AccountApi {
     return this.tokens !== null;
   }
 
+  /** 이 기기에 든 계정이 게스트인지 연동 계정인지. 네트워크를 쓰지 않는다(계정 변경 확인 창의 경고 문구를 고른다). */
+  async sessionKind(): Promise<AccountState["kind"] | null> {
+    try {
+      const loaded = this.tokens ?? await this.options.store.load();
+      return loaded ? stateOf(loaded).kind : null;
+    } catch { return null; }
+  }
+
   /** 가장 최근 인증 실패의 짧은 진단 문자열이다(토큰·키는 담지 않는다). 연결 실패 안내의 진단 코드로 쓴다. */
   lastFailure(): string { return this.failure; }
 
@@ -211,14 +219,34 @@ export class SupabaseAccountApi implements AccountApi {
   async mergeGuestSave(_request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>> { return fail("guest-merge-unavailable", t("error.account.mergeUnavailable")); }
 
   async logout(): Promise<AccountResult<AccountState>> {
+    const known = this.tokens;
     this.authGeneration++;
     this.tokens = null; this.pending = null; this.pendingRegistration = undefined;
     const pending = this.writeTokens(null);
     this.logoutPending = pending;
     try { await pending; } catch { return fail("network-error", t("error.account.logoutFailed")); }
     finally { if (this.logoutPending === pending) this.logoutPending = null; }
+    if (known && isAnonymous(known)) await this.abandonGuest(known);
     // 새 게스트를 여기서 만들지 않는다 — 로그아웃 뒤에는 타이틀이 로그인 선택(게스트·아이디 계정)을 보여 준다.
     return { ok: true, value: { kind: "guest", provider: "guest", maskedId: "GUEST-••••" } };
+  }
+
+  /**
+   * 게스트는 이 기기의 토큰이 유일한 열쇠라 로그아웃하면 다시 들어올 길이 없다 — 서버에 포기를 알려 친구·랭킹에서 감추고
+   * 유예 뒤 지우게 한다(`abandon_guest_account`, 게스트인지는 서버의 auth.users가 다시 판정한다). 로그아웃 경합 규칙을
+   * 건드리지 않도록 토큰을 이미 지운 뒤 손에 든 토큰으로 한 번만 보내고, 실패해도 로그아웃은 성공이다 — 그때 남는 계정은
+   * 오래 안 들어온 게스트 정리(`purge_inactive_guests`)가 거둔다.
+   */
+  private async abandonGuest(tokens: StoredTokens): Promise<void> {
+    if (tokens.expiresAtMs <= this.now()) return;
+    try {
+      await this.fetchImpl(`${this.options.url}/rest/v1/rpc/abandon_guest_account`, {
+        method: "POST",
+        headers: { apikey: this.options.key, Authorization: `Bearer ${tokens.accessToken}`, "Content-Type": "application/json" },
+        body: "{}",
+        signal: timeoutSignal(5000),
+      });
+    } catch { /* 위 주석 — 로그아웃을 막지 않는다. */ }
   }
 
   async registerWithId(id: string, password: string): Promise<AccountResult<AccountState>> {

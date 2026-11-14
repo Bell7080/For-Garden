@@ -728,8 +728,16 @@ export class TitleScene extends Phaser.Scene {
    */
   private confirmSwitchAccount(): void {
     if (!this.popups) return;
+    // 게스트는 이 기기를 떠나면 다시 들어올 길이 없고 서버에서도 지워진다 — 확인 창이 그 말을 먼저 한다.
+    void (accountApi.sessionKind?.() ?? Promise.resolve(null)).catch(() => null).then((kind) => {
+      if (this.scene.isActive()) this.openSwitchAccountConfirm(kind === "guest");
+    });
+  }
+
+  private openSwitchAccountConfirm(guest: boolean): void {
+    if (!this.popups) return;
     this.popups.confirm(
-      { title: t("title.switchAccount"), message: t("title.switchAccount.body"), confirmLabel: t("title.switchAccount"), destructive: true },
+      { title: t("title.switchAccount"), message: t(guest ? "title.switchAccount.guestBody" : "title.switchAccount.body"), confirmLabel: t("title.switchAccount"), destructive: true },
       () => {
         void accountApi.logout().then((result) => {
           if (!this.scene.isActive()) return;

@@ -378,6 +378,7 @@ export const MISC_KO = {
   "title.login.email": "이메일로 계속",
   "title.switchAccount": "계정 변경",
   "title.switchAccount.body": "다른 계정으로 시작합니다. 이 기기의 로컬 저장 데이터가 삭제됩니다. 서버에 연동된 진행은 유지됩니다.",
+  "title.switchAccount.guestBody": "게스트 계정은 이 기기를 떠나면 다시 들어올 수 없어 진행이 영구히 삭제됩니다. 진행을 지키려면 먼저 환경설정에서 계정을 연동해 주세요.",
   "title.gate.maintenance.title": "점검 중",
   "title.gate.maintenance.default": "서버 점검 중입니다. 잠시 후 다시 시도해 주세요.",
   "title.gate.maintenance.until": "종료 예정: {time}",

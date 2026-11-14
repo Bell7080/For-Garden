@@ -332,7 +332,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   }
   if (trait.effectId === "restraintCollapse") return t("skill.ferocity.restraintCollapse");
   if (trait.effectId === "meteorShower") return t("skill.ferocity.meteorShower", { every: trait.starfallEvery, percent: trait.radiusBonusPercent });
-  if (trait.effectId === "featherDust") return t("skill.ferocity.featherDust", { every: trait.tidyEvery, stacks: trait.chillStacksPerHit });
+  if (trait.effectId === "featherDust") return t("skill.ferocity.featherDust", { every: trait.tidyEvery });
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? ""
@@ -1031,14 +1031,6 @@ export function skillDescription(
       const volley = skill.selfVolley;
       return t("skill.sentence.volley", { seconds: volley.seconds, hits: volley.hitCount, percent: volley.attackSpeedPercent });
     }
-    // 아군을 모두 씻기고 막을 두르는 궁극기. 방어·저항은 받는 아군마다 다르므로 %로 적는다.
-    if ("teamBuff" in skill && skill.teamBuff?.kind === "deepClean") {
-      const buff = skill.teamBuff;
-      const shield = stats.ap === undefined
-        ? t("skill.sentence.deepClean.shieldPercent", { percent: buff.shieldPower })
-        : valueTag("shield", "ap", buff.shieldPower, stats.ap);
-      return t("skill.sentence.deepClean", { shield, seconds: buff.seconds, percent: buff.defenseResistancePercent });
-    }
     // 듀오 한 명에게만 거는 지시. 대상이 전장 전체가 아니라는 것부터 말한다.
     if ("teamBuff" in skill && skill.teamBuff?.kind === "order") {
       const buff = skill.teamBuff;
@@ -1248,6 +1240,15 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
       ? t("skill.clause.allyHealing.percent", { percent: skill.allyHealingPower })
       : t("skill.clause.allyHealing.amount", { amount: valueTag("heal", "ap", skill.allyHealingPower, stats.ap) });
     clauses.push({ text: t("skill.clause.allyHealing", { heal: healText }), joinWithComma: true });
+  }
+  // 「대청소」 — 쓸어 낸 뒤 아군 전원에게 남기는 막과 강화. 주어가 아군으로 바뀌는 절이라 제 문장으로 선다.
+  // 방어·저항은 받는 아군마다 오르는 양이 달라 %로 적는다.
+  if ("allyScrub" in skill && skill.allyScrub !== undefined) {
+    const buff = skill.allyScrub;
+    const shield = stats.ap === undefined
+      ? t("skill.clause.deepClean.shieldPercent", { percent: buff.shieldPower })
+      : valueTag("shield", "ap", buff.shieldPower, stats.ap);
+    clauses.push({ text: t("skill.clause.deepClean", { shield, seconds: buff.seconds, percent: buff.defenseResistancePercent }), standalone: true });
   }
   if ("selfShieldMaxHpPercent" in skill && skill.selfShieldMaxHpPercent !== undefined) {
     // 주어가 시전자로 바뀌는 절이라 제 문장으로 선다. 능력치를 알면 실제 값으로, 모르면 비율로 적는다.
@@ -1684,7 +1685,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "cageIn") return t("skill.breakthrough.effect.ultimate.cageIn", { name: def.ultimate.name, seconds: trim(effect.tauntSeconds) });
     if (effect.kind === "dustCloud") return t("skill.breakthrough.effect.ultimate.dustCloud", { name: def.ultimate.name, stacks: trim(effect.stacks) });
     if (effect.kind === "fullLining") return t("skill.breakthrough.effect.ultimate.fullLining", { name: def.ultimate.name });
-    if (effect.kind === "finishingPolish") return t("skill.breakthrough.effect.ultimate.finishingPolish", { name: def.ultimate.name, percent: trim(effect.attackSpeedPercent) });
+    if (effect.kind === "spotlessFinish") return t("skill.breakthrough.effect.ultimate.spotlessFinish", { name: def.ultimate.name });
     // 피해량의 몇 %는 **명중 시점의 상대값**이라 실제 수로 바꾸지 않는다(대상마다 달라진다).
     return t("skill.breakthrough.effect.ultimate", {
       percent: trim(effect.powerPercent), name: def.ultimate.name,

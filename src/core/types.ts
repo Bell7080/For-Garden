@@ -338,6 +338,12 @@ export type AttackSkill = SkillBase & {
    * 지원가의 막이 제 몸에 고이지 않게 덜어 두는 손잡이다 — 덜어 낸 만큼 다른 아군의 몫이 커진다.
    */
   allyShieldSelfWeight?: number;
+  /**
+   * 「대청소」(아르테). 이 기술을 쏘면 생존 아군 전원에게 시전자 주문력 비례 보호막을 두르고 그 시간 동안 방어력·저항력을
+   * 올린다. 피해는 이 기술 자신의 몫이고, 이 계약은 적이 아니라 아군에게 남는 덤이다. 해로운 효과를 걷는 일은 하지 않는다 —
+   * 그것은 궁극기 돌파(`spotlessFinish`)의 몫이다.
+   */
+  allyScrub?: DeepCleanBuff;
   healing?: never;
   teamBuff?: never;
   selfSetup?: never;
@@ -630,7 +636,8 @@ export type TeamBuff =
     }
   | {
       /**
-       * 「대청소」(아르테). 아군 전원의 해로운 효과를 걷고 주문력 비례 보호막을 두르며, 그 시간 동안 방어력·저항력을 올린다.
+       * 「대청소」(아르테). 아군 전원에게 주문력 비례 보호막을 두르며, 그 시간 동안 방어력·저항력을 올린다.
+       * 공격 궁극기의 덤(`AttackSkill.allyScrub`)으로 실린다.
        *
        * 순풍·오더·공명과 **다른 슬롯**(`Fighter.scrub`)에 선다 — 같은 칸을 쓰면 스테라의 순풍과 서로 덮어쓴다.
        */
@@ -643,6 +650,9 @@ export type TeamBuff =
       seconds: number;
       attackSpeedPercent?: never;
     };
+
+/** 「대청소」가 아군에게 남기는 막·방어 강화 한 벌. */
+export type DeepCleanBuff = Extract<TeamBuff, { kind: "deepClean" }>;
 
 /** 모든 스킬의 판별 유니온이며 `damageType in skill`로 공격 여부를 좁힌다. */
 export type Skill = AttackSkill | HealingSkill | SupportSkill | SetupSkill;
@@ -1559,10 +1569,9 @@ export type FerocityTrait = {
     }
   | { effectId: "damageReduction"; reductionPercent: number }
   | {
-      /** 「깃털 먼지」(아르테) — 폭주 동안 「뒷정리」 주기가 `tidyEvery`로 줄고, 일반 공격의 둔화가 한 번에 `chillStacksPerHit`겹씩 쌓인다. */
+      /** 「깃털 먼지」(아르테) — 폭주 동안 「뒷정리」 주기가 `tidyEvery`로 준다. */
       effectId: "featherDust";
       tidyEvery: number;
-      chillStacksPerHit: number;
     }
   | {
       /** 토리카 전용 탱커 폭주. 정적 종족값을 바꾸지 않고 전투 계산에만 투영한다. */
@@ -3299,9 +3308,8 @@ export type UltimateBreakthrough = {
    */
   kind: "fullLining";
 } | {
-  /** 「대청소」가 같은 시간 동안 아군 전원의 공격 속도도 이 비율만큼 올린다(아르테 「마무리 광택」). */
-  kind: "finishingPolish";
-  attackSpeedPercent: number;
+  /** 「대청소」가 막을 두르기 전에 생존 아군 전원의 해로운 효과를 모두 걷는다(아르테 「티끌 하나 없이」). */
+  kind: "spotlessFinish";
 } | {
   /** 궁극기를 쏘기 직전 소환수가 살아 있으면 표적에 관측이 이 수만큼 먼저 쌓인다(모르페). */
   kind: "jointObservation";

@@ -154,7 +154,7 @@ const CATEGORY: Record<EffectKind, Category> = {
   stitchedMight: "damage",
   // 아르테 — 청소
   powerWash: "control",
-  finishingPolish: "support",
+  spotlessFinish: "support",
   protectiveGear: "survival",
   proTouch: "support",
   poisonPulse: "damage",

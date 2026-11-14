@@ -483,6 +483,7 @@ export const MISC_DE = {
   "stageMap.subRead": "Gelesen",
   "title.switchAccount": "Konto wechseln",
   "title.switchAccount.body": "Mit anderem Konto starten. Lokale Speicherdaten auf diesem Gerät werden gelöscht. Mit dem Server verknüpfter Fortschritt bleibt erhalten.",
+  "title.switchAccount.guestBody": "Ein Gastkonto lässt sich nach dem Verlassen dieses Geräts nicht wieder öffnen, der Fortschritt wird dauerhaft gelöscht. Um ihn zu behalten, verknüpfe zuerst in den Einstellungen ein Konto.",
   "profile.edit.frameGift": "Limitiert",
   "profile.unlock.gift.firstPayment": "Erhältlich als Erstkauf-Geschenk",
   "profile.unlock.gift.seasonPass": "Saisonpass-Belohnung Stufe 30",

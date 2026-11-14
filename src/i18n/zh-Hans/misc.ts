@@ -483,6 +483,7 @@ export const MISC_ZH_HANS = {
   "stageMap.subRead": "已读",
   "title.switchAccount": "切换账号",
   "title.switchAccount.body": "使用其他账号开始。此设备的本地存档将被删除，已关联服务器的进度会保留。",
+  "title.switchAccount.guestBody": "访客账号离开此设备后将无法再次登录，进度会被永久删除。如需保留进度，请先在设置中关联账号。",
   "profile.edit.frameGift": "限定",
   "profile.unlock.gift.firstPayment": "通过首次付费礼物获得",
   "profile.unlock.gift.seasonPass": "赛季通行证第30级奖励",

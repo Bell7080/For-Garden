@@ -319,3 +319,29 @@ describe('로그아웃과 토큰 갱신 경합',()=>{
   expect(store.value).toBeNull();expect(await api.hasSession()).toBe(false);
  });
 });
+
+describe("게스트 로그아웃은 서버에 계정 포기를 알린다", () => {
+  const jwt = (claims: Record<string, unknown>) => `h.${Buffer.from(JSON.stringify(claims)).toString("base64url")}.s`;
+  it("게스트는 토큰을 지운 뒤 abandon_guest_account를 한 번 부른다", async () => {
+    const { api, store, calls } = setup(() => json({ ok: true }));
+    store.value = { accessToken: jwt({ is_anonymous: true }), refreshToken: "r", expiresAtMs: 2_000_000, userId: "u" };
+    await api.getState();
+    expect((await api.logout()).ok).toBe(true);
+    expect(store.value).toBeNull();
+    expect(calls.filter((c) => c.path === "/rest/v1/rpc/abandon_guest_account")).toHaveLength(1);
+  });
+  it("연동 계정은 로그아웃해도 부르지 않는다", async () => {
+    const { api, store, calls } = setup(() => json({ ok: true }));
+    store.value = { accessToken: jwt({ is_anonymous: false, email: "a@b.c" }), refreshToken: "r", expiresAtMs: 2_000_000, userId: "u" };
+    await api.getState();
+    expect((await api.logout()).ok).toBe(true);
+    expect(calls.some((c) => c.path.includes("abandon_guest_account"))).toBe(false);
+  });
+  it("서버가 실패해도 로그아웃은 성공이다", async () => {
+    const { api, store } = setup((path) => (path.includes("abandon") ? Promise.reject(new Error("offline")) : json({ ok: true })));
+    store.value = { accessToken: jwt({ is_anonymous: true }), refreshToken: "r", expiresAtMs: 2_000_000, userId: "u" };
+    await api.getState();
+    expect((await api.logout()).ok).toBe(true);
+    expect(await api.sessionKind()).toBeNull();
+  });
+});

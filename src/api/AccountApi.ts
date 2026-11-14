@@ -85,6 +85,8 @@ export interface AccountApi {
   verifyEmailCode?(email: string, code: string, intent: "sign-in" | "link"): Promise<AccountResult<AccountState>>;
   login(request: LoginRequest): Promise<AccountResult<AccountState>>;
   logout(): Promise<AccountResult<AccountState>>;
+  /** 이 기기에 든 계정의 종류(네트워크 없이). 계정이 없거나 모르면 `null`이다. */
+  sessionKind?(): Promise<AccountState["kind"] | null>;
   requestWithdrawal(): Promise<AccountResult<void>>;
   getRemoteSaveMetadata(): Promise<AccountResult<RemoteSaveMetadata | null>>;
   downloadRemoteSave(): Promise<AccountResult<RemoteSaveDocument>>;

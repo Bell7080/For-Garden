@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BREAKTHROUGH_FRAGMENTS, breakthroughFragmentSpend, UNIVERSAL_FRAGMENT_ITEM, universalFragmentRarity, breakthroughFragmentCost, breakthroughSlotGrade, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, isBreakthroughSlotOpen, openedBreakthroughSlots, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_BASE_LEVEL_CAP, RELIC_MAX_LEVEL, RELIC_LEVEL_CAP_BY_RESEARCH, breakthroughGrowthPercent, applyLevelGrowth, BREAKTHROUGH_GRADE_CAP, relicExpToNext, relicLevelUpCost, breakthroughGrade, isGrowthReachable, BREAKTHROUGH_CAP } from "../../src/core/relicProgression";
+import { BREAKTHROUGH_FRAGMENTS, breakthroughFragmentSpend, UNIVERSAL_FRAGMENT_ITEM, universalFragmentRarity, breakthroughFragmentCost, breakthroughSlotGrade, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, isBreakthroughSlotOpen, openedBreakthroughSlots, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_BASE_LEVEL_CAP, RELIC_MAX_LEVEL, RELIC_LEVEL_CAP_BY_RESEARCH, breakthroughGrowthPercent, applyLevelGrowth, BREAKTHROUGH_GRADE_CAP, relicExpToNext, relicLevelUpCost, breakthroughGrade, isGrowthReachable, BREAKTHROUGH_CAP, BREAKTHROUGH_REFERENCE_LEVELS, referenceBreakthroughAt } from "../../src/core/relicProgression";
 import { combatPower } from "../../src/core/combatPower";
 import type { RelicProgress, Stats } from "../../src/core/types";
 import { RelicProgressionManager } from "../../src/managers/RelicProgressionManager";
@@ -79,9 +79,9 @@ describe("렐릭 성장 규칙", () => {
     expect(calculateFinalStats(BASE, early, [rune], "SR").hp).toBe(111);
 
     // **돌파는 레벨 성장 %에 단계마다 +10%를 더한다**(응태 결정, 2026-11-11) — 곱하지 않고 더한다.
-    // 요구 레벨(20·30·40)에 못 미치면 뚫어 둔 돌파는 꺼져 있다 — 2레벨의 돌파 III은 돌파 0과 같다.
-    const dormant: RelicProgress = { ...early, breakthrough: 3 };
-    expect(calculateFinalStats(BASE, dormant, [rune], "SR").hp).toBe(111);
+    // 돌파는 레벨을 묻지 않는다 — 2레벨의 돌파 III도 +30%를 그대로 받는다.
+    const lowLevel: RelicProgress = { ...early, breakthrough: 3 };
+    expect(calculateFinalStats(BASE, lowLevel, [rune], "SR").hp).toBeGreaterThan(111);
     const flat = calculateFinalStats(BASE, { ...early, level: 40 }, [rune], "SR").hp;
     const broken = calculateFinalStats(BASE, { ...early, level: 40, breakthrough: 3 }, [rune], "SR").hp;
     expect(broken).toBeGreaterThan(flat);
@@ -113,7 +113,7 @@ describe("렐릭 성장 규칙", () => {
     // 그 공용 배율이 도는 동안에는 다섯 등급에 닿은 개체가 종류를 가리지 않고 전투를 궁극기가
     // 찬 채로 시작했고(토리카가 그랬다), 개체 전용 효과가 말하려던 것을 그 공짜 한 방이 덮었다.
     for (const step of BREAKTHROUGH_STEPS) {
-      expect(Object.keys(step).sort()).toEqual(["cheesecake", "requiredLevel", "slot"]);
+      expect(Object.keys(step).sort()).toEqual(["slot"]);
     }
     // 능력치는 단계마다 오각형 다섯에 +10%를 더할 뿐이다(응태 결정, 2026-11-11) — 공속 같은 정체성 값은 그대로다.
     const plain: RelicProgress = { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
@@ -197,8 +197,10 @@ describe("돌파", () => {
     expect(relicLevelCap(60)).toBe(RELIC_MAX_LEVEL);
     // 상한표는 오르기만 한다.
     for (let i = 1; i < RELIC_LEVEL_CAP_BY_RESEARCH.length; i += 1) expect(RELIC_LEVEL_CAP_BY_RESEARCH[i].levelCap).toBeGreaterThan(RELIC_LEVEL_CAP_BY_RESEARCH[i - 1].levelCap);
-    // 돌파 요구 레벨은 20·30·40·50 그대로다.
-    expect(BREAKTHROUGH_STEPS.map(({ requiredLevel }) => requiredLevel)).toEqual([20, 30, 40, 50]);
+    // 돌파는 레벨을 묻지 않는다 — 20·30·40·50은 모의·특가가 읽는 기준 진행표로만 남았다.
+    expect(BREAKTHROUGH_REFERENCE_LEVELS).toEqual([20, 30, 40, 50]);
+    expect(referenceBreakthroughAt(19)).toBe(0);
+    expect(referenceBreakthroughAt(50)).toBe(4);
   });
 
   it("단계마다 오각형 다섯에 +10%를 레벨 성장에 더한다", () => {
@@ -211,14 +213,13 @@ describe("돌파", () => {
     expect(applyLevelGrowth(def, 30, "SR", 1).attackSpeed).toBe(100);
   });
 
-  it("는 레벨을 상한까지 채우고 그 개체의 파편이 있어야 할 수 있다", () => {
-    const step = nextBreakthrough(0)!;
+  it("는 그 개체의 파편만 있으면 레벨과 무관하게 할 수 있다", () => {
+    // 응태 결정(2026-11-15) — 요구 레벨도 치즈케이크도 없다.
     const need = breakthroughFragmentCost("SR", 0);
-    expect(canBreakThrough("SR", base(), need, step.cheesecake, 0)).toBe(false); // 레벨이 요구 레벨에 못 미친다
-    const maxed = { ...base(), level: step.requiredLevel };
-    expect(canBreakThrough("SR", maxed, need, step.cheesecake, 0)).toBe(true);
-    expect(canBreakThrough("SR", maxed, need - 1, step.cheesecake, 0)).toBe(false);
-    expect(canBreakThrough("SR", maxed, need, step.cheesecake - 1, 0)).toBe(false);
+    expect(canBreakThrough("SR", base(), need, 0)).toBe(true);
+    expect(canBreakThrough("SR", base(), need - 1, 0)).toBe(false);
+    expect(canBreakThrough("SR", { ...base(), breakthrough: BREAKTHROUGH_CAP }, 99, 99)).toBe(false);
+    expect(nextBreakthrough(BREAKTHROUGH_CAP)).toBeUndefined();
   });
 
   it("는 파편 수를 등급이 정하고 뒤 단계일수록 더 든다", () => {
@@ -234,15 +235,11 @@ describe("돌파", () => {
       for (let step = 1; step < list.length; step += 1) expect(list[step]).toBeGreaterThanOrEqual(list[step - 1]);
       expect(list[list.length - 1]).toBeGreaterThan(list[2]);
     }
-    // 치즈케이크도 같은 이유로 단계마다 오른다.
-    for (let step = 1; step < BREAKTHROUGH_STEPS.length; step += 1) {
-      expect(BREAKTHROUGH_STEPS[step].cheesecake).toBeGreaterThan(BREAKTHROUGH_STEPS[step - 1].cheesecake);
-    }
     // SSR은 III→IV에 두 장, 마지막 별에 세 장이 필요하다.
-    expect(canBreakThrough("SSR", { ...base(), level: BREAKTHROUGH_STEPS[2].requiredLevel, breakthrough: 2 }, 1, 99_999, 0)).toBe(false);
-    expect(canBreakThrough("SSR", { ...base(), level: BREAKTHROUGH_STEPS[2].requiredLevel, breakthrough: 2 }, 2, 99_999, 0)).toBe(true);
-    expect(canBreakThrough("SSR", { ...base(), level: BREAKTHROUGH_STEPS[3].requiredLevel, breakthrough: 3 }, 2, 99_999, 0)).toBe(false);
-    expect(canBreakThrough("SSR", { ...base(), level: BREAKTHROUGH_STEPS[3].requiredLevel, breakthrough: 3 }, 3, 99_999, 0)).toBe(true);
+    expect(canBreakThrough("SSR", { ...base(), breakthrough: 2 }, 1, 0)).toBe(false);
+    expect(canBreakThrough("SSR", { ...base(), breakthrough: 2 }, 2, 0)).toBe(true);
+    expect(canBreakThrough("SSR", { ...base(), breakthrough: 3 }, 2, 0)).toBe(false);
+    expect(canBreakThrough("SSR", { ...base(), breakthrough: 3 }, 3, 0)).toBe(true);
   });
 
   it("의 만능 파편은 그 개체의 파편이 모자란 몫만 채운다", () => {
@@ -253,10 +250,8 @@ describe("돌파", () => {
     expect(breakthroughFragmentSpend("R", 0, 1, 5)).toEqual({ own: 1, universal: 3, enough: true });
     // 둘을 합쳐도 모자라면 뚫을 수 없다.
     expect(breakthroughFragmentSpend("R", 0, 1, 2)).toEqual({ own: 1, universal: 2, enough: false });
-    const maxed = { ...base(), level: RELIC_BASE_LEVEL_CAP };
-    const cheesecake = nextBreakthrough(0)!.cheesecake;
-    expect(canBreakThrough("R", maxed, 1, cheesecake, 3)).toBe(true);
-    expect(canBreakThrough("R", maxed, 1, cheesecake, 2)).toBe(false);
+    expect(canBreakThrough("R", base(), 1, 3)).toBe(true);
+    expect(canBreakThrough("R", base(), 1, 2)).toBe(false);
     expect(universalFragmentRarity(UNIVERSAL_FRAGMENT_ITEM.SR)).toBe("SR");
     expect(universalFragmentRarity("stamina-tonic")).toBeUndefined();
   });
@@ -298,22 +293,18 @@ describe("전투력", () => {
 /*
  * **화면이 만들 수 없는 성장을 가르치지 않는다.**
  *
- * 돌파는 레벨 상한을 채운 뒤에만 뚫린다(`canBreakThrough`). 그러니 레벨 10에 돌파 1은 어느
- * 손으로도 만들 수 없는 값이고, 적도 플레이어와 같은 성장 축만 쓰므로 같은 규칙을 지나야 한다.
+ * 돌파는 파편만 들어(`canBreakThrough`) 레벨과 무관하다 — 남는 경계는 레벨·돌파 각각의 범위뿐이다.
  */
 describe("도달 가능한 성장 자리", () => {
-  it("은 요구 레벨을 채우지 않은 돌파를 거부한다", () => {
+  it("은 범위 안의 레벨·돌파를 모두 받아들인다", () => {
     expect(isGrowthReachable(1, 0)).toBe(true);
     expect(isGrowthReachable(RELIC_BASE_LEVEL_CAP, 0)).toBe(true);
     // 상한은 연구원 레벨이 열므로 돌파 없이도 100까지 설 수 있다.
     expect(isGrowthReachable(RELIC_MAX_LEVEL, 0)).toBe(true);
     expect(isGrowthReachable(RELIC_MAX_LEVEL + 1, 0)).toBe(false);
-    // 돌파 1은 20레벨을 한 번 찍은 개체만 갖는다. 10레벨 돌파 1은 만들 수 없다.
-    expect(isGrowthReachable(10, 1)).toBe(false);
-    expect(isGrowthReachable(BREAKTHROUGH_STEPS[0].requiredLevel, 1)).toBe(true);
-    // 그 단계의 요구 레벨이 곧 하한이다 — 돌파해도 레벨은 그대로이므로.
-    expect(isGrowthReachable(BREAKTHROUGH_STEPS[1].requiredLevel - 1, 2)).toBe(false);
-    expect(isGrowthReachable(BREAKTHROUGH_STEPS[1].requiredLevel, 2)).toBe(true);
+    // 돌파는 파편만 들어 레벨과 무관하다 — 레벨 1 돌파 V도 만들 수 있다.
+    expect(isGrowthReachable(1, BREAKTHROUGH_CAP)).toBe(true);
+    expect(isGrowthReachable(10, 1)).toBe(true);
   });
 
   it("은 범위를 벗어난 값을 던지지 않고 거짓으로 돌려준다", () => {

@@ -945,7 +945,7 @@ export class ExpeditionScene extends Phaser.Scene {
         label: relic.name,
         level: relicProgression.getProgress(relic.id).level,
         rarity: relic.rarity,
-        breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id), breakthroughDimmed: relicProgression.isBreakthroughDimmed(relic.id),
+        breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id),
         affinity: { element: relic.element, role: relic.role },
         // 이미 편성판에 나가 있는 카드는 떠오르지 않고 눌려 들어간다.
         selectedStyle: "pressed",
@@ -1051,7 +1051,7 @@ export class ExpeditionScene extends Phaser.Scene {
         const badgeTop = FORMATION.y - FORMATION.height / 2 + 34;
         chrome.add(new AffinityBadge(this, x - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62));
         chrome.add(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62));
-        addBreakthroughGradeMark(this, chrome, x + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(relicId), relicProgression.isBreakthroughDimmed(relicId));
+        addBreakthroughGradeMark(this, chrome, x + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(relicId));
         addUnitPower(this, chrome, x, groundY + 22, relicProgression.getCombatPower(relicId), 24, COLOR.accentText);
         addUnitNameplate(this, chrome, x, groundY + 26, relicProgression.getProgress(relicId).level, def.name, 30);
       }
@@ -1182,7 +1182,7 @@ export class ExpeditionScene extends Phaser.Scene {
   /** 목록 카드의 레벨·돌파 등급을 지금 값으로 맞춘다. 카드를 다시 세우지 않는다. */
   private syncRosterProgress(): void {
     this.cards.forEach((card, id) => {
-      if (card.active) card.setProgress(relicProgression.getProgress(id).level, relicProgression.getBreakthroughGrade(id), relicProgression.isBreakthroughDimmed(id));
+      if (card.active) card.setProgress(relicProgression.getProgress(id).level, relicProgression.getBreakthroughGrade(id));
     });
   }
 

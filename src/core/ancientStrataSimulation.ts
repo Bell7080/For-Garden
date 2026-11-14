@@ -2,7 +2,7 @@ import { COMBAT_STEP_MS } from "./combatProtocol";
 import { BOND_LEVEL_CAP } from "./bond";
 import { getRelic } from "../data/relics";
 import { RUNE_STAT_RULES } from "../data/runes";
-import { applyHeartGems, applyLevelGrowth, BREAKTHROUGH_STEPS, RELIC_MAX_LEVEL } from "./relicProgression";
+import { applyHeartGems, applyLevelGrowth, referenceBreakthroughAt, RELIC_MAX_LEVEL } from "./relicProgression";
 import { createRuneInstance, enhanceRune, engraveRune, type RuneInstance, type RuneMainStatKey, type RuneStatKey, type RuneSubStatKey } from "./runes";
 import { partyRuneTraitEffects } from "./runeTraitEffects";
 import { stepAncientStrataBattle, createAncientStrataSkirmish, getAncientStrataFloor } from "./ancientStrataBattle";
@@ -59,8 +59,8 @@ export function ancientReferenceParty(ids: readonly string[], equipment: Ancient
     if (getRelic(relicId).enemyOnly || getRelic(relicId).summonOnly) throw new RangeError(`플레이 불가 렐릭: ${relicId}`);
     return { relicId, runes: ancientReferenceRunes(relicId, equipment) };
   });
-  // 그 레벨까지 열 수 있는 돌파를 모두 연 계정으로 본다(요구 레벨 20·30·40·50).
-  const breakthrough = BREAKTHROUGH_STEPS.filter(({ requiredLevel }) => requiredLevel < level).length;
+  // 그 레벨의 평범한 계정으로 본다(기준 진행표 20·30·40·50 — 예전 요구 레벨 바로 다음부터 열린 셈).
+  const breakthrough = referenceBreakthroughAt(level - 1);
   const players = equipped.map(({ relicId, runes }) => {
     const def = getRelic(relicId);
     return { ...def, stats: applyHeartGems(applyLevelGrowth(def.stats, level, def.rarity, breakthrough), runes) };

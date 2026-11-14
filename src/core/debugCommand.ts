@@ -1,7 +1,7 @@
 import { BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL } from "./bond";
 import type { Wallet } from "./gacha";
 import { normalizePlayerLevel, PLAYER_LEVEL_CAP } from "./playerLevel";
-import { BREAKTHROUGH_CAP, BREAKTHROUGH_STEPS, RELIC_MAX_LEVEL, remainingBreakthroughCost, UNIVERSAL_FRAGMENT_ITEM } from "./relicProgression";
+import { BREAKTHROUGH_CAP, RELIC_MAX_LEVEL, remainingBreakthroughFragments, UNIVERSAL_FRAGMENT_ITEM } from "./relicProgression";
 import type { RelicProgress } from "./types";
 
 /**
@@ -53,11 +53,6 @@ export interface DebugRules {
   stageIdsThrough: (chapter: number) => string[];
   initialProgress: () => RelicProgress;
   bondXpFirstAcquisition: number;
-}
-
-/** 레벨 L에서 뚫을 수 있었던 가장 높은 돌파 단계 — 돌파 단계의 요구 레벨이 L 이하인 수. */
-export function breakthroughAvailableAt(level: number): number {
-  return BREAKTHROUGH_STEPS.filter(({ requiredLevel }) => requiredLevel <= level).length;
 }
 
 function ownedProgress(target: DebugTarget, relicId: string): RelicProgress {
@@ -118,10 +113,9 @@ export function applyDebugCommand(target: DebugTarget, command: DebugCommand, ru
       let changed = 0;
       for (const id of targets(target, command.relicId)) {
         const p = target.relicProgress[id];
-        // 레벨을 낮춰 지금 돌파의 요구 레벨 아래로 내려가면 그 레벨에서 가능한 단계까지 돌파를 내린다(만들 수 없는 성장 상태를 만들지 않는다).
-        const breakthrough = Math.min(p.breakthrough, breakthroughAvailableAt(level));
-        if (p.level === level && p.breakthrough === breakthrough) continue;
-        target.relicProgress[id] = { ...p, level, exp: 0, breakthrough, ...(breakthrough < BREAKTHROUGH_CAP ? { resonance: undefined } : {}) };
+        // 돌파는 레벨을 묻지 않으므로(파편만 든다) 레벨만 옮기고 돌파·공명은 그대로 둔다.
+        if (p.level === level) continue;
+        target.relicProgress[id] = { ...p, level, exp: 0 };
         changed += 1;
       }
       return changed;
@@ -131,11 +125,9 @@ export function applyDebugCommand(target: DebugTarget, command: DebugCommand, ru
       let changed = 0;
       for (const id of targets(target, command.relicId)) {
         const p = target.relicProgress[id];
-        // 돌파 단계는 그 단계의 요구 레벨 이상에서만 성립하므로 레벨을 그 선까지 끌어올린다.
-        const floor = breakthrough === 0 ? 1 : BREAKTHROUGH_STEPS[breakthrough - 1].requiredLevel;
-        const level = Math.max(p.level, floor);
-        if (p.breakthrough === breakthrough && p.level === level) continue;
-        target.relicProgress[id] = { ...p, breakthrough, level, exp: level === p.level ? p.exp : 0, ...(breakthrough < BREAKTHROUGH_CAP ? { resonance: undefined } : {}) };
+        // 돌파는 레벨을 묻지 않으므로 레벨은 그대로 두고 단계만 옮긴다.
+        if (p.breakthrough === breakthrough) continue;
+        target.relicProgress[id] = { ...p, breakthrough, ...(breakthrough < BREAKTHROUGH_CAP ? { resonance: undefined } : {}) };
         changed += 1;
       }
       return changed;
@@ -162,10 +154,9 @@ export function applyDebugCommand(target: DebugTarget, command: DebugCommand, ru
       const progress = ownedProgress(target, command.relicId);
       const rarity = rules.playable.find((relic) => relic.id === command.relicId)?.rarity;
       if (!rarity) throw new Error("플레이 가능한 렐릭이 아닙니다.");
-      const cost = remainingBreakthroughCost(rarity, progress);
-      if (cost.fragments === 0 && cost.cheesecake === 0) return 0;
-      target.relicFragments[command.relicId] = (target.relicFragments[command.relicId] ?? 0) + cost.fragments;
-      target.wallet.cheesecake = Math.min(rules.walletCaps.cheesecake, target.wallet.cheesecake + cost.cheesecake);
+      const fragments = remainingBreakthroughFragments(rarity, progress.breakthrough);
+      if (fragments === 0) return 0;
+      target.relicFragments[command.relicId] = (target.relicFragments[command.relicId] ?? 0) + fragments;
       return 1;
     }
     case "universalFragments": {

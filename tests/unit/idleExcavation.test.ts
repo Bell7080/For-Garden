@@ -135,8 +135,8 @@ describe("방치 발굴 순수 규칙", () => {
 
   it("레벨과 한계 돌파만 생산 성장값에 반영한다", () => {
     const model = excavationProductionDisplayModel(["rex", null, null], RELICS, { rex: progress(11, 2) });
-    // 11레벨은 첫 돌파의 요구 레벨(20)에 못 미쳐 뚫어 둔 돌파가 꺼져 있다.
-    expect(model.relics[0]).toMatchObject({ basePerHour: 7.92, levelIncreasePerHour: 1.584, breakthroughIncreasePerHour: 0, totalPerHour: 9.504 });
+    // 돌파는 레벨과 무관하게 켜져 있다 — 11레벨에서도 돌파 두 단계 몫이 든다.
+    expect(model.relics[0]).toMatchObject({ basePerHour: 7.92, levelIncreasePerHour: 1.584, breakthroughIncreasePerHour: 1.584, totalPerHour: 11.088 });
     const grown = excavationProductionDisplayModel(["rex", null, null], RELICS, { rex: progress(30, 2) });
     expect(grown.relics[0]).toMatchObject({ basePerHour: 7.92, levelIncreasePerHour: 4.5936, breakthroughIncreasePerHour: 1.584, totalPerHour: 14.0976 });
   });

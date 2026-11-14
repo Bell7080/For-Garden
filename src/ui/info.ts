@@ -48,10 +48,9 @@ import { openElementPopup, openRolePopup } from "./affinityPopups";
 import { breakthroughEffectText, breakthroughEffectKeywords } from "./skillPresentation";
 import { formatBreakthroughDescription } from "./skillExplanation";
 import { addBreakthroughGradeMark, addResonanceGradeMark, addResonanceMark, RARITY_TONE } from "./rarityMark";
-import { RESONANCE_CAP, RESONANCE_CHEESECAKE, RESONANCE_STAT_PERCENT, canResonate, resonanceFragmentCost, resonanceFragmentSpend, resonanceOf } from "../core/relicResonance";
-import { addFramedIcon, addItemFrame } from "./itemFrame";
+import { RESONANCE_CAP, RESONANCE_STAT_PERCENT, canResonate, resonanceFragmentCost, resonanceFragmentSpend, resonanceOf } from "../core/relicResonance";
+import { addFramedIcon } from "./itemFrame";
 import { FaceFrame } from "./FaceFrame";
-import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { session } from "../state/session";
 import { addPageChevrons, type PageChevronPair } from "./PageChevrons";
 import { motionPolicy } from "../core/settings";
@@ -367,11 +366,9 @@ const BREAK_ARM = { low: 0.35, high: 1, duration: 900 } as const;
  * 크게 세우고, 드는 재료는 가방·상점과 같은 액자로 둔다 — 여기서 사람이 정하는 것은 "지금
  * 올릴 수 있나"이고, 그 답은 등급 두 글자와 액자 둘의 수가 전부 말한다.
  */
-/** 돌파 한 번에 드는 것. 셋이 같은 액자를 쓰지만 담기는 것이 달라 판별 합집합으로 둔다. */
+/** 돌파·공명 한 번에 드는 것 — 파편뿐이다(응태 결정 2026-11-15). 그 개체의 파편과, 모자랄 때만 함께 드는 만능 파편. */
 type BreakthroughCost =
-  | { kind: "level"; label: string; need: number; have: number }
   | { kind: "fragment"; label: string; need: number; have: number }
-  | { kind: "currency"; texture: string; label: string; need: number; have: number }
   /** 그 개체의 파편이 모자라 **함께 소모되는** 만능 파편. 쓰일 때만 칸이 선다. */
   | { kind: "universal"; texture: string; label: string; need: number; have: number };
 
@@ -1111,7 +1108,7 @@ export class InfoManager {
     if (!canResetRelic(progress)) return;
     // 21레벨 위로 쌓은 몫은 90%만 돌아온다 — 잃는 양을 창이 먼저 말한다. 회수량은 서버가 다시 구한다.
     const asset = this.figureAssetOf(def);
-    openRelicResetPopup(this.scene, this.popups, { asset, level: progress.level, refund: relicResetRefund(progress), loss: relicResetLoss(progress), dormantBreakthrough: progress.breakthrough > 0 }, () => void this.resetRelic(def.id));
+    openRelicResetPopup(this.scene, this.popups, { asset, level: progress.level, refund: relicResetRefund(progress), loss: relicResetLoss(progress) }, () => void this.resetRelic(def.id));
   }
 
   /** 회수·레벨 확정은 서버가 한 처리로 맡는다. 화면은 결과만 다시 그린다. */
@@ -1140,16 +1137,16 @@ export class InfoManager {
     const resonance = resonanceOf(progress);
     const resonating = !step && resonance < RESONANCE_CAP;
     const ready = this.ownedNow && def !== undefined && (step
-      ? canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake, universal)
-      : canResonate(def.rarity, progress, BREAKTHROUGH_STEPS.length, held, session.wallet.cheesecake, universal));
+      ? canBreakThrough(def.rarity, progress, held, universal)
+      : canResonate(def.rarity, progress, BREAKTHROUGH_STEPS.length, held, universal));
     this.breakButton?.container.setAlpha(step || resonating ? (ready ? 1 : 0.7) : 0.35);
     // 문구가 바뀌면 폭도 함께 바뀐다 — 처음 그릴 때만 누르면 `돌파 완료`가 판을 넘는다.
     const label = step ? t("info.breakthrough") : resonating ? t("info.resonance") : t("info.resonance.max");
     if (this.breakButton) squeezeTextToWidth(this.breakButton.label.setText(label), BREAK_BUTTON.width - BREAK_BUTTON.labelInset);
     this.breakButton?.label.setColor(ready ? COLOR.ink : COLOR.inkDim);
     this.paintBreakArm(ready);
-    if (resonating && def) this.paintBreakCost(def, { cheesecake: RESONANCE_CHEESECAKE }, held, resonanceFragmentCost(def.rarity, resonance), universal, resonanceFragmentSpend(def.rarity, resonance, held, universal));
-    else this.paintBreakCost(def, step, held, need, universal);
+    if (resonating && def) this.paintBreakCost(def, true, held, resonanceFragmentCost(def.rarity, resonance), universal, resonanceFragmentSpend(def.rarity, resonance, held, universal));
+    else this.paintBreakCost(def, step !== undefined, held, need, universal);
   }
 
   /**
@@ -1172,27 +1169,25 @@ export class InfoManager {
   }
 
   /**
-   * 버튼이 직접 말하는 **드는 것 둘** — 그 개체의 파편과 치즈케이크.
+   * 버튼이 직접 말하는 **드는 것** — 그 개체의 파편(모자라면 함께 드는 만능 파편). 파편 말고는 들지 않는다.
    *
-   * 예전에는 파편만 맨 숫자로 `200 / 5`라 적어, 무엇의 200인지도 치즈케이크가 든다는 것도
-   * 눌러 보고서야 알았다. 지금은 둘 다 **그림 + 가진 수 / 드는 수**로 서고 모자란 쪽만 붉다.
+   * 예전에는 파편만 맨 숫자로 `200 / 5`라 적어 무엇의 200인지 눌러 보고서야 알았다. 지금은
+   * **그림 + 가진 수 / 드는 수**로 서고 모자라면 붉다.
    *
    * **액자를 쓰지 않는다** — 버튼 판 안에 액자를 넣으면 판이 두 겹으로 보인다(재화 비용 표기와
    * 같은 규칙). 파편 그림은 확정 창의 보석 조각과 같은 얼굴을 액자 없이 세운 것이다.
    */
-  private paintBreakCost(def: RelicDef | undefined, step: Pick<BreakthroughStep, "cheesecake"> | undefined, held: number, need: number, universal: number, resonanceSpend?: { own: number; universal: number; enough: boolean }): void {
+  private paintBreakCost(def: RelicDef | undefined, open: boolean, held: number, need: number, universal: number, resonanceSpend?: { own: number; universal: number; enough: boolean }): void {
     const row = this.breakButton?.cost;
     if (!row) return;
     row.removeAll(true);
-    if (!def || !step) return;
-    const cheesecake = session.wallet.cheesecake;
+    if (!def || !open) return;
     // 그 개체의 파편이 모자라면 **모자란 몫만** 만능 파편이 채운다. 쓰일 몫이 있으면 파편 줄은 붉지 않고,
     // 그 옆에 만능 파편 그림과 `×N`이 금빛으로 따로 서서 무엇이 함께 소모되는지 버튼이 먼저 말한다.
     const spend = resonanceSpend ?? breakthroughFragmentSpend(def.rarity, relicProgression.getProgress(def.id).breakthrough, held, universal);
-    const pairs: { short: boolean; text: string; color?: string; kind: "fragment" | "universal" | "cheesecake" }[] = [
+    const pairs: { short: boolean; text: string; color?: string; kind: "fragment" | "universal" }[] = [
       { kind: "fragment", short: !spend.enough && held < need, text: `${formatCurrency(held)}/${formatCurrency(need)}` },
       ...(spend.enough && spend.universal > 0 ? [{ kind: "universal" as const, short: false, text: `×${formatCurrency(spend.universal)}`, color: UNIVERSAL_SPEND_TEXT }] : []),
-      { kind: "cheesecake", short: cheesecake < step.cheesecake, text: `${formatCurrency(cheesecake)}/${formatCurrency(step.cheesecake)}` },
     ];
     const values = pairs.map(({ short, text, color }) => this.scene.add
       .text(0, 0, text, textStyle({ role: "emphasis", size: BREAK_BUTTON.costSize, color: short ? COLOR.dangerText : color ?? COLOR.accentText }))
@@ -1207,12 +1202,9 @@ export class InfoManager {
       if (kind === "fragment") {
         // 파편은 그 개체의 얼굴 조각이다. 액자 없이 그림만 세운다.
         row.add(new FaceFrame(this.scene, iconX, 0, { portraitAssetId: def.portraitAssetId, size: BREAK_BUTTON.icon, bare: true }));
-      } else if (kind === "universal") {
+      } else {
         // 만능 파편의 일러스트를 액자 없이 세운다(등급색은 그림이 이미 갖고 있다).
         const key = universalFragmentTexture(def.rarity);
-        if (this.scene.textures.exists(key)) row.add(this.scene.add.image(iconX, 0, key).setDisplaySize(BREAK_BUTTON.icon, BREAK_BUTTON.icon));
-      } else {
-        const key = CURRENCY_ICON_BY_WALLET.cheesecake;
         if (this.scene.textures.exists(key)) row.add(this.scene.add.image(iconX, 0, key).setDisplaySize(BREAK_BUTTON.icon, BREAK_BUTTON.icon));
       }
       value.setX(cursor + BREAK_BUTTON.icon + BREAK_BUTTON.gap);
@@ -1224,10 +1216,8 @@ export class InfoManager {
   /**
    * 돌파에 드는 재료와 열리는 것을 보여 주고 그 자리에서 확정한다.
    *
-   * **드는 것은 셋 다 액자로 세운다** — 레벨, 그 개체의 파편, 치즈케이크 순이다. 예전에는
-   * 레벨만 글로 적었고("레벨을 20까지 올려야 한다"), 그래서 같은 조건 셋이 두 종류의 표기로
-   * 갈렸다. 액자 안에 `Lv`와 요구 레벨을 세우면 재화와 같은 얼굴로 읽히고, 무엇이 모자란지는
-   * 세 액자의 색이 한꺼번에 말한다.
+   * **드는 것은 파편 액자뿐이다** — 그 개체의 파편, 모자라면 만능 파편이 한 칸 더 선다. 레벨·치즈케이크
+   * 액자는 걷었다(응태 결정 2026-11-15 — 돌파·공명은 파편만 든다).
    *
    * **열리는 것은 이 개체만의 효과 한 줄이다**(`breakthroughEffectText`). 공용 보정
    * ("모든 능력치 +15%")은 능력치 판이 이미 보여 주므로 여기 적지 않는다 — 적으면 이 창에서
@@ -1254,7 +1244,6 @@ export class InfoManager {
         return;
       }
       const top = -height / 2;
-      const requiredLevel = step.requiredLevel;
       // **올라가는 것은 별 개수가 아니라 등급이다.** 카드 오른쪽 위에 박히는 로마자와 같은
       // 표식을 그대로 크게 세우고, 그 사이에 화살표만 둔다 — "1 → 2"라고 적으면 화면 어디에도
       // 없는 숫자를 새로 배우게 된다.
@@ -1291,10 +1280,8 @@ export class InfoManager {
       const costY = top + BREAK_CONFIRM.costY;
       const universalName = findItem(UNIVERSAL_FRAGMENT_ITEM[def.rarity])?.name ?? "";
       const costs: BreakthroughCost[] = [
-        { kind: "level", label: t("info.level"), need: requiredLevel, have: progress.level },
         { kind: "fragment", label: t("info.breakthrough.fragment", { name: def.name }), need: fragmentCost, have: held },
         ...(usesUniversal ? [{ kind: "universal" as const, texture: universalFragmentTexture(def.rarity), label: universalName, need: spend.universal, have: universal }] : []),
-        { kind: "currency", texture: CURRENCY_ICON_BY_WALLET.cheesecake, label: t("info.breakthrough.cheesecake"), need: step.cheesecake, have: session.wallet.cheesecake },
       ];
       const costStep = costs.length > 3 ? BREAK_CONFIRM.costStepCompact : BREAK_CONFIRM.costStep;
       costs.forEach((cost, index) => {
@@ -1314,7 +1301,7 @@ export class InfoManager {
           .setOrigin(0.5));
       }
 
-      const ready = canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake, universal);
+      const ready = canBreakThrough(def.rarity, progress, held, universal);
       const actionY = top + BREAK_CONFIRM.actionY;
       // 확정은 확인 창(`PopupLayer.confirm`)과 같은 **제 판을 가진 강조 버튼**이다 — 판 하나에 투명한
       // 입력면을 얹어 두던 때는 눌려도 손맛이 없었고 다른 확정 버튼과 다른 물건으로 읽혔다.
@@ -1374,7 +1361,6 @@ export class InfoManager {
     const costs: BreakthroughCost[] = [
       { kind: "fragment", label: t("info.breakthrough.fragment", { name: def.name }), need: usesUniversal ? spend.own : resonanceFragmentCost(def.rarity, resonance), have: held },
       ...(usesUniversal ? [{ kind: "universal" as const, texture: universalFragmentTexture(def.rarity), label: universalName, need: spend.universal, have: universal }] : []),
-      { kind: "currency", texture: CURRENCY_ICON_BY_WALLET.cheesecake, label: t("info.breakthrough.cheesecake"), need: RESONANCE_CHEESECAKE, have: session.wallet.cheesecake },
     ];
     costs.forEach((cost, index) => {
       const x = (index - (costs.length - 1) / 2) * BREAK_CONFIRM.costStep;
@@ -1386,7 +1372,7 @@ export class InfoManager {
         .text(x, costY + BREAK_CONFIRM.costFrame / 2 + 58, t(needKey, { count: formatCurrency(cost.need) }), textStyle({ role: "emphasis", size: 24, color: !enough ? COLOR.dangerText : cost.kind === "universal" ? UNIVERSAL_SPEND_TEXT : COLOR.ink }))
         .setOrigin(0.5));
     });
-    const ready = canResonate(def.rarity, progress, BREAKTHROUGH_STEPS.length, held, session.wallet.cheesecake, universal);
+    const ready = canResonate(def.rarity, progress, BREAKTHROUGH_STEPS.length, held, universal);
     body.add(new Button(this.scene, 0, top + BREAK_CONFIRM.actionY, {
       width: BREAK_CONFIRM.action.width, height: BREAK_CONFIRM.action.height, label: t("info.resonance.do"), fontSize: 34,
       variant: "primary", fill: 0x2d2440, decorDots: true, accentColor: BREAK_EDGE, accentTextColor: COLOR.ink,
@@ -1397,9 +1383,7 @@ export class InfoManager {
   /**
    * 드는 것 한 칸.
    *
-   * 셋이 **같은 액자**를 쓴다 — 레벨은 재화가 아니지만 돌파를 막는 같은 조건이라, 한쪽만 글로
-   * 적으면 같은 성격의 셋이 두 종류의 표기로 갈린다. 파편만 그 개체의 얼굴을 담은 보석 조각이고
-   * (`FaceFrame`의 `gem`), 나머지는 재화·아이템 액자 한 장을 그대로 쓴다.
+   * 그 개체의 파편은 얼굴을 담은 보석 조각(`FaceFrame`의 `gem`), 만능 파편은 공용 아이템 액자 한 장이다.
    */
   private addBreakthroughCost(
     body: Phaser.GameObjects.Container,
@@ -1426,24 +1410,6 @@ export class InfoManager {
       addFramedIcon(this.scene, body, x, y, size, cost.texture, { amount: formatCurrency(cost.have), plain: true });
       return;
     }
-    if (cost.kind === "currency") {
-      addFramedIcon(this.scene, body, x, y, size, cost.texture, {
-        amount: formatCurrency(cost.have),
-        amountColor: enough ? undefined : COLOR.dangerText,
-        color,
-      });
-      return;
-    }
-    // 레벨 액자는 그림 대신 글자 둘이 든다 — 위에 `Lv`, 아래에 **지금 레벨**이다. 그림 파일을
-    // 새로 굽지 않는 이유는 이 값이 아이콘이 아니라 숫자이기 때문이다.
-    //
-    // **우하단에 레벨을 또 적지 않는다.** 다른 두 액자는 그림이 무엇인지 말하고 우하단이 가진
-    // 수를 말하는데, 레벨 액자는 그림 자리가 이미 숫자라 우하단에 같은 성격의 수를 겹치면 한
-    // 칸에 레벨이 두 번 선다. 드는 값(`필요 N`)은 세 칸이 함께 쓰는 아래 줄이 말한다.
-    const frame = addItemFrame(this.scene, x, y, size, { color });
-    body.add(frame);
-    frame.add(this.scene.add.text(0, -size * 0.16, "Lv", textStyle({ role: "emphasis", size: Math.round(size * 0.2), color: COLOR.inkDim })).setOrigin(0.5));
-    frame.add(this.scene.add.text(0, size * 0.14, formatCurrency(cost.have), textStyle({ role: "display", size: Math.round(size * 0.34), color: enough ? COLOR.ink : COLOR.dangerText })).setOrigin(0.5).setScale(1, 1.1));
   }
 
   /** 재료 차감과 단계 확정은 서버가 한 처리로 맡는다. 화면은 결과만 다시 그린다. */
@@ -1929,7 +1895,7 @@ export class InfoManager {
   private openBreakthroughSteps(_from: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
-    openBreakthroughStepsPopup(this.scene, this.popups, this.keywords, def, breakthroughGrade(this.shownBreakthrough(def)), this.shownStats(def), breakthroughGrade(this.shownActiveBreakthrough(def)));
+    openBreakthroughStepsPopup(this.scene, this.popups, this.keywords, def, breakthroughGrade(this.shownBreakthrough(def)), this.shownStats(def));
   }
 
 
@@ -2477,7 +2443,7 @@ export class InfoManager {
   /** 원화 아래 스킬 아이콘 세 개. 누르면 정형 팝업이 뜬다. */
   private buildSkillIcons(def: RelicDef): void {
     for (const icon of this.skillIcons.splice(0)) icon.destroy();
-    const breakthrough = this.shownActiveBreakthrough(def);
+    const breakthrough = this.shownBreakthrough(def);
     this.skillIconsKey = this.skillIconsKeyOf(def);
     const entries: [string, Skill, number | undefined, SkillArtSlot][] = [
       [t("info.skill.passive"), { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined, "passive"],
@@ -2523,7 +2489,7 @@ export class InfoManager {
   }
 
   private skillIconsKeyOf(def: RelicDef): string {
-    return `${def.id}:${this.publicProfile ? "public:" : ""}${this.shownBreakthrough(def)}:${this.shownActiveBreakthrough(def)}`;
+    return `${def.id}:${this.publicProfile ? "public:" : ""}${this.shownBreakthrough(def)}`;
   }
 
   /**
@@ -2533,19 +2499,6 @@ export class InfoManager {
    */
   private shownBreakthrough(def: RelicDef): number {
     return this.publicProfile ? Math.max(0, this.publicProfile.breakthroughGrade - 1) : relicProgression.getProgress(def.id).breakthrough;
-  }
-
-  /**
-   * 지금 **켜져 있는** 돌파 단계 — 스킬 액자의 `+`·쪽지의 돌파 줄·폭주 뱃지가 읽는다. 레벨 초기화로 요구 레벨에
-   * 못 미친 단계는 꺼져 있다(`activeBreakthrough`). 공개 프로필은 이미 켜진 등급만 알려 주므로 그대로다.
-   */
-  private shownActiveBreakthrough(def: RelicDef): number {
-    return this.publicProfile ? this.shownBreakthrough(def) : relicProgression.getActiveBreakthrough(def.id);
-  }
-
-  /** 뚫어 둔 돌파 중 꺼진 단계가 있는가 — 등급 표식이 회색으로 선다. */
-  private shownBreakthroughDimmed(def: RelicDef): boolean {
-    return this.shownActiveBreakthrough(def) < this.shownBreakthrough(def);
   }
 
   private shownStats(def: RelicDef): Stats {
@@ -2560,7 +2513,7 @@ export class InfoManager {
    */
   private addFerocityBadge(x: number, y: number, def: RelicDef): void {
     // 스킬 아이콘과 같은 목록에 담아 미보유 개체에서 함께 숨고 다시 그릴 때 함께 지워진다.
-    this.skillIcons.push(addInfoFerocityBadge(this.scene, this.popups, this.chrome, x, y, def, (from) => this.openFerocityTrait(def, from), breakthroughEnhances(def, this.shownActiveBreakthrough(def), "ferocity")));
+    this.skillIcons.push(addInfoFerocityBadge(this.scene, this.popups, this.chrome, x, y, def, (from) => this.openFerocityTrait(def, from), breakthroughEnhances(def, this.shownBreakthrough(def), "ferocity")));
     this.addSkillGlanceButton(x, y - INFO_BADGE_SIZE / 2 - SKILL_GLANCE_BUTTON.gap - SKILL_GLANCE_BUTTON.size / 2, def);
   }
 
@@ -2582,7 +2535,7 @@ export class InfoManager {
     hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(container, "normal", { pop: false }); });
     hit.on("pointerup", () => {
       pressIn(container);
-      openSkillGlancePopup(this.scene, this.popups, [{ def: { ...def, stats: this.shownStats(def) }, breakthrough: this.shownActiveBreakthrough(def) }], {
+      openSkillGlancePopup(this.scene, this.popups, [{ def: { ...def, stats: this.shownStats(def) }, breakthrough: this.shownBreakthrough(def) }], {
         reduceMotion: motionPolicy(session.settings).nonEssentialRepeatFactor === 0,
         onClose: () => pressOut(container),
       });
@@ -2595,7 +2548,7 @@ export class InfoManager {
   /** 개체별 폭주 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
   private openFerocityTrait(def: RelicDef, from: PopupSource): void {
     const finalDef = { ...def, stats: this.shownStats(def) };
-    const breakthrough = this.shownActiveBreakthrough(def);
+    const breakthrough = this.shownBreakthrough(def);
     openFerocityTraitPopup(this.scene, this.popups, this.keywords, finalDef, from, {
       breakthroughEffect: !breakthroughEnhances(def, breakthrough, "ferocity")
         ? undefined : breakthroughEffectText(def, "ferocity", finalDef.stats),
@@ -2608,7 +2561,7 @@ export class InfoManager {
     // 레벨·돌파·장착 룬을 모두 반영한 정의를 넘겨 74 같은 기본치가 성장 후에 남지 않게 한다.
     const def = this.currentDef!;
     const finalDef = { ...def, stats: this.shownStats(def) };
-    const breakthrough = this.shownActiveBreakthrough(def);
+    const breakthrough = this.shownBreakthrough(def);
     // **열린 돌파 등급의 몫만 넘긴다.** 아직 뚫지 않은 단계의 효과를 쪽지에 적으면 지금 싸우는
     // 이 개체가 하지 않는 일을 말하게 된다 — 무엇이 열리는지는 등급 돋보기가 여는 표가 맡는다.
     const breakthroughEffect = slot && breakthroughEnhances(def, breakthrough, slot)
@@ -2788,11 +2741,9 @@ export class InfoManager {
   private paintStars(def: RelicDef): void {
     this.starRow.removeAll(true);
     const stars = breakthroughGrade(this.shownBreakthrough(def));
-    // 레벨 초기화로 꺼진 단계가 있으면 표식이 회색으로 선다 — 레벨을 다시 올리면 빛이 돌아온다.
-    const dimmed = this.shownBreakthroughDimmed(def);
-    addBreakthroughGradeMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, stars, dimmed);
-    // 공명은 내 렐릭에게만 있다 — 공개 프로필은 공명을 알려 주지 않으므로 그리지 않는다. 돌파 V가 꺼지면 공명도 함께 꺼진다.
-    if (!this.publicProfile) addResonanceMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, resonanceOf(relicProgression.getProgress(def.id)), RESONANCE_CAP, dimmed);
+    addBreakthroughGradeMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, stars);
+    // 공명은 내 렐릭에게만 있다 — 공개 프로필은 공명을 알려 주지 않으므로 그리지 않는다.
+    if (!this.publicProfile) addResonanceMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, resonanceOf(relicProgression.getProgress(def.id)), RESONANCE_CAP);
   }
 
   /** 레벨·경험치·유대·능력치·젬을 지금 상태로 다시 칠한다. */
@@ -3392,11 +3343,6 @@ export function openBreakthroughStepsPopup(
   grade: number,
   /** 성장한 능력치. 넘기면 회복처럼 계산 가능한 수치가 실제 값으로 선다. */
   stats?: Stats,
-  /**
-   * 지금 **켜져 있는** 등급. 뚫어 둔 등급(`grade`)보다 낮으면 그 사이 줄은 꺼진 줄(잿빛 + 「필요 LV.N」)로 선다 —
-   * 레벨 초기화로 요구 레벨에 못 미친 단계다. 없으면 뚫어 둔 등급과 같다.
-   */
-  activeGrade: number = grade,
 ): void {
   const textWrap = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length).textWrap;
   // 먼저 실제 문장을 세워 높이를 잰다. 문장이 긴 캐릭터도 글자를 줄이지 않고
@@ -3430,12 +3376,10 @@ export function openBreakthroughStepsPopup(
       const cardHeight = layout.rowHeights[index];
       const cardTop = y - cardHeight / 2;
       const reached = grade >= rowGrade;
-      // 뚫어 두었지만 레벨이 요구 레벨에 못 미쳐 꺼진 카드. 레벨을 다시 올리면 저절로 켜진다.
-      const dormant = reached && activeGrade < rowGrade;
       // 다음에 뚫을 카드 — 이 창에서 가장 먼저 눈이 가야 하는 자리다.
       const next = !reached && rowGrade === grade + 1;
       // 열린 카드와 안 열린 카드를 **밝기가 아니라 결**로 가른다(`BREAK_STEPS.tone` 주석 참고).
-      const tone = dormant ? BREAK_STEPS.tone.dormant : reached ? BREAK_STEPS.tone.reached : BREAK_STEPS.tone.locked;
+      const tone = reached ? BREAK_STEPS.tone.reached : BREAK_STEPS.tone.locked;
       const cardShape = slantedRect(layout.rowWidth, cardHeight, slant);
       body.add(drawLayer(scene, 0, y, cardShape, {
         fill: tone.fill,
@@ -3454,7 +3398,7 @@ export function openBreakthroughStepsPopup(
         new Phaser.Math.Vector2(half + shiftAt(headerBottom), -cardHeight / 2 + headerBottom),
         new Phaser.Math.Vector2(-half + shiftAt(headerBottom), -cardHeight / 2 + headerBottom),
       ], true);
-      band.lineStyle(2, COLOR.accent, reached && !dormant ? 0.55 : 0.22);
+      band.lineStyle(2, COLOR.accent, reached ? 0.55 : 0.22);
       band.lineBetween(-half + shiftAt(headerBottom), -cardHeight / 2 + headerBottom, half + shiftAt(headerBottom), -cardHeight / 2 + headerBottom);
       body.add(band);
       if (next) {
@@ -3471,31 +3415,19 @@ export function openBreakthroughStepsPopup(
       }
       const headerY = cardTop + headerBottom / 2;
       const mark = scene.add.container(BREAK_STEPS.gradeMark.x + shiftAt(headerBottom / 2), headerY);
-      addBreakthroughGradeMark(scene, mark, 0, 0, BREAK_STEPS.gradeMark.size, rowGrade, dormant);
+      addBreakthroughGradeMark(scene, mark, 0, 0, BREAK_STEPS.gradeMark.size, rowGrade);
       mark.setAlpha(tone.gradeMark);
       body.add(mark);
-      // 머리 띠 오른쪽 — 요구 레벨과 이 단계가 오각형에 더하는 성장. 둘은 효과 문장과 다른 축이라 띠에 따로 선다.
+      // 머리 띠 오른쪽 — 이 단계가 오각형에 더하는 성장. 효과 문장과 다른 축이라 띠에 따로 선다.
+      // 돌파는 파편만 들어 요구 레벨이 없으므로 레벨 칩을 세우지 않는다. 아직 못 연 단계만 맨 끝에 자물쇠가 선다.
       const right = half + shiftAt(headerBottom / 2) - BREAK_STEPS.headerRight.margin;
       let cursor = right;
-      const levelColor = dormant ? COLOR.inkDim : reached ? COLOR.accentText : COLOR.ink;
-      const levelText = dormant
-        ? t("info.breakthrough.need", { count: `LV.${entry.requiredLevel}` })
-        : `LV.${entry.requiredLevel}`;
-      const level = scene.add
-        .text(cursor, headerY, levelText, textStyle({ role: "display", size: dormant ? BREAK_STEPS.dormantNeed.size : BREAK_STEPS.headerRight.levelSize, color: levelColor }))
-        .setOrigin(1, 0.5);
-      squeezeTextToWidth(level, 150);
-      body.add(level);
-      cursor -= level.displayWidth;
       if (!reached) {
-        // 아직 못 연 단계는 요구 레벨 앞에 자물쇠가 선다 — 이 수가 "넘어야 하는 문턱"으로 읽힌다.
-        cursor -= 8;
         body.add(drawGlyph(scene, "lock", cursor - 11, headerY, 22, next ? COLOR.accent : 0xa9a7a2, 0.95, 3));
-        cursor -= 22;
+        cursor -= 22 + BREAK_STEPS.headerRight.gap;
       }
-      cursor -= BREAK_STEPS.headerRight.gap;
       const growthValue = scene.add
-        .text(cursor, headerY, `+${breakthroughGrowthPercent(1)}%`, textStyle({ role: "display", size: BREAK_STEPS.headerRight.levelSize, color: reached && !dormant ? "#9fe08a" : COLOR.ink }))
+        .text(cursor, headerY, `+${breakthroughGrowthPercent(1)}%`, textStyle({ role: "display", size: BREAK_STEPS.headerRight.levelSize, color: reached ? "#9fe08a" : COLOR.ink }))
         .setOrigin(1, 0.5);
       body.add(growthValue);
       cursor -= growthValue.displayWidth + 8;
@@ -3514,7 +3446,7 @@ export function openBreakthroughStepsPopup(
       body.add(slotLabel);
       const nameLeft = textLeft + slotLabel.displayWidth + BREAK_STEPS.headerText.gap;
       const skillName = scene.add
-        .text(nameLeft, headerY, breakthroughSlotSkillName(def, entry.slot), textStyle({ role: "display", size: BREAK_STEPS.headerText.nameSize, color: reached && !dormant ? COLOR.accentText : COLOR.ink }))
+        .text(nameLeft, headerY, breakthroughSlotSkillName(def, entry.slot), textStyle({ role: "display", size: BREAK_STEPS.headerText.nameSize, color: reached ? COLOR.accentText : COLOR.ink }))
         .setOrigin(0, 0.5);
       squeezeTextToWidth(skillName, Math.max(80, cursor - BREAK_STEPS.headerRight.gap - nameLeft));
       body.add(skillName);
@@ -3543,8 +3475,8 @@ export function openBreakthroughStepsPopup(
         label: skillSlotLabel(entry.slot),
         // 이미 뚫은 카드는 정보창 아래 액자 줄과 **같은 얼굴**로 선다(강조색 + 이름 뒤의 `+`).
         // "없음"으로 정해 둔 자리는 뚫었어도 `+`를 달지 않는다 — 달라진 것이 없다.
-        enhanced: breakthroughEnhances(def, activeGrade - 1, entry.slot),
-        dimAlpha: reached && !dormant ? undefined : BREAK_STEPS.lockedIconAlpha,
+        enhanced: breakthroughEnhances(def, grade - 1, entry.slot),
+        dimAlpha: reached ? undefined : BREAK_STEPS.lockedIconAlpha,
       });
       icon.setPosition(BREAK_STEPS.icon.x + shiftAt(bodyY - cardTop), bodyY);
       body.add(icon);

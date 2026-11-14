@@ -62,8 +62,6 @@ export interface PortraitCardOptions {
    * 개체가 원래 얼마나 귀한지다. 그래서 색(바탕)과 글자(별)가 서로 다른 값에서 나온다.
    */
   breakthroughGrade?: number;
-  /** 뚫어 둔 돌파 중 꺼진 단계가 있으면(레벨 초기화 뒤) 등급 표식이 회색으로 선다. */
-  breakthroughDimmed?: boolean;
   /** 보유 렐릭 즐겨찾기. 한계 돌파 로마자 아래에 전용 별표로만 표시한다. */
   bookmarked?: boolean;
   /** 미발굴 카드. 원화를 실루엣으로 덮고 이름을 감춘다. */
@@ -227,7 +225,6 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private gradeSpot?: { x: number; y: number; size: number };
   private shownLevel?: number;
   private shownGrade?: number;
-  private shownGradeDimmed = false;
   private readonly options: PortraitCardOptions;
   private readonly bodyHeight: number;
   private readonly overhang: number;
@@ -466,7 +463,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       this.gradeSpot = { x: width / 2 - CHIP_INSET - 22, y: -height / 2 + 34, size: Math.min(46, width / 6) };
       this.gradeMark = scene.add.container(0, 0);
       this.add(this.gradeMark);
-      this.paintGrade(options.breakthroughGrade, options.breakthroughDimmed ?? false);
+      this.paintGrade(options.breakthroughGrade);
     } else if (options.badge) {
       this.add(
         scene.add
@@ -858,7 +855,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
    * 목록의 카드는 옛 값을 들고 있었다. 카드를 통째로 다시 세우면 원화를 다시 읽어 깜빡이므로
    * 숫자와 표식만 갈아 끼운다. 바뀐 것이 없으면 아무것도 하지 않는다.
    */
-  setProgress(level: number | undefined, breakthroughGrade: number | undefined, breakthroughDimmed = false): this {
+  setProgress(level: number | undefined, breakthroughGrade: number | undefined): this {
     if (level !== undefined && this.levelText && level !== this.shownLevel) {
       this.shownLevel = level;
       this.levelText.setText(`${level}`);
@@ -868,16 +865,15 @@ export class PortraitCard extends Phaser.GameObjects.Container {
         this.nameText.setX(this.levelText.x + Math.max(this.levelText.width, this.levelTag.width) + nameSize * 0.42);
       }
     }
-    if (breakthroughGrade !== undefined && this.gradeMark && (breakthroughGrade !== this.shownGrade || breakthroughDimmed !== this.shownGradeDimmed)) this.paintGrade(breakthroughGrade, breakthroughDimmed);
+    if (breakthroughGrade !== undefined && this.gradeMark && breakthroughGrade !== this.shownGrade) this.paintGrade(breakthroughGrade);
     return this;
   }
 
-  private paintGrade(grade: number, dimmed: boolean): void {
+  private paintGrade(grade: number): void {
     if (!this.gradeMark || !this.gradeSpot) return;
     this.shownGrade = grade;
-    this.shownGradeDimmed = dimmed;
     this.gradeMark.removeAll(true);
-    addBreakthroughGradeMark(this.scene, this.gradeMark, this.gradeSpot.x, this.gradeSpot.y, this.gradeSpot.size, grade, dimmed);
+    addBreakthroughGradeMark(this.scene, this.gradeMark, this.gradeSpot.x, this.gradeSpot.y, this.gradeSpot.size, grade);
   }
 
 }

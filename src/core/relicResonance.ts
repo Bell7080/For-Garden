@@ -16,9 +16,6 @@ export const RESONANCE_CAP = 5;
 /** 공명 한 단계가 오각형 다섯에 얹는 몫(%). 단계마다 더한다(곱하지 않는다). */
 export const RESONANCE_STAT_PERCENT = 5;
 
-/** 공명 한 단계에 드는 치즈케이크 — 돌파 마지막 단계와 같은 값이다. */
-export const RESONANCE_CHEESECAKE = 2_000;
-
 /**
  * 등급별 공명 한 단계 파편 수(I~V 순서). SSR 완돌 뒤의 중복 여덟(1·1·2·3 이후)과 같은 결로 뒤로 갈수록 더 든다.
  */
@@ -62,12 +59,12 @@ export function resonanceFragmentSpend(rarity: RelicRarity, resonance: number, o
   return { own: fromOwn, universal: fromUniversal, enough: cost > 0 && fromOwn + fromUniversal >= cost };
 }
 
-/** 공명할 수 있는가 — 돌파를 끝냈고(`breakthroughCap`), 공명이 V 아래이며, 파편·치즈케이크가 있다. */
-export function canResonate(rarity: RelicRarity, progress: Pick<RelicProgress, "breakthrough" | "resonance">, breakthroughCap: number, fragments: number, cheesecake: number, universal: number): boolean {
+/** 공명할 수 있는가 — 돌파를 끝냈고(`breakthroughCap`), 공명이 V 아래이며, 파편이 있다. 파편 말고는 들지 않는다(응태 결정 2026-11-15). */
+export function canResonate(rarity: RelicRarity, progress: Pick<RelicProgress, "breakthrough" | "resonance">, breakthroughCap: number, fragments: number, universal: number): boolean {
   if (progress.breakthrough < breakthroughCap) return false;
   const resonance = resonanceOf(progress);
   if (resonance >= RESONANCE_CAP) return false;
-  return resonanceFragmentSpend(rarity, resonance, fragments, universal).enough && cheesecake >= RESONANCE_CHEESECAKE;
+  return resonanceFragmentSpend(rarity, resonance, fragments, universal).enough;
 }
 
 const GROWTH_KEYS: readonly (keyof Stats)[] = ["hp", "def", "res", "atk", "ap"];

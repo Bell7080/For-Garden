@@ -93,11 +93,6 @@ export const BREAK_STEPS = {
   tone: {
     reached: { fill: 0x2a2418, alpha: 0.95, edgeAlpha: 0.9, gradeMark: 1, header: 0x4a3b1c, headerAlpha: 0.85 },
     locked: { fill: 0x161d27, alpha: 0.92, edgeAlpha: 0.42, gradeMark: 0.55, header: 0x1f2a38, headerAlpha: 0.9 },
-    /**
-     * 뚫어 두었지만 **꺼진** 카드 — 레벨 초기화로 요구 레벨에 못 미친 단계(`activeBreakthrough`).
-     * 호박빛도 남색도 아닌 잿빛이라 "아직 안 뚫음"과도 "켜져 있음"과도 갈린다.
-     */
-    dormant: { fill: 0x1e2024, alpha: 0.94, edgeAlpha: 0.28, gradeMark: 1, header: 0x2c2f35, headerAlpha: 0.9 },
   },
   /** 다음에 뚫을 카드 — 테두리 안쪽에서 강조 빛이 느리게 숨 쉰다(움직임 줄이기에서는 멈춘 빛). */
   next: { haloAlpha: 0.28, haloWidth: 10, lineWidth: 3, breatheMs: 1100, tagHeight: 34, tagSize: 20, tagPadX: 18, tagLift: 5 },
@@ -107,10 +102,8 @@ export const BREAK_STEPS = {
   gradeMark: { x: -402, size: 30 },
   /** 머리 띠의 글 — 슬롯 이름(작고 흐림)과 스킬 이름(크고 굵게). */
   headerText: { x: -360, slotSize: 21, nameSize: 28, gap: 12 },
-  /** 머리 띠 오른쪽 — 요구 레벨 칩과 능력치 성장. 오른쪽 변에서 남기는 여백과 둘 사이 간격. */
+  /** 머리 띠 오른쪽 — 능력치 성장(못 연 단계는 자물쇠가 함께). 오른쪽 변에서 남기는 여백과 둘 사이 간격. */
   headerRight: { margin: 22, levelSize: 24, growthSize: 20, gap: 22 },
-  /** 꺼진 카드의 「필요 LV.N」 크기. 요구 레벨 칩 자리에 선다. */
-  dormantNeed: { size: 20 },
   /** 몸통 안에서 스킬 액자가 서는 자리와 크기. */
   icon: { x: -380, size: 100 },
   /** 설명 글이 시작하는 x와 줄 오른쪽 변에서 남기는 여백. */

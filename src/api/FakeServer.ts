@@ -24,7 +24,7 @@ import { currentPickupBannerId, currentPickupWindow, inPickupRotation } from "..
 import { bannerAcceptsCount, bannerActive, canPull, carryoverTenAvailable, carryoverTensOnClose, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { socialApi } from "./FakeSocialServer";
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
-import { RESONANCE_CAP, RESONANCE_CHEESECAKE, canResonate, relicFragmentRoom, resonanceFragmentSpend, resonanceOf } from "../core/relicResonance";
+import { RESONANCE_CAP, canResonate, relicFragmentRoom, resonanceFragmentSpend, resonanceOf } from "../core/relicResonance";
 import { BANNERS, STANDARD_POOLS, researchBanners } from "../data/banners";
 import {
   SITUATIONAL_OFFER_RULES, activeSituationalOffer, consumeSituationalOffer, forgetSituationalOfferKey, issueSituationalOffer, normalizeSituationalOfferState,
@@ -2799,7 +2799,7 @@ export class FakeServer implements GameApi {
   /**
    * 돌파.
    *
-   * 재료 검사와 차감, 단계 확정을 한 처리 단위로 끝낸다. 화면은 결과만 받아 다시 그린다.
+   * 파편 검사와 차감, 단계 확정을 한 처리 단위로 끝낸다. 레벨·치즈케이크는 들지 않는다(응태 결정 2026-11-15). 화면은 결과만 받아 다시 그린다.
    */
   async breakThroughRelic(relicId: string): Promise<BreakThroughResponse> {
     await this.delay();
@@ -2808,14 +2808,13 @@ export class FakeServer implements GameApi {
     const step = nextBreakthrough(current.breakthrough);
     // 돌파를 끝낸 개체는 같은 버튼이 **공명**을 올린다(`core/relicResonance.ts`) — 한 단계 위의 성장 축이다.
     if (!step) return this.resonateRelic(relicId, current);
-    if (current.level < step.requiredLevel) throw new GameApiError("RELIC_MAX_LEVEL", "돌파 요구 레벨에 닿아야 돌파할 수 있습니다.");
     const held = this.state.relicFragments[relicId] ?? 0;
     // 파편 수는 **등급**이 정한다(`BREAKTHROUGH_FRAGMENTS`) — SSR은 한 장으로 한 단계지만
     // R은 넷을 모아야 한다. 등급을 모르는 채로는 검사도 차감도 할 수 없다.
     const rarity = RELICS.find(({ id }) => id === relicId)?.rarity ?? "R";
     const universalItem = UNIVERSAL_FRAGMENT_ITEM[rarity];
     const universal = this.state.itemInventory.find((stack) => stack.itemId === universalItem)?.quantity ?? 0;
-    if (!canBreakThrough(rarity, current, held, this.state.wallet.cheesecake, universal)) throw new GameApiError("INSUFFICIENT_CURRENCY", "돌파 재료가 부족합니다.");
+    if (!canBreakThrough(rarity, current, held, universal)) throw new GameApiError("INSUFFICIENT_CURRENCY", "돌파 재료가 부족합니다.");
     // 그 개체의 파편을 먼저 다 쓰고 **모자란 몫만** 같은 등급의 만능 파편이 채운다 — 화면의 버튼·확정 창이
     // 같은 함수(`breakthroughFragmentSpend`)로 보여 준 그 수다.
     const spend = breakthroughFragmentSpend(rarity, current.breakthrough, held, universal);
@@ -2825,14 +2824,13 @@ export class FakeServer implements GameApi {
     const nextFragments = { ...this.state.relicFragments, [relicId]: held - spend.own };
     const nextItems = spend.universal > 0 ? removeItemLot(this.state.itemInventory, universalItem, spend.universal) : this.state.itemInventory;
     if (!nextItems) throw new GameApiError("INSUFFICIENT_ITEMS", "만능 파편이 부족합니다.");
-    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake - step.cheesecake };
-    this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, itemInventory: nextItems, wallet: nextWallet });
-    this.state.relicProgress = nextProgress; this.state.relicFragments = nextFragments; this.state.itemInventory = nextItems; this.state.wallet = nextWallet;
+    this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, itemInventory: nextItems });
+    this.state.relicProgress = nextProgress; this.state.relicFragments = nextFragments; this.state.itemInventory = nextItems;
     return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(this.state.playerResearch.level), breakthroughGrade: breakthroughGrade(breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend.universal };
   }
 
   /**
-   * 공명 한 단계 — 돌파 V 개체의 파편(모자란 몫은 같은 등급 만능 파편)과 치즈케이크를 쓴다. 차감과 단계 확정은 한 저장이다.
+   * 공명 한 단계 — 돌파 V 개체의 파편(모자란 몫은 같은 등급 만능 파편)만 쓴다. 차감과 단계 확정은 한 저장이다.
    * 응답 모양은 돌파와 같고 `resonance`가 더 붙는다(돌파 단계는 그대로 V).
    */
   private resonateRelic(relicId: string, current: Session["relicProgress"][string]): BreakThroughResponse {
@@ -2842,15 +2840,14 @@ export class FakeServer implements GameApi {
     const held = this.state.relicFragments[relicId] ?? 0;
     const universalItem = UNIVERSAL_FRAGMENT_ITEM[rarity];
     const universal = this.state.itemInventory.find((stack) => stack.itemId === universalItem)?.quantity ?? 0;
-    if (!canResonate(rarity, current, BREAKTHROUGH_CAP, held, this.state.wallet.cheesecake, universal)) throw new GameApiError("INSUFFICIENT_CURRENCY", "공명 재료가 부족합니다.");
+    if (!canResonate(rarity, current, BREAKTHROUGH_CAP, held, universal)) throw new GameApiError("INSUFFICIENT_CURRENCY", "공명 재료가 부족합니다.");
     const spend = resonanceFragmentSpend(rarity, resonance, held, universal);
     const nextProgress = { ...this.state.relicProgress, [relicId]: { ...current, resonance: resonance + 1 } };
     const nextFragments = { ...this.state.relicFragments, [relicId]: held - spend.own };
     const nextItems = spend.universal > 0 ? removeItemLot(this.state.itemInventory, universalItem, spend.universal) : this.state.itemInventory;
     if (!nextItems) throw new GameApiError("INSUFFICIENT_ITEMS", "만능 파편이 부족합니다.");
-    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake - RESONANCE_CHEESECAKE };
-    this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, itemInventory: nextItems, wallet: nextWallet });
-    this.state.relicProgress = nextProgress; this.state.relicFragments = nextFragments; this.state.itemInventory = nextItems; this.state.wallet = nextWallet;
+    this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, itemInventory: nextItems });
+    this.state.relicProgress = nextProgress; this.state.relicFragments = nextFragments; this.state.itemInventory = nextItems;
     return { ...this.snapshot(), relicId, breakthrough: current.breakthrough, levelCap: relicLevelCap(this.state.playerResearch.level), breakthroughGrade: breakthroughGrade(current.breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend.universal, resonance: resonance + 1 };
   }
 
@@ -3643,12 +3640,12 @@ export class FakeServer implements GameApi {
       if (pulls >= guarantee - SITUATIONAL_OFFER_RULES.pityWindow) candidates.push({ trigger: "pityNear", key: `pity:${group}`, productId: "offer-pity" });
       else state = forgetSituationalOfferKey(state, `pity:${group}`);
     }
-    // 돌파 — 레벨 상한에 닿았는데 파편이 모자란 개체. 높은 등급부터 본다.
+    // 돌파 — 다음 돌파를 바랄 만큼 키운 개체(`breakthroughShortLevels`)인데 파편이 모자란 개체. 높은 등급부터 본다.
     const short = new Set<string>();
     for (const relicId of this.state.owned) {
       const progress = this.state.relicProgress[relicId];
       const rarity = RELICS.find(({ id }) => id === relicId)?.rarity;
-      if (!progress || !rarity || progress.breakthrough >= BREAKTHROUGH_CAP || progress.level < (nextBreakthrough(progress.breakthrough)?.requiredLevel ?? Infinity)) continue;
+      if (!progress || !rarity || progress.breakthrough >= BREAKTHROUGH_CAP || progress.level < (SITUATIONAL_OFFER_RULES.breakthroughShortLevels[progress.breakthrough] ?? Infinity)) continue;
       const universal = this.state.itemInventory.find((stack) => stack.itemId === UNIVERSAL_FRAGMENT_ITEM[rarity])?.quantity ?? 0;
       if (!breakthroughFragmentSpend(rarity, progress.breakthrough, this.state.relicFragments[relicId] ?? 0, universal).enough) short.add(rarity);
     }

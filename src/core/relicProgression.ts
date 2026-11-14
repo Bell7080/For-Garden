@@ -75,12 +75,17 @@ export const BREAKTHROUGH_STAT_PERCENT = 10;
  */
 export type BreakthroughSlot = "basic" | "ultimate" | "ferocity" | "passive";
 
+/**
+ * 한계 돌파 한 단계. **드는 것은 파편뿐이다**(응태 결정 2026-11-15) — 요구 레벨·치즈케이크를 걷었다.
+ *
+ * 요구 레벨(20·30·40·50)이 있던 때는 레벨 초기화가 뚫어 둔 단계를 꺼 두어야 했고(낮은 레벨에 돌파 효과를 공짜로
+ * 얹는 조합을 막으려고), 표식이 회색으로 가라앉았다. 돌파가 레벨과 무관해지자 1레벨의 돌파 V가 누구에게나 정상
+ * 상태라 꺼 둘 이유가 사라졌다. 레벨 축은 연구원 레벨이, 돌파 축은 중복(파편)이 맡는다. 적의 돌파는 여전히 레벨이
+ * 정한다(`ENEMY_BREAKTHROUGH_LEVELS` — 적의 레벨 곡선은 이 표와 무관하다).
+ */
 export interface BreakthroughStep {
-  /** 이 단계를 뚫는 데 필요한 레벨. 상한은 연구원 레벨이 열고(`relicLevelCap`), 돌파는 이 레벨에 닿은 개체만 한다. */
-  requiredLevel: number;
   /** 이 별에서 열리는 슬롯. 개체별 효과와 전투 분기가 같은 키를 읽는다. */
   slot: BreakthroughSlot;
-  cheesecake: number;
 }
 
 /**
@@ -93,11 +98,23 @@ export interface BreakthroughStep {
  * 그 공짜 한 방이 덮었다. 개체마다 다른 것은 `RelicDef.breakthroughEffects` 하나뿐이다.
  */
 export const BREAKTHROUGH_STEPS: readonly BreakthroughStep[] = [
-  { requiredLevel: 20, slot: "basic", cheesecake: 200 },
-  { requiredLevel: 30, slot: "ultimate", cheesecake: 500 },
-  { requiredLevel: 40, slot: "ferocity", cheesecake: 1000 },
-  { requiredLevel: 50, slot: "passive", cheesecake: 2000 },
+  { slot: "basic" },
+  { slot: "ultimate" },
+  { slot: "ferocity" },
+  { slot: "passive" },
 ];
+
+/**
+ * 「보통 이 레벨쯤에서 다음 돌파를 연다」는 **기준 진행표**(예전 요구 레벨 20·30·40·50).
+ * 돌파 자체는 레벨을 묻지 않는다(파편만 든다, 응태 결정 2026-11-15). 이 표는 규칙이 아니라 모의 전투·
+ * 상황 특가·QA 도구가 "그 레벨의 평범한 계정"을 세울 때만 읽는다 — 돌파 가능 여부를 이 표로 가르지 않는다.
+ */
+export const BREAKTHROUGH_REFERENCE_LEVELS: readonly number[] = [20, 30, 40, 50];
+
+/** 기준 진행표로 본 레벨 L 계정의 돌파 단계 수(모의·QA 전용). */
+export function referenceBreakthroughAt(level: number): number {
+  return BREAKTHROUGH_REFERENCE_LEVELS.filter((required) => required <= level).length;
+}
 
 /**
  * 등급별 한 단계 파편 수 — 돌파 네 번(I→II · II→III · III→IV · IV→V)의 값을 순서대로 적는다.
@@ -106,7 +123,7 @@ export const BREAKTHROUGH_STEPS: readonly BreakthroughStep[] = [
  * 한 장이지만 R은 네 장을 모아야 한다. 단계마다 수를 적어 두므로 한 단계만 따로 조일 수 있다.
  *
  * **뒤로 갈수록 더 든다.** 별 다섯은 그 개체를 끝까지 키운 표식인데 앞 단계와 같은 값이면
- * SSR은 네 번 다시 만나는 것으로 끝난다. 치즈케이크도 같은 이유로 단계마다 오른다.
+ * SSR은 네 번 다시 만나는 것으로 끝난다.
  * III→IV(돌파 등급 IV)는 앞 단계보다 한 장 더(R은 둘 더) 들고, 마지막은 그보다 더 든다.
  */
 export const BREAKTHROUGH_FRAGMENTS: Readonly<Record<RelicRarity, readonly [number, number, number, number]>> = {
@@ -197,45 +214,23 @@ export function researchLevelForRelicCap(levelCap: number): number | undefined {
   return RELIC_LEVEL_CAP_BY_RESEARCH.find((row) => row.levelCap >= levelCap)?.researchLevel;
 }
 
-/** 돌파 `breakthrough`단계를 지난 개체가 다음 돌파에 닿는 레벨. 다 뚫었으면 `undefined`. */
-export function breakthroughRequiredLevel(breakthrough: number): number | undefined {
-  return BREAKTHROUGH_STEPS[breakthrough]?.requiredLevel;
-}
-
 /**
- * 그 성장 상태가 **플레이어가 실제로 지날 수 있는 자리인가.**
- *
- * 돌파는 그 단계의 요구 레벨에 닿은 뒤에만 뚫린다(`canBreakThrough`). 그러니 돌파 1단계인 개체는
- * 적어도 한 번 20레벨을 찍은 개체이고, 레벨 10에 돌파 1은 **어느 손으로도 만들 수 없는 값**이다.
- * 레벨 쪽 상한은 연구원 레벨이 정하므로 여기서는 렐릭 레벨의 끝(`RELIC_MAX_LEVEL`)만 본다.
+ * 그 성장 상태가 **저장으로 받아들일 수 있는 값인가.** 돌파가 레벨과 무관해졌으므로(파편만 든다) 1레벨에 돌파 V도
+ * 정상이다 — 레벨은 렐릭 레벨의 끝(`RELIC_MAX_LEVEL`), 돌파는 0~`BREAKTHROUGH_CAP` 범위만 본다.
  */
 export function isGrowthReachable(level: number, breakthrough: number): boolean {
   if (!Number.isInteger(level) || level < 1 || level > RELIC_MAX_LEVEL) return false;
-  if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) return false;
-  return breakthrough === 0 || level >= BREAKTHROUGH_STEPS[breakthrough - 1].requiredLevel;
+  return Number.isInteger(breakthrough) && breakthrough >= 0 && breakthrough <= BREAKTHROUGH_CAP;
 }
 
 /**
- * 지금 레벨에서 **실제로 켜져 있는** 돌파 단계 — 뚫어 둔 단계 중 요구 레벨(20·30·40·50)에 닿은 앞쪽 몫이다.
+ * 전투·능력치가 읽는 돌파 단계 — 저장값을 0~`BREAKTHROUGH_CAP`로 맞춘 값이다.
  *
- * 레벨 초기화(`resetRelic`)는 레벨만 1로 되돌리고 뚫어 둔 돌파는 지우지 않는다(응태 결정 2026-11-12).
- * 그러면 1레벨에 돌파 V가 생기는데, 그 몫을 그대로 두면 초기화가 곧 「낮은 레벨에 돌파 효과」라는
- * 공짜 조합이 된다. 그래서 **요구 레벨에 못 미치는 단계는 꺼 둔다** — 성장 몫·슬롯 효과·공명이 함께
- * 꺼지고, 레벨을 다시 그 요구 레벨까지 올리면 저절로 켜진다. 저장된 단계는 그대로다.
- *
- * 능력치·전투·전투력·스냅샷이 돌파를 읽는 곳은 저장값이 아니라 반드시 이 값을 읽는다. 저장값은
- * 다음 돌파의 재료(`nextBreakthrough`)와 표식의 「어디까지 뚫었나」에만 쓴다.
+ * 돌파에 요구 레벨이 있던 때는 레벨 초기화 뒤 요구 레벨에 못 미친 단계를 여기서 꺼 두었다. 이제 돌파는 파편만 들어
+ * 레벨과 무관하므로 뚫어 둔 단계가 언제나 켜져 있다. 읽는 곳은 저장값을 직접 읽지 않고 이 값을 지난다(범위 정리).
  */
-export function activeBreakthrough(level: number, breakthrough: number): number {
-  const stored = Math.max(0, Math.min(BREAKTHROUGH_CAP, Math.floor(breakthrough)));
-  let active = 0;
-  while (active < stored && level >= BREAKTHROUGH_STEPS[active].requiredLevel) active += 1;
-  return active;
-}
-
-/** `activeBreakthrough`의 진행 상태판. 저장이 없으면 0이다. */
-export function activeBreakthroughOf(progress: Pick<RelicProgress, "level" | "breakthrough"> | undefined): number {
-  return progress ? activeBreakthrough(progress.level, progress.breakthrough) : 0;
+export function activeBreakthroughOf(progress: Pick<RelicProgress, "breakthrough"> | undefined): number {
+  return progress ? Math.max(0, Math.min(BREAKTHROUGH_CAP, Math.floor(progress.breakthrough))) : 0;
 }
 
 /** 다음 돌파에 드는 재료. 이미 별 다섯이면 없다. */
@@ -244,15 +239,12 @@ export function nextBreakthrough(breakthrough: number): BreakthroughStep | undef
 }
 
 /**
- * 돌파할 수 있는지.
- *
- * 그 단계의 요구 레벨(20·30·40·50)에 닿은 뒤에만 뚫을 수 있다. `fragments`는 **그 개체의** 파편 수다.
+ * 돌파할 수 있는지 — 파편(그 개체의 파편 + 같은 등급 만능 파편)만 본다. 레벨·치즈케이크는 들지 않는다.
+ * `fragments`는 **그 개체의** 파편 수다.
  */
-export function canBreakThrough(rarity: RelicRarity, progress: RelicProgress, fragments: number, cheesecake: number, universal: number): boolean {
-  const step = nextBreakthrough(progress.breakthrough);
-  if (!step) return false;
-  if (progress.level < step.requiredLevel) return false;
-  return breakthroughFragmentSpend(rarity, progress.breakthrough, fragments, universal).enough && cheesecake >= step.cheesecake;
+export function canBreakThrough(rarity: RelicRarity, progress: Pick<RelicProgress, "breakthrough">, fragments: number, universal: number): boolean {
+  if (!nextBreakthrough(progress.breakthrough)) return false;
+  return breakthroughFragmentSpend(rarity, progress.breakthrough, fragments, universal).enough;
 }
 
 /**
@@ -288,31 +280,11 @@ export function breakthroughSlotGrade(slot: BreakthroughSlot): number {
   return index < 0 ? BREAKTHROUGH_GRADE_CAP : index + 2;
 }
 
-/**
- * 지금 상태에서 **별 다섯까지** 가는 데 드는 재료 전부.
- *
- * 급여로 올려야 하는 레벨까지 함께 센다 — 돌파는 레벨을 상한까지 채운 뒤에만 되므로, 파편과
- * 돌파 치즈케이크만 세면 실제로는 한 단계도 뚫을 수 없는 수를 알려 주게 된다.
- *
- * 순수 계산이라 화면·테스트 지급·안내가 같은 값을 읽는다.
- */
-export function remainingBreakthroughCost(rarity: RelicRarity, progress: RelicProgress): { fragments: number; cheesecake: number } {
+/** 지금 상태에서 돌파 V까지 남은 파편 수(그 개체의 파편 기준). 화면·테스트 지급·안내가 같은 값을 읽는다. */
+export function remainingBreakthroughFragments(rarity: RelicRarity, breakthrough: number): number {
   let fragments = 0;
-  let cheesecake = 0;
-  let level = progress.level;
-  let exp = progress.exp;
-  for (let step = progress.breakthrough; step < BREAKTHROUGH_CAP; step += 1) {
-    // 그 단계의 요구 레벨까지 먹인다. 한 레벨에 드는 급여 횟수는 남은 경험치에서 나온다.
-    const cap = BREAKTHROUGH_STEPS[step].requiredLevel;
-    while (level < cap) {
-      cheesecake += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp) * FEED_UNIT.cheesecake;
-      level += 1;
-      exp = 0;
-    }
-    fragments += breakthroughFragmentCost(rarity, step);
-    cheesecake += BREAKTHROUGH_STEPS[step].cheesecake;
-  }
-  return { fragments, cheesecake };
+  for (let step = Math.max(0, breakthrough); step < BREAKTHROUGH_CAP; step += 1) fragments += breakthroughFragmentCost(rarity, step);
+  return fragments;
 }
 
 /** 급여 한 번에 드는 치즈케이크와 그때 오르는 경험치. */
@@ -488,7 +460,6 @@ export function applyHeartGems(stats: Stats, gems: readonly RuneInstance[]): Sta
  */
 export function calculateFinalStats(base: Stats, progress: RelicProgress, gems: readonly RuneInstance[], rarity: RelicRarity, options: { resonance?: boolean } = {}): Stats {
   if (progress.heartGemSlots.length !== 3) throw new RangeError("Heart Gem 슬롯은 정확히 3개여야 합니다.");
-  // 요구 레벨에 못 미치는 돌파는 꺼져 있다(`activeBreakthrough`) — 성장 몫도, 돌파 V 뒤의 공명도 함께 꺼진다.
   const breakthrough = activeBreakthroughOf(progress);
   const grown = applyLevelGrowth(base, progress.level, rarity, breakthrough);
   const resonance = options.resonance === false || breakthrough < BREAKTHROUGH_CAP ? 0 : resonanceOf(progress);

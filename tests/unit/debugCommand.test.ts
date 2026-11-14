@@ -52,7 +52,7 @@ describe("QA 디버그 명령", () => {
     // 레벨 상한은 연구원 레벨이 열므로 레벨만 올려도 돌파는 그대로다.
     expect(state.relicProgress[target.id].breakthrough).toBe(0);
     await api.applyDebugCommand({ kind: "relicBreakthrough", relicId: target.id, breakthrough: 4 });
-    expect(state.relicProgress[target.id]).toMatchObject({ breakthrough: 4, level: 50 });
+    expect(state.relicProgress[target.id]).toMatchObject({ breakthrough: 4, level: 35 });
     await api.applyDebugCommand({ kind: "relicBond", relicId: target.id, level: 3 });
     expect(state.relicProgress[target.id].bondLevel).toBe(3);
   });

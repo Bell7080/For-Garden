@@ -3,7 +3,7 @@ import { FakeServer } from "../../src/api/FakeServer";
 import { resolveAcquisitions } from "../../src/core/gacha";
 import { BREAKTHROUGH_CAP, calculateFinalStats } from "../../src/core/relicProgression";
 import {
-  RESONANCE_CAP, RESONANCE_CHEESECAKE, RESONANCE_FRAGMENTS, canResonate, relicFragmentRoom, remainingResonanceFragments,
+  RESONANCE_CAP, RESONANCE_FRAGMENTS, canResonate, relicFragmentRoom, remainingResonanceFragments,
   resonanceFragmentRoom, resonanceFragmentSpend, resonanceOf, resonanceStatEffect,
 } from "../../src/core/relicResonance";
 import { RELICS } from "../../src/data/relics";
@@ -16,7 +16,6 @@ describe("공명 규칙", () => {
     expect(remainingResonanceFragments("SSR", 0)).toBe(9);
     expect(remainingResonanceFragments("SR", 2)).toBe(10);
     expect(remainingResonanceFragments("R", 5)).toBe(0);
-    expect(RESONANCE_CHEESECAKE).toBe(2_000);
   });
 
   it("저장값을 믿지 않고 0~5 정수로 맞춘다", () => {
@@ -31,11 +30,11 @@ describe("공명 규칙", () => {
     expect(resonanceFragmentSpend("SSR", 5, 9, 9).enough).toBe(false);
   });
 
-  it("돌파를 끝내야 공명할 수 있고 치즈케이크가 함께 든다", () => {
-    expect(canResonate("SSR", { breakthrough: BREAKTHROUGH_CAP - 1 }, BREAKTHROUGH_CAP, 9, 99_999, 0)).toBe(false);
-    expect(canResonate("SSR", { breakthrough: BREAKTHROUGH_CAP }, BREAKTHROUGH_CAP, 1, RESONANCE_CHEESECAKE, 0)).toBe(true);
-    expect(canResonate("SSR", { breakthrough: BREAKTHROUGH_CAP }, BREAKTHROUGH_CAP, 1, RESONANCE_CHEESECAKE - 1, 0)).toBe(false);
-    expect(canResonate("SSR", { breakthrough: BREAKTHROUGH_CAP, resonance: RESONANCE_CAP }, BREAKTHROUGH_CAP, 9, 99_999, 0)).toBe(false);
+  it("돌파를 끝내야 공명할 수 있고 파편만 든다", () => {
+    expect(canResonate("SSR", { breakthrough: BREAKTHROUGH_CAP - 1 }, BREAKTHROUGH_CAP, 9, 0)).toBe(false);
+    expect(canResonate("SSR", { breakthrough: BREAKTHROUGH_CAP }, BREAKTHROUGH_CAP, 1, 0)).toBe(true);
+    expect(canResonate("SSR", { breakthrough: BREAKTHROUGH_CAP }, BREAKTHROUGH_CAP, 0, 0)).toBe(false);
+    expect(canResonate("SSR", { breakthrough: BREAKTHROUGH_CAP, resonance: RESONANCE_CAP }, BREAKTHROUGH_CAP, 9, 0)).toBe(false);
   });
 
   it("받을 수 있는 파편 수는 돌파 중이면 끝이 없고 돌파 V면 공명 V까지 남은 몫이다", () => {
@@ -75,16 +74,16 @@ describe("FakeServer 공명", () => {
     return { state, api: new FakeServer(state, { latencyMs: 0, persistSession: () => undefined }) };
   }
 
-  it("돌파 V에서 같은 조작이 공명을 한 단계 올리고 파편·만능 파편·치즈케이크를 쓴다", async () => {
+  it("돌파 V에서 같은 조작이 공명을 한 단계 올리고 파편·만능 파편만 쓴다 — 치즈케이크는 그대로다", async () => {
     const { state, api } = setup();
     state.relicFragments.torika = 1;
-    state.itemInventory = [...state.itemInventory.filter(({ itemId }) => itemId !== "universal-fragment-sr"), { itemId: "universal-fragment-sr", quantity: 3 }];
-    state.wallet.cheesecake = RESONANCE_CHEESECAKE + 10;
+    state.itemInventory = [...state.itemInventory.filter(({ itemId }) => itemId !== "universal-fragment-sr"), { itemId: "universal-fragment-sr", quantity: 2 }];
+    state.wallet.cheesecake = 10;
     const response = await api.breakThroughRelic("torika");
     expect(response).toMatchObject({ breakthrough: BREAKTHROUGH_CAP, resonance: 1, fragments: 0, universalFragmentsUsed: 1 });
     expect(state.relicProgress.torika?.resonance).toBe(1);
     expect(state.wallet.cheesecake).toBe(10);
-    expect(state.itemInventory.find(({ itemId }) => itemId === "universal-fragment-sr")?.quantity).toBe(2);
+    expect(state.itemInventory.find(({ itemId }) => itemId === "universal-fragment-sr")?.quantity).toBe(1);
     await expect(api.breakThroughRelic("torika")).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
   });
 

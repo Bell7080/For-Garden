@@ -1,4 +1,5 @@
 import { sameJsonShape } from "./jsonShape";
+import { BREAKTHROUGH_REFERENCE_LEVELS } from "./relicProgression";
 /**
  * **상황 특가** — 막힌 순간에 한 번 나타나는 72시간짜리 결제 상품(응태 승인 2026-11-09).
  *
@@ -28,6 +29,11 @@ export const SITUATIONAL_OFFER_RULES = {
   /** SSR 천장까지 남은 연구가 이 수 이하이면 천장 특가가 선다. */
   pityWindow: 10,
   playerLevels: [10, 20, 30, 40] as readonly number[],
+  /**
+   * 돌파 특가가 보는 「키우는 중인 개체」의 레벨 — 다음 돌파 단계(0~3)마다 이 레벨에 닿았는데 파편이 모자라면 선다.
+   * 돌파 자체는 레벨과 무관해졌지만(파편만 든다) 아직 키우지 않은 개체마다 특가가 서면 안 되므로 기준 진행표를 읽는다.
+   */
+  breakthroughShortLevels: BREAKTHROUGH_REFERENCE_LEVELS,
   /** 이번 달 지층 최고층이 이 층에 닿으면 지층 특가가 선다. */
   ancientFloor: 10,
 } as const;

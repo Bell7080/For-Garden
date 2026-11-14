@@ -1,19 +1,18 @@
 /**
- * 연구 기록을 **천장이 함께 쌓이는 갈래**로 나누는 규칙 — Phaser 없이 읽혀 단위 테스트가 같은 값을 쓴다.
+ * 연구 기록의 묶음이 **어느 뽑기의 것인가**를 가르는 규칙 — Phaser 없이 읽혀 단위 테스트가 같은 값을 쓴다.
  *
- * 기록을 한 줄로 늘어놓던 때는 「천장 카운트 23」이 어느 연구의 23인지 읽히지 않았다(응태 요청, 2026-11-15).
- * 천장은 배너가 아니라 **천장 그룹**(`Banner.pityGroupId`)마다 쌓이므로 탭도 그룹을 따른다 — 상시(화석) ·
- * 한정 픽업 · 첫 복원. 한정 픽업은 플레샤·디안이 교대로 서도 **한 그룹이라 천장이 이월된다**(`pickupRotation.ts`),
- * 그래서 한 탭에 함께 서고 묶음마다 그 픽업의 결(색)과 얼굴로 갈린다.
+ * 묶음 머리줄이 색·이름만으로는 「천장 카운트 23」이 어느 연구의 23인지 읽히지 않았다(응태 요청, 2026-11-15).
+ * 모든 기록은 한 목록에 쌓이고(뽑기가 늘어도 탭이 늘지 않게), 묶음마다 그 배너의 모집판 결·픽업 얼굴과
+ * 그 천장 그룹의 분모(`n / 120`)가 선다. 천장은 배너가 아니라 **천장 그룹**(`Banner.pityGroupId`)마다 쌓인다 —
+ * 플레샤·디안 픽업은 교대로 서도 한 그룹이라 천장이 이월된다(`pickupRotation.ts`).
  */
 import type { Banner, GachaPityState } from "../core/gacha";
-import type { GachaHistoryEntry } from "../core/gachaHistory";
 import { PITY_GROUP, QA_PICKUP_BANNER_PREFIX } from "../data/banners";
 import { BANNER_TONE, bannerPresentation, type BannerTone } from "./labBannerPresentation";
 
 export type GachaHistorySection = "pickup" | "standard" | "welcome";
 
-/** 탭 순서 — 가장 자주 도는 한정 픽업이 먼저, 첫 복원은 끝이다. */
+/** 갈래 — 천장 그룹마다 하나. */
 export const GACHA_HISTORY_SECTIONS: readonly GachaHistorySection[] = ["pickup", "standard", "welcome"];
 
 const SECTION_GROUP: Record<GachaHistorySection, string> = {
@@ -22,7 +21,7 @@ const SECTION_GROUP: Record<GachaHistorySection, string> = {
   welcome: PITY_GROUP.WELCOME,
 };
 
-/** 탭의 결 — 한정 픽업은 호박석 픽업의 금빛, 나머지는 제 배너의 결이다. */
+/** 정의를 못 찾은 배너의 결 — 한정 픽업은 호박석 픽업의 금빛, 나머지는 제 배너의 결이다. */
 export const GACHA_HISTORY_SECTION_TONE: Record<GachaHistorySection, BannerTone> = {
   pickup: "limited",
   standard: "standard",
@@ -47,21 +46,6 @@ export function gachaHistorySectionOfBanner(bannerId: string, banners: readonly 
   return bannerId.startsWith(QA_PICKUP_BANNER_PREFIX) ? "pickup" : "standard";
 }
 
-/** 그 갈래의 묶음만 — 받은 순서(최신부터)를 지킨다. */
-export function gachaHistoryEntriesOf(section: GachaHistorySection, entries: readonly GachaHistoryEntry[], banners: readonly Banner[]): GachaHistoryEntry[] {
-  return entries.filter((entry) => gachaHistorySectionOfBanner(entry.bannerId, banners) === section);
-}
-
-/**
- * 세울 탭. 상시·한정 픽업은 늘 선다. 첫 복원은 계정당 한 번의 배너라 **기록이 있거나 지금 그 배너를 보고
- * 있을 때만** 선다 — 다 쓴 뒤에도 빈 탭이 남으면 고를 것 없는 칸이 하나 는다.
- */
-export function visibleGachaHistorySections(entries: readonly GachaHistoryEntry[], banners: readonly Banner[], current: GachaHistorySection): GachaHistorySection[] {
-  return GACHA_HISTORY_SECTIONS.filter((section) => section !== "welcome"
-    || current === "welcome"
-    || entries.some((entry) => gachaHistorySectionOfBanner(entry.bannerId, banners) === "welcome"));
-}
-
 export interface GachaHistorySummary {
   /** 그 갈래의 SSR 이후 누적 횟수. */
   count: number;
@@ -75,7 +59,7 @@ export interface GachaHistorySummary {
   carriesOver: boolean;
 }
 
-/** 탭 머리 판 — 지금 그 갈래의 천장. 배너 정의의 확정 횟수와 저장의 천장 그룹 값을 그대로 읽는다. */
+/** 머리 판·머리줄 분모 — 지금 그 갈래의 천장. 배너 정의의 확정 횟수와 저장의 천장 그룹 값을 그대로 읽는다. */
 export function gachaHistorySummary(section: GachaHistorySection, banners: readonly Banner[], pityByGroup: Readonly<Record<string, GachaPityState>>): GachaHistorySummary {
   const group = SECTION_GROUP[section];
   const total = banners.find((banner) => banner.pityGroupId === group)?.highestRarityGuarantee ?? 0;
@@ -113,9 +97,6 @@ export function gachaHistoryEntryTint(bannerId: string, banners: readonly Banner
   return toneTint(tone ?? GACHA_HISTORY_SECTION_TONE[gachaHistorySectionOfBanner(bannerId, banners)]);
 }
 
-export function gachaHistorySectionTint(section: GachaHistorySection): GachaHistoryTint {
-  return toneTint(GACHA_HISTORY_SECTION_TONE[section]);
-}
 
 /** 픽업 배너의 대표(SSR 픽업) 렐릭 — 머리줄의 얼굴과 「○○ 픽업」 제목. 픽업이 없으면 없다. */
 export function gachaHistoryPickupRelicId(bannerId: string, banners: readonly Banner[]): string | undefined {

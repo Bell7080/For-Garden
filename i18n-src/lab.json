@@ -99,16 +99,6 @@
 "{currency} ×{amount}",
 "{currency} ×{amount}"
 ],
-"lab.history.pity": [
-"保底计数 {count}",
-"นับการันตี {count}",
-"Đếm bảo đảm {count}",
-"Hitungan jaminan {count}",
-"Contador de garantía {count}",
-"Contador de garantia {count}",
-"Garantiezähler {count}",
-"Счётчик гарантии {count}"
-],
 "lab.history.unknownBanner": [
 "已结束的研究",
 "การวิจัยที่สิ้นสุดแล้ว",
@@ -118,36 +108,6 @@
 "Pesquisa encerrada",
 "Beendete Forschung",
 "Завершённое исследование"
-],
-"lab.history.tab.pickup": [
-"限定UP",
-"เรทอัปจำกัด",
-"Tăng tỉ lệ giới hạn",
-"Pickup Terbatas",
-"Destacado limitado",
-"Destaque limitado",
-"Limitiertes Pickup",
-"Ограниченный избранный"
-],
-"lab.history.tab.standard": [
-"常驻",
-"วิจัยถาวร",
-"Thường trực",
-"Standar",
-"Estándar",
-"Padrão",
-"Standard",
-"Постоянное"
-],
-"lab.history.tab.welcome": [
-"首次复原",
-"ฟื้นคืนครั้งแรก",
-"Phục hồi sơ khởi",
-"Restorasi Pertama",
-"Primera restauración",
-"Primeira restauração",
-"Erste Restaurierung",
-"Первое восстановление"
 ],
 "lab.history.pickupName": [
 "{name} UP",

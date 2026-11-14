@@ -482,7 +482,7 @@ export class LabScene extends Phaser.Scene {
   /** 연구 기록(`GachaHistoryPopup`). 서버가 연구와 같은 저장에 남긴 기록을 읽기만 한다. */
   private showHistory(): void {
     if (!this.popupLayer) return;
-    openGachaHistory({ scene: this, popups: this.popupLayer, history: session.gachaHistory, pityByGroup: session.gachaPityByGroup, currentGroupId: this.banner.pityGroupId });
+    openGachaHistory({ scene: this, popups: this.popupLayer, history: session.gachaHistory, pityByGroup: session.gachaPityByGroup, currentBannerId: this.banner.id });
   }
 
   /** 현재 단계의 자동 진행을 기다린다. 탭하면 이 Promise만 끝나고 다음 상태로 넘어간다. */

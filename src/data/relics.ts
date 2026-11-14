@@ -1171,7 +1171,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
       // 세 겹이 차면 터져 2초 기절 + 자기 방어력·저항력 140%씩의 물리 피해. 터진 적은 기절이 풀린 뒤 6초 동안 다시 쌓이지 않는다.
       statusEffects: [{
-        kind: "pressure", speedPercentPerStack: 8, maxStacks: 3, seconds: 4,
+        kind: "pressure", speedPercentPerStack: 8, maxStacks: 3, seconds: 5,
         stunSeconds: 2, defensePower: 140, resistancePower: 140, lockoutSeconds: 6,
       }],
     },
@@ -1474,7 +1474,7 @@ export const RELICS: RelicDef[] = [
       looming: {
         intervalSeconds: 2.5,
         radius: 240,
-        intimidate: { kind: "intimidate", maxStacks: 3, seconds: 6, fearSeconds: 2, immunitySeconds: 6 },
+        intimidate: { kind: "intimidate", maxStacks: 3, seconds: 8, fearSeconds: 2, immunitySeconds: 6 },
       },
       desc: "2.5초마다 주위 모든 적에게 위압이 한 겹 쌓인다. 피해는 주지 않는다.",
     },
@@ -1488,7 +1488,7 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      statusEffects: [{ kind: "intimidate", maxStacks: 3, seconds: 6, fearSeconds: 2, immunitySeconds: 6 }],
+      statusEffects: [{ kind: "intimidate", maxStacks: 3, seconds: 8, fearSeconds: 2, immunitySeconds: 6 }],
     },
     ultimate: {
       id: "ark-ult",
@@ -5389,7 +5389,7 @@ export const RELICS: RelicDef[] = [
      * 있다고 가정하지 않는다), 시즌 게이지가 공유라 회복·보호막·경감·강인함은 더하지 않는다.
      */
     breakthroughEffects: {
-      basic: { kind: "biteMark", seconds: 8, damageTakenPercent: 4, maxStacks: 3 },
+      basic: { kind: "biteMark", seconds: 12, damageTakenPercent: 4, maxStacks: 3 },
       ultimate: { kind: "unhealedMark", seconds: 6, reductionPercent: 40 },
       ferocity: { kind: "hungryStride", moveSpeedPercent: 50 },
       passive: { kind: "scarMight", damagePercentPerStack: 5 },
@@ -5776,7 +5776,7 @@ export const RELICS: RelicDef[] = [
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
        */
-      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 3 }],
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 6 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -5797,7 +5797,7 @@ export const RELICS: RelicDef[] = [
     },
     // 레이티아 다섯 종은 같은 스킬이라 같은 한계 돌파를 쓴다.
     breakthroughEffects: {
-      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 6 },
+      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 8 },
       ultimate: { kind: "cheekShield", shieldMaxHpPercent: 30 },
       ferocity: { kind: "swiftHands", attackSpeedPercent: 40 },
       passive: { kind: "lightSleeper" },
@@ -5901,7 +5901,7 @@ export const RELICS: RelicDef[] = [
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
        */
-      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 3 }],
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 6 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -5922,7 +5922,7 @@ export const RELICS: RelicDef[] = [
     },
     // 레이티아 다섯 종은 같은 스킬이라 같은 한계 돌파를 쓴다.
     breakthroughEffects: {
-      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 6 },
+      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 8 },
       ultimate: { kind: "cheekShield", shieldMaxHpPercent: 30 },
       ferocity: { kind: "swiftHands", attackSpeedPercent: 40 },
       passive: { kind: "lightSleeper" },
@@ -6026,7 +6026,7 @@ export const RELICS: RelicDef[] = [
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
        */
-      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 3 }],
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 6 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -6047,7 +6047,7 @@ export const RELICS: RelicDef[] = [
     },
     // 레이티아 다섯 종은 같은 스킬이라 같은 한계 돌파를 쓴다.
     breakthroughEffects: {
-      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 6 },
+      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 8 },
       ultimate: { kind: "cheekShield", shieldMaxHpPercent: 30 },
       ferocity: { kind: "swiftHands", attackSpeedPercent: 40 },
       passive: { kind: "lightSleeper" },
@@ -6151,7 +6151,7 @@ export const RELICS: RelicDef[] = [
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
        */
-      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 3 }],
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 6 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -6172,7 +6172,7 @@ export const RELICS: RelicDef[] = [
     },
     // 레이티아 다섯 종은 같은 스킬이라 같은 한계 돌파를 쓴다.
     breakthroughEffects: {
-      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 6 },
+      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 8 },
       ultimate: { kind: "cheekShield", shieldMaxHpPercent: 30 },
       ferocity: { kind: "swiftHands", attackSpeedPercent: 40 },
       passive: { kind: "lightSleeper" },
@@ -6276,7 +6276,7 @@ export const RELICS: RelicDef[] = [
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
        */
-      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 3 }],
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 5, maxStacks: 2, seconds: 6 }],
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -6297,7 +6297,7 @@ export const RELICS: RelicDef[] = [
     },
     // 레이티아 다섯 종은 같은 스킬이라 같은 한계 돌파를 쓴다.
     breakthroughEffects: {
-      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 6 },
+      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 5, seconds: 8 },
       ultimate: { kind: "cheekShield", shieldMaxHpPercent: 30 },
       ferocity: { kind: "swiftHands", attackSpeedPercent: 40 },
       passive: { kind: "lightSleeper" },

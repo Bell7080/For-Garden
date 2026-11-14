@@ -1781,7 +1781,7 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
     expect(ally.bt.biteMark?.stacks).toBeGreaterThanOrEqual(2);
     expect(ally.bt.biteMark!.stacks).toBeLessThanOrEqual(3);
     boss.stunnedFor = 999;
-    for (let tick = 0; tick < 200; tick += 1) stepSkirmish(state, 0.05);
+    for (let tick = 0; tick < 260; tick += 1) stepSkirmish(state, 0.05);
     expect(ally.bt.biteMark).toBeNull();
   });
 

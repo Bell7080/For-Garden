@@ -40,6 +40,7 @@ export const DUEL_RU = {
   "duel.refresh.free": "Обновить соперников {left}/{limit}",
   "duel.refresh.title": "Обновить соперников",
   "duel.refresh.message": "Потратьте самоцветы, чтобы выбрать новых соперников. С каждым обновлением цена растёт.",
+  "duel.refresh.reset": "Бесплатные обновления сбросятся через {time}",
   "duel.fought": "Бой сыгран",
   "duel.power": "Мощь {power}",
   "duel.challenge": "Вызвать",

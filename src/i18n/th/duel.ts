@@ -40,6 +40,7 @@ export const DUEL_TH = {
   "duel.refresh.free": "รีเฟรชคู่ต่อสู้ {left}/{limit}",
   "duel.refresh.title": "รีเฟรชคู่ต่อสู้",
   "duel.refresh.message": "ใช้เจมเพื่อสุ่มคู่ต่อสู้ใหม่ ยิ่งรีเฟรชมาก ราคาก็ยิ่งเพิ่มขึ้น",
+  "duel.refresh.reset": "รีเฟรชฟรีจะรีเซ็ตใน {time}",
   "duel.fought": "ต่อสู้แล้ว",
   "duel.power": "พลังต่อสู้ {power}",
   "duel.challenge": "ท้าชิง",

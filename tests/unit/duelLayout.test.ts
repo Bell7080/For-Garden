@@ -9,7 +9,7 @@ import { BACK_BUTTON_SIZE, BACK_SLOT } from "../../src/ui/popupGeometry";
 import { insidePopupBody, staminaPopupLayout } from "../../src/ui/staminaPopupLayout";
 import { TOP_BAR_SLOT_KEYS } from "../../src/ui/topBarSlots";
 import {
-  DUEL_OPPONENT_POPUP, DUEL_PODIUM, DUEL_PROFILE, DUEL_RANKING_VIEW, DUEL_SCREEN, DUEL_TIER_COLOR, duelHistoryMinScroll, duelHistoryRowY, duelOpponentPopupHeight, duelOpponentRowY, duelProfileRowY, duelTabX,
+  DUEL_OPPONENT_POPUP, DUEL_PODIUM, DUEL_PROFILE, DUEL_RANKING_VIEW, DUEL_SCREEN, DUEL_TIER_COLOR, duelHistoryMinScroll, duelHistoryRowY, duelOpponentPopupHeight, duelOpponentRefreshY, duelOpponentResetY, duelOpponentRowY, duelProfileRowY, duelTabX,
 } from "../../src/ui/duelLayout";
 
 const S = DUEL_SCREEN;
@@ -74,7 +74,18 @@ describe("상대 선택 창", () => {
     const height = duelOpponentPopupHeight(count);
     expect(height).toBeLessThan(BASE_HEIGHT - 200);
     expect(duelOpponentRowY(0, count) - DUEL_OPPONENT_POPUP.rowHeight / 2).toBeGreaterThan(-height / 2);
-    expect(duelOpponentRowY(count - 1, count) + DUEL_OPPONENT_POPUP.rowHeight / 2).toBeLessThan(height / 2 - DUEL_OPPONENT_POPUP.refresh.height);
+    expect(duelOpponentRowY(count - 1, count) + DUEL_OPPONENT_POPUP.rowHeight / 2).toBeLessThan(duelOpponentRefreshY(count) - DUEL_OPPONENT_POPUP.refresh.height / 2 - 24);
+  });
+
+  it("새로고침 버튼 아래 초기화 시계가 판 밑변 안에, 버튼과 겹치지 않게 선다", () => {
+    const count = DUEL_OPPONENT_COUNT;
+    const R = DUEL_OPPONENT_POPUP.refresh;
+    const height = duelOpponentPopupHeight(count);
+    const buttonBottom = duelOpponentRefreshY(count) + R.height / 2;
+    expect(duelOpponentResetY(count) - R.resetSize / 2).toBeGreaterThan(buttonBottom + 8);
+    expect(duelOpponentResetY(count) + R.resetSize / 2).toBeLessThan(height / 2 - 12);
+    // 아이콘은 버튼 판 안 왼쪽 끝에 든다.
+    expect(-R.width / 2 + R.iconInset - R.iconSize / 2).toBeGreaterThan(-R.width / 2);
   });
 
   it("얼굴·글줄·방어덱·도전 버튼이 줄 안에서 겹치지 않는다", () => {

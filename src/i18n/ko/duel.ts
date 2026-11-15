@@ -40,6 +40,7 @@ export const DUEL_KO = {
   "duel.refresh.free": "상대 새로고침 {left}/{limit}",
   "duel.refresh.title": "상대 새로고침",
   "duel.refresh.message": "젬으로 상대를 새로 고릅니다. 새로고침할수록 값이 오릅니다.",
+  "duel.refresh.reset": "무료 새로고침 초기화까지 {time}",
   "duel.fought": "대전 완료",
   "duel.power": "전투력 {power}",
   "duel.challenge": "도전",

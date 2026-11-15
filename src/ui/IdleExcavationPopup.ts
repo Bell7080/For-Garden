@@ -24,6 +24,7 @@ import { chipPoints, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from 
 import { clipHit, containerClip } from "./clippedHit";
 import { PortraitCard } from "./PortraitCard";
 import { relicProgression } from "../managers/RelicProgressionManager";
+import { settingsManager } from "../managers/SettingsManager";
 import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
 import { RosterControls } from "./RosterControls";
 import { autoAssignExcavation, type ExcavationAutoMode, type ExcavationCandidate } from "../core/excavationAutoAssign";
@@ -584,7 +585,7 @@ export class IdleExcavationPopup {
     if (!this.confirmed || this.saving) return;
     this.draft = copyFormation(this.confirmed.excavation.assignedRelicIds);
     this.selectedSlot = slot;
-    this.gridScrollY = 0; this.rosterView = DEFAULT_ROSTER_VIEW;
+    this.gridScrollY = 0; this.rosterView = settingsManager.rosterView("excavation");
     this.renderEditor();
   }
 
@@ -657,7 +658,7 @@ export class IdleExcavationPopup {
     new RosterControls(this.scene, {
       left: GRID_VIEW.left, right: GRID_VIEW.right, y: GRID_VIEW.top - 42, parent: content, view: this.rosterView,
       popups: this.popups, filterPreset: "excavation",
-      onChange: (view) => { this.rosterView = view; this.gridScrollY = 0; this.renderEditor(); },
+      onChange: (view) => { this.rosterView = view; settingsManager.rememberRosterView("excavation", view); this.gridScrollY = 0; this.renderEditor(); },
     });
     this.rosterCards.clear();
     this.bindRosterPick(content);

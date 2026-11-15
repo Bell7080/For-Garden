@@ -348,7 +348,7 @@ export class PartyScene extends Phaser.Scene {
     this.blindChoice = this.content.content === "duelDefense" ? [...this.content.blindChoice] : [];
     this.selectedSlot = undefined;
     this.cards.clear();
-    this.rosterView = DEFAULT_ROSTER_VIEW;
+    this.rosterView = settingsManager.rosterView("party");
     this.allySlots = [];
     this.isEnteringBattle = false;
     const defense = this.defenseOnly;
@@ -405,7 +405,7 @@ export class PartyScene extends Phaser.Scene {
       right: rosterRightEdge(),
       y: headTop - 18 - ROSTER_CONTROLS.height / 2,
       view: this.rosterView,
-      onChange: (view) => { this.rosterView = view; this.fillRoster(); this.refresh(); },
+      onChange: (view) => { this.rosterView = view; settingsManager.rememberRosterView("party", view); this.fillRoster(); this.refresh(); },
     });
     this.autoPlaceButton = new Button(this, this.autoButtonPosition.x, this.autoButtonPosition.y, {
       width: autoButtonWidth,

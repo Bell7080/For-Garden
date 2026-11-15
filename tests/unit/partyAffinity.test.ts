@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { arrangeByRole, autoPickLanes, autoPickParty, relicMatchupScore, RECOMMENDED_SLOT_ROLES, elementDistribution, partyAffinitySummary, relicAffinityDirection } from "../../src/core/partyAffinity";
+import { arrangeByRole, AUTO_PICK_FIT_BONUS, autoPickFit, autoPickLanes, autoPickParty, relicMatchupScore, RECOMMENDED_SLOT_ROLES, elementDistribution, partyAffinitySummary, relicAffinityDirection } from "../../src/core/partyAffinity";
 import { getRelic, PLAYABLE_RELICS } from "../../src/data/relics";
+import { hitsArea } from "../../src/core/attackScope";
 
 /** Phaser 없이 편성 추천과 화면 요약이 같은 속성 공식을 쓰는지 검증한다. */
 describe("파티 속성 미리보기", () => {
@@ -95,5 +96,28 @@ describe("자동 배치는 전투력까지 잰다", () => {
       const best = Math.max(...roster.map((relic) => relicMatchupScore(relic, [lanes[lane]], 100)));
       expect(relicMatchupScore(getRelic(id!), [lanes[lane]], 100)).toBeLessThanOrEqual(best);
     });
+  });
+});
+
+describe("자동 배치는 콘텐츠의 결을 따진다", () => {
+  const flat = (): number => 1000;
+  it("1대1·보스 판(single)은 세기가 같으면 전사·암살자를 먼저 데려간다", () => {
+    const picked = autoPickParty(PLAYABLE_RELICS, [], 3, flat, "single").map((id) => getRelic(id).role);
+    expect(picked.every((role) => role === "warrior" || role === "assassin")).toBe(true);
+  });
+  it("몰려오는 판(area)은 세기가 같으면 범위 공격이 있는 몸을 먼저 데려간다", () => {
+    const picked = autoPickParty(PLAYABLE_RELICS, [], 3, flat, "area");
+    expect(picked.every((id) => hitsArea(getRelic(id)))).toBe(true);
+  });
+  it("결의 몫은 한참 센 몸을 뒤집지 못한다", () => {
+    const tank = PLAYABLE_RELICS.find((relic) => relic.role === "tank")!;
+    const power = (relic: { id: string }): number => (relic.id === tank.id ? 2000 : 1000);
+    expect(autoPickParty(PLAYABLE_RELICS, [], 3, power, "single")).toContain(tank.id);
+    expect(autoPickFit(tank, "single")).toBe(1);
+    expect(AUTO_PICK_FIT_BONUS).toBeLessThan(1.5);
+  });
+  it("현상수배 레인도 같은 세기면 전사·암살자로 채운다", () => {
+    const slots = autoPickLanes(PLAYABLE_RELICS, [getRelic("toby"), getRelic("amo"), getRelic("ripa")], flat);
+    expect(slots.every((id) => ["warrior", "assassin"].includes(getRelic(id!).role))).toBe(true);
   });
 });

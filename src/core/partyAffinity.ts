@@ -1,3 +1,4 @@
+import { hitsArea } from "./attackScope";
 import { combatPower } from "./combatPower";
 import { effectiveElement, elementMultiplier } from "./element";
 import type { Element, RelicDef } from "./types";
@@ -62,9 +63,27 @@ export function relicMatchupScore(relic: RelicDef, enemies: readonly RelicDef[],
 }
 
 /**
+ * 콘텐츠가 바라는 싸움의 결 — 자동 배치가 세기에 얹는 몫이다.
+ * - `single`: 적 하나와 오래 맞붙는 판(현상수배 1대1·레이드 보스). 한 대상을 몰아치는 전사·암살자가 낫다.
+ * - `area`: 한꺼번에 몰려오는 판(치즈케이크 대작전). 여럿을 치는 기술(`hitsArea`)이 있는 몸이 낫다.
+ * 전투 계산에는 들지 않는 **추천의 기울기**일 뿐이라 숨은 보정이 아니다(편성은 사람이 언제든 바꾼다).
+ */
+export type AutoPickFocus = "single" | "area";
+
+/** 결에 맞는 몸이 받는 몫. 전투력 1%가 승률 약 2%p라 20%는 비슷한 세기면 뒤집고, 한참 약한 몸은 올리지 못하는 크기다. */
+export const AUTO_PICK_FIT_BONUS = 1.2;
+
+/** 이 렐릭이 콘텐츠의 결에 맞는가 — 맞으면 `AUTO_PICK_FIT_BONUS`, 아니면 1이다. */
+export function autoPickFit(relic: RelicDef, focus: AutoPickFocus | undefined): number {
+  if (focus === "single") return relic.role === "warrior" || relic.role === "assassin" ? AUTO_PICK_FIT_BONUS : 1;
+  if (focus === "area") return hitsArea(relic) ? AUTO_PICK_FIT_BONUS : 1;
+  return 1;
+}
+
+/**
  * **누구를** 데려갈지는 실제 세기(`relicMatchupScore` — 전투력 × 상성)가 높은 순서로 고르고, 직군으로
  * **어디에** 세울지 정한다(`arrangeByRole`). 상성만 보면 유리한 1레벨이 불리한 60레벨을 밀어내므로 전투력을
- * 함께 잰다. 전투력은 부르는 쪽이 넘긴다(성장·룬이 든 값 — 없으면 태생 능력치로 잰다). 점수가 같으면 보유
+ * 함께 잰다. 콘텐츠의 결(`focus`)에 맞는 몸은 몫을 더 받는다. 전투력은 부르는 쪽이 넘긴다(성장·룬이 든 값 — 없으면 태생 능력치로 잰다). 점수가 같으면 보유
  * 목록 순서를 지켜 결과가 매번 바뀌지 않으며, 직군은 고르는 데에는 쓰지 않는다 — 숨은 보정이 아니라 자리만 정한다.
  */
 export function autoPickParty(
@@ -72,9 +91,10 @@ export function autoPickParty(
   enemies: readonly RelicDef[],
   size = 3,
   powerOf: (relic: RelicDef) => number = (relic) => combatPower(relic.stats),
+  focus?: AutoPickFocus,
 ): string[] {
   const picked = roster
-    .map((relic, index) => ({ relic, index, score: relicMatchupScore(relic, enemies, powerOf(relic)) }))
+    .map((relic, index) => ({ relic, index, score: relicMatchupScore(relic, enemies, powerOf(relic)) * autoPickFit(relic, focus) }))
     .sort((left, right) => right.score - left.score || left.index - right.index)
     .slice(0, Math.max(0, size))
     .map(({ relic }) => relic);
@@ -83,16 +103,17 @@ export function autoPickParty(
 
 /**
  * **1대1 레인 편성**(현상수배)의 자동 배치 — 자리마다 마주 설 적이 하나뿐이라 적 전체가 아니라 **그 자리의 적**과의
- * 실제 세기로 고른다. 모든 (렐릭, 자리) 짝을 세기 순으로 늘어놓고 높은 짝부터 비어 있는 렐릭·자리끼리 잇는다.
+ * 실제 세기로 고른다(1대1이라 전사·암살자가 결의 몫을 받는다 — `AutoPickFocus`). 모든 (렐릭, 자리) 짝을 세기 순으로 늘어놓고 높은 짝부터 비어 있는 렐릭·자리끼리 잇는다.
  * 직군으로 자리를 옮기지 않는다 — 자리가 곧 마주 설 상대다. 같은 세기면 보유 목록·자리 순서를 지킨다.
  */
 export function autoPickLanes(
   roster: readonly RelicDef[],
   laneEnemies: readonly RelicDef[],
   powerOf: (relic: RelicDef) => number = (relic) => combatPower(relic.stats),
+  focus: AutoPickFocus = "single",
 ): (string | null)[] {
   const pairs = roster.flatMap((relic, index) => {
-    const power = powerOf(relic);
+    const power = powerOf(relic) * autoPickFit(relic, focus);
     return laneEnemies.map((enemy, lane) => ({ relic, index, lane, score: relicMatchupScore(relic, [enemy], power) }));
   }).sort((a, b) => b.score - a.score || a.index - b.index || a.lane - b.lane);
   const slots: (string | null)[] = laneEnemies.map(() => null);

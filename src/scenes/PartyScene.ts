@@ -283,7 +283,9 @@ export class PartyScene extends Phaser.Scene {
     const powerOf = (relic: RelicDef): number => relicProgression.getCombatPower(relic.id, { pvp: this.pvp });
     // 현상수배는 자리마다 마주 설 적이 하나라 그 적과의 세기로 자리를 채운다.
     if (this.content.content === "bounty") return toFormationSlots(autoPickLanes(relicCollection.owned, this.enemies, powerOf), 3);
-    if (!this.guard) return toFormationSlots(autoPickParty(relicCollection.owned, this.enemies, 3, powerOf), 3);
+    // 몰려오는 대작전은 범위 공격, 보스 하나와 맞붙는 레이드는 전사·암살자 쪽으로 기운다.
+    const focus = this.content.content === "cake" ? "area" : this.content.content === "raid" ? "single" : undefined;
+    if (!this.guard) return toFormationSlots(autoPickParty(relicCollection.owned, this.enemies, 3, powerOf, focus), 3);
     const ids = autoPickParty(relicCollection.owned, this.enemies, GUILD_GUARD.slots, powerOf);
     return arrangeGuardFormation(ids.map((id) => getRelic(id)));
   }

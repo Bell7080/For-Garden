@@ -30,6 +30,7 @@ import { squeezeTextToWidth } from "../ui/textFit";
 import { addBackButton } from "../ui/IconButton";
 import { PopupLayer } from "../ui/PopupLayer";
 import { NotificationDot } from "../ui/NotificationDot";
+import { notificationManager } from "../managers/NotificationManager";
 import { openRewardPopup } from "../ui/RewardPopup";
 import { currencyRecordToRewardItems } from "../ui/rewardPopupModel";
 import { playSceneEntrance, slideTabPage, startScene } from "../ui/screenTransition";
@@ -156,10 +157,13 @@ export class DuelScene extends Phaser.Scene {
     this.paintStanding(status);
     this.paintProfile(status);
     if (status.pendingSeasonReward) {
-      view.add(new Button(this, BASE_WIDTH / 2, S.seasonReward.y, {
+      const claim = new Button(this, BASE_WIDTH / 2, S.seasonReward.y, {
         width: S.seasonReward.width, height: S.seasonReward.height, label: t("duel.seasonReward.claim"), fontSize: 26, variant: "primary",
         onClick: () => void this.claimSeasonReward(),
-      }));
+      });
+      // 로비 결투 입구의 점이 가리키는 그 버튼이다 — 같은 붉은 점이 여기까지 이어진다.
+      new NotificationDot(this, claim, { x: S.seasonReward.width / 2 - 16, y: -S.seasonReward.height / 2 + 14 });
+      view.add(claim);
     }
     this.paintDefense(status);
     this.paintChallenge(status);
@@ -355,6 +359,8 @@ export class DuelScene extends Phaser.Scene {
     this.busy = true;
     try {
       const claimed = await withBusy(this, gameApi.claimDuelSeasonReward());
+      // 로비 결투 입구의 시즌 보상 점이 곧바로 꺼진다.
+      void notificationManager.refresh().catch(() => undefined);
       if (!this.scene.isActive()) return;
       openRewardPopup(this, this.popups, { items: currencyRecordToRewardItems({ duelEmblem: claimed.duelEmblem, gems: claimed.gems }), onConfirm: () => void this.fetchStatus() });
     } catch (error) {

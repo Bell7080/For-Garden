@@ -30,6 +30,7 @@ import { addFramedIcon, addShelfAmount } from "../ui/itemFrame";
 import { tradePackageValuePercent } from "../data/tradePackages";
 import { openRewardPopup, productGrantsToRewardItems } from "../ui/RewardPopup";
 import { notificationManager } from "../managers/NotificationManager";
+import { NotificationDot } from "../ui/NotificationDot";
 import { addSoldOutStamp, forgetSoldOutStamp, styleLimitCount } from "../ui/soldOutStamp";
 import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { DialogueBubble } from "../ui/DialogueBubble";
@@ -531,6 +532,8 @@ export class ShopScene extends Phaser.Scene {
     // storefront 판정은 검증된 모델 하나가 소유한다. 여기서 filter를 다시 쓰면 같은 규칙이
     // 두 곳에 살아, 한쪽만 고쳐도 화면은 조용히 예전 규칙으로 남는다.
     this.products = shopModel(response.products, this.storefront);
+    // 탭의 무료 칸 점은 받은 목록에서 정해지므로 목록이 도착하면 탭 줄도 다시 세운다.
+    this.createTabs();
     this.renderProducts();
   }
 
@@ -666,6 +669,8 @@ export class ShopScene extends Phaser.Scene {
     // 남은 횟수를 다 쓴 칸은 검은 막이 덮이고 「매진」 도장이 찍힌다 — 눌러 열어도 구매 버튼이 꺼져 있다.
     if (soldOut) addSoldOutStamp(this, card, width, SHOP_CARD.height, showcaseCardBevel(width, SHOP_CARD.height), product.id);
     else forgetSoldOutStamp(product.id);
+    // 아직 받지 않은 무료 칸은 로비 상점 칩의 붉은 점이 가리키는 그 칸이다 — 같은 점을 여기에도 단다.
+    if (product.acquisition.kind === "free" && product.purchasable) new NotificationDot(this, card, { x: width / 2 - 20, y: -SHOP_CARD.height / 2 + 20 });
     /*
      * **창 밖으로 흘러간 칸은 손을 받지 않는다.** GeometryMask는 그리기만 자르므로, 위로 흘러가
      * 가려진 칸의 입력면이 무대 위에 그대로 남아 점원을 누른 손을 가로챘다(카드가 점원보다 위
@@ -761,6 +766,7 @@ export class ShopScene extends Phaser.Scene {
     session.wallet = { ...result.wallet };
     this.products = this.products.map((product) => product.id === result.productId ? { ...product, remaining: result.remaining, purchasable: result.remaining > 0 } : product);
     this.topBar?.refresh();
+    this.createTabs();
     this.renderProducts();
   }
 
@@ -770,11 +776,15 @@ export class ShopScene extends Phaser.Scene {
     this.tabRow = this.add.container(0, 0).setDepth(9);
     this.stage.tabs.forEach((tab, index) => {
       const { x, y } = shopTabSpot(index);
-      addCategoryTab(this, this.tabRow, {
+      const tabObject = addCategoryTab(this, this.tabRow, {
         x, y, width: SHOP_TAB_ROW.width, height: SHOP_TAB_ROW.height,
         label: tab.label, selected: tab.id === this.selectedCategory,
         onSelect: () => this.selectCategory(tab.id),
       });
+      // 받지 않은 무료 칸이 든 탭에 점을 세운다 — 다른 탭에 들어와도 무료 칸이 어디 있는지 읽힌다.
+      if (productsForShopTab(this.products, tab.id, this.storefront).some((product) => product.acquisition.kind === "free" && product.purchasable)) {
+        new NotificationDot(this, tabObject, { x: SHOP_TAB_ROW.width / 2 - 18, y: -SHOP_TAB_ROW.height / 2 + 10 });
+      }
     });
   }
 

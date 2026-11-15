@@ -33,7 +33,18 @@ export interface AchievementState {
   firstPaymentPaid?: true;
   /** 레벨·업적이 아니라 선물로 연 한정 프로필 테두리 ID(첫 결제 · 시즌 패스). */
   giftFrames?: string[];
+  /**
+   * 도감에 굳힌 만남(`core/codex.ts`) — 상태가 따로 말하지 않는 만남(진 판 · 레이드 보스 · 지층)만 저장 경계가 더한다.
+   * 칸이 있는 ID인지는 무거운 렐릭 표를 아는 `core/codex.ts`가 거른다.
+   */
+  encountered?: string[];
+  /** 받은 도감 마디 수(`CODEX_MILESTONES` 앞에서부터). */
+  codexClaimed?: number;
 }
+
+/** 도감 마디 수의 저장 상한 — 마디 표보다 넉넉한 안전선이다(표가 늘어도 저장 검증을 함께 고칠 필요가 없게). */
+const CODEX_CLAIM_LIMIT = 64;
+const ENCOUNTER_LIMIT = 512;
 
 /** 선물로만 여는 한정 테두리 ID. `data/profileFrames.ts`의 `unlockGift` 테두리와 같아야 한다(`profileFrames.test`). */
 export const GIFT_FRAME_IDS: ReadonlySet<string> = new Set(["patron", "season"]);
@@ -53,12 +64,15 @@ export function normalizeAchievementState(value: unknown): AchievementState {
   }
   const ancientFloorPeak = Math.min(ANCIENT_STRATA_MAX_FLOOR, whole(source.ancientFloorPeak));
   const giftFrames = Array.isArray(source.giftFrames) ? [...new Set(source.giftFrames.filter((id): id is string => typeof id === "string" && GIFT_FRAME_IDS.has(id)))] : [];
+  const encountered = Array.isArray(source.encountered) ? [...new Set(source.encountered.filter((id): id is string => typeof id === "string" && id.length > 0 && id.length <= 64))].slice(0, ENCOUNTER_LIMIT) : [];
+  const codexClaimed = Math.min(CODEX_CLAIM_LIMIT, whole(source.codexClaimed));
   const growth = Array.isArray(source.growth) ? [...new Set(source.growth.filter((id): id is string => typeof id === "string" && NEWBIE_GROWTH_CLAIM_IDS.has(id)))] : [];
   return {
     claimed, goldPeak: Math.min(LIFETIME_COUNT_CAP, whole(source.goldPeak)), ...(ancientFloorPeak > 0 ? { ancientFloorPeak } : {}),
     ...(growth.length > 0 ? { growth } : {}), ...(source.favoriteChosen === true ? { favoriteChosen: true as const } : {}), ...(source.guildJoined === true ? { guildJoined: true as const } : {}),
     ...(source.firstPaymentGift === true ? { firstPaymentGift: true as const } : {}),
     ...(source.firstPaymentPaid === true && source.firstPaymentGift !== true ? { firstPaymentPaid: true as const } : {}), ...(giftFrames.length > 0 ? { giftFrames } : {}),
+    ...(encountered.length > 0 ? { encountered } : {}), ...(codexClaimed > 0 ? { codexClaimed } : {}),
   };
 }
 
@@ -73,6 +87,8 @@ export function isValidAchievementState(value: unknown): value is AchievementSta
   if (state.firstPaymentGift !== undefined && state.firstPaymentGift !== true) return false;
   if (state.firstPaymentPaid !== undefined && (state.firstPaymentPaid !== true || state.firstPaymentGift === true)) return false;
   if (state.giftFrames !== undefined && (!Array.isArray(state.giftFrames) || state.giftFrames.some((id) => typeof id !== "string" || !GIFT_FRAME_IDS.has(id)))) return false;
+  if (state.encountered !== undefined && (!Array.isArray(state.encountered) || state.encountered.length > ENCOUNTER_LIMIT || state.encountered.some((id) => typeof id !== "string" || id.length === 0 || id.length > 64) || new Set(state.encountered).size !== state.encountered.length)) return false;
+  if (state.codexClaimed !== undefined && (!Number.isInteger(state.codexClaimed) || state.codexClaimed < 0 || state.codexClaimed > CODEX_CLAIM_LIMIT)) return false;
   if (!state.claimed || typeof state.claimed !== "object") return false;
   return Object.entries(state.claimed).every(([id, count]) => {
     const series = ACHIEVEMENT_SERIES.find((candidate) => candidate.id === id);

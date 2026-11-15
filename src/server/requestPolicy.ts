@@ -4,6 +4,7 @@ export const READ_METHODS = new Set([
   "arena.get",
   "archaeologyState",
   "getAchievements",
+  "getCodex",
   "getNewbieGrowth",
   "getAncientRanking",
   "getAdOperationsConfig",

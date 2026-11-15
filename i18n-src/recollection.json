@@ -1138,5 +1138,105 @@
     "Atra deixa diante de Meron um crachá que guardou escondido.",
     "Atra legt vor Meron ein Namensschild ab, das sie heimlich beiseitegelegt hat.",
     "Атра кладёт перед Мероном бирку с именем, которую тайком припрятала."
+  ],
+  "lobby.menu.codex": [
+    "图鉴",
+    "สมุดภาพ",
+    "Lưu trữ",
+    "Arsip",
+    "Archivo",
+    "Arquivo",
+    "Archiv",
+    "Архив"
+  ],
+  "codex.title": [
+    "图鉴",
+    "สมุดภาพ",
+    "Lưu trữ",
+    "Arsip",
+    "Archivo",
+    "Arquivo",
+    "Archiv",
+    "Архив"
+  ],
+  "codex.summary.score": [
+    "记录分数",
+    "คะแนนบันทึก",
+    "Điểm ghi chép",
+    "Skor catatan",
+    "Puntos de registro",
+    "Pontos de registro",
+    "Eintragspunkte",
+    "Очки записей"
+  ],
+  "codex.summary.recorded": [
+    "已记录 {recorded} / {total}",
+    "บันทึก {recorded} / {total}",
+    "Đã ghi {recorded} / {total}",
+    "Tercatat {recorded} / {total}",
+    "Registrados {recorded} / {total}",
+    "Registrados {recorded} / {total}",
+    "Erfasst {recorded} / {total}",
+    "Записано {recorded} / {total}"
+  ],
+  "codex.summary.next": [
+    "{score}分",
+    "{score} คะแนน",
+    "{score} điểm",
+    "{score} poin",
+    "{score} pts",
+    "{score} pts",
+    "{score} Pkt.",
+    "{score} оч."
+  ],
+  "codex.tab.ally": [
+    "我方 {recorded}/{total}",
+    "พันธมิตร {recorded}/{total}",
+    "Đồng minh {recorded}/{total}",
+    "Sekutu {recorded}/{total}",
+    "Aliados {recorded}/{total}",
+    "Aliados {recorded}/{total}",
+    "Verbündete {recorded}/{total}",
+    "Союзники {recorded}/{total}"
+  ],
+  "codex.tab.enemy": [
+    "敌方 {recorded}/{total}",
+    "ศัตรู {recorded}/{total}",
+    "Kẻ địch {recorded}/{total}",
+    "Musuh {recorded}/{total}",
+    "Enemigos {recorded}/{total}",
+    "Inimigos {recorded}/{total}",
+    "Feinde {recorded}/{total}",
+    "Враги {recorded}/{total}"
+  ],
+  "codex.unknown": [
+    "???",
+    "???",
+    "???",
+    "???",
+    "???",
+    "???",
+    "???",
+    "???"
+  ],
+  "codex.claimAll": [
+    "全部领取",
+    "รับทั้งหมด",
+    "Nhận tất cả",
+    "Klaim Semua",
+    "Reclamar todo",
+    "Resgatar tudo",
+    "Alle abholen",
+    "Забрать всё"
+  ],
+  "codex.rewardTitle": [
+    "图鉴奖励",
+    "รางวัลสมุดภาพ",
+    "Phần thưởng Lưu trữ",
+    "Hadiah Arsip",
+    "Recompensas del Archivo",
+    "Recompensas do Arquivo",
+    "Archiv-Belohnungen",
+    "Награды Архива"
   ]
 }

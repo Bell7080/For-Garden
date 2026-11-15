@@ -51,6 +51,7 @@ import { showContentToast } from "../ui/ContentToast";
 import { notificationManager } from "../managers/NotificationManager";
 import { MissionsPopup } from "../ui/MissionsPopup";
 import { AchievementsPopup } from "../ui/AchievementsPopup";
+import { CodexPopup } from "../ui/CodexPopup";
 import { LOBBY_PORTRAIT_SPOT, lobbyPortraitPlacement } from "../ui/portraitPlacement";
 import { LOBBY_FAVORITE_ENTRANCE, LOBBY_FAVORITE_SQUISH, lobbyFavoriteGhosts } from "../ui/pokeMotion";
 import { PuppetPoker } from "../ui/puppetAct";
@@ -97,6 +98,7 @@ import { syncGuildWarStandbyDaily } from "../managers/GuildWarStandbySync";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { LobbyMenuTray, LOBBY_MENU_GLYPH } from "../ui/LobbyMenuTray";
+import { HelpPopup } from "../ui/HelpPopup";
 import { RecollectionPopup } from "../ui/RecollectionPopup";
 import { logError } from "../managers/ErrorReporter";
 
@@ -1060,13 +1062,15 @@ export class LobbyScene extends Phaser.Scene {
    * 크기도 출격·교류보다 한참 작게 둔다.
    */
   /**
-   * 가방 아래의 메뉴(햄버거). 누르면 옆에서 한 줄짜리 판이 나와 회고·업적을 고른다.
+   * 가방 아래의 메뉴(햄버거). 누르면 옆에서 한 줄짜리 판이 나와 회고·업적·도감·도움말을 고른다.
    * 받을 업적 단계가 남아 있으면 업적 칩과 접힌 단추에 빨간 점이 선다.
    */
   private buildMenuTray(): void {
     new LobbyMenuTray(this, [
       { icon: LOBBY_MENU_GLYPH.recollection, label: t("lobby.menu.recollection"), onClick: () => this.openRecollection() },
       { icon: LOBBY_MENU_GLYPH.achievement, label: t("lobby.menu.achievement"), onClick: () => this.openAchievements(), notice: "achievementReward" },
+      { icon: LOBBY_MENU_GLYPH.codex, label: t("lobby.menu.codex"), onClick: () => this.openCodex(), notice: "codexReward" },
+      { icon: LOBBY_MENU_GLYPH.help, label: t("lobby.menu.help"), onClick: () => this.openHelp() },
     ], undefined, () => this.popupLayer?.isOpen ?? false);
   }
 
@@ -1074,6 +1078,23 @@ export class LobbyScene extends Phaser.Scene {
   private openAchievements(): void {
     if (!this.popupLayer) return;
     new AchievementsPopup(this, this.popupLayer, gameApi, () => this.topBar?.refresh()).open();
+  }
+
+  /** 도감을 로비 위에서 연다 — 업적 창과 같은 판이다. */
+  private openCodex(): void {
+    if (!this.popupLayer) return;
+    new CodexPopup(this, this.popupLayer, gameApi, () => this.topBar?.refresh()).open();
+  }
+
+  /**
+   * 도움말 — 게임 고유 용어 사전과 지난 안내 다시 보기. 고고학 탐사 안내는 판 위에 겹쳐 띄울 수 없는
+   * 길잡이라 고고학 화면으로 들어가 거기서 다시 돈다(고고학이 열려 있을 때만).
+   */
+  private openHelp(): void {
+    if (!this.popupLayer) return;
+    new HelpPopup(this, this.popupLayer, {
+      onReplayArchaeology: contentOpen("archaeology") ? () => startScene(this, "archaeology", { replayTour: true }) : undefined,
+    }).open();
   }
 
   /** 본 이야기를 모아 다시 읽는 회고를 로비 위에서 연다. 고른 이야기는 끝나면 로비로 돌아온다. */

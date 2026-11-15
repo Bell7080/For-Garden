@@ -70,6 +70,7 @@ export class NotificationManager {
       claimableMailCount: signals.status === "fulfilled" ? signals.value.claimableMailCount ?? 0 : Number(previous.mail),
       claimablePassCount: signals.status === "fulfilled" ? signals.value.claimablePassCount ?? 0 : Number(previous.passReward),
       claimableAchievementCount: signals.status === "fulfilled" ? signals.value.claimableAchievementCount ?? 0 : Number(previous.achievementReward),
+      claimableCodexCount: signals.status === "fulfilled" ? signals.value.claimableCodexCount ?? 0 : Number(previous.codexReward),
       freeSupplyCategories: signals.status === "fulfilled" ? signals.value.freeSupplyCategories ?? [] : FREE_CATEGORIES.filter((_, index) => previous[FREE_KEYS[index]]),
       situationalOfferCount: signals.status === "fulfilled" ? signals.value.situationalOfferCount ?? 0 : Number(previous.premiumOffer),
       shopFreeSupply: signals.status === "fulfilled" ? signals.value.shopFreeSupply === true : previous.shopFree,

@@ -193,6 +193,10 @@ export class ArchaeologyScene extends Phaser.Scene {
   private stopTour: (() => void) | null = null;
   /** 이 화면에서 판 안내를 이미 걸어 두었나 — 판을 다시 그릴 때마다 첫 방문 판정을 되풀이하지 않는다. */
   private boardTourQueued = false;
+  /** 도움말의 「다시 보기」로 들어왔나 — 이미 본 안내라도 지도 안내를 한 번 더 돌린다. */
+  private replayTour = false;
+  /** 다시 보기 중에 처음 여는 판에서 판 안내도 이어 돌린다. */
+  private pendingBoardReplay = false;
   /**
    * 합성대 꼭짓점 셋에 넣은 룬 ID. 특성 연구대처럼 **인스턴스가 아니라 ID를 든다** — 팔거나 바뀐
    * 룬을 다시 그릴 때 저장에서 다시 찾아 지금 값을 쓴다.
@@ -283,7 +287,9 @@ export class ArchaeologyScene extends Phaser.Scene {
    * 룬 쪽지의 「특성 연구」로 들어오면 연구 탭을 열고 그 룬을 연구대에 꽂은 채로 선다(`goToTraitResearch`).
    * 빈손으로 들어온 사람은 지난번 탭 그대로다.
    */
-  init(data?: { tab?: unknown; benchRuneId?: unknown }): void {
+  init(data?: { tab?: unknown; benchRuneId?: unknown; replayTour?: unknown }): void {
+    this.replayTour = data?.replayTour === true;
+    if (this.replayTour) this.tab = "strata";
     if (typeof data?.benchRuneId === "string" && session.runeInventory.some(({ instanceId }) => instanceId === data.benchRuneId)) {
       this.tab = "research";
       this.benchRuneId = data.benchRuneId;
@@ -358,6 +364,28 @@ export class ArchaeologyScene extends Phaser.Scene {
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
     showContentIntro(this, "archaeologyTour", () => this.startMapTour());
+    this.pendingBoardReplay = false;
+    if (this.replayTour) this.beginTourReplay();
+  }
+
+  /**
+   * 도움말에서 다시 보는 고고학 안내. 지도가 서면 지도 안내를, 진행 중인 판이 열려 있으면 판 안내를 돌린다.
+   * 화면이 서버 응답을 받아 지도를 세우기까지 기다려야 하므로 실제 시간으로 몇 번 엿본다 — 씬 시계는 바쁜
+   * 기기에서 프레임이 돌아야 깨어난다.
+   */
+  private beginTourReplay(): void {
+    this.replayTour = false;
+    let tries = 0;
+    const poll = (): void => {
+      if (!this.sys.isActive() || this.stopTour) return;
+      if (!anyPopupOpen()) {
+        if (this.mapShown()) { this.pendingBoardReplay = true; this.startMapTour(); return; }
+        if (this.board !== null && this.strataGrid !== null) { this.boardTourQueued = true; this.startBoardTour(); return; }
+      }
+      tries += 1;
+      if (tries < 24) window.setTimeout(poll, 300);
+    };
+    window.setTimeout(poll, 500);
   }
 
   /**
@@ -624,7 +652,12 @@ export class ArchaeologyScene extends Phaser.Scene {
 
     this.paintStrataHaul(board);
     this.publishDigDebug();
-    if (!this.boardTourQueued) {
+    if (this.pendingBoardReplay) {
+      // 도움말에서 다시 보는 중 — 이미 본 안내라 첫 방문 판정을 지나지 않고 판 안내를 곧바로 잇는다.
+      this.pendingBoardReplay = false;
+      this.boardTourQueued = true;
+      window.setTimeout(() => { if (this.sys.isActive()) this.startBoardTour(); }, 800);
+    } else if (!this.boardTourQueued) {
       this.boardTourQueued = true;
       showContentIntro(this, "archaeologyBoard", () => this.startBoardTour());
     }

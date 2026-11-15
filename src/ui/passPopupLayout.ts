@@ -2,8 +2,8 @@ import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
 /**
  * 로비 패스 창의 자리표(창 중심 기준).
  *
- * 위에서부터 **패스 이름(제목표) → 패스 레벨과 레벨 단위로 끊긴 게이지 → 목록(보상 또는 미션) → 미션·보상 탭 →
- * 패스 탭 → 모두 받기(가운데)** 순이다. 목록은 마디 열다섯 줄이 **창 안에서 아래로 흐른다** — 한 판에 다 넣으려고 줄을 줄이면
+ * 위에서부터 **패스 이름(제목표) → 패스 레벨과 레벨 단위로 끊긴 게이지 → 목록(보상 또는 미션) → 모두 받기(가운데) →
+ * 미션·보상 탭 → 패스 탭** 순이다. 목록은 마디 열다섯 줄이 **창 안에서 아래로 흐른다** — 한 판에 다 넣으려고 줄을 줄이면
  * 액자가 작아져 무엇을 받는지보다 줄 수가 먼저 읽힌다.
  *
  * 보상 줄은 **가운데에 레벨**, 왼쪽에 무료 칸, 오른쪽에 유료(패스) 칸이 선다. 가운데 레벨 열에는 세로 게이지가 줄을
@@ -38,17 +38,18 @@ export const PASS_POPUP = {
   /**
    * 목록 아래 한 줄 — 왼쪽에 미션·보상 탭(받을 것이 없으면 오른쪽에 「받을 보상 없음」). 패스 탭 줄에 바짝 붙이고 얇게 두어 목록 창을 그만큼 넓힌다.
    */
-  modeRow: { fromBottom: 276, tabWidth: 190, tabHeight: 60, tabGap: 8 },
+  modeRow: { fromBottom: 176, tabWidth: 190, tabHeight: 60, tabGap: 8 },
   /**
-   * 맨 아래 가운데 — 모두 받기. 임무·우편과 같은 자리·같은 한 벌(`CLAIM_ALL_BUTTON_STYLE`)이다. 탭 줄 오른쪽 구석에 작게
-   * 박아 두던 때는 받을 것이 있어도 눈에 걸리지 않았다 — 두 탭 줄을 한 칸씩 올리고 그 자리를 받기에 내준다.
+   * 목록과 탭 줄 사이 가운데 — 모두 받기. 임무·우편과 같은 한 벌(`CLAIM_ALL_BUTTON_STYLE`)이다. 탭 줄 오른쪽 구석에 작게
+   * 박아 두던 때는 받을 것이 있어도 눈에 걸리지 않았고, 탭 줄 아래(판 맨 밑)에 두던 때는 받기가 탭에 가려 목록과 떨어져
+   * 읽혔다 — 목록 바로 아래, 두 탭 줄 위에 선다(응태 2026-11-15).
    */
-  claimRow: { fromBottom: 74, width: 440, height: 88 },
+  claimRow: { fromBottom: 290, width: 440, height: 88 },
   /**
    * 맨 아래 패스 탭 줄 — 패스가 늘어도 칸이 줄지 않도록 **고정 폭 칸이 옆으로 흐르는 줄**이다. 오른쪽 끝은 창의 깎인
    * 모서리(오른쪽 아래 빗변)를 따라 잘리고, 그 빗변에서 `edgeInset`만큼 물러난다. 그 물러남은 왼쪽 여백(판 변 → 줄 시작선, `(width - inner) / 2`)과 같아서 줄이 뒷 판과 양쪽에서 같은 간격으로 앉는다 — 14px로 바싹 붙이던 때는 오른쪽 끝이 뒷 판 빗변에 눌려 비율이 맞지 않았다.
    */
-  passRow: { fromBottom: 178, tabWidth: 290, tabHeight: 80, tabGap: 8, edgeInset: 40 },
+  passRow: { fromBottom: 78, tabWidth: 290, tabHeight: 80, tabGap: 8, edgeInset: 40 },
   /**
    * 패스 넘김 화살표 — 창 좌우 가장자리, 목록 창의 세로 가운데에 걸친다. 창 바깥 여백(`(width - inner) / 2` = 40)에 앉고
    * 안쪽 여백으로 조금 넘어오는 몫은 반투명 유리가 받는다.
@@ -108,10 +109,10 @@ export function passPopupListHeaderY(): number {
   return -PASS_POPUP.height / 2 + PASS_POPUP.list.top + PASS_POPUP.list.headerHeight / 2;
 }
 
-/** 목록이 흐르는 창(창 중심 기준 y). 머리 줄 아래에서 탭 줄 한 뼘 위까지다. */
+/** 목록이 흐르는 창(창 중심 기준 y). 머리 줄 아래에서 모두 받기 한 뼘 위까지다. */
 export function passPopupViewport(): { top: number; bottom: number; height: number } {
   const top = -PASS_POPUP.height / 2 + PASS_POPUP.list.top + PASS_POPUP.list.headerHeight;
-  const bottom = PASS_POPUP.height / 2 - PASS_POPUP.modeRow.fromBottom - PASS_POPUP.modeRow.tabHeight / 2 - 24;
+  const bottom = PASS_POPUP.height / 2 - PASS_POPUP.claimRow.fromBottom - PASS_POPUP.claimRow.height / 2 - 24;
   return { top, bottom, height: bottom - top };
 }
 

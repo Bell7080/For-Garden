@@ -185,7 +185,7 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       });
       const ready = passReadyCount(pass);
       const C = PASS_POPUP.claimRow;
-      // 받기는 판 맨 아래 가운데 — 임무·우편과 같은 자리·같은 한 벌이다. 받을 것이 없으면 꺼진 채 서고 탭 줄 끝이 그 말을 한다.
+      // 받기는 목록 바로 아래, 탭 줄 위 가운데 — 임무·우편과 같은 한 벌이다. 받을 것이 없으면 꺼진 채 서고 탭 줄 끝이 그 말을 한다.
       root.add(new Button(scene, 0, height / 2 - C.fromBottom, {
         width: C.width, height: C.height, ...CLAIM_ALL_BUTTON_STYLE, label: ready > 0 ? t("lobby.pass.claimAll", { count: ready }) : t("missions.claimAll"),
         onClick: () => void claim(pass),
@@ -194,7 +194,7 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
         root.add(scene.add.text(inner / 2, modeY, t("lobby.pass.nothing"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5));
       }
       if (message) {
-        root.add(scene.add.text(0, modeY - M.tabHeight / 2 - 30, message, textStyle({ role: "body", size: 22, color: COLOR.dangerText, align: "center", wrap: inner })).setOrigin(0.5));
+        root.add(scene.add.text(0, height / 2 - C.fromBottom - C.height / 2 - 30, message, textStyle({ role: "body", size: 22, color: COLOR.dangerText, align: "center", wrap: inner })).setOrigin(0.5));
       }
 
       // 맨 아래 — 패스 탭. 받을 것이 있는 패스는 이름 뒤에 그 수가 붙는다.

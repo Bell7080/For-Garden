@@ -10,7 +10,7 @@ import { passLevelOf, passReadyCount, passToOpen, storyPassStageId } from "../..
 import { CATEGORY_TAB } from "../../src/ui/categoryTabStyle";
 import { createStrataBoard } from "../../src/core/strataDig";
 import { DEFAULT_STRATA_LAYER_ID } from "../../src/data/strataLayers";
-import { passPopupContentHeight, passPopupMinScroll, passPopupPassMinScroll, passPopupPassStrip, passPopupPassTabs, passPopupRailFill, passPopupRowY, passPopupScrollFor, passPopupViewport, modeToPassTabGap, PASS_POPUP } from "../../src/ui/passPopupLayout";
+import { passPopupContentHeight, passPopupMinScroll, passPopupPassMinScroll, passPopupPassStrip, passPopupPassTabs, passPopupRailFill, passPopupRowY, passPopupScrollFor, passPopupViewport, modeToPassTabGap, selectedTabReach, PASS_POPUP } from "../../src/ui/passPopupLayout";
 
 class MemoryStorage {
   private values = new Map<string, string>();
@@ -222,25 +222,26 @@ describe("패스 창 탭 줄 간격", () => {
 });
 
 describe("패스 탭 줄의 오른쪽 잘림", () => {
-  it("탭 줄은 받기 줄 위로 올라가 빗변에 닿지 않고, 오른쪽 끝이 곧게 선다", () => {
+  it("탭 줄의 오른쪽 끝은 빗변과 평행하게 edgeInset만큼 물러나 잘린다", () => {
     const strip = passPopupPassStrip();
-    const { passRow, height, inner } = PASS_POPUP;
-    const y = height / 2 - passRow.fromBottom;
-    expect(strip.right(strip.bottom)).toBeCloseTo(strip.right(strip.top));
-    expect(strip.right(y)).toBeLessThanOrEqual(inner / 2);
+    const { passRow, width, height, inner } = PASS_POPUP;
+    const bevel = Math.min(width, height) * POPUP_BODY_BEVEL_RATIO;
+    for (const y of [strip.top, strip.bottom, height / 2 - passRow.fromBottom]) {
+      const edge = width / 2 - Math.max(0, y - (height / 2 - bevel));
+      expect(strip.right(y)).toBeCloseTo(Math.min(inner / 2, edge - passRow.edgeInset * Math.SQRT2));
+    }
   });
 
-  it("모두 받기는 맨 아래 가운데에 서고 뒷 판 빗변과 패스 탭 줄 어느 쪽에도 닿지 않는다", () => {
-    const { claimRow, passRow, width, height } = PASS_POPUP;
-    const bevel = Math.min(width, height) * POPUP_BODY_BEVEL_RATIO;
-    const claimBottom = height / 2 - claimRow.fromBottom + claimRow.height / 2;
+  it("모두 받기는 목록 바로 아래 가운데, 두 탭 줄 위에 서고 어느 쪽과도 겹치지 않는다", () => {
+    const { claimRow, modeRow, height, inner } = PASS_POPUP;
     const claimTop = height / 2 - claimRow.fromBottom - claimRow.height / 2;
-    // 오른쪽 아래 빗변이 그 높이에서 허락하는 폭 안이다.
-    expect(claimRow.width / 2).toBeLessThan(width / 2 - Math.max(0, claimBottom - (height / 2 - bevel)) - 24);
-    expect(claimBottom).toBeLessThan(height / 2);
-    // 켜진 패스 탭이 커져도 받기를 덮지 않는다.
-    const passBottom = height / 2 - passRow.fromBottom + (passRow.tabHeight / 2) * CATEGORY_TAB.selectedScale;
-    expect(claimTop - passBottom).toBeGreaterThanOrEqual(8);
+    const claimBottom = height / 2 - claimRow.fromBottom + claimRow.height / 2;
+    expect(claimRow.width).toBeLessThanOrEqual(inner);
+    // 목록 창은 받기 위에서 끝난다.
+    expect(passPopupViewport().bottom).toBeLessThanOrEqual(claimTop - 16);
+    // 켜진 미션·보상 탭이 솟고 커져도 받기를 덮지 않는다.
+    const modeTop = height / 2 - modeRow.fromBottom - selectedTabReach(modeRow.tabHeight, CATEGORY_TAB).up;
+    expect(modeTop - claimBottom).toBeGreaterThanOrEqual(8);
   });
 
   it("탭이 네 칸이어도 흐르는 줄은 보이는 창 안에서 끝까지 닿는다", () => {

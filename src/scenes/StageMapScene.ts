@@ -3,7 +3,7 @@ import { fitTextToBox } from "../ui/textFit";
 import { openSettingsOver } from "./settingsOverlay";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { stageMapRow } from "../core/stageMapDirection";
-import { STORY_DIFFICULTY, isStoryDifficultyUnlocked, storyBaseStageId, storyDifficultyOf, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
+import { STORY_DIFFICULTY, isStoryDifficultyUnlocked, storyDifficultyOf, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
 import { storyStages, ALL_STORY_STAGES } from "../data/stages";
 import { addStoryDifficultyIcon } from "../ui/StoryDifficultyIcon";
 import { openStoryDifficultyPicker } from "../ui/StoryDifficultyPopup";
@@ -13,6 +13,7 @@ import { tutorialManager } from "../managers/TutorialManager";
 import { goRoute, partyRoute } from "./stageStoryRoute";
 import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
+import { storyStageNumberLabel } from "../ui/storyStageLabel";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import type { StageDef } from "../core/types";
 import { setDebugScene, setDebugStageMapSelected } from "../debug";
@@ -349,7 +350,7 @@ export class StageMapScene extends Phaser.Scene {
       // 입력과 선택 표시는 투명한 원이 계속 맡는다. 손가락이 모서리에서 빠지지 않게 한다.
       const ring = this.add.circle(x, y, 48, 0xffffff, 0);
       const label = this.add
-        .text(x, y, isSubNode(stage) ? t("stageMap.sub") : storyBaseStageId(stage.id), textStyle({ role: "emphasis", size: 30, color: cleared ? "#1a1d21" : unlocked ? COLOR.ink : COLOR.inkDim }))
+        .text(x, y, storyStageNumberLabel(stage), textStyle({ role: "emphasis", size: 30, color: cleared ? "#1a1d21" : unlocked ? COLOR.ink : COLOR.inkDim }))
         .setOrigin(0.5);
       const name = this.add
         .text(x, y + 66, stage.name, textStyle({ role: "display", size: 28, color: unlocked ? COLOR.ink : COLOR.inkDim }))
@@ -477,7 +478,7 @@ export class StageMapScene extends Phaser.Scene {
     this.enemyPreview.showAt(scroll - visualIndex * NODE_GAP, {
       // 성장 스냅샷은 능력치 사본과 **같은 자리 순서**로 넘긴다 — 배열 순서로 넘기면 아모의
       // 레벨이 리파 밑에 적힌다.
-      title: stage.sub ? `${t("stageMap.sub")}  ${stage.name}` : `${storyBaseStageId(stage.id)}  ${stage.name}`, growth: stageEnemyGrowth(stage), enemies, elite: stage.elite === true,
+      title: `${storyStageNumberLabel(stage)}  ${stage.name}`, growth: stageEnemyGrowth(stage), enemies, elite: stage.elite === true,
       // 서사가 없는 관문은 `undefined`가 그대로 넘어가 직전 노드의 줄이 남지 않는다.
       situation: stage.situation,
       // 결과판과 같은 그 관문의 전장 원화가 판 안에 옅게 비친다.

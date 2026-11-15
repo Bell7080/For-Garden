@@ -918,6 +918,12 @@ export class IdleExcavationPopup {
         if (result.cleared) this.refreshEditorSlots();
         else this.paintSlotSelection();
       },
+      // 칸에 선 SD도 목록 카드와 같은 꾹 누름으로 상세가 열린다 — 현황에서도, 배치 중에도.
+      longPress: (index) => {
+        const relicId = formation[index];
+        const relic = relicId ? RELICS.find((candidate) => candidate.id === relicId) : undefined;
+        if (relic && !this.saving) this.openRelicInfo(relic);
+      },
       drop: (from, to) => {
         this.formationDragVisual?.endDrag();
         if (!editable || !this.draft || this.saving) return;
@@ -926,7 +932,7 @@ export class IdleExcavationPopup {
         // 저장 전에는 서버 응답과 Session을 건드리지 않고 슬롯 줄만 다시 세운다.
         this.refreshEditorSlots();
       },
-    }, { enabled: () => !this.saving, canDrag: () => editable });
+    }, { enabled: () => !this.saving, canDrag: () => editable, longPressGauge: (index) => Boolean(formation[index]) });
   }
 
   /** 현황 전용 Puppet/tween을 중복 파괴 없이 비우고 진행 중 로딩도 무효화한다. */

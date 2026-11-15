@@ -85,6 +85,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { setDebugBattle, setDebugBossResult, setDebugScene } from "../debug";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { bindLongPress } from "../ui/longPressInfo";
+import { isTap } from "../ui/tapGuard";
 import { type InfoManager, sceneInfoManager } from "../ui/info";
 import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { SummonInfoPopup } from "../ui/SummonInfoPopup";
@@ -1321,16 +1322,27 @@ export class BattleScene extends Phaser.Scene {
       }
       // Puppet Mesh의 기본 입력 경계는 비동기 생성 시점의 로컬 크기에 묶여 이동·배율 적용 뒤
       // 실제 SD와 어긋날 수 있다. 투명 몸통 영역을 따로 두고 매 프레임 발 위치를 따라가게 한다.
-      const infoHit = !this.isAlly(fighter)
-        ? this.add.rectangle(fighter.x, fighter.y - unitHeight / 2, 190 * fighter.bodyScale, unitHeight + 70, 0xffffff, 0)
-          .setInteractive({ useHandCursor: true })
-          .on("pointerup", () => {
-            // 소환수는 적 창이 아니라 소환수 창이다 — 레벨·돌파가 없고 지휘자의 한 능력치를 따라 자란다.
-            if (this.openSummonInfo(fighter)) return;
-            // 배치된 그 개체를 그대로 연다.
-            this.info.show(this.enemySnapshots.get(fighter.id) ?? { def: fighter.def, level: 1, breakthrough: 0 });
-          })
-        : undefined;
+      const infoHit = this.add.rectangle(fighter.x, fighter.y - unitHeight / 2, 190 * fighter.bodyScale, unitHeight + 70, 0xffffff, 0)
+        .setInteractive({ useHandCursor: !this.isAlly(fighter) });
+      if (!this.isAlly(fighter)) {
+        infoHit.on("pointerup", () => {
+          // 소환수는 적 창이 아니라 소환수 창이다 — 레벨·돌파가 없고 지휘자의 한 능력치를 따라 자란다.
+          if (this.openSummonInfo(fighter)) return;
+          // 배치된 그 개체를 그대로 연다.
+          this.info.show(this.enemySnapshots.get(fighter.id) ?? { def: fighter.def, level: 1, breakthrough: 0 });
+        });
+      } else {
+        // 전장의 아군 SD도 아래 프로필 카드와 같은 꾹 누름으로 상세를 연다. 짧은 탭은 아군 창을 열지 않는다 —
+        // 난전 한가운데를 스친 손이 창을 열어 전투를 멈추면 안 된다. 대신 맞붙은 적을 가리던 자리라면
+        // 그 아래 적에게 탭을 넘겨, 아군 입력면이 생겨도 적을 눌러 여는 손이 막히지 않게 한다.
+        bindLongPress(this, infoHit, {
+          onTap: () => this.forwardTapToEnemy(this.input.activePointer),
+          allowTap: () => isTap(this.input.activePointer),
+          onLongPress: () => { if (!this.openSummonInfo(fighter)) this.openAllyInfo(fighter); },
+          enabled: () => !this.finished && !this.ultimateSequenceActive,
+          depth: 1500,
+        });
+      }
       // 폭주 필터. 스킬 아이콘과 같은 속성·직군 색을 그대로 쓰며, 발광이 아니라 몸에 입힌다.
       const feverTint = skillArtTint(fighter.def.element, fighter.def.role);
       // 발밑 그림자는 몸집만큼만 — 작게 선 늑대가 사람만 한 그림자를 끌고 다니지 않는다.
@@ -1435,10 +1447,7 @@ export class BattleScene extends Phaser.Scene {
         onTap: () => this.useUltimate(fighter),
         onLongPress: () => {
           card.setScale(profileScale(this.ultimateCharged(fighter)));
-          // 원정은 떠날 때의 모습을 읽기 전용으로 연다. 도중에 급여·돌파를 할 길을 열어 두지 않는다.
-          // 떠 있는 동안 전투가 멈추도록 그 창을 붙잡아 둔다(`simulationPaused`).
-          if (this.frozenRelics) this.allyInfoRef = showExpeditionRelic(this, fighter.def.id);
-          else this.allyInfo().showRelic(fighter.def);
+          this.openAllyInfo(fighter);
         },
         depth: 1500,
       });
@@ -1447,6 +1456,23 @@ export class BattleScene extends Phaser.Scene {
       // 밝은 배경 원화 위에서 흐린 회색 글자는 게이지 옆에 있어도 읽히지 않는다.
       this.profiles.push({ fighter, prefab, card, glow, sweep, charge, hpBar, hpLabel, ferocityBar, ferocityLabel, hpShown: fighter.hp, ferocityShown: fighter.ferocity, chargeShown: 0, ready: false });
     });
+  }
+
+  /** 아군 SD 입력면을 짧게 누른 손을 그 자리 아래의 적에게 넘긴다. 겹친 적이 없으면 아무 일도 없다. */
+  private forwardTapToEnemy(pointer: Phaser.Input.Pointer): void {
+    const { worldX: x, worldY: y } = pointer;
+    const below = [...this.views.values()]
+      .filter((view) => !this.isAlly(view.fighter) && !view.dead && view.infoHit?.input?.enabled && view.infoHit.getBounds().contains(x, y))
+      .sort((a, b) => (b.infoHit?.depth ?? 0) - (a.infoHit?.depth ?? 0))[0];
+    below?.infoHit?.emit("pointerup", pointer);
+  }
+
+  /** 아군 하나의 상세 창 — 아래 프로필 카드와 전장의 SD가 같은 길로 연다. */
+  private openAllyInfo(fighter: Fighter): void {
+    // 원정은 떠날 때의 모습을 읽기 전용으로 연다. 도중에 급여·돌파를 할 길을 열어 두지 않는다.
+    // 떠 있는 동안 전투가 멈추도록 그 창을 붙잡아 둔다(`simulationPaused`).
+    if (this.frozenRelics) this.allyInfoRef = showExpeditionRelic(this, fighter.def.id);
+    else this.allyInfo().showRelic(fighter.def);
   }
 
   /**
@@ -3024,6 +3050,10 @@ export class BattleScene extends Phaser.Scene {
         .map((view) => ({ fighterId: view.fighter.id, x: view.statusHit.x, y: view.statusHit.y, count: this.statusViewsOf(view.fighter).length }))
         .filter(({ count }) => count > 0),
       // E2E도 사용자가 보는 이동 중 클릭 영역의 중심을 그대로 눌러 입력 회귀를 확인한다.
+      // 아군 SD도 꾹 눌러 상세를 연다 — 그 입력면의 현재 중심.
+      allyTargets: [...this.views.values()]
+        .filter((view) => this.isAlly(view.fighter) && !view.dead && view.fighter.summonOwnerId === null)
+        .map((view) => ({ x: view.infoHit?.x ?? view.fighter.x, y: view.infoHit?.y ?? view.fighter.y })),
       enemyTargets: [...this.views.values()]
         .filter((view) => view.fighter.side === "enemy" && !view.dead)
         .map((view) => ({ x: view.infoHit?.x ?? view.fighter.x, y: view.infoHit?.y ?? view.fighter.y })),

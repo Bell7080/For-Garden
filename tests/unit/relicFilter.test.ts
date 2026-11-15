@@ -66,3 +66,21 @@ describe("도감 필터 — 등급·소속", () => {
     expect(matchesRelicFilter(torika, { ...EMPTY_RELIC_FILTER, squads: [otherSquad] })).toBe(false);
   });
 });
+
+describe("파견 필터 — 생산 재화·도시 특화", () => {
+  it("생산 재화는 발굴 특성의 주 재화로 거르고 조건 수에 든다", () => {
+    const own = torika.excavationTrait.primaryCurrency;
+    const other = (["cheesecake", "rawStone", "gold", "gems"] as const).find((currency) => currency !== own)!;
+    expect(relicFilterCount({ ...EMPTY_RELIC_FILTER, currencies: [own] })).toBe(1);
+    expect(matchesRelicFilter(torika, { ...EMPTY_RELIC_FILTER, currencies: [own] })).toBe(true);
+    expect(matchesRelicFilter(torika, { ...EMPTY_RELIC_FILTER, currencies: [other] })).toBe(false);
+  });
+
+  it("특화 일치만은 문맥이 준 특화 수로 거르고, 문맥이 없으면 거르지 않는다", () => {
+    const filter = { ...EMPTY_RELIC_FILTER, specialtyOnly: true };
+    expect(relicFilterCount(filter)).toBe(1);
+    expect(matchesRelicFilter(torika, filter, { specialtyOf: () => 0 })).toBe(false);
+    expect(matchesRelicFilter(torika, filter, { specialtyOf: () => 2 })).toBe(true);
+    expect(matchesRelicFilter(torika, filter)).toBe(true);
+  });
+});

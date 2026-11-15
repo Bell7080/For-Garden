@@ -19,6 +19,12 @@ export const INTERACTION_CITY_SLOT_GROUND_OFFSET = 110;
 export const INTERACTION_CITY_LOWER = { left: -415, right: 415, top: -72, bottom: 425 } as const;
 
 /**
+ * 목록 위 자동 배치 단추. 필터·정렬 줄(아래 칸 윗변 − 42 + 64)과 한 뼘(76) 벌려 두 줄이 붙어
+ * 낑겨 보이지 않게 하고, 위 파견대 칸 밑변과도 30px 넘게 띄운다 — 발굴의 자동 배치 줄과 같은 높이다.
+ */
+export const INTERACTION_CITY_AUTO = { y: INTERACTION_CITY_LOWER.top - 54, width: 200, height: 54 } as const;
+
+/**
  * 돌아오는 재화 액자 한 칸.
  *
  * 액자를 키운 것은 **눌러서 재화 안내를 여는 자리**이기도 하기 때문이다 — 엄지가 닿아야 하는
@@ -75,8 +81,8 @@ export const INTERACTION_CITY_POPUP_SPOTS = {
   }),
   /** 목록 위 오른쪽의 자동 배치. 배치 중에만 서 있다. */
   autoAssign: {
-    x: BASE_WIDTH / 2 + INTERACTION_CITY_LOWER.right - 90,
-    y: BASE_HEIGHT / 2 + INTERACTION_CITY_LOWER.top - 42,
+    x: BASE_WIDTH / 2 + INTERACTION_CITY_LOWER.right - INTERACTION_CITY_AUTO.width / 2,
+    y: BASE_HEIGHT / 2 + INTERACTION_CITY_AUTO.y,
   },
   /** 주요 조작. 배치 중에는 취소가 왼쪽에 서므로 오른쪽으로 밀린다. */
   primary: (editing: boolean): { x: number; y: number } => ({

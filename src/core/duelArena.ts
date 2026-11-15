@@ -251,6 +251,11 @@ export function duelDayKey(now: Date): string {
   return now.toISOString().slice(0, 10);
 }
 
+/** 도전권·새로고침 횟수가 처음으로 돌아가는 시각 — 날짜 키가 바뀌는 다음 UTC 자정. */
+export function duelDailyResetAt(now: Date): Date {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+}
+
 /** 시즌 번호(1부터). 기준점 이전은 1로 수렴한다. */
 export function duelSeasonNumber(now: Date): number {
   return Math.max(1, Math.floor((now.getTime() - duelSeasonEpoch()) / (DUEL_SEASON_DAYS * DAY_MS)) + 1);

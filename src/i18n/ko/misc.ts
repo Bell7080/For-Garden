@@ -331,6 +331,9 @@ export const MISC_KO = {
   "relics.filter.reach": "사거리",
   "relics.filter.rarity": "등급",
   "relics.filter.squad": "소속",
+  "relics.filter.currency": "생산 재화",
+  "relics.filter.specialty": "도시 특화",
+  "relics.filter.specialtyOnly": "특화 일치만",
   "relics.filter.reset": "조건 해제",
   "relics.search": "이름 검색",
 

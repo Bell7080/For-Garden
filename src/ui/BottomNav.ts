@@ -171,6 +171,8 @@ export class BottomNav {
       }
       // 받을 무료 보급이 남아 있으면 프리미엄 탭에 점을 세운다.
       if (tab.key === "premium") bindNotificationDot(scene, group, { x: 34, y: -40 }, (listener) => notificationManager.subscribe("premiumNotice", listener));
+      // 오늘의 무료 연구가 남아 있으면 연구소 탭에도 같은 점을 세운다(잠긴 동안에는 세우지 않는다).
+      if (tab.key === "lab") bindNotificationDot(scene, group, { x: 34, y: -40 }, (listener) => notificationManager.subscribe("freeResearch", (visible) => listener(visible && (contentId === undefined || contentOpen(contentId)))));
       // 지금 화면인 탭만 살짝 크다. 밑줄이나 상자 대신 크기로 알린다.
       group.setScale(active ? ACTIVE_SCALE : 1);
 

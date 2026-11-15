@@ -1747,6 +1747,9 @@ export class BattleScene extends Phaser.Scene {
     // 한 시뮬레이션 프레임의 유효 타격을 하나로 병합해 광역/연격이 기기를 연속 진동시키지 않게 한다.
     if (hasMergedBattleHit(events)) settingsManager.haptic("battleHit");
     events.forEach((event) => this.playEvent(event));
+    // 판이 굳었는데 끝났다는 사건을 놓쳤으면(사건을 재생하던 프레임이 예외로 끊긴 경우 등) 여기서 닫는다 —
+    // 코어는 끝난 판을 다시 굴리지 않아 사건이 두 번 오지 않으므로, 놓치면 결과판이 영영 열리지 않는다.
+    if (!this.finished && this.state.phase !== "fight") this.finishBattle(this.state.phase);
     if (this.autoUltimate && !this.finished && !this.state.automaticUltimates) this.fireReadyUltimates();
     this.refreshProfiles();
     this.refreshDebug();

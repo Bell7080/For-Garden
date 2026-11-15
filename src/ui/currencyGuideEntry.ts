@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
-import type { CurrencyGuideAction } from "../data/currencyGuide";
+import type { LobbyMenu } from "../scenes/lobbyEntry";
+import type { GuideNavigator } from "./guideNavigation";
 import type { WalletItemKey } from "../data/items";
 import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
 import { setCurrencyGuideOpener, setItemGuideOpener } from "./itemFrame";
@@ -9,7 +10,6 @@ import { session } from "../state/session";
 import type { ItemDefinition } from "../data/items";
 import type { PopupLayer } from "./PopupLayer";
 import { StaminaPopup } from "./StaminaPopup";
-import { startScene } from "./screenTransition";
 
 /**
  * 재화를 눌러 여는 안내창의 **유일한 경계**.
@@ -18,14 +18,14 @@ import { startScene } from "./screenTransition";
  * 눌러도 아무 일이 없었다 — 같은 그림이 화면에 따라 눌리기도, 눌리지 않기도 했다. 지금은
  * 씬이 열릴 때 이 한 줄만 걸면 **그 화면의 상단 줄과 액자 그림이 전부** 같은 창으로 이어진다.
  *
- * 이동은 여기서 직접 하지 않고 각 씬의 콜백에 넘긴다 — 무역처럼 로비 위에서만 열리는 판이
- * 있어, 어느 화면에서 눌렀는지에 따라 갈 곳이 다르다.
+ * 줄 옆 화살표의 길은 `guideNavigation` 한 곳이 정한다. 로비만 판(발굴·무역·임무·출격)을 그 자리에서
+ * 여는 콜백을 넘기고, 다른 화면은 로비로 돌아가 그 판을 연다.
  */
 export interface CurrencyGuideHost {
   scene: Phaser.Scene;
   popups: PopupLayer;
-  /** 안내창의 이동 버튼을 눌렀을 때. 비우면 씬 전환만 공용 규칙으로 처리한다. */
-  onAction?: (action: CurrencyGuideAction) => void;
+  /** 로비 위 판을 그 자리에서 여는 길 — 로비만 준다. */
+  onLobbyPanel?: (panel: LobbyMenu) => void;
 }
 
 /**
@@ -35,16 +35,18 @@ export interface CurrencyGuideHost {
  * 획득처를 글로 읽는 공용 안내로는 모자란다.
  */
 export function openCurrencyGuide(host: CurrencyGuideHost, key: WalletItemKey): void {
-  if (key === "stamina") { new StaminaPopup(host.scene, host.popups, gameApi).open(); return; }
-  new CurrencyGuidePopup(host.scene, host.popups, (action) => applyGuideAction(host, action)).open(key);
+  if (key === "stamina") { openStaminaGuide(host); return; }
+  new CurrencyGuidePopup(host.scene, host.popups, guideNavigatorParts(host)).open(key);
 }
 
-/** 이동 버튼의 공용 처리. 씬이 제 나름의 콜백을 주면 그쪽이 먼저다. */
-function applyGuideAction(host: CurrencyGuideHost, action: CurrencyGuideAction): void {
-  if (host.onAction) { host.onAction(action); return; }
-  // 팝업 목적지(무역)는 그 판을 소유한 화면에서만 열 수 있으므로, 없는 화면에서는 로비로 돌아간다.
-  if (action.kind === "scene") startScene(host.scene, action.target);
-  else startScene(host.scene, "lobby");
+function openStaminaGuide(host: CurrencyGuideHost): void {
+  // 스테미나 창 안의 줄은 스테미나 창을 다시 열 필요가 없다(`openStamina`를 넘기지 않는다).
+  new StaminaPopup(host.scene, host.popups, gameApi, { onLobbyPanel: host.onLobbyPanel }).open();
+}
+
+/** 안내창 줄 옆 화살표가 쓰는 길 — 로비 판 콜백과 그 자리에서 여는 스테미나 창. */
+export function guideNavigatorParts(host: CurrencyGuideHost): Omit<GuideNavigator, "scene"> {
+  return { onLobbyPanel: host.onLobbyPanel, openStamina: () => openStaminaGuide(host) };
 }
 
 /**
@@ -63,7 +65,7 @@ export function bindCurrencyGuide(host: CurrencyGuideHost): void {
  * 재료·소비품 안내 — 가방에서 여는 것과 **같은 창**이다(`ItemGuidePopup`). 보유 수는 지금 가방에서
  * 읽고, 「사용하기」는 가방에서만 선다(쓰는 일은 가방의 몫이고 영수증·우편은 보여 주기만 한다).
  */
-export function openItemGuide(host: Pick<CurrencyGuideHost, "scene" | "popups">, definition: ItemDefinition): void {
+export function openItemGuide(host: CurrencyGuideHost, definition: ItemDefinition): void {
   const quantity = session.itemInventory.find(({ itemId }) => itemId === definition.id)?.quantity ?? 0;
-  new ItemGuidePopup(host.scene, host.popups).open({ definition, quantity });
+  new ItemGuidePopup(host.scene, host.popups, guideNavigatorParts(host)).open({ definition, quantity });
 }

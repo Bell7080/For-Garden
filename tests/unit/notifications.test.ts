@@ -16,11 +16,11 @@ describe("notifications", () => {
   });
 
   it("maps only positive or explicit conditions to each stable key", () => {
-    expect(NOTIFICATION_KEYS).toEqual(["raidReward", "expeditionReward", "sortieReward", "missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "premiumOffer", "passReward", "premiumNotice", "achievementReward", "shopFree"]);
+    expect(NOTIFICATION_KEYS).toEqual(["raidReward", "expeditionReward", "sortieReward", "missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "premiumOffer", "passReward", "premiumNotice", "achievementReward", "shopFree", "freeResearch", "interactionReturned", "duelSeasonReward", "premiumSubscription"]);
     expect(deriveNotificationState({ claimableMissionCount: 2, excavationHarvestReady: true, pendingFriendRequestCount: 1, unseenEventCount: 3, unreadMailCount: 4 }))
-      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: true, excavationHarvestReady: true, friendRequest: true, newEvent: true, mail: true, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, premiumOffer: false, passReward: false, premiumNotice: false, achievementReward: false, shopFree: false });
+      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: true, excavationHarvestReady: true, friendRequest: true, newEvent: true, mail: true, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, premiumOffer: false, passReward: false, premiumNotice: false, achievementReward: false, shopFree: false, freeResearch: false, interactionReturned: false, duelSeasonReward: false, premiumSubscription: false });
     expect(deriveNotificationState({ claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 }))
-      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: false, excavationHarvestReady: false, friendRequest: false, newEvent: false, mail: false, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, premiumOffer: false, passReward: false, premiumNotice: false, achievementReward: false, shopFree: false });
+      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: false, excavationHarvestReady: false, friendRequest: false, newEvent: false, mail: false, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, premiumOffer: false, passReward: false, premiumNotice: false, achievementReward: false, shopFree: false, freeResearch: false, interactionReturned: false, duelSeasonReward: false, premiumSubscription: false });
     expect(deriveNotificationState({ claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0, freeSupplyCategories: ["weekly"] }))
       .toMatchObject({ premiumFree: true, premiumFreeDaily: false, premiumFreeWeekly: true, premiumFreeMonthly: false, passReward: false, premiumNotice: true });
   });
@@ -70,6 +70,29 @@ describe("notifications", () => {
     expect((await api.getNotificationSignals()).freeSupplyCategories).not.toContain("daily");
     now = new Date("2026-08-31T00:00:00Z");
     expect((await api.getNotificationSignals()).freeSupplyCategories).toContain("daily");
+  });
+
+  it("무료 연구·교류 귀환·결투 시즌 보상·구독 오늘 몫도 제 키로 켜고, 구독 몫은 하단 프리미엄 점에도 든다", () => {
+    const base = { claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 };
+    expect(deriveNotificationState({ ...base, freeResearchAvailable: true })).toMatchObject({ freeResearch: true, premiumNotice: false });
+    expect(deriveNotificationState({ ...base, claimableInteractionCount: 1 }).interactionReturned).toBe(true);
+    expect(deriveNotificationState({ ...base, duelSeasonRewardReady: true }).duelSeasonReward).toBe(true);
+    expect(deriveNotificationState({ ...base, claimableSubscriptionBonusCount: 1 })).toMatchObject({ premiumSubscription: true, premiumNotice: true });
+    expect(deriveNotificationState({ ...base, claimableInteractionCount: 0, claimableSubscriptionBonusCount: 0 })).toMatchObject({ interactionReturned: false, premiumSubscription: false, premiumNotice: false });
+  });
+
+  it("오늘의 무료 연구는 쓰면 꺼지고 다음 UTC 날짜에 다시 켜진다", async () => {
+    let now = new Date("2026-08-30T12:00:00Z");
+    const state = createDefaultSession();
+    const api = new FakeServer(state, { latencyMs: 0, now: () => now });
+    // 연구소가 잠긴 동안은 켜지 않는다.
+    expect((await api.getNotificationSignals()).freeResearchAvailable).toBe(false);
+    for (const id of ["1-1", "1-2", "1-3", "1-4", "1-5"]) state.cleared.add(id);
+    expect((await api.getNotificationSignals()).freeResearchAvailable).toBe(true);
+    await api.pullRelics({ bannerId: "fossil", count: 1, free: true });
+    expect((await api.getNotificationSignals()).freeResearchAvailable).toBe(false);
+    now = new Date("2026-08-31T00:00:00Z");
+    expect((await api.getNotificationSignals()).freeResearchAvailable).toBe(true);
   });
 
   it("keeps one red, white-outlined, dark-shadow specification for every button", () => {

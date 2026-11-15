@@ -3,7 +3,7 @@ import { attachRoll } from "./RollingValue";
 import { remainingDetail } from "./itemExpiry";
 import { t } from "../i18n";
 import type { ItemDefinition } from "../data/items";
-import { chipPoints, drawLayer, drawShapeInnerGlow, HoloBar, slantedRect } from "./holo";
+import { chipPoints, drawLayer, drawShapeInnerGlow, slantedRect } from "./holo";
 import { dotPattern } from "./Button";
 import { shapeClipMask } from "./popupArt";
 import { settingsManager } from "../managers/SettingsManager";
@@ -12,8 +12,10 @@ import { addItemDefinitionIcon } from "./itemDefinitionIcon";
 import { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { ITEM_GUIDE, itemGuideHeight, itemGuideSourcesTop } from "./itemGuideLayout";
-import { itemSourceKeys } from "../data/itemSources";
-import { shrinkTextToWidth } from "./textFit";
+import { itemSourceRoutes } from "../data/itemSources";
+import { addGuideRouteList, addGuideSectionHeader } from "./GuideRouteList";
+import type { GuideNavigator } from "./guideNavigation";
+import { itemDescription } from "./itemDescription";
 import { pressIn, pressOut } from "./pressFeedback";
 import { clipHit, containerClip } from "./clippedHit";
 import { universalFragmentRarity } from "../core/relicProgression";
@@ -37,11 +39,11 @@ export interface ItemGuideOptions {
  * 더 띄우던 때는 이 창이 이미 무엇을 쓰는지 말하고 있는데 같은 질문을 되물었다.
  */
 export class ItemGuidePopup {
-  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer) {}
+  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly navigator: Omit<GuideNavigator, "scene"> = {}) {}
 
   open(options: ItemGuideOptions): void {
     const { definition, quantity, onUse, expiry } = options;
-    const sources = itemSourceKeys(definition.id);
+    const sources = itemSourceRoutes(definition.id);
     const height = itemGuideHeight(onUse !== undefined, sources.length);
     const top = -height / 2;
     this.popups.open({ width: ITEM_GUIDE.width, height, title: definition.name, dim: true, dimAlpha: 0.34 }, (body, close) => {
@@ -61,13 +63,13 @@ export class ItemGuidePopup {
         body.add(addItemDefinitionIcon(this.scene, definition.icon, iconX, heroY, iconSize));
       }
       if (fragmentRarity) body.add(addUniversalFragmentGlass(this.scene, hero.frameSize, fragmentRarity).setPosition(iconX, heroY));
-      body.add(this.scene.add.text(hero.width / 2 - 40, heroY - 28, t("inventory.guide.held"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
-      body.add(attachRoll(this.scene.add.text(hero.width / 2 - 40, heroY + 18, quantity.toLocaleString(), textStyle({ role: "display", size: 52, color: "#ffe9a3" }))
+      body.add(this.scene.add.text(hero.width / 2 - 40, heroY - 28, t("inventory.guide.held"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5));
+      body.add(attachRoll(this.scene.add.text(hero.width / 2 - 40, heroY + 18, quantity.toLocaleString(), textStyle({ role: "display", size: 56, color: "#ffe9a3" }))
         .setOrigin(1, 0.5).setShadow(2, 6, "#05070a", 7, false, true), { memoryKey: `item-guide:${definition.id}` }));
       if (expiry) {
         // 가방 칸의 표식(`7D`)이 줄여 적은 것을 여기서는 자세히 — 가장 먼저 사라질 묶음의 수와 남은
         // 일·시간(하루 안이면 시·분, 한 시간 안이면 분·초)을 초마다 다시 적는다.
-        const line = this.scene.add.text(hero.width / 2 - 40, heroY + 62, "", textStyle({ role: "emphasis", size: 20, color: COLOR.dangerText })).setOrigin(1, 0.5);
+        const line = this.scene.add.text(hero.width / 2 - 40, heroY + 62, "", textStyle({ role: "emphasis", size: 22, color: COLOR.dangerText })).setOrigin(1, 0.5);
         const paint = (): void => { line.setText(t("inventory.guide.expiry", { count: expiry.count, time: remainingDetail(expiry.expiresAt) })); };
         paint();
         const timer = this.scene.time.addEvent({ delay: 1000, loop: true, callback: paint });
@@ -77,20 +79,15 @@ export class ItemGuidePopup {
 
       const { section } = ITEM_GUIDE;
       const sectionY = top + section.top;
-      body.add(this.scene.add.text(-section.width / 2, sectionY, t("inventory.guide.effect"), textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
-      new HoloBar(this.scene, 0, sectionY + 32, section.width, 5, { color: COLOR.accent, trackAlpha: 0.5 }).addTo(body).setValue(1);
-      body.add(this.scene.add.text(-section.width / 2 + 15, sectionY + 60, definition.description, textStyle({ role: "body", size: 24, color: COLOR.ink, wrap: section.width - 30 })).setOrigin(0, 0));
+      addGuideSectionHeader(this.scene, body, sectionY, section.width, t("inventory.guide.effect"));
+      body.add(this.scene.add.text(-section.width / 2 + 10, sectionY + 64, itemDescription(definition), textStyle({ role: "body", size: ITEM_GUIDE.bodySize, color: COLOR.ink, wrap: section.width - 20 })).setOrigin(0, 0));
       if (sources.length > 0) {
-        // 효과와 같은 제목줄 양식으로 「얻는 방법」을 세우고, 수급처는 줄마다 짧은 빗금 표식과 함께 선다.
+        // 효과와 같은 제목줄 양식으로 「얻는 방법」을 세운다. 갈 곳이 있는 줄은 화살표를 눌러 그 화면으로 간다.
         const sourcesY = top + itemGuideSourcesTop();
-        body.add(this.scene.add.text(-section.width / 2, sourcesY, t("inventory.guide.sources"), textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
-        new HoloBar(this.scene, 0, sourcesY + 32, section.width, 5, { color: COLOR.accent, trackAlpha: 0.5 }).addTo(body).setValue(1);
-        sources.forEach((key, index) => {
-          const lineY = sourcesY + ITEM_GUIDE.sources.header + index * ITEM_GUIDE.sources.line + ITEM_GUIDE.sources.line / 2 - 8;
-          body.add(drawLayer(this.scene, -section.width / 2 + 22, lineY, slantedRect(8, 22, 4), { fill: COLOR.accent, alpha: 0.8, shadow: false }));
-          const line = this.scene.add.text(-section.width / 2 + 42, lineY, t(key), textStyle({ role: "body", size: 23, color: COLOR.ink })).setOrigin(0, 0.5);
-          shrinkTextToWidth(line, section.width - 50);
-          body.add(line);
+        addGuideSectionHeader(this.scene, body, sourcesY, section.width, t("inventory.guide.sources"));
+        addGuideRouteList(this.scene, body, {
+          x: 0, y: sourcesY + ITEM_GUIDE.sources.header + ITEM_GUIDE.sources.line / 2, width: section.width, routes: sources,
+          navigator: { scene: this.scene, ...this.navigator }, close, rowHeight: ITEM_GUIDE.sources.line,
         });
       }
 

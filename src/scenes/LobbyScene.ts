@@ -85,7 +85,6 @@ import { MailPopup } from "../ui/MailPopup";
 import { openPassPopup } from "../ui/PassPopup";
 import { LobbyPassCard } from "../ui/LobbyPassCard";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
-import type { CurrencyGuideAction } from "../data/currencyGuide";
 import { motionPolicy, powerSavingPolicy } from "../core/settings";
 import { LobbyAtmosphere } from "../ui/LobbyAtmosphere";
 import { TRANSITION } from "../core/screenTransition";
@@ -293,7 +292,7 @@ export class LobbyScene extends Phaser.Scene {
     // 열려다 아무것도 세우지 못했다 — 이벤트 판이 두 번 다시 열리지 않았다. 새 로비는 빈손으로 시작한다.
     this.forgetPopups();
     // 이 한 줄로 상단 재화 칸뿐 아니라 가방·무역·영수증의 재화 액자까지 같은 창으로 이어진다.
-    bindCurrencyGuide({ scene: this, popups: this.popupLayer, onAction: (action) => this.handleCurrencyAction(action) });
+    bindCurrencyGuide({ scene: this, popups: this.popupLayer, onLobbyPanel: (panel) => this.openLobbyPanel(panel) });
     this.sortieSdPuppets.clear();
 
     // 그 사이 새로 열린 콘텐츠를 모아 둔다 — 아래 입구들이 제 몫을 가져가 자물쇠가 터지는 연출을 돈다.
@@ -324,6 +323,9 @@ export class LobbyScene extends Phaser.Scene {
       onClick: this.guarded("duel", () => (PVP_MODE_SELECT_ENABLED ? this.openPvpMenu() : startScene(this, "duel"))),
     });
     this.gateEntrance("duel", duelButton, { width: LOBBY_ACTION_BOUNDS.expedition.width, height: LOBBY_ACTION_BOUNDS.expedition.height, tall: "right", tilt: -6 });
+    // 받지 않은 결투 시즌 보상이 대기 중이면 출격과 같은 규칙으로 실제 우상단 모서리에 점을 세운다.
+    const duelDot = perspectiveButtonNotificationAnchor({ width: LOBBY_ACTION_BOUNDS.expedition.width, height: LOBBY_ACTION_BOUNDS.expedition.height, tall: "right", rotation: Phaser.Math.DegToRad(-6), inset: 10 });
+    bindNotificationDot(this, duelButton, duelDot, (listener) => notificationManager.subscribe("duelSeasonReward", listener));
 
     // 출격 — 로비에서 가장 큰 버튼이다. 주황빛 강조로 다른 입구와 구분한다.
     const sortieButton = new Button(this, LOBBY_ACTION_BOUNDS.sortie.x, LOBBY_ACTION_BOUNDS.sortie.y, {
@@ -360,6 +362,8 @@ export class LobbyScene extends Phaser.Scene {
       onClick: this.guarded("interaction", () => startScene(this, "interaction")),
     });
     this.gateEntrance("interaction", interactionButton, { width: 292, height: 106, tall: "left", tilt: 6 });
+    // 돌아와 받을 교류 파견이 있으면 발굴과 같은 자리에 점을 세운다.
+    bindNotificationDot(this, interactionButton, perspectiveButtonNotificationAnchor({ width: 292, height: 106, tall: "left", rotation: Phaser.Math.DegToRad(6), inset: 10 }), (listener) => notificationManager.subscribe("interactionReturned", listener));
 
     // 발굴 — 출격과 같은 줄에 서지만 크기는 교류와 같다. 왼쪽은 서브 콘텐츠 자리라, 오른쪽의
     // 큰 주황 버튼과 크기로 위계를 가른다. 색도 교류와 같은 푸른 계열로 묶는다.
@@ -407,9 +411,8 @@ export class LobbyScene extends Phaser.Scene {
     const continueEntry = (): void => {
       if (!this.scene.isActive()) return;
       if (tutorialManager.lobbyStep() !== undefined) this.returnMenu = undefined;
-      if (this.returnMenu === "sortie") this.openSortieMenu(true);
-      else if (this.returnMenu === "duel") this.openPvpMenu(true);
-      else if (this.returnMenu === "event") this.openEvents(true);
+      if (this.returnMenu === "duel") this.openPvpMenu(true);
+      else if (this.returnMenu) this.openLobbyPanel(this.returnMenu, true);
       // 들어서는 순서는 **출석 → 레벨업 → (닫힘) → 열림 연출**이다(응태: 출석이 가장 먼저). 한 판이 끝나야 다음이 선다 —
       // 겹치면 둘 다 반쯤 가린다. 열림 연출은 레벨업 판이 닫힐 때까지 문 뒤에서 기다린다.
       const levelUp = this.returnMenu ? undefined : this.pendingLevelUp;
@@ -676,16 +679,22 @@ export class LobbyScene extends Phaser.Scene {
     startScene(this, "shop", { storefront: "shop", returnScene: "lobby" });
   }
 
-  /** 상단과 가방이 공유하는 안내를 열고, 선택적인 이동만 로비 소유 콜백에서 해석한다. */
+  /** 상단과 가방이 공유하는 안내를 연다 — 줄 옆 화살표는 로비 판을 그 자리에서 연다. */
   private openCurrencyGuide(currency: import("../data/items").WalletItemKey): void {
     if (!this.popupLayer) return;
-    openCurrencyGuide({ scene: this, popups: this.popupLayer, onAction: (action) => this.handleCurrencyAction(action) }, currency);
+    openCurrencyGuide({ scene: this, popups: this.popupLayer, onLobbyPanel: (panel) => this.openLobbyPanel(panel) }, currency);
   }
 
-  /** 안내 프리팹은 이 콜백만 요청하므로 지갑 변경 없이 구현된 씬·로비 팝업으로만 이동한다. */
-  private handleCurrencyAction(action: CurrencyGuideAction): void {
-    if (action.kind === "scene" && action.target === "lab") startScene(this, "lab");
-    if (action.kind === "popup" && action.target === "trade") this.guarded("trade", () => this.openTrade())();
+  /** 안내창 화살표·돌아오는 진입이 여는 로비 위 판 — 판마다 입구와 같은 잠금을 지난다. */
+  private openLobbyPanel(panel: LobbyMenu, instant = false): void {
+    switch (panel) {
+      case "sortie": this.openSortieMenu(instant); return;
+      case "duel": this.guarded("duel", () => (PVP_MODE_SELECT_ENABLED ? this.openPvpMenu(instant) : startScene(this, "duel")))(); return;
+      case "event": this.openEvents(instant); return;
+      case "excavation": this.guarded("excavation", () => this.openIdleExcavation())(); return;
+      case "trade": this.guarded("trade", () => this.openTrade())(); return;
+      case "missions": this.openMissions(); return;
+    }
   }
 
   /** 오른쪽 레일에서 로비를 떠나지 않고 가방 작업판을 연다. */
@@ -693,7 +702,7 @@ export class LobbyScene extends Phaser.Scene {
     if (!this.popupLayer) return;
     this.inventoryPopup ??= new InventoryPopup(this, this.popupLayer, gameApi, () => {
       this.inventoryPopup = undefined; this.inventoryBackButton?.destroy(); this.inventoryBackButton = undefined;
-    }, (action) => this.handleCurrencyAction(action));
+    }, (panel) => this.openLobbyPanel(panel));
     this.inventoryPopup.open();
     if (!this.inventoryBackButton) this.inventoryBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.popupLayer?.backOr(() => this.inventoryPopup?.close()) }).setDepth(2100);
   }
@@ -728,6 +737,8 @@ export class LobbyScene extends Phaser.Scene {
           onClick: () => { close(); if (mode.id === "arena") startScene(this, "duel"); else startScene(this, "arena"); },
         });
         body.add(entry);
+        // 결투장 칸도 출격판의 칸과 같은 자리에 시즌 보상 점을 단다 — 로비 버튼의 점이 어느 칸 것인지 판 안에서 이어진다.
+        if (mode.id === "arena") bindNotificationDot(this, entry, { x: PVP_MENU.entry.width / 2 - 22, y: -pvpEntryHeight(mode.id) / 2 + 22 }, (listener) => notificationManager.subscribe("duelSeasonReward", listener));
         // 렉시아 VS 스피나는 칸 **안에서** 맞부딪힌다 — 칩 실루엣 마스크에 가둬 판 밖으로 나가지 않는다.
         if(mode.id==="live-arena") addArenaMascots(this,body,-235,layout.centers[index]+118,205,true,SORTIE_SD_DEPTH,{ mask: entry.clipMask, spread: 0.95 });
       });

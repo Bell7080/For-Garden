@@ -3633,7 +3633,14 @@ export class FakeServer implements GameApi {
     const expedition = this.rollExpedition(now);
     const claimableExpeditionCount = EXPEDITION_BEST_SCORE_REWARD_STAGES.filter(stage => expedition.bestScore >= stage.threshold && !expedition.claimedRewardStageIds.includes(stage.id)).length;
     const claimableRaidCount = this.raidInstances(now).map(row => this.raidDto(row, now)).filter(row => row.status === "completed" && !row.settled && row.settlement.some(reward => reward.amount > 0)).length;
-    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
+    // 공짜로 받을 수 있는데 화면이 알리지 않던 넷 — 무료 연구 · 돌아온 교류 파견 · 결투 시즌 보상 · 구독의 오늘 몫.
+    // 연구소가 아직 잠긴 계정에는 무료 연구 점을 세우지 않는다(눌러도 들어갈 수 없다).
+    const freeResearch = isContentUnlocked("lab", this.state.playerResearch.level, true, this.state.cleared) && freeResearchAvailable(this.state.productPurchases[FREE_RESEARCH_SOURCE_ID], now);
+    const claimableInteractionCount = this.state.interaction.slots.filter((slot) => slot !== null && !slot.claimed && isInteractionDispatchComplete(slot.completesAt, now.getTime())).length;
+    // 시즌 보상은 결투 서버가 붙었을 때만 생긴다(`claimDuelSeasonReward`와 같은 문). 조회라 상태를 저장하지 않는다.
+    const duelSeasonRewardReady = (QA_TOOLS_ENABLED || this.duelContext !== undefined) && rollDuelPeriods(normalizeDuelState(this.state.duel, [...this.state.owned]), now).pendingSeasonReward != null;
+    const claimableSubscriptionBonusCount = PRODUCTS.filter((product) => product.passBenefit && this.subscriptionInfo(product, now).subscription?.dailyBonusClaimed === false).length;
+    return { freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
   }
 
   /**

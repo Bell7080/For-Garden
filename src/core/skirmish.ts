@@ -10258,11 +10258,13 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
   const enemiesLeft = aliveFighters(state, "enemy").filter(isPartyFighter).length;
   if (state.horde) {
     // 웨이브는 끝나지 않는다 — 필드가 비어도 다음 웨이브가 온다. 끝은 전멸과 무너짐뿐이다.
+    // 무너짐(돌파 허용선)은 아군이 살아 있는 채로 끝난다 — 아래의 일반 판정 사슬로 흘려보내면 `else return`에 걸려
+    // 판은 패배로 굳었는데 `finish` 사건이 나가지 않아 화면이 결과판을 영영 열지 못했다(후반 수호전이 끝나지 않던 까닭).
     if (playersLeft === 0 || state.horde.overrun) state.phase = "defeat";
     else return;
   }
   // 불사 보스는 적 HP와 무관하게 아군 전멸만 정상 종료로 인정한다.
-  if (state.boss && playersLeft === 0) state.phase = "defeat";
+  else if (state.boss && playersLeft === 0) state.phase = "defeat";
   else if (state.boss && state.boss.endsOnKill && enemiesLeft === 0) state.phase = "victory";
   else if (state.boss) return;
   else if (playersLeft === 0) state.phase = "defeat";

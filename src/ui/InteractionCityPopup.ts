@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { notificationManager } from "../managers/NotificationManager";
 import { playFormationTapSound } from "./formationSound";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
@@ -38,6 +39,7 @@ import {
   INTERACTION_CITY_BRIEF_ART,
   INTERACTION_CITY_BRIEF_ROWS,
   INTERACTION_CITY_BRIEF_TEXT,
+  INTERACTION_CITY_AUTO,
   INTERACTION_CITY_LOWER,
   INTERACTION_CITY_PANEL,
   INTERACTION_CITY_REWARD_FRAME,
@@ -540,19 +542,20 @@ export class InteractionCityPopup {
     const owned = RELICS.filter((relic) => session.owned.has(relic.id));
     const available = owned.filter((relic) => !away.has(relic.id));
     const powerOf = (relic: RelicDef): number => relicProgression.getCombatPower(relic.id);
-    const shown = applyRosterView(owned, this.rosterView, powerOf);
+    // 필터의 「특화 일치만」은 이 도시의 특화(속성·직군·스쿼드)에 하나라도 맞는 이만 남긴다.
+    const shown = applyRosterView(owned, this.rosterView, powerOf, { specialtyOf: (relic) => interactionSpecialtyMatches(view.city, relic) });
     const roster = [...shown.filter((relic) => !away.has(relic.id)), ...shown.filter((relic) => away.has(relic.id))];
     const awayUntil = new Map<string, number>();
     for (const dispatch of dispatches) if (!dispatch.claimed) for (const id of dispatch.party) awayUntil.set(id, Date.parse(dispatch.completesAt));
     this.rosterCards.clear();
     this.awayClocks = [];
 
-    this.rosterHint = this.scene.add.text(ROSTER_VIEW.left + 10, LOWER.top - 42, this.rosterHintText(), textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5);
+    this.rosterHint = this.scene.add.text(ROSTER_VIEW.left + 10, INTERACTION_CITY_AUTO.y, this.rosterHintText(), textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5);
     parent.add(this.rosterHint);
     // 조작 설명 대신 그 조작을 대신해 주는 단추를 둔다. 교류에는 발굴의 생산 특화 같은 개체별
     // 기준이 없어 고를 축이 전투력뿐이라, 발굴처럼 기준을 돌려 고르는 화살표는 두지 않는다.
-    parent.add(new Button(this.scene, ROSTER_VIEW.right - 90, LOWER.top - 42, {
-      width: 170, height: 52, fontSize: 22, label: t("interaction.autoPlace"), accentColor: BLUE,
+    parent.add(new Button(this.scene, ROSTER_VIEW.right - INTERACTION_CITY_AUTO.width / 2, INTERACTION_CITY_AUTO.y, {
+      width: INTERACTION_CITY_AUTO.width, height: INTERACTION_CITY_AUTO.height, fontSize: 22, label: t("interaction.autoPlace"), icon: "auto", accentColor: BLUE,
       onClick: () => {
         // 그 도시에 맞는 칸이 많은 이부터 세운다 — 같은 수끼리만 전투력으로 가른다.
         this.party = toFormationSlots(autoAssignInteractionParty(
@@ -566,6 +569,7 @@ export class InteractionCityPopup {
 
     new RosterControls(this.scene, {
       left: ROSTER_VIEW.left, right: ROSTER_VIEW.right, y: ROSTER_VIEW.top - 42, parent, view: this.rosterView,
+      popups: this.popups, filterPreset: "interaction",
       onChange: (next) => { this.rosterView = next; this.gridScrollY = 0; this.renderRoster(view); },
     });
 
@@ -888,6 +892,8 @@ export class InteractionCityPopup {
     this.busy = true; this.render();
     try {
       const response = await this.manager.claim(dispatch.dispatchId, crypto.randomUUID());
+      // 로비 교류 입구의 귀환 점이 곧바로 꺼진다.
+      void notificationManager.refresh().catch(() => undefined);
       this.popups.closeAll();
       this.onChanged?.();
       // 영수증은 공용 표기 한 장이 그린다 — 재화 키를 아이콘으로 바꾸는 표도 그쪽이 갖는다.

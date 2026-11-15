@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { staminaTimerLine } from "../../src/ui/staminaDisplay";
-import { heroStack, insidePopupBody, STAMINA_CELL, STAMINA_SWAP, staminaPopupLayout } from "../../src/ui/staminaPopupLayout";
+import { heroStack, insidePopupBody, STAMINA_CELL, STAMINA_ROUTES, STAMINA_SWAP, staminaPopupLayout } from "../../src/ui/staminaPopupLayout";
 import { STAMINA_RECHARGE_SOURCES, staminaAdSlot, staminaConsumable, staminaCurrencyRecharge } from "../../src/data/staminaRecharge";
 import { STAMINA_REGEN_INTERVAL_MS } from "../../src/core/stamina";
 
@@ -54,7 +54,7 @@ describe("스테미나 창의 순수 규칙", () => {
 });
 
 describe("스테미나 창의 자리", () => {
-  const layout = staminaPopupLayout(1);
+  const layout = staminaPopupLayout(1, 1);
 
   it("의 위쪽 판은 팝업 몸판의 깎인 모서리 안에 든다", () => {
     // 판을 네모(`slantedRect`)로 두면 몸판의 왼쪽 위 빗변을 넘어 밖으로 삐져나온다.
@@ -81,12 +81,15 @@ describe("스테미나 창의 자리", () => {
       expect(insidePopupBody(layout, { y: layout.cell.y, width: (Math.abs(x) + layout.cell.width / 2) * 2, height: layout.cell.height })).toBe(true);
     }
     expect(layout.cell.y + layout.cell.height / 2).toBeLessThan(layout.hairlineY);
-    expect(layout.usesFirstRowY).toBeLessThan(layout.height / 2);
+    expect(layout.usesTop! + STAMINA_ROUTES.header + STAMINA_ROUTES.row).toBeLessThanOrEqual(layout.height / 2);
   });
 
-  it("의 사용처가 늘면 창이 그만큼 자란다", () => {
+  it("의 획득처·사용처가 늘면 창이 그만큼 자란다", () => {
     // 높이를 손으로 적으면 줄이 늘어난 순간 마지막 줄이 판 밖으로 밀린다.
-    expect(staminaPopupLayout(3).height).toBe(layout.height + layout.usesRowHeight * 2);
+    expect(staminaPopupLayout(1, 3).height).toBe(layout.height + STAMINA_ROUTES.row * 2);
+    expect(staminaPopupLayout(3, 1).height).toBe(layout.height + STAMINA_ROUTES.row * 2);
+    // 두 구역은 겹치지 않고 위아래로 쌓인다.
+    expect(layout.usesTop!).toBeGreaterThanOrEqual(layout.sourcesTop! + STAMINA_ROUTES.header + STAMINA_ROUTES.row);
   });
 
   it("의 액자·수치·시간은 시간 줄이 없어도 판 가운데에 머문다", () => {
@@ -103,7 +106,7 @@ describe("스테미나 창의 자리", () => {
 });
 
 describe("소비품 갈아 끼우기", () => {
-  const layout = staminaPopupLayout(3);
+  const layout = staminaPopupLayout(3, 3);
 
   it("는 좌우 버튼이 칸 밖으로 나가지 않는다", () => {
     // 92로 잡았던 때는 바깥 끝이 칸 반폭(114.7)을 0.3px 넘었다.
@@ -114,7 +117,7 @@ describe("소비품 갈아 끼우기", () => {
   it("는 좌우 버튼이 액자를 덮지 않는다", () => {
     // 갈아 끼우는 것이 그 그림이라 액자 옆에 붙되, 겹치면 무엇이 바뀌는지 가린다.
     const inner = STAMINA_SWAP.x - STAMINA_SWAP.size / 2;
-    expect(inner).toBeGreaterThan(108 / 2);
+    expect(inner).toBeGreaterThan(STAMINA_CELL.frameSize / 2);
   });
 });
 
@@ -130,7 +133,7 @@ describe("충전 칸 한 장의 세로 자리", () => {
       { top: c.buttonY - c.buttonHeight / 2, bottom: c.buttonY + c.buttonHeight / 2 },
     ];
     for (let index = 1; index < rows.length; index++) expect(rows[index].top).toBeGreaterThanOrEqual(rows[index - 1].bottom);
-    const half = staminaPopupLayout(3).cell.height / 2;
+    const half = staminaPopupLayout(3, 3).cell.height / 2;
     expect(rows[0].top).toBeGreaterThanOrEqual(-half);
     expect(rows[rows.length - 1].bottom).toBeLessThanOrEqual(half);
     // 갈아 끼우는 화살표는 액자 밖에 선다.

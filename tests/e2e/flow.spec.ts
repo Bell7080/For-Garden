@@ -43,7 +43,7 @@ test("충전 직후 결과판의 같은 다음 단계 버튼으로 입장한다"
   await page.waitForTimeout(500);
   await captureGame(page, "docs/qa/energy-achievements-2026-10-27/energy-before.png");
   const guide = currencyGuide("stamina");
-  const layout = staminaPopupLayout(Math.max(guide.uses.length, guide.sources.length));
+  const layout = staminaPopupLayout(guide.sources.length, guide.uses.length);
   // 우상단에는 닫기 입력도 남기지 않는다. 돌아가기는 판 밖 우하단 공용 뒤로가기 한 곳이 맡는다.
   await tap(page, BASE_WIDTH / 2 + layout.width / 2 - 40, BASE_HEIGHT / 2 - layout.height / 2 + 40);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("스테미나");

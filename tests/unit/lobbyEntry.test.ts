@@ -197,7 +197,7 @@ describe("돌아와 다시 여는 판", () => {
      * 읽혔다. 눈으로만 보이는 일이라 소스의 모양으로 지킨다.
      */
     const lobby = readFileSync("src/scenes/LobbyScene.ts", "utf8");
-    expect(lobby).toContain('this.returnMenu === "sortie") this.openSortieMenu(true)');
+    expect(lobby).toContain('else if (this.returnMenu) this.openLobbyPanel(this.returnMenu, true)');
     expect(lobby).toContain('this.returnMenu === "duel") this.openPvpMenu(true)');
     expect(lobby.match(/hideCloseButton: true, instant,/g)?.length).toBe(2);
     const popup = readFileSync("src/ui/PopupLayer.ts", "utf8");

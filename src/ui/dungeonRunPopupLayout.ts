@@ -35,10 +35,10 @@ export const DUNGEON_RUN_POPUP = {
 
 /** 충전 칸 한 장의 안쪽 자리(칸 가운데 기준). 그림 → 회복량 → 버튼. */
 export const DUNGEON_RUN_CELL = {
-  frameX: -56, frameY: -34, frameSize: 84,
-  gainX: 42, gainY: -50, gainSize: 36,
-  nameX: 42, nameY: -14, nameSize: 19,
-  buttonY: 58, buttonHeight: 54, padX: 12,
+  frameX: -60, frameY: -36, frameSize: 90,
+  gainX: 44, gainY: -54, gainSize: 42,
+  nameX: 44, nameY: -14, nameSize: 21,
+  buttonY: 54, buttonHeight: 64, padX: 12,
 } as const;
 
 export type DungeonRunMode = "auto" | "sweep";

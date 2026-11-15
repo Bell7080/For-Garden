@@ -52,6 +52,7 @@ import { COLOR, textStyle } from "./theme";
 import { currencyRecordToRewardItems, openRewardPopup } from "./RewardPopup";
 import { interactionRemainingLabel, relicsAwayOnInteraction, autoAssignInteractionParty, interactionLayerViews, type InteractionLayerView } from "./interactionLayerModel";
 import type { RelicDef } from "../core/types";
+import { settingsManager } from "../managers/SettingsManager";
 import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
 import { RosterControls } from "./RosterControls";
 import { dropRosterRelic, tapFormationSlot, tapRosterRelic, toFormationSlots, formationMembers } from "../core/formationSlots";
@@ -175,7 +176,7 @@ export class InteractionCityPopup {
     this.selectedSlot = undefined;
     this.editing = false;
     this.gridScrollY = 0;
-    this.rosterView = DEFAULT_ROSTER_VIEW;
+    this.rosterView = settingsManager.rosterView("interaction");
     this.busy = false;
     this.popups.closeAll();
 
@@ -570,7 +571,7 @@ export class InteractionCityPopup {
     new RosterControls(this.scene, {
       left: ROSTER_VIEW.left, right: ROSTER_VIEW.right, y: ROSTER_VIEW.top - 42, parent, view: this.rosterView,
       popups: this.popups, filterPreset: "interaction",
-      onChange: (next) => { this.rosterView = next; this.gridScrollY = 0; this.renderRoster(view); },
+      onChange: (next) => { this.rosterView = next; settingsManager.rememberRosterView("interaction", next); this.gridScrollY = 0; this.renderRoster(view); },
     });
 
     if (roster.length === 0) {

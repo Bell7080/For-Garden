@@ -2,6 +2,8 @@ import { sameArenaSeen, type ArenaSeenRecord } from "../core/arenaNotice";
 import type Phaser from "phaser";
 import { createDefaultSettings, normalizeSettings } from "../core/settings";
 import { sameContentSeen, type ContentSeenState } from "../core/contentFresh";
+import { normalizeRosterView, rosterViewFor, sameRosterView, type RosterViewScreen } from "../core/rosterViewMemory";
+import type { RosterView } from "../core/rosterView";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type GameSettings, type Session } from "../state/session";
 import { platformFeedback, type HapticPattern, type PlatformFeedback, type ScheduledNotification } from "../api/PlatformFeedback";
@@ -54,6 +56,19 @@ export class SettingsManager extends EventTarget {
     const current = this.get().game.dungeonTiers;
     if (current[dungeon] === tierId) return;
     this.update({ game: { dungeonTiers: { ...current, [dungeon]: tierId } } });
+  }
+
+  /** 렐릭 목록 화면이 지금 세울 필터·정렬(`core/rosterViewMemory.ts`). 기억이 없거나 쓸 수 없는 값이면 기본값이다. */
+  rosterView(screen: RosterViewScreen): RosterView {
+    return rosterViewFor(this.get().game.rosterViews, screen);
+  }
+
+  /** 렐릭 목록 화면에서 바꾼 필터·정렬을 기억한다. 검색 글은 남기지 않고, 같은 값이면 저장하지 않는다. */
+  rememberRosterView(screen: RosterViewScreen, view: RosterView): void {
+    const current = this.get().game.rosterViews;
+    const next = normalizeRosterView(view, screen);
+    if (current[screen] && sameRosterView(current[screen], next, screen)) return;
+    this.update({ game: { rosterViews: { ...current, [screen]: next } } });
   }
 
   /** 길드전·수호전 탭에서 지금 판을 봤다고 적는다 — 붉은 점이 꺼진다. `guardReward`는 알린 수호전 순위 보상의, `warResult`는 알린 길드전 결과의 날짜다. */

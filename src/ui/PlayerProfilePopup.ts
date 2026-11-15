@@ -30,7 +30,7 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { powerSavingPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { pressIn, pressOut } from "./pressFeedback";
-import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
+import { Button, DESTRUCTIVE_BUTTON_STYLE, FRIEND_BUTTON_STYLE } from "./Button";
 import { PlayerLevelTreePopup } from "./PlayerLevelTreePopup";
 import { addSdFootShadow } from "./SdFootShadow";
 import { addMarkChip } from "./MarkChip";
@@ -61,6 +61,8 @@ export interface ProfileAction {
   icon?: GlyphName;
   /** 눌러도 할 일이 없는 상태(이미 친구 · 신청 대기 중)를 흐린 판으로 말한다. */
   disabled?: boolean;
+  /** 친구 조작 — 연두 판이고, 혼자 서면 좁게 가운데에 선다. */
+  friend?: boolean;
   onClick: () => void;
 }
 
@@ -605,7 +607,8 @@ export class PlayerProfilePopup {
     const actions = this.options.actions ?? [];
     if (actions.length === 0) return;
     const { actions: slot, showcase } = PLAYER_PROFILE_LAYOUT;
-    const width = Math.floor((showcase.width - slot.gap * (actions.length - 1)) / actions.length);
+    const lone = actions.length === 1 && actions[0].friend;
+    const width = lone ? slot.loneWidth : Math.floor((showcase.width - slot.gap * (actions.length - 1)) / actions.length);
     const tone = this.options.actionTone;
     if (tone) {
       // 조작 줄이 그 무리의 것임을 위의 기록 칸과 가르는 한 줄 — 같은 색 선과 양 끝 마름모.
@@ -618,13 +621,14 @@ export class PlayerProfilePopup {
       body.add(line);
     }
     actions.forEach((action, index) => {
-      const x = -showcase.width / 2 + width / 2 + index * (width + slot.gap);
+      const x = lone ? 0 : -showcase.width / 2 + width / 2 + index * (width + slot.gap);
       const toned = tone && !action.destructive
         ? { variant: "primary" as const, accentColor: tone.accent, accentTextColor: COLOR.ink, fill: tone.fill, decorDots: true }
         : {};
       body.add(new Button(this.scene, x, slot.y, {
         width, height: slot.height, label: action.label, fontSize: slot.fontSize, icon: action.icon,
         ...toned,
+        ...(action.friend ? FRIEND_BUTTON_STYLE : {}),
         ...(action.destructive ? DESTRUCTIVE_BUTTON_STYLE : {}),
         onClick: action.onClick,
       }).setEnabled(!action.disabled));

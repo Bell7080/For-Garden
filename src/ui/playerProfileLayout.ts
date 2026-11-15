@@ -60,7 +60,7 @@ export const PLAYER_PROFILE_LAYOUT = {
   storyClears: { rowHeight: 62, rowGap: 8, padX: 14, padTop: 12, padBottom: 16, chevron: 26, openMs: 160 },
   nextUnlock: { y: 600 },
   /** 친구 카드 밑동의 조작 줄(즐겨찾기·삭제). 다음 해금 줄이 없는 친구 카드가 그 자리를 쓴다. */
-  actions: { y: 636, height: 88, gap: 16, fontSize: 32 },
+  actions: { y: 636, height: 88, gap: 16, fontSize: 32, loneWidth: 440 },
 } as const;
 
 /** 긴 사용자 문자열은 실제 Text bounds가 예약 영역을 넘기 전에 유니코드 단위로 줄인다. */

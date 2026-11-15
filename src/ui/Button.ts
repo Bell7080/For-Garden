@@ -446,6 +446,18 @@ export const DEFENSE_BUTTON_STYLE = {
 } as const;
 
 /**
+ * 사람에게 손을 내미는 조작의 연두 버튼 — 프로필 카드의 친구 신청·수락이 쓴다. 체력 게이지와 같은 계열의 연두라
+ * 붉은 [나가기]·푸른 [방어]와 같은 짙기로 서되 색으로만 갈린다.
+ */
+export const FRIEND_BUTTON_STYLE = {
+  variant: "primary",
+  fill: 0x16301c,
+  accentColor: 0x8fdc6a,
+  accentTextColor: "#d6f7c2",
+  decorDots: true,
+} as const;
+
+/**
  * 「모두 받기」 — 임무·우편·패스·업적·신규 성장·원정 기록 보상이 같은 한 벌을 쓴다. 받는 조작은 화면의 주인공이라
  * 충전 칸의 쓰기 버튼과 같은 밝은 호박빛 판에 글자를 한 뼘 키우고, 양 끝에 점무늬를 깐다. 자리는 늘 판 아래 가운데다.
  */

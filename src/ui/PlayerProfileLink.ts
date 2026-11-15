@@ -114,6 +114,7 @@ export function profileFriendButton(scene: Phaser.Scene, userId: string, relatio
   return {
     label: t(FRIEND_ACTION_LABEL[friend.action]),
     icon: "friends",
+    friend: true,
     disabled: !friend.enabled,
     onClick: () => {
       if (!friend.enabled || BUSY.has(scene)) return;

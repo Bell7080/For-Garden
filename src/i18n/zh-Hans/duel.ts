@@ -40,6 +40,7 @@ export const DUEL_ZH_HANS = {
   "duel.refresh.free": "刷新对手 {left}/{limit}",
   "duel.refresh.title": "刷新对手",
   "duel.refresh.message": "花费宝石重新挑选对手。每刷新一次，费用就会上涨。",
+  "duel.refresh.reset": "免费刷新重置倒计时 {time}",
   "duel.fought": "已对战",
   "duel.power": "战斗力 {power}",
   "duel.challenge": "挑战",

@@ -36,6 +36,8 @@ import { ResearchPullButton, type ResearchPullCostPart } from "../ui/ResearchPul
 import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { addRatesButton, RATES_SPOT } from "../ui/RatesButton";
 import { LAB_CHROME, LAB_TITLE } from "../ui/labLayout";
+import { NotificationDot } from "../ui/NotificationDot";
+import { notificationManager } from "../managers/NotificationManager";
 import { addBannerArrow, addBannerTitle, drawBannerPages } from "../ui/LabBannerTitle";
 import { WelcomeBannerCast } from "../ui/WelcomeBannerCast";
 import { BANNER_TONE, bannerPresentation, bannerTags, bannerTenDiscountPercent } from "../ui/labBannerPresentation";
@@ -189,8 +191,10 @@ export class LabScene extends Phaser.Scene {
     // 배너 전환 — 판때기가 아니라 옅은 유리 위의 꺾쇠(`addBannerArrow`).
     // **넘김 화살표는 모집판의 SD(첫 복원 연구의 SSR 넷)보다 위에서 손을 받는다.** 바깥 두 마리가 화살표
     // 자리까지 걸쳐 서서, 같은 깊이면 SD가 먼저 눌려 배너가 넘어가지 않았다. 화면에서 배너를 넘기는 손이 먼저다.
-    addBannerArrow(this, LAB_TITLE.arrow.x, LAB_TITLE.arrow.y, -1, () => this.switchBanner(-1)).setDepth(LAB_CHROME.depth.arrows);
-    addBannerArrow(this, BASE_WIDTH - LAB_TITLE.arrow.x, LAB_TITLE.arrow.y, 1, () => this.switchBanner(1)).setDepth(LAB_CHROME.depth.arrows);
+    this.bannerArrows = [
+      addBannerArrow(this, LAB_TITLE.arrow.x, LAB_TITLE.arrow.y, -1, () => this.switchBanner(-1)).setDepth(LAB_CHROME.depth.arrows),
+      addBannerArrow(this, BASE_WIDTH - LAB_TITLE.arrow.x, LAB_TITLE.arrow.y, 1, () => this.switchBanner(1)).setDepth(LAB_CHROME.depth.arrows),
+    ];
     this.bannerPages = this.add.graphics({ x: cx, y: LAB_TITLE.pages.y });
 
     this.oneButton = new ResearchPullButton(this, 300, LAB_CHROME.pull.y, {
@@ -445,6 +449,26 @@ export class LabScene extends Phaser.Scene {
 
   /** 오늘의 무료 연구가 남았는가 — 서버가 답한 값만 믿고, 답이 오기 전에는 닫힌 쪽이다. */
   private freeResearchReady = false;
+  /** 배너 넘김 꺾쇠 둘(왼쪽·오른쪽) — 무료 연구 배너 쪽 꺾쇠에 붉은 점을 단다. */
+  private bannerArrows: Phaser.GameObjects.Container[] = [];
+  private bannerArrowDot?: NotificationDot;
+
+  /**
+   * 무료 연구가 남았는데 다른 배너를 보고 있으면 **그 배너로 가는 짧은 쪽 꺾쇠**에 붉은 점을 단다 —
+   * 연구소는 첫 복원 연구부터 열려 무료 칸이 한 장 넘겨야 보였고, 하단 탭의 점만 보고 들어와선 어디인지 몰랐다.
+   */
+  private syncBannerArrowDot(): void {
+    this.bannerArrowDot?.destroy(true);
+    this.bannerArrowDot = undefined;
+    const banners = this.banners;
+    const target = banners.findIndex((banner) => banner.id === FREE_RESEARCH_BANNER_ID);
+    const current = Math.min(this.bannerIndex, banners.length - 1);
+    if (!this.freeResearchReady || target < 0 || target === current) return;
+    const forward = (target - current + banners.length) % banners.length;
+    const arrow = this.bannerArrows[forward <= banners.length - forward ? 1 : 0];
+    if (!arrow?.active) return;
+    this.bannerArrowDot = new NotificationDot(this, arrow, { x: LAB_TITLE.arrow.width / 2 - 4, y: -LAB_TITLE.arrow.height / 2 + 2 });
+  }
 
   private freePullOpen(banner: Banner): boolean {
     return this.freeResearchReady && banner.id === FREE_RESEARCH_BANNER_ID;
@@ -468,7 +492,11 @@ export class LabScene extends Phaser.Scene {
     try {
       // 결과와 비용은 클라이언트에서 계산하지 않고 API 응답만 화면에 반영한다.
       const response = await gameApi.pullRelics(free ? { bannerId: banner.id, count, free: true } : { bannerId: banner.id, count });
-      if (free) this.freeResearchReady = false;
+      if (free) {
+        this.freeResearchReady = false;
+        // 하단 탭·로비의 붉은 점이 곧바로 꺼진다(다음 15초 시계를 기다리지 않는다).
+        void notificationManager.refresh().catch(() => undefined);
+      }
       // 응답을 기다리는 사이 화면을 떠났으면 부서진 판을 다시 칠하지 않는다(운영 오류 기록 — `setCost`의 `add` undefined).
       if (!this.alive) return;
       this.topBar.refresh();
@@ -954,6 +982,8 @@ export class LabScene extends Phaser.Scene {
     const freeOne = this.freePullOpen(banner);
     if (freeOne) this.oneButton.setFreeLabel(t("lab.pull.freeToday"));
     else this.oneButton.setCost(pullCostParts(banner, 1, pity));
+    this.oneButton.setFreeHighlight(freeOne && !banner.tenOnly);
+    this.syncBannerArrowDot();
     this.oneButton.setEnabled(oneOpen && !this.pullPending && (freeOne || canPull(session.wallet, banner, 1, pity)));
     this.tenButton
       .setCost(pullCostParts(banner, 10, pity))

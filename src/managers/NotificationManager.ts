@@ -73,6 +73,10 @@ export class NotificationManager {
       freeSupplyCategories: signals.status === "fulfilled" ? signals.value.freeSupplyCategories ?? [] : FREE_CATEGORIES.filter((_, index) => previous[FREE_KEYS[index]]),
       situationalOfferCount: signals.status === "fulfilled" ? signals.value.situationalOfferCount ?? 0 : Number(previous.premiumOffer),
       shopFreeSupply: signals.status === "fulfilled" ? signals.value.shopFreeSupply === true : previous.shopFree,
+      freeResearchAvailable: signals.status === "fulfilled" ? signals.value.freeResearchAvailable === true : previous.freeResearch,
+      claimableInteractionCount: signals.status === "fulfilled" ? signals.value.claimableInteractionCount ?? 0 : Number(previous.interactionReturned),
+      duelSeasonRewardReady: signals.status === "fulfilled" ? signals.value.duelSeasonRewardReady === true : previous.duelSeasonReward,
+      claimableSubscriptionBonusCount: signals.status === "fulfilled" ? signals.value.claimableSubscriptionBonusCount ?? 0 : Number(previous.premiumSubscription),
     });
     // 전체 조회 결과도 같은 manager 이벤트 계약으로 발행해 UI 구독 경로를 하나로 유지한다.
     this.state = next; this.events.publishNotification(next);

@@ -31,17 +31,25 @@ export function bindNotificationDot(
 ): () => void {
   watchNotificationClock(scene);
   let dot: NotificationDot | undefined;
-  const unsubscribe = subscribe((visible) => {
+  // 잠든·멈춘 씬에서 바뀐 값을 버리면 깨어난 뒤에도 옛 점이 남는다(설정을 겹쳐 연 동안 받은 보상 등).
+  // 마지막으로 받은 값을 기억했다가 깨어나는 순간 다시 맞춘다.
+  let wanted = false;
+  const apply = (): void => {
     // create 도중에 구독하면 첫 값이 곧바로 불리므로 만드는 중인 씬도 받아 준다.
     if ((!scene.sys.isActive() && scene.sys.settings.status !== Phaser.Scenes.CREATING) || !target.active) return;
-    if (visible && !dot) dot = new NotificationDot(scene, target, options);
-    if (!visible && dot) { dot.destroy(true); dot = undefined; }
-  });
+    if (wanted && !dot) dot = new NotificationDot(scene, target, options);
+    if (!wanted && dot) { dot.destroy(true); dot = undefined; }
+  };
+  const unsubscribe = subscribe((visible) => { wanted = visible; apply(); });
+  scene.events.on(Phaser.Scenes.Events.WAKE, apply);
+  scene.events.on(Phaser.Scenes.Events.RESUME, apply);
   let disposed = false;
   const dispose = () => {
     if (disposed) return;
     disposed = true;
     unsubscribe(); dot?.destroy(true); dot = undefined;
+    scene.events.off(Phaser.Scenes.Events.WAKE, apply);
+    scene.events.off(Phaser.Scenes.Events.RESUME, apply);
     scene.events.off(Phaser.Scenes.Events.SHUTDOWN, dispose);
     target.off(Phaser.GameObjects.Events.DESTROY, dispose);
   };

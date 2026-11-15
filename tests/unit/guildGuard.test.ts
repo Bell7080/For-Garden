@@ -185,8 +185,14 @@ describe("수호전 필드 카운팅과 제약", () => {
 
   it("쌓인 적이 상한에 닿으면 끝난다 — 버티기만 하는 탱커 하나도 쌓인 무리에 무너진다", () => {
     const state = createGuildGuardSkirmish(lineup(["ark", null, null, null, null, null], 60), getRelic, guildGuardRoster("fire"));
-    for (let i = 0; i < 6000 && state.phase === "fight"; i += 1) stepSkirmish(state, 1 / 20);
+    const finishes: string[] = [];
+    for (let i = 0; i < 6000 && state.phase === "fight"; i += 1) {
+      for (const event of stepSkirmish(state, 1 / 20)) if (event.kind === "finish") finishes.push(event.phase);
+    }
     expect(state.horde?.overrun).toBe(true);
+    // 아군이 살아 있는 채로 무너져도 끝났다는 사건이 꼭 한 번 나가야 화면이 결과판을 연다.
+    expect(state.fighters.some((fighter) => fighter.side === "player" && fighter.hp > 0)).toBe(true);
+    expect(finishes).toEqual(["defeat"]);
     expect(hordeFieldCount(state)).toBeGreaterThanOrEqual(GUILD_GUARD.overrunCap);
     expect(GUILD_GUARD.overrunCap).toBe(18);
   });

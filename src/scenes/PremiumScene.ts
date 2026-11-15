@@ -16,7 +16,7 @@ import { notificationManager } from "../managers/NotificationManager";
 import { TabStripEdgeHint } from "../ui/TabStripEdgeHint";
 import { hiddenDotSides, nearestHiddenDot, tabStripMinScroll, type TabStripSpec } from "../core/tabStrip";
 import { attachTabStripDrag } from "../ui/tabStripDrag";
-import { bindNotificationDot } from "../ui/NotificationDot";
+import { bindNotificationDot, NotificationDot } from "../ui/NotificationDot";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { addFrameAmount, addFramedIcon, guideForIcon } from "../ui/itemFrame";
@@ -273,6 +273,9 @@ export class PremiumScene extends Phaser.Scene {
     if (kind === "wide") this.paintWideCard(card, product, width, action); else this.paintGridCard(card, product, width, action);
     if (soldOut) card.setAlpha(PREMIUM_SOLD_OUT_ALPHA);
     if (subscribed) this.addActivePulse(card, width, height, premiumCardTone(product));
+    // 지금 공짜로 받을 수 있는 칸(무료 보급 · 구독의 오늘 몫)은 탭의 점이 가리키는 그 카드에도 점을 단다.
+    const claimableNow = (product.acquisition.kind === "free" && product.purchasable) || product.subscription?.dailyBonusClaimed === false;
+    if (claimableNow) new NotificationDot(this, card, { x: width / 2 - 20, y: -height / 2 + 20 });
     this.content?.add(card);
     // 상태 딱지는 흐려진 카드의 알파를 물려받지 않도록 카드 곁에 따로 붙인다.
     const stickerKey = `${product.id}:${status ?? ""}`;
@@ -515,6 +518,8 @@ export class PremiumScene extends Phaser.Scene {
       this.applyPurchaseResult(result);
       openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
       await this.refresh();
+      // 하단 탭·구독 라벨의 점이 곧바로 꺼진다.
+      void notificationManager.refresh().catch(() => undefined);
     } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claiming = false; }
   }
 
@@ -707,7 +712,7 @@ export class PremiumScene extends Phaser.Scene {
         onSelect: () => { if (!drag.dragging()) this.selectCategory(tab.id); },
       });
       // 받을 무료 보급이 남은 일간·주간·월간 라벨, 상황 특가가 열린 한정 라벨에 점을 세운다.
-      const dotKey = tab.id === "daily" ? "premiumFreeDaily" : tab.id === "weekly" ? "premiumFreeWeekly" : tab.id === "monthly" ? "premiumFreeMonthly" : tab.id === "limited" ? "premiumOffer" : undefined;
+      const dotKey = tab.id === "daily" ? "premiumFreeDaily" : tab.id === "weekly" ? "premiumFreeWeekly" : tab.id === "monthly" ? "premiumFreeMonthly" : tab.id === "limited" ? "premiumOffer" : tab.id === "subscription" ? "premiumSubscription" : undefined;
       if (dotKey) this.tabDotDisposers.push(bindNotificationDot(this, tabObject, { x: PREMIUM_TAB_ROW.width / 2 - 22, y: -PREMIUM_TAB_ROW.height / 2 + 12 }, (listener) => notificationManager.subscribe(dotKey, (visible) => {
         listener(visible);
         this.tabDotted[index] = visible;

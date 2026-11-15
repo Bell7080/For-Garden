@@ -30,6 +30,7 @@ import { squeezeTextToWidth } from "../ui/textFit";
 import { addBackButton } from "../ui/IconButton";
 import { PopupLayer } from "../ui/PopupLayer";
 import { NotificationDot } from "../ui/NotificationDot";
+import { notificationManager } from "../managers/NotificationManager";
 import { openRewardPopup } from "../ui/RewardPopup";
 import { currencyRecordToRewardItems } from "../ui/rewardPopupModel";
 import { playSceneEntrance, slideTabPage, startScene } from "../ui/screenTransition";
@@ -156,10 +157,13 @@ export class DuelScene extends Phaser.Scene {
     this.paintStanding(status);
     this.paintProfile(status);
     if (status.pendingSeasonReward) {
-      view.add(new Button(this, BASE_WIDTH / 2, S.seasonReward.y, {
+      const claim = new Button(this, BASE_WIDTH / 2, S.seasonReward.y, {
         width: S.seasonReward.width, height: S.seasonReward.height, label: t("duel.seasonReward.claim"), fontSize: 26, variant: "primary",
         onClick: () => void this.claimSeasonReward(),
-      }));
+      });
+      // 로비 결투 입구의 점이 가리키는 그 버튼이다 — 같은 붉은 점이 여기까지 이어진다.
+      new NotificationDot(this, claim, { x: S.seasonReward.width / 2 - 16, y: -S.seasonReward.height / 2 + 14 });
+      view.add(claim);
     }
     this.paintDefense(status);
     this.paintChallenge(status);
@@ -315,13 +319,12 @@ export class DuelScene extends Phaser.Scene {
     openDuelOpponentPopup(this, this.popups, status, {
       // 도전은 곧장 편성으로 가지 않는다 — 먼저 상대의 방어팀을 크게 보이고, 그 창의 출격이 공격팀 편성을 연다.
       onChallenge: (opponent) => openDuelDefensePreview(this, this.popups, opponent, {
-        onSortie: () => startScene(this, "party", { content: "duel", opponent, attack: status.attack }),
+        onSortie: () => startScene(this, "party", { content: "duel", opponent, attack: this.status?.attack ?? status.attack }),
         onBack: () => this.openOpponents(),
       }),
-      onRefresh: (close) => {
-        const price = status.nextRefreshPrice;
-        // 옛 창을 닫고 새 상태로 같은 창을 다시 연다 — 같은 제목이라 갈아 끼우기로 읽힌다.
-        const refresh = (): void => { close(); void this.run(() => gameApi.refreshDuelOpponents(), () => this.openOpponents()); };
+      onRefresh: (price, begin) => {
+        // 창은 닫지 않는다 — 요청을 넘기면 창이 그 자리에서 줄을 걷고 새 명단을 쌓는다.
+        const refresh = (): void => begin(this.refreshOpponents());
         if (price === 0) { refresh(); return; }
         this.popups.confirm({
           title: t("duel.refresh.title"), message: t("duel.refresh.message"), confirmLabel: t("duel.refresh.title"),
@@ -330,6 +333,23 @@ export class DuelScene extends Phaser.Scene {
         }, refresh);
       },
     });
+  }
+
+  /** 상대 새로고침. 새 상태로 무대를 다시 그리고 그 상태를 돌려준다 — 거절·실패면 토스트를 띄우고 `null`이다. */
+  private async refreshOpponents(): Promise<DuelStatusResponse | null> {
+    if (this.busy) return null;
+    this.busy = true;
+    try {
+      const next = await gameApi.refreshDuelOpponents();
+      if (!this.scene.isActive()) return null;
+      this.paint(next);
+      return next;
+    } catch (error) {
+      if (this.scene.isActive()) showContentToast(this, this.errorMessage(error), "refused");
+      return null;
+    } finally {
+      this.busy = false;
+    }
   }
 
   /** 상태를 바꾸는 조작 하나. 응답이 곧 새 상태이므로 그대로 다시 그린다. */
@@ -355,6 +375,8 @@ export class DuelScene extends Phaser.Scene {
     this.busy = true;
     try {
       const claimed = await withBusy(this, gameApi.claimDuelSeasonReward());
+      // 로비 결투 입구의 시즌 보상 점이 곧바로 꺼진다.
+      void notificationManager.refresh().catch(() => undefined);
       if (!this.scene.isActive()) return;
       openRewardPopup(this, this.popups, { items: currencyRecordToRewardItems({ duelEmblem: claimed.duelEmblem, gems: claimed.gems }), onConfirm: () => void this.fetchStatus() });
     } catch (error) {

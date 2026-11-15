@@ -60,7 +60,6 @@ export const DUEL_ZH_HANS = {
   "duel.ticketPopup.reset": "{time}后重置为默认的{count}张",
   "duel.ticketPopup.gemName": "宝石购买",
   "duel.ticketPopup.gemDetail": "今日 {count}/{limit}次",
-  "duel.ticketPopup.buy": "购买",
   "duel.ticketPopup.adName": "广告奖励",
   "duel.ticketPopup.failed": "充值失败，请稍后再试。",
   "duel.defense.label": "防守",

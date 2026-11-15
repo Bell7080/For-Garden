@@ -117,9 +117,12 @@ export class PremiumScene extends Phaser.Scene {
 
   constructor() { super("premium"); }
 
-  init(data: { section?: PremiumSection }): void {
+  init(data: { section?: PremiumSection; tab?: PremiumCategory }): void {
     // 설정 화면이나 개발 콘솔이 넘긴 값도 실제 지원하는 섹션으로 제한한다.
     this.activeSection = data?.section === "premium" ? data.section : "premium";
+    // 재화 안내의 바로가기는 그 재화를 파는 탭(젬·일간·패스)으로 곧장 연다. 모르는 값은 첫 탭이다.
+    const tab = PREMIUM_TABS.find((entry) => entry.id === data?.tab);
+    if (tab) this.selectedCategory = tab.id;
     consumeSceneEntry(this);
   }
 

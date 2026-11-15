@@ -16,15 +16,21 @@ export interface StaminaPopupLayout {
   /** 판 안에서 세로로 가운데 정렬한 액자·수치·시간의 중심 y다. */
   heroStack: { frameY: number; valueY: number; timerY?: number };
   frameSize: number;
-  /** 충전 제목과 세 칸. */
+  /** 충전 제목과 칸들. */
   rechargeTitleY: number;
-  cell: { y: number; width: number; height: number; centers: readonly [number, number, number] };
-  /** 사용처 구분선과 제목. */
+  cell: { y: number; width: number; height: number; centers: readonly number[] };
+  /** 획득처·사용처 구역을 여는 구분선. 구역이 없는 창(결투 도전권)은 쓰지 않는다. */
   hairlineY: number;
-  usesTitleY: number;
-  usesFirstRowY: number;
-  usesRowHeight: number;
+  /** 「획득처」·「사용처」 제목줄의 윗변 y. 줄이 없는 구역은 `undefined`다. */
+  sourcesTop?: number;
+  usesTop?: number;
 }
+
+/**
+ * 획득처·사용처 구역의 자리 — 재화 안내창과 **같은 값**이다(`GuideRouteList`의 줄 높이·제목줄).
+ * 스테미나만 다른 줄 간격·글자 크기로 서면 같은 「어디서 얻나」가 창마다 다른 무게로 읽힌다.
+ */
+export const STAMINA_ROUTES = { header: 64, row: 56, gap: 26 } as const;
 
 /**
  * 한 칸이 여러 소비품을 맡을 때 액자 좌우에 서는 **갈아 끼우기**.
@@ -55,13 +61,11 @@ const BASE = {
   gapValueTimer: 4,
   heroToTitle: 46,
   titleToCells: 40,
-  cellHeight: 300,
+  cellHeight: 344,
   cellGap: 18,
   cellsToHairline: 40,
-  hairlineToTitle: 34,
-  titleToRow: 52,
-  usesRowHeight: 44,
-  bottomPad: 44,
+  hairlineToTitle: 26,
+  bottomPad: 50,
 } as const;
 
 /**
@@ -70,24 +74,25 @@ const BASE = {
  *
  * 남은 횟수 줄(y 82)이 버튼 윗변(y 81)에 걸쳐 「3/3 남음」이 버튼에 덮이던 것을 고치며 표로 옮겼다 —
  * 칸 안의 좌표를 화면에 손으로 적어 두면 한 줄만 옮겨도 이웃 줄과 겹치는지 아무도 모른다.
+ * 버튼·회복량·이름은 칸에서 가장 자주 읽는 수라 한 뼘 크다(응태 2026-11-15 — 「젬 20이 눈에 안 띈다」).
  */
 export const STAMINA_CELL = {
-  frameY: -92, frameSize: 100,
-  gainY: -16, gainSize: 40,
-  nameY: 24, nameSize: 22,
-  detailY: 52, detailSize: 19,
-  buttonY: 110, buttonHeight: 62,
+  frameY: -104, frameSize: 112,
+  gainY: -12, gainSize: 46,
+  nameY: 32, nameSize: 25,
+  detailY: 62, detailSize: 21,
+  buttonY: 128, buttonHeight: 76,
   padX: 14,
 } as const;
 
 /**
- * 창 하나의 모든 자리를 한 번에 만든다. 결투 도전권 창도 같은 표를 칸 둘·사용처 없이 쓴다 —
+ * 창 하나의 모든 자리를 한 번에 만든다. 결투 도전권 창도 같은 표를 칸 둘·구역 없이 쓴다 —
  * 「지금 얼마 남았나 → 지금 채우는 수단」이라는 같은 일을 하는 창이 다른 모양이면 안 된다.
  *
- * 높이를 손으로 적지 않고 **쌓인 내용에서 거꾸로 구한다** — 사용처 줄이 늘거나 칸 높이를 고치면
+ * 높이를 손으로 적지 않고 **쌓인 내용에서 거꾸로 구한다** — 획득처·사용처 줄이 늘거나 칸 높이를 고치면
  * 창이 저절로 그만큼 자라, 마지막 줄이 판 밖으로 밀려나는 일이 생기지 않는다.
  */
-export function staminaPopupLayout(useRows: number, cells = 3, withUses = true): StaminaPopupLayout {
+export function staminaPopupLayout(sourceRows: number, useRows: number, cells = 3): StaminaPopupLayout {
   const inner = BASE.width - BASE.padX * 2;
   const cellWidth = (inner - BASE.cellGap * (cells - 1)) / cells;
 
@@ -98,10 +103,17 @@ export function staminaPopupLayout(useRows: number, cells = 3, withUses = true):
   const cellTop = rechargeTitleTop + BASE.titleToCells;
   const cellBottom = cellTop + BASE.cellHeight;
   const hairlineTop = cellBottom + BASE.cellsToHairline;
-  const usesTitleTop = hairlineTop + BASE.hairlineToTitle;
-  const firstRowTop = usesTitleTop + BASE.titleToRow;
+  let cursor = hairlineTop + BASE.hairlineToTitle;
+  const block = (rows: number): number | undefined => {
+    if (rows <= 0) return undefined;
+    const at = cursor;
+    cursor += STAMINA_ROUTES.header + rows * STAMINA_ROUTES.row + STAMINA_ROUTES.gap;
+    return at;
+  };
+  const sourcesTop = block(sourceRows);
+  const usesTop = block(useRows);
   // 획득처·사용처 구역이 없는 창(결투 도전권)은 충전 칸 밑에서 끝난다.
-  const height = withUses ? firstRowTop + Math.max(0, useRows - 1) * BASE.usesRowHeight + BASE.usesRowHeight / 2 + BASE.bottomPad : cellBottom + BASE.bottomPad;
+  const height = sourcesTop === undefined && usesTop === undefined ? cellBottom + BASE.bottomPad : cursor - STAMINA_ROUTES.gap + BASE.bottomPad;
   const top = -height / 2;
 
   const heroY = top + heroTop + BASE.heroHeight / 2;
@@ -114,14 +126,13 @@ export function staminaPopupLayout(useRows: number, cells = 3, withUses = true):
     width: BASE.width,
     height,
     hero: { y: heroY, width: inner, height: BASE.heroHeight },
-    heroStack: heroStack(heroY, useRows >= 0),
+    heroStack: heroStack(heroY, true),
     frameSize: BASE.frameSize,
     rechargeTitleY: top + rechargeTitleTop,
-    cell: { y: top + cellTop + BASE.cellHeight / 2, width: cellWidth, height: BASE.cellHeight, centers: centers as unknown as readonly [number, number, number] },
+    cell: { y: top + cellTop + BASE.cellHeight / 2, width: cellWidth, height: BASE.cellHeight, centers },
     hairlineY: top + hairlineTop,
-    usesTitleY: top + usesTitleTop,
-    usesFirstRowY: top + firstRowTop,
-    usesRowHeight: BASE.usesRowHeight,
+    sourcesTop: sourcesTop === undefined ? undefined : top + sourcesTop,
+    usesTop: usesTop === undefined ? undefined : top + usesTop,
   };
 }
 

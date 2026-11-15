@@ -2,8 +2,9 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import type { TextKey } from "../i18n";
 import { profileFrameOrDefault } from "../data/profileFrames";
-import { drawLayer, HoloBar, slantedRect } from "./holo";
+import { drawLayer, slantedRect } from "./holo";
 import { ITEM_GUIDE, itemGuideHeight } from "./itemGuideLayout";
+import { addGuideSectionHeader } from "./GuideRouteList";
 import { ProfileAvatar } from "./ProfileAvatar";
 import type { PopupLayer } from "./PopupLayer";
 import { shrinkTextToWidth } from "./textFit";
@@ -44,8 +45,7 @@ export function openProfileFrameGuide(scene: Phaser.Scene, popups: PopupLayer, o
     body.add(shrinkTextToWidth(name, textWidth));
 
     const sectionY = top + section.top;
-    body.add(scene.add.text(-section.width / 2, sectionY, t("inventory.guide.effect"), textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
-    new HoloBar(scene, 0, sectionY + 32, section.width, 5, { color: COLOR.accent, trackAlpha: 0.5 }).addTo(body).setValue(1);
-    body.add(scene.add.text(-section.width / 2 + 15, sectionY + 60, t(options.descriptionKey), textStyle({ role: "body", size: 24, color: COLOR.ink, wrap: section.width - 30 })).setOrigin(0, 0));
+    addGuideSectionHeader(scene, body, sectionY, section.width, t("inventory.guide.effect"));
+    body.add(scene.add.text(-section.width / 2 + 15, sectionY + 64, t(options.descriptionKey), textStyle({ role: "body", size: ITEM_GUIDE.bodySize, color: COLOR.ink, wrap: section.width - 30 })).setOrigin(0, 0));
   });
 }

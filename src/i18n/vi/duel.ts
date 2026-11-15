@@ -60,7 +60,6 @@ export const DUEL_VI = {
   "duel.ticketPopup.reset": "Sau {time} sẽ về mặc định {count} vé",
   "duel.ticketPopup.gemName": "Mua bằng Ngọc",
   "duel.ticketPopup.gemDetail": "Hôm nay {count}/{limit} lần",
-  "duel.ticketPopup.buy": "Mua",
   "duel.ticketPopup.adName": "Thưởng quảng cáo",
   "duel.ticketPopup.failed": "Nạp thất bại. Vui lòng thử lại sau ít phút.",
   "duel.defense.label": "Phòng thủ",

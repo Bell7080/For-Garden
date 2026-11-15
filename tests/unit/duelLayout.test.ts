@@ -148,7 +148,7 @@ describe("결투 도전권 — 상단 칸과 충전 창", () => {
   });
 
   it("충전 창은 스테미나 창과 같은 표를 칸 둘·사용처 없이 쓰고, 판과 칸이 몸판 안에 든다", () => {
-    const layout = staminaPopupLayout(0, 2, false);
+    const layout = staminaPopupLayout(0, 0, 2);
     const [left, right] = layout.cell.centers;
     expect(left! + right!).toBeCloseTo(0, 5);
     expect(insidePopupBody(layout, layout.hero)).toBe(true);
@@ -156,6 +156,6 @@ describe("결투 도전권 — 상단 칸과 충전 창", () => {
       expect(Math.abs(x) + layout.cell.width / 2).toBeLessThanOrEqual(layout.hero.width / 2 + 0.001);
     }
     expect(insidePopupBody(layout, { y: layout.cell.y, width: layout.hero.width, height: layout.cell.height })).toBe(true);
-    expect(layout.height).toBeLessThan(staminaPopupLayout(1).height);
+    expect(layout.height).toBeLessThan(staminaPopupLayout(1, 1).height);
   });
 });

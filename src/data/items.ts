@@ -63,8 +63,8 @@ export const ITEMS = [
   { id: "rawStone", name: "원석", description: "지층 탐사로 캐낸 미가공 광물입니다. 룬 특성 재해석에 사용합니다.", category: "currency", icon: { kind: "currency", key: "rawStone" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
   // 에너지 드링크는 **기본과 쎈 것 둘**이다. 회복량만 다른 같은 물건이라 한 칸에서 좌우로
   // 갈아 끼우고(`StaminaPopup`), 그래서 둘의 이름도 같은 낱말에 표시만 다르게 붙인다.
-  { id: "stamina-tonic", name: "에너지 드링크", description: "스테미나를 60 회복합니다.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 60 } },
-  { id: "stamina-tonic-large", name: "에너지 드링크+", description: "스테미나를 120 회복합니다.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic-large" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 120 } },
+  { id: "stamina-tonic", name: "에너지 드링크", description: "스테미나를 {amount} 회복합니다.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 60 } },
+  { id: "stamina-tonic-large", name: "에너지 드링크+", description: "스테미나를 {amount} 회복합니다.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic-large" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 120 } },
   // 계정 첫 결제 선물(`FIRST_PAYMENT_GIFT`)로 받는 선택권. 가방에서 쓰면 7일 가이드와 같은 SR 고르기 창이 열린다.
   { id: "sr-select-ticket", name: "SR 렐릭 선택권", description: "SR 렐릭 한 명을 골라 데려옵니다. 이미 함께하는 렐릭을 고르면 그 렐릭의 파편 1개가 됩니다.", category: "consumable", icon: { kind: "asset", key: "item-sr-select-ticket" }, maxStack: 99, useEffect: { kind: "select_relic", rarity: "SR" } },
   { id: "ancient-core", name: "미지의 고대 핵", description: "룬에 특성 한 줄을 새로 부여합니다. 이미 특성이 있으면 지우고 다시 부여합니다.", category: "material", icon: { kind: "asset", key: "item-ancient-core" }, maxStack: 999, useEffect: { kind: "none" } },
@@ -77,10 +77,10 @@ export const ITEMS = [
   // 소탕 한 번에 한 장. 멤버십이 없을 때만 들고, 던전 입구에서 광고를 보면 다섯 장씩 채워진다.
   // 고고학 지층 탐사 한 번. 시간이 채우는 횟수와 같은 몫이라 그림도 탐사 횟수 칸의 입장권 그대로다 —
   // 그 칸의 그림을 누르면 이 안내창이 열린다(`guideForIcon`).
-  { id: "strata-ticket", name: "발굴권", description: "고고학 유적을 여는 횟수입니다. 3시간마다 하나씩 3개까지 차고, 상점·보상으로 받은 것은 3개를 넘겨 쌓입니다.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "strata-ticket", name: "발굴권", description: "고고학 유적을 여는 횟수입니다. {hours}시간마다 하나씩 {cap}개까지 차고, 상점·보상으로 받은 것은 {cap}개를 넘겨 쌓입니다.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   // 결투장 도전 한 번. 하루 다섯 장이 채워지는 몫과 같은 것이라 결투장의 도전권 줄이 이 그림을 쓴다 —
   // 그 줄의 그림을 누르면 이 안내창이 열린다. 전용 원화가 오기 전까지 입장권 그림을 빌려 쓴다.
-  { id: "duel-ticket", name: "결투 도전권", description: "결투장에서 상대에게 도전할 때 한 장 씁니다. 매일 다섯 장이 채워집니다.", category: "material", icon: { kind: "asset", key: "item-duel-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "duel-ticket", name: "결투 도전권", description: "결투장에서 상대에게 도전할 때 한 장 씁니다. 매일 {count}장이 채워집니다.", category: "material", icon: { kind: "asset", key: "item-duel-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   // 한계 돌파의 **만능 파편** — 등급마다 하나다. 그 개체의 파편이 모자랄 때만 같은 등급 렐릭의 돌파에서 모자란
   // 몫을 채운다(`breakthroughFragmentSpend`). 그림은 파편 액자 그대로이고 얼굴 자리에 누구의 것도 아닌 실루엣이 선다.
   { id: "universal-fragment-r", name: "만능 R 파편", description: "어느 R 렐릭의 한계 돌파에나 쓸 수 있는 파편입니다. 그 렐릭의 파편이 모자랄 때만 모자란 만큼 소모됩니다.", category: "material", icon: { kind: "asset", key: "item-universal-fragment-r" }, maxStack: 999, useEffect: { kind: "none" } },

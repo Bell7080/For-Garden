@@ -801,14 +801,14 @@
 ],
 "item.strata-ticket.name": ["发掘券", "ตั๋วขุดค้น", "Vé khai quật", "Tiket Penggalian", "Ticket de excavación", "Tíquete de escavação", "Grabungsticket", "Билет на раскопки"],
 "item.strata-ticket.description": [
-"恢复1次考古地层探查次数。",
-"ฟื้นฟูจำนวนครั้งสำรวจชั้นหินโบราณคดี 1 ครั้ง",
-"Hồi 1 lượt thám sát địa tầng Khảo cổ.",
-"Memulihkan 1 kesempatan survei lapisan Arkeologi.",
-"Recupera 1 intento de estudio de estratos de Arqueología.",
-"Recupera 1 tentativa de pesquisa de estratos da Arqueologia.",
-"Stellt 1 Erkundung der Archäologie-Schichten wieder her.",
-"Восстанавливает 1 попытку разведки слоёв Археологии."
+"开启考古遗迹的次数。每{hours}小时恢复1张，最多{cap}张；商店和奖励获得的部分可超过{cap}张。",
+"จำนวนครั้งที่เปิดซากโบราณสถานได้ ฟื้นทุก {hours} ชั่วโมงทีละใบจนถึง {cap} ใบ ส่วนที่ได้จากร้านค้าหรือรางวัลสะสมเกิน {cap} ใบได้",
+"Số lượt mở di tích Khảo cổ. Cứ {hours} giờ hồi 1 vé, tối đa {cap} vé; vé từ cửa hàng và phần thưởng được tích vượt quá {cap}.",
+"Jumlah kesempatan membuka situs Arkeologi. Pulih 1 setiap {hours} jam hingga {cap}; tiket dari toko dan hadiah bisa menumpuk melebihi {cap}.",
+"Intentos para abrir yacimientos de Arqueología. Se recupera 1 cada {hours} horas hasta {cap}; los de tiendas y recompensas se acumulan por encima de {cap}.",
+"Tentativas para abrir sítios de Arqueologia. Recupera 1 a cada {hours} horas até {cap}; os de lojas e recompensas acumulam acima de {cap}.",
+"Versuche, Archäologie-Stätten zu öffnen. Alle {hours} Stunden lädt einer nach, bis {cap}; aus Läden und Belohnungen stapeln sich über {cap} hinaus.",
+"Попытки открыть раскопки Археологии. Каждые {hours} ч восстанавливается 1, до {cap}; полученные в магазинах и наградах копятся сверх {cap}."
 ],
 "item.duel-ticket.name": [
 "决斗挑战券",
@@ -821,14 +821,14 @@
 "Билет вызова на дуэль"
 ],
 "item.duel-ticket.description": [
-"在决斗场向对手发起挑战时消耗1张。每天补充5张。",
-"ใช้ 1 ใบเมื่อท้าคู่ต่อสู้ในสนามดวล เติมให้วันละ 5 ใบ",
-"Dùng 1 vé khi khiêu chiến đối thủ ở Đấu trường. Mỗi ngày được nạp lại 5 vé.",
-"Memakai 1 tiket saat menantang lawan di Arena Duel. Diisi ulang 5 tiket setiap hari.",
-"Se usa 1 al desafiar a un rival en la Arena de duelos. Se recargan 5 cada día.",
-"Usa 1 ao desafiar um oponente na Arena de duelos. Recarrega 5 por dia.",
-"Wird beim Herausfordern eines Gegners in der Duellarena verbraucht. Täglich werden 5 aufgefüllt.",
-"Тратится 1 при вызове соперника на арене дуэлей. Каждый день пополняется до 5."
+"在决斗场向对手发起挑战时消耗1张。每天补充{count}张。",
+"ใช้ 1 ใบเมื่อท้าคู่ต่อสู้ในสนามดวล เติมให้วันละ {count} ใบ",
+"Dùng 1 vé khi khiêu chiến đối thủ ở Đấu trường. Mỗi ngày được nạp lại {count} vé.",
+"Memakai 1 tiket saat menantang lawan di Arena Duel. Diisi ulang {count} tiket setiap hari.",
+"Se usa 1 al desafiar a un rival en la Arena de duelos. Se recargan {count} cada día.",
+"Usa 1 ao desafiar um oponente na Arena de duelos. Recarrega {count} por dia.",
+"Wird beim Herausfordern eines Gegners in der Duellarena verbraucht. Täglich werden {count} aufgefüllt.",
+"Тратится 1 при вызове соперника на арене дуэлей. Каждый день пополняется до {count}."
 ],
 "item.universal-fragment-r.name": [
 "万能R碎片",

@@ -85,7 +85,6 @@ import { MailPopup } from "../ui/MailPopup";
 import { openPassPopup } from "../ui/PassPopup";
 import { LobbyPassCard } from "../ui/LobbyPassCard";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
-import type { CurrencyGuideAction } from "../data/currencyGuide";
 import { motionPolicy, powerSavingPolicy } from "../core/settings";
 import { LobbyAtmosphere } from "../ui/LobbyAtmosphere";
 import { TRANSITION } from "../core/screenTransition";
@@ -293,7 +292,7 @@ export class LobbyScene extends Phaser.Scene {
     // 열려다 아무것도 세우지 못했다 — 이벤트 판이 두 번 다시 열리지 않았다. 새 로비는 빈손으로 시작한다.
     this.forgetPopups();
     // 이 한 줄로 상단 재화 칸뿐 아니라 가방·무역·영수증의 재화 액자까지 같은 창으로 이어진다.
-    bindCurrencyGuide({ scene: this, popups: this.popupLayer, onAction: (action) => this.handleCurrencyAction(action) });
+    bindCurrencyGuide({ scene: this, popups: this.popupLayer, onLobbyPanel: (panel) => this.openLobbyPanel(panel) });
     this.sortieSdPuppets.clear();
 
     // 그 사이 새로 열린 콘텐츠를 모아 둔다 — 아래 입구들이 제 몫을 가져가 자물쇠가 터지는 연출을 돈다.
@@ -407,9 +406,8 @@ export class LobbyScene extends Phaser.Scene {
     const continueEntry = (): void => {
       if (!this.scene.isActive()) return;
       if (tutorialManager.lobbyStep() !== undefined) this.returnMenu = undefined;
-      if (this.returnMenu === "sortie") this.openSortieMenu(true);
-      else if (this.returnMenu === "duel") this.openPvpMenu(true);
-      else if (this.returnMenu === "event") this.openEvents(true);
+      if (this.returnMenu === "duel") this.openPvpMenu(true);
+      else if (this.returnMenu) this.openLobbyPanel(this.returnMenu, true);
       // 들어서는 순서는 **출석 → 레벨업 → (닫힘) → 열림 연출**이다(응태: 출석이 가장 먼저). 한 판이 끝나야 다음이 선다 —
       // 겹치면 둘 다 반쯤 가린다. 열림 연출은 레벨업 판이 닫힐 때까지 문 뒤에서 기다린다.
       const levelUp = this.returnMenu ? undefined : this.pendingLevelUp;
@@ -676,16 +674,22 @@ export class LobbyScene extends Phaser.Scene {
     startScene(this, "shop", { storefront: "shop", returnScene: "lobby" });
   }
 
-  /** 상단과 가방이 공유하는 안내를 열고, 선택적인 이동만 로비 소유 콜백에서 해석한다. */
+  /** 상단과 가방이 공유하는 안내를 연다 — 줄 옆 화살표는 로비 판을 그 자리에서 연다. */
   private openCurrencyGuide(currency: import("../data/items").WalletItemKey): void {
     if (!this.popupLayer) return;
-    openCurrencyGuide({ scene: this, popups: this.popupLayer, onAction: (action) => this.handleCurrencyAction(action) }, currency);
+    openCurrencyGuide({ scene: this, popups: this.popupLayer, onLobbyPanel: (panel) => this.openLobbyPanel(panel) }, currency);
   }
 
-  /** 안내 프리팹은 이 콜백만 요청하므로 지갑 변경 없이 구현된 씬·로비 팝업으로만 이동한다. */
-  private handleCurrencyAction(action: CurrencyGuideAction): void {
-    if (action.kind === "scene" && action.target === "lab") startScene(this, "lab");
-    if (action.kind === "popup" && action.target === "trade") this.guarded("trade", () => this.openTrade())();
+  /** 안내창 화살표·돌아오는 진입이 여는 로비 위 판 — 판마다 입구와 같은 잠금을 지난다. */
+  private openLobbyPanel(panel: LobbyMenu, instant = false): void {
+    switch (panel) {
+      case "sortie": this.openSortieMenu(instant); return;
+      case "duel": this.guarded("duel", () => (PVP_MODE_SELECT_ENABLED ? this.openPvpMenu(instant) : startScene(this, "duel")))(); return;
+      case "event": this.openEvents(instant); return;
+      case "excavation": this.guarded("excavation", () => this.openIdleExcavation())(); return;
+      case "trade": this.guarded("trade", () => this.openTrade())(); return;
+      case "missions": this.openMissions(); return;
+    }
   }
 
   /** 오른쪽 레일에서 로비를 떠나지 않고 가방 작업판을 연다. */
@@ -693,7 +697,7 @@ export class LobbyScene extends Phaser.Scene {
     if (!this.popupLayer) return;
     this.inventoryPopup ??= new InventoryPopup(this, this.popupLayer, gameApi, () => {
       this.inventoryPopup = undefined; this.inventoryBackButton?.destroy(); this.inventoryBackButton = undefined;
-    }, (action) => this.handleCurrencyAction(action));
+    }, (panel) => this.openLobbyPanel(panel));
     this.inventoryPopup.open();
     if (!this.inventoryBackButton) this.inventoryBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.popupLayer?.backOr(() => this.inventoryPopup?.close()) }).setDepth(2100);
   }

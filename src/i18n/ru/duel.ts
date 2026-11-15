@@ -60,7 +60,6 @@ export const DUEL_RU = {
   "duel.ticketPopup.reset": "Через {time} сбросится до базовых {count}",
   "duel.ticketPopup.gemName": "Купить за самоцветы",
   "duel.ticketPopup.gemDetail": "Сегодня {count}/{limit}",
-  "duel.ticketPopup.buy": "Купить",
   "duel.ticketPopup.adName": "Награда за рекламу",
   "duel.ticketPopup.failed": "Не удалось пополнить. Попробуйте ещё раз чуть позже.",
   "duel.defense.label": "Защита",

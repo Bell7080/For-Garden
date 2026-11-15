@@ -60,7 +60,6 @@ export const DUEL_ZH_HANT = {
   "duel.ticketPopup.reset": "{time}後重置為預設的{count}張",
   "duel.ticketPopup.gemName": "寶石購買",
   "duel.ticketPopup.gemDetail": "今日 {count}/{limit}次",
-  "duel.ticketPopup.buy": "購買",
   "duel.ticketPopup.adName": "廣告獎勵",
   "duel.ticketPopup.failed": "充值失敗，請稍後再試。",
   "duel.defense.label": "防守",

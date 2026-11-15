@@ -259,26 +259,6 @@
 "Einsetzen",
 "Потратить"
 ],
-"stamina.adRemaining": [
-"今日 {left}/{limit}",
-"วันนี้ {left}/{limit}",
-"Hôm nay {left}/{limit}",
-"Hari ini {left}/{limit}",
-"Hoy {left}/{limit}",
-"Hoje {left}/{limit}",
-"Heute {left}/{limit}",
-"Сегодня {left}/{limit}"
-],
-"stamina.watchAd": [
-"观看",
-"ดู",
-"Xem",
-"Tonton",
-"Ver",
-"Assistir",
-"Ansehen",
-"Смотреть"
-],
 "stamina.rechargeFailed": [
 "充能失败。请稍后再试。",
 "เติมไม่สำเร็จ ลองใหม่ภายหลัง",
@@ -481,14 +461,515 @@
 ],
 "stamina.gemDetail": ["今日{count}次 · {reset}重置", "วันนี้ {count} ครั้ง · รีเซ็ต {reset}", "Hôm nay {count} lần · đặt lại {reset}", "Hari ini {count}x · atur ulang {reset}", "Hoy {count} veces · se reinicia {reset}", "Hoje {count}x · reinicia {reset}", "Heute {count}× · Reset {reset}", "Сегодня {count} раз · сброс {reset}"],
 "inventory.guide.sources": ["获取方式", "วิธีได้รับ", "Cách nhận", "Cara Mendapatkan", "Cómo obtener", "Como obter", "Erhalt", "Как получить"],
-"inventory.source.dungeonDrop": ["芝士蛋糕大作战·悬赏胜利与扫荡时偶尔获得（每日最多3张）", "บางครั้งจากชัยชนะและการกวาดล้างใน ปฏิบัติการชีสเค้ก · ค่าหัว (สูงสุดวันละ 3)", "Thỉnh thoảng khi thắng và càn quét Đại chiến Bánh phô mai · Truy nã (tối đa 3/ngày)", "Kadang dari kemenangan dan sapu bersih Operasi Cheesecake · Buronan (maks. 3/hari)", "A veces al ganar y en el barrido de Operación Tarta de queso · Se busca (máx. 3 al día)", "Às vezes em vitórias e na varredura de Operação Cheesecake · Procurados (até 3 por dia)", "Manchmal bei Siegen und Säuberungen in Käsekuchen-Operation · Kopfgeld (max. 3 pro Tag)", "Иногда за победы и зачистку в «Чизкейк» · Розыск (до 3 в день)"],
-"inventory.source.dungeonDropRare": ["芝士蛋糕大作战·悬赏胜利与扫荡时稀有获得（每日最多1张）", "นาน ๆ ครั้งจากชัยชนะและการกวาดล้างใน ปฏิบัติการชีสเค้ก · ค่าหัว (สูงสุดวันละ 1)", "Hiếm khi thắng và càn quét Đại chiến Bánh phô mai · Truy nã (tối đa 1/ngày)", "Jarang dari kemenangan dan sapu bersih Operasi Cheesecake · Buronan (maks. 1/hari)", "Rara vez al ganar y en el barrido de Operación Tarta de queso · Se busca (máx. 1 al día)", "Raramente em vitórias e na varredura de Operação Cheesecake · Procurados (até 1 por dia)", "Selten bei Siegen und Säuberungen in Käsekuchen-Operation · Kopfgeld (max. 1 pro Tag)", "Изредка за победы и зачистку в «Чизкейк» · Розыск (до 1 в день)"],
-"inventory.source.strata": ["考古地层探查", "การสำรวจชั้นหินโบราณคดี", "Thăm dò địa tầng Khảo cổ", "Eksplorasi lapisan Arkeologi", "Exploración de estratos de Arqueología", "Exploração de estratos de Arqueologia", "Archäologie-Schichtgrabung", "Археологическая разведка пластов"],
-"inventory.source.strataRare": ["考古地层探查中稀有获得", "นาน ๆ ครั้งจากการสำรวจชั้นหินโบราณคดี", "Hiếm khi từ thăm dò địa tầng Khảo cổ", "Jarang dari eksplorasi lapisan Arkeologi", "Rara vez en la exploración de estratos de Arqueología", "Raramente na exploração de estratos de Arqueologia", "Selten aus der Archäologie-Schichtgrabung", "Изредка в археологической разведке пластов"],
-"inventory.source.attendance": ["签到奖励", "รางวัลเช็กอิน", "Phần thưởng điểm danh", "Hadiah absen", "Recompensas de asistencia", "Recompensas de presença", "Anmeldebelohnungen", "Награды за вход"],
-"inventory.source.premium": ["高级商店礼包", "แพ็กเกจร้านค้าพรีเมียม", "Gói Cửa hàng cao cấp", "Paket Toko Premium", "Paquetes de la Tienda prémium", "Pacotes da Loja premium", "Premium-Shop-Pakete", "Наборы премиум-магазина"],
-"inventory.source.raidPass": ["突袭通行证（每日1张）", "บัตรผ่านเรด (วันละ 1)", "Thẻ Raid (1 mỗi ngày)", "Pass Raid (1 per hari)", "Pase de incursión (1 al día)", "Passe de incursão (1 por dia)", "Raid-Pass (1 pro Tag)", "Пропуск рейда (1 в день)"],
-"inventory.source.levelUp": ["研究员等级提升", "เลเวลนักวิจัยเพิ่มขึ้น", "Lên cấp nhà nghiên cứu", "Naik level periset", "Subida de nivel de investigador", "Subida de nível de pesquisador", "Forschenden-Stufenaufstieg", "Повышение уровня исследователя"],
-"inventory.source.shops": ["商店", "ร้านค้า", "Cửa hàng", "Toko", "Tienda", "Loja", "Shop", "Магазин"],
-"inventory.source.ad": ["广告奖励", "รางวัลโฆษณา", "Phần thưởng quảng cáo", "Hadiah iklan", "Recompensas de anuncios", "Recompensas de anúncios", "Werbebelohnungen", "Награды за рекламу"]
+"inventory.source.ad": ["广告奖励", "รางวัลโฆษณา", "Phần thưởng quảng cáo", "Hadiah iklan", "Recompensas de anuncios", "Recompensas de anúncios", "Werbebelohnungen", "Награды за рекламу"],
+"guide.route.excavation": [
+"配置型资源采掘",
+"ขุดทรัพยากรแบบวางทีม",
+"Khai thác tài nguyên theo bố trí",
+"Gali sumber daya dengan penempatan",
+"Excavación de recursos por asignación",
+"Escavação de recursos por alocação",
+"Ressourcen-Grabung mit Aufstellung",
+"Раскопки ресурсов с размещением"
+],
+"guide.route.archaeology": [
+"考古地层探查",
+"สำรวจชั้นหินโบราณคดี",
+"Thám sát địa tầng Khảo cổ",
+"Survei lapisan Arkeologi",
+"Exploración de estratos de Arqueología",
+"Pesquisa de estratos da Arqueologia",
+"Schichtenerkundung der Archäologie",
+"Разведка слоёв Археологии"
+],
+"guide.route.archaeologyShop": [
+"考古商店（原石兑换）",
+"ร้านค้าโบราณคดี (แลกด้วยหินดิบ)",
+"Cửa hàng Khảo cổ (đổi bằng Đá thô)",
+"Toko Arkeologi (tukar Batu Mentah)",
+"Tienda de Arqueología (canje con Piedra en bruto)",
+"Loja de Arqueologia (troca por Pedra bruta)",
+"Archäologie-Shop (Tausch gegen Rohstein)",
+"Магазин Археологии (обмен на необработанный камень)"
+],
+"guide.route.archaeologyAd": [
+"考古商店广告 · 原石{amount}，每天{count}次",
+"โฆษณาร้านค้าโบราณคดี · หินดิบ {amount} วันละ {count} ครั้ง",
+"Quảng cáo Cửa hàng Khảo cổ · Đá thô {amount}, {count} lần/ngày",
+"Iklan Toko Arkeologi · Batu Mentah {amount}, {count}x/hari",
+"Anuncio de la Tienda de Arqueología · {amount} Piedra en bruto, {count} al día",
+"Anúncio da Loja de Arqueologia · {amount} Pedra bruta, {count} por dia",
+"Werbung im Archäologie-Shop · {amount} Rohstein, {count}× täglich",
+"Реклама в магазине Археологии · {amount} необработанного камня, {count} раз в день"
+],
+"guide.route.story": [
+"剧情关卡通关奖励",
+"รางวัลผ่านด่านเนื้อเรื่อง",
+"Thưởng vượt ải cốt truyện",
+"Hadiah menyelesaikan tahap cerita",
+"Recompensas por superar etapas de la historia",
+"Recompensas por concluir etapas da história",
+"Belohnungen für Story-Etappen",
+"Награды за прохождение этапов сюжета"
+],
+"guide.route.expedition": [
+"远征节点与每周记录奖励",
+"รางวัลจุดออกสำรวจและสถิติรายสัปดาห์",
+"Thưởng nút Viễn chinh và kỷ lục tuần",
+"Hadiah node Ekspedisi dan rekor mingguan",
+"Recompensas de nodos de Expedición y récord semanal",
+"Recompensas de nós de Expedição e recorde semanal",
+"Belohnungen aus Expeditionsknoten und Wochenrekord",
+"Награды за узлы Экспедиции и недельный рекорд"
+],
+"guide.route.missions": [
+"每日·每周任务奖励",
+"รางวัลภารกิจรายวัน·รายสัปดาห์",
+"Thưởng Nhiệm vụ ngày·tuần",
+"Hadiah Misi harian·mingguan",
+"Recompensas de Misiones diarias y semanales",
+"Recompensas de Missões diárias e semanais",
+"Belohnungen täglicher und wöchentlicher Missionen",
+"Награды за ежедневные и еженедельные задания"
+],
+"guide.route.attendance": [
+"签到奖励",
+"รางวัลเช็กอิน",
+"Thưởng điểm danh",
+"Hadiah absen",
+"Recompensas de asistencia",
+"Recompensas de presença",
+"Anwesenheitsbelohnungen",
+"Награды за посещение"
+],
+"guide.route.premiumGem": [
+"高级商店的宝石商品",
+"สินค้าเจมในร้านค้าพรีเมียม",
+"Gói Ngọc trong Cửa hàng Cao cấp",
+"Produk Permata di Toko Premium",
+"Productos de Gemas en la Tienda Premium",
+"Produtos de Gemas na Loja Premium",
+"Juwel-Angebote im Premium-Shop",
+"Самоцветы в премиум-магазине"
+],
+"guide.route.premiumGemAd": [
+"高级宝石页广告 · 宝石{amount}，每天{count}次",
+"โฆษณาแท็บเจมพรีเมียม · เจม {amount} วันละ {count} ครั้ง",
+"Quảng cáo tab Ngọc cao cấp · {amount} Ngọc, {count} lần/ngày",
+"Iklan tab Permata Premium · {amount} Permata, {count}x/hari",
+"Anuncio de la pestaña Gemas premium · {amount} Gemas, {count} al día",
+"Anúncio da aba Gemas premium · {amount} Gemas, {count} por dia",
+"Werbung im Premium-Juwel-Tab · {amount} Juwelen, {count}× täglich",
+"Реклама во вкладке премиум-самоцветов · {amount} самоцветов, {count} раз в день"
+],
+"guide.route.premiumPackage": [
+"高级商店礼包",
+"แพ็กเกจร้านค้าพรีเมียม",
+"Gói Cửa hàng Cao cấp",
+"Paket Toko Premium",
+"Paquetes de la Tienda Premium",
+"Pacotes da Loja Premium",
+"Pakete im Premium-Shop",
+"Наборы премиум-магазина"
+],
+"guide.route.premiumDaily": [
+"高级每日免费补给",
+"เสบียงฟรีรายวันพรีเมียม",
+"Tiếp tế miễn phí hằng ngày ở Cao cấp",
+"Pasokan gratis harian Premium",
+"Suministro diario gratuito en Premium",
+"Suprimento diário gratuito no Premium",
+"Tägliche Gratis-Lieferung im Premium",
+"Ежедневный бесплатный запас в премиум"
+],
+"guide.route.raidPass": [
+"团队讨伐通行证奖励",
+"รางวัลบัตรผ่านเรด",
+"Thưởng Vé thông hành Đột kích",
+"Hadiah Pass Raid",
+"Recompensas del Pase de incursión",
+"Recompensas do Passe de raide",
+"Raid-Pass-Belohnungen",
+"Награды пропуска рейда"
+],
+"guide.route.shop": [
+"普通商店",
+"ร้านค้าทั่วไป",
+"Cửa hàng thường",
+"Toko umum",
+"Tienda general",
+"Loja geral",
+"Allgemeiner Shop",
+"Обычный магазин"
+],
+"guide.route.shopGoldExchange": [
+"普通商店金币页（宝石 → 金币）",
+"แท็บทองร้านค้าทั่วไป (เจม → ทอง)",
+"Tab Vàng của Cửa hàng thường (Ngọc → Vàng)",
+"Tab Emas Toko umum (Permata → Emas)",
+"Pestaña Oro de la Tienda general (Gemas → Oro)",
+"Aba Ouro da Loja geral (Gemas → Ouro)",
+"Gold-Tab im allgemeinen Shop (Juwelen → Gold)",
+"Вкладка золота в обычном магазине (самоцветы → золото)"
+],
+"guide.route.shopGoldAd": [
+"普通商店金币页广告 · 金币{amount}，每天{count}次",
+"โฆษณาแท็บทองร้านค้าทั่วไป · ทอง {amount} วันละ {count} ครั้ง",
+"Quảng cáo tab Vàng Cửa hàng thường · {amount} Vàng, {count} lần/ngày",
+"Iklan tab Emas Toko umum · {amount} Emas, {count}x/hari",
+"Anuncio de la pestaña Oro de la Tienda · {amount} Oro, {count} al día",
+"Anúncio da aba Ouro da Loja · {amount} Ouro, {count} por dia",
+"Werbung im Gold-Tab des Shops · {amount} Gold, {count}× täglich",
+"Реклама во вкладке золота магазина · {amount} золота, {count} раз в день"
+],
+"guide.route.shopGoldBuy": [
+"普通商店的金币商品",
+"สินค้าราคาทองในร้านค้าทั่วไป",
+"Hàng mua bằng Vàng ở Cửa hàng thường",
+"Produk Emas di Toko umum",
+"Productos con Oro en la Tienda general",
+"Produtos por Ouro na Loja geral",
+"Gold-Angebote im allgemeinen Shop",
+"Товары за золото в обычном магазине"
+],
+"guide.route.trade": [
+"贸易礼包（宝石）",
+"แพ็กเกจค้าขาย (เจม)",
+"Gói Giao thương (Ngọc)",
+"Paket Dagang (Permata)",
+"Paquetes de Comercio (Gemas)",
+"Pacotes de Comércio (Gemas)",
+"Handelspakete (Juwelen)",
+"Торговые наборы (самоцветы)"
+],
+"guide.route.lootShop": [
+"战利品商店兑换",
+"แลกในร้านค้าของรางวัล",
+"Đổi ở Cửa hàng chiến lợi phẩm",
+"Tukar di Toko Jarahan",
+"Canjes en la Tienda de botín",
+"Trocas na Loja de espólios",
+"Tausch im Beute-Shop",
+"Обмен в магазине трофеев"
+],
+"guide.route.lootAd": [
+"战利品商店广告 · 每天{count}次",
+"โฆษณาร้านค้าของรางวัล · วันละ {count} ครั้ง",
+"Quảng cáo Cửa hàng chiến lợi phẩm · {count} lần/ngày",
+"Iklan Toko Jarahan · {count}x/hari",
+"Anuncio de la Tienda de botín · {count} al día",
+"Anúncio da Loja de espólios · {count} por dia",
+"Werbung im Beute-Shop · {count}× täglich",
+"Реклама в магазине трофеев · {count} раз в день"
+],
+"guide.route.duelShop": [
+"决斗商店兑换",
+"แลกในร้านค้าดวล",
+"Đổi ở Cửa hàng Đấu tay đôi",
+"Tukar di Toko Duel",
+"Canjes en la Tienda de duelo",
+"Trocas na Loja de duelo",
+"Tausch im Duell-Shop",
+"Обмен в магазине дуэлей"
+],
+"guide.route.mileageShop": [
+"里程商店兑换",
+"แลกในร้านค้าไมล์",
+"Đổi ở Cửa hàng Dặm",
+"Tukar di Toko Mil",
+"Canjes en la Tienda de millas",
+"Trocas na Loja de milhas",
+"Tausch im Meilen-Shop",
+"Обмен в магазине миль"
+],
+"guide.route.researchGray": [
+"研究所研究的材料奖励",
+"วัสดุจากการวิจัยในห้องวิจัย",
+"Vật liệu nhận từ nghiên cứu ở Viện nghiên cứu",
+"Material dari riset di Lab Riset",
+"Materiales de las investigaciones del Lab",
+"Materiais das pesquisas do Laboratório",
+"Materialien aus Forschung im Forschungslabor",
+"Материалы из исследований в Лаборатории"
+],
+"guide.route.researchMileage": [
+"每次研究累积{amount}",
+"สะสม {amount} ทุกครั้งที่วิจัย",
+"Tích {amount} mỗi lần nghiên cứu",
+"+{amount} setiap kali riset",
+"+{amount} por cada investigación",
+"+{amount} a cada pesquisa",
+"+{amount} pro Forschung",
+"+{amount} за каждое исследование"
+],
+"guide.route.researchDuplicate": [
+"已完成突破的遗物重复获得",
+"เรลิกซ้ำที่ทะลวงครบแล้ว",
+"Di vật trùng đã Đột phá tối đa",
+"Duplikat Relik yang Terobosan-nya penuh",
+"Duplicados de Reliquias con Ruptura completa",
+"Duplicatas de Relíquias com Ruptura completa",
+"Duplikate von Relikten mit vollem Durchbruch",
+"Дубликаты Реликтов с завершённым Прорывом"
+],
+"guide.route.cakeOperation": [
+"芝士蛋糕大作战胜利·扫荡",
+"ชนะและกวาดล้างปฏิบัติการชีสเค้ก",
+"Thắng và Càn quét Đại chiến Bánh phô mai",
+"Menang dan Sapu Operasi Cheesecake",
+"Victorias y Barridos de la Operación Tarta de queso",
+"Vitórias e Varreduras da Operação Cheesecake",
+"Siege und Säuberungen der Käsekuchen-Operation",
+"Победы и зачистки в операции «Чизкейк»"
+],
+"guide.route.bounty": [
+"悬赏胜利·扫荡",
+"ชนะและกวาดล้างค่าหัว",
+"Thắng và Càn quét Truy nã",
+"Menang dan Sapu Buronan",
+"Victorias y Barridos de Se busca",
+"Vitórias e Varreduras de Procurados",
+"Siege und Säuberungen bei Kopfgeldern",
+"Победы и зачистки в Розыске"
+],
+"guide.route.raidRun": [
+"团队讨伐战斗与结算",
+"การต่อสู้และสรุปผลเรด",
+"Trận Đột kích và quyết toán",
+"Pertarungan dan penyelesaian Raid",
+"Combates y liquidaciones de Incursión",
+"Batalhas e acertos de Raide",
+"Raid-Kämpfe und Abrechnungen",
+"Бои и итоги рейдов"
+],
+"guide.route.duelBattle": [
+"决斗场战斗与赛季结算",
+"การต่อสู้ในสนามดวลและสรุปซีซัน",
+"Trận ở Đấu trường và quyết toán mùa",
+"Pertarungan Arena Duel dan penyelesaian musim",
+"Combates en la Arena de duelos y cierre de temporada",
+"Batalhas na Arena de duelos e fechamento da temporada",
+"Duellarena-Kämpfe und Saisonabrechnung",
+"Бои на арене дуэлей и итоги сезона"
+],
+"guide.route.runeSell": [
+"出售符文",
+"ขายรูน",
+"Bán Rune",
+"Menjual Rune",
+"Vender Runas",
+"Vender Runas",
+"Runen verkaufen",
+"Продажа рун"
+],
+"guide.route.levelUp": [
+"研究员等级提升 · {amount}瓶（{days}天期限）",
+"เลเวลนักวิจัยเพิ่ม · {amount} ขวด (หมดอายุใน {days} วัน)",
+"Lên cấp nhà nghiên cứu · {amount} chai (hạn {days} ngày)",
+"Naik level peneliti (Riset) · {amount} botol (kedaluwarsa {days} hari)",
+"Subida de nivel de investigador · {amount} botella(s) (caduca en {days} días)",
+"Subida de nível de pesquisador · {amount} garrafa(s) (expira em {days} dias)",
+"Forscher-Levelaufstieg · {amount} Flasche(n) (läuft in {days} Tagen ab)",
+"Повышение уровня исследователя · {amount} бут. (срок {days} дн.)"
+],
+"guide.route.dungeonDrop": [
+"团队讨伐开放后，芝士蛋糕大作战·悬赏中偶尔获得（每天最多{count}张）",
+"หลังเปิดเรด ได้บางครั้งจากปฏิบัติการชีสเค้ก·ค่าหัว (วันละไม่เกิน {count} ใบ)",
+"Sau khi mở Đột kích: thỉnh thoảng từ Đại chiến Bánh phô mai·Truy nã (tối đa {count} vé/ngày)",
+"Setelah Raid terbuka: kadang dari Operasi Cheesecake·Buronan (maks. {count} per hari)",
+"Tras desbloquear Incursión: a veces en la Operación Tarta de queso y Se busca (hasta {count} al día)",
+"Após liberar a Raide: às vezes na Operação Cheesecake e Procurados (até {count} por dia)",
+"Nach Raid-Freischaltung: gelegentlich aus Käsekuchen-Operation und Kopfgeld (bis {count} täglich)",
+"После открытия рейдов: иногда в операции «Чизкейк» и Розыске (до {count} в день)"
+],
+"guide.route.strataDrop": [
+"团队讨伐开放后，考古地层探查中偶尔获得",
+"หลังเปิดเรด ได้บางครั้งจากการสำรวจชั้นหินโบราณคดี",
+"Sau khi mở Đột kích: thỉnh thoảng từ thám sát địa tầng Khảo cổ",
+"Setelah Raid terbuka: kadang dari survei lapisan Arkeologi",
+"Tras desbloquear Incursión: a veces en estratos de Arqueología",
+"Após liberar a Raide: às vezes em estratos da Arqueologia",
+"Nach Raid-Freischaltung: gelegentlich aus Archäologie-Schichten",
+"После открытия рейдов: иногда в слоях Археологии"
+],
+"guide.route.sweepAd": [
+"副本扫荡窗口广告 · {amount}张，每天{count}次",
+"โฆษณาหน้ากวาดล้างดันเจียน · {amount} ใบ วันละ {count} ครั้ง",
+"Quảng cáo cửa sổ Càn quét · {amount} vé, {count} lần/ngày",
+"Iklan jendela Sapu dungeon · {amount} tiket, {count}x/hari",
+"Anuncio de la ventana de Barrido · {amount} boletos, {count} al día",
+"Anúncio da janela de Varredura · {amount} bilhetes, {count} por dia",
+"Werbung im Säuberungsfenster · {amount} Tickets, {count}× täglich",
+"Реклама в окне зачистки · {amount} билетов, {count} раз в день"
+],
+"guide.route.staminaRegen": [
+"自然恢复 · 每{minutes}分钟{amount}",
+"ฟื้นตามเวลา · {amount} ทุก {minutes} นาที",
+"Hồi theo thời gian · {amount} mỗi {minutes} phút",
+"Pulih seiring waktu · {amount} tiap {minutes} menit",
+"Recuperación natural · {amount} cada {minutes} min",
+"Recuperação natural · {amount} a cada {minutes} min",
+"Natürliche Erholung · {amount} alle {minutes} Min.",
+"Восстановление со временем · {amount} каждые {minutes} мин"
+],
+"guide.route.staminaDrink": [
+"使用能量饮料",
+"ใช้เครื่องดื่มพลังงาน",
+"Dùng Nước tăng lực",
+"Memakai Minuman Energi",
+"Usar Bebidas energéticas",
+"Usar Bebidas energéticas",
+"Energydrinks verwenden",
+"Энергетики"
+],
+"guide.route.staminaGem": [
+"宝石补充 · 每次{amount}（宝石{gems}起）",
+"เติมด้วยเจม · ครั้งละ {amount} (เริ่ม {gems} เจม)",
+"Nạp bằng Ngọc · {amount} mỗi lần (từ {gems} Ngọc)",
+"Isi dengan Permata · {amount} sekali (mulai {gems} Permata)",
+"Recarga con Gemas · {amount} cada vez (desde {gems} Gemas)",
+"Recarga com Gemas · {amount} por vez (a partir de {gems} Gemas)",
+"Mit Juwelen aufladen · je {amount} (ab {gems} Juwelen)",
+"Пополнение за самоцветы · по {amount} (от {gems} самоцветов)"
+],
+"guide.route.staminaAd": [
+"广告补给 · 每次{amount}，每天{count}次",
+"เสบียงโฆษณา · ครั้งละ {amount} วันละ {count} ครั้ง",
+"Tiếp tế quảng cáo · {amount} mỗi lần, {count} lần/ngày",
+"Pasokan iklan · {amount} sekali, {count}x/hari",
+"Suministro por anuncio · {amount} cada vez, {count} al día",
+"Suprimento por anúncio · {amount} por vez, {count} por dia",
+"Werbelieferung · je {amount}, {count}× täglich",
+"Запас за рекламу · по {amount}, {count} раз в день"
+],
+"guide.route.staminaBattles": [
+"仅在胜利的战斗中消耗",
+"ใช้เฉพาะการต่อสู้ที่ชนะ",
+"Chỉ tiêu hao khi thắng trận",
+"Hanya terpakai di pertarungan yang dimenangkan",
+"Solo se gasta en combates ganados",
+"Gasto só em batalhas vencidas",
+"Nur bei gewonnenen Kämpfen verbraucht",
+"Тратится только в выигранных боях"
+],
+"guide.route.raidEntry": [
+"每次进入团队讨伐{amount}",
+"{amount} ต่อการเข้าเรด",
+"{amount} mỗi lần vào Đột kích",
+"{amount} per masuk Raid",
+"{amount} por cada entrada a Incursión",
+"{amount} por entrada na Raide",
+"{amount} pro Raid-Eintritt",
+"{amount} за вход в рейд"
+],
+"guide.route.duelDaily": [
+"每天补充{count}张",
+"เติมให้วันละ {count} ใบ",
+"Mỗi ngày nạp lại {count} vé",
+"Diisi ulang {count} setiap hari",
+"Se recargan {count} cada día",
+"Recarrega {count} por dia",
+"Täglich auf {count} aufgefüllt",
+"Каждый день пополняется до {count}"
+],
+"guide.route.duelBuy": [
+"额外购买决斗挑战券 · 宝石{gems}起，每天{count}次",
+"ซื้อตั๋วดวลเพิ่ม · เริ่ม {gems} เจม วันละ {count} ครั้ง",
+"Mua thêm vé Đấu · từ {gems} Ngọc, {count} lần/ngày",
+"Beli tiket Duel tambahan · mulai {gems} Permata, {count}x/hari",
+"Boletos de duelo extra · desde {gems} Gemas, {count} al día",
+"Bilhetes de duelo extras · a partir de {gems} Gemas, {count} por dia",
+"Zusätzliche Duell-Tickets · ab {gems} Juwelen, {count}× täglich",
+"Доп. билеты дуэли · от {gems} самоцветов, {count} раз в день"
+],
+"guide.route.duelAd": [
+"决斗场广告 · 每天{count}次",
+"โฆษณาสนามดวล · วันละ {count} ครั้ง",
+"Quảng cáo Đấu trường · {count} lần/ngày",
+"Iklan Arena Duel · {count}x/hari",
+"Anuncio de la Arena de duelos · {count} al día",
+"Anúncio da Arena de duelos · {count} por dia",
+"Werbung in der Duellarena · {count}× täglich",
+"Реклама на арене дуэлей · {count} раз в день"
+],
+"guide.route.labFossil": [
+"研究所的化石研究",
+"วิจัยฟอสซิลในห้องวิจัย",
+"Nghiên cứu Hóa thạch ở Viện nghiên cứu",
+"Riset Fosil di Lab Riset",
+"Investigación de Fósiles en el Lab",
+"Pesquisa de Fósseis no Laboratório",
+"Fossil-Forschung im Forschungslabor",
+"Исследование окаменелостей в Лаборатории"
+],
+"guide.route.labAmber": [
+"研究所的UP研究",
+"วิจัยพิกอัปในห้องวิจัย",
+"Nghiên cứu Pick-up ở Viện nghiên cứu",
+"Riset Pick-up di Lab Riset",
+"Investigación destacada en el Lab",
+"Pesquisa em destaque no Laboratório",
+"Pick-up-Forschung im Forschungslabor",
+"Исследование с повышенным шансом в Лаборатории"
+],
+"guide.route.labFill": [
+"补足不足的研究道具 · 每个宝石{gems}",
+"เติมของวิจัยที่ขาด · ชิ้นละ {gems} เจม",
+"Bù vật phẩm nghiên cứu thiếu · {gems} Ngọc mỗi cái",
+"Menutup kekurangan item riset · {gems} Permata per item",
+"Cubrir objetos de investigación faltantes · {gems} Gemas cada uno",
+"Cobrir itens de pesquisa em falta · {gems} Gemas cada",
+"Fehlende Forschungsgegenstände ergänzen · {gems} Juwelen pro Stück",
+"Нехватка предметов для исследования · {gems} самоцветов за шт."
+],
+"guide.route.staminaRecharge": [
+"体力补充 · 宝石{gems}起",
+"เติมสตามินา · เริ่ม {gems} เจม",
+"Nạp Thể lực · từ {gems} Ngọc",
+"Isi Stamina · mulai {gems} Permata",
+"Recarga de Estamina · desde {gems} Gemas",
+"Recarga de Estamina · a partir de {gems} Gemas",
+"Ausdauer aufladen · ab {gems} Juwelen",
+"Пополнение выносливости · от {gems} самоцветов"
+],
+"guide.route.guildCreate": [
+"创建公会 · 宝石{gems}",
+"ก่อตั้งกิลด์ · {gems} เจม",
+"Lập Bang hội · {gems} Ngọc",
+"Mendirikan Guild · {gems} Permata",
+"Fundar un Gremio · {gems} Gemas",
+"Fundar uma Guilda · {gems} Gemas",
+"Gilde gründen · {gems} Juwelen",
+"Создание гильдии · {gems} самоцветов"
+],
+"guide.route.relicFeed": [
+"遗物喂食（等级成长）",
+"ป้อนเรลิก (เพิ่มเลเวล)",
+"Cho ăn Di vật (tăng cấp)",
+"Makanan untuk Relik (naik level)",
+"Alimentar Reliquias (subir nivel)",
+"Alimentar Relíquias (subir nível)",
+"Relikte füttern (Levelaufstieg)",
+"Кормление Реликтов (рост уровня)"
+],
+"guide.route.runeCraft": [
+"符文打磨·刻印·合成",
+"เจียระไน·สลัก·ผสมรูน",
+"Mài·Khắc·Hợp nhất Rune",
+"Asah·Ukir·Sintesis Rune",
+"Tallado, Grabado y Síntesis de Runas",
+"Lapidação, Gravação e Síntese de Runas",
+"Runen veredeln, gravieren und verschmelzen",
+"Огранка, гравировка и синтез рун"
+],
+"guide.route.runeTrait": [
+"符文特性重解",
+"ตีความคุณสมบัติรูนใหม่",
+"Tái diễn giải đặc tính Rune",
+"Interpretasi ulang sifat Rune",
+"Reinterpretación de rasgos de Runa",
+"Reinterpretação de traços de Runa",
+"Runen-Merkmal neu deuten",
+"Переосмысление свойств руны"
+]
 }

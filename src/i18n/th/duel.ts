@@ -60,7 +60,6 @@ export const DUEL_TH = {
   "duel.ticketPopup.reset": "อีก {time} จะรีเซ็ตเหลือ {count} ใบตามปกติ",
   "duel.ticketPopup.gemName": "ซื้อด้วยเจม",
   "duel.ticketPopup.gemDetail": "วันนี้ {count}/{limit} ครั้ง",
-  "duel.ticketPopup.buy": "ซื้อ",
   "duel.ticketPopup.adName": "รางวัลจากโฆษณา",
   "duel.ticketPopup.failed": "เติมไม่สำเร็จ โปรดลองอีกครั้งในอีกสักครู่",
   "duel.defense.label": "ป้องกัน",

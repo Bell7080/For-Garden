@@ -241,10 +241,12 @@ export class Button extends Phaser.GameObjects.Container {
         shadow.setVisible(!!cost); icon.setVisible(!!cost); amount.setVisible(!!cost);
         if (!cost) { label.setX(0); return; }
         amount.setText(costText(cost.amount, opts.cost?.abbreviate)).setColor(cost.affordable === false ? COLOR.dangerText : COLOR.ink);
-        const total = label.width + gap + coin + gap * 0.24 + amount.width;
+        // 라벨이 빈 버튼(값만 세우는 충전 칸)은 그림과 수만으로 가운데에 선다.
+        const lead = label.text ? label.width + gap : 0;
+        const total = lead + coin + gap * 0.24 + amount.width;
         const left = -total / 2;
         label.setX(left + label.width / 2);
-        const coinX = left + label.width + gap + coin / 2;
+        const coinX = left + lead + coin / 2;
         shadow.setX(coinX + 3); icon.setX(coinX);
         amount.setX(coinX + coin / 2 + gap * 0.24);
       };

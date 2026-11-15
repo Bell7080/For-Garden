@@ -19,36 +19,6 @@
 "Eine Bescheinigung dafür, wie weit du den Boss zurückgedrängt hast.",
 "Свидетельство о том, насколько вы оттеснили босса."
 ],
-"currency.raidSigil.source.0": [
-"结束的讨伐结算",
-"สรุปผลเรดที่จบแล้ว",
-"Quyết toán đột kích đã kết thúc",
-"Penyelesaian raid yang berakhir",
-"Liquidación de una incursión terminada",
-"Acerto de uma raide encerrada",
-"Abrechnung eines beendeten Raids",
-"Расчёт завершённого рейда"
-],
-"currency.raidSigil.source.1": [
-"讨伐的击败分成",
-"ส่วนแบ่งจากการปราบเรด",
-"Phần chia chinh phạt đột kích",
-"Bagian penaklukan raid",
-"Parte por subyugar la incursión",
-"Parte pela subjugação da raide",
-"Anteil an der Raid-Bezwingung",
-"Доля за усмирение в рейде"
-],
-"currency.raidSigil.use.0": [
-"战利品商店的讨伐兑换",
-"แลกของปราบปรามที่ร้านค้าของรางวัล",
-"Đổi chinh phạt ở Cửa hàng chiến lợi phẩm",
-"Tukar penaklukan di Toko Jarahan",
-"Canje de subyugación en la Tienda de botín",
-"Troca de subjugação na Loja de espólios",
-"Bezwingungstausch im Beute-Shop",
-"Обмен за усмирение в магазине трофеев"
-],
 "currency.salvageRecord.name": [
 "打捞记录",
 "บันทึกกู้ซาก",
@@ -69,36 +39,6 @@
 "Ein Protokoll dessen, was aus den versunkenen Zweigstellen geborgen wurde.",
 "Запись о поднятом из затонувших филиалов."
 ],
-"currency.salvageRecord.source.0": [
-"远征节点奖励",
-"รางวัลจุดออกสำรวจ",
-"Thưởng nút Viễn chinh",
-"Hadiah titik Ekspedisi",
-"Recompensas de nodos de Expedición",
-"Recompensas de nós da Expedição",
-"Expedition-Knotenbelohnungen",
-"Награды узлов экспедиции"
-],
-"currency.salvageRecord.source.1": [
-"远征每周记录奖励",
-"รางวัลสถิติออกสำรวจรายสัปดาห์",
-"Thưởng kỷ lục Viễn chinh tuần",
-"Hadiah rekor mingguan Ekspedisi",
-"Recompensas del récord semanal de Expedición",
-"Recompensas do recorde semanal da Expedição",
-"Expedition-Wochenrekordbelohnungen",
-"Награды рекорда экспедиции за неделю"
-],
-"currency.salvageRecord.use.0": [
-"战利品商店的打捞兑换",
-"แลกของกู้ซากที่ร้านค้าของรางวัล",
-"Đổi trục vớt ở Cửa hàng chiến lợi phẩm",
-"Tukar penyelamatan di Toko Jarahan",
-"Canje de rescate en la Tienda de botín",
-"Troca de resgate na Loja de espólios",
-"Bergungstausch im Beute-Shop",
-"Обмен спасённого в магазине трофеев"
-],
 "currency.duelEmblem.name": [
 "斗士徽章",
 "เครื่องหมายนักสู้",
@@ -118,36 +58,6 @@
 "Uma insígnia concedida por cada luta travada sob o estandarte da arena.",
 "Ein Abzeichen für jeden Kampf unter dem Banner der Arena.",
 "Знак, который вручают за каждый бой под знаменем арены."
-],
-"currency.duelEmblem.source.0": [
-"斗技场战斗",
-"การต่อสู้ในสนามดวล",
-"Trận đấu trường",
-"Pertarungan arena",
-"Combates de la arena",
-"Lutas da arena",
-"Arenakämpfe",
-"Бои на арене"
-],
-"currency.duelEmblem.source.1": [
-"斗技场赛季结算",
-"การสรุปผลฤดูกาลสนามดวล",
-"Quyết toán mùa đấu trường",
-"Penyelesaian musim arena",
-"Liquidación de temporada de la arena",
-"Acerto de temporada da arena",
-"Arena-Saisonabrechnung",
-"Итоги сезона арены"
-],
-"currency.duelEmblem.use.0": [
-"决斗商店兑换",
-"แลกที่ร้านค้าดวล",
-"Đổi ở Cửa hàng đấu",
-"Tukar di Toko Duel",
-"Canje en la Tienda de duelo",
-"Troca na Loja de duelo",
-"Tausch im Duell-Shop",
-"Обмен в магазине дуэлей"
 ],
 "item.rawStone.name": [
 "原石",
@@ -260,14 +170,14 @@
 "Энергетик"
 ],
 "item.stamina-tonic.description": [
-"恢复60体力。",
-"ฟื้นฟูสตามินา 60",
-"Hồi 60 Thể lực.",
-"Memulihkan 60 Stamina.",
-"Recupera 60 de Estamina.",
-"Recupera 60 de Estamina.",
-"Stellt 60 Ausdauer wieder her.",
-"Восстанавливает 60 выносливости."
+"恢复{amount}体力。",
+"ฟื้นฟูสตามินา {amount}",
+"Hồi {amount} Thể lực.",
+"Memulihkan {amount} Stamina.",
+"Recupera {amount} de Estamina.",
+"Recupera {amount} de Estamina.",
+"Stellt {amount} Ausdauer wieder her.",
+"Восстанавливает {amount} выносливости."
 ],
 "item.stamina-tonic-large.name": [
 "能量饮料+",
@@ -280,14 +190,14 @@
 "Энергетик+"
 ],
 "item.stamina-tonic-large.description": [
-"恢复120体力。",
-"ฟื้นฟูสตามินา 120",
-"Hồi 120 Thể lực.",
-"Memulihkan 120 Stamina.",
-"Recupera 120 de Estamina.",
-"Recupera 120 de Estamina.",
-"Stellt 120 Ausdauer wieder her.",
-"Восстанавливает 120 выносливости."
+"恢复{amount}体力。",
+"ฟื้นฟูสตามินา {amount}",
+"Hồi {amount} Thể lực.",
+"Memulihkan {amount} Stamina.",
+"Recupera {amount} de Estamina.",
+"Recupera {amount} de Estamina.",
+"Stellt {amount} Ausdauer wieder her.",
+"Восстанавливает {amount} выносливости."
 ],
 "premium.tab.deal": [
 "特惠",

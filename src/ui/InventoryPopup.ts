@@ -36,9 +36,10 @@ import { formatCurrency } from "../core/formatCurrency";
 import { managerEvents } from "../managers/ManagerEvents";
 import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
 import { ItemGuidePopup } from "./ItemGuidePopup";
+import { guideNavigatorParts } from "./currencyGuideEntry";
 import { addItemDefinitionIcon } from "./itemDefinitionIcon";
 import { addExpiryTag, soonestItemExpiry } from "./itemExpiry";
-import type { CurrencyGuideAction } from "../data/currencyGuide";
+import type { LobbyMenu } from "../scenes/lobbyEntry";
 import { RELIC_GRID_INTRO, relicGridIntroDelay } from "./relicGridLayout";
 import { motionPolicy } from "../core/settings";
 import { universalFragmentRarity } from "../core/relicProgression";
@@ -110,7 +111,7 @@ export class InventoryPopup {
     this.inventoryDirty = false; this.render(this.view);
   };
 
-  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi, private readonly onClose?: () => void, private readonly onCurrencyAction?: (action: CurrencyGuideAction) => void) {}
+  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi, private readonly onClose?: () => void, private readonly onLobbyPanel?: (panel: LobbyMenu) => void) {}
 
   /** 중복 열기를 막고 조회가 끝난 뒤 현재 탭을 그린다. */
   open(): void {
@@ -337,8 +338,8 @@ export class InventoryPopup {
     // 가장자리 칸에 붙이면 판 밖 우하단 뒤로가기와 겹친다.
     if (item.kind === "rune") { openRuneInfoPopup(this.scene, this.popups, { runeInstanceId: item.rune.instanceId, api: this.api, traitResearch: true }); return; }
     // 재화 카드는 상단 칩과 같은 안내 프리팹을 스택 위에 쌓아 가방 자체를 보존한다.
-    if (item.category === "currency" && item.definition.icon.kind === "currency") { new CurrencyGuidePopup(this.scene, this.popups, this.onCurrencyAction).open(item.definition.icon.key); return; }
-    new ItemGuidePopup(this.scene, this.popups).open({
+    if (item.category === "currency" && item.definition.icon.kind === "currency") { new CurrencyGuidePopup(this.scene, this.popups, guideNavigatorParts({ scene: this.scene, popups: this.popups, onLobbyPanel: this.onLobbyPanel })).open(item.definition.icon.key); return; }
+    new ItemGuidePopup(this.scene, this.popups, guideNavigatorParts({ scene: this.scene, popups: this.popups, onLobbyPanel: this.onLobbyPanel })).open({
       definition: item.definition, quantity: item.quantity, expiry: item.kind === "stack" && item.lot ? { count: item.lot.quantity, expiresAt: item.lot.expiresAt } : soonestItemExpiry(item.definition.id),
       onUse: item.category === "consumable" ? () => this.useConsumable(item.definition, item.kind === "stack" ? item.lot?.expiresAt : undefined) : undefined,
     });

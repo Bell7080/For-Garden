@@ -60,7 +60,6 @@ export const DUEL_DE = {
   "duel.ticketPopup.reset": "Setzt sich in {time} auf {count} zurück",
   "duel.ticketPopup.gemName": "Mit Juwelen kaufen",
   "duel.ticketPopup.gemDetail": "Heute {count}/{limit}",
-  "duel.ticketPopup.buy": "Kaufen",
   "duel.ticketPopup.adName": "Werbebelohnung",
   "duel.ticketPopup.failed": "Aufladen fehlgeschlagen. Bitte versuche es gleich noch einmal.",
   "duel.defense.label": "Verteidigung",

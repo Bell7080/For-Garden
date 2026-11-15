@@ -60,7 +60,6 @@ export const DUEL_KO = {
   "duel.ticketPopup.reset": "{time} 뒤 기본 {count}장으로 초기화",
   "duel.ticketPopup.gemName": "젬 구매",
   "duel.ticketPopup.gemDetail": "오늘 {count}/{limit}회",
-  "duel.ticketPopup.buy": "구매",
   "duel.ticketPopup.adName": "광고 보상",
   "duel.ticketPopup.failed": "충전에 실패했습니다. 잠시 뒤 다시 시도해 주세요.",
   "duel.defense.label": "방어",

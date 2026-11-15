@@ -60,7 +60,6 @@ export const DUEL_JA = {
   "duel.ticketPopup.reset": "{time}後に基本の{count}枚へリセット",
   "duel.ticketPopup.gemName": "ジェム購入",
   "duel.ticketPopup.gemDetail": "本日 {count}/{limit}回",
-  "duel.ticketPopup.buy": "購入",
   "duel.ticketPopup.adName": "広告報酬",
   "duel.ticketPopup.failed": "チャージに失敗しました。しばらくしてからもう一度お試しください。",
   "duel.defense.label": "防衛",

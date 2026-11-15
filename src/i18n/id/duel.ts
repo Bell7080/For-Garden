@@ -60,7 +60,6 @@ export const DUEL_ID = {
   "duel.ticketPopup.reset": "{time} lagi direset ke {count} tiket standar",
   "duel.ticketPopup.gemName": "Beli dengan Permata",
   "duel.ticketPopup.gemDetail": "Hari ini {count}/{limit} kali",
-  "duel.ticketPopup.buy": "Beli",
   "duel.ticketPopup.adName": "Hadiah Iklan",
   "duel.ticketPopup.failed": "Pengisian gagal. Silakan coba lagi sebentar lagi.",
   "duel.defense.label": "Pertahanan",

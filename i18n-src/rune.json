@@ -199,6 +199,146 @@
 "Diese Rune verkaufen. Eine verkaufte Rune lässt sich nicht zurückholen.",
 "Продать эту руну. Проданную руну нельзя вернуть."
 ],
+"rune.bulkSell.title": [
+"批量出售符文",
+"ขายรูนแบบรวม",
+"Bán Rune hàng loạt",
+"Jual Rune Massal",
+"Venta masiva de runas",
+"Venda em massa de runas",
+"Runen-Massenverkauf",
+"Массовая продажа рун"
+],
+"rune.bulkSell.entry": [
+"批量出售",
+"ขายแบบรวม",
+"Bán hàng loạt",
+"Jual Massal",
+"Venta masiva",
+"Venda em massa",
+"Massenverkauf",
+"Продать пачкой"
+],
+"rune.bulkSell.craft.fresh": [
+"未打磨",
+"ยังไม่เจียระไน",
+"Chưa Mài",
+"Belum Diasah",
+"Sin tallar",
+"Não lapidada",
+"Nicht veredelt",
+"Без огранки"
+],
+"rune.bulkSell.craft.crafting": [
+"打磨中",
+"กำลังเจียระไน",
+"Đang Mài",
+"Sedang Diasah",
+"Tallando",
+"Lapidando",
+"Wird veredelt",
+"Огранка идёт"
+],
+"rune.bulkSell.craft.engraved": [
+"已刻印",
+"สลักแล้ว",
+"Đã Khắc",
+"Sudah Diukir",
+"Grabada",
+"Gravada",
+"Graviert",
+"Гравирована"
+],
+"rune.bulkSell.empty": [
+"没有符合条件的符文。",
+"ไม่มีรูนที่ตรงเงื่อนไข",
+"Không có Rune phù hợp điều kiện.",
+"Tidak ada Rune yang sesuai syarat.",
+"Ninguna runa cumple estas condiciones.",
+"Nenhuma runa atende a estas condições.",
+"Keine Rune erfüllt diese Bedingungen.",
+"Нет рун, подходящих под условия."
+],
+"rune.bulkSell.protected": [
+"装备中、已锁定和收藏的符文不会出售。",
+"รูนที่สวมอยู่ ล็อก หรือบุ๊กมาร์กไว้จะไม่ถูกขาย",
+"Rune đang đeo, đã khóa hoặc Đánh dấu sẽ không bị bán.",
+"Rune yang terpasang, terkunci, atau diberi Penanda tidak dijual.",
+"Las runas equipadas, bloqueadas o con Marcador no se venden.",
+"Runas equipadas, travadas ou com Marcador não são vendidas.",
+"Angelegte, gesperrte und mit Lesezeichen markierte Runen werden nie verkauft.",
+"Надетые, запертые руны и руны с Закладкой не продаются."
+],
+"rune.bulkSell.protectedCount": [
+"{count}个装备中、已锁定或收藏的符文将被排除。",
+"รูนที่สวมอยู่ ล็อก หรือบุ๊กมาร์กไว้ {count} ชิ้นจะไม่ถูกขาย",
+"{count} Rune đang đeo, đã khóa hoặc Đánh dấu được giữ lại.",
+"{count} Rune terpasang, terkunci, atau diberi Penanda dikecualikan.",
+"Se excluyen {count} runas equipadas, bloqueadas o con Marcador.",
+"{count} runas equipadas, travadas ou com Marcador ficam de fora.",
+"{count} angelegte, gesperrte oder mit Lesezeichen markierte Runen bleiben außen vor.",
+"Исключено рун (надетых, запертых, с Закладкой): {count}."
+],
+"rune.bulkSell.receive": [
+"预计获得",
+"ได้รับโดยประมาณ",
+"Dự kiến nhận",
+"Perkiraan diterima",
+"Recibirás",
+"Você recebe",
+"Du erhältst",
+"Вы получите"
+],
+"rune.bulkSell.sellCount": [
+"出售{count}个",
+"ขาย {count} ชิ้น",
+"Bán {count}",
+"Jual {count}",
+"Vender {count}",
+"Vender {count}",
+"{count} verkaufen",
+"Продать: {count}"
+],
+"rune.bulkSell.capFull": [
+"超出原石持有上限，无法出售。",
+"ขายไม่ได้เพราะเกินขีดจำกัดหินดิบ",
+"Không thể bán vì vượt giới hạn Đá thô.",
+"Tidak bisa dijual karena melebihi batas Batu Mentah.",
+"No puedes vender: superarías el límite de Piedra en bruto.",
+"Não é possível vender: excederia o limite de Pedra bruta.",
+"Verkauf nicht möglich: Das Rohstein-Limit würde überschritten.",
+"Нельзя продать: превышен лимит необработанного камня."
+],
+"rune.bulkSell.confirm": [
+"出售{count}个符文。已出售的符文无法恢复。",
+"ขายรูน {count} ชิ้น รูนที่ขายแล้วไม่สามารถกู้คืนได้",
+"Bán {count} Rune. Rune đã bán không thể lấy lại.",
+"Jual {count} Rune. Rune yang terjual tidak bisa dikembalikan.",
+"Vender {count} runas. Las runas vendidas no se pueden recuperar.",
+"Vender {count} runas. Runas vendidas não podem ser recuperadas.",
+"{count} Runen verkaufen. Verkaufte Runen lassen sich nicht zurückholen.",
+"Продать рун: {count}. Проданные руны нельзя вернуть."
+],
+"rune.bulkSell.done": [
+"已出售{count}个符文 · 原石 +{amount}",
+"ขายรูน {count} ชิ้น · หินดิบ +{amount}",
+"Đã bán {count} Rune · Đá thô +{amount}",
+"{count} Rune terjual · Batu Mentah +{amount}",
+"{count} runas vendidas · Piedra en bruto +{amount}",
+"{count} runas vendidas · Pedra bruta +{amount}",
+"{count} Runen verkauft · Rohstein +{amount}",
+"Продано рун: {count} · Необработанный камень +{amount}"
+],
+"rune.bulkSell.failed": [
+"出售失败。",
+"ขายไม่สำเร็จ",
+"Không thể bán.",
+"Gagal menjual.",
+"No se pudo vender.",
+"Não foi possível vender.",
+"Verkauf fehlgeschlagen.",
+"Не удалось продать."
+],
 "rune.craft": [
 "打磨",
 "เจียระไน",
@@ -1269,5 +1409,14 @@
 "Alle {value} Basisangriffe sind immer kritische Treffer. Jede weitere Kopie dieser Rune senkt die Anzahl um 1 (mindestens {min}).",
 "Каждые {value} базовых атаки всегда наносят критический удар. Каждая дополнительная такая руна уменьшает число на 1 (минимум {min})."
 ],
-"rune.free.craft": ["免费打磨", "เจียระไนฟรี", "Mài miễn phí", "Asah gratis", "Tallar gratis", "Lapidar grátis", "Gratis veredeln", "Бесплатная огранка"]
+"rune.free.craft": [
+"免费打磨",
+"เจียระไนฟรี",
+"Mài miễn phí",
+"Asah gratis",
+"Tallar gratis",
+"Lapidar grátis",
+"Gratis veredeln",
+"Бесплатная огранка"
+]
 }

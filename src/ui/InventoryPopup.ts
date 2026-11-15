@@ -24,6 +24,13 @@ import { offerFreeRuneCraft } from "./freeRuneCraftTutorial";
 import { createRuneListState, RuneListControls, visibleRuneList, type RuneListState } from "./RuneListControls";
 import { RUNE_LIST_CONTROLS } from "./runeListControlsLayout";
 import { addRuneCard, runeTexture } from "./runeIcons";
+import { Button } from "./Button";
+import { openRuneBulkSellPopup } from "./RuneBulkSellPopup";
+import { RUNE_BULK_SELL } from "./runeBulkSellLayout";
+
+/** 일괄 판매 진입 버튼의 결 — 룬 쪽지의 판매 버튼과 같은 붉은빛이다. */
+const RUNE_BULK_SELL_ENTRY_ACCENT = 0xd9455a;
+const RUNE_BULK_SELL_ENTRY_TEXT = "#ffc3cb";
 import { COLOR } from "./theme";
 import { formatCurrency } from "../core/formatCurrency";
 import { managerEvents } from "../managers/ManagerEvents";
@@ -165,6 +172,12 @@ export class InventoryPopup {
         state: this.runeList, parts: true, onChange: () => this.renderList(body, false),
         isActive: () => this.popups.isTop(body),
       });
+      // 조건별 일괄 판매 — 조작 줄 위 오른쪽 빈 자리. 되돌릴 수 없는 조작이라 판매 버튼과 같은 붉은 결이다.
+      const { width, height, y } = RUNE_BULK_SELL.entry;
+      body.add(new Button(this.scene, right - width / 2, y, {
+        width, height, label: t("rune.bulkSell.entry"), fontSize: 22, accentColor: RUNE_BULK_SELL_ENTRY_ACCENT, accentTextColor: RUNE_BULK_SELL_ENTRY_TEXT,
+        onClick: () => openRuneBulkSellPopup(this.scene, this.popups, this.api),
+      }));
     }
     this.renderList(body, deal);
   }

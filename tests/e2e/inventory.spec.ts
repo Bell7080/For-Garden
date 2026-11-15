@@ -7,6 +7,7 @@ import { captureGame, tap, tapUntil, waitForDebugState } from "./canvasInput";
 // 레일 자리는 화면이 소유한 배치표에서 읽는다 — 좌표를 스펙에 베껴 두면 줄이 옮겨질 때 조용히 빗나간다.
 import { LOBBY_RAIL_BOUNDS } from "../../src/ui/lobbyLayout";
 import { BACK_SLOT } from "../../src/ui/popupGeometry";
+import { RUNE_BULK_SELL, runeBulkSellLayout } from "../../src/ui/runeBulkSellLayout";
 
 const WIDTH = 1080; const HEIGHT = 1920;
 
@@ -142,4 +143,41 @@ test("창 밖으로 잘려 안 보이는 룬 카드는 손을 받지 않는다 �
   // 같은 열의 창 안쪽(아래변 위 한 뼘)은 그대로 눌려 룬 쪽지가 열린다 — 입력을 통째로 막은 것이 아니다.
   await tap(page, columnX, HEIGHT / 2 + INVENTORY_LIST_BOTTOM - 40);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles?.length ?? 0)).toBeGreaterThan(1);
+});
+
+test("룬 일괄 판매는 조건에 맞는 룬만 확인 뒤 판다", async ({ page }) => {
+  test.setTimeout(240_000);
+  await startAfterOpening(page, (state) => {
+    const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 10])) as Record<RuneStatKey, number>;
+    const make = (instanceId: string, rarity: "uncommon" | "rare" | "legendary", part: 0 | 1 | 2) => createRuneInstance({ instanceId, baseName: "조각", rarity, part, statValues: values, random: () => 0 });
+    state.runeInventory = [
+      make("sell-uncommon", "uncommon", 0),
+      make("sell-rare", "rare", 1),
+      { ...make("keep-locked", "rare", 2), locked: true },
+      make("keep-legendary", "legendary", 0),
+    ];
+  });
+  await tap(page, WIDTH / 2, HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapUntil(page, LOBBY_RAIL_BOUNDS.utility.inventory.x, LOBBY_RAIL_BOUNDS.utility.inventory.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)) !== undefined);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.inventoryTextureKeys?.length)).toBe(4);
+  await page.setViewportSize({ width: WIDTH, height: HEIGHT });
+  const entry = RUNE_BULK_SELL.entry;
+  const right = 900 / 2 - 48;
+  await captureGame(page, `test-results/${test.info().project.name}-rune-bulk-sell-entry.png`);
+  await tapUntil(page, WIDTH / 2 + right - entry.width / 2, HEIGHT / 2 + entry.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.popupTitles))?.includes("룬 일괄 판매") === true);
+  await captureGame(page, `test-results/${test.info().project.name}-rune-bulk-sell-popup.png`);
+  const layout = runeBulkSellLayout(4);
+  await tap(page, WIDTH / 2, HEIGHT / 2 + layout.buttonY);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles?.length)).toBe(3);
+  await captureGame(page, `test-results/${test.info().project.name}-rune-bulk-sell-confirm.png`);
+  // 확인 창의 확정 버튼(오른쪽). 문장 줄 수에 따라 몇십 px 오르내려도 버튼 높이 안에 든다.
+  await tap(page, WIDTH / 2 + 180, HEIGHT / 2 + 135);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles?.length)).toBe(2);
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${test.info().project.name}-rune-bulk-sell-after.png`);
+  // 판 밖 우하단 돌아가기로 닫으면 가방이 판 룬을 걷어 낸 목록으로 다시 선다.
+  await tap(page, BACK_SLOT.x, BACK_SLOT.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.inventoryTextureKeys?.length), { timeout: 20_000 }).toBe(2);
+  await captureGame(page, `test-results/${test.info().project.name}-rune-bulk-sell-done.png`);
 });

@@ -299,6 +299,9 @@ export const MISC_EN = {
   "relics.filter.reach": "Range",
   "relics.filter.rarity": "Rarity",
   "relics.filter.squad": "Squad",
+  "relics.filter.currency": "Output",
+  "relics.filter.specialty": "City Specialty",
+  "relics.filter.specialtyOnly": "Specialty Match Only",
   "relics.filter.reset": "Clear",
   "relics.search": "Search by name",
 

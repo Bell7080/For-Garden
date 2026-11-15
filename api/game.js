@@ -941,22 +941,22 @@ var require_transformers = __commonJS({
       PostgresTypes2["tsrange"] = "tsrange";
       PostgresTypes2["tstzrange"] = "tstzrange";
     })(PostgresTypes || (exports.PostgresTypes = PostgresTypes = {}));
-    var convertChangeData = (columns, record2, options = {}) => {
+    var convertChangeData = (columns, record3, options = {}) => {
       var _a;
       const skipTypes = (_a = options.skipTypes) !== null && _a !== void 0 ? _a : [];
-      if (!record2) {
+      if (!record3) {
         return {};
       }
-      return Object.keys(record2).reduce((acc, rec_key) => {
-        acc[rec_key] = (0, exports.convertColumn)(rec_key, columns, record2, skipTypes);
+      return Object.keys(record3).reduce((acc, rec_key) => {
+        acc[rec_key] = (0, exports.convertColumn)(rec_key, columns, record3, skipTypes);
         return acc;
       }, {});
     };
     exports.convertChangeData = convertChangeData;
-    var convertColumn = (columnName, columns, record2, skipTypes) => {
+    var convertColumn = (columnName, columns, record3, skipTypes) => {
       const column = columns.find((x) => x.name === columnName);
       const colType = column === null || column === void 0 ? void 0 : column.type;
-      const value = record2[columnName];
+      const value = record3[columnName];
       if (colType && !skipTypes.includes(colType)) {
         return (0, exports.convertCell)(colType, value);
       }
@@ -5101,12 +5101,6 @@ var ARENA_KO = {
   "arena.battle.perspective": "\uB0B4 \uD300\uC740 {team}",
   "arena.battle.bottom": "\uC544\uB798\uCABD",
   "arena.invite.from": "{name}\uB2D8\uC774 \uC544\uB808\uB098 \uC804\uD22C\uB97C \uC694\uCCAD\uD588\uC2B5\uB2C8\uB2E4",
-  "arena.result.draw": "\uBB34\uC2B9\uBD80",
-  "arena.result.win": "\uC2B9\uB9AC",
-  "arena.result.loss": "\uD328\uBC30",
-  "arena.result.ranked": "\uC544\uB808\uB098 \uACB0\uACFC \uD655\uC815 \xB7 {score} RP",
-  "arena.result.friendly": "\uCE5C\uC120\uC804 \uC885\uB8CC \xB7 \uD2F0\uC5B4\xB7\uB3C4\uC804\uAD8C\xB7\uC7AC\uD654 \uBCC0\uB3D9 \uC5C6\uC74C",
-  "arena.result.back": "\uB3CC\uC544\uAC00\uAE30",
   "arena.title": "\uC544\uB808\uB098",
   "arena.reconnect": "\uB2E4\uC2DC \uC5F0\uACB0",
   "arena.lobby.rules": "\uAC01 1\uBC34(\uB3D9\uC2DC \uBE44\uACF5\uAC1C) \xB7 \uBC88\uAC08\uC544 \uD53D\uD574 1\xB72\xB73\uBC88 \uCE78 \uBC30\uCE58\n\uAC19\uC740 \uB810\uB9AD \uC911\uBCF5 \uD53D \uAE08\uC9C0 \xB7 \uC591 \uD300 \uC790\uB3D9 \uAD81\uADF9\uAE30",
@@ -5129,7 +5123,6 @@ var ARENA_KO = {
   "arena.result.drawLabel": "\uBB34\uC2B9\uBD80",
   "arena.result.winLabel": "\uC2B9\uB9AC",
   "arena.result.lossLabel": "\uD328\uBC30",
-  "arena.result.applied": "\uC544\uB808\uB098 \uC810\uC218\uC5D0 \uACB0\uACFC\uAC00 \uBC18\uC601\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
   "arena.result.friendlyNotice": "\uCE5C\uC120\uC804\uC740 \uD2F0\uC5B4\uC640 \uC7AC\uD654\uAC00 \uBCC0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
   "arena.result.return": "\uC544\uB808\uB098\uB85C \uB3CC\uC544\uAC00\uAE30",
   "arena.ban.choose": "\uC0C1\uB300 \uB810\uB9AD \uD558\uB098\uB97C \uB20C\uB7EC \uBC34\uD558\uACE0 \uD655\uC815\uD558\uC138\uC694",
@@ -5215,7 +5208,13 @@ var ARENA_KO = {
   "arena.chip.duplicatesAllowed": "\uC911\uBCF5 \uD5C8\uC6A9",
   "arena.invite.tag": "\uC544\uB808\uB098 \uCE5C\uC120\uC804",
   "arena.invite.me": "\uB098",
-  "arena.invite.opponent": "\uC0C1\uB300"
+  "arena.invite.opponent": "\uC0C1\uB300",
+  "arena.result.rematch": "\uB2E4\uC2DC \uD558\uAE30",
+  "arena.result.lastMatch": "\uC9C0\uB09C \uD310 \uACB0\uACFC",
+  "arena.error.friend": "\uCE5C\uAD6C\uC640\uB9CC \uCE5C\uC120\uC804\uC744 \uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "arena.friend.previewTitle": "\uCE5C\uC120\uC804 \uC0C1\uB300",
+  "arena.friend.previewSub": "LV.{level} \xB7 \uCE5C\uC120\uC804",
+  "arena.friend.partyTitle": "\uCE5C\uC120\uC804 \xB7 {name}"
 };
 
 // src/i18n/ko/settings.ts
@@ -5306,6 +5305,9 @@ var SETTINGS_KO = {
   "settings.account.restoreFailed": "\uAD6C\uB9E4 \uBCF5\uC6D0\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "settings.history.title": "\uACB0\uC81C \uAE30\uB85D",
   "settings.history.empty": "\uACB0\uC81C \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "settings.history.giftEmpty": "\uBC1B\uC740 \uC120\uBB3C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "settings.history.tab.purchase": "\uACB0\uC81C \uAE30\uB85D",
+  "settings.history.tab.gift": "\uC120\uBB3C \uAE30\uB85D",
   "settings.history.unknownDate": "\uC2DC\uAC01 \uAE30\uB85D \uC5C6\uC74C",
   "settings.history.firstBonus": "\uCCAB \uAD6C\uB9E4 2\uBC30 \uC801\uC6A9",
   "settings.history.failed": "\uACB0\uC81C \uAE30\uB85D\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
@@ -5693,6 +5695,17 @@ var INFO_KO = {
   "info.rune.threeSlots": "\uB8EC \uC138 \uC790\uB9AC",
   "info.rune.complete": "\uC138 \uC870\uAC01\uC774 \uBAA8\uB450 \uB9DE\uBB3C\uB838\uB2E4.",
   "info.rune.filled": "\uCC44\uC6B4 \uC790\uB9AC {count}",
+  "info.rune.loadout.auto": "\uC790\uB3D9 \uC7A5\uCC29",
+  "info.rune.loadout.recommend": "\uCD94\uCC9C \uC7A5\uCC29",
+  "info.rune.loadout.clear": "\uBAA8\uB450 \uD574\uC81C",
+  "info.rune.loadout.equip": "\uC7A5\uCC29",
+  "info.rune.loadout.cancel": "\uCDE8\uC18C",
+  "info.rune.loadout.none": "\uC9C0\uAE08\uBCF4\uB2E4 \uB098\uC740 \uB8EC\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "info.rune.loadout.done": "\uC804\uD22C\uB825 {before} \u2192 {after}",
+  "info.rune.loadout.confirm": "\uCD94\uCC9C \uB8EC\uC73C\uB85C \uAC08\uC544 \uB08D\uB2C8\uB2E4.\n\uC804\uD22C\uB825 {before} \u2192 {after}",
+  "info.rune.loadout.moves": "{names}\uC5D0\uAC8C\uC11C \uBE7C \uC635\uB2C8\uB2E4.",
+  "info.rune.loadout.cleared": "\uB8EC\uC744 \uBAA8\uB450 \uD574\uC81C\uD588\uC2B5\uB2C8\uB2E4.",
+  "info.rune.loadout.failed": "\uB8EC\uC744 \uC7A5\uCC29\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
   "info.journal.title": "\uAD00\uCC30 \uC77C\uC9C0",
   "info.journal.fossilRecord": "\uBC1C\uAD74 \uAE30\uB85D",
   "info.journal.diaryTitle": "\uAD00\uCC30 \uC77C\uAE30",
@@ -5850,19 +5863,15 @@ var LAB_KO = {
   "lab.history.title": "\uC5F0\uAD6C \uAE30\uB85D",
   "lab.history.caption": "\uCD5C\uADFC {count}\uAC74 (\uCD5C\uB300 {limit}\uAC74)",
   "lab.history.amount": "{currency} \xD7{amount}",
-  "lab.history.pity": "\uCC9C\uC7A5 \uCE74\uC6B4\uD2B8 {count}",
   "lab.history.unknownBanner": "\uC885\uB8CC\uB41C \uC5F0\uAD6C",
-  "lab.history.tab.pickup": "\uD55C\uC815 \uD53D\uC5C5",
-  "lab.history.tab.standard": "\uC0C1\uC2DC",
-  "lab.history.tab.welcome": "\uCCAB \uBCF5\uC6D0",
   "lab.history.pickupName": "{name} \uD53D\uC5C5",
-  "lab.history.count": "\uCC9C\uC7A5 \uCE74\uC6B4\uD2B8 {count} / {total}",
-  "lab.history.carryover": "\uCC9C\uC7A5\uACFC \uD53D\uC5C5 \uD655\uC815\uC740 \uB2E4\uC74C \uD53D\uC5C5\uC73C\uB85C \uC774\uC6D4\uB429\uB2C8\uB2E4",
+  "lab.history.count": "\uD655\uC815 \uCE74\uC6B4\uD2B8 {count} / {total}",
   "lab.mileageShop.short": "\uB9C8\uC77C\uB9AC\uC9C0",
   "lab.pity.label": "SSR \uD655\uC815\uAE4C\uC9C0",
   "lab.pity.unit": "\uD68C",
   "lab.pity.pickupNext": "\uB2E4\uC74C SSR \uD53D\uC5C5 \uD655\uC815",
   "lab.pull.one": "1\uD68C \uC5F0\uAD6C",
+  "lab.pull.freeToday": "\uC624\uB298 \uBB34\uB8CC!",
   "lab.pull.ten": "10\uD68C \uC5F0\uAD6C",
   "lab.pull.againHint": "\uD55C \uBC88 \uB354 \uC5F0\uAD6C\uD574 \uBCFC\uAE4C\uC694?",
   "lab.networkError": "\uD1B5\uC2E0\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
@@ -5871,7 +5880,8 @@ var LAB_KO = {
   "lab.policy.pickupOn": "ON \xB7 \uB2E4\uC74C SSR\uC740 \uD53D\uC5C5",
   "lab.policy.pickupOff": "OFF",
   "lab.policy.pickupRate": "SSR \uD53D\uC5C5 \uD655\uB960 {percent}% \xB7 \uC2E4\uD328 \uC2DC \uB2E4\uC74C SSR \uD53D\uC5C5 \uD655\uC815",
-  "lab.policy.tenGuarantee": "10\uC5F0 \uB9C8\uC9C0\uB9C9 \uC2AC\uB86F SR \uC774\uC0C1 \uBCF4\uC7A5 (SSR \uCC9C\uC7A5 \uC6B0\uC120)",
+  "lab.policy.carryover": "\uD655\uC815 \uCE74\uC6B4\uD2B8\uC640 \uD53D\uC5C5 \uD655\uC815\uC740 \uB2E4\uC74C \uD53D\uC5C5\uC73C\uB85C \uC774\uC6D4\uB429\uB2C8\uB2E4",
+  "lab.policy.tenGuarantee": "10\uC5F0 \uB9C8\uC9C0\uB9C9 \uC2AC\uB86F SR \uC774\uC0C1 \uBCF4\uC7A5 (SSR \uD655\uC815\uC774 \uC6B0\uC120)",
   "lab.policy.tenUpgrade": "10\uC5F0 \uB9C8\uC9C0\uB9C9 \uC2AC\uB86F\uC774 SR\uC774\uBA74 {percent}% \uD655\uB960\uB85C SSR\uB85C \uC0C1\uC2B9",
   "lab.policy.mileage": "\uC5F0\uAD6C 1\uD68C\uB9C8\uB2E4 DNA \uB9C8\uC77C\uB9AC\uC9C0 +1",
   "lab.policy.duplicate": "\uC911\uBCF5 \uBCF4\uC0C1  \uD574\uB2F9 \uB810\uB9AD \uD30C\uD3B8 +1 \xB7 \uD30C\uD3B8\uC744 \uBAA8\uC544 \uD55C\uACC4 \uB3CC\uD30C",
@@ -6008,7 +6018,6 @@ var BATTLE_KO = {
   "battle.settle.recoverLobby": "\uB85C\uBE44\uB85C \uB3CC\uC544\uAC00\uAE30",
   "battle.settle.done": "\uC6D0\uC815 \uAD00\uCE21 \uC644\uB8CC",
   "battle.settle.score": "\uC774\uBC88 \uC6D0\uC815 \uC810\uC218",
-  "battle.settle.detail": "\uC0C1\uC138",
   "battle.settle.toLobby": "\uB85C\uBE44\uB85C",
   "battle.settle.weeklyRecord": "\uC8FC\uAC04 \uAE30\uB85D",
   "battle.contribution": "\uAE30\uC5EC\uB3C4",
@@ -6230,7 +6239,13 @@ var FRIENDS_KO = {
   "friends.error.alreadyFriend": "\uC774\uBBF8 \uCE5C\uAD6C\uC785\uB2C8\uB2E4.",
   "friends.error.alreadyRequested": "\uC774\uBBF8 \uC2E0\uCCAD\uD588\uC2B5\uB2C8\uB2E4.",
   "friends.error.self": "\uC790\uC2E0\uC5D0\uAC8C\uB294 \uC2E0\uCCAD\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
-  "friends.error.gone": "\uC774\uBBF8 \uCC98\uB9AC\uB418\uC5C8\uAC70\uB098 \uC5C6\uB294 \uB300\uC0C1\uC785\uB2C8\uB2E4."
+  "friends.error.gone": "\uC774\uBBF8 \uCC98\uB9AC\uB418\uC5C8\uAC70\uB098 \uC5C6\uB294 \uB300\uC0C1\uC785\uB2C8\uB2E4.",
+  "friends.card.request": "\uCE5C\uAD6C \uC2E0\uCCAD",
+  "friends.card.accept": "\uC2E0\uCCAD \uC218\uB77D",
+  "friends.card.pending": "\uC2E0\uCCAD \uB300\uAE30 \uC911",
+  "friends.card.already": "\uC774\uBBF8 \uCE5C\uAD6C",
+  "friends.card.sent": "\uCE5C\uAD6C \uC2E0\uCCAD\uC744 \uBCF4\uB0C8\uC2B5\uB2C8\uB2E4.",
+  "friends.card.became": "\uCE5C\uAD6C\uAC00 \uB418\uC5C8\uC2B5\uB2C8\uB2E4."
 };
 
 // src/i18n/ko/guild.ts
@@ -6466,8 +6481,8 @@ var GUILD_KO = {
   "guild.guard.trait.overrunValue": "\uC801 {count}",
   "guild.guard.trait.interval": "\uC6E8\uC774\uBE0C \uAC04\uACA9",
   "guild.guard.trait.intervalValue": "{seconds}\uCD08",
-  "guild.guard.trait.growth": "\uC6E8\uC774\uBE0C\uB9C8\uB2E4 \uC801 LV +{level} \xB7 {waves}\uC6E8\uC774\uBE0C\uB9C8\uB2E4 +1\uB9C8\uB9AC (\uCD5C\uB300 {cap})",
-  "guild.guard.trait.tick": "{wave}\uC6E8\uC774\uBE0C \xB7 {count}\uB9C8\uB9AC",
+  "guild.guard.trait.growth": "\uC801 LV.{start}\uBD80\uD130 \uAC08\uC218\uB85D \uAC00\uD30C\uB974\uAC8C \xB7 {waves}\uC6E8\uC774\uBE0C\uB9C8\uB2E4 +1\uB9C8\uB9AC (\uCD5C\uB300 {cap})",
+  "guild.guard.trait.tick": "{wave}\uC6E8\uC774\uBE0C",
   "guild.guard.attempts": "\uB0A8\uC740 \uB3C4\uC804 {left}/{total}",
   "guild.guard.start": "\uCD9C\uACA9",
   "guild.guard.tab.members": "\uAE38\uB4DC\uC6D0 \uC21C\uC704",
@@ -6479,7 +6494,7 @@ var GUILD_KO = {
   "guild.guard.party.back": "\uB4B7\uC904",
   "guild.guard.preview.title": "\uC624\uB298\uC758 \uC801",
   "guild.guard.preview.power": "\uCCAB \uC6E8\uC774\uBE0C \uC804\uD22C\uB825 {power}",
-  "guild.guard.preview.rule": "\uC6E8\uC774\uBE0C\uB9C8\uB2E4 \uB808\uBCA8 +{level} \xB7 \uC801 {cap}\uB9C8\uB9AC\uBA74 \uBD95\uAD34 \xB7 \uC544\uAD70 \uD68C\uBCF5\xB7\uBCF4\uD638\uB9C9 -{cut}%",
+  "guild.guard.preview.rule": "\uC801 LV.{start}\uBD80\uD130 \uAC08\uC218\uB85D \uAC00\uD30C\uB974\uAC8C \xB7 \uC801 {cap}\uB9C8\uB9AC\uBA74 \uBD95\uAD34 \xB7 \uC544\uAD70 \uD68C\uBCF5\xB7\uBCF4\uD638\uB9C9 -{cut}%",
   "guild.guard.preview.level": "LV.{level}",
   "guild.guard.preview.wave": "{wave}\uC6E8\uC774\uBE0C",
   "guild.guard.battle.line": "\uC6E8\uC774\uBE0C {wave} \xB7 \uD544\uB4DC {field}/{cap}",
@@ -6536,6 +6551,20 @@ var RUNE_KO = {
   "rune.sell": "\uD310\uB9E4",
   "rune.sell.title": "\uB8EC \uD310\uB9E4",
   "rune.sell.message": "\uC774 \uB8EC\uC744 \uD310\uB9E4\uD569\uB2C8\uB2E4. \uD310\uB9E4\uD55C \uB8EC\uC740 \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "rune.bulkSell.title": "\uB8EC \uC77C\uAD04 \uD310\uB9E4",
+  "rune.bulkSell.entry": "\uC77C\uAD04 \uD310\uB9E4",
+  "rune.bulkSell.craft.fresh": "\uC138\uACF5 \uC804",
+  "rune.bulkSell.craft.crafting": "\uC138\uACF5 \uC911",
+  "rune.bulkSell.craft.engraved": "\uAC01\uC778 \uC644\uB8CC",
+  "rune.bulkSell.empty": "\uC870\uAC74\uC5D0 \uB9DE\uB294 \uB8EC\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "rune.bulkSell.protected": "\uC7A5\uCC29\xB7\uC7A0\uAE08\xB7\uC990\uACA8\uCC3E\uAE30\uD55C \uB8EC\uC740 \uD310\uB9E4\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+  "rune.bulkSell.protectedCount": "\uC7A5\uCC29\xB7\uC7A0\uAE08\xB7\uC990\uACA8\uCC3E\uAE30\uD55C \uB8EC {count}\uAC1C\uB294 \uC81C\uC678\uB429\uB2C8\uB2E4.",
+  "rune.bulkSell.receive": "\uC608\uC0C1 \uC218\uB839",
+  "rune.bulkSell.sellCount": "{count}\uAC1C \uD310\uB9E4",
+  "rune.bulkSell.capFull": "\uC6D0\uC11D \uBCF4\uC720 \uD55C\uB3C4\uB97C \uB118\uC5B4 \uD310\uB9E4\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "rune.bulkSell.confirm": "\uB8EC {count}\uAC1C\uB97C \uD310\uB9E4\uD569\uB2C8\uB2E4. \uD310\uB9E4\uD55C \uB8EC\uC740 \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "rune.bulkSell.done": "\uB8EC {count}\uAC1C \uD310\uB9E4 \xB7 \uC6D0\uC11D +{amount}",
+  "rune.bulkSell.failed": "\uD310\uB9E4\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
   "rune.craft": "\uC138\uACF5",
   "rune.craftTitle": "\uB8EC \uC138\uACF5",
   "rune.craftAll": "\uC77C\uAD04 \uC138\uACF5",
@@ -6765,9 +6794,6 @@ var SHOP_KO = {
   "shop.premium.sticker.subscribed": "\uAD6C\uB3C5 \uC911",
   "shop.premium.sticker.soldOut": "\uB9E4\uC9C4",
   "shop.premium.adFailed": "\uAD11\uACE0 \uBCF4\uC0C1\uC744 \uBC1B\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
-  "shop.goldAdTitle": "\uAD11\uACE0 \uBCF4\uACE0 \uACE8\uB4DC \uBC1B\uAE30",
-  "shop.archaeologyAdTitle": "\uAD11\uACE0 \uBCF4\uACE0 \uC6D0\uC11D \uBC1B\uAE30",
-  "shop.lootAdTitle": "\uAD11\uACE0 \uBCF4\uACE0 \uC99D\uD45C \uBC1B\uAE30",
   "shop.premium.daily": "\uB9E4\uC77C",
   "shop.premium.valueMultiple": "\uAC00\uCE58 {multiple}",
   "shop.premium.firstBonus": "\uCCAB \uAD6C\uB9E4 \uBCF4\uB108\uC2A4 +{amount}",
@@ -6903,14 +6929,58 @@ var INVENTORY_KO = {
   "inventory.expiry.minutes": "{minutes}\uBD84 {seconds}\uCD08",
   "inventory.guide.effect": "\uD6A8\uACFC",
   "inventory.guide.sources": "\uC5BB\uB294 \uBC29\uBC95",
-  "inventory.source.dungeonDrop": "\uB808\uC774\uB4DC \uAC1C\uBC29 \uD6C4 \uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804\xB7\uD604\uC0C1\uC218\uBC30 \uC2B9\uB9AC\uC640 \uC18C\uD0D5\uC5D0\uC11C \uAC00\uB054 (\uD558\uB8E8 3\uC7A5\uAE4C\uC9C0)",
-  "inventory.source.strata": "\uB808\uC774\uB4DC \uAC1C\uBC29 \uD6C4 \uACE0\uACE0\uD559 \uC9C0\uCE35 \uD0D0\uC0AC\uC5D0\uC11C \uAC00\uB054",
-  "inventory.source.attendance": "\uCD9C\uC11D \uBCF4\uC0C1",
-  "inventory.source.premium": "\uD504\uB9AC\uBBF8\uC5C4 \uC0C1\uC810 \uD328\uD0A4\uC9C0",
-  "inventory.source.raidPass": "\uB808\uC774\uB4DC \uD328\uC2A4 (\uB9E4\uC77C 1\uC7A5)",
-  "inventory.source.levelUp": "\uC5F0\uAD6C\uC6D0 \uB808\uBCA8 \uC0C1\uC2B9",
-  "inventory.source.shops": "\uC0C1\uC810",
   "inventory.source.ad": "\uAD11\uACE0 \uBCF4\uC0C1",
+  "guide.route.excavation": "\uBC30\uCE58\uD615 \uC790\uC6D0 \uBC1C\uAD74",
+  "guide.route.archaeology": "\uACE0\uACE0\uD559 \uC9C0\uCE35 \uD0D0\uC0AC",
+  "guide.route.archaeologyShop": "\uACE0\uACE0\uD559 \uC0C1\uC810 (\uC6D0\uC11D \uAD50\uD658)",
+  "guide.route.archaeologyAd": "\uACE0\uACE0\uD559 \uC0C1\uC810 \uBB34\uB8CC\xB7\uAD11\uACE0 \xB7 \uC6D0\uC11D {amount}, \uD558\uB8E8 {count}\uD68C",
+  "guide.route.story": "\uC2A4\uD1A0\uB9AC \uAD00\uBB38 \uD074\uB9AC\uC5B4 \uBCF4\uC0C1",
+  "guide.route.expedition": "\uC6D0\uC815 \uB178\uB4DC\xB7\uC8FC\uAC04 \uAE30\uB85D \uBCF4\uC0C1",
+  "guide.route.missions": "\uC77C\uC77C\xB7\uC8FC\uAC04 \uC784\uBB34 \uBCF4\uC0C1",
+  "guide.route.attendance": "\uCD9C\uC11D \uBCF4\uC0C1",
+  "guide.route.premiumGem": "\uD504\uB9AC\uBBF8\uC5C4 \uC0C1\uC810 \uC82C \uC0C1\uD488",
+  "guide.route.premiumGemAd": "\uD504\uB9AC\uBBF8\uC5C4 \uC82C \uD0ED \uAD11\uACE0 \xB7 \uC82C {amount}, \uD558\uB8E8 {count}\uD68C",
+  "guide.route.premiumPackage": "\uD504\uB9AC\uBBF8\uC5C4 \uC0C1\uC810 \uD328\uD0A4\uC9C0",
+  "guide.route.premiumDaily": "\uD504\uB9AC\uBBF8\uC5C4 \uC77C\uAC04 \uBB34\uB8CC \uBCF4\uAE09",
+  "guide.route.raidPass": "\uB808\uC774\uB4DC \uD328\uC2A4 \uBCF4\uC0C1",
+  "guide.route.shop": "\uC77C\uBC18 \uC0C1\uC810",
+  "guide.route.shopGoldExchange": "\uC77C\uBC18 \uC0C1\uC810 \uACE8\uB4DC \uD0ED (\uC82C \u2192 \uACE8\uB4DC)",
+  "guide.route.shopGoldAd": "\uC77C\uBC18 \uC0C1\uC810 \uC77C\uC77C \uD0ED \uBB34\uB8CC\xB7\uAD11\uACE0 \xB7 \uACE8\uB4DC {amount}, \uD558\uB8E8 {count}\uD68C",
+  "guide.route.shopGoldBuy": "\uC77C\uBC18 \uC0C1\uC810\uC758 \uACE8\uB4DC \uC0C1\uD488",
+  "guide.route.trade": "\uBB34\uC5ED \uD328\uD0A4\uC9C0 (\uC82C)",
+  "guide.route.lootShop": "\uC804\uB9AC\uD488 \uC0C1\uC810 \uAD50\uD658",
+  "guide.route.lootAd": "\uC804\uB9AC\uD488 \uC0C1\uC810 \uBB34\uB8CC\xB7\uAD11\uACE0 \xB7 \uD558\uB8E8 {count}\uD68C",
+  "guide.route.duelShop": "\uACB0\uD22C \uC0C1\uC810 \uAD50\uD658",
+  "guide.route.mileageShop": "\uB9C8\uC77C\uB9AC\uC9C0 \uC0C1\uC810 \uAD50\uD658",
+  "guide.route.researchGray": "\uC5F0\uAD6C\uC18C \uC5F0\uAD6C\uC758 \uC7AC\uB8CC \uBCF4\uC0C1",
+  "guide.route.researchMileage": "\uC5F0\uAD6C 1\uD68C\uB9C8\uB2E4 {amount} \uC801\uB9BD",
+  "guide.route.researchDuplicate": "\uD55C\uACC4 \uB3CC\uD30C\uB97C \uB9C8\uCE5C \uB810\uB9AD\uC758 \uC911\uBCF5",
+  "guide.route.cakeOperation": "\uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804 \uC2B9\uB9AC\xB7\uC18C\uD0D5",
+  "guide.route.bounty": "\uD604\uC0C1\uC218\uBC30 \uC2B9\uB9AC\xB7\uC18C\uD0D5",
+  "guide.route.raidRun": "\uB808\uC774\uB4DC \uC804\uD22C\uC640 \uC815\uC0B0",
+  "guide.route.duelBattle": "\uACB0\uD22C\uC7A5 \uC804\uD22C\uC640 \uC2DC\uC98C \uC815\uC0B0",
+  "guide.route.runeSell": "\uB8EC \uD310\uB9E4",
+  "guide.route.levelUp": "\uC5F0\uAD6C\uC6D0 \uB808\uBCA8 \uC0C1\uC2B9 \xB7 {amount}\uBCD1 ({days}\uC77C \uAE30\uD55C)",
+  "guide.route.dungeonDrop": "\uB808\uC774\uB4DC \uAC1C\uBC29 \uB4A4 \uB300\uC791\uC804\xB7\uD604\uC0C1\uC218\uBC30\uC5D0\uC11C \uAC00\uB054 (\uD558\uB8E8 {count}\uC7A5\uAE4C\uC9C0)",
+  "guide.route.strataDrop": "\uB808\uC774\uB4DC \uAC1C\uBC29 \uB4A4 \uACE0\uACE0\uD559 \uC9C0\uCE35 \uD0D0\uC0AC\uC5D0\uC11C \uAC00\uB054",
+  "guide.route.sweepAd": "\uB358\uC804 \uC18C\uD0D5 \uCC3D \uAD11\uACE0 \xB7 {amount}\uC7A5, \uD558\uB8E8 {count}\uD68C",
+  "guide.route.staminaRegen": "\uC2DC\uAC04 \uD68C\uBCF5 \xB7 {minutes}\uBD84\uB9C8\uB2E4 {amount}",
+  "guide.route.staminaDrink": "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C \uC0AC\uC6A9",
+  "guide.route.staminaGem": "\uC82C \uCDA9\uC804 \xB7 {amount}\uC529 (\uC82C {gems}\uBD80\uD130)",
+  "guide.route.staminaAd": "\uAD11\uACE0 \uBCF4\uAE09 \xB7 {amount}\uC529, \uD558\uB8E8 {count}\uD68C",
+  "guide.route.staminaBattles": "\uC774\uAE34 \uC804\uD22C\uC5D0\uC11C\uB9CC \uC18C\uBAA8",
+  "guide.route.raidEntry": "\uB808\uC774\uB4DC \uC785\uC7A5\uB9C8\uB2E4 {amount}",
+  "guide.route.duelDaily": "\uB9E4\uC77C {count}\uC7A5 \uCC44\uC6CC\uC9D0",
+  "guide.route.duelBuy": "\uACB0\uD22C \uB3C4\uC804\uAD8C \uCD94\uAC00 \uAD6C\uB9E4 \xB7 \uC82C {gems}\uBD80\uD130, \uD558\uB8E8 {count}\uD68C",
+  "guide.route.duelAd": "\uACB0\uD22C\uC7A5 \uAD11\uACE0 \xB7 \uD558\uB8E8 {count}\uD68C",
+  "guide.route.labFossil": "\uC5F0\uAD6C\uC18C\uC758 \uD654\uC11D \uC5F0\uAD6C",
+  "guide.route.labAmber": "\uC5F0\uAD6C\uC18C\uC758 \uD53D\uC5C5 \uC5F0\uAD6C",
+  "guide.route.labFill": "\uBAA8\uC790\uB780 \uC5F0\uAD6C \uC7AC\uD654 \uCC44\uC6B0\uAE30 \xB7 1\uAC1C\uB2F9 \uC82C {gems}",
+  "guide.route.staminaRecharge": "\uC2A4\uD14C\uBBF8\uB098 \uCDA9\uC804 \xB7 \uC82C {gems}\uBD80\uD130",
+  "guide.route.guildCreate": "\uAE38\uB4DC \uCC3D\uC124 \xB7 \uC82C {gems}",
+  "guide.route.relicFeed": "\uB810\uB9AD \uAE09\uC5EC (\uB808\uBCA8 \uC131\uC7A5)",
+  "guide.route.runeCraft": "\uB8EC \uC138\uACF5\xB7\uAC01\uC778\xB7\uD569\uC131",
+  "guide.route.runeTrait": "\uB8EC \uD2B9\uC131 \uC7AC\uD574\uC11D",
   "inventory.useButton": "\uC0AC\uC6A9\uD558\uAE30",
   "inventory.staminaGained": "\uC2A4\uD14C\uBBF8\uB098 +{amount}",
   "inventory.staminaFull": "\uC2A4\uD14C\uBBF8\uB098\uAC00 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4",
@@ -6921,8 +6991,6 @@ var INVENTORY_KO = {
   "stamina.gemMessage": "\uC82C\uC744 \uC0AC\uC6A9\uD574 \uC2A4\uD14C\uBBF8\uB098\uB97C {amount} \uD68C\uBCF5\uD569\uB2C8\uB2E4.",
   "stamina.gemDetail": "\uC624\uB298 {count}\uD68C \xB7 {reset} \uCD08\uAE30\uD654",
   "stamina.spend": "\uC0AC\uC6A9",
-  "stamina.adRemaining": "\uC624\uB298 {left}/{limit}",
-  "stamina.watchAd": "\uC2DC\uCCAD",
   "stamina.rechargeFailed": "\uCDA9\uC804\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "stamina.adCancelled": "\uAD11\uACE0\uAC00 \uCDE8\uC18C\uB418\uC5C8\uAC70\uB098 \uC900\uBE44\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.",
   "stamina.nextRecovery": "{minutes}\uBD84\uB9C8\uB2E4 {amount} \uD68C\uBCF5 \xB7 \uB2E4\uC74C \uD68C\uBCF5\uAE4C\uC9C0 {time}",
@@ -7263,6 +7331,9 @@ var MISC_KO = {
   "relics.filter.reach": "\uC0AC\uAC70\uB9AC",
   "relics.filter.rarity": "\uB4F1\uAE09",
   "relics.filter.squad": "\uC18C\uC18D",
+  "relics.filter.currency": "\uC0DD\uC0B0 \uC7AC\uD654",
+  "relics.filter.specialty": "\uB3C4\uC2DC \uD2B9\uD654",
+  "relics.filter.specialtyOnly": "\uD2B9\uD654 \uC77C\uCE58\uB9CC",
   "relics.filter.reset": "\uC870\uAC74 \uD574\uC81C",
   "relics.search": "\uC774\uB984 \uAC80\uC0C9",
   // 속성 상성·직군 안내
@@ -7285,7 +7356,6 @@ var MISC_KO = {
   "trade.disconnected": "\uAD50\uC2E0 \uB450\uC808",
   "trade.reconnect": "\uC7AC\uC811\uC18D",
   "trade.title": "\uBB34\uC5ED",
-  "score.detail": "\uC810\uC218 \uC0C1\uC138",
   "score.normalNodes": "\uC77C\uBC18 \uB178\uB4DC \uD569\uACC4",
   "score.bossDamage": "\uD3F0\uD1A0\uC2A4 \uD53C\uD574 \uC810\uC218",
   // 타이틀
@@ -7883,7 +7953,7 @@ var SKILL_KO = {
   "skill.breakthrough.effect.passive.extraChapter": "\u300C{name}\u300D\uC758 \uC99D\uAC00\uB7C9\uC774 \uAC00\uB4DD \uCC28\uBA74 [[curse|\uC800\uC8FC]]\uC758 \uC0C1\uD55C\uC774 {stacks}\uACB9 \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.passive.iceShatter": "[[frozen|\uBE59\uACB0]]\uC774 \uD480\uB9AC\uB294 \uC21C\uAC04 \uADF8 \uC801 \uC8FC\uC704\uC758 \uB2E4\uB978 \uC801\uC5D0\uAC8C {percent}\uB9CC\uD07C [[physical-damage|\uBB3C\uB9AC \uD53C\uD574]]\uAC00 \uD55C \uBC88 \uD130\uC9C4\uB2E4.",
   "skill.breakthrough.effect.ultimate.quarryMark": "\u300C{name}\u300D{name!\uC774} \uC2E4\uC81C\uB85C [[fear|\uACF5\uD3EC]]\uC5D0 \uBE60\uB728\uB9B0 \uC801\uC740 {seconds}\uCD08 \uB3D9\uC548 \uBC1B\uB294 \uBAA8\uB4E0 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4. \uACF5\uD3EC\uAC00 \uD480\uB824\uB3C4 \uD45C\uC2DD\uC740 \uB0A8\uB294\uB2E4.",
-  "skill.breakthrough.effect.passive.terrorCarapace": "\uC790\uC2E0\uC774 [[intimidation|\uC704\uC555]]\uC744 \uAC74 \uC801 \uD55C \uBA85\uB2F9 [[def|\uBC29\uC5B4\uB825]]\uACFC [[res|\uC800\uD56D\uB825]]\uC774 {percent}% \uC624\uB978\uB2E4(\uCD5C\uB300 {max}%).",
+  "skill.breakthrough.effect.passive.terrorCarapace": "\uC790\uC2E0\uC774 [[intimidation|\uC704\uC555]]\uC774\uB098 [[fear|\uACF5\uD3EC]]\uB97C \uAC74 \uC801 \uD55C \uBA85\uB2F9 [[def|\uBC29\uC5B4\uB825]]\uACFC [[res|\uC800\uD56D\uB825]]\uC774 {percent}% \uC624\uB978\uB2E4(\uCD5C\uB300 {max}%).",
   "skill.breakthrough.effect.basic.wetMark": "[[shimmer|\uBC18\uC9DD!]]\uC774 \uBD99\uC5B4 \uC788\uB294 \uB3D9\uC548 \uADF8 \uC801\uC774 \uBC1B\uB294 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.basic.paintSpill": "[[overpaint|\uB367\uCE60]]\uC774 \uCD5C\uB300 \uACB9\uC778 \uC801\uC744 \uB54C\uB9AC\uBA74 \uADF8 \uADFC\uCC98\uC758 \uB2E4\uB978 \uC801\uC5D0\uAC8C [[overpaint|\uB367\uCE60]]\uC774 {stacks}\uACB9 \uBC88\uC9C4\uB2E4.",
   "skill.breakthrough.effect.basic.tightStitch": "\u300C{name}\u300D{name!\uC774} \uD53C\uD574\uC758 {percent}%\uB97C [[shield|\uBCF4\uD638\uB9C9]]\uC73C\uB85C \uC62E\uAE34\uB2E4. \uD55C \uBC88\uC5D0 \uB450\uB974\uB294 \uC0C1\uD55C\uC740 \uADF8\uB300\uB85C\uB2E4.",
@@ -7991,7 +8061,7 @@ var SKILL_KO = {
   "skill.breakthrough.effect.ferocity.coldSnap": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801 \uC804\uC6D0\uC5D0\uAC8C [[chill|\uB454\uD654]]\uAC00 {stacks}\uACB9 \uC313\uC778\uB2E4.",
   "skill.breakthrough.effect.ferocity.emberRush": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 [[nodonia-elation|\uD76C\uC5F4]]\uC774 \uC989\uC2DC {stacks}\uACB9 \uC313\uC778\uB2E4.",
   "skill.breakthrough.effect.passive.sweetShare": "[[nodonia-elation|\uD76C\uC5F4]]\uC774 \uCD5C\uB300\uB85C \uC313\uC5EC \uC788\uB294 \uB3D9\uC548, \uB9E4\uCD08 \uB3CC\uB9AC\uB294 \uC7AC\uC0DD\uB7C9\uC758 {percent}%\uB97C \uB2E4\uB978 \uC544\uAD70 \uC804\uC6D0\uB3C4 \uBC1B\uB294\uB2E4.",
-  "skill.breakthrough.effect.basic.preyScale": "\u300C{name}\u300D{name!\uC774} \uC774\uBBF8 [[intimidation|\uC704\uC555]]\uC774 \uAC78\uB824 \uC788\uB358 \uC801\uC744 \uB9DE\uD788\uBA74, \uC9C0\uAE08 \uC704\uC555\uC5D0 \uAC78\uB824 \uC788\uB294 \uC801 \uD55C \uBA85\uB2F9 {percent}(\uCD5C\uB300 {max}\uBA85)\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978\uB2E4. {seconds}\uCD08\uC5D0 \uD55C \uBC88\uB9CC \uBC1C\uB3D9\uD55C\uB2E4.",
+  "skill.breakthrough.effect.basic.preyScale": "\u300C{name}\u300D{name!\uC774} \uC774\uBBF8 [[intimidation|\uC704\uC555]]\uC774\uB098 [[fear|\uACF5\uD3EC]]\uC5D0 \uBE60\uC838 \uC788\uB358 \uC801\uC744 \uB9DE\uD788\uBA74, \uC9C0\uAE08 \uC704\uC555\xB7\uACF5\uD3EC\uC5D0 \uBE60\uC9C4 \uC801 \uD55C \uBA85\uB2F9 {percent}(\uCD5C\uB300 {max}\uBA85)\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978\uB2E4. {seconds}\uCD08\uC5D0 \uD55C \uBC88\uB9CC \uBC1C\uB3D9\uD55C\uB2E4.",
   "skill.breakthrough.effect.basic.darkRoast": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uC801 [[def|\uBC29\uC5B4\uB825]]\uC758 {percent}%\uB97C \uBB34\uC2DC\uD55C\uB2E4.",
   "skill.breakthrough.effect.ferocity.roarEntry": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801 \uC804\uC6D0\uC5D0\uAC8C [[intimidation|\uC704\uC555]]\uC774 {stacks}\uACB9 \uC313\uC778\uB2E4.",
   "skill.breakthrough.effect.ferocity.chainEntry": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801\uC744 \uD55C\uAEBC\uBC88\uC5D0 \uD295\uACA8 \uB0B8\uB2E4. \uB0A0\uC544\uAC00\uB2E4 \uB2E4\uB978 \uC801\uC5D0\uAC8C \uBD80\uB52A\uD788\uBA74 \uBD80\uB52A\uD78C \uC801\uC5D0\uAC8C [[concussion|\uB1CC\uC9C4\uD0D5]]\uC774 \uAC78\uB9B0\uB2E4. \uD55C \uBC88 \uD295\uAE38 \uB54C \uD55C \uC801\uC529\uC774\uB2E4.",
@@ -8356,6 +8426,7 @@ var DUEL_KO = {
   "duel.refresh.free": "\uC0C1\uB300 \uC0C8\uB85C\uACE0\uCE68 {left}/{limit}",
   "duel.refresh.title": "\uC0C1\uB300 \uC0C8\uB85C\uACE0\uCE68",
   "duel.refresh.message": "\uC82C\uC73C\uB85C \uC0C1\uB300\uB97C \uC0C8\uB85C \uACE0\uB985\uB2C8\uB2E4. \uC0C8\uB85C\uACE0\uCE68\uD560\uC218\uB85D \uAC12\uC774 \uC624\uB985\uB2C8\uB2E4.",
+  "duel.refresh.reset": "\uBB34\uB8CC \uC0C8\uB85C\uACE0\uCE68 \uCD08\uAE30\uD654\uAE4C\uC9C0 {time}",
   "duel.fought": "\uB300\uC804 \uC644\uB8CC",
   "duel.power": "\uC804\uD22C\uB825 {power}",
   "duel.challenge": "\uB3C4\uC804",
@@ -8376,7 +8447,6 @@ var DUEL_KO = {
   "duel.ticketPopup.reset": "{time} \uB4A4 \uAE30\uBCF8 {count}\uC7A5\uC73C\uB85C \uCD08\uAE30\uD654",
   "duel.ticketPopup.gemName": "\uC82C \uAD6C\uB9E4",
   "duel.ticketPopup.gemDetail": "\uC624\uB298 {count}/{limit}\uD68C",
-  "duel.ticketPopup.buy": "\uAD6C\uB9E4",
   "duel.ticketPopup.adName": "\uAD11\uACE0 \uBCF4\uC0C1",
   "duel.ticketPopup.failed": "\uCDA9\uC804\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "duel.defense.label": "\uBC29\uC5B4",
@@ -8423,6 +8493,16 @@ init_define_import_meta_env();
 var RECOLLECTION_KO = {
   "lobby.menu.recollection": "\uD68C\uACE0",
   "lobby.menu.achievement": "\uC5C5\uC801",
+  "lobby.menu.codex": "\uB3C4\uAC10",
+  "codex.title": "\uB3C4\uAC10",
+  "codex.summary.score": "\uAE30\uB85D \uC810\uC218",
+  "codex.summary.recorded": "\uAE30\uB85D {recorded} / {total}",
+  "codex.summary.next": "{score}\uC810",
+  "codex.tab.ally": "\uC544\uAD70 {recorded}/{total}",
+  "codex.tab.enemy": "\uC801 {recorded}/{total}",
+  "codex.unknown": "???",
+  "codex.claimAll": "\uBAA8\uB450 \uBC1B\uAE30",
+  "codex.rewardTitle": "\uB3C4\uAC10 \uBCF4\uC0C1",
   "recollection.title": "\uD68C\uACE0",
   "recollection.tab.chapter1": "1\uC7A5",
   "recollection.tab.chapter2": "2\uC7A5",
@@ -9023,10 +9103,10 @@ var RUNE_ENHANCEMENT_RULES = {
 var MAIN_KEYS = ["hp", "atk", "ap", "def", "res"];
 var RUNE_MAIN_STAT_KEYS = MAIN_KEYS;
 var SUB_KEYS = ["moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"];
-function sampleKeys(keys, count2, random) {
+function sampleKeys(keys, count3, random) {
   const pool = [...keys];
   const picked = [];
-  while (picked.length < count2) {
+  while (picked.length < count3) {
     const roll3 = random();
     if (!Number.isFinite(roll3) || roll3 < 0 || roll3 >= 1) throw new RangeError("\uB8EC \uB09C\uC218\uB294 0 \uC774\uC0C1 1 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
     picked.push(pool.splice(Math.floor(roll3 * pool.length), 1)[0]);
@@ -9080,9 +9160,9 @@ function assertValidRuneInstance(rune) {
   const optionKeys = new Set(options.map(({ key }) => key));
   for (const [key, history] of Object.entries(rune.enhancementHistory)) {
     if (!optionKeys.has(key)) throw new Error("\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC635\uC158\uC758 \uAC15\uD654 \uC774\uB825\uC774 \uC788\uC2B5\uB2C8\uB2E4.");
-    history?.forEach((record2, index) => {
-      if (!Number.isInteger(record2.attempt) || record2.attempt < 1 || record2.attempt > RUNE_ENHANCEMENT_RULES.attemptsPerOption || record2.attempt !== index + 1 || !Number.isFinite(record2.successChance) || record2.successChance < 0 || record2.successChance > 1 || typeof record2.succeeded !== "boolean") throw new Error("\uAC15\uD654 \uC774\uB825 \uC21C\uC11C \uB610\uB294 \uD655\uB960\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-      if (!Number.isFinite(record2.valueAdded) || record2.valueAdded < 0 || !record2.succeeded && record2.valueAdded !== 0) throw new Error("\uAC15\uD654 \uC774\uB825\uC758 \uC99D\uAC00\uB7C9\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    history?.forEach((record3, index) => {
+      if (!Number.isInteger(record3.attempt) || record3.attempt < 1 || record3.attempt > RUNE_ENHANCEMENT_RULES.attemptsPerOption || record3.attempt !== index + 1 || !Number.isFinite(record3.successChance) || record3.successChance < 0 || record3.successChance > 1 || typeof record3.succeeded !== "boolean") throw new Error("\uAC15\uD654 \uC774\uB825 \uC21C\uC11C \uB610\uB294 \uD655\uB960\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+      if (!Number.isFinite(record3.valueAdded) || record3.valueAdded < 0 || !record3.succeeded && record3.valueAdded !== 0) throw new Error("\uAC15\uD654 \uC774\uB825\uC758 \uC99D\uAC00\uB7C9\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     });
     if ((history?.length ?? 0) > RUNE_ENHANCEMENT_RULES.attemptsPerOption) throw new Error("\uD55C \uC635\uC158\uC740 \uC138 \uBC88\uAE4C\uC9C0\uB9CC \uAC15\uD654\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
   }
@@ -9118,14 +9198,14 @@ function enhanceRune(rune, statKey, valueIncrease, random) {
   if (!Number.isFinite(valueIncrease) || valueIncrease < 0) throw new RangeError("\uAC15\uD654 \uC99D\uAC00\uB7C9\uC740 0 \uC774\uC0C1\uC758 \uC720\uD55C\uD55C \uAC12\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
   const succeeded = random < rune.currentSuccessChance;
   const previous = rune.enhancementHistory[statKey] ?? [];
-  const record2 = { attempt: previous.length + 1, successChance: rune.currentSuccessChance, succeeded, valueAdded: succeeded ? valueIncrease : 0 };
+  const record3 = { attempt: previous.length + 1, successChance: rune.currentSuccessChance, succeeded, valueAdded: succeeded ? valueIncrease : 0 };
   const update = (option) => option.key === statKey && succeeded ? { ...option, value: option.value + valueIncrease } : option;
   const attempts = runeEnhancementAttempts(rune) + 1;
   const next = {
     ...rune,
     mainStats: rune.mainStats.map(update),
     subStats: rune.subStats.map(update),
-    enhancementHistory: { ...rune.enhancementHistory, [statKey]: [...previous, record2] },
+    enhancementHistory: { ...rune.enhancementHistory, [statKey]: [...previous, record3] },
     currentSuccessChance: calculateRuneEnhancementSuccessChance(rune.currentSuccessChance, succeeded),
     enhancementComplete: attempts === runeTotalEnhancementAttempts(rune.rarity)
   };
@@ -10455,15 +10535,21 @@ var GUILD_GUARD = {
   timeLimitSeconds: 300,
   /** 미리 짜 두는 웨이브 수. 시간 안에 이보다 많이 올 수 없다(당겨 와도). */
   maxWaves: 80,
-  startLevel: 1,
   /**
-   * 웨이브마다 레벨이 4씩 오른다(2026-10-29 응태 요청 — 2 → 4, 상한 100 → 200). 적당히 오른 웨이브에서 이미 확실히 강해져
-   * 아주 긴 웨이브를 밀지 않아도 점수가 크게 쌓이고, 상한을 풀어 깊은 웨이브에서도 계속 세진다.
+   * 적 레벨은 **LV.20에서 시작해 곡선으로 오른다**(2026-11-15 응태 요청 — 「시작 레벨 대략 20, 난이도가 더 곡선지게, 너무 쉬움」).
+   * 웨이브 w의 레벨 = `startLevel + levelPerWave × (w−1) + levelCurve × (w−1)²`. 첫 몇 웨이브는 웨이브당 2~3레벨로 숨을 고르고,
+   * 열 웨이브를 넘기면 한 웨이브에 대여섯씩, 스무 웨이브 언저리에서는 열 가까이 뛴다 — 오래 버틸수록 벽이 가팔라진다.
+   * 예전 직선(LV.1부터 웨이브당 +4)은 키운 편성이 300초를 그대로 버텨 「언젠가는 무너진다」가 성립하지 않았다.
    */
-  // 적이 등급마다 다르게 자라고 돌파 몫을 받게 되며(「적은 적이다」, 2026-11-12) 예전 3.6% 시절의 웨이브당 3레벨·상한 134와
-  // 같은 세기(SR 곡선 기준)로 옮겼다.
-  levelPerWave: 4,
-  maxLevel: 160,
+  startLevel: 20,
+  levelPerWave: 1.5,
+  levelCurve: 0.1,
+  maxLevel: 300,
+  /**
+   * 아군·적 몸집 — 여섯이 두 줄로 서고 열 마리 넘게 몰려오는 판이라 다른 전투(1)보다 줄여 모두가 한 화면에 보이게 한다
+   * (2026-11-15 응태 요청). 적은 잡졸 몸집(`ENCOUNTER_ROLE.normal.bodyScale`)에 이 배율을 곱한다.
+   */
+  bodyScale: 0.72,
   /**
    * 머릿수: 5 + 웨이브의 사분의 일, 상한 10. 상한(18)이 치즈케이크 대작전 한 판(10~15)을 조금 넘는 무리라, 한 웨이브가
    * 그 절반 남짓이어야 "다 못 치우면 쌓인다"가 몇 웨이브에 걸쳐 일어난다(한 번에 15씩 오면 두 웨이브 만에 끝났다).
@@ -10475,8 +10561,10 @@ var GUILD_GUARD = {
   gruntScore: 30,
   gruntScorePerWave: 10
 };
+var GUILD_GUARD_ENEMY_ROLE = "normal";
 function guardWaveLevel(index) {
-  return Math.min(GUILD_GUARD.maxLevel, GUILD_GUARD.startLevel + GUILD_GUARD.levelPerWave * (index - 1));
+  const step2 = Math.max(0, index - 1);
+  return Math.min(GUILD_GUARD.maxLevel, GUILD_GUARD.startLevel + Math.round(GUILD_GUARD.levelPerWave * step2 + GUILD_GUARD.levelCurve * step2 * step2));
 }
 function guardWaveCount(index) {
   return Math.min(GUILD_GUARD.gruntCap, GUILD_GUARD.gruntBase + Math.floor(index / GUILD_GUARD.gruntPerWaves));
@@ -10490,7 +10578,7 @@ function buildGuardWave(roster, index) {
   const units = [];
   for (let i = 0; i < guardWaveCount(index); i += 1) {
     const base = roster.units[guardPick(index, i) % roster.units.length];
-    units.push(grownUnit(base, "swarm", level, guardUnitScore(index)));
+    units.push(grownUnit(base, GUILD_GUARD_ENEMY_ROLE, level, guardUnitScore(index)));
   }
   return { index, level, units };
 }
@@ -10505,7 +10593,7 @@ function grownUnit(base, role, level, score) {
   return {
     def: { ...base, encounterRole: role, stats: applyEncounterScaling(base.stats, base.rarity, level, role, 1) },
     role,
-    bodyScale: ENCOUNTER_ROLE[role].bodyScale,
+    bodyScale: ENCOUNTER_ROLE[role].bodyScale * GUILD_GUARD.bodyScale,
     score,
     level
   };
@@ -10541,11 +10629,11 @@ function guildGuardHordeSpec(roster) {
     allyRestorePercent: GUILD_GUARD.allyRestorePercent
   };
 }
-function hordeEntrySpots(arena, entryY, count2, wave) {
+function hordeEntrySpots(arena, entryY, count3, wave) {
   const width = arena.right - arena.left;
   const sides = ["top", "left", "right"];
   const seen = { top: 0, left: 0, right: 0 };
-  return Array.from({ length: count2 }, (_, i) => {
+  return Array.from({ length: count3 }, (_, i) => {
     const from = sides[(i + wave) % sides.length];
     const k = seen[from]++;
     const jitter = (wave * 37 + i * 53) % 100 / 100;
@@ -10583,10 +10671,10 @@ function normalizeGuildGuardFormation(slots) {
   return out;
 }
 function rankGuildGuardMembers(records) {
-  return [...records].sort((a, b) => b.score - a.score || a.at - b.at).map((record2, i) => ({ ...record2, rank: i + 1 }));
+  return [...records].sort((a, b) => b.score - a.score || a.at - b.at).map((record3, i) => ({ ...record3, rank: i + 1 }));
 }
 function guildGuardTotal(records) {
-  return records.reduce((sum, record2) => sum + Math.max(0, Math.round(record2.score)), 0);
+  return records.reduce((sum, record3) => sum + Math.max(0, Math.round(record3.score)), 0);
 }
 
 // src/core/combatEffects.ts
@@ -11090,23 +11178,23 @@ var HORDE_ENTRY_SPEED = 150;
 var HORDE_SIDE_ENTRY_SPEED = 900;
 var HORDE_ROW = 5;
 var HORDE_ROW_GAP = 64;
-function spawnSpots(arena, side, count2 = 3) {
+function spawnSpots(arena, side, count3 = 3) {
   const limit = side === "enemy" ? MAX_ENEMY_COUNT : 5;
-  if (!Number.isInteger(count2) || count2 < 1 || count2 > limit) throw new RangeError(`\uD300 \uC778\uC6D0\uC740 1~${limit}\uAE30\uC5EC\uC57C \uD569\uB2C8\uB2E4.`);
+  if (!Number.isInteger(count3) || count3 < 1 || count3 > limit) throw new RangeError(`\uD300 \uC778\uC6D0\uC740 1~${limit}\uAE30\uC5EC\uC57C \uD569\uB2C8\uB2E4.`);
   const width = arena.right - arena.left;
-  if (count2 > HORDE_ROW) {
-    return Array.from({ length: count2 }, (_, index) => {
+  if (count3 > HORDE_ROW) {
+    return Array.from({ length: count3 }, (_, index) => {
       const row = Math.floor(index / HORDE_ROW);
-      const inRow = Math.min(HORDE_ROW, count2 - row * HORDE_ROW);
+      const inRow = Math.min(HORDE_ROW, count3 - row * HORDE_ROW);
       const column = index % HORDE_ROW;
       const shift = row % 2 === 0 ? 0 : 0.5 / HORDE_ROW;
       const ratio = inRow === 1 ? 0.5 : Math.min(0.96, 0.06 + 0.84 * column / (inRow - 1) + shift);
       return { x: arena.left + width * ratio, y: arena.top + row * HORDE_ROW_GAP };
     });
   }
-  const ratios = count2 === 3 ? [0.08, 0.5, 0.92] : count2 === 2 ? [0.29, 0.71] : Array.from({ length: count2 }, (_, index) => count2 === 1 ? 0.5 : 0.08 + 0.84 * index / (count2 - 1));
+  const ratios = count3 === 3 ? [0.08, 0.5, 0.92] : count3 === 2 ? [0.29, 0.71] : Array.from({ length: count3 }, (_, index) => count3 === 1 ? 0.5 : 0.08 + 0.84 * index / (count3 - 1));
   const columns = ratios.map((ratio) => arena.left + width * ratio);
-  const stagger = count2 === 3 ? [0, -70, 0] : columns.map((_, index) => index % 2 === 0 ? 0 : -70);
+  const stagger = count3 === 3 ? [0, -70, 0] : columns.map((_, index) => index % 2 === 0 ? 0 : -70);
   return columns.map((x, index) => ({
     x,
     y: side === "player" ? arena.bottom + stagger[index] : arena.top - stagger[index]
@@ -11129,7 +11217,7 @@ function createPackFighters(owners, augmentEffects, enemyEffects = []) {
     const forward = owner2.side === "player" ? -1 : 1;
     const x = owner2.x + (index % 2 === 0 ? -70 : 70);
     const y = owner2.y + forward * 90;
-    const wolf = makeFighter({ ...spec.def, stats }, owner2.side, index, x, y, 0, 0, spec.bodyScale ?? 1, owner2.side === "player" ? augmentEffects : enemyEffects);
+    const wolf = makeFighter({ ...spec.def, stats }, owner2.side, index, x, y, 0, 0, (spec.bodyScale ?? 1) * (owner2.side === "player" ? owner2.bodyScale : 1), owner2.side === "player" ? augmentEffects : enemyEffects);
     wolf.id = `${owner2.id}:${spec.def.id}`;
     wolf.summonOwnerId = owner2.id;
     wolf.resummonRule = spec.resummon;
@@ -11153,7 +11241,7 @@ function createPupPool(owner2, augmentEffects) {
       ...spec,
       scaling: { hp: spec.scaling.hp * ratio, atk: spec.scaling.atk * ratio, def: spec.scaling.def * ratio, res: spec.scaling.res * ratio }
     });
-    const pup = makeFighter({ ...spec.def, stats }, owner2.side, index, owner2.x, owner2.y, 0, 0, PUP.bodyScale, augmentEffects);
+    const pup = makeFighter({ ...spec.def, stats }, owner2.side, index, owner2.x, owner2.y, 0, 0, PUP.bodyScale * (owner2.side === "player" ? owner2.bodyScale : 1), augmentEffects);
     pup.id = `${owner2.id}:pup-${index}`;
     pup.summonOwnerId = owner2.id;
     pup.facing = owner2.facing;
@@ -11179,12 +11267,12 @@ function createSkirmish(playerDefs, enemyDefs, arena, playerBondLevels = {}, pla
   if (options.boss && (!options.boss.phases.length || options.boss.limitSeconds <= 0)) throw new RangeError("\uBCF4\uC2A4 \uB2E8\uACC4\uC640 \uB9AC\uBBF8\uD2B8\uB294 \uC720\uD6A8\uD574\uC57C \uD569\uB2C8\uB2E4.");
   const playerSpots = options.playerPositions ?? spawnSpots(arena, "player", playerDefs.length);
   const enemySpots = options.enemyPositions ?? (enemyDefs.length === 0 ? [] : spawnSpots(arena, "enemy", enemyDefs.length));
-  for (const [spots, count2] of [[options.playerPositions, playerDefs.length], [options.enemyPositions, enemyDefs.length]]) {
-    if (spots && (spots.length !== count2 || spots.some((p) => !Number.isFinite(p.x) || !Number.isFinite(p.y) || p.x < arena.left || p.x > arena.right || p.y < arena.top || p.y > arena.bottom))) throw new RangeError("Invalid starting positions");
+  for (const [spots, count3] of [[options.playerPositions, playerDefs.length], [options.enemyPositions, enemyDefs.length]]) {
+    if (spots && (spots.length !== count3 || spots.some((p) => !Number.isFinite(p.x) || !Number.isFinite(p.y) || p.x < arena.left || p.x > arena.right || p.y < arena.top || p.y > arena.bottom))) throw new RangeError("Invalid starting positions");
   }
   const initialById = new Map(options.playerInitialStates?.map((snapshot) => [snapshot.relicId, snapshot]));
   const players = playerDefs.map((def, i) => {
-    const fighter = makeFighter(def, "player", i, playerSpots[i].x, playerSpots[i].y, playerBondLevels[def.id] ?? 0, playerBreakthroughs[def.id] ?? 0, 1, options.augmentEffects);
+    const fighter = makeFighter(def, "player", i, playerSpots[i].x, playerSpots[i].y, playerBondLevels[def.id] ?? 0, playerBreakthroughs[def.id] ?? 0, options.playerBodyScale ?? 1, options.augmentEffects);
     const saved = initialById.get(def.id);
     if (saved) fighter.hp = saved.alive ? fighter.maxHp * Math.min(100, Math.max(0, saved.currentHp)) / 100 : 0;
     return fighter;
@@ -11843,17 +11931,17 @@ function resolveYawn(fighter, state, events) {
   if (plan?.kind !== "yawnContagion") return;
   for (const other of state.fighters) {
     if (other.side !== fighter.side || other.id === fighter.id || !isFighterAlive(other) || distance(fighter, other) > plan.radius) continue;
-    for (let count2 = 0; count2 < plan.stacks; count2 += 1) applyCombatStatusEffect(other, yawn.effect, events, state, sleeper.id);
+    for (let count3 = 0; count3 < plan.stacks; count3 += 1) applyCombatStatusEffect(other, yawn.effect, events, state, sleeper.id);
   }
 }
 function applyIntimidate(target, effect, events, state, sourceId, basicHit) {
   if (!isFighterAlive(target)) return;
   const source = findFighter(state, sourceId);
-  if (basicHit && source !== void 0 && target.intimidation !== null && state.elapsed >= source.bt.dreadAegisReadyAt) {
+  if (basicHit && source !== void 0 && (target.intimidation !== null || target.fear !== null) && state.elapsed >= source.bt.dreadAegisReadyAt) {
     const aegis = openedBreakthrough(source, "basic", (effects) => effects.basic);
     if (aegis?.kind === "preyScale" && isFighterAlive(source)) {
       source.bt.dreadAegisReadyAt = state.elapsed + aegis.cooldownSeconds;
-      const scared = Math.min(aegis.maxEnemies, state.fighters.filter((other) => other.side !== source.side && isFighterAlive(other) && other.intimidation !== null).length);
+      const scared = Math.min(aegis.maxEnemies, state.fighters.filter((other) => other.side !== source.side && isFighterAlive(other) && (other.intimidation !== null || other.fear !== null)).length);
       grantShield(state, source, source.id, Math.max(1, Math.round(source.maxHp * aegis.shieldPercentPerEnemy * scared / 100)), events, 1);
     }
   }
@@ -12082,14 +12170,14 @@ function pickBySelection(state, fighter, selection) {
 }
 function fireObservationVolley(attacker, target, state, events) {
   const plan = attacker.def.basic.observationVolley;
-  const count2 = target.observation?.stacks ?? 0;
-  if (!plan || count2 <= 0 || !isFighterAlive(target)) return;
+  const count3 = target.observation?.stacks ?? 0;
+  if (!plan || count3 <= 0 || !isFighterAlive(target)) return;
   const offense = { ...attacker, def: offensiveDefinition(attacker) };
   const defense = defensiveDefinition(target, state);
   const fresh = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   const recent = fresh?.kind === "freshSight" && target.observation !== null && target.observation.total - target.observation.remaining < fresh.windowSeconds;
   const input = { power: recent && fresh?.kind === "freshSight" ? fresh.percentPerStack : plan.percentPerStack, damageType: "physical", scalingStat: "atk", isCritical: false, kind: "basic", ignoresDefense: true };
-  for (let index = 0; index < count2 && isFighterAlive(target); index += 1) {
+  for (let index = 0; index < count3 && isFighterAlive(target); index += 1) {
     const raw = computeDamage(offense, defense, input);
     const resolution = resolveReceivedDamage(target, raw);
     const hpBefore = target.hp;
@@ -12098,7 +12186,7 @@ function fireObservationVolley(attacker, target, state, events) {
     applyDamage(target, resolution.applied, events, state);
     const credited = recordDamageContribution(state, packCreditId(attacker), target, "physical", "atk", computeDamageContribution(offense, input), resolution, hpBefore, shieldBefore, shieldProviderId);
     if (state.boss && state.boss.seasonHp === void 0 && target.id === state.boss.fighterId) state.boss.score += credited;
-    events.push({ kind: "observationTick", attackerId: attacker.id, fighterId: target.id, amount: resolution.applied, index, count: count2, windowSeconds: plan.windowSeconds });
+    events.push({ kind: "observationTick", attackerId: attacker.id, fighterId: target.id, amount: resolution.applied, index, count: count3, windowSeconds: plan.windowSeconds });
     if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
     tryTriggerEmergencyRecovery(target, state);
     tryTriggerLowHpVanish(target, state);
@@ -12852,11 +12940,11 @@ function tickRaiders(fighter, dt, state) {
   }
   const march = fighter.def.passive.workerMarch;
   if (march && dt > 0) {
-    const count2 = marchAllies(state, fighter);
-    if (count2 > 0) {
+    const count3 = marchAllies(state, fighter);
+    if (count3 > 0) {
       const deeper = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
       const regen = deeper?.kind === "deeperMarch" ? deeper.regenMaxHpPercentPerAllyPerSecond : march.regenMaxHpPercentPerAllyPerSecond;
-      applyHealing(state, fighter, fighter.maxHp * Math.max(regen, march.regenMaxHpPercentPerAllyPerSecond) * count2 * dt / 100);
+      applyHealing(state, fighter, fighter.maxHp * Math.max(regen, march.regenMaxHpPercentPerAllyPerSecond) * count3 * dt / 100);
     }
   }
   return events;
@@ -12931,13 +13019,13 @@ function gainElation(target) {
     tickIn: target.elation?.tickIn ?? 1
   };
 }
-function gainPrickle(fighter, count2) {
+function gainPrickle(fighter, count3) {
   const plan = fighter.def.passive.prickle;
-  if (fighter.def.passive.kind !== "prickly" || plan === void 0 || !isFighterAlive(fighter) || count2 <= 0) return;
+  if (fighter.def.passive.kind !== "prickly" || plan === void 0 || !isFighterAlive(fighter) || count3 <= 0) return;
   const trait = fighter.def.ferocityTrait;
   const multiplier = fighter.ferocityFever && trait.effectId === "caffeineBubble" ? trait.prickleGainMultiplier : 1;
   fighter.prickle = {
-    stacks: Math.min(plan.maxStacks, (fighter.prickle?.stacks ?? 0) + count2 * multiplier),
+    stacks: Math.min(plan.maxStacks, (fighter.prickle?.stacks ?? 0) + count3 * multiplier),
     remaining: plan.seconds,
     total: plan.seconds
   };
@@ -13763,21 +13851,21 @@ function tidyUpAfterBasic(fighter, state, events) {
   if (fighter.tidyCount < every) return;
   fighter.tidyCount = 0;
   const pro = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
-  const count2 = pro?.kind === "proTouch" ? pro.targets : 1;
+  const count3 = pro?.kind === "proTouch" ? pro.targets : 1;
   const scale = pro?.kind === "proTouch" ? pro.healPercent / 100 : 1;
   const ap = fighter.def.stats.ap;
   const allies = aliveFighters(state, fighter.side).filter((ally) => ally.summonOwnerId === null);
   const ratio = (ally) => ally.hp / Math.max(1, ally.maxHp);
   const dirty = allies.map((ally) => ({ ally, slots: debuffSlots(ally) })).filter((entry) => entry.slots.length > 0).sort((a, b) => b.slots.length - a.slots.length || ratio(a.ally) - ratio(b.ally));
   const tended = /* @__PURE__ */ new Set();
-  for (const { ally, slots } of dirty.slice(0, count2)) {
+  for (const { ally, slots } of dirty.slice(0, count3)) {
     slots.reduce((longest, slot) => slot.remaining > longest.remaining ? slot : longest).clear();
     const amount = applyHealing(state, ally, ap * plan.cleanseHealPower / 100 * scale, fighter.id);
     pushHeal(events, ally, amount, "passive");
     tended.add(ally);
   }
   if (dirty.length > 0) return;
-  for (const ally of [...allies].sort((a, b) => ratio(a) - ratio(b)).slice(0, count2)) {
+  for (const ally of [...allies].sort((a, b) => ratio(a) - ratio(b)).slice(0, count3)) {
     const amount = applyHealing(state, ally, ap * plan.fallbackHealPower / 100 * scale, fighter.id);
     pushHeal(events, ally, amount, "passive");
   }
@@ -14465,11 +14553,11 @@ function strongestLivingAura(state, receiverSide, field) {
 function terrorCarapacePercent(state, fighter) {
   const plan = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
   if (plan?.kind !== "terrorCarapace") return 0;
-  let count2 = 0;
+  let count3 = 0;
   for (const other of state.fighters) {
-    if (other.side !== fighter.side && isFighterAlive(other) && other.intimidation?.sourceId === fighter.id) count2 += 1;
+    if (other.side !== fighter.side && isFighterAlive(other) && (other.intimidation?.sourceId === fighter.id || other.fear?.sourceId === fighter.id)) count3 += 1;
   }
-  return plan.percentPerIntimidated * Math.min(count2, plan.maxIntimidated);
+  return plan.percentPerIntimidated * Math.min(count3, plan.maxIntimidated);
 }
 function undyingGuardPercent(fighter) {
   if (fighter.bt.undyingGuard <= 0) return 0;
@@ -14679,7 +14767,7 @@ function triggerCombatAugments(state, owner2, trigger, events, hitTarget) {
         const adjusted = percent * (target.immortal ? 0.25 : 1);
         status = status.kind === "concussion" ? { ...status, maxHpPercent: adjusted, criticalMaxHpPercent: adjusted } : { ...status, maxHpPercentPerSecond: adjusted / Math.max(1e-3, status.seconds * owner2.statusPotencyMultiplier) };
       }
-      for (let count2 = 0; count2 < (effect.applications ?? 1) && isFighterAlive(target); count2 += 1) {
+      for (let count3 = 0; count3 < (effect.applications ?? 1) && isFighterAlive(target); count3 += 1) {
         if (controlled && !augmentControlAvailable(state, target)) break;
         applyCombatStatusEffect(target, status, events, state, owner2.id);
         if (controlled) reserveAugmentRecovery(state, target, true);
@@ -14996,7 +15084,7 @@ function tickTankBreakthroughs(fighter, dt, state, events) {
         sink.tickIn -= dt;
         if (sink.tickIn <= EMERGENCY_RECOVERY.epsilon) {
           sink.tickIn += 1;
-          for (let count2 = 0; count2 < plan.stacksPerSecond; count2 += 1) applyPressure(target, effect, events, state, fighter.id);
+          for (let count3 = 0; count3 < plan.stacksPerSecond; count3 += 1) applyPressure(target, effect, events, state, fighter.id);
         }
         return sink.remaining > EMERGENCY_RECOVERY.epsilon && isFighterAlive(target);
       });
@@ -15733,7 +15821,7 @@ function gazeDrowsy(owner2, attacker, state, events) {
   const plan = openedBreakthrough(owner2, "ultimate", (effects) => effects.ultimate);
   const drowsy = owner2.def.passive.whiteNoise?.drowsy;
   if (plan?.kind !== "lullabyGaze" || !drowsy) return;
-  for (let count2 = 0; count2 < plan.stacksPerHit; count2 += 1) applyCombatStatusEffect(attacker, drowsy, events, state, owner2.id);
+  for (let count3 = 0; count3 < plan.stacksPerHit; count3 += 1) applyCombatStatusEffect(attacker, drowsy, events, state, owner2.id);
 }
 function reflectWall(owner2, absorbed, state, events) {
   if (owner2.fortress === null || owner2.bt.reflectBusy || absorbed <= 0 || !isFighterAlive(owner2)) return;
@@ -17280,12 +17368,12 @@ function advancePup(state, pup, owner2, dt, events) {
   clearDefeatedStatuses(pup);
   events.push({ kind: "death", fighterId: pup.id });
 }
-function spawnPups(state, owner2, count2, events) {
+function spawnPups(state, owner2, count3, events) {
   if (state.phase !== "fight" || !isFighterAlive(owner2)) return;
   const pool = state.fighters.filter((unit) => unit.summonOwnerId === owner2.id && isPupFighter(unit));
   const forward = owner2.side === "player" ? -1 : 1;
   for (const pup of pool) {
-    if (count2 <= 0) break;
+    if (count3 <= 0) break;
     if (isFighterAlive(pup)) continue;
     const slot = pool.indexOf(pup);
     pup.hp = pup.maxHp;
@@ -17299,7 +17387,7 @@ function spawnPups(state, owner2, count2, events) {
     pup.ferocityFever = owner2.ferocityFever;
     pup.ferocity = ferocityMirrored(owner2, pup);
     events.push({ kind: "packSummon", fighterId: pup.id, ownerFighterId: owner2.id, x: pup.x, y: pup.y });
-    count2 -= 1;
+    count3 -= 1;
   }
 }
 function tickPupLitter(state, owner2, events) {
@@ -17391,8 +17479,7 @@ function settle(state, events) {
   if (state.horde) {
     if (playersLeft === 0 || state.horde.overrun) state.phase = "defeat";
     else return;
-  }
-  if (state.boss && playersLeft === 0) state.phase = "defeat";
+  } else if (state.boss && playersLeft === 0) state.phase = "defeat";
   else if (state.boss && state.boss.endsOnKill && enemiesLeft === 0) state.phase = "victory";
   else if (state.boss) return;
   else if (playersLeft === 0) state.phase = "defeat";
@@ -18153,6 +18240,7 @@ function advanceHorde(state, events) {
     wave.units.forEach((unit, i) => {
       const fighter = makeFighter(unit.def, "enemy", horde.serial, spots[i].x, spots[i].y, 0, 0, unit.bodyScale, state.enemyAugmentEffects ?? []);
       horde.serial += 1;
+      fighter.attackCooldown = i * 0.18;
       fighter.hordeEntering = true;
       fighter.hordeEntry = spots[i].from;
       fighter.hordeScore = unit.score;
@@ -18400,15 +18488,7 @@ function applyArenaAction(source, actor, action, now) {
     r.reason = "forfeit";
     return r;
   }
-  if (now >= r.deadline && r.phase !== "battle") {
-    const simultaneous = r.phase === "ban" || r.rules.placement === "hidden";
-    const waiting = r.phase === "ban" ? r.bans.map((b) => b === null) : r.locked.map((v2) => !v2);
-    const late = simultaneous ? waiting.indexOf(true) : arenaTurn(r);
-    r.phase = "done";
-    r.winner = simultaneous && waiting[0] && waiting[1] ? null : 1 - late;
-    r.reason = "timeout";
-    return r;
-  }
+  if (now >= r.deadline && (r.phase === "ban" || r.phase === "place")) arenaAutoResolve(r, now);
   if (r.phase === "ban" || r.phase === "place") {
     const seen = r.seen ?? [now, now];
     if (action.kind !== "tick" || now - seen[side] >= ARENA_SEEN_STEP_MS) seen[side] = now;
@@ -18451,6 +18531,38 @@ function applyArenaAction(source, actor, action, now) {
     r.lease = { id: r.id, seed: r.seed, setup: arenaSetup(r), expiresAt: new Date(r.deadline).toISOString() };
   }
   return r;
+}
+function arenaAutoResolve(r, now) {
+  const strongest = (units) => [...units].sort((a, b) => combatPower(b.def.stats) - combatPower(a.def.stats) || a.def.id.localeCompare(b.def.id))[0];
+  if (r.phase === "ban") {
+    r.bans.forEach((ban, side) => {
+      if (ban === null) r.bans[side] = strongest(r.players[1 - side].roster)?.def.id ?? ARENA_HIDDEN_BAN;
+    });
+    r.phase = "place";
+    r.deadline = now + 45e3;
+    return;
+  }
+  if (r.phase !== "place") return;
+  const fill = (side, count3) => {
+    for (let n = 0; n < count3 && r.picks[side].length < 3; n++) {
+      const unit = strongest(arenaPickable(r, side));
+      const slot = ARENA_SLOTS.findIndex((_, index) => !r.picks[side].some((p) => p.slot === index));
+      if (!unit || slot < 0) break;
+      r.picks[side].push({ relicId: unit.def.id, slot, ...ARENA_SLOTS[slot] });
+    }
+    r.locked[side] = r.picks[side].length >= 3;
+  };
+  if (r.rules.placement === "alternate") {
+    if (!r.locked[arenaTurn(r)]) fill(arenaTurn(r), 1);
+  } else r.locked.forEach((locked, side) => {
+    if (!locked) fill(side, 3);
+  });
+  r.deadline = now + 45e3;
+  if (r.locked.every(Boolean)) {
+    r.phase = "battle";
+    r.deadline = now + 6e5;
+    r.lease = { id: r.id, seed: r.seed, setup: arenaSetup(r), expiresAt: new Date(r.deadline).toISOString() };
+  }
 }
 function settleArena(room) {
   if (room.phase !== "battle" || !room.lease) return room;
@@ -19739,7 +19851,7 @@ var RELICS = [
     // 한계 돌파: 젖은 표적 · 물보라 충전 · 큰 파도 · 건드리면 터진다.
     breakthroughEffects: {
       basic: { kind: "wetMark", takenPercent: 12 },
-      ultimate: { kind: "splashCharge", energy: 15, allyEnergy: 5 },
+      ultimate: { kind: "splashCharge", energy: 15, allyEnergy: 15 },
       ferocity: { kind: "bigWave", powerMultiplier: 2 },
       passive: { kind: "touchBurst" }
     },
@@ -19883,9 +19995,9 @@ var RELICS = [
       teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 10, maxHpRegenPercentPerSecond: 2 }
     },
     breakthroughEffects: {
-      basic: { kind: "windStep", moveSpeedPercent: 20, seconds: 3 },
+      basic: { kind: "windStep", moveSpeedPercent: 20, seconds: 4 },
       ultimate: { kind: "gustEnergy", energy: 25 },
-      ferocity: { kind: "feverGale", seconds: 3, speedPercent: 20 },
+      ferocity: { kind: "feverGale", seconds: 4, speedPercent: 20 },
       passive: { kind: "windEcho", energy: 25 }
     }
   },
@@ -20447,15 +20559,16 @@ var RELICS = [
       selfRoar: {
         radius: 360,
         fear: { kind: "fear", seconds: 2, immunitySeconds: 6 },
-        shieldMaxHpPercent: 10,
+        shieldMaxHpPercent: 15,
         shieldPerFearedMaxHpPercent: 6,
         shieldMaxFeared: 5
       }
     },
+    // 2026-11-15 응태 승인 — 먹잇감 비늘 3%·쿨 3초는 쿨이 공격 간격(3초)과 같아 아무것도 묶지 않았고 한 번이 적 한 대 남짓이었다. 공포도 세고 한 번을 묵직하게.
     breakthroughEffects: {
-      basic: { kind: "preyScale", shieldPercentPerEnemy: 3, maxEnemies: 5, cooldownSeconds: 3 },
+      basic: { kind: "preyScale", shieldPercentPerEnemy: 8, maxEnemies: 5, cooldownSeconds: 4 },
       ultimate: { kind: "quarryMark", seconds: 8, damageTakenPercent: 12 },
-      ferocity: { kind: "roarEntry", radius: 500, stacks: 1 },
+      ferocity: { kind: "roarEntry", radius: 500, stacks: 2 },
       passive: { kind: "terrorCarapace", percentPerIntimidated: 10, maxIntimidated: 5 }
     }
   },
@@ -21370,7 +21483,7 @@ var RELICS = [
     // 한계 돌파 — 평타에 맞은 적이 잠깐 노도니아만 노리고(벌 세우기), 절정 동안 대신 받은 피해가 최대 체력의 10% 쌓일 때마다 주위에 열기가 터지며(최대 4번),
     // 폭주에 들어서는 순간 희열이 다섯 겹 쌓이고, 희열이 가득하면 재생의 절반이 아군 전원에게 번진다.
     breakthroughEffects: {
-      basic: { kind: "scoldTaunt", tauntSeconds: 0.5 },
+      basic: { kind: "scoldTaunt", tauntSeconds: 1.5 },
       ultimate: { kind: "heatBurst", thresholdPercent: 10, pulsePercent: 2.5, maxPulses: 4, radius: 300 },
       ferocity: { kind: "emberRush", stacks: 5 },
       passive: { kind: "sweetShare", sharePercent: 50 }
@@ -22443,9 +22556,9 @@ var RELICS = [
       effectType: "magical",
       damageType: "magical",
       targeting: "single",
-      allyEnergyGain: 4,
+      allyEnergyGain: 6,
       // 파동이 지나간 몫의 일부가 가장 다친 동료에게 돌아간다. 도디(30%)보다 낮게 둔다 — 주문력이 훨씬 높다.
-      lowestHpAllyHealingFromDamagePercent: 20
+      lowestHpAllyHealingFromDamagePercent: 25
     },
     ultimate: {
       id: "neuri-ult",
@@ -22458,7 +22571,7 @@ var RELICS = [
     },
     // 날갯짓 파동에 적이 움찔하고(II) 순풍이 오래 불며(III) 폭주하면 맞춘 만큼 회복하고(IV) 울림이 둘에게 걸린다(V).
     breakthroughEffects: {
-      basic: { kind: "shellKnock", seconds: 0.3 },
+      basic: { kind: "shellKnock", seconds: 0.4 },
       ultimate: { kind: "longGust", seconds: 10 },
       ferocity: { kind: "bloodFever", lifeStealPoints: 10 },
       passive: { kind: "twinHum" }
@@ -22814,7 +22927,7 @@ var RELICS = [
       basic: { kind: "chainWrap", speedPercentPerStack: 8, maxStacks: 5 },
       ultimate: { kind: "cageIn", tauntSeconds: 2 },
       ferocity: { kind: "ironBarSweep", radius: 200, maxTargets: 3 },
-      passive: { kind: "youngestCare", sharePercent: 15 }
+      passive: { kind: "youngestCare", sharePercent: 30 }
     }
   },
   {
@@ -22889,6 +23002,8 @@ var RELICS = [
       // 네 번째 들이받기가 표적을 뒤로 날린다. 매 타격이면 붙을 틈이 없어 주기로 둔다.
       statusEffectEvery: 4,
       statusEffects: [{ kind: "knockback", seconds: 0.5, speed: 1e3, bounces: 1 }],
+      // 응태 요청(2026-11-15) — 뿔이 방어를 파고든다. 자물쇠가 풀린 뒤 휩쓰는 평타도 같은 값을 읽는다.
+      defenseIgnorePercent: 40,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -22909,7 +23024,9 @@ var RELICS = [
       // 경직은 0.1초 고정이라 0.5초 차단은 기절이다.
       statusEffects: [{ kind: "stun", seconds: 0.5 }],
       // 전사의 자가 수급 — 길 위에서 들이받은 만큼 몸을 추스른다.
-      damageHealingPercent: 20
+      damageHealingPercent: 20,
+      // 응태 요청(2026-11-15) — 질주가 길 위 적의 보호막을 피해가 박히기 전에 깨뜨린다(코마와 같은 계약).
+      breaksShield: true
     },
     // 뿔이 상대를 멈칫하게 하고(II) 질주의 폭이 넓어지며(III) 폭주하면 급소가 터진다(IV).
     breakthroughEffects: {
@@ -22971,9 +23088,9 @@ var RELICS = [
     breakthroughEffects: {
       // 같은 적을 연속으로 맞히면 경직이 0.1초씩 쌓인다(최대 0.3초). 공격 간격(약 1.7초)보다 짧아 영구 경직이 되지 않고,
       // 경직이 쌓일 때마다 저항(`gainTenacity`)도 함께 오른다.
-      basic: { kind: "staccatoChain", secondsPerStack: 0.1, maxStacks: 3 },
+      basic: { kind: "staccatoChain", secondsPerStack: 0.15, maxStacks: 3 },
       // 궁극기 게이지가 90에서 75로 줄고, 체력이 가득 차 회복할 몫이 없던 아군은 최대 체력 8%의 보호막을 얻는다.
-      ultimate: { kind: "lightChorus", costReduction: 15, fullHpShieldPercent: 8 },
+      ultimate: { kind: "lightChorus", costReduction: 15, fullHpShieldPercent: 15 },
       // 폭주에 들어서는 순간 주위 적 전원에게 스타카토 한 번이 먼저 울린다(공격력 60%, 경직 포함). 팀의 합창이 시작되기 전의 서곡이다.
       ferocity: { kind: "overture", radius: 520, powerPercent: 60 },
       // 메테의 막을 두른 아군이 평타를 맞히면 그 적 주위로 음파(공격력 40%)가 퍼진다. 아군마다 3초에 한 번이다.
@@ -23279,7 +23396,7 @@ var RELICS = [
     // 한계 돌파: 소다 터짐(세 번마다 냉기) · 냉방 환기 · 한파(폭주 진입에 전원 냉기) · 얼음 깨기.
     breakthroughEffects: {
       basic: { kind: "sodaPop", everyHits: 3, radius: 300, stacks: 1 },
-      ultimate: { kind: "coolingVent", healMaxHpPercentPerFrozen: 0.5, maxFrozenCounted: 3 },
+      ultimate: { kind: "coolingVent", healMaxHpPercentPerFrozen: 1.5, maxFrozenCounted: 3 },
       ferocity: { kind: "coldSnap", radius: 500, stacks: 2 },
       passive: { kind: "iceShatter", radius: 300, attackPercent: 120 }
     },
@@ -23771,7 +23888,7 @@ var RELICS = [
       // 파치가 때려서 날리는 것과 같은 궤적이되 한 뼘 짧다 — 밀어붙이는 길을 여는 것이지
       // 전장 밖으로 치우는 것이 아니다.
       knockback: { seconds: 1.1, speed: 1600, bounces: 2 },
-      allyRegenFromDuoDamagePercent: 5
+      allyRegenFromDuoDamagePercent: 8
     },
     passive: {
       // kind가 duoLink인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
@@ -23907,7 +24024,7 @@ var RELICS = [
       basic: { kind: "freshSight", percentPerStack: 15, windowSeconds: 2 },
       ultimate: { kind: "jointObservation", stacks: 5 },
       ferocity: { kind: "droneOverheat", stackMultiplier: 2 },
-      passive: { kind: "manyEyes", attackSpeedPercentPerObserved: 5 }
+      passive: { kind: "manyEyes", attackSpeedPercentPerObserved: 7 }
     },
     passive: {
       id: "morphe-passive",
@@ -24097,7 +24214,7 @@ var RELICS = [
       basic: { kind: "pupLitter", every: 6 },
       ultimate: { kind: "pupRush", count: 3 },
       ferocity: { kind: "pupFrenzy", every: 6 },
-      passive: { kind: "packStrength", damagePercentPerWolf: 3 }
+      passive: { kind: "packStrength", damagePercentPerWolf: 4 }
     }
   },
   KURO_DEF,
@@ -25954,8 +26071,8 @@ function getStageEnemies(stage) {
   return growth.map((enemy) => {
     const base = getRelic(enemy.relicId);
     const enemyRole = enemy.elite === true ? "elite" : role;
-    const count2 = enemy.elite === true ? soloElites : stage.enemies.length;
-    const stats = applyEncounterScaling(base.stats, base.rarity, enemy.level, enemyRole, count2);
+    const count3 = enemy.elite === true ? soloElites : stage.enemies.length;
+    const stats = applyEncounterScaling(base.stats, base.rarity, enemy.level, enemyRole, count3);
     return { ...base, encounterRole: enemyRole, stats };
   });
 }
@@ -26589,8 +26706,8 @@ function pickWeighted2(entries, random) {
   }
   return entries[entries.length - 1][0];
 }
-function randomInt(count2, random) {
-  return Math.min(count2 - 1, Math.floor(clampRoll2(random) * count2));
+function randomInt(count3, random) {
+  return Math.min(count3 - 1, Math.floor(clampRoll2(random) * count3));
 }
 function rollHuntPairs(difficulty, random) {
   const picked = [];
@@ -26660,12 +26777,12 @@ function rollHuntMoves(layout, difficulty, random) {
   if (jackpotIds.size > 0 && difficulty.jackpotMoves > 0) {
     const touched = () => {
       const replay = [...layout];
-      let count2 = 0;
+      let count3 = 0;
       for (const move of moves) {
-        if (move.swaps.some(([x, y]) => jackpotIds.has(replay[x]) || jackpotIds.has(replay[y]))) count2 += 1;
+        if (move.swaps.some(([x, y]) => jackpotIds.has(replay[x]) || jackpotIds.has(replay[y]))) count3 += 1;
         for (const [x, y] of move.swaps) [replay[x], replay[y]] = [replay[y], replay[x]];
       }
-      return count2;
+      return count3;
     };
     let guard = 0;
     while (touched() < difficulty.jackpotMoves && guard < 40) {
@@ -27080,8 +27197,8 @@ function recordStoryResult(state, stageId, victory) {
     const { storyLoss: _cleared, ...rest } = state;
     return rest;
   }
-  const count2 = state.storyLoss?.stageId === stageId ? state.storyLoss.count + 1 : 1;
-  return { ...state, storyLoss: { stageId, count: count2 } };
+  const count3 = state.storyLoss?.stageId === stageId ? state.storyLoss.count + 1 : 1;
+  return { ...state, storyLoss: { stageId, count: count3 } };
 }
 function storyStageChapter(stageId) {
   const match = /^(?:[a-z]+:)?(\d+)-\d+/.exec(stageId);
@@ -27378,6 +27495,8 @@ var NEWBIE_GROWTH_MILESTONES = [
 var NEWBIE_GROWTH_CLAIM_IDS = /* @__PURE__ */ new Set([...NEWBIE_GROWTH_GOALS.map(({ id }) => id), ...NEWBIE_GROWTH_MILESTONES.map(({ id }) => id)]);
 
 // src/core/achievementState.ts
+var CODEX_CLAIM_LIMIT = 64;
+var ENCOUNTER_LIMIT = 512;
 var GIFT_FRAME_IDS = /* @__PURE__ */ new Set(["patron", "season"]);
 function createEmptyAchievementState() {
   return { claimed: {}, goldPeak: 0 };
@@ -27388,11 +27507,13 @@ function normalizeAchievementState(value) {
   const claimedSource = source.claimed && typeof source.claimed === "object" ? source.claimed : {};
   const claimed = {};
   for (const series of ACHIEVEMENT_SERIES) {
-    const count2 = Math.min(series.tiers.length, whole(claimedSource[series.id]));
-    if (count2 > 0) claimed[series.id] = count2;
+    const count3 = Math.min(series.tiers.length, whole(claimedSource[series.id]));
+    if (count3 > 0) claimed[series.id] = count3;
   }
   const ancientFloorPeak = Math.min(ANCIENT_STRATA_MAX_FLOOR, whole(source.ancientFloorPeak));
   const giftFrames = Array.isArray(source.giftFrames) ? [...new Set(source.giftFrames.filter((id) => typeof id === "string" && GIFT_FRAME_IDS.has(id)))] : [];
+  const encountered = Array.isArray(source.encountered) ? [...new Set(source.encountered.filter((id) => typeof id === "string" && id.length > 0 && id.length <= 64))].slice(0, ENCOUNTER_LIMIT) : [];
+  const codexClaimed = Math.min(CODEX_CLAIM_LIMIT, whole(source.codexClaimed));
   const growth = Array.isArray(source.growth) ? [...new Set(source.growth.filter((id) => typeof id === "string" && NEWBIE_GROWTH_CLAIM_IDS.has(id)))] : [];
   return {
     claimed,
@@ -27403,7 +27524,9 @@ function normalizeAchievementState(value) {
     ...source.guildJoined === true ? { guildJoined: true } : {},
     ...source.firstPaymentGift === true ? { firstPaymentGift: true } : {},
     ...source.firstPaymentPaid === true && source.firstPaymentGift !== true ? { firstPaymentPaid: true } : {},
-    ...giftFrames.length > 0 ? { giftFrames } : {}
+    ...giftFrames.length > 0 ? { giftFrames } : {},
+    ...encountered.length > 0 ? { encountered } : {},
+    ...codexClaimed > 0 ? { codexClaimed } : {}
   };
 }
 function isValidAchievementState(value) {
@@ -27417,10 +27540,12 @@ function isValidAchievementState(value) {
   if (state.firstPaymentGift !== void 0 && state.firstPaymentGift !== true) return false;
   if (state.firstPaymentPaid !== void 0 && (state.firstPaymentPaid !== true || state.firstPaymentGift === true)) return false;
   if (state.giftFrames !== void 0 && (!Array.isArray(state.giftFrames) || state.giftFrames.some((id) => typeof id !== "string" || !GIFT_FRAME_IDS.has(id)))) return false;
+  if (state.encountered !== void 0 && (!Array.isArray(state.encountered) || state.encountered.length > ENCOUNTER_LIMIT || state.encountered.some((id) => typeof id !== "string" || id.length === 0 || id.length > 64) || new Set(state.encountered).size !== state.encountered.length)) return false;
+  if (state.codexClaimed !== void 0 && (!Number.isInteger(state.codexClaimed) || state.codexClaimed < 0 || state.codexClaimed > CODEX_CLAIM_LIMIT)) return false;
   if (!state.claimed || typeof state.claimed !== "object") return false;
-  return Object.entries(state.claimed).every(([id, count2]) => {
+  return Object.entries(state.claimed).every(([id, count3]) => {
     const series = ACHIEVEMENT_SERIES.find((candidate) => candidate.id === id);
-    return series !== void 0 && Number.isInteger(count2) && count2 >= 0 && count2 <= series.tiers.length;
+    return series !== void 0 && Number.isInteger(count3) && count3 >= 0 && count3 <= series.tiers.length;
   });
 }
 
@@ -27513,8 +27638,8 @@ function duelBlindOrder(members, chosen = []) {
   const rest = [...members].filter(({ relicId }) => !picked.includes(relicId)).sort((a, b) => b.power - a.power || members.indexOf(a) - members.indexOf(b)).map(({ relicId }) => relicId);
   return [...picked, ...rest].slice(0, DUEL_MAX_BLIND);
 }
-function duelHiddenRelicIds(blindOrder, count2) {
-  return blindOrder.slice(0, Math.max(0, Math.min(DUEL_MAX_BLIND, count2)));
+function duelHiddenRelicIds(blindOrder, count3) {
+  return blindOrder.slice(0, Math.max(0, Math.min(DUEL_MAX_BLIND, count3)));
 }
 function duelExtraAttemptPrice(purchasedToday) {
   return DUEL_EXTRA_ATTEMPT_PRICES[purchasedToday];
@@ -28307,15 +28432,15 @@ function addItemLot(inventory, itemId, quantity, options) {
   return { inventory: next, added };
 }
 function removeItemLot(inventory, itemId, quantity) {
-  const count2 = Math.floor(quantity);
+  const count3 = Math.floor(quantity);
   const stack = inventory.find((entry) => entry.itemId === itemId);
-  if (!stack || count2 <= 0 || stack.quantity < count2) return count2 <= 0 ? inventory.map((entry) => ({ ...entry })) : void 0;
+  if (!stack || count3 <= 0 || stack.quantity < count3) return count3 <= 0 ? inventory.map((entry) => ({ ...entry })) : void 0;
   return inventory.flatMap((entry) => {
     if (entry.itemId !== itemId) return [{ ...entry }];
-    const left = entry.quantity - count2;
+    const left = entry.quantity - count3;
     if (left <= 0) return [];
     if (!entry.lots) return [{ ...entry, quantity: left }];
-    let owed = count2;
+    let owed = count3;
     const lots = normalizeLots(entry.lots).map((lot) => {
       const take = Math.min(owed, lot.quantity);
       owed -= take;
@@ -28325,15 +28450,15 @@ function removeItemLot(inventory, itemId, quantity) {
   });
 }
 function removeItemLotAt(inventory, itemId, quantity, expiresAt) {
-  const count2 = Math.floor(quantity);
+  const count3 = Math.floor(quantity);
   const stack = inventory.find((entry) => entry.itemId === itemId);
   const target = stack?.lots?.find((lot) => lot.expiresAt === expiresAt);
-  if (!stack || !target || count2 <= 0 || target.quantity < count2) return void 0;
+  if (!stack || !target || count3 <= 0 || target.quantity < count3) return void 0;
   return inventory.flatMap((entry) => {
     if (entry.itemId !== itemId) return [{ ...entry }];
-    const left = entry.quantity - count2;
+    const left = entry.quantity - count3;
     if (left <= 0) return [];
-    const lots = normalizeLots(entry.lots.map((lot) => lot.expiresAt === expiresAt ? { ...lot, quantity: lot.quantity - count2 } : lot));
+    const lots = normalizeLots(entry.lots.map((lot) => lot.expiresAt === expiresAt ? { ...lot, quantity: lot.quantity - count3 } : lot));
     return [{ ...entry, quantity: left, lots }];
   });
 }
@@ -28485,8 +28610,8 @@ var ITEMS = [
   { id: "rawStone", name: "\uC6D0\uC11D", description: "\uC9C0\uCE35 \uD0D0\uC0AC\uB85C \uCE90\uB0B8 \uBBF8\uAC00\uACF5 \uAD11\uBB3C\uC785\uB2C8\uB2E4. \uB8EC \uD2B9\uC131 \uC7AC\uD574\uC11D\uC5D0 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "rawStone" }, maxStack: 9999999, useEffect: { kind: "none" } },
   // 에너지 드링크는 **기본과 쎈 것 둘**이다. 회복량만 다른 같은 물건이라 한 칸에서 좌우로
   // 갈아 끼우고(`StaminaPopup`), 그래서 둘의 이름도 같은 낱말에 표시만 다르게 붙인다.
-  { id: "stamina-tonic", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 60 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 60 } },
-  { id: "stamina-tonic-large", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 120 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic-large" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 120 } },
+  { id: "stamina-tonic", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C {amount} \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 60 } },
+  { id: "stamina-tonic-large", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C {amount} \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic-large" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 120 } },
   // 계정 첫 결제 선물(`FIRST_PAYMENT_GIFT`)로 받는 선택권. 가방에서 쓰면 7일 가이드와 같은 SR 고르기 창이 열린다.
   { id: "sr-select-ticket", name: "SR \uB810\uB9AD \uC120\uD0DD\uAD8C", description: "SR \uB810\uB9AD \uD55C \uBA85\uC744 \uACE8\uB77C \uB370\uB824\uC635\uB2C8\uB2E4. \uC774\uBBF8 \uD568\uAED8\uD558\uB294 \uB810\uB9AD\uC744 \uACE0\uB974\uBA74 \uADF8 \uB810\uB9AD\uC758 \uD30C\uD3B8 1\uAC1C\uAC00 \uB429\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-sr-select-ticket" }, maxStack: 99, useEffect: { kind: "select_relic", rarity: "SR" } },
   { id: "ancient-core", name: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575", description: "\uB8EC\uC5D0 \uD2B9\uC131 \uD55C \uC904\uC744 \uC0C8\uB85C \uBD80\uC5EC\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uD2B9\uC131\uC774 \uC788\uC73C\uBA74 \uC9C0\uC6B0\uACE0 \uB2E4\uC2DC \uBD80\uC5EC\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-ancient-core" }, maxStack: 999, useEffect: { kind: "none" } },
@@ -28499,10 +28624,10 @@ var ITEMS = [
   // 소탕 한 번에 한 장. 멤버십이 없을 때만 들고, 던전 입구에서 광고를 보면 다섯 장씩 채워진다.
   // 고고학 지층 탐사 한 번. 시간이 채우는 횟수와 같은 몫이라 그림도 탐사 횟수 칸의 입장권 그대로다 —
   // 그 칸의 그림을 누르면 이 안내창이 열린다(`guideForIcon`).
-  { id: "strata-ticket", name: "\uBC1C\uAD74\uAD8C", description: "\uACE0\uACE0\uD559 \uC720\uC801\uC744 \uC5EC\uB294 \uD69F\uC218\uC785\uB2C8\uB2E4. 3\uC2DC\uAC04\uB9C8\uB2E4 \uD558\uB098\uC529 3\uAC1C\uAE4C\uC9C0 \uCC28\uACE0, \uC0C1\uC810\xB7\uBCF4\uC0C1\uC73C\uB85C \uBC1B\uC740 \uAC83\uC740 3\uAC1C\uB97C \uB118\uACA8 \uC313\uC785\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "strata-ticket", name: "\uBC1C\uAD74\uAD8C", description: "\uACE0\uACE0\uD559 \uC720\uC801\uC744 \uC5EC\uB294 \uD69F\uC218\uC785\uB2C8\uB2E4. {hours}\uC2DC\uAC04\uB9C8\uB2E4 \uD558\uB098\uC529 {cap}\uAC1C\uAE4C\uC9C0 \uCC28\uACE0, \uC0C1\uC810\xB7\uBCF4\uC0C1\uC73C\uB85C \uBC1B\uC740 \uAC83\uC740 {cap}\uAC1C\uB97C \uB118\uACA8 \uC313\uC785\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   // 결투장 도전 한 번. 하루 다섯 장이 채워지는 몫과 같은 것이라 결투장의 도전권 줄이 이 그림을 쓴다 —
   // 그 줄의 그림을 누르면 이 안내창이 열린다. 전용 원화가 오기 전까지 입장권 그림을 빌려 쓴다.
-  { id: "duel-ticket", name: "\uACB0\uD22C \uB3C4\uC804\uAD8C", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC0C1\uB300\uC5D0\uAC8C \uB3C4\uC804\uD560 \uB54C \uD55C \uC7A5 \uC501\uB2C8\uB2E4. \uB9E4\uC77C \uB2E4\uC12F \uC7A5\uC774 \uCC44\uC6CC\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-duel-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "duel-ticket", name: "\uACB0\uD22C \uB3C4\uC804\uAD8C", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC0C1\uB300\uC5D0\uAC8C \uB3C4\uC804\uD560 \uB54C \uD55C \uC7A5 \uC501\uB2C8\uB2E4. \uB9E4\uC77C {count}\uC7A5\uC774 \uCC44\uC6CC\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-duel-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   // 한계 돌파의 **만능 파편** — 등급마다 하나다. 그 개체의 파편이 모자랄 때만 같은 등급 렐릭의 돌파에서 모자란
   // 몫을 채운다(`breakthroughFragmentSpend`). 그림은 파편 액자 그대로이고 얼굴 자리에 누구의 것도 아닌 실루엣이 선다.
   { id: "universal-fragment-r", name: "\uB9CC\uB2A5 R \uD30C\uD3B8", description: "\uC5B4\uB290 R \uB810\uB9AD\uC758 \uD55C\uACC4 \uB3CC\uD30C\uC5D0\uB098 \uC4F8 \uC218 \uC788\uB294 \uD30C\uD3B8\uC785\uB2C8\uB2E4. \uADF8 \uB810\uB9AD\uC758 \uD30C\uD3B8\uC774 \uBAA8\uC790\uB784 \uB54C\uB9CC \uBAA8\uC790\uB780 \uB9CC\uD07C \uC18C\uBAA8\uB429\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-universal-fragment-r" }, maxStack: 999, useEffect: { kind: "none" } },
@@ -28669,9 +28794,9 @@ var emptyServerJournal = () => ({ receipts: {}, raidAdmissions: {} });
 function isValidServerJournal(value) {
   if (!value || typeof value !== "object") return false;
   const journal = value;
-  const record2 = (v2) => !!v2 && typeof v2 === "object" && !Array.isArray(v2);
-  const json = (v2) => v2 === null || typeof v2 === "string" || typeof v2 === "boolean" || typeof v2 === "number" && Number.isFinite(v2) || (Array.isArray(v2) ? v2.every(json) : record2(v2) && Object.values(v2).every(json));
-  return (journal.qaTenUpgrade === void 0 || typeof journal.qaTenUpgrade === "boolean") && (journal.storyChoices === void 0 || record2(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record2(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record2(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record2(journal.combat) && record2(journal.combat.tickets) && record2(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && (journal.guildGuard === void 0 || record2(journal.guildGuard) && Number.isSafeInteger(journal.guildGuard.day) && Number.isSafeInteger(journal.guildGuard.used) && journal.guildGuard.used >= 0 && Number.isSafeInteger(journal.guildGuard.best) && journal.guildGuard.best >= 0) && (journal.guildGuardAdmissions === void 0 || record2(journal.guildGuardAdmissions) && Object.entries(journal.guildGuardAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.element === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && Array.isArray(admission.lineup) && admission.lineup.length === 6 && admission.lineup.every((slot) => slot === null || record2(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot)))) && (journal.guildWarAdmissions === void 0 || record2(journal.guildWarAdmissions) && Object.entries(journal.guildWarAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.slotId === "string" && typeof admission.opponentName === "string" && typeof admission.defenderName === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && [admission.attack, admission.defense].every((side) => Array.isArray(side) && side.length === 3 && side.every((slot) => record2(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot))))) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
+  const record3 = (v2) => !!v2 && typeof v2 === "object" && !Array.isArray(v2);
+  const json = (v2) => v2 === null || typeof v2 === "string" || typeof v2 === "boolean" || typeof v2 === "number" && Number.isFinite(v2) || (Array.isArray(v2) ? v2.every(json) : record3(v2) && Object.values(v2).every(json));
+  return (journal.qaTenUpgrade === void 0 || typeof journal.qaTenUpgrade === "boolean") && (journal.storyChoices === void 0 || record3(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record3(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record3(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record3(journal.combat) && record3(journal.combat.tickets) && record3(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record3(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record3(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record3(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record3(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record3(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && (journal.giftLog === void 0 || Array.isArray(journal.giftLog) && journal.giftLog.length <= 200 && journal.giftLog.every((gift) => record3(gift) && typeof gift.title === "string" && typeof gift.sender === "string" && Number.isFinite(Date.parse(gift.receivedAt)) && Array.isArray(gift.rewards) && gift.rewards.every((reward) => record3(reward) && json(reward) && (reward.kind === "currency" || reward.kind === "item") && Number.isSafeInteger(reward.amount)))) && (journal.guildGuard === void 0 || record3(journal.guildGuard) && Number.isSafeInteger(journal.guildGuard.day) && Number.isSafeInteger(journal.guildGuard.used) && journal.guildGuard.used >= 0 && Number.isSafeInteger(journal.guildGuard.best) && journal.guildGuard.best >= 0) && (journal.guildGuardAdmissions === void 0 || record3(journal.guildGuardAdmissions) && Object.entries(journal.guildGuardAdmissions).every(([id, admission]) => id.length > 0 && record3(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.element === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && Array.isArray(admission.lineup) && admission.lineup.length === 6 && admission.lineup.every((slot) => slot === null || record3(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot)))) && (journal.guildWarAdmissions === void 0 || record3(journal.guildWarAdmissions) && Object.entries(journal.guildWarAdmissions).every(([id, admission]) => id.length > 0 && record3(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.slotId === "string" && typeof admission.opponentName === "string" && typeof admission.defenderName === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && [admission.attack, admission.defense].every((side) => Array.isArray(side) && side.length === 3 && side.every((slot) => record3(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot))))) && record3(journal.receipts) && record3(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record3(receipt) && typeof receipt.identity === "string" && record3(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record3(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
 }
 
 // src/core/expeditionPeriods.ts
@@ -29322,17 +29447,31 @@ function observeAccountOwner(uid) {
 // src/core/settings.ts
 init_define_import_meta_env();
 
+// src/core/arenaNotice.ts
+init_define_import_meta_env();
+var count2 = (value) => typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.floor(value) : null;
+function normalizeArenaSeen(value) {
+  if (!value || typeof value !== "object") return null;
+  const v2 = value;
+  const owner2 = typeof v2.owner === "string" && v2.owner.length > 0 && v2.owner.length <= 80 ? v2.owner : null;
+  const score = count2(v2.score), wins = count2(v2.wins), losses = count2(v2.losses);
+  return owner2 === null || score === null || wins === null || losses === null ? null : { owner: owner2, score, wins, losses };
+}
+function sameArenaSeen(a, b) {
+  return a === b || !!a && !!b && a.owner === b.owner && a.score === b.score && a.wins === b.wins && a.losses === b.losses;
+}
+
 // src/core/contentFresh.ts
 init_define_import_meta_env();
 var isContentId = (value) => typeof value === "string" && ALL_GATED_CONTENT.includes(value);
 var uniqueIds = (values) => ALL_GATED_CONTENT.filter((id) => values.includes(id));
 function normalizeContentSeen(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const record2 = value;
-  if (typeof record2.owner !== "string" || record2.owner.length > 64 || !Array.isArray(record2.known)) return null;
-  const known = uniqueIds(record2.known.filter(isContentId));
-  const fresh = Array.isArray(record2.fresh) ? uniqueIds(record2.fresh.filter(isContentId)).filter((id) => known.includes(id)) : [];
-  return { owner: record2.owner, known, fresh };
+  const record3 = value;
+  if (typeof record3.owner !== "string" || record3.owner.length > 64 || !Array.isArray(record3.known)) return null;
+  const known = uniqueIds(record3.known.filter(isContentId));
+  const fresh = Array.isArray(record3.fresh) ? uniqueIds(record3.fresh.filter(isContentId)).filter((id) => known.includes(id)) : [];
+  return { owner: record3.owner, known, fresh };
 }
 function sameContentSeen(a, b) {
   if (!a || !b) return a === b;
@@ -29382,12 +29521,12 @@ init_define_import_meta_env();
 var AUTO_REPEAT_MAX_RUNS = 99;
 var DEFAULT_AUTO_REPEAT_OPTIONS = { runs: 10, stopOnDefeat: true, autoDrink: false };
 function normalizeAutoRepeatOptions(value) {
-  const record2 = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const record3 = value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const d = DEFAULT_AUTO_REPEAT_OPTIONS;
   return {
-    runs: Number.isInteger(record2.runs) && record2.runs >= 1 && record2.runs <= AUTO_REPEAT_MAX_RUNS ? record2.runs : d.runs,
-    stopOnDefeat: typeof record2.stopOnDefeat === "boolean" ? record2.stopOnDefeat : d.stopOnDefeat,
-    autoDrink: typeof record2.autoDrink === "boolean" ? record2.autoDrink : d.autoDrink
+    runs: Number.isInteger(record3.runs) && record3.runs >= 1 && record3.runs <= AUTO_REPEAT_MAX_RUNS ? record3.runs : d.runs,
+    stopOnDefeat: typeof record3.stopOnDefeat === "boolean" ? record3.stopOnDefeat : d.stopOnDefeat,
+    autoDrink: typeof record3.autoDrink === "boolean" ? record3.autoDrink : d.autoDrink
   };
 }
 
@@ -29398,6 +29537,91 @@ var BATTLE_SPEEDS = [1, 1.5, 2, 3];
 // src/core/runeListFilter.ts
 init_define_import_meta_env();
 var RUNE_TRAIT_VIEWS = ["all", "with", "without"];
+
+// src/core/rosterViewMemory.ts
+init_define_import_meta_env();
+
+// src/core/relicFilter.ts
+init_define_import_meta_env();
+var EMPTY_RELIC_FILTER = { rarities: [], squads: [], elements: [], roles: [], reaches: [], currencies: [], specialtyOnly: false, query: "" };
+var RELIC_FILTER_PRESET_AXES = {
+  full: ["rarity", "element", "role", "reach", "squad"],
+  battle: ["element", "role", "reach"],
+  excavation: ["currency", "rarity"],
+  interaction: ["specialty", "element", "role", "squad"]
+};
+
+// src/core/relicSort.ts
+init_define_import_meta_env();
+var RELIC_SORT_MODES = ["number", "rarity", "power"];
+var SORT_DEFAULT_DESCENDING = {
+  number: false,
+  rarity: true,
+  power: true
+};
+
+// src/core/rosterView.ts
+init_define_import_meta_env();
+var DEFAULT_ROSTER_VIEW = {
+  filter: EMPTY_RELIC_FILTER,
+  sortMode: "number",
+  descending: SORT_DEFAULT_DESCENDING.number
+};
+
+// src/core/rosterViewMemory.ts
+var ROSTER_VIEW_SCREEN_PRESET = {
+  codex: "full",
+  party: "battle",
+  expedition: "battle",
+  excavation: "excavation",
+  interaction: "interaction"
+};
+var ROSTER_VIEW_SCREENS = Object.keys(ROSTER_VIEW_SCREEN_PRESET);
+var RARITIES = Object.keys({ R: 1, SR: 1, SSR: 1 });
+var SQUADS = Object.keys({ fang: 1, gear: 1, eye: 1, rune: 1, rogue: 1, annihilation: 1, "sealed-abyss": 1 });
+var ELEMENTS = Object.keys({ fire: 1, water: 1, grass: 1, earth: 1, wind: 1 });
+var ROLES = Object.keys({ warrior: 1, tank: 1, assassin: 1, support: 1 });
+var REACHES = Object.keys({ melee: 1, mid: 1, ranged: 1 });
+var CURRENCIES4 = Object.keys({ gold: 1, cheesecake: 1, rawStone: 1, gems: 1 });
+var record = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
+function axisValues(value, known, shown) {
+  if (!shown || !Array.isArray(value)) return [];
+  return known.filter((item3) => value.includes(item3));
+}
+function normalizeRosterView(value, screen) {
+  const raw = record(value);
+  const f = record(raw.filter);
+  const axes = new Set(RELIC_FILTER_PRESET_AXES[ROSTER_VIEW_SCREEN_PRESET[screen]]);
+  const filter = {
+    ...EMPTY_RELIC_FILTER,
+    rarities: axisValues(f.rarities, RARITIES, axes.has("rarity")),
+    squads: axisValues(f.squads, SQUADS, axes.has("squad")),
+    elements: axisValues(f.elements, ELEMENTS, axes.has("element")),
+    roles: axisValues(f.roles, ROLES, axes.has("role")),
+    reaches: axisValues(f.reaches, REACHES, axes.has("reach")),
+    currencies: axisValues(f.currencies, CURRENCIES4, axes.has("currency")),
+    specialtyOnly: axes.has("specialty") && f.specialtyOnly === true
+  };
+  const known = RELIC_SORT_MODES.includes(raw.sortMode);
+  const sortMode = known ? raw.sortMode : DEFAULT_ROSTER_VIEW.sortMode;
+  const descending = known && typeof raw.descending === "boolean" ? raw.descending : SORT_DEFAULT_DESCENDING[sortMode];
+  return { filter, sortMode, descending };
+}
+function normalizeRosterViews(value) {
+  const raw = record(value);
+  const out = {};
+  for (const screen of ROSTER_VIEW_SCREENS) {
+    if (screen in raw) out[screen] = normalizeRosterView(raw[screen], screen);
+  }
+  return out;
+}
+function rosterViewFor(stored, screen) {
+  const view = stored[screen];
+  return view ? normalizeRosterView(view, screen) : DEFAULT_ROSTER_VIEW;
+}
+function sameRosterView(a, b, screen) {
+  return JSON.stringify(normalizeRosterView(a, screen)) === JSON.stringify(normalizeRosterView(b, screen));
+}
 
 // src/core/settings.ts
 var TEXT_SPEEDS = [0.5, 1, 2];
@@ -29415,13 +29639,13 @@ function createDefaultSettings() {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, adRewardDot: false, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, adRewardDot: false, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null, arenaSeen: null, rosterViews: {} },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" }
   };
 }
-var record = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
+var record2 = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
 var bool = (value, fallback) => typeof value === "boolean" ? value : fallback;
 var volume = (value, fallback) => typeof value === "number" && Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : fallback;
 var tierId = (value) => typeof value === "string" && value.length <= 40 ? value : "";
@@ -29429,18 +29653,18 @@ var seenKey = (value) => typeof value === "number" && Number.isInteger(value) &&
 var allowed = (value, values, fallback) => values.includes(value) ? value : fallback;
 function normalizeSettings(value) {
   const d = createDefaultSettings();
-  const root = record(value);
-  const s = record(root.sound);
-  const v2 = record(root.vibration);
-  const n = record(root.notifications);
-  const p = record(root.presentation);
-  const x = record(root.accessibility);
-  const g = record(root.game);
-  const a = record(root.account);
+  const root = record2(value);
+  const s = record2(root.sound);
+  const v2 = record2(root.vibration);
+  const n = record2(root.notifications);
+  const p = record2(root.presentation);
+  const x = record2(root.accessibility);
+  const g = record2(root.game);
+  const a = record2(root.account);
   return {
     sound: { masterVolume: volume(s.masterVolume, d.sound.masterVolume), musicVolume: volume(s.musicVolume, d.sound.musicVolume), effectsVolume: volume(s.effectsVolume, d.sound.effectsVolume), voiceVolume: volume(s.voiceVolume, d.sound.voiceVolume), masterMuted: bool(s.masterMuted, d.sound.masterMuted), musicMuted: bool(s.musicMuted, d.sound.musicMuted), effectsMuted: bool(s.effectsMuted, d.sound.effectsMuted), voiceMuted: bool(s.voiceMuted, d.sound.voiceMuted) },
     vibration: { enabled: bool(v2.enabled, d.vibration.enabled), combatHit: bool(v2.combatHit, d.vibration.combatHit), ultimate: bool(v2.ultimate, d.vibration.ultimate), excavationResult: bool(v2.excavationResult, d.vibration.excavationResult), uiInput: bool(v2.uiInput, d.vibration.uiInput) },
-    notifications: { enabled: bool(n.enabled, d.notifications.enabled), staminaFull: bool(n.staminaFull, d.notifications.staminaFull), dailyMission: bool(n.dailyMission, d.notifications.dailyMission), quietHours: bool(n.quietHours, d.notifications.quietHours), quietHoursStart: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(n.quietHoursStart)) ? String(n.quietHoursStart) : d.notifications.quietHoursStart, quietHoursEnd: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(n.quietHoursEnd)) ? String(n.quietHoursEnd) : d.notifications.quietHoursEnd, lastScheduledIds: Object.fromEntries(Object.entries(record(n.lastScheduledIds)).filter(([key, id]) => ["staminaFull", "dailyMission"].includes(key) && typeof id === "string" && id.length <= 120)) },
+    notifications: { enabled: bool(n.enabled, d.notifications.enabled), staminaFull: bool(n.staminaFull, d.notifications.staminaFull), dailyMission: bool(n.dailyMission, d.notifications.dailyMission), quietHours: bool(n.quietHours, d.notifications.quietHours), quietHoursStart: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(n.quietHoursStart)) ? String(n.quietHoursStart) : d.notifications.quietHoursStart, quietHoursEnd: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(n.quietHoursEnd)) ? String(n.quietHoursEnd) : d.notifications.quietHoursEnd, lastScheduledIds: Object.fromEntries(Object.entries(record2(n.lastScheduledIds)).filter(([key, id]) => ["staminaFull", "dailyMission"].includes(key) && typeof id === "string" && id.length <= 120)) },
     presentation: {
       screenShake: bool(p.screenShake, d.presentation.screenShake),
       damageNumbers: bool(p.damageNumbers, d.presentation.damageNumbers),
@@ -29470,8 +29694,8 @@ function normalizeSettings(value) {
       // 지원 언어 목록은 language.ts 하나가 가지므로 여기에 코드를 다시 적지 않는다.
       language: normalizeLanguage(g.language),
       // 단계가 실제로 있는지는 입구가 가린다 — 여기서는 짧은 문자열인지만 본다.
-      dungeonTiers: { bounty: tierId(record(g.dungeonTiers).bounty), cake: tierId(record(g.dungeonTiers).cake) },
-      guildSeen: { war: seenKey(record(g.guildSeen).war), guard: seenKey(record(g.guildSeen).guard), guardReward: seenKey(record(g.guildSeen).guardReward), warResult: seenKey(record(g.guildSeen).warResult) },
+      dungeonTiers: { bounty: tierId(record2(g.dungeonTiers).bounty), cake: tierId(record2(g.dungeonTiers).cake) },
+      guildSeen: { war: seenKey(record2(g.guildSeen).war), guard: seenKey(record2(g.guildSeen).guard), guardReward: seenKey(record2(g.guildSeen).guardReward), warResult: seenKey(record2(g.guildSeen).warResult) },
       guildLevelSeen: typeof g.guildLevelSeen === "string" && /^[\w-]{1,64}:\d{1,2}$/.test(g.guildLevelSeen) ? g.guildLevelSeen : "",
       // 보유·중복은 편성 화면이 다시 가린다 — 여기서는 여섯 칸 이하의 짧은 ID·빈 칸인지만 본다.
       partyPresets: normalizePartyPresets(g.partyPresets),
@@ -29482,16 +29706,20 @@ function normalizeSettings(value) {
       legalConsent: typeof g.legalConsent === "string" && /^[\w.:|-]{1,160}$/.test(g.legalConsent) ? g.legalConsent : "",
       // 필드가 없던 저장은 예전 모습(얼굴 없음 · 장착 룬도 보임)으로 이관한다.
       runeBag: {
-        showHolder: bool(record(g.runeBag).showHolder, d.game.runeBag.showHolder),
-        showEquipped: bool(record(g.runeBag).showEquipped, d.game.runeBag.showEquipped),
+        showHolder: bool(record2(g.runeBag).showHolder, d.game.runeBag.showHolder),
+        showEquipped: bool(record2(g.runeBag).showEquipped, d.game.runeBag.showEquipped),
         // 특성 유무·즐겨찾기 토글이 생기기 전의 저장은 모두 보이는 쪽(전체·끔)으로 읽는다.
-        trait: allowed(record(g.runeBag).trait, RUNE_TRAIT_VIEWS, d.game.runeBag.trait),
-        bookmarkedOnly: bool(record(g.runeBag).bookmarkedOnly, d.game.runeBag.bookmarkedOnly)
+        trait: allowed(record2(g.runeBag).trait, RUNE_TRAIT_VIEWS, d.game.runeBag.trait),
+        bookmarkedOnly: bool(record2(g.runeBag).bookmarkedOnly, d.game.runeBag.bookmarkedOnly)
       },
       // 필드가 없던 저장은 기본 옵션(10판 · 패배 시 중단 · 드링크 끔)으로 이관한다.
       autoRepeat: normalizeAutoRepeatOptions(g.autoRepeat),
       // 필드가 없던 저장은 기록 없음(null)이다 — 첫 로비가 지금 열린 것을 「이미 본 것」으로 시작한다.
-      contentSeen: normalizeContentSeen(g.contentSeen)
+      contentSeen: normalizeContentSeen(g.contentSeen),
+      // 필드가 없던 저장은 기록 없음 — 처음 들어온 입구가 지금 전적으로 시작한다.
+      arenaSeen: normalizeArenaSeen(g.arenaSeen),
+      // 필드가 없던 저장은 기억 없음 — 모든 목록이 기본 필터·정렬로 선다. 없어진 옵션은 기본값으로 떨어진다.
+      rosterViews: normalizeRosterViews(g.rosterViews)
     },
     // 인증 토큰은 이 모델에 애초에 자리를 만들지 않아 로컬 저장으로 새는 경로를 차단한다.
     account: { provider: allowed(a.provider, ["guest", "google", "apple"], d.account.provider), displayId: typeof a.displayId === "string" && a.displayId.length <= 80 ? a.displayId : d.account.displayId }
@@ -30228,10 +30456,11 @@ var AD_REWARD_SLOTS = [
   { id: "gem-ad", displayText: "\uC82C 50", reward: { kind: "currency", currency: "gems", amount: 50 }, dailyLimitUtc: 3, placement: "premium_gems" },
   // 일간 탭: 「일일 무료 보급」을 받은 뒤에만 하루 두 번 같은 묶음을 더 받는다.
   { id: "daily-bonus-ad", displayText: "\uC77C\uC77C \uBCF4\uAE09 \uCD94\uAC00", reward: { kind: "currencies", grants: [{ currency: "gold", amount: 1e4 }, { currency: "cheesecake", amount: 30 }, { currency: "gems", amount: 10 }], items: [{ itemId: "stamina-tonic", quantity: 1 }] }, dailyLimitUtc: 2, placement: "premium_daily", requiresClaimedProductId: "premium-free-daily" },
-  { id: "gold-ad", displayText: "\uACE8\uB4DC 5,000", reward: { kind: "currency", currency: "gold", amount: 5e3 }, dailyLimitUtc: 3, placement: "shop_gold" },
-  // 고고학 상점의 원석, 전리품 상점의 토벌·인양 증표. 모두 하루 세 번이다.
-  { id: "archaeology-ad", displayText: "\uC6D0\uC11D 100", reward: { kind: "currency", currency: "rawStone", amount: 100 }, dailyLimitUtc: 3, placement: "archaeology_shop" },
-  { id: "loot-ad", displayText: "\uD1A0\uBC8C \uC99D\uD45C 5 \xB7 \uC778\uC591 \uC99D\uD45C 5", reward: { kind: "currencies", grants: [{ currency: "raidSigil", amount: 5 }, { currency: "salvageRecord", amount: 5 }] }, dailyLimitUtc: 3, placement: "loot_shop" }
+  // **상점 세 곳의 광고는 그 가게 무료 칸의 뒷면이다**(응태 요청 2026-11-15). 무료 칸을 받은 뒤 같은 칸이
+  // 같은 묶음의 광고 칸으로 바뀐다 — 지급품은 그 무료 상품과 같아야 하고(`adRewards.test`), 무료 1 + 광고 2가 하루 몫이다.
+  { id: "gold-ad", displayText: "\uACE8\uB4DC 5,000 \xB7 \uCE58\uC988\uCF00\uC774\uD06C 20", reward: { kind: "currencies", grants: [{ currency: "gold", amount: 5e3 }, { currency: "cheesecake", amount: 20 }] }, dailyLimitUtc: 2, placement: "shop_gold", requiresClaimedProductId: "shop-free-daily" },
+  { id: "archaeology-ad", displayText: "\uC6D0\uC11D 100", reward: { kind: "currency", currency: "rawStone", amount: 100 }, dailyLimitUtc: 2, placement: "archaeology_shop", requiresClaimedProductId: "arch-free-daily" },
+  { id: "loot-ad", displayText: "\uD1A0\uBC8C \uC99D\uD45C 5 \xB7 \uC778\uC591 \uC99D\uD45C 5", reward: { kind: "currencies", grants: [{ currency: "raidSigil", amount: 5 }, { currency: "salvageRecord", amount: 5 }] }, dailyLimitUtc: 2, placement: "loot_shop", requiresClaimedProductId: "loot-free-daily" }
   // 기준 점수가 없거나 광고 검증이 실패하면 서버가 지급을 거절하며 횟수도 소비하지 않는다.
 ];
 function findAdRewardSlot(slotId) {
@@ -30251,12 +30480,12 @@ var DUNGEON_RUN_STAMINA = 10;
 function normalizeSweepCount(value) {
   return Number.isInteger(value) && value >= 1 && value <= SWEEP_COUNT_LIMIT ? value : void 0;
 }
-function settleSweep(cost, count2, adFreeMembership) {
+function settleSweep(cost, count3, adFreeMembership) {
   return {
-    count: count2,
-    staminaCost: cost.staminaCost * count2,
-    ticketCost: adFreeMembership ? 0 : count2,
-    rewards: Object.fromEntries(Object.entries(cost.rewards).map(([currency3, amount]) => [currency3, amount * count2]))
+    count: count3,
+    staminaCost: cost.staminaCost * count3,
+    ticketCost: adFreeMembership ? 0 : count3,
+    rewards: Object.fromEntries(Object.entries(cost.rewards).map(([currency3, amount]) => [currency3, amount * count3]))
   };
 }
 function sweepRefusal(input) {
@@ -30270,14 +30499,14 @@ function sweepRefusal(input) {
 
 // src/data/cakeOperation.ts
 var CAKE_OPERATION_TIERS = [
-  { id: "cake-1", name: "1\uB2E8\uACC4", enemyLevel: 4, enemyCount: 10, rewardCheesecake: 30 },
-  { id: "cake-2", name: "2\uB2E8\uACC4", enemyLevel: 11, enemyCount: 10, rewardCheesecake: 44 },
-  { id: "cake-3", name: "3\uB2E8\uACC4", enemyLevel: 18, enemyCount: 11, rewardCheesecake: 58 },
-  { id: "cake-4", name: "4\uB2E8\uACC4", enemyLevel: 24, enemyCount: 12, rewardCheesecake: 72 },
-  { id: "cake-5", name: "5\uB2E8\uACC4", enemyLevel: 32, enemyCount: 13, rewardCheesecake: 88 },
-  { id: "cake-6", name: "6\uB2E8\uACC4", enemyLevel: 41, enemyCount: 14, rewardCheesecake: 108 },
-  { id: "cake-7", name: "7\uB2E8\uACC4", enemyLevel: 49, enemyCount: 15, rewardCheesecake: 128 },
-  { id: "cake-8", name: "8\uB2E8\uACC4", enemyLevel: 53, enemyCount: 15, rewardCheesecake: 150 }
+  { id: "cake-1", name: "1\uB2E8\uACC4", enemyLevel: 9, enemyCount: 10, rewardCheesecake: 30 },
+  { id: "cake-2", name: "2\uB2E8\uACC4", enemyLevel: 20, enemyCount: 10, rewardCheesecake: 44 },
+  { id: "cake-3", name: "3\uB2E8\uACC4", enemyLevel: 25, enemyCount: 11, rewardCheesecake: 58 },
+  { id: "cake-4", name: "4\uB2E8\uACC4", enemyLevel: 32, enemyCount: 11, rewardCheesecake: 72 },
+  { id: "cake-5", name: "5\uB2E8\uACC4", enemyLevel: 38, enemyCount: 12, rewardCheesecake: 88 },
+  { id: "cake-6", name: "6\uB2E8\uACC4", enemyLevel: 43, enemyCount: 12, rewardCheesecake: 108 },
+  { id: "cake-7", name: "7\uB2E8\uACC4", enemyLevel: 50, enemyCount: 13, rewardCheesecake: 128 },
+  { id: "cake-8", name: "8\uB2E8\uACC4", enemyLevel: 57, enemyCount: 13, rewardCheesecake: 150 }
 ];
 var CAKE_OPERATION_ENEMY_IDS = [
   "raitia-grass",
@@ -36244,37 +36473,37 @@ var BOUNTY_TIERS = [
     { relicId: "koma", level: 20 }
   ] },
   { id: "bounty-3", order: 5, name: "\uD604\uC0C1\uC218\uBC30 5\uAE09", rewardGold: 5700, rounds: [
-    { relicId: "neuri", level: 26 },
-    { relicId: "atra", level: 24 },
+    { relicId: "mir", level: 26 },
+    { relicId: "atra", level: 25 },
     { relicId: "koma", level: 24 }
   ] },
-  // 6급~9급은 이카닉시아가 마지막 라운드의 벽으로 선다(10급은 아모).
+  // 6급부터 5~7장의 감금조가 선다 — 라자(5장 부간부)가 먼저, 마가사(5장 간부)가 벽이다.
   { id: "bounty-8", order: 6, name: "\uD604\uC0C1\uC218\uBC30 6\uAE09", rewardGold: 7800, rounds: [
     { relicId: "pulsi", level: 31 },
-    { relicId: "amo", level: 31 },
-    { relicId: "ikanixia", level: 30 }
+    { relicId: "raja", level: 31 },
+    { relicId: "magasa", level: 30 }
   ] },
   { id: "bounty-4", order: 7, name: "\uD604\uC0C1\uC218\uBC30 7\uAE09", rewardGold: 11500, rounds: [
-    { relicId: "pulsi", level: 40 },
-    { relicId: "atra", level: 37 },
+    { relicId: "toby", level: 40 },
+    { relicId: "magasa", level: 37 },
     { relicId: "ikanixia", level: 37 }
   ] },
+  // 8·9급의 벽은 노아(6장) — 1대1에서 가장 좁은 개체다.
   { id: "bounty-9", order: 8, name: "\uD604\uC0C1\uC218\uBC30 8\uAE09", rewardGold: 15e3, rounds: [
-    { relicId: "ripa", level: 41 },
+    { relicId: "raja", level: 41 },
     { relicId: "atra", level: 41 },
-    { relicId: "ikanixia", level: 40 }
+    { relicId: "noa", level: 40 }
   ] },
   { id: "bounty-10", order: 9, name: "\uD604\uC0C1\uC218\uBC30 9\uAE09", rewardGold: 2e4, rounds: [
-    { relicId: "ripa", level: 49 },
-    { relicId: "koma", level: 46 },
-    { relicId: "ikanixia", level: 46 }
+    { relicId: "magasa", level: 49 },
+    { relicId: "ikanixia", level: 46 },
+    { relicId: "noa", level: 46 }
   ] },
-  // 10급은 돌파 4단계를 다 연 가장 무거운 셋의 자리다. 아모가 가장 좁은 벽이라 마지막에 선다
-  // (v0.442.7 — 이카닉시아의 반향 막을 반으로 줄이자 이카닉시아·코마를 확실히 이기는 개체 수가 11종으로 같아져 아모와 자리를 바꿨다).
+  // 10급은 7장 끝의 부대장 카르가 마지막에 선다.
   { id: "bounty-5", order: 10, name: "\uD604\uC0C1\uC218\uBC30 10\uAE09", rewardGold: 28e3, rounds: [
-    { relicId: "ikanixia", level: 50 },
+    { relicId: "noa", level: 50 },
     { relicId: "koma", level: 50 },
-    { relicId: "amo", level: 53 }
+    { relicId: "carno", level: 53 }
   ] }
 ];
 var BOUNTY_TIER_BY_ID = new Map(BOUNTY_TIERS.map((tier) => [tier.id, tier]));
@@ -36301,13 +36530,13 @@ function roll2(random) {
   if (!Number.isFinite(value) || value < 0 || value >= 1) throw new RangeError("\uC6D0\uC815 \uB09C\uC218\uB294 0 \uC774\uC0C1 1 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
   return value;
 }
-function chooseColumns(count2, random) {
+function chooseColumns(count3, random) {
   const columns = Array.from({ length: EXPEDITION_MAP_BALANCE.columns }, (_, column) => column);
   for (let index = columns.length - 1; index > 0; index -= 1) {
     const target = Math.floor(roll2(random) * (index + 1));
     [columns[index], columns[target]] = [columns[target], columns[index]];
   }
-  return columns.slice(0, count2).sort((left, right) => left - right);
+  return columns.slice(0, count3).sort((left, right) => left - right);
 }
 function chooseType(previous, streak, nonCombatStreak, random) {
   const candidates = ROUTE_TYPES.filter((type) => {
@@ -36337,9 +36566,9 @@ function generateExpeditionMap(input) {
   const columnHistory = /* @__PURE__ */ new Map();
   for (let floor = 1; floor <= EXPEDITION_MAP_BALANCE.routeFloors; floor += 1) {
     const span = EXPEDITION_MAP_BALANCE.nodesPerFloor.max - EXPEDITION_MAP_BALANCE.nodesPerFloor.min + 1;
-    const count2 = EXPEDITION_MAP_BALANCE.nodesPerFloor.min + Math.floor(roll2(input.random) * span);
+    const count3 = EXPEDITION_MAP_BALANCE.nodesPerFloor.min + Math.floor(roll2(input.random) * span);
     const requiredCombat = EXPEDITION_MAP_BALANCE.requiredCombatFloors.includes(floor);
-    const nodes = chooseColumns(count2, input.random).map((column) => {
+    const nodes = chooseColumns(count3, input.random).map((column) => {
       const history = columnHistory.get(column);
       const type = requiredCombat ? EXPEDITION_COMBAT_TYPES[Math.floor(roll2(input.random) * EXPEDITION_COMBAT_TYPES.length)] : chooseType(history?.type, history?.streak ?? 0, history?.nonCombatStreak ?? 0, input.random);
       const nonCombat = EXPEDITION_NON_COMBAT_TYPES.includes(type);
@@ -36783,7 +37012,7 @@ function cloneRune(rune) {
     ...rune,
     mainStats: [{ ...rune.mainStats[0] }, { ...rune.mainStats[1] }],
     subStats: rune.subStats.map((stat) => ({ ...stat })),
-    enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record2) => ({ ...record2 }))])),
+    enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record3) => ({ ...record3 }))])),
     engravings: rune.engravings.map((engraving) => ({ ...engraving }))
   };
 }
@@ -36830,9 +37059,9 @@ function migrateSavedRelicIds(input) {
   if (interaction && Array.isArray(interaction.slots)) interaction.slots.forEach((slot) => {
     if (slot && typeof slot === "object") slot.party = mapUniqueIds(slot.party);
   });
-  if (Array.isArray(data.observationRecords)) data.observationRecords.forEach((record2) => {
-    if (!record2 || typeof record2 !== "object") return;
-    const entry = record2;
+  if (Array.isArray(data.observationRecords)) data.observationRecords.forEach((record3) => {
+    if (!record3 || typeof record3 !== "object") return;
+    const entry = record3;
     entry.relicId = mapId(entry.relicId);
     entry.storyId = mapStoryId(entry.storyId);
     entry.questionId = mapObservationId(entry.questionId);
@@ -36958,7 +37187,7 @@ var SaveManager = class {
       saveVersion: CURRENT_SAVE_VERSION,
       settings: normalizeSettings(state.settings),
       completedStoryIds: [...state.completedStoryIds],
-      observationRecords: state.observationRecords.map((record2) => ({ ...record2 })),
+      observationRecords: state.observationRecords.map((record3) => ({ ...record3 })),
       selectedStageId: state.selectedStageId,
       party: [...state.party],
       clearedStageIds: [...state.cleared],
@@ -37168,7 +37397,7 @@ var SaveManager = class {
       heartGemSlots: (v13Slots[id] ?? progress.heartGemSlots ?? [null, null, null]).map((slot) => slot === null ? null : legacyIdMap.get(slot) ?? slot)
     }]));
     const savedFragments = Number(legacy.saveVersion) >= 17 && legacy.relicFragments && typeof legacy.relicFragments === "object" ? legacy.relicFragments : void 0;
-    const relicFragments = savedFragments ?? Object.fromEntries(Object.entries(savedProgress).map(([id, progress]) => [id, progress.awakening ?? 0]).filter(([, count2]) => count2 > 0));
+    const relicFragments = savedFragments ?? Object.fromEntries(Object.entries(savedProgress).map(([id, progress]) => [id, progress.awakening ?? 0]).filter(([, count3]) => count3 > 0));
     const itemInventory = repairLegacyLotStacks((Array.isArray(legacy.itemInventory) ? legacy.itemInventory : []).filter((stack) => stack?.itemId !== "raid-sigil"));
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current2 } = legacy;
     if (legacy.saveVersion === void 0) return { ...current2, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, chestForge, delophyHunt, shuteFishing, achievements, tutorial };
@@ -37203,7 +37432,7 @@ var SaveManager = class {
     if (!Array.isArray(data.earnedProfileModifierIds) || !Array.isArray(data.equippedProfileModifierIds) || data.earnedProfileModifierIds.some((id) => !modifierIds.has(id)) || data.equippedProfileModifierIds.some((id) => !data.earnedProfileModifierIds.includes(id)) || new Set(data.earnedProfileModifierIds).size !== data.earnedProfileModifierIds.length || new Set(data.equippedProfileModifierIds).size !== data.equippedProfileModifierIds.length || data.equippedProfileModifierIds.length > MAX_EQUIPPED_PROFILE_MODIFIERS) fail3("\uD504\uB85C\uD544 \uC218\uC2DD\uC5B4 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!sameJsonShape(data.settings, normalizeSettings(data.settings))) fail3("\uC124\uC815 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.completedStoryIds) || data.completedStoryIds.some((id) => typeof id !== "string") || new Set(data.completedStoryIds).size !== data.completedStoryIds.length) fail3("\uC644\uB8CC \uC2A4\uD1A0\uB9AC \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.observationRecords) || data.observationRecords.some((record2) => !record2 || typeof record2.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record2.date) || !relicIds.has(record2.relicId) || typeof record2.storyId !== "string" || typeof record2.questionId !== "string" || typeof record2.question !== "string" || typeof record2.choiceId !== "string" || typeof record2.answer !== "string" || typeof record2.personalityTag !== "string" || typeof record2.discoveredHabit !== "string")) fail3("\uAD00\uCC30 \uC778\uD130\uBDF0 \uAE30\uB85D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.observationRecords) || data.observationRecords.some((record3) => !record3 || typeof record3.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record3.date) || !relicIds.has(record3.relicId) || typeof record3.storyId !== "string" || typeof record3.questionId !== "string" || typeof record3.question !== "string" || typeof record3.choiceId !== "string" || typeof record3.answer !== "string" || typeof record3.personalityTag !== "string" || typeof record3.discoveredHabit !== "string")) fail3("\uAD00\uCC30 \uC778\uD130\uBDF0 \uAE30\uB85D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (new Set(data.observationRecords.map(({ date }) => date)).size !== data.observationRecords.length) fail3("\uD558\uB8E8\uC5D0 \uAD00\uCC30 \uC778\uD130\uBDF0\uB97C \uB450 \uBC88 \uAE30\uB85D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.party) || data.party.length !== 3 || new Set(data.party).size !== 3 || data.party.some((id) => !data.ownedRelicIds.includes(id))) fail3("\uD30C\uD2F0\uB294 \uC11C\uB85C \uB2E4\uB978 \uBCF4\uC720 \uB810\uB9AD 3\uBA85\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
     if (!relicIds.has(data.favorite) || !data.ownedRelicIds.includes(data.favorite)) fail3("\uC560\uCC29 \uB810\uB9AD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
@@ -37218,7 +37447,7 @@ var SaveManager = class {
     for (const [id, progress] of Object.entries(data.relicProgress)) {
       if (!relicIds.has(id) || !Number.isInteger(progress.breakthrough) || progress.breakthrough < 0 || progress.breakthrough > BREAKTHROUGH_CAP || progress.resonance !== void 0 && (!Number.isInteger(progress.resonance) || progress.resonance < 0 || progress.resonance > RESONANCE_CAP || progress.breakthrough < BREAKTHROUGH_CAP) || !Number.isInteger(progress.exp) || progress.exp < 0 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > 10 || !Number.isInteger(progress.bondXp) || progress.bondXp < 0 || progress.bondXp > 650 || typeof progress.lastLobbyInteractionDate !== "string" || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail3("\uB810\uB9AD \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     }
-    if (!data.relicFragments || typeof data.relicFragments !== "object" || Object.entries(data.relicFragments).some(([id, count2]) => !data.ownedRelicIds.includes(id) || !Number.isInteger(count2) || count2 < 0)) fail3("\uB810\uB9AD \uD30C\uD3B8 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.relicFragments || typeof data.relicFragments !== "object" || Object.entries(data.relicFragments).some(([id, count3]) => !data.ownedRelicIds.includes(id) || !Number.isInteger(count3) || count3 < 0)) fail3("\uB810\uB9AD \uD30C\uD3B8 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.runeInventory)) fail3("\uB8EC \uC778\uBCA4\uD1A0\uB9AC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.itemInventory) || new Set(data.itemInventory.map(({ itemId }) => itemId)).size !== data.itemInventory.length || data.itemInventory.some((stack) => {
       const { itemId, quantity } = stack;
@@ -37242,7 +37471,7 @@ var SaveManager = class {
     }) || !Array.isArray(data.missions.claimedResearchStageIds) || data.missions.claimedResearchStageIds.some((id) => typeof id !== "string") || new Set(data.missions.claimedResearchStageIds).size !== data.missions.claimedResearchStageIds.length) fail3("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.productPurchases || typeof data.productPurchases !== "object" || Object.values(data.productPurchases).some((value) => typeof value.periodKey !== "string" || !Number.isInteger(value.count) || value.count < 0)) fail3("\uC0C1\uD488 \uAD6C\uB9E4 \uC81C\uD55C \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     const adLimits = { ...Object.fromEntries(AD_REWARD_SLOTS.map(({ id, dailyLimitUtc }) => [id, dailyLimitUtc])), [ROULETTE.counter]: ROULETTE.limit };
-    if (!data.dailyAdRewards || typeof data.dailyAdRewards.date !== "string" || !data.dailyAdRewards.claimsBySlot || Object.entries(data.dailyAdRewards.claimsBySlot).some(([id, count2]) => !(id in adLimits) || !Number.isInteger(count2) || count2 < 0 || count2 > adLimits[id]) || !Array.isArray(data.dailyAdRewards.requestIds) || data.dailyAdRewards.requestIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.dailyAdRewards.requestIds).size !== data.dailyAdRewards.requestIds.length) fail3("\uC77C\uC77C \uAD11\uACE0 \uC218\uB839 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.dailyAdRewards || typeof data.dailyAdRewards.date !== "string" || !data.dailyAdRewards.claimsBySlot || Object.entries(data.dailyAdRewards.claimsBySlot).some(([id, count3]) => !(id in adLimits) || !Number.isInteger(count3) || count3 < 0 || count3 > adLimits[id]) || !Array.isArray(data.dailyAdRewards.requestIds) || data.dailyAdRewards.requestIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.dailyAdRewards.requestIds).size !== data.dailyAdRewards.requestIds.length) fail3("\uC77C\uC77C \uAD11\uACE0 \uC218\uB839 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.expedition || typeof data.expedition.weekKey !== "string" || typeof data.expedition.dayKey !== "string" || !Number.isInteger(data.expedition.playsToday) || data.expedition.playsToday < 0 || !Array.isArray(data.expedition.claimedRewardStageIds) || typeof data.expedition.bestAchievedAt !== "string" || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || !Array.isArray(data.expedition.lastParty) || data.expedition.lastParty.length > 3 || new Set(data.expedition.lastParty).size !== data.expedition.lastParty.length || data.expedition.lastParty.some((id) => !data.ownedRelicIds.includes(id)) || data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null) fail3("\uC6D0\uC815 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.raid || !Array.isArray(data.raid.instances) || !data.raid.instances.every(isRaidInstance) || new Set(data.raid.instances.map(({ id }) => id)).size !== data.raid.instances.length) fail3("\uB808\uC774\uB4DC \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.cakeOperation || !Number.isInteger(data.cakeOperation.clearedIndex) || data.cakeOperation.clearedIndex < -1 || data.cakeOperation.clearedIndex >= CAKE_OPERATION_TIERS.length) fail3("\uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
@@ -37315,7 +37544,7 @@ var SaveManager = class {
       archaeology: structuredClone(data.archaeology ?? createArchaeologyState()),
       settings: normalizeSettings(data.settings),
       completedStoryIds: new Set(data.completedStoryIds),
-      observationRecords: data.observationRecords.map((record2) => ({ ...record2 })),
+      observationRecords: data.observationRecords.map((record3) => ({ ...record3 })),
       selectedStageId: data.selectedStageId,
       party: [...data.party],
       cleared: new Set(data.clearedStageIds),
@@ -37349,7 +37578,7 @@ var SaveManager = class {
       shuteFishing: structuredClone(data.shuteFishing),
       situationalOffers: normalizeSituationalOfferState(data.situationalOffers),
       gachaHistory: normalizeGachaHistory(data.gachaHistory),
-      achievements: { ...data.achievements, claimed: { ...data.achievements.claimed }, ...data.achievements.growth ? { growth: [...data.achievements.growth] } : {} },
+      achievements: { ...data.achievements, claimed: { ...data.achievements.claimed }, ...data.achievements.growth ? { growth: [...data.achievements.growth] } : {}, ...data.achievements.encountered ? { encountered: [...data.achievements.encountered] } : {} },
       tutorial: { completedStepIds: [...data.tutorial.completedStepIds], ...data.tutorial.seenIntroIds ? { seenIntroIds: [...data.tutorial.seenIntroIds] } : {}, ...data.tutorial.freeRuneCraft ? { freeRuneCraft: { ...data.tutorial.freeRuneCraft } } : {} }
     };
   }
@@ -37543,7 +37772,7 @@ var UNLIMITED = Number.MAX_SAFE_INTEGER;
 function limits(target, maxTriggers = 1, cooldownSeconds = 0, maxStacks = 1) {
   return { maxTriggers, cooldownSeconds, maxStacks, target };
 }
-function buildEffects(def, { value, value2, count: count2 }, relicId) {
+function buildEffects(def, { value, value2, count: count3 }, relicId) {
   const scope = { kind: "relic", relicId };
   const effect = def.effect;
   switch (effect.kind) {
@@ -37653,7 +37882,7 @@ function buildEffects(def, { value, value2, count: count2 }, relicId) {
     case "warmUp":
       return [{ kind: "warmUpHaste", percentPerStack: value, everySeconds: effect.everySeconds, maxStacks: effect.maxStacks, scope }];
     case "periodicCrit":
-      return [{ kind: "periodicCrit", everyN: Math.max(effect.minEvery, value - (count2 - 1)), scope }];
+      return [{ kind: "periodicCrit", everyN: Math.max(effect.minEvery, value - (count3 - 1)), scope }];
   }
 }
 function resolveRuneTraitStacking(traits, relicId) {
@@ -38005,14 +38234,14 @@ function prepareCombat(state, request, now, id) {
 function finishCombat(state, proof, now) {
   if (!proof || typeof proof.id !== "string" || !Array.isArray(proof.actions) || proof.actions.length > MAX_COMBAT_ACTIONS || !Number.isInteger(proof.ticks) || proof.ticks < 0 || proof.ticks > MAX_COMBAT_TICKS || proof.abandoned !== void 0 && typeof proof.abandoned !== "boolean")
     return fail("proof_shape");
-  const record2 = combatJournal(state).records[proof.id];
-  if (!record2) return fail("no_record");
-  if (Date.parse(record2.lease.expiresAt) < now.getTime()) return fail("lease_expired");
-  if (record2.verdict) return structuredClone(record2.verdict);
-  if (record2.lease.setup.options?.automaticUltimates && proof.actions.length) return fail("auto_ultimate_actions");
-  if (proof.ticks * COMBAT_STEP_MS > Math.max(0, now.getTime() - Date.parse(record2.issuedAt)) * 3 + 2e3)
+  const record3 = combatJournal(state).records[proof.id];
+  if (!record3) return fail("no_record");
+  if (Date.parse(record3.lease.expiresAt) < now.getTime()) return fail("lease_expired");
+  if (record3.verdict) return structuredClone(record3.verdict);
+  if (record3.lease.setup.options?.automaticUltimates && proof.actions.length) return fail("auto_ultimate_actions");
+  if (proof.ticks * COMBAT_STEP_MS > Math.max(0, now.getTime() - Date.parse(record3.issuedAt)) * 3 + 2e3)
     return fail("too_fast");
-  const battle = combatState(record2.lease), rng = bossBattleRandom(record2.lease.seed);
+  const battle = combatState(record3.lease), rng = bossBattleRandom(record3.lease.seed);
   let index = 0, previous = -1;
   for (const action of proof.actions) {
     if (!action || !Number.isInteger(action.tick) || action.tick < 0 || action.tick < previous || action.tick > proof.ticks || typeof action.actorId !== "string")
@@ -38038,7 +38267,7 @@ function finishCombat(state, proof, now) {
   if (!proof.abandoned && battle.phase === "fight") return fail(`still_fighting@${proof.ticks}`);
   const victory = !proof.abandoned && battle.phase === "victory";
   const results = skirmishRelicResults(battle);
-  const party = record2.input.input.mode === "expedition" ? record2.input.input.relics.map((r) => r.relicId) : record2.lease.setup.players.map((f) => f.id);
+  const party = record3.input.input.mode === "expedition" ? record3.input.input.relics.map((r) => r.relicId) : record3.lease.setup.players.map((f) => f.id);
   const verdict = {
     victory,
     relicHp: party.map(
@@ -38046,14 +38275,14 @@ function finishCombat(state, proof, now) {
     ),
     elapsedMs: proof.ticks * COMBAT_STEP_MS
   };
-  record2.verdict = verdict;
+  record3.verdict = verdict;
   return structuredClone(verdict);
 }
 function consumeCombat(state, key) {
   const journal = combatJournal(state);
   delete journal.tickets[key];
-  for (const [id, record2] of Object.entries(journal.records))
-    if (combatKey(record2.input) === key) delete journal.records[id];
+  for (const [id, record3] of Object.entries(journal.records))
+    if (combatKey(record3.input) === key) delete journal.records[id];
 }
 
 // src/api/storyAuthority.ts
@@ -39999,13 +40228,13 @@ function carryoverTensOnClose(banner, next) {
   if (next.pullsSinceSsr >= total) return 0;
   return Math.floor(Math.max(0, banner.pullLimit - total) / 10);
 }
-function pullCost(banner, count2, pity) {
-  if (count2 === 10 && carryoverTenAvailable(banner, pity)) return banner.carryoverTenCost;
-  return count2 === 10 ? banner.costTen : banner.costOne * count2;
+function pullCost(banner, count3, pity) {
+  if (count3 === 10 && carryoverTenAvailable(banner, pity)) return banner.carryoverTenCost;
+  return count3 === 10 ? banner.costTen : banner.costOne * count3;
 }
 var RESEARCH_TICKET_GEM_PRICE = 300;
-function pullPayment(wallet, banner, count2, pity) {
-  const cost = pullCost(banner, count2, pity);
+function pullPayment(wallet, banner, count3, pity) {
+  const cost = pullCost(banner, count3, pity);
   const tickets = Math.max(0, Math.min(cost, wallet[banner.currency]));
   const gems3 = (cost - tickets) * RESEARCH_TICKET_GEM_PRICE;
   return { tickets, gems: gems3, affordable: wallet.gems >= gems3 };
@@ -40021,12 +40250,12 @@ function bannerPullsRemaining(banner, pity) {
   if (banner.closeOnHighestRarity && (pity?.pullsSinceSsr ?? 0) < total) return 0;
   return Math.max(0, banner.pullLimit - total);
 }
-function bannerAcceptsCount(banner, count2, pity) {
-  if (banner.tenOnly && count2 !== 10) return false;
-  return count2 <= bannerPullsRemaining(banner, pity);
+function bannerAcceptsCount(banner, count3, pity) {
+  if (banner.tenOnly && count3 !== 10) return false;
+  return count3 <= bannerPullsRemaining(banner, pity);
 }
-function canPull(wallet, banner, count2, pity) {
-  return pullPayment(wallet, banner, count2, pity).affordable && bannerAcceptsCount(banner, count2, pity);
+function canPull(wallet, banner, count3, pity) {
+  return pullPayment(wallet, banner, count3, pity).affordable && bannerAcceptsCount(banner, count3, pity);
 }
 function choose(values, rng) {
   if (values.length === 0) throw new Error("\uCD94\uCCA8\uD560 \uB810\uB9AD \uD480\uC774 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.");
@@ -40043,18 +40272,18 @@ function determineGrade(banner, random) {
 function rewardAmount(reward, random) {
   return reward.min + Math.min(reward.max - reward.min, Math.floor(random * (reward.max - reward.min + 1)));
 }
-function pull(banner, count2, currentPity, rng, options = {}) {
+function pull(banner, count3, currentPity, rng, options = {}) {
   const relicIds = [];
   const rarities = [];
   const slots = [];
   let pity = { ...currentPity };
-  for (let slot = 0; slot < count2; slot += 1) {
+  for (let slot = 0; slot < count3; slot += 1) {
     const pityForcesSsr = pity.pullsSinceSsr + 1 >= banner.highestRarityGuarantee;
     let grade = pityForcesSsr ? "SSR" : determineGrade(banner, rng());
-    if (!pityForcesSsr && count2 === 10 && slot === 9 && (grade === "GRAY" || grade === "R")) grade = "SR";
+    if (!pityForcesSsr && count3 === 10 && slot === 9 && (grade === "GRAY" || grade === "R")) grade = "SR";
     let upgraded = false;
-    if (!pityForcesSsr && count2 === 10 && slot === 9 && options.forceTenUpgrade && grade !== "SSR") grade = "SR";
-    if (!pityForcesSsr && count2 === 10 && slot === 9 && grade === "SR" && (options.forceTenUpgrade || rng() < TEN_PULL_SR_UPGRADE_CHANCE)) {
+    if (!pityForcesSsr && count3 === 10 && slot === 9 && options.forceTenUpgrade && grade !== "SSR") grade = "SR";
+    if (!pityForcesSsr && count3 === 10 && slot === 9 && grade === "SR" && (options.forceTenUpgrade || rng() < TEN_PULL_SR_UPGRADE_CHANCE)) {
       grade = "SSR";
       upgraded = true;
     }
@@ -40088,9 +40317,9 @@ function pull(banner, count2, currentPity, rng, options = {}) {
   }
   return { slots, relicIds, rarities, pity };
 }
-function spend(wallet, banner, count2, pity) {
-  if (!canPull(wallet, banner, count2, pity)) return wallet;
-  const payment = pullPayment(wallet, banner, count2, pity);
+function spend(wallet, banner, count3, pity) {
+  if (!canPull(wallet, banner, count3, pity)) return wallet;
+  const payment = pullPayment(wallet, banner, count3, pity);
   return { ...wallet, [banner.currency]: wallet[banner.currency] - payment.tickets, gems: wallet.gems - payment.gems };
 }
 function resolveAcquisitions(ownedRelicIds, fragmentsById, results, breakthroughGradeById = {}, maxStars = 5, overflowAmountOf = () => 1, resonanceRoomById = {}) {
@@ -40266,6 +40495,18 @@ var FakeSocialServer = class {
     const list = (source) => [...source.entries()].sort((a, b) => b[1] - a[1]).map(([id, requestedAt]) => ({ profile: cloneProfile(this.profileOf(id)), requestedAt }));
     return { incoming: list(this.incoming), outgoing: list(this.outgoing), requestLimit: FRIEND_REQUEST_LIMIT, serverTime: this.now() };
   }
+  /**
+   * 순위·명단에 선 한 사람의 공개 카드와 나와의 관계. 결투장·레이드·원정·지층·아레나 순위표의 줄을 누르면 이것으로
+   * 카드를 연다 — 화면이 순위 응답의 얼굴·이름으로 카드를 지어내지 않고, 친구 찾기와 같은 공개 프로필을 받는다.
+   */
+  async getProfile(userId) {
+    const profile = this.profileOf(userId);
+    return { profile: cloneProfile(profile), relation: this.relationOf(userId), serverTime: this.now() };
+  }
+  /** 이 서버가 카드를 줄 수 있는 사람인가 — 표본 풀 밖(로컬 NPC·`local-player`)은 줄을 눌러도 카드가 없다. */
+  knowsProfile(userId) {
+    return this.profiles.has(userId);
+  }
   /** 한 검색어로 이름(부분 일치)과 고유 ID(정확히 일치)를 함께 찾는다. `selfUid`는 자기 자신을 결과에서 뺀다. */
   async searchUsers(request) {
     const users = [...this.profiles.values()].filter((profile) => profile.uid !== request.selfUid && matchesUserQuery(profile, request.query)).sort((a, b) => b.lastActiveAt - a.lastActiveAt).map((profile) => ({ profile: cloneProfile(profile), relation: this.relationOf(profile.id) }));
@@ -40370,8 +40611,8 @@ var socialApi = new Proxy({}, {
 init_define_import_meta_env();
 var MILEAGE_PER_PULL = 1;
 var MILEAGE_OVERFLOW_BY_RARITY = { SSR: 30, SR: 8, R: 2 };
-function mileageForPull(count2, overflowTotal) {
-  return count2 * MILEAGE_PER_PULL + overflowTotal;
+function mileageForPull(count3, overflowTotal) {
+  return count3 * MILEAGE_PER_PULL + overflowTotal;
 }
 
 // src/data/firstPaymentGift.ts
@@ -41466,7 +41707,7 @@ function mileage(id, category, iconKey, name, description, price, limit, grants2
     visibleUntil: UNTIL
   };
 }
-var MILEAGE_PICKUP_PRICE = 300;
+var MILEAGE_PICKUP_PRICE = 250;
 function pickupProducts() {
   return BANNERS.flatMap((banner) => (banner.pickupRelicIds.SSR ?? []).map((relicId) => ({
     id: `mileage-pickup-${banner.id}-${relicId}`,
@@ -41544,6 +41785,8 @@ var DUEL_PRODUCTS = [
 // src/data/products.ts
 var SHOP_PRODUCTS = [
   // 일반 탭은 세로 목록 조작을 실제 콘텐츠로 확인할 수 있도록 용도와 가격대가 다른 보급 묶음을 함께 둔다.
+  // 일일 무료 보급 — 일반 상점 「일일」 탭 맨 앞의 값 없는 한 칸(응태 요청 2026-11-14). 하루 젬 환산 약 30이다.
+  { id: "shop-free-daily", storefront: "shop", category: "daily", iconKey: "shop-product-supplies", name: "\uC77C\uC77C \uBB34\uB8CC \uBCF4\uAE09", description: "", acquisition: { kind: "free" }, grants: [{ kind: "currency", currency: "gold", amount: 5e3 }, { kind: "currency", currency: "cheesecake", amount: 20 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "shop-field-supplies", storefront: "shop", category: "daily", iconKey: "shop-product-supplies", name: "\uCE58\uC988\uCF00\uC774\uD06C (\uC18C)", description: "", acquisition: { kind: "currency", currency: "gold", amount: 1e4 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 40 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "shop-field-rations", storefront: "shop", category: "daily", iconKey: "shop-product-supplies", name: "\uCE58\uC988\uCF00\uC774\uD06C (\uC911)", description: "", acquisition: { kind: "currency", currency: "gold", amount: 19e3 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 80 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "shop-recovery-cache", storefront: "shop", category: "special", iconKey: "shop-product-supplies", name: "\uCE58\uC988\uCF00\uC774\uD06C (\uB300)", description: "", acquisition: { kind: "currency", currency: "gold", amount: 28e3 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 120 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
@@ -41574,6 +41817,9 @@ var SHOP_PRODUCTS = [
   // 재료라 인양 상점과 겹쳐도 된다 — 한쪽에만 두면 그 콘텐츠를 돌지 않는 사람의 성장이 막힌다.
   // **원석으로 사는 재화.** 원석 한 알은 골드 150쯤이 시세라, 값은 시세보다 조금 비싸게 두어 「원석을 캐서 재화로 바꾸는
   // 길」은 열되 그것이 가장 좋은 환전이 되지 않게 한다. 화석·호박석은 연구 한 번(젬 300)이 기준이고 두 연구의 확률·회색 보상이 같으므로 값도 같다(2,500). 주간 한 개씩만 연다.
+  // 일일 무료 원석 — 고고학 상점 「일간」 탭 맨 앞 칸. 받은 뒤 같은 칸이 같은 묶음의 광고 칸(`archaeology-ad`)으로 바뀐다(응태 요청 2026-11-15).
+  // 무료 1 + 광고 2가 예전 광고 3회와 같은 하루 총량이다(원석 300).
+  { id: "arch-free-daily", storefront: "archaeology", category: "daily", iconKey: "shop-product-supplies", name: "\uC77C\uC77C \uBB34\uB8CC \uC6D0\uC11D", description: "", acquisition: { kind: "free" }, grants: [{ kind: "currency", currency: "rawStone", amount: 100 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-gold-exchange", storefront: "archaeology", category: "daily", iconKey: "shop-product-supplies", name: "\uACE8\uB4DC", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 250 }, grants: [{ kind: "currency", currency: "gold", amount: 3e4 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-cheesecake-exchange", storefront: "archaeology", category: "daily", iconKey: "shop-product-supplies", name: "\uCE58\uC988\uCF00\uC774\uD06C", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 150 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 60 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-fossil-exchange", storefront: "archaeology", category: "weekly", iconKey: "shop-product-supplies", name: "\uD654\uC11D", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 2500 }, grants: [{ kind: "currency", currency: "fossil", amount: 1 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
@@ -41584,6 +41830,9 @@ var SHOP_PRODUCTS = [
   // **레이드 상점.** 값은 전부 토벌 증표라 레이드를 돈 사람만 살 수 있고, 다른 재화로 사는 길을
   // 두지 않는다 — 젬으로도 살 수 있으면 증표가 무엇을 위한 것인지 말하지 못한다. 제한은 주간이
   // 기본이고, 성장 재료만 매일 열어 꾸준히 도는 사람이 매주 몰아 사지 않게 한다.
+  // 일일 무료 증표 — 전리품 상점 맨 앞 칸(어느 탭에서나 같은 칸). 받은 뒤 같은 칸이 같은 묶음의 광고 칸(`loot-ad`)으로 바뀐다.
+  // 무료 1 + 광고 2가 예전 광고 3회와 같은 하루 총량이다(토벌·인양 증표 각 15).
+  { id: "loot-free-daily", storefront: "loot", lootCategory: "raid", category: "daily", iconKey: "shop-product-supplies", name: "\uC77C\uC77C \uBB34\uB8CC \uC99D\uD45C", description: "", acquisition: { kind: "free" }, grants: [{ kind: "currency", currency: "raidSigil", amount: 5 }, { kind: "currency", currency: "salvageRecord", amount: 5 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "raid-cheesecake-ration", storefront: "loot", lootCategory: "raid", category: "daily", iconKey: "shop-product-supplies", name: "\uD1A0\uBC8C \uBCF4\uAE09 \uAE09\uC5EC", description: "\uCE58\uC988\uCF00\uC774\uD06C 100\uAC1C", acquisition: { kind: "currency", currency: "raidSigil", amount: 90 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 100 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "raid-gold-bounty", storefront: "loot", lootCategory: "raid", category: "daily", iconKey: "shop-product-fossil", name: "\uD1A0\uBC8C \uD3EC\uC0C1\uAE08", description: "\uACE8\uB4DC 20,000\uAC1C", acquisition: { kind: "currency", currency: "raidSigil", amount: 70 }, grants: [{ kind: "currency", currency: "gold", amount: 2e4 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "raid-ancient-core", storefront: "loot", lootCategory: "raid", category: "weekly", iconKey: "shop-product-ancient-core", name: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575", description: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575 1\uAC1C", acquisition: { kind: "currency", currency: "raidSigil", amount: 120 }, grants: [{ kind: "item", itemId: "ancient-core", name: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575", amount: 1 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
@@ -41835,6 +42084,11 @@ var DUEL_NPC_NAMES = [
 
 // src/core/partyAffinity.ts
 init_define_import_meta_env();
+
+// src/core/attackScope.ts
+init_define_import_meta_env();
+
+// src/core/partyAffinity.ts
 var CENTER_PRIORITY = { tank: 0, warrior: 1, assassin: 2, support: 3 };
 var LEFT_PRIORITY = { assassin: 0, warrior: 1, tank: 2, support: 3 };
 function arrangeByRole(members) {
@@ -41903,11 +42157,11 @@ function simulateDuelDefenses(state, now, pool, defensePower, random) {
   const due = Math.floor((nowMs - simMs) / interval);
   if (due <= 0 || state.defense.length === 0 || pool.length === 0) return { state, entries: [], reachedTiers: [] };
   const next = cloneDuelState(state);
-  const count2 = Math.min(due, DUEL_DEFENSE_SIM.catchUpLimit);
-  const firstMs = simMs + (due - count2 + 1) * interval;
+  const count3 = Math.min(due, DUEL_DEFENSE_SIM.catchUpLimit);
+  const firstMs = simMs + (due - count3 + 1) * interval;
   const entries = [];
   const reachedTiers = [];
-  for (let index = 0; index < count2; index += 1) {
+  for (let index = 0; index < count3; index += 1) {
     const candidates = pickDuelOpponents(pool, next.score, random);
     const npc = candidates[Math.floor(random() * candidates.length)] ?? pool[0];
     const theirs = npc.units.reduce((sum, unit) => sum + unit.power, 0);
@@ -42120,9 +42374,9 @@ function validateGuildName(raw) {
   const name = normalizeGuildName(raw);
   if (!name) return { ok: false, problem: "empty" };
   if (!/^[\p{L}\p{N} ]+$/u.test(name)) return { ok: false, problem: "invalid" };
-  const count2 = guildGlyphCount(name);
-  if (count2 < GUILD_NAME_MIN) return { ok: false, problem: "short" };
-  if (count2 > GUILD_NAME_MAX) return { ok: false, problem: "long" };
+  const count3 = guildGlyphCount(name);
+  if (count3 < GUILD_NAME_MIN) return { ok: false, problem: "short" };
+  if (count3 > GUILD_NAME_MAX) return { ok: false, problem: "long" };
   return { ok: true, name };
 }
 var guildNameKey = (name) => normalizeGuildName(name).replace(/ /g, "").toLowerCase();
@@ -42144,8 +42398,8 @@ var GUILD_ATTENDANCE_CYCLE = [
 ];
 var GUILD_STAMP_DAYS = GUILD_ATTENDANCE_CYCLE.length;
 var guildAttendanceDay = (day) => GUILD_ATTENDANCE_CYCLE[Math.min(GUILD_STAMP_DAYS, Math.max(1, Math.floor(day))) - 1];
-function guildAttendanceView(count2, lastDay, today) {
-  const done = Math.min(GUILD_STAMP_DAYS, Math.max(0, Math.floor(count2)));
+function guildAttendanceView(count3, lastDay, today) {
+  const done = Math.min(GUILD_STAMP_DAYS, Math.max(0, Math.floor(count3)));
   if (lastDay === today && done > 0) return { filled: done, day: done, stampedToday: true };
   const base = done >= GUILD_STAMP_DAYS ? 0 : done;
   return { filled: base, day: base + 1, stampedToday: false };
@@ -42468,10 +42722,10 @@ var FakeGuildServer = class _FakeGuildServer {
       for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
       return h >>> 0;
     };
-    const sample = (name, badge, joinMode, prosperity, count2, notice, warScore) => {
+    const sample = (name, badge, joinMode, prosperity, count3, notice, warScore) => {
       const id = `sample-${++this.sequence}`;
       const members = /* @__PURE__ */ new Map();
-      for (let i = 0; i < count2; i++) {
+      for (let i = 0; i < count3; i++) {
         const userId = `${id}-m${i}`;
         const seed = hash(userId);
         const relic = roster[seed % roster.length];
@@ -42917,10 +43171,10 @@ var FakeGuildServer = class _FakeGuildServer {
   /** 표본 길드원의 오늘 기록 — 날짜와 id에서만 나오는 값이라 다시 읽어도 같다. */
   sampleGuard(member, day) {
     if (!member.sample || member.guardDay === day) return;
-    const record2 = sampleGuardRecord(member.userId, member.level, day);
+    const record3 = sampleGuardRecord(member.userId, member.level, day);
     member.guardDay = day;
-    member.guardBest = record2.best;
-    member.guardAt = record2.at;
+    member.guardBest = record3.best;
+    member.guardAt = record3.at;
   }
   /** 오늘의 기록만 센다 — 지난날의 최고는 0이다. */
   guardBestOf(member, day) {
@@ -42951,12 +43205,12 @@ var FakeGuildServer = class _FakeGuildServer {
     const ranked = [...this.guilds.values()].map((g) => ({ id: g.id, name: g.name, badge: { ...g.badge }, level: this.level(g), score: this.guardScoreOf(g) ?? 0, isMine: g.id === guild.id })).sort((a, b) => b.score - a.score || a.name.localeCompare(b.name)).map((entry, index) => ({ ...entry, rank: index + 1 }));
     return { day, members, guilds: ranked.slice(0, 50), mine: ranked.find((entry) => entry.isMine) ?? null, serverTime: now };
   }
-  async recordGuard(actor, record2, requestId) {
+  async recordGuard(actor, record3, requestId) {
     return this.once(actor, requestId, () => {
       const { guild, me } = this.requireGuild(actor);
-      const score = Math.max(0, Math.round(record2.score));
-      if (me.guardDay !== record2.day) {
-        me.guardDay = record2.day;
+      const score = Math.max(0, Math.round(record3.score));
+      if (me.guardDay !== record3.day) {
+        me.guardDay = record3.day;
         me.guardBest = 0;
         me.guardAt = 0;
       }
@@ -42964,7 +43218,7 @@ var FakeGuildServer = class _FakeGuildServer {
         me.guardBest = Math.max(me.guardBest, score);
         me.guardAt = this.now();
       }
-      me.coin += Math.max(0, Math.round(record2.coin));
+      me.coin += Math.max(0, Math.round(record3.coin));
       _FakeGuildServer.ledgerSlot(this.guardLedger, me.guardDay, guild.id).set(me.userId, me.guardBest);
       return { best: me.guardBest, coin: me.coin };
     });
@@ -43359,17 +43613,17 @@ var FakeGuildServer = class _FakeGuildServer {
       };
     });
   }
-  async recordWarAttack(actor, record2, requestId) {
+  async recordWarAttack(actor, record3, requestId) {
     const captured = this.once(actor, requestId, () => {
       const { guild, me } = this.requireGuild(actor);
-      const key = `${me.userId}:${record2.day}:${record2.slotId}:${record2.entry}`;
+      const key = `${me.userId}:${record3.day}:${record3.slotId}:${record3.entry}`;
       if (!this.warPending.delete(key)) return fail2("WAR_NOT_ENTERED");
-      if (!record2.won) return false;
-      const match = this.warMatches.get(record2.day)?.find((m) => m.a === guild.id || m.b === guild.id);
+      if (!record3.won) return false;
+      const match = this.warMatches.get(record3.day)?.find((m) => m.a === guild.id || m.b === guild.id);
       if (!match || match.settled) return false;
       const captures = match.captures.get(guild.id);
-      if (captures.has(record2.slotId)) return false;
-      captures.set(record2.slotId, { at: this.now(), by: me.userId });
+      if (captures.has(record3.slotId)) return false;
+      captures.set(record3.slotId, { at: this.now(), by: me.userId });
       return true;
     });
     return { captured, front: await this.getWarFront(actor) };
@@ -43550,6 +43804,7 @@ function createGuildGuardSkirmish(lineup, defs, roster) {
       horde: guildGuardHordeSpec(roster),
       timeLimitSeconds: GUILD_GUARD.timeLimitSeconds,
       automaticUltimates: true,
+      playerBodyScale: GUILD_GUARD.bodyScale,
       playerPositions: spots.map(({ x, y }) => ({ x, y })),
       augmentEffects: traits
     }
@@ -43732,6 +43987,81 @@ function findEventByProductId(productId) {
   return EVENTS.find(({ exchangeProductIds }) => exchangeProductIds.includes(productId));
 }
 
+// src/core/codex.ts
+init_define_import_meta_env();
+var CODEX_RELICS = RELICS.filter((relic) => relic.summonOnly !== true);
+var CODEX_IDS = new Set(CODEX_RELICS.map(({ id }) => id));
+function codexSide(relic) {
+  return relic.enemyOnly === true ? "enemy" : "ally";
+}
+var CODEX_RARITY_POINTS = { R: 10, SR: 20, SSR: 30 };
+var CODEX_MILESTONES = [
+  { score: 50, reward: { currency: "gems", amount: 50 } },
+  { score: 100, reward: { currency: "gems", amount: 50 } },
+  { score: 150, reward: { currency: "gems", amount: 50 } },
+  { score: 200, reward: { currency: "gems", amount: 100 } },
+  { score: 300, reward: { currency: "gems", amount: 100 } },
+  { score: 400, reward: { currency: "gems", amount: 100 } },
+  { score: 500, reward: { currency: "gems", amount: 150 } },
+  { score: 600, reward: { currency: "gems", amount: 150 } },
+  { score: 700, reward: { currency: "gems", amount: 150 } },
+  { score: 800, reward: { currency: "gems", amount: 200 } },
+  { score: 900, reward: { currency: "gems", amount: 200 } },
+  { score: 1e3, reward: { currency: "gems", amount: 200 } }
+];
+function derivedCodexEncounters(state) {
+  const ids = /* @__PURE__ */ new Set();
+  for (const id of state.owned) ids.add(id);
+  for (const stage of ALL_STORY_STAGES) {
+    if (stage.kind !== "battle" || !state.cleared.has(stage.id)) continue;
+    for (const enemy of stage.enemies) ids.add(enemy.relicId);
+  }
+  const bountyCleared = state.bounty?.clearedTierIds ?? [];
+  for (const tier of BOUNTY_TIERS) if (isBountyTierCleared(tier, bountyCleared)) for (const round of tier.rounds) ids.add(round.relicId);
+  if ((state.cakeOperation?.clearedIndex ?? -1) >= 0) for (const id of CAKE_OPERATION_ENEMY_IDS) ids.add(id);
+  if ((state.expedition?.allTimeBestScore ?? 0) > 0 || (state.expedition?.bestScore ?? 0) > 0) ids.add("pontos");
+  for (const id of [...ids]) if (!CODEX_IDS.has(id)) ids.delete(id);
+  return ids;
+}
+function codexRecordedIds(state) {
+  const ids = derivedCodexEncounters(state);
+  for (const id of state.achievements?.encountered ?? []) if (CODEX_IDS.has(id)) ids.add(id);
+  return ids;
+}
+function codexScore(recorded) {
+  return CODEX_RELICS.reduce((sum, relic) => sum + (recorded.has(relic.id) ? CODEX_RARITY_POINTS[relic.rarity] : 0), 0);
+}
+function codexMaxScore() {
+  return CODEX_RELICS.reduce((sum, relic) => sum + CODEX_RARITY_POINTS[relic.rarity], 0);
+}
+function codexReachedMilestones(score) {
+  let count3 = 0;
+  for (const milestone of CODEX_MILESTONES) {
+    if (score < milestone.score) break;
+    count3 += 1;
+  }
+  return count3;
+}
+function codexClaimableCount(score, claimed) {
+  return Math.max(0, codexReachedMilestones(score) - claimed);
+}
+function claimCodexMilestones(score, claimed) {
+  const reached = codexReachedMilestones(score);
+  const indices = [];
+  const totals = /* @__PURE__ */ new Map();
+  for (let index = claimed; index < reached; index += 1) {
+    indices.push(index);
+    const { currency: currency3, amount } = CODEX_MILESTONES[index].reward;
+    totals.set(currency3, (totals.get(currency3) ?? 0) + amount);
+  }
+  return { claimed: Math.max(claimed, reached), indices, rewards: [...totals].map(([currency3, amount]) => ({ currency: currency3, amount })) };
+}
+function mergeEncountered(current2, add) {
+  const set = new Set((current2 ?? []).filter((id) => CODEX_IDS.has(id)));
+  for (const id of add) if (CODEX_IDS.has(id)) set.add(id);
+  return CODEX_RELICS.filter(({ id }) => set.has(id)).map(({ id }) => id);
+}
+
 // src/core/achievements.ts
 init_define_import_meta_env();
 
@@ -43834,12 +44164,12 @@ function achievementFacts(state) {
   };
 }
 function achievedTierCount(series, value) {
-  let count2 = 0;
+  let count3 = 0;
   for (const tier of series.tiers) {
     if (value < tier.target) break;
-    count2 += 1;
+    count3 += 1;
   }
-  return count2;
+  return count3;
 }
 function claimableTierCount(series, value, claimed) {
   return Math.max(0, achievedTierCount(series, value) - claimed);
@@ -44122,6 +44452,24 @@ for (const source of STAMINA_RECHARGE_SOURCES) {
   registerDataText(source, "name", `stamina.source.${source.id}.name`);
 }
 
+// src/core/freeResearch.ts
+init_define_import_meta_env();
+var FREE_RESEARCH_SOURCE_ID = "research-free-daily";
+var FREE_RESEARCH_BANNER_ID = "fossil";
+var FREE_RESEARCH_DAILY_LIMIT = 1;
+function freeResearchUsedToday(record3, now) {
+  return record3?.periodKey === staminaGemDayKey(now) ? record3.count : 0;
+}
+function freeResearchAvailable(record3, now) {
+  return freeResearchUsedToday(record3, now) < FREE_RESEARCH_DAILY_LIMIT;
+}
+function freeResearchSpent(record3, now) {
+  return { periodKey: staminaGemDayKey(now), count: freeResearchUsedToday(record3, now) + 1 };
+}
+function freeResearchResetsAt(now) {
+  return nextUtcMidnight(now);
+}
+
 // src/managers/InventoryManager.ts
 init_define_import_meta_env();
 
@@ -44151,14 +44499,20 @@ function deriveNotificationState(conditions) {
     mail: conditions.unreadMailCount > 0 || (conditions.claimableMailCount ?? 0) > 0,
     passReward: (conditions.claimablePassCount ?? 0) > 0,
     achievementReward: (conditions.claimableAchievementCount ?? 0) > 0,
+    codexReward: (conditions.claimableCodexCount ?? 0) > 0,
     // 패스 달성 보상은 로비 패스 카드에서 받으므로 프리미엄 쪽에는 알리지 않는다.
-    premiumNotice: (conditions.freeSupplyCategories?.length ?? 0) > 0 || (conditions.situationalOfferCount ?? 0) > 0,
+    premiumNotice: (conditions.freeSupplyCategories?.length ?? 0) > 0 || (conditions.situationalOfferCount ?? 0) > 0 || (conditions.claimableSubscriptionBonusCount ?? 0) > 0,
     // 상황 특가는 결과판 위에 창을 띄우지 않고 프리미엄 「한정」 탭의 붉은 점으로만 알린다.
     premiumOffer: (conditions.situationalOfferCount ?? 0) > 0,
     premiumFree: (conditions.freeSupplyCategories?.length ?? 0) > 0,
     premiumFreeDaily: conditions.freeSupplyCategories?.includes("daily") ?? false,
     premiumFreeWeekly: conditions.freeSupplyCategories?.includes("weekly") ?? false,
-    premiumFreeMonthly: conditions.freeSupplyCategories?.includes("monthly") ?? false
+    premiumFreeMonthly: conditions.freeSupplyCategories?.includes("monthly") ?? false,
+    shopFree: conditions.shopFreeSupply === true,
+    freeResearch: conditions.freeResearchAvailable === true,
+    interactionReturned: (conditions.claimableInteractionCount ?? 0) > 0,
+    duelSeasonReward: conditions.duelSeasonRewardReady === true,
+    premiumSubscription: (conditions.claimableSubscriptionBonusCount ?? 0) > 0
   };
 }
 var EMPTY_NOTIFICATION_STATE = deriveNotificationState({
@@ -44482,6 +44836,15 @@ function purchaseHistoryFromJournal(journal, limit = PURCHASE_HISTORY_LIMIT) {
   const at = (entry) => entry.purchasedAt ? Date.parse(entry.purchasedAt) : -Infinity;
   return entries.sort((a, b) => at(b) - at(a)).slice(0, Math.max(0, limit));
 }
+var GIFT_LOG_LIMIT = 50;
+function appendGiftLog(journal, gifts) {
+  const fresh = gifts.map((gift) => ({ ...gift, rewards: gift.rewards.map((reward) => ({ ...reward })) }));
+  return { ...journal, giftLog: [...fresh.reverse(), ...journal.giftLog ?? []].slice(0, GIFT_LOG_LIMIT) };
+}
+function giftHistoryFromJournal(journal, limit = GIFT_LOG_LIMIT) {
+  const at = (gift) => Date.parse(gift.receivedAt);
+  return [...journal?.giftLog ?? []].sort((a, b) => at(b) - at(a)).slice(0, Math.max(0, limit));
+}
 
 // src/core/greatSuccess.ts
 init_define_import_meta_env();
@@ -44495,14 +44858,14 @@ function rollGreatSuccess(random) {
   return random() < GREAT_SUCCESS.chance;
 }
 function rollGreatSuccessCount(runs, random) {
-  let count2 = 0;
-  for (let index = 0; index < runs; index += 1) if (rollGreatSuccess(random)) count2 += 1;
-  return count2;
+  let count3 = 0;
+  for (let index = 0; index < runs; index += 1) if (rollGreatSuccess(random)) count3 += 1;
+  return count3;
 }
-function greatSuccessBonus(rewards, count2) {
-  if (count2 <= 0) return {};
+function greatSuccessBonus(rewards, count3) {
+  if (count3 <= 0) return {};
   const extra = GREAT_SUCCESS.multiplier - 1;
-  return Object.fromEntries(Object.entries(rewards).map(([currency3, amount]) => [currency3, Math.floor(amount * extra) * count2]).filter(([, amount]) => amount > 0));
+  return Object.fromEntries(Object.entries(rewards).map(([currency3, amount]) => [currency3, Math.floor(amount * extra) * count3]).filter(([, amount]) => amount > 0));
 }
 
 // src/core/expeditionScore.ts
@@ -44657,7 +45020,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.459.1",
+  version: "0.478.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -44752,6 +45115,7 @@ var READ_METHODS = /* @__PURE__ */ new Set([
   "arena.get",
   "archaeologyState",
   "getAchievements",
+  "getCodex",
   "getNewbieGrowth",
   "getAncientRanking",
   "getAdOperationsConfig",
@@ -44785,6 +45149,7 @@ var READ_METHODS = /* @__PURE__ */ new Set([
   "social.getFriends",
   "social.getRequests",
   "social.searchUsers",
+  "social.getProfile",
   "social.getRecommendations",
   "guild.getGuild",
   "guild.searchGuilds",
@@ -44815,6 +45180,7 @@ var SOCIAL_METHODS = [
   "getFriends",
   "getRequests",
   "searchUsers",
+  "getProfile",
   "getRecommendations",
   "sendRequest",
   "cancelRequest",
@@ -44913,6 +45279,8 @@ var SERVER_GAME_METHODS = [
   "feedRelic",
   "fulfillPlatformPurchase",
   "getAchievements",
+  "getCodex",
+  "claimCodexRewards",
   "getNewbieGrowth",
   "claimNewbieGrowth",
   "getAdOperationsConfig",
@@ -44926,6 +45294,7 @@ var SERVER_GAME_METHODS = [
   "getRegularEvent",
   "getExpeditionLeaderboard",
   "getExpeditionWeeklyBest",
+  "getFreeResearchStatus",
   "getIdleExcavation",
   "getInteractionCities",
   "getInteractionDispatch",
@@ -44966,6 +45335,7 @@ var SERVER_GAME_METHODS = [
   "setDuelDefense",
   "setFavorite",
   "setParty",
+  "setRuneLoadout",
   "setRelicBookmark",
   "settleExpeditionRun",
   "settleRaid",
@@ -45270,6 +45640,17 @@ var SettingsManager = class extends EventTarget {
     if (current2[dungeon] === tierId2) return;
     this.update({ game: { dungeonTiers: { ...current2, [dungeon]: tierId2 } } });
   }
+  /** 렐릭 목록 화면이 지금 세울 필터·정렬(`core/rosterViewMemory.ts`). 기억이 없거나 쓸 수 없는 값이면 기본값이다. */
+  rosterView(screen) {
+    return rosterViewFor(this.get().game.rosterViews, screen);
+  }
+  /** 렐릭 목록 화면에서 바꾼 필터·정렬을 기억한다. 검색 글은 남기지 않고, 같은 값이면 저장하지 않는다. */
+  rememberRosterView(screen, view) {
+    const current2 = this.get().game.rosterViews;
+    const next = normalizeRosterView(view, screen);
+    if (current2[screen] && sameRosterView(current2[screen], next, screen)) return;
+    this.update({ game: { rosterViews: { ...current2, [screen]: next } } });
+  }
   /** 길드전·수호전 탭에서 지금 판을 봤다고 적는다 — 붉은 점이 꺼진다. `guardReward`는 알린 수호전 순위 보상의, `warResult`는 알린 길드전 결과의 날짜다. */
   rememberGuildSeen(page, key) {
     const current2 = this.get().game.guildSeen;
@@ -45290,6 +45671,11 @@ var SettingsManager = class extends EventTarget {
   rememberContentSeen(state) {
     if (sameContentSeen(this.get().game.contentSeen, state)) return;
     this.update({ game: { contentSeen: state } });
+  }
+  /** 지금 아레나 전적을 봤다고 적는다(`core/arenaNotice.ts`). 같은 값이면 저장하지 않는다. */
+  rememberArenaSeen(record3) {
+    if (sameArenaSeen(this.get().game.arenaSeen, record3)) return;
+    this.update({ game: { arenaSeen: record3 } });
   }
   /** 약관·처리방침 동의를 이 기기에 기록한다(서버 기록은 `LegalConsentApi`가 따로 남긴다). */
   rememberLegalConsent(key) {
@@ -45394,11 +45780,11 @@ var settingsManager = new SettingsManager();
 var STRATA_TICKET_ITEM2 = "strata-ticket";
 var MAX_RUNE_NAME_LENGTH = 20;
 var QA_ANCIENT_RANKING = [
-  { playerId: "qa-ancient-1", displayName: "DeepDiver", floor: 118, favoriteRelicId: "koma" },
-  { playerId: "qa-ancient-2", displayName: "Haneul", floor: 87, favoriteRelicId: "rex" },
-  { playerId: "qa-ancient-3", displayName: "StrataKeeper", floor: 64, favoriteRelicId: "mette" },
-  { playerId: "qa-ancient-4", displayName: "MossLab", floor: 31, favoriteRelicId: "torika" },
-  { playerId: "qa-ancient-5", displayName: "FossilHunter", floor: 12, favoriteRelicId: "parua" }
+  { playerId: "user-stars", displayName: "DeepDiver", floor: 118, favoriteRelicId: "koma" },
+  { playerId: "user-fog", displayName: "Haneul", floor: 87, favoriteRelicId: "rex" },
+  { playerId: "user-lighthouse", displayName: "StrataKeeper", floor: 64, favoriteRelicId: "mette" },
+  { playerId: "friend-dawn", displayName: "MossLab", floor: 31, favoriteRelicId: "torika" },
+  { playerId: "user-garden", displayName: "FossilHunter", floor: 12, favoriteRelicId: "parua" }
 ];
 var FakeServer = class {
   constructor(state = session, options = {}) {
@@ -45526,6 +45912,8 @@ var FakeServer = class {
   stageAdmissionResults = /* @__PURE__ */ new Map();
   /** 입장 때 커밋한 요청을 보관하고 완료 정산이 해당 전투의 대기 건 하나만 소비하게 한다. */
   pendingStageAdmissions = /* @__PURE__ */ new Map();
+  /** 다음 저장에 도감으로 굳힐 만남(`noteEncounters`). */
+  pendingEncounters = /* @__PURE__ */ new Set();
   /** 현상수배 입장 재전송이 스테미나를 두 번 깎지 않게 하는 서버 영수증 표다. */
   bountyAdmissionResults = /* @__PURE__ */ new Map();
   bountySweepResults = /* @__PURE__ */ new Map();
@@ -45675,20 +46063,26 @@ var FakeServer = class {
     const claimable = targets2.filter((mail) => !!mail && !deletedIds.has(mail.id) && mail.rewards.length > 0 && !mail.claimed && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs));
     const granted = [];
     const candidate = structuredClone(this.state);
-    for (const mail of claimable) for (const reward of mail.rewards) {
-      if (!Number.isInteger(reward.amount) || reward.amount <= 0) throw new GameApiError("INVALID_STATE", "\uC62C\uBC14\uB974\uC9C0 \uC54A\uC740 \uC6B0\uD3B8 \uBCF4\uC0C1\uC785\uB2C8\uB2E4.");
-      if (reward.kind === "currency") {
-        const amount = Math.min(reward.amount, WALLET_CAPS[reward.currency] - candidate.wallet[reward.currency]);
-        candidate.wallet[reward.currency] += amount;
-        if (amount > 0) granted.push({ ...reward, amount });
-      } else {
-        const definition = findItem(reward.itemId);
-        if (!definition || definition.category === "rune" || definition.category === "currency") throw new GameApiError("INVALID_STATE", "\uC62C\uBC14\uB974\uC9C0 \uC54A\uC740 \uC6B0\uD3B8 \uC544\uC774\uD15C\uC785\uB2C8\uB2E4.");
-        const result = this.grantItem(candidate.itemInventory, reward.itemId, reward.amount, new Date(nowMs), reward.expiresInDays);
-        candidate.itemInventory = result.inventory;
-        if (result.added > 0) granted.push({ ...reward, amount: result.added });
+    const gifts = [];
+    for (const mail of claimable) {
+      const before = granted.length;
+      for (const reward of mail.rewards) {
+        if (!Number.isInteger(reward.amount) || reward.amount <= 0) throw new GameApiError("INVALID_STATE", "\uC62C\uBC14\uB974\uC9C0 \uC54A\uC740 \uC6B0\uD3B8 \uBCF4\uC0C1\uC785\uB2C8\uB2E4.");
+        if (reward.kind === "currency") {
+          const amount = Math.min(reward.amount, WALLET_CAPS[reward.currency] - candidate.wallet[reward.currency]);
+          candidate.wallet[reward.currency] += amount;
+          if (amount > 0) granted.push({ ...reward, amount });
+        } else {
+          const definition = findItem(reward.itemId);
+          if (!definition || definition.category === "rune" || definition.category === "currency") throw new GameApiError("INVALID_STATE", "\uC62C\uBC14\uB974\uC9C0 \uC54A\uC740 \uC6B0\uD3B8 \uC544\uC774\uD15C\uC785\uB2C8\uB2E4.");
+          const result = this.grantItem(candidate.itemInventory, reward.itemId, reward.amount, new Date(nowMs), reward.expiresInDays);
+          candidate.itemInventory = result.inventory;
+          if (result.added > 0) granted.push({ ...reward, amount: result.added });
+        }
       }
+      if (granted.length > before) gifts.push({ title: mail.title, sender: mail.sender, receivedAt: new Date(nowMs).toISOString(), rewards: granted.slice(before) });
     }
+    if (gifts.length) candidate.serverJournal = appendGiftLog(candidate.serverJournal ?? emptyServerJournal(), gifts);
     candidate.claimedMailIds = [.../* @__PURE__ */ new Set([...candidate.claimedMailIds ?? [], ...claimable.map(({ id }) => id)])];
     const queue = expeditionRankRewardQueue(candidate.expedition).filter((reward) => !claimable.some(({ id }) => id === `expedition-rank:${reward.weekKey}`));
     candidate.expedition = { ...candidate.expedition, pendingRankReward: queue[0] ?? null, pendingRankRewards: queue.slice(1) };
@@ -46185,8 +46579,8 @@ var FakeServer = class {
     };
   }
   raidTickets() {
-    const count2 = (itemId) => this.state.itemInventory.find((entry) => entry.itemId === itemId)?.quantity ?? 0;
-    return { normal: count2(RAID_TICKET_ITEM), select: count2(RAID_SELECT_TICKET_ITEM) };
+    const count3 = (itemId) => this.state.itemInventory.find((entry) => entry.itemId === itemId)?.quantity ?? 0;
+    return { normal: count3(RAID_TICKET_ITEM), select: count3(RAID_SELECT_TICKET_ITEM) };
   }
   /**
    * 레이드 목록 — 진행 중인 판 전부와, **참여한** 끝난 판.
@@ -46309,6 +46703,7 @@ var FakeServer = class {
     if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "\uC2A4\uD14C\uBBF8\uB098\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
     const spent = this.spendStamina(cost);
     const updated = { ...instance, attemptsUsed: instance.attemptsUsed + 1 };
+    this.noteEncounters([instance.bossRelicId]);
     const nextState = structuredClone(this.state);
     Object.assign(nextState, { wallet: spent.wallet, playerResearch: spent.playerResearch, missions: spent.missions, itemInventory: spent.itemInventory });
     nextState.raid = { instances: [...nextState.raid.instances.filter(({ id }) => id !== updated.id), updated] };
@@ -46757,28 +47152,28 @@ var FakeServer = class {
     const relic = PLAYABLE_RELICS.find(({ id }) => id === request.relicId);
     if (!relic || !this.state.owned.has(request.relicId)) throw new GameApiError("INVALID_STATE", "\uAD00\uCC30 \uB300\uC0C1\uC740 \uBCF4\uC720\uD55C \uB810\uB9AD\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
     const story = createObservationStory(request.relicId, relic.name, request.utcDate);
-    const previous = this.state.observationRecords.find((record3) => record3.storyId === story.id);
+    const previous = this.state.observationRecords.find((record4) => record4.storyId === story.id);
     if (previous) return { record: structuredClone(previous), bondXpEarned: 0, firstCompletion: false };
     if (request.utcDate !== utcDateKey(this.now())) throw new GameApiError("INVALID_STATE", "\uC624\uB298 \uB0A0\uC9DC\uC758 \uAD00\uCC30 \uC778\uD130\uBDF0\uB9CC \uC644\uB8CC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
-    if (this.state.observationRecords.some((record3) => record3.date === request.utcDate)) throw new GameApiError("DAILY_ENTRY_LIMIT", "\uC624\uB298\uC758 \uAD00\uCC30 \uC778\uD130\uBDF0\uB294 \uC774\uBBF8 \uC644\uB8CC\uD588\uC2B5\uB2C8\uB2E4.");
+    if (this.state.observationRecords.some((record4) => record4.date === request.utcDate)) throw new GameApiError("DAILY_ENTRY_LIMIT", "\uC624\uB298\uC758 \uAD00\uCC30 \uC778\uD130\uBDF0\uB294 \uC774\uBBF8 \uC644\uB8CC\uD588\uC2B5\uB2C8\uB2E4.");
     let discovery;
     try {
       discovery = observationDiscovery(request.relicId, request.utcDate, request.choiceId);
     } catch (error) {
       throw new GameApiError("INVALID_STATE", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uAD00\uCC30 \uC120\uD0DD\uC9C0\uC785\uB2C8\uB2E4.", { cause: error });
     }
-    const record2 = { date: request.utcDate, relicId: request.relicId, storyId: story.id, questionId: discovery.question.id, question: discovery.question.prompt, choiceId: discovery.choice.id, answer: discovery.choice.label, personalityTag: discovery.choice.personalityTag, discoveredHabit: discovery.habit };
+    const record3 = { date: request.utcDate, relicId: request.relicId, storyId: story.id, questionId: discovery.question.id, question: discovery.question.prompt, choiceId: discovery.choice.id, answer: discovery.choice.label, personalityTag: discovery.choice.personalityTag, discoveredHabit: discovery.habit };
     const progress = this.state.relicProgress[request.relicId];
     if (!progress) throw new GameApiError("INVALID_STATE", "\uAD00\uCC30 \uB300\uC0C1\uC758 \uC720\uB300 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const reward = grantBondXp(progress, BOND_XP_REWARD.firstObservationInterview);
     const completedStoryIds = new Set(this.state.completedStoryIds).add(story.id);
-    const observationRecords = [...this.state.observationRecords, record2];
+    const observationRecords = [...this.state.observationRecords, record3];
     const relicProgress = { ...this.state.relicProgress, [request.relicId]: reward.progress };
     this.persist({ ...this.state, completedStoryIds, observationRecords, relicProgress });
     this.state.completedStoryIds = completedStoryIds;
     this.state.observationRecords = observationRecords;
     this.state.relicProgress = relicProgress;
-    return { record: structuredClone(record2), bondXpEarned: reward.xpGained, firstCompletion: true };
+    return { record: structuredClone(record3), bondXpEarned: reward.xpGained, firstCompletion: true };
   }
   /** 고고학 지도의 마지막 선택 유적. 삭제된 카탈로그 ID가 저장되지 않게 한다. */
   async selectArchaeologySite(request) {
@@ -47014,12 +47409,12 @@ var FakeServer = class {
     await this.delay();
     const now = this.guardNow();
     const day = guildGuardDayKey(now);
-    const record2 = this.state.serverJournal?.guildGuard;
+    const record3 = this.state.serverJournal?.guildGuard;
     return {
       day,
       element: guildGuardElement(now),
-      attemptsLeft: guildGuardAttemptsLeft(record2, now),
-      best: record2?.day === day ? record2.best : 0,
+      attemptsLeft: guildGuardAttemptsLeft(record3, now),
+      best: record3?.day === day ? record3.best : 0,
       endsAt: guildGuardEndsAt(now),
       serverTime: now
     };
@@ -47046,8 +47441,8 @@ var FakeServer = class {
     if (!membership.guild) throw new GuildApiError("NOT_IN_GUILD");
     const now = this.guardNow();
     const day = guildGuardDayKey(now);
-    const record2 = this.state.serverJournal?.guildGuard;
-    if (guildGuardAttemptsLeft(record2, now) <= 0) throw new GuildApiError("GUARD_LIMIT");
+    const record3 = this.state.serverJournal?.guildGuard;
+    if (guildGuardAttemptsLeft(record3, now) <= 0) throw new GuildApiError("GUARD_LIMIT");
     const element = guildGuardElement(now);
     const lineup = formation.map((relicId) => relicId === null ? null : {
       relicId,
@@ -47055,8 +47450,8 @@ var FakeServer = class {
     });
     const seed = globalThis.crypto?.randomUUID?.() ?? `${request.requestId}:${now}`;
     const journal = structuredClone(this.state.serverJournal ?? emptyServerJournal());
-    const used = record2?.day === day ? record2.used : 0;
-    journal.guildGuard = { day, used: used + 1, best: record2?.day === day ? record2.best : 0 };
+    const used = record3?.day === day ? record3.used : 0;
+    journal.guildGuard = { day, used: used + 1, best: record3?.day === day ? record3.best : 0 };
     const admissions = Object.fromEntries(Object.entries(journal.guildGuardAdmissions ?? {}).filter(([, admission]) => Date.parse(admission.expiresAt) >= now));
     admissions[request.requestId] = { seed: seed.slice(0, 64), day, element, expiresAt: new Date(now + (GUILD_GUARD.timeLimitSeconds + 1800) * 1e3).toISOString(), lineup };
     journal.guildGuardAdmissions = admissions;
@@ -47077,8 +47472,8 @@ var FakeServer = class {
     await this.guildBackend.recordGuard(this.guildActor(), { day: admission.day, score: outcome.score, coin }, `guard:${request.requestId}`);
     const now = this.guardNow();
     const journal = structuredClone(this.state.serverJournal ?? emptyServerJournal());
-    const record2 = journal.guildGuard?.day === admission.day ? journal.guildGuard : { day: admission.day, used: 0, best: 0 };
-    journal.guildGuard = { ...record2, best: Math.max(record2.best, outcome.score) };
+    const record3 = journal.guildGuard?.day === admission.day ? journal.guildGuard : { day: admission.day, used: 0, best: 0 };
+    journal.guildGuard = { ...record3, best: Math.max(record3.best, outcome.score) };
     journal.guildGuardAdmissions = { ...journal.guildGuardAdmissions, [request.requestId]: { ...admission, settled: true } };
     const result = { outcome, coin, best: journal.guildGuard.day === guildGuardDayKey(now) ? journal.guildGuard.best : outcome.score, attemptsLeft: guildGuardAttemptsLeft(journal.guildGuard, now) };
     const next = { ...this.state, serverJournal: journal };
@@ -47293,8 +47688,8 @@ var FakeServer = class {
   }
   /** 오늘(서버 UTC) 이 수단으로 채운 횟수. 날짜 키가 바뀌었으면 0이다 — 카운터는 구매 한도와 같은 기록(`productPurchases`)을 쓴다. */
   staminaGemPurchasedToday(sourceId, now) {
-    const record2 = this.state.productPurchases[sourceId];
-    return record2?.periodKey === staminaGemDayKey(now) ? record2.count : 0;
+    const record3 = this.state.productPurchases[sourceId];
+    return record3?.periodKey === staminaGemDayKey(now) ? record3.count : 0;
   }
   staminaRechargeStatus(sourceId, now) {
     const purchasedToday = this.staminaGemPurchasedToday(sourceId, now);
@@ -47757,8 +48152,8 @@ var FakeServer = class {
     const applied = this.applyProductGrants(product, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now, bonus);
     const periodKey = this.productPeriodKey(product, now);
     const current2 = this.state.productPurchases[product.id];
-    const count2 = (current2?.periodKey === periodKey ? current2.count : 0) + 1;
-    const nextPurchases = product.situational ? this.state.productPurchases : { ...this.state.productPurchases, [product.id]: { periodKey, count: count2 } };
+    const count3 = (current2?.periodKey === periodKey ? current2.count : 0) + 1;
+    const nextPurchases = product.situational ? this.state.productPurchases : { ...this.state.productPurchases, [product.id]: { periodKey, count: count3 } };
     const candidate = structuredClone(this.state);
     candidate.wallet = nextWallet;
     candidate.itemInventory = applied.items;
@@ -47806,7 +48201,7 @@ var FakeServer = class {
   /** 결제 기록은 장부의 플랫폼 거래 영수증만 읽는다 — 화면이 기억한 값이 아니라 지급을 확정한 쪽의 기록이다. */
   async getPurchaseHistory() {
     await this.delay();
-    return { entries: purchaseHistoryFromJournal(this.state.serverJournal), serverTime: this.now().toISOString() };
+    return { entries: purchaseHistoryFromJournal(this.state.serverJournal), gifts: giftHistoryFromJournal(this.state.serverJournal), serverTime: this.now().toISOString() };
   }
   /** 광고 시청 경로와 같은 슬롯 정의·UTC 카운터를 사용하되 활성 패스만 토큰 없이 통과시킨다. */
   async claimInstantAdReward(request) {
@@ -47851,6 +48246,11 @@ var FakeServer = class {
     this.instantClaimResults.set(request.requestId, result);
     return result;
   }
+  async getFreeResearchStatus() {
+    await this.delay();
+    const now = this.now();
+    return { available: freeResearchAvailable(this.state.productPurchases[FREE_RESEARCH_SOURCE_ID], now), bannerId: FREE_RESEARCH_BANNER_ID, resetsAt: freeResearchResetsAt(now).toISOString() };
+  }
   /** 비용 검사, 재화 차감, 난수 결과, 보유 반영을 모두 서버 경계 안에서 원자적으로 처리한다. */
   async pullRelics(request) {
     await this.delay();
@@ -47866,7 +48266,10 @@ var FakeServer = class {
     if (!bannerAcceptsCount(banner, request.count, currentPity)) {
       throw new GameApiError("BANNER_LIMIT_REACHED", "\uC774 \uC5F0\uAD6C\uB294 \uB354 \uC9C4\uD589\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
     }
-    if (!canPull(this.state.wallet, banner, request.count, currentPity)) {
+    const free = request.free === true;
+    if (free && (request.count !== 1 || banner.id !== FREE_RESEARCH_BANNER_ID)) throw new GameApiError("INVALID_STATE", "\uBB34\uB8CC \uC5F0\uAD6C\uB294 \uD654\uC11D \uC5F0\uAD6C 1\uD68C\uC5D0\uB9CC \uC4F8 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+    if (free && !freeResearchAvailable(this.state.productPurchases[FREE_RESEARCH_SOURCE_ID], this.now())) throw new GameApiError("PURCHASE_LIMIT_REACHED", "\uC624\uB298\uC758 \uBB34\uB8CC \uC5F0\uAD6C\uB97C \uC774\uBBF8 \uC0AC\uC6A9\uD588\uC2B5\uB2C8\uB2E4.");
+    if (!free && !canPull(this.state.wallet, banner, request.count, currentPity)) {
       throw new GameApiError("INSUFFICIENT_CURRENCY", "\uC7AC\uD654\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
     }
     const forceTenUpgrade = request.count === 10 && this.developmentTools && this.state.serverJournal?.qaTenUpgrade === true;
@@ -47880,7 +48283,7 @@ var FakeServer = class {
     for (const result of outcome.slots) {
       if (!nextProgress[result.relicId]) nextProgress[result.relicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
     }
-    const paidWallet = spend(this.state.wallet, banner, request.count, currentPity);
+    const paidWallet = free ? { ...this.state.wallet } : spend(this.state.wallet, banner, request.count, currentPity);
     const nextWallet = { ...paidWallet, dnaFragments: this.state.wallet.dnaFragments + mileageGained };
     for (const slot of pulled.slots) if (slot.kind === "currency") {
       nextWallet[slot.currency] = Math.min(WALLET_CAPS[slot.currency], nextWallet[slot.currency] + slot.amount);
@@ -47917,7 +48320,8 @@ var FakeServer = class {
       });
       return appendGachaHistory(this.state.gachaHistory, { at: this.now().toISOString(), bannerId: banner.id, count: request.count, cost, pity: groupPity.pullsSinceSsr, slots });
     })();
-    const nextState = { ...this.state, tutorial: nextTutorial, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory, gachaHistory: nextGachaHistory };
+    const nextPurchases = free ? { ...this.state.productPurchases, [FREE_RESEARCH_SOURCE_ID]: freeResearchSpent(this.state.productPurchases[FREE_RESEARCH_SOURCE_ID], this.now()) } : this.state.productPurchases;
+    const nextState = { ...this.state, tutorial: nextTutorial, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory, gachaHistory: nextGachaHistory, productPurchases: nextPurchases };
     if (forceTenUpgrade) {
       const { qaTenUpgrade: _spent, ...journal } = nextState.serverJournal ?? emptyServerJournal();
       nextState.serverJournal = journal;
@@ -47934,6 +48338,7 @@ var FakeServer = class {
     this.state.missions = nextMissions;
     this.state.relicStory = nextRelicStory;
     this.state.gachaHistory = nextGachaHistory;
+    this.state.productPurchases = nextPurchases;
     const upgradedSlot = pulled.slots.findIndex((slot) => slot.kind === "relic" && slot.upgraded === true);
     return {
       ...this.snapshot(),
@@ -48091,6 +48496,7 @@ var FakeServer = class {
     }
     if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "\uC804\uD22C \uC2A4\uD14C\uC774\uC9C0\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
     if ((stage.ancientFloor !== void 0 || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "\uC544\uC9C1 \uC5F4\uB9AC\uC9C0 \uC54A\uC740 \uC2A4\uD14C\uC774\uC9C0\uC785\uB2C8\uB2E4.");
+    this.noteEncounters(getStageEnemies(stage).map(({ id }) => id));
     const firstClear = victory && !this.state.cleared.has(stageId);
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);
     const pending2 = this.pendingStageAdmissions.get(stageId);
@@ -48279,6 +48685,7 @@ var FakeServer = class {
     } catch {
       throw new GameApiError("CAKE_TIER_NOT_FOUND", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC791\uC804 \uB2E8\uACC4\uC785\uB2C8\uB2E4.");
     }
+    this.noteEncounters(CAKE_OPERATION_ENEMY_IDS);
     const admitted = this.pendingCakeAdmissions.get(tier.id)?.has(request.requestId) === true;
     const cost = admitted ? cakeOperationRunCost(tier).staminaCost : 0;
     const spent = request.victory && cost > 0 ? this.chargeVictoryStamina(cost) : void 0;
@@ -48438,6 +48845,7 @@ var FakeServer = class {
     const tier = getBountyTier(request.tierId);
     const now = this.now();
     const victory = request.victory && request.clearedRounds >= BOUNTY.roundCount;
+    this.noteEncounters(tier.rounds.slice(0, Math.min(tier.rounds.length, Math.max(0, Math.floor(request.clearedRounds)) + 1)).map(({ relicId }) => relicId));
     const firstClear = victory && !this.state.bounty.clearedTierIds.includes(tier.id);
     const cost = bountyRunCost(tier).staminaCost;
     const spent = victory ? this.chargeVictoryStamina(cost) : void 0;
@@ -48738,7 +49146,7 @@ var FakeServer = class {
     await this.delay();
     if (this.duelContext) {
       const duel3 = this.duelNow(this.now());
-      const entries2 = this.duelContext.ranking.map((row, index) => ({ ...row, rank: index + 1, tierId: duelTier(row.score).id, isMe: row.id === this.duelContext.playerId }));
+      const entries2 = this.duelContext.ranking.map((row, index) => ({ ...row, playerId: row.id, rank: index + 1, tierId: duelTier(row.score).id, isMe: row.id === this.duelContext.playerId }));
       const me2 = { rank: this.duelContext.rank, displayName: this.state.playerCard.nickname || t("duel.ranking.me"), score: duel3.score, tierId: duelTier(duel3.score).id, favoriteRelicId: this.state.favorite, ...profileFace(this.state), isMe: true };
       return { entries: entries2, me: me2, seasonEndsAt: duelSeasonEndsAt(this.now()).toISOString() };
     }
@@ -48853,7 +49261,11 @@ var FakeServer = class {
     const expedition = this.rollExpedition(now);
     const claimableExpeditionCount = EXPEDITION_BEST_SCORE_REWARD_STAGES.filter((stage) => expedition.bestScore >= stage.threshold && !expedition.claimedRewardStageIds.includes(stage.id)).length;
     const claimableRaidCount = this.raidInstances(now).map((row) => this.raidDto(row, now)).filter((row) => row.status === "completed" && !row.settled && row.settlement.some((reward) => reward.amount > 0)).length;
-    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
+    const freeResearch = isContentUnlocked("lab", this.state.playerResearch.level, true, this.state.cleared) && freeResearchAvailable(this.state.productPurchases[FREE_RESEARCH_SOURCE_ID], now);
+    const claimableInteractionCount = this.state.interaction.slots.filter((slot) => slot !== null && !slot.claimed && isInteractionDispatchComplete(slot.completesAt, now.getTime())).length;
+    const duelSeasonRewardReady = (QA_TOOLS_ENABLED || this.duelContext !== void 0) && rollDuelPeriods(normalizeDuelState(this.state.duel, [...this.state.owned]), now).pendingSeasonReward != null;
+    const claimableSubscriptionBonusCount = PRODUCTS.filter((product) => product.passBenefit && this.subscriptionInfo(product, now).subscription?.dailyBonusClaimed === false).length;
+    return { freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
   }
   /**
    * **상황 특가를 지금 상태에서 읽어 세운다**(`core/situationalOffers.ts`). 조회(붉은 점·프리미엄 목록)가 부르며, 바뀐 것이 있을 때만 저장한다.
@@ -48922,6 +49334,10 @@ var FakeServer = class {
       state = issueSituationalOffer(state, { trigger: "stageLoss", key: `stage-loss:${chapter}`, productId: "offer-stage-loss" }, now).state;
     }
     return state;
+  }
+  /** 일반 상점의 무료 칸을 아직 받지 않았는가 — 로비 상점 버튼의 붉은 점. */
+  shopFreeSupply(now) {
+    return PRODUCTS.some((product) => product.storefront === "shop" && product.acquisition.kind === "free" && this.isVisible(product, now) && this.remaining(product, now) > 0);
   }
   /** 받을 수 있는 무료 보급이 남은 프리미엄 탭 — 목록의 `purchasable`과 같은 판정을 읽는다. */
   freeSupplyCategories(now) {
@@ -49010,6 +49426,50 @@ var FakeServer = class {
       newModifierIds: nextState.earnedProfileModifierIds.filter((id) => !before.has(id)),
       granted
     };
+  }
+  /** 도감 — 기록된 개체·기록 점수·마디마다의 상태를 서버가 판정한다(`core/codex.ts`). */
+  async getCodex() {
+    await this.delay();
+    return this.codexDto(this.state);
+  }
+  /**
+   * 닿은 도감 마디를 모두 받는다. 마디 수와 지급을 같은 nextState와 단 한 번의 persist로 확정해 같은 마디를
+   * 두 번 받지 못하게 한다. 상한을 넘기는 몫은 깎아서 준다.
+   */
+  async claimCodexRewards() {
+    await this.delay();
+    const achievements = normalizeAchievementState(this.state.achievements);
+    const claim = claimCodexMilestones(codexScore(codexRecordedIds(this.state)), achievements.codexClaimed ?? 0);
+    if (claim.indices.length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "\uBC1B\uC744 \uB3C4\uAC10 \uBCF4\uC0C1\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const nextWallet = { ...this.state.wallet };
+    const granted = claim.rewards.map(({ currency: currency3, amount }) => {
+      const applied = Math.max(0, Math.min(amount, WALLET_CAPS[currency3] - nextWallet[currency3]));
+      nextWallet[currency3] += applied;
+      return { currency: currency3, amount: applied };
+    });
+    const nextAchievements = { ...achievements, codexClaimed: claim.claimed };
+    this.persist({ ...this.state, wallet: nextWallet, achievements: nextAchievements });
+    this.state.wallet = nextWallet;
+    return { ...this.snapshot(), claimedMilestones: claim.indices, granted };
+  }
+  codexDto(state) {
+    const recorded = codexRecordedIds(state);
+    const score = codexScore(recorded);
+    const claimed = normalizeAchievementState(state.achievements).codexClaimed ?? 0;
+    return {
+      entries: CODEX_RELICS.map((relic) => ({ id: relic.id, side: codexSide(relic), recorded: recorded.has(relic.id), points: CODEX_RARITY_POINTS[relic.rarity] })),
+      score,
+      maxScore: codexMaxScore(),
+      milestones: CODEX_MILESTONES.map((milestone, index) => ({ score: milestone.score, reward: { ...milestone.reward }, state: index < claimed ? "claimed" : score >= milestone.score ? "claimable" : "locked" })),
+      claimableCount: codexClaimableCount(score, claimed)
+    };
+  }
+  /**
+   * 상태에 남지 않는 만남(진 판 · 레이드 보스 · 지층)을 다음 저장에 굳히도록 적어 둔다. 상태가 이미 말하는 만남
+   * (보유 · 깬 관문)은 도감이 상태에서 직접 읽으므로 적지 않아도 된다.
+   */
+  noteEncounters(ids) {
+    for (const id of ids) this.pendingEncounters.add(id);
   }
   /** 길드에 든 적이 있는가 — 굳힌 값이 먼저이고, 아니면 지금 소속을 본다(조회 실패는 아직 아님으로 둔다). */
   async newbieGuildJoined() {
@@ -49191,9 +49651,9 @@ var FakeServer = class {
     return response;
   }
   progressPassOwned(pass) {
-    const record2 = this.state.productPurchases[pass.productId];
-    if (pass.seasonal) return record2?.periodKey === seasonKey(this.now()) && record2.count > 0;
-    return (record2?.count ?? 0) > 0;
+    const record3 = this.state.productPurchases[pass.productId];
+    if (pass.seasonal) return record3?.periodKey === seasonKey(this.now()) && record3.count > 0;
+    return (record3?.count ?? 0) > 0;
   }
   /** 패스가 재는 진행도 — 스토리는 본편 관문 클리어 수, 레벨은 연구원 레벨, 레이드는 입장 수다. */
   progressPassProgress(pass, state) {
@@ -49284,13 +49744,13 @@ var FakeServer = class {
     for (const grant of product.grants) {
       if (grant.kind !== "rune") continue;
       if (grant.randomRarity) {
-        for (let count3 = 0; count3 < quantity * grant.amount; count3 += 1) {
+        for (let count4 = 0; count4 < quantity * grant.amount; count4 += 1) {
           grantedRunes.push(this.createGrantedRune(rollRandomRuneRarity(this.random()), [...nextRunes, ...grantedRunes]));
         }
         continue;
       }
       const choice = this.resolveRuneChoice(grant, this.runePartOf(product, now), request.runeChoice);
-      for (let count3 = 0; count3 < quantity * grant.amount; count3 += 1) {
+      for (let count4 = 0; count4 < quantity * grant.amount; count4 += 1) {
         const rune = this.createGrantedRune(grant.rarity, [...nextRunes, ...grantedRunes], choice.part, choice.mainKeys);
         grantedRunes.push(rune);
       }
@@ -49320,8 +49780,8 @@ var FakeServer = class {
     }
     const periodKey = this.productPeriodKey(product, now);
     const current2 = this.state.productPurchases[product.id];
-    const count2 = (current2?.periodKey === periodKey ? current2.count : 0) + quantity;
-    const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count: count2 } };
+    const count3 = (current2?.periodKey === periodKey ? current2.count : 0) + quantity;
+    const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count: count3 } };
     const candidate = { ...this.state, wallet: nextWallet, runeInventory: nextRunes, itemInventory: nextItems, productPurchases: nextPurchases, relicFragments: nextFragments, owned: nextOwned, relicProgress: nextProgress, relicStory: nextRelicStory };
     redeemDeferredStoryBond(candidate, newRelicIds);
     this.persist(candidate);
@@ -49334,7 +49794,7 @@ var FakeServer = class {
     this.state.owned = nextOwned;
     this.state.relicProgress = nextProgress;
     this.state.relicStory = nextRelicStory;
-    return { ...this.snapshot(), productId, quantity, granted, grantedRunes: grantedRunes.map((rune) => this.cloneRune(rune)), remaining: Math.max(0, product.purchaseLimit - count2), newRelicIds };
+    return { ...this.snapshot(), productId, quantity, granted, grantedRunes: grantedRunes.map((rune) => this.cloneRune(rune)), remaining: Math.max(0, product.purchaseLimit - count3), newRelicIds };
   }
   /** 룬 상품이 이 기간에 내놓는 자리. 로테이션 칸이 정하고, 칸이 없는 상품은 지급 정의의 고정 자리를 쓴다. */
   runePartOf(product, now) {
@@ -49671,6 +50131,32 @@ var FakeServer = class {
     this.state.relicProgress = nextProgress;
     return { inventory: this.runeInventoryDto() };
   }
+  /**
+   * 세 칸을 한 번에 정한다. 칸마다 제 자리의 룬만 들고, 한 룬을 두 칸에 쓰지 않는다. 다른 렐릭이 낀 룬은
+   * `moveFromOther`일 때만 받아 그 렐릭의 칸을 같은 저장에서 비운다 — 두 요청으로 나누면 사이에 끊겨 룬이 두 곳에 남는다.
+   */
+  async setRuneLoadout(request) {
+    await this.delay();
+    if (!this.state.owned.has(request.relicId)) throw new GameApiError("RELIC_NOT_FOUND", "\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
+    if (!Array.isArray(request.slots) || request.slots.length !== 3) throw new GameApiError("RUNE_SLOT_MISMATCH", "\uB8EC \uCE78\uC740 \uC14B\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+    const chosen = request.slots.filter((id) => id !== null);
+    if (new Set(chosen).size !== chosen.length) throw new GameApiError("RUNE_ALREADY_EQUIPPED", "\uD55C \uB8EC\uC744 \uB450 \uCE78\uC5D0 \uB084 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    request.slots.forEach((id, index) => {
+      if (id === null) return;
+      if (this.ownedRune(id).part !== index) throw new GameApiError("RUNE_SLOT_MISMATCH", "\uC774 \uB8EC\uC740 \uB2E4\uB978 \uCE78\uC758 \uC870\uAC01\uC785\uB2C8\uB2E4.");
+    });
+    const taken = new Set(chosen);
+    const nextProgress = { ...this.state.relicProgress };
+    for (const [holderId, holder] of Object.entries(this.state.relicProgress)) {
+      if (holderId === request.relicId || !holder.heartGemSlots.some((id) => id !== null && taken.has(id))) continue;
+      if (!request.moveFromOther) throw new GameApiError("RUNE_ALREADY_EQUIPPED", "\uC774\uBBF8 \uB2E4\uB978 \uB810\uB9AD\uC5D0 \uC7A5\uCC29\uB41C \uB8EC\uC785\uB2C8\uB2E4.");
+      nextProgress[holderId] = { ...holder, heartGemSlots: holder.heartGemSlots.map((id) => id !== null && taken.has(id) ? null : id) };
+    }
+    nextProgress[request.relicId] = { ...nextProgress[request.relicId], heartGemSlots: [...request.slots] };
+    this.persist({ ...this.state, relicProgress: nextProgress });
+    this.state.relicProgress = nextProgress;
+    return { inventory: this.runeInventoryDto() };
+  }
   /** 노출 판정은 클라이언트 시간이 아니라 주입 가능한 서버 시간만 사용한다. */
   /** 상품 노출 기간 — 서버 운영 일정(`live_schedule`)이 정의의 기간을 덮고, 배너에 묶인 상품은 그 배너 기간 안으로 줄인다. */
   productWindow(product, now) {
@@ -49724,9 +50210,9 @@ var FakeServer = class {
       const offer = activeSituationalOffer(this.state.situationalOffers, product.id, now);
       return offer && offer.purchasedAt === void 0 ? 1 : 0;
     }
-    const record2 = this.state.productPurchases[product.id];
-    const count2 = record2?.periodKey === this.productPeriodKey(product, now) ? record2.count : 0;
-    return Math.max(0, product.purchaseLimit - count2);
+    const record3 = this.state.productPurchases[product.id];
+    const count3 = record3?.periodKey === this.productPeriodKey(product, now) ? record3.count : 0;
+    return Math.max(0, product.purchaseLimit - count3);
   }
   /** 활성 구독의 만료 시각과 오늘 몫 수령 여부. 구독이 아니거나 비활성이면 비어 있다. */
   subscriptionInfo(product, now) {
@@ -50112,7 +50598,7 @@ var FakeServer = class {
       ...rune,
       mainStats: [{ ...rune.mainStats[0] }, { ...rune.mainStats[1] }],
       subStats: rune.subStats.map((stat) => ({ ...stat })),
-      enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record2) => ({ ...record2 }))])),
+      enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record3) => ({ ...record3 }))])),
       engravings: rune.engravings.map((engraving) => ({ ...engraving }))
     };
   }
@@ -50153,9 +50639,9 @@ var FakeServer = class {
   /** 저장을 마친 뒤 받을 보상 수가 바뀌었을 때만 알린다 — 조회가 다시 저장해도 수가 같으면 되풀이되지 않는다. */
   signalMissionNotice(next) {
     if (this.missionNoticeListeners.size === 0) return;
-    const count2 = missionNoticeScore(next, this.now());
-    if (count2 === this.lastMissionNotice) return;
-    this.lastMissionNotice = count2;
+    const count3 = missionNoticeScore(next, this.now());
+    if (count3 === this.lastMissionNotice) return;
+    this.lastMissionNotice = count3;
     this.missionNoticeListeners.forEach((listener) => listener());
   }
   /** 주차가 달라지면 점수·누적·수령 단계를 함께 버려 지난주 보상이 새 주에 새지 않게 한다. */
@@ -50298,6 +50784,11 @@ var FakeServer = class {
   persist(next) {
     this.absorbStrataTicketsInto(next);
     this.raiseAchievementPeaks(next);
+    const encounters = this.pendingEncounters.size > 0 ? [...this.pendingEncounters] : [];
+    if (encounters.length > 0) {
+      const achievements = normalizeAchievementState(next.achievements);
+      next.achievements = { ...achievements, encountered: mergeEncountered(achievements.encountered, encounters) };
+    }
     this.validateState(next);
     try {
       if (this.persistSession) this.persistSession(next);
@@ -50305,6 +50796,7 @@ var FakeServer = class {
     } catch (error) {
       throw persistenceFailed(error);
     }
+    for (const id of encounters) this.pendingEncounters.delete(id);
     if (next.achievements) this.state.achievements = next.achievements;
     this.signalMissionNotice(next);
   }
@@ -50356,7 +50848,8 @@ function missionClaimCount(missions, now) {
   return claimableMissionIds(normalized).length + stages;
 }
 function missionNoticeScore(next, now) {
-  return claimableAchievementCount(normalizeAchievementState(next.achievements), achievementFacts(next)) * 1e3 + missionClaimCount(next.missions, now);
+  const codex = codexClaimableCount(codexScore(codexRecordedIds(next)), normalizeAchievementState(next.achievements).codexClaimed ?? 0);
+  return codex * 1e6 + claimableAchievementCount(normalizeAchievementState(next.achievements), achievementFacts(next)) * 1e3 + missionClaimCount(next.missions, now);
 }
 function qaRandom() {
   const hook = globalThis.__PF_QA_RANDOM;
@@ -50517,13 +51010,18 @@ var RelicProgressionManager = class {
     const response = await api.unequipRune({ relicId, slotIndex });
     if (!hasRemoteState(response)) this.applyRuneInventory(response.inventory);
   }
+  /** 세 칸을 한 번에 정한다 — 자동·추천 장착과 모두 해제. 서버가 확정한 장착표만 적용한다. */
+  async setRuneLoadout(relicId, slots, api = gameApi, options = {}) {
+    const response = await api.setRuneLoadout({ relicId, slots, ...options.moveFromOther ? { moveFromOther: true } : {} });
+    if (!hasRemoteState(response)) this.applyRuneInventory(response.inventory);
+  }
   /** 인벤토리 DTO를 기존 공유 객체에 복사해 씬 참조를 보존하고 응답 단위로 저장한다. */
   applyRuneInventory(inventory) {
     this.state.runeInventory = inventory.runes.map((rune) => ({
       ...rune,
       mainStats: [{ ...rune.mainStats[0] }, { ...rune.mainStats[1] }],
       subStats: rune.subStats.map((stat) => ({ ...stat })),
-      enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record2) => ({ ...record2 }))])),
+      enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record3) => ({ ...record3 }))])),
       engravings: rune.engravings.map((engraving) => ({ ...engraving }))
     }));
     for (const equipment of inventory.equipment) {
@@ -50565,10 +51063,28 @@ function arenaPlayer(id, data) {
     traits: partyRuneTraitEffects([{ relicId, runes: (s.relicProgress[relicId]?.heartGemSlots ?? []).flatMap((key) => s.runeInventory.filter((r) => r.instanceId === key)) }])
   })) };
 }
+var fieldable = (state, id) => typeof id === "string" && state.owned.has(id) && !getRelic(id).summonOnly;
+function practiceDefenseIds(state) {
+  const defense = (state.duel?.defense ?? []).filter((id) => fieldable(state, id));
+  return [...new Set(defense.length > 0 ? defense : state.party.filter((id) => fieldable(state, id)))].slice(0, 3);
+}
+function practicePartyIds(state, requested) {
+  if (Array.isArray(requested) && requested.length >= 1 && requested.length <= 3 && new Set(requested).size === requested.length && requested.every((id) => fieldable(state, id))) return requested;
+  return [...new Set(state.party.filter((id) => fieldable(state, id)))].slice(0, 3);
+}
+async function arenaPracticePreview(rpc, player, target) {
+  if (typeof target !== "string" || target === player || !await rpc("server_are_friends", { p_a: player, p_b: target })) throw Error("ARENA_FRIEND_REQUIRED");
+  const saved = await rpc("server_load_state", { p_player: target });
+  if (!saved?.data) throw Error("ARENA_FRIEND_REQUIRED");
+  const state = saveManager.parse(saved.data), progression = new RelicProgressionManager(state);
+  const units = practiceDefenseIds(state).map((relicId) => ({ relicId, level: state.relicProgress[relicId]?.level ?? 1, breakthrough: activeBreakthroughOf(state.relicProgress[relicId]), power: progression.getCombatPower(relicId, { pvp: true }) }));
+  return { units, totalPower: units.reduce((sum, u) => sum + u.power, 0) };
+}
 async function handleArenaCall(rpc, player, method, args, requestId) {
   const input = args[0] ?? {};
   if (method === "get" && input.kind === "standing") return await rpc("server_arena_standing", { p_player: player });
   if (method === "get" && input.kind === "ranking") return await rpc("server_arena_ranking", { p_player: player, p_limit: 100 });
+  if (method === "get" && input.kind === "practicePreview") return await arenaPracticePreview(rpc, player, input.target);
   const kind = method === "get" ? "status" : input.kind;
   if (!["status", "queue", "cancel", "invite", "accept", "decline", "practice", "action", "finish"].includes(kind ?? "")) throw Error("ARENA_ACTION");
   let rules = input.rules === void 0 ? RANKED_ARENA_RULES : arenaRules(input.rules);
@@ -50585,7 +51101,7 @@ async function handleArenaCall(rpc, player, method, args, requestId) {
       if (next.practice && !next.lease) {
         next.players.forEach((p, side) => {
           const state = saveManager.parse(context.records.find((s) => s.id === p.id).data);
-          const ids = side === 0 ? state.party : state.duel?.defense ?? state.party;
+          const ids = side === 0 ? practicePartyIds(state, kind === "practice" && p.id === player ? input.party : void 0) : practiceDefenseIds(state);
           next.picks[side] = ids.slice(0, 3).map((relicId, slot) => ({ relicId, slot, ...ARENA_SLOTS[slot] }));
         });
         next.locked = [true, true];
@@ -50656,7 +51172,7 @@ function authoritativeArgs(state, method, args) {
   }
   if (key) {
     const records = Object.values(journal.records).filter(
-      (record2) => combatKey(record2.input) === key && record2.verdict
+      (record3) => combatKey(record3.input) === key && record3.verdict
     );
     if (!records.length) return reject();
     if (method === "resolveDuel") return [{ ...request, won: records[0].verdict.victory }];
@@ -50664,9 +51180,9 @@ function authoritativeArgs(state, method, args) {
       return [args[0], records[0].verdict.victory];
     if (method === "completeBounty") {
       const rounds = new Map(
-        records.map((record2) => [
-          record2.input.input.mode === "bounty" ? record2.input.input.round : -1,
-          record2.verdict
+        records.map((record3) => [
+          record3.input.input.mode === "bounty" ? record3.input.input.round : -1,
+          record3.verdict
         ])
       );
       const wins = [0, 1, 2].filter(
@@ -51309,10 +51825,10 @@ function createSupabaseGuildBackend(call) {
     getShop: (actor) => run2(actor, "getShop"),
     getGuard: (actor) => run2(actor, "getGuard"),
     getRanking: (actor) => run2(actor, "getRanking"),
-    recordGuard: async (actor, record2, requestId) => {
+    recordGuard: async (actor, record3, requestId) => {
       const whole2 = (value, max) => Number.isSafeInteger(value) && value >= 0 && value <= max;
-      if (!whole2(record2?.day, 1e6) || !whole2(record2.score, 1e7) || !whole2(record2.coin, 100)) invalid();
-      return run2(actor, "recordGuard", [{ day: record2.day, score: record2.score, coin: record2.coin }], requestId);
+      if (!whole2(record3?.day, 1e6) || !whole2(record3.score, 1e7) || !whole2(record3.coin, 100)) invalid();
+      return run2(actor, "recordGuard", [{ day: record3.day, score: record3.score, coin: record3.coin }], requestId);
     },
     getWarMap: (actor) => run2(actor, "getWarMap"),
     clearWarSlot: (actor, slotId) => parseGuildWarSlotId(slotId) ? run2(actor, "clearWarSlot", [slotId]) : invalid(),
@@ -51328,9 +51844,9 @@ function createSupabaseGuildBackend(call) {
     autoArrangeWar: (actor) => run2(actor, "autoArrangeWar"),
     getWarFront: (actor) => run2(actor, "getWarFront"),
     beginWarAttack: (actor, slotId, requestId) => parseGuildWarSlotId(slotId) ? run2(actor, "beginWarAttack", [slotId], requestId) : invalid(),
-    recordWarAttack: (actor, record2, requestId) => {
-      if (!Number.isSafeInteger(record2?.day) || !parseGuildWarSlotId(record2.slotId) || typeof record2.won !== "boolean" || !isId(record2.entry)) invalid();
-      return run2(actor, "recordWarAttack", [{ day: record2.day, slotId: record2.slotId, won: record2.won, entry: record2.entry }], requestId);
+    recordWarAttack: (actor, record3, requestId) => {
+      if (!Number.isSafeInteger(record3?.day) || !parseGuildWarSlotId(record3.slotId) || typeof record3.won !== "boolean" || !isId(record3.entry)) invalid();
+      return run2(actor, "recordWarAttack", [{ day: record3.day, slotId: record3.slotId, won: record3.won, entry: record3.entry }], requestId);
     },
     createGuild: (actor, input, requestId) => {
       const checked = validateGuildName(String(input?.name ?? ""));
@@ -51432,6 +51948,10 @@ async function handler(req, res) {
     } else if (body.method.startsWith("social.")) {
       const method = body.method.slice(7);
       if (!isSocialMethod(method)) throw new GameCallError(400, "unknown_method");
+      if (method === "getProfile") {
+        res.status(200).json(await publicProfileOf(store, user.id, body.args?.[0]));
+        return;
+      }
       const response = await store.socialCall(user.id, method, body.args ?? [], body.requestId);
       if (["getFriends", "getRequests", "searchUsers", "getRecommendations"].includes(method)) await refreshStaleProfileRecords(response?.result, (id) => store.load(id), /* @__PURE__ */ new Date());
       res.status(200).json(response);
@@ -51449,6 +51969,19 @@ async function handler(req, res) {
     const elapsedMs = Date.now() - startedAt;
     if (elapsedMs >= 2e3) console.warn(JSON.stringify({ event: "slow_game_request", method: callMethod, elapsedMs }));
   }
+}
+var PLAYER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function publicProfileOf(store, self2, target) {
+  if (typeof target !== "string" || !PLAYER_ID.test(target)) throw new GameCallError(400, "invalid_args");
+  if (target.toLowerCase() === self2.toLowerCase()) throw new GameCallError(422, "SELF_REQUEST");
+  const stored = await store.load(target).catch(() => null);
+  const uid = stored ? saveManager.parse(stored.data).playerCard.uid : "";
+  if (!uid) throw new GameCallError(422, "USER_NOT_FOUND");
+  const response = await store.socialCall(self2, "searchUsers", [{ query: uid }]);
+  const found = response?.result?.users?.find((entry) => typeof entry.profile?.id === "string" && entry.profile.id.toLowerCase() === target.toLowerCase());
+  if (!found) throw new GameCallError(422, "USER_NOT_FOUND");
+  await refreshStaleProfileRecords({ users: [found] }, (id) => store.load(id), /* @__PURE__ */ new Date());
+  return { ok: true, result: { ...found, serverTime: response?.result?.serverTime ?? Date.now() }, incomingCount: response?.incomingCount };
 }
 export {
   handler as default

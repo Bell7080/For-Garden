@@ -52,7 +52,7 @@ import { BREAKTHROUGH_CAP, breakthroughFragmentSpend, canBreakThrough, UNIVERSAL
 import { canResetRelic, relicResetRefund, resetRelicProgress } from "../core/relicReset";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
 import { MISSIONS, RESEARCH_REWARD_STAGES, maxResearchPoints, mergeMissionRewards, type MissionReward, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, LIFETIME_COUNT_CAP, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
-import { CHAPTERS, DAILY_RESTORATION, getStage, STAGES, SUB_STORY_GEM_REWARDS } from "../data/stages";
+import { CHAPTERS, DAILY_RESTORATION, getStage, getStageEnemies, STAGES, SUB_STORY_GEM_REWARDS } from "../data/stages";
 import { PROGRESS_PASSES, findProgressPass, type ProgressPassDefinition } from "../data/progressPasses";
 import { addSeasonPoints, currentSeasonProgress, rollSeasonPassState, seasonEndsAt, seasonKey } from "../core/seasonPass";
 import { claimableProgressPassFreeThresholds, claimableProgressPassThresholds, progressPassFreeStates, progressPassGoal, progressPassMilestoneStates } from "../core/progressPass";
@@ -110,6 +110,8 @@ import type { AnswerRelicQuestionRequest, AnswerRelicQuestionResponse, ClaimReli
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
 import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse, RegularEventDto, RegularEventResponse } from "./contracts";
+import type { ClaimCodexRewardsResponse, CodexResponse } from "./contracts";
+import { CODEX_MILESTONES, CODEX_RARITY_POINTS, CODEX_RELICS, claimCodexMilestones, codexClaimableCount, codexMaxScore, codexRecordedIds, codexScore, codexSide, mergeEncountered } from "../core/codex";
 import type { AchievementListResponse, AchievementSeriesDto, ClaimAchievementRewardsResponse, ClaimNewbieGrowthRequest, ClaimNewbieGrowthResponse, NewbieGrowthResponse } from "./contracts";
 import { achievementFacts, claimAchievements, claimableAchievementCount, claimableTierCount, normalizeAchievementState } from "../core/achievements";
 import { ACHIEVEMENT_SERIES } from "../data/achievements";
@@ -149,7 +151,7 @@ import type { EnterRaidRequest, EnterRaidResponse, RaidDto, RaidListResponse, Ra
 import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, CompleteExpeditionNodeRequest, CompleteExpeditionNodeResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse, SweepExpeditionRequest, SweepExpeditionResponse } from "./contracts";
 import type { EnterStageRequest, EnterStageResponse, StageClearGrantDto } from "./contracts";
 import type { CakeOperationCompleteRequest, CakeOperationCompleteResponse, CakeOperationEnterResponse, CakeOperationRunRequest, DungeonSweepRequest, DungeonSweepResponse } from "./contracts";
-import { cakeOperationRunCost, cakeOperationTierIndex, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
+import { CAKE_OPERATION_ENEMY_IDS, cakeOperationRunCost, cakeOperationTierIndex, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { settleSweep, sweepRefusal, SWEEP_TICKET_ITEM, type DungeonRunCost } from "../core/dungeonShortcut";
 import { greatSuccessBonus, rollGreatSuccessCount } from "../core/greatSuccess";
 import type { AttendanceStatusResponse, ClaimAttendanceAdRequest, ClaimAttendanceRequest, ClaimAttendanceResponse, ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, DeleteMailsRequest, MarkMailsReadRequest } from "./contracts";
@@ -285,6 +287,8 @@ export class FakeServer implements GameApi {
   private readonly stageAdmissionResults = new Map<string, EnterStageResponse>();
   /** 입장 때 커밋한 요청을 보관하고 완료 정산이 해당 전투의 대기 건 하나만 소비하게 한다. */
   private readonly pendingStageAdmissions = new Map<string, Set<string>>();
+  /** 다음 저장에 도감으로 굳힐 만남(`noteEncounters`). */
+  private readonly pendingEncounters = new Set<string>();
   /** 현상수배 입장 재전송이 스테미나를 두 번 깎지 않게 하는 서버 영수증 표다. */
   private readonly bountyAdmissionResults = new Map<string, EnterBountyResponse>();
   private readonly bountySweepResults = new Map<string, DungeonSweepResponse>();
@@ -1111,6 +1115,7 @@ export class FakeServer implements GameApi {
     if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
     const spent = this.spendStamina(cost);
     const updated: RaidInstanceState = { ...instance, attemptsUsed: instance.attemptsUsed + 1 };
+    this.noteEncounters([instance.bossRelicId]);
     const nextState = structuredClone(this.state);
     Object.assign(nextState, { wallet: spent.wallet, playerResearch: spent.playerResearch, missions: spent.missions, itemInventory: spent.itemInventory });
     nextState.raid = { instances: [...nextState.raid.instances.filter(({ id }) => id !== updated.id), updated] };
@@ -2922,6 +2927,8 @@ export class FakeServer implements GameApi {
     // 완료 API는 전투 보상만 정산하며 스토리 완료는 StoryManager가 독점한다.
     if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "전투 스테이지가 아닙니다.");
     if ((stage.ancientFloor !== undefined || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "아직 열리지 않은 스테이지입니다.");
+    // 진 판에서 본 얼굴도 도감에 남는다 — 지층 층은 달마다 지워지므로 이긴 판도 함께 굳힌다.
+    this.noteEncounters(getStageEnemies(stage).map(({ id }) => id));
     const firstClear = victory && !this.state.cleared.has(stageId);
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);
     const pending = this.pendingStageAdmissions.get(stageId);
@@ -3108,6 +3115,7 @@ export class FakeServer implements GameApi {
     const cached = this.cakeCompletionResults.get(request.requestId);
     if (cached) return structuredClone(cached);
     let tier; try { tier = getCakeOperationTier(request.tierId); } catch { throw new GameApiError("CAKE_TIER_NOT_FOUND", "존재하지 않는 작전 단계입니다."); }
+    this.noteEncounters(CAKE_OPERATION_ENEMY_IDS);
     // 입장 영수증이 걸린 판만 스테미나 몫이 있고, **이긴 판에서만** 뺀다.
     const admitted = this.pendingCakeAdmissions.get(tier.id)?.has(request.requestId) === true;
     const cost = admitted ? cakeOperationRunCost(tier).staminaCost : 0;
@@ -3250,6 +3258,8 @@ export class FakeServer implements GameApi {
     const tier = getBountyTier(request.tierId);
     const now = this.now();
     const victory = request.victory && request.clearedRounds >= BOUNTY.roundCount;
+    // 맞선 라운드의 적까지(이긴 라운드 + 진 라운드 하나)를 도감에 굳힌다.
+    this.noteEncounters(tier.rounds.slice(0, Math.min(tier.rounds.length, Math.max(0, Math.floor(request.clearedRounds)) + 1)).map(({ relicId }) => relicId));
     const firstClear = victory && !this.state.bounty.clearedTierIds.includes(tier.id);
     const cost = bountyRunCost(tier).staminaCost;
     const spent = victory ? this.chargeVictoryStamina(cost) : undefined;
@@ -3648,7 +3658,7 @@ export class FakeServer implements GameApi {
     // 시즌 보상은 결투 서버가 붙었을 때만 생긴다(`claimDuelSeasonReward`와 같은 문). 조회라 상태를 저장하지 않는다.
     const duelSeasonRewardReady = (QA_TOOLS_ENABLED || this.duelContext !== undefined) && rollDuelPeriods(normalizeDuelState(this.state.duel, [...this.state.owned]), now).pendingSeasonReward != null;
     const claimableSubscriptionBonusCount = PRODUCTS.filter((product) => product.passBenefit && this.subscriptionInfo(product, now).subscription?.dailyBonusClaimed === false).length;
-    return { freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
+    return { freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
   }
 
   /**
@@ -3824,6 +3834,53 @@ export class FakeServer implements GameApi {
       newModifierIds: nextState.earnedProfileModifierIds.filter((id) => !before.has(id)),
       granted,
     };
+  }
+
+  /** 도감 — 기록된 개체·기록 점수·마디마다의 상태를 서버가 판정한다(`core/codex.ts`). */
+  async getCodex(): Promise<CodexResponse> {
+    await this.delay();
+    return this.codexDto(this.state);
+  }
+
+  /**
+   * 닿은 도감 마디를 모두 받는다. 마디 수와 지급을 같은 nextState와 단 한 번의 persist로 확정해 같은 마디를
+   * 두 번 받지 못하게 한다. 상한을 넘기는 몫은 깎아서 준다.
+   */
+  async claimCodexRewards(): Promise<ClaimCodexRewardsResponse> {
+    await this.delay();
+    const achievements = normalizeAchievementState(this.state.achievements);
+    const claim = claimCodexMilestones(codexScore(codexRecordedIds(this.state)), achievements.codexClaimed ?? 0);
+    if (claim.indices.length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "받을 도감 보상이 없습니다.");
+    const nextWallet = { ...this.state.wallet };
+    const granted = claim.rewards.map(({ currency, amount }) => {
+      const applied = Math.max(0, Math.min(amount, WALLET_CAPS[currency] - nextWallet[currency]));
+      nextWallet[currency] += applied;
+      return { currency, amount: applied };
+    });
+    const nextAchievements = { ...achievements, codexClaimed: claim.claimed };
+    this.persist({ ...this.state, wallet: nextWallet, achievements: nextAchievements });
+    this.state.wallet = nextWallet;
+    return { ...this.snapshot(), claimedMilestones: claim.indices, granted };
+  }
+
+  private codexDto(state: Session): CodexResponse {
+    const recorded = codexRecordedIds(state);
+    const score = codexScore(recorded);
+    const claimed = normalizeAchievementState(state.achievements).codexClaimed ?? 0;
+    return {
+      entries: CODEX_RELICS.map((relic) => ({ id: relic.id, side: codexSide(relic), recorded: recorded.has(relic.id), points: CODEX_RARITY_POINTS[relic.rarity] })),
+      score, maxScore: codexMaxScore(),
+      milestones: CODEX_MILESTONES.map((milestone, index) => ({ score: milestone.score, reward: { ...milestone.reward }, state: index < claimed ? "claimed" : score >= milestone.score ? "claimable" : "locked" })),
+      claimableCount: codexClaimableCount(score, claimed),
+    };
+  }
+
+  /**
+   * 상태에 남지 않는 만남(진 판 · 레이드 보스 · 지층)을 다음 저장에 굳히도록 적어 둔다. 상태가 이미 말하는 만남
+   * (보유 · 깬 관문)은 도감이 상태에서 직접 읽으므로 적지 않아도 된다.
+   */
+  private noteEncounters(ids: Iterable<string>): void {
+    for (const id of ids) this.pendingEncounters.add(id);
   }
 
   /** 길드에 든 적이 있는가 — 굳힌 값이 먼저이고, 아니면 지금 소속을 본다(조회 실패는 아직 아님으로 둔다). */
@@ -5243,6 +5300,12 @@ export class FakeServer implements GameApi {
     this.absorbStrataTicketsInto(next);
     // 골드와 지층 최고 기록은 소비·월간 초기화 후에도 유지한다.
     this.raiseAchievementPeaks(next);
+    // 진 판·레이드처럼 상태에 남지 않는 만남을 도감에 굳힌다.
+    const encounters = this.pendingEncounters.size > 0 ? [...this.pendingEncounters] : [];
+    if (encounters.length > 0) {
+      const achievements = normalizeAchievementState(next.achievements);
+      next.achievements = { ...achievements, encountered: mergeEncountered(achievements.encountered, encounters) };
+    }
     // 모든 쓰기 API가 공유하는 마지막 경계에서 음수·상한·중복을 저장 전에 차단한다.
     this.validateState(next);
     // validateState의 도메인 오류는 그대로 두고 실제 저장 장치 오류만 공용 API 실패로 분류한다.
@@ -5252,6 +5315,7 @@ export class FakeServer implements GameApi {
     } catch (error) {
       throw persistenceFailed(error);
     }
+    for (const id of encounters) this.pendingEncounters.delete(id);
     // 호출자는 nextState의 몇 칸만 옮기므로 저장 경계가 올린 업적 최고 기록도 함께 맞춘다.
     if (next.achievements) this.state.achievements = next.achievements;
     this.signalMissionNotice(next);
@@ -5308,9 +5372,10 @@ function missionClaimCount(missions: Session["missions"], now: Date): number {
   return claimableMissionIds(normalized).length + stages;
 }
 
-/** 업적 단계도 같은 신호를 탄다 — 두 수를 한 값으로 묶어 어느 쪽이 바뀌어도 신호가 나가게 한다(임무 수는 1,000을 넘지 않는다). */
+/** 업적 단계·도감 마디도 같은 신호를 탄다 — 여러 수를 한 값으로 묶어 어느 쪽이 바뀌어도 신호가 나가게 한다(임무 수는 1,000을 넘지 않는다). */
 export function missionNoticeScore(next: Session, now: Date): number {
-  return claimableAchievementCount(normalizeAchievementState(next.achievements), achievementFacts(next)) * 1000 + missionClaimCount(next.missions, now);
+  const codex = codexClaimableCount(codexScore(codexRecordedIds(next)), normalizeAchievementState(next.achievements).codexClaimed ?? 0);
+  return codex * 1_000_000 + claimableAchievementCount(normalizeAchievementState(next.achievements), achievementFacts(next)) * 1000 + missionClaimCount(next.missions, now);
 }
 
 /**

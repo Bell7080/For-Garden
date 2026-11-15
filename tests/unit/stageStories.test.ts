@@ -75,7 +75,7 @@ describe("로비 메뉴 자리", () => {
   });
 
   it("판은 사라진 단추 자리에 오른쪽 끝과 세로 중심을 맞춰 서고 칩이 판 안에 든다", () => {
-    const { bounds, chips } = lobbyMenuTrayLayout(2);
+    const { bounds, chips } = lobbyMenuTrayLayout(3);
     expect(bounds.x + bounds.width / 2).toBe(LOBBY_MENU_BUTTON.x + LOBBY_MENU_BUTTON.width / 2);
     expect(bounds.y).toBe(LOBBY_MENU_BUTTON.y);
     expect(bounds.x - bounds.width / 2).toBeGreaterThan(0);

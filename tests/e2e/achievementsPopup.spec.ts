@@ -17,7 +17,7 @@ test("로비 메뉴의 업적 칩은 업적 창을 연다", async ({ page }) => 
   });
   await tap(page, WIDTH / 2, HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  const { chips } = lobbyMenuTrayLayout(2);
+  const { chips } = lobbyMenuTrayLayout(3);
   await tap(page, LOBBY_MENU_BUTTON.x, LOBBY_MENU_BUTTON.y);
   await tapAndWait(page, chips[1].x, chips[1].y, () => window.__PF_DEBUG?.popupTitles, ["업적"]);
   await page.waitForTimeout(600);

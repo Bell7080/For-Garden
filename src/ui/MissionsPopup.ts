@@ -11,7 +11,7 @@ import { notificationManager } from "../managers/NotificationManager";
 import { logError } from "../managers/ErrorReporter";
 import { session } from "../state/session";
 import { motionPolicy } from "../core/settings";
-import { Button } from "./Button";
+import { Button, CLAIM_ALL_BUTTON_STYLE } from "./Button";
 import { squeezeTextToWidth } from "./textFit";
 import { addCategoryTab } from "./CategoryTab";
 import { slideTabPage } from "./screenTransition";
@@ -363,7 +363,7 @@ export class MissionsPopup {
       }
     });
     const claimable = this.claimableCount(this.period);
-    const claim = new Button(this.scene, layout.claim.x, layout.claim.y, { width: layout.claim.width, height: layout.claim.height, label: t("missions.claimAll"), variant: "primary", onClick: () => void this.claimAll() });
+    const claim = new Button(this.scene, layout.claim.x, layout.claim.y, { width: layout.claim.width, height: layout.claim.height, label: t("missions.claimAll"), ...CLAIM_ALL_BUTTON_STYLE, onClick: () => void this.claimAll() });
     if (claimable === 0) claim.setEnabled(false);
     footer.add(claim);
   }

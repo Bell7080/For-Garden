@@ -64,6 +64,37 @@ function toShapePoints(flat: number[]): { x: number; y: number }[] {
   return points;
 }
 
+/**
+ * 강조 버튼(`variant: "primary"`) 판의 결 — 모든 강조 버튼이 같은 값을 쓴다. 판 색은 강조색을 짙게 누른 것이고
+ * (`fill`을 넘기면 그 색), 위에서 같은 색이 옅게 비치며, 밑동은 한 톤 짙은 턱이다. 라벨은 강조색을 밝힌 색이다.
+ */
+export const PRIMARY_PLATE = {
+  fillShade: 0.2,
+  alpha: 0.9,
+  sheen: 0.05,
+  glow: 0.26,
+  glowHeight: 0.62,
+  ledgeWidth: 6,
+  ledgeShade: 0.5,
+  ledgeAlpha: 0.95,
+  labelTint: 0.45,
+} as const;
+
+/** 색을 검정 쪽으로 누른다(`amount` = 남기는 몫). */
+export function shadeColor(color: number, amount: number): number {
+  const r = Math.round(((color >> 16) & 0xff) * amount);
+  const g = Math.round(((color >> 8) & 0xff) * amount);
+  const b = Math.round((color & 0xff) * amount);
+  return (r << 16) | (g << 8) | b;
+}
+
+/** 색을 흰색 쪽으로 밝힌 CSS 색(`amount` = 흰색으로 가는 몫). */
+export function tintColor(color: number, amount: number): string {
+  const lift = (channel: number): number => Math.round(channel + (255 - channel) * amount);
+  const r = lift((color >> 16) & 0xff), g = lift((color >> 8) & 0xff), b = lift(color & 0xff);
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+}
+
 export interface ButtonOptions {
   width: number;
   height: number;
@@ -173,21 +204,26 @@ export class Button extends Phaser.GameObjects.Container {
             bevel: { topLeft: height * 0.52, topRight: 0, bottomRight: height * 0.52, bottomLeft: 0 },
           })
         : slantedRect(width, height);
+    // 강조 버튼은 **수단의 색으로 물든 판**이다(충전 칸의 버튼과 같은 한 벌 — `PRIMARY_PLATE`). 검은 유리 위에 금빛 윗줄·밑줄만
+    // 긋던 때는 판이 비어 보여 「위아래 금테두리」로만 읽혔다. 이제 판 자체가 강조색을 짙게 머금고 위에서 빛을 받으며,
+    // 밑동은 밝은 선이 아니라 한 톤 짙은 턱이 두께를 만든다. 라벨도 강조색을 밝힌 색이다.
+    const P = PRIMARY_PLATE;
     plate.add(drawLayer(scene, 0, 0, shape, {
       // 유리판이라 바탕을 짙게 칠하지 않는다. 뒤 배경이 비쳐야 두께가 느껴진다.
-      fill: opts.fill ?? (primary ? 0x0d1219 : 0x1b2029),
-      alpha: primary ? 0.74 : HOLO.glass,
-      sheen: primary ? 0.07 : 0.04,
+      fill: opts.fill ?? (primary ? shadeColor(accent, P.fillShade) : 0x1b2029),
+      alpha: primary ? P.alpha : HOLO.glass,
+      sheen: primary ? P.sheen : 0.04,
+      ...(primary ? { glow: { color: accent, strength: P.glow, height: P.glowHeight } } : {}),
       // 사방을 두르지 않고 빛이 닿는 윗변 한 줄만 긋는다.
       edge: accent,
       edgeAlpha: primary ? 0.95 : 0.4,
     }));
     if (primary && !opts.perspective) {
-      // 강조 버튼만 아래에도 한 줄을 그어 유리판의 두께를 만든다.
-      const underline = scene.add.graphics();
-      underline.lineStyle(3, accent, 0.6);
-      underline.lineBetween(-width / 2 + height * 0.52, height / 2 - 5, width / 2 - height * 0.52, height / 2 - 5);
-      plate.add(underline);
+      // 밑동의 턱 — 밝은 금선 대신 판보다 한 톤 짙은 띠가 아래 변을 받쳐 눌리는 판의 두께를 만든다.
+      const ledge = scene.add.graphics();
+      ledge.lineStyle(P.ledgeWidth, shadeColor(accent, P.ledgeShade), P.ledgeAlpha);
+      ledge.lineBetween(-width / 2, height / 2 - P.ledgeWidth / 2, width / 2 - height * 0.52 - P.ledgeWidth / 2, height / 2 - P.ledgeWidth / 2);
+      plate.add(ledge);
     }
     if (opts.perspective) {
       // 사다리꼴은 아래 변도 기울어 있다. 그 변을 따라 한 줄 그어 원근을 한 번 더 알린다.
@@ -202,9 +238,11 @@ export class Button extends Phaser.GameObjects.Container {
     const fontSize = opts.fontSize ?? 36;
     const iconSize = fontSize * 1.35;
     const label = scene.add
-      .text(0, hasSub ? -14 : 0, opts.label, textStyle({ role: "display", size: fontSize, ...(opts.labelColor ? { color: opts.labelColor } : {}) }))
+      .text(0, hasSub ? -14 : 0, opts.label, textStyle({ role: "display", size: fontSize, ...(opts.labelColor ? { color: opts.labelColor } : primary ? { color: tintColor(accent, PRIMARY_PLATE.labelTint) } : {}) }))
       .setOrigin(0.5);
     plate.add(label);
+    // 언어마다 길이가 다른 라벨이 판을 넘지 않게, 글자만 서는 버튼은 깎인 모서리 안쪽 폭으로 가로만 누른다(넘칠 때만).
+    if (!opts.icon && !opts.art && !opts.cost && opts.tag === undefined) squeezeTextToWidth(label, width - height * (primary ? 1.04 : 0.6));
     this.labelText = label;
     this.plate = plate;
     this.labelSize = fontSize;
@@ -405,4 +443,17 @@ export const DEFENSE_BUTTON_STYLE = {
   fill: 0x142338,
   accentColor: COLOR.exchange,
   accentTextColor: COLOR.exchangeText,
+} as const;
+
+/**
+ * 「모두 받기」 — 임무·우편·패스·업적·신규 성장·원정 기록 보상이 같은 한 벌을 쓴다. 받는 조작은 화면의 주인공이라
+ * 충전 칸의 쓰기 버튼과 같은 밝은 호박빛 판에 글자를 한 뼘 키우고, 양 끝에 점무늬를 깐다. 자리는 늘 판 아래 가운데다.
+ */
+export const CLAIM_ALL_BUTTON_STYLE = {
+  variant: "primary",
+  accentColor: 0xf2c25a,
+  accentTextColor: "#ffe2a0",
+  labelColor: "#ffe8b0",
+  fontSize: 38,
+  decorDots: true,
 } as const;

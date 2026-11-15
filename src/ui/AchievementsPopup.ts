@@ -10,7 +10,7 @@ import { formatCurrency } from "../core/formatCurrency";
 import { motionPolicy } from "../core/settings";
 import { notificationManager } from "../managers/NotificationManager";
 import { session } from "../state/session";
-import { Button } from "./Button";
+import { Button, CLAIM_ALL_BUTTON_STYLE } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
 import { slideTabPage } from "./screenTransition";
 import { attachDragScroll } from "./dragScroll";
@@ -347,7 +347,7 @@ export class AchievementsPopup {
       this.scene.tweens.add({ targets: row, x: target, duration: 220, ease: "Cubic.easeOut", onUpdate: sync, onComplete: sync });
     }
     this.tabScroll = target; this.tabScrollTab = this.tab;
-    const claim = new Button(this.scene, layout.claim.x, layout.claim.y, { width: layout.claim.width, height: layout.claim.height, label: t("achievement.claimAll"), variant: "primary", onClick: () => void this.claim(this.claimableIdsInTab()) });
+    const claim = new Button(this.scene, layout.claim.x, layout.claim.y, { width: layout.claim.width, height: layout.claim.height, label: t("achievement.claimAll"), ...CLAIM_ALL_BUTTON_STYLE, onClick: () => void this.claim(this.claimableIdsInTab()) });
     if (this.claimableIdsInTab().length === 0) claim.setEnabled(false);
     footer.add(claim);
   }

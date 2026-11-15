@@ -8,7 +8,7 @@ import { gameApi } from "../api/FakeServer";
 import { GameApiError, type ExpeditionRewardStageDto, type GameApi } from "../api/contracts";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { session } from "../state/session";
-import { Button } from "./Button";
+import { Button, CLAIM_ALL_BUTTON_STYLE } from "./Button";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { RewardFrame } from "./RewardFrame";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
@@ -128,7 +128,7 @@ export class ExpeditionRewardPopup {
     this.buildTrack(track, snapshot.rewardStages, snapshot.bestScore, viewTop, view);
     this.attachScroll(content, viewTop, view);
     const claimable = snapshot.rewardStages.some(stage => snapshot.bestScore >= stage.threshold && !stage.claimed);
-    const claimAll = new Button(this.scene, 0, viewTop + view + 78, { width: 400, height: 92, label: t("missions.claimAll"), variant: "primary", onClick: () => void this.claim() });
+    const claimAll = new Button(this.scene, 0, viewTop + view + 78, { width: 400, height: 92, label: t("missions.claimAll"), ...CLAIM_ALL_BUTTON_STYLE, onClick: () => void this.claim() });
     claimAll.setEnabled(claimable && !this.claiming);
     content.add(claimAll);
   }

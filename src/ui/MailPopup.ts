@@ -7,7 +7,7 @@ import { findItem } from "../data/items";
 import { formatCurrency } from "../core/formatCurrency";
 import { MailManager } from "../managers/MailManager";
 import { session } from "../state/session";
-import { Button } from "./Button";
+import { Button, CLAIM_ALL_BUTTON_STYLE } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
 import { slideTabPage } from "./screenTransition";
 import { attachDragScroll } from "./dragScroll";
@@ -357,7 +357,7 @@ export class MailPopup {
     const claimable = this.manager.claimableIds(this.result);
     const unreadNotices = this.result.mails.filter((mail) => mailTabOf(mail) === this.tab && !mail.read).map(({ id }) => id);
     const action = this.tab === "reward"
-      ? new Button(this.scene, layout.action.x, layout.action.y, { width: layout.action.width, height: layout.action.height, label: t("mail.claimAll"), variant: "primary", onClick: () => void this.claim(claimable) })
+      ? new Button(this.scene, layout.action.x, layout.action.y, { width: layout.action.width, height: layout.action.height, label: t("mail.claimAll"), ...CLAIM_ALL_BUTTON_STYLE, onClick: () => void this.claim(claimable) })
       : new Button(this.scene, layout.action.x, layout.action.y, { width: layout.action.width, height: layout.action.height, label: t("mail.readAll"), onClick: () => void this.readAll(unreadNotices) });
     if ((this.tab === "reward" ? claimable : unreadNotices).length === 0) action.setEnabled(false);
     footer.add(action);

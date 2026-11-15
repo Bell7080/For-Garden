@@ -8,7 +8,7 @@ import { formatCurrency } from "../core/formatCurrency";
 import { t, type TextKey } from "../i18n";
 import { platformPayment } from "../platform/payment";
 import { transitionTiming } from "../core/screenTransition";
-import { Button } from "./Button";
+import { Button, CLAIM_ALL_BUTTON_STYLE } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
 import { notificationManager } from "../managers/NotificationManager";
 import { NotificationDot } from "./NotificationDot";
@@ -168,7 +168,7 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       }
       list.refresh();
 
-      // 목록 아래 — 왼쪽에 미션·보상 탭, 오른쪽에 받기.
+      // 목록 아래 — 왼쪽에 미션·보상 탭.
       const M = PASS_POPUP.modeRow;
       const modeY = height / 2 - M.fromBottom;
       (["mission", "reward"] as const).forEach((id, index) => {
@@ -184,12 +184,13 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
         });
       });
       const ready = passReadyCount(pass);
-      if (ready > 0) {
-        root.add(new Button(scene, inner / 2 - M.button.width / 2, modeY, {
-          width: M.button.width, height: M.button.height, variant: "primary", label: t("lobby.pass.claimAll", { count: ready }),
-          onClick: () => void claim(pass),
-        }));
-      } else {
+      const C = PASS_POPUP.claimRow;
+      // 받기는 판 맨 아래 가운데 — 임무·우편과 같은 자리·같은 한 벌이다. 받을 것이 없으면 꺼진 채 서고 탭 줄 끝이 그 말을 한다.
+      root.add(new Button(scene, 0, height / 2 - C.fromBottom, {
+        width: C.width, height: C.height, ...CLAIM_ALL_BUTTON_STYLE, label: ready > 0 ? t("lobby.pass.claimAll", { count: ready }) : t("missions.claimAll"),
+        onClick: () => void claim(pass),
+      }).setEnabled(ready > 0 && !pending));
+      if (ready === 0) {
         root.add(scene.add.text(inner / 2, modeY, t("lobby.pass.nothing"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5));
       }
       if (message) {

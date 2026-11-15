@@ -15,7 +15,7 @@ import { session } from "../state/session";
 import { BACKGROUND } from "./backgroundAssets";
 import { addPopupBackgroundImage } from "./backgrounds";
 import { withBusy } from "./BusyOverlay";
-import { Button } from "./Button";
+import { Button, CLAIM_ALL_BUTTON_STYLE } from "./Button";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { FaceFrame } from "./FaceFrame";
 import { chipPoints, drawLayer, drawShapeEdge, drawShapeOutline, HoloBar, HOLO, slantedRect, toPoints } from "./holo";
@@ -192,7 +192,7 @@ export class NewbieGrowthPopup {
     dynamic.add(this.list);
     this.paintGoals(this.list, this.data);
     const claimable = this.data.goals.some(({ state }) => state === "claimable") || this.data.milestones.some(({ state }) => state === "claimable");
-    const button = new Button(this.scene, 0, L.claim.y, { width: L.claim.width, height: L.claim.height, label: t("newbieGrowth.claimAll"), variant: "primary", onClick: () => void this.claim() });
+    const button = new Button(this.scene, 0, L.claim.y, { width: L.claim.width, height: L.claim.height, label: t("newbieGrowth.claimAll"), ...CLAIM_ALL_BUTTON_STYLE, onClick: () => void this.claim() });
     button.setEnabled(claimable);
     dynamic.add(button);
   }

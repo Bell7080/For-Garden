@@ -222,15 +222,25 @@ describe("패스 창 탭 줄 간격", () => {
 });
 
 describe("패스 탭 줄의 오른쪽 잘림", () => {
-  it("뒷 판 빗변과 평행하고, 빗변까지의 간격이 왼쪽 여백과 같다", () => {
+  it("탭 줄은 받기 줄 위로 올라가 빗변에 닿지 않고, 오른쪽 끝이 곧게 선다", () => {
     const strip = passPopupPassStrip();
-    const { passRow, width, height, inner } = PASS_POPUP;
-    // 평행: y가 1 내려갈 때 오른쪽 끝이 정확히 1 물러난다(45도 빗변).
+    const { passRow, height, inner } = PASS_POPUP;
     const y = height / 2 - passRow.fromBottom;
-    expect(strip.right(y) - strip.right(y + 1)).toBeCloseTo(1);
-    // 빗변까지의 수직 거리 = 가로 물러남 / √2.
-    const bevelX = width / 2 - (y - (height / 2 - Math.min(width, height) * POPUP_BODY_BEVEL_RATIO));
-    expect((bevelX - strip.right(y)) / Math.SQRT2).toBeCloseTo((width - inner) / 2);
+    expect(strip.right(strip.bottom)).toBeCloseTo(strip.right(strip.top));
+    expect(strip.right(y)).toBeLessThanOrEqual(inner / 2);
+  });
+
+  it("모두 받기는 맨 아래 가운데에 서고 뒷 판 빗변과 패스 탭 줄 어느 쪽에도 닿지 않는다", () => {
+    const { claimRow, passRow, width, height } = PASS_POPUP;
+    const bevel = Math.min(width, height) * POPUP_BODY_BEVEL_RATIO;
+    const claimBottom = height / 2 - claimRow.fromBottom + claimRow.height / 2;
+    const claimTop = height / 2 - claimRow.fromBottom - claimRow.height / 2;
+    // 오른쪽 아래 빗변이 그 높이에서 허락하는 폭 안이다.
+    expect(claimRow.width / 2).toBeLessThan(width / 2 - Math.max(0, claimBottom - (height / 2 - bevel)) - 24);
+    expect(claimBottom).toBeLessThan(height / 2);
+    // 켜진 패스 탭이 커져도 받기를 덮지 않는다.
+    const passBottom = height / 2 - passRow.fromBottom + (passRow.tabHeight / 2) * CATEGORY_TAB.selectedScale;
+    expect(claimTop - passBottom).toBeGreaterThanOrEqual(8);
   });
 
   it("탭이 네 칸이어도 흐르는 줄은 보이는 창 안에서 끝까지 닿는다", () => {

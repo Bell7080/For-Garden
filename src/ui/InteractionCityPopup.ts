@@ -65,7 +65,7 @@ import { startPuppetHop } from "./puppetHop";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { sceneInfoManager, type InfoManager } from "./info";
 import { pressIn, pressOut } from "./pressFeedback";
-import { onTap } from "./tapGuard";
+import { isTap } from "./tapGuard";
 import { addScrollHint } from "./ScrollHint";
 
 /**
@@ -258,11 +258,23 @@ export class InteractionCityPopup {
         occupied: Boolean(relicId), index, groundOffset: SLOT_GROUND_OFFSET,
       });
       if (relicId) this.standPuppet(relicId, x, view.state === "away");
-      if (!editable) return;
+      // 고칠 수 없는 칸(나가 있는 동안)도 선 이가 있으면 꾹 눌러 상세는 연다.
+      if (!editable && !relicId) return;
       const hit = this.scene.add.rectangle(x, SLOT.y, SLOT.width, SLOT.height, 0xffffff, 0)
-        .setName(`interaction-party-slot-${index + 1}`).setDepth(SD_DEPTH + 1).setInteractive({ useHandCursor: true });
-      onTap(hit, () => this.tapSlot(index));
+        .setName(`interaction-party-slot-${index + 1}`).setDepth(SD_DEPTH + 1).setInteractive({ useHandCursor: editable });
+      // 짧은 탭은 칸 고르기, 꾹 누름은 상세다 — 목록 카드·다른 편성 화면과 같은 손이다.
+      bindLongPress(this.scene, hit, {
+        onTap: editable ? () => this.tapSlot(index) : undefined,
+        allowTap: () => isTap(this.scene.input.activePointer),
+        enabled: () => !this.busy,
+        onLongPress: () => {
+          const relic = relicId ? RELICS.find((candidate) => candidate.id === relicId) : undefined;
+          if (relic) this.info().showRelic(relic);
+        },
+        depth: SD_DEPTH + 2,
+      });
       parent.add(hit);
+      if (!editable) return;
       // 빼는 표식은 SD보다 앞선 층에 선다 — 같은 컨테이너에 두면 머리에 가린다.
       if (index === this.selectedSlot && relicId && this.chromeLayer) addFormationRemoveChip(this.scene, this.chromeLayer, box, () => this.tapSlot(index, "clear"));
     });

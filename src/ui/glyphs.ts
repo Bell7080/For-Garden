@@ -70,6 +70,7 @@ export type GlyphName =
   | "id-card"
   | "receipt"
   | "restore"
+  | "refresh"
   | "tag-buff"
   | "tag-target"
   | "tag-area"
@@ -250,6 +251,29 @@ export function drawGlyph(
       g.fillStyle(color, alpha);
       g.fillPoints(points(-r * 0.3, -r * 0.94, r * 0.1, -r * 0.62, -r * 0.3, -r * 0.3), true);
       break;
+    case "refresh": {
+      // 새로고침 — 꺾은 선으로 도는 두 호가 서로의 꼬리를 쫓는다. 끝마다 도는 방향(시계 방향)으로 채운 화살촉.
+      const arc = (from: number, to: number): void => {
+        const steps = 4;
+        const list: number[] = [];
+        for (let i = 0; i <= steps; i += 1) {
+          const a = Phaser.Math.DegToRad(from + ((to - from) * i) / steps);
+          list.push(Math.cos(a) * r * 0.72, Math.sin(a) * r * 0.72);
+        }
+        g.strokePoints(points(...list), false);
+        const end = Phaser.Math.DegToRad(to);
+        const ex = Math.cos(end) * r * 0.72, ey = Math.sin(end) * r * 0.72;
+        // 도는 방향의 접선(시계 방향)과 바깥 법선으로 삼각형을 세운다.
+        const tx = -Math.sin(end), ty = Math.cos(end);
+        const nx = Math.cos(end), ny = Math.sin(end);
+        const head = r * 0.36, wing = r * 0.3;
+        g.fillStyle(color, alpha);
+        g.fillPoints(points(ex + tx * head, ey + ty * head, ex + nx * wing, ey + ny * wing, ex - nx * wing, ey - ny * wing), true);
+      };
+      arc(195, 330);
+      arc(15, 150);
+      break;
+    }
     case "expedition-normal":
       // 교차한 발굴 도구는 일반 조우를 뜻한다.
       g.lineBetween(-r * 0.72, -r * 0.72, r * 0.72, r * 0.72);

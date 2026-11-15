@@ -40,6 +40,7 @@ export const DUEL_ID = {
   "duel.refresh.free": "Segarkan lawan {left}/{limit}",
   "duel.refresh.title": "Segarkan Lawan",
   "duel.refresh.message": "Gunakan Permata untuk memilih lawan baru. Harganya naik setiap kali disegarkan.",
+  "duel.refresh.reset": "Penyegaran gratis direset dalam {time}",
   "duel.fought": "Sudah bertarung",
   "duel.power": "Kekuatan Tempur {power}",
   "duel.challenge": "Tantang",

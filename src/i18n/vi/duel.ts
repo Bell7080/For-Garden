@@ -40,6 +40,7 @@ export const DUEL_VI = {
   "duel.refresh.free": "Làm mới đối thủ {left}/{limit}",
   "duel.refresh.title": "Làm mới đối thủ",
   "duel.refresh.message": "Dùng Ngọc để chọn lại đối thủ. Mỗi lần làm mới, giá lại tăng.",
+  "duel.refresh.reset": "Lượt làm mới miễn phí đặt lại sau {time}",
   "duel.fought": "Đã đấu",
   "duel.power": "Lực chiến {power}",
   "duel.challenge": "Thách đấu",

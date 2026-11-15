@@ -1123,13 +1123,18 @@ export class ExpeditionScene extends Phaser.Scene {
         if (this.rosterDragging || this.rosterDraggedDistance > ROSTER_DRAG_SLOP) return;
         this.tapFormationSlot(index);
       },
+      // 자리에 세워 둔 SD도 목록 카드·스토리 편성과 같은 꾹 누름으로 상세가 열린다.
+      longPress: (index) => {
+        const id = this.selected[index];
+        if (id) this.ally().showRelic(getRelic(id));
+      },
       drop: (from, to) => {
         this.formationDragVisual?.endDrag();
         this.selected = moveFormationSlot(this.selected, from, to);
         this.selectedSlot = to;
         this.refreshPreparationSelection();
       },
-    });
+    }, { longPressGauge: (index) => this.selected[index] !== null && this.selected[index] !== undefined });
   }
 
   /** 아직 서 있지 않은 렐릭만 읽어 세우고, 이미 선 SD는 자리만 옮긴다. */

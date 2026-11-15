@@ -25,7 +25,9 @@ import { setDebugGridCards, setDebugGridOffset, setDebugScene } from '../debug';
 import { arenaExitRoute } from '../core/arenaExit';
 import { arenaResultFromRoom, openArenaResultPopup } from '../ui/ArenaResultPopup';
 import { arenaBattleInput } from './arenaPractice';
-import { onTap } from "../ui/tapGuard";
+import { isTap, onTap } from "../ui/tapGuard";
+import { bindLongPress } from "../ui/longPressInfo";
+import { showArenaUnit } from "../ui/arenaUnitInfo";
 import { addScrollHint } from "../ui/ScrollHint";
 
 /**
@@ -474,7 +476,10 @@ export class ArenaRoomScene extends Phaser.Scene {
         }
         cell.add(drawLayer(this, 0, 0, slantedRect(L.slot.width, L.slot.height), { fill: ARENA_TONE.panel, alpha: .82, edge: tone, edgeAlpha: chosen ? 1 : .55 }));
         if (pick) {
-          this.addCard(cell, 0, 6, this.unitOf(r, pick.relicId, owner), pick.relicId, L.slot.card.width, L.slot.card.height);
+          const placed = this.unitOf(r, pick.relicId, owner);
+          const card = this.addCard(cell, 0, 6, placed, pick.relicId, L.slot.card.width, L.slot.card.height);
+          // 칸에 선 렐릭도 격자 카드와 같은 꾹 누름으로 이 판의 모습을 연다. 짧은 탭은 아무 일도 없다.
+          if (placed) bindLongPress(this, card.hit, { onLongPress: () => showArenaUnit(this, placed), allowTap: () => false });
         } else if (chosen && this.selectedRelic) {
           // 고르는 중인 렐릭은 칸에 흐리게 미리 선다 — 확정하면 그대로 그 자리다.
           this.addCard(cell, 0, 6, this.unitOf(r, this.selectedRelic, side), this.selectedRelic, L.slot.card.width, L.slot.card.height).setAlpha(.55);
@@ -632,7 +637,13 @@ export class ArenaRoomScene extends Phaser.Scene {
       dim.add(dimLabel);
       const banMark = addBanMark(this, card, GRID.cardWidth, GRID.cardHeight).setVisible(false);
       // 누른 자리와 뗀 자리의 거리로 끌기를 가른다(공용 탭 판정). 속도를 쌓아 재던 때는 손끝이 조금만 떨려도 탭이 버려졌다.
-      onTap(card.hit, () => this.tapCard(unit.def.id));
+      // 짧은 탭은 밴·배치 고르기, 꾹 누름은 이 판의 모습(읽기 전용 정보창)이다 — 다른 편성 그리드와 같은 손이다.
+      // 끌어 스크롤한 손은 둘 다 아니다(꾹 누름은 움직이면 풀리고, 탭은 공용 탭 거리를 넘으면 버린다).
+      bindLongPress(this, card.hit, {
+        onTap: () => this.tapCard(unit.def.id),
+        allowTap: () => isTap(this.input.activePointer),
+        onLongPress: () => showArenaUnit(this, unit),
+      });
       this.gridCards.set(unit.def.id, { card, banMark, dim, dimLabel });
     });
     this.gridContent = content;

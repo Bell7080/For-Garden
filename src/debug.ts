@@ -28,6 +28,7 @@ export interface DebugBattle {
   ultimateQueue?: string[];
   /** 실제 이동 중인 적 클릭 영역 중심. E2E가 고정 좌표 대신 렌더 입력 계약을 누르는 데만 쓴다. */
   enemyTargets?: Array<{ x: number; y: number }>;
+  allyTargets?: Array<{ x: number; y: number }>;
   /**
    * 머리 위 상태 칩 줄의 실제 자리와 걸린 수.
    *

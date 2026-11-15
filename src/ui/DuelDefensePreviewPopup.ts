@@ -16,6 +16,10 @@ import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 import { addUnitNameplate, addUnitPower } from "./unitNameplate";
 import { logError } from "../managers/ErrorReporter";
+import { ARENA_TONE } from "./arenaTheme";
+
+/** 비동기 친선전으로 연 미리보기 — 티어·점수 대신 친구의 연구원 레벨이 서고 아레나 보랏빛으로 물든다. */
+export interface DuelPreviewFriendly { level: number }
 
 /** 방어팀 미리보기의 자리. 머리 줄 → 세 칸이 선 무대 → 출격 순이고 창 높이는 그 합이다. */
 export const DUEL_DEFENSE_PREVIEW = {
@@ -46,16 +50,16 @@ export function duelDefensePreviewLayout(): { height: number; headY: number; sta
  * 않고 `?`로만 선다 — 그 몫은 머리 줄의 총 전투력에만 든다. 맨 아래 **출격**이 공격팀 편성 화면을 연다.
  * 뒤로 나가면 상대 선택으로 돌아간다.
  */
-export function openDuelDefensePreview(scene: Phaser.Scene, popups: PopupLayer, opponent: DuelOpponentDto, handlers: { onSortie: () => void; onBack: () => void }): void {
+export function openDuelDefensePreview(scene: Phaser.Scene, popups: PopupLayer, opponent: DuelOpponentDto, handlers: { onSortie: () => void; onBack: () => void }, friendly?: DuelPreviewFriendly): void {
   const L = DUEL_DEFENSE_PREVIEW;
   const layout = duelDefensePreviewLayout();
-  const tone = DUEL_TIER_COLOR[opponent.tierId];
+  const tone = friendly ? { fill: ARENA_TONE.accent } : DUEL_TIER_COLOR[opponent.tierId];
   let sortied = false;
   popups.open({
-    width: L.width, height: layout.height, title: t("duel.defense.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.78, backButton: true,
+    width: L.width, height: layout.height, title: friendly ? t("arena.friend.previewTitle") : t("duel.defense.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.78, backButton: true,
     onClose: () => { if (!sortied) handlers.onBack(); },
   }, (body, close) => {
-    paintHead(scene, body, layout.headY, opponent);
+    paintHead(scene, body, layout.headY, opponent, friendly);
     paintStage(scene, body, layout.stageY, opponent, tone.fill);
     const hidden = opponent.units.filter((unit) => !unit.relicId).length;
     if (hidden > 0) body.add(scene.add.text(0, layout.blindY, t("duel.defense.blind", { count: hidden }), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
@@ -67,15 +71,20 @@ export function openDuelDefensePreview(scene: Phaser.Scene, popups: PopupLayer, 
 }
 
 /** 누구의 방어팀인가 — 얼굴 · 이름 · 티어와 점수, 오른쪽에 총 전투력. */
-function paintHead(scene: Phaser.Scene, body: Phaser.GameObjects.Container, y: number, opponent: DuelOpponentDto): void {
+function paintHead(scene: Phaser.Scene, body: Phaser.GameObjects.Container, y: number, opponent: DuelOpponentDto, friendly?: DuelPreviewFriendly): void {
   const H = DUEL_DEFENSE_PREVIEW.head;
   const tone = DUEL_TIER_COLOR[opponent.tierId];
-  body.add(drawLayer(scene, 0, y, chipPoints(DUEL_DEFENSE_PREVIEW.stage.width, H.height, { bevel: { topLeft: 30, bottomRight: 30 } }), { fill: 0x141a22, alpha: 0.94, edge: tone.fill, edgeAlpha: 0.7 }));
+  body.add(drawLayer(scene, 0, y, chipPoints(DUEL_DEFENSE_PREVIEW.stage.width, H.height, { bevel: { topLeft: 30, bottomRight: 30 } }), { fill: friendly ? ARENA_TONE.panel : 0x141a22, alpha: 0.94, edge: friendly ? ARENA_TONE.accent : tone.fill, edgeAlpha: 0.7 }));
   addRankingFace(scene, body, opponent, opponent.displayName, { x: H.faceX, y, size: H.avatar });
   body.add(squeezeTextToWidth(scene.add.text(H.textX, y - 32, opponent.displayName, textStyle({ role: "display", size: 38, color: COLOR.ink })).setOrigin(0, 0.5), 400));
+  if (friendly) {
+    // 친선전에는 티어·점수가 걸리지 않는다 — 그 자리에 연구원 레벨과 「친선전」 한 마디만 선다.
+    body.add(squeezeTextToWidth(scene.add.text(H.textX, y + 28, t("arena.friend.previewSub", { level: friendly.level }), textStyle({ role: "emphasis", size: 26, color: ARENA_TONE.accentText })).setOrigin(0, 0.5), 400));
+  } else {
   addDuelTierEmblem(scene, body, H.textX + 22, y + 28, 44, opponent.tierId);
   const tierName = `${t(`duel.tier.${opponent.tierId}`)} ${duelDivisionNumeral(opponent.division)}`.trim();
   body.add(squeezeTextToWidth(scene.add.text(H.textX + 56, y + 28, `${tierName}  ${t("duel.score", { score: opponent.score.toLocaleString() })}`, textStyle({ role: "emphasis", size: 26, color: tone.text })).setOrigin(0, 0.5), 340));
+  }
   body.add(scene.add.text(H.powerX, y - 28, t("duel.defense.totalPower"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
   body.add(scene.add.text(H.powerX, y + 18, opponent.totalPower.toLocaleString(), textStyle({ role: "display", size: 52, color: "#ff8a8a" })).setOrigin(1, 0.5).setStroke("#05070a", 6));
 }

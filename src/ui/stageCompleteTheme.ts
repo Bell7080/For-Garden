@@ -1,4 +1,6 @@
+import type { DuelTierId } from "../core/duelArena";
 import { BACKGROUND } from "./backgroundAssets";
+import { DUEL_TIER_COLOR } from "./duelLayout";
 
 /**
  * 결과판(`StageCompletePopup`)의 **색 한 벌**.
@@ -61,6 +63,15 @@ export const BOUNTY_RESULT_THEME: StageCompleteTheme = {
   accent: 0x7ccbf2, accentText: "#a3ddff", deepText: "#0a2232", fill: 0x081520,
   backdropKey: BACKGROUND.bountyField, ...BACKDROP,
 };
+
+/**
+ * 결투장 — 판을 마친 **티어의 색**이다(로비 휘장과 같은 `DUEL_TIER_COLOR`). 뒤에는 결투 전장 원화가 옅게 비친다.
+ * 금빛 공용 판으로 서던 때는 스토리 결과와 구별되지 않았다.
+ */
+export function duelResultTheme(tierId: DuelTierId): StageCompleteTheme {
+  const tone = DUEL_TIER_COLOR[tierId];
+  return { accent: tone.fill, accentText: tone.text, deepText: "#120b06", fill: 0x100c12, backdropKey: BACKGROUND.duelField, ...BACKDROP };
+}
 
 /**
  * 레이드 — **보스마다** 그 속성의 색이다(수쿠스이노 풀 · 타보아 불 · 코아틀 바람, `ELEMENT_TINT`와 같은 계열).

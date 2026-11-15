@@ -1,3 +1,4 @@
+import { sameArenaSeen, type ArenaSeenRecord } from "../core/arenaNotice";
 import type Phaser from "phaser";
 import { createDefaultSettings, normalizeSettings } from "../core/settings";
 import { sameContentSeen, type ContentSeenState } from "../core/contentFresh";
@@ -78,6 +79,12 @@ export class SettingsManager extends EventTarget {
   rememberContentSeen(state: ContentSeenState): void {
     if (sameContentSeen(this.get().game.contentSeen, state)) return;
     this.update({ game: { contentSeen: state } });
+  }
+
+  /** 지금 아레나 전적을 봤다고 적는다(`core/arenaNotice.ts`). 같은 값이면 저장하지 않는다. */
+  rememberArenaSeen(record: ArenaSeenRecord): void {
+    if (sameArenaSeen(this.get().game.arenaSeen, record)) return;
+    this.update({ game: { arenaSeen: record } });
   }
 
   /** 약관·처리방침 동의를 이 기기에 기록한다(서버 기록은 `LegalConsentApi`가 따로 남긴다). */

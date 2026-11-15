@@ -61,7 +61,7 @@ describe("전투 결과 UI 복구", () => {
 
 describe('치즈케이크 결과 표시', () => {
   it('결과 참가자는 소환수를 제외한 편성 렐릭만 포함한다', () => {
-    const Battle=sourceClass('src/scenes/BattleScene.ts','BattleScene',{Phaser:{Scene:class{}}});
+    const Battle=sourceClass('src/scenes/BattleScene.ts','BattleScene',{Phaser:{Scene:class{}},arenaViewAlly:(side:string)=>side==='player'});
     const scene=Object.assign(Object.create(Battle.prototype),{state:{fighters:[
       {id:'dian',def:{id:'dian'},side:'player',summonOwnerId:null},
       {id:'wolf',def:{id:'dian-wolf'},side:'player',summonOwnerId:'dian'},

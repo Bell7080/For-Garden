@@ -219,16 +219,6 @@
     "Niederlage",
     "Поражение"
   ],
-  "arena.result.applied": [
-    "结果已计入竞技场积分。",
-    "บันทึกผลลงคะแนนอารีนาแล้ว",
-    "Kết quả đã được tính vào điểm Đấu trường.",
-    "Hasil telah diterapkan pada rating Arena.",
-    "El resultado ya se aplicó a tu puntuación de Arena.",
-    "O resultado foi aplicado à sua pontuação da Arena.",
-    "Das Ergebnis zählt jetzt für deine Arenawertung.",
-    "Результат учтён в рейтинге Арены."
-  ],
   "arena.result.friendlyNotice": [
     "友谊赛不会改变段位和货币。",
     "การกระชับมิตรไม่เปลี่ยนระดับหรือเงินตรา",
@@ -519,36 +509,6 @@
     "{name} lädt dich zu einem Arenakampf ein",
     "{name} приглашает вас на бой на арене"
   ],
-  "arena.result.ranked": [
-    "竞技场结果已确认 · {score} RP",
-    "ยืนยันผลอารีนาแล้ว · {score} RP",
-    "Đã xác nhận kết quả Đấu trường · {score} RP",
-    "Hasil Arena dikonfirmasi · {score} RP",
-    "Resultado de Arena confirmado · {score} RP",
-    "Resultado da Arena confirmado · {score} RP",
-    "Arenaergebnis bestätigt · {score} RP",
-    "Результат Арены подтверждён · {score} RP"
-  ],
-  "arena.result.friendly": [
-    "友谊赛结束 · 段位、挑战券及货币不变",
-    "จบกระชับมิตร · ระดับ ตั๋ว และเงินตราไม่เปลี่ยน",
-    "Giao hữu kết thúc · không thay đổi bậc, vé hay tiền tệ",
-    "Persahabatan selesai · tier, tiket, dan mata uang tidak berubah",
-    "Amistoso terminado · sin cambios de rango, entradas ni monedas",
-    "Amistoso concluído · sem alteração de ranque, entradas ou moedas",
-    "Freundschaftskampf beendet · Rang, Tickets und Währung bleiben gleich",
-    "Дружеский бой завершён · ранг, билеты и валюта не изменены"
-  ],
-  "arena.result.back": [
-    "返回",
-    "กลับ",
-    "Quay lại",
-    "Kembali",
-    "Volver",
-    "Voltar",
-    "Zurück",
-    "Назад"
-  ],
   "arena.mode.scope": [
     "实时禁选 · 1·2·3号位布阵 · 3对3自动战斗",
     "แบนและเลือกแบบสด · วางช่อง 1·2·3 · ต่อสู้อัตโนมัติ 3 ต่อ 3",
@@ -558,36 +518,6 @@
     "Banimentos e escolhas ao vivo · espaços 1·2·3 · batalha automática 3x3",
     "Live-Bann & Wahl · Plätze 1·2·3 · automatischer 3-gegen-3-Kampf",
     "Запреты и выбор в реальном времени · ячейки 1·2·3 · автобой 3 на 3"
-  ],
-  "arena.result.draw": [
-    "平局",
-    "เสมอ",
-    "Hòa",
-    "Seri",
-    "Empate",
-    "Empate",
-    "Unentschieden",
-    "Ничья"
-  ],
-  "arena.result.win": [
-    "胜利",
-    "ชนะ",
-    "Chiến thắng",
-    "Menang",
-    "Victoria",
-    "Vitória",
-    "Sieg",
-    "Победа"
-  ],
-  "arena.result.loss": [
-    "失败",
-    "แพ้",
-    "Thất bại",
-    "Kalah",
-    "Derrota",
-    "Derrota",
-    "Niederlage",
-    "Поражение"
   ],
   "arena.room.banTitle": [
     "禁用阶段",
@@ -879,7 +809,16 @@
     "Woche",
     "Неделя"
   ],
-"ranking.reward.monthly": ["每月奖励", "รายเดือน", "Thưởng tháng", "Bulanan", "Mensual", "Mensal", "Monat", "Месяц"],
+  "ranking.reward.monthly": [
+    "每月奖励",
+    "รายเดือน",
+    "Thưởng tháng",
+    "Bulanan",
+    "Mensual",
+    "Mensal",
+    "Monat",
+    "Месяц"
+  ],
   "arena.ranking.title": [
     "竞技场排名",
     "อันดับอารีนา",
@@ -1189,5 +1128,65 @@
     "Rival",
     "Gegner",
     "Соперник"
+  ],
+  "arena.result.rematch": [
+    "再来一局",
+    "เล่นอีกครั้ง",
+    "Đấu lại",
+    "Main lagi",
+    "Revancha",
+    "Jogar de novo",
+    "Revanche",
+    "Реванш"
+  ],
+  "arena.result.lastMatch": [
+    "上一场结果",
+    "ผลแมตช์ล่าสุด",
+    "Kết quả trận trước",
+    "Hasil pertandingan terakhir",
+    "Última partida",
+    "Última partida",
+    "Letztes Match",
+    "Прошлый бой"
+  ],
+  "arena.error.friend": [
+    "只能与好友进行友谊赛。",
+    "แมตช์กระชับมิตรเล่นได้กับเพื่อนเท่านั้น",
+    "Chỉ có thể đấu giao hữu với bạn bè.",
+    "Pertandingan persahabatan hanya bisa dengan teman.",
+    "Solo puedes hacer amistosos con amigos.",
+    "Só é possível jogar amistosos com amigos.",
+    "Freundschaftskämpfe gehen nur mit Freunden.",
+    "Товарищеские бои доступны только с друзьями."
+  ],
+  "arena.friend.previewTitle": [
+    "友谊赛对手",
+    "คู่แข่งกระชับมิตร",
+    "Đối thủ giao hữu",
+    "Lawan persahabatan",
+    "Rival amistoso",
+    "Adversário amistoso",
+    "Freundschaftsgegner",
+    "Соперник по товарищескому бою"
+  ],
+  "arena.friend.previewSub": [
+    "LV.{level} · 友谊赛",
+    "LV.{level} · กระชับมิตร",
+    "LV.{level} · Giao hữu",
+    "LV.{level} · Persahabatan",
+    "LV.{level} · Amistoso",
+    "LV.{level} · Amistoso",
+    "LV.{level} · Freundschaftskampf",
+    "LV.{level} · Товарищеский бой"
+  ],
+  "arena.friend.partyTitle": [
+    "友谊赛 · {name}",
+    "กระชับมิตร · {name}",
+    "Giao hữu · {name}",
+    "Persahabatan · {name}",
+    "Amistoso · {name}",
+    "Amistoso · {name}",
+    "Freundschaftskampf · {name}",
+    "Товарищеский бой · {name}"
   ]
 }

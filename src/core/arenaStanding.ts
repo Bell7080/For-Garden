@@ -125,3 +125,50 @@ export function arenaPublicStanding(value: unknown): ArenaPublicStanding | undef
   const score = typeof value === "number" ? value : Number.NaN;
   return Number.isFinite(score) && score >= 0 ? { score: Math.floor(score) } : undefined;
 }
+
+/**
+ * 결과판의 RP 게이지가 지나는 줄 — 결투장(`duelGaugeSteps`)과 같은 모양이라 같은 블록(`addDuelStandingRow`)이 그린다.
+ * 아레나는 단계가 없어 한 줄이 티어 하나이고, 게이지 칸 나눔은 로비(`arenaStanding`)와 같다(브론즈는 900~1,100).
+ */
+export interface ArenaGaugeStep {
+  tierId: ArenaTierId;
+  division: null;
+  floor: number;
+  ceil: number;
+  top: boolean;
+  from: number;
+  to: number;
+}
+
+function arenaGaugeRange(index: number): Omit<ArenaGaugeStep, "from" | "to"> {
+  const tier = ARENA_TIERS[index];
+  const next = ARENA_TIERS[index + 1];
+  if (!next) return { tierId: tier.id, division: null, floor: tier.floor, ceil: tier.floor, top: true };
+  const floor = index === 0 ? 2 * ARENA_START_SCORE - next.floor : tier.floor;
+  return { tierId: tier.id, division: null, floor, ceil: next.floor, top: false };
+}
+
+/** RP `before` → `after`로 가는 동안 지나는 줄을 차례로. 같으면 서 있는 줄 하나다. */
+export function arenaGaugeSteps(before: number, after: number): ArenaGaugeStep[] {
+  const start = Math.max(0, Math.floor(before));
+  const end = Math.max(0, Math.floor(after));
+  const ratio = (range: Omit<ArenaGaugeStep, "from" | "to">, score: number): number =>
+    range.top ? 1 : Math.min(1, Math.max(0, (score - range.floor) / Math.max(1, range.ceil - range.floor)));
+  const steps: ArenaGaugeStep[] = [];
+  let index = arenaTierIndex(start);
+  let range = arenaGaugeRange(index);
+  let from = ratio(range, start);
+  for (let guard = 0; guard < ARENA_TIERS.length * 2; guard += 1) {
+    if (end > start && !range.top && end >= range.ceil) {
+      steps.push({ ...range, from, to: 1 });
+      index += 1; range = arenaGaugeRange(index); from = 0;
+    } else if (end < start && index > 0 && end < ARENA_TIERS[index].floor) {
+      steps.push({ ...range, from, to: 0 });
+      index -= 1; range = arenaGaugeRange(index); from = 1;
+    } else {
+      steps.push({ ...range, from, to: ratio(range, end) });
+      break;
+    }
+  }
+  return steps;
+}

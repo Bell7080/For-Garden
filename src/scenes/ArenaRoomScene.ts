@@ -23,6 +23,8 @@ import { squeezeTextToWidth } from '../ui/textFit';
 import type { ClipRect } from '../ui/clipRect';
 import { setDebugGridCards, setDebugGridOffset, setDebugScene } from '../debug';
 import { arenaExitRoute } from '../core/arenaExit';
+import { arenaResultFromRoom, openArenaResultPopup } from '../ui/ArenaResultPopup';
+import { arenaBattleInput } from './arenaPractice';
 import { onTap } from "../ui/tapGuard";
 import { addScrollHint } from "../ui/ScrollHint";
 
@@ -78,6 +80,9 @@ function drawBanX(scene: Phaser.Scene, width: number, height: number): Phaser.Ga
   return root;
 }
 
+/** 마감 이만큼 전에 골라 둔 선택을 대신 확정한다 — 서버 시계와 어긋나도 마감 안에 닿게 넉넉히 둔다. */
+const ARENA_AUTO_SUBMIT_MS = 1500;
+
 export class ArenaRoomScene extends Phaser.Scene {
   private roomId = '';
   private status?: ArenaStatus;
@@ -86,6 +91,10 @@ export class ArenaRoomScene extends Phaser.Scene {
   private fetching?: Promise<void>;
   /** 행동(밴·배치·잠금·되돌리기)을 보내는 중. 같은 손이 두 번 보내지 않게 막는다. */
   private acting = false;
+  /** 마감 직전 대신 확정을 보낸 단계(`submitBeforeDeadline`) — 같은 단계에 두 번 보내지 않는다. */
+  /** 친선전의 전투 없는 결과판을 이미 띄웠는가 — 조회가 다시 그려도 두 번 띄우지 않는다. */
+  private resultShown = false;
+  private autoSubmitted = '';
   /** 칸·확정 버튼을 마지막으로 그린 상태. 같으면 다시 세우지 않는다 — 누르는 도중 조회가 버튼을 갈아 끼우면 그 손이 사라진다. */
   private slotsKey = '';
   private controlsKey = '';
@@ -124,7 +133,7 @@ export class ArenaRoomScene extends Phaser.Scene {
   /** 밴이 끝난 뒤 한 번 — 밴 칸이 세 칸으로 갈라지는 연출을 다음 칠에서 돌린다. */
   private unfold = false;
   constructor() { super('arenaRoom'); }
-  init(input: { roomId: string; friendId?: string }): void { this.roomId = input.roomId; this.friendId = input.friendId; }
+  init(input: { roomId: string; friendId?: string }): void { this.roomId = input.roomId; this.friendId = input.friendId; this.resultShown = false; }
 
   create(): void {
     this.status = undefined;
@@ -183,6 +192,24 @@ export class ArenaRoomScene extends Phaser.Scene {
     if (!r) return;
     const live = ['ban', 'place', 'invited'].includes(r.phase);
     this.clock.setText(live ? String(Math.max(0, Math.ceil((r.deadline - Date.now()) / 1000))) : '');
+    this.submitBeforeDeadline(r);
+  }
+
+  /**
+   * 마감 직전에 **골라 둔 선택을 대신 확정**한다. 시계가 다 되면 서버가 아직 고르지 않은 몫을 가장 센 렐릭으로 채우는데
+   * (`arenaAutoResolve`), 손으로 골라 두고 확정만 못 누른 선택은 그 전에 보내야 고른 그대로 선다. 한 단계에 한 번만 보낸다.
+   */
+  private submitBeforeDeadline(r: ArenaRoom): void {
+    if ((r.phase !== 'ban' && r.phase !== 'place') || r.deadline - Date.now() > ARENA_AUTO_SUBMIT_MS || !this.status) return;
+    const key = `${r.id}:${r.version}:${r.phase}`;
+    if (this.autoSubmitted === key || this.acting) return;
+    const side = this.side(r, this.status.playerId);
+    if (!this.canAct(r, side)) return;
+    const hiddenReady = r.phase === 'place' && r.rules.placement === 'hidden' && r.picks[side].length >= 3;
+    if (!this.selectedRelic && !hiddenReady) return;
+    if (r.phase === 'place' && !hiddenReady && (this.selectedSlot < 0 || r.picks[side].some((p) => p.slot === this.selectedSlot))) this.selectedSlot = this.firstEmptySlot(r, side);
+    this.autoSubmitted = key;
+    this.confirm(r, side);
   }
 
   /** 나가는 길 — 친선전은 친구 화면의 친선전 선택판, 랭크전은 아레나 입구(`arenaExitRoute`). */
@@ -278,13 +305,7 @@ export class ArenaRoomScene extends Phaser.Scene {
     const side = this.side(r, s.playerId);
     if ((r.phase === 'battle' || r.phase === 'done') && r.lease && !this.transitioning) {
       this.transitioning = true;
-      // 전투 화면은 언제나 내 편을 아래에 세운다 — 공격 편은 나, 상대 칸은 상대의 픽이다.
-      const me = side, foe = 1 - side, opponent = r.players[foe];
-      startScene(this, 'battle', {
-        mode: 'duel', requestId: r.id, attack: r.picks[me].map((p) => p.relicId), opponentName: opponent.name, opponentScore: 0,
-        units: r.picks[foe].map((p) => { const u = opponent.roster.find((unit) => unit.def.id === p.relicId)!; return { relicId: p.relicId, level: u.level, breakthrough: u.breakthrough, stats: u.def.stats }; }),
-        arena: { roomId: r.id, side, lease: r.lease, practice: (r as ArenaRoom & { practice?: boolean }).practice === true, ...(r.ranked ? {} : { friendId: opponent.id }) },
-      });
+      startScene(this, 'battle', arenaBattleInput(r, s.playerId));
       return;
     }
     // 밴이 끝나는 순간 한 번 — 서로 무엇을 밴했는지 크게 보여 준 뒤 왼쪽 띠로 보낸다.
@@ -327,9 +348,19 @@ export class ArenaRoomScene extends Phaser.Scene {
         this.paintInviteWaiting(panel, r, side);
         return;
       }
-      line(-120, r.phase === 'declined' ? t("arena.invite.closed") : r.winner === null ? t("arena.result.drawLabel") : r.winner === side ? t("arena.result.winLabel") : t("arena.result.lossLabel"), 54, r.winner === side ? ARENA_TONE.allyText : COLOR.ink);
-      line(-20, r.ranked ? t("arena.result.applied") : t("arena.result.friendlyNotice"), 28, COLOR.inkDim);
-      if (r.phase === 'done' && r.reason === 'forfeit') line(40, r.winner === side ? t("arena.result.foeForfeit") : t("arena.result.selfForfeit"), 26, ARENA_TONE.accentText);
+      if (r.phase === 'done') {
+        // 전투 없이 끝난 판(기권 · 자리 비움). 랭크전은 아레나 입구로 돌아가 그곳의 「지난 판 결과」가 잃은 RP까지 알린다
+        // (`ArenaScene.noticeUnseenResult`) — 여기서 따로 알리면 같은 판을 두 번 본다. 친선전은 곧바로 결과판이다.
+        panel.destroy();
+        if (r.ranked) { this.leave(); return; }
+        if (!this.resultShown) {
+          this.resultShown = true;
+          openArenaResultPopup(this, new PopupLayer(this, 2400), { ...arenaResultFromRoom(r, this.status!.playerId), onClose: () => this.leave() });
+        }
+        return;
+      }
+      // 여기 닿는 것은 닫힌 요청뿐이다(끝난 판은 위에서 결과판으로 갔다).
+      line(-60, t("arena.invite.closed"), 54, COLOR.ink);
       panel.add(new Button(this, 0, 150, { width: 700, height: 110, label: t("arena.result.return"), variant: 'primary', fill: ARENA_TONE.confirm, accentColor: ARENA_TONE.accent, accentTextColor: COLOR.ink, onClick: () => this.leave() }));
       return;
     }

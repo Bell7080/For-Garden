@@ -70,13 +70,25 @@ describe('live arena authoritative preparation',()=>{
   for(let n=0;n<6;n++){const side=arenaTurn(r),i=r.picks[side].length;r=place(r,side,['rex','mette','stella'][i],i);}
   expect(r.phase).toBe('battle');expect(r.lease!.setup.options!.playerPositions![0]).toEqual(arenaPosition(r.picks[0][0],0));
  });
- it('assigns timeout and forfeit without trusting a client result',()=>{
-  let r=fixture();expect(applyArenaAction(r,'a',{kind:'tick'},50000)).toMatchObject({phase:'done',winner:null,reason:'timeout'});
-  r=applyArenaAction(r,'a',{kind:'ban',relicId:'rex'},100);expect(applyArenaAction(r,'a',{kind:'tick'},50000)).toMatchObject({winner:0,reason:'timeout'});
-  r=fixture();
-  r=fixture(true,false);expect(applyArenaAction(r,'b',{kind:'tick'},50000).winner).toBe(null);
-  expect(applyArenaAction(r,'a',{kind:'forfeit'},1000)).toMatchObject({winner:1,reason:'forfeit'});
-  expect(()=>publicArenaRoom(r,'outsider')).toThrow('ARENA_FORBIDDEN');
+ it('auto-picks for a late side instead of losing on the clock, and keeps a client-free forfeit',()=>{
+  const fresh=(r:ArenaRoom,at:number)=>({...r,seen:[at,at]});
+  // 밴: 둘 다 늦으면 서로 상대 명단에서 가장 센 렐릭을 대신 밴하고 배치로 넘어간다.
+  let r=applyArenaAction(fresh(fixture(),49000),'a',{kind:'tick'},50000);
+  expect(r.phase).toBe('place');expect(r.bans.every(b=>typeof b==='string'&&b!==ARENA_HIDDEN_BAN)).toBe(true);expect(r.deadline).toBe(95000);
+  // 이미 고른 쪽의 밴은 그대로다.
+  const one=applyArenaAction(fixture(),'a',{kind:'ban',relicId:'rex'},100);
+  expect(applyArenaAction(fresh(one,49000),'a',{kind:'tick'},50000).bans[0]).toBe('rex');
+  // 교차 배치: 차례인 쪽만 한 칸을 대신 세우고 시계를 새로 건다.
+  const turn=arenaTurn(r);
+  r=applyArenaAction(fresh(r,99000),'a',{kind:'tick'},100000);
+  expect(r.phase).toBe('place');expect(r.picks[turn]).toHaveLength(1);expect(r.picks[1-turn]).toHaveLength(0);expect(r.deadline).toBe(145000);
+  // 비공개 배치: 확정하지 않은 쪽을 모두 채워 곧바로 전투로 간다.
+  const hidden=applyArenaAction(fresh(fixture(true,false),49000),'b',{kind:'tick'},50000);
+  expect(hidden.phase).toBe('battle');expect(hidden.picks.map(p=>p.length)).toEqual([3,3]);expect(hidden.lease).toBeDefined();
+  expect(hidden.winner).toBeUndefined();
+  const live=fixture();
+  expect(applyArenaAction(live,'a',{kind:'forfeit'},1000)).toMatchObject({winner:1,reason:'forfeit'});
+  expect(()=>publicArenaRoom(live,'outsider')).toThrow('ARENA_FORBIDDEN');
  });
  it('treats a silent opponent during ban/pick as a forfeit loss',()=>{
   const r=fixture();

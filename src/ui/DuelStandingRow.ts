@@ -3,6 +3,7 @@ import { audioManager } from "../managers/AudioManager";
 import { t } from "../i18n";
 import { duelDivisionNumeral, duelStanding } from "../core/duelArena";
 import { duelGaugeSteps, type DuelGaugeStep } from "../core/duelStandingTrack";
+import { arenaGaugeSteps, arenaTierId } from "../core/arenaStanding";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { addDuelTierEmblem } from "./DuelTierEmblem";
@@ -17,6 +18,8 @@ export interface DuelStandingResult {
   /** 연승 보너스가 얹힌 판이면 그 몫과 연승 수. */
   streakBonus: number;
   winStreak: number;
+  /** 아레나 RP면 단계 없는 티어 줄과 `RP` 표기로 선다(같은 블록·같은 연출). 비우면 결투장 점수다. */
+  track?: "duel" | "arena";
 }
 
 /**
@@ -44,7 +47,8 @@ export function addDuelStandingRow(scene: Phaser.Scene, body: Phaser.GameObjects
   const L = DUEL_STANDING_ROW;
   const block = scene.add.container(0, y);
   body.add(block);
-  const steps = duelGaugeSteps(result.scoreBefore, result.scoreAfter);
+  const arena = result.track === "arena";
+  const steps: DuelGaugeStep[] = arena ? arenaGaugeSteps(result.scoreBefore, result.scoreAfter) : duelGaugeSteps(result.scoreBefore, result.scoreAfter);
   const delta = result.scoreAfter - result.scoreBefore;
   const still = motionPolicy(session.settings).nonEssentialDistanceFactor === 0;
   const gaugeX = -(L.gauge.nextSize + L.gauge.nextGap) / 2;
@@ -67,8 +71,8 @@ export function addDuelStandingRow(scene: Phaser.Scene, body: Phaser.GameObjects
       .setOrigin(0.5).setShadow(0, 4, "#05070a", 6, false, true);
     block.add(nameText);
     if (!step.top) {
-      const next = duelStanding(step.ceil);
-      nextEmblem = addDuelTierEmblem(scene, block, gaugeX + L.gauge.width / 2 + L.gauge.nextGap + L.gauge.nextSize / 2, L.gauge.y, L.gauge.nextSize, next.tier.id, next.division);
+      const next = arena ? { id: arenaTierId(step.ceil), division: null } : (({ tier, division }) => ({ id: tier.id, division }))(duelStanding(step.ceil));
+      nextEmblem = addDuelTierEmblem(scene, block, gaugeX + L.gauge.width / 2 + L.gauge.nextGap + L.gauge.nextSize / 2, L.gauge.y, L.gauge.nextSize, next.id, next.division);
     }
     if (pop && !still) {
       scene.tweens.add({ targets: [emblem, nameText], scale: { from: 1.3, to: 1 }, duration: 280, ease: "Back.Out" });
@@ -78,7 +82,7 @@ export function addDuelStandingRow(scene: Phaser.Scene, body: Phaser.GameObjects
   };
   const setRatio = (step: DuelGaugeStep, ratio: number): void => {
     bar.setValue(step.top ? 1 : ratio, DUEL_TIER_COLOR[step.tierId].fill);
-    gaugeLabel.setText(step.top ? t("duel.gauge.max") : `${Math.round(step.floor + ratio * (step.ceil - step.floor)).toLocaleString()} / ${step.ceil.toLocaleString()}`);
+    gaugeLabel.setText(step.top ? t("duel.gauge.max") : `${Math.round(step.floor + ratio * (step.ceil - step.floor)).toLocaleString()} / ${step.ceil.toLocaleString()}${arena ? " RP" : ""}`);
   };
 
   // 증감 — 오르면 강조색, 내리면 붉은색. 점수는 경고가 아니라 결과라 크기만 키우고 반짝이지 않는다.

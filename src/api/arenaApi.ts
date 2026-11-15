@@ -27,7 +27,9 @@ export interface ArenaStatus {
 export type ArenaStandingStatus = Required<Pick<ArenaStatus, 'score' | 'wins' | 'losses' | 'winStreak' | 'bestStreak' | 'bestScore' | 'nextStreakBonus' | 'rank' | 'weekEndsAt' | 'serverTime' | 'lastWeek'>>;
 export interface ArenaRankingEntry extends ProfileFaceDto { rank: number; playerId: string; displayName: string; score: number; isMe: boolean; favoriteRelicId?: string }
 export interface ArenaRankingStatus { rank: number | null; entries: ArenaRankingEntry[] }
-const READ_KINDS = new Set(['status', 'standing', 'ranking']);
+const READ_KINDS = new Set(['status', 'standing', 'ranking', 'practicePreview']);
+/** 비동기 친선전 미리보기 — 친구의 결투장 방어덱(렐릭·레벨·돌파·대인전 전투력). 친구가 아니면 `ARENA_FRIEND_REQUIRED`. */
+export interface ArenaPracticePreview { units: { relicId: string; level: number; breakthrough: number; power: number }[]; totalPower: number }
 let lastStanding: { score: number; played: boolean } | null = null;
 /** 마지막으로 받은 내 RP. 프로필이 아레나에 다녀온 뒤 다시 묻지 않고 곧바로 읽는다. 한 판도 안 했으면 null이다. */
 export function cachedArenaScore(): number | null { return lastStanding?.played ? lastStanding.score : null; }
@@ -39,6 +41,7 @@ function remember(result: { score?: unknown; wins?: unknown; losses?: unknown })
 }
 export async function arenaStanding(): Promise<ArenaStandingStatus> { return await arenaRequest('standing') as ArenaStandingStatus; }
 export async function arenaRanking(): Promise<ArenaRankingStatus> { return await arenaRequest('ranking') as ArenaRankingStatus; }
+export async function arenaPracticePreview(target: string): Promise<ArenaPracticePreview> { return await arenaRequest('practicePreview', { target }) as ArenaPracticePreview; }
 let tokenProvider: (() => Promise<string | null>) | null = null;
 /** 마지막으로 쓴 토큰 — 창이 닫히는 순간에는 토큰을 기다릴 수 없어 이것으로 기권을 보낸다. */
 let lastToken: string | null = null;
@@ -50,6 +53,8 @@ export async function arenaCall(kind = 'status', options: {
     target?: string;
     rules?: ArenaRules;
     action?: ArenaAction;
+    /** 비동기 친선전의 내 편성(보유 렐릭 1~3). 비우면 서버가 지금 편성을 쓴다. */
+    party?: string[];
 } = {}): Promise<ArenaStatus> {
     return await arenaRequest(kind, options) as ArenaStatus;
 }
@@ -116,5 +121,7 @@ export function arenaError(error: unknown): string {
         return t("arena.error.offline");
     if (code === 'ARENA_INVITE_COOLDOWN')
         return t("arena.error.cooldown");
+    if (code === 'ARENA_FRIEND_REQUIRED')
+        return t("arena.error.friend");
     return t("arena.error.connection");
 }

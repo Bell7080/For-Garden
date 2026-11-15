@@ -25,6 +25,10 @@ import { squeezeTextToWidth } from '../ui/textFit';
 import { addRankChip } from "../ui/RankingChips";
 import { DuelRankingPopup, type RankingSource } from '../ui/DuelRankingPopup';
 import { openArenaTierRewards, openArenaWeeklyRewards } from '../ui/ArenaRewardPopup';
+import { arenaResultFromRoom, arenaResultMe, arenaSeenFor, openArenaResultPopup } from '../ui/ArenaResultPopup';
+import { arenaUnseenResult } from '../core/arenaNotice';
+import { arenaStreakBonus } from '../core/arenaStanding';
+import { settingsManager } from '../managers/SettingsManager';
 
 /**
  * 아레나 입구 — 결투장 입구와 같은 구도로 **내 자리**를 보여 준다. 가운데 티어 휘장과 다음 티어까지의 게이지,
@@ -73,6 +77,26 @@ export class ArenaScene extends Phaser.Scene {
         this.view.add(this.add.text(540, S.rules.y, t("arena.lobby.rules"), textStyle({ role: "body", size: 26, color: COLOR.inkDim, align: 'center', wrap: S.rules.wrap })).setOrigin(.5).setShadow(0, 3, '#000000', 0, true, true));
         const resume = s.room && !['done', 'declined'].includes(s.room.phase);
         this.view.add(new Button(this, 540, S.match.y, { width: S.match.width, height: S.match.height, label: resume ? t("arena.resume") : t("arena.match.start"), variant: 'primary', accentColor: ARENA_TONE.accent, accentTextColor: COLOR.ink, fill: ARENA_TONE.confirm, decorDots: true, onClick: () => startScene(this, resume ? 'arenaRoom' : 'arenaMatch', resume ? { roomId: s.room!.id } : undefined) }));
+        this.noticeUnseenResult(s);
+    }
+    /**
+     * 결과판을 보지 못하고 끝난 랭크전(기권 · 자리 비움 · 밴픽 중 끊김)을 한 번 알린다 — 잃은 RP를 모른 채 다음 판을
+     * 누르지 않게 한다. 기기에 남긴 지난 전적과 견주고(`arenaUnseenResult`), 알린 뒤에는 지금 전적으로 맞춘다.
+     */
+    private noticeUnseenResult(s: ArenaStatus): void {
+        const now = arenaSeenFor(s);
+        if (!now) return;
+        const unseen = arenaUnseenResult(session.settings.game.arenaSeen, now);
+        settingsManager.rememberArenaSeen(now);
+        if (!unseen) return;
+        const room = s.room && s.room.phase === 'done' && s.room.ranked ? s.room : null;
+        const fromRoom = room ? arenaResultFromRoom(room, s.playerId) : null;
+        openArenaResultPopup(this, this.popups, {
+            ...(fromRoom ?? { ranked: true, me: arenaResultMe([]) }),
+            outcome: unseen.outcome, ranked: true, notice: true,
+            standing: { before: unseen.before, after: unseen.after, streakBonus: unseen.outcome === 'win' ? arenaStreakBonus(s.winStreak ?? 0) : 0, winStreak: s.winStreak ?? 0 },
+            onClose: () => undefined,
+        });
     }
     /** 제목 아래 — 주간 정산까지 남은 시간. 서버 시각으로 잰다(기기 시계를 믿지 않는다). */
     private paintWeekClock(s: ArenaStatus): void {

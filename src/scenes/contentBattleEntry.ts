@@ -6,6 +6,7 @@ import type { PartyContent } from "../data/partyContent";
 import { rememberPlayerExp } from "../managers/PlayerExpReceipts";
 import { session } from "../state/session";
 import { startScene } from "../ui/screenTransition";
+import { startArenaPractice } from "./arenaPractice";
 
 /**
  * 콘텐츠 한 판의 **입장** — 편성 화면의 전투 시작과 결과판의 「다시 하기」가 함께 지난다.
@@ -44,6 +45,11 @@ export async function enterContentBattle(scene: Phaser.Scene, content: PartyCont
       mode: "duel", requestId: admission.requestId, attack: [...relicIds], opponentName: admission.opponentName,
       opponentScore: admission.opponentScore, units: admission.units,
     } satisfies DuelBattleInputDto);
+    return;
+  }
+  if (content.content === "friendly") {
+    // 친선전은 도전권도 스테미나도 없다 — 서버가 모의전투 방과 발급표를 한 번에 세운다.
+    await startArenaPractice(scene, content.friend.id, relicIds);
     return;
   }
   // 방어덱 게시는 전투가 아니다 — 편성 화면이 따로 저장한다.

@@ -52,7 +52,15 @@ export type PartyContent =
    */
   | { content: "guildWarDefense"; slotId: string | null; deck: readonly string[] }
   /** 길드전 공격 — 위에 상대 칸의 방어덱이 서고, 전투 시작이 공격 한 번을 쓴다. */
-  | { content: "guildWar"; slotId: string; defenderName: string; units: readonly GuildWarPartyUnit[] };
+  | { content: "guildWar"; slotId: string; defenderName: string; units: readonly GuildWarPartyUnit[] }
+  /**
+   * 친선전(비동기 모의전투) — 위에 친구의 방어팀(1~3)이 서고, 전투 시작이 곧 모의전투 방을 연다. 재화·RP는 움직이지 않는다.
+   * 뒤로가기는 그 친구의 친선전 선택판으로 돌아간다.
+   */
+  | { content: "friendly"; opponent: DuelPartyOpponent; friend: FriendlyTarget };
+
+/** 친선전 상대 — 친구 카드가 넘긴 공개 값 그대로다(`ArenaFriendTarget`과 같은 모양). */
+export interface FriendlyTarget { id: string; name: string; frameId: string; favoriteRelicId: string; level: number }
 
 /** 길드전 상대 칸의 방어덱 한 자리 — 전선(`getWarFront`)이 내려 준 공개 값 그대로다. */
 export interface GuildWarPartyUnit { relicId: string; level: number; breakthrough: number; power: number }
@@ -60,9 +68,9 @@ export interface GuildWarPartyUnit { relicId: string; level: number; breakthroug
 const stringIds = (value: unknown, limit: number): string[] =>
   Array.isArray(value) ? value.filter((id): id is string => typeof id === "string").slice(0, limit) : [];
 
-function normalizeDuelOpponent(value: unknown): DuelPartyOpponent | undefined {
+function normalizeDuelOpponent(value: unknown, minUnits = 3): DuelPartyOpponent | undefined {
   const source = value as Partial<DuelPartyOpponent> | undefined;
-  if (!source || typeof source.id !== "string" || typeof source.displayName !== "string" || !Number.isFinite(source.score) || !Array.isArray(source.units) || source.units.length !== 3) return undefined;
+  if (!source || typeof source.id !== "string" || typeof source.displayName !== "string" || !Number.isFinite(source.score) || !Array.isArray(source.units) || source.units.length < minUnits || source.units.length > 3) return undefined;
   const units = source.units.map((unit) => ({
     relicId: typeof unit?.relicId === "string" ? unit.relicId : null,
     level: Number.isFinite(unit?.level) ? unit.level : 1,
@@ -77,7 +85,15 @@ function normalizeDuelOpponent(value: unknown): DuelPartyOpponent | undefined {
  * 지난 진입의 값으로 엉뚱한 던전의 편성이 뜨면 안 된다.
  */
 export function normalizePartyContent(input: unknown): PartyContent {
-  const data = (input ?? {}) as Partial<{ content: string; tierId: string; raidId: string; bossRelicId: string; difficulty: string; auto: unknown; opponent: unknown; attack: unknown; defense: unknown; blindChoice: unknown; element: string; slotId: string | null; deck: unknown; defenderName: string; units: unknown }>;
+  const data = (input ?? {}) as Partial<{ content: string; tierId: string; raidId: string; bossRelicId: string; difficulty: string; auto: unknown; opponent: unknown; attack: unknown; defense: unknown; blindChoice: unknown; element: string; slotId: string | null; deck: unknown; defenderName: string; units: unknown; friend: unknown }>;
+  if (data.content === "friendly") {
+    // 친구의 방어팀은 셋이 안 될 수 있다(보유 렐릭이 적은 계정) — 한 명부터 받는다. 가려진 칸은 없다.
+    const opponent = normalizeDuelOpponent(data.opponent, 1);
+    const friend = data.friend as Partial<FriendlyTarget> | undefined;
+    if (opponent && opponent.units.every(({ relicId }) => relicId) && friend && typeof friend.id === "string" && friend.id === opponent.id) {
+      return { content: "friendly", opponent, friend: { id: friend.id, name: String(friend.name ?? opponent.displayName), frameId: String(friend.frameId ?? ""), favoriteRelicId: String(friend.favoriteRelicId ?? ""), level: Number.isFinite(friend.level) ? friend.level as number : 1 } };
+    }
+  }
   if (data.content === "duel") {
     const opponent = normalizeDuelOpponent(data.opponent);
     if (opponent) return { content: "duel", opponent, attack: stringIds(data.attack, 3) };
@@ -180,7 +196,7 @@ export function partyPreview(content: PartyContent, stage: BattleStageDef): Part
     });
     return { shown, all: shown.map(({ def }) => def), role: "normal", totalPower: content.units.reduce((sum, { power }) => sum + power, 0) };
   }
-  if (content.content === "duel") {
+  if (content.content === "duel" || content.content === "friendly") {
     // 보이는 칸은 입장이 세울 것과 같은 성장(`duelGrownStats`)으로 선다. 가려진 칸은 상성 계산에도 들지 않는다.
     const shown = content.opponent.units.map((unit) => {
       if (!unit.relicId) return { def: null, level: unit.level, breakthrough: unit.breakthrough, power: unit.power };

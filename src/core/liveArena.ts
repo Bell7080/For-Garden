@@ -6,6 +6,7 @@ import { bossBattleRandom } from './bossSimulation';
 import { battleArena } from './battleArena';
 import type { RelicDef } from './types';
 import type { ExpeditionAugmentEffect } from './expeditionAugments';
+import { combatPower } from './combatPower';
 
 /**
  * `unique`는 교차 공개 배치에서 **상대가 이미 고른 렐릭을 고르지 못하게** 한다(기본 켜짐 — 저장된 옛 방은 키가 없어 켜진 것으로 읽는다).
@@ -98,14 +99,9 @@ export function applyArenaAction(source: ArenaRoom, actor: string, action: Arena
   if (['done','declined'].includes(r.phase)) return r;
   if(r.phase==='invited') { if(now>=r.deadline || (action.kind==='forfeit' && side===0)) r.phase='declined'; return r; }
   if (action.kind === 'forfeit') { r.phase='done'; r.winner=1-side; r.reason='forfeit'; return r; }
-  if (now >= r.deadline && r.phase !== 'battle') {
-    // 동시에 고르는 단계(밴·비공개 배치)는 둘 다 늦으면 무승부, 한쪽만 늦으면 그쪽의 패배다.
-    const simultaneous = r.phase === 'ban' || r.rules.placement === 'hidden';
-    const waiting = r.phase === 'ban' ? r.bans.map(b => b === null) : r.locked.map(v => !v);
-    const late = simultaneous ? waiting.indexOf(true) : arenaTurn(r);
-    r.phase='done'; r.winner=simultaneous && waiting[0] && waiting[1] ? null : 1-late;
-    r.reason='timeout'; return r;
-  }
+  // 시계가 다 되면 지지 않는다 — 아직 고르지 않은 쪽의 몫을 서버가 대신 고른다(`arenaAutoResolve`).
+  // 화면은 마감 직전에 골라 둔 선택을 먼저 보내므로, 여기까지 오는 것은 아무것도 고르지 않은 편뿐이다.
+  if (now >= r.deadline && (r.phase === 'ban' || r.phase === 'place')) arenaAutoResolve(r, now);
   if (r.phase === 'ban' || r.phase === 'place') {
     const seen = r.seen ?? [now, now];
     if (action.kind !== 'tick' || now - seen[side] >= ARENA_SEEN_STEP_MS) seen[side] = now;
@@ -139,6 +135,37 @@ export function applyArenaAction(source: ArenaRoom, actor: string, action: Arena
     r.lease={ id:r.id, seed:r.seed, setup:arenaSetup(r), expiresAt:new Date(r.deadline).toISOString() };
   }
   return r;
+}
+/**
+ * 시계가 다 된 단계를 대신 마친다(그 자리에서 고친다). 밴은 상대 명단에서 가장 센 렐릭, 배치는 고를 수 있는 렐릭 중
+ * 가장 센 것을 빈 칸 앞 번호부터 세운다 — 전투력(`combatPower`)만 보는 결정적 규칙이라 두 화면과 재시도가 같은 답을 낸다.
+ * 교차 배치는 차례인 쪽이 한 칸만, 비공개 배치는 확정하지 않은 쪽이 남은 칸을 모두 채우고 확정한다.
+ */
+export function arenaAutoResolve(r: ArenaRoom, now: number): void {
+  const strongest = (units: readonly ArenaUnit[]): ArenaUnit | undefined =>
+    [...units].sort((a, b) => combatPower(b.def.stats) - combatPower(a.def.stats) || a.def.id.localeCompare(b.def.id))[0];
+  if (r.phase === 'ban') {
+    r.bans.forEach((ban, side) => { if (ban === null) r.bans[side] = strongest(r.players[1 - side].roster)?.def.id ?? ARENA_HIDDEN_BAN; });
+    r.phase = 'place'; r.deadline = now + 45000;
+    return;
+  }
+  if (r.phase !== 'place') return;
+  const fill = (side: number, count: number): void => {
+    for (let n = 0; n < count && r.picks[side].length < 3; n++) {
+      const unit = strongest(arenaPickable(r, side));
+      const slot = ARENA_SLOTS.findIndex((_, index) => !r.picks[side].some(p => p.slot === index));
+      if (!unit || slot < 0) break;
+      r.picks[side].push({ relicId: unit.def.id, slot, ...ARENA_SLOTS[slot] });
+    }
+    r.locked[side] = r.picks[side].length >= 3;
+  };
+  if (r.rules.placement === 'alternate') { if (!r.locked[arenaTurn(r)]) fill(arenaTurn(r), 1); }
+  else r.locked.forEach((locked, side) => { if (!locked) fill(side, 3); });
+  r.deadline = now + 45000;
+  if (r.locked.every(Boolean)) {
+    r.phase = 'battle'; r.deadline = now + 600000;
+    r.lease = { id: r.id, seed: r.seed, setup: arenaSetup(r), expiresAt: new Date(r.deadline).toISOString() };
+  }
 }
 /** Same canonical orientation and seed for both clients, including defender. Never accept a client winner. */
 export function settleArena(room: ArenaRoom): ArenaRoom {

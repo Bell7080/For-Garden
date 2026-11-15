@@ -25,6 +25,7 @@ import { addStageEliteMark } from "../ui/stageEliteMark";
 import { session } from "../state/session";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError } from "../api/contracts";
+import { arenaError } from "../api/arenaApi";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { BACK_SLOT } from "../ui/popupGeometry";
@@ -245,7 +246,7 @@ export class PartyScene extends Phaser.Scene {
   private get guard(): boolean { return this.content.content === "guildGuard"; }
   /** 마주 선 편 없이 아군만 세워 저장하는 편성 — 결투 방어덱과 길드전 방어덱. */
   /** 결투 편성은 공명을 뺀 전투력으로 읽는다 — 결투에서는 공명이 들지 않는다. */
-  private get pvp(): boolean { return this.content.content === "duel" || this.content.content === "duelDefense"; }
+  private get pvp(): boolean { return this.content.content === "duel" || this.content.content === "duelDefense" || this.content.content === "friendly"; }
   private get defenseOnly(): boolean { return this.content.content === "duelDefense" || this.content.content === "guildWarDefense"; }
   /**
    * 편성 프리셋을 쓰는 화면 — 세 자리를 손으로 고르는 공격 편성만이다. 수호전 여섯 칸은 제 기억을,
@@ -358,7 +359,7 @@ export class PartyScene extends Phaser.Scene {
     const cx = BASE_WIDTH / 2;
     // 편성 미리보기와 실제 전투가 같은 전장 원화를 공유해 출전 흐름을 시각적으로 잇는다.
     // 어느 콘텐츠가 어느 전장에 서는지는 전투와 같은 표(`BATTLE_FIELD_BACKGROUND`)가 갖는다.
-    addSceneBackground(this, battleFieldBackground(this.content.content === "duelDefense" ? "duel" : this.content.content, session.selectedStageId ?? undefined));
+    addSceneBackground(this, battleFieldBackground(this.content.content === "duelDefense" || this.content.content === "friendly" ? "duel" : this.content.content, session.selectedStageId ?? undefined));
     this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-29);
 
     const stage = getBattleStage(session.selectedStageId ?? "1-1");
@@ -374,7 +375,7 @@ export class PartyScene extends Phaser.Scene {
     // 출격을 누르는 순간에는 대부분 캐시에서 나온다. 기다리지 않으므로 이 화면은 막히지 않는다.
     this.prefetchBattleSds();
     // 스테미나를 쓰는 편성(스토리·레이드·현상수배·대작전)만 오른쪽 위에 남은 양을 세운다. 결투는 도전권이라 세우지 않는다.
-    const staminaContent = this.content.content !== "duel" && this.content.content !== "guildWar" && !this.defenseOnly && !this.guard;
+    const staminaContent = this.content.content !== "duel" && this.content.content !== "friendly" && this.content.content !== "guildWar" && !this.defenseOnly && !this.guard;
     const titleText = this.add.text(cx, 70, this.title(stage), textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
     if (staminaContent) {
       // 가운데 제목이 오른쪽 스테미나 칸(왼쪽 끝 826px)을 넘지 않게 폭을 지킨다.
@@ -791,6 +792,7 @@ export class PartyScene extends Phaser.Scene {
     if(this.content.content === "stage" && stage.ancientFloor !== undefined) return `${t("ancient.title")} · B${stage.ancientFloor}`;
     const content = this.content;
     if (content.content === "duel") return t("duel.party.attackTitle", { name: content.opponent.displayName });
+    if (content.content === "friendly") return t("arena.friend.partyTitle", { name: content.friend.name });
     if (content.content === "duelDefense") return t("duel.party.defenseTitle");
     if (content.content === "guildGuard") return t("guild.guard.party.title");
     if (content.content === "guildWarDefense") return content.slotId ? t("guild.war.party.title", { slot: guildWarSlotLabel(content.slotId) }) : t("guild.war.party.deckTitle");
@@ -810,13 +812,18 @@ export class PartyScene extends Phaser.Scene {
     this.savePresets();
 
     // 결투는 스토리 편성을 저장하지 않는다 — 공격덱은 입장이, 방어덱은 게시가 서버에 남긴다.
-    if (this.content.content === "duel" || this.content.content === "guildWar" || this.defenseOnly || this.guard) {
+    if (this.content.content === "duel" || this.content.content === "friendly" || this.content.content === "guildWar" || this.defenseOnly || this.guard) {
       try {
         if (this.guard) settingsManager.update({ game: { guardFormation: [...this.picked] } });
         await this.enterBattle();
       } catch (error) {
         if (error instanceof GuildApiError) {
           this.hint.setText(t(`guild.error.${error.code}`));
+          this.restoreEntryControls();
+          return;
+        }
+        if (this.content.content === "friendly") {
+          this.hint.setText(arenaError(error));
           this.restoreEntryControls();
           return;
         }
@@ -877,6 +884,7 @@ export class PartyScene extends Phaser.Scene {
     // 레이드 편성에서 나가는 길은 목록이 아니라 고른 그 판이다 — 한 단계 앞이다.
     if (content.content === "raid") startScene(this, "raid", { raidId: content.raidId });
     else if (content.content === "duel" || content.content === "duelDefense") startScene(this, "duel");
+    else if (content.content === "friendly") startScene(this, "friends", { arenaFriendId: content.friend.id });
     else if (content.content === "guildGuard") startScene(this, "guild", { page: "guard" });
     else if (content.content === "guildWarDefense" || content.content === "guildWar") startScene(this, "guild", { page: "war" });
     else if (content.content === "bounty") startScene(this, "bounty", { tierId: content.tierId });

@@ -18,11 +18,37 @@ export function arenaPlayer(id:string,data:unknown):ArenaPlayer {
     traits:partyRuneTraitEffects([{relicId,runes:(s.relicProgress[relicId]?.heartGemSlots??[]).flatMap(key=>s.runeInventory.filter(r=>r.instanceId===key))}]),
   })) };
 }
+type ArenaSaveState=ReturnType<typeof saveManager.parse>;
+const fieldable=(state:ArenaSaveState,id:unknown):id is string=>typeof id==='string' && state.owned.has(id) && !getRelic(id).summonOnly;
+
+/** 비동기 친선전에서 친구가 세우는 편 — 결투장 방어덱(비었으면 지금 편성)에서 보유한 셋까지. 미리보기와 전투가 같은 값을 읽는다. */
+export function practiceDefenseIds(state:ArenaSaveState):string[] {
+  const defense=(state.duel?.defense??[]).filter(id=>fieldable(state,id));
+  return [...new Set(defense.length>0?defense:state.party.filter(id=>fieldable(state,id)))].slice(0,3);
+}
+
+/** 친선전의 내 편 — 편성 화면이 보낸 셋을 믿지 않고 보유·중복·소환 전용을 다시 가린다. 쓸 수 없으면 지금 편성이다. */
+export function practicePartyIds(state:ArenaSaveState,requested:unknown):string[] {
+  if(Array.isArray(requested) && requested.length>=1 && requested.length<=3 && new Set(requested).size===requested.length && requested.every(id=>fieldable(state,id))) return requested as string[];
+  return [...new Set(state.party.filter(id=>fieldable(state,id)))].slice(0,3);
+}
+
+/** 친선전 미리보기에 서는 친구의 편 — 렐릭·레벨·돌파·대인전 전투력. 친구가 아니면 거절한다. */
+export async function arenaPracticePreview(rpc:ArenaRpc,player:string,target:unknown):Promise<{units:{relicId:string;level:number;breakthrough:number;power:number}[];totalPower:number}> {
+  if(typeof target!=='string' || target===player || !(await rpc('server_are_friends',{p_a:player,p_b:target}))) throw Error('ARENA_FRIEND_REQUIRED');
+  const saved=await rpc('server_load_state',{p_player:target}) as {data?:unknown}|null;
+  if(!saved?.data) throw Error('ARENA_FRIEND_REQUIRED');
+  const state=saveManager.parse(saved.data), progression=new RelicProgressionManager(state);
+  const units=practiceDefenseIds(state).map(relicId=>({relicId,level:state.relicProgress[relicId]?.level??1,breakthrough:activeBreakthroughOf(state.relicProgress[relicId]),power:progression.getCombatPower(relicId,{pvp:true})}));
+  return {units,totalPower:units.reduce((sum,u)=>sum+u.power,0)};
+}
+
 export async function handleArenaCall(rpc:ArenaRpc, player:string, method:string, args:unknown[], requestId?:string):Promise<unknown> {
-  const input=(args[0]??{}) as {kind?:string;roomId?:string;target?:string;rules?:unknown;action?:ArenaAction};
+  const input=(args[0]??{}) as {kind?:string;roomId?:string;target?:string;rules?:unknown;action?:ArenaAction;party?:unknown};
   // 읽기만 하는 두 갈래(내 자리·주간 순위)는 방 잠금·정리를 거치지 않는다 — 로비 프로필도 이 값을 읽는다.
   if(method==='get' && input.kind==='standing') return await rpc('server_arena_standing',{p_player:player});
   if(method==='get' && input.kind==='ranking') return await rpc('server_arena_ranking',{p_player:player,p_limit:100});
+  if(method==='get' && input.kind==='practicePreview') return await arenaPracticePreview(rpc,player,input.target);
   const kind=method==='get'?'status':input.kind;
   if(!['status','queue','cancel','invite','accept','decline','practice','action','finish'].includes(kind??'')) throw Error('ARENA_ACTION');
   let rules=input.rules===undefined?RANKED_ARENA_RULES:arenaRules(input.rules);
@@ -41,7 +67,8 @@ export async function handleArenaCall(rpc:ArenaRpc, player:string, method:string
       if ((next as ArenaRoom & {practice?:boolean}).practice && !next.lease) {
         next.players.forEach((p,side)=>{
           const state=saveManager.parse(context.records.find(s=>s.id===p.id)!.data);
-          const ids=side===0?state.party:state.duel?.defense??state.party;
+          // 신청한 쪽(0)은 편성 화면이 고른 셋, 받는 쪽(1)은 결투장 방어덱이다.
+          const ids=side===0?practicePartyIds(state,kind==='practice'&&p.id===player?input.party:undefined):practiceDefenseIds(state);
           next.picks[side]=ids.slice(0,3).map((relicId,slot)=>({relicId,slot,...ARENA_SLOTS[slot]}));
         });
         next.locked=[true,true];next.phase='battle';next.deadline=Date.now()+600000;

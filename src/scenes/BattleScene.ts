@@ -4,7 +4,11 @@ import { getAncientStrataFloor } from "../core/ancientStrataBattle";
 import { storyDifficultyOf } from "../core/storyDifficulty";
 import { storyStages } from "../data/stages";
 import { openStoryDifficultyUnlocked } from "../ui/StoryDifficultyPopup";
-import { arenaCall } from "../api/arenaApi";
+import { arenaCall, cachedArenaScore } from "../api/arenaApi";
+import { arenaResultFromRoom, arenaSeenFor, openArenaResultPopup } from "../ui/ArenaResultPopup";
+import { arenaStreakBonus } from "../core/arenaStanding";
+import { enterArenaPractice } from "./arenaPractice";
+import type { ArenaRoom } from "../core/liveArena";
 import { arenaExitRoute } from "../core/arenaExit";
 import { battleResultFailure, type BattleResultPhase } from "../core/battleResultFailure";
 import packageInfo from "../../package.json" with { type: "json" };
@@ -156,7 +160,8 @@ import { growthPaths, type GrowthPath } from "../core/growthPaths";
 import { contentOpen } from "../ui/contentLock";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { ExpeditionScoreDetailPopup } from "../ui/ExpeditionScoreDetailPopup";
-import { ANCIENT_RESULT_THEME, BOUNTY_RESULT_THEME, CAKE_RESULT_THEME, EXPEDITION_RESULT_THEME, raidResultTheme, storyResultTheme, type StageCompleteTheme } from "../ui/stageCompleteTheme";
+import { ANCIENT_RESULT_THEME, BOUNTY_RESULT_THEME, CAKE_RESULT_THEME, EXPEDITION_RESULT_THEME, duelResultTheme, raidResultTheme, storyResultTheme, type StageCompleteTheme } from "../ui/stageCompleteTheme";
+import { duelStanding } from "../core/duelArena";
 import { beginBossSettlementAttempt, bossSettlementRecoveryRoute, completeBossSettlementAttempt, createBossSettlementFailureState, failBossSettlementAttempt } from "../core/bossSettlementFailure";
 import { hasMergedBattleHit, isPlayerUltimateReadyTransition } from "../core/hapticPolicy";
 import { applyBattleTestPreset, battleRandom } from "../testSupport/battleHarness";
@@ -505,6 +510,8 @@ export class BattleScene extends Phaser.Scene {
   private contributionRefreshAt = 0;
   /** finishBattle 첫 진입에서만 만든 JSON 스냅샷으로 정산 재시도와 연출 완료가 개별 값을 바꾸지 못한다. */
   private contributionResult?: BattleContributionResult;
+  /** 아레나 결과를 확정한 방 — 결과판을 닫고 나가는 길(`arenaExitRoute`)이 읽는다. */
+  private arenaFinished?: { room?: ArenaRoom; playerId: string };
 
   constructor() {
     super("battle");
@@ -3495,14 +3502,33 @@ export class BattleScene extends Phaser.Scene {
   private async finishArena():Promise<void> {
     if(this.battleInput.mode!=="duel" || !this.battleInput.arena)return;
     const input=this.battleInput.arena,generation=this.combatGeneration;
+    this.arenaFinished=undefined;
+    // 판 시작 RP — 입구가 남긴 전적(같은 계정)을 먼저 믿고, 없으면 이번 접속에서 받은 값이다. 확정 응답이 그 값을 덮기 전에 붙잡는다.
+    const seen=session.settings.game.arenaSeen;
+    const before=seen&&seen.owner===session.playerCard.uid?seen.score:cachedArenaScore();
+    const exit=():void=>{const route=arenaExitRoute(this.arenaFinished?.room,this.arenaFinished?.playerId,input.friendId);startScene(this,route.scene,route.scene==="friends"?route.data:undefined);};
     try {
       const status=await arenaCall("finish",{roomId:input.roomId});
       if(!this.scene.isActive()||generation!==this.combatGeneration)return;
+      this.arenaFinished={room:status.room??undefined,playerId:status.playerId};
       const r=status.room!;
-      const title=r.winner===null?t("arena.result.draw"):r.winner===input.side?t("arena.result.win"):t("arena.result.loss");
-      if(r.winner!==null)audioManager?.playSfx(r.winner===input.side?"battle.victory":"battle.defeat");
-      new PopupLayer(this,2200).confirm({title,message:r.ranked?t("arena.result.ranked",{score:status.score}):t("arena.result.friendly"),confirmLabel:t("arena.result.back"),cancelLabel:false},()=>{const route=arenaExitRoute(r,status.playerId,input.friendId);startScene(this,route.scene,route.scene==="friends"?route.data:undefined);});
-    }catch(error){if(this.scene.isActive()&&generation===this.combatGeneration)this.showResultFailure(()=>void this.finishArena(),()=>{const route=arenaExitRoute(undefined,undefined,input.friendId);startScene(this,route.scene,route.scene==="friends"?route.data:undefined);},error,"duel");}
+      // 이 결과판이 곧 그 판을 본 것이다 — 입구가 같은 판을 「지난 판 결과」로 다시 알리지 않게 전적을 맞춘다.
+      const now=arenaSeenFor(status);
+      if(now)settingsManager.rememberArenaSeen(now);
+      const base=arenaResultFromRoom(r,status.playerId);
+      const mvp=this.stageCompleteFighters().find((f)=>f.isMvp)?.relicId;
+      const popups=new PopupLayer(this,2200);
+      const friendId=input.friendId;
+      openArenaResultPopup(this,popups,{
+        ...base,
+        ...(mvp?{mvpRelicId:mvp}:{}),
+        ...(r.ranked&&before!==null?{standing:{before,after:status.score,streakBonus:base.outcome==="win"?arenaStreakBonus(status.winStreak??0):0,winStreak:status.winStreak??0}}:{}),
+        onContribution:(onClosed)=>this.openContributionPopup(popups,onClosed),
+        // 비동기 친선전만 같은 상대·같은 편성으로 곧바로 다시 붙는다(실시간 친선은 상대가 다시 받아야 한다).
+        ...(input.practice&&friendId?{onRematch:()=>void enterArenaPractice(this,friendId,this.battleInput.mode==="duel"?this.battleInput.attack:[],()=>undefined)}:{}),
+        onClose:exit,
+      });
+    }catch(error){if(this.scene.isActive()&&generation===this.combatGeneration)this.showResultFailure(()=>void this.finishArena(),exit,error,"duel");}
   }
 
   private async finishDuel(input: DuelBattleInputDto, won: boolean): Promise<void> {
@@ -3526,8 +3552,9 @@ export class BattleScene extends Phaser.Scene {
     // 티어 블록(휘장 · 게이지 · 증감)이 점수를 말하고, 연승 보너스도 그 블록이 함께 적는다.
     const standing = { scoreBefore: settled.scoreBefore, scoreAfter: settled.scoreAfter, streakBonus: settled.streakBonus, winStreak: settled.winStreak };
     const onConfirm = (): void => { if (!chosen && this.scene.isActive()) toDuel(); };
+    const theme = duelResultTheme(duelStanding(settled.scoreAfter).tier.id);
     if (settled.won) {
-      new StageCompletePopup(this, popups).open({ reward: { kind: "loot", items }, standing, fighters, onOpenContribution: openContribution, onConfirm });
+      new StageCompletePopup(this, popups).open({ reward: { kind: "loot", items }, standing, fighters, onOpenContribution: openContribution, onConfirm, theme });
       return;
     }
     new StageCompletePopup(this, popups).open({
@@ -3536,7 +3563,7 @@ export class BattleScene extends Phaser.Scene {
       reward: { kind: "defeat", actions: [
         { label: t("duel.result.toDuel"), onPress: go(toDuel) },
       ] },
-      standing,
+      standing, theme,
       fighters, onOpenContribution: openContribution, onConfirm,
     });
   }
@@ -3707,7 +3734,7 @@ export class BattleScene extends Phaser.Scene {
   private stageCompleteFighters(): StageCompleteFighter[] {
     const mvpFighterId = this.contributionResult ? battleContributionMvp(this.contributionResult) : undefined;
     return this.state.fighters
-      .filter(({ side, summonOwnerId }) => side === "player" && summonOwnerId === null)
+      .filter((fighter) => this.isAlly(fighter) && fighter.summonOwnerId === null)
       .map((fighter) => ({ relicId: fighter.def.id, isMvp: fighter.id === mvpFighterId }));
   }
 

@@ -1,6 +1,7 @@
 import { t } from "../i18n";
 import Phaser from 'phaser';
-import { arenaCall, arenaError } from '../api/arenaApi';
+import { arenaCall, arenaError, arenaPracticePreview, type ArenaPracticePreview } from '../api/arenaApi';
+import { openDuelDefensePreview } from './DuelDefensePreviewPopup';
 import type { ArenaRules } from '../core/liveArena';
 import { getRelic } from '../data/relics';
 import { playerProfileDisplay, profileAvatarContent } from '../state/playerProfile';
@@ -33,14 +34,15 @@ export function openArenaFriendPopup(scene: Phaser.Scene, popups: PopupLayer, fr
   popups.open({ width: M.width, height, title: t("arena.friend.title", { p0: friend.name }), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: true, backButton: true }, (body, close) => {
     const error = scene.add.text(0, height / 2 - M.pad.bottom / 2, '', textStyle({ role: "body", size: 24, color: ARENA_TONE.sparkText, wrap: M.entry.width })).setOrigin(.5);
     body.add(error);
+    // 모의전투는 결투장과 같은 길이다 — 상대 방어팀 미리보기 → 출격 → 아군 편성 → 전투. 방(「연결 중」)을 거치지 않는다.
     const practice = async (): Promise<void> => {
       if (busy) return;
       busy = true;
       try {
-        const status = await arenaCall('practice', { target: friend.id, rules: { ban: true, order: 'random', placement: 'alternate', unique: true } });
-        if (!scene.scene.isActive()) return;
+        const preview = await arenaPracticePreview(friend.id);
+        if (!scene.scene.isActive() || !body.active) return;
         close();
-        startScene(scene, 'arenaRoom', { roomId: status.room!.id, friendId: friend.id });
+        openFriendlyPreview(scene, popups, friend, preview);
       } catch (e) {
         if (body.active) error.setText(arenaError(e));
       } finally { busy = false; }
@@ -64,6 +66,22 @@ export function openArenaFriendPopup(scene: Phaser.Scene, popups: PopupLayer, fr
     body.add(drawLayer(scene, tagX, tagY, chipPoints(M.tag.width, M.tag.height, { bevel: { topLeft: 12, bottomRight: 12 } }), { fill: 0x0b1a12, alpha: .92, edge: ARENA_TONE.ally, edgeAlpha: .9 }));
     body.add(squeezeTextToWidth(scene.add.text(tagX, tagY, t("arena.friend.free"), textStyle({ role: "emphasis", size: 22, color: ARENA_TONE.allyText })).setOrigin(.5), M.tag.width - 24));
   });
+}
+
+/**
+ * 친구의 방어팀 미리보기 — 결투장의 방어팀 미리보기 창을 친선전 색으로 그대로 쓴다. 출격은 공용 편성 화면(`friendly`)을,
+ * 뒤로가기는 친선전 선택판을 다시 연다.
+ */
+function openFriendlyPreview(scene: Phaser.Scene, popups: PopupLayer, friend: ArenaFriendTarget, preview: ArenaPracticePreview): void {
+  const units = preview.units.map((unit) => ({ relicId: unit.relicId, level: unit.level, breakthrough: unit.breakthrough, power: unit.power }));
+  const opponent = {
+    id: friend.id, displayName: friend.name, score: 0, tierId: 'bronze' as const, division: null, favoriteRelicId: friend.favoriteRelicId,
+    totalPower: preview.totalPower, avatarRelicId: friend.favoriteRelicId, frameId: friend.frameId, units, fought: false,
+  };
+  openDuelDefensePreview(scene, popups, opponent, {
+    onSortie: () => startScene(scene, 'party', { content: 'friendly', opponent: { id: friend.id, displayName: friend.name, score: 0, totalPower: preview.totalPower, units }, friend }),
+    onBack: () => openArenaFriendPopup(scene, popups, friend),
+  }, { level: friend.level });
 }
 
 /** 줄 하나의 고를 것들. 값은 칩마다 짧은 키이고 규칙으로 옮기는 일은 `set`이 한다. */

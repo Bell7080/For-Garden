@@ -1,3 +1,4 @@
+import { combatPower } from "./combatPower";
 import { effectiveElement, elementMultiplier } from "./element";
 import type { Element, RelicDef } from "./types";
 
@@ -46,21 +47,62 @@ export function partyAffinitySummary(allies: readonly RelicDef[], enemies: reado
 }
 
 /**
- * 적 전체를 향한 속성 배율 합이 높은 순서로 **누구를** 데려갈지 고르고, 직군으로 **어디에** 세울지
- * 정한다(`arrangeByRole`). 점수가 같으면 보유 목록 순서를 지켜 결과가 매번 바뀌지 않으며, 직군은
- * 고르는 데에는 쓰지 않는다 — 숨은 보정이 아니라 자리만 정한다.
+ * 한 렐릭이 이번 적 편성을 상대로 **실제로 얼마나 센가** — 전투력에 속성 상성을 곱한 값이다.
+ *
+ * 속성 배율은 주는 피해와 받는 피해에 모두 든다(`damage.ts`). 그래서 상성은 공격 쪽(적 평균으로 주는 배율)과
+ * 방어 쪽(적 평균에게서 받는 배율의 역수)을 함께 곱한다 — 유리하면 더 세게 때리고 덜 맞는다. 적이 없으면
+ * 전투력 그대로다. 같은 속성은 1이라 어느 쪽에도 치우치지 않는다.
  */
-export function autoPickParty(roster: readonly RelicDef[], enemies: readonly RelicDef[], size = 3): string[] {
+export function relicMatchupScore(relic: RelicDef, enemies: readonly RelicDef[], power: number): number {
+  if (enemies.length === 0) return power;
+  const mine = effectiveElement(relic);
+  const dealt = enemies.reduce((sum, enemy) => sum + elementMultiplier(mine, effectiveElement(enemy)), 0) / enemies.length;
+  const taken = enemies.reduce((sum, enemy) => sum + elementMultiplier(effectiveElement(enemy), mine), 0) / enemies.length;
+  return power * dealt / taken;
+}
+
+/**
+ * **누구를** 데려갈지는 실제 세기(`relicMatchupScore` — 전투력 × 상성)가 높은 순서로 고르고, 직군으로
+ * **어디에** 세울지 정한다(`arrangeByRole`). 상성만 보면 유리한 1레벨이 불리한 60레벨을 밀어내므로 전투력을
+ * 함께 잰다. 전투력은 부르는 쪽이 넘긴다(성장·룬이 든 값 — 없으면 태생 능력치로 잰다). 점수가 같으면 보유
+ * 목록 순서를 지켜 결과가 매번 바뀌지 않으며, 직군은 고르는 데에는 쓰지 않는다 — 숨은 보정이 아니라 자리만 정한다.
+ */
+export function autoPickParty(
+  roster: readonly RelicDef[],
+  enemies: readonly RelicDef[],
+  size = 3,
+  powerOf: (relic: RelicDef) => number = (relic) => combatPower(relic.stats),
+): string[] {
   const picked = roster
-    .map((relic, index) => ({
-      relic,
-      index,
-      score: enemies.reduce((sum, enemy) => sum + elementMultiplier(effectiveElement(relic), effectiveElement(enemy)), 0),
-    }))
+    .map((relic, index) => ({ relic, index, score: relicMatchupScore(relic, enemies, powerOf(relic)) }))
     .sort((left, right) => right.score - left.score || left.index - right.index)
     .slice(0, Math.max(0, size))
     .map(({ relic }) => relic);
   return arrangeByRole(picked).map(({ id }) => id);
+}
+
+/**
+ * **1대1 레인 편성**(현상수배)의 자동 배치 — 자리마다 마주 설 적이 하나뿐이라 적 전체가 아니라 **그 자리의 적**과의
+ * 실제 세기로 고른다. 모든 (렐릭, 자리) 짝을 세기 순으로 늘어놓고 높은 짝부터 비어 있는 렐릭·자리끼리 잇는다.
+ * 직군으로 자리를 옮기지 않는다 — 자리가 곧 마주 설 상대다. 같은 세기면 보유 목록·자리 순서를 지킨다.
+ */
+export function autoPickLanes(
+  roster: readonly RelicDef[],
+  laneEnemies: readonly RelicDef[],
+  powerOf: (relic: RelicDef) => number = (relic) => combatPower(relic.stats),
+): (string | null)[] {
+  const pairs = roster.flatMap((relic, index) => {
+    const power = powerOf(relic);
+    return laneEnemies.map((enemy, lane) => ({ relic, index, lane, score: relicMatchupScore(relic, [enemy], power) }));
+  }).sort((a, b) => b.score - a.score || a.index - b.index || a.lane - b.lane);
+  const slots: (string | null)[] = laneEnemies.map(() => null);
+  const used = new Set<string>();
+  for (const pair of pairs) {
+    if (slots[pair.lane] !== null || used.has(pair.relic.id)) continue;
+    slots[pair.lane] = pair.relic.id;
+    used.add(pair.relic.id);
+  }
+  return slots;
 }
 
 /**

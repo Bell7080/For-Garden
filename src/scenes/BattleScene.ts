@@ -58,7 +58,7 @@ import type { GuildGuardBattleInputDto, GuildWarBattleInputDto } from "../core/e
 import type { SubmitGuildGuardResponse, SubmitGuildWarAttackResponse } from "../api/contracts";
 import { getBattleStage, getStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
 import { nextBattleStage } from "../core/stageProgress";
-import { BOUNTY, bountyRoundEnemy, getBountyTier } from "../data/bounty";
+import { BOUNTY, BOUNTY_TIERS, bountyRoundEnemy, getBountyTier } from "../data/bounty";
 import { bountyRunCost, isBountyTierUnlocked, nextBountyStep, type BountyBattleInputDto } from "../core/bountyRun";
 import { defeatPartyRoute, type PartyContent } from "../data/partyContent";
 import { enterContentBattle } from "./contentBattleEntry";
@@ -3460,10 +3460,18 @@ export class BattleScene extends Phaser.Scene {
     const replay = replayable ? { label: t("stageComplete.replay"), onPress: go(() => this.replayContent({ content: "bounty", tierId: input.tierId }, toBounty)) } : undefined;
     const auto = this.autoRepeatBanner(input.requestId, { content: "bounty", tierId: input.tierId }, step.kind === "clear", () => bountyRunCost(bountyTier).staminaCost, toBounty, () => { chosen = true; });
     if (step.kind === "clear") {
+      // 대작전과 같이 이긴 판이면 바로 위 등급으로 이어 간다 — 입장값은 모든 등급이 같고, 이 판의 승리로 막 열렸을 수도 있다.
+      const nextTier = BOUNTY_TIERS[BOUNTY_TIERS.indexOf(bountyTier) + 1];
+      const advanceable = nextTier !== undefined && isBountyTierUnlocked(nextTier, settled.clearedTierIds)
+        && session.wallet.stamina >= bountyRunCost(nextTier).staminaCost;
+      const clearActions: StageCompleteAction[] | undefined = advanceable ? [
+        { label: t("stageComplete.next"), primary: true, onPress: go(() => this.replayContent({ content: "bounty", tierId: nextTier.id }, () => startScene(this, "bounty", { tierId: nextTier.id }))) },
+        ...(replay ? [replay] : []),
+      ] : undefined;
       new StageCompletePopup(this, popups).open({
         reward: { kind: "loot", items: withGreatSuccessBonus(dungeonRewardItems(settled.granted ?? { gold: settled.goldEarned }, settled.bonusItems), settled.greatSuccessBonus) },
         greatSuccess: settled.greatSuccess === true, autoRepeat: auto, theme: this.resultTheme(),
-        replay, fighters, onOpenContribution: openContribution,
+        replay, clearActions, fighters, onOpenContribution: openContribution,
         onConfirm: () => { if (!chosen && this.scene.isActive()) toBounty(); },
       });
       return;

@@ -36,7 +36,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { chipPoints, drawLayer, HOLO, slantedRect } from "../ui/holo";
 import { DUNGEON_THEME } from "../ui/dungeonTheme";
 import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
-import { autoPickParty, RECOMMENDED_SLOT_ROLES, relicAffinityDirection } from "../core/partyAffinity";
+import { autoPickLanes, autoPickParty, RECOMMENDED_SLOT_ROLES, relicAffinityDirection } from "../core/partyAffinity";
 import { settingsManager } from "../managers/SettingsManager";
 import type { SetPartyFailureReason } from "../managers/RelicCollectionManager";
 import { AffinityDirection } from "../ui/AffinityDirection";
@@ -280,8 +280,11 @@ export class PartyScene extends Phaser.Scene {
   }
   /** 자동 배치 — 수호전은 여섯을 골라 앞줄부터 몸으로 막는 직군을 세운다. */
   private autoFormation(): (string | null)[] {
-    if (!this.guard) return toFormationSlots(autoPickParty(relicCollection.owned, this.enemies), 3);
-    const ids = autoPickParty(relicCollection.owned, this.enemies, GUILD_GUARD.slots);
+    const powerOf = (relic: RelicDef): number => relicProgression.getCombatPower(relic.id, { pvp: this.pvp });
+    // 현상수배는 자리마다 마주 설 적이 하나라 그 적과의 세기로 자리를 채운다.
+    if (this.content.content === "bounty") return toFormationSlots(autoPickLanes(relicCollection.owned, this.enemies, powerOf), 3);
+    if (!this.guard) return toFormationSlots(autoPickParty(relicCollection.owned, this.enemies, 3, powerOf), 3);
+    const ids = autoPickParty(relicCollection.owned, this.enemies, GUILD_GUARD.slots, powerOf);
     return arrangeGuardFormation(ids.map((id) => getRelic(id)));
   }
 
@@ -1161,8 +1164,10 @@ export class PartyScene extends Phaser.Scene {
         slot.request += 1;
       }
       const standing = slot.creature !== undefined;
-      // 빈 슬롯 및 전체 관계가 상쇄된 중립은 텍스트 대신 표식 자체를 완전히 숨긴다.
-      slot.affinityDirection.setDirection(id ? relicAffinityDirection(getRelic(id), this.enemies) : "neutral");
+      // 빈 슬롯은 표식을 숨기고, 상성이 없거나 상쇄된 중립은 회색 가로줄로 선다. 현상수배는 자리마다 마주 설
+      // 적이 하나라 그 적과만 견준다 — 적 셋 전체로 재면 같은 속성끼리 마주 서도 다른 라운드의 적 때문에 불리로 읽혔다.
+      const facing = this.content.content === "bounty" ? this.enemies.slice(i, i + 1) : this.enemies;
+      slot.affinityDirection.setDirection(id && facing.length > 0 ? relicAffinityDirection(getRelic(id), facing) : "hidden");
       // 이미 그 렐릭이 서 있으면 다시 세우지 않는다.
       if (!moved && (!id || !standing || slot.currentId !== id)) void this.fillAllySlot(slot, i, id);
       slot.currentId = id;

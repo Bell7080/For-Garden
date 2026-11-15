@@ -816,9 +816,9 @@ test("모바일 편성 상단의 자동 배치 버튼과 자리별 상성 화살
   expect(before?.visibleAffinityDirections).toBe(0);
 
   await tapGame(page, before!.autoButton.x, before!.autoButton.y);
-  // 현재 기본 보유·1-2 적 조합에서는 파루아가 유리, 도디가 불리, 토리카는 중립이다.
+  // 선 자리마다 표식이 하나씩 선다 — 유리·불리는 화살표, 무상성은 회색 작대기다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.selectedCount)).toBe(3);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.visibleAffinityDirections)).toBe(2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.visibleAffinityDirections)).toBe(3);
   // SD 로딩과 무관한 슬롯 입력면으로 고르고 한 번 더 누르면 그 화면 자리 하나만 빠진다.
   await clearFormationSlot(page, "party", 1);
   await captureGame(page, `test-results/${test.info().project.name}-party-affinity-arrows.png`);

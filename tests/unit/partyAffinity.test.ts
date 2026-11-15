@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arrangeByRole, autoPickParty, RECOMMENDED_SLOT_ROLES, elementDistribution, partyAffinitySummary, relicAffinityDirection } from "../../src/core/partyAffinity";
+import { arrangeByRole, autoPickLanes, autoPickParty, relicMatchupScore, RECOMMENDED_SLOT_ROLES, elementDistribution, partyAffinitySummary, relicAffinityDirection } from "../../src/core/partyAffinity";
 import { getRelic, PLAYABLE_RELICS } from "../../src/data/relics";
 
 /** Phaser 없이 편성 추천과 화면 요약이 같은 속성 공식을 쓰는지 검증한다. */
@@ -18,10 +18,10 @@ describe("파티 속성 미리보기", () => {
     expect(partyAffinitySummary(allies, enemies)).toEqual({ advantage: 2, disadvantage: 1, neutral: 1 });
   });
 
-  it("자동 배치는 적 전체에 대한 속성 점수가 높은 셋을 안정적으로 고르고 직군으로 자리를 정한다", () => {
+  it("자동 배치는 실제 세기(전투력 × 상성)가 높은 셋을 안정적으로 고르고 직군으로 자리를 정한다", () => {
     const roster = [getRelic("rex"), getRelic("torika"), getRelic("spino"), getRelic("dodo"), getRelic("tia")];
     const enemies = [getRelic("toby"), getRelic("amo"), getRelic("ripa")];
-    // 고르는 것은 속성 점수(스피나·티아·토리카), 자리는 직군이다 — 탱커가 가운데, 암살자가 왼쪽.
+    // 고르는 것은 세기(태생 전투력 × 상성 — 스피나·티아·토리카), 자리는 직군이다 — 탱커가 가운데, 암살자가 왼쪽.
     expect(autoPickParty(roster, enemies)).toEqual(["spino", "torika", "tia"]);
   });
 
@@ -62,5 +62,38 @@ describe("편성 칸의 추천 직군", () => {
     const pick = (role: string) => PLAYABLE_RELICS.find((relic) => relic.role === role)!;
     const arranged = arrangeByRole([pick("support"), pick("tank"), pick("assassin")]);
     arranged.forEach((relic, slot) => expect(RECOMMENDED_SLOT_ROLES[slot], relic.id).toContain(relic.role));
+  });
+});
+
+describe("자동 배치는 전투력까지 잰다", () => {
+  it("상성이 유리해도 전투력이 한참 낮으면 밀린다", () => {
+    const roster = [getRelic("rex"), getRelic("torika"), getRelic("spino"), getRelic("dodo"), getRelic("tia")];
+    const enemies = [getRelic("toby"), getRelic("amo"), getRelic("ripa")];
+    // 상성으로는 스피나가 뽑히지만 전투력이 1이면 빠지고, 렉스가 들어온다.
+    const power = (relic: { id: string }): number => (relic.id === "spino" ? 1 : 1000);
+    const picked = autoPickParty(roster, enemies, 3, power);
+    expect(picked).not.toContain("spino");
+    expect(picked).toHaveLength(3);
+  });
+
+  it("세기가 같으면 상성이 가른다 — 유리는 주는 피해와 받는 피해에 모두 든다", () => {
+    const enemy = getRelic("toby");
+    const ally = getRelic("rex");
+    const direction = relicAffinityDirection(ally, [enemy]);
+    const score = relicMatchupScore(ally, [enemy], 100);
+    if (direction === "up") expect(score).toBeCloseTo(100 * 1.25 * 1.25);
+    else if (direction === "down") expect(score).toBeCloseTo(100 / 1.25 / 1.25);
+    else expect(score).toBe(100);
+  });
+
+  it("현상수배 레인은 자리마다 그 자리의 적과 가장 센 짝을 잇는다", () => {
+    const roster = [getRelic("rex"), getRelic("torika"), getRelic("spino")];
+    const lanes = [getRelic("toby"), getRelic("amo"), getRelic("ripa")];
+    const slots = autoPickLanes(roster, lanes, () => 100);
+    expect(new Set(slots).size).toBe(3);
+    slots.forEach((id, lane) => {
+      const best = Math.max(...roster.map((relic) => relicMatchupScore(relic, [lanes[lane]], 100)));
+      expect(relicMatchupScore(getRelic(id!), [lanes[lane]], 100)).toBeLessThanOrEqual(best);
+    });
   });
 });

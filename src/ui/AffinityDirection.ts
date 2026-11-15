@@ -5,10 +5,18 @@ import { session } from "../state/session";
 import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 
 /** 상성 화살표의 상태색. 프리팹이 색과 겹침을 소유해 씬마다 다른 표식을 만들지 않게 한다. */
-const DIRECTION_COLOR: Record<Exclude<Direction, "neutral">, number> = {
+const DIRECTION_COLOR: Record<Direction, number> = {
   up: 0x55d68b,
   down: 0xe15d64,
+  // 무상성은 유리·불리 어느 색도 빌리지 않는 회색이다 — 붉은 기가 돌면 불리로 읽힌다.
+  neutral: 0x9aa3ad,
 };
+
+/** 무상성 표식 — 화살표 대신 눕힌 작대기 한 줄이다. 화살표와 같은 폭의 홀로그램 칩 결로 끝을 비스듬히 깎는다. */
+function barPoints(size: number): number[] {
+  const w = size * 0.62, h = size * 0.2, cut = h * 0.7;
+  return [-w + cut, -h, w, -h, w - cut, h, -w, h];
+}
 
 /**
  * 꼬리에 V자 홈을 낸 갈래 화살촉의 좌표. 홑겹 삼각형 대신 결기를 나눈 쐐기 모양을 써서 다른
@@ -55,14 +63,14 @@ export class AffinityDirection extends Phaser.GameObjects.Container {
     this.setVisible(false);
   }
 
-  /** 중립은 아무 라벨도 남기지 않고 컨테이너 전체를 숨긴다. */
-  setDirection(direction: Direction): this {
+  /** 유리는 위 화살표, 불리는 아래 화살표, 무상성은 회색 작대기다. 빈 자리(`hidden`)만 표식을 숨긴다. */
+  setDirection(direction: Direction | "hidden"): this {
     this.assist?.destroy(); this.assist = undefined;
-    if (direction === "neutral") return this.setVisible(false);
+    if (direction === "hidden") return this.setVisible(false);
     const color = DIRECTION_COLOR[direction];
     // 기본 좌표는 뾰족한 끝이 위를 향하므로, 아래쪽 방향에서만 y를 뒤집는다.
     const sign = direction === "up" ? 1 : -1;
-    const points = chevronPoints(this.size).map((value, i) => (i % 2 === 0 ? value : value * sign));
+    const points = direction === "neutral" ? barPoints(this.size) : chevronPoints(this.size).map((value, i) => (i % 2 === 0 ? value : value * sign));
     const geom = (scale: number): Phaser.Geom.Point[] => {
       const pts: Phaser.Geom.Point[] = [];
       for (let i = 0; i < points.length; i += 2) pts.push(new Phaser.Geom.Point(points[i] * scale, points[i + 1] * scale));
@@ -81,6 +89,12 @@ export class AffinityDirection extends Phaser.GameObjects.Container {
 
     this.face.clear().fillStyle(color, 1).fillPoints(geom(1), true);
 
+    // 작대기는 윗변 한 줄만 옅게 밝힌다(가리키는 끝이 없다).
+    if (direction === "neutral") {
+      const top = geom(1);
+      this.edge.clear().lineStyle(2, 0xffffff, 0.5).lineBetween(top[0].x, top[0].y, top[1].x, top[1].y);
+      return this.setVisible(true);
+    }
     // 진행 방향(뾰족한 끝)의 두 변에만 밝은 강조선을 걸어, 사방을 두르지 않고도 끝을 또렷하게 한다.
     const tip = geom(1)[0];
     const shoulders = [geom(1)[1], geom(1)[7]];

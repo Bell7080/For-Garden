@@ -358,7 +358,6 @@ export const MISC_KO = {
   "trade.disconnected": "교신 두절",
   "trade.reconnect": "재접속",
   "trade.title": "무역",
-  "score.detail": "점수 상세",
   "score.normalNodes": "일반 노드 합계",
   "score.bossDamage": "폰토스 피해 점수",
 

@@ -321,7 +321,6 @@ export const MISC_TH = {
   "trade.disconnected": "สัญญาณขาดหาย",
   "trade.reconnect": "เชื่อมต่อใหม่",
   "trade.title": "การค้า",
-  "score.detail": "รายละเอียดคะแนน",
   "score.normalNodes": "รวมจุดทั่วไป",
   "score.bossDamage": "คะแนนความเสียหายต่อพอนทอส",
   "title.saveRecovered": "ตรวจสอบข้อมูลเซฟไม่ได้ จึงกู้คืนเป็นสถานะเริ่มต้นที่ปลอดภัย",

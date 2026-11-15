@@ -860,7 +860,7 @@ export class InfoManager {
     if (this.capabilities.mutateProgress) {
       this.levelUpEffect = new FeedLevelUpEffect(scene, {
         figure: () => this.figure,
-        figureSpot: { x: FIGURE.x, groundY: FIGURE.y, height: FIGURE.height, depth: 1004 },
+        figureSpot: { x: FIGURE.x, groundY: FIGURE.y, height: FIGURE.height, depth: baseDepth + 4 },
         portrait: () => this.portrait,
         // 원화는 코어(허리께)를 발밑 삼는다 — 실제 발끝은 판 밑변 아래라 그 자리에선 연출이 가린다.
         portraitSpot: { x: PORTRAIT_FOCUS.x, groundY: PORTRAIT_FOCUS.y + 260, height: 820, depth: Math.max(portraitDepth, baseDepth + 1) },
@@ -2051,7 +2051,7 @@ export class InfoManager {
     this.scene.tweens.add({ targets: this.chrome, x: BASE_WIDTH, alpha: 0, duration: 320, ease: "Cubic.In" });
     const exit = this.scene.add
       .rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0xffffff, 0)
-      .setDepth(1600)
+      .setDepth(this.root.depth + 600)
       .setInteractive({ useHandCursor: true });
     exit.on("pointerup", () => this.leaveGallery());
     this.gallery = exit;
@@ -2495,7 +2495,9 @@ export class InfoManager {
       x: FIGURE.x,
       groundY: FIGURE.y,
       height: FIGURE.height,
-      depth: 1004,
+      // 창이 서는 층을 따라 올라간다 — 1004로 박아 두면 팝업 위에서 연 창(baseDepth가 높은 창)에서
+      // SD가 창의 배경 판 아래로 깔려 보이지 않는다.
+      depth: this.root.depth + 4,
       isStale: () => request !== this.figureRequest,
     }).catch(swallowCancelled).finally(() => { this.pendingLoads -= 1; });
     if (!figure) return;

@@ -339,7 +339,6 @@ export const MISC_JA = {
   "trade.disconnected": "通信途絶",
   "trade.reconnect": "再接続",
   "trade.title": "商取引",
-  "score.detail": "スコア詳細",
   "score.normalNodes": "通常ノード合計",
   "score.bossDamage": "ポントスへのダメージスコア",
 

@@ -8,7 +8,6 @@
 "battle.settle.recoverLobby": ["返回大厅", "กลับล็อบบี้", "Về sảnh", "Kembali ke lobi", "Volver al vestíbulo", "Voltar ao saguão", "Zur Lobby", "Вернуться в холл"],
 "battle.settle.done": ["远征观察结束", "ออกสำรวจเสร็จสิ้น", "Viễn chinh quan sát hoàn tất", "Observasi Ekspedisi Selesai", "Observación de Expedición completada", "Observação da Expedição concluída", "Expedition-Beobachtung abgeschlossen", "Наблюдение экспедиции завершено"],
 "battle.settle.score": ["本次远征分数", "คะแนนออกสำรวจรอบนี้", "Điểm Viễn chinh lần này", "Skor Ekspedisi Ini", "Puntuación de esta Expedición", "Pontuação desta Expedição", "Punkte dieser Expedition", "Очки этой экспедиции"],
-"battle.settle.detail": ["详情", "รายละเอียด", "Chi tiết", "Detail", "Detalles", "Detalhes", "Details", "Подробнее"],
 "battle.settle.toLobby": ["返回大厅", "กลับล็อบบี้", "Về sảnh", "Ke Lobi", "Al vestíbulo", "Ao saguão", "Zur Lobby", "В лобби"],
 "battle.settle.weeklyRecord": ["每周记录", "สถิติรายสัปดาห์", "Kỷ lục tuần", "Rekor Mingguan", "Récord semanal", "Recorde semanal", "Wochenrekord", "Рекорд недели"],
 "battle.contribution": ["贡献度", "การมีส่วนร่วม", "Đóng góp", "Kontribusi", "Contribución", "Contribuição", "Beitrag", "Вклад"],

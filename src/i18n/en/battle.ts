@@ -23,7 +23,6 @@ export const BATTLE_EN = {
   "battle.settle.recoverLobby": "Return to lobby",
   "battle.settle.done": "Expedition Observation Complete",
   "battle.settle.score": "This Expedition's Score",
-  "battle.settle.detail": "Details",
   "battle.settle.toLobby": "To Lobby",
   "battle.settle.weeklyRecord": "Weekly Record",
   "battle.contribution": "Contribution",

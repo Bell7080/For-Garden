@@ -321,7 +321,6 @@ export const MISC_ZH_HANT = {
   "trade.disconnected": "訊號中斷",
   "trade.reconnect": "重新連線",
   "trade.title": "貿易",
-  "score.detail": "分數詳情",
   "score.normalNodes": "普通節點合計",
   "score.bossDamage": "蓬託斯傷害分數",
   "title.saveRecovered": "無法驗證存檔資料，已恢復為安全的初始狀態。",

@@ -23,7 +23,6 @@ export const BATTLE_TH = {
   "battle.settle.recoverLobby": "กลับล็อบบี้",
   "battle.settle.done": "ออกสำรวจเสร็จสิ้น",
   "battle.settle.score": "คะแนนออกสำรวจรอบนี้",
-  "battle.settle.detail": "รายละเอียด",
   "battle.settle.toLobby": "กลับล็อบบี้",
   "battle.settle.weeklyRecord": "สถิติรายสัปดาห์",
   "battle.contribution": "การมีส่วนร่วม",

@@ -23,7 +23,6 @@ export const BATTLE_VI = {
   "battle.settle.recoverLobby": "Về sảnh",
   "battle.settle.done": "Viễn chinh quan sát hoàn tất",
   "battle.settle.score": "Điểm Viễn chinh lần này",
-  "battle.settle.detail": "Chi tiết",
   "battle.settle.toLobby": "Về sảnh",
   "battle.settle.weeklyRecord": "Kỷ lục tuần",
   "battle.contribution": "Đóng góp",

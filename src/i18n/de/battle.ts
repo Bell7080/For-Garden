@@ -23,7 +23,6 @@ export const BATTLE_DE = {
   "battle.settle.recoverLobby": "Zur Lobby",
   "battle.settle.done": "Expedition-Beobachtung abgeschlossen",
   "battle.settle.score": "Punkte dieser Expedition",
-  "battle.settle.detail": "Details",
   "battle.settle.toLobby": "Zur Lobby",
   "battle.settle.weeklyRecord": "Wochenrekord",
   "battle.contribution": "Beitrag",

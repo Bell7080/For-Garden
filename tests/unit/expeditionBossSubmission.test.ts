@@ -240,7 +240,7 @@ describe("원정 보스 비동기 정산 복구", () => {
     expect(harness.settle).toHaveBeenNthCalledWith(2, expect.objectContaining({ settlementId: harness.request.settlementId }));
 
     // 이 경로에는 정산 성공이나 로컬 런 삭제 명령이 없고 Boot 목적지만 존재한다.
-    expect(bossSettlementRecoveryRoute()).toEqual({ scene: "boot", data: { destination: "lobby" } });
+    expect(bossSettlementRecoveryRoute()).toEqual({ scene: "boot", data: { destination: "expedition" } });
     completeBossSettlementAttempt(state);
     expect(state).toMatchObject({ bossSettlementPending: false, failureVisible: false });
   });

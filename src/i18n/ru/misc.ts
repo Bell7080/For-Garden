@@ -321,7 +321,6 @@ export const MISC_RU = {
   "trade.disconnected": "Сигнал потерян",
   "trade.reconnect": "Переподключить",
   "trade.title": "Торговля",
-  "score.detail": "Подробно о счёте",
   "score.normalNodes": "Сумма обычных узлов",
   "score.bossDamage": "Очки урона по Понтосу",
   "title.saveRecovered": "Не удалось проверить сохранение, поэтому восстановлено безопасное начальное состояние.",

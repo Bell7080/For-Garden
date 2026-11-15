@@ -160,7 +160,7 @@ import { stepUltimateCharge } from "../ui/ultimateChargeMotion";
 import { growthPaths, type GrowthPath } from "../core/growthPaths";
 import { contentOpen } from "../ui/contentLock";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
-import { ExpeditionScoreDetailPopup } from "../ui/ExpeditionScoreDetailPopup";
+import { expeditionScoreDetailModel } from "../ui/expeditionScoreDetailModel";
 import { ANCIENT_RESULT_THEME, BOUNTY_RESULT_THEME, CAKE_RESULT_THEME, EXPEDITION_RESULT_THEME, duelResultTheme, raidResultTheme, storyResultTheme, type StageCompleteTheme } from "../ui/stageCompleteTheme";
 import { duelStanding } from "../core/duelArena";
 import { beginBossSettlementAttempt, bossSettlementRecoveryRoute, completeBossSettlementAttempt, createBossSettlementFailureState, failBossSettlementAttempt } from "../core/bossSettlementFailure";
@@ -406,6 +406,8 @@ export class BattleScene extends Phaser.Scene {
   private bossScoreLabel?: Phaser.GameObjects.Text;
   /** 중앙 총점이 서버/코어 목표값을 부드럽게 따라갈 때 사용하는 화면 전용 정수다. */
   private bossScoreShown = 0;
+  /** 원정 노드 결과판이 「기존 점수 → +N」을 그리려고 붙잡는, 제출 전 노드 점수 합계. */
+  private expeditionScoreBefore?: number;
   private bossScoreTarget = 0;
   private bossScoreScale = 1;
   /** 수호전 머리 — 처치 점수와 웨이브·필드 줄. */
@@ -523,7 +525,7 @@ export class BattleScene extends Phaser.Scene {
    *
    * 예전에는 왼쪽에 「일반 스테이지 N · 보스전 M」 줄이 함께 섰는데, 가운데 큰 수가 이미 그
    * 둘을 더한 값이라 **같은 수를 한 화면에 두 번** 적고 있었다. 나눠 본 값이 필요한 손은
-   * 결과판의 세부 점수(`ExpeditionScoreDetailPopup`)를 연다 — 싸우는 동안 바꿀 수 있는
+   * 결과판의 점수 밑 세부 줄을 읽는다 — 싸우는 동안 바꿀 수 있는
    * 것이 없는 수다.
    */
   private buildBossScoreHud(): void {
@@ -616,6 +618,8 @@ export class BattleScene extends Phaser.Scene {
   init(input?: BattleSceneInputDto): void {
     // 정규화는 Phaser 비의존 코어가 맡아 생략·빈 객체도 매번 새로운 스토리 DTO로 교체한다.
     this.battleInput = normalizeBattleSceneInput(input);
+    // 씬 인스턴스는 판마다 다시 쓰이므로 지난 노드의 기준 점수를 들고 오지 않는다.
+    this.expeditionScoreBefore = undefined;
   }
 
   create(): void {
@@ -633,7 +637,7 @@ export class BattleScene extends Phaser.Scene {
           this.combatLease=lease;
           this.createBattle();
         }).catch((error: unknown)=>{
-          if(this.scene.isActive()&&generation===this.combatGeneration) this.showResultFailure(prepare,()=>startScene(this,"lobby"), error, "prepare");
+          if(this.scene.isActive()&&generation===this.combatGeneration) this.showResultFailure(prepare,()=>this.leaveFailedBattle(), error, "prepare");
         });
       };
       prepare();
@@ -1024,6 +1028,11 @@ export class BattleScene extends Phaser.Scene {
     setDebugBossResult({ visible: true, lobby: { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 } });
   }
 
+  /** 전투 준비·검증이 끝내 실패했을 때 나가는 길 — 원정 판은 원정으로, 나머지는 예전처럼 로비로 간다. */
+  private leaveFailedBattle(): void {
+    startScene(this, this.battleInput.mode === "expedition" ? "expedition" : "lobby");
+  }
+
   /** 실패를 성공/포기로 꾸미거나 로컬 런을 지우지 않고 Boot의 서버·저장 재동기화 경계로 나간다. */
   private recoverBossSettlementToLobby(): void {
     if (this.bossLeaving) return;
@@ -1038,12 +1047,13 @@ export class BattleScene extends Phaser.Scene {
    * 예전에는 전장을 검은 막으로 통째로 덮고 표제·보상·점수·버튼 다섯을 따로 세운 전용 화면이었다.
    * 같은 원정의 노드 결과는 공용 판인데 마지막 정산만 다른 화면이라, 이번 판을 누가 끌었는지(MVP)도
    * 보이지 않았다. 지금은 편성 SD·MVP → 기여도 → 주간 순위 → 정산 보상 → 최종 점수 → 세부 점수·주간
-   * 기록이 한 판에 서고, 판은 화면 아무 곳이나 눌러 닫혀 로비로 간다.
+   * 기록이 한 판에 서고, 판은 화면 아무 곳이나 눌러 닫혀 원정 메인(주간 기록)으로 간다.
    */
   private showBossResult(score: SubmitExpeditionBossScoreResponse, settlement: SettleExpeditionRunResponse): void {
     // 원정 환산 점수를 피해량 머리글에 넣지 않는다. 실제 HP 피해 장부만 비교한다.
     if (this.contributionResult && score.verifiedDamage !== undefined) this.contributionResult = withConfirmedAttackTotal(this.contributionResult, score.verifiedDamage);
     const popups = new PopupLayer(this, 2200);
+    const detail = expeditionScoreDetailModel(score);
     const rank = score.rankAfter !== null && score.rankAfter !== undefined
       ? { label: t("battle.rank.weekly"), after: score.rankAfter, before: score.rankBefore, improved: score.improved }
       : undefined;
@@ -1051,10 +1061,15 @@ export class BattleScene extends Phaser.Scene {
       reward: { kind: "loot", items: currencyRecordToRewardItems(settlement.granted), settlement: true },
       title: t("battle.settle.done"),
       theme: EXPEDITION_RESULT_THEME,
-      score: { label: t("battle.settle.score"), value: score.runScore, ...(rank ? { rank } : {}) },
+      score: {
+        label: t("battle.settle.score"), value: detail.runScore, ...(rank ? { rank } : {}),
+        // 구성값은 서버 영수증 그대로 큰 수 밑에 한 줄로 선다 — 따로 판을 열지 않아도 무엇이 점수를 만들었는지 읽힌다.
+        breakdown: [
+          { label: t("score.normalNodes"), value: detail.normalNodeScoreTotal },
+          { label: t("score.bossDamage"), value: detail.bossDamageScore },
+        ],
+      },
       extras: [
-        // 구성값은 서버 영수증 그대로 세부 점수 판에 건넨다. 같은 팝업 층 위에 한 겹 더 연다.
-        { label: t("battle.settle.detail"), onPress: () => new ExpeditionScoreDetailPopup(this, popups).open(score) },
         { label: t("battle.settle.weeklyRecord"), onPress: () => new ExpeditionRankingPopup(this, popups).open() },
       ],
       fighters: this.stageCompleteFighters(),
@@ -1063,7 +1078,7 @@ export class BattleScene extends Phaser.Scene {
         if (this.bossLeaving) return;
         this.bossLeaving = true;
         // 성공 정산은 다시 요청하지 않는다. Boot가 서버 최신본을 읽고 저장 검증·마이그레이션을 거친다.
-        startScene(this, "boot", { destination: "lobby" });
+        startScene(this, "boot", { destination: "expedition" });
       },
     });
     // 판은 화면 아무 곳이나 눌러 닫히므로, 로비로 가는 자리는 밑동의 「화면을 눌러 확인」 자리다.
@@ -3122,7 +3137,7 @@ export class BattleScene extends Phaser.Scene {
         if(!verdict) throw new Error("combat_not_verified");
         this.combatLease=undefined;
         this.openBattleResult(verdict.victory?"victory":"defeat");
-      }).catch((error: unknown)=>{ if(this.scene.isActive() && generation === this.combatGeneration && this.combatLease === lease) this.showResultFailure(verify,()=>startScene(this,"lobby"), error, "verify"); }); };
+      }).catch((error: unknown)=>{ if(this.scene.isActive() && generation === this.combatGeneration && this.combatLease === lease) this.showResultFailure(verify,()=>this.leaveFailedBattle(), error, "verify"); }); };
       verify();
       return;
     }
@@ -3780,6 +3795,9 @@ export class BattleScene extends Phaser.Scene {
    * 지금은 끝나는 즉시 HP를 제출하고 결산창 하나만 연다.
    */
   private finishExpeditionBattle(input: ExpeditionBattleInputDto, won: boolean): void {
+    // 이 노드를 제출하기 **전**의 노드 합계 — 다시 시도해도 처음 잰 값을 쓴다(영수증이 같은 몫을 돌려준다).
+    this.expeditionScoreBefore ??= expeditionManager.status().run?.normalNodeScoreTotal ?? 0;
+    const scoreBefore = this.expeditionScoreBefore;
     {
       // 시작부터 사망해 불참한 렐릭도 원래 ID·HP·생존 상태로 종료 DTO에 다시 합친다.
       const results = expeditionBattleResults(input, skirmishRelicResults(this.state));
@@ -3804,7 +3822,7 @@ export class BattleScene extends Phaser.Scene {
               ...(settlement.runScore && settlement.runScore > 0 ? { score: { label: t("battle.settle.score"), value: settlement.runScore } } : {}),
               fighters: this.stageCompleteFighters(),
               onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
-              onConfirm: () => { if (!chosen && this.scene.isActive()) startScene(this, "lobby"); },
+              onConfirm: () => { if (!chosen && this.scene.isActive()) startScene(this, "expedition"); },
             });
           });
         }
@@ -3822,8 +3840,11 @@ export class BattleScene extends Phaser.Scene {
             items: currencyRecordToRewardItems(nodeResult.rewards),
           },
           theme: EXPEDITION_RESULT_THEME,
-          // 이 노드의 점수는 보스 정산과 같은 점수 블록(이름표 + 큰 수)으로 선다 — 집계 점수라 `+`를 붙이지 않는다.
-          ...(nodeResult.nodeScore > 0 ? { score: { label: t("expedition.nodeScore"), value: nodeResult.nodeScore } } : {}),
+          // 큰 수는 이 노드까지의 원정 점수이고, 기존 점수에서 굴러 올라가며 밑에 「노드 점수 +N」이 선다.
+          ...(nodeResult.nodeScore > 0 ? { score: {
+            label: t("expedition.score"), value: scoreBefore + nodeResult.nodeScore,
+            gain: { label: t("expedition.nodeScore"), value: nodeResult.nodeScore },
+          } } : {}),
           fighters: this.stageCompleteFighters(),
           onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
           // 전투 후 회복이 얹혔으면 지도 HUD가 **전투가 끝난 체력**에서 차오르며 오른 양을 띄운다 —
@@ -3835,7 +3856,7 @@ export class BattleScene extends Phaser.Scene {
       }).catch((error: unknown) => {
         // 두 정산 모두 같은 영수증으로 멱등이라 다시 시도해도 두 번 쌓이지 않는다. 삼키면 판이 아무것도 없이 멈춘다.
         logError("expedition.nodeSettle", "[expedition] 노드 결과 정산 실패", error);
-        if (this.scene.isActive()) this.showResultFailure(() => this.finishExpeditionBattle(input, won), () => startScene(this, "lobby"), error, "expedition");
+        if (this.scene.isActive()) this.showResultFailure(() => this.finishExpeditionBattle(input, won), () => startScene(this, "expedition"), error, "expedition");
       });
     }
   }

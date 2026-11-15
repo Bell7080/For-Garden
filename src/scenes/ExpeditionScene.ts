@@ -1,4 +1,5 @@
 import { bindNotificationDot } from "../ui/NotificationDot";
+import { squeezeTextToWidth } from "../ui/textFit";
 import { playFormationTapSound } from "../ui/formationSound";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { notificationManager } from "../managers/NotificationManager";
@@ -108,7 +109,8 @@ const RANKING = {
   // 얼굴이 제목 줄 바로 아래에서 시작하도록 위쪽 여백은 그대로 두고, 발끝은 화면 아래 UI 뒤로
   // 숨을 만큼 크게 세운다.
   boss: { groundY: BASE_HEIGHT + 40, height: 1720, tap: { top: 280, bottom: 1300, width: 620 } },
-  score: { y: 1470, width: 900, height: 190 },
+  // 판 밑변과 아래 버튼 줄(주간 점수 보상의 붉은 점) 사이에 안전 여백을 남긴다 — 붙여 두던 때는 점이 판에 걸쳤다.
+  score: { y: 1448, width: 900, height: 200 },
   utility: { y: 1610, width: 330, height: 82, gap: 24 },
   actions: { y: 1800, height: 130, sortieWidth: 460, sweepWidth: 250, gap: 24 },
 } as const;
@@ -124,6 +126,12 @@ export function rankingBossBounds() {
 const GLOBAL_AUGMENT_CHIPS = 6;
 
 const AUGMENT_PICKER_DEPTH = 4001;
+/**
+ * 지도 HUD를 꾹 눌러 여는 아군 창의 층. 증강 고르기 판(4000)과 그 위로 올라온 HUD(4001)보다
+ * 위여야 한다 — 1000에 두던 때는 고르는 동안 연 창이 증강 카드 아래에 깔렸다. 판의 태그 쪽지(6000)는
+ * 창이 떠 있는 동안 눌릴 수 없으므로 그 아래여도 된다.
+ */
+const MAP_ALLY_INFO_DEPTH = 4100;
 
 /**
  * 주간 원정 준비/이어하기 화면.
@@ -208,6 +216,8 @@ export class ExpeditionScene extends Phaser.Scene {
   }
   /** 전투 노드 선택은 모달 대신 지도에 붙는 공용 SD 편성판 하나만 갱신한다. */
   private enemyPreview?: NodeEnemyPreview;
+  /** 증강 고르기 판이 HUD를 빌려 간 동안. 짧은 탭은 대상 고르기로만 읽는다. */
+  private augmentPicking = false;
   /** 선택 해제와 스크롤 추적을 같은 지도 인스턴스에 전달한다. */
   private mapView?: ExpeditionMapView;
   /** 기록 화면의 내 점수 패널. 서버 응답이 오면 이 층만 통째로 갈아 끼운다. */
@@ -535,6 +545,8 @@ export class ExpeditionScene extends Phaser.Scene {
    * 1쪽 전체 적용, 2쪽부터 편성 순서의 렐릭이다. 렐릭을 눌러 열면 그 렐릭의 쪽부터 선다.
    */
   private openAugmentDetails(augments: readonly ExpeditionAugmentSelection[], relicId?: string): void {
+    // 증강을 고르는 동안의 짧은 탭은 대상 고르기다. 현황판까지 함께 열면 고르기 판 아래에 깔린다.
+    if (this.augmentPicking) return;
     const order = expeditionManager.status().run?.relics.map(({ relicId: id }) => id) ?? [];
     new ExpeditionAugmentStatusPopup(this, this.popups).open(augments, order, relicId);
   }
@@ -567,10 +579,10 @@ export class ExpeditionScene extends Phaser.Scene {
       profile.setAugmentBadges(personal[state.relicId] ?? [], () => this.openAugmentDetails(augments, state.relicId));
       profile.card.hit.setInteractive({ useHandCursor: true });
       bindLongPress(this, profile.card.hit, {
-        onLongPress: () => showExpeditionRelic(this, def.id, { portraitDepth: 1001, baseDepth: 1000 }),
+        onLongPress: () => showExpeditionRelic(this, def.id, { portraitDepth: MAP_ALLY_INFO_DEPTH + 1, baseDepth: MAP_ALLY_INFO_DEPTH }),
         // 짧은 탭은 지금 무엇이 붙어 있는지를 연다. 꾹 누르면 예전처럼 상세 정보창이다.
         onTap: augments.length > 0 ? () => this.openAugmentDetails(augments, state.relicId) : undefined,
-        depth: 1200,
+        // 게이지는 기본 층(손 밑의 모든 판보다 위)에 둔다. 1200이면 증강 고르기 판 아래로 깔렸다.
       });
       this.relicProfiles.set(state.relicId, profile);
     });
@@ -606,6 +618,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const markerY = (profile: BattleProfile): number => profile.card.getBounds().top - 34;
     return {
       attach: (onPick) => {
+        this.augmentPicking = true;
         pickHandlers.clear();
         profiles.forEach((profile, relicId) => {
           profile.setDepth(AUGMENT_PICKER_DEPTH);
@@ -641,6 +654,7 @@ export class ExpeditionScene extends Phaser.Scene {
         return { x: BASE_WIDTH / 2, y: (EXPEDITION_LAYOUT.augments.top + EXPEDITION_LAYOUT.augments.bottom) / 2 };
       },
       detach: () => {
+        this.augmentPicking = false;
         clearMarkers();
         profiles.forEach((profile, relicId) => {
           profile.setDepth(0).setAlpha(1);
@@ -687,7 +701,7 @@ export class ExpeditionScene extends Phaser.Scene {
     }, async () => {
       const settlement = await withBusy(this, gameApi.settleExpeditionRun({ runId: run.runId, settlementId: `${run.runId}:abandon`, outcome: "abandoned" }));
       // 지갑 상한 적용 뒤 실제 들어온 양만 영수증에 표시하고 확인 후 로비로 돌아간다.
-      openRewardPopup(this, this.popups, { title: t("expedition.abandon.settle"), items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => startScene(this, "lobby") });
+      openRewardPopup(this, this.popups, { title: t("expedition.abandon.settle"), items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => startScene(this, "expedition") });
     });
   }
 
@@ -717,7 +731,7 @@ export class ExpeditionScene extends Phaser.Scene {
     new Button(this, utilityLeftX, utility.y, { width: utility.width, height: utility.height, label: t("expedition.ranking"), fontSize: 26, onClick: () => new ExpeditionRankingPopup(this, this.popups).open() }).setDepth(12);
     const rewardButton = new Button(this, utilityRightX, utility.y, { width: utility.width, height: utility.height, label: t("expedition.weeklyScoreReward"), fontSize: 26, onClick: () => void new ExpeditionRewardPopup(this, this.popups).open() }).setDepth(12);
 
-    bindNotificationDot(this, rewardButton, { x: utility.width / 2 - 16, y: -utility.height / 2 + 12 }, listener => notificationManager.subscribe("expeditionReward", listener));
+    bindNotificationDot(this, rewardButton, { x: utility.width / 2 - 18, y: -utility.height / 2 + 18 }, listener => notificationManager.subscribe("expeditionReward", listener));
     const actionsTotal = actions.sortieWidth + actions.sweepWidth + actions.gap;
     const sortieX = BASE_WIDTH / 2 - actionsTotal / 2 + actions.sortieWidth / 2;
     const sweepX = BASE_WIDTH / 2 + actionsTotal / 2 - actions.sweepWidth / 2;
@@ -761,13 +775,16 @@ export class ExpeditionScene extends Phaser.Scene {
     }
     const left = -score.width / 2 + 48;
     const right = score.width / 2 - 48;
-    const top = -score.height / 2 + 40;
-    panel.add(this.add.text(left, top, t("expedition.weekly.myBest"), textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0));
-    panel.add(this.add.text(left, top + 32, (best?.bestScore ?? 0).toLocaleString(), textStyle({ role: "display", size: 52, color: COLOR.accentText })).setOrigin(0, 0));
-    panel.add(this.add.text(right, top, best?.rank ? t("expedition.weekly.rank", { rank: best.rank }) : t("expedition.weekly.unranked"), textStyle({ role: "emphasis", size: 26, color: COLOR.sortieText })).setOrigin(1, 0));
+    const top = -score.height / 2 + 32;
+    // 기록 화면에서 가장 먼저 읽혀야 하는 수라 글자를 한 뼘 크게 세운다.
+    panel.add(this.add.text(left, top, t("expedition.weekly.myBest"), textStyle({ role: "emphasis", size: 27, color: COLOR.inkDim })).setOrigin(0, 0));
+    panel.add(this.add.text(left, top + 36, (best?.bestScore ?? 0).toLocaleString(), textStyle({ role: "display", size: 68, color: COLOR.accentText })).setOrigin(0, 0));
+    panel.add(this.add.text(right, top, best?.rank ? t("expedition.weekly.rank", { rank: best.rank }) : t("expedition.weekly.unranked"), textStyle({ role: "emphasis", size: 32, color: COLOR.sortieText })).setOrigin(1, 0));
     // 누적 점수 대신 **주가 끝나면 받을 순위 보상**이 선다 — 최고 기록 하나가 순위와 보상을 함께 정한다.
     if (best?.rankRewards && (best.rankRewards.gems || best.rankRewards.salvageRecord)) {
-      panel.add(this.add.text(right, top + 90, t("expedition.weekly.rankReward", { gems: (best.rankRewards.gems ?? 0).toLocaleString(), salvage: (best.rankRewards.salvageRecord ?? 0).toLocaleString() }), textStyle({ role: "body", size: 20, color: COLOR.ink })).setOrigin(1, 0));
+      const reward = this.add.text(right, top + 104, t("expedition.weekly.rankReward", { gems: (best.rankRewards.gems ?? 0).toLocaleString(), salvage: (best.rankRewards.salvageRecord ?? 0).toLocaleString() }), textStyle({ role: "body", size: 24, color: COLOR.ink })).setOrigin(1, 0);
+      squeezeTextToWidth(reward, score.width / 2 + 20);
+      panel.add(reward);
     }
   }
 

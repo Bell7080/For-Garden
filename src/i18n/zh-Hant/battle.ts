@@ -23,7 +23,6 @@ export const BATTLE_ZH_HANT = {
   "battle.settle.recoverLobby": "返回大廳",
   "battle.settle.done": "遠征觀察結束",
   "battle.settle.score": "本次遠征分數",
-  "battle.settle.detail": "詳情",
   "battle.settle.toLobby": "返回大廳",
   "battle.settle.weeklyRecord": "每週記錄",
   "battle.contribution": "貢獻度",

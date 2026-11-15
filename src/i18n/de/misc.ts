@@ -321,7 +321,6 @@ export const MISC_DE = {
   "trade.disconnected": "Signal verloren",
   "trade.reconnect": "Neu verbinden",
   "trade.title": "Handel",
-  "score.detail": "Punktedetails",
   "score.normalNodes": "Summe normaler Knoten",
   "score.bossDamage": "Schadenspunkte gegen Pontos",
   "title.saveRecovered": "Der Speicherstand konnte nicht geprüft werden, daher wurde ein sicherer Anfangszustand wiederhergestellt.",

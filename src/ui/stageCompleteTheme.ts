@@ -97,6 +97,7 @@ export function raidResultTheme(bossRelicId: string | undefined): StageCompleteT
  */
 export const RESULT_SCORE_BLOCK = {
   rank: { labelY: 136, labelSize: 22, valueY: 186, valueSize: 48 },
-  score: { labelY: 428, labelSize: 24, valueY: 490, valueSize: 66 },
+  // 세부 줄(오른 몫 · 점수 구성)은 큰 수와 보조 조작 줄 사이의 띠에 선다.
+  score: { labelY: 428, labelSize: 24, valueY: 490, valueSize: 66, detailY: 548, detailSize: 24, gainDelayMs: 520 },
   extras: { y: 612, width: 300, height: 80, gap: 24, font: 26 },
 } as const;

@@ -23,7 +23,6 @@ export const BATTLE_PT_BR = {
   "battle.settle.recoverLobby": "Voltar ao saguão",
   "battle.settle.done": "Observação da Expedição concluída",
   "battle.settle.score": "Pontuação desta Expedição",
-  "battle.settle.detail": "Detalhes",
   "battle.settle.toLobby": "Ao saguão",
   "battle.settle.weeklyRecord": "Recorde semanal",
   "battle.contribution": "Contribuição",

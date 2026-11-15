@@ -323,7 +323,6 @@ export const MISC_EN = {
   "trade.disconnected": "Signal Lost",
   "trade.reconnect": "Reconnect",
   "trade.title": "Trade",
-  "score.detail": "Score Details",
   "score.normalNodes": "Normal node total",
   "score.bossDamage": "Pontos damage score",
   "title.saveRecovered": "The save data could not be verified, so a safe initial state was restored.",

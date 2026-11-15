@@ -96,6 +96,21 @@ export const DIALOGUE_STANDING_ZOOM: Readonly<Partial<Record<DialogueStandingAss
   carno: 1.3,
 };
 
+/**
+ * 원화별 머리 줄 보정(px, 위로 올리는 값). 0이 기준이다.
+ *
+ * 머리 관절이 같은 줄에 서도 원화마다 고개 각도·관절 자리가 달라 얼굴이 낮게 읽히는 개체만 적는다.
+ * 카르는 고개를 숙인 거구라 관절 기준으로 세우면 얼굴이 다른 인물보다 낮았다(응태 2026-11-15).
+ */
+export const DIALOGUE_STANDING_RAISE: Readonly<Partial<Record<DialogueStandingAsset, number>>> = {
+  carno: 140,
+};
+
+/** 그 원화의 머리 관절이 설 높이. */
+export function dialogueStandingHeadY(id: DialogueStandingAsset): number {
+  return DIALOGUE_STANDING_FRAME.headY - (DIALOGUE_STANDING_RAISE[id] ?? 0);
+}
+
 /** 말하는 사람과 나머지를 가르는 값. 나머지는 한 톤 가라앉고 한 층 뒤로 선다. */
 export const DIALOGUE_FOCUS = {
   /** 말하지 않는 사람의 색. 검게 누르면 실루엣과 구별되지 않으므로 옅은 잿빛으로만 누른다. */

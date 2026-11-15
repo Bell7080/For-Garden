@@ -41,6 +41,7 @@ import {
   DIALOGUE_STAGE_FADE,
   DIALOGUE_STANDING_FRAME,
   DIALOGUE_STANDING_ZOOM,
+  dialogueStandingHeadY,
   dialogueStageSpot,
   explosionShards,
 } from "./dialogueStageLayout";
@@ -234,7 +235,7 @@ export class DialogueStage {
     let creature: PuppetCreature;
     try {
       creature = await spawnPuppet(this.scene, asset, {
-        focus: { anchor: "head", x: spot.x, y: DIALOGUE_STANDING_FRAME.headY },
+        focus: { anchor: "head", x: spot.x, y: dialogueStandingHeadY(entry.id) },
         height: DIALOGUE_STANDING_FRAME.height * zoom,
         depth: DIALOGUE_FOCUS.listenerDepth,
       });
@@ -259,7 +260,7 @@ export class DialogueStage {
       baseX: creature.x,
       baseY: creature.y,
       unitScale: creature.scaleX / spot.zoom,
-      headOffset: { x: (spot.x - creature.x) / creature.scaleX, y: (DIALOGUE_STANDING_FRAME.headY - creature.y) / creature.scaleX },
+      headOffset: { x: (spot.x - creature.x) / creature.scaleX, y: (dialogueStandingHeadY(entry.id) - creature.y) / creature.scaleX },
     };
     this.members.set(entry.id, member);
     creature.setMask(this.mask);
@@ -373,7 +374,7 @@ export class DialogueStage {
     const spot = dialogueStageSpot(entry.slot, castSize);
     const scale = member.unitScale * spot.zoom;
     const baseX = spot.x - member.headOffset.x * scale;
-    const baseY = DIALOGUE_STANDING_FRAME.headY - member.headOffset.y * scale;
+    const baseY = dialogueStandingHeadY(member.id) - member.headOffset.y * scale;
     member.slot = entry.slot;
     member.restScale = scale;
     if (Math.abs(baseX - member.baseX) < 0.5 && Math.abs(baseY - member.baseY) < 0.5 && Math.abs(scale - member.creature.scaleX) < 1e-4) return;

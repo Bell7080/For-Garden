@@ -90,7 +90,11 @@ export const DIALOGUE_STANDING_FRAME = { headY: 540, height: 1880 } as const;
  * 값은 1080×1920 캡처에서 **얼굴 크기가 서로 맞도록** 눈으로 맞췄다. 등신이 낮은(머리가 큰)
  * 원화는 줄이고, 캔버스에 여백이 많은 적 원화는 키운다.
  */
-export const DIALOGUE_STANDING_ZOOM: Readonly<Partial<Record<DialogueStandingAsset, number>>> = {};
+export const DIALOGUE_STANDING_ZOOM: Readonly<Partial<Record<DialogueStandingAsset, number>>> = {
+  // 카르는 거구라 원화가 상반신만 담고 얼굴이 작다(두 눈 사이 66px — 대부분 90px 안팎).
+  // 그대로 세우면 옆의 코마보다 얼굴이 작아 거구가 오히려 작게 읽혔다(응태 2026-11-15).
+  carno: 1.3,
+};
 
 /** 말하는 사람과 나머지를 가르는 값. 나머지는 한 톤 가라앉고 한 층 뒤로 선다. */
 export const DIALOGUE_FOCUS = {

@@ -29,7 +29,7 @@ import { GUILD_WAR_ATTACKS_PER_MEMBER, GUILD_WAR_MIN_MEMBERS, type GuildWarBranc
 import { GUILD_WAR_BRANCHES } from "../core/guildWarMap";
 import { drawGlyph, type GlyphName } from "../ui/glyphs";
 import { guildAttendanceRace } from "../core/guildRace";
-import { isOnline, lastActiveAge } from "../core/social";
+import { isOnline, lastActiveAge, type FriendRelation } from "../core/social";
 import { GUILD_GUARD_DAILY_RANK_COINS, GUILD_WEEKLY_RANK_REWARDS, rankTableAsPool } from "../data/competitiveRewards";
 import { RELICS } from "../data/relics";
 import { setDebugScene } from "../debug";
@@ -81,6 +81,7 @@ import { squeezeTextToWidth } from "../ui/textFit";
 import { TextInputField } from "../ui/TextInputField";
 import { TopBar } from "../ui/TopBar";
 import { GUILD_COIN_TEXT } from "../ui/topBarSlots";
+import { addPlayerProfileTap, fetchFriendRelation, profileFriendButton } from "../ui/PlayerProfileLink";
 import { COLOR, textStyle } from "../ui/theme";
 
 type GuildTab = "info" | "members";
@@ -187,6 +188,8 @@ export class GuildScene extends Phaser.Scene {
   private clockOffset = 0;
 
   private popups!: PopupLayer;
+  /** 길드원 카드를 열기 전에 친구 관계를 받아 오는 중 — 연타가 카드를 두 장 세우지 않게. */
+  private profileLoading = false;
   private topBar!: TopBar;
   private view!: Phaser.GameObjects.Container;
   private controls!: Phaser.GameObjects.Container;
@@ -1108,7 +1111,13 @@ export class GuildScene extends Phaser.Scene {
       const person = "request" in entry ? entry.request : entry.member;
       this.plate(row, 0, 0, S.width, S.row.height - 4, "member" in entry && entry.member.isMe ? COLOR.accent : undefined);
       const relic = RELICS.find((candidate) => candidate.id === person.avatarRelicId);
-      row.add(new ProfileAvatar(this, R.badge.x, 0, { size: 104, frameId: person.frameId, portraitAssetId: relic?.portraitAssetId, fallback: Array.from(person.name.trim())[0] ?? "?" }));
+      if ("request" in entry) {
+        // 가입 신청자는 얼굴을 눌러 그 사람의 플레이어 카드를 구경한 뒤 수락·거절을 고른다.
+        const face = this.add.container(R.badge.x, 0);
+        row.add(face);
+        addPlayerProfileTap(this, face, 128, 128, this.popups, { playerId: person.userId }, this.clip());
+        face.add(new ProfileAvatar(this, 0, 0, { size: 104, frameId: person.frameId, portraitAssetId: relic?.portraitAssetId, fallback: Array.from(person.name.trim())[0] ?? "?" }));
+      } else row.add(new ProfileAvatar(this, R.badge.x, 0, { size: 104, frameId: person.frameId, portraitAssetId: relic?.portraitAssetId, fallback: Array.from(person.name.trim())[0] ?? "?" }));
       if ("request" in entry) {
         const room = S.width / 2 - (R.button.width * 2 + 60) - R.textX;
         row.add(squeezeTextToWidth(this.add.text(R.textX, R.nameY, person.name, textStyle({ role: "display", size: 34 })).setOrigin(0, 0.5), room));
@@ -1141,8 +1150,21 @@ export class GuildScene extends Phaser.Scene {
     this.label(row, right, 46, t("guild.members.total", { value: member.contributionTotal.toLocaleString() }), { role: "body", size: 22, color: COLOR.ink }, [1, 0.5]);
   }
 
-  /** 길드원 카드 — 친구 카드와 같은 한 장에 직책·기여도가 먼저 서고, 관리 권한이 있으면 밑동에 조작이 선다. */
-  private openMemberProfile(member: GuildMemberView): void {
+  /**
+   * 길드원 카드 — 친구 카드와 같은 한 장에 직책·기여도가 먼저 서고, 관리 권한이 있으면 밑동에 조작이 선다.
+   * 다른 길드원의 카드에는 친구 칸(신청 · 수락 · 대기 중 · 이미 친구)이 함께 선다 — 관계는 서버에서 받아 온다.
+   */
+  private openMemberProfile(member: GuildMemberView, instant = false): void {
+    if (this.popups.isOpen || this.profileLoading) return;
+    if (member.isMe) { this.showMemberProfile(member, null, instant); return; }
+    this.profileLoading = true;
+    void fetchFriendRelation(member.userId).then((relation) => {
+      this.profileLoading = false;
+      if (this.scene.isActive()) this.showMemberProfile(member, relation, instant);
+    });
+  }
+
+  private showMemberProfile(member: GuildMemberView, relation: FriendRelation | null, instant: boolean): void {
     if (this.popups.isOpen) return;
     const lastActive = member.isMe ? t("friends.age.online") : this.ageText(member.lastActiveAt);
     const records = [
@@ -1150,14 +1172,22 @@ export class GuildScene extends Phaser.Scene {
       { label: t("guild.profile.contribution"), value: member.contributionWeek.toLocaleString(), sub: t("guild.members.total", { value: member.contributionTotal.toLocaleString() }) },
     ];
     const tone = this.guildTone();
-    const actions: ProfileAction[] = member.isMe ? [] : this.memberActions(member).map((action) => ({
+    const manage: ProfileAction[] = member.isMe ? [] : this.memberActions(member).map((action) => ({
       label: action.label, icon: action.icon, destructive: action.tone === "danger", onClick: () => { popup.close(); action.run(); },
     }));
+    const friend = relation ? [profileFriendButton(this, member.userId, relation, (next) => {
+      popup.close();
+      this.showMemberProfile(member, next, true);
+    })] : [];
+    // 한 줄은 세 칸까지다 — 넘치면 관리 조작을 「관리」 한 칸으로 접고 친구 칸은 그대로 둔다.
+    const collapse = manage.length + friend.length > 3;
+    const actions: ProfileAction[] = collapse
+      ? [{ label: t("guild.members.manage"), icon: "settings", onClick: () => { popup.close(); this.openMemberActions(member); } }, ...friend]
+      : [...manage, ...friend];
     const popup = new PlayerProfilePopup(this, this.popups, guildMemberProfileDisplay(member, lastActive, records), () => undefined, undefined, {
-      title: t("guild.profile.title"), actionTone: tone, report: !member.isMe,
-      actions: actions.length > 3 ? [{ label: t("guild.members.manage"), icon: "settings", onClick: () => { popup.close(); this.openMemberActions(member); } }] : actions,
+      title: t("guild.profile.title"), actionTone: tone, report: !member.isMe, actions,
     });
-    popup.open();
+    popup.open({ instant });
   }
 
   /**

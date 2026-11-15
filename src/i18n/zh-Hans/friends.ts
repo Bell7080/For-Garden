@@ -43,4 +43,10 @@ export const FRIENDS_ZH_HANS = {
   "friends.error.alreadyRequested": "已提交申请。",
   "friends.error.self": "无法向自己申请。",
   "friends.error.gone": "目标不存在或已处理。",
+  "friends.card.request": "加好友",
+  "friends.card.accept": "接受申请",
+  "friends.card.pending": "已申请",
+  "friends.card.already": "已是好友",
+  "friends.card.sent": "已发送好友申请。",
+  "friends.card.became": "已成为好友。",
 } as const;

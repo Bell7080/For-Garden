@@ -43,4 +43,10 @@ export const FRIENDS_VI = {
   "friends.error.alreadyRequested": "Đã gửi lời mời.",
   "friends.error.self": "Không thể gửi lời mời cho chính mình.",
   "friends.error.gone": "Đối tượng không còn hoặc đã xử lý.",
+  "friends.card.request": "Kết bạn",
+  "friends.card.accept": "Chấp nhận",
+  "friends.card.pending": "Đã gửi lời mời",
+  "friends.card.already": "Đã là bạn",
+  "friends.card.sent": "Đã gửi lời mời kết bạn.",
+  "friends.card.became": "Hai bạn đã là bạn bè.",
 } as const;

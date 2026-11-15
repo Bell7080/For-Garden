@@ -123,6 +123,20 @@ export class FakeSocialServer {
     return { incoming: list(this.incoming), outgoing: list(this.outgoing), requestLimit: FRIEND_REQUEST_LIMIT, serverTime: this.now() };
   }
 
+  /**
+   * 순위·명단에 선 한 사람의 공개 카드와 나와의 관계. 결투장·레이드·원정·지층·아레나 순위표의 줄을 누르면 이것으로
+   * 카드를 연다 — 화면이 순위 응답의 얼굴·이름으로 카드를 지어내지 않고, 친구 찾기와 같은 공개 프로필을 받는다.
+   */
+  async getProfile(userId: string): Promise<UserSearchEntry & { serverTime: number }> {
+    const profile = this.profileOf(userId);
+    return { profile: cloneProfile(profile), relation: this.relationOf(userId), serverTime: this.now() };
+  }
+
+  /** 이 서버가 카드를 줄 수 있는 사람인가 — 표본 풀 밖(로컬 NPC·`local-player`)은 줄을 눌러도 카드가 없다. */
+  knowsProfile(userId: string): boolean {
+    return this.profiles.has(userId);
+  }
+
   /** 한 검색어로 이름(부분 일치)과 고유 ID(정확히 일치)를 함께 찾는다. `selfUid`는 자기 자신을 결과에서 뺀다. */
   async searchUsers(request: { query: string; selfUid?: string }): Promise<UserSearchResponse> {
     const users = [...this.profiles.values()]
@@ -220,7 +234,7 @@ export class FakeSocialServer {
 }
 
 /** 현재 브라우저 세션에서 친구 화면이 공유하는 임시 API 인스턴스다. */
-export type SocialApi = Pick<FakeSocialServer, "subscribe" | "pendingRequestCount" | "getFriends" | "getRequests" | "searchUsers" | "getRecommendations" | "sendRequest" | "cancelRequest" | "acceptRequest" | "declineRequest" | "acceptAllRequests" | "declineAllRequests" | "setFavorite" | "removeFriend" | "rentFavoriteRelic">;
+export type SocialApi = Pick<FakeSocialServer, "subscribe" | "pendingRequestCount" | "getProfile" | "getFriends" | "getRequests" | "searchUsers" | "getRecommendations" | "sendRequest" | "cancelRequest" | "acceptRequest" | "declineRequest" | "acceptAllRequests" | "declineAllRequests" | "setFavorite" | "removeFriend" | "rentFavoriteRelic">;
 const localSocial = new FakeSocialServer();
 let activeSocial: SocialApi = localSocial;
 const subscribers = new Set<() => void>();
@@ -242,3 +256,13 @@ export const socialApi = new Proxy({} as SocialApi, {
     return typeof value === "function" ? value.bind(activeSocial) : undefined;
   },
 });
+
+const PLAYER_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/**
+ * 이 id의 카드를 열 수 있는가 — 순위·목록의 줄이 눌리는 줄인지 정한다.
+ * 실서버는 계정 id(uuid)면 열 수 있고, 로컬 표본은 그 표본이 아는 이용자만 열 수 있다(NPC·내 표본 id는 카드가 없다).
+ */
+export function socialProfileReachable(id: string | undefined): boolean {
+  if (!id) return false;
+  return activeSocial === localSocial ? localSocial.knowsProfile(id) : PLAYER_UUID.test(id);
+}

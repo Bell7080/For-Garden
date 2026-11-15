@@ -18,6 +18,8 @@ import {
 } from "./expeditionRankingLayout";
 import { COLOR, textStyle } from "./theme";
 import { attachDragScroll } from "./dragScroll";
+import type { ClipRect } from "./clipRect";
+import { addPlayerProfileTap } from "./PlayerProfileLink";
 import { addScrollHint } from "./ScrollHint";
 
 /** 서버 주차 스냅샷만 사용해 준비와 결과 화면이 공유하는 원정 기록판을 그린다. */
@@ -106,7 +108,9 @@ export class ExpeditionRankingPopup {
       Math.hypot(bottom.x - center.x, bottom.y - center.y) * 2, 0xffffff).setVisible(false);
     list.setMask(this.listMask.createGeometryMask());
     content.add(list);
-    merged.forEach((entry, index) => this.renderRank(list, entry, rankingRowY(index)));
+    const mask = this.listMask;
+    const clip = { left: mask.x - mask.width / 2, right: mask.x + mask.width / 2, top: mask.y - mask.height / 2, bottom: mask.y + mask.height / 2 };
+    merged.forEach((entry, index) => this.renderRank(list, entry, rankingRowY(index), clip));
 
     // 끌기와 휠이 같은 한계를 쓴다. 줄이 적으면 minY가 0이라 아무 일도 일어나지 않는다.
     let offset = 0;
@@ -127,7 +131,7 @@ export class ExpeditionRankingPopup {
    * 왼쪽에는 그 사람의 **애착 렐릭 얼굴**이 선다. 이름만 늘어선 목록에서는 누가 누구인지
    * 읽히지 않고, 서버가 준 값이 있을 때만 세우므로 화면이 개체를 지어내지 않는다.
    */
-  private renderRank(list: Phaser.GameObjects.Container, entry: ExpeditionLeaderboardEntry, y: number): void {
+  private renderRank(list: Phaser.GameObjects.Container, entry: ExpeditionLeaderboardEntry, y: number, clip: ClipRect): void {
     const medal = rankingMedal(entry.rank);
     const row = this.scene.add.container(0, y).setScale(entry.isMe ? 1.04 : 1);
     const accent = medal?.edge ?? (entry.isMe ? COLOR.accent : COLOR.panelEdge);
@@ -149,6 +153,8 @@ export class ExpeditionRankingPopup {
     row.add(this.scene.add
       .text(RANKING_LIST.scoreX, 0, entry.score.toLocaleString(), textStyle({ role: "display", size: 32, color: rankColor }))
       .setOrigin(1, 0.5));
+    // 줄을 누르면 그 사람의 플레이어 카드가 순위표 위에 겹쳐 뜬다.
+    addPlayerProfileTap(this.scene, row, RANKING_LIST.rowWidth, RANKING_LIST.rowHeight, this.popups, entry, clip);
     list.add(row);
   }
 

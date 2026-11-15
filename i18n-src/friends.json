@@ -1,7 +1,7 @@
 {
-"friends.title": ["好友", "เพื่อน", "Bạn bè", "Teman", "Amigos", "Amigos", "Freunde", "Друзья"],
-"friends.researchLevel": ["研究员 LV.{level}", "นักวิจัย LV.{level}", "Nhà nghiên cứu LV.{level}", "Periset LV.{level}", "Investigador LV.{level}", "Pesquisador LV.{level}", "Forscher LV.{level}", "Исследователь LV.{level}"],
-"friends.profile": ["好友资料", "โปรไฟล์เพื่อน", "Hồ sơ bạn bè", "Profil Teman", "Perfil de amigo", "Perfil do amigo", "Freundesprofil", "Профиль друга"],
+  "friends.title": ["好友", "เพื่อน", "Bạn bè", "Teman", "Amigos", "Amigos", "Freunde", "Друзья"],
+  "friends.researchLevel": ["研究员 LV.{level}", "นักวิจัย LV.{level}", "Nhà nghiên cứu LV.{level}", "Periset LV.{level}", "Investigador LV.{level}", "Pesquisador LV.{level}", "Forscher LV.{level}", "Исследователь LV.{level}"],
+  "friends.profile": ["好友资料", "โปรไฟล์เพื่อน", "Hồ sơ bạn bè", "Profil Teman", "Perfil de amigo", "Perfil do amigo", "Freundesprofil", "Профиль друга"],
   "friends.tab.friends": ["好友", "เพื่อน", "Bạn bè", "Teman", "Amigos", "Amigos", "Freunde", "Друзья"],
   "friends.tab.requests": ["申请", "คำขอ", "Lời mời", "Permintaan", "Solicitudes", "Solicitações", "Anfragen", "Заявки"],
   "friends.tab.search": ["查找", "ค้นหา", "Tìm kiếm", "Cari", "Buscar", "Buscar", "Suchen", "Поиск"],
@@ -41,5 +41,11 @@
   "friends.error.alreadyFriend": ["已经是好友了。", "เป็นเพื่อนกันแล้ว", "Đã là bạn bè.", "Sudah berteman.", "Ya sois amigos.", "Vocês já são amigos.", "Ihr seid bereits befreundet.", "Вы уже друзья."],
   "friends.error.alreadyRequested": ["已提交申请。", "ส่งคำขอแล้ว", "Đã gửi lời mời.", "Permintaan sudah dikirim.", "Solicitud ya enviada.", "Solicitação já enviada.", "Anfrage bereits gesendet.", "Заявка уже отправлена."],
   "friends.error.self": ["无法向自己申请。", "ส่งคำขอหาตนเองไม่ได้", "Không thể gửi lời mời cho chính mình.", "Tidak dapat mengirim ke diri sendiri.", "No puedes enviarte una solicitud.", "Não pode enviar solicitação a si mesmo.", "Du kannst dir selbst keine Anfrage senden.", "Нельзя отправить заявку себе."],
-  "friends.error.gone": ["目标不存在或已处理。", "เป้าหมายไม่มีอยู่หรือจัดการแล้ว", "Đối tượng không còn hoặc đã xử lý.", "Target tidak ada atau sudah diproses.", "El objetivo ya no existe o se ha procesado.", "O alvo não existe ou já foi processado.", "Ziel nicht vorhanden oder bereits bearbeitet.", "Цель отсутствует или уже обработана."]
+  "friends.error.gone": ["目标不存在或已处理。", "เป้าหมายไม่มีอยู่หรือจัดการแล้ว", "Đối tượng không còn hoặc đã xử lý.", "Target tidak ada atau sudah diproses.", "El objetivo ya no existe o se ha procesado.", "O alvo não existe ou já foi processado.", "Ziel nicht vorhanden oder bereits bearbeitet.", "Цель отсутствует или уже обработана."],
+  "friends.card.request": ["加好友", "เพิ่มเพื่อน", "Kết bạn", "Tambah Teman", "Agregar amigo", "Adicionar amigo", "Freund hinzufügen", "Добавить в друзья"],
+  "friends.card.accept": ["接受申请", "ยอมรับคำขอ", "Chấp nhận", "Terima", "Aceptar", "Aceitar", "Annehmen", "Принять"],
+  "friends.card.pending": ["已申请", "ส่งคำขอแล้ว", "Đã gửi lời mời", "Menunggu", "Enviada", "Enviada", "Gesendet", "Заявка отправлена"],
+  "friends.card.already": ["已是好友", "เป็นเพื่อนแล้ว", "Đã là bạn", "Sudah berteman", "Ya son amigos", "Já são amigos", "Befreundet", "Уже друзья"],
+  "friends.card.sent": ["已发送好友申请。", "ส่งคำขอเป็นเพื่อนแล้ว", "Đã gửi lời mời kết bạn.", "Permintaan pertemanan terkirim.", "Solicitud de amistad enviada.", "Solicitação de amizade enviada.", "Freundschaftsanfrage gesendet.", "Заявка в друзья отправлена."],
+  "friends.card.became": ["已成为好友。", "เป็นเพื่อนกันแล้ว", "Hai bạn đã là bạn bè.", "Kalian sekarang berteman.", "Ahora son amigos.", "Agora vocês são amigos.", "Ihr seid jetzt befreundet.", "Теперь вы друзья."]
 }

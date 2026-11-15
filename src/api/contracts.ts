@@ -980,7 +980,7 @@ export interface ResolveDuelResponse extends PlayerStateDto {
   /** 이 판 뒤의 연승과, 이 판에 얹힌 연승 보너스(`delta`에 이미 들어 있다). */
   winStreak: number; streakBonus: number;
 }
-export interface DuelRankingEntryDto extends ProfileFaceDto { rank: number; displayName: string; score: number; tierId: import("../core/duelArena").DuelTierId; favoriteRelicId: string; isMe: boolean; }
+export interface DuelRankingEntryDto extends ProfileFaceDto { rank: number; /** 서버 계정 id — 줄을 눌러 그 사람의 카드를 연다. 표본 순위는 비어 있다. */ playerId?: string; displayName: string; score: number; tierId: import("../core/duelArena").DuelTierId; favoriteRelicId: string; isMe: boolean; }
 /** 고대 지층 상시 순위 한 줄 — 점수는 가장 깊이 깬 층이고 같은 층이면 먼저 닿은 사람이 위다. */
 export interface AncientRankingEntryDto extends ProfileFaceDto { rank: number; playerId: string; displayName: string; floor: number; favoriteRelicId: string; isMe: boolean; }
 export interface AncientRankingResponse { entries: AncientRankingEntryDto[]; me: AncientRankingEntryDto | null; }

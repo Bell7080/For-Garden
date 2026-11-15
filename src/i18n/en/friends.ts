@@ -43,4 +43,10 @@ export const FRIENDS_EN = {
   "friends.error.alreadyRequested": "Already requested.",
   "friends.error.self": "You can't send a request to yourself.",
   "friends.error.gone": "This request is no longer available.",
+  "friends.card.request": "Add Friend",
+  "friends.card.accept": "Accept",
+  "friends.card.pending": "Request Sent",
+  "friends.card.already": "Friends",
+  "friends.card.sent": "Friend request sent.",
+  "friends.card.became": "You are now friends.",
 } as const;

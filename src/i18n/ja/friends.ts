@@ -43,4 +43,10 @@ export const FRIENDS_JA = {
   "friends.error.alreadyRequested": "すでに申請済みです。",
   "friends.error.self": "自分自身には申請できません。",
   "friends.error.gone": "すでに処理済みか、対象が存在しません。",
+  "friends.card.request": "フレンド申請",
+  "friends.card.accept": "申請を承認",
+  "friends.card.pending": "申請中",
+  "friends.card.already": "フレンド",
+  "friends.card.sent": "フレンド申請を送りました。",
+  "friends.card.became": "フレンドになりました。",
 } as const;

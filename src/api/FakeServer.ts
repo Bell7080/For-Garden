@@ -175,12 +175,13 @@ import { t } from "../i18n";
 export const MAX_RUNE_NAME_LENGTH = 20;
 
 /** QA 빌드의 고대 지층 순위 표본. 일반 빌드는 서버가 순위를 주입하기 전까지 아무것도 세우지 않는다. */
+/** QA 표본 순위 — 줄을 눌러 카드를 열어 보도록 id는 친구 표본(`PREVIEW_DIRECTORY`)의 네 관계(없음·받은 신청·보낸 신청·친구)를 가리킨다. */
 const QA_ANCIENT_RANKING: readonly { playerId: string; displayName: string; floor: number; favoriteRelicId: string }[] = [
-  { playerId: "qa-ancient-1", displayName: "DeepDiver", floor: 118, favoriteRelicId: "koma" },
-  { playerId: "qa-ancient-2", displayName: "Haneul", floor: 87, favoriteRelicId: "rex" },
-  { playerId: "qa-ancient-3", displayName: "StrataKeeper", floor: 64, favoriteRelicId: "mette" },
-  { playerId: "qa-ancient-4", displayName: "MossLab", floor: 31, favoriteRelicId: "torika" },
-  { playerId: "qa-ancient-5", displayName: "FossilHunter", floor: 12, favoriteRelicId: "parua" },
+  { playerId: "user-stars", displayName: "DeepDiver", floor: 118, favoriteRelicId: "koma" },
+  { playerId: "user-fog", displayName: "Haneul", floor: 87, favoriteRelicId: "rex" },
+  { playerId: "user-lighthouse", displayName: "StrataKeeper", floor: 64, favoriteRelicId: "mette" },
+  { playerId: "friend-dawn", displayName: "MossLab", floor: 31, favoriteRelicId: "torika" },
+  { playerId: "user-garden", displayName: "FossilHunter", floor: 12, favoriteRelicId: "parua" },
 ];
 
 /** FakeServer의 지연과 난수원을 테스트에서 결정적으로 바꾸기 위한 선택 설정이다. */
@@ -3506,7 +3507,7 @@ export class FakeServer implements GameApi {
     await this.delay();
     if (this.duelContext) {
       const duel = this.duelNow(this.now());
-      const entries = this.duelContext.ranking.map((row, index) => ({ ...row, rank: index + 1, tierId: duelTier(row.score).id, isMe: row.id === this.duelContext!.playerId }));
+      const entries = this.duelContext.ranking.map((row, index) => ({ ...row, playerId: row.id, rank: index + 1, tierId: duelTier(row.score).id, isMe: row.id === this.duelContext!.playerId }));
       const me = { rank: this.duelContext.rank, displayName: this.state.playerCard.nickname || t("duel.ranking.me"), score: duel.score, tierId: duelTier(duel.score).id, favoriteRelicId: this.state.favorite, ...profileFace(this.state), isMe: true };
       return { entries, me, seasonEndsAt: duelSeasonEndsAt(this.now()).toISOString() };
     }

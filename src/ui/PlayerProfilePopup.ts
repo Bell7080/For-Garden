@@ -59,6 +59,8 @@ export interface ProfileAction {
   destructive?: boolean;
   /** 라벨 왼쪽 선 아이콘. */
   icon?: GlyphName;
+  /** 눌러도 할 일이 없는 상태(이미 친구 · 신청 대기 중)를 흐린 판으로 말한다. */
+  disabled?: boolean;
   onClick: () => void;
 }
 
@@ -97,8 +99,9 @@ export class PlayerProfilePopup {
     } = {},
   ) {}
 
-  open(options: { instant?: boolean } = {}): void {
-    if (this.opened || this.layer.isOpen) return;
+  /** `stacked`: 순위표처럼 이미 열린 판 위에서 카드를 겹쳐 연다(닫으면 그 판으로 돌아간다). */
+  open(options: { instant?: boolean; stacked?: boolean } = {}): void {
+    if (this.opened || (this.layer.isOpen && !options.stacked)) return;
     this.opened = true;
     setDebugPlayerProfileOpen(true);
     const layout = PLAYER_PROFILE_LAYOUT;
@@ -624,7 +627,7 @@ export class PlayerProfilePopup {
         ...toned,
         ...(action.destructive ? DESTRUCTIVE_BUTTON_STYLE : {}),
         onClick: action.onClick,
-      }));
+      }).setEnabled(!action.disabled));
     });
   }
 }

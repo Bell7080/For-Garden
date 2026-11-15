@@ -46,6 +46,8 @@ import { TopBar } from "../ui/TopBar";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { withBusy } from "../ui/BusyOverlay";
 import { showContentIntro } from "../ui/contentIntro";
+import type { ClipRect } from "../ui/clipRect";
+import { addPlayerProfileTap } from "../ui/PlayerProfileLink";
 import { addRaidGuideButton } from "../ui/RaidGuidePopup";
 
 /**
@@ -552,7 +554,8 @@ export class RaidScene extends Phaser.Scene {
     this.listMask = this.add.rectangle(RAID_BOARD.centerX, viewport.centerY, RANKING_LIST.rowWidth, viewport.height, 0xffffff).setVisible(false);
     list.setMask(this.listMask.createGeometryMask());
     content.add(list);
-    entries.forEach((entry, index) => this.renderRow(list, entry, rankingRowY(index)));
+    const clip = { left: RAID_BOARD.centerX - RANKING_LIST.rowWidth / 2, right: RAID_BOARD.centerX + RANKING_LIST.rowWidth / 2, top: viewport.centerY - viewport.height / 2, bottom: viewport.centerY + viewport.height / 2 };
+    entries.forEach((entry, index) => this.renderRow(list, entry, rankingRowY(index), clip));
 
     // 끌기와 휠이 같은 한계를 쓴다. 줄이 창보다 짧으면 minY가 0이라 아무 일도 일어나지 않는다.
     const minY = Math.min(0, viewport.height - (entries.length * (RANKING_LIST.rowHeight + RANKING_LIST.rowGap) - RANKING_LIST.rowGap));
@@ -565,7 +568,7 @@ export class RaidScene extends Phaser.Scene {
   }
 
   /** 한 줄. 1·2·3등의 금·은·동과 내 줄의 강조는 순위표와 같은 표를 읽는다. */
-  private renderRow(list: Phaser.GameObjects.Container, entry: RaidContributionEntryDto, y: number): void {
+  private renderRow(list: Phaser.GameObjects.Container, entry: RaidContributionEntryDto, y: number, clip: ClipRect): void {
     const medal = rankingMedal(entry.rank);
     const row = this.add.container(0, y).setScale(entry.isMe ? 1.04 : 1);
     const accent = medal?.edge ?? (entry.isMe ? COLOR.accent : COLOR.panelEdge);
@@ -581,6 +584,8 @@ export class RaidScene extends Phaser.Scene {
     addRankingFace(this, row, entry, entry.displayName);
     row.add(this.add.text(RANKING_LIST.nameX, 0, entry.displayName, textStyle({ role: "emphasis", size: 30, color: medal?.text ?? (entry.isMe ? COLOR.accentText : COLOR.ink) })).setOrigin(0, 0.5));
     row.add(this.add.text(RANKING_LIST.scoreX, 0, entry.damage.toLocaleString(), textStyle({ role: "display", size: 32, color: rankColor })).setOrigin(1, 0.5));
+    // 기여 줄을 누르면 그 사람의 플레이어 카드가 뜬다(내 줄은 내 카드).
+    addPlayerProfileTap(this, row, RANKING_LIST.rowWidth, RANKING_LIST.rowHeight, this.popups, entry, clip);
     list.add(row);
   }
 

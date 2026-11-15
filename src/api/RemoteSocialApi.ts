@@ -11,6 +11,7 @@ export const SOCIAL_METHODS = [
   "getFriends",
   "getRequests",
   "searchUsers",
+  "getProfile",
   "getRecommendations",
   "sendRequest",
   "cancelRequest",

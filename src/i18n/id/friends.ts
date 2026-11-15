@@ -43,4 +43,10 @@ export const FRIENDS_ID = {
   "friends.error.alreadyRequested": "Permintaan sudah dikirim.",
   "friends.error.self": "Tidak dapat mengirim ke diri sendiri.",
   "friends.error.gone": "Target tidak ada atau sudah diproses.",
+  "friends.card.request": "Tambah Teman",
+  "friends.card.accept": "Terima",
+  "friends.card.pending": "Menunggu",
+  "friends.card.already": "Sudah berteman",
+  "friends.card.sent": "Permintaan pertemanan terkirim.",
+  "friends.card.became": "Kalian sekarang berteman.",
 } as const;

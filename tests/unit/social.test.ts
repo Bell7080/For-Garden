@@ -32,3 +32,13 @@ describe("친구 조력자 규칙", () => {
     expect(second.friends[0].competitiveStats.highestStage?.displayValue).toBe("2-5 붉은 협곡");
   });
 });
+
+describe("플레이어 카드의 친구 조작", () => {
+  it("관계마다 할 일이 하나이고, 누를 것 없는 상태는 꺼진다", async () => {
+    const { profileFriendAction } = await import("../../src/core/social");
+    expect(profileFriendAction("none")).toEqual({ action: "request", enabled: true });
+    expect(profileFriendAction("incoming")).toEqual({ action: "accept", enabled: true });
+    expect(profileFriendAction("outgoing")).toEqual({ action: "pending", enabled: false });
+    expect(profileFriendAction("friend")).toEqual({ action: "friend", enabled: false });
+  });
+});

@@ -20,6 +20,11 @@ import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { attachDragScroll } from "./dragScroll";
 import { addScrollHint } from "./ScrollHint";
+import type { ClipRect } from "./clipRect";
+import { addPlayerProfileTap } from "./PlayerProfileLink";
+
+/** 붙박인 내 줄은 흐르지 않아 어디를 눌러도 받는다. */
+const FULL_CLIP: ClipRect = { left: -1e6, right: 1e6, top: -1e6, bottom: 1e6 };
 
 /**
  * 결투장 순위 — 원정 순위표와 **같은 줄 규격**(`RANKING_LIST`)·같은 금은동을 쓴다. 다른 것은 점수 옆에
@@ -30,6 +35,8 @@ export type RankingRowEntry = Pick<DuelRankingEntryDto, "rank" | "displayName" |
   favoriteRelicId?: string;
   /** 티어가 없는 순위(고대 지층)는 비운다 — 줄에 티어 표식이 서지 않는다. */
   tierId?: DuelTierId;
+  /** 서버 계정 id — 있으면 줄을 눌러 그 사람의 플레이어 카드를 연다(`addPlayerProfileTap`). */
+  playerId?: string;
 };
 
 /**
@@ -98,7 +105,7 @@ export class DuelRankingPopup {
     content.add(this.scene.add.rectangle(0, DUEL_RANKING_VIEW.divider, RANKING_LIST.rowWidth, 2, COLOR.accent, 0.45));
     // 붙박인 내 줄 위에 「내 순위」 이름표 — 목록의 한 줄과 같은 판이라 이것이 없으면 목록이 거기서 끊긴 것처럼 읽힌다.
     content.add(this.scene.add.text(-RANKING_LIST.rowWidth / 2, DUEL_RANKING_VIEW.divider - 22, t("ranking.mine"), textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0, 0.5));
-    if (me) this.renderRow(content, me, DUEL_RANKING_VIEW.meY);
+    if (me) this.renderRow(content, me, DUEL_RANKING_VIEW.meY, FULL_CLIP);
     else content.add(this.scene.add.text(0, DUEL_RANKING_VIEW.meY, t("duel.rank.none"), textStyle({ role: "emphasis", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
 
     // 시상대는 목록 머리로 함께 흐른다 — 줄 규격은 원정 순위표와 같게 두고 목록만 그만큼 내려선다.
@@ -118,13 +125,13 @@ export class DuelRankingPopup {
     // 마스크는 그것이 자르는 판과 같은 목숨을 산다 — 닫히는 연출 동안에도 판이 그려지므로 판이 죽을 때 함께 푼다.
     body.once(Phaser.GameObjects.Events.DESTROY, () => { list.clearMask(true); maskShape.destroy(); });
     content.add(list);
-    if (podium > 0) this.renderPodium(list, entries.slice(0, 3));
-    entries.forEach((entry, index) => this.renderRow(list, entry, podium + rankingRowY(index)));
+    // 끄는 면도 창 안에서만 손을 받는다(`addClippedHit`) — 창 밖으로 남으면 아래의 뒤로가기가 막힌다.
+    const clip = { left: maskShape.x - maskShape.width / 2, right: maskShape.x + maskShape.width / 2, top: maskShape.y - maskShape.height / 2, bottom: maskShape.y + maskShape.height / 2 };
+    if (podium > 0) this.renderPodium(list, entries.slice(0, 3), clip);
+    entries.forEach((entry, index) => this.renderRow(list, entry, podium + rankingRowY(index), clip));
 
     let offset = 0;
     const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, metrics.minY, 0); list.y = metrics.startY + offset; };
-    // 끄는 면도 창 안에서만 손을 받는다(`addClippedHit`) — 창 밖으로 남으면 아래의 뒤로가기가 막힌다.
-    const clip = { left: maskShape.x - maskShape.width / 2, right: maskShape.x + maskShape.width / 2, top: maskShape.y - maskShape.height / 2, bottom: maskShape.y + maskShape.height / 2 };
     const hit = addClippedHit(this.scene, content, 0, metrics.viewportCenterY, RANKING_LIST.rowWidth, metrics.viewportHeight, () => clip);
     hit.disableInteractive();
     attachDragScroll(this.scene, { owner: hit, root: content, bounds: () => new Phaser.Geom.Rectangle(clip.left, clip.top, clip.right - clip.left, clip.bottom - clip.top), onDelta: move });
@@ -132,7 +139,7 @@ export class DuelRankingPopup {
   }
 
   /** 1·2·3등의 단 — 가운데가 1등이고 가장 높다. 단의 색은 순위표 줄의 금·은·동과 같다. */
-  private renderPodium(parent: Phaser.GameObjects.Container, top: readonly RankingRowEntry[]): void {
+  private renderPodium(parent: Phaser.GameObjects.Container, top: readonly RankingRowEntry[], clip: ClipRect): void {
     top.forEach((entry, index) => {
       const spot = DUEL_PODIUM.spots[index];
       const medal = rankingMedal(entry.rank);
@@ -143,13 +150,17 @@ export class DuelRankingPopup {
       }));
       parent.add(this.scene.add.text(spot.x, plinthY, `${entry.rank}`, textStyle({ role: "display", size: Math.min(56, spot.plinth - 8), color: medal.text })).setOrigin(0.5));
       const faceY = DUEL_PODIUM.baseY - spot.plinth - 44 - spot.face / 2;
-      addRankingFace(this.scene, parent, entry, entry.displayName, { x: spot.x, y: faceY, size: profileAvatarSizeFor(spot.face) });
+      // 단 위의 얼굴도 그 사람의 카드를 연다 — 얼굴을 담는 칸을 하나 두고 그 칸이 눌린다.
+      const face = this.scene.add.container(spot.x, faceY);
+      parent.add(face);
+      addPlayerProfileTap(this.scene, face, spot.face + 24, spot.face + 24, this.popups, entry, clip);
+      addRankingFace(this.scene, face, entry, entry.displayName, { x: 0, y: 0, size: profileAvatarSizeFor(spot.face) });
       parent.add(squeezeTextToWidth(this.scene.add.text(spot.x, DUEL_PODIUM.baseY - spot.plinth - 10, entry.displayName, textStyle({ role: "emphasis", size: 24, color: medal.text }))
         .setOrigin(0.5, 1).setStroke("#05070a", 5), DUEL_PODIUM.plinthWidth));
     });
   }
 
-  private renderRow(parent: Phaser.GameObjects.Container, entry: RankingRowEntry, y: number): void {
+  private renderRow(parent: Phaser.GameObjects.Container, entry: RankingRowEntry, y: number, clip: ClipRect): void {
     const medal = rankingMedal(entry.rank);
     const tone = entry.tierId ? DUEL_TIER_COLOR[entry.tierId] : { text: COLOR.accentText };
     const row = this.scene.add.container(0, y).setScale(entry.isMe ? 1.04 : 1);
@@ -166,6 +177,8 @@ export class DuelRankingPopup {
     if (entry.tierId) addDuelTierEmblem(this.scene, row, RANKING_LIST.scoreX - 170, 0, 54, entry.tierId);
     const score = this.source.formatScore ? this.source.formatScore(entry.score) : entry.score.toLocaleString();
     row.add(this.scene.add.text(RANKING_LIST.scoreX, 0, score, textStyle({ role: "display", size: 32, color: tone.text })).setOrigin(1, 0.5));
+    // 줄을 누르면 그 사람의 플레이어 카드가 이 순위표 위에 겹쳐 뜬다(내 줄은 내 카드).
+    addPlayerProfileTap(this.scene, row, RANKING_LIST.rowWidth, RANKING_LIST.rowHeight, this.popups, entry, clip);
     parent.add(row);
   }
 }

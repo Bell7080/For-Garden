@@ -37,6 +37,7 @@ export const READ_METHODS = new Set([
   "social.getFriends",
   "social.getRequests",
   "social.searchUsers",
+  "social.getProfile",
   "social.getRecommendations",
   "guild.getGuild",
   "guild.searchGuilds",

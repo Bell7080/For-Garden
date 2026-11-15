@@ -43,4 +43,10 @@ export const FRIENDS_TH = {
   "friends.error.alreadyRequested": "ส่งคำขอแล้ว",
   "friends.error.self": "ส่งคำขอหาตนเองไม่ได้",
   "friends.error.gone": "เป้าหมายไม่มีอยู่หรือจัดการแล้ว",
+  "friends.card.request": "เพิ่มเพื่อน",
+  "friends.card.accept": "ยอมรับคำขอ",
+  "friends.card.pending": "ส่งคำขอแล้ว",
+  "friends.card.already": "เป็นเพื่อนแล้ว",
+  "friends.card.sent": "ส่งคำขอเป็นเพื่อนแล้ว",
+  "friends.card.became": "เป็นเพื่อนกันแล้ว",
 } as const;

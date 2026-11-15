@@ -43,4 +43,10 @@ export const FRIENDS_PT_BR = {
   "friends.error.alreadyRequested": "Solicitação já enviada.",
   "friends.error.self": "Não pode enviar solicitação a si mesmo.",
   "friends.error.gone": "O alvo não existe ou já foi processado.",
+  "friends.card.request": "Adicionar amigo",
+  "friends.card.accept": "Aceitar",
+  "friends.card.pending": "Enviada",
+  "friends.card.already": "Já são amigos",
+  "friends.card.sent": "Solicitação de amizade enviada.",
+  "friends.card.became": "Agora vocês são amigos.",
 } as const;

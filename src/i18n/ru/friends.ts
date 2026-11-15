@@ -43,4 +43,10 @@ export const FRIENDS_RU = {
   "friends.error.alreadyRequested": "Заявка уже отправлена.",
   "friends.error.self": "Нельзя отправить заявку себе.",
   "friends.error.gone": "Цель отсутствует или уже обработана.",
+  "friends.card.request": "Добавить в друзья",
+  "friends.card.accept": "Принять",
+  "friends.card.pending": "Заявка отправлена",
+  "friends.card.already": "Уже друзья",
+  "friends.card.sent": "Заявка в друзья отправлена.",
+  "friends.card.became": "Теперь вы друзья.",
 } as const;

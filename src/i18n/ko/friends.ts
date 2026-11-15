@@ -43,4 +43,10 @@ export const FRIENDS_KO = {
   "friends.error.alreadyRequested": "이미 신청했습니다.",
   "friends.error.self": "자신에게는 신청할 수 없습니다.",
   "friends.error.gone": "이미 처리되었거나 없는 대상입니다.",
+  "friends.card.request": "친구 신청",
+  "friends.card.accept": "신청 수락",
+  "friends.card.pending": "신청 대기 중",
+  "friends.card.already": "이미 친구",
+  "friends.card.sent": "친구 신청을 보냈습니다.",
+  "friends.card.became": "친구가 되었습니다.",
 } as const;

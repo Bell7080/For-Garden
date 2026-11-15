@@ -42,6 +42,20 @@ export type FriendFilter = (typeof FRIEND_FILTERS)[number];
 /** 한 이용자와 나의 관계. 차단한 이용자는 검색·추천에서 빠지므로 여기에는 없다. */
 export type FriendRelation = "none" | "friend" | "incoming" | "outgoing";
 
+/**
+ * 남의 플레이어 카드 밑동에 서는 친구 조작 한 칸 — 관계마다 할 일이 하나뿐이다.
+ * 아직 아무 사이도 아니면 신청, 상대가 먼저 보냈으면 수락, 내가 보냈으면 대기 중(누를 것 없음), 친구면 이미 친구(누를 것 없음).
+ */
+export type ProfileFriendAction = "request" | "accept" | "pending" | "friend";
+export function profileFriendAction(relation: FriendRelation): { action: ProfileFriendAction; enabled: boolean } {
+  switch (relation) {
+    case "none": return { action: "request", enabled: true };
+    case "incoming": return { action: "accept", enabled: true };
+    case "outgoing": return { action: "pending", enabled: false };
+    case "friend": return { action: "friend", enabled: false };
+  }
+}
+
 /** 목록·정렬이 읽는 최소한의 친구 모양. */
 export interface FriendListItem {
   id: string;

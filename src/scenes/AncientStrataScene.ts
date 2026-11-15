@@ -301,7 +301,7 @@ export class AncientStrataScene extends Phaser.Scene {
       title: t("ancient.ranking.title"),
       load: async () => {
         const ranking = await gameApi.getAncientRanking();
-        const row = (entry: (typeof ranking.entries)[number]) => ({ rank: entry.rank, displayName: entry.displayName, score: entry.floor, isMe: entry.isMe, favoriteRelicId: entry.favoriteRelicId, avatarRelicId: entry.avatarRelicId, frameId: entry.frameId });
+        const row = (entry: (typeof ranking.entries)[number]) => ({ rank: entry.rank, playerId: entry.playerId, displayName: entry.displayName, score: entry.floor, isMe: entry.isMe, favoriteRelicId: entry.favoriteRelicId, avatarRelicId: entry.avatarRelicId, frameId: entry.frameId });
         return { entries: ranking.entries.map(row), me: ranking.me ? row(ranking.me) : null };
       },
       formatScore: (floor: number) => `B${floor}`,

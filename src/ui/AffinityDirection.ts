@@ -14,7 +14,7 @@ const DIRECTION_COLOR: Record<Direction, number> = {
 
 /** 무상성 표식 — 화살표 대신 눕힌 작대기 한 줄이다. 화살표와 같은 폭의 홀로그램 칩 결로 끝을 비스듬히 깎는다. */
 function barPoints(size: number): number[] {
-  const w = size * 0.62, h = size * 0.2, cut = h * 0.7;
+  const w = size * 0.62, h = size * 0.14, cut = h * 0.7;
   return [-w + cut, -h, w, -h, w - cut, h, -w, h];
 }
 

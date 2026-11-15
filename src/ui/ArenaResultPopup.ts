@@ -9,7 +9,7 @@ import type { ArenaSeenRecord } from "../core/arenaNotice";
 import { getRelic } from "../data/relics";
 import type { PortraitAssetId } from "../core/types";
 import { ARENA_TONE } from "./arenaTheme";
-import { ARENA_RESULT as L, arenaResultActionX, arenaResultTeamX } from "./arenaResultLayout";
+import { ARENA_RESULT as L, arenaResultActionY, arenaResultTeamX } from "./arenaResultLayout";
 import { Button } from "./Button";
 import { addDuelStandingRow } from "./DuelStandingRow";
 import { FaceFrame } from "./FaceFrame";
@@ -80,7 +80,7 @@ export function openArenaResultPopup(scene: Phaser.Scene, popups: PopupLayer, op
     if (options.onContribution) actions.push({ label: t("stageComplete.contribution"), run: () => { contribution?.setVisible(false); options.onContribution!(() => contribution?.setVisible(true)); } });
     if (options.onRematch) actions.push({ label: t("arena.result.rematch"), primary: true, run: () => { chosen = true; close(); options.onRematch!(); } });
     actions.forEach((action, index) => {
-      const button = new Button(scene, arenaResultActionX(index, actions.length), L.actions.y, {
+      const button = new Button(scene, 0, arenaResultActionY(index), {
         width: L.actions.width, height: L.actions.height, label: action.label, fontSize: 28,
         ...(action.primary ? { variant: "primary" as const, fill: ARENA_TONE.confirm } : {}),
         accentColor: ARENA_TONE.accent, accentTextColor: COLOR.ink, onClick: action.run,

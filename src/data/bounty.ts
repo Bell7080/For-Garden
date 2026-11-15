@@ -49,15 +49,17 @@ export const BOUNTY = {
 /**
  * 등급 사다리 — **열 등급**.
  *
- * **한 등급 안의 셋은 같은 레벨로 자라 있고, 등급마다 서는 정예가 바뀐다.** 다섯 등급이 모두 토비 → 아모
- * → 코마였을 때는 등급이 레벨만 다른 같은 판이라 한 번 맞춘 세 명을 끝까지 그대로 썼다. 지금은 아래
- * 등급에 가벼운 정예(네우리·펄시·미르·리파)가 서고, 위로 갈수록 무거운 정예(아모·아트라·코마·이카닉시아)가
- * 자리를 넓혀 **등급마다 누구를 어느 라운드에 낼지**를 다시 고르게 한다. 마지막 라운드는 늘 그 등급에서
- * 가장 무거운 정예다 — 누구를 마지막까지 남길지가 이 던전의 판단이다.
+ * **한 등급 안의 셋은 같은 레벨로 자라 있고, 등급마다 서는 정예가 바뀐다.** 아래 다섯 등급은 1~4장의 공멸 조원이
+ * 서고(가벼운 네우리·펄시·미르·리파·토비 / 무거운 아모·아트라·코마), 6급부터는 **5~7장의 감금조**가 자리를 넓힌다 —
+ * 라자 → 마가사 → 노아 → 카르 순이다. 스토리를 밀며 만난 적이 현상수배에도 차례로 올라와야 위 등급이 레벨만 높은
+ * 같은 판이 되지 않는다. 마지막 라운드는 늘 그 등급에서 가장 좁은 벽이다 — 누구를 마지막까지 남길지가 이 던전의
+ * 판단이다. 같은 레벨 차에서 1대1을 확실히 이기는 개체 수로 재면 가벼운 정예 25 안팎 · 라자 17 · 아모·코마·아트라·
+ * 이카닉시아·마가사 14 안팎 · 카르 10 · 노아 8이다(v0.463.0 측정).
  *
  * 값은 눈대중이 아니라 `tests/unit/bountyBalance.test.ts`가 `duelBalance`로 다시 잰다 — 등급마다 상정한
  * 성장 수준에서 세 라운드 모두 낼 개체가 셋 이상 남는지, 그리고 **레벨 20 파티를 세워 두고 등급만
- * 올렸을 때 낼 수 있는 개체가 줄곧 줄어드는지**(75 → 70 → 64 → 46 → 39 → 23 → 14 → 12 → 10 → 1)다. v0.451.2 평타 상향으로 7급·8급이 14로 같아져 8급 아트라를 LV.41(돌파 문턱)로 올렸다. 렐릭 성장 개편(돌파 +10%p)으로 적도 사다리 돌파 몫을 받게 되자 7급 1라운드의 미르가 6급보다 쉬워져 펄시로 바꿨다.
+ * 올렸을 때 낼 수 있는 개체가 줄곧 줄어드는지**(74 → 68 → 65 → 46 → 34 → 26 → 15 → 9 → 2 → 1)다. 라자는 1대1에서
+ * 표시보다 버티는 개체라(표시를 넘긴 아군이 지는 짝이 넷에 하나) 앞 라운드에만 세운다.
  *
  * **ID는 저장 키라 순서와 따로 논다.** 다섯 등급이던 때의 `bounty-1`~`bounty-5`는 같은 레벨대의 새 자리
  * (1 · 3 · 5 · 7 · 10급)로 옮겨 앉고, 그 사이에 새로 선 다섯이 `bounty-6`~`bounty-10`이다 — 이미 깬 등급이
@@ -85,25 +87,25 @@ export const BOUNTY_TIERS: readonly BountyTierDef[] = [
     { relicId: "toby", level: 21 }, { relicId: "amo", level: 21 }, { relicId: "koma", level: 20 },
   ] },
   { id: "bounty-3", order: 5, name: "현상수배 5급", rewardGold: 5_700, rounds: [
-    { relicId: "neuri", level: 26 }, { relicId: "atra", level: 24 }, { relicId: "koma", level: 24 },
+    { relicId: "mir", level: 26 }, { relicId: "atra", level: 25 }, { relicId: "koma", level: 24 },
   ] },
-  // 6급~9급은 이카닉시아가 마지막 라운드의 벽으로 선다(10급은 아모).
+  // 6급부터 5~7장의 감금조가 선다 — 라자(5장 부간부)가 먼저, 마가사(5장 간부)가 벽이다.
   { id: "bounty-8", order: 6, name: "현상수배 6급", rewardGold: 7_800, rounds: [
-    { relicId: "pulsi", level: 31 }, { relicId: "amo", level: 31 }, { relicId: "ikanixia", level: 30 },
+    { relicId: "pulsi", level: 31 }, { relicId: "raja", level: 31 }, { relicId: "magasa", level: 30 },
   ] },
   { id: "bounty-4", order: 7, name: "현상수배 7급", rewardGold: 11_500, rounds: [
-    { relicId: "pulsi", level: 40 }, { relicId: "atra", level: 37 }, { relicId: "ikanixia", level: 37 },
+    { relicId: "toby", level: 40 }, { relicId: "magasa", level: 37 }, { relicId: "ikanixia", level: 37 },
   ] },
+  // 8·9급의 벽은 노아(6장) — 1대1에서 가장 좁은 개체다.
   { id: "bounty-9", order: 8, name: "현상수배 8급", rewardGold: 15_000, rounds: [
-    { relicId: "ripa", level: 41 }, { relicId: "atra", level: 41 }, { relicId: "ikanixia", level: 40 },
+    { relicId: "raja", level: 41 }, { relicId: "atra", level: 41 }, { relicId: "noa", level: 40 },
   ] },
   { id: "bounty-10", order: 9, name: "현상수배 9급", rewardGold: 20_000, rounds: [
-    { relicId: "ripa", level: 49 }, { relicId: "koma", level: 46 }, { relicId: "ikanixia", level: 46 },
+    { relicId: "magasa", level: 49 }, { relicId: "ikanixia", level: 46 }, { relicId: "noa", level: 46 },
   ] },
-  // 10급은 돌파 4단계를 다 연 가장 무거운 셋의 자리다. 아모가 가장 좁은 벽이라 마지막에 선다
-  // (v0.442.7 — 이카닉시아의 반향 막을 반으로 줄이자 이카닉시아·코마를 확실히 이기는 개체 수가 11종으로 같아져 아모와 자리를 바꿨다).
+  // 10급은 7장 끝의 부대장 카르가 마지막에 선다.
   { id: "bounty-5", order: 10, name: "현상수배 10급", rewardGold: 28_000, rounds: [
-    { relicId: "ikanixia", level: 50 }, { relicId: "koma", level: 50 }, { relicId: "amo", level: 53 },
+    { relicId: "noa", level: 50 }, { relicId: "koma", level: 50 }, { relicId: "carno", level: 53 },
   ] },
 ];
 

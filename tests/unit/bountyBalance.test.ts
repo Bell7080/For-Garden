@@ -81,7 +81,7 @@ describe("현상수배 등급 검수", () => {
 
   it("은 가장 높은 등급이 1레벨 맨몸을 막는다", () => {
     /*
-     * **한 라운드라도 막히면 그 판은 끝난다.** 10급의 마지막 라운드(이카닉시아)가 그 자리다.
+     * **한 라운드라도 막히면 그 판은 끝난다.** 10급의 마지막 라운드(카르)가 그 자리다.
      *
      * 낮은 등급은 1레벨로도 넘어갈 수 있다 — 이 게임의 1대1에서는 레벨보다 **어느 개체를
      * 내보냈는가**가 훨씬 크게 작용하기 때문이다. 등급을 차례로 깨야 다음이 열리고 하루 입장이
@@ -97,14 +97,15 @@ describe("현상수배 등급 검수", () => {
 /**
  * **1대1 표시 전투력**(응태 2026-11-15: 「아군보다 낮은데 아군이 지는 일은 웬만해선 없어야」). 개체 대 개체라 상성이 크게 갈라
  * 표시 ×1.0에서는 아군이 표시를 넘고도 지는 짝이 4할 남짓이었다. 혼자 서는 적의 배수(`SOLO_ENEMY_POWER_WEIGHT` 1.8)를
- * 곱한 표시를 처음 넘는 레벨의 아군이 지는 짝은 ×1.6에서 15%, ×1.8에서 11%(셋에 둘이 아모)다. 여기서는 세 등급만 본다.
+ * 곱한 표시를 처음 넘는 레벨의 아군이 지는 짝은 ×1.6에서 15%, ×1.8에서 11%(셋에 둘이 아모)다. v0.463.0에 감금조가 오른 뒤로는
+ * 9·10급의 표시가 레벨 100 아군보다 높아 셀 짝이 없으므로 모든 등급을 함께 센다(9.4%).
  */
 describe("현상수배 표시 전투력", () => {
   it("표시를 넘긴 아군이 지는 짝은 드물다", () => {
     const grown = (def: RelicDef, level: number): RelicDef => ({ ...def, stats: applyLevelGrowth(def.stats, level, def.rarity, referenceBreakthroughAt(level)) });
     const wins = (def: RelicDef, level: number, enemy: RelicDef) => SEEDS.every((seed) => simulateDuel(grown(def, level), enemy, seed).winner === "left");
     let losses = 0, total = 0;
-    for (const tier of BOUNTY_TIERS.filter(({ order }) => order === 1 || order === 5 || order === 10)) {
+    for (const tier of BOUNTY_TIERS) {
       for (const round of tier.rounds) {
         const enemy = bountyRoundEnemy(round);
         const shown = soloEnemyPower(enemy.stats, getRelic(round.relicId).stats);
@@ -118,5 +119,5 @@ describe("현상수배 표시 전투력", () => {
       }
     }
     expect(losses / total).toBeLessThan(0.12);
-  }, 120_000);
+  }, 240_000);
 });

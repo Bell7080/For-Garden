@@ -276,9 +276,12 @@ export const GUILD_GUARD_PAGE = {
     titleY: 32,
     cells: { y: 102, width: 236, height: 96, gap: 12 },
     ruleY: 180,
-    bars: { baseline: 336, maxHeight: 92, minHeight: 14, width: 64, labelGap: 18, tickY: 364 },
-    /** 막대로 보여 줄 웨이브 — 처음 몇 웨이브부터 깊은 웨이브까지 오르는 폭이 한눈에 읽히게 고른다. */
-    waves: [1, 5, 10, 20, 30, 40] as const,
+    bars: { baseline: 336, maxHeight: 96, minHeight: 10, width: 42, labelGap: 16, tickY: 364, levelSize: 19, tickSize: 17 },
+    /**
+     * 막대로 보여 줄 웨이브 — 앞쪽은 촘촘히, 뒤로 갈수록 성기게 골라 곡선이 꺾여 오르는 모양이 열 개의 막대로 읽히게 한다
+     * (2026-11-15 응태 — 여섯 막대로는 난이도가 계단처럼 보였다). 막대 폭·글자는 막대 사이 폭에 맞춰 눌린다.
+     */
+    waves: [1, 3, 5, 8, 10, 13, 16, 20, 25, 30] as const,
   },
   ranking: { y: 1556, width: 330, height: 82, gap: 24 },
   sortie: { y: 1676, width: 560, height: 124 },

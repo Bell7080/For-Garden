@@ -12,7 +12,7 @@ import type { Element, RelicDef } from "./types";
  * (`timeLimitSeconds`)이 있지만 그것은 "버텨냈다"로 끝나는 바닥이지 노리는 끝이 아니다.
  *
  * **세기는 레벨 하나와 자리의 몫(`ENCOUNTER_ROLE`)으로만 오른다** — 스테이지 전용 배율을 두지 않는다.
- * 모든 적은 `swarm`(가볍고 작게 떼로 오는 몸)으로 선다(2026-10-28 응태 요청 — 정예 자리를 걷어 냈다). 웨이브마다
+ * 모든 적은 잡졸(`normal`)로 선다(2026-10-28 정예 자리를 걷고, 2026-11-15 무리도 걷었다 — 응태 요청). 웨이브마다
  * 바뀌는 것은 레벨과 서는 수, 그리고 명단에서 섞어 고른 얼굴뿐이다. 웨이브는 시간으로 오고(`waveIntervalSeconds`) 필드가 비면 조금 당겨 온다.
  *
  * 난수를 쓰지 않는다 — 누가 어디서 나오는지는 웨이브 번호에서만 정해지므로 서버가 편성과 날짜만으로
@@ -47,15 +47,21 @@ export const GUILD_GUARD = {
   timeLimitSeconds: 300,
   /** 미리 짜 두는 웨이브 수. 시간 안에 이보다 많이 올 수 없다(당겨 와도). */
   maxWaves: 80,
-  startLevel: 1,
   /**
-   * 웨이브마다 레벨이 4씩 오른다(2026-10-29 응태 요청 — 2 → 4, 상한 100 → 200). 적당히 오른 웨이브에서 이미 확실히 강해져
-   * 아주 긴 웨이브를 밀지 않아도 점수가 크게 쌓이고, 상한을 풀어 깊은 웨이브에서도 계속 세진다.
+   * 적 레벨은 **LV.20에서 시작해 곡선으로 오른다**(2026-11-15 응태 요청 — 「시작 레벨 대략 20, 난이도가 더 곡선지게, 너무 쉬움」).
+   * 웨이브 w의 레벨 = `startLevel + levelPerWave × (w−1) + levelCurve × (w−1)²`. 첫 몇 웨이브는 웨이브당 2~3레벨로 숨을 고르고,
+   * 열 웨이브를 넘기면 한 웨이브에 대여섯씩, 스무 웨이브 언저리에서는 열 가까이 뛴다 — 오래 버틸수록 벽이 가팔라진다.
+   * 예전 직선(LV.1부터 웨이브당 +4)은 키운 편성이 300초를 그대로 버텨 「언젠가는 무너진다」가 성립하지 않았다.
    */
-  // 적이 등급마다 다르게 자라고 돌파 몫을 받게 되며(「적은 적이다」, 2026-11-12) 예전 3.6% 시절의 웨이브당 3레벨·상한 134와
-  // 같은 세기(SR 곡선 기준)로 옮겼다.
-  levelPerWave: 4,
-  maxLevel: 160,
+  startLevel: 20,
+  levelPerWave: 1.5,
+  levelCurve: 0.1,
+  maxLevel: 300,
+  /**
+   * 아군·적 몸집 — 여섯이 두 줄로 서고 열 마리 넘게 몰려오는 판이라 다른 전투(1)보다 줄여 모두가 한 화면에 보이게 한다
+   * (2026-11-15 응태 요청). 적은 잡졸 몸집(`ENCOUNTER_ROLE.normal.bodyScale`)에 이 배율을 곱한다.
+   */
+  bodyScale: 0.72,
   /**
    * 머릿수: 5 + 웨이브의 사분의 일, 상한 10. 상한(18)이 치즈케이크 대작전 한 판(10~15)을 조금 넘는 무리라, 한 웨이브가
    * 그 절반 남짓이어야 "다 못 치우면 쌓인다"가 몇 웨이브에 걸쳐 일어난다(한 번에 15씩 오면 두 웨이브 만에 끝났다).
@@ -69,6 +75,12 @@ export const GUILD_GUARD = {
 } as const;
 
 export const GUILD_GUARD_FRONT_ROWS = 2;
+
+/**
+ * 수호전의 적은 모두 잡졸(`normal`)로 선다(2026-11-15 응태 요청 — 「무리 말고 모두 잡졸로」). 무리(`swarm`)는 체력 몫이 0.7이라
+ * 떼로 와도 가볍게 쓸려 나갔다.
+ */
+export const GUILD_GUARD_ENEMY_ROLE: EncounterRole = "normal";
 
 /** 한 웨이브에 서는 몸 하나. 정의는 그 웨이브의 레벨로 이미 자라 있다. */
 export interface HordeUnit {
@@ -98,13 +110,14 @@ export interface HordeSpec {
   allyRestorePercent?: number;
 }
 
-/** 속성 하나의 명단 — 그날 몰려오는 얼굴들. 모두 무리(`swarm`)로 선다. */
+/** 속성 하나의 명단 — 그날 몰려오는 얼굴들. 모두 잡졸(`GUILD_GUARD_ENEMY_ROLE`)로 선다. */
 export interface GuildGuardRoster {
   units: readonly RelicDef[];
 }
 
 export function guardWaveLevel(index: number): number {
-  return Math.min(GUILD_GUARD.maxLevel, GUILD_GUARD.startLevel + GUILD_GUARD.levelPerWave * (index - 1));
+  const step = Math.max(0, index - 1);
+  return Math.min(GUILD_GUARD.maxLevel, GUILD_GUARD.startLevel + Math.round(GUILD_GUARD.levelPerWave * step + GUILD_GUARD.levelCurve * step * step));
 }
 
 export function guardWaveCount(index: number): number {
@@ -125,7 +138,7 @@ export function buildGuardWave(roster: GuildGuardRoster, index: number): HordeWa
   const units: HordeUnit[] = [];
   for (let i = 0; i < guardWaveCount(index); i += 1) {
     const base = roster.units[guardPick(index, i) % roster.units.length];
-    units.push(grownUnit(base, "swarm", level, guardUnitScore(index)));
+    units.push(grownUnit(base, GUILD_GUARD_ENEMY_ROLE, level, guardUnitScore(index)));
   }
   return { index, level, units };
 }
@@ -141,7 +154,7 @@ function grownUnit(base: RelicDef, role: EncounterRole, level: number, score: nu
   return {
     def: { ...base, encounterRole: role, stats: applyEncounterScaling(base.stats, base.rarity, level, role, 1) },
     role,
-    bodyScale: ENCOUNTER_ROLE[role].bodyScale,
+    bodyScale: ENCOUNTER_ROLE[role].bodyScale * GUILD_GUARD.bodyScale,
     score,
     level,
   };

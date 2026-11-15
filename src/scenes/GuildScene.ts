@@ -11,7 +11,7 @@ import {
   type GuildWarFrontSlotView, type GuildWarFrontView,
 } from "../api/guildContracts";
 import type { GuildGuardStatusResponse, StampGuildAttendanceResponse } from "../api/contracts";
-import { GUILD_GUARD, guardRosterPreview, guardWaveCount, guardWaveLevel } from "../core/guildGuard";
+import { GUILD_GUARD, guardRosterPreview, guardWaveLevel } from "../core/guildGuard";
 import type { Element } from "../core/types";
 import { guildGuardRoster } from "../data/guildGuard";
 import { Button, DEFENSE_BUTTON_STYLE, DESTRUCTIVE_BUTTON_STYLE } from "../ui/Button";
@@ -1655,7 +1655,7 @@ export class GuildScene extends Phaser.Scene {
   /**
    * 수호전 특징 판 — 기록 판 바로 아래. 이 판이 무엇이 다른 판인지를 한 장에 모은다: 위에 규칙 칸 셋(아군 회복·보호막 감소,
    * 방어선이 무너지는 적 수, 웨이브 간격), 그 아래 성장 한 줄, 맨 아래 웨이브별 적 레벨 막대. 수는 모두 `GUILD_GUARD`와
-   * 웨이브를 실제로 짜는 함수(`guardWaveLevel` · `guardWaveCount`)에서 읽어 전투와 화면이 다른 값을 말하지 않는다.
+   * 웨이브를 실제로 짜는 함수(`guardWaveLevel`)에서 읽어 전투와 화면이 다른 값을 말하지 않는다.
    */
   private paintGuardTraits(): void {
     const T = G.traits;
@@ -1685,12 +1685,15 @@ export class GuildScene extends Phaser.Scene {
     });
 
     squeezeTextToWidth(this.label(this.controls, cx, top + T.ruleY, t("guild.guard.trait.growth", {
-      level: GUILD_GUARD.levelPerWave, waves: GUILD_GUARD.gruntPerWaves, cap: GUILD_GUARD.gruntCap,
+      start: GUILD_GUARD.startLevel, waves: GUILD_GUARD.gruntPerWaves, cap: GUILD_GUARD.gruntCap,
     }), { role: "emphasis", size: 24, color: COLOR.ink }, [0.5, 0.5]), T.width - 48);
 
     // 웨이브별 적 레벨 — 막대 높이가 레벨이고, 깊어질수록 강조색에서 붉은빛으로 짙어진다.
     const B = T.bars;
-    const ticks = T.waves.map((wave) => ({ wave, level: guardWaveLevel(wave), count: guardWaveCount(wave) }));
+    const ticks = T.waves.map((wave) => ({ wave, level: guardWaveLevel(wave) }));
+    // 막대 사이 폭 — 레벨·웨이브 글자는 이 폭 안에 눌러 담아 이웃 막대의 글자와 겹치지 않게 한다.
+    const step = ticks.length > 1 ? guildGuardTraitBarX(1, ticks.length) - guildGuardTraitBarX(0, ticks.length) : T.width;
+    const labelRoom = step - 8;
     const peak = Math.max(...ticks.map(({ level }) => level));
     const base = top + B.baseline;
     const bars = this.add.graphics();
@@ -1714,9 +1717,10 @@ export class GuildScene extends Phaser.Scene {
         new Phaser.Math.Vector2(x - B.width / 2 + cut, base - h), new Phaser.Math.Vector2(x + B.width / 2, base - h),
         new Phaser.Math.Vector2(x + B.width / 2, base), new Phaser.Math.Vector2(x - B.width / 2, base), new Phaser.Math.Vector2(x - B.width / 2, base - h + cut),
       ], true);
-      const levelText = this.label(this.controls, x, base - h - B.labelGap, `LV.${tick.level}`, { role: "display", size: 22, color: hex(fill) }, [0.5, 0.5]);
+      const levelText = this.label(this.controls, x, base - h - B.labelGap, `LV.${tick.level}`, { role: "display", size: B.levelSize, color: hex(fill) }, [0.5, 0.5]);
       levelText.setStroke("#05070a", 5);
-      squeezeTextToWidth(this.label(this.controls, x, top + B.tickY, t("guild.guard.trait.tick", { wave: tick.wave, count: tick.count }), { role: "body", size: 19, color: COLOR.inkDim }, [0.5, 0.5]), 120);
+      squeezeTextToWidth(levelText, labelRoom);
+      squeezeTextToWidth(this.label(this.controls, x, top + B.tickY, t("guild.guard.trait.tick", { wave: tick.wave }), { role: "body", size: B.tickSize, color: COLOR.inkDim }, [0.5, 0.5]), labelRoom);
     });
   }
 

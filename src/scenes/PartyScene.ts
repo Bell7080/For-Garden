@@ -687,7 +687,7 @@ export class PartyScene extends Phaser.Scene {
     this.guardPopups ??= new PopupLayer(this, 2100);
     this.guardPopups.open({ width: L.width, height: layout.height, title: t("guild.guard.preview.title"), dim: true, closeOnBackdrop: true }, (body) => {
       body.add(this.add.text(0, layout.info[0], t("guild.guard.preview.power", { power: power.toLocaleString() }), textStyle({ role: "display", size: 32, color: COLOR.dangerText })).setOrigin(0.5));
-      body.add(squeezeTextToWidth(this.add.text(0, layout.info[1], t("guild.guard.preview.rule", { level: GUILD_GUARD.levelPerWave, cap: GUILD_GUARD.overrunCap, cut: 100 - GUILD_GUARD.allyRestorePercent }), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5), L.width - 120));
+      body.add(squeezeTextToWidth(this.add.text(0, layout.info[1], t("guild.guard.preview.rule", { start: GUILD_GUARD.startLevel, cap: GUILD_GUARD.overrunCap, cut: 100 - GUILD_GUARD.allyRestorePercent }), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5), L.width - 120));
       const nonEmpty = groups.filter((group) => group.length > 0);
       layout.sections.forEach((section, index) => {
         const group = nonEmpty[index];

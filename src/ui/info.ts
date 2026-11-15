@@ -653,6 +653,8 @@ export class InfoManager {
   onFed?: (mode: "normal" | "level") => void;
   /** 급여로 레벨이 오른 순간의 연출(빛기둥·LEVEL UP!·나선·줄 번쩍임·능력치·점프). */
   private levelUpEffect?: FeedLevelUpEffect;
+  /** 한계 돌파 연출이 도는 중 — 휩싸였다가 터지기까지 다시 돌파하지 않는다. */
+  private breakthroughPlaying = false;
 
   /** 급여 버튼이 지금 서 있는 자리(씬 좌표). 창이 닫혀 있으면 `undefined`. */
   feedButtonBounds(): Phaser.Geom.Rectangle | undefined {
@@ -1422,15 +1424,27 @@ export class InfoManager {
   private async breakThrough(): Promise<void> {
     const def = this.currentDef;
     if (!def) return;
+    if (this.breakthroughPlaying) return;
     try {
       await withBusy(this.scene, gameApi.breakThroughRelic(def.id));
       // 성공한 서버 처리만 알린다. 실패했을 때는 지갑 값이 바뀌지 않는다.
       this.onWalletChange?.();
-      this.playBreakthroughBurst();
     } catch {
       // 조건은 화면에서 이미 막는다. 실패하면 상태만 다시 그린다.
+      this.refreshGrowth();
+      return;
     }
-    this.refreshGrowth();
+    // SD와 전신 원화가 무지개빛에 휩싸였다가 **파칭** 터지고, 그 순간 등급 표식이 바뀐다.
+    // 휩싸이는 동안 같은 버튼이 다시 눌려 두 번 돌파하지 않게 막아 둔다.
+    this.breakthroughPlaying = true;
+    const burst = (): void => {
+      this.breakthroughPlaying = false;
+      if (!this.root.active) return;
+      if (this.currentDef?.id === def.id) this.playBreakthroughBurst();
+      this.refreshGrowth();
+    };
+    if (this.levelUpEffect) this.levelUpEffect.playBreakthrough(burst);
+    else burst();
   }
 
   /**

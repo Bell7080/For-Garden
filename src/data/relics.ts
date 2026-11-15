@@ -3942,6 +3942,8 @@ export const RELICS: RelicDef[] = [
       // 네 번째 들이받기가 표적을 뒤로 날린다. 매 타격이면 붙을 틈이 없어 주기로 둔다.
       statusEffectEvery: 4,
       statusEffects: [{ kind: "knockback", seconds: 0.5, speed: 1000, bounces: 1 }],
+      // 응태 요청(2026-11-15) — 뿔이 방어를 파고든다. 자물쇠가 풀린 뒤 휩쓰는 평타도 같은 값을 읽는다.
+      defenseIgnorePercent: 40,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -3963,6 +3965,8 @@ export const RELICS: RelicDef[] = [
       statusEffects: [{ kind: "stun", seconds: 0.5 }],
       // 전사의 자가 수급 — 길 위에서 들이받은 만큼 몸을 추스른다.
       damageHealingPercent: 20,
+      // 응태 요청(2026-11-15) — 질주가 길 위 적의 보호막을 피해가 박히기 전에 깨뜨린다(코마와 같은 계약).
+      breaksShield: true,
     },
     // 뿔이 상대를 멈칫하게 하고(II) 질주의 폭이 넓어지며(III) 폭주하면 급소가 터진다(IV).
     breakthroughEffects: {

@@ -2000,24 +2000,24 @@
     "{seconds} с"
   ],
   "guild.guard.trait.growth": [
-    "每波敌人 LV +{level} · 每{waves}波 +1只（最多{cap}）",
-    "ทุกเวฟ ศัตรู LV +{level} · ทุก {waves} เวฟ +1 ตัว (สูงสุด {cap})",
-    "Mỗi đợt: địch LV +{level} · cứ {waves} đợt +1 địch (tối đa {cap})",
-    "Tiap gelombang: LV musuh +{level} · +1 musuh tiap {waves} gelombang (maks {cap})",
-    "Cada oleada: LV enemigo +{level} · +1 enemigo cada {waves} oleadas (máx. {cap})",
-    "Cada onda: LV inimigo +{level} · +1 inimigo a cada {waves} ondas (máx. {cap})",
-    "Jede Welle: Gegner-LV +{level} · alle {waves} Wellen +1 Gegner (max. {cap})",
-    "Каждая волна: LV врагов +{level} · +1 враг каждые {waves} волны (макс. {cap})"
+    "敌人从 LV.{start} 起越来越强 · 每{waves}波 +1只（最多{cap}）",
+    "ศัตรูเริ่ม LV.{start} แล้วแรงขึ้นเร็วขึ้นเรื่อยๆ · ทุก {waves} เวฟ +1 ตัว (สูงสุด {cap})",
+    "Địch từ LV.{start}, càng về sau càng mạnh nhanh · cứ {waves} đợt +1 địch (tối đa {cap})",
+    "Musuh mulai LV.{start}, naik makin cepat · +1 musuh tiap {waves} gelombang (maks {cap})",
+    "Enemigos desde LV.{start}, cada vez más rápido · +1 enemigo cada {waves} oleadas (máx. {cap})",
+    "Inimigos a partir do LV.{start}, cada vez mais rápido · +1 inimigo a cada {waves} ondas (máx. {cap})",
+    "Gegner ab LV.{start}, immer steiler · alle {waves} Wellen +1 Gegner (max. {cap})",
+    "Враги с LV.{start}, всё круче · +1 враг каждые {waves} волны (макс. {cap})"
   ],
   "guild.guard.trait.tick": [
-    "第{wave}波 · {count}只",
-    "เวฟ {wave} · {count} ตัว",
-    "Đợt {wave} · ×{count}",
-    "Gel. {wave} · ×{count}",
-    "Oleada {wave} · ×{count}",
-    "Onda {wave} · ×{count}",
-    "Welle {wave} · ×{count}",
-    "Волна {wave} · ×{count}"
+    "第{wave}波",
+    "เวฟ {wave}",
+    "Đợt {wave}",
+    "Gel. {wave}",
+    "Oleada {wave}",
+    "Onda {wave}",
+    "Welle {wave}",
+    "Волна {wave}"
   ],
   "guild.guard.attempts": [
     "剩余挑战 {left}/{total}",
@@ -2130,14 +2130,14 @@
     "Боевая мощь 1-й волны {power}"
   ],
   "guild.guard.preview.rule": [
-    "每波等级 +{level} · 敌人达 {cap} 名即崩溃 · 我方治疗·护盾 -{cut}%",
-    "เลเวล +{level} ต่อคลื่น · ศัตรู {cap} ตัวแนวป้องกันแตก · ฮีล/โล่ฝ่ายเรา -{cut}%",
-    "Mỗi đợt cấp +{level} · Đủ {cap} kẻ địch là vỡ · Hồi máu/khiên phe ta -{cut}%",
-    "Level +{level} tiap gelombang · Runtuh di {cap} musuh · Pemulihan/perisai tim -{cut}%",
-    "Nivel +{level} por oleada · Cae con {cap} enemigos · Curación/escudos aliados -{cut}%",
-    "Nível +{level} por onda · Cai com {cap} inimigos · Cura/escudos aliados -{cut}%",
-    "Stufe +{level} pro Welle · Fällt bei {cap} Gegnern · Heilung/Schilde des Teams -{cut}%",
-    "Уровень +{level} за волну · Падение при {cap} врагах · Лечение/щиты союзников -{cut}%"
+    "敌人从 LV.{start} 起越来越强 · 敌人达 {cap} 名即崩溃 · 我方治疗·护盾 -{cut}%",
+    "ศัตรูเริ่ม LV.{start} แรงขึ้นเรื่อยๆ · ศัตรู {cap} ตัวแนวป้องกันแตก · ฮีล/โล่ฝ่ายเรา -{cut}%",
+    "Địch từ LV.{start}, càng về sau càng mạnh · Đủ {cap} kẻ địch là vỡ · Hồi máu/khiên phe ta -{cut}%",
+    "Musuh mulai LV.{start}, makin cepat naik · Runtuh di {cap} musuh · Pemulihan/perisai tim -{cut}%",
+    "Enemigos desde LV.{start}, cada vez más rápido · Cae con {cap} enemigos · Curación/escudos aliados -{cut}%",
+    "Inimigos a partir do LV.{start}, cada vez mais rápido · Cai com {cap} inimigos · Cura/escudos aliados -{cut}%",
+    "Gegner ab LV.{start}, immer steiler · Fällt bei {cap} Gegnern · Heilung/Schilde des Teams -{cut}%",
+    "Враги с LV.{start}, всё круче · Падение при {cap} врагах · Лечение/щиты союзников -{cut}%"
   ],
   "guild.guard.preview.level": [
     "LV.{level}",

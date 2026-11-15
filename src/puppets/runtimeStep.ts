@@ -21,15 +21,20 @@ export const PUPPET_BACKGROUND_GAP_SECONDS = 1;
 export const PUPPET_STEP_TOLERANCE = 0.25;
 
 /**
- * PuppetForge v0.41.0 (pinned commit b5af06a) exposes only `Puppet.update(dt)`: its public `Puppet` API has
- * neither `seek`/`setTime` nor separate timeline and secondary-motion advancement. Consequently animation
- * accuracy cannot be capped independently from physics work here. Every foreground delta is consumed in the
- * frame that supplied it; physics protection comes only from splitting that delta into stable-sized updates.
+ * 한 프레임에 Puppet 하나를 적분하는 횟수의 상한.
  *
- * Do not reintroduce a per-Puppet remainder: sustained slow frames would make animation permanently trail
- * wall-clock time. If update-count capping becomes necessary, PuppetForge must first expose timeline correction
- * (ideally `advanceTimeline(elapsed)` plus `integrateSecondary(step)`) so only secondary work can be bounded.
+ * `Puppet.update`는 재생 시각만이 아니라 **정점 스키닝까지 매번** 하므로 가장 비싼 CPU 작업이다.
+ * 느린 프레임을 편집기 간격으로 끝까지 나누면 느릴수록 일이 늘어 다음 프레임이 더 느려지는
+ * 악순환이 생긴다 — 치즈케이크 대작전(SD 20마리)에서 프레임이 0.5초로 늘자 Puppet 갱신이
+ * 프레임당 915번, CPU의 94%를 먹었다(v0.465.0 측정).
+ *
+ * 셋이면 20fps(약 54ms)까지는 예전과 똑같이 나뉘고, 그보다 느린 프레임만 서브스텝이 길어진다.
+ * 길어져도 안전한 이유는 PuppetForge의 secondary 적분(`SecondaryMotion.apply`)이 스스로
+ * dt를 1/30초로 자르기 때문이다 — 스프링은 폭주하지 않고, 재생 시각(`player.update`)과
+ * 블렌드는 넘긴 시간을 그대로 받아 **흐른 시간은 이번 프레임에 전부 소비한다**(남은 몫을 다음
+ * 프레임에 빚으로 넘기지 않는다 — 그러면 느린 프레임이 이어질 때 애니메이션이 영영 뒤처진다).
  */
+export const PUPPET_MAX_STEPS_PER_FRAME = 3;
 
 /**
  * Puppet에 넘길 **실제로 흐른 시간**(ms)을 고른다.
@@ -54,7 +59,7 @@ export function puppetElapsedMs(rawDeltaMs: number, smoothedDeltaMs: number, loo
   return rawDeltaMs;
 }
 
-/** Advance one Puppet through stable, editor-sized steps and return the last calculated vertex buffer. */
+/** Advance one Puppet through stable, editor-sized steps (at most PUPPET_MAX_STEPS_PER_FRAME) and return the last vertex buffer. */
 export function advancePuppet(puppet: Puppet, elapsedSeconds: number): Float32Array | null {
   // Negative/non-finite deltas are not real elapsed time, so they must neither rewind nor poison the remainder.
   if (!Number.isFinite(elapsedSeconds) || elapsedSeconds <= 0) return null;
@@ -66,7 +71,10 @@ export function advancePuppet(puppet: Puppet, elapsedSeconds: number): Float32Ar
 
   let vertices: Float32Array | null = null;
   // 경계 바로 위의 값을 한 번으로 삼킨다. 이유는 PUPPET_STEP_TOLERANCE 주석에 있다.
-  const stepCount = Math.max(1, Math.ceil(elapsedSeconds / PUPPET_STEP_SECONDS - PUPPET_STEP_TOLERANCE));
+  const stepCount = Math.min(
+    PUPPET_MAX_STEPS_PER_FRAME,
+    Math.max(1, Math.ceil(elapsedSeconds / PUPPET_STEP_SECONDS - PUPPET_STEP_TOLERANCE)),
+  );
   const step = elapsedSeconds / stepCount;
 
   // Substep size protects secondary integration; consuming every substep now keeps the coupled timeline truthful.

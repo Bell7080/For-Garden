@@ -3,6 +3,7 @@ import type { Puppet } from "puppetforge";
 import {
   advancePuppet,
   PUPPET_BACKGROUND_GAP_SECONDS,
+  PUPPET_MAX_STEPS_PER_FRAME,
   PUPPET_STEP_SECONDS,
   PUPPET_STEP_TOLERANCE,
   puppetElapsedMs,
@@ -36,7 +37,17 @@ describe("Puppet runtime stepping", () => {
     advancePuppet(puppet, 0.5);
 
     expect(update.mock.calls.reduce((sum, [step]) => sum + step, 0)).toBeCloseTo(1);
-    expect(update.mock.calls.every(([step]) => step <= MAX_STEP_SECONDS)).toBe(true);
+    // 느린 프레임은 횟수 상한에 걸려 서브스텝이 길어진다 — 일이 느릴수록 늘어나는 악순환을 끊는다.
+    expect(update).toHaveBeenCalledTimes(PUPPET_MAX_STEPS_PER_FRAME * 2);
+  });
+
+  it("20fps까지는 예전처럼 편집기 간격으로 나누고, 그보다 느린 프레임만 횟수를 묶는다", () => {
+    for (const [frameSeconds, calls] of [[0.033, 2], [0.05, 3], [0.1, 3], [0.9, 3]] as const) {
+      const { puppet, update } = puppetStub();
+      advancePuppet(puppet, frameSeconds);
+      expect(update).toHaveBeenCalledTimes(calls);
+      expect(update.mock.calls.reduce((sum, [step]) => sum + step, 0)).toBeCloseTo(frameSeconds, 10);
+    }
   });
 
   it.each([0.2, 0.1, 0.033, 0.01667])(
@@ -55,7 +66,9 @@ describe("Puppet runtime stepping", () => {
       const animationTime = update.mock.calls.reduce((sum, [step]) => sum + step, 0);
       expect(animationTime).toBeCloseTo(wallClock, 10);
       expect(animationTime).toBeCloseTo(1, 10);
-      expect(update.mock.calls.every(([step]) => step <= MAX_STEP_SECONDS)).toBe(true);
+      if (frameSeconds <= PUPPET_MAX_STEPS_PER_FRAME * MAX_STEP_SECONDS) {
+        expect(update.mock.calls.every(([step]) => step <= MAX_STEP_SECONDS)).toBe(true);
+      }
     },
   );
 

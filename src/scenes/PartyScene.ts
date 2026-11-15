@@ -1,13 +1,14 @@
 import { ancientStageFloor } from "../data/ancientStrataDifficulty";
 import { openSettingsOver } from "./settingsOverlay";
 import { playFormationTapSound } from "../ui/formationSound";
-import { storyBaseStageId, storyDifficultyOf } from "../core/storyDifficulty";
+import { storyDifficultyOf } from "../core/storyDifficulty";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { followTutorialTarget } from "../ui/tutorialTarget";
 import { TUTORIAL_SPOTLIGHT_DEPTH } from "../ui/TutorialSpotlight";
 import { tutorialManager } from "../managers/TutorialManager";
 import Phaser from "phaser";
 import { t } from "../i18n";
+import { storyStageNumberLabel } from "../ui/storyStageLabel";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { setDebugGridCards, setDebugGridOffset, setDebugParty, setDebugScene } from "../debug";
 import type { RelicDef } from "../core/types";
@@ -800,7 +801,7 @@ export class PartyScene extends Phaser.Scene {
     if (content.content === "raid") return t("raid.title");
     if (content.content === "bounty") return getBountyTier(content.tierId).name;
     if (content.content === "cake") return `${t("cake.title")}  ${getCakeOperationTier(content.tierId).name}`;
-    return `${t(`storyDifficulty.${storyDifficultyOf(stage.id)}`)} · ${storyBaseStageId(stage.id)}  ${stage.name}`;
+    return `${t(`storyDifficulty.${storyDifficultyOf(stage.id)}`)} · ${storyStageNumberLabel(stage)}  ${stage.name}`;
   }
 
   /** 전투 시작 — 손으로 누른 한 판과 자동 전투의 첫 판이 같은 길을 지난다. */

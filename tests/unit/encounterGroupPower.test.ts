@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { encounterGroupPower, encounterUnitPowers } from "../../src/core/levelDesign";
+import { encounterGroupPower, encounterUnitPowers, HORDE_POWER_SHARE } from "../../src/core/levelDesign";
 import { withBaseStats } from "../../src/data/relics";
 import { getBattleStage, getStageEnemies } from "../../src/data/stages";
 import { cakeOperationEnemies, CAKE_OPERATION_TIERS } from "../../src/data/cakeOperation";
@@ -16,9 +16,9 @@ describe("무리 표시 전투력", () => {
       expect(encounterGroupPower(units)).toBe(encounterUnitPowers(units).reduce((sum, power) => sum + power, 0));
     }
   });
-  it("열다섯 던전만 아군 셋의 머릿수로 맞춘다", () => {
+  it("물량 던전만 합에 몫(HORDE_POWER_SHARE)을 곱한다", () => {
     const units = withBaseStats(cakeOperationEnemies(CAKE_OPERATION_TIERS[0]));
     const total = encounterUnitPowers(units).reduce((sum, power) => sum + power, 0);
-    expect(encounterGroupPower(units, { horde: true })).toBe(Math.round(total * 3 / units.length));
+    expect(encounterGroupPower(units, { horde: true })).toBe(Math.round(total * HORDE_POWER_SHARE));
   });
 });

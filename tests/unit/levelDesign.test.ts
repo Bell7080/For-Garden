@@ -160,7 +160,8 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   ["현상수배 10단계", 60, () => [bountyRoundEnemy(BOUNTY_TIERS.find(({ order }) => order === 10)!.rounds.find(({ relicId }) => relicId === "amo")!)], "normal", "bounty", 18.5, 0.98],
   // v0.422.4: 엘라 발경의 방어력 40%는 세 걸음 모두 광역이라 몰려오는 무리에서 크게 든다 — 30.1 → 26.0초.
   // v0.441.0 직군 존재감(탱커 30 > 전사 20 > 암살자 10)·몰림 벌점 240 → 120: 둘씩 붙어 26.0 → 23.7초.
-  ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 23.7, 0.85],
+  // v0.462.0 대작전 사다리 재측정(1단계 LV.4 → LV.9, 응태 2026-11-15): 23.7초·0.85 → 25.9초·0.74.
+  ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 25.9, 0.74],
   // v0.395.4: 전투 코어의 hypot·sin·cos·atan2·exp·pow를 결정적 구현(detMath)으로 바꾸자 열다섯이 엉키는 난전이 마지막 자리부터 달라져 52.8 → 57.3초로 재측정됐다.
   // v0.422.4: 같은 이유로 57.3 → 44.9초 — 무리 띠보다 길던 한 판이 그만큼 가까워졌다.
   // 한계 돌파 +10%/단계(2026-11-11): 기준 파티와 적이 함께 사다리 돌파 %를 받는다. 무리 몫은 태생 층과 곱해져 조금 갈려 44.9 → 50.3초.

@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { simulateDuel } from "../../src/core/duelBalance";
-import { applyLevelGrowth } from "../../src/core/relicProgression";
-import { shownBreakthroughForLevel } from "../../src/core/levelDesign";
+import { applyLevelGrowth, referenceBreakthroughAt } from "../../src/core/relicProgression";
+import { shownBreakthroughForLevel, soloEnemyPower } from "../../src/core/levelDesign";
+import { combatPower } from "../../src/core/combatPower";
 import { BOUNTY_TIERS, bountyRoundEnemy } from "../../src/data/bounty";
-import { PLAYABLE_RELICS } from "../../src/data/relics";
+import { PLAYABLE_RELICS, getRelic } from "../../src/data/relics";
 import type { RelicDef } from "../../src/core/types";
 
 /**
@@ -91,4 +92,31 @@ describe("현상수배 등급 검수", () => {
     // v0.308.3: 코마의 폭주 문턱이 320으로 올라 폭주(막·공속)가 판 안에서 거의 열리지 않는다 — 1대1에서 암살자 유티 하나가 열린다.
     expect(reliableWinners(bountyRoundEnemy(last.rounds[2]), 1)).toEqual([]);
   });
+});
+
+/**
+ * **1대1 표시 전투력**(응태 2026-11-15: 「아군보다 낮은데 아군이 지는 일은 웬만해선 없어야」). 개체 대 개체라 상성이 크게 갈라
+ * 표시 ×1.0에서는 아군이 표시를 넘고도 지는 짝이 4할 남짓이었다. 혼자 서는 적의 배수(`SOLO_ENEMY_POWER_WEIGHT` 1.8)를
+ * 곱한 표시를 처음 넘는 레벨의 아군이 지는 짝은 ×1.6에서 15%, ×1.8에서 11%(셋에 둘이 아모)다. 여기서는 세 등급만 본다.
+ */
+describe("현상수배 표시 전투력", () => {
+  it("표시를 넘긴 아군이 지는 짝은 드물다", () => {
+    const grown = (def: RelicDef, level: number): RelicDef => ({ ...def, stats: applyLevelGrowth(def.stats, level, def.rarity, referenceBreakthroughAt(level)) });
+    const wins = (def: RelicDef, level: number, enemy: RelicDef) => SEEDS.every((seed) => simulateDuel(grown(def, level), enemy, seed).winner === "left");
+    let losses = 0, total = 0;
+    for (const tier of BOUNTY_TIERS.filter(({ order }) => order === 1 || order === 5 || order === 10)) {
+      for (const round of tier.rounds) {
+        const enemy = bountyRoundEnemy(round);
+        const shown = soloEnemyPower(enemy.stats, getRelic(round.relicId).stats);
+        for (const def of PLAYABLE_RELICS) {
+          let level = 1;
+          while (level < 100 && combatPower(grown(def, level).stats, def.stats) < shown) level += 1;
+          if (level >= 100) continue;
+          total += 1;
+          if (!wins(def, level, enemy)) losses += 1;
+        }
+      }
+    }
+    expect(losses / total).toBeLessThan(0.12);
+  }, 120_000);
 });

@@ -393,15 +393,38 @@ export function encounterUnitPower(stats: Stats, encounterRole: EncounterRole | 
  * 한때 셋보다 많이 서면 평균 × 셋으로 줄였는데, 스토리의 넷·다섯 무리는 그 몸이 전부 동시에 싸운다 — 7-4가 지도에서는
  * 19,962, 편성 화면에서는 14,972로 서서 아군이 그보다 높아도 졌다(모의: 무리 넷은 표시 ×1.0에서 승률 56~90%,
  * 다섯은 24~33%. 셋이 서는 관문은 78~96%). 합 그대로 적으면 머릿수와 무관하게 「표시가 같으면 대개 이긴다」로 맞는다.
- * **열다섯이 몰려오는 던전(`horde`)만** 아군 셋과 같은 머릿수로 맞춘다(`groupCombatPower`) — 한 번에 맞붙지 않는 몸까지
- * 더하면 숫자만 부푼다. 표시 전용이며 전투에는 쓰지 않는다.
+ * **열 명 넘게 몰려오는 던전(`horde`)만** 합에 `HORDE_POWER_SHARE`를 곱한다 — 한 번에 맞붙지 않는 몸까지 더하면 숫자만
+ * 부푼다. 표시 전용이며 전투에는 쓰지 않는다.
  */
 export function encounterGroupPower(units: readonly { stats: Stats; encounterRole?: EncounterRole; base?: Stats }[], options: { horde?: boolean } = {}): number {
   const powers = encounterUnitPowers(units);
   if (powers.length === 0) return 0;
   const total = powers.reduce((sum, power) => sum + power, 0);
-  const slots = POWER_COMPARISON_SLOTS;
-  return options.horde !== true || powers.length <= slots ? total : Math.round(total * slots / powers.length);
+  return options.horde !== true || powers.length <= POWER_COMPARISON_SLOTS ? total : Math.round(total * HORDE_POWER_SHARE);
+}
+
+/**
+ * **물량 던전(치즈케이크 대작전)의 표시 전투력 = 몰려오는 전부의 합 × 이 몫**(응태 2026-11-15: 「적이 높게 표기돼도 괜찮다.
+ * 아군보다 낮은데 아군이 지는 일은 웬만해선 없어야 한다」).
+ *
+ * 예전에는 머릿수로 나눠 셋 몫(합 × 3/N)으로 적었는데, 머릿수가 늘수록 숫자가 실제 세기보다 작아져 7단계는 12,511로
+ * 서는데 아군 16,555가 있어야 넘었다. 무작위 파티 10종이 단계마다 **지는 마지막 레벨**의 전투력을 재 보니 합의
+ * 0.20~0.32배였다 — 머릿수(10~13)와 무관하게 한 띠라, 몫 하나를 그 위(0.35)에 두면 표시를 넘긴 아군이 지는 일이 없다.
+ * 다시 재는 법은 `cakeOperation.test`의 표.
+ */
+export const HORDE_POWER_SHARE = 0.35;
+
+/**
+ * **1대1로 혼자 서는 적(현상수배)의 표시 배수.** 맞붙는 상대 하나와 개체 대 개체로 겨루므로 상성이 결과를 크게 가르고,
+ * 같은 전투력이라도 지는 짝이 많았다(31종 × 30라운드 모의에서 표시를 처음 넘는 레벨의 아군이 지는 짝이 ×1.6에서 15%).
+ * ×1.8이면 11%이고 그중 셋에 둘이 아모다 — 아모를 빼면 4% 남짓이라 남는 것은 그 개체의 1대1 세기다(개체마다 표시를
+ * 고치지 않는다). 다시 재는 법은 `bountyBalance.test`.
+ */
+export const SOLO_ENEMY_POWER_WEIGHT = 1.8;
+
+/** 1대1로 서는 적 하나의 표시 전투력 — 현상수배의 입구·편성 레인이 같은 값을 읽는다. */
+export function soloEnemyPower(stats: Stats, base?: Stats): number {
+  return Math.round(combatPower(stats, base) * SOLO_ENEMY_POWER_WEIGHT);
 }
 
 /**

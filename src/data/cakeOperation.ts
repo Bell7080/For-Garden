@@ -38,27 +38,26 @@ export interface CakeOperationTier {
 /**
  * 여덟 단계의 사다리.
  *
- * **적 전부가 한꺼번에 몰려온다.** 무리 유형(`swarm`)의 몫(체력 ×0.7)을 받으므로 권장 레벨은
- * 웨이브 시절 그대로 두어도, 참조 파티(엘라·마키·스테라)가 제 권장 레벨에서 여덟 단계를 모두
- * 넘고 체력이 0.6~0.9 남는다. 머릿수는 10에서 15까지만 오른다 — 20을 넘기면 레벨을 아무리
- * 내려도 수로 밀려 끝나지 않는 판이 된다.
+ * **적 전부가 한꺼번에 몰려온다.** 무리 유형(`swarm`)의 몫(체력 ×0.7)을 받는다.
  *
- * 레벨이 한 번도 내려가지 않게 짠다 — 다음 단계가 앞 단계보다
- * 가벼우면 사다리가 아니라 옆길이 된다. 스테미나는 모든 단계가 10이라 **스테미나당 효율이 곧
- * 보상의 크기**이고, 위로 갈수록 크게 좋아진다(1단계 3.0 → 8단계 15.0 케이크/스테미나).
- * 그 대신 **클리어 컷이 효율만큼 올라간다** — 적 등급 성장(R 2.5% + 돌파 몫)으로 다시 푼 사다리(「적은 적이다」, 2026-11-12)에서
- * 8단계는 LV.53이고, 그 세기가 예전 LV.60의 자리다. 높은 단계를 쉽게 밀지 못하게 하는 것은 보상을 깎는 일이 아니라
- * 이 레벨이다.
+ * **곡선은 무작위 파티 열 종으로 잰다**(응태 2026-11-15 재측정 — `cakeOperation.test`의 머리 주석). 6판 중 5판을 이기는 최저
+ * 레벨의 중앙값이 1 · 10 · 17 · 24 · 30 · 38 · 46 · 53으로 고르게 오르게 레벨과 머릿수를 함께 놓았다. 예전 사다리(LV.4~53 ·
+ * 10~15마리)는 1~3단계를 레벨 1~6이 넘고 7~8단계는 표기보다 높아야 넘어, 곡선이 앞에서 눕고 뒤에서 섰다. 머릿수는 한 마리가
+ * 레벨 서너 칸만큼 무거워 13에서 멈춘다 — 15까지 올리면 같은 곡선을 맞추려 레벨을 거꾸로 내려야 했다(사다리가 내려간다).
+ *
+ * 레벨이 한 번도 내려가지 않게 짠다 — 다음 단계가 앞 단계보다 가벼우면 사다리가 아니라 옆길이 된다. 스테미나는 모든 단계가
+ * 10이라 **스테미나당 효율이 곧 보상의 크기**이고, 위로 갈수록 크게 좋아진다(1단계 3.0 → 8단계 15.0 케이크/스테미나). 높은
+ * 단계를 쉽게 밀지 못하게 하는 것은 보상을 깎는 일이 아니라 레벨이다.
  */
 export const CAKE_OPERATION_TIERS: readonly CakeOperationTier[] = [
-  { id: "cake-1", name: "1단계", enemyLevel: 4, enemyCount: 10, rewardCheesecake: 30 },
-  { id: "cake-2", name: "2단계", enemyLevel: 11, enemyCount: 10, rewardCheesecake: 44 },
-  { id: "cake-3", name: "3단계", enemyLevel: 18, enemyCount: 11, rewardCheesecake: 58 },
-  { id: "cake-4", name: "4단계", enemyLevel: 24, enemyCount: 12, rewardCheesecake: 72 },
-  { id: "cake-5", name: "5단계", enemyLevel: 32, enemyCount: 13, rewardCheesecake: 88 },
-  { id: "cake-6", name: "6단계", enemyLevel: 41, enemyCount: 14, rewardCheesecake: 108 },
-  { id: "cake-7", name: "7단계", enemyLevel: 49, enemyCount: 15, rewardCheesecake: 128 },
-  { id: "cake-8", name: "8단계", enemyLevel: 53, enemyCount: 15, rewardCheesecake: 150 },
+  { id: "cake-1", name: "1단계", enemyLevel: 9, enemyCount: 10, rewardCheesecake: 30 },
+  { id: "cake-2", name: "2단계", enemyLevel: 20, enemyCount: 10, rewardCheesecake: 44 },
+  { id: "cake-3", name: "3단계", enemyLevel: 25, enemyCount: 11, rewardCheesecake: 58 },
+  { id: "cake-4", name: "4단계", enemyLevel: 32, enemyCount: 11, rewardCheesecake: 72 },
+  { id: "cake-5", name: "5단계", enemyLevel: 38, enemyCount: 12, rewardCheesecake: 88 },
+  { id: "cake-6", name: "6단계", enemyLevel: 43, enemyCount: 12, rewardCheesecake: 108 },
+  { id: "cake-7", name: "7단계", enemyLevel: 50, enemyCount: 13, rewardCheesecake: 128 },
+  { id: "cake-8", name: "8단계", enemyLevel: 57, enemyCount: 13, rewardCheesecake: 150 },
 ];
 
 /**

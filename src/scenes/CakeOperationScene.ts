@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { getRelic } from "../data/relics";
+import { getRelic, withBaseStats } from "../data/relics";
 import { openSettingsOver } from "./settingsOverlay";
 import { t } from "../i18n";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -12,8 +12,8 @@ import { settingsManager } from "../managers/SettingsManager";
 import { distinctElements } from "../core/element";
 import { openDungeonAutoBattle, openDungeonSweep } from "./dungeonSweepFlow";
 import { autoRepeat } from "../managers/AutoRepeatManager";
-import { combatPower, groupCombatPower } from "../core/combatPower";
-import { requiredBreakthroughForLevel } from "../core/levelDesign";
+import { combatPower } from "../core/combatPower";
+import { encounterGroupPower, requiredBreakthroughForLevel } from "../core/levelDesign";
 import { DUNGEON_LOBBY } from "../ui/dungeonLobbyLayout";
 import { DUNGEON_THEME } from "../ui/dungeonTheme";
 import { DungeonLobby } from "../ui/DungeonLobby";
@@ -139,7 +139,7 @@ export class CakeOperationScene extends Phaser.Scene {
           hordeCount: enemies.length,
           elements: distinctElements(enemies.map((def) => def.element)),
           reward: { icon: "currency-cheesecake", amount: entry.rewardCheesecake },
-          enemyPower: groupCombatPower(enemies.map((def) => def.stats), undefined, enemies.map((def) => getRelic(def.id).stats)),
+          enemyPower: encounterGroupPower(withBaseStats(enemies), { horde: true }),
           unlocked: isCakeTierUnlocked(entry.id, clearedIndex),
           cleared: index <= clearedIndex,
         };

@@ -1394,7 +1394,7 @@ describe("슈테 스킬 표시 계약", () => {
     expect(description).toContain("[[duo|듀오]]");
     expect(description).toContain("[[charge|돌진]]");
     expect(description).toContain("[[knockback|날아간다]]");
-    expect(description).toContain("듀오가 입힌 피해의 5%");
+    expect(description).toContain("듀오가 입힌 피해의 8%");
     // 지원가의 폭주라 자기 능력치를 올리는 절이 없다.
     expect(description).not.toContain("자신");
   });

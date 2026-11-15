@@ -703,8 +703,8 @@ describe("메테 한계 돌파", () => {
     for (const fighter of [mette, rex, tia]) fighter.shield.amount = 0;
     mette.energy = mette.def.ultimate.cost;
     fireUltimate(state, mette.id, () => 0.99);
-    // 가득 찬 렉시아는 최대 체력 8%의 보호막, 다친 티아는 회복만 받는다.
-    expect(rex.shield.amount).toBeCloseTo(rex.maxHp * 0.08, 3);
+    // 가득 찬 렉시아는 최대 체력 15%의 보호막, 다친 티아는 회복만 받는다.
+    expect(rex.shield.amount).toBeCloseTo(rex.maxHp * 0.15, 3);
     expect(tia.shield.amount).toBe(0);
     expect(tia.hp).toBeGreaterThan(tia.maxHp * 0.5);
   });

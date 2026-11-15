@@ -2758,12 +2758,13 @@ function applyIntimidate(
 ): void {
   if (!isFighterAlive(target)) return;
   const source = findFighter(state, sourceId);
-  // 평타 돌파(`preyScale`) — 이미 위압이 걸려 있던 적을 평타로 맞히면, 지금 위압에 걸린 적 수만큼 막을 두른다. 위압을 새로 거는 첫 타에는 붙지 않는다.
-  if (basicHit && source !== undefined && target.intimidation !== null && state.elapsed >= source.bt.dreadAegisReadyAt) {
+  // 평타 돌파(`preyScale`) — 이미 위압·공포에 빠져 있던 적을 평타로 맞히면, 지금 위압·공포에 빠진 적 수만큼 막을 두른다. 위압을 새로 거는 첫 타에는 붙지 않는다.
+  // 공포도 센다 — 위압은 상한에서 공포로 넘어가며 사라지므로, 위압만 세면 아크가 잘 겁줄수록 막이 얇아졌다.
+  if (basicHit && source !== undefined && (target.intimidation !== null || target.fear !== null) && state.elapsed >= source.bt.dreadAegisReadyAt) {
     const aegis = openedBreakthrough(source, "basic", (effects) => effects.basic);
     if (aegis?.kind === "preyScale" && isFighterAlive(source)) {
       source.bt.dreadAegisReadyAt = state.elapsed + aegis.cooldownSeconds;
-      const scared = Math.min(aegis.maxEnemies, state.fighters.filter((other) => other.side !== source.side && isFighterAlive(other) && other.intimidation !== null).length);
+      const scared = Math.min(aegis.maxEnemies, state.fighters.filter((other) => other.side !== source.side && isFighterAlive(other) && (other.intimidation !== null || other.fear !== null)).length);
       grantShield(state, source, source.id, Math.max(1, Math.round(source.maxHp * aegis.shieldPercentPerEnemy * scared / 100)), events, 1);
     }
   }
@@ -6277,13 +6278,13 @@ function strongestLivingAura(state: SkirmishState, receiverSide: Side, field: "t
     .map((provider) => provider.def.passive[field] ?? 0));
 }
 
-/** 패시브 돌파(`terrorCarapace`) — 자신이 건 위압이 살아 있는 적 한 명당 방어·저항 증가(%). 열려 있지 않으면 0이다. */
+/** 패시브 돌파(`terrorCarapace`) — 자신이 건 위압·공포가 살아 있는 적 한 명당 방어·저항 증가(%). 열려 있지 않으면 0이다. */
 function terrorCarapacePercent(state: SkirmishState, fighter: Fighter): number {
   const plan = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
   if (plan?.kind !== "terrorCarapace") return 0;
   let count = 0;
   for (const other of state.fighters) {
-    if (other.side !== fighter.side && isFighterAlive(other) && other.intimidation?.sourceId === fighter.id) count += 1;
+    if (other.side !== fighter.side && isFighterAlive(other) && (other.intimidation?.sourceId === fighter.id || other.fear?.sourceId === fighter.id)) count += 1;
   }
   return plan.percentPerIntimidated * Math.min(count, plan.maxIntimidated);
 }

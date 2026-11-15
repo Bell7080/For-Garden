@@ -803,7 +803,7 @@ export const RELICS: RelicDef[] = [
     // 한계 돌파: 젖은 표적 · 물보라 충전 · 큰 파도 · 건드리면 터진다.
     breakthroughEffects: {
       basic: { kind: "wetMark", takenPercent: 12 },
-      ultimate: { kind: "splashCharge", energy: 15, allyEnergy: 5 },
+      ultimate: { kind: "splashCharge", energy: 15, allyEnergy: 15 },
       ferocity: { kind: "bigWave", powerMultiplier: 2 },
       passive: { kind: "touchBurst" },
     },
@@ -948,9 +948,9 @@ export const RELICS: RelicDef[] = [
       teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 10, maxHpRegenPercentPerSecond: 2 },
     },
     breakthroughEffects: {
-      basic: { kind: "windStep", moveSpeedPercent: 20, seconds: 3 },
+      basic: { kind: "windStep", moveSpeedPercent: 20, seconds: 4 },
       ultimate: { kind: "gustEnergy", energy: 25 },
-      ferocity: { kind: "feverGale", seconds: 3, speedPercent: 20 },
+      ferocity: { kind: "feverGale", seconds: 4, speedPercent: 20 },
       passive: { kind: "windEcho", energy: 25 },
     },
   },
@@ -1501,15 +1501,16 @@ export const RELICS: RelicDef[] = [
       selfRoar: {
         radius: 360,
         fear: { kind: "fear", seconds: 2, immunitySeconds: 6 },
-        shieldMaxHpPercent: 10,
+        shieldMaxHpPercent: 15,
         shieldPerFearedMaxHpPercent: 6,
         shieldMaxFeared: 5,
       },
     },
+    // 2026-11-15 응태 승인 — 먹잇감 비늘 3%·쿨 3초는 쿨이 공격 간격(3초)과 같아 아무것도 묶지 않았고 한 번이 적 한 대 남짓이었다. 공포도 세고 한 번을 묵직하게.
     breakthroughEffects: {
-      basic: { kind: "preyScale", shieldPercentPerEnemy: 3, maxEnemies: 5, cooldownSeconds: 3 },
+      basic: { kind: "preyScale", shieldPercentPerEnemy: 8, maxEnemies: 5, cooldownSeconds: 4 },
       ultimate: { kind: "quarryMark", seconds: 8, damageTakenPercent: 12 },
-      ferocity: { kind: "roarEntry", radius: 500, stacks: 1 },
+      ferocity: { kind: "roarEntry", radius: 500, stacks: 2 },
       passive: { kind: "terrorCarapace", percentPerIntimidated: 10, maxIntimidated: 5 },
     },
   },
@@ -2425,7 +2426,7 @@ export const RELICS: RelicDef[] = [
     // 한계 돌파 — 평타에 맞은 적이 잠깐 노도니아만 노리고(벌 세우기), 절정 동안 대신 받은 피해가 최대 체력의 10% 쌓일 때마다 주위에 열기가 터지며(최대 4번),
     // 폭주에 들어서는 순간 희열이 다섯 겹 쌓이고, 희열이 가득하면 재생의 절반이 아군 전원에게 번진다.
     breakthroughEffects: {
-      basic: { kind: "scoldTaunt", tauntSeconds: 0.5 },
+      basic: { kind: "scoldTaunt", tauntSeconds: 1.5 },
       ultimate: { kind: "heatBurst", thresholdPercent: 10, pulsePercent: 2.5, maxPulses: 4, radius: 300 },
       ferocity: { kind: "emberRush", stacks: 5 },
       passive: { kind: "sweetShare", sharePercent: 50 },
@@ -3499,9 +3500,9 @@ export const RELICS: RelicDef[] = [
       effectType: "magical",
       damageType: "magical",
       targeting: "single",
-      allyEnergyGain: 4,
+      allyEnergyGain: 6,
       // 파동이 지나간 몫의 일부가 가장 다친 동료에게 돌아간다. 도디(30%)보다 낮게 둔다 — 주문력이 훨씬 높다.
-      lowestHpAllyHealingFromDamagePercent: 20,
+      lowestHpAllyHealingFromDamagePercent: 25,
     },
     ultimate: {
       id: "neuri-ult",
@@ -3514,7 +3515,7 @@ export const RELICS: RelicDef[] = [
     },
     // 날갯짓 파동에 적이 움찔하고(II) 순풍이 오래 불며(III) 폭주하면 맞춘 만큼 회복하고(IV) 울림이 둘에게 걸린다(V).
     breakthroughEffects: {
-      basic: { kind: "shellKnock", seconds: 0.3 },
+      basic: { kind: "shellKnock", seconds: 0.4 },
       ultimate: { kind: "longGust", seconds: 10 },
       ferocity: { kind: "bloodFever", lifeStealPoints: 10 },
       passive: { kind: "twinHum" },
@@ -3866,7 +3867,7 @@ export const RELICS: RelicDef[] = [
       basic: { kind: "chainWrap", speedPercentPerStack: 8, maxStacks: 5 },
       ultimate: { kind: "cageIn", tauntSeconds: 2 },
       ferocity: { kind: "ironBarSweep", radius: 200, maxTargets: 3 },
-      passive: { kind: "youngestCare", sharePercent: 15 },
+      passive: { kind: "youngestCare", sharePercent: 30 },
     },
   },
   {
@@ -4014,9 +4015,9 @@ export const RELICS: RelicDef[] = [
     breakthroughEffects: {
       // 같은 적을 연속으로 맞히면 경직이 0.1초씩 쌓인다(최대 0.3초). 공격 간격(약 1.7초)보다 짧아 영구 경직이 되지 않고,
       // 경직이 쌓일 때마다 저항(`gainTenacity`)도 함께 오른다.
-      basic: { kind: "staccatoChain", secondsPerStack: 0.1, maxStacks: 3 },
+      basic: { kind: "staccatoChain", secondsPerStack: 0.15, maxStacks: 3 },
       // 궁극기 게이지가 90에서 75로 줄고, 체력이 가득 차 회복할 몫이 없던 아군은 최대 체력 8%의 보호막을 얻는다.
-      ultimate: { kind: "lightChorus", costReduction: 15, fullHpShieldPercent: 8 },
+      ultimate: { kind: "lightChorus", costReduction: 15, fullHpShieldPercent: 15 },
       // 폭주에 들어서는 순간 주위 적 전원에게 스타카토 한 번이 먼저 울린다(공격력 60%, 경직 포함). 팀의 합창이 시작되기 전의 서곡이다.
       ferocity: { kind: "overture", radius: 520, powerPercent: 60 },
       // 메테의 막을 두른 아군이 평타를 맞히면 그 적 주위로 음파(공격력 40%)가 퍼진다. 아군마다 3초에 한 번이다.
@@ -4304,7 +4305,7 @@ export const RELICS: RelicDef[] = [
     // 한계 돌파: 소다 터짐(세 번마다 냉기) · 냉방 환기 · 한파(폭주 진입에 전원 냉기) · 얼음 깨기.
     breakthroughEffects: {
       basic: { kind: "sodaPop", everyHits: 3, radius: 300, stacks: 1 },
-      ultimate: { kind: "coolingVent", healMaxHpPercentPerFrozen: 0.5, maxFrozenCounted: 3 },
+      ultimate: { kind: "coolingVent", healMaxHpPercentPerFrozen: 1.5, maxFrozenCounted: 3 },
       ferocity: { kind: "coldSnap", radius: 500, stacks: 2 },
       passive: { kind: "iceShatter", radius: 300, attackPercent: 120 },
     },
@@ -4796,7 +4797,7 @@ export const RELICS: RelicDef[] = [
       // 파치가 때려서 날리는 것과 같은 궤적이되 한 뼘 짧다 — 밀어붙이는 길을 여는 것이지
       // 전장 밖으로 치우는 것이 아니다.
       knockback: { seconds: 1.1, speed: 1600, bounces: 2 },
-      allyRegenFromDuoDamagePercent: 5,
+      allyRegenFromDuoDamagePercent: 8,
     },
     passive: {
       // kind가 duoLink인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
@@ -4932,7 +4933,7 @@ export const RELICS: RelicDef[] = [
       basic: { kind: "freshSight", percentPerStack: 15, windowSeconds: 2 },
       ultimate: { kind: "jointObservation", stacks: 5 },
       ferocity: { kind: "droneOverheat", stackMultiplier: 2 },
-      passive: { kind: "manyEyes", attackSpeedPercentPerObserved: 5 },
+      passive: { kind: "manyEyes", attackSpeedPercentPerObserved: 7 },
     },
     passive: {
       id: "morphe-passive",
@@ -5103,7 +5104,7 @@ export const RELICS: RelicDef[] = [
       basic: { kind: "pupLitter", every: 6 },
       ultimate: { kind: "pupRush", count: 3 },
       ferocity: { kind: "pupFrenzy", every: 6 },
-      passive: { kind: "packStrength", damagePercentPerWolf: 3 },
+      passive: { kind: "packStrength", damagePercentPerWolf: 4 },
     },
   },
   KURO_DEF,

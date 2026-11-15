@@ -62,7 +62,7 @@ describe("아크 — 정체성", () => {
 
   it("은 받는 피해 감소를 쓰지 않고 버티는 값을 눈에 보이는 보호막으로 낸다", () => {
     expect(JSON.stringify(ARK)).not.toContain("damageReduction");
-    expect(ROAR.shieldMaxHpPercent + ROAR.shieldPerFearedMaxHpPercent * ROAR.shieldMaxFeared).toBeLessThanOrEqual(40);
+    expect(ROAR.shieldMaxHpPercent + ROAR.shieldPerFearedMaxHpPercent * ROAR.shieldMaxFeared).toBeLessThanOrEqual(45);
   });
 });
 
@@ -371,11 +371,13 @@ describe("아크 — 한계 돌파", () => {
     expect(all.def).toBeCloseTo(before.def * (1 + passive.percentPerIntimidated * passive.maxIntimidated / 100), 3);
   });
 
-  it("V — 위압이 공포로 바뀌어 풀리면 오른 값도 함께 사라진다", () => {
+  it("V — 위압이 공포로 바뀌어도 오른 값은 남는다(공포도 센다 — 잘 겁줄수록 약해지지 않게)", () => {
     const { state, ark, enemies } = withBreakthrough(4);
     const before = defensiveDefinition(ark, state).def.stats.def;
     intimidateFully(state, ark, enemies[0]);
-    expect(defensiveDefinition(ark, state).def.stats.def).toBe(before);
+    expect(enemies[0].fear).not.toBeNull();
+    expect(enemies[0].intimidation).toBeNull();
+    expect(defensiveDefinition(ark, state).def.stats.def).toBeCloseTo(before * (1 + passive.percentPerIntimidated / 100), 3);
   });
 
   it("의 효과 문구는 네 슬롯 모두 계약의 수를 말한다", () => {

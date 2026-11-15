@@ -1,0 +1,702 @@
+{
+  "lobby.menu.help": [
+    "帮助",
+    "ช่วยเหลือ",
+    "Trợ giúp",
+    "Bantuan",
+    "Ayuda",
+    "Ajuda",
+    "Hilfe",
+    "Справка"
+  ],
+  "help.title": [
+    "帮助",
+    "ช่วยเหลือ",
+    "Trợ giúp",
+    "Bantuan",
+    "Ayuda",
+    "Ajuda",
+    "Hilfe",
+    "Справка"
+  ],
+  "help.tab.terms": [
+    "术语",
+    "คำศัพท์",
+    "Thuật ngữ",
+    "Istilah",
+    "Términos",
+    "Termos",
+    "Begriffe",
+    "Термины"
+  ],
+  "help.tab.tutorials": [
+    "重温",
+    "ดูอีกครั้ง",
+    "Xem lại",
+    "Lihat lagi",
+    "Repasar",
+    "Rever",
+    "Erneut ansehen",
+    "Повторить"
+  ],
+  "help.term.relic.name": [
+    "遗物",
+    "เรลิก",
+    "Di vật",
+    "Relik",
+    "Reliquia",
+    "Relíquia",
+    "Relikt",
+    "Реликт"
+  ],
+  "help.term.relic.body": [
+    "从化石中复原的灭绝动物个体。收集并培养遗物，与它们并肩作战。",
+    "สัตว์สูญพันธุ์ที่ฟื้นคืนจากฟอสซิล สะสมและเลี้ยงดูเรลิกเพื่อต่อสู้ร่วมกัน",
+    "Cá thể động vật tuyệt chủng được phục hồi từ hóa thạch. Thu thập và nuôi dưỡng Di vật để cùng chiến đấu.",
+    "Hewan punah yang direstorasi dari fosil. Kumpulkan dan besarkan Relik untuk bertarung bersamamu.",
+    "Un animal extinto restaurado a partir de un fósil. Reúne y cría Reliquias para luchar a tu lado.",
+    "Um animal extinto restaurado a partir de um fóssil. Colecione e crie Relíquias para lutar ao seu lado.",
+    "Ein ausgestorbenes Tier, aus einem Fossil restauriert. Sammle und ziehe Relikte auf, um an ihrer Seite zu kämpfen.",
+    "Вымершее животное, восстановленное из окаменелости. Собирайте и растите Реликтов, чтобы сражаться вместе."
+  ],
+  "help.term.research.name": [
+    "研究",
+    "วิจัย",
+    "Nghiên cứu",
+    "Riset",
+    "Investigación",
+    "Pesquisa",
+    "Forschung",
+    "Исследование"
+  ],
+  "help.term.research.body": [
+    "在研究所投入化石或琥珀，邂逅新的遗物。再次遇到同一遗物时，会累积它的碎片。",
+    "ใช้ฟอสซิลหรืออำพันในห้องวิจัยเพื่อพบเรลิกใหม่ หากพบเรลิกเดิมซ้ำจะได้เศษของเรลิกนั้น",
+    "Dùng Hóa thạch hoặc Hổ phách tại Viện nghiên cứu để gặp Di vật mới. Gặp lại cùng Di vật sẽ tích lũy Mảnh của nó.",
+    "Gunakan Fosil atau Amber di Lab Riset untuk bertemu Relik baru. Bertemu Relik yang sama lagi akan mengumpulkan Serpihannya.",
+    "Usa Fósiles o Ámbar en el Lab de investigación para conocer nuevas Reliquias. Repetir una Reliquia acumula sus Fragmentos.",
+    "Faça pesquisas com Fósseis ou Âmbar no Laboratório para conhecer novas Relíquias. Repetir uma Relíquia acumula seus Fragmentos.",
+    "Setze im Forschungslabor Fossilien oder Bernstein ein, um neue Relikte zu treffen. Triffst du dasselbe Relikt erneut, sammeln sich seine Splitter.",
+    "Проводите исследования с окаменелостями или янтарём в Лаборатории, чтобы встретить новых Реликтов. Повторный Реликт приносит его Фрагменты."
+  ],
+  "help.term.excavation.name": [
+    "采掘",
+    "ขุด",
+    "Khai thác",
+    "Galian",
+    "Excavación",
+    "Escavação",
+    "Grabung",
+    "Раскопки"
+  ],
+  "help.term.excavation.body": [
+    "在大厅部署遗物后，资源会随时间累积。它与研究所获取遗物的研究不同，是部署型的资源采掘。",
+    "วางเรลิกไว้ที่ล็อบบี้แล้วทรัพยากรจะสะสมตามเวลา ต่างจากการวิจัยในห้องวิจัย นี่คือการขุดทรัพยากรแบบวางประจำ",
+    "Đặt Di vật ở sảnh, tài nguyên sẽ tích lũy theo thời gian. Khác với Nghiên cứu tại Viện nghiên cứu, đây là khai thác tài nguyên theo kiểu bố trí.",
+    "Tempatkan Relik di lobi dan sumber daya menumpuk seiring waktu. Berbeda dari Riset di Lab Riset, ini menggali sumber daya lewat penempatan.",
+    "Coloca Reliquias en el vestíbulo y los recursos se acumulan con el tiempo. A diferencia de la investigación del Lab, la excavación reúne recursos por colocación.",
+    "Posicione Relíquias no saguão e os recursos se acumulam com o tempo. Diferente da Pesquisa do Laboratório, a Escavação reúne recursos por posicionamento.",
+    "Platziere Relikte in der Lobby, und mit der Zeit sammeln sich Ressourcen an. Anders als die Forschung im Forschungslabor sammelt die Grabung Ressourcen durch Platzierung.",
+    "Разместите Реликтов в лобби, и ресурсы будут копиться со временем. В отличие от исследования в Лаборатории, раскопки собирают ресурсы за счёт размещения."
+  ],
+  "help.term.archaeology.name": [
+    "考古",
+    "โบราณคดี",
+    "Khảo cổ",
+    "Arkeologi",
+    "Arqueología",
+    "Arqueologia",
+    "Archäologie",
+    "Археология"
+  ],
+  "help.term.archaeology.body": [
+    "选择遗迹挖掘地层，获得原石、符文和货币。越深的遗迹封锁越久但收获越多，久未挖掘的浅层遗迹会凝结晶体。",
+    "เลือกซากโบราณแล้วขุดชั้นหินเพื่อหาหินดิบ รูน และเงินตรา ซากที่ลึกจะถูกปิดนานแต่ให้มาก ส่วนซากตื้นที่พักไว้นานจะเกิดผลึก",
+    "Chọn di tích và đào các tầng đất để lấy đá thô, Rune và tiền tệ. Di tích càng sâu càng bị khóa lâu nhưng cho nhiều hơn, di tích nông để nghỉ lâu sẽ kết tinh.",
+    "Pilih reruntuhan dan gali lapisannya untuk batu mentah, Rune, dan mata uang. Reruntuhan dalam terkunci lebih lama tapi memberi lebih banyak, dan reruntuhan dangkal yang lama diistirahatkan menumbuhkan kristal.",
+    "Elige unas ruinas y excava sus estratos en busca de piedras en bruto, Runas y monedas. Las más profundas se sellan más tiempo pero dan más, y las someras que reposan forman cristales.",
+    "Escolha ruínas e escave seus estratos atrás de pedras brutas, Runas e moedas. As mais profundas ficam seladas por mais tempo, mas rendem mais, e as rasas em descanso formam cristais.",
+    "Wähle eine Ruine und grabe ihre Schichten nach Rohsteinen, Runen und Währung ab. Tiefere Ruinen bleiben länger versiegelt, geben aber mehr, und lange ruhende flache Ruinen bilden Kristalle.",
+    "Выберите руины и раскапывайте пласты ради необработанных камней, Рун и валюты. Глубокие руины дольше закрыты, но дают больше, а долго отдыхавшие мелкие покрываются кристаллами."
+  ],
+  "help.term.feeding.name": [
+    "喂食",
+    "ป้อนอาหาร",
+    "Cho ăn",
+    "Makan",
+    "Alimentar",
+    "Alimentar",
+    "Füttern",
+    "Кормление"
+  ],
+  "help.term.feeding.body": [
+    "喂食芝士蛋糕来累积经验值。遗物的等级上限由研究员等级开放。",
+    "ป้อนชีสเค้กเพื่อสะสมค่าประสบการณ์ ขีดจำกัดเลเวลของเรลิกจะเปิดตามเลเวลนักวิจัย",
+    "Cho ăn Bánh phô mai để tích lũy kinh nghiệm. Giới hạn cấp của Di vật được mở theo cấp Nhà nghiên cứu.",
+    "Beri makan Cheesecake untuk mengumpulkan EXP. Batas level Relik dibuka oleh level Periset.",
+    "Alimenta con Tarta de queso para acumular EXP. El nivel máximo de una Reliquia lo abre tu nivel de investigador.",
+    "Alimente com Cheesecake para acumular EXP. O nível máximo de uma Relíquia é liberado pelo seu nível de pesquisador.",
+    "Füttere Käsekuchen, um EP zu sammeln. Die Stufenobergrenze eines Relikts öffnet deine Forscherstufe.",
+    "Кормите чизкейком, чтобы копить опыт. Предел уровня Реликта открывает уровень исследователя."
+  ],
+  "help.term.fragment.name": [
+    "碎片",
+    "เศษ",
+    "Mảnh",
+    "Serpihan",
+    "Fragmentos",
+    "Fragmentos",
+    "Splitter",
+    "Фрагменты"
+  ],
+  "help.term.fragment.body": [
+    "再次遇到同一遗物时，会累积它的碎片。用于突破和共鸣。",
+    "เมื่อพบเรลิกเดิมซ้ำจะได้เศษของเรลิกนั้น ใช้สำหรับการทะลวงขีดจำกัดและการสั่นพ้อง",
+    "Gặp lại cùng Di vật sẽ tích lũy Mảnh của nó. Dùng cho Đột phá và Cộng hưởng.",
+    "Bertemu Relik yang sama lagi mengumpulkan Serpihannya. Dipakai untuk Terobosan dan Resonansi.",
+    "Repetir una Reliquia acumula sus Fragmentos. Se usan en la Ruptura y la Resonancia.",
+    "Repetir uma Relíquia acumula seus Fragmentos. Eles são usados na Ruptura e na Ressonância.",
+    "Triffst du dasselbe Relikt erneut, sammeln sich seine Splitter. Sie werden für Durchbruch und Resonanz verwendet.",
+    "Повторный Реликт приносит его Фрагменты. Они тратятся на Прорыв и Резонанс."
+  ],
+  "help.term.breakthrough.name": [
+    "突破",
+    "ทะลวงขีดจำกัด",
+    "Đột phá",
+    "Terobosan",
+    "Ruptura",
+    "Ruptura",
+    "Durchbruch",
+    "Прорыв"
+  ],
+  "help.term.breakthrough.body": [
+    "使用碎片将突破等级从I提升到V。每一阶都会提高能力值成长，并开放技能效果。",
+    "ใช้เศษเพื่อเพิ่มระดับทะลวงจาก I ถึง V ทุกขั้นจะเพิ่มการเติบโตของค่าสถานะและเปิดเอฟเฟกต์สกิล",
+    "Dùng Mảnh để nâng bậc Đột phá từ I đến V. Mỗi bậc tăng mức tăng trưởng chỉ số và mở hiệu ứng kỹ năng.",
+    "Gunakan Serpihan untuk menaikkan tingkat Terobosan dari I sampai V. Tiap tahap menambah pertumbuhan stat dan membuka efek skill.",
+    "Gasta Fragmentos para subir el grado de Ruptura de I a V. Cada paso aumenta el crecimiento de atributos y abre un efecto de habilidad.",
+    "Gaste Fragmentos para subir o grau de Ruptura de I a V. Cada etapa aumenta o crescimento de atributos e libera um efeito de habilidade.",
+    "Mit Splittern hebst du die Durchbruchstufe von I bis V an. Jede Stufe steigert das Wertewachstum und schaltet einen Fertigkeitseffekt frei.",
+    "Тратьте Фрагменты, чтобы поднять ступень Прорыва с I до V. Каждая ступень усиливает рост характеристик и открывает эффект навыка."
+  ],
+  "help.term.resonance.name": [
+    "共鸣",
+    "การสั่นพ้อง",
+    "Cộng hưởng",
+    "Resonansi",
+    "Resonancia",
+    "Ressonância",
+    "Resonanz",
+    "Резонанс"
+  ],
+  "help.term.resonance.body": [
+    "突破V之后的阶段。只消耗碎片，每一阶能力值提升5%。在决斗场中无效。",
+    "ขั้นถัดจากทะลวงขีดจำกัด V ใช้เพียงเศษ และเพิ่มค่าสถานะ 5% ทุกขั้น ปิดใช้งานในสนามดวล",
+    "Bậc tiếp theo sau Đột phá V. Chỉ tốn Mảnh và tăng chỉ số 5% mỗi bậc. Bị tắt trong Đấu trường.",
+    "Tahap setelah Terobosan V. Hanya butuh Serpihan dan menaikkan stat 5% per tahap. Tidak berlaku di Arena Duel.",
+    "El paso tras la Ruptura V. Solo cuesta Fragmentos y sube los atributos un 5% por paso. Se desactiva en la Arena de duelos.",
+    "A etapa após a Ruptura V. Custa apenas Fragmentos e aumenta os atributos em 5% por etapa. Fica desativada na Arena de Duelos.",
+    "Die Stufe nach Durchbruch V. Sie kostet nur Splitter und erhöht die Werte um 5% pro Stufe. In der Duellarena ist sie deaktiviert.",
+    "Ступень после Прорыва V. Требует только Фрагменты и повышает характеристики на 5% за ступень. На Арене дуэлей отключён."
+  ],
+  "help.term.bond.name": [
+    "羁绊",
+    "สายสัมพันธ์",
+    "Gắn kết",
+    "Ikatan",
+    "Vínculo",
+    "Vínculo",
+    "Bindung",
+    "Связь"
+  ],
+  "help.term.bond.body": [
+    "每个遗物各自累积的关系数值。通过获得、胜利和每日互动提升，越高战斗中野性积累越快。",
+    "ค่าความสัมพันธ์ของเรลิกแต่ละตัว เพิ่มจากการได้รับ ชัยชนะ และการโต้ตอบรายวัน ยิ่งสูงพลังป่าเถื่อนยิ่งเต็มเร็วในการต่อสู้",
+    "Chỉ số quan hệ riêng của mỗi Di vật. Tăng qua việc nhận được, chiến thắng và tương tác hằng ngày; càng cao thì Dã tính trong trận càng đầy nhanh.",
+    "Nilai hubungan tiap Relik. Naik lewat perolehan, kemenangan, dan interaksi harian; makin tinggi, makin cepat Keganasan terisi saat bertarung.",
+    "Valor de relación propio de cada Reliquia. Sube al obtenerla, al ganar y con la interacción diaria; cuanto más alto, antes se llena la Ferocidad en combate.",
+    "Valor de relação de cada Relíquia. Sobe ao obtê-la, ao vencer e com a interação diária; quanto maior, mais rápido a Ferocidade enche em batalha.",
+    "Ein Beziehungswert jedes Relikts. Er steigt durch Erhalt, Siege und tägliche Interaktion; je höher er ist, desto schneller füllt sich im Kampf die Wildheit.",
+    "Показатель отношений каждого Реликта. Растёт за получение, победы и ежедневное общение; чем выше, тем быстрее в бою копится свирепость."
+  ],
+  "help.term.favorite.name": [
+    "最爱",
+    "เรลิกโปรด",
+    "Yêu thích",
+    "Favorit",
+    "Favorita",
+    "Favorita",
+    "Favorit",
+    "Любимец"
+  ],
+  "help.term.favorite.body": [
+    "站在大厅的代表遗物，只能选一位。更换后羁绊保持不变。",
+    "เรลิกตัวแทนหนึ่งตัวที่ยืนในล็อบบี้ เปลี่ยนแล้วสายสัมพันธ์ยังคงเดิม",
+    "Một Di vật đại diện đứng ở sảnh. Đổi cũng không ảnh hưởng đến Gắn kết.",
+    "Satu Relik perwakilan yang berdiri di lobi. Menggantinya tidak mengubah Ikatan.",
+    "La Reliquia que se luce en el vestíbulo. Cambiarla no altera el Vínculo.",
+    "A Relíquia que fica no saguão. Trocá-la não altera o Vínculo.",
+    "Das eine Relikt, das in der Lobby steht. Ein Wechsel lässt die Bindung unverändert.",
+    "Один Реликт, который стоит в лобби. Смена не меняет Связь."
+  ],
+  "help.term.rune.name": [
+    "符文",
+    "รูน",
+    "Rune",
+    "Rune",
+    "Runa",
+    "Runa",
+    "Rune",
+    "Руна"
+  ],
+  "help.term.rune.body": [
+    "把一颗心分成三块的装备。每一块都有固定的镶嵌位置。",
+    "อุปกรณ์ที่แบ่งหัวใจออกเป็นสามชิ้น แต่ละชิ้นใส่ได้เฉพาะช่องของตัวเอง",
+    "Trang bị là một trái tim chia thành ba mảnh ghép. Mỗi mảnh ghép chỉ gắn được vào ô của riêng nó.",
+    "Perlengkapan berupa hati yang dibagi menjadi tiga keping. Tiap keping hanya cocok di slotnya sendiri.",
+    "Equipo que divide un corazón en tres piezas. Cada pieza solo encaja en su propia ranura.",
+    "Equipamento que divide um coração em três peças. Cada peça só encaixa no próprio espaço.",
+    "Ausrüstung, die ein Herz in drei Teile teilt. Jedes Teil passt nur in seinen eigenen Platz.",
+    "Снаряжение — сердце, разделённое на три части. Каждая часть встаёт только в своё гнездо."
+  ],
+  "help.term.runecraft.name": [
+    "打磨 · 刻印",
+    "เจียระไน · สลัก",
+    "Mài · Khắc",
+    "Asah · Ukir",
+    "Tallado · Grabado",
+    "Lapidação · Gravação",
+    "Veredeln · Gravieren",
+    "Огранка · Гравировка"
+  ],
+  "help.term.runecraft.body": [
+    "花费金币逐行提升符文的属性。打磨完成后，最后刻印一次即可完成符文。",
+    "ใช้ทองเพื่อเพิ่มออปชันของรูนทีละแถว เมื่อเจียระไนเสร็จให้สลักครั้งสุดท้ายหนึ่งครั้งเพื่อทำให้รูนสมบูรณ์",
+    "Dùng Vàng để nâng từng dòng chỉ số của Rune. Mài xong thì Khắc một lần cuối để hoàn thiện Rune.",
+    "Gunakan Emas untuk menaikkan opsi Rune satu baris demi satu. Setelah diasah, Ukir sekali untuk menyempurnakan Rune.",
+    "Gasta Oro para mejorar las opciones de una Runa línea a línea. Al terminar el tallado, grábala una vez para completarla.",
+    "Gaste Ouro para melhorar as opções de uma Runa linha a linha. Ao terminar a lapidação, faça a gravação uma vez para completá-la.",
+    "Mit Gold veredelst du die Optionen einer Rune Zeile für Zeile. Danach gravierst du sie ein letztes Mal, um die Rune zu vollenden.",
+    "Тратьте золото, чтобы улучшать свойства Руны строку за строкой. После огранки один раз выполните гравировку, чтобы завершить Руну."
+  ],
+  "help.term.ultimate.name": [
+    "必杀技",
+    "ท่าไม้ตาย",
+    "Tuyệt kỹ",
+    "Ultimate",
+    "Definitiva",
+    "Suprema",
+    "Ultimative Fähigkeit",
+    "Ульта"
+  ],
+  "help.term.ultimate.body": [
+    "卡牌图案充满后点击使用的大招。开启自动必杀技后会自动释放。",
+    "ท่าใหญ่ที่ใช้โดยแตะการ์ดเมื่อภาพเต็ม เปิดท่าไม้ตายอัตโนมัติแล้วจะใช้เอง",
+    "Chiêu lớn dùng bằng cách chạm vào thẻ khi hình đã đầy. Bật Tuyệt kỹ tự động thì sẽ tự dùng.",
+    "Jurus besar yang dipakai dengan mengetuk kartu saat gambarnya penuh. Nyalakan Ultimate otomatis agar dipakai sendiri.",
+    "Un gran ataque que se usa tocando la carta cuando su imagen se llena. Activa la Definitiva automática y se usará sola.",
+    "Um grande golpe usado ao tocar a carta quando a imagem se completa. Ative a Suprema automática e ela será usada sozinha.",
+    "Eine große Technik, die du durch Tippen auf die Karte einsetzt, sobald ihr Bild gefüllt ist. Mit der automatischen Ultimativen geschieht das von selbst.",
+    "Мощный приём: коснитесь карты, когда её рисунок заполнится. Включите авто-ульту, и она будет срабатывать сама."
+  ],
+  "help.term.frenzy.name": [
+    "野性 · 暴走",
+    "ป่าเถื่อน · คลั่ง",
+    "Dã tính · Cuồng bạo",
+    "Keganasan · Amuk",
+    "Ferocidad · Frenesí",
+    "Ferocidade · Frenesi",
+    "Wildheit · Raserei",
+    "Свирепость · Неистовство"
+  ],
+  "help.term.frenzy.body": [
+    "战斗中野性槽会逐渐积累，充满后进入暴走，战斗更加强悍。暴走期间也能使用必杀技。",
+    "เกจป่าเถื่อนจะเพิ่มขึ้นระหว่างต่อสู้ เมื่อเต็มจะคลั่งและสู้แรงขึ้น ระหว่างคลั่งก็ใช้ท่าไม้ตายได้",
+    "Thanh Dã tính đầy dần trong trận, khi đầy sẽ Cuồng bạo và đánh mạnh hơn. Khi Cuồng bạo vẫn dùng được Tuyệt kỹ.",
+    "Bar Keganasan terisi selama bertarung, dan saat penuh Relik mengamuk dan bertarung lebih kuat. Ultimate tetap bisa dipakai saat Amuk.",
+    "La barra de Ferocidad se llena en combate y, al llenarse, entra en Frenesí y lucha con más fuerza. La Definitiva sigue disponible durante el Frenesí.",
+    "A barra de Ferocidade enche em batalha e, quando cheia, entra em Frenesi e luta com mais força. A Suprema continua disponível durante o Frenesi.",
+    "Die Wildheitsleiste füllt sich im Kampf; ist sie voll, verfällt das Relikt in Raserei und kämpft stärker. Ultimative Fähigkeiten gehen auch in der Raserei.",
+    "Шкала свирепости копится в бою, а когда заполнится — начинается неистовство и Реликт бьётся сильнее. Ульта доступна и в неистовстве."
+  ],
+  "help.term.stamina.name": [
+    "体力",
+    "สตามินา",
+    "Thể lực",
+    "Stamina",
+    "Estamina",
+    "Estamina",
+    "Ausdauer",
+    "Выносливость"
+  ],
+  "help.term.stamina.body": [
+    "出击所需的资源。只在胜利时扣除，消耗多少就获得多少研究员经验值。",
+    "ทรัพยากรสำหรับออกรบ หักเฉพาะเมื่อชนะ และใช้ไปเท่าไรค่าประสบการณ์นักวิจัยก็เพิ่มเท่านั้น",
+    "Tài nguyên để xuất kích, chỉ bị trừ khi thắng. Dùng bao nhiêu thì kinh nghiệm Nhà nghiên cứu tăng bấy nhiêu.",
+    "Sumber daya untuk berangkat bertempur, hanya terpakai saat menang. Setiap yang terpakai menambah EXP Periset.",
+    "Se gasta al salir a combatir, y solo si ganas. Cada punto gastado suma EXP de investigador.",
+    "Gasta-se ao partir para a batalha, e só quando você vence. Cada ponto gasto soma EXP de pesquisador.",
+    "Wird für Einsätze verbraucht, aber nur bei einem Sieg. Jeder verbrauchte Punkt bringt Forscher-EP.",
+    "Тратится на вылазки, и только при победе. Каждая потраченная единица даёт опыт исследователя."
+  ],
+  "help.term.researcherLevel.name": [
+    "研究员等级",
+    "เลเวลนักวิจัย",
+    "Cấp Nhà nghiên cứu",
+    "Level Periset",
+    "Nivel de investigador",
+    "Nível de pesquisador",
+    "Forscherstufe",
+    "Уровень исследователя"
+  ],
+  "help.term.researcherLevel.body": [
+    "消耗多少体力就获得多少经验值。升级后会开放新内容并提高遗物的等级上限。",
+    "ค่าประสบการณ์เพิ่มตามสตามินาที่ใช้ เมื่อเลเวลขึ้นจะเปิดคอนเทนต์ใหม่และขีดจำกัดเลเวลของเรลิก",
+    "Kinh nghiệm tăng theo Thể lực đã dùng. Lên cấp sẽ mở nội dung mới và nâng giới hạn cấp của Di vật.",
+    "Naik sesuai Stamina yang dipakai. Tiap level membuka konten baru dan menaikkan batas level Relik.",
+    "Sube con la Estamina que gastas. Cada nivel abre contenido nuevo y eleva el nivel máximo de las Reliquias.",
+    "Sobe com a Estamina gasta. Cada nível libera conteúdo novo e aumenta o nível máximo das Relíquias.",
+    "Steigt mit der verbrauchten Ausdauer. Jede Stufe schaltet neue Inhalte frei und hebt die Stufenobergrenze der Relikte an.",
+    "Растёт с потраченной выносливостью. Каждый уровень открывает новый контент и поднимает предел уровня Реликтов."
+  ],
+  "help.term.fossil.name": [
+    "化石 · 琥珀",
+    "ฟอสซิล · อำพัน",
+    "Hóa thạch · Hổ phách",
+    "Fosil · Amber",
+    "Fósil · Ámbar",
+    "Fóssil · Âmbar",
+    "Fossil · Bernstein",
+    "Окаменелость · Янтарь"
+  ],
+  "help.term.fossil.body": [
+    "用于研究的货币。琥珀用于限定UP研究。",
+    "สกุลเงินที่ใช้ในการวิจัย อำพันใช้กับการวิจัยพิกอัปแบบจำกัดเวลา",
+    "Tiền tệ dùng cho Nghiên cứu. Hổ phách dùng cho Nghiên cứu tăng tỉ lệ giới hạn.",
+    "Mata uang untuk Riset. Amber dipakai untuk Riset pick-up terbatas.",
+    "Monedas para investigar. El Ámbar se usa en las investigaciones de selección limitada.",
+    "Moedas para pesquisar. O Âmbar é usado nas pesquisas de destaque limitado.",
+    "Währungen für die Forschung. Bernstein wird für die zeitlich begrenzte Pick-up-Forschung verwendet.",
+    "Валюта для исследований. Янтарь идёт на ограниченные исследования с повышенным шансом."
+  ],
+  "help.term.mileage.name": [
+    "DNA里程",
+    "ไมล์ DNA",
+    "Dặm DNA",
+    "Mil DNA",
+    "Millas de ADN",
+    "Milhas de DNA",
+    "DNA-Meilen",
+    "Мили ДНК"
+  ],
+  "help.term.mileage.body": [
+    "每次研究都会累积的通用货币。可在里程商店兑换碎片或UP遗物。",
+    "สกุลเงินกลางที่สะสมทุกครั้งที่วิจัย แลกเป็นเศษหรือเรลิกพิกอัปได้ที่ร้านค้าไมล์",
+    "Tiền tệ chung tích lũy mỗi lần Nghiên cứu. Đổi lấy Mảnh hoặc Di vật tăng tỉ lệ ở Cửa hàng Dặm.",
+    "Mata uang bersama yang terkumpul setiap Riset. Tukarkan di Toko Mil untuk Serpihan atau Relik pick-up.",
+    "Moneda común que se acumula con cada investigación. Cámbiala en la Tienda de millas por Fragmentos o Reliquias destacadas.",
+    "Moeda comum que se acumula a cada pesquisa. Troque na Loja de milhas por Fragmentos ou Relíquias em destaque.",
+    "Eine gemeinsame Währung, die mit jeder Forschung wächst. Tausche sie im Meilen-Shop gegen Splitter oder Pick-up-Relikte.",
+    "Общая валюта, копящаяся с каждым исследованием. Обменивайте её в Магазине миль на Фрагменты или избранных Реликтов."
+  ],
+  "help.term.expedition.name": [
+    "远征",
+    "ออกสำรวจ",
+    "Viễn chinh",
+    "Ekspedisi",
+    "Expedición",
+    "Expedição",
+    "Expedition",
+    "Экспедиция"
+  ],
+  "help.term.expedition.body": [
+    "每天一次、攀登二十层的纪录战。以单局最高分决定每周排名。",
+    "การท้าทายสถิติปีนยี่สิบชั้นวันละครั้ง คะแนนสูงสุดในรอบเดียวจะกำหนดอันดับประจำสัปดาห์",
+    "Thử thách kỷ lục leo hai mươi tầng, mỗi ngày một lần. Điểm cao nhất của một lượt quyết định xếp hạng tuần.",
+    "Tantangan rekor mendaki dua puluh lantai, sekali sehari. Skor terbaik satu putaran menentukan peringkat mingguan.",
+    "Un desafío de récord de veinte pisos, una vez al día. Tu mejor partida decide la clasificación semanal.",
+    "Um desafio de recorde de vinte andares, uma vez por dia. Sua melhor partida define o ranking semanal.",
+    "Ein Rekordlauf über zwanzig Ebenen, einmal am Tag. Dein bester einzelner Lauf bestimmt die Wochenrangliste.",
+    "Рекордный забег на двадцать этажей раз в день. Лучший одиночный забег определяет недельный рейтинг."
+  ],
+  "help.term.interaction.name": [
+    "交流",
+    "แลกเปลี่ยน",
+    "Giao lưu",
+    "Tukar Kunjung",
+    "Intercambio",
+    "Intercâmbio",
+    "Austausch",
+    "Обмен"
+  ],
+  "help.term.interaction.body": [
+    "把遗物派往外部城市，它们回来时会带回物资。",
+    "ส่งเรลิกไปยังเมืองภายนอก แล้วพวกเขาจะนำสิ่งของกลับมา",
+    "Gửi Di vật đến các thành phố bên ngoài, khi trở về chúng sẽ mang theo vật phẩm.",
+    "Kirim Relik ke kota-kota di luar, dan mereka kembali membawa barang.",
+    "Envía Reliquias a ciudades lejanas y volverán trayendo objetos.",
+    "Envie Relíquias para cidades distantes e elas voltam trazendo itens.",
+    "Schicke Relikte in Städte draußen, und sie kehren mit Waren zurück.",
+    "Отправьте Реликтов во внешние города, и они вернутся с товарами."
+  ],
+  "help.term.formation.name": [
+    "编队",
+    "จัดทีม",
+    "Đội hình",
+    "Formasi",
+    "Formación",
+    "Formação",
+    "Formation",
+    "Построение"
+  ],
+  "help.term.formation.body": [
+    "在三个位置部署遗物。中间适合坦克或战士，两侧适合刺客或辅助。",
+    "วางเรลิกในสามช่อง ตรงกลางเหมาะกับแทงก์หรือนักรบ ด้านข้างเหมาะกับนักฆ่าหรือซัพพอร์ต",
+    "Đặt Di vật vào ba vị trí. Ở giữa hợp với Đỡ đòn hoặc Chiến binh, hai bên hợp với Sát thủ hoặc Hỗ trợ.",
+    "Tempatkan Relik di tiga slot. Tengah cocok untuk tank atau prajurit, sisi untuk assassin atau pendukung.",
+    "Coloca Reliquias en tres puestos. Al centro van tanques o guerreros; a los lados, asesinos o apoyos.",
+    "Posicione Relíquias em três lugares. No centro, tanques ou guerreiros; nas laterais, assassinos ou suportes.",
+    "Stelle Relikte auf drei Plätze. In die Mitte passen Tanks oder Krieger, an die Seiten Assassinen oder Unterstützer.",
+    "Расставьте Реликтов на три места. В центр подходят танки или воины, по бокам — убийцы или поддержка."
+  ],
+  "help.term.combatPower.name": [
+    "战斗力",
+    "พลังต่อสู้",
+    "Lực chiến",
+    "Kekuatan Tempur",
+    "Poder de combate",
+    "Poder de Combate",
+    "Kampfkraft",
+    "Боевая мощь"
+  ],
+  "help.term.combatPower.body": [
+    "能力值五边形的面积。用于比较强弱，并不决定战斗结果。",
+    "พื้นที่ของห้าเหลี่ยมค่าสถานะ ใช้เทียบความแข็งแกร่ง แต่ไม่ได้ตัดสินผลการต่อสู้",
+    "Diện tích của hình ngũ giác chỉ số. Dùng để so sức mạnh chứ không quyết định kết quả trận đấu.",
+    "Luas segi lima stat. Dipakai untuk membandingkan kekuatan, bukan penentu hasil pertarungan.",
+    "El área del pentágono de atributos. Sirve para comparar fuerza, pero no decide el resultado del combate.",
+    "A área do pentágono de atributos. Serve para comparar força, mas não decide o resultado da batalha.",
+    "Die Fläche des Werte-Fünfecks. Sie vergleicht die Stärke, entscheidet aber nicht über den Ausgang eines Kampfes.",
+    "Площадь пятиугольника характеристик. Помогает сравнить силу, но не решает исход боя."
+  ],
+  "help.basics.1.heading": [
+    "使用必杀技",
+    "แตะใช้ท่าไม้ตาย",
+    "Dùng Tuyệt kỹ",
+    "Pakai Ultimate",
+    "Usa la Definitiva",
+    "Use a Suprema",
+    "Ultimative Fähigkeit nutzen",
+    "Используйте ульту"
+  ],
+  "help.basics.1.body": [
+    "卡牌图案充满后，点击该卡牌使用必杀技。开启自动必杀技后会自动释放。",
+    "เมื่อภาพบนการ์ดเต็มแล้ว แตะการ์ดนั้นเพื่อใช้ท่าไม้ตาย เปิดท่าไม้ตายอัตโนมัติแล้วจะใช้เอง",
+    "Khi hình trên thẻ đầy, chạm vào thẻ để dùng Tuyệt kỹ. Bật Tuyệt kỹ tự động thì sẽ tự dùng.",
+    "Saat gambar kartu penuh, ketuk kartu itu untuk memakai Ultimate. Nyalakan Ultimate otomatis agar dipakai sendiri.",
+    "Cuando la imagen de una carta se llene, tócala para usar su Definitiva. Activa la Definitiva automática para que se use sola.",
+    "Quando a imagem de uma carta se completar, toque nela para usar a Suprema. Ative a Suprema automática para que ela seja usada sozinha.",
+    "Ist das Bild einer Karte gefüllt, tippe sie an, um ihre Ultimative einzusetzen. Mit der automatischen Ultimativen geschieht das von selbst.",
+    "Когда рисунок карты заполнится, коснитесь её, чтобы применить ульту. Включите авто-ульту, и она будет срабатывать сама."
+  ],
+  "help.basics.2.heading": [
+    "按自己的节奏战斗",
+    "ปรับการต่อสู้ให้ถนัดมือ",
+    "Điều khiển trận đấu",
+    "Atur pertarungan",
+    "Controla el combate",
+    "Controle a batalha",
+    "Kampfsteuerung",
+    "Управление боем"
+  ],
+  "help.basics.2.body": [
+    "用倍速加快战斗，用跳过演出略过必杀技动画。打开贡献度可查看谁表现最好。",
+    "ใช้ความเร็วเพื่อเร่งการต่อสู้ และข้ามฉากเพื่อข้ามฉากท่าไม้ตาย เปิดผลงานเพื่อดูว่าใครเด่นที่สุด",
+    "Dùng Tốc độ để đánh nhanh hơn, Bỏ qua để lướt qua cảnh Tuyệt kỹ. Mở Đóng góp để xem ai nổi bật nhất.",
+    "Kecepatan mempercepat pertarungan, dan Lewati melewatkan adegan Ultimate. Buka Kontribusi untuk melihat siapa yang paling berjasa.",
+    "La Velocidad acelera los combates y Omitir salta las escenas de Definitiva. Abre Contribución para ver quién destacó más.",
+    "A Velocidade acelera as batalhas e Pular ignora as cenas da Suprema. Abra Contribuição para ver quem se destacou.",
+    "Das Tempo beschleunigt Kämpfe, und Überspringen lässt Szenen der Ultimativen aus. Öffne den Beitrag, um zu sehen, wer am meisten geleistet hat.",
+    "Скорость ускоряет бой, а пропуск убирает сцены ульты. Откройте вклад, чтобы увидеть, кто отличился."
+  ],
+  "help.basics.3.heading": [
+    "用芝士蛋糕培养",
+    "เลี้ยงด้วยชีสเค้ก",
+    "Nuôi bằng Bánh phô mai",
+    "Besarkan dengan Cheesecake",
+    "Cría con Tarta de queso",
+    "Crie com Cheesecake",
+    "Mit Käsekuchen aufziehen",
+    "Растите чизкейком"
+  ],
+  "help.basics.3.body": [
+    "在遗物信息中点击喂食，给它吃芝士蛋糕。长按可一次提升多个等级。",
+    "แตะป้อนในข้อมูลเรลิกเพื่อให้ชีสเค้ก กดค้างเพื่อเพิ่มหลายเลเวลในครั้งเดียว",
+    "Chạm Cho ăn trong thông tin Di vật để cho Bánh phô mai. Nhấn giữ để lên nhiều cấp một lúc.",
+    "Ketuk Makan di info Relik untuk memberi Cheesecake. Tekan lama untuk menaikkan beberapa level sekaligus.",
+    "Toca Alimentar en la información de una Reliquia para darle Tarta de queso. Mantén pulsado para subir varios niveles a la vez.",
+    "Toque em Alimentar nas informações da Relíquia para dar Cheesecake. Segure para subir vários níveis de uma vez.",
+    "Tippe in den Relikt-Infos auf Füttern, um Käsekuchen zu geben. Halte gedrückt, um mehrere Stufen auf einmal zu steigen.",
+    "Нажмите «Кормить» в сведениях о Реликте, чтобы дать чизкейк. Удерживайте, чтобы поднять несколько уровней сразу."
+  ],
+  "help.basics.4.heading": [
+    "邂逅新的遗物",
+    "พบเรลิกใหม่",
+    "Gặp Di vật mới",
+    "Temui Relik baru",
+    "Conoce nuevas Reliquias",
+    "Conheça novas Relíquias",
+    "Neue Relikte treffen",
+    "Встречайте новых Реликтов"
+  ],
+  "help.basics.4.body": [
+    "在研究所用化石进行研究，邂逅新的遗物。再次遇到同一遗物时会累积碎片。",
+    "วิจัยด้วยฟอสซิลในห้องวิจัยเพื่อพบเรลิกใหม่ หากพบเรลิกเดิมซ้ำจะได้เศษ",
+    "Nghiên cứu bằng Hóa thạch tại Viện nghiên cứu để gặp Di vật mới. Gặp lại cùng Di vật sẽ tích lũy Mảnh.",
+    "Lakukan Riset dengan Fosil di Lab Riset untuk bertemu Relik baru. Bertemu Relik yang sama lagi mengumpulkan Serpihan.",
+    "Investiga con Fósiles en el Lab de investigación para conocer nuevas Reliquias. Repetir una Reliquia acumula Fragmentos.",
+    "Pesquise com Fósseis no Laboratório para conhecer novas Relíquias. Repetir uma Relíquia acumula Fragmentos.",
+    "Forsche im Forschungslabor mit Fossilien, um neue Relikte zu treffen. Triffst du dasselbe Relikt erneut, sammeln sich Splitter.",
+    "Проводите исследования с окаменелостями в Лаборатории, чтобы встретить новых Реликтов. Повторный Реликт приносит Фрагменты."
+  ],
+  "help.tutorial.basics": [
+    "第一步",
+    "ก้าวแรก",
+    "Bước đầu",
+    "Langkah Pertama",
+    "Primeros pasos",
+    "Primeiros passos",
+    "Erste Schritte",
+    "Первые шаги"
+  ],
+  "help.tutorial.stageMap": [
+    "剧情地图",
+    "แผนที่เนื้อเรื่อง",
+    "Bản đồ cốt truyện",
+    "Peta Cerita",
+    "Mapa de historia",
+    "Mapa da história",
+    "Story-Karte",
+    "Карта сюжета"
+  ],
+  "help.tutorial.party": [
+    "编队",
+    "จัดทีม",
+    "Đội hình",
+    "Formasi",
+    "Formación",
+    "Formação",
+    "Formation",
+    "Построение"
+  ],
+  "help.tutorial.archaeology": [
+    "考古探索",
+    "สำรวจโบราณคดี",
+    "Thám hiểm Khảo cổ",
+    "Penjelajahan Arkeologi",
+    "Exploración arqueológica",
+    "Exploração arqueológica",
+    "Archäologische Erkundung",
+    "Археологическая разведка"
+  ],
+  "help.tutorial.shop": [
+    "商店",
+    "ร้านค้า",
+    "Cửa hàng",
+    "Toko",
+    "Tienda",
+    "Loja",
+    "Shop",
+    "Магазин"
+  ],
+  "help.tutorial.cakeOperation": [
+    "芝士蛋糕大作战",
+    "ปฏิบัติการชีสเค้ก",
+    "Đại chiến Bánh phô mai",
+    "Operasi Cheesecake",
+    "Operación Tarta de queso",
+    "Operação Cheesecake",
+    "Käsekuchen-Operation",
+    "Операция «Чизкейк»"
+  ],
+  "help.tutorial.bounty": [
+    "悬赏",
+    "ค่าหัว",
+    "Truy nã",
+    "Buronan",
+    "Se busca",
+    "Procurados",
+    "Kopfgeld",
+    "Розыск"
+  ],
+  "help.tutorial.interaction": [
+    "交流",
+    "แลกเปลี่ยน",
+    "Giao lưu",
+    "Tukar Kunjung",
+    "Intercambio",
+    "Intercâmbio",
+    "Austausch",
+    "Обмен"
+  ],
+  "help.tutorial.duel": [
+    "决斗场",
+    "สนามดวล",
+    "Đấu trường",
+    "Arena Duel",
+    "Arena de duelos",
+    "Arena de Duelos",
+    "Duellarena",
+    "Арена дуэлей"
+  ],
+  "help.tutorial.friends": [
+    "好友",
+    "เพื่อน",
+    "Bạn bè",
+    "Teman",
+    "Amigos",
+    "Amigos",
+    "Freunde",
+    "Друзья"
+  ],
+  "help.tutorial.raid": [
+    "团队战",
+    "เรด",
+    "Đột kích",
+    "Raid",
+    "Incursión",
+    "Incursão",
+    "Raid",
+    "Рейд"
+  ],
+  "help.tutorial.expedition": [
+    "远征",
+    "ออกสำรวจ",
+    "Viễn chinh",
+    "Ekspedisi",
+    "Expedición",
+    "Expedição",
+    "Expedition",
+    "Экспедиция"
+  ],
+  "help.tutorial.premium": [
+    "高级",
+    "พรีเมียม",
+    "Cao cấp",
+    "Premium",
+    "Prémium",
+    "Premium",
+    "Premium",
+    "Премиум"
+  ],
+  "help.tutorial.archaeology.sub": [
+    "再次讲解遗迹地图和地层盘",
+    "แนะนำแผนที่ซากโบราณและกระดานชั้นหินอีกครั้ง",
+    "Hướng dẫn lại bản đồ di tích và bàn tầng đất",
+    "Memandu lagi peta reruntuhan dan papan lapisan",
+    "Vuelve a guiarte por el mapa de ruinas y el tablero de estratos",
+    "Guia você de novo pelo mapa de ruínas e o tabuleiro de estratos",
+    "Führt dich erneut durch Ruinenkarte und Schichtbrett",
+    "Снова проведёт по карте руин и доске пластов"
+  ]
+}

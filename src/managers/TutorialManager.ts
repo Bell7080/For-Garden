@@ -1,7 +1,7 @@
 import type { CompleteTutorialStepResponse, GameApi } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
 import {
-  tutorialBattleStage, battleFeatureOpen, battleFeatureToTeach, isTutorialStepDone, lobbyTutorialGateStage, lobbyTutorialStep, nextTutorialStep, shouldShowContentIntro, TUTORIAL_STEPS,
+  tutorialBattleStage, battleFeatureOpen, battleFeatureToTeach, isTutorialStepDone, lobbyTutorialGateStage, lobbyTutorialStep, nextTutorialStep, isContentIntroSeen, shouldShowContentIntro, TUTORIAL_STEPS,
   type BattleTutorialFeature, type ContentIntroId, type TutorialStepId,
 } from "../core/tutorial";
 import { createCompletedTutorialState, createEmptyTutorialState, freeRuneCraftId } from "../core/tutorial";
@@ -50,6 +50,9 @@ export class TutorialManager {
 
   /** 이 콘텐츠의 첫 방문 안내를 지금 띄울 차례인가(첫 플레이 튜토리얼을 마쳤고 아직 안 본 것). */
   shouldShowIntro(id: ContentIntroId): boolean { return shouldShowContentIntro(this.tutorial, id); }
+
+  /** 이 첫 방문 안내를 이미 봤나 — 도움말의 다시 보기가 본 안내만 연다. */
+  introSeen(id: ContentIntroId): boolean { return isContentIntroSeen(this.tutorial, id); }
 
   /** 첫 방문 안내를 봤다고 남긴다. 실패해도 안내를 다시 한 번 보는 것뿐이라 삼킨다. */
   async markIntroSeen(id: ContentIntroId): Promise<void> {

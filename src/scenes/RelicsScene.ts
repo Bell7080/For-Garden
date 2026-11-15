@@ -1,3 +1,4 @@
+import { settingsManager } from "../managers/SettingsManager";
 import Phaser from "phaser";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { t } from "../i18n";
@@ -144,6 +145,11 @@ export class RelicsScene extends Phaser.Scene {
     setDebugScene("relics");
     this.debugCards = {};
     this.cards.clear();
+    // 마지막으로 걸어 둔 필터·정렬로 연다(`core/rosterViewMemory.ts`). 검색 글은 기억하지 않는다.
+    const remembered = settingsManager.rosterView("codex");
+    this.sortMode = remembered.sortMode;
+    this.descending = remembered.descending;
+    this.filter = remembered.filter;
     // 화면 좌표에 고정된 사각형이 콘텐츠가 움직여도 제목·탭 영역을 절대 침범하지 않는다.
     // 스크롤 영역은 사각형이라 스텐실 마스크가 아니라 scissor로 자른다(`ScissorContainer`) —
     // 스텐실은 렌더 묶음을 끊어 카드가 많은 도감의 프레임을 깎았다.
@@ -190,7 +196,7 @@ export class RelicsScene extends Phaser.Scene {
       descending: this.descending,
       filterCount: relicFilterCount(this.filter),
       onSort: (mode) => this.setSortMode(mode as SortMode),
-      onDirection: (descending) => { this.descending = descending; this.refresh(true); },
+      onDirection: (descending) => { this.descending = descending; this.rememberView(); this.refresh(true); },
       onFilter: (anchor) => openRelicFilterPopup(this, this.popups, anchor, () => this.filter, (filter) => this.setFilter(filter)),
       onSearch: (query) => this.setFilter({ ...this.filter, query }),
       onAffinity: (anchor) => openElementChartPopup(this, this.popups, anchor),
@@ -414,13 +420,20 @@ export class RelicsScene extends Phaser.Scene {
     // 개체번호로 바꿨는데 마지막 번호부터 서면, 그건 고른 기준이 아니라 직전 방향이 남긴 줄이다.
     this.descending = SORT_DEFAULT_DESCENDING[mode];
     this.controls.setDirection(this.descending);
+    this.rememberView();
     this.refresh(true);
+  }
+
+  /** 지금 필터·정렬을 이 기기에 남긴다 — 도감을 닫았다 열어도(앱을 다시 켜도) 그대로 선다. */
+  private rememberView(): void {
+    settingsManager.rememberRosterView("codex", { filter: this.filter, sortMode: this.sortMode, descending: this.descending });
   }
 
   /** 조건이 바뀌면 걸린 수를 조작 줄에 알리고 목록을 다시 세운다. */
   private setFilter(filter: RelicFilter): void {
     this.filter = filter;
     this.controls.setFilterCount(relicFilterCount(filter));
+    this.rememberView();
     this.refresh(true);
   }
 

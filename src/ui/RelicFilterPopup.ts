@@ -6,7 +6,7 @@ import { PLAYABLE_RELICS } from "../data/relics";
 import { SQUADS } from "../data/factions";
 import { RARITY_TONE } from "./rarityMark";
 import { squeezeTextToWidth } from "./textFit";
-import { EMPTY_RELIC_FILTER, relicFilterCount, toggleFilterValue, type RelicFilter } from "../core/relicFilter";
+import { EMPTY_RELIC_FILTER, RELIC_FILTER_PRESET_AXES, relicFilterCount, toggleFilterValue, type RelicFilter, type RelicFilterAxis, type RelicFilterPreset } from "../core/relicFilter";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON, type AffinityIconKey } from "./affinityIcons";
 import { chipPoints, drawLayer, drawShapeEdge, slantedRect, toPoints } from "./holo";
@@ -35,27 +35,7 @@ function playableSquads(): SquadId[] {
   return (Object.keys(SQUADS) as SquadId[]).filter((id) => used.has(id));
 }
 
-/** 판이 세우는 축 하나. */
-export type RelicFilterAxis = "specialty" | "currency" | "rarity" | "element" | "role" | "reach" | "squad";
-
-/**
- * 어느 화면에서 여는 판인가 — **그 화면에서 고르는 데 쓰이는 축만** 세운다.
- *
- * - `full` 도감: 다섯 축 전부.
- * - `battle` 전투 편성(파티·원정): 전투에 필요한 속성·직군·사거리.
- * - `excavation` 발굴 배치: 생산량을 정하는 것은 **캐는 재화**라 그 축이 맨 위이고, 고르는 손이 함께 보는 등급이 그 아래다.
- *   속성·직군·사거리는 발굴 생산에 아무 영향이 없어 세우지 않는다.
- * - `interaction` 교류 파견: 몫을 정하는 것은 도시 특화(속성·직군·소속)라 「특화 일치」 한 칸과 그 세 축이 선다.
- *   사거리·등급은 파견 몫에 들지 않는다.
- */
-export type RelicFilterPreset = "full" | "battle" | "excavation" | "interaction";
-
-export const RELIC_FILTER_PRESET_AXES: Readonly<Record<RelicFilterPreset, readonly RelicFilterAxis[]>> = {
-  full: ["rarity", "element", "role", "reach", "squad"],
-  battle: ["element", "role", "reach"],
-  excavation: ["currency", "rarity"],
-  interaction: ["specialty", "element", "role", "squad"],
-};
+export { RELIC_FILTER_PRESET_AXES, type RelicFilterAxis, type RelicFilterPreset } from "../core/relicFilter";
 
 /** 켜진 칩과 꺼진 칩. 색이 아니라 **밝기와 크기**로 가른다 — 화면 전체의 선택 규칙과 같다. */
 const CHIP = { on: { fill: 0x1d2a38, alpha: 0.98, scale: 1.06 }, off: { fill: 0x080d13, alpha: 0.72, scale: 1 } } as const;

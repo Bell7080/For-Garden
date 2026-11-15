@@ -869,7 +869,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.rosterMask = this.make.graphics({});
     this.rosterMask.fillStyle(0xffffff, 1).fillRect(0, ROSTER_VIEWPORT.top, BASE_WIDTH, ROSTER_VIEWPORT.bottom - ROSTER_VIEWPORT.top);
     content.setMask(this.rosterMask.createGeometryMask());
-    this.rosterView = DEFAULT_ROSTER_VIEW;
+    this.rosterView = settingsManager.rosterView("expedition");
     this.fillRosterGrid();
     addScrollHint(this, undefined, {
       x: BASE_WIDTH / 2, y: (ROSTER_VIEWPORT.top + ROSTER_VIEWPORT.bottom) / 2, width: BASE_WIDTH,
@@ -882,7 +882,7 @@ export class ExpeditionScene extends Phaser.Scene {
       right: BASE_WIDTH / 2 + formationRosterColumnX(ROSTER, ROSTER.columns - 1) + ROSTER.cardWidth / 2,
       y: ROSTER_VIEWPORT.top + PORTRAIT_GRID_MASK_GAP - 18 - ROSTER_CONTROLS.height / 2,
       view: this.rosterView,
-      onChange: (view) => { this.rosterView = view; this.fillRosterGrid(); this.refreshPreparationSelection(); },
+      onChange: (view) => { this.rosterView = view; settingsManager.rememberRosterView("expedition", view); this.fillRosterGrid(); this.refreshPreparationSelection(); },
     });
 
     // 목록 카드도 끌어서 칸에 놓는다. 세로 끌기는 스크롤, 가로로 끌거나 창 위로 끌어 올리면 SD가 튀어나온다.

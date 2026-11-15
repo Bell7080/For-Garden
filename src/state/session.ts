@@ -94,7 +94,9 @@ export interface GameSettings {
     /** 새로 열린 콘텐츠의 기록 — 마지막으로 본 열림 상태와 아직 들르지 않은 것(`core/contentFresh.ts`). 비었으면 아직 기록이 없다 — 기기 기록이다. */
     contentSeen: import("../core/contentFresh").ContentSeenState | null;
     /** 마지막으로 본 아레나 전적(`core/arenaNotice.ts`). 결과판 없이 끝난 판을 입구가 한 번 알린다 — 기기 기록이다. */
-    arenaSeen: import("../core/arenaNotice").ArenaSeenRecord | null };
+    arenaSeen: import("../core/arenaNotice").ArenaSeenRecord | null;
+    /** 렐릭 목록 화면마다 마지막으로 걸어 둔 필터·정렬(`core/rosterViewMemory.ts`). 비었으면 기본값이다 — 기기 선호다. */
+    rosterViews: import("../core/rosterViewMemory").StoredRosterViews };
   account: { provider: "guest" | "google" | "apple"; displayId: string };
 }
 

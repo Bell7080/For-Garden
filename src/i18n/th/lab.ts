@@ -13,7 +13,6 @@ export const LAB_TH = {
   "lab.history.unknownBanner": "การวิจัยที่สิ้นสุดแล้ว",
   "lab.history.pickupName": "เรทอัป {name}",
   "lab.history.count": "นับการันตี {count} / {total}",
-  "lab.history.carryover": "การันตีและเรทอัปการันตีจะยกไปยังเรทอัปถัดไป",
   "lab.mileageShop.short": "ไมล์",
   "lab.pity.label": "จนกว่าจะการันตี SSR",
   "lab.pity.unit": "ครั้ง",

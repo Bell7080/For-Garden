@@ -13,7 +13,6 @@ export const LAB_VI = {
   "lab.history.unknownBanner": "Nghiên cứu đã kết thúc",
   "lab.history.pickupName": "Tăng tỉ lệ {name}",
   "lab.history.count": "Đếm bảo đảm {count} / {total}",
-  "lab.history.carryover": "Bảo đảm và tăng tỉ lệ chắc chắn được chuyển sang đợt kế tiếp",
   "lab.mileageShop.short": "Tích điểm",
   "lab.pity.label": "Còn đến khi chắc chắn SSR",
   "lab.pity.unit": "lượt",

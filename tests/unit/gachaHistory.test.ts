@@ -6,7 +6,7 @@ import { canonicalJson } from "../../src/core/jsonShape";
 import { SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession } from "../../src/state/session";
 import { formatGachaHistoryTime, gachaHistoryRows, GACHA_HISTORY } from "../../src/ui/gachaHistoryLayout";
-import { gachaHistoryEntryTint, gachaHistoryPickupRelicId, gachaHistorySectionOfBanner, gachaHistorySummary } from "../../src/ui/gachaHistorySections";
+import { gachaHistoryEntryTint, gachaHistoryPickupRelicId, gachaHistoryPityTotal, gachaHistorySectionOfBanner } from "../../src/ui/gachaHistorySections";
 
 function entry(count: 1 | 10, at = "2026-11-11T09:00:00.000Z"): GachaHistoryEntry {
   return { at, bannerId: "fossil", count, cost: { fossil: count }, pity: 3, slots: Array.from({ length: count }, () => ({ kind: "relic" as const, relicId: "torika" })) };
@@ -79,10 +79,10 @@ describe("연구 기록 — 뽑기별 구분", () => {
     expect(gachaHistorySectionOfBanner("welcome", banners)).toBe("welcome");
   });
 
-  it("머리 판은 그 갈래의 천장 그룹 값을 읽고, 한정 픽업만 이월을 말한다", () => {
-    const pity = { [getBanner("amber").pityGroupId]: { pullsSinceSsr: 83, pickupGuaranteed: true }, [getBanner("fossil").pityGroupId]: { pullsSinceSsr: 5, pickupGuaranteed: false } };
-    expect(gachaHistorySummary("pickup", banners, pity)).toEqual({ count: 83, total: 120, left: 37, pickupNext: true, carriesOver: true });
-    expect(gachaHistorySummary("standard", banners, pity)).toEqual({ count: 5, total: 120, left: 115, pickupNext: false, carriesOver: false });
+  it("묶음 머리줄의 분모는 그 배너가 속한 천장 그룹의 확정 횟수다", () => {
+    expect(gachaHistoryPityTotal("amber", banners)).toBe(getBanner("amber").highestRarityGuarantee);
+    expect(gachaHistoryPityTotal("moonlit", banners)).toBe(gachaHistoryPityTotal("amber", banners));
+    expect(gachaHistoryPityTotal("welcome", banners)).toBe(getBanner("welcome").highestRarityGuarantee);
   });
 
   it("디안·플레샤 픽업은 머리줄 색과 얼굴로 갈린다", () => {
@@ -92,7 +92,8 @@ describe("연구 기록 — 뽑기별 구분", () => {
     expect(gachaHistoryPickupRelicId("fossil", banners)).toBeUndefined();
   });
 
-  it("머리 판은 흐르는 목록 위에 선다", () => {
-    expect(GACHA_HISTORY.summary.top + GACHA_HISTORY.summary.height).toBeLessThan(GACHA_HISTORY.viewportTop);
+  it("머리 판 없이 목록이 머리글 바로 아래에서 흐른다", () => {
+    expect(GACHA_HISTORY.viewportTop).toBeGreaterThan(GACHA_HISTORY.captionY);
+    expect("summary" in GACHA_HISTORY).toBe(false);
   });
 });

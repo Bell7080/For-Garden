@@ -129,16 +129,6 @@
 "Garantiezähler {count} / {total}",
 "Счётчик гарантии {count} / {total}"
 ],
-"lab.history.carryover": [
-"保底与UP必得将继承至下一期UP",
-"การันตีและเรทอัปการันตีจะยกไปยังเรทอัปถัดไป",
-"Bảo đảm và tăng tỉ lệ chắc chắn được chuyển sang đợt kế tiếp",
-"Jaminan dan pickup pasti terbawa ke pickup berikutnya",
-"La garantía y el destacado asegurado pasan al siguiente destacado",
-"A garantia e o destaque garantido passam para o próximo destaque",
-"Garantie und Pickup-Garantie gehen auf das nächste Pickup über",
-"Гарантия и избранный переносятся на следующий баннер"
-],
 "lab.mileageShop.short": [
 "里程",
 "ไมล์",

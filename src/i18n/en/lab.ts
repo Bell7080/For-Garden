@@ -13,7 +13,6 @@ export const LAB_EN = {
   "lab.history.unknownBanner": "Ended Research",
   "lab.history.pickupName": "{name} Pickup",
   "lab.history.count": "Pity count {count} / {total}",
-  "lab.history.carryover": "Pity and pickup guarantee carry over to the next pickup",
   "lab.mileageShop.short": "Mileage",
   "lab.pity.label": "SSR guaranteed in",
   "lab.pity.unit": "pulls",

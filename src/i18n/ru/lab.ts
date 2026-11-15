@@ -13,7 +13,6 @@ export const LAB_RU = {
   "lab.history.unknownBanner": "Завершённое исследование",
   "lab.history.pickupName": "Избранный: {name}",
   "lab.history.count": "Счётчик гарантии {count} / {total}",
-  "lab.history.carryover": "Гарантия и избранный переносятся на следующий баннер",
   "lab.mileageShop.short": "Мили",
   "lab.pity.label": "До гарантии SSR",
   "lab.pity.unit": "раз",

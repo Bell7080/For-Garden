@@ -3,10 +3,10 @@
  *
  * 묶음 머리줄이 색·이름만으로는 「천장 카운트 23」이 어느 연구의 23인지 읽히지 않았다(응태 요청, 2026-11-15).
  * 모든 기록은 한 목록에 쌓이고(뽑기가 늘어도 탭이 늘지 않게), 묶음마다 그 배너의 모집판 결·픽업 얼굴과
- * 그 천장 그룹의 분모(`n / 120`)가 선다. 천장은 배너가 아니라 **천장 그룹**(`Banner.pityGroupId`)마다 쌓인다 —
+ * 그 천장 그룹의 분모(`n / 120`)가 선다. 머리 판은 두지 않는다(응태, 2026-11-15). 천장은 배너가 아니라 **천장 그룹**(`Banner.pityGroupId`)마다 쌓인다 —
  * 플레샤·디안 픽업은 교대로 서도 한 그룹이라 천장이 이월된다(`pickupRotation.ts`).
  */
-import type { Banner, GachaPityState } from "../core/gacha";
+import type { Banner } from "../core/gacha";
 import { PITY_GROUP, QA_PICKUP_BANNER_PREFIX } from "../data/banners";
 import { BANNER_TONE, bannerPresentation, type BannerTone } from "./labBannerPresentation";
 
@@ -28,10 +28,6 @@ export const GACHA_HISTORY_SECTION_TONE: Record<GachaHistorySection, BannerTone>
   welcome: "welcome",
 };
 
-export function gachaHistorySectionGroup(section: GachaHistorySection): string {
-  return SECTION_GROUP[section];
-}
-
 export function gachaHistorySectionOfGroup(groupId: string): GachaHistorySection {
   return GACHA_HISTORY_SECTIONS.find((section) => SECTION_GROUP[section] === groupId) ?? "standard";
 }
@@ -46,32 +42,10 @@ export function gachaHistorySectionOfBanner(bannerId: string, banners: readonly 
   return bannerId.startsWith(QA_PICKUP_BANNER_PREFIX) ? "pickup" : "standard";
 }
 
-export interface GachaHistorySummary {
-  /** 그 갈래의 SSR 이후 누적 횟수. */
-  count: number;
-  /** 확정까지의 총 횟수(천장). */
-  total: number;
-  /** SSR 확정까지 남은 횟수. */
-  left: number;
-  /** 다음 SSR이 픽업으로 확정되었나. */
-  pickupNext: boolean;
-  /** 천장·픽업 확정이 다음 픽업으로 이월되는 갈래인가. */
-  carriesOver: boolean;
-}
-
-/** 머리 판·머리줄 분모 — 지금 그 갈래의 천장. 배너 정의의 확정 횟수와 저장의 천장 그룹 값을 그대로 읽는다. */
-export function gachaHistorySummary(section: GachaHistorySection, banners: readonly Banner[], pityByGroup: Readonly<Record<string, GachaPityState>>): GachaHistorySummary {
-  const group = SECTION_GROUP[section];
-  const total = banners.find((banner) => banner.pityGroupId === group)?.highestRarityGuarantee ?? 0;
-  const pity = pityByGroup[group];
-  const count = pity?.pullsSinceSsr ?? 0;
-  return {
-    count,
-    total,
-    left: Math.max(0, total - count),
-    pickupNext: section === "pickup" && pity?.pickupGuaranteed === true,
-    carriesOver: section === "pickup",
-  };
+/** 묶음 머리줄의 분모(`n / 120`) — 그 배너가 속한 천장 그룹의 확정 횟수. 정의를 못 찾으면 0. */
+export function gachaHistoryPityTotal(bannerId: string, banners: readonly Banner[]): number {
+  const group = SECTION_GROUP[gachaHistorySectionOfBanner(bannerId, banners)];
+  return banners.find((banner) => banner.pityGroupId === group)?.highestRarityGuarantee ?? 0;
 }
 
 export interface GachaHistoryTint {

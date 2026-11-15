@@ -12,13 +12,8 @@ export const GACHA_HISTORY = {
   padding: 40,
   /** 창 윗변에서 머리글(최근 N건) 줄까지. 제목표가 윗변에 걸터앉으므로 그만큼 비운다. */
   captionY: 74,
-  /**
-   * 머리 판 — 지금 보고 있던 뽑기의 이름과 천장(확정까지 남은 수 · 카운트 · 픽업 확정 · 이월). 목록과 함께 흐르지
-   * 않는다 — 기록을 내려 읽는 동안에도 「이 천장이 어느 연구의 것인가」가 위에 남아야 한다.
-   */
-  summary: { top: 112, height: 172, nameSize: 30, leftSize: 46, unitSize: 26, lineSize: 23 },
   /** 창 윗변에서 흐르는 목록 창 윗변까지. */
-  viewportTop: 302,
+  viewportTop: 112,
   /** 창 밑변에서 흐르는 목록 창 밑변까지. */
   viewportBottom: 40,
   header: { height: 100, gap: 14, titleSize: 30, subSize: 23, dateSize: 23, face: 72, band: 8 },

@@ -13,7 +13,6 @@ export const LAB_ZH_HANT = {
   "lab.history.unknownBanner": "已結束的研究",
   "lab.history.pickupName": "{name} UP",
   "lab.history.count": "保底計數 {count} / {total}",
-  "lab.history.carryover": "保底與UP必得將繼承至下一期UP",
   "lab.mileageShop.short": "里程",
   "lab.pity.label": "距離SSR保底",
   "lab.pity.unit": "次",

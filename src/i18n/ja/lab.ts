@@ -13,7 +13,6 @@ export const LAB_JA = {
   "lab.history.unknownBanner": "終了した研究",
   "lab.history.pickupName": "{name}ピックアップ",
   "lab.history.count": "天井カウント {count} / {total}",
-  "lab.history.carryover": "天井とピックアップ確定は次のピックアップへ引き継がれます",
   "lab.mileageShop.short": "マイレージ",
   "lab.pity.label": "SSR確定まで",
   "lab.pity.unit": "回",

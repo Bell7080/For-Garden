@@ -13,7 +13,6 @@ export const LAB_ID = {
   "lab.history.unknownBanner": "Riset berakhir",
   "lab.history.pickupName": "Pickup {name}",
   "lab.history.count": "Hitungan jaminan {count} / {total}",
-  "lab.history.carryover": "Jaminan dan pickup pasti terbawa ke pickup berikutnya",
   "lab.mileageShop.short": "Poin",
   "lab.pity.label": "Hingga SSR terjamin",
   "lab.pity.unit": "kali",

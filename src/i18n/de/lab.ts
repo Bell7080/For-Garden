@@ -13,7 +13,6 @@ export const LAB_DE = {
   "lab.history.unknownBanner": "Beendete Forschung",
   "lab.history.pickupName": "{name}-Pickup",
   "lab.history.count": "Garantiezähler {count} / {total}",
-  "lab.history.carryover": "Garantie und Pickup-Garantie gehen auf das nächste Pickup über",
   "lab.mileageShop.short": "Meilen",
   "lab.pity.label": "SSR garantiert in",
   "lab.pity.unit": "Zügen",

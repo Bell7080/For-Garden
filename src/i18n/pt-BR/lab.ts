@@ -13,7 +13,6 @@ export const LAB_PT_BR = {
   "lab.history.unknownBanner": "Pesquisa encerrada",
   "lab.history.pickupName": "Destaque: {name}",
   "lab.history.count": "Contador de garantia {count} / {total}",
-  "lab.history.carryover": "A garantia e o destaque garantido passam para o próximo destaque",
   "lab.mileageShop.short": "Milhas",
   "lab.pity.label": "SSR garantido em",
   "lab.pity.unit": "giros",

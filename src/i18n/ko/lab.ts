@@ -13,7 +13,6 @@ export const LAB_KO = {
   "lab.history.unknownBanner": "종료된 연구",
   "lab.history.pickupName": "{name} 픽업",
   "lab.history.count": "천장 카운트 {count} / {total}",
-  "lab.history.carryover": "천장과 픽업 확정은 다음 픽업으로 이월됩니다",
   "lab.mileageShop.short": "마일리지",
   "lab.pity.label": "SSR 확정까지",
   "lab.pity.unit": "회",

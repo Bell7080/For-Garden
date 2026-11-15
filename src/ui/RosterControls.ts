@@ -4,7 +4,7 @@ import { RELIC_SORT_MODES, type RelicSortMode } from "../core/relicSort";
 import { rosterFilterCount, withRosterSort, type RosterView } from "../core/rosterView";
 import { addFilterButton, type FilterButton } from "./FilterButton";
 import { PopupLayer } from "./PopupLayer";
-import { openRelicFilterPopup } from "./RelicFilterPopup";
+import { openRelicFilterPopup, type RelicFilterPreset } from "./RelicFilterPopup";
 import { SortControl } from "./SortControl";
 
 /** 조작 줄의 자리. 도감의 큰 줄(84)보다 한 뼘 낮게 잡아 편성 화면의 그리드 위 한 줄에 든다. */
@@ -21,8 +21,14 @@ export interface RosterControlsOptions {
   readonly y: number;
   readonly view: RosterView;
   readonly onChange: (view: RosterView) => void;
-  /** 필터 판이 사는 층. 넘기지 않으면 이 줄이 하나 만든다. */
+  /**
+   * 필터 판이 사는 층. **팝업 안에 서는 줄이면 그 팝업의 층을 반드시 넘긴다** — 이 줄이 따로 만든 층은
+   * 깊이가 고정(2200)이라, 그보다 높은 층에 선 팝업(교류 2600) 안에서 열면 판이 그 팝업 **뒤**에 깔렸다.
+   * 같은 층에 쌓으면 이미 열린 어느 판보다 위에 선다.
+   */
   readonly popups?: PopupLayer;
+  /** 필터 판이 세우는 축(`RELIC_FILTER_PRESET_AXES`). 화면이 무엇으로 고르는지에 맞춘다. 기본은 전투 편성. */
+  readonly filterPreset?: RelicFilterPreset;
   /** 펼친 정렬 목록·필터 판이 다른 입력 위에 얹히도록 하는 깊이. */
   readonly depth?: number;
   /**
@@ -56,9 +62,12 @@ export class RosterControls {
 
     this.filter = addFilterButton(scene, this.layer, { x: options.left + filterWidth / 2, y, width: filterWidth, height }, () => {
       this.sort.closeMenu();
-      const anchor = { x: options.left + filterWidth / 2, y: y + height / 2 + 26 };
-      const world = options.parent ? options.parent.getWorldTransformMatrix().transformPoint(anchor.x, anchor.y) : anchor;
-      openRelicFilterPopup(scene, this.popups, { x: world.x, y: world.y }, () => this.view.filter, (next) => this.change({ ...this.view, filter: next }), "battle");
+      // 판은 줄 **바로 아래**에서 목록을 덮으며 열린다. 가로는 목록 가운데 — 칩 하나에 맞추면 판이
+      // 화면 왼쪽 끝으로 밀려 팝업 밖으로 비어져 나왔다.
+      const below = { x: (options.left + options.right) / 2, y: y + height / 2 + 12 };
+      const world = options.parent ? options.parent.getWorldTransformMatrix().transformPoint(below.x, below.y) : below;
+      openRelicFilterPopup(scene, this.popups, { below: { x: world.x, y: world.y } }, () => this.view.filter,
+        (next) => this.change({ ...this.view, filter: next }), options.filterPreset ?? "battle");
     });
 
     const dirX = options.right - dirWidth / 2;
@@ -66,6 +75,9 @@ export class RosterControls {
       x: dirX - dirWidth / 2 - gap - sortWidth / 2, y, height, sortWidth, dirWidth, gap, fontSize,
       sortOptions: RELIC_SORT_MODES.map((mode) => ({ id: mode, label: t(`relics.sort.${mode === "number" ? "id" : mode}`) })),
       sortMode: this.view.sortMode, descending: this.view.descending, parent: this.layer,
+      // 펼친 목록이 그리드 **위**에 서도록 연 순간 이 줄을 부모의 맨 위로 올린다. 그리드는 이 줄보다 늦게
+      // 더해지므로 그대로 두면 목록이 카드 뒤에 깔리고 카드가 먼저 손을 받았다.
+      onOpen: () => { this.options.parent?.bringToTop(this.layer); },
       onSort: (mode) => { this.change(withRosterSort(this.view, mode), true); },
       onDirection: (descending) => this.change({ ...this.view, descending }),
     });

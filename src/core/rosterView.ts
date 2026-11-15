@@ -1,5 +1,5 @@
 import type { RelicDef } from "./types";
-import { EMPTY_RELIC_FILTER, matchesRelicFilter, relicFilterCount, type RelicFilter } from "./relicFilter";
+import { EMPTY_RELIC_FILTER, matchesRelicFilter, relicFilterCount, type RelicFilter, type RelicFilterContext } from "./relicFilter";
 import { SORT_DEFAULT_DESCENDING, sortRelicsBy, type RelicSortMode } from "./relicSort";
 
 /**
@@ -31,6 +31,6 @@ export function rosterFilterCount(view: RosterView): number {
 }
 
 /** 조건에 맞는 렐릭만, 기준·방향대로 세운다. 전투력은 부르는 쪽이 어떻게 세는지 넘긴다. */
-export function applyRosterView(relics: readonly RelicDef[], view: RosterView, powerOf: (relic: RelicDef) => number): RelicDef[] {
-  return sortRelicsBy(relics.filter((relic) => matchesRelicFilter(relic, view.filter)), view.sortMode, view.descending, powerOf);
+export function applyRosterView(relics: readonly RelicDef[], view: RosterView, powerOf: (relic: RelicDef) => number, context: RelicFilterContext = {}): RelicDef[] {
+  return sortRelicsBy(relics.filter((relic) => matchesRelicFilter(relic, view.filter, context)), view.sortMode, view.descending, powerOf);
 }

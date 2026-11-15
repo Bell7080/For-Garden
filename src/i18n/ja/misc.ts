@@ -314,6 +314,9 @@ export const MISC_JA = {
   "relics.filter.reach": "射程",
   "relics.filter.rarity": "等級",
   "relics.filter.squad": "所属",
+  "relics.filter.currency": "生産資源",
+  "relics.filter.specialty": "都市特化",
+  "relics.filter.specialtyOnly": "特化一致のみ",
   "relics.filter.reset": "条件解除",
   "relics.search": "名前で検索",
 

@@ -26,7 +26,8 @@ import { PortraitCard } from "./PortraitCard";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
 import { RosterControls } from "./RosterControls";
-import { autoAssignExcavation, excavationAutoModeLabel, EXCAVATION_AUTO_MODES, type ExcavationAutoMode, type ExcavationCandidate } from "../core/excavationAutoAssign";
+import { autoAssignExcavation, type ExcavationAutoMode, type ExcavationCandidate } from "../core/excavationAutoAssign";
+import { ExcavationAutoPlace } from "./ExcavationAutoPlace";
 import { bindLongPress } from "./longPressInfo";
 import { type InfoManager, sceneInfoManager } from "./info";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "./portraitGrid";
@@ -73,6 +74,11 @@ const EFFECT_CHIP = { width: 210, height: 36, x: 300 } as const;
 /** 그리드 위 두 줄의 간격 — 그리드에 붙는 줄은 필터·정렬, 그 위 줄은 자동 배치 같은 편성 보조 버튼이다. */
 const ROSTER_BAR_STEP = 64;
 const GRID_VIEW = { left: -415, right: 415, top: STATUS_SUMMARY.y - STATUS_SUMMARY.height / 2 + ROSTER_BAR_STEP, bottom: 425 } as const;
+/**
+ * 자동 배치 줄의 세로 중심. 필터·정렬 줄과 한 뼘(76) 벌려, 두 줄이 붙어 한 덩어리로 낑겨 보이지
+ * 않게 하고 위 슬롯 판의 밑변과도 30px 넘게 띄운다.
+ */
+const AUTO_ROW_Y = GRID_VIEW.top - 42 - 76;
 /** 한 줄에 몇 칸이고 카드가 얼마나 큰지는 화면이 정하지 않는다 — 폭만 주면 공용 규칙이 정한다. */
 const ROSTER = formationRosterGrid(GRID_VIEW.right - GRID_VIEW.left);
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
@@ -625,35 +631,32 @@ export class IdleExcavationPopup {
     this.renderUpper(this.draft, true);
     const content = this.resetLower();
     if (!content) return;
-    this.rosterLabel = this.scene.add.text(GRID_VIEW.left + 10, GRID_VIEW.top - 42 - ROSTER_BAR_STEP, (this.selectedSlot === undefined ? t("excavation.ownedRelics") : t("excavation.ownedRelicsForSlot", { slot: this.selectedSlot + 1 })), textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5);
+    this.rosterLabel = this.scene.add.text(GRID_VIEW.left + 10, AUTO_ROW_Y, (this.selectedSlot === undefined ? t("excavation.ownedRelics") : t("excavation.ownedRelicsForSlot", { slot: this.selectedSlot + 1 })), textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5);
     content.add(this.rosterLabel);
-    // 조작 설명 대신 **그 조작을 대신해 주는 단추**를 둔다. 기준은 화살표로 돌려 고르고,
-    // 무엇을 많이 캘지는 지금 모자란 재화에 따라 그때그때 달라지므로 하나로 고정하지 않는다.
-    const autoY = GRID_VIEW.top - 42 - ROSTER_BAR_STEP;
-    content.add(new Button(this.scene, GRID_VIEW.right - 205, autoY, {
-      width: 190, height: 56, fontSize: 22,
-      label: t("excavation.autoPlace"), sub: excavationAutoModeLabel(this.autoMode),
-      onClick: () => {
-        if (this.saving || !this.draft) return;
-        this.draft = autoAssignExcavation(this.autoCandidates(), this.autoMode);
-        // 자동으로 채운 뒤에는 첫 빈 칸(없으면 1번)이 다음 손을 기다린다.
-        this.selectedSlot = undefined;
-        this.refreshEditorSlots();
-      },
-    }));
-    content.add(new Button(this.scene, GRID_VIEW.right - 75, autoY, {
-      width: 56, height: 56, fontSize: 24, label: "▶",
-      onClick: () => {
-        const index = EXCAVATION_AUTO_MODES.indexOf(this.autoMode);
-        this.autoMode = EXCAVATION_AUTO_MODES[(index + 1) % EXCAVATION_AUTO_MODES.length];
+    // 조작 설명 대신 **그 조작을 대신해 주는 단추**를 둔다. 무엇을 많이 캘지는 지금 모자란 재화에
+    // 따라 그때그때 달라지므로 하나로 고정하지 않고, 기준 칩이 아래로 펼치는 목록에서 고른다.
+    const apply = (): void => {
+      if (this.saving || !this.draft) return;
+      this.draft = autoAssignExcavation(this.autoCandidates(), this.autoMode);
+      // 자동으로 채운 뒤에는 첫 빈 칸(없으면 1번)이 다음 손을 기다린다.
+      this.selectedSlot = undefined;
+      this.refreshEditorSlots();
+    };
+    new ExcavationAutoPlace(this.scene, {
+      right: GRID_VIEW.right, y: AUTO_ROW_Y, parent: content, mode: this.autoMode,
+      onApply: apply,
+      onPick: (mode) => {
+        this.autoMode = mode;
+        apply();
         this.renderEditor();
       },
-    }));
+    });
     const powerOf = (relic: RelicDef): number => relicProgression.getCombatPower(relic.id);
     const owned = applyRosterView(RELICS.filter((relic) => session.owned.has(relic.id)), this.rosterView, powerOf);
     // 그리드에 붙는 줄 — 도감과 같은 필터·정렬. 바뀌면 목록만 다시 세운다(편성 초안은 그대로다).
     new RosterControls(this.scene, {
       left: GRID_VIEW.left, right: GRID_VIEW.right, y: GRID_VIEW.top - 42, parent: content, view: this.rosterView,
+      popups: this.popups, filterPreset: "excavation",
       onChange: (view) => { this.rosterView = view; this.gridScrollY = 0; this.renderEditor(); },
     });
     this.rosterCards.clear();

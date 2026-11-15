@@ -2353,6 +2353,36 @@
 "Trupp",
 "Отряд"
 ],
+"relics.filter.currency": [
+"产出资源",
+"ทรัพยากรที่ผลิต",
+"Tài nguyên sản xuất",
+"Hasil Produksi",
+"Recurso producido",
+"Recurso produzido",
+"Ertrag",
+"Добыча"
+],
+"relics.filter.specialty": [
+"城市专长",
+"ความถนัดของเมือง",
+"Chuyên môn thành phố",
+"Keahlian Kota",
+"Especialidad de la ciudad",
+"Especialidade da cidade",
+"Stadt-Spezialität",
+"Специализация города"
+],
+"relics.filter.specialtyOnly": [
+"仅限专长匹配",
+"เฉพาะที่ตรงความถนัด",
+"Chỉ khớp chuyên môn",
+"Hanya keahlian cocok",
+"Solo con especialidad",
+"Só com especialidade",
+"Nur passende Spezialität",
+"Только со специализацией"
+],
 "relics.filter.reset": [
 "清除",
 "ล้าง",

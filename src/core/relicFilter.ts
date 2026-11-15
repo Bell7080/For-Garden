@@ -1,4 +1,4 @@
-import type { Element, ReachTier, RelicDef, RelicRarity, Role, SquadId } from "./types";
+import type { Element, ExcavationProductionCurrency, ReachTier, RelicDef, RelicRarity, Role, SquadId } from "./types";
 
 /**
  * 도감이 목록을 좁히는 조건.
@@ -15,15 +15,29 @@ export interface RelicFilter {
   readonly elements: readonly Element[];
   readonly roles: readonly Role[];
   readonly reaches: readonly ReachTier[];
+  /** 발굴에서 캐는 주력 재화(`excavationTrait.primaryCurrency`). 발굴 배치 목록만 이 축을 세운다. */
+  readonly currencies: readonly ExcavationProductionCurrency[];
+  /**
+   * 지금 고른 교류 도시의 특화(속성·직군·소속)와 하나라도 맞는 렐릭만 남긴다. 도시는 화면이 알므로
+   * 판정은 `RelicFilterContext.specialtyOf`가 하고, 그 판정을 넘기지 않은 화면에서는 조건이 아니다.
+   */
+  readonly specialtyOnly: boolean;
   /** 이름·개체번호로 좁히는 글. 빈 글은 조건이 아니다. */
   readonly query: string;
 }
 
-export const EMPTY_RELIC_FILTER: RelicFilter = { rarities: [], squads: [], elements: [], roles: [], reaches: [], query: "" };
+export const EMPTY_RELIC_FILTER: RelicFilter = { rarities: [], squads: [], elements: [], roles: [], reaches: [], currencies: [], specialtyOnly: false, query: "" };
+
+/** 화면만 아는 판정. 교류 도시 특화처럼 개체 정의만으로는 정할 수 없는 조건이 여기서 온다. */
+export interface RelicFilterContext {
+  /** 그 렐릭이 지금 도시의 특화와 몇 칸 맞는가(0이면 맞지 않는다). */
+  readonly specialtyOf?: (relic: RelicDef) => number;
+}
 
 /** 걸린 조건이 몇 개인가. 필터 버튼이 이 수를 달고 선다. */
 export function relicFilterCount(filter: RelicFilter): number {
-  return filter.rarities.length + filter.squads.length + filter.elements.length + filter.roles.length + filter.reaches.length;
+  return filter.rarities.length + filter.squads.length + filter.elements.length + filter.roles.length + filter.reaches.length
+    + filter.currencies.length + (filter.specialtyOnly ? 1 : 0);
 }
 
 /** 검색까지 포함해 아무것도 걸리지 않았는가. */
@@ -42,12 +56,14 @@ export function normalizeQuery(query: string): string {
 }
 
 /** 한 개체가 조건을 모두 통과하는가. */
-export function matchesRelicFilter(relic: RelicDef, filter: RelicFilter): boolean {
+export function matchesRelicFilter(relic: RelicDef, filter: RelicFilter, context: RelicFilterContext = {}): boolean {
   if (filter.rarities.length > 0 && !filter.rarities.includes(relic.rarity)) return false;
   if (filter.squads.length > 0 && !filter.squads.includes(relic.squad)) return false;
   if (filter.elements.length > 0 && !filter.elements.includes(relic.element)) return false;
   if (filter.roles.length > 0 && !filter.roles.includes(relic.role)) return false;
   if (filter.reaches.length > 0 && !filter.reaches.includes(relic.reachTier)) return false;
+  if (filter.currencies.length > 0 && !filter.currencies.includes(relic.excavationTrait.primaryCurrency)) return false;
+  if (filter.specialtyOnly && context.specialtyOf && context.specialtyOf(relic) <= 0) return false;
   const query = normalizeQuery(filter.query);
   if (query === "") return true;
   // 이름과 개체번호 둘 다 받는다. 번호를 외운 손과 이름을 아는 손이 같은 칸을 쓴다.

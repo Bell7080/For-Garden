@@ -93,3 +93,16 @@ describe("도시 쪽지의 안내 줄", () => {
     expect(INTERACTION_CITY_PANEL.height).toBeLessThanOrEqual(1920 - 200);
   });
 });
+
+describe("교류 목록 위 자동 배치 줄", () => {
+  it("파견대 칸 밑변과 필터·정렬 줄 사이에 떠 겹치지 않는다", async () => {
+    const { INTERACTION_CITY_AUTO, INTERACTION_CITY_SLOT, INTERACTION_CITY_LOWER } = await import("../../src/ui/interactionCityLayout");
+    const slotBottom = INTERACTION_CITY_SLOT.y + INTERACTION_CITY_SLOT.height / 2;
+    const autoTop = INTERACTION_CITY_AUTO.y - INTERACTION_CITY_AUTO.height / 2;
+    const autoBottom = INTERACTION_CITY_AUTO.y + INTERACTION_CITY_AUTO.height / 2;
+    // 필터·정렬 줄: 그리드 윗변(아래 칸 윗변 + 64) − 42, 높이 56.
+    const controlsTop = INTERACTION_CITY_LOWER.top + 64 - 42 - 28;
+    expect(autoTop - slotBottom).toBeGreaterThanOrEqual(30);
+    expect(controlsTop - autoBottom).toBeGreaterThanOrEqual(18);
+  });
+});

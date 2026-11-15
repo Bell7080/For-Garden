@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
-import type { Element, ReachTier, RelicRarity, Role, SquadId } from "../core/types";
+import type { Element, ExcavationProductionCurrency, ReachTier, RelicRarity, Role, SquadId } from "../core/types";
+import { CURRENCY_ICON_BY_WALLET, type CurrencyIconKey } from "./currencyIcons";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { SQUADS } from "../data/factions";
 import { RARITY_TONE } from "./rarityMark";
@@ -24,6 +25,8 @@ const ELEMENTS: readonly Element[] = ["fire", "water", "grass", "earth", "wind"]
 const ROLES: readonly Role[] = ["warrior", "tank", "assassin", "support"];
 const REACHES: readonly ReachTier[] = ["melee", "mid", "ranged"];
 const RARITIES: readonly RelicRarity[] = ["SSR", "SR", "R"];
+/** 발굴이 캐는 네 재화. 순서는 발굴 자동 배치 기준 목록과 같다. */
+const CURRENCIES: readonly ExcavationProductionCurrency[] = ["cheesecake", "rawStone", "gold", "gems"];
 /** 소속 칩은 한 줄에 셋씩 — 스쿼드 이름이 길어 다섯을 한 줄에 두면 글자가 칸을 넘는다. */
 const SQUAD_PER_ROW = 3;
 /** 도감에 실제로 서는 개체가 속한 스쿼드만 고를 수 있다 — 아무도 없는 칸은 눌러도 목록이 비기만 한다. */
@@ -32,93 +35,139 @@ function playableSquads(): SquadId[] {
   return (Object.keys(SQUADS) as SquadId[]).filter((id) => used.has(id));
 }
 
+/** 판이 세우는 축 하나. */
+export type RelicFilterAxis = "specialty" | "currency" | "rarity" | "element" | "role" | "reach" | "squad";
+
+/**
+ * 어느 화면에서 여는 판인가 — **그 화면에서 고르는 데 쓰이는 축만** 세운다.
+ *
+ * - `full` 도감: 다섯 축 전부.
+ * - `battle` 전투 편성(파티·원정): 전투에 필요한 속성·직군·사거리.
+ * - `excavation` 발굴 배치: 생산량을 정하는 것은 **캐는 재화**라 그 축이 맨 위이고, 고르는 손이 함께 보는 등급이 그 아래다.
+ *   속성·직군·사거리는 발굴 생산에 아무 영향이 없어 세우지 않는다.
+ * - `interaction` 교류 파견: 몫을 정하는 것은 도시 특화(속성·직군·소속)라 「특화 일치」 한 칸과 그 세 축이 선다.
+ *   사거리·등급은 파견 몫에 들지 않는다.
+ */
+export type RelicFilterPreset = "full" | "battle" | "excavation" | "interaction";
+
+export const RELIC_FILTER_PRESET_AXES: Readonly<Record<RelicFilterPreset, readonly RelicFilterAxis[]>> = {
+  full: ["rarity", "element", "role", "reach", "squad"],
+  battle: ["element", "role", "reach"],
+  excavation: ["currency", "rarity"],
+  interaction: ["specialty", "element", "role", "squad"],
+};
+
 /** 켜진 칩과 꺼진 칩. 색이 아니라 **밝기와 크기**로 가른다 — 화면 전체의 선택 규칙과 같다. */
 const CHIP = { on: { fill: 0x1d2a38, alpha: 0.98, scale: 1.06 }, off: { fill: 0x080d13, alpha: 0.72, scale: 1 } } as const;
+
+/** 판을 어디에 세우는가. `anchor`는 누른 칩 위·아래에 붙이고, `below`는 그 점 바로 아래로 판 윗변을 내린다. */
+export type RelicFilterPlacement = { readonly anchor: { x: number; y: number } } | { readonly below: { x: number; y: number } };
 
 /**
  * 목록을 좁히는 조건을 고르는 판.
  *
- * 세 축(속성·직군·사거리)이 각각 한 줄이고, 한 축 안에서는 여럿을 켤 수 있다. 고른 것은
- * 곧바로 목록에 반영된다 — 「적용」을 따로 두면 무엇을 켜면 몇 장이 남는지 보이지 않아
- * 눌러 보고 닫고 다시 여는 일이 된다.
+ * 축마다 한 줄이고, 한 축 안에서는 여럿을 켤 수 있다. 고른 것은 곧바로 목록에 반영된다 —
+ * 「적용」을 따로 두면 무엇을 켜면 몇 장이 남는지 보이지 않아 눌러 보고 닫고 다시 여는 일이 된다.
  */
 export function openRelicFilterPopup(
   scene: Phaser.Scene,
   popups: PopupLayer,
-  anchor: { x: number; y: number },
+  placement: { x: number; y: number } | RelicFilterPlacement,
   current: () => RelicFilter,
   onChange: (filter: RelicFilter) => void,
-  /**
-   * `battle`이면 편성 화면용 — 전투에 필요한 세 축(속성·직군·사거리)만 세운다. 등급과 소속은 편성을
-   * 고르는 데 쓰이지 않고 판만 길게 만든다.
-   */
-  mode: "full" | "battle" = "full",
+  /** 어느 화면의 판인가. 축은 `RELIC_FILTER_PRESET_AXES`가 정한다. */
+  preset: RelicFilterPreset = "full",
 ): void {
-  const battle = mode === "battle";
-  const squads = battle ? [] : playableSquads();
+  const axes = RELIC_FILTER_PRESET_AXES[preset];
+  const squads = axes.includes("squad") ? playableSquads() : [];
   const squadRows = Math.max(1, Math.ceil(squads.length / SQUAD_PER_ROW));
-  // 순서: (등급) · 속성 · 직군 · 사거리 · (소속)(여러 줄이면 첫 줄만 제목을 갖는다).
-  const sections = [
-    ...(battle ? [] : [{ chipHeight: RELIC_FILTER_POPUP.textChipHeight }]),
-    { chipHeight: RELIC_FILTER_POPUP.iconChipHeight },
-    { chipHeight: RELIC_FILTER_POPUP.iconChipHeight },
-    { chipHeight: RELIC_FILTER_POPUP.textChipHeight },
-    ...(battle ? [] : Array.from({ length: squadRows }, (_, row) => ({ chipHeight: RELIC_FILTER_POPUP.textChipHeight, continued: row > 0 }))),
-  ];
-  const at = battle ? { element: 0, role: 1, reach: 2 } : { rarity: 0, element: 1, role: 2, reach: 3, squad: 4 };
+  const chipHeightOf = (axis: RelicFilterAxis): number =>
+    axis === "element" || axis === "role" || axis === "currency" ? RELIC_FILTER_POPUP.iconChipHeight : RELIC_FILTER_POPUP.textChipHeight;
+  // 축마다 첫 줄의 칸 번호. 소속처럼 여러 줄이면 첫 줄만 제목을 갖고 나머지는 이어 붙는다.
+  const sections: { chipHeight: number; continued?: boolean }[] = [];
+  const firstRow = new Map<RelicFilterAxis, number>();
+  for (const axis of axes) {
+    firstRow.set(axis, sections.length);
+    const rows = axis === "squad" ? squadRows : 1;
+    for (let row = 0; row < rows; row += 1) sections.push({ chipHeight: chipHeightOf(axis), continued: row > 0 });
+  }
   const hasCondition = relicFilterCount(current()) > 0;
   const layout = relicFilterPopupLayout(sections, hasCondition);
+  // 아래로 열 자리가 화면 밑동을 넘으면 누른 자리에 붙는 기본 배치로 돌아간다(판이 화면 밖으로 잘리지 않게).
+  const fitsBelow = "below" in placement && placement.below.y + layout.height + 40 <= scene.scale.height;
+  const where = "below" in placement
+    ? fitsBelow ? { x: placement.below.x, y: placement.below.y + layout.height / 2 } : { anchor: placement.below }
+    : { anchor: "anchor" in placement ? placement.anchor : placement };
 
   popups.open(
     {
       width: RELIC_FILTER_POPUP.width,
       height: layout.height,
       title: t("relics.filter"),
-      anchor,
+      ...where,
       closeOnBackdrop: true, hideCloseButton: true,
     },
     (body, close) => {
       const left = -RELIC_FILTER_POPUP.width / 2 + RELIC_FILTER_POPUP.padding;
-      const label = (y: number, text: string): void => {
-        body.add(scene.add.text(left, y, text, textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(0, 0.5));
+      const label = (axis: RelicFilterAxis, text: string): number => {
+        const section = layout.sections[firstRow.get(axis)!];
+        body.add(scene.add.text(left, section.labelY, text, textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(0, 0.5));
+        return section.chipY;
       };
 
-      if (!battle) label(layout.sections[0].labelY, t("relics.filter.rarity"));
-      if (!battle) RARITIES.forEach((rarity, index) => {
-        addTextChip(scene, body, relicFilterChipX(index, RARITIES.length), layout.sections[0].chipY, relicFilterChipWidth(RARITIES.length), rarity, RARITY_TONE[rarity].chip,
-          () => current().rarities.includes(rarity),
-          () => onChange({ ...current(), rarities: toggleFilterValue(current().rarities, rarity) }));
-      });
-
-      label(layout.sections[at.element].labelY, t("relics.filter.element"));
-      ELEMENTS.forEach((element, index) => {
-        addIconChip(scene, body, relicFilterChipX(index, ELEMENTS.length), layout.sections[at.element].chipY, relicFilterChipWidth(ELEMENTS.length), ELEMENT_ICON[element], t(`element.${element}`),
-          () => current().elements.includes(element),
-          () => onChange({ ...current(), elements: toggleFilterValue(current().elements, element) }));
-      });
-
-      label(layout.sections[at.role].labelY, t("relics.filter.role"));
-      ROLES.forEach((role, index) => {
-        addIconChip(scene, body, relicFilterChipX(index, ROLES.length), layout.sections[at.role].chipY, relicFilterChipWidth(ROLES.length), ROLE_ICON[role], t(`role.${role}`),
-          () => current().roles.includes(role),
-          () => onChange({ ...current(), roles: toggleFilterValue(current().roles, role) }));
-      });
-
-      label(layout.sections[at.reach].labelY, t("relics.filter.reach"));
-      REACHES.forEach((reach, index) => {
-        addTextChip(scene, body, relicFilterChipX(index, REACHES.length), layout.sections[at.reach].chipY, relicFilterChipWidth(REACHES.length), reachLabel(reach), REACH_TONE[reach],
-          () => current().reaches.includes(reach),
-          () => onChange({ ...current(), reaches: toggleFilterValue(current().reaches, reach) }));
-      });
-
-      if (!battle) label(layout.sections[4].labelY, t("relics.filter.squad"));
-      squads.forEach((squad, index) => {
-        const row = Math.floor(index / SQUAD_PER_ROW);
-        const column = index % SQUAD_PER_ROW;
-        addTextChip(scene, body, relicFilterChipX(column, SQUAD_PER_ROW), layout.sections[4 + row].chipY, relicFilterChipWidth(SQUAD_PER_ROW), SQUADS[squad].name, COLOR.accent,
-          () => current().squads.includes(squad),
-          () => onChange({ ...current(), squads: toggleFilterValue(current().squads, squad) }));
-      });
+      for (const axis of axes) {
+        if (axis === "specialty") {
+          const y = label(axis, t("relics.filter.specialty"));
+          addTextChip(scene, body, relicFilterChipX(0, 1), y, relicFilterChipWidth(1), t("relics.filter.specialtyOnly"), COLOR.accent,
+            () => current().specialtyOnly,
+            () => onChange({ ...current(), specialtyOnly: !current().specialtyOnly }));
+        } else if (axis === "currency") {
+          const y = label(axis, t("relics.filter.currency"));
+          CURRENCIES.forEach((currency, index) => {
+            addIconChip(scene, body, relicFilterChipX(index, CURRENCIES.length), y, relicFilterChipWidth(CURRENCIES.length), { currency: CURRENCY_ICON_BY_WALLET[currency] }, t(`excavation.auto.${currency}`),
+              () => current().currencies.includes(currency),
+              () => onChange({ ...current(), currencies: toggleFilterValue(current().currencies, currency) }));
+          });
+        } else if (axis === "rarity") {
+          const y = label(axis, t("relics.filter.rarity"));
+          RARITIES.forEach((rarity, index) => {
+            addTextChip(scene, body, relicFilterChipX(index, RARITIES.length), y, relicFilterChipWidth(RARITIES.length), rarity, RARITY_TONE[rarity].chip,
+              () => current().rarities.includes(rarity),
+              () => onChange({ ...current(), rarities: toggleFilterValue(current().rarities, rarity) }));
+          });
+        } else if (axis === "element") {
+          const y = label(axis, t("relics.filter.element"));
+          ELEMENTS.forEach((element, index) => {
+            addIconChip(scene, body, relicFilterChipX(index, ELEMENTS.length), y, relicFilterChipWidth(ELEMENTS.length), { affinity: ELEMENT_ICON[element] }, t(`element.${element}`),
+              () => current().elements.includes(element),
+              () => onChange({ ...current(), elements: toggleFilterValue(current().elements, element) }));
+          });
+        } else if (axis === "role") {
+          const y = label(axis, t("relics.filter.role"));
+          ROLES.forEach((role, index) => {
+            addIconChip(scene, body, relicFilterChipX(index, ROLES.length), y, relicFilterChipWidth(ROLES.length), { affinity: ROLE_ICON[role] }, t(`role.${role}`),
+              () => current().roles.includes(role),
+              () => onChange({ ...current(), roles: toggleFilterValue(current().roles, role) }));
+          });
+        } else if (axis === "reach") {
+          const y = label(axis, t("relics.filter.reach"));
+          REACHES.forEach((reach, index) => {
+            addTextChip(scene, body, relicFilterChipX(index, REACHES.length), y, relicFilterChipWidth(REACHES.length), reachLabel(reach), REACH_TONE[reach],
+              () => current().reaches.includes(reach),
+              () => onChange({ ...current(), reaches: toggleFilterValue(current().reaches, reach) }));
+          });
+        } else {
+          label(axis, t("relics.filter.squad"));
+          const first = firstRow.get(axis)!;
+          squads.forEach((squad, index) => {
+            const row = Math.floor(index / SQUAD_PER_ROW);
+            const column = index % SQUAD_PER_ROW;
+            addTextChip(scene, body, relicFilterChipX(column, SQUAD_PER_ROW), layout.sections[first + row].chipY, relicFilterChipWidth(SQUAD_PER_ROW), SQUADS[squad].name, COLOR.accent,
+              () => current().squads.includes(squad),
+              () => onChange({ ...current(), squads: toggleFilterValue(current().squads, squad) }));
+          });
+        }
+      }
 
       // **걸린 조건이 없으면 그 줄 자체를 세우지 않는다.** 눌러도 아무 일이 없는 칸은 준비
       // 상태를 과장한다. 검색 글은 제 칸이 지우므로 여기서 건드리지 않는다.
@@ -133,7 +182,7 @@ export function openRelicFilterPopup(
         hit.on("pointerup", () => {
           pressOut(reset);
           close();
-          // 검색 글은 그대로 둔다 — 여기서 지우는 것은 이 판이 보여 준 세 축뿐이다.
+          // 검색 글은 그대로 둔다 — 여기서 지우는 것은 이 판이 보여 준 축뿐이다.
           onChange({ ...EMPTY_RELIC_FILTER, query: current().query });
         });
         reset.add(hit);
@@ -150,7 +199,7 @@ function addIconChip(
   x: number,
   y: number,
   width: number,
-  icon: AffinityIconKey,
+  icon: { affinity: AffinityIconKey } | { currency: CurrencyIconKey },
   name: string,
   isOn: () => boolean,
   toggle: () => void,
@@ -161,8 +210,13 @@ function addIconChip(
   const plate = drawLayer(scene, 0, 0, shape, { fill: CHIP.off.fill, alpha: CHIP.off.alpha, shadow: false });
   const edge = drawShapeEdge(scene, 0, 0, shape, "top", { color: COLOR.accent, alpha: 1, width: 5 });
   chip.add([plate, edge]);
-  const badge = new AffinityBadge(scene, 0, -height * 0.16, icon, Math.min(58, width * 0.46), 0.5);
-  chip.add(badge);
+  const iconSize = Math.min(58, width * 0.46);
+  if ("affinity" in icon) chip.add(new AffinityBadge(scene, 0, -height * 0.16, icon.affinity, iconSize, 0.5));
+  // 재화는 여러 색으로 그린 그림이라 칠하지 않고 그대로 세운다. 검은 복제 한 겹이 어두운 칩 위에서 실루엣을 띄운다.
+  else if (scene.textures.exists(icon.currency)) {
+    chip.add(scene.add.image(3, -height * 0.16 + 4, icon.currency).setDisplaySize(iconSize, iconSize).setTintFill(0x000000).setAlpha(0.55));
+    chip.add(scene.add.image(0, -height * 0.16, icon.currency).setDisplaySize(iconSize, iconSize));
+  }
   const text = scene.add.text(0, height * 0.3, name, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
   chip.add(text);
 

@@ -321,7 +321,6 @@ export const MISC_ZH_HANS = {
   "trade.disconnected": "信号中断",
   "trade.reconnect": "重新连接",
   "trade.title": "贸易",
-  "score.detail": "分数详情",
   "score.normalNodes": "普通节点合计",
   "score.bossDamage": "蓬托斯伤害分数",
   "title.saveRecovered": "无法验证存档数据，已恢复为安全的初始状态。",

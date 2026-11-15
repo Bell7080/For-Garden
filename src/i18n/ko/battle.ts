@@ -24,7 +24,6 @@ export const BATTLE_KO = {
   "battle.settle.recoverLobby": "로비로 돌아가기",
   "battle.settle.done": "원정 관측 완료",
   "battle.settle.score": "이번 원정 점수",
-  "battle.settle.detail": "상세",
   "battle.settle.toLobby": "로비로",
   "battle.settle.weeklyRecord": "주간 기록",
   "battle.contribution": "기여도",

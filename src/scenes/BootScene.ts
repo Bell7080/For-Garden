@@ -22,7 +22,7 @@ export class BootScene extends Phaser.Scene {
     super("boot");
   }
 
-  create(data?: { destination?: "lobby" | "raid" | "raidBattle"; raidId?: string; raidBattle?: RaidBattleInputDto }): void {
+  create(data?: { destination?: "lobby" | "expedition" | "raid" | "raidBattle"; raidId?: string; raidBattle?: RaidBattleInputDto }): void {
     if (finishOAuthPopup()) return;
     setDebugScene("boot");
     // 서버 연결은 보안 저장소와 설정이 있는 빌드에서만 선다. 호출은 쓸 때 처음 일어나므로 부팅을 기다리게 하지 않는다.
@@ -90,6 +90,8 @@ export class BootScene extends Phaser.Scene {
     // 「다시 하기」는 목록도 판도 거치지 않고 같은 판의 전장으로 곧장 들어간다.
     if (data?.destination === "raidBattle" && data.raidBattle) this.scene.start("battle", data.raidBattle);
     else if (data?.destination === "raid") this.scene.start("raid", { raidId: data.raidId });
+    // 원정을 끝내고 나가는 길은 로비가 아니라 원정 메인(주간 기록)이다 — 서버 최신본을 다시 읽은 뒤 그 자리로 간다.
+    else if (data?.destination === "expedition") this.scene.start("expedition");
     else this.scene.start(data?.destination === "lobby" ? "lobby" : "title");
   }
 }

@@ -8,6 +8,8 @@ import { getRelic } from "../data/relics";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
+import { attachRoll } from "./RollingValue";
+import { squeezeTextToWidth } from "./textFit";
 import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { addFramedIcon } from "./itemFrame";
@@ -153,7 +155,18 @@ export interface StageCompletePopupOptions {
    * 한 판의 **최종 점수**(원정 폰토스 정산). 있으면 보상 줄 아래 큰 수로 서고 `footnote`를 대신한다.
    * `rank`가 있으면 경험치 블록 자리에 주간 순위가 서고, 오른 판이면 이웃을 넘으며 올라간다.
    */
-  score?: { label: string; value: number; rank?: { label: string; after: number; before?: number | null; improved?: boolean } };
+  score?: {
+    label: string;
+    value: number;
+    rank?: { label: string; after: number; before?: number | null; improved?: boolean };
+    /**
+     * 이번 판이 보탠 몫(원정 노드). 있으면 큰 수가 `value - gain`에서 굴러 `value`에 닿고, 그 밑에
+     * `이름표 +N` 한 줄이 강조색으로 선다 — 기존 점수에서 얼마가 올랐는지가 한 블록에서 읽힌다.
+     */
+    gain?: { label: string; value: number };
+    /** 최종 점수의 구성(원정 노드 합계 · 폰토스 피해). 큰 수 밑에 한 줄로 선다 — 합은 늘 `value`와 같아야 한다. */
+    breakdown?: readonly { label: string; value: number }[];
+  };
   /**
    * 판을 닫지 않는 **보조 조작**(세부 점수 · 주간 기록). 점수 아래 가로 한 줄로 서고, 누르면 같은
    * 팝업 층 위에 판을 한 겹 더 연다. 판을 닫는 길은 여전히 화면 아무 곳이나 누르는 것 하나다.
@@ -638,9 +651,27 @@ export class StageCompletePopup {
   private buildScore(body: Phaser.GameObjects.Container, score: NonNullable<StageCompletePopupOptions["score"]>): void {
     const S = RESULT_SCORE_BLOCK.score;
     body.add(this.scene.add.text(0, S.labelY + this.shiftY, score.label, textStyle({ role: "body", size: S.labelSize, color: COLOR.inkDim })).setOrigin(0.5));
-    const value = this.scene.add.text(0, S.valueY + this.shiftY, Math.floor(score.value).toLocaleString(), textStyle({ role: "display", size: S.valueSize, color: COLOR.ink })).setOrigin(0.5);
+    const total = Math.floor(score.value);
+    const gain = score.gain && score.gain.value > 0 ? Math.floor(score.gain.value) : 0;
+    // 오른 판이면 기존 점수를 먼저 적고 굴려 올린다 — 첫 글자를 들고 태어난 칸은 다음 `setText`부터 구른다.
+    const value = this.scene.add.text(0, S.valueY + this.shiftY, (gain > 0 ? Math.max(0, total - gain) : total).toLocaleString(), textStyle({ role: "display", size: S.valueSize, color: COLOR.ink })).setOrigin(0.5);
     value.setStroke("#000000", 6).setShadow(0, 4, "#000000", 4, false, true);
     body.add(value);
+    const detail = score.gain && gain > 0
+      ? `${score.gain.label} +${gain.toLocaleString()}`
+      : score.breakdown && score.breakdown.length > 0
+        ? score.breakdown.map(({ label, value: part }) => `${label} ${Math.floor(part).toLocaleString()}`).join("  ·  ")
+        : undefined;
+    if (detail !== undefined) {
+      const line = this.scene.add.text(0, S.detailY + this.shiftY, detail, textStyle({ role: "emphasis", size: S.detailSize, color: gain > 0 ? this.accentText() : COLOR.inkDim })).setOrigin(0.5);
+      line.setStroke("#000000", 4);
+      body.add(squeezeTextToWidth(line, WIDTH - 140));
+    }
+    if (gain > 0) {
+      attachRoll(value);
+      // 기다림은 씬 시계가 아니라 트윈의 `delay`다 — 결과판이 서는 전투 화면에서는 `delayedCall`이 깨어나지 않았다.
+      this.scene.tweens.addCounter({ from: 0, to: 1, duration: 1, delay: S.gainDelayMs, onComplete: () => { if (value.active) value.setText(total.toLocaleString()); } });
+    }
   }
 
   /** 판을 닫지 않는 보조 조작 한 줄. 같은 폭을 나눠 가로로 선다. */

@@ -36,6 +36,7 @@ export function completeBossSettlementAttempt(state: BossSettlementFailureState)
 /**
  * 실패판 이탈은 성공/포기 명령이 아니다. Boot가 서버와 저장을 다시 읽게 할 목적지만 돌려준다.
  */
-export function bossSettlementRecoveryRoute(): { scene: "boot"; data: { destination: "lobby" } } {
-  return { scene: "boot", data: { destination: "lobby" } };
+export function bossSettlementRecoveryRoute(): { scene: "boot"; data: { destination: "expedition" } } {
+  // 나가는 자리는 원정 메인이다 — 로비로 튕기면 결과를 확인하려고 원정을 다시 찾아 들어와야 한다.
+  return { scene: "boot", data: { destination: "expedition" } };
 }

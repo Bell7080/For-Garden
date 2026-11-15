@@ -23,7 +23,6 @@ export const BATTLE_ID = {
   "battle.settle.recoverLobby": "Kembali ke lobi",
   "battle.settle.done": "Observasi Ekspedisi Selesai",
   "battle.settle.score": "Skor Ekspedisi Ini",
-  "battle.settle.detail": "Detail",
   "battle.settle.toLobby": "Ke Lobi",
   "battle.settle.weeklyRecord": "Rekor Mingguan",
   "battle.contribution": "Kontribusi",

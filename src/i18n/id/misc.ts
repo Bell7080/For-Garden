@@ -321,7 +321,6 @@ export const MISC_ID = {
   "trade.disconnected": "Sinyal Hilang",
   "trade.reconnect": "Sambung Ulang",
   "trade.title": "Perdagangan",
-  "score.detail": "Detail Skor",
   "score.normalNodes": "Total titik biasa",
   "score.bossDamage": "Skor kerusakan Pontos",
   "title.saveRecovered": "Data simpanan tidak dapat diverifikasi, jadi keadaan awal yang aman dipulihkan.",

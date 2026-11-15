@@ -372,6 +372,8 @@ describe("전리품 상점", () => {
     expect(lootProducts.length).toBeGreaterThan(0);
     for (const product of lootProducts) {
       expect(product.lootCategory, product.id).toBeTruthy();
+      // 하루 한 번 무료칸(광고와 같은 자리를 나눠 쓴다)만 값이 없다.
+      if (product.acquisition.kind === "free") continue;
       expect(product.acquisition.kind, product.id).toBe("currency");
       if (product.acquisition.kind === "currency") {
         expect(product.acquisition.currency, product.id).toBe(TAB_CURRENCY[product.lootCategory!]);

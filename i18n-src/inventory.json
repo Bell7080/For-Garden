@@ -492,16 +492,7 @@
 "Archäologie-Shop (Tausch gegen Rohstein)",
 "Магазин Археологии (обмен на необработанный камень)"
 ],
-"guide.route.archaeologyAd": [
-"考古商店广告 · 原石{amount}，每天{count}次",
-"โฆษณาร้านค้าโบราณคดี · หินดิบ {amount} วันละ {count} ครั้ง",
-"Quảng cáo Cửa hàng Khảo cổ · Đá thô {amount}, {count} lần/ngày",
-"Iklan Toko Arkeologi · Batu Mentah {amount}, {count}x/hari",
-"Anuncio de la Tienda de Arqueología · {amount} Piedra en bruto, {count} al día",
-"Anúncio da Loja de Arqueologia · {amount} Pedra bruta, {count} por dia",
-"Werbung im Archäologie-Shop · {amount} Rohstein, {count}× täglich",
-"Реклама в магазине Археологии · {amount} необработанного камня, {count} раз в день"
-],
+"guide.route.archaeologyAd": ["考古商店免费·广告 · 原石{amount}，每天{count}次", "ร้านค้าโบราณคดี ฟรี·โฆษณา · หินดิบ {amount} วันละ {count} ครั้ง", "Cửa hàng Khảo cổ miễn phí·quảng cáo · Đá thô {amount}, {count} lần/ngày", "Toko Arkeologi gratis·iklan · Batu Mentah {amount}, {count}x/hari", "Tienda de Arqueología gratis·anuncio · {amount} Piedra en bruto, {count} al día", "Loja de Arqueologia grátis·anúncio · {amount} Pedra bruta, {count} por dia", "Archäologie-Shop gratis·Werbung · {amount} Rohstein, {count}× täglich", "Магазин Археологии, бесплатно·реклама · {amount} необработанного камня, {count} раз в день"],
 "guide.route.story": [
 "剧情关卡通关奖励",
 "รางวัลผ่านด่านเนื้อเรื่อง",
@@ -612,16 +603,7 @@
 "Gold-Tab im allgemeinen Shop (Juwelen → Gold)",
 "Вкладка золота в обычном магазине (самоцветы → золото)"
 ],
-"guide.route.shopGoldAd": [
-"普通商店金币页广告 · 金币{amount}，每天{count}次",
-"โฆษณาแท็บทองร้านค้าทั่วไป · ทอง {amount} วันละ {count} ครั้ง",
-"Quảng cáo tab Vàng Cửa hàng thường · {amount} Vàng, {count} lần/ngày",
-"Iklan tab Emas Toko umum · {amount} Emas, {count}x/hari",
-"Anuncio de la pestaña Oro de la Tienda · {amount} Oro, {count} al día",
-"Anúncio da aba Ouro da Loja · {amount} Ouro, {count} por dia",
-"Werbung im Gold-Tab des Shops · {amount} Gold, {count}× täglich",
-"Реклама во вкладке золота магазина · {amount} золота, {count} раз в день"
-],
+"guide.route.shopGoldAd": ["普通商店每日页免费·广告 · 金币{amount}，每天{count}次", "ร้านค้าทั่วไปแท็บรายวัน ฟรี·โฆษณา · ทอง {amount} วันละ {count} ครั้ง", "Tab Hằng ngày Cửa hàng thường miễn phí·quảng cáo · {amount} Vàng, {count} lần/ngày", "Tab Harian Toko umum gratis·iklan · {amount} Emas, {count}x/hari", "Pestaña Diario de la Tienda gratis·anuncio · {amount} Oro, {count} al día", "Aba Diário da Loja grátis·anúncio · {amount} Ouro, {count} por dia", "Täglich-Tab im Shop gratis·Werbung · {amount} Gold, {count}× täglich", "Вкладка «Ежедневно» магазина, бесплатно·реклама · {amount} золота, {count} раз в день"],
 "guide.route.shopGoldBuy": [
 "普通商店的金币商品",
 "สินค้าราคาทองในร้านค้าทั่วไป",
@@ -652,16 +634,7 @@
 "Tausch im Beute-Shop",
 "Обмен в магазине трофеев"
 ],
-"guide.route.lootAd": [
-"战利品商店广告 · 每天{count}次",
-"โฆษณาร้านค้าของรางวัล · วันละ {count} ครั้ง",
-"Quảng cáo Cửa hàng chiến lợi phẩm · {count} lần/ngày",
-"Iklan Toko Jarahan · {count}x/hari",
-"Anuncio de la Tienda de botín · {count} al día",
-"Anúncio da Loja de espólios · {count} por dia",
-"Werbung im Beute-Shop · {count}× täglich",
-"Реклама в магазине трофеев · {count} раз в день"
-],
+"guide.route.lootAd": ["战利品商店免费·广告 · 每天{count}次", "ร้านค้าของรางวัล ฟรี·โฆษณา · วันละ {count} ครั้ง", "Cửa hàng chiến lợi phẩm miễn phí·quảng cáo · {count} lần/ngày", "Toko Jarahan gratis·iklan · {count}x/hari", "Tienda de botín gratis·anuncio · {count} al día", "Loja de espólios grátis·anúncio · {count} por dia", "Beute-Shop gratis·Werbung · {count}× täglich", "Магазин трофеев, бесплатно·реклама · {count} раз в день"],
 "guide.route.duelShop": [
 "决斗商店兑换",
 "แลกในร้านค้าดวล",

@@ -235,7 +235,7 @@ export interface ShopStagePresentation {
    * 그 가게의 「광고 보고 받기」 칸. `tabs`를 비우면 모든 탭 끝에 서고, 있으면 그 탭에만 선다.
    * 씬이 storefront로 분기하지 않도록 이 표가 슬롯과 문구를 갖는다.
    */
-  readonly ad?: { readonly slotId: string; readonly titleKey: "shop.goldAdTitle" | "shop.archaeologyAdTitle" | "shop.lootAdTitle"; readonly tabs?: readonly string[] };
+  readonly ad?: { readonly slotId: string; readonly freeProductId: string; readonly tabs?: readonly string[] };
 }
 
 /**
@@ -253,7 +253,7 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     titleKey: "shop.title",
     tabs: SHOP_CURRENCY_TABS,
     currencies: "shop",
-    ad: { slotId: "gold-ad", titleKey: "shop.goldAdTitle", tabs: ["gold"] },
+    ad: { slotId: "gold-ad", freeProductId: "shop-free-daily", tabs: ["daily"] },
   },
   archaeology: {
     merchant: ARCHAEOLOGY_MERCHANT,
@@ -263,7 +263,7 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     tabs: SHOP_REFRESH_TABS,
     // 이 가게에서 조작을 정하는 수는 원석 하나뿐이다.
     currencies: "archaeologyShop",
-    ad: { slotId: "archaeology-ad", titleKey: "shop.archaeologyAdTitle", tabs: ["daily"] },
+    ad: { slotId: "archaeology-ad", freeProductId: "arch-free-daily", tabs: ["daily"] },
     // 머리 관절은 **대사 띠 오른쪽 끝(730)보다 오른쪽**에 있어야 얼굴이 띠에 덮이지 않고,
     // 관절 오른쪽 461px이 화면 안에 들려면 배율이 0.73 아래여야 한다 — 그 둘을 함께 만족하는
     // 자리다. 키가 오비보다 작은 것은 원화가 넓기 때문이지 인물이 작아서가 아니다.
@@ -277,7 +277,7 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     // 탭 하나가 지갑 한 칸을 가리킨다 — 눌러 보기 전에 무엇으로 사는 자리인지 읽혀야 한다.
     tabs: LOOT_CATEGORY_TABS,
     currencies: "loot",
-    ad: { slotId: "loot-ad", titleKey: "shop.lootAdTitle" },
+    ad: { slotId: "loot-ad", freeProductId: "loot-free-daily" },
     // 프로티아와 등신이 비슷해 같은 자리를 쓴다. 자리는 점원이 정하지 무대가 정하지 않는다.
     merchantSpot: { headX: 744, height: 1010 },
   },

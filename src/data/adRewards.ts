@@ -51,10 +51,11 @@ export const AD_REWARD_SLOTS = [
   { id: "gem-ad", displayText: "젬 50", reward: { kind: "currency", currency: "gems", amount: 50 }, dailyLimitUtc: 3, placement: "premium_gems" },
   // 일간 탭: 「일일 무료 보급」을 받은 뒤에만 하루 두 번 같은 묶음을 더 받는다.
   { id: "daily-bonus-ad", displayText: "일일 보급 추가", reward: { kind: "currencies", grants: [{ currency: "gold", amount: 10_000 }, { currency: "cheesecake", amount: 30 }, { currency: "gems", amount: 10 }], items: [{ itemId: "stamina-tonic", quantity: 1 }] }, dailyLimitUtc: 2, placement: "premium_daily", requiresClaimedProductId: "premium-free-daily" },
-  { id: "gold-ad", displayText: "골드 5,000", reward: { kind: "currency", currency: "gold", amount: 5_000 }, dailyLimitUtc: 3, placement: "shop_gold" },
-  // 고고학 상점의 원석, 전리품 상점의 토벌·인양 증표. 모두 하루 세 번이다.
-  { id: "archaeology-ad", displayText: "원석 100", reward: { kind: "currency", currency: "rawStone", amount: 100 }, dailyLimitUtc: 3, placement: "archaeology_shop" },
-  { id: "loot-ad", displayText: "토벌 증표 5 · 인양 증표 5", reward: { kind: "currencies", grants: [{ currency: "raidSigil", amount: 5 }, { currency: "salvageRecord", amount: 5 }] }, dailyLimitUtc: 3, placement: "loot_shop" },
+  // **상점 세 곳의 광고는 그 가게 무료 칸의 뒷면이다**(응태 요청 2026-11-15). 무료 칸을 받은 뒤 같은 칸이
+  // 같은 묶음의 광고 칸으로 바뀐다 — 지급품은 그 무료 상품과 같아야 하고(`adRewards.test`), 무료 1 + 광고 2가 하루 몫이다.
+  { id: "gold-ad", displayText: "골드 5,000 · 치즈케이크 20", reward: { kind: "currencies", grants: [{ currency: "gold", amount: 5_000 }, { currency: "cheesecake", amount: 20 }] }, dailyLimitUtc: 2, placement: "shop_gold", requiresClaimedProductId: "shop-free-daily" },
+  { id: "archaeology-ad", displayText: "원석 100", reward: { kind: "currency", currency: "rawStone", amount: 100 }, dailyLimitUtc: 2, placement: "archaeology_shop", requiresClaimedProductId: "arch-free-daily" },
+  { id: "loot-ad", displayText: "토벌 증표 5 · 인양 증표 5", reward: { kind: "currencies", grants: [{ currency: "raidSigil", amount: 5 }, { currency: "salvageRecord", amount: 5 }] }, dailyLimitUtc: 2, placement: "loot_shop", requiresClaimedProductId: "loot-free-daily" },
   // 기준 점수가 없거나 광고 검증이 실패하면 서버가 지급을 거절하며 횟수도 소비하지 않는다.
 ] as const satisfies readonly AdRewardSlot[];
 

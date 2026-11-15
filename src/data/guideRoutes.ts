@@ -9,8 +9,8 @@ import { GUILD_CREATE_GEMS } from "../core/guild";
 import { PLAYER_LEVEL_UP_REWARD } from "../core/playerLevel";
 import { RAID_TICKET_DROP } from "../core/raidTicketDrops";
 import { STAMINA_RECHARGE_SOURCES } from "./staminaRecharge";
-import { AD_REWARD_SLOTS } from "./adRewards";
-import type { PremiumCategory, ProductStorefront } from "./products";
+import { AD_REWARD_SLOTS, type AdRewardSlot } from "./adRewards";
+import { PRODUCTS, type PremiumCategory, type ProductStorefront } from "./products";
 
 /**
  * 재화·아이템 안내창의 「획득처」·「사용처」 한 줄.
@@ -101,10 +101,12 @@ export const GUIDE_ROUTE_DESTINATION: Readonly<Record<GuideRouteId, GuideDestina
 
 /** 광고 슬롯 하나의 보상 수와 하루 횟수. 슬롯이 사라지면 0으로 서서 테스트가 잡는다. */
 function adSlot(id: string): { amount: number; count: number } {
-  const slot = AD_REWARD_SLOTS.find((entry) => entry.id === id);
+  const slot: AdRewardSlot | undefined = AD_REWARD_SLOTS.find((entry) => entry.id === id);
   if (!slot) return { amount: 0, count: 0 };
-  const reward = slot.reward as { kind: string; amount?: number; quantity?: number };
-  return { amount: reward.amount ?? reward.quantity ?? 0, count: slot.dailyLimitUtc };
+  const reward = slot.reward as { kind: string; amount?: number; quantity?: number; grants?: readonly { amount: number }[] };
+  // 무료 칸 뒷면의 광고(상점 세 곳)는 무료 몫까지 합쳐 하루 몇 번 받는지를 말한다 — 같은 칸·같은 묶음이다.
+  const free = slot.requiresClaimedProductId ? PRODUCTS.find((product) => product.id === slot.requiresClaimedProductId) : undefined;
+  return { amount: reward.amount ?? reward.quantity ?? reward.grants?.[0]?.amount ?? 0, count: slot.dailyLimitUtc + (free?.acquisition.kind === "free" ? free.purchaseLimit : 0) };
 }
 
 /**

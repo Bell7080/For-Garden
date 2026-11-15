@@ -12,6 +12,25 @@ describe("광고 보상 정적 정의", () => {
     expect(findAdRewardSlot("daily-stamina")?.placement).toBe("shop_free_supplies");
   });
 
+  /**
+   * **상점 무료·광고 칸은 한 자리다**(응태 요청 2026-11-15). 무료를 받으면 같은 칸이 광고 칸으로 바뀌므로 광고가 주는 것은
+   * 그 무료 상품과 같아야 한다 — 갈리면 칸 모양은 같은데 받는 것이 달라진다.
+   */
+  it("상점 광고는 앞선 무료 상품과 같은 묶음을 준다", async () => {
+    const { PRODUCTS } = await import("../../src/data/products");
+    const { SHOP_STAGE_PRESENTATION } = await import("../../src/data/shopPresentation");
+    for (const stage of Object.values(SHOP_STAGE_PRESENTATION)) {
+      if (!stage.ad) continue;
+      const slot = findAdRewardSlot(stage.ad.slotId);
+      const free = PRODUCTS.find((product) => product.id === stage.ad?.freeProductId);
+      expect(free?.acquisition.kind).toBe("free");
+      expect(slot?.requiresClaimedProductId).toBe(free?.id);
+      const reward = slot!.reward;
+      const adGrants = reward.kind === "currency" ? [reward] : reward.kind === "currencies" ? reward.grants : [];
+      expect(adGrants.map(({ currency, amount }) => ({ currency, amount }))).toEqual(free!.grants.map((grant) => grant.kind === "currency" ? { currency: grant.currency, amount: grant.amount } : grant));
+    }
+  });
+
   it("발굴 슬롯의 일회·갱신·만료 정책을 판별 가능한 효과로 고정한다", () => {
     const effects = AD_REWARD_SLOTS.filter((slot) => slot.placement === "idle_excavation").map((slot) => slot.reward.kind === "excavation_effect" ? slot.reward.effect : undefined);
     expect(effects).toEqual([

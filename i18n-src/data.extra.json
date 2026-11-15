@@ -2,7 +2,7 @@
 "adReward.archaeology-ad.text": ["原石 100", "หินดิบ 100", "Đá thô 100", "Batu Mentah 100", "Piedra en bruto 100", "Pedra bruta 100", "Rohstein 100", "Необработанный камень 100"],
 "adReward.daily-bonus-ad.text": ["额外每日补给", "เสบียงรายวันเพิ่มเติม", "Bổ sung tiếp tế hằng ngày", "Suplai Harian Tambahan", "Suministros diarios adicionales", "Suprimentos diários adicionais", "Zusätzliche Tagesversorgung", "Дополнительные ежедневные припасы"],
 "adReward.gem-ad.text": ["宝石 50", "เจม 50", "Ngọc 50", "Permata 50", "Gemas 50", "Gemas 50", "Juwelen 50", "Самоцветы 50"],
-"adReward.gold-ad.text": ["金币 5,000", "ทอง 5,000", "Vàng 5,000", "Emas 5.000", "Oro 5.000", "Ouro 5.000", "Gold 5.000", "Золото 5 000"],
+"adReward.gold-ad.text": ["金币 5,000 · 芝士蛋糕 20", "ทอง 5,000 · ชีสเค้ก 20", "Vàng 5,000 · Bánh phô mai 20", "Emas 5.000 · Cheesecake 20", "Oro 5.000 · Tarta de queso 20", "Ouro 5.000 · Cheesecake 20", "Gold 5.000 · Käsekuchen 20", "Золото 5 000 · Чизкейк 20"],
 "adReward.loot-ad.text": ["讨伐徽印 5 · 打捞记录 5", "ตราปราบปราม 5 · บันทึกกู้ซาก 5", "Ấn chinh phạt 5 · Hồ sơ trục vớt 5", "Segel Penaklukan 5 · Catatan Penyelamatan 5", "Sello de subyugación 5 · Registro de rescate 5", "Selo de subjugação 5 · Registro de resgate 5", "Bezwingungssiegel 5 · Bergungsprotokoll 5", "Печать усмирения 5 · Запись спасения 5"],
 "premium.tab.daily": ["每日", "รายวัน", "Hằng ngày", "Harian", "Diario", "Diário", "Täglich", "Ежедневно"],
 "premium.tab.monthly": ["每月", "รายเดือน", "Hằng tháng", "Bulanan", "Mensual", "Mensal", "Monatlich", "Ежемесячно"],

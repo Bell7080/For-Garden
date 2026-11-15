@@ -143,6 +143,8 @@
 "Tägliche Gratis-Versorgung",
 "Ежедневные бесплатные припасы"
 ],
+"product.arch-free-daily.name": ["每日免费原石", "หินดิบฟรีประจำวัน", "Đá thô miễn phí hằng ngày", "Batu Mentah Gratis Harian", "Piedra en bruto gratis diaria", "Pedra bruta grátis diária", "Täglicher Gratis-Rohstein", "Ежедневный бесплатный камень"],
+"product.loot-free-daily.name": ["每日免费徽印", "ตราฟรีประจำวัน", "Ấn miễn phí hằng ngày", "Segel Gratis Harian", "Sellos gratis diarios", "Selos grátis diários", "Tägliche Gratis-Siegel", "Ежедневные бесплатные печати"],
 "product.shop-field-supplies.name": [
 "芝士蛋糕 (小)",
 "ชีสเค้ก (เล็ก)",

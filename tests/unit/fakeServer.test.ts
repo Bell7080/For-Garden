@@ -1067,11 +1067,16 @@ describe("FakeServer 광고 보상 경계", () => {
     expect(state.dailyAdRewards).toEqual({ date: "2026-08-22", claimsBySlot: { "daily-stamina": 1 }, requestIds: ["ad-request-1"] });
   });
 
-  it("고고학 원석 100 · 전리품 증표 5+5 광고는 하루 세 번까지 지갑에 들어간다", async () => {
+  it("상점 세 곳은 무료 1회 뒤 같은 묶음의 광고 2회 — 하루 총량은 예전 광고 3회와 같다", async () => {
     const state = makeSession();
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
     const raw = state.wallet.rawStone; const sigil = state.wallet.raidSigil; const record = state.wallet.salvageRecord;
-    for (let index = 0; index < 3; index += 1) {
+    // 무료 몫을 받기 전에는 광고가 열리지 않는다.
+    await expect(server.claimAdReward({ slotId: "archaeology-ad", verificationToken: "verified:archaeology-ad", requestId: "raw-early" })).rejects.toMatchObject({ code: "AD_PREREQUISITE" });
+    await expect(server.claimAdReward({ slotId: "loot-ad", verificationToken: "verified:loot-ad", requestId: "loot-early" })).rejects.toMatchObject({ code: "AD_PREREQUISITE" });
+    await server.purchaseProduct({ storefront: "archaeology", productId: "arch-free-daily", quantity: 1 });
+    await server.purchaseProduct({ storefront: "loot", productId: "loot-free-daily", quantity: 1 });
+    for (let index = 0; index < 2; index += 1) {
       await server.claimAdReward({ slotId: "archaeology-ad", verificationToken: "verified:archaeology-ad", requestId: `raw-${index}` });
       await server.claimAdReward({ slotId: "loot-ad", verificationToken: "verified:loot-ad", requestId: `loot-${index}` });
     }

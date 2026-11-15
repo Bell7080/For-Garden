@@ -41,12 +41,13 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { PurchasePopup } from "../ui/PurchasePopup";
 import { session } from "../state/session";
-import { findAdRewardSlot } from "../data/adRewards";
-import { addAdRewardCard } from "../ui/AdRewardCard";
+import { findAdRewardSlot, type AdRewardSlot } from "../data/adRewards";
+import { grantTiles } from "../ui/premiumModel";
+import { UI_ICON } from "../ui/icons";
 import { adSlotStatus, watchAdSlot } from "./adSlotFlow";
 import { motionPolicy } from "../core/settings";
 import { productsForShopTab, shopModel } from "../ui/shopModel";
-import type { ProductStorefront } from "../data/products";
+import type { ProductCurrency, ProductStorefront } from "../data/products";
 import { consumeSceneEntry } from "./sceneEntry";
 import { LOBBY_RETURN, normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 import { shapeClipMask } from "../ui/popupArt";
@@ -540,18 +541,23 @@ export class ShopScene extends Phaser.Scene {
   /** 현재 서버 상태로 두 줄 격자를 재조립하고 실제 높이에서 스크롤 한계를 계산한다. */
   private renderProducts(): void {
     this.content?.removeAll(true);
-    const visibleProducts = productsForShopTab(this.products, this.selectedCategory, this.storefront);
+    // 무료 칸은 일반 목록에 섞지 않는다 — 광고 칸과 한 자리를 나눠 쓰므로 아래 「무료·광고 칸」이 세운다.
+    const freeId = this.stage.ad?.freeProductId;
+    const visibleProducts = productsForShopTab(this.products, this.selectedCategory, this.storefront).filter((product) => product.id !== freeId);
     // 선반을 먼저 깔고 그 위에 칸을 올린다 — 순서가 뒤집히면 선반이 칸을 가로질러 지나간다.
-    // 일반 상점의 골드 탭 끝에는 광고 보고 골드를 받는 칸이 하나 더 선다.
-    const adSpec = this.stage.ad;
-    const goldAd = adSpec && (!adSpec.tabs || adSpec.tabs.includes(this.selectedCategory)) ? 1 : 0;
-    const rows = Math.ceil((visibleProducts.length + goldAd) / SHOP_CARD.columns);
+    const merged = this.freeAdSlotOn(this.selectedCategory) ? 1 : 0;
+    const rows = Math.ceil((visibleProducts.length + merged) / SHOP_CARD.columns);
     for (let row = 0; row < rows; row += 1) this.addShelf(row);
-    // 광고 칸은 언제나 목록 맨 위(1번)에 서고 상품들은 한 칸씩 밀린다.
-    if (goldAd) this.addAdCard(0);
-    visibleProducts.forEach((product, index) => this.addProduct(product, index + goldAd));
+    // **무료·광고 칸은 한 자리다**(응태 요청 2026-11-15). 목록 맨 위(1번)에 서고, 오늘 무료 몫을 받기 전에는 무료 칸,
+    // 받은 뒤에는 같은 묶음을 주는 광고 칸으로 바뀐다 — 상품들은 한 칸씩 밀린다.
+    if (merged) {
+      const free = this.freeProduct();
+      if (free?.purchasable) this.addProduct(free, 0);
+      else this.addAdCard(0, free);
+    }
+    visibleProducts.forEach((product, index) => this.addProduct(product, index + merged));
     const view = shopGridViewport();
-    this.minScrollY = Math.min(0, view.bottom - view.top - shopGridContentHeight(visibleProducts.length + goldAd));
+    this.minScrollY = Math.min(0, view.bottom - view.top - shopGridContentHeight(visibleProducts.length + merged));
     this.publishControls(visibleProducts);
     this.scrollTo(this.content?.y ?? 0);
     this.tickRefreshClock(true);
@@ -608,7 +614,7 @@ export class ShopScene extends Phaser.Scene {
     const soldOut = product.remaining <= 0;
     paintShowcaseCard(this, card, {
       width, height: SHOP_CARD.height, accent: soldOut ? COLOR.inkDimHex : SHOWCASE_TIER_TONE[product.refresh], dim: soldOut,
-      railX: -width / 2 + 34, stageY: SHOP_CARD.frameY + SHOP_CARD.frame / 2, pedestalWidth: SHOP_CARD.frame * SHOP_CARD.pedestalRatio, gleamIndex: index,
+      railX: -width / 2 + 34, stageY: SHOP_CARD.frameY + SHOP_CARD.frame / 2, pedestalWidth: shopPedestalWidth(width, shopGrantTiles(product.grants).length), gleamIndex: index,
     });
     // 마일리지 파편(주간 SSR·주간 SR·일간 R)은 상품 그림이 아니라 **그 개체의 얼굴 액자**로 선다 — 무엇을 사는지가 얼굴로 먼저 읽힌다.
     const runeProduct = runeProductOf(product);
@@ -621,6 +627,9 @@ export class ShopScene extends Phaser.Scene {
     } else if (runeProduct) {
       // 룬은 상점에 서는 순간 등급과 자리가 정해져 있다 — 가방의 룬 카드와 같은 액자에 그 조각이 크게 선다.
       card.add(addRuneFrame(this, 0, SHOP_CARD.frameY, SHOP_CARD.frame, isRandomRuneProduct(product) ? undefined : runeProduct.rarity, runeProduct.part, { mystery: isRandomRuneProduct(product) }));
+    } else if (shopGrantTiles(product.grants).length > 1) {
+      // **받는 것이 여럿이면 여럿 다 선다**(응태 2026-11-15 — 무료 보급이 골드 한 장만 서서 골드만 주는 줄 알았다).
+      this.addGrantFrames(card, shopGrantTiles(product.grants));
     } else {
       // 그림은 첫 지급품에서 나온다(`productIconTexture`) — 가방에 들어오는 것과 같은 그림이 칸에 선다.
       // 공용 액자(`addFramedIcon`)를 지나야 만능 파편이 가방과 같은 등급색 유리·홀로그램 결로 선다. 칸 자체가
@@ -656,7 +665,7 @@ export class ShopScene extends Phaser.Scene {
       });
     } else if (product.acquisition.kind === "free") {
       // 무료 칸은 값 줄 자리에 「무료」 한 마디만 선다 — 누르면 확인 창 없이 곧바로 받는다.
-      card.add(this.add.text(0, SHOP_CARD.price.y, t("product.price.free"), textStyle({ role: "display", size: 34, color: soldOut ? "#9aa3b5" : "#ffe08a" })).setOrigin(0.5).setShadow(2, 3, "#000000", 0, true, true));
+      card.add(addShopPriceWord(this, t("product.price.free"), soldOut));
     }
     // 따로 사는 것보다 이득인 상품은 무역과 같은 가치 배지가 우상단에 선다(100%를 넘는 것만 — 골드 교환소는 늘 아래다).
     const valuePercent = tradePackageValuePercent(product.acquisition, product.grants);
@@ -711,23 +720,77 @@ export class ShopScene extends Phaser.Scene {
     });
   }
 
-  /** 가게마다 표(`stage.ad`)가 정한 「광고 보고 받기」 칸. 지급과 횟수는 서버가 확정한다. */
-  private addAdCard(index: number): void {
+  /** 이 탭에 무료·광고 칸이 서는가 — 가게 표(`stage.ad.tabs`)가 정하고, 비우면 모든 탭이다. */
+  private freeAdSlotOn(tab: string): boolean {
+    const spec = this.stage.ad;
+    return spec !== undefined && (!spec.tabs || spec.tabs.includes(tab));
+  }
+
+  /** 이 가게의 무료 상품. 광고 칸이 같은 자리·같은 묶음을 이어받는다. */
+  private freeProduct(): ProductDto | undefined {
+    const id = this.stage.ad?.freeProductId;
+    return id ? this.products.find((product) => product.id === id) : undefined;
+  }
+
+  /** 받는 것이 여럿인 칸 — 액자를 나란히 세우고, 많으면 칸 폭 안에 들도록 액자를 줄인다. */
+  private addGrantFrames(card: Phaser.GameObjects.Container, tiles: readonly { icon: string; amount: number }[]): void {
+    const width = shopCardWidth();
+    const size = shopGrantFrameSize(width, tiles.length);
+    tiles.forEach((tile, index) => {
+      const x = (index - (tiles.length - 1) / 2) * (size + SHOP_GRANT_GAP);
+      const frame = addFramedIcon(this, undefined, x, SHOP_CARD.frameY, size, tile.icon, { plain: true });
+      frame.add(addShelfAmount(this, size, formatCurrency(tile.amount)));
+      card.add(frame);
+    });
+  }
+
+  /**
+   * 무료 칸의 뒷면 — 「광고 보고 받기」.
+   *
+   * **무료 칸과 같은 한 장이다**(응태 요청 2026-11-15). 받는 것(무료 상품의 지급품 = 광고 슬롯의 지급품)·이름·남은 횟수 줄이
+   * 무료 칸과 같은 자리·같은 글꼴로 서고, 값 줄 자리의 「무료」만 광고 표식 + 「광고」로 바뀐다. 지급과 횟수는 서버가 확정한다.
+   */
+  private addAdCard(index: number, free: ProductDto | undefined): void {
     const spec = this.stage.ad;
     const slot = spec ? findAdRewardSlot(spec.slotId) : undefined;
     if (!spec || !slot || !this.content) return;
-    const grants = slot.reward.kind === "currency" ? [{ currency: slot.reward.currency, amount: slot.reward.amount }]
-      : slot.reward.kind === "currencies" ? slot.reward.grants : [];
-    const [first, ...extras] = grants;
-    if (!first) return;
+    const grants = adSlotGrants(slot);
+    if (grants.length === 0) return;
     const status = adSlotStatus(spec.slotId);
+    const done = status.remaining <= 0;
+    const width = shopCardWidth();
     const { x, y } = shopCardSpot(index);
-    addAdRewardCard(this, this.content, {
-      x, y, width: shopCardWidth(), height: SHOP_CARD.height, currency: first.currency, amount: first.amount, extras,
-      title: t(spec.titleKey), remaining: status.remaining, limit: status.limit,
-      clip: shopGridViewport, isTap: (pointer) => this.insideViewport(pointer) && this.draggedDistance <= SHOP_CARD.dragSlop,
-      onWatch: () => void this.watchAd(spec.slotId), stampKey: spec.slotId,
+    const card = this.add.container(x, y);
+    paintShowcaseCard(this, card, {
+      width, height: SHOP_CARD.height, accent: done ? COLOR.inkDimHex : SHOWCASE_TIER_TONE.daily, dim: done,
+      railX: -width / 2 + 34, stageY: SHOP_CARD.frameY + SHOP_CARD.frame / 2, pedestalWidth: shopPedestalWidth(width, grants.length), gleamIndex: index,
     });
+    this.addGrantFrames(card, grants);
+    const name = this.add.text(0, SHOP_CARD.nameY, free?.name ?? "", textStyle({ role: "emphasis", size: 27 })).setOrigin(0.5);
+    const room = width - 36;
+    if (name.width > room) name.setScale(Math.max(0.7, room / name.width), 1);
+    card.add(name);
+    card.add(styleLimitCount(this.add.text(0, SHOP_CARD.remainingY, t("shop.exchangeRemaining", { remaining: formatCurrency(status.remaining), limit: formatCurrency(status.limit) }), textStyle({ role: "emphasis", size: 27 })).setOrigin(0.5), done));
+    // 값 줄 자리: 무료 칸의 「무료」와 같은 글자 양식에 광고 표식을 앞세운다.
+    const word = addShopPriceWord(this, t("shop.premium.dailyAdTag"), done);
+    const iconSize = 44;
+    const gap = 10;
+    const left = -(iconSize + gap + word.width) / 2;
+    card.add(this.add.image(left + iconSize / 2, SHOP_CARD.price.y, UI_ICON.ad).setDisplaySize(iconSize, iconSize).setAlpha(done ? 0.5 : 1));
+    word.setX(left + iconSize + gap + word.width / 2);
+    card.add(word);
+    if (done) addSoldOutStamp(this, card, width, SHOP_CARD.height, showcaseCardBevel(width, SHOP_CARD.height), spec.slotId);
+    else forgetSoldOutStamp(spec.slotId);
+    const hit = addClippedHit(this, card, 0, 0, width, SHOP_CARD.height, shopGridViewport, { useHandCursor: !done });
+    hit.on("pointerdown", () => pressIn(card));
+    hit.on("pointerout", () => pressOut(card, "normal", { pop: false }));
+    hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      pressOut(card);
+      if (!this.insideViewport(pointer) || this.draggedDistance > SHOP_CARD.dragSlop) return;
+      if (done) { this.notice(t("product.limit.ad"), true); return; }
+      void this.watchAd(spec.slotId);
+    });
+    this.content.add(card);
   }
 
   private async watchAd(slotId: string): Promise<void> {
@@ -782,7 +845,10 @@ export class ShopScene extends Phaser.Scene {
         onSelect: () => this.selectCategory(tab.id),
       });
       // 받지 않은 무료 칸이 든 탭에 점을 세운다 — 다른 탭에 들어와도 무료 칸이 어디 있는지 읽힌다.
-      if (productsForShopTab(this.products, tab.id, this.storefront).some((product) => product.acquisition.kind === "free" && product.purchasable)) {
+      const freeId = this.stage.ad?.freeProductId;
+      const freeHere = productsForShopTab(this.products, tab.id, this.storefront).some((product) => product.id !== freeId && product.acquisition.kind === "free" && product.purchasable)
+        || (this.freeAdSlotOn(tab.id) && this.freeProduct()?.purchasable === true);
+      if (freeHere) {
         new NotificationDot(this, tabObject, { x: SHOP_TAB_ROW.width / 2 - 18, y: -SHOP_TAB_ROW.height / 2 + 10 });
       }
     });
@@ -856,4 +922,36 @@ export class ShopScene extends Phaser.Scene {
   private notice(message: string, refused = false): void {
     showContentToast(this, message, refused ? "refused" : "info");
   }
+}
+
+/** 액자 사이 간격 — 받는 것이 여럿인 칸. */
+const SHOP_GRANT_GAP = 18;
+
+/** 칸에 액자로 설 지급품(재화·아이템). 룬·파편처럼 제 액자를 가진 것은 따로 그린다. */
+function shopGrantTiles(grants: ProductDto["grants"]): { icon: string; amount: number }[] {
+  return grantTiles(grants.filter((grant) => grant.kind === "currency" || grant.kind === "item")).map((tile) => ({ icon: tile.icon, amount: tile.amount }));
+}
+
+/** 액자 한 변. 하나·둘은 공용 크기 그대로, 그보다 많으면 칸 폭 안에 들도록 줄인다. */
+function shopGrantFrameSize(width: number, count: number): number {
+  return Math.min(SHOP_CARD.frame, Math.floor((width - 48 - SHOP_GRANT_GAP * (count - 1)) / Math.max(1, count)));
+}
+
+/** 받침 폭 — 액자 줄 전체를 받친다. */
+function shopPedestalWidth(width: number, count: number): number {
+  if (count <= 1) return SHOP_CARD.frame * SHOP_CARD.pedestalRatio;
+  const size = shopGrantFrameSize(width, count);
+  return Math.min(width - 60, count * size + (count - 1) * SHOP_GRANT_GAP + size * 0.5);
+}
+
+/** 광고 슬롯이 주는 재화 — 같은 자리의 무료 상품과 같은 묶음이다(`adRewards.test`). */
+function adSlotGrants(slot: AdRewardSlot): { icon: string; amount: number }[] {
+  const reward = slot.reward;
+  const currencies = reward.kind === "currency" ? [{ currency: reward.currency, amount: reward.amount }] : reward.kind === "currencies" ? reward.grants : [];
+  return shopGrantTiles(currencies.map((grant) => ({ kind: "currency" as const, currency: grant.currency as ProductCurrency, amount: grant.amount })));
+}
+
+/** 값 줄 자리의 한 마디(「무료」·「광고」) — 무료 칸과 광고 칸이 같은 양식을 쓴다. */
+function addShopPriceWord(scene: Phaser.Scene, label: string, dim: boolean): Phaser.GameObjects.Text {
+  return scene.add.text(0, SHOP_CARD.price.y, label, textStyle({ role: "display", size: 34, color: dim ? "#9aa3b5" : "#ffe08a" })).setOrigin(0.5).setShadow(2, 3, "#000000", 0, true, true);
 }

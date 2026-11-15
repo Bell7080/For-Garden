@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AD_REWARD_SLOTS } from "../../src/data/adRewards";
+import { AD_REWARD_SLOTS, type AdRewardSlot } from "../../src/data/adRewards";
 import { PREMIUM_PRODUCTS } from "../../src/data/premiumProducts";
 import { PROGRESS_PASSES } from "../../src/data/progressPasses";
 import { isCleanPaidAmount, paidAmountUnit } from "../../src/core/paidAmountUnit";
@@ -28,7 +28,11 @@ describe("유료 상품 수량 단위", () => {
     for (const pass of PROGRESS_PASSES) for (const m of pass.milestones) for (const grant of m.rewards) {
       if ((grant.kind === "currency" || grant.kind === "item") && !isCleanPaidAmount(grant.amount)) bad.push(`${pass.id}:${m.threshold}:${grant.amount}`);
     }
-    for (const slot of AD_REWARD_SLOTS) if (slot.reward.kind === "currency" && (slot.reward.currency === "gems" || slot.reward.currency === "gold") && !isCleanPaidAmount(slot.reward.amount)) bad.push(slot.id);
+    for (const slot of AD_REWARD_SLOTS) {
+      const reward = slot.reward as AdRewardSlot["reward"];
+      const grants = reward.kind === "currency" ? [reward] : reward.kind === "currencies" ? reward.grants : [];
+      if (grants.some((grant) => (grant.currency === "gems" || grant.currency === "gold") && !isCleanPaidAmount(grant.amount))) bad.push(slot.id);
+    }
     expect(bad).toEqual([]);
   });
 

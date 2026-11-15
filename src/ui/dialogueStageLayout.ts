@@ -94,6 +94,21 @@ export const DIALOGUE_STANDING_ZOOM: Readonly<Partial<Record<DialogueStandingAss
   // 카르는 거구라 원화가 상반신만 담고 얼굴이 작다(두 눈 사이 66px — 대부분 90px 안팎).
   // 그대로 세우면 옆의 코마보다 얼굴이 작아 거구가 오히려 작게 읽혔다(응태 2026-11-15).
   carno: 1.3,
+  // 아래는 같은 틀로 세웠을 때 화면의 두 눈 사이가 대부분(85~115px)에서 크게 벗어난 원화다.
+  // 작은 쪽은 88px, 큰 쪽은 112px 언저리로 당긴다. 노도니아는 모자 끝이 화면 위로 나가지 않는 1.3에서 멈춘다.
+  nodonia: 1.3,
+  mosana: 1.16,
+  deina: 1.13,
+  atra: 1.11,
+  seira: 1.1,
+  ikanixia: 1.09,
+  kento: 0.94,
+  maki: 0.92,
+  noa: 0.9,
+  toby: 0.9,
+  koma: 0.88,
+  obi: 0.85,
+  dodi: 0.82,
 };
 
 /**
@@ -104,6 +119,10 @@ export const DIALOGUE_STANDING_ZOOM: Readonly<Partial<Record<DialogueStandingAss
  */
 export const DIALOGUE_STANDING_RAISE: Readonly<Partial<Record<DialogueStandingAsset, number>>> = {
   carno: 140,
+  // 관절 기준으로 세우면 두 눈이 다른 원화(화면 y 505~545)보다 눈에 띄게 낮던 원화.
+  amo: 125,
+  torika: 60,
+  keris: 30,
 };
 
 /** 그 원화의 머리 관절이 설 높이. */

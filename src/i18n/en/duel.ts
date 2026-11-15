@@ -40,6 +40,7 @@ export const DUEL_EN = {
   "duel.refresh.free": "Refresh opponents {left}/{limit}",
   "duel.refresh.title": "Refresh Opponents",
   "duel.refresh.message": "Spend Gems to pick new opponents. The cost rises with each refresh.",
+  "duel.refresh.reset": "Free refreshes reset in {time}",
   "duel.fought": "Fought",
   "duel.power": "Combat Power {power}",
   "duel.challenge": "Challenge",

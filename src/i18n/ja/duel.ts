@@ -40,6 +40,7 @@ export const DUEL_JA = {
   "duel.refresh.free": "対戦相手を更新 {left}/{limit}",
   "duel.refresh.title": "対戦相手を更新",
   "duel.refresh.message": "ジェムを使って対戦相手を選び直します。更新するたびに費用が上がります。",
+  "duel.refresh.reset": "無料更新リセットまで {time}",
   "duel.fought": "対戦済み",
   "duel.power": "戦闘力 {power}",
   "duel.challenge": "挑戦",

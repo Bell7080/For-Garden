@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { notificationManager } from "../managers/NotificationManager";
 import { playFormationTapSound } from "./formationSound";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
@@ -888,6 +889,8 @@ export class InteractionCityPopup {
     this.busy = true; this.render();
     try {
       const response = await this.manager.claim(dispatch.dispatchId, crypto.randomUUID());
+      // 로비 교류 입구의 귀환 점이 곧바로 꺼진다.
+      void notificationManager.refresh().catch(() => undefined);
       this.popups.closeAll();
       this.onChanged?.();
       // 영수증은 공용 표기 한 장이 그린다 — 재화 키를 아이콘으로 바꾸는 표도 그쪽이 갖는다.

@@ -84,7 +84,8 @@ export const DUEL_OPPONENT_POPUP = {
   rowHeight: 196,
   rowGap: 14,
   top: 100,
-  bottomRoom: 150,
+  /** 줄 아래 새로고침 버튼과 그 아래 초기화 시계 한 줄이 서는 높이. */
+  bottomRoom: 214,
   faceX: -370,
   /** 상대의 프로필 얼굴 한 변 — 테두리 장식(`PROFILE_FRAME_REACH`)까지 줄 안·이름 왼쪽에 든다. */
   avatarSize: 96,
@@ -97,8 +98,27 @@ export const DUEL_OPPONENT_POPUP = {
   challengeX: 375,
   challengeWidth: 140,
   challengeHeight: 108,
-  refresh: { width: 300, height: 76 },
+  /**
+   * 새로고침 버튼 — 왼쪽 끝에 돌아가는 화살표 아이콘이 서고, 그 아래 회색 한 줄이 무료 횟수가 처음으로 돌아가는
+   * 시각(서버 UTC 자정)까지 남은 시간을 말한다. `fromBottom`·`resetFromBottom`은 판 밑변에서 위로 잰 중심 거리다.
+   */
+  refresh: { width: 480, height: 104, fontSize: 32, iconSize: 54, iconInset: 58, fromBottom: 124, resetFromBottom: 42, resetSize: 24 },
+  /**
+   * 상대 줄이 쌓이는 연출. 열 때와 새로고침 뒤에 위 줄부터 한 줄씩 아래에서 떠올라 제자리에 앉고(`rise`·`stagger`),
+   * 새로고침을 누르면 지금 줄들이 아래 줄부터 왼쪽으로 밀리며 사라진다(`out*`).
+   */
+  stack: { rise: 70, stagger: 70, duration: 340, outShift: 60, outStagger: 45, outDuration: 190 },
 } as const;
+
+/** 새로고침 버튼의 중심 y(팝업 로컬). */
+export function duelOpponentRefreshY(count: number): number {
+  return duelOpponentPopupHeight(count) / 2 - DUEL_OPPONENT_POPUP.refresh.fromBottom;
+}
+
+/** 새로고침 아래 초기화 시계 한 줄의 중심 y(팝업 로컬). */
+export function duelOpponentResetY(count: number): number {
+  return duelOpponentPopupHeight(count) / 2 - DUEL_OPPONENT_POPUP.refresh.resetFromBottom;
+}
 
 /** 상대 `count`명을 담는 팝업 높이. 손으로 적지 않고 줄 수에서 거꾸로 구한다. */
 export function duelOpponentPopupHeight(count: number): number {

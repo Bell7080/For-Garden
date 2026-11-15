@@ -1,5 +1,6 @@
 import { clipHit } from "../ui/clippedHit";
 import Phaser from "phaser";
+import { NotificationDot } from "../ui/NotificationDot";
 import { audioManager } from "../managers/AudioManager";
 import { t } from "../i18n";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -493,6 +494,8 @@ export class InteractionScene extends Phaser.Scene {
     holder.add(text);
     // 시계는 이 글자 하나만 초마다 갈아 끼운다 — 카드를 다시 만들면 원화까지 매초 새로 선다.
     if (away) this.remainingLabels[index] = text;
+    // 돌아와 받을 것이 있는 층은 로비 교류 입구와 같은 붉은 점을 단다 — 그 점이 어느 층 것인지 여기서 이어진다.
+    if (done) new NotificationDot(this, holder, { x: chip.width / 2 - 8, y: -chip.height / 2 + 2 });
     return holder;
   }
 

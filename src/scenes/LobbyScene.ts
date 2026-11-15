@@ -323,6 +323,9 @@ export class LobbyScene extends Phaser.Scene {
       onClick: this.guarded("duel", () => (PVP_MODE_SELECT_ENABLED ? this.openPvpMenu() : startScene(this, "duel"))),
     });
     this.gateEntrance("duel", duelButton, { width: LOBBY_ACTION_BOUNDS.expedition.width, height: LOBBY_ACTION_BOUNDS.expedition.height, tall: "right", tilt: -6 });
+    // 받지 않은 결투 시즌 보상이 대기 중이면 출격과 같은 규칙으로 실제 우상단 모서리에 점을 세운다.
+    const duelDot = perspectiveButtonNotificationAnchor({ width: LOBBY_ACTION_BOUNDS.expedition.width, height: LOBBY_ACTION_BOUNDS.expedition.height, tall: "right", rotation: Phaser.Math.DegToRad(-6), inset: 10 });
+    bindNotificationDot(this, duelButton, duelDot, (listener) => notificationManager.subscribe("duelSeasonReward", listener));
 
     // 출격 — 로비에서 가장 큰 버튼이다. 주황빛 강조로 다른 입구와 구분한다.
     const sortieButton = new Button(this, LOBBY_ACTION_BOUNDS.sortie.x, LOBBY_ACTION_BOUNDS.sortie.y, {
@@ -359,6 +362,8 @@ export class LobbyScene extends Phaser.Scene {
       onClick: this.guarded("interaction", () => startScene(this, "interaction")),
     });
     this.gateEntrance("interaction", interactionButton, { width: 292, height: 106, tall: "left", tilt: 6 });
+    // 돌아와 받을 교류 파견이 있으면 발굴과 같은 자리에 점을 세운다.
+    bindNotificationDot(this, interactionButton, perspectiveButtonNotificationAnchor({ width: 292, height: 106, tall: "left", rotation: Phaser.Math.DegToRad(6), inset: 10 }), (listener) => notificationManager.subscribe("interactionReturned", listener));
 
     // 발굴 — 출격과 같은 줄에 서지만 크기는 교류와 같다. 왼쪽은 서브 콘텐츠 자리라, 오른쪽의
     // 큰 주황 버튼과 크기로 위계를 가른다. 색도 교류와 같은 푸른 계열로 묶는다.
@@ -732,6 +737,8 @@ export class LobbyScene extends Phaser.Scene {
           onClick: () => { close(); if (mode.id === "arena") startScene(this, "duel"); else startScene(this, "arena"); },
         });
         body.add(entry);
+        // 결투장 칸도 출격판의 칸과 같은 자리에 시즌 보상 점을 단다 — 로비 버튼의 점이 어느 칸 것인지 판 안에서 이어진다.
+        if (mode.id === "arena") bindNotificationDot(this, entry, { x: PVP_MENU.entry.width / 2 - 22, y: -pvpEntryHeight(mode.id) / 2 + 22 }, (listener) => notificationManager.subscribe("duelSeasonReward", listener));
         // 렉시아 VS 스피나는 칸 **안에서** 맞부딪힌다 — 칩 실루엣 마스크에 가둬 판 밖으로 나가지 않는다.
         if(mode.id==="live-arena") addArenaMascots(this,body,-235,layout.centers[index]+118,205,true,SORTIE_SD_DEPTH,{ mask: entry.clipMask, spread: 0.95 });
       });

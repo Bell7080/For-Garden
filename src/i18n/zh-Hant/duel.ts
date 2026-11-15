@@ -40,6 +40,7 @@ export const DUEL_ZH_HANT = {
   "duel.refresh.free": "重新整理對手 {left}/{limit}",
   "duel.refresh.title": "重新整理對手",
   "duel.refresh.message": "花費寶石重新挑選對手。每重新整理一次，費用就會上漲。",
+  "duel.refresh.reset": "免費刷新重置倒計時 {time}",
   "duel.fought": "已對戰",
   "duel.power": "戰鬥力 {power}",
   "duel.challenge": "挑戰",

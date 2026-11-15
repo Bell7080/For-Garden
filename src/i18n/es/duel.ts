@@ -40,6 +40,7 @@ export const DUEL_ES = {
   "duel.refresh.free": "Renovar rivales {left}/{limit}",
   "duel.refresh.title": "Renovar rivales",
   "duel.refresh.message": "Gasta Gemas para elegir nuevos rivales. El precio sube con cada renovación.",
+  "duel.refresh.reset": "Renovaciones gratis se reinician en {time}",
   "duel.fought": "Ya combatido",
   "duel.power": "Poder de combate {power}",
   "duel.challenge": "Desafiar",

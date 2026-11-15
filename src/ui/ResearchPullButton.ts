@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 import { audioManager } from "../managers/AudioManager";
+import { settingsManager } from "../managers/SettingsManager";
+import { NotificationDot } from "./NotificationDot";
 import { textStyle } from "./theme";
 
 const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
@@ -20,6 +22,8 @@ export interface ResearchPullCostPart { iconKey: string; amount: number; short?:
 const INK = 0x3b2a1c;
 /** 크림 면. 모집 원화가 밝은 파스텔이라 어두운 유리 판은 그 위에서 구멍처럼 뚫려 보였다. */
 const CREAM = 0xfff6e4;
+/** 오늘의 무료 연구 강조 빛 — 「무료」 글자의 붉은빛과 겹치지 않는 따뜻한 금빛. */
+const FREE_GLOW = 0xffc94a;
 
 /**
  * 연구소의 연구 버튼 — **모집 원화에 어울리는 말랑한 알약**이다.
@@ -34,6 +38,8 @@ export class ResearchPullButton extends Phaser.GameObjects.Container {
   /** 드는 값 줄 — 연구 재화 한 조각과, 모자라면 그 옆의 젬 한 조각. 값이 바뀔 때마다 다시 세운다. */
   private readonly cost: Phaser.GameObjects.Container;
   private enabled = true;
+  /** 오늘의 무료 연구가 남은 동안만 서는 강조 한 벌(빛무리·반짝이·숨쉬기·붉은 점). */
+  private freeHighlight?: { layer: Phaser.GameObjects.Container; dot: NotificationDot; tweens: Phaser.Tweens.Tween[] };
 
   constructor(scene: Phaser.Scene, x: number, y: number, private readonly options: ResearchPullButtonOptions) {
     super(scene, x, y);
@@ -126,7 +132,63 @@ export class ResearchPullButton extends Phaser.GameObjects.Container {
    */
   setFreeLabel(label: string): this {
     this.cost.removeAll(true);
-    this.cost.add(this.scene.add.text(0, 0, label, textStyle({ role: "display", size: Math.round(this.options.height * 0.2), color: "#d2463c" })).setOrigin(0.5));
+    // 평소 값 줄보다 한 뼘 크고 흰 테를 둘러, 크림 면 위에서도 「무료」가 먼저 읽힌다.
+    this.cost.add(this.scene.add.text(0, 0, label, textStyle({ role: "display", size: Math.round(this.options.height * 0.24), color: "#d2463c" })).setStroke("#ffffff", 6).setOrigin(0.5));
+    return this;
+  }
+
+  /**
+   * **오늘의 무료 연구를 크게 알린다** — 값 줄만 「오늘 무료!」로 바뀌던 때는 한 번 훑어선 평소 버튼과
+   * 다르지 않았다. 판 뒤로 금빛 빛무리가 숨 쉬고, 둘레에 반짝이가 톡톡 켜지며, 버튼이 살짝 부풀었다
+   * 가라앉고, 오른쪽 위에 공용 붉은 점이 선다. 무료를 쓰면 한 벌을 통째로 걷는다. 움직임 줄이기에서는
+   * 빛무리와 점만 가만히 선다.
+   */
+  setFreeHighlight(on: boolean): this {
+    if (on === (this.freeHighlight !== undefined)) return this;
+    if (!on) {
+      const current = this.freeHighlight!;
+      for (const tween of current.tweens) tween.remove();
+      current.layer.destroy(true);
+      current.dot.destroy(true);
+      this.freeHighlight = undefined;
+      this.face.setScale(1);
+      return this;
+    }
+    const scene = this.scene;
+    const { width, height } = this.options;
+    const reduce = settingsManager.get().accessibility.reduceMotion;
+    const layer = scene.add.container(0, 0);
+    // 빛무리 — 같은 알약을 한 뼘씩 키워 옅은 금빛을 겹친다(밝아지는 합성 없이, 원화 위에서 하얗게 뜨지 않게).
+    const halo = scene.add.graphics();
+    for (const [grow, alpha] of [[34, 0.16], [22, 0.24], [12, 0.34]] as const) {
+      halo.fillStyle(FREE_GLOW, alpha);
+      halo.fillRoundedRect(-width / 2 - grow, -height / 2 - grow, width + grow * 2, height + grow * 2 + 12, height / 2 + grow);
+    }
+    layer.add(halo);
+    // 반짝이 — 둘레 여섯 자리에 네 갈래 마름모가 차례로 켜졌다 꺼진다. 난수 없이 번호에서 자리·박자를 정한다.
+    const spots = [[-0.5, -0.62], [-0.18, -0.8], [0.22, -0.78], [0.52, -0.6], [0.56, 0.42], [-0.54, 0.46]] as const;
+    const sparkles = spots.map(([sx, sy], index) => {
+      const star = scene.add.graphics({ x: sx * width, y: sy * height });
+      const r = index % 2 === 0 ? 15 : 11;
+      star.fillStyle(0xffffff, 1);
+      star.fillPoints([new Phaser.Geom.Point(0, -r), new Phaser.Geom.Point(r * 0.28, -r * 0.28), new Phaser.Geom.Point(r, 0), new Phaser.Geom.Point(r * 0.28, r * 0.28), new Phaser.Geom.Point(0, r), new Phaser.Geom.Point(-r * 0.28, r * 0.28), new Phaser.Geom.Point(-r, 0), new Phaser.Geom.Point(-r * 0.28, -r * 0.28)], true);
+      star.fillStyle(FREE_GLOW, 1);
+      star.fillPoints([new Phaser.Geom.Point(0, -r * 0.5), new Phaser.Geom.Point(r * 0.5, 0), new Phaser.Geom.Point(0, r * 0.5), new Phaser.Geom.Point(-r * 0.5, 0)], true);
+      star.setAlpha(reduce ? 0.85 : 0).setScale(reduce ? 0.8 : 0.3);
+      return star;
+    });
+    layer.add(sparkles);
+    this.addAt(layer, 0);
+    const tweens: Phaser.Tweens.Tween[] = [];
+    if (!reduce) {
+      tweens.push(scene.tweens.add({ targets: halo, alpha: { from: 0.55, to: 1 }, duration: 760, yoyo: true, repeat: -1, ease: "Sine.easeInOut" }));
+      tweens.push(scene.tweens.add({ targets: this.face, scale: { from: 1, to: 1.035 }, duration: 760, yoyo: true, repeat: -1, ease: "Sine.easeInOut" }));
+      sparkles.forEach((star, index) => {
+        tweens.push(scene.tweens.add({ targets: star, alpha: { from: 0, to: 1 }, scale: { from: 0.3, to: 1 }, angle: { from: 0, to: 45 }, duration: 420, yoyo: true, repeat: -1, repeatDelay: 900, delay: index * 260, ease: "Sine.easeOut" }));
+      });
+    }
+    const dot = new NotificationDot(scene, this, { x: width / 2 - 26, y: -height / 2 + 6 });
+    this.freeHighlight = { layer, dot, tweens };
     return this;
   }
 

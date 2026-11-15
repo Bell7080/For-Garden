@@ -40,6 +40,7 @@ export const DUEL_DE = {
   "duel.refresh.free": "Gegner neu mischen {left}/{limit}",
   "duel.refresh.title": "Gegner neu mischen",
   "duel.refresh.message": "Mische mit Juwelen neue Gegner. Der Preis steigt mit jedem Mal.",
+  "duel.refresh.reset": "Kostenloses Mischen wird zurückgesetzt in {time}",
   "duel.fought": "Gekämpft",
   "duel.power": "Kampfkraft {power}",
   "duel.challenge": "Herausfordern",

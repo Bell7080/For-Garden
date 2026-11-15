@@ -500,6 +500,7 @@ export default {
   "product.shop-tonic-pack.grant.0": "能量飲料",
   "product.shop-tonic-large-pack.name": "能量飲料+",
   "product.shop-tonic-large-pack.grant.0": "能量飲料+",
+  "product.shop-free-daily.name": "每日免費補給",
   "product.shop-field-supplies.name": "起司蛋糕 (小)",
   "product.shop-field-rations.name": "起司蛋糕 (中)",
   "product.shop-recovery-cache.name": "起司蛋糕 (大)",

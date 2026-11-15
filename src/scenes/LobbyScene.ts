@@ -1122,6 +1122,7 @@ export class LobbyScene extends Phaser.Scene {
     this.lockRailButton("trade", buttons[2]);
     // 보상 상태의 단일 구독과 기존 팝업 연결은 위치 분리 뒤에도 그대로 유지한다.
     bindNotificationDot(this, buttons[0], { x: 42, y: -42 }, (listener) => notificationManager.subscribe("missionReward", listener));
+    bindNotificationDot(this, buttons[1], { x: 42, y: -42 }, (listener) => notificationManager.subscribe("shopFree", listener));
   }
 
   /** 씬 전환 없이 같은 PopupLayer에 임무 작업판 한 장만 연다. */

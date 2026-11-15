@@ -143,6 +143,12 @@ export class RelicProgressionManager {
     if (!hasRemoteState(response)) this.applyRuneInventory(response.inventory);
   }
 
+  /** 세 칸을 한 번에 정한다 — 자동·추천 장착과 모두 해제. 서버가 확정한 장착표만 적용한다. */
+  async setRuneLoadout(relicId: string, slots: readonly [string | null, string | null, string | null], api: GameApi = gameApi, options: { moveFromOther?: boolean } = {}): Promise<void> {
+    const response = await api.setRuneLoadout({ relicId, slots, ...(options.moveFromOther ? { moveFromOther: true } : {}) });
+    if (!hasRemoteState(response)) this.applyRuneInventory(response.inventory);
+  }
+
   /** 인벤토리 DTO를 기존 공유 객체에 복사해 씬 참조를 보존하고 응답 단위로 저장한다. */
   private applyRuneInventory(inventory: RuneInventoryDto): void {
     this.state.runeInventory = inventory.runes.map((rune) => ({

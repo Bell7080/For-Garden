@@ -19,6 +19,7 @@ export const LAB_JA = {
   "lab.pity.unit": "回",
   "lab.pity.pickupNext": "次のSSRはピックアップ確定",
   "lab.pull.one": "1回研究",
+  "lab.pull.freeToday": "本日無料！",
   "lab.pull.ten": "10回研究",
   "lab.pull.againHint": "もう一度研究してみる？",
   "lab.networkError": "通信に失敗しました。もう一度お試しください。",

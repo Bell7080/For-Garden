@@ -19,6 +19,7 @@ export const LAB_ZH_HANS = {
   "lab.pity.unit": "次",
   "lab.pity.pickupNext": "下个SSR必为UP",
   "lab.pull.one": "研究 x1",
+  "lab.pull.freeToday": "今日免费！",
   "lab.pull.ten": "研究 x10",
   "lab.pull.againHint": "再研究一次吧？",
   "lab.networkError": "请求失败。请重试。",

@@ -19,6 +19,7 @@ export const LAB_RU = {
   "lab.pity.unit": "раз",
   "lab.pity.pickupNext": "Следующий SSR — избранный",
   "lab.pull.one": "Исследование x1",
+  "lab.pull.freeToday": "Сегодня бесплатно!",
   "lab.pull.ten": "Исследование x10",
   "lab.pull.againHint": "Исследовать ещё раз?",
   "lab.networkError": "Запрос не удался. Повторите попытку.",

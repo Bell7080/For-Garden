@@ -516,6 +516,7 @@ export default {
   "product.shop-tonic-pack.grant.0": "Energy Drink",
   "product.shop-tonic-large-pack.name": "Energy Drink+",
   "product.shop-tonic-large-pack.grant.0": "Energy Drink+",
+  "product.shop-free-daily.name": "Daily Free Supplies",
   "product.shop-field-supplies.name": "Cheesecake (S)",
   "product.shop-field-rations.name": "Cheesecake (M)",
   "product.shop-recovery-cache.name": "Cheesecake (L)",

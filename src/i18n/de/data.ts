@@ -500,6 +500,7 @@ export default {
   "product.shop-tonic-pack.grant.0": "Energydrink",
   "product.shop-tonic-large-pack.name": "Energydrink+",
   "product.shop-tonic-large-pack.grant.0": "Energydrink+",
+  "product.shop-free-daily.name": "Tägliche Gratis-Versorgung",
   "product.shop-field-supplies.name": "Käsekuchen (Klein)",
   "product.shop-field-rations.name": "Käsekuchen (Mittel)",
   "product.shop-recovery-cache.name": "Käsekuchen (Groß)",

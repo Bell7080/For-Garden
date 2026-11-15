@@ -98,3 +98,24 @@ describe('반복 보상 인플레이션 승인선',()=>{
   expect(top(GUILD_GUARD_DAILY_RANK_COINS)*7,approvalMessage).toBeLessThanOrEqual(210);
  });
 });
+
+describe('하루 한 번 무료 수급처(2026-11-14 신설 — 응태 승인 대상)',()=>{
+ const approvalMessage='무료칸·무료 연구의 양을 올리려면 공급량 표를 먼저 보여 주고 응태 승인을 받는다.';
+ it('일반 상점 일일 무료칸은 하루 한 번 · 골드 5,000 · 치즈케이크 20을 넘지 않는다',async()=>{
+  const { PRODUCTS } = await import('../../src/data/products');
+  const free=PRODUCTS.filter(p=>p.storefront==='shop'&&p.acquisition.kind==='free');
+  expect(free.map(p=>p.id)).toEqual(['shop-free-daily']);
+  const [slot]=free;
+  expect(slot.purchaseLimit,approvalMessage).toBe(1);
+  expect(slot.refresh).toBe('daily');
+  const amount=(currency:string)=>slot.grants.reduce((sum,g)=>sum+(g.kind==='currency'&&g.currency===currency?g.amount:0),0);
+  expect(amount('gold'),approvalMessage).toBeLessThanOrEqual(5000);
+  expect(amount('cheesecake'),approvalMessage).toBeLessThanOrEqual(20);
+  expect(slot.grants.every(g=>g.kind==='currency'&&(g.currency==='gold'||g.currency==='cheesecake')),approvalMessage).toBe(true);
+ });
+ it('무료 연구는 하루 1회 · 상시 화석 연구 1회뿐이다',async()=>{
+  const { FREE_RESEARCH_DAILY_LIMIT, FREE_RESEARCH_BANNER_ID } = await import('../../src/core/freeResearch');
+  expect(FREE_RESEARCH_DAILY_LIMIT,approvalMessage).toBe(1);
+  expect(FREE_RESEARCH_BANNER_ID).toBe('fossil');
+ });
+});

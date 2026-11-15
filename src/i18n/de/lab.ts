@@ -19,6 +19,7 @@ export const LAB_DE = {
   "lab.pity.unit": "Zügen",
   "lab.pity.pickupNext": "Nächstes SSR ist das Pickup",
   "lab.pull.one": "Forschung x1",
+  "lab.pull.freeToday": "Heute gratis!",
   "lab.pull.ten": "Forschung x10",
   "lab.pull.againHint": "Noch einmal forschen?",
   "lab.networkError": "Die Anfrage ist fehlgeschlagen. Bitte erneut versuchen.",

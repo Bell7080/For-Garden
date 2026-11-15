@@ -500,6 +500,7 @@ export default {
   "product.shop-tonic-pack.grant.0": "Nước tăng lực",
   "product.shop-tonic-large-pack.name": "Nước tăng lực+",
   "product.shop-tonic-large-pack.grant.0": "Nước tăng lực+",
+  "product.shop-free-daily.name": "Tiếp tế miễn phí hằng ngày",
   "product.shop-field-supplies.name": "Bánh phô mai (Nhỏ)",
   "product.shop-field-rations.name": "Bánh phô mai (Vừa)",
   "product.shop-recovery-cache.name": "Bánh phô mai (Lớn)",

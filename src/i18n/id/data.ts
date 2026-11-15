@@ -500,6 +500,7 @@ export default {
   "product.shop-tonic-pack.grant.0": "Minuman Energi",
   "product.shop-tonic-large-pack.name": "Minuman Energi+",
   "product.shop-tonic-large-pack.grant.0": "Minuman Energi+",
+  "product.shop-free-daily.name": "Pasokan Gratis Harian",
   "product.shop-field-supplies.name": "Cheesecake (Kecil)",
   "product.shop-field-rations.name": "Cheesecake (Sedang)",
   "product.shop-recovery-cache.name": "Cheesecake (Besar)",

@@ -424,6 +424,55 @@ describe("FakeServer", () => {
     expect(state.relicProgress.rex.heartGemSlots[0]).toBe("rune-1");
   });
 
+  it("세 칸을 한 저장에서 정하고, 다른 렐릭의 룬은 옮기기를 허락할 때만 빼 온다", async () => {
+    const state = makeSession();
+    const second = { ...makeRune("rune-2"), part: 1 as const };
+    state.runeInventory = [makeRune(), second];
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await server.setRuneLoadout({ relicId: "torika", slots: ["rune-1", "rune-2", null] });
+    expect(state.relicProgress.torika.heartGemSlots).toEqual(["rune-1", "rune-2", null]);
+    // 자리가 다른 칸에 넣거나 다른 렐릭의 룬을 허락 없이 가져오면 아무것도 바뀌지 않는다.
+    await expect(server.setRuneLoadout({ relicId: "rex", slots: ["rune-2", null, null] })).rejects.toMatchObject({ code: "RUNE_SLOT_MISMATCH" });
+    await expect(server.setRuneLoadout({ relicId: "rex", slots: ["rune-1", null, null] })).rejects.toMatchObject({ code: "RUNE_ALREADY_EQUIPPED" });
+    expect(state.relicProgress.rex.heartGemSlots).toEqual([null, null, null]);
+    await server.setRuneLoadout({ relicId: "rex", slots: ["rune-1", null, null], moveFromOther: true });
+    expect(state.relicProgress.torika.heartGemSlots).toEqual([null, "rune-2", null]);
+    expect(state.relicProgress.rex.heartGemSlots).toEqual(["rune-1", null, null]);
+    // 모두 해제도 같은 경계다.
+    await server.setRuneLoadout({ relicId: "torika", slots: [null, null, null] });
+    expect(state.relicProgress.torika.heartGemSlots).toEqual([null, null, null]);
+  });
+
+  it("하루 한 번 무료 연구는 화석 연구 1회에만, 재화 없이, 하루 한 번만 돈다", async () => {
+    const state = makeSession(0);
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await server.completeStage("1-5", true);
+    state.wallet.fossil = 0; state.wallet.gems = 0;
+    expect((await server.getFreeResearchStatus()).available).toBe(true);
+    // 다른 배너·10회에는 쓸 수 없다.
+    await expect(server.pullRelics({ bannerId: "fossil", count: 10, free: true })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    const result = await server.pullRelics({ bannerId: "fossil", count: 1, free: true });
+    expect(result.results).toHaveLength(1);
+    expect(state.wallet.fossil).toBe(0);
+    expect(state.wallet.gems).toBeGreaterThanOrEqual(0);
+    // 연구 기록에는 아무것도 치르지 않은 1회로 남는다.
+    expect(state.gachaHistory?.entries.at(-1)).toMatchObject({ bannerId: "fossil", count: 1, cost: {} });
+    expect((await server.getFreeResearchStatus()).available).toBe(false);
+    await expect(server.pullRelics({ bannerId: "fossil", count: 1, free: true })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
+  });
+
+  it("일반 상점의 일일 무료칸은 하루 한 번 받고, 받으면 상점 빨간 점이 꺼진다", async () => {
+    const state = makeSession();
+    const server = new FakeServer(state, { latencyMs: 0 });
+    expect((await server.getNotificationSignals()).shopFreeSupply).toBe(true);
+    const goldBefore = state.wallet.gold;
+    const result = await server.purchaseProduct({ storefront: "shop", productId: "shop-free-daily", quantity: 1 });
+    expect(result.remaining).toBe(0);
+    expect(state.wallet.gold).toBe(goldBefore + 5000);
+    expect((await server.getNotificationSignals()).shopFreeSupply).toBe(false);
+    await expect(server.purchaseProduct({ storefront: "shop", productId: "shop-free-daily", quantity: 1 })).rejects.toBeDefined();
+  });
+
   it("모든 일반 강화 뒤에만 대상 옵션 각인을 정확히 하나 저장한다", async () => {
     const state = makeSession(); let rune = makeRune();
     for (const { key } of rune.mainStats) for (let count = 0; count < 3; count += 1) rune = applyRuneEnhancement(rune, key, 1, 0);

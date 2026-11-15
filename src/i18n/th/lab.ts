@@ -19,6 +19,7 @@ export const LAB_TH = {
   "lab.pity.unit": "ครั้ง",
   "lab.pity.pickupNext": "SSR ถัดไปคือตัวเรทอัป",
   "lab.pull.one": "วิจัย x1",
+  "lab.pull.freeToday": "ฟรีวันนี้!",
   "lab.pull.ten": "วิจัย x10",
   "lab.pull.againHint": "วิจัยอีกสักครั้งไหม?",
   "lab.networkError": "คำขอล้มเหลว ลองอีกครั้ง",

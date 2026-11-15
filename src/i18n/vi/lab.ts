@@ -19,6 +19,7 @@ export const LAB_VI = {
   "lab.pity.unit": "lượt",
   "lab.pity.pickupNext": "SSR kế tiếp là nhân vật tăng tỉ lệ",
   "lab.pull.one": "Nghiên cứu x1",
+  "lab.pull.freeToday": "Miễn phí hôm nay!",
   "lab.pull.ten": "Nghiên cứu x10",
   "lab.pull.againHint": "Nghiên cứu thêm một lần nữa?",
   "lab.networkError": "Yêu cầu thất bại. Hãy thử lại.",

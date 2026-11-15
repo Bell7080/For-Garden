@@ -19,6 +19,7 @@ export const LAB_ES = {
   "lab.pity.unit": "tiradas",
   "lab.pity.pickupNext": "El próximo SSR será el destacado",
   "lab.pull.one": "Investigar x1",
+  "lab.pull.freeToday": "¡Gratis hoy!",
   "lab.pull.ten": "Investigar x10",
   "lab.pull.againHint": "¿Investigar una vez más?",
   "lab.networkError": "La solicitud falló. Inténtalo de nuevo.",

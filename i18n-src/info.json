@@ -455,6 +455,116 @@
 "Belegt {count}",
 "Занято {count}"
 ],
+"info.rune.loadout.auto": [
+"自动装备",
+"สวมอัตโนมัติ",
+"Tự trang bị",
+"Pasang Otomatis",
+"Equipar auto",
+"Equipar auto",
+"Auto-Ausrüsten",
+"Автоэкипировка"
+],
+"info.rune.loadout.recommend": [
+"推荐装备",
+"สวมที่แนะนำ",
+"Trang bị đề xuất",
+"Pasang Saran",
+"Recomendado",
+"Recomendado",
+"Empfohlen",
+"Рекомендуемое"
+],
+"info.rune.loadout.clear": [
+"全部卸下",
+"ถอดทั้งหมด",
+"Tháo hết",
+"Lepas Semua",
+"Quitar todo",
+"Remover tudo",
+"Alle ablegen",
+"Снять все"
+],
+"info.rune.loadout.equip": [
+"装备",
+"สวม",
+"Trang bị",
+"Pasang",
+"Equipar",
+"Equipar",
+"Ausrüsten",
+"Надеть"
+],
+"info.rune.loadout.cancel": [
+"取消",
+"ยกเลิก",
+"Hủy",
+"Batal",
+"Cancelar",
+"Cancelar",
+"Abbrechen",
+"Отмена"
+],
+"info.rune.loadout.none": [
+"没有比当前更好的符文。",
+"ไม่มีรูนที่ดีกว่านี้",
+"Không có rune tốt hơn.",
+"Tidak ada rune yang lebih baik.",
+"No hay runas mejores.",
+"Não há runas melhores.",
+"Keine besseren Runen vorhanden.",
+"Лучших рун нет."
+],
+"info.rune.loadout.done": [
+"战斗力 {before} → {after}",
+"พลังต่อสู้ {before} → {after}",
+"Lực chiến {before} → {after}",
+"Kekuatan Tempur {before} → {after}",
+"Poder de combate {before} → {after}",
+"Poder de Combate {before} → {after}",
+"Kampfkraft {before} → {after}",
+"Мощь {before} → {after}"
+],
+"info.rune.loadout.confirm": [
+"更换为推荐符文。\n战斗力 {before} → {after}",
+"เปลี่ยนเป็นรูนที่แนะนำ\nพลังต่อสู้ {before} → {after}",
+"Đổi sang rune đề xuất.\nLực chiến {before} → {after}",
+"Ganti ke rune yang disarankan.\nKekuatan Tempur {before} → {after}",
+"Cambiar a las runas recomendadas.\nPoder de combate {before} → {after}",
+"Trocar pelas runas recomendadas.\nPoder de Combate {before} → {after}",
+"Zu den empfohlenen Runen wechseln.\nKampfkraft {before} → {after}",
+"Сменить на рекомендуемые руны.\nМощь {before} → {after}"
+],
+"info.rune.loadout.moves": [
+"将从{names}处卸下。",
+"จะถอดจาก {names}",
+"Lấy từ: {names}",
+"Diambil dari: {names}",
+"Se quitarán de: {names}",
+"Serão retiradas de: {names}",
+"Wird abgelegt bei: {names}",
+"Будут сняты с: {names}"
+],
+"info.rune.loadout.cleared": [
+"已卸下全部符文。",
+"ถอดรูนทั้งหมดแล้ว",
+"Đã tháo hết rune.",
+"Semua rune dilepas.",
+"Runas quitadas.",
+"Runas removidas.",
+"Alle Runen abgelegt.",
+"Все руны сняты."
+],
+"info.rune.loadout.failed": [
+"符文装备失败。",
+"สวมรูนไม่สำเร็จ",
+"Không thể trang bị rune.",
+"Gagal memasang rune.",
+"No se pudieron equipar las runas.",
+"Não foi possível equipar as runas.",
+"Runen konnten nicht ausgerüstet werden.",
+"Не удалось надеть руны."
+],
 "info.journal.title": [
 "观察日志",
 "บันทึกการสังเกต",

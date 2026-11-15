@@ -10,6 +10,8 @@ import { serverNow } from "../api/serverClock";
 import { ResearchPresentationController, highestRarity, researchSlotViews, showcaseRelicIds } from "../core/researchPresentation";
 import { consumeSceneEntry } from "./sceneEntry";
 import { LIMITED_RELIC_IDS, researchBanners } from "../data/banners";
+import { FREE_RESEARCH_BANNER_ID } from "../core/freeResearch";
+import { logError } from "../managers/ErrorReporter";
 import { QA_ALL_EVENTS } from "../core/buildFlavor";
 import { getRelic } from "../data/relics";
 import { session } from "../state/session";
@@ -231,6 +233,7 @@ export class LabScene extends Phaser.Scene {
     });
     this.showcaseRelic();
     this.refresh();
+    void this.loadFreeResearch();
     // SSR 전조 무대를 손이 노는 동안 미리 세운다 — 첫 SSR이 뜨는 순간 셰이더 컴파일이 몰려
     // 화면이 멎지 않게. 들어오는 연출이 끝난 뒤에 세워 그 연출을 끊지 않는다.
     this.time.delayedCall(900, () => void warmSsrOmen(this.game, settingsManager.get().accessibility.reduceMotion));
@@ -415,6 +418,8 @@ export class LabScene extends Phaser.Scene {
    */
   private requestPull(count: 1 | 10): void {
     const banner = this.banner;
+    // 오늘의 무료 연구는 재화를 묻지 않는다 — 확인 창 없이 곧바로 돌린다.
+    if (count === 1 && this.freePullOpen(banner)) { if (!this.pullPending) { this.clearPullSpotlight(); void this.doPull(1, true); } return; }
     if (this.pullPending || !canPull(session.wallet, banner, count, this.pityOf(banner))) return;
     this.clearPullSpotlight();
     const payment = pullPayment(session.wallet, banner, count, this.pityOf(banner));
@@ -438,15 +443,32 @@ export class LabScene extends Phaser.Scene {
     return status >= Phaser.Scenes.RUNNING && status <= Phaser.Scenes.SLEEPING;
   }
 
-  private async doPull(count: 1 | 10): Promise<void> {
+  /** 오늘의 무료 연구가 남았는가 — 서버가 답한 값만 믿고, 답이 오기 전에는 닫힌 쪽이다. */
+  private freeResearchReady = false;
+
+  private freePullOpen(banner: Banner): boolean {
+    return this.freeResearchReady && banner.id === FREE_RESEARCH_BANNER_ID;
+  }
+
+  private async loadFreeResearch(): Promise<void> {
+    try {
+      const status = await gameApi.getFreeResearchStatus();
+      if (!this.alive) return;
+      this.freeResearchReady = status.available;
+      this.refresh();
+    } catch (error) { logError("lab.freeResearch", "무료 연구 상태를 읽지 못했습니다.", error); }
+  }
+
+  private async doPull(count: 1 | 10, free = false): Promise<void> {
     const banner = this.banner;
-    if (this.pullPending || !canPull(session.wallet, banner, count, this.pityOf(banner))) return;
+    if (this.pullPending || (!free && !canPull(session.wallet, banner, count, this.pityOf(banner)))) return;
 
     this.pullPending = true;
     this.refresh();
     try {
       // 결과와 비용은 클라이언트에서 계산하지 않고 API 응답만 화면에 반영한다.
-      const response = await gameApi.pullRelics({ bannerId: banner.id, count });
+      const response = await gameApi.pullRelics(free ? { bannerId: banner.id, count, free: true } : { bannerId: banner.id, count });
+      if (free) this.freeResearchReady = false;
       // 응답을 기다리는 사이 화면을 떠났으면 부서진 판을 다시 칠하지 않는다(운영 오류 기록 — `setCost`의 `add` undefined).
       if (!this.alive) return;
       this.topBar.refresh();
@@ -929,9 +951,10 @@ export class LabScene extends Phaser.Scene {
     const oneOpen = bannerAcceptsCount(banner, 1, pity) || !banner.tenOnly;
     this.oneButton.setVisible(!banner.tenOnly);
     this.tenButton.setX(banner.tenOnly ? BASE_WIDTH / 2 : 780);
-    this.oneButton
-      .setCost(pullCostParts(banner, 1, pity))
-      .setEnabled(oneOpen && !this.pullPending && canPull(session.wallet, banner, 1, pity));
+    const freeOne = this.freePullOpen(banner);
+    if (freeOne) this.oneButton.setFreeLabel(t("lab.pull.freeToday"));
+    else this.oneButton.setCost(pullCostParts(banner, 1, pity));
+    this.oneButton.setEnabled(oneOpen && !this.pullPending && (freeOne || canPull(session.wallet, banner, 1, pity)));
     this.tenButton
       .setCost(pullCostParts(banner, 10, pity))
       .setEnabled(!this.pullPending && canPull(session.wallet, banner, 10, pity));

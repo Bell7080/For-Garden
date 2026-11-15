@@ -19,6 +19,7 @@ export const LAB_PT_BR = {
   "lab.pity.unit": "giros",
   "lab.pity.pickupNext": "O próximo SSR será o destaque",
   "lab.pull.one": "Pesquisar x1",
+  "lab.pull.freeToday": "Grátis hoje!",
   "lab.pull.ten": "Pesquisar x10",
   "lab.pull.againHint": "Pesquisar mais uma vez?",
   "lab.networkError": "A solicitação falhou. Tente novamente.",

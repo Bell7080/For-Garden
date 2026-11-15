@@ -16,13 +16,19 @@ describe("notifications", () => {
   });
 
   it("maps only positive or explicit conditions to each stable key", () => {
-    expect(NOTIFICATION_KEYS).toEqual(["raidReward", "expeditionReward", "sortieReward", "missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "premiumOffer", "passReward", "premiumNotice", "achievementReward"]);
+    expect(NOTIFICATION_KEYS).toEqual(["raidReward", "expeditionReward", "sortieReward", "missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "premiumOffer", "passReward", "premiumNotice", "achievementReward", "shopFree"]);
     expect(deriveNotificationState({ claimableMissionCount: 2, excavationHarvestReady: true, pendingFriendRequestCount: 1, unseenEventCount: 3, unreadMailCount: 4 }))
-      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: true, excavationHarvestReady: true, friendRequest: true, newEvent: true, mail: true, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, premiumOffer: false, passReward: false, premiumNotice: false, achievementReward: false });
+      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: true, excavationHarvestReady: true, friendRequest: true, newEvent: true, mail: true, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, premiumOffer: false, passReward: false, premiumNotice: false, achievementReward: false, shopFree: false });
     expect(deriveNotificationState({ claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 }))
-      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: false, excavationHarvestReady: false, friendRequest: false, newEvent: false, mail: false, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, premiumOffer: false, passReward: false, premiumNotice: false, achievementReward: false });
+      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: false, excavationHarvestReady: false, friendRequest: false, newEvent: false, mail: false, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, premiumOffer: false, passReward: false, premiumNotice: false, achievementReward: false, shopFree: false });
     expect(deriveNotificationState({ claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0, freeSupplyCategories: ["weekly"] }))
       .toMatchObject({ premiumFree: true, premiumFreeDaily: false, premiumFreeWeekly: true, premiumFreeMonthly: false, passReward: false, premiumNotice: true });
+  });
+
+  it("일반 상점의 오늘 무료칸이 남아 있으면 상점 입구에 점을 켠다", () => {
+    const base = { claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 };
+    expect(deriveNotificationState({ ...base, shopFreeSupply: true }).shopFree).toBe(true);
+    expect(deriveNotificationState(base).shopFree).toBe(false);
   });
 
   it("읽은 우편의 미수령 보상과 패스 보상도 알리고 전부 수령하면 꺼진다", () => {

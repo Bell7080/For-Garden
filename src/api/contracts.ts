@@ -241,6 +241,12 @@ export interface EquipRuneResponse { inventory: RuneInventoryDto; }
 export interface UnequipRuneRequest { relicId: string; slotIndex: number; }
 /** 해제 뒤의 단일 기준 인벤토리다. */
 export interface UnequipRuneResponse { inventory: RuneInventoryDto; }
+/**
+ * 렐릭 한 명의 세 칸을 한 번에 정한다(자동·추천 장착, 모두 해제). 칸마다 룬 ID 또는 null.
+ * 다른 렐릭이 낀 룬이 섞이면 `moveFromOther`가 있어야 하고, 그 렐릭의 칸을 같은 저장에서 비운다.
+ */
+export interface SetRuneLoadoutRequest { relicId: string; slots: readonly [string | null, string | null, string | null]; moveFromOther?: boolean; }
+export interface SetRuneLoadoutResponse { inventory: RuneInventoryDto; }
 /** 판매 명령은 재전송 멱등 키와 서버가 제거할 인스턴스 ID만 전달한다. */
 export interface SellRunesRequest { requestId: string; instanceIds: string[]; }
 /** 서버가 원자 커밋한 룬·장착표·지갑과 실제 지급 골드다. */
@@ -657,7 +663,7 @@ export interface PeriodResearchDto { points: number; maxPoints: number; stages: 
 /** 목록 응답은 로비 배지에서 바로 쓸 미수령 개수를 포함한다. */
 export interface MissionListResponse { missions: MissionDto[]; claimableCount: number; research: Record<MissionPeriod, PeriodResearchDto>; }
 /** 받은 편지함 데이터가 없는 화면이 상태를 추측하지 않도록 마련한 명시적 서버 계약이다. */
-export interface NotificationSignalsResponse { claimableRaidCount?: number; claimableExpeditionCount?: number; pendingFriendRequestCount: number; /** 받을 수 있는 업적 단계 수. */ claimableAchievementCount?: number; unseenEventCount: number; /** 광고를 봐야 받는 것만 남은 이벤트 수(돌림판 광고 보너스). `unseenEventCount`에 들지 않고, 설정을 켠 사람의 화면만 더한다. */ adOnlyEventCount?: number; unreadMailCount: number; claimableMailCount?: number; claimablePassCount?: number; /** 아직 받지 않은 무료 보급이 있는 프리미엄 탭(일간·주간·월간). */ freeSupplyCategories: Array<"daily" | "weekly" | "monthly">; /** 지금 열린 상황 특가 수(받을 첫 결제 선물 포함) — 프리미엄 「한정」 탭의 붉은 점. */ situationalOfferCount?: number; /** 운영 도구가 보낸 우편·재화 변동 소식. 한 번 내려가면 서버가 비운다. */ opsNotices?: OpsNotice[]; }
+export interface NotificationSignalsResponse { claimableRaidCount?: number; claimableExpeditionCount?: number; pendingFriendRequestCount: number; /** 받을 수 있는 업적 단계 수. */ claimableAchievementCount?: number; unseenEventCount: number; /** 광고를 봐야 받는 것만 남은 이벤트 수(돌림판 광고 보너스). `unseenEventCount`에 들지 않고, 설정을 켠 사람의 화면만 더한다. */ adOnlyEventCount?: number; unreadMailCount: number; claimableMailCount?: number; claimablePassCount?: number; /** 아직 받지 않은 무료 보급이 있는 프리미엄 탭(일간·주간·월간). */ freeSupplyCategories: Array<"daily" | "weekly" | "monthly">; /** 일반 상점에 아직 받지 않은 무료 칸이 있는가. */ shopFreeSupply?: boolean; /** 지금 열린 상황 특가 수(받을 첫 결제 선물 포함) — 프리미엄 「한정」 탭의 붉은 점. */ situationalOfferCount?: number; /** 운영 도구가 보낸 우편·재화 변동 소식. 한 번 내려가면 서버가 비운다. */ opsNotices?: OpsNotice[]; }
 /** 일괄 또는 선택 수령 뒤 지급 총액과 최신 상태를 반환한다. */
 export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; claimedResearchStageIds: string[]; /** 임무·연구도 단계가 각각 준 것과 그 합(같은 재화는 한 줄). 상한에 깎인 뒤의 실제 지급분이다. */ rewards: { mission: MissionReward[]; research: MissionReward[] }; granted: MissionReward[]; }
 
@@ -738,6 +744,18 @@ export interface PurchaseProductResponse extends PlayerStateDto { productId: str
 export interface PullRequest {
   bannerId: string;
   count: 1 | 10;
+  /**
+   * 하루 한 번 무료 연구(`core/freeResearch.ts`). 상시 화석 연구의 1회에만 쓰이고 재화를 차감하지 않는다 —
+   * 오늘 이미 썼으면 서버가 거절한다(화면이 버튼을 감춰도 요청은 올 수 있다).
+   */
+  free?: boolean;
+}
+
+/** 오늘의 무료 연구가 남았는지와 다음 초기화 시각(UTC 자정). */
+export interface FreeResearchStatusDto {
+  available: boolean;
+  bannerId: string;
+  resetsAt: string;
 }
 
 /** 네트워크 슬롯은 렐릭 수집 변화와 수량형 재화를 판별자로 안전하게 분리한다. */
@@ -1340,6 +1358,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   claimPassDailyBonus(request: ClaimPassDailyBonusRequest): Promise<PurchaseProductResponse>;
   claimFirstPaymentGift(request: ClaimFirstPaymentGiftRequest): Promise<ClaimFirstPaymentGiftResponse>;
   pullRelics(request: PullRequest): Promise<PullResponse>;
+  /** 오늘의 무료 연구(하루 1회 · 상시 화석 연구 1회)가 남았는지 읽는다. */
+  getFreeResearchStatus(): Promise<FreeResearchStatusDto>;
   /** 급여로 경험치를 올린다. 횟수를 넘기면 한 번에 여러 번 먹인다. */
   feedRelic(relicId: string, feeds?: number): Promise<FeedRelicResponse>;
   /** 레벨 상한을 한 단계 연다. 재료 차감과 단계 확정을 한 처리로 맡는다. */
@@ -1439,6 +1459,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   equipRune(request: EquipRuneRequest): Promise<EquipRuneResponse>;
   /** 렐릭 슬롯을 장착표의 단일 기준에서 해제한다. */
   unequipRune(request: UnequipRuneRequest): Promise<UnequipRuneResponse>;
+  /** 렐릭 한 명의 세 칸을 한 저장에서 정한다 — 자동·추천 장착과 모두 해제가 같은 경계를 쓴다. */
+  setRuneLoadout(request: SetRuneLoadoutRequest): Promise<SetRuneLoadoutResponse>;
 }
 
 /** 예상 가능한 요청 실패를 일반 네트워크 예외와 구분한다. */

@@ -500,6 +500,7 @@ export default {
   "product.shop-tonic-pack.grant.0": "Bebida energética",
   "product.shop-tonic-large-pack.name": "Bebida energética+",
   "product.shop-tonic-large-pack.grant.0": "Bebida energética+",
+  "product.shop-free-daily.name": "Suministros gratis diarios",
   "product.shop-field-supplies.name": "Tarta de queso (Pequeño)",
   "product.shop-field-rations.name": "Tarta de queso (Mediano)",
   "product.shop-recovery-cache.name": "Tarta de queso (Grande)",

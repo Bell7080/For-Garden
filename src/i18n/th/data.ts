@@ -500,6 +500,7 @@ export default {
   "product.shop-tonic-pack.grant.0": "เครื่องดื่มชูกำลัง",
   "product.shop-tonic-large-pack.name": "เครื่องดื่มชูกำลัง+",
   "product.shop-tonic-large-pack.grant.0": "เครื่องดื่มชูกำลัง+",
+  "product.shop-free-daily.name": "เสบียงฟรีประจำวัน",
   "product.shop-field-supplies.name": "ชีสเค้ก (เล็ก)",
   "product.shop-field-rations.name": "ชีสเค้ก (กลาง)",
   "product.shop-recovery-cache.name": "ชีสเค้ก (ใหญ่)",

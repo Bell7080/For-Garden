@@ -133,6 +133,16 @@
 "product.shop-tonic-pack.grant.0": ["能量饮料", "เครื่องดื่มชูกำลัง", "Nước tăng lực", "Minuman Energi", "Bebida energética", "Bebida energética", "Energydrink", "Энергетик"],
 "product.shop-tonic-large-pack.name": ["能量饮料+", "เครื่องดื่มชูกำลัง+", "Nước tăng lực+", "Minuman Energi+", "Bebida energética+", "Bebida energética+", "Energydrink+", "Энергетик+"],
 "product.shop-tonic-large-pack.grant.0": ["能量饮料+", "เครื่องดื่มชูกำลัง+", "Nước tăng lực+", "Minuman Energi+", "Bebida energética+", "Bebida energética+", "Energydrink+", "Энергетик+"],
+"product.shop-free-daily.name": [
+"每日免费补给",
+"เสบียงฟรีประจำวัน",
+"Tiếp tế miễn phí hằng ngày",
+"Pasokan Gratis Harian",
+"Suministros gratis diarios",
+"Suprimentos grátis diários",
+"Tägliche Gratis-Versorgung",
+"Ежедневные бесплатные припасы"
+],
 "product.shop-field-supplies.name": [
 "芝士蛋糕 (小)",
 "ชีสเค้ก (เล็ก)",

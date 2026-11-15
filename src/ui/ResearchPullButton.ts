@@ -120,6 +120,16 @@ export class ResearchPullButton extends Phaser.GameObjects.Container {
     return this;
   }
 
+  /**
+   * **오늘의 무료 연구**(`core/freeResearch.ts`) — 값 줄 자리에 재화 그림 대신 「오늘 무료」 한 마디가 선다.
+   * 값이 사라진 것이 곧 이번 한 번은 아무것도 들지 않는다는 말이라 따로 딱지를 붙이지 않는다.
+   */
+  setFreeLabel(label: string): this {
+    this.cost.removeAll(true);
+    this.cost.add(this.scene.add.text(0, 0, label, textStyle({ role: "display", size: Math.round(this.options.height * 0.2), color: "#d2463c" })).setOrigin(0.5));
+    return this;
+  }
+
   setEnabled(enabled: boolean): this {
     this.enabled = enabled;
     this.setAlpha(enabled ? 1 : 0.6);

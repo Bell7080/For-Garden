@@ -681,6 +681,7 @@ export default {
   "product.shop-tonic-pack.grant.0": "エナジードリンク",
   "product.shop-tonic-large-pack.name": "エナジードリンク+",
   "product.shop-tonic-large-pack.grant.0": "エナジードリンク+",
+  "product.shop-free-daily.name": "毎日の無料補給",
   "product.shop-field-supplies.name": "チーズケーキ (小)",
   "product.shop-field-rations.name": "チーズケーキ (中)",
   "product.shop-recovery-cache.name": "チーズケーキ (大)",

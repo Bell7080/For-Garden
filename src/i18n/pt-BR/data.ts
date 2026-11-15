@@ -500,6 +500,7 @@ export default {
   "product.shop-tonic-pack.grant.0": "Bebida energética",
   "product.shop-tonic-large-pack.name": "Bebida energética+",
   "product.shop-tonic-large-pack.grant.0": "Bebida energética+",
+  "product.shop-free-daily.name": "Suprimentos grátis diários",
   "product.shop-field-supplies.name": "Cheesecake (Pequeno)",
   "product.shop-field-rations.name": "Cheesecake (Médio)",
   "product.shop-recovery-cache.name": "Cheesecake (Grande)",

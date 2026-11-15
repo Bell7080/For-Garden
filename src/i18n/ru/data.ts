@@ -500,6 +500,7 @@ export default {
   "product.shop-tonic-pack.grant.0": "Энергетик",
   "product.shop-tonic-large-pack.name": "Энергетик+",
   "product.shop-tonic-large-pack.grant.0": "Энергетик+",
+  "product.shop-free-daily.name": "Ежедневные бесплатные припасы",
   "product.shop-field-supplies.name": "Чизкейк (Малый)",
   "product.shop-field-rations.name": "Чизкейк (Средний)",
   "product.shop-recovery-cache.name": "Чизкейк (Большой)",

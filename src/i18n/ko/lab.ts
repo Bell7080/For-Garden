@@ -19,6 +19,7 @@ export const LAB_KO = {
   "lab.pity.unit": "회",
   "lab.pity.pickupNext": "다음 SSR 픽업 확정",
   "lab.pull.one": "1회 연구",
+  "lab.pull.freeToday": "오늘 무료!",
   "lab.pull.ten": "10회 연구",
   "lab.pull.againHint": "한 번 더 연구해 볼까요?",
   "lab.networkError": "통신에 실패했습니다. 다시 시도해 주세요.",

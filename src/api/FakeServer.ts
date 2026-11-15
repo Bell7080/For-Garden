@@ -71,7 +71,7 @@ import { normalizeSettings } from "../core/settings";
 import type { GameSettings } from "../state/session";
 import type { UpdateAccountSettingsRequest, UpdateAccountSettingsResponse } from "./contracts";
 import type { BeginExpeditionAugmentRequest, BeginExpeditionAugmentResponse, ChooseExpeditionAugmentRequest, CompleteExpeditionRestRequest, PrepareExpeditionBossRequest, PrepareExpeditionBossResponse, StartExpeditionRunRequest, StartExpeditionRunResponse } from "./contracts";
-import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type ResetRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse, type StaminaRechargeStatusDto, type ClaimProgressPassRequest, type ClaimProgressPassResponse, type ProgressPassDto, type ProgressPassListResponse } from "./contracts";
+import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type ResetRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type FreeResearchStatusDto, type RechargeStaminaRequest, type RechargeStaminaResponse, type StaminaRechargeStatusDto, type ClaimProgressPassRequest, type ClaimProgressPassResponse, type ProgressPassDto, type ProgressPassListResponse } from "./contracts";
 import type { ProductDefinition, ProductGrant } from "../data/shopCatalog";
 import { PRODUCTS } from "../data/shopCatalog";
 import type { ProductListResponse, PurchaseProductRequest, PurchaseProductResponse } from "./contracts";
@@ -136,9 +136,10 @@ import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummon
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { nextStaminaGemCost, nextUtcMidnight, staminaGemDayKey } from "../core/staminaGemPricing";
+import { FREE_RESEARCH_BANNER_ID, FREE_RESEARCH_SOURCE_ID, freeResearchAvailable, freeResearchResetsAt, freeResearchSpent } from "../core/freeResearch";
 import { paidStaminaApplied, settleStamina, STAMINA_HOLD_LIMIT, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
-import type { EnhanceRuneAllRequest, EnhanceRuneAllResponse, EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse, SynthesizeRunesRequest, SynthesizeRunesResponse } from "./contracts";
+import type { EnhanceRuneAllRequest, EnhanceRuneAllResponse, EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, SetRuneLoadoutRequest, SetRuneLoadoutResponse, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse, SynthesizeRunesRequest, SynthesizeRunesResponse } from "./contracts";
 import type { ClaimFirstPaymentGiftRequest, ClaimFirstPaymentGiftResponse, FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse, PurchaseHistoryResponse } from "./contracts";
 import { purchaseHistoryFromJournal } from "../core/purchaseHistory";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, ClaimPassDailyBonusRequest, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
@@ -2637,6 +2638,12 @@ export class FakeServer implements GameApi {
     return result;
   }
 
+  async getFreeResearchStatus(): Promise<FreeResearchStatusDto> {
+    await this.delay();
+    const now = this.now();
+    return { available: freeResearchAvailable(this.state.productPurchases[FREE_RESEARCH_SOURCE_ID], now), bannerId: FREE_RESEARCH_BANNER_ID, resetsAt: freeResearchResetsAt(now).toISOString() };
+  }
+
   /** 비용 검사, 재화 차감, 난수 결과, 보유 반영을 모두 서버 경계 안에서 원자적으로 처리한다. */
   async pullRelics(request: PullRequest): Promise<PullResponse> {
     await this.delay();
@@ -2655,7 +2662,11 @@ export class FakeServer implements GameApi {
     if (!bannerAcceptsCount(banner, request.count, currentPity)) {
       throw new GameApiError("BANNER_LIMIT_REACHED", "이 연구는 더 진행할 수 없습니다.");
     }
-    if (!canPull(this.state.wallet, banner, request.count, currentPity)) {
+    // 하루 한 번 무료 연구 — 상시 화석 연구 1회에만 쓰고 재화 검사·차감을 건너뛴다.
+    const free = request.free === true;
+    if (free && (request.count !== 1 || banner.id !== FREE_RESEARCH_BANNER_ID)) throw new GameApiError("INVALID_STATE", "무료 연구는 화석 연구 1회에만 쓸 수 있습니다.");
+    if (free && !freeResearchAvailable(this.state.productPurchases[FREE_RESEARCH_SOURCE_ID], this.now())) throw new GameApiError("PURCHASE_LIMIT_REACHED", "오늘의 무료 연구를 이미 사용했습니다.");
+    if (!free && !canPull(this.state.wallet, banner, request.count, currentPity)) {
       throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
     }
 
@@ -2676,7 +2687,7 @@ export class FakeServer implements GameApi {
       // 건드리지 않는다 — 별은 플레이어가 파편을 써서 스스로 올린다.
       if (!nextProgress[result.relicId]) nextProgress[result.relicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
     }
-    const paidWallet = spend(this.state.wallet, banner, request.count, currentPity);
+    const paidWallet = free ? { ...this.state.wallet } : spend(this.state.wallet, banner, request.count, currentPity);
     const nextWallet = { ...paidWallet, dnaFragments: this.state.wallet.dnaFragments + mileageGained };
     // 비용 차감 뒤 회색 보상을 순서대로 더하며 계정 상한에서 버려지는 양은 저장하지 않는다.
     for (const slot of pulled.slots) if (slot.kind === "currency") {
@@ -2723,7 +2734,8 @@ export class FakeServer implements GameApi {
       });
       return appendGachaHistory(this.state.gachaHistory, { at: this.now().toISOString(), bannerId: banner.id, count: request.count, cost, pity: groupPity.pullsSinceSsr, slots });
     })();
-    const nextState: Session = { ...this.state, tutorial: nextTutorial, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory, gachaHistory: nextGachaHistory };
+    const nextPurchases = free ? { ...this.state.productPurchases, [FREE_RESEARCH_SOURCE_ID]: freeResearchSpent(this.state.productPurchases[FREE_RESEARCH_SOURCE_ID], this.now()) } : this.state.productPurchases;
+    const nextState: Session = { ...this.state, tutorial: nextTutorial, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory, gachaHistory: nextGachaHistory, productPurchases: nextPurchases };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
     if (forceTenUpgrade) {
@@ -2743,6 +2755,7 @@ export class FakeServer implements GameApi {
     this.state.missions = nextMissions;
     this.state.relicStory = nextRelicStory;
     this.state.gachaHistory = nextGachaHistory;
+    this.state.productPurchases = nextPurchases;
     const upgradedSlot = pulled.slots.findIndex((slot) => slot.kind === "relic" && slot.upgraded === true);
     return {
       ...this.snapshot(),
@@ -3620,7 +3633,7 @@ export class FakeServer implements GameApi {
     const expedition = this.rollExpedition(now);
     const claimableExpeditionCount = EXPEDITION_BEST_SCORE_REWARD_STAGES.filter(stage => expedition.bestScore >= stage.threshold && !expedition.claimedRewardStageIds.includes(stage.id)).length;
     const claimableRaidCount = this.raidInstances(now).map(row => this.raidDto(row, now)).filter(row => row.status === "completed" && !row.settled && row.settlement.some(reward => reward.amount > 0)).length;
-    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
+    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
   }
 
   /**
@@ -3698,6 +3711,11 @@ export class FakeServer implements GameApi {
       state = issueSituationalOffer(state, { trigger: "stageLoss", key: `stage-loss:${chapter}`, productId: "offer-stage-loss" }, now).state;
     }
     return state;
+  }
+
+  /** 일반 상점의 무료 칸을 아직 받지 않았는가 — 로비 상점 버튼의 붉은 점. */
+  private shopFreeSupply(now: Date): boolean {
+    return PRODUCTS.some((product) => product.storefront === "shop" && product.acquisition.kind === "free" && this.isVisible(product, now) && this.remaining(product, now) > 0);
   }
 
   /** 받을 수 있는 무료 보급이 남은 프리미엄 탭 — 목록의 `purchasable`과 같은 판정을 읽는다. */
@@ -4486,6 +4504,33 @@ export class FakeServer implements GameApi {
     const nextProgress = { ...this.state.relicProgress, [request.relicId]: { ...target, heartGemSlots: slots } };
     const nextState = { ...this.state, relicProgress: nextProgress };
     this.persist(nextState);
+    this.state.relicProgress = nextProgress;
+    return { inventory: this.runeInventoryDto() };
+  }
+
+  /**
+   * 세 칸을 한 번에 정한다. 칸마다 제 자리의 룬만 들고, 한 룬을 두 칸에 쓰지 않는다. 다른 렐릭이 낀 룬은
+   * `moveFromOther`일 때만 받아 그 렐릭의 칸을 같은 저장에서 비운다 — 두 요청으로 나누면 사이에 끊겨 룬이 두 곳에 남는다.
+   */
+  async setRuneLoadout(request: SetRuneLoadoutRequest): Promise<SetRuneLoadoutResponse> {
+    await this.delay();
+    if (!this.state.owned.has(request.relicId)) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
+    if (!Array.isArray(request.slots) || request.slots.length !== 3) throw new GameApiError("RUNE_SLOT_MISMATCH", "룬 칸은 셋이어야 합니다.");
+    const chosen = request.slots.filter((id): id is string => id !== null);
+    if (new Set(chosen).size !== chosen.length) throw new GameApiError("RUNE_ALREADY_EQUIPPED", "한 룬을 두 칸에 낄 수 없습니다.");
+    request.slots.forEach((id, index) => {
+      if (id === null) return;
+      if (this.ownedRune(id).part !== index) throw new GameApiError("RUNE_SLOT_MISMATCH", "이 룬은 다른 칸의 조각입니다.");
+    });
+    const taken = new Set(chosen);
+    const nextProgress = { ...this.state.relicProgress };
+    for (const [holderId, holder] of Object.entries(this.state.relicProgress)) {
+      if (holderId === request.relicId || !holder.heartGemSlots.some((id) => id !== null && taken.has(id))) continue;
+      if (!request.moveFromOther) throw new GameApiError("RUNE_ALREADY_EQUIPPED", "이미 다른 렐릭에 장착된 룬입니다.");
+      nextProgress[holderId] = { ...holder, heartGemSlots: holder.heartGemSlots.map((id) => (id !== null && taken.has(id) ? null : id)) as [string | null, string | null, string | null] };
+    }
+    nextProgress[request.relicId] = { ...nextProgress[request.relicId], heartGemSlots: [...request.slots] as [string | null, string | null, string | null] };
+    this.persist({ ...this.state, relicProgress: nextProgress });
     this.state.relicProgress = nextProgress;
     return { inventory: this.runeInventoryDto() };
   }

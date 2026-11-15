@@ -28,7 +28,8 @@ import { addSectionTitle } from "../ui/SectionTitle";
 import { addBackButton } from "../ui/IconButton";
 import { addFramedIcon, addShelfAmount } from "../ui/itemFrame";
 import { tradePackageValuePercent } from "../data/tradePackages";
-import { openRewardPopup } from "../ui/RewardPopup";
+import { openRewardPopup, productGrantsToRewardItems } from "../ui/RewardPopup";
+import { notificationManager } from "../managers/NotificationManager";
 import { addSoldOutStamp, forgetSoldOutStamp, styleLimitCount } from "../ui/soldOutStamp";
 import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { DialogueBubble } from "../ui/DialogueBubble";
@@ -650,6 +651,9 @@ export class ShopScene extends Phaser.Scene {
       addPriceBar(this, card, 0, SHOP_CARD.price.y, width - SHOP_CARD.price.inset, undefined, "guildCoin", product.acquisition.amount, {
         height: SHOP_CARD.price.height, short: this.guildCoin < product.acquisition.amount, accent: soldOut ? undefined : SHOWCASE_TIER_TONE[product.refresh],
       });
+    } else if (product.acquisition.kind === "free") {
+      // 무료 칸은 값 줄 자리에 「무료」 한 마디만 선다 — 누르면 확인 창 없이 곧바로 받는다.
+      card.add(this.add.text(0, SHOP_CARD.price.y, t("product.price.free"), textStyle({ role: "display", size: 34, color: soldOut ? "#9aa3b5" : "#ffe08a" })).setOrigin(0.5).setShadow(2, 3, "#000000", 0, true, true));
     }
     // 따로 사는 것보다 이득인 상품은 무역과 같은 가치 배지가 우상단에 선다(100%를 넘는 것만 — 골드 교환소는 늘 아래다).
     const valuePercent = tradePackageValuePercent(product.acquisition, product.grants);
@@ -679,6 +683,7 @@ export class ShopScene extends Phaser.Scene {
       if (this.draggedDistance <= SHOP_CARD.dragSlop) {
         // 비활성 상품도 이유와 상세 정보를 읽을 수 있으며 카드 탭 자체는 절대 즉시 구매하지 않는다.
         if (product.acquisition.kind === "guild_coin") { this.confirmGuildPurchase(product); return; }
+        if (product.acquisition.kind === "free") { if (product.purchasable) void this.claimFree(product); else this.notice(t("shop.premium.freeClaimed"), true); return; }
         new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice(t("shop.exchangeDone")); await this.refresh(); });
       }
     });
@@ -734,6 +739,21 @@ export class ShopScene extends Phaser.Scene {
   private insideViewport(pointer: Phaser.Input.Pointer): boolean {
     const view = shopGridViewport();
     return pointer.x >= view.left && pointer.x <= view.right && pointer.y >= view.top && pointer.y <= view.bottom;
+  }
+
+  private claimingFree = false;
+
+  /** 일반 상점의 무료 칸 — 고를 것이 없는 일일 보급이라 확인 창 없이 받고 영수증만 띄운다. */
+  private async claimFree(product: ProductDto): Promise<void> {
+    if (this.claimingFree) return;
+    this.claimingFree = true;
+    try {
+      const result = await withBusy(this, gameApi.purchaseProduct({ storefront: this.storefront, productId: product.id, quantity: 1 }));
+      this.applyPurchaseResult(result);
+      openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
+      await this.refresh();
+      void notificationManager.refresh().catch(() => undefined);
+    } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claimingFree = false; }
   }
 
   /** 보상 팝업이 닫힌 뒤 구매 응답의 지갑·잔여 횟수를 먼저 반영하고 카탈로그도 다시 조회한다. */

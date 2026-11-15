@@ -27,6 +27,7 @@ export const LAB_RU = {
   "lab.policy.pickupOn": "ВКЛ · Следующий SSR — избранный",
   "lab.policy.pickupOff": "ВЫКЛ",
   "lab.policy.pickupRate": "Шанс избранного среди SSR {percent}% · При промахе следующий SSR — избранный",
+  "lab.policy.carryover": "Счётчик гарантии и гарантия избранного переносятся на следующее избранное",
   "lab.policy.tenGuarantee": "Последний слот x10 — SR или выше (гарантия SSR в приоритете)",
   "lab.policy.tenUpgrade": "Если последний слот x10 — SR, с шансом {percent}% он повышается до SSR",
   "lab.policy.mileage": "+1 миля ДНК за каждое исследование",

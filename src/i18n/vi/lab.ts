@@ -27,6 +27,7 @@ export const LAB_VI = {
   "lab.policy.pickupOn": "BẬT · SSR kế tiếp là nhân vật tăng tỉ lệ",
   "lab.policy.pickupOff": "TẮT",
   "lab.policy.pickupRate": "Tỉ lệ nhân vật tăng tỉ lệ trong SSR {percent}% · Nếu trượt, SSR kế tiếp chắc chắn trúng",
+  "lab.policy.carryover": "Số đếm bảo đảm và bảo đảm nhân vật tăng tỉ lệ được chuyển sang đợt tăng tỉ lệ kế tiếp",
   "lab.policy.tenGuarantee": "Ô cuối của x10 là SR trở lên (bảo đảm SSR được ưu tiên)",
   "lab.policy.tenUpgrade": "Nếu ô cuối của x10 là SR, có {percent}% cơ hội nâng lên SSR",
   "lab.policy.mileage": "Mỗi lượt nghiên cứu +1 Dặm DNA",

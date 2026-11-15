@@ -269,6 +269,16 @@
 "SSR-Pickup-Chance {percent}% · Bei Fehlschlag ist das nächste SSR das Pickup",
 "Шанс избранного среди SSR {percent}% · При промахе следующий SSR — избранный"
 ],
+"lab.policy.carryover": [
+"保底计数与UP保底将继承至下一期UP",
+"จำนวนนับการันตีและการันตีเรทอัปจะถูกยกไปยังเรทอัปถัดไป",
+"Số đếm bảo đảm và bảo đảm nhân vật tăng tỉ lệ được chuyển sang đợt tăng tỉ lệ kế tiếp",
+"Hitungan jaminan dan jaminan pickup terbawa ke pickup berikutnya",
+"El contador de garantía y la garantía de destacado se transfieren al siguiente destacado",
+"O contador de garantia e a garantia de destaque são transferidos para o próximo destaque",
+"Garantiezähler und Pickup-Garantie werden ins nächste Pickup übernommen",
+"Счётчик гарантии и гарантия избранного переносятся на следующее избранное"
+],
 "lab.policy.tenGuarantee": [
 "10连最后一格必为SR以上（SSR保底优先）",
 "ช่องสุดท้ายของ 10 ครั้งคือ SR ขึ้นไป (การันตี SSR มาก่อน)",

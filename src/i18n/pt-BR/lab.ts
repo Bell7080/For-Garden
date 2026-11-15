@@ -27,6 +27,7 @@ export const LAB_PT_BR = {
   "lab.policy.pickupOn": "ON · O próximo SSR será o destaque",
   "lab.policy.pickupOff": "OFF",
   "lab.policy.pickupRate": "Chance de destaque no SSR {percent}% · Se falhar, o próximo SSR será o destaque",
+  "lab.policy.carryover": "O contador de garantia e a garantia de destaque são transferidos para o próximo destaque",
   "lab.policy.tenGuarantee": "A última posição do x10 é SR ou melhor (a garantia SSR tem prioridade)",
   "lab.policy.tenUpgrade": "Se a última posição do x10 for SR, há {percent}% de chance de subir para SSR",
   "lab.policy.mileage": "+1 Milha de DNA por pesquisa",

@@ -27,6 +27,7 @@ export const LAB_TH = {
   "lab.policy.pickupOn": "ON · SSR ถัดไปคือตัวเรทอัป",
   "lab.policy.pickupOff": "OFF",
   "lab.policy.pickupRate": "โอกาสได้ตัวเรทอัปใน SSR {percent}% · ถ้าพลาด SSR ถัดไปคือตัวเรทอัป",
+  "lab.policy.carryover": "จำนวนนับการันตีและการันตีเรทอัปจะถูกยกไปยังเรทอัปถัดไป",
   "lab.policy.tenGuarantee": "ช่องสุดท้ายของ 10 ครั้งคือ SR ขึ้นไป (การันตี SSR มาก่อน)",
   "lab.policy.tenUpgrade": "หากช่องสุดท้ายของ 10 ครั้งเป็น SR มีโอกาส {percent}% ที่จะเลื่อนเป็น SSR",
   "lab.policy.mileage": "ทุกการวิจัย 1 ครั้ง ได้ไมล์ DNA +1",

@@ -27,6 +27,7 @@ export const LAB_DE = {
   "lab.policy.pickupOn": "AN · Nächstes SSR ist das Pickup",
   "lab.policy.pickupOff": "AUS",
   "lab.policy.pickupRate": "SSR-Pickup-Chance {percent}% · Bei Fehlschlag ist das nächste SSR das Pickup",
+  "lab.policy.carryover": "Garantiezähler und Pickup-Garantie werden ins nächste Pickup übernommen",
   "lab.policy.tenGuarantee": "Der letzte Platz eines 10er-Zugs ist SR oder besser (SSR-Garantie hat Vorrang)",
   "lab.policy.tenUpgrade": "Ist der letzte Platz eines 10er-Zugs SR, besteht eine Chance von {percent}%, auf SSR aufzusteigen",
   "lab.policy.mileage": "+1 DNA-Meile pro Forschung",

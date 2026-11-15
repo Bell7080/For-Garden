@@ -27,6 +27,7 @@ export const LAB_ZH_HANT = {
   "lab.policy.pickupOn": "ON · 下個SSR必為UP",
   "lab.policy.pickupOff": "OFF",
   "lab.policy.pickupRate": "SSR中UP機率{percent}% · 未中時下個SSR必為UP",
+  "lab.policy.carryover": "保底計數與UP保底將繼承至下一期UP",
   "lab.policy.tenGuarantee": "10連最後一格必為SR以上（SSR保底優先）",
   "lab.policy.tenUpgrade": "10連最後一格若為SR，有{percent}%機率升為SSR",
   "lab.policy.mileage": "每次研究DNA里程 +1",

@@ -27,6 +27,7 @@ export const LAB_ID = {
   "lab.policy.pickupOn": "ON · SSR berikutnya pasti pickup",
   "lab.policy.pickupOff": "OFF",
   "lab.policy.pickupRate": "Peluang pickup SSR {percent}% · Jika meleset, SSR berikutnya pasti pickup",
+  "lab.policy.carryover": "Hitungan jaminan dan jaminan pickup terbawa ke pickup berikutnya",
   "lab.policy.tenGuarantee": "Slot terakhir x10 minimal SR (jaminan SSR diutamakan)",
   "lab.policy.tenUpgrade": "Jika slot terakhir x10 berupa SR, ada peluang {percent}% naik menjadi SSR",
   "lab.policy.mileage": "Setiap riset +1 Mil DNA",

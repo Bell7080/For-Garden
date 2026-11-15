@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import { TEN_PULL_SR_UPGRADE_CHANCE, type Banner, type GachaPityState } from "../core/gacha";
 import { formatRatePercent, gachaRateTable, type RateEntry, type RateTier, type RateTierRow } from "../core/gachaRateTable";
+import { PITY_GROUP } from "../data/banners";
 import { getRelic } from "../data/relics";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { FaceFrame } from "./FaceFrame";
@@ -103,7 +104,7 @@ function pickupFlags(row: RateTierRow): { pickup: boolean }[] {
   return row.entries.map((entry) => ({ pickup: entry.kind === "relic" && entry.pickup }));
 }
 
-/** 규칙 글 — 지금 계정의 천장 상태와 이 배너가 갖는 보장만 적는다. */
+/** 규칙 글 — 지금 계정의 확정 카운트 상태와 이 배너가 갖는 보장만 적는다. */
 function rulesText({ banner, pity }: GachaRatesContext): string {
   const hasPickup = Object.values(banner.pickupRelicIds).some((ids) => (ids?.length ?? 0) > 0);
   return [
@@ -113,6 +114,8 @@ function rulesText({ banner, pity }: GachaRatesContext): string {
       t("lab.policy.pickupRate", { percent: formatRatePercent(banner.pickupRate) }),
       t("lab.policy.pickup", { state: t(pity.pickupGuaranteed ? "lab.policy.pickupOn" : "lab.policy.pickupOff") }),
     ] : []),
+    // 한정 픽업은 한 그룹이라 확정 카운트·픽업 확정이 다음 픽업으로 넘어간다 — 그 사실은 보장 규칙이 직접 말한다.
+    ...(banner.pityGroupId === PITY_GROUP.LIMITED_PICKUP ? [t("lab.policy.carryover")] : []),
     t("lab.policy.tenGuarantee"),
     t("lab.policy.tenUpgrade", { percent: formatRatePercent(TEN_PULL_SR_UPGRADE_CHANCE) }),
     t("lab.policy.mileage"),

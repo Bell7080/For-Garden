@@ -395,12 +395,12 @@ export class SettingsScene extends Phaser.Scene {
     this.content.add([button, hit]);
   }
 
-  /** 결제 기록은 서버가 장부에서 읽어 준 그대로 세운다. 실패하면 비우지 않고 안내만 한다. */
+  /** 결제·선물 기록은 서버가 장부에서 읽어 준 그대로 세운다. 실패하면 비우지 않고 안내만 한다. */
   private async openPurchaseHistory(): Promise<void> {
     this.accountBusy = true;
     try {
-      const { entries } = await gameApi.getPurchaseHistory();
-      if (this.scene.isActive()) openPurchaseHistoryPopup(this, this.popups, entries);
+      const { entries, gifts } = await gameApi.getPurchaseHistory();
+      if (this.scene.isActive()) openPurchaseHistoryPopup(this, this.popups, entries, gifts ?? []);
     } catch {
       this.showRestoreNotice("settings.history.failed");
     } finally { this.accountBusy = false; }

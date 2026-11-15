@@ -140,8 +140,8 @@ import { FREE_RESEARCH_BANNER_ID, FREE_RESEARCH_SOURCE_ID, freeResearchAvailable
 import { paidStaminaApplied, settleStamina, STAMINA_HOLD_LIMIT, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
 import type { EnhanceRuneAllRequest, EnhanceRuneAllResponse, EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, SetRuneLoadoutRequest, SetRuneLoadoutResponse, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse, SynthesizeRunesRequest, SynthesizeRunesResponse } from "./contracts";
-import type { ClaimFirstPaymentGiftRequest, ClaimFirstPaymentGiftResponse, FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse, PurchaseHistoryResponse } from "./contracts";
-import { purchaseHistoryFromJournal } from "../core/purchaseHistory";
+import type { ClaimFirstPaymentGiftRequest, ClaimFirstPaymentGiftResponse, FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse, GiftHistoryEntryDto, PurchaseHistoryResponse } from "./contracts";
+import { appendGiftLog, giftHistoryFromJournal, purchaseHistoryFromJournal } from "../core/purchaseHistory";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, ClaimPassDailyBonusRequest, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { EXCAVATION_CURRENCIES, excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
@@ -481,20 +481,27 @@ export class FakeServer implements GameApi {
     const claimable = targets.filter((mail): mail is MailDto => !!mail && !deletedIds.has(mail.id) && mail.rewards.length > 0 && !mail.claimed && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs));
     const granted: MailRewardDto[] = [];
     const candidate = structuredClone(this.state);
-    for (const mail of claimable) for (const reward of mail.rewards) {
-      if (!Number.isInteger(reward.amount) || reward.amount <= 0) throw new GameApiError("INVALID_STATE", "올바르지 않은 우편 보상입니다.");
-      if (reward.kind === "currency") {
-        const amount = Math.min(reward.amount, WALLET_CAPS[reward.currency] - candidate.wallet[reward.currency]);
-        candidate.wallet[reward.currency] += amount;
-        if (amount > 0) granted.push({ ...reward, amount });
-      } else {
-        const definition = findItem(reward.itemId);
-        if (!definition || definition.category === "rune" || definition.category === "currency") throw new GameApiError("INVALID_STATE", "올바르지 않은 우편 아이템입니다.");
-        const result = this.grantItem(candidate.itemInventory, reward.itemId, reward.amount, new Date(nowMs), reward.expiresInDays);
-        candidate.itemInventory = result.inventory;
-        if (result.added > 0) granted.push({ ...reward, amount: result.added });
+    const gifts: GiftHistoryEntryDto[] = [];
+    for (const mail of claimable) {
+      const before = granted.length;
+      for (const reward of mail.rewards) {
+        if (!Number.isInteger(reward.amount) || reward.amount <= 0) throw new GameApiError("INVALID_STATE", "올바르지 않은 우편 보상입니다.");
+        if (reward.kind === "currency") {
+          const amount = Math.min(reward.amount, WALLET_CAPS[reward.currency] - candidate.wallet[reward.currency]);
+          candidate.wallet[reward.currency] += amount;
+          if (amount > 0) granted.push({ ...reward, amount });
+        } else {
+          const definition = findItem(reward.itemId);
+          if (!definition || definition.category === "rune" || definition.category === "currency") throw new GameApiError("INVALID_STATE", "올바르지 않은 우편 아이템입니다.");
+          const result = this.grantItem(candidate.itemInventory, reward.itemId, reward.amount, new Date(nowMs), reward.expiresInDays);
+          candidate.itemInventory = result.inventory;
+          if (result.added > 0) granted.push({ ...reward, amount: result.added });
+        }
       }
+      // 선물 기록은 실제로 들어간 몫만 남긴다 — 상한에 깎인 몫을 받은 것처럼 적지 않는다.
+      if (granted.length > before) gifts.push({ title: mail.title, sender: mail.sender, receivedAt: new Date(nowMs).toISOString(), rewards: granted.slice(before) });
     }
+    if (gifts.length) candidate.serverJournal = appendGiftLog(candidate.serverJournal ?? emptyServerJournal(), gifts);
     // 순위 우편도 수령 ID를 남겨 재접속 뒤 같은 우편을 재요청해도 안전하게 처리한다.
     candidate.claimedMailIds = [...new Set([...(candidate.claimedMailIds ?? []), ...claimable.map(({ id }) => id)])];
     // 순위 보상 우편은 저장의 대기에서 세운 것이다 — 받았으면 대기를 비워 다시 서지 않게 한다.
@@ -2599,7 +2606,7 @@ export class FakeServer implements GameApi {
   /** 결제 기록은 장부의 플랫폼 거래 영수증만 읽는다 — 화면이 기억한 값이 아니라 지급을 확정한 쪽의 기록이다. */
   async getPurchaseHistory(): Promise<PurchaseHistoryResponse> {
     await this.delay();
-    return { entries: purchaseHistoryFromJournal(this.state.serverJournal), serverTime: this.now().toISOString() };
+    return { entries: purchaseHistoryFromJournal(this.state.serverJournal), gifts: giftHistoryFromJournal(this.state.serverJournal), serverTime: this.now().toISOString() };
   }
 
   /** 광고 시청 경로와 같은 슬롯 정의·UTC 카운터를 사용하되 활성 패스만 토큰 없이 통과시킨다. */

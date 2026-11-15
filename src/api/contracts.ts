@@ -604,7 +604,13 @@ export interface PurchaseHistoryEntryDto {
   granted: readonly ProductGrant[];
   firstBonusApplied: boolean;
 }
-export interface PurchaseHistoryResponse { entries: readonly PurchaseHistoryEntryDto[]; serverTime: string; }
+/**
+ * 선물 기록 한 줄 — 우편으로 받은 보상(운영 선물·쿠폰·순위 보상 등). 결제 기록 창의 「선물 기록」 탭이 읽는다.
+ *
+ * 받은 순간의 제목·보낸 이를 그대로 새기고, 보상은 상한에 깎인 뒤 실제로 들어간 몫이다.
+ */
+export interface GiftHistoryEntryDto { title: string; sender: string; receivedAt: string; rewards: readonly MailRewardDto[]; }
+export interface PurchaseHistoryResponse { entries: readonly PurchaseHistoryEntryDto[]; gifts: readonly GiftHistoryEntryDto[]; serverTime: string; }
 /** 진행 패스 마디 하나 — 정적 보상과 서버가 판정한 상태(받음 · 받을 수 있음 · 닿음 · 아직). */
 /** 마디 하나 — 왼쪽 무료 칸(`free`·`freeState`)과 오른쪽 유료 칸(`rewards`·`state`). */
 export interface ProgressPassMilestoneDto {

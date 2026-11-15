@@ -143,7 +143,7 @@ describe("마일리지 상점 상품", () => {
       const product = MILEAGE_PRODUCTS.find((entry) => entry.id === id)!;
       expect(product, id).toBeDefined();
       expect(product.acquisition).toEqual({ kind: "currency", currency: "dnaFragments", amount: MILEAGE_PICKUP_PRICE });
-      expect(MILEAGE_PICKUP_PRICE).toBe(300);
+      expect(MILEAGE_PICKUP_PRICE).toBe(250);
       expect(product.purchaseLimit).toBe(1);
       expect(product.grants).toEqual([{ kind: "relic_fragment", relicId, amount: 1 }]);
     }

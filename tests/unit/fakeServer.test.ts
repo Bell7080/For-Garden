@@ -1772,29 +1772,29 @@ describe("FakeServer 마일리지 상점", () => {
     expect(state.relicFragments[clerk] ?? 0).toBe(0);
   });
 
-  it("한정 픽업 렐릭은 마일리지 300 — 미보유면 본체, 보유면 파편 1장, 배너마다 한 번이다", async () => {
+  it("한정 픽업 렐릭은 마일리지 250 — 미보유면 본체, 보유면 파편 1장, 배너마다 한 번이다", async () => {
     const productId = "mileage-pickup-amber-dian";
-    const fresh = makeSession(); fresh.wallet.dnaFragments = 600; fresh.owned.delete("dian"); delete fresh.relicProgress.dian;
+    const fresh = makeSession(); fresh.wallet.dnaFragments = 500; fresh.owned.delete("dian"); delete fresh.relicProgress.dian;
     const server = new FakeServer(fresh, { latencyMs: 0, now: () => WEEK });
     const first = await server.purchaseProduct({ storefront: "mileage", productId, quantity: 1 });
     expect(first.newRelicIds).toEqual(["dian"]);
     expect(fresh.owned.has("dian")).toBe(true);
     expect(fresh.relicFragments.dian ?? 0).toBe(0);
-    expect(fresh.wallet.dnaFragments).toBe(300);
+    expect(fresh.wallet.dnaFragments).toBe(250);
     // 주가 바뀌어도 같은 배너 기간에는 다시 살 수 없다.
     const later = new FakeServer(fresh, { latencyMs: 0, now: () => new Date(WEEK.getTime() + 14 * 86_400_000) });
     await expect(later.purchaseProduct({ storefront: "mileage", productId, quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
 
-    const owner = makeSession(); owner.wallet.dnaFragments = 300; owner.owned.add("dian");
+    const owner = makeSession(); owner.wallet.dnaFragments = 250; owner.owned.add("dian");
     owner.relicProgress.dian = { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     const owned = await new FakeServer(owner, { latencyMs: 0, now: () => WEEK }).purchaseProduct({ storefront: "mileage", productId, quantity: 1 });
     expect(owned.newRelicIds).toEqual([]);
     expect(owner.relicFragments.dian).toBe(1);
 
-    const maxed = makeSession(); maxed.wallet.dnaFragments = 300; maxed.owned.add("dian");
+    const maxed = makeSession(); maxed.wallet.dnaFragments = 250; maxed.owned.add("dian");
     maxed.relicProgress.dian = { level: 1, exp: 0, breakthrough: BREAKTHROUGH_GRADE_CAP - 1, resonance: 5, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     await expect(new FakeServer(maxed, { latencyMs: 0, now: () => WEEK }).purchaseProduct({ storefront: "mileage", productId, quantity: 1 })).rejects.toMatchObject({ code: "RELIC_MAX_BREAKTHROUGH" });
-    expect(maxed.wallet.dnaFragments).toBe(300);
+    expect(maxed.wallet.dnaFragments).toBe(250);
   });
 
   it("운영 일정이 배너를 닫으면 연구도, 그 배너에 묶인 마일리지 픽업도 받지 않는다", async () => {

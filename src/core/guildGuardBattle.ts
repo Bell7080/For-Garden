@@ -46,6 +46,7 @@ export function createGuildGuardSkirmish(lineup: GuildGuardLineup, defs: (id: st
       horde: guildGuardHordeSpec(roster),
       timeLimitSeconds: GUILD_GUARD.timeLimitSeconds,
       automaticUltimates: true,
+      playerBodyScale: GUILD_GUARD.bodyScale,
       playerPositions: spots.map(({ x, y }) => ({ x, y })),
       augmentEffects: traits,
     },

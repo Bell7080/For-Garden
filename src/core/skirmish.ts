@@ -871,6 +871,11 @@ export interface CreateSkirmishOptions {
   augmentEffects?: readonly ExpeditionAugmentEffect[];
   enemyAugmentEffects?: readonly ExpeditionAugmentEffect[];
   enemyBondLevels?: readonly number[];
+  /**
+   * 아군 몸집. 기본 1이다. 여섯이 한 화면에 서는 수호전만 줄여(`GUILD_GUARD.bodyScale`) 모두가 보이게 한다 —
+   * 몸집은 서로 밀어내는 간격(`pairSpacing`)에도 들어가므로 화면과 서버 재현이 같은 값을 읽어야 한다. 아군 소환수도 이 배율을 따른다.
+   */
+  playerBodyScale?: number;
   /** 적 종류별 크기 표현을 씬이 재해석하지 않도록 입력 모델에서 전달한다. */
   enemyBodyScale?: number;
   /** 개체별 몸집. 혼합 편성의 일부 정예도 서버 재현과 같은 크기·간격을 쓴다. */
@@ -1649,7 +1654,7 @@ function createPackFighters(owners: readonly Fighter[], augmentEffects: readonly
     const forward = owner.side === "player" ? -1 : 1;
     const x = owner.x + (index % 2 === 0 ? -70 : 70);
     const y = owner.y + forward * 90;
-    const wolf = makeFighter({ ...spec.def, stats }, owner.side, index, x, y, 0, 0, spec.bodyScale ?? 1, owner.side === "player" ? augmentEffects : enemyEffects);
+    const wolf = makeFighter({ ...spec.def, stats }, owner.side, index, x, y, 0, 0, (spec.bodyScale ?? 1) * (owner.side === "player" ? owner.bodyScale : 1), owner.side === "player" ? augmentEffects : enemyEffects);
     // 편성 칸의 ID와 겹치지 않도록 주인 ID를 이름공간으로 쓴다. 기여도가 이 형태를 읽는다.
     wolf.id = `${owner.id}:${spec.def.id}`;
     wolf.summonOwnerId = owner.id;
@@ -1686,7 +1691,7 @@ function createPupPool(owner: Fighter, augmentEffects: readonly ExpeditionAugmen
     const stats = deriveSummonStats(owner.def.stats, {
       ...spec, scaling: { hp: spec.scaling.hp * ratio, atk: spec.scaling.atk * ratio, def: spec.scaling.def * ratio, res: spec.scaling.res * ratio },
     });
-    const pup = makeFighter({ ...spec.def, stats }, owner.side, index, owner.x, owner.y, 0, 0, PUP.bodyScale, augmentEffects);
+    const pup = makeFighter({ ...spec.def, stats }, owner.side, index, owner.x, owner.y, 0, 0, PUP.bodyScale * (owner.side === "player" ? owner.bodyScale : 1), augmentEffects);
     pup.id = `${owner.id}:pup-${index}`;
     pup.summonOwnerId = owner.id;
     pup.facing = owner.facing;
@@ -1731,7 +1736,7 @@ export function createSkirmish(
   }
   const initialById = new Map(options.playerInitialStates?.map((snapshot) => [snapshot.relicId, snapshot]));
   const players = playerDefs.map((def, i) => {
-    const fighter = makeFighter(def, "player", i, playerSpots[i].x, playerSpots[i].y, playerBondLevels[def.id] ?? 0, playerBreakthroughs[def.id] ?? 0, 1, options.augmentEffects);
+    const fighter = makeFighter(def, "player", i, playerSpots[i].x, playerSpots[i].y, playerBondLevels[def.id] ?? 0, playerBreakthroughs[def.id] ?? 0, options.playerBodyScale ?? 1, options.augmentEffects);
     const saved = initialById.get(def.id);
     if (saved) fighter.hp = saved.alive ? fighter.maxHp * Math.min(100, Math.max(0, saved.currentHp)) / 100 : 0;
     return fighter;
@@ -11259,6 +11264,9 @@ function advanceHorde(state: SkirmishState, events: SkirmishEvent[]): void {
     wave.units.forEach((unit, i) => {
       const fighter = makeFighter(unit.def, "enemy", horde.serial, spots[i].x, spots[i].y, 0, 0, unit.bodyScale, state.enemyAugmentEffects ?? []);
       horde.serial += 1;
+      // 첫 공격을 어긋나게 두는 몫은 이번 웨이브 안의 순번으로만 잰다. 일련번호(`serial`)로 재던 때는
+      // 판이 길어질수록 그 값이 쌓여 14웨이브의 적이 들어온 뒤 12초 넘게 한 대도 때리지 못했다.
+      fighter.attackCooldown = i * 0.18;
       fighter.hordeEntering = true;
       fighter.hordeEntry = spots[i].from;
       fighter.hordeScore = unit.score;

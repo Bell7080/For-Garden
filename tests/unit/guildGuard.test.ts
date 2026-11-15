@@ -26,20 +26,25 @@ describe("수호전 웨이브", () => {
   });
 
   it("웨이브마다 레벨이 확실히 오르고, 깊이 갈수록 한 마리 점수가 가파르게 커진다", () => {
-    expect(guardWaveLevel(2) - guardWaveLevel(1)).toBe(GUILD_GUARD.levelPerWave);
-    expect(guardWaveLevel(10)).toBeGreaterThanOrEqual(GUILD_GUARD.startLevel + 27);
+    expect(GUILD_GUARD.startLevel).toBe(20);
+    // 곡선 — 한 웨이브에 오르는 폭이 깊어질수록 넓어진다(앞쪽 열 웨이브의 오름보다 뒤쪽 열 웨이브의 오름이 훨씬 크다).
+    const rise = (from: number, to: number) => guardWaveLevel(to) - guardWaveLevel(from);
+    expect(rise(1, 2)).toBeGreaterThanOrEqual(1);
+    expect(rise(20, 30)).toBeGreaterThan(rise(1, 10) * 2);
+    for (let wave = 2; wave <= 40; wave += 1) expect(guardWaveLevel(wave), `${wave}`).toBeGreaterThan(guardWaveLevel(wave - 1));
     expect(guardUnitScore(1)).toBe(GUILD_GUARD.gruntScore + GUILD_GUARD.gruntScorePerWave);
     expect(guardUnitScore(20)).toBeGreaterThan(guardUnitScore(10) * 1.5);
   });
 
-  it("다섯 속성 모두 그 속성의 명단에서만 고르고, 모두 무리로 선다", () => {
+  it("다섯 속성 모두 그 속성의 명단에서만 고르고, 모두 잡졸로 선다 — 몸집은 수호전 배율만큼 작다", () => {
     for (const element of GUILD_GUARD_ELEMENTS) {
       const roster = guildGuardRoster(element);
       expect(roster.units.length, element).toBeGreaterThan(0);
       for (const def of roster.units) expect(def.element).toBe(element);
       for (const unit of buildGuardWave(roster, 9).units) {
-        expect(unit.role).toBe("swarm");
-        expect(unit.def.encounterRole).toBe("swarm");
+        expect(unit.role).toBe("normal");
+        expect(unit.def.encounterRole).toBe("normal");
+        expect(unit.bodyScale).toBeCloseTo(GUILD_GUARD.bodyScale);
       }
     }
   });
@@ -138,11 +143,11 @@ describe("수호전 재현", () => {
   it("같은 편성·시드면 같은 점수가 나오고, 키운 편성이 더 멀리 간다", () => {
     const roster = guildGuardRoster("earth");
     const ids = ["deina", "rex", "ark", "terisa", "stella", "mette"];
-    const weak = replayGuildGuard(lineup(ids, 1), getRelic, roster, "seed-a");
-    const again = replayGuildGuard(lineup(ids, 1), getRelic, roster, "seed-a");
+    const weak = replayGuildGuard(lineup(ids, 20), getRelic, roster, "seed-a");
+    const again = replayGuildGuard(lineup(ids, 20), getRelic, roster, "seed-a");
     expect(again).toEqual(weak);
     expect(weak.score).toBeGreaterThan(0);
-    const strong = replayGuildGuard(lineup(ids, 30), getRelic, roster, "seed-a");
+    const strong = replayGuildGuard(lineup(ids, 50), getRelic, roster, "seed-a");
     expect(strong.score).toBeGreaterThan(weak.score);
     expect(strong.waves).toBeGreaterThan(weak.waves);
   }, 60_000);
@@ -160,7 +165,7 @@ describe("수호전 재현", () => {
   });
 
   it("빈 칸이 있는 편성도 그 자리를 비운 채 선다", () => {
-    const outcome = replayGuildGuard(lineup(["deina", null, null, null, "stella", null], 40), getRelic, guildGuardRoster("fire"), "seed-b");
+    const outcome = replayGuildGuard(lineup(["deina", null, null, null, "stella", null], 60), getRelic, guildGuardRoster("fire"), "seed-b");
     expect(outcome.kills).toBeGreaterThan(0);
   }, 60_000);
 });
@@ -175,6 +180,24 @@ describe("수호전 자동 배치", () => {
 });
 
 describe("수호전 필드 카운팅과 제약", () => {
+  it("아군 여섯도 수호전 몸집으로 작게 선다 — 다른 판의 아군은 그대로다", () => {
+    const state = createGuildGuardSkirmish(lineup(["torika", "deina", null, null, null, null], 20), getRelic, guildGuardRoster("fire"));
+    for (const ally of state.fighters.filter((f) => f.side === "player")) expect(ally.bodyScale).toBeCloseTo(GUILD_GUARD.bodyScale);
+  });
+
+  it("뒤 웨이브의 적도 들어오자마자 때린다 — 첫 공격 엇갈림은 웨이브 안 순번으로만 잰다", () => {
+    const state = createGuildGuardSkirmish(lineup(["ark", null, null, null, null, null], 60), getRelic, guildGuardRoster("fire"));
+    (state.horde!.spec as { overrunCap: number }).overrunCap = 1_000_000;
+    let late: string[] = [];
+    for (let i = 0; i < 20 * 70 && state.phase === "fight"; i += 1) {
+      for (const event of stepSkirmish(state, 1 / 20, () => 0.5)) if (event.kind === "hordeWave" && event.wave >= 6) late = late.length ? late : event.fighterIds;
+      if (late.length) break;
+    }
+    expect(late.length).toBeGreaterThan(0);
+    const cooldowns = late.map((id) => state.fighters.find((f) => f.id === id)!.attackCooldown);
+    expect(Math.max(...cooldowns)).toBeLessThanOrEqual(0.18 * (GUILD_GUARD.gruntCap - 1) + 1e-9);
+  }, 60_000);
+
   it("들어오는 중인 몸까지 필드에 센다 — 웨이브가 서는 순간 그 머릿수가 곧바로 잡힌다", () => {
     const state = createGuildGuardSkirmish(lineup(["torika", null, null, null, null, null], 1), getRelic, guildGuardRoster("fire"));
     stepSkirmish(state, 0.05);

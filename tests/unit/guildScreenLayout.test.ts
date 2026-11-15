@@ -44,7 +44,12 @@ describe("수호전 특징 판", () => {
   it("막대는 실제 웨이브 규칙의 값이고 깊을수록 오른다", () => {
     const levels = T.waves.map(guardWaveLevel);
     for (let i = 1; i < levels.length; i += 1) expect(levels[i]).toBeGreaterThan(levels[i - 1]);
-    expect(guardWaveLevel(5) - guardWaveLevel(4)).toBe(GUILD_GUARD.levelPerWave);
+    // 곡선 — 막대 사이의 오름폭(웨이브당)이 뒤로 갈수록 넓어진다.
+    const perWave = T.waves.slice(1).map((wave, i) => (guardWaveLevel(wave) - guardWaveLevel(T.waves[i])) / (wave - T.waves[i]));
+    expect(perWave[perWave.length - 1]).toBeGreaterThan(perWave[0] * 2);
+    expect(T.waves.length).toBeGreaterThanOrEqual(10);
+    // 막대 사이 폭 안에 막대가 들어간다.
+    expect(T.bars.width).toBeLessThan((T.width - 120) / (T.waves.length - 1));
     expect(Math.max(...T.waves.map(guardWaveCount))).toBeLessThanOrEqual(GUILD_GUARD.gruntCap);
   });
 });

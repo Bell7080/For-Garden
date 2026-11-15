@@ -6,13 +6,16 @@ import { audioManager } from "../managers/AudioManager";
 import { settingsManager } from "../managers/SettingsManager";
 import { playMotion, type PuppetCreature } from "../puppets/assets";
 import { t } from "../i18n";
-import { burstDiamond } from "./breakthroughBurst";
+import { breakthroughShardVector, burstDiamond } from "./breakthroughBurst";
 import { ensureEffectTextures, EFFECT_TEXTURE } from "./effectTextures";
-import { FEED_LEVEL_UP, type FeedHopSpec, type StatGain, feedBannerLetterDelay, feedLevelUpStatGains, feedSpiralPoint } from "./feedLevelUpStyle";
+import { BREAKTHROUGH_AURA, breakthroughOutlineColor, FEED_LEVEL_UP, type FeedHopSpec, type StatGain, feedBannerLetterDelay, feedLevelUpStatGains, feedSpiralPoint } from "./feedLevelUpStyle";
 import { toPoints } from "./holo";
 import { HOLO_SHIMMER, holoGlowColor } from "./holoShimmer";
 import { statToneHex } from "./statTones";
 import { textStyle } from "./theme";
+
+/** 돌파 연출에서 몸마다 다른 크기(`BREAKTHROUGH_AURA.body`). */
+type AuraBodySize = { readonly outlinePx: number; readonly outlinePulsePx: number; readonly sparkScale: number };
 
 /** 연출이 붙는 몸의 자리 — 발밑·키·층. */
 export interface FeedLevelUpSpot { readonly x: number; readonly groundY: number; readonly height: number; readonly depth: number }
@@ -94,6 +97,185 @@ export class FeedLevelUpEffect {
       this.spiral(portraitSpot, spec.sparkSize);
       this.hop(portrait, portraitSpot, spec.hop);
     }
+  }
+
+  /**
+   * 한계 돌파가 확정됐다 — SD와 전신 원화가 무지개빛에 휩싸였다가 **파칭** 터진다(`BREAKTHROUGH_AURA`).
+   * `onBurst`는 터지는 순간 한 번 불린다(등급 표식이 바뀌는 자리다). 몸이 하나도 서 있지 않거나
+   * 움직임 줄이기면 기다리지 않고 곧바로 부른다.
+   */
+  playBreakthrough(onBurst: () => void): void {
+    if (!this.scene.sys.isActive()) { onBurst(); return; }
+    ensureEffectTextures(this.scene);
+    const settings = settingsManager.get();
+    const calm = motionPolicy(settings).nonEssentialRepeatFactor === 0;
+    const reduceFlashes = settings.accessibility.reduceFlashes;
+    const bodies: { body: PuppetCreature; spot: FeedLevelUpSpot; size: AuraBodySize; hop: FeedHopSpec; isFigure: boolean }[] = [];
+    const figure = this.targets.figure();
+    if (figure?.active === true && figure.visible) {
+      bodies.push({ body: figure, spot: this.targets.figureSpot, size: BREAKTHROUGH_AURA.body.figure, hop: FEED_LEVEL_UP.hop, isFigure: true });
+    }
+    const portrait = this.targets.portrait?.();
+    const portraitSpot = this.targets.portraitSpot;
+    if (portraitSpot && portrait?.active === true && portrait.visible && portrait.alpha > 0.3) {
+      bodies.push({ body: portrait, spot: portraitSpot, size: BREAKTHROUGH_AURA.body.portrait, hop: FEED_LEVEL_UP.portrait.hop, isFigure: false });
+    }
+    if (calm || bodies.length === 0) { onBurst(); return; }
+    settingsManager.haptic("uiTap");
+    for (const entry of bodies) this.charge(entry.body, entry.spot, entry.size, reduceFlashes);
+    let fired = false;
+    const fire = (): void => {
+      if (fired) return;
+      fired = true;
+      for (const entry of bodies) {
+        this.burstBody(entry.body, entry.spot, entry.size, reduceFlashes);
+        if (entry.body.active) this.hop(entry.body, entry.spot, entry.hop);
+        if (entry.isFigure) this.pillar(reduceFlashes);
+      }
+      onBurst();
+    };
+    // 씬 시계(`delayedCall`)가 아니라 트윈으로 깨운다 — 정보창이 서는 화면에서는 씬 타이머가 깨어나지
+    // 않아 휩싸인 채 굳은 적이 있다(결과판의 경험치 줄과 같은 까닭).
+    this.scene.tweens.addCounter({ from: 0, to: 1, duration: BREAKTHROUGH_AURA.chargeMs, onComplete: fire });
+    // 씬이 그 사이에 닫히면 타이머가 깨어나지 않는다 — 몸에 남은 테두리·채움을 걷는다.
+    this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { for (const entry of bodies) this.clearAura(entry.body); });
+  }
+
+  /** 휩싸임 — 무지개 테두리가 몸을 돌고, 빛무리가 맴돌고, 조각이 빨려 들고, 몸이 하얗게 차오른다. */
+  private charge(body: PuppetCreature, spot: FeedLevelUpSpot, size: AuraBodySize, reduceFlashes: boolean): void {
+    const spec = BREAKTHROUGH_AURA;
+    const { x, groundY, height, depth } = spot;
+    const centerY = groundY - height * 0.5;
+    const fillPeak = reduceFlashes ? spec.fill.charge * 0.6 : spec.fill.charge;
+    const clock = { t: 0 };
+    this.scene.tweens.add({
+      targets: clock, t: 1, duration: spec.chargeMs, ease: "Sine.In",
+      onUpdate: () => {
+        if (!body.active) return;
+        const elapsed = clock.t * spec.chargeMs;
+        // 테두리는 들어오며 두꺼워지고 숨 쉬듯 한 번 더 부푼다.
+        const pulse = Math.sin(clock.t * Math.PI * 3) * 0.5 + 0.5;
+        const radius = size.outlinePx * Math.min(1, clock.t * 2.2) + size.outlinePulsePx * pulse * clock.t;
+        const steps = Array.from({ length: spec.outline.directions }, (_unused, i) => {
+          const angle = (i / spec.outline.directions) * Math.PI * 2;
+          return { dx: Math.cos(angle) * radius, dy: Math.sin(angle) * radius, alpha: spec.outline.alpha * Math.min(1, clock.t * 3), color: breakthroughOutlineColor(i, elapsed) };
+        });
+        body.setAfterimages(steps);
+        body.setBodyFill(spec.fill.color, fillPeak * clock.t);
+      },
+    });
+
+    // 몸 뒤에서 무지개 빛무리가 맴돈다. 각자 제 색이라 겹치는 자리마다 다른 빛이 번진다.
+    const halos = spec.colors.map((color, index) => this.scene.add
+      .image(x, centerY, EFFECT_TEXTURE.glow)
+      .setTint(color)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setDepth(depth - 1)
+      .setDisplaySize(height * spec.halo.sizeRatio, height * spec.halo.sizeRatio * 1.15)
+      .setAlpha(0)
+      .setData("haloIndex", index));
+    const orbit = { t: 0 };
+    this.scene.tweens.add({
+      targets: orbit, t: 1, duration: spec.chargeMs, ease: "Linear",
+      onUpdate: () => halos.forEach((halo, index) => {
+        if (!halo.active) return;
+        const angle = (index / halos.length) * Math.PI * 2 + orbit.t * spec.halo.turns * Math.PI * 2;
+        const r = height * spec.halo.orbitRatio * (1 - orbit.t * 0.5);
+        halo.setPosition(x + Math.cos(angle) * r, centerY + Math.sin(angle) * r * 0.6).setAlpha(spec.halo.alpha * Math.min(1, orbit.t * 2.5));
+      }),
+      onComplete: () => halos.forEach(halo => {
+        if (!halo.active) return;
+        // 파칭 — 빛무리는 바깥으로 부풀며 꺼진다.
+        this.scene.tweens.add({ targets: halo, scaleX: halo.scaleX * 1.7, scaleY: halo.scaleY * 1.7, alpha: 0, duration: spec.burst.ms, ease: "Cubic.Out", onComplete: () => halo.destroy() });
+      }),
+    });
+
+    // 사방에서 몸 한가운데로 빨려 드는 마름모 조각.
+    const g = spec.gather;
+    for (let index = 0; index < g.count; index += 1) {
+      const angle = (index / g.count) * Math.PI * 2 + 0.3;
+      const from = height * g.fromRatio;
+      const spark = this.scene.add
+        .image(x + Math.cos(angle) * from, centerY + Math.sin(angle) * from * 0.8, EFFECT_TEXTURE.shard)
+        .setTint(spec.colors[index % spec.colors.length])
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setDepth(depth + 1)
+        .setRotation(angle)
+        .setAlpha(0);
+      spark.setScale((g.size * size.sparkScale) / spark.width);
+      const delay = Math.min(spec.chargeMs - g.ms, index * g.stagger + 120);
+      this.scene.tweens.add({ targets: spark, alpha: 0.95, duration: 140, delay, ease: "Sine.Out" });
+      this.scene.tweens.add({
+        targets: spark, x, y: centerY, scale: spark.scale * 0.3, duration: g.ms, delay, ease: "Cubic.In",
+        onComplete: () => spark.destroy(),
+      });
+    }
+  }
+
+  /** 파칭 — 하얗게 찬 몸이 번쩍 터지고 테두리가 튀어 흩어지며 무지개 파편이 위로 뜬다. */
+  private burstBody(body: PuppetCreature, spot: FeedLevelUpSpot, size: AuraBodySize, reduceFlashes: boolean): void {
+    const spec = BREAKTHROUGH_AURA;
+    const { x, groundY, height, depth } = spot;
+    const centerY = groundY - height * 0.5;
+    if (body.active) {
+      const peak = reduceFlashes ? spec.fill.reducedFlash : spec.fill.flash;
+      const fade = { t: 0 };
+      this.scene.tweens.add({
+        targets: fade, t: 1, duration: spec.burst.ms, ease: "Cubic.Out",
+        onUpdate: () => {
+          if (!body.active) return;
+          body.setBodyFill(spec.fill.color, peak * (1 - fade.t));
+          const radius = (size.outlinePx + size.outlinePulsePx) * (1 + fade.t * spec.burst.outlineSpread);
+          body.setAfterimages(Array.from({ length: spec.outline.directions }, (_unused, i) => {
+            const angle = (i / spec.outline.directions) * Math.PI * 2;
+            return { dx: Math.cos(angle) * radius, dy: Math.sin(angle) * radius, alpha: spec.outline.alpha * (1 - fade.t), color: breakthroughOutlineColor(i, 0) };
+          }));
+        },
+        onComplete: () => this.clearAura(body),
+      });
+    }
+
+    // 무지개 파편이 위로 벌어진 부채꼴로 뜬다.
+    const b = spec.burst;
+    for (let index = 0; index < b.shards; index += 1) {
+      const vector = breakthroughShardVector(index, b.shards);
+      const shard = this.scene.add
+        .image(x, centerY, EFFECT_TEXTURE.shard)
+        .setTint(spec.colors[index % spec.colors.length])
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setDepth(depth + 1)
+        .setRotation(Math.atan2(vector.y, vector.x));
+      const base = (b.shardSize * size.sparkScale) / shard.width;
+      shard.setScale(base);
+      const distance = height * b.shardDistanceRatio;
+      this.scene.tweens.add({
+        targets: shard, x: x + vector.x * distance, y: centerY + vector.y * distance, scale: base * 0.4, alpha: 0,
+        duration: b.shardMs, delay: index * 14, ease: "Cubic.Out", onComplete: () => shard.destroy(),
+      });
+    }
+
+    // 몸 한가운데에서 무지개 마름모 파문이 한 겹 퍼진다.
+    const ring = this.scene.add.graphics({ x, y: centerY }).setDepth(depth - 1).setBlendMode(Phaser.BlendModes.ADD);
+    const spread = { t: 0 };
+    this.scene.tweens.add({
+      targets: spread, t: 1, duration: b.ring.ms, ease: "Cubic.Out",
+      onUpdate: () => {
+        ring.clear();
+        const radius = height * 0.2 + height * b.ring.to * 0.5 * spread.t;
+        spec.colors.forEach((color, index) => {
+          ring.lineStyle(b.ring.thickness * (1 - spread.t * 0.6), color, 0.75 * (1 - spread.t));
+          ring.strokePoints(toPoints(burstDiamond(radius * (1 - index * 0.045), b.ring.squash)), true);
+        });
+      },
+      onComplete: () => ring.destroy(),
+    });
+  }
+
+  /** 몸에 얹은 테두리·채움을 걷는다. */
+  private clearAura(body: PuppetCreature): void {
+    if (!body.active) return;
+    body.setAfterimages([]);
+    body.setBodyFill(0xffffff, 0);
   }
 
   /** 레벨 숫자가 한 번 부풀었다 제자리로. 세로로 늘인 숫자라 제 배율을 기억해 돌아간다. */

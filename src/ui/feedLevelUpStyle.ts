@@ -48,6 +48,47 @@ export const FEED_LEVEL_UP = {
   cooldownMs: 1100,
 } as const;
 
+/**
+ * 한계 돌파가 확정된 순간의 연출 — 레벨업과 같은 몸(SD·전신 원화)에 **두 박자**로 선다.
+ *
+ * 1. **휩싸임**(`chargeMs`) — 무지개빛 테두리가 몸을 따라 돌고, 여러 빛무리가 몸 뒤에서 맴돌며, 조각이
+ *    사방에서 몸으로 빨려 들고, 몸이 하얗게 차오른다. 레벨업보다 한 단계 귀한 조작이라 색이 하나가 아니다.
+ * 2. **파칭**(`burstMs`) — 하얗게 찬 몸이 단번에 터지며 테두리가 바깥으로 튀어 흩어지고, 무지개 파편이
+ *    위로 부채꼴로 뜨고, 몸이 통 튀며 발밑에 마름모 파문이 퍼진다. 같은 순간 등급 표식이 바뀐다.
+ *
+ * 레벨업과 같은 규칙을 지킨다 — 동그라미 없음(마름모), 파편은 위로, 섬광은 옅게, 난수 없음.
+ * 움직임 줄이기에서는 휩싸임을 건너뛰고 곧바로 터진다(등급 표식의 연출만 남는다).
+ */
+export const BREAKTHROUGH_AURA = {
+  /** 휩싸이는 시간. 확인을 누른 뒤 표식이 바뀌기까지의 기다림이라 1초를 넘기지 않는다. */
+  chargeMs: 820,
+  /** 무지개 — 테두리·빛무리·조각이 이 차례로 돈다. 밝은 파스텔이라 겹쳐도 탁해지지 않는다. */
+  colors: [0xff7eb6, 0xffd45a, 0x8dffb4, 0x74dcff, 0xb79bff, 0xffa36b],
+  /** 몸 둘레의 색 테두리(정점을 다시 그리는 잔상). 방향 수와 두께(px) — SD·원화가 따로 쓴다. */
+  outline: { directions: 10, alpha: 0.85, spinPerSecond: 7 },
+  /** 몸이 하얗게 차오르는 몫. 끝에서 1로 번쩍였다가 사라진다. */
+  fill: { charge: 0.45, flash: 1, reducedFlash: 0.45, fadeMs: 320, color: 0xffffff },
+  /** 몸 뒤에서 맴도는 빛무리. 키에 대한 비율이다. */
+  halo: { alpha: 0.2, orbitRatio: 0.16, sizeRatio: 0.8, turns: 1.3 },
+  /** 사방에서 몸으로 빨려 드는 조각. */
+  gather: { count: 12, fromRatio: 0.85, size: 26, ms: 520, stagger: 22 },
+  /** 파칭 — 테두리가 바깥으로 튀며 흩어지는 몫과 무지개 파편·파문. */
+  burst: { ms: 380, outlineSpread: 3.2, shards: 10, shardSize: 34, shardDistanceRatio: 0.95, shardMs: 620, ring: { to: 1.7, ms: 520, thickness: 7, squash: 0.34 } },
+  /** 몸마다 다른 크기. 원화는 화면을 크게 차지해 테두리를 두껍게, 조각을 크게 둔다. */
+  body: {
+    figure: { outlinePx: 4, outlinePulsePx: 3, sparkScale: 1 },
+    portrait: { outlinePx: 7, outlinePulsePx: 5, sparkScale: 1.5 },
+  },
+} as const;
+
+/** 휩싸임 동안 테두리 한 방향의 색 — 시간이 흐르며 무지개가 몸 둘레를 돈다. 난수를 쓰지 않는다. */
+export function breakthroughOutlineColor(direction: number, elapsedMs: number): number {
+  const { colors, outline } = BREAKTHROUGH_AURA;
+  const shift = Math.floor((elapsedMs / 1000) * outline.spinPerSecond);
+  const index = (((direction + shift) % colors.length) + colors.length) % colors.length;
+  return colors[index];
+}
+
 /** 능력치 한 줄 — 무엇이 얼마나 올랐나. 오른 것만, 오각형 순서대로 담는다. */
 export interface StatGain {
   readonly key: "hp" | "def" | "res" | "atk" | "ap";

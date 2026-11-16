@@ -399,8 +399,8 @@ export class SettingsScene extends Phaser.Scene {
   private async openPurchaseHistory(): Promise<void> {
     this.accountBusy = true;
     try {
-      const { entries, gifts } = await gameApi.getPurchaseHistory();
-      if (this.scene.isActive()) openPurchaseHistoryPopup(this, this.popups, entries, gifts ?? []);
+      const { entries, sentGifts, mails } = await gameApi.getPurchaseHistory();
+      if (this.scene.isActive()) openPurchaseHistoryPopup(this, this.popups, { entries, sentGifts: sentGifts ?? [], mails: mails ?? [] });
     } catch {
       this.showRestoreNotice("settings.history.failed");
     } finally { this.accountBusy = false; }

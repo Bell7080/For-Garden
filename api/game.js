@@ -5305,9 +5305,16 @@ var SETTINGS_KO = {
   "settings.account.restoreFailed": "\uAD6C\uB9E4 \uBCF5\uC6D0\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "settings.history.title": "\uACB0\uC81C \uAE30\uB85D",
   "settings.history.empty": "\uACB0\uC81C \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
-  "settings.history.giftEmpty": "\uBC1B\uC740 \uC120\uBB3C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "settings.history.giftEmpty": "\uBCF4\uB0B8 \uC120\uBB3C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "settings.history.tab.purchase": "\uACB0\uC81C \uAE30\uB85D",
   "settings.history.tab.gift": "\uC120\uBB3C \uAE30\uB85D",
+  "settings.history.mailEmpty": "\uBC1B\uC740 \uC6B0\uD3B8 \uBCF4\uC0C1\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "settings.history.tab.mail": "\uC6B0\uD3B8 \uAE30\uB85D",
+  "settings.history.gift.to": "\uBC1B\uB294 \uC774 {name}",
+  "settings.history.gift.pending": "\uC218\uB839 \uB300\uAE30",
+  "settings.history.gift.accepted": "\uBC1B\uC74C",
+  "settings.history.gift.returned": "\uBC18\uD658\uB428 \xB7 \uD658\uBD88",
+  "settings.history.gift.revoked": "\uACB0\uC81C \uCDE8\uC18C\uB85C \uD68C\uC218\uB428",
   "settings.history.unknownDate": "\uC2DC\uAC01 \uAE30\uB85D \uC5C6\uC74C",
   "settings.history.firstBonus": "\uCCAB \uAD6C\uB9E4 2\uBC30 \uC801\uC6A9",
   "settings.history.failed": "\uACB0\uC81C \uAE30\uB85D\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
@@ -8617,6 +8624,81 @@ var RECOLLECTION_KO = {
   "recollection.summary.stage-7-10-post": "\uCE74\uB974\uAC00 \uC2A4\uC2A4\uB85C \uAD6C\uC18D\uC744 \uBD80\uC218\uACE0 \uAC10\uAE08\uC870\uC640 \uD568\uAED8 \uC704\uB85C \uB5A0\uB09C\uB2E4."
 };
 
+// src/i18n/ko/help.ts
+init_define_import_meta_env();
+var HELP_KO = {
+  "lobby.menu.help": "\uB3C4\uC6C0\uB9D0",
+  "help.title": "\uB3C4\uC6C0\uB9D0",
+  "help.tab.terms": "\uC6A9\uC5B4",
+  "help.tab.tutorials": "\uB2E4\uC2DC \uBCF4\uAE30",
+  "help.term.relic.name": "\uB810\uB9AD",
+  "help.term.relic.body": "\uD654\uC11D\uC5D0\uC11C \uBCF5\uC6D0\uD55C \uBA78\uC885 \uB3D9\uBB3C \uAC1C\uCCB4\uC608\uC694. \uBAA8\uC73C\uACE0 \uD0A4\uC6CC \uD568\uAED8 \uC2F8\uC6B0\uB294 \uB3D9\uB8CC\uC608\uC694.",
+  "help.term.research.name": "\uC5F0\uAD6C",
+  "help.term.research.body": "\uC5F0\uAD6C\uC18C\uC5D0\uC11C \uD654\uC11D\uC774\uB098 \uD638\uBC15\uC11D\uC744 \uB123\uC5B4 \uC0C8 \uB810\uB9AD\uC744 \uB9CC\uB098\uC694. \uAC19\uC740 \uB810\uB9AD\uC744 \uB2E4\uC2DC \uB9CC\uB098\uBA74 \uADF8 \uB810\uB9AD\uC758 \uD30C\uD3B8\uC774 \uC313\uC5EC\uC694.",
+  "help.term.excavation.name": "\uBC1C\uAD74",
+  "help.term.excavation.body": "\uB85C\uBE44\uC5D0 \uB810\uB9AD\uC744 \uBC30\uCE58\uD574 \uB450\uBA74 \uC2DC\uAC04\uC774 \uC9C0\uB098\uBA70 \uC7AC\uD654\uAC00 \uC313\uC5EC\uC694. \uC5F0\uAD6C\uC18C\uC758 \uB810\uB9AD \uD68D\uB4DD \uC5F0\uAD6C\uC640 \uB2E4\uB978, \uBC30\uCE58\uD615 \uC790\uC6D0 \uBC1C\uAD74\uC774\uC5D0\uC694.",
+  "help.term.archaeology.name": "\uACE0\uACE0\uD559",
+  "help.term.archaeology.body": "\uC720\uC801\uC744 \uACE8\uB77C \uC9C0\uCE35\uC744 \uD30C\uBA70 \uC6D0\uC11D\xB7\uB8EC\xB7\uC7AC\uD654\uB97C \uCE90\uC694. \uAE4A\uC740 \uC720\uC801\uC77C\uC218\uB85D \uC624\uB798 \uC7A0\uAE30\uC9C0\uB9CC \uB354 \uB9CE\uC774 \uC8FC\uACE0, \uC624\uB798 \uC270 \uB0AE\uC740 \uC720\uC801\uC5D0\uB294 \uACB0\uC815\uC774 \uB9FA\uD600\uC694.",
+  "help.term.feeding.name": "\uAE09\uC5EC",
+  "help.term.feeding.body": "\uCE58\uC988\uCF00\uC774\uD06C\uB97C \uBA39\uC5EC \uACBD\uD5D8\uCE58\uB97C \uC313\uC544\uC694. \uB810\uB9AD\uC758 \uB808\uBCA8 \uC0C1\uD55C\uC740 \uC5F0\uAD6C\uC6D0 \uB808\uBCA8\uC774 \uC5F4\uC5B4\uC694.",
+  "help.term.fragment.name": "\uD30C\uD3B8",
+  "help.term.fragment.body": "\uAC19\uC740 \uB810\uB9AD\uC744 \uB2E4\uC2DC \uB9CC\uB098\uBA74 \uADF8 \uB810\uB9AD\uC758 \uD30C\uD3B8\uC774 \uC313\uC5EC\uC694. \uD55C\uACC4 \uB3CC\uD30C\uC640 \uACF5\uBA85\uC5D0 \uC368\uC694.",
+  "help.term.breakthrough.name": "\uD55C\uACC4 \uB3CC\uD30C",
+  "help.term.breakthrough.body": "\uD30C\uD3B8\uC744 \uC368\uC11C \uB3CC\uD30C \uB4F1\uAE09\uC744 I\uC5D0\uC11C V\uAE4C\uC9C0 \uC62C\uB824\uC694. \uB2E8\uACC4\uB9C8\uB2E4 \uB2A5\uB825\uCE58 \uC131\uC7A5\uC774 \uC624\uB974\uACE0 \uC2A4\uD0AC \uD6A8\uACFC\uAC00 \uC5F4\uB824\uC694.",
+  "help.term.resonance.name": "\uACF5\uBA85",
+  "help.term.resonance.body": "\uB3CC\uD30C V \uB2E4\uC74C \uB2E8\uACC4\uC608\uC694. \uD30C\uD3B8\uB9CC \uB4E4\uACE0, \uB2E8\uACC4\uB9C8\uB2E4 \uB2A5\uB825\uCE58\uAC00 5% \uC62C\uB77C\uC694. \uACB0\uD22C\uC7A5\uC5D0\uC11C\uB294 \uAEBC\uC838\uC694.",
+  "help.term.bond.name": "\uC720\uB300",
+  "help.term.bond.body": "\uB810\uB9AD\uB9C8\uB2E4 \uC313\uC774\uB294 \uAD00\uACC4 \uC218\uCE58\uC608\uC694. \uD68D\uB4DD\xB7\uC2B9\uB9AC\xB7\uB9E4\uC77C\uC758 \uC0C1\uD638\uC791\uC6A9\uC73C\uB85C \uC624\uB974\uACE0, \uB192\uC744\uC218\uB85D \uC804\uD22C\uC5D0\uC11C \uC57C\uC131\uC774 \uBE68\uB9AC \uCC28\uC694.",
+  "help.term.favorite.name": "\uC560\uCC29",
+  "help.term.favorite.body": "\uB85C\uBE44\uC5D0 \uC138\uC6B8 \uB300\uD45C \uB810\uB9AD \uD558\uB098\uC608\uC694. \uBC14\uAFD4\uB3C4 \uC720\uB300\uB294 \uADF8\uB300\uB85C\uC608\uC694.",
+  "help.term.rune.name": "\uB8EC",
+  "help.term.rune.body": "\uD558\uD2B8\uB97C \uC14B\uC73C\uB85C \uB098\uB208 \uC870\uAC01 \uC7A5\uBE44\uC608\uC694. \uC870\uAC01\uB9C8\uB2E4 \uB07C\uC6B8 \uC790\uB9AC\uAC00 \uC815\uD574\uC838 \uC788\uC5B4\uC694.",
+  "help.term.runecraft.name": "\uC138\uACF5 \xB7 \uAC01\uC778",
+  "help.term.runecraft.body": "\uACE8\uB4DC\uB97C \uC368\uC11C \uB8EC\uC758 \uC635\uC158\uC744 \uD55C \uC904\uC529 \uC62C\uB824\uC694. \uC138\uACF5\uC744 \uB9C8\uCE58\uBA74 \uB9C8\uC9C0\uB9C9\uC73C\uB85C \uD55C \uBC88 \uAC01\uC778\uD574 \uB8EC\uC744 \uC644\uC131\uD574\uC694.",
+  "help.term.ultimate.name": "\uAD81\uADF9\uAE30",
+  "help.term.ultimate.body": "\uCE74\uB4DC \uADF8\uB9BC\uC774 \uB2E4 \uCC28\uC624\uB974\uBA74 \uB20C\uB7EC \uC4F0\uB294 \uD070 \uAE30\uC220\uC774\uC5D0\uC694. \uC790\uB3D9 \uAD81\uADF9\uAE30\uB97C \uCF1C\uBA74 \uC54C\uC544\uC11C \uC368\uC694.",
+  "help.term.frenzy.name": "\uC57C\uC131 \xB7 \uD3ED\uC8FC",
+  "help.term.frenzy.body": "\uC2F8\uC6B0\uB294 \uB3D9\uC548 \uC57C\uC131 \uAC8C\uC774\uC9C0\uAC00 \uCC28\uACE0, \uAC00\uB4DD \uCC28\uBA74 \uD3ED\uC8FC\uD574 \uB354 \uC138\uAC8C \uC2F8\uC6CC\uC694. \uD3ED\uC8FC \uC911\uC5D0\uB3C4 \uAD81\uADF9\uAE30\uB97C \uC4F8 \uC218 \uC788\uC5B4\uC694.",
+  "help.term.stamina.name": "\uC2A4\uD14C\uBBF8\uB098",
+  "help.term.stamina.body": "\uCD9C\uACA9\uC5D0 \uB4DC\uB294 \uC790\uC6D0\uC774\uC5D0\uC694. \uC774\uAE34 \uD310\uC5D0\uC11C\uB9CC \uBE60\uC9C0\uACE0, \uC4F4 \uB9CC\uD07C \uC5F0\uAD6C\uC6D0 \uACBD\uD5D8\uCE58\uAC00 \uC62C\uB77C\uC694.",
+  "help.term.researcherLevel.name": "\uC5F0\uAD6C\uC6D0 \uB808\uBCA8",
+  "help.term.researcherLevel.body": "\uC4F4 \uC2A4\uD14C\uBBF8\uB098\uB9CC\uD07C \uACBD\uD5D8\uCE58\uAC00 \uC62C\uB77C\uC694. \uB808\uBCA8\uC774 \uC624\uB974\uBA74 \uC0C8 \uCF58\uD150\uCE20\uC640 \uB810\uB9AD\uC758 \uB808\uBCA8 \uC0C1\uD55C\uC774 \uC5F4\uB824\uC694.",
+  "help.term.fossil.name": "\uD654\uC11D \xB7 \uD638\uBC15\uC11D",
+  "help.term.fossil.body": "\uC5F0\uAD6C\uC5D0 \uB123\uB294 \uC7AC\uD654\uC608\uC694. \uD638\uBC15\uC11D\uC740 \uD55C\uC815 \uD53D\uC5C5 \uC5F0\uAD6C\uC5D0 \uC368\uC694.",
+  "help.term.mileage.name": "DNA \uB9C8\uC77C\uB9AC\uC9C0",
+  "help.term.mileage.body": "\uC5F0\uAD6C\uD560 \uB54C\uB9C8\uB2E4 \uC313\uC774\uB294 \uACF5\uC6A9 \uC7AC\uD654\uC608\uC694. \uB9C8\uC77C\uB9AC\uC9C0 \uC0C1\uC810\uC5D0\uC11C \uD30C\uD3B8\uC774\uB098 \uD53D\uC5C5 \uB810\uB9AD\uC73C\uB85C \uBC14\uAFD4\uC694.",
+  "help.term.expedition.name": "\uC6D0\uC815",
+  "help.term.expedition.body": "\uD558\uB8E8 \uD55C \uBC88 \uC2A4\uBB34 \uCE35\uC744 \uC624\uB974\uB294 \uAE30\uB85D\uC804\uC774\uC5D0\uC694. \uD55C \uD310\uC758 \uCD5C\uACE0 \uC810\uC218\uB85C \uC8FC\uAC04 \uC21C\uC704\uAC00 \uC815\uD574\uC838\uC694.",
+  "help.term.interaction.name": "\uAD50\uB958",
+  "help.term.interaction.body": "\uB810\uB9AD\uC744 \uBC14\uAE65 \uB3C4\uC2DC\uB85C \uBCF4\uB0B4 \uB450\uBA74 \uB3CC\uC544\uC62C \uB54C \uBB3C\uAC74\uC744 \uAC00\uC838\uC640\uC694.",
+  "help.term.formation.name": "\uD3B8\uC131",
+  "help.term.formation.body": "\uC138 \uC790\uB9AC\uC5D0 \uB810\uB9AD\uC744 \uC138\uC6CC\uC694. \uAC00\uC6B4\uB370\uB294 \uD0F1\uCEE4\xB7\uC804\uC0AC, \uC591\uC606\uC740 \uC554\uC0B4\uC790\xB7\uC9C0\uC6D0\uAC00\uAC00 \uC798 \uB9DE\uC544\uC694.",
+  "help.term.combatPower.name": "\uC804\uD22C\uB825",
+  "help.term.combatPower.body": "\uB2A5\uB825\uCE58 \uC624\uAC01\uD615\uC758 \uB113\uC774\uC608\uC694. \uC138\uAE30\uB97C \uACAC\uC8FC\uB294 \uD45C\uC2DC\uC774\uACE0 \uC804\uD22C \uACB0\uACFC\uB97C \uC815\uD558\uC9C0\uB294 \uC54A\uC544\uC694.",
+  "help.basics.1.heading": "\uAD81\uADF9\uAE30\uB97C \uB20C\uB7EC\uC694",
+  "help.basics.1.body": "\uCE74\uB4DC \uADF8\uB9BC\uC774 \uB2E4 \uCC28\uC624\uB974\uBA74 \uADF8 \uCE74\uB4DC\uB97C \uB20C\uB7EC \uAD81\uADF9\uAE30\uB97C \uC368\uC694. \uC790\uB3D9 \uAD81\uADF9\uAE30\uB97C \uCF1C\uBA74 \uC54C\uC544\uC11C \uC368\uC694.",
+  "help.basics.2.heading": "\uC804\uD22C\uB97C \uC190\uC5D0 \uB9DE\uAC8C",
+  "help.basics.2.body": "\uBC30\uC18D\uC73C\uB85C \uC804\uD22C\uB97C \uBE60\uB974\uAC8C, \uC5F0\uCD9C \uC2A4\uD0B5\uC73C\uB85C \uAD81\uADF9\uAE30 \uC5F0\uCD9C\uC744 \uAC74\uB108\uB6F0\uC5B4\uC694. \uAE30\uC5EC\uB3C4\uB97C \uC5F4\uBA74 \uB204\uAC00 \uD65C\uC57D\uD588\uB294\uC9C0 \uBCF4\uC5EC\uC694.",
+  "help.basics.3.heading": "\uCE58\uC988\uCF00\uC774\uD06C\uB85C \uD0A4\uC6CC\uC694",
+  "help.basics.3.body": "\uB810\uB9AD \uC815\uBCF4\uC5D0\uC11C \uAE09\uC5EC\uD558\uAE30\uB97C \uB20C\uB7EC \uCE58\uC988\uCF00\uC774\uD06C\uB97C \uBA39\uC5EC\uC694. \uAFB9 \uB204\uB974\uBA74 \uD55C \uBC88\uC5D0 \uC5EC\uB7EC \uB808\uBCA8\uC744 \uC62C\uB824\uC694.",
+  "help.basics.4.heading": "\uC0C8 \uB810\uB9AD\uC744 \uB9CC\uB098\uC694",
+  "help.basics.4.body": "\uC5F0\uAD6C\uC18C\uC5D0\uC11C \uD654\uC11D\uC73C\uB85C \uC5F0\uAD6C\uD574 \uC0C8 \uB810\uB9AD\uC744 \uB9CC\uB098\uC694. \uAC19\uC740 \uB810\uB9AD\uC744 \uB2E4\uC2DC \uB9CC\uB098\uBA74 \uD30C\uD3B8\uC774 \uC313\uC5EC\uC694.",
+  "help.tutorial.basics": "\uCCAB\uAC78\uC74C",
+  "help.tutorial.stageMap": "\uC2A4\uD1A0\uB9AC \uC9C0\uB3C4",
+  "help.tutorial.party": "\uD3B8\uC131",
+  "help.tutorial.archaeology": "\uACE0\uACE0\uD559 \uD0D0\uC0AC",
+  "help.tutorial.shop": "\uC0C1\uC810",
+  "help.tutorial.cakeOperation": "\uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804",
+  "help.tutorial.bounty": "\uD604\uC0C1\uC218\uBC30",
+  "help.tutorial.interaction": "\uAD50\uB958",
+  "help.tutorial.duel": "\uACB0\uD22C\uC7A5",
+  "help.tutorial.friends": "\uCE5C\uAD6C",
+  "help.tutorial.raid": "\uB808\uC774\uB4DC",
+  "help.tutorial.expedition": "\uC6D0\uC815",
+  "help.tutorial.premium": "\uD504\uB9AC\uBBF8\uC5C4",
+  "help.tutorial.archaeology.sub": "\uC720\uC801 \uC9C0\uB3C4\uC640 \uC9C0\uCE35 \uD310\uC744 \uB2E4\uC2DC \uC9DA\uC5B4 \uC918\uC694"
+};
+
 // src/i18n/ko/dialogue.ts
 init_define_import_meta_env();
 var DIALOGUE_KO = {
@@ -8898,7 +8980,7 @@ var DEBUG_KO = {
 };
 
 // src/i18n/ko/index.ts
-var KO = { ...ARENA_KO, ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...GUILD_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO, ...DUNGEON_KO, ...DUEL_KO, ...RECOLLECTION_KO, ...DIALOGUE_KO, ...ACHIEVEMENT_KO, ...SUPPORT_KO, ...DEBUG_KO };
+var KO = { ...ARENA_KO, ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...GUILD_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO, ...DUNGEON_KO, ...DUEL_KO, ...RECOLLECTION_KO, ...HELP_KO, ...DIALOGUE_KO, ...ACHIEVEMENT_KO, ...SUPPORT_KO, ...DEBUG_KO };
 
 // src/i18n/catalog.ts
 var loaded = /* @__PURE__ */ new Map([[DEFAULT_LANGUAGE, KO]]);
@@ -28796,7 +28878,8 @@ function isValidServerJournal(value) {
   const journal = value;
   const record3 = (v2) => !!v2 && typeof v2 === "object" && !Array.isArray(v2);
   const json = (v2) => v2 === null || typeof v2 === "string" || typeof v2 === "boolean" || typeof v2 === "number" && Number.isFinite(v2) || (Array.isArray(v2) ? v2.every(json) : record3(v2) && Object.values(v2).every(json));
-  return (journal.qaTenUpgrade === void 0 || typeof journal.qaTenUpgrade === "boolean") && (journal.storyChoices === void 0 || record3(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record3(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record3(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record3(journal.combat) && record3(journal.combat.tickets) && record3(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record3(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record3(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record3(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record3(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record3(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && (journal.giftLog === void 0 || Array.isArray(journal.giftLog) && journal.giftLog.length <= 200 && journal.giftLog.every((gift) => record3(gift) && typeof gift.title === "string" && typeof gift.sender === "string" && Number.isFinite(Date.parse(gift.receivedAt)) && Array.isArray(gift.rewards) && gift.rewards.every((reward) => record3(reward) && json(reward) && (reward.kind === "currency" || reward.kind === "item") && Number.isSafeInteger(reward.amount)))) && (journal.guildGuard === void 0 || record3(journal.guildGuard) && Number.isSafeInteger(journal.guildGuard.day) && Number.isSafeInteger(journal.guildGuard.used) && journal.guildGuard.used >= 0 && Number.isSafeInteger(journal.guildGuard.best) && journal.guildGuard.best >= 0) && (journal.guildGuardAdmissions === void 0 || record3(journal.guildGuardAdmissions) && Object.entries(journal.guildGuardAdmissions).every(([id, admission]) => id.length > 0 && record3(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.element === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && Array.isArray(admission.lineup) && admission.lineup.length === 6 && admission.lineup.every((slot) => slot === null || record3(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot)))) && (journal.guildWarAdmissions === void 0 || record3(journal.guildWarAdmissions) && Object.entries(journal.guildWarAdmissions).every(([id, admission]) => id.length > 0 && record3(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.slotId === "string" && typeof admission.opponentName === "string" && typeof admission.defenderName === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && [admission.attack, admission.defense].every((side) => Array.isArray(side) && side.length === 3 && side.every((slot) => record3(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot))))) && record3(journal.receipts) && record3(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record3(receipt) && typeof receipt.identity === "string" && record3(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record3(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
+  const mailLog = (log) => log === void 0 || Array.isArray(log) && log.length <= 200 && log.every((gift) => record3(gift) && typeof gift.title === "string" && typeof gift.sender === "string" && typeof gift.receivedAt === "string" && Number.isFinite(Date.parse(gift.receivedAt)) && Array.isArray(gift.rewards) && gift.rewards.every((reward) => record3(reward) && json(reward) && (reward.kind === "currency" || reward.kind === "item") && Number.isSafeInteger(reward.amount)));
+  return (journal.qaTenUpgrade === void 0 || typeof journal.qaTenUpgrade === "boolean") && (journal.storyChoices === void 0 || record3(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record3(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record3(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record3(journal.combat) && record3(journal.combat.tickets) && record3(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record3(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record3(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record3(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record3(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record3(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && mailLog(journal.mailLog) && mailLog(journal.giftLog) && (journal.guildGuard === void 0 || record3(journal.guildGuard) && Number.isSafeInteger(journal.guildGuard.day) && Number.isSafeInteger(journal.guildGuard.used) && journal.guildGuard.used >= 0 && Number.isSafeInteger(journal.guildGuard.best) && journal.guildGuard.best >= 0) && (journal.guildGuardAdmissions === void 0 || record3(journal.guildGuardAdmissions) && Object.entries(journal.guildGuardAdmissions).every(([id, admission]) => id.length > 0 && record3(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.element === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && Array.isArray(admission.lineup) && admission.lineup.length === 6 && admission.lineup.every((slot) => slot === null || record3(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot)))) && (journal.guildWarAdmissions === void 0 || record3(journal.guildWarAdmissions) && Object.entries(journal.guildWarAdmissions).every(([id, admission]) => id.length > 0 && record3(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.slotId === "string" && typeof admission.opponentName === "string" && typeof admission.defenderName === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && [admission.attack, admission.defense].every((side) => Array.isArray(side) && side.length === 3 && side.every((slot) => record3(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot))))) && record3(journal.receipts) && record3(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record3(receipt) && typeof receipt.identity === "string" && record3(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record3(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
 }
 
 // src/core/expeditionPeriods.ts
@@ -44836,14 +44919,16 @@ function purchaseHistoryFromJournal(journal, limit = PURCHASE_HISTORY_LIMIT) {
   const at = (entry) => entry.purchasedAt ? Date.parse(entry.purchasedAt) : -Infinity;
   return entries.sort((a, b) => at(b) - at(a)).slice(0, Math.max(0, limit));
 }
-var GIFT_LOG_LIMIT = 50;
-function appendGiftLog(journal, gifts) {
-  const fresh = gifts.map((gift) => ({ ...gift, rewards: gift.rewards.map((reward) => ({ ...reward })) }));
-  return { ...journal, giftLog: [...fresh.reverse(), ...journal.giftLog ?? []].slice(0, GIFT_LOG_LIMIT) };
+var MAIL_LOG_LIMIT = 50;
+var mailLogOf = (journal) => journal?.mailLog ?? journal?.giftLog ?? [];
+function appendMailLog(journal, mails) {
+  const fresh = mails.map((mail) => ({ ...mail, rewards: mail.rewards.map((reward) => ({ ...reward })) }));
+  const { giftLog: _legacy, ...rest } = journal;
+  return { ...rest, mailLog: [...fresh.reverse(), ...mailLogOf(journal)].slice(0, MAIL_LOG_LIMIT) };
 }
-function giftHistoryFromJournal(journal, limit = GIFT_LOG_LIMIT) {
-  const at = (gift) => Date.parse(gift.receivedAt);
-  return [...journal?.giftLog ?? []].sort((a, b) => at(b) - at(a)).slice(0, Math.max(0, limit));
+function mailHistoryFromJournal(journal, limit = MAIL_LOG_LIMIT) {
+  const at = (mail) => Date.parse(mail.receivedAt);
+  return [...mailLogOf(journal)].sort((a, b) => at(b) - at(a)).slice(0, Math.max(0, limit));
 }
 
 // src/core/greatSuccess.ts
@@ -45020,7 +45105,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.478.0",
+  version: "0.479.1",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -46063,7 +46148,7 @@ var FakeServer = class {
     const claimable = targets2.filter((mail) => !!mail && !deletedIds.has(mail.id) && mail.rewards.length > 0 && !mail.claimed && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs));
     const granted = [];
     const candidate = structuredClone(this.state);
-    const gifts = [];
+    const claimedLog = [];
     for (const mail of claimable) {
       const before = granted.length;
       for (const reward of mail.rewards) {
@@ -46080,9 +46165,9 @@ var FakeServer = class {
           if (result.added > 0) granted.push({ ...reward, amount: result.added });
         }
       }
-      if (granted.length > before) gifts.push({ title: mail.title, sender: mail.sender, receivedAt: new Date(nowMs).toISOString(), rewards: granted.slice(before) });
+      if (granted.length > before) claimedLog.push({ title: mail.title, sender: mail.sender, receivedAt: new Date(nowMs).toISOString(), rewards: granted.slice(before) });
     }
-    if (gifts.length) candidate.serverJournal = appendGiftLog(candidate.serverJournal ?? emptyServerJournal(), gifts);
+    if (claimedLog.length) candidate.serverJournal = appendMailLog(candidate.serverJournal ?? emptyServerJournal(), claimedLog);
     candidate.claimedMailIds = [.../* @__PURE__ */ new Set([...candidate.claimedMailIds ?? [], ...claimable.map(({ id }) => id)])];
     const queue = expeditionRankRewardQueue(candidate.expedition).filter((reward) => !claimable.some(({ id }) => id === `expedition-rank:${reward.weekKey}`));
     candidate.expedition = { ...candidate.expedition, pendingRankReward: queue[0] ?? null, pendingRankRewards: queue.slice(1) };
@@ -48201,7 +48286,7 @@ var FakeServer = class {
   /** 결제 기록은 장부의 플랫폼 거래 영수증만 읽는다 — 화면이 기억한 값이 아니라 지급을 확정한 쪽의 기록이다. */
   async getPurchaseHistory() {
     await this.delay();
-    return { entries: purchaseHistoryFromJournal(this.state.serverJournal), gifts: giftHistoryFromJournal(this.state.serverJournal), serverTime: this.now().toISOString() };
+    return { entries: purchaseHistoryFromJournal(this.state.serverJournal), sentGifts: [], mails: mailHistoryFromJournal(this.state.serverJournal), serverTime: this.now().toISOString() };
   }
   /** 광고 시청 경로와 같은 슬롯 정의·UTC 카운터를 사용하되 활성 패스만 토큰 없이 통과시킨다. */
   async claimInstantAdReward(request) {

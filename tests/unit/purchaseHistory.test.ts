@@ -3,7 +3,7 @@ import { FakeServer } from "../../src/api/FakeServer";
 import { runPlatformRestore } from "../../src/api/platformPurchase";
 import type { PlatformPaymentAdapter, PlatformReceipt } from "../../src/api/PlatformPayment";
 import { UnsupportedPlatformPaymentAdapter } from "../../src/api/PlatformPayment";
-import { appendGiftLog, GIFT_LOG_LIMIT, giftHistoryFromJournal, maskTransactionId, purchaseHistoryFromJournal } from "../../src/core/purchaseHistory";
+import { appendMailLog, MAIL_LOG_LIMIT, mailHistoryFromJournal, maskTransactionId, purchaseHistoryFromJournal } from "../../src/core/purchaseHistory";
 import { emptyServerJournal, isValidServerJournal } from "../../src/core/serverJournal";
 import { PRODUCTS } from "../../src/data/shopCatalog";
 import { createDefaultSession } from "../../src/state/session";
@@ -60,7 +60,7 @@ describe("결제 기록", () => {
   });
 });
 
-describe("선물 기록", () => {
+describe("우편 기록", () => {
   it("우편으로 받은 보상이 제목·보낸 이·받은 시각과 함께 남고, 같은 요청을 다시 보내도 두 번 적히지 않는다", async () => {
     const { api } = server();
     clock = Date.parse("2026-11-12T03:00:00Z");
@@ -68,27 +68,42 @@ describe("선물 기록", () => {
       { id: "g1", title: "점검 보상", body: "", rewards: [{ asset: "gems", amount: 300 }], sentAt: "2026-11-11T00:00:00Z", expiresAt: null },
       { id: "g2", title: "쿠폰 선물", body: "", rewards: [{ asset: "gold", amount: 5000 }], sentAt: "2026-11-11T00:00:00Z", expiresAt: null },
     ]);
-    expect((await api.getPurchaseHistory()).gifts).toEqual([]);
+    const before = await api.getPurchaseHistory();
+    expect(before.mails).toEqual([]);
+    expect(before.sentGifts).toEqual([]);
     const { mails } = await api.getMails();
     const ids = mails.filter(mail => mail.id.startsWith("ops:g")).map(mail => mail.id);
     await api.claimMailRewards({ mailIds: ids, requestId: "gift-claim" });
     await api.claimMailRewards({ mailIds: ids, requestId: "gift-claim" });
-    const { gifts } = await api.getPurchaseHistory();
-    expect(gifts.map(gift => gift.title).sort()).toEqual(["점검 보상", "쿠폰 선물"]);
-    expect(gifts.every(gift => gift.receivedAt === "2026-11-12T03:00:00.000Z" && gift.sender.length > 0)).toBe(true);
-    expect(gifts.find(gift => gift.title === "점검 보상")!.rewards).toEqual([{ kind: "currency", currency: "gems", amount: 300 }]);
+    const history = await api.getPurchaseHistory();
+    expect(history.mails.map(mail => mail.title).sort()).toEqual(["점검 보상", "쿠폰 선물"]);
+    expect(history.mails.every(mail => mail.receivedAt === "2026-11-12T03:00:00.000Z" && mail.sender.length > 0)).toBe(true);
+    expect(history.mails.find(mail => mail.title === "점검 보상")!.rewards).toEqual([{ kind: "currency", currency: "gems", amount: 300 }]);
+    // 우편 수령은 보낸 선물이 아니다 — 두 기록이 섞이지 않는다.
+    expect(history.sentGifts).toEqual([]);
   });
 
   it("장부는 최근 것부터 상한까지만 남고 저장 검증을 통과한다", () => {
     let journal = emptyServerJournal();
-    for (let index = 0; index < GIFT_LOG_LIMIT + 5; index += 1) {
-      journal = appendGiftLog(journal, [{ title: `선물 ${index}`, sender: "운영", receivedAt: new Date(Date.UTC(2026, 10, 1, 0, index)).toISOString(), rewards: [{ kind: "currency", currency: "gems", amount: 10 }] }]);
+    for (let index = 0; index < MAIL_LOG_LIMIT + 5; index += 1) {
+      journal = appendMailLog(journal, [{ title: `우편 ${index}`, sender: "운영", receivedAt: new Date(Date.UTC(2026, 10, 1, 0, index)).toISOString(), rewards: [{ kind: "currency", currency: "gems", amount: 10 }] }]);
     }
-    const gifts = giftHistoryFromJournal(journal);
-    expect(gifts).toHaveLength(GIFT_LOG_LIMIT);
-    expect(gifts[0].title).toBe(`선물 ${GIFT_LOG_LIMIT + 4}`);
+    const logged = mailHistoryFromJournal(journal);
+    expect(logged).toHaveLength(MAIL_LOG_LIMIT);
+    expect(logged[0].title).toBe(`우편 ${MAIL_LOG_LIMIT + 4}`);
     expect(isValidServerJournal(journal)).toBe(true);
-    expect(isValidServerJournal({ ...journal, giftLog: [{ title: 1 }] })).toBe(false);
+    expect(isValidServerJournal({ ...journal, mailLog: [{ title: 1 }] })).toBe(false);
+  });
+
+  it("v0.477.0이 `giftLog`로 적은 장부도 읽고, 다음 기록 때 `mailLog`로 옮긴다", () => {
+    const old = { title: "옛 우편", sender: "운영", receivedAt: "2026-11-14T00:00:00.000Z", rewards: [{ kind: "currency" as const, currency: "gems" as const, amount: 50 }] };
+    const legacy = { ...emptyServerJournal(), giftLog: [old] };
+    expect(isValidServerJournal(legacy)).toBe(true);
+    expect(isValidServerJournal({ ...legacy, giftLog: [{ title: 1 }] })).toBe(false);
+    expect(mailHistoryFromJournal(legacy).map(mail => mail.title)).toEqual(["옛 우편"]);
+    const moved = appendMailLog(legacy, [{ ...old, title: "새 우편", receivedAt: "2026-11-15T00:00:00.000Z" }]);
+    expect(moved.giftLog).toBeUndefined();
+    expect(mailHistoryFromJournal(moved).map(mail => mail.title)).toEqual(["새 우편", "옛 우편"]);
   });
 });
 

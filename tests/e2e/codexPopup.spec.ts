@@ -19,7 +19,7 @@ test("로비 메뉴의 도감 칩은 도감 창을 연다", async ({ page }) => 
   });
   await tap(page, WIDTH / 2, HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  const { chips } = lobbyMenuTrayLayout(3);
+  const { chips } = lobbyMenuTrayLayout(4);
   await tap(page, LOBBY_MENU_BUTTON.x, LOBBY_MENU_BUTTON.y);
   await page.waitForTimeout(400);
   await page.screenshot({ path: `test-results/${test.info().project.name}-codex-menu.png` });

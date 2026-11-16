@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { GiftHistoryEntryDto, PurchaseHistoryEntryDto } from "../api/contracts";
+import type { MailClaimHistoryEntryDto, PurchaseHistoryEntryDto, SentGiftHistoryEntryDto } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
 import { PRODUCTS } from "../data/shopCatalog";
 import { t } from "../i18n";
@@ -26,8 +26,21 @@ const HISTORY = {
 } as const;
 const HISTORY_HEIGHT = HISTORY.top + HISTORY.rowsPerPage * HISTORY.rowHeight + HISTORY.foot + HISTORY.tab.height + HISTORY.tab.bottom;
 
-export type PurchaseHistoryTab = "purchase" | "gift";
-const HISTORY_TABS: readonly PurchaseHistoryTab[] = ["purchase", "gift"];
+/** 결제 → 보낸 선물 → 받은 우편 순이다. 보낸 선물은 결제가 낳는 것이라 결제 바로 옆에 둔다. */
+export type PurchaseHistoryTab = "purchase" | "gift" | "mail";
+const HISTORY_TABS: readonly PurchaseHistoryTab[] = ["purchase", "gift", "mail"];
+const TAB_LABEL = { purchase: "settings.history.tab.purchase", gift: "settings.history.tab.gift", mail: "settings.history.tab.mail" } as const;
+const TAB_EMPTY = { purchase: "settings.history.empty", gift: "settings.history.giftEmpty", mail: "settings.history.mailEmpty" } as const;
+const GIFT_STATUS = {
+  pending: "settings.history.gift.pending", accepted: "settings.history.gift.accepted",
+  returned: "settings.history.gift.returned", revoked: "settings.history.gift.revoked",
+} as const;
+
+export interface PurchaseHistoryLists {
+  entries: readonly PurchaseHistoryEntryDto[];
+  sentGifts: readonly SentGiftHistoryEntryDto[];
+  mails: readonly MailClaimHistoryEntryDto[];
+}
 
 const pad = (value: number): string => String(value).padStart(2, "0");
 /** 기기 시각으로 `2026.11.10 17:30`. 시각이 없던 옛 거래는 날짜 자리를 비운다(지어낸 날짜를 적지 않는다). */
@@ -46,26 +59,38 @@ const purchaseRow = (entry: PurchaseHistoryEntryDto): HistoryRow => ({
   tiles: grantTiles(entry.granted).map((tile) => ({ icon: tile.icon, amount: tile.amount })),
 });
 
-const giftRow = (gift: GiftHistoryEntryDto): HistoryRow => ({
-  name: gift.title,
-  meta: `${purchasedLabel(gift.receivedAt)}  ·  ${gift.sender}`,
-  tiles: gift.rewards.map((reward) => ({ icon: rewardDtoTexture(reward), amount: reward.amount })),
+const sentGiftRow = (gift: SentGiftHistoryEntryDto): HistoryRow => {
+  const product = PRODUCTS.find(candidate => candidate.id === gift.productId);
+  return {
+    name: product?.name ?? gift.productId,
+    meta: `${purchasedLabel(gift.sentAt)}  ·  ${t("settings.history.gift.to", { name: gift.recipientName })}`,
+    note: t(GIFT_STATUS[gift.status]),
+    tiles: product ? grantTiles(product.grants).map((tile) => ({ icon: tile.icon, amount: tile.amount })) : [],
+  };
+};
+
+const mailRow = (mail: MailClaimHistoryEntryDto): HistoryRow => ({
+  name: mail.title,
+  meta: `${purchasedLabel(mail.receivedAt)}  ·  ${mail.sender}`,
+  tiles: mail.rewards.map((reward) => ({ icon: rewardDtoTexture(reward), amount: reward.amount })),
 });
 
 /**
- * 계정 판의 「결제 기록」이 여는 창 — 「결제 기록」·「선물 기록」 두 탭이다.
+ * 계정 판의 「결제 기록」이 여는 창 — 「결제 기록」·「선물 기록」·「우편 기록」 세 탭이다.
  *
  * 결제 기록은 지급을 마친 플랫폼 거래만 최근 것부터 한 줄씩 선다 — 상품 이름, 지급 시각과 거래 꼬리표(끝 네 자리),
  * 받은 것의 액자. 값은 스토어 영수증이 말하므로 여기서 다시 적지 않는다. 문의할 때 대조할 수 있으면 된다.
- * 선물 기록은 우편으로 받은 보상(운영 선물·쿠폰·순위 보상)이고, 제목·받은 시각·보낸 이·받은 것이 선다.
+ * 선물 기록은 내가 다른 연구원에게 보낸 선물이다(상품·보낸 시각·받는 이·상태). 선물하기가 열리기 전에는 비어 있다.
+ * 우편 기록은 우편으로 받은 보상(운영 선물·쿠폰·순위 보상)이고, 제목·받은 시각·보낸 이·받은 것이 선다.
  * 탭과 쪽은 판을 닫지 않고 목록만 갈아 끼운다(`slideTabPage`).
  */
 export function openPurchaseHistoryPopup(
   scene: Phaser.Scene, popups: PopupLayer,
-  entries: readonly PurchaseHistoryEntryDto[], gifts: readonly GiftHistoryEntryDto[] = [], initialTab: PurchaseHistoryTab = "purchase",
+  lists: PurchaseHistoryLists, initialTab: PurchaseHistoryTab = "purchase",
 ): void {
   const height = HISTORY_HEIGHT;
-  const rowsOf = (tab: PurchaseHistoryTab): HistoryRow[] => tab === "gift" ? gifts.map(giftRow) : entries.map(purchaseRow);
+  const rowsOf = (tab: PurchaseHistoryTab): HistoryRow[] =>
+    tab === "gift" ? lists.sentGifts.map(sentGiftRow) : tab === "mail" ? lists.mails.map(mailRow) : lists.entries.map(purchaseRow);
   popups.open({ width: HISTORY.width, height, title: t("settings.history.title"), dim: true, backButton: true, closeOnBackdrop: true }, (body) => {
     let tab = initialTab;
     let list: Phaser.GameObjects.Container | undefined;
@@ -82,7 +107,7 @@ export function openPurchaseHistoryPopup(
       const shown = rows.slice(current * HISTORY.rowsPerPage, (current + 1) * HISTORY.rowsPerPage);
       const container = scene.add.container(0, 0);
       if (shown.length === 0) {
-        container.add(scene.add.text(0, top + HISTORY.rowHeight / 2 - 20, t(tab === "gift" ? "settings.history.giftEmpty" : "settings.history.empty"), textStyle({ role: "body", size: 28, color: COLOR.inkDim, align: "center" })).setOrigin(0.5));
+        container.add(scene.add.text(0, top + HISTORY.rowHeight / 2 - 20, t(TAB_EMPTY[tab]), textStyle({ role: "body", size: 28, color: COLOR.inkDim, align: "center" })).setOrigin(0.5));
         return container;
       }
       shown.forEach((row, index) => {
@@ -133,7 +158,7 @@ export function openPurchaseHistoryPopup(
         const x = -HISTORY.width / 2 + 40 + HISTORY.tab.width / 2 + index * (HISTORY.tab.width + HISTORY.tab.gap);
         addCategoryTab(scene, tabs, {
           x, y: tabY, width: HISTORY.tab.width, height: HISTORY.tab.height,
-          label: t(id === "gift" ? "settings.history.tab.gift" : "settings.history.tab.purchase"), selected: id === tab,
+          label: t(TAB_LABEL[id]), selected: id === tab,
           onSelect: () => {
             if (id === tab) return;
             const from = HISTORY_TABS.indexOf(tab);

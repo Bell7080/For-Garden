@@ -609,8 +609,23 @@ export interface PurchaseHistoryEntryDto {
  *
  * 받은 순간의 제목·보낸 이를 그대로 새기고, 보상은 상한에 깎인 뒤 실제로 들어간 몫이다.
  */
-export interface GiftHistoryEntryDto { title: string; sender: string; receivedAt: string; rewards: readonly MailRewardDto[]; }
-export interface PurchaseHistoryResponse { entries: readonly PurchaseHistoryEntryDto[]; gifts: readonly GiftHistoryEntryDto[]; serverTime: string; }
+export interface MailClaimHistoryEntryDto { title: string; sender: string; receivedAt: string; rewards: readonly MailRewardDto[]; }
+/**
+ * 내가 다른 연구원에게 보낸 선물 한 건. 선물하기가 열리기 전에는 늘 빈 목록이다 — 모양은 선물 설계 승인 뒤 확정한다.
+ * `status`: 받는 쪽이 아직 받지 않음 · 받음 · 받지 않아 돌아옴(보낸 쪽으로 환불) · 결제 취소로 회수됨.
+ */
+export interface SentGiftHistoryEntryDto {
+  productId: string; recipientName: string; sentAt: string;
+  status: "pending" | "accepted" | "returned" | "revoked";
+}
+export interface PurchaseHistoryResponse {
+  entries: readonly PurchaseHistoryEntryDto[];
+  /** 내가 보낸 선물(선물하기가 열리기 전에는 빈 목록). */
+  sentGifts: readonly SentGiftHistoryEntryDto[];
+  /** 우편으로 받은 보상(운영 선물·쿠폰·순위 보상). */
+  mails: readonly MailClaimHistoryEntryDto[];
+  serverTime: string;
+}
 /** 진행 패스 마디 하나 — 정적 보상과 서버가 판정한 상태(받음 · 받을 수 있음 · 닿음 · 아직). */
 /** 마디 하나 — 왼쪽 무료 칸(`free`·`freeState`)과 오른쪽 유료 칸(`rewards`·`state`). */
 export interface ProgressPassMilestoneDto {

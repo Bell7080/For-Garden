@@ -44,6 +44,7 @@ export type GlyphName =
   | "arena-tier"
   | "ranking"
   | "trophy"
+  | "help"
   | "bag"
   | "rank-reward"
   | "page-prev"
@@ -166,6 +167,12 @@ export function drawGlyph(
       g.strokePoints(points(-r * 0.46, r * 0.9, -r * 0.3, r * 0.56, r * 0.3, r * 0.56, r * 0.46, r * 0.9), true);
       g.fillStyle(color, alpha);
       g.fillPoints(points(0, -r * 0.64, r * 0.18, -r * 0.42, 0, -r * 0.2, -r * 0.18, -r * 0.42), true);
+      break;
+    case "help":
+      // 도움말 — 각진 물음표 갈고리와 그 아래 채운 마름모 점. 곡선 없이 꺾은 선으로만 갈고리를 접는다.
+      g.strokePoints(points(-r * 0.46, -r * 0.42, -r * 0.46, -r * 0.7, -r * 0.2, -r * 0.92, r * 0.28, -r * 0.92, r * 0.5, -r * 0.7, r * 0.5, -r * 0.32, 0, -r * 0.02, 0, r * 0.32), false);
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(0, r * 0.56, r * 0.18, r * 0.74, 0, r * 0.92, -r * 0.18, r * 0.74), true);
       break;
     case "bag":
       // 가방 — 각진 손잡이와 덮개, 가운데 채운 마름모 잠금쇠. 상점(가게 차양)과 모양이 갈린다.

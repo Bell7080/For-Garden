@@ -2,7 +2,7 @@ import { BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "./bond";
 import type { CombatJournal } from "./combatProtocol";
 import type { ExpeditionRelicSnapshot } from "./expeditionSnapshot";
 import { isExpeditionRelicSnapshot } from "./expeditionSnapshot";
-import type { GiftHistoryEntryDto, PassEntitlementDto } from "../api/contracts";
+import type { MailClaimHistoryEntryDto, PassEntitlementDto } from "../api/contracts";
 import { isValidOpsJournal, type OpsJournal } from "./opsInbox";
 
 /** 지급 결과와 처리 표식을 같은 저장에 담는다. 공개 계정 스냅샷은 영수증에 중복 저장하지 않는다. */
@@ -26,8 +26,10 @@ export interface ServerJournal {
   guildGuardAdmissions?: Record<string, GuildGuardAdmission>;
   /** 길드전 공격 입장 영수증 — 두 편성 사본과 시드. 제출은 이것으로만 다시 굴린다. */
   guildWarAdmissions?: Record<string, GuildWarAdmission>;
-  /** 우편으로 받은 선물 기록(최근 것이 앞, `GIFT_LOG_LIMIT`줄까지). 영수증은 256개에서 잘리므로 따로 둔다. */
-  giftLog?: GiftHistoryEntryDto[];
+  /** 우편으로 받은 보상 기록(최근 것이 앞, `MAIL_LOG_LIMIT`줄까지). 영수증은 256개에서 잘리므로 따로 둔다. */
+  mailLog?: MailClaimHistoryEntryDto[];
+  /** v0.477.0이 쓴 옛 이름. 읽기만 하고 다음 기록 때 `mailLog`로 옮긴다 — 보낸 선물 기록과 이름이 섞이지 않게. */
+  giftLog?: MailClaimHistoryEntryDto[];
   subscriptionMails?: Record<string, { entitlementId: string; productId: string; sentAt: string; expiresAt: string; itemId: string; amount: number }>;
 }
 
@@ -61,6 +63,10 @@ export function isValidServerJournal(value: unknown): value is ServerJournal {
   const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
   const json = (v: unknown): boolean => v === null || typeof v === "string" || typeof v === "boolean" || (typeof v === "number" && Number.isFinite(v))
     || (Array.isArray(v) ? v.every(json) : record(v) && Object.values(v).every(json));
+  /** 우편 기록 한 벌(`mailLog`·옛 `giftLog`)의 모양. */
+  const mailLog = (log: unknown): boolean => log === undefined || Array.isArray(log) && log.length <= 200 && log.every((gift) => record(gift)
+      && typeof gift.title === "string" && typeof gift.sender === "string" && typeof gift.receivedAt === "string" && Number.isFinite(Date.parse(gift.receivedAt))
+      && Array.isArray(gift.rewards) && gift.rewards.every((reward) => record(reward) && json(reward) && (reward.kind === "currency" || reward.kind === "item") && Number.isSafeInteger(reward.amount)));
   return (journal.qaTenUpgrade === undefined || typeof journal.qaTenUpgrade === "boolean")
     && (journal.storyChoices === undefined || record(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0)))
     && (journal.pendingStoryBondXp === undefined || record(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP]))
@@ -73,9 +79,7 @@ export function isValidServerJournal(value: unknown): value is ServerJournal {
     && (journal.subscriptionMails === undefined || record(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record(mail)
       && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string"
       && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0))
-    && (journal.giftLog === undefined || Array.isArray(journal.giftLog) && journal.giftLog.length <= 200 && journal.giftLog.every((gift) => record(gift)
-      && typeof gift.title === "string" && typeof gift.sender === "string" && Number.isFinite(Date.parse(gift.receivedAt))
-      && Array.isArray(gift.rewards) && gift.rewards.every((reward) => record(reward) && json(reward) && (reward.kind === "currency" || reward.kind === "item") && Number.isSafeInteger(reward.amount))))
+    && mailLog(journal.mailLog) && mailLog(journal.giftLog)
     && (journal.guildGuard === undefined || record(journal.guildGuard) && Number.isSafeInteger(journal.guildGuard.day) && Number.isSafeInteger(journal.guildGuard.used) && journal.guildGuard.used >= 0 && Number.isSafeInteger(journal.guildGuard.best) && journal.guildGuard.best >= 0)
     && (journal.guildGuardAdmissions === undefined || record(journal.guildGuardAdmissions) && Object.entries(journal.guildGuardAdmissions).every(([id, admission]) => id.length > 0 && record(admission)
       && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.element === "string"

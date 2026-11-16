@@ -1,4 +1,4 @@
-import type { GiftHistoryEntryDto, PurchaseHistoryEntryDto } from "../api/contracts";
+import type { MailClaimHistoryEntryDto, PurchaseHistoryEntryDto } from "../api/contracts";
 import type { ProductGrant } from "../data/products";
 import type { ServerJournal } from "./serverJournal";
 
@@ -54,17 +54,21 @@ export function purchaseHistoryFromJournal(journal: ServerJournal | undefined, l
   return entries.sort((a, b) => at(b) - at(a)).slice(0, Math.max(0, limit));
 }
 
-/** 선물 기록이 남기는 최대 줄 수. 넘치면 오래된 것부터 걷는다 — 저장이 끝없이 자라지 않게. */
-export const GIFT_LOG_LIMIT = 50;
+/** 우편 기록이 남기는 최대 줄 수. 넘치면 오래된 것부터 걷는다 — 저장이 끝없이 자라지 않게. */
+export const MAIL_LOG_LIMIT = 50;
 
-/** 새로 받은 선물을 장부 앞에 붙인다(최근 것이 앞). 장부를 바꾸지 않고 새 장부를 돌려준다. */
-export function appendGiftLog(journal: ServerJournal, gifts: readonly GiftHistoryEntryDto[]): ServerJournal {
-  const fresh = gifts.map((gift) => ({ ...gift, rewards: gift.rewards.map((reward) => ({ ...reward })) }));
-  return { ...journal, giftLog: [...fresh.reverse(), ...(journal.giftLog ?? [])].slice(0, GIFT_LOG_LIMIT) };
+/** v0.477.0이 `giftLog`라는 이름으로 적은 장부도 같은 우편 기록이다. 새로 적을 때 `mailLog`로 옮긴다. */
+const mailLogOf = (journal: ServerJournal | undefined): readonly MailClaimHistoryEntryDto[] => journal?.mailLog ?? journal?.giftLog ?? [];
+
+/** 새로 받은 우편 보상을 장부 앞에 붙인다(최근 것이 앞). 장부를 바꾸지 않고 새 장부를 돌려준다. */
+export function appendMailLog(journal: ServerJournal, mails: readonly MailClaimHistoryEntryDto[]): ServerJournal {
+  const fresh = mails.map((mail) => ({ ...mail, rewards: mail.rewards.map((reward) => ({ ...reward })) }));
+  const { giftLog: _legacy, ...rest } = journal;
+  return { ...rest, mailLog: [...fresh.reverse(), ...mailLogOf(journal)].slice(0, MAIL_LOG_LIMIT) };
 }
 
-/** 결제 기록 창의 「선물 기록」 탭이 읽는 줄(최근 것부터). */
-export function giftHistoryFromJournal(journal: ServerJournal | undefined, limit = GIFT_LOG_LIMIT): GiftHistoryEntryDto[] {
-  const at = (gift: GiftHistoryEntryDto): number => Date.parse(gift.receivedAt);
-  return [...(journal?.giftLog ?? [])].sort((a, b) => at(b) - at(a)).slice(0, Math.max(0, limit));
+/** 결제 기록 창의 「우편 기록」 탭이 읽는 줄(최근 것부터). */
+export function mailHistoryFromJournal(journal: ServerJournal | undefined, limit = MAIL_LOG_LIMIT): MailClaimHistoryEntryDto[] {
+  const at = (mail: MailClaimHistoryEntryDto): number => Date.parse(mail.receivedAt);
+  return [...mailLogOf(journal)].sort((a, b) => at(b) - at(a)).slice(0, Math.max(0, limit));
 }

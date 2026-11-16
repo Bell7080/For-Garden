@@ -70,4 +70,9 @@ export const HELP_JA = {
   "help.tutorial.expedition": "遠征",
   "help.tutorial.premium": "プレミアム",
   "help.tutorial.archaeology.sub": "遺跡マップと地層の盤をもう一度案内します",
+  "help.group.collect": "収集・研究",
+  "help.group.growth": "育成",
+  "help.group.rune": "ルーン",
+  "help.group.battle": "戦闘",
+  "help.group.content": "コンテンツ",
 } as const;

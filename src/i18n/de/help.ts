@@ -70,4 +70,9 @@ export const HELP_DE = {
   "help.tutorial.expedition": "Expedition",
   "help.tutorial.premium": "Premium",
   "help.tutorial.archaeology.sub": "Führt dich erneut durch Ruinenkarte und Schichtbrett",
+  "help.group.collect": "Sammeln & Forschung",
+  "help.group.growth": "Wachstum",
+  "help.group.rune": "Runen",
+  "help.group.battle": "Kampf",
+  "help.group.content": "Inhalte",
 } as const;

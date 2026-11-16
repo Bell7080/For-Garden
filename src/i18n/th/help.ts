@@ -70,4 +70,9 @@ export const HELP_TH = {
   "help.tutorial.expedition": "ออกสำรวจ",
   "help.tutorial.premium": "พรีเมียม",
   "help.tutorial.archaeology.sub": "แนะนำแผนที่ซากโบราณและกระดานชั้นหินอีกครั้ง",
+  "help.group.collect": "สะสมและวิจัย",
+  "help.group.growth": "การเติบโต",
+  "help.group.rune": "รูน",
+  "help.group.battle": "การต่อสู้",
+  "help.group.content": "คอนเทนต์",
 } as const;

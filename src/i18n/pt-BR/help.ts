@@ -70,4 +70,9 @@ export const HELP_PT_BR = {
   "help.tutorial.expedition": "Expedição",
   "help.tutorial.premium": "Premium",
   "help.tutorial.archaeology.sub": "Guia você de novo pelo mapa de ruínas e o tabuleiro de estratos",
+  "help.group.collect": "Coleção e Pesquisa",
+  "help.group.growth": "Crescimento",
+  "help.group.rune": "Runas",
+  "help.group.battle": "Combate",
+  "help.group.content": "Conteúdo",
 } as const;

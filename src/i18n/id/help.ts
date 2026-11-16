@@ -70,4 +70,9 @@ export const HELP_ID = {
   "help.tutorial.expedition": "Ekspedisi",
   "help.tutorial.premium": "Premium",
   "help.tutorial.archaeology.sub": "Memandu lagi peta reruntuhan dan papan lapisan",
+  "help.group.collect": "Koleksi & Riset",
+  "help.group.growth": "Pertumbuhan",
+  "help.group.rune": "Rune",
+  "help.group.battle": "Pertarungan",
+  "help.group.content": "Konten",
 } as const;

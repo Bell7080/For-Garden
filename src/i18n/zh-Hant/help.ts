@@ -70,4 +70,9 @@ export const HELP_ZH_HANT = {
   "help.tutorial.expedition": "遠征",
   "help.tutorial.premium": "高階",
   "help.tutorial.archaeology.sub": "再次講解遺蹟地圖和地層盤",
+  "help.group.collect": "收集·研究",
+  "help.group.growth": "成長",
+  "help.group.rune": "符文",
+  "help.group.battle": "戰鬥",
+  "help.group.content": "玩法",
 } as const;

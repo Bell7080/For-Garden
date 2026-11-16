@@ -70,4 +70,9 @@ export const HELP_VI = {
   "help.tutorial.expedition": "Viễn chinh",
   "help.tutorial.premium": "Cao cấp",
   "help.tutorial.archaeology.sub": "Hướng dẫn lại bản đồ di tích và bàn tầng đất",
+  "help.group.collect": "Sưu tầm & Nghiên cứu",
+  "help.group.growth": "Phát triển",
+  "help.group.rune": "Rune",
+  "help.group.battle": "Chiến đấu",
+  "help.group.content": "Nội dung",
 } as const;

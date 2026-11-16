@@ -70,4 +70,9 @@ export const HELP_KO = {
   "help.tutorial.expedition": "원정",
   "help.tutorial.premium": "프리미엄",
   "help.tutorial.archaeology.sub": "유적 지도와 지층 판을 다시 짚어 줘요",
+  "help.group.collect": "수집·연구",
+  "help.group.growth": "성장",
+  "help.group.rune": "룬",
+  "help.group.battle": "전투",
+  "help.group.content": "콘텐츠",
 } as const;

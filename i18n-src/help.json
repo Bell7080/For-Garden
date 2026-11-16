@@ -698,5 +698,55 @@
     "Guia você de novo pelo mapa de ruínas e o tabuleiro de estratos",
     "Führt dich erneut durch Ruinenkarte und Schichtbrett",
     "Снова проведёт по карте руин и доске пластов"
+  ],
+  "help.group.collect": [
+    "收集·研究",
+    "สะสมและวิจัย",
+    "Sưu tầm & Nghiên cứu",
+    "Koleksi & Riset",
+    "Colección e Investigación",
+    "Coleção e Pesquisa",
+    "Sammeln & Forschung",
+    "Сбор и исследования"
+  ],
+  "help.group.growth": [
+    "成长",
+    "การเติบโต",
+    "Phát triển",
+    "Pertumbuhan",
+    "Crecimiento",
+    "Crescimento",
+    "Wachstum",
+    "Развитие"
+  ],
+  "help.group.rune": [
+    "符文",
+    "รูน",
+    "Rune",
+    "Rune",
+    "Runas",
+    "Runas",
+    "Runen",
+    "Руны"
+  ],
+  "help.group.battle": [
+    "战斗",
+    "การต่อสู้",
+    "Chiến đấu",
+    "Pertarungan",
+    "Combate",
+    "Combate",
+    "Kampf",
+    "Бой"
+  ],
+  "help.group.content": [
+    "玩法",
+    "คอนเทนต์",
+    "Nội dung",
+    "Konten",
+    "Contenido",
+    "Conteúdo",
+    "Inhalte",
+    "Контент"
   ]
 }

@@ -70,4 +70,9 @@ export const HELP_EN = {
   "help.tutorial.expedition": "Expedition",
   "help.tutorial.premium": "Premium",
   "help.tutorial.archaeology.sub": "Walks you through the ruin map and the strata board again",
+  "help.group.collect": "Collection & Research",
+  "help.group.growth": "Growth",
+  "help.group.rune": "Runes",
+  "help.group.battle": "Combat",
+  "help.group.content": "Content",
 } as const;

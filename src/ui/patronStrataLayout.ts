@@ -1,29 +1,56 @@
 /**
  * 후원 지층 창과 프리미엄 화면 칩의 자리 — 화면은 좌표를 손으로 적지 않고 이 표를 읽는다.
  *
- * 창은 위에서부터 **지금 지층(이름 · 기금 · 다음 지층까지 줄)** → **매일 후원 보급** → **승급 기념품 단면도**다.
- * 단면도는 표토가 맨 위, 지핵이 맨 아래인 일곱 띠라 「깊이 내려간다」가 그대로 그림이 된다.
- * 창 높이는 띠 수에서 거꾸로 구한다(`patronPopupHeight`) — 손으로 적으면 띠를 더할 때 아래가 판 밖으로 나간다.
+ * 창은 위에서부터 **지금 지층(큰 표식 · 이름 · 기금/다음 문턱)** → **지층 사다리(일곱 표식 + 지나온 길)** →
+ * **고른 지층의 혜택(승급 기념품 한 줄 + 혜택 카드 두 열)** → **오늘의 후원 보급 + 받기**다(응태 2026-11-16 — 등급 사다리를 눌러
+ * 그 등급의 혜택을 넘겨 보는 구성). 창 높이는 카드가 가장 많은 지층에 맞춰 굳힌다 — 지층을 넘길 때마다 판 높이가 바뀌면
+ * 갈아 끼우기가 출렁인다(`patronPopupHeight`).
  */
 export const PATRON_POPUP = {
   width: 960,
   pad: 48,
-  hero: { top: 70, height: 176, nameSize: 46, fundSize: 24, gaugeY: 120, gaugeHeight: 14 },
-  daily: { top: 270, frame: 104, gap: 16, frameY: 98, button: { width: 220, height: 84 }, fundSize: 22 },
-  rewards: { top: 486, headerHeight: 66, bandHeight: 96, bandGap: 8, frame: 72, nameSize: 30, thresholdSize: 20, button: { width: 170, height: 64 } },
-  bottomPad: 40,
+  hero: { top: 64, emblemY: 60, emblem: 40, nameY: 136, nameSize: 52, fundY: 190, fundSize: 30, height: 216 },
+  ladder: { top: 300, height: 206, emblemY: 60, emblem: 26, plate: { width: 104, top: 12, bottom: 134 }, trackY: 110, node: 11, lineHeight: 8, noteY: 170, noteSize: 22, inset: 64 },
+  benefit: { top: 530, headerHeight: 62, reward: { height: 112, frame: 76, button: { width: 170, height: 64 } }, gap: 14, columns: 2, card: { height: 100, frame: 72 }, labelSize: 25 },
+  daily: { headerHeight: 62, frame: 96, gap: 18, frameY: 112, button: { width: 380, height: 92, y: 232 }, noteSize: 21, height: 300 },
+  bottomPad: 36,
 } as const;
 
-/** 단면도 띠 수가 정하는 창 높이. */
-export function patronPopupHeight(bands: number): number {
-  const R = PATRON_POPUP.rewards;
-  return R.top + R.headerHeight + bands * R.bandHeight + Math.max(0, bands - 1) * R.bandGap + PATRON_POPUP.bottomPad;
+/** 혜택 카드 줄 수. */
+export const patronBenefitRows = (cards: number): number => Math.ceil(Math.max(0, cards) / PATRON_POPUP.benefit.columns);
+
+/** 혜택 카드 묶음이 시작하는 y(판 윗변 기준) — 기념품 한 줄 아래. */
+export function patronCardsTop(): number {
+  const B = PATRON_POPUP.benefit;
+  return B.top + B.headerHeight + B.reward.height + B.gap;
 }
 
-/** 띠 하나의 가운데 y(판 윗변 기준). */
-export function patronBandY(index: number): number {
-  const R = PATRON_POPUP.rewards;
-  return R.top + R.headerHeight + index * (R.bandHeight + R.bandGap) + R.bandHeight / 2;
+/** 카드 하나의 가운데(판 윗변·가운데 기준). */
+export function patronCardSpot(index: number, inner: number): { x: number; y: number; width: number } {
+  const B = PATRON_POPUP.benefit;
+  const width = (inner - B.gap * (B.columns - 1)) / B.columns;
+  const column = index % B.columns;
+  const row = Math.floor(index / B.columns);
+  return { x: -inner / 2 + width / 2 + column * (width + B.gap), y: patronCardsTop() + row * (B.card.height + B.gap) + B.card.height / 2, width };
+}
+
+/** 오늘의 보급 묶음이 시작하는 y. */
+export function patronDailyTop(maxCards: number): number {
+  const B = PATRON_POPUP.benefit;
+  const rows = patronBenefitRows(maxCards);
+  return patronCardsTop() + rows * B.card.height + Math.max(0, rows - 1) * B.gap + 26;
+}
+
+/** 카드가 가장 많은 지층이 정하는 창 높이. */
+export function patronPopupHeight(maxCards: number): number {
+  return patronDailyTop(maxCards) + PATRON_POPUP.daily.height + PATRON_POPUP.bottomPad;
+}
+
+/** 사다리 위 표식 하나의 x — 첫·끝 표식은 판 안쪽으로 `inset`만큼 들인다. */
+export function patronLadderX(index: number, count: number, inner: number): number {
+  const L = PATRON_POPUP.ladder;
+  const span = inner - L.inset * 2;
+  return count <= 1 ? 0 : -span / 2 + (span * index) / (count - 1);
 }
 
 /** 프리미엄 화면 오른쪽 위, 「프리미엄」 제목과 마주 보는 칩. 오른쪽 끝을 제목의 왼쪽 여백과 같게 둔다. */

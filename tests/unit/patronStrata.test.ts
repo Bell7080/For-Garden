@@ -8,6 +8,8 @@ import {
 import { GIFT_FRAME_IDS } from "../../src/core/achievementState";
 import { PROFILE_FRAMES } from "../../src/data/profileFrames";
 import { PROFILE_MODIFIERS } from "../../src/data/profileModifiers";
+import { patronBenefitCards, patronMaxBenefitCards } from "../../src/ui/patronStrataModel";
+import { patronPopupHeight } from "../../src/ui/patronStrataLayout";
 
 const NOW = new Date("2026-11-16T12:00:00Z");
 
@@ -121,5 +123,23 @@ describe("후원 지층 — 서버 경계", () => {
     expect(state.achievements?.giftFrames).toContain("patron-fossil");
     const amber = await api.claimPatronTierReward({ requestId: "r-a", tierId: "amber" });
     expect(amber.modifierId).toBe("amber-bound");
+  });
+});
+
+describe("후원 지층 혜택 카드", () => {
+  it("표토는 바탕이라 표식이 없고, 한 층 내려가면 새로 생긴 것은 NEW · 늘어난 것은 위 화살표다", () => {
+    expect(patronBenefitCards(0).every((card) => card.change === "none")).toBe(true);
+    const sediment = patronBenefitCards(1);
+    const cake = sediment.find((card) => card.kind === "daily" && card.grant.kind === "currency" && card.grant.currency === "cheesecake");
+    expect(cake?.change).toBe("new");
+    const fossil = patronBenefitCards(2);
+    expect(fossil.find((card) => card.kind === "daily" && card.grant.kind === "currency" && card.grant.currency === "gold")?.change).toBe("up");
+    expect(fossil.find((card) => card.kind === "frame")?.change).toBe("new");
+  });
+
+  it("창 높이는 카드가 가장 많은 지층에 맞춰 굳고 판이 화면 안에 든다", () => {
+    const max = patronMaxBenefitCards();
+    expect(max).toBe(Math.max(...PATRON_TIERS.map((_tier, index) => patronBenefitCards(index).length)));
+    expect(patronPopupHeight(max)).toBeLessThanOrEqual(1560);
   });
 });

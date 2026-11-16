@@ -6,7 +6,9 @@ import {
 import { ACHIEVEMENT_GEM_BUDGET } from "../../src/data/achievements";
 import { getStage, getStageEnemies } from "../../src/data/stages";
 import { createDefaultSession } from "../../src/state/session";
-import { CODEX_POPUP_LAYOUT, codexCellSpot } from "../../src/ui/codexPopupLayout";
+import { CODEX_POPUP_LAYOUT, codexColumnX, codexGridPlan, groupCodexEntries } from "../../src/ui/codexPopupLayout";
+import { getRelic } from "../../src/data/relics";
+import { SQUADS } from "../../src/data/factions";
 
 const NOW = Date.UTC(2026, 10, 15, 3);
 const server = (state = createDefaultSession()) => new FakeServer(state, { latencyMs: 0, now: () => new Date(NOW), random: () => 0.5 });
@@ -78,10 +80,35 @@ describe("도감 — 서버 경계", () => {
 });
 
 describe("도감 창 배치", () => {
-  it("한 줄 다섯 칸이 격자 폭 안에 든다", () => {
+  it("한 줄 네 칸의 스탠딩 전시 칸이 격자 폭 안에 든다", () => {
     const { grid } = CODEX_POPUP_LAYOUT;
-    const last = codexCellSpot(grid.columns - 1);
-    expect(last.x + grid.cell / 2).toBeLessThanOrEqual(grid.width / 2);
-    expect(codexCellSpot(0).x - grid.cell / 2).toBeGreaterThanOrEqual(-grid.width / 2);
+    expect(codexColumnX(grid.columns - 1) + grid.cardWidth / 2).toBeLessThanOrEqual(grid.width / 2);
+    expect(codexColumnX(0) - grid.cardWidth / 2).toBeGreaterThanOrEqual(-grid.width / 2);
+    // 세로로 긴 칸이다 — 정수리부터 허벅지께까지 서는 스탠딩 비율.
+    expect(grid.cardHeight / grid.cardWidth).toBeGreaterThan(1.6);
+  });
+
+  it("등급별은 SSR → SR → R, 소속별은 스쿼드 표 순서로 구역을 가르고 칸을 하나도 빠뜨리지 않는다", () => {
+    const entries = CODEX_RELICS.map(({ id }) => { const def = getRelic(id); return { id, rarity: def.rarity, squad: def.squad }; });
+    const squads = Object.keys(SQUADS);
+    const byRarity = groupCodexEntries(entries, "rarity", squads);
+    expect(byRarity.map(({ key }) => key)).toEqual(["SSR", "SR", "R"].filter((key) => entries.some(({ rarity }) => rarity === key)));
+    const bySquad = groupCodexEntries(entries, "squad", squads);
+    const keys = bySquad.map(({ key }) => squads.indexOf(key!));
+    expect([...keys].sort((a, b) => a - b)).toEqual(keys);
+    for (const groups of [byRarity, bySquad, groupCodexEntries(entries, "number", squads)]) {
+      expect(groups.flatMap(({ entries: inGroup }) => inGroup.map(({ id }) => id)).sort()).toEqual(entries.map(({ id }) => id).sort());
+    }
+  });
+
+  it("구역 제목과 카드는 겹치지 않고 아래로만 쌓인다", () => {
+    const { grid } = CODEX_POPUP_LAYOUT;
+    const plan = codexGridPlan([{ key: "SSR", count: 5 }, { key: "SR", count: 3 }]);
+    expect(plan.cards).toHaveLength(8);
+    const secondHeader = plan.headers[1].y;
+    // 첫 구역의 둘째 줄 카드 아래변이 둘째 제목 위에서 끝난다.
+    expect(plan.cards[4].y + grid.cardHeight / 2).toBeLessThan(secondHeader - grid.headerHeight / 2);
+    expect(plan.cards[5].y - grid.cardHeight / 2).toBeGreaterThan(secondHeader + grid.headerHeight / 2);
+    expect(plan.height).toBeGreaterThan(plan.cards[7].y + grid.cardHeight / 2);
   });
 });

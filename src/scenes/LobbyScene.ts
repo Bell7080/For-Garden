@@ -1061,14 +1061,14 @@ export class LobbyScene extends Phaser.Scene {
    * 크기도 출격·교류보다 한참 작게 둔다.
    */
   /**
-   * 가방 아래의 메뉴(햄버거). 누르면 옆에서 한 줄짜리 판이 나와 회고·업적·도감을 고른다.
+   * 가방 아래의 메뉴(햄버거). 누르면 옆에서 한 줄짜리 판이 나와 도감·회고·업적을 고른다(도감이 판의 먼 끝).
    * 받을 업적 단계가 남아 있으면 업적 칩과 접힌 단추에 빨간 점이 선다.
    */
   private buildMenuTray(): void {
     new LobbyMenuTray(this, [
+      { icon: LOBBY_MENU_GLYPH.codex, label: t("lobby.menu.codex"), onClick: () => this.openCodex(), notice: "codexReward" },
       { icon: LOBBY_MENU_GLYPH.recollection, label: t("lobby.menu.recollection"), onClick: () => this.openRecollection() },
       { icon: LOBBY_MENU_GLYPH.achievement, label: t("lobby.menu.achievement"), onClick: () => this.openAchievements(), notice: "achievementReward" },
-      { icon: LOBBY_MENU_GLYPH.codex, label: t("lobby.menu.codex"), onClick: () => this.openCodex(), notice: "codexReward" },
     ], undefined, () => this.popupLayer?.isOpen ?? false);
   }
 

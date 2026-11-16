@@ -1219,6 +1219,36 @@
     "???",
     "???"
   ],
+  "codex.sort.number": [
+    "编号顺序",
+    "ตามหมายเลข",
+    "Theo số",
+    "Nomor",
+    "Por número",
+    "Por número",
+    "Nach Nr.",
+    "По номеру"
+  ],
+  "codex.sort.rarity": [
+    "按稀有度",
+    "ตามระดับ",
+    "Theo bậc",
+    "Kelangkaan",
+    "Por rareza",
+    "Por raridade",
+    "Nach Seltenheit",
+    "По редкости"
+  ],
+  "codex.sort.squad": [
+    "按所属",
+    "ตามสังกัด",
+    "Theo đội",
+    "Skuad",
+    "Por escuadra",
+    "Por esquadrão",
+    "Nach Trupp",
+    "По отряду"
+  ],
   "codex.claimAll": [
     "全部领取",
     "รับทั้งหมด",

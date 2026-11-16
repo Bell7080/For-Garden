@@ -19,7 +19,7 @@ test("로비 메뉴의 업적 칩은 업적 창을 연다", async ({ page }) => 
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   const { chips } = lobbyMenuTrayLayout(3);
   await tap(page, LOBBY_MENU_BUTTON.x, LOBBY_MENU_BUTTON.y);
-  await tapAndWait(page, chips[1].x, chips[1].y, () => window.__PF_DEBUG?.popupTitles, ["업적"]);
+  await tapAndWait(page, chips[2].x, chips[2].y, () => window.__PF_DEBUG?.popupTitles, ["업적"]);
   await page.waitForTimeout(600);
   await captureGame(page, `test-results/${test.info().project.name}-achievements-popup.png`);
   // 마지막 갈래(기록) — 단발·숨은 업적이 선다. 탭 줄은 화면 밖으로 흐르므로 손으로 끌어 넘긴 뒤 누른다.

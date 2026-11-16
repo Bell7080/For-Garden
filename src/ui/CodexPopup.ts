@@ -27,17 +27,22 @@ import { RewardFrame } from "./RewardFrame";
 import { openRewardPopup } from "./RewardPopup";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
-import { FaceFrame } from "./FaceFrame";
-import { addItemFrame } from "./itemFrame";
 import { RARITY_TONE } from "./rarityMark";
 import { pressIn, pressOut } from "./pressFeedback";
 import { withBusy } from "./BusyOverlay";
 import { NotificationDot } from "./NotificationDot";
 import { EnemyInfoPopup } from "./EnemyInfoPopup";
-import { CODEX_POPUP_LAYOUT, CODEX_TABS, codexCellSpot, codexGridContentHeight, type CodexTab } from "./codexPopupLayout";
+import { CODEX_POPUP_LAYOUT, CODEX_SORTS, CODEX_TABS, codexGridPlan, groupCodexEntries, type CodexSort, type CodexTab } from "./codexPopupLayout";
+import { CodexStandee } from "./CodexStandee";
+import { addSectionTitle } from "./SectionTitle";
+import { addFactionMark } from "./FactionMark";
+import { SQUADS } from "../data/factions";
+import type { SquadId } from "../core/types";
 
-/** 아직 만나지 않은 칸 — 원화 없이 어두운 액자에 물음표 하나. */
-const UNKNOWN = { fill: 0x161d27, mark: "#8a96a6" } as const;
+/** 창을 닫았다 다시 열어도 고른 정렬은 남는다(기기·계정에 저장하지 않는 화면 안의 선택). */
+let lastSort: CodexSort = "number";
+const SQUAD_ORDER = Object.keys(SQUADS);
+const SORT_LABEL: Record<CodexSort, "codex.sort.number" | "codex.sort.rarity" | "codex.sort.squad"> = { number: "codex.sort.number", rarity: "codex.sort.rarity", squad: "codex.sort.squad" };
 
 /**
  * 도감 — 이제껏 마주한 아군과 적의 기록.
@@ -48,13 +53,14 @@ const UNKNOWN = { fill: 0x161d27, mark: "#8a96a6" } as const;
  */
 export class CodexPopup {
   private tab: CodexTab = "ally";
+  private sort: CodexSort = lastSort;
   private data?: CodexResponse;
   private body?: Phaser.GameObjects.Container;
   private list?: Phaser.GameObjects.Container;
   private footer?: Phaser.GameObjects.Container;
   private bars: HoloBar[] = [];
   private scrollContent?: Phaser.GameObjects.Container;
-  private cells: Phaser.GameObjects.Container[] = [];
+  private cells: CodexStandee[] = [];
   private scroll = 0;
   private minScroll = 0;
   private scrollTab?: CodexTab;
@@ -86,6 +92,13 @@ export class CodexPopup {
     if (this.list) slideTabPage(this.scene, [this.list], from, CODEX_TABS.indexOf(tab));
   }
 
+  private selectSort(sort: CodexSort): void {
+    if (sort === this.sort) return;
+    const from = CODEX_SORTS.indexOf(this.sort);
+    this.sort = sort; lastSort = sort; this.scrollTab = undefined; this.render();
+    if (this.scrollContent) slideTabPage(this.scene, [this.scrollContent], from, CODEX_SORTS.indexOf(sort));
+  }
+
   private destroyContent(): void { this.bars.forEach((bar) => bar.destroy()); this.bars = []; this.list?.destroy(); this.list = undefined; this.scrollContent = undefined; this.cells = []; }
 
   private entriesInTab(): CodexEntryDto[] { return (this.data?.entries ?? []).filter(({ side }) => side === this.tab); }
@@ -95,9 +108,13 @@ export class CodexPopup {
     this.destroyContent(); if (!this.body || !this.data) return;
     this.list = this.scene.add.container(0, 0); this.body.add(this.list);
     this.renderSummary(this.data);
-    const entries = this.entriesInTab();
-    const content = this.buildScrollGrid(entries.length);
-    entries.forEach((entry, index) => this.renderCell(content, entry, index));
+    this.renderSortRow();
+    const entries = this.entriesInTab().map((entry) => { const def = getRelic(entry.id); return { ...entry, rarity: def.rarity, squad: def.squad }; });
+    const groups = groupCodexEntries(entries, this.sort, SQUAD_ORDER);
+    const plan = codexGridPlan(groups.map(({ key, entries: inGroup }) => ({ key, count: inGroup.length })));
+    const content = this.buildScrollGrid(plan.height);
+    plan.headers.forEach(({ key, y }) => this.renderHeader(content, key, y, groups.find((group) => group.key === key)!.entries));
+    groups.flatMap(({ entries: inGroup }) => inGroup).forEach((entry, index) => this.renderCell(content, entry, plan.cards[index]));
     this.scrollTab = this.tab;
     this.applyScroll(keepScroll);
     this.renderFooter();
@@ -161,7 +178,34 @@ export class CodexPopup {
     }
   }
 
-  private buildScrollGrid(count: number): Phaser.GameObjects.Container {
+  /** 정렬 줄 — 번호순 · 등급별 · 소속별. 목록이 아래에 있어 라벨이 아래로 솟는다. */
+  private renderSortRow(): void {
+    const { sort } = CODEX_POPUP_LAYOUT;
+    const row = this.scene.add.container(0, 0); this.list!.add(row);
+    CODEX_SORTS.forEach((option, index) => {
+      const x = (index - (CODEX_SORTS.length - 1) / 2) * (sort.tab.width + sort.tab.gap);
+      addCategoryTab(this.scene, row, { x, y: sort.y, width: sort.tab.width, height: sort.tab.height, label: t(SORT_LABEL[option]), selected: option === this.sort, face: "down", onSelect: () => this.selectSort(option) });
+    });
+  }
+
+  /** 구역 제목 — 공용 제목표. 소속 구역은 엠블럼을, 모든 구역은 그 구역의 기록 수를 곁들인다. */
+  private renderHeader(content: Phaser.GameObjects.Container, key: string, y: number, entries: readonly CodexEntryDto[]): void {
+    const { grid } = CODEX_POPUP_LAYOUT;
+    const left = -grid.width / 2;
+    const squad = this.sort === "squad" ? (key as SquadId) : undefined;
+    const label = squad ? SQUADS[squad].name : key;
+    const title = addSectionTitle(this.scene, left + (squad ? 58 : 0), y, label, { size: 28 });
+    content.add(title);
+    if (squad) { const mark = addFactionMark(this.scene, left + 26, y, squad, { size: 52 }); if (mark) content.add(mark); }
+    if (this.sort === "rarity") title.list.forEach((child) => { if (child instanceof Phaser.GameObjects.Text) child.setColor(RARITY_TONE[key as keyof typeof RARITY_TONE]?.ink ?? COLOR.accentText); });
+    const recorded = entries.filter((entry) => entry.recorded).length;
+    content.add(this.scene.add.text(grid.width / 2, y, `${recorded} / ${entries.length}`, textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5));
+    const line = this.scene.add.graphics();
+    line.fillStyle(COLOR.accent, 0.25).fillRect(left, y + grid.headerHeight / 2 - 4, grid.width, 2);
+    content.add(line);
+  }
+
+  private buildScrollGrid(contentHeight: number): Phaser.GameObjects.Container {
     const { grid } = CODEX_POPUP_LAYOUT;
     const frame = this.scene.add.container(0, grid.top);
     this.list!.add(frame);
@@ -178,7 +222,7 @@ export class CodexPopup {
     frame.add(content);
     content.setMask(shapeClipMask(this.scene, frame, [-half, 0, half, 0, half, viewHeight, -half, viewHeight]));
     this.scrollContent = content;
-    this.minScroll = Math.min(0, viewHeight - codexGridContentHeight(count));
+    this.minScroll = Math.min(0, viewHeight - contentHeight);
     attachDragScroll(this.scene, {
       owner: drag, root: frame,
       bounds: () => { const c = clip(); return new Phaser.Geom.Rectangle(c.left, c.top, c.right - c.left, c.bottom - c.top); },
@@ -194,37 +238,25 @@ export class CodexPopup {
     this.scroll = Phaser.Math.Clamp(value, this.minScroll, 0);
     content.y = this.scroll;
     const viewHeight = grid.bottom - grid.top;
-    // 창 밖으로 나간 칸은 감춘다 — 마스크는 그림만 자르고 입력을 막지 않는다.
+    // 창 밖으로 나간 칸은 감추고, 처음 보이는 칸만 원화를 굽는다 — 한 줄 아래까지 미리 읽어 넘길 때 비지 않게 한다.
     for (const cell of this.cells) {
-      const top = cell.y + this.scroll - grid.cell / 2;
-      const bottom = cell.y + this.scroll + grid.cell / 2 + grid.nameGap + grid.nameSize;
-      cell.setVisible(bottom > 0 && top < viewHeight);
+      const top = cell.y + this.scroll - grid.cardHeight / 2;
+      const bottom = cell.y + this.scroll + grid.cardHeight / 2;
+      const visible = bottom > 0 && top < viewHeight;
+      cell.setVisible(visible);
+      if (bottom > -grid.cardHeight && top < viewHeight + grid.cardHeight) cell.reveal();
     }
   }
 
-  /** 한 칸 — 등급색 외곽선의 얼굴 액자와 이름. 만나지 않은 칸은 물음표와 「???」다. */
-  private renderCell(content: Phaser.GameObjects.Container, entry: CodexEntryDto, index: number): void {
+  /** 한 칸 — 세로로 긴 스탠딩 전시 칸(`CodexStandee`). 만나지 않은 칸은 물음표와 「???」다. */
+  private renderCell(content: Phaser.GameObjects.Container, entry: CodexEntryDto, spot: { x: number; y: number }): void {
     const { grid } = CODEX_POPUP_LAYOUT;
     const def = getRelic(entry.id);
-    const spot = codexCellSpot(index);
-    const cell = this.scene.add.container(spot.x, spot.y);
+    const cell = new CodexStandee(this.scene, spot.x, spot.y, def, entry.recorded, { width: grid.cardWidth, height: grid.cardHeight });
     content.add(cell); this.cells.push(cell);
-    const tone = RARITY_TONE[def.rarity];
-    if (entry.recorded) {
-      cell.add(new FaceFrame(this.scene, 0, 0, { portraitAssetId: def.portraitAssetId, size: grid.cell, color: tone.chip }));
-    } else {
-      // 아직 만나지 않은 칸은 원화를 읽지 않는다 — 누구인지 미리 말하지 않고, 쉰 장 넘는 전신 묶음을 한꺼번에 받지도 않는다.
-      cell.add(addItemFrame(this.scene, 0, 0, grid.cell, { fill: UNKNOWN.fill, color: COLOR.inkDimHex, outlineAlpha: 0.7 }));
-      cell.add(this.scene.add.text(0, 0, "?", textStyle({ role: "display", size: Math.round(grid.cell * 0.46), color: UNKNOWN.mark })).setOrigin(0.5).setAlpha(0.55));
-    }
-    // 등급 글자 — 만난 칸은 그 등급의 색, 아직이면 흐린 회색. 점수의 무게가 등급에서 나온다.
-    cell.add(this.scene.add.text(-grid.cell / 2 + 10, -grid.cell / 2 + 4, def.rarity, textStyle({ role: "display", size: 22, color: entry.recorded ? tone.halo : COLOR.inkDim })).setOrigin(0, 0).setStroke("#05070a", 5));
-    const name = this.scene.add.text(0, grid.cell / 2 + grid.nameGap + grid.nameSize / 2, entry.recorded ? def.name : t("codex.unknown"), textStyle({ role: "emphasis", size: grid.nameSize, color: entry.recorded ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5);
-    squeezeTextToWidth(name, grid.cell + grid.gap - 6);
-    cell.add(name);
     if (!entry.recorded) return;
     // 창 밖으로 걸친 칸이 판 밖의 손을 받지 않도록 격자 창으로 자른 입력면을 단다.
-    const hit = addClippedHit(this.scene, cell, 0, 0, grid.cell, grid.cell, this.gridClip!, { useHandCursor: true });
+    const hit = addClippedHit(this.scene, cell, 0, 0, grid.cardWidth, grid.cardHeight, this.gridClip!, { useHandCursor: true });
     hit.on("pointerdown", () => pressIn(cell));
     hit.on("pointerout", () => pressOut(cell, "normal", { pop: false }));
     hit.on("pointerup", () => { pressOut(cell); this.inspect(entry); });

@@ -28,7 +28,13 @@ export type AchievementFacts = Record<AchievementMetric, number>;
  * 들였어도 지금까지 해 온 만큼이 그대로 선다. 누적 횟수(승리·연구·급여…)만 상태에 남지 않아
  * 임무 사건의 누적 기록(`MissionState.lifetime`)을 읽는다 — 그 값은 도입 뒤부터 센다.
  */
-export function achievementFacts(state: Session): AchievementFacts {
+/**
+ * 저장 밖에서 오는 값 — 지금은 선물 전달 수 하나다. 받는 사람이 받는 순간 보낸 사람의 저장은 열려 있지 않으므로,
+ * 서버가 주문 표에서 센 값을 그 요청의 맥락으로 넘긴다(없으면 0).
+ */
+export interface AchievementExternalFacts { giftsDelivered?: number }
+
+export function achievementFacts(state: Session, external: AchievementExternalFacts = {}): AchievementFacts {
   const lifetime = state.missions.lifetime ?? {};
   const playable = PLAYABLE_RELICS.filter(({ id }) => state.owned.has(id));
   const progress = playable.map(({ id }) => state.relicProgress[id]).filter((entry) => entry !== undefined);
@@ -92,6 +98,7 @@ export function achievementFacts(state: Session): AchievementFacts {
     partySquads: partyFull ? new Set(partyDefs.map(({ squad }) => squad)).size : 0,
     partySsr: partyFull ? partyDefs.filter(({ rarity }) => rarity === "SSR").length : 0,
     nicknameSet: state.playerCard?.nickname ? 1 : 0,
+    giftsDelivered: Math.max(0, Math.floor(external.giftsDelivered ?? 0)),
   };
 }
 

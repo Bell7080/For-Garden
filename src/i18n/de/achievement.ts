@@ -74,6 +74,8 @@ export const ACHIEVEMENT_DE = {
   "achievement.series.allied-party": "Drei vereinte Trupps",
   "achievement.series.ssr-party": "Drei strahlende Gefährten",
   "achievement.objective.goldPeak": "{value} Gold besitzen",
+  "achievement.series.gift-giver": "Schenkende Hände",
+  "achievement.objective.giftsDelivered": "Überbringe {value} Geschenke",
   "achievement.objective.relicsOwned": "{value} Reliktarten besitzen",
   "achievement.objective.maxRelicLevel": "Ein Relikt auf Stufe {value} bringen",
   "achievement.objective.relicsMaxBreakthrough": "Durchbruch bei {value} Relikten abschließen",

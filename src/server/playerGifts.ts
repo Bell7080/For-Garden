@@ -13,8 +13,10 @@ export interface GiftContext {
   sender: Omit<GiftSenderFacts, "researchLevel" | "accountCreatedAt" | "ownPayments"> & {
     /** 지난 금액 기간 안의 환불되지 않은 본인 결제(선물 결제 제외). 값은 DB가 모르므로 상품 ID로 받아 서버가 상품 표에서 원화로 바꾼다. */
     ownPayments: readonly { productId: string; at: string }[];
+    /** 내가 보낸 선물 중 상대가 받은 것의 수(기간 없이 전체) — 선물 업적이 읽는다. 없으면 맥락의 주문에서 센다. */
+    deliveredCount?: number;
   };
-  /** 친구 관계에 있는 받을 수 있는 사람들. 이름은 표시용이다. */
+  /** 친구 관계에 있거나 같은 길드에 있는, 받을 수 있는 사람들. 이름은 표시용이다. */
   recipients: Record<string, GiftRecipientFacts & { name: string }>;
   /** 내가 보낸 주문(금액 기간 — 지난 91일)과 받은 주문, 그리고 받는 쪽 한도를 재는 데 필요한 주문(지난 31일 이상). */
   orders: GiftOrder[];

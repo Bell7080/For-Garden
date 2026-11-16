@@ -16,6 +16,7 @@ export default {
   "profileFrame.ancient.name": "太古の地層",
   "profileFrame.conqueror.name": "不屈の月桂冠",
   "profileFrame.runic.name": "ルーンの輝き",
+  "profileFrame.giver.name": "贈り物の輪",
   // ── 렐릭 이름 ────────────────────────────────────────────────────────────
   "relic.rex.name": "レクシア",
   "relic.torika.name": "トリカ",
@@ -343,6 +344,7 @@ export default {
   "premium.tab.deal": "お得",
   "premium.tab.limited": "限定",
   "premium.tab.gem": "ダイヤ",
+  "premium.tab.gift": "ギフト",
   "shop.tab.gold": "ゴールド",
   "shop.tab.special": "特価",
   "shop.tab.daily": "デイリー",

@@ -14,6 +14,7 @@ export default {
   "profileFrame.ancient.name": "Ancient Strata",
   "profileFrame.conqueror.name": "Unyielding Laurel",
   "profileFrame.runic.name": "Runic Radiance",
+  "profileFrame.giver.name": "Ring of Giving",
 
   // ── Stages, chapters, currencies, items and operational data ─────────────────────────────────────────────────────────────
   "stage.1-1.name": "The Falling Ark",
@@ -178,6 +179,7 @@ export default {
   "premium.tab.deal": "Deals",
   "premium.tab.limited": "Limited",
   "premium.tab.gem": "Diamonds",
+  "premium.tab.gift": "Gift",
   "shop.tab.gold": "Gold",
   "shop.tab.special": "Deals",
   "shop.tab.daily": "Daily",

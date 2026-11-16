@@ -1,4 +1,5 @@
 import type { MissionReward } from "../core/missions";
+import { GIFTING_ENABLED } from "../core/gifting";
 
 /**
  * 업적 — 기간이 없는, 한 계정이 한 번씩 밟아 가는 기록.
@@ -71,7 +72,8 @@ export type AchievementMetric =
   | "partySameElement"
   | "partySquads"
   | "partySsr"
-  | "nicknameSet";
+  | "nicknameSet"
+  | "giftsDelivered";
 
 export interface AchievementTier {
   target: number;
@@ -100,7 +102,14 @@ const cheesecake = (amount: number): MissionReward => ({ currency: "cheesecake",
 const tiers = (targets: readonly number[], rewards: readonly MissionReward[]): AchievementTier[] =>
   targets.map((target, index) => ({ target, reward: rewards[index] ?? rewards.at(-1)! }));
 
-export const ACHIEVEMENT_SERIES: readonly AchievementSeries[] = [
+/**
+ * 선물 전달 — 보낸 선물을 상대가 **받은** 수(보낸 뒤 취소·거절·만료로 돌아온 것은 세지 않는다).
+ * 마지막 단계가 선물 전용 테두리(`giver`)를 연다. 선물하기가 꺼진 동안은 목록에 서지 않는다.
+ * 선물 한 번이 가장 싼 젬 팩 값이라 보상이 그 값을 넘을 수 없다 — 부계정에 보내 업적을 사는 길이 이득이 되지 않는다.
+ */
+export const GIFT_ACHIEVEMENT_SERIES: AchievementSeries = { id: "gift-giver", category: "daily", metric: "giftsDelivered", tiers: tiers([1, 5, 20, 50], [cheesecake(100), cheesecake(200), cheesecake(300), gems(50)]) };
+
+const BASE_ACHIEVEMENT_SERIES: readonly AchievementSeries[] = [
   // ── 성장 ──
   { id: "wealth", category: "growth", metric: "goldPeak", tiers: tiers([10_000, 100_000, 1_000_000, 10_000_000, 100_000_000], [gems(5), gems(10), gems(20), gems(40), gems(80)]), modifierId: "millionaire" },
   { id: "nurture", category: "growth", metric: "maxRelicLevel", tiers: tiers([10, 20, 40, 60], [cheesecake(50), cheesecake(100), cheesecake(200), cheesecake(400)]) },
@@ -159,6 +168,8 @@ export const ACHIEVEMENT_SERIES: readonly AchievementSeries[] = [
   { id: "allied-party", category: "feat", metric: "partySquads", tiers: tiers([3], [gems(10)]), hidden: true },
   { id: "ssr-party", category: "feat", metric: "partySsr", tiers: tiers([3], [gems(10)]), hidden: true },
 ];
+
+export const ACHIEVEMENT_SERIES: readonly AchievementSeries[] = GIFTING_ENABLED ? [...BASE_ACHIEVEMENT_SERIES, GIFT_ACHIEVEMENT_SERIES] : BASE_ACHIEVEMENT_SERIES;
 
 /** 전체 업적을 끝까지 달성했을 때의 젬 예산. 업적 지급량 5배 상향과 함께 조정한다. */
 export const ACHIEVEMENT_GEM_BUDGET = 15_000;

@@ -74,6 +74,8 @@ export const ACHIEVEMENT_KO = {
   "achievement.series.allied-party": "세 스쿼드의 연합",
   "achievement.series.ssr-party": "눈부신 세 사람",
   "achievement.objective.goldPeak": "골드 {value} 보유",
+  "achievement.series.gift-giver": "마음을 전하는 손",
+  "achievement.objective.giftsDelivered": "선물 {value}회 전달",
   "achievement.objective.relicsOwned": "렐릭 {value}종 보유",
   "achievement.objective.maxRelicLevel": "렐릭 한 명을 레벨 {value}까지 성장",
   "achievement.objective.relicsMaxBreakthrough": "렐릭 {value}명의 한계 돌파 완료",

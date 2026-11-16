@@ -51,6 +51,14 @@ describe("보낼 자격 (결정 D4)", () => {
   ] as const)("%s", (reason, over) => {
     expect(giftEligibility(input(over as Partial<GiftEligibilityInput>))).toEqual({ ok: false, reason });
   });
+  it("친구가 아니어도 길드에 함께 있은 지 14일이 지났으면 보낼 수 있다", () => {
+    const guildmate = (days: number | null, friendDays: number | null = null) => input({ recipient: { id: "b", friendSince: friendDays === null ? null : ago(friendDays), guildmateSince: days === null ? null : ago(days), active: true, guest: false, storeRegion: "KR" } });
+    expect(giftEligibility(guildmate(GIFT_POLICY.minFriendDays))).toEqual({ ok: true });
+    expect(giftEligibility(guildmate(GIFT_POLICY.minFriendDays - 1))).toEqual({ ok: false, reason: "friend_too_new" });
+    // 둘 중 하나라도 오래되었으면 된다 — 막 친구가 된 오랜 길드원.
+    expect(giftEligibility(guildmate(60, 1))).toEqual({ ok: true });
+    expect(giftEligibility(guildmate(null, null))).toEqual({ ok: false, reason: "not_friend" });
+  });
   it("90일보다 오래된 환불은 막지 않는다", () => {
     expect(giftEligibility(input({ sender: { ...input().sender, lastOwnRefundAt: ago(GIFT_POLICY.refundLookbackDays + 1) } }))).toEqual({ ok: true });
   });

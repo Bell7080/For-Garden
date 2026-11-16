@@ -74,6 +74,8 @@ export const ACHIEVEMENT_ES = {
   "achievement.series.allied-party": "Tres escuadrones unidos",
   "achievement.series.ssr-party": "Tres compañeros brillantes",
   "achievement.objective.goldPeak": "Tener {value} de oro",
+  "achievement.series.gift-giver": "Manos que regalan",
+  "achievement.objective.giftsDelivered": "Entrega {value} regalos",
   "achievement.objective.relicsOwned": "Tener {value} tipos de reliquia",
   "achievement.objective.maxRelicLevel": "Subir una reliquia al nivel {value}",
   "achievement.objective.relicsMaxBreakthrough": "Completar la ruptura de {value} reliquias",

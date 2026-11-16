@@ -2648,6 +2648,18 @@ export class FakeServer implements GameApi {
     return product.giftable || this.giftingOverride?.giftableProductIds.includes(product.id) ? product : undefined;
   }
 
+  /** 업적의 사실 — 저장에서 읽는 것에 선물 전달 수(주문 표가 갖는다)를 더한다. 맥락이 없는 호출은 0이다. */
+  private achievementFactsOf(state: Session): ReturnType<typeof achievementFacts> {
+    return achievementFacts(state, { giftsDelivered: this.giftsDelivered() });
+  }
+
+  /** 내가 보낸 선물 중 상대가 받은 수. 실서버는 DB가 전체 기간을 세어 넘기고, 없으면 맥락의 주문에서 센다. */
+  private giftsDelivered(): number {
+    if (!this.giftsOpen()) return 0;
+    const context = this.giftContext!;
+    return context.sender.deliveredCount ?? context.orders.filter(order => order.senderId === context.playerId && order.status === "accepted").length;
+  }
+
   private giftSenderFacts(context: GiftContext): GiftSenderFacts {
     // 본인 결제의 원화 값은 상품 표가 갖는다. 표에서 사라진 상품은 값을 모르므로 세지 않는다(한도가 커지는 쪽으로 틀리지 않게).
     const ownPayments = context.sender.ownPayments.flatMap(({ productId, at }) => {
@@ -3815,7 +3827,7 @@ export class FakeServer implements GameApi {
     const attendance = this.attendanceDto(this.attendanceNow(now), now);
     const mail = this.mailListDto();
     const claimablePassCount = this.progressPassDtos(this.state).reduce((sum, pass) => sum + pass.milestones.filter((stage) => stage.freeState === "claimable" || stage.state === "claimable").length, 0);
-    const claimableAchievements = claimableAchievementCount(normalizeAchievementState(this.state.achievements), achievementFacts(this.state));
+    const claimableAchievements = claimableAchievementCount(normalizeAchievementState(this.state.achievements), this.achievementFactsOf(this.state));
     const growth = newbieGrowthWindow(this.newbieGrowthStart(this.state), now);
     const claimableGrowth = growth.active ? this.newbieGrowthDto(this.state, this.newbieGrowthFactsOf(this.state, await this.newbieGuildJoined()), now).claimableCount : 0;
     const roulette = rouletteStatus(this.state.dailyAdRewards, now, this.hasAdFreeMembership(now));
@@ -3986,7 +3998,7 @@ export class FakeServer implements GameApi {
     await this.delay();
     for (const id of seriesIds ?? []) if (!ACHIEVEMENT_SERIES.some((series) => series.id === id)) throw new GameApiError("NOTHING_TO_CLAIM", "존재하지 않는 업적입니다.");
     const current = normalizeAchievementState(this.state.achievements);
-    const claim = claimAchievements(current, achievementFacts(this.state), seriesIds);
+    const claim = claimAchievements(current, this.achievementFactsOf(this.state), seriesIds);
     if (claim.rewards.length === 0 && Object.keys(claim.claimedTiers).length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "받을 업적 보상이 없습니다.");
     const nextWallet = { ...this.state.wallet };
     const granted = claim.rewards.map(({ currency, amount }) => {
@@ -4138,7 +4150,7 @@ export class FakeServer implements GameApi {
 
   private achievementListDto(state: Session): AchievementListResponse {
     const achievements = normalizeAchievementState(state.achievements);
-    const facts = achievementFacts(state);
+    const facts = this.achievementFactsOf(state);
     const earned = new Set(state.earnedProfileModifierIds);
     const series = ACHIEVEMENT_SERIES.map((definition): AchievementSeriesDto => {
       const claimedTiers = achievements.claimed[definition.id] ?? 0;

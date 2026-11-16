@@ -118,13 +118,19 @@ begin
       from public.purchase_records r
       where r.player_id = p_player and r.refunded_at is null and r.recorded_at > p_now - interval '90 days'
         and not exists (select 1 from public.gift_orders g where g.transaction_id = r.transaction_id)),
-    'storeRegion', (select s.region from public.player_store_regions s where s.player_id = p_player)
+    'storeRegion', (select s.region from public.player_store_regions s where s.player_id = p_player),
+    -- 선물 업적: 내가 보낸 선물 중 상대가 받은 수(기간 없이).
+    'deliveredCount', (select count(*) from public.gift_orders g where g.sender_id = p_player and g.status = 'accepted')
   );
   if p_recipient is not null and p_recipient <> p_player then
     select jsonb_build_object(p_recipient::text, jsonb_build_object(
       'id', p_recipient::text,
       'name', coalesce(p.nickname, p.uid::text),
       'friendSince', e.friend_since,
+      -- 같은 길드에 함께 있은 시각 — 둘 중 늦게 들어온 쪽의 가입 시각. 길드를 나가면 행이 지워져 다시 센다.
+      'guildmateSince', (select greatest(gs.joined_at, gr.joined_at) from public.guild_members gs
+        join public.guild_members gr on gr.guild_id = gs.guild_id
+        where gs.player_id = p_player and gr.player_id = p_recipient),
       'active', p.status = 'active',
       'guest', coalesce(u.is_anonymous, true),
       'storeRegion', (select s.region from public.player_store_regions s where s.player_id = p_recipient)))

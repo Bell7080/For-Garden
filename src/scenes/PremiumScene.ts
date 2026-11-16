@@ -9,7 +9,10 @@ import { ProfileAvatar } from "../ui/ProfileAvatar";
 import { playerProfileDisplay, profileAvatarContent } from "../state/playerProfile";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugPremiumSection, setDebugScene } from "../debug";
-import { PREMIUM_TABS, type PremiumCategory } from "../data/shopCatalog";
+import { PREMIUM_TABS, type PremiumTabId } from "../data/shopCatalog";
+import { GIFTING_ENABLED } from "../core/gifting";
+import { drawGlyph } from "../ui/glyphs";
+import { openGiftInbox, openGiftRecipientPicker } from "../ui/GiftPopups";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { BottomNav } from "../ui/BottomNav";
 import { notificationManager } from "../managers/NotificationManager";
@@ -96,7 +99,9 @@ export class PremiumScene extends Phaser.Scene {
   /** 설정 왕복 시 복원할 섹션이며, 지원하지 않는 외부 값은 init에서 제거한다. */
   private activeSection: PremiumSection = "premium";
   /** 첫 라벨은 카탈로그 순서에서 정해 화면과 데이터의 기본값이 갈리지 않게 한다. */
-  private selectedCategory: PremiumCategory = PREMIUM_TABS[0].id;
+  private selectedCategory: PremiumTabId = PREMIUM_TABS[0].id;
+  /** 선물 탭에 서는 상품 — 서버가 선물 가능으로 표시한 것만(`getGiftOptions`). 스위치가 꺼졌으면 늘 비어 있다. */
+  private giftProductIds: readonly string[] = [];
   private products: ProductDto[] = [];
   private minScrollY = 0;
   private pointerDown = false;
@@ -117,7 +122,7 @@ export class PremiumScene extends Phaser.Scene {
 
   constructor() { super("premium"); }
 
-  init(data: { section?: PremiumSection; tab?: PremiumCategory }): void {
+  init(data: { section?: PremiumSection; tab?: PremiumTabId }): void {
     // 설정 화면이나 개발 콘솔이 넘긴 값도 실제 지원하는 섹션으로 제한한다.
     this.activeSection = data?.section === "premium" ? data.section : "premium";
     // 재화 안내의 바로가기는 그 재화를 파는 탭(젬·일간·패스)으로 곧장 연다. 모르는 값은 첫 탭이다.
@@ -213,6 +218,7 @@ export class PremiumScene extends Phaser.Scene {
     this.firstPaymentGift = response.firstPaymentGift?.available ? response.firstPaymentGift : undefined;
     this.serverOffsetMs = Date.parse(response.serverTime) - Date.now();
     this.renderProducts();
+    if (GIFTING_ENABLED) void this.loadGiftProducts(alive);
     // 상품을 산 뒤에는 지갑이 바뀌었으므로 상단 줄도 함께 맞춘다.
     const state = await gameApi.getPlayerState().catch(() => undefined);
     if (!state || !alive() || !this.scene.isActive()) return;
@@ -220,10 +226,51 @@ export class PremiumScene extends Phaser.Scene {
     this.topBar?.refresh();
   }
 
+  /** 선물 가능 상품 목록 — 받을 사람 없이 물으면 서버가 선물할 수 있는 상품만 늘어놓는다(자격은 사람을 고른 뒤에 다시 묻는다). */
+  private async loadGiftProducts(alive: () => boolean): Promise<void> {
+    try {
+      const response = await gameApi.getGiftOptions({ recipientId: "" });
+      if (!alive() || !this.scene.isActive()) return;
+      this.giftProductIds = response.options.map((option) => option.productId);
+      if (this.selectedCategory === "gift") this.renderProducts();
+    } catch (error) {
+      if (!(error instanceof GameApiError)) logError("premium.giftOptions", "[premium] 선물 상품 조회 실패", error);
+    }
+  }
+
+  /**
+   * 선물 탭 — 맨 앞은 받은 선물함, 그 뒤로 선물할 수 있는 상품. 상품을 누르면 결제 전에 받을 사람(친구·길드원)을 고른다.
+   * 선물은 기본 지급만 가므로(첫 구매 보너스 없음) 카드에도 보너스 액자와 남은 구매 횟수를 세우지 않는다.
+   */
+  private renderGiftTab(): void {
+    const kind = premiumListKind("gift");
+    const visible = this.products.filter((product) => this.giftProductIds.includes(product.id));
+    this.addGiftInboxCard(0, kind);
+    visible.forEach((product, index) => this.addProduct(product, index + 1, kind, { gift: true }));
+    const view = premiumGridViewport();
+    this.minScrollY = Math.min(0, view.bottom - view.top - premiumGridContentHeight(visible.length + 1, kind));
+    this.scrollTo(this.content?.y ?? 0);
+  }
+
+  /** 받은 선물함을 여는 칸 — 선물 탭 맨 앞. */
+  private addGiftInboxCard(index: number, kind: PremiumListKind): void {
+    const width = premiumCardWidth(kind);
+    const height = premiumCardHeight(kind);
+    const { x, y } = premiumCardSpot(index, kind);
+    const card = this.add.container(x, y);
+    paintShowcaseCard(this, card, { width, height, accent: COLOR.exchange, dim: false, railX: -width / 2 + 34, stageY: PREMIUM_CARD.frameY + PREMIUM_CARD.frame / 2 });
+    card.add(drawGlyph(this, "mail", 0, PREMIUM_CARD.frameY, PREMIUM_CARD.frame * 0.8, COLOR.exchange, 0.9, 5));
+    const name = this.add.text(0, PREMIUM_CARD.nameY, t("gift.inbox.button"), textStyle({ role: "display", size: 30 })).setOrigin(0.5).setShadow(3, 4, "#04060a", 0, true, true);
+    card.add(squeezeTextToWidth(name, width - 36, 0.7));
+    this.addCardHit(card, width, height, () => void openGiftInbox(this, this.popups));
+    this.content?.add(card);
+  }
+
   /** 현재 라벨의 상품만 그 갈래의 모양(가로 한 줄 · 두 칸 격자)으로 다시 조립하고 스크롤 한계를 계산한다. */
   private renderProducts(): void {
     this.content?.removeAll(true);
     this.limitedClocks = [];
+    if (this.selectedCategory === "gift") { this.renderGiftTab(); return; }
     const visible = productsForPremiumCategory(this.products, this.selectedCategory);
     const kind = premiumListKind(this.selectedCategory);
     // 광고 칸은 젬 탭의 맨 위(1번)다. 일간 탭은 별도 광고 칸이 없고, 1번 「일일 무료 보급」을 받으면 같은 자리가 광고 칸으로 바뀐다.
@@ -252,13 +299,14 @@ export class PremiumScene extends Phaser.Scene {
    * **입력면은 카드를 먼저, 액자를 나중에 세운다.** 액자는 제 안내창을 여는 손이 따로 있어야 하므로 카드의
    * 입력면이 그 위를 덮으면 안 된다 — 위에 선 것이 먼저 손을 받는다.
    */
-  private addProduct(product: ProductDto, index: number, kind: PremiumListKind): void {
+  private addProduct(product: ProductDto, index: number, kind: PremiumListKind, options: { gift?: boolean } = {}): void {
     const width = premiumCardWidth(kind);
     const height = premiumCardHeight(kind);
     const { x, y } = premiumCardSpot(index, kind);
     const card = this.add.container(x, y);
     const action = productActionModel(product.acquisition, { remaining: product.remaining, available: product.purchasable });
-    const status = premiumStatusOf(product);
+    // 선물은 내 구매 한도와 무관하다 — 매진·이용 중 딱지를 세우지 않는다.
+    const status = options.gift ? undefined : premiumStatusOf(product);
     const subscribed = product.subscription !== undefined;
     // 이용 중인 구독은 살 수 없지만 소진된 상품이 아니다 — 흐리게 가라앉히지 않고 테두리가 맥동한다.
     const soldOut = status !== undefined && !subscribed;
@@ -268,16 +316,17 @@ export class PremiumScene extends Phaser.Scene {
       paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : premiumCardTone(product), dim: soldOut, railX: -width / 2 + PREMIUM_WIDE.pad, tag: premiumCardTag(product), stageY: PREMIUM_WIDE.stack.frameY + PREMIUM_WIDE.frame / 2 });
     }
     this.addCardHit(card, width, height, () => {
+      if (options.gift) { void openGiftRecipientPicker(this, this.popups, product.id); return; }
       if (product.acquisition.kind === "free") { if (product.purchasable) void this.claimFree(product); else this.notice(t("shop.premium.freeClaimed"), true); return; }
       if (subscribed) { void this.claimSubscriptionDaily(product); return; }
       // 결제 비활성 상품도 상세 팝업 안에서 지급량·가격·사유를 확인한다.
       new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice(t("shop.premium.purchased")); await this.refresh(); });
     });
-    if (kind === "wide") this.paintWideCard(card, product, width, action); else this.paintGridCard(card, product, width, action);
+    if (kind === "wide") this.paintWideCard(card, product, width, action); else this.paintGridCard(card, product, width, action, options.gift === true);
     if (soldOut) card.setAlpha(PREMIUM_SOLD_OUT_ALPHA);
     if (subscribed) this.addActivePulse(card, width, height, premiumCardTone(product));
     // 지금 공짜로 받을 수 있는 칸(무료 보급 · 구독의 오늘 몫)은 탭의 점이 가리키는 그 카드에도 점을 단다.
-    const claimableNow = (product.acquisition.kind === "free" && product.purchasable) || product.subscription?.dailyBonusClaimed === false;
+    const claimableNow = !options.gift && (product.acquisition.kind === "free" && product.purchasable) || product.subscription?.dailyBonusClaimed === false;
     if (claimableNow) new NotificationDot(this, card, { x: width / 2 - 20, y: -height / 2 + 20 });
     this.content?.add(card);
     // 상태 딱지는 흐려진 카드의 알파를 물려받지 않도록 카드 곁에 따로 붙인다.
@@ -387,10 +436,10 @@ export class PremiumScene extends Phaser.Scene {
    * **첫 구매 보너스가 남았으면 액자가 하나 더 선다** — 기본 액자 + 「+」 + 보너스 액자, 그리고 보너스 액자 위에
    * 「/ 첫 구매 보너스」 제목표. 모서리 글자로 알리던 때는 무엇이 더 들어오는지 셈해야 했다.
    */
-  private paintGridCard(card: Phaser.GameObjects.Container, product: ProductDto, width: number, action: ReturnType<typeof productActionModel>): void {
+  private paintGridCard(card: Phaser.GameObjects.Container, product: ProductDto, width: number, action: ReturnType<typeof productActionModel>, gift = false): void {
     const C = PREMIUM_CARD;
     const tile = premiumGrantTiles(product)[0];
-    const bonus = premiumFirstBonusGems(product);
+    const bonus = gift ? 0 : premiumFirstBonusGems(product);
     if (tile && bonus > 0) {
       const B = C.bonus;
       this.addGrantFrame(card, -B.offsetX, C.frameY, B.frame, tile.icon, tile.amount);
@@ -405,6 +454,8 @@ export class PremiumScene extends Phaser.Scene {
     // 이름 길이는 언어가 정하고 칸 폭은 둘이 나눠 갖는 고정값이라, 넘치면 글자만 가로로 줄인다.
     card.add(squeezeTextToWidth(name, width - 36, 0.7));
     this.paintPriceChip(card, product, 0, C.price.y, width - C.price.inset, C.price.height, C.price.size, action);
+    // 선물 칸의 밑줄은 「기본 지급만」 — 첫 구매 보너스는 선물에 붙지 않는다.
+    if (gift) { card.add(this.add.text(0, C.remainingY, t("gift.tab.baseOnly"), textStyle({ role: "emphasis", size: 25, color: COLOR.inkDim })).setOrigin(0.5).setStroke("#05070a", 3)); return; }
     card.add(this.add.text(0, C.remainingY, action.disabledReason ?? t("shop.premium.remaining", { remaining: product.remaining, limit: product.purchaseLimit }), textStyle({ role: "emphasis", size: 25, color: product.purchasable ? COLOR.ink : COLOR.dangerText })).setOrigin(0.5).setStroke("#05070a", 3));
   }
 
@@ -742,9 +793,9 @@ export class PremiumScene extends Phaser.Scene {
   private selectedIndex(): number { return PREMIUM_TABS.findIndex((tab) => tab.id === this.selectedCategory); }
 
   /** 라벨을 바꾸면 이전 스크롤을 버리고 그 갈래의 첫 상품부터 다시 보여 준다. */
-  private selectCategory(category: PremiumCategory): void {
+  private selectCategory(category: PremiumTabId): void {
     if (category === this.selectedCategory) return;
-    const indexOf = (id: PremiumCategory): number => PREMIUM_TABS.findIndex((tab) => tab.id === id);
+    const indexOf = (id: PremiumTabId): number => PREMIUM_TABS.findIndex((tab) => tab.id === id);
     const from = indexOf(this.selectedCategory);
     const rowFrom = this.tabRow?.x;
     this.selectedCategory = category;

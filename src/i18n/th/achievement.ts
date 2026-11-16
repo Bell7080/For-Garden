@@ -74,6 +74,8 @@ export const ACHIEVEMENT_TH = {
   "achievement.series.allied-party": "สามหน่วยรวมใจ",
   "achievement.series.ssr-party": "สามผู้เปล่งประกาย",
   "achievement.objective.goldPeak": "มีทอง {value}",
+  "achievement.series.gift-giver": "มือที่ส่งต่อน้ำใจ",
+  "achievement.objective.giftsDelivered": "ส่งของขวัญถึงมือ {value} ครั้ง",
   "achievement.objective.relicsOwned": "มีเรลิก {value} ชนิด",
   "achievement.objective.maxRelicLevel": "เลี้ยงเรลิกหนึ่งตัวถึงเลเวล {value}",
   "achievement.objective.relicsMaxBreakthrough": "ทะลวงเรลิก {value} ตัวจนสมบูรณ์",

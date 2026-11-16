@@ -74,6 +74,8 @@ export const ACHIEVEMENT_ZH_HANT = {
   "achievement.series.allied-party": "三支小隊聯合",
   "achievement.series.ssr-party": "耀眼的三人",
   "achievement.objective.goldPeak": "持有{value}金幣",
+  "achievement.series.gift-giver": "傳遞心意之手",
+  "achievement.objective.giftsDelivered": "送達{value}次禮物",
   "achievement.objective.relicsOwned": "擁有{value}種遺物",
   "achievement.objective.maxRelicLevel": "將一名遺物培養至{value}級",
   "achievement.objective.relicsMaxBreakthrough": "完成{value}名遺物的突破",

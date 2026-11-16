@@ -74,6 +74,8 @@ export const ACHIEVEMENT_JA = {
   "achievement.series.allied-party": "三つのスクワッドの連合",
   "achievement.series.ssr-party": "輝く三人",
   "achievement.objective.goldPeak": "ゴールドを{value}所持",
+  "achievement.series.gift-giver": "想いを届ける手",
+  "achievement.objective.giftsDelivered": "プレゼントを{value}回届ける",
   "achievement.objective.relicsOwned": "レリックを{value}種所持",
   "achievement.objective.maxRelicLevel": "レリック1人をレベル{value}まで育成",
   "achievement.objective.relicsMaxBreakthrough": "レリック{value}人の限界突破を完了",

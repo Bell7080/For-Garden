@@ -229,6 +229,7 @@
 "Diamanten",
 "Алмазы"
 ],
+  "premium.tab.gift": ["礼物", "ของขวัญ", "Quà tặng", "Hadiah", "Regalo", "Presente", "Geschenk", "Подарок"],
 "shop.tab.gold": [
 "金币",
 "ทอง",
@@ -1655,5 +1656,6 @@
   "modifier.master-mentor.name": ["完美引路人","ผู้ชี้นำสู่ความสมบูรณ์","Người dẫn lối hoàn thiện","Pembimbing Kesempurnaan","Mentor de la perfección","Mentor da perfeição","Mentor der Vollendung","Наставник совершенства"],
   "profileFrame.ancient.name": ["太古地层","ชั้นดินดึกดำบรรพ์","Địa tầng thái cổ","Lapisan Purba","Estratos ancestrales","Estratos ancestrais","Uralte Schichten","Древние пласты"],
   "profileFrame.conqueror.name": ["不屈月桂","พวงเกียรติยศอันแน่วแน่","Vòng nguyệt quế bất khuất","Mahkota Keteguhan","Laurel inquebrantable","Louro inabalável","Unbeugsamer Lorbeer","Несгибаемый лавр"],
-  "profileFrame.runic.name": ["符文光辉","ประกายรูน","Ánh sáng rune","Kilau Rune","Resplandor rúnico","Radiância rúnica","Runenglanz","Рунное сияние"]
+  "profileFrame.runic.name": ["符文光辉","ประกายรูน","Ánh sáng rune","Kilau Rune","Resplandor rúnico","Radiância rúnica","Runenglanz","Рунное сияние"],
+  "profileFrame.giver.name": ["赠礼之环", "วงแหวนแห่งการให้", "Vòng trao tặng", "Lingkar Pemberian", "Anillo de la generosidad", "Anel da generosidade", "Ring des Schenkens", "Кольцо щедрости"]
 }

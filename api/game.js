@@ -6291,8 +6291,8 @@ var FRIENDS_KO = {
   "gift.refusal.blocked": "\uC120\uBB3C\uD558\uAE30\uAC00 \uC81C\uD55C\uB41C \uACC4\uC815\uC785\uB2C8\uB2E4.",
   "gift.refusal.no_payment_history": "\uBCF8\uC778 \uACB0\uC81C \uD6C4 7\uC77C\uC774 \uC9C0\uB098\uC57C \uBCF4\uB0BC \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
   "gift.refusal.recent_refund": "\uCD5C\uADFC 90\uC77C \uC548\uC5D0 \uD658\uBD88\uD55C \uACC4\uC815\uC740 \uBCF4\uB0BC \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
-  "gift.refusal.not_friend": "\uCE5C\uAD6C\uC5D0\uAC8C\uB9CC \uBCF4\uB0BC \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
-  "gift.refusal.friend_too_new": "\uCE5C\uAD6C\uAC00 \uB41C \uC9C0 14\uC77C\uC774 \uC9C0\uB098\uC57C \uBCF4\uB0BC \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.not_friend": "\uCE5C\uAD6C\uB098 \uAE38\uB4DC\uC6D0\uC5D0\uAC8C\uB9CC \uBCF4\uB0BC \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.friend_too_new": "\uCE5C\uAD6C\xB7\uAE38\uB4DC\uC6D0\uC774 \uB41C \uC9C0 14\uC77C\uC774 \uC9C0\uB098\uC57C \uBCF4\uB0BC \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
   "gift.refusal.recipient_unavailable": "\uC120\uBB3C\uC744 \uBC1B\uC744 \uC218 \uC5C6\uB294 \uC5F0\uAD6C\uC6D0\uC785\uB2C8\uB2E4.",
   "gift.refusal.send_daily": "\uC624\uB298 \uBCF4\uB0BC \uC218 \uC788\uB294 \uC120\uBB3C\uC744 \uBAA8\uB450 \uBCF4\uB0C8\uC2B5\uB2C8\uB2E4.",
   "gift.refusal.send_monthly": "30\uC77C \uB3D9\uC548 \uBCF4\uB0BC \uC218 \uC788\uB294 \uC120\uBB3C\uC744 \uBAA8\uB450 \uBCF4\uB0C8\uC2B5\uB2C8\uB2E4.",
@@ -6301,7 +6301,15 @@ var FRIENDS_KO = {
   "gift.refusal.receive_daily": "\uC0C1\uB300\uAC00 \uC624\uB298 \uBC1B\uC744 \uC218 \uC788\uB294 \uC120\uBB3C\uC774 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4.",
   "gift.refusal.receive_monthly": "\uC0C1\uB300\uAC00 30\uC77C \uB3D9\uC548 \uBC1B\uC744 \uC218 \uC788\uB294 \uC120\uBB3C\uC774 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4.",
   "gift.refusal.duplicate_pending": "\uC544\uC9C1 \uBC1B\uC9C0 \uC54A\uC740 \uAC19\uC740 \uC120\uBB3C\uC774 \uC788\uC2B5\uB2C8\uB2E4.",
-  "gift.inbox.accepted": "\uC120\uBB3C\uC744 \uBC1B\uC558\uC2B5\uB2C8\uB2E4."
+  "gift.inbox.accepted": "\uC120\uBB3C\uC744 \uBC1B\uC558\uC2B5\uB2C8\uB2E4.",
+  "gift.tab.baseOnly": "\uAE30\uBCF8 \uC9C0\uAE09\uB9CC",
+  "gift.recipient.title": "\uBC1B\uC744 \uC0AC\uB78C",
+  "gift.recipient.for": "\u300C{product}\u300D{product!\uC744} \uBC1B\uC744 \uC0AC\uB78C\uC744 \uACE0\uB974\uC138\uC694.",
+  "gift.recipient.emptyFriends": "\uC120\uBB3C\uD560 \uC218 \uC788\uB294 \uCE5C\uAD6C\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "gift.recipient.emptyGuild": "\uD568\uAED8 \uC788\uB294 \uAE38\uB4DC\uC6D0\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "gift.recipient.choose": "\uC120\uD0DD",
+  "gift.recipient.tabFriends": "\uCE5C\uAD6C",
+  "gift.recipient.tabGuild": "\uAE38\uB4DC"
 };
 
 // src/i18n/ko/guild.ts
@@ -8844,6 +8852,8 @@ var ACHIEVEMENT_KO = {
   "achievement.series.allied-party": "\uC138 \uC2A4\uCFFC\uB4DC\uC758 \uC5F0\uD569",
   "achievement.series.ssr-party": "\uB208\uBD80\uC2E0 \uC138 \uC0AC\uB78C",
   "achievement.objective.goldPeak": "\uACE8\uB4DC {value} \uBCF4\uC720",
+  "achievement.series.gift-giver": "\uB9C8\uC74C\uC744 \uC804\uD558\uB294 \uC190",
+  "achievement.objective.giftsDelivered": "\uC120\uBB3C {value}\uD68C \uC804\uB2EC",
   "achievement.objective.relicsOwned": "\uB810\uB9AD {value}\uC885 \uBCF4\uC720",
   "achievement.objective.maxRelicLevel": "\uB810\uB9AD \uD55C \uBA85\uC744 \uB808\uBCA8 {value}\uAE4C\uC9C0 \uC131\uC7A5",
   "achievement.objective.relicsMaxBreakthrough": "\uB810\uB9AD {value}\uBA85\uC758 \uD55C\uACC4 \uB3CC\uD30C \uC644\uB8CC",
@@ -27551,11 +27561,169 @@ init_define_import_meta_env();
 
 // src/data/achievements.ts
 init_define_import_meta_env();
+
+// src/core/gifting.ts
+init_define_import_meta_env();
+var GIFTING_ENABLED = false;
+var DAY_MS = 864e5;
+var GIFT_POLICY = {
+  /** 보낸 사람 연구원 레벨. 막 만든 부계정을 걸러 낸다. */
+  senderMinResearchLevel: 20,
+  /** 보낸 사람 계정 나이(일). */
+  senderMinAccountDays: 14,
+  /** 친구가 된 뒤 지나야 하는 날. 끊었다 다시 맺으면 처음부터 센다. */
+  minFriendDays: 14,
+  /** 본인 결제가 이 날수만큼 환불 없이 지나야 선물할 수 있다. */
+  ownPaymentClearDays: 7,
+  /** 이 기간 안에 본인 결제 환불이 있으면 선물할 수 없다. */
+  refundLookbackDays: 90,
+  sendPerDay: 2,
+  sendPer30Days: 10,
+  /**
+   * 금액 한도는 고정 숫자가 아니라 **본인 결제 실적**이다(응태 결정 2026-11-16 — 최대 한도를 두지 않는다). 이 기간 동안
+   * 보낸 선물의 원화 합은 같은 기간에 환불 없이 `ownPaymentClearDays`가 지난 본인 결제(선물 결제 제외)의 원화 합을 넘지 못한다.
+   * 오래 결제해 온 사람은 사실상 한도가 없고, 막 만든 계정·도용 카드 계정은 0원부터다 — 도용 카드로 선물을 사서 판매용
+   * 계정에 몰아주는 세탁을 막는다(받은 쪽은 회수하지 않으므로 선물이 일반 결제보다 세탁에 좋은 통로가 된다).
+   */
+  amountWindowDays: 90,
+  receivePerDay: 2,
+  receivePer30Days: 10,
+  /** 받지 않은 선물이 돌아오기까지(일). */
+  pendingExpiryDays: 30,
+  /** 결제 대기 주문이 사라지기까지(분). */
+  paymentWindowMinutes: 30,
+  /**
+   * 선물로 보낼 수 있는 상품의 계정당 구매 한도 하한. 한정·주기 상품(한도 1~2, 매일·매주·매달·계정당 한 번)은
+   * 부계정이 선물로 몇 번이고 사 줄 수 있어 「한 사람에 한 번」이라는 값어치가 깨진다 — 되풀이해 사는 팩만 연다.
+   */
+  minGiftablePurchaseLimit: 10
+};
+function giftableProductShape(product) {
+  return product.acquisition.kind === "platform_payment" && !product.passBenefit && !product.situational && product.refresh === "none" && product.purchaseLimit >= GIFT_POLICY.minGiftablePurchaseLimit;
+}
+var ms = (iso) => iso ? Date.parse(iso) : NaN;
+var olderThan = (iso, days, now) => Number.isFinite(ms(iso)) && now.getTime() - ms(iso) >= days * DAY_MS;
+var within = (iso, days, now) => now.getTime() - ms(iso) < days * DAY_MS;
+function countsTowardGiftLimits(order, now) {
+  const settled = settleGiftOrder(order, now);
+  return settled.status !== "lapsed";
+}
+function giftEligibility(input) {
+  const { sender, recipient, now } = input;
+  const refuse = (reason) => ({ ok: false, reason });
+  if (!input.enabled) return refuse("disabled");
+  if (!input.giftable) return refuse("not_giftable");
+  if (recipient && recipient.id === input.senderId) return refuse("self");
+  if (sender.guest) return refuse("guest");
+  if (sender.ageRestricted) return refuse("age_restricted");
+  if (sender.blocked) return refuse("blocked");
+  if (sender.researchLevel < GIFT_POLICY.senderMinResearchLevel) return refuse("level");
+  if (!olderThan(sender.accountCreatedAt, GIFT_POLICY.senderMinAccountDays, now)) return refuse("account_age");
+  if (sender.lastOwnRefundAt && within(sender.lastOwnRefundAt, GIFT_POLICY.refundLookbackDays, now)) return refuse("recent_refund");
+  if (!olderThan(sender.oldestClearedOwnPaymentAt, GIFT_POLICY.ownPaymentClearDays, now)) return refuse("no_payment_history");
+  if (!recipient || !recipient.active || recipient.guest) return refuse("recipient_unavailable");
+  const ties = [recipient.friendSince, recipient.guildmateSince ?? null].filter((tie) => !!tie);
+  if (ties.length === 0) return refuse("not_friend");
+  if (!ties.some((tie) => olderThan(tie, GIFT_POLICY.minFriendDays, now))) return refuse("friend_too_new");
+  if (!sender.storeRegion || sender.storeRegion !== recipient.storeRegion) return refuse("region_mismatch");
+  const live = dedupe(input.orders).filter((order) => countsTowardGiftLimits(order, now));
+  const sent = live.filter((order) => order.senderId === input.senderId);
+  const received = live.filter((order) => order.recipientId === recipient.id);
+  if (sent.some((order) => order.recipientId === recipient.id && order.productId === input.productId && ["awaiting_payment", "pending"].includes(settleGiftOrder(order, now).status))) return refuse("duplicate_pending");
+  if (sent.filter((order) => within(order.createdAt, 1, now)).length >= GIFT_POLICY.sendPerDay) return refuse("send_daily");
+  const sentMonth = sent.filter((order) => within(order.createdAt, 30, now));
+  if (sentMonth.length >= GIFT_POLICY.sendPer30Days) return refuse("send_monthly");
+  if (giftAmountAllowanceKrw(sender, sent, now) < input.priceKrw) return refuse("send_amount");
+  const receivedLive = received.filter((order) => settleGiftOrder(order, now).status !== "returned" && settleGiftOrder(order, now).status !== "revoked");
+  if (receivedLive.filter((order) => within(order.createdAt, 1, now)).length >= GIFT_POLICY.receivePerDay) return refuse("receive_daily");
+  if (receivedLive.filter((order) => within(order.createdAt, 30, now)).length >= GIFT_POLICY.receivePer30Days) return refuse("receive_monthly");
+  return { ok: true };
+}
+function giftAmountAllowanceKrw(sender, sentOrders, now) {
+  const window2 = GIFT_POLICY.amountWindowDays;
+  const earned = sender.ownPayments.filter((payment) => within(payment.at, window2, now) && olderThan(payment.at, GIFT_POLICY.ownPaymentClearDays, now)).reduce((sum, payment) => sum + payment.priceKrw, 0);
+  const spent = sentOrders.filter((order) => within(order.createdAt, window2, now) && !["returned", "revoked", "lapsed"].includes(settleGiftOrder(order, now).status)).reduce((sum, order) => sum + order.priceKrw, 0);
+  return Math.max(0, earned - spent);
+}
+function dedupe(orders) {
+  return [...new Map(orders.map((order) => [order.id, order])).values()];
+}
+function createGiftOrder(input) {
+  return {
+    id: input.id,
+    senderId: input.senderId,
+    recipientId: input.recipientId,
+    senderName: input.senderName,
+    recipientName: input.recipientName,
+    productId: input.productId,
+    priceKrw: input.priceKrw,
+    status: "awaiting_payment",
+    createdAt: input.now.toISOString(),
+    paidAt: null,
+    expiresAt: new Date(input.now.getTime() + GIFT_POLICY.paymentWindowMinutes * 6e4).toISOString(),
+    resolvedAt: null,
+    transactionId: null,
+    returnReason: null,
+    refundedAt: null
+  };
+}
+function settleGiftOrder(order, now) {
+  if (now.getTime() < ms(order.expiresAt)) return order;
+  if (order.status === "awaiting_payment") return { ...order, status: "lapsed", resolvedAt: order.expiresAt };
+  if (order.status === "pending") return { ...order, status: "returned", returnReason: "expired", resolvedAt: order.expiresAt };
+  return order;
+}
+var GiftTransitionError = class extends Error {
+  constructor(reason) {
+    super(`GIFT_${reason.toUpperCase()}`);
+    this.reason = reason;
+  }
+  reason;
+};
+function transitionGift(order, action, actorId, now) {
+  const current2 = settleGiftOrder(order, now);
+  const at = now.toISOString();
+  const senderOnly = () => {
+    if (actorId !== current2.senderId) throw new GiftTransitionError("forbidden");
+  };
+  const recipientOnly = () => {
+    if (actorId !== current2.recipientId) throw new GiftTransitionError("forbidden");
+  };
+  switch (action.kind) {
+    case "pay":
+      senderOnly();
+      if (current2.status !== "awaiting_payment") throw new GiftTransitionError("state");
+      return { ...current2, status: "pending", paidAt: at, transactionId: action.transactionId, expiresAt: new Date(now.getTime() + GIFT_POLICY.pendingExpiryDays * DAY_MS).toISOString() };
+    case "accept":
+      recipientOnly();
+      if (current2.status !== "pending") throw new GiftTransitionError("state");
+      return { ...current2, status: "accepted", resolvedAt: at };
+    case "decline":
+      recipientOnly();
+      if (current2.status !== "pending") throw new GiftTransitionError("state");
+      return { ...current2, status: "returned", returnReason: "declined", resolvedAt: at };
+    case "cancel":
+      senderOnly();
+      if (current2.status !== "pending") throw new GiftTransitionError("state");
+      return { ...current2, status: "returned", returnReason: "cancelled", resolvedAt: at };
+  }
+}
+function sentGiftDisplayStatus(order, now) {
+  const settled = settleGiftOrder(order, now);
+  if (settled.status === "awaiting_payment" || settled.status === "lapsed") return null;
+  return settled.status;
+}
+function incomingGifts(orders, recipientId, now) {
+  return dedupe(orders).map((order) => settleGiftOrder(order, now)).filter((order) => order.recipientId === recipientId && order.status === "pending").sort((a, b) => ms(a.paidAt) - ms(b.paidAt));
+}
+
+// src/data/achievements.ts
 var gems = (amount) => ({ currency: "gems", amount: amount * 5 });
 var gold = (amount) => ({ currency: "gold", amount });
 var cheesecake = (amount) => ({ currency: "cheesecake", amount });
 var tiers = (targets2, rewards) => targets2.map((target, index) => ({ target, reward: rewards[index] ?? rewards.at(-1) }));
-var ACHIEVEMENT_SERIES = [
+var GIFT_ACHIEVEMENT_SERIES = { id: "gift-giver", category: "daily", metric: "giftsDelivered", tiers: tiers([1, 5, 20, 50], [cheesecake(100), cheesecake(200), cheesecake(300), gems(50)]) };
+var BASE_ACHIEVEMENT_SERIES = [
   // ── 성장 ──
   { id: "wealth", category: "growth", metric: "goldPeak", tiers: tiers([1e4, 1e5, 1e6, 1e7, 1e8], [gems(5), gems(10), gems(20), gems(40), gems(80)]), modifierId: "millionaire" },
   { id: "nurture", category: "growth", metric: "maxRelicLevel", tiers: tiers([10, 20, 40, 60], [cheesecake(50), cheesecake(100), cheesecake(200), cheesecake(400)]) },
@@ -27614,6 +27782,7 @@ var ACHIEVEMENT_SERIES = [
   { id: "allied-party", category: "feat", metric: "partySquads", tiers: tiers([3], [gems(10)]), hidden: true },
   { id: "ssr-party", category: "feat", metric: "partySsr", tiers: tiers([3], [gems(10)]), hidden: true }
 ];
+var ACHIEVEMENT_SERIES = GIFTING_ENABLED ? [...BASE_ACHIEVEMENT_SERIES, GIFT_ACHIEVEMENT_SERIES] : BASE_ACHIEVEMENT_SERIES;
 
 // src/data/newbieGrowth.ts
 init_define_import_meta_env();
@@ -27744,7 +27913,7 @@ function duelDefenseWinChance(mine, theirs) {
 var DUEL_SEASON_DAYS = 21;
 var DUEL_SEASON_EPOCH = Date.UTC(2026, 0, 5);
 var duelSeasonEpoch = () => cycleAnchor(DUEL_SEASON_EPOCH);
-var DAY_MS = 864e5;
+var DAY_MS2 = 864e5;
 function duelTierIndex(score) {
   let index = 0;
   DUEL_TIERS.forEach((tier, i) => {
@@ -27817,13 +27986,13 @@ function duelDayKey(now) {
   return now.toISOString().slice(0, 10);
 }
 function duelSeasonNumber(now) {
-  return Math.max(1, Math.floor((now.getTime() - duelSeasonEpoch()) / (DUEL_SEASON_DAYS * DAY_MS)) + 1);
+  return Math.max(1, Math.floor((now.getTime() - duelSeasonEpoch()) / (DUEL_SEASON_DAYS * DAY_MS2)) + 1);
 }
 function duelSeasonId(now) {
   return `S${duelSeasonNumber(now)}`;
 }
 function duelSeasonEndsAt(now) {
-  return new Date(duelSeasonEpoch() + duelSeasonNumber(now) * DUEL_SEASON_DAYS * DAY_MS);
+  return new Date(duelSeasonEpoch() + duelSeasonNumber(now) * DUEL_SEASON_DAYS * DAY_MS2);
 }
 function duelSeasonResetScore(score) {
   return Math.floor(score * 0.6 / DUEL_DIVISION_SPAN) * DUEL_DIVISION_SPAN;
@@ -28425,11 +28594,13 @@ init_define_import_meta_env();
 // src/data/profileFrames.ts
 init_define_import_meta_env();
 var DEFAULT_PROFILE_FRAME_ID = "field";
+var GIFT_GIVER_FRAME = { id: "giver", style: "halo", displayName: "\uB098\uB214\uC758 \uACE0\uB9AC", unlockLevel: 1, unlockAchievement: { id: "gift-giver", tiers: 4 }, color: 16748488, wash: 4069932 };
 var PROFILE_FRAMES = [
   { id: "field", style: "plain", displayName: "\uD604\uC7A5 \uC5F0\uAD6C\uC6D0", unlockLevel: 1, color: 10466248, wash: 2766404 },
   { id: "ancient", style: "strata", displayName: "\uD0DC\uACE0\uC758 \uC9C0\uCE35", unlockLevel: 1, unlockAchievement: { id: "ancient-depth", tiers: 4 }, color: 14200434, wash: 3745816 },
   { id: "conqueror", style: "laurel", displayName: "\uBD88\uAD74\uC758 \uC6D4\uACC4", unlockLevel: 1, unlockAchievement: { id: "hard-frontline", tiers: 4 }, color: 15895451, wash: 4070184 },
   { id: "runic", style: "prism", displayName: "\uB8EC\uC758 \uAD11\uCC44", unlockLevel: 1, unlockAchievement: { id: "rune-refinement", tiers: 4 }, color: 8316382, wash: 1325882 },
+  ...GIFTING_ENABLED ? [GIFT_GIVER_FRAME] : [],
   { id: "patron", style: "sigil", displayName: "\uCCAB \uD6C4\uC6D0\uC758 \uC99D\uD45C", unlockLevel: 1, unlockGift: "firstPayment", color: 16765562, wash: 4139536 },
   { id: "season", style: "halo", displayName: "\uC2DC\uC98C\uC758 \uB0A0\uAC1C", unlockLevel: 1, unlockGift: "seasonPass", color: 10478591, wash: 1258058 },
   { id: "holo", style: "bracket", displayName: "\uD22C\uC601 \uAD00\uCE21", unlockLevel: 10, color: 6280447, wash: 1521736 },
@@ -28448,7 +28619,7 @@ function isProfileFrameUnlocked(frame, playerLevel, claimed = {}, giftFrames = [
   if (frame.unlockGift) return giftFrames.includes(frame.id);
   return playerLevel >= frame.unlockLevel && (!frame.unlockAchievement || (claimed[frame.unlockAchievement.id] ?? 0) >= frame.unlockAchievement.tiers);
 }
-for (const frame of PROFILE_FRAMES) registerDataText(frame, "displayName", `profileFrame.${frame.id}.name`);
+for (const frame of [...PROFILE_FRAMES, ...GIFTING_ENABLED ? [] : [GIFT_GIVER_FRAME]]) registerDataText(frame, "displayName", `profileFrame.${frame.id}.name`);
 
 // src/core/playerCard.ts
 var NICKNAME_MIN_LENGTH = 2;
@@ -28561,13 +28732,13 @@ function repairLegacyLotStacks(inventory) {
     return group.map((stack) => ({ ...stack, ...stack.lots ? { lots: stack.lots.map((lot) => ({ ...lot })) } : {} }));
   });
 }
-var DAY_MS2 = 864e5;
+var DAY_MS3 = 864e5;
 var ITEM_EXPIRY_DAYS = { min: 1, max: 7 };
 function clampExpiryDays(days) {
   return Math.max(ITEM_EXPIRY_DAYS.min, Math.min(ITEM_EXPIRY_DAYS.max, Math.floor(days)));
 }
 function lotExpiresAt(now, days) {
-  return new Date(now.getTime() + clampExpiryDays(days) * DAY_MS2).toISOString();
+  return new Date(now.getTime() + clampExpiryDays(days) * DAY_MS3).toISOString();
 }
 function normalizeLots(lots) {
   return lots.filter((lot) => lot.quantity > 0).map((lot) => ({ ...lot })).sort((a, b) => Date.parse(a.expiresAt) - Date.parse(b.expiresAt));
@@ -40338,160 +40509,6 @@ function recordGiftChange(context, expectedStatus, order) {
   else context.orders.push(order);
 }
 
-// src/core/gifting.ts
-init_define_import_meta_env();
-var GIFTING_ENABLED = false;
-var DAY_MS3 = 864e5;
-var GIFT_POLICY = {
-  /** 보낸 사람 연구원 레벨. 막 만든 부계정을 걸러 낸다. */
-  senderMinResearchLevel: 20,
-  /** 보낸 사람 계정 나이(일). */
-  senderMinAccountDays: 14,
-  /** 친구가 된 뒤 지나야 하는 날. 끊었다 다시 맺으면 처음부터 센다. */
-  minFriendDays: 14,
-  /** 본인 결제가 이 날수만큼 환불 없이 지나야 선물할 수 있다. */
-  ownPaymentClearDays: 7,
-  /** 이 기간 안에 본인 결제 환불이 있으면 선물할 수 없다. */
-  refundLookbackDays: 90,
-  sendPerDay: 2,
-  sendPer30Days: 10,
-  /**
-   * 금액 한도는 고정 숫자가 아니라 **본인 결제 실적**이다(응태 결정 2026-11-16 — 최대 한도를 두지 않는다). 이 기간 동안
-   * 보낸 선물의 원화 합은 같은 기간에 환불 없이 `ownPaymentClearDays`가 지난 본인 결제(선물 결제 제외)의 원화 합을 넘지 못한다.
-   * 오래 결제해 온 사람은 사실상 한도가 없고, 막 만든 계정·도용 카드 계정은 0원부터다 — 도용 카드로 선물을 사서 판매용
-   * 계정에 몰아주는 세탁을 막는다(받은 쪽은 회수하지 않으므로 선물이 일반 결제보다 세탁에 좋은 통로가 된다).
-   */
-  amountWindowDays: 90,
-  receivePerDay: 2,
-  receivePer30Days: 10,
-  /** 받지 않은 선물이 돌아오기까지(일). */
-  pendingExpiryDays: 30,
-  /** 결제 대기 주문이 사라지기까지(분). */
-  paymentWindowMinutes: 30,
-  /**
-   * 선물로 보낼 수 있는 상품의 계정당 구매 한도 하한. 한정·주기 상품(한도 1~2, 매일·매주·매달·계정당 한 번)은
-   * 부계정이 선물로 몇 번이고 사 줄 수 있어 「한 사람에 한 번」이라는 값어치가 깨진다 — 되풀이해 사는 팩만 연다.
-   */
-  minGiftablePurchaseLimit: 10
-};
-function giftableProductShape(product) {
-  return product.acquisition.kind === "platform_payment" && !product.passBenefit && !product.situational && product.refresh === "none" && product.purchaseLimit >= GIFT_POLICY.minGiftablePurchaseLimit;
-}
-var ms = (iso) => iso ? Date.parse(iso) : NaN;
-var olderThan = (iso, days, now) => Number.isFinite(ms(iso)) && now.getTime() - ms(iso) >= days * DAY_MS3;
-var within = (iso, days, now) => now.getTime() - ms(iso) < days * DAY_MS3;
-function countsTowardGiftLimits(order, now) {
-  const settled = settleGiftOrder(order, now);
-  return settled.status !== "lapsed";
-}
-function giftEligibility(input) {
-  const { sender, recipient, now } = input;
-  const refuse = (reason) => ({ ok: false, reason });
-  if (!input.enabled) return refuse("disabled");
-  if (!input.giftable) return refuse("not_giftable");
-  if (recipient && recipient.id === input.senderId) return refuse("self");
-  if (sender.guest) return refuse("guest");
-  if (sender.ageRestricted) return refuse("age_restricted");
-  if (sender.blocked) return refuse("blocked");
-  if (sender.researchLevel < GIFT_POLICY.senderMinResearchLevel) return refuse("level");
-  if (!olderThan(sender.accountCreatedAt, GIFT_POLICY.senderMinAccountDays, now)) return refuse("account_age");
-  if (sender.lastOwnRefundAt && within(sender.lastOwnRefundAt, GIFT_POLICY.refundLookbackDays, now)) return refuse("recent_refund");
-  if (!olderThan(sender.oldestClearedOwnPaymentAt, GIFT_POLICY.ownPaymentClearDays, now)) return refuse("no_payment_history");
-  if (!recipient || !recipient.active || recipient.guest) return refuse("recipient_unavailable");
-  if (!recipient.friendSince) return refuse("not_friend");
-  if (!olderThan(recipient.friendSince, GIFT_POLICY.minFriendDays, now)) return refuse("friend_too_new");
-  if (!sender.storeRegion || sender.storeRegion !== recipient.storeRegion) return refuse("region_mismatch");
-  const live = dedupe(input.orders).filter((order) => countsTowardGiftLimits(order, now));
-  const sent = live.filter((order) => order.senderId === input.senderId);
-  const received = live.filter((order) => order.recipientId === recipient.id);
-  if (sent.some((order) => order.recipientId === recipient.id && order.productId === input.productId && ["awaiting_payment", "pending"].includes(settleGiftOrder(order, now).status))) return refuse("duplicate_pending");
-  if (sent.filter((order) => within(order.createdAt, 1, now)).length >= GIFT_POLICY.sendPerDay) return refuse("send_daily");
-  const sentMonth = sent.filter((order) => within(order.createdAt, 30, now));
-  if (sentMonth.length >= GIFT_POLICY.sendPer30Days) return refuse("send_monthly");
-  if (giftAmountAllowanceKrw(sender, sent, now) < input.priceKrw) return refuse("send_amount");
-  const receivedLive = received.filter((order) => settleGiftOrder(order, now).status !== "returned" && settleGiftOrder(order, now).status !== "revoked");
-  if (receivedLive.filter((order) => within(order.createdAt, 1, now)).length >= GIFT_POLICY.receivePerDay) return refuse("receive_daily");
-  if (receivedLive.filter((order) => within(order.createdAt, 30, now)).length >= GIFT_POLICY.receivePer30Days) return refuse("receive_monthly");
-  return { ok: true };
-}
-function giftAmountAllowanceKrw(sender, sentOrders, now) {
-  const window2 = GIFT_POLICY.amountWindowDays;
-  const earned = sender.ownPayments.filter((payment) => within(payment.at, window2, now) && olderThan(payment.at, GIFT_POLICY.ownPaymentClearDays, now)).reduce((sum, payment) => sum + payment.priceKrw, 0);
-  const spent = sentOrders.filter((order) => within(order.createdAt, window2, now) && !["returned", "revoked", "lapsed"].includes(settleGiftOrder(order, now).status)).reduce((sum, order) => sum + order.priceKrw, 0);
-  return Math.max(0, earned - spent);
-}
-function dedupe(orders) {
-  return [...new Map(orders.map((order) => [order.id, order])).values()];
-}
-function createGiftOrder(input) {
-  return {
-    id: input.id,
-    senderId: input.senderId,
-    recipientId: input.recipientId,
-    senderName: input.senderName,
-    recipientName: input.recipientName,
-    productId: input.productId,
-    priceKrw: input.priceKrw,
-    status: "awaiting_payment",
-    createdAt: input.now.toISOString(),
-    paidAt: null,
-    expiresAt: new Date(input.now.getTime() + GIFT_POLICY.paymentWindowMinutes * 6e4).toISOString(),
-    resolvedAt: null,
-    transactionId: null,
-    returnReason: null,
-    refundedAt: null
-  };
-}
-function settleGiftOrder(order, now) {
-  if (now.getTime() < ms(order.expiresAt)) return order;
-  if (order.status === "awaiting_payment") return { ...order, status: "lapsed", resolvedAt: order.expiresAt };
-  if (order.status === "pending") return { ...order, status: "returned", returnReason: "expired", resolvedAt: order.expiresAt };
-  return order;
-}
-var GiftTransitionError = class extends Error {
-  constructor(reason) {
-    super(`GIFT_${reason.toUpperCase()}`);
-    this.reason = reason;
-  }
-  reason;
-};
-function transitionGift(order, action, actorId, now) {
-  const current2 = settleGiftOrder(order, now);
-  const at = now.toISOString();
-  const senderOnly = () => {
-    if (actorId !== current2.senderId) throw new GiftTransitionError("forbidden");
-  };
-  const recipientOnly = () => {
-    if (actorId !== current2.recipientId) throw new GiftTransitionError("forbidden");
-  };
-  switch (action.kind) {
-    case "pay":
-      senderOnly();
-      if (current2.status !== "awaiting_payment") throw new GiftTransitionError("state");
-      return { ...current2, status: "pending", paidAt: at, transactionId: action.transactionId, expiresAt: new Date(now.getTime() + GIFT_POLICY.pendingExpiryDays * DAY_MS3).toISOString() };
-    case "accept":
-      recipientOnly();
-      if (current2.status !== "pending") throw new GiftTransitionError("state");
-      return { ...current2, status: "accepted", resolvedAt: at };
-    case "decline":
-      recipientOnly();
-      if (current2.status !== "pending") throw new GiftTransitionError("state");
-      return { ...current2, status: "returned", returnReason: "declined", resolvedAt: at };
-    case "cancel":
-      senderOnly();
-      if (current2.status !== "pending") throw new GiftTransitionError("state");
-      return { ...current2, status: "returned", returnReason: "cancelled", resolvedAt: at };
-  }
-}
-function sentGiftDisplayStatus(order, now) {
-  const settled = settleGiftOrder(order, now);
-  if (settled.status === "awaiting_payment" || settled.status === "lapsed") return null;
-  return settled.status;
-}
-function incomingGifts(orders, recipientId, now) {
-  return dedupe(orders).map((order) => settleGiftOrder(order, now)).filter((order) => order.recipientId === recipientId && order.status === "pending").sort((a, b) => ms(a.paidAt) - ms(b.paidAt));
-}
-
 // src/api/serverClock.ts
 init_define_import_meta_env();
 var offsetMs = 0;
@@ -42329,7 +42346,7 @@ var PREMIUM_PRODUCTS = [
 var PREMIUM_GEM_PER_KRW = 1500 / 4900;
 
 // src/data/shopCatalog.ts
-var PREMIUM_TABS = [
+var ALL_PREMIUM_TABS = [
   { id: "limited", label: "\uD55C\uC815" },
   { id: "pass", label: "\uD328\uC2A4" },
   { id: "deal", label: "\uD2B9\uAC00" },
@@ -42337,8 +42354,10 @@ var PREMIUM_TABS = [
   { id: "daily", label: "\uC77C\uAC04" },
   { id: "weekly", label: "\uC8FC\uAC04" },
   { id: "monthly", label: "\uC6D4\uAC04" },
-  { id: "gem", label: "\uC82C" }
+  { id: "gem", label: "\uC82C" },
+  { id: "gift", label: "\uC120\uBB3C" }
 ];
+var PREMIUM_TABS = ALL_PREMIUM_TABS.filter((tab) => tab.id !== "gift" || GIFTING_ENABLED);
 var LEGACY_PRODUCTS = [
   // 이벤트도 같은 카탈로그 가격·지급·구매 제한 규칙을 사용하며 기간 판정은 서버 API가 수행한다.
   { id: "event-great-auk-supplies", storefront: "trade", category: "special", iconKey: "shop-product-supplies", name: "\uD574\uC548 \uC870\uC0AC \uBCF4\uAE09\uD488", description: "\uD070\uBC14\uB2E4\uC1E0\uC624\uB9AC \uBC1C\uAD74 \uBCF4\uACE0\uC11C \uAD50\uD658 \uBCF4\uAE09", acquisition: { kind: "currency", currency: "cheesecake", amount: 30 }, grants: [{ kind: "currency", currency: "fossil", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: "2026-08-20T00:00:00Z", visibleUntil: "2026-09-03T00:00:00Z" }
@@ -42347,7 +42366,7 @@ var LEGACY_PRODUCTS = [
   // 재화를 재화로 바꾸는 일은 DNA 교환이 그대로 맡는다.
 ];
 var PRODUCTS = [...SHOP_PRODUCTS, ...LEGACY_PRODUCTS, ...PREMIUM_PRODUCTS];
-for (const tab of PREMIUM_TABS) registerDataText(tab, "label", `premium.tab.${tab.id}`);
+for (const tab of ALL_PREMIUM_TABS) registerDataText(tab, "label", `premium.tab.${tab.id}`);
 for (const product of PRODUCTS) {
   registerDataText(product, "name", `product.${product.id}.name`);
   if (product.storefront !== "premium" && product.storefront !== "mileage" && product.storefront !== "duel" && product.description !== "") registerDataText(product, "description", `product.${product.id}.description`);
@@ -44420,7 +44439,7 @@ function buildRecollectionEntries() {
 var RECOLLECTION_ENTRIES = buildRecollectionEntries();
 
 // src/core/achievements.ts
-function achievementFacts(state) {
+function achievementFacts(state, external = {}) {
   const lifetime = state.missions.lifetime ?? {};
   const playable = PLAYABLE_RELICS.filter(({ id }) => state.owned.has(id));
   const progress = playable.map(({ id }) => state.relicProgress[id]).filter((entry) => entry !== void 0);
@@ -44482,7 +44501,8 @@ function achievementFacts(state) {
     partySameElement: partyFull && new Set(partyDefs.map(({ element }) => element)).size === 1 ? 1 : 0,
     partySquads: partyFull ? new Set(partyDefs.map(({ squad }) => squad)).size : 0,
     partySsr: partyFull ? partyDefs.filter(({ rarity }) => rarity === "SSR").length : 0,
-    nicknameSet: state.playerCard?.nickname ? 1 : 0
+    nicknameSet: state.playerCard?.nickname ? 1 : 0,
+    giftsDelivered: Math.max(0, Math.floor(external.giftsDelivered ?? 0))
   };
 }
 function achievedTierCount(series, value) {
@@ -45345,7 +45365,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.483.2",
+  version: "0.484.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -48559,6 +48579,16 @@ var FakeServer = class {
     if (!product || !giftableProductShape(product)) return void 0;
     return product.giftable || this.giftingOverride?.giftableProductIds.includes(product.id) ? product : void 0;
   }
+  /** 업적의 사실 — 저장에서 읽는 것에 선물 전달 수(주문 표가 갖는다)를 더한다. 맥락이 없는 호출은 0이다. */
+  achievementFactsOf(state) {
+    return achievementFacts(state, { giftsDelivered: this.giftsDelivered() });
+  }
+  /** 내가 보낸 선물 중 상대가 받은 수. 실서버는 DB가 전체 기간을 세어 넘기고, 없으면 맥락의 주문에서 센다. */
+  giftsDelivered() {
+    if (!this.giftsOpen()) return 0;
+    const context = this.giftContext;
+    return context.sender.deliveredCount ?? context.orders.filter((order) => order.senderId === context.playerId && order.status === "accepted").length;
+  }
   giftSenderFacts(context) {
     const ownPayments = context.sender.ownPayments.flatMap(({ productId, at }) => {
       const acquisition = PRODUCTS.find(({ id }) => id === productId)?.acquisition;
@@ -49740,7 +49770,7 @@ var FakeServer = class {
     const attendance = this.attendanceDto(this.attendanceNow(now), now);
     const mail = this.mailListDto();
     const claimablePassCount = this.progressPassDtos(this.state).reduce((sum, pass) => sum + pass.milestones.filter((stage) => stage.freeState === "claimable" || stage.state === "claimable").length, 0);
-    const claimableAchievements = claimableAchievementCount(normalizeAchievementState(this.state.achievements), achievementFacts(this.state));
+    const claimableAchievements = claimableAchievementCount(normalizeAchievementState(this.state.achievements), this.achievementFactsOf(this.state));
     const growth = newbieGrowthWindow(this.newbieGrowthStart(this.state), now);
     const claimableGrowth = growth.active ? this.newbieGrowthDto(this.state, this.newbieGrowthFactsOf(this.state, await this.newbieGuildJoined()), now).claimableCount : 0;
     const roulette = rouletteStatus(this.state.dailyAdRewards, now, this.hasAdFreeMembership(now));
@@ -49891,7 +49921,7 @@ var FakeServer = class {
     await this.delay();
     for (const id of seriesIds ?? []) if (!ACHIEVEMENT_SERIES.some((series) => series.id === id)) throw new GameApiError("NOTHING_TO_CLAIM", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC5C5\uC801\uC785\uB2C8\uB2E4.");
     const current2 = normalizeAchievementState(this.state.achievements);
-    const claim = claimAchievements(current2, achievementFacts(this.state), seriesIds);
+    const claim = claimAchievements(current2, this.achievementFactsOf(this.state), seriesIds);
     if (claim.rewards.length === 0 && Object.keys(claim.claimedTiers).length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "\uBC1B\uC744 \uC5C5\uC801 \uBCF4\uC0C1\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const nextWallet = { ...this.state.wallet };
     const granted = claim.rewards.map(({ currency: currency3, amount }) => {
@@ -50047,7 +50077,7 @@ var FakeServer = class {
   }
   achievementListDto(state) {
     const achievements = normalizeAchievementState(state.achievements);
-    const facts = achievementFacts(state);
+    const facts = this.achievementFactsOf(state);
     const earned = new Set(state.earnedProfileModifierIds);
     const series = ACHIEVEMENT_SERIES.map((definition) => {
       const claimedTiers = achievements.claimed[definition.id] ?? 0;
@@ -51919,8 +51949,9 @@ async function run(playerId, req, deps) {
     const now = deps.now?.() ?? /* @__PURE__ */ new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
     const wantsDuel = /^(getDuelStatus|refreshDuelOpponents|setDuelDefense|enterDuel|resolveDuel|buyDuelAttempt|getDuelRanking|claimDuelSeasonReward)$/.test(req.method) && deps.store.duelContext;
-    const wantsGift = GIFTING_ENABLED && /^(getGiftOptions|prepareGift|sendGift|cancelGift|getIncomingGifts|acceptGift|declineGift|getPurchaseHistory)$/.test(req.method) && deps.store.giftContext;
+    const wantsGift = GIFTING_ENABLED && /^(getGiftOptions|prepareGift|sendGift|cancelGift|getIncomingGifts|acceptGift|declineGift|getPurchaseHistory|getAchievements|claimAchievementRewards)$/.test(req.method) && deps.store.giftContext;
     const giftRecipient = /^(getGiftOptions|prepareGift)$/.test(req.method) ? String(req.args?.[0]?.recipientId ?? "") || null : null;
+    const giftRecipientId = giftRecipient && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(giftRecipient) ? giftRecipient : null;
     const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords, schedule, launchAt, gifts] = await Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : void 0,
       deps.store.load(playerId),
@@ -51934,7 +51965,7 @@ async function run(playerId, req, deps) {
       req.method === "updatePlayerCard" && deps.store.bannedWords ? deps.store.bannedWords().catch(() => []) : void 0,
       deps.store.liveSchedule ? deps.store.liveSchedule().catch(() => void 0) : void 0,
       deps.store.launchAt ? deps.store.launchAt().catch(() => void 0) : void 0,
-      wantsGift ? deps.store.giftContext(playerId, giftRecipient, now) : void 0
+      wantsGift ? deps.store.giftContext(playerId, giftRecipientId, now) : void 0
     ]);
     checkDeadline();
     if (schedule !== void 0) setLiveSchedule(schedule);

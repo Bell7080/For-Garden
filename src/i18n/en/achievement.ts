@@ -74,6 +74,8 @@ export const ACHIEVEMENT_EN = {
   "achievement.series.allied-party": "Three Squads United",
   "achievement.series.ssr-party": "Three Shining Companions",
   "achievement.objective.goldPeak": "Hold {value} Gold",
+  "achievement.series.gift-giver": "Giving Hands",
+  "achievement.objective.giftsDelivered": "Deliver {value} gifts",
   "achievement.objective.relicsOwned": "Own {value} Relic types",
   "achievement.objective.maxRelicLevel": "Raise a Relic to level {value}",
   "achievement.objective.relicsMaxBreakthrough": "Complete Breakthrough for {value} Relics",

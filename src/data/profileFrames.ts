@@ -1,4 +1,5 @@
 import { registerDataText } from "../i18n";
+import { GIFTING_ENABLED } from "../core/gifting";
 
 /**
  * 프로필 테두리 — 연구원 레벨 또는 업적 보상 수령으로 여는 치장.
@@ -29,11 +30,15 @@ export type ProfileFrameStyle = "plain" | "bracket" | "gem" | "wing" | "vine" | 
 
 export const DEFAULT_PROFILE_FRAME_ID = "field";
 
+/** 선물을 많이 전한 사람의 테두리 — 선물 업적 「마음을 전하는 손」 네 단계를 다 받으면 열린다. 선물하기가 꺼진 동안은 서지 않는다. */
+export const GIFT_GIVER_FRAME: ProfileFrameDefinition = { id: "giver", style: "halo", displayName: "나눔의 고리", unlockLevel: 1, unlockAchievement: { id: "gift-giver", tiers: 4 }, color: 0xff8fc8, wash: 0x3e1a2c };
+
 export const PROFILE_FRAMES: readonly ProfileFrameDefinition[] = [
   { id: "field", style: "plain", displayName: "현장 연구원", unlockLevel: 1, color: 0x9fb3c8, wash: 0x2a3644 },
   { id: "ancient", style: "strata", displayName: "태고의 지층", unlockLevel: 1, unlockAchievement: { id: "ancient-depth", tiers: 4 }, color: 0xd8ae72, wash: 0x392818 },
   { id: "conqueror", style: "laurel", displayName: "불굴의 월계", unlockLevel: 1, unlockAchievement: { id: "hard-frontline", tiers: 4 }, color: 0xf28b9b, wash: 0x3e1b28 },
   { id: "runic", style: "prism", displayName: "룬의 광채", unlockLevel: 1, unlockAchievement: { id: "rune-refinement", tiers: 4 }, color: 0x7ee5de, wash: 0x143b3a },
+  ...(GIFTING_ENABLED ? [GIFT_GIVER_FRAME] : []),
   { id: "patron", style: "sigil", displayName: "첫 후원의 증표", unlockLevel: 1, unlockGift: "firstPayment", color: 0xffd27a, wash: 0x3f2a10 },
   { id: "season", style: "halo", displayName: "시즌의 날개", unlockLevel: 1, unlockGift: "seasonPass", color: 0x9fe3ff, wash: 0x13324a },
   { id: "holo", style: "bracket", displayName: "투영 관측", unlockLevel: 10, color: 0x5fd4ff, wash: 0x173848 },
@@ -57,4 +62,4 @@ export function isProfileFrameUnlocked(frame: ProfileFrameDefinition, playerLeve
   return playerLevel >= frame.unlockLevel && (!frame.unlockAchievement || (claimed[frame.unlockAchievement.id] ?? 0) >= frame.unlockAchievement.tiers);
 }
 
-for (const frame of PROFILE_FRAMES) registerDataText(frame, "displayName", `profileFrame.${frame.id}.name`);
+for (const frame of [...PROFILE_FRAMES, ...(GIFTING_ENABLED ? [] : [GIFT_GIVER_FRAME])]) registerDataText(frame, "displayName", `profileFrame.${frame.id}.name`);

@@ -137,6 +137,8 @@ export interface GiftRecipientFacts {
   id: string;
   /** 지금의 친구 관계가 맺어진 시각. 친구가 아니면 `null`. */
   friendSince: string | null;
+  /** 같은 길드에 함께 있은 시각(둘 중 늦게 들어온 쪽). 같은 길드가 아니면 `null`. 친구가 아니어도 길드원이면 받을 수 있다. */
+  guildmateSince?: string | null;
   /** 정상 활동 중인 계정인가(정지·탈퇴·게스트 포기 아님). */
   active: boolean;
   guest: boolean;
@@ -192,8 +194,10 @@ export function giftEligibility(input: GiftEligibilityInput): GiftEligibility {
   if (sender.lastOwnRefundAt && within(sender.lastOwnRefundAt, GIFT_POLICY.refundLookbackDays, now)) return refuse("recent_refund");
   if (!olderThan(sender.oldestClearedOwnPaymentAt, GIFT_POLICY.ownPaymentClearDays, now)) return refuse("no_payment_history");
   if (!recipient || !recipient.active || recipient.guest) return refuse("recipient_unavailable");
-  if (!recipient.friendSince) return refuse("not_friend");
-  if (!olderThan(recipient.friendSince, GIFT_POLICY.minFriendDays, now)) return refuse("friend_too_new");
+  // 관계는 친구 또는 같은 길드 — 둘 중 하나라도 맺은 지 `minFriendDays`가 지났으면 된다.
+  const ties = [recipient.friendSince, recipient.guildmateSince ?? null].filter((tie): tie is string => !!tie);
+  if (ties.length === 0) return refuse("not_friend");
+  if (!ties.some(tie => olderThan(tie, GIFT_POLICY.minFriendDays, now))) return refuse("friend_too_new");
   if (!sender.storeRegion || sender.storeRegion !== recipient.storeRegion) return refuse("region_mismatch");
 
   const live = dedupe(input.orders).filter(order => countsTowardGiftLimits(order, now));

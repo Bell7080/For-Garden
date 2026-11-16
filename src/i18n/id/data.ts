@@ -549,7 +549,7 @@ export default {
   "keyword.frenzy.term": "Amukan",
   "keyword.frenzy.description": "Menyerang unit terdekat di pihaknya sendiri dengan damage separuhnya. Tanpa sekutu untuk diserang, ia menyerang dirinya sendiri. Tidak bisa memakai Ultimate selama mengamuk.",
   "keyword.concussion.term": "Gegar",
-  "keyword.concussion.description": "Kerusakan sebanding HP maks, berlipat dua saat kritis. Menembus Pertahanan dan afinitas serta langsung terjadi saat kena.",
+  "keyword.concussion.description": "Kerusakan sebesar 6% HP maks, atau 12% saat kritis. Menembus Pertahanan dan afinitas serta langsung terjadi saat kena.",
   "keyword.knockback.term": "Hempasan",
   "keyword.knockback.description": "Musuh yang terkena memantul di dinding medan. Selama melayang, tak bisa bergerak maupun menyerang.",
   "keyword.charge.term": "Serbuan",

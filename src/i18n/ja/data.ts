@@ -732,7 +732,7 @@ export default {
   "keyword.frenzy.term": "狂乱",
   "keyword.frenzy.description": "最も近い味方を攻撃し、そのとき与えるダメージは半分になる。殴る味方が残っていなければその場で自分を攻撃する。狂乱中は必殺技を使えない。",
   "keyword.concussion.term": "脳震盪",
-  "keyword.concussion.description": "最大体力に比例するダメージ。クリティカル発動時は2倍になる。防御力と属性を素通りして、当たった瞬間に一度で入る。",
+  "keyword.concussion.description": "最大体力の6%に当たるダメージ。クリティカル発動時は12%に当たるダメージ。防御力と属性を素通りして、当たった瞬間に一度で入る。",
   "keyword.knockback.term": "吹き飛ばし",
   "keyword.knockback.description": "弾かれた敵が戦場の壁を跳ねながら飛び回る。飛んでいる間は動くことも殴ることもできない。",
   "keyword.charge.term": "突進",

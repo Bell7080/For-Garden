@@ -567,7 +567,7 @@ export default {
   "keyword.frenzy.term": "Frenzy",
   "keyword.frenzy.description": "It attacks the nearest unit on its own side, dealing half damage. With no allies left to hit, it attacks itself on the spot. It cannot use its Ultimate while frenzied.",
   "keyword.concussion.term": "Concussion",
-  "keyword.concussion.description": "Damage proportional to the target's max HP, doubled on a critical strike. It passes through Defense and affinity and lands at once on impact.",
+  "keyword.concussion.description": "Damage equal to 6% of max HP, or 12% on a critical strike. It passes through Defense and affinity and lands at once on impact.",
   "keyword.knockback.term": "Knockback",
   "keyword.knockback.description": "The struck enemy bounces off the walls of the battlefield. While flying it can neither move nor attack.",
   "keyword.charge.term": "Charge",

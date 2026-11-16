@@ -549,7 +549,7 @@ export default {
   "keyword.frenzy.term": "Frenesí",
   "keyword.frenzy.description": "Ataca a la unidad más cercana de su propio bando y causa la mitad de daño. Sin aliados a los que golpear, se ataca a sí mismo. No puede usar su Definitiva en Frenesí.",
   "keyword.concussion.term": "Conmoción",
-  "keyword.concussion.description": "Daño proporcional a los PV máx., doble en golpe crítico. Atraviesa la Defensa y la afinidad y se aplica de golpe al impactar.",
+  "keyword.concussion.description": "Daño igual al 6% de los PV máx., o 12% en golpe crítico. Atraviesa la Defensa y la afinidad y se aplica de golpe al impactar.",
   "keyword.knockback.term": "Derribo",
   "keyword.knockback.description": "El enemigo golpeado rebota contra los muros del campo de batalla. Mientras vuela no puede moverse ni atacar.",
   "keyword.charge.term": "Embestida",

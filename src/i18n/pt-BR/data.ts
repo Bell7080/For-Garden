@@ -549,7 +549,7 @@ export default {
   "keyword.frenzy.term": "Frenesi",
   "keyword.frenzy.description": "Ataca a unidade mais próxima do próprio lado, causando metade do dano. Sem aliados para atingir, ataca a si mesmo. Não pode usar a Suprema em Frenesi.",
   "keyword.concussion.term": "Concussão",
-  "keyword.concussion.description": "Dano proporcional ao PV máx., dobrado em acerto crítico. Atravessa Defesa e afinidade e acontece de uma vez no impacto.",
+  "keyword.concussion.description": "Dano igual a 6% do PV máx., ou 12% em acerto crítico. Atravessa Defesa e afinidade e acontece de uma vez no impacto.",
   "keyword.knockback.term": "Arremesso",
   "keyword.knockback.description": "O inimigo atingido quica nas paredes do campo de batalha. Enquanto voa, não pode se mover nem atacar.",
   "keyword.charge.term": "Investida",

@@ -999,10 +999,10 @@ describe("파치 스킬 표시 계약", () => {
   it("의 기본 공격은 세 번째 타격에만 걸린다는 사실을 본문이 말한다", () => {
     const def = pachi();
     expect(def.basic.statusEffectEvery).toBe(3);
-    // 뇌진탕의 비율은 개체마다 달라 본문이 적는다(태그는 「치명타면 두 배」만 말한다).
+    // 뇌진탕의 수치와 치명타 배증은 태그가 말하므로 본문이 되풀이하지 않는다.
     // 기절은 뇌진탕과 같은 타격에 함께 걸리므로 문장을 끊지 않고 이어 붙인다.
     expect(skillDescription(def.basic, { damage: 118 })).toBe(
-      "적 한 명에게 [[damage-value|118]]의 [[physical-damage|물리 피해]]를 준다. 매 3번째 공격마다 최대 체력 6%(치명타면 12%)의 [[concussion|뇌진탕]]을 입히고 1초 동안 [[stun|기절]]시킨다.",
+      "적 한 명에게 [[damage-value|118]]의 [[physical-damage|물리 피해]]를 준다. 매 3번째 공격마다 [[concussion|뇌진탕]]을 입히고 1초 동안 [[stun|기절]]시킨다.",
     );
   });
 
@@ -1010,7 +1010,7 @@ describe("파치 스킬 표시 계약", () => {
     const def = pachi();
     expect(def.ultimate).toMatchObject({ targeting: "chargeLine", power: 200 });
     expect(skillDescription(def.ultimate, { damage: 264 })).toBe(
-      "[[charge|돌진]]해 뚫고 지나간 길의 모든 적에게 [[damage-value|264]]의 [[physical-damage|물리 피해]]를 주고 최대 체력 6%(치명타면 12%)의 [[concussion|뇌진탕]]을 입히고 2초 동안 [[stun|기절]]시킨다.",
+      "[[charge|돌진]]해 뚫고 지나간 길의 모든 적에게 [[damage-value|264]]의 [[physical-damage|물리 피해]]를 주고 [[concussion|뇌진탕]]을 입히고 2초 동안 [[stun|기절]]시킨다.",
     );
   });
 
@@ -1034,14 +1034,9 @@ describe("파치 스킬 표시 계약", () => {
     const effect = pachi().basic.statusEffects!.find((status) => status.kind === "concussion")!;
     if (effect.kind !== "concussion") throw new Error("뇌진탕 효과가 아니다");
     const keyword = KEYWORDS.find((entry) => entry.id === "concussion")!;
-    // 뇌진탕은 파치(6%)와 코마(10%)가 함께 쓰는 규칙어라 수치는 본문이 적고, 태그는 「치명타면 두 배」만 말한다.
-    expect(keyword.description).not.toMatch(/\d+%/);
-    expect(keyword.description).toContain("치명타면 두 배");
-    for (const def of RELICS) for (const status of [...(def.basic.statusEffects ?? []), ...(def.ultimate.statusEffects ?? [])]) {
-      if (status.kind === "concussion") expect(status.criticalMaxHpPercent, def.id).toBe(status.maxHpPercent * 2);
-    }
-    expect(effect.maxHpPercent).toBe(6);
-    expect(effect.criticalMaxHpPercent).toBe(12);
+    // 수치를 태그가 말하기로 했으므로 데이터와 갈리면 유일한 설명이 틀린다.
+    expect(keyword.description).toContain(`최대 체력의 ${effect.maxHpPercent}%`);
+    expect(keyword.description).toContain(`치명타면 ${effect.criticalMaxHpPercent}%`);
   });
 });
 
@@ -1138,7 +1133,7 @@ describe("코마 스킬 표시 계약", () => {
     // 붙이지 않고 이어지는 형태를 문구 표가 통째로 갖는다.
     expect(skillDescription(def.basic, { damage: 150 })).toBe(
       "적 한 명에게 [[damage-value|150]]의 [[physical-damage|물리 피해]]를 준다."
-      + " 매 3번째 공격마다 최대 체력 10%(치명타면 20%)의 [[concussion|뇌진탕]]을 입히고 1초 동안 [[stun|기절]]시키며 [[knockback|날려버린다]].",
+      + " 매 3번째 공격마다 [[concussion|뇌진탕]]을 입히고 1초 동안 [[stun|기절]]시키며 [[knockback|날려버린다]].",
     );
   });
 

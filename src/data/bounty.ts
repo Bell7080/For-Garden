@@ -104,8 +104,9 @@ export const BOUNTY_TIERS: readonly BountyTierDef[] = [
     { relicId: "magasa", level: 49 }, { relicId: "ikanixia", level: 46 }, { relicId: "noa", level: 46 },
   ] },
   // 10급은 7장 끝의 부대장 카르가 마지막에 선다.
+  // v0.487.4: 코마의 뇌진탕을 6%로 낮춘 뒤 LV.50에서는 LV.20 모르페가 1대1을 세 판 모두 이겨 10급 2라운드를 LV.53(카르와 같은 레벨)로 올렸다.
   { id: "bounty-5", order: 10, name: "현상수배 10급", rewardGold: 28_000, rounds: [
-    { relicId: "noa", level: 50 }, { relicId: "koma", level: 50 }, { relicId: "carno", level: 53 },
+    { relicId: "noa", level: 50 }, { relicId: "koma", level: 53 }, { relicId: "carno", level: 53 },
   ] },
 ];
 

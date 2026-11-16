@@ -549,7 +549,7 @@ export default {
   "keyword.frenzy.term": "暴走",
   "keyword.frenzy.description": "会攻击最近的己方单位，造成的伤害减半。没有可攻击的同伴时，会当场攻击自己。暴走期间无法使用必杀技。",
   "keyword.concussion.term": "脑震荡",
-  "keyword.concussion.description": "按最大生命比例造成的伤害，暴击时翻倍。穿透防御与属性相克，命中瞬间一次性造成。",
+  "keyword.concussion.description": "相当于最大生命6%的伤害，暴击时为12%。穿透防御与属性相克，命中瞬间一次性造成。",
   "keyword.knockback.term": "击飞",
   "keyword.knockback.description": "被击中的敌人会在战场墙壁间反弹。飞行期间无法移动也无法攻击。",
   "keyword.charge.term": "冲锋",

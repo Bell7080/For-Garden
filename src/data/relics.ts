@@ -3060,10 +3060,12 @@ export const RELICS: RelicDef[] = [
     stats: {
       // 중간보스는 SR 띠의 위쪽이다. 암살자가 쓰는 공격력과 그 정체성인 공격 속도에만 얹는다.
       // 응태 결정(v0.308.6): SSR 없이 못 깰 만큼 단단해 체력을 덜어 방어·저항·주문력에 조금 나눴다(1100/55/46/52 → 900/60/52/62).
-      hp: 900,
+      // 응태 결정(v0.487.4): 뇌진탕을 파치와 같은 6%(치명 12%)로 낮춘 몫을 체력·공격력으로 돌려받았다(900/150 → 960/152).
+      // 공격력만 165로 올리거나 체력을 980 넘게 얹으면 1-10·4-9 검수가 흔들려 이 자리에서 멈췄다. 이동 속도는 손대지 않는다.
+      hp: 960,
       def: 60,
       res: 52,
-      atk: 150,
+      atk: 152,
       ap: 62,
       attackSpeed: 118,
       moveSpeed: 124,
@@ -3114,7 +3116,7 @@ export const RELICS: RelicDef[] = [
        */
       statusEffectEvery: 3,
       statusEffects: [
-        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 },
+        { kind: "concussion", maxHpPercent: 6, criticalMaxHpPercent: 12 },
         { kind: "stun", seconds: 1 },
         // 밀어내는 것이 이 개체가 무리에서 맡은 일이다 — 흩어진 적을 한 방향으로 몰아
         // 뒤따르는 아모와 토비 앞에 세운다(`squadNote`).

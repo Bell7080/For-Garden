@@ -549,7 +549,7 @@ export default {
   "keyword.frenzy.term": "Cuồng bạo",
   "keyword.frenzy.description": "Tấn công đơn vị phe mình gần nhất và gây sát thương giảm một nửa. Không còn đồng đội để đánh thì tự đánh mình tại chỗ. Không thể dùng Tuyệt kỹ khi Cuồng bạo.",
   "keyword.concussion.term": "Chấn động",
-  "keyword.concussion.description": "Sát thương theo tỉ lệ HP tối đa, gấp đôi khi chí mạng. Xuyên qua Thủ và tương khắc, gây ngay khi trúng.",
+  "keyword.concussion.description": "Sát thương bằng 6% HP tối đa, hoặc 12% khi chí mạng. Xuyên qua Thủ và tương khắc, gây ngay khi trúng.",
   "keyword.knockback.term": "Đánh bật",
   "keyword.knockback.description": "Kẻ địch trúng đòn nảy bật giữa các bức tường chiến trường. Khi đang bay không thể di chuyển hay tấn công.",
   "keyword.charge.term": "Xung phong",

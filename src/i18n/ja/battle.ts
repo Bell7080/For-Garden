@@ -73,4 +73,6 @@ export const BATTLE_JA = {
   "tutorial.rune.engrave": "刻印を確定して、ルーンを完成させてください",
   "tutorial.rune.done.title": "ルーン完成！",
   "tutorial.rune.done.body": "研磨と刻印をすべて終えました。次からは研磨にゴールドがかかります。",
+  "tutorial.rune.done.go": "{name}に装着しに行く",
+  "tutorial.rune.equip": "ルーンはここで装着できます！",
 } as const;

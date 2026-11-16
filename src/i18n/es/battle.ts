@@ -70,4 +70,6 @@ export const BATTLE_ES = {
   "tutorial.rune.engrave": "Toca Confirmar grabado para completar la Runa",
   "tutorial.rune.done.title": "¡Runa completa!",
   "tutorial.rune.done.body": "Tallado y grabado terminados. A partir de ahora, tallar cuesta Oro.",
+  "tutorial.rune.done.go": "Equipar a {name}",
+  "tutorial.rune.equip": "¡Aquí puedes equipar Runas!",
 } as const;

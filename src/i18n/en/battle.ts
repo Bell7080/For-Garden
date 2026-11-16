@@ -70,4 +70,6 @@ export const BATTLE_EN = {
   "tutorial.rune.engrave": "Tap Confirm Engraving to complete the Rune",
   "tutorial.rune.done.title": "Rune Complete!",
   "tutorial.rune.done.body": "Polishing and Engraving are all done. From now on, Polishing costs Gold.",
+  "tutorial.rune.done.go": "Equip on {name}",
+  "tutorial.rune.equip": "You can equip Runes here!",
 } as const;

@@ -70,4 +70,6 @@ export const BATTLE_DE = {
   "tutorial.rune.engrave": "Tippe auf Gravur bestätigen, um die Rune zu vollenden",
   "tutorial.rune.done.title": "Rune vollendet!",
   "tutorial.rune.done.body": "Veredeln und Gravieren sind fertig. Ab jetzt kostet Veredeln Gold.",
+  "tutorial.rune.done.go": "Bei {name} anlegen",
+  "tutorial.rune.equip": "Hier kannst du Runen anlegen!",
 } as const;

@@ -70,4 +70,6 @@ export const BATTLE_TH = {
   "tutorial.rune.engrave": "แตะยืนยันการสลักเพื่อทำให้รูนสมบูรณ์",
   "tutorial.rune.done.title": "รูนสมบูรณ์!",
   "tutorial.rune.done.body": "เจียระไนและสลักเสร็จหมดแล้ว ต่อไปการเจียระไนจะใช้ทอง",
+  "tutorial.rune.done.go": "ไปสวมให้ {name}",
+  "tutorial.rune.equip": "สวมใส่รูนได้ที่นี่!",
 } as const;

@@ -8,7 +8,8 @@ import { gameApi } from "../api/FakeServer";
 import { setDebugRuneForgeRename, setDebugRuneNoteCraft } from "../debug";
 import { canEngraveRune, canEnhanceRune, formatRuneOptionValue, runeOptionValue, runeBatchEnhancementTargets, runePartLabel, runeRarityLabel, runeEnhancementAttempts, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../core/runes";
 import { runeBatchEnhancementGoldCost, runeEnhancementGoldCost } from "../data/runes";
-import { RELICS } from "../data/relics";
+import { getRelic, RELICS } from "../data/relics";
+import { relicCollection } from "../managers/RelicCollectionManager";
 import { InventoryManager } from "../managers/InventoryManager";
 import { burstOverlayEffect } from "../managers/overlayEffects";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -30,7 +31,7 @@ import { COLOR, textStyle } from "./theme";
 import { audioManager } from "../managers/AudioManager";
 import { contentOpen, showContentLockedToast } from "./contentLock";
 import { LOCK_DIM } from "./lockStyle";
-import { startNavScene } from "./screenTransition";
+import { startNavScene, startScene } from "./screenTransition";
 import { NAV_TABS, navTabDirection } from "../core/navTabs";
 import { tutorialManager } from "../managers/TutorialManager";
 import { guideFreeRuneCraft, unionRects } from "./freeRuneCraftTutorial";
@@ -46,6 +47,9 @@ const RUNE_STAT_KEY: Readonly<Record<RuneStatKey, TextKey>> = {
   attackSpeed: "stat.attackSpeed", lifeSteal: "stat.lifeSteal", critChance: "stat.critChance", critDamage: "stat.critDamage",
   ferocityGain: "stat.ferocityGain.rune", energyGain: "stat.energyGain.rune",
 };
+
+/** 무료 각인 체험을 마치면 룬을 끼우는 자리를 짚어 줄 렐릭 — 신규 계정의 호위 렐릭이다. */
+const RUNE_EQUIP_GUIDE_RELIC = "torika";
 
 /** 상수가 아니라 함수다 — 모듈이 읽히는 순간의 문구로 굳으면 언어를 바꿔도 그 자리만 옛 이름으로 남는다. */
 export function runeStatLabel(key: RuneStatKey): string { return t(RUNE_STAT_KEY[key]); }
@@ -595,7 +599,14 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         if (engraving && wasFree) {
           scene.time.delayedCall(700, () => {
             if (closed) return;
-            popups.confirm({ title: t("tutorial.rune.done.title"), message: t("tutorial.rune.done.body"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
+            // 마지막 한 칸은 끼우는 자리를 짚어 주는 것까지다 — 토리카 정보창으로 데려가 룬 칸을 비추고, 장착은 시키지 않는다.
+            const guideId = relicCollection.owns(RUNE_EQUIP_GUIDE_RELIC) ? RUNE_EQUIP_GUIDE_RELIC : undefined;
+            popups.confirm({
+              title: t("tutorial.rune.done.title"),
+              message: t("tutorial.rune.done.body"),
+              confirmLabel: guideId ? t("tutorial.rune.done.go", { name: getRelic(guideId).name }) : t("settings.action.confirm"),
+              cancelLabel: false,
+            }, () => { if (guideId && scene.scene.isActive()) startScene(scene, "relics", { openRelicId: guideId, runeEquipHint: true }); });
           });
         }
       } catch (error) {

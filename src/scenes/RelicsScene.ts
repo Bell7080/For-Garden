@@ -131,13 +131,16 @@ export class RelicsScene extends Phaser.Scene {
 
   /** 결과판의 강해지는 길이 곧장 정보창을 열어 달라고 넘긴 렐릭. 한 번 열고 비운다. */
   private pendingOpenRelicId?: string;
+  /** 무료 각인 체험을 마치고 넘어왔다 — 연 정보창의 룬 칸을 한 번 짚어 준다(장착은 시키지 않는다). */
+  private pendingRuneEquipHint = false;
 
   constructor() {
     super("relics");
   }
 
-  init(data?: { openRelicId?: string }): void {
+  init(data?: { openRelicId?: string; runeEquipHint?: boolean }): void {
     this.pendingOpenRelicId = typeof data?.openRelicId === "string" ? data.openRelicId : undefined;
+    this.pendingRuneEquipHint = data?.runeEquipHint === true;
     consumeSceneEntry(this);
   }
 
@@ -231,8 +234,29 @@ export class RelicsScene extends Phaser.Scene {
     // 강해지는 길로 들어왔으면 그 렐릭의 정보창이 곧장 열린다 — 도감에서 다시 찾지 않는다.
     const openId = this.pendingOpenRelicId;
     this.pendingOpenRelicId = undefined;
-    if (openId && relicCollection.owns(openId)) this.info.showRelic(getRelic(openId), true);
-    else this.startFeedTutorial(nav);
+    const runeHint = this.pendingRuneEquipHint;
+    this.pendingRuneEquipHint = false;
+    if (openId && relicCollection.owns(openId)) {
+      this.info.showRelic(getRelic(openId), true);
+      if (runeHint) this.showRuneEquipHint(openId);
+    } else this.startFeedTutorial(nav);
+  }
+
+  /**
+   * 무료 각인 체험의 마지막 한 칸: 정보창의 룬 칸을 비추며 「여기서 장착할 수 있어요」만 말한다. 장착은 시키지 않으므로
+   * 화면 아무 곳이나 누르면 걷히고 아무것도 저장하지 않는다(체험은 각인에서 이미 끝났다). 창이 닫히거나 다른 렐릭으로
+   * 넘어가거나 다른 판이 덮이면 함께 걷는다.
+   */
+  private showRuneEquipHint(relicId: string): void {
+    let stopped = false;
+    const stop = followTutorialTarget(this, {
+      enabled: () => !stopped && this.info.currentRelicId() === relicId && this.info.runeSlotsBounds() !== undefined,
+      rect: () => this.info.runeSlotsBounds(),
+      text: () => t("tutorial.rune.equip"),
+      hint: () => t("reward.tapHint"),
+      onAdvance: () => { stopped = true; stop(); },
+      side: () => "above",
+    });
   }
 
   /**

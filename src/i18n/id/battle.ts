@@ -70,4 +70,6 @@ export const BATTLE_ID = {
   "tutorial.rune.engrave": "Ketuk Konfirmasi Ukiran untuk menyempurnakan Rune",
   "tutorial.rune.done.title": "Rune sempurna!",
   "tutorial.rune.done.body": "Asah dan Ukir sudah selesai. Mulai sekarang Asah memakai Emas.",
+  "tutorial.rune.done.go": "Pakaikan ke {name}",
+  "tutorial.rune.equip": "Rune bisa dipakai di sini!",
 } as const;

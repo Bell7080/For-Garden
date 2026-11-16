@@ -464,6 +464,8 @@ interface BadgeHandle {
 /** 젬 조각 하나를 다시 칠하는 손잡이. */
 interface GemSlot {
   paint(gemId: string | null): void;
+  /** 조각 그림이 지금 서 있는 자리(씬 좌표). 튜토리얼이 룬 칸을 가리킬 때 읽는다. */
+  bounds(): Phaser.Geom.Rectangle;
 }
 
 /**
@@ -667,6 +669,17 @@ export class InfoManager {
     return this.feedPopupOpen ? this.feedOneTutorialHit?.getBounds() : undefined;
   }
   private feedOneTutorialHit?: Phaser.GameObjects.Rectangle;
+
+  /** 룬 칸 셋을 품는 자리(씬 좌표). 창이 닫혀 있거나 다른 판이 덮었거나 룬을 다룰 수 없는 창이면 `undefined`. */
+  runeSlotsBounds(): Phaser.Geom.Rectangle | undefined {
+    if (!this.isOpen || this.popups.isOpen || !this.capabilities.mutateProgress || !this.ownedNow || this.gemSlots.length === 0) return undefined;
+    return this.gemSlots.map((slot) => slot.bounds()).reduce((union, rect) => Phaser.Geom.Rectangle.Union(union, rect));
+  }
+
+  /** 지금 정보창이 서 있는 렐릭. 창이 닫혀 있으면 `undefined`. */
+  currentRelicId(): string | undefined {
+    return this.isOpen ? this.currentDef?.id : undefined;
+  }
 
   /**
    * 처음 열 때 상태 정보가 "조립되듯" 사사삭 들어선다 — 오른쪽 판·제목이 위에서부터 차례로
@@ -1851,6 +1864,7 @@ export class InfoManager {
     attach(panel, glow, piece, label, hit);
 
     return {
+      bounds: () => piece.getBounds(),
       paint: (gemId) => {
         currentRuneId = gemId;
         const gem = gemId ? session.runeInventory.find(({ instanceId }) => instanceId === gemId) : undefined;

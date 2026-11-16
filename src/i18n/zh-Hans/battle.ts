@@ -70,4 +70,6 @@ export const BATTLE_ZH_HANS = {
   "tutorial.rune.engrave": "请点击确认刻印来完成符文",
   "tutorial.rune.done.title": "符文完成！",
   "tutorial.rune.done.body": "打磨和刻印都完成了。之后打磨需要消耗金币。",
+  "tutorial.rune.done.go": "去给{name}装备",
+  "tutorial.rune.equip": "符文可以在这里装备！",
 } as const;

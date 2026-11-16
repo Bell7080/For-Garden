@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { GREAT_SUCCESS, greatSuccessBonus, greatSuccessPulses, rollGreatSuccess, rollGreatSuccessCount } from "../../src/core/greatSuccess";
 
 describe("대성공 규칙", () => {
-  it("확률 10% · 배율 1.5배 — 2배 승인선 아래에서 기대 공급량을 +5%만 올린다", () => {
+  it("확률 10% · 배율 2배(응태 승인 2026-11-16) — 기대 공급량은 +10%까지만 올린다", () => {
     expect(GREAT_SUCCESS.chance).toBe(0.1);
-    expect(GREAT_SUCCESS.multiplier).toBeLessThan(2);
-    expect(GREAT_SUCCESS.chance * (GREAT_SUCCESS.multiplier - 1)).toBeCloseTo(0.05);
+    expect(GREAT_SUCCESS.multiplier).toBe(2);
+    expect(GREAT_SUCCESS.chance * (GREAT_SUCCESS.multiplier - 1)).toBeLessThanOrEqual(0.1);
   });
 
   it("난수가 확률 아래면 대성공이다", () => {
@@ -20,8 +20,8 @@ describe("대성공 규칙", () => {
     expect(index).toBe(4);
   });
 
-  it("얹히는 몫은 한 판 보상의 절반을 내림해 판 수만큼 — 0인 재화는 싣지 않는다", () => {
-    expect(greatSuccessBonus({ gold: 1001, cheesecake: 1, gems: 0 }, 3)).toEqual({ gold: 1500 });
+  it("얹히는 몫은 한 판 보상(배율 − 1)을 내림해 판 수만큼 — 0인 재화는 싣지 않는다", () => {
+    expect(greatSuccessBonus({ gold: 1001, cheesecake: 1, gems: 0 }, 3)).toEqual({ gold: 3003, cheesecake: 3 });
     expect(greatSuccessBonus({ gold: 1000 }, 0)).toEqual({});
   });
 

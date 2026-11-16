@@ -5695,7 +5695,7 @@ var INFO_KO = {
   "info.reset.done": "\uCE58\uC988\uCF00\uC774\uD06C {count}\uAC1C\uB97C \uB3CC\uB824\uBC1B\uC558\uC2B5\uB2C8\uB2E4.",
   "info.rune.bag": "\uB8EC \uAC00\uBC29 \xB7 {part}",
   "info.rune.empty": "\uBE48 \uC790\uB9AC",
-  "info.rune.emptySlot": "   \uBE48 \uC790\uB9AC",
+  "info.rune.tapToEquip": "\uB20C\uB7EC\uC11C \uC7A5\uCC29",
   "info.rune.named": "{rarity} \uB8EC",
   "info.rune.threeSlots": "\uB8EC \uC138 \uC790\uB9AC",
   "info.rune.complete": "\uC138 \uC870\uAC01\uC774 \uBAA8\uB450 \uB9DE\uBB3C\uB838\uB2E4.",
@@ -6069,7 +6069,9 @@ var BATTLE_KO = {
   "tutorial.rune.engravePick": "\uAC01\uC778\uD560 \uB2A5\uB825\uCE58\uB97C \uD558\uB098 \uACE8\uB77C \uC8FC\uC138\uC694",
   "tutorial.rune.engrave": "\uAC01\uC778 \uD655\uC815\uC744 \uB20C\uB7EC \uB8EC\uC744 \uC644\uC131\uD574 \uC8FC\uC138\uC694",
   "tutorial.rune.done.title": "\uB8EC \uC644\uC131!",
-  "tutorial.rune.done.body": "\uC138\uACF5\uACFC \uAC01\uC778\uC744 \uBAA8\uB450 \uB9C8\uCCE4\uC5B4\uC694. \uB2E4\uC74C\uBD80\uD130\uB294 \uC138\uACF5\uC5D0 \uACE8\uB4DC\uAC00 \uB4E4\uC5B4\uC694."
+  "tutorial.rune.done.body": "\uC138\uACF5\uACFC \uAC01\uC778\uC744 \uBAA8\uB450 \uB9C8\uCCE4\uC5B4\uC694. \uB2E4\uC74C\uBD80\uD130\uB294 \uC138\uACF5\uC5D0 \uACE8\uB4DC\uAC00 \uB4E4\uC5B4\uC694.",
+  "tutorial.rune.done.go": "{name}\uC5D0\uAC8C \uC7A5\uCC29\uD558\uB7EC \uAC00\uAE30",
+  "tutorial.rune.equip": "\uB8EC\uC740 \uC5EC\uAE30\uC11C \uC7A5\uCC29\uD560 \uC218 \uC788\uC5B4\uC694!"
 };
 
 // src/i18n/ko/cakeOperation.ts
@@ -7590,6 +7592,37 @@ var MISC_KO = {
   "profile.edit.frameGift": "\uD55C\uC815",
   "profile.unlock.gift.firstPayment": "\uCCAB \uACB0\uC81C \uC120\uBB3C\uB85C \uBC1B\uC2B5\uB2C8\uB2E4",
   "profile.unlock.gift.seasonPass": "\uC2DC\uC98C \uD328\uC2A4 30\uB2E8\uACC4 \uBCF4\uC0C1",
+  "profile.unlock.gift.patronStrata": "\uD6C4\uC6D0 \uC9C0\uCE35 \uC2B9\uAE09 \uAE30\uB150\uD488",
+  "profile.unlock.patron": "\uD6C4\uC6D0 \uC9C0\uCE35 \u300C{name}\u300D \uC2B9\uAE09 \uAE30\uB150\uD488",
+  "patron.tier.topsoil": "\uD45C\uD1A0\uCE35",
+  "patron.tier.sediment": "\uD1F4\uC801\uCE35",
+  "patron.tier.fossil": "\uD654\uC11D\uCE35",
+  "patron.tier.amber": "\uD638\uBC15\uCE35",
+  "patron.tier.bedrock": "\uAE30\uBC18\uC554",
+  "patron.tier.deep": "\uC2EC\uCE35",
+  "patron.tier.core": "\uC9C0\uD575",
+  "patron.title": "\uD6C4\uC6D0 \uC9C0\uCE35",
+  "patron.fund": "\uBCF5\uC6D0 \uAE30\uAE08",
+  "patron.next": "\u300C{name}\u300D\uAE4C\uC9C0 {value}",
+  "patron.max": "\uAC00\uC7A5 \uAE4A\uC740 \uC9C0\uCE35\uC5D0 \uB2FF\uC558\uC2B5\uB2C8\uB2E4",
+  "patron.daily.claim": "\uBC1B\uAE30",
+  "patron.daily.claimed": "\uC624\uB298 \uBC1B\uC74C",
+  "patron.daily.fund": "\uAE30\uAE08 +{value}",
+  "patron.reward.title": "\uC2B9\uAE09 \uAE30\uB150\uD488",
+  "patron.reward.claim": "\uBC1B\uAE30",
+  "patron.reward.claimed": "\uBC1B\uC74C",
+  "patron.reward.settling": "{days}\uC77C \uB4A4",
+  "patron.threshold": "\uAE30\uAE08 {value}",
+  "patron.promoted": "\u300C{name}\u300D\uC5D0 \uB2FF\uC558\uC2B5\uB2C8\uB2E4",
+  "patron.purchase.fund": "\uBCF5\uC6D0 \uAE30\uAE08 +{value}",
+  "patron.daily.today": "\uC624\uB298\uC758 \uD6C4\uC6D0 \uBCF4\uAE09 \xB7 {name}",
+  "patron.benefit.title": "{name} \uD61C\uD0DD",
+  "patron.benefit.daily": "\uB9E4\uC77C {name}",
+  "patron.benefit.frame": "\uD14C\uB450\uB9AC \u300C{name}\u300D",
+  "patron.benefit.modifier": "\uC218\uC2DD\uC5B4 \u300C{name}\u300D",
+  "patron.reward.none": "\uAE30\uB150\uD488 \uC5C6\uC74C",
+  "patron.reward.locked": "\uBBF8\uB3C4\uB2EC",
+  "patron.howto": "\uACB0\uC81C 100\uC6D0 \xB7 \uB9E4\uC77C \uBCF4\uAE09\uB9C8\uB2E4 \uAE30\uAE08 +1",
   "profile.frameGuide.kind": "\uD504\uB85C\uD544 \uD14C\uB450\uB9AC",
   "profile.frameGuide.firstPayment": "\uD504\uB85C\uD544 \uC0AC\uC9C4\uC5D0 \uC50C\uC6B0\uB294 \uAE08\uBE5B \uD14C\uB450\uB9AC\uC785\uB2C8\uB2E4. \uACC4\uC815 \uCCAB \uACB0\uC81C \uB54C \uD55C \uBC88\uB9CC \uBC1B\uC73C\uBA70, \uBC1B\uC73C\uBA74 \uD504\uB85C\uD544 \uAFB8\uBBF8\uAE30\uC758 \uD14C\uB450\uB9AC \uBAA9\uB85D\uC5D0\uC11C \uACE0\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
   "trade.tag.season": "\uC2DC\uC98C"
@@ -8418,6 +8451,9 @@ var DUNGEON_KO = {
   "party.hordeCount": "\uC801 {count}\uAE30",
   "greatSuccess.stamp": "\uB300\uC131\uACF5",
   "greatSuccess.count": "\uB300\uC131\uACF5 \xD7{count}",
+  "greatSuccess.badge": "\uB300\uC131\uACF5 {chance}%",
+  "greatSuccess.info.title": "\uB300\uC131\uACF5",
+  "greatSuccess.info.body": "\uC774\uAE34 \uD310\uB9C8\uB2E4 {chance}% \uD655\uB960\uB85C \uB300\uC131\uACF5!\n\uB300\uC131\uACF5\uD55C \uD310\uC740 \uAE30\uBCF8 \uBCF4\uC0C1\uC744 {multiplier}\uBC30\uB85C \uBC1B\uC2B5\uB2C8\uB2E4.\n\uC18C\uD0D5\uB3C4 \uD310\uB9C8\uB2E4 \uB530\uB85C \uD310\uC815\uD569\uB2C8\uB2E4.",
   "autoRepeat.button": "\uC790\uB3D9 \uC804\uD22C",
   "autoRepeat.title": "\uC790\uB3D9 \uC804\uD22C",
   "autoRepeat.stopOnDefeat": "\uD328\uBC30 \uC2DC \uC911\uB2E8",
@@ -9058,9 +9094,9 @@ var PLACEHOLDER = /\{(\w+)([:!])?([^}\s]+)?\}/g;
 function t(key, params) {
   const text = loaded.get(active)?.[key] ?? KO[key];
   if (!params) return text;
-  return text.replace(PLACEHOLDER, (whole2, name, mode, particle) => {
+  return text.replace(PLACEHOLDER, (whole3, name, mode, particle) => {
     const value = params[name];
-    if (value === void 0) return whole2;
+    if (value === void 0) return whole3;
     const filled = String(value);
     if (mode === void 0 || particle === void 0) return filled;
     return (mode === "!" ? "" : filled) + pickParticle(filled, particle);
@@ -9254,20 +9290,25 @@ var RUNE_STAT_UNIT = {
   energyGain: "flat",
   ferocityGain: "flat"
 };
-var RUNE_STAT_SCALE = {
-  hp: 1,
-  atk: 1,
-  ap: 1,
-  def: 1,
-  res: 1,
-  moveSpeed: 1,
-  attackSpeed: 1,
-  lifeSteal: 1,
-  critChance: 1,
-  critDamage: 1,
-  energyGain: 0.5,
-  ferocityGain: 0.25
+var RUNE_FLAT_RULES = {
+  energyGain: {
+    uncommon: { base: 1, enhancement: 0.5 },
+    rare: { base: 1.5, enhancement: 0.5 },
+    epic: { base: 2, enhancement: 0.5 },
+    legendary: { base: 2, enhancement: 1 }
+  },
+  ferocityGain: {
+    uncommon: { base: 0.5, enhancement: 0.5 },
+    rare: { base: 1, enhancement: 0.5 },
+    epic: { base: 1.5, enhancement: 0.5 },
+    legendary: { base: 2, enhancement: 0.5 }
+  }
 };
+function subRule(rarity, key) {
+  if (key === "energyGain" || key === "ferocityGain") return RUNE_FLAT_RULES[key][rarity];
+  const rule = RUNE_GENERATION_RULES[rarity];
+  return { base: rule.subBase, enhancement: rule.subEnhancement };
+}
 var RUNE_ENHANCEMENT_RULES = {
   initialSuccessChance: 0.75,
   successChanceDelta: 0.1,
@@ -9312,20 +9353,20 @@ function generateRune(input) {
   const rule = RUNE_GENERATION_RULES[input.rarity];
   const statValues = Object.fromEntries([
     ...MAIN_KEYS.map((key) => [key, rule.mainBase]),
-    ...SUB_KEYS.map((key) => [key, rule.subBase * RUNE_STAT_SCALE[key]])
+    ...SUB_KEYS.map((key) => [key, subRule(input.rarity, key).base])
   ]);
   return createRuneInstance({ ...input, statValues });
 }
 function runeEnhancementIncrease(rarity, statKey) {
   const rule = RUNE_GENERATION_RULES[rarity];
-  return MAIN_KEYS.includes(statKey) ? rule.mainEnhancement : rule.subEnhancement * RUNE_STAT_SCALE[statKey];
+  return MAIN_KEYS.includes(statKey) ? rule.mainEnhancement : subRule(rarity, statKey).enhancement;
 }
 function runeOptionValue(rune, key) {
   const main = rune.mainStats.some((option) => option.key === key);
   const rule = RUNE_GENERATION_RULES[rune.rarity];
   const successes = (rune.enhancementHistory[key] ?? []).filter(({ succeeded }) => succeeded).length;
   const engraved = rune.engravings.some(({ statKey }) => statKey === key) ? 1 : 0;
-  const value = main ? rule.mainBase + rule.mainEnhancement * (successes + engraved) : (rule.subBase + rule.subEnhancement * (successes + engraved)) * RUNE_STAT_SCALE[key];
+  const value = main ? rule.mainBase + rule.mainEnhancement * (successes + engraved) : subRule(rune.rarity, key).base + subRule(rune.rarity, key).enhancement * (successes + engraved);
   return Math.round(value * 100) / 100;
 }
 function assertValidRuneInstance(rune) {
@@ -9612,9 +9653,9 @@ function applyBreakthrough(stats, breakthrough) {
   if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) throw new RangeError("\uB3CC\uD30C \uB2E8\uACC4\uAC00 \uBC94\uC704\uB97C \uBC97\uC5B4\uB0AC\uC2B5\uB2C8\uB2E4.");
   return { ...stats };
 }
-function applyHeartGems(stats, gems3) {
+function applyHeartGems(stats, gems4) {
   const totals = {};
-  for (const gem of gems3) {
+  for (const gem of gems4) {
     assertValidRuneInstance(gem);
     for (const option of [...gem.mainStats, ...gem.subStats]) totals[option.key] = (totals[option.key] ?? 0) + runeOptionValue(gem, option.key);
   }
@@ -9625,13 +9666,13 @@ function applyHeartGems(stats, gems3) {
   }
   return result;
 }
-function calculateFinalStats(base, progress, gems3, rarity, options = {}) {
+function calculateFinalStats(base, progress, gems4, rarity, options = {}) {
   if (progress.heartGemSlots.length !== 3) throw new RangeError("Heart Gem \uC2AC\uB86F\uC740 \uC815\uD655\uD788 3\uAC1C\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
   const breakthrough = activeBreakthroughOf(progress);
   const grown = applyLevelGrowth(base, progress.level, rarity, breakthrough);
   const resonance = options.resonance === false || breakthrough < BREAKTHROUGH_CAP ? 0 : resonanceOf(progress);
   const resonated = resonance > 0 ? applyStatPercent(grown, resonanceStatEffect(resonance)) : grown;
-  return applyHeartGems(applyBreakthrough(resonated, breakthrough), gems3);
+  return applyHeartGems(applyBreakthrough(resonated, breakthrough), gems4);
 }
 
 // src/core/liveArena.ts
@@ -10000,9 +10041,9 @@ function statForPower(stats, key) {
 // src/core/levelDesign.ts
 function encounterRampFactor(ramp, elapsedSeconds) {
   const start = ramp.startPercent / 100;
-  const whole2 = Math.max(0, Math.floor(elapsedSeconds));
-  const rise = start + (1 - start) * Math.min(1, whole2 / ramp.seconds);
-  const late = Math.max(0, whole2 - ramp.seconds);
+  const whole3 = Math.max(0, Math.floor(elapsedSeconds));
+  const rise = start + (1 - start) * Math.min(1, whole3 / ramp.seconds);
+  const late = Math.max(0, whole3 - ramp.seconds);
   return rise + late * ramp.lateGrowthPercentPerSecond / 100;
 }
 var ENCOUNTER_ROLE = {
@@ -11013,7 +11054,13 @@ var FROZEN = {
   /** 완전 행동불가로 묶이는 시간(초). */
   seconds: 3,
   /** 풀리는 순간 입히는 최대 체력 비율(%) 고정 피해. */
-  maxHpPercentOnExpire: 10
+  maxHpPercentOnExpire: 10,
+  /**
+   * 풀린 뒤 다시 얼지 않는 시간(초). 매디는 전장 전체 둔화를 쌓아 최대 겹에서 얼리고 다시 쌓기를 되풀이해,
+   * 강인함이 없는 결투에서 한 적을 전투의 절반 넘게 묶었다(응태 결정 2026-11-16 — 최소 제약). 빙결 시간과 같은
+   * 3초라 한 적이 얼어 있는 시간은 길어야 절반이다. 공포의 면역과 같은 결이다.
+   */
+  immunitySeconds: 3
 };
 var EMERGENCY_RECOVERY = {
   /** 회복 틱 사이의 시간(초). */
@@ -11261,6 +11308,7 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     intimidation: null,
     fear: null,
     fearImmuneFor: 0,
+    frozenImmuneFor: 0,
     loomingIn: def.passive.looming?.intervalSeconds ?? 0,
     frozen: null,
     observation: null,
@@ -11629,6 +11677,7 @@ function chillIsMaxed(target) {
 }
 function applyFrozen(target, seconds, maxHpPercentOnExpire, events, state) {
   if (!isFighterAlive(target) || seconds <= 0) return;
+  if (target.frozen === null && target.frozenImmuneFor > EMERGENCY_RECOVERY.epsilon) return;
   seconds = controlDuration(target, seconds);
   if (seconds <= 0) return;
   const wasFrozen = target.frozen !== null;
@@ -14583,6 +14632,7 @@ function clearDefeatedStatuses(fighter) {
   fighter.staggeredFor = 0;
   fighter.chill = null;
   fighter.frozen = null;
+  fighter.frozenImmuneFor = 0;
   fighter.observation = null;
   fighter.echo = null;
   fighter.shieldFade = null;
@@ -17692,11 +17742,13 @@ function advance(state, dt, rng, events) {
     tickReagentStates(fighter, dt);
     if (isFighterAlive(fighter) && fighter.stunnedFor > 0) fighter.stunnedFor = Math.max(0, fighter.stunnedFor - dt);
     if (isFighterAlive(fighter) && fighter.staggeredFor > 0) fighter.staggeredFor = Math.max(0, fighter.staggeredFor - dt);
+    if (fighter.frozenImmuneFor > 0) fighter.frozenImmuneFor = Math.max(0, fighter.frozenImmuneFor - dt);
     if (isFighterAlive(fighter) && fighter.frozen) {
       const remaining = fighter.frozen.remaining - dt;
       if (remaining <= EMERGENCY_RECOVERY.epsilon) {
         const amount = percentHpDamage(fighter, fighter.frozen.maxHpPercentOnExpire);
         fighter.frozen = null;
+        fighter.frozenImmuneFor = FROZEN.immunitySeconds;
         const dealt = applyDamage(fighter, amount, events, state);
         events.push({ kind: "concussion", fighterId: fighter.id, amount: dealt, critical: false });
         if (!isFighterAlive(fighter)) {
@@ -27782,30 +27834,125 @@ var NEWBIE_GROWTH_MILESTONES = [
 ];
 var NEWBIE_GROWTH_CLAIM_IDS = /* @__PURE__ */ new Set([...NEWBIE_GROWTH_GOALS.map(({ id }) => id), ...NEWBIE_GROWTH_MILESTONES.map(({ id }) => id)]);
 
+// src/core/patronStrata.ts
+init_define_import_meta_env();
+
+// src/data/patronStrata.ts
+init_define_import_meta_env();
+var gold2 = (amount) => ({ kind: "currency", currency: "gold", amount });
+var cake = (amount) => ({ kind: "currency", currency: "cheesecake", amount });
+var gems3 = (amount) => ({ kind: "currency", currency: "gems", amount });
+var tonic = { kind: "item", itemId: "stamina-tonic", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", amount: 1, expiresInDays: 7 };
+var PATRON_TIERS = [
+  { id: "topsoil", threshold: 0, daily: [gold2(5e3), gems3(5)], reward: [], color: 10257510 },
+  { id: "sediment", threshold: 30, daily: [gold2(5e3), cake(20), gems3(5)], reward: [gems3(100)], color: 13214826 },
+  { id: "fossil", threshold: 300, daily: [gold2(1e4), cake(30), gems3(10)], reward: [{ kind: "currency", currency: "fossil", amount: 3 }], frameId: "patron-fossil", color: 14275264 },
+  { id: "amber", threshold: 1e3, daily: [gold2(1e4), cake(50), gems3(15)], reward: [{ kind: "currency", currency: "amber", amount: 5 }], modifierId: "amber-bound", color: 15905857 },
+  { id: "bedrock", threshold: 3e3, daily: [gold2(2e4), cake(50), gems3(20), tonic], reward: [{ kind: "currency", currency: "fossil", amount: 10 }, { kind: "currency", currency: "amber", amount: 10 }], frameId: "patron-bedrock", color: 9082280 },
+  { id: "deep", threshold: 1e4, daily: [gold2(3e4), cake(80), gems3(25), tonic], reward: [{ kind: "item", itemId: "universal-fragment-sr", name: "\uB9CC\uB2A5 SR \uD30C\uD3B8", amount: 2 }], modifierId: "deep-patron", color: 7302399 },
+  { id: "core", threshold: 3e4, daily: [gold2(5e4), cake(100), gems3(30), tonic], reward: [{ kind: "item", itemId: "universal-fragment-ssr", name: "\uB9CC\uB2A5 SSR \uD30C\uD3B8", amount: 1 }], frameId: "patron-core", color: 16742981 }
+];
+
+// src/core/patronStrata.ts
+var PATRON_TIER_IDS = PATRON_TIERS.map(({ id }) => id);
+var PATRON_FRAME_IDS = PATRON_TIERS.flatMap(({ frameId }) => frameId ? [frameId] : []);
+var PATRON_SETTLE_MS = 7 * 864e5;
+var PATRON_DAILY_FUND = 1;
+var PATRON_KRW_PER_FUND = 100;
+var FUND_LIMIT = 1e7;
+function fundForPriceKrw(priceKrw) {
+  return Number.isFinite(priceKrw) && priceKrw > 0 ? Math.floor(priceKrw / PATRON_KRW_PER_FUND) : 0;
+}
+var patronFund = (state) => state.free + state.paid;
+function patronTierIndex(fund) {
+  let index = 0;
+  PATRON_TIERS.forEach((tier, at) => {
+    if (fund >= tier.threshold) index = at;
+  });
+  return index;
+}
+var patronTierOf = (state) => PATRON_TIERS[patronTierIndex(patronFund(state))];
+var dayKey = (now) => now.toISOString().slice(0, 10);
+var patronDailyAvailable = (state, now) => state.dailyDate !== dayKey(now);
+function addPatronFund(state, source, amount, now) {
+  if (!(amount > 0)) return state;
+  const before = patronTierIndex(patronFund(state));
+  const next = { ...state, [source]: Math.min(FUND_LIMIT, state[source] + Math.floor(amount)) };
+  const after = patronTierIndex(patronFund(next));
+  if (after <= before) return next;
+  const reachedAt = { ...state.reachedAt ?? {} };
+  const at = new Date(now.getTime() + (source === "paid" ? PATRON_SETTLE_MS : 0)).toISOString();
+  for (let index = before + 1; index <= after; index += 1) {
+    const id = PATRON_TIERS[index].id;
+    if (!reachedAt[id]) reachedAt[id] = at;
+  }
+  return { ...next, reachedAt };
+}
+function patronRewardStatus(state, tierId2, now) {
+  const index = PATRON_TIER_IDS.indexOf(tierId2);
+  if (index <= 0) return "locked";
+  if (state.claimed?.includes(tierId2)) return "claimed";
+  if (patronTierIndex(patronFund(state)) < index) return "locked";
+  const at = state.reachedAt?.[tierId2];
+  return at && Date.parse(at) > now.getTime() ? "settling" : "ready";
+}
+function patronHasClaimable(state, now) {
+  return patronDailyAvailable(state, now) || PATRON_TIERS.some(({ id }) => patronRewardStatus(state, id, now) === "ready");
+}
+var whole = (value) => Number.isInteger(value) && value >= 0 ? Math.min(FUND_LIMIT, value) : 0;
+var isDateKey = (value) => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
+var isIso2 = (value) => typeof value === "string" && value.length <= 40 && Number.isFinite(Date.parse(value));
+var isTierId = (value) => typeof value === "string" && PATRON_TIER_IDS.includes(value);
+function normalizePatronState(value) {
+  const source = value && typeof value === "object" ? value : {};
+  const claimed = Array.isArray(source.claimed) ? [...new Set(source.claimed.filter(isTierId))].filter((id) => id !== "topsoil") : [];
+  const reachedSource = source.reachedAt && typeof source.reachedAt === "object" ? source.reachedAt : {};
+  const reachedAt = {};
+  for (const id of PATRON_TIER_IDS) if (id !== "topsoil" && isIso2(reachedSource[id])) reachedAt[id] = reachedSource[id];
+  return {
+    free: whole(source.free),
+    paid: whole(source.paid),
+    ...isDateKey(source.dailyDate) ? { dailyDate: source.dailyDate } : {},
+    ...claimed.length > 0 ? { claimed } : {},
+    ...Object.keys(reachedAt).length > 0 ? { reachedAt } : {}
+  };
+}
+function isValidPatronState(value) {
+  if (!value || typeof value !== "object") return false;
+  const state = value;
+  if (!Number.isInteger(state.free) || state.free < 0 || state.free > FUND_LIMIT) return false;
+  if (!Number.isInteger(state.paid) || state.paid < 0 || state.paid > FUND_LIMIT) return false;
+  if (state.dailyDate !== void 0 && !isDateKey(state.dailyDate)) return false;
+  if (state.claimed !== void 0 && (!Array.isArray(state.claimed) || state.claimed.some((id) => !isTierId(id) || id === "topsoil") || new Set(state.claimed).size !== state.claimed.length)) return false;
+  if (state.reachedAt !== void 0 && (typeof state.reachedAt !== "object" || Object.entries(state.reachedAt).some(([id, at]) => !isTierId(id) || id === "topsoil" || !isIso2(at)))) return false;
+  return true;
+}
+
 // src/core/achievementState.ts
 var CODEX_CLAIM_LIMIT = 64;
 var ENCOUNTER_LIMIT = 512;
-var GIFT_FRAME_IDS = /* @__PURE__ */ new Set(["patron", "season"]);
+var GIFT_FRAME_IDS = /* @__PURE__ */ new Set(["patron", "season", ...PATRON_FRAME_IDS]);
 function createEmptyAchievementState() {
   return { claimed: {}, goldPeak: 0 };
 }
-var whole = (value) => Number.isInteger(value) && value >= 0 ? value : 0;
+var whole2 = (value) => Number.isInteger(value) && value >= 0 ? value : 0;
 function normalizeAchievementState(value) {
   const source = value && typeof value === "object" ? value : {};
   const claimedSource = source.claimed && typeof source.claimed === "object" ? source.claimed : {};
   const claimed = {};
   for (const series of ACHIEVEMENT_SERIES) {
-    const count3 = Math.min(series.tiers.length, whole(claimedSource[series.id]));
+    const count3 = Math.min(series.tiers.length, whole2(claimedSource[series.id]));
     if (count3 > 0) claimed[series.id] = count3;
   }
-  const ancientFloorPeak = Math.min(ANCIENT_STRATA_MAX_FLOOR, whole(source.ancientFloorPeak));
+  const ancientFloorPeak = Math.min(ANCIENT_STRATA_MAX_FLOOR, whole2(source.ancientFloorPeak));
   const giftFrames = Array.isArray(source.giftFrames) ? [...new Set(source.giftFrames.filter((id) => typeof id === "string" && GIFT_FRAME_IDS.has(id)))] : [];
   const encountered = Array.isArray(source.encountered) ? [...new Set(source.encountered.filter((id) => typeof id === "string" && id.length > 0 && id.length <= 64))].slice(0, ENCOUNTER_LIMIT) : [];
-  const codexClaimed = Math.min(CODEX_CLAIM_LIMIT, whole(source.codexClaimed));
+  const codexClaimed = Math.min(CODEX_CLAIM_LIMIT, whole2(source.codexClaimed));
+  const patron = source.patron && typeof source.patron === "object" ? normalizePatronState(source.patron) : void 0;
   const growth = Array.isArray(source.growth) ? [...new Set(source.growth.filter((id) => typeof id === "string" && NEWBIE_GROWTH_CLAIM_IDS.has(id)))] : [];
   return {
     claimed,
-    goldPeak: Math.min(LIFETIME_COUNT_CAP, whole(source.goldPeak)),
+    goldPeak: Math.min(LIFETIME_COUNT_CAP, whole2(source.goldPeak)),
     ...ancientFloorPeak > 0 ? { ancientFloorPeak } : {},
     ...growth.length > 0 ? { growth } : {},
     ...source.favoriteChosen === true ? { favoriteChosen: true } : {},
@@ -27814,7 +27961,8 @@ function normalizeAchievementState(value) {
     ...source.firstPaymentPaid === true && source.firstPaymentGift !== true ? { firstPaymentPaid: true } : {},
     ...giftFrames.length > 0 ? { giftFrames } : {},
     ...encountered.length > 0 ? { encountered } : {},
-    ...codexClaimed > 0 ? { codexClaimed } : {}
+    ...codexClaimed > 0 ? { codexClaimed } : {},
+    ...patron ? { patron } : {}
   };
 }
 function isValidAchievementState(value) {
@@ -27830,6 +27978,7 @@ function isValidAchievementState(value) {
   if (state.giftFrames !== void 0 && (!Array.isArray(state.giftFrames) || state.giftFrames.some((id) => typeof id !== "string" || !GIFT_FRAME_IDS.has(id)))) return false;
   if (state.encountered !== void 0 && (!Array.isArray(state.encountered) || state.encountered.length > ENCOUNTER_LIMIT || state.encountered.some((id) => typeof id !== "string" || id.length === 0 || id.length > 64) || new Set(state.encountered).size !== state.encountered.length)) return false;
   if (state.codexClaimed !== void 0 && (!Number.isInteger(state.codexClaimed) || state.codexClaimed < 0 || state.codexClaimed > CODEX_CLAIM_LIMIT)) return false;
+  if (state.patron !== void 0 && !isValidPatronState(state.patron)) return false;
   if (!state.claimed || typeof state.claimed !== "object") return false;
   return Object.entries(state.claimed).every(([id, count3]) => {
     const series = ACHIEVEMENT_SERIES.find((candidate) => candidate.id === id);
@@ -28082,9 +28231,9 @@ function rollDuelPeriods(state, now) {
     next.defenseSimAt = "";
     next.seasonId = seasonId;
   }
-  const dayKey = duelDayKey(now);
-  if (next.dayKey !== dayKey) {
-    next.dayKey = dayKey;
+  const dayKey2 = duelDayKey(now);
+  if (next.dayKey !== dayKey2) {
+    next.dayKey = dayKey2;
     next.attemptsUsed = 0;
     next.attemptsPurchased = 0;
     next.attemptsFromAds = 0;
@@ -28566,6 +28715,10 @@ var PROFILE_FRAMES = [
   ...GIFTING_ENABLED ? [GIFT_GIVER_FRAME] : [],
   { id: "patron", style: "sigil", displayName: "\uCCAB \uD6C4\uC6D0\uC758 \uC99D\uD45C", unlockLevel: 1, unlockGift: "firstPayment", color: 16765562, wash: 4139536 },
   { id: "season", style: "halo", displayName: "\uC2DC\uC98C\uC758 \uB0A0\uAC1C", unlockLevel: 1, unlockGift: "seasonPass", color: 10478591, wash: 1258058 },
+  // 후원 지층 기념품(`data/patronStrata.ts`) — 화석층 · 기반암 · 지핵에 처음 닿아 기념품을 받을 때 연다.
+  { id: "patron-fossil", style: "fossil", displayName: "\uD654\uC11D\uCE35\uC758 \uAE30\uB85D", unlockLevel: 1, unlockGift: "patronStrata", color: 14275264, wash: 3025442 },
+  { id: "patron-bedrock", style: "bedrock", displayName: "\uAE30\uBC18\uC554", unlockLevel: 1, unlockGift: "patronStrata", color: 11122380, wash: 2041395 },
+  { id: "patron-core", style: "core", displayName: "\uC9C0\uD575", unlockLevel: 1, unlockGift: "patronStrata", color: 16742981, wash: 4594190 },
   { id: "holo", style: "bracket", displayName: "\uD22C\uC601 \uAD00\uCE21", unlockLevel: 10, color: 6280447, wash: 1521736 },
   { id: "amber", style: "gem", displayName: "\uD638\uBC15 \uD45C\uBCF8", unlockLevel: 20, color: 15905857, wash: 4008978 },
   { id: "abyss", style: "wing", displayName: "\uC2EC\uD574 \uAE30\uB85D", unlockLevel: 30, color: 11566335, wash: 2759748 },
@@ -28796,8 +28949,8 @@ function captureExpeditionRelicSnapshot(def, progress, runeInventory, skinId) {
 function isExpeditionRelicSnapshot(value) {
   if (!value || typeof value !== "object") return false;
   const snapshot = value;
-  const whole2 = (n) => Number.isInteger(n) && n >= 0;
-  return whole2(snapshot.level) && snapshot.level >= 1 && whole2(snapshot.breakthrough) && whole2(snapshot.bondLevel) && !!snapshot.stats && typeof snapshot.stats === "object" && Object.values(snapshot.stats).every((stat) => Number.isFinite(stat)) && Array.isArray(snapshot.runes) && (snapshot.skinId === null || typeof snapshot.skinId === "string");
+  const whole3 = (n) => Number.isInteger(n) && n >= 0;
+  return whole3(snapshot.level) && snapshot.level >= 1 && whole3(snapshot.breakthrough) && whole3(snapshot.bondLevel) && !!snapshot.stats && typeof snapshot.stats === "object" && Object.values(snapshot.stats).every((stat) => Number.isFinite(stat)) && Array.isArray(snapshot.runes) && (snapshot.skinId === null || typeof snapshot.skinId === "string");
 }
 
 // src/core/opsInbox.ts
@@ -29122,8 +29275,8 @@ var RAID_BOSS_ROLE = "boss";
 function raidSeasonKey(now) {
   return now.toISOString().slice(0, 10);
 }
-function raidWorldBossId(dayKey) {
-  const day = Math.floor(Date.parse(`${dayKey}T00:00:00.000Z`) / 864e5);
+function raidWorldBossId(dayKey2) {
+  const day = Math.floor(Date.parse(`${dayKey2}T00:00:00.000Z`) / 864e5);
   return RAID_BOSS_POOL[(day % RAID_BOSS_POOL.length + RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
 }
 function rollRaidSummon(bossRoll, difficultyRoll) {
@@ -29156,17 +29309,17 @@ function seedHash(seed) {
   }
   return (hash >>> 0) / 4294967296;
 }
-function mockRaidContributions(dayKey, dayProgress, twoRunBase = 3e4) {
+function mockRaidContributions(dayKey2, dayProgress, twoRunBase = 3e4) {
   if (!QA_TOOLS_ENABLED) return [];
   const played = Math.min(1, Math.max(0.15, dayProgress / 0.7));
   return RAID_MOCK_PARTICIPANTS.map(({ id, displayName, favoriteRelicId, pace }) => {
-    const jitter = 0.78 + seedHash(`${dayKey}:${id}`) * 0.44;
+    const jitter = 0.78 + seedHash(`${dayKey2}:${id}`) * 0.44;
     return { playerId: id, displayName, favoriteRelicId, damage: Math.floor(twoRunBase * pace * jitter * played) };
   });
 }
-function mockRaidWorldDamage(dayKey, dayProgress, totalHp = RAID_SEASON_TOTAL_HP) {
+function mockRaidWorldDamage(dayKey2, dayProgress, totalHp = RAID_SEASON_TOTAL_HP) {
   if (!QA_TOOLS_ENABLED) return 0;
-  const reach = 0.55 + seedHash(`${dayKey}:world`) * 0.55;
+  const reach = 0.55 + seedHash(`${dayKey2}:world`) * 0.55;
   const curve = 1 - (1 - Math.min(1, Math.max(0, dayProgress))) ** 2;
   return Math.floor(totalHp * reach * curve);
 }
@@ -29190,14 +29343,14 @@ function mockSummonRaidDamage(raidId, elapsedRatio, totalHp) {
   const curve = 1 - (1 - Math.min(1, Math.max(0, elapsedRatio))) ** 2;
   return Math.floor(totalHp * reach * curve);
 }
-function mockFriendRaids(dayKey) {
-  const start = Date.parse(`${dayKey}T00:00:00.000Z`);
+function mockFriendRaids(dayKey2) {
+  const start = Date.parse(`${dayKey2}T00:00:00.000Z`);
   return PREVIEW_FRIENDS.map((friend, index) => {
-    const pick2 = seedHash(`${dayKey}:${friend.id}:raid`);
+    const pick2 = seedHash(`${dayKey2}:${friend.id}:raid`);
     const difficulty = RAID_SUMMON_DIFFICULTIES[Math.floor(pick2 * RAID_SUMMON_DIFFICULTIES.length) % RAID_SUMMON_DIFFICULTIES.length];
-    const bossRelicId = RAID_BOSS_POOL[Math.floor(seedHash(`${dayKey}:${friend.id}:boss`) * RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
+    const bossRelicId = RAID_BOSS_POOL[Math.floor(seedHash(`${dayKey2}:${friend.id}:boss`) * RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
     return {
-      id: `friend-${friend.id}-${dayKey}`,
+      id: `friend-${friend.id}-${dayKey2}`,
       friendId: friend.id,
       friendName: friend.displayName,
       bossRelicId,
@@ -29685,9 +29838,9 @@ function normalizeExpeditionState(expedition) {
 }
 function rollExpeditionPeriods(expedition, now) {
   const weekKey = expeditionWeekKey(now);
-  const dayKey = expeditionDayKey(now);
+  const dayKey2 = expeditionDayKey(now);
   let next = expedition;
-  if (next.dayKey !== dayKey) next = { ...next, dayKey, playsToday: 0 };
+  if (next.dayKey !== dayKey2) next = { ...next, dayKey: dayKey2, playsToday: 0 };
   if (next.weekKey !== weekKey) {
     const queue = expeditionRankRewardQueue(next);
     if (next.weekKey && next.bestScore > 0 && !queue.some((reward) => reward.weekKey === next.weekKey)) queue.push({ weekKey: next.weekKey, score: next.bestScore, achievedAt: next.bestAchievedAt });
@@ -30788,6 +30941,9 @@ var PROFILE_MODIFIERS = [
   { id: "diligent-researcher", displayName: "\uC131\uC2E4\uD55C \uC5F0\uAD6C\uC6D0", rarity: "epic", acquisitionConditionId: "achievement:diligence" },
   { id: "challenger", displayName: "\uC815\uC810\uC758 \uB3C4\uC804\uC790", rarity: "legendary", acquisitionConditionId: "achievement:duel-tier" },
   { id: "stratum-explorer", displayName: "\uC9C0\uCE35 \uD0D0\uC0AC\uAC00", rarity: "rare", acquisitionConditionId: "achievement:archaeologist" },
+  // 후원 지층 기념품(`data/patronStrata.ts`) — 호박층 · 심층에 처음 닿아 기념품을 받을 때 연다.
+  { id: "amber-bound", displayName: "\uD638\uBC15 \uC18D\uC758", rarity: "epic", acquisitionConditionId: "patron:amber" },
+  { id: "deep-patron", displayName: "\uC2EC\uCE35\uC758", rarity: "legendary", acquisitionConditionId: "patron:deep" },
   { id: "walking-codex", displayName: "\uAC78\uC5B4 \uB2E4\uB2C8\uB294 \uB3C4\uAC10", rarity: "legendary", acquisitionConditionId: "achievement:codex-complete" }
 ];
 function findProfileModifier(id) {
@@ -38041,11 +38197,11 @@ function favoriteShowcase(state) {
   const relic = RELICS.find(({ id }) => id === state.favorite);
   if (!relic) return null;
   const progress = state.relicProgress[relic.id];
-  const gems3 = (progress?.heartGemSlots ?? []).flatMap((id) => {
+  const gems4 = (progress?.heartGemSlots ?? []).flatMap((id) => {
     const rune = id === null ? void 0 : state.runeInventory.find((candidate) => candidate.instanceId === id);
     return rune ? [rune] : [];
   });
-  const stats = progress ? calculateFinalStats(relic.stats, progress, gems3, relic.rarity) : relic.stats;
+  const stats = progress ? calculateFinalStats(relic.stats, progress, gems4, relic.rarity) : relic.stats;
   return {
     relicId: relic.id,
     displayName: relic.name,
@@ -38549,8 +38705,8 @@ function prepareCombat(state, request, now, id) {
   setActiveAncientSeason(state.ancientSeason ?? "");
   const stage = getBattleStage(input.stageId ?? state.selectedStageId ?? "1-1");
   if (b.mode === "stage" && (stage.ancientFloor !== void 0 || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, state.cleared)) return fail("stage_locked");
-  const cake = b.mode === "cake" ? getCakeOperationTier(b.tierId) : void 0;
-  const enemies = cake ? cakeOperationEnemies(cake) : b.mode === "bounty" ? [bountyRoundEnemy(getBountyTier(b.tierId).rounds[b.round])] : b.mode === "expedition" ? getExpeditionNodeEnemies(b.nodeType, b.floor) : getStageEnemies(stage);
+  const cake2 = b.mode === "cake" ? getCakeOperationTier(b.tierId) : void 0;
+  const enemies = cake2 ? cakeOperationEnemies(cake2) : b.mode === "bounty" ? [bountyRoundEnemy(getBountyTier(b.tierId).rounds[b.round])] : b.mode === "expedition" ? getExpeditionNodeEnemies(b.nodeType, b.floor) : getStageEnemies(stage);
   const expedition = b.mode === "expedition" ? createExpeditionSkirmishConfig(b, players, enemies) : void 0;
   const setup = {
     players: expedition?.playerDefs ?? players,
@@ -38565,11 +38721,11 @@ function prepareCombat(state, request, now, id) {
     } : {
       augmentEffects: traits,
       ...b.mode === "stage" && stage.ancientFloor !== void 0 ? { enemyAugmentEffects: getAncientStrataFloor(stage.ancientFloor).enemyAugmentEffects, enemyPercentHpBases: getAncientStrataFloor(stage.ancientFloor).enemyPercentHpBases, timeLimitSeconds: getAncientStrataFloor(stage.ancientFloor).timeLimitSeconds } : {},
-      enemyBreakthroughs: cake || b.mode === "bounty" ? [...placedEnemyIndex(b, stage, enemies).values()].map(
+      enemyBreakthroughs: cake2 || b.mode === "bounty" ? [...placedEnemyIndex(b, stage, enemies).values()].map(
         (e) => e.breakthrough
       ) : stageEnemyGrowth(stage).map((e) => e.breakthrough),
       enemyBodyScales: b.mode === "stage" ? enemies.map((enemy) => ENCOUNTER_ROLE[enemy.encounterRole ?? "normal"].bodyScale) : void 0,
-      enemyBodyScale: ENCOUNTER_ROLE[cake ? cakeOperationRole(cake) : encounterRoleFor(enemies.length, {
+      enemyBodyScale: ENCOUNTER_ROLE[cake2 ? cakeOperationRole(cake2) : encounterRoleFor(enemies.length, {
         elite: stage.elite === true || b.mode === "bounty"
       })].bodyScale
     }
@@ -40611,8 +40767,8 @@ var RESEARCH_TICKET_GEM_PRICE = 300;
 function pullPayment(wallet, banner, count3, pity) {
   const cost = pullCost(banner, count3, pity);
   const tickets = Math.max(0, Math.min(cost, wallet[banner.currency]));
-  const gems3 = (cost - tickets) * RESEARCH_TICKET_GEM_PRICE;
-  return { tickets, gems: gems3, affordable: wallet.gems >= gems3 };
+  const gems4 = (cost - tickets) * RESEARCH_TICKET_GEM_PRICE;
+  return { tickets, gems: gems4, affordable: wallet.gems >= gems4 };
 }
 function bannerActive(banner, now, schedule = liveSchedule()) {
   const window2 = banner.id === void 0 ? scheduledWindow("banner", "", banner, []) : scheduledWindow("banner", banner.id, banner, schedule);
@@ -44878,7 +45034,7 @@ function deriveNotificationState(conditions) {
     achievementReward: (conditions.claimableAchievementCount ?? 0) > 0,
     codexReward: (conditions.claimableCodexCount ?? 0) > 0,
     // 패스 달성 보상은 로비 패스 카드에서 받으므로 프리미엄 쪽에는 알리지 않는다.
-    premiumNotice: (conditions.freeSupplyCategories?.length ?? 0) > 0 || (conditions.situationalOfferCount ?? 0) > 0 || (conditions.claimableSubscriptionBonusCount ?? 0) > 0,
+    premiumNotice: (conditions.freeSupplyCategories?.length ?? 0) > 0 || (conditions.situationalOfferCount ?? 0) > 0 || (conditions.claimableSubscriptionBonusCount ?? 0) > 0 || conditions.patronClaimable === true,
     // 상황 특가는 결과판 위에 창을 띄우지 않고 프리미엄 「한정」 탭의 붉은 점으로만 알린다.
     premiumOffer: (conditions.situationalOfferCount ?? 0) > 0,
     premiumFree: (conditions.freeSupplyCategories?.length ?? 0) > 0,
@@ -44890,7 +45046,8 @@ function deriveNotificationState(conditions) {
     interactionReturned: (conditions.claimableInteractionCount ?? 0) > 0,
     duelSeasonReward: conditions.duelSeasonRewardReady === true,
     premiumSubscription: (conditions.claimableSubscriptionBonusCount ?? 0) > 0,
-    guildAttendance: conditions.guildAttendanceReady === true
+    guildAttendance: conditions.guildAttendanceReady === true,
+    patronDaily: conditions.patronClaimable === true
   };
 }
 var EMPTY_NOTIFICATION_STATE = deriveNotificationState({
@@ -45233,7 +45390,7 @@ var GREAT_SUCCESS = {
   /** 한 판이 대성공일 확률. */
   chance: 0.1,
   /** 대성공 판이 받는 기본 보상의 배율. 얹히는 몫은 `multiplier - 1`이다. */
-  multiplier: 1.5
+  multiplier: 2
 };
 function rollGreatSuccess(random) {
   return random() < GREAT_SUCCESS.chance;
@@ -45401,7 +45558,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.485.3",
+  version: "0.487.2",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -45633,6 +45790,9 @@ var SERVER_GAME_METHODS = [
   "claimMissionRewards",
   "claimPassDailyBonus",
   "claimFirstPaymentGift",
+  "getPatronStatus",
+  "claimPatronDaily",
+  "claimPatronTierReward",
   "claimProgressPass",
   "claimRelicChapter",
   "claimRelicQuestionReward",
@@ -47763,10 +47923,10 @@ var FakeServer = class {
     await this.delay();
     const stamped = await this.guildBackend.stampAttendance(this.guildActor(), this.guildRequestId("stamp"));
     const { reward } = guildAttendanceDay(stamped.day);
-    const gold2 = reward.gold ?? 0, cheesecake3 = reward.cheesecake ?? 0, gems3 = reward.gems ?? 0;
+    const gold3 = reward.gold ?? 0, cheesecake3 = reward.cheesecake ?? 0, gems4 = reward.gems ?? 0;
     const wallet = { ...this.state.wallet };
     const granted = { gold: 0, cheesecake: 0, gems: 0 };
-    for (const [key, amount] of [["gold", gold2], ["cheesecake", cheesecake3], ["gems", gems3]]) {
+    for (const [key, amount] of [["gold", gold3], ["cheesecake", cheesecake3], ["gems", gems4]]) {
       granted[key] = Math.max(0, Math.min(amount, WALLET_CAPS[key] - wallet[key]));
       wallet[key] += granted[key];
     }
@@ -48474,6 +48634,80 @@ var FakeServer = class {
     this.commitRaidState(candidate);
     return { ...this.snapshot(), ...result };
   }
+  /** 후원 지층 상태를 화면이 읽는 모양으로 옮긴다 — 기금·지층·오늘 보급·기념품. */
+  patronStatusDto(state, now) {
+    return {
+      fund: patronFund(state),
+      freeFund: state.free,
+      paidFund: state.paid,
+      tierId: patronTierOf(state).id,
+      dailyAvailable: patronDailyAvailable(state, now),
+      rewards: PATRON_TIERS.slice(1).map(({ id }) => {
+        const status = patronRewardStatus(state, id, now);
+        return { tierId: id, status, ...status === "settling" && state.reachedAt?.[id] ? { claimableAt: state.reachedAt[id] } : {} };
+      }),
+      nextDailyAt: nextUtcMidnight(now).toISOString(),
+      serverTime: now.toISOString()
+    };
+  }
+  patronState() {
+    return normalizePatronState(this.state.achievements?.patron);
+  }
+  async getPatronStatus() {
+    await this.delay();
+    return this.patronStatusDto(this.patronState(), this.now());
+  }
+  /** 후원 지층의 오늘 보급 — 지금 지층의 보급을 주고 무료 기금 1을 쌓는다. 같은 요청 ID의 재전송은 영수증을 돌려준다. */
+  async claimPatronDaily(request) {
+    await this.delay();
+    const cached = this.readReceipt("patronDaily", request.requestId, "daily");
+    if (cached) return { ...this.snapshot(), ...cached };
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "\uC694\uCCAD ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    const now = this.now();
+    const before = this.patronState();
+    if (!patronDailyAvailable(before, now)) throw new GameApiError("INVALID_STATE", "\uC624\uB298 \uD6C4\uC6D0 \uBCF4\uAE09\uC744 \uC774\uBBF8 \uBC1B\uC558\uC2B5\uB2C8\uB2E4.");
+    const tier = patronTierOf(before);
+    const nextWallet = { ...this.state.wallet };
+    const applied = this.applyProductGrants({ grants: tier.daily }, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now);
+    const after = { ...addPatronFund(before, "free", PATRON_DAILY_FUND, now), dailyDate: utcDateKey(now) };
+    const promoted = patronTierOf(after).id !== tier.id ? patronTierOf(after).id : void 0;
+    const candidate = structuredClone(this.state);
+    candidate.wallet = nextWallet;
+    candidate.itemInventory = applied.items;
+    candidate.achievements = { ...normalizeAchievementState(this.state.achievements), patron: after };
+    const result = { granted: applied.granted, patron: this.patronStatusDto(after, now), ...promoted ? { promotedTo: promoted } : {} };
+    this.recordReceipt(candidate, "patronDaily", request.requestId, "daily", result);
+    this.commitRaidState(candidate);
+    return { ...this.snapshot(), ...result };
+  }
+  /** 처음 닿은 지층의 기념품 — 재화·아이템과 테두리·수식어를 한 저장으로 확정한다. */
+  async claimPatronTierReward(request) {
+    await this.delay();
+    const cached = this.readReceipt("patronTier", request.requestId, String(request.tierId));
+    if (cached) return { ...this.snapshot(), ...cached };
+    const tier = PATRON_TIERS.find(({ id }) => id === request.tierId);
+    if (!request.requestId || !tier) throw new GameApiError("INVALID_STATE", "\uC54C \uC218 \uC5C6\uB294 \uC9C0\uCE35\uC785\uB2C8\uB2E4.");
+    const now = this.now();
+    const before = this.patronState();
+    const status = patronRewardStatus(before, tier.id, now);
+    if (status !== "ready") throw new GameApiError("INVALID_STATE", status === "settling" ? "\uC544\uC9C1 \uC815\uC0B0 \uC911\uC778 \uAE30\uB150\uD488\uC785\uB2C8\uB2E4." : "\uBC1B\uC744 \uC218 \uC5C6\uB294 \uAE30\uB150\uD488\uC785\uB2C8\uB2E4.");
+    const nextWallet = { ...this.state.wallet };
+    const applied = this.applyProductGrants({ grants: tier.reward }, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now);
+    const after = { ...before, claimed: [...before.claimed ?? [], tier.id] };
+    const achievements = normalizeAchievementState(this.state.achievements);
+    const candidate = structuredClone(this.state);
+    candidate.wallet = nextWallet;
+    candidate.itemInventory = applied.items;
+    candidate.achievements = { ...achievements, patron: after, ...tier.frameId ? { giftFrames: [.../* @__PURE__ */ new Set([...achievements.giftFrames ?? [], tier.frameId])] } : {} };
+    if (tier.modifierId && findProfileModifier(tier.modifierId) && !candidate.earnedProfileModifierIds.includes(tier.modifierId)) {
+      const earned = /* @__PURE__ */ new Set([...candidate.earnedProfileModifierIds, tier.modifierId]);
+      candidate.earnedProfileModifierIds = PROFILE_MODIFIERS.filter(({ id }) => earned.has(id)).map(({ id }) => id);
+    }
+    const result = { granted: applied.granted, patron: this.patronStatusDto(after, now), ...tier.frameId ? { frameId: tier.frameId } : {}, ...tier.modifierId ? { modifierId: tier.modifierId } : {} };
+    this.recordReceipt(candidate, "patronTier", request.requestId, tier.id, result);
+    this.commitRaidState(candidate);
+    return { ...this.snapshot(), ...result };
+  }
   /** 무료 수령을 먼저 받아야 열리는 광고 슬롯(일간 보급의 추가 몫)은 그 상품의 오늘 몫이 소진됐을 때만 받는다. */
   assertAdPrerequisite(slot, now) {
     if (slot.id === ROULETTE.adSlot && !this.allEventsOpen() && !rouletteStatus(this.state.dailyAdRewards, now).active) throw new GameApiError("EVENT_NOT_ACTIVE", "\uC774\uBCA4\uD2B8\uAC00 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
@@ -48554,7 +48788,12 @@ var FakeServer = class {
     candidate.itemInventory = applied.items;
     candidate.productPurchases = nextPurchases;
     if (product.situational) candidate.situationalOffers = consumeSituationalOffer(normalizeSituationalOfferState(this.state.situationalOffers), product.id, now);
-    if (firstPaymentGift) candidate.achievements = { ...achievements, firstPaymentPaid: true };
+    const patronGain = fundForPriceKrw(product.acquisition.basePriceKrw);
+    candidate.achievements = {
+      ...achievements,
+      ...firstPaymentGift ? { firstPaymentPaid: true } : {},
+      ...patronGain > 0 ? { patron: addPatronFund(normalizePatronState(achievements.patron), "paid", patronGain, now) } : {}
+    };
     let entitlement;
     if (product.passBenefit) {
       const entitlementId = `entitlement-${verification.transactionId}`;
@@ -48703,6 +48942,11 @@ var FakeServer = class {
     if (this.readReceipt("platformTransaction", verification.transactionId, order.productId) || this.fulfilledTransactions.has(verification.transactionId) || context.orders.some((row) => row.transactionId === verification.transactionId)) throw new GameApiError("RECEIPT_INVALID", "\uC774\uBBF8 \uC0AC\uC6A9\uB41C \uAC70\uB798\uC785\uB2C8\uB2E4.");
     const { after } = this.moveGift(context, order.id, { kind: "pay", transactionId: verification.transactionId }, now);
     const candidate = structuredClone(this.state);
+    const giftFund = fundForPriceKrw(order.priceKrw);
+    if (giftFund > 0) {
+      const achievements = normalizeAchievementState(this.state.achievements);
+      candidate.achievements = { ...achievements, patron: addPatronFund(normalizePatronState(achievements.patron), "paid", giftFund, now) };
+    }
     this.recordReceipt(candidate, "platformTransaction", verification.transactionId, order.productId, {
       productId: order.productId,
       quantity: 1,
@@ -49646,8 +49890,8 @@ var FakeServer = class {
     const wallet = { ...this.state.wallet };
     const emblem = Math.max(0, Math.min(request.won ? DUEL_BATTLE_REWARD.win : DUEL_BATTLE_REWARD.loss, WALLET_CAPS.duelEmblem - wallet.duelEmblem));
     wallet.duelEmblem += emblem;
-    const gems3 = Math.max(0, Math.min(reached.reduce((sum, tier) => sum + tier.firstReachGems, 0), WALLET_CAPS.gems - wallet.gems));
-    wallet.gems += gems3;
+    const gems4 = Math.max(0, Math.min(reached.reduce((sum, tier) => sum + tier.firstReachGems, 0), WALLET_CAPS.gems - wallet.gems));
+    wallet.gems += gems4;
     const entry = {
       at: now.toISOString(),
       opponentName: pending2.opponentName,
@@ -49687,7 +49931,7 @@ var FakeServer = class {
       tierBefore: duelTier(scoreBefore).id,
       tierAfter: duelTier(scoreAfter).id,
       duelEmblem: emblem,
-      gems: gems3,
+      gems: gems4,
       winStreak,
       streakBonus,
       newlyReachedTierIds: reached.map(({ id }) => id)
@@ -49742,14 +49986,14 @@ var FakeServer = class {
     if (!pending2 || !tier) throw new GameApiError("NOTHING_TO_CLAIM", "\uBC1B\uC744 \uC2DC\uC98C \uBCF4\uC0C1\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const wallet = { ...this.state.wallet };
     const emblem = Math.max(0, Math.min(tier.seasonReward.duelEmblem, WALLET_CAPS.duelEmblem - wallet.duelEmblem));
-    const gems3 = Math.max(0, Math.min(tier.seasonReward.gems, WALLET_CAPS.gems - wallet.gems));
+    const gems4 = Math.max(0, Math.min(tier.seasonReward.gems, WALLET_CAPS.gems - wallet.gems));
     wallet.duelEmblem += emblem;
-    wallet.gems += gems3;
+    wallet.gems += gems4;
     const next = { ...duel2, pendingSeasonReward: null };
     this.persist({ ...this.state, wallet, duel: next });
     this.state.wallet = wallet;
     this.state.duel = next;
-    return { ...this.snapshot(), seasonId: pending2.seasonId, tierId: tier.id, duelEmblem: emblem, gems: gems3 };
+    return { ...this.snapshot(), seasonId: pending2.seasonId, tierId: tier.id, duelEmblem: emblem, gems: gems4 };
   }
   /** 정적 이벤트에 서버가 판정한 상태를 결합해 클라이언트 시계 의존을 없앤다. */
   async getEvents() {
@@ -49819,7 +50063,8 @@ var FakeServer = class {
     const duelSeasonRewardReady = (QA_TOOLS_ENABLED || this.duelContext !== void 0) && rollDuelPeriods(normalizeDuelState(this.state.duel, [...this.state.owned]), now).pendingSeasonReward != null;
     const claimableSubscriptionBonusCount = PRODUCTS.filter((product) => product.passBenefit && this.subscriptionInfo(product, now).subscription?.dailyBonusClaimed === false).length;
     const guildAttendanceReady = await this.guildAttendanceReady();
-    return { guildAttendanceReady, freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
+    const patronClaimable = patronHasClaimable(this.patronState(), now);
+    return { patronClaimable, guildAttendanceReady, freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
   }
   /**
    * **상황 특가를 지금 상태에서 읽어 세운다**(`core/situationalOffers.ts`). 조회(붉은 점·프리미엄 목록)가 부르며, 바뀐 것이 있을 때만 저장한다.
@@ -51603,13 +51848,13 @@ var RelicProgressionManager = class {
   /** UI와 전투가 공유할 최종 능력치를 순수 코어 계산기로 구한다. */
   getFinalStats(relicId, options = {}) {
     const progress = this.getProgress(relicId);
-    const gems3 = progress.heartGemSlots.flatMap((id) => {
+    const gems4 = progress.heartGemSlots.flatMap((id) => {
       const rune = id === null ? void 0 : this.state.runeInventory.find((candidate) => candidate.instanceId === id);
       if (!rune) return [];
       return [rune];
     });
     const def = getRelic(relicId);
-    return calculateFinalStats(def.stats, progress, gems3, def.rarity, { resonance: !options.pvp });
+    return calculateFinalStats(def.stats, progress, gems4, def.rarity, { resonance: !options.pvp });
   }
   /** 성장 트랜잭션이 끝난 뒤에만 저장해 중간 상태가 남지 않게 한다. */
   persistSharedSession() {
@@ -52402,8 +52647,8 @@ function createSupabaseGuildBackend(call) {
     getGuard: (actor) => run2(actor, "getGuard"),
     getRanking: (actor) => run2(actor, "getRanking"),
     recordGuard: async (actor, record3, requestId) => {
-      const whole2 = (value, max) => Number.isSafeInteger(value) && value >= 0 && value <= max;
-      if (!whole2(record3?.day, 1e6) || !whole2(record3.score, 1e7) || !whole2(record3.coin, 100)) invalid();
+      const whole3 = (value, max) => Number.isSafeInteger(value) && value >= 0 && value <= max;
+      if (!whole3(record3?.day, 1e6) || !whole3(record3.score, 1e7) || !whole3(record3.coin, 100)) invalid();
       return run2(actor, "recordGuard", [{ day: record3.day, score: record3.score, coin: record3.coin }], requestId);
     },
     getWarMap: (actor) => run2(actor, "getWarMap"),

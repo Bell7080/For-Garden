@@ -762,11 +762,11 @@ describe("FakeServer", () => {
     await server.enterBounty({ tierId: "bounty-1", requestId: "clear" });
     await server.completeBounty({ tierId: "bounty-1", requestId: "clear", victory: true, clearedRounds: 3 });
     const swept = await server.sweepBounty({ tierId: "bounty-1", requestId: "sweep", count: 3 });
-    // 난수 0이면 판마다 대성공이다 — 한 판 1,200에 600씩 더 얹힌다.
-    expect(swept).toMatchObject({ count: 3, staminaSpent: 30, ticketsSpent: 3, granted: { gold: 5_400 }, greatSuccessCount: 3, greatSuccessBonus: { gold: 1_800 } });
-    expect(state.wallet.gold).toBe(7_200);
-    await expect(server.sweepBounty({ tierId: "bounty-1", requestId: "sweep", count: 3 })).resolves.toMatchObject({ granted: { gold: 5_400 } });
-    expect(state.wallet.gold).toBe(7_200);
+    // 난수 0이면 판마다 대성공이다 — 한 판 1,200에 1,200씩 더 얹힌다.
+    expect(swept).toMatchObject({ count: 3, staminaSpent: 30, ticketsSpent: 3, granted: { gold: 7_200 }, greatSuccessCount: 3, greatSuccessBonus: { gold: 3_600 } });
+    expect(state.wallet.gold).toBe(9_600);
+    await expect(server.sweepBounty({ tierId: "bounty-1", requestId: "sweep", count: 3 })).resolves.toMatchObject({ granted: { gold: 7_200 } });
+    expect(state.wallet.gold).toBe(9_600);
     expect(state.itemInventory).toEqual([{ itemId: "sweep-ticket", quantity: 1 }]);
   });
 

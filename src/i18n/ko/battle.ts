@@ -73,4 +73,6 @@ export const BATTLE_KO = {
   "tutorial.rune.engrave": "각인 확정을 눌러 룬을 완성해 주세요",
   "tutorial.rune.done.title": "룬 완성!",
   "tutorial.rune.done.body": "세공과 각인을 모두 마쳤어요. 다음부터는 세공에 골드가 들어요.",
+  "tutorial.rune.done.go": "{name}에게 장착하러 가기",
+  "tutorial.rune.equip": "룬은 여기서 장착할 수 있어요!",
 } as const;

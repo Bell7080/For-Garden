@@ -70,4 +70,6 @@ export const BATTLE_VI = {
   "tutorial.rune.engrave": "Hãy chạm Xác nhận Khắc để hoàn thiện Rune",
   "tutorial.rune.done.title": "Rune hoàn thiện!",
   "tutorial.rune.done.body": "Đã Mài và Khắc xong. Từ giờ Mài sẽ tốn Vàng.",
+  "tutorial.rune.done.go": "Trang bị cho {name}",
+  "tutorial.rune.equip": "Bạn có thể trang bị Rune ở đây!",
 } as const;

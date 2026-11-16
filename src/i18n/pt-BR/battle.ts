@@ -70,4 +70,6 @@ export const BATTLE_PT_BR = {
   "tutorial.rune.engrave": "Toque em Confirmar gravação para completar a Runa",
   "tutorial.rune.done.title": "Runa completa!",
   "tutorial.rune.done.body": "Lapidação e gravação concluídas. A partir de agora, lapidar custa Ouro.",
+  "tutorial.rune.done.go": "Equipar em {name}",
+  "tutorial.rune.equip": "Você pode equipar Runas aqui!",
 } as const;

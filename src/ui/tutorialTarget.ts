@@ -14,6 +14,10 @@ export function followTutorialTarget(scene: Phaser.Scene, options: {
   passive?: boolean;
   /** 안내 글이 설 쪽. 없으면 대상이 화면 위쪽이면 아래, 아니면 위다. */
   side?: () => "above" | "below" | undefined;
+  /** 누를 대상이 없는 알림 칸 — 화면 아무 곳이나 누르면 불린다(`TutorialSpotlight.onAdvance`). */
+  onAdvance?: () => void;
+  /** 안내 글 곁의 작은 한 줄(「화면을 눌러 확인」 등). */
+  hint?: () => string;
 }): () => void {
   let stopped = false, spotlight: TutorialSpotlight | undefined, signature = "";
   let waiting: Phaser.GameObjects.Rectangle | undefined;
@@ -36,10 +40,11 @@ export function followTutorialTarget(scene: Phaser.Scene, options: {
       waiting?.destroy(); waiting = undefined;
       const text = options.text();
       const guide = options.guide?.();
-      const next = JSON.stringify([rect.x, rect.y, rect.width, rect.height, text, guide, options.side?.()]);
+      const hint = options.hint?.();
+      const next = JSON.stringify([rect.x, rect.y, rect.width, rect.height, text, guide, options.side?.(), hint]);
       if (next !== signature) {
         clear(); signature = next;
-        spotlight = new TutorialSpotlight(scene, { rect, text, guide, side: options.side?.() ?? (rect.y < 700 ? "below" : "above"), onSkip: options.onSkip, skipLabel: t("tutorial.skip"), passive: options.passive });
+        spotlight = new TutorialSpotlight(scene, { rect, text, guide, hint, side: options.side?.() ?? (rect.y < 700 ? "below" : "above"), onSkip: options.onSkip, onAdvance: options.onAdvance, skipLabel: t("tutorial.skip"), passive: options.passive });
       }
     }
   };

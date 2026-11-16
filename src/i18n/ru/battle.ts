@@ -70,4 +70,6 @@ export const BATTLE_RU = {
   "tutorial.rune.engrave": "Нажмите «Подтвердить гравировку», чтобы завершить руну",
   "tutorial.rune.done.title": "Руна готова!",
   "tutorial.rune.done.body": "Огранка и гравировка завершены. Дальше огранка стоит золота.",
+  "tutorial.rune.done.go": "Надеть руну: {name}",
+  "tutorial.rune.equip": "Здесь можно надеть руны!",
 } as const;

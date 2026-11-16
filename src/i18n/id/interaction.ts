@@ -4,7 +4,7 @@ export const INTERACTION_ID = {
   "interaction.subtitle": "Satu tim dapat dikirim ke tiap kota",
   "interaction.dispatched": "Dikirim · {remaining}",
   "interaction.awaitingClaim": "Menunggu diklaim",
-  "interaction.lockedByStage": "Terbuka setelah menyelesaikan {stage}",
+  "interaction.lockedByLevel": "Terbuka di Periset LV.{level}",
   "interaction.journal": "Jurnal Kota",
   "interaction.expected": "Perkiraan Hadiah",
   "interaction.specialty": "Keahlian",

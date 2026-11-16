@@ -30,15 +30,13 @@ export const INTERACTION_DEPARTMENT_LABEL: Readonly<Record<InteractionDepartment
 export interface InteractionCity {
   readonly id: string; readonly displayName: string; readonly department: InteractionDepartment; readonly description: string;
   /**
-   * 해금은 **스토리 진행이 연다**(`docs/interaction-cities.md` §3).
+   * 해금은 **연구원 레벨이 연다**(`docs/interaction-cities.md` §3 · 응태 결정 2026-11-16).
    *
-   * 플레이어 레벨로 열던 때는 레벨이 스토리를 앞질러, 아직 만나지도 않은 도시의 창구가 먼저
-   * 열렸다. 지금은 그 도시를 알게 되는 관문을 지나야 열린다.
-   *
-   * **비워 두면 처음부터 열려 있다.** 교류에 처음 들어온 손이 빈 목록을 보지 않도록 앞의 세
-   * 곳은 조건을 두지 않는다 — 눌러 볼 것이 하나도 없는 화면은 콘텐츠가 없는 것으로 읽힌다.
+   * 스토리 관문으로 열던 때(v0.125.0~)는 스토리를 미는 사람만 도시가 늘었다. 지금은 교류 입구
+   * (`CONTENT_UNLOCKS`의 `interaction`, 5레벨)와 같은 축으로 열고, 도시 사이에 레벨 간격을 두어
+   * 한꺼번에 열리지 않게 한다. 첫 도시는 입구와 같은 레벨이라 들어온 손이 빈 목록을 보지 않는다.
    */
-  readonly unlock: { readonly stageId?: string };
+  readonly unlock: { readonly level: number };
   /**
    * 파견에 드는 시간(분).
    *
@@ -96,7 +94,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     // 흘린다.
     id: "doppel-parlor", displayName: "도플 · 중앙 연구소 응접실", department: "exchange",
     description: "도플의 중앙 연구소 한쪽에 딸린 응접실. 손님을 앉혀 두고 연구 일지를 한 장씩 내어 준다.",
-    unlock: {}, durationMinutes: 10, partySize: { min: 1, max: 3 },
+    unlock: { level: 5 }, durationMinutes: 10, partySize: { min: 1, max: 3 },
     specialty: { elements: ["water"], roles: ["support"], squads: ["rune"] },
     rewards: [{ currency: "gold", min: 300, max: 800 }, { currency: "cheesecake", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 6 }],
     clueJournalId: "interaction-doppel-01", illustration: "background-interaction-doppel-parlor",
@@ -106,7 +104,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     // 것을 그대로 두어 저장(진행 중 파견·읽은 일지)이 깨지지 않는다.
     id: "doppel-lab", displayName: "도플 · 내부 연구기관", department: "exchange",
     description: "도플 연구소 안쪽의 내부 연구기관. 이터널에 파견됐던 연구원들이 남긴 일기가 이곳에 모인다.",
-    unlock: {}, durationMinutes: 30, partySize: { min: 1, max: 3 },
+    unlock: { level: 7 }, durationMinutes: 30, partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support"], squads: ["rune"] },
     rewards: [{ currency: "gold", min: 800, max: 1_800 }, { currency: "cheesecake", min: 1, max: 3 }, { currency: "rawStone", min: 0, max: 20 }],
     clueJournalId: "interaction-doppel-lab-01", illustration: "background-interaction-doppel-lab",
@@ -115,7 +113,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     // 3단계부터는 스토리 관문이 연다(§3). 렐릭의 사용처와 연구 성과, 연구 **목적**.
     id: "doppel-office", displayName: "도플 · 관리부", department: "council",
     description: "연구 성과와 렐릭의 사용처를 집계하는 도플의 관리부. 결재가 여러 단을 거쳐 오래 기다려야 한다.",
-    unlock: { stageId: "1-4" }, durationMinutes: 240, partySize: { min: 1, max: 3 },
+    unlock: { level: 9 }, durationMinutes: 240, partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support", "tank"], squads: ["rune", "eye"] },
     rewards: [{ currency: "gems", min: 8, max: 25 }, { currency: "gold", min: 2_000, max: 5_000 }, { currency: "cheesecake", min: 5, max: 15 }, { currency: "rawStone", min: 0, max: 50 }],
     clueJournalId: "interaction-doppel-office-01", illustration: "background-interaction-doppel-office",
@@ -124,7 +122,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     // 4단계: 러스트는 무거운 이야기 사이의 숨 고르기다. 세계관보다 짧은 해프닝을 맡는다.
     id: "rust-garage", displayName: "러스트 · 정비창", department: "exchange",
     description: "러스트의 정비창. 부서진 연구 장비를 고쳐 달라는 의뢰가 쉴 새 없이 들어온다.",
-    unlock: { stageId: "1-10" }, durationMinutes: 60, partySize: { min: 1, max: 3 },
+    unlock: { level: 12 }, durationMinutes: 60, partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["warrior"], squads: ["gear"] },
     rewards: [{ currency: "gold", min: 1_500, max: 3_500 }, { currency: "cheesecake", min: 3, max: 8 }, { currency: "rawStone", min: 0, max: 40 }],
     clueJournalId: "interaction-rust-garage-01", illustration: "background-interaction-rust-garage",
@@ -133,7 +131,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     // 5단계: 고성능 장비의 대여 기간 연장 협상. 간간이 도플 이야기가 섞여 든다.
     id: "rust-lease", displayName: "러스트 · 대여 관리부", department: "council",
     description: "고성능 장비를 빌려 주는 러스트의 대여 관리부. 연장 한 건에도 긴 협상이 붙는다.",
-    unlock: { stageId: "2-5" }, durationMinutes: 720, partySize: { min: 1, max: 3 },
+    unlock: { level: 15 }, durationMinutes: 720, partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
     rewards: [{ currency: "gems", min: 8, max: 40 }, { currency: "gold", min: 3_500, max: 7_500 }, { currency: "cheesecake", min: 15, max: 40 }, { currency: "rawStone", min: 0, max: 80 }],
     clueJournalId: "interaction-rust-lease-01", illustration: "background-interaction-rust-lease",
@@ -143,7 +141,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     // 비춘다. 상층부의 정체·목적은 단정하지 않는다(`docs/lore.md` §1.2).
     id: "doppel-upper", displayName: "도플 · 상층부", department: "council",
     description: "도플 연구소의 가장 높은 층. 연구의 목적을 정하는 사람들이 이곳에 앉는다.",
-    unlock: { stageId: "2-10" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
+    unlock: { level: 18 }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     specialty: { elements: ["water"], roles: ["support", "tank"], squads: ["rune", "eye"] },
     rewards: [{ currency: "gems", min: 8, max: 85 }, { currency: "gold", min: 4_000, max: 9_000 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
     clueJournalId: "interaction-doppel-upper-01", illustration: "background-interaction-doppel-upper",
@@ -153,7 +151,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     // 나노칩 기술의 출처가 이 도시라는 사실은 스치기만 한다.
     id: "rust-works", displayName: "러스트 · 중앙 공방", department: "council",
     description: "러스트의 중심에 선 거대한 공방. 연구 장비의 설계와 수리가 한곳에 모인다.",
-    unlock: { stageId: "3-5" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
+    unlock: { level: 21 }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
     rewards: [{ currency: "gems", min: 8, max: 85 }, { currency: "gold", min: 4_500, max: 10_000 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
     clueJournalId: "interaction-rust-works-01", illustration: "background-interaction-rust-works",
@@ -163,7 +161,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     // 먼저 "실패 개체를 더 넘겨라"고 손을 내밀고, 거절하는 자리에서 정보를 캐 온다.
     id: "odidi-embassy", displayName: "오디디 · 외교 접견실", department: "council",
     description: "꿈을 연구하는 도시 오디디가 외부 손님을 맞는 접견실. 제안은 늘 그들이 먼저 꺼낸다.",
-    unlock: { stageId: "3-10" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
+    unlock: { level: 25 }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     specialty: { elements: ["wind", "water"], roles: ["assassin", "support"], squads: ["eye", "rogue"] },
     rewards: [{ currency: "gems", min: 8, max: 85 }, { currency: "gold", min: 4_000, max: 9_000 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
     clueJournalId: "interaction-odidi-embassy-01", illustration: "background-interaction-odidi-embassy",

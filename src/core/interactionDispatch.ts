@@ -1,3 +1,4 @@
+import { contentUnlockLevel } from "./contentUnlock";
 import type { Element, Role } from "./types";
 import type { SquadId } from "../data/factions";
 import type { InteractionCity, InteractionRewardRange } from "../data/interactionCities";
@@ -15,14 +16,13 @@ export function validateInteractionFormation(ids: readonly string[], owned: Read
 }
 
 /**
- * 그 도시가 열렸는가 — **스토리 진행 하나만 본다**(`docs/interaction-cities.md` §3).
+ * 그 도시가 열렸는가 — **연구원 레벨 하나만 본다**(`docs/interaction-cities.md` §3).
  *
- * 조건이 없는 도시는 언제나 열려 있다. 조건이 있으면 그 관문을 **깬 적이 있어야** 하며,
- * 알 수 없는 ID는 열지 않는다 — 없는 관문을 조건으로 적어 두면 조용히 전부 열린다.
+ * 교류 입구가 열리는 레벨(`contentUnlockLevel("interaction")`)보다 낮게 적힌 도시도 입구 레벨
+ * 전에는 열지 않는다 — 서버가 입구를 건너뛴 요청을 받아도 같은 답을 낸다.
  */
-export function isInteractionCityUnlocked(city: InteractionCity, clearedStageIds: ReadonlySet<string>): boolean {
-  const required = city.unlock.stageId;
-  return required === undefined || clearedStageIds.has(required);
+export function isInteractionCityUnlocked(city: InteractionCity, playerLevel: number): boolean {
+  return playerLevel >= Math.max(city.unlock.level, contentUnlockLevel("interaction"));
 }
 
 /**

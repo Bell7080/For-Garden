@@ -4,7 +4,7 @@ export const INTERACTION_ZH_HANT = {
   "interaction.subtitle": "每座城市可派遣一支隊伍",
   "interaction.dispatched": "派遣中 · {remaining}",
   "interaction.awaitingClaim": "待領取",
-  "interaction.lockedByStage": "通關{stage}後開放",
+  "interaction.lockedByLevel": "研究員 LV.{level}後開放",
   "interaction.journal": "城市日誌",
   "interaction.expected": "預計獎勵",
   "interaction.specialty": "專長",

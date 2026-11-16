@@ -4,7 +4,7 @@ export const INTERACTION_VI = {
   "interaction.subtitle": "Mỗi thành phố được cử một đội",
   "interaction.dispatched": "Đang cử đi · {remaining}",
   "interaction.awaitingClaim": "Chờ nhận",
-  "interaction.lockedByStage": "Mở sau khi vượt {stage}",
+  "interaction.lockedByLevel": "Mở khi Nhà nghiên cứu đạt LV.{level}",
   "interaction.journal": "Nhật ký thành phố",
   "interaction.expected": "Thưởng dự kiến",
   "interaction.specialty": "Chuyên môn",

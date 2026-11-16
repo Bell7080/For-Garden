@@ -4,7 +4,7 @@ export const INTERACTION_JA = {
   "interaction.subtitle": "都市ごとに一チームずつ送れる",
   "interaction.dispatched": "派遣中 · {remaining}",
   "interaction.awaitingClaim": "受け取り待ち",
-  "interaction.lockedByStage": "{stage} クリアで解放",
+  "interaction.lockedByLevel": "研究員 LV.{level}で解放",
 
   "interaction.journal": "都市日誌",
   "interaction.expected": "予想報酬",

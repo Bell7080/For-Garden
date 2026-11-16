@@ -4,7 +4,7 @@ export const INTERACTION_TH = {
   "interaction.subtitle": "ส่งได้เมืองละหนึ่งทีม",
   "interaction.dispatched": "กำลังส่งตัว · {remaining}",
   "interaction.awaitingClaim": "รอรับรางวัล",
-  "interaction.lockedByStage": "เปิดหลังผ่าน {stage}",
+  "interaction.lockedByLevel": "เปิดเมื่อนักวิจัย LV.{level}",
   "interaction.journal": "บันทึกเมือง",
   "interaction.expected": "รางวัลที่คาดว่าจะได้",
   "interaction.specialty": "ความถนัด",

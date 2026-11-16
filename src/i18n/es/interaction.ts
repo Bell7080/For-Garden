@@ -4,7 +4,7 @@ export const INTERACTION_ES = {
   "interaction.subtitle": "Se puede enviar un equipo a cada ciudad",
   "interaction.dispatched": "Enviado · {remaining}",
   "interaction.awaitingClaim": "Por reclamar",
-  "interaction.lockedByStage": "Se abre tras superar {stage}",
+  "interaction.lockedByLevel": "Se abre con Investigador LV.{level}",
   "interaction.journal": "Diario de la ciudad",
   "interaction.expected": "Recompensas esperadas",
   "interaction.specialty": "Especialidad",

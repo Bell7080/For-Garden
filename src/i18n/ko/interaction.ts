@@ -4,7 +4,7 @@ export const INTERACTION_KO = {
   "interaction.subtitle": "도시마다 한 팀씩 보낼 수 있다",
   "interaction.dispatched": "파견 중 · {remaining}",
   "interaction.awaitingClaim": "수령 대기",
-  "interaction.lockedByStage": "{stage} 클리어로 열린다",
+  "interaction.lockedByLevel": "연구원 LV.{level}에 열린다",
 
   "interaction.journal": "도시 일지",
   "interaction.expected": "예상 보상",

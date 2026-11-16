@@ -611,13 +611,36 @@ export interface PurchaseHistoryEntryDto {
  */
 export interface MailClaimHistoryEntryDto { title: string; sender: string; receivedAt: string; rewards: readonly MailRewardDto[]; }
 /**
- * 내가 다른 연구원에게 보낸 선물 한 건. 선물하기가 열리기 전에는 늘 빈 목록이다 — 모양은 선물 설계 승인 뒤 확정한다.
+ * 내가 다른 연구원에게 보낸 선물 한 건. 선물하기가 꺼져 있는 동안(`GIFTING_ENABLED`)은 늘 빈 목록이다.
  * `status`: 받는 쪽이 아직 받지 않음 · 받음 · 받지 않아 돌아옴(보낸 쪽으로 환불) · 결제 취소로 회수됨.
+ * `orderId`가 있고 `status`가 수령 대기면 보낸 사람이 「선물 취소」를 할 수 있다.
  */
 export interface SentGiftHistoryEntryDto {
   productId: string; recipientName: string; sentAt: string;
   status: "pending" | "accepted" | "returned" | "revoked";
+  orderId?: string;
 }
+
+/* ── 선물하기 ── 규칙은 `core/gifting.ts`. 꺼져 있는 동안 아래 경계는 모두 `GIFT_UNAVAILABLE`로 거절한다. */
+
+/** 친구 한 명에게 보낼 수 있는 상품과 그 자격. 거절 사유는 서버가 정하고 화면은 문구로만 바꾼다. */
+export interface GiftOptionsRequest { recipientId: string; }
+export interface GiftOptionDto { productId: string; platformProductId: string; priceKrw: number; eligible: boolean; reason: import("../core/gifting").GiftRefusal | null; }
+export interface GiftOptionsResponse { recipientId: string; recipientName: string; options: readonly GiftOptionDto[]; serverTime: string; }
+/** 결제 대기 주문을 연다. `orderId`는 스토어 결제의 계정 토큰으로 들어가 결제와 주문을 묶는다. */
+export interface PrepareGiftRequest { recipientId: string; productId: string; requestId: string; }
+export interface PrepareGiftResponse { orderId: string; productId: string; platformProductId: string; paymentDeadline: string; }
+/** 검증된 결제를 그 주문에 묶어 선물을 보낸다. 보낸 사람에게는 아무것도 지급하지 않는다. */
+export interface SendGiftRequest { orderId: string; verificationId: string; requestId: string; }
+export interface SendGiftResponse { gift: SentGiftHistoryEntryDto; replayed?: true; }
+export interface GiftOrderActionRequest { orderId: string; requestId: string; }
+export interface CancelGiftResponse { gift: SentGiftHistoryEntryDto; }
+/** 받는 사람 우편함에 서는 선물. 받기 전에는 아무것도 지급하지 않았다. */
+export interface IncomingGiftDto { orderId: string; productId: string; senderName: string; sentAt: string; expiresAt: string; grants: readonly MailRewardDto[]; }
+export interface IncomingGiftsResponse { gifts: readonly IncomingGiftDto[]; serverTime: string; }
+/** 받기는 그 계정 저장에 지급하고 주문을 받음으로 바꾸는 것을 한 저장으로 확정한다. */
+export interface AcceptGiftResponse extends PlayerStateDto { orderId: string; granted: readonly MailRewardDto[]; }
+export interface DeclineGiftResponse { orderId: string; }
 export interface PurchaseHistoryResponse {
   entries: readonly PurchaseHistoryEntryDto[];
   /** 내가 보낸 선물(선물하기가 열리기 전에는 빈 목록). */
@@ -884,6 +907,7 @@ export interface UpgradeRuneTraitResponse { rune: RuneInstance; items: Inventory
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
 export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_DAILY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_NOT_ENTERED" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "AD_PREREQUISITE" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "PASS_BONUS_CLAIMED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "BANNER_NOT_ACTIVE" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RELIC_MAX_BREAKTHROUGH" | "RUNE_CHOICE_REQUIRED" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE" | "NOTHING_TO_CLAIM" | "DUEL_UNAVAILABLE" | "DUEL_OPPONENT_NOT_FOUND" | "DUEL_OPPONENT_FOUGHT" | "DUEL_NO_ATTEMPTS" | "DUEL_ATTEMPT_LIMIT" | "DUEL_INVALID_TEAM" | "DUEL_ADMISSION_NOT_FOUND"
+  | "GIFT_UNAVAILABLE" | "GIFT_NOT_ELIGIBLE" | "GIFT_NOT_FOUND" | "GIFT_STATE_INVALID"
   | "STRATA_NO_CHARGE" | "STRATA_CHARGE_FULL" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_SITE_COOLING" | "STRATA_TILE_UNAVAILABLE"
   | "RUNE_SYNTHESIS_INVALID" | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_GRADE_REACHED" | "RUNE_TRAIT_REROLL_PENDING"
   | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "DUNGEON_NOT_CLEARED" | "SWEEP_TICKET_SHORTAGE"
@@ -1372,6 +1396,18 @@ export interface GameApi extends AsyncArenaProfileApi {
   fulfillPlatformPurchase(request: FulfillPlatformPurchaseRequest): Promise<FulfillPlatformPurchaseResponse>;
   /** 이 계정에서 지급을 마친 플랫폼 결제 기록(최근 것부터). 읽기만 한다. */
   getPurchaseHistory(): Promise<PurchaseHistoryResponse>;
+  /** 선물하기 — 친구에게 보낼 수 있는 상품과 자격(꺼져 있으면 `GIFT_UNAVAILABLE`). */
+  getGiftOptions(request: GiftOptionsRequest): Promise<GiftOptionsResponse>;
+  /** 결제 대기 선물 주문을 연다. */
+  prepareGift(request: PrepareGiftRequest): Promise<PrepareGiftResponse>;
+  /** 검증된 결제를 주문에 묶어 선물을 보낸다. */
+  sendGift(request: SendGiftRequest): Promise<SendGiftResponse>;
+  /** 받기 전 선물을 보낸 사람이 취소한다(스토어 환불로 돌아간다). */
+  cancelGift(request: GiftOrderActionRequest): Promise<CancelGiftResponse>;
+  /** 나에게 와서 아직 받지 않은 선물. */
+  getIncomingGifts(): Promise<IncomingGiftsResponse>;
+  acceptGift(request: GiftOrderActionRequest): Promise<AcceptGiftResponse>;
+  declineGift(request: GiftOrderActionRequest): Promise<DeclineGiftResponse>;
   /** 진행 패스 셋의 진행도·열림·마디 상태. */
   getProgressPasses(): Promise<ProgressPassListResponse>;
   /** 닿은 마디의 무료 칸과(연 패스면) 유료 칸을 모두 받는다. */

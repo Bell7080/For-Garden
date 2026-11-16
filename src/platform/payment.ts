@@ -3,7 +3,7 @@ import { PRODUCTS } from "../data/shopCatalog";
 import { UnsupportedPlatformPaymentAdapter, type PlatformPaymentAdapter, type PlatformPaymentResult, type PlatformReceipt, type PlatformRestoreResult } from "../api/PlatformPayment";
 
 /** 네이티브 셸이 주입하는 최소 결제 SDK 계약이다. 웹 단독 빌드는 성공을 가장하지 않는다. */
-interface PaymentBridge { requestPayment(platformProductId: string): Promise<PlatformPaymentResult>; restorePurchases?(): Promise<PlatformRestoreResult>; }
+interface PaymentBridge { requestPayment(platformProductId: string, options?: { accountToken?: string }): Promise<PlatformPaymentResult>; restorePurchases?(): Promise<PlatformRestoreResult>; }
 
 declare global {
   interface Window { __PF_PAYMENT__?: PaymentBridge; }

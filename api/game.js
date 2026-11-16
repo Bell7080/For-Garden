@@ -6252,7 +6252,55 @@ var FRIENDS_KO = {
   "friends.card.pending": "\uC2E0\uCCAD \uB300\uAE30 \uC911",
   "friends.card.already": "\uC774\uBBF8 \uCE5C\uAD6C",
   "friends.card.sent": "\uCE5C\uAD6C \uC2E0\uCCAD\uC744 \uBCF4\uB0C8\uC2B5\uB2C8\uB2E4.",
-  "friends.card.became": "\uCE5C\uAD6C\uAC00 \uB418\uC5C8\uC2B5\uB2C8\uB2E4."
+  "friends.card.became": "\uCE5C\uAD6C\uAC00 \uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+  "gift.action": "\uC120\uBB3C\uD558\uAE30",
+  "gift.inbox.button": "\uBC1B\uC740 \uC120\uBB3C",
+  "gift.picker.title": "\uC120\uBB3C\uD558\uAE30",
+  "gift.picker.to": "{name}\uC5D0\uAC8C \uBCF4\uB0BC \uC120\uBB3C",
+  "gift.picker.empty": "\uBCF4\uB0BC \uC218 \uC788\uB294 \uC120\uBB3C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "gift.picker.price": "\u20A9{price}",
+  "gift.confirm.title": "\uC120\uBB3C \uBCF4\uB0B4\uAE30",
+  "gift.confirm.message": "{name}\uC5D0\uAC8C \u300C{product}\u300D{product!\uC744} \uBCF4\uB0C5\uB2C8\uB2E4.\n\n\xB7 \uBC1B\uAE30 \uC804\uC5D0\uB294 \uC5B8\uC81C\uB4E0 \uCDE8\uC18C\uD558\uACE0 \uD658\uBD88\uBC1B\uC744 \uC218 \uC788\uC2B5\uB2C8\uB2E4.\n\xB7 30\uC77C \uC548\uC5D0 \uBC1B\uC9C0 \uC54A\uC73C\uBA74 \uB3CC\uC544\uC624\uACE0 \uD658\uBD88\uB429\uB2C8\uB2E4.\n\xB7 \uBC1B\uC740 \uB4A4 \uD658\uBD88\uD558\uBA74 \uBCF4\uB0B8 \uACC4\uC815\uC758 \uC120\uBB3C\xB7\uACB0\uC81C\uAC00 \uC81C\uD55C\uB429\uB2C8\uB2E4.",
+  "gift.confirm.pay": "\uACB0\uC81C\uD558\uAE30",
+  "gift.sent": "\uC120\uBB3C\uC744 \uBCF4\uB0C8\uC2B5\uB2C8\uB2E4.",
+  "gift.failed": "\uC120\uBB3C\uC744 \uBCF4\uB0B4\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
+  "gift.inbox.title": "\uBC1B\uC740 \uC120\uBB3C",
+  "gift.inbox.empty": "\uBC1B\uC744 \uC120\uBB3C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "gift.inbox.from": "\uBCF4\uB0B8 \uC774 {name}",
+  "gift.inbox.expires": "{date}\uAE4C\uC9C0",
+  "gift.inbox.accept": "\uBC1B\uAE30",
+  "gift.inbox.decline": "\uAC70\uC808",
+  "gift.inbox.declineTitle": "\uC120\uBB3C \uAC70\uC808",
+  "gift.inbox.declineMessage": "{name}\uC5D0\uAC8C \uC120\uBB3C\uC744 \uB3CC\uB824\uBCF4\uB0C5\uB2C8\uB2E4. \uBCF4\uB0B8 \uC0AC\uB78C\uC5D0\uAC8C \uD658\uBD88\uB429\uB2C8\uB2E4.",
+  "gift.inbox.declined": "\uC120\uBB3C\uC744 \uB3CC\uB824\uBCF4\uB0C8\uC2B5\uB2C8\uB2E4.",
+  "gift.cancel.action": "\uC120\uBB3C \uCDE8\uC18C",
+  "gift.cancel.title": "\uC120\uBB3C \uCDE8\uC18C",
+  "gift.cancel.message": "{name}\uC5D0\uAC8C \uBCF4\uB0B8 \uC120\uBB3C\uC744 \uAC70\uB461\uB2C8\uB2E4. \uACB0\uC81C\uD55C \uAE08\uC561\uC740 \uD658\uBD88\uB429\uB2C8\uB2E4.",
+  "gift.cancel.done": "\uC120\uBB3C\uC744 \uCDE8\uC18C\uD588\uC2B5\uB2C8\uB2E4.",
+  "gift.error.unavailable": "\uC9C0\uAE08\uC740 \uC120\uBB3C\uD558\uAE30\uB97C \uC774\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "gift.error.notFound": "\uC120\uBB3C\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "gift.error.state": "\uC774\uBBF8 \uCC98\uB9AC\uB41C \uC120\uBB3C\uC785\uB2C8\uB2E4.",
+  "gift.error.notEligible": "\uBCF4\uB0BC \uC218 \uC5C6\uB294 \uC120\uBB3C\uC785\uB2C8\uB2E4.",
+  "gift.refusal.disabled": "\uC9C0\uAE08\uC740 \uC120\uBB3C\uD558\uAE30\uB97C \uC774\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.not_giftable": "\uC120\uBB3C\uD560 \uC218 \uC5C6\uB294 \uC0C1\uD488\uC785\uB2C8\uB2E4.",
+  "gift.refusal.self": "\uC790\uC2E0\uC5D0\uAC8C\uB294 \uBCF4\uB0BC \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.level": "\uC5F0\uAD6C\uC6D0 \uB808\uBCA8 20\uBD80\uD130 \uBCF4\uB0BC \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.account_age": "\uAC00\uC785 14\uC77C \uB4A4\uBD80\uD130 \uBCF4\uB0BC \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.guest": "\uAC8C\uC2A4\uD2B8 \uACC4\uC815\uC740 \uBCF4\uB0BC \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.age_restricted": "\uBBF8\uC131\uB144 \uACC4\uC815\uC740 \uBCF4\uB0BC \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.blocked": "\uC120\uBB3C\uD558\uAE30\uAC00 \uC81C\uD55C\uB41C \uACC4\uC815\uC785\uB2C8\uB2E4.",
+  "gift.refusal.no_payment_history": "\uBCF8\uC778 \uACB0\uC81C \uD6C4 7\uC77C\uC774 \uC9C0\uB098\uC57C \uBCF4\uB0BC \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.recent_refund": "\uCD5C\uADFC 90\uC77C \uC548\uC5D0 \uD658\uBD88\uD55C \uACC4\uC815\uC740 \uBCF4\uB0BC \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.not_friend": "\uCE5C\uAD6C\uC5D0\uAC8C\uB9CC \uBCF4\uB0BC \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.friend_too_new": "\uCE5C\uAD6C\uAC00 \uB41C \uC9C0 14\uC77C\uC774 \uC9C0\uB098\uC57C \uBCF4\uB0BC \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.recipient_unavailable": "\uC120\uBB3C\uC744 \uBC1B\uC744 \uC218 \uC5C6\uB294 \uC5F0\uAD6C\uC6D0\uC785\uB2C8\uB2E4.",
+  "gift.refusal.send_daily": "\uC624\uB298 \uBCF4\uB0BC \uC218 \uC788\uB294 \uC120\uBB3C\uC744 \uBAA8\uB450 \uBCF4\uB0C8\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.send_monthly": "30\uC77C \uB3D9\uC548 \uBCF4\uB0BC \uC218 \uC788\uB294 \uC120\uBB3C\uC744 \uBAA8\uB450 \uBCF4\uB0C8\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.send_amount": "30\uC77C \uC120\uBB3C \uAE08\uC561 \uD55C\uB3C4\uC5D0 \uB2FF\uC558\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.receive_daily": "\uC0C1\uB300\uAC00 \uC624\uB298 \uBC1B\uC744 \uC218 \uC788\uB294 \uC120\uBB3C\uC774 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.receive_monthly": "\uC0C1\uB300\uAC00 30\uC77C \uB3D9\uC548 \uBC1B\uC744 \uC218 \uC788\uB294 \uC120\uBB3C\uC774 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.duplicate_pending": "\uC544\uC9C1 \uBC1B\uC9C0 \uC54A\uC740 \uAC19\uC740 \uC120\uBB3C\uC774 \uC788\uC2B5\uB2C8\uB2E4.",
+  "gift.inbox.accepted": "\uC120\uBB3C\uC744 \uBC1B\uC558\uC2B5\uB2C8\uB2E4."
 };
 
 // src/i18n/ko/guild.ts
@@ -8508,6 +8556,9 @@ var RECOLLECTION_KO = {
   "codex.tab.ally": "\uC544\uAD70 {recorded}/{total}",
   "codex.tab.enemy": "\uC801 {recorded}/{total}",
   "codex.unknown": "???",
+  "codex.sort.number": "\uBC88\uD638\uC21C",
+  "codex.sort.rarity": "\uB4F1\uAE09\uBCC4",
+  "codex.sort.squad": "\uC18C\uC18D\uBCC4",
   "codex.claimAll": "\uBAA8\uB450 \uBC1B\uAE30",
   "codex.rewardTitle": "\uB3C4\uAC10 \uBCF4\uC0C1",
   "recollection.title": "\uD68C\uACE0",
@@ -8696,7 +8747,12 @@ var HELP_KO = {
   "help.tutorial.raid": "\uB808\uC774\uB4DC",
   "help.tutorial.expedition": "\uC6D0\uC815",
   "help.tutorial.premium": "\uD504\uB9AC\uBBF8\uC5C4",
-  "help.tutorial.archaeology.sub": "\uC720\uC801 \uC9C0\uB3C4\uC640 \uC9C0\uCE35 \uD310\uC744 \uB2E4\uC2DC \uC9DA\uC5B4 \uC918\uC694"
+  "help.tutorial.archaeology.sub": "\uC720\uC801 \uC9C0\uB3C4\uC640 \uC9C0\uCE35 \uD310\uC744 \uB2E4\uC2DC \uC9DA\uC5B4 \uC918\uC694",
+  "help.group.collect": "\uC218\uC9D1\xB7\uC5F0\uAD6C",
+  "help.group.growth": "\uC131\uC7A5",
+  "help.group.rune": "\uB8EC",
+  "help.group.battle": "\uC804\uD22C",
+  "help.group.content": "\uCF58\uD150\uCE20"
 };
 
 // src/i18n/ko/dialogue.ts
@@ -26850,8 +26906,8 @@ function rollHuntMoves(layout, difficulty, random) {
     }
     for (const [x, y] of swaps) [cards[x], cards[y]] = [cards[y], cards[x]];
     last = `${Math.min(a, b)}-${Math.max(a, b)}`;
-    const ms = Math.max(MIN_MOVE_MS, Math.round(difficulty.moveMs * (style === "dive" ? 1.25 : style === "arc" ? 1.1 : 1)));
-    moves.push({ swaps, style, ms });
+    const ms2 = Math.max(MIN_MOVE_MS, Math.round(difficulty.moveMs * (style === "dive" ? 1.25 : style === "arc" ? 1.1 : 1)));
+    moves.push({ swaps, style, ms: ms2 });
   };
   for (let index = 0; index < difficulty.swaps; index += 1) swapOnce(void 0);
   const jackpotSlots = () => slots.filter((slot) => heatAt(slot) >= 4);
@@ -27688,12 +27744,12 @@ function duelStanding(score) {
   const index = duelTierIndex(score);
   const tier = DUEL_TIERS[index];
   const next = DUEL_TIERS[index + 1];
-  const within = Math.max(0, score - tier.floor);
+  const within2 = Math.max(0, score - tier.floor);
   if (tier.divisions > 1) {
-    const step2 = Math.min(tier.divisions - 1, Math.floor(within / DUEL_DIVISION_SPAN));
-    return { tier, division: tier.divisions - step2, progress: Math.min(1, (within - step2 * DUEL_DIVISION_SPAN) / DUEL_DIVISION_SPAN) };
+    const step2 = Math.min(tier.divisions - 1, Math.floor(within2 / DUEL_DIVISION_SPAN));
+    return { tier, division: tier.divisions - step2, progress: Math.min(1, (within2 - step2 * DUEL_DIVISION_SPAN) / DUEL_DIVISION_SPAN) };
   }
-  return { tier, division: null, progress: next ? Math.min(1, within / (next.floor - tier.floor)) : 1 };
+  return { tier, division: null, progress: next ? Math.min(1, within2 / (next.floor - tier.floor)) : 1 };
 }
 var DUEL_LOW_TIER_SCORE = {
   bronze: { win: 2, loss: 0.5 },
@@ -40253,6 +40309,151 @@ function redeemDeferredStoryBond(next, acquired) {
   next.serverJournal = journal;
 }
 
+// src/server/playerGifts.ts
+init_define_import_meta_env();
+function recordGiftChange(context, expectedStatus, order) {
+  const existing = context.changes.find((change) => change.order.id === order.id);
+  if (existing) existing.order = order;
+  else context.changes.push({ expectedStatus, order });
+  const index = context.orders.findIndex((row) => row.id === order.id);
+  if (index >= 0) context.orders[index] = order;
+  else context.orders.push(order);
+}
+
+// src/core/gifting.ts
+init_define_import_meta_env();
+var GIFTING_ENABLED = false;
+var DAY_MS3 = 864e5;
+var GIFT_POLICY = {
+  /** 보낸 사람 연구원 레벨. 막 만든 부계정을 걸러 낸다. */
+  senderMinResearchLevel: 20,
+  /** 보낸 사람 계정 나이(일). */
+  senderMinAccountDays: 14,
+  /** 친구가 된 뒤 지나야 하는 날. 끊었다 다시 맺으면 처음부터 센다. */
+  minFriendDays: 14,
+  /** 본인 결제가 이 날수만큼 환불 없이 지나야 선물할 수 있다. */
+  ownPaymentClearDays: 7,
+  /** 이 기간 안에 본인 결제 환불이 있으면 선물할 수 없다. */
+  refundLookbackDays: 90,
+  sendPerDay: 2,
+  sendPer30Days: 10,
+  /** 30일 동안 보낼 수 있는 선물의 원화 합. */
+  sendAmountPer30DaysKrw: 1e5,
+  receivePerDay: 2,
+  receivePer30Days: 10,
+  /** 받지 않은 선물이 돌아오기까지(일). */
+  pendingExpiryDays: 30,
+  /** 결제 대기 주문이 사라지기까지(분). */
+  paymentWindowMinutes: 30
+};
+var ms = (iso) => iso ? Date.parse(iso) : NaN;
+var olderThan = (iso, days, now) => Number.isFinite(ms(iso)) && now.getTime() - ms(iso) >= days * DAY_MS3;
+var within = (iso, days, now) => now.getTime() - ms(iso) < days * DAY_MS3;
+function countsTowardGiftLimits(order, now) {
+  const settled = settleGiftOrder(order, now);
+  return settled.status !== "lapsed";
+}
+function giftEligibility(input) {
+  const { sender, recipient, now } = input;
+  const refuse = (reason) => ({ ok: false, reason });
+  if (!input.enabled) return refuse("disabled");
+  if (!input.giftable) return refuse("not_giftable");
+  if (recipient && recipient.id === input.senderId) return refuse("self");
+  if (sender.guest) return refuse("guest");
+  if (sender.ageRestricted) return refuse("age_restricted");
+  if (sender.blocked) return refuse("blocked");
+  if (sender.researchLevel < GIFT_POLICY.senderMinResearchLevel) return refuse("level");
+  if (!olderThan(sender.accountCreatedAt, GIFT_POLICY.senderMinAccountDays, now)) return refuse("account_age");
+  if (sender.lastOwnRefundAt && within(sender.lastOwnRefundAt, GIFT_POLICY.refundLookbackDays, now)) return refuse("recent_refund");
+  if (!olderThan(sender.oldestClearedOwnPaymentAt, GIFT_POLICY.ownPaymentClearDays, now)) return refuse("no_payment_history");
+  if (!recipient || !recipient.active || recipient.guest) return refuse("recipient_unavailable");
+  if (!recipient.friendSince) return refuse("not_friend");
+  if (!olderThan(recipient.friendSince, GIFT_POLICY.minFriendDays, now)) return refuse("friend_too_new");
+  const live = dedupe(input.orders).filter((order) => countsTowardGiftLimits(order, now));
+  const sent = live.filter((order) => order.senderId === input.senderId);
+  const received = live.filter((order) => order.recipientId === recipient.id);
+  if (sent.some((order) => order.recipientId === recipient.id && order.productId === input.productId && ["awaiting_payment", "pending"].includes(settleGiftOrder(order, now).status))) return refuse("duplicate_pending");
+  if (sent.filter((order) => within(order.createdAt, 1, now)).length >= GIFT_POLICY.sendPerDay) return refuse("send_daily");
+  const sentMonth = sent.filter((order) => within(order.createdAt, 30, now));
+  if (sentMonth.length >= GIFT_POLICY.sendPer30Days) return refuse("send_monthly");
+  if (sentMonth.reduce((sum, order) => sum + order.priceKrw, 0) + input.priceKrw > GIFT_POLICY.sendAmountPer30DaysKrw) return refuse("send_amount");
+  const receivedLive = received.filter((order) => settleGiftOrder(order, now).status !== "returned" && settleGiftOrder(order, now).status !== "revoked");
+  if (receivedLive.filter((order) => within(order.createdAt, 1, now)).length >= GIFT_POLICY.receivePerDay) return refuse("receive_daily");
+  if (receivedLive.filter((order) => within(order.createdAt, 30, now)).length >= GIFT_POLICY.receivePer30Days) return refuse("receive_monthly");
+  return { ok: true };
+}
+function dedupe(orders) {
+  return [...new Map(orders.map((order) => [order.id, order])).values()];
+}
+function createGiftOrder(input) {
+  return {
+    id: input.id,
+    senderId: input.senderId,
+    recipientId: input.recipientId,
+    senderName: input.senderName,
+    recipientName: input.recipientName,
+    productId: input.productId,
+    priceKrw: input.priceKrw,
+    status: "awaiting_payment",
+    createdAt: input.now.toISOString(),
+    paidAt: null,
+    expiresAt: new Date(input.now.getTime() + GIFT_POLICY.paymentWindowMinutes * 6e4).toISOString(),
+    resolvedAt: null,
+    transactionId: null,
+    returnReason: null,
+    refundedAt: null
+  };
+}
+function settleGiftOrder(order, now) {
+  if (now.getTime() < ms(order.expiresAt)) return order;
+  if (order.status === "awaiting_payment") return { ...order, status: "lapsed", resolvedAt: order.expiresAt };
+  if (order.status === "pending") return { ...order, status: "returned", returnReason: "expired", resolvedAt: order.expiresAt };
+  return order;
+}
+var GiftTransitionError = class extends Error {
+  constructor(reason) {
+    super(`GIFT_${reason.toUpperCase()}`);
+    this.reason = reason;
+  }
+  reason;
+};
+function transitionGift(order, action, actorId, now) {
+  const current2 = settleGiftOrder(order, now);
+  const at = now.toISOString();
+  const senderOnly = () => {
+    if (actorId !== current2.senderId) throw new GiftTransitionError("forbidden");
+  };
+  const recipientOnly = () => {
+    if (actorId !== current2.recipientId) throw new GiftTransitionError("forbidden");
+  };
+  switch (action.kind) {
+    case "pay":
+      senderOnly();
+      if (current2.status !== "awaiting_payment") throw new GiftTransitionError("state");
+      return { ...current2, status: "pending", paidAt: at, transactionId: action.transactionId, expiresAt: new Date(now.getTime() + GIFT_POLICY.pendingExpiryDays * DAY_MS3).toISOString() };
+    case "accept":
+      recipientOnly();
+      if (current2.status !== "pending") throw new GiftTransitionError("state");
+      return { ...current2, status: "accepted", resolvedAt: at };
+    case "decline":
+      recipientOnly();
+      if (current2.status !== "pending") throw new GiftTransitionError("state");
+      return { ...current2, status: "returned", returnReason: "declined", resolvedAt: at };
+    case "cancel":
+      senderOnly();
+      if (current2.status !== "pending") throw new GiftTransitionError("state");
+      return { ...current2, status: "returned", returnReason: "cancelled", resolvedAt: at };
+  }
+}
+function sentGiftDisplayStatus(order, now) {
+  const settled = settleGiftOrder(order, now);
+  if (settled.status === "awaiting_payment" || settled.status === "lapsed") return null;
+  return settled.status;
+}
+function incomingGifts(orders, recipientId, now) {
+  return dedupe(orders).map((order) => settleGiftOrder(order, now)).filter((order) => order.recipientId === recipientId && order.status === "pending").sort((a, b) => ms(a.paidAt) - ms(b.paidAt));
+}
+
 // src/api/serverClock.ts
 init_define_import_meta_env();
 var offsetMs = 0;
@@ -40273,7 +40474,7 @@ function placeholderAdToken(slotId) {
 
 // src/core/pickupRotation.ts
 init_define_import_meta_env();
-var DAY_MS3 = 864e5;
+var DAY_MS4 = 864e5;
 var PICKUP_ROTATION = {
   anchor: Date.parse("2026-11-13T00:00:00Z"),
   periodDays: 21,
@@ -40283,7 +40484,7 @@ function inPickupRotation(bannerId, rotation = PICKUP_ROTATION) {
   return rotation.bannerIds.includes(bannerId);
 }
 function turnIndex(now, rotation) {
-  return Math.floor((now - rotation.anchor) / (rotation.periodDays * DAY_MS3));
+  return Math.floor((now - rotation.anchor) / (rotation.periodDays * DAY_MS4));
 }
 function currentPickupBannerId(now, rotation = PICKUP_ROTATION) {
   const length = rotation.bannerIds.length;
@@ -40292,8 +40493,8 @@ function currentPickupBannerId(now, rotation = PICKUP_ROTATION) {
 }
 function currentPickupWindow(now, rotation = PICKUP_ROTATION) {
   if (turnIndex(now, rotation) < 0) return { endsAt: new Date(rotation.anchor).toISOString() };
-  const start = rotation.anchor + turnIndex(now, rotation) * rotation.periodDays * DAY_MS3;
-  return { startsAt: new Date(start).toISOString(), endsAt: new Date(start + rotation.periodDays * DAY_MS3).toISOString() };
+  const start = rotation.anchor + turnIndex(now, rotation) * rotation.periodDays * DAY_MS4;
+  return { startsAt: new Date(start).toISOString(), endsAt: new Date(start + rotation.periodDays * DAY_MS4).toISOString() };
 }
 function pickupRotationOpen(bannerId, now, rotation = PICKUP_ROTATION) {
   return !inPickupRotation(bannerId, rotation) || currentPickupBannerId(now, rotation) === bannerId;
@@ -42463,11 +42664,11 @@ function validateGuildName(raw) {
   return { ok: true, name };
 }
 var guildNameKey = (name) => normalizeGuildName(name).replace(/ /g, "").toLowerCase();
-var guildDateKey = (ms) => new Date(ms).toISOString().slice(0, 10);
-var guildMonthKey = (ms) => new Date(ms).toISOString().slice(0, 7);
-function guildWeekKey(ms) {
-  const day = new Date(ms).getUTCDay();
-  return guildDateKey(ms - (day + 6) % 7 * 864e5);
+var guildDateKey = (ms2) => new Date(ms2).toISOString().slice(0, 10);
+var guildMonthKey = (ms2) => new Date(ms2).toISOString().slice(0, 7);
+function guildWeekKey(ms2) {
+  const day = new Date(ms2).getUTCDay();
+  return guildDateKey(ms2 - (day + 6) % 7 * 864e5);
 }
 var DAY = { prosperity: 10, contribution: 10, coin: 5 };
 var GUILD_ATTENDANCE_CYCLE = [
@@ -42538,9 +42739,9 @@ init_define_import_meta_env();
 var GUILD_WAR_MIN_MEMBERS = 10;
 var GUILD_WAR_ATTACKS_PER_MEMBER = 3;
 var GUILD_WAR_START_SCORE = 1e3;
-var guildWarDayNumber = (ms) => Math.floor(ms / 864e5);
+var guildWarDayNumber = (ms2) => Math.floor(ms2 / 864e5);
 var guildWarPhase = (dayNumber) => dayNumber % 2 === 0 ? "prep" : "battle";
-var guildWarPhaseEndsAt = (ms) => (guildWarDayNumber(ms) + 1) * 864e5;
+var guildWarPhaseEndsAt = (ms2) => (guildWarDayNumber(ms2) + 1) * 864e5;
 var GUILD_WAR_GRUNTS = [
   [2, 1, 0],
   [2, 1, 1],
@@ -42683,9 +42884,9 @@ function guildWarNow(now) {
 
 // src/api/guildQaClock.ts
 init_define_import_meta_env();
-var DAY_MS4 = 864e5;
+var DAY_MS5 = 864e5;
 var dayShift = 0;
-var guildQaClockShift = () => QA_TOOLS_ENABLED ? dayShift * DAY_MS4 : 0;
+var guildQaClockShift = () => QA_TOOLS_ENABLED ? dayShift * DAY_MS5 : 0;
 
 // src/core/guildRankRewards.ts
 init_define_import_meta_env();
@@ -43982,10 +44183,10 @@ function guildGuardRoster(element) {
 
 // src/data/mileageClerk.ts
 init_define_import_meta_env();
-var DAY_MS5 = 864e5;
-var FIRST_MONDAY_MS = 4 * DAY_MS5;
+var DAY_MS6 = 864e5;
+var FIRST_MONDAY_MS = 4 * DAY_MS6;
 function mileageWeekIndex(now) {
-  return Math.floor((now.getTime() - FIRST_MONDAY_MS) / (7 * DAY_MS5));
+  return Math.floor((now.getTime() - FIRST_MONDAY_MS) / (7 * DAY_MS6));
 }
 function mileageClerkPool() {
   const pickups = new Set(BANNERS.flatMap((banner) => banner.pickupRelicIds.SSR ?? []));
@@ -44001,7 +44202,7 @@ function mileageRotationPool(rarity) {
   return PLAYABLE_RELICS.filter((relic) => relic.rarity === rarity && !LIMITED_RELIC_IDS.has(relic.id) && !pickups.has(relic.id)).map((relic) => relic.id);
 }
 function mileageDayIndex(now) {
-  return Math.floor(now.getTime() / DAY_MS5);
+  return Math.floor(now.getTime() / DAY_MS6);
 }
 function mileageRotatingFragmentId(rarity, period, now) {
   const pool = mileageRotationPool(rarity);
@@ -44284,7 +44485,7 @@ function claimAchievements(state, facts, seriesIds) {
 
 // src/core/newbieGrowth.ts
 init_define_import_meta_env();
-var DAY_MS6 = 864e5;
+var DAY_MS7 = 864e5;
 function newbieGrowthFacts(facts, achievements, relicsBrokenThrough) {
   const extra = {
     favoriteChosen: achievements.favoriteChosen ? 1 : 0,
@@ -44297,11 +44498,11 @@ function newbieGrowthWindow(createdAt, now) {
   const created = createdAt ? new Date(createdAt) : void 0;
   if (!created || Number.isNaN(created.getTime()) || Number.isNaN(now.getTime())) return { active: false, day: 0, endsAt: (/* @__PURE__ */ new Date(0)).toISOString() };
   const start = Date.parse(`${utcDateKey(created)}T00:00:00.000Z`);
-  const elapsedDays = Math.max(0, Math.floor((now.getTime() - start) / DAY_MS6));
-  const end = start + Math.ceil((created.getTime() - start) / DAY_MS6 + NEWBIE_GROWTH_WINDOW_DAYS) * DAY_MS6;
+  const elapsedDays = Math.max(0, Math.floor((now.getTime() - start) / DAY_MS7));
+  const end = start + Math.ceil((created.getTime() - start) / DAY_MS7 + NEWBIE_GROWTH_WINDOW_DAYS) * DAY_MS7;
   const active3 = now.getTime() < end;
   const day = active3 ? Math.min(NEWBIE_GROWTH_DAYS, elapsedDays + 1) : 0;
-  return { active: active3, day, ...active3 && day < NEWBIE_GROWTH_DAYS ? { nextDayAt: new Date(start + day * DAY_MS6).toISOString() } : {}, endsAt: new Date(end).toISOString() };
+  return { active: active3, day, ...active3 && day < NEWBIE_GROWTH_DAYS ? { nextDayAt: new Date(start + day * DAY_MS7).toISOString() } : {}, endsAt: new Date(end).toISOString() };
 }
 function newbieGrowthGoalState(goal, facts, claimed, openDay) {
   if (claimed.has(goal.id)) return "claimed";
@@ -44907,6 +45108,7 @@ function purchaseHistoryFromJournal(journal, limit = PURCHASE_HISTORY_LIMIT) {
     }
     if (typeof transactionId !== "string") continue;
     const result = receipt.result;
+    if (typeof result.giftOrderId === "string") continue;
     const productId = typeof result.productId === "string" ? result.productId : receipt.identity;
     entries.push({
       productId,
@@ -45105,7 +45307,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.479.1",
+  version: "0.482.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -45227,6 +45429,8 @@ var READ_METHODS = /* @__PURE__ */ new Set([
   "getPlayerState",
   "getProducts",
   "getPurchaseHistory",
+  "getGiftOptions",
+  "getIncomingGifts",
   "getProgressPasses",
   "getRaids",
   "getStaminaRechargeStatus",
@@ -45439,7 +45643,14 @@ var SERVER_GAME_METHODS = [
   "updatePlayerCard",
   "upgradeRuneTrait",
   "useConsumable",
-  "verifyPurchaseReceipt"
+  "verifyPurchaseReceipt",
+  "getGiftOptions",
+  "prepareGift",
+  "sendGift",
+  "cancelGift",
+  "getIncomingGifts",
+  "acceptGift",
+  "declineGift"
 ];
 var METHOD_SET = new Set(SERVER_GAME_METHODS);
 function isServerGameMethod(name) {
@@ -45875,6 +46086,8 @@ var FakeServer = class {
   constructor(state = session, options = {}) {
     this.state = state;
     this.duelContext = options.duelContext;
+    this.giftContext = options.giftContext;
+    this.giftingOverride = options.giftingOverride;
     this.remoteExpeditionRank = options.expeditionRank;
     this.ancientRanking = options.ancientRanking;
     this.regularEvent = options.regularEvent ?? null;
@@ -46011,6 +46224,8 @@ var FakeServer = class {
   duelResolveResults = /* @__PURE__ */ new Map();
   developmentTools;
   duelContext;
+  giftContext;
+  giftingOverride;
   remoteExpeditionRank;
   ancientRanking;
   regularEvent;
@@ -48286,7 +48501,151 @@ var FakeServer = class {
   /** 결제 기록은 장부의 플랫폼 거래 영수증만 읽는다 — 화면이 기억한 값이 아니라 지급을 확정한 쪽의 기록이다. */
   async getPurchaseHistory() {
     await this.delay();
-    return { entries: purchaseHistoryFromJournal(this.state.serverJournal), sentGifts: [], mails: mailHistoryFromJournal(this.state.serverJournal), serverTime: this.now().toISOString() };
+    const now = this.now();
+    const context = this.giftsOpen() ? this.giftContext : void 0;
+    const sentGifts = (context?.orders ?? []).filter((order) => order.senderId === context.playerId).map((order) => this.sentGiftDto(order, now)).filter((row) => row !== null).sort((a, b) => Date.parse(b.sentAt) - Date.parse(a.sentAt)).slice(0, 50);
+    return { entries: purchaseHistoryFromJournal(this.state.serverJournal), sentGifts, mails: mailHistoryFromJournal(this.state.serverJournal), serverTime: now.toISOString() };
+  }
+  /* ── 선물하기 ── 규칙은 `core/gifting.ts`가 갖고, 여기는 주문 맥락을 읽고 바꾸는 경계다. 스위치가 꺼져 있거나 서버가 맥락을
+     주입하지 않으면 모두 `GIFT_UNAVAILABLE`이다 — 결제가 SDK 없이 `unsupported`를 돌려주는 것과 같은 자리다. */
+  giftsOpen() {
+    return (this.giftingOverride?.enabled ?? GIFTING_ENABLED) && this.giftContext !== void 0;
+  }
+  giftGate() {
+    if (!this.giftsOpen()) throw new GameApiError("GIFT_UNAVAILABLE", t("gift.error.unavailable"));
+    return this.giftContext;
+  }
+  /** 선물할 수 있는 상품 — 현금 결제 상품이고, 정의가 `giftable`이며, 기간 권리(패스)가 아니다. */
+  giftableProduct(productId) {
+    const product = PRODUCTS.find(({ id }) => id === productId);
+    if (!product || product.acquisition.kind !== "platform_payment" || product.passBenefit) return void 0;
+    return product.giftable || this.giftingOverride?.giftableProductIds.includes(product.id) ? product : void 0;
+  }
+  giftSenderFacts(context) {
+    return { ...context.sender, researchLevel: this.state.playerResearch.level, accountCreatedAt: this.state.playerCard.createdAt || null };
+  }
+  sentGiftDto(order, now) {
+    const status = sentGiftDisplayStatus(order, now);
+    return status ? { orderId: order.id, productId: order.productId, recipientName: order.recipientName, sentAt: order.paidAt ?? order.createdAt, status } : null;
+  }
+  giftGrants(product) {
+    return product.grants.flatMap((grant) => grant.kind === "currency" ? [{ kind: "currency", currency: grant.currency, amount: grant.amount }] : grant.kind === "item" ? [{ kind: "item", itemId: grant.itemId, amount: grant.amount, ...grant.expiresInDays ? { expiresInDays: grant.expiresInDays } : {} }] : []);
+  }
+  /** 주문 하나를 사람의 조작으로 옮긴다. 시간 전이(만료)가 먼저 적용되고, 규칙이 거절하면 아무것도 바꾸지 않는다. */
+  moveGift(context, orderId, action, now) {
+    const before = context.orders.find((order) => order.id === orderId);
+    if (!before) throw new GameApiError("GIFT_NOT_FOUND", t("gift.error.notFound"));
+    let after;
+    try {
+      after = transitionGift(before, action, context.playerId, now);
+    } catch (error) {
+      if (error instanceof GiftTransitionError) throw new GameApiError(error.reason === "state" ? "GIFT_STATE_INVALID" : "GIFT_NOT_FOUND", t(error.reason === "state" ? "gift.error.state" : "gift.error.notFound"));
+      throw error;
+    }
+    recordGiftChange(context, before.status, after);
+    return { before, after };
+  }
+  async getGiftOptions(request) {
+    await this.delay();
+    const context = this.giftGate();
+    const now = this.now();
+    const recipient = context.recipients[request.recipientId] ?? null;
+    const sender = this.giftSenderFacts(context);
+    const options = PRODUCTS.filter((product) => this.giftableProduct(product.id) && this.isVisible(product, now)).map((product) => {
+      const acquisition = product.acquisition;
+      const verdict = giftEligibility({ enabled: true, senderId: context.playerId, sender, recipient, productId: product.id, priceKrw: acquisition.basePriceKrw, giftable: true, orders: context.orders, now });
+      return { productId: product.id, platformProductId: acquisition.platformProductId, priceKrw: acquisition.basePriceKrw, eligible: verdict.ok, reason: verdict.ok ? null : verdict.reason };
+    });
+    return { recipientId: request.recipientId, recipientName: recipient?.name ?? "", options, serverTime: now.toISOString() };
+  }
+  async prepareGift(request) {
+    await this.delay();
+    const context = this.giftGate();
+    const now = this.now();
+    const orderId = `gift-${request.requestId}`;
+    const existing = context.orders.find((order2) => order2.id === orderId);
+    const product = this.giftableProduct(request.productId);
+    if (!request.requestId || !product || !this.isVisible(product, now)) throw new GameApiError("GIFT_NOT_ELIGIBLE", t("gift.error.notEligible"));
+    const acquisition = product.acquisition;
+    if (existing) {
+      if (existing.senderId !== context.playerId || existing.productId !== product.id || existing.recipientId !== request.recipientId) throw new GameApiError("INVALID_STATE", "\uB2E4\uB978 \uC694\uCCAD\uC5D0 \uC0AC\uC6A9\uB41C \uCC98\uB9AC ID\uC785\uB2C8\uB2E4.");
+      return { orderId, productId: product.id, platformProductId: acquisition.platformProductId, paymentDeadline: existing.expiresAt };
+    }
+    const recipient = context.recipients[request.recipientId] ?? null;
+    const verdict = giftEligibility({ enabled: true, senderId: context.playerId, sender: this.giftSenderFacts(context), recipient, productId: product.id, priceKrw: acquisition.basePriceKrw, giftable: true, orders: context.orders, now });
+    if (!verdict.ok || !recipient) throw new GameApiError("GIFT_NOT_ELIGIBLE", t(`gift.refusal.${verdict.ok ? "recipient_unavailable" : verdict.reason}`));
+    const order = createGiftOrder({ id: orderId, senderId: context.playerId, recipientId: recipient.id, senderName: this.state.playerCard.nickname || t("profile.defaultName"), recipientName: recipient.name, productId: product.id, priceKrw: acquisition.basePriceKrw, now });
+    recordGiftChange(context, null, order);
+    return { orderId, productId: product.id, platformProductId: acquisition.platformProductId, paymentDeadline: order.expiresAt };
+  }
+  /**
+   * 검증된 결제를 주문에 묶는다. 그 거래는 일반 결제와 **같은 거래 장부**(`platformTransaction`)에 지급 없이 남는다 — 같은
+   * 영수증을 `fulfillPlatformPurchase`로 다시 들고 와도 보낸 사람에게 상품이 들어가지 않고, 다른 선물에 두 번 쓰이지도 않는다.
+   */
+  async sendGift(request) {
+    await this.delay();
+    const context = this.giftGate();
+    const now = this.now();
+    const order = context.orders.find((row) => row.id === request.orderId);
+    const verification = [...this.verifiedTransactions.values()].find(({ verificationId }) => verificationId === request.verificationId);
+    if (!order || order.senderId !== context.playerId) throw new GameApiError("GIFT_NOT_FOUND", t("gift.error.notFound"));
+    if (!request.requestId || !verification || verification.productId !== order.productId) throw new GameApiError("RECEIPT_INVALID", "\uAC80\uC99D\uB41C \uD50C\uB7AB\uD3FC \uAC70\uB798\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
+    if (order.transactionId === verification.transactionId) return { gift: this.sentGiftDto(order, now), replayed: true };
+    if (this.readReceipt("platformTransaction", verification.transactionId, order.productId) || this.fulfilledTransactions.has(verification.transactionId) || context.orders.some((row) => row.transactionId === verification.transactionId)) throw new GameApiError("RECEIPT_INVALID", "\uC774\uBBF8 \uC0AC\uC6A9\uB41C \uAC70\uB798\uC785\uB2C8\uB2E4.");
+    const { after } = this.moveGift(context, order.id, { kind: "pay", transactionId: verification.transactionId }, now);
+    const candidate = structuredClone(this.state);
+    this.recordReceipt(candidate, "platformTransaction", verification.transactionId, order.productId, {
+      productId: order.productId,
+      quantity: 1,
+      granted: [],
+      grantedRunes: [],
+      remaining: 0,
+      firstBonusApplied: false,
+      purchasedAt: now.toISOString(),
+      giftOrderId: order.id
+    });
+    this.commitRaidState(candidate);
+    return { gift: this.sentGiftDto(after, now) };
+  }
+  async cancelGift(request) {
+    await this.delay();
+    const context = this.giftGate();
+    const now = this.now();
+    const { after } = this.moveGift(context, request.orderId, { kind: "cancel" }, now);
+    return { gift: this.sentGiftDto(after, now) };
+  }
+  async getIncomingGifts() {
+    await this.delay();
+    const context = this.giftGate();
+    const now = this.now();
+    const gifts = incomingGifts(context.orders, context.playerId, now).flatMap((order) => {
+      const product = PRODUCTS.find(({ id }) => id === order.productId);
+      return product ? [{ orderId: order.id, productId: order.productId, senderName: order.senderName, sentAt: order.paidAt ?? order.createdAt, expiresAt: order.expiresAt, grants: this.giftGrants(product) }] : [];
+    });
+    return { gifts, serverTime: now.toISOString() };
+  }
+  /** 받기 — 받는 사람 자신의 저장에 지급하고 주문을 받음으로 바꾼다. 둘은 같은 저장으로 확정된다(서버 핸들러의 한 트랜잭션). */
+  async acceptGift(request) {
+    await this.delay();
+    const context = this.giftGate();
+    const now = this.now();
+    const order = context.orders.find((row) => row.id === request.orderId);
+    const product = order && PRODUCTS.find(({ id }) => id === order.productId);
+    if (!order || !product || order.recipientId !== context.playerId) throw new GameApiError("GIFT_NOT_FOUND", t("gift.error.notFound"));
+    const wallet = { ...this.state.wallet };
+    const applied = this.applyProductGrants(product, 1, wallet, this.state.itemInventory.map((entry) => ({ ...entry })), now);
+    this.moveGift(context, order.id, { kind: "accept" }, now);
+    const candidate = structuredClone(this.state);
+    candidate.wallet = wallet;
+    candidate.itemInventory = applied.items;
+    this.commitRaidState(candidate);
+    return { ...this.snapshot(), orderId: order.id, granted: this.giftGrants({ ...product, grants: applied.granted }) };
+  }
+  async declineGift(request) {
+    await this.delay();
+    const context = this.giftGate();
+    this.moveGift(context, request.orderId, { kind: "decline" }, this.now());
+    return { orderId: request.orderId };
   }
   /** 광고 시청 경로와 같은 슬롯 정의·UTC 카운터를 사용하되 활성 패스만 토큰 없이 통과시킨다. */
   async claimInstantAdReward(request) {
@@ -51518,7 +51877,9 @@ async function run(playerId, req, deps) {
     const now = deps.now?.() ?? /* @__PURE__ */ new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
     const wantsDuel = /^(getDuelStatus|refreshDuelOpponents|setDuelDefense|enterDuel|resolveDuel|buyDuelAttempt|getDuelRanking|claimDuelSeasonReward)$/.test(req.method) && deps.store.duelContext;
-    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords, schedule, launchAt] = await Promise.all([
+    const wantsGift = GIFTING_ENABLED && /^(getGiftOptions|prepareGift|sendGift|cancelGift|getIncomingGifts|acceptGift|declineGift|getPurchaseHistory)$/.test(req.method) && deps.store.giftContext;
+    const giftRecipient = /^(getGiftOptions|prepareGift)$/.test(req.method) ? String(req.args?.[0]?.recipientId ?? "") || null : null;
+    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords, schedule, launchAt, gifts] = await Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : void 0,
       deps.store.load(playerId),
       deps.store.identity ? deps.store.identity(playerId) : void 0,
@@ -51530,7 +51891,8 @@ async function run(playerId, req, deps) {
       req.method === "getRegularEvent" && deps.store.regularEvent ? deps.store.regularEvent().catch(() => null) : void 0,
       req.method === "updatePlayerCard" && deps.store.bannedWords ? deps.store.bannedWords().catch(() => []) : void 0,
       deps.store.liveSchedule ? deps.store.liveSchedule().catch(() => void 0) : void 0,
-      deps.store.launchAt ? deps.store.launchAt().catch(() => void 0) : void 0
+      deps.store.launchAt ? deps.store.launchAt().catch(() => void 0) : void 0,
+      wantsGift ? deps.store.giftContext(playerId, giftRecipient, now) : void 0
     ]);
     checkDeadline();
     if (schedule !== void 0) setLiveSchedule(schedule);
@@ -51563,6 +51925,7 @@ async function run(playerId, req, deps) {
       persistSession: () => void 0,
       raidContext: context,
       duelContext: duels,
+      ...gifts ? { giftContext: gifts } : {},
       expeditionRank: expedition?.rank,
       ancientRanking: ancient,
       ...regular !== void 0 ? { regularEvent: regular } : {},
@@ -51619,7 +51982,8 @@ async function run(playerId, req, deps) {
         response: { ok: true, result: response.result, revision: void 0, _requestFingerprint: fingerprint },
         publicProfile: publicProfile(state, playerId, now),
         raids: context ? raidChanges(context, state) : void 0,
-        duels: duels?.changes
+        duels: duels?.changes,
+        gifts: gifts?.changes.length ? gifts.changes : void 0
       });
       const claimedMails = (state.claimedMailIds ?? []).filter((id) => isOpsMailId(id) && !claimedBefore.has(id)).map(opsMailUuid);
       if ((applied.length > 0 || claimedMails.length > 0) && deps.store.opsAck) await deps.store.opsAck(playerId, applied, claimedMails).catch(() => void 0);
@@ -51709,6 +52073,10 @@ function createSupabaseStore(env) {
       const context = await rpc("server_duel_context", { p_player: playerId, p_season: duelSeasonId(now), p_level: contentUnlockLevel("duel") });
       return { ...context, changes: [] };
     },
+    async giftContext(playerId, recipientId, now) {
+      const context = await rpc("server_gift_context", { p_player: playerId, p_recipient: recipientId, p_now: now.toISOString() });
+      return { ...context, playerId, changes: [] };
+    },
     async regularEvent() {
       return await rpc("server_regular_event", {});
     },
@@ -51770,7 +52138,7 @@ function createSupabaseStore(env) {
         p_data: input.data,
         p_hash: await sha256Hex(JSON.stringify(input.data)),
         p_version: data.saveVersion ?? 1,
-        p_summary: { _profile: input.publicProfile, _raids: input.raids, _duels: input.duels, level: data.playerResearch?.level ?? 1, gems: data.wallet?.gems ?? 0, gold: data.wallet?.gold ?? 0 },
+        p_summary: { _profile: input.publicProfile, _raids: input.raids, _duels: input.duels, ...input.gifts?.length ? { _gifts: input.gifts } : {}, level: data.playerResearch?.level ?? 1, gems: data.wallet?.gems ?? 0, gold: data.wallet?.gold ?? 0 },
         p_method: input.method,
         p_request: input.requestId,
         p_response: input.response

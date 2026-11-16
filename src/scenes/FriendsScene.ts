@@ -2,6 +2,7 @@ import { showContentToast } from "../ui/ContentToast";
 import { NotificationDot } from "../ui/NotificationDot";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { openArenaFriendPopup } from "../ui/ArenaFriendPopup";
+import { giftEntryOpen, openGiftInbox, openGiftPicker } from "../ui/GiftPopups";
 import { consumeSceneEntry } from "./sceneEntry";
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -275,6 +276,12 @@ export class FriendsScene extends Phaser.Scene {
     const incoming = data?.incoming.length ?? 0;
     const outgoing = data?.outgoing.length ?? 0;
     this.addSummary(t("friends.summary.requests", { incoming, outgoing, limit: FRIEND_REQUEST_LIMIT }));
+    // 받은 선물함은 신청 탭의 머리줄 오른쪽에 선다 — 선물하기가 열린 뒤에만(`GIFTING_ENABLED`).
+    if (giftEntryOpen()) {
+      addRowButton(this, this.controls, friendsChipXFromRight(0, 1, C.bulk), S.summary.y, C.bulk.width, C.bulk.height, t("gift.inbox.button"), "accent", () => FULL_CLIP, () => true, () => {
+        if (!this.popups.isOpen) void openGiftInbox(this, this.popups);
+      });
+    }
     (["incoming", "outgoing"] as const).forEach((view, index) => {
       addFriendChip(this, this.controls, friendsChipX(index, C.subTab), y, C.subTab.width, C.subTab.height, t(`friends.requests.${view}`, { count: view === "incoming" ? incoming : outgoing }), this.requestView === view, () => {
         if (this.requestView === view) return;
@@ -516,6 +523,8 @@ export class FriendsScene extends Phaser.Scene {
     if (this.popups.isOpen) return;
     const actions: ProfileAction[] = isFriend ? [
       {label:t("arena.friend.button"),onClick:()=>{popup.close();openArenaFriendPopup(this,this.popups,{id:profile.id,name:profile.displayName,frameId:profile.frameId,favoriteRelicId:profile.favoriteRelic.relicId,level:profile.level});}},
+      // 선물하기는 스위치(`GIFTING_ENABLED`)가 켜진 뒤에만 선다 — 꺼진 동안은 입구가 없다.
+      ...(giftEntryOpen() ? [{ label: t("gift.action"), onClick: () => { popup.close(); void openGiftPicker(this, this.popups, { id: profile.id, name: profile.displayName }); } }] : []),
     ] : [];
     // 즐겨찾기·삭제는 밑동 버튼이 아니라 카드 머리의 표식 칩이다(렐릭 정보창·룬 쪽지와 같은 한 장).
     const marks: ProfileMarks | undefined = isFriend ? {

@@ -396,11 +396,13 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   /** 결제·선물 기록은 서버가 장부에서 읽어 준 그대로 세운다. 실패하면 비우지 않고 안내만 한다. */
-  private async openPurchaseHistory(): Promise<void> {
+  private async openPurchaseHistory(tab?: "gift"): Promise<void> {
     this.accountBusy = true;
     try {
       const { entries, sentGifts, mails } = await gameApi.getPurchaseHistory();
-      if (this.scene.isActive()) openPurchaseHistoryPopup(this, this.popups, { entries, sentGifts: sentGifts ?? [], mails: mails ?? [] });
+      // 선물을 취소하면 목록을 다시 받아 선물 탭으로 새로 세운다 — 상태 줄이 그 자리에서 바뀐다.
+      const onGiftCancelled = (): void => { this.popups.closeAll(); void this.openPurchaseHistory("gift"); };
+      if (this.scene.isActive()) openPurchaseHistoryPopup(this, this.popups, { entries, sentGifts: sentGifts ?? [], mails: mails ?? [], onGiftCancelled }, tab);
     } catch {
       this.showRestoreNotice("settings.history.failed");
     } finally { this.accountBusy = false; }

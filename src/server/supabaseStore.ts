@@ -5,6 +5,7 @@ import { expeditionWeekKey } from "../core/expeditionBoss";
 import { duelSeasonId } from "../core/duelArena";
 import { contentUnlockLevel } from "../core/contentUnlock";
 import type { PlayerDuelContext } from "./playerDuels";
+import type { GiftContext } from "./playerGifts";
 import type { OpsInbox } from "../core/opsInbox";
 import { requestBudget } from "./requestPolicy";
 import { refreshWindow } from "./refreshWindow";
@@ -58,6 +59,10 @@ export function createSupabaseStore(env: Env) {
     async duelContext(playerId, now) {
       const context = await rpc("server_duel_context", { p_player: playerId, p_season: duelSeasonId(now), p_level: contentUnlockLevel("duel") }) as PlayerDuelContext;
       return { ...context, changes: [] };
+    },
+    async giftContext(playerId, recipientId, now) {
+      const context = await rpc("server_gift_context", { p_player: playerId, p_recipient: recipientId, p_now: now.toISOString() }) as Omit<GiftContext, "playerId" | "changes">;
+      return { ...context, playerId, changes: [] };
     },
     async regularEvent() { return await rpc("server_regular_event", {}) as import("../api/contracts").RegularEventDto | null; },
     async identity(playerId) { return await rpc("server_player_identity", { p_player: playerId }) as { uid: string; createdAt: string }; },
@@ -119,7 +124,7 @@ export function createSupabaseStore(env: Env) {
         p_data: input.data,
         p_hash: await sha256Hex(JSON.stringify(input.data)),
         p_version: data.saveVersion ?? 1,
-        p_summary: { _profile: input.publicProfile, _raids: input.raids, _duels: input.duels, level: data.playerResearch?.level ?? 1, gems: data.wallet?.gems ?? 0, gold: data.wallet?.gold ?? 0 },
+        p_summary: { _profile: input.publicProfile, _raids: input.raids, _duels: input.duels, ...(input.gifts?.length ? { _gifts: input.gifts } : {}), level: data.playerResearch?.level ?? 1, gems: data.wallet?.gems ?? 0, gold: data.wallet?.gold ?? 0 },
         p_method: input.method,
         p_request: input.requestId,
         p_response: input.response,

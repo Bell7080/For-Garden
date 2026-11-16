@@ -20,6 +20,7 @@ export const SERVER_GAME_METHODS = [
   "selectArchaeologySite", "sellRunes", "setDuelDefense", "setFavorite", "setParty", "setRuneLoadout", "setRelicBookmark", "settleExpeditionRun", "settleRaid", "startExpeditionRun", "startInteractionDispatch", "startStrataRun", "submitExpeditionBossScore",
   "submitRaidDamage", "summonRaid", "sweepBounty", "synthesizeRunes", "sweepCakeOperation", "sweepExpedition", "unequipRune", "updateAccountSettings", "updatePlayerCard", "upgradeRuneTrait",
   "useConsumable", "verifyPurchaseReceipt",
+  "getGiftOptions", "prepareGift", "sendGift", "cancelGift", "getIncomingGifts", "acceptGift", "declineGift",
 ] as const;
 
 export type ServerGameMethod = (typeof SERVER_GAME_METHODS)[number];

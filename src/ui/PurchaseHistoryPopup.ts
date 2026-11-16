@@ -4,6 +4,8 @@ import { formatCurrency } from "../core/formatCurrency";
 import { PRODUCTS } from "../data/shopCatalog";
 import { t } from "../i18n";
 import { addCategoryTab } from "./CategoryTab";
+import { Button } from "./Button";
+import { confirmCancelGift } from "./GiftPopups";
 import { drawGlyph } from "./glyphs";
 import { drawHairline } from "./holo";
 import { addFramedIcon } from "./itemFrame";
@@ -40,6 +42,8 @@ export interface PurchaseHistoryLists {
   entries: readonly PurchaseHistoryEntryDto[];
   sentGifts: readonly SentGiftHistoryEntryDto[];
   mails: readonly MailClaimHistoryEntryDto[];
+  /** 받기 전의 선물을 취소한 뒤 목록을 다시 받아 창을 새로 세운다. 없으면 취소 칸을 세우지 않는다. */
+  onGiftCancelled?: () => void;
 }
 
 const pad = (value: number): string => String(value).padStart(2, "0");
@@ -50,7 +54,7 @@ function purchasedLabel(at: string | null): string {
   return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-interface HistoryRow { name: string; meta: string; note?: string; tiles: { icon: string; amount: number }[] }
+interface HistoryRow { name: string; meta: string; note?: string; tiles: { icon: string; amount: number }[]; gift?: SentGiftHistoryEntryDto }
 
 const purchaseRow = (entry: PurchaseHistoryEntryDto): HistoryRow => ({
   name: PRODUCTS.find(candidate => candidate.id === entry.productId)?.name ?? entry.productId,
@@ -66,6 +70,7 @@ const sentGiftRow = (gift: SentGiftHistoryEntryDto): HistoryRow => {
     meta: `${purchasedLabel(gift.sentAt)}  ·  ${t("settings.history.gift.to", { name: gift.recipientName })}`,
     note: t(GIFT_STATUS[gift.status]),
     tiles: product ? grantTiles(product.grants).map((tile) => ({ icon: tile.icon, amount: tile.amount })) : [],
+    gift,
   };
 };
 
@@ -124,6 +129,15 @@ export function openPurchaseHistoryPopup(
           const x = right - (tiles.length - 1 - slot) * HISTORY.frameGap;
           addFramedIcon(scene, container, x, y + 60, HISTORY.frame, tile.icon, { amount: formatCurrency(tile.amount), plain: true });
         });
+        // 받기 전의 선물만 취소할 수 있다 — 주문 번호가 있는 줄(선물하기가 연 뒤의 주문)에만 선다.
+        const gift = row.gift;
+        if (gift?.status === "pending" && gift.orderId && lists.onGiftCancelled) {
+          const orderId = gift.orderId;
+          container.add(new Button(scene, HISTORY.width / 2 - 56 - 100, y + 128, {
+            width: 200, height: 48, label: t("gift.cancel.action"), fontSize: 22,
+            onClick: () => confirmCancelGift(scene, popups, { orderId, recipientName: gift.recipientName }, () => lists.onGiftCancelled?.()),
+          }));
+        }
         if (index < shown.length - 1) container.add(drawHairline(scene, 0, y + HISTORY.rowHeight - 24, HISTORY.width - 100, { alpha: 0.14 }));
       });
       if (pages <= 1) return container;

@@ -5,6 +5,8 @@ import type { AncientRankingResponse, RegularEventDto, ExpeditionLeaderboardResp
 import { isContentUnlocked } from "../core/contentUnlock";
 import { rollDuelPeriods, normalizeDuelState } from "../core/duelState";
 import type { PlayerDuelContext, PlayerDuelChange } from "./playerDuels";
+import type { GiftChange, GiftContext } from "./playerGifts";
+import { GIFTING_ENABLED } from "../core/gifting";
 import { prepareCombat, finishCombat, CombatRejected } from "./combatAuthority";
 import { authoritativeArgs, recordBoundaryResult, verifyBossWallTime } from "./releaseBoundary";
 import type { CombatPrepare, CombatProof } from "../core/combatProtocol";
@@ -42,6 +44,11 @@ export interface StateStore {
   /** 운영 도구가 이번 주에 편성한 정기 이벤트. 실패하면 이벤트 없음으로 본다(게임 호출은 막지 않는다). */
   regularEvent?(): Promise<RegularEventDto | null>;
   duelContext?(playerId: string, now: Date): Promise<PlayerDuelContext>;
+  /**
+   * 선물 주문 맥락(`gift_orders` + 보낸 사람 사실 + 받을 수 있는 친구). `recipientId`가 있으면 그 친구의 받는 쪽 주문도 함께 읽는다.
+   * 선물하기가 꺼져 있으면(`GIFTING_ENABLED`) 부르지 않는다.
+   */
+  giftContext?(playerId: string, recipientId: string | null, now: Date): Promise<GiftContext>;
   /** 운영 도구가 올린 받을 우편과 아직 반영하지 않은 재화 조정. 실패해도 게임 호출은 막지 않는다. */
   opsInbox?(playerId: string): Promise<OpsInbox>;
   /** 상태 확정 뒤 반영한 조정과 수령한 우편을 운영 표에 표시한다(실패해도 상태는 이미 확정이다). */
@@ -66,6 +73,8 @@ export interface StateStore {
     publicProfile?: ReturnType<typeof publicProfile>;
     raids?: SharedRaidChange[];
     duels?: PlayerDuelChange[];
+    /** 이번 호출이 바꾼 선물 주문. 기대 상태가 DB와 다르면 충돌로 다시 시도한다. */
+    gifts?: GiftChange[];
   }): Promise<{ revision: string }>;
 }
 
@@ -151,7 +160,9 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
     const now = deps.now?.() ?? new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
     const wantsDuel = /^(getDuelStatus|refreshDuelOpponents|setDuelDefense|enterDuel|resolveDuel|buyDuelAttempt|getDuelRanking|claimDuelSeasonReward)$/.test(req.method) && deps.store.duelContext;
-    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords, schedule, launchAt] = await Promise.all([
+    const wantsGift = GIFTING_ENABLED && /^(getGiftOptions|prepareGift|sendGift|cancelGift|getIncomingGifts|acceptGift|declineGift|getPurchaseHistory)$/.test(req.method) && deps.store.giftContext;
+    const giftRecipient = /^(getGiftOptions|prepareGift)$/.test(req.method) ? String((req.args?.[0] as { recipientId?: unknown } | undefined)?.recipientId ?? "") || null : null;
+    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords, schedule, launchAt, gifts] = await Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : undefined,
       deps.store.load(playerId),
       deps.store.identity ? deps.store.identity(playerId) : undefined,
@@ -164,6 +175,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       req.method === "updatePlayerCard" && deps.store.bannedWords ? deps.store.bannedWords().catch(() => []) : undefined,
       deps.store.liveSchedule ? deps.store.liveSchedule().catch(() => undefined) : undefined,
       deps.store.launchAt ? deps.store.launchAt().catch(() => undefined) : undefined,
+      wantsGift ? deps.store.giftContext!(playerId, giftRecipient, now) : undefined,
     ]);
     checkDeadline();
     // 서버가 받아 주는 배너·상품·이벤트 기간은 클라이언트가 본 것과 같은 운영 일정을 따른다. 못 읽었으면 지난 값을 그대로 쓴다.
@@ -199,6 +211,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       persistSession: () => undefined,
       raidContext: context,
       duelContext: duels,
+      ...(gifts ? { giftContext: gifts } : {}),
       expeditionRank: expedition?.rank,
       ancientRanking: ancient,
       ...(regular !== undefined ? { regularEvent: regular } : {}),
@@ -252,6 +265,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
         publicProfile: publicProfile(state, playerId, now),
         raids: context ? raidChanges(context, state) : undefined,
         duels: duels?.changes,
+        gifts: gifts?.changes.length ? gifts.changes : undefined,
       });
       const claimedMails = (state.claimedMailIds ?? []).filter((id) => isOpsMailId(id) && !claimedBefore.has(id)).map(opsMailUuid);
       if ((applied.length > 0 || claimedMails.length > 0) && deps.store.opsAck) await deps.store.opsAck(playerId, applied, claimedMails).catch(() => undefined);

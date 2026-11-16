@@ -27,8 +27,11 @@ export interface PlatformPaymentAdapter {
   /**
    * 스토어 상품 ID(`platformProductId`)로 결제창을 연다. 성공 영수증을 반환해도 지급은 서버 검증 뒤에만 가능하다.
    * SDK를 붙일 때는 이 메서드 하나만 구현하면 된다.
+   *
+   * `accountToken`은 선물 주문 ID다 — Apple은 `appAccountToken`, Google은 `obfuscatedProfileId`로 넣어 그 결제를 주문에 묶는다.
+   * 서버는 검증할 때 영수증 안의 토큰이 주문 ID와 같은지 본다(선물하기를 켜기 전의 선행 조건).
    */
-  requestPayment(platformProductId: string): Promise<PlatformPaymentResult>;
+  requestPayment(platformProductId: string, options?: { accountToken?: string }): Promise<PlatformPaymentResult>;
   /** 스토어에 남은 거래를 다시 받는다. 없으면 구매 복원은 `unsupported`다. */
   restorePurchases?(): Promise<PlatformRestoreResult>;
 }
@@ -36,7 +39,7 @@ export interface PlatformPaymentAdapter {
 /** 결제 SDK가 없는 빌드의 기본 구현이다. 결제를 시작하지 않고 `unsupported`만 돌려준다. */
 export class UnsupportedPlatformPaymentAdapter implements PlatformPaymentAdapter {
   readonly supported = false;
-  async requestPayment(_platformProductId: string): Promise<PlatformPaymentResult> {
+  async requestPayment(_platformProductId: string, _options?: { accountToken?: string }): Promise<PlatformPaymentResult> {
     return { status: "unsupported" };
   }
   async restorePurchases(): Promise<PlatformRestoreResult> {

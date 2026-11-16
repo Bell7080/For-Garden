@@ -17,6 +17,8 @@ import { combatJournal, consumeCombat } from "../server/combatAuthority";
 import { BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "../core/bond";
 import { assertStoryUnlocked, resolveStoryChoice, assertStoryChoiceReachable, redeemDeferredStoryBond } from "./storyAuthority";
 import type { SharedRaidContext } from "../server/sharedRaids";
+import { recordGiftChange, type GiftContext } from "../server/playerGifts";
+import { GIFTING_ENABLED, createGiftOrder, giftEligibility, incomingGifts, sentGiftDisplayStatus, transitionGift, GiftTransitionError, type GiftAction, type GiftOrder, type GiftSenderFacts } from "../core/gifting";
 import { serverNow } from "./serverClock";
 import { QA_ALL_EVENTS, QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { PLACEHOLDER_AD_ENABLED, TEMP_AD_REWARD_ENABLED, placeholderAdToken, tempAdToken } from "../core/tempAd";
@@ -142,7 +144,7 @@ import { FREE_RESEARCH_BANNER_ID, FREE_RESEARCH_SOURCE_ID, freeResearchAvailable
 import { paidStaminaApplied, settleStamina, STAMINA_HOLD_LIMIT, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
 import type { EnhanceRuneAllRequest, EnhanceRuneAllResponse, EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, SetRuneLoadoutRequest, SetRuneLoadoutResponse, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse, SynthesizeRunesRequest, SynthesizeRunesResponse } from "./contracts";
-import type { ClaimFirstPaymentGiftRequest, ClaimFirstPaymentGiftResponse, FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse, MailClaimHistoryEntryDto, PurchaseHistoryResponse } from "./contracts";
+import type { ClaimFirstPaymentGiftRequest, ClaimFirstPaymentGiftResponse, FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse, MailClaimHistoryEntryDto, PurchaseHistoryResponse, SentGiftHistoryEntryDto, GiftOptionsRequest, GiftOptionsResponse, PrepareGiftRequest, PrepareGiftResponse, SendGiftRequest, SendGiftResponse, GiftOrderActionRequest, CancelGiftResponse, IncomingGiftsResponse, AcceptGiftResponse, DeclineGiftResponse } from "./contracts";
 import { appendMailLog, mailHistoryFromJournal, purchaseHistoryFromJournal } from "../core/purchaseHistory";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, ClaimPassDailyBonusRequest, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { EXCAVATION_CURRENCIES, excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
@@ -194,6 +196,10 @@ export interface FakeServerOptions {
   /** 실제 DB의 공유 체력·참가자 스냅샷. 서버 호출 단위에서만 주입한다. */
   raidContext?: SharedRaidContext;
   duelContext?: PlayerDuelContext;
+  /** 실제 DB의 선물 주문·자격 사실. 서버 호출 단위에서만 주입하고, 없으면 선물 경계는 모두 거절한다. */
+  giftContext?: GiftContext;
+  /** 테스트 전용: 선물하기 스위치(`GIFTING_ENABLED`)와 선물 가능 상품을 덮어쓴다. 운영 경로는 넘기지 않는다. */
+  giftingOverride?: { enabled: boolean; giftableProductIds: readonly string[] };
   expeditionRank?: number | null;
   /** 실제 DB의 고대 지층 상시 순위. 서버 호출 단위에서만 주입한다. */
   ancientRanking?: AncientRankingResponse;
@@ -302,6 +308,8 @@ export class FakeServer implements GameApi {
 
   private readonly developmentTools: boolean;
   private readonly duelContext?: PlayerDuelContext;
+  private readonly giftContext?: GiftContext;
+  private readonly giftingOverride?: { enabled: boolean; giftableProductIds: readonly string[] };
   private readonly remoteExpeditionRank?: number | null;
   private readonly ancientRanking?: AncientRankingResponse;
   private readonly regularEvent: RegularEventDto | null;
@@ -312,6 +320,8 @@ export class FakeServer implements GameApi {
     options: FakeServerOptions = {},
   ) {
     this.duelContext = options.duelContext;
+    this.giftContext = options.giftContext;
+    this.giftingOverride = options.giftingOverride;
     this.remoteExpeditionRank = options.expeditionRank;
     this.ancientRanking = options.ancientRanking;
     this.regularEvent = options.regularEvent ?? null;
@@ -2611,7 +2621,163 @@ export class FakeServer implements GameApi {
   /** 결제 기록은 장부의 플랫폼 거래 영수증만 읽는다 — 화면이 기억한 값이 아니라 지급을 확정한 쪽의 기록이다. */
   async getPurchaseHistory(): Promise<PurchaseHistoryResponse> {
     await this.delay();
-    return { entries: purchaseHistoryFromJournal(this.state.serverJournal), sentGifts: [], mails: mailHistoryFromJournal(this.state.serverJournal), serverTime: this.now().toISOString() };
+    const now = this.now();
+    const context = this.giftsOpen() ? this.giftContext : undefined;
+    const sentGifts = (context?.orders ?? []).filter(order => order.senderId === context!.playerId)
+      .map(order => this.sentGiftDto(order, now)).filter((row): row is SentGiftHistoryEntryDto => row !== null)
+      .sort((a, b) => Date.parse(b.sentAt) - Date.parse(a.sentAt)).slice(0, 50);
+    return { entries: purchaseHistoryFromJournal(this.state.serverJournal), sentGifts, mails: mailHistoryFromJournal(this.state.serverJournal), serverTime: now.toISOString() };
+  }
+
+  /* ── 선물하기 ── 규칙은 `core/gifting.ts`가 갖고, 여기는 주문 맥락을 읽고 바꾸는 경계다. 스위치가 꺼져 있거나 서버가 맥락을
+     주입하지 않으면 모두 `GIFT_UNAVAILABLE`이다 — 결제가 SDK 없이 `unsupported`를 돌려주는 것과 같은 자리다. */
+
+  private giftsOpen(): boolean {
+    return (this.giftingOverride?.enabled ?? GIFTING_ENABLED) && this.giftContext !== undefined;
+  }
+
+  private giftGate(): GiftContext {
+    if (!this.giftsOpen()) throw new GameApiError("GIFT_UNAVAILABLE", t("gift.error.unavailable"));
+    return this.giftContext!;
+  }
+
+  /** 선물할 수 있는 상품 — 현금 결제 상품이고, 정의가 `giftable`이며, 기간 권리(패스)가 아니다. */
+  private giftableProduct(productId: string): ProductDefinition | undefined {
+    const product = PRODUCTS.find(({ id }) => id === productId);
+    if (!product || product.acquisition.kind !== "platform_payment" || product.passBenefit) return undefined;
+    return product.giftable || this.giftingOverride?.giftableProductIds.includes(product.id) ? product : undefined;
+  }
+
+  private giftSenderFacts(context: GiftContext): GiftSenderFacts {
+    return { ...context.sender, researchLevel: this.state.playerResearch.level, accountCreatedAt: this.state.playerCard.createdAt || null };
+  }
+
+  private sentGiftDto(order: GiftOrder, now: Date): SentGiftHistoryEntryDto | null {
+    const status = sentGiftDisplayStatus(order, now);
+    return status ? { orderId: order.id, productId: order.productId, recipientName: order.recipientName, sentAt: order.paidAt ?? order.createdAt, status } : null;
+  }
+
+  private giftGrants(product: ProductDefinition): MailRewardDto[] {
+    return product.grants.flatMap((grant): MailRewardDto[] => grant.kind === "currency" ? [{ kind: "currency", currency: grant.currency, amount: grant.amount }]
+      : grant.kind === "item" ? [{ kind: "item", itemId: grant.itemId, amount: grant.amount, ...(grant.expiresInDays ? { expiresInDays: grant.expiresInDays } : {}) }] : []);
+  }
+
+  /** 주문 하나를 사람의 조작으로 옮긴다. 시간 전이(만료)가 먼저 적용되고, 규칙이 거절하면 아무것도 바꾸지 않는다. */
+  private moveGift(context: GiftContext, orderId: string, action: GiftAction, now: Date): { before: GiftOrder; after: GiftOrder } {
+    const before = context.orders.find(order => order.id === orderId);
+    if (!before) throw new GameApiError("GIFT_NOT_FOUND", t("gift.error.notFound"));
+    let after: GiftOrder;
+    try { after = transitionGift(before, action, context.playerId, now); }
+    catch (error) {
+      if (error instanceof GiftTransitionError) throw new GameApiError(error.reason === "state" ? "GIFT_STATE_INVALID" : "GIFT_NOT_FOUND", t(error.reason === "state" ? "gift.error.state" : "gift.error.notFound"));
+      throw error;
+    }
+    recordGiftChange(context, before.status, after);
+    return { before, after };
+  }
+
+  async getGiftOptions(request: GiftOptionsRequest): Promise<GiftOptionsResponse> {
+    await this.delay();
+    const context = this.giftGate();
+    const now = this.now();
+    const recipient = context.recipients[request.recipientId] ?? null;
+    const sender = this.giftSenderFacts(context);
+    const options = PRODUCTS.filter(product => this.giftableProduct(product.id) && this.isVisible(product, now)).map(product => {
+      const acquisition = product.acquisition as Extract<ProductDefinition["acquisition"], { kind: "platform_payment" }>;
+      const verdict = giftEligibility({ enabled: true, senderId: context.playerId, sender, recipient, productId: product.id, priceKrw: acquisition.basePriceKrw, giftable: true, orders: context.orders, now });
+      return { productId: product.id, platformProductId: acquisition.platformProductId, priceKrw: acquisition.basePriceKrw, eligible: verdict.ok, reason: verdict.ok ? null : verdict.reason };
+    });
+    return { recipientId: request.recipientId, recipientName: recipient?.name ?? "", options, serverTime: now.toISOString() };
+  }
+
+  async prepareGift(request: PrepareGiftRequest): Promise<PrepareGiftResponse> {
+    await this.delay();
+    const context = this.giftGate();
+    const now = this.now();
+    // 재전송은 같은 주문을 돌려준다 — 결제 창이 두 주문에 묶이지 않게.
+    const orderId = `gift-${request.requestId}`;
+    const existing = context.orders.find(order => order.id === orderId);
+    const product = this.giftableProduct(request.productId);
+    if (!request.requestId || !product || !this.isVisible(product, now)) throw new GameApiError("GIFT_NOT_ELIGIBLE", t("gift.error.notEligible"));
+    const acquisition = product.acquisition as Extract<ProductDefinition["acquisition"], { kind: "platform_payment" }>;
+    if (existing) {
+      if (existing.senderId !== context.playerId || existing.productId !== product.id || existing.recipientId !== request.recipientId) throw new GameApiError("INVALID_STATE", "다른 요청에 사용된 처리 ID입니다.");
+      return { orderId, productId: product.id, platformProductId: acquisition.platformProductId, paymentDeadline: existing.expiresAt };
+    }
+    const recipient = context.recipients[request.recipientId] ?? null;
+    const verdict = giftEligibility({ enabled: true, senderId: context.playerId, sender: this.giftSenderFacts(context), recipient, productId: product.id, priceKrw: acquisition.basePriceKrw, giftable: true, orders: context.orders, now });
+    if (!verdict.ok || !recipient) throw new GameApiError("GIFT_NOT_ELIGIBLE", t(`gift.refusal.${verdict.ok ? "recipient_unavailable" : verdict.reason}`));
+    const order = createGiftOrder({ id: orderId, senderId: context.playerId, recipientId: recipient.id, senderName: this.state.playerCard.nickname || t("profile.defaultName"), recipientName: recipient.name, productId: product.id, priceKrw: acquisition.basePriceKrw, now });
+    recordGiftChange(context, null, order);
+    return { orderId, productId: product.id, platformProductId: acquisition.platformProductId, paymentDeadline: order.expiresAt };
+  }
+
+  /**
+   * 검증된 결제를 주문에 묶는다. 그 거래는 일반 결제와 **같은 거래 장부**(`platformTransaction`)에 지급 없이 남는다 — 같은
+   * 영수증을 `fulfillPlatformPurchase`로 다시 들고 와도 보낸 사람에게 상품이 들어가지 않고, 다른 선물에 두 번 쓰이지도 않는다.
+   */
+  async sendGift(request: SendGiftRequest): Promise<SendGiftResponse> {
+    await this.delay();
+    const context = this.giftGate();
+    const now = this.now();
+    const order = context.orders.find(row => row.id === request.orderId);
+    const verification = [...this.verifiedTransactions.values()].find(({ verificationId }) => verificationId === request.verificationId);
+    if (!order || order.senderId !== context.playerId) throw new GameApiError("GIFT_NOT_FOUND", t("gift.error.notFound"));
+    if (!request.requestId || !verification || verification.productId !== order.productId) throw new GameApiError("RECEIPT_INVALID", "검증된 플랫폼 거래가 아닙니다.");
+    if (order.transactionId === verification.transactionId) return { gift: this.sentGiftDto(order, now)!, replayed: true };
+    if (this.readReceipt("platformTransaction", verification.transactionId, order.productId) || this.fulfilledTransactions.has(verification.transactionId)
+      || context.orders.some(row => row.transactionId === verification.transactionId)) throw new GameApiError("RECEIPT_INVALID", "이미 사용된 거래입니다.");
+    const { after } = this.moveGift(context, order.id, { kind: "pay", transactionId: verification.transactionId }, now);
+    const candidate = structuredClone(this.state);
+    this.recordReceipt(candidate, "platformTransaction", verification.transactionId, order.productId, {
+      productId: order.productId, quantity: 1, granted: [], grantedRunes: [], remaining: 0, firstBonusApplied: false, purchasedAt: now.toISOString(), giftOrderId: order.id,
+    });
+    this.commitRaidState(candidate);
+    return { gift: this.sentGiftDto(after, now)! };
+  }
+
+  async cancelGift(request: GiftOrderActionRequest): Promise<CancelGiftResponse> {
+    await this.delay();
+    const context = this.giftGate();
+    const now = this.now();
+    const { after } = this.moveGift(context, request.orderId, { kind: "cancel" }, now);
+    return { gift: this.sentGiftDto(after, now)! };
+  }
+
+  async getIncomingGifts(): Promise<IncomingGiftsResponse> {
+    await this.delay();
+    const context = this.giftGate();
+    const now = this.now();
+    const gifts = incomingGifts(context.orders, context.playerId, now).flatMap(order => {
+      const product = PRODUCTS.find(({ id }) => id === order.productId);
+      return product ? [{ orderId: order.id, productId: order.productId, senderName: order.senderName, sentAt: order.paidAt ?? order.createdAt, expiresAt: order.expiresAt, grants: this.giftGrants(product) }] : [];
+    });
+    return { gifts, serverTime: now.toISOString() };
+  }
+
+  /** 받기 — 받는 사람 자신의 저장에 지급하고 주문을 받음으로 바꾼다. 둘은 같은 저장으로 확정된다(서버 핸들러의 한 트랜잭션). */
+  async acceptGift(request: GiftOrderActionRequest): Promise<AcceptGiftResponse> {
+    await this.delay();
+    const context = this.giftGate();
+    const now = this.now();
+    const order = context.orders.find(row => row.id === request.orderId);
+    const product = order && PRODUCTS.find(({ id }) => id === order.productId);
+    if (!order || !product || order.recipientId !== context.playerId) throw new GameApiError("GIFT_NOT_FOUND", t("gift.error.notFound"));
+    // 상한에서 막히면 주문을 옮기기 전에 거절한다 — 받음으로 바꾸고 지급에 실패하면 받는 사람이 잃는다.
+    const wallet = { ...this.state.wallet };
+    const applied = this.applyProductGrants(product, 1, wallet, this.state.itemInventory.map(entry => ({ ...entry })), now);
+    this.moveGift(context, order.id, { kind: "accept" }, now);
+    const candidate = structuredClone(this.state);
+    candidate.wallet = wallet; candidate.itemInventory = applied.items;
+    this.commitRaidState(candidate);
+    return { ...this.snapshot(), orderId: order.id, granted: this.giftGrants({ ...product, grants: applied.granted }) };
+  }
+
+  async declineGift(request: GiftOrderActionRequest): Promise<DeclineGiftResponse> {
+    await this.delay();
+    const context = this.giftGate();
+    this.moveGift(context, request.orderId, { kind: "decline" }, this.now());
+    return { orderId: request.orderId };
   }
 
   /** 광고 시청 경로와 같은 슬롯 정의·UTC 카운터를 사용하되 활성 패스만 토큰 없이 통과시킨다. */

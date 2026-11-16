@@ -40,7 +40,9 @@ export function purchaseHistoryFromJournal(journal: ServerJournal | undefined, l
     let transactionId: unknown;
     try { transactionId = (JSON.parse(key) as unknown[])[1]; } catch { continue; }
     if (typeof transactionId !== "string") continue;
-    const result = receipt.result as { productId?: unknown; purchasedAt?: unknown; granted?: unknown; firstBonusApplied?: unknown };
+    const result = receipt.result as { productId?: unknown; purchasedAt?: unknown; granted?: unknown; firstBonusApplied?: unknown; giftOrderId?: unknown };
+    // 선물 결제는 결제 탭이 아니라 선물 기록 탭이 말한다 — 여기 서면 지급 없는 빈 결제로 읽힌다.
+    if (typeof result.giftOrderId === "string") continue;
     const productId = typeof result.productId === "string" ? result.productId : receipt.identity;
     entries.push({
       productId,

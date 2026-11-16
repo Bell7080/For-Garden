@@ -61,6 +61,7 @@ declare
     'public.server_social_wallets',
     'public.server_rate_windows',
     'public.player_device_sessions',
+    'public.gift_orders', 'public.gift_sender_flags', 'public.store_refund_events',
     'public.server_social_receipts',
     'public.server_competitive_scores',
     'public.server_competitive_results',

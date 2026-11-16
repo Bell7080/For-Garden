@@ -181,6 +181,11 @@ export interface ProductDefinition {
    * 노출·남은 수·구매 허락은 상품 기간이 아니라 그 계정의 열린 특가가 정한다.
    */
   situational?: SituationalOfferTrigger;
+  /**
+   * **선물하기로 친구에게 보낼 수 있는 상품**(`core/gifting.ts` · 결정 D1 — 선물 전용 유료 패키지만, 재화 묶음·원석·미지핵·패스는 넣지 않는다).
+   * 현금 결제 상품에만 의미가 있고, 지금은 어느 상품에도 달지 않았다 — 선물 상품을 더하는 것은 BM 승인 사항이다.
+   */
+  giftable?: true;
 }
 
 /** 프로토타입 운영 카탈로그. 실제 차감과 지급은 이 데이터가 아니라 GameApi만 수행한다. */

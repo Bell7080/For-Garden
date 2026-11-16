@@ -32,7 +32,7 @@ export const LAB_VI = {
   "lab.policy.tenUpgrade": "Nếu ô cuối của x10 là SR, có {percent}% cơ hội nâng lên SSR",
   "lab.policy.mileage": "Mỗi lượt nghiên cứu +1 Dặm DNA",
   "lab.policy.duplicate": "Thưởng trùng  +1 Mảnh của Di vật đó · Gom Mảnh để Đột phá",
-  "lab.policy.duplicateMax": "Sau Đột phá bậc V, trùng lặp chuyển thành Dặm DNA (SSR +30 · SR +8 · R +2)",
+  "lab.policy.duplicateMax": "Khi đã gom đủ Mảnh cần đến Cộng hưởng V, trùng lặp chuyển thành Dặm DNA (SSR +30 · SR +8 · R +2)",
   "lab.skipAll": "Bỏ qua tất cả",
   "lab.scanning": "Đang nghiên cứu DNA hóa thạch",
   "lab.resonance.SSR": "Cộng hưởng màu hổ phách bùng lên",

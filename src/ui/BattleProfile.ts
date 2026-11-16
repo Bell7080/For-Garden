@@ -136,7 +136,7 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     this.hpLabel.setText(dead ? t("battle.profile.down") : `HP ${Math.round(currentHp)} / ${Math.round(maxHp)}`)
       .setColor(dead ? COLOR.dangerText : COLOR.hpText);
     this.ferocityBar.setValue(ferocity / this.ferocityMax, COLOR.ferocityLow);
-    this.ferocityLabel.setText(t("battle.profile.ferocity", { value: Math.round(ferocity) })).setColor(COLOR.ferocityText);
+    this.ferocityLabel.setText(t("battle.profile.ferocity", { value: Math.round(ferocity), max: Math.round(this.ferocityMax) })).setColor(COLOR.ferocityText);
     // 사망은 카드와 충전 가림막의 조립이 끝난 뒤 전체 알파를 정확히 한 번 적용한다. 잠금 tint,
     // 선택 면, 충전 효과의 개별 알파를 여기서 다시 계산하지 않아 중복 감쇠를 피하고 부활 시 복구한다.
     this.card.setCompositeAlpha(dead ? 0.45 : 1);

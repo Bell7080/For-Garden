@@ -28,7 +28,12 @@ export interface AncientTrial {
   readonly hp: number;
   readonly attack: number;
   readonly defense: number;
-  readonly seconds: number;
+  /**
+   * 제한 시간(초). **「초읽기」 하나만 갖는다** — 그 시각에 판이 패배로 끝나고 전투 시계가 거꾸로 센다.
+   * 나머지 시련은 시간 제한이 없고 다른 전투처럼 데스 카운트가 판을 닫는다(응태 결정 2026-11-16 —
+   * 모든 층에 화면에 없는 90초 패배가 숨어 있었다).
+   */
+  readonly seconds?: number;
   /** 적 전원이 최대 체력의 몇 %만큼 막을 두르고 시작하나. */
   readonly initialShieldPercent?: number;
   /** 적 전원의 궁극기 게이지가 몇 % 찬 채로 시작하나. */
@@ -42,16 +47,16 @@ export type AncientTrialId = "endurance" | "armor" | "assault" | "deadline" | "s
 export const ANCIENT_TRIAL_IDS: readonly AncientTrialId[] = ["endurance","armor","assault","deadline","shield","charge","frenzy","precision"];
 /** 시련 하나가 판을 얼마나 바꾸는가(2026-10-27 상향 — 체력·공격 +30%, 방어 +50%, 막 30%, 궁극기 50%, 시한 45초 · 2026-10-28 공속 +25%·치명타 +30% 추가). */
 export const ANCIENT_TRIALS = {
-  endurance: { hp: 1.3, attack: 1, defense: 1, seconds: 90 },
-  armor: { hp: 1, attack: 1, defense: 1.5, seconds: 90 },
-  assault: { hp: 1, attack: 1.3, defense: 1, seconds: 90 },
+  endurance: { hp: 1.3, attack: 1, defense: 1 },
+  armor: { hp: 1, attack: 1, defense: 1.5 },
+  assault: { hp: 1, attack: 1.3, defense: 1 },
   deadline: { hp: .88, attack: 1, defense: 1, seconds: 45 },
-  shield: { hp: 1, attack: 1, defense: 1, seconds: 90, initialShieldPercent: 30 },
-  charge: { hp: 1, attack: 1, defense: 1, seconds: 90, openingEnergyPercent: 50 },
+  shield: { hp: 1, attack: 1, defense: 1, initialShieldPercent: 30 },
+  charge: { hp: 1, attack: 1, defense: 1, openingEnergyPercent: 50 },
   // 2026-10-28 응태 요청 — 공속 +25%는 평타 압박을 맹공(+30%)보다 조금 덜 올린다(궁극기 충전도 함께 빨라지므로).
   // 치명타 +30%는 기본 10% → 40%라 평균 피해 기대치가 ×1.05 → ×1.20(약 +14%)이고, 한 방의 흔들림이 시련의 몫이다.
-  frenzy: { hp: 1, attack: 1, defense: 1, seconds: 90, attackSpeedPercent: 25 },
-  precision: { hp: 1, attack: 1, defense: 1, seconds: 90, critChancePoints: 30 },
+  frenzy: { hp: 1, attack: 1, defense: 1, attackSpeedPercent: 25 },
+  precision: { hp: 1, attack: 1, defense: 1, critChancePoints: 30 },
 } as const satisfies Record<AncientTrialId, AncientTrial>;
 
 export function ancientEncounterRole(kind: AncientEncounterKind, index: number): EncounterRole {

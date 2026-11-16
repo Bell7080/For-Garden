@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getBattleStage, getStageEnemies } from "../../src/data/stages";
 import { getRelic } from "../../src/data/relics";
+import { deathClockClosesBySeconds } from "../../src/core/battleClock";
 import { ANCIENT_DIFFICULTY_BANDS, ANCIENT_STRATA_MAX_FLOOR, ancientFirstClearReward } from "../../src/data/ancientStrataDifficulty";
 import { isCleanPaidAmount } from "../../src/core/paidAmountUnit";
 import { ancientStrataMultipliers, createAncientStrataSkirmish, getAncientStrataFloor } from "../../src/core/ancientStrataBattle";
@@ -128,7 +129,7 @@ describe("실제 전투 기반 고대 지층 검수", () => {
     const state = scenario.createState();
     expect(state.fighters.filter(f => f.side === "enemy").map(f => f.def.stats)).toEqual(getAncientStrataFloor(100).enemies.map(e => e.stats));
     expect(state.fighters.find(f => f.side === "player")?.breakthrough).toBe(4);
-    expect(scenario.durationSeconds).toBe(getAncientStrataFloor(100).timeLimitSeconds);
+    expect(scenario.durationSeconds).toBe(getAncientStrataFloor(100).timeLimitSeconds ?? deathClockClosesBySeconds());
     expect(() => createCcCombatScenario({ mode: "ancient", selections: [{ augmentId: "tag-stun-basic", targetRelicId: "rex" }] })).toThrow();
   });
 });

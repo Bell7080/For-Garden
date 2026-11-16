@@ -5351,7 +5351,7 @@ var LOBBY_KO = {
   "lobby.sortie.story": "\uC2A4\uD1A0\uB9AC",
   "lobby.sortie.story.status": "\uBA54\uC778 \uC791\uC804",
   "lobby.sortie.cake": "\uCF00\uC774\uD06C \uB300\uC791\uC804",
-  "lobby.sortie.cake.status": "3 WAVE \xB7 \uC131\uC7A5 \uC7AC\uD654",
+  "lobby.sortie.cake.status": "\uBAB0\uB824\uC624\uB294 \uBB34\uB9AC \xB7 \uC131\uC7A5 \uC7AC\uD654",
   "lobby.sortie.bounty": "\uD604\uC0C1\uC218\uBC30",
   "lobby.sortie.bounty.status": "\uD0DC\uADF8 3\uD68C \xB7 \uACE8\uB4DC",
   "lobby.sortie.raid": "\uB808\uC774\uB4DC",
@@ -5890,7 +5890,7 @@ var LAB_KO = {
   "lab.policy.tenUpgrade": "10\uC5F0 \uB9C8\uC9C0\uB9C9 \uC2AC\uB86F\uC774 SR\uC774\uBA74 {percent}% \uD655\uB960\uB85C SSR\uB85C \uC0C1\uC2B9",
   "lab.policy.mileage": "\uC5F0\uAD6C 1\uD68C\uB9C8\uB2E4 DNA \uB9C8\uC77C\uB9AC\uC9C0 +1",
   "lab.policy.duplicate": "\uC911\uBCF5 \uBCF4\uC0C1  \uD574\uB2F9 \uB810\uB9AD \uD30C\uD3B8 +1 \xB7 \uD30C\uD3B8\uC744 \uBAA8\uC544 \uD55C\uACC4 \uB3CC\uD30C",
-  "lab.policy.duplicateMax": "\uB3CC\uD30C \uB4F1\uAE09 V \uB2EC\uC131 \uC774\uD6C4 \uC911\uBCF5\uC740 DNA \uB9C8\uC77C\uB9AC\uC9C0\uB85C \uC804\uD658 (SSR +30 \xB7 SR +8 \xB7 R +2)",
+  "lab.policy.duplicateMax": "\uACF5\uBA85 V\uAE4C\uC9C0 \uD544\uC694\uD55C \uD30C\uD3B8\uC744 \uBAA8\uB450 \uBAA8\uC740 \uB4A4\uC758 \uC911\uBCF5\uC740 DNA \uB9C8\uC77C\uB9AC\uC9C0\uB85C \uC804\uD658 (SSR +30 \xB7 SR +8 \xB7 R +2)",
   "lab.skipAll": "\uC804\uCCB4 \uAC74\uB108\uB6F0\uAE30",
   "lab.scanning": "\uD654\uC11D DNA \uC5F0\uAD6C \uC911",
   "lab.resonance.SSR": "\uD638\uBC15\uBE5B \uACF5\uBA85\uC774 \uD3ED\uBC1C\uD55C\uB2E4",
@@ -7365,7 +7365,7 @@ var MISC_KO = {
   "growth.party": "\uD3B8\uC131 \uBC14\uAFB8\uAE30",
   // 전투 프로필·보상
   "battle.profile.down": "\uC804\uD22C \uBD88\uB2A5",
-  "battle.profile.ferocity": "\uC57C\uC131 {value} / 100",
+  "battle.profile.ferocity": "\uC57C\uC131 {value} / {max}",
   "reward.title": "\uD68D\uB4DD \uBCF4\uC0C1",
   "reward.tapHint": "\uD654\uBA74\uC744 \uB20C\uB7EC \uD655\uC778",
   // 적 미리보기·룬 확률
@@ -25597,16 +25597,16 @@ var ANCIENT_ENCOUNTERS = [
 ];
 var ANCIENT_TRIAL_IDS = ["endurance", "armor", "assault", "deadline", "shield", "charge", "frenzy", "precision"];
 var ANCIENT_TRIALS = {
-  endurance: { hp: 1.3, attack: 1, defense: 1, seconds: 90 },
-  armor: { hp: 1, attack: 1, defense: 1.5, seconds: 90 },
-  assault: { hp: 1, attack: 1.3, defense: 1, seconds: 90 },
+  endurance: { hp: 1.3, attack: 1, defense: 1 },
+  armor: { hp: 1, attack: 1, defense: 1.5 },
+  assault: { hp: 1, attack: 1.3, defense: 1 },
   deadline: { hp: 0.88, attack: 1, defense: 1, seconds: 45 },
-  shield: { hp: 1, attack: 1, defense: 1, seconds: 90, initialShieldPercent: 30 },
-  charge: { hp: 1, attack: 1, defense: 1, seconds: 90, openingEnergyPercent: 50 },
+  shield: { hp: 1, attack: 1, defense: 1, initialShieldPercent: 30 },
+  charge: { hp: 1, attack: 1, defense: 1, openingEnergyPercent: 50 },
   // 2026-10-28 응태 요청 — 공속 +25%는 평타 압박을 맹공(+30%)보다 조금 덜 올린다(궁극기 충전도 함께 빨라지므로).
   // 치명타 +30%는 기본 10% → 40%라 평균 피해 기대치가 ×1.05 → ×1.20(약 +14%)이고, 한 방의 흔들림이 시련의 몫이다.
-  frenzy: { hp: 1, attack: 1, defense: 1, seconds: 90, attackSpeedPercent: 25 },
-  precision: { hp: 1, attack: 1, defense: 1, seconds: 90, critChancePoints: 30 }
+  frenzy: { hp: 1, attack: 1, defense: 1, attackSpeedPercent: 25 },
+  precision: { hp: 1, attack: 1, defense: 1, critChancePoints: 30 }
 };
 function ancientEncounterRole(kind, index) {
   return kind === "swarm" ? "swarm" : kind === "elite" || kind === "eliteDuo" || kind === "mixed" && index === 0 ? "elite" : "normal";

@@ -272,7 +272,7 @@ export const MISC_ID = {
   "growth.party": "Ubah Formasi",
   "stageComplete.exit": "Keluar",
   "battle.profile.down": "Tumbang",
-  "battle.profile.ferocity": "Keganasan {value} / 100",
+  "battle.profile.ferocity": "Keganasan {value} / {max}",
   "reward.title": "Hadiah Didapat",
   "reward.tapHint": "Ketuk layar untuk konfirmasi",
   "enemyPreview.title": "Formasi Musuh",

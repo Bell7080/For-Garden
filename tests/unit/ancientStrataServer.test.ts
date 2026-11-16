@@ -129,4 +129,10 @@ describe("공용 전투 제한과 심층 비례 피해",()=>{
     expect(getAncientStrataFloor(4).trialId).toBe("deadline");
     expect(getAncientStrataFloor(4).timeLimitSeconds).toBe(45);
   });
+  it("제한 시간은 「초읽기」 하나만 갖는다 — 다른 층에 화면에 없는 패배 시각을 숨기지 않는다",()=>{
+    for(let floor=1;floor<=40;floor++){
+      const definition=getAncientStrataFloor(floor);
+      expect(definition.timeLimitSeconds).toBe(definition.trialId==="deadline"?45:undefined);
+    }
+  });
 });

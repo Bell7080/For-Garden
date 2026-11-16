@@ -2094,14 +2094,14 @@
 "Выбыл"
 ],
 "battle.profile.ferocity": [
-"野性 {value} / 100",
-"ความดุร้าย {value} / 100",
-"Dã tính {value} / 100",
-"Keganasan {value} / 100",
-"Ferocidad {value} / 100",
-"Ferocidade {value} / 100",
-"Wildheit {value} / 100",
-"Ярость {value} / 100"
+"野性 {value} / {max}",
+"ความดุร้าย {value} / {max}",
+"Dã tính {value} / {max}",
+"Keganasan {value} / {max}",
+"Ferocidad {value} / {max}",
+"Ferocidade {value} / {max}",
+"Wildheit {value} / {max}",
+"Ярость {value} / {max}"
 ],
 "reward.title": [
 "获得奖励",

@@ -272,7 +272,7 @@ export const MISC_TH = {
   "growth.party": "เปลี่ยนการจัดทีม",
   "stageComplete.exit": "ออก",
   "battle.profile.down": "ล้ม",
-  "battle.profile.ferocity": "ความดุร้าย {value} / 100",
+  "battle.profile.ferocity": "ความดุร้าย {value} / {max}",
   "reward.title": "ได้รับรางวัล",
   "reward.tapHint": "แตะหน้าจอเพื่อยืนยัน",
   "enemyPreview.title": "การจัดทีมศัตรู",

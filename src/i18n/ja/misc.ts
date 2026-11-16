@@ -286,7 +286,7 @@ export const MISC_JA = {
 
 
   "battle.profile.down": "戦闘不能",
-  "battle.profile.ferocity": "野性 {value} / 100",
+  "battle.profile.ferocity": "野性 {value} / {max}",
   "reward.title": "獲得報酬",
   "reward.tapHint": "画面を押して確認",
 

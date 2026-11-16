@@ -85,7 +85,7 @@ export const INFO_ES = {
   "info.reset.done": "Se devolvió Tarta de queso ×{count}.",
   "info.rune.bag": "Bolsa de Runas · {part}",
   "info.rune.empty": "Espacio vacío",
-  "info.rune.emptySlot": "   Espacio vacío",
+  "info.rune.tapToEquip": "Toca para equipar",
   "info.rune.named": "Runa {rarity}",
   "info.rune.threeSlots": "Tres espacios de Runa",
   "info.rune.complete": "Las tres piezas encajan.",

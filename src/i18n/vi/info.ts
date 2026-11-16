@@ -85,7 +85,7 @@ export const INFO_VI = {
   "info.reset.done": "Đã hoàn lại {count} Bánh phô mai.",
   "info.rune.bag": "Túi Rune · {part}",
   "info.rune.empty": "Ô trống",
-  "info.rune.emptySlot": "   Ô trống",
+  "info.rune.tapToEquip": "Chạm để trang bị",
   "info.rune.named": "Rune {rarity}",
   "info.rune.threeSlots": "Ba ô Rune",
   "info.rune.complete": "Ba mảnh khớp trọn vào nhau.",

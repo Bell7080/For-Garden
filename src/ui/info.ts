@@ -12,7 +12,7 @@ import { PuppetPoker } from "./puppetAct";
 import { INFO_PORTRAIT_SQUISH } from "./pokeMotion";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { Combatant } from "../core/combatTypes";
-import { formatRuneOptionValue, runeOptionValue, runePartLabel, runeRarityLabel, type RunePart } from "../core/runes";
+import { formatRuneOptionValue, runeOptionValue, runePartLabel, runeRarityLabel, type RuneInstance, type RunePart, type RuneStatKey } from "../core/runes";
 import { previewSkillDamage } from "../core/damage";
 import type { BasicAttack, Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
 import { setDebugFeedButton, setDebugInfoAssetReady, setDebugInfoGemSlots, setDebugInfoOpen, addDebugFeedTaps } from "../debug";
@@ -57,7 +57,7 @@ import { motionPolicy } from "../core/settings";
 import { RewardFrame } from "./RewardFrame";
 import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { addMarkChip } from "./MarkChip";
-import { addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
+import { addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeAccentCss, runeSeatTexture, runeTexture } from "./runeIcons";
 import { reachLabel, STAT_TONE, reachToneHex } from "./statTones";
 import { openRuneInfoPopup, openRunePopup, runeStatLabel } from "./RunePopup";
 import { offerFreeRuneCraft } from "./freeRuneCraftTutorial";
@@ -77,7 +77,7 @@ import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
 import { addSkillIconFrame, skillSlotLabel, type SkillIconFrameOptions, type SkillIconTone } from "./SkillIconFrame";
 import { encounterRoleDescription, encounterRoleIcon, encounterRoleName } from "./encounterRolePresentation";
 import type { EncounterRole } from "../core/levelDesign";
-import { squeezeTextToWidth } from "./textFit";
+import { fitTextToBox, squeezeTextToWidth } from "./textFit";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
 import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, breakthroughFragmentSpend, type BreakthroughStep, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as simulateFeed, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade, breakthroughGrowthPercent, RELIC_MAX_LEVEL } from "../core/relicProgression";
@@ -387,6 +387,27 @@ const SWIPE_SETTLE_MS = 180;
 
 /** 빈 자리가 제 크기에서 물러나는 비율. 셋이 물러나면 사이에 고른 틈이 생긴다. */
 const RUNE_GAP = 0.955;
+
+/**
+ * 룬 판의 자리(기둥 가운데 기준 x · 화면 y).
+ *
+ * 하트는 왼쪽, 칸마다 한 줄씩 오른쪽에 선다. 빈 조각은 가운데에서 `pop`만큼 바깥으로 **튀어나와**
+ * 번호를 달고 숨 쉰다 — 끼운 조각과 같은 자리에 오므라져 있기만 하던 때는 거기가 룬을 끼우는 곳인지
+ * 읽히지 않았다(응태 2026-11-16). 줄의 첫 줄은 돋보기(판 오른쪽 위) 밑에서 시작한다.
+ */
+const RUNE_SEAT = {
+  heart: { dx: -84, y: 1414, size: 200 },
+  pop: 16,
+  socket: { rimAlpha: [0.45, 0.95] as const, rimScale: 1.13, fillAlpha: 0.2, breatheMs: 1100, number: 48 },
+  rows: { left: 26, right: 218, y: [1370, 1434, 1498] as const, height: 58, badge: 34, name: 23, stat: 17 },
+} as const;
+
+/** 룬 돋보기 판(`openRuneOverview`)의 자리. 줄 높이와 창 높이는 글을 잰 뒤 거꾸로 구한다. */
+const RUNE_OVERVIEW = {
+  width: 880, plate: 800, frame: 108, frameX: 74, gap: 26, pad: 26,
+  name: 30, part: 20, main: 26, sub: 21, subMaxHeight: 60, lineGap: 6,
+  rowPad: 18, minRow: 128, rowGap: 14, top: 78, status: 64, buttons: 100, bottom: 40,
+} as const;
 
 /** 능력치 칩에서 쓰는 다섯 축과 색. */
 const STAT_CHIPS: readonly { key: keyof Stats; labelKey: TextKey; color: number }[] = [
@@ -1824,12 +1845,21 @@ export class InfoManager {
    * 기준으로 잘라 두었기 때문이다. 등급 색은 `RUNE_ACCENT`가 유일한 기준이다.
    */
   private addGemSlot(index: number, panel: Phaser.GameObjects.Container): GemSlot {
-    const center = { x: COLUMN.x - 48, y: 1404 };
-    const size = 214;
+    const { heart, pop, socket, rows } = RUNE_SEAT;
+    const center = { x: COLUMN.x + heart.dx, y: heart.y };
+    const size = heart.size;
     // 조각의 대략적인 무게중심. 세 조각이 나뉘는 방향(위 왼쪽·위 오른쪽·아래)을 그대로 따른다.
     const spot = runeSpot(size, index);
+    // 빈 조각이 튀어나가는 방향 — 가운데에서 제 무게중심 쪽으로.
+    const reach = Math.hypot(spot.x, spot.y) || 1;
+    const out = { x: (spot.x / reach) * pop, y: (spot.y / reach) * pop };
 
-    // 등급색 발광 → 조각 그림 순으로 쌓는다. 빈 자리는 발광 없이 어두운 조각만 남는다.
+    // 빈 자리의 테 → 등급색 발광 → 조각 → 번호 순으로 쌓는다.
+    const rim = this.scene.add
+      .image(center.x, center.y, runeTexture(undefined, index))
+      .setOrigin(0.5, RUNE_CENTER_Y)
+      .setTintFill(COLOR.accent)
+      .setAlpha(0);
     const glow = this.scene.add
       .image(center.x, center.y, runeTexture(undefined, index))
       .setOrigin(0.5, RUNE_CENTER_Y)
@@ -1840,16 +1870,46 @@ export class InfoManager {
       .image(center.x, center.y, runeTexture(undefined, index))
       .setOrigin(0.5, RUNE_CENTER_Y)
       .setDisplaySize(size, size);
-    // 이름은 하트 오른쪽에 세 줄로 세운다. 조각 안에 넣으면 좁은 면에 글자가 눌려 읽히지 않는다.
-    const label = this.scene.add
-      .text(center.x + size * 0.62, center.y - 46 + index * 46, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim }))
+    // 빈 자리 안쪽을 강조색으로 옅게 물들여 검은 구멍이 아니라 「끼울 자리」로 읽히게 한다.
+    const fill = this.scene.add
+      .image(center.x, center.y, runeTexture(undefined, index))
+      .setOrigin(0.5, RUNE_CENTER_Y)
+      .setTintFill(COLOR.accent)
+      .setAlpha(0);
+    // 빈 조각 위의 칸 번호. 가방·쪽지의 「N번」과 같은 수라, 오른쪽 줄의 번호와 함께 어느 칸인지 말한다.
+    const number = this.scene.add
+      .text(center.x + spot.x + out.x, center.y + spot.y + out.y, String(index + 1), textStyle({ role: "display", size: socket.number, color: COLOR.accentText }))
+      .setOrigin(0.5)
+      .setStroke("#05070a", 7);
+    // 빈 테는 숨 쉰다 — 움직임 줄이기에서는 가장 밝은 자리에 멈춘다.
+    const breathe = motionPolicy(session.settings).nonEssentialRepeatFactor !== 0;
+    const rimTween = breathe
+      ? this.scene.tweens.add({ targets: rim, alpha: { from: socket.rimAlpha[0], to: socket.rimAlpha[1] }, duration: socket.breatheMs, yoyo: true, repeat: -1, ease: "Sine.easeInOut", paused: true })
+      : undefined;
+
+    // 오른쪽 줄 — 칸 번호 액자 · 이름 · 주 옵션 한 줄. 누르면 조각을 누른 것과 같다.
+    const rowY = rows.y[index];
+    const rowLeft = COLUMN.x + rows.left;
+    const rowWidth = rows.right - rows.left;
+    const rowCenter = rowLeft + rowWidth / 2;
+    const rowPlate = drawLayer(this.scene, rowCenter, rowY, slantedRect(rowWidth, rows.height, 10), { fill: 0x0b1018, alpha: 0.86, shadow: { x: 0, y: 4 } });
+    const badgeX = rowLeft + 10 + rows.badge / 2;
+    const badgePlate = this.scene.add.rectangle(badgeX, rowY, rows.badge, rows.badge, COLOR.accent, 1).setAngle(45).setScale(0.72, 1);
+    const badgeText = this.scene.add
+      .text(badgeX, rowY, String(index + 1), textStyle({ role: "display", size: 24, color: "#05070a" }))
+      .setOrigin(0.5);
+    const textLeft = badgeX + rows.badge / 2 + 10;
+    const textRoom = rowLeft + rowWidth - 12 - textLeft;
+    const nameText = this.scene.add
+      .text(textLeft, rowY - 12, "", textStyle({ role: "display", size: rows.name, color: COLOR.ink }))
+      .setOrigin(0, 0.5)
+      .setStroke("#05070a", 4);
+    const statText = this.scene.add
+      .text(textLeft, rowY + 14, "", textStyle({ role: "emphasis", size: rows.stat, color: COLOR.inkDim }))
       .setOrigin(0, 0.5);
 
     let currentRuneId: string | null = null;
-    const hit = this.scene.add
-      .rectangle(center.x + spot.x, center.y + spot.y, size * 0.42, size * 0.42, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true });
-    hit.on("pointerup", () => {
+    const open = (): void => {
       // 채운 조각은 룬 쪽지(세공은 거기서 한 번 더 고른다), 빈 조각은 장착 가방을 연다.
       if (currentRuneId) {
         // 끼워 둔 룬에서 곧장 같은 자리의 가방으로 건너가 갈아 낀다 — 해제를 먼저 누르지 않아도 된다.
@@ -1860,25 +1920,52 @@ export class InfoManager {
           ...(mutable ? { openBag: () => this.openGemPicker(index), traitResearch: true } : {}),
         });
       } else this.openGemPicker(index);
-    });
-    attach(panel, glow, piece, label, hit);
+    };
+    const hit = this.scene.add
+      .rectangle(center.x + spot.x, center.y + spot.y, size * 0.46, size * 0.46, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true });
+    hit.on("pointerup", open);
+    const rowHit = this.scene.add
+      .rectangle(rowCenter, rowY, rowWidth, rows.height, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true });
+    rowHit.on("pointerup", open);
+    attach(panel, rim, glow, piece, fill, number, rowPlate, badgePlate, badgeText, nameText, statText, hit, rowHit);
 
     return {
       bounds: () => piece.getBounds(),
       paint: (gemId) => {
         currentRuneId = gemId;
         const gem = gemId ? session.runeInventory.find(({ instanceId }) => instanceId === gemId) : undefined;
-        piece.setTexture(runeTexture(gem?.rarity, index));
-        // 빈 자리는 제 크기보다 조금 오므라들어 조각 사이에 틈이 생긴다. 룬을 끼우면 제
-        // 크기로 펴져 틈이 메워지므로, 셋을 다 채우면 이음매 없는 하트 한 장이 된다.
+        // 끼운 조각은 틈을 메워 구운 판(`runeSeatTexture`)이라 셋을 다 끼우면 금 없는 하트 한 장이다.
+        // 빈 자리는 조금 오므라든 채 바깥으로 튀어나와 「여기에 끼운다」를 말한다.
+        const local = { x: center.x - panel.x, y: center.y - panel.y };
+        piece.setTexture(gem ? runeSeatTexture(gem.rarity, index) : runeTexture(undefined, index));
         piece.setDisplaySize(size, size).setScale(piece.scaleX * (gem ? 1 : RUNE_GAP), piece.scaleY * (gem ? 1 : RUNE_GAP));
+        piece.setPosition(local.x + (gem ? 0 : out.x), local.y + (gem ? 0 : out.y));
+        rim.setPosition(piece.x, piece.y).setDisplaySize(size * RUNE_GAP * socket.rimScale, size * RUNE_GAP * socket.rimScale);
+        fill.setPosition(piece.x, piece.y).setDisplaySize(piece.displayWidth, piece.displayHeight).setAlpha(gem ? 0 : socket.fillAlpha);
+        number.setVisible(!gem);
         if (gem) {
-          glow.setTexture(runeTexture(gem.rarity, index)).setTint(RUNE_ACCENT[gem.rarity]).setAlpha(0.4);
-          label.setText(index + 1 + "   " + (gem.customName ?? t("info.rune.named", { rarity: runeRarityLabel(gem.rarity) }))).setColor(COLOR.ink);
+          rimTween?.pause();
+          rim.setAlpha(0);
+          glow.setTexture(runeSeatTexture(gem.rarity, index)).setTint(RUNE_ACCENT[gem.rarity]).setAlpha(0.4);
+          const accent = runeAccentCss(gem.rarity);
+          badgePlate.setFillStyle(RUNE_ACCENT[gem.rarity], 1);
+          rowPlate.setAlpha(1);
+          nameText.setText(gem.customName ?? t("info.rune.named", { rarity: runeRarityLabel(gem.rarity) })).setColor(accent);
+          statText
+            .setText(gem.mainStats.map(({ key }) => runeStatLabel(key) + " " + formatRuneOptionValue(key, runeOptionValue(gem, key))).join("  "))
+            .setColor(COLOR.ink);
         } else {
           glow.setAlpha(0);
-          label.setText(index + 1 + t("info.rune.emptySlot")).setColor(COLOR.inkDim);
+          if (rimTween) { rim.setAlpha(socket.rimAlpha[0]); rimTween.resume(); } else rim.setAlpha(socket.rimAlpha[1]);
+          badgePlate.setFillStyle(COLOR.accent, 1);
+          rowPlate.setAlpha(0.7);
+          nameText.setText(t("info.rune.empty")).setColor(COLOR.inkDim);
+          statText.setText(t("info.rune.tapToEquip")).setColor(COLOR.accentText);
         }
+        squeezeTextToWidth(nameText, textRoom);
+        squeezeTextToWidth(statText, textRoom);
       },
     };
   }
@@ -2198,51 +2285,81 @@ export class InfoManager {
     openRewardPopup(this.scene, this.popups, { items: currencyRecordToRewardItems({ gems }) });
   }
 
-  /** 세 룬을 한 장에 펼쳐 무엇이 얼마나 붙었는지 한 번에 본다. */
+  /**
+   * 세 룬을 한 장에 펼쳐 무엇이 얼마나 붙었는지 한 번에 본다.
+   *
+   * 한 줄에 주·부 옵션을 모두 이어 붙이던 때는 긴 언어에서 판 밖으로 흘렀다. 줄마다 이름 → 주 옵션(굵게) →
+   * 부 옵션(가늘고 흐리게, 넘치면 두 줄)으로 쌓고, 줄 높이와 창 높이는 실제로 쌓인 글에서 거꾸로 구한다.
+   */
   private openRuneOverview(from: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
     const slots = relicProgression.getProgress(def.id).heartGemSlots;
     // 내 렐릭이면 판 밑동에 장착 조작 셋이 선다 — 자동(빈 룬만)·추천(다른 렐릭의 룬까지)·모두 해제.
     const loadout = this.capabilities.mutateProgress && this.ownedNow;
-    this.popups.open({ width: 800, height: loadout ? 760 : 620, title: t("info.rune.threeSlots"), tilt: -1.2, ...anchorOf(from) }, (body) => {
-      slots.forEach((gemId, index) => {
-        const y = -180 + index * 130;
-        const gem = gemId ? session.runeInventory.find(({ instanceId }) => instanceId === gemId) : undefined;
-        body.add(drawLayer(this.scene, 0, y, slantedRect(680, 108, 16), {
+    const L = RUNE_OVERVIEW;
+    const textX = -L.plate / 2 + L.frameX + L.frame / 2 + L.gap;
+    const room = L.plate / 2 - L.pad - textX;
+    const option = (gem: RuneInstance, key: RuneStatKey): string => runeStatLabel(key) + " " + formatRuneOptionValue(key, runeOptionValue(gem, key));
+    // 창을 열기 전에 글을 먼저 세워 재야 줄 높이와 창 높이를 정할 수 있다 — 여는 순간 본문에 옮겨 담는다.
+    const rows = slots.map((gemId, index) => {
+      const gem = gemId ? session.runeInventory.find(({ instanceId }) => instanceId === gemId) : undefined;
+      const part = this.scene.add.text(0, 0, runePartLabel(index as RunePart), textStyle({ role: "body", size: L.part, color: COLOR.inkDim })).setOrigin(1, 0);
+      const name = this.scene.add
+        .text(0, 0, gem ? (gem.customName ?? t("info.rune.named", { rarity: runeRarityLabel(gem.rarity) })) : t("info.rune.empty"), textStyle({ role: "display", size: L.name, color: gem ? runeAccentCss(gem.rarity) : COLOR.inkDim })).setStroke("#05070b", 4)
+        .setOrigin(0, 0);
+      squeezeTextToWidth(name, room - part.width - 16);
+      const main = gem && gem.mainStats.length > 0
+        ? squeezeTextToWidth(this.scene.add.text(0, 0, gem.mainStats.map(({ key }) => option(gem, key)).join("   "), textStyle({ role: "emphasis", size: L.main, color: COLOR.accentText })).setOrigin(0, 0), room)
+        : undefined;
+      const sub = gem && gem.subStats.length > 0
+        ? fitTextToBox(this.scene.add.text(0, 0, gem.subStats.map(({ key }) => option(gem, key)).join("   "), textStyle({ role: "body", size: L.sub, color: COLOR.inkDim, lineSpacing: 2 })).setOrigin(0, 0), { width: room, height: L.subMaxHeight }, { size: L.sub, minSize: 18 })
+        : undefined;
+      const textHeight = name.height + (main ? L.lineGap + main.height : 0) + (sub ? L.lineGap + sub.height : 0);
+      const height = Math.max(L.minRow, textHeight + L.rowPad * 2);
+      return { gem, index, part, name, main, sub, textHeight, height };
+    });
+    const rowsHeight = rows.reduce((sum, row) => sum + row.height, 0) + L.rowGap * (rows.length - 1);
+    const footer = L.status + (loadout ? L.buttons : 0);
+    const height = Math.ceil(L.top + rowsHeight + footer + L.bottom);
+    this.popups.open({ width: L.width, height, title: t("info.rune.threeSlots"), tilt: -1.2, ...anchorOf(from) }, (body) => {
+      let y = -height / 2 + L.top;
+      rows.forEach(({ gem, index, part, name, main, sub, textHeight, height: rowHeight }) => {
+        const cy = y + rowHeight / 2;
+        body.add(drawLayer(this.scene, 0, cy, slantedRect(L.plate, rowHeight, 16), {
           fill: gem ? 0x1c1520 : 0x0d1219,
           alpha: gem ? 0.95 : 0.7,
           edge: gem ? RUNE_ACCENT[gem.rarity] : COLOR.accent,
           edgeAlpha: gem ? 0.7 : 0.16,
         }));
         // 자리마다 들어갈 조각이 정해져 있으므로 빈 칸도 제 조각을 옅게 세워 둔다.
-        body.add(addRuneFrame(this.scene, -272, y, 92, gem?.rarity, index as RunePart, { mainStats: gem?.mainStats, engraved: (gem?.engravings.length ?? 0) > 0 }));
-        body.add(this.scene.add.text(-206, y - 26, runePartLabel(index as RunePart), textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0));
-        body.add(
-          this.scene.add
-            .text(-206, y + 2, gem ? (gem.customName ?? t("info.rune.named", { rarity: runeRarityLabel(gem.rarity) })) : t("info.rune.empty"), textStyle({ role: "display", size: 28, color: gem ? COLOR.ink : COLOR.inkDim }))
-            .setOrigin(0, 0),
-        );
-        if (gem) {
-          const effect = [...gem.mainStats, ...gem.subStats].map(({ key }) => runeStatLabel(key) + " " + formatRuneOptionValue(key, runeOptionValue(gem, key))).join("   ");
-          body.add(this.scene.add.text(306, y + 8, effect, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(1, 0));
-        }
+        body.add(addRuneFrame(this.scene, -L.plate / 2 + L.frameX, cy, L.frame, gem?.rarity, index as RunePart, { mainStats: gem?.mainStats, engraved: (gem?.engravings.length ?? 0) > 0 }));
+        let ty = cy - textHeight / 2;
+        part.setPosition(L.plate / 2 - L.pad, ty + (name.height - part.height) / 2);
+        name.setPosition(textX, ty);
+        body.add([part, name]);
+        ty += name.height;
+        if (main) { ty += L.lineGap; main.setPosition(textX, ty); body.add(main); ty += main.height; }
+        if (sub) { ty += L.lineGap; sub.setPosition(textX, ty); body.add(sub); }
+        y += rowHeight + L.rowGap;
       });
+      y += L.status / 2 - L.rowGap;
       const filled = slots.filter(Boolean).length;
       body.add(
         this.scene.add
-          .text(0, loadout ? 192 : 240, filled === 3 ? t("info.rune.complete") : t("info.rune.filled", { count: `${filled} / 3` }), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText }))
+          .text(0, y, filled === 3 ? t("info.rune.complete") : t("info.rune.filled", { count: `${filled} / 3` }), textStyle({ role: "emphasis", size: 26, color: COLOR.accentText }))
           .setOrigin(0.5),
       );
       if (!loadout) return;
+      const buttonY = y + L.status / 2 + L.buttons / 2 - 10;
       const actions: { label: string; mode: RuneLoadoutMode; primary?: boolean; enabled: boolean }[] = [
         { label: t("info.rune.loadout.auto"), mode: "auto", primary: true, enabled: true },
         { label: t("info.rune.loadout.recommend"), mode: "recommend", enabled: true },
         { label: t("info.rune.loadout.clear"), mode: "clear", enabled: filled > 0 },
       ];
       actions.forEach(({ label, mode, primary, enabled }, index) => {
-        body.add(new Button(this.scene, (index - 1) * 232, 282, {
-          width: 216, height: 84, label, fontSize: 28,
+        body.add(new Button(this.scene, (index - 1) * 252, buttonY, {
+          width: 236, height: 84, label, fontSize: 28,
           ...(primary ? { variant: "primary" as const } : {}),
           onClick: () => this.applyRuneLoadout(def.id, mode, from),
         }).setEnabled(enabled));

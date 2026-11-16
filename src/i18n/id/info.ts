@@ -85,7 +85,7 @@ export const INFO_ID = {
   "info.reset.done": "{count} Cheesecake dikembalikan.",
   "info.rune.bag": "Tas Rune · {part}",
   "info.rune.empty": "Slot kosong",
-  "info.rune.emptySlot": "   Slot kosong",
+  "info.rune.tapToEquip": "Ketuk untuk memasang",
   "info.rune.named": "Rune {rarity}",
   "info.rune.threeSlots": "Tiga Slot Rune",
   "info.rune.complete": "Ketiga keping saling mengunci.",

@@ -279,8 +279,18 @@ function toGeomPoints(flat: number[]): Phaser.Geom.Point[] {
   return points;
 }
 
+/**
+ * 정보창 하트에 **끼운** 조각. 가방의 조각은 자른 면을 1.6°씩 물려 「조각」으로 읽히게 했는데, 하트
+ * 위에서는 그 틈이 검은 금 세 줄로 남았다. 이 판은 틈을 제 색으로 메우고 이웃과 살짝 겹쳐 굽는다
+ * (`scripts/prepare_rune_seats.py`) — 셋을 다 끼우면 이음매 없는 하트 한 장이다.
+ */
+export function runeSeatTexture(rarity: HeartGemRarity, index: number): string {
+  return `rune-${rarity}-${index}-seat`;
+}
+
 export const RUNE_ICON_ASSETS: ReadonlyArray<readonly [string, string]> = [
   ...RARITIES.flatMap((rarity) => [0, 1, 2].map((index) => [`rune-${rarity}-${index}`, `/sprites/runes/${rarity}-${index}.webp`] as const)),
+  ...RARITIES.flatMap((rarity) => [0, 1, 2].map((index) => [runeSeatTexture(rarity, index), `/sprites/runes/${rarity}-${index}-seat.webp`] as const)),
   ...[0, 1, 2].map((index) => [`rune-empty-${index}`, `/sprites/runes/empty-${index}.webp`] as const),
 ];
 

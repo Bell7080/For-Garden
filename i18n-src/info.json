@@ -405,15 +405,15 @@
 "Leerer Platz",
 "Пустая ячейка"
 ],
-"info.rune.emptySlot": [
-"   空位",
-"   ช่องว่าง",
-"   Ô trống",
-"   Slot kosong",
-"   Espacio vacío",
-"   Espaço vazio",
-"   Leerer Platz",
-"   Пустая ячейка"
+"info.rune.tapToEquip": [
+"点击装备",
+"แตะเพื่อสวมใส่",
+"Chạm để trang bị",
+"Ketuk untuk memasang",
+"Toca para equipar",
+"Toque para equipar",
+"Tippen zum Ausrüsten",
+"Нажмите, чтобы надеть"
 ],
 "info.rune.named": [
 "{rarity}符文",

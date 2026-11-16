@@ -85,7 +85,7 @@ export const INFO_RU = {
   "info.reset.done": "Возвращено чизкейков: {count}.",
   "info.rune.bag": "Сумка рун · {part}",
   "info.rune.empty": "Пустая ячейка",
-  "info.rune.emptySlot": "   Пустая ячейка",
+  "info.rune.tapToEquip": "Нажмите, чтобы надеть",
   "info.rune.named": "Руна: {rarity}",
   "info.rune.threeSlots": "Три ячейки рун",
   "info.rune.complete": "Все три части сошлись.",

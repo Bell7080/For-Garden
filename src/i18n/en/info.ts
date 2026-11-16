@@ -85,7 +85,7 @@ export const INFO_EN = {
   "info.reset.done": "{count} Cheesecake returned.",
   "info.rune.bag": "Rune Bag · {part}",
   "info.rune.empty": "Empty slot",
-  "info.rune.emptySlot": "   Empty slot",
+  "info.rune.tapToEquip": "Tap to equip",
   "info.rune.named": "{rarity} Rune",
   "info.rune.threeSlots": "Three Rune Slots",
   "info.rune.complete": "All three pieces interlock.",

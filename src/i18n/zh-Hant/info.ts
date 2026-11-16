@@ -85,7 +85,7 @@ export const INFO_ZH_HANT = {
   "info.reset.done": "已返還{count}個起司蛋糕。",
   "info.rune.bag": "符文揹包 · {part}",
   "info.rune.empty": "空位",
-  "info.rune.emptySlot": "   空位",
+  "info.rune.tapToEquip": "點擊裝備",
   "info.rune.named": "{rarity}符文",
   "info.rune.threeSlots": "三個符文欄位",
   "info.rune.complete": "三塊碎片完美契合。",

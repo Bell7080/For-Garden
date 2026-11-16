@@ -85,7 +85,7 @@ export const INFO_ZH_HANS = {
   "info.reset.done": "已返还{count}个芝士蛋糕。",
   "info.rune.bag": "符文背包 · {part}",
   "info.rune.empty": "空位",
-  "info.rune.emptySlot": "   空位",
+  "info.rune.tapToEquip": "点击装备",
   "info.rune.named": "{rarity}符文",
   "info.rune.threeSlots": "三个符文栏位",
   "info.rune.complete": "三块碎片完美契合。",

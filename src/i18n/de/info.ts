@@ -85,7 +85,7 @@ export const INFO_DE = {
   "info.reset.done": "{count} Käsekuchen zurückerhalten.",
   "info.rune.bag": "Runentasche · {part}",
   "info.rune.empty": "Leerer Platz",
-  "info.rune.emptySlot": "   Leerer Platz",
+  "info.rune.tapToEquip": "Tippen zum Ausrüsten",
   "info.rune.named": "{rarity}e Rune",
   "info.rune.threeSlots": "Drei Runenplätze",
   "info.rune.complete": "Alle drei Teile greifen ineinander.",

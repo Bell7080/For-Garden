@@ -156,6 +156,9 @@ const FROST_PLUME = {
   slowPercent: 30,
 } as const;
 
+/** 플레샤 유성 한 발의 위력(주문력 %) — 패시브의 유성과 궁극기(그 절반)가 같은 수에서 나온다. */
+const PLESHA_METEOR_POWER = 150;
+
 export const RELICS: RelicDef[] = [
   {
     id: "rex",
@@ -178,7 +181,7 @@ export const RELICS: RelicDef[] = [
     catalogSummary: "신장 1.63m, 체중 54kg의 균형 잡힌 인간형 체격과 발달한 턱 구조가 확인된, 성체 초기 티라노사우루스 화석 기반 표본.",
     unlockRecord: { status: "recorded", text: "렉시아는 먼저 앞장서고 승부를 선언하는 일이 잦다. 스스로를 여왕이라 부르는 당당한 말투 그대로, 문 앞에서도 선언부터 하고 문을 열다 경첩째 뽑아 든다. 그러고는 눈치를 보며 시말서 철을 꺼내 오는데, 철은 벌써 두 권째다. 맨 앞 장에는 자랑스러운 첫 시말서가 붙어 있다. 문은 부수면서도 귀여운 접시와 찻잔만은 손가락 두 개로 조심조심 다룬다. 예전에 내가 블렌딩A의 홍차가 맛있다고 한마디 했더니 그 브랜드의 한정판을 줄 서서 구해 와 한 번도 열지 않은 채 아끼고 있다. 지금까지 깨진 찻잔은 하나도 없다. 동료의 신호가 들리면 곧바로 보폭을 맞추고, 전투가 길어질수록 야성을 즐기면서도 뒤처진 동료를 몇 번이고 돌아본다. 칭찬 한마디에는 입꼬리를 누르느라 꼬리 끝이 먼저 살랑거린다." },
     rarity: "SSR",
-    ferocityMax: 100,
+    ferocityMax: 110,
     portraitAssetId: "lexia",
     origin: "티라노사우루스",
     element: "fire",
@@ -988,7 +991,7 @@ export const RELICS: RelicDef[] = [
     // 관제 호칭 중 가장 실무적인 것을 골라, 귀찮다면서도 일은 끝까지 하는 선임의 결을 말한다.
     researcherTitle: "담당관",
     rarity: "R",
-    ferocityMax: 90,
+    ferocityMax: 100,
     portraitAssetId: "kento",
     origin: "켄트로사우르스",
     element: "fire",
@@ -1323,7 +1326,7 @@ export const RELICS: RelicDef[] = [
     // 선원 모자를 쓰고 지시를 되읊는 버릇이라 시그널 아이가 지시자에게 쓰는 「오더」를 그대로 연구원에게 돌려 쓴다.
     researcherTitle: "오더",
     rarity: "SR",
-    ferocityMax: 110,
+    ferocityMax: 90,
     portraitAssetId: "irna",
     origin: "이크티오르니스",
     element: "water",
@@ -1430,7 +1433,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "앱솔루트 팽의 전선 수비 담당. 밀고 들어가는 동료들 앞에 서서 상대가 먼저 물러서게 만들어 전열을 지키고, 연구원을 \"마스터\"라 부르며 지시에는 고개부터 끄덕인다.",
     researcherTitle: "마스터",
     rarity: "SSR",
-    ferocityMax: 120,
+    ferocityMax: 100,
     portraitAssetId: "ark",
     origin: "아르크토두스",
     element: "earth",
@@ -1770,9 +1773,9 @@ export const RELICS: RelicDef[] = [
       effectType: "healing",
       value: 3,
       durationSeconds: 0,
-      // 예고 원이 먼저 서고 1초 뒤 떨어진다 — 피할 틈이 있는 만큼 범위는 평타보다 넓다.
-      starfall: { every: 3, delaySeconds: 1, radius: 150, power: 100, lowestAllyHealPercent: 65 },
-      desc: "기본 공격 3번째마다 그 자리에 1초 뒤 유성이 떨어져 원 안의 적에게 마법 피해를 주고, 준 피해의 일부만큼 가장 다친 아군을 회복한다.",
+      // 유성 한 발의 피해(「유성」 태그)와 회복(이 패시브)이다. 평타·궁극기가 같은 유성을 부른다(응태 결정 2026-11-16).
+      starfall: { power: PLESHA_METEOR_POWER, lowestAllyHealPercent: 70 },
+      desc: "유성이 적에게 준 피해의 70%만큼 체력이 가장 낮은 아군을 회복한다. 떨어뜨린 자신은 회복하지 않는다.",
     },
     basic: {
       id: "plesha-basic",
@@ -1784,19 +1787,22 @@ export const RELICS: RelicDef[] = [
       damageType: "magical",
       targeting: "targetedCircle",
       radius: 90,
+      // 예고 원이 먼저 서고 1초 뒤 떨어진다 — 피할 틈이 있는 만큼 범위는 평타보다 넓다.
+      starfall: { every: 3, delaySeconds: 1, radius: 150 },
     },
     ultimate: {
       id: "plesha-ult",
       name: "별이 아름답네요, 선배",
-      // 한 번 떨어질 때의 위력이다. 세 번 떨어진다 — 원 안 아군 회복은 한계 돌파(III)가 연다.
-      power: 60,
+      // 한 번 떨어질 때의 위력 — 패시브 유성의 절반이고, 대신 그 유성의 회복은 두 배다(응태 결정 2026-11-16).
+      // 원 안 아군 회복은 한계 돌파(III)가 연다.
+      power: PLESHA_METEOR_POWER / 2,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
       cost: 120,
       targeting: "targetedCircle",
       radius: 200,
-      repeatStrike: { count: 3, intervalSeconds: 0.45, meteor: true },
+      repeatStrike: { count: 3, intervalSeconds: 0.45, meteor: { powerPercent: 50, healMultiplier: 2 } },
     },
   },
   {
@@ -1822,7 +1828,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "사일런트 룬의 기록 담당. 케어실을 드나든 렐릭의 얼굴을 한 장씩 그려 벽에 붙여 두고, 정작 자기 그림 이야기가 나오면 후드를 뒤집어쓴다.",
     researcherTitle: "연구원 씨",
     rarity: "SSR",
-    ferocityMax: 100,
+    ferocityMax: 90,
     portraitAssetId: "meron",
     origin: "메갈로돈",
     element: "water",
@@ -2043,7 +2049,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "나이트 기어의 야전 담당의. 인양조가 다치면 그 자리에서 붙여 놓고, 연구원만은 \"연구원님\"이라 부르며 진료 예약을 조른다.",
     researcherTitle: "연구원님",
     rarity: "SSR",
-    ferocityMax: 120,
+    ferocityMax: 130,
     portraitAssetId: "maki",
     origin: "마카이로두스",
     element: "earth",
@@ -2272,7 +2278,7 @@ export const RELICS: RelicDef[] = [
     // 낯을 가리는 스쿼드에서 혼자 말이 많은 막내라, 스쿼드가 쓰는 호칭 중 가장 격식 있는 쪽을 골라 장난스럽게 부른다.
     researcherTitle: "연구원님",
     rarity: "SR",
-    ferocityMax: 110,
+    ferocityMax: 100,
     portraitAssetId: "delopi",
     origin: "딜로포사우루스",
     element: "grass",
@@ -2384,7 +2390,7 @@ export const RELICS: RelicDef[] = [
     // 케어하는 스쿼드에서 스스로 돌봄을 받지 않는 쪽이라, 아이를 부르듯 하는 호칭을 골라 쓴다.
     researcherTitle: "아가",
     rarity: "SSR",
-    ferocityMax: 110,
+    ferocityMax: 120,
     portraitAssetId: "nodonia",
     origin: "프테라노돈",
     element: "wind",
@@ -2772,6 +2778,8 @@ export const RELICS: RelicDef[] = [
     squadNote: "공멸의 후미 방벽으로 확인된다. 포격에는 먼저 껍질을 닫지만 작은 동료가 남으면 돌아와, 침투조가 모두 빠질 때까지 통로를 몸으로 막는다.",
     researcherTitle: "연구원",
     rarity: "R",
+    // 폭주가 다른 적보다 늦게 와(첫 폭주 중앙값 14초 남짓) 기본 130에서 내렸다(2026-11-16 폭주 게이지 정리).
+    ferocityMax: 120,
     portraitAssetId: "amo",
     // 원종·속성·역할은 발굴 및 복원 분류 데이터이며 성격을 직접 표현하지 않는다.
     origin: "암모나이트",
@@ -3280,6 +3288,8 @@ export const RELICS: RelicDef[] = [
     squadNote: "공멸 회수조의 부간부로 확인된다. 간부가 앞으로 나가면 그 뒤를 받쳐 회수 대상 앞에 선다. 연구원을 \"연구원님\"이라 깍듯이 부른다.",
     researcherTitle: "연구원님",
     rarity: "SR",
+    // 폭주가 다른 적보다 늦게 와(첫 폭주 중앙값 14초 남짓) 기본 130에서 내렸다(2026-11-16 폭주 게이지 정리).
+    ferocityMax: 120,
     portraitAssetId: "atra",
     origin: "아르트로플레우라",
     element: "grass",
@@ -3806,6 +3816,8 @@ export const RELICS: RelicDef[] = [
     squadNote: "공멸 감금조의 부간부로, 감방의 서열 정리를 맡아 온 고참으로 확인된다. 무리를 막내처럼 챙기며, 앞에 서서 덤비는 적을 모두 제게로 부른다. 연구원을 \"연구원\"이라 부른다.",
     researcherTitle: "연구원",
     rarity: "SR",
+    // 폭주가 다른 적보다 늦게 와(첫 폭주 중앙값 14초 남짓) 기본 130에서 내렸다(2026-11-16 폭주 게이지 정리).
+    ferocityMax: 120,
     portraitAssetId: "raja",
     origin: "라자사우루스",
     element: "earth",
@@ -3998,7 +4010,7 @@ export const RELICS: RelicDef[] = [
     catalogSummary: "신장 1.76m의 견고한 인간형 체격과 현악 연주에 적합한 섬세한 손끝을 지닌, 성체 메가테리움 화석 기반 표본.",
     unlockRecord: { status: "recorded", text: "메테는 복원 직후부터 바이올린의 울림에 유난히 오래 귀를 기울였다. 활을 올리기 전에 송진을 한참 바르는 버릇이 있어, 그동안은 누가 말을 걸어도 대답하지 않는다. 평소에는 케어실 바닥에 느긋하게 뒹굴며 귀찮다는 말을 달고 살지만, 아픈 렐릭이 실려 오면 말없이 일어나 곁에 앉는다. 그 큰 몸으로 가늘디가는 활을 켜는데, 연주가 시작되면 말수가 뚝 끊기고 활끝만 따라간다. 전장에서도 흔들리는 법이 없어 박자가 흐트러진 동료 옆에 서서 걸음을 맞춰 준다. 지금은 나를 위한 단 하나뿐인 무대를 준비하며, 자신의 연주가 온전히 닿을 날을 고대하고 있다." },
     rarity: "SSR",
-    ferocityMax: 110,
+    ferocityMax: 120,
     // 6번 전신과 SD를 함께 사용해 도감과 전투에서 같은 메테가 보이도록 한다.
     portraitAssetId: "mette",
     origin: "메가테리움",
@@ -4380,7 +4392,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "사일런트 룬의 재봉 담당. 케어실에 실려 온 개체의 옷과 몸을 말없이 꿰매고, 실이 떨어지면 제 수도복을 그어 뜯어 쓴다.",
     researcherTitle: "아가",
     rarity: "SR",
-    ferocityMax: 90,
+    ferocityMax: 80,
     portraitAssetId: "terisa",
     origin: "테리지노사우루스",
     // 불은 갈퀴를 달궈 지지는 쪽에서 온다 — 자르는 손과 지혈하는 손이 같은 손이다.
@@ -4748,7 +4760,7 @@ export const RELICS: RelicDef[] = [
     // 관제 절차를 통째로 외워 오는 개체라 스쿼드가 지시자에게 쓰는 호칭을 그대로 연구원에게 돌린다.
     researcherTitle: "오더",
     rarity: "SSR",
-    ferocityMax: 100,
+    ferocityMax: 90,
     portraitAssetId: "shute",
     origin: "스테고사우루스",
     element: "earth",
@@ -6097,6 +6109,8 @@ export const RELICS: RelicDef[] = [
     squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
     researcherTitle: "연구원",
     rarity: "R",
+    // 폭주가 다른 적보다 늦게 와(첫 폭주 중앙값 14초 남짓) 기본 130에서 내렸다(2026-11-16 폭주 게이지 정리).
+    ferocityMax: 120,
     portraitAssetId: "raitia-earth",
     origin: "겨울잠쥐",
     element: "earth",

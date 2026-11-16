@@ -170,7 +170,8 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 49.3, 0.77], // v0.451.2 평타 상향: 54.0 → 51.7초. 레이티아 평타 둔화(2026-11-13): 51.7 → 49.3초.
   ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 15.3, 0.95], // v0.451.2 평타 상향: 18.1 → 15.3초.
   // 정예가 보호막을 깨고(코마) 치유를 깎는 자리가 되어 평균이 37.3 → 29.5로 줄고 띠 안에 들었다.
-  ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 12.4, 0.64],
+  // 2026-11-16 폭주 게이지 정리(아모·아트라·라자 130 → 120, 아군 게이지 재배치): 잔여 체력 0.64 → 0.54.
+  ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 12.4, 0.54],
   // 한계 돌파 +10%/단계(2026-11-11): 15.0초·0.72 → 17.5초·0.78.
   // v0.441.0 직군 존재감(탱커 30 > 전사 20 > 암살자 10)·몰림 벌점 240 → 120: 17.5초·0.78 → 13.0초·0.81.
   ["원정 무리 15층", 29, () => getExpeditionEncounterEnemies("horde", 15), "swarm", "expedition", 13.0, 0.81],

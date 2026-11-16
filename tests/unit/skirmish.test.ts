@@ -4050,7 +4050,8 @@ describe("데이", () => {
 
   it("의 밴덜리즘은 터진 뒤 4초 동안 다시 터지지 않는다", () => {
     expect(VANDALISM_REBURST_SECONDS).toBe(4);
-    const state = createSkirmish([getRelic("deina")], [getRelic("amo")], arena);
+    // 아모의 폭주 정화가 겹을 지우지 않게 게이지를 멀리 둔다 — 여기서 보는 것은 다시 터지는 간격뿐이다.
+    const state = createSkirmish([getRelic("deina")], [{ ...getRelic("amo"), ferocityMax: 10_000 }], arena);
     const [deina, enemy] = state.fighters;
     deina.x = 400; deina.y = 700; enemy.x = 480; enemy.y = 700;
     enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;

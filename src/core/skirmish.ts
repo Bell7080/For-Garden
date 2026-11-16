@@ -3436,9 +3436,13 @@ function triggerRally(attacker: Fighter, state: SkirmishState, events: SkirmishE
 }
 
 /** 폭주 「유성우」가 켜져 있으면 그 값을, 아니면 패시브의 값을 쓴다. */
+function basicStarfall(def: RelicDef): NonNullable<BasicAttack["starfall"]> | undefined {
+  return "starfall" in def.basic ? def.basic.starfall : undefined;
+}
+
 function starfallShape(attacker: Fighter): { every: number; radius: number } | undefined {
-  const starfall = attacker.def.passive.starfall;
-  if (!starfall) return undefined;
+  const starfall = basicStarfall(attacker.def);
+  if (!starfall || !attacker.def.passive.starfall) return undefined;
   const trait = attacker.def.ferocityTrait;
   if (attacker.ferocityFever && trait.effectId === "meteorShower") {
     return { every: Math.min(starfall.every, trait.starfallEvery), radius: starfall.radius * (1 + trait.radiusBonusPercent / 100) };
@@ -3453,7 +3457,7 @@ function starfallShape(attacker: Fighter): { every: number; radius: number } | u
  * 예고 원이 곧 판정이라 "어디에 떨어지는가"가 화면과 갈리지 않는다. 궁극기는 이 셈을 건드리지 않는다.
  */
 function callStarfall(attacker: Fighter, target: { x: number; y: number }, rng: () => number): void {
-  const starfall = attacker.def.passive.starfall;
+  const starfall = basicStarfall(attacker.def);
   const shape = starfallShape(attacker);
   if (!starfall || !shape || !isFighterAlive(attacker)) return;
   const drop = () => attacker.starfalls.push({ x: target.x, y: target.y, radius: shape.radius, remaining: starfall.delaySeconds, total: starfall.delaySeconds });
@@ -3527,11 +3531,12 @@ function healFromStarfall(
   starfall: NonNullable<Passive["starfall"]>,
   state: SkirmishState,
   events: SkirmishEvent[],
+  healMultiplier = 1,
 ): void {
   if (dealt <= 0) return;
   const ally = lowestCurrentHpAlly(state, fighter.side, fighter.id);
   if (!ally) return;
-  const requested = dealt * starfall.lowestAllyHealPercent / 100;
+  const requested = dealt * starfall.lowestAllyHealPercent / 100 * healMultiplier;
   const healed = applyHealing(state, ally, requested, fighter.id);
   pushHeal(events, ally, healed, "passive");
   grantFeverHealingShield(fighter, ally, healed, events, state);
@@ -9667,7 +9672,9 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   }
   // 「대청소」(아르테) — 원을 쓸어 낸 뒤 생존 아군 전원에게 막과 방어·저항 강화를 남긴다.
   if (useUltimate && ultimate && "allyScrub" in ultimate && ultimate.allyScrub) applyAllyScrub(attacker, ultimate.allyScrub, state, events);
-  if (useUltimate && attacker.def.passive.starfall) healFromStarfall(attacker, ultimateMeteorDealt, attacker.def.passive.starfall, state, events);
+  // 궁극기의 유성은 피해가 절반인 대신 회복이 그 배수만큼 든다(`repeatStrike.meteor`).
+  const ultimateMeteor = useUltimate && ultimate && "repeatStrike" in ultimate ? ultimate.repeatStrike?.meteor : undefined;
+  if (ultimateMeteor && attacker.def.passive.starfall) healFromStarfall(attacker, ultimateMeteorDealt, attacker.def.passive.starfall, state, events, ultimateMeteor.healMultiplier);
   // 투사체가 떨어진 자리도 한 번의 기본 공격으로 센다 — 유성은 그 낙하 지점에 예약된다.
   if (!useUltimate && !followUp && !free) callStarfall(attacker, center, rng);
   // 되돌아오는 돌진은 이미 치른 한 번의 몫이라 야성을 다시 올리지 않는다.

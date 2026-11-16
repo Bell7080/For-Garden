@@ -738,10 +738,8 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     });
   }
   if (passive.kind === "starfall" && passive.starfall !== undefined) {
-    const plan = passive.starfall;
-    return t("skill.passive.starfall", {
-      every: plan.every, seconds: plan.delaySeconds, damage: scaled("damage", "ap", plan.power, own?.ap),
-    });
+    // 유성 한 발의 피해는 「유성」 태그가, 언제 떨어지는지는 기본 공격·궁극기가 말한다 — 패시브는 회복만 적는다.
+    return t("skill.passive.starfall", { percent: passive.starfall.lowestAllyHealPercent });
   }
   if (passive.kind === "restraintLocks" && passive.restraintLocks !== undefined) {
     const plan = passive.restraintLocks;
@@ -1140,7 +1138,10 @@ export function skillDescription(
     });
   }
   const repeat = "repeatStrike" in skill ? skill.repeatStrike : undefined;
-  const repeatParts = repeat === undefined ? undefined : { ...parts, seconds: repeat.intervalSeconds, count: repeat.count };
+  const repeatParts = repeat === undefined ? undefined : {
+    ...parts, seconds: repeat.intervalSeconds, count: repeat.count,
+    percent: repeat.meteor?.powerPercent ?? 0, multiplier: repeat.meteor?.healMultiplier ?? 1,
+  };
   sentences.push(joined === undefined
     ? t(repeatParts ? (repeat?.meteor ? "skill.sentence.meteorRepeat" : "skill.sentence.repeat") : "skill.sentence.damage", repeatParts ?? parts)
     : t(repeatParts ? "skill.sentence.repeatAnd" : joined.joinWithComma ? "skill.sentence.damageAndComma" : "skill.sentence.damageAnd",
@@ -1169,6 +1170,10 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   // 일반 공격과 궁극기 모두 캐릭터 ID 없이 같은 적중 후 데이터 계약을 설명한다.
   if ("reagentStacks" in skill && skill.reagentStacks !== undefined) {
     clauses.push({ text: t("skill.clause.reagent", { stacks: skill.reagentStacks }) });
+  }
+  // 기본 공격이 부르는 유성(플레샤) — 몇 번째마다 떨어지는지는 평타의 값이라 평타 본문이 말한다.
+  if ("starfall" in skill && skill.starfall !== undefined) {
+    clauses.push({ text: t("skill.clause.starfall", { every: skill.starfall.every, seconds: skill.starfall.delaySeconds }), standalone: true });
   }
   // 적이 갈래보다 적을 때 남는 갈래가 어디로 가는지는 이 평타의 값이라 제 문장으로 적는다.
   if ("repeatOnLone" in skill && skill.repeatOnLone === true) {

@@ -715,6 +715,11 @@ export type BasicAttackStep = {
 /** 기본 공격만 가질 수 있는 추가 타격 계약이다. 일반 단타는 불필요한 확률 필드를 갖지 않는다. */
 export type BasicAttack = AttackSkill & {
   /**
+   * 기본 공격이 부르는 [[meteor|유성]](플레샤). 실제로 나간 기본 공격 `every`번째마다 그 표적이 서 있던 자리에
+   * 유성을 예약하고 `delaySeconds` 뒤 반경 `radius` 안에 떨어뜨린다. 유성 한 발의 피해·회복은 패시브(`Passive.starfall`)가 갖는다.
+   */
+  starfall?: { every: number; delaySeconds: number; radius: number };
+  /**
    * 실제로 나간 기본 공격 **N번째마다** 주위 적을 도발하고 자신에게 보호막을 두른다(라자의 「철권」).
    * 상태 효과 주기(`statusEffectEvery`)와 따로 센다 — 경직은 매 타, 이 호령은 N타마다다.
    */
@@ -1202,8 +1207,11 @@ export type Ultimate = Skill & {
     count: number;
     /** 다음 타격까지의 간격(초). */
     intervalSeconds: number;
-    /** 타격 하나하나를 [[meteor|유성]]으로 설명한다(플레샤). 전투 규칙은 바꾸지 않는다. */
-    meteor?: true;
+    /**
+     * 타격 하나하나가 패시브의 [[meteor|유성]]이다(플레샤). 위력은 따로 적지 않고 유성 위력(`Passive.starfall.power`)의
+     * `powerPercent`%이며(`power`와 같아야 한다 — `pleshaMeteor.test`), 그 유성의 회복은 `healMultiplier`배로 든다.
+     */
+    meteor?: { powerPercent: number; healMultiplier: number };
   };
   /**
    * 쓰는 순간 **방어력이 가장 낮은 적**에게 순간이동해 그 적에게 쓰는가.
@@ -2419,14 +2427,11 @@ export interface Passive {
    * 기본 공격이 주위 `liberatedRadius` 안의 모든 적을 친다(「해방」).
    */
   /**
-   * 「별똥별 피크닉」 계약(플레샤). 실제로 나간 기본 공격 `every`번째마다 그 표적이 서 있던 자리에 유성을 예약하고,
-   * `delaySeconds` 뒤 반경 `radius` 안의 모든 적에게 주문력 `power`%의 마법 피해를 준다. 실제로 깎인 체력의
-   * `lowestAllyHealPercent`%만큼 체력이 가장 낮은 아군(자신 제외)을 회복한다. 떨어지는 동안 표적이 비켜나면 맞지 않는다.
+   * 유성 한 발의 계약(플레샤). 원 안의 모든 적에게 주문력 `power`%의 마법 피해를 주고(「유성」 태그가 말한다),
+   * 실제로 깎인 체력의 `lowestAllyHealPercent`%만큼 체력이 가장 낮은 아군(자신 제외)을 회복한다(패시브 본문이 말한다).
+   * 언제·어디에 떨어지는지는 기본 공격(`Skill.starfall`)과 궁극기(`repeatStrike.meteor`)가 정한다.
    */
   starfall?: {
-    every: number;
-    delaySeconds: number;
-    radius: number;
     power: number;
     lowestAllyHealPercent: number;
   };

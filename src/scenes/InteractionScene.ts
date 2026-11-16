@@ -23,25 +23,12 @@ import { interactionArtFit, interactionLayerViews, interactionRemainingLabel, ty
 import { coverCrop } from "../ui/coverCrop";
 import { shapeClipMask } from "../ui/popupArt";
 import { drawGlyph } from "../ui/glyphs";
-import { STAGES } from "../data/stages";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { addScrollHint } from "../ui/ScrollHint";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { showContentIntro } from "../ui/contentIntro";
 import { onTap } from "../ui/tapGuard";
 
-/**
- * 여는 조건에 적을 관문 이름.
- *
- * 화면이 `1-4` 같은 ID를 그대로 적지 않는다 — 그 수는 데이터의 자리 번호이지 플레이어가
- * 스테이지 화면에서 읽는 이름이 아니다. 알 수 없는 ID는 그 ID를 그대로 돌려주어 빠진 조건이
- * 조용히 사라지지 않게 한다.
- */
-function stageDisplayName(stageId: string | undefined): string {
-  if (!stageId) return "";
-  const stage = STAGES.find((candidate) => candidate.id === stageId);
-  return stage ? `${stage.id} ${stage.name}` : stageId;
-}
 
 const BLUE = 0x55b9e8;
 
@@ -228,7 +215,7 @@ export class InteractionScene extends Phaser.Scene {
 
   private currentViews(): InteractionLayerView[] {
     const dispatches = session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null);
-    return interactionLayerViews(session.cleared, dispatches, this.serverNow());
+    return interactionLayerViews(session.playerResearch.level, dispatches, this.serverNow());
   }
 
   /**
@@ -389,7 +376,7 @@ export class InteractionScene extends Phaser.Scene {
       .setShadow(0, 3, "#05070a", 6, false, true));
     // 아랫줄은 그 도시가 무엇을 하는 자리인지 한 줄로 말한다. 잠긴 카드만 여는 조건이 대신 선다.
     const note = locked
-      ? t("interaction.lockedByStage", { stage: stageDisplayName(view.city.unlock.stageId) })
+      ? t("interaction.lockedByLevel", { level: view.city.unlock.level })
       : view.city.description;
     layer.add(this.add
       .text(textX, bottom - INTERACTION_LAYER.noteUp, note, textStyle({ role: "body", size: 23, color: locked ? "#e0a83e" : COLOR.inkDim }))

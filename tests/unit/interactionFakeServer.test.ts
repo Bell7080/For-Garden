@@ -6,7 +6,7 @@ import { createDefaultSession } from "../../src/state/session";
 /** FakeServer도 시작 시각 소유와 완료 수령 멱등성을 실제 API 호출로 고정한다. */
 describe("FakeServer interaction API", () => {
   it("종료 전 수령을 막고 같은 requestId를 두 번 지급하지 않는다", async () => {
-    let now = new Date("2026-09-03T00:00:00.000Z"); const state = createDefaultSession(); const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => now });
+    let now = new Date("2026-09-03T00:00:00.000Z"); const state = createDefaultSession(); state.playerResearch = { ...state.playerResearch, level: 5 }; const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => now });
     const started = await server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["torika"] });
     const dispatch = started.dispatches[0]!; expect(dispatch.startedAt).toBe(now.toISOString());
     await expect(server.claimInteractionDispatch({ dispatchId: dispatch.dispatchId, requestId: "claim-1" })).rejects.toThrow();
@@ -14,6 +14,12 @@ describe("FakeServer interaction API", () => {
     const first = await server.claimInteractionDispatch({ dispatchId: dispatch.dispatchId, requestId: "claim-1" });
     const second = await server.claimInteractionDispatch({ dispatchId: dispatch.dispatchId, requestId: "claim-1" });
     expect(state.wallet.gold - before).toBe(first.granted.find(({ currency }) => currency === "gold")?.amount ?? 0); expect(second).toEqual(first);
+  });
+
+  it("교류가 열리기 전(레벨 5 미만)에는 서버가 파견을 거절한다", async () => {
+    const state = createDefaultSession(); state.playerResearch = { ...state.playerResearch, level: 4 };
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    await expect(server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["torika"] })).rejects.toThrow();
   });
 
   it("여러 도시에 함께 나가되 같은 도시와 같은 렐릭은 두 번 나가지 않는다", async () => {
@@ -30,6 +36,7 @@ describe("FakeServer interaction API", () => {
 
   it("돌아올 것은 출발할 때 표의 모든 줄에서 굴리고, 수령하면 그 목록 그대로 들어온다", async () => {
     let now = new Date("2026-09-03T00:00:00.000Z"); const state = createDefaultSession();
+    state.playerResearch = { ...state.playerResearch, level: 5 };
     // 가장 높은 쪽으로 굴린다 — 「0~n」인 귀한 줄도 비지 않는다.
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0.999, now: () => now });
     const [dispatch] = (await server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["torika", "rex", "spino"] })).dispatches;
@@ -45,8 +52,6 @@ describe("FakeServer interaction API", () => {
     for (const { id } of INTERACTION_CITIES) {
       let now = new Date("2026-09-03T00:00:00.000Z"); const state = createDefaultSession();
       state.playerResearch = { ...state.playerResearch, level: 99 };
-      const city = INTERACTION_CITIES.find((candidate) => candidate.id === id)!;
-      if (city.unlock.stageId) state.cleared.add(city.unlock.stageId);
       const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => now });
       await server.startInteractionDispatch({ cityId: id, party: ["torika"] });
       const dispatch = (await server.getInteractionDispatch()).dispatches[0]!; now = new Date(dispatch.completesAt);

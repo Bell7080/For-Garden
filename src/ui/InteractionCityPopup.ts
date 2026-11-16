@@ -389,7 +389,7 @@ export class InteractionCityPopup {
     const cityId = this.view?.city.id;
     if (!cityId) return;
     const dispatches = session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null);
-    const next = interactionLayerViews(session.cleared, dispatches, this.now()).find((view) => view.city.id === cityId);
+    const next = interactionLayerViews(session.playerResearch.level, dispatches, this.now()).find((view) => view.city.id === cityId);
     if (!next) return;
     this.view = next;
     if (next.state !== "idle") this.party = toFormationSlots(next.dispatch?.party ?? [], 3);

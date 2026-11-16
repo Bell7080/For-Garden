@@ -6,10 +6,10 @@ import { INTERACTION_CITIES } from "../../src/data/interactionCities";
 // 도시 목록은 운영 중 늘어난다 — 순서가 아니라 id로 집어야 표가 커져도 같은 것을 검사한다.
 const city = INTERACTION_CITIES.find((entry) => entry.id === "doppel-lab")!;
 /** 조건이 걸린 도시. 앞의 두 곳은 처음부터 열려 있으므로 잠금 규칙은 뒤의 도시로 본다. */
-const gatedCity = INTERACTION_CITIES.find((entry) => entry.unlock.stageId !== undefined)!;
+const gatedCity = INTERACTION_CITIES.find((entry) => entry.unlock.level > 5)!;
 /** 교류의 데이터 기반 개방·편성·시간·보상·완료 경계를 회귀 고정한다. */
 describe("interaction dispatch rules", () => {
-  it("선행 관문과 1~3명 고유 소유 편성을 검증한다", () => { expect(isInteractionCityUnlocked(gatedCity, new Set())).toBe(false); expect(isInteractionCityUnlocked(gatedCity, new Set([gatedCity.unlock.stageId!]))).toBe(true); expect(isInteractionCityUnlocked(city, new Set())).toBe(true); const owned = new Set(["a", "b", "c"]); expect(validateInteractionFormation([], owned)).toBe("party_size"); expect(validateInteractionFormation(["a", "a"], owned)).toBe("duplicate"); expect(validateInteractionFormation(["x"], owned)).toBe("not_owned"); expect(validateInteractionFormation(["a", "b", "c"], owned)).toBeNull(); });
+  it("개방 레벨과 1~3명 고유 소유 편성을 검증한다", () => { expect(isInteractionCityUnlocked(gatedCity, gatedCity.unlock.level - 1)).toBe(false); expect(isInteractionCityUnlocked(gatedCity, gatedCity.unlock.level)).toBe(true); expect(isInteractionCityUnlocked(city, city.unlock.level)).toBe(true); expect(isInteractionCityUnlocked({ ...city, unlock: { level: 1 } }, 4)).toBe(false); const owned = new Set(["a", "b", "c"]); expect(validateInteractionFormation([], owned)).toBe("party_size"); expect(validateInteractionFormation(["a", "a"], owned)).toBe("duplicate"); expect(validateInteractionFormation(["x"], owned)).toBe("not_owned"); expect(validateInteractionFormation(["a", "b", "c"], owned)).toBeNull(); });
   it("인원이 적으면 덜 가져오고, 특화에 맞는 칸마다 더 가져온다", () => {
     // 도플 내부 연구기관 — 물/풀 · 서포터 · 사일런트 룬.
     const plain = { element: "fire" as const, role: "tank" as const, squad: "fang" as const };

@@ -4,7 +4,7 @@ export const INTERACTION_RU = {
   "interaction.subtitle": "В каждый город можно отправить один отряд",
   "interaction.dispatched": "В пути · {remaining}",
   "interaction.awaitingClaim": "Ожидает получения",
-  "interaction.lockedByStage": "Откроется после прохождения {stage}",
+  "interaction.lockedByLevel": "Откроется на уровне Исследователь LV.{level}",
   "interaction.journal": "Дневник города",
   "interaction.expected": "Ожидаемые награды",
   "interaction.specialty": "Специализация",

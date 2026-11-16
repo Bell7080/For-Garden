@@ -6792,7 +6792,7 @@ var INTERACTION_KO = {
   "interaction.subtitle": "\uB3C4\uC2DC\uB9C8\uB2E4 \uD55C \uD300\uC529 \uBCF4\uB0BC \uC218 \uC788\uB2E4",
   "interaction.dispatched": "\uD30C\uACAC \uC911 \xB7 {remaining}",
   "interaction.awaitingClaim": "\uC218\uB839 \uB300\uAE30",
-  "interaction.lockedByStage": "{stage} \uD074\uB9AC\uC5B4\uB85C \uC5F4\uB9B0\uB2E4",
+  "interaction.lockedByLevel": "\uC5F0\uAD6C\uC6D0 LV.{level}\uC5D0 \uC5F4\uB9B0\uB2E4",
   "interaction.journal": "\uB3C4\uC2DC \uC77C\uC9C0",
   "interaction.expected": "\uC608\uC0C1 \uBCF4\uC0C1",
   "interaction.specialty": "\uD2B9\uD654",
@@ -26062,7 +26062,12 @@ var CHAPTERS = CHAPTER_CONTENT.map((content, chapterIndex) => {
          * 초회의 몫은 나머지 보상(`firstClearBonus`)이 늘리고, 성장 재화의 숨통은 대작전이 튼다.
          */
         firstClearCheesecake: 30 + globalOrder * 5,
-        repeatClearCheesecake: 10 + globalOrder * 2,
+        /*
+         * 반복 클리어 치즈케이크는 **장마다 2씩만** 오른다(1장 10 → 7장 22 · 응태 결정 2026-11-16).
+         * 예전 `10 + 관문 순서 × 2`는 7-10에서 148이라 같은 스테미나 10으로 대작전 8단계(150)와 맞먹었다 —
+         * 치즈케이크의 주 수급처는 대작전이고, 스토리 반복은 관문 사이에 큰 차이가 없는 덤이다.
+         */
+        repeatClearCheesecake: 10 + chapterIndex * 2,
         firstClearBonus: storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, enemies.length === 1)
       },
       // 아직 서사가 없는 장은 이 값이 비어 있고, 화면은 그 줄을 그리지 않는다.
@@ -36988,7 +36993,7 @@ var INTERACTION_CITIES = [
     displayName: "\uB3C4\uD50C \xB7 \uC911\uC559 \uC5F0\uAD6C\uC18C \uC751\uC811\uC2E4",
     department: "exchange",
     description: "\uB3C4\uD50C\uC758 \uC911\uC559 \uC5F0\uAD6C\uC18C \uD55C\uCABD\uC5D0 \uB538\uB9B0 \uC751\uC811\uC2E4. \uC190\uB2D8\uC744 \uC549\uD600 \uB450\uACE0 \uC5F0\uAD6C \uC77C\uC9C0\uB97C \uD55C \uC7A5\uC529 \uB0B4\uC5B4 \uC900\uB2E4.",
-    unlock: {},
+    unlock: { level: 5 },
     durationMinutes: 10,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water"], roles: ["support"], squads: ["rune"] },
@@ -37003,7 +37008,7 @@ var INTERACTION_CITIES = [
     displayName: "\uB3C4\uD50C \xB7 \uB0B4\uBD80 \uC5F0\uAD6C\uAE30\uAD00",
     department: "exchange",
     description: "\uB3C4\uD50C \uC5F0\uAD6C\uC18C \uC548\uCABD\uC758 \uB0B4\uBD80 \uC5F0\uAD6C\uAE30\uAD00. \uC774\uD130\uB110\uC5D0 \uD30C\uACAC\uB410\uB358 \uC5F0\uAD6C\uC6D0\uB4E4\uC774 \uB0A8\uAE34 \uC77C\uAE30\uAC00 \uC774\uACF3\uC5D0 \uBAA8\uC778\uB2E4.",
-    unlock: {},
+    unlock: { level: 7 },
     durationMinutes: 30,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support"], squads: ["rune"] },
@@ -37017,7 +37022,7 @@ var INTERACTION_CITIES = [
     displayName: "\uB3C4\uD50C \xB7 \uAD00\uB9AC\uBD80",
     department: "council",
     description: "\uC5F0\uAD6C \uC131\uACFC\uC640 \uB810\uB9AD\uC758 \uC0AC\uC6A9\uCC98\uB97C \uC9D1\uACC4\uD558\uB294 \uB3C4\uD50C\uC758 \uAD00\uB9AC\uBD80. \uACB0\uC7AC\uAC00 \uC5EC\uB7EC \uB2E8\uC744 \uAC70\uCCD0 \uC624\uB798 \uAE30\uB2E4\uB824\uC57C \uD55C\uB2E4.",
-    unlock: { stageId: "1-4" },
+    unlock: { level: 9 },
     durationMinutes: 240,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support", "tank"], squads: ["rune", "eye"] },
@@ -37031,7 +37036,7 @@ var INTERACTION_CITIES = [
     displayName: "\uB7EC\uC2A4\uD2B8 \xB7 \uC815\uBE44\uCC3D",
     department: "exchange",
     description: "\uB7EC\uC2A4\uD2B8\uC758 \uC815\uBE44\uCC3D. \uBD80\uC11C\uC9C4 \uC5F0\uAD6C \uC7A5\uBE44\uB97C \uACE0\uCCD0 \uB2EC\uB77C\uB294 \uC758\uB8B0\uAC00 \uC274 \uC0C8 \uC5C6\uC774 \uB4E4\uC5B4\uC628\uB2E4.",
-    unlock: { stageId: "1-10" },
+    unlock: { level: 12 },
     durationMinutes: 60,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["warrior"], squads: ["gear"] },
@@ -37045,7 +37050,7 @@ var INTERACTION_CITIES = [
     displayName: "\uB7EC\uC2A4\uD2B8 \xB7 \uB300\uC5EC \uAD00\uB9AC\uBD80",
     department: "council",
     description: "\uACE0\uC131\uB2A5 \uC7A5\uBE44\uB97C \uBE4C\uB824 \uC8FC\uB294 \uB7EC\uC2A4\uD2B8\uC758 \uB300\uC5EC \uAD00\uB9AC\uBD80. \uC5F0\uC7A5 \uD55C \uAC74\uC5D0\uB3C4 \uAE34 \uD611\uC0C1\uC774 \uBD99\uB294\uB2E4.",
-    unlock: { stageId: "2-5" },
+    unlock: { level: 15 },
     durationMinutes: 720,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
@@ -37060,7 +37065,7 @@ var INTERACTION_CITIES = [
     displayName: "\uB3C4\uD50C \xB7 \uC0C1\uCE35\uBD80",
     department: "council",
     description: "\uB3C4\uD50C \uC5F0\uAD6C\uC18C\uC758 \uAC00\uC7A5 \uB192\uC740 \uCE35. \uC5F0\uAD6C\uC758 \uBAA9\uC801\uC744 \uC815\uD558\uB294 \uC0AC\uB78C\uB4E4\uC774 \uC774\uACF3\uC5D0 \uC549\uB294\uB2E4.",
-    unlock: { stageId: "2-10" },
+    unlock: { level: 18 },
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water"], roles: ["support", "tank"], squads: ["rune", "eye"] },
@@ -37075,7 +37080,7 @@ var INTERACTION_CITIES = [
     displayName: "\uB7EC\uC2A4\uD2B8 \xB7 \uC911\uC559 \uACF5\uBC29",
     department: "council",
     description: "\uB7EC\uC2A4\uD2B8\uC758 \uC911\uC2EC\uC5D0 \uC120 \uAC70\uB300\uD55C \uACF5\uBC29. \uC5F0\uAD6C \uC7A5\uBE44\uC758 \uC124\uACC4\uC640 \uC218\uB9AC\uAC00 \uD55C\uACF3\uC5D0 \uBAA8\uC778\uB2E4.",
-    unlock: { stageId: "3-5" },
+    unlock: { level: 21 },
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
@@ -37090,7 +37095,7 @@ var INTERACTION_CITIES = [
     displayName: "\uC624\uB514\uB514 \xB7 \uC678\uAD50 \uC811\uACAC\uC2E4",
     department: "council",
     description: "\uAFC8\uC744 \uC5F0\uAD6C\uD558\uB294 \uB3C4\uC2DC \uC624\uB514\uB514\uAC00 \uC678\uBD80 \uC190\uB2D8\uC744 \uB9DE\uB294 \uC811\uACAC\uC2E4. \uC81C\uC548\uC740 \uB298 \uADF8\uB4E4\uC774 \uBA3C\uC800 \uAEBC\uB0B8\uB2E4.",
-    unlock: { stageId: "3-10" },
+    unlock: { level: 25 },
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["wind", "water"], roles: ["assassin", "support"], squads: ["eye", "rogue"] },
@@ -41420,9 +41425,8 @@ function validateInteractionFormation(ids, owned) {
   if (new Set(ids).size !== ids.length) return "duplicate";
   return ids.some((id) => !owned.has(id)) ? "not_owned" : null;
 }
-function isInteractionCityUnlocked(city, clearedStageIds) {
-  const required = city.unlock.stageId;
-  return required === void 0 || clearedStageIds.has(required);
+function isInteractionCityUnlocked(city, playerLevel) {
+  return playerLevel >= Math.max(city.unlock.level, contentUnlockLevel("interaction"));
 }
 var INTERACTION_YIELD = {
   party: [0, 0.5, 0.75, 1],
@@ -45397,7 +45401,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.485.0",
+  version: "0.485.2",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -46339,7 +46343,7 @@ var FakeServer = class {
   async getInteractionCities() {
     await this.delay();
     const { dispatchTimeReductionPercent } = await this.currentGuildPerks();
-    return { cities: INTERACTION_CITIES.map((city) => ({ ...city, durationMinutes: guildDispatchMinutes(city.durationMinutes, dispatchTimeReductionPercent), unlocked: isInteractionCityUnlocked(city, this.state.cleared) })), serverTime: this.now().toISOString() };
+    return { cities: INTERACTION_CITIES.map((city) => ({ ...city, durationMinutes: guildDispatchMinutes(city.durationMinutes, dispatchTimeReductionPercent), unlocked: isInteractionCityUnlocked(city, this.state.playerResearch.level) })), serverTime: this.now().toISOString() };
   }
   /** 길드 레벨 혜택. 길드가 없거나 길드 저장소에 닿지 않으면 혜택 없이 진행한다 — 혜택이 막혔다고 발굴·교류까지 막지 않는다. */
   async currentGuildPerks() {
@@ -46362,7 +46366,8 @@ var FakeServer = class {
   async startInteractionDispatch(request) {
     await this.delay();
     const city = findInteractionCity(request.cityId);
-    if (!city || !isInteractionCityUnlocked(city, this.state.cleared)) throw new GameApiError("INVALID_STATE", "\uAC1C\uBC29\uB418\uC9C0 \uC54A\uC740 \uAD50\uB958 \uB3C4\uC2DC\uC785\uB2C8\uB2E4.");
+    if (!isContentUnlocked("interaction", this.state.playerResearch.level)) throw new GameApiError("INVALID_STATE", "\uAD50\uB958\uAC00 \uC544\uC9C1 \uC5F4\uB9AC\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.");
+    if (!city || !isInteractionCityUnlocked(city, this.state.playerResearch.level)) throw new GameApiError("INVALID_STATE", "\uAC1C\uBC29\uB418\uC9C0 \uC54A\uC740 \uAD50\uB958 \uB3C4\uC2DC\uC785\uB2C8\uB2E4.");
     if (this.state.interaction.slots.some((slot) => slot && slot.cityId === city.id && !slot.claimed)) throw new GameApiError("INVALID_STATE", "\uC774\uBBF8 \uC774 \uB3C4\uC2DC\uC5D0 \uD30C\uACAC \uC911\uC785\uB2C8\uB2E4.");
     const away = new Set(this.state.interaction.slots.flatMap((slot) => slot && !slot.claimed ? slot.party : []));
     if (request.party.some((id) => away.has(id))) throw new GameApiError("INVALID_STATE", "\uC774\uBBF8 \uD30C\uACAC \uC911\uC778 \uB810\uB9AD\uC785\uB2C8\uB2E4.");

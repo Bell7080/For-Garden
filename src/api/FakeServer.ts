@@ -393,7 +393,7 @@ export class FakeServer implements GameApi {
   /** 도시의 파견 시간은 길드 레벨 혜택을 덜어 내려보낸다 — 화면이 혜택을 다시 셈하지 않고 이 값을 그대로 적는다. */
   async getInteractionCities(): Promise<InteractionCitiesResponse> {
     await this.delay(); const { dispatchTimeReductionPercent } = await this.currentGuildPerks();
-    return { cities: INTERACTION_CITIES.map(city => ({ ...city, durationMinutes: guildDispatchMinutes(city.durationMinutes, dispatchTimeReductionPercent), unlocked: isInteractionCityUnlocked(city, this.state.cleared) })), serverTime: this.now().toISOString() };
+    return { cities: INTERACTION_CITIES.map(city => ({ ...city, durationMinutes: guildDispatchMinutes(city.durationMinutes, dispatchTimeReductionPercent), unlocked: isInteractionCityUnlocked(city, this.state.playerResearch.level) })), serverTime: this.now().toISOString() };
   }
 
   /** 길드 레벨 혜택. 길드가 없거나 길드 저장소에 닿지 않으면 혜택 없이 진행한다 — 혜택이 막혔다고 발굴·교류까지 막지 않는다. */
@@ -411,7 +411,8 @@ export class FakeServer implements GameApi {
   /** 출발 순간 서버가 편성·seed·결과와 절대 종료 시각을 함께 확정한다. */
   async startInteractionDispatch(request: StartInteractionDispatchRequest): Promise<InteractionDispatchResponse> {
     await this.delay(); const city = findInteractionCity(request.cityId);
-    if (!city || !isInteractionCityUnlocked(city, this.state.cleared)) throw new GameApiError("INVALID_STATE", "개방되지 않은 교류 도시입니다.");
+    if (!isContentUnlocked("interaction", this.state.playerResearch.level)) throw new GameApiError("INVALID_STATE", "교류가 아직 열리지 않았습니다.");
+    if (!city || !isInteractionCityUnlocked(city, this.state.playerResearch.level)) throw new GameApiError("INVALID_STATE", "개방되지 않은 교류 도시입니다.");
     // 도시마다 한 팀씩 나간다. 같은 도시에 두 팀을 겹쳐 보내면 어느 쪽 보상인지 화면이 말할 수 없다.
     if (this.state.interaction.slots.some((slot) => slot && slot.cityId === city.id && !slot.claimed)) throw new GameApiError("INVALID_STATE", "이미 이 도시에 파견 중입니다.");
     // 나가 있는 팀은 다른 도시에도 함께 나갈 수 없다.

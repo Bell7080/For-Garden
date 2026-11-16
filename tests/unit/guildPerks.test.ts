@@ -22,7 +22,8 @@ describe("길드 레벨 혜택", () => {
 
   it("교류 파견 시간을 도시 목록과 실제 종료 시각이 같은 값으로 줄인다", async () => {
     const now = new Date("2026-09-03T00:00:00.000Z");
-    const server = new FakeServer(createDefaultSession(), { latencyMs: 0, random: () => 0, now: () => now, guild: guildAt(9) });
+    const state = createDefaultSession(); state.playerResearch = { ...state.playerResearch, level: 5 };
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => now, guild: guildAt(9) });
     const base = findInteractionCity("doppel-parlor")!.durationMinutes;
     const city = (await server.getInteractionCities()).cities.find(({ id }) => id === "doppel-parlor")!;
     expect(city.durationMinutes).toBe(guildDispatchMinutes(base, 10));

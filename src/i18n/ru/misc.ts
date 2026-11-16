@@ -272,7 +272,7 @@ export const MISC_RU = {
   "growth.party": "Сменить построение",
   "stageComplete.exit": "Выйти",
   "battle.profile.down": "Выбыл",
-  "battle.profile.ferocity": "Ярость {value} / 100",
+  "battle.profile.ferocity": "Ярость {value} / {max}",
   "reward.title": "Полученные награды",
   "reward.tapHint": "Коснитесь экрана, чтобы подтвердить",
   "enemyPreview.title": "Построение врага",

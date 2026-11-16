@@ -32,7 +32,7 @@ export const LAB_ZH_HANT = {
   "lab.policy.tenUpgrade": "10連最後一格若為SR，有{percent}%機率升為SSR",
   "lab.policy.mileage": "每次研究DNA里程 +1",
   "lab.policy.duplicate": "重複獎勵  該遺物碎片 +1 · 集齊碎片進行極限突破",
-  "lab.policy.duplicateMax": "突破等級V之後，重複獲得轉為DNA里程（SSR +30 · SR +8 · R +2）",
+  "lab.policy.duplicateMax": "集齊共鳴V所需的全部碎片後，重複獲得轉為DNA里程（SSR +30 · SR +8 · R +2）",
   "lab.skipAll": "全部跳過",
   "lab.scanning": "正在研究化石DNA",
   "lab.resonance.SSR": "琥珀色的共鳴迸發而出",

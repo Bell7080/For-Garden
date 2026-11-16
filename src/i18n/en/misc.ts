@@ -273,7 +273,7 @@ export const MISC_EN = {
   "growth.party": "Change Formation",
   "stageComplete.exit": "Leave",
   "battle.profile.down": "Down",
-  "battle.profile.ferocity": "Ferocity {value} / 100",
+  "battle.profile.ferocity": "Ferocity {value} / {max}",
   "reward.title": "Rewards Gained",
   "reward.tapHint": "Tap the screen to confirm",
   "enemyPreview.title": "Enemy Formation",

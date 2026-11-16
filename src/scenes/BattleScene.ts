@@ -1763,7 +1763,10 @@ export class BattleScene extends Phaser.Scene {
     this.flipView();
     if (this.viewFlip) events.splice(0, events.length, ...this.mirrorEvents(events));
     // 코어가 센 시간을 그대로 적는다. 배속은 이미 위에서 한 번 곱해졌으므로 시계도 그만큼 빨리 돈다.
-    this.clockLabel?.setText(formatBattleClock(this.state.elapsed));
+    // 제한 시간이 있는 판(지층 「초읽기」)은 남은 시간을 거꾸로 센다 — 0이 되는 순간이 곧 패배라,
+    // 지난 시간만 적으면 언제 지는지를 화면이 말하지 못한다. 수호전(버티면 이기는 판)은 제 HUD가 말한다.
+    const limit = this.state.horde ? undefined : this.state.timeLimitSeconds;
+    this.clockLabel?.setText(formatBattleClock(limit === undefined ? this.state.elapsed : Math.max(0, Math.ceil(limit - this.state.elapsed - 1e-6))));
     this.paintDeathClock();
     if (this.state.boss) {
       const boss = this.state.boss;

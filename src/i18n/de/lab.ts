@@ -32,7 +32,7 @@ export const LAB_DE = {
   "lab.policy.tenUpgrade": "Ist der letzte Platz eines 10er-Zugs SR, besteht eine Chance von {percent}%, auf SSR aufzusteigen",
   "lab.policy.mileage": "+1 DNA-Meile pro Forschung",
   "lab.policy.duplicate": "Duplikatbelohnung  +1 Splitter dieses Relikts · Sammle Splitter für den Durchbruch",
-  "lab.policy.duplicateMax": "Nach Durchbruch-Stufe V werden Duplikate zu DNA-Meilen (SSR +30 · SR +8 · R +2)",
+  "lab.policy.duplicateMax": "Sind alle Splitter bis Resonanz V gesammelt, werden Duplikate zu DNA-Meilen (SSR +30 · SR +8 · R +2)",
   "lab.skipAll": "Alles überspringen",
   "lab.scanning": "Fossil-DNA wird erforscht",
   "lab.resonance.SSR": "Eine bernsteinfarbene Resonanz bricht hervor",

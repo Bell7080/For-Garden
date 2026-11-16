@@ -11,7 +11,7 @@ export const LOBBY_KO = {
   "lobby.sortie.story": "스토리",
   "lobby.sortie.story.status": "메인 작전",
   "lobby.sortie.cake": "케이크 대작전",
-  "lobby.sortie.cake.status": "3 WAVE · 성장 재화",
+  "lobby.sortie.cake.status": "몰려오는 무리 · 성장 재화",
   "lobby.sortie.bounty": "현상수배",
   "lobby.sortie.bounty.status": "태그 3회 · 골드",
   "lobby.sortie.raid": "레이드",

@@ -272,7 +272,7 @@ export const MISC_PT_BR = {
   "growth.party": "Mudar formação",
   "stageComplete.exit": "Sair",
   "battle.profile.down": "Caído",
-  "battle.profile.ferocity": "Ferocidade {value} / 100",
+  "battle.profile.ferocity": "Ferocidade {value} / {max}",
   "reward.title": "Recompensas obtidas",
   "reward.tapHint": "Toque na tela para confirmar",
   "enemyPreview.title": "Formação inimiga",

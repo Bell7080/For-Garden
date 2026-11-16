@@ -90,14 +90,14 @@
 "Тортовая операция"
 ],
 "lobby.sortie.cake.status": [
-"3 WAVE · 养成材料",
-"3 WAVE · วัสดุพัฒนา",
-"3 WAVE · Nguyên liệu phát triển",
-"3 WAVE · Bahan Peningkatan",
-"3 OLEADAS · Materiales de mejora",
-"3 ONDAS · Materiais de evolução",
-"3 WELLEN · Aufwertungsmaterial",
-"3 ВОЛНЫ · Материалы роста"
+"蜂拥而至 · 养成材料",
+"ฝูงที่บุกถาโถม · วัสดุพัฒนา",
+"Bầy tràn tới · Nguyên liệu phát triển",
+"Gerombolan Menyerbu · Bahan Peningkatan",
+"Horda en avalancha · Materiales de mejora",
+"Horda em avalanche · Materiais de evolução",
+"Ansturm der Horde · Aufwertungsmaterial",
+"Натиск орды · Материалы роста"
 ],
 "lobby.sortie.bounty": [
 "悬赏",
@@ -130,14 +130,14 @@
 "Рейд"
 ],
 "lobby.sortie.raid.status": [
-"协力作战 · 准备中",
-"ปฏิบัติการร่วม · กำลังเตรียม",
-"Tác chiến hợp lực · Đang chuẩn bị",
-"Operasi Kooperatif · Dalam Persiapan",
-"Operación cooperativa · En preparación",
-"Operação cooperativa · Em preparação",
-"Koop-Operation · In Vorbereitung",
-"Совместная операция · В подготовке"
+"协力作战 · 每周赛季",
+"ปฏิบัติการร่วม · ซีซันรายสัปดาห์",
+"Tác chiến hợp lực · Mùa hằng tuần",
+"Operasi Kooperatif · Musim Mingguan",
+"Operación cooperativa · Temporada semanal",
+"Operação cooperativa · Temporada semanal",
+"Koop-Operation · Wochensaison",
+"Совместная операция · Недельный сезон"
 ],
 "lobby.expedition.resume": [
 "继续 · {plays}次 · 最佳 {best}",

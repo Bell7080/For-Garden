@@ -1,4 +1,5 @@
 import { COMBAT_STEP_MS } from "./combatProtocol";
+import { deathClockClosesBySeconds } from "./battleClock";
 import { BOND_LEVEL_CAP } from "./bond";
 import { getRelic } from "../data/relics";
 import { RUNE_STAT_RULES } from "../data/runes";
@@ -79,7 +80,8 @@ export interface AncientSimulationRun {
 export function simulateAncientStrataRun(floor: number, party: ReturnType<typeof ancientReferenceParty>, seed: number, control: DifficultyControl = "auto", step = COMBAT_STEP_MS / 1000): AncientSimulationRun {
   if (!Number.isFinite(step) || step < 1 / 120 || step > 1 / 20) throw new RangeError("시뮬레이션 틱은 1/120~1/20초입니다.");
   const state = createAncientStrataSkirmish(floor, party.players, { ...party, automaticUltimates: false });
-  const timeLimit = getAncientStrataFloor(floor).timeLimitSeconds;
+  // 「초읽기」만 제한 시간을 갖는다 — 나머지 층은 데스 카운트가 닫는 시각까지 돌린다.
+  const timeLimit = getAncientStrataFloor(floor).timeLimitSeconds ?? deathClockClosesBySeconds();
   const rng = createDifficultyRng(seed);
   let firstPlayerDeathSeconds: number | null = null, ultimateHitEvents = 0;
   function observe(events: SkirmishEvent[]) {

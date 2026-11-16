@@ -32,7 +32,7 @@ export const LAB_EN = {
   "lab.policy.tenUpgrade": "If the last slot of a 10-pull ends as SR, {percent}% chance to rise to SSR",
   "lab.policy.mileage": "DNA Mileage +1 per research",
   "lab.policy.duplicate": "Duplicate reward  +1 Shard for that Relic · Collect Shards to Breakthrough",
-  "lab.policy.duplicateMax": "After Breakthrough grade V, duplicates convert to DNA Mileage (SSR +30 · SR +8 · R +2)",
+  "lab.policy.duplicateMax": "Once all Shards up to Resonance V are collected, duplicates convert to DNA Mileage (SSR +30 · SR +8 · R +2)",
   "lab.skipAll": "Skip All",
   "lab.scanning": "Researching fossil DNA",
   "lab.resonance.SSR": "An amber resonance bursts out",

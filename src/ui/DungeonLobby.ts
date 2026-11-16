@@ -13,6 +13,7 @@ import { DUNGEON_LOBBY, dungeonActionButtonWidth, dungeonActionButtonX, dungeonL
 import type { DungeonTheme } from "./dungeonTheme";
 import { DUNGEON_RUN_TONE } from "./dungeonRunPopupLayout";
 import { EnemyInfoPopup } from "./EnemyInfoPopup";
+import { addGreatSuccessBadge, GREAT_SUCCESS_BADGE, openGreatSuccessInfo } from "./GreatSuccessBadge";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawLayer } from "./holo";
 import { addFramedIcon } from "./itemFrame";
@@ -125,6 +126,8 @@ export class DungeonLobby {
   private swipeFrom?: number;
   /** 무대의 적을 누르면 여는 창 — 편성·전투 화면과 같은 적 정보 팝업 한 장이다. */
   private readonly enemyInfo: EnemyInfoPopup;
+  /** 대성공 딱지가 여는 쪽지. */
+  private readonly notes: PopupLayer;
 
   constructor(private readonly scene: Phaser.Scene, private readonly handlers: DungeonLobbyHandlers, private readonly options: DungeonLobbyOptions) {
     const S = DUNGEON_LOBBY.stage;
@@ -134,6 +137,7 @@ export class DungeonLobby {
     this.stage.add(this.stageChrome);
     this.layer = scene.add.container(0, 0);
     this.enemyInfo = new EnemyInfoPopup(scene, new PopupLayer(scene, 2200));
+    this.notes = new PopupLayer(scene, 2200);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.lineupRequest += 1; });
   }
 
@@ -430,6 +434,11 @@ export class DungeonLobby {
     const amount = scene.add.text(iconX + reward.icon / 2 + 18, bodyY, formatCurrency(tier.reward.amount), textStyle({ role: "display", size: 44, color: this.options.theme.accentText })).setOrigin(0, 0.5);
     squeezeTextToWidth(amount, rewardCard.width / 2 - 24 - amount.x);
     prize.add(amount);
+    // 이긴 판마다 굴리는 대성공 — 보상 카드 오른쪽 위에 삐딱한 금빛 딱지로 붙고, 누르면 무엇인지 말한다.
+    const B = GREAT_SUCCESS_BADGE;
+    const badgeX = rewardCard.x + rewardCard.width / 2 - B.width / 2 + 6;
+    const badgeY = DUNGEON_LOBBY.summary.y - DUNGEON_LOBBY.summary.height / 2 + 12;
+    this.layer.add(addGreatSuccessBadge(scene, badgeX, badgeY, (at) => openGreatSuccessInfo(scene, this.notes, at)));
   }
 
   /**

@@ -199,6 +199,36 @@
 "Volltreffer ×{count}",
 "Большой успех ×{count}"
 ],
+"greatSuccess.badge": [
+"大成功 {chance}%",
+"สำเร็จยิ่ง {chance}%",
+"Đại thành công {chance}%",
+"Sukses Besar {chance}%",
+"¡Éxito! {chance}%",
+"Sucesso! {chance}%",
+"Volltreffer {chance}%",
+"Успех! {chance}%"
+],
+"greatSuccess.info.title": [
+"大成功",
+"สำเร็จยิ่ง",
+"Đại thành công",
+"Sukses Besar",
+"Gran éxito",
+"Grande sucesso",
+"Volltreffer",
+"Большой успех"
+],
+"greatSuccess.info.body": [
+"每次获胜都有{chance}%的概率触发大成功！\n大成功的一局可获得{multiplier}倍基础奖励。\n扫荡也会逐局分别判定。",
+"ชนะทุกครั้งมีโอกาส {chance}% ที่จะสำเร็จยิ่ง!\nรอบที่สำเร็จยิ่งจะได้รางวัลพื้นฐาน {multiplier} เท่า\nการกวาดล้างก็สุ่มแยกทีละรอบ",
+"Mỗi trận thắng có {chance}% cơ hội Đại thành công!\nTrận Đại thành công nhận {multiplier} lần phần thưởng cơ bản.\nCàn quét cũng xét riêng từng trận.",
+"Setiap kemenangan punya peluang {chance}% Sukses Besar!\nRonde Sukses Besar memberi {multiplier}× hadiah dasar.\nSapu bersih juga diundi per ronde.",
+"¡Cada victoria tiene un {chance}% de probabilidad de Gran éxito!\nUna partida con Gran éxito da {multiplier}× la recompensa base.\nEl barrido también se sortea partida a partida.",
+"Cada vitória tem {chance}% de chance de Grande sucesso!\nUma partida com Grande sucesso dá {multiplier}× a recompensa base.\nA varredura também sorteia cada partida separadamente.",
+"Jeder Sieg hat eine Chance von {chance} % auf einen Volltreffer!\nEin Volltreffer bringt das {multiplier}-Fache der Grundbelohnung.\nBeim Säubern wird jeder Durchgang einzeln ausgelost.",
+"Каждая победа с шансом {chance}% приносит большой успех!\nЗа такой бой даётся базовая награда ×{multiplier}.\nПри зачистке шанс проверяется для каждого боя отдельно."
+],
 "autoRepeat.button": [
 "自动战斗",
 "ต่อสู้อัตโนมัติ",

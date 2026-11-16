@@ -64,6 +64,7 @@ export const AUGMENT_DE = {
   "augment.tag.selfBasic": "Alle {every} treffenden normalen Angriffsaktionen: {tag} ×{stacks} auf sich selbst.",
   "augment.tag.selfRule": "Nur auf sich selbst. Fläche und Mehrfachtreffer zählen einmal pro Aktion, Zusatzschaden zählt nicht. Stärkere Effekte bleiben. Verstärkungen im selben Platz stapeln nicht. Rücksetzung pro Kampf.",
   "augment.tag.detail.bleed": "{seconds} s lang wahrer Schaden von {maxHpPercentPerSecond}% maximalen Ziel-LP pro Sekunde. Erhaltene Heilung −{healingReceivedReductionPercent}%. Prozent-Verstärkungen gemeinsam höchstens 10% pro Ziel. Unsterbliche Bosse nutzen 25% Multiplikator und bestehende Prozentresistenz.",
+  "augment.tag.detail.bleedPlain": "{seconds} s lang wahrer Schaden von {maxHpPercentPerSecond}% maximalen Ziel-LP pro Sekunde. Prozent-Verstärkungen gemeinsam höchstens 10% pro Ziel. Unsterbliche Bosse nutzen 25% Multiplikator und bestehende Prozentresistenz.",
   "augment.tag.detail.frenzy": "Für {seconds} s Verbündete mit halbem Schaden angreifen, keine Ultimativ. Ohne Verbündete sich selbst angreifen. Zähigkeit gilt.",
   "augment.tag.detail.knockback": "Rückstoß für {seconds} s mit {speed}px/s, höchstens {bounces} Wandabpraller. Im Flug handlungsunfähig. Zähigkeit gilt.",
   "augment.tag.detail.tailwind": "Für {seconds} s Angriffstempo +{attackSpeedPercent}%, Bewegungstempo +{moveSpeedPercent}%. Teilt einen Platz mit Rückenwind, Befehl und Resonanz.",

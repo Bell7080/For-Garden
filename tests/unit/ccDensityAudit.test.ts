@@ -79,7 +79,7 @@ describe("증강 CC 공용 안전장치", () => {
     expect(capExpeditionControl({ kind: "drowsy", seconds: 12, sleepSeconds: 1.8, maxStacks: 3, wakeResistancePower: 1, groggySeconds: 2, groggyAttackSpeedPercent: 8 }, 2)).toMatchObject({ seconds: 12, sleepSeconds: 0.3 });
   });
 
-  it.each([['stagger',1,1], ['stun',4,6], ['chill',4,4], ['fear',6,6], ['frozen',8,8], ['taunt',8,8], ['pressure',10,10], ['drowsy',10,10], ['intimidate',10,10]] as const)("%s의 기본 %i초/궁극기 %i초 대기를 데이터·카드·팝업이 공유한다", (kind, basicSeconds, ultimateSeconds) => {
+  it.each([['stagger',1,1], ['stun',4,6], ['chill',4,4], ['fear',6,6], ['frozen',8,8], ['taunt',8,8]] as const)("%s의 기본 %i초/궁극기 %i초 대기를 데이터·카드·팝업이 공유한다", (kind, basicSeconds, ultimateSeconds) => {
     for (const variant of ["basic", "ultimate"]) {
       const seconds = variant === "basic" ? basicSeconds : ultimateSeconds;
       const def = getExpeditionAugment(`tag-${kind}-${variant}`)!;
@@ -87,6 +87,20 @@ describe("증강 CC 공용 안전장치", () => {
       expect(expeditionControlCooldown(def.effect.payload)).toBe(seconds);
       expect(def.effect.limits.cooldownSeconds).toBe(seconds);
       expect(expeditionAugmentEffectLabel(def)).toContain(`${seconds}초`);
+      expect(expeditionAugmentKeywords(def)[0].description).toContain("2.4초");
+      expect(expeditionAugmentKeywords(def)[0].sections?.[0].text).toContain(`${seconds}초`);
+    }
+  });
+
+  // 누적형은 겹을 올리는 일 자체가 제어가 아니다 — 겹마다 10초를 걸던 때는 겹(12초 유지)이 먼저 사라져 한 번도 터지지 않았다.
+  // 미리 비축은 공유 회복 시계와 그 상태의 잠금·면역이 막고, 겹 대기는 계획표 값(평타 2초 · 궁극기 4초)을 쓴다.
+  it.each(["pressure", "drowsy", "intimidate"] as const)("%s 누적형은 겹 대기를 쓰고 증강 제어 규칙은 그대로 받는다", kind => {
+    for (const [variant, seconds] of [["basic", 2], ["ultimate", 4]] as const) {
+      const def = getExpeditionAugment(`tag-${kind}-${variant}`)!;
+      if (def.effect.kind !== "triggered") throw Error("Missing trigger");
+      expect(expeditionControlCooldown(def.effect.payload)).toBeUndefined();
+      expect(def.effect.limits.cooldownSeconds).toBe(seconds);
+      expect(expeditionAugmentEffectLabel(def)).not.toContain("CC 재발동");
       expect(expeditionAugmentKeywords(def)[0].description).toContain("2.4초");
       expect(expeditionAugmentKeywords(def)[0].sections?.[0].text).toContain(`${seconds}초`);
     }

@@ -68,6 +68,7 @@ export const AUGMENT_KO = {
   "augment.tag.selfBasic": "평타 {every}회 적중마다 자신에게 {tag} {stacks}회 적용.",
   "augment.tag.selfRule": "자신에게만 적용한다. 공격 횟수는 광역·연격도 행동당 한 번만 센다. 추가 피해는 제외한다. 강한 기존 효과를 약하게 덮어쓰지 않으며, 같은 강화 슬롯은 중첩되지 않는다. 전투마다 초기화된다.",
   "augment.tag.detail.bleed": "{seconds}초 동안 매초 대상 최대 체력의 {maxHpPercentPerSecond}% 고정 피해. 받는 회복량 -{healingReceivedReductionPercent}%. 증강 비율 피해는 대상별 합계 최대 10%이며 불사 보스에는 25% 배율과 기존 비율 피해 저항을 적용한다.",
+  "augment.tag.detail.bleedPlain": "{seconds}초 동안 매초 대상 최대 체력의 {maxHpPercentPerSecond}% 고정 피해. 증강 비율 피해는 대상별 합계 최대 10%이며 불사 보스에는 25% 배율과 기존 비율 피해 저항을 적용한다.",
   "augment.tag.detail.frenzy": "{seconds}초 동안 자기 편을 공격하며 피해가 절반이 된다. 궁극기는 쓸 수 없다. 자기 편이 없으면 자신을 공격한다. 기존 강인함을 적용한다.",
   "augment.tag.detail.knockback": "{seconds}초 동안 초속 {speed}px로 날려버린다. 벽 반사 최대 {bounces}회. 날아가는 동안 행동할 수 없으며 기존 강인함을 적용한다.",
   "augment.tag.detail.tailwind": "{seconds}초 동안 공격 속도 +{attackSpeedPercent}%, 이동 속도 +{moveSpeedPercent}%. 다른 순풍·오더·공명과 같은 슬롯을 사용한다.",

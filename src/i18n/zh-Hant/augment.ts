@@ -64,6 +64,7 @@ export const AUGMENT_ZH_HANT = {
   "augment.tag.selfBasic": "普攻命中{every}次後，對自身施加{stacks}次{tag}。",
   "augment.tag.selfRule": "僅對自身生效。範圍與多段攻擊每個動作計數一次，不計額外傷害。保留更強的已有效果。同一強化槽不疊加。每場戰鬥重置。",
   "augment.tag.detail.bleed": "持續{seconds}秒，每秒造成目標最大生命{maxHpPercentPerSecond}%的固定傷害。受到的治療−{healingReceivedReductionPercent}%。增幅比例傷害每個目標合計上限10%。不死首領套用25%倍率及現有比例傷害抗性。",
+  "augment.tag.detail.bleedPlain": "持續{seconds}秒，每秒造成目標最大生命{maxHpPercentPerSecond}%的固定傷害。增幅比例傷害每個目標合計上限10%。不死首領套用25%倍率及現有比例傷害抗性。",
   "augment.tag.detail.frenzy": "持續{seconds}秒，以一半傷害攻擊友軍，無法使用必殺技。沒有友軍時攻擊自身。套用現有韌性。",
   "augment.tag.detail.knockback": "以每秒{speed}px擊飛{seconds}秒，最多反彈牆壁{bounces}次。飛行中無法行動，套用現有韌性。",
   "augment.tag.detail.tailwind": "持續{seconds}秒，攻速＋{attackSpeedPercent}%，移速＋{moveSpeedPercent}%。與順風、指令、共鳴共用強化槽。",

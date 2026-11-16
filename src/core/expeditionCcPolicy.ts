@@ -27,15 +27,29 @@ export function capExpeditionControl(status: CombatStatusEffect, potency: number
   return status;
 }
 
-/** 누적 태그는 겹을 올리는 시점에도 긴 대기를 적용해 발동을 미리 비축하지 못한다. */
+/** 쌓여서 터질 때만 행동을 막는 태그. 겹을 올리는 일 자체는 제어가 아니다. */
+const STACKING_CONTROL_TAGS = new Set<CombatStatusEffect["kind"]>(["pressure", "drowsy", "intimidate"]);
+
+/** 증강 제어 규칙(한 번 최대 0.6초 · 공유 회복 시계)을 받는 payload인가. */
+export function isExpeditionControlPayload(payload: { kind: string; status?: CombatStatusEffect }): boolean {
+  return payload.kind === "frozen" || (payload.kind === "status" && payload.status !== undefined && EXPEDITION_CONTROL_TAGS.has(payload.status.kind));
+}
+
+/**
+ * 곧바로 행동을 막는 태그의 재발동 대기. 누적형(수압·졸음·위압)은 여기서 값을 갖지 않는다 — 겹마다 10초를
+ * 걸던 때는 겹이 다음 겹 전에 사라져(유지 12초) 원정 한 판 동안 한 번도 터지지 않았다. 누적형이 미리 비축되지
+ * 않는 것은 공유 회복 시계(`augmentControlAvailable` — 회복 중인 적에게는 겹도 오르지 않는다)와 그 상태
+ * 자신의 잠금·면역(수압 잠금 · 위압 면역)이 지킨다.
+ */
 export function expeditionControlCooldown(payload: { kind: string; status?: CombatStatusEffect }): number | undefined {
   if (payload.kind === "frozen") return 8;
   if (payload.kind !== "status" || !payload.status || !EXPEDITION_CONTROL_TAGS.has(payload.status.kind)) return undefined;
   const kind = payload.status.kind;
+  if (STACKING_CONTROL_TAGS.has(kind)) return undefined;
   // 경직은 0.1초 고정이라 기본·궁극기판의 길이가 같고 대기도 같다.
   if (kind === "stagger") return 1;
   if (kind === "chill") return 4;
   if (kind === "stun") return payload.status.kind === "stun" && payload.status.seconds <= 0.25 ? 4 : 6;
   if (kind === "fear") return 6;
-  return kind === "pressure" || kind === "drowsy" || kind === "intimidate" ? 10 : 8;
+  return 8;
 }

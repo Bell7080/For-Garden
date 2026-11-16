@@ -64,6 +64,7 @@ export const AUGMENT_EN = {
   "augment.tag.selfBasic": "Every {every} basic attack actions that hit, apply {tag} ×{stacks} to self.",
   "augment.tag.selfRule": "Self only. Area and multi-hit attacks count once per action; extra damage does not count. Stronger active effects are preserved. Buffs sharing a slot do not stack. Resets each battle.",
   "augment.tag.detail.bleed": "For {seconds}s, true damage equal to {maxHpPercentPerSecond}% target max HP per second. Healing received −{healingReceivedReductionPercent}%. Augment percent damage shares a 10% cap per target. Immortal bosses apply a 25% multiplier and existing percent-damage resistance.",
+  "augment.tag.detail.bleedPlain": "For {seconds}s, true damage equal to {maxHpPercentPerSecond}% target max HP per second. Augment percent damage shares a 10% cap per target. Immortal bosses apply a 25% multiplier and existing percent-damage resistance.",
   "augment.tag.detail.frenzy": "For {seconds}s, attack allies at half damage and cannot use Ultimates. If no allies remain, attack self. Existing tenacity applies.",
   "augment.tag.detail.knockback": "Knock back for {seconds}s at {speed}px/s, with at most {bounces} wall bounce(s). Cannot act while flying. Existing tenacity applies.",
   "augment.tag.detail.tailwind": "For {seconds}s: attack speed +{attackSpeedPercent}%, movement speed +{moveSpeedPercent}%. Shares a slot with Tailwind, Order and Resonance.",

@@ -64,6 +64,7 @@ export const AUGMENT_ID = {
   "augment.tag.selfBasic": "Setiap {every} aksi serangan dasar yang mengenai, terapkan {tag} ×{stacks} ke diri sendiri.",
   "augment.tag.selfRule": "Hanya diri sendiri. Area dan serangan beruntun dihitung sekali per aksi, tanpa kerusakan tambahan. Efek lebih kuat dipertahankan. Penguatan satu slot tidak menumpuk. Reset tiap pertempuran.",
   "augment.tag.detail.bleed": "Selama {seconds} dtk, kerusakan sejati per detik {maxHpPercentPerSecond}% HP maksimum target. Penyembuhan diterima −{healingReceivedReductionPercent}%. Augmen persentase berbagi batas 10% per target. Bos abadi memakai Ganda 25% dan resistensi persentase yang ada.",
+  "augment.tag.detail.bleedPlain": "Selama {seconds} dtk, kerusakan sejati per detik {maxHpPercentPerSecond}% HP maksimum target. Augmen persentase berbagi batas 10% per target. Bos abadi memakai Ganda 25% dan resistensi persentase yang ada.",
   "augment.tag.detail.frenzy": "Selama {seconds} dtk, menyerang sekutu dengan setengah kerusakan dan tidak bisa memakai Ultimate. Tanpa sekutu, menyerang diri sendiri. Ketahanan berlaku.",
   "augment.tag.detail.knockback": "Dorong selama {seconds} dtk pada {speed}px/dtk, maksimal {bounces} pantulan dinding. Tidak bisa bertindak saat terbang. Ketahanan berlaku.",
   "augment.tag.detail.tailwind": "Selama {seconds} dtk: kecepatan serangan +{attackSpeedPercent}%, gerak +{moveSpeedPercent}%. Berbagi slot dengan Angin Buritan, Perintah, dan Resonansi.",

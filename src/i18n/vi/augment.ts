@@ -64,6 +64,7 @@ export const AUGMENT_VI = {
   "augment.tag.selfBasic": "Sau mỗi {every} hành động đánh thường trúng đích, áp dụng {tag} ×{stacks} lên bản thân.",
   "augment.tag.selfRule": "Chỉ bản thân. Diện rộng và liên kích tính một lần mỗi hành động, không tính sát thương thêm. Giữ hiệu ứng mạnh hơn. Cường hóa chung ô không cộng dồn. Đặt lại mỗi trận.",
   "augment.tag.detail.bleed": "Trong {seconds} giây, sát thương chuẩn mỗi giây bằng {maxHpPercentPerSecond}% HP tối đa mục tiêu. Hồi máu nhận −{healingReceivedReductionPercent}%. Tăng cường sát thương phần trăm chung giới hạn 10% mỗi mục tiêu. Trùm bất tử áp dụng hệ số 25% và kháng phần trăm hiện có.",
+  "augment.tag.detail.bleedPlain": "Trong {seconds} giây, sát thương chuẩn mỗi giây bằng {maxHpPercentPerSecond}% HP tối đa mục tiêu. Tăng cường sát thương phần trăm chung giới hạn 10% mỗi mục tiêu. Trùm bất tử áp dụng hệ số 25% và kháng phần trăm hiện có.",
   "augment.tag.detail.frenzy": "Trong {seconds} giây, tấn công đồng minh với nửa sát thương và không dùng Tuyệt kỹ. Không có đồng minh thì tự tấn công. Áp dụng bền bỉ.",
   "augment.tag.detail.knockback": "Hất văng {seconds} giây với tốc độ {speed}px/giây, tối đa {bounces} lần nảy tường. Không thể hành động khi bay. Áp dụng bền bỉ.",
   "augment.tag.detail.tailwind": "Trong {seconds} giây: tốc đánh +{attackSpeedPercent}%, di chuyển +{moveSpeedPercent}%. Chung ô với Thuận phong, Mệnh lệnh và Cộng hưởng.",

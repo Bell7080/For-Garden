@@ -242,6 +242,28 @@ describe("범용 원정 태그 증강", () => {
     expect(state.fighters[1].bleed?.percent).toBeCloseTo(0.05);
   });
 
+  it("회복 감소가 없는 출혈 증강은 「받는 회복량 -0%」를 적지 않는다", () => {
+    const basic = EXPEDITION_TAG_AUGMENTS.find(def => def.id === "tag-bleed-basic")!;
+    const ultimate = EXPEDITION_TAG_AUGMENTS.find(def => def.id === "tag-bleed-ultimate")!;
+    expect(expeditionAugmentKeywords(basic)[0].description).not.toContain("받는 회복량");
+    expect(expeditionAugmentKeywords(ultimate)[0].description).toContain("받는 회복량 -15%");
+  });
+
+  it("수압·졸음·위압 증강은 겹이 사라지기 전에 쌓여 한 판 안에 실제로 터진다", () => {
+    // 겹마다 10초를 걸던 때는 겹(유지 12초)이 다음 겹 전에 사라져 40초 동안 한 번도 터지지 않았다.
+    for (const tag of ["pressure", "drowsy", "intimidate"] as const) {
+      const state = setup(`tag-${tag}-basic`);
+      const target = state.fighters[1];
+      let controlled = false;
+      for (let i = 0; i < 12 && !controlled; i++) {
+        attack(state);
+        controlled = target.stunnedFor > 0 || target.sleep !== null || target.fear !== null;
+        if (!controlled) advance(state, 1.5);
+      }
+      expect(controlled, tag).toBe(true);
+    }
+  });
+
   it("기절·광란·날려버림·빙결은 전용 개체 없이 실제 상태를 만든다", () => {
     for (const [id, field] of [["stun", "stunnedFor"], ["frenzy", "frenzy"], ["knockback", "knockback"], ["frozen", "frozen"]] as const) {
       const state = setup(`tag-${id}-ultimate`);

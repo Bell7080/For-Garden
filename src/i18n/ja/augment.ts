@@ -64,6 +64,7 @@ export const AUGMENT_JA = {
   "augment.tag.selfBasic": "通常攻撃{every}回命中ごとに、自分に{tag}を{stacks}回付与。",
   "augment.tag.selfRule": "自分のみ。範囲・連撃も1行動につき1回計算し追加ダメージは除外。強い既存効果を維持。同じ強化枠は重複しない。戦闘ごとにリセット。",
   "augment.tag.detail.bleed": "{seconds}秒間、毎秒対象最大HPの{maxHpPercentPerSecond}%の固定ダメージ。被回復量−{healingReceivedReductionPercent}%。オーグメント割合ダメージは対象ごとに合計10%まで。不死ボスには25%倍率と既存の割合耐性を適用。",
+  "augment.tag.detail.bleedPlain": "{seconds}秒間、毎秒対象最大HPの{maxHpPercentPerSecond}%の固定ダメージ。オーグメント割合ダメージは対象ごとに合計10%まで。不死ボスには25%倍率と既存の割合耐性を適用。",
   "augment.tag.detail.frenzy": "{seconds}秒間、半分のダメージで味方を攻撃し必殺技使用不可。味方がいなければ自分を攻撃。強靭を適用。",
   "augment.tag.detail.knockback": "{seconds}秒間、秒速{speed}pxで吹き飛ばす。壁反射最大{bounces}回。飛行中は行動不可。強靭を適用。",
   "augment.tag.detail.tailwind": "{seconds}秒間、攻撃速度＋{attackSpeedPercent}%・移動速度＋{moveSpeedPercent}%。追い風・オーダー・共鳴と同じ枠を使う。",

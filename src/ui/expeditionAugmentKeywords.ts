@@ -1,4 +1,4 @@
-import { EXPEDITION_CC_POLICY, expeditionControlCooldown } from "../core/expeditionCcPolicy";
+import { EXPEDITION_CC_POLICY, expeditionControlCooldown, isExpeditionControlPayload } from "../core/expeditionCcPolicy";
 import { expeditionStatAugmentLabel } from "../data/expeditionStatAugments";
 import { expeditionTagTerm, expeditionPayloadTag } from "../data/expeditionTagAugments";
 import { type KeywordDef } from "../data/keywords";
@@ -28,7 +28,8 @@ export function expeditionAugmentKeywords(def: ExpeditionAugmentDef): KeywordDef
   const kind = expeditionPayloadTag(payload);
   const values = payload.kind === "status" ? payload.status : payload.kind === "shell" || payload.kind === "reagent" ? payload.contract : payload.kind === "teamBuff" ? payload.buff : payload;
   let detail: string;
-  if (payload.kind === "frozen") detail = t("status.frozen.detail", { time: t("status.seconds", { value: payload.seconds }), percent: payload.maxHpPercentOnExpire });
+  if (payload.kind === "status" && payload.status.kind === "bleed" && !payload.status.healingReceivedReductionPercent) detail = t("augment.tag.detail.bleedPlain", { seconds: payload.status.seconds, maxHpPercentPerSecond: payload.status.maxHpPercentPerSecond });
+  else if (payload.kind === "frozen") detail = t("status.frozen.detail", { time: t("status.seconds", { value: payload.seconds }), percent: payload.maxHpPercentOnExpire });
   else if (payload.kind === "stealth") detail = t("skill.clause.selfStealth", { seconds: payload.seconds });
   else if (payload.kind === "teamBuff" && payload.buff.kind === "resonance") detail = `${t("augment.percent", { label: t("stat.attackSpeed"), percent: payload.buff.attackSpeedPercent })} · ${t("status.seconds", { value: payload.buff.seconds })}`;
   else {
@@ -37,7 +38,7 @@ export function expeditionAugmentKeywords(def: ExpeditionAugmentDef): KeywordDef
   }
   const limits = t("augment.tag.limits", { max: effect.limits.maxTriggers, cooldown: effect.limits.cooldownSeconds });
   const controlValues = { cap: EXPEDITION_CC_POLICY.maxSeconds, gap: EXPEDITION_CC_POLICY.recoverySeconds };
-  const hasControl = expeditionControlCooldown(payload) !== undefined;
+  const hasControl = isExpeditionControlPayload(payload);
   const control = hasControl ? t("augment.tag.controlSummary", controlValues) : "";
   const rule = t(effect.limits.target === "self" && payload.kind !== "shell" ? "augment.tag.selfRule" : effect.trigger === "onDamaged" ? "augment.tag.receivedRule" : "augment.tag.attackRule");
   // 효과는 먼저 읽고, 발동 제한은 별도 칸에서 확인한다. 공격 계산의 예외는

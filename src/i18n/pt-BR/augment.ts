@@ -64,6 +64,7 @@ export const AUGMENT_PT_BR = {
   "augment.tag.selfBasic": "A cada {every} ações de ataque básico que acertam, aplica {tag} ×{stacks} em si.",
   "augment.tag.selfRule": "Somente em si. Área e golpes múltiplos contam uma vez por ação, sem dano adicional. Efeitos mais fortes são mantidos. Melhorias no mesmo espaço não acumulam. Reinicia por batalha.",
   "augment.tag.detail.bleed": "Por {seconds} s, dano verdadeiro por segundo de {maxHpPercentPerSecond}% dos PV máximos do alvo. Cura recebida −{healingReceivedReductionPercent}%. Aprimoramentos proporcionais compartilham limite de 10% por alvo. Chefes imortais aplicam multiplicador de 25% e resistência proporcional existente.",
+  "augment.tag.detail.bleedPlain": "Por {seconds} s, dano verdadeiro por segundo de {maxHpPercentPerSecond}% dos PV máximos do alvo. Aprimoramentos proporcionais compartilham limite de 10% por alvo. Chefes imortais aplicam multiplicador de 25% e resistência proporcional existente.",
   "augment.tag.detail.frenzy": "Por {seconds} s, ataca aliados com metade do dano e não usa Supremas. Sem aliados, ataca a si mesmo. Aplica tenacidade.",
   "augment.tag.detail.knockback": "Repele por {seconds} s a {speed}px/s, com até {bounces} ricochetes em paredes. Não pode agir no ar. Aplica tenacidade.",
   "augment.tag.detail.tailwind": "Por {seconds} s: velocidade de ataque +{attackSpeedPercent}%, movimento +{moveSpeedPercent}%. Usa o mesmo espaço de Vento favorável, Ordem e Ressonância.",

@@ -3789,7 +3789,7 @@ export const RELICS: RelicDef[] = [
     // 손톱이 피를 내고(II) 폭주하면 급소가 더 자주 터진다(IV). 은신과 움찔이 이미 생존 몫이라 나머지는 비운다.
     breakthroughEffects: {
       basic: { kind: "snagClaw", speedPercentPerStack: 8, maxStacks: 5 },
-      ultimate: { kind: "startledLeap", radius: 220, stunSeconds: 0.8, lockoutSeconds: 8 },
+      ultimate: { kind: "startledLeap", radius: 220, stunSeconds: 0.8, lockoutSeconds: 5 },
       ferocity: { kind: "clawFlurry", extraHits: 1 },
       passive: { kind: "tailHide", seconds: 2 },
     },

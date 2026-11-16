@@ -15,6 +15,7 @@ export const COMMON_TH = {
   "stat.critDamage": "ความเสียหายคริติคอล",
   "stat.energyGain": "ชาร์จท่าไม้ตาย",
   "stat.energyGain.rune": "เพิ่มชาร์จท่าไม้ตาย",
+  "stat.ferocityGain": "การสะสมความดุร้าย",
   "stat.ferocityGain.rune": "เพิ่มการสะสมความดุร้าย",
   "stat.lifeSteal": "ดูดเลือด",
   "stat.range": "ระยะ",

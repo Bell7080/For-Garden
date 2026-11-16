@@ -1,3 +1,4 @@
+import { ferocityGainBonus } from "./ferocity";
 import type { Stats } from "./types";
 
 /**
@@ -49,7 +50,15 @@ export function offenseGrowth(stats: Stats, base?: Stats): number {
 export function combatPower(stats: Stats, base?: Stats): number {
   const speedGrowth = offenseGrowth(stats, base);
   return Math.round((Object.keys(WEIGHTS) as (keyof Stats)[])
-    .reduce((sum, key) => sum + stats[key] * WEIGHTS[key] * (key === "attackSpeed" ? speedGrowth : 1), 0));
+    .reduce((sum, key) => sum + statForPower(stats, key) * WEIGHTS[key] * (key === "attackSpeed" ? speedGrowth : 1), 0));
+}
+
+/**
+ * 야성 획득량은 전 개체 공통값(12)이 깔려 있어 그 몫까지 세면 모든 개체의 전투력이 같은 양만큼 불어날 뿐이다 —
+ * 공통값 위에 룬·증강이 더한 몫만 센다(퍼센트로 세던 때도 그 몫만 셌다).
+ */
+function statForPower(stats: Stats, key: keyof Stats): number {
+  return key === "ferocityGain" ? ferocityGainBonus(stats) : stats[key];
 }
 
 /** 편성이 한 번에 맞서는 자리 수. 아군 전투력 합은 이 수만큼의 개체로 셈한다. */

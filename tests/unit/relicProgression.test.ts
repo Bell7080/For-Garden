@@ -75,8 +75,8 @@ describe("렐릭 성장 규칙", () => {
   it("기본 능력치에 레벨, 별, Heart Gem 순으로 단계별 반올림해 적용한다", () => {
     const early: RelicProgress = { level: 2, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: ["vital-seed", null, null] };
     const rune = testRune("growth");
-    // 101 → 레벨 2%(103) → 룬 표의 HP 기본 8%(111) 순서다.
-    expect(calculateFinalStats(BASE, early, [rune], "SR").hp).toBe(111);
+    // 101 → 레벨 2%(103) → 고급 룬 주 옵션 6%(109) 순서다. 룬 수치는 저장값이 아니라 등급표가 정한다.
+    expect(calculateFinalStats(BASE, early, [rune], "SR").hp).toBe(109);
 
     // **돌파는 레벨 성장 %에 단계마다 +10%를 더한다**(응태 결정, 2026-11-11) — 곱하지 않고 더한다.
     // 돌파는 레벨을 묻지 않는다 — 2레벨의 돌파 III도 +30%를 그대로 받는다.

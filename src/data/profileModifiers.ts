@@ -3,7 +3,7 @@ import { registerDataText } from "../i18n";
 export type ProfileModifierRarity = "common" | "rare" | "epic" | "legendary";
 
 /** 획득 조건은 manager가 판정할 수 있는 불변 ID이며 화면 문구나 임의 콜백을 포함하지 않는다. */
-export type ProfileModifierAcquisitionConditionId = `mission:${string}` | `research:${"daily" | "weekly"}:${string}` | `achievement:${string}`;
+export type ProfileModifierAcquisitionConditionId = `mission:${string}` | `research:${"daily" | "weekly"}:${string}` | `achievement:${string}` | `patron:${string}`;
 
 /** 저장에는 id만 남고, 변경 가능한 표시 정보는 이 정적 정의에서만 해석한다. */
 export interface ProfileModifierDefinition { readonly id: string; readonly displayName: string; readonly rarity: ProfileModifierRarity; readonly acquisitionConditionId: ProfileModifierAcquisitionConditionId; }
@@ -42,6 +42,9 @@ export const PROFILE_MODIFIERS: readonly ProfileModifierDefinition[] = [
   { id: "diligent-researcher", displayName: "성실한 연구원", rarity: "epic", acquisitionConditionId: "achievement:diligence" },
   { id: "challenger", displayName: "정점의 도전자", rarity: "legendary", acquisitionConditionId: "achievement:duel-tier" },
   { id: "stratum-explorer", displayName: "지층 탐사가", rarity: "rare", acquisitionConditionId: "achievement:archaeologist" },
+  // 후원 지층 기념품(`data/patronStrata.ts`) — 호박층 · 심층에 처음 닿아 기념품을 받을 때 연다.
+  { id: "amber-bound", displayName: "호박 속의", rarity: "epic", acquisitionConditionId: "patron:amber" },
+  { id: "deep-patron", displayName: "심층의", rarity: "legendary", acquisitionConditionId: "patron:deep" },
   { id: "walking-codex", displayName: "걸어 다니는 도감", rarity: "legendary", acquisitionConditionId: "achievement:codex-complete" },
 ] as const;
 

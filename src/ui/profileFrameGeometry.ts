@@ -28,7 +28,7 @@ export function profileAvatarSizeFor(room: number): number {
   return Math.floor(room / (2 * PROFILE_FRAME_REACH));
 }
 
-export const FRAME_STYLE_RANK: readonly ProfileFrameStyle[] = ["plain", "bracket", "gem", "wing", "vine", "crown", "strata", "laurel", "prism", "sigil", "halo"];
+export const FRAME_STYLE_RANK: readonly ProfileFrameStyle[] = ["plain", "bracket", "gem", "wing", "vine", "crown", "strata", "laurel", "prism", "sigil", "halo", "fossil", "bedrock", "core"];
 
 export function profileFrameOuter(size: number): number {
   return size * (1 + PROFILE_FRAME_PAD * 2);
@@ -130,7 +130,7 @@ export function profileFrameShapes(size: number, style: ProfileFrameStyle): Prof
   // 바탕 테두리 — 굵은 색 선 한 줄과 그 안쪽의 가는 흰 선. 가장 높은 테두리만 바깥에 한 겹 더.
   shapes.rings.push({ side: outer, width: size * 0.05, tone: "frame", alpha: 1 });
   shapes.rings.push({ side: outer - size * 0.07, width: Math.max(1.5, size * 0.012), tone: "white", alpha: 0.45 });
-  if (style === "crown") shapes.rings.push({ side: outer + size * 0.09, width: Math.max(2, size * 0.018), tone: "frame", alpha: 0.7 });
+  if (style === "crown" || style === "core") shapes.rings.push({ side: outer + size * 0.09, width: Math.max(2, size * 0.018), tone: "frame", alpha: 0.7 });
 
   switch (style) {
     case "strata": {
@@ -180,6 +180,48 @@ export function profileFrameShapes(size: number, style: ProfileFrameStyle): Prof
       diamond(anchor.bottom, 0.08, 0.11);
       diamond(anchor.left, 0.05, 0.075, "light");
       diamond(anchor.right, 0.05, 0.075, "light");
+      break;
+    }
+    case "fossil": {
+      // 화석층의 기록 — 아랫변 밖으로 짧아지며 쌓인 지층 세 줄, 윗변에 묻힌 표본 하나.
+      [[0.03, 0.5], [0.07, 0.38], [0.11, 0.26]].forEach(([offset, length]) => shapes.strokes.push({ width: size * 0.02, points: [
+        { x: anchor.bottom.x - (length * size) / 2, y: anchor.half + offset * size },
+        { x: anchor.bottom.x + (length * size) / 2, y: anchor.half + offset * size },
+      ] }));
+      diamond(anchor.top, 0.08, 0.11);
+      diamond(anchor.top, 0.03, 0.05, "light");
+      for (const cut of cuts) diamond(cut, 0.04, 0.058);
+      break;
+    }
+    case "bedrock": {
+      // 기반암 — 깎이지 않은 두 모서리를 두꺼운 ㄱ자 덩어리가 받치고, 좌우 변에 단단한 보석.
+      const reach = anchor.half + size * 0.05;
+      const arm = size * 0.26;
+      for (const [sx, sy] of [[1, -1], [-1, 1]] as const) {
+        shapes.strokes.push({ width: size * 0.06, points: [
+          { x: sx * reach - sx * arm, y: sy * reach }, { x: sx * reach, y: sy * reach }, { x: sx * reach, y: sy * reach - sy * arm },
+        ] });
+      }
+      diamond(anchor.left, 0.07, 0.12);
+      diamond(anchor.right, 0.07, 0.12);
+      for (const cut of cuts) shapes.strokes.push({ width: size * 0.03, points: cutBracket(cut, size * 0.05, anchor.bevel * 0.8, size * 0.04) });
+      break;
+    }
+    case "core": {
+      // 지핵 — 네 변과 네 모서리에서 바깥으로 뻗는 불꽃 여덟 갈래, 위아래에 이글거리는 보석.
+      const rays: { point: FramePoint; angle: number; length: number }[] = [
+        { point: anchor.top, angle: -Math.PI / 2, length: 0.12 },
+        { point: anchor.bottom, angle: Math.PI / 2, length: 0.1 },
+        { point: anchor.left, angle: Math.PI, length: 0.1 },
+        { point: anchor.right, angle: 0, length: 0.1 },
+        { point: anchor.topRight, angle: -Math.PI / 4, length: 0.08 },
+        { point: anchor.bottomLeft, angle: (Math.PI * 3) / 4, length: 0.08 },
+        { point: anchor.topLeftCut, angle: (-Math.PI * 3) / 4, length: 0.09 },
+        { point: anchor.bottomRightCut, angle: Math.PI / 4, length: 0.09 },
+      ];
+      for (const ray of rays) shapes.blades.push({ x: ray.point.x, y: ray.point.y, angle: ray.angle, length: ray.length * size, width: size * 0.045 });
+      diamond(anchor.top, 0.07, 0.1, "light");
+      diamond(anchor.bottom, 0.07, 0.1, "light");
       break;
     }
     case "plain":

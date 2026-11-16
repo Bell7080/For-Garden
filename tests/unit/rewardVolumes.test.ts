@@ -119,3 +119,15 @@ describe('하루 한 번 무료 수급처(2026-11-14 신설 — 응태 승인 �
   expect(FREE_RESEARCH_BANNER_ID).toBe('fossil');
  });
 });
+
+describe('후원 지층 매일 보급·승급 기념품(2026-11-16 신설 — 응태 승인)',()=>{
+ const approvalMessage='후원 지층 보급·기념품을 올리려면 공급량 표를 먼저 보여 주고 응태 승인을 받는다(설계 analysis/vip-patron-strata-design-2026-11-16.md).';
+ it('무료로 닿는 표토·퇴적층의 매일 젬은 5, 가장 깊은 지핵도 30을 넘지 않는다',async()=>{
+  const { PATRON_TIERS } = await import('../../src/data/patronStrata');
+  const gemsOf=(grants:readonly import('../../src/data/products').ProductGrant[])=>grants.reduce((sum,g)=>sum+(g.kind==='currency'&&g.currency==='gems'?g.amount:0),0);
+  expect(PATRON_TIERS.map(t=>gemsOf(t.daily)),approvalMessage).toEqual([5,5,10,15,20,25,30]);
+  // 기념품은 지층마다 한 번이라 반복 수급이 아니다 — 젬은 퇴적층 100 하나뿐이다.
+  expect(PATRON_TIERS.reduce((sum,t)=>sum+gemsOf(t.reward),0),approvalMessage).toBe(100);
+  expect(PATRON_TIERS.find(t=>t.id==='sediment')!.threshold,approvalMessage).toBe(30);
+ });
+});

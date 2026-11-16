@@ -13,7 +13,7 @@ export interface ProfileFrameDefinition {
   readonly unlockLevel: number;
   readonly unlockAchievement?: { readonly id: string; readonly tiers: number };
   /** 레벨·업적이 아니라 선물로만 연다 — 받은 테두리 ID는 업적 저장의 `giftFrames`가 든다. 레벨 가지나무·레벨업 창에 서지 않는다. */
-  readonly unlockGift?: "firstPayment" | "seasonPass";
+  readonly unlockGift?: "firstPayment" | "seasonPass" | "patronStrata";
   /** 테두리 선과 발광의 색. */
   readonly color: number;
   /** 액자 안쪽을 은은하게 물들이는 색. */
@@ -25,7 +25,7 @@ export interface ProfileFrameDefinition {
   readonly style: ProfileFrameStyle;
 }
 
-export type ProfileFrameStyle = "plain" | "bracket" | "gem" | "wing" | "vine" | "crown" | "strata" | "laurel" | "prism" | "sigil" | "halo";
+export type ProfileFrameStyle = "plain" | "bracket" | "gem" | "wing" | "vine" | "crown" | "strata" | "laurel" | "prism" | "sigil" | "halo" | "fossil" | "bedrock" | "core";
 
 export const DEFAULT_PROFILE_FRAME_ID = "field";
 
@@ -36,6 +36,10 @@ export const PROFILE_FRAMES: readonly ProfileFrameDefinition[] = [
   { id: "runic", style: "prism", displayName: "룬의 광채", unlockLevel: 1, unlockAchievement: { id: "rune-refinement", tiers: 4 }, color: 0x7ee5de, wash: 0x143b3a },
   { id: "patron", style: "sigil", displayName: "첫 후원의 증표", unlockLevel: 1, unlockGift: "firstPayment", color: 0xffd27a, wash: 0x3f2a10 },
   { id: "season", style: "halo", displayName: "시즌의 날개", unlockLevel: 1, unlockGift: "seasonPass", color: 0x9fe3ff, wash: 0x13324a },
+  // 후원 지층 기념품(`data/patronStrata.ts`) — 화석층 · 기반암 · 지핵에 처음 닿아 기념품을 받을 때 연다.
+  { id: "patron-fossil", style: "fossil", displayName: "화석층의 기록", unlockLevel: 1, unlockGift: "patronStrata", color: 0xd9d2c0, wash: 0x2e2a22 },
+  { id: "patron-bedrock", style: "bedrock", displayName: "기반암", unlockLevel: 1, unlockGift: "patronStrata", color: 0xa9b6cc, wash: 0x1f2633 },
+  { id: "patron-core", style: "core", displayName: "지핵", unlockLevel: 1, unlockGift: "patronStrata", color: 0xff7a45, wash: 0x461a0e },
   { id: "holo", style: "bracket", displayName: "투영 관측", unlockLevel: 10, color: 0x5fd4ff, wash: 0x173848 },
   { id: "amber", style: "gem", displayName: "호박 표본", unlockLevel: 20, color: 0xf2b441, wash: 0x3d2c12 },
   { id: "abyss", style: "wing", displayName: "심해 기록", unlockLevel: 30, color: 0xb07cff, wash: 0x2a1c44 },

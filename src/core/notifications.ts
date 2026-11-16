@@ -1,5 +1,5 @@
 /** 화면 이름과 무관하게 서버 상태에서 판별할 수 있는 공용 알림 키다. */
-export const NOTIFICATION_KEYS = ["raidReward", "expeditionReward", "sortieReward", "missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "premiumOffer", "passReward", "premiumNotice", "achievementReward", "codexReward", "shopFree", "freeResearch", "interactionReturned", "duelSeasonReward", "premiumSubscription"] as const;
+export const NOTIFICATION_KEYS = ["raidReward", "expeditionReward", "sortieReward", "missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "premiumOffer", "passReward", "premiumNotice", "achievementReward", "codexReward", "shopFree", "freeResearch", "interactionReturned", "duelSeasonReward", "premiumSubscription", "patronDaily"] as const;
 export type NotificationKey = (typeof NOTIFICATION_KEYS)[number];
 
 /** API 응답을 합성하기 전의 최소 조건이며, 항목이 없으면 추측하지 않고 false로 둔다. */
@@ -35,6 +35,8 @@ export interface NotificationConditions {
   duelSeasonRewardReady?: boolean;
   /** 오늘 몫을 아직 받지 않은 구독 수. */
   claimableSubscriptionBonusCount?: number;
+  /** 후원 지층에 받을 것(오늘 보급·기념품)이 있는가. */
+  patronClaimable?: boolean;
 }
 
 /** 모든 씬이 공유하는 판정 결과라 UI가 개별 숫자나 날짜를 다시 계산하지 않는다. */
@@ -55,7 +57,7 @@ export function deriveNotificationState(conditions: NotificationConditions): Not
     achievementReward: (conditions.claimableAchievementCount ?? 0) > 0,
     codexReward: (conditions.claimableCodexCount ?? 0) > 0,
     // 패스 달성 보상은 로비 패스 카드에서 받으므로 프리미엄 쪽에는 알리지 않는다.
-    premiumNotice: (conditions.freeSupplyCategories?.length ?? 0) > 0 || (conditions.situationalOfferCount ?? 0) > 0 || (conditions.claimableSubscriptionBonusCount ?? 0) > 0,
+    premiumNotice: (conditions.freeSupplyCategories?.length ?? 0) > 0 || (conditions.situationalOfferCount ?? 0) > 0 || (conditions.claimableSubscriptionBonusCount ?? 0) > 0 || conditions.patronClaimable === true,
     // 상황 특가는 결과판 위에 창을 띄우지 않고 프리미엄 「한정」 탭의 붉은 점으로만 알린다.
     premiumOffer: (conditions.situationalOfferCount ?? 0) > 0,
     premiumFree: (conditions.freeSupplyCategories?.length ?? 0) > 0,
@@ -67,6 +69,7 @@ export function deriveNotificationState(conditions: NotificationConditions): Not
     interactionReturned: (conditions.claimableInteractionCount ?? 0) > 0,
     duelSeasonReward: conditions.duelSeasonRewardReady === true,
     premiumSubscription: (conditions.claimableSubscriptionBonusCount ?? 0) > 0,
+    patronDaily: conditions.patronClaimable === true,
   };
 }
 

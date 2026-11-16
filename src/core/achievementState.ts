@@ -2,6 +2,7 @@ import { ACHIEVEMENT_SERIES } from "../data/achievements";
 import { LIFETIME_COUNT_CAP } from "./missions";
 import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import { NEWBIE_GROWTH_CLAIM_IDS } from "../data/newbieGrowth";
+import { PATRON_FRAME_IDS, isValidPatronState, normalizePatronState, type PatronState } from "./patronStrata";
 
 /*
  * 업적 저장 모양만 따로 둔다 — `state/session.ts`가 읽는 파일이라 렐릭·스테이지 표처럼 무거운 데이터를
@@ -40,6 +41,8 @@ export interface AchievementState {
   encountered?: string[];
   /** 받은 도감 마디 수(`CODEX_MILESTONES` 앞에서부터). */
   codexClaimed?: number;
+  /** 후원 지층 — 복원 기금 누적·매일 보급·기념품(`core/patronStrata.ts`). 한 번도 쌓지 않았으면 없다. */
+  patron?: PatronState;
 }
 
 /** 도감 마디 수의 저장 상한 — 마디 표보다 넉넉한 안전선이다(표가 늘어도 저장 검증을 함께 고칠 필요가 없게). */
@@ -47,7 +50,7 @@ const CODEX_CLAIM_LIMIT = 64;
 const ENCOUNTER_LIMIT = 512;
 
 /** 선물로만 여는 한정 테두리 ID. `data/profileFrames.ts`의 `unlockGift` 테두리와 같아야 한다(`profileFrames.test`). */
-export const GIFT_FRAME_IDS: ReadonlySet<string> = new Set(["patron", "season"]);
+export const GIFT_FRAME_IDS: ReadonlySet<string> = new Set(["patron", "season", ...PATRON_FRAME_IDS]);
 
 export function createEmptyAchievementState(): AchievementState { return { claimed: {}, goldPeak: 0 }; }
 
@@ -66,6 +69,7 @@ export function normalizeAchievementState(value: unknown): AchievementState {
   const giftFrames = Array.isArray(source.giftFrames) ? [...new Set(source.giftFrames.filter((id): id is string => typeof id === "string" && GIFT_FRAME_IDS.has(id)))] : [];
   const encountered = Array.isArray(source.encountered) ? [...new Set(source.encountered.filter((id): id is string => typeof id === "string" && id.length > 0 && id.length <= 64))].slice(0, ENCOUNTER_LIMIT) : [];
   const codexClaimed = Math.min(CODEX_CLAIM_LIMIT, whole(source.codexClaimed));
+  const patron = source.patron && typeof source.patron === "object" ? normalizePatronState(source.patron) : undefined;
   const growth = Array.isArray(source.growth) ? [...new Set(source.growth.filter((id): id is string => typeof id === "string" && NEWBIE_GROWTH_CLAIM_IDS.has(id)))] : [];
   return {
     claimed, goldPeak: Math.min(LIFETIME_COUNT_CAP, whole(source.goldPeak)), ...(ancientFloorPeak > 0 ? { ancientFloorPeak } : {}),
@@ -73,6 +77,7 @@ export function normalizeAchievementState(value: unknown): AchievementState {
     ...(source.firstPaymentGift === true ? { firstPaymentGift: true as const } : {}),
     ...(source.firstPaymentPaid === true && source.firstPaymentGift !== true ? { firstPaymentPaid: true as const } : {}), ...(giftFrames.length > 0 ? { giftFrames } : {}),
     ...(encountered.length > 0 ? { encountered } : {}), ...(codexClaimed > 0 ? { codexClaimed } : {}),
+    ...(patron ? { patron } : {}),
   };
 }
 
@@ -89,6 +94,7 @@ export function isValidAchievementState(value: unknown): value is AchievementSta
   if (state.giftFrames !== undefined && (!Array.isArray(state.giftFrames) || state.giftFrames.some((id) => typeof id !== "string" || !GIFT_FRAME_IDS.has(id)))) return false;
   if (state.encountered !== undefined && (!Array.isArray(state.encountered) || state.encountered.length > ENCOUNTER_LIMIT || state.encountered.some((id) => typeof id !== "string" || id.length === 0 || id.length > 64) || new Set(state.encountered).size !== state.encountered.length)) return false;
   if (state.codexClaimed !== undefined && (!Number.isInteger(state.codexClaimed) || state.codexClaimed < 0 || state.codexClaimed > CODEX_CLAIM_LIMIT)) return false;
+  if (state.patron !== undefined && !isValidPatronState(state.patron)) return false;
   if (!state.claimed || typeof state.claimed !== "object") return false;
   return Object.entries(state.claimed).every(([id, count]) => {
     const series = ACHIEVEMENT_SERIES.find((candidate) => candidate.id === id);

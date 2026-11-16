@@ -1,3 +1,4 @@
+import { squeezeTextToWidth } from "./textFit";
 import { openNicknamePopup } from "./NicknamePopup";
 import Phaser from "phaser";
 import { slideTabPage } from "./screenTransition";
@@ -231,7 +232,7 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
         });
         item.add(sample);
         const frameName = scene.add.text(0, cellHeight / 2 - 58, frame.displayName, textStyle({ role: "emphasis", size: 24, color: chosen ? hex(frame.color) : COLOR.ink })).setOrigin(0.5);
-        item.add(frameName);
+        item.add(squeezeTextToWidth(frameName, width - 24));
         if (!unlocked) {
           // 못 얻은 테두리는 칸 실루엣 그대로 어둠을 덮는다 — 견본만 옅게 하던 때는 얻은 것과 분간되지 않았다.
           const { missing } = AVATAR_PICKER;
@@ -240,7 +241,7 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
           item.add(drawLayer(scene, 0, 0, plate, { fill: 0x000000, alpha: missing.dim, shadow: false }));
           item.add(drawGlyph(scene, "lock", -30, cellHeight / 2 - 24, 22, COLOR.inkDimHex));
           const lockText = scene.add.text(-12, cellHeight / 2 - 24, frame.unlockGift ? t("profile.edit.frameGift") : frame.unlockAchievement ? t("achievement.tier", { current: frame.unlockAchievement.tiers, total: frame.unlockAchievement.tiers }) : t("profile.edit.frameLocked", { level: frame.unlockLevel }), textStyle({ role: "emphasis", size: 20, color: COLOR.inkDim })).setOrigin(0, 0.5);
-          item.add(lockText);
+          item.add(squeezeTextToWidth(lockText, width / 2 + 2));
         }
         const hit = scene.add.rectangle(0, 0, width, cellHeight, 0xffffff, 0).setInteractive({ useHandCursor: unlocked });
         hit.on("pointerup", () => {

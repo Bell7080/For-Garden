@@ -8,6 +8,7 @@ import type { RaidDifficulty } from "../data/raid";
 import type { AcquisitionResult, GachaPityState, QuantityRewardKind, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId, Stats } from "../core/types";
 import type { MissionPeriod, MissionReward } from "../core/missions";
+import type { PatronRewardStatus, PatronTierId } from "../core/patronStrata";
 import type { AchievementCategory, AchievementMetric } from "../data/achievements";
 import type { NewbieGrowthMetric, NewbieGrowthMilestoneReward, NewbieGrowthReward } from "../data/newbieGrowth";
 import type { NewbieGrowthGoalState, NewbieGrowthMilestoneState } from "../core/newbieGrowth";
@@ -699,6 +700,32 @@ export interface ClaimFirstPaymentGiftResponse extends PlayerStateDto {
   frameId: string;
 }
 
+/** 후원 지층 기념품 하나의 상태(`core/patronStrata.ts`). */
+export interface PatronTierRewardDto { tierId: PatronTierId; status: PatronRewardStatus; /** `settling`이면 받을 수 있게 되는 시각. */ claimableAt?: string; }
+/** 후원 지층 — 복원 기금·지금 지층·오늘 보급·기념품 상태. 다른 사람에게는 내려주지 않는다. */
+export interface PatronStatusDto {
+  fund: number;
+  freeFund: number;
+  paidFund: number;
+  tierId: PatronTierId;
+  dailyAvailable: boolean;
+  rewards: PatronTierRewardDto[];
+  /** 다음 UTC 자정(매일 보급이 돌아오는 시각). */
+  nextDailyAt: string;
+  serverTime: string;
+}
+export interface ClaimPatronDailyRequest { requestId: string; }
+export interface ClaimPatronTierRewardRequest { requestId: string; tierId: PatronTierId; }
+export interface ClaimPatronResponse extends PlayerStateDto {
+  granted: readonly ProductGrant[];
+  patron: PatronStatusDto;
+  /** 기념품과 함께 열린 테두리·수식어. */
+  frameId?: string;
+  modifierId?: string;
+  /** 이번 수령으로 오른 지층(매일 보급의 기금 1이 문턱을 넘긴 때). */
+  promotedTo?: PatronTierId;
+}
+
 /** 임무 화면에 필요한 진행·보상·수령 상태를 한 행으로 전달한다. */
 export interface MissionDto { id: string; period: MissionPeriod; title: string; progress: number; target: number; reward: MissionReward; researchPoints: number; claimed: boolean; }
 /** 연구도 마디는 정적 보상과 서버가 확정한 달성·수령 상태를 함께 전달한다. */
@@ -707,7 +734,7 @@ export interface PeriodResearchDto { points: number; maxPoints: number; stages: 
 /** 목록 응답은 로비 배지에서 바로 쓸 미수령 개수를 포함한다. */
 export interface MissionListResponse { missions: MissionDto[]; claimableCount: number; research: Record<MissionPeriod, PeriodResearchDto>; }
 /** 받은 편지함 데이터가 없는 화면이 상태를 추측하지 않도록 마련한 명시적 서버 계약이다. */
-export interface NotificationSignalsResponse { claimableRaidCount?: number; claimableExpeditionCount?: number; pendingFriendRequestCount: number; /** 받을 수 있는 업적 단계 수. */ claimableAchievementCount?: number; /** 받을 수 있는 도감 마디 수. */ claimableCodexCount?: number; unseenEventCount: number; /** 광고를 봐야 받는 것만 남은 이벤트 수(돌림판 광고 보너스). `unseenEventCount`에 들지 않고, 설정을 켠 사람의 화면만 더한다. */ adOnlyEventCount?: number; unreadMailCount: number; claimableMailCount?: number; claimablePassCount?: number; /** 아직 받지 않은 무료 보급이 있는 프리미엄 탭(일간·주간·월간). */ freeSupplyCategories: Array<"daily" | "weekly" | "monthly">; /** 일반 상점에 아직 받지 않은 무료 칸이 있는가. */ shopFreeSupply?: boolean; /** 오늘의 무료 연구(`core/freeResearch.ts`)가 남았는가. */ freeResearchAvailable?: boolean; /** 돌아와 받기를 기다리는 교류 파견 수. */ claimableInteractionCount?: number; /** 받지 않은 결투 시즌 보상이 있는가. */ duelSeasonRewardReady?: boolean; /** 이용 중인데 오늘 몫을 아직 받지 않은 구독 수. */ claimableSubscriptionBonusCount?: number; /** 지금 열린 상황 특가 수(받을 첫 결제 선물 포함) — 프리미엄 「한정」 탭의 붉은 점. */ situationalOfferCount?: number; /** 운영 도구가 보낸 우편·재화 변동 소식. 한 번 내려가면 서버가 비운다. */ opsNotices?: OpsNotice[]; }
+export interface NotificationSignalsResponse { claimableRaidCount?: number; claimableExpeditionCount?: number; pendingFriendRequestCount: number; /** 받을 수 있는 업적 단계 수. */ claimableAchievementCount?: number; /** 받을 수 있는 도감 마디 수. */ claimableCodexCount?: number; unseenEventCount: number; /** 광고를 봐야 받는 것만 남은 이벤트 수(돌림판 광고 보너스). `unseenEventCount`에 들지 않고, 설정을 켠 사람의 화면만 더한다. */ adOnlyEventCount?: number; unreadMailCount: number; claimableMailCount?: number; claimablePassCount?: number; /** 아직 받지 않은 무료 보급이 있는 프리미엄 탭(일간·주간·월간). */ freeSupplyCategories: Array<"daily" | "weekly" | "monthly">; /** 일반 상점에 아직 받지 않은 무료 칸이 있는가. */ shopFreeSupply?: boolean; /** 오늘의 무료 연구(`core/freeResearch.ts`)가 남았는가. */ freeResearchAvailable?: boolean; /** 돌아와 받기를 기다리는 교류 파견 수. */ claimableInteractionCount?: number; /** 받지 않은 결투 시즌 보상이 있는가. */ duelSeasonRewardReady?: boolean; /** 이용 중인데 오늘 몫을 아직 받지 않은 구독 수. */ claimableSubscriptionBonusCount?: number; /** 지금 열린 상황 특가 수(받을 첫 결제 선물 포함) — 프리미엄 「한정」 탭의 붉은 점. */ situationalOfferCount?: number; /** 후원 지층에 받을 것(오늘 보급·기념품)이 있는가. */ patronClaimable?: boolean; /** 운영 도구가 보낸 우편·재화 변동 소식. 한 번 내려가면 서버가 비운다. */ opsNotices?: OpsNotice[]; }
 /** 일괄 또는 선택 수령 뒤 지급 총액과 최신 상태를 반환한다. */
 export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; claimedResearchStageIds: string[]; /** 임무·연구도 단계가 각각 준 것과 그 합(같은 재화는 한 줄). 상한에 깎인 뒤의 실제 지급분이다. */ rewards: { mission: MissionReward[]; research: MissionReward[] }; granted: MissionReward[]; }
 
@@ -1419,6 +1446,12 @@ export interface GameApi extends AsyncArenaProfileApi {
   /** 활성 구독의 오늘 몫을 받는다. 하루에 한 번이다. */
   claimPassDailyBonus(request: ClaimPassDailyBonusRequest): Promise<PurchaseProductResponse>;
   claimFirstPaymentGift(request: ClaimFirstPaymentGiftRequest): Promise<ClaimFirstPaymentGiftResponse>;
+  /** 후원 지층 — 복원 기금과 오늘 보급·기념품 상태를 읽는다. */
+  getPatronStatus(): Promise<PatronStatusDto>;
+  /** 후원 지층의 오늘 보급을 받는다(UTC 하루 한 번 · 기금 +1). */
+  claimPatronDaily(request: ClaimPatronDailyRequest): Promise<ClaimPatronResponse>;
+  /** 처음 닿은 지층의 기념품을 받는다(결제로 닿았으면 7일 뒤). */
+  claimPatronTierReward(request: ClaimPatronTierRewardRequest): Promise<ClaimPatronResponse>;
   pullRelics(request: PullRequest): Promise<PullResponse>;
   /** 오늘의 무료 연구(하루 1회 · 상시 화석 연구 1회)가 남았는지 읽는다. */
   getFreeResearchStatus(): Promise<FreeResearchStatusDto>;

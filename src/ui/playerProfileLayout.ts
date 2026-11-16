@@ -92,7 +92,7 @@ export const AVATAR_PICKER = {
   /** 미보유 칸을 누르는 어둠 — 칸과 같은 실루엣으로 덮는다. 미보유 얼굴은 정보창처럼 검은 실루엣이고, 어두운 액자 면에 묻히지 않게 그 칸만 밝은 면을 깐다. */
   missing: { dim: 0.62, labelAlpha: 0.38, sampleAlpha: 0.3, silhouetteTint: 0x000000, silhouetteAlpha: 0.88, silhouetteFill: 0x4a5a6e },
   photos: { top: 588, columns: 5, cell: 150, gap: 24 },
-  frames: { top: 598, columns: 3, width: 272, height: 256, gap: 18, avatarSize: 124 },
+  frames: { top: 598, columns: 4, width: 206, height: 236, gap: 14, avatarSize: 112 },
   modifiers: { top: 598, columns: 3, width: 272, height: 76, gap: 18 },
   bottomPad: 70,
 } as const;

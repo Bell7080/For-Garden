@@ -63,6 +63,11 @@ import { wrapDialogueText } from "../core/dialogueTextWrap";
 import { settingsManager } from "../managers/SettingsManager";
 import { withBusy } from "../ui/BusyOverlay";
 import { showContentIntro } from "../ui/contentIntro";
+import type { PatronStatusDto } from "../api/contracts";
+import type { PatronTierId } from "../core/patronStrata";
+import { PATRON_TIERS } from "../core/patronStrata";
+import { drawEmblem, openPatronStrataPopup, patronTierName } from "../ui/PatronStrataPopup";
+import { PATRON_CHIP } from "../ui/patronStrataLayout";
 
 /**
  * 현금 결제 카탈로그를 인게임 재화 상점과 분리해 소유하는 독립 프리미엄 씬이다.
@@ -114,6 +119,10 @@ export class PremiumScene extends Phaser.Scene {
   /** 상품 목록을 한 번이라도 받았는가. 못 받은 채 라벨을 누르면 다시 묻는다. */
   private productsLoaded = false;
   private closed = false;
+  /** 후원 지층 — 받기 전에는 칩을 세우지 않는다(조회 중 문구를 띄우지 않는다). */
+  private patronStatus?: PatronStatusDto;
+  private patronChip?: Phaser.GameObjects.Container;
+  private patronDotDispose?: () => void;
 
   constructor() { super("premium"); }
 
@@ -140,6 +149,9 @@ export class PremiumScene extends Phaser.Scene {
     });
     this.add.text(60, 185, t("shop.premium.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
     addSectionTitle(this, premiumTitleLeft(), premiumTitleY(), t("premium.list"), { size: PREMIUM_TITLE.size }).setDepth(8);
+    this.patronChip = undefined;
+    if (this.patronStatus) this.drawPatronChip(this.patronStatus);
+    void this.refreshPatron();
     this.createViewport();
     this.createTabs();
     this.installScrollInput();
@@ -156,6 +168,7 @@ export class PremiumScene extends Phaser.Scene {
       this.viewportMask?.destroy(); this.viewportMask = undefined;
       this.tabMask?.destroy(); this.tabMask = undefined;
       this.tabEdgeHint?.destroy(); this.tabEdgeHint = undefined;
+      this.patronDotDispose?.(); this.patronDotDispose = undefined;
     });
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
@@ -590,6 +603,71 @@ export class PremiumScene extends Phaser.Scene {
       this.topBar?.refresh();
       openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
       await this.refresh();
+      void notificationManager.refresh().catch(() => undefined);
+    } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claiming = false; }
+  }
+
+  /** 후원 지층 상태를 다시 묻고 칩을 맞춘다. 실패하면 지난 칩을 그대로 둔다. */
+  private async refreshPatron(): Promise<PatronStatusDto | undefined> {
+    const status = await gameApi.getPatronStatus().catch((error) => { logError("premium.patron", "[premium] 후원 지층 조회 실패", error); return undefined; });
+    if (!status || this.closed || !this.scene.isActive()) return undefined;
+    this.patronStatus = status;
+    this.drawPatronChip(status);
+    return status;
+  }
+
+  /**
+   * 오른쪽 위 「후원 지층」 칩 — 「프리미엄」 제목과 마주 보는 구석이다. 지층 표식 · 지층 이름 · 복원 기금이 서고,
+   * 오늘 보급이나 받을 기념품이 남았으면 붉은 점이 선다(`patronDaily`). 누르면 후원 지층 창이 열린다.
+   */
+  private drawPatronChip(status: PatronStatusDto): void {
+    this.patronDotDispose?.(); this.patronDotDispose = undefined;
+    this.patronChip?.destroy();
+    const C = PATRON_CHIP;
+    const tier = PATRON_TIERS.find(({ id }) => id === status.tierId) ?? PATRON_TIERS[0];
+    const chip = this.add.container(C.right - C.width / 2, C.y).setDepth(9);
+    chip.add(drawLayer(this, 0, 0, chipPoints(C.width, C.height, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } }), { fill: 0x0c121a, alpha: 0.82, edge: tier.color, edgeAlpha: 0.85 }));
+    const left = -C.width / 2;
+    chip.add(drawEmblem(this, left + 40, 0, C.emblem, tier.color));
+    const textLeft = left + 76;
+    const name = this.add.text(textLeft, -14, patronTierName(tier.id), textStyle({ role: "display", size: C.nameSize, color: `#${tier.color.toString(16).padStart(6, "0")}` })).setOrigin(0, 0.5);
+    chip.add(squeezeTextToWidth(name, C.width - 96));
+    const fund = this.add.text(textLeft, 18, `${t("patron.fund")} ${formatCurrency(status.fund)}`, textStyle({ role: "emphasis", size: C.fundSize, color: COLOR.inkDim })).setOrigin(0, 0.5);
+    chip.add(squeezeTextToWidth(fund, C.width - 96));
+    // 칩은 스크롤 창 밖(화면 머리)에 서므로 창으로 자를 것이 없다 — 화면 전체를 창으로 준다.
+    const hit = addClippedHit(this, chip, 0, 0, C.width, C.height, () => ({ left: 0, right: this.scale.width, top: 0, bottom: this.scale.height }), { useHandCursor: true });
+    hit.on("pointerdown", () => pressIn(chip));
+    hit.on("pointerout", () => pressOut(chip, "normal", { pop: false }));
+    hit.on("pointerup", () => { pressOut(chip); this.openPatron(); });
+    this.patronDotDispose = bindNotificationDot(this, chip, { x: C.width / 2 - 10, y: -C.height / 2 + 8 }, (listener) => notificationManager.subscribe("patronDaily", listener));
+    this.patronChip = chip;
+  }
+
+  private openPatron(): void {
+    const status = this.patronStatus;
+    if (!status) return;
+    const profile = playerProfileDisplay(session);
+    openPatronStrataPopup(this, this.popups, {
+      status,
+      avatar: { portraitAssetId: profile.avatar?.portraitAssetId, fallback: profileAvatarContent(profile, () => false).fallback },
+      onClaimDaily: () => void this.claimPatron(() => gameApi.claimPatronDaily({ requestId: globalThis.crypto?.randomUUID?.() ?? `patron-daily-${Date.now()}` })),
+      onClaimReward: (tierId: PatronTierId) => void this.claimPatron(() => gameApi.claimPatronTierReward({ requestId: globalThis.crypto?.randomUUID?.() ?? `patron-tier-${Date.now()}`, tierId })),
+    });
+  }
+
+  /** 보급·기념품 받기 — 지급은 서버 경계가 하고, 화면은 영수증을 띄운 뒤 창을 새 상태로 다시 연다. */
+  private async claimPatron(call: () => ReturnType<typeof gameApi.claimPatronDaily>): Promise<void> {
+    if (this.claiming) return;
+    this.claiming = true;
+    try {
+      const result = await withBusy(this, call());
+      session.wallet = { ...result.wallet };
+      this.topBar?.refresh();
+      this.patronStatus = result.patron;
+      this.drawPatronChip(result.patron);
+      this.popups.closeAll();
+      openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted), onConfirm: () => { if (!this.closed) this.openPatron(); } });
+      if (result.promotedTo) this.notice(t("patron.promoted", { name: patronTierName(result.promotedTo) }));
       void notificationManager.refresh().catch(() => undefined);
     } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claiming = false; }
   }

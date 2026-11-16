@@ -25,6 +25,7 @@ export function modifierUnlockText(modifier: ProfileModifierDefinition): string 
     const stage = RESEARCH_REWARD_STAGES[period === "weekly" ? "weekly" : "daily"].find(({ id }) => id === stageId);
     return stage ? t(period === "weekly" ? "profile.unlock.researchWeekly" : "profile.unlock.researchDaily", { value: stage.threshold.toLocaleString() }) : "";
   }
+  if (kind === "patron") return t("profile.unlock.patron", { name: t(`patron.tier.${rest[0]}` as Parameters<typeof t>[0]) });
   if (kind === "achievement") return t("profile.unlock.achievement", { name: t(`achievement.series.${rest[0]}` as Parameters<typeof t>[0]) });
   return "";
 }

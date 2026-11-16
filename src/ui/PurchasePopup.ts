@@ -1,4 +1,5 @@
 import { formatStorePrice } from "../core/storePrice";
+import { fundForPriceKrw } from "../core/patronStrata";
 import { audioManager } from "../managers/AudioManager";
 import { addRewardExpiryTag } from "./rewardExpiry";
 import { addListPrice, addPremiumValueBadges } from "./premiumValueBadge";
@@ -409,7 +410,9 @@ export class PurchasePopup {
       if (tile.daily) view.add(this.scene.add.text(slots.xs[index], P.frameY - slots.size / 2 - 20, t("shop.premium.daily"), textStyle({ role: "display", size: 24, color: accent })).setOrigin(0.5).setStroke("#000000", 4));
     });
     const bonus = premiumFirstBonusGems(product);
-    const extras = [...(bonus > 0 ? [t("shop.premium.firstBonus", { amount: formatCurrency(bonus) })] : []), ...premiumDecorationNames(product), ...(product.passBenefit?.adFree ? [t("shop.premium.perk.adRemoval")] : [])];
+    // 결제마다 쌓이는 복원 기금(후원 지층)도 같은 줄이 말한다 — 정가 100원마다 1, 서버(`fulfillPlatformPurchase`)와 같은 함수다.
+    const patronFund = fundForPriceKrw(product.acquisition.basePriceKrw);
+    const extras = [...(bonus > 0 ? [t("shop.premium.firstBonus", { amount: formatCurrency(bonus) })] : []), ...premiumDecorationNames(product), ...(product.passBenefit?.adFree ? [t("shop.premium.perk.adRemoval")] : []), ...(patronFund > 0 ? [t("patron.purchase.fund", { value: formatCurrency(patronFund) })] : [])];
     if (extras.length) {
       const extra = this.scene.add.text(0, P.bonusY, extras.join("  ·  "), textStyle({ role: "display", size: 28, color: accent, align: "center" })).setOrigin(0.5).setStroke("#000000", 5);
       view.add(fitTextToBox(extra, { width: 800, height: 56 }, { size: 28, minSize: 20 }));

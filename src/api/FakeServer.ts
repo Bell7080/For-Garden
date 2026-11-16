@@ -41,7 +41,8 @@ import { findInteractionJournal, journalsForCity } from "../data/interactionJour
 import { resolveJournalDiscovery, type JournalDiscoveryResolution } from "../core/interactionJournals";
 import { cleanBio, cleanNickname, createPlayerUid, nicknameLockedUntil, nicknameProblem } from "../core/playerCard";
 import { findProfileFrame, isProfileFrameUnlocked } from "../data/profileFrames";
-import { findProfileModifier } from "../data/profileModifiers";
+import { PROFILE_MODIFIERS, findProfileModifier } from "../data/profileModifiers";
+import { PATRON_DAILY_FUND, PATRON_TIERS, addPatronFund, fundForPriceKrw, normalizePatronState, patronDailyAvailable, patronFund, patronHasClaimable, patronRewardStatus, patronTierOf, type PatronState } from "../core/patronStrata";
 import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward, type AdRewardSlot } from "../data/adRewards";
 import { consumeRestorationEntry, normalizeDailyContent, utcDateKey } from "../core/dailyContent";
 import { ATTENDANCE_TRACK_IDS, attendanceTrackView, claimAttendanceAdBonus, claimAttendanceDay, normalizeAttendanceState, rollAttendance, type AttendanceState } from "../core/attendance";
@@ -144,7 +145,7 @@ import { FREE_RESEARCH_BANNER_ID, FREE_RESEARCH_SOURCE_ID, freeResearchAvailable
 import { paidStaminaApplied, settleStamina, STAMINA_HOLD_LIMIT, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
 import type { EnhanceRuneAllRequest, EnhanceRuneAllResponse, EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, SetRuneLoadoutRequest, SetRuneLoadoutResponse, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse, SynthesizeRunesRequest, SynthesizeRunesResponse } from "./contracts";
-import type { ClaimFirstPaymentGiftRequest, ClaimFirstPaymentGiftResponse, FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse, MailClaimHistoryEntryDto, PurchaseHistoryResponse, SentGiftHistoryEntryDto, GiftOptionsRequest, GiftOptionsResponse, PrepareGiftRequest, PrepareGiftResponse, SendGiftRequest, SendGiftResponse, GiftOrderActionRequest, CancelGiftResponse, IncomingGiftsResponse, AcceptGiftResponse, DeclineGiftResponse } from "./contracts";
+import type { ClaimFirstPaymentGiftRequest, ClaimPatronDailyRequest, ClaimPatronTierRewardRequest, ClaimPatronResponse, PatronStatusDto, ClaimFirstPaymentGiftResponse, FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse, MailClaimHistoryEntryDto, PurchaseHistoryResponse, SentGiftHistoryEntryDto, GiftOptionsRequest, GiftOptionsResponse, PrepareGiftRequest, PrepareGiftResponse, SendGiftRequest, SendGiftResponse, GiftOrderActionRequest, CancelGiftResponse, IncomingGiftsResponse, AcceptGiftResponse, DeclineGiftResponse } from "./contracts";
 import { appendMailLog, mailHistoryFromJournal, purchaseHistoryFromJournal } from "../core/purchaseHistory";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, ClaimPassDailyBonusRequest, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { EXCAVATION_CURRENCIES, excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
@@ -2506,6 +2507,77 @@ export class FakeServer implements GameApi {
     return { ...this.snapshot(), ...result };
   }
 
+  /** 후원 지층 상태를 화면이 읽는 모양으로 옮긴다 — 기금·지층·오늘 보급·기념품. */
+  private patronStatusDto(state: PatronState, now: Date): PatronStatusDto {
+    return {
+      fund: patronFund(state), freeFund: state.free, paidFund: state.paid, tierId: patronTierOf(state).id,
+      dailyAvailable: patronDailyAvailable(state, now),
+      rewards: PATRON_TIERS.slice(1).map(({ id }) => {
+        const status = patronRewardStatus(state, id, now);
+        return { tierId: id, status, ...(status === "settling" && state.reachedAt?.[id] ? { claimableAt: state.reachedAt[id] } : {}) };
+      }),
+      nextDailyAt: nextUtcMidnight(now).toISOString(), serverTime: now.toISOString(),
+    };
+  }
+
+  private patronState(): PatronState { return normalizePatronState(this.state.achievements?.patron); }
+
+  async getPatronStatus(): Promise<PatronStatusDto> {
+    await this.delay();
+    return this.patronStatusDto(this.patronState(), this.now());
+  }
+
+  /** 후원 지층의 오늘 보급 — 지금 지층의 보급을 주고 무료 기금 1을 쌓는다. 같은 요청 ID의 재전송은 영수증을 돌려준다. */
+  async claimPatronDaily(request: ClaimPatronDailyRequest): Promise<ClaimPatronResponse> {
+    await this.delay();
+    const cached = this.readReceipt<Omit<ClaimPatronResponse, keyof PlayerStateDto>>("patronDaily", request.requestId, "daily");
+    if (cached) return { ...this.snapshot(), ...cached };
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "요청 ID가 필요합니다.");
+    const now = this.now();
+    const before = this.patronState();
+    if (!patronDailyAvailable(before, now)) throw new GameApiError("INVALID_STATE", "오늘 후원 보급을 이미 받았습니다.");
+    const tier = patronTierOf(before);
+    const nextWallet = { ...this.state.wallet };
+    const applied = this.applyProductGrants({ grants: tier.daily }, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now);
+    const after = { ...addPatronFund(before, "free", PATRON_DAILY_FUND, now), dailyDate: utcDateKey(now) };
+    const promoted = patronTierOf(after).id !== tier.id ? patronTierOf(after).id : undefined;
+    const candidate = structuredClone(this.state);
+    candidate.wallet = nextWallet; candidate.itemInventory = applied.items;
+    candidate.achievements = { ...normalizeAchievementState(this.state.achievements), patron: after };
+    const result = { granted: applied.granted, patron: this.patronStatusDto(after, now), ...(promoted ? { promotedTo: promoted } : {}) };
+    this.recordReceipt(candidate, "patronDaily", request.requestId, "daily", result);
+    this.commitRaidState(candidate);
+    return { ...this.snapshot(), ...result };
+  }
+
+  /** 처음 닿은 지층의 기념품 — 재화·아이템과 테두리·수식어를 한 저장으로 확정한다. */
+  async claimPatronTierReward(request: ClaimPatronTierRewardRequest): Promise<ClaimPatronResponse> {
+    await this.delay();
+    const cached = this.readReceipt<Omit<ClaimPatronResponse, keyof PlayerStateDto>>("patronTier", request.requestId, String(request.tierId));
+    if (cached) return { ...this.snapshot(), ...cached };
+    const tier = PATRON_TIERS.find(({ id }) => id === request.tierId);
+    if (!request.requestId || !tier) throw new GameApiError("INVALID_STATE", "알 수 없는 지층입니다.");
+    const now = this.now();
+    const before = this.patronState();
+    const status = patronRewardStatus(before, tier.id, now);
+    if (status !== "ready") throw new GameApiError("INVALID_STATE", status === "settling" ? "아직 정산 중인 기념품입니다." : "받을 수 없는 기념품입니다.");
+    const nextWallet = { ...this.state.wallet };
+    const applied = this.applyProductGrants({ grants: tier.reward }, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now);
+    const after: PatronState = { ...before, claimed: [...(before.claimed ?? []), tier.id] };
+    const achievements = normalizeAchievementState(this.state.achievements);
+    const candidate = structuredClone(this.state);
+    candidate.wallet = nextWallet; candidate.itemInventory = applied.items;
+    candidate.achievements = { ...achievements, patron: after, ...(tier.frameId ? { giftFrames: [...new Set([...(achievements.giftFrames ?? []), tier.frameId])] } : {}) };
+    if (tier.modifierId && findProfileModifier(tier.modifierId) && !candidate.earnedProfileModifierIds.includes(tier.modifierId)) {
+      const earned = new Set([...candidate.earnedProfileModifierIds, tier.modifierId]);
+      candidate.earnedProfileModifierIds = PROFILE_MODIFIERS.filter(({ id }) => earned.has(id)).map(({ id }) => id);
+    }
+    const result = { granted: applied.granted, patron: this.patronStatusDto(after, now), ...(tier.frameId ? { frameId: tier.frameId } : {}), ...(tier.modifierId ? { modifierId: tier.modifierId } : {}) };
+    this.recordReceipt(candidate, "patronTier", request.requestId, tier.id, result);
+    this.commitRaidState(candidate);
+    return { ...this.snapshot(), ...result };
+  }
+
   /** 무료 수령을 먼저 받아야 열리는 광고 슬롯(일간 보급의 추가 몫)은 그 상품의 오늘 몫이 소진됐을 때만 받는다. */
   private assertAdPrerequisite(slot: AdRewardSlot, now: Date): void {
     if (slot.id === ROULETTE.adSlot && !this.allEventsOpen() && !rouletteStatus(this.state.dailyAdRewards, now).active) throw new GameApiError("EVENT_NOT_ACTIVE", "이벤트가 종료되었습니다.");
@@ -2590,7 +2662,12 @@ export class FakeServer implements GameApi {
     const candidate = structuredClone(this.state);
     candidate.wallet = nextWallet; candidate.itemInventory = applied.items; candidate.productPurchases = nextPurchases;
     if (product.situational) candidate.situationalOffers = consumeSituationalOffer(normalizeSituationalOfferState(this.state.situationalOffers), product.id, now);
-    if (firstPaymentGift) candidate.achievements = { ...achievements, firstPaymentPaid: true };
+    // 후원 지층 — 정가 ₩100마다 복원 기금 1(결제 몫). 결제 몫이 닿게 한 지층의 기념품은 7일 뒤에 열린다.
+    const patronGain = fundForPriceKrw(product.acquisition.basePriceKrw);
+    candidate.achievements = {
+      ...achievements, ...(firstPaymentGift ? { firstPaymentPaid: true as const } : {}),
+      ...(patronGain > 0 ? { patron: addPatronFund(normalizePatronState(achievements.patron), "paid", patronGain, now) } : {}),
+    };
     let entitlement: PassEntitlementDto | undefined;
     if (product.passBenefit) {
       const entitlementId = `entitlement-${verification.transactionId}`;
@@ -2734,6 +2811,12 @@ export class FakeServer implements GameApi {
       || context.orders.some(row => row.transactionId === verification.transactionId)) throw new GameApiError("RECEIPT_INVALID", "이미 사용된 거래입니다.");
     const { after } = this.moveGift(context, order.id, { kind: "pay", transactionId: verification.transactionId }, now);
     const candidate = structuredClone(this.state);
+    // 후원 지층 기금은 결제한 사람(보낸 사람)에게만 쌓인다 — 받는 사람의 기금은 그대로다.
+    const giftFund = fundForPriceKrw(order.priceKrw);
+    if (giftFund > 0) {
+      const achievements = normalizeAchievementState(this.state.achievements);
+      candidate.achievements = { ...achievements, patron: addPatronFund(normalizePatronState(achievements.patron), "paid", giftFund, now) };
+    }
     this.recordReceipt(candidate, "platformTransaction", verification.transactionId, order.productId, {
       productId: order.productId, quantity: 1, granted: [], grantedRunes: [], remaining: 0, firstBonusApplied: false, purchasedAt: now.toISOString(), giftOrderId: order.id,
     });
@@ -3829,7 +3912,8 @@ export class FakeServer implements GameApi {
     // 시즌 보상은 결투 서버가 붙었을 때만 생긴다(`claimDuelSeasonReward`와 같은 문). 조회라 상태를 저장하지 않는다.
     const duelSeasonRewardReady = (QA_TOOLS_ENABLED || this.duelContext !== undefined) && rollDuelPeriods(normalizeDuelState(this.state.duel, [...this.state.owned]), now).pendingSeasonReward != null;
     const claimableSubscriptionBonusCount = PRODUCTS.filter((product) => product.passBenefit && this.subscriptionInfo(product, now).subscription?.dailyBonusClaimed === false).length;
-    return { freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
+    const patronClaimable = patronHasClaimable(this.patronState(), now);
+    return { patronClaimable, freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
   }
 
   /**

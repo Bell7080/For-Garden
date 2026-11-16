@@ -1117,8 +1117,8 @@ export class LobbyScene extends Phaser.Scene {
     rail.forEach((item) => {
       const button = new RailButton(this, item.bounds.x, item.bounds.y, { icon: item.icon, label: item.label, size: item.bounds.width, event: item.event, onClick: item.onClick });
       // 실제 서버 계약이 준비된 우편·친구 요청만 연결하고 Fake 데이터에서는 임의로 켜지 않는다.
-      // 이벤트 입구는 오늘 받을 출석이 남아 있으면 점이 선다.
-      const key = item.icon === "mail" ? "mail" : item.icon === "friends" ? "friendRequest" : item.icon === "event" ? "newEvent" : undefined;
+      // 이벤트 입구는 오늘 받을 출석이 남아 있으면, 길드 칩은 오늘 길드 출석을 아직 찍지 않았으면 점이 선다.
+      const key = item.icon === "mail" ? "mail" : item.icon === "friends" ? "friendRequest" : item.icon === "event" ? "newEvent" : item.icon === "guild" ? "guildAttendance" : undefined;
       if (item.icon === "friends") this.lockRailButton("friends", button);
       if (item.icon === "guild") this.lockRailButton("guild", button);
       if (key) bindNotificationDot(this, button, { x: 42, y: -42 }, (listener) => notificationManager.subscribe(key, listener));

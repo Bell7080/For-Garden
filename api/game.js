@@ -44834,7 +44834,8 @@ function deriveNotificationState(conditions) {
     freeResearch: conditions.freeResearchAvailable === true,
     interactionReturned: (conditions.claimableInteractionCount ?? 0) > 0,
     duelSeasonReward: conditions.duelSeasonRewardReady === true,
-    premiumSubscription: (conditions.claimableSubscriptionBonusCount ?? 0) > 0
+    premiumSubscription: (conditions.claimableSubscriptionBonusCount ?? 0) > 0,
+    guildAttendance: conditions.guildAttendanceReady === true
   };
 }
 var EMPTY_NOTIFICATION_STATE = deriveNotificationState({
@@ -45345,7 +45346,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.483.2",
+  version: "0.483.3",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -49751,7 +49752,8 @@ var FakeServer = class {
     const claimableInteractionCount = this.state.interaction.slots.filter((slot) => slot !== null && !slot.claimed && isInteractionDispatchComplete(slot.completesAt, now.getTime())).length;
     const duelSeasonRewardReady = (QA_TOOLS_ENABLED || this.duelContext !== void 0) && rollDuelPeriods(normalizeDuelState(this.state.duel, [...this.state.owned]), now).pendingSeasonReward != null;
     const claimableSubscriptionBonusCount = PRODUCTS.filter((product) => product.passBenefit && this.subscriptionInfo(product, now).subscription?.dailyBonusClaimed === false).length;
-    return { freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
+    const guildAttendanceReady = await this.guildAttendanceReady();
+    return { guildAttendanceReady, freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
   }
   /**
    * **상황 특가를 지금 상태에서 읽어 세운다**(`core/situationalOffers.ts`). 조회(붉은 점·프리미엄 목록)가 부르며, 바뀐 것이 있을 때만 저장한다.
@@ -49956,6 +49958,18 @@ var FakeServer = class {
    */
   noteEncounters(ids) {
     for (const id of ids) this.pendingEncounters.add(id);
+  }
+  /**
+   * 길드원인데 오늘 출석 도장이 비었는가. 길드가 잠긴 계정은 묻지 않고, 길드가 없거나 조회가 실패하면 점을 세우지 않는다
+   * (`getAttendance`는 길드원이 아니면 거절한다). 날짜는 길드 백엔드가 출석판과 같은 UTC 자정으로 정한다.
+   */
+  async guildAttendanceReady() {
+    if (!isContentUnlocked("guild", this.state.playerResearch.level)) return false;
+    try {
+      return !(await this.guildBackend.getAttendance(this.guildActor())).stampedToday;
+    } catch {
+      return false;
+    }
   }
   /** 길드에 든 적이 있는가 — 굳힌 값이 먼저이고, 아니면 지금 소속을 본다(조회 실패는 아직 아님으로 둔다). */
   async newbieGuildJoined() {

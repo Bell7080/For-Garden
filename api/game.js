@@ -26062,7 +26062,12 @@ var CHAPTERS = CHAPTER_CONTENT.map((content, chapterIndex) => {
          * 초회의 몫은 나머지 보상(`firstClearBonus`)이 늘리고, 성장 재화의 숨통은 대작전이 튼다.
          */
         firstClearCheesecake: 30 + globalOrder * 5,
-        repeatClearCheesecake: 10 + globalOrder * 2,
+        /*
+         * 반복 클리어 치즈케이크는 **장마다 2씩만** 오른다(1장 10 → 7장 22 · 응태 결정 2026-11-16).
+         * 예전 `10 + 관문 순서 × 2`는 7-10에서 148이라 같은 스테미나 10으로 대작전 8단계(150)와 맞먹었다 —
+         * 치즈케이크의 주 수급처는 대작전이고, 스토리 반복은 관문 사이에 큰 차이가 없는 덤이다.
+         */
+        repeatClearCheesecake: 10 + chapterIndex * 2,
         firstClearBonus: storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, enemies.length === 1)
       },
       // 아직 서사가 없는 장은 이 값이 비어 있고, 화면은 그 줄을 그리지 않는다.
@@ -45396,7 +45401,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.485.1",
+  version: "0.485.2",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {

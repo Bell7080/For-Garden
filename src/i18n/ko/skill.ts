@@ -287,11 +287,11 @@ export const SKILL_KO = {
   "skill.clause.everyNth": "매 {every}번째 공격마다 {effects}",
 
   // ── 상태이상 한 절 ───────────────────────────────────────────────────────
-  "skill.status.concussionStunKnockback": "[[concussion|뇌진탕]]을 입히고 {seconds}초 동안 [[stun|기절]]시키며 [[knockback|날려버린다]]",
-  "skill.status.concussionStun": "[[concussion|뇌진탕]]을 입히고 {seconds}초 동안 [[stun|기절]]시킨다",
+  "skill.status.concussionStunKnockback": "최대 체력 {percent}%(치명타면 {critical}%)의 [[concussion|뇌진탕]]을 입히고 {seconds}초 동안 [[stun|기절]]시키며 [[knockback|날려버린다]]",
+  "skill.status.concussionStun": "최대 체력 {percent}%(치명타면 {critical}%)의 [[concussion|뇌진탕]]을 입히고 {seconds}초 동안 [[stun|기절]]시킨다",
   "skill.status.overpaint": "[[overpaint|덧칠]]을 한 겹 쌓는다",
   "skill.status.stun": "{seconds}초 동안 [[stun|기절]]시킨다",
-  "skill.status.concussion": "[[concussion|뇌진탕]]을 입힌다",
+  "skill.status.concussion": "최대 체력 {percent}%(치명타면 {critical}%)의 [[concussion|뇌진탕]]을 입힌다",
   "skill.status.weakpoint": "[[weakpoint|약점 포착]]을 남긴다",
   "skill.status.butcher": "[[butcher|손질]]을 한 겹 쌓는다",
   "skill.status.knockback": "[[knockback|날려버린다]]",

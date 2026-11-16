@@ -1383,10 +1383,11 @@ function statusClausesWithoutRally(skill: DescribedSkill): SkillEffectClause[] {
   if (bleedKnock) texts.push(t("skill.status.deepBleedKnockback"));
   // 뇌진탕이 있으면 기절을 그 뒤에 이어 붙여 한 덩어리로 만든다. 어미를 잘라 붙이지 않고
   // 이어지는 형태를 직접 적는다 — 잘라 붙이면 "입힌고" 같은 어형이 나온다.
-  if (concussion && stun && stun.kind === "stun") {
+  if (concussion && concussion.kind === "concussion" && stun && stun.kind === "stun") {
+    const params = { seconds: stun.seconds, percent: concussion.maxHpPercent, critical: concussion.criticalMaxHpPercent };
     texts.push(merged
-      ? t("skill.status.concussionStunKnockback", { seconds: stun.seconds })
-      : t("skill.status.concussionStun", { seconds: stun.seconds }));
+      ? t("skill.status.concussionStunKnockback", params)
+      : t("skill.status.concussionStun", params));
   }
   for (const effect of effects) {
     if (merged && effect === knockback) continue;
@@ -1423,8 +1424,8 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   // 덧칠은 몇 겹까지 쌓이고 한 겹이 얼마인지가 곧 이 스킬의 값이라 키워드가 아니라 본문이 적는다.
   if (effect.kind === "overpaint") return t("skill.status.overpaint");
   if (effect.kind === "stun") return t("skill.status.stun", { seconds: effect.seconds });
-  // 뇌진탕의 수치와 치명타 배증은 키워드가 말하므로 본문은 걸린다는 사실만 적는다.
-  if (effect.kind === "concussion") return t("skill.status.concussion");
+  // 뇌진탕의 비율은 개체마다 다르다(파치 6% · 코마 10%) — 여러 개체가 쓰는 규칙어라 수치는 키워드가 아니라 본문이 적는다.
+  if (effect.kind === "concussion") return t("skill.status.concussion", { percent: effect.maxHpPercent, critical: effect.criticalMaxHpPercent });
   // 터지는 위력과 회복 비율은 태그가 말하므로 본문은 표식을 남긴다는 사실만 적는다.
   if (effect.kind === "weakpoint") return t("skill.status.weakpoint");
   // 겹 상한과 터지는 위력은 태그가 말하므로 본문은 겹이 쌓인다는 사실만 적는다.

@@ -549,7 +549,7 @@ export default {
   "keyword.frenzy.term": "暴走",
   "keyword.frenzy.description": "會攻擊最近的己方單位，造成的傷害減半。沒有可攻擊的同伴時，會當場攻擊自己。暴走期間無法使用必殺技。",
   "keyword.concussion.term": "腦震盪",
-  "keyword.concussion.description": "相當於最大生命10%的傷害，暴擊時為20%。穿透防禦與屬性相剋，命中瞬間一次性造成。",
+  "keyword.concussion.description": "按最大生命比例造成的傷害，暴擊時翻倍。穿透防禦與屬性相剋，命中瞬間一次性造成。",
   "keyword.knockback.term": "擊飛",
   "keyword.knockback.description": "被擊中的敵人會在戰場牆壁間反彈。飛行期間無法移動也無法攻擊。",
   "keyword.charge.term": "衝鋒",

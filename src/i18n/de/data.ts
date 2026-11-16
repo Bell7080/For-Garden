@@ -549,7 +549,7 @@ export default {
   "keyword.frenzy.term": "Raserei",
   "keyword.frenzy.description": "Es greift die nächste Einheit der eigenen Seite an und verursacht dabei nur halben Schaden. Ohne Verbündete greift es sich selbst an. In Raserei kann es keine Ultimativ einsetzen.",
   "keyword.concussion.term": "Gehirnerschütterung",
-  "keyword.concussion.description": "Schaden in Höhe von 10% des max. Lebens, bei kritischem Treffer 20%. Durchdringt Verteidigung und Affinität und wirkt sofort beim Aufprall.",
+  "keyword.concussion.description": "Schaden proportional zum max. Leben, bei kritischem Treffer doppelt. Durchdringt Verteidigung und Affinität und wirkt sofort beim Aufprall.",
   "keyword.knockback.term": "Rückstoß",
   "keyword.knockback.description": "Der getroffene Gegner prallt an den Wänden des Schlachtfelds ab. Im Flug kann er sich weder bewegen noch angreifen.",
   "keyword.charge.term": "Sturmangriff",

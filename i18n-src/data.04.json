@@ -390,14 +390,14 @@
 "Сотрясение"
 ],
 "keyword.concussion.description": [
-"相当于最大生命5%的伤害，暴击时为15%。穿透防御与属性相克，命中瞬间一次性造成。",
-"ความเสียหายเท่ากับ 5% ของ HP สูงสุด หรือ 15% เมื่อคริติคอล ทะลุพลังป้องกันและธาตุ และเกิดทันทีเมื่อโดน",
-"Sát thương bằng 5% HP tối đa, hoặc 15% khi chí mạng. Xuyên qua Thủ và tương khắc, gây ngay khi trúng.",
-"Kerusakan sebesar 5% HP maks, atau 15% saat kritis. Menembus Pertahanan dan afinitas serta langsung terjadi saat kena.",
-"Daño igual al 5% de los PV máx., o 15% en golpe crítico. Atraviesa la Defensa y la afinidad y se aplica de golpe al impactar.",
-"Dano igual a 5% do PV máx., ou 15% em acerto crítico. Atravessa Defesa e afinidade e acontece de uma vez no impacto.",
-"Schaden in Höhe von 5% des max. Lebens, bei kritischem Treffer 15%. Durchdringt Verteidigung und Affinität und wirkt sofort beim Aufprall.",
-"Урон в 5% макс. ОЗ, при крите — 15%. Проходит сквозь защиту и сродство и наносится сразу при попадании."
+"按最大生命比例造成的伤害，暴击时翻倍。穿透防御与属性相克，命中瞬间一次性造成。",
+"ความเสียหายตามสัดส่วน HP สูงสุด และเพิ่มเป็นสองเท่าเมื่อคริติคอล ทะลุพลังป้องกันและธาตุ และเกิดทันทีเมื่อโดน",
+"Sát thương theo tỉ lệ HP tối đa, gấp đôi khi chí mạng. Xuyên qua Thủ và tương khắc, gây ngay khi trúng.",
+"Kerusakan sebanding HP maks, berlipat dua saat kritis. Menembus Pertahanan dan afinitas serta langsung terjadi saat kena.",
+"Daño proporcional a los PV máx., doble en golpe crítico. Atraviesa la Defensa y la afinidad y se aplica de golpe al impactar.",
+"Dano proporcional ao PV máx., dobrado em acerto crítico. Atravessa Defesa e afinidade e acontece de uma vez no impacto.",
+"Schaden proportional zum max. Leben, bei kritischem Treffer doppelt. Durchdringt Verteidigung und Affinität und wirkt sofort beim Aufprall.",
+"Урон, пропорциональный макс. ОЗ, при крите — вдвое больше. Проходит сквозь защиту и сродство и наносится сразу при попадании."
 ],
 "keyword.knockback.term": [
 "击飞",

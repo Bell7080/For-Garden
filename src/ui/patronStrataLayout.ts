@@ -10,9 +10,9 @@ export const PATRON_POPUP = {
   width: 960,
   pad: 48,
   hero: { top: 64, emblemY: 60, emblem: 40, nameY: 136, nameSize: 52, fundY: 190, fundSize: 30, height: 216 },
-  ladder: { top: 300, height: 206, emblemY: 60, emblem: 26, plate: { width: 104, top: 12, bottom: 134 }, trackY: 110, node: 11, lineHeight: 8, noteY: 170, noteSize: 22, inset: 64 },
-  benefit: { top: 530, headerHeight: 62, reward: { height: 112, frame: 76, button: { width: 170, height: 64 } }, gap: 14, columns: 2, card: { height: 100, frame: 72 }, labelSize: 25 },
-  daily: { headerHeight: 62, frame: 96, gap: 18, frameY: 112, button: { width: 380, height: 92, y: 232 }, noteSize: 21, height: 300 },
+  ladder: { top: 300, height: 240, emblemY: 60, emblem: 26, plate: { width: 104, top: 12, bottom: 134 }, trackY: 110, node: 11, lineHeight: 8, noteY: 168, noteSize: 28, howtoY: 208, howtoSize: 24, inset: 64 },
+  benefit: { top: 562, headerHeight: 62, reward: { height: 120, frame: 80, button: { width: 180, height: 70 } }, gap: 14, columns: 2, card: { height: 106, frame: 78 }, labelSize: 29 },
+  daily: { headerHeight: 62, frame: 96, gap: 18, frameY: 112, button: { width: 380, height: 96, y: 238 }, tag: { height: 46, size: 26, emblem: 10, padX: 16, gap: 10, angle: -6 }, height: 306 },
   bottomPad: 36,
 } as const;
 

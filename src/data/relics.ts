@@ -2004,7 +2004,7 @@ export const RELICS: RelicDef[] = [
       statusEffectEvery: 3,
       statusEffects: [
         { kind: "stun", seconds: 1 },
-        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 },
+        { kind: "concussion", maxHpPercent: 6, criticalMaxHpPercent: 12 },
       ],
     },
     ultimate: {
@@ -2021,7 +2021,7 @@ export const RELICS: RelicDef[] = [
       radius: 110,
       statusEffects: [
         { kind: "stun", seconds: 2 },
-        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 },
+        { kind: "concussion", maxHpPercent: 6, criticalMaxHpPercent: 12 },
       ],
     },
   },

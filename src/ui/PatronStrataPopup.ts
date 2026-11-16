@@ -6,7 +6,7 @@ import { PROFILE_MODIFIERS } from "../data/profileModifiers";
 import { formatCurrency } from "../core/formatCurrency";
 import { chipPoints, drawLayer, slantedRect } from "./holo";
 import { addGuideSectionHeader } from "./GuideRouteList";
-import { addFrameAmount, addFramedIcon, addItemFrame, guideForIcon } from "./itemFrame";
+import { addFramedIcon, addItemFrame, addShelfAmount, guideForIcon } from "./itemFrame";
 import { premiumGrantTiles } from "./premiumModel";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { Button } from "./Button";
@@ -50,7 +50,6 @@ export function openPatronStrataPopup(scene: Phaser.Scene, popups: PopupLayer, o
   const height = patronPopupHeight(maxCards);
   const top = -height / 2;
   const inner = P.width - P.pad * 2;
-  const left = -inner / 2;
   const tierIndex = Math.max(0, PATRON_TIERS.findIndex(({ id }) => id === status.tierId));
   const tier = PATRON_TIERS[tierIndex];
   const next = PATRON_TIERS[tierIndex + 1];
@@ -112,8 +111,8 @@ export function openPatronStrataPopup(scene: Phaser.Scene, popups: PopupLayer, o
     const nextLine = next
       ? t("patron.next", { name: patronTierName(next.id), value: formatCurrency(Math.max(0, next.threshold - status.fund)) })
       : t("patron.max");
-    body.add(shrinkTextToWidth(scene.add.text(left + 32, ladderTop + L.noteY, nextLine, textStyle({ role: "emphasis", size: L.noteSize, color: COLOR.hpText })).setOrigin(0, 0.5), inner / 2 - 40));
-    body.add(shrinkTextToWidth(scene.add.text(-left - 32, ladderTop + L.noteY, t("patron.howto"), textStyle({ role: "body", size: L.noteSize - 2, color: COLOR.inkDim })).setOrigin(1, 0.5), inner / 2 - 40));
+    body.add(shrinkTextToWidth(scene.add.text(0, ladderTop + L.noteY, nextLine, textStyle({ role: "emphasis", size: L.noteSize, color: COLOR.hpText })).setOrigin(0.5), inner - 64));
+    body.add(shrinkTextToWidth(scene.add.text(0, ladderTop + L.howtoY, t("patron.howto"), textStyle({ role: "body", size: L.howtoSize, color: COLOR.inkDim })).setOrigin(0.5), inner - 64));
 
     // ── 고른 지층의 혜택 ──
     const B = P.benefit;
@@ -136,10 +135,11 @@ export function openPatronStrataPopup(scene: Phaser.Scene, popups: PopupLayer, o
       const button = new Button(scene, 0, buttonY, { width: D.button.width, height: D.button.height, label: t("patron.daily.claim"), variant: "primary", onClick: options.onClaimDaily });
       body.add(button);
       new NotificationDot(scene, button, { x: D.button.width / 2 - 8, y: -D.button.height / 2 + 6 });
+      // 기금 딱지 — 받기 판 왼쪽 위 모서리에 비스듬히 걸쳐 「누르면 기금이 쌓인다」를 말한다.
+      body.add(addFundTag(scene, -D.button.width / 2 + 34, buttonY - D.button.height / 2 + 2, t("patron.daily.fund", { value: 1 })));
     } else {
-      body.add(scene.add.text(0, buttonY, t("patron.daily.claimed"), textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim })).setOrigin(0.5));
+      body.add(scene.add.text(0, buttonY, t("patron.daily.claimed"), textStyle({ role: "emphasis", size: 32, color: COLOR.inkDim })).setOrigin(0.5));
     }
-    body.add(scene.add.text(D.button.width / 2 + 24, buttonY, t("patron.daily.fund", { value: 1 }), textStyle({ role: "emphasis", size: D.noteSize, color: COLOR.hpText })).setOrigin(0, 0.5));
   });
 }
 
@@ -165,17 +165,17 @@ function paintRewardRow(scene: Phaser.Scene, body: Phaser.GameObjects.Container,
   const row = scene.add.container(0, y);
   body.add(row);
   row.add(drawLayer(scene, 0, 0, chipPoints(inner, R.height, { bevel: { topLeft: 16, bottomRight: 16 } }), { fill: band.color, alpha: reached ? 0.22 : 0.1, edge: band.color, edgeAlpha: 0.8 }));
-  row.add(scene.add.text(left + 28, -16, t("patron.reward.title"), textStyle({ role: "display", size: 28, color: hex(band.color) })).setOrigin(0, 0.5).setShadow(0, 2, "#05070a", 3, true, true));
-  row.add(scene.add.text(left + 28, 20, t("patron.threshold", { value: formatCurrency(band.threshold) }), textStyle({ role: "emphasis", size: 20, color: COLOR.inkDim })).setOrigin(0, 0.5));
+  row.add(scene.add.text(left + 28, -18, t("patron.reward.title"), textStyle({ role: "display", size: 32, color: hex(band.color) })).setOrigin(0, 0.5).setShadow(0, 2, "#05070a", 3, true, true));
+  row.add(scene.add.text(left + 28, 22, t("patron.threshold", { value: formatCurrency(band.threshold) }), textStyle({ role: "emphasis", size: 25, color: COLOR.inkDim })).setOrigin(0, 0.5));
   const tiles = premiumGrantTiles({ grants: [...band.reward] });
   if (tiles.length === 0) {
-    row.add(scene.add.text(left + 250, 0, t("patron.reward.none"), textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    row.add(scene.add.text(left + 250, 0, t("patron.reward.none"), textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0, 0.5));
   }
   tiles.forEach((tile, i) => addRewardFrame(scene, row, left + 250 + R.frame / 2 + i * (R.frame + 12), 0, R.frame, tile.icon, tile.amount));
   if (!reward) return;
   const actionX = -left - R.button.width / 2 - 16;
   if (reward.status === "ready") {
-    const button = new Button(scene, actionX, 0, { width: R.button.width, height: R.button.height, label: t("patron.reward.claim"), variant: "primary", fontSize: 26, onClick: () => options.onClaimReward(band.id) });
+    const button = new Button(scene, actionX, 0, { width: R.button.width, height: R.button.height, label: t("patron.reward.claim"), variant: "primary", fontSize: 30, onClick: () => options.onClaimReward(band.id) });
     row.add(button);
     new NotificationDot(scene, button, { x: R.button.width / 2 - 6, y: -R.button.height / 2 + 4 });
     return;
@@ -185,7 +185,7 @@ function paintRewardRow(scene: Phaser.Scene, body: Phaser.GameObjects.Container,
     : reward.status === "settling"
       ? t("patron.reward.settling", { days: Math.max(1, Math.ceil((Date.parse(reward.claimableAt ?? status.serverTime) - Date.parse(status.serverTime)) / DAY_MS)) })
       : t("patron.reward.locked");
-  row.add(scene.add.text(actionX, 0, label, textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
+  row.add(scene.add.text(actionX, 0, label, textStyle({ role: "emphasis", size: 29, color: COLOR.inkDim })).setOrigin(0.5));
 }
 
 /** 혜택 카드 — 왼쪽 액자(매일 보급의 재화·테두리 미리보기·수식어 표식)와 이름. 새로 생긴 것은 NEW, 늘어난 것은 위 화살표. */
@@ -232,11 +232,28 @@ function drawUpArrow(scene: Phaser.Scene, x: number, y: number): Phaser.GameObje
   return g;
 }
 
+/** 「기금 +1」 딱지 — 연두 판 위에 지층 표식과 검은 글자. 왼쪽 위·오른쪽 아래만 깎고 살짝 기울여 붙인 표로 읽힌다. */
+function addFundTag(scene: Phaser.Scene, x: number, y: number, label: string): Phaser.GameObjects.Container {
+  const T = PATRON_POPUP.daily.tag;
+  const tag = scene.add.container(x, y).setAngle(T.angle);
+  const text = scene.add.text(0, 0, label, textStyle({ role: "display", size: T.size, color: "#05070a" })).setOrigin(0, 0.5);
+  const width = T.padX * 2 + T.emblem * 2.4 + T.gap + text.width;
+  tag.add(drawLayer(scene, 0, 0, chipPoints(width, T.height, { bevel: { topLeft: T.height * 0.32, bottomRight: T.height * 0.32 } }), { fill: COLOR.hpFill, alpha: 1, edge: 0xffffff, edgeAlpha: 0.7, shadow: { x: 3, y: 5 } }));
+  const emblemX = -width / 2 + T.padX + T.emblem * 1.2;
+  const emblem = scene.add.graphics({ x: emblemX, y: 0 });
+  emblem.fillStyle(0x05070a, 0.85).fillPoints(diamondPoints(T.emblem + 3), true);
+  emblem.fillStyle(0xffffff, 1).fillPoints(diamondPoints(T.emblem), true);
+  emblem.fillStyle(COLOR.hpFill, 1).fillPoints(diamondPoints(T.emblem * 0.4), true);
+  tag.add(emblem);
+  tag.add(text.setX(emblemX + T.emblem * 1.2 + T.gap));
+  return tag;
+}
+
 const diamondPoints = (r: number): Phaser.Geom.Point[] => [new Phaser.Geom.Point(0, -r), new Phaser.Geom.Point(r * 1.1, 0), new Phaser.Geom.Point(0, r), new Phaser.Geom.Point(-r * 1.1, 0)];
 
 function addRewardFrame(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, size: number, icon: string, amount: number): void {
   const frame = addFramedIcon(scene, parent, x, y, size, icon, { plain: true });
-  frame.add(addFrameAmount(scene, size, formatCurrency(amount)));
+  frame.add(addShelfAmount(scene, size, formatCurrency(amount)));
   const openGuide = guideForIcon(scene, icon);
   if (!openGuide) return;
   frame.setSize(size, size).setInteractive({ useHandCursor: true });

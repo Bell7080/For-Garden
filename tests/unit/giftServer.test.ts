@@ -18,8 +18,8 @@ const OPEN = { enabled: true, giftableProductIds: [PRODUCT] } as const;
 function context(playerId: string, friend: string, friendName: string, orders: GiftContext["orders"] = []): GiftContext {
   return {
     playerId,
-    sender: { guest: false, ageRestricted: false, blocked: false, oldestClearedOwnPaymentAt: ago(30), lastOwnRefundAt: null },
-    recipients: { [friend]: { id: friend, name: friendName, friendSince: ago(30), active: true, guest: false } },
+    sender: { guest: false, ageRestricted: false, blocked: false, oldestClearedOwnPaymentAt: ago(30), lastOwnRefundAt: null, ownPayments: [{ productId: "premium-monthly-heavy", at: ago(20) }], storeRegion: "KR" },
+    recipients: { [friend]: { id: friend, name: friendName, friendSince: ago(30), active: true, guest: false, storeRegion: "KR" } },
     orders, changes: [],
   };
 }
@@ -121,6 +121,13 @@ describe("선물하기 서버 경계", () => {
     const blocked = context("a", "b", "B");
     blocked.sender.blocked = true;
     expect(await code(server(blocked).api.prepareGift({ recipientId: "b", productId: PRODUCT, requestId: "p2" }))).toBe("GIFT_NOT_ELIGIBLE");
+  });
+
+  it("한정·주기 상품은 선물 목록에 올려도 서지 않는다 — 부계정이 한도를 비껴가지 못하게", async () => {
+    const limited = ["premium-starter", "premium-daily-deal", "premium-weekly-deal", "premium-monthly-fossil", "premium-monthly", "premium-season-pass"];
+    const { api } = server(context("a", "b", "B"), { enabled: true, giftableProductIds: [PRODUCT, ...limited] });
+    expect((await api.getGiftOptions({ recipientId: "b" })).options.map(option => option.productId)).toEqual([PRODUCT]);
+    expect(await code(api.prepareGift({ recipientId: "b", productId: "premium-starter", requestId: "p1" }))).not.toBe("ok");
   });
 
   it("선물 가능으로 표시되지 않은 상품은 선물 목록에 서지 않는다", async () => {

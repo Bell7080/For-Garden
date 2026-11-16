@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  GIFTING_ENABLED, GIFT_POLICY, createGiftOrder, giftEligibility, giftRefundOutcome, incomingGifts, sentGiftDisplayStatus,
+  GIFTING_ENABLED, GIFT_POLICY, giftAmountAllowanceKrw, giftableProductShape, createGiftOrder, giftEligibility, giftRefundOutcome, incomingGifts, sentGiftDisplayStatus,
   settleGiftOrder, transitionGift, GiftTransitionError, type GiftEligibilityInput, type GiftOrder,
 } from "../../src/core/gifting";
 
@@ -11,8 +11,8 @@ const ago = (days: number): string => new Date(NOW.getTime() - days * DAY).toISO
 function input(over: Partial<GiftEligibilityInput> = {}): GiftEligibilityInput {
   return {
     enabled: true, senderId: "a", productId: "gift-pack", priceKrw: 9_900, giftable: true, orders: [], now: NOW,
-    sender: { researchLevel: 30, accountCreatedAt: ago(60), guest: false, ageRestricted: false, blocked: false, oldestClearedOwnPaymentAt: ago(20), lastOwnRefundAt: null },
-    recipient: { id: "b", friendSince: ago(30), active: true, guest: false },
+    sender: { researchLevel: 30, accountCreatedAt: ago(60), guest: false, ageRestricted: false, blocked: false, oldestClearedOwnPaymentAt: ago(20), lastOwnRefundAt: null, ownPayments: [{ priceKrw: 59_000, at: ago(20) }], storeRegion: "KR" },
+    recipient: { id: "b", friendSince: ago(30), active: true, guest: false, storeRegion: "KR" },
     ...over,
   };
 }
@@ -66,9 +66,30 @@ describe("한도", () => {
     const orders = Array.from({ length: 10 }, (_, i) => paid(`m${i}`, 2 + i, { recipientId: `r${i}`, priceKrw: 1_000 }));
     expect(giftEligibility(input({ orders }))).toEqual({ ok: false, reason: "send_monthly" });
   });
-  it("30일 금액 상한", () => {
-    const orders = [paid("big", 3, { recipientId: "c", priceKrw: GIFT_POLICY.sendAmountPer30DaysKrw - 5_000 })];
-    expect(giftEligibility(input({ orders }))).toEqual({ ok: false, reason: "send_amount" });
+  it("금액 한도는 고정 상한이 아니라 본인 결제 실적이다", () => {
+    // 59,000원을 냈으면 9,900원짜리는 다섯 번까지(49,500) — 여섯 번째(59,400)는 넘는다.
+    const five = Array.from({ length: 5 }, (_, i) => paid(`s${i}`, 2 + i, { recipientId: `r${i}`, priceKrw: 9_900 }));
+    expect(giftEligibility(input({ orders: five.slice(0, 4) }))).toEqual({ ok: true });
+    expect(giftEligibility(input({ orders: five }))).toEqual({ ok: false, reason: "send_amount" });
+    // 많이 낸 사람은 그만큼 열린다 — 위에서 막는 숫자가 없다.
+    const whale = { ...input().sender, ownPayments: Array.from({ length: 20 }, (_, i) => ({ priceKrw: 69_000, at: ago(10 + i) })) };
+    expect(giftAmountAllowanceKrw(whale, five, NOW)).toBe(20 * 69_000 - 5 * 9_900);
+  });
+  it("금액 실적은 결제가 지난 뒤(7일)부터, 기간(90일) 안의 것만 센다", () => {
+    const sender = (at: string) => ({ ...input().sender, ownPayments: [{ priceKrw: 59_000, at }] });
+    expect(giftAmountAllowanceKrw(sender(ago(GIFT_POLICY.ownPaymentClearDays - 1)), [], NOW)).toBe(0);
+    expect(giftAmountAllowanceKrw(sender(ago(GIFT_POLICY.amountWindowDays + 1)), [], NOW)).toBe(0);
+    expect(giftAmountAllowanceKrw(sender(ago(30)), [], NOW)).toBe(59_000);
+    // 돌아온 선물은 결제가 스토어로 돌아갔으므로 실적을 쓰지 않는다.
+    expect(giftAmountAllowanceKrw(sender(ago(30)), [paid("back", 3, { priceKrw: 9_900, status: "returned" })], NOW)).toBe(59_000);
+  });
+  it("결제 실적이 없는(막 생긴·도용 카드) 계정은 0원부터다", () => {
+    expect(giftEligibility(input({ sender: { ...input().sender, ownPayments: [] } }))).toEqual({ ok: false, reason: "send_amount" });
+  });
+  it("같은 스토어 지역끼리만 보낸다 — 모르는 지역도 막는다", () => {
+    expect(giftEligibility(input({ recipient: { ...input().recipient!, storeRegion: "TR" } }))).toEqual({ ok: false, reason: "region_mismatch" });
+    expect(giftEligibility(input({ recipient: { ...input().recipient!, storeRegion: null } }))).toEqual({ ok: false, reason: "region_mismatch" });
+    expect(giftEligibility(input({ sender: { ...input().sender, storeRegion: null } }))).toEqual({ ok: false, reason: "region_mismatch" });
   });
   it("받는 쪽 하루 2건 — 다른 사람이 보낸 것도 센다", () => {
     const orders = [paid("p", 0.1, { senderId: "x" }), paid("q", 0.2, { senderId: "y" })];
@@ -151,5 +172,14 @@ describe("화면이 읽는 목록", () => {
     const other = { ...mine, id: "n", recipientId: "z" };
     const gone = { ...mine, id: "g", expiresAt: ago(0.1) };
     expect(incomingGifts([mine, other, gone], "b", NOW).map(o => o.id)).toEqual(["m"]);
+  });
+});
+
+describe("선물 가능 상품의 모양", () => {
+  it("현금 상품 가운데 선물로 열 수 있는 것은 한도 없는 다이아 팩뿐이다 — 한정·주기·패스·특가는 모두 닫힌다", async () => {
+    const { PRODUCTS } = await import("../../src/data/shopCatalog");
+    const open = PRODUCTS.filter(product => giftableProductShape(product)).map(product => product.premiumCategory);
+    expect(open.length).toBeGreaterThan(0);
+    expect(new Set(open)).toEqual(new Set(["gem"]));
   });
 });

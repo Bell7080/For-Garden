@@ -15,6 +15,7 @@ export const COMMON_VI = {
   "stat.critDamage": "ST chí mạng",
   "stat.energyGain": "Nạp Tuyệt kỹ",
   "stat.energyGain.rune": "Tăng nạp Tuyệt kỹ",
+  "stat.ferocityGain": "Tích Dã tính",
   "stat.ferocityGain.rune": "Tăng tích Dã tính",
   "stat.lifeSteal": "Hút máu",
   "stat.range": "Tầm đánh",

@@ -24,7 +24,7 @@ export const CC_AUGMENT_FAMILIES = ["stagger", "stun", "frozen", "fear", "frenzy
 function neutral(id: string, attackSpeed: number): RelicDef {
   const base = getRelic("dodo");
   return { ...base, id, stats: { ...base.stats, hp: 1_000_000, atk: 1, ap: 1, def: 300, res: 300, attackSpeed,
-    critChance: 0, lifeSteal: 0, energyGain: 26, ferocityGain: 0 },
+    critChance: 0, lifeSteal: 0, energyGain: 26, ferocityGain: 12 },
     passive: { id: "cc-audit-neutral", name: "CC audit", kind: "summonDerived", value: 0, iconAssetId: "skill-icon-buff", effectType: "buff", desc: "" },
     basic: { id: "cc-audit-basic", name: "CC audit", iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single", power: 1 },
     ultimate: { id: "cc-audit-ultimate", name: "CC audit", iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single", power: 1, cost: 100 },

@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
 import { BASE_WIDTH } from "../config/gameConfig";
-import { runeDisplayName, runePartLabel, runeRarityLabel, type RuneInstance, type RuneStatKey } from "../core/runes";
+import { formatRuneOptionValue, runeDisplayName, runeOptionValue, runePartLabel, runeRarityLabel, type RuneInstance, type RuneStatKey } from "../core/runes";
 import { KeywordManager } from "../managers/KeywordManager";
 import { session } from "../state/session";
 import { addResearchActionRow, type ResearchActionRowSpec } from "./ResearchActionRow";
@@ -126,7 +126,7 @@ function paintDetail(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, 
     parent.add(scene.add.text(bounds.left + 30, y, runeStatLabel(stat.key), main
       ? textStyle({ role: "emphasis", size: 22, color: COLOR.ink })
       : textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0.5));
-    parent.add(scene.add.text(bounds.right, y, `+${stat.value}%`,
+    parent.add(scene.add.text(bounds.right, y, formatRuneOptionValue(stat.key, runeOptionValue(rune, stat.key)),
       textStyle({ role: "display", size: 22, color: main ? `#${accent.toString(16).padStart(6, "0")}` : COLOR.ink })).setOrigin(1, 0.5));
   });
 }

@@ -1535,7 +1535,8 @@ describe("능력치 반영", () => {
     stepSkirmish(state, 1 / 60, () => 0.999999);
     const dealt = targetBefore - target.hp;
     expect(attacker.energy).toBe(40);
-    expect(attacker.ferocity).toBeCloseTo(FEROCITY_RULES.basicGain * 1.5);
+    // 야성 획득량은 기본 공격 한 번에 오르는 깡 수치다.
+    expect(attacker.ferocity).toBeCloseTo(50);
     // 태생 25퍼센트포인트에 렉시아 패시브의 25퍼센트포인트가 더해진다.
     expect(attacker.hp - hpBefore).toBeCloseTo(dealt * 0.5);
   });

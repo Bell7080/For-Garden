@@ -15,6 +15,7 @@ export const COMMON_ZH_HANT = {
   "stat.critDamage": "暴擊傷害",
   "stat.energyGain": "必殺技充能",
   "stat.energyGain.rune": "必殺技充能提升",
+  "stat.ferocityGain": "野性獲取量",
   "stat.ferocityGain.rune": "野性獲取提升",
   "stat.lifeSteal": "吸血",
   "stat.range": "射程",

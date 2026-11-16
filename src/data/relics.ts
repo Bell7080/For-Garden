@@ -41,7 +41,7 @@ const KURO_DEF: RelicDef = {
   strike: "claw",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 디안의 태생 공격력 160에서 파생한 값이며, 전투에서는 성장한 공격력으로 다시 계산된다.
-  stats: { hp: 422, def: 67, res: 67, atk: 158, ap: 0, attackSpeed: 104, moveSpeed: 109, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+  stats: { hp: 422, def: 67, res: 67, atk: 158, ap: 0, attackSpeed: 104, moveSpeed: 109, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 12 },
   ferocityTrait: {
     name: "무리의 몸", effectId: "packBody",
     defenseResistancePercent: 50, attackSpeedPercent: 50,
@@ -78,7 +78,7 @@ const SHIRO_DEF: RelicDef = {
   strike: "slash",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 디안의 태생 주문력 158에서 파생한 값이며, 전투에서는 성장한 주문력으로 다시 계산된다.
-  stats: { hp: 422, def: 70, res: 74, atk: 0, ap: 155, attackSpeed: 96, moveSpeed: 100, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+  stats: { hp: 422, def: 70, res: 74, atk: 0, ap: 155, attackSpeed: 96, moveSpeed: 100, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 12 },
   ferocityTrait: {
     name: "무리의 몸", effectId: "packBody",
     defenseResistancePercent: 50, attackSpeedPercent: 50,
@@ -121,7 +121,7 @@ const DIMO_DEF: RelicDef = {
   projectile: "signal",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 모르페의 태생 공격력 172에서 파생한 값이며, 전투에서는 성장한 공격력으로 다시 계산된다.
-  stats: { hp: 301, def: 43, res: 43, atk: 86, ap: 0, attackSpeed: 80, moveSpeed: 105, critChance: 0, critDamage: 150, energyGain: 12, lifeSteal: 0, ferocityGain: 0 },
+  stats: { hp: 301, def: 43, res: 43, atk: 86, ap: 0, attackSpeed: 80, moveSpeed: 105, critChance: 0, critDamage: 150, energyGain: 12, lifeSteal: 0, ferocityGain: 12 },
   ferocityTrait: { name: "오버클럭", effectId: "overclockBody", attackSpeedPercent: 50, moveSpeedPercent: 50 },
   passive: {
     id: "dimo-passive", name: "고공 탐색", kind: "highAltitudeRecon", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0,
@@ -203,7 +203,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 치명타 확률 가산은 패시브가 이미 미는 축이라 폭주가 같은 말을 반복했다. 지금은 자기가
     // 남긴 출혈을 조건으로 삼아, 물어뜯은 자리를 다시 무는 것이 곧 확정 치명타다.
@@ -306,7 +306,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // **폭주가 체력을 되돌리지 않는다.** 매초 회복이 함께 있던 때는 폭주 한 번이 곧 완치라,
     // 앞에 선 몸이 언제 무너지는지가 화면에서 사라졌다(5% → 1.5%로 내려도 성격은 같았다).
@@ -439,7 +439,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 내려서는 자리에 물이 고인다. 잠행이 "숨어서 옮겨 간다"에서 **사냥터를 여는 걸음**이 되어,
     // 도착하자마자 그 자리의 평타가 전부 다단히트로 들어간다.
@@ -591,7 +591,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 폭주는 스피나와 같은 은신 태그를 쓰되 도약 없이 무리 사냥을 재실행하며, 루카 자신도 공속 오라 대상이다.
     ferocityTrait: { name: "폭주", effectId: "packHunt", stealthDurationSeconds: 3, retriggerPackHunt: true, sharedTargetAttackSpeedPercent: 40 },
@@ -693,7 +693,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 손이 빨라지는 몫은 절반으로 줄이고, 그만큼을 고친 자리에 한 겹 덮는 쪽으로 옮겼다 —
     // 속도만 두 배가 되면 폭주가 "더 많이 고쳤다"까지만 말하고, 이미 가득 찬 아군에게는
@@ -798,7 +798,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 물살을 타고 계속 뛰어드는 몸이라 폭주는 **버틸 숨과 손**으로 발현한다. 토리카의 폭주와
     // 같은 1초 시계를 쓰되(`torikaBulwark`) 손이 함께 빨라진다 — 그쪽은 앞에 서서 버티는
@@ -911,7 +911,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: { name: "자, 역풍의 시간이다!", effectId: "tailwindRally", teamFerocityGain: 5, teamEnergyGain: 5 },
     passive: {
@@ -1017,7 +1017,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 들어서는 순간 넓게 한 번 도발하고, 폭주 중에는 까칠이 두 배로 쌓인다. 반격이 세지는 것은 겹이 그만큼
     // 빨리 차서이며 피해량을 따로 올리는 숨은 보정이 아니다(공용 야성 규칙이 이미 피해를 올린다).
@@ -1139,7 +1139,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 폭주 중 공속이 오르고 평타가 자기 주위를 쓸어, 맞은 적 모두에게 수압이 쌓인다. 보호막은 따로 주지 않는다.
     ferocityTrait: { name: "심해 와류", effectId: "abyssalVortex", attackSpeedPercent: 40, radius: 200 },
@@ -1244,7 +1244,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 폭주 중 공속이 오르고 철퇴가 자기 주위를 휩쓸어 맞은 적을 짧게 밀어낸다.
     ferocityTrait: { name: "잠투정", effectId: "sleepTantrum", attackSpeedPercent: 40, radius: 200, knockback: { seconds: 0.3, speed: 700, bounces: 0 } },
@@ -1353,7 +1353,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 폭주는 공속을 올리지 않는다 — 느리게 쏘는 것이 정체성이라 한 발의 무게만 키운다.
     ferocityTrait: { name: "폭풍 속의 조준", effectId: "stormAim", defenseIgnorePercent: 25 },
@@ -1459,7 +1459,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 폭주 중 위압이 한 번에 두 겹 쌓이고 공포 뒤 면역이 짧아져, 같은 적에게 공포를 연달아 먹인다. 피해량·궁극기는 건드리지 않는다.
     ferocityTrait: { name: "사냥 본능", effectId: "huntInstinct", intimidateBonusStacks: 1, fearImmunitySeconds: 1 },
@@ -1563,7 +1563,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 폭주 중 평타가 한 갈래 더 갈라지고 공격 속도가 오른다. 갈래 수는 일반 공격 계약이 정한다.
     breakthroughEffects: {
@@ -1660,7 +1660,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     breakthroughEffects: {
       basic: { kind: "darkRoast", defenseIgnorePercent: 20 },
@@ -1754,7 +1754,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 한계 돌파(응태 결정 2026-11-12) — 평타가 확률로 유성을 부르고, 궁극기는 한 발 더 떨어지며 회복이 붙고,
     // 폭주 동안 아군 모두가 빨라지고, 유성 회복이 다친 아군 한 명에게 한 번 더 들어간다.
@@ -1850,7 +1850,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 소심해서 자기가 나서지 못하는 아이라, 폭주는 제 화력이 아니라 아군의 손을 빌리는 쪽으로 발현한다.
     // 한계 돌파: 번진 물감 · 튀는 물감 · 한 겹 더 · 급소 그리기.
@@ -1953,7 +1953,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: {
       name: "야, 비켜!",
@@ -2072,7 +2072,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: {
       name: "잠깐, 나 이래 봬도 의사라고?",
@@ -2190,7 +2190,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 광란은 폭주에서도 나오지만 **직접 적중**에만 걸린다. 전이까지 발동하면 한 번의 공격이
     // 사슬 길이만큼 적을 돌려세워, 폭주 동안 상대 편이 통째로 멈춘 것처럼 된다.
@@ -2302,7 +2302,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 바르거나 터뜨리거나 한 번에 하나만 한다. 그래서 폭주 중 실제 피해량은 공속이 정하고,
     // 공속 증가가 곧 "얼마나 자주 청산하는가"가 된다.
@@ -2420,7 +2420,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 폭주에 들어서는 순간 넓은 범위의 적이 한꺼번에 이쪽을 본다(3초, 들어설 때 한 번). 폭주 동안은
     // 서 있는 것만으로 주위가 지져지고 희열이 터질 때의 회복이 늘어난다 — 회복만 있던 자리에 적에게
@@ -2533,7 +2533,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 굳는 순간 몸이 한 겹 덮이고, 그 상태로 권을 딱 한 바퀴(발경 3연) 몰아친다.
     ferocityTrait: { name: "금강불괴(金剛不壞)", effectId: "adamantBody", shieldMaxHpPercent: 25, hastenedAttacks: 3, attackSpeedPercent: 150 },
@@ -2668,7 +2668,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     /*
      * **완전 난장판!** 힘 조절에 실패하는 순간이 폭주다 — 한 대씩 비틀던 집게가 옆 사람까지 휩쓴다.
@@ -2806,7 +2806,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: {
       name: "이번엔 안 숨을 거야!",
@@ -2915,7 +2915,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 캐릭터 ID가 아니라 공용 시약 도핑 계약이 진입 살포와 자기 공속 증가를 함께 표현한다.
     ferocityTrait: {
@@ -3071,7 +3071,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     /*
      * **앞장서서 뚫는 몸이라 잃은 만큼을 두른다.** 공속만 올리던 때는 이 폭주가 열려도
@@ -3205,7 +3205,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: { name: "박쥐 폭풍", effectId: "batStorm", radiusPercent: 40, tickSpeedPercent: 50 },
     passive: {
@@ -3312,7 +3312,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: { name: "부끄러운 가시", effectId: "thornBristle", segmentSizePercent: 50, restoreSpeedPercent: 50 },
     passive: {
@@ -3402,7 +3402,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: { name: "신난 꼬리", effectId: "frenzyTail", attackSpeedPercent: 30, extraStacksPerHit: 1 },
     passive: {
@@ -3487,7 +3487,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: { name: "마음이 급해서요", effectId: "swiftFlight", intervalReductionPercent: 40 },
     passive: {
@@ -3572,7 +3572,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: { name: "더 많이 영차", effectId: "marchOfAnts", radiusBonus: 120, extraAllies: 2 },
     passive: {
@@ -3657,7 +3657,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: { name: "식욕 폭주", effectId: "appetiteFrenzy", attackSpeedPercent: 30, bleedHealPercent: 50 },
     passive: {
@@ -3745,7 +3745,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: { name: "궁지에 몰린 짐승", effectId: "corneredBeast", attackSpeedPercent: 35, moveSpeedPercent: 25, flinchCooldownSeconds: 3 },
     passive: {
@@ -3837,7 +3837,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: { name: "점호 거부", effectId: "rollCallRefusal", pullRadiusPercent: 40, rallyEvery: 3 },
     passive: {
@@ -3923,7 +3923,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: { name: "구속 붕괴", effectId: "restraintCollapse" },
     passive: {
@@ -4024,7 +4024,7 @@ export const RELICS: RelicDef[] = [
     stats: {
       hp: 1260, def: 110, res: 76, atk: 124, ap: 52,
       attackSpeed: 88, moveSpeed: 74, critChance: 10, critDamage: 150,
-      energyGain: 26, lifeSteal: 0, ferocityGain: 0,
+      energyGain: 26, lifeSteal: 0, ferocityGain: 12,
     },
     // 별 넷이 이 개체를 **지휘하는 연주자**로 완성한다 — 박자가 쌓이고(II), 찬가가 더 자주 울리며 넘치는 선율이 방패가 되고(III),
     // 폭주 진입에 서곡이 울리고(IV), 막이 남아 있는 내내 음파가 퍼진다(V). 회복 총량(잃은 체력 15%)은 건드리지 않는다.
@@ -4149,7 +4149,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: {
       name: "네가 예술을 알아?",
@@ -4315,7 +4315,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: { name: "모피", effectId: "furCoat", cleanseAllOnEntry: true, shieldMaxHpPercent: 25, defenseResistancePercent: 100 },
     // 한계 돌파: 소다 터짐(세 번마다 냉기) · 냉방 환기 · 한파(폭주 진입에 전원 냉기) · 얼음 깨기.
@@ -4422,7 +4422,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 수치를 여기 적지 않는다 — 옮기는 비율과 상한은 「가봉」 하나가 갖고, 폭주는 그 몫이
     // 보호막으로 가는지 회복으로 가는지만 바꾼다.
@@ -4545,7 +4545,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 한계 돌파: 강력 세척 · 티끌 하나 없이 · 보호복 착용 · 프로의 손길.
     breakthroughEffects: {
@@ -4657,7 +4657,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 폭주는 **거리**를 갖는다. 궁극기가 속도를 갖고 있어, 둘 다 공속을 올리면 두 슬롯이
     // 화면에서 같은 말을 한다. 순환을 기다리지 않는 갈래화살과 사거리가 함께 붙는다.
@@ -4789,7 +4789,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 폭주는 슈테 자신이 세지는 것이 아니라 **듀오를 밀어 넣는다.** 지원가의 폭주가 제 화력을
     // 올리면 그 순간만 지원가가 아니게 된다.
@@ -4921,7 +4921,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     /*
      * **두 갈래가 한 자리에서 돈다** — 요람에 앉아 화력을 내는 모르페와, 그 눈이 되어 전장을 도는 디모.
@@ -5035,7 +5035,7 @@ export const RELICS: RelicDef[] = [
      * 공격력과 주문력이 거의 같은 이유는 일반 공격이 두 축을 한 번에(공격력 40% + 주문력 60%)
      * 쓰기 때문이고, 늑대 둘도 각각 그 한 축에서만 자란다. 전투력 2453으로 SSR 띠(2340~2460) 안이다.
      */
-    stats: { hp: 750, def: 40, res: 40, atk: 160, ap: 158, attackSpeed: 132, moveSpeed: 64, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+    stats: { hp: 750, def: 40, res: 40, atk: 160, ap: 158, attackSpeed: 132, moveSpeed: 64, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 12 },
     // 쿠로는 최종 공격력만, 시로는 최종 주문력만 읽는다. 서로 반대 능력치는 파생 결과에 섞이지 않는다.
     summons: [
       {
@@ -5170,7 +5170,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 30,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     // 폭주 파동은 매초 각 적 최대 HP의 2%를 고정 피해로 주고, 살아 있는 동안 모든 적 회복을 취소한다.
     ferocityTrait: { name: "해구", effectId: "pontusRage", maxHpDamagePercentPerSecond: 2, cancelEnemyHealing: true },
@@ -5308,7 +5308,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 30,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     /*
      * **범람.** 턱이 닫힐 때마다 그 옆까지 함께 찢긴다.
@@ -5479,7 +5479,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 30,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     /*
      * **대식가의 식탁.** 폭주에 드는 순간 주위의 먹잇감을 한꺼번에 몸 앞으로 끌어오고, 그 뒤로 조이는
@@ -5623,7 +5623,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 30,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     /*
      * **폭풍의 날갯짓.** 폭주에 드는 순간 다음 한 방이 곧바로 자세를 무너뜨리고, 맞은 쪽은 벽까지 날아간다.
@@ -5759,7 +5759,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: {
       name: "과식",
@@ -5884,7 +5884,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: {
       name: "과식",
@@ -6009,7 +6009,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: {
       name: "과식",
@@ -6136,7 +6136,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: {
       name: "과식",
@@ -6261,7 +6261,7 @@ export const RELICS: RelicDef[] = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0,
+      ferocityGain: 12,
     },
     ferocityTrait: {
       name: "과식",

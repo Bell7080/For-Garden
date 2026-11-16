@@ -78,6 +78,7 @@ export class NotificationManager {
       claimableInteractionCount: signals.status === "fulfilled" ? signals.value.claimableInteractionCount ?? 0 : Number(previous.interactionReturned),
       duelSeasonRewardReady: signals.status === "fulfilled" ? signals.value.duelSeasonRewardReady === true : previous.duelSeasonReward,
       claimableSubscriptionBonusCount: signals.status === "fulfilled" ? signals.value.claimableSubscriptionBonusCount ?? 0 : Number(previous.premiumSubscription),
+      guildAttendanceReady: signals.status === "fulfilled" ? signals.value.guildAttendanceReady === true : previous.guildAttendance,
     });
     // 전체 조회 결과도 같은 manager 이벤트 계약으로 발행해 UI 구독 경로를 하나로 유지한다.
     this.state = next; this.events.publishNotification(next);

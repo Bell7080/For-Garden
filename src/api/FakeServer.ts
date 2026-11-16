@@ -2649,7 +2649,12 @@ export class FakeServer implements GameApi {
   }
 
   private giftSenderFacts(context: GiftContext): GiftSenderFacts {
-    return { ...context.sender, researchLevel: this.state.playerResearch.level, accountCreatedAt: this.state.playerCard.createdAt || null };
+    // 본인 결제의 원화 값은 상품 표가 갖는다. 표에서 사라진 상품은 값을 모르므로 세지 않는다(한도가 커지는 쪽으로 틀리지 않게).
+    const ownPayments = context.sender.ownPayments.flatMap(({ productId, at }) => {
+      const acquisition = PRODUCTS.find(({ id }) => id === productId)?.acquisition;
+      return acquisition?.kind === "platform_payment" ? [{ priceKrw: acquisition.basePriceKrw, at }] : [];
+    });
+    return { ...context.sender, ownPayments, researchLevel: this.state.playerResearch.level, accountCreatedAt: this.state.playerCard.createdAt || null };
   }
 
   private sentGiftDto(order: GiftOrder, now: Date): SentGiftHistoryEntryDto | null {
@@ -3824,7 +3829,8 @@ export class FakeServer implements GameApi {
     // 시즌 보상은 결투 서버가 붙었을 때만 생긴다(`claimDuelSeasonReward`와 같은 문). 조회라 상태를 저장하지 않는다.
     const duelSeasonRewardReady = (QA_TOOLS_ENABLED || this.duelContext !== undefined) && rollDuelPeriods(normalizeDuelState(this.state.duel, [...this.state.owned]), now).pendingSeasonReward != null;
     const claimableSubscriptionBonusCount = PRODUCTS.filter((product) => product.passBenefit && this.subscriptionInfo(product, now).subscription?.dailyBonusClaimed === false).length;
-    return { freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
+    const guildAttendanceReady = await this.guildAttendanceReady();
+    return { guildAttendanceReady, freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
   }
 
   /**
@@ -4047,6 +4053,15 @@ export class FakeServer implements GameApi {
    */
   private noteEncounters(ids: Iterable<string>): void {
     for (const id of ids) this.pendingEncounters.add(id);
+  }
+
+  /**
+   * 길드원인데 오늘 출석 도장이 비었는가. 길드가 잠긴 계정은 묻지 않고, 길드가 없거나 조회가 실패하면 점을 세우지 않는다
+   * (`getAttendance`는 길드원이 아니면 거절한다). 날짜는 길드 백엔드가 출석판과 같은 UTC 자정으로 정한다.
+   */
+  private async guildAttendanceReady(): Promise<boolean> {
+    if (!isContentUnlocked("guild", this.state.playerResearch.level)) return false;
+    try { return !(await this.guildBackend.getAttendance(this.guildActor())).stampedToday; } catch { return false; }
   }
 
   /** 길드에 든 적이 있는가 — 굳힌 값이 먼저이고, 아니면 지금 소속을 본다(조회 실패는 아직 아님으로 둔다). */

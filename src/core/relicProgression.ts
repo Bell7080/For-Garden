@@ -1,6 +1,5 @@
 import type { HeartGemStatEffect } from "../data/heartGems";
-import { RUNE_STAT_RULES } from "../data/runes";
-import { assertValidRuneInstance, type RuneInstance } from "./runes";
+import { assertValidRuneInstance, RUNE_STAT_UNIT, runeOptionValue, type RuneInstance, type RuneStatKey } from "./runes";
 import { RARITY_LEVEL_GROWTH } from "./rarityScaling";
 import { resonanceOf, resonanceStatEffect } from "./relicResonance";
 import type { RelicDef, RelicProgress, RelicRarity, Stats } from "./types";
@@ -433,22 +432,23 @@ export function applyBreakthrough(stats: Stats, breakthrough: number): Stats {
   return { ...stats };
 }
 
-/** 장착된 Heart Gem을 슬롯 순서대로 적용해 저장 순서까지 계산 규칙의 일부로 고정한다. */
+/**
+ * 장착한 룬을 능력치에 붙인다 — **룬은 합연산이다**(응태 결정 2026-11-16).
+ *
+ * 같은 능력치의 옵션을 모든 룬에서 먼저 더하고(`runeOptionValue` — 화면과 같은 값), 그 합을 한 번만 붙인다.
+ * `percent`는 성장된 값에 `(1 + 합%)`를 한 번 곱하고, `points`·`flat`은 그대로 더한다. 옵션마다 곱하고 반올림하던
+ * 때는 같은 능력치 세 줄이 서로 곱해졌고(1.14³) 장착 순서가 결과에 끼었다.
+ */
 export function applyHeartGems(stats: Stats, gems: readonly RuneInstance[]): Stats {
-  const result = { ...stats };
+  const totals: Partial<Record<RuneStatKey, number>> = {};
   for (const gem of gems) {
     assertValidRuneInstance(gem);
-    for (const option of [...gem.mainStats, ...gem.subStats]) {
-      const rule = RUNE_STAT_RULES[option.key];
-      // 저장된 option.value는 과거 버전의 중복 합산값일 수 있어, 성공 이력과 표로 정규화한다.
-      const successes = (gem.enhancementHistory[option.key] ?? []).filter(({ succeeded }) => succeeded).length;
-      const engraved = gem.engravings.some(({ statKey }) => statKey === option.key) ? 1 : 0;
-      const value = rule.base + rule.enhancement * (successes + engraved);
-      const key = option.key as keyof Stats;
-      result[key] = rule.unit === "percentagePoint"
-        ? result[key] + value
-        : Math.round(result[key] * (1 + value / 100));
-    }
+    for (const option of [...gem.mainStats, ...gem.subStats]) totals[option.key] = (totals[option.key] ?? 0) + runeOptionValue(gem, option.key);
+  }
+  const result = { ...stats };
+  for (const [key, total] of Object.entries(totals) as [RuneStatKey, number][]) {
+    const stat = key as keyof Stats;
+    result[stat] = RUNE_STAT_UNIT[key] === "percent" ? Math.round(stats[stat] * (1 + total / 100)) : Math.round((stats[stat] + total) * 100) / 100;
   }
   return result;
 }

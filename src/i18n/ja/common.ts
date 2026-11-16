@@ -15,6 +15,7 @@ export const COMMON_JA = {
   "stat.critDamage": "クリティカルダメージ",
   "stat.energyGain": "必殺技チャージ量",
   "stat.energyGain.rune": "必殺技チャージ量増加",
+  "stat.ferocityGain": "野性獲得量",
   "stat.ferocityGain.rune": "野性獲得量増加",
   "stat.lifeSteal": "ダメージ吸収",
   "stat.range": "射程",

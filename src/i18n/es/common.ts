@@ -15,6 +15,7 @@ export const COMMON_ES = {
   "stat.critDamage": "Daño crítico",
   "stat.energyGain": "Carga de Definitiva",
   "stat.energyGain.rune": "Carga de Definitiva +",
+  "stat.ferocityGain": "Ganancia de Ferocidad",
   "stat.ferocityGain.rune": "Ganancia de Ferocidad +",
   "stat.lifeSteal": "Robo de vida",
   "stat.range": "Alcance",

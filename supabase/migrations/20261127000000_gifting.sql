@@ -58,6 +58,29 @@ create table if not exists public.gift_sender_flags (
 alter table public.gift_sender_flags enable row level security;
 revoke all on public.gift_sender_flags from public, anon, authenticated;
 
+-- ───────── 스토어 지역 ─────────
+-- 선물은 같은 스토어 지역끼리만 보낸다(응태 결정 2026-11-16 — 지역 가격 차익 금지). 값은 검증된 영수증의 지역(Apple
+-- storefront · Google regionCode)이 가장 믿을 만하고, 결제한 적 없는 받는 사람은 스토어 SDK가 알려 준 지역이다.
+-- 지역을 모르는 계정은 보내지도 받지도 못한다.
+create table if not exists public.player_store_regions (
+  player_id uuid primary key references public.players(id) on delete cascade,
+  region text not null check (region ~ '^[A-Z]{2}$'),
+  source text not null check (source in ('receipt','storefront')),
+  updated_at timestamptz not null default now()
+);
+alter table public.player_store_regions enable row level security;
+revoke all on public.player_store_regions from public, anon, authenticated;
+
+-- 영수증에서 읽은 지역은 SDK가 알려 준 지역보다 앞선다 — 기기가 보낸 값이 영수증 값을 덮지 못한다.
+create or replace function public.server_note_store_region(p_player uuid, p_region text, p_source text)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  if p_region !~ '^[A-Z]{2}$' or p_source not in ('receipt','storefront') then raise exception 'invalid region' using errcode = '22023'; end if;
+  insert into public.player_store_regions (player_id, region, source) values (p_player, p_region, p_source)
+  on conflict (player_id) do update set region = excluded.region, source = excluded.source, updated_at = now()
+  where excluded.source = 'receipt' or public.player_store_regions.source = 'storefront';
+end $$;
+
 -- ───────── 스토어 환불 수신 ─────────
 -- 스토어(Google 무효 구매 · Apple 환불 알림)가 보낸 사건을 한 번씩만 반영한다. 키는 스토어의 사건 id다.
 create table if not exists public.store_refund_events (
@@ -89,7 +112,13 @@ begin
     'oldestClearedOwnPaymentAt', (select min(r.recorded_at) from public.purchase_records r
       where r.player_id = p_player and r.refunded_at is null
         and not exists (select 1 from public.gift_orders g where g.transaction_id = r.transaction_id)),
-    'lastOwnRefundAt', (select max(r.refunded_at) from public.purchase_records r where r.player_id = p_player)
+    'lastOwnRefundAt', (select max(r.refunded_at) from public.purchase_records r where r.player_id = p_player),
+    -- 금액 한도의 실적: 지난 90일의 환불되지 않은 본인 결제(선물 결제 제외). 원화 값은 상품 표를 아는 서버가 붙인다.
+    'ownPayments', (select coalesce(jsonb_agg(jsonb_build_object('productId', r.product_id, 'at', r.recorded_at) order by r.recorded_at), '[]'::jsonb)
+      from public.purchase_records r
+      where r.player_id = p_player and r.refunded_at is null and r.recorded_at > p_now - interval '90 days'
+        and not exists (select 1 from public.gift_orders g where g.transaction_id = r.transaction_id)),
+    'storeRegion', (select s.region from public.player_store_regions s where s.player_id = p_player)
   );
   if p_recipient is not null and p_recipient <> p_player then
     select jsonb_build_object(p_recipient::text, jsonb_build_object(
@@ -97,7 +126,8 @@ begin
       'name', coalesce(p.nickname, p.uid::text),
       'friendSince', e.friend_since,
       'active', p.status = 'active',
-      'guest', coalesce(u.is_anonymous, true)))
+      'guest', coalesce(u.is_anonymous, true),
+      'storeRegion', (select s.region from public.player_store_regions s where s.player_id = p_recipient)))
     into recipients
     from public.players p
     left join auth.users u on u.id = p.id
@@ -105,11 +135,12 @@ begin
       on e.a = least(p_player, p_recipient) and e.b = greatest(p_player, p_recipient) and e.status = 'friend'
     where p.id = p_recipient;
   end if;
-  -- 내가 보내거나 받은 주문, 그리고 받는 쪽 한도를 재는 데 필요한 그 친구의 받은 주문(지난 31일 + 아직 열린 것).
+  -- 내가 보낸 주문(금액 기간 — 지난 91일), 내가 받은 주문과 받는 쪽 한도를 재는 그 친구의 받은 주문(지난 31일), 아직 열린 것.
   select coalesce(jsonb_agg(g.data order by g.created_at), '[]'::jsonb) into orders
   from public.gift_orders g
-  where (g.sender_id = p_player or g.recipient_id = p_player or (p_recipient is not null and g.recipient_id = p_recipient))
-    and (g.created_at > p_now - interval '31 days' or g.status in ('awaiting_payment','pending'));
+  where (g.sender_id = p_player and g.created_at > p_now - interval '91 days')
+     or ((g.sender_id = p_player or g.recipient_id = p_player or (p_recipient is not null and g.recipient_id = p_recipient))
+         and (g.created_at > p_now - interval '31 days' or g.status in ('awaiting_payment','pending')));
   return jsonb_build_object('playerId', p_player::text, 'sender', sender, 'recipients', coalesce(recipients, '{}'::jsonb), 'orders', orders);
 end $$;
 
@@ -209,10 +240,12 @@ begin
 end $$;
 
 revoke all on function public.server_gift_context(uuid,uuid,timestamptz),
+  public.server_note_store_region(uuid,text,text),
   public.server_apply_store_refund(text,text,text,timestamptz),
   public.server_commit_state_before_gifts(uuid,bigint,jsonb,text,integer,jsonb,text,text,jsonb),
   public.server_commit_state(uuid,bigint,jsonb,text,integer,jsonb,text,text,jsonb) from public, anon, authenticated;
 grant execute on function public.server_gift_context(uuid,uuid,timestamptz),
+  public.server_note_store_region(uuid,text,text),
   public.server_apply_store_refund(text,text,text,timestamptz),
   public.server_commit_state_before_gifts(uuid,bigint,jsonb,text,integer,jsonb,text,text,jsonb),
   public.server_commit_state(uuid,bigint,jsonb,text,integer,jsonb,text,text,jsonb) to service_role;

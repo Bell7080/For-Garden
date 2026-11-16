@@ -184,6 +184,10 @@
      **보스·불사 자리는 비율 피해를 덜 받는다**(`EncounterRoleSpec.percentHpResistance` 30% — 역할 칸이 한 줄로 말한다).
      기준 체력을 낮춘 뒤에도 퍼뎀 하나가 판을 끌고 가서다. 비율 피해를 만드는 자리는 모두 `percentHpDamage`
      한 함수를 지난다(출혈·뇌진탕·빙결 해제) — 한 곳만 `maxHp`를 직접 읽으면 그 효과 하나가 저항을 비껴간다.
+   - **야성 획득량(`Stats.ferocityGain`)은 기본 공격 한 번에 오르는 야성이다** — 궁극기 충전량(`energyGain`)과 같은 결의 깡 스탯이고
+     전 개체 공통 12다(`COMMON_SECONDARY_STATS`). 룬·원정 증강은 그 위에 깡 수치를 더하고, 궁극기 한 번에도 같은 몫이 붙는다
+     (`actionFerocityGain`). 퍼센트 배율로 다시 바꾸지 않는다 — 게이지 크기가 달라 같은 수가 붙어도 폭주 시각이 갈려야 한다(응태 결정 2026-11-16).
+     공통값보다 작은 옛 값(0 기준 저장·스냅샷)은 그 위에 얹어 읽는다(`basicFerocityGain`). 전투력은 공통값 위의 몫만 센다.
    - **야성 게이지의 크기는 개체가 갖는다**(`RelicDef.ferocityMax` · `ferocityMaxOf`). 궁극기 `cost`처럼 개체마다 다르고(아군 기본 100 · 적 기본 130 ·
      코마 320) 폭주 쪽지가 `게이지 N`으로 말한다. 폭주는 크기와 무관하게 8초에 다 닳고(`feverDrainPerSecond`), 피해 구간은 최대치의 50/80/100% 비율이다.
      야성 최대치를 `FEROCITY_RULES.max`로 직접 읽지 않는다. 소환수는 주인의 진행도를 비율로 옮긴다(`ferocityMirrored`).
@@ -366,7 +370,7 @@
 - **패스와 30일 구독은 가치 배수 상한의 예외다** — 플레이어가 직접 플레이한 대가를 돌려주는 상품이라서다. 5천 원 아래 상품은 효율이 200%를 넘어도 된다.
 - **원석·미지핵(고대 핵류)은 일반 유료 패키지에 넣지 않는다.** 원석은 「고고학 지원 패키지」로만 팔고, 미지핵은 돈으로 팔지 않는다(스테미나 상품은 가능).
 - **시즌 패스는 28일 · 30단계이고 임무 연구도가 올린다**(`core/seasonPass.ts` · 정의 `SEASON_PASS`). 새 카운터를 두지 않고 `claimMissionRewards`가 같은 연구도를 더한다. 구매는 `refresh: "season"`으로 시즌마다 세고, 시즌이 바뀌면 `rollSeasonPassState`가 진행과 받은 칸을 함께 비운다. 보상 표를 바꾸면 `seasonPass.test`를 함께 고친다(응태 승인).
-- **선물하기는 구현되어 있고 스위치로 꺼져 있다**(`GIFTING_ENABLED` · 규칙 `core/gifting.ts` · 경계 `FakeServer`의 `*Gift` · DB `20261127000000_gifting.sql`). 받는 사람은 **자기 저장에 직접 받고**, 받은 뒤 환불은 받는 쪽을 절대 깎지 않고 보낸 사람에게 채무·차단·결제 보류를 세운다(`giftRefundOutcome` — 좀비고식 음수 재화 금지). 스토어 환불은 `server_apply_store_refund` 한 곳으로만 받는다. **선물은 직접 사는 것보다 이득이 생기면 안 된다**(부계정 꼼수) — 선물은 기본 지급만 주고(첫 구매 보너스·계정 첫 결제 보상 없음), 주기가 없고 한도가 넉넉한 상품만 열린다(`giftableProductShape` — 한정·일간·주간·월간·패스·특가는 `giftable`을 달아도 닫힌다). 켜기 전에 스토어 환불 자동 수신·영수증 계정 토큰 검증·선물 가능 상품(`giftable`, 응태 승인)을 먼저 갖춘다.
+- **선물하기는 구현되어 있고 스위치로 꺼져 있다**(`GIFTING_ENABLED` · 규칙 `core/gifting.ts` · 경계 `FakeServer`의 `*Gift` · DB `20261127000000_gifting.sql`). 받는 사람은 **자기 저장에 직접 받고**, 받은 뒤 환불은 받는 쪽을 절대 깎지 않고 보낸 사람에게 채무·차단·결제 보류를 세운다(`giftRefundOutcome` — 좀비고식 음수 재화 금지). 스토어 환불은 `server_apply_store_refund` 한 곳으로만 받는다. **선물은 직접 사는 것보다 이득이 생기면 안 된다**(부계정 꼼수) — 선물은 기본 지급만 주고(첫 구매 보너스·계정 첫 결제 보상 없음), 주기가 없고 한도가 넉넉한 상품만 열린다(`giftableProductShape` — 한정·일간·주간·월간·패스·특가는 `giftable`을 달아도 닫힌다). **금액 한도는 고정 상한이 없고 본인 결제 실적이다**(`giftAmountAllowanceKrw` — 지난 90일, 7일 지난 환불 없는 본인 결제 합 − 보낸 선물 합 · 응태 결정 2026-11-16, 도용 카드 세탁 방지). **같은 스토어 지역끼리만 보낸다**(`player_store_regions` — 영수증 지역이 SDK 지역보다 앞선다, 모르면 막는다). 켜기 전에 스토어 환불 자동 수신·영수증 계정 토큰 검증·선물 가능 상품(`giftable`, 응태 승인)을 먼저 갖춘다.
 - **계정 첫 결제 보상은 상품 첫 구매 두 배와 별개로 계정당 한 번이다**(`src/data/firstPaymentGift.ts` — SR 선택권 · 화석 5 · 테두리 `patron`). 지급은 `fulfillPlatformPurchase` 한 곳이고, 선물 테두리(`unlockGift`)는 레벨 나무에 서지 않고 `achievements.giftFrames`로만 연다.
 - **상황 특가는 막힌 순간 그 계정에만 72시간 선다**(`core/situationalOffers.ts` · 상품 `situational`). 동시에 셋 · 하루 하나 · 종류마다 7일 · 같은 키 한 번이고, 판단은 조회 경계(`evaluateSituationalOffers`)가 한다. **전투 중·결과판에 결제 창을 띄우지 않는다** — 「한정」 탭의 붉은 점(`premiumOffer`)만 알린다. 노출·구매는 열린 특가가 정하고 사면 특가를 걷는다. 상황·값을 바꾸면 `situationalOffers.test`를 함께 고친다(응태 승인).
 - 프리미엄 탭은 한정·패스·특가·구독·일간·주간·월간·젬이다(`PREMIUM_TABS`). 무료 보급은 `acquisition: { kind: "free" }`이고 지급은 `purchaseProduct`,
@@ -433,7 +437,7 @@
 - **길드 상태는 `GuildBackend`가 소유하고 지갑이 얽힌 네 조작(`createGuild`·`changeGuildBadge`·`stampGuildAttendance`·`buyGuildProduct`)만 `GameApi`가 한 호출 안에서 확정한다.** 호출자(이름·레벨·얼굴)는 클라이언트가 보내지 않고 서버가 저장된 진행에서 만든다(`guildActorFrom`). 길드 코인은 길드원 행이 들고 지갑에 두지 않는다.
 - **뱃지는 길드장만 바꾸고 첫 변경은 무료, 이후 젬 500이다.** 길드 만들기는 젬 2,000, 레벨 7부터 열린다(`CONTENT_UNLOCKS`). 이름은 2~12자의 문자·숫자·공백이고 문자 검증은 TS가 먼저 한다.
 - **출석은 탭이 아니라 7일 순환 도장판이다**(`GUILD_ATTENDANCE_CYCLE`). 길드 화면에 처음 들어온 날 판이 떠 도장이 찍히고, 빠진 날은 초기화하지 않으며 7일차 다음 날 1일차로 돌아간다. 고를 것이 없다(골드·치즈케이크가 번갈아, 7일차 젬) — 기여도·코인·부흥도는 7일차만 더 크다.
-- **화면은 큰 탭 셋(정보·길드전·수호전, `GUILD_PAGES`)이 가르고 정보 안에 작은 탭(정보·멤버)이 선다.** 길드전·수호전의 붉은 점은 그 판의 주기 키(`guildPageEventKey`)가 기기에 남은 본 값(`settings.game.guildSeen` — 계정 설정에 섞지 않는다)과 다를 때만 선다. 상점·순위는 정보 왼쪽 칩, 다른 길드 찾기·탈퇴는 오른쪽 위 메뉴 칩이 연다. **길드 상점은 일반 상점과 같은 `ShopScene`(`guild` 자리)이다** — 상품은 `guildShopProducts`가 같은 `ProductDto`로 옮기고 값은 길드 코인(`guild_coin` 획득 방식), 구매는 다른 상점과 같은 구매 작업판(`PurchasePopup.openGuild` — 잔액만 길드 코인) → `buyGuildProduct`다. 출석판 위에는 나와 바로 위 길드원의 이번 주 기여가 서고 넘으면 역전 연출이 돈다(`guildAttendanceRace`). 멤버 줄을 누르면 친구 카드와 같은 `PlayerProfilePopup`이 연다(`guildMemberProfileDisplay`).
+- **화면은 큰 탭 셋(정보·길드전·수호전, `GUILD_PAGES`)이 가르고 정보 안에 작은 탭(정보·멤버)이 선다.** 길드전·수호전의 붉은 점은 그 판의 주기 키(`guildPageEventKey`)가 기기에 남은 본 값(`settings.game.guildSeen` — 계정 설정에 섞지 않는다)과 다를 때만 선다. 상점·순위는 정보 왼쪽 칩, 다른 길드 찾기·탈퇴는 오른쪽 위 메뉴 칩이 연다. **길드 상점은 일반 상점과 같은 `ShopScene`(`guild` 자리)이다** — 상품은 `guildShopProducts`가 같은 `ProductDto`로 옮기고 값은 길드 코인(`guild_coin` 획득 방식), 구매는 다른 상점과 같은 구매 작업판(`PurchasePopup.openGuild` — 잔액만 길드 코인) → `buyGuildProduct`다. 오늘 도장을 아직 찍지 않았으면 로비 길드 칩에 붉은 점이 선다(`guildAttendance` — 서버가 출석판의 `stampedToday`를 읽는다, 길드가 없으면 서지 않는다). 출석판 위에는 나와 바로 위 길드원의 이번 주 기여가 서고 넘으면 역전 연출이 돈다(`guildAttendanceRace`). 멤버 줄을 누르면 친구 카드와 같은 `PlayerProfilePopup`이 연다(`guildMemberProfileDisplay`).
 - **QA 빌드는 임시 길드 「포가든 수호대」의 길드장으로 시작한다**(`QA_GUILD_AUTO_JOIN` — 길드 샌드박스 기본 켜짐, 길드에 얽힌 `gameApi` 조작도 이 기기가 받는다). E2E(`test`)와 일반 빌드는 끈다.
 - **배지 값은 번호가 아니라 견본으로 고른다** — 만들기·배지 창의 배지 공방(`guildSwatchSpot`)이 실제 배지 견본을 늘어놓는다. 창을 하나 더 여는 고르기 창을 다시 만들지 않는다. 값은 확정 버튼 판 안에 박고(첫 배지 변경은 값 자리에 `tag`로 「무료」, 오른쪽 위에 `ribbon` 딱지 「첫 회 무료!」), 취소는 판 밖 우하단 뒤로가기(`backButton`)다 — 값 줄·취소 버튼을 따로 세우지 않는다.
 - 수호전·길드전·혜택 적용은 2~4단계다(`guildWar.ts`는 주기 계산만). 진행 상황·미비점·상점 구성안은 `docs/guild-plan.md`가 갖는다.
@@ -2280,6 +2284,13 @@
   마지막 조작의 결과가 운에 갈리면 무엇에 새길지 정할 수 없다. 각인은 기록만 남기지 않고 그
   옵션의 **수치도 함께 올린다** — 전투 계산(`applyHeartGems`)이 이미 각인을 성공 한 번으로
   세므로, 올리지 않으면 화면의 값과 실제 능력치가 갈린다.
+- **룬 수치는 등급표 하나가 정하고 화면과 전투가 같은 값을 읽는다**(`runeOptionValue` — 등급 `RUNE_GENERATION_RULES` +
+  세공 성공·각인 횟수, 표기는 `formatRuneOptionValue`). 등급과 무관한 다른 표로 전투를 다시 셈하던 때(v0.483.0까지)는 고급이
+  적힌 것보다 세고 전설이 적힌 것보다 약했다. 저장된 `value`를 화면에 직접 적지 않는다.
+- **룬끼리는 합연산이다**(응태 결정 2026-11-16). 한 능력치에 걸린 룬 몫을 모두 더한 뒤 성장된 값에 **한 번만** 곱한다
+  (`applyHeartGems`) — 옵션마다 곱하고 반올림하면 세 줄이 곱으로 불고 장착 순서가 결과에 낀다.
+- **궁극기 충전량·야성 획득량 룬은 깡 수치다**(`RUNE_STAT_UNIT`의 `flat` · 크기 `RUNE_STAT_SCALE`). 퍼센트로 주면 게이지가 큰
+  개체와 작은 개체가 같은 비율로 빨라져, 게이지 크기를 개체마다 다르게 둔 뜻(발동 시각이 갈린다)이 사라진다.
 - **세공 화면의 안내 문구는 다음에 할 일을 말한다.** "모든 세공을 마쳤다 · 각인만 남았다"처럼
   상태만 적지 않고 "각인을 진행해 룬을 완성해 주세요."처럼 **무엇을 하면 되는지**를 적고, 다
   끝났으면 "모든 세공이 끝났습니다."로 끝을 알린다.

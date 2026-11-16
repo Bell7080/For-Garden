@@ -23,7 +23,8 @@ export const COMMON_KO = {
   "stat.critDamage": "치명타 피해",
   "stat.energyGain": "궁극기 충전량",
   "stat.energyGain.rune": "궁극기 충전량 증가",
-  "stat.ferocityGain.rune": "야성 획득 증가",
+  "stat.ferocityGain": "야성 획득량",
+  "stat.ferocityGain.rune": "야성 획득량 증가",
   "stat.lifeSteal": "피해 흡혈",
   "stat.range": "사거리",
 

@@ -7776,7 +7776,7 @@ var SKILL_KO = {
   "skill.sentence.damageAnd": "{target} {damage}\uB97C \uC8FC\uACE0 {effect}.",
   "skill.sentence.repeat": "{target} {seconds}\uCD08 \uAC04\uACA9\uC73C\uB85C {damage}\uB97C {count}\uBC88 \uC900\uB2E4.",
   "skill.sentence.repeatAnd": "{target} {seconds}\uCD08 \uAC04\uACA9\uC73C\uB85C {damage}\uB97C {count}\uBC88 \uC8FC\uACE0 {effect}.",
-  "skill.sentence.meteorRepeat": "{target} {seconds}\uCD08 \uAC04\uACA9\uC73C\uB85C [[meteor|\uC720\uC131]]\uC744 {count}\uBC88 \uB5A8\uC5B4\uB728\uB824, \uB5A8\uC5B4\uC9C8 \uB54C\uB9C8\uB2E4 {damage}\uB97C \uC900\uB2E4.",
+  "skill.sentence.meteorRepeat": "{target} {seconds}\uCD08 \uAC04\uACA9\uC73C\uB85C [[meteor|\uC720\uC131]]\uC744 {count}\uBC88 \uB5A8\uC5B4\uB728\uB824, \uB5A8\uC5B4\uC9C8 \uB54C\uB9C8\uB2E4 {damage}\uB97C \uC900\uB2E4. \uC774 \uC720\uC131\uC740 \uD53C\uD574\uAC00 {percent}%\uC778 \uB300\uC2E0 \uD68C\uBCF5\uC774 {multiplier}\uBC30\uB2E4.",
   "skill.sentence.damageAndComma": "{target} {damage}\uB97C \uC8FC\uACE0, {effect}.",
   "skill.sentence.clause": "{text}.",
   "skill.sentence.teamMissingHpHeal": "\uBAA8\uB4E0 \uC0DD\uC874 \uC544\uAD70\uC774 \uAC01\uC790 [[missing-hp|\uC783\uC740 \uCCB4\uB825]]\uC758 {percent}%\uB97C \uD68C\uBCF5\uD55C\uB2E4.",
@@ -7976,7 +7976,7 @@ var SKILL_KO = {
   "skill.ferocity.appetiteFrenzy": "\uD3ED\uC8FC \uC911 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB974\uACE0, \uC790\uC2E0\uC774 \uAC74 [[bleed|\uCD9C\uD608]]\uC774 \uD53C\uD574\uB97C \uC904 \uB54C\uB9C8\uB2E4 \uADF8 \uD53C\uD574\uC758 {heal}%\uB9CC\uD07C \uD68C\uBCF5\uD55C\uB2E4.",
   "skill.ferocity.corneredBeast": "\uD3ED\uC8FC \uC911 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {attack}%, [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {move}% \uC624\uB974\uACE0 \uB4F1 \uB4A4\uB85C \uB6F0\uC5B4 \uBB3C\uB7EC\uB098\uB294 \uC7AC\uC0AC\uC6A9 \uB300\uAE30\uAC00 {seconds}\uCD08\uB85C \uC904\uC5B4\uB4E0\uB2E4.",
   "skill.ferocity.rollCallRefusal": "\uD3ED\uC8FC \uC911 \uAD81\uADF9\uAE30\uAC00 \uB04C\uC5B4\uB2F9\uAE30\uB294 \uBC94\uC704\uAC00 {percent}% \uB113\uC5B4\uC9C0\uACE0, [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC758 \uB3C4\uBC1C\xB7\uBCF4\uD638\uB9C9\uC774 {every}\uBC88\uC9F8\uB9C8\uB2E4 \uD130\uC9C4\uB2E4.",
-  "skill.passive.starfall": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] {every}\uBC88\uC9F8\uB9C8\uB2E4 \uADF8 \uC790\uB9AC\uC5D0 {seconds}\uCD08 \uB4A4 [[meteor|\uC720\uC131]]\uC774 \uB5A8\uC5B4\uC838 \uC6D0 \uC548\uC758 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C {damage}\uC758 [[magical-damage|\uB9C8\uBC95 \uD53C\uD574]]\uB97C \uC900\uB2E4.",
+  "skill.passive.starfall": "[[meteor|\uC720\uC131]]\uC774 \uC801\uC5D0\uAC8C \uC900 \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC544\uAD70\uC744 \uD68C\uBCF5\uD55C\uB2E4. \uB5A8\uC5B4\uB728\uB9B0 \uC790\uC2E0\uC740 \uD68C\uBCF5\uD558\uC9C0 \uC54A\uB294\uB2E4.",
   "skill.ferocity.meteorShower": "\uD3ED\uC8FC \uC911\uC5D0\uB294 [[meteor|\uC720\uC131]]\uC774 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] {every}\uBC88\uC9F8\uB9C8\uB2E4 \uB5A8\uC5B4\uC9C0\uACE0 \uBC94\uC704\uAC00 {percent}% \uB113\uC5B4\uC9C4\uB2E4.",
   "skill.ferocity.restraintCollapse": "\uD3ED\uC8FC \uC911\uC5D0\uB294 \uB0A8\uC740 \uC790\uBB3C\uC1E0\uAC00 \uBAA8\uB450 \uD480\uB9B0 \uAC83\uC73C\uB85C \uCE5C\uB2E4. \uD3ED\uC8FC\uAC00 \uB05D\uB098\uBA74 \uC6D0\uB798 \uC218\uB85C \uB3CC\uC544\uAC04\uB2E4.",
   "skill.ferocity.huntInstinct": "\uD3ED\uC8FC \uC911 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 [[intimidation|\uC704\uC555]]\uC744 {stacks}\uACB9\uC529 \uC313\uACE0, [[fear|\uACF5\uD3EC]]\uAC00 \uD480\uB9B0 \uB4A4\uC758 \uBA74\uC5ED\uC774 {seconds}\uCD08\uB85C \uC9E7\uC544\uC9C4\uB2E4.",
@@ -8047,6 +8047,7 @@ var SKILL_KO = {
   "skill.breakthrough.effect.passive.packStrength": "\uC11C \uC788\uB294 \uB291\uB300(\uCFE0\uB85C\xB7\uC2DC\uB85C\xB7\uC0C8\uB07C) \uD55C \uB9C8\uB9AC\uB9C8\uB2E4 \uB514\uC548\uC774 \uC8FC\uB294 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4. \uCD5C\uB300 {max}%.",
   "skill.ferocity.extraFork": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC758 \uAC08\uB798\uAC00 {count}\uAC1C \uB298\uACE0 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB978\uB2E4.",
   "skill.clause.forkLone": "\uC801\uC774 \uD558\uB098\uBFD0\uC774\uBA74 \uBAA8\uB4E0 \uAC08\uB798\uAC00 \uADF8 \uC801\uC5D0\uAC8C \uBC15\uD78C\uB2E4",
+  "skill.clause.starfall": "{every}\uBC88\uC9F8 \uACF5\uACA9\uB9C8\uB2E4 \uADF8 \uC790\uB9AC\uC5D0 {seconds}\uCD08 \uB4A4 [[meteor|\uC720\uC131]]\uC774 \uB5A8\uC5B4\uC9C4\uB2E4",
   "skill.status.frostPlume": "[[yuti-plume|\uC11C\uB9AC\uAE43]]\uC744 \uD55C \uACB9 \uBC15\uB294\uB2E4",
   "skill.phrase.splitShotFork": "\uC11C\uB85C \uB2E4\uB978 \uC801 {count}\uBA85\uC5D0\uAC8C",
   "skill.breakthrough.effect.basic.frostBrand": "[[yuti-plume|\uC11C\uB9AC\uAE43]]\uC774 \uBC15\uD78C \uC801\uC5D0\uAC8C \u300C{name}\u300D\uC758 \uD53C\uD574\uAC00 \uC11C\uB9AC\uAE43 \uD55C \uACB9\uB9C8\uB2E4 {percent}%\uC529 \uCEE4\uC9C4\uB2E4. \uCD5C\uB300 {max}%\uAE4C\uC9C0.",
@@ -12604,9 +12605,12 @@ function triggerRally(attacker, state, events) {
     area: { shape: "radial", x: attacker.x, y: attacker.y, radius: rally.tauntRadius }
   });
 }
+function basicStarfall(def) {
+  return "starfall" in def.basic ? def.basic.starfall : void 0;
+}
 function starfallShape(attacker) {
-  const starfall = attacker.def.passive.starfall;
-  if (!starfall) return void 0;
+  const starfall = basicStarfall(attacker.def);
+  if (!starfall || !attacker.def.passive.starfall) return void 0;
   const trait = attacker.def.ferocityTrait;
   if (attacker.ferocityFever && trait.effectId === "meteorShower") {
     return { every: Math.min(starfall.every, trait.starfallEvery), radius: starfall.radius * (1 + trait.radiusBonusPercent / 100) };
@@ -12614,7 +12618,7 @@ function starfallShape(attacker) {
   return { every: starfall.every, radius: starfall.radius };
 }
 function callStarfall(attacker, target, rng) {
-  const starfall = attacker.def.passive.starfall;
+  const starfall = basicStarfall(attacker.def);
   const shape = starfallShape(attacker);
   if (!starfall || !shape || !isFighterAlive(attacker)) return;
   const drop = () => attacker.starfalls.push({ x: target.x, y: target.y, radius: shape.radius, remaining: starfall.delaySeconds, total: starfall.delaySeconds });
@@ -12695,11 +12699,11 @@ function landStarfall(fighter, fall, starfall, state, events) {
   }
   healFromStarfall(fighter, dealt, starfall, state, events);
 }
-function healFromStarfall(fighter, dealt, starfall, state, events) {
+function healFromStarfall(fighter, dealt, starfall, state, events, healMultiplier = 1) {
   if (dealt <= 0) return;
   const ally = lowestCurrentHpAlly(state, fighter.side, fighter.id);
   if (!ally) return;
-  const requested = dealt * starfall.lowestAllyHealPercent / 100;
+  const requested = dealt * starfall.lowestAllyHealPercent / 100 * healMultiplier;
   const healed = applyHealing(state, ally, requested, fighter.id);
   pushHeal(events, ally, healed, "passive");
   grantFeverHealingShield(fighter, ally, healed, events, state);
@@ -17202,7 +17206,8 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
     }
   }
   if (useUltimate && ultimate && "allyScrub" in ultimate && ultimate.allyScrub) applyAllyScrub(attacker, ultimate.allyScrub, state, events);
-  if (useUltimate && attacker.def.passive.starfall) healFromStarfall(attacker, ultimateMeteorDealt, attacker.def.passive.starfall, state, events);
+  const ultimateMeteor = useUltimate && ultimate && "repeatStrike" in ultimate ? ultimate.repeatStrike?.meteor : void 0;
+  if (ultimateMeteor && attacker.def.passive.starfall) healFromStarfall(attacker, ultimateMeteorDealt, attacker.def.passive.starfall, state, events, ultimateMeteor.healMultiplier);
   if (!useUltimate && !followUp && !free) callStarfall(attacker, center, rng);
   if (!attacker.bt.dashBack?.running) gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
 }
@@ -19342,6 +19347,7 @@ var FROST_PLUME = {
   slowSeconds: 3,
   slowPercent: 30
 };
+var PLESHA_METEOR_POWER = 150;
 var RELICS = [
   {
     id: "rex",
@@ -19364,7 +19370,7 @@ var RELICS = [
     catalogSummary: "\uC2E0\uC7A5 1.63m, \uCCB4\uC911 54kg\uC758 \uADE0\uD615 \uC7A1\uD78C \uC778\uAC04\uD615 \uCCB4\uACA9\uACFC \uBC1C\uB2EC\uD55C \uD131 \uAD6C\uC870\uAC00 \uD655\uC778\uB41C, \uC131\uCCB4 \uCD08\uAE30 \uD2F0\uB77C\uB178\uC0AC\uC6B0\uB8E8\uC2A4 \uD654\uC11D \uAE30\uBC18 \uD45C\uBCF8.",
     unlockRecord: { status: "recorded", text: "\uB809\uC2DC\uC544\uB294 \uBA3C\uC800 \uC55E\uC7A5\uC11C\uACE0 \uC2B9\uBD80\uB97C \uC120\uC5B8\uD558\uB294 \uC77C\uC774 \uC7A6\uB2E4. \uC2A4\uC2A4\uB85C\uB97C \uC5EC\uC655\uC774\uB77C \uBD80\uB974\uB294 \uB2F9\uB2F9\uD55C \uB9D0\uD22C \uADF8\uB300\uB85C, \uBB38 \uC55E\uC5D0\uC11C\uB3C4 \uC120\uC5B8\uBD80\uD130 \uD558\uACE0 \uBB38\uC744 \uC5F4\uB2E4 \uACBD\uCCA9\uC9F8 \uBF51\uC544 \uB4E0\uB2E4. \uADF8\uB7EC\uACE0\uB294 \uB208\uCE58\uB97C \uBCF4\uBA70 \uC2DC\uB9D0\uC11C \uCCA0\uC744 \uAEBC\uB0B4 \uC624\uB294\uB370, \uCCA0\uC740 \uBC8C\uC368 \uB450 \uAD8C\uC9F8\uB2E4. \uB9E8 \uC55E \uC7A5\uC5D0\uB294 \uC790\uB791\uC2A4\uB7EC\uC6B4 \uCCAB \uC2DC\uB9D0\uC11C\uAC00 \uBD99\uC5B4 \uC788\uB2E4. \uBB38\uC740 \uBD80\uC218\uBA74\uC11C\uB3C4 \uADC0\uC5EC\uC6B4 \uC811\uC2DC\uC640 \uCC3B\uC794\uB9CC\uC740 \uC190\uAC00\uB77D \uB450 \uAC1C\uB85C \uC870\uC2EC\uC870\uC2EC \uB2E4\uB8EC\uB2E4. \uC608\uC804\uC5D0 \uB0B4\uAC00 \uBE14\uB80C\uB529A\uC758 \uD64D\uCC28\uAC00 \uB9DB\uC788\uB2E4\uACE0 \uD55C\uB9C8\uB514 \uD588\uB354\uB2C8 \uADF8 \uBE0C\uB79C\uB4DC\uC758 \uD55C\uC815\uD310\uC744 \uC904 \uC11C\uC11C \uAD6C\uD574 \uC640 \uD55C \uBC88\uB3C4 \uC5F4\uC9C0 \uC54A\uC740 \uCC44 \uC544\uB07C\uACE0 \uC788\uB2E4. \uC9C0\uAE08\uAE4C\uC9C0 \uAE68\uC9C4 \uCC3B\uC794\uC740 \uD558\uB098\uB3C4 \uC5C6\uB2E4. \uB3D9\uB8CC\uC758 \uC2E0\uD638\uAC00 \uB4E4\uB9AC\uBA74 \uACE7\uBC14\uB85C \uBCF4\uD3ED\uC744 \uB9DE\uCD94\uACE0, \uC804\uD22C\uAC00 \uAE38\uC5B4\uC9C8\uC218\uB85D \uC57C\uC131\uC744 \uC990\uAE30\uBA74\uC11C\uB3C4 \uB4A4\uCC98\uC9C4 \uB3D9\uB8CC\uB97C \uBA87 \uBC88\uC774\uACE0 \uB3CC\uC544\uBCF8\uB2E4. \uCE6D\uCC2C \uD55C\uB9C8\uB514\uC5D0\uB294 \uC785\uAF2C\uB9AC\uB97C \uB204\uB974\uB290\uB77C \uAF2C\uB9AC \uB05D\uC774 \uBA3C\uC800 \uC0B4\uB791\uAC70\uB9B0\uB2E4." },
     rarity: "SSR",
-    ferocityMax: 100,
+    ferocityMax: 110,
     portraitAssetId: "lexia",
     origin: "\uD2F0\uB77C\uB178\uC0AC\uC6B0\uB8E8\uC2A4",
     element: "fire",
@@ -20172,7 +20178,7 @@ var RELICS = [
     // 관제 호칭 중 가장 실무적인 것을 골라, 귀찮다면서도 일은 끝까지 하는 선임의 결을 말한다.
     researcherTitle: "\uB2F4\uB2F9\uAD00",
     rarity: "R",
-    ferocityMax: 90,
+    ferocityMax: 100,
     portraitAssetId: "kento",
     origin: "\uCF04\uD2B8\uB85C\uC0AC\uC6B0\uB974\uC2A4",
     element: "fire",
@@ -20520,7 +20526,7 @@ var RELICS = [
     // 선원 모자를 쓰고 지시를 되읊는 버릇이라 시그널 아이가 지시자에게 쓰는 「오더」를 그대로 연구원에게 돌려 쓴다.
     researcherTitle: "\uC624\uB354",
     rarity: "SR",
-    ferocityMax: 110,
+    ferocityMax: 90,
     portraitAssetId: "irna",
     origin: "\uC774\uD06C\uD2F0\uC624\uB974\uB2C8\uC2A4",
     element: "water",
@@ -20626,7 +20632,7 @@ var RELICS = [
     squadNote: '\uC571\uC194\uB8E8\uD2B8 \uD33D\uC758 \uC804\uC120 \uC218\uBE44 \uB2F4\uB2F9. \uBC00\uACE0 \uB4E4\uC5B4\uAC00\uB294 \uB3D9\uB8CC\uB4E4 \uC55E\uC5D0 \uC11C\uC11C \uC0C1\uB300\uAC00 \uBA3C\uC800 \uBB3C\uB7EC\uC11C\uAC8C \uB9CC\uB4E4\uC5B4 \uC804\uC5F4\uC744 \uC9C0\uD0A4\uACE0, \uC5F0\uAD6C\uC6D0\uC744 "\uB9C8\uC2A4\uD130"\uB77C \uBD80\uB974\uBA70 \uC9C0\uC2DC\uC5D0\uB294 \uACE0\uAC1C\uBD80\uD130 \uB044\uB355\uC778\uB2E4.',
     researcherTitle: "\uB9C8\uC2A4\uD130",
     rarity: "SSR",
-    ferocityMax: 120,
+    ferocityMax: 100,
     portraitAssetId: "ark",
     origin: "\uC544\uB974\uD06C\uD1A0\uB450\uC2A4",
     element: "earth",
@@ -20965,9 +20971,9 @@ var RELICS = [
       effectType: "healing",
       value: 3,
       durationSeconds: 0,
-      // 예고 원이 먼저 서고 1초 뒤 떨어진다 — 피할 틈이 있는 만큼 범위는 평타보다 넓다.
-      starfall: { every: 3, delaySeconds: 1, radius: 150, power: 100, lowestAllyHealPercent: 65 },
-      desc: "\uAE30\uBCF8 \uACF5\uACA9 3\uBC88\uC9F8\uB9C8\uB2E4 \uADF8 \uC790\uB9AC\uC5D0 1\uCD08 \uB4A4 \uC720\uC131\uC774 \uB5A8\uC5B4\uC838 \uC6D0 \uC548\uC758 \uC801\uC5D0\uAC8C \uB9C8\uBC95 \uD53C\uD574\uB97C \uC8FC\uACE0, \uC900 \uD53C\uD574\uC758 \uC77C\uBD80\uB9CC\uD07C \uAC00\uC7A5 \uB2E4\uCE5C \uC544\uAD70\uC744 \uD68C\uBCF5\uD55C\uB2E4."
+      // 유성 한 발의 피해(「유성」 태그)와 회복(이 패시브)이다. 평타·궁극기가 같은 유성을 부른다(응태 결정 2026-11-16).
+      starfall: { power: PLESHA_METEOR_POWER, lowestAllyHealPercent: 70 },
+      desc: "\uC720\uC131\uC774 \uC801\uC5D0\uAC8C \uC900 \uD53C\uD574\uC758 70%\uB9CC\uD07C \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC544\uAD70\uC744 \uD68C\uBCF5\uD55C\uB2E4. \uB5A8\uC5B4\uB728\uB9B0 \uC790\uC2E0\uC740 \uD68C\uBCF5\uD558\uC9C0 \uC54A\uB294\uB2E4."
     },
     basic: {
       id: "plesha-basic",
@@ -20978,20 +20984,23 @@ var RELICS = [
       effectType: "magical",
       damageType: "magical",
       targeting: "targetedCircle",
-      radius: 90
+      radius: 90,
+      // 예고 원이 먼저 서고 1초 뒤 떨어진다 — 피할 틈이 있는 만큼 범위는 평타보다 넓다.
+      starfall: { every: 3, delaySeconds: 1, radius: 150 }
     },
     ultimate: {
       id: "plesha-ult",
       name: "\uBCC4\uC774 \uC544\uB984\uB2F5\uB124\uC694, \uC120\uBC30",
-      // 한 번 떨어질 때의 위력이다. 세 번 떨어진다 — 원 안 아군 회복은 한계 돌파(III)가 연다.
-      power: 60,
+      // 한 번 떨어질 때의 위력 — 패시브 유성의 절반이고, 대신 그 유성의 회복은 두 배다(응태 결정 2026-11-16).
+      // 원 안 아군 회복은 한계 돌파(III)가 연다.
+      power: PLESHA_METEOR_POWER / 2,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
       cost: 120,
       targeting: "targetedCircle",
       radius: 200,
-      repeatStrike: { count: 3, intervalSeconds: 0.45, meteor: true }
+      repeatStrike: { count: 3, intervalSeconds: 0.45, meteor: { powerPercent: 50, healMultiplier: 2 } }
     }
   },
   {
@@ -21017,7 +21026,7 @@ var RELICS = [
     squadNote: "\uC0AC\uC77C\uB7F0\uD2B8 \uB8EC\uC758 \uAE30\uB85D \uB2F4\uB2F9. \uCF00\uC5B4\uC2E4\uC744 \uB4DC\uB098\uB4E0 \uB810\uB9AD\uC758 \uC5BC\uAD74\uC744 \uD55C \uC7A5\uC529 \uADF8\uB824 \uBCBD\uC5D0 \uBD99\uC5EC \uB450\uACE0, \uC815\uC791 \uC790\uAE30 \uADF8\uB9BC \uC774\uC57C\uAE30\uAC00 \uB098\uC624\uBA74 \uD6C4\uB4DC\uB97C \uB4A4\uC9D1\uC5B4\uC4F4\uB2E4.",
     researcherTitle: "\uC5F0\uAD6C\uC6D0 \uC528",
     rarity: "SSR",
-    ferocityMax: 100,
+    ferocityMax: 90,
     portraitAssetId: "meron",
     origin: "\uBA54\uAC08\uB85C\uB3C8",
     element: "water",
@@ -21236,7 +21245,7 @@ var RELICS = [
     squadNote: '\uB098\uC774\uD2B8 \uAE30\uC5B4\uC758 \uC57C\uC804 \uB2F4\uB2F9\uC758. \uC778\uC591\uC870\uAC00 \uB2E4\uCE58\uBA74 \uADF8 \uC790\uB9AC\uC5D0\uC11C \uBD99\uC5EC \uB193\uACE0, \uC5F0\uAD6C\uC6D0\uB9CC\uC740 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uBD80\uB974\uBA70 \uC9C4\uB8CC \uC608\uC57D\uC744 \uC870\uB978\uB2E4.',
     researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
     rarity: "SSR",
-    ferocityMax: 120,
+    ferocityMax: 130,
     portraitAssetId: "maki",
     origin: "\uB9C8\uCE74\uC774\uB85C\uB450\uC2A4",
     element: "earth",
@@ -21463,7 +21472,7 @@ var RELICS = [
     // 낯을 가리는 스쿼드에서 혼자 말이 많은 막내라, 스쿼드가 쓰는 호칭 중 가장 격식 있는 쪽을 골라 장난스럽게 부른다.
     researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
     rarity: "SR",
-    ferocityMax: 110,
+    ferocityMax: 100,
     portraitAssetId: "delopi",
     origin: "\uB51C\uB85C\uD3EC\uC0AC\uC6B0\uB8E8\uC2A4",
     element: "grass",
@@ -21574,7 +21583,7 @@ var RELICS = [
     // 케어하는 스쿼드에서 스스로 돌봄을 받지 않는 쪽이라, 아이를 부르듯 하는 호칭을 골라 쓴다.
     researcherTitle: "\uC544\uAC00",
     rarity: "SSR",
-    ferocityMax: 110,
+    ferocityMax: 120,
     portraitAssetId: "nodonia",
     origin: "\uD504\uD14C\uB77C\uB178\uB3C8",
     element: "wind",
@@ -21965,6 +21974,8 @@ var RELICS = [
     squadNote: "\uACF5\uBA78\uC758 \uD6C4\uBBF8 \uBC29\uBCBD\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uD3EC\uACA9\uC5D0\uB294 \uBA3C\uC800 \uAECD\uC9C8\uC744 \uB2EB\uC9C0\uB9CC \uC791\uC740 \uB3D9\uB8CC\uAC00 \uB0A8\uC73C\uBA74 \uB3CC\uC544\uC640, \uCE68\uD22C\uC870\uAC00 \uBAA8\uB450 \uBE60\uC9C8 \uB54C\uAE4C\uC9C0 \uD1B5\uB85C\uB97C \uBAB8\uC73C\uB85C \uB9C9\uB294\uB2E4.",
     researcherTitle: "\uC5F0\uAD6C\uC6D0",
     rarity: "R",
+    // 폭주가 다른 적보다 늦게 와(첫 폭주 중앙값 14초 남짓) 기본 130에서 내렸다(2026-11-16 폭주 게이지 정리).
+    ferocityMax: 120,
     portraitAssetId: "amo",
     // 원종·속성·역할은 발굴 및 복원 분류 데이터이며 성격을 직접 표현하지 않는다.
     origin: "\uC554\uBAA8\uB098\uC774\uD2B8",
@@ -22474,6 +22485,8 @@ var RELICS = [
     squadNote: '\uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uBD80\uAC04\uBD80\uB85C \uD655\uC778\uB41C\uB2E4. \uAC04\uBD80\uAC00 \uC55E\uC73C\uB85C \uB098\uAC00\uBA74 \uADF8 \uB4A4\uB97C \uBC1B\uCCD0 \uD68C\uC218 \uB300\uC0C1 \uC55E\uC5D0 \uC120\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uAE4D\uB4EF\uC774 \uBD80\uB978\uB2E4.',
     researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
     rarity: "SR",
+    // 폭주가 다른 적보다 늦게 와(첫 폭주 중앙값 14초 남짓) 기본 130에서 내렸다(2026-11-16 폭주 게이지 정리).
+    ferocityMax: 120,
     portraitAssetId: "atra",
     origin: "\uC544\uB974\uD2B8\uB85C\uD50C\uB808\uC6B0\uB77C",
     element: "grass",
@@ -23000,6 +23013,8 @@ var RELICS = [
     squadNote: '\uACF5\uBA78 \uAC10\uAE08\uC870\uC758 \uBD80\uAC04\uBD80\uB85C, \uAC10\uBC29\uC758 \uC11C\uC5F4 \uC815\uB9AC\uB97C \uB9E1\uC544 \uC628 \uACE0\uCC38\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uBB34\uB9AC\uB97C \uB9C9\uB0B4\uCC98\uB7FC \uCC59\uAE30\uBA70, \uC55E\uC5D0 \uC11C\uC11C \uB364\uBE44\uB294 \uC801\uC744 \uBAA8\uB450 \uC81C\uAC8C\uB85C \uBD80\uB978\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB978\uB2E4.',
     researcherTitle: "\uC5F0\uAD6C\uC6D0",
     rarity: "SR",
+    // 폭주가 다른 적보다 늦게 와(첫 폭주 중앙값 14초 남짓) 기본 130에서 내렸다(2026-11-16 폭주 게이지 정리).
+    ferocityMax: 120,
     portraitAssetId: "raja",
     origin: "\uB77C\uC790\uC0AC\uC6B0\uB8E8\uC2A4",
     element: "earth",
@@ -23196,7 +23211,7 @@ var RELICS = [
     catalogSummary: "\uC2E0\uC7A5 1.76m\uC758 \uACAC\uACE0\uD55C \uC778\uAC04\uD615 \uCCB4\uACA9\uACFC \uD604\uC545 \uC5F0\uC8FC\uC5D0 \uC801\uD569\uD55C \uC12C\uC138\uD55C \uC190\uB05D\uC744 \uC9C0\uB2CC, \uC131\uCCB4 \uBA54\uAC00\uD14C\uB9AC\uC6C0 \uD654\uC11D \uAE30\uBC18 \uD45C\uBCF8.",
     unlockRecord: { status: "recorded", text: "\uBA54\uD14C\uB294 \uBCF5\uC6D0 \uC9C1\uD6C4\uBD80\uD130 \uBC14\uC774\uC62C\uB9B0\uC758 \uC6B8\uB9BC\uC5D0 \uC720\uB09C\uD788 \uC624\uB798 \uADC0\uB97C \uAE30\uC6B8\uC600\uB2E4. \uD65C\uC744 \uC62C\uB9AC\uAE30 \uC804\uC5D0 \uC1A1\uC9C4\uC744 \uD55C\uCC38 \uBC14\uB974\uB294 \uBC84\uB987\uC774 \uC788\uC5B4, \uADF8\uB3D9\uC548\uC740 \uB204\uAC00 \uB9D0\uC744 \uAC78\uC5B4\uB3C4 \uB300\uB2F5\uD558\uC9C0 \uC54A\uB294\uB2E4. \uD3C9\uC18C\uC5D0\uB294 \uCF00\uC5B4\uC2E4 \uBC14\uB2E5\uC5D0 \uB290\uAE0B\uD558\uAC8C \uB4B9\uAD74\uBA70 \uADC0\uCC2E\uB2E4\uB294 \uB9D0\uC744 \uB2EC\uACE0 \uC0B4\uC9C0\uB9CC, \uC544\uD508 \uB810\uB9AD\uC774 \uC2E4\uB824 \uC624\uBA74 \uB9D0\uC5C6\uC774 \uC77C\uC5B4\uB098 \uACC1\uC5D0 \uC549\uB294\uB2E4. \uADF8 \uD070 \uBAB8\uC73C\uB85C \uAC00\uB298\uB514\uAC00\uB294 \uD65C\uC744 \uCF1C\uB294\uB370, \uC5F0\uC8FC\uAC00 \uC2DC\uC791\uB418\uBA74 \uB9D0\uC218\uAC00 \uB69D \uB04A\uAE30\uACE0 \uD65C\uB05D\uB9CC \uB530\uB77C\uAC04\uB2E4. \uC804\uC7A5\uC5D0\uC11C\uB3C4 \uD754\uB4E4\uB9AC\uB294 \uBC95\uC774 \uC5C6\uC5B4 \uBC15\uC790\uAC00 \uD750\uD2B8\uB7EC\uC9C4 \uB3D9\uB8CC \uC606\uC5D0 \uC11C\uC11C \uAC78\uC74C\uC744 \uB9DE\uCDB0 \uC900\uB2E4. \uC9C0\uAE08\uC740 \uB098\uB97C \uC704\uD55C \uB2E8 \uD558\uB098\uBFD0\uC778 \uBB34\uB300\uB97C \uC900\uBE44\uD558\uBA70, \uC790\uC2E0\uC758 \uC5F0\uC8FC\uAC00 \uC628\uC804\uD788 \uB2FF\uC744 \uB0A0\uC744 \uACE0\uB300\uD558\uACE0 \uC788\uB2E4." },
     rarity: "SSR",
-    ferocityMax: 110,
+    ferocityMax: 120,
     // 6번 전신과 SD를 함께 사용해 도감과 전투에서 같은 메테가 보이도록 한다.
     portraitAssetId: "mette",
     origin: "\uBA54\uAC00\uD14C\uB9AC\uC6C0",
@@ -23605,7 +23620,7 @@ var RELICS = [
     squadNote: "\uC0AC\uC77C\uB7F0\uD2B8 \uB8EC\uC758 \uC7AC\uBD09 \uB2F4\uB2F9. \uCF00\uC5B4\uC2E4\uC5D0 \uC2E4\uB824 \uC628 \uAC1C\uCCB4\uC758 \uC637\uACFC \uBAB8\uC744 \uB9D0\uC5C6\uC774 \uAFF0\uB9E4\uACE0, \uC2E4\uC774 \uB5A8\uC5B4\uC9C0\uBA74 \uC81C \uC218\uB3C4\uBCF5\uC744 \uADF8\uC5B4 \uB72F\uC5B4 \uC4F4\uB2E4.",
     researcherTitle: "\uC544\uAC00",
     rarity: "SR",
-    ferocityMax: 90,
+    ferocityMax: 80,
     portraitAssetId: "terisa",
     origin: "\uD14C\uB9AC\uC9C0\uB178\uC0AC\uC6B0\uB8E8\uC2A4",
     // 불은 갈퀴를 달궈 지지는 쪽에서 온다 — 자르는 손과 지혈하는 손이 같은 손이다.
@@ -23973,7 +23988,7 @@ var RELICS = [
     // 관제 절차를 통째로 외워 오는 개체라 스쿼드가 지시자에게 쓰는 호칭을 그대로 연구원에게 돌린다.
     researcherTitle: "\uC624\uB354",
     rarity: "SSR",
-    ferocityMax: 100,
+    ferocityMax: 90,
     portraitAssetId: "shute",
     origin: "\uC2A4\uD14C\uACE0\uC0AC\uC6B0\uB8E8\uC2A4",
     element: "earth",
@@ -25344,6 +25359,8 @@ var RELICS = [
     squadNote: "\uACF5\uBA78\uC758 \uC18C\uBAA8 \uBB3C\uB7C9. \uC9C0\uC2DC\uBC1B\uC740 \uBC29\uD5A5\uC73C\uB85C \uD55C\uAEBC\uBC88\uC5D0 \uD758\uB7EC\uAC00 \uD1B5\uB85C\uB97C \uBA54\uC6B0\uACE0, \uC55E\uC758 \uAC1C\uCCB4\uAC00 \uC4F0\uB7EC\uC9C4 \uC790\uB9AC\uB97C \uB4A4\uC758 \uAC1C\uCCB4\uAC00 \uADF8\uB300\uB85C \uBC1F\uACE0 \uB118\uC5B4\uAC04\uB2E4.",
     researcherTitle: "\uC5F0\uAD6C\uC6D0",
     rarity: "R",
+    // 폭주가 다른 적보다 늦게 와(첫 폭주 중앙값 14초 남짓) 기본 130에서 내렸다(2026-11-16 폭주 게이지 정리).
+    ferocityMax: 120,
     portraitAssetId: "raitia-earth",
     origin: "\uACA8\uC6B8\uC7A0\uC950",
     element: "earth",
@@ -40344,8 +40361,16 @@ var GIFT_POLICY = {
   /** 받지 않은 선물이 돌아오기까지(일). */
   pendingExpiryDays: 30,
   /** 결제 대기 주문이 사라지기까지(분). */
-  paymentWindowMinutes: 30
+  paymentWindowMinutes: 30,
+  /**
+   * 선물로 보낼 수 있는 상품의 계정당 구매 한도 하한. 한정·주기 상품(한도 1~2, 매일·매주·매달·계정당 한 번)은
+   * 부계정이 선물로 몇 번이고 사 줄 수 있어 「한 사람에 한 번」이라는 값어치가 깨진다 — 되풀이해 사는 팩만 연다.
+   */
+  minGiftablePurchaseLimit: 10
 };
+function giftableProductShape(product) {
+  return product.acquisition.kind === "platform_payment" && !product.passBenefit && !product.situational && product.refresh === "none" && product.purchaseLimit >= GIFT_POLICY.minGiftablePurchaseLimit;
+}
 var ms = (iso) => iso ? Date.parse(iso) : NaN;
 var olderThan = (iso, days, now) => Number.isFinite(ms(iso)) && now.getTime() - ms(iso) >= days * DAY_MS3;
 var within = (iso, days, now) => now.getTime() - ms(iso) < days * DAY_MS3;
@@ -45307,7 +45332,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.482.0",
+  version: "0.483.1",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -48518,7 +48543,7 @@ var FakeServer = class {
   /** 선물할 수 있는 상품 — 현금 결제 상품이고, 정의가 `giftable`이며, 기간 권리(패스)가 아니다. */
   giftableProduct(productId) {
     const product = PRODUCTS.find(({ id }) => id === productId);
-    if (!product || product.acquisition.kind !== "platform_payment" || product.passBenefit) return void 0;
+    if (!product || !giftableProductShape(product)) return void 0;
     return product.giftable || this.giftingOverride?.giftableProductIds.includes(product.id) ? product : void 0;
   }
   giftSenderFacts(context) {

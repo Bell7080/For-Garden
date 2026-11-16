@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  GIFTING_ENABLED, GIFT_POLICY, createGiftOrder, giftEligibility, giftRefundOutcome, incomingGifts, sentGiftDisplayStatus,
+  GIFTING_ENABLED, GIFT_POLICY, giftableProductShape, createGiftOrder, giftEligibility, giftRefundOutcome, incomingGifts, sentGiftDisplayStatus,
   settleGiftOrder, transitionGift, GiftTransitionError, type GiftEligibilityInput, type GiftOrder,
 } from "../../src/core/gifting";
 
@@ -151,5 +151,14 @@ describe("화면이 읽는 목록", () => {
     const other = { ...mine, id: "n", recipientId: "z" };
     const gone = { ...mine, id: "g", expiresAt: ago(0.1) };
     expect(incomingGifts([mine, other, gone], "b", NOW).map(o => o.id)).toEqual(["m"]);
+  });
+});
+
+describe("선물 가능 상품의 모양", () => {
+  it("현금 상품 가운데 선물로 열 수 있는 것은 한도 없는 다이아 팩뿐이다 — 한정·주기·패스·특가는 모두 닫힌다", async () => {
+    const { PRODUCTS } = await import("../../src/data/shopCatalog");
+    const open = PRODUCTS.filter(product => giftableProductShape(product)).map(product => product.premiumCategory);
+    expect(open.length).toBeGreaterThan(0);
+    expect(new Set(open)).toEqual(new Set(["gem"]));
   });
 });

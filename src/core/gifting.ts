@@ -41,7 +41,37 @@ export const GIFT_POLICY = {
   pendingExpiryDays: 30,
   /** 결제 대기 주문이 사라지기까지(분). */
   paymentWindowMinutes: 30,
+  /**
+   * 선물로 보낼 수 있는 상품의 계정당 구매 한도 하한. 한정·주기 상품(한도 1~2, 매일·매주·매달·계정당 한 번)은
+   * 부계정이 선물로 몇 번이고 사 줄 수 있어 「한 사람에 한 번」이라는 값어치가 깨진다 — 되풀이해 사는 팩만 연다.
+   */
+  minGiftablePurchaseLimit: 10,
 } as const;
+
+/** 선물 가능 여부를 가르는 상품의 모양. `ProductDefinition`을 그대로 넘겨도 된다. */
+export interface GiftableProductShape {
+  acquisition: { kind: string };
+  purchaseLimit: number;
+  refresh: string;
+  passBenefit?: unknown;
+  situational?: unknown;
+}
+
+/**
+ * 선물로 보내도 내가 사는 것보다 이득이 생기지 않는 상품인가.
+ *
+ * 선물은 상품의 기본 지급(`grants`)만 주고 첫 구매 보너스·계정 첫 결제 보상은 주지 않으므로 같은 값이면 언제나
+ * 직접 사는 쪽이 같거나 낫다. 남는 구멍은 한도다 — 받는 사람의 구매 기록을 세지 않으니 한정 상품을 선물로
+ * 되풀이해 받으면 한도를 비껴간다. 그래서 주기가 없고(`refresh: "none"`) 한도가 넉넉한 상품만 연다.
+ * `giftable` 표시나 테스트 목록이 있어도 이 모양을 지나야 한다.
+ */
+export function giftableProductShape(product: GiftableProductShape): boolean {
+  return product.acquisition.kind === "platform_payment"
+    && !product.passBenefit
+    && !product.situational
+    && product.refresh === "none"
+    && product.purchaseLimit >= GIFT_POLICY.minGiftablePurchaseLimit;
+}
 
 /**
  * 주문 상태.

@@ -18,7 +18,7 @@ import { BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "../core/bond";
 import { assertStoryUnlocked, resolveStoryChoice, assertStoryChoiceReachable, redeemDeferredStoryBond } from "./storyAuthority";
 import type { SharedRaidContext } from "../server/sharedRaids";
 import { recordGiftChange, type GiftContext } from "../server/playerGifts";
-import { GIFTING_ENABLED, createGiftOrder, giftEligibility, incomingGifts, sentGiftDisplayStatus, transitionGift, GiftTransitionError, type GiftAction, type GiftOrder, type GiftSenderFacts } from "../core/gifting";
+import { GIFTING_ENABLED, createGiftOrder, giftableProductShape, giftEligibility, incomingGifts, sentGiftDisplayStatus, transitionGift, GiftTransitionError, type GiftAction, type GiftOrder, type GiftSenderFacts } from "../core/gifting";
 import { serverNow } from "./serverClock";
 import { QA_ALL_EVENTS, QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { PLACEHOLDER_AD_ENABLED, TEMP_AD_REWARD_ENABLED, placeholderAdToken, tempAdToken } from "../core/tempAd";
@@ -2644,7 +2644,7 @@ export class FakeServer implements GameApi {
   /** 선물할 수 있는 상품 — 현금 결제 상품이고, 정의가 `giftable`이며, 기간 권리(패스)가 아니다. */
   private giftableProduct(productId: string): ProductDefinition | undefined {
     const product = PRODUCTS.find(({ id }) => id === productId);
-    if (!product || product.acquisition.kind !== "platform_payment" || product.passBenefit) return undefined;
+    if (!product || !giftableProductShape(product)) return undefined;
     return product.giftable || this.giftingOverride?.giftableProductIds.includes(product.id) ? product : undefined;
   }
 

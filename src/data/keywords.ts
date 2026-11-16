@@ -265,7 +265,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "frozen", term: "빙결", kind: "debuff",
-    description: `${FROZEN.seconds}초 동안 [[stun|기절]]과 같이 완전히 행동할 수 없다. 풀리는 순간 최대 체력의 ${FROZEN.maxHpPercentOnExpire}%에 해당하는 [[fixed-damage|고정 피해]]를 입는다.`,
+    description: `${FROZEN.seconds}초 동안 [[stun|기절]]과 같이 완전히 행동할 수 없다. 풀리는 순간 최대 체력의 ${FROZEN.maxHpPercentOnExpire}%에 해당하는 [[fixed-damage|고정 피해]]를 입는다. 풀린 뒤 ${FROZEN.immunitySeconds}초 동안은 다시 얼지 않는다.`,
   },
   {
     id: "hp", term: "체력", kind: "rule",

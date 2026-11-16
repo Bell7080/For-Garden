@@ -748,7 +748,7 @@ export default {
   "keyword.chill.term": "鈍化",
   "keyword.chill.description": "重ねが積まれるほど攻撃速度と移動速度がともに下がる。[[frozen|氷結]]中は新たにかからない。",
   "keyword.frozen.term": "氷結",
-  "keyword.frozen.description": "3秒間、[[stun|気絶]]と同じくまったく行動できない。解けた瞬間に最大体力の10%に当たる[[fixed-damage|固定ダメージ]]を受ける。",
+  "keyword.frozen.description": "3秒間、[[stun|気絶]]と同じくまったく行動できない。解けた瞬間に最大体力の10%に当たる[[fixed-damage|固定ダメージ]]を受ける。解けた後3秒間は再び氷結しない。",
   "keyword.hp.term": "体力",
   "keyword.hp.description": "戦闘で持ちこたえられる生命力だ。すべて尽きると戦えなくなる。",
   "keyword.atk.term": "攻撃力",

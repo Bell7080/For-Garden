@@ -565,7 +565,7 @@ export default {
   "keyword.chill.term": "Dingin",
   "keyword.chill.description": "Semakin banyak tumpukan, semakin rendah Kecepatan Serang dan Gerak. Tak bisa diberikan baru saat [[frozen|Beku]].",
   "keyword.frozen.term": "Beku",
-  "keyword.frozen.description": "Sama sekali tak bisa bertindak selama 3 detik, seperti [[stun|Pingsan]]. Saat pecah, unit menerima [[fixed-damage|kerusakan tetap]] sebesar 10% HP maks.",
+  "keyword.frozen.description": "Sama sekali tak bisa bertindak selama 3 detik, seperti [[stun|Pingsan]]. Saat pecah, unit menerima [[fixed-damage|kerusakan tetap]] sebesar 10% HP maks. Setelah pulih, tak bisa dibekukan lagi selama 3 detik.",
   "keyword.hp.term": "Nyawa",
   "keyword.hp.description": "Nyawa yang dipertahankan unit dalam pertarungan. Jika nol, ia tak bisa bertarung lagi.",
   "keyword.atk.term": "Serangan",

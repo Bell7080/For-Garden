@@ -565,7 +565,7 @@ export default {
   "keyword.chill.term": "寒气",
   "keyword.chill.description": "层数越多，攻击速度与移动速度都越低。[[frozen|冰冻]]期间无法重新施加。",
   "keyword.frozen.term": "冰冻",
-  "keyword.frozen.description": "如同[[stun|眩晕]]，3秒内完全无法行动。解除瞬间受到相当于最大生命10%的[[fixed-damage|固定伤害]]。",
+  "keyword.frozen.description": "如同[[stun|眩晕]]，3秒内完全无法行动。解除瞬间受到相当于最大生命10%的[[fixed-damage|固定伤害]]。解除后3秒内不会再次冰冻。",
   "keyword.hp.term": "生命",
   "keyword.hp.description": "单位在战斗中能坚持的生命值。归零后便无法再战斗。",
   "keyword.atk.term": "攻击力",

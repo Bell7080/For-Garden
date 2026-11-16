@@ -565,7 +565,7 @@ export default {
   "keyword.chill.term": "Escalofrío",
   "keyword.chill.description": "Cuantas más cargas, menor la Velocidad de ataque y la de movimiento. No puede aplicarse de nuevo mientras está [[frozen|Congelado]].",
   "keyword.frozen.term": "Congelado",
-  "keyword.frozen.description": "Totalmente incapaz de actuar durante 3 segundos, como con [[stun|Aturdimiento]]. Al romperse, la unidad recibe [[fixed-damage|daño fijo]] igual al 10% de los PV máx.",
+  "keyword.frozen.description": "Totalmente incapaz de actuar durante 3 segundos, como con [[stun|Aturdimiento]]. Al romperse, la unidad recibe [[fixed-damage|daño fijo]] igual al 10% de los PV máx. Tras romperse, no puede volver a congelarse durante 3 segundos.",
   "keyword.hp.term": "Salud",
   "keyword.hp.description": "La vida con la que una unidad aguanta en combate. Al llegar a cero ya no puede luchar.",
   "keyword.atk.term": "Ataque",

@@ -565,7 +565,7 @@ export default {
   "keyword.chill.term": "Kälte",
   "keyword.chill.description": "Je mehr Stapel, desto geringer Angriffs- und Lauftempo. Während [[frozen|Gefroren]] kann sie nicht neu aufgetragen werden.",
   "keyword.frozen.term": "Gefroren",
-  "keyword.frozen.description": "3 Sekunden lang völlig handlungsunfähig, wie bei [[stun|Betäubung]]. Beim Zerbrechen erleidet die Einheit [[fixed-damage|fixen Schaden]] in Höhe von 10% des max. Lebens.",
+  "keyword.frozen.description": "3 Sekunden lang völlig handlungsunfähig, wie bei [[stun|Betäubung]]. Beim Zerbrechen erleidet die Einheit [[fixed-damage|fixen Schaden]] in Höhe von 10% des max. Lebens. Danach kann die Einheit 3 Sekunden lang nicht erneut einfrieren.",
   "keyword.hp.term": "Leben",
   "keyword.hp.description": "Das Leben, mit dem eine Einheit im Kampf durchhält. Bei null kann sie nicht mehr kämpfen.",
   "keyword.atk.term": "Angriff",

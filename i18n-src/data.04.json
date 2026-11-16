@@ -550,14 +550,14 @@
 "Заморозка"
 ],
 "keyword.frozen.description": [
-"如同[[stun|眩晕]]，3秒内完全无法行动。解除瞬间受到相当于最大生命10%的[[fixed-damage|固定伤害]]。",
-"ขยับไม่ได้เลย 3 วินาทีเหมือน[[stun|มึนงง]] ตอนที่แตกจะได้รับ[[fixed-damage|ความเสียหายคงที่]]เท่ากับ 10% ของ HP สูงสุด",
-"Hoàn toàn không thể hành động trong 3 giây, như [[stun|Choáng]]. Khoảnh khắc vỡ ra, đơn vị chịu [[fixed-damage|sát thương cố định]] bằng 10% HP tối đa.",
-"Sama sekali tak bisa bertindak selama 3 detik, seperti [[stun|Pingsan]]. Saat pecah, unit menerima [[fixed-damage|kerusakan tetap]] sebesar 10% HP maks.",
-"Totalmente incapaz de actuar durante 3 segundos, como con [[stun|Aturdimiento]]. Al romperse, la unidad recibe [[fixed-damage|daño fijo]] igual al 10% de los PV máx.",
-"Totalmente incapaz de agir por 3 segundos, como no [[stun|Atordoamento]]. Ao quebrar, a unidade recebe [[fixed-damage|dano fixo]] igual a 10% do PV máx.",
-"3 Sekunden lang völlig handlungsunfähig, wie bei [[stun|Betäubung]]. Beim Zerbrechen erleidet die Einheit [[fixed-damage|fixen Schaden]] in Höhe von 10% des max. Lebens.",
-"3 секунды полностью не может действовать, как при [[stun|оглушении]]. В момент разрушения получает [[fixed-damage|фиксированный урон]] в 10% макс. ОЗ."
+"如同[[stun|眩晕]]，3秒内完全无法行动。解除瞬间受到相当于最大生命10%的[[fixed-damage|固定伤害]]。解除后3秒内不会再次冰冻。",
+"ขยับไม่ได้เลย 3 วินาทีเหมือน[[stun|มึนงง]] ตอนที่แตกจะได้รับ[[fixed-damage|ความเสียหายคงที่]]เท่ากับ 10% ของ HP สูงสุด หลังหายแล้วจะไม่ถูกแช่แข็งซ้ำอีก 3 วินาที",
+"Hoàn toàn không thể hành động trong 3 giây, như [[stun|Choáng]]. Khoảnh khắc vỡ ra, đơn vị chịu [[fixed-damage|sát thương cố định]] bằng 10% HP tối đa. Sau khi tan, không bị đóng băng lại trong 3 giây.",
+"Sama sekali tak bisa bertindak selama 3 detik, seperti [[stun|Pingsan]]. Saat pecah, unit menerima [[fixed-damage|kerusakan tetap]] sebesar 10% HP maks. Setelah pulih, tak bisa dibekukan lagi selama 3 detik.",
+"Totalmente incapaz de actuar durante 3 segundos, como con [[stun|Aturdimiento]]. Al romperse, la unidad recibe [[fixed-damage|daño fijo]] igual al 10% de los PV máx. Tras romperse, no puede volver a congelarse durante 3 segundos.",
+"Totalmente incapaz de agir por 3 segundos, como no [[stun|Atordoamento]]. Ao quebrar, a unidade recebe [[fixed-damage|dano fixo]] igual a 10% do PV máx. Depois de quebrar, não pode ser congelada de novo por 3 segundos.",
+"3 Sekunden lang völlig handlungsunfähig, wie bei [[stun|Betäubung]]. Beim Zerbrechen erleidet die Einheit [[fixed-damage|fixen Schaden]] in Höhe von 10% des max. Lebens. Danach kann die Einheit 3 Sekunden lang nicht erneut einfrieren.",
+"3 секунды полностью не может действовать, как при [[stun|оглушении]]. В момент разрушения получает [[fixed-damage|фиксированный урон]] в 10% макс. ОЗ. После этого 3 секунды не может быть заморожена снова."
 ],
 "keyword.hp.term": [
 "生命",

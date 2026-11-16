@@ -182,14 +182,34 @@ export const RUNE_STAT_UNIT: Readonly<Record<RuneStatKey, RuneStatUnit>> = {
 };
 
 /**
- * 등급표의 보조 값에 곱하는 크기. 깡스탯 둘만 1이 아니다 — 충전량은 평타당 26, 야성은 평타당 12가 기준이라
- * 등급표의 보조 값(3~12)을 그대로 더하면 한 줄이 게이지를 절반 가까이 당긴다. 충전량 ×0.5(전설 풀세공 +6 ≈ 23%),
- * 야성 ×0.25(전설 풀세공 +3 = 25%)로 다른 보조 옵션과 비슷한 무게에 맞춘다.
+ * 깡스탯 두 줄(궁극기 충전량·야성 획득량)의 등급표 — **0.5 단위로만 오른다**(응태 결정 2026-11-16).
+ *
+ * 다른 보조 옵션의 등급표(3~14)를 그대로 더하면 한 줄이 게이지를 절반 가까이 당기고, 배율(×0.25)로 줄이면
+ * 0.75·1.25처럼 자잘한 소수가 남는다. 그래서 이 둘만 따로 표를 두고 값과 세공 한 번의 증가량을 0.5의 배수로
+ * 맞춘다. 정수로만 두면 고급과 전설의 차이가 한두 칸뿐이라 0.5까지는 허락한다. 충전량은 평타당 26, 야성은
+ * 평타당 12가 기준이다. 풀세공은 성공 3 + 각인 1, 증가 네 번이다.
+ *
+ * - 충전량: 처음 1·1.5·2·2 → 풀세공 3·3.5·4·6. 전설만 세공 한 번이 +1이다. 전설 3줄이면 평타당 +18 —
+ *   +21(전설 ×0.5 시절)일 때 비용 90 개체가 평타 두 번에 궁극기를 써서 연출이 쏟아졌다.
+ * - 야성: 처음 0.5·1·1.5·2 → 풀세공 2.5·3·3.5·4.
  */
-export const RUNE_STAT_SCALE: Readonly<Record<RuneStatKey, number>> = {
-  hp: 1, atk: 1, ap: 1, def: 1, res: 1, moveSpeed: 1, attackSpeed: 1, lifeSteal: 1, critChance: 1, critDamage: 1,
-  energyGain: 0.5, ferocityGain: 0.25,
+export const RUNE_FLAT_RULES: Readonly<Record<"energyGain" | "ferocityGain", Readonly<Record<RuneRarity, { base: number; enhancement: number }>>>> = {
+  energyGain: {
+    uncommon: { base: 1, enhancement: 0.5 }, rare: { base: 1.5, enhancement: 0.5 },
+    epic: { base: 2, enhancement: 0.5 }, legendary: { base: 2, enhancement: 1 },
+  },
+  ferocityGain: {
+    uncommon: { base: 0.5, enhancement: 0.5 }, rare: { base: 1, enhancement: 0.5 },
+    epic: { base: 1.5, enhancement: 0.5 }, legendary: { base: 2, enhancement: 0.5 },
+  },
 };
+
+/** 보조 옵션 한 줄의 처음 값과 세공 한 번의 증가량. 깡스탯은 위 정수 표, 나머지는 등급표다. */
+function subRule(rarity: RuneRarity, key: RuneStatKey): { base: number; enhancement: number } {
+  if (key === "energyGain" || key === "ferocityGain") return RUNE_FLAT_RULES[key][rarity];
+  const rule = RUNE_GENERATION_RULES[rarity];
+  return { base: rule.subBase, enhancement: rule.subEnhancement };
+}
 
 /** 일반 강화의 모든 확률 및 횟수 밸런스를 소유하는 단일 표다. */
 export const RUNE_ENHANCEMENT_RULES = {
@@ -278,7 +298,7 @@ export function generateRune(input: GenerateRuneInput): RuneInstance {
   // 풀의 역할에 따라 고정 기본값을 배정해 초기 수치 재추첨이라는 두 번째 랜덤 축을 만들지 않는다.
   const statValues = Object.fromEntries([
     ...MAIN_KEYS.map((key) => [key, rule.mainBase] as const),
-    ...SUB_KEYS.map((key) => [key, rule.subBase * RUNE_STAT_SCALE[key]] as const),
+    ...SUB_KEYS.map((key) => [key, subRule(input.rarity, key).base] as const),
   ]) as Record<RuneStatKey, number>;
   return createRuneInstance({ ...input, statValues });
 }
@@ -286,7 +306,7 @@ export function generateRune(input: GenerateRuneInput): RuneInstance {
 /** 등급과 옵션 역할에 맞는 강화 성공 1회 고정 증가량을 반환한다. */
 export function runeEnhancementIncrease(rarity: RuneRarity, statKey: RuneStatKey): number {
   const rule = RUNE_GENERATION_RULES[rarity];
-  return MAIN_KEYS.includes(statKey as RuneMainStatKey) ? rule.mainEnhancement : rule.subEnhancement * RUNE_STAT_SCALE[statKey];
+  return MAIN_KEYS.includes(statKey as RuneMainStatKey) ? rule.mainEnhancement : subRule(rarity, statKey).enhancement;
 }
 
 /**
@@ -303,7 +323,7 @@ export function runeOptionValue(rune: Pick<RuneInstance, "rarity" | "mainStats" 
   const engraved = rune.engravings.some(({ statKey }) => statKey === key) ? 1 : 0;
   const value = main
     ? rule.mainBase + rule.mainEnhancement * (successes + engraved)
-    : (rule.subBase + rule.subEnhancement * (successes + engraved)) * RUNE_STAT_SCALE[key];
+    : subRule(rune.rarity, key).base + subRule(rune.rarity, key).enhancement * (successes + engraved);
   return Math.round(value * 100) / 100;
 }
 

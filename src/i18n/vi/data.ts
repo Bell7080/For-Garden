@@ -565,7 +565,7 @@ export default {
   "keyword.chill.term": "Giá lạnh",
   "keyword.chill.description": "Càng nhiều tầng, Tốc đánh và Tốc chạy càng giảm. Không thể gây mới khi đang [[frozen|Đóng băng]].",
   "keyword.frozen.term": "Đóng băng",
-  "keyword.frozen.description": "Hoàn toàn không thể hành động trong 3 giây, như [[stun|Choáng]]. Khoảnh khắc vỡ ra, đơn vị chịu [[fixed-damage|sát thương cố định]] bằng 10% HP tối đa.",
+  "keyword.frozen.description": "Hoàn toàn không thể hành động trong 3 giây, như [[stun|Choáng]]. Khoảnh khắc vỡ ra, đơn vị chịu [[fixed-damage|sát thương cố định]] bằng 10% HP tối đa. Sau khi tan, không bị đóng băng lại trong 3 giây.",
   "keyword.hp.term": "Máu",
   "keyword.hp.description": "Sinh lực đơn vị dùng để trụ trong trận. Về 0 thì không thể chiến đấu nữa.",
   "keyword.atk.term": "Công",

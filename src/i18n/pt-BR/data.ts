@@ -565,7 +565,7 @@ export default {
   "keyword.chill.term": "Calafrio",
   "keyword.chill.description": "Quanto mais acúmulos, menores a Velocidade de ataque e a de movimento. Não pode ser aplicado de novo enquanto [[frozen|Congelado]].",
   "keyword.frozen.term": "Congelado",
-  "keyword.frozen.description": "Totalmente incapaz de agir por 3 segundos, como no [[stun|Atordoamento]]. Ao quebrar, a unidade recebe [[fixed-damage|dano fixo]] igual a 10% do PV máx.",
+  "keyword.frozen.description": "Totalmente incapaz de agir por 3 segundos, como no [[stun|Atordoamento]]. Ao quebrar, a unidade recebe [[fixed-damage|dano fixo]] igual a 10% do PV máx. Depois de quebrar, não pode ser congelada de novo por 3 segundos.",
   "keyword.hp.term": "Vida",
   "keyword.hp.description": "A vida com que uma unidade resiste na batalha. Ao chegar a zero, não pode mais lutar.",
   "keyword.atk.term": "Ataque",

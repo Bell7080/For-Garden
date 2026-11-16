@@ -687,6 +687,8 @@ export interface Fighter extends Combatant {
   fear: { remaining: number; total: number; sourceId: string; immunitySeconds: number } | null;
   /** 공포가 풀린 뒤 새 위압·공포가 들지 않는 남은 시간(초). 영구 도주를 막는다. */
   fearImmuneFor: number;
+  /** 빙결이 풀린 뒤 다시 얼지 않는 남은 시간(초) — `FROZEN.immunitySeconds`. */
+  frozenImmuneFor: number;
   /** 「거대한 그림자」가 다음에 울리기까지 남은 시간(초). */
   loomingIn: number;
   /**
@@ -1271,6 +1273,12 @@ export const FROZEN = {
   seconds: 3,
   /** 풀리는 순간 입히는 최대 체력 비율(%) 고정 피해. */
   maxHpPercentOnExpire: 10,
+  /**
+   * 풀린 뒤 다시 얼지 않는 시간(초). 매디는 전장 전체 둔화를 쌓아 최대 겹에서 얼리고 다시 쌓기를 되풀이해,
+   * 강인함이 없는 결투에서 한 적을 전투의 절반 넘게 묶었다(응태 결정 2026-11-16 — 최소 제약). 빙결 시간과 같은
+   * 3초라 한 적이 얼어 있는 시간은 길어야 절반이다. 공포의 면역과 같은 결이다.
+   */
+  immunitySeconds: 3,
 } as const;
 
 /** 긴급 회복의 공용 틱 규칙. 유지 시간과 회복량은 캐릭터 정의가 소유한다. */
@@ -1532,6 +1540,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     intimidation: null,
     fear: null,
     fearImmuneFor: 0,
+    frozenImmuneFor: 0,
     loomingIn: def.passive.looming?.intervalSeconds ?? 0,
     frozen: null,
     observation: null,
@@ -2109,6 +2118,8 @@ function chillIsMaxed(target: Fighter): boolean {
  */
 function applyFrozen(target: Fighter, seconds: number, maxHpPercentOnExpire: number, events: SkirmishEvent[], state: SkirmishState): void {
   if (!isFighterAlive(target) || seconds <= 0) return;
+  // 막 풀린 적은 잠깐 다시 얼지 않는다 — 둔화 겹은 소모하지 않고 그대로 남는다.
+  if (target.frozen === null && target.frozenImmuneFor > EMERGENCY_RECOVERY.epsilon) return;
   seconds = controlDuration(target, seconds);
   if (seconds <= 0) return;
   const wasFrozen = target.frozen !== null;
@@ -5813,6 +5824,7 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.staggeredFor = 0;
   fighter.chill = null;
   fighter.frozen = null;
+  fighter.frozenImmuneFor = 0;
   fighter.observation = null;
   fighter.echo = null;
   fighter.shieldFade = null;
@@ -10401,11 +10413,13 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     if (isFighterAlive(fighter) && fighter.staggeredFor > 0) fighter.staggeredFor = Math.max(0, fighter.staggeredFor - dt);
     // 빙결이 풀리는 순간 최대 체력 비율 고정 피해를 한 번 입힌다. 방어·상성을 지나치는 즉발
     // 피해라 뇌진탕과 같은 사건(kind: "concussion")을 그대로 재사용한다.
+    if (fighter.frozenImmuneFor > 0) fighter.frozenImmuneFor = Math.max(0, fighter.frozenImmuneFor - dt);
     if (isFighterAlive(fighter) && fighter.frozen) {
       const remaining = fighter.frozen.remaining - dt;
       if (remaining <= EMERGENCY_RECOVERY.epsilon) {
         const amount = percentHpDamage(fighter, fighter.frozen.maxHpPercentOnExpire);
         fighter.frozen = null;
+        fighter.frozenImmuneFor = FROZEN.immunitySeconds;
         const dealt = applyDamage(fighter, amount, events, state);
         events.push({ kind: "concussion", fighterId: fighter.id, amount: dealt, critical: false });
         if (!isFighterAlive(fighter)) { clearDefeatedStatuses(fighter); events.push({ kind: "death", fighterId: fighter.id }); }

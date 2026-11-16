@@ -583,7 +583,7 @@ export default {
   "keyword.chill.term": "Chill",
   "keyword.chill.description": "The more stacks, the lower both Attack Speed and Move Speed. It cannot be applied anew while [[frozen|Frozen]].",
   "keyword.frozen.term": "Frozen",
-  "keyword.frozen.description": "Completely unable to act for 3 seconds, as with [[stun|Stun]]. The moment it breaks, the unit takes [[fixed-damage|fixed damage]] equal to 10% of max HP.",
+  "keyword.frozen.description": "Completely unable to act for 3 seconds, as with [[stun|Stun]]. The moment it breaks, the unit takes [[fixed-damage|fixed damage]] equal to 10% of max HP. Afterward, it cannot be frozen again for 3 seconds.",
   "keyword.hp.term": "HP",
   "keyword.hp.description": "The life a unit can hold on with in battle. At zero it can no longer fight.",
   "keyword.atk.term": "Attack",

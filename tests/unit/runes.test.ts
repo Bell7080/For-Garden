@@ -76,8 +76,16 @@ describe("룬 도메인", () => {
     expect(runeOptionValue({ ...base, rarity: "legendary", enhancementHistory: full, engravings: [{ statKey: "atk" }] } as never, "atk")).toBe(24);
     expect(runeOptionValue({ ...base, rarity: "uncommon", enhancementHistory: full } as never, "atk")).toBe(9);
     // 궁극기 충전량·야성 획득량은 퍼센트가 아니라 한 번에 더해지는 양이다.
-    expect(runeOptionValue({ ...base, rarity: "legendary", enhancementHistory: {} }, "energyGain")).toBe(3);
-    expect(runeOptionValue({ ...base, rarity: "legendary", enhancementHistory: {} }, "ferocityGain")).toBe(1.5);
+    expect(runeOptionValue({ ...base, rarity: "legendary", enhancementHistory: {} }, "energyGain")).toBe(2);
+    expect(runeOptionValue({ ...base, rarity: "legendary", enhancementHistory: {} }, "ferocityGain")).toBe(2);
+    // 깡스탯은 0.5 단위로만 오르고 세공·각인 한 번이 0.5 이상이다.
+    const fullEnergy = { energyGain: [true, true, true].map((succeeded) => ({ succeeded })) };
+    expect(runeOptionValue({ ...base, rarity: "legendary", enhancementHistory: fullEnergy, engravings: [{ statKey: "energyGain" }] } as never, "energyGain")).toBe(6);
+    for (const rarity of ["uncommon", "rare", "epic", "legendary"] as const) for (const key of ["energyGain", "ferocityGain"] as const) {
+      expect(Number.isInteger(runeOptionValue({ ...base, rarity, enhancementHistory: {} }, key) * 2)).toBe(true);
+      expect(runeEnhancementIncrease(rarity, key)).toBeGreaterThanOrEqual(0.5);
+      expect(Number.isInteger(runeEnhancementIncrease(rarity, key) * 2)).toBe(true);
+    }
     expect(formatRuneOptionValue("energyGain", 3)).toBe("+3");
     expect(formatRuneOptionValue("atk", 12)).toBe("+12%");
   });

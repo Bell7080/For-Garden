@@ -33,8 +33,13 @@ export const GIFT_POLICY = {
   refundLookbackDays: 90,
   sendPerDay: 2,
   sendPer30Days: 10,
-  /** 30일 동안 보낼 수 있는 선물의 원화 합. */
-  sendAmountPer30DaysKrw: 100_000,
+  /**
+   * 금액 한도는 고정 숫자가 아니라 **본인 결제 실적**이다(응태 결정 2026-11-16 — 최대 한도를 두지 않는다). 이 기간 동안
+   * 보낸 선물의 원화 합은 같은 기간에 환불 없이 `ownPaymentClearDays`가 지난 본인 결제(선물 결제 제외)의 원화 합을 넘지 못한다.
+   * 오래 결제해 온 사람은 사실상 한도가 없고, 막 만든 계정·도용 카드 계정은 0원부터다 — 도용 카드로 선물을 사서 판매용
+   * 계정에 몰아주는 세탁을 막는다(받은 쪽은 회수하지 않으므로 선물이 일반 결제보다 세탁에 좋은 통로가 된다).
+   */
+  amountWindowDays: 90,
   receivePerDay: 2,
   receivePer30Days: 10,
   /** 받지 않은 선물이 돌아오기까지(일). */
@@ -122,6 +127,10 @@ export interface GiftSenderFacts {
   oldestClearedOwnPaymentAt: string | null;
   /** 가장 최근의 본인 결제 환불 시각. */
   lastOwnRefundAt: string | null;
+  /** 지난 `amountWindowDays` 안의 환불되지 않은 본인 결제(선물 결제 제외) — 원화 값과 지급 시각. 금액 한도가 읽는다. */
+  ownPayments: readonly { priceKrw: number; at: string }[];
+  /** 보낸 사람의 스토어 지역(ISO 3166-1 alpha-2). 모르면 `null`이고 보낼 수 없다. */
+  storeRegion: string | null;
 }
 
 export interface GiftRecipientFacts {
@@ -131,13 +140,15 @@ export interface GiftRecipientFacts {
   /** 정상 활동 중인 계정인가(정지·탈퇴·게스트 포기 아님). */
   active: boolean;
   guest: boolean;
+  /** 받는 사람의 스토어 지역. 보낸 사람과 같아야 한다 — 싼 지역에서 사서 비싼 지역에 보내는 가격 차익을 막는다. */
+  storeRegion: string | null;
 }
 
 export type GiftRefusal =
   | "disabled" | "not_giftable" | "self"
   | "level" | "account_age" | "guest" | "age_restricted" | "blocked" | "no_payment_history" | "recent_refund"
   | "not_friend" | "friend_too_new" | "recipient_unavailable"
-  | "send_daily" | "send_monthly" | "send_amount" | "receive_daily" | "receive_monthly" | "duplicate_pending";
+  | "region_mismatch" | "send_daily" | "send_monthly" | "send_amount" | "receive_daily" | "receive_monthly" | "duplicate_pending";
 
 export type GiftEligibility = { ok: true } | { ok: false; reason: GiftRefusal };
 
@@ -183,6 +194,7 @@ export function giftEligibility(input: GiftEligibilityInput): GiftEligibility {
   if (!recipient || !recipient.active || recipient.guest) return refuse("recipient_unavailable");
   if (!recipient.friendSince) return refuse("not_friend");
   if (!olderThan(recipient.friendSince, GIFT_POLICY.minFriendDays, now)) return refuse("friend_too_new");
+  if (!sender.storeRegion || sender.storeRegion !== recipient.storeRegion) return refuse("region_mismatch");
 
   const live = dedupe(input.orders).filter(order => countsTowardGiftLimits(order, now));
   const sent = live.filter(order => order.senderId === input.senderId);
@@ -191,12 +203,27 @@ export function giftEligibility(input: GiftEligibilityInput): GiftEligibility {
   if (sent.filter(order => within(order.createdAt, 1, now)).length >= GIFT_POLICY.sendPerDay) return refuse("send_daily");
   const sentMonth = sent.filter(order => within(order.createdAt, 30, now));
   if (sentMonth.length >= GIFT_POLICY.sendPer30Days) return refuse("send_monthly");
-  if (sentMonth.reduce((sum, order) => sum + order.priceKrw, 0) + input.priceKrw > GIFT_POLICY.sendAmountPer30DaysKrw) return refuse("send_amount");
+  if (giftAmountAllowanceKrw(sender, sent, now) < input.priceKrw) return refuse("send_amount");
   // 돌아온 선물은 받은 것이 아니므로 받기 한도에 세지 않는다.
   const receivedLive = received.filter(order => settleGiftOrder(order, now).status !== "returned" && settleGiftOrder(order, now).status !== "revoked");
   if (receivedLive.filter(order => within(order.createdAt, 1, now)).length >= GIFT_POLICY.receivePerDay) return refuse("receive_daily");
   if (receivedLive.filter(order => within(order.createdAt, 30, now)).length >= GIFT_POLICY.receivePer30Days) return refuse("receive_monthly");
   return { ok: true };
+}
+
+/**
+ * 지금 더 보낼 수 있는 원화 — 기간 안의 결제가 끝난 본인 결제 합에서 같은 기간에 보낸 선물 합을 뺀 값.
+ * 돌아오거나 회수된 선물은 결제가 스토어로 돌아갔으니 빼지 않는다. 결제 대기 주문은 결제가 되면 쓰일 몫이라 뺀다.
+ */
+export function giftAmountAllowanceKrw(sender: Pick<GiftSenderFacts, "ownPayments">, sentOrders: readonly GiftOrder[], now: Date): number {
+  const window = GIFT_POLICY.amountWindowDays;
+  const earned = sender.ownPayments
+    .filter(payment => within(payment.at, window, now) && olderThan(payment.at, GIFT_POLICY.ownPaymentClearDays, now))
+    .reduce((sum, payment) => sum + payment.priceKrw, 0);
+  const spent = sentOrders
+    .filter(order => within(order.createdAt, window, now) && !["returned", "revoked", "lapsed"].includes(settleGiftOrder(order, now).status))
+    .reduce((sum, order) => sum + order.priceKrw, 0);
+  return Math.max(0, earned - spent);
 }
 
 function dedupe(orders: readonly GiftOrder[]): GiftOrder[] {

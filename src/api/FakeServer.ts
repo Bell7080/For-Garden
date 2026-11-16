@@ -2649,7 +2649,12 @@ export class FakeServer implements GameApi {
   }
 
   private giftSenderFacts(context: GiftContext): GiftSenderFacts {
-    return { ...context.sender, researchLevel: this.state.playerResearch.level, accountCreatedAt: this.state.playerCard.createdAt || null };
+    // 본인 결제의 원화 값은 상품 표가 갖는다. 표에서 사라진 상품은 값을 모르므로 세지 않는다(한도가 커지는 쪽으로 틀리지 않게).
+    const ownPayments = context.sender.ownPayments.flatMap(({ productId, at }) => {
+      const acquisition = PRODUCTS.find(({ id }) => id === productId)?.acquisition;
+      return acquisition?.kind === "platform_payment" ? [{ priceKrw: acquisition.basePriceKrw, at }] : [];
+    });
+    return { ...context.sender, ownPayments, researchLevel: this.state.playerResearch.level, accountCreatedAt: this.state.playerCard.createdAt || null };
   }
 
   private sentGiftDto(order: GiftOrder, now: Date): SentGiftHistoryEntryDto | null {

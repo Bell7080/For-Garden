@@ -18,8 +18,8 @@ const OPEN = { enabled: true, giftableProductIds: [PRODUCT] } as const;
 function context(playerId: string, friend: string, friendName: string, orders: GiftContext["orders"] = []): GiftContext {
   return {
     playerId,
-    sender: { guest: false, ageRestricted: false, blocked: false, oldestClearedOwnPaymentAt: ago(30), lastOwnRefundAt: null },
-    recipients: { [friend]: { id: friend, name: friendName, friendSince: ago(30), active: true, guest: false } },
+    sender: { guest: false, ageRestricted: false, blocked: false, oldestClearedOwnPaymentAt: ago(30), lastOwnRefundAt: null, ownPayments: [{ productId: "premium-monthly-heavy", at: ago(20) }], storeRegion: "KR" },
+    recipients: { [friend]: { id: friend, name: friendName, friendSince: ago(30), active: true, guest: false, storeRegion: "KR" } },
     orders, changes: [],
   };
 }

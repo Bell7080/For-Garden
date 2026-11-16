@@ -6296,7 +6296,8 @@ var FRIENDS_KO = {
   "gift.refusal.recipient_unavailable": "\uC120\uBB3C\uC744 \uBC1B\uC744 \uC218 \uC5C6\uB294 \uC5F0\uAD6C\uC6D0\uC785\uB2C8\uB2E4.",
   "gift.refusal.send_daily": "\uC624\uB298 \uBCF4\uB0BC \uC218 \uC788\uB294 \uC120\uBB3C\uC744 \uBAA8\uB450 \uBCF4\uB0C8\uC2B5\uB2C8\uB2E4.",
   "gift.refusal.send_monthly": "30\uC77C \uB3D9\uC548 \uBCF4\uB0BC \uC218 \uC788\uB294 \uC120\uBB3C\uC744 \uBAA8\uB450 \uBCF4\uB0C8\uC2B5\uB2C8\uB2E4.",
-  "gift.refusal.send_amount": "30\uC77C \uC120\uBB3C \uAE08\uC561 \uD55C\uB3C4\uC5D0 \uB2FF\uC558\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.region_mismatch": "\uAC19\uC740 \uC2A4\uD1A0\uC5B4 \uC9C0\uC5ED\uC758 \uCE5C\uAD6C\uC5D0\uAC8C\uB9CC \uBCF4\uB0BC \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "gift.refusal.send_amount": "\uCD5C\uADFC 90\uC77C \uB3D9\uC548 \uC9C1\uC811 \uACB0\uC81C\uD55C \uAE08\uC561\uB9CC\uD07C\uB9CC \uC120\uBB3C\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
   "gift.refusal.receive_daily": "\uC0C1\uB300\uAC00 \uC624\uB298 \uBC1B\uC744 \uC218 \uC788\uB294 \uC120\uBB3C\uC774 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4.",
   "gift.refusal.receive_monthly": "\uC0C1\uB300\uAC00 30\uC77C \uB3D9\uC548 \uBC1B\uC744 \uC218 \uC788\uB294 \uC120\uBB3C\uC774 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4.",
   "gift.refusal.duplicate_pending": "\uC544\uC9C1 \uBC1B\uC9C0 \uC54A\uC740 \uAC19\uC740 \uC120\uBB3C\uC774 \uC788\uC2B5\uB2C8\uB2E4.",
@@ -40354,8 +40355,13 @@ var GIFT_POLICY = {
   refundLookbackDays: 90,
   sendPerDay: 2,
   sendPer30Days: 10,
-  /** 30일 동안 보낼 수 있는 선물의 원화 합. */
-  sendAmountPer30DaysKrw: 1e5,
+  /**
+   * 금액 한도는 고정 숫자가 아니라 **본인 결제 실적**이다(응태 결정 2026-11-16 — 최대 한도를 두지 않는다). 이 기간 동안
+   * 보낸 선물의 원화 합은 같은 기간에 환불 없이 `ownPaymentClearDays`가 지난 본인 결제(선물 결제 제외)의 원화 합을 넘지 못한다.
+   * 오래 결제해 온 사람은 사실상 한도가 없고, 막 만든 계정·도용 카드 계정은 0원부터다 — 도용 카드로 선물을 사서 판매용
+   * 계정에 몰아주는 세탁을 막는다(받은 쪽은 회수하지 않으므로 선물이 일반 결제보다 세탁에 좋은 통로가 된다).
+   */
+  amountWindowDays: 90,
   receivePerDay: 2,
   receivePer30Days: 10,
   /** 받지 않은 선물이 돌아오기까지(일). */
@@ -40394,6 +40400,7 @@ function giftEligibility(input) {
   if (!recipient || !recipient.active || recipient.guest) return refuse("recipient_unavailable");
   if (!recipient.friendSince) return refuse("not_friend");
   if (!olderThan(recipient.friendSince, GIFT_POLICY.minFriendDays, now)) return refuse("friend_too_new");
+  if (!sender.storeRegion || sender.storeRegion !== recipient.storeRegion) return refuse("region_mismatch");
   const live = dedupe(input.orders).filter((order) => countsTowardGiftLimits(order, now));
   const sent = live.filter((order) => order.senderId === input.senderId);
   const received = live.filter((order) => order.recipientId === recipient.id);
@@ -40401,11 +40408,17 @@ function giftEligibility(input) {
   if (sent.filter((order) => within(order.createdAt, 1, now)).length >= GIFT_POLICY.sendPerDay) return refuse("send_daily");
   const sentMonth = sent.filter((order) => within(order.createdAt, 30, now));
   if (sentMonth.length >= GIFT_POLICY.sendPer30Days) return refuse("send_monthly");
-  if (sentMonth.reduce((sum, order) => sum + order.priceKrw, 0) + input.priceKrw > GIFT_POLICY.sendAmountPer30DaysKrw) return refuse("send_amount");
+  if (giftAmountAllowanceKrw(sender, sent, now) < input.priceKrw) return refuse("send_amount");
   const receivedLive = received.filter((order) => settleGiftOrder(order, now).status !== "returned" && settleGiftOrder(order, now).status !== "revoked");
   if (receivedLive.filter((order) => within(order.createdAt, 1, now)).length >= GIFT_POLICY.receivePerDay) return refuse("receive_daily");
   if (receivedLive.filter((order) => within(order.createdAt, 30, now)).length >= GIFT_POLICY.receivePer30Days) return refuse("receive_monthly");
   return { ok: true };
+}
+function giftAmountAllowanceKrw(sender, sentOrders, now) {
+  const window2 = GIFT_POLICY.amountWindowDays;
+  const earned = sender.ownPayments.filter((payment) => within(payment.at, window2, now) && olderThan(payment.at, GIFT_POLICY.ownPaymentClearDays, now)).reduce((sum, payment) => sum + payment.priceKrw, 0);
+  const spent = sentOrders.filter((order) => within(order.createdAt, window2, now) && !["returned", "revoked", "lapsed"].includes(settleGiftOrder(order, now).status)).reduce((sum, order) => sum + order.priceKrw, 0);
+  return Math.max(0, earned - spent);
 }
 function dedupe(orders) {
   return [...new Map(orders.map((order) => [order.id, order])).values()];
@@ -45332,7 +45345,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.483.1",
+  version: "0.483.2",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -48547,7 +48560,11 @@ var FakeServer = class {
     return product.giftable || this.giftingOverride?.giftableProductIds.includes(product.id) ? product : void 0;
   }
   giftSenderFacts(context) {
-    return { ...context.sender, researchLevel: this.state.playerResearch.level, accountCreatedAt: this.state.playerCard.createdAt || null };
+    const ownPayments = context.sender.ownPayments.flatMap(({ productId, at }) => {
+      const acquisition = PRODUCTS.find(({ id }) => id === productId)?.acquisition;
+      return acquisition?.kind === "platform_payment" ? [{ priceKrw: acquisition.basePriceKrw, at }] : [];
+    });
+    return { ...context.sender, ownPayments, researchLevel: this.state.playerResearch.level, accountCreatedAt: this.state.playerCard.createdAt || null };
   }
   sentGiftDto(order, now) {
     const status = sentGiftDisplayStatus(order, now);

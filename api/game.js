@@ -5013,9 +5013,6 @@ init_define_import_meta_env();
 // src/core/relicProgression.ts
 init_define_import_meta_env();
 
-// src/data/runes.ts
-init_define_import_meta_env();
-
 // src/core/runes.ts
 init_define_import_meta_env();
 
@@ -5577,7 +5574,8 @@ var COMMON_KO = {
   "stat.critDamage": "\uCE58\uBA85\uD0C0 \uD53C\uD574",
   "stat.energyGain": "\uAD81\uADF9\uAE30 \uCDA9\uC804\uB7C9",
   "stat.energyGain.rune": "\uAD81\uADF9\uAE30 \uCDA9\uC804\uB7C9 \uC99D\uAC00",
-  "stat.ferocityGain.rune": "\uC57C\uC131 \uD68D\uB4DD \uC99D\uAC00",
+  "stat.ferocityGain": "\uC57C\uC131 \uD68D\uB4DD\uB7C9",
+  "stat.ferocityGain.rune": "\uC57C\uC131 \uD68D\uB4DD\uB7C9 \uC99D\uAC00",
   "stat.lifeSteal": "\uD53C\uD574 \uD761\uD608",
   "stat.range": "\uC0AC\uAC70\uB9AC",
   // 역할 — 전투 공식을 바꾸지 않는 특화 태그다.
@@ -9242,6 +9240,34 @@ var RUNE_GENERATION_RULES = {
   epic: { mainBase: 10, subBase: 5, mainEnhancement: 2, subEnhancement: 1 },
   legendary: { mainBase: 12, subBase: 6, mainEnhancement: 3, subEnhancement: 2 }
 };
+var RUNE_STAT_UNIT = {
+  hp: "percent",
+  atk: "percent",
+  ap: "percent",
+  def: "percent",
+  res: "percent",
+  moveSpeed: "percent",
+  attackSpeed: "percent",
+  lifeSteal: "points",
+  critChance: "points",
+  critDamage: "points",
+  energyGain: "flat",
+  ferocityGain: "flat"
+};
+var RUNE_STAT_SCALE = {
+  hp: 1,
+  atk: 1,
+  ap: 1,
+  def: 1,
+  res: 1,
+  moveSpeed: 1,
+  attackSpeed: 1,
+  lifeSteal: 1,
+  critChance: 1,
+  critDamage: 1,
+  energyGain: 0.5,
+  ferocityGain: 0.25
+};
 var RUNE_ENHANCEMENT_RULES = {
   initialSuccessChance: 0.75,
   successChanceDelta: 0.1,
@@ -9286,13 +9312,21 @@ function generateRune(input) {
   const rule = RUNE_GENERATION_RULES[input.rarity];
   const statValues = Object.fromEntries([
     ...MAIN_KEYS.map((key) => [key, rule.mainBase]),
-    ...SUB_KEYS.map((key) => [key, rule.subBase])
+    ...SUB_KEYS.map((key) => [key, rule.subBase * RUNE_STAT_SCALE[key]])
   ]);
   return createRuneInstance({ ...input, statValues });
 }
 function runeEnhancementIncrease(rarity, statKey) {
   const rule = RUNE_GENERATION_RULES[rarity];
-  return MAIN_KEYS.includes(statKey) ? rule.mainEnhancement : rule.subEnhancement;
+  return MAIN_KEYS.includes(statKey) ? rule.mainEnhancement : rule.subEnhancement * RUNE_STAT_SCALE[statKey];
+}
+function runeOptionValue(rune, key) {
+  const main = rune.mainStats.some((option) => option.key === key);
+  const rule = RUNE_GENERATION_RULES[rune.rarity];
+  const successes = (rune.enhancementHistory[key] ?? []).filter(({ succeeded }) => succeeded).length;
+  const engraved = rune.engravings.some(({ statKey }) => statKey === key) ? 1 : 0;
+  const value = main ? rule.mainBase + rule.mainEnhancement * (successes + engraved) : (rule.subBase + rule.subEnhancement * (successes + engraved)) * RUNE_STAT_SCALE[key];
+  return Math.round(value * 100) / 100;
 }
 function assertValidRuneInstance(rune) {
   if (!rune.instanceId.trim() || !rune.baseName.trim()) throw new Error("\uB8EC ID\uC640 \uAE30\uBCF8 \uC774\uB984\uC740 \uBE44\uC5B4 \uC788\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
@@ -9382,92 +9416,6 @@ function engraveRune(rune, result) {
   };
   assertValidRuneInstance(next);
   return next;
-}
-
-// src/data/runes.ts
-var RUNE_STAT_RULES = {
-  hp: { base: 8, enhancement: 2, unit: "percent" },
-  atk: { base: 8, enhancement: 2, unit: "percent" },
-  ap: { base: 8, enhancement: 2, unit: "percent" },
-  def: { base: 8, enhancement: 2, unit: "percent" },
-  res: { base: 8, enhancement: 2, unit: "percent" },
-  moveSpeed: { base: 5, enhancement: 1, unit: "percent" },
-  attackSpeed: { base: 5, enhancement: 1, unit: "percent" },
-  lifeSteal: { base: 3, enhancement: 1, unit: "percentagePoint" },
-  critChance: { base: 5, enhancement: 1, unit: "percentagePoint" },
-  critDamage: { base: 8, enhancement: 2, unit: "percentagePoint" },
-  ferocityGain: { base: 5, enhancement: 1, unit: "percent" },
-  energyGain: { base: 5, enhancement: 1, unit: "percent" }
-};
-var RUNE_ENHANCEMENT_GOLD_COSTS = {
-  uncommon: [1e3, 1500, 2e3, 2500, 3e3, 3500],
-  rare: [2500, 3e3, 3500, 4e3, 4500, 5e3, 5500, 6e3, 6500],
-  epic: [6e3, 7500, 9e3, 10500, 12e3, 13500, 15e3, 16500, 18e3, 19500, 21e3, 22500],
-  legendary: [15e3, 18e3, 21e3, 24e3, 27e3, 3e4, 33e3, 36e3, 39e3, 42e3, 45e3, 48e3, 51e3, 54e3, 57e3]
-};
-function runeEnhancementGoldCost(rarity, completedAttempts) {
-  if (!Number.isInteger(completedAttempts) || completedAttempts < 0) throw new RangeError("\uB204\uC801 \uAC15\uD654 \uD69F\uC218\uB294 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  const cost = RUNE_ENHANCEMENT_GOLD_COSTS[rarity][completedAttempts];
-  if (cost === void 0) throw new RangeError("\uBAA8\uB4E0 \uAC15\uD654\uB97C \uB9C8\uCE5C \uB8EC\uC5D0\uB294 \uB2E4\uC74C \uBE44\uC6A9\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
-  return cost;
-}
-function runeBatchEnhancementGoldCost(rune) {
-  const remaining = runeBatchEnhancementTargets(rune).length;
-  const done = runeEnhancementAttempts(rune);
-  let total = 0;
-  for (let step2 = 0; step2 < remaining; step2 += 1) total += runeEnhancementGoldCost(rune.rarity, done + step2);
-  return total;
-}
-var STARTER_RUNE_RARITIES = [
-  "uncommon",
-  "uncommon",
-  "uncommon",
-  "rare",
-  "rare",
-  "rare",
-  "epic",
-  "epic",
-  "legendary",
-  "legendary"
-];
-var STARTER_RUNE_PARTS = [0, 1, 2, 0, 1, 2, 0, 1, 2, 0];
-var STARTER_RUNE_TRAITED = [true, false, true, false, true, false, true, false, true, false];
-function backfillStarterRuneTraits(runes, random) {
-  return runes.map((rune) => {
-    const index = STARTER_RUNE_TRAITED.findIndex((_, slot) => rune.instanceId === `starter-rune-${slot + 1}`);
-    if (index < 0 || !STARTER_RUNE_TRAITED[index] || rune.trait !== void 0) return rune;
-    return { ...rune, trait: grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: "uncommon", random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE }) };
-  });
-}
-var STARTER_RUNE_TRAIT_KIT = {
-  rawStone: 5e4,
-  items: [
-    { itemId: "ancient-core", quantity: 30 },
-    { itemId: "refined-core", quantity: 10 },
-    { itemId: "restoration-crystal", quantity: 10 }
-  ]
-};
-function createStarterRunes(random) {
-  return STARTER_RUNE_RARITIES.map((rarity, index) => {
-    const rune = generateRune({
-      instanceId: `starter-rune-${index + 1}`,
-      baseName: t("rune.baseName", { part: runePartLabel(STARTER_RUNE_PARTS[index]) }),
-      rarity,
-      part: STARTER_RUNE_PARTS[index],
-      random
-    });
-    if (!STARTER_RUNE_TRAITED[index]) return rune;
-    return { ...rune, trait: grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: "uncommon", random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE }) };
-  });
-}
-var RUNE_SELL_RAW_STONE = {
-  uncommon: 20,
-  rare: 50,
-  epic: 150,
-  legendary: 400
-};
-function runeSellValue(rune) {
-  return RUNE_SELL_RAW_STONE[rune.rarity];
 }
 
 // src/core/rarityScaling.ts
@@ -9665,17 +9613,15 @@ function applyBreakthrough(stats, breakthrough) {
   return { ...stats };
 }
 function applyHeartGems(stats, gems3) {
-  const result = { ...stats };
+  const totals = {};
   for (const gem of gems3) {
     assertValidRuneInstance(gem);
-    for (const option of [...gem.mainStats, ...gem.subStats]) {
-      const rule = RUNE_STAT_RULES[option.key];
-      const successes = (gem.enhancementHistory[option.key] ?? []).filter(({ succeeded }) => succeeded).length;
-      const engraved = gem.engravings.some(({ statKey }) => statKey === option.key) ? 1 : 0;
-      const value = rule.base + rule.enhancement * (successes + engraved);
-      const key = option.key;
-      result[key] = rule.unit === "percentagePoint" ? result[key] + value : Math.round(result[key] * (1 + value / 100));
-    }
+    for (const option of [...gem.mainStats, ...gem.subStats]) totals[option.key] = (totals[option.key] ?? 0) + runeOptionValue(gem, option.key);
+  }
+  const result = { ...stats };
+  for (const [key, total] of Object.entries(totals)) {
+    const stat = key;
+    result[stat] = RUNE_STAT_UNIT[key] === "percent" ? Math.round(stats[stat] * (1 + total / 100)) : Math.round((stats[stat] + total) * 100) / 100;
   }
   return result;
 }
@@ -9856,7 +9802,7 @@ function grantDailyLobbyBondXp(progress, utcDate) {
 }
 function amplifyFerocityGain(amount, bondLevel) {
   if (!Number.isFinite(amount) || amount < 0 || !Number.isInteger(bondLevel) || bondLevel < 0) throw new RangeError("\uC57C\uC131 \uC99D\uAC00\uB7C9\uACFC \uC720\uB300 \uB808\uBCA8\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-  return Math.max(0, Math.round(amount * BOND_FEROCITY_MULTIPLIER[Math.min(BOND_LEVEL_CAP, bondLevel)]));
+  return Math.max(0, Math.round(amount * BOND_FEROCITY_MULTIPLIER[Math.min(BOND_LEVEL_CAP, bondLevel)] * 100) / 100);
 }
 
 // src/core/battleClock.ts
@@ -9957,6 +9903,15 @@ var FEROCITY_RULES = {
     { ratio: 1, damageBonus: 0.35 }
   ]
 };
+function basicFerocityGain(stats) {
+  return stats.ferocityGain < FEROCITY_RULES.basicGain ? FEROCITY_RULES.basicGain + Math.max(0, stats.ferocityGain) : stats.ferocityGain;
+}
+function ferocityGainBonus(stats) {
+  return basicFerocityGain(stats) - FEROCITY_RULES.basicGain;
+}
+function actionFerocityGain(stats, ultimate) {
+  return ultimate ? FEROCITY_RULES.ultimateGain + ferocityGainBonus(stats) : basicFerocityGain(stats);
+}
 function ferocityMaxOf(def) {
   return def.ferocityMax ?? (def.enemyOnly ? FEROCITY_RULES.enemyMax : FEROCITY_RULES.max);
 }
@@ -10036,7 +9991,10 @@ function offenseGrowth(stats, base) {
 }
 function combatPower(stats, base) {
   const speedGrowth = offenseGrowth(stats, base);
-  return Math.round(Object.keys(WEIGHTS).reduce((sum, key) => sum + stats[key] * WEIGHTS[key] * (key === "attackSpeed" ? speedGrowth : 1), 0));
+  return Math.round(Object.keys(WEIGHTS).reduce((sum, key) => sum + statForPower(stats, key) * WEIGHTS[key] * (key === "attackSpeed" ? speedGrowth : 1), 0));
+}
+function statForPower(stats, key) {
+  return key === "ferocityGain" ? ferocityGainBonus(stats) : stats[key];
 }
 
 // src/core/levelDesign.ts
@@ -10237,15 +10195,15 @@ var EXPEDITION_FLAT_STAT_PLANS = [
   { id: "crit-chance", stat: "critChance", category: "attack", sr: 8, ssr: 14 },
   { id: "crit-damage", stat: "critDamage", category: "attack", sr: 25, ssr: 45 },
   { id: "energy-gain", stat: "energyGain", category: "spell", sr: 2, ssr: 4 },
-  { id: "ferocity-gain", stat: "ferocityGain", category: "attack", sr: 12, ssr: 20 }
+  { id: "ferocity-gain", stat: "ferocityGain", category: "attack", sr: 1.5, ssr: 2.5 }
 ];
-var STAT_LABELS = { lifeSteal: "stat.lifeSteal", critChance: "stat.critChance", critDamage: "stat.critDamage", energyGain: "stat.energyGain", ferocityGain: "stat.ferocityGain.rune" };
+var STAT_LABELS = { lifeSteal: "stat.lifeSteal", critChance: "stat.critChance", critDamage: "stat.critDamage", energyGain: "stat.energyGain", ferocityGain: "stat.ferocityGain" };
 function expeditionStatAugmentLabel(def, linkLifesteal = false) {
   if (def.effect.kind !== "flatStat") return void 0;
   const effect = def.effect;
   const name = t(STAT_LABELS[effect.stat]);
   const label = linkLifesteal && effect.stat === "lifeSteal" ? `[[augment-tag|${name}]]` : name;
-  return effect.stat === "energyGain" ? t("augment.flatPoints", { label, points: effect.points }) : t("augment.percent", { label, percent: effect.points });
+  return effect.stat === "energyGain" || effect.stat === "ferocityGain" ? t("augment.flatPoints", { label, points: effect.points }) : t("augment.percent", { label, percent: effect.points });
 }
 var EXPEDITION_STAT_AUGMENTS = [
   ...EXPEDITION_FLAT_STAT_PLANS.flatMap((plan) => ["sr", "ssr"].map((rarity) => {
@@ -15403,7 +15361,7 @@ function gainFerocity(fighter, base, state, events) {
   const before = fighter.ferocity;
   if (fighter.ferocityFever) return;
   const rallied = base + tailwindRally(state, fighter.side).ferocity;
-  const adjusted = amplifyFerocityGain(rallied, fighter.bondLevel) * (1 + fighter.def.stats.ferocityGain / 100);
+  const adjusted = amplifyFerocityGain(rallied, fighter.bondLevel);
   const ferocityMax = ferocityMaxOf(fighter.def);
   fighter.ferocity = Math.min(ferocityMax, before + adjusted);
   if (before < ferocityMax && fighter.ferocity >= ferocityMax) {
@@ -16767,7 +16725,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     } else gainEnergy(attacker, state);
     grantAllyEnergy(attacker, skill, state);
     grantDuoCharge(attacker, skill, state, events);
-    gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
+    gainFerocity(attacker, actionFerocityGain(attacker.def.stats, useUltimate), state, events);
   }
   if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state, events);
   if (!useUltimate && attacker.def.passive.kind === "basicHitAttackSpeedStack" && comboHit?.waterGranted !== true) {
@@ -17220,7 +17178,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
   const ultimateMeteor = useUltimate && ultimate && "repeatStrike" in ultimate ? ultimate.repeatStrike?.meteor : void 0;
   if (ultimateMeteor && attacker.def.passive.starfall) healFromStarfall(attacker, ultimateMeteorDealt, attacker.def.passive.starfall, state, events, ultimateMeteor.healMultiplier);
   if (!useUltimate && !followUp && !free) callStarfall(attacker, center, rng);
-  if (!attacker.bt.dashBack?.running) gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
+  if (!attacker.bt.dashBack?.running) gainFerocity(attacker, actionFerocityGain(attacker.def.stats, useUltimate), state, events);
 }
 function orbitStep(position, target, step2, radius, direction) {
   const dx = position.x - target.x;
@@ -19218,7 +19176,7 @@ var KURO_DEF = {
   strike: "claw",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1 },
   // 디안의 태생 공격력 160에서 파생한 값이며, 전투에서는 성장한 공격력으로 다시 계산된다.
-  stats: { hp: 422, def: 67, res: 67, atk: 158, ap: 0, attackSpeed: 104, moveSpeed: 109, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+  stats: { hp: 422, def: 67, res: 67, atk: 158, ap: 0, attackSpeed: 104, moveSpeed: 109, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 12 },
   ferocityTrait: {
     name: "\uBB34\uB9AC\uC758 \uBAB8",
     effectId: "packBody",
@@ -19263,7 +19221,7 @@ var SHIRO_DEF = {
   strike: "slash",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1 },
   // 디안의 태생 주문력 158에서 파생한 값이며, 전투에서는 성장한 주문력으로 다시 계산된다.
-  stats: { hp: 422, def: 70, res: 74, atk: 0, ap: 155, attackSpeed: 96, moveSpeed: 100, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+  stats: { hp: 422, def: 70, res: 74, atk: 0, ap: 155, attackSpeed: 96, moveSpeed: 100, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 12 },
   ferocityTrait: {
     name: "\uBB34\uB9AC\uC758 \uBAB8",
     effectId: "packBody",
@@ -19308,7 +19266,7 @@ var DIMO_DEF = {
   projectile: "signal",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1 },
   // 모르페의 태생 공격력 172에서 파생한 값이며, 전투에서는 성장한 공격력으로 다시 계산된다.
-  stats: { hp: 301, def: 43, res: 43, atk: 86, ap: 0, attackSpeed: 80, moveSpeed: 105, critChance: 0, critDamage: 150, energyGain: 12, lifeSteal: 0, ferocityGain: 0 },
+  stats: { hp: 301, def: 43, res: 43, atk: 86, ap: 0, attackSpeed: 80, moveSpeed: 105, critChance: 0, critDamage: 150, energyGain: 12, lifeSteal: 0, ferocityGain: 12 },
   ferocityTrait: { name: "\uC624\uBC84\uD074\uB7ED", effectId: "overclockBody", attackSpeedPercent: 50, moveSpeedPercent: 50 },
   passive: {
     id: "dimo-passive",
@@ -19403,7 +19361,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 치명타 확률 가산은 패시브가 이미 미는 축이라 폭주가 같은 말을 반복했다. 지금은 자기가
     // 남긴 출혈을 조건으로 삼아, 물어뜯은 자리를 다시 무는 것이 곧 확정 치명타다.
@@ -19506,7 +19464,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // **폭주가 체력을 되돌리지 않는다.** 매초 회복이 함께 있던 때는 폭주 한 번이 곧 완치라,
     // 앞에 선 몸이 언제 무너지는지가 화면에서 사라졌다(5% → 1.5%로 내려도 성격은 같았다).
@@ -19639,7 +19597,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 내려서는 자리에 물이 고인다. 잠행이 "숨어서 옮겨 간다"에서 **사냥터를 여는 걸음**이 되어,
     // 도착하자마자 그 자리의 평타가 전부 다단히트로 들어간다.
@@ -19791,7 +19749,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 폭주는 스피나와 같은 은신 태그를 쓰되 도약 없이 무리 사냥을 재실행하며, 루카 자신도 공속 오라 대상이다.
     ferocityTrait: { name: "\uD3ED\uC8FC", effectId: "packHunt", stealthDurationSeconds: 3, retriggerPackHunt: true, sharedTargetAttackSpeedPercent: 40 },
@@ -19893,7 +19851,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 손이 빨라지는 몫은 절반으로 줄이고, 그만큼을 고친 자리에 한 겹 덮는 쪽으로 옮겼다 —
     // 속도만 두 배가 되면 폭주가 "더 많이 고쳤다"까지만 말하고, 이미 가득 찬 아군에게는
@@ -19998,7 +19956,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 물살을 타고 계속 뛰어드는 몸이라 폭주는 **버틸 숨과 손**으로 발현한다. 토리카의 폭주와
     // 같은 1초 시계를 쓰되(`torikaBulwark`) 손이 함께 빨라진다 — 그쪽은 앞에 서서 버티는
@@ -20110,7 +20068,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: { name: "\uC790, \uC5ED\uD48D\uC758 \uC2DC\uAC04\uC774\uB2E4!", effectId: "tailwindRally", teamFerocityGain: 5, teamEnergyGain: 5 },
     passive: {
@@ -20215,7 +20173,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 들어서는 순간 넓게 한 번 도발하고, 폭주 중에는 까칠이 두 배로 쌓인다. 반격이 세지는 것은 겹이 그만큼
     // 빨리 차서이며 피해량을 따로 올리는 숨은 보정이 아니다(공용 야성 규칙이 이미 피해를 올린다).
@@ -20341,7 +20299,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 폭주 중 공속이 오르고 평타가 자기 주위를 쓸어, 맞은 적 모두에게 수압이 쌓인다. 보호막은 따로 주지 않는다.
     ferocityTrait: { name: "\uC2EC\uD574 \uC640\uB958", effectId: "abyssalVortex", attackSpeedPercent: 40, radius: 200 },
@@ -20451,7 +20409,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 폭주 중 공속이 오르고 철퇴가 자기 주위를 휩쓸어 맞은 적을 짧게 밀어낸다.
     ferocityTrait: { name: "\uC7A0\uD22C\uC815", effectId: "sleepTantrum", attackSpeedPercent: 40, radius: 200, knockback: { seconds: 0.3, speed: 700, bounces: 0 } },
@@ -20564,7 +20522,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 폭주는 공속을 올리지 않는다 — 느리게 쏘는 것이 정체성이라 한 발의 무게만 키운다.
     ferocityTrait: { name: "\uD3ED\uD48D \uC18D\uC758 \uC870\uC900", effectId: "stormAim", defenseIgnorePercent: 25 },
@@ -20669,7 +20627,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 폭주 중 위압이 한 번에 두 겹 쌓이고 공포 뒤 면역이 짧아져, 같은 적에게 공포를 연달아 먹인다. 피해량·궁극기는 건드리지 않는다.
     ferocityTrait: { name: "\uC0AC\uB0E5 \uBCF8\uB2A5", effectId: "huntInstinct", intimidateBonusStacks: 1, fearImmunitySeconds: 1 },
@@ -20772,7 +20730,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 폭주 중 평타가 한 갈래 더 갈라지고 공격 속도가 오른다. 갈래 수는 일반 공격 계약이 정한다.
     breakthroughEffects: {
@@ -20869,7 +20827,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     breakthroughEffects: {
       basic: { kind: "darkRoast", defenseIgnorePercent: 20 },
@@ -20963,7 +20921,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 한계 돌파(응태 결정 2026-11-12) — 평타가 확률로 유성을 부르고, 궁극기는 한 발 더 떨어지며 회복이 붙고,
     // 폭주 동안 아군 모두가 빨라지고, 유성 회복이 다친 아군 한 명에게 한 번 더 들어간다.
@@ -21059,7 +21017,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 소심해서 자기가 나서지 못하는 아이라, 폭주는 제 화력이 아니라 아군의 손을 빌리는 쪽으로 발현한다.
     // 한계 돌파: 번진 물감 · 튀는 물감 · 한 겹 더 · 급소 그리기.
@@ -21161,7 +21119,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: {
       name: "\uC57C, \uBE44\uCF1C!",
@@ -21279,7 +21237,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: {
       name: "\uC7A0\uAE50, \uB098 \uC774\uB798 \uBD2C\uB3C4 \uC758\uC0AC\uB77C\uACE0?",
@@ -21396,7 +21354,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 광란은 폭주에서도 나오지만 **직접 적중**에만 걸린다. 전이까지 발동하면 한 번의 공격이
     // 사슬 길이만큼 적을 돌려세워, 폭주 동안 상대 편이 통째로 멈춘 것처럼 된다.
@@ -21507,7 +21465,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 바르거나 터뜨리거나 한 번에 하나만 한다. 그래서 폭주 중 실제 피해량은 공속이 정하고,
     // 공속 증가가 곧 "얼마나 자주 청산하는가"가 된다.
@@ -21624,7 +21582,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 폭주에 들어서는 순간 넓은 범위의 적이 한꺼번에 이쪽을 본다(3초, 들어설 때 한 번). 폭주 동안은
     // 서 있는 것만으로 주위가 지져지고 희열이 터질 때의 회복이 늘어난다 — 회복만 있던 자리에 적에게
@@ -21741,7 +21699,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 굳는 순간 몸이 한 겹 덮이고, 그 상태로 권을 딱 한 바퀴(발경 3연) 몰아친다.
     ferocityTrait: { name: "\uAE08\uAC15\uBD88\uAD34(\u91D1\u525B\u4E0D\u58DE)", effectId: "adamantBody", shieldMaxHpPercent: 25, hastenedAttacks: 3, attackSpeedPercent: 150 },
@@ -21875,7 +21833,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     /*
      * **완전 난장판!** 힘 조절에 실패하는 순간이 폭주다 — 한 대씩 비틀던 집게가 옆 사람까지 휩쓴다.
@@ -22013,7 +21971,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: {
       name: "\uC774\uBC88\uC5D4 \uC548 \uC228\uC744 \uAC70\uC57C!",
@@ -22122,7 +22080,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 캐릭터 ID가 아니라 공용 시약 도핑 계약이 진입 살포와 자기 공속 증가를 함께 표현한다.
     ferocityTrait: {
@@ -22279,7 +22237,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     /*
      * **앞장서서 뚫는 몸이라 잃은 만큼을 두른다.** 공속만 올리던 때는 이 폭주가 열려도
@@ -22413,7 +22371,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: { name: "\uBC15\uC950 \uD3ED\uD48D", effectId: "batStorm", radiusPercent: 40, tickSpeedPercent: 50 },
     passive: {
@@ -22520,7 +22478,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: { name: "\uBD80\uB044\uB7EC\uC6B4 \uAC00\uC2DC", effectId: "thornBristle", segmentSizePercent: 50, restoreSpeedPercent: 50 },
     passive: {
@@ -22610,7 +22568,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: { name: "\uC2E0\uB09C \uAF2C\uB9AC", effectId: "frenzyTail", attackSpeedPercent: 30, extraStacksPerHit: 1 },
     passive: {
@@ -22695,7 +22653,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: { name: "\uB9C8\uC74C\uC774 \uAE09\uD574\uC11C\uC694", effectId: "swiftFlight", intervalReductionPercent: 40 },
     passive: {
@@ -22780,7 +22738,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: { name: "\uB354 \uB9CE\uC774 \uC601\uCC28", effectId: "marchOfAnts", radiusBonus: 120, extraAllies: 2 },
     passive: {
@@ -22865,7 +22823,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: { name: "\uC2DD\uC695 \uD3ED\uC8FC", effectId: "appetiteFrenzy", attackSpeedPercent: 30, bleedHealPercent: 50 },
     passive: {
@@ -22953,7 +22911,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: { name: "\uAD81\uC9C0\uC5D0 \uBAB0\uB9B0 \uC9D0\uC2B9", effectId: "corneredBeast", attackSpeedPercent: 35, moveSpeedPercent: 25, flinchCooldownSeconds: 3 },
     passive: {
@@ -23047,7 +23005,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: { name: "\uC810\uD638 \uAC70\uBD80", effectId: "rollCallRefusal", pullRadiusPercent: 40, rallyEvery: 3 },
     passive: {
@@ -23135,7 +23093,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: { name: "\uAD6C\uC18D \uBD95\uAD34", effectId: "restraintCollapse" },
     passive: {
@@ -23245,7 +23203,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 별 넷이 이 개체를 **지휘하는 연주자**로 완성한다 — 박자가 쌓이고(II), 찬가가 더 자주 울리며 넘치는 선율이 방패가 되고(III),
     // 폭주 진입에 서곡이 울리고(IV), 막이 남아 있는 내내 음파가 퍼진다(V). 회복 총량(잃은 체력 15%)은 건드리지 않는다.
@@ -23388,7 +23346,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: {
       name: "\uB124\uAC00 \uC608\uC220\uC744 \uC54C\uC544?",
@@ -23554,7 +23512,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: { name: "\uBAA8\uD53C", effectId: "furCoat", cleanseAllOnEntry: true, shieldMaxHpPercent: 25, defenseResistancePercent: 100 },
     // 한계 돌파: 소다 터짐(세 번마다 냉기) · 냉방 환기 · 한파(폭주 진입에 전원 냉기) · 얼음 깨기.
@@ -23661,7 +23619,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 수치를 여기 적지 않는다 — 옮기는 비율과 상한은 「가봉」 하나가 갖고, 폭주는 그 몫이
     // 보호막으로 가는지 회복으로 가는지만 바꾼다.
@@ -23784,7 +23742,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 한계 돌파: 강력 세척 · 티끌 하나 없이 · 보호복 착용 · 프로의 손길.
     breakthroughEffects: {
@@ -23896,7 +23854,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 폭주는 **거리**를 갖는다. 궁극기가 속도를 갖고 있어, 둘 다 공속을 올리면 두 슬롯이
     // 화면에서 같은 말을 한다. 순환을 기다리지 않는 갈래화살과 사거리가 함께 붙는다.
@@ -24028,7 +23986,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 폭주는 슈테 자신이 세지는 것이 아니라 **듀오를 밀어 넣는다.** 지원가의 폭주가 제 화력을
     // 올리면 그 순간만 지원가가 아니게 된다.
@@ -24159,7 +24117,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     /*
      * **두 갈래가 한 자리에서 돈다** — 요람에 앉아 화력을 내는 모르페와, 그 눈이 되어 전장을 도는 디모.
@@ -24272,7 +24230,7 @@ var RELICS = [
      * 공격력과 주문력이 거의 같은 이유는 일반 공격이 두 축을 한 번에(공격력 40% + 주문력 60%)
      * 쓰기 때문이고, 늑대 둘도 각각 그 한 축에서만 자란다. 전투력 2453으로 SSR 띠(2340~2460) 안이다.
      */
-    stats: { hp: 750, def: 40, res: 40, atk: 160, ap: 158, attackSpeed: 132, moveSpeed: 64, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+    stats: { hp: 750, def: 40, res: 40, atk: 160, ap: 158, attackSpeed: 132, moveSpeed: 64, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 12 },
     // 쿠로는 최종 공격력만, 시로는 최종 주문력만 읽는다. 서로 반대 능력치는 파생 결과에 섞이지 않는다.
     summons: [
       {
@@ -24428,7 +24386,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 30,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     // 폭주 파동은 매초 각 적 최대 HP의 2%를 고정 피해로 주고, 살아 있는 동안 모든 적 회복을 취소한다.
     ferocityTrait: { name: "\uD574\uAD6C", effectId: "pontusRage", maxHpDamagePercentPerSecond: 2, cancelEnemyHealing: true },
@@ -24566,7 +24524,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 30,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     /*
      * **범람.** 턱이 닫힐 때마다 그 옆까지 함께 찢긴다.
@@ -24740,7 +24698,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 30,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     /*
      * **대식가의 식탁.** 폭주에 드는 순간 주위의 먹잇감을 한꺼번에 몸 앞으로 끌어오고, 그 뒤로 조이는
@@ -24884,7 +24842,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 30,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     /*
      * **폭풍의 날갯짓.** 폭주에 드는 순간 다음 한 방이 곧바로 자세를 무너뜨리고, 맞은 쪽은 벽까지 날아간다.
@@ -25020,7 +24978,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: {
       name: "\uACFC\uC2DD",
@@ -25145,7 +25103,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: {
       name: "\uACFC\uC2DD",
@@ -25270,7 +25228,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: {
       name: "\uACFC\uC2DD",
@@ -25397,7 +25355,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: {
       name: "\uACFC\uC2DD",
@@ -25522,7 +25480,7 @@ var RELICS = [
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
-      ferocityGain: 0
+      ferocityGain: 12
     },
     ferocityTrait: {
       name: "\uACFC\uC2DD",
@@ -29141,9 +29099,9 @@ init_define_import_meta_env();
 var NOW = Date.now();
 var SAMPLE_FRIENDS = [
   // 샘플도 공개 화이트리스트만 명시해 실제 응답에 계정 키·재화·편성이 섞이는 일을 조기에 드러낸다.
-  { id: "friend-haneul", uid: "418207735", frameId: "holo", displayName: "\uD558\uB298\uC815\uC6D0", level: 27, status: "\uC0C8 \uD45C\uBCF8\uC758 \uD754\uC801\uC744 \uCC3E\uB294 \uC911", lastActiveAt: NOW - 3e4, equippedModifiers: [{ id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare" }], favoriteRelic: { relicId: "rex", level: 24, breakthroughGrade: 5, stats: { hp: 820, def: 42, res: 36, atk: 132, ap: 76, attackSpeed: 112, moveSpeed: 108, critChance: 20, critDamage: 160, energyGain: 28, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["rex-basic", "rex-passive", "rex-ultimate"] }, competitiveStats: { highestStage: { stageId: "stage-2-5", displayValue: "2-5 \uBD89\uC740 \uD611\uACE1" }, arenaScore: 1350, expeditionScore: 18420, ancientFloor: 23 } },
+  { id: "friend-haneul", uid: "418207735", frameId: "holo", displayName: "\uD558\uB298\uC815\uC6D0", level: 27, status: "\uC0C8 \uD45C\uBCF8\uC758 \uD754\uC801\uC744 \uCC3E\uB294 \uC911", lastActiveAt: NOW - 3e4, equippedModifiers: [{ id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare" }], favoriteRelic: { relicId: "rex", level: 24, breakthroughGrade: 5, stats: { hp: 820, def: 42, res: 36, atk: 132, ap: 76, attackSpeed: 112, moveSpeed: 108, critChance: 20, critDamage: 160, energyGain: 28, lifeSteal: 0, ferocityGain: 12 }, skillIds: ["rex-basic", "rex-passive", "rex-ultimate"] }, competitiveStats: { highestStage: { stageId: "stage-2-5", displayValue: "2-5 \uBD89\uC740 \uD611\uACE1" }, arenaScore: 1350, expeditionScore: 18420, ancientFloor: 23 } },
   // 두 번째 샘플은 선택 기록과 수식어가 없는 정상 응답을 검수하며 빈 상태 문구 대신 렌더링 생략을 확인한다.
-  { id: "friend-moss", uid: "602913548", frameId: "field", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", level: 19, status: "\uC624\uB298\uB3C4 \uCC9C\uCC9C\uD788 \uBCF5\uC6D0", lastActiveAt: NOW - 12 * 6e4, equippedModifiers: [], favoriteRelic: { relicId: "torika", level: 18, breakthroughGrade: 4, stats: { hp: 1420, def: 128, res: 92, atk: 74, ap: 52, attackSpeed: 78, moveSpeed: 72, critChance: 5, critDamage: 140, energyGain: 20, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["torika-basic", "torika-passive", "torika-ultimate"] }, competitiveStats: { ancientFloor: 7 } }
+  { id: "friend-moss", uid: "602913548", frameId: "field", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", level: 19, status: "\uC624\uB298\uB3C4 \uCC9C\uCC9C\uD788 \uBCF5\uC6D0", lastActiveAt: NOW - 12 * 6e4, equippedModifiers: [], favoriteRelic: { relicId: "torika", level: 18, breakthroughGrade: 4, stats: { hp: 1420, def: 128, res: 92, atk: 74, ap: 52, attackSpeed: 78, moveSpeed: 72, critChance: 5, critDamage: 140, energyGain: 20, lifeSteal: 0, ferocityGain: 12 }, skillIds: ["torika-basic", "torika-passive", "torika-ultimate"] }, competitiveStats: { ancientFloor: 7 } }
 ];
 var PREVIEW_FRIENDS = QA_TOOLS_ENABLED ? SAMPLE_FRIENDS : [];
 for (const friend of PREVIEW_FRIENDS) {
@@ -30601,6 +30559,79 @@ function getRelicSkin(id) {
 }
 for (const skin of RELIC_SKINS) {
   registerDataText(skin, "name", `skin.${skin.id}.name`);
+}
+
+// src/data/runes.ts
+init_define_import_meta_env();
+var RUNE_ENHANCEMENT_GOLD_COSTS = {
+  uncommon: [1e3, 1500, 2e3, 2500, 3e3, 3500],
+  rare: [2500, 3e3, 3500, 4e3, 4500, 5e3, 5500, 6e3, 6500],
+  epic: [6e3, 7500, 9e3, 10500, 12e3, 13500, 15e3, 16500, 18e3, 19500, 21e3, 22500],
+  legendary: [15e3, 18e3, 21e3, 24e3, 27e3, 3e4, 33e3, 36e3, 39e3, 42e3, 45e3, 48e3, 51e3, 54e3, 57e3]
+};
+function runeEnhancementGoldCost(rarity, completedAttempts) {
+  if (!Number.isInteger(completedAttempts) || completedAttempts < 0) throw new RangeError("\uB204\uC801 \uAC15\uD654 \uD69F\uC218\uB294 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+  const cost = RUNE_ENHANCEMENT_GOLD_COSTS[rarity][completedAttempts];
+  if (cost === void 0) throw new RangeError("\uBAA8\uB4E0 \uAC15\uD654\uB97C \uB9C8\uCE5C \uB8EC\uC5D0\uB294 \uB2E4\uC74C \uBE44\uC6A9\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  return cost;
+}
+function runeBatchEnhancementGoldCost(rune) {
+  const remaining = runeBatchEnhancementTargets(rune).length;
+  const done = runeEnhancementAttempts(rune);
+  let total = 0;
+  for (let step2 = 0; step2 < remaining; step2 += 1) total += runeEnhancementGoldCost(rune.rarity, done + step2);
+  return total;
+}
+var STARTER_RUNE_RARITIES = [
+  "uncommon",
+  "uncommon",
+  "uncommon",
+  "rare",
+  "rare",
+  "rare",
+  "epic",
+  "epic",
+  "legendary",
+  "legendary"
+];
+var STARTER_RUNE_PARTS = [0, 1, 2, 0, 1, 2, 0, 1, 2, 0];
+var STARTER_RUNE_TRAITED = [true, false, true, false, true, false, true, false, true, false];
+function backfillStarterRuneTraits(runes, random) {
+  return runes.map((rune) => {
+    const index = STARTER_RUNE_TRAITED.findIndex((_, slot) => rune.instanceId === `starter-rune-${slot + 1}`);
+    if (index < 0 || !STARTER_RUNE_TRAITED[index] || rune.trait !== void 0) return rune;
+    return { ...rune, trait: grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: "uncommon", random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE }) };
+  });
+}
+var STARTER_RUNE_TRAIT_KIT = {
+  rawStone: 5e4,
+  items: [
+    { itemId: "ancient-core", quantity: 30 },
+    { itemId: "refined-core", quantity: 10 },
+    { itemId: "restoration-crystal", quantity: 10 }
+  ]
+};
+function createStarterRunes(random) {
+  return STARTER_RUNE_RARITIES.map((rarity, index) => {
+    const rune = generateRune({
+      instanceId: `starter-rune-${index + 1}`,
+      baseName: t("rune.baseName", { part: runePartLabel(STARTER_RUNE_PARTS[index]) }),
+      rarity,
+      part: STARTER_RUNE_PARTS[index],
+      random
+    });
+    if (!STARTER_RUNE_TRAITED[index]) return rune;
+    return { ...rune, trait: grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: "uncommon", random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE }) };
+  });
+}
+var RUNE_SELL_RAW_STONE = {
+  uncommon: 20,
+  rare: 50,
+  epic: 150,
+  legendary: 400
+};
+function runeSellValue(rune) {
+  return RUNE_SELL_RAW_STONE[rune.rarity];
 }
 
 // src/state/session.ts
@@ -44854,7 +44885,8 @@ function deriveNotificationState(conditions) {
     freeResearch: conditions.freeResearchAvailable === true,
     interactionReturned: (conditions.claimableInteractionCount ?? 0) > 0,
     duelSeasonReward: conditions.duelSeasonRewardReady === true,
-    premiumSubscription: (conditions.claimableSubscriptionBonusCount ?? 0) > 0
+    premiumSubscription: (conditions.claimableSubscriptionBonusCount ?? 0) > 0,
+    guildAttendance: conditions.guildAttendanceReady === true
   };
 }
 var EMPTY_NOTIFICATION_STATE = deriveNotificationState({
@@ -45365,7 +45397,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.484.0",
+  version: "0.485.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -49781,7 +49813,8 @@ var FakeServer = class {
     const claimableInteractionCount = this.state.interaction.slots.filter((slot) => slot !== null && !slot.claimed && isInteractionDispatchComplete(slot.completesAt, now.getTime())).length;
     const duelSeasonRewardReady = (QA_TOOLS_ENABLED || this.duelContext !== void 0) && rollDuelPeriods(normalizeDuelState(this.state.duel, [...this.state.owned]), now).pendingSeasonReward != null;
     const claimableSubscriptionBonusCount = PRODUCTS.filter((product) => product.passBenefit && this.subscriptionInfo(product, now).subscription?.dailyBonusClaimed === false).length;
-    return { freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
+    const guildAttendanceReady = await this.guildAttendanceReady();
+    return { guildAttendanceReady, freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
   }
   /**
    * **상황 특가를 지금 상태에서 읽어 세운다**(`core/situationalOffers.ts`). 조회(붉은 점·프리미엄 목록)가 부르며, 바뀐 것이 있을 때만 저장한다.
@@ -49986,6 +50019,18 @@ var FakeServer = class {
    */
   noteEncounters(ids) {
     for (const id of ids) this.pendingEncounters.add(id);
+  }
+  /**
+   * 길드원인데 오늘 출석 도장이 비었는가. 길드가 잠긴 계정은 묻지 않고, 길드가 없거나 조회가 실패하면 점을 세우지 않는다
+   * (`getAttendance`는 길드원이 아니면 거절한다). 날짜는 길드 백엔드가 출석판과 같은 UTC 자정으로 정한다.
+   */
+  async guildAttendanceReady() {
+    if (!isContentUnlocked("guild", this.state.playerResearch.level)) return false;
+    try {
+      return !(await this.guildBackend.getAttendance(this.guildActor())).stampedToday;
+    } catch {
+      return false;
+    }
   }
   /** 길드에 든 적이 있는가 — 굳힌 값이 먼저이고, 아니면 지금 소속을 본다(조회 실패는 아직 아님으로 둔다). */
   async newbieGuildJoined() {

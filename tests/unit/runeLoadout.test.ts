@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { getRelic } from "../../src/data/relics";
-import { RUNE_STAT_RULES } from "../../src/data/runes";
 import { recommendRuneLoadout, runeHolders, type RuneLoadoutRelic } from "../../src/core/runeLoadout";
 import { createRuneInstance, type RuneMainStatKey, type RunePart, type RuneRarity, type RuneStatKey } from "../../src/core/runes";
 import type { RelicProgress } from "../../src/core/types";
 
-const VALUES = Object.fromEntries(Object.entries(RUNE_STAT_RULES).map(([key, rule]) => [key, rule.base])) as Record<RuneStatKey, number>;
+const VALUES: Record<RuneStatKey, number> = {
+  hp: 8, atk: 8, ap: 8, def: 8, res: 8,
+  moveSpeed: 5, attackSpeed: 5, lifeSteal: 5, critChance: 5, critDamage: 5, ferocityGain: 1, energyGain: 2,
+};
 
 function rune(id: string, part: RunePart, mainKeys: readonly [RuneMainStatKey, RuneMainStatKey], rarity: RuneRarity = "uncommon") {
   return createRuneInstance({ instanceId: id, baseName: "추천 테스트 룬", rarity, part, statValues: VALUES, mainKeys, random: () => 0 });

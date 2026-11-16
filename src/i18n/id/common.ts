@@ -15,6 +15,7 @@ export const COMMON_ID = {
   "stat.critDamage": "Kerusakan Kritis",
   "stat.energyGain": "Isi Ultimate",
   "stat.energyGain.rune": "Isi Ultimate Naik",
+  "stat.ferocityGain": "Perolehan Keganasan",
   "stat.ferocityGain.rune": "Perolehan Keganasan Naik",
   "stat.lifeSteal": "Curi Nyawa",
   "stat.range": "Jangkauan",

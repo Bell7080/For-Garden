@@ -15,6 +15,7 @@ export const COMMON_RU = {
   "stat.critDamage": "Урон крита",
   "stat.energyGain": "Заряд ульты",
   "stat.energyGain.rune": "Заряд ульты +",
+  "stat.ferocityGain": "Прирост ярости",
   "stat.ferocityGain.rune": "Прирост ярости +",
   "stat.lifeSteal": "Вампиризм",
   "stat.range": "Дальность",

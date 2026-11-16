@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  applyRuneFerocityGain,
-  applyRuneLifeSteal,
   assertValidRuneInstance,
   calculateRuneEnhancementSuccessChance,
   canEngraveRune,
@@ -14,7 +12,8 @@ import {
   RUNE_GENERATION_RULES,
   runeRarityLabel,
   RUNE_SUB_STAT_COUNTS,
-  runeCombatModifiers,
+  runeOptionValue,
+  formatRuneOptionValue,
   runeEnhancementIncrease,
   validateRuneInstance,
   type RuneInstance,
@@ -70,16 +69,17 @@ describe("룬 도메인", () => {
     expect(() => assertValidRuneInstance({ ...rune, currentSuccessChance: 1.1 })).toThrow(/0~1/);
   });
 
-  it("Stats 밖의 흡혈과 야성 증가를 전투 계산 계약으로 적용한다", () => {
-    const rune = makeRune("legendary");
-    const customized = { ...rune, subStats: [
-      { key: "lifeSteal" as const, value: 10 },
-      { key: "ferocityGain" as const, value: 25 },
-      { key: "energyGain" as const, value: 5 },
-    ] };
-    const modifiers = runeCombatModifiers(customized);
-    expect(applyRuneLifeSteal(50, 100, 200, modifiers)).toBe(70);
-    expect(applyRuneFerocityGain(12, modifiers)).toBe(15);
+  it("수치는 등급표와 세공 기록에서 나오고 게이지 옵션은 깡 수치다", () => {
+    const base = { mainStats: [{ key: "atk" as const, value: 0 }, { key: "hp" as const, value: 0 }] as const, engravings: [] as const };
+    const full = { atk: [true, true, true].map((succeeded) => ({ succeeded })) };
+    expect(runeOptionValue({ ...base, rarity: "legendary", enhancementHistory: {} }, "atk")).toBe(12);
+    expect(runeOptionValue({ ...base, rarity: "legendary", enhancementHistory: full, engravings: [{ statKey: "atk" }] } as never, "atk")).toBe(24);
+    expect(runeOptionValue({ ...base, rarity: "uncommon", enhancementHistory: full } as never, "atk")).toBe(9);
+    // 궁극기 충전량·야성 획득량은 퍼센트가 아니라 한 번에 더해지는 양이다.
+    expect(runeOptionValue({ ...base, rarity: "legendary", enhancementHistory: {} }, "energyGain")).toBe(3);
+    expect(runeOptionValue({ ...base, rarity: "legendary", enhancementHistory: {} }, "ferocityGain")).toBe(1.5);
+    expect(formatRuneOptionValue("energyGain", 3)).toBe("+3");
+    expect(formatRuneOptionValue("atk", 12)).toBe("+12%");
   });
 
   it("고정 난수의 성공과 실패에 따라 수치와 다음 확률만 알맞게 바꾼다", () => {

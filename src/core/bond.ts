@@ -52,5 +52,6 @@ export function grantDailyLobbyBondXp(progress: RelicProgress, utcDate: string):
 export function amplifyFerocityGain(amount: number, bondLevel: number): number {
   if (!Number.isFinite(amount) || amount < 0 || !Number.isInteger(bondLevel) || bondLevel < 0) throw new RangeError("야성 증가량과 유대 레벨이 올바르지 않습니다.");
   // 외부 전투 스냅샷에 상한 초과 값이 와도 최대 해금 효과로 안전하게 제한한다.
-  return Math.max(0, Math.round(amount * BOND_FEROCITY_MULTIPLIER[Math.min(BOND_LEVEL_CAP, bondLevel)]));
+  // 정수로 자르지 않는다 — 룬·증강의 야성 몫이 소수(+1.5 등)라 반올림하면 그 몫이 사라지거나 두 배로 튄다.
+  return Math.max(0, Math.round(amount * BOND_FEROCITY_MULTIPLIER[Math.min(BOND_LEVEL_CAP, bondLevel)] * 100) / 100);
 }

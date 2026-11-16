@@ -32,7 +32,7 @@ export const LAB_JA = {
   "lab.policy.tenUpgrade": "10連の最終スロットがSRなら {percent}% の確率でSSRに上昇",
   "lab.policy.mileage": "研究1回ごとにDNAマイレージ +1",
   "lab.policy.duplicate": "重複報酬  該当レリックの欠片 +1 · 欠片を集めて限界突破",
-  "lab.policy.duplicateMax": "突破ランクV到達後の重複はDNAマイレージに変換 (SSR +30 · SR +8 · R +2)",
+  "lab.policy.duplicateMax": "共鳴Vまでに必要な欠片をすべて集めた後の重複はDNAマイレージに変換 (SSR +30 · SR +8 · R +2)",
 
   "lab.skipAll": "すべてスキップ",
   "lab.scanning": "化石DNAを研究中",

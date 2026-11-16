@@ -74,6 +74,8 @@ export const ACHIEVEMENT_PT_BR = {
   "achievement.series.allied-party": "Três esquadrões unidos",
   "achievement.series.ssr-party": "Três companheiros brilhantes",
   "achievement.objective.goldPeak": "Ter {value} de ouro",
+  "achievement.series.gift-giver": "Mãos generosas",
+  "achievement.objective.giftsDelivered": "Entregue {value} presentes",
   "achievement.objective.relicsOwned": "Ter {value} tipos de relíquia",
   "achievement.objective.maxRelicLevel": "Elevar uma relíquia ao nível {value}",
   "achievement.objective.relicsMaxBreakthrough": "Concluir a ruptura de {value} relíquias",

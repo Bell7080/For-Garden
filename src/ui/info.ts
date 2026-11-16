@@ -12,7 +12,7 @@ import { PuppetPoker } from "./puppetAct";
 import { INFO_PORTRAIT_SQUISH } from "./pokeMotion";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { Combatant } from "../core/combatTypes";
-import { runePartLabel, runeRarityLabel, type RunePart } from "../core/runes";
+import { formatRuneOptionValue, runeOptionValue, runePartLabel, runeRarityLabel, type RunePart } from "../core/runes";
 import { previewSkillDamage } from "../core/damage";
 import type { BasicAttack, Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
 import { setDebugFeedButton, setDebugInfoAssetReady, setDebugInfoGemSlots, setDebugInfoOpen, addDebugFeedTaps } from "../debug";
@@ -421,6 +421,7 @@ const EXTRA_STATS: readonly { key: keyof Stats; labelKey: TextKey; suffix?: stri
   { key: "critChance", labelKey: "stat.critChance", suffix: "%" },
   { key: "critDamage", labelKey: "stat.critDamage", suffix: "%" },
   { key: "energyGain", labelKey: "stat.energyGain" },
+  { key: "ferocityGain", labelKey: "stat.ferocityGain" },
 ];
 
 /**
@@ -2209,7 +2210,7 @@ export class InfoManager {
             .setOrigin(0, 0),
         );
         if (gem) {
-          const effect = [...gem.mainStats, ...gem.subStats].map(({ key, value }) => runeStatLabel(key) + " +" + value + "%").join("   ");
+          const effect = [...gem.mainStats, ...gem.subStats].map(({ key }) => runeStatLabel(key) + " " + formatRuneOptionValue(key, runeOptionValue(gem, key))).join("   ");
           body.add(this.scene.add.text(306, y + 8, effect, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(1, 0));
         }
       });
@@ -3589,7 +3590,8 @@ export function openExtraStatsPopup(
   // 판은 글자가 들어가는 만큼만 넓다. 남는 여백은 읽는 데 도움이 되지 않고 뒤 화면만 가린다.
   const width = 700;
   const edge = width / 2 - 34;
-  const height = 1150;
+  // 보조 능력치 한 줄(76)이 늘 때마다 함께 키운다 — 마지막 줄이 판 밑변에 붙지 않게.
+  const height = 1150 + 76 * (EXTRA_STATS.length - 5);
   // 이 창만 **누른 자리에 붙지 않고 화면 가운데에 선다.** 열두 줄이 쌓인 성적표라 돋보기에
   // 매달면 판이 통째로 아래로 밀려 마지막 줄이 화면 밑변에 붙는다(v0.58.0까지 그랬다) —
   // 손이 닿기도 읽기도 어려운 자리다. 관찰 기록판과 같은 이유로 자리를 고정한다.

@@ -985,6 +985,8 @@
   "achievement.series.normal-frontline": ["普通难度战线","แนวหน้าระดับปกติ","Tiền tuyến Thường","Garis Depan Normal","Frente normal","Frente Normal","Normale Front","Обычный фронт"],
   "achievement.series.hard-frontline": ["困难难度战线","แนวหน้าระดับยาก","Tiền tuyến Khó","Garis Depan Sulit","Frente difícil","Frente Difícil","Schwere Front","Сложный фронт"],
   "achievement.series.rune-refinement": ["打磨的极致","เจียระไนจนสมบูรณ์","Bậc thầy mài rune","Ahli Asah","Maestría del tallado","Mestre da lapidação","Meister der Veredelung","Мастер огранки"],
+  "achievement.series.gift-giver": ["传递心意之手", "มือที่ส่งต่อน้ำใจ", "Bàn tay trao gửi", "Tangan Pemberi", "Manos que regalan", "Mãos generosas", "Schenkende Hände", "Щедрые руки"],
+  "achievement.objective.giftsDelivered": ["送达{value}次礼物", "ส่งของขวัญถึงมือ {value} ครั้ง", "Trao {value} món quà", "Kirim {value} hadiah", "Entrega {value} regalos", "Entregue {value} presentes", "Überbringe {value} Geschenke", "Вручите {value} подарков"],
   "achievement.series.trait-research": ["特性研究者","นักวิจัยคุณลักษณะ","Nhà nghiên cứu đặc tính","Riset Trait","Investigador de rasgos","Pesquisador de traços","Merkmalsforscher","Исследователь свойств"],
   "achievement.series.legendary-traits": ["传说的潜力","ศักยภาพระดับตำนาน","Tiềm năng huyền thoại","Potensi Legendaris","Potencial legendario","Potencial lendário","Legendäres Potenzial","Легендарный потенциал"],
   "achievement.series.perfect-roster": ["完整的研究团队","ทีมวิจัยที่สมบูรณ์","Đội nghiên cứu hoàn thiện","Tim Riset Sempurna","Equipo de investigación completo","Equipe de pesquisa completa","Vollendetes Forschungsteam","Совершенная исследовательская команда"],

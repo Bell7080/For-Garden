@@ -8,6 +8,7 @@ import { battleArena } from "./battleArena";
 import { createRaidSkirmishConfig, expeditionBattleEffects } from "./expeditionBattle";
 import type { ExpeditionAugmentSelection } from "./expeditionRewards";
 import { createSkirmish } from "./skirmish";
+import { deathClockClosesBySeconds } from "./battleClock";
 import type { RelicDef } from "./types";
 import type { CcAuditLimits, CcAuditScenario } from "./ccDensityAudit";
 import { ancientReferenceParty, type AncientEquipment } from "./ancientStrataSimulation";
@@ -23,7 +24,7 @@ export const CC_AUGMENT_FAMILIES = ["stagger", "stun", "frozen", "fear", "frenzy
 function neutral(id: string, attackSpeed: number): RelicDef {
   const base = getRelic("dodo");
   return { ...base, id, stats: { ...base.stats, hp: 1_000_000, atk: 1, ap: 1, def: 300, res: 300, attackSpeed,
-    critChance: 0, lifeSteal: 0, energyGain: 26, ferocityGain: 0 },
+    critChance: 0, lifeSteal: 0, energyGain: 26, ferocityGain: 12 },
     passive: { id: "cc-audit-neutral", name: "CC audit", kind: "summonDerived", value: 0, iconAssetId: "skill-icon-buff", effectType: "buff", desc: "" },
     basic: { id: "cc-audit-basic", name: "CC audit", iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single", power: 1 },
     ultimate: { id: "cc-audit-ultimate", name: "CC audit", iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single", power: 1, cost: 100 },
@@ -72,7 +73,7 @@ export function createCcCombatScenario(options: {
     if (options.equipment && !["bare", "epic", "ceiling"].includes(options.equipment)) throw new Error("Invalid ancient equipment");
     const party = ancientReferenceParty(options.party ?? ["rex", "torika", "mette"], options.equipment ?? "bare", options.level ?? 60);
     const id = `ancient:${floor}:${options.equipment ?? "bare"}:lv${options.level ?? 60}`;
-    return { id, seed: options.seed ?? id, durationSeconds: Math.min(options.durationSeconds ?? definition.timeLimitSeconds, definition.timeLimitSeconds),
+    return { id, seed: options.seed ?? id, durationSeconds: Math.min(options.durationSeconds ?? (definition.timeLimitSeconds ?? deathClockClosesBySeconds()), definition.timeLimitSeconds ?? deathClockClosesBySeconds()),
       limits: CC_AUDIT_LIMITS.stage, metadata: { mode: "ancient", floor, equipment: options.equipment ?? "bare", level: options.level ?? 60, party: party.players.map(p => p.id) },
       step: stepAncientStrataBattle, stepSeconds: .02, createState: () => createAncientStrataSkirmish(floor, party.players, party) };
   }

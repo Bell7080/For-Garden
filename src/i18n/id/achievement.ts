@@ -74,6 +74,8 @@ export const ACHIEVEMENT_ID = {
   "achievement.series.allied-party": "Tiga Skuad Bersatu",
   "achievement.series.ssr-party": "Tiga Sosok Bersinar",
   "achievement.objective.goldPeak": "Miliki {value} Emas",
+  "achievement.series.gift-giver": "Tangan Pemberi",
+  "achievement.objective.giftsDelivered": "Kirim {value} hadiah",
   "achievement.objective.relicsOwned": "Miliki {value} jenis Relik",
   "achievement.objective.maxRelicLevel": "Naikkan satu Relik ke level {value}",
   "achievement.objective.relicsMaxBreakthrough": "Selesaikan Terobosan {value} Relik",

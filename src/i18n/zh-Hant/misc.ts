@@ -272,7 +272,7 @@ export const MISC_ZH_HANT = {
   "growth.party": "更換編隊",
   "stageComplete.exit": "退出",
   "battle.profile.down": "倒下",
-  "battle.profile.ferocity": "野性 {value} / 100",
+  "battle.profile.ferocity": "野性 {value} / {max}",
   "reward.title": "獲得獎勵",
   "reward.tapHint": "點選畫面確認",
   "enemyPreview.title": "敵方編隊",

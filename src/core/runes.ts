@@ -46,7 +46,7 @@ export function runeDisplayName(rune: { customName: string | null; part: RunePar
   return rune.customName ?? t("rune.baseName", { part: runePartLabel(rune.part) });
 }
 
-/** 룬이 올릴 수 있는 전투 수치 키다. 수치는 덧셈형 퍼센트포인트 또는 곱셈형 증가율(%)이다. */
+/** 룬이 올릴 수 있는 전투 수치 키다. 붙는 방식은 `RUNE_STAT_UNIT`이 정한다. */
 export type RuneStatKey =
   | "hp" | "atk" | "ap" | "def" | "res"
   | "moveSpeed" | "attackSpeed" | "lifeSteal" | "critChance" | "critDamage"
@@ -58,11 +58,11 @@ export type RuneMainStatKey = "hp" | "atk" | "ap" | "def" | "res";
 /** 룬의 보조 능력치 키다. 한 인스턴스 안에서는 주·보조를 통틀어 같은 키를 두 번 쓰지 않는다. */
 export type RuneSubStatKey = Exclude<RuneStatKey, RuneMainStatKey>;
 
-/** 룬 옵션 한 줄이다. `value`는 해당 능력치에 더할 백분율 수치이며 유한한 0 이상 값이어야 한다. */
+/** 룬 옵션 한 줄이다. `value`는 저장용 사본이고, 실제 값은 `runeOptionValue`가 이력에서 다시 구한다. */
 export interface RuneStatOption<K extends RuneStatKey = RuneStatKey> {
   /** 적용할 능력치의 안정적인 키다. */
   key: K;
-  /** 적용량이다. 확률 계열은 덧셈형 퍼센트포인트, 나머지는 기존 수치에 대한 곱셈형 증가율(%)이다. */
+  /** 적용량의 저장 사본이다. 단위는 `RUNE_STAT_UNIT`을 따른다. */
   value: number;
 }
 
@@ -141,14 +141,6 @@ export interface RuneInstance {
   trait?: RuneTrait;
 }
 
-/** 룬 옵션을 실제 전투 계산에 넘기는 계약이다. 모든 값의 단위는 백분율이다. */
-export interface RuneCombatModifiers {
-  /** 피해 후 공격자 체력을 회복할 피해량 비율(%). 현재 `Stats`에 없으므로 피해 확정 단계가 소비한다. */
-  lifeStealPercent: number;
-  /** 사건별 기본 야성 획득량에 곱해 더할 비율(%). 현재 `Stats`에 없으므로 야성 증가 단계가 소비한다. */
-  ferocityGainPercent: number;
-}
-
 /** 희귀도별 보조 옵션의 정확한 개수다. 생성과 검증이 함께 참조하는 단일 규칙이다. */
 export const RUNE_SUB_STAT_COUNTS: Readonly<Record<RuneRarity, number>> = {
   uncommon: 0,
@@ -170,6 +162,33 @@ export const RUNE_GENERATION_RULES: Readonly<Record<RuneRarity, {
   rare: { mainBase: 8, subBase: 4, mainEnhancement: 2, subEnhancement: 1 },
   epic: { mainBase: 10, subBase: 5, mainEnhancement: 2, subEnhancement: 1 },
   legendary: { mainBase: 12, subBase: 6, mainEnhancement: 3, subEnhancement: 2 },
+};
+
+/**
+ * 옵션이 능력치에 붙는 방식 — 룬은 **합연산**이다(응태 결정 2026-11-16).
+ *
+ * - `percent`: 장착한 룬의 같은 능력치 %를 **모두 더한 뒤** 성장된 값에 한 번만 곱한다. 룬끼리 곱하지 않는다.
+ * - `points`: 백분율로 세는 능력치(치명타·흡혈)에 그대로 더한다.
+ * - `flat`: 깡스탯. 궁극기 충전량·야성 획득량(평타 한 번에 오르는 양)에 그대로 더한다. 게이지 최대치가 개체마다
+ *   달라 같은 깡스탯이 개체마다 다른 발동 시간을 만든다 — 그 차이가 게이지를 다르게 둔 이유다.
+ */
+export type RuneStatUnit = "percent" | "points" | "flat";
+
+export const RUNE_STAT_UNIT: Readonly<Record<RuneStatKey, RuneStatUnit>> = {
+  hp: "percent", atk: "percent", ap: "percent", def: "percent", res: "percent",
+  moveSpeed: "percent", attackSpeed: "percent",
+  lifeSteal: "points", critChance: "points", critDamage: "points",
+  energyGain: "flat", ferocityGain: "flat",
+};
+
+/**
+ * 등급표의 보조 값에 곱하는 크기. 깡스탯 둘만 1이 아니다 — 충전량은 평타당 26, 야성은 평타당 12가 기준이라
+ * 등급표의 보조 값(3~12)을 그대로 더하면 한 줄이 게이지를 절반 가까이 당긴다. 충전량 ×0.5(전설 풀세공 +6 ≈ 23%),
+ * 야성 ×0.25(전설 풀세공 +3 = 25%)로 다른 보조 옵션과 비슷한 무게에 맞춘다.
+ */
+export const RUNE_STAT_SCALE: Readonly<Record<RuneStatKey, number>> = {
+  hp: 1, atk: 1, ap: 1, def: 1, res: 1, moveSpeed: 1, attackSpeed: 1, lifeSteal: 1, critChance: 1, critDamage: 1,
+  energyGain: 0.5, ferocityGain: 0.25,
 };
 
 /** 일반 강화의 모든 확률 및 횟수 밸런스를 소유하는 단일 표다. */
@@ -259,7 +278,7 @@ export function generateRune(input: GenerateRuneInput): RuneInstance {
   // 풀의 역할에 따라 고정 기본값을 배정해 초기 수치 재추첨이라는 두 번째 랜덤 축을 만들지 않는다.
   const statValues = Object.fromEntries([
     ...MAIN_KEYS.map((key) => [key, rule.mainBase] as const),
-    ...SUB_KEYS.map((key) => [key, rule.subBase] as const),
+    ...SUB_KEYS.map((key) => [key, rule.subBase * RUNE_STAT_SCALE[key]] as const),
   ]) as Record<RuneStatKey, number>;
   return createRuneInstance({ ...input, statValues });
 }
@@ -267,7 +286,30 @@ export function generateRune(input: GenerateRuneInput): RuneInstance {
 /** 등급과 옵션 역할에 맞는 강화 성공 1회 고정 증가량을 반환한다. */
 export function runeEnhancementIncrease(rarity: RuneRarity, statKey: RuneStatKey): number {
   const rule = RUNE_GENERATION_RULES[rarity];
-  return MAIN_KEYS.includes(statKey as RuneMainStatKey) ? rule.mainEnhancement : rule.subEnhancement;
+  return MAIN_KEYS.includes(statKey as RuneMainStatKey) ? rule.mainEnhancement : rule.subEnhancement * RUNE_STAT_SCALE[statKey];
+}
+
+/**
+ * 옵션 한 줄이 **지금 실제로 주는 값** — 화면과 전투가 함께 읽는 단 하나의 값이다.
+ *
+ * 등급표(`RUNE_GENERATION_RULES`)의 기본값에 세공 성공·각인마다 등급표의 증가량을 더한다. 저장된 `option.value`는
+ * 예전 버전에서 중복 합산된 값일 수 있어 읽지 않고, 성공 이력에서 다시 구한다. 한때 전투만 등급과 무관한 표로
+ * 다시 계산해 전설 룬이 「+21%」라 적힌 채 +14%로 싸웠다 — 화면과 전투가 이 함수를 함께 읽어야 그런 일이 없다.
+ */
+export function runeOptionValue(rune: Pick<RuneInstance, "rarity" | "mainStats" | "enhancementHistory" | "engravings">, key: RuneStatKey): number {
+  const main = rune.mainStats.some((option) => option.key === key);
+  const rule = RUNE_GENERATION_RULES[rune.rarity];
+  const successes = (rune.enhancementHistory[key] ?? []).filter(({ succeeded }) => succeeded).length;
+  const engraved = rune.engravings.some(({ statKey }) => statKey === key) ? 1 : 0;
+  const value = main
+    ? rule.mainBase + rule.mainEnhancement * (successes + engraved)
+    : (rule.subBase + rule.subEnhancement * (successes + engraved)) * RUNE_STAT_SCALE[key];
+  return Math.round(value * 100) / 100;
+}
+
+/** 옵션 값의 표기. 깡스탯(충전량·야성 획득)은 `%`를 붙이지 않는다. */
+export function formatRuneOptionValue(key: RuneStatKey, value: number): string {
+  return "+" + String(Math.round(value * 100) / 100) + (RUNE_STAT_UNIT[key] === "flat" ? "" : "%");
 }
 
 /** 인스턴스의 저장 불변 조건을 검사하며, 유효하면 true를 반환하고 아니면 false를 반환한다. */
@@ -393,30 +435,4 @@ export function engraveRune(rune: RuneInstance, result: RuneEngravingResult): Ru
   };
   assertValidRuneInstance(next);
   return next;
-}
-
-/** 룬 옵션 합계에서 `Stats` 밖의 흡혈·야성 증가량을 추출해 전투 계층에 전달한다. */
-export function runeCombatModifiers(rune: RuneInstance): RuneCombatModifiers {
-  assertValidRuneInstance(rune);
-  const totals = [...rune.mainStats, ...rune.subStats].reduce<Partial<Record<RuneStatKey, number>>>((sum, option) => {
-    sum[option.key] = (sum[option.key] ?? 0) + option.value;
-    return sum;
-  }, {});
-  return { lifeStealPercent: totals.lifeSteal ?? 0, ferocityGainPercent: totals.ferocityGain ?? 0 };
-}
-
-/** 확정 피해와 흡혈 비율로 회복 후 체력을 계산한다. 체력·피해 단위는 전투 HP이며 최대 체력을 넘지 않는다. */
-export function applyRuneLifeSteal(currentHp: number, maxHp: number, dealtDamage: number, modifiers: RuneCombatModifiers): number {
-  if (![currentHp, maxHp, dealtDamage, modifiers.lifeStealPercent].every(Number.isFinite) || maxHp < 0 || dealtDamage < 0 || modifiers.lifeStealPercent < 0) {
-    throw new RangeError("흡혈 계산 입력은 0 이상의 유한한 값이어야 합니다.");
-  }
-  return Math.min(maxHp, Math.max(0, currentHp) + dealtDamage * modifiers.lifeStealPercent / 100);
-}
-
-/** 사건별 기본 야성 획득량에 룬 보정을 적용한다. 반환 단위는 야성 게이지 포인트다. */
-export function applyRuneFerocityGain(baseGain: number, modifiers: RuneCombatModifiers): number {
-  if (!Number.isFinite(baseGain) || baseGain < 0 || !Number.isFinite(modifiers.ferocityGainPercent) || modifiers.ferocityGainPercent < 0) {
-    throw new RangeError("야성 획득 계산 입력은 0 이상의 유한한 값이어야 합니다.");
-  }
-  return baseGain * (1 + modifiers.ferocityGainPercent / 100);
 }

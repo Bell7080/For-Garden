@@ -1,9 +1,9 @@
 import { COMBAT_STEP_MS } from "./combatProtocol";
+import { deathClockClosesBySeconds } from "./battleClock";
 import { BOND_LEVEL_CAP } from "./bond";
 import { getRelic } from "../data/relics";
-import { RUNE_STAT_RULES } from "../data/runes";
 import { applyHeartGems, applyLevelGrowth, referenceBreakthroughAt, RELIC_MAX_LEVEL } from "./relicProgression";
-import { createRuneInstance, enhanceRune, engraveRune, type RuneInstance, type RuneMainStatKey, type RuneStatKey, type RuneSubStatKey } from "./runes";
+import { generateRune, enhanceRune, engraveRune, runeEnhancementIncrease, runeOptionValue, type RuneInstance, type RuneMainStatKey, type RuneSubStatKey } from "./runes";
 import { partyRuneTraitEffects } from "./runeTraitEffects";
 import { stepAncientStrataBattle, createAncientStrataSkirmish, getAncientStrataFloor } from "./ancientStrataBattle";
 import { createDifficultyRng, type DifficultyControl } from "./stageDifficulty";
@@ -38,14 +38,14 @@ export function ancientReferenceRunes(relicId: string, equipment: AncientEquipme
     : [[offense, "hp"], [offense, "def"], [offense, "res"]];
   const subs: RuneSubStatKey[] = def.role === "support" ? ["energyGain", "attackSpeed", "moveSpeed"] : ["attackSpeed", "critChance", "lifeSteal"];
   return mains.map((mainKeys, part) => {
-    let rune = createRuneInstance({ instanceId: `ancient-${relicId}-${equipment}-${part}`, baseName: "Ancient reference", part: part as 0 | 1 | 2,
-      rarity: equipment === "epic" ? "epic" : "legendary", mainKeys, random: () => 0,
-      statValues: Object.fromEntries(Object.entries(RUNE_STAT_RULES).map(([key, rule]) => [key, rule.base])) as Record<RuneStatKey, number> });
-    rune = { ...rune, subStats: subs.slice(0, equipment === "epic" ? 2 : 3).map(key => ({ key, value: RUNE_STAT_RULES[key].base })) };
+    const rarity = equipment === "epic" ? "epic" : "legendary";
+    let rune = generateRune({ instanceId: `ancient-${relicId}-${equipment}-${part}`, baseName: "Ancient reference", part: part as 0 | 1 | 2, rarity, mainKeys, random: () => 0 });
+    // 보조 옵션은 역할이 정한 키로 갈아 끼운다. 실제 값은 `runeOptionValue`가 등급표에서 다시 구하므로 저장 사본만 맞춘다.
+    rune = { ...rune, subStats: subs.slice(0, equipment === "epic" ? 2 : 3).map(key => ({ key, value: runeOptionValue(rune, key) })) };
     for (const { key } of [...rune.mainStats, ...rune.subStats]) for (let attempt = 0; attempt < 3; attempt++) {
-      rune = enhanceRune(rune, key, RUNE_STAT_RULES[key].enhancement, equipment === "epic" && attempt === 2 ? 0.99 : 0);
+      rune = enhanceRune(rune, key, runeEnhancementIncrease(rarity, key), equipment === "epic" && attempt === 2 ? 0.99 : 0);
     }
-    if (equipment === "ceiling") rune = engraveRune(rune, { statKey: mainKeys[0], valueAdded: RUNE_STAT_RULES[mainKeys[0]].enhancement, grade: "perfect" });
+    if (equipment === "ceiling") rune = engraveRune(rune, { statKey: mainKeys[0], valueAdded: runeEnhancementIncrease(rarity, mainKeys[0]), grade: "perfect" });
     const traitIds = def.role === "tank" ? ["guardian", "lastStand", "firstAid"] : def.role === "support" ? ["awakening", "warCry", "afterglow"] : ["rhythm", "deepWound", "hemorrhage"];
     return { ...rune, trait: { id: traitIds[part], grade: equipment === "epic" ? "epic" : "legendary", upgradeMisses: 0 } };
   });
@@ -79,7 +79,8 @@ export interface AncientSimulationRun {
 export function simulateAncientStrataRun(floor: number, party: ReturnType<typeof ancientReferenceParty>, seed: number, control: DifficultyControl = "auto", step = COMBAT_STEP_MS / 1000): AncientSimulationRun {
   if (!Number.isFinite(step) || step < 1 / 120 || step > 1 / 20) throw new RangeError("시뮬레이션 틱은 1/120~1/20초입니다.");
   const state = createAncientStrataSkirmish(floor, party.players, { ...party, automaticUltimates: false });
-  const timeLimit = getAncientStrataFloor(floor).timeLimitSeconds;
+  // 「초읽기」만 제한 시간을 갖는다 — 나머지 층은 데스 카운트가 닫는 시각까지 돌린다.
+  const timeLimit = getAncientStrataFloor(floor).timeLimitSeconds ?? deathClockClosesBySeconds();
   const rng = createDifficultyRng(seed);
   let firstPlayerDeathSeconds: number | null = null, ultimateHitEvents = 0;
   function observe(events: SkirmishEvent[]) {

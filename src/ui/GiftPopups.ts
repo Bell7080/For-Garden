@@ -1,15 +1,22 @@
 import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
+import { socialApi } from "../api/FakeSocialServer";
+import { guildApi } from "../api/guildApi";
 import type { GiftOptionDto, IncomingGiftDto } from "../api/contracts";
 import { GameApiError } from "../api/contracts";
 import { runGiftPurchase } from "../api/platformPurchase";
 import { GIFTING_ENABLED } from "../core/gifting";
 import { formatCurrency } from "../core/formatCurrency";
+import { RELICS } from "../data/relics";
 import { PRODUCTS } from "../data/shopCatalog";
 import { t } from "../i18n";
 import { logError } from "../managers/ErrorReporter";
 import { platformPayment } from "../platform/payment";
 import { Button } from "./Button";
+import { addCategoryTab } from "./CategoryTab";
+import { FaceFrame } from "./FaceFrame";
+import { giftRecipientPage, giftRecipientRows, GIFT_RECIPIENT_PAGE_SIZE, type GiftRecipientRow, type GiftRecipientSources, type GiftRecipientTab } from "./giftRecipientModel";
+import { addPageChevrons } from "./PageChevrons";
 import { showContentToast } from "./ContentToast";
 import { drawHairline } from "./holo";
 import { addFramedIcon } from "./itemFrame";
@@ -80,6 +87,86 @@ export async function openGiftPicker(scene: Phaser.Scene, popups: PopupLayer, re
       if (index < Math.min(options.length, GIFT_LIST.maxRows) - 1) body.add(drawHairline(scene, 0, y + GIFT_LIST.rowHeight - 14, GIFT_LIST.width - 100, { alpha: 0.14 }));
     });
   });
+}
+
+/** 받을 사람 고르기 창의 자리 — 줄 여섯이 한 쪽이고 아래에 친구·길드 탭과 쪽 넘김이 선다. */
+const RECIPIENT = { width: 900, top: 150, rowHeight: 124, face: 92, bottom: 190, tabWidth: 220, tabHeight: 72 } as const;
+const recipientHeight = RECIPIENT.top + GIFT_RECIPIENT_PAGE_SIZE * RECIPIENT.rowHeight + RECIPIENT.bottom;
+let lastRecipientTab: GiftRecipientTab = "friends";
+
+/**
+ * 프리미엄 「선물」 탭의 상품을 누르면 열린다 — 결제 전에 받을 사람을 친구·길드원 중에서 고른다.
+ * 줄을 누르면 서버가 그 사람에게 그 상품을 보낼 수 있는지 답하고, 되면 결제 전 확인 창으로, 안 되면 그 이유가 토스트로 선다.
+ */
+export async function openGiftRecipientPicker(scene: Phaser.Scene, popups: PopupLayer, productId: string): Promise<void> {
+  if (!GIFTING_ENABLED) return;
+  const [friends, guild] = await Promise.allSettled([socialApi.getFriends(), guildApi.getMembers()]);
+  if (!scene.sys.isActive()) return;
+  const sources: GiftRecipientSources = {
+    friends: friends.status === "fulfilled" ? friends.value.friends : [],
+    // 길드가 없으면 조회가 실패한다 — 그때는 빈 목록이다.
+    guild: guild.status === "fulfilled" ? guild.value.members : [],
+  };
+  let busy = false;
+  const choose = (row: GiftRecipientRow, close: () => void): void => {
+    if (busy) return;
+    busy = true;
+    void gameApi.getGiftOptions({ recipientId: row.id }).then((response) => {
+      busy = false;
+      if (!scene.sys.isActive()) return;
+      const option = response.options.find(candidate => candidate.productId === productId);
+      if (!option) { showContentToast(scene, t("gift.error.notEligible"), "refused"); return; }
+      if (!option.eligible) { showContentToast(scene, t(`gift.refusal.${option.reason ?? "recipient_unavailable"}`), "refused"); return; }
+      confirmGift(scene, popups, { id: row.id, name: row.name }, option, close);
+    }, (error: unknown) => {
+      busy = false;
+      if (!(error instanceof GameApiError)) logError("gift.recipient", "[gift] options failed", error);
+      if (scene.sys.isActive()) showContentToast(scene, errorText(error), "refused");
+    });
+  };
+  const render = (tab: GiftRecipientTab, requestedPage: number): void => {
+    lastRecipientTab = tab;
+    const view = giftRecipientPage(giftRecipientRows(sources, tab), requestedPage);
+    const height = recipientHeight;
+    // 쪽·탭을 바꿀 때는 같은 제목의 판을 닫고 다시 연다 — 판이 갈아 끼우기로 보고 연출 없이 선다.
+    popups.open({ width: RECIPIENT.width, height, title: t("gift.recipient.title"), dim: true, backButton: true, closeOnBackdrop: true }, (body, close) => {
+      const top = -height / 2 + RECIPIENT.top;
+      const left = -RECIPIENT.width / 2 + 56;
+      const right = RECIPIENT.width / 2 - 56;
+      const subtitle = scene.add.text(0, top - 50, t("gift.recipient.for", { product: productName(productId) }), textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim, align: "center" })).setOrigin(0.5);
+      body.add(shrinkTextToWidth(subtitle, RECIPIENT.width - 112));
+      if (view.rows.length === 0) {
+        body.add(scene.add.text(0, top + RECIPIENT.rowHeight * 2, t(tab === "friends" ? "gift.recipient.emptyFriends" : "gift.recipient.emptyGuild"), textStyle({ role: "body", size: 28, color: COLOR.inkDim, align: "center", wrap: RECIPIENT.width - 160 })).setOrigin(0.5));
+      }
+      view.rows.forEach((row, index) => {
+        const y = top + index * RECIPIENT.rowHeight + RECIPIENT.rowHeight / 2;
+        const relic = RELICS.find(candidate => candidate.id === row.relicId) ?? RELICS.find(candidate => candidate.id === "torika")!;
+        body.add(new FaceFrame(scene, left + RECIPIENT.face / 2, y, { portraitAssetId: relic.portraitAssetId, size: RECIPIENT.face, color: tab === "guild" ? COLOR.exchange : COLOR.accent }));
+        const name = scene.add.text(left + RECIPIENT.face + 28, y - 18, row.name, textStyle({ role: "emphasis", size: 30, color: COLOR.ink })).setOrigin(0, 0.5);
+        body.add(shrinkTextToWidth(name, 400));
+        body.add(scene.add.text(left + RECIPIENT.face + 28, y + 22, `LV.${row.level}`, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0, 0.5));
+        body.add(new Button(scene, right - 100, y, { width: 200, height: 76, label: t("gift.recipient.choose"), variant: "primary", onClick: () => choose(row, close) }));
+        if (index < view.rows.length - 1) body.add(drawHairline(scene, 0, y + RECIPIENT.rowHeight / 2, RECIPIENT.width - 100, { alpha: 0.14 }));
+      });
+      const bottomY = height / 2 - 76;
+      (["friends", "guild"] as const).forEach((id, index) => {
+        addCategoryTab(scene, body, {
+          x: left + RECIPIENT.tabWidth / 2 + index * (RECIPIENT.tabWidth + 16), y: bottomY,
+          width: RECIPIENT.tabWidth, height: RECIPIENT.tabHeight, selected: id === tab,
+          accent: id === "guild" ? COLOR.exchange : undefined,
+          label: t(id === "friends" ? "gift.recipient.tabFriends" : "gift.recipient.tabGuild"),
+          onSelect: () => { if (id !== tab) { close(); render(id, 0); } },
+        });
+      });
+      if (view.pages > 1) {
+        body.add(scene.add.text(right - 110, bottomY, `${view.page + 1} / ${view.pages}`, textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0.5));
+        const chevrons = addPageChevrons(scene, { leftX: right - 200, rightX: right - 20, y: bottomY }, (step) => { close(); render(tab, view.page + step); });
+        chevrons.setEdges(view.page > 0, view.page < view.pages - 1);
+        body.add(chevrons.container);
+      }
+    });
+  };
+  render(lastRecipientTab, 0);
 }
 
 /** 결제 전에 정책 세 줄을 말한다 — 받기 전 취소 · 30일 뒤 반환 · 받은 뒤 환불의 제한. */

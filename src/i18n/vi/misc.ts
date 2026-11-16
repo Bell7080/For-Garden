@@ -272,7 +272,7 @@ export const MISC_VI = {
   "growth.party": "Đổi đội hình",
   "stageComplete.exit": "Thoát",
   "battle.profile.down": "Gục ngã",
-  "battle.profile.ferocity": "Dã tính {value} / 100",
+  "battle.profile.ferocity": "Dã tính {value} / {max}",
   "reward.title": "Phần thưởng nhận được",
   "reward.tapHint": "Chạm màn hình để xác nhận",
   "enemyPreview.title": "Đội hình địch",

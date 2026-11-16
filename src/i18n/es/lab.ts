@@ -32,7 +32,7 @@ export const LAB_ES = {
   "lab.policy.tenUpgrade": "Si la última posición de x10 es SR, hay un {percent}% de probabilidad de subir a SSR",
   "lab.policy.mileage": "+1 Milla de ADN por investigación",
   "lab.policy.duplicate": "Recompensa por duplicado  +1 Fragmento de esa Reliquia · Reúne Fragmentos para la Ruptura",
-  "lab.policy.duplicateMax": "Tras la Ruptura de grado V, los duplicados se convierten en Millas de ADN (SSR +30 · SR +8 · R +2)",
+  "lab.policy.duplicateMax": "Tras reunir todos los Fragmentos hasta Resonancia V, los duplicados se convierten en Millas de ADN (SSR +30 · SR +8 · R +2)",
   "lab.skipAll": "Omitir todo",
   "lab.scanning": "Investigando ADN fósil",
   "lab.resonance.SSR": "Estalla una resonancia ámbar",

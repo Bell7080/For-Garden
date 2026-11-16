@@ -39,6 +39,7 @@ import { guildMemberProfileDisplay, playerProfileDisplay } from "../state/player
 import { session } from "../state/session";
 import { AffinityBadge } from "../ui/AffinityBadge";
 import { ELEMENT_ICON } from "../ui/affinityIcons";
+import { notificationManager } from "../managers/NotificationManager";
 import { addAttendanceStamp, playAttendanceStamp } from "../ui/attendanceStamp";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { withBusy } from "../ui/BusyOverlay";
@@ -869,6 +870,8 @@ export class GuildScene extends Phaser.Scene {
         if (!this.scene.isActive()) return;
         gameApi.stampGuildAttendance({}).then((result) => {
           stamped = result;
+          // 로비 길드 칩의 출석 점을 곧바로 끈다.
+          void notificationManager.refresh().catch(() => undefined);
           if (!this.scene.isActive()) return;
           // 판 밖을 눌러 먼저 닫았으면 연출 없이 영수증만 세운다.
           if (!body.active) { showReceipt(); return; }

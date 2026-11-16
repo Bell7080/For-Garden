@@ -74,6 +74,8 @@ export const ACHIEVEMENT_RU = {
   "achievement.series.allied-party": "Союз трёх отрядов",
   "achievement.series.ssr-party": "Три сияющих спутника",
   "achievement.objective.goldPeak": "Иметь золото: {value}",
+  "achievement.series.gift-giver": "Щедрые руки",
+  "achievement.objective.giftsDelivered": "Вручите {value} подарков",
   "achievement.objective.relicsOwned": "Иметь {value} видов реликтов",
   "achievement.objective.maxRelicLevel": "Развить реликт до уровня {value}",
   "achievement.objective.relicsMaxBreakthrough": "Завершить прорыв {value} реликтов",

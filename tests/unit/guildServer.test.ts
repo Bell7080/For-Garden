@@ -89,6 +89,23 @@ describe("FakeServer 길드 조작", () => {
     expect(await code(() => server.changeGuildBadge({ badge: { shape: "banner", shapeColor: "crimson", icon: "leaf", iconColor: "ink" } }))).toBe("INSUFFICIENT_GEMS");
   });
 
+  it("출석 점은 길드원이 오늘 도장을 찍기 전에만 켜지고 다음 UTC 날짜에 다시 켜진다", async () => {
+    const clock = { now: Date.UTC(2026, 9, 14, 12) };
+    const guild = new FakeGuildServer(() => clock.now, { seed: false, levelGate: false });
+    const state = createDefaultSession();
+    state.wallet.gems = 5_000;
+    state.playerResearch.level = 20;
+    const server = new FakeServer(state, { latencyMs: 0, guild, now: () => new Date(clock.now), persistSession: () => undefined });
+    // 길드가 없으면 점이 서지 않는다.
+    expect((await server.getNotificationSignals()).guildAttendanceReady).toBe(false);
+    await server.createGuild({ name: "별빛", joinMode: "open", badge: { ...BADGE } });
+    expect((await server.getNotificationSignals()).guildAttendanceReady).toBe(true);
+    await server.stampGuildAttendance({});
+    expect((await server.getNotificationSignals()).guildAttendanceReady).toBe(false);
+    clock.now = Date.UTC(2026, 9, 15, 0, 1);
+    expect((await server.getNotificationSignals()).guildAttendanceReady).toBe(true);
+  });
+
   it("이름 변경은 길드장만 젬 2,000으로 하고 같은 이름·겹치는 이름은 받지 않는다", async () => {
     const guild = new FakeGuildServer(() => Date.UTC(2026, 9, 14, 12), { seed: false, levelGate: false });
     await guild.createGuild(actor("other"), { name: "달빛", joinMode: "open", badge: BADGE }, "o1");

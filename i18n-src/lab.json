@@ -310,14 +310,14 @@
 "Награда за повтор  +1 фрагмент этого реликта · Копите фрагменты для прорыва"
 ],
 "lab.policy.duplicateMax": [
-"突破等级V之后，重复获得转为DNA里程（SSR +30 · SR +8 · R +2）",
-"หลังทะลวงถึงระดับ V ตัวซ้ำจะแปลงเป็นไมล์ DNA (SSR +30 · SR +8 · R +2)",
-"Sau Đột phá bậc V, trùng lặp chuyển thành Dặm DNA (SSR +30 · SR +8 · R +2)",
-"Setelah Terobosan tingkat V, duplikat diubah menjadi Mil DNA (SSR +30 · SR +8 · R +2)",
-"Tras la Ruptura de grado V, los duplicados se convierten en Millas de ADN (SSR +30 · SR +8 · R +2)",
-"Após a Ruptura de grau V, duplicatas viram Milhas de DNA (SSR +30 · SR +8 · R +2)",
-"Nach Durchbruch-Stufe V werden Duplikate zu DNA-Meilen (SSR +30 · SR +8 · R +2)",
-"После Прорыва V дубликаты превращаются в мили ДНК (SSR +30 · SR +8 · R +2)"
+"集齐共鸣V所需的全部碎片后，重复获得转为DNA里程（SSR +30 · SR +8 · R +2）",
+"เมื่อสะสมเศษที่ต้องใช้จนถึงการสั่นพ้อง V ครบแล้ว ตัวซ้ำจะแปลงเป็นไมล์ DNA (SSR +30 · SR +8 · R +2)",
+"Khi đã gom đủ Mảnh cần đến Cộng hưởng V, trùng lặp chuyển thành Dặm DNA (SSR +30 · SR +8 · R +2)",
+"Setelah semua Serpihan hingga Resonansi V terkumpul, duplikat diubah menjadi Mil DNA (SSR +30 · SR +8 · R +2)",
+"Tras reunir todos los Fragmentos hasta Resonancia V, los duplicados se convierten en Millas de ADN (SSR +30 · SR +8 · R +2)",
+"Depois de juntar todos os Fragmentos até Ressonância V, duplicatas viram Milhas de DNA (SSR +30 · SR +8 · R +2)",
+"Sind alle Splitter bis Resonanz V gesammelt, werden Duplikate zu DNA-Meilen (SSR +30 · SR +8 · R +2)",
+"Когда собраны все фрагменты до Резонанса V, дубликаты превращаются в мили ДНК (SSR +30 · SR +8 · R +2)"
 ],
 "lab.skipAll": [
 "全部跳过",

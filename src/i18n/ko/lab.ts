@@ -32,7 +32,7 @@ export const LAB_KO = {
   "lab.policy.tenUpgrade": "10연 마지막 슬롯이 SR이면 {percent}% 확률로 SSR로 상승",
   "lab.policy.mileage": "연구 1회마다 DNA 마일리지 +1",
   "lab.policy.duplicate": "중복 보상  해당 렐릭 파편 +1 · 파편을 모아 한계 돌파",
-  "lab.policy.duplicateMax": "돌파 등급 V 달성 이후 중복은 DNA 마일리지로 전환 (SSR +30 · SR +8 · R +2)",
+  "lab.policy.duplicateMax": "공명 V까지 필요한 파편을 모두 모은 뒤의 중복은 DNA 마일리지로 전환 (SSR +30 · SR +8 · R +2)",
 
   "lab.skipAll": "전체 건너뛰기",
   "lab.scanning": "화석 DNA 연구 중",

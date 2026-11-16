@@ -272,7 +272,7 @@ export const MISC_ES = {
   "growth.party": "Cambiar formación",
   "stageComplete.exit": "Salir",
   "battle.profile.down": "Caído",
-  "battle.profile.ferocity": "Ferocidad {value} / 100",
+  "battle.profile.ferocity": "Ferocidad {value} / {max}",
   "reward.title": "Recompensas obtenidas",
   "reward.tapHint": "Toca la pantalla para confirmar",
   "enemyPreview.title": "Formación enemiga",

@@ -1,7 +1,7 @@
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 // 하단 탭의 윗변. `BottomNav`가 아니라 순수 표에서 읽어 이 자리표가 Phaser를 들여오지 않는다.
 import { LOBBY_NAV_TOP } from "./lobbyLayout";
-import type { PremiumCategory } from "../data/products";
+import type { PremiumTabId } from "../data/shopCatalog";
 
 /**
  * 프리미엄 화면의 자리표.
@@ -110,8 +110,9 @@ export function premiumWideFrameXs(count: number): number[] {
 
 /** 이 갈래의 카드가 서는 방식. 다이아만 두 칸, 나머지 묶음은 한 줄에 하나다. */
 export type PremiumListKind = "wide" | "grid";
-export function premiumListKind(category: PremiumCategory): PremiumListKind {
-  return category === "gem" ? "grid" : "wide";
+export function premiumListKind(category: PremiumTabId): PremiumListKind {
+  // 선물 탭은 젬 팩만 서므로 젬 탭과 같은 두 칸 격자다.
+  return category === "gem" || category === "gift" ? "grid" : "wide";
 }
 
 export interface PremiumRect { left: number; right: number; top: number; bottom: number }

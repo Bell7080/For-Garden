@@ -272,7 +272,7 @@ export const MISC_ZH_HANS = {
   "growth.party": "更换编队",
   "stageComplete.exit": "退出",
   "battle.profile.down": "倒下",
-  "battle.profile.ferocity": "野性 {value} / 100",
+  "battle.profile.ferocity": "野性 {value} / {max}",
   "reward.title": "获得奖励",
   "reward.tapHint": "点击画面确认",
   "enemyPreview.title": "敌方编队",

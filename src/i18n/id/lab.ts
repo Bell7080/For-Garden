@@ -32,7 +32,7 @@ export const LAB_ID = {
   "lab.policy.tenUpgrade": "Jika slot terakhir x10 berupa SR, ada peluang {percent}% naik menjadi SSR",
   "lab.policy.mileage": "Setiap riset +1 Mil DNA",
   "lab.policy.duplicate": "Hadiah duplikat  +1 Serpihan Relik itu · Kumpulkan Serpihan untuk Terobosan",
-  "lab.policy.duplicateMax": "Setelah Terobosan tingkat V, duplikat diubah menjadi Mil DNA (SSR +30 · SR +8 · R +2)",
+  "lab.policy.duplicateMax": "Setelah semua Serpihan hingga Resonansi V terkumpul, duplikat diubah menjadi Mil DNA (SSR +30 · SR +8 · R +2)",
   "lab.skipAll": "Lewati Semua",
   "lab.scanning": "Meriset DNA fosil",
   "lab.resonance.SSR": "Resonansi amber meledak keluar",

@@ -272,7 +272,7 @@ export const MISC_DE = {
   "growth.party": "Formation ändern",
   "stageComplete.exit": "Verlassen",
   "battle.profile.down": "Besiegt",
-  "battle.profile.ferocity": "Wildheit {value} / 100",
+  "battle.profile.ferocity": "Wildheit {value} / {max}",
   "reward.title": "Erhaltene Belohnungen",
   "reward.tapHint": "Zum Bestätigen auf den Bildschirm tippen",
   "enemyPreview.title": "Gegnerische Formation",

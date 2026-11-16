@@ -74,6 +74,8 @@ export const ACHIEVEMENT_VI = {
   "achievement.series.allied-party": "Ba Biệt đội liên minh",
   "achievement.series.ssr-party": "Ba người tỏa sáng",
   "achievement.objective.goldPeak": "Sở hữu {value} Vàng",
+  "achievement.series.gift-giver": "Bàn tay trao gửi",
+  "achievement.objective.giftsDelivered": "Trao {value} món quà",
   "achievement.objective.relicsOwned": "Sở hữu {value} loại Di vật",
   "achievement.objective.maxRelicLevel": "Nâng một Di vật lên cấp {value}",
   "achievement.objective.relicsMaxBreakthrough": "Hoàn tất Đột phá cho {value} Di vật",

@@ -6,7 +6,7 @@ import { t, type TextKey } from "../i18n";
 import type { GameApi } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
 import { setDebugRuneForgeRename, setDebugRuneNoteCraft } from "../debug";
-import { canEngraveRune, canEnhanceRune, runeBatchEnhancementTargets, runePartLabel, runeRarityLabel, runeEnhancementAttempts, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../core/runes";
+import { canEngraveRune, canEnhanceRune, formatRuneOptionValue, runeOptionValue, runeBatchEnhancementTargets, runePartLabel, runeRarityLabel, runeEnhancementAttempts, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../core/runes";
 import { runeBatchEnhancementGoldCost, runeEnhancementGoldCost } from "../data/runes";
 import { RELICS } from "../data/relics";
 import { InventoryManager } from "../managers/InventoryManager";
@@ -293,7 +293,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
       if (rune.engravings.some(({ statKey }) => statKey === stat.key)) {
         addRuneMark(scene, body, statLeft + name.width + NOTE_ENGRAVE_MARK.gap, y, NOTE_ENGRAVE_MARK.outer, "engrave");
       }
-      body.add(scene.add.text(-statLeft, y, `+${stat.value}%`, textStyle({ role: "display", size: 24, color: main ? hex(accent) : COLOR.ink })).setOrigin(1, 0.5));
+      body.add(scene.add.text(-statLeft, y, formatRuneOptionValue(stat.key, runeOptionValue(rune, stat.key)), textStyle({ role: "display", size: 24, color: main ? hex(accent) : COLOR.ink })).setOrigin(1, 0.5));
     });
 
     // **특성은 선 하나로 갈라 아래에 선다.** 옵션 목록에 섞으면 여섯째 옵션으로 읽히는데,
@@ -760,7 +760,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         const labelStyle = main
           ? textStyle({ role: "display", size: 29, color: chosen ? COLOR.accentText : COLOR.ink })
           : textStyle({ role: "emphasis", size: 23, color: chosen ? COLOR.accentText : COLOR.inkDim });
-        content.add(scene.add.text(-width / 2 + (chosen ? 36 : 24), y, `${runeStatLabel(stat.key)}  +${stat.value}%`, labelStyle).setOrigin(0, 0.5).setWordWrapWidth(marks.labelWrap));
+        content.add(scene.add.text(-width / 2 + (chosen ? 36 : 24), y, `${runeStatLabel(stat.key)}  ${formatRuneOptionValue(stat.key, runeOptionValue(current, stat.key))}`, labelStyle).setOrigin(0, 0.5).setWordWrapWidth(marks.labelWrap));
         const history = current.enhancementHistory[stat.key] ?? [];
         const outer = main ? marks.mainOuter : marks.subOuter;
         for (let slot = 0; slot < 3; slot += 1) {

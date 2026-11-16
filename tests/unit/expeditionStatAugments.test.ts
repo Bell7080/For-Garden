@@ -56,10 +56,12 @@ describe("상시 흡혈·치명·충전·이동 증강", () => {
     expect(state.fighters[0].energy).toBe(16);
     expect(expeditionAugmentEffectLabel(EXPEDITION_STAT_AUGMENTS.find(def => def.id === "stat-energy-gain-ssr")!)).not.toContain("%");
   });
-  it("야성 증가율·이동 속도 배율·치명 확률·치명 피해는 각자의 단위를 지킨다", () => {
+  it("야성 획득·이동 속도 배율·치명 확률·치명 피해는 각자의 단위를 지킨다", () => {
     const plain = setup(); const boosted = setup("stat-ferocity-gain-ssr");
     stepSkirmish(plain, 1 / 60, () => 0.99); stepSkirmish(boosted, 1 / 60, () => 0.99);
-    expect(boosted.fighters[0].ferocity).toBeCloseTo(plain.fighters[0].ferocity * 1.2);
+    // 야성 획득은 기본 공격 한 번에 더하는 깡 수치다(공통 12 + 2.5).
+    expect(boosted.fighters[0].ferocity - plain.fighters[0].ferocity).toBeCloseTo(plain.fighters[0].ferocity * 2.5 / 12);
+    expect(expeditionAugmentEffectLabel(EXPEDITION_STAT_AUGMENTS.find(def => def.id === "stat-ferocity-gain-ssr")!)).not.toContain("%");
     expect(setup("stat-move-speed-ssr").fighters[0].def.stats.moveSpeed).toBe(120);
     const critical = setup("stat-crit-chance-ssr");
     expect(stepSkirmish(critical, 1 / 60, () => 0.1).some(event => event.kind === "attack" && event.attackerId === critical.fighters[0].id && event.critical)).toBe(true);

@@ -6,7 +6,7 @@ import type { Combatant, DamageInput } from "./combatTypes";
 import { computeDamage, computeDamageContribution, currentAbilityPower, isCriticalHit } from "./damage";
 // 전투 HUD와 피해 공식이 동일한 현재 주문력 계산을 소비하도록 공용 헬퍼를 다시 노출한다.
 export { currentAbilityPower } from "./damage";
-import { drainFerocityFever, FEROCITY_RULES, feverDrainPerSecond, ferocityMaxOf, ferocityMirrored } from "./ferocity";
+import { actionFerocityGain, drainFerocityFever, FEROCITY_RULES, feverDrainPerSecond, ferocityMaxOf, ferocityMirrored } from "./ferocity";
 import { isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
 import { ENCOUNTER_ROLE, encounterRampFactor, type EncounterDamageReduction, type EncounterTenacity } from "./levelDesign";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, flatStatPoints, highHpDamageMultiplier, lowHpDamageMultiplier, nthBasicBonusMultiplier, openingCritCount, periodicCritEvery, sameTargetStreakMultiplier, shieldedDamageMultiplier, warmUpAttackSpeedPercent, type ExpeditionAugmentEffect, type FlatStatKind, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
@@ -7227,8 +7227,8 @@ export function gainFerocity(fighter: Fighter, base: number, state: SkirmishStat
   if (fighter.ferocityFever) return;
   // 폭주한 지원가의 팀 보정은 유대·룬 보정 앞에서 사건별 기본 충전량 자체를 키운다.
   const rallied = base + tailwindRally(state, fighter.side).ferocity;
-  // 룬 야성 보정은 유대 보정 뒤의 사건별 충전량에 곱하며 단위는 percent다.
-  const adjusted = amplifyFerocityGain(rallied, fighter.bondLevel) * (1 + fighter.def.stats.ferocityGain / 100);
+  // 룬·증강의 야성 몫은 깡 수치라 공격 행동의 기본량(`actionFerocityGain`)에 이미 들어 있다. 여기서는 유대만 곱한다.
+  const adjusted = amplifyFerocityGain(rallied, fighter.bondLevel);
   const ferocityMax = ferocityMaxOf(fighter.def);
   fighter.ferocity = Math.min(ferocityMax, before + adjusted);
   // 처음 최대치에 닿은 순간 피버 카운트다운을 켠다.
@@ -9067,7 +9067,7 @@ function strike(
     // 아군 전체 충전은 시전자 자신의 충전과 같은 경계에서, 한 공격 행동에 한 번만 나눠 준다.
     grantAllyEnergy(attacker, skill, state);
   grantDuoCharge(attacker, skill, state, events);
-    gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
+    gainFerocity(attacker, actionFerocityGain(attacker.def.stats, useUltimate), state, events);
   }
   // 무효 공격은 실제 피격이 아니므로 피격 야성과 그에 따른 폭주 전환을 만들지 않는다.
   if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state, events);
@@ -9678,7 +9678,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   // 투사체가 떨어진 자리도 한 번의 기본 공격으로 센다 — 유성은 그 낙하 지점에 예약된다.
   if (!useUltimate && !followUp && !free) callStarfall(attacker, center, rng);
   // 되돌아오는 돌진은 이미 치른 한 번의 몫이라 야성을 다시 올리지 않는다.
-  if (!attacker.bt.dashBack?.running) gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
+  if (!attacker.bt.dashBack?.running) gainFerocity(attacker, actionFerocityGain(attacker.def.stats, useUltimate), state, events);
 }
 
 /**

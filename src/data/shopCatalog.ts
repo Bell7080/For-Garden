@@ -4,6 +4,7 @@ import { registerDataText } from "../i18n";
 import type { PremiumCategory, ProductDefinition, ProductStorefront, ShopProductIconKey } from "./products";
 
 /** 기존 import 경로를 유지하면서 상품 계약의 단일 소유자인 products를 공개한다. */
+import { GIFTING_ENABLED } from "../core/gifting";
 export type { PassBenefitDefinition, PremiumCategory, ProductAcquisition, ProductCurrency, ProductDefinition, ProductGrant, ProductRefresh, ProductStorefront, ShopCategory, ShopProductIconKey } from "./products";
 
 /**
@@ -15,11 +16,17 @@ export type { PassBenefitDefinition, PremiumCategory, ProductAcquisition, Produc
  * **패스는 두 곳에서 산다** — 로비의 패스 창(`PassPopup`)과 이 화면의 「패스」 라벨이다. 같은 상품·같은 결제 경계라
  * 어디서 사도 적용과 이미 지난 마디의 소급이 똑같다. 카드의 액자는 지급 목록이 아니라 유료 칸 전체의 합이다(`premiumGrantTiles`).
  */
-export const PREMIUM_TABS: ReadonlyArray<{ id: PremiumCategory; label: string }> = [
+/** 라벨 하나 — 상품 갈래이거나, 상품 갈래가 아닌 「선물」(같은 상품을 친구·길드원에게 보내는 자리). */
+export type PremiumTabId = PremiumCategory | "gift";
+
+const ALL_PREMIUM_TABS: ReadonlyArray<{ id: PremiumTabId; label: string }> = [
   { id: "limited", label: "한정" }, { id: "pass", label: "패스" }, { id: "deal", label: "특가" },
   { id: "subscription", label: "구독" }, { id: "daily", label: "일간" }, { id: "weekly", label: "주간" },
-  { id: "monthly", label: "월간" }, { id: "gem", label: "젬" },
+  { id: "monthly", label: "월간" }, { id: "gem", label: "젬" }, { id: "gift", label: "선물" },
 ];
+
+/** 「선물」은 선물하기 스위치(`GIFTING_ENABLED`)가 켜졌을 때만 선다 — 꺼진 동안은 라벨도 없다. */
+export const PREMIUM_TABS: ReadonlyArray<{ id: PremiumTabId; label: string }> = ALL_PREMIUM_TABS.filter((tab) => tab.id !== "gift" || GIFTING_ENABLED);
 
 /** 임시 상품 그림 등록표이며 최종 원화가 준비되면 경로만 교체한다. */
 export const SHOP_PRODUCT_ICON_ASSETS: ReadonlyArray<readonly [ShopProductIconKey, string]> = [
@@ -51,7 +58,7 @@ export const PRODUCTS: readonly ProductDefinition[] = [...SHOP_PRODUCTS, ...LEGA
 export const PRODUCT_STOREFRONTS: readonly ProductStorefront[] = ["shop", "trade", "premium"];
 
 /** 프리미엄 탭 이름도 같은 방식으로 언어별 덮어쓰기를 받는다. */
-for (const tab of PREMIUM_TABS) registerDataText(tab, "label", `premium.tab.${tab.id}`);
+for (const tab of ALL_PREMIUM_TABS) registerDataText(tab, "label", `premium.tab.${tab.id}`);
 /**
  * 상품 이름과 설명도 함께 등록한다.
  *

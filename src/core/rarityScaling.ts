@@ -46,7 +46,7 @@ export const COMMON_SECONDARY_STATS = {
   critDamage: 150,
   energyGain: 26,
   lifeSteal: 0,
-  ferocityGain: 0,
+  ferocityGain: 12,
 } as const satisfies Partial<Stats>;
 
 /** 등급 띠가 서로 겹치지 않고 R → SR → SSR 순서인지. 데이터 검수와 테스트가 함께 쓴다. */

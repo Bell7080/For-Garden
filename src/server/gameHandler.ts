@@ -160,8 +160,10 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
     const now = deps.now?.() ?? new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
     const wantsDuel = /^(getDuelStatus|refreshDuelOpponents|setDuelDefense|enterDuel|resolveDuel|buyDuelAttempt|getDuelRanking|claimDuelSeasonReward)$/.test(req.method) && deps.store.duelContext;
-    const wantsGift = GIFTING_ENABLED && /^(getGiftOptions|prepareGift|sendGift|cancelGift|getIncomingGifts|acceptGift|declineGift|getPurchaseHistory)$/.test(req.method) && deps.store.giftContext;
+    const wantsGift = GIFTING_ENABLED && /^(getGiftOptions|prepareGift|sendGift|cancelGift|getIncomingGifts|acceptGift|declineGift|getPurchaseHistory|getAchievements|claimAchievementRewards)$/.test(req.method) && deps.store.giftContext;
     const giftRecipient = /^(getGiftOptions|prepareGift)$/.test(req.method) ? String((req.args?.[0] as { recipientId?: unknown } | undefined)?.recipientId ?? "") || null : null;
+    // 받는 사람 id는 DB에서 uuid로 읽는다 — 모양이 아니면 받는 사람 없이 묻는다(상품 목록만 필요한 선물 탭).
+    const giftRecipientId = giftRecipient && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(giftRecipient) ? giftRecipient : null;
     const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords, schedule, launchAt, gifts] = await Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : undefined,
       deps.store.load(playerId),
@@ -175,7 +177,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       req.method === "updatePlayerCard" && deps.store.bannedWords ? deps.store.bannedWords().catch(() => []) : undefined,
       deps.store.liveSchedule ? deps.store.liveSchedule().catch(() => undefined) : undefined,
       deps.store.launchAt ? deps.store.launchAt().catch(() => undefined) : undefined,
-      wantsGift ? deps.store.giftContext!(playerId, giftRecipient, now) : undefined,
+      wantsGift ? deps.store.giftContext!(playerId, giftRecipientId, now) : undefined,
     ]);
     checkDeadline();
     // 서버가 받아 주는 배너·상품·이벤트 기간은 클라이언트가 본 것과 같은 운영 일정을 따른다. 못 읽었으면 지난 값을 그대로 쓴다.

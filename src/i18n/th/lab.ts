@@ -32,7 +32,7 @@ export const LAB_TH = {
   "lab.policy.tenUpgrade": "หากช่องสุดท้ายของ 10 ครั้งเป็น SR มีโอกาส {percent}% ที่จะเลื่อนเป็น SSR",
   "lab.policy.mileage": "ทุกการวิจัย 1 ครั้ง ได้ไมล์ DNA +1",
   "lab.policy.duplicate": "รางวัลซ้ำ  เศษของเรลิกนั้น +1 · สะสมเศษเพื่อทะลวงขีดจำกัด",
-  "lab.policy.duplicateMax": "หลังทะลวงถึงระดับ V ตัวซ้ำจะแปลงเป็นไมล์ DNA (SSR +30 · SR +8 · R +2)",
+  "lab.policy.duplicateMax": "เมื่อสะสมเศษที่ต้องใช้จนถึงการสั่นพ้อง V ครบแล้ว ตัวซ้ำจะแปลงเป็นไมล์ DNA (SSR +30 · SR +8 · R +2)",
   "lab.skipAll": "ข้ามทั้งหมด",
   "lab.scanning": "กำลังวิจัย DNA ฟอสซิล",
   "lab.resonance.SSR": "เสียงสะท้อนสีอำพันพุ่งออกมา",

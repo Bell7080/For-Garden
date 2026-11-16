@@ -4,6 +4,7 @@ import { SQUADS } from "../data/factions";
 import { portraitAssetFor, withPuppetTexture } from "../puppets/assets";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
+import { BACKGROUND, useBackgroundTexture } from "./backgrounds";
 import { addFactionMark } from "./FactionMark";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeEdge, drawShapeOutline } from "./holo";
 import { RARITY_TONE } from "./rarityMark";
@@ -37,6 +38,8 @@ export const CODEX_STANDEE = {
   name: 27,
   squad: { emblem: 30, text: 18 },
   emblem: { size: 0.86, alpha: 0.2, y: -0.12 },
+  /** 뒷배경 — 정보창의 배경 원화를 칸 비율로 잘라 등급색으로 물들인다. 원화보다 먼저 읽히지 않게 누른다. */
+  backdrop: { tint: 0.42, dim: 0.38 },
   unknownFill: 0x121821,
 } as const;
 
@@ -55,11 +58,13 @@ export class CodexStandee extends Phaser.GameObjects.Container {
     const { width, height } = size;
     const bevel = width * CODEX_STANDEE.bevel;
     this.shape = chipPoints(width, height, { bevel: { topLeft: bevel, topRight: 0, bottomRight: bevel, bottomLeft: 0 } });
-    const tone = RARITY_TONE[def.rarity];
     this.add(drawLayer(scene, 0, 0, this.shape, { fill: recorded ? 0x0b1118 : CODEX_STANDEE.unknownFill, alpha: 0.96 }));
     if (recorded) {
       // 등급색으로 물든 뒷면과 그 위에 옅게 깔린 소속 엠블럼 — 원화가 도착하기 전에도 칸이 비어 보이지 않는다.
-      this.add(drawLayer(scene, 0, 0, this.shape, { fill: tone.chip, alpha: 0.26 }));
+      // 뒷배경은 정보창의 배경 원화다 — 칸 실루엣대로 등급마다 한 번 구워 두고 다시 쓴다.
+      const backdropLayer = scene.add.container(0, 0);
+      this.add(backdropLayer);
+      this.paintBackdrop(backdropLayer);
       const emblem = addFactionMark(scene, 0, height * CODEX_STANDEE.emblem.y, def.squad, { size: width * CODEX_STANDEE.emblem.size });
       if (emblem) { emblem.setAlpha(CODEX_STANDEE.emblem.alpha); this.add(emblem); }
     } else {
@@ -80,6 +85,21 @@ export class CodexStandee extends Phaser.GameObjects.Container {
     if (this.requested || !this.recorded) return;
     this.requested = true;
     void this.bake();
+  }
+
+  private paintBackdrop(layer: Phaser.GameObjects.Container): void {
+    const scene = this.scene;
+    const key = `codex-backdrop:${this.def.rarity}:${Math.round(this.size.width)}x${Math.round(this.size.height)}`;
+    const place = (): void => { if (!this.disposed) layer.add(scene.add.image(0, 0, key).setDisplaySize(this.size.width, this.size.height)); };
+    if (scene.textures.exists(key)) { place(); return; }
+    // 구울 동안만 배경 원화를 붙잡는다(배경 거주 규칙) — 구운 뒤의 칸은 제 캔버스만 쓴다.
+    const holder = scene.add.image(0, 0, "__DEFAULT").setVisible(false);
+    layer.add(holder);
+    useBackgroundTexture(scene, holder, BACKGROUND.info, () => {
+      if (this.disposed) return;
+      bakeBackdropTexture(scene, key, BACKGROUND.info, this.size, this.shape, RARITY_TONE[this.def.rarity].chip);
+      place();
+    });
   }
 
   private cacheKey(): string { return `${this.def.portraitAssetId}:${Math.round(this.size.width)}x${Math.round(this.size.height)}`; }
@@ -155,6 +175,39 @@ export function standeeCrop(
   };
 }
 
+function bakeBackdropTexture(scene: Phaser.Scene, key: string, sourceKey: string, size: { width: number; height: number }, shape: number[], tint: number): void {
+  if (scene.textures.exists(key)) return;
+  const width = Math.round(size.width); const height = Math.round(size.height);
+  const canvas = scene.textures.createCanvas(key, width, height);
+  if (!canvas) return;
+  const ctx = canvas.getContext();
+  const source = scene.textures.get(sourceKey).getSourceImage() as HTMLImageElement;
+  // cover — 칸 비율로 원화 가운데를 잘라 낸다.
+  const scale = Math.max(width / source.width, height / source.height);
+  const cropW = width / scale; const cropH = height / scale;
+  ctx.drawImage(source, (source.width - cropW) / 2, (source.height - cropH) / 2, cropW, cropH, 0, 0, width, height);
+  const color = Phaser.Display.Color.IntegerToColor(tint);
+  ctx.fillStyle = `rgba(${color.red},${color.green},${color.blue},${CODEX_STANDEE.backdrop.tint})`;
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = `rgba(3,6,10,${CODEX_STANDEE.backdrop.dim})`;
+  ctx.fillRect(0, 0, width, height);
+  clipToShape(ctx, shape, width, height);
+  canvas.refresh();
+}
+
+/** 칸 밖으로 나간 두 모서리를 그림에서 지운다. 채우는 색은 반드시 불투명해야 한다(알파가 남으면 그만큼 지워진다). */
+function clipToShape(ctx: CanvasRenderingContext2D, shape: number[], width: number, height: number): void {
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.fillStyle = "#000000";
+  ctx.beginPath();
+  for (let index = 0; index < shape.length; index += 2) {
+    const x = shape[index] + width / 2; const y = shape[index + 1] + height / 2;
+    if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.globalCompositeOperation = "source-over";
+}
+
 function bakeStandeeTexture(scene: Phaser.Scene, sourceKey: string, cacheKey: string, size: { width: number; height: number }, shape: number[], crop: { x: number; y: number; width: number; height: number }): string {
   const key = `codex-standee:${cacheKey}`;
   if (scene.textures.exists(key)) return key;
@@ -173,15 +226,7 @@ function bakeStandeeTexture(scene: Phaser.Scene, sourceKey: string, cacheKey: st
   ctx.fillRect(0, height * CODEX_STANDEE.shade.from, width, height * (1 - CODEX_STANDEE.shade.from));
   // 칸 밖으로 나간 두 모서리는 덮지 않고 지운다. 채우는 색은 반드시 불투명하게 되돌린다 — 밑동 어둠의
   // 그라데이션이 남아 있으면 `destination-in`이 그 알파를 그대로 곱해 원화 위쪽이 통째로 지워진다.
-  ctx.globalCompositeOperation = "destination-in";
-  ctx.fillStyle = "#000000";
-  ctx.beginPath();
-  for (let index = 0; index < shape.length; index += 2) {
-    const x = shape[index] + width / 2; const y = shape[index + 1] + height / 2;
-    if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  }
-  ctx.closePath(); ctx.fill();
-  ctx.globalCompositeOperation = "source-over";
+  clipToShape(ctx, shape, width, height);
   canvas.refresh();
   return key;
 }

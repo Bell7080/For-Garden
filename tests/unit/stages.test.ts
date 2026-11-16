@@ -8,6 +8,8 @@ import { stageFirstClearRewards } from "../../src/core/stageRewards";
 import { isStageUnlockedByProgress, nextBattleStage } from "../../src/core/stageProgress";
 import { stageChapterNavigationLayout } from "../../src/ui/stageChapterLayout";
 import { BREAKTHROUGH_CAP } from "../../src/core/relicProgression";
+import { CAKE_OPERATION_TIERS } from "../../src/data/cakeOperation";
+import { difficultyStageRewards, STORY_DIFFICULTIES } from "../../src/core/storyDifficulty";
 
 /** 스테이지 편성과 공개 성장 설계가 콘텐츠 수정 중 흐트러지지 않도록 고정한다. */
 describe("stage enemy design", () => {
@@ -16,6 +18,28 @@ describe("stage enemy design", () => {
   it("최초/반복 보상과 단일 일일 복원 3회 제한을 정적 데이터로 제공한다", () => {
     expect(battles[0].rewards).toMatchObject({ firstClearCheesecake: 30, repeatClearCheesecake: 10 });
     expect(DAILY_RESTORATION).toMatchObject({ id: "daily-restoration", maxEntriesPerUtcDay: 3, rewardCheesecake: 40 });
+  });
+  /*
+   * 치즈케이크의 주 수급처는 대작전이다(응태 2026-11-16). 스토리 반복은 장마다 2씩만 올라 관문 사이에 큰 차이가 없고,
+   * 같은 스테미나 10으로 그 관문 레벨에서 갈 수 있는 대작전 단계의 절반을 넘지 않는다(어려움 배율까지 얹어도).
+   */
+  it("스토리 반복 치즈케이크는 평평하고 대작전보다 한참 적다", () => {
+    const repeats = battles.map((stage) => stage.rewards.repeatClearCheesecake);
+    expect(Math.min(...repeats)).toBe(10);
+    expect(Math.max(...repeats)).toBe(22);
+    const reachableAt = (stage: BattleStageDef) => {
+      const level = Math.max(...stage.enemies.map((enemy) => enemy.level));
+      return CAKE_OPERATION_TIERS.filter((tier) => tier.enemyLevel <= level).at(-1) ?? CAKE_OPERATION_TIERS[0];
+    };
+    // 보통·어려움은 쉬움 4-10을 넘어야 열리므로 그 자리에서 갈 수 있는 대작전 단계를 바닥으로 잡는다.
+    const gate = reachableAt(battles.find((stage) => stage.id === "4-10")!);
+    for (const stage of battles) {
+      for (const difficulty of STORY_DIFFICULTIES) {
+        const repeat = difficultyStageRewards(stage.rewards, difficulty).repeatClearCheesecake;
+        const tier = difficulty === "easy" ? reachableAt(stage) : [reachableAt(stage), gate].sort((a, b) => b.rewardCheesecake - a.rewardCheesecake)[0];
+        expect(repeat * 2, `${difficulty}:${stage.id}`).toBeLessThanOrEqual(tier.rewardCheesecake);
+      }
+    }
   });
   /*
    * 초회 보상의 바탕은 골드·치즈케이크·젬이다. 원석은 2장부터, 화석은 정예 관문에만, 룬은 고급·희귀만

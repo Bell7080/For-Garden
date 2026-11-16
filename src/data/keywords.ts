@@ -228,7 +228,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "concussion", term: "뇌진탕", kind: "debuff",
-    description: "최대 체력의 10%(치명타면 20%)에 해당하는 피해로, 방어력과 속성을 지나쳐 맞은 순간 한 번에 들어간다.",
+    description: "대상 최대 체력에 비례한 피해로, 치명타면 두 배가 된다. 방어력과 속성을 지나쳐 맞은 순간 한 번에 들어간다.",
   },
   {
     id: "knockback", term: "날려버림", kind: "debuff",

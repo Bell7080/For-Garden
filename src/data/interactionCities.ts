@@ -113,7 +113,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     // 3단계부터는 스토리 관문이 연다(§3). 렐릭의 사용처와 연구 성과, 연구 **목적**.
     id: "doppel-office", displayName: "도플 · 관리부", department: "council",
     description: "연구 성과와 렐릭의 사용처를 집계하는 도플의 관리부. 결재가 여러 단을 거쳐 오래 기다려야 한다.",
-    unlock: { level: 9 }, durationMinutes: 240, partySize: { min: 1, max: 3 },
+    unlock: { level: 10 }, durationMinutes: 240, partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support", "tank"], squads: ["rune", "eye"] },
     rewards: [{ currency: "gems", min: 8, max: 25 }, { currency: "gold", min: 2_000, max: 5_000 }, { currency: "cheesecake", min: 5, max: 15 }, { currency: "rawStone", min: 0, max: 50 }],
     clueJournalId: "interaction-doppel-office-01", illustration: "background-interaction-doppel-office",
@@ -122,7 +122,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     // 4단계: 러스트는 무거운 이야기 사이의 숨 고르기다. 세계관보다 짧은 해프닝을 맡는다.
     id: "rust-garage", displayName: "러스트 · 정비창", department: "exchange",
     description: "러스트의 정비창. 부서진 연구 장비를 고쳐 달라는 의뢰가 쉴 새 없이 들어온다.",
-    unlock: { level: 12 }, durationMinutes: 60, partySize: { min: 1, max: 3 },
+    unlock: { level: 13 }, durationMinutes: 60, partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["warrior"], squads: ["gear"] },
     rewards: [{ currency: "gold", min: 1_500, max: 3_500 }, { currency: "cheesecake", min: 3, max: 8 }, { currency: "rawStone", min: 0, max: 40 }],
     clueJournalId: "interaction-rust-garage-01", illustration: "background-interaction-rust-garage",
@@ -131,7 +131,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     // 5단계: 고성능 장비의 대여 기간 연장 협상. 간간이 도플 이야기가 섞여 든다.
     id: "rust-lease", displayName: "러스트 · 대여 관리부", department: "council",
     description: "고성능 장비를 빌려 주는 러스트의 대여 관리부. 연장 한 건에도 긴 협상이 붙는다.",
-    unlock: { level: 15 }, durationMinutes: 720, partySize: { min: 1, max: 3 },
+    unlock: { level: 16 }, durationMinutes: 720, partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
     rewards: [{ currency: "gems", min: 8, max: 40 }, { currency: "gold", min: 3_500, max: 7_500 }, { currency: "cheesecake", min: 15, max: 40 }, { currency: "rawStone", min: 0, max: 80 }],
     clueJournalId: "interaction-rust-lease-01", illustration: "background-interaction-rust-lease",
@@ -141,7 +141,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     // 비춘다. 상층부의 정체·목적은 단정하지 않는다(`docs/lore.md` §1.2).
     id: "doppel-upper", displayName: "도플 · 상층부", department: "council",
     description: "도플 연구소의 가장 높은 층. 연구의 목적을 정하는 사람들이 이곳에 앉는다.",
-    unlock: { level: 18 }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
+    unlock: { level: 19 }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     specialty: { elements: ["water"], roles: ["support", "tank"], squads: ["rune", "eye"] },
     rewards: [{ currency: "gems", min: 8, max: 85 }, { currency: "gold", min: 4_000, max: 9_000 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
     clueJournalId: "interaction-doppel-upper-01", illustration: "background-interaction-doppel-upper",
@@ -151,7 +151,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     // 나노칩 기술의 출처가 이 도시라는 사실은 스치기만 한다.
     id: "rust-works", displayName: "러스트 · 중앙 공방", department: "council",
     description: "러스트의 중심에 선 거대한 공방. 연구 장비의 설계와 수리가 한곳에 모인다.",
-    unlock: { level: 21 }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
+    unlock: { level: 22 }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
     rewards: [{ currency: "gems", min: 8, max: 85 }, { currency: "gold", min: 4_500, max: 10_000 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
     clueJournalId: "interaction-rust-works-01", illustration: "background-interaction-rust-works",

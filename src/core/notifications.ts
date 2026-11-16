@@ -1,5 +1,5 @@
 /** 화면 이름과 무관하게 서버 상태에서 판별할 수 있는 공용 알림 키다. */
-export const NOTIFICATION_KEYS = ["raidReward", "expeditionReward", "sortieReward", "missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "premiumOffer", "passReward", "premiumNotice", "achievementReward", "codexReward", "shopFree", "freeResearch", "interactionReturned", "duelSeasonReward", "premiumSubscription"] as const;
+export const NOTIFICATION_KEYS = ["raidReward", "expeditionReward", "sortieReward", "missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "premiumOffer", "passReward", "premiumNotice", "achievementReward", "codexReward", "shopFree", "freeResearch", "interactionReturned", "duelSeasonReward", "premiumSubscription", "guildAttendance"] as const;
 export type NotificationKey = (typeof NOTIFICATION_KEYS)[number];
 
 /** API 응답을 합성하기 전의 최소 조건이며, 항목이 없으면 추측하지 않고 false로 둔다. */
@@ -35,6 +35,8 @@ export interface NotificationConditions {
   duelSeasonRewardReady?: boolean;
   /** 오늘 몫을 아직 받지 않은 구독 수. */
   claimableSubscriptionBonusCount?: number;
+  /** 길드에 들었는데 오늘 출석 도장을 아직 찍지 않았는가. 길드가 없으면 서버가 false로 보낸다. */
+  guildAttendanceReady?: boolean;
 }
 
 /** 모든 씬이 공유하는 판정 결과라 UI가 개별 숫자나 날짜를 다시 계산하지 않는다. */
@@ -67,6 +69,7 @@ export function deriveNotificationState(conditions: NotificationConditions): Not
     interactionReturned: (conditions.claimableInteractionCount ?? 0) > 0,
     duelSeasonReward: conditions.duelSeasonRewardReady === true,
     premiumSubscription: (conditions.claimableSubscriptionBonusCount ?? 0) > 0,
+    guildAttendance: conditions.guildAttendanceReady === true,
   };
 }
 

@@ -433,12 +433,12 @@ export const STAGE_7_3_MENDED_SLEEVE: DialogueStory = {
   backdrop: "detention",
   nodes: linear([
     { id: "quiet", speaker: "", body: "침묵의 복도. 발소리가 바닥에 닿기도 전에 어둠이 먹어 버린다. 테리사가 걸음을 늦추고 연구원의 찢어진 소매를 끌어당긴다.", standing: "terisa", cast: [{ id: "terisa", slot: "left" }, { id: "nodonia", slot: "right" }] },
-    { id: "sewn", speaker: "테리사", body: "…다 꿰맸어, 아가. 이번엔 안 풀려.", standing: "terisa", act: "nod" },
+    { id: "sewn", speaker: "테리사", body: "…다 꿰맸어요, 연구원님. 이번엔 안 풀려요.", standing: "terisa", act: "nod" },
     { id: "count", speaker: "노도니아", body: "잘했어, 테리사. 아가, 팔 들어 보렴. 셋 셀 동안 안 아프면 된 거야.", standing: "nodonia", act: "lean" },
     { id: "wall", speaker: "안카", body: "연구원 씨… 저 앞 벽 좀 보세요. 긁힌 자국이요… 숫자를 지운 거예요.", standing: "anka", cast: [{ id: "anka", slot: "left" }, { id: "terisa", slot: "center" }, { id: "nodonia", slot: "right" }], act: "lean" },
     { id: "ahead", speaker: "", body: "벽마다 새겨진 번호 가운데 몇 개만 날카롭게 긁혀 있다. 자국은 아직 새것이고, 연구원의 걸음보다 꼭 한 칸씩 앞서 있다.", standing: "anka" },
     { id: "path", speaker: "노도니아", body: "누가 우리보다 먼저 지나갔구나. 아가, 저 자국도 아직 새것이야.", standing: "nodonia", act: "nod" },
-    { id: "shadow", speaker: "테리사", body: "…가리개 쓴 애야. 아까 그림자 봤어.", standing: "terisa" },
+    { id: "shadow", speaker: "테리사", body: "…가리개 쓴 아이예요. 아까 그림자를 봤어요.", standing: "terisa" },
     {
       id: "choose", speaker: "", body: "복도 저편에서 쇠를 긁는 소리가 한 번 더 난다.", standing: "terisa",
       choices: [
@@ -447,7 +447,7 @@ export const STAGE_7_3_MENDED_SLEEVE: DialogueStory = {
       ],
     },
     { id: "catchA", speaker: "노도니아", body: "잠깐, 아가. 누구인지도 모르잖니. 너무 가까이 가지 말고 따라가 보자꾸나.", standing: "nodonia", act: "shake", nextId: "hush" },
-    { id: "followB", speaker: "테리사", body: "…응. 그게 나아. 저 애도 들키기 싫어해.", standing: "terisa", act: "nod", nextId: "hush" },
+    { id: "followB", speaker: "테리사", body: "…네. 그게 나아요. 저 아이도 들키기 싫어해요.", standing: "terisa", act: "nod", nextId: "hush" },
     { id: "hush", speaker: "안카", body: "연구원 씨… 조금만 천천히요. 앞에서 무슨 소리가 나면 바로 멈춰요.", standing: "anka", act: "nod" },
     { id: "last", speaker: "", body: "복도 끝에서 마지막 번호 하나가 긁혀 나간다. 「072」였던 자리다.", standing: "anka", cast: [] },
   ]),

@@ -11,7 +11,7 @@ import { linear } from "./linear";
  * 않고 스스로 구속을 부수고(전투에서도 다칠수록 자물쇠가 풀린다), 감금조를 데리고 두 대장(기가노토·티타노)이 있는 위로 간다.
  * 연구원의 손은 끝내 쓰이지 않았다. 공멸의 목표(야성 증폭제)는 그대로 남아 다음 장으로 이어진다.
  *
- * 함께하는 것은 사일런트 룬(노도니아·테리사 「아가」, 메론·매디·안카 「연구원 씨」)이고, 후반에 쁘띠 로그와 앱솔루트 팽이 합류한다.
+ * 함께하는 것은 사일런트 룬(노도니아 「아가」, 테리사 「연구원님」, 메론·매디·안카 「연구원 씨」)이고, 후반에 쁘띠 로그와 앱솔루트 팽이 합류한다.
  */
 
 /** 7-1 전 — 사일런트 룬이 떨어진 연구원을 받아 낸다. */
@@ -22,7 +22,7 @@ export const STAGE_7_1_PRE: DialogueStory = {
   nodes: linear([
     { id: "wake", speaker: "", body: "눈을 뜨자 차가운 바닥 대신 누군가의 무릎이 있다. 머리 위에서 낮은 목소리가 숫자를 세고 있다.", cast: [{ id: "nodonia", slot: "center" }] },
     { id: "nodonia", speaker: "노도니아", body: "아가, 정신 들어? 천천히 일어나. 어지럽진 않고? 다친 데부터 보자.", standing: "nodonia", act: "lean" },
-    { id: "terisa", speaker: "테리사", body: "소매가 찢어졌네, 아가. 잠깐만 팔을 내밀어 보렴. 상처는 없는지 보자.", standing: "terisa", cast: [{ id: "nodonia", slot: "left" }, { id: "terisa", slot: "right" }], act: "nod" },
+    { id: "terisa", speaker: "테리사", body: "소매가 찢어졌네요, 연구원님. 잠깐 팔을 내밀어 보세요. 상처는 없는지 볼게요.", standing: "terisa", cast: [{ id: "nodonia", slot: "left" }, { id: "terisa", slot: "right" }], act: "nod" },
     { id: "anka", speaker: "안카", body: "연구원 씨, 여기는 조용히 걸어야 해요. 아래에 자는 척하는 게 너무 많아요.", standing: "anka", cast: [{ id: "anka", slot: "center" }], act: "shrink" },
   ]),
 };

@@ -57,7 +57,7 @@ export const SQUADS: Readonly<Record<SquadId, SquadDef>> = {
     id: "rune", name: "사일런트 룬", latin: "Silent Rune",
     duty: "DNA 공명 안정 및 심신 케어",
     allegiance: "ally", hasEmblem: true,
-    researcherTitles: ["선생", "연구원 씨", "아가"],
+    researcherTitles: ["선생", "연구원 씨", "아가", "연구원님"],
   },
   rogue: {
     id: "rogue", name: "쁘띠 로그", latin: "Petit Rogue",

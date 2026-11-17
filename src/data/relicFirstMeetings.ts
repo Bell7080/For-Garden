@@ -27,7 +27,7 @@ export const RELIC_FIRST_MEETINGS: Readonly<Record<string, string>> = {
   deina: "나 데이! 이 벽, 아직 비어 있네. 그려도 돼?",
   maddy: "매디예요, 연구원 씨. 여긴 좀 덥네요. 냉방 더 세게 틀어도 돼요?",
   arte: "A-CLEAN 아르테, 현장 도착했습니다! 연구원님, 발밑 조심하세요.",
-  terisa: "찢어진 곳이 있으면… 꿰매 줄게, 아가.",
+  terisa: "찢어진 곳이 있으면… 꿰매 드릴게요, 연구원님.",
   parua: "멀리… 멀리요! 다 보여요.",
   shute: "그거 아니라니까? 내 오더 들어, 캐리해 줄게.",
   morphe: "…담당관? 잘 왔어. 잠깐만… 화면 띄워 줄게.",

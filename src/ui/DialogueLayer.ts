@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { audioManager } from "../managers/AudioManager";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import type { DialogueBackdrop, DialogueChoice, DialogueNode, DialogueStandingAsset } from "../core/dialogue";
+import type { DialogueBackdrop, DialogueChoice, DialogueNode, DialogueStandingAsset, DialogueVoice } from "../core/dialogue";
 import { DialoguePlaybackClock } from "../core/dialoguePlayback";
 import { settingsManager } from "../managers/SettingsManager";
 import { Button } from "./Button";
@@ -10,13 +10,14 @@ import { t } from "../i18n";
 import { anyPopupOpen } from "./PopupLayer";
 import { DIALOGUE_BUBBLE } from "./dialogueBubbleLayout";
 import { DialogueStage } from "./DialogueStage";
-import { DIALOGUE_OVERSCAN, DIALOGUE_PANEL_TOP } from "./dialogueStageLayout";
+import { DIALOGUE_OVERSCAN, DIALOGUE_PANEL_TOP, DIALOGUE_VOICE } from "./dialogueStageLayout";
 import { drawGlassFade, drawHairline } from "./holo";
 import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
 import { wrapDialogueText } from "../core/dialogueTextWrap";
 import { fitTextToBox } from "./textFit";
-import { activeFontFamily } from "./fonts";
+import { motionPolicy } from "../core/settings";
+import { activeFontFamily, fontStyleFor } from "./fonts";
 import { playFadeIn, playFadeOut } from "./screenTransition";
 
 const PANEL_TOP = DIALOGUE_PANEL_TOP;
@@ -132,7 +133,7 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     this.history.push({ speaker: node.speaker, body: node.body });
     if (this.history.length > LOG_LIMIT) this.history.shift();
     this.pendingChoices = node.choices ?? [];
-    this.startTyping(node.body);
+    this.startTyping(node.body, node.voice);
     await this.stage.present(node, () => generation === this.renderGeneration && this.isRenderOwnerActive());
   }
 
@@ -148,15 +149,23 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     this.speakerPlate = addSectionTitle(this.scene, PANEL_TEXT.nameX, PANEL_TOP - 10, label, { size: PANEL_TEXT.nameSize, parent: this });
   }
 
-  /** 현재 설정으로 글자 간격을 계산하고 본문 완성 전에는 진행 표식과 선택지를 감춘다. */
-  private startTyping(body: string): void {
+  /**
+   * 현재 설정으로 글자 간격을 계산하고 본문 완성 전에는 진행 표식과 선택지를 감춘다.
+   * 목소리 크기(`voice`)는 글자 크기·굵기·색과 찍히는 속도를 함께 바꾼다 — 외침은 판이 한 번 튄다.
+   */
+  private startTyping(body: string, voice?: DialogueVoice): void {
     const characters = Array.from(body);
-    const timing = this.playbackClock.timingFor(body);
+    const spec = voice ? DIALOGUE_VOICE[voice] : undefined;
+    const base = this.playbackClock.timingFor(body);
+    const timing = spec ? { ...base, characterMs: base.characterMs * spec.speed } : base;
     this.fullBody = body;
+    const size = Math.round(PANEL_TEXT.bodySize * (spec?.sizeRatio ?? 1));
+    this.bodyText.setFontStyle(fontStyleFor(spec?.role ?? "body")).setColor(spec?.dim ? COLOR.inkDim : COLOR.ink);
     // 전체 문장으로 먼저 맞춰 타이핑 도중 글자 크기가 흔들리지 않게 한다.
     this.bodyText.setFontFamily(activeFontFamily()).setText(body);
-    fitTextToBox(this.bodyText, { width: BASE_WIDTH - 184, height: 350 }, { size: PANEL_TEXT.bodySize, minSize: 26, step: 1 });
+    fitTextToBox(this.bodyText, { width: BASE_WIDTH - 184, height: 350 }, { size, minSize: 26, step: 1 });
     this.bodyText.setText("");
+    if (spec && spec.bump > 0) this.bump(spec.bump);
     this.nextMark.setVisible(false);
     this.isTyping = characters.length > 0;
     if (!this.isTyping) { this.finishTyping(); return; }
@@ -171,6 +180,15 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
         if (visibleCount === characters.length) this.finishTyping();
       },
     });
+  }
+
+  /** 외침 — 본문이 한 번 위로 튀었다 돌아온다. 움직임 줄이기에서는 튀지 않는다. */
+  private bump(dy: number): void {
+    const factor = motionPolicy(settingsManager.get()).nonEssentialDistanceFactor;
+    if (factor <= 0) return;
+    this.scene.tweens.killTweensOf(this.bodyText);
+    this.bodyText.setY(PANEL_TEXT.bodyY);
+    this.scene.tweens.add({ targets: this.bodyText, y: PANEL_TEXT.bodyY - dy * factor, duration: 70, yoyo: true, ease: "Quad.Out", onComplete: () => this.bodyText.setY(PANEL_TEXT.bodyY) });
   }
 
   /** 빠른 입력과 자연 완료가 공유하는 단일 완료 경계다. */

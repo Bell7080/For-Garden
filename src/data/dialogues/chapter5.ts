@@ -118,7 +118,7 @@ export const STAGE_5_9_POST: DialogueStory = {
     { id: "chains", speaker: "", body: "끊어진 족쇄가 바닥에 흩어져 있었다. 그 사이에서 작은 그림자 하나가 몸을 웅크린 채 이쪽을 보고 있었다.", cast: [{ id: "noa", slot: "center", veiled: true }], cue: "impact" },
     { id: "noa", speaker: "???", body: "오, 오지 마… 오지 말라니까…!", standing: "noa", act: "tremble" },
     { id: "deina", speaker: "데이", body: "연구원님, 쫓으면 안 돼! 저렇게 벌벌 떠는 애가 제일 먼저 깨물어. 가만히 있어 주자.", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "noa", slot: "right", veiled: true }], act: "lean" },
-    { id: "flee", speaker: "", body: "그림자는 손톱 긁는 소리만 남기고 취사장 쪽으로 사라졌다." },
+    { id: "flee", speaker: "", body: "그림자는 손톱 긁는 소리만 남기고, 눈 깜짝할 사이 취사장 쪽으로 튀어 나갔다.", cast: [{ id: "deina", slot: "left" }], leave: "dash" },
   ]),
 };
 
@@ -143,9 +143,9 @@ export const STAGE_5_10_POST: DialogueStory = {
   nodes: linear([
     { id: "laugh", speaker: "마가사", body: "아하하… 손맛 좋네요, 연구원님 쪽 사람들. 졌으니까 오늘 설거지는 제가 할게요.", standing: "magasa", cast: [{ id: "magasa", slot: "center" }], act: "faint" },
     { id: "hint", speaker: "마가사", body: "그런데요, 맨 아래 부대장님 자물쇠는 사람 손이어야 열린대요. 연구원님 같은 진짜 사람 손.", standing: "magasa", act: "lean" },
-    { id: "deina", speaker: "데이", body: "…그래서 처음부터 아래로 몰았구나! 합동 추격도, 끊어진 승강기도 전부 한 길이었어.", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "magasa", slot: "right" }], act: "nod" },
-    { id: "koma", speaker: "코마", body: "…아래로 가지 마라.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
-    { id: "gone", speaker: "", body: "그 한마디만 남기고 코마는 다음 계단으로 내려갔다. 위로 가라는 말은 끝내 하지 않았다." },
+    { id: "deina", speaker: "데이", body: "…그래서 처음부터 아래로 몰았구나! 합동 추격도, 끊어진 승강기도 전부 한 길이었어.", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "magasa", slot: "right" }], act: "nod", cue: "heartbeat" },
+    { id: "koma", speaker: "코마", body: "…아래로 가지 마라.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean", voice: "whisper" },
+    { id: "gone", speaker: "", body: "그 한마디만 남기고 코마는 다음 계단 아래로 가라앉듯 사라졌다. 위로 가라는 말은 끝내 하지 않았다.", cast: [], leave: "sink" },
   ]),
 };
 

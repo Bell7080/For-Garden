@@ -73,15 +73,36 @@ export type DialogueSign = "announce" | "warning" | "system" | "broadcast" | "to
  * `alarm`은 한 번 켜지면 `explosion`이나 배경이 바뀔 때까지 붉게 맥박친다 — 경보는 한 줄이
  * 아니라 그 뒤 몇 마디 내내 울리고 있어야 경보다.
  */
-export type DialogueCue = "rumble" | "alarm" | "explosion" | "impact";
+export type DialogueCue =
+  | "rumble" | "alarm" | "explosion" | "impact"
+  /** 불이 꺼졌다 켜진다 — 정전, 시간이 건너뛴 자리, 눈을 감았다 뜬 순간. 몇 박자 뒤 저절로 걷힌다. */
+  | "blackout"
+  /** 화면 가장자리가 두 번 쿵, 쿵 조인다 — 숨이 멎는 긴장, 무언가를 깨달은 순간. */
+  | "heartbeat";
 
 /**
  * 무대를 떠나는 방식. 적지 않으면 그 자리에서 옅어진다.
  *
- * `blastOff`는 쓰러진 SD가 튕겨 날아가 별이 되는 전투의 퇴장과 같은 문법이다 — 한 방 맞고
- * 하늘로 날아가며 "두고 보자~"를 외치는 우당탕탕 퇴장을 대사 화면에서도 그대로 읽히게 한다.
+ * **퇴장은 그 사람이 어떤 사람인지 말한다** — 모두가 별이 되면 우당탕탕 삼인조와 서늘한 간부가
+ * 같은 무게로 읽힌다. 고르는 기준은 `docs/story-brain/craft.md`의 퇴장 문법표가 갖는다.
+ *
+ * - `blastOff` 한 방 맞고 빙글빙글 날아가 별이 된다 — "두고 보자~"의 우당탕탕 퇴장(개그 담당만).
+ * - `dash` 몸을 한 번 당겼다가 슉 하고 옆으로 빠져나간다 — 잔상이 길을 남긴다(날랜 퇴장).
+ * - `sink` 스르륵 아래로 가라앉으며 어둠에 녹는다 — 그림자 속으로 물러나는 서늘한 퇴장.
+ * - `vanish` 두어 번 깜빡이다 팟 하고 꺼진다 — 처음부터 거기 없었던 것 같은 퇴장.
+ * - `rise` 날개를 펴듯 위로 휙 솟구친다 — 하늘·천장으로 빠지는 퇴장(날개 가진 이, 천장을 뚫는 이).
+ * - `retreat` 뒷걸음질로 작아지며 멀어진다 — 미련이 남아 돌아보며 가는 퇴장.
  */
-export type DialogueLeave = "blastOff";
+export type DialogueLeave = "blastOff" | "dash" | "sink" | "vanish" | "rise" | "retreat";
+
+/**
+ * 대사의 목소리 크기. 적지 않으면 보통이다.
+ *
+ * - `shout` 외침 — 글자가 크고 굵어지며 대사판이 한 번 튄다. 한 장면에 한두 번만 쓴다.
+ * - `whisper` 속삭임 — 글자가 작고 흐려지며 천천히 찍힌다. 혼잣말·비밀·마지막 한마디.
+ * - `heavy` 무게 — 굵은 글자로 한 자씩 또박또박 찍힌다. 선언·명령·결심.
+ */
+export type DialogueVoice = "shout" | "whisper" | "heavy";
 
 /** 이야기의 배경. 키와 원화의 대응은 `dialogueStageLayout.ts`의 표가 갖는다. */
 export type DialogueBackdrop =
@@ -122,6 +143,8 @@ export interface DialogueNode {
   cue?: DialogueCue;
   /** 이 노드에서 무대를 떠나는 사람이 어떻게 나가는가. `cast`로 빠진 사람에게만 걸린다. */
   leave?: DialogueLeave;
+  /** 이 줄을 어떤 크기의 목소리로 찍는가. 적지 않으면 보통이다. */
+  voice?: DialogueVoice;
   /** 사람이 아닌 목소리의 딱지. 적은 노드에만 뜨고, 적지 않은 노드에서는 걷힌다. */
   sign?: DialogueSign;
   /** `standing`이 무대에 없어 혼자 서게 될 때 무전 목소리로 세울지. `cast`를 적은 노드는 멤버가 갖는다. */

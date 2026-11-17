@@ -184,7 +184,7 @@ export const STAGE_1_10_PRE: DialogueStory = {
     { id: "train", speaker: "도디", body: "그, 그치만 열차는 떨어졌잖아요!", standing: "dodi", cast: [{ id: "dodi", slot: "left" }, { id: "koma", slot: "right" }], act: "fright" },
     { id: "order", speaker: "코마", body: "…떨어뜨리라는 지시였다. 내가 정한 일이 아니다.", standing: "koma", act: "shrink" },
     { id: "who", speaker: "토리카", body: "누가요?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "koma", slot: "right" }] },
-    { id: "above", speaker: "코마", body: "…위에서. 문은 내가 막는다. 돌아가라, 연구원. 돌아가지 않으면 데려간다.", standing: "koma", cue: "impact" },
+    { id: "above", speaker: "코마", body: "…위에서. 문은 내가 막는다. 돌아가라, 연구원. 돌아가지 않으면 데려간다.", standing: "koma", cue: "impact", voice: "heavy" },
   ]),
 };
 
@@ -205,7 +205,8 @@ export const STAGE_1_10_POST: DialogueStory = {
     },
     { id: "answerA", speaker: "코마", body: "…실패작.", standing: "koma", act: "recoil", nextId: "leave" },
     { id: "answerB", speaker: "코마", body: "…이야기.", standing: "koma", act: "recoil", nextId: "leave" },
-    { id: "leave", speaker: "코마", body: "위에는 이렇게 보고하겠다. 연구원은 아직 문을 넘지 않았다고.", standing: "koma", cast: [{ id: "torika", slot: "left" }], nextId: "crash" },
+    { id: "leave", speaker: "코마", body: "위에는 이렇게 보고하겠다. 연구원은 아직 문을 넘지 않았다고.", standing: "koma", cast: [{ id: "torika", slot: "left" }, { id: "koma", slot: "right" }], nextId: "vanish" },
+    { id: "vanish", speaker: "", body: "말이 끝나자 코마의 윤곽이 흙먼지 속에서 일렁였다. 눈을 한 번 깜빡이는 사이, 그 자리에는 가라앉는 먼지만 남아 있었다.", cast: [{ id: "torika", slot: "left" }], leave: "vanish", nextId: "crash" },
     { id: "crash", speaker: "", body: "경첩째 뽑힌 문짝이 날아와 땅에 박혔다.", cue: "explosion", nextId: "lexia" },
     { id: "lexia", speaker: "렉시아", body: "제가 왔어요! 문은 열어 뒀어요. 정확히는… 문짝을 가져왔어요.", standing: "lexia", cast: ALONE("lexia"), act: "puff", nextId: "hello" },
     { id: "hello", speaker: "토리카", body: "렉시아 님!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "lexia", slot: "right" }], act: "hopTwice", nextId: "queen" },

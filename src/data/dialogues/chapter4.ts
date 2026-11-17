@@ -94,11 +94,12 @@ export const STAGE_4_10_POST: DialogueStory = {
   backdrop: "deepField",
   nodes: linear([
     { id: "retreat", speaker: "이카닉시아", body: "…이렇게까지 했는데도 닿지 않다니요. 오늘은 물러나겠습니다. 정말이지, 서두를 이유는 없으니까요.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
-    { id: "wing", speaker: "", body: "날개 망토가 허공으로 떠오르고, 회수조의 그림자가 하나둘 선로 너머로 사라졌다.", standing: "ikanixia", leave: "blastOff", cast: [] },
+    { id: "wing", speaker: "", body: "날개 망토가 선로 아래 어둠 속으로 미끄러지듯 가라앉았다. 회수조의 그림자도 하나둘 그 뒤를 따랐다.", standing: "ikanixia", leave: "sink", cast: [] },
+    { id: "path", speaker: "", body: "이상한 일이었다. 몇 번을 물러나도 회수조는 한 번도 위쪽 출구로 가지 않았다. 그들이 남기고 간 길은 언제나 아래로 이어져 있었다." },
     { id: "floor", speaker: "", body: "사령실 바닥이 낮게 울렸다. 금 간 바닥판 아래로 녹슨 철문 하나가 드러났다. 문 위의 글씨만은 또렷했다. 「제1지부 지하 감금동 — 출입 금지」.", cue: "rumble" },
     { id: "order", speaker: "???", body: "…072. 감금동을 열어라. 부대장을 데려와라.", cast: [{ id: "koma", slot: "center" }], cue: "alarm" },
-    { id: "koma", speaker: "코마", body: "…다음 목록에서 다시 만난다.", standing: "koma", act: "shrink" },
-    { id: "gone", speaker: "", body: "코마는 대꾸 없이 철문 손잡이를 잡았다. 문이 열리자 아래에서 차가운 바람이 올라왔다." },
+    { id: "koma", speaker: "코마", body: "…따라오지 마라. 아래는 당신이 올 곳이 아니다.", standing: "koma", act: "shrink", voice: "whisper" },
+    { id: "gone", speaker: "", body: "그 목소리에는 끝내 대꾸하지 않고, 코마는 철문 손잡이를 잡았다. 문이 열리자 아래에서 차가운 바람이 올라왔고, 작은 그림자는 그 어둠 속으로 가라앉았다.", cast: [], leave: "sink" },
   ]),
 };
 

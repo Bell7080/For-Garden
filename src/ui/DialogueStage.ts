@@ -30,6 +30,9 @@ import {
   DIALOGUE_SIGN,
   DIALOGUE_SIGN_LAYOUT,
   DIALOGUE_BLAST_OFF,
+  DIALOGUE_BLACKOUT,
+  DIALOGUE_HEARTBEAT,
+  DIALOGUE_LEAVES,
   DIALOGUE_BACKDROP,
   DIALOGUE_CUES,
   DIALOGUE_ENTRANCE,
@@ -200,7 +203,7 @@ export class DialogueStage {
       .sort((a, b) => DIALOGUE_SLOT_ORDER[a.slot] - DIALOGUE_SLOT_ORDER[b.slot]);
     const departures = leavers.map((member, index) => this.dismiss(member, node.leave, index, leavers.length));
     // 날아가며 퇴장하는 동안은 다음 인물을 들이지 않는다 — 날아가기가 끝나 사라진 뒤에 들어와야 겹치지 않는다.
-    if (node.leave === "blastOff") {
+    if (node.leave) {
       await Promise.all(departures);
       if (!isCurrent()) return;
     }
@@ -290,6 +293,7 @@ export class DialogueStage {
     if (!this.scene.tweens || !creature.active) { creature.destroy(); return Promise.resolve(); }
     this.scene.tweens.killTweensOf(creature);
     if (leave === "blastOff") return this.blastOff(member, order, total);
+    if (leave && this.distanceFactor() > 0) return this.depart(member, leave, order);
     this.scene.tweens.add({ targets: creature, alpha: 0, duration: DIALOGUE_ENTRANCE.exitMs, onComplete: () => creature.destroy() });
     return Promise.resolve();
   }
@@ -339,6 +343,131 @@ export class DialogueStage {
         resolve();
       },
     }));
+  }
+
+  /**
+   * 별이 되지 않는 퇴장(`DIALOGUE_LEAVES`). 퇴장은 그 사람이 어떤 사람인지 말하므로 저마다 다르다 —
+   * 슉 빠지는 잔상, 스르륵 가라앉는 어둠, 팟 꺼지는 깜빡임, 휙 솟는 바람, 돌아보며 멀어지는 뒷걸음.
+   * 여럿이 함께 떠나면 자리 순서대로 조금씩 어긋나 나간다.
+   */
+  private depart(member: StageMember, leave: Exclude<DialogueLeave, "blastOff">, order: number): Promise<void> {
+    const { creature } = member;
+    const factor = this.distanceFactor();
+    const wait = order * DIALOGUE_BLAST_OFF.staggerMs;
+    creature.setAnimationFrozen(true);
+    const finish = (resolve: () => void) => () => { creature.setAfterimages([]); creature.destroy(); resolve(); };
+    const leading = wait > 0 ? [{ alpha: creature.alpha, duration: wait }] : [];
+    if (leave === "dash") {
+      const spec = DIALOGUE_LEAVES.dash;
+      const dir = member.slot === "left" ? -1 : 1;
+      if (order === 0) audioManager?.playSfx("sweep.hop");
+      creature.clearMask();
+      return new Promise<void>((resolve) => this.scene.tweens.chain({
+        targets: creature,
+        tweens: [
+          ...leading,
+          { x: creature.x - dir * spec.windupDx * factor, duration: spec.windupMs, ease: "Quad.Out" },
+          {
+            x: creature.x + dir * spec.distance * factor,
+            duration: spec.flyMs,
+            ease: "Cubic.In",
+            onStart: () => {
+              creature.setAfterimages(spec.trail.map((alpha, index) => ({ dx: -dir * spec.trailGap * (index + 1), dy: 0, alpha })));
+              this.streak(creature.x, creature.y - 300 * creature.scaleY, dir, 0, spec.streakAlpha, spec.streakMs);
+            },
+          },
+        ],
+        onComplete: finish(resolve),
+      }));
+    }
+    if (leave === "rise") {
+      const spec = DIALOGUE_LEAVES.rise;
+      if (order === 0) audioManager?.playSfx("sweep.hop");
+      creature.clearMask();
+      return new Promise<void>((resolve) => this.scene.tweens.chain({
+        targets: creature,
+        tweens: [
+          ...leading,
+          { y: creature.y + spec.crouchDy * factor, duration: spec.crouchMs, ease: "Quad.Out" },
+          {
+            y: creature.y + spec.dy * factor,
+            scale: creature.scaleX * spec.endScale,
+            duration: spec.flyMs,
+            ease: "Cubic.In",
+            onStart: () => {
+              creature.setAfterimages([0.4, 0.22].map((alpha, index) => ({ dx: 0, dy: 90 * (index + 1), alpha })));
+              this.streak(creature.x, creature.y - 200 * creature.scaleY, 0, -1, spec.streakAlpha, spec.streakMs);
+            },
+          },
+        ],
+        onComplete: finish(resolve),
+      }));
+    }
+    if (leave === "vanish") {
+      const spec = DIALOGUE_LEAVES.vanish;
+      return new Promise<void>((resolve) => this.scene.tweens.chain({
+        targets: creature,
+        tweens: [...leading, ...spec.blinks.map((alpha) => ({ alpha, duration: spec.blinkMs, ease: "Linear" }))],
+        onComplete: () => {
+          if (!this.terminated) this.puff(creature.x, creature.y - 380 * creature.scaleY, spec.puffSize, spec.puffMs);
+          finish(resolve)();
+        },
+      }));
+    }
+    if (leave === "sink") {
+      const spec = DIALOGUE_LEAVES.sink;
+      this.tweenTint(creature, spec.darken);
+      return new Promise<void>((resolve) => this.scene.tweens.chain({
+        targets: creature,
+        tweens: [...leading, { y: creature.y + spec.dy * factor, alpha: 0, duration: spec.ms, ease: "Sine.In" }],
+        onComplete: finish(resolve),
+      }));
+    }
+    const spec = DIALOGUE_LEAVES.retreat;
+    this.tweenTint(creature, spec.darken);
+    return new Promise<void>((resolve) => this.scene.tweens.chain({
+      targets: creature,
+      tweens: [
+        ...leading,
+        { y: creature.y, duration: spec.pauseMs },
+        { y: creature.y + spec.dy * factor, scale: creature.scaleX * spec.endScale, alpha: 0, duration: spec.ms, ease: "Sine.InOut" },
+      ],
+      onComplete: finish(resolve),
+    }));
+  }
+
+  /** 빠져나간 길에 남는 바람 줄기 — 가로(`dirX`)나 세로(`dirY`)로 긴 얇은 마름모 셋. */
+  private streak(x: number, y: number, dirX: number, dirY: number, alpha: number, ms: number): void {
+    const g = this.scene.add.graphics({ x, y }).setDepth(DIALOGUE_FOCUS.speakerDepth + 1).setAlpha(alpha);
+    g.fillStyle(0xffffff, 1);
+    [-70, 10, 80].forEach((offset, index) => {
+      const length = 260 - index * 50;
+      const cx = dirY !== 0 ? offset : -dirX * length * 0.6;
+      const cy = dirY !== 0 ? -dirY * length * 0.6 : offset;
+      const along = dirY !== 0 ? { x: 0, y: length / 2 } : { x: length / 2, y: 0 };
+      const across = dirY !== 0 ? { x: 4, y: 0 } : { x: 0, y: 4 };
+      g.fillPoints([
+        new Phaser.Math.Vector2(cx - along.x, cy - along.y),
+        new Phaser.Math.Vector2(cx + across.x, cy + across.y),
+        new Phaser.Math.Vector2(cx + along.x, cy + along.y),
+        new Phaser.Math.Vector2(cx - across.x, cy - across.y),
+      ], true);
+    });
+    this.scene.tweens.add({ targets: g, alpha: 0, x: x + dirX * 220, y: y + dirY * 220, duration: ms, ease: "Quad.Out", onComplete: () => g.destroy() });
+  }
+
+  /** 팟 꺼진 자리에 한 번 번지는 옅은 마름모 연기. */
+  private puff(x: number, y: number, size: number, ms: number): void {
+    const g = this.scene.add.graphics({ x, y }).setDepth(DIALOGUE_FOCUS.speakerDepth + 1).setAlpha(0.5);
+    g.fillStyle(0xd8dce8, 1);
+    g.fillPoints([
+      new Phaser.Math.Vector2(0, -size * 0.5),
+      new Phaser.Math.Vector2(size * 0.42, -size * 0.04),
+      new Phaser.Math.Vector2(0, size * 0.46),
+      new Phaser.Math.Vector2(-size * 0.38, size * 0.06),
+    ], true);
+    g.setScale(0.3);
+    this.scene.tweens.add({ targets: g, scale: 1.4, alpha: 0, duration: ms, ease: "Cubic.Out", onComplete: () => g.destroy() });
   }
 
   /** 날아간 자리에서 한 번 반짝이는 마름모. 동그라미가 아니라 좌우를 어긋나게 깎은 마름모다. */
@@ -552,10 +681,58 @@ export class DialogueStage {
   /** 흔들림·섬광·경보 가운데 폭파를 뺀 것. 폭파는 무대를 갈아 끼우므로 기다려야 한다. */
   private playCue(cue: DialogueCue): void {
     const spec = DIALOGUE_CUES[cue];
-    audioManager?.playSfx(`story.${cue}`);
+    audioManager?.playSfx(cue === "blackout" ? "story.impact" : cue === "heartbeat" ? "story.rumble" : `story.${cue}`);
     this.shake(spec.shakeMs, spec.shakeIntensity);
     if (spec.flashAlpha > 0) this.flash(spec.flashAlpha, 60, 240);
     if (cue === "alarm") this.startAlarm();
+    if (cue === "blackout") this.blackout();
+    if (cue === "heartbeat") this.heartbeat();
+  }
+
+  /** 암전 — 무대가 검게 잠겼다가 걷힌다. 대사판은 그 위에 남아 글은 읽힌다. */
+  private blackout(): void {
+    const spec = DIALOGUE_BLACKOUT;
+    const veil = fullScreenRect(this.scene, 0x000000, 0).setDepth(DEPTH.fade - 1);
+    this.scene.tweens.chain({
+      targets: veil,
+      tweens: [
+        { fillAlpha: spec.alpha, duration: spec.inMs, ease: "Quad.Out" },
+        { fillAlpha: spec.alpha, duration: spec.holdMs },
+        { fillAlpha: 0, duration: spec.outMs, ease: "Sine.InOut" },
+      ],
+      onComplete: () => veil.destroy(),
+    });
+  }
+
+  /** 심장 박동 — 가장자리가 짙게 두 번 조인다. 가운데는 비워 인물과 글을 덮지 않는다. */
+  private heartbeat(): void {
+    const spec = DIALOGUE_HEARTBEAT;
+    const o = DIALOGUE_OVERSCAN;
+    const w = BASE_WIDTH + o * 2;
+    const h = BASE_HEIGHT + o * 2;
+    const c = spec.color;
+    const thick = spec.thickness;
+    const band = this.scene.add.graphics().setDepth(DEPTH.alarm).setAlpha(0);
+    band.fillGradientStyle(c, c, c, c, 1, 1, 0, 0);
+    band.fillRect(-o, -o, w, thick + o);
+    band.fillGradientStyle(c, c, c, c, 0, 0, 1, 1);
+    band.fillRect(-o, BASE_HEIGHT - thick, w, thick + o);
+    band.fillGradientStyle(c, c, c, c, 1, 0, 1, 0);
+    band.fillRect(-o, -o, thick + o, h);
+    band.fillGradientStyle(c, c, c, c, 0, 1, 0, 1);
+    band.fillRect(BASE_WIDTH - thick, -o, thick + o, h);
+    const [first, second] = spec.beats;
+    this.scene.tweens.chain({
+      targets: band,
+      tweens: [
+        { alpha: first.alpha, duration: spec.beatMs * 0.4, ease: "Quad.Out" },
+        { alpha: 0.1, duration: spec.beatMs, ease: "Quad.In" },
+        { alpha: 0.1, duration: Math.max(0, second.at - spec.beatMs * 1.4) },
+        { alpha: second.alpha, duration: spec.beatMs * 0.4, ease: "Quad.Out" },
+        { alpha: 0, duration: spec.beatMs * 2, ease: "Sine.In" },
+      ],
+      onComplete: () => band.destroy(),
+    });
   }
 
   private shake(duration: number, intensity: number): void {

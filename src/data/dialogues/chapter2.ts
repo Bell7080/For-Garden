@@ -173,7 +173,7 @@ export const STAGE_2_8_POST: DialogueStory = {
     { id: "komaReply", speaker: "코마", body: "…네우리. 보고를 받으러 왔나.", standing: "koma", act: "shrink" },
     { id: "polite", speaker: "네우리", body: "어머, 보고라니요. 저희 같은 말단이 어찌 감히. 다만 위에서 「테러조는 이제 쉬셔도 된다」고 하셔서요. 아주, 아주 정중하게 전해 드리러 왔답니다.", standing: "neuri", act: "bounce" },
     { id: "mir", speaker: "미르", body: "…길. 막혀 있다. 치운다.", standing: "mir", act: "nod" },
-    { id: "bye", speaker: "네우리", body: "아, 그렇지, 미르. …그럼 연구원님, 다음에 또 뵙지요. 그때는 저희 회수조가 직접 모시러 오겠습니다.", standing: "neuri", act: "nod", leave: "blastOff", cast: [{ id: "koma", slot: "left" }] },
+    { id: "bye", speaker: "네우리", body: "아, 그렇지, 미르. …그럼 연구원님, 다음에 또 뵙지요. 그때는 저희 회수조가 직접 모시러 오겠습니다.", standing: "neuri", act: "nod", leave: "rise", cast: [{ id: "koma", slot: "left" }] },
     { id: "torika", speaker: "토리카", body: "코마 씨… 실패하셨다는 게 무슨 말이에요?", standing: "torika", cast: PAIR("koma"), act: "lean" },
     { id: "later", speaker: "코마", body: "…나중에 말하지. 저 둘이 이 구역까지 내려왔다는 것만 기억해라.", standing: "koma", act: "shrink" },
   ]),

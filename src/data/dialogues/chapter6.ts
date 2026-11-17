@@ -73,6 +73,7 @@ export const STAGE_6_5_POST: DialogueStory = {
     { id: "magasa", speaker: "마가사", body: "우리 노아한테 뭐 하는 거예요, 연구원님? 이 아이는 재료 아니에요. 식구예요.", standing: "magasa", cast: [{ id: "noa", slot: "left" }, { id: "magasa", slot: "right" }], act: "lean" },
     { id: "noa2", speaker: "노아", body: "마가사… 나 하나도 안 무서웠어. 진짜야.", standing: "noa", act: "tremble" },
     { id: "magasa2", speaker: "마가사", body: "알아, 알아. 가자. 밥 먹고 다시 하자.", standing: "magasa", act: "nod" },
+    { id: "back", speaker: "", body: "마가사는 노아를 등에 업고 뒷걸음질로 물러났다. 마지막까지 이쪽에서 눈을 떼지 않은 채, 두 그림자는 취사장 문 너머로 사라졌다.", cast: [], leave: "retreat" },
   ]),
 };
 
@@ -125,7 +126,7 @@ export const STAGE_6_10_POST: DialogueStory = {
     { id: "noa", speaker: "노아", body: "…응. 근데 바닥이, 바닥이 이상해.", standing: "noa", act: "fright" },
     { id: "crack", speaker: "", body: "회랑 바닥이 한가운데부터 꺼져 내렸다. 위로 가는 계단이 멀어지고, 몸이 어둠 속으로 떨어졌다.", cast: [], cue: "explosion" },
     { id: "koma", speaker: "코마", body: "…손 잡아라. 떨어지면, 그 문은 네 손으로 열게 된다.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
-    { id: "voice", speaker: "???", body: "…늦었어.", cast: [{ id: "koma", slot: "left" }, { id: "carno", slot: "right", veiled: true }], cue: "impact" },
+    { id: "voice", speaker: "???", body: "…늦었어.", cast: [{ id: "koma", slot: "left" }, { id: "carno", slot: "right", veiled: true }], cue: "heartbeat", voice: "heavy" },
   ]),
 };
 

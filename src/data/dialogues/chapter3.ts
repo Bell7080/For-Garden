@@ -140,11 +140,11 @@ export const STAGE_3_10_POST: DialogueStory = {
   backdrop: "deepField",
   nodes: linear([
     { id: "fall", speaker: "이카닉시아", body: "…후훗. 오늘은 여기까지로 해 두죠. 아쉽지만 서두를 이유는 없으니까요.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
-    { id: "wing", speaker: "", body: "날개 망토가 허공으로 떠올랐다. 회수조의 그림자들도 하나둘 그 뒤를 따라 사라졌다.", standing: "ikanixia", leave: "blastOff", cast: [] },
+    { id: "wing", speaker: "", body: "날개 망토가 허공으로 떠올랐다. 회수조의 그림자들도 하나둘 그 뒤를 따라 사라졌다.", standing: "ikanixia", leave: "rise", cast: [] },
     { id: "koma", speaker: "코마", body: "…당신은 아직 목록에 있다.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
     { id: "koma2", speaker: "코마", body: "내 번호는, 지웠다. 그건 내가 정했다.", standing: "koma", act: "shrink" },
     { id: "lexia", speaker: "렉시아", body: "…지웠다니, 무슨 소리야? 그럼 너는 이제 어디로 가는데?", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "koma", slot: "right" }], act: "nod" },
-    { id: "koma3", speaker: "", body: "대답은 없었다. 코마는 가리개를 고쳐 쓰고 연구원 쪽을 한 번 돌아본 뒤, 회수조가 사라진 반대편 통로로 걸어갔다." },
+    { id: "koma3", speaker: "", body: "대답은 없었다. 코마는 가리개를 고쳐 쓰고 연구원 쪽을 한 번 돌아본 뒤, 회수조가 사라진 반대편 통로로 걸어갔다.", cast: [{ id: "lexia", slot: "left" }], leave: "retreat" },
   ]),
 };
 

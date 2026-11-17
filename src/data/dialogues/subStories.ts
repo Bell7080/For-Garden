@@ -30,7 +30,7 @@ export const STAGE_2_3_LOST_BADGE: DialogueStory = {
         { id: "wound", label: "손의 상처가 마음에 걸린다", nextId: "plunge", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
       ],
     },
-    { id: "plunge", speaker: "", body: "대답은 없었다. 첨벙, 물소리 하나만 남기고 그림자는 수로 아래로 사라졌다.", standing: "koma", cast: [], cue: "impact" },
+    { id: "plunge", speaker: "", body: "대답은 없었다. 첨벙, 물소리 하나만 남기고 그림자는 수로 아래로 가라앉았다.", standing: "koma", cast: [], leave: "sink" },
     { id: "dodi", speaker: "도디", body: "…쫓아가요, 대장님. 저쪽으로 가면 생산선이에요.", standing: "dodi", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "right" }], act: "nod" },
   ]),
 };
@@ -73,7 +73,7 @@ export const STAGE_2_9_SECOND_CHASE: DialogueStory = {
     { id: "give", speaker: "", body: "코마가 품에서 사원증을 꺼내 난간 위에 내려놓았다.", standing: "koma" },
     { id: "promise", speaker: "코마", body: "돌려준다고 했다. 위에는 나 혼자 한 일이라고 하겠다.", standing: "koma", act: "nod" },
     { id: "warn", speaker: "코마", body: "조심해라. 위가 찾는 건 내 번호가 아니라 당신 번호다.", standing: "koma", act: "lean" },
-    { id: "exit", speaker: "", body: "코마는 난간 아래 구멍으로 몸을 던졌다. 어둠이 소리도 없이 그 몸을 삼켰다.", standing: "koma", cast: [{ id: "torika", slot: "center" }] },
+    { id: "exit", speaker: "", body: "코마는 난간 아래 구멍으로 몸을 던졌다. 어둠이 소리도 없이 그 몸을 삼켰다.", standing: "koma", cast: [{ id: "torika", slot: "center" }], leave: "sink" },
   ]),
 };
 
@@ -222,7 +222,7 @@ export const STAGE_3_3_SIDE_POST: DialogueStory = {
     { id: "returnA", speaker: "렉시아", body: "자, 돌려줄게. 다음엔 점수 말고 제대로 덤벼. 그럼 나도 제대로 상대해 줄게.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "mir", slot: "center" }, { id: "pulsi", slot: "right" }], act: "nod", nextId: "laugh" },
     { id: "fillB", speaker: "루카", body: "…그럼 「끝까지 뛰었음」이라고 적어 줘. 첫 칸은 그걸로 충분해.", standing: "luka", remote: true, nextId: "laugh" },
     { id: "laugh", speaker: "미르", body: "…헤헤. 연구원님 쪽은 점수를 이상하게 주네요. 다음에 또 모시러 올게요!", standing: "mir", cast: [{ id: "mir", slot: "left" }, { id: "pulsi", slot: "right" }], act: "hopTwice" },
-    { id: "gone", speaker: "", body: "두 그림자가 물을 튀기며 통로 너머로 사라졌다. 펄시가 한 번 뒤돌아본 것은 아무도 보지 못했다.", standing: "pulsi", cast: [] },
+    { id: "gone", speaker: "", body: "두 그림자가 물을 튀기며 통로 너머로 쏜살같이 사라졌다. 펄시가 한 번 뒤돌아본 것은 아무도 보지 못했다.", standing: "pulsi", cast: [], leave: "dash" },
   ]),
 };
 
@@ -290,7 +290,7 @@ export const STAGE_4_7_SIDE_POST: DialogueStory = {
     { id: "giveA", speaker: "델로피", body: "네, 돌려드릴게요. 대신 마술 하나는 남겨 뒀어요. 펴 보시면 아실 거예요.", standing: "delopi", act: "nod", nextId: "neuri" },
     { id: "tearB", speaker: "델로피", body: "찢는 건 마술이 아니잖아요… 그 대신 이 한 장만 쓱, 사라지게 해 드릴게요.", standing: "delopi", act: "hop", nextId: "neuri" },
     { id: "neuri", speaker: "네우리", body: "후훗… 오늘 일은 「보류」로 적어 둘게요. 저도 한 번쯤은 써 보고 싶었거든요.", standing: "neuri", act: "lean" },
-    { id: "left", speaker: "", body: "네우리와 펄시는 뒷문 반대편으로 사라졌다. 바닥에 떨어진 종이 한 장에 「072 — 보류」라는 글씨가 남아 있었다.", standing: "delopi", cast: [] },
+    { id: "left", speaker: "", body: "네우리는 장부를 끌어안고 뒷걸음질로 뒷문 반대편까지 물러났다. 바닥에 떨어진 종이 한 장에 「072 — 보류」라는 글씨가 남아 있었다.", standing: "delopi", cast: [{ id: "delopi", slot: "left" }], leave: "retreat" },
   ]),
 };
 
@@ -396,7 +396,7 @@ export const STAGE_6_4_SIDE_POST: DialogueStory = {
     { id: "askB", speaker: "스테라", body: "선배가 물어봐요. 라자 씨는 왜 늘 앞에 서요?", standing: "stella", cast: [{ id: "stella", slot: "left" }, { id: "raja", slot: "right" }], act: "lean", nextId: "noa" },
     { id: "noa", speaker: "라자", body: "…앞이 버티면 노아가 안 나와도 된다. 겁 많은 애는 뒤에 있어야 한다.", standing: "raja", cast: [{ id: "raja", slot: "left" }, { id: "kento", slot: "right" }], act: "nod" },
     { id: "same", speaker: "라자", body: "같은 이유군. 내일 다시 긋겠다.", standing: "raja" },
-    { id: "up", speaker: "", body: "라자는 바람을 거슬러 수직갱 위로 올라갔다. 위쪽 어딘가에서 작게 떨리는 숨소리가 라자를 맞았다.", standing: "raja", cast: [] },
+    { id: "up", speaker: "", body: "라자는 바람을 거슬러 수직갱 위로 올라갔다. 위쪽 어딘가에서 작게 떨리는 숨소리가 라자를 맞았다.", standing: "raja", cast: [{ id: "kento", slot: "right" }], leave: "rise" },
   ]),
 };
 

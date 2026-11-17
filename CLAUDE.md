@@ -747,6 +747,13 @@
 
 ## 이야기 무대 — 대사 화면
 
+- **대사를 쓰거나 고치기 전에 `docs/story-brain/`을 먼저 연다.** 그 장이 맡은 칸(`plot.md`), 인물의 목표·말투
+  (`characters.md`), 관계·호감·적대(`relationships.md`), 깔린 떡밥(`threads.md`)을 대조하고, 장면을 바꾸면 그 문서들에
+  한 줄을 더한다 — 문서와 대사가 갈리면 다음 사람은 어느 쪽이 맞는지 알 수 없다. 작법·연출 문법은 `craft.md`가 갖는다.
+- **퇴장은 그 인물이 어디로 가는지를 말한다**(`leave` — 값 `DIALOGUE_LEAVES`). 슉 빠지기(`dash`) · 스르륵 사라지기(`vanish`) ·
+  가라앉기(`sink`) · 떠오르기(`rise`) · 뒷걸음질(`retreat`)이고, **별이 되는 `blastOff`는 개그 퇴장에만** 쓴다. 대사의
+  무게는 `voice`(외침 `shout` · 속삭임 `whisper` · 무게 `heavy` — 외침은 한 이야기에 셋까지)가, 장면의 숨은 `cue`의 암전
+  (`blackout`)·심장 박동(`heartbeat`)이 더한다. `leave`는 `cast`를 적은 노드에만 쓴다 — `dialogueStageGrammar.test`가 지킨다.
 - **스탠딩은 늘 idle이고 표정을 적지 않는다.** 기분은 몸 전체를 옮기는 몸짓(`DialogueNode.act` —
   통통·부들부들·끄덕 등, 값은 `src/ui/dialogueStageLayout.ts`의 `DIALOGUE_ACTS`)이 말한다. 모든
   몸짓은 제자리(0, 0)로 끝나야 한다 — 끝나지 않으면 대사가 쌓일수록 인물이 흘러내린다. 표정 이름을

@@ -175,6 +175,23 @@ export const DIALOGUE_BLAST_OFF = {
   twinkleY: 110,
 } as const;
 
+/**
+ * 별이 되지 않는 퇴장들. 퇴장은 그 사람이 어떤 사람인지 말하므로(`DialogueLeave`) 값도 저마다 다르다.
+ * 거리는 움직임 줄이기(`nonEssentialDistanceFactor`)를 따라 줄고, 0이면 그 자리에서 옅어지기만 한다.
+ */
+export const DIALOGUE_LEAVES = {
+  /** 슉 — 반대쪽으로 한 뼘 당겼다가 자리 바깥쪽으로 빠져나간다. 잔상 겹이 길을 남긴다. */
+  dash: { windupMs: 90, windupDx: 46, flyMs: 210, distance: 1250, trail: [0.5, 0.32, 0.18], trailGap: 70, streakAlpha: 0.55, streakMs: 260 },
+  /** 스르륵 — 어둡게 물들며 아래로 가라앉는다. */
+  sink: { ms: 760, dy: 260, darken: 0x2a2a38 },
+  /** 팟 — 두어 번 깜빡이다 꺼지고, 그 자리에 옅은 마름모 연기가 한 번 번진다. */
+  vanish: { blinks: [0.15, 0.85, 0.1, 0.6, 0], blinkMs: 60, puffSize: 120, puffMs: 360 },
+  /** 휙 — 살짝 웅크렸다가 위로 솟구친다. 별은 없고 바람 줄기 두어 개가 뒤따른다. */
+  rise: { crouchMs: 120, crouchDy: 30, flyMs: 380, dy: -1500, endScale: 0.82, streakAlpha: 0.5, streakMs: 300 },
+  /** 뒷걸음 — 작아지며 화면 안쪽으로 멀어진다. 한 번 멈칫하는 사이가 미련이다. */
+  retreat: { pauseMs: 220, ms: 900, endScale: 0.62, dy: -120, darken: 0x8a8f9c },
+} as const;
+
 /** 스탠딩 연출 한 걸음 — 기준 자리에서의 변위와 그 자리까지 가는 시간. */
 export interface DialogueActStep {
   dx: number;
@@ -394,7 +411,25 @@ export const DIALOGUE_CUES: Readonly<Record<DialogueCue, {
   alarm: { shakeMs: 380, shakeIntensity: 0.008, flashAlpha: 0 },
   explosion: { shakeMs: 900, shakeIntensity: 0.03, flashAlpha: 1 },
   impact: { shakeMs: 180, shakeIntensity: 0.01, flashAlpha: 0.22 },
+  blackout: { shakeMs: 0, shakeIntensity: 0, flashAlpha: 0 },
+  heartbeat: { shakeMs: 120, shakeIntensity: 0.004, flashAlpha: 0 },
 };
+
+/** 암전. 불이 꺼진 동안은 대사판만 남고 무대는 검게 잠긴다 — 인물과 글이 사라지지 않도록 대사판 아래 층이다. */
+export const DIALOGUE_BLACKOUT = { inMs: 90, holdMs: 520, outMs: 420, alpha: 0.94 } as const;
+
+/** 심장 박동. 가장자리가 짙게 조였다 풀리기를 두 번 — 두 번째가 약간 늦고 옅다(쿵, 쿵). */
+export const DIALOGUE_HEARTBEAT = { color: 0x1a0006, thickness: 260, beats: [{ at: 0, alpha: 0.78 }, { at: 300, alpha: 0.52 }], beatMs: 150 } as const;
+
+/**
+ * 목소리 크기(`DialogueVoice`). 글자 크기 배율·역할·색과 한 글자가 찍히는 속도 배율을 갖는다.
+ * 외침은 대사판이 한 번 튀어(`bump`) 글자보다 먼저 소리가 크다는 것을 말한다.
+ */
+export const DIALOGUE_VOICE = {
+  shout: { sizeRatio: 1.32, role: "display", dim: false, speed: 0.75, bump: 14 },
+  whisper: { sizeRatio: 0.84, role: "body", dim: true, speed: 1.5, bump: 0 },
+  heavy: { sizeRatio: 1.08, role: "emphasis", dim: false, speed: 1.35, bump: 0 },
+} as const;
 
 /** 경보의 붉은 맥박. 한 번 켜지면 폭파나 배경 전환이 끌 때까지 되풀이된다. */
 export const DIALOGUE_ALARM = {

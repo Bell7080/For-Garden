@@ -1607,7 +1607,7 @@
 "Говорю же, не то! Слушай мои команды, я затащу."
 ],
 "firstMeeting.morphe": ["……管理员？来得正好。稍等……我把画面调出来。", "…ผู้ดูแล? มาพอดีเลย รอหน่อยนะ… จะเปิดจอให้", "…Người điều phối? Tới đúng lúc lắm. Chờ chút… Tôi mở màn hình cho.", "…Pengendali? Senang kamu datang. Sebentar… kutampilkan layarnya.", "…¿Controlador? Me alegra verte. Un momento… Te pongo la pantalla.", "…Controlador? Que bom que veio. Só um instante… Vou abrir a tela.", "…Leitstelle? Schön, dass du da bist. Moment… Ich zeige dir den Bildschirm.", "…Куратор? Хорошо, что ты здесь. Подожди… Выведу экран."],
-"firstMeeting.dian": ["我会保护你的，队长！……啊，克罗！希罗！", "ฉันจะปกป้องคุณเองค่ะ กัปตัน! …อ๊ะ คุโระ! ชิโระ!", "Em sẽ bảo vệ anh, Đội trưởng! …A, Kuro! Shiro!", "Aku akan melindungimu, Kapten! …Ah, Kuro! Shiro!", "¡Yo te protegeré, Capitán! …¡Ah, Kuro! ¡Shiro!", "Eu vou te proteger, Capitão! …Ah, Kuro! Shiro!", "Ich beschütze dich, Captain! …Ah, Kuro! Shiro!", "Я защищу тебя, капитан! …Ой, Куро! Широ!"],
+"firstMeeting.dian": ["我会保护队长的！……啊，克罗！希罗！过来！", "กัปตันฉันจะปกป้องเองค่ะ! …อ๊ะ คุโระ! ชิโระ! มานี่!", "Đội trưởng để em bảo vệ! …Á, Kuro! Shiro! Lại đây nào!", "Kapten biar aku yang lindungi! …Ah, Kuro! Shiro! Sini!", "¡Yo te protegeré, Capitán! …¡Ay, Kuro! ¡Shiro! ¡Venid aquí!", "O Capitão eu protejo! …Ah, Kuro! Shiro! Vem cá!", "Ich beschütze dich, Captain! …Ah, Kuro! Shiro! Kommt her!", "Капитана защищу я! …Ой, Куро! Широ! Ко мне!"],
 "event.greatAuk.stage.name": [
 "大海雀海岸发掘地",
 "แหล่งขุดค้นชายฝั่งนกอัลก์ใหญ่",

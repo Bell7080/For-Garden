@@ -309,7 +309,7 @@
 "Torika",
 "Торика"
 ],
-"dialogue.opening-train.window.body": ["看，窗外那些塔，你看见了吗？那里就是永恒之城。我们快到了。", "เห็นหอคอยนอกหน้าต่างไหมคะ? นั่นคืออีเทอร์นัลซิตี ใกล้ถึงแล้วค่ะ", "Thấy những tòa tháp ngoài cửa sổ không? Đó là Thành phố Vĩnh Hằng. Sắp tới rồi.", "Lihat menara di luar jendela itu? Itulah Eternal City. Kita hampir sampai.", "¿Ve esas torres por la ventana? Eso es Eternal City. Ya casi llegamos.", "Está vendo aquelas torres pela janela? Ali é Eternal City. Já estamos chegando.", "Sehen Sie die Türme vor dem Fenster? Das ist Eternal City. Wir sind fast da.", "Видите башни за окном? Это Вечный город. Мы почти приехали."],
+"dialogue.opening-train.window.body": ["看到那边高高的塔了吗？那里就是永恒之城。我们快到了。", "เห็นหอคอยสูง ๆ ตรงนั้นไหมคะ? นั่นคืออีเทอร์นัลซิตี้ค่ะ ใกล้ถึงแล้วล่ะค่ะ", "Thấy mấy tòa tháp cao đằng kia không? Đó là Eternal City đấy. Sắp tới nơi rồi.", "Lihat menara-menara tinggi di sana? Itulah Eternal City. Sebentar lagi kita sampai.", "¿Ves esas torres tan altas de allí? Eso es Eternal City. Ya casi hemos llegado.", "Tá vendo aquelas torres altas? Ali é Eternal City. Já estamos quase lá.", "Siehst du die hohen Türme da drüben? Das ist Eternal City. Wir sind gleich da.", "Видите вон те высокие башни? Это Вечный город. Мы почти приехали."],
 "dialogue.opening-train.answer.speaker": [
 "托莉卡",
 "โทริกะ",
@@ -360,7 +360,7 @@
 "Torika",
 "Торика"
 ],
-"dialogue.opening-train.warm.body": ["那我来介绍！到了之后，我们一起去打招呼吧。", "งั้นฉันจะแนะนำให้เองค่ะ! ไปถึงแล้วไปทักทายด้วยกันนะคะ", "Vậy tôi sẽ giới thiệu cho! Tới nơi rồi cùng đi chào hỏi nhé.", "Kalau begitu, biar saya perkenalkan! Sesampainya nanti, ayo menyapa bersama.", "¡Entonces haré las presentaciones! Cuando lleguemos, iremos a saludar juntos.", "Então eu faço as apresentações! Quando chegarmos, vamos cumprimentar todo mundo juntos.", "Dann stelle ich Sie vor! Wenn wir ankommen, sagen wir zusammen Hallo.", "Тогда я вас познакомлю! Приедем - пойдём вместе поздороваемся."],
+"dialogue.opening-train.warm.body": ["真的吗？那我来全部介绍给你！到了之后，我们一起去和其他孩子打招呼吧。", "จริงเหรอคะ? งั้นฉันจะพาแนะนำทั้งหมดเองค่ะ! ถึงแล้วไปทักทายคนอื่น ๆ ด้วยกันนะคะ", "Thật hả? Vậy để mình giới thiệu hết cho! Đến nơi rồi mình cùng đi chào mấy bạn khác nữa nhé.", "Sungguh? Kalau begitu biar aku yang perkenalkan semuanya! Sesampainya nanti, kita pergi menyapa yang lain bersama-sama, ya.", "¿De verdad? ¡Entonces te lo presento todo yo! Cuando lleguemos, vamos también a saludar a los demás.", "Sério? Então eu apresento tudo pra você! Quando chegarmos, a gente vai cumprimentar o pessoal!", "Echt? Dann zeige ich dir alles! Wenn wir ankommen, gehen wir zusammen zu den anderen und sagen Hallo.", "Правда? Тогда я вам всё покажу! Как приедем, пойдём вместе поздороваемся и с остальными."],
 "dialogue.opening-train.ready.speaker": [
 "托莉卡",
 "โทริกะ",
@@ -522,7 +522,7 @@
 "Parua",
 "Паруа"
 ],
-"dialogue.opening-train.parua.body": ["我是帕鲁娅。负责看守后方，这是我的工作。", "ฉันคือปารัว หน้าที่ของฉันคือระวังหลัง", "Tớ là Parua. Canh chừng phía sau là việc của tớ.", "Aku Parua. Mengawasi bagian belakang adalah tugasku.", "Soy Parua. Vigilar la retaguardia es mi trabajo.", "Sou a Parua. Vigiar a retaguarda é o meu trabalho.", "Ich bin Parua. Den Rücken zu decken ist meine Aufgabe.", "Я Паруа. Прикрывать тыл — моя работа."],
+"dialogue.opening-train.parua.body": ["问候晚了。我是帕鲁娅。我会跟在后面。", "ทักทายช้าไปหน่อยนะคะ ฉันชื่อพารัวค่ะ จะตามไปอยู่ข้างหลังนะคะ", "Chào hỏi muộn mất rồi. Em là Parua. Em sẽ đi theo phía sau.", "Maaf terlambat memperkenalkan diri. Aku Parua. Aku akan mengikuti dari belakang.", "Perdona que me presente tarde. Soy Parua. Yo iré detrás.", "Desculpe a demora pra me apresentar. Sou a Parua. Eu vou atrás, cuidando da retaguarda.", "Ich habe mich noch gar nicht vorgestellt. Ich bin Parua. Ich folge von hinten.", "Простите, что не поздоровалась сразу. Я Паруа. Я пойду сзади."],
 "dialogue.opening-train.sniff.speaker": [
 "帕鲁娅",
 "ปารัว",
@@ -544,7 +544,7 @@
 "Torika",
 "Торика"
 ],
-"dialogue.opening-train.scold.body": ["再忍一下。到了车站就能马上下车了！", "ทนอีกนิดนะคะ พอถึงสถานีก็ลงได้ทันทีเลย!", "Ráng thêm một chút thôi. Tới ga là có thể xuống ngay!", "Sabar sebentar lagi. Kita bisa langsung turun begitu tiba di stasiun!", "Aguante un poquito más. ¡Podremos bajar en cuanto lleguemos a la estación!", "Aguente só mais um pouco. Assim que chegarmos à estação, podemos descer!", "Nur noch ein bisschen. Sobald wir am Bahnhof sind, können wir aussteigen!", "Потерпите ещё немного. На станции сразу выйдем!"],
+"dialogue.opening-train.scold.body": ["要是晕车就再忍一下。到了车站马上就能下车了！", "ถ้าเมารถก็อดทนอีกนิดนะคะ พอถึงสถานีก็ลงได้ทันทีเลยค่ะ!", "Nếu say xe thì Đội trưởng cố chịu một chút nhé. Đến ga là xuống được ngay mà!", "Kalau mabuk perjalanan, tahan sebentar lagi, ya. Begitu tiba di stasiun, kita bisa langsung turun!", "Si te mareas, aguanta un poquito. ¡En cuanto lleguemos a la estación podremos bajar!", "Se estiver enjoando, aguente só mais um pouquinho. Assim que chegarmos à estação, dá pra descer!", "Falls dir übel wird, halt noch ein bisschen durch. Sobald wir am Bahnhof sind, können wir gleich aussteigen!", "Если укачало, потерпите ещё чуть-чуть. На станции сразу сможем выйти!"],
 "dialogue.opening-train.quake.body": [
 "轰隆隆……！！整节车厢剧烈晃动。",
 "ครืนนน…!! ทั้งตู้รถไฟโยกอย่างรุนแรง",
@@ -686,7 +686,7 @@
 "Dodi",
 "Доди"
 ],
-"dialogue.opening-train.record.body": ["队长没事！帕鲁娅，帮我扶住这边。得先离开这里！", "กัปตันปลอดภัยค่ะ! ปารัว ช่วยจับตรงนี้หน่อย ต้องออกจากที่นี่ก่อน!", "Đội trưởng vẫn an toàn! Parua, giữ chỗ này giúp tớ. Phải ra khỏi đây trước đã!", "Kapten selamat! Parua, bantu pegang sebelah sini. Kita harus keluar dulu!", "¡El Capitán está a salvo! Parua, ayúdame a sujetar esto. ¡Primero tenemos que salir de aquí!", "O Capitão está bem! Parua, me ajuda a segurar aqui. Primeiro precisamos sair daqui!", "Dem Captain geht es gut! Parua, hilf mir hier. Wir müssen erst mal raus!", "Капитан в порядке! Паруа, подержи тут. Сначала надо выбраться!"],
+"dialogue.opening-train.record.body": ["看起来没受伤！帕鲁娅，帮我一起扶住这边。得先从这里出去！", "ดูท่าจะไม่ได้บาดเจ็บตรงไหนนะคะ! พารัว ช่วยจับตรงนี้ด้วยกันหน่อย ต้องออกไปจากที่นี่ก่อนค่ะ!", "Trông không bị thương chỗ nào cả! Parua, giữ chỗ này với tớ. Trước hết phải ra khỏi đây đã!", "Kelihatannya tidak ada yang terluka! Parua, bantu pegang sebelah sini. Pokoknya kita harus keluar dari sini dulu!", "¡No parece que tenga ninguna herida! Parua, ayúdame a sujetar esto. ¡Primero tenemos que salir de aquí!", "Parece que não houve nenhum ferimento! Parua, me ajuda a segurar aqui. Primeiro a gente tem que sair daqui!", "Sieht nicht verletzt aus! Parua, pack hier mit an. Erst mal müssen wir hier raus!", "Ран вроде не видно! Паруа, помоги, подхвати с этой стороны. Сначала надо отсюда выбраться!"],
 "dialogue.opening-train.three.speaker": [
 "帕鲁娅",
 "ปารัว",
@@ -697,7 +697,7 @@
 "Parua",
 "Паруа"
 ],
-"dialogue.opening-train.three.body": ["嘘。三个。正穿过烟雾朝这边来。", "ชู่ว สามตัว กำลังฝ่าควันมาทางนี้", "Suỵt. Ba đứa. Đang băng qua khói tới đây.", "Ssst. Tiga. Datang ke sini menembus asap.", "Chsss. Tres. Vienen hacia aquí entre el humo.", "Shh. Três. Vindo para cá pela fumaça.", "Pst. Drei. Sie kommen durch den Rauch hierher.", "Тсс. Трое. Идут сюда сквозь дым."],
+"dialogue.opening-train.three.body": ["嘘。有人来了。三个……正从烟雾那头朝这边过来。", "ชู่ว์ มีคนมา สามคน… กำลังเดินมาทางนี้จากหลังกลุ่มควัน", "Suỵt. Có người đến. Ba người… đang đi về phía này từ sau làn khói.", "Ssst. Ada yang datang. Tiga orang… mereka datang ke arah sini dari balik asap.", "Chsss. Viene alguien. Son tres… vienen hacia aquí desde el otro lado del humo.", "Shh. Vem alguém. São três… estão vindo pra cá pelo meio da fumaça.", "Pst. Da kommt jemand. Drei… Sie kommen durch den Rauch auf uns zu.", "Тсс. Кто-то идёт. Трое… идут сюда сквозь дым."],
 "dialogue.opening-train.toby.speaker": [
 "托比",
 "โทบี",

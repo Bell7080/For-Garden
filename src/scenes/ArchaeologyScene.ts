@@ -24,6 +24,7 @@ import { addSceneBackground, BACKGROUND, useBackgroundTexture } from "../ui/back
 import { BottomNav } from "../ui/BottomNav";
 import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { addRatesButton, RATES_SPOT } from "../ui/RatesButton";
+import { RailButton } from "../ui/RailButton";
 import { Button } from "../ui/Button";
 import { IconButton } from "../ui/IconButton";
 import { InventoryPopup } from "../ui/InventoryPopup";
@@ -351,7 +352,8 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.traitOddsLink = addRatesButton(this, rates.x, rates.y, t("rune.trait.odds"), () => openRuneTraitOdds({ scene: this, popups: this.popups }));
     this.synthOddsLink = addRatesButton(this, rates.x, rates.y, t("archaeology.synth.oddsTitle"), () => openRuneSynthesisOdds({ scene: this, popups: this.popups }));
     // 합성 탭에서만 확률 버튼 바로 아래(연구소의 연구 기록 자리)에 룬 가방이 선다 — 로비와 같은 가방 판 한 장을 연다.
-    this.synthBagLink = addRatesButton(this, RATES_SPOT.history.x, RATES_SPOT.history.y, t("archaeology.synth.bag"), () => this.openRuneBag(), { glyph: "bag" });
+    const bag = RATES_SPOT.bagChip;
+    this.synthBagLink = new RailButton(this, bag.x, bag.y, { icon: "bag", label: t("archaeology.synth.bag"), size: bag.size, onClick: () => this.openRuneBag() });
     // 판(합성 판·특성 표)이 왼쪽 열까지 넓게 서므로 버튼은 판 위에 올린다 — 아래에 깔리면 글자가 판에 잘린다.
     [this.traitOddsLink, this.synthOddsLink, this.synthBagLink].forEach((link) => link.setDepth(1));
 

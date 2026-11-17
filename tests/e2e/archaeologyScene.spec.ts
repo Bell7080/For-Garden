@@ -279,10 +279,10 @@ test("합성 탭의 룬 가방과 일괄 세공 판", async ({ page }, testInfo)
   await tap(page, 60 + 140 + 2 * 296, BASE_HEIGHT - 268);
   await page.waitForTimeout(700);
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-synth-bag.png`);
-  // 확률 버튼 바로 아래(연구 기록 자리)의 룬 가방.
+  // 확률 버튼 아래 왼쪽 열의 룬 가방 아이콘 칩.
   await expect.poll(async () => {
     const titles = (await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? [];
-    if (titles.length === 0) await tap(page, RATES_SPOT.history.x + 110, RATES_SPOT.history.y + 34);
+    if (titles.length === 0) await tap(page, RATES_SPOT.bagChip.x, RATES_SPOT.bagChip.y);
     return titles.length;
   }, { timeout: 20_000 }).toBeGreaterThan(0);
   await page.waitForTimeout(800);

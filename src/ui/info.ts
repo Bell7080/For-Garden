@@ -17,7 +17,7 @@ import { previewSkillDamage } from "../core/damage";
 import type { BasicAttack, Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
 import { setDebugFeedButton, setDebugInfoAssetReady, setDebugInfoGemSlots, setDebugInfoOpen, addDebugFeedTaps } from "../debug";
 import { formatCurrency } from "../core/formatCurrency";
-import { baseStatsOf, getRelic, PLAYABLE_RELICS, RELICS } from "../data/relics";
+import { baseStatsOf, PLAYABLE_RELICS, RELICS } from "../data/relics";
 import { KeywordManager } from "../managers/KeywordManager";
 import { relicStories } from "../managers/RelicStoryManager";
 import { BOND_STORY_GEM_REWARD, type BondStoryLevel } from "../core/relicStory";
@@ -106,9 +106,7 @@ import { withBusy } from "./BusyOverlay";
 import { canResetRelic, relicResetLoss, relicResetRefund } from "../core/relicReset";
 import { showContentToast } from "./ContentToast";
 import { findItem } from "../data/items";
-import { mountRunePickerGrid } from "./runePickerGrid";
-import { recommendRuneLoadout, runeHolders } from "../core/runeLoadout";
-import { runePickerSize } from "./runePickerLayout";
+import { openRuneWorkbench } from "./RuneWorkbenchPopup";
 import { universalFragmentTexture } from "./universalFragmentArt";
 import { logError, reportCatch } from "../managers/ErrorReporter";
 import { characterTags } from "./characterTags";
@@ -369,7 +367,6 @@ const BREAK_ARM = { low: 0.35, high: 1, duration: 900 } as const;
  */
 /** 돌파·공명 한 번에 드는 것 — 파편뿐이다(응태 결정 2026-11-15). 그 개체의 파편과, 모자랄 때만 함께 드는 만능 파편. */
 /** 룬 세 칸을 한 번에 정하는 조작. */
-type RuneLoadoutMode = "auto" | "recommend" | "clear";
 
 type BreakthroughCost =
   | { kind: "fragment"; label: string; need: number; have: number }
@@ -406,7 +403,7 @@ const RUNE_SEAT = {
 const RUNE_OVERVIEW = {
   width: 880, plate: 800, frame: 108, frameX: 74, gap: 26, pad: 26,
   name: 30, part: 20, main: 26, sub: 21, subMaxHeight: 60, lineGap: 6,
-  rowPad: 18, minRow: 128, rowGap: 14, top: 78, status: 64, buttons: 100, bottom: 40,
+  rowPad: 18, minRow: 128, rowGap: 14, top: 78, status: 64, bottom: 40,
 } as const;
 
 /** 능력치 칩에서 쓰는 다섯 축과 색. */
@@ -601,7 +598,6 @@ export class InfoManager {
   private currentDef?: RelicDef;
   private ownedNow = true;
   /** 세 칸을 정하는 요청이 도는 동안 같은 판의 다른 누름을 받지 않는다. */
-  private runeLoadoutBusy = false;
   private portrait?: PuppetCreature;
   /** 전신을 누르면 뽀용·띠용 — 로비의 애착 렐릭과 같은 한 벌. */
   private portraitPoker?: PuppetPoker;
@@ -952,7 +948,7 @@ export class InfoManager {
 
     // 하트 젬 — 하트 하나를 셋으로 가른 자리.
     this.addSectionTitle(t("info.section.rune"), 1398 - 146).setVisible(this.capabilities.mutateProgress);
-    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 1316, (from) => this.openRuneOverview(from), gemPanel);
+    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 1316, (from) => (this.capabilities.mutateProgress && this.ownedNow ? this.openRuneWorkbench(0) : this.openRuneOverview(from)), gemPanel);
     for (let index = 0; index < 3; index += 1) this.gemSlots.push(this.addGemSlot(index, gemPanel));
 
     this.buildFigureStand();
@@ -1910,16 +1906,10 @@ export class InfoManager {
 
     let currentRuneId: string | null = null;
     const open = (): void => {
-      // 채운 조각은 룬 쪽지(세공은 거기서 한 번 더 고른다), 빈 조각은 장착 가방을 연다.
-      if (currentRuneId) {
-        // 끼워 둔 룬에서 곧장 같은 자리의 가방으로 건너가 갈아 낀다 — 해제를 먼저 누르지 않아도 된다.
-        const mutable = this.capabilities.mutateProgress;
-        openRuneInfoPopup(this.scene, this.popups, {
-          runeInstanceId: currentRuneId,
-          onChanged: () => this.refreshGrowth(),
-          ...(mutable ? { openBag: () => this.openGemPicker(index), traitResearch: true } : {}),
-        });
-      } else this.openGemPicker(index);
+      // 내 렐릭이면 세 칸을 한 판에서 고르고 비교하는 룬 정비 창이 그 칸을 고른 채 열린다.
+      if (this.capabilities.mutateProgress && this.ownedNow) { this.openRuneWorkbench(index as RunePart); return; }
+      // 남의 렐릭은 끼운 룬의 쪽지만 읽는다.
+      if (currentRuneId) openRuneInfoPopup(this.scene, this.popups, { runeInstanceId: currentRuneId, onChanged: () => this.refreshGrowth() });
     };
     const hit = this.scene.add
       .rectangle(center.x + spot.x, center.y + spot.y, size * 0.46, size * 0.46, 0xffffff, 0)
@@ -1970,30 +1960,12 @@ export class InfoManager {
     };
   }
 
-  /**
-   * 칸 하나에 낄 룬을 고르는 가방.
-   *
-   * 가방(`InventoryPopup`)과 **같은 카드 한 장**을 쓴다. 여기에만 이름·옵션을 늘어놓으면 같은
-   * 룬이 두 화면에서 다른 무게로 읽히고, 한쪽을 고칠 때 다른 쪽이 옛 모습으로 남는다. 카드는
-   * 액자 한 장이고 이름과 옵션 수치는 눌러서 여는 쪽지가 맡는다.
-   */
-  private openGemPicker(index: number): void {
-    if (!this.capabilities.mutateProgress) return;
+  /** 룬 정비 창 — 세 칸을 골라 보고 비교한 뒤 한 번에 적용한다(`RuneWorkbenchPopup`). */
+  private openRuneWorkbench(part: RunePart): void {
     const def = this.currentDef;
-    if (!def || !this.ownedNow) return;
-    // 룬은 제 자리에만 들어간다. 다른 조각까지 늘어놓으면 고를 수 없는 것을 고르게 된다.
-    const runes = session.runeInventory.filter(rune => rune.part === index);
-    const { width, height } = runePickerSize(runes.length);
-    this.popups.open({ width, height, title: t("info.rune.bag", { part: runePartLabel(index as RunePart) }), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
-      mountRunePickerGrid(this.scene, body, {
-        popups: this.popups, runes, parts: false, isCovered: () => this.popups.isOpen, isActive: () => this.popups.isTop(body),
-        onPick: rune => openRuneInfoPopup(this.scene, this.popups, {
-          runeInstanceId: rune.instanceId, onChanged: () => this.refreshGrowth(),
-          equip: { relicId: def.id, slotIndex: index, onEquipped: () => { close(); this.refreshGrowth(); } },
-        }),
-      });
-    });
-    // 렐릭의 룬 가방도 룬을 보는 자리라, 체험 룬이 남아 있으면 같은 무료 세공 체험을 권한다.
+    if (!def || !this.capabilities.mutateProgress || !this.ownedNow) return;
+    openRuneWorkbench(this.scene, this.popups, { relicId: def.id, part, onChanged: () => this.refreshGrowth() });
+    // 룬을 고르는 자리라, 체험 룬이 남아 있으면 같은 무료 세공 체험을 권한다.
     offerFreeRuneCraft(this.scene, this.popups, (runeInstanceId) => openRunePopup(this.scene, this.popups, { runeInstanceId, onChanged: () => this.refreshGrowth() }));
   }
 
@@ -2295,8 +2267,6 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def) return;
     const slots = relicProgression.getProgress(def.id).heartGemSlots;
-    // 내 렐릭이면 판 밑동에 장착 조작 셋이 선다 — 자동(빈 룬만)·추천(다른 렐릭의 룬까지)·모두 해제.
-    const loadout = this.capabilities.mutateProgress && this.ownedNow;
     const L = RUNE_OVERVIEW;
     const textX = -L.plate / 2 + L.frameX + L.frame / 2 + L.gap;
     const room = L.plate / 2 - L.pad - textX;
@@ -2320,7 +2290,7 @@ export class InfoManager {
       return { gem, index, part, name, main, sub, textHeight, height };
     });
     const rowsHeight = rows.reduce((sum, row) => sum + row.height, 0) + L.rowGap * (rows.length - 1);
-    const footer = L.status + (loadout ? L.buttons : 0);
+    const footer = L.status;
     const height = Math.ceil(L.top + rowsHeight + footer + L.bottom);
     this.popups.open({ width: L.width, height, title: t("info.rune.threeSlots"), tilt: -1.2, ...anchorOf(from) }, (body) => {
       let y = -height / 2 + L.top;
@@ -2350,57 +2320,7 @@ export class InfoManager {
           .text(0, y, filled === 3 ? t("info.rune.complete") : t("info.rune.filled", { count: `${filled} / 3` }), textStyle({ role: "emphasis", size: 26, color: COLOR.accentText }))
           .setOrigin(0.5),
       );
-      if (!loadout) return;
-      const buttonY = y + L.status / 2 + L.buttons / 2 - 10;
-      const actions: { label: string; mode: RuneLoadoutMode; primary?: boolean; enabled: boolean }[] = [
-        { label: t("info.rune.loadout.auto"), mode: "auto", primary: true, enabled: true },
-        { label: t("info.rune.loadout.recommend"), mode: "recommend", enabled: true },
-        { label: t("info.rune.loadout.clear"), mode: "clear", enabled: filled > 0 },
-      ];
-      actions.forEach(({ label, mode, primary, enabled }, index) => {
-        body.add(new Button(this.scene, (index - 1) * 252, buttonY, {
-          width: 236, height: 84, label, fontSize: 28,
-          ...(primary ? { variant: "primary" as const } : {}),
-          onClick: () => this.applyRuneLoadout(def.id, mode, from),
-        }).setEnabled(enabled));
-      });
     });
-  }
-
-  /**
-   * 세 칸을 한 번에 정한다(`recommendRuneLoadout` → `setRuneLoadout`). 자동은 아무도 끼지 않은 룬만 써서 곧바로
-   * 끼우고, 추천은 다른 렐릭이 낀 룬까지 보고 빼 올 것이 있으면 확인 창이 묻는다. 끝나면 같은 판을 새 값으로 다시 세운다.
-   */
-  private applyRuneLoadout(relicId: string, mode: RuneLoadoutMode, from: PopupSource): void {
-    const def = this.currentDef;
-    if (!def || def.id !== relicId || this.runeLoadoutBusy) return;
-    const relic = { relicId, base: def.stats, rarity: def.rarity, progress: relicProgression.getProgress(relicId) };
-    const commit = (slots: readonly [string | null, string | null, string | null], moveFromOther: boolean, done: string): void => {
-      this.runeLoadoutBusy = true;
-      void relicProgression.setRuneLoadout(relicId, slots, undefined, { moveFromOther }).then(() => {
-        this.refreshGrowth();
-        if (this.currentDef?.id === relicId && this.popups.isOpen) { this.popups.closeTop(); this.openRuneOverview(from); }
-        showContentToast(this.scene, done, "info");
-      }, (error: unknown) => {
-        logError("info.runeLoadout", "룬 일괄 장착 실패", error);
-        showContentToast(this.scene, t("info.rune.loadout.failed"), "refused");
-      }).finally(() => { this.runeLoadoutBusy = false; });
-    };
-    if (mode === "clear") {
-      commit([null, null, null], false, t("info.rune.loadout.cleared"));
-      return;
-    }
-    const plan = recommendRuneLoadout(relic, session.runeInventory, runeHolders(session.relicProgress), mode === "recommend" ? { includeOthers: true } : {});
-    if (!plan.changed) {
-      showContentToast(this.scene, t("info.rune.loadout.none"), "refused");
-      return;
-    }
-    const done = t("info.rune.loadout.done", { before: plan.powerBefore.toLocaleString(), after: plan.powerAfter.toLocaleString() });
-    const movedFrom = [...new Set(plan.movedFrom.filter((id): id is string => id !== null))];
-    if (mode === "auto") { commit(plan.slots, false, done); return; }
-    const message = t("info.rune.loadout.confirm", { before: plan.powerBefore.toLocaleString(), after: plan.powerAfter.toLocaleString() })
-      + (movedFrom.length > 0 ? "\n" + t("info.rune.loadout.moves", { names: movedFrom.map((id) => getRelic(id).name).join(", ") }) : "");
-    this.popups.confirm({ title: t("info.rune.loadout.recommend"), message, confirmLabel: t("info.rune.loadout.equip"), cancelLabel: t("info.rune.loadout.cancel") }, () => commit(plan.slots, movedFrom.length > 0, done));
   }
 
   /** 공격 속도처럼 자주 보지 않는 수치는 돋보기 안에만 둔다. */

@@ -6,8 +6,8 @@ import { startAfterOpening } from "./openingSave";
 import { canvasBox, gamePoint, tapUntil } from "./canvasInput";
 
 /**
- * 정보창 룬 칸 — 끼운 조각이 이음매 없이 맞물리고, 빈 칸이 번호를 달고 튀어나오며, 돋보기 판의
- * 옵션 줄이 판 안에 드는지를 눈으로 본다. 판정이 아니라 캡처가 목적이라 언어마다 한 장씩 남긴다.
+ * 정보창 룬 칸 — 끼운 조각이 이음매 없이 맞물리고, 빈 칸이 번호를 달고 튀어나오며, 돋보기가 여는
+ * 룬 정비 창의 칸·비교 판·목록이 판 안에 드는지를 눈으로 본다. 판정이 아니라 캡처가 목적이라 언어마다 한 장씩 남긴다.
  */
 // 세로 화면을 그대로 담아야 작은 글자의 넘침이 보인다.
 test.use({ viewport: { width: 540, height: 960 }, deviceScaleFactor: 2 });
@@ -43,12 +43,12 @@ async function openInfo(page: Page, language: LanguageId): Promise<void> {
 }
 
 for (const language of ["ko", "de", "ru", "vi"] as const) {
-  test(`정보창 룬 칸과 돋보기 판 (${language})`, async ({ page }, testInfo) => {
+  test(`정보창 룬 칸과 룬 정비 창 (${language})`, async ({ page }, testInfo) => {
     await openInfo(page, language);
     await page.screenshot({ path: `test-results/info-rune-slots-${language}.png` });
     await tapUntil(page, 994, 1296, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).length > 0);
     await page.waitForTimeout(500);
-    await page.screenshot({ path: `test-results/info-rune-overview-${language}.png` });
+    await page.screenshot({ path: `test-results/info-rune-workbench-${language}.png` });
     testInfo.annotations.push({ type: "clamped", description: JSON.stringify(await page.evaluate(() => window.__PF_DEBUG?.clampedText ?? [])) });
   });
 }

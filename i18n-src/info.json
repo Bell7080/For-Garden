@@ -385,16 +385,6 @@
 "Nächste Stufe",
 "Следующий"
 ],
-"info.rune.bag": [
-"符文背包 · {part}",
-"กระเป๋ารูน · {part}",
-"Túi Rune · {part}",
-"Tas Rune · {part}",
-"Bolsa de Runas · {part}",
-"Bolsa de Runas · {part}",
-"Runentasche · {part}",
-"Сумка рун · {part}"
-],
 "info.rune.empty": [
 "空位",
 "ช่องว่าง",
@@ -485,26 +475,6 @@
 "Alle ablegen",
 "Снять все"
 ],
-"info.rune.loadout.equip": [
-"装备",
-"สวม",
-"Trang bị",
-"Pasang",
-"Equipar",
-"Equipar",
-"Ausrüsten",
-"Надеть"
-],
-"info.rune.loadout.cancel": [
-"取消",
-"ยกเลิก",
-"Hủy",
-"Batal",
-"Cancelar",
-"Cancelar",
-"Abbrechen",
-"Отмена"
-],
 "info.rune.loadout.none": [
 "没有比当前更好的符文。",
 "ไม่มีรูนที่ดีกว่านี้",
@@ -525,16 +495,6 @@
 "Kampfkraft {before} → {after}",
 "Мощь {before} → {after}"
 ],
-"info.rune.loadout.confirm": [
-"更换为推荐符文。\n战斗力 {before} → {after}",
-"เปลี่ยนเป็นรูนที่แนะนำ\nพลังต่อสู้ {before} → {after}",
-"Đổi sang rune đề xuất.\nLực chiến {before} → {after}",
-"Ganti ke rune yang disarankan.\nKekuatan Tempur {before} → {after}",
-"Cambiar a las runas recomendadas.\nPoder de combate {before} → {after}",
-"Trocar pelas runas recomendadas.\nPoder de Combate {before} → {after}",
-"Zu den empfohlenen Runen wechseln.\nKampfkraft {before} → {after}",
-"Сменить на рекомендуемые руны.\nМощь {before} → {after}"
-],
 "info.rune.loadout.moves": [
 "将从{names}处卸下。",
 "จะถอดจาก {names}",
@@ -545,16 +505,6 @@
 "Wird abgelegt bei: {names}",
 "Будут сняты с: {names}"
 ],
-"info.rune.loadout.cleared": [
-"已卸下全部符文。",
-"ถอดรูนทั้งหมดแล้ว",
-"Đã tháo hết rune.",
-"Semua rune dilepas.",
-"Runas quitadas.",
-"Runas removidas.",
-"Alle Runen abgelegt.",
-"Все руны сняты."
-],
 "info.rune.loadout.failed": [
 "符文装备失败。",
 "สวมรูนไม่สำเร็จ",
@@ -564,6 +514,186 @@
 "Não foi possível equipar as runas.",
 "Runen konnten nicht ausgerüstet werden.",
 "Не удалось надеть руны."
+],
+"info.rune.workbench.title": [
+"符文整备",
+"จัดรูน",
+"Chỉnh rune",
+"Atur Rune",
+"Ajuste de runas",
+"Ajuste de runas",
+"Runen-Setup",
+"Настройка рун"
+],
+"info.rune.workbench.power": [
+"战斗力",
+"พลังต่อสู้",
+"Lực chiến",
+"Kekuatan Tempur",
+"Poder de combate",
+"Poder de Combate",
+"Kampfkraft",
+"Мощь"
+],
+"info.rune.workbench.current": [
+"当前",
+"ปัจจุบัน",
+"Hiện tại",
+"Sekarang",
+"Actual",
+"Atual",
+"Aktuell",
+"Сейчас"
+],
+"info.rune.workbench.picked": [
+"所选符文",
+"รูนที่เลือก",
+"Rune đã chọn",
+"Rune terpilih",
+"Runa elegida",
+"Runa escolhida",
+"Gewählte Rune",
+"Выбранная руна"
+],
+"info.rune.workbench.pickHint": [
+"请从下方列表选择要更换的符文。",
+"เลือกรูนที่จะเปลี่ยนจากรายการด้านล่าง",
+"Chọn rune muốn thay ở danh sách bên dưới.",
+"Pilih rune pengganti dari daftar di bawah.",
+"Elige abajo la runa que quieres poner.",
+"Escolha abaixo a runa que quer colocar.",
+"Wähle unten eine Rune zum Tauschen.",
+"Выберите руну для замены в списке ниже."
+],
+"info.rune.workbench.pickBelow": [
+"从下方选择装备",
+"เลือกด้านล่างเพื่อใส่",
+"Chọn bên dưới để lắp",
+"Pilih di bawah untuk pasang",
+"Elige abajo",
+"Escolha abaixo",
+"Unten wählen",
+"Выберите ниже"
+],
+"info.rune.workbench.changed": [
+"变更",
+"เปลี่ยน",
+"Đổi",
+"Ubah",
+"Cambio",
+"Alterado",
+"Neu",
+"Изм."
+],
+"info.rune.workbench.equipped": [
+"装备",
+"ใส่อยู่",
+"Đang lắp",
+"Terpasang",
+"Equipada",
+"Equipada",
+"Aktiv",
+"Надета"
+],
+"info.rune.workbench.movedFrom": [
+"从{name}处移来",
+"ย้ายมาจาก {name}",
+"Chuyển từ {name}",
+"Dipindah dari {name}",
+"Movida desde {name}",
+"Movida de {name}",
+"Von {name} übernommen",
+"Снята с: {name}"
+],
+"info.rune.workbench.info": [
+"符文信息",
+"ข้อมูลรูน",
+"Thông tin rune",
+"Info Rune",
+"Info de runa",
+"Info da runa",
+"Runen-Info",
+"О руне"
+],
+"info.rune.workbench.unequip": [
+"卸下",
+"ถอด",
+"Tháo",
+"Lepas",
+"Quitar",
+"Remover",
+"Ablegen",
+"Снять"
+],
+"info.rune.workbench.apply": [
+"应用（{count}格）",
+"ใช้ ({count} ช่อง)",
+"Áp dụng ({count})",
+"Terapkan ({count})",
+"Aplicar ({count})",
+"Aplicar ({count})",
+"Übernehmen ({count})",
+"Применить ({count})"
+],
+"info.rune.workbench.applyNone": [
+"应用",
+"ใช้",
+"Áp dụng",
+"Terapkan",
+"Aplicar",
+"Aplicar",
+"Übernehmen",
+"Применить"
+],
+"info.rune.workbench.drafted": [
+"已临时填入 · 点击应用保存",
+"ใส่ชั่วคราวแล้ว · กดใช้เพื่อบันทึก",
+"Đã điền tạm · Nhấn Áp dụng để lưu",
+"Diisi sementara · Ketuk Terapkan untuk simpan",
+"Borrador listo · Pulsa Aplicar para guardar",
+"Rascunho pronto · Toque em Aplicar para salvar",
+"Als Entwurf gesetzt · Zum Speichern übernehmen",
+"Черновик готов · Нажмите «Применить»"
+],
+"info.rune.workbench.unsavedTitle": [
+"应用变更",
+"ใช้การเปลี่ยนแปลง",
+"Áp dụng thay đổi",
+"Terapkan Perubahan",
+"Aplicar cambios",
+"Aplicar alterações",
+"Änderungen übernehmen",
+"Применить изменения"
+],
+"info.rune.workbench.unsaved": [
+"有{count}格变更尚未应用。\n要应用后离开吗？",
+"ยังไม่ได้ใช้ช่องที่เปลี่ยน {count} ช่อง\nใช้ก่อนออกไหม?",
+"Còn {count} ô đã đổi chưa áp dụng.\nÁp dụng rồi thoát?",
+"{count} slot yang diubah belum diterapkan.\nTerapkan sebelum keluar?",
+"Hay {count} casilla(s) sin aplicar.\n¿Aplicar antes de salir?",
+"Há {count} espaço(s) sem aplicar.\nAplicar antes de sair?",
+"{count} geänderte Plätze sind nicht übernommen.\nVor dem Verlassen übernehmen?",
+"Изменений не применено: {count}.\nПрименить перед выходом?"
+],
+"info.rune.workbench.applyAndLeave": [
+"应用并离开",
+"ใช้แล้วออก",
+"Áp dụng & thoát",
+"Terapkan & keluar",
+"Aplicar y salir",
+"Aplicar e sair",
+"Übernehmen",
+"Применить и выйти"
+],
+"info.rune.workbench.discard": [
+"放弃并离开",
+"ทิ้งแล้วออก",
+"Bỏ & thoát",
+"Buang & keluar",
+"Descartar",
+"Descartar",
+"Verwerfen",
+"Отменить"
 ],
 "info.journal.title": [
 "观察日志",

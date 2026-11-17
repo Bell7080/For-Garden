@@ -408,6 +408,10 @@ export const MISC_JA = {
   "intro.premium.1.body": "プレミアムでは、パス・サブスクリプション・特価商品を確認できます。",
   "intro.premium.2.heading": "無料補給もお忘れなく",
   "intro.premium.2.body": "無料の補給があると赤い点でお知らせします。立ち寄るたびに受け取ってください。",
+  "intro.descendingMap.1.heading": "…今回の道は、下へ続く。",
+  "intro.descendingMap.1.body": "監禁棟は最上層から下へ潜っていく。地図も上から読め。次の関門は、いつも足元にある。",
+  "intro.descendingMap.2.heading": "勘違いするな。",
+  "intro.descendingMap.2.body": "あなたが迷えば、連れていく手間が増えるだけだ。…下で待っている。",
   "rail.guild": "ギルド",
 
   "nav.archaeology": "考古学",

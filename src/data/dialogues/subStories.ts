@@ -100,13 +100,13 @@ export const STAGE_3_8_APOLOGY: DialogueStory = {
   backdrop: "deepField",
   nodes: linear([
     { id: "wall", speaker: "", body: "파치가 뚫어 놓은 벽 앞, 파편 더미 곁에서 엘라가 양손에 서류를 든 채 한숨을 쉬었다.", standing: "ella", cast: [{ id: "ella", slot: "left" }, { id: "pachi", slot: "right" }], act: "lean" },
-    { id: "report", speaker: "엘라", body: "연구원님, 벽 건은 제가 시말서로 정리해 두겠습니다. 이번 달에만 열두 장째예요.", standing: "ella", act: "nod" },
+    { id: "report", speaker: "엘라", body: "연구원, 벽 건은 제가 시말서로 정리해 둘게요. 이번 달에만 열두 장째예요.", standing: "ella", act: "nod" },
     { id: "pachi", speaker: "파치", body: "길 열었으면 된 거잖아! 시말서를 쓰든 말든 벽은 이미 뚫렸는데?", standing: "pachi", act: "rage" },
-    { id: "boss", speaker: "엘라", body: "서류가 없으면 벽이 아니라 저희 예산에 구멍이 납니다, 파치 님.", standing: "ella", act: "shake" },
+    { id: "boss", speaker: "엘라", body: "서류가 없으면 벽이 아니라 저희 예산에 구멍이 나요, 파치.", standing: "ella", act: "shake" },
     { id: "ark", speaker: "아크", body: "…마스터, 이쪽은 저희가 맡을게요. 더 무너질 수도 있으니까 떨어져 계세요!", standing: "ark", cast: [{ id: "ark", slot: "left" }, { id: "yuti", slot: "right" }], act: "nod" },
     { id: "yuti", speaker: "유티", body: "저, 저기 마스터… 아, 아니, 보스! 아크가 정리하고 나면 이쪽으로 오세요!", standing: "yuti", act: "hopTwice" },
     { id: "pachi2", speaker: "파치", body: "보스! 더 막힌 데는 없어요? 저 아직 멀쩡해요!", standing: "pachi", cast: [{ id: "ella", slot: "left" }, { id: "pachi", slot: "right" }], act: "hop" },
-    { id: "ella2", speaker: "엘라", body: "…그 전에 시말서부터 쓰시고요.", standing: "ella", act: "recoil" },
+    { id: "ella2", speaker: "엘라", body: "…그 전에 시말서부터 쓰고요.", standing: "ella", act: "recoil" },
   ]),
 };
 
@@ -180,7 +180,7 @@ export const STAGE_2_4_SIDE_POST: DialogueStory = {
       ],
     },
     { id: "writeA", speaker: "도디", body: "네! 하나도 안 빼고 일지에 옮길게요. 벽이 지워져도 여기 남아 있게요.", standing: "dodi", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "center" }, { id: "parua", slot: "right" }], act: "nod", nextId: "again" },
-    { id: "dotB", speaker: "파루아", body: "…네. 점이 붙었다고 끝난 건 아니에요. 아모 씨 번호에도 점이 있었잖아요.", standing: "parua", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "center" }, { id: "parua", slot: "right" }], act: "nod", nextId: "again" },
+    { id: "dotB", speaker: "파루아", body: "…네. 점이 붙었다고 끝난 건 아니에요. 이렇게 번호는 남아 있잖아요.", standing: "parua", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "center" }, { id: "parua", slot: "right" }], act: "nod", nextId: "again" },
     { id: "again", speaker: "리파", body: "…이상한 연구원이야. 다음에 또 불 끄면, 그땐 같이 읽어 줘.", standing: "ripa", cast: [{ id: "toby", slot: "left" }, { id: "ripa", slot: "right" }], act: "hop" },
     { id: "amo", speaker: "토비", body: "읽긴 뭘 읽어! 가자, 리파. 아모 혼자 두면 또 혼자 다 짊어진단 말이야.", standing: "toby", act: "nod" },
   ]),
@@ -211,7 +211,7 @@ export const STAGE_3_3_SIDE_POST: DialogueStory = {
     { id: "zero", speaker: "미르", body: "에이, 둘 다 놓쳤어요… 네우리한테 또 「0점」이라고 적히겠다.", standing: "mir", act: "squash" },
     { id: "praise", speaker: "펄시", body: "괜찮아. 어차피 점수 모아 봤자 간부님은 칭찬 한 번 안 해 주잖아.", standing: "pulsi", act: "shrink" },
     { id: "someday", speaker: "미르", body: "그래도 모으면… 언젠가 「잘했어요」 한 번은 들을지도 모르잖아요.", standing: "mir", act: "lean" },
-    { id: "radio", speaker: "루카", body: "연구원님, 무전이야. 쟤네 점수판이 방금 물에 떠내려와서 주웠어. 근데 칸이 전부 비어 있어. 누가 매긴 흔적도 없고.", standing: "luka", remote: true },
+    { id: "radio", speaker: "루카", body: "연구원님, 이거 봐. 쟤네 점수판이 물에 떠내려와서 주웠어. 근데 칸이 전부 비어 있어. 누가 매긴 흔적도 없고.", standing: "luka", remote: true },
     {
       id: "choose", speaker: "", body: "젖은 점수판이 연구원의 손에 건네졌다.", standing: "mir",
       choices: [
@@ -237,7 +237,7 @@ export const STAGE_4_3_BREAK_TIME: DialogueStory = {
     { id: "why", speaker: "토비", body: "…야, 연구원. 왜 따라왔어. 진심으로 싸우라길래 진심으로 했잖아.", standing: "toby", act: "shrink" },
     { id: "thanks", speaker: "아모", body: "…연구원이 세게 와 줘서 안 혼났어. 고마워.", standing: "amo", act: "nod" },
     { id: "snack", speaker: "토리카", body: "대장님이 간식 챙겨 오셨어요. 셋이 나눠 드세요!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "amo", slot: "center" }, { id: "toby", slot: "right" }], act: "hop" },
-    { id: "smell", speaker: "토비", body: "…치즈케이크네. 잔향 지구 때 그 상자랑 같은 냄새다.", standing: "toby", act: "lean" },
+    { id: "smell", speaker: "토비", body: "…치즈케이크네. 생산 회랑에서 굴러오던 그 상자랑 같은 냄새다.", standing: "toby", act: "lean" },
     { id: "ask", speaker: "아모", body: "…연구원. 그때 따라가도 되냐고 물었던 거. 아직 유효해?", standing: "amo", act: "lean" },
     {
       id: "choose", speaker: "", body: "아모는 붕대 감긴 팔을 무릎에 올려놓은 채 대답을 기다렸다.", standing: "amo",

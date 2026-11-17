@@ -69,6 +69,7 @@ export const HELP_ZH_HANS = {
   "help.tutorial.raid": "团队战",
   "help.tutorial.expedition": "远征",
   "help.tutorial.premium": "高级",
+  "help.tutorial.descendingMap": "向下的地图",
   "help.tutorial.archaeology.sub": "再次讲解遗迹地图和地层盘",
   "help.group.collect": "收集·研究",
   "help.group.growth": "成长",

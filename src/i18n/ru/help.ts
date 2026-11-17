@@ -69,6 +69,7 @@ export const HELP_RU = {
   "help.tutorial.raid": "Рейд",
   "help.tutorial.expedition": "Экспедиция",
   "help.tutorial.premium": "Премиум",
+  "help.tutorial.descendingMap": "Карта спуска",
   "help.tutorial.archaeology.sub": "Снова проведёт по карте руин и доске пластов",
   "help.group.collect": "Сбор и исследования",
   "help.group.growth": "Развитие",

@@ -69,6 +69,7 @@ export const HELP_TH = {
   "help.tutorial.raid": "เรด",
   "help.tutorial.expedition": "ออกสำรวจ",
   "help.tutorial.premium": "พรีเมียม",
+  "help.tutorial.descendingMap": "แผนที่ขาลง",
   "help.tutorial.archaeology.sub": "แนะนำแผนที่ซากโบราณและกระดานชั้นหินอีกครั้ง",
   "help.group.collect": "สะสมและวิจัย",
   "help.group.growth": "การเติบโต",

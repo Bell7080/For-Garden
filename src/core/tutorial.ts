@@ -38,7 +38,7 @@ export type TutorialStepId = (typeof TUTORIAL_STEPS)[number];
  * 안내형을 한 번은 본다.
  */
 export const CONTENT_INTRO_IDS = [
-  "stageMap", "party", "shop", "cakeOperation", "bounty", "interaction", "duel", "friends", "raid", "expedition", "archaeologyTour", "archaeologyBoard", "premium",
+  "stageMap", "party", "shop", "cakeOperation", "bounty", "interaction", "duel", "friends", "raid", "expedition", "archaeologyTour", "archaeologyBoard", "premium", "descendingMap",
 ] as const;
 
 /** 화면을 짚는 안내형 첫 방문 안내. 나머지는 모두 아이콘 쪽지다. */

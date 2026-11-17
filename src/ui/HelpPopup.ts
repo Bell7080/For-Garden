@@ -101,6 +101,7 @@ const TUTORIAL_BACKDROP: Readonly<Record<string, string>> = {
   raid: BACKGROUND.sortieRaid,
   expedition: BACKGROUND.expeditionRanking,
   premium: BACKGROUND.premiumShop,
+  descendingMap: BACKGROUND.stageMapPrisonApproach,
 };
 
 export function helpTutorialBackdrop(entry: HelpTutorialEntry): string {

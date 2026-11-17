@@ -69,6 +69,7 @@ export const HELP_KO = {
   "help.tutorial.raid": "레이드",
   "help.tutorial.expedition": "원정",
   "help.tutorial.premium": "프리미엄",
+  "help.tutorial.descendingMap": "내려가는 지도",
   "help.tutorial.archaeology.sub": "유적 지도와 지층 판을 다시 짚어 줘요",
   "help.group.collect": "수집·연구",
   "help.group.growth": "성장",

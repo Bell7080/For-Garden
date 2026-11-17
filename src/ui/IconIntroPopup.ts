@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
+import { getRelic } from "../data/relics";
 import { Button } from "./Button";
+import { FaceFrame } from "./FaceFrame";
 import { chipPoints, drawLayer } from "./holo";
 import { addFramedIcon } from "./itemFrame";
 import type { PopupLayer } from "./PopupLayer";
@@ -15,8 +17,13 @@ import { COLOR, textStyle } from "./theme";
  * 쪽 표는 `contentIntroPages.ts` 한 곳이 갖는다.
  */
 export interface IconIntroPage {
-  /** 액자 안에 설 그림(재화·아이템·직군 텍스처 키). */
+  /** 액자 안에 설 그림(재화·아이템·직군 텍스처 키). `speaker`가 있으면 쓰지 않는다. */
   icon: string;
+  /**
+   * 이 쪽을 말하는 인물(렐릭 ID). 있으면 그림 대신 그 인물의 얼굴 액자와 이름이 서고, 글은 그 인물의 말투로 쓴다 —
+   * 안내를 시스템 문장이 아니라 이야기 속 인물이 건네는 말로 들려줄 때만 쓴다.
+   */
+  speaker?: string;
   headingKey: TextKey;
   bodyKey: TextKey;
 }
@@ -57,7 +64,14 @@ export function openIconIntro(scene: Phaser.Scene, popups: PopupLayer, pages: re
     const paint = (): void => {
       content.removeAll(true);
       const spec = pages[page];
-      addFramedIcon(scene, content, 0, L.iconY, L.icon, spec.icon, { plain: true });
+      if (spec.speaker) {
+        const def = getRelic(spec.speaker);
+        content.add(new FaceFrame(scene, 0, L.iconY - 14, { portraitAssetId: def.portraitAssetId, size: L.icon - 20 }));
+        content.add(scene.add.text(0, L.iconY + L.icon / 2 - 4, def.name, textStyle({ role: "emphasis", size: 28, color: COLOR.inkDim }))
+          .setOrigin(0.5, 0.5));
+      } else {
+        addFramedIcon(scene, content, 0, L.iconY, L.icon, spec.icon, { plain: true });
+      }
       const heading = scene.add.text(0, L.headingY, t(spec.headingKey), textStyle({ role: "display", size: L.headingSize, color: COLOR.accentText }))
         .setOrigin(0.5);
       shrinkTextToWidth(heading, L.width - 120);

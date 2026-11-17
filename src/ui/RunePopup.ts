@@ -158,25 +158,19 @@ function requestRuneName(scene: Phaser.Scene, current: string, commit: (name: st
 /**
  * 쪽지 아래 버튼 줄의 자리.
  *
- * 세공(과 장착)이 줄의 주인이고 판매는 작게 오른쪽 끝에 선다. 폭과 x를 한 표에 두는 이유는,
- * 화면에서 눈대중으로 정하면 장착이 붙는 순간 세 판이 서로 겹치기 때문이다.
+ * 세공(과 장착·해제)만 줄에 선다. 판매는 되돌릴 수 없는 다른 성격의 조작이라 줄에 두지 않고
+ * 판 오른쪽 위 구석의 작은 아이콘 칩으로 물러난다(응태 2026-11-18) — 같은 줄에 서면 세공을 누르려던
+ * 손이 함께 닿고, 무엇이 이 쪽지의 주 조작인지도 흐려진다.
  */
 const RUNE_NOTE_BUTTONS = {
-  plain: { width: 300, craftX: -100, equipX: 0, sellX: 200 },
-  withEquip: { width: 180, craftX: -180, equipX: 10, sellX: 210 },
-  /**
-   * 이미 끼워져 있는 룬의 줄. 세공과 해제 둘뿐이라 같은 폭으로 나란히 선다.
-   *
-   * 판매는 아예 서지 않는다 — 끼고 있는 룬은 서버가 판매를 거부하므로, 눌리지 않는 버튼을
-   * 남겨 두면 "왜 안 되는가"를 창이 말하지 않은 채 자리만 차지한다. 그 자리에 지금 할 수
-   * 있는 조작(해제)을 세운다.
-   */
-  equipped: { width: 220, craftX: -120, equipX: 120, sellX: 0 },
-  sellWidth: 110,
-  sellHeight: 60,
+  plain: { width: 320, craftX: 0, equipX: 0 },
+  withEquip: { width: 240, craftX: -130, equipX: 130 },
+  /** 이미 끼워져 있는 룬의 줄 — 세공과 해제(또는 옮겨 끼우기)가 같은 폭으로 나란히 선다. */
+  equipped: { width: 220, craftX: -120, equipX: 120 },
+  /** 판매 칩 — 잠금·즐겨찾기 칩과 같은 줄의 반대쪽 끝. 끼고 있는 룬에는 서지 않는다(서버가 거부한다). */
+  sellChipX: 244,
   /** 되돌릴 수 없는 조작 하나뿐인 색. 강조색(금)과 갈라 두어 실수로 눌리지 않게 한다. */
   sellAccent: 0xd9455a,
-  sellText: "#ffc3cb",
 } as const;
 
 /** 잠금은 서늘한 강철빛, 즐겨찾기는 정보창 별과 같은 노랑이다. */
@@ -255,12 +249,12 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
   const layout = runeNoteLayout(stats.length, traitBody ? Math.max(1, traitBody.getBounds().height) : 0, showBag || showTrait);
   popups.open({ width: panel.width, height: layout.height, title: t("rune.title"), titleSize: POPUP_TITLE_SIZE.workboard, y: panel.centerY, dim: true, backButton: true, onClose: options.onClose }, (body, close) => {
     const top = -layout.height / 2;
-    // 판매 버튼은 자물쇠 칩이 다시 칠할 대상이라 먼저 만들고, 자리는 아래 버튼 줄에서 정한다.
-    const sell = new Button(scene, 0, 0, {
-      width: RUNE_NOTE_BUTTONS.sellWidth, height: RUNE_NOTE_BUTTONS.sellHeight, label: t("rune.sell"), fontSize: 22,
-      accentColor: RUNE_NOTE_BUTTONS.sellAccent, accentTextColor: RUNE_NOTE_BUTTONS.sellText,
-      // 판매는 되돌릴 수 없어 공용 확인 창이 한 번 묻는다 — 받을 원석이 보유 줄로 선다.
-      onClick: () => popups.confirm({
+    const slot = equippedRuneSlot(rune.instanceId);
+    const equipped = slot !== undefined;
+    // 판매는 판 오른쪽 위 구석의 휴지통 칩 하나다. 되돌릴 수 없어 공용 확인 창이 한 번 묻고, 받을 원석이 보유 줄로 선다.
+    const sell = equipped ? undefined : addMarkChip(scene, body, RUNE_NOTE_BUTTONS.sellChipX, top + panel.chip.y, {
+      glyph: "trash", onColor: RUNE_NOTE_BUTTONS.sellAccent, size: panel.chip.size,
+      onToggle: () => popups.confirm({
         title: t("rune.sell.title"),
         message: t("rune.sell.message"),
         balance: { iconKey: CURRENCY_ICON_BY_WALLET.rawStone, before: session.wallet.rawStone, after: session.wallet.rawStone + runeSellValue(rune) },
@@ -273,7 +267,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     // 판매 버튼 옆이 아니라 표식 자리에 있어야 실수로 함께 눌리지 않는다.
     const marks = addRuneMarkChips(scene, body, top + panel.chip.y, rune.instanceId, options.api ?? gameApi, (next) => {
       // 자물쇠가 걸린 동안에는 판매 자체를 막는다. 서버도 같은 이유로 거부한다.
-      if (!equipped) sell.setEnabled(!next.locked);
+      sell?.paint(true, !next.locked);
       options.onChanged?.(next);
     });
     body.add(addRuneFrame(scene, panel.frame.x, top + panel.frame.y, panel.frame.size, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved: rune.engravings.length > 0 }));
@@ -327,13 +321,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
 
     const buttonY = top + layout.buttonY;
     const equip = options.equip;
-    const slot = equippedRuneSlot(rune.instanceId);
-    const equipped = slot !== undefined;
-    // 판매는 **되돌릴 수 없는 다른 성격의 조작**이라 세공·장착과 같은 크기로 나란히 세우지
-    // 않는다. 셋을 같은 폭으로 두면 줄이 넘쳐 서로 겹쳤고, 무엇이 이 쪽지의 주 조작인지도
-    // 읽히지 않았다. 판매만 작고 붉게 오른쪽 끝으로 물러난다.
-    // 이미 끼워져 있는 룬은 그 줄 자체가 다르다 — 판매도 장착도 할 수 없으므로 세공과
-    // 해제 둘만 나란히 선다.
+    // 이미 끼워져 있는 룬은 그 줄 자체가 다르다 — 세공과 해제(또는 옮겨 끼우기) 둘만 나란히 선다.
     const main = equipped || (equip !== undefined && slot !== undefined) ? RUNE_NOTE_BUTTONS.equipped : equip ? RUNE_NOTE_BUTTONS.withEquip : RUNE_NOTE_BUTTONS.plain;
     const craft = new Button(scene, main.craftX, buttonY, {
       width: main.width, height: panel.buttonHeight, label: t("rune.craft"), fontSize: 26, variant: "primary", accentColor: accent,
@@ -396,9 +384,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
         },
       }));
     }
-    // 끼워져 있는 룬에는 판매 자리 자체를 두지 않는다.
-    if (equipped) sell.destroy();
-    else { body.add(sell.setPosition(main.sellX, buttonY)); sell.setEnabled(!rune.locked); }
+    sell?.paint(true, !rune.locked);
     marks.paint(rune);
 
     if (layout.shortcutY !== null) {

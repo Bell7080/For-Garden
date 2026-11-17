@@ -28,6 +28,8 @@ export interface ConfirmOptions {
   cancelLabel?: string | false;
   /** 취소 **버튼**을 눌렀을 때만 부른다(판 밖 누르기·뒤로가기는 그냥 닫는다). 「버리고 나가기」처럼 취소 쪽도 조작인 창이 쓴다. */
   onCancel?: () => void;
+  /** 취소 버튼도 조작이고 그것이 되돌릴 수 없을 때(「적용하지 않기」) 그 버튼을 붉은 파괴적 판으로 세운다. */
+  cancelDestructive?: boolean;
   costs?: readonly { iconKey: string; amount: number; short?: boolean }[];
   balance?: { iconKey: string; before: number; after: number };
 }
@@ -262,7 +264,7 @@ export class PopupLayer {
       const xs = confirmButtonXs(single ? 1 : 2);
       const common = { width: L.button.width, height: L.button.height, fontSize: L.button.fontSize };
       if (!single) {
-        body.add(new Button(this.scene, xs[0], buttonY, { ...common, label: typeof options.cancelLabel === "string" ? options.cancelLabel : t("popup.cancel"), onClick: () => { close(); options.onCancel?.(); } }));
+        body.add(new Button(this.scene, xs[0], buttonY, { ...common, label: typeof options.cancelLabel === "string" ? options.cancelLabel : t("popup.cancel"), ...(options.cancelDestructive ? DESTRUCTIVE_BUTTON_STYLE : {}), onClick: () => { close(); options.onCancel?.(); } }));
       }
       body.add(new Button(this.scene, xs[xs.length - 1], buttonY, {
         ...common,

@@ -595,16 +595,6 @@
 "Von {name} übernommen",
 "Снята с: {name}"
 ],
-"info.rune.workbench.info": [
-"符文信息",
-"ข้อมูลรูน",
-"Thông tin rune",
-"Info Rune",
-"Info de runa",
-"Info da runa",
-"Runen-Info",
-"О руне"
-],
 "info.rune.workbench.unequip": [
 "卸下",
 "ถอด",
@@ -655,39 +645,12 @@
 "Änderungen übernehmen",
 "Применить изменения"
 ],
-"info.rune.workbench.unsaved": [
-"有{count}格变更尚未应用。\n要应用后离开吗？",
-"ยังไม่ได้ใช้ช่องที่เปลี่ยน {count} ช่อง\nใช้ก่อนออกไหม?",
-"Còn {count} ô đã đổi chưa áp dụng.\nÁp dụng rồi thoát?",
-"{count} slot yang diubah belum diterapkan.\nTerapkan sebelum keluar?",
-"Hay {count} casilla(s) sin aplicar.\n¿Aplicar antes de salir?",
-"Há {count} espaço(s) sem aplicar.\nAplicar antes de sair?",
-"{count} geänderte Plätze sind nicht übernommen.\nVor dem Verlassen übernehmen?",
-"Изменений не применено: {count}.\nПрименить перед выходом?"
-],
-"info.rune.workbench.applyAndLeave": [
-"应用并离开",
-"ใช้แล้วออก",
-"Áp dụng & thoát",
-"Terapkan & keluar",
-"Aplicar y salir",
-"Aplicar e sair",
-"Übernehmen",
-"Применить и выйти"
-],
-"info.rune.workbench.discard": [
-"放弃并离开",
-"ทิ้งแล้วออก",
-"Bỏ & thoát",
-"Buang & keluar",
-"Descartar",
-"Descartar",
-"Verwerfen",
-"Отменить"
-],
+"info.rune.workbench.unsaved": ["有{count}格变更尚未应用。\n要应用吗？", "ยังไม่ได้ใช้ช่องที่เปลี่ยน {count} ช่อง\nจะใช้หรือไม่?", "Còn {count} ô đã đổi chưa áp dụng.\nÁp dụng không?", "{count} slot yang diubah belum diterapkan.\nTerapkan?", "Hay {count} casilla(s) sin aplicar.\n¿Aplicar los cambios?", "Há {count} espaço(s) sem aplicar.\nAplicar as mudanças?", "{count} geänderte Plätze sind nicht übernommen.\nJetzt übernehmen?", "Изменений не применено: {count}.\nПрименить?"],
+"info.rune.workbench.applyAndLeave": ["应用", "ใช้", "Áp dụng", "Terapkan", "Aplicar", "Aplicar", "Übernehmen", "Применить"],
+"info.rune.workbench.discard": ["不应用", "ไม่ใช้", "Không áp dụng", "Jangan terapkan", "No aplicar", "Não aplicar", "Nicht übernehmen", "Не применять"],
 "info.rune.workbench.compareTitle": ["更换对比", "เปรียบเทียบการเปลี่ยน", "So sánh thay đổi", "Bandingkan", "Comparar", "Comparar", "Vergleich", "Сравнение"],
-"info.rune.workbench.moveAsk": ["连其他遗物装备的符文一起使用会更强。\n要从{names}那里移过来吗？", "หากใช้รูนที่เรลิกอื่นสวมอยู่ด้วยจะแข็งแกร่งขึ้น\nย้ายมาจาก {names} หรือไม่?", "Dùng cả Rune mà Di vật khác đang trang bị sẽ mạnh hơn.\nChuyển từ {names} sang?", "Memakai Rune yang dipasang Relik lain akan lebih kuat.\nPindahkan dari {names}?", "Usar también las Runas equipadas en otras Reliquias lo hará más fuerte.\n¿Tomarlas de {names}?", "Usar também as Runas equipadas em outras Relíquias deixa mais forte.\nTirar de {names}?", "Mit Runen anderer Relikte wird es stärker.\nVon {names} übernehmen?", "С рунами других Реликтов будет сильнее.\nЗабрать у: {names}?"],
-"info.rune.workbench.movePowers": ["战斗力  移入 {moved} · 仅空闲符文 {free}", "พลังต่อสู้  ย้ายมา {moved} · เฉพาะรูนว่าง {free}", "Lực chiến  Chuyển {moved} · Chỉ Rune trống {free}", "Kekuatan Tempur  Pindahkan {moved} · Hanya Rune bebas {free}", "Poder de combate  Tomar {moved} · Solo Runas libres {free}", "Poder de Combate  Tirar {moved} · Só Runas livres {free}", "Kampfkraft  Übernehmen {moved} · Nur freie Runen {free}", "Боевая мощь  Забрать {moved} · Только свободные руны {free}"],
+"info.rune.workbench.moveLead": ["把其他遗物装备的以下符文移过来装备。", "จะย้ายรูนด้านล่างที่เรลิกอื่นสวมอยู่มาสวมให้", "Chuyển các Rune dưới đây từ Di vật khác sang trang bị.", "Rune di bawah ini akan dipindahkan dari Relik lain.", "Se tomarán estas Runas de otras Reliquias.", "Estas Runas serão tiradas de outras Relíquias.", "Diese Runen werden von anderen Relikten übernommen.", "Эти руны будут забраны у других Реликтов."],
+"info.rune.workbench.moveSlot": ["{slot}号格", "ช่อง {slot}", "Ô {slot}", "Slot {slot}", "Casilla {slot}", "Espaço {slot}", "Platz {slot}", "Ячейка {slot}"],
 "info.rune.workbench.moveAccept": ["移过来", "ย้ายมา", "Chuyển sang", "Pindahkan", "Tomarlas", "Tirar", "Übernehmen", "Забрать"],
 "info.rune.workbench.moveFree": ["仅用空闲符文", "เฉพาะรูนว่าง", "Chỉ Rune trống", "Hanya Rune bebas", "Solo Runas libres", "Só Runas livres", "Nur freie Runen", "Только свободные руны"],
 "info.journal.title": [

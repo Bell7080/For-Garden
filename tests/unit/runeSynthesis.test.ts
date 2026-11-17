@@ -9,7 +9,7 @@ const sum = (values: readonly number[]): number => values.reduce((total, value) 
 
 describe("룬 합성 규칙", () => {
   it("골드는 등급마다 오르고, 결과 등급은 같거나 한 단계 위일 뿐 내려가지 않는다", () => {
-    expect(RUNE_SYNTHESIS_RULES.goldCost).toEqual({ uncommon: 200_000, rare: 400_000, epic: 600_000, legendary: 1_000_000 });
+    expect(RUNE_SYNTHESIS_RULES.goldCost).toEqual({ uncommon: 100_000, rare: 300_000, epic: 500_000, legendary: 800_000 });
     for (const rarity of RARITIES) {
       const odds = runeSynthesisRarityOdds(rarity);
       expect(odds.same + odds.up).toBe(100);

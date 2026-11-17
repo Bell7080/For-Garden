@@ -1471,9 +1471,9 @@ describe("룬 합성", () => {
     const first = await server.synthesizeRunes({ requestId: "synth-1", runeInstanceIds: ["s-1", "s-2", "s-3"] });
     const replay = await server.synthesizeRunes({ requestId: "synth-1", runeInstanceIds: ["s-1", "s-2", "s-3"] });
     expect(replay).toEqual(first);
-    expect(first).toMatchObject({ upgraded: true, goldSpent: 200_000 });
+    expect(first).toMatchObject({ upgraded: true, goldSpent: 100_000 });
     expect(first.rune.rarity).toBe("rare");
-    expect(state.wallet.gold).toBe(300_000);
+    expect(state.wallet.gold).toBe(400_000);
     expect(state.runeInventory.map(({ instanceId }) => instanceId).sort()).toEqual([first.rune.instanceId, "keep"].sort());
   });
 

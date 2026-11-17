@@ -30,7 +30,7 @@ export const RUNE_WORKBENCH = {
   compare: { gap: 44, height: 262, pad: 22, label: 19, title: 26, icon: 64, name: 28, line: 21, lineHeight: 27, arrow: 26, moved: 20 },
   actions: { gap: 14, height: 64, fontSize: 24 },
   controls: { gap: 18 },
-  grid: { columns: 5, card: 152, cell: 172, rows: 3, listGap: 18, delta: 22, tag: 17 },
+  grid: { columns: 5, card: 152, cell: 172, rows: 3, listGap: 18, delta: 22, tag: 23 },
   footer: { gap: 22, height: 84, fontSize: 26, bottom: 32 },
 } as const;
 
@@ -39,18 +39,7 @@ const W = RUNE_WORKBENCH;
 /** 하트 원화가 기준점에서 옆으로 뻗는 몫(캔버스 한 변에 대한 비율 — 알파 경계 실측 46~214 / 256). */
 export const RUNE_HEART_REACH = 0.33;
 
-/** 버튼 하나의 폭 — 칸 조작·아래 조작의 셋이 판 안쪽 폭을 나눠 갖는다. */
-export function runeWorkbenchColumnWidth(): number {
-  return (W.width - W.padX * 2 - W.slots.gap * 2) / 3;
-}
-
-/** 버튼 셋의 가로 중심. */
-export function runeWorkbenchColumnX(index: number): number {
-  const width = runeWorkbenchColumnWidth();
-  return -W.width / 2 + W.padX + width / 2 + index * (width + W.slots.gap);
-}
-
-/** 아래 조작 둘(추천 장착 · 적용)이 판 안쪽 폭을 반씩 나눠 갖는 폭. */
+/** 둘씩 서는 조작 줄(해제 · 모두 해제 / 추천 장착 · 적용)이 판 안쪽 폭을 반씩 나눠 갖는 폭. */
 export function runeWorkbenchFooterWidth(): number {
   return (W.width - W.padX * 2 - W.slots.gap) / 2;
 }

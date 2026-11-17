@@ -17,8 +17,8 @@ const RARITY_ORDER: readonly RuneRarity[] = ["uncommon", "rare", "epic", "legend
 export const RUNE_SYNTHESIS_INPUTS = 3;
 
 export const RUNE_SYNTHESIS_RULES = {
-  /** 합성 한 번의 골드(응태 결정 — 골드 과잉 해소). */
-  goldCost: { uncommon: 200_000, rare: 400_000, epic: 600_000, legendary: 1_000_000 },
+  /** 합성 한 번의 골드(응태 결정 — 골드 과잉 해소). 2026-11-18 전체를 낮추고 고급은 절반으로: 20만/40만/60만/100만 → 10만/30만/50만/80만. */
+  goldCost: { uncommon: 100_000, rare: 300_000, epic: 500_000, legendary: 800_000 },
   /** 한 등급 위가 나올 확률(%). 2026-10-25 응태 확정으로 35/25/12 → 50/40/25 상향. 전설은 위가 없어 새 전설로 옵션·특성만 다시 굴린다. */
   upgradePercent: { uncommon: 50, rare: 40, epic: 25, legendary: 0 },
   /**

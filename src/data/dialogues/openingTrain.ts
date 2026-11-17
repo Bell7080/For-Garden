@@ -80,7 +80,7 @@ export const OPENING_TRAIN: DialogueStory = {
     // ── 폭파: 열차에서 전장으로 ──────────────────────────────────────
     { id: "blast", speaker: "", body: "콰아아아앙!!", cast: [], cue: "explosion", backdrop: "wreck", nextId: "aftermath" },
     { id: "aftermath", speaker: "토리카", body: "콜록, 콜록… 연구원님, 괜찮으세요?! 열차가… 선로 밖으로 떨어졌어요…!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "shake", nextId: "record" },
-    { id: "record", speaker: "도디", body: "다치신 데는 없어 보여! 파루아, 이쪽 좀 같이 잡아 줘. 일단 여기서 빠져나가야 해!", standing: "dodi", cast: ROGUE_TRIO, act: "tremble", nextId: "three" },
+    { id: "record", speaker: "도디", body: "다치신 데는 없죠?! 파루아, 이쪽 좀 같이 잡아 줘. 일단 여기서 빠져나가야 해!", standing: "dodi", cast: ROGUE_TRIO, act: "tremble", nextId: "three" },
     { id: "three", speaker: "파루아", body: "쉿. 누가 와요. 셋이에요… 연기 너머에서 이쪽으로 오고 있어요.", standing: "parua", act: "lean", nextId: "toby" },
 
     // ── 공멸의 우당탕탕 삼인조 ──────────────────────────────────────

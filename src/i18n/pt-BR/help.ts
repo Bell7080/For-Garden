@@ -69,6 +69,7 @@ export const HELP_PT_BR = {
   "help.tutorial.raid": "Incursão",
   "help.tutorial.expedition": "Expedição",
   "help.tutorial.premium": "Premium",
+  "help.tutorial.descendingMap": "Mapa descendente",
   "help.tutorial.archaeology.sub": "Guia você de novo pelo mapa de ruínas e o tabuleiro de estratos",
   "help.group.collect": "Coleção e Pesquisa",
   "help.group.growth": "Crescimento",

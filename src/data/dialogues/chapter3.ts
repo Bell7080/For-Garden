@@ -73,8 +73,8 @@ export const STAGE_3_5_POST: DialogueStory = {
   nodes: linear([
     { id: "down", speaker: "아트라", body: "…아, 안 아파요. 이 정도는… 윽. 자, 잠깐만요. 아직 안 끝났어요…", standing: "atra", cast: [{ id: "atra", slot: "center" }], act: "faint" },
     { id: "koma", speaker: "코마", body: "…그만 일어나라.", standing: "koma", cast: [{ id: "atra", slot: "left" }, { id: "koma", slot: "right" }], act: "lean" },
-    { id: "atra", speaker: "아트라", body: "선, 선배… 저, 저 졌어요… 그래도 선배보다는… 오래 버텼죠?", standing: "atra", act: "hop" },
-    { id: "koma2", speaker: "코마", body: "…그건 맞다.", standing: "koma", act: "shrink" },
+    { id: "atra", speaker: "아트라", body: "선, 선배… 저 졌어요… 그, 그래도 조금은 오래 버텼죠? 선배 보시라고…", standing: "atra", act: "hop" },
+    { id: "koma2", speaker: "코마", body: "…봤다. 오래 버텼다.", standing: "koma", act: "shrink" },
   ]),
 };
 
@@ -88,7 +88,7 @@ export const STAGE_3_6_POST: DialogueStory = {
     { id: "mir", speaker: "미르", body: "연구원님~ 거기 계셨네요! 같이 가요! 저희가 모실게요!", standing: "mir", cast: [{ id: "mir", slot: "center" }], act: "hop" },
     { id: "pulsi", speaker: "펄시", body: "막다른 길이네? 술래잡기는 이쯤 하고, 이제 제대로 놀아 보자고.", standing: "pulsi", cast: [{ id: "pulsi", slot: "center" }], act: "hopTwice" },
     { id: "crash", speaker: "", body: "굉음과 함께 격벽 한가운데가 안쪽으로 터져 나왔다. 먼지 속에서 머리를 감싼 그림자 하나가 튀어나왔다.", cue: "explosion", cast: [{ id: "pachi", slot: "center" }] },
-    { id: "pachi", speaker: "파치", body: "보스, 길 열었어! 늦어서 미안!", standing: "pachi", act: "bounce" },
+    { id: "pachi", speaker: "파치", body: "보스, 길 뚫었어요! …늦은 건 벽이 두꺼워서고요!", standing: "pachi", act: "bounce" },
     { id: "pulsi2", speaker: "펄시", body: "…벽을 머리로 깼어? 진짜로?", standing: "pulsi", cast: [{ id: "pulsi", slot: "left" }, { id: "pachi", slot: "right" }], act: "fright" },
   ]),
 };
@@ -99,10 +99,10 @@ export const STAGE_3_8_POST: DialogueStory = {
   startNodeId: "ambush",
   backdrop: "deepField",
   nodes: linear([
-    { id: "ambush", speaker: "펄시", body: "깜짝 선물이야, 연구원! 받아!", standing: "pulsi", cast: [{ id: "pulsi", slot: "right" }, { id: "torika", slot: "left" }], act: "hop", cue: "impact" },
-    { id: "block", speaker: "엘라", body: "…연구원님, 뒤로 물러나 계십시오. 이쪽은 제가 막겠습니다.", standing: "ella", cast: [{ id: "ella", slot: "center" }], act: "lean" },
+    { id: "ambush", speaker: "펄시", body: "깜짝 선물이야, 연구원님! 받아!", standing: "pulsi", cast: [{ id: "pulsi", slot: "right" }, { id: "torika", slot: "left" }], act: "hop", cue: "impact" },
+    { id: "block", speaker: "엘라", body: "…연구원, 뒤로 물러나 있어요. 여기는 제가 막을게요.", standing: "ella", cast: [{ id: "ella", slot: "center" }], act: "lean" },
     { id: "neuri", speaker: "네우리", body: "후훗… 끝까지 막아서실 셈인가요? 어디까지 버티시나 구경할게요.", standing: "neuri", cast: [{ id: "ella", slot: "left" }, { id: "neuri", slot: "right" }], act: "nod" },
-    { id: "ella", speaker: "엘라", body: "구경하실 시간은 없을 겁니다. 연구원님, 지금 저쪽 통로로 가십시오.", standing: "ella", act: "shake" },
+    { id: "ella", speaker: "엘라", body: "구경할 틈은 없을 거예요. 연구원, 지금 저쪽 통로로 가요. 천천히, 그래도 멈추지 말고요.", standing: "ella", act: "shake" },
   ]),
 };
 

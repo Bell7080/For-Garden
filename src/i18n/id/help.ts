@@ -69,6 +69,7 @@ export const HELP_ID = {
   "help.tutorial.raid": "Raid",
   "help.tutorial.expedition": "Ekspedisi",
   "help.tutorial.premium": "Premium",
+  "help.tutorial.descendingMap": "Peta Menurun",
   "help.tutorial.archaeology.sub": "Memandu lagi peta reruntuhan dan papan lapisan",
   "help.group.collect": "Koleksi & Riset",
   "help.group.growth": "Pertumbuhan",

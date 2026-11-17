@@ -49,7 +49,7 @@ export const STAGE_7_4_POST: DialogueStory = {
     { id: "panel", speaker: "", body: "제어반 마지막 칸에는 손바닥 모양의 판이 박혀 있었다. 그 앞에 코마가 등을 보인 채 서 있었다.", standing: "koma", cast: [{ id: "koma", slot: "center" }], cue: "alarm" },
     { id: "koma", speaker: "코마", body: "…맨 아래 자물쇠는 사람 손이어야 열린다. 나는 그 손을 데려오라는 명령을 받았다.", standing: "koma", act: "lean" },
     { id: "nodonia", speaker: "노도니아", body: "…그런데 왜 알려 주는 거니? 명령대로 할 생각이면 숨기는 편이 나았을 텐데.", standing: "nodonia", cast: [{ id: "nodonia", slot: "left" }, { id: "koma", slot: "right" }], act: "shake" },
-    { id: "koma2", speaker: "코마", body: "…그러니까 하는 말이다.", standing: "koma", act: "shrink" },
+    { id: "koma2", speaker: "코마", body: "…숨길 생각이 없으니까 하는 말이다.", standing: "koma", act: "shrink" },
   ]),
 };
 
@@ -98,8 +98,8 @@ export const STAGE_7_8_POST: DialogueStory = {
   nodes: linear([
     { id: "wall", speaker: "", body: "옆 벽이 안쪽으로 터져 나왔다. 먼지 속에서 머리를 감싼 파치와 렉시아가 함께 뛰어들었다.", cast: [{ id: "pachi", slot: "left" }, { id: "lexia", slot: "right" }], cue: "explosion" },
     { id: "lexia", speaker: "렉시아", body: "마스터, 늦어서 미안해요! 위에서부터 벽을 세 개나 뚫고 왔어요. 앞은 이제 제가 맡을게요!", standing: "lexia", act: "hop" },
-    { id: "pachi", speaker: "파치", body: "네 개야, 보스. 하나는 렉시아가 문이라고 우겼어.", standing: "pachi", act: "nod" },
-    { id: "ella", speaker: "엘라", body: "다들 무사하군요. 연구원님, 걸으실 수 있겠습니까? 돌아가는 길은 저희가 열겠습니다.", standing: "ella", cast: [{ id: "ella", slot: "center" }], act: "shrink" },
+    { id: "pachi", speaker: "파치", body: "네 개예요, 보스. 하나는 렉시아가 문이라고 우겼고요.", standing: "pachi", act: "nod" },
+    { id: "ella", speaker: "엘라", body: "다들 무사하네요. 연구원, 걸을 수 있겠어요? 돌아가는 길은 저희가 열게요.", standing: "ella", cast: [{ id: "ella", slot: "center" }], act: "shrink" },
   ]),
 };
 

@@ -69,6 +69,7 @@ export const HELP_EN = {
   "help.tutorial.raid": "Raid",
   "help.tutorial.expedition": "Expedition",
   "help.tutorial.premium": "Premium",
+  "help.tutorial.descendingMap": "Descending Map",
   "help.tutorial.archaeology.sub": "Walks you through the ruin map and the strata board again",
   "help.group.collect": "Collection & Research",
   "help.group.growth": "Growth",

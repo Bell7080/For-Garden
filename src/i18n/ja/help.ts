@@ -69,6 +69,7 @@ export const HELP_JA = {
   "help.tutorial.raid": "レイド",
   "help.tutorial.expedition": "遠征",
   "help.tutorial.premium": "プレミアム",
+  "help.tutorial.descendingMap": "下りの地図",
   "help.tutorial.archaeology.sub": "遺跡マップと地層の盤をもう一度案内します",
   "help.group.collect": "収集・研究",
   "help.group.growth": "育成",

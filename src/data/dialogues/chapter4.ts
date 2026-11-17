@@ -54,10 +54,10 @@ export const STAGE_4_6_PRE: DialogueStory = {
   startNodeId: "pulsi",
   backdrop: "deepField",
   nodes: linear([
-    { id: "pulsi", speaker: "펄시", body: "합동이라며? 그럼 연구원은 내 몫이야. 나머지는 코마가 알아서 해.", standing: "pulsi", cast: [{ id: "koma", slot: "left" }, { id: "pulsi", slot: "right" }], act: "hop" },
+    { id: "pulsi", speaker: "펄시", body: "합동이라며? 그럼 연구원님은 내 몫이야. 나머지는 코마 님이 알아서 하시고~", standing: "pulsi", cast: [{ id: "koma", slot: "left" }, { id: "pulsi", slot: "right" }], act: "hop" },
     { id: "koma", speaker: "코마", body: "…대상은 하나다. 나눌 것도 없다.", standing: "koma", act: "lean" },
     { id: "pulsi2", speaker: "펄시", body: "그럼 먼저 잡는 쪽이 임자네. 이번엔 절대 눈 안 뗀다.", standing: "pulsi", act: "puff" },
-    { id: "ripa", speaker: "리파", body: "…선배, 저기 연구원이야. 이번엔 진짜로 잡아야 돼?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "shrink" },
+    { id: "ripa", speaker: "리파", body: "…코마, 저기 연구원 있어. 이번엔 진짜로 잡아야 돼?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "shrink" },
     { id: "koma2", speaker: "코마", body: "…앞만 봐라.", standing: "koma", act: "nod" },
   ]),
 };

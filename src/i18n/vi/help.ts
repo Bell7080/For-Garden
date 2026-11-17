@@ -69,6 +69,7 @@ export const HELP_VI = {
   "help.tutorial.raid": "Đột kích",
   "help.tutorial.expedition": "Viễn chinh",
   "help.tutorial.premium": "Cao cấp",
+  "help.tutorial.descendingMap": "Bản đồ đi xuống",
   "help.tutorial.archaeology.sub": "Hướng dẫn lại bản đồ di tích và bàn tầng đất",
   "help.group.collect": "Sưu tầm & Nghiên cứu",
   "help.group.growth": "Phát triển",

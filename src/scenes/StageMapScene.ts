@@ -2,7 +2,7 @@ import { onAccountSwitch } from "../core/accountScope";
 import { fitTextToBox } from "../ui/textFit";
 import { openSettingsOver } from "./settingsOverlay";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
-import { stageMapRow } from "../core/stageMapDirection";
+import { isDescendingChapter, stageMapRow } from "../core/stageMapDirection";
 import { STORY_DIFFICULTY, isStoryDifficultyUnlocked, storyDifficultyOf, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
 import { storyStages, ALL_STORY_STAGES } from "../data/stages";
 import { addStoryDifficultyIcon } from "../ui/StoryDifficultyIcon";
@@ -208,6 +208,7 @@ export class StageMapScene extends Phaser.Scene {
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
     showContentIntro(this, "stageMap");
+    this.introduceDescent();
     followTutorialTarget(this, {
       enabled: () => tutorialManager.battleStage() !== undefined,
       blocked: () => this.enemyPopups.isOpen,
@@ -267,6 +268,12 @@ export class StageMapScene extends Phaser.Scene {
     this.map.destroy(true);
     this.nodes.clear();
     this.buildMap();
+    this.introduceDescent();
+  }
+
+  /** 위에서 아래로 내려가는 지도를 처음 열면 코마가 방향을 짚어 준다. 본 뒤로는 다시 뜨지 않는다. */
+  private introduceDescent(): void {
+    if (isDescendingChapter(this.currentChapter)) showContentIntro(this, "descendingMap");
   }
 
   /** 그 구역의 지도 노드 — 본편 관문에 서브(SUB)를 더한 것이다. 본편 순서는 그대로 둔다. */

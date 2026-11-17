@@ -32,4 +32,7 @@ export const CONTENT_INTRO_PAGES: Readonly<Record<IconIntroId, readonly IconIntr
   raid: pages("raid", [W.raidSigil, "item-raid-ticket"]),
   expedition: pages("expedition", [W.salvageRecord, ROLE_ICON.warrior, W.gems]),
   premium: pages("premium", [W.gems, "item-stamina-tonic"]),
+  // 5·6장 지도는 위에서 아래로 내려간다. 시스템 문장이 아니라 그 길로 몰고 있는 코마가 새침하게 짚어 준다 —
+  // 「아래에서 기다린다」는 몰이의 복선이다(story-brain/threads.md).
+  descendingMap: pages("descendingMap", ["", ""]).map((page) => ({ ...page, speaker: "koma" })),
 };

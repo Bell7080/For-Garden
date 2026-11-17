@@ -79,7 +79,7 @@ export const STAGE_2_5_PRE: DialogueStory = {
     { id: "alone", speaker: "토리카", body: "아모 씨 혼자예요? 토비 씨와 리파 씨는요?", standing: "torika", cast: PAIR("amo"), act: "lean" },
     { id: "away", speaker: "아모", body: "…오지 말라고 했어. 여기만큼은 나 혼자 서고 싶었거든.", standing: "amo", act: "nod" },
     { id: "why", speaker: "아모", body: "저기 라인 끝 보이지? 나, 저기 처음 올려졌다가 쓸 수 없음 표식을 달고 내려왔어.", standing: "amo", act: "shrink" },
-    { id: "ask", speaker: "아모", body: "연구원이 그때 한 말이 진짜인지 확인하러 왔어. 그러니까 지나가려면… 내가 먼저 확인해야겠어.", standing: "amo", act: "tremble" },
+    { id: "ask", speaker: "아모", body: "코마한테 들었어. 연구원이 우리 같은 것한테도 말을 걸었다고. 그게 진짜인지 확인하러 왔어. 그러니까 지나가려면… 내가 먼저 확인해야겠어.", standing: "amo", act: "tremble" },
   ]),
 };
 
@@ -172,7 +172,7 @@ export const STAGE_2_8_POST: DialogueStory = {
     { id: "koma", speaker: "네우리", body: "그건 그렇고, 코마 님! 결국… 결국 실패하셨네요?", standing: "neuri", act: "lean" },
     { id: "komaReply", speaker: "코마", body: "…네우리. 보고를 받으러 왔나.", standing: "koma", act: "shrink" },
     { id: "polite", speaker: "네우리", body: "어머, 보고라니요. 저희 같은 말단이 어찌 감히. 다만 위에서 「테러조는 이제 쉬셔도 된다」고 하셔서요. 아주, 아주 정중하게 전해 드리러 왔답니다.", standing: "neuri", act: "bounce" },
-    { id: "mir", speaker: "미르", body: "…길. 막혀 있다. 치운다.", standing: "mir", act: "nod" },
+    { id: "mir", speaker: "미르", body: "네우리, 길 막혔어요! 제가 치울게요!", standing: "mir", act: "nod" },
     { id: "bye", speaker: "네우리", body: "아, 그렇지, 미르. …그럼 연구원님, 다음에 또 뵙지요. 그때는 저희 회수조가 직접 모시러 오겠습니다.", standing: "neuri", act: "nod", leave: "rise", cast: [{ id: "koma", slot: "left" }] },
     { id: "torika", speaker: "토리카", body: "코마 씨… 실패하셨다는 게 무슨 말이에요?", standing: "torika", cast: PAIR("koma"), act: "lean" },
     { id: "later", speaker: "코마", body: "…나중에 말하지. 저 둘이 이 구역까지 내려왔다는 것만 기억해라.", standing: "koma", act: "shrink" },
@@ -189,7 +189,7 @@ export const STAGE_2_9_POST: DialogueStory = {
     { id: "dodi", speaker: "도디", body: "다들 이 아래로 흘러간 거예요. 쓸 수 없음이라고 적힌 채로…", standing: "dodi", act: "shrink" },
     { id: "lexia", speaker: "렉시아", body: "아래에는 뭐가 있어?", standing: "lexia", act: "lean" },
     { id: "dei", speaker: "데이", body: "구멍 가장자리에 낙서 같은 화살표가 있어! 내가 그린 거 아니야, 진짜야. 누가 아래로 가는 길을 표시해 놨어.", cast: VOICE("deina", "lexia", "dodi"), act: "lean" },
-    { id: "stay", speaker: "", body: "렉시아의 물음에 대답하는 이는 없었다. 연구원은 구멍 앞에 한참 서 있었다." },
+    { id: "stay", speaker: "", body: "화살표가 무엇을 가리키는지 아는 이는 없었다. 연구원은 구멍 앞에 한참 서 있었다." },
     { id: "torika", speaker: "토리카", body: "…가요, 대장님. 아직은 위에서 할 일이 있어요.", standing: "torika", cast: PAIR("lexia"), act: "nod" },
   ]),
 };

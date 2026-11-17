@@ -35,7 +35,7 @@ export const STAGE_6_3_POST: DialogueStory = {
     { id: "magasa", speaker: "마가사", body: "라자, 많이 먹어. 앞에 서는 사람이 제일 먼저 배고프잖아.", standing: "magasa", act: "nod" },
     { id: "raja", speaker: "라자", body: "…노아 몫은.", standing: "raja", act: "lean" },
     { id: "magasa2", speaker: "마가사", body: "벌써 덜어 놨지~ 아, 연구원님 몫도 남겨 뒀는데. 오시면 같이 드세요.", standing: "magasa", act: "hop" },
-    { id: "keris", speaker: "케리스", body: "…기록했습니다, 선배. 적이 우리 몫의 그릇을 따로 덜어 둔 건 이번이 처음이에요.", standing: "keris", cast: [{ id: "keris", slot: "center" }], act: "shrink" },
+    { id: "keris", speaker: "케리스", body: "…기록해 둘게요, 선배. 적이 우리 몫의 그릇을 따로 덜어 둔 건 처음이에요.", standing: "keris", cast: [{ id: "keris", slot: "center" }], act: "shrink" },
   ]),
 };
 
@@ -59,7 +59,7 @@ export const STAGE_6_5_PRE: DialogueStory = {
   nodes: linear([
     { id: "drop", speaker: "", body: "위에서 그림자가 떨어져 내렸다. 땅에 닿기도 전에 손톱이 먼저 공기를 갈랐다.", standing: "noa", cast: [{ id: "noa", slot: "center" }], cue: "impact" },
     { id: "noa", speaker: "노아", body: "오, 오지 마! 오지 말라니까! …왜 계속 오는 건데!", standing: "noa", act: "fright" },
-    { id: "shute", speaker: "슈테", body: "오더, 저 아이는 내가 맡을게. 저 하나만 끝까지 붙잡고 있을 테니까, 내 신호 믿고 움직여.", standing: "shute", cast: [{ id: "shute", slot: "left" }, { id: "noa", slot: "right" }], act: "nod" },
+    { id: "shute", speaker: "슈테", body: "오더, 쟤는 내가 마크할게. 끝까지 쟤 하나만 물고 있을 테니까, 내 핑 오면 그때 움직여. ㄹㅇ로.", standing: "shute", cast: [{ id: "shute", slot: "left" }, { id: "noa", slot: "right" }], act: "nod" },
   ]),
 };
 
@@ -125,7 +125,7 @@ export const STAGE_6_10_POST: DialogueStory = {
     { id: "fall", speaker: "마가사", body: "아하… 둘이서도 안 되네. 노아, 괜찮아?", standing: "magasa", cast: [{ id: "magasa", slot: "left" }, { id: "noa", slot: "right" }], act: "faint" },
     { id: "noa", speaker: "노아", body: "…응. 근데 바닥이, 바닥이 이상해.", standing: "noa", act: "fright" },
     { id: "crack", speaker: "", body: "회랑 바닥이 한가운데부터 꺼져 내렸다. 위로 가는 계단이 멀어지고, 몸이 어둠 속으로 떨어졌다.", cast: [], cue: "explosion" },
-    { id: "koma", speaker: "코마", body: "…손 잡아라. 떨어지면, 그 문은 네 손으로 열게 된다.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
+    { id: "koma", speaker: "코마", body: "…손 잡아라. 떨어지면, 그 문은 당신 손으로 열게 된다.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
     { id: "voice", speaker: "???", body: "…늦었어.", cast: [{ id: "koma", slot: "left" }, { id: "carno", slot: "right", veiled: true }], cue: "heartbeat", voice: "heavy" },
   ]),
 };

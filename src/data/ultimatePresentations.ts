@@ -102,6 +102,8 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   teku: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.98, cutInHoldMs: 140, zoomScale: 1.12, zoomMs: 110, cameraShakeIntensity: 0.006 },
   plesha: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1, cutInHoldMs: 160, zoomScale: 1.1, zoomMs: 120, cameraShakeIntensity: 0.007 },
   arte: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1, cutInHoldMs: 160, zoomScale: 1.1, zoomMs: 120, cameraShakeIntensity: 0.007 },
+  // 큰 몸이 천천히 그늘을 펼치는 기술이라 한 박자 오래 머물고 흔들림은 낮다.
+  brika: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, cutInHoldMs: 180, zoomScale: 1.12, zoomMs: 130, cameraShakeIntensity: 0.005 },
   ark: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.96, zoomScale: 1.2, zoomMs: 115, cameraShakeIntensity: 0.009 },
   anka: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.02, zoomScale: 1.16, zoomMs: 120, cameraShakeIntensity: 0.006 },
   "toby": { ...DEFAULT_ULTIMATE_PRESENTATION, cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },

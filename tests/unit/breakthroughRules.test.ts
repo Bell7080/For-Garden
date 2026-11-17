@@ -157,6 +157,11 @@ const CATEGORY: Record<EffectKind, Category> = {
   spotlessFinish: "support",
   protectiveGear: "survival",
   proTouch: "support",
+  // 브리카 — 우듬지 그늘
+  canopyChain: "survival",
+  canopyRecovery: "survival",
+  canopyShelter: "support",
+  deepShade: "support",
   poisonPulse: "damage",
   bleedSettle: "damage",
   extraCard: "damage",

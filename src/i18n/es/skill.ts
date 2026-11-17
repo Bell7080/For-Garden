@@ -561,4 +561,11 @@ export const SKILL_ES = {
   "skill.clause.deepClean.shieldPercent": "el {percent}% del [[ap|Poder mágico]]",
   "skill.clause.push": "los empuja un poco",
   "skill.status.chillTimed": "acumula una carga de [[chill|Ralentización]] durante {seconds} s, hasta {stacks} cargas, cada una reduce un {percent}% la [[attack-speed|Velocidad de ataque]] y la [[move-speed|Velocidad de movimiento]]",
+  "skill.ferocity.splash.tauntEntry": "Al entrar en Frenesí, aplica [[taunt|Provocación]] a todos los enemigos cercanos durante {seconds} s.",
+  "skill.passive.canopyShade": "Recibe en su lugar el {percent}% del daño que sufrirían los aliados cercanos. El {shield}% del daño recibido así se convierte en un [[shield|Escudo]] propio, hasta {cap}.",
+  "skill.sentence.selfBulwarkNear": "Obtiene un [[shield|Escudo]] de {shield} y durante {seconds} s recibe el {percent}% del daño que sufrirían los aliados en un área amplia.",
+  "skill.breakthrough.effect.basic.canopyChain": "Cada {every}.º \"{name}\" otorga a sí misma un [[shield|Escudo]] de {percent}.",
+  "skill.breakthrough.effect.ultimate.canopyRecovery": "Cuando termina \"{name}\", recupera el {percent}% del daño recibido en lugar de los aliados durante ese tiempo.",
+  "skill.breakthrough.effect.ferocity.canopyShelter": "Al entrar en [[ferocity|Frenesí]], otorga un [[shield|Escudo]] de {percent} a los demás aliados dentro del alcance de \"{name}\".",
+  "skill.breakthrough.effect.passive.deepShade": "\"{name}\" recibe el {percent}% del daño de los aliados con menos del {hp}% de vida.",
 } as const;

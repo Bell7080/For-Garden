@@ -563,4 +563,11 @@ export const SKILL_EN = {
   "skill.clause.deepClean.shieldPercent": "{percent}% of [[ap|Ability Power]]",
   "skill.clause.push": "pushes them back a little",
   "skill.status.chillTimed": "builds one stack of [[chill|Chill]] for {seconds}s, up to {stacks} stacks, each lowering [[attack-speed|Attack Speed]] and [[move-speed|Move Speed]] by {percent}%",
+  "skill.ferocity.splash.tauntEntry": "On entering Frenzy, [[taunt|Taunts]] every enemy nearby for {seconds}s.",
+  "skill.passive.canopyShade": "Takes {percent}% of the damage nearby allies would receive. {shield}% of the damage taken this way becomes a [[shield|Shield]] on itself, up to {cap}.",
+  "skill.sentence.selfBulwarkNear": "Gains a [[shield|Shield]] of {shield}, then for {seconds}s takes {percent}% of the damage allies across a wide area would receive.",
+  "skill.breakthrough.effect.basic.canopyChain": "Every {every}th \"{name}\" grants itself a [[shield|Shield]] of {percent}.",
+  "skill.breakthrough.effect.ultimate.canopyRecovery": "When \"{name}\" ends, it recovers {percent}% of the damage it took for allies during it.",
+  "skill.breakthrough.effect.ferocity.canopyShelter": "On entering [[ferocity|Frenzy]], grants a [[shield|Shield]] of {percent} to the other allies within \"{name}\" range.",
+  "skill.breakthrough.effect.passive.deepShade": "\"{name}\" takes {percent}% of the damage for allies below {hp}% HP.",
 } as const;

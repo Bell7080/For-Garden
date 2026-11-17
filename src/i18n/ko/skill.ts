@@ -610,4 +610,11 @@ export const SKILL_KO = {
   "skill.clause.deepClean.shieldPercent": "[[ap|주문력]]의 {percent}%",
   "skill.clause.push": "주위로 조금 밀어낸다",
   "skill.status.chillTimed": "{seconds}초 동안 [[chill|둔화]]를 한 겹 쌓아 최대 {stacks}겹까지 겹마다 [[attack-speed|공격 속도]]와 [[move-speed|이동 속도]]를 {percent}% 낮춘다",
+  "skill.ferocity.splash.tauntEntry": "폭주에 들어가는 순간 주위 모든 적을 {seconds}초 동안 [[taunt|도발]]한다.",
+  "skill.passive.canopyShade": "주위 아군이 받는 피해의 {percent}%를 대신 받는다. 대신 받은 피해의 {shield}%는 자신의 [[shield|보호막]]이 되며, 이렇게 쌓이는 보호막은 {cap}을 넘지 않는다.",
+  "skill.sentence.selfBulwarkNear": "자신에게 {shield}만큼 [[shield|보호막]]을 두르고, {seconds}초 동안 넓은 범위의 아군이 받는 피해의 {percent}%를 대신 받는다.",
+  "skill.breakthrough.effect.basic.canopyChain": "「{name}」 {every}번째마다 자신에게 {percent}만큼 [[shield|보호막]]을 두른다.",
+  "skill.breakthrough.effect.ultimate.canopyRecovery": "「{name}」{name!이} 끝나는 순간 그동안 대신 받은 피해의 {percent}%만큼 회복한다.",
+  "skill.breakthrough.effect.ferocity.canopyShelter": "[[ferocity|폭주]]에 드는 순간 「{name}」 범위 안의 다른 아군에게 {percent}만큼 [[shield|보호막]]을 두른다.",
+  "skill.breakthrough.effect.passive.deepShade": "「{name}」{name!이} 체력이 {hp}% 미만인 아군의 피해는 {percent}%를 대신 받는다.",
 } as const;

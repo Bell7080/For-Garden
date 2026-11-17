@@ -1757,6 +1757,8 @@ describe("FakeServer 마일리지 상점", () => {
     const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
     const sr = mileageRotatingFragmentId("SR", "weekly", WEEK)!;
     const r = mileageRotatingFragmentId("R", "daily", WEEK)!;
+    // 회전은 개체 목록에서 나오므로 새 개체가 들면 시작 편성의 렐릭이 걸릴 수 있다 — 「처음」을 보려고 비워 둔다.
+    state.owned.delete(sr); state.owned.delete(r);
     const first = await server.purchaseProduct({ storefront: "mileage", productId: "mileage-weekly-sr", quantity: 1 });
     expect(first.newRelicIds).toEqual([sr]);
     expect(first.granted).toEqual([{ kind: "relic_fragment", relicId: sr, amount: 1 }]);

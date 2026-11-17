@@ -561,4 +561,11 @@ export const SKILL_VI = {
   "skill.clause.deepClean.shieldPercent": "{percent}% [[ap|Sức Mạnh Phép]]",
   "skill.clause.push": "đẩy chúng lùi một chút",
   "skill.status.chillTimed": "cộng 1 tầng [[chill|Làm Chậm]] trong {seconds} giây, tối đa {stacks} tầng, mỗi tầng giảm {percent}% [[attack-speed|Tốc Độ Đánh]] và [[move-speed|Tốc Độ Di Chuyển]]",
+  "skill.ferocity.splash.tauntEntry": "Ngay khi vào Cuồng bạo, [[taunt|Khiêu khích]] mọi kẻ địch xung quanh trong {seconds} giây.",
+  "skill.passive.canopyShade": "Gánh thay {percent}% sát thương mà đồng minh xung quanh phải nhận. {shield}% sát thương gánh thay trở thành [[shield|Lá chắn]] của bản thân, tối đa {cap}.",
+  "skill.sentence.selfBulwarkNear": "Nhận [[shield|Lá chắn]] {shield}, rồi trong {seconds} giây gánh thay {percent}% sát thương mà đồng minh trong phạm vi rộng phải nhận.",
+  "skill.breakthrough.effect.basic.canopyChain": "Mỗi lần thứ {every} của \"{name}\" tạo cho bản thân [[shield|Lá chắn]] {percent}.",
+  "skill.breakthrough.effect.ultimate.canopyRecovery": "Khi \"{name}\" kết thúc, hồi phục {percent}% sát thương đã gánh thay trong thời gian đó.",
+  "skill.breakthrough.effect.ferocity.canopyShelter": "Ngay khi vào [[ferocity|Cuồng bạo]], tạo [[shield|Lá chắn]] {percent} cho các đồng minh khác trong phạm vi \"{name}\".",
+  "skill.breakthrough.effect.passive.deepShade": "\"{name}\" gánh thay {percent}% sát thương cho đồng minh có máu dưới {hp}%.",
 } as const;

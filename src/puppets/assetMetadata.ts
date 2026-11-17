@@ -906,6 +906,24 @@ export const ARTE_SD_METADATA: Omit<PuppetAsset, "url"> = {
   joints: { center: [701, 532], head: [735, 406], eyes: null, feet: [[629, 1204], [798, 1183]] },
 };
 
+/** 브리카 전신: 중심1·머리1·눈1·눈2·발1·발2를 프로젝트에서 읽었다. alpha > 16 경계는 (104,26)–(1017,1340)이고 발 관절은 그림 밖에 있다. */
+export const BRIKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 104, top: 26, right: 1017, bottom: 1340 },
+  joints: { center: [579, 338], head: [595, 250], eyes: [[561, 243], [622, 232]], feet: [[514, 1846], [568, 1840]] },
+  /** 로비 세로 비율: 메론 기준. 1.77 m — 눈(237.5)에서 alpha 아래 경계까지를 그 키로 맞춘다. 로스터에서 가장 큰 몸이다. */
+  lobbyZoom: 1.106,
+};
+
+/** 브리카 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. alpha > 16 경계는 (81,12)–(1167,1239)이다. */
+export const BRIKA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 81, top: 12, right: 1167, bottom: 1239 },
+  joints: { center: [694, 593], head: [733, 438], eyes: null, feet: [[534, 1213], [755, 1223]] },
+};
+
 /** 아크 SD: 중심1·머리1을 프로젝트에서 읽었으며 눈 관절은 없다. alpha 경계는 (113,31)–(1128,1224)이다. */
 export const ARK_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254,

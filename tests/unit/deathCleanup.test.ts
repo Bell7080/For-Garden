@@ -23,7 +23,7 @@ describe("사망 정리", () => {
   it("노도니아가 아군 몫을 대신 받다 쓰러져도 사망 사건이 나온다", () => {
     const state = createSkirmish([getRelic("nodonia"), getRelic("rex")], [getRelic("raitia-grass")], ARENA);
     const [nodonia, rex] = state.fighters.filter(({ side }) => side === "player");
-    nodonia.bulwark = { remaining: 5, total: 5, percent: 100, regenPercentPerSecond: 0, passiveHealBonusPercent: 0, tickIn: 1, skillId: "test", name: "test" };
+    nodonia.bulwark = { remaining: 5, total: 5, percent: 100, regenPercentPerSecond: 0, passiveHealBonusPercent: 0, tickIn: 1, skillId: "test", name: "test", radius: null };
     nodonia.hp = 1;
     rex.maxHp = rex.hp = 1_000_000_000;
     const events: SkirmishEvent[] = [];

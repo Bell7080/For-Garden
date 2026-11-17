@@ -57,7 +57,7 @@ import { motionPolicy } from "../core/settings";
 import { RewardFrame } from "./RewardFrame";
 import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { addMarkChip } from "./MarkChip";
-import { addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeAccentCss, runeSeatTexture, runeTexture } from "./runeIcons";
+import { addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeAccentCss, runeHeartSpot, runeSeatTexture, runeTexture } from "./runeIcons";
 import { reachLabel, STAT_TONE, reachToneHex } from "./statTones";
 import { openRuneInfoPopup, openRunePopup, runeStatLabel } from "./RunePopup";
 import { offerFreeRuneCraft } from "./freeRuneCraftTutorial";
@@ -1845,7 +1845,7 @@ export class InfoManager {
     const center = { x: COLUMN.x + heart.dx, y: heart.y };
     const size = heart.size;
     // 조각의 대략적인 무게중심. 세 조각이 나뉘는 방향(위 왼쪽·위 오른쪽·아래)을 그대로 따른다.
-    const spot = runeSpot(size, index);
+    const spot = runeHeartSpot(size, index);
     // 빈 조각이 튀어나가는 방향 — 가운데에서 제 무게중심 쪽으로.
     const reach = Math.hypot(spot.x, spot.y) || 1;
     const out = { x: (spot.x / reach) * pop, y: (spot.y / reach) * pop };
@@ -3176,18 +3176,6 @@ function heartOutline(t: number, size: number): [number, number] {
   return [x * scale, y * scale];
 }
 
-/**
- * 룬 조각의 대략적인 무게중심(px, `center` 기준 상대 좌표).
- *
- * 실제 자르는 각도는 `scripts/prepare_icons.py`의 `RUNE_CUTS`가 정한다. 여기서는 그 세 구간의
- * 가운데 각도만 그대로 옮겨, 손이 닿을 자리와 이름표를 놓을 자리로 쓴다.
- */
-function runeSpot(size: number, index: number): { x: number; y: number } {
-  const midDegrees = [210, 330, 90][index];
-  const radius = size * 0.3;
-  const rad = Phaser.Math.DegToRad(midDegrees);
-  return { x: Math.cos(rad) * radius, y: Math.sin(rad) * radius };
-}
 
 
 /* ───────────────────────────────────────────────────────────────────────────

@@ -116,6 +116,11 @@ export const INFO_JA = {
   "info.rune.workbench.unsaved": "変更した{count}枠が未適用です。\n適用して閉じますか？",
   "info.rune.workbench.applyAndLeave": "適用して閉じる",
   "info.rune.workbench.discard": "破棄して閉じる",
+  "info.rune.workbench.compareTitle": "付け替え比較",
+  "info.rune.workbench.moveAsk": "他のレリックが装着中のルーンも使うとさらに強くなります。\n{names}から付け替えますか？",
+  "info.rune.workbench.movePowers": "戦闘力  付け替え {moved} · 空きルーンのみ {free}",
+  "info.rune.workbench.moveAccept": "付け替える",
+  "info.rune.workbench.moveFree": "空きルーンのみ",
 
   "info.journal.title": "観察日誌",
   "info.journal.id": "個体番号",

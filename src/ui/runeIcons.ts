@@ -25,6 +25,18 @@ const RARITIES: readonly HeartGemRarity[] = ["uncommon", "rare", "epic", "legend
 /** 조각을 잘라 붙이는 기준점(캔버스 세로 비율). `prepare_icons.py`의 `RUNE_CENTER_Y`와 같다. */
 export const RUNE_CENTER_Y = 0.44;
 
+/**
+ * 조각의 대략적인 무게중심(px, 하트 기준점에서 잰 상대 좌표).
+ *
+ * 실제 자르는 각도는 `scripts/prepare_icons.py`의 `RUNE_CUTS`가 정한다. 여기서는 그 세 구간의 가운데 각도만 옮겨,
+ * 손이 닿을 자리와 빈 조각이 튀어나가는 방향으로 쓴다(정보창 하트와 룬 정비 창이 함께 읽는다).
+ */
+export function runeHeartSpot(size: number, index: number): { x: number; y: number } {
+  const radians = ([210, 330, 90][index] * Math.PI) / 180;
+  const radius = size * 0.3;
+  return { x: Math.cos(radians) * radius, y: Math.sin(radians) * radius };
+}
+
 /** 조각을 굽는 원본 캔버스 한 변(px). */
 export const RUNE_BAKE_SIZE = 256;
 

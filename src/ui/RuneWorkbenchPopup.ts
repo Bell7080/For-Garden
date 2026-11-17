@@ -11,16 +11,18 @@ import { Button } from "./Button";
 import { addClippedHit } from "./clippedHit";
 import type { ClipRect } from "./clipRect";
 import { showContentToast } from "./ContentToast";
+import { addSectionTitle } from "./SectionTitle";
+import { BACK_BUTTON_SIZE, BACK_SLOT } from "./popupGeometry";
 import { attachDragScroll } from "./dragScroll";
 import { chipPoints, drawLayer, drawShapeOutline } from "./holo";
 import { bindLongPress } from "./longPressInfo";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { shapeClipMask } from "./popupArt";
 import { pressIn, pressOut } from "./pressFeedback";
-import { addRuneCard, addRuneFrame, RUNE_ACCENT, runeAccentCss } from "./runeIcons";
+import { addRuneCard, addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeAccentCss, runeHeartSpot, runeSeatTexture, runeTexture } from "./runeIcons";
 import { createRuneListState, RuneListControls, visibleRuneList } from "./RuneListControls";
 import { openRuneInfoPopup, runeStatLabel } from "./RunePopup";
-import { RUNE_WORKBENCH, runeWorkbenchCell, runeWorkbenchColumnWidth, runeWorkbenchColumnX, runeWorkbenchMinScroll, runeWorkbenchRows } from "./runeWorkbenchLayout";
+import { RUNE_WORKBENCH, runeWorkbenchCell, runeWorkbenchColumnWidth, runeWorkbenchColumnX, runeWorkbenchMinScroll, runeWorkbenchRows, runeWorkbenchSideSpan, RUNE_WORKBENCH_BACK_CLEARANCE } from "./runeWorkbenchLayout";
 import { addScrollHint } from "./ScrollHint";
 import { isTap } from "./tapGuard";
 import { squeezeTextToWidth } from "./textFit";
@@ -33,6 +35,8 @@ const DOWN_TEXT = COLOR.dangerText;
 const CHANGED_TONE = COLOR.shieldFill;
 /** 닫기를 막고 확인 창을 띄운 직후 같은 닫기가 다시 오면 통과시킨다 — `closeAll`이 확인 창과 번갈아 끝없이 돌지 않게. */
 const CLOSE_GUARD_MS = 400;
+/** 목록 마스크 밖의 입력면이 받는 창 — 자를 것이 없다. */
+const OPEN_CLIP = (): ClipRect => ({ left: -Infinity, right: Infinity, top: -Infinity, bottom: Infinity });
 
 export interface RuneWorkbenchOptions {
   readonly relicId: string;
@@ -103,6 +107,8 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
   let closeSelf: (() => void) | undefined;
 
   popups.open({
+    // 길게 서는 창이라 화면 가운데가 아니라 판 밖 뒤로가기 바로 위에 밑변을 맞춘다.
+    y: BACK_SLOT.y - BACK_BUTTON_SIZE / 2 - RUNE_WORKBENCH_BACK_CLEARANCE - height / 2,
     width: W.width, height, title: t("info.rune.workbench.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true,
     canClose: () => {
       if (forceClose || changedCount() === 0) return true;
@@ -155,12 +161,32 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
     // ── 아래 조작 ────────────────────────────────────────────────────────
     const footerY = top + rows.footerY;
     const footerCommon = { width: column, height: W.footer.height, fontSize: W.footer.fontSize };
-    const recommendInto = (mode: "auto" | "recommend"): void => {
-      const plan = recommendIntoDraft(relic(), draft, session.runeInventory, runeHolders(session.relicProgress), mode);
-      if (!plan.changed) { showContentToast(scene, t("info.rune.loadout.none"), "refused"); return; }
-      draft = plan.slots;
+    const takeDraft = (slots: RuneLoadoutSlots): void => {
+      draft = slots;
       showContentToast(scene, t("info.rune.workbench.drafted"), "info");
       repaint?.(false);
+    };
+    const recommendInto = (mode: "auto" | "recommend"): void => {
+      const holders = runeHolders(session.relicProgress);
+      const plan = recommendIntoDraft(relic(), draft, session.runeInventory, holders, mode);
+      if (!plan.changed) { showContentToast(scene, t("info.rune.loadout.none"), "refused"); return; }
+      // 추천이 다른 렐릭의 룬을 새로 빼 오면, 옮겨 낄지 남은 룬만 쓸지 고르게 한다 — 남의 편성을 말없이 허물지 않는다.
+      const takers = runeDraftMovedFrom(plan.slots, holders, def.id).filter((id, p): id is string => id !== null && plan.slots[p] !== draft[p]);
+      if (mode === "auto" || takers.length === 0) { takeDraft(plan.slots); return; }
+      const free = recommendIntoDraft(relic(), draft, session.runeInventory, holders, "auto");
+      const powerOf = (slots: RuneLoadoutSlots): string => runeLoadoutPower(relic(), slots, session.runeInventory).toLocaleString();
+      const names = [...new Set(takers)].map((id) => getRelic(id).name).join(", ");
+      popups.confirm({
+        title: t("info.rune.loadout.recommend"),
+        message: t("info.rune.workbench.moveAsk", { names })
+          + "\n" + t("info.rune.workbench.movePowers", { moved: powerOf(plan.slots), free: powerOf(free.changed ? free.slots : draft) }),
+        confirmLabel: t("info.rune.workbench.moveAccept"),
+        cancelLabel: t("info.rune.workbench.moveFree"),
+        onCancel: () => {
+          if (free.changed) takeDraft(free.slots);
+          else showContentToast(scene, t("info.rune.loadout.none"), "refused");
+        },
+      }, () => takeDraft(plan.slots));
     };
     const autoButton = new Button(scene, runeWorkbenchColumnX(0), footerY, { ...footerCommon, label: t("info.rune.loadout.auto"), onClick: () => recommendInto("auto") });
     const recommendButton = new Button(scene, runeWorkbenchColumnX(1), footerY, { ...footerCommon, label: t("info.rune.loadout.recommend"), onClick: () => recommendInto("recommend") });
@@ -266,43 +292,101 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
     const paintSlots = (): void => {
       slotLayer.removeAll(true);
       const changed = new Set(changedRuneParts(base, draft));
-      const S = W.slots;
+      const H = W.heart;
+      const cy = top + rows.heartY;
+      const plateWidth = W.width - W.padX * 2 + 24;
+      // 하트 판 — 아래 비교 판과 떨어진 한 장이라, 「어느 칸을 고르나」와 「무엇이 바뀌나」가 두 덩어리로 읽힌다.
+      slotLayer.add(drawLayer(scene, 0, top + H.top + H.height / 2, chipPoints(plateWidth, H.height, { bevel: { topLeft: 34, topRight: 0, bottomRight: 34, bottomLeft: 0 } }), { fill: 0x0a0e14, alpha: 0.72, edge: COLOR.accent, edgeAlpha: 0.35 }));
+      const selectPart = (p: RunePart): void => {
+        if (p === part) return;
+        part = p;
+        repaint?.(true);
+      };
+
+      // 조각 셋 — 고른 조각만 강조색 테를 두르고 바깥으로 튀어나오며, 나머지는 한 톤 가라앉는다.
       RUNE_DRAFT_PARTS.forEach((p) => {
         const selected = p === part;
         const rune = runeById(draft[p]);
-        const x = runeWorkbenchColumnX(p);
-        const y = top + rows.slotsY - (selected ? S.raise : 0);
-        const slot = scene.add.container(x, y);
-        const shape = chipPoints(column, S.height, { bevel: { topLeft: S.height * 0.2, topRight: 0, bottomRight: S.height * 0.2, bottomLeft: 0 } });
-        slot.add(drawLayer(scene, 0, 0, shape, {
-          fill: selected ? 0x1d2430 : 0x0d1219, alpha: selected ? 0.98 : 0.82,
+        const spot = runeHeartSpot(H.size, p);
+        const reach = Math.hypot(spot.x, spot.y) || 1;
+        const push = selected ? H.pop : rune ? 0 : H.pop * 0.4;
+        const x = (spot.x / reach) * push;
+        const y = cy + (spot.y / reach) * push;
+        const texture = rune ? runeSeatTexture(rune.rarity, p) : runeTexture(undefined, p);
+        const scale = rune ? 1 : 0.955;
+        // 고른 조각은 강조색 테, 빈 조각은 옅은 테 — 검은 구멍이 아니라 「끼울 자리」로 읽힌다.
+        if (selected || !rune) {
+          slotLayer.add(scene.add.image(x, y, texture).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(H.size * scale * 1.08, H.size * scale * 1.08).setTintFill(COLOR.accent).setAlpha(selected ? 0.95 : 0.4));
+        }
+        if (rune) {
+          slotLayer.add(scene.add.image(x, y, texture).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(H.size * 1.18, H.size * 1.18).setTint(RUNE_ACCENT[rune.rarity]).setBlendMode(Phaser.BlendModes.ADD).setAlpha(selected ? 0.45 : 0.22));
+        }
+        slotLayer.add(scene.add.image(x, y, texture).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(H.size * scale, H.size * scale).setAlpha(selected ? 1 : rune ? 0.78 : 0.6));
+        if (!rune) {
+          slotLayer.add(scene.add.image(x, y, texture).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(H.size * scale, H.size * scale).setTintFill(COLOR.accent).setAlpha(selected ? 0.28 : 0.14));
+        }
+        // 조각 위 칸 번호 — 옆 글 판의 번호와 같은 수라 어느 글이 어느 조각인지 잇는다.
+        // 조각의 무게중심은 `runeHeartSpot`보다 안쪽이라(손이 닿을 넓은 자리) 번호는 그 반쯤에 앉힌다.
+        slotLayer.add(scene.add.text(x + spot.x * 0.6, y + spot.y * 0.6, String(p + 1), textStyle({ role: "display", size: H.number, color: selected ? COLOR.accentText : COLOR.ink }))
+          .setOrigin(0.5).setStroke("#05070a", 7).setAlpha(selected ? 1 : 0.8));
+        const pieceHit = addClippedHit(scene, slotLayer, x + spot.x * 0.6, y + spot.y * 0.6, H.size * 0.32, H.size * 0.32, OPEN_CLIP);
+        pieceHit.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (isTap(pointer)) selectPart(p); });
+      });
+
+      // 글 판 셋 — 1번 왼쪽 · 2번 오른쪽 · 3번 아래.
+      RUNE_DRAFT_PARTS.forEach((p) => {
+        const selected = p === part;
+        const rune = runeById(draft[p]);
+        const bottom = p === 2;
+        const span = bottom ? { left: -H.bottom.width / 2, right: H.bottom.width / 2 } : runeWorkbenchSideSpan(p === 0 ? "left" : "right");
+        const width = span.right - span.left;
+        const height = bottom ? H.bottom.height : H.side.height;
+        const block = scene.add.container((span.left + span.right) / 2, cy + (bottom ? H.bottom.y : H.side.y));
+        block.add(drawLayer(scene, 0, 0, chipPoints(width, height, { bevel: { topLeft: height * 0.2, topRight: 0, bottomRight: height * 0.2, bottomLeft: 0 } }), {
+          fill: selected ? 0x1d2430 : 0x0d1219, alpha: selected ? 0.96 : 0.7,
           edge: selected ? COLOR.accent : rune ? RUNE_ACCENT[rune.rarity] : COLOR.inkDimHex,
           edgeAlpha: selected ? 1 : 0.35, edgeWidth: selected ? 4 : 2,
         }));
-        const frameX = -column / 2 + 14 + S.frame / 2;
-        slot.add(addRuneFrame(scene, frameX, 0, S.frame, rune?.rarity, p, { mainStats: rune?.mainStats, engraved: (rune?.engravings.length ?? 0) > 0 }).setAlpha(rune ? 1 : 0.55));
-        const textX = frameX + S.frame / 2 + 12;
-        const room = column / 2 - 12 - textX;
-        slot.add(scene.add.text(column / 2 - 12, -S.height / 2 + 10, String(p + 1), textStyle({ role: "display", size: S.part, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(1, 0));
-        const name = scene.add.text(textX, -18, rune ? (rune.customName ?? t("info.rune.named", { rarity: runeRarityLabel(rune.rarity) })) : t("info.rune.empty"), textStyle({ role: "display", size: S.name, color: rune ? runeAccentCss(rune.rarity) : COLOR.inkDim }))
-          .setOrigin(0, 0.5).setStroke("#05070a", 4);
-        squeezeTextToWidth(name, room - 20);
-        const stat = scene.add.text(textX, 16, rune ? rune.mainStats.map(({ key }) => runeStatLabel(key) + " " + formatRuneOptionValue(key, runeOptionValue(rune, key))).join(" · ") : t("info.rune.workbench.pickBelow"), textStyle({ role: "emphasis", size: S.stat, color: rune ? COLOR.ink : COLOR.accentText }))
-          .setOrigin(0, 0.5);
-        squeezeTextToWidth(stat, room);
-        slot.add([name, stat]);
-        if (changed.has(p)) slot.add(addTag(scene, -column / 2 + 10, S.height / 2 - 18, t("info.rune.workbench.changed"), CHANGED_TONE, "#05070a", S.tag, 0));
-        // 칸 카드는 목록 마스크 밖이라 자를 것이 없다 — 입력면만 같은 관문(`addClippedHit`)을 지나 판 전체를 창으로 준다.
-        const hit = addClippedHit(scene, slot, 0, 0, column, S.height, () => ({ left: -Infinity, right: Infinity, top: -Infinity, bottom: Infinity }));
-        hit.on("pointerdown", () => pressIn(slot));
-        hit.on("pointerout", () => pressOut(slot, "normal", { pop: false }));
+        const name = rune ? (rune.customName ?? t("info.rune.named", { rarity: runeRarityLabel(rune.rarity) })) : t("info.rune.empty");
+        const stats = rune ? rune.mainStats.map(({ key }) => runeStatLabel(key) + " " + formatRuneOptionValue(key, runeOptionValue(rune, key))) : [t("info.rune.workbench.pickBelow")];
+        // 글은 하트 쪽으로 붙는다 — 왼쪽 판은 오른쪽 정렬, 오른쪽 판은 왼쪽 정렬, 아래 판은 가운데.
+        const align = bottom ? 0.5 : p === 0 ? 1 : 0;
+        const textX = bottom ? 0 : p === 0 ? width / 2 - 18 : -width / 2 + 18;
+        const room = width - 36 - (bottom ? 60 : 0);
+        const numberX = p === 0 ? -width / 2 + 16 : width / 2 - 16;
+        block.add(scene.add.text(bottom ? -width / 2 + 22 : numberX, bottom ? 0 : -height / 2 + 12, String(p + 1), textStyle({ role: "display", size: H.number * 0.6, color: selected ? COLOR.accentText : COLOR.inkDim }))
+          .setOrigin(bottom ? 0.5 : p === 0 ? 0 : 1, bottom ? 0.5 : 0));
+        if (bottom) {
+          const nameText = scene.add.text(textX, -15, name, textStyle({ role: "display", size: H.bottom.name, color: rune ? runeAccentCss(rune.rarity) : COLOR.inkDim })).setOrigin(0.5).setStroke("#05070a", 4);
+          squeezeTextToWidth(nameText, room);
+          const statText = scene.add.text(textX, 17, stats.join(" · "), textStyle({ role: "emphasis", size: H.bottom.stat, color: rune ? COLOR.ink : COLOR.accentText })).setOrigin(0.5);
+          squeezeTextToWidth(statText, room);
+          block.add([nameText, statText]);
+        } else {
+          const firstY = -height / 2 + 26 + (stats.length === 1 ? H.side.line / 2 : 0);
+          const nameText = scene.add.text(textX, firstY + 18, name, textStyle({ role: "display", size: H.side.name, color: rune ? runeAccentCss(rune.rarity) : COLOR.inkDim })).setOrigin(align, 0.5).setStroke("#05070a", 4);
+          squeezeTextToWidth(nameText, room - 30);
+          block.add(nameText);
+          stats.forEach((line, i) => {
+            const statText = scene.add.text(textX, firstY + 18 + H.side.line * (i + 1) + 2, line, textStyle({ role: "emphasis", size: H.side.stat, color: rune ? COLOR.ink : COLOR.accentText })).setOrigin(align, 0.5);
+            squeezeTextToWidth(statText, room);
+            block.add(statText);
+          });
+        }
+        if (changed.has(p)) {
+          block.add(bottom
+            ? addTag(scene, width / 2 - 10, 0, t("info.rune.workbench.changed"), CHANGED_TONE, "#05070a", H.tag, 1)
+            : addTag(scene, p === 0 ? -width / 2 + 10 : width / 2 - 10, height / 2 - 18, t("info.rune.workbench.changed"), CHANGED_TONE, "#05070a", H.tag, p === 0 ? 0 : 1));
+        }
+        // 판은 목록 마스크 밖이라 자를 것이 없다 — 입력면만 같은 관문(`addClippedHit`)을 지나 판 전체를 창으로 준다.
+        const hit = addClippedHit(scene, block, 0, 0, width, height, OPEN_CLIP);
+        hit.on("pointerdown", () => pressIn(block));
+        hit.on("pointerout", () => pressOut(block, "normal", { pop: false }));
         hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-          pressOut(slot);
-          if (!isTap(pointer) || p === part) return;
-          part = p;
-          repaint?.(true);
+          pressOut(block);
+          if (isTap(pointer)) selectPart(p);
         });
-        slotLayer.add(slot);
+        slotLayer.add(block);
       });
     };
 
@@ -314,47 +398,53 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
       compareLayer.add(drawLayer(scene, 0, cTop + C.height / 2, chipPoints(plateWidth, C.height, { bevel: { topLeft: C.height * 0.14, topRight: 0, bottomRight: C.height * 0.14, bottomLeft: 0 } }), { fill: 0x0a0e14, alpha: 0.9 }));
       const before = runeById(base[part]);
       const after = runeById(draft[part]);
+      // 제목표가 판 윗변에 걸터앉아 위 하트 판과 다른 덩어리임을 말한다.
+      compareLayer.add(addSectionTitle(scene, -plateWidth / 2 - 6, cTop, t("info.rune.workbench.compareTitle"), { size: C.title }));
       const leftX = -plateWidth / 2 + C.pad;
-      const midX = -plateWidth / 2 + plateWidth * 0.43;
+      const midX = -plateWidth / 2 + plateWidth * 0.45;
       const rightX = midX + 44;
       const rightEdge = plateWidth / 2 - C.pad;
-      const labelY = cTop + C.pad;
-      const nameY = labelY + C.label + 8;
+      const labelY = cTop + C.pad + 12;
+      const iconY = labelY + C.label + 8 + C.icon / 2;
+      const nameY = iconY - C.icon / 2;
       const linesTop = nameY + C.name + 10;
       const linesRoom = cTop + C.height - C.pad - linesTop;
       const nameOf = (rune: RuneInstance | undefined): string => (rune ? (rune.customName ?? t("info.rune.named", { rarity: runeRarityLabel(rune.rarity) })) : t("info.rune.empty"));
-      const addName = (x: number, rune: RuneInstance | undefined, room: number): void => {
-        const text = scene.add.text(x, nameY, nameOf(rune), textStyle({ role: "display", size: C.name, color: rune ? runeAccentCss(rune.rarity) : COLOR.inkDim })).setOrigin(0, 0).setStroke("#05070a", 4);
-        squeezeTextToWidth(text, room);
+      // 룬 그림 + 이름. 그림은 가방 카드와 같은 액자라 아래 목록에서 고른 카드와 같은 얼굴로 읽힌다. 돌려주는 값은 글이 서는 x.
+      const addHead = (x: number, rune: RuneInstance | undefined, room: number): number => {
+        compareLayer.add(addRuneFrame(scene, x + C.icon / 2, iconY, C.icon, rune?.rarity, part, { mainStats: rune?.mainStats, engraved: (rune?.engravings.length ?? 0) > 0 }).setAlpha(rune ? 1 : 0.5));
+        const textX = x + C.icon + 14;
+        const text = scene.add.text(textX, nameY, nameOf(rune), textStyle({ role: "display", size: C.name, color: rune ? runeAccentCss(rune.rarity) : COLOR.inkDim })).setOrigin(0, 0).setStroke("#05070a", 4);
+        squeezeTextToWidth(text, room - C.icon - 14);
         compareLayer.add(text);
+        return textX;
       };
 
       // 왼쪽 — 지금 이 칸에 저장된 룬.
       compareLayer.add(scene.add.text(leftX, labelY, t("info.rune.workbench.current"), textStyle({ role: "body", size: C.label, color: COLOR.inkDim })).setOrigin(0, 0));
-      addName(leftX, before, midX - leftX - 16);
+      const ownX = addHead(leftX, before, midX - leftX - 16);
       const own = before ? [...before.mainStats.map(({ key }) => ({ key, main: true })), ...before.subStats.map(({ key }) => ({ key, main: false }))] : [];
       const ownStep = own.length > 0 ? Math.min(C.lineHeight, linesRoom / own.length) : C.lineHeight;
       own.forEach(({ key, main }, i) => {
-        const text = scene.add.text(leftX, linesTop + i * ownStep, runeStatLabel(key) + " " + formatRuneOptionValue(key, runeOptionValue(before!, key)), main ? textStyle({ role: "emphasis", size: Math.min(C.line, ownStep * 0.82), color: COLOR.ink }) : textStyle({ role: "body", size: Math.min(C.line, ownStep * 0.82), color: COLOR.inkDim })).setOrigin(0, 0);
-        squeezeTextToWidth(text, midX - leftX - 16);
+        const text = scene.add.text(ownX, linesTop + i * ownStep, runeStatLabel(key) + " " + formatRuneOptionValue(key, runeOptionValue(before!, key)), main ? textStyle({ role: "emphasis", size: Math.min(C.line, ownStep * 0.82), color: COLOR.ink }) : textStyle({ role: "body", size: Math.min(C.line, ownStep * 0.82), color: COLOR.inkDim })).setOrigin(0, 0);
+        squeezeTextToWidth(text, midX - ownX - 16);
         compareLayer.add(text);
       });
-      if (!before) compareLayer.add(scene.add.text(leftX, linesTop, "—", textStyle({ role: "body", size: C.line, color: COLOR.inkDim })).setOrigin(0, 0));
 
       // 가운데 화살표 · 오른쪽 — 후보.
       compareLayer.add(scene.add.text(midX + 14, cTop + C.height / 2, "▶", textStyle({ role: "display", size: C.arrow, color: COLOR.accentText })).setOrigin(0.5));
       compareLayer.add(scene.add.text(rightX, labelY, t("info.rune.workbench.picked"), textStyle({ role: "body", size: C.label, color: COLOR.inkDim })).setOrigin(0, 0));
       if (draft[part] === base[part]) {
-        const hint = scene.add.text(rightX, nameY + 6, t("info.rune.workbench.pickHint"), textStyle({ role: "body", size: C.line, color: COLOR.accentText, wrap: rightEdge - rightX })).setOrigin(0, 0);
+        const hint = scene.add.text(rightX, nameY + 10, t("info.rune.workbench.pickHint"), textStyle({ role: "body", size: C.line, color: COLOR.accentText, wrap: rightEdge - rightX })).setOrigin(0, 0);
         compareLayer.add(hint);
         return;
       }
-      addName(rightX, after, rightEdge - rightX);
+      const pickedX = addHead(rightX, after, rightEdge - rightX);
       let y = linesTop;
       const mover = movedFrom()[part];
       if (mover) {
-        const moved = scene.add.text(rightX, y, t("info.rune.workbench.movedFrom", { name: getRelic(mover).name }), textStyle({ role: "emphasis", size: C.moved, color: COLOR.shieldText })).setOrigin(0, 0);
-        squeezeTextToWidth(moved, rightEdge - rightX);
+        const moved = scene.add.text(pickedX, y, t("info.rune.workbench.movedFrom", { name: getRelic(mover).name }), textStyle({ role: "emphasis", size: C.moved, color: COLOR.shieldText })).setOrigin(0, 0);
+        squeezeTextToWidth(moved, rightEdge - pickedX);
         compareLayer.add(moved);
         y += C.moved + 8;
       }
@@ -364,8 +454,8 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
       lines.forEach(({ key, main, after: value, delta }, i) => {
         const ly = y + i * step;
         const has = after !== undefined && (after.mainStats.some((o) => o.key === key) || after.subStats.some((o) => o.key === key));
-        const label = scene.add.text(rightX, ly, runeStatLabel(key) + " " + (has ? formatRuneOptionValue(key, value) : "—"), main ? textStyle({ role: "emphasis", size, color: COLOR.ink }) : textStyle({ role: "body", size, color: COLOR.inkDim })).setOrigin(0, 0);
-        squeezeTextToWidth(label, rightEdge - rightX - 110);
+        const label = scene.add.text(pickedX, ly, runeStatLabel(key) + " " + (has ? formatRuneOptionValue(key, value) : "—"), main ? textStyle({ role: "emphasis", size, color: COLOR.ink }) : textStyle({ role: "body", size, color: COLOR.inkDim })).setOrigin(0, 0);
+        squeezeTextToWidth(label, rightEdge - pickedX - 110);
         compareLayer.add(label);
         if (delta !== 0) {
           compareLayer.add(scene.add.text(rightEdge, ly, (delta > 0 ? "▲" : "▼") + formatRuneOptionValue(key, Math.abs(delta)).replace(/^\+/, ""), textStyle({ role: "emphasis", size, color: delta > 0 ? UP_TEXT : DOWN_TEXT })).setOrigin(1, 0));

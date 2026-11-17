@@ -695,6 +695,11 @@
 "Verwerfen",
 "Отменить"
 ],
+"info.rune.workbench.compareTitle": ["更换对比", "เปรียบเทียบการเปลี่ยน", "So sánh thay đổi", "Bandingkan", "Comparar", "Comparar", "Vergleich", "Сравнение"],
+"info.rune.workbench.moveAsk": ["连其他遗物装备的符文一起使用会更强。\n要从{names}那里移过来吗？", "หากใช้รูนที่เรลิกอื่นสวมอยู่ด้วยจะแข็งแกร่งขึ้น\nย้ายมาจาก {names} หรือไม่?", "Dùng cả Rune mà Di vật khác đang trang bị sẽ mạnh hơn.\nChuyển từ {names} sang?", "Memakai Rune yang dipasang Relik lain akan lebih kuat.\nPindahkan dari {names}?", "Usar también las Runas equipadas en otras Reliquias lo hará más fuerte.\n¿Tomarlas de {names}?", "Usar também as Runas equipadas em outras Relíquias deixa mais forte.\nTirar de {names}?", "Mit Runen anderer Relikte wird es stärker.\nVon {names} übernehmen?", "С рунами других Реликтов будет сильнее.\nЗабрать у: {names}?"],
+"info.rune.workbench.movePowers": ["战斗力  移入 {moved} · 仅空闲符文 {free}", "พลังต่อสู้  ย้ายมา {moved} · เฉพาะรูนว่าง {free}", "Lực chiến  Chuyển {moved} · Chỉ Rune trống {free}", "Kekuatan Tempur  Pindahkan {moved} · Hanya Rune bebas {free}", "Poder de combate  Tomar {moved} · Solo Runas libres {free}", "Poder de Combate  Tirar {moved} · Só Runas livres {free}", "Kampfkraft  Übernehmen {moved} · Nur freie Runen {free}", "Боевая мощь  Забрать {moved} · Только свободные руны {free}"],
+"info.rune.workbench.moveAccept": ["移过来", "ย้ายมา", "Chuyển sang", "Pindahkan", "Tomarlas", "Tirar", "Übernehmen", "Забрать"],
+"info.rune.workbench.moveFree": ["仅用空闲符文", "เฉพาะรูนว่าง", "Chỉ Rune trống", "Hanya Rune bebas", "Solo Runas libres", "Só Runas livres", "Nur freie Runen", "Только свободные руны"],
 "info.journal.title": [
 "观察日志",
 "บันทึกการสังเกต",

@@ -120,6 +120,11 @@ export const INFO_KO = {
   "info.rune.workbench.unsaved": "바꾼 칸 {count}개를 적용하지 않았습니다.\n적용하고 나갈까요?",
   "info.rune.workbench.applyAndLeave": "적용하고 나가기",
   "info.rune.workbench.discard": "버리고 나가기",
+  "info.rune.workbench.compareTitle": "교체 비교",
+  "info.rune.workbench.moveAsk": "다른 렐릭이 낀 룬까지 쓰면 더 강해집니다.\n{names}에게서 옮겨 낄까요?",
+  "info.rune.workbench.movePowers": "전투력  옮겨 끼기 {moved} · 남은 룬만 {free}",
+  "info.rune.workbench.moveAccept": "옮겨 끼기",
+  "info.rune.workbench.moveFree": "남은 룬만",
 
   "info.journal.title": "관찰 일지",
   "info.journal.fossilRecord": "발굴 기록",

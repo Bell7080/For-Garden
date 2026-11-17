@@ -89,7 +89,6 @@ export const INFO_PT_BR = {
   "info.rune.threeSlots": "Três espaços de Runa",
   "info.rune.complete": "As três peças se encaixam.",
   "info.rune.filled": "Preenchidos {count}",
-  "info.rune.loadout.auto": "Equipar auto",
   "info.rune.loadout.recommend": "Recomendado",
   "info.rune.loadout.clear": "Remover tudo",
   "info.rune.loadout.none": "Não há runas melhores.",

@@ -89,7 +89,6 @@ export const INFO_ZH_HANT = {
   "info.rune.threeSlots": "三個符文欄位",
   "info.rune.complete": "三塊碎片完美契合。",
   "info.rune.filled": "已裝 {count}",
-  "info.rune.loadout.auto": "自動裝備",
   "info.rune.loadout.recommend": "推薦裝備",
   "info.rune.loadout.clear": "全部卸下",
   "info.rune.loadout.none": "沒有比當前更好的符文。",

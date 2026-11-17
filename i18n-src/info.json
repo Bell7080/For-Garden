@@ -445,16 +445,6 @@
 "Belegt {count}",
 "Занято {count}"
 ],
-"info.rune.loadout.auto": [
-"自动装备",
-"สวมอัตโนมัติ",
-"Tự trang bị",
-"Pasang Otomatis",
-"Equipar auto",
-"Equipar auto",
-"Auto-Ausrüsten",
-"Автоэкипировка"
-],
 "info.rune.loadout.recommend": [
 "推荐装备",
 "สวมที่แนะนำ",

@@ -95,7 +95,6 @@ export const INFO_KO = {
   "info.rune.threeSlots": "룬 세 자리",
   "info.rune.complete": "세 조각이 모두 맞물렸다.",
   "info.rune.filled": "채운 자리 {count}",
-  "info.rune.loadout.auto": "자동 장착",
   "info.rune.loadout.recommend": "추천 장착",
   "info.rune.loadout.clear": "모두 해제",
   "info.rune.loadout.none": "지금보다 나은 룬이 없습니다.",

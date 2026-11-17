@@ -89,7 +89,6 @@ export const INFO_DE = {
   "info.rune.threeSlots": "Drei Runenplätze",
   "info.rune.complete": "Alle drei Teile greifen ineinander.",
   "info.rune.filled": "Belegt {count}",
-  "info.rune.loadout.auto": "Auto-Ausrüsten",
   "info.rune.loadout.recommend": "Empfohlen",
   "info.rune.loadout.clear": "Alle ablegen",
   "info.rune.loadout.none": "Keine besseren Runen vorhanden.",

@@ -89,7 +89,6 @@ export const INFO_VI = {
   "info.rune.threeSlots": "Ba ô Rune",
   "info.rune.complete": "Ba mảnh khớp trọn vào nhau.",
   "info.rune.filled": "Đã lắp {count}",
-  "info.rune.loadout.auto": "Tự trang bị",
   "info.rune.loadout.recommend": "Trang bị đề xuất",
   "info.rune.loadout.clear": "Tháo hết",
   "info.rune.loadout.none": "Không có rune tốt hơn.",

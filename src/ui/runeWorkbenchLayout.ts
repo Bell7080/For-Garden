@@ -50,6 +50,17 @@ export function runeWorkbenchColumnX(index: number): number {
   return -W.width / 2 + W.padX + width / 2 + index * (width + W.slots.gap);
 }
 
+/** 아래 조작 둘(추천 장착 · 적용)이 판 안쪽 폭을 반씩 나눠 갖는 폭. */
+export function runeWorkbenchFooterWidth(): number {
+  return (W.width - W.padX * 2 - W.slots.gap) / 2;
+}
+
+/** 아래 조작 둘의 가로 중심(0 왼쪽 · 1 오른쪽). */
+export function runeWorkbenchFooterX(index: 0 | 1): number {
+  const half = (runeWorkbenchFooterWidth() + W.slots.gap) / 2;
+  return index === 0 ? -half : half;
+}
+
 export interface RuneWorkbenchRows {
   /** 하트 기준점(조각 셋이 함께 서는 점)의 세로 자리. */
   heartY: number;

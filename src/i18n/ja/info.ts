@@ -91,7 +91,6 @@ export const INFO_JA = {
   "info.rune.threeSlots": "ルーン三枠",
   "info.rune.complete": "三つの欠片がすべて噛み合った。",
   "info.rune.filled": "装着 {count}",
-  "info.rune.loadout.auto": "自動装着",
   "info.rune.loadout.recommend": "おすすめ装着",
   "info.rune.loadout.clear": "すべて外す",
   "info.rune.loadout.none": "今より良いルーンはありません。",

@@ -89,7 +89,6 @@ export const INFO_TH = {
   "info.rune.threeSlots": "ช่องรูนสามช่อง",
   "info.rune.complete": "ชิ้นส่วนทั้งสามประกบกันพอดี",
   "info.rune.filled": "เต็ม {count}",
-  "info.rune.loadout.auto": "สวมอัตโนมัติ",
   "info.rune.loadout.recommend": "สวมที่แนะนำ",
   "info.rune.loadout.clear": "ถอดทั้งหมด",
   "info.rune.loadout.none": "ไม่มีรูนที่ดีกว่านี้",

@@ -89,7 +89,6 @@ export const INFO_EN = {
   "info.rune.threeSlots": "Three Rune Slots",
   "info.rune.complete": "All three pieces interlock.",
   "info.rune.filled": "Filled {count}",
-  "info.rune.loadout.auto": "Auto Equip",
   "info.rune.loadout.recommend": "Recommended",
   "info.rune.loadout.clear": "Unequip All",
   "info.rune.loadout.none": "No better runes available.",

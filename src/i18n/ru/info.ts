@@ -89,7 +89,6 @@ export const INFO_RU = {
   "info.rune.threeSlots": "Три ячейки рун",
   "info.rune.complete": "Все три части сошлись.",
   "info.rune.filled": "Занято {count}",
-  "info.rune.loadout.auto": "Автоэкипировка",
   "info.rune.loadout.recommend": "Рекомендуемое",
   "info.rune.loadout.clear": "Снять все",
   "info.rune.loadout.none": "Лучших рун нет.",

@@ -22,7 +22,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { addRuneCard, addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeAccentCss, runeHeartSpot, runeSeatTexture, runeTexture } from "./runeIcons";
 import { createRuneListState, RuneListControls, visibleRuneList } from "./RuneListControls";
 import { openRuneInfoPopup, runeStatLabel } from "./RunePopup";
-import { RUNE_WORKBENCH, runeWorkbenchCell, runeWorkbenchColumnWidth, runeWorkbenchColumnX, runeWorkbenchMinScroll, runeWorkbenchRows, runeWorkbenchSideSpan, RUNE_WORKBENCH_BACK_CLEARANCE } from "./runeWorkbenchLayout";
+import { RUNE_WORKBENCH, runeWorkbenchCell, runeWorkbenchColumnWidth, runeWorkbenchColumnX, runeWorkbenchFooterWidth, runeWorkbenchFooterX, runeWorkbenchMinScroll, runeWorkbenchRows, runeWorkbenchSideSpan, RUNE_WORKBENCH_BACK_CLEARANCE } from "./runeWorkbenchLayout";
 import { addScrollHint } from "./ScrollHint";
 import { isTap } from "./tapGuard";
 import { squeezeTextToWidth } from "./textFit";
@@ -160,19 +160,19 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
 
     // ── 아래 조작 ────────────────────────────────────────────────────────
     const footerY = top + rows.footerY;
-    const footerCommon = { width: column, height: W.footer.height, fontSize: W.footer.fontSize };
+    const footerCommon = { width: runeWorkbenchFooterWidth(), height: W.footer.height, fontSize: W.footer.fontSize };
     const takeDraft = (slots: RuneLoadoutSlots): void => {
       draft = slots;
       showContentToast(scene, t("info.rune.workbench.drafted"), "info");
       repaint?.(false);
     };
-    const recommendInto = (mode: "auto" | "recommend"): void => {
+    const recommendInto = (): void => {
       const holders = runeHolders(session.relicProgress);
-      const plan = recommendIntoDraft(relic(), draft, session.runeInventory, holders, mode);
+      const plan = recommendIntoDraft(relic(), draft, session.runeInventory, holders, "recommend");
       if (!plan.changed) { showContentToast(scene, t("info.rune.loadout.none"), "refused"); return; }
       // 추천이 다른 렐릭의 룬을 새로 빼 오면, 옮겨 낄지 남은 룬만 쓸지 고르게 한다 — 남의 편성을 말없이 허물지 않는다.
       const takers = runeDraftMovedFrom(plan.slots, holders, def.id).filter((id, p): id is string => id !== null && plan.slots[p] !== draft[p]);
-      if (mode === "auto" || takers.length === 0) { takeDraft(plan.slots); return; }
+      if (takers.length === 0) { takeDraft(plan.slots); return; }
       const free = recommendIntoDraft(relic(), draft, session.runeInventory, holders, "auto");
       const powerOf = (slots: RuneLoadoutSlots): string => runeLoadoutPower(relic(), slots, session.runeInventory).toLocaleString();
       const names = [...new Set(takers)].map((id) => getRelic(id).name).join(", ");
@@ -188,10 +188,10 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
         },
       }, () => takeDraft(plan.slots));
     };
-    const autoButton = new Button(scene, runeWorkbenchColumnX(0), footerY, { ...footerCommon, label: t("info.rune.loadout.auto"), onClick: () => recommendInto("auto") });
-    const recommendButton = new Button(scene, runeWorkbenchColumnX(1), footerY, { ...footerCommon, label: t("info.rune.loadout.recommend"), onClick: () => recommendInto("recommend") });
-    const applyButton = new Button(scene, runeWorkbenchColumnX(2), footerY, { ...footerCommon, label: t("info.rune.workbench.applyNone"), variant: "primary", onClick: () => apply() });
-    body.add([autoButton, recommendButton, applyButton]);
+    // 「남은 룬만」이 곧 예전의 자동 장착이라 버튼을 따로 두지 않는다 — 추천 장착이 옮겨 낄지를 묻는다.
+    const recommendButton = new Button(scene, runeWorkbenchFooterX(0), footerY, { ...footerCommon, label: t("info.rune.loadout.recommend"), onClick: () => recommendInto() });
+    const applyButton = new Button(scene, runeWorkbenchFooterX(1), footerY, { ...footerCommon, label: t("info.rune.workbench.applyNone"), variant: "primary", onClick: () => apply() });
+    body.add([recommendButton, applyButton]);
 
     // ── 목록 ─────────────────────────────────────────────────────────────
     const g = W.grid;
@@ -474,7 +474,6 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
       clearButton.setEnabled(draft[part] !== null);
       clearAllButton.setEnabled(draft.some((id) => id !== null));
       applyButton.setLabel(count > 0 ? t("info.rune.workbench.apply", { count: String(count) }) : t("info.rune.workbench.applyNone")).setEnabled(count > 0 && !busy);
-      autoButton.setEnabled(!busy);
       recommendButton.setEnabled(!busy);
     };
     repaint(true);

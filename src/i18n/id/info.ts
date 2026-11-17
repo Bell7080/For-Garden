@@ -89,7 +89,6 @@ export const INFO_ID = {
   "info.rune.threeSlots": "Tiga Slot Rune",
   "info.rune.complete": "Ketiga keping saling mengunci.",
   "info.rune.filled": "Terisi {count}",
-  "info.rune.loadout.auto": "Pasang Otomatis",
   "info.rune.loadout.recommend": "Pasang Saran",
   "info.rune.loadout.clear": "Lepas Semua",
   "info.rune.loadout.none": "Tidak ada rune yang lebih baik.",

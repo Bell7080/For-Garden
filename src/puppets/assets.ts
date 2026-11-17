@@ -69,6 +69,8 @@ import {
   PLESHA_SD_METADATA,
   ARTE_PORTRAIT_METADATA,
   ARTE_SD_METADATA,
+  BRIKA_PORTRAIT_METADATA,
+  BRIKA_SD_METADATA,
   NODONIA_PORTRAIT_METADATA,
   NODONIA_SD_METADATA,
   PACHI_PORTRAIT_METADATA,
@@ -448,6 +450,12 @@ export const ARTE_ASSET: PuppetAsset = {
   ...ARTE_PORTRAIT_METADATA,
 };
 
+/** 32번 전신 일러스트: 브리카(브라키오사우루스). 검은 후드와 사슬 고리를 엮은 긴 은빛 땋은 머리의 원화다. */
+export const BRIKA_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_032.zip`,
+  ...BRIKA_PORTRAIT_METADATA,
+};
+
 /** 20번 기본 SD는 디안, `_black`은 쿠로, `_white`는 시로라는 이름 대응을 보존한다. */
 export const DIAN_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020.zip`, ...DIAN_SD_METADATA };
 /** 모르페가 띄우는 관제 드론 디모(A-Dimo)의 SD. 전신 원화가 따로 없어 정보창도 같은 묶음을 세운다. */
@@ -621,6 +629,7 @@ const PORTRAIT_ASSETS = {
   teku: TEKU_ASSET,
   plesha: PLESHA_ASSET,
   arte: ARTE_ASSET,
+  brika: BRIKA_ASSET,
   // 늑대는 전신 원화가 따로 없다. SD 자체가 온전한 한 마리라 정보창도 같은 묶음을 세운다.
   kuro: KURO_SD_ASSET,
   dimo: DIMO_SD_ASSET,
@@ -865,6 +874,12 @@ export const ARTE_SD_ASSET: PuppetAsset = {
   ...ARTE_SD_METADATA,
 };
 
+/** 32번 SD: 브리카. */
+export const BRIKA_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_032.zip`,
+  ...BRIKA_SD_METADATA,
+};
+
 /** 19번 SD: 테리사. */
 export const TERISA_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_019.zip`,
@@ -942,6 +957,7 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   teku: TEKU_SD_ASSET,
   plesha: PLESHA_SD_ASSET,
   arte: ARTE_SD_ASSET,
+  brika: BRIKA_SD_ASSET,
   kuro: KURO_SD_ASSET,
   dimo: DIMO_SD_ASSET,
   shiro: SHIRO_SD_ASSET,

@@ -348,7 +348,10 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   const ending = trait.statusEffect?.kind === "stagger"
     ? t("skill.ferocity.splash.endingStagger", { bonus })
     : t("skill.ferocity.splash.ending", { bonus });
-  return t("skill.ferocity.splash", { speed, ending });
+  const splash = t("skill.ferocity.splash", { speed, ending });
+  // 들어서는 순간의 도발은 범위 타격과 다른 때에 일어나므로 제 문장으로 선다.
+  return trait.tauntOnEntry === undefined ? splash
+    : `${splash} ${t("skill.ferocity.splash.tauntEntry", { seconds: trait.tauntOnEntry.seconds })}`;
 }
 
 /**
@@ -814,6 +817,11 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
       every: plan.every, heal: scaled("heal", "ap", plan.cleanseHealPower, own?.ap), fallback: scaled("heal", "ap", plan.fallbackHealPower, own?.ap),
     });
   }
+  // 대신 받는 몫·막으로 바뀌는 몫·막 상한을 한 번에 말한다. 상한은 제 최대 체력에서 재는 값이라 실제 수로 세운다.
+  if (passive.kind === "canopyShade" && passive.canopy !== undefined) {
+    const plan = passive.canopy;
+    return t("skill.passive.canopyShade", { percent: plan.sharePercent, shield: plan.shieldFromSharePercent, cap: scaled("shield", "hp", plan.shieldCapMaxHpPercent, own?.maxHp) });
+  }
   if (passive.kind === "shimmerMark") return t("skill.passive.shimmerMark", { percent: scaled("damage", "ap", passive.value, own?.ap) });
   if (passive.kind === "frostboundDominion") return t("skill.passive.frostboundDominion");
   if (passive.kind !== "battleMaidMastery") return passive.desc;
@@ -974,6 +982,10 @@ export function skillDescription(
     if ("selfBulwark" in skill && skill.selfBulwark !== undefined) {
       const plan = skill.selfBulwark;
       // 희열이 무엇이고 얼마나 회복하는지는 「희열」 태그가 말한다(쓰는 개체가 하나뿐인 규칙어).
+      // 반경이 있는 앞에 서기는 「모든 아군」이 아니라 주위 아군의 몫만 나눠 받는다.
+      if (plan.radius !== undefined) {
+        return t("skill.sentence.selfBulwarkNear", { seconds: plan.seconds, percent: plan.redirectPercent, shield: scaled("shield", "hp", plan.shieldMaxHpPercent ?? 0, stats.maxHp) });
+      }
       if (plan.passiveHealBonusPercent !== undefined) {
         return t("skill.sentence.selfBulwarkElation", { seconds: plan.seconds, percent: plan.passiveHealBonusPercent });
       }
@@ -1633,6 +1645,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "splitHealing") return t("skill.breakthrough.effect.basic.splitHealing", { percent: trim(effect.sharePercent) });
     if (effect.kind === "starfallChance") return t("skill.breakthrough.effect.basic.starfallChance", { percent: trim(effect.chancePercent) });
     if (effect.kind === "powerWash") return t("skill.breakthrough.effect.basic.powerWash", { name: def.basic.name, every: trim(effect.every) });
+    if (effect.kind === "canopyChain") return t("skill.breakthrough.effect.basic.canopyChain", { name: def.basic.name, every: trim(def.basic.statusEffectEvery ?? 1), percent: sv("shield", "hp", effect.shieldMaxHpPercent) });
     // 주기 이름이 있으면 그것이 이 효과가 얹히는 그 한 방의 이름이다(칩에 뜨는 이름과 같다).
     const trigger = def.basic.statusEffectStackName ?? def.basic.name;
     // **회복량은 계산할 수 있으면 실제 값으로 말한다.** 능력치를 아는 자리(정보창·적 팝업)에서는
@@ -1691,6 +1704,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "dustCloud") return t("skill.breakthrough.effect.ultimate.dustCloud", { name: def.ultimate.name, stacks: trim(effect.stacks) });
     if (effect.kind === "fullLining") return t("skill.breakthrough.effect.ultimate.fullLining", { name: def.ultimate.name });
     if (effect.kind === "spotlessFinish") return t("skill.breakthrough.effect.ultimate.spotlessFinish", { name: def.ultimate.name });
+    if (effect.kind === "canopyRecovery") return t("skill.breakthrough.effect.ultimate.canopyRecovery", { name: def.ultimate.name, percent: trim(effect.healPercent) });
     // 피해량의 몇 %는 **명중 시점의 상대값**이라 실제 수로 바꾸지 않는다(대상마다 달라진다).
     return t("skill.breakthrough.effect.ultimate", {
       percent: trim(effect.powerPercent), name: def.ultimate.name,
@@ -1746,6 +1760,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "clawFlurry") return t("skill.breakthrough.effect.ferocity.clawFlurry", { name: def.basic.name, hits: trim(effect.extraHits) });
     if (effect.kind === "ironBarSweep") return t("skill.breakthrough.effect.ferocity.ironBarSweep", { name: def.basic.name, count: trim(effect.maxTargets) });
     if (effect.kind === "chainSwing") return t("skill.breakthrough.effect.ferocity.chainSwing", { percent: sv("damage", "atk", effect.powerPercent), seconds: trim(effect.stunSeconds) });
+    if (effect.kind === "canopyShelter") return t("skill.breakthrough.effect.ferocity.canopyShelter", { name: def.passive.name, percent: sv("shield", "hp", effect.shieldMaxHpPercent) });
     return t("skill.breakthrough.effect.ferocity", {
       percent: trim(effect.shieldPercentOfDamageTaken), seconds: trim(effect.tauntSeconds),
     });
@@ -1823,6 +1838,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effects.passive.kind === "youngestCare") return t("skill.breakthrough.effect.passive.youngestCare", { name: def.passive.name, percent: trim(effects.passive.sharePercent) });
     if (effects.passive.kind === "chainShrapnel") return t("skill.breakthrough.effect.passive.chainShrapnel", { name: def.passive.name, percent: sv("damage", "atk", effects.passive.powerPercent) });
     if (effects.passive.kind === "leapVeil") return t("skill.breakthrough.effect.passive.leapVeil", { seconds: effects.passive.stealthSeconds, cooldown: effects.passive.cooldownSeconds });
+    if (effects.passive.kind === "deepShade") return t("skill.breakthrough.effect.passive.deepShade", { name: def.passive.name, hp: trim(effects.passive.belowHpPercent), percent: trim(effects.passive.sharePercent) });
     if (effects.passive.kind === "rescueShield") {
       return t("skill.breakthrough.effect.passive.rescueShield", { hp: trim(effects.passive.belowHpPercent), percent: sv("shield", "ap", effects.passive.apPercent) });
     }

@@ -561,4 +561,11 @@ export const SKILL_ID = {
   "skill.clause.deepClean.shieldPercent": "{percent}% [[ap|Kekuatan Sihir]]",
   "skill.clause.push": "mendorong mereka sedikit",
   "skill.status.chillTimed": "menambah 1 tumpukan [[chill|Perlambat]] selama {seconds} dtk, hingga {stacks} tumpukan, masing-masing menurunkan [[attack-speed|Kecepatan Serang]] dan [[move-speed|Kecepatan Gerak]] sebesar {percent}%",
+  "skill.ferocity.splash.tauntEntry": "Saat masuk Amukan, memberi [[taunt|Provokasi]] pada semua musuh di sekitar selama {seconds} dtk.",
+  "skill.passive.canopyShade": "Menanggung {percent}% kerusakan yang diterima sekutu di sekitar. {shield}% dari kerusakan yang ditanggung menjadi [[shield|Perisai]] bagi diri sendiri, hingga {cap}.",
+  "skill.sentence.selfBulwarkNear": "Mendapat [[shield|Perisai]] sebesar {shield}, lalu selama {seconds} dtk menanggung {percent}% kerusakan yang diterima sekutu di area luas.",
+  "skill.breakthrough.effect.basic.canopyChain": "Setiap \"{name}\" ke-{every} memberi diri sendiri [[shield|Perisai]] sebesar {percent}.",
+  "skill.breakthrough.effect.ultimate.canopyRecovery": "Saat \"{name}\" berakhir, memulihkan {percent}% kerusakan yang ditanggung selama itu.",
+  "skill.breakthrough.effect.ferocity.canopyShelter": "Saat masuk [[ferocity|Amukan]], memberi [[shield|Perisai]] sebesar {percent} kepada sekutu lain dalam jangkauan \"{name}\".",
+  "skill.breakthrough.effect.passive.deepShade": "\"{name}\" menanggung {percent}% kerusakan untuk sekutu dengan HP di bawah {hp}%.",
 } as const;

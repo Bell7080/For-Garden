@@ -561,4 +561,11 @@ export const SKILL_TH = {
   "skill.clause.deepClean.shieldPercent": "{percent}% ของ[[ap|พลังเวท]]",
   "skill.clause.push": "ผลักออกไปเล็กน้อย",
   "skill.status.chillTimed": "ซ้อน[[chill|ชะลอ]] 1 ชั้นเป็นเวลา {seconds} วินาที สูงสุด {stacks} ชั้น แต่ละชั้นลด[[attack-speed|ความเร็วโจมตี]]และ[[move-speed|ความเร็วเคลื่อนที่]] {percent}%",
+  "skill.ferocity.splash.tauntEntry": "ทันทีที่เข้าสู่ภาวะคลั่ง จะ[[taunt|ยั่วยุ]]ศัตรูทั้งหมดรอบตัว {seconds} วินาที",
+  "skill.passive.canopyShade": "รับความเสียหายแทนพันธมิตรรอบตัว {percent}% ความเสียหายที่รับแทน {shield}% จะกลายเป็น[[shield|โล่]]ของตนเอง โดยโล่ที่สะสมแบบนี้ไม่เกิน {cap}",
+  "skill.sentence.selfBulwarkNear": "สร้าง[[shield|โล่]] {shield} ให้ตนเอง แล้วรับความเสียหายแทนพันธมิตรในวงกว้าง {percent}% เป็นเวลา {seconds} วินาที",
+  "skill.breakthrough.effect.basic.canopyChain": "ทุกครั้งที่ {every} ของ \"{name}\" จะสร้าง[[shield|โล่]] {percent} ให้ตนเอง",
+  "skill.breakthrough.effect.ultimate.canopyRecovery": "เมื่อ \"{name}\" สิ้นสุด จะฟื้นฟูเท่ากับ {percent}% ของความเสียหายที่รับแทนระหว่างนั้น",
+  "skill.breakthrough.effect.ferocity.canopyShelter": "ทันทีที่เข้าสู่[[ferocity|คลั่ง]] จะสร้าง[[shield|โล่]] {percent} ให้พันธมิตรอื่นในระยะของ \"{name}\"",
+  "skill.breakthrough.effect.passive.deepShade": "\"{name}\" จะรับความเสียหายแทนพันธมิตรที่มีพลังชีวิตต่ำกว่า {hp}% เป็น {percent}%",
 } as const;

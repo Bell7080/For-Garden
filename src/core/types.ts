@@ -52,7 +52,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno" | "plesha" | "arte";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno" | "plesha" | "arte" | "brika";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -437,6 +437,13 @@ export type SelfBulwark = {
    * 두지 않고 그 재생을 키우는 쪽이 "맞을수록 차오른다"는 이 개체의 결을 그대로 잇는다.
    */
   passiveHealBonusPercent?: number;
+  /**
+   * 대신 받는 반경(px). 선택이다 — 없으면 전장 어디에 선 아군이든 대신 받는다(노도니아). 있으면 시전자에게서 이 거리
+   * 안에 선 아군의 피해만 가로챈다(브리카의 「우듬지 펼치기」).
+   */
+  radius?: number;
+  /** 시전하는 순간 제 몸에 두르는 보호막(자신 최대 체력 %). 선택이다. */
+  shieldMaxHpPercent?: number;
 };
 
 /**
@@ -1468,7 +1475,9 @@ export type PassiveKind =
   /** 카르노 전용: 구속구 넷이 체력 문턱마다 끊어지며 빨라지고, 모두 끊어지면 기본 공격이 주위를 휩쓴다. */
   | "restraintLocks"
   /** 플레샤 전용: 기본 공격 몇 번째마다 표적 자리에 유성이 늦게 떨어져 적을 치고, 그 피해로 가장 다친 아군을 회복한다. */
-  | "starfall";
+  | "starfall"
+  /** 브리카 전용: 둘레 반경 안의 아군이 받는 피해 일부를 대신 받고, 대신 받은 몫의 일부를 보호막으로 바꾼다. */
+  | "canopyShade";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
@@ -1610,6 +1619,8 @@ export type FerocityTrait = {
       attackSpeedBonusPercent?: number;
       /** 범위 명중에 함께 적용할 선택 상태 효과다. */
       statusEffect?: CombatStatusEffect;
+      /** 폭주에 들어서는 순간 이 반경 안의 적 전원을 도발한다(브리카). 선택이다. */
+      tauntOnEntry?: { radius: number; seconds: number };
     }
   | {
       effectId: "selfAttackSpeedMultiplier";
@@ -2526,6 +2537,12 @@ export interface Passive {
    * 비율이 가장 낮은 아군을 `fallbackHealPower`%만큼 회복시킨다. 행동을 세므로 광역 평타가 여럿을 맞혀도 한 번이다.
    */
   tidyUp?: { every: number; cleanseHealPower: number; fallbackHealPower: number };
+  /**
+   * 「우듬지 그늘」 계약(브리카). 반경 `radius` 안에 선 **다른 아군**이 받는 피해의 `sharePercent`%를 대신 받는다.
+   * 대신 받은 몫의 `shieldFromSharePercent`%는 제 보호막이 되며, 제 몸의 막 전체가 최대 체력의 `shieldCapMaxHpPercent`%를
+   * 넘지 않는 선까지만 채운다. 궁극기의 앞에 서기가 더 큰 몫을 받으면 그쪽이 먼저다.
+   */
+  canopy?: { radius: number; sharePercent: number; shieldFromSharePercent: number; shieldCapMaxHpPercent: number };
   /** 전투 한정 누적 패시브가 쌓을 수 있는 최대 횟수. 상한이 없으면 한 판이 길수록 끝없이 자란다. */
   maxStacks?: number;
   /**
@@ -2859,6 +2876,10 @@ export interface BreakthroughNone {
  * (`BasicAttack.statusEffectEvery`)을 그대로 타고 세 번에 한 번만 일어난다.
  */
 export type BasicBreakthrough = {
+  /** 주기가 채워지는 일반 공격(도발이 걸리는 한 방)마다 제 몸에 최대 체력 `shieldMaxHpPercent`%의 보호막을 두른다(브리카의 「감아 쥐기」). */
+  kind: "canopyChain";
+  shieldMaxHpPercent: number;
+} | {
   /** 기본 공격마다 이 확률로 그 자리에 유성이 하나 더 떨어진다(플레샤). 주기 유성의 셈은 건드리지 않는다. */
   kind: "starfallChance";
   /** 발동 확률(%). */
@@ -3129,6 +3150,10 @@ export type BasicBreakthrough = {
  * 궁극기가 세 번이 된다(채널링 궁극기와 같은 규칙이다).
  */
 export type UltimateBreakthrough = {
+  /** 궁극기의 앞에 서기가 끝나는 순간, 그동안 대신 받은 피해의 `healPercent`%만큼 회복한다(브리카의 「뿌리 내리기」). */
+  kind: "canopyRecovery";
+  healPercent: number;
+} | {
   /** 되찍는 궁극기가 `extraStrikes`번 더 떨어지고, 떨어질 때마다 원 안의 아군이 주문력 `allyHealPower`%만큼 회복한다(플레샤 — 기본 궁극기에는 아군 회복이 없다). */
   kind: "meteorEncore";
   extraStrikes: number;
@@ -3388,6 +3413,10 @@ export type UltimateBreakthrough = {
  * 세져 그 시간만 부풀고, 끝나고 가장 약해지는 자리를 메우지 못한다.
  */
 export type FerocityBreakthrough = {
+  /** 폭주에 들어서는 순간 패시브 반경 안의 아군 전원에게 브리카 최대 체력 `shieldMaxHpPercent`%의 보호막을 두른다(브리카의 「그늘 아래로」). */
+  kind: "canopyShelter";
+  shieldMaxHpPercent: number;
+} | {
   /** 폭주에 들어서는 순간 살아 있는 아군 모두의 공격 속도가 폭주가 이어지는 동안(8초) 오른다(플레샤). */
   kind: "starlitCheer";
   attackSpeedPercent: number;
@@ -3628,6 +3657,11 @@ export type FerocityBreakthrough = {
  * 패시브의 조건(체력 절반 등)을 그대로 타므로 새 발동 조건을 만들지 않는다.
  */
 export type PassiveBreakthrough = {
+  /** 「우듬지 그늘」이 체력 `belowHpPercent`% 미만인 아군의 피해는 `sharePercent`%를 대신 받는다(브리카의 「깊은 그늘」). */
+  kind: "deepShade";
+  belowHpPercent: number;
+  sharePercent: number;
+} | {
   /** 유성 회복이 가장 다친 아군에 더해 **다친 아군 한 명**에게 그 회복량의 `percent`%만큼 한 번 더 들어간다(플레샤). */
   kind: "secondStar";
   percent: number;

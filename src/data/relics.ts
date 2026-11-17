@@ -4605,6 +4605,104 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
+    id: "brika",
+    squad: "gear",
+    name: "브리카",
+    specimenNumber: "032",
+    projectName: "HIGH CANOPY",
+    excavationSite: "미국 콜로라도 모리슨층",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "강바닥 사암층에서 목뼈가 한 줄로 이어진 채 드러났다. 목뼈 하나하나가 사람 팔뚝만큼 길었고, 끝으로 갈수록 아래로 휘어 머리가 땅을 내려다보는 자세로 굳어 있었다. 발굴진은 목을 마디마다 나눠 석고로 감싼 뒤 번호를 매겨 옮겼다. 앞다리가 뒷다리보다 길어 어깨가 높이 솟은 몸이었고, 뼈의 성장선은 아직 다 닫히지 않았다. 복원은 긴 목의 균형을 먼저 맞추고 나머지 체격을 거기에 맞췄다.",
+    observationProfile: {
+      originYear: "약 1억 5,400만 년 전",
+      // 키는 다 자랐지만 마음은 아직 그 키를 따라오지 못한 아성체라 열넷 언저리에 둔다.
+      restorationYear: "E.C. 14년",
+      lifeStage: "아성체",
+      height: "1.77 m",
+      weight: "96 kg",
+    },
+    catalogSummary: "신장 1.77m, 체중 96kg의 인간형 체격에 길게 휜 목뼈가 확인된 아성체 브라키오사우루스 화석 기반 표본.",
+    unlockRecord: { status: "recorded", text: "복원 후 브리카는 늘 무리의 맨 뒤에 선다. 크다는 말을 들으면 소매로 입을 가리고 고개를 숙이지만, 숙여도 머리는 남들보다 높이 있다. 금빛 고리와 사슬, 작은 별을 엮어 땋은 머리는 손이 닿지 않는 선반의 상자를 끌어내릴 때 쓴다. 앞에 서는 일은 끝내 사양하면서도, 동료가 비틀거리면 말없이 뒤에서 그 어깨 위로 그늘을 드리운다. 자기를 올려다보는 시선이 싫다고 하면서, 내려다보며 지켜 주는 일은 좀처럼 그만두지 않는다." },
+    squadNote: "높은 선반과 깊은 틈의 회수 담당. 나이트 기어의 인양 현장에서 사슬 고리를 엮은 머리로 손이 닿지 않는 코어를 끌어내리고, 늘 대열의 맨 뒤를 지킨다.",
+    researcherTitle: "연구원님",
+    rarity: "SR",
+    portraitAssetId: "brika",
+    origin: "브라키오사우루스",
+    // 높은 나뭇가지의 잎을 먹던 종이라 풀이다 — 우듬지가 드리우는 그늘이 이 개체의 버티기다.
+    element: "grass",
+    role: "tank",
+    // 긴 머리 사슬이 닿는 거리에서 싸운다. 앞줄 탱커들 뒤에서 한 걸음 물러나 아군 위로 그늘을 드리우는 자리다.
+    reachTier: "mid",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 132.5, efficiencyMultiplier: 1.07 },
+    /*
+     * SR 탱커 띠 안에서 체력·방어·저항에 몫을 몰았다. 피해를 나눠 받는 개체라 실효 체력이 곧 일이다.
+     * 공격은 사슬 끝의 덤이라 낮게 두고, 쓰는 스킬이 없는 주문력은 높게 적지 않는다.
+     * 큰 몸이라 공속·이속은 로스터 하위권이다.
+     */
+    stats: {
+      hp: 1680,
+      def: 98,
+      res: 100,
+      atk: 62,
+      ap: 20,
+      attackSpeed: 72,
+      moveSpeed: 72,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 12,
+    },
+    // 한계 돌파: 고리 사슬 · 늦은 새순 · 그늘막 · 깊은 그늘.
+    breakthroughEffects: {
+      basic: { kind: "canopyChain", shieldMaxHpPercent: 5 },
+      ultimate: { kind: "canopyRecovery", healPercent: 35 },
+      ferocity: { kind: "canopyShelter", shieldMaxHpPercent: 6 },
+      passive: { kind: "deepShade", belowHpPercent: 30, sharePercent: 40 },
+    },
+    // 폭주는 공용 범위 피해에 진입 도발을 얹는다 — 화가 나서 휘두르는 머리 사슬이 주위를 쓸고 시선을 모은다.
+    ferocityTrait: { name: "보지 말라고 했잖아요!", effectId: "splashDamage", damagePercent: 40, radius: 180, tauntOnEntry: { radius: 420, seconds: 3 } },
+    passive: {
+      // kind가 canopyShade인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "brika-passive",
+      name: "우듬지 그늘",
+      kind: "canopyShade",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 0,
+      // 응태 2026-11-17: 그늘이 닿는 범위를 넓게 — 뒤에 서서 앞줄까지 덮어야 하는 자리라 360 → 520.
+      canopy: { radius: 520, sharePercent: 20, shieldFromSharePercent: 25, shieldCapMaxHpPercent: 15 },
+      desc: "주위의 아군이 받는 피해의 20%를 대신 받는다. 대신 받은 피해의 25%만큼 자신에게 보호막을 두르며, 보호막은 최대 체력의 15%를 넘지 않는다.",
+    },
+    basic: {
+      id: "brika-basic",
+      name: "땋은 사슬",
+      power: 50,
+      scalingStat: "atk",
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      // 공격력보다 몸의 무게로 친다 — 대신 받는 탱커가 체력을 키운 몫이 기본 공격에도 돌아온다.
+      secondaryScaling: { stat: "hp", power: 3 },
+      // 셋째 사슬이 상대의 시선을 끌어온다. 뒤에 선 탱커가 앞줄 대신 맞을 차례를 스스로 고르는 길이다.
+      statusEffectEvery: 3,
+      statusEffectStackName: "세 갈래 땋기",
+      statusEffects: [{ kind: "taunt", seconds: 1 }],
+    },
+    ultimate: {
+      id: "brika-ult",
+      name: "우듬지 펼치기",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 120,
+      targeting: "self",
+      // 5초 동안 넓은 그늘 안의 아군 피해 절반을 대신 받고, 그 몫을 버틸 막을 먼저 두른다.
+      selfBulwark: { seconds: 5, redirectPercent: 50, radius: 760, shieldMaxHpPercent: 15 },
+    },
+  },
+  {
     id: "parua",
     squad: "rogue",
     name: "파루아",

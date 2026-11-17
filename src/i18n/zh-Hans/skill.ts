@@ -561,4 +561,11 @@ export const SKILL_ZH_HANS = {
   "skill.clause.deepClean.shieldPercent": "[[ap|法术强度]]的{percent}%",
   "skill.clause.push": "将其向外推开少许",
   "skill.status.chillTimed": "叠加1层持续{seconds}秒的[[chill|迟缓]]，最多{stacks}层，每层使[[attack-speed|攻击速度]]与[[move-speed|移动速度]]降低{percent}%",
+  "skill.ferocity.splash.tauntEntry": "进入暴走的瞬间，[[taunt|嘲讽]]周围所有敌人{seconds}秒。",
+  "skill.passive.canopyShade": "代替周围友方承受其所受伤害的{percent}%。代受伤害的{shield}%会转为自身的[[shield|护盾]]，以此累积的护盾不超过{cap}。",
+  "skill.sentence.selfBulwarkNear": "为自身附加{shield}的[[shield|护盾]]，并在{seconds}秒内代替大范围内的友方承受其所受伤害的{percent}%。",
+  "skill.breakthrough.effect.basic.canopyChain": "每第{every}次「{name}」为自身附加{percent}的[[shield|护盾]]。",
+  "skill.breakthrough.effect.ultimate.canopyRecovery": "「{name}」结束时，恢复期间代受伤害的{percent}%。",
+  "skill.breakthrough.effect.ferocity.canopyShelter": "进入[[ferocity|暴走]]的瞬间，为「{name}」范围内的其他友方附加{percent}的[[shield|护盾]]。",
+  "skill.breakthrough.effect.passive.deepShade": "「{name}」对生命值低于{hp}%的友方，代受其伤害的{percent}%。",
 } as const;

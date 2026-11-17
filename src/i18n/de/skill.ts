@@ -561,4 +561,11 @@ export const SKILL_DE = {
   "skill.clause.deepClean.shieldPercent": "{percent} % der [[ap|Zauberkraft]]",
   "skill.clause.push": "stößt sie ein Stück zurück",
   "skill.status.chillTimed": "baut {seconds} s lang eine Stufe [[chill|Verlangsamung]] auf, bis zu {stacks} Stufen, die je [[attack-speed|Angriffstempo]] und [[move-speed|Lauftempo]] um {percent} % senken",
+  "skill.ferocity.splash.tauntEntry": "Beim Eintritt in die Raserei belegt sie alle Gegner in der Nähe {seconds} s lang mit [[taunt|Spott]].",
+  "skill.passive.canopyShade": "Übernimmt {percent} % des Schadens, den Verbündete in der Nähe erleiden würden. {shield} % des so übernommenen Schadens werden zu einem eigenen [[shield|Schild]], höchstens {cap}.",
+  "skill.sentence.selfBulwarkNear": "Erhält einen [[shield|Schild]] von {shield} und übernimmt {seconds} s lang {percent} % des Schadens, den Verbündete in einem weiten Bereich erleiden würden.",
+  "skill.breakthrough.effect.basic.canopyChain": "Jeder {every}. \"{name}\" gewährt ihr selbst einen [[shield|Schild]] von {percent}.",
+  "skill.breakthrough.effect.ultimate.canopyRecovery": "Wenn \"{name}\" endet, stellt sie {percent} % des in dieser Zeit für Verbündete übernommenen Schadens wieder her.",
+  "skill.breakthrough.effect.ferocity.canopyShelter": "Beim Eintritt in die [[ferocity|Raserei]] erhalten die anderen Verbündeten im Bereich von \"{name}\" einen [[shield|Schild]] von {percent}.",
+  "skill.breakthrough.effect.passive.deepShade": "\"{name}\" übernimmt {percent} % des Schadens für Verbündete unter {hp} % LP.",
 } as const;

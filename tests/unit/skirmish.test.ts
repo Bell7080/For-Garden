@@ -3940,7 +3940,7 @@ describe("노도니아의 프로젝트 REVERIE", () => {
 
     // 폭주 동안 희열의 재생이 50% 늘고, 궁극기와 겹치면 더해진다(곱하지 않는다).
     expect(elationHealMultiplier(nodonia)).toBe(1.5);
-    nodonia.bulwark = { remaining: 5, total: 5, percent: 100, regenPercentPerSecond: 0, passiveHealBonusPercent: 200, tickIn: 1, skillId: "nodonia-ult", name: "절정" };
+    nodonia.bulwark = { remaining: 5, total: 5, percent: 100, regenPercentPerSecond: 0, passiveHealBonusPercent: 200, tickIn: 1, skillId: "nodonia-ult", name: "절정", radius: null };
     expect(elationHealMultiplier(nodonia)).toBe(3.5);
 
     // 기본 공격은 더 이상 회복하지 않는다.

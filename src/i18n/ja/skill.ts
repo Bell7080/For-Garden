@@ -585,4 +585,11 @@ export const SKILL_JA = {
   "skill.clause.deepClean.shieldPercent": "[[ap|魔力]]の{percent}%",
   "skill.clause.push": "周囲へ少し押し出す",
   "skill.status.chillTimed": "{seconds}秒間[[chill|鈍化]]を1重積み、最大{stacks}重まで1重ごとに[[attack-speed|攻撃速度]]と[[move-speed|移動速度]]を{percent}%下げる",
+  "skill.ferocity.splash.tauntEntry": "暴走に入った瞬間、周囲のすべての敵を{seconds}秒間[[taunt|挑発]]する。",
+  "skill.passive.canopyShade": "周囲の味方が受けるダメージの{percent}%を代わりに受ける。代わりに受けたダメージの{shield}%は自分の[[shield|シールド]]になり、こうして重なるシールドは{cap}を超えない。",
+  "skill.sentence.selfBulwarkNear": "自分に{shield}の[[shield|シールド]]を付与し、{seconds}秒間、広い範囲の味方が受けるダメージの{percent}%を代わりに受ける。",
+  "skill.breakthrough.effect.basic.canopyChain": "「{name}」{every}回目ごとに自分に{percent}の[[shield|シールド]]を付与する。",
+  "skill.breakthrough.effect.ultimate.canopyRecovery": "「{name}」が終わった瞬間、その間に代わりに受けたダメージの{percent}%を回復する。",
+  "skill.breakthrough.effect.ferocity.canopyShelter": "[[ferocity|暴走]]に入った瞬間、「{name}」の範囲内の他の味方に{percent}の[[shield|シールド]]を付与する。",
+  "skill.breakthrough.effect.passive.deepShade": "「{name}」が体力{hp}%未満の味方のダメージは{percent}%を代わりに受ける。",
 } as const;

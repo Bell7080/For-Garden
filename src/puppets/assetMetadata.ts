@@ -240,8 +240,8 @@ export const METTE_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   joints: { center: [514, 432], head: [520, 255], eyes: [[481, 277], [557, 243]], feet: [[574, 1377], [449, 1612]] },
   // 왼쪽으로 처진 후드 장식이 카드에서 대칭 홈의 왼쪽 대각선 모서리에 잘렸다.
   cardHeadEscape: { left: 0.12 },
-  /** 로비 세로 비율: 메론 기준. 1.76 m — 가장 크다. */
-  lobbyZoom: 1.089,
+  /** 로비 세로 비율: 메론 기준. 1.72 m. */
+  lobbyZoom: 1.064,
 };
 
 export const METTE_SD_METADATA: Omit<PuppetAsset, "url"> = {
@@ -912,8 +912,8 @@ export const BRIKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1448,
   content: { left: 104, top: 26, right: 1017, bottom: 1340 },
   joints: { center: [579, 338], head: [595, 250], eyes: [[561, 243], [622, 232]], feet: [[514, 1846], [568, 1840]] },
-  /** 로비 세로 비율: 메론 기준. 1.77 m — 눈(237.5)에서 alpha 아래 경계까지를 그 키로 맞춘다. 로스터에서 가장 큰 몸이다. */
-  lobbyZoom: 1.106,
+  /** 로비 세로 비율: 메론 기준. 1.90 m — 눈(237.5)에서 alpha 아래 경계까지를 그 키로 맞춘다. 로스터에서 가장 큰 몸이다(응태 2026-11-17 — 190cm 남짓). */
+  lobbyZoom: 1.187,
 };
 
 /** 브리카 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. alpha > 16 경계는 (81,12)–(1167,1239)이다. */

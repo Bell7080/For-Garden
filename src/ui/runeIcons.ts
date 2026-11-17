@@ -197,7 +197,7 @@ export function addRuneCard(
 ): Phaser.GameObjects.Container {
   const engraved = rune.engravings.length > 0;
   const card = scene.add.container(x, y);
-  const shape = chipPoints(width, height, { bevel: { topLeft: width * 0.19, topRight: 0, bottomRight: width * 0.19, bottomLeft: 0 } });
+  const shape = runeCardShape(width, height);
   card.add(drawLayer(scene, 0, 0, shape, { fill: 0x151a21, alpha: 0.96, edge: engraved ? RUNE_ENGRAVE_GOLD : RUNE_ACCENT[rune.rarity], edgeAlpha: engraved ? 0.9 : 0.35 }));
   const frameSize = Math.min(width, height) * 0.89;
   const frame = addRuneFrame(scene, 0, 0, frameSize, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved });
@@ -224,6 +224,27 @@ export function addRuneCard(
     card.setAlpha(0.72);
   }
   return card;
+}
+
+/** 룬 카드의 실루엣. 카드 위에 얹는 덮개(고른 표시)도 같은 모양을 받아 깎인 모서리가 어긋나지 않게 한다. */
+export function runeCardShape(width: number, height: number): number[] {
+  return chipPoints(width, height, { bevel: { topLeft: width * 0.19, topRight: 0, bottomRight: width * 0.19, bottomLeft: 0 } });
+}
+
+/** 여럿을 고르는 가방에서 고른 카드 — 같은 실루엣의 강조색 테두리와 오른쪽 위(깎이지 않은 모서리)의 체크 칩. */
+export const RUNE_CARD_SELECTION = { tone: 0x7fe3c0, line: 5, chip: 46, glyph: 30 } as const;
+
+export function addRuneCardSelection(scene: Phaser.Scene, card: Phaser.GameObjects.Container, width: number, height: number): void {
+  const S = RUNE_CARD_SELECTION;
+  const shape = runeCardShape(width, height);
+  const outline = scene.add.graphics();
+  outline.lineStyle(S.line, S.tone, 1);
+  outline.strokePoints(Array.from({ length: shape.length / 2 }, (_, i) => new Phaser.Geom.Point(shape[i * 2], shape[i * 2 + 1])), true, true);
+  card.add(outline);
+  const x = width / 2 - S.chip / 2 - 6;
+  const y = -height / 2 + S.chip / 2 + 6;
+  card.add(drawLayer(scene, x, y, chipPoints(S.chip, S.chip, { bevel: { topLeft: S.chip * 0.3, topRight: 0, bottomRight: S.chip * 0.3, bottomLeft: 0 } }), { fill: S.tone, alpha: 1, edge: 0x05070a, edgeAlpha: 0.8 }));
+  card.add(drawGlyph(scene, "check", x, y, S.glyph, 0x05070a));
 }
 
 /** 카드 한 장이 읽는 룬의 최소 모양. 세공 이력이나 이름까지 알 필요가 없다. */

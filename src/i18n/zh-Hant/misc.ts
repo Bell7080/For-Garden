@@ -527,4 +527,5 @@ export const MISC_ZH_HANT = {
   "profile.frameGuide.kind": "頭像框",
   "profile.frameGuide.firstPayment": "套在頭像照片上的金色頭像框。僅在賬號首次付費時獲得一次，獲得後可在個人資料裝扮的頭像框列表中選擇。",
   "trade.tag.season": "賽季",
+  "archaeology.synth.bag": "符文背包",
 } as const;

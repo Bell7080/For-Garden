@@ -121,7 +121,8 @@ import { ACHIEVEMENT_SERIES } from "../data/achievements";
 import { NEWBIE_GROWTH_GOALS, NEWBIE_GROWTH_MILESTONES } from "../data/newbieGrowth";
 import { claimNewbieGrowth as calculateNewbieGrowthClaim, newbieGrowthClaimableCount, newbieGrowthClaimedGoalCount, newbieGrowthFacts, newbieGrowthGoalState, newbieGrowthMilestoneState, newbieGrowthWindow, type NewbieGrowthFacts } from "../core/newbieGrowth";
 import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, runeBatchEnhancementTargets, runePartLabel, RUNE_MAIN_STAT_KEYS, type RuneMainStatKey, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
-import { runeBatchEnhancementGoldCost, runeEnhancementGoldCost, runeSellValue } from "../data/runes";
+import { runeBatchEnhancementGoldCost, runeBulkCraftGoldCost, runeEnhancementGoldCost, runeSellValue } from "../data/runes";
+import { isRuneBulkCraftCandidate, runeBulkEngraveStat } from "../core/runeBulkCraft";
 import { rotationOffer, rotationRunePart } from "../core/shopRotation";
 import { rollRandomRuneRarity, rollRuneSynthesisPart, rollRuneSynthesisRarity, rollRuneSynthesisTraitGrade, runeSynthesisRefusal, RUNE_SYNTHESIS_RULES } from "../core/runeSynthesis";
 import { rotationSlot } from "../data/runeRotation";
@@ -144,7 +145,7 @@ import { nextStaminaGemCost, nextUtcMidnight, staminaGemDayKey } from "../core/s
 import { FREE_RESEARCH_BANNER_ID, FREE_RESEARCH_SOURCE_ID, freeResearchAvailable, freeResearchResetsAt, freeResearchSpent } from "../core/freeResearch";
 import { paidStaminaApplied, settleStamina, STAMINA_HOLD_LIMIT, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
-import type { EnhanceRuneAllRequest, EnhanceRuneAllResponse, EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, SetRuneLoadoutRequest, SetRuneLoadoutResponse, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse, SynthesizeRunesRequest, SynthesizeRunesResponse } from "./contracts";
+import type { EnhanceRuneAllRequest, EnhanceRuneAllResponse, EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, SetRuneLoadoutRequest, SetRuneLoadoutResponse, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse, SynthesizeRunesRequest, SynthesizeRunesResponse, CraftRunesRequest, CraftRunesResponse } from "./contracts";
 import type { ClaimFirstPaymentGiftRequest, ClaimPatronDailyRequest, ClaimPatronTierRewardRequest, ClaimPatronResponse, PatronStatusDto, ClaimFirstPaymentGiftResponse, FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse, MailClaimHistoryEntryDto, PurchaseHistoryResponse, SentGiftHistoryEntryDto, GiftOptionsRequest, GiftOptionsResponse, PrepareGiftRequest, PrepareGiftResponse, SendGiftRequest, SendGiftResponse, GiftOrderActionRequest, CancelGiftResponse, IncomingGiftsResponse, AcceptGiftResponse, DeclineGiftResponse } from "./contracts";
 import { appendMailLog, mailHistoryFromJournal, purchaseHistoryFromJournal } from "../core/purchaseHistory";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, ClaimPassDailyBonusRequest, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
@@ -292,6 +293,7 @@ export class FakeServer implements GameApi {
   /** 운영 DB의 requestId 고유 제약을 흉내 내 판매 재전송에 최초 확정 영수증을 돌려준다. */
   private readonly runeSaleResults = new Map<string, SellRunesResponse>();
   private readonly runeSynthesisResults = new Map<string, SynthesizeRunesResponse>();
+  private readonly runeCraftResults = new Map<string, CraftRunesResponse>();
   /** 일반 스테이지 입장 재전송이 중복 승리 대기 건을 만들지 않게 하는 서버 영수증 표다. */
   private readonly stageAdmissionResults = new Map<string, EnterStageResponse>();
   /** 입장 때 커밋한 요청을 보관하고 완료 정산이 해당 전투의 대기 건 하나만 소비하게 한다. */
@@ -4605,6 +4607,55 @@ export class FakeServer implements GameApi {
     this.state.wallet = nextWallet;
     this.state.runeInventory = nextRunes;
     return { goldSpent, results, nextSuccessChance: rune.currentSuccessChance, rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
+  }
+
+  /**
+   * 룬 일괄 세공. 고른 룬마다 남은 세공을 위 줄부터 판정하고, `engrave`를 주면 세공을 마친 각인 전 룬의 그 자리 주 옵션에
+   * 각인한다. 골드 총액을 먼저 확인해 한 번에 빼고 저장도 한 번이다. 같은 requestId는 같은 결과를 돌려준다.
+   * 무료 각인 체험은 한 줄씩 해 보는 것이라 일괄 세공은 무료가 아니다(한 룬 일괄 세공과 같다).
+   */
+  async craftRunes(request: CraftRunesRequest): Promise<CraftRunesResponse> {
+    await this.delay();
+    const cached = this.runeCraftResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    const engrave = request.engrave;
+    if (!request.requestId || request.runeInstanceIds.length === 0 || new Set(request.runeInstanceIds).size !== request.runeInstanceIds.length || (engrave !== null && engrave !== 0 && engrave !== 1)) {
+      throw new GameApiError("RUNE_CRAFT_INVALID", "일괄 세공 요청 ID와 중복 없는 룬이 필요합니다.");
+    }
+    const selected = request.runeInstanceIds.map((id) => this.ownedRune(id));
+    if (selected.some((rune) => !isRuneBulkCraftCandidate(rune, engrave))) throw new GameApiError("RUNE_ENHANCEMENT_COMPLETE", "더 세공하거나 각인할 것이 없는 룬이 섞여 있습니다.");
+    const goldSpent = runeBulkCraftGoldCost(selected);
+    if (this.state.wallet.gold < goldSpent) throw new GameApiError("INSUFFICIENT_GOLD", "룬 강화에 필요한 골드가 부족합니다.");
+    let attempts = 0;
+    let successes = 0;
+    let engraved = 0;
+    let tutorial = normalizeTutorialState(this.state.tutorial);
+    const crafted = selected.map((current) => {
+      let rune = current;
+      for (const statKey of runeBatchEnhancementTargets(current)) {
+        rune = applyRuneEnhancement(rune, statKey, runeEnhancementIncrease(rune.rarity, statKey), this.random());
+        attempts += 1;
+        if (rune.enhancementHistory[statKey]?.at(-1)?.succeeded === true) successes += 1;
+      }
+      if (engrave !== null && canEngraveRune(rune)) {
+        const statKey = runeBulkEngraveStat(rune, engrave);
+        rune = applyRuneEngraving(rune, { statKey, valueAdded: runeEnhancementIncrease(rune.rarity, statKey) });
+        engraved += 1;
+        // 체험 룬의 각인이 곧 체험의 끝이다 — 한 줄 각인과 같은 저장에서 걷는다.
+        if (isFreeRuneCraft(tutorial, rune.instanceId)) tutorial = endFreeRuneCraft(tutorial);
+      }
+      return rune;
+    });
+    const byId = new Map(crafted.map((rune) => [rune.instanceId, rune]));
+    const nextRunes = this.state.runeInventory.map((candidate) => byId.get(candidate.instanceId) ?? candidate);
+    const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold - goldSpent };
+    this.persist({ ...this.state, wallet: nextWallet, runeInventory: nextRunes, tutorial });
+    this.state.wallet = nextWallet;
+    this.state.runeInventory = nextRunes;
+    this.state.tutorial = tutorial;
+    const response: CraftRunesResponse = { goldSpent, attempts, successes, engraved, runes: crafted.map((rune) => this.cloneRune(rune)), inventory: this.runeInventoryDto(), wallet: { ...nextWallet } };
+    this.runeCraftResults.set(request.requestId, structuredClone(response));
+    return response;
   }
 
   /** 일반 강화 완료와 미각인 상태를 확인하고 대상 옵션에 각인 결과 하나만 추가한다. */

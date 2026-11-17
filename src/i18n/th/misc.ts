@@ -527,4 +527,5 @@ export const MISC_TH = {
   "profile.frameGuide.kind": "กรอบโปรไฟล์",
   "profile.frameGuide.firstPayment": "กรอบสีทองสำหรับรูปโปรไฟล์ ได้รับเพียงครั้งเดียวจากการชำระเงินครั้งแรกของบัญชี แล้วจะเลือกได้ในรายการกรอบของการตกแต่งโปรไฟล์",
   "trade.tag.season": "ซีซัน",
+  "archaeology.synth.bag": "กระเป๋ารูน",
 } as const;

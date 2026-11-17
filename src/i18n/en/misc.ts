@@ -529,4 +529,5 @@ export const MISC_EN = {
   "profile.frameGuide.kind": "Profile Frame",
   "profile.frameGuide.firstPayment": "A golden frame for your profile picture. It's given only once, with your account's first purchase, and then appears in the frame list under Customize Profile.",
   "trade.tag.season": "Season",
+  "archaeology.synth.bag": "Rune Bag",
 } as const;

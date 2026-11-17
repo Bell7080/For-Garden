@@ -35,6 +35,11 @@ export function runeBatchEnhancementGoldCost(rune: RuneInstance): number {
   return total;
 }
 
+/** 여러 룬의 남은 세공을 모두 돌릴 때 드는 골드. 각인은 골드가 들지 않는다. */
+export function runeBulkCraftGoldCost(runes: readonly RuneInstance[]): number {
+  return runes.reduce((sum, rune) => sum + runeBatchEnhancementGoldCost(rune), 0);
+}
+
 /**
  * 시작 룬 열 개의 등급 구성(임시).
  *

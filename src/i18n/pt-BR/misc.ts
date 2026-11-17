@@ -527,4 +527,5 @@ export const MISC_PT_BR = {
   "profile.frameGuide.kind": "Moldura de perfil",
   "profile.frameGuide.firstPayment": "Uma moldura dourada para a foto de perfil. É recebida só uma vez, na primeira compra da conta, e depois aparece na lista de molduras ao personalizar o perfil.",
   "trade.tag.season": "Temporada",
+  "archaeology.synth.bag": "Bolsa de runas",
 } as const;

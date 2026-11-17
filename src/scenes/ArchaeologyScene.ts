@@ -25,6 +25,9 @@ import { BottomNav } from "../ui/BottomNav";
 import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { addRatesButton, RATES_SPOT } from "../ui/RatesButton";
 import { Button } from "../ui/Button";
+import { IconButton } from "../ui/IconButton";
+import { InventoryPopup } from "../ui/InventoryPopup";
+import { BACK_SLOT } from "../ui/popupGeometry";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { runeTexture } from "../ui/runeIcons";
@@ -187,6 +190,10 @@ export class ArchaeologyScene extends Phaser.Scene {
   private tab: ArchaeologyTab = "strata";
   private traitOddsLink: Phaser.GameObjects.Container | null = null;
   private synthOddsLink: Phaser.GameObjects.Container | null = null;
+  /** 합성 탭에서 룬 가방(세공·판매·일괄 세공)을 여는 버튼 — 합성할 룬을 고르다 곧바로 손볼 수 있게. */
+  private synthBagLink: Phaser.GameObjects.Container | null = null;
+  private inventoryPopup?: InventoryPopup;
+  private inventoryBackButton?: IconButton;
   /** 지금 지도에 서 있는 유적 지도. 안내형 튜토리얼이 노드 자리를 묻는다. 판·다른 탭에서는 없다. */
   private mapView: ArchaeologyMapView | null = null;
   /** 진행 중인 안내형 튜토리얼을 끝내는 손잡이. 한 번에 하나만 돈다. */
@@ -343,6 +350,10 @@ export class ArchaeologyScene extends Phaser.Scene {
     const rates = RATES_SPOT.screen;
     this.traitOddsLink = addRatesButton(this, rates.x, rates.y, t("rune.trait.odds"), () => openRuneTraitOdds({ scene: this, popups: this.popups }));
     this.synthOddsLink = addRatesButton(this, rates.x, rates.y, t("archaeology.synth.oddsTitle"), () => openRuneSynthesisOdds({ scene: this, popups: this.popups }));
+    // 합성 탭에서만 확률 버튼 바로 아래(연구소의 연구 기록 자리)에 룬 가방이 선다 — 로비와 같은 가방 판 한 장을 연다.
+    this.synthBagLink = addRatesButton(this, RATES_SPOT.history.x, RATES_SPOT.history.y, t("archaeology.synth.bag"), () => this.openRuneBag(), { glyph: "bag" });
+    // 판(합성 판·특성 표)이 왼쪽 열까지 넓게 서므로 버튼은 판 위에 올린다 — 아래에 깔리면 글자가 판에 잘린다.
+    [this.traitOddsLink, this.synthOddsLink, this.synthBagLink].forEach((link) => link.setDepth(1));
 
     this.view = this.add.container(0, 0);
     this.tabRow = this.add.container(0, 0);
@@ -467,6 +478,17 @@ export class ArchaeologyScene extends Phaser.Scene {
     void this.refresh().catch(() => { this.chargeRefreshPending = false; });
   }
 
+  /** 로비 가방과 같은 판 — 닫으면 합성 판을 다시 그려 바뀐 룬(세공·각인·판매)을 곧바로 읽는다. */
+  private openRuneBag(): void {
+    if (this.inventoryPopup || this.popups.isOpen) return;
+    this.inventoryPopup = new InventoryPopup(this, this.popups, gameApi, () => {
+      this.inventoryPopup = undefined; this.inventoryBackButton?.destroy(); this.inventoryBackButton = undefined;
+      if (this.tab === "synth") this.paintView();
+    });
+    this.inventoryPopup.open();
+    this.inventoryBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.popups.backOr(() => this.inventoryPopup?.close()) }).setDepth(2700);
+  }
+
   private paintView(): void {
     // 명시적인 화면 전환에서만 기존 판 경계를 버린다. 한 칸 결과에는 이 메서드를 호출하지 않는다.
     this.strataTiles.clear(); this.strataHits.clear(); this.strataGrid = null; this.strataHaul = null; this.strataDigsText = null; this.strataDigsBar = null;
@@ -478,6 +500,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     setDebugArchaeologyMap(undefined);
     this.traitOddsLink?.setVisible(this.tab !== "synth");
     this.synthOddsLink?.setVisible(this.tab === "synth");
+    this.synthBagLink?.setVisible(this.tab === "synth");
     // 판을 파는 동안에는 판과 범례가 주인공이라 지도 안내를 걷는다.
     if (this.tab === "strata") this.paintStrata();
     else if (this.tab === "research") this.paintResearch();

@@ -527,4 +527,5 @@ export const MISC_ID = {
   "profile.frameGuide.kind": "Bingkai Profil",
   "profile.frameGuide.firstPayment": "Bingkai emas untuk foto profil. Hanya diterima sekali pada pembelian pertama akun, lalu bisa dipilih di daftar bingkai pada kustomisasi profil.",
   "trade.tag.season": "Musim",
+  "archaeology.synth.bag": "Tas Rune",
 } as const;

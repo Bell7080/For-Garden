@@ -1418,5 +1418,19 @@
 "Lapidar grátis",
 "Gratis veredeln",
 "Бесплатная огранка"
-]
+],
+"rune.bulkCraft.title": ["批量打磨", "เจียระไนแบบรวม", "Mài hàng loạt", "Asah Massal", "Tallado masivo", "Lapidação em massa", "Massen-Veredelung", "Массовая огранка"],
+"rune.bulkCraft.entry": ["批量打磨", "เจียระไนรวม", "Mài loạt", "Asah Massal", "Tallado masivo", "Lapidar em massa", "Massen-Veredelung", "Огранить пачкой"],
+"rune.bulkCraft.selected": ["已选 {count} / {total}", "เลือก {count} / {total}", "Đã chọn {count} / {total}", "Dipilih {count} / {total}", "Elegidas {count} / {total}", "Selecionadas {count} / {total}", "Gewählt {count} / {total}", "Выбрано {count} / {total}"],
+"rune.bulkCraft.selectAll": ["全选", "เลือกทั้งหมด", "Chọn tất cả", "Pilih Semua", "Elegir todas", "Selecionar tudo", "Alle wählen", "Выбрать все"],
+"rune.bulkCraft.clearAll": ["取消选择", "ยกเลิกเลือก", "Bỏ chọn", "Batalkan", "Quitar selección", "Limpar seleção", "Abwählen", "Сбросить"],
+"rune.bulkCraft.engrave": ["刻印", "สลัก", "Khắc ấn", "Ukir", "Grabado", "Gravação", "Gravur", "Гравировка"],
+"rune.bulkCraft.engrave.none": ["不刻印", "ไม่สลัก", "Không", "Tidak", "No", "Não", "Keine", "Нет"],
+"rune.bulkCraft.engrave.top": ["上方主属性", "หลักบน", "Chính trên", "Utama atas", "Principal sup.", "Principal sup.", "Obere Haupt", "Верхняя осн."],
+"rune.bulkCraft.engrave.bottom": ["下方主属性", "หลักล่าง", "Chính dưới", "Utama bawah", "Principal inf.", "Principal inf.", "Untere Haupt", "Нижняя осн."],
+"rune.bulkCraft.button": ["打磨 {count} 个", "เจียระไน {count} ชิ้น", "Mài {count}", "Asah {count}", "Tallar {count}", "Lapidar {count}", "{count} veredeln", "Огранить {count}"],
+"rune.bulkCraft.confirm": ["对 {count} 个符文进行剩余的 {attempts} 次打磨。", "เจียระไนที่เหลือ {attempts} ครั้งให้รูน {count} ชิ้น", "Thực hiện {attempts} lần mài còn lại cho {count} Rune.", "Jalankan {attempts} asah tersisa pada {count} Rune.", "Se harán los {attempts} tallados restantes de {count} runas.", "Fazer as {attempts} lapidações restantes em {count} runas.", "Die restlichen {attempts} Veredelungen an {count} Runen ausführen.", "Выполнить оставшиеся {attempts} огранок для {count} рун."],
+"rune.bulkCraft.confirmEngrave": ["对 {count} 个符文进行剩余的 {attempts} 次打磨，并将 {engravings} 个刻印于{target}。刻印无法撤销。", "เจียระไนที่เหลือ {attempts} ครั้งให้รูน {count} ชิ้น และสลัก {engravings} ชิ้นที่{target} การสลักย้อนกลับไม่ได้", "Thực hiện {attempts} lần mài còn lại cho {count} Rune và khắc ấn {engravings} cái vào {target}. Không thể hoàn tác khắc ấn.", "Jalankan {attempts} asah tersisa pada {count} Rune dan ukir {engravings} pada {target}. Ukiran tidak bisa dibatalkan.", "Se harán los {attempts} tallados restantes de {count} runas y se grabarán {engravings} en {target}. El grabado no se puede deshacer.", "Fazer as {attempts} lapidações restantes em {count} runas e gravar {engravings} em {target}. A gravação não pode ser desfeita.", "Die restlichen {attempts} Veredelungen an {count} Runen ausführen und {engravings} auf {target} gravieren. Gravuren sind endgültig.", "Выполнить {attempts} оставшихся огранок для {count} рун и выгравировать {engravings} на {target}. Гравировку нельзя отменить."],
+"rune.bulkCraft.done": ["打磨 {attempts} 次中成功 {successes} 次 · 刻印 {engraved} 个", "เจียระไนสำเร็จ {successes}/{attempts} ครั้ง · สลัก {engraved} ชิ้น", "Mài thành công {successes}/{attempts} lần · Khắc ấn {engraved}", "Asah berhasil {successes}/{attempts} · Diukir {engraved}", "{successes} de {attempts} tallados con éxito · {engraved} grabadas", "{successes} de {attempts} lapidações com sucesso · {engraved} gravadas", "{successes} von {attempts} Veredelungen erfolgreich · {engraved} graviert", "Огранка: успешно {successes} из {attempts} · гравировок {engraved}"],
+"rune.bulkCraft.failed": ["批量打磨失败。", "เจียระไนแบบรวมล้มเหลว", "Mài hàng loạt thất bại.", "Asah massal gagal.", "Falló el tallado masivo.", "Falha na lapidação em massa.", "Massen-Veredelung fehlgeschlagen.", "Массовая огранка не удалась."]
 }

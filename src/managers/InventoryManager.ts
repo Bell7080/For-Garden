@@ -4,7 +4,7 @@ import type { ItemLot } from "../core/itemLots";
 import { releaseAdWait } from "../platform/rewardedAds";
 import { isValidLotStack } from "../core/itemLots";
 import type { Wallet } from "../core/gacha";
-import type { ClaimAdRewardRequest, ClaimAdRewardResponse, EngraveRuneResponse, EnhanceRuneAllResponse, EnhanceRuneResponse, GameApi, InventoryItemDto, RechargeStaminaResponse, RenameRuneResponse, SellRunesResponse, SynthesizeRunesResponse, UseConsumableResponse } from "../api/contracts";
+import type { ClaimAdRewardRequest, ClaimAdRewardResponse, EngraveRuneResponse, EnhanceRuneAllResponse, EnhanceRuneResponse, GameApi, InventoryItemDto, RechargeStaminaResponse, RenameRuneResponse, SellRunesResponse, SynthesizeRunesResponse, CraftRunesResponse, UseConsumableResponse } from "../api/contracts";
 import type { RuneInstance, RuneStatKey } from "../core/runes";
 import { RELICS } from "../data/relics";
 import { findItem, ITEMS, type ItemCategory, type ItemDefinition, type WalletItemKey } from "../data/items";
@@ -265,6 +265,16 @@ export class InventoryManager {
       }
     }
     return this.applyRuneMutation(response);
+  }
+
+  /** 고른 룬 여럿을 한 번에 세공(·각인)한다. 응답의 확정 스냅샷(룬 목록·지갑)만 반영한다. */
+  async craftRunes(api: GameApi, instanceIds: readonly string[], engrave: 0 | 1 | null, requestId = crypto.randomUUID()): Promise<CraftRunesResponse> {
+    const response = await api.craftRunes({ requestId, runeInstanceIds: instanceIds, engrave });
+    if (!hasRemoteState(response)) this.state.runeInventory = response.inventory.runes.map((rune) => structuredClone(rune));
+    if (!hasRemoteState(response)) this.state.wallet = { ...response.wallet };
+    this.events.publish("wallet", { wallet: this.state.wallet });
+    this.events.publishInventory();
+    return response;
   }
 
   /** 판매 응답의 확정 스냅샷만 Session에 반영하고 모든 상태 소비자에게 같은 시점으로 알린다. */

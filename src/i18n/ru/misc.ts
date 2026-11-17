@@ -527,4 +527,5 @@ export const MISC_RU = {
   "profile.frameGuide.kind": "Рамка профиля",
   "profile.frameGuide.firstPayment": "Золотая рамка для фото профиля. Выдаётся лишь один раз — при первой покупке на аккаунте, — после чего её можно выбрать в списке рамок при оформлении профиля.",
   "trade.tag.season": "Сезон",
+  "archaeology.synth.bag": "Сумка рун",
 } as const;

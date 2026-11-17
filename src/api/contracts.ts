@@ -252,6 +252,23 @@ export interface SetRuneLoadoutResponse { inventory: RuneInventoryDto; }
 export interface SellRunesRequest { requestId: string; instanceIds: string[]; }
 /** 서버가 원자 커밋한 룬·장착표·지갑과 실제 지급 골드다. */
 export interface SellRunesResponse { inventory: RuneInventoryDto; wallet: Wallet; rawStoneAwarded: number; }
+/**
+ * 룬 일괄 세공 — 고른 룬 여럿의 남은 세공을 위 줄부터 모두 돌리고, `engrave`를 주면 세공을 마친 룬의 그 자리 주 옵션에 각인한다.
+ * 칸 순서·난수·비용은 서버가 정한다.
+ */
+export interface CraftRunesRequest { requestId: string; runeInstanceIds: readonly string[]; engrave: 0 | 1 | null; }
+export interface CraftRunesResponse {
+  goldSpent: number;
+  /** 돌린 세공 횟수와 그중 성공한 횟수. */
+  attempts: number;
+  successes: number;
+  /** 각인한 룬 수. */
+  engraved: number;
+  /** 바뀐 룬들(요청 순서). */
+  runes: RuneInstance[];
+  inventory: RuneInventoryDto;
+  wallet: Wallet;
+}
 /** 룬 합성 — 각인까지 마친 같은 등급 룬 셋. 결과 등급·자리·옵션·특성은 서버가 굴린다. */
 export interface SynthesizeRunesRequest { requestId: string; runeInstanceIds: readonly string[]; }
 export interface SynthesizeRunesResponse {
@@ -936,7 +953,7 @@ export interface UpgradeRuneTraitResponse { rune: RuneInstance; items: Inventory
 export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_DAILY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_NOT_ENTERED" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "AD_PREREQUISITE" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "PASS_BONUS_CLAIMED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "BANNER_NOT_ACTIVE" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RELIC_MAX_BREAKTHROUGH" | "RUNE_CHOICE_REQUIRED" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE" | "NOTHING_TO_CLAIM" | "DUEL_UNAVAILABLE" | "DUEL_OPPONENT_NOT_FOUND" | "DUEL_OPPONENT_FOUGHT" | "DUEL_NO_ATTEMPTS" | "DUEL_ATTEMPT_LIMIT" | "DUEL_INVALID_TEAM" | "DUEL_ADMISSION_NOT_FOUND"
   | "GIFT_UNAVAILABLE" | "GIFT_NOT_ELIGIBLE" | "GIFT_NOT_FOUND" | "GIFT_STATE_INVALID"
   | "STRATA_NO_CHARGE" | "STRATA_CHARGE_FULL" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_SITE_COOLING" | "STRATA_TILE_UNAVAILABLE"
-  | "RUNE_SYNTHESIS_INVALID" | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_GRADE_REACHED" | "RUNE_TRAIT_REROLL_PENDING"
+  | "RUNE_SYNTHESIS_INVALID" | "RUNE_CRAFT_INVALID" | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_GRADE_REACHED" | "RUNE_TRAIT_REROLL_PENDING"
   | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "DUNGEON_NOT_CLEARED" | "SWEEP_TICKET_SHORTAGE"
   | "RELIC_STORY_NOT_FOUND" | "RELIC_STORY_LOCKED" | "RELIC_STORY_ALREADY_CLAIMED" | "PROFILE_MODIFIER_INVALID" | "DEBUG_TOOLS_DISABLED";
 
@@ -1356,6 +1373,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   equipRelicSkin(request: EquipRelicSkinRequest): Promise<RelicMarkResponse>;
   /** 장착 검증과 지갑 상한을 통과한 룬 판매를 서버가 원자 확정한다. */
   sellRunes(request: SellRunesRequest): Promise<SellRunesResponse>;
+  /** 고른 룬 여럿의 남은 세공(과 고른 자리의 각인)을 골드 차감과 함께 한 번에 확정한다. */
+  craftRunes(request: CraftRunesRequest): Promise<CraftRunesResponse>;
   /** 각인 완료 룬 셋을 골드로 합성해 새 룬 하나를 만든다. */
   synthesizeRunes(request: SynthesizeRunesRequest): Promise<SynthesizeRunesResponse>;
 

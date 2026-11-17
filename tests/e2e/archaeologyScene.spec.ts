@@ -5,6 +5,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { archaeologySitePopupLayout } from "../../src/ui/archaeologySitePopupLayout";
 import { ARCHAEOLOGY_SITES } from "../../src/data/archaeologySites";
 import { RATES_SPOT } from "../../src/ui/ratesButtonLayout";
+import { generateRune } from "../../src/core/runes";
 
 /**
  * 고고학 화면과 그 상점의 눈 검사.
@@ -256,4 +257,42 @@ test("유적 지도 이동 → 잠긴 유적 확인 → 열린 유적 미리보�
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-site-preview.png`);
   await tapPreviewStart(page);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.tiles.length), { timeout: 30_000 }).toBeGreaterThan(1);
+});
+
+test("합성 탭의 룬 가방과 일괄 세공 판", async ({ page }, testInfo) => {
+  test.setTimeout(180_000);
+  await startAfterOpening(page, (session) => {
+    session.cleared.add("1-10"); session.archaeology.lastSelectedSiteId = "garden-gate";
+    session.wallet.gold = 2_000_000;
+    let seed = 0.21;
+    const random = () => { seed = (seed * 9301 + 0.49297) % 1; return seed; };
+    const rarities = ["uncommon", "rare", "epic", "legendary"] as const;
+    for (let index = 0; index < 8; index += 1) {
+      session.runeInventory.push(generateRune({ instanceId: `bulk-${index}`, baseName: "rune", rarity: rarities[index % 4], part: (index % 3) as 0 | 1 | 2, random }));
+    }
+  });
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => scene(page)).toBe("lobby");
+  await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");
+  await page.waitForTimeout(600);
+  // 셋째 라벨이 합성이다(`ArchaeologyScene.paintTabs` — 왼쪽 60부터 폭 280 · 사이 16).
+  await tap(page, 60 + 140 + 2 * 296, BASE_HEIGHT - 268);
+  await page.waitForTimeout(700);
+  await captureGame(page, `test-results/${testInfo.project.name}-archaeology-synth-bag.png`);
+  // 확률 버튼 바로 아래(연구 기록 자리)의 룬 가방.
+  await expect.poll(async () => {
+    const titles = (await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? [];
+    if (titles.length === 0) await tap(page, RATES_SPOT.history.x + 110, RATES_SPOT.history.y + 34);
+    return titles.length;
+  }, { timeout: 20_000 }).toBeGreaterThan(0);
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${testInfo.project.name}-archaeology-synth-inventory.png`);
+  // 가방 룬 탭 — 일괄 판매 바로 왼쪽의 일괄 세공(판 가운데 기준 x 118, y -700).
+  await expect.poll(async () => {
+    const titles = (await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? [];
+    if (titles.length < 2) await tap(page, BASE_WIDTH / 2 + 118, BASE_HEIGHT / 2 - 700);
+    return titles.length;
+  }, { timeout: 20_000 }).toBeGreaterThan(1);
+  await page.waitForTimeout(900);
+  await captureGame(page, `test-results/${testInfo.project.name}-rune-bulk-craft.png`);
 });

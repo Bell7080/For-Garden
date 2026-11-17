@@ -527,4 +527,5 @@ export const MISC_DE = {
   "profile.frameGuide.kind": "Profilrahmen",
   "profile.frameGuide.firstPayment": "Ein goldener Rahmen für dein Profilbild. Es gibt ihn nur einmal, beim ersten Kauf des Kontos; danach steht er in der Rahmenliste der Profilgestaltung zur Auswahl.",
   "trade.tag.season": "Saison",
+  "archaeology.synth.bag": "Runentasche",
 } as const;

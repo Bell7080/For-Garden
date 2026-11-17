@@ -549,4 +549,5 @@ export const MISC_JA = {
   "profile.frameGuide.kind": "プロフィールフレーム",
   "profile.frameGuide.firstPayment": "プロフィール写真にかぶせる金色のフレームです。アカウントの初回決済で一度だけ受け取れ、受け取るとプロフィールカスタムのフレーム一覧から選べます。",
   "trade.tag.season": "シーズン",
+  "archaeology.synth.bag": "ルーンバッグ",
 } as const;

@@ -26,9 +26,9 @@ export function runePickerListTop(): number {
 }
 
 /** 가방 판의 크기. `total`은 거르기 전의 룬 수다. `viewHeight`는 목록이 보이는 높이다. */
-export function runePickerSize(total: number): { width: number; height: number; viewHeight: number } {
+export function runePickerSize(total: number, maxRows: number = RUNE_PICK_GRID.maxRows): { width: number; height: number; viewHeight: number } {
   const g = RUNE_PICK_GRID;
-  const rows = Math.min(g.maxRows, Math.max(1, Math.ceil(total / g.columns)));
+  const rows = Math.min(maxRows, Math.max(1, Math.ceil(total / g.columns)));
   const viewHeight = rows * g.cellHeight;
   return { width: g.columns * g.cellWidth + g.padX * 2, height: runePickerListTop() + viewHeight + g.bottom, viewHeight };
 }

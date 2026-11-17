@@ -1457,6 +1457,45 @@ describe("룬 판매", () => {
   });
 });
 
+/** 일괄 세공은 고른 룬 여럿의 남은 세공을 골드 한 번으로 확정하고, 고른 자리(위·아래 주 옵션)에 각인까지 새긴다. */
+describe("룬 일괄 세공", () => {
+  it("남은 세공을 모두 돌리고 고른 자리에 각인하며 같은 requestId는 다시 쓰지 않는다", async () => {
+    const state = makeSession(); const a = makeRune("c-1"); const b = makeRune("c-2");
+    const total = runeBatchEnhancementGoldCost(a) + runeBatchEnhancementGoldCost(b);
+    state.wallet.gold = total + 3; state.runeInventory = [a, b];
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    const first = await server.craftRunes({ requestId: "craft-1", runeInstanceIds: ["c-1", "c-2"], engrave: 1 });
+    expect(first.goldSpent).toBe(total); expect(first.engraved).toBe(2);
+    expect(first.attempts).toBe(runeBatchEnhancementTargets(a).length + runeBatchEnhancementTargets(b).length);
+    expect(state.wallet.gold).toBe(3);
+    state.runeInventory.forEach((rune) => {
+      expect(rune.enhancementComplete).toBe(true);
+      expect(rune.engravings.map(({ statKey }) => statKey)).toEqual([rune.mainStats[1].key]);
+    });
+    const replay = await server.craftRunes({ requestId: "craft-1", runeInstanceIds: ["c-1", "c-2"], engrave: 1 });
+    expect(replay).toEqual(first); expect(state.wallet.gold).toBe(3);
+  });
+
+  it("각인을 고르지 않으면 세공만 하고, 할 일이 없는 룬과 모자란 골드는 상태를 건드리기 전에 거절한다", async () => {
+    const state = makeSession(); const rune = makeRune("c-3");
+    state.wallet.gold = runeBatchEnhancementGoldCost(rune); state.runeInventory = [rune];
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    const response = await server.craftRunes({ requestId: "craft-2", runeInstanceIds: ["c-3"], engrave: null });
+    expect(response.engraved).toBe(0); expect(state.runeInventory[0].engravings).toEqual([]);
+    await expect(server.craftRunes({ requestId: "craft-3", runeInstanceIds: ["c-3"], engrave: null })).rejects.toMatchObject({ code: "RUNE_ENHANCEMENT_COMPLETE" });
+    // 세공을 마친 룬도 각인을 고르면 각인만 남은 일로 선다(골드는 들지 않는다).
+    const engraveOnly = await server.craftRunes({ requestId: "craft-4", runeInstanceIds: ["c-3"], engrave: 0 });
+    expect(engraveOnly).toMatchObject({ goldSpent: 0, attempts: 0, engraved: 1 });
+    const poor = makeSession(); const fresh = makeRune("c-5"); poor.wallet.gold = runeBatchEnhancementGoldCost(fresh) - 1; poor.runeInventory = [fresh];
+    const before = JSON.stringify(poor.runeInventory);
+    const strict = new FakeServer(poor, { latencyMs: 0, random: () => { throw new Error("검증 전에 난수를 부르면 안 됩니다."); } });
+    await expect(strict.craftRunes({ requestId: "poor", runeInstanceIds: ["c-5"], engrave: 0 })).rejects.toMatchObject({ code: "INSUFFICIENT_GOLD" });
+    expect(JSON.stringify(poor.runeInventory)).toBe(before);
+    await expect(strict.craftRunes({ requestId: "dup", runeInstanceIds: ["c-5", "c-5"], engrave: null })).rejects.toMatchObject({ code: "RUNE_CRAFT_INVALID" });
+    await expect(strict.craftRunes({ requestId: "empty", runeInstanceIds: [], engrave: null })).rejects.toMatchObject({ code: "RUNE_CRAFT_INVALID" });
+  });
+});
+
 /** 합성은 재료 셋·골드를 한 번에 확정하고, 원석 상점의 랜덤 룬은 등급을 서버가 굴린다. */
 describe("룬 합성", () => {
   const engraved = (instanceId: string): RuneInstance => {

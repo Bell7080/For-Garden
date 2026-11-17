@@ -27,6 +27,8 @@ import { addRuneCard, runeTexture } from "./runeIcons";
 import { Button } from "./Button";
 import { openRuneBulkSellPopup } from "./RuneBulkSellPopup";
 import { RUNE_BULK_SELL } from "./runeBulkSellLayout";
+import { openRuneBulkCraftPopup } from "./RuneBulkCraftPopup";
+import { RUNE_BULK_CRAFT } from "./runeBulkCraftLayout";
 
 /** 일괄 판매 진입 버튼의 결 — 룬 쪽지의 판매 버튼과 같은 붉은빛이다. */
 const RUNE_BULK_SELL_ENTRY_ACCENT = 0xd9455a;
@@ -178,6 +180,12 @@ export class InventoryPopup {
       body.add(new Button(this.scene, right - width / 2, y, {
         width, height, label: t("rune.bulkSell.entry"), fontSize: 22, accentColor: RUNE_BULK_SELL_ENTRY_ACCENT, accentTextColor: RUNE_BULK_SELL_ENTRY_TEXT,
         onClick: () => openRuneBulkSellPopup(this.scene, this.popups, this.api),
+      }));
+      // 일괄 세공 — 일괄 판매 바로 왼쪽. 골드만 쓰는 성장 조작이라 기본 결이다.
+      const craft = RUNE_BULK_CRAFT.entry;
+      body.add(new Button(this.scene, right - width - craft.gap - craft.width / 2, craft.y, {
+        width: craft.width, height: craft.height, label: t("rune.bulkCraft.entry"), fontSize: 22,
+        onClick: () => openRuneBulkCraftPopup(this.scene, this.popups, this.api),
       }));
     }
     this.renderList(body, deal);

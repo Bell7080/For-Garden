@@ -18,9 +18,9 @@ export const STAGE_6_1_PRE: DialogueStory = {
   startNodeId: "drone",
   backdrop: "detention",
   nodes: linear([
-    { id: "drone", speaker: "", body: "환기구에서 작은 드론 하나가 소리 없이 내려와 연구원의 눈높이에서 멈춘다.", cast: [{ id: "morphe", slot: "center" }], cue: "rumble" },
+    { id: "drone", speaker: "", body: "환기구에서 작은 드론 하나가 소리 없이 내려와 연구원의 눈높이에서 멈췄다.", cast: [{ id: "morphe", slot: "center" }], cue: "rumble" },
     { id: "morphe", speaker: "모르페", body: "…담당관, 들려? 위로 가는 길 찾고 있어. 내가 보고 있으니까… 천천히 움직여.", standing: "morphe", act: "nod" },
-    { id: "kento", speaker: "켄토", body: "담당관, 거기서 움직이지 마. 내려앉는 건 내가 먼저 막을 테니까.", standing: "kento", cast: [{ id: "kento", slot: "left" }, { id: "stella", slot: "right" }], act: "lean" },
+    { id: "kento", speaker: "켄토", body: "담당관, 잠깐 거기 있어. 천장이 내려앉으면 내가 먼저 받칠게.", standing: "kento", cast: [{ id: "kento", slot: "left" }, { id: "stella", slot: "right" }], act: "lean" },
     { id: "stella", speaker: "스테라", body: "선배, 저 아래에서 바람이 빨려 들어가요. 열린 통로가 있는 것 같아요.", standing: "stella", act: "tremble" },
   ]),
 };
@@ -31,7 +31,7 @@ export const STAGE_6_3_POST: DialogueStory = {
   startNodeId: "pot",
   backdrop: "detention",
   nodes: linear([
-    { id: "pot", speaker: "", body: "무너진 순찰로 한구석에서 작은 불이 피어 있다. 마가사가 솥을 걸고 라자에게 그릇을 내민다.", cast: [{ id: "raja", slot: "left" }, { id: "magasa", slot: "right" }] },
+    { id: "pot", speaker: "", body: "무너진 순찰로 한구석에 작은 불이 피어 있었다. 마가사가 솥을 걸어 놓고 라자에게 그릇을 내밀었다.", cast: [{ id: "raja", slot: "left" }, { id: "magasa", slot: "right" }] },
     { id: "magasa", speaker: "마가사", body: "라자, 많이 먹어. 앞에 서는 사람이 제일 먼저 배고프잖아.", standing: "magasa", act: "nod" },
     { id: "raja", speaker: "라자", body: "…노아 몫은.", standing: "raja", act: "lean" },
     { id: "magasa2", speaker: "마가사", body: "벌써 덜어 놨지~ 아, 연구원님 몫도 남겨 뒀는데. 오시면 같이 드세요.", standing: "magasa", act: "hop" },
@@ -46,8 +46,8 @@ export const STAGE_6_4_POST: DialogueStory = {
   backdrop: "prisonField",
   nodes: linear([
     { id: "wind", speaker: "스테라", body: "선배, 바람이 하나 더 있어요. 아주 작고… 계속 떨리는 바람이요.", standing: "stella", cast: [{ id: "stella", slot: "left" }, { id: "kento", slot: "right" }], act: "tremble", cue: "rumble" },
-    { id: "kento", speaker: "켄토", body: "스테라, 내 뒤로. 떨리는 건 겁먹었다는 거고, 겁먹은 건 먼저 뛰어들어.", standing: "kento", act: "lean" },
-    { id: "shaft", speaker: "", body: "환기 수직갱 위에서 손톱이 금속을 긁는 소리가 길게 이어진다.", cue: "impact" },
+    { id: "kento", speaker: "켄토", body: "스테라, 내 뒤로 와. 떨고 있다는 건 겁먹었다는 거야. 겁먹은 놈이 제일 먼저 덤벼들어.", standing: "kento", act: "lean" },
+    { id: "shaft", speaker: "", body: "환기 수직갱 위에서 손톱으로 금속을 긁는 소리가 길게 이어졌다.", cue: "impact" },
   ]),
 };
 
@@ -57,9 +57,9 @@ export const STAGE_6_5_PRE: DialogueStory = {
   startNodeId: "drop",
   backdrop: "prisonField",
   nodes: linear([
-    { id: "drop", speaker: "", body: "그림자가 위에서 떨어진다. 땅에 닿기도 전에 손톱이 먼저 공기를 가른다.", standing: "noa", cast: [{ id: "noa", slot: "center" }], cue: "impact" },
+    { id: "drop", speaker: "", body: "위에서 그림자가 떨어져 내렸다. 땅에 닿기도 전에 손톱이 먼저 공기를 갈랐다.", standing: "noa", cast: [{ id: "noa", slot: "center" }], cue: "impact" },
     { id: "noa", speaker: "노아", body: "오, 오지 마! 오지 말라니까! …왜 계속 오는 건데!", standing: "noa", act: "fright" },
-    { id: "shute", speaker: "슈테", body: "오더, 저 아이는 내가 붙잡을게. 한 명만, 끝까지. 내 지시 믿어.", standing: "shute", cast: [{ id: "shute", slot: "left" }, { id: "noa", slot: "right" }], act: "nod" },
+    { id: "shute", speaker: "슈테", body: "오더, 저 아이는 내가 맡을게. 저 하나만 끝까지 붙잡고 있을 테니까, 내 신호 믿고 움직여.", standing: "shute", cast: [{ id: "shute", slot: "left" }, { id: "noa", slot: "right" }], act: "nod" },
   ]),
 };
 
@@ -82,7 +82,7 @@ export const STAGE_6_7_POST: DialogueStory = {
   startNodeId: "glass",
   backdrop: "detention",
   nodes: linear([
-    { id: "glass", speaker: "", body: "깨진 면회 창 너머에 의자 두 개가 마주 놓여 있다. 한쪽 의자에만 손톱자국이 깊다.", cast: [{ id: "ikanixia", slot: "left" }, { id: "neuri", slot: "right" }] },
+    { id: "glass", speaker: "", body: "깨진 면회 창 너머에 의자 두 개가 마주 놓여 있었다. 한쪽 의자에만 손톱자국이 깊게 패어 있었다.", cast: [{ id: "ikanixia", slot: "left" }, { id: "neuri", slot: "right" }] },
     { id: "ika", speaker: "이카닉시아", body: "부대장님이 깨어나시면 저희도 줄을 서야겠죠. 그분 앞에서는 간부도 조원도 한 줄이니까요.", standing: "ikanixia", act: "lean" },
     { id: "neuri", speaker: "네우리", body: "저희 간부님은 줄 같은 거 안 서세요! …서시나요?", standing: "neuri", act: "shake" },
     { id: "ika2", speaker: "이카닉시아", body: "후훗. 서는 척은 잘하죠.", standing: "ikanixia", act: "nod" },
@@ -98,7 +98,7 @@ export const STAGE_6_8_POST: DialogueStory = {
     { id: "record", speaker: "케리스", body: "선배, 관제 기록이에요. 최하층 구속실, 수감 개체 하나. 이름 칸에는… 「카르」.", standing: "keris", cast: [{ id: "keris", slot: "left" }, { id: "irna", slot: "right" }], act: "lean" },
     { id: "keris2", speaker: "케리스", body: "다른 칸은 다 번호인데, 이 칸만 이름이에요. 지운 자국 위에 다시 적혀 있어요.", standing: "keris", act: "shrink" },
     { id: "irna", speaker: "이르나", body: "오더, 승강기 줄이 감겨 내려가요. 제가 끊을게요. 떨어져 계세요.", standing: "irna", act: "nod", cue: "impact" },
-    { id: "lift", speaker: "", body: "총성 한 발. 아래로 끌려가던 짐 승강기가 멈춘다. 그 안에 빈 구속복 하나가 걸려 있다." },
+    { id: "lift", speaker: "", body: "총성이 한 발 울렸다. 아래로 끌려 내려가던 짐 승강기가 멈춰 섰다. 그 안에는 빈 구속복 하나가 걸려 있었다." },
   ]),
 };
 
@@ -108,7 +108,7 @@ export const STAGE_6_10_PRE: DialogueStory = {
   startNodeId: "deep",
   backdrop: "detention",
   nodes: linear([
-    { id: "deep", speaker: "", body: "회랑의 끝, 위로 오르는 계단 앞에 둘이 서 있다. 하나는 솥을 내려놓았고, 하나는 그 등 뒤에 붙어 있다.", standing: "magasa", cast: [{ id: "magasa", slot: "left" }, { id: "noa", slot: "right" }], cue: "rumble" },
+    { id: "deep", speaker: "", body: "회랑 끝, 위로 오르는 계단 앞에 둘이 서 있었다. 하나는 솥을 내려놓았고, 하나는 그 등 뒤에 붙어 있었다.", standing: "magasa", cast: [{ id: "magasa", slot: "left" }, { id: "noa", slot: "right" }], cue: "rumble" },
     { id: "magasa", speaker: "마가사", body: "연구원님, 위로는 못 가요. 부대장님이 아래에서 기다리시거든요.", standing: "magasa", act: "lean" },
     { id: "noa", speaker: "노아", body: "마가사, 내 뒤에 있어. …아니, 내가 뒤에 있을게. 근데 나도 할래.", standing: "noa", act: "tremble" },
     { id: "stella", speaker: "스테라", body: "선배, 노아가 계속 마가사 쪽을 보고 있어요. 둘 사이를 떼어 놓을 수 있겠어요?", standing: "stella", cast: [{ id: "stella", slot: "center" }], act: "nod" },
@@ -123,8 +123,8 @@ export const STAGE_6_10_POST: DialogueStory = {
   nodes: linear([
     { id: "fall", speaker: "마가사", body: "아하… 둘이서도 안 되네. 노아, 괜찮아?", standing: "magasa", cast: [{ id: "magasa", slot: "left" }, { id: "noa", slot: "right" }], act: "faint" },
     { id: "noa", speaker: "노아", body: "…응. 근데 바닥이, 바닥이 이상해.", standing: "noa", act: "fright" },
-    { id: "crack", speaker: "", body: "회랑 바닥이 한가운데부터 꺼져 내린다. 위로 가는 계단이 멀어지고, 몸이 어둠 속으로 떨어진다.", cast: [], cue: "explosion" },
-    { id: "koma", speaker: "코마", body: "…손을 잡아라. 아래로 떨어지면 네 손으로 그 문을 열게 할 거다.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
+    { id: "crack", speaker: "", body: "회랑 바닥이 한가운데부터 꺼져 내렸다. 위로 가는 계단이 멀어지고, 몸이 어둠 속으로 떨어졌다.", cast: [], cue: "explosion" },
+    { id: "koma", speaker: "코마", body: "…손 잡아라. 떨어지면, 그 문은 네 손으로 열게 된다.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
     { id: "voice", speaker: "???", body: "…늦었어.", cast: [{ id: "koma", slot: "left" }, { id: "carno", slot: "right", veiled: true }], cue: "impact" },
   ]),
 };

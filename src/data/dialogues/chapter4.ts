@@ -16,8 +16,8 @@ export const STAGE_4_1_PRE: DialogueStory = {
   startNodeId: "radio",
   backdrop: "deepField",
   nodes: linear([
-    { id: "radio", speaker: "", body: "승강장 스피커에서 낮은 안내가 흐른다. 「합동 추격 개시. 대상 확보 후 코마 조 복귀.」", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "alarm" },
-    { id: "ika", speaker: "이카닉시아", body: "두 무리가 한 선로에 서는 일이 흔하지는 않죠. 서두를 이유는 없지만, 이번에는 누구도 놓치지 않을 거예요.", standing: "ikanixia", act: "lean" },
+    { id: "radio", speaker: "", body: "승강장 스피커에서 낮은 안내 방송이 흘러나왔다. 「합동 추격 개시. 대상 확보 후 코마 조 복귀.」", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "alarm" },
+    { id: "ika", speaker: "이카닉시아", body: "두 무리가 한 선로에 나란히 서는 일은 흔치 않죠. 서두를 생각은 없지만, 이번엔 아무도 놓치지 않을 거예요.", standing: "ikanixia", act: "lean" },
     { id: "lexia", speaker: "렉시아", body: "둘이 같이 오든 말든 상관없어! 마스터, 제 뒤에서 떨어지지 마요.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "ikanixia", slot: "right" }], act: "hop" },
   ]),
 };
@@ -28,8 +28,8 @@ export const STAGE_4_3_PRE: DialogueStory = {
   startNodeId: "whisper",
   backdrop: "deepField",
   nodes: linear([
-    { id: "whisper", speaker: "토비", body: "야, 우리 진심으로 싸우는 거 아니다? …아니, 진심으로 해야 돼. 대충 하면 또 끌려가.", standing: "toby", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], act: "shake" },
-    { id: "ripa", speaker: "리파", body: "뒤에서 미르가 세고 있어. 몇 번 맞았는지까지.", standing: "ripa", act: "shrink" },
+    { id: "whisper", speaker: "토비", body: "야, 우리 진심으로 싸우는 거 아니다? …아니, 진심으로 해야 돼. 대충 했다간 또 끌려가.", standing: "toby", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], act: "shake" },
+    { id: "ripa", speaker: "리파", body: "뒤에서 미르가 다 세고 있어. 우리가 몇 대 맞았는지까지.", standing: "ripa", act: "shrink" },
     { id: "amo", speaker: "아모", body: "…연구원. 그러니까 세게 와. 우리가 져도 아무도 뭐라 못 하게.", standing: "amo", act: "nod" },
     { id: "torika", speaker: "토리카", body: "대장님, 저 셋… 싸우기 싫은 얼굴이에요.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "amo", slot: "right" }], act: "tremble" },
   ]),
@@ -41,7 +41,7 @@ export const STAGE_4_4_PRE: DialogueStory = {
   startNodeId: "block",
   backdrop: "deepField",
   nodes: linear([
-    { id: "block", speaker: "", body: "봉인된 갱도 앞에 아트라와 아모가 나란히 서 있다. 그 뒤로 가리개를 쓴 그림자가 지나간다.", standing: "atra", cast: [{ id: "atra", slot: "left" }, { id: "amo", slot: "right" }], cue: "rumble" },
+    { id: "block", speaker: "", body: "봉인된 갱도 앞을 아트라와 아모가 나란히 막아서 있었다. 그 뒤로 가리개를 쓴 그림자 하나가 지나갔다.", standing: "atra", cast: [{ id: "atra", slot: "left" }, { id: "amo", slot: "right" }], cue: "rumble" },
     { id: "atra", speaker: "아트라", body: "아, 안 비켜요… 명, 명령이라서… 죄, 죄송해요…", standing: "atra", act: "tremble" },
     { id: "amo", speaker: "아모", body: "…나도. 여기는 비켜 줄 수가 없어.", standing: "amo", act: "shrink" },
     { id: "koma", speaker: "코마", body: "…여기는 지나갈 수 없다. 돌아가라.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
@@ -55,9 +55,9 @@ export const STAGE_4_6_PRE: DialogueStory = {
   backdrop: "deepField",
   nodes: linear([
     { id: "pulsi", speaker: "펄시", body: "합동이라며? 그럼 연구원은 내 몫이야. 나머지는 코마가 알아서 해.", standing: "pulsi", cast: [{ id: "koma", slot: "left" }, { id: "pulsi", slot: "right" }], act: "hop" },
-    { id: "koma", speaker: "코마", body: "…대상은 하나다. 나눌 것 없다.", standing: "koma", act: "lean" },
-    { id: "pulsi2", speaker: "펄시", body: "그럼 먼저 닿는 쪽이 갖는 거다. 이번엔 눈 안 뗄 거야.", standing: "pulsi", act: "puff" },
-    { id: "ripa", speaker: "리파", body: "…선배, 저쪽이 연구원이야. 이번엔 정말 해야 돼?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "shrink" },
+    { id: "koma", speaker: "코마", body: "…대상은 하나다. 나눌 것도 없다.", standing: "koma", act: "lean" },
+    { id: "pulsi2", speaker: "펄시", body: "그럼 먼저 잡는 쪽이 임자네. 이번엔 절대 눈 안 뗀다.", standing: "pulsi", act: "puff" },
+    { id: "ripa", speaker: "리파", body: "…선배, 저기 연구원이야. 이번엔 진짜로 잡아야 돼?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "shrink" },
     { id: "koma2", speaker: "코마", body: "…앞만 봐라.", standing: "koma", act: "nod" },
   ]),
 };
@@ -68,8 +68,8 @@ export const STAGE_4_8_POST: DialogueStory = {
   startNodeId: "snap",
   backdrop: "deepField",
   nodes: linear([
-    { id: "snap", speaker: "", body: "승강기 줄이 끊어지는 소리. 바닥 표시등이 깜빡이며 아래로, 아래로 숫자를 지워 나간다.", cast: [{ id: "lexia", slot: "left" }, { id: "torika", slot: "right" }], cue: "explosion" },
-    { id: "lexia", speaker: "렉시아", body: "마스터, 손잡이 꽉 잡아요! 제가 앞에서 받을게요!", standing: "lexia", act: "shake" },
+    { id: "snap", speaker: "", body: "승강기 줄이 끊어지는 소리가 났다. 층수 표시등이 깜빡이며 숫자를 하나씩 지워 나갔다. 아래로, 계속 아래로.", cast: [{ id: "lexia", slot: "left" }, { id: "torika", slot: "right" }], cue: "explosion" },
+    { id: "lexia", speaker: "렉시아", body: "마스터, 손잡이 꽉 잡아요! 떨어지면 제가 받을게요!", standing: "lexia", act: "shake" },
     { id: "radio", speaker: "스피나", body: "…그 아래는 지도에 없어요. 어디로 떨어지든, 먼저 숨을 곳부터 찾으세요.", standing: "seira", cast: [{ id: "lexia", slot: "left" }, { id: "seira", slot: "right", remote: true }], act: "nod", cue: "rumble" },
     { id: "torika", speaker: "토리카", body: "렉시아 님, 손 놓치면 안 돼요! 대장님, 저도 꽉 잡아 주세요!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "hop" },
   ]),
@@ -81,9 +81,9 @@ export const STAGE_4_10_PRE: DialogueStory = {
   startNodeId: "end",
   backdrop: "deepField",
   nodes: linear([
-    { id: "end", speaker: "", body: "사령실 문이 열린다. 가리개를 쓴 코마와 날개 망토의 이카닉시아가 한 걸음 사이를 두고 서 있다.", standing: "ikanixia", cast: [{ id: "koma", slot: "left" }, { id: "ikanixia", slot: "right" }], cue: "rumble" },
-    { id: "ika", speaker: "이카닉시아", body: "코마 님이 앞에 서 주시니 든든하네요. 저는 뒤에서 천천히 하겠습니다.", standing: "ikanixia", act: "nod" },
-    { id: "koma", speaker: "코마", body: "…내가 앞이다. 뒤는 당신이 맡아라.", standing: "koma", act: "lean" },
+    { id: "end", speaker: "", body: "사령실 문이 열렸다. 가리개를 쓴 코마와 날개 망토를 두른 이카닉시아가 한 걸음 거리를 두고 서 있었다.", standing: "ikanixia", cast: [{ id: "koma", slot: "left" }, { id: "ikanixia", slot: "right" }], cue: "rumble" },
+    { id: "ika", speaker: "이카닉시아", body: "코마 님이 앞에 서 주시니 든든하네요. 저는 뒤에서 천천히 따라가겠습니다.", standing: "ikanixia", act: "nod" },
+    { id: "koma", speaker: "코마", body: "…앞은 내가 선다. 뒤나 잘 막아라.", standing: "koma", act: "lean" },
   ]),
 };
 
@@ -93,12 +93,12 @@ export const STAGE_4_10_POST: DialogueStory = {
   startNodeId: "retreat",
   backdrop: "deepField",
   nodes: linear([
-    { id: "retreat", speaker: "이카닉시아", body: "…이렇게까지 하셨는데도 닿지 않다니. 오늘은 물러나겠습니다. 정말, 서두를 이유가 없으니까요.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
-    { id: "wing", speaker: "", body: "날개 망토가 허공으로 올라가고, 회수조의 그림자가 하나씩 선로 너머로 사라진다.", standing: "ikanixia", leave: "blastOff", cast: [] },
-    { id: "floor", speaker: "", body: "사령실 바닥이 낮게 울린다. 금이 간 바닥판 아래로 녹슨 철문 하나가 드러난다. 문 위의 글씨만은 또렷하다. 「제1지부 지하 감금동 — 출입 금지」.", cue: "rumble" },
+    { id: "retreat", speaker: "이카닉시아", body: "…이렇게까지 했는데도 닿지 않다니요. 오늘은 물러나겠습니다. 정말이지, 서두를 이유는 없으니까요.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
+    { id: "wing", speaker: "", body: "날개 망토가 허공으로 떠오르고, 회수조의 그림자가 하나둘 선로 너머로 사라졌다.", standing: "ikanixia", leave: "blastOff", cast: [] },
+    { id: "floor", speaker: "", body: "사령실 바닥이 낮게 울렸다. 금 간 바닥판 아래로 녹슨 철문 하나가 드러났다. 문 위의 글씨만은 또렷했다. 「제1지부 지하 감금동 — 출입 금지」.", cue: "rumble" },
     { id: "order", speaker: "???", body: "…072. 감금동을 열어라. 부대장을 데려와라.", cast: [{ id: "koma", slot: "center" }], cue: "alarm" },
     { id: "koma", speaker: "코마", body: "…다음 목록에서 다시 만난다.", standing: "koma", act: "shrink" },
-    { id: "gone", speaker: "", body: "코마는 대답 대신 철문의 손잡이를 잡는다. 문이 열리고, 아래에서 차가운 바람이 올라온다." },
+    { id: "gone", speaker: "", body: "코마는 대꾸 없이 철문 손잡이를 잡았다. 문이 열리자 아래에서 차가운 바람이 올라왔다." },
   ]),
 };
 

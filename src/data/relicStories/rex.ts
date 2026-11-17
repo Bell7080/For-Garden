@@ -26,19 +26,19 @@ const CHAPTER_4: DialogueStory = {
   startNodeId: "n1",
   titleCard: { title: "첫 시말서", subtitle: "렉시아 · 애착 이야기 1" },
   nodes: [
-    { id: "n1", speaker: "", body: "복도 끝 회의실 앞. 렉시아가 문 앞에서 한 번 크게 선언하더니 문을 열었다. 문짝은 경첩째 그녀의 손에 들려 있다.", standing: "lexia", act: "recoil", nextId: "n2" },
-    { id: "n2", speaker: "렉시아", body: "마스터, 마침 오셨네요. …다치신 데는 없죠? 문은, 제가 고쳐 놓을게요. 조금만 당기려고 했는데.", standing: "lexia", act: "shake", nextId: "n3" },
+    { id: "n1", speaker: "", body: "복도 끝 회의실 앞. 렉시아가 「여왕 입장!」 하고 크게 외치며 문을 열었다. 그리고 문짝은 경첩째 그녀의 손에 들려 있었다.", standing: "lexia", act: "recoil", nextId: "n2" },
+    { id: "n2", speaker: "렉시아", body: "마스터, 마침 오셨네요. …다치신 데는 없죠? 문은 제가 고쳐 놓을게요. 살짝 당기기만 하려고 했는데요.", standing: "lexia", act: "shake", nextId: "n3" },
     { id: "n3", speaker: "", body: "렉시아는 문짝을 벽에 조심스럽게 기대 세워 놓고, 겉옷 안쪽에서 두툼한 철 하나를 꺼냈다. 표지가 닳은 시말서 철이다.", standing: "lexia", nextId: "n4" },
-    { id: "n4", speaker: "렉시아", body: "…이건 비밀인데요. 이게 두 번째 권이에요. 첫 권 맨 앞 장은 제 첫 시말서고요. 보시겠어요? 아니, 안 보셔도… 보세요.", standing: "lexia", act: "lean", nextId: "n5" },
-    { id: "n5", speaker: "", body: "맨 앞 장에는 큼직한 글씨가 적혀 있다. 『서약. 이 렉시아는 두 번 다시 문을 부수지 않겠다.』 그 아래로 이름만 다른 시말서가 끝없이 이어져 있다.", nextId: "n6" },
-    { id: "n6", speaker: "연구원", body: "(첫 장의 서약과 마지막 장의 날짜 사이가 아주 짧다.)", choices: [
+    { id: "n4", speaker: "렉시아", body: "…이건 비밀인데요, 벌써 두 번째 권이에요. 맨 앞에는 제 첫 시말서를 옮겨 붙여 놨어요. 보실래요? 아니, 안 보셔도… 아니에요, 보세요.", standing: "lexia", act: "lean", nextId: "n5" },
+    { id: "n5", speaker: "", body: "맨 앞 장에는 큼직한 글씨가 적혀 있었다. 『서약. 이 렉시아는 두 번 다시 문을 부수지 않겠다.』 그 뒤로는 날짜만 다른 시말서가 끝없이 이어졌다.", nextId: "n6" },
+    { id: "n6", speaker: "연구원", body: "(서약한 날과 바로 다음 시말서의 날짜가 고작 며칠 차이다.)", choices: [
       { id: "ok", label: "다친 데 없으면 됐어. 같이 고치자", nextId: "n7a" },
       { id: "count", label: "서약은 몇 번이나 지켰어?", nextId: "n7b" },
     ] },
-    { id: "n7a", speaker: "렉시아", body: "같이요? …그럼 경첩은 제가 들고 있을게요. 나사는 마스터가 돌리세요. 그건 제가 하면 또 부서져요.", standing: "lexia", act: "nod", nextId: "n8" },
-    { id: "n7b", speaker: "렉시아", body: "…세 번째 장까지는요. 아니, 어제까지는 열한 번째 장까지요! 기록은 갱신되고 있으니까 괜찮은 거예요.", standing: "lexia", act: "hop", nextId: "n8" },
-    { id: "n8", speaker: "", body: "나사가 한 번 돌아갈 때마다 렉시아의 눈이 문과 연구원을 번갈아 보았다. 그러다 마지막에 문이 제자리에 서자 렉시아가 작게 숨을 내쉬었다.", nextId: "n9" },
-    { id: "n9", speaker: "렉시아", body: "됐어요! 이번엔 안 떨어지네요. 마스터, 손 좀 보세요. 나사에 긁히진 않으셨어요? …수고하셨으니까 홍차는 제가 대접할게요.", standing: "lexia", act: "hopTwice" },
+    { id: "n7a", speaker: "렉시아", body: "같이요? …그럼 문은 제가 받치고 있을게요. 나사는 마스터가 돌려 주세요. 그건 제가 하면 또 부서져요.", standing: "lexia", act: "nod", nextId: "n8" },
+    { id: "n7b", speaker: "렉시아", body: "…사흘이요. 아니, 제일 길게 간 건 열하루였어요! 기록은 계속 갱신되고 있으니까 괜찮은 거예요.", standing: "lexia", act: "hop", nextId: "n8" },
+    { id: "n8", speaker: "", body: "나사가 한 번 돌아갈 때마다 렉시아의 눈이 문과 연구원을 오갔다. 마지막 나사를 조이고 문이 제자리에 서자, 렉시아가 작게 숨을 내쉬었다.", nextId: "n9" },
+    { id: "n9", speaker: "렉시아", body: "됐어요! 이번엔 안 떨어지네요. 마스터, 손 좀 보여 주세요. 나사에 긁히진 않으셨죠? …수고하셨으니까 홍차는 제가 대접할게요.", standing: "lexia", act: "hopTwice" },
   ],
 };
 
@@ -49,18 +49,18 @@ const CHAPTER_6: DialogueStory = {
   startNodeId: "n1",
   titleCard: { title: "경호원 자리", subtitle: "렉시아 · 애착 이야기 2" },
   nodes: [
-    { id: "n1", speaker: "", body: "아침 회의 직전의 복도. 렉시아가 연구원의 왼쪽에 서 있다. 반대쪽 오른쪽에는 토리카가 간식 보따리를 안고 선 채 지지 않으려 한다.", cast: QUEEN_AND_TORIKA, standing: "lexia", nextId: "n2" },
-    { id: "n2", speaker: "렉시아", body: "토리카, 오늘은 내가 왼쪽이야. 어제는 네가 종일 섰잖아.", standing: "lexia", act: "shake", nextId: "n3" },
+    { id: "n1", speaker: "", body: "아침 회의 직전의 복도. 렉시아가 연구원의 왼쪽에 서 있었다. 오른쪽에서는 토리카가 간식 보따리를 안은 채 질세라 버티고 있었다.", cast: QUEEN_AND_TORIKA, standing: "lexia", nextId: "n2" },
+    { id: "n2", speaker: "렉시아", body: "토리카, 오늘 왼쪽은 내 자리야. 어제는 네가 하루 종일 섰잖아.", standing: "lexia", act: "shake", nextId: "n3" },
     { id: "n3", speaker: "토리카", body: "그럼 앞은 내가 막을게. 뒤에서 뭐가 오면 네가 봐 줘!", standing: "torika", act: "hop", nextId: "n4" },
-    { id: "n4", speaker: "", body: "둘이 한 발씩 앞으로 나서다가 서로의 어깨가 닿았다. 복도 모퉁이에서 돌풍처럼 경보음이 울렸다. 훈련용이다.", cue: "alarm", nextId: "n5" },
-    { id: "n5", speaker: "렉시아", body: "…훈련 경보네. 토리카, 네 쪽 문 막아. 난 정면이야. 어느 자리인지는 끝나고 다시 정하자.", standing: "lexia", act: "nod", nextId: "n6" },
+    { id: "n4", speaker: "", body: "둘이 동시에 한 발씩 나서다가 어깨가 부딪쳤다. 그때 복도 모퉁이에서 경보음이 돌풍처럼 울렸다. 훈련용이었다.", cue: "alarm", nextId: "n5" },
+    { id: "n5", speaker: "렉시아", body: "…훈련 경보네. 토리카, 네 쪽 문 막아. 정면은 내가 맡을게. 자리는 끝나고 다시 정하자.", standing: "lexia", act: "nod", nextId: "n6" },
     { id: "n6", speaker: "토리카", body: "좋아! 대장님 곁은 둘이 같이 지키는 걸로!", standing: "torika", act: "hopTwice", nextId: "n7" },
-    { id: "n7", speaker: "연구원", body: "(훈련은 순식간에 끝났다. 서로 자리를 두고 다투던 두 사람이 이번엔 같은 쪽을 보고 있다.)", choices: [
+    { id: "n7", speaker: "연구원", body: "(훈련은 순식간에 끝났다. 자리를 두고 다투던 두 사람이 이번엔 같은 쪽을 보고 있다.)", choices: [
       { id: "both", label: "둘 다 든든해. 자리는 번갈아 서자", nextId: "n8a" },
       { id: "queen", label: "렉시아, 이번엔 네가 먼저 앞에 서 줘", nextId: "n8b" },
     ] },
-    { id: "n8a", speaker: "렉시아", body: "번갈아요? …여왕이 자리를 나눠 쓴다니 이상하지만, 마스터가 말씀하시니 받아들이죠. 오늘은 제가 왼쪽이에요.", standing: "lexia", act: "nod", nextId: "n9" },
-    { id: "n8b", speaker: "렉시아", body: "저, 저한테 먼저요? …당연하죠! 최전선은 제 자리니까요! …토리카, 오늘만 양보하는 거야. 간식 하나 나눠 주면 봐줄게.", standing: "lexia", act: "hop", nextId: "n9" },
+    { id: "n8a", speaker: "렉시아", body: "번갈아요? …여왕이 자리를 나눠 쓰다니 좀 이상하지만, 마스터 말씀이니 따를게요. 대신 오늘은 제가 왼쪽이에요.", standing: "lexia", act: "nod", nextId: "n9" },
+    { id: "n8b", speaker: "렉시아", body: "저, 저요? …당연하죠! 최전선은 제 자리니까요! …토리카, 미안하지만 이번엔 내가 앞이야. 간식 하나 나눠 주면 다음엔 양보할게.", standing: "lexia", act: "hop", nextId: "n9" },
     { id: "n9", speaker: "토리카", body: "하나가 아니라 두 개 줄게! 같이 먹으면 더 맛있잖아.", standing: "torika", act: "hop", nextId: "n10" },
     { id: "n10", speaker: "렉시아", body: "…마스터, 방금 제 꼬리 끝이 움직였다면 못 본 걸로 해 주세요. 여왕은 간식 한 입에 흔들리지 않으니까요.", standing: "lexia", act: "shrink" },
   ],
@@ -73,16 +73,16 @@ const CHAPTER_8: DialogueStory = {
   startNodeId: "n1",
   titleCard: { title: "돌아보는 여왕", subtitle: "렉시아 · 애착 이야기 3" },
   nodes: [
-    { id: "n1", speaker: "", body: "외벽 방어선 밖의 훈련장. 렉시아가 야성이 오른 채 가장 앞에서 달리고 있다. 뒤에서는 토리카가 보따리를 안고 헐떡이며 따라온다.", cast: QUEEN_AND_TORIKA, standing: "lexia", cue: "rumble", nextId: "n2" },
+    { id: "n1", speaker: "", body: "외벽 방어선 밖의 훈련장. 야성이 오른 렉시아가 맨 앞에서 달리고 있었다. 그 뒤로 토리카가 보따리를 안고 헐떡이며 따라왔다.", cast: QUEEN_AND_TORIKA, standing: "lexia", cue: "rumble", nextId: "n2" },
     { id: "n2", speaker: "렉시아", body: "하하! 오늘은 전부 내 거야! 끝까지 밀어붙인다!", standing: "lexia", act: "hopTwice", nextId: "n3" },
     { id: "n3", speaker: "", body: "그때 뒤에서 토리카가 돌부리에 걸려 넘어졌다. 보따리가 쏟아지는 소리가 훈련장에 퍼졌다.", standing: "torika", act: "recoil", nextId: "n4" },
-    { id: "n4", speaker: "", body: "렉시아의 발이 멈췄다. 앞으로 뻗던 몸이 뒤로 돌아선다. 야성이 아직 한가득 남아 있는 눈빛이다.", standing: "lexia", cue: "impact", nextId: "n5" },
+    { id: "n4", speaker: "", body: "렉시아의 발이 멈췄다. 앞으로 내달리던 몸이 뒤로 돌아섰다. 눈빛에는 야성이 아직 한가득 남아 있었다.", standing: "lexia", cue: "impact", nextId: "n5" },
     { id: "n5", speaker: "렉시아", body: "…토리카, 괜찮아? 일어나. 보따리는 내가 들게. 앞은… 앞은 이따가 다시 가면 돼.", standing: "lexia", act: "lean", nextId: "n6" },
-    { id: "n6", speaker: "연구원", body: "(렉시아가 토리카를 일으켜 세우는 손이 조금 거칠다. 그래도 힘 조절은 끝까지 잘 해냈다.)", choices: [
+    { id: "n6", speaker: "연구원", body: "(토리카를 일으켜 세우는 렉시아의 손길이 조금 거칠다. 그래도 힘 조절은 끝까지 해낸다.)", choices: [
       { id: "praise", label: "방금 멈춘 거, 정말 멋졌어", nextId: "n7a" },
       { id: "ask", label: "앞장서고 싶었을 텐데 괜찮아?", nextId: "n7b" },
     ] },
-    { id: "n7a", speaker: "렉시아", body: "멋졌다니요. 그건… 당연한 거죠! 여왕은 누구 하나 뒤에 남기지 않아요. …그래도 마스터가 그렇게 말씀하시니까 기억해 둘게요.", standing: "lexia", act: "nod", nextId: "n8" },
+    { id: "n7a", speaker: "렉시아", body: "멋졌다니요. 그건… 당연한 거죠! 여왕은 아무도 뒤에 남겨 두지 않아요. …그래도 마스터가 그렇게 말해 주셨으니까, 기억해 둘게요.", standing: "lexia", act: "nod", nextId: "n8" },
     { id: "n7b", speaker: "렉시아", body: "앞장서는 건 제일 좋아해요. 근데 혼자 앞에 서면 돌아봤을 때 아무도 없잖아요. 그럼 그건 승리가 아니라 그냥 달리기예요.", standing: "lexia", act: "lean", nextId: "n8" },
     { id: "n8", speaker: "토리카", body: "렉시아, 고마워! 다음엔 내가 먼저 뛰어서 네 뒤를 열게!", standing: "torika", act: "hop", nextId: "n9" },
     { id: "n9", speaker: "렉시아", body: "그건 안 돼. 앞은 내가 가. 대신 네 보따리는 내가 안 쏟게 들어 줄게. 약속이야.", standing: "lexia", act: "nod" },
@@ -96,11 +96,11 @@ const CHAPTER_10: DialogueStory = {
   startNodeId: "n1",
   titleCard: { title: "여왕이 앞에 서는 이유", subtitle: "렉시아 · 애착 이야기 4" },
   nodes: [
-    { id: "n1", speaker: "", body: "새벽의 외벽 위. 렉시아가 난간 옆 작은 탁자에 찻잔 두 개와 낡은 철제 홍차 통을 올려 두고 기다리고 있다. 시말서 철은 어느새 세 권째다. 뚜껑은 아직 닫혀 있다.", standing: "lexia", nextId: "n2" },
-    { id: "n2", speaker: "렉시아", body: "마스터, 마침 잘 오셨어요. 오늘은 부순 게 하나도 없어서 철이 가볍거든요. 이런 날은 처음이에요. 그래서 오늘은 이 통을 열어 볼까 해요.", standing: "lexia", act: "hop", nextId: "n3" },
+    { id: "n1", speaker: "", body: "새벽의 외벽 위. 렉시아가 난간 옆 작은 탁자에 찻잔 두 개와, 뚜껑이 닫힌 낡은 철제 홍차 통을 올려 두고 기다리고 있었다. 시말서 철은 어느새 세 권째였다.", standing: "lexia", nextId: "n2" },
+    { id: "n2", speaker: "렉시아", body: "마스터, 마침 잘 오셨어요. 오늘은 시말서를 한 장도 안 썼어요. 이런 날은 처음이에요. 그래서 이 통을 열어 볼까 해요.", standing: "lexia", act: "hop", nextId: "n3" },
     { id: "n3", speaker: "렉시아", body: "같이 드시려고 기다렸어요. …뭘 그렇게 놀라세요? 혼자 다 마셔 버리면 다음 한정판까지 기다려야 하잖아요.", standing: "lexia", act: "lean", nextId: "n4" },
-    { id: "n4", speaker: "", body: "렉시아가 철의 마지막 장을 펼쳐 보였다. 오늘 날짜 아래에 짧은 문장이 적혀 있다.", standing: "lexia", nextId: "n5" },
-    { id: "n5", speaker: "렉시아", body: "『오늘은 부수지 않고 지켰다.』 …이번엔 이렇게 적어 봤어요. 마스터도 한 줄 써 주세요. 증인, 해 주실 거죠?", standing: "lexia", act: "shrink", nextId: "n6" },
+    { id: "n4", speaker: "", body: "렉시아가 철의 마지막 장을 펼쳐 보였다. 오늘 날짜 아래에 짧은 문장이 적혀 있었다.", standing: "lexia", nextId: "n5" },
+    { id: "n5", speaker: "렉시아", body: "『오늘은 부수지 않고 지켰다.』 …이번엔 이렇게 적어 봤어요. 마스터도 한 줄 써 주세요. 증인 서 주실 거죠?", standing: "lexia", act: "shrink", nextId: "n6" },
     { id: "n6", speaker: "연구원", body: "(삼백 장의 시말서 끝에 이 한 줄이 있다. 렉시아의 꼬리 끝이 천천히 흔들리기 시작한다.)", choices: [
       { id: "proud", label: "정말 대단해, 렉시아. 자랑스러워", nextId: "n7a" },
       { id: "keep", label: "이 철, 나도 가끔 읽어 봐도 돼?", nextId: "n7b" },
@@ -108,9 +108,9 @@ const CHAPTER_10: DialogueStory = {
     { id: "n7a", speaker: "렉시아", body: "자, 자랑스럽다니… 입꼬리가 내려가질 않잖아요. 여왕은 이럴 때 어떤 얼굴을 해야 하죠? …알았어요, 그냥 웃을게요.", standing: "lexia", act: "hopTwice", nextId: "n8" },
     { id: "n7b", speaker: "렉시아", body: "읽으시게요? 시말서 부분은 눈을 감고 넘기세요. 맨 뒷장만 읽으시면 돼요. 그건 마스터한테만 보여 드리는 거예요.", standing: "lexia", act: "nod", nextId: "n8" },
     { id: "n8", speaker: "", body: "해가 뜨자 외벽 위로 붉은 빛이 번졌다. 렉시아가 조심스럽게 홍차 통의 뚜껑을 열자 달콤한 향이 새벽바람에 섞였다.", nextId: "n8b" },
-    { id: "n8b", speaker: "렉시아", body: "이거, 예전에 마스터가 처음 맛있다고 하셨던 블렌딩A 홍차의 한정판이에요. 구하려고 줄을 세 번 섰어요. 아까워서 한 번도 못 열었는데… 오늘은 마스터랑 마시고 싶어요.", standing: "lexia", act: "shrink", nextId: "n8c" },
+    { id: "n8b", speaker: "렉시아", body: "이거, 마스터가 처음으로 맛있다고 하셨던 블렌딩A 홍차의 한정판이에요. 구하려고 줄을 세 번이나 섰어요. 아까워서 여태 못 열었는데… 오늘은 마스터랑 마시고 싶어요.", standing: "lexia", act: "shrink", nextId: "n8c" },
     { id: "n8c", speaker: "", body: "렉시아는 숨을 참은 채 두 개의 찻잔에 홍차를 따랐다. 잔은 단 한 방울도 넘치지 않았다.", nextId: "n9" },
-    { id: "n9", speaker: "렉시아", body: "마스터, 앞으로도 제 앞은 제가 맡을게요. 대신 뒤는 마스터가 맡아 주세요. 여왕은 뒤를 돌아봤을 때 마스터가 보이면 그걸로 충분해요.", standing: "lexia", act: "nod" },
+    { id: "n9", speaker: "렉시아", body: "마스터, 앞으로도 앞은 제가 맡을게요. 대신 뒤는 마스터가 맡아 주세요. 돌아봤을 때 마스터가 보이면, 여왕은 그걸로 충분해요.", standing: "lexia", act: "nod" },
   ],
 };
 
@@ -193,13 +193,13 @@ export const REX_STORY: RelicStoryProfile = {
   bondStories: { 4: CHAPTER_4, 6: CHAPTER_6, 8: CHAPTER_8, 10: CHAPTER_10 },
   bondLines: [
     // 0 — 낯선 사이. 당당하지만 깍듯하다.
-    ["처음 뵙겠어요, 마스터. 이 렉시아가 최전선에서 모시겠어요. …문은 제가 열게요. 조심해서요.", "찻잔은 한 번도 안 깼어요. 그건 정말이에요. 문은… 다른 이야기고요.", "여왕은 한 번 한 말은 지켜요. 그러니 오늘은 아무것도 안 부술게요.", "마스터의 명령이라면 어디든 선두에서 갈게요. 승부는 제가 선언하죠."],
+    ["처음 뵙네요, 마스터. 이 렉시아가 최전선에서 모실게요. …문은 제가 열게요. 조심해서요.", "찻잔은 한 번도 안 깼어요. 그건 정말이에요. 문은… 다른 이야기고요.", "여왕은 한 번 한 말은 지켜요. 그러니 오늘은 아무것도 안 부술게요.", "마스터의 명령이라면 어디든 선두에서 갈게요. 승부는 제가 선언하죠."],
     // 1
     ["마스터 오셨네요! 오늘은 문을 세 개 열었는데 두 개만 멀쩡해요. 나쁘지 않죠?", "마스터, 아침은 드셨어요? 아직이면 같이 가요. 오늘은 제가 먼저 자리 잡았어요.", "동료의 신호가 들리면 바로 달려가요. 그건 여왕의 소양이에요."],
     // 2
     ["철이 조금 무거워졌어요. 아니, 철이 무거운 게 아니라 제가 부순 게 많은 거죠.", "복도에서 저 보시면 불러 주세요. 못 듣고 지나가면 좀… 아쉽잖아요.", "오늘은 의자만 하나 부쉈어요. 이 정도면 양호하죠?", "이 접시 보세요, 토끼 모양이에요. 귀엽죠? 귀엽다고 해 주세요."],
     // 3
-    ["칭찬이 듣고 싶은 건 아니에요. 그냥… 한 번쯤은 들어도 나쁘지 않아서요.", "토리카가 간식을 나눠 줬어요. 여왕은 받은 건 꼭 갚아요. 내일 홍차 한 잔으로요.", "홍차 한 잔 드실래요? 조금 뜨거우니까 천천히 드세요. 잔은 제가 놓아 드릴게요.", "블렌딩A에서 한정판이 또 나왔대요. 줄 서러 가야 해요. 마스터가 맛있다고 하셨던 거니까요.", "여왕은 약한 척 안 해요. 근데 마스터 앞에서는 조금 편해요."],
+    ["칭찬이 듣고 싶은 건 아니에요. 그냥… 한 번쯤은 들어도 나쁘지 않아서요.", "토리카가 간식을 나눠 줬어요. 여왕은 받은 건 꼭 갚아요. 내일 홍차 한 잔으로요.", "홍차 한 잔 드실래요? 조금 뜨거우니까 천천히 드세요. 잔은 제가 놓아 드릴게요.", "블렌딩A에서 한정판이 또 나왔대요. 줄 서러 가야 해요. 마스터가 맛있다고 하셨던 거니까요.", "여왕은 약한 모습 안 보여요. 근데 마스터 앞에서는… 조금 마음이 놓여요."],
     // 4
     ["문짝은 이제 부수지 않고 열어요. …아직은 열 번 중 서너 번이지만요.", "마스터가 나사를 돌려 주시면 문이 제자리로 와요. 신기하죠?", "오늘은 문 열 때 숨을 참아 봤어요. 손잡이가 멀쩡해요! …대신 얼굴이 좀 빨개졌어요."],
     // 5
@@ -211,8 +211,8 @@ export const REX_STORY: RelicStoryProfile = {
     // 8
     ["방금 뒤돌아봤더니 토리카가 손을 흔들었어요. 저도 흔들 뻔했어요. 여왕은 고개만 끄덕였지만요.", "오늘은 일부러 세 걸음 천천히 갔어요. 따라오는 소리가 들려야 달릴 맛이 나요.", "마스터가 뒤에 계시면 앞이 무섭지 않아요. 이건 비밀이에요."],
     // 9
-    ["마스터, 오늘 아침에 문손잡이를 돌렸는데 그냥 돌아갔어요. 아무 일도 없었어요. 원래 이렇게 이상한 일이었나요?", "오늘은 아무것도 안 부쉈어요. 칭찬 받을 준비 됐어요!", "새 잔 샀어요. 마스터 거예요. 토끼는 아니고… 아, 토끼 맞아요."],
+    ["마스터, 오늘 아침에 문손잡이를 돌렸는데 그냥 돌아갔어요. 아무 일도 없었어요. 원래 문 여는 게 이렇게 싱거운 일이었어요?", "오늘은 아무것도 안 부쉈어요. 칭찬 받을 준비 됐어요!", "새 잔 샀어요. 마스터 거예요. 토끼는 아니고… 아, 토끼 맞아요."],
     // 10 — 마음을 연 사이. 장난이 늘어난다.
-    ["마스터, 철 맨 뒷장 읽으셨어요? 아직 안 읽으셨으면 제가 직접 읽어 드릴게요. 떨리니까 눈은 감고요.", "여왕은 앞을, 마스터는 뒤를. 이 배치가 제일 마음에 들어요. 평생 바꾸지 않을 거예요.", "문은 이제 조금 덜 부숴요. 그래도 부수는 날엔 같이 고쳐 주실 거죠?"],
+    ["마스터, 철 맨 뒷장 보셨어요? 아직이면 제가 직접 읽어 드릴게요. 떨리니까 마스터는 눈 감고 들으세요.", "여왕은 앞을, 마스터는 뒤를. 이 배치가 제일 마음에 들어요. 평생 바꾸지 않을 거예요.", "문은 이제 조금 덜 부숴요. 그래도 부수는 날엔 같이 고쳐 주실 거죠?"],
   ],
 };

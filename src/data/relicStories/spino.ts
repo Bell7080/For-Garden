@@ -20,15 +20,15 @@ const CHAPTER_4: DialogueStory = {
   startNodeId: "n1",
   titleCard: { title: "들키지 않은 어항", subtitle: "스피나 · 애착 이야기 1" },
   nodes: [
-    { id: "n1", speaker: "", body: "근무가 끝난 수중경비대 휴게실. 불이 반쯤 꺼진 방 안쪽에서 스피나가 작은 어항 앞에 쪼그려 앉아 모래를 한 알씩 옮기고 있다.", standing: "seira", nextId: "n2" },
-    { id: "n2", speaker: "", body: "연구원이 문틈에서 발을 멈추자 스피나의 어깨가 아주 조금 움츠러들었다. 망토 자락이 어항을 가린다.", standing: "seira", act: "shrink", nextId: "n3" },
-    { id: "n3", speaker: "스피나", body: "…연구원님. 아직 퇴근… 안 하셨군요. 아니, 저는 순찰 중이에요. 이건… 점검이에요.", standing: "seira", act: "tremble", nextId: "n4" },
+    { id: "n1", speaker: "", body: "근무가 끝난 수중경비대 휴게실. 불이 반쯤 꺼진 방 안쪽에서, 스피나가 작은 어항 앞에 쪼그려 앉아 모래를 한 알씩 옮기고 있었다.", standing: "seira", nextId: "n2" },
+    { id: "n2", speaker: "", body: "연구원이 문간에서 걸음을 멈추자 스피나의 어깨가 움찔했다. 망토 자락이 슬그머니 어항을 가렸다.", standing: "seira", act: "shrink", nextId: "n3" },
+    { id: "n3", speaker: "스피나", body: "…연구원님. 아직 퇴근 안 하셨어요? 아, 저는… 순찰 중이에요. 이건, 그러니까… 점검이에요.", standing: "seira", act: "tremble", nextId: "n4" },
     { id: "n4", speaker: "연구원", body: "(어항 안에는 작은 조약돌과 이끼, 그리고 아직 이름을 짓지 않은 물고기 한 마리가 있다.)", choices: [
       { id: "ignore", label: "못 본 척하고 점검 잘 하라고 말한다", nextId: "n5a" },
       { id: "nice", label: "어항이 예쁘다고 솔직히 말한다", nextId: "n5b" },
     ] },
-    { id: "n5a", speaker: "스피나", body: "…네. 점검, 잘 하고 있어요. 모래 입자까지 전부요. 그러니까 연구원님은… 안 보셨던 걸로 하셔도 돼요.", standing: "seira", act: "nod", nextId: "n6" },
-    { id: "n5b", speaker: "스피나", body: "예쁘… 다고요? …아무한테도 안 보여 줬는데. 아니, 안 보여 준 게 아니라 안 보인 거예요. …고마워요, 연구원님.", standing: "seira", act: "shrink", nextId: "n6" },
+    { id: "n5a", speaker: "스피나", body: "…네. 점검, 꼼꼼히 하고 있어요. 모래 한 알까지요. 그러니까 연구원님은… 아무것도 못 보신 거예요.", standing: "seira", act: "nod", nextId: "n6" },
+    { id: "n5b", speaker: "스피나", body: "예쁘… 다고요? …아무한테도 안 보여 준 건데. 아, 숨긴 게 아니라 그냥 아무도 못 본 거예요. …고마워요, 연구원님.", standing: "seira", act: "shrink", nextId: "n6" },
     { id: "n6", speaker: "", body: "스피나는 한참 동안 어항 속 물고기만 바라보았다. 이윽고 아주 작은 목소리로 한마디를 보탰다.", standing: "seira", nextId: "n7" },
     { id: "n7", speaker: "스피나", body: "수로에서 데려왔어요. 혼자 남아 있길래… 이름은 아직 못 지었어요.", standing: "seira", act: "lean", nextId: "n8" },
     { id: "n8", speaker: "", body: "연구원이 돌아서 나올 때, 스피나는 어항 쪽으로 고개를 숙인 채 연구원의 발소리가 멀어질 때까지 움직이지 않았다.", nextId: "n9" },
@@ -43,24 +43,24 @@ const CHAPTER_6: DialogueStory = {
   startNodeId: "n1",
   titleCard: { title: "반듯한 조개 한 개", subtitle: "스피나 · 애착 이야기 2" },
   nodes: [
-    { id: "n1", speaker: "", body: "겨울 초입의 수문 옆 계단. 연구원이 갓 구운 붕어빵 봉지를 들고 걸어오자 스피나가 이미 그 자리에 앉아 있다. 마치 처음부터 있었던 것처럼.", standing: "seira", nextId: "n2" },
-    { id: "n2", speaker: "스피나", body: "…연구원님. 그, 냄새가… 나서요. 아니, 순찰 중에 냄새가 났을 뿐이에요. 물가 근처라서요.", standing: "seira", act: "lean", nextId: "n3" },
+    { id: "n1", speaker: "", body: "초겨울, 수문 옆 계단. 연구원이 갓 구운 붕어빵 봉지를 들고 가 보니 스피나가 벌써 거기 앉아 있었다. 처음부터 그 자리에 있었다는 듯이.", standing: "seira", nextId: "n2" },
+    { id: "n2", speaker: "스피나", body: "…연구원님. 그, 냄새가… 나서요. 아니, 순찰하다가 냄새가 났을 뿐이에요. 여기가 순찰 경로라서요.", standing: "seira", act: "lean", nextId: "n3" },
     { id: "n3", speaker: "연구원", body: "(봉지 안에는 팥과 슈크림, 그리고 피자 붕어빵이 한 개씩 들어 있다.)", choices: [
       { id: "red", label: "팥붕어빵부터 건넨다", nextId: "n4a" },
       { id: "pizza", label: "피자 붕어빵을 먼저 건넨다", nextId: "n4b" },
     ] },
     { id: "n4a", speaker: "", body: "스피나는 붕어빵을 두 손으로 받았다가 조용히 봉지에 도로 내려놓고, 시선을 피자 붕어빵 쪽으로 슬쩍 옮겼다.", standing: "seira", act: "shrink", nextId: "n5" },
-    { id: "n4b", speaker: "", body: "스피나의 눈이 처음으로 활짝 열렸다. 붕어빵을 받아 든 손끝이 아주 조금 떨린다.", standing: "seira", act: "hop", nextId: "n5" },
-    { id: "n5", speaker: "스피나", body: "…저는 피자 든 게 좋아요. 달지 않고, 치즈도 있고요. 괜찮으시면… 저걸로 주실래요?", standing: "seira", act: "tremble", nextId: "n6" },
+    { id: "n4b", speaker: "", body: "스피나의 눈이 처음으로 동그래졌다. 붕어빵을 받아 든 손끝이 살짝 떨렸다.", standing: "seira", act: "hop", nextId: "n5" },
+    { id: "n5", speaker: "스피나", body: "…저는 피자 든 게 좋아요. 달지 않고, 치즈도 들어 있어서요. …이거, 제가 먹어도 돼요?", standing: "seira", act: "tremble", nextId: "n6" },
     { id: "n6", speaker: "", body: "스피나는 머리부터 한 입 베어 물고는 어색하게 고개를 돌렸다. 치즈가 길게 늘어났다.", standing: "seira", cue: "impact", nextId: "n7" },
     { id: "n7", speaker: "스피나", body: "…연구원님. 이거, 받으세요. 오늘 수로에서 찾은 건데요. 가장 반듯한 걸로 골랐어요. 붕어빵값이에요.", standing: "seira", act: "nod", nextId: "n8" },
-    { id: "n8", speaker: "", body: "스피나가 내민 손바닥에는 흠 하나 없이 가장자리가 고른 작은 조개 하나가 놓여 있다. 어항 바닥에 깔린 것과 같은 결이다.", nextId: "n9" },
+    { id: "n8", speaker: "", body: "스피나가 내민 손바닥에는 흠 하나 없이 가장자리가 고른 작은 조개가 놓여 있었다. 어항 바닥에 깔린 것과 같은 결이었다.", nextId: "n9" },
     { id: "n9", speaker: "연구원", body: "(조개는 손바닥 안에서 미지근하다. 오래 쥐고 있던 모양이다.)", choices: [
       { id: "keep", label: "책상에 소중히 놓아 둘게", nextId: "n10a" },
       { id: "pay", label: "붕어빵은 선물이었는데, 고마워", nextId: "n10b" },
     ] },
-    { id: "n10a", speaker: "스피나", body: "…책상이요. 네. 이미 한 개 놓여 있는 건… 모르는 척할게요. 그건, 어제 제가 놓은 거니까요.", standing: "seira", act: "shrink", nextId: "n11" },
-    { id: "n10b", speaker: "스피나", body: "선물이면… 더 갚아야 하는데. 다음에는 두 개… 가져올게요. 붕어빵이 있으면요.", standing: "seira", act: "nod", nextId: "n11" },
+    { id: "n10a", speaker: "스피나", body: "…책상이요. 네. 거기 이미 하나 있는 건… 모른 척해 주세요. 그건 어제 제가 몰래 놓고 간 거라서요.", standing: "seira", act: "shrink", nextId: "n11" },
+    { id: "n10b", speaker: "스피나", body: "선물이었으면… 더 갚아야겠네요. 다음엔 두 개 가져올게요. …또 붕어빵이 있으면요.", standing: "seira", act: "nod", nextId: "n11" },
     { id: "n11", speaker: "스피나", body: "연구원님. 붕어빵 파는 곳, 어디예요? …순찰 경로에 넣어 두려고요. 정말로 순찰이에요.", standing: "seira", act: "lean" },
   ],
 };
@@ -74,8 +74,8 @@ const CHAPTER_8: DialogueStory = {
   nodes: [
     { id: "n1", speaker: "", body: "수중경비대 사무실. 외부 점검관 일행이 문을 열고 들어오는 순간, 스피나의 자리에서 그림자 하나가 사라졌다.", standing: "seira", cue: "impact", nextId: "n2" },
     { id: "n2", speaker: "점검관", body: "이쪽이 수중 순찰 담당 자리군요. 담당자분은 어디 계시죠? 몇 가지 확인할 게 있는데요.", nextId: "n3" },
-    { id: "n3", speaker: "", body: "연구원의 책상 아래에서 아주 작은 목소리가 들렸다. 망토 자락이 다리 옆에 닿는다.", nextId: "n4" },
-    { id: "n4", speaker: "스피나", body: "…연구원님. 나가면… 안 돼요. 제가 말을 못 해서요. 낯선 분은… 아직 어려워요.", standing: "seira", act: "tremble", nextId: "n5" },
+    { id: "n3", speaker: "", body: "연구원의 책상 아래에서 아주 작은 목소리가 들렸다. 다리에 망토 자락이 스쳤다.", nextId: "n4" },
+    { id: "n4", speaker: "스피나", body: "…연구원님. 저 여기 있다고… 말하지 말아 주세요. 낯선 분 앞에선 말이 안 나와요. 아직은… 어려워요.", standing: "seira", act: "tremble", nextId: "n5" },
     { id: "n5", speaker: "연구원", body: "(책상 아래에서 망토 자락이 떨리고 있다. 점검관은 서류를 넘기며 기다리고 있다.)", choices: [
       { id: "cover", label: "담당자는 지금 순찰 중이니 내가 대신 답하겠다고 말한다", nextId: "n6a" },
       { id: "sit", label: "책상 아래에 조용히 손을 내려 준다", nextId: "n6b" },
@@ -84,8 +84,8 @@ const CHAPTER_8: DialogueStory = {
     { id: "n6b", speaker: "", body: "연구원이 내려 준 손 위로 작은 손이 조용히 올라왔다. 손끝이 차가웠고, 곧 따뜻해졌다.", nextId: "n7" },
     { id: "n7", speaker: "", body: "점검관은 연구원이 내민 순찰 기록을 한 줄씩 훑었다. 빈틈은 하나도 없었다. 날짜, 시각, 수문 수위까지 모두 맞았다.", nextId: "n8" },
     { id: "n8", speaker: "점검관", body: "이렇게 정확한 기록은 처음 봅니다. 담당자분께 전해 주세요. 정말 훌륭하다고요.", nextId: "n9" },
-    { id: "n9", speaker: "", body: "점검관 일행이 나가자 책상 밑에서 스피나가 천천히 고개를 내밀었다. 귀끝이 새빨갛다.", standing: "seira", act: "shrink", nextId: "n10" },
-    { id: "n10", speaker: "스피나", body: "…들었어요. 제 기록을 보고 그렇게 말씀하셨죠? 고맙다는 말씀… 못 드렸네요.", standing: "seira", act: "lean", nextId: "n11" },
+    { id: "n9", speaker: "", body: "점검관 일행이 나가자 책상 밑에서 스피나가 천천히 고개를 내밀었다. 귀 끝이 새빨갰다.", standing: "seira", act: "shrink", nextId: "n10" },
+    { id: "n10", speaker: "스피나", body: "…다 들었어요. 제 기록 보고 하신 말씀이죠? …고맙다는 인사도 못 드렸네요.", standing: "seira", act: "lean", nextId: "n11" },
     { id: "n11", speaker: "스피나", body: "다음엔 제가 직접 보여 드릴게요. …오늘은 옆에 계셔서, 정말 다행이었어요.", standing: "seira", act: "nod" },
   ],
 };
@@ -97,10 +97,10 @@ const CHAPTER_10: DialogueStory = {
   startNodeId: "n1",
   titleCard: { title: "처음 보여 주는 어항", subtitle: "스피나 · 애착 이야기 4" },
   nodes: [
-    { id: "n1", speaker: "", body: "새벽의 수로 옆 방. 스피나가 어항을 책상 한가운데에 올려 두고 연구원을 기다리고 있다. 이번에는 망토로 가리지 않았다.", standing: "seira", nextId: "n2" },
-    { id: "n2", speaker: "스피나", body: "연구원님… 오셨네요. 오늘은… 숨기지 않을게요. 이 어항, 제가 하루씩 꾸민 거예요. 처음부터 끝까지, 전부 보여 드릴게요.", standing: "seira", act: "nod", nextId: "n3" },
-    { id: "n3", speaker: "", body: "어항 안에는 반듯한 조개 하나가 중앙에 놓여 있고, 그 곁으로 아주 작은 붕어빵 모양의 장식이 이끼 사이에 숨어 있다.", nextId: "n4" },
-    { id: "n4", speaker: "스피나", body: "이 조개는 처음 연구원님께 드리려던 것과 같은 결이에요. 그리고 이건… 아니, 이 장식은 그냥 우연이에요. 우연히 붕어빵 모양이었어요.", standing: "seira", act: "tremble", nextId: "n5" },
+    { id: "n1", speaker: "", body: "새벽, 수로 옆 방. 스피나가 어항을 책상 한가운데에 올려 두고 연구원을 기다리고 있었다. 이번에는 망토로 가리지 않았다.", standing: "seira", nextId: "n2" },
+    { id: "n2", speaker: "스피나", body: "연구원님… 오셨네요. 오늘은… 숨기지 않을게요. 이 어항, 제가 매일 조금씩 꾸민 거예요. 오늘은 전부 보여 드릴게요.", standing: "seira", act: "nod", nextId: "n3" },
+    { id: "n3", speaker: "", body: "어항 한가운데에는 반듯한 조개 하나가 놓여 있었고, 그 옆 이끼 사이에는 손톱만 한 붕어빵 모양 장식이 숨어 있었다.", nextId: "n4" },
+    { id: "n4", speaker: "스피나", body: "이 조개는 처음 연구원님께 드린 거랑 같은 결이에요. 그리고 이건… 그냥 우연이에요. 주웠는데 어쩌다 붕어빵 모양이었어요.", standing: "seira", act: "tremble", nextId: "n5" },
     { id: "n5", speaker: "연구원", body: "(어항 속 물고기가 조개 주변을 천천히 맴돌고 있다. 처음 보았을 때보다 조금 더 자랐다.)", choices: [
       { id: "name", label: "이 물고기, 이름은 정했어?", nextId: "n6a" },
       { id: "stay", label: "조용히 같이 어항을 바라본다", nextId: "n6b" },
@@ -108,7 +108,7 @@ const CHAPTER_10: DialogueStory = {
     { id: "n6a", speaker: "스피나", body: "정했어요. …'오래'라고요. 오래 기다려도 곁에 남아 줘서요. 어때요? 이상한가요?", standing: "seira", act: "shrink", nextId: "n7" },
     { id: "n6b", speaker: "스피나", body: "…같이 보니까, 혼자 볼 때랑 달라요. 물이 더 맑아 보여요. 이유는 모르겠지만요.", standing: "seira", act: "lean", nextId: "n7" },
     { id: "n7", speaker: "", body: "스피나는 어항 유리에 손끝을 가만히 대었다. 물고기가 손끝 쪽으로 천천히 다가왔다.", nextId: "n8" },
-    { id: "n8", speaker: "스피나", body: "연구원님. 저, 여전히 사람이 많은 곳은 어려워요. 그래도… 연구원님 곁에서는 숨지 않아도 될 것 같아요. 이건 어항 앞이라서 그런 게 아니에요.", standing: "seira", act: "nod", nextId: "n9" },
+    { id: "n8", speaker: "스피나", body: "연구원님. 저, 여전히 사람 많은 곳은 어려워요. 그래도… 연구원님 곁에서는 숨지 않아도 될 것 같아요. 어항 앞이라서 하는 말 아니에요.", standing: "seira", act: "nod", nextId: "n9" },
     { id: "n9", speaker: "스피나", body: "다음엔 붕어빵을 같이 먹어요. 어항 앞에서요. …피자 붕어빵으로요. 물고기가 부러워하면 안 되니까, 조금만 보여 주고요.", standing: "seira", act: "hop" },
   ],
 };
@@ -150,7 +150,7 @@ export const SPINO_STORY: RelicStoryProfile = {
       choices: [
         {
           id: "pizza", label: "피자 붕어빵을 내밀어 본다",
-          reply: "…이건 괜찮아요. 짭짤하고, 치즈가 늘어나니까… 물고기답달까요. 아, 모양 얘기예요.",
+          reply: "…이건 좋아요. 짭짤하고, 치즈도 쭉 늘어나고요. …그리고 물고기 모양이잖아요.",
           note: "피자 붕어빵을 내밀자 눈이 먼저 열렸다. 머리부터 한 입 무는 순서가 정해져 있는 모양이다.",
         },
         {
@@ -160,7 +160,7 @@ export const SPINO_STORY: RelicStoryProfile = {
         },
         {
           id: "why", label: "왜 그렇게 붕어빵을 좋아하냐고 물어본다",
-          reply: "물고기 모양이라서… 요. 저는 물가에서 오래 기다리는 쪽이라서, 그 모양이 보이면 반가워요. 이유는 그냥 그래요.",
+          reply: "물고기 모양이라서… 요. 물가에서 오래 기다리다 보면 물고기가 제일 반갑거든요. …그게 다예요.",
           note: "이유를 묻자 어색하게 어깨를 으쓱였다. 물가에서 기다리던 습관이 취향으로 남은 듯하다.",
         },
       ],
@@ -176,7 +176,7 @@ export const SPINO_STORY: RelicStoryProfile = {
         },
         {
           id: "stay", label: "연구원 곁에 가만히 서 있다는 걸 알아챈다",
-          reply: "…연구원님 곁은, 숨는 곳이 아니라 서 있어도 되는 곳이에요. 달라요. 조금요.",
+          reply: "…연구원님 옆은 숨을 필요가 없는 데라서요. 숨는 거랑은 달라요. 조금이지만요.",
           note: "숨지 않고 곁에 서 있는 모습이 관찰됐다. 본인은 아직 그것이 숨는 게 아니라는 걸 낯설어한다.",
         },
       ],
@@ -185,7 +185,7 @@ export const SPINO_STORY: RelicStoryProfile = {
   bondStories: { 4: CHAPTER_4, 6: CHAPTER_6, 8: CHAPTER_8, 10: CHAPTER_10 },
   bondLines: [
     // 0 — 낯선 사이. 말수가 적고 한 걸음 떨어져 있다.
-    ["…처음 뵙겠… 스피나예요. 순찰 경로에 문제 없는지… 확인 중이었어요.", "…연구원님. 저는 보이지 않는 곳에 있을게요. 필요하면… 부르세요.", "…수문 점검 끝났어요. 이상 없음. 그게 전부예요."],
+    ["…처음 뵙겠… 스피나예요. 순찰 경로에 문제 없는지… 확인 중이었어요.", "…연구원님. 저는 안 보이는 곳에 있을게요. 필요하시면… 불러 주세요.", "…수문 점검 끝났어요. 이상 없음. 그게 전부예요."],
     // 1
     ["…어서 오세요. 오늘도 수위는 정상이에요. …그 말씀드리려고 기다렸어요.", "물소리가 나는 곳이 편해요. 연구원님도… 가끔 와 보세요.", "점검 기록, 한 줄도 안 빠뜨렸어요. 확인하셔도 돼요."],
     // 2
@@ -193,7 +193,7 @@ export const SPINO_STORY: RelicStoryProfile = {
     // 3
     ["어항 얘기는… 하지 말아 주세요. 아니, 해도 되는데… 조용히요.", "붕어빵은 피자 쪽이 좋아요. …이건 비밀로 해 주세요. 아마 다 아시겠지만요.", "연구원님이 오시면… 어항 물고기가 먼저 알아채요. 저는 그다음에요."],
     // 4
-    ["…물고기가 연구원님 오시는 시간에 맞춰 먹이 먹는 것 같아요. 제가 시간을 맞춘 게 아니에요.", "물고기가 조금 자랐어요. 사진 찍어 뒀는데… 다음에 오시면 보여 드릴게요.", "…오늘은 한 번, 연구원님 쪽을 돌아봤어요. 별일은 아니에요."],
+    ["…물고기가 연구원님 오시는 시간에 맞춰 먹이 먹는 것 같아요. 제가 시간을 맞춘 게 아니에요.", "물고기가 조금 자랐어요. 사진 찍어 뒀는데… 다음에 오시면 보여 드릴게요.", "…아까 순찰하다가, 연구원님 계신 쪽을 한 번 돌아봤어요. 별일은 아니에요."],
     // 5
     ["조개를 고르는 건 생각보다 어려워요. 반듯한 건 흔하지 않거든요.", "…연구원님 책상 위 조개, 잘 있나요? 그냥, 궁금해서요.", "붕어빵 파는 곳 알아냈어요. …연구원님도 좋아하실 것 같아서요."],
     // 6 — 장 6 이후: 선물을 주고받을 수 있게 된다.
@@ -201,10 +201,10 @@ export const SPINO_STORY: RelicStoryProfile = {
     // 7
     ["…오늘 물이 조금 탁해요. 비가 오려나 봐요. 연구원님, 우산 있으세요?", "…여기 앉으세요. 저도 아직 안 갈 거예요. 조금만 더 같이 있어요.", "수문 점검하다가 문득 연구원님 생각이 났어요. …안 날 줄 알았는데."],
     // 8
-    ["낯선 분 앞에 서면 아직 다리가 먼저 숨어요. 그래도 어제는 인사까지 했어요.", "점검관이 훌륭하다고 했던 말, 계속 기억에 남아요. 누가 대신 서 주셨는지도요.", "…연구원님 책상 밑, 생각보다 넓었어요. 다음엔 다른 데 숨을게요. 아니, 숨지 않을게요."],
+    ["낯선 분 앞에선 아직도 몸이 먼저 숨어요. 그래도 어제는 인사까지 했어요.", "점검관이 훌륭하다고 했던 말, 계속 기억에 남아요. 누가 대신 서 주셨는지도요.", "…연구원님 책상 밑, 생각보다 넓었어요. 다음엔 다른 데 숨을게요. 아니, 숨지 않을게요."],
     // 9
     ["어항 속 물고기, 이름을 정했어요. 아직 비밀이에요. 곧 알려 드릴게요.", "…요즘은 근무가 끝나도 바로 안 사라져요. 연구원님이 오실 때까지 기다려요.", "붕어빵 두 개 사 왔어요. 하나는 제 거, 하나는… 연구원님 거예요. 피자 맛이요."],
     // 10 — 마음을 연 사이. 말이 길어진다.
-    ["연구원님, 어항 보러 오세요. 오늘은 조개를 새로 놓았어요. 이번 건 가장 반듯해요.", "물고기가 '오래'라는 이름을 알아듣는 것 같아요. …착각일 수도 있지만요.", "붕어빵 사러 같이 가실래요? …오늘은 제가 살게요. 고르실 때까지 기다려 드릴 거예요."],
+    ["연구원님, 어항 보러 오세요. 오늘 조개를 새로 놓았어요. 이번 건 지금까지 중에 제일 반듯해요.", "물고기가 '오래'라는 이름을 알아듣는 것 같아요. …착각일 수도 있지만요.", "붕어빵 사러 같이 가실래요? …오늘은 제가 살게요. 고르실 때까지 기다려 드릴 거예요."],
   ],
 };

@@ -566,8 +566,7 @@ export const SKILL_EN = {
   "skill.ferocity.splash.tauntEntry": "On entering Frenzy, [[taunt|Taunts]] every enemy nearby for {seconds}s.",
   "skill.passive.canopyShade": "Takes {percent}% of the damage nearby allies would receive. {shield}% of the damage taken this way becomes a [[shield|Shield]] on itself, up to {cap}.",
   "skill.sentence.selfBulwarkNear": "Gains a [[shield|Shield]] of {shield}, then for {seconds}s takes {percent}% of the damage allies across a wide area would receive.",
-  "skill.breakthrough.effect.basic.canopyChain": "Every {every}th \"{name}\" grants itself a [[shield|Shield]] of {percent}.",
-  "skill.breakthrough.effect.ultimate.canopyRecovery": "When \"{name}\" ends, it recovers {percent}% of the damage it took for allies during it.",
-  "skill.breakthrough.effect.ferocity.canopyShelter": "On entering [[ferocity|Frenzy]], grants a [[shield|Shield]] of {percent} to the other allies within \"{name}\" range.",
-  "skill.breakthrough.effect.passive.deepShade": "\"{name}\" takes {percent}% of the damage for allies below {hp}% HP.",
+  "skill.breakthrough.effect.basic.chainSnare": "Every {every}th \"{name}\" applies a {percent}% [[chill|Chill]] to the target for {seconds}s.",
+  "skill.breakthrough.effect.ultimate.canopySweep": "When \"{name}\" is cast, pushes nearby enemies outward.",
+  "skill.breakthrough.effect.passive.shadeRetort": "{percent}% of the damage taken for allies is stored and added all at once to the next basic attack as [[fixed-damage|fixed damage]]. Stores up to {cap}.",
 } as const;

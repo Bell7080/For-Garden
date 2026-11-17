@@ -588,8 +588,7 @@ export const SKILL_JA = {
   "skill.ferocity.splash.tauntEntry": "暴走に入った瞬間、周囲のすべての敵を{seconds}秒間[[taunt|挑発]]する。",
   "skill.passive.canopyShade": "周囲の味方が受けるダメージの{percent}%を代わりに受ける。代わりに受けたダメージの{shield}%は自分の[[shield|シールド]]になり、こうして重なるシールドは{cap}を超えない。",
   "skill.sentence.selfBulwarkNear": "自分に{shield}の[[shield|シールド]]を付与し、{seconds}秒間、広い範囲の味方が受けるダメージの{percent}%を代わりに受ける。",
-  "skill.breakthrough.effect.basic.canopyChain": "「{name}」{every}回目ごとに自分に{percent}の[[shield|シールド]]を付与する。",
-  "skill.breakthrough.effect.ultimate.canopyRecovery": "「{name}」が終わった瞬間、その間に代わりに受けたダメージの{percent}%を回復する。",
-  "skill.breakthrough.effect.ferocity.canopyShelter": "[[ferocity|暴走]]に入った瞬間、「{name}」の範囲内の他の味方に{percent}の[[shield|シールド]]を付与する。",
-  "skill.breakthrough.effect.passive.deepShade": "「{name}」が体力{hp}%未満の味方のダメージは{percent}%を代わりに受ける。",
+  "skill.breakthrough.effect.basic.chainSnare": "「{name}」{every}回目ごとに、当たった敵に{seconds}秒間{percent}%の[[chill|鈍化]]をかける。",
+  "skill.breakthrough.effect.ultimate.canopySweep": "「{name}」を広げた瞬間、周囲の敵を外側へ押し出す。",
+  "skill.breakthrough.effect.passive.shadeRetort": "代わりに受けたダメージの{percent}%が蓄積し、次の通常攻撃に[[fixed-damage|固定ダメージ]]としてまとめて上乗せされる。蓄積は最大{cap}まで。",
 } as const;

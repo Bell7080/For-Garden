@@ -4,7 +4,7 @@ import { combatPower } from "../../src/core/combatPower";
 import { withinRarityBand } from "../../src/core/rarityScaling";
 import { FEROCITY_RULES, ferocityMaxOf } from "../../src/core/ferocity";
 import { getRelic } from "../../src/data/relics";
-import { ferocityTraitDescription, passiveDescription, skillDescription } from "../../src/ui/skillPresentation";
+import { breakthroughEffectText, ferocityTraitDescription, passiveDescription, skillDescription } from "../../src/ui/skillPresentation";
 
 /**
  * 브리카 — 풀 SR 중거리 탱커. 앞에 서서 맞는 탱커가 아니라 뒤에 서서 「우듬지 그늘」로 주위 아군의 피해를
@@ -12,8 +12,8 @@ import { ferocityTraitDescription, passiveDescription, skillDescription } from "
  */
 const ARENA: Arena = { left: 0, right: 2_000, top: 0, bottom: 2_000 };
 
-function setup(allyIds: string[] = ["torika"]): { state: SkirmishState } {
-  const state = createSkirmish([getRelic("brika"), ...allyIds.map((id) => getRelic(id))], [getRelic("amo")], ARENA);
+function setup(allyIds: string[] = ["torika"], breakthrough = 0): { state: SkirmishState } {
+  const state = createSkirmish([getRelic("brika"), ...allyIds.map((id) => getRelic(id))], [getRelic("amo")], ARENA, {}, { brika: breakthrough });
   for (const fighter of state.fighters) { fighter.attackCooldown = 99; fighter.stealthFor = 0; }
   return { state };
 }
@@ -106,6 +106,98 @@ describe("브리카 — 폭주", () => {
     stepSkirmish(state, 1 / 60);
     expect(brika.ferocityFever).toBe(true);
     expect(foe.taunted?.sourceId).toBe(brika.id);
+  });
+});
+
+describe("브리카 — 한계 돌파(응태 2026-11-17)", () => {
+  it("은 셋째 사슬 둔화 · 펼칠 때 밀어내기 · 폭주 큰 막 · 되갚는 그늘이다", () => {
+    expect(getRelic("brika").breakthroughEffects).toEqual({
+      basic: { kind: "chainSnare", slowPercent: 35, seconds: 2.5 },
+      ultimate: { kind: "canopySweep", radius: 380, distance: 260 },
+      ferocity: { kind: "protectiveGear", shieldMaxHpPercent: 35 },
+      passive: { kind: "shadeRetort", storePercent: 150, capMaxHpPercent: 40 },
+    });
+  });
+
+  it("II — 셋째 「땋은 사슬」이 도발과 함께 둔화를 건다", () => {
+    const { state } = setup(["torika"], 4);
+    const [brika, ally, foe] = state.fighters;
+    ally.x = 200; ally.y = 200;
+    brika.x = 1_000; brika.y = 1_100;
+    foe.x = 1_000; foe.y = 1_000;
+    for (let swing = 0; swing < 3; swing += 1) {
+      brika.targetId = foe.id; brika.attackCooldown = 0; foe.hp = foe.maxHp;
+      stepSkirmish(state, 1 / 60);
+      if (swing < 2) expect(foe.chill).toBeNull();
+    }
+    expect(foe.chill).toMatchObject({ stacks: 1, speedPercentPerStack: 35 });
+  });
+
+  it("III — 「우듬지 펼치기」가 가까운 적을 밀어내고, 열리기 전에는 밀지 않는다", () => {
+    for (const [breakthrough, pushed] of [[0, false], [4, true]] as const) {
+      const { state } = setup(["torika"], breakthrough);
+      const [brika, , foe] = state.fighters;
+      brika.x = 1_000; brika.y = 1_000;
+      foe.x = 1_000; foe.y = 900;
+      brika.energy = brika.def.ultimate.cost;
+      fireUltimate(state, brika.id);
+      expect(foe.y < 900).toBe(pushed);
+      expect(foe.stunnedFor).toBe(0);
+    }
+  });
+
+  it("IV — 폭주에 드는 순간 제 몸에 큰 막을 두른다", () => {
+    const { state } = setup(["torika"], 4);
+    const [brika, , foe] = state.fighters;
+    brika.x = 1_000; brika.y = 1_000;
+    foe.x = 1_000; foe.y = 960;
+    brika.ferocity = ferocityMaxOf(brika.def) - FEROCITY_RULES.hitGain;
+    foe.targetId = brika.id; foe.attackCooldown = 0;
+    stepSkirmish(state, 1 / 60);
+    expect(brika.ferocityFever).toBe(true);
+    expect(brika.shield.amount).toBeGreaterThan(brika.maxHp * 0.3);
+  });
+
+  it("V — 대신 받은 피해가 쌓였다가 다음 일반 공격에 고정 피해로 한꺼번에 얹힌다", () => {
+    const { state } = setup(["torika"], 4);
+    const [brika, ally, foe] = state.fighters;
+    brika.x = 1_000; brika.y = 1_400;
+    ally.x = 1_000; ally.y = 1_000;
+    foe.x = 1_000; foe.y = 960;
+    foe.targetId = ally.id; foe.attackCooldown = 0;
+    const shared = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "damageShared");
+    expect(shared).toHaveLength(1);
+    expect(brika.bt.shadeStored).toBeGreaterThan(0);
+    const stored = Math.round(brika.bt.shadeStored);
+    foe.attackCooldown = 99;
+    brika.x = 1_000; brika.y = 1_100;
+    brika.targetId = foe.id; brika.attackCooldown = 0;
+    const released = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "attack" && event.attackerId === brika.id && event.damageType === "true");
+    expect(released).toHaveLength(1);
+    expect(released[0]).toMatchObject({ amount: stored });
+    expect(brika.bt.shadeStored).toBe(0);
+  });
+
+  it("V — 쌓이는 몫은 최대 체력 40%에서 멈춘다", () => {
+    const { state } = setup(["torika"], 4);
+    const [brika, ally, foe] = state.fighters;
+    brika.x = 1_000; brika.y = 1_400;
+    ally.x = 1_000; ally.y = 1_000; ally.maxHp = 10_000_000; ally.hp = ally.maxHp;
+    foe.x = 1_000; foe.y = 960;
+    for (let swing = 0; swing < 300; swing += 1) {
+      foe.targetId = ally.id; foe.attackCooldown = 0; brika.hp = brika.maxHp;
+      stepSkirmish(state, 1 / 60);
+    }
+    expect(brika.bt.shadeStored).toBeCloseTo(brika.maxHp * 0.4, 3);
+  });
+
+  it("의 문장은 네 칸 모두 자리 표시 없이 지어진다", () => {
+    const brika = getRelic("brika");
+    for (const slot of ["basic", "ultimate", "ferocity", "passive"] as const) {
+      const text = breakthroughEffectText(brika, slot, brika.stats);
+      expect(text).toBeDefined();
+      expect(text).not.toMatch(/\{[a-z]+[^}]*\}/i);
+    }
   });
 });
 

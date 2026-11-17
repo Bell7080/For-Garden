@@ -564,8 +564,7 @@ export const SKILL_VI = {
   "skill.ferocity.splash.tauntEntry": "Ngay khi vào Cuồng bạo, [[taunt|Khiêu khích]] mọi kẻ địch xung quanh trong {seconds} giây.",
   "skill.passive.canopyShade": "Gánh thay {percent}% sát thương mà đồng minh xung quanh phải nhận. {shield}% sát thương gánh thay trở thành [[shield|Lá chắn]] của bản thân, tối đa {cap}.",
   "skill.sentence.selfBulwarkNear": "Nhận [[shield|Lá chắn]] {shield}, rồi trong {seconds} giây gánh thay {percent}% sát thương mà đồng minh trong phạm vi rộng phải nhận.",
-  "skill.breakthrough.effect.basic.canopyChain": "Mỗi lần thứ {every} của \"{name}\" tạo cho bản thân [[shield|Lá chắn]] {percent}.",
-  "skill.breakthrough.effect.ultimate.canopyRecovery": "Khi \"{name}\" kết thúc, hồi phục {percent}% sát thương đã gánh thay trong thời gian đó.",
-  "skill.breakthrough.effect.ferocity.canopyShelter": "Ngay khi vào [[ferocity|Cuồng bạo]], tạo [[shield|Lá chắn]] {percent} cho các đồng minh khác trong phạm vi \"{name}\".",
-  "skill.breakthrough.effect.passive.deepShade": "\"{name}\" gánh thay {percent}% sát thương cho đồng minh có máu dưới {hp}%.",
+  "skill.breakthrough.effect.basic.chainSnare": "Mỗi lần thứ {every} của \"{name}\" gây [[chill|Làm chậm]] {percent}% lên kẻ địch trúng đòn trong {seconds} giây.",
+  "skill.breakthrough.effect.ultimate.canopySweep": "Ngay khi dùng \"{name}\", đẩy các kẻ địch xung quanh ra xa.",
+  "skill.breakthrough.effect.passive.shadeRetort": "{percent}% sát thương đã gánh thay được tích lũy và cộng một lần vào đòn đánh thường kế tiếp dưới dạng [[fixed-damage|sát thương cố định]]. Tích lũy tối đa {cap}.",
 } as const;

@@ -478,8 +478,8 @@ export interface Fighter extends Combatant {
     bulwarkTaken: number;
     /** 궁극기 돌파(`heatBurst`) — 이번 대신 받기에서 이미 터진 파동 수. */
     bulwarkPulses: number;
-    /** 궁극기 돌파(`canopyRecovery`) — 이번 앞에 서기 동안 대신 받은 피해(원래 피해 기준)의 합. 끝나는 순간 회복으로 바뀐다. */
-    canopyUltTaken: number;
+    /** 패시브 돌파(`shadeRetort`) — 대신 받은 피해에서 쌓아 둔, 다음 일반 공격에 얹을 고정 피해. 얹으면 0으로 비운다. */
+    shadeStored: number;
     /** 평타 돌파(`sodaPop`) — 마지막 터짐 이후 나간 일반 공격 수. */
     sodaCount: number;
     /** 궁극기 돌파(`afterglow`) — 쓰러진 몸이 지고 있던 저주 겹 수. 한 번 처리하면 0으로 비운다. */
@@ -1479,7 +1479,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       focusStreak: null,
       bulwarkTaken: 0,
       bulwarkPulses: 0,
-      canopyUltTaken: 0,
+      shadeStored: 0,
       sodaCount: 0,
       curseDeathStacks: 0,
       resonanceReadyAt: {},
@@ -4501,7 +4501,6 @@ function raiseBulwark(
 ): void {
   fighter.bt.bulwarkTaken = 0;
   fighter.bt.bulwarkPulses = 0;
-  fighter.bt.canopyUltTaken = 0;
   fighter.bulwark = {
     remaining: plan.seconds,
     total: plan.seconds,
@@ -4536,14 +4535,6 @@ function tickBulwark(fighter: Fighter, dt: number, state: SkirmishState, events:
     return;
   }
   fighter.bulwark = null;
-  // 궁극기 돌파(`canopyRecovery`) — 버텨 낸 시간이 끝나는 순간 대신 받은 몫의 일부가 돌아온다.
-  const recovery = openedBreakthrough(fighter, "ultimate", (effects) => effects.ultimate);
-  const taken = fighter.bt.canopyUltTaken;
-  fighter.bt.canopyUltTaken = 0;
-  if (recovery?.kind === "canopyRecovery" && taken > 0 && isFighterAlive(fighter)) {
-    const healed = applyHealing(state, fighter, taken * recovery.healPercent / 100, fighter.id);
-    pushHeal(events, fighter, healed, "ultimate", 1.4);
-  }
 }
 
 /**
@@ -4860,12 +4851,14 @@ function tauntEnemiesAround(
  * 평타마다 붙이면 탱커 한 명이 전열을 영구히 잠근다. 이미 있는 주기 계약을 그대로 타므로
  * 세 번에 한 번만 일어나고, 그 수는 자기 프로필의 칩이 들고 있어 플레이어가 셀 수 있다.
  */
-function applyBasicBreakthrough(attacker: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+function applyBasicBreakthrough(attacker: Fighter, target: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
   const effect = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   if (!effect || !isFighterAlive(attacker)) return;
-  if (effect.kind === "canopyChain") {
-    // 감아 쥐기 — 도발이 걸리는 그 한 방에 제 몸을 한 겹 감는다.
-    grantShield(state, attacker, attacker.id, attacker.maxHp * effect.shieldMaxHpPercent / 100, events);
+  if (effect.kind === "chainSnare") {
+    // 얽힌 사슬 — 도발이 걸리는 그 한 방이 발까지 감아 묶는다. 공용 둔화 한 겹이라 다른 둔화와 같은 칩·같은 강인함을 지난다.
+    if (isFighterAlive(target)) {
+      applyCombatStatusEffect(target, { kind: "chill", speedPercentPerStack: effect.slowPercent, maxStacks: 1, seconds: effect.seconds }, events, state, attacker.id);
+    }
     return;
   }
   if (effect.kind !== "periodicGuard") return;
@@ -7334,14 +7327,6 @@ export function gainFerocity(fighter: Fighter, base: number, state: SkirmishStat
       // 보호복 착용 — 폭주에 드는 순간 제 몸에 한 겹. 진입 순간 한 번뿐이다.
       grantProvidedShield(state, fighter, fighter, feverBreakthrough.shieldMaxHpPercent, events);
     }
-    if (feverBreakthrough?.kind === "canopyShelter") {
-      // 그늘 아래로 — 폭주에 드는 순간 우듬지 그늘 반경 안의 아군에게 제 최대 체력에서 나온 막을 두른다.
-      const radius = fighter.def.passive.canopy?.radius ?? 0;
-      const amount = fighter.maxHp * feverBreakthrough.shieldMaxHpPercent / 100;
-      for (const ally of aliveFighters(state, fighter.side)) {
-        if (ally !== fighter && distance(fighter, ally) <= radius) grantShield(state, ally, fighter.id, amount, events);
-      }
-    }
     if (feverBreakthrough?.kind === "hemStitch") {
       // 밑단 시침 — 폭주에 드는 순간 자신을 뺀 모든 아군에게 한 겹씩 덧댄다(자기 막은 가봉이 맡는다). 진입 순간 한 번뿐이다.
       for (const ally of aliveFighters(state, fighter.side)) if (ally !== fighter) grantProvidedShield(state, fighter, ally, feverBreakthrough.shieldMaxHpPercent, events);
@@ -8193,6 +8178,47 @@ function bulwarkSharePercent(fighter: Fighter): number | null {
   return fever?.kind === "feverGuard" ? fever.percent : null;
 }
 
+/** 패시브 돌파(`shadeRetort`) — 대신 받은 몫(원래 피해 기준)의 일부를 다음 일반 공격의 고정 피해로 쌓아 둔다. 최대 체력 비율 상한에서 멈춘다. */
+function storeShadeRetort(guardian: Fighter, share: number): void {
+  const plan = openedBreakthrough(guardian, "passive", (effects) => effects.passive);
+  if (plan?.kind !== "shadeRetort" || share <= 0) return;
+  const cap = guardian.maxHp * plan.capMaxHpPercent / 100;
+  guardian.bt.shadeStored = Math.min(cap, guardian.bt.shadeStored + share * plan.storePercent / 100);
+}
+
+/**
+ * 쌓아 둔 그늘을 이번 일반 공격에 한꺼번에 얹는다 — 방어·저항을 지나지 않는 고정 피해다. 대신 맞아 준 몫을 그대로
+ * 돌려주는 것이라 맞은 쪽의 방어로 다시 깎지 않고, 받는 쪽의 경감(보스·불사 자리)만 지난다.
+ */
+function releaseShadeRetort(owner: Fighter, victim: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const stored = Math.round(owner.bt.shadeStored);
+  if (stored < 1 || !isFighterAlive(victim)) return;
+  owner.bt.shadeStored = 0;
+  const resolution = resolveReceivedDamage(victim, stored);
+  const hpBefore = victim.hp;
+  applyDamage(victim, resolution.applied, events, state);
+  addContribution(state.contributions, owner.id, "attack", hpBefore - victim.hp, "attackPower");
+  events.push({ kind: "attack", attackerId: owner.id, targetId: victim.id, skill: "basic", amount: resolution.applied,
+    contributionAmount: hpBefore - victim.hp, critical: false, animate: false, damageType: "true", mitigated: resolution.reduced < resolution.raw });
+  if (!isFighterAlive(victim)) {
+    clearDefeatedStatuses(victim);
+    events.push({ kind: "death", fighterId: victim.id, sourceId: owner.id });
+  }
+}
+
+/** 궁극기 돌파(`canopySweep`) — 그늘을 펼치는 순간 가까운 적을 바깥으로 밀어낸다. 행동은 막지 않고 자리만 옮긴다. */
+function sweepCanopy(owner: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = openedBreakthrough(owner, "ultimate", (effects) => effects.ultimate);
+  if (plan?.kind !== "canopySweep") return;
+  for (const foe of aliveFighters(state, owner.side === "player" ? "enemy" : "player")) {
+    if (distance(owner, foe) > plan.radius) continue;
+    const dx = foe.x - owner.x; const dy = foe.y - owner.y; const gap = dHypot(dx, dy) || 1;
+    displaceByControl(foe, foe.x + dx / gap * plan.distance, foe.y + dy / gap * plan.distance, state);
+  }
+  events.push({ kind: "areaImpact", attackerId: owner.id, ultimate: true, damageType: "physical",
+    area: { shape: "radial", x: owner.x, y: owner.y, radius: plan.radius } });
+}
+
 /** 대신 받는 몸인가 — 앞에 서 있거나 「우듬지 그늘」을 두른 몸이다. 이 몸들의 피해는 다시 나누지 않는다. */
 function isShareGuardian(fighter: Fighter): boolean {
   return bulwarkSharePercent(fighter) !== null || fighter.def.passive.canopy !== undefined;
@@ -8214,11 +8240,7 @@ function guardShareFor(guardian: Fighter, target: Fighter): { percent: number; c
   }
   const canopy = guardian.def.passive.canopy;
   if (canopy && distance(guardian, target) <= canopy.radius) {
-    // 패시브 돌파(`deepShade`) — 쓰러지기 직전의 아군은 더 깊은 그늘에 든다.
-    const deep = openedBreakthrough(guardian, "passive", (effects) => effects.passive);
-    const low = deep?.kind === "deepShade" && target.hp < target.maxHp * deep.belowHpPercent / 100;
-    const percent = low ? Math.max(canopy.sharePercent, deep.sharePercent) : canopy.sharePercent;
-    if (!best || percent > best.percent) best = { percent, canopy: true };
+    if (!best || canopy.sharePercent > best.percent) best = { percent: canopy.sharePercent, canopy: true };
   }
   return best;
 }
@@ -8247,7 +8269,7 @@ function shareWithBulwark(target: Fighter, amount: number, events: SkirmishEvent
   const dealt = applyDamage(guardian, resolution.applied, events, state);
   events.push({ kind: "damageShared", fighterId: guardian.id, fromFighterId: target.id, amount: dealt });
   guardian.bt.bulwarkTaken += share;
-  if (guardian.bulwark !== null) guardian.bt.canopyUltTaken += share;
+  storeShadeRetort(guardian, share);
   const canopy = guardian.def.passive.canopy;
   if (plan.canopy && canopy && isFighterAlive(guardian)) {
     // 우듬지 그늘 — 대신 받은 몫의 일부가 제 막이 된다. 몸의 막 전체가 상한 아래일 때 그 선까지만 채운다.
@@ -9069,6 +9091,8 @@ function strike(
   reactTouchBurst(target, attacker, state, events);
   reactRaiders(target, attacker, state, events, useUltimate);
   if (!useUltimate) sodaPop(attacker, target, state, events);
+  // 패시브 돌파(`shadeRetort`) — 대신 맞아 준 몫이 이 일반 공격에 한꺼번에 돌아온다. 연격 둘째 타는 다시 꺼내지 않는다.
+  if (!useUltimate && comboHit === undefined) releaseShadeRetort(attacker, target, state, events);
   if (!useUltimate) pullStruck(attacker, target, state, events);
 
   const transfer = useUltimate ? attacker.def.ultimate.damageTransfer : undefined;
@@ -9254,7 +9278,7 @@ function strike(
     maybeFreezeAtMaxChill(attacker, target, events, state);
     // 기본 공격 돌파는 **주기가 채워지는 그 한 방**에만 얹힌다. 상태를 거는 판정이 곧 그
     // 주기이므로 같은 문 안에서 함께 돈다 — 따로 세면 두 셈이 한 박자씩 어긋난다.
-    if (!useUltimate) applyBasicBreakthrough(attacker, state, events);
+    if (!useUltimate) applyBasicBreakthrough(attacker, target, state, events);
   }
   if (!useUltimate && comboHit === undefined) triggerRally(attacker, state, events);
   if (!useUltimate && comboHit === undefined) callStarfall(attacker, target, rng);
@@ -11091,6 +11115,7 @@ function fireUltimateCore(
     });
     if ((plan.shieldMaxHpPercent ?? 0) > 0) grantShield(state, attacker, attacker.id, attacker.maxHp * (plan.shieldMaxHpPercent ?? 0) / 100, events, 1.6);
     events.push({ kind: "combatEffect", fighterId: attacker.id, effect: { tag: "shieldGain", intensity: 1.6 } });
+    sweepCanopy(attacker, state, events);
     attacker.attackCooldown = attackInterval(attacker, state);
     return events;
   }

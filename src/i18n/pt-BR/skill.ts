@@ -564,8 +564,7 @@ export const SKILL_PT_BR = {
   "skill.ferocity.splash.tauntEntry": "Ao entrar em Frenesi, aplica [[taunt|Provocação]] a todos os inimigos próximos por {seconds} s.",
   "skill.passive.canopyShade": "Recebe no lugar dos aliados próximos {percent}% do dano que sofreriam. {shield}% do dano recebido assim vira um [[shield|Escudo]] próprio, até {cap}.",
   "skill.sentence.selfBulwarkNear": "Ganha um [[shield|Escudo]] de {shield} e por {seconds} s recebe {percent}% do dano que aliados em uma área ampla sofreriam.",
-  "skill.breakthrough.effect.basic.canopyChain": "A cada {every}º \"{name}\", ganha um [[shield|Escudo]] de {percent}.",
-  "skill.breakthrough.effect.ultimate.canopyRecovery": "Quando \"{name}\" termina, recupera {percent}% do dano recebido no lugar dos aliados durante esse tempo.",
-  "skill.breakthrough.effect.ferocity.canopyShelter": "Ao entrar em [[ferocity|Frenesi]], concede um [[shield|Escudo]] de {percent} aos outros aliados no alcance de \"{name}\".",
-  "skill.breakthrough.effect.passive.deepShade": "\"{name}\" recebe {percent}% do dano dos aliados com menos de {hp}% de vida.",
+  "skill.breakthrough.effect.basic.chainSnare": "A cada {every}º \"{name}\", aplica [[chill|Lentidão]] de {percent}% ao alvo por {seconds} s.",
+  "skill.breakthrough.effect.ultimate.canopySweep": "Ao usar \"{name}\", empurra os inimigos próximos para longe.",
+  "skill.breakthrough.effect.passive.shadeRetort": "{percent}% do dano recebido no lugar dos aliados é acumulado e somado de uma vez ao próximo ataque básico como [[fixed-damage|dano fixo]]. Acumula até {cap}.",
 } as const;

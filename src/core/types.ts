@@ -2876,9 +2876,10 @@ export interface BreakthroughNone {
  * (`BasicAttack.statusEffectEvery`)을 그대로 타고 세 번에 한 번만 일어난다.
  */
 export type BasicBreakthrough = {
-  /** 주기가 채워지는 일반 공격(도발이 걸리는 한 방)마다 제 몸에 최대 체력 `shieldMaxHpPercent`%의 보호막을 두른다(브리카의 「감아 쥐기」). */
-  kind: "canopyChain";
-  shieldMaxHpPercent: number;
+  /** 주기가 채워지는 일반 공격(도발이 걸리는 한 방)이 맞은 적의 공격 속도·이동 속도를 `seconds`초 동안 `slowPercent`% 깎는다(브리카의 「얽힌 사슬」). 공용 둔화(`chill`) 한 겹이라 강인함·정화가 그대로 지난다. */
+  kind: "chainSnare";
+  slowPercent: number;
+  seconds: number;
 } | {
   /** 기본 공격마다 이 확률로 그 자리에 유성이 하나 더 떨어진다(플레샤). 주기 유성의 셈은 건드리지 않는다. */
   kind: "starfallChance";
@@ -3150,9 +3151,10 @@ export type BasicBreakthrough = {
  * 궁극기가 세 번이 된다(채널링 궁극기와 같은 규칙이다).
  */
 export type UltimateBreakthrough = {
-  /** 궁극기의 앞에 서기가 끝나는 순간, 그동안 대신 받은 피해의 `healPercent`%만큼 회복한다(브리카의 「뿌리 내리기」). */
-  kind: "canopyRecovery";
-  healPercent: number;
+  /** 궁극기를 펼치는 순간 반경 `radius` 안의 적을 자신에게서 바깥으로 `distance`만큼 밀어낸다(브리카의 「가지 걷어내기」). 행동은 막지 않고 자리만 옮기며 강인함 경계를 지난다. */
+  kind: "canopySweep";
+  radius: number;
+  distance: number;
 } | {
   /** 되찍는 궁극기가 `extraStrikes`번 더 떨어지고, 떨어질 때마다 원 안의 아군이 주문력 `allyHealPower`%만큼 회복한다(플레샤 — 기본 궁극기에는 아군 회복이 없다). */
   kind: "meteorEncore";
@@ -3413,10 +3415,6 @@ export type UltimateBreakthrough = {
  * 세져 그 시간만 부풀고, 끝나고 가장 약해지는 자리를 메우지 못한다.
  */
 export type FerocityBreakthrough = {
-  /** 폭주에 들어서는 순간 패시브 반경 안의 아군 전원에게 브리카 최대 체력 `shieldMaxHpPercent`%의 보호막을 두른다(브리카의 「그늘 아래로」). */
-  kind: "canopyShelter";
-  shieldMaxHpPercent: number;
-} | {
   /** 폭주에 들어서는 순간 살아 있는 아군 모두의 공격 속도가 폭주가 이어지는 동안(8초) 오른다(플레샤). */
   kind: "starlitCheer";
   attackSpeedPercent: number;
@@ -3657,10 +3655,13 @@ export type FerocityBreakthrough = {
  * 패시브의 조건(체력 절반 등)을 그대로 타므로 새 발동 조건을 만들지 않는다.
  */
 export type PassiveBreakthrough = {
-  /** 「우듬지 그늘」이 체력 `belowHpPercent`% 미만인 아군의 피해는 `sharePercent`%를 대신 받는다(브리카의 「깊은 그늘」). */
-  kind: "deepShade";
-  belowHpPercent: number;
-  sharePercent: number;
+  /**
+   * 대신 받은 피해(원래 피해 기준)의 `storePercent`%가 쌓였다가 다음 일반 공격에 고정 피해로 한꺼번에 얹힌다(브리카의 「되갚는 그늘」).
+   * 쌓이는 몫은 최대 체력의 `capMaxHpPercent`%에서 멈춘다 — 상한이 없으면 대신 받기 궁극기 한 번이 한 방을 끝없이 키운다.
+   */
+  kind: "shadeRetort";
+  storePercent: number;
+  capMaxHpPercent: number;
 } | {
   /** 유성 회복이 가장 다친 아군에 더해 **다친 아군 한 명**에게 그 회복량의 `percent`%만큼 한 번 더 들어간다(플레샤). */
   kind: "secondStar";

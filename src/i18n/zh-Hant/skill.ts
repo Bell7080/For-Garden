@@ -564,8 +564,7 @@ export const SKILL_ZH_HANT = {
   "skill.ferocity.splash.tauntEntry": "進入暴走的瞬間，[[taunt|嘲諷]]周圍所有敵人{seconds}秒。",
   "skill.passive.canopyShade": "代替周圍友方承受其所受傷害的{percent}%。代受傷害的{shield}%會轉為自身的[[shield|護盾]]，以此累積的護盾不超過{cap}。",
   "skill.sentence.selfBulwarkNear": "為自身附加{shield}的[[shield|護盾]]，並在{seconds}秒內代替大範圍內的友方承受其所受傷害的{percent}%。",
-  "skill.breakthrough.effect.basic.canopyChain": "每第{every}次「{name}」為自身附加{percent}的[[shield|護盾]]。",
-  "skill.breakthrough.effect.ultimate.canopyRecovery": "「{name}」結束時，恢復期間代受傷害的{percent}%。",
-  "skill.breakthrough.effect.ferocity.canopyShelter": "進入[[ferocity|暴走]]的瞬間，為「{name}」範圍內的其他友方附加{percent}的[[shield|護盾]]。",
-  "skill.breakthrough.effect.passive.deepShade": "「{name}」對生命值低於{hp}%的友方，代受其傷害的{percent}%。",
+  "skill.breakthrough.effect.basic.chainSnare": "每第{every}次「{name}」對命中的敵人施加{seconds}秒{percent}%的[[chill|減速]]。",
+  "skill.breakthrough.effect.ultimate.canopySweep": "施放「{name}」的瞬間，將周圍的敵人向外推開。",
+  "skill.breakthrough.effect.passive.shadeRetort": "代受傷害的{percent}%會累積起來，在下一次普通攻擊時一次性作為[[fixed-damage|固定傷害]]附加。最多累積{cap}。",
 } as const;

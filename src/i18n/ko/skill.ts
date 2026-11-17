@@ -613,8 +613,7 @@ export const SKILL_KO = {
   "skill.ferocity.splash.tauntEntry": "폭주에 들어가는 순간 주위 모든 적을 {seconds}초 동안 [[taunt|도발]]한다.",
   "skill.passive.canopyShade": "주위 아군이 받는 피해의 {percent}%를 대신 받는다. 대신 받은 피해의 {shield}%는 자신의 [[shield|보호막]]이 되며, 이렇게 쌓이는 보호막은 {cap}을 넘지 않는다.",
   "skill.sentence.selfBulwarkNear": "자신에게 {shield}만큼 [[shield|보호막]]을 두르고, {seconds}초 동안 넓은 범위의 아군이 받는 피해의 {percent}%를 대신 받는다.",
-  "skill.breakthrough.effect.basic.canopyChain": "「{name}」 {every}번째마다 자신에게 {percent}만큼 [[shield|보호막]]을 두른다.",
-  "skill.breakthrough.effect.ultimate.canopyRecovery": "「{name}」{name!이} 끝나는 순간 그동안 대신 받은 피해의 {percent}%만큼 회복한다.",
-  "skill.breakthrough.effect.ferocity.canopyShelter": "[[ferocity|폭주]]에 드는 순간 「{name}」 범위 안의 다른 아군에게 {percent}만큼 [[shield|보호막]]을 두른다.",
-  "skill.breakthrough.effect.passive.deepShade": "「{name}」{name!이} 체력이 {hp}% 미만인 아군의 피해는 {percent}%를 대신 받는다.",
+  "skill.breakthrough.effect.basic.chainSnare": "「{name}」 {every}번째마다 맞은 적에게 {seconds}초 동안 {percent}% [[chill|둔화]]를 건다.",
+  "skill.breakthrough.effect.ultimate.canopySweep": "「{name}」{name!을} 펼치는 순간 주위의 적을 바깥으로 밀어낸다.",
+  "skill.breakthrough.effect.passive.shadeRetort": "대신 받은 피해의 {percent}%가 쌓였다가 다음 일반 공격에 [[fixed-damage|고정 피해]]로 한꺼번에 더해진다. 최대 {cap}까지 쌓인다.",
 } as const;

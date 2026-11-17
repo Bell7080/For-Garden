@@ -564,8 +564,7 @@ export const SKILL_DE = {
   "skill.ferocity.splash.tauntEntry": "Beim Eintritt in die Raserei belegt sie alle Gegner in der Nähe {seconds} s lang mit [[taunt|Spott]].",
   "skill.passive.canopyShade": "Übernimmt {percent} % des Schadens, den Verbündete in der Nähe erleiden würden. {shield} % des so übernommenen Schadens werden zu einem eigenen [[shield|Schild]], höchstens {cap}.",
   "skill.sentence.selfBulwarkNear": "Erhält einen [[shield|Schild]] von {shield} und übernimmt {seconds} s lang {percent} % des Schadens, den Verbündete in einem weiten Bereich erleiden würden.",
-  "skill.breakthrough.effect.basic.canopyChain": "Jeder {every}. \"{name}\" gewährt ihr selbst einen [[shield|Schild]] von {percent}.",
-  "skill.breakthrough.effect.ultimate.canopyRecovery": "Wenn \"{name}\" endet, stellt sie {percent} % des in dieser Zeit für Verbündete übernommenen Schadens wieder her.",
-  "skill.breakthrough.effect.ferocity.canopyShelter": "Beim Eintritt in die [[ferocity|Raserei]] erhalten die anderen Verbündeten im Bereich von \"{name}\" einen [[shield|Schild]] von {percent}.",
-  "skill.breakthrough.effect.passive.deepShade": "\"{name}\" übernimmt {percent} % des Schadens für Verbündete unter {hp} % LP.",
+  "skill.breakthrough.effect.basic.chainSnare": "Jeder {every}. \"{name}\" belegt das Ziel {seconds} s lang mit {percent} % [[chill|Verlangsamung]].",
+  "skill.breakthrough.effect.ultimate.canopySweep": "Beim Einsatz von \"{name}\" werden Gegner in der Nähe nach außen gestoßen.",
+  "skill.breakthrough.effect.passive.shadeRetort": "{percent} % des für Verbündete übernommenen Schadens wird gespeichert und dem nächsten Normalangriff auf einmal als [[fixed-damage|fixen Schaden]] hinzugefügt. Speichert bis zu {cap}.",
 } as const;

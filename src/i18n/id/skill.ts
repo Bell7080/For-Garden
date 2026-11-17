@@ -564,8 +564,7 @@ export const SKILL_ID = {
   "skill.ferocity.splash.tauntEntry": "Saat masuk Amukan, memberi [[taunt|Provokasi]] pada semua musuh di sekitar selama {seconds} dtk.",
   "skill.passive.canopyShade": "Menanggung {percent}% kerusakan yang diterima sekutu di sekitar. {shield}% dari kerusakan yang ditanggung menjadi [[shield|Perisai]] bagi diri sendiri, hingga {cap}.",
   "skill.sentence.selfBulwarkNear": "Mendapat [[shield|Perisai]] sebesar {shield}, lalu selama {seconds} dtk menanggung {percent}% kerusakan yang diterima sekutu di area luas.",
-  "skill.breakthrough.effect.basic.canopyChain": "Setiap \"{name}\" ke-{every} memberi diri sendiri [[shield|Perisai]] sebesar {percent}.",
-  "skill.breakthrough.effect.ultimate.canopyRecovery": "Saat \"{name}\" berakhir, memulihkan {percent}% kerusakan yang ditanggung selama itu.",
-  "skill.breakthrough.effect.ferocity.canopyShelter": "Saat masuk [[ferocity|Amukan]], memberi [[shield|Perisai]] sebesar {percent} kepada sekutu lain dalam jangkauan \"{name}\".",
-  "skill.breakthrough.effect.passive.deepShade": "\"{name}\" menanggung {percent}% kerusakan untuk sekutu dengan HP di bawah {hp}%.",
+  "skill.breakthrough.effect.basic.chainSnare": "Setiap \"{name}\" ke-{every} memberi [[chill|Perlambatan]] {percent}% pada musuh yang terkena selama {seconds} detik.",
+  "skill.breakthrough.effect.ultimate.canopySweep": "Saat \"{name}\" digunakan, mendorong musuh di sekitar menjauh.",
+  "skill.breakthrough.effect.passive.shadeRetort": "{percent}% kerusakan yang ditanggung untuk sekutu tersimpan, lalu ditambahkan sekaligus ke serangan dasar berikutnya sebagai [[fixed-damage|kerusakan tetap]]. Tersimpan hingga {cap}.",
 } as const;

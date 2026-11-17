@@ -564,8 +564,7 @@ export const SKILL_TH = {
   "skill.ferocity.splash.tauntEntry": "ทันทีที่เข้าสู่ภาวะคลั่ง จะ[[taunt|ยั่วยุ]]ศัตรูทั้งหมดรอบตัว {seconds} วินาที",
   "skill.passive.canopyShade": "รับความเสียหายแทนพันธมิตรรอบตัว {percent}% ความเสียหายที่รับแทน {shield}% จะกลายเป็น[[shield|โล่]]ของตนเอง โดยโล่ที่สะสมแบบนี้ไม่เกิน {cap}",
   "skill.sentence.selfBulwarkNear": "สร้าง[[shield|โล่]] {shield} ให้ตนเอง แล้วรับความเสียหายแทนพันธมิตรในวงกว้าง {percent}% เป็นเวลา {seconds} วินาที",
-  "skill.breakthrough.effect.basic.canopyChain": "ทุกครั้งที่ {every} ของ \"{name}\" จะสร้าง[[shield|โล่]] {percent} ให้ตนเอง",
-  "skill.breakthrough.effect.ultimate.canopyRecovery": "เมื่อ \"{name}\" สิ้นสุด จะฟื้นฟูเท่ากับ {percent}% ของความเสียหายที่รับแทนระหว่างนั้น",
-  "skill.breakthrough.effect.ferocity.canopyShelter": "ทันทีที่เข้าสู่[[ferocity|คลั่ง]] จะสร้าง[[shield|โล่]] {percent} ให้พันธมิตรอื่นในระยะของ \"{name}\"",
-  "skill.breakthrough.effect.passive.deepShade": "\"{name}\" จะรับความเสียหายแทนพันธมิตรที่มีพลังชีวิตต่ำกว่า {hp}% เป็น {percent}%",
+  "skill.breakthrough.effect.basic.chainSnare": "ทุกครั้งที่ {every} ของ \"{name}\" จะติด[[chill|ชะลอ]] {percent}% ให้ศัตรูที่โดนเป็นเวลา {seconds} วินาที",
+  "skill.breakthrough.effect.ultimate.canopySweep": "ทันทีที่ใช้ \"{name}\" จะผลักศัตรูรอบตัวออกไปด้านนอก",
+  "skill.breakthrough.effect.passive.shadeRetort": "{percent}% ของความเสียหายที่รับแทนจะสะสมไว้ แล้วเพิ่มเป็น[[fixed-damage|ความเสียหายคงที่]]ในการโจมตีพื้นฐานครั้งถัดไปในครั้งเดียว สะสมได้สูงสุด {cap}",
 } as const;

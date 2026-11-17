@@ -1645,7 +1645,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "splitHealing") return t("skill.breakthrough.effect.basic.splitHealing", { percent: trim(effect.sharePercent) });
     if (effect.kind === "starfallChance") return t("skill.breakthrough.effect.basic.starfallChance", { percent: trim(effect.chancePercent) });
     if (effect.kind === "powerWash") return t("skill.breakthrough.effect.basic.powerWash", { name: def.basic.name, every: trim(effect.every) });
-    if (effect.kind === "canopyChain") return t("skill.breakthrough.effect.basic.canopyChain", { name: def.basic.name, every: trim(def.basic.statusEffectEvery ?? 1), percent: sv("shield", "hp", effect.shieldMaxHpPercent) });
+    if (effect.kind === "chainSnare") return t("skill.breakthrough.effect.basic.chainSnare", { name: def.basic.name, every: trim(def.basic.statusEffectEvery ?? 1), seconds: trim(effect.seconds), percent: trim(effect.slowPercent) });
     // 주기 이름이 있으면 그것이 이 효과가 얹히는 그 한 방의 이름이다(칩에 뜨는 이름과 같다).
     const trigger = def.basic.statusEffectStackName ?? def.basic.name;
     // **회복량은 계산할 수 있으면 실제 값으로 말한다.** 능력치를 아는 자리(정보창·적 팝업)에서는
@@ -1704,7 +1704,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "dustCloud") return t("skill.breakthrough.effect.ultimate.dustCloud", { name: def.ultimate.name, stacks: trim(effect.stacks) });
     if (effect.kind === "fullLining") return t("skill.breakthrough.effect.ultimate.fullLining", { name: def.ultimate.name });
     if (effect.kind === "spotlessFinish") return t("skill.breakthrough.effect.ultimate.spotlessFinish", { name: def.ultimate.name });
-    if (effect.kind === "canopyRecovery") return t("skill.breakthrough.effect.ultimate.canopyRecovery", { name: def.ultimate.name, percent: trim(effect.healPercent) });
+    if (effect.kind === "canopySweep") return t("skill.breakthrough.effect.ultimate.canopySweep", { name: def.ultimate.name });
     // 피해량의 몇 %는 **명중 시점의 상대값**이라 실제 수로 바꾸지 않는다(대상마다 달라진다).
     return t("skill.breakthrough.effect.ultimate", {
       percent: trim(effect.powerPercent), name: def.ultimate.name,
@@ -1760,7 +1760,6 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "clawFlurry") return t("skill.breakthrough.effect.ferocity.clawFlurry", { name: def.basic.name, hits: trim(effect.extraHits) });
     if (effect.kind === "ironBarSweep") return t("skill.breakthrough.effect.ferocity.ironBarSweep", { name: def.basic.name, count: trim(effect.maxTargets) });
     if (effect.kind === "chainSwing") return t("skill.breakthrough.effect.ferocity.chainSwing", { percent: sv("damage", "atk", effect.powerPercent), seconds: trim(effect.stunSeconds) });
-    if (effect.kind === "canopyShelter") return t("skill.breakthrough.effect.ferocity.canopyShelter", { name: def.passive.name, percent: sv("shield", "hp", effect.shieldMaxHpPercent) });
     return t("skill.breakthrough.effect.ferocity", {
       percent: trim(effect.shieldPercentOfDamageTaken), seconds: trim(effect.tauntSeconds),
     });
@@ -1838,7 +1837,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effects.passive.kind === "youngestCare") return t("skill.breakthrough.effect.passive.youngestCare", { name: def.passive.name, percent: trim(effects.passive.sharePercent) });
     if (effects.passive.kind === "chainShrapnel") return t("skill.breakthrough.effect.passive.chainShrapnel", { name: def.passive.name, percent: sv("damage", "atk", effects.passive.powerPercent) });
     if (effects.passive.kind === "leapVeil") return t("skill.breakthrough.effect.passive.leapVeil", { seconds: effects.passive.stealthSeconds, cooldown: effects.passive.cooldownSeconds });
-    if (effects.passive.kind === "deepShade") return t("skill.breakthrough.effect.passive.deepShade", { name: def.passive.name, hp: trim(effects.passive.belowHpPercent), percent: trim(effects.passive.sharePercent) });
+    if (effects.passive.kind === "shadeRetort") return t("skill.breakthrough.effect.passive.shadeRetort", { percent: trim(effects.passive.storePercent), cap: sv("damage", "hp", effects.passive.capMaxHpPercent) });
     if (effects.passive.kind === "rescueShield") {
       return t("skill.breakthrough.effect.passive.rescueShield", { hp: trim(effects.passive.belowHpPercent), percent: sv("shield", "ap", effects.passive.apPercent) });
     }

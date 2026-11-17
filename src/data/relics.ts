@@ -4653,12 +4653,12 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 12,
     },
-    // 한계 돌파: 고리 사슬 · 늦은 새순 · 그늘막 · 깊은 그늘.
+    // 한계 돌파(응태 2026-11-17): 셋째 사슬이 묶고 · 펼칠 때 밀어내고 · 폭주에 큰 막 · 대신 맞은 몫을 다음 평타로 되갚는다.
     breakthroughEffects: {
-      basic: { kind: "canopyChain", shieldMaxHpPercent: 5 },
-      ultimate: { kind: "canopyRecovery", healPercent: 35 },
-      ferocity: { kind: "canopyShelter", shieldMaxHpPercent: 6 },
-      passive: { kind: "deepShade", belowHpPercent: 30, sharePercent: 40 },
+      basic: { kind: "chainSnare", slowPercent: 35, seconds: 2.5 },
+      ultimate: { kind: "canopySweep", radius: 380, distance: 260 },
+      ferocity: { kind: "protectiveGear", shieldMaxHpPercent: 35 },
+      passive: { kind: "shadeRetort", storePercent: 150, capMaxHpPercent: 40 },
     },
     // 폭주는 공용 범위 피해에 진입 도발을 얹는다 — 화가 나서 휘두르는 머리 사슬이 주위를 쓸고 시선을 모은다.
     ferocityTrait: { name: "보지 말라고 했잖아요!", effectId: "splashDamage", damagePercent: 40, radius: 180, tauntOnEntry: { radius: 420, seconds: 3 } },

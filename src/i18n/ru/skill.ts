@@ -564,8 +564,7 @@ export const SKILL_RU = {
   "skill.ferocity.splash.tauntEntry": "При входе в неистовство накладывает [[taunt|Провокацию]] на всех врагов рядом на {seconds} с.",
   "skill.passive.canopyShade": "Принимает на себя {percent}% урона, который получили бы союзники рядом. {shield}% принятого так урона превращается в собственный [[shield|Щит]], не более {cap}.",
   "skill.sentence.selfBulwarkNear": "Получает [[shield|Щит]] на {shield}, затем {seconds} с принимает на себя {percent}% урона, который получили бы союзники на широкой площади.",
-  "skill.breakthrough.effect.basic.canopyChain": "Каждый {every}-й «{name}» даёт себе [[shield|Щит]] на {percent}.",
-  "skill.breakthrough.effect.ultimate.canopyRecovery": "Когда «{name}» заканчивается, восстанавливает {percent}% урона, принятого за союзников за это время.",
-  "skill.breakthrough.effect.ferocity.canopyShelter": "При входе в [[ferocity|неистовство]] даёт другим союзникам в зоне «{name}» [[shield|Щит]] на {percent}.",
-  "skill.breakthrough.effect.passive.deepShade": "«{name}» принимает {percent}% урона за союзников с здоровьем ниже {hp}%.",
+  "skill.breakthrough.effect.basic.chainSnare": "Каждый {every}-й «{name}» накладывает на цель [[chill|замедление]] на {percent}% на {seconds} с.",
+  "skill.breakthrough.effect.ultimate.canopySweep": "При использовании «{name}» отталкивает ближайших врагов.",
+  "skill.breakthrough.effect.passive.shadeRetort": "{percent}% урона, принятого за союзников, накапливается и добавляется к следующей обычной атаке как [[fixed-damage|фиксированный урон]]. Накапливается до {cap}.",
 } as const;

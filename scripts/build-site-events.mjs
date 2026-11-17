@@ -32,6 +32,7 @@ try {
 import {REGULAR_EVENT_CYCLE, rotationAnchor, WEEK_MS} from ${at("src/core/regularEventRotation.ts")};
 import {holdsDefinitionEnds, setLaunchAt} from ${at("src/core/launchAnchor.ts")};
 import {OPEN_END} from ${at("src/core/liveSchedule.ts")};
+import {PICKUP_ROTATION} from ${at("src/core/pickupRotation.ts")};
 import {BACKGROUND_ASSETS} from ${at("src/ui/backgroundAssets.ts")};
 import {LOBBY_KO} from ${at("src/i18n/ko/lobby.ts")};
 import {LOBBY_EN} from ${at("src/i18n/en/lobby.ts")};
@@ -40,7 +41,7 @@ import * as METADATA from ${at("src/puppets/assetMetadata.ts")};
 // 출시 시각(launchAnchor.ts)은 빌드 환경의 FORGARDEN_LAUNCH_AT으로 받는다 — 없으면 출시 전이라 끝 날짜를 걷고 교대는 원래 기준점이다.
 setLaunchAt(process.env.FORGARDEN_LAUNCH_AT ?? null);
 const EVENTS = LOBBY_EVENTS.map((event) => holdsDefinitionEnds() && !event.weekly ? {...event, endsAt: OPEN_END} : event);
-export default {events: EVENTS, cycle: REGULAR_EVENT_CYCLE, anchor: rotationAnchor(), weekMs: WEEK_MS, assets: BACKGROUND_ASSETS, metadata: METADATA, text: {ko: LOBBY_KO, en: LOBBY_EN, ja: LOBBY_JA}};`;
+export default {events: EVENTS, pickup: PICKUP_ROTATION, cycle: REGULAR_EVENT_CYCLE, anchor: rotationAnchor(), weekMs: WEEK_MS, assets: BACKGROUND_ASSETS, metadata: METADATA, text: {ko: LOBBY_KO, en: LOBBY_EN, ja: LOBBY_JA}};`;
   await build({
     stdin: { contents: entry, resolveDir: root, loader: "ts" },
     bundle: true,
@@ -86,12 +87,24 @@ export default {events: EVENTS, cycle: REGULAR_EVENT_CYCLE, anchor: rotationAnch
       destination: e.destination?.kind ?? null,
     };
   });
+  function pickupFeed() {
+    const rotation = data.pickup;
+    const cycle = rotation.bannerIds.map((bannerId) => {
+      const found = data.events.find((e) => e.destination?.kind === "lab" && e.destination.bannerId === bannerId);
+      if (!found) throw new Error(`픽업 배너 ${bannerId}로 가는 로비 이벤트가 없습니다.`);
+      return found.id;
+    });
+    return { cycle, anchor: new Date(rotation.anchor).toISOString(), periodMs: rotation.periodDays * 86_400_000 };
+  }
   const version = JSON.parse(await readFile(resolve(root, "package.json"), "utf8")).version;
   const feed = {
     schema: 1,
     version,
     // 주마다 한 이벤트만 서는 정기 이벤트 교대 — 홈페이지가 주 경계(UTC 월요일 00:00)를 직접 계산한다.
     rotation: { cycle: [...data.cycle], anchor: new Date(data.anchor).toISOString(), weekMs: data.weekMs },
+    // 한정 픽업 교대 — 픽업 카드는 한 번에 하나만 선다(`core/pickupRotation.ts`). 배너 ID를 그 배너로 가는 로비 이벤트 ID로
+    // 바꿔 싣고, 홈페이지가 차례(21일)를 직접 편다. 교대 시작 전에는 마지막 칸이 서 있었다.
+    pickup: pickupFeed(),
     events,
   };
   await mkdir(dirname(out), { recursive: true });

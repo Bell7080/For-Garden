@@ -133,7 +133,8 @@ export function galleryPortraitPlacement(asset: PuppetAsset): { x: number; groun
  * 지금은 **바닥선 하나**(`floor`)에 발을 세우고, 키가 큰 개체가 실제로 크게 서도록
  * 기준 높이에 원화별 `lobbyZoom`을 곱한다. 기준은 메론(1.58 m)이다.
  */
-export const LOBBY_PORTRAIT_SPOT = { x: BASE_WIDTH / 2, floor: 1930, height: 1740 } as const;
+// 1740 → 1620(응태 2026-11-17): 1.90 m 브리카가 바닥선에서 화면 위를 넘지 않도록 모두를 같은 비율로 한 뼘 줄였다.
+export const LOBBY_PORTRAIT_SPOT = { x: BASE_WIDTH / 2, floor: 1930, height: 1620 } as const;
 
 /** 로비 전신이 쓰는 spawn 옵션. 화면이 좌표와 배율을 손으로 적지 않는다. */
 export function lobbyPortraitPlacement(asset: PuppetAsset) {

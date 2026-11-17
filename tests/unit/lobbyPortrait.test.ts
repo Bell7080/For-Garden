@@ -125,8 +125,8 @@ const PORTRAITS: Readonly<Record<string, Omit<PuppetAsset, "url">>> = {
 /** 로비에 설 수 있는 개체 = 플레이어가 애착으로 고를 수 있는 렐릭이다. */
 const LOBBY_RELICS = RELICS.filter((relic) => relic.portraitAssetId in PORTRAITS && relic.observationProfile);
 
-/** 메론(1.58 m)이 1740px로 서는 지금 크기에서 나온 값이다. 기준을 바꾸면 이 수만 고친다. */
-const PIXELS_PER_METRE = 912;
+/** 메론(1.58 m)이 1620px로 서는 지금 크기에서 나온 값이다. 기준을 바꾸면 이 수만 고친다. */
+const PIXELS_PER_METRE = 849;
 
 function eyeToFootOnScreen(assetId: string): number {
   const asset = { url: "", ...PORTRAITS[assetId] } as PuppetAsset;

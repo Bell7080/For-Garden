@@ -1,6 +1,6 @@
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { GameApiError, type GameApi, type FulfillPlatformPurchaseResponse, type ProductDto, type SendGiftResponse } from "./contracts";
-import { GIFTING_ENABLED } from "../core/gifting";
+import { GIFTING_ENABLED, GIFT_PAYMENTS_ENABLED } from "../core/gifting";
 import type { PlatformPaymentAdapter } from "./PlatformPayment";
 import { confirmPlatformProduct } from "../core/productConfirmation";
 
@@ -106,11 +106,11 @@ export type GiftPurchaseOutcome =
 /**
  * 선물 주문 → 결제창(주문 ID를 계정 토큰으로) → 영수증 검증 → 주문에 묶기.
  *
- * **선물하기가 꺼져 있으면 결제창을 열지 않고 `unsupported`다**(`GIFTING_ENABLED`) — 결제 SDK가 없는 빌드와 같은 끝이다.
+ * 화면 스위치와 결제 스위치를 함께 검사한다. 일반 빌드는 주문·결제창을 열기 전에 `unsupported`로 끝난다.
  * 일반 결제와 같은 검증 경계를 지나고, 거래는 같은 장부에 지급 없이 남아 다른 선물이나 본인 지급에 다시 쓰이지 않는다.
  */
 export async function runGiftPurchase(api: GameApi, payment: PlatformPaymentAdapter, recipientId: string, productId: string, enabled = GIFTING_ENABLED): Promise<GiftPurchaseOutcome> {
-  if (!enabled || payment.supported === false || !globalThis.crypto?.subtle) return { status: "unsupported" };
+  if (!enabled || !GIFT_PAYMENTS_ENABLED || payment.supported === false || !globalThis.crypto?.subtle) return { status: "unsupported" };
   try {
     const order = await api.prepareGift({ recipientId, productId, requestId: `gift:${await requestKey([recipientId, productId, String(Date.now())])}`.slice(0, 64) });
     const paid = await payment.requestPayment(order.platformProductId, { accountToken: order.orderId });
@@ -118,7 +118,7 @@ export async function runGiftPurchase(api: GameApi, payment: PlatformPaymentAdap
     if (paid.status === "unsupported") return { status: "unsupported" };
     const receipt = paid.receipt;
     const platform = PLATFORMS.find((candidate) => candidate === receipt.platform);
-    if (!platform || platform === "test" && !QA_TOOLS_ENABLED || receipt.productId !== order.platformProductId) return { status: "failed", message: "" };
+    if (platform !== "test" || receipt.productId !== order.platformProductId) return { status: "failed", message: "" };
     const verificationKey = await requestKey([platform, receipt.transactionId, receipt.payload]);
     const verified = await api.verifyPurchaseReceipt({ productId: order.productId, platform, receipt: receipt.payload, requestId: `verify:${verificationKey}` });
     if (verified.verified !== true || verified.productId !== order.productId) return { status: "failed", message: "" };

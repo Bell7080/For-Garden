@@ -26,12 +26,12 @@ export interface ProfileFrameDefinition {
   readonly style: ProfileFrameStyle;
 }
 
-export type ProfileFrameStyle = "plain" | "bracket" | "gem" | "wing" | "vine" | "crown" | "strata" | "laurel" | "prism" | "sigil" | "halo" | "fossil" | "bedrock" | "core";
+export type ProfileFrameStyle = "plain" | "bracket" | "gem" | "wing" | "vine" | "crown" | "strata" | "laurel" | "prism" | "sigil" | "halo" | "fossil" | "bedrock" | "core" | "ribbon";
 
 export const DEFAULT_PROFILE_FRAME_ID = "field";
 
 /** 선물을 많이 전한 사람의 테두리 — 선물 업적 「마음을 전하는 손」 네 단계를 다 받으면 열린다. 선물하기가 꺼진 동안은 서지 않는다. */
-export const GIFT_GIVER_FRAME: ProfileFrameDefinition = { id: "giver", style: "halo", displayName: "나눔의 고리", unlockLevel: 1, unlockAchievement: { id: "gift-giver", tiers: 4 }, color: 0xff8fc8, wash: 0x3e1a2c };
+export const GIFT_GIVER_FRAME: ProfileFrameDefinition = { id: "giver", style: "ribbon", displayName: "나눔의 고리", unlockLevel: 1, unlockAchievement: { id: "gift-giver", tiers: 4 }, color: 0xff8fc8, wash: 0x3e1a2c };
 
 export const PROFILE_FRAMES: readonly ProfileFrameDefinition[] = [
   { id: "field", style: "plain", displayName: "현장 연구원", unlockLevel: 1, color: 0x9fb3c8, wash: 0x2a3644 },

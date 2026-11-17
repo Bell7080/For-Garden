@@ -18,7 +18,7 @@ import { BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "../core/bond";
 import { assertStoryUnlocked, resolveStoryChoice, assertStoryChoiceReachable, redeemDeferredStoryBond } from "./storyAuthority";
 import type { SharedRaidContext } from "../server/sharedRaids";
 import { recordGiftChange, type GiftContext } from "../server/playerGifts";
-import { GIFTING_ENABLED, createGiftOrder, giftableProductShape, giftEligibility, incomingGifts, sentGiftDisplayStatus, transitionGift, GiftTransitionError, type GiftAction, type GiftOrder, type GiftSenderFacts } from "../core/gifting";
+import { GIFTING_ENABLED, GIFT_PAYMENTS_ENABLED, createGiftOrder, giftableProductShape, giftEligibility, incomingGifts, sentGiftDisplayStatus, transitionGift, GiftTransitionError, type GiftAction, type GiftOrder, type GiftSenderFacts } from "../core/gifting";
 import { serverNow } from "./serverClock";
 import { QA_ALL_EVENTS, QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { PLACEHOLDER_AD_ENABLED, TEMP_AD_REWARD_ENABLED, placeholderAdToken, tempAdToken } from "../core/tempAd";
@@ -201,6 +201,8 @@ export interface FakeServerOptions {
   giftContext?: GiftContext;
   /** 테스트 전용: 선물하기 스위치(`GIFTING_ENABLED`)와 선물 가능 상품을 덮어쓴다. 운영 경로는 넘기지 않는다. */
   giftingOverride?: { enabled: boolean; giftableProductIds: readonly string[] };
+  /** QA에서는 결제 실적·레벨·기간·지역을 기다리지 않는다. 정책 테스트는 false로 원래 자격 규칙을 검사한다. */
+  qaGiftEligibility?: boolean;
   expeditionRank?: number | null;
   /** 실제 DB의 고대 지층 상시 순위. 서버 호출 단위에서만 주입한다. */
   ancientRanking?: AncientRankingResponse;
@@ -311,6 +313,7 @@ export class FakeServer implements GameApi {
   private readonly duelContext?: PlayerDuelContext;
   private readonly giftContext?: GiftContext;
   private readonly giftingOverride?: { enabled: boolean; giftableProductIds: readonly string[] };
+  private readonly qaGiftEligibility: boolean;
   private readonly remoteExpeditionRank?: number | null;
   private readonly ancientRanking?: AncientRankingResponse;
   private readonly regularEvent: RegularEventDto | null;
@@ -323,6 +326,7 @@ export class FakeServer implements GameApi {
     this.duelContext = options.duelContext;
     this.giftContext = options.giftContext;
     this.giftingOverride = options.giftingOverride;
+    this.qaGiftEligibility = QA_TOOLS_ENABLED && (options.qaGiftEligibility ?? true);
     this.remoteExpeditionRank = options.expeditionRank;
     this.ancientRanking = options.ancientRanking;
     this.regularEvent = options.regularEvent ?? null;
@@ -2723,7 +2727,7 @@ export class FakeServer implements GameApi {
   private giftableProduct(productId: string): ProductDefinition | undefined {
     const product = PRODUCTS.find(({ id }) => id === productId);
     if (!product || !giftableProductShape(product)) return undefined;
-    return product.giftable || this.giftingOverride?.giftableProductIds.includes(product.id) ? product : undefined;
+    return (this.giftingOverride ? this.giftingOverride.giftableProductIds.includes(product.id) : product.giftable) ? product : undefined;
   }
 
   /** 업적의 사실 — 저장에서 읽는 것에 선물 전달 수(주문 표가 갖는다)를 더한다. 맥락이 없는 호출은 0이다. */
@@ -2779,13 +2783,14 @@ export class FakeServer implements GameApi {
     const sender = this.giftSenderFacts(context);
     const options = PRODUCTS.filter(product => this.giftableProduct(product.id) && this.isVisible(product, now)).map(product => {
       const acquisition = product.acquisition as Extract<ProductDefinition["acquisition"], { kind: "platform_payment" }>;
-      const verdict = giftEligibility({ enabled: true, senderId: context.playerId, sender, recipient, productId: product.id, priceKrw: acquisition.basePriceKrw, giftable: true, orders: context.orders, now });
+      const verdict = giftEligibility({ enabled: true, senderId: context.playerId, sender, recipient, productId: product.id, priceKrw: acquisition.basePriceKrw, giftable: true, orders: context.orders, now }, this.qaGiftEligibility);
       return { productId: product.id, platformProductId: acquisition.platformProductId, priceKrw: acquisition.basePriceKrw, eligible: verdict.ok, reason: verdict.ok ? null : verdict.reason };
     });
     return { recipientId: request.recipientId, recipientName: recipient?.name ?? "", options, serverTime: now.toISOString() };
   }
 
   async prepareGift(request: PrepareGiftRequest): Promise<PrepareGiftResponse> {
+    if (!GIFT_PAYMENTS_ENABLED) throw new GameApiError("GIFT_UNAVAILABLE", t("gift.error.unavailable"));
     await this.delay();
     const context = this.giftGate();
     const now = this.now();
@@ -2800,7 +2805,7 @@ export class FakeServer implements GameApi {
       return { orderId, productId: product.id, platformProductId: acquisition.platformProductId, paymentDeadline: existing.expiresAt };
     }
     const recipient = context.recipients[request.recipientId] ?? null;
-    const verdict = giftEligibility({ enabled: true, senderId: context.playerId, sender: this.giftSenderFacts(context), recipient, productId: product.id, priceKrw: acquisition.basePriceKrw, giftable: true, orders: context.orders, now });
+    const verdict = giftEligibility({ enabled: true, senderId: context.playerId, sender: this.giftSenderFacts(context), recipient, productId: product.id, priceKrw: acquisition.basePriceKrw, giftable: true, orders: context.orders, now }, this.qaGiftEligibility);
     if (!verdict.ok || !recipient) throw new GameApiError("GIFT_NOT_ELIGIBLE", t(`gift.refusal.${verdict.ok ? "recipient_unavailable" : verdict.reason}`));
     const order = createGiftOrder({ id: orderId, senderId: context.playerId, recipientId: recipient.id, senderName: this.state.playerCard.nickname || t("profile.defaultName"), recipientName: recipient.name, productId: product.id, priceKrw: acquisition.basePriceKrw, now });
     recordGiftChange(context, null, order);
@@ -2812,6 +2817,7 @@ export class FakeServer implements GameApi {
    * 영수증을 `fulfillPlatformPurchase`로 다시 들고 와도 보낸 사람에게 상품이 들어가지 않고, 다른 선물에 두 번 쓰이지도 않는다.
    */
   async sendGift(request: SendGiftRequest): Promise<SendGiftResponse> {
+    if (!GIFT_PAYMENTS_ENABLED) throw new GameApiError("GIFT_UNAVAILABLE", t("gift.error.unavailable"));
     await this.delay();
     const context = this.giftGate();
     const now = this.now();

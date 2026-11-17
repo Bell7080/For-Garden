@@ -6182,6 +6182,7 @@ var AUGMENT_KO = {
   "augment.tag.selfBasic": "\uD3C9\uD0C0 {every}\uD68C \uC801\uC911\uB9C8\uB2E4 \uC790\uC2E0\uC5D0\uAC8C {tag} {stacks}\uD68C \uC801\uC6A9.",
   "augment.tag.selfRule": "\uC790\uC2E0\uC5D0\uAC8C\uB9CC \uC801\uC6A9\uD55C\uB2E4. \uACF5\uACA9 \uD69F\uC218\uB294 \uAD11\uC5ED\xB7\uC5F0\uACA9\uB3C4 \uD589\uB3D9\uB2F9 \uD55C \uBC88\uB9CC \uC13C\uB2E4. \uCD94\uAC00 \uD53C\uD574\uB294 \uC81C\uC678\uD55C\uB2E4. \uAC15\uD55C \uAE30\uC874 \uD6A8\uACFC\uB97C \uC57D\uD558\uAC8C \uB36E\uC5B4\uC4F0\uC9C0 \uC54A\uC73C\uBA70, \uAC19\uC740 \uAC15\uD654 \uC2AC\uB86F\uC740 \uC911\uCCA9\uB418\uC9C0 \uC54A\uB294\uB2E4. \uC804\uD22C\uB9C8\uB2E4 \uCD08\uAE30\uD654\uB41C\uB2E4.",
   "augment.tag.detail.bleed": "{seconds}\uCD08 \uB3D9\uC548 \uB9E4\uCD08 \uB300\uC0C1 \uCD5C\uB300 \uCCB4\uB825\uC758 {maxHpPercentPerSecond}% \uACE0\uC815 \uD53C\uD574. \uBC1B\uB294 \uD68C\uBCF5\uB7C9 -{healingReceivedReductionPercent}%. \uC99D\uAC15 \uBE44\uC728 \uD53C\uD574\uB294 \uB300\uC0C1\uBCC4 \uD569\uACC4 \uCD5C\uB300 10%\uC774\uBA70 \uBD88\uC0AC \uBCF4\uC2A4\uC5D0\uB294 25% \uBC30\uC728\uACFC \uAE30\uC874 \uBE44\uC728 \uD53C\uD574 \uC800\uD56D\uC744 \uC801\uC6A9\uD55C\uB2E4.",
+  "augment.tag.detail.bleedPlain": "{seconds}\uCD08 \uB3D9\uC548 \uB9E4\uCD08 \uB300\uC0C1 \uCD5C\uB300 \uCCB4\uB825\uC758 {maxHpPercentPerSecond}% \uACE0\uC815 \uD53C\uD574. \uC99D\uAC15 \uBE44\uC728 \uD53C\uD574\uB294 \uB300\uC0C1\uBCC4 \uD569\uACC4 \uCD5C\uB300 10%\uC774\uBA70 \uBD88\uC0AC \uBCF4\uC2A4\uC5D0\uB294 25% \uBC30\uC728\uACFC \uAE30\uC874 \uBE44\uC728 \uD53C\uD574 \uC800\uD56D\uC744 \uC801\uC6A9\uD55C\uB2E4.",
   "augment.tag.detail.frenzy": "{seconds}\uCD08 \uB3D9\uC548 \uC790\uAE30 \uD3B8\uC744 \uACF5\uACA9\uD558\uBA70 \uD53C\uD574\uAC00 \uC808\uBC18\uC774 \uB41C\uB2E4. \uAD81\uADF9\uAE30\uB294 \uC4F8 \uC218 \uC5C6\uB2E4. \uC790\uAE30 \uD3B8\uC774 \uC5C6\uC73C\uBA74 \uC790\uC2E0\uC744 \uACF5\uACA9\uD55C\uB2E4. \uAE30\uC874 \uAC15\uC778\uD568\uC744 \uC801\uC6A9\uD55C\uB2E4.",
   "augment.tag.detail.knockback": "{seconds}\uCD08 \uB3D9\uC548 \uCD08\uC18D {speed}px\uB85C \uB0A0\uB824\uBC84\uB9B0\uB2E4. \uBCBD \uBC18\uC0AC \uCD5C\uB300 {bounces}\uD68C. \uB0A0\uC544\uAC00\uB294 \uB3D9\uC548 \uD589\uB3D9\uD560 \uC218 \uC5C6\uC73C\uBA70 \uAE30\uC874 \uAC15\uC778\uD568\uC744 \uC801\uC6A9\uD55C\uB2E4.",
   "augment.tag.detail.tailwind": "{seconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4 +{attackSpeedPercent}%, \uC774\uB3D9 \uC18D\uB3C4 +{moveSpeedPercent}%. \uB2E4\uB978 \uC21C\uD48D\xB7\uC624\uB354\xB7\uACF5\uBA85\uACFC \uAC19\uC740 \uC2AC\uB86F\uC744 \uC0AC\uC6A9\uD55C\uB2E4.",
@@ -8686,7 +8687,7 @@ var RECOLLECTION_KO = {
   "recollection.tab.chapter6": "6\uC7A5",
   "recollection.tab.chapter7": "7\uC7A5",
   "recollection.summary.stage-4-3-pre": "\uC810\uAC80 \uD1B5\uB85C\uC5D0\uC11C \uD68C\uC218\uB41C \uC0BC\uC778\uC870\uAC00 \uBA85\uB839\uC774\uB77C\uC11C \uC55E\uC744 \uB9C9\uB294\uB2E4.",
-  "recollection.summary.stage-4-6-pre": "\uB124\uC6B0\uB9AC\uAC00 \uAC19\uC740 \uAC04\uBD80\uC778 \uCF54\uB9C8\uB97C \uB0AE\uCDB0 \uBCF4\uACE0, \uB9AC\uD30C\uB294 \uC815\uB9D0 \uC2F8\uC6CC\uC57C \uD558\uB0D0\uACE0 \uBB3B\uB294\uB2E4.",
+  "recollection.summary.stage-4-6-pre": "\uD384\uC2DC\uAC00 \uC5F0\uAD6C\uC6D0\uC744 \uC81C \uBAAB\uC73C\uB85C \uCC1C\uD558\uACE0, \uB9AC\uD30C\uB294 \uC815\uB9D0 \uC2F8\uC6CC\uC57C \uD558\uB0D0\uACE0 \uBB3B\uB294\uB2E4.",
   "recollection.summary.stage-4-8-post": "\uB04A\uC5B4\uC9C4 \uC2B9\uAC15\uAE30\uAC00 \uC9C0\uB3C4\uC5D0 \uC5C6\uB294 \uC544\uB798\uB85C \uB5A8\uC5B4\uC9C4\uB2E4.",
   "recollection.summary.stage-5-1-pre": "\uAC10\uAE08\uB3D9 \uC785\uAD6C\uC5D0\uC11C \uC9C0\uBD80\uC758 \uACBD\uACE0\uBB38\uACFC \uBB38\uC744 \uC9C0\uD0A4\uB294 \uC0BC\uC778\uC870\uB97C \uB9CC\uB09C\uB2E4.",
   "recollection.summary.stage-5-3-post": "\uB378\uB85C\uD53C\uAC00 \uACF5\uBA78 \uD3EC\uD68D \uAC1C\uCCB4\uC758 \uC218\uAC10 \uBA85\uB2E8\uC744 \uCC3E\uC544\uB0B8\uB2E4.",
@@ -9806,15 +9807,17 @@ function capExpeditionControl(status, potency) {
   if (status.kind === "intimidate") return { ...status, fearSeconds: Math.min(status.fearSeconds, cap) };
   return status;
 }
+var STACKING_CONTROL_TAGS = /* @__PURE__ */ new Set(["pressure", "drowsy", "intimidate"]);
 function expeditionControlCooldown(payload) {
   if (payload.kind === "frozen") return 8;
   if (payload.kind !== "status" || !payload.status || !EXPEDITION_CONTROL_TAGS.has(payload.status.kind)) return void 0;
   const kind = payload.status.kind;
+  if (STACKING_CONTROL_TAGS.has(kind)) return void 0;
   if (kind === "stagger") return 1;
   if (kind === "chill") return 4;
   if (kind === "stun") return payload.status.kind === "stun" && payload.status.seconds <= 0.25 ? 4 : 6;
   if (kind === "fear") return 6;
-  return kind === "pressure" || kind === "drowsy" || kind === "intimidate" ? 10 : 8;
+  return 8;
 }
 
 // src/core/bond.ts
@@ -21222,7 +21225,7 @@ var RELICS = [
       statusEffectEvery: 3,
       statusEffects: [
         { kind: "stun", seconds: 1 },
-        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 }
+        { kind: "concussion", maxHpPercent: 6, criticalMaxHpPercent: 12 }
       ]
     },
     ultimate: {
@@ -21239,7 +21242,7 @@ var RELICS = [
       radius: 110,
       statusEffects: [
         { kind: "stun", seconds: 2 },
-        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 }
+        { kind: "concussion", maxHpPercent: 6, criticalMaxHpPercent: 12 }
       ]
     }
   },
@@ -22278,6 +22281,7 @@ var RELICS = [
     stats: {
       // 중간보스는 SR 띠의 위쪽이다. 암살자가 쓰는 공격력과 그 정체성인 공격 속도에만 얹는다.
       // 응태 결정(v0.308.6): SSR 없이 못 깰 만큼 단단해 체력을 덜어 방어·저항·주문력에 조금 나눴다(1100/55/46/52 → 900/60/52/62).
+      // 응태 결정(v0.487.8): 뇌진탕을 파치와 같은 6%(치명 12%)로 낮춘 순수 너프다. v0.487.7에 얹었던 체력·공격력 보강(960/152)은 1-10을 오히려 막아 되돌렸다.
       hp: 900,
       def: 60,
       res: 52,
@@ -22332,7 +22336,7 @@ var RELICS = [
        */
       statusEffectEvery: 3,
       statusEffects: [
-        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 },
+        { kind: "concussion", maxHpPercent: 6, criticalMaxHpPercent: 12 },
         { kind: "stun", seconds: 1 },
         // 밀어내는 것이 이 개체가 무리에서 맡은 일이다 — 흩어진 적을 한 방향으로 몰아
         // 뒤따르는 아모와 토비 앞에 세운다(`squadNote`).
@@ -23007,7 +23011,7 @@ var RELICS = [
     // 손톱이 피를 내고(II) 폭주하면 급소가 더 자주 터진다(IV). 은신과 움찔이 이미 생존 몫이라 나머지는 비운다.
     breakthroughEffects: {
       basic: { kind: "snagClaw", speedPercentPerStack: 8, maxStacks: 5 },
-      ultimate: { kind: "startledLeap", radius: 220, stunSeconds: 0.8, lockoutSeconds: 8 },
+      ultimate: { kind: "startledLeap", radius: 220, stunSeconds: 0.8, lockoutSeconds: 5 },
       ferocity: { kind: "clawFlurry", extraHits: 1 },
       passive: { kind: "tailHide", seconds: 2 }
     }
@@ -25856,7 +25860,8 @@ function enemyGrowth(relicId, level, formationSlot) {
 var STORY_RECOMMENDED_LEVELS = [
   // **적은 적이다**(응태 결정, 2026-11-12) — 적도 아군처럼 등급마다 레벨당 성장이 다르고(`ENEMY_RARITY_LEVEL_GROWTH`) 돌파
   // 단계(LV.21·31·41·51)마다 +10%p를 받는다. 3.6% 단일 성장 시절의 세기를 그 관문 적들의 등급 곡선 위로 옮기되
-  // 그 세기를 넘지 않는 가장 높은 레벨을 골랐고(평균), 내려가지 않게 앞 관문 값 이상으로 맞췄다. 마지막 보스 카르(SSR)는 LV.58에서 예전 LV.60의 세기를 낸다.
+  // 그 세기를 넘지 않는 가장 높은 레벨을 골랐고(평균), 내려가지 않게 앞 관문 값 이상으로 맞췄다.
+  // 3-10부터는 신규 연구원에게 가파르다는 평에 완만하게 낮췄다(v0.488.0 — 3-10 30 → 29, 7장 끝 58 → 50, 측정은 VERSION.md).
   3,
   6,
   9,
@@ -25879,54 +25884,54 @@ var STORY_RECOMMENDED_LEVELS = [
   22,
   27,
   28,
-  30,
-  30,
-  30,
-  30,
-  30,
-  30,
-  30,
-  30,
+  29,
+  29,
+  29,
+  29,
+  29,
+  29,
+  29,
+  29,
+  32,
+  32,
+  32,
+  33,
+  33,
   34,
   34,
   34,
   35,
   35,
-  36,
   37,
   37,
   37,
   38,
+  38,
+  38,
+  39,
+  39,
   40,
   40,
-  40,
-  42,
+  41,
   42,
   42,
   43,
   43,
   44,
   44,
+  45,
+  45,
+  45,
   46,
+  46,
+  47,
+  47,
+  47,
   48,
   48,
   49,
   49,
-  50,
-  50,
-  50,
-  50,
-  50,
-  50,
-  52,
-  52,
-  54,
-  54,
-  54,
-  55,
-  56,
-  56,
-  58
+  50
 ];
 var CHAPTER_ONE_ELITES = {
   5: "toby",
@@ -25950,7 +25955,7 @@ var LATE_CHAPTER_FORMATIONS = {
   "4-3": [["amo", 0], ["mir", 1], ["pulsi", 2]],
   "4-4": [["atra", 0], ["amo", 2]],
   "4-5": [["atra", 0], ["toby", 2]],
-  "4-6": [["ripa", 0], ["koma", 1], ["neuri", 2]],
+  "4-6": [["ripa", 0], ["koma", 1], ["pulsi", 2]],
   "4-7": [["ripa", 0], ["pulsi", 1], ["mir", 2]],
   "4-8": [["amo", 0], ["toby", 1], ["ripa", 2], ["mir", 3], ["pulsi", 4]],
   "4-9": [["mir", 0], ["koma", 1], ["pulsi", 2]],
@@ -25967,37 +25972,39 @@ var LATE_CHAPTER_FORMATIONS = {
   "5-9": [["raja", 0], ["atra", 1], ["mir", 2], ["pulsi", 3]],
   "5-10": [["magasa", 1]],
   // 6장 — 중층 격리 회랑. 감금조가 앞에 서고 회수조가 받친다. 6-5 노아의 기습(정예) · 6-10 마가사·노아 투톱(정예 둘).
-  "6-1": [["raja", 0], ["magasa", 1], ["neuri", 2]],
+  // 네우리(순풍)와 노아가 함께 서면 정예보다 무거워져(6-6·6-8) 네우리를 뺐다 — 순풍은 4-6·6-1에서도 앞뒤 관문을 뒤집었다(v0.488.0).
+  "6-1": [["raja", 0], ["magasa", 1], ["pulsi", 2]],
   "6-2": [["atra", 0], ["mir", 1], ["pulsi", 2], ["neuri", 3]],
   "6-3": [["raja", 0], ["mir", 1], ["magasa", 2]],
   "6-4": [["raja", 0], ["pulsi", 1], ["neuri", 2]],
   "6-5": [["noa", 1]],
-  "6-6": [["raja", 0], ["noa", 1], ["neuri", 2]],
+  "6-6": [["raja", 0], ["noa", 1], ["mir", 2]],
   "6-7": [["atra", 0], ["noa", 1], ["pulsi", 2]],
-  "6-8": [["raja", 0], ["atra", 1], ["noa", 2], ["pulsi", 3], ["neuri", 4]],
+  "6-8": [["atra", 0], ["noa", 1], ["mir", 2], ["pulsi", 3]],
   "6-9": [["raja", 0], ["magasa", 1], ["noa", 2]],
   "6-10": [["magasa", 0], ["noa", 2]],
   // 7장 — 최하층 구속실. 감금조 셋과 회수조가 함께 선다. 7-5 이카닉시아의 저지선(정예) · 7-10 부대장 카르(정예).
+  // 라자·노아·마가사가 넷째 지원과 함께 서면 7-5 보스보다 무거워(7-3·7-6·7-8) 넷째를 빼거나 펄시로 바꿨다(v0.488.0).
   "7-1": [["raja", 0], ["magasa", 1], ["neuri", 2]],
   "7-2": [["atra", 0], ["noa", 1], ["mir", 2], ["pulsi", 3]],
-  "7-3": [["raja", 0], ["noa", 1], ["magasa", 2]],
+  "7-3": [["raja", 0], ["noa", 1], ["pulsi", 2]],
   "7-4": [["atra", 0], ["raja", 1], ["pulsi", 2], ["neuri", 3]],
   "7-5": [["ikanixia", 1]],
-  "7-6": [["raja", 0], ["magasa", 1], ["noa", 2], ["neuri", 3]],
+  "7-6": [["raja", 0], ["magasa", 1], ["noa", 2]],
   "7-7": [["atra", 0], ["raja", 1], ["noa", 2], ["pulsi", 3]],
-  "7-8": [["raja", 0], ["atra", 1], ["magasa", 2], ["noa", 3], ["neuri", 4]],
+  "7-8": [["raja", 0], ["atra", 1], ["magasa", 2], ["noa", 3]],
   "7-9": [["raja", 0], ["magasa", 1], ["noa", 2]],
   "7-10": [["carno", 1]]
 };
 var STORY_BOSS_LEVELS = {
-  "4-10": 41,
-  // 코마·이카닉시아 투 캐리 — 사다리 38
-  "5-10": 50,
-  // 간부 마가사 — 사다리 44
-  "7-5": 60,
-  // 간부 이카닉시아의 저지선 — 사다리 54
-  "7-10": 85
-  // 부대장 카르 — 사다리 58
+  "4-10": 36,
+  // 코마·이카닉시아 투 캐리 — 사다리 35
+  "5-10": 48,
+  // 간부 마가사 — 사다리 40
+  "7-5": 54,
+  // 간부 이카닉시아의 저지선 — 사다리 47
+  "7-10": 60
+  // 부대장 카르 — 사다리 50
 };
 var ELITE_DUO_STAGE_IDS = /* @__PURE__ */ new Set(["2-7", "2-9", "4-4", "4-5", "4-10", "6-10"]);
 var CHAPTER_ONE_ENEMIES = STORY_RECOMMENDED_LEVELS.slice(0, 10).map((recommended, index) => {
@@ -27579,7 +27586,8 @@ init_define_import_meta_env();
 
 // src/core/gifting.ts
 init_define_import_meta_env();
-var GIFTING_ENABLED = false;
+var GIFTING_ENABLED = true;
+var GIFT_PAYMENTS_ENABLED = QA_TOOLS_ENABLED;
 var DAY_MS = 864e5;
 var GIFT_POLICY = {
   /** 보낸 사람 연구원 레벨. 막 만든 부계정을 걸러 낸다. */
@@ -27623,24 +27631,24 @@ function countsTowardGiftLimits(order, now) {
   const settled = settleGiftOrder(order, now);
   return settled.status !== "lapsed";
 }
-function giftEligibility(input) {
+function giftEligibility(input, qa = false) {
   const { sender, recipient, now } = input;
   const refuse = (reason) => ({ ok: false, reason });
   if (!input.enabled) return refuse("disabled");
   if (!input.giftable) return refuse("not_giftable");
   if (recipient && recipient.id === input.senderId) return refuse("self");
-  if (sender.guest) return refuse("guest");
+  if (!qa && sender.guest) return refuse("guest");
   if (sender.ageRestricted) return refuse("age_restricted");
   if (sender.blocked) return refuse("blocked");
-  if (sender.researchLevel < GIFT_POLICY.senderMinResearchLevel) return refuse("level");
-  if (!olderThan(sender.accountCreatedAt, GIFT_POLICY.senderMinAccountDays, now)) return refuse("account_age");
+  if (!qa && sender.researchLevel < GIFT_POLICY.senderMinResearchLevel) return refuse("level");
+  if (!qa && !olderThan(sender.accountCreatedAt, GIFT_POLICY.senderMinAccountDays, now)) return refuse("account_age");
   if (sender.lastOwnRefundAt && within(sender.lastOwnRefundAt, GIFT_POLICY.refundLookbackDays, now)) return refuse("recent_refund");
-  if (!olderThan(sender.oldestClearedOwnPaymentAt, GIFT_POLICY.ownPaymentClearDays, now)) return refuse("no_payment_history");
-  if (!recipient || !recipient.active || recipient.guest) return refuse("recipient_unavailable");
+  if (!qa && !olderThan(sender.oldestClearedOwnPaymentAt, GIFT_POLICY.ownPaymentClearDays, now)) return refuse("no_payment_history");
+  if (!recipient || !recipient.active || !qa && recipient.guest) return refuse("recipient_unavailable");
   const ties = [recipient.friendSince, recipient.guildmateSince ?? null].filter((tie) => !!tie);
   if (ties.length === 0) return refuse("not_friend");
-  if (!ties.some((tie) => olderThan(tie, GIFT_POLICY.minFriendDays, now))) return refuse("friend_too_new");
-  if (!sender.storeRegion || sender.storeRegion !== recipient.storeRegion) return refuse("region_mismatch");
+  if (!qa && !ties.some((tie) => olderThan(tie, GIFT_POLICY.minFriendDays, now))) return refuse("friend_too_new");
+  if (!qa && (!sender.storeRegion || sender.storeRegion !== recipient.storeRegion)) return refuse("region_mismatch");
   const live = dedupe(input.orders).filter((order) => countsTowardGiftLimits(order, now));
   const sent = live.filter((order) => order.senderId === input.senderId);
   const received = live.filter((order) => order.recipientId === recipient.id);
@@ -27648,7 +27656,7 @@ function giftEligibility(input) {
   if (sent.filter((order) => within(order.createdAt, 1, now)).length >= GIFT_POLICY.sendPerDay) return refuse("send_daily");
   const sentMonth = sent.filter((order) => within(order.createdAt, 30, now));
   if (sentMonth.length >= GIFT_POLICY.sendPer30Days) return refuse("send_monthly");
-  if (giftAmountAllowanceKrw(sender, sent, now) < input.priceKrw) return refuse("send_amount");
+  if (!qa && giftAmountAllowanceKrw(sender, sent, now) < input.priceKrw) return refuse("send_amount");
   const receivedLive = received.filter((order) => settleGiftOrder(order, now).status !== "returned" && settleGiftOrder(order, now).status !== "revoked");
   if (receivedLive.filter((order) => within(order.createdAt, 1, now)).length >= GIFT_POLICY.receivePerDay) return refuse("receive_daily");
   if (receivedLive.filter((order) => within(order.createdAt, 30, now)).length >= GIFT_POLICY.receivePer30Days) return refuse("receive_monthly");
@@ -28706,7 +28714,7 @@ init_define_import_meta_env();
 // src/data/profileFrames.ts
 init_define_import_meta_env();
 var DEFAULT_PROFILE_FRAME_ID = "field";
-var GIFT_GIVER_FRAME = { id: "giver", style: "halo", displayName: "\uB098\uB214\uC758 \uACE0\uB9AC", unlockLevel: 1, unlockAchievement: { id: "gift-giver", tiers: 4 }, color: 16748488, wash: 4069932 };
+var GIFT_GIVER_FRAME = { id: "giver", style: "ribbon", displayName: "\uB098\uB214\uC758 \uACE0\uB9AC", unlockLevel: 1, unlockAchievement: { id: "gift-giver", tiers: 4 }, color: 16748488, wash: 4069932 };
 var PROFILE_FRAMES = [
   { id: "field", style: "plain", displayName: "\uD604\uC7A5 \uC5F0\uAD6C\uC6D0", unlockLevel: 1, color: 10466248, wash: 2766404 },
   { id: "ancient", style: "strata", displayName: "\uD0DC\uACE0\uC758 \uC9C0\uCE35", unlockLevel: 1, unlockAchievement: { id: "ancient-depth", tiers: 4 }, color: 14200434, wash: 3745816 },
@@ -37020,9 +37028,10 @@ var BOUNTY_TIERS = [
     { relicId: "noa", level: 46 }
   ] },
   // 10급은 7장 끝의 부대장 카르가 마지막에 선다.
+  // v0.487.8: 코마의 뇌진탕을 6%로 낮춘 뒤 LV.53까지는 LV.20 모르페가 1대1을 세 판 모두 이겨 10급이 9급보다 쉬워져, 2라운드 코마를 LV.55로 세운다.
   { id: "bounty-5", order: 10, name: "\uD604\uC0C1\uC218\uBC30 10\uAE09", rewardGold: 28e3, rounds: [
     { relicId: "noa", level: 50 },
-    { relicId: "koma", level: 50 },
+    { relicId: "koma", level: 55 },
     { relicId: "carno", level: 53 }
   ] }
 ];
@@ -40098,12 +40107,12 @@ var STAGE_4_4_PRE = {
 };
 var STAGE_4_6_PRE = {
   id: "stage-4-6-pre",
-  startNodeId: "neuri",
+  startNodeId: "pulsi",
   backdrop: "deepField",
   nodes: linear([
-    { id: "neuri", speaker: "\uB124\uC6B0\uB9AC", body: "\uCF54\uB9C8 \uB2D8, \uC774\uBC88\uC5D0\uB294 \uAF2D \uC131\uACF5\uD574 \uC8FC\uC138\uC694. \uC800\uD76C \uAC04\uBD80\uB2D8 \uCCB4\uBA74\uB3C4 \uAC78\uB824 \uC788\uAC70\uB4E0\uC694.", standing: "neuri", cast: [{ id: "koma", slot: "left" }, { id: "neuri", slot: "right" }], act: "nod" },
-    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uAC19\uC740 \uAC04\uBD80\uB2E4. \uB124 \uB300\uC7A5\uD55C\uD14C \uADF8\uB807\uAC8C \uC804\uD574\uB77C.", standing: "koma", act: "lean" },
-    { id: "neuri2", speaker: "\uB124\uC6B0\uB9AC", body: "\uC5B4\uBA38, \uC804\uD574 \uB4DC\uB9B4\uAC8C\uC694. \uC6C3\uC73C\uC2E4 \uAC70\uC608\uC694.", standing: "neuri", act: "lean" },
+    { id: "pulsi", speaker: "\uD384\uC2DC", body: "\uD569\uB3D9\uC774\uB77C\uBA70? \uADF8\uB7FC \uC5F0\uAD6C\uC6D0\uC740 \uB0B4 \uBAAB\uC774\uC57C. \uB098\uBA38\uC9C0\uB294 \uCF54\uB9C8\uAC00 \uC54C\uC544\uC11C \uD574.", standing: "pulsi", cast: [{ id: "koma", slot: "left" }, { id: "pulsi", slot: "right" }], act: "hop" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB300\uC0C1\uC740 \uD558\uB098\uB2E4. \uB098\uB20C \uAC83 \uC5C6\uB2E4.", standing: "koma", act: "lean" },
+    { id: "pulsi2", speaker: "\uD384\uC2DC", body: "\uADF8\uB7FC \uBA3C\uC800 \uB2FF\uB294 \uCABD\uC774 \uAC16\uB294 \uAC70\uB2E4. \uC774\uBC88\uC5D4 \uB208 \uC548 \uB5C4 \uAC70\uC57C.", standing: "pulsi", act: "puff" },
     { id: "ripa", speaker: "\uB9AC\uD30C", body: "\u2026\uC120\uBC30, \uC800\uCABD\uC774 \uC5F0\uAD6C\uC6D0\uC774\uC57C. \uC774\uBC88\uC5D4 \uC815\uB9D0 \uD574\uC57C \uB3FC?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "shrink" },
     { id: "koma2", speaker: "\uCF54\uB9C8", body: "\u2026\uC55E\uB9CC \uBD10\uB77C.", standing: "koma", act: "nod" }
   ])
@@ -42425,6 +42434,7 @@ var gemPack = (id, name, amount, price) => ({
   premiumCategory: "gem",
   iconKey: "shop-product-gems",
   name,
+  giftable: true,
   description: `\uB2E4\uC774\uC544 ${amount}\uAC1C`,
   acquisition: pay(id, price),
   grants: [currency2("gems", amount)],
@@ -45558,7 +45568,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.487.2",
+  version: "0.487.10",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -46342,6 +46352,7 @@ var FakeServer = class {
     this.duelContext = options.duelContext;
     this.giftContext = options.giftContext;
     this.giftingOverride = options.giftingOverride;
+    this.qaGiftEligibility = QA_TOOLS_ENABLED && (options.qaGiftEligibility ?? true);
     this.remoteExpeditionRank = options.expeditionRank;
     this.ancientRanking = options.ancientRanking;
     this.regularEvent = options.regularEvent ?? null;
@@ -46480,6 +46491,7 @@ var FakeServer = class {
   duelContext;
   giftContext;
   giftingOverride;
+  qaGiftEligibility;
   remoteExpeditionRank;
   ancientRanking;
   regularEvent;
@@ -48853,7 +48865,7 @@ var FakeServer = class {
   giftableProduct(productId) {
     const product = PRODUCTS.find(({ id }) => id === productId);
     if (!product || !giftableProductShape(product)) return void 0;
-    return product.giftable || this.giftingOverride?.giftableProductIds.includes(product.id) ? product : void 0;
+    return (this.giftingOverride ? this.giftingOverride.giftableProductIds.includes(product.id) : product.giftable) ? product : void 0;
   }
   /** 업적의 사실 — 저장에서 읽는 것에 선물 전달 수(주문 표가 갖는다)를 더한다. 맥락이 없는 호출은 0이다. */
   achievementFactsOf(state) {
@@ -48901,12 +48913,13 @@ var FakeServer = class {
     const sender = this.giftSenderFacts(context);
     const options = PRODUCTS.filter((product) => this.giftableProduct(product.id) && this.isVisible(product, now)).map((product) => {
       const acquisition = product.acquisition;
-      const verdict = giftEligibility({ enabled: true, senderId: context.playerId, sender, recipient, productId: product.id, priceKrw: acquisition.basePriceKrw, giftable: true, orders: context.orders, now });
+      const verdict = giftEligibility({ enabled: true, senderId: context.playerId, sender, recipient, productId: product.id, priceKrw: acquisition.basePriceKrw, giftable: true, orders: context.orders, now }, this.qaGiftEligibility);
       return { productId: product.id, platformProductId: acquisition.platformProductId, priceKrw: acquisition.basePriceKrw, eligible: verdict.ok, reason: verdict.ok ? null : verdict.reason };
     });
     return { recipientId: request.recipientId, recipientName: recipient?.name ?? "", options, serverTime: now.toISOString() };
   }
   async prepareGift(request) {
+    if (!GIFT_PAYMENTS_ENABLED) throw new GameApiError("GIFT_UNAVAILABLE", t("gift.error.unavailable"));
     await this.delay();
     const context = this.giftGate();
     const now = this.now();
@@ -48920,7 +48933,7 @@ var FakeServer = class {
       return { orderId, productId: product.id, platformProductId: acquisition.platformProductId, paymentDeadline: existing.expiresAt };
     }
     const recipient = context.recipients[request.recipientId] ?? null;
-    const verdict = giftEligibility({ enabled: true, senderId: context.playerId, sender: this.giftSenderFacts(context), recipient, productId: product.id, priceKrw: acquisition.basePriceKrw, giftable: true, orders: context.orders, now });
+    const verdict = giftEligibility({ enabled: true, senderId: context.playerId, sender: this.giftSenderFacts(context), recipient, productId: product.id, priceKrw: acquisition.basePriceKrw, giftable: true, orders: context.orders, now }, this.qaGiftEligibility);
     if (!verdict.ok || !recipient) throw new GameApiError("GIFT_NOT_ELIGIBLE", t(`gift.refusal.${verdict.ok ? "recipient_unavailable" : verdict.reason}`));
     const order = createGiftOrder({ id: orderId, senderId: context.playerId, recipientId: recipient.id, senderName: this.state.playerCard.nickname || t("profile.defaultName"), recipientName: recipient.name, productId: product.id, priceKrw: acquisition.basePriceKrw, now });
     recordGiftChange(context, null, order);
@@ -48931,6 +48944,7 @@ var FakeServer = class {
    * 영수증을 `fulfillPlatformPurchase`로 다시 들고 와도 보낸 사람에게 상품이 들어가지 않고, 다른 선물에 두 번 쓰이지도 않는다.
    */
   async sendGift(request) {
+    if (!GIFT_PAYMENTS_ENABLED) throw new GameApiError("GIFT_UNAVAILABLE", t("gift.error.unavailable"));
     await this.delay();
     const context = this.giftGate();
     const now = this.now();

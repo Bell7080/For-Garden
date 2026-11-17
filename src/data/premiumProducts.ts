@@ -50,6 +50,7 @@ const pay = (platformProductId: string, basePriceKrw: number, listPriceKrw?: num
 /** 다이아 한 팩. 같은 모양이 여섯이라 표로 찍는다. */
 const gemPack = (id: string, name: string, amount: number, price: number): ProductDefinition => ({
   id, storefront: "premium", category: "special", premiumCategory: "gem", iconKey: "shop-product-gems", name,
+  giftable: true,
   description: `다이아 ${amount}개`,
   acquisition: pay(id, price),
   grants: [currency("gems", amount)],

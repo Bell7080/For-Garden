@@ -11,7 +11,7 @@ import { RELICS } from "../data/relics";
 import { PRODUCTS } from "../data/shopCatalog";
 import { t } from "../i18n";
 import { logError } from "../managers/ErrorReporter";
-import { platformPayment } from "../platform/payment";
+import { giftPayment } from "../platform/payment";
 import { Button } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
 import { FaceFrame } from "./FaceFrame";
@@ -176,7 +176,7 @@ function confirmGift(scene: Phaser.Scene, popups: PopupLayer, recipient: { id: s
     message: t("gift.confirm.message", { name: recipient.name, product: productName(option.productId) }),
     confirmLabel: t("gift.confirm.pay"),
   }, () => {
-    void runGiftPurchase(gameApi, platformPayment(), recipient.id, option.productId).then((outcome) => {
+    void runGiftPurchase(gameApi, giftPayment(), recipient.id, option.productId).then((outcome) => {
       if (!scene.sys.isActive()) return;
       if (outcome.status === "sent") {
         closePicker();

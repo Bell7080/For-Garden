@@ -23,9 +23,9 @@ function order(over: Partial<GiftOrder> = {}): GiftOrder {
 }
 
 describe("선물하기 스위치", () => {
-  it("지금은 꺼져 있다 — 켜기 전에 스토어 환불 자동 수신이 먼저다(결정 D6)", () => {
-    expect(GIFTING_ENABLED).toBe(false);
-    expect(giftEligibility(input({ enabled: GIFTING_ENABLED }))).toEqual({ ok: false, reason: "disabled" });
+  it("화면은 열고 꺼진 스위치에 대한 거절 규칙도 유지한다", () => {
+    expect(GIFTING_ENABLED).toBe(true);
+    expect(giftEligibility(input({ enabled: false }))).toEqual({ ok: false, reason: "disabled" });
   });
 });
 

@@ -3,6 +3,9 @@ import { FakeServer } from "../../src/api/FakeServer";
 import { GameApiError } from "../../src/api/contracts";
 import type { GiftContext } from "../../src/server/playerGifts";
 import { createDefaultSession } from "../../src/state/session";
+import type { GameApi } from "../../src/api/contracts";
+import { runGiftPurchase } from "../../src/api/platformPurchase";
+import { giftPayment } from "../../src/platform/payment";
 
 /**
  * 선물하기 서버 경계 — 스위치가 꺼진 동안 모두 거절하고, 켰을 때(테스트 전용 `giftingOverride`) 보내기·받기·거절·취소가
@@ -29,7 +32,7 @@ function server(giftContext: GiftContext | undefined, override: { enabled: boole
   state.playerResearch.level = 30;
   state.playerCard.createdAt = ago(60);
   state.playerCard.nickname = giftContext?.playerId === "a" ? "보낸이" : "받는이";
-  const api = new FakeServer(state, { latencyMs: 0, now: () => new Date(clock), persistSession: () => undefined, giftContext, giftingOverride: override ?? undefined });
+  const api = new FakeServer(state, { latencyMs: 0, now: () => new Date(clock), persistSession: () => undefined, giftContext, giftingOverride: override ?? undefined, qaGiftEligibility: false });
   return { state, api };
 }
 
@@ -41,8 +44,35 @@ async function pay(api: FakeServer, orderId: string, tx: string) {
 const code = async (run: Promise<unknown>): Promise<string> => run.then(() => "ok", (error: unknown) => error instanceof GameApiError ? error.code : String(error));
 
 describe("선물하기 서버 경계", () => {
+  it("QA 새 계정도 모의 결제로 보내고, 요청마다 서버를 새로 만들어도 받는 쪽에 기본 수량만 지급한다", async () => {
+    const senderContext = context("a", "b", "B");
+    Object.assign(senderContext.sender, { guest: true, oldestClearedOwnPaymentAt: null, ownPayments: [], storeRegion: null });
+    Object.assign(senderContext.recipients.b, { guest: true, friendSince: new Date(clock).toISOString(), storeRegion: null });
+    const state = createDefaultSession();
+    const freshServer = () => new FakeServer(state, { latencyMs: 0, now: () => new Date(clock), persistSession: () => undefined, giftContext: senderContext });
+    const option = (await freshServer().getGiftOptions({ recipientId: "b" })).options.find(option => option.productId === PRODUCT);
+    expect(option).toMatchObject({ eligible: true, reason: null });
+    const api = {
+      prepareGift: (request: Parameters<GameApi["prepareGift"]>[0]) => freshServer().prepareGift(request),
+      verifyPurchaseReceipt: (request: Parameters<GameApi["verifyPurchaseReceipt"]>[0]) => freshServer().verifyPurchaseReceipt(request),
+      sendGift: (request: Parameters<GameApi["sendGift"]>[0]) => freshServer().sendGift(request),
+    } as GameApi;
+    const gems = state.wallet.gems;
+    expect(await runGiftPurchase(api, giftPayment(), "b", PRODUCT)).toMatchObject({ status: "sent", result: { gift: { status: "pending" } } });
+    expect(state.wallet.gems).toBe(gems);
+    const receiverState = createDefaultSession();
+    const receiver = new FakeServer(receiverState, { latencyMs: 0, persistSession: () => undefined, now: () => new Date(clock), giftContext: context("b", "a", "A", structuredClone(senderContext.orders)) });
+    const before = receiverState.wallet.gems;
+    const inbox = await receiver.getIncomingGifts();
+    expect(inbox.gifts).toHaveLength(1);
+    await receiver.acceptGift({ orderId: inbox.gifts[0].orderId, requestId: "qa-accept" });
+    expect(receiverState.wallet.gems - before).toBe(350);
+    await expect(receiver.acceptGift({ orderId: inbox.gifts[0].orderId, requestId: "qa-accept-again" })).rejects.toMatchObject({ code: "GIFT_STATE_INVALID" });
+    expect(receiverState.wallet.gems - before).toBe(350);
+  });
+
   it("스위치가 꺼져 있으면 모든 선물 호출이 GIFT_UNAVAILABLE이고 결제 기록에도 선물이 서지 않는다", async () => {
-    const { api } = server(context("a", "b", "B"), null);
+    const { api } = server(context("a", "b", "B"), { enabled: false, giftableProductIds: [] });
     expect(await code(api.getGiftOptions({ recipientId: "b" }))).toBe("GIFT_UNAVAILABLE");
     expect(await code(api.prepareGift({ recipientId: "b", productId: PRODUCT, requestId: "r1" }))).toBe("GIFT_UNAVAILABLE");
     expect(await code(api.getIncomingGifts())).toBe("GIFT_UNAVAILABLE");

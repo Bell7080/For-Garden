@@ -28,7 +28,7 @@ export function profileAvatarSizeFor(room: number): number {
   return Math.floor(room / (2 * PROFILE_FRAME_REACH));
 }
 
-export const FRAME_STYLE_RANK: readonly ProfileFrameStyle[] = ["plain", "bracket", "gem", "wing", "vine", "crown", "strata", "laurel", "prism", "sigil", "halo", "fossil", "bedrock", "core"];
+export const FRAME_STYLE_RANK: readonly ProfileFrameStyle[] = ["plain", "bracket", "gem", "wing", "vine", "crown", "strata", "laurel", "prism", "sigil", "halo", "fossil", "bedrock", "core", "ribbon"];
 
 export function profileFrameOuter(size: number): number {
   return size * (1 + PROFILE_FRAME_PAD * 2);
@@ -168,6 +168,20 @@ export function profileFrameShapes(size: number, style: ProfileFrameStyle): Prof
         diamond(point, 0.025, 0.04, "light");
       }
       for (const cut of cuts) shapes.strokes.push({ width: size * 0.022, points: cutBracket(cut, size * 0.07, anchor.bevel * 0.9, size * 0.05) });
+      break;
+    }
+    case "ribbon": {
+      // 나눔의 고리 — 아랫변에 묶은 선물 리본. 시즌의 날개와 다른 모양으로 남긴다.
+      const knot = anchor.bottom;
+      for (const side of [-1, 1]) shapes.strokes.push({ width: size * 0.025, points: [
+        knot,
+        { x: knot.x + side * size * 0.16, y: knot.y - size * 0.08 },
+        { x: knot.x + side * size * 0.18, y: knot.y + size * 0.05 },
+        knot,
+        { x: knot.x + side * size * 0.08, y: knot.y + size * 0.1 },
+      ] });
+      diamond(knot, 0.045, 0.055, "light");
+      diamond(anchor.top, 0.05, 0.07);
       break;
     }
     case "halo": {

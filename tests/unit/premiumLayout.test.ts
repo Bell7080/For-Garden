@@ -8,6 +8,7 @@ import {
 import { PREMIUM_TABS, PRODUCTS } from "../../src/data/shopCatalog";
 import { premiumCategoryOf } from "../../src/ui/premiumModel";
 import type { ProductDto } from "../../src/api/contracts";
+import { giftableProductShape } from "../../src/core/gifting";
 
 describe("프리미엄 자리표", () => {
   it("의 격자 창은 제목표 아래에서 시작해 라벨 줄 위에서 끝난다", () => {
@@ -70,10 +71,12 @@ describe("프리미엄 자리표", () => {
 });
 
 describe("프리미엄 목록 갈래", () => {
-  it("는 네 라벨이 모두 설 상품을 갖는다", () => {
+  it("모든 라벨에 실제로 표시할 상품이 있다", () => {
     // 눌러도 빈 목록만 나오는 라벨은 준비 상태를 과장한다.
     for (const tab of PREMIUM_TABS) {
-      const count = PRODUCTS.filter((product) => product.storefront === "premium" && premiumCategoryOf(product as unknown as ProductDto) === tab.id).length;
+      const count = PRODUCTS.filter((product) => product.storefront === "premium" && (tab.id === "gift"
+        ? product.giftable && giftableProductShape(product)
+        : premiumCategoryOf(product as unknown as ProductDto) === tab.id)).length;
       expect(count, tab.id).toBeGreaterThan(0);
     }
   });

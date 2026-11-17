@@ -23,6 +23,11 @@ export function platformPayment(): PlatformPaymentAdapter {
   return new UnsupportedPlatformPaymentAdapter();
 }
 
+/** 선물은 QA 모의 결제만 허용한다. 일반 빌드는 네이티브 브리지가 있어도 결제창을 열지 않는다. */
+export function giftPayment(): PlatformPaymentAdapter {
+  return QA_TOOLS_ENABLED ? qaPaymentAdapter : new UnsupportedPlatformPaymentAdapter();
+}
+
 let qaTransactionSeq = 0;
 /** QA 결제가 이 기기에서 만든 영수증. 구매 복원이 스토어처럼 다시 내놓는다(이미 받은 거래는 서버가 다시 주지 않는다). */
 const qaReceipts: PlatformReceipt[] = [];

@@ -27,6 +27,13 @@ describe("프로필 테두리 모양", () => {
     expect(Math.min(...xs)).toBeGreaterThan(-a.half + a.bevel);
   });
 
+  it("선물 테두리의 리본은 시즌 날개와 다른 도형을 쓴다", () => {
+    const ribbon = profileFrameShapes(132, "ribbon");
+    expect(ribbon.strokes).toHaveLength(2);
+    expect(ribbon.blades).toHaveLength(0);
+    expect(ribbon).not.toEqual(profileFrameShapes(132, "halo"));
+  });
+
   it("괄호는 깎인 모서리의 빗변 밖 허공에 뜨지 않는다", () => {
     const size = 200;
     const a = profileFrameAnchors(size);

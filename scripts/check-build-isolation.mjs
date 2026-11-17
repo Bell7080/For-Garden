@@ -26,9 +26,12 @@ try {
         contents: `import {SaveManager,SAVE_STORAGE_KEY} from './src/state/SaveManager';
           import {createDefaultSession} from './src/state/session';
           import {LOCAL_SAVE_FLAVOR} from './src/core/saveStorage';
+          import {GIFTING_ENABLED,GIFT_PAYMENTS_ENABLED} from './src/core/gifting';
+          import {giftPayment} from './src/platform/payment';
           import {setDebugScene,setDebugReady,setDebugProgress,debugPerfEnabled} from './src/debug';
           export function run(storage){const saves=new SaveManager(storage);const before=saves.load();const state=before??createDefaultSession();saves.save(state);setDebugScene('title');setDebugReady(true);setDebugProgress(state.wallet,state.owned);return {before,flavor:LOCAL_SAVE_FLAVOR,key:SAVE_STORAGE_KEY,wallet:saves.load().wallet,perf:debugPerfEnabled};}
-          export function read(storage){return new SaveManager(storage).load();}`,
+          export function read(storage){return new SaveManager(storage).load();}
+          export function gifts(){return {visible:GIFTING_ENABLED,payments:GIFT_PAYMENTS_ENABLED,supported:giftPayment().supported!==false};}`,
         resolveDir: root,
       },
       bundle: true,
@@ -47,6 +50,7 @@ try {
     globalThis.window = {};
     globalThis.location = { search: "?perf=1" };
     const module = await import(pathToFileURL(outfile).href);
+    assert.deepEqual(module.gifts(), { visible: true, payments: mode !== "production", supported: mode !== "production" });
     modules.set(mode, module);
     const result = module.run(storage);
     assert.equal(

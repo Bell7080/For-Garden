@@ -1,10 +1,10 @@
+import { QA_TOOLS_ENABLED } from "./buildFlavor";
+
 /**
  * 선물하기 — 친구에게 유료 상품을 사서 보내는 규칙(설계 `/mnt/project-files/gift-system/gift-system-design.md`).
  *
- * **지금은 꺼져 있다**(`GIFTING_ENABLED` — 응태 결정 2026-11-16: 「구현은 하되 결제처럼 지금은 안 되게」). 결제가 SDK 없이
- * `unsupported`를 돌려주는 것과 같이, 꺼진 동안 서버의 모든 선물 경계는 `GIFT_UNAVAILABLE`로 거절하고 화면은 입구를 세우지
- * 않는다. **켜기 전 선행 조건은 스토어 환불 자동 수신**(Apple App Store Server Notifications V2 · Google RTDN)이다 — 환불을 모르는
- * 채 선물을 열면 좀비고 사태와 같은 조건이 된다(결정 D6).
+ * 화면과 선물함은 열되 일반 빌드의 결제·전송은 닫는다(응태 결정 2026-11-17). QA 빌드에서만 모의 영수증으로 전송한다.
+ * 실제 결제를 열기 전에는 스토어 환불 자동 수신과 영수증 계정 토큰 검증이 먼저 서야 한다.
  *
  * 핵심 약속 둘:
  * 1. **받는 사람은 절대 음수가 되지 않는다.** 받은 뒤 환불이 와도 받는 쪽에서 아무것도 회수하지 않는다(`giftRefundOutcome`).
@@ -14,8 +14,10 @@
  * Phaser를 읽지 않는 순수 모듈이라 FakeServer·서버 핸들러·화면이 같은 판정을 읽는다.
  */
 
-/** 선물하기 스위치. 켜는 것은 응태 결정이고, 켜기 전에 스토어 환불 자동 수신이 먼저 서야 한다. */
-export const GIFTING_ENABLED = false;
+/** 선물 화면·선물함·기록은 공개한다. */
+export const GIFTING_ENABLED = true;
+/** 실제 결제는 닫고 QA에서만 모의 결제를 받는다. 클라이언트와 서버가 함께 검사한다. */
+export const GIFT_PAYMENTS_ENABLED = QA_TOOLS_ENABLED;
 
 const DAY_MS = 86_400_000;
 
@@ -179,26 +181,28 @@ export function countsTowardGiftLimits(order: GiftOrder, now: Date): boolean {
 
 /**
  * 보낼 수 있는가. 순서는 「바꿀 수 없는 것 → 보낸 사람 → 관계 → 한도」라, 거절 사유가 지금 할 수 있는 일과 가까운 것부터 선다.
+ * QA는 모의 결제로 시험하므로 계정·결제 실적·관계 기간·지역을 건너뛴다. 실제 관계·정지·차단·중복·횟수 한도는 지킨다.
+ * qa 값은 서버의 빌드 설정만 전달하며 API 요청에서는 받지 않는다.
  */
-export function giftEligibility(input: GiftEligibilityInput): GiftEligibility {
+export function giftEligibility(input: GiftEligibilityInput, qa = false): GiftEligibility {
   const { sender, recipient, now } = input;
   const refuse = (reason: GiftRefusal): GiftEligibility => ({ ok: false, reason });
   if (!input.enabled) return refuse("disabled");
   if (!input.giftable) return refuse("not_giftable");
   if (recipient && recipient.id === input.senderId) return refuse("self");
-  if (sender.guest) return refuse("guest");
+  if (!qa && sender.guest) return refuse("guest");
   if (sender.ageRestricted) return refuse("age_restricted");
   if (sender.blocked) return refuse("blocked");
-  if (sender.researchLevel < GIFT_POLICY.senderMinResearchLevel) return refuse("level");
-  if (!olderThan(sender.accountCreatedAt, GIFT_POLICY.senderMinAccountDays, now)) return refuse("account_age");
+  if (!qa && sender.researchLevel < GIFT_POLICY.senderMinResearchLevel) return refuse("level");
+  if (!qa && !olderThan(sender.accountCreatedAt, GIFT_POLICY.senderMinAccountDays, now)) return refuse("account_age");
   if (sender.lastOwnRefundAt && within(sender.lastOwnRefundAt, GIFT_POLICY.refundLookbackDays, now)) return refuse("recent_refund");
-  if (!olderThan(sender.oldestClearedOwnPaymentAt, GIFT_POLICY.ownPaymentClearDays, now)) return refuse("no_payment_history");
-  if (!recipient || !recipient.active || recipient.guest) return refuse("recipient_unavailable");
+  if (!qa && !olderThan(sender.oldestClearedOwnPaymentAt, GIFT_POLICY.ownPaymentClearDays, now)) return refuse("no_payment_history");
+  if (!recipient || !recipient.active || (!qa && recipient.guest)) return refuse("recipient_unavailable");
   // 관계는 친구 또는 같은 길드 — 둘 중 하나라도 맺은 지 `minFriendDays`가 지났으면 된다.
   const ties = [recipient.friendSince, recipient.guildmateSince ?? null].filter((tie): tie is string => !!tie);
   if (ties.length === 0) return refuse("not_friend");
-  if (!ties.some(tie => olderThan(tie, GIFT_POLICY.minFriendDays, now))) return refuse("friend_too_new");
-  if (!sender.storeRegion || sender.storeRegion !== recipient.storeRegion) return refuse("region_mismatch");
+  if (!qa && !ties.some(tie => olderThan(tie, GIFT_POLICY.minFriendDays, now))) return refuse("friend_too_new");
+  if (!qa && (!sender.storeRegion || sender.storeRegion !== recipient.storeRegion)) return refuse("region_mismatch");
 
   const live = dedupe(input.orders).filter(order => countsTowardGiftLimits(order, now));
   const sent = live.filter(order => order.senderId === input.senderId);
@@ -207,7 +211,7 @@ export function giftEligibility(input: GiftEligibilityInput): GiftEligibility {
   if (sent.filter(order => within(order.createdAt, 1, now)).length >= GIFT_POLICY.sendPerDay) return refuse("send_daily");
   const sentMonth = sent.filter(order => within(order.createdAt, 30, now));
   if (sentMonth.length >= GIFT_POLICY.sendPer30Days) return refuse("send_monthly");
-  if (giftAmountAllowanceKrw(sender, sent, now) < input.priceKrw) return refuse("send_amount");
+  if (!qa && giftAmountAllowanceKrw(sender, sent, now) < input.priceKrw) return refuse("send_amount");
   // 돌아온 선물은 받은 것이 아니므로 받기 한도에 세지 않는다.
   const receivedLive = received.filter(order => settleGiftOrder(order, now).status !== "returned" && settleGiftOrder(order, now).status !== "revoked");
   if (receivedLive.filter(order => within(order.createdAt, 1, now)).length >= GIFT_POLICY.receivePerDay) return refuse("receive_daily");

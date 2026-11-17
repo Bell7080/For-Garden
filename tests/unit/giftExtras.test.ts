@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { achievementFacts, achievementRewardTotals } from "../../src/core/achievements";
-import { ACHIEVEMENT_GEM_BUDGET, GIFT_ACHIEVEMENT_SERIES } from "../../src/data/achievements";
+import { ACHIEVEMENT_GEM_BUDGET, ACHIEVEMENT_SERIES, GIFT_ACHIEVEMENT_SERIES } from "../../src/data/achievements";
 import { GIFT_GIVER_FRAME, isProfileFrameUnlocked } from "../../src/data/profileFrames";
 import { createDefaultSession } from "../../src/state/session";
 import { GIFT_RECIPIENT_PAGE_SIZE, giftRecipientPage, giftRecipientRows, type GiftRecipientSources } from "../../src/ui/giftRecipientModel";
@@ -35,8 +35,9 @@ describe("선물 받을 사람 고르기", () => {
 describe("선물 업적과 테두리", () => {
   it("선물 업적을 켜도 업적 젬 예산 안이다", () => {
     const base = achievementRewardTotals().find(({ currency }) => currency === "gems")?.amount ?? 0;
-    const gift = GIFT_ACHIEVEMENT_SERIES.tiers.reduce((sum, tier) => sum + (tier.reward.currency === "gems" ? tier.reward.amount : 0), 0);
-    expect(base + gift).toBeLessThanOrEqual(ACHIEVEMENT_GEM_BUDGET);
+    // 스위치가 켜져 있으므로 선물 업적 보상은 이미 전체 합계에 포함돼 있다.
+    expect(ACHIEVEMENT_SERIES).toContain(GIFT_ACHIEVEMENT_SERIES);
+    expect(base).toBeLessThanOrEqual(ACHIEVEMENT_GEM_BUDGET);
   });
 
   it("전달 횟수는 저장이 아니라 서버 맥락에서 읽는다", () => {

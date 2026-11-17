@@ -96,7 +96,7 @@ export const RECOLLECTION_PT_BR = {
   "recollection.tab.chapter6": "Capítulo 6",
   "recollection.tab.chapter7": "Capítulo 7",
   "recollection.summary.stage-4-3-pre": "Na passagem de inspeção, o trio recuperado bloqueia o caminho porque recebeu ordens.",
-  "recollection.summary.stage-4-6-pre": "Neuri menospreza Koma, oficial como ela, e Ripa pergunta se precisam mesmo lutar.",
+  "recollection.summary.stage-4-6-pre": "Pulsi reivindica o pesquisador como sua presa, e Ripa pergunta se precisam mesmo lutar.",
   "recollection.summary.stage-4-8-post": "O elevador se solta e despenca para profundezas que nenhum mapa mostra.",
   "recollection.summary.stage-5-1-pre": "Na entrada do bloco de detenção estão o aviso da filial e o trio que guarda a porta.",
   "recollection.summary.stage-5-3-post": "Delopi encontra a lista de detentos dos indivíduos da Aniquilação capturados.",

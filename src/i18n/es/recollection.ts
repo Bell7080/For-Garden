@@ -96,7 +96,7 @@ export const RECOLLECTION_ES = {
   "recollection.tab.chapter6": "Capítulo 6",
   "recollection.tab.chapter7": "Capítulo 7",
   "recollection.summary.stage-4-3-pre": "En el pasaje de inspección, el trío recuperado bloquea el paso porque se lo ordenaron.",
-  "recollection.summary.stage-4-6-pre": "Neuri menosprecia a Koma, oficial como ella, y Ripa pregunta si de verdad tienen que pelear.",
+  "recollection.summary.stage-4-6-pre": "Pulsi reclama al investigador como su presa, y Ripa pregunta si de verdad tienen que pelear.",
   "recollection.summary.stage-4-8-post": "El ascensor se suelta y cae hacia unas profundidades que no figuran en ningún mapa.",
   "recollection.summary.stage-5-1-pre": "En la entrada del bloque de reclusión esperan el aviso de la sede y el trío que guarda la puerta.",
   "recollection.summary.stage-5-3-post": "Delopi encuentra la lista de reclusos de los sujetos de Aniquilación capturados.",

@@ -96,7 +96,7 @@ export const RECOLLECTION_VI = {
   "recollection.tab.chapter6": "Chương 6",
   "recollection.tab.chapter7": "Chương 7",
   "recollection.summary.stage-4-3-pre": "Trong hành lang bảo trì, bộ ba bị thu hồi chặn đường vì đó là mệnh lệnh.",
-  "recollection.summary.stage-4-6-pre": "Neuri coi thường Koma dù cùng là cán bộ, còn Ripa hỏi có thật phải đánh không.",
+  "recollection.summary.stage-4-6-pre": "Pulsi giành nhà nghiên cứu làm con mồi của mình, còn Ripa hỏi có thật phải đánh không.",
   "recollection.summary.stage-4-8-post": "Thang máy đứt cáp rơi xuống nơi không có trên bản đồ.",
   "recollection.summary.stage-5-1-pre": "Ở lối vào khu giam giữ là lời cảnh báo của chi nhánh và bộ ba canh cửa.",
   "recollection.summary.stage-5-3-post": "Delopi tìm ra danh sách giam giữ những cá thể Hủy diệt bị bắt.",

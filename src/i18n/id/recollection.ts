@@ -96,7 +96,7 @@ export const RECOLLECTION_ID = {
   "recollection.tab.chapter6": "Bab 6",
   "recollection.tab.chapter7": "Bab 7",
   "recollection.summary.stage-4-3-pre": "Di lorong pemeriksaan, trio yang dipulangkan menghalangi jalan karena diperintah.",
-  "recollection.summary.stage-4-6-pre": "Neuri meremehkan Koma yang sesama perwira, dan Ripa bertanya apakah mereka sungguh harus bertarung.",
+  "recollection.summary.stage-4-6-pre": "Pulsi mengklaim sang Periset sebagai bagiannya, dan Ripa bertanya apakah mereka sungguh harus bertarung.",
   "recollection.summary.stage-4-8-post": "Lift yang talinya putus jatuh ke kedalaman yang tak ada di peta.",
   "recollection.summary.stage-5-1-pre": "Di pintu masuk blok penahanan ada peringatan cabang dan trio yang menjaga pintu.",
   "recollection.summary.stage-5-3-post": "Delopi menemukan daftar tahanan subjek Annihilation yang tertangkap.",

@@ -48,15 +48,15 @@ export const STAGE_4_4_PRE: DialogueStory = {
   ]),
 };
 
-/** 4-6 전 — 네우리가 같은 간부인 코마를 한 단계 낮춰 본다. */
+/** 4-6 전 — 회수조의 펄시가 합동 추격에 끼어 연구원을 제 몫으로 찜한다. 코마는 대상은 하나라고만 답한다. */
 export const STAGE_4_6_PRE: DialogueStory = {
   id: "stage-4-6-pre",
-  startNodeId: "neuri",
+  startNodeId: "pulsi",
   backdrop: "deepField",
   nodes: linear([
-    { id: "neuri", speaker: "네우리", body: "코마 님, 이번에는 꼭 성공해 주세요. 저희 간부님 체면도 걸려 있거든요.", standing: "neuri", cast: [{ id: "koma", slot: "left" }, { id: "neuri", slot: "right" }], act: "nod" },
-    { id: "koma", speaker: "코마", body: "…같은 간부다. 네 대장한테 그렇게 전해라.", standing: "koma", act: "lean" },
-    { id: "neuri2", speaker: "네우리", body: "어머, 전해 드릴게요. 웃으실 거예요.", standing: "neuri", act: "lean" },
+    { id: "pulsi", speaker: "펄시", body: "합동이라며? 그럼 연구원은 내 몫이야. 나머지는 코마가 알아서 해.", standing: "pulsi", cast: [{ id: "koma", slot: "left" }, { id: "pulsi", slot: "right" }], act: "hop" },
+    { id: "koma", speaker: "코마", body: "…대상은 하나다. 나눌 것 없다.", standing: "koma", act: "lean" },
+    { id: "pulsi2", speaker: "펄시", body: "그럼 먼저 닿는 쪽이 갖는 거다. 이번엔 눈 안 뗄 거야.", standing: "pulsi", act: "puff" },
     { id: "ripa", speaker: "리파", body: "…선배, 저쪽이 연구원이야. 이번엔 정말 해야 돼?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "shrink" },
     { id: "koma2", speaker: "코마", body: "…앞만 봐라.", standing: "koma", act: "nod" },
   ]),

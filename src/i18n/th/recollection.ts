@@ -96,7 +96,7 @@ export const RECOLLECTION_TH = {
   "recollection.tab.chapter6": "บทที่ 6",
   "recollection.tab.chapter7": "บทที่ 7",
   "recollection.summary.stage-4-3-pre": "ในทางตรวจซ่อม สามคนที่ถูกกู้กลับมาขวางทางเพราะเป็นคำสั่ง",
-  "recollection.summary.stage-4-6-pre": "เนอูรีดูแคลนโคมะที่เป็นแกนนำเหมือนกัน ส่วนริปาถามว่าต้องสู้จริงหรือ",
+  "recollection.summary.stage-4-6-pre": "พัลซีจองนักวิจัยไว้เป็นเหยื่อของตัวเอง ส่วนริปาถามว่าต้องสู้จริงหรือ",
   "recollection.summary.stage-4-8-post": "ลิฟต์ที่สายขาดร่วงลงสู่ที่ที่ไม่มีในแผนที่",
   "recollection.summary.stage-5-1-pre": "ที่ทางเข้าอาคารคุมขัง มีคำเตือนของสาขาและสามคนที่เฝ้าประตูอยู่",
   "recollection.summary.stage-5-3-post": "เดโลปีพบรายชื่อผู้ถูกคุมขังของเหล่าสมาชิกกลุ่มทำลายล้างที่ถูกจับ",

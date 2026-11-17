@@ -96,7 +96,7 @@ export const RECOLLECTION_DE = {
   "recollection.tab.chapter6": "Kapitel 6",
   "recollection.tab.chapter7": "Kapitel 7",
   "recollection.summary.stage-4-3-pre": "Im Wartungsgang versperrt das zurückgeholte Trio den Weg, weil es so befohlen wurde.",
-  "recollection.summary.stage-4-6-pre": "Neuri sieht auf Koma herab, obwohl sie gleichrangig sind, und Ripa fragt, ob sie wirklich kämpfen müssen.",
+  "recollection.summary.stage-4-6-pre": "Pulsi beansprucht den Forscher als seine Beute, und Ripa fragt, ob sie wirklich kämpfen müssen.",
   "recollection.summary.stage-4-8-post": "Der Aufzug reißt ab und stürzt in Tiefen, die auf keiner Karte stehen.",
   "recollection.summary.stage-5-1-pre": "Am Eingang des Haftblocks warten das Warnschild der Zweigstelle und das Trio, das die Tür bewacht.",
   "recollection.summary.stage-5-3-post": "Delopi findet die Gefangenenliste der gefassten Vernichtungs-Individuen.",

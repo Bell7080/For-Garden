@@ -96,7 +96,7 @@ export const RECOLLECTION_KO = {
   "recollection.tab.chapter6": "6장",
   "recollection.tab.chapter7": "7장",
   "recollection.summary.stage-4-3-pre": "점검 통로에서 회수된 삼인조가 명령이라서 앞을 막는다.",
-  "recollection.summary.stage-4-6-pre": "네우리가 같은 간부인 코마를 낮춰 보고, 리파는 정말 싸워야 하냐고 묻는다.",
+  "recollection.summary.stage-4-6-pre": "펄시가 연구원을 제 몫으로 찜하고, 리파는 정말 싸워야 하냐고 묻는다.",
   "recollection.summary.stage-4-8-post": "끊어진 승강기가 지도에 없는 아래로 떨어진다.",
   "recollection.summary.stage-5-1-pre": "감금동 입구에서 지부의 경고문과 문을 지키는 삼인조를 만난다.",
   "recollection.summary.stage-5-3-post": "델로피가 공멸 포획 개체의 수감 명단을 찾아낸다.",

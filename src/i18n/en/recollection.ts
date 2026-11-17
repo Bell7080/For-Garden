@@ -96,7 +96,7 @@ export const RECOLLECTION_EN = {
   "recollection.tab.chapter6": "Chapter 6",
   "recollection.tab.chapter7": "Chapter 7",
   "recollection.summary.stage-4-3-pre": "In the maintenance passage, the retrieved trio blocks the way because they were ordered to.",
-  "recollection.summary.stage-4-6-pre": "Neuri looks down on Koma, a fellow officer, and Ripa asks whether they really have to fight.",
+  "recollection.summary.stage-4-6-pre": "Pulsi calls dibs on the Researcher, and Ripa asks whether they really have to fight.",
   "recollection.summary.stage-4-8-post": "The elevator snaps loose and plunges into depths no map shows.",
   "recollection.summary.stage-5-1-pre": "At the detention block entrance stand the branch's warning sign and the trio guarding the door.",
   "recollection.summary.stage-5-3-post": "Delopi uncovers the prisoner roster of captured Annihilation subjects.",

@@ -96,7 +96,7 @@ export const RECOLLECTION_JA = {
   "recollection.tab.chapter6": "第6章",
   "recollection.tab.chapter7": "第7章",
   "recollection.summary.stage-4-3-pre": "点検通路で、回収された三人組が命令だからと行く手を阻む。",
-  "recollection.summary.stage-4-6-pre": "ネウリが同じ幹部のコマを見下し、リパは本当に戦うのかと尋ねる。",
+  "recollection.summary.stage-4-6-pre": "パルシが研究員を自分の獲物だと言い張り、リパは本当に戦わなきゃいけないのかと問う。",
   "recollection.summary.stage-4-8-post": "ワイヤーが切れた昇降機が、地図にない下層へ落ちていく。",
   "recollection.summary.stage-5-1-pre": "監禁棟の入口で、支部の警告文と扉を守る三人組に出くわす。",
   "recollection.summary.stage-5-3-post": "デロピが、捕獲された共滅個体の収監名簿を見つけ出す。",

@@ -39,12 +39,12 @@ export const OPENING_TRAIN: DialogueStory = {
   nodes: [
     // ── 열차 안: 토리카 ───────────────────────────────────────────────
     { id: "wake", speaker: "???", body: "연구원님, 연구원님! 눈 좀 떠 보세요. 창밖에 도시가 보여요!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "hop", nextId: "greet" },
-    { id: "greet", speaker: "토리카", body: "저는 토리카예요! 오늘부터 연구원님을 지키는 호위 렐릭이에요. 도착할 때까지 옆에 꼭 붙어 있을게요.", standing: "torika", act: "nod", nextId: "relicNote" },
+    { id: "greet", speaker: "토리카", body: "아, 저는 토리카예요! 오늘부터 연구원님을 지킬 호위 렐릭이고요. 도착할 때까지 옆에 꼭 붙어 있을게요.", standing: "torika", act: "nod", nextId: "relicNote" },
     // 토리카가 스스로 「렐릭」이라 부르는 순간, 그 말이 무엇인지 지문이 한 번 짚는다. 캐릭터가 자기소개처럼
     // 풀어 말하면 첫 만남의 대사가 설명서가 된다 — 무대 밖의 목소리가 맡는다.
     { id: "relicNote", speaker: "", body: "렐릭 — 화석 속 멸종 동물의 DNA를 되살려 빚어낸 인간형 복원체. 이터널 시티는 그들을 그렇게 부른다.", nextId: "relicNote2" },
     { id: "relicNote2", speaker: "", body: "되살아난 렐릭은 원종의 힘과 함께, 이성을 삼킬 수 있는 본능 「야성」을 안고 살아간다.", nextId: "window" },
-    { id: "window", speaker: "토리카", body: "저기, 창밖에 탑들 보이세요? 저기가 이터널 시티예요. 이제 거의 다 왔어요.", standing: "torika", act: "lean", nextId: "answer" },
+    { id: "window", speaker: "토리카", body: "저기 높은 탑들 보이세요? 저기가 이터널 시티예요. 이제 거의 다 왔어요.", standing: "torika", act: "lean", nextId: "answer" },
     {
       id: "answer", speaker: "토리카", body: "도착하면 제일 먼저 뭘 하고 싶으세요?", standing: "torika",
       choices: [
@@ -52,7 +52,7 @@ export const OPENING_TRAIN: DialogueStory = {
         { id: "work", label: "도시부터 둘러볼게", nextId: "ready" },
       ],
     },
-    { id: "warm", speaker: "토리카", body: "그럼 제가 소개해 드릴게요! 도착하면 같이 인사하러 가요.", standing: "torika", act: "hopTwice", nextId: "peek" },
+    { id: "warm", speaker: "토리카", body: "정말요? 그럼 제가 다 소개해 드릴게요! 도착하면 다른 애들한테도 같이 인사하러 가요.", standing: "torika", act: "hopTwice", nextId: "peek" },
     { id: "ready", speaker: "토리카", body: "그럼 제가 안내할게요! 맛있는 가게부터… 아, 아니, 중요한 연구소부터요!", standing: "torika", act: "shake", nextId: "peek" },
 
     // ── 도디: 부끄럽지만 반짝반짝한 1호 팬 ──────────────────────────────
@@ -60,18 +60,18 @@ export const OPENING_TRAIN: DialogueStory = {
     { id: "callDodi", speaker: "토리카", body: "도디! 뒤에 숨어 있지 말고 나와서 인사해야지!", standing: "torika", act: "hop", nextId: "fan" },
     { id: "fan", speaker: "도디", body: "와아… 진짜다. 진짜 연구원님이다! 저, 저는 기록병 도디예요! 연구원님이 쓰신 복원 보고서는 한 줄도 빼놓지 않고 다 읽었어요!", standing: "dodi", act: "hopTwice", nextId: "shy" },
     { id: "shy", speaker: "도디", body: "그, 그러니까… 제 일지 첫 장에… 이름 한 번만 적어 주시면 안 될까요…?", standing: "dodi", act: "shrink", nextId: "title" },
-    { id: "title", speaker: "도디", body: "오늘부터 연구원님은 저희 대장님이에요! 대장님, 대장님… 헤헤, 벌써 입에 붙었어요!", standing: "dodi", act: "hop", nextId: "halt" },
+    { id: "title", speaker: "도디", body: "아, 그리고… 오늘부터 연구원님은 저희 대장님이에요! 대장님, 대장님… 헤헤, 벌써 입에 붙었어요!", standing: "dodi", act: "hop", nextId: "halt" },
 
     // ── 파루아: 도디를 붙잡으며 연구원에게 흥미를 ───────────────────────
     { id: "halt", speaker: "???", body: "도디, 조금만 떨어져. 연구원님 앉으실 자리도 없잖아.", standing: "parua", cast: ROGUE_TRIO, act: "lean", nextId: "sorry" },
     { id: "sorry", speaker: "도디", body: "앗, 죄, 죄송해요! 너무 반가워서 그만…!", standing: "dodi", act: "recoil", nextId: "parua" },
-    { id: "parua", speaker: "파루아", body: "저는 파루아예요. 뒤를 살피는 게 제 일이에요.", standing: "parua", act: "nod", nextId: "sniff" },
+    { id: "parua", speaker: "파루아", body: "인사가 늦었네요. 파루아예요. 저는 뒤에서 따라갈게요.", standing: "parua", act: "nod", nextId: "sniff" },
     { id: "sniff", speaker: "파루아", body: "멀미는 안 하셨어요? 여기까지 오는 길이 꽤 흔들렸을 텐데… 창문 좀 열어 드릴까요?", standing: "parua", act: "lean", nextId: "scold" },
-    { id: "scold", speaker: "토리카", body: "조금만 참아 주세요. 정거장에 도착하면 바로 내릴 수 있어요!", standing: "torika", act: "shake", nextId: "quake" },
+    { id: "scold", speaker: "토리카", body: "멀미 나시면 조금만 참으세요. 정거장에 닿으면 바로 내릴 수 있어요!", standing: "torika", act: "shake", nextId: "quake" },
 
     // ── 경보: 큰 진동, 그리고 검은 베일 ───────────────────────────────
-    { id: "quake", speaker: "", body: "쿠구구궁…!! 객차 전체가 크게 들썩인다.", cue: "rumble", nextId: "alarm" },
-    { id: "alarm", speaker: "안내 방송", body: "경보. 경보. 선로 전방에 미확인 개체 접근. 승객 여러분은 즉시 자리를 지켜 주십시오.", cue: "alarm", sign: "broadcast", nextId: "sense" },
+    { id: "quake", speaker: "", body: "쿠구구궁…!! 객차 전체가 크게 들썩였다.", cue: "rumble", nextId: "alarm" },
+    { id: "alarm", speaker: "안내 방송", body: "경보. 경보. 선로 전방에 미확인 개체가 접근 중입니다. 승객 여러분은 자리에서 움직이지 마십시오.", cue: "alarm", sign: "broadcast", nextId: "sense" },
     { id: "sense", speaker: "파루아", body: "…앞에서 뭔가 와요. 하나가 아니에요.", standing: "parua", act: "tremble", nextId: "guard" },
     { id: "guard", speaker: "토리카", body: "연구원님, 제 뒤로 오세요! 무슨 일이 있어도 제가 막을게요!", standing: "torika", act: "hop", nextId: "veil" },
     { id: "veil", speaker: "???", body: "찾았다. Garden이 내려보낸 연구원.", standing: "koma", cast: [{ id: "koma", slot: "center", veiled: true }], cue: "rumble", nextId: "order" },
@@ -80,14 +80,14 @@ export const OPENING_TRAIN: DialogueStory = {
     // ── 폭파: 열차에서 전장으로 ──────────────────────────────────────
     { id: "blast", speaker: "", body: "콰아아아앙!!", cast: [], cue: "explosion", backdrop: "wreck", nextId: "aftermath" },
     { id: "aftermath", speaker: "토리카", body: "콜록, 콜록… 연구원님, 괜찮으세요?! 열차가… 선로 밖으로 떨어졌어요…!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "shake", nextId: "record" },
-    { id: "record", speaker: "도디", body: "대장님은 무사해요! 파루아, 이쪽 좀 잡아 줘. 일단 여기서 나가야겠어!", standing: "dodi", cast: ROGUE_TRIO, act: "tremble", nextId: "three" },
-    { id: "three", speaker: "파루아", body: "쉿. 셋이에요. 연기 너머에서 이쪽으로 오고 있어요.", standing: "parua", act: "lean", nextId: "toby" },
+    { id: "record", speaker: "도디", body: "다치신 데는 없어 보여! 파루아, 이쪽 좀 같이 잡아 줘. 일단 여기서 빠져나가야 해!", standing: "dodi", cast: ROGUE_TRIO, act: "tremble", nextId: "three" },
+    { id: "three", speaker: "파루아", body: "쉿. 누가 와요. 셋이에요… 연기 너머에서 이쪽으로 오고 있어요.", standing: "parua", act: "lean", nextId: "toby" },
 
     // ── 공멸의 우당탕탕 삼인조 ──────────────────────────────────────
     { id: "toby", speaker: "토비", body: "찾았다아! 저기 있다, 그 연구원! 이번엔 내가 제일 먼저 잡는다!", standing: "toby", cast: RAID_TRIO, act: "hopTwice", cue: "impact", nextId: "amo" },
     { id: "amo", speaker: "아모", body: "토, 토비… 목소리 좀 줄여. 코마가 조용히 움직이랬잖아…", standing: "amo", act: "tremble", nextId: "ripa" },
     { id: "ripa", speaker: "리파", body: "에이, 어차피 다 들켰는걸? 저쪽 셋 표정 좀 봐. 완전 재밌다!", standing: "ripa", act: "hop", nextId: "demand" },
-    { id: "demand", speaker: "토비", body: "우리는 공멸! 그 연구원만 넘기면 너희는 곱게 보내 줄게!", standing: "toby", act: "shake", nextId: "refuse" },
+    { id: "demand", speaker: "토비", body: "우리는 공멸이다! 그 연구원만 넘겨. 그럼 너희는 곱게 보내 줄게!", standing: "toby", act: "shake", nextId: "refuse" },
 
     // ── 맞서는 쁘띠 로그 ──────────────────────────────────────────
     { id: "refuse", speaker: "토리카", body: "싫어요! 연구원님은… 우리 대장님이에요. 한 발짝도 못 지나가요!", standing: "torika", cast: ROGUE_TRIO, act: "hop", cue: "impact", nextId: "brave" },

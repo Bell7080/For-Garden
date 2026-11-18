@@ -2,6 +2,7 @@ import { applyApiOriginPolicy, qaToolsAllowed } from "./httpSecurity";
 import { handleArenaCall } from "./liveArena";
 /** 인증된 본인의 게임·친구 상태만 조작하는 HTTP 경계. */
 import { GameCallError, handleGameCall } from "./gameHandler";
+import { clientResponseState } from "./clientState";
 import { createSupabaseStore } from "./supabaseStore";
 import { refreshStaleProfileRecords } from "./friendProfileFallback";
 import { isServerGameMethod } from "./gameMethods";
@@ -31,6 +32,10 @@ export default async function handler(req: Req, res: Res): Promise<void> {
   // 개별 RPC 제한만 두면 여러 번의 조회·재시도와 대기열 시간이 30초를 넘는다.
   const deadline = AbortSignal.timeout(25_000);
   let callMethod = "invalid_request";
+  // 느린 호출이 어느 구간에서 멈췄는지 — 인증 · 관문(속도 제한·기기) · 규칙과 저장.
+  const phases: Record<string, number> = {};
+  let phaseAt = startedAt;
+  const mark = (name: string) => { const now = Date.now(); phases[name] = now - phaseAt; phaseAt = now; };
   try {
     const raw = typeof req.body === "string" ? req.body : JSON.stringify(req.body ?? null);
     if (Number(req.headers["content-length"] ?? 0)>MAX_BODY_BYTES || new TextEncoder().encode(raw).length>MAX_BODY_BYTES) throw new GameCallError(413,"body_too_large");
@@ -48,6 +53,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     const who = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anonKey ?? "", authorization: auth }, signal: AbortSignal.any([deadline, AbortSignal.timeout(10000)]) });
     const user = who.ok ? await who.json() as { id?: string } : null;
     if (!user?.id) throw new GameCallError(401,"not_authenticated");
+    mark("auth");
     const store = createSupabaseStore({ url, serviceKey, signal: deadline });
     // 나중에 접속한 기기가 이긴다(`deviceSession.ts`). 기기 확인은 속도 제한과 함께 나가 왕복을 늘리지 않는다.
     const device = deviceSessionOf(body);
@@ -57,6 +63,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     ]);
     if (!rate.allowed) { res.setHeader("retry-after",String(rate.retryAfter)); throw new GameCallError(429,"rate_limited"); }
     if (!deviceOk) throw new GameCallError(409, SESSION_REPLACED_CODE);
+    mark("gate");
     const uid = user.id;
     if (body.method === "session.claim" || body.method === "session.check") { res.status(200).json({ ok: true, result: null }); return; }
     const guild: GuildBackend = createSupabaseGuildBackend(async (actor, method, args, requestId) => store.guildCall(uid, method, actor, args, requestId));
@@ -85,7 +92,9 @@ export default async function handler(req: Req, res: Res): Promise<void> {
       if (["getFriends","getRequests","searchUsers","getRecommendations"].includes(method)) await refreshStaleProfileRecords(response?.result, (id) => store.load(id), new Date());
       res.status(200).json(response);
     } else {
-      res.status(200).json(await handleGameCall(user.id,body,{store,strict:true,guild,signal:deadline,developmentTools:qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS)}));
+      const response = await handleGameCall(user.id,body,{store,strict:true,guild,signal:deadline,developmentTools:qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS) });
+      mark("game");
+      res.status(200).json(clientResponseState(response, isReadMethod(body.method) ? (body as { knownRevision?: unknown }).knownRevision : undefined));
     }
   } catch (error) {
     if (error instanceof GameCallError) { res.status(error.status).json({ ok:false,code:error.code,message:error.message,...(error.domainCode ? {domainCode:error.domainCode} : {}),...(error.detail ? {detail:error.detail} : {}) }); return; }
@@ -94,7 +103,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
   } finally {
     const elapsedMs = Date.now() - startedAt;
     // 사용자·토큰·본문은 남기지 않고 병목이 난 게임 메서드만 식별한다.
-    if (elapsedMs >= 2000) console.warn(JSON.stringify({event:"slow_game_request",method:callMethod,elapsedMs}));
+    if (elapsedMs >= 2000) console.warn(JSON.stringify({event:"slow_game_request",method:callMethod,elapsedMs,phases}));
   }
 }
 

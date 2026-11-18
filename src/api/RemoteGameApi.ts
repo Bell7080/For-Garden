@@ -69,7 +69,9 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
     const kept = retryIds.get(callKey);
     const requestId = isReadMethod(method) ? undefined : (kept ?? newId());
     if (requestId && callKey) retryIds.set(callKey, requestId);
-    const body = JSON.stringify({ method, args, ...(requestId ? { requestId } : {}), ...deviceSessionField() });
+    // 조회는 지금 가진 revision을 함께 보낸다 — 서버 상태가 그대로면 전체 저장을 다시 싣지 않는다(`clientState.ts`).
+    const knownRevision = isReadMethod(method) && appliedRevision >= 0 ? String(appliedRevision) : undefined;
+    const body = JSON.stringify({ method, args, ...(requestId ? { requestId } : {}), ...(knownRevision ? { knownRevision } : {}), ...deviceSessionField() });
     let lastError: unknown;
     const signal = timeoutSignal(35000);
     // 네트워크 단절은 같은 requestId로 재전송해도 서버가 한 번만 반영한다.
@@ -110,7 +112,8 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
         if (staleRetries >= 2) throw new RemoteGameApiError(409, "stale_response");
         return call(method, args, staleRetries + 1);
       }
-      if (!Number.isFinite(revision) || revision >= appliedRevision) {
+      // 상태가 빠진 답은 이미 가진 revision 그대로라는 뜻이다 — 다시 검증·반영하지 않는다(전투 중 조회가 메인 스레드를 붙잡지 않게).
+      if (json.state !== undefined && (!Number.isFinite(revision) || revision >= appliedRevision)) {
         if (Number.isFinite(revision)) appliedRevision = revision;
         options.applyState(saveManager.parse(json.state));
       }

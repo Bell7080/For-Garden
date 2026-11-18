@@ -17,6 +17,11 @@ export const FEVER_INK = {
   directions: 12,
   crowdThreshold: 10,
   crowdDirections: 6,
+  /**
+   * 그래픽 품질이 낮을수록 줄이는 방향 수. 겹 하나가 SD 한 몸을 다시 그리는 것이라, 폭주한 몸 하나가 방향 수의 두 배만큼
+   * 더 그려진다 — 「낮음」을 골라도 이 몫이 그대로여서 품질 설정이 전투에서 거의 듣지 않았다.
+   */
+  qualityDirections: { high: 12, balanced: 8, low: 6 },
   /** 붉은 띠의 두께(px) — 가장 얇을 때와 박자의 정점에서 더하는 몫. */
   thickness: [5, 9],
   /** 먹선은 붉은 띠보다 이만큼 더 바깥에 선다. */
@@ -54,8 +59,9 @@ export function feverFade(ageMs: number, endedMs?: number): number {
  * 몸 둘레로 비껴 그릴 겹들. **먹선이 먼저**(더 바깥, 더 뒤), 붉은 띠가 그 안쪽이다 — 순서가
  * 바뀌면 붉은 띠를 먹이 덮어 테두리가 검게만 보인다.
  */
-export function feverOutlineDirections(livingCount: number): number {
-  return livingCount > FEVER_INK.crowdThreshold ? FEVER_INK.crowdDirections : FEVER_INK.directions;
+export function feverOutlineDirections(livingCount: number, quality: keyof typeof FEVER_INK.qualityDirections = "high"): number {
+  const byQuality = FEVER_INK.qualityDirections[quality];
+  return livingCount > FEVER_INK.crowdThreshold ? Math.min(byQuality, FEVER_INK.crowdDirections) : byQuality;
 }
 
 export function feverOutlineSteps(pulse: number, fade: number, scale = 1, directions: number = FEVER_INK.directions): PuppetAfterimage[] {

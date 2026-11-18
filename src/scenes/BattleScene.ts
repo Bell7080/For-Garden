@@ -1,4 +1,5 @@
 import { profileFace } from "../state/playerProfile";
+import { holdLiveOps } from "../managers/liveOps";
 import { ancientStageFloor, ancientStageId, ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import { getAncientStrataFloor } from "../core/ancientStrataBattle";
 import { storyDifficultyOf } from "../core/storyDifficulty";
@@ -443,6 +444,8 @@ export class BattleScene extends Phaser.Scene {
   private battleSpeed: BattleSpeed = 1;
   /** 3배속을 열 수 있는가. 서버가 답하기 전에는 닫힌 것으로 둔다. */
   private battleMember = false;
+  /** 판이 설 때 굳힌 그래픽 품질 — 폭주 테두리의 겹 수가 읽는다. */
+  private graphicsQuality: "high" | "balanced" | "low" = "high";
   /** E2E가 Canvas의 짧은 회복 표시 수명을 관찰하기 위한 개수이며 게임 상태에는 관여하지 않는다. */
   private healPopups = 0;
   /** 켜져 있으면 게이지가 찬 아군 궁극기를 다음 프레임에 자동 발동한다. */
@@ -778,6 +781,7 @@ export class BattleScene extends Phaser.Scene {
     const battleSettings = currentSettings.game;
     // 전투 시작 시 하나의 최종 정책 스냅샷을 모든 HUD와 카메라 연출에 동일하게 전달한다.
     this.motion = motionPolicy(currentSettings);
+    this.graphicsQuality = currentSettings.presentation.graphicsQuality;
     // 멤버십은 서버에 물어야 알 수 있어 **닫힌 쪽에서 시작한다** — 저장에 3이 있으면 답이 올 때까지
     // 2로 싸우다가 멤버십이 확인되는 순간 3으로 돌아간다(`resolveBattleMembership`).
     this.battleMember = false;
@@ -839,8 +843,11 @@ export class BattleScene extends Phaser.Scene {
     const onWake = (): void => this.onWake();
     this.events.on(Phaser.Scenes.Events.SLEEP, onSleep);
     this.events.on(Phaser.Scenes.Events.WAKE, onWake);
+    // 전투가 도는 동안 운영 조회를 쉰다 — 조회 응답을 세션에 얹는 일이 프레임을 끊었다(`holdLiveOps`).
+    const releaseLiveOps = holdLiveOps();
     // 씬의 사건 통은 다시 시작해도 비워지지 않는다 — 판마다 걸면 깨어날 때 처리기가 판 수만큼 돈다.
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      releaseLiveOps();
       this.events.off(Phaser.Scenes.Events.SLEEP, onSleep);
       this.events.off(Phaser.Scenes.Events.WAKE, onWake);
     });
@@ -2690,7 +2697,7 @@ export class BattleScene extends Phaser.Scene {
 
   /** 좌표·방향·체력 바·앞뒤 순서를 시뮬레이션 상태에 맞춘다. */
   private syncViews(): void {
-    const outlineDirections = feverOutlineDirections(this.state.fighters.filter(isFighterAlive).length);
+    const outlineDirections = feverOutlineDirections(this.state.fighters.filter(isFighterAlive).length, this.graphicsQuality);
     const feverMarks: Parameters<EffectManager["syncFeverMarks"]>[0][number][] = [];
     this.views.forEach((view) => {
       // 사망 사건을 놓친 몸도 여기서 붙잡는다 — 코어가 쓰러뜨렸는데 화면만 모르면 시체가 선 채로 남는다.

@@ -213,12 +213,12 @@ export class PremiumScene extends Phaser.Scene {
    * 상품은 **받는 즉시** 그리고, 지갑 맞추기는 그 뒤에 따로 한다 — 지갑 조회가 늦거나 실패해도 상품이 기다리지 않는다.
    * 더 새 조회가 시작되면 옛 조회의 답은 버린다.
    */
-  private async refresh(): Promise<void> {
+  private async refresh(options: { quiet?: boolean } = {}): Promise<void> {
     const seq = ++this.refreshSeq;
     const alive = (): boolean => !this.closed && seq === this.refreshSeq;
     let response: Awaited<ReturnType<typeof gameApi.getProducts>> | undefined;
     try {
-      response = await readWithRetry(() => withBusy(this, gameApi.getProducts("premium")), { alive, retryable: (error) => !(error instanceof GameApiError) });
+      response = await readWithRetry(() => options.quiet ? gameApi.getProducts("premium") : withBusy(this, gameApi.getProducts("premium")), { alive, retryable: (error) => !(error instanceof GameApiError) });
     } catch (error) {
       if (alive()) logError("premium.products", "[premium] 상품 목록 조회 실패", error);
       return;
@@ -232,10 +232,8 @@ export class PremiumScene extends Phaser.Scene {
     this.serverOffsetMs = Date.parse(response.serverTime) - Date.now();
     this.renderProducts();
     if (GIFTING_ENABLED) void this.loadGiftProducts(alive);
-    // 상품을 산 뒤에는 지갑이 바뀌었으므로 상단 줄도 함께 맞춘다.
-    const state = await gameApi.getPlayerState().catch(() => undefined);
-    if (!state || !alive() || !this.scene.isActive()) return;
-    session.wallet = { ...session.wallet, ...state.wallet };
+    // 상품을 산 뒤에는 지갑이 바뀌었으므로 상단 줄도 함께 맞춘다. 서버 연결이면 방금 조회의 응답이 이미 세션에 얹혔고
+    // 이 기기 구현은 세션을 직접 바꾸므로, 지갑만 따로 다시 묻지 않는다(그 왕복이 화면 진입을 한 번 더 붙잡았다).
     this.topBar?.refresh();
   }
 
@@ -333,7 +331,7 @@ export class PremiumScene extends Phaser.Scene {
       if (product.acquisition.kind === "free") { if (product.purchasable) void this.claimFree(product); else this.notice(t("shop.premium.freeClaimed"), true); return; }
       if (subscribed) { void this.claimSubscriptionDaily(product); return; }
       // 결제 비활성 상품도 상세 팝업 안에서 지급량·가격·사유를 확인한다.
-      new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice(t("shop.premium.purchased")); await this.refresh(); });
+      new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, (result) => { this.applyPurchaseResult(result); this.notice(t("shop.premium.purchased")); void this.refresh({ quiet: true }); });
     });
     if (kind === "wide") this.paintWideCard(card, product, width, action); else this.paintGridCard(card, product, width, action, options.gift === true);
     if (soldOut) card.setAlpha(PREMIUM_SOLD_OUT_ALPHA);
@@ -570,7 +568,8 @@ export class PremiumScene extends Phaser.Scene {
       const result = await withBusy(this, gameApi.purchaseProduct({ storefront: "premium", productId: product.id, quantity: 1 }));
       this.applyPurchaseResult(result);
       openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
-      await this.refresh();
+      // 영수증은 이미 떴다 — 목록 맞추기는 뒤에서 조용히 한다(그 위에 대기 막을 다시 덮지 않는다).
+      void this.refresh({ quiet: true });
       void notificationManager.refresh().catch(() => undefined);
     } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claiming = false; }
   }
@@ -584,7 +583,8 @@ export class PremiumScene extends Phaser.Scene {
       const result = await withBusy(this, gameApi.claimPassDailyBonus({ productId: product.id, requestId: globalThis.crypto?.randomUUID?.() ?? `daily-${Date.now()}` }));
       this.applyPurchaseResult(result);
       openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
-      await this.refresh();
+      // 영수증은 이미 떴다 — 목록 맞추기는 뒤에서 조용히 한다(그 위에 대기 막을 다시 덮지 않는다).
+      void this.refresh({ quiet: true });
       // 하단 탭·구독 라벨의 점이 곧바로 꺼진다.
       void notificationManager.refresh().catch(() => undefined);
     } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claiming = false; }
@@ -653,7 +653,8 @@ export class PremiumScene extends Phaser.Scene {
       session.wallet = { ...result.wallet };
       this.topBar?.refresh();
       openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
-      await this.refresh();
+      // 영수증은 이미 떴다 — 목록 맞추기는 뒤에서 조용히 한다(그 위에 대기 막을 다시 덮지 않는다).
+      void this.refresh({ quiet: true });
       void notificationManager.refresh().catch(() => undefined);
     } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claiming = false; }
   }
@@ -745,8 +746,8 @@ export class PremiumScene extends Phaser.Scene {
       const items = await watchAdSlot("gem-ad");
       if (!items) { this.notice(t("stamina.adCancelled")); return; }
       this.topBar?.refresh();
-      await this.refresh();
       openRewardPopup(this, this.popups, { items });
+      void this.refresh({ quiet: true });
     } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claiming = false; }
   }
 
@@ -797,8 +798,8 @@ export class PremiumScene extends Phaser.Scene {
       const items = await watchAdSlot("daily-bonus-ad");
       if (!items) { this.notice(t("stamina.adCancelled")); return; }
       this.topBar?.refresh();
-      await this.refresh();
       openRewardPopup(this, this.popups, { items });
+      void this.refresh({ quiet: true });
     } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claiming = false; }
   }
 

@@ -1,4 +1,5 @@
 import type Phaser from "phaser";
+import { withBusy } from "../ui/BusyOverlay";
 import { gameApi } from "../api/FakeServer";
 import type { DungeonSweepResponse, PlayerStateDto } from "../api/contracts";
 import type { DungeonRunCost } from "../core/dungeonShortcut";
@@ -57,7 +58,7 @@ export async function openDungeonSweep(flow: DungeonSweepFlow): Promise<void> {
   flow.setBusy(true);
   let membership: boolean;
   try {
-    const state = await gameApi.getPlayerState();
+    const state = await withBusy(scene, gameApi.getPlayerState());
     if (!scene.scene.isActive()) return;
     flow.setDailyAdRewards(state.dailyAdRewards);
     membership = state.adFreeMembership;

@@ -179,6 +179,12 @@ import { t } from "../i18n";
 
 /** 사용자 룬 이름의 서버 정책이다. UI 글자 수와 무관하게 API 경계가 최종 권한을 가진다. */
 export const MAX_RUNE_NAME_LENGTH = 20;
+/**
+ * 저장 장부에 남기는 일반 처리 영수증 수. 같은 요청의 재전송을 되찾는 몫이라 최근 것만 있으면 된다 — 서버는 요청 ID별
+ * 영수증 표(`findReceipt`)를 따로 둔다. 256개를 두던 때는 장부가 저장의 8할(267KB)이 되어 읽기·쓰기·비교가 모두 느려졌다.
+ * 결제 거래·검증 영수증과 진행 중인 원정 런의 영수증은 수와 무관하게 남는다.
+ */
+export const RECEIPT_KEEP = 48;
 
 /** QA 빌드의 고대 지층 순위 표본. 일반 빌드는 서버가 순위를 주입하기 전까지 아무것도 세우지 않는다. */
 /** QA 표본 순위 — 줄을 눌러 카드를 열어 보도록 id는 친구 표본(`PREVIEW_DIRECTORY`)의 네 관계(없음·받은 신청·보낸 신청·친구)를 가리킨다. */
@@ -1084,7 +1090,7 @@ export class FakeServer implements GameApi {
     // 로컬 저장 용량을 제한한다. 활성 런의 영수증은 정산될 때까지 보존한다.
     const protectedRun = next.expedition.run?.runId;
     const entries = Object.entries(journal.receipts);
-    journal.receipts = Object.fromEntries(entries.filter(([key, receipt], index) => (key.startsWith('["platformTransaction",') || key.startsWith('["platformVerification",')) || index >= entries.length - 256 || (protectedRun && receipt.identity.includes(protectedRun))));
+    journal.receipts = Object.fromEntries(entries.filter(([key, receipt], index) => (key.startsWith('["platformTransaction",') || key.startsWith('["platformVerification",')) || index >= entries.length - RECEIPT_KEEP || (protectedRun && receipt.identity.includes(protectedRun))));
     next.serverJournal = journal;
   }
 

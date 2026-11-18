@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { drawLayer, drawShapeEdge, slantedRect } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { drawGlyph, type GlyphName } from "./glyphs";
+import { isTap } from "./tapGuard";
 
 export interface TextInputFieldOptions {
   width: number;
@@ -109,7 +110,17 @@ export class TextInputField extends Phaser.GameObjects.Container {
     this.field.addEventListener("focus", () => this.setCaretVisible(true));
     this.field.addEventListener("blur", () => this.setCaretVisible(false));
     const hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerup", () => this.field.focus());
+    // **칸 안에서 누르고 칸 안에서 뗀 탭만** 자판을 연다. Phaser는 손을 뗀 자리의 물체에 `pointerup`을
+    // 보내므로, 아래 목록을 위로 끌어 올리다 이 칸 위에서 놓은 손도 초점을 주어 자판이 불쑥 올라왔다
+    // (룬 정비 창 — 검색 칸 바로 밑이 목록이다, 응태 2026-11-18).
+    let pressed = false;
+    hit.on("pointerdown", () => { pressed = true; });
+    hit.on("pointerout", () => { pressed = false; });
+    hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      const tap = pressed && isTap(pointer);
+      pressed = false;
+      if (tap) this.field.focus();
+    });
     this.add(hit);
 
     this.follow = () => {

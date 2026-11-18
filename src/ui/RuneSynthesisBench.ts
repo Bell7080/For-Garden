@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { BASE_WIDTH } from "../config/gameConfig";
-import { runeRarityLabel, type RuneInstance, type RuneRarity } from "../core/runes";
+import { formatRuneOptionValue, runeOptionValue, runeRarityLabel, type RuneInstance, type RuneRarity, type RuneStatKey } from "../core/runes";
 import { isRuneSynthesisMaterial, RUNE_SYNTHESIS_INPUTS, RUNE_SYNTHESIS_RULES, runeSynthesisRarityOdds, runeSynthesisTraitOdds } from "../core/runeSynthesis";
 import { RUNE_TRAIT_GRADES } from "../core/runeTraits";
 import { session } from "../state/session";
@@ -14,8 +14,10 @@ import { mountRunePickerGrid } from "./runePickerGrid";
 import { runePickerSize } from "./runePickerLayout";
 import { researchPlateBevel } from "./researchBenchLayout";
 import { addRuneFrame, RUNE_ACCENT } from "./runeIcons";
-import { RUNE_SYNTHESIS, runeSynthesisButtonCenter, runeSynthesisCenter, runeSynthesisOddsBounds, runeSynthesisPlateBounds, runeSynthesisVertices } from "./runeSynthesisLayout";
+import { RUNE_SYNTHESIS, RUNE_SYNTHESIS_INFO, runeSynthesisInfoBounds, runeSynthesisButtonCenter, runeSynthesisCenter, runeSynthesisOddsBounds, runeSynthesisPlateBounds, runeSynthesisVertices } from "./runeSynthesisLayout";
 import { addSectionTitle } from "./SectionTitle";
+import { runeStatLabel } from "./RunePopup";
+import { runeTraitName } from "./runeTraitPresentation";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 import { motionPolicy } from "../core/settings";
@@ -48,6 +50,49 @@ export interface RuneSynthesisBenchHandles {
   core: Phaser.GameObjects.Container;
   /** 확률 판. 연출이 도는 동안 흐려 둔다 — 사라진 재료의 확률이 그대로 서 있으면 안 된다. */
   odds: Phaser.GameObjects.Container;
+  /** 넣은 룬의 능력 판들. 연출이 돌면 재료와 함께 걷는다. */
+  details: Phaser.GameObjects.Container;
+}
+
+const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
+
+/**
+ * 넣은 룬 하나의 능력 판 — 주 옵션 둘(굵게, 등급색 값) → 보조 옵션(흐리게) → 특성 한 줄.
+ * 액자의 색만으로는 무엇을 녹이는지 읽히지 않아, 누르지 않고도 세 재료를 견줄 수 있게 곁에 적는다.
+ */
+function addRuneDetail(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, index: number, rune: RuneInstance): void {
+  const I = RUNE_SYNTHESIS_INFO;
+  const accent = RUNE_ACCENT[rune.rarity];
+  const stats: ReadonlyArray<{ key: RuneStatKey; main: boolean }> = [
+    ...rune.mainStats.map(({ key }) => ({ key, main: true })),
+    ...rune.subStats.map(({ key }) => ({ key, main: false })),
+  ];
+  const lines = stats.length + 1;
+  const b = runeSynthesisInfoBounds(BASE_WIDTH, index, lines);
+  const width = b.right - b.left;
+  const height = b.bottom - b.top;
+  parent.add(drawLayer(scene, (b.left + b.right) / 2, (b.top + b.bottom) / 2,
+    chipPoints(width, height, { bevel: { topLeft: 14, topRight: 0, bottomRight: 14, bottomLeft: 0 } }),
+    { fill: 0x0a1017, alpha: 0.82, edge: accent, edgeAlpha: 0.6 }));
+  const left = b.left + I.pad + 4;
+  const right = b.right - I.pad - 4;
+  stats.forEach(({ key, main }, row) => {
+    const y = b.top + I.pad + I.lineHeight * (row + 0.5);
+    const value = scene.add.text(right, y, formatRuneOptionValue(key, runeOptionValue(rune, key)), main
+      ? textStyle({ role: "display", size: I.mainSize, color: hex(accent) })
+      : textStyle({ role: "emphasis", size: I.subSize, color: COLOR.ink })).setOrigin(1, 0.5);
+    const label = scene.add.text(left, y, runeStatLabel(key), main
+      ? textStyle({ role: "emphasis", size: I.mainSize, color: COLOR.ink })
+      : textStyle({ role: "body", size: I.subSize, color: COLOR.inkDim })).setOrigin(0, 0.5);
+    squeezeTextToWidth(label, Math.max(40, right - left - value.displayWidth - 8));
+    parent.add([label, value]);
+  });
+  const traitY = b.top + I.pad + I.lineHeight * (stats.length + 0.5);
+  const trait = rune.trait;
+  const traitText = scene.add.text(left, traitY, trait ? runeTraitName(trait.id) : t("archaeology.synth.traitNone"),
+    textStyle({ role: "emphasis", size: I.subSize, color: trait ? hex(RUNE_ACCENT[trait.grade]) : COLOR.inkDim })).setOrigin(0, 0.5);
+  squeezeTextToWidth(traitText, right - left);
+  parent.add(traitText);
 }
 
 const PICKER_EMPTY_HEIGHT = 420;
@@ -265,6 +310,10 @@ export function addRuneSynthesisBench(options: RuneSynthesisBenchOptions): RuneS
     return rune ? holder : undefined;
   });
 
+  const details = scene.add.container(0, 0);
+  parent.add(details);
+  slots.forEach((rune, index) => { if (rune) addRuneDetail(scene, details, index, rune); });
+
   const odds = paintOdds(scene, parent, slots);
 
   const button = runeSynthesisButtonCenter(BASE_WIDTH);
@@ -278,6 +327,6 @@ export function addRuneSynthesisBench(options: RuneSynthesisBenchOptions): RuneS
     onClick: () => { if (!options.busy) options.onSynthesize(); },
   }).setEnabled(ready && affordable && !options.busy));
 
-  return { frames, core, odds };
+  return { frames, core, odds, details };
 }
 

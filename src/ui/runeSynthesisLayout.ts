@@ -84,3 +84,48 @@ export function runeSynthesisButtonCenter(screenWidth: number): { x: number; y: 
   const odds = runeSynthesisOddsBounds(screenWidth);
   return { x: (odds.left + odds.right) / 2, y: odds.bottom + RUNE_SYNTHESIS.buttonGap + RUNE_SYNTHESIS.buttonHeight / 2 };
 }
+
+/**
+ * 넣은 룬의 능력 판(주 옵션 → 보조 옵션 → 특성). 꼭짓점 칸 곁, 삼각형 바깥 빈 자리에 선다.
+ *
+ * 액자만으로는 등급과 두 주 옵션의 색만 읽혀, 무엇을 녹이는지 알려면 칸을 하나씩 눌러 봐야 했다
+ * (응태 2026-11-18). 위 꼭짓점은 칸 왼쪽에 윗변을 맞추고, 아래 둘은 제 칸 바로 위에 밑변을 맞춰
+ * 위로 자란다 — 줄 수가 달라도 칸과 붙은 쪽은 움직이지 않는다.
+ */
+export const RUNE_SYNTHESIS_INFO = {
+  width: 244,
+  /** 칸과 판 사이. */
+  gap: 18,
+  /** 위 꼭짓점 판이 제 칸 윗변보다 올라서는 높이 — 아래 판과의 사이를 벌린다. */
+  lift: 16,
+  /** 아래 꼭짓점 판이 제 칸 바깥 변에서 더 내미는 폭. */
+  outset: 80,
+  pad: 12,
+  lineHeight: 30,
+  mainSize: 23,
+  subSize: 21,
+} as const;
+
+/** 줄 수에서 판 높이를 구한다. */
+export function runeSynthesisInfoHeight(lines: number): number {
+  return RUNE_SYNTHESIS_INFO.pad * 2 + Math.max(1, lines) * RUNE_SYNTHESIS_INFO.lineHeight;
+}
+
+/** 꼭짓점 `index`의 능력 판 자리(화면 좌표). */
+export function runeSynthesisInfoBounds(screenWidth: number, index: number, lines: number): { left: number; right: number; top: number; bottom: number } {
+  const I = RUNE_SYNTHESIS_INFO;
+  const vertex = runeSynthesisVertices(screenWidth)[index];
+  const plate = runeSynthesisPlateBounds(screenWidth);
+  const height = runeSynthesisInfoHeight(lines);
+  const half = RUNE_SYNTHESIS.slot / 2;
+  if (index === 0) {
+    const right = vertex.x - half - I.gap;
+    const top = vertex.y - half - I.lift;
+    return { left: right - I.width, right, top, bottom: top + height };
+  }
+  const bottom = vertex.y - half - I.gap;
+  const left = index === 1
+    ? Math.min(plate.right - 20, vertex.x + half + I.outset) - I.width
+    : Math.max(plate.left + 20, vertex.x - half - I.outset);
+  return { left, right: left + I.width, top: bottom - height, bottom };
+}

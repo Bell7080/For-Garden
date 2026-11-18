@@ -6,7 +6,7 @@ import { RUNE_SYNTHESIS, runeSynthesisCenter, runeSynthesisInfoBounds, runeSynth
 type Box = { left: number; right: number; top: number; bottom: number };
 const overlaps = (a: Box, b: Box): boolean => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
 
-describe("룬 합성 능력 판 자리", () => {
+describe("룬 합성대 자리", () => {
   // 전설 룬이 가장 길다 — 주 옵션 둘 + 보조 셋 + 특성 한 줄.
   const LINES = 6;
   const plate = runeSynthesisPlateBounds(BASE_WIDTH);
@@ -15,54 +15,36 @@ describe("룬 합성 능력 판 자리", () => {
   const frames: Box[] = vertices.map(({ x, y }) => ({ left: x - half, right: x + half, top: y - half, bottom: y + half }));
   const infos = [0, 1, 2].map((index) => runeSynthesisInfoBounds(BASE_WIDTH, index, LINES));
 
-  it("판 안에 들고 어느 칸 액자와도 겹치지 않는다", () => {
-    for (const info of infos) {
+  it("세 칸은 한 줄에 같은 간격으로 서고 판 가운데에 대칭이다", () => {
+    expect(vertices[0].y).toBe(vertices[1].y);
+    expect(vertices[1].y).toBe(vertices[2].y);
+    expect(vertices[1].x - vertices[0].x).toBeCloseTo(vertices[2].x - vertices[1].x);
+    expect(vertices[1].x).toBeCloseTo((plate.left + plate.right) / 2);
+  });
+
+  it("능력 판은 제 칸 바로 밑에 서고 판 안에 든다", () => {
+    infos.forEach((info, index) => {
+      expect(info.top).toBeGreaterThanOrEqual(frames[index].bottom);
+      expect((info.left + info.right) / 2).toBeCloseTo(vertices[index].x);
       expect(info.left).toBeGreaterThanOrEqual(plate.left);
       expect(info.right).toBeLessThanOrEqual(plate.right);
-      expect(info.top).toBeGreaterThanOrEqual(plate.top);
       expect(info.bottom).toBeLessThanOrEqual(plate.bottom);
       for (const frame of frames) expect(overlaps(info, frame)).toBe(false);
-    }
-  });
-
-  it("위 두 칸 · 아래 한 칸이고 판은 위 왼쪽·위 오른쪽·아래에 선다", () => {
-    const [a, b, c] = vertices;
-    expect(a.y).toBe(b.y);
-    expect(c.y).toBeGreaterThan(a.y);
-    expect(a.x).toBeLessThan(c.x);
-    expect(b.x).toBeGreaterThan(c.x);
-    expect(infos[0].right).toBeLessThanOrEqual(frames[0].left);
-    expect(infos[1].left).toBeGreaterThanOrEqual(frames[1].right);
-    expect(infos[2].top).toBeGreaterThanOrEqual(frames[2].bottom);
-    // 양옆 판은 좌우 대칭이다.
-    expect(infos[0].left - plate.left).toBeCloseTo(plate.right - infos[1].right);
-  });
-
-  it("가운데 빛과 칸이 겹치지 않는다", () => {
-    const center = runeSynthesisCenter(BASE_WIDTH);
-    const core: Box = { left: center.x - RUNE_SYNTHESIS.core / 2, right: center.x + RUNE_SYNTHESIS.core / 2, top: center.y - RUNE_SYNTHESIS.core / 2, bottom: center.y + RUNE_SYNTHESIS.core / 2 };
-    for (const frame of frames) expect(overlaps(core, frame)).toBe(false);
-  });
-
-  it("왼쪽 판은 확률 버튼 윗변보다 위에서 끝난다(긴 언어에서 버튼이 넓어져도 겹치지 않는다)", () => {
-    expect(infos[0].bottom).toBeLessThanOrEqual(RATES_SPOT.screen.y - RATES_BUTTON.height / 2);
-  });
-
-  it("능력 판끼리 겹치지 않는다", () => {
+    });
     expect(overlaps(infos[0], infos[1])).toBe(false);
-    expect(overlaps(infos[0], infos[2])).toBe(false);
     expect(overlaps(infos[1], infos[2])).toBe(false);
   });
 
-  it("삼각형 선을 덮지 않는다(네 모서리가 모두 삼각형 밖)", () => {
-    const [a, b, c] = vertices;
-    const side = (p: { x: number; y: number }, q: { x: number; y: number }, r: { x: number; y: number }): number => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
-    const inside = (p: { x: number; y: number }): boolean => {
-      const d1 = side(a, b, p); const d2 = side(b, c, p); const d3 = side(c, a, p);
-      return (d1 > 0 && d2 > 0 && d3 > 0) || (d1 < 0 && d2 < 0 && d3 < 0);
-    };
-    for (const info of infos) {
-      for (const p of [{ x: info.left, y: info.top }, { x: info.right, y: info.top }, { x: info.left, y: info.bottom }, { x: info.right, y: info.bottom }]) expect(inside(p)).toBe(false);
-    }
+  it("칸 줄은 왼쪽 열의 확률 버튼 밑에서 시작한다(긴 언어에서 버튼이 넓어져도 겹치지 않는다)", () => {
+    expect(frames[0].top).toBeGreaterThanOrEqual(RATES_SPOT.screen.y + RATES_BUTTON.height / 2);
+    // 그 아래 왼쪽 열은 룬 가방 칩(곁 상점 칩과 같은 폭)뿐이다.
+    expect(infos[0].left).toBeGreaterThanOrEqual(RATES_SPOT.bagChip.x + RATES_SPOT.bagChip.size / 2);
+  });
+
+  it("가운데 빛은 칸 줄 위 판 안에 서고 칸과 겹치지 않는다", () => {
+    const center = runeSynthesisCenter(BASE_WIDTH);
+    const core: Box = { left: center.x - RUNE_SYNTHESIS.core / 2, right: center.x + RUNE_SYNTHESIS.core / 2, top: center.y - RUNE_SYNTHESIS.core / 2, bottom: center.y + RUNE_SYNTHESIS.core / 2 };
+    expect(core.top).toBeGreaterThanOrEqual(plate.top);
+    for (const frame of frames) expect(overlaps(core, frame)).toBe(false);
   });
 });

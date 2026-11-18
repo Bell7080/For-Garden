@@ -272,11 +272,9 @@ export function addRuneSynthesisBench(options: RuneSynthesisBenchOptions): RuneS
   const rarity = placed[0]?.rarity;
   const tone = rarity ? RUNE_ACCENT[rarity] : COLOR.accent;
 
-  // 삼각형 — 꼭짓점끼리, 그리고 꼭짓점에서 가운데로. 넣은 칸에서 가운데로 가는 선만 밝다.
+  // 칸마다 가운데 빛으로 오르는 선. 넣은 칸의 선만 밝다.
   const lines = scene.add.graphics();
   parent.add(lines);
-  lines.lineStyle(3, tone, 0.28);
-  lines.strokePoints(vertices.map(({ x, y }) => new Phaser.Geom.Point(x, y)), true);
   vertices.forEach((vertex, index) => {
     lines.lineStyle(slots[index] ? 4 : 2, tone, slots[index] ? 0.7 : 0.22);
     lines.lineBetween(vertex.x, vertex.y, center.x, center.y);

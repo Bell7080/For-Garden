@@ -79,10 +79,15 @@ interface StageMember {
   flicker?: Phaser.Tweens.Tween;
   /** 들어오는 움직임이 끝나 제 자리에 선 뒤인가. 투영의 일렁임은 그 뒤에만 알파를 만진다. */
   settled: boolean;
-  /** 몸짓이 없을 때의 배율. 눌리고 늘어나는 몸짓이 끝나면 여기로 돌아온다. */
+  /** 몸짓이 없을 때의 배율. 눌리고 늘어나는 몸짓이 끝나면 여기로 돌아온다. 듣는 동안은 물러난 배율이다. */
   restScale: number;
   baseX: number;
   baseY: number;
+  /** 자리(`dialogueStageSpot`)가 정한 머리 x와 무대 배율. 말하는 동안의 모습이 여기서 나온다. */
+  spotX: number;
+  spotZoom: number;
+  /** 지금 화자로 서 있는가. 아니면 물러나 작아지고 idle이 멈춘다(`applyPose`). */
+  speaking: boolean;
   /** 무대 크기 배율(`zoom`)이 1일 때의 개체 배율. */
   unitScale: number;
   headOffset: { x: number; y: number };
@@ -208,6 +213,8 @@ export class DialogueStage {
       if (!isCurrent()) return;
     }
 
+    // 화자를 먼저 정해 둔다 — 자리를 옮기는 사람과 새로 들어오는 사람이 처음부터 제 모습(나섬·물러남)으로 선다.
+    this.focusedSpeaker = node.standing;
     const arrivals = next.filter(({ id }) => !this.members.has(id));
     for (const entry of next) {
       const member = this.members.get(entry.id);
@@ -264,7 +271,15 @@ export class DialogueStage {
       baseY: creature.y,
       unitScale: creature.scaleX / spot.zoom,
       headOffset: { x: (spot.x - creature.x) / creature.scaleX, y: (dialogueStandingHeadY(entry.id) - creature.y) / creature.scaleX },
+      spotX: spot.x,
+      spotZoom: spot.zoom,
+      speaking: true,
     };
+    // 들어오기 전에 제 모습을 정한다 — 듣는 사람은 처음부터 물러나 멈춘 채로 미끄러져 들어온다.
+    member.speaking = member.id === this.focusedSpeaker;
+    Object.assign(member, this.poseOf(member));
+    creature.setScale(member.restScale).setPosition(member.baseX, member.baseY);
+    if (!member.speaking) creature.setAnimationFrozen(true);
     this.members.set(entry.id, member);
     creature.setMask(this.mask);
     if (member.veiled) creature.setTint(DIALOGUE_FOCUS.veilTint);
@@ -501,24 +516,52 @@ export class DialogueStage {
       member.creature.setTint(veiled ? DIALOGUE_FOCUS.veilTint : DIALOGUE_FOCUS.dimTint);
     }
     const spot = dialogueStageSpot(entry.slot, castSize);
-    const scale = member.unitScale * spot.zoom;
-    const baseX = spot.x - member.headOffset.x * scale;
-    const baseY = dialogueStandingHeadY(member.id) - member.headOffset.y * scale;
     member.slot = entry.slot;
-    member.restScale = scale;
-    if (Math.abs(baseX - member.baseX) < 0.5 && Math.abs(baseY - member.baseY) < 0.5 && Math.abs(scale - member.creature.scaleX) < 1e-4) return;
-    member.baseX = baseX;
-    member.baseY = baseY;
-    this.stopAct(member);
-    this.scene.tweens.killTweensOf(member.creature);
+    member.spotX = spot.x;
+    member.spotZoom = spot.zoom;
+    this.applyPose(member, member.id === this.focusedSpeaker, DIALOGUE_ENTRANCE.moveMs, entry.remote === true);
+  }
+
+  /**
+   * 화자인지에 따른 모습. 말하는 사람은 자리가 정한 그대로, 듣는 사람은 머리 관절을 기준으로
+   * 줄어들고(`listenerScale`) 조금 내려앉아(`listenerDrop`) 한 걸음 뒤에 선 것처럼 보인다.
+   */
+  private poseOf(member: StageMember): { baseX: number; baseY: number; restScale: number } {
+    const recede = member.speaking ? 1 : DIALOGUE_FOCUS.listenerScale;
+    const scale = member.unitScale * member.spotZoom * recede;
+    const headY = dialogueStandingHeadY(member.id) + (member.speaking ? 0 : DIALOGUE_FOCUS.listenerDrop);
+    return { baseX: member.spotX - member.headOffset.x * scale, baseY: headY - member.headOffset.y * scale, restScale: scale };
+  }
+
+  /**
+   * 화자 여부와 자리를 몸에 입힌다. 듣는 사람은 idle이 멈추고, 다시 말하면 그 자리에서 이어진다
+   * (`setAnimationFrozen` — 처음부터 다시 틀지 않는다). 바뀐 것이 없으면 아무것도 건드리지 않는다.
+   */
+  private applyPose(member: StageMember, speaking: boolean, duration: number, remote = member.remote): void {
+    const { creature } = member;
+    if (!creature.active) return;
+    const turned = speaking !== member.speaking;
+    member.speaking = speaking;
+    const pose = this.poseOf(member);
+    const moved = Math.abs(pose.baseX - member.baseX) >= 0.5 || Math.abs(pose.baseY - member.baseY) >= 0.5
+      || Math.abs(pose.restScale - creature.scaleX) >= 1e-4;
+    Object.assign(member, pose);
+    if (moved || turned) this.stopAct(member);
+    // 몸짓을 끊으면 idle이 풀리므로 듣는 사람은 그 뒤에 다시 멈춘다.
+    if (!speaking) creature.setAnimationFrozen(true);
+    else if (!member.act) creature.setAnimationFrozen(false);
+    if (!moved) return;
+    this.scene.tweens.killTweensOf(creature);
+    const instant = this.distanceFactor() <= 0;
     this.scene.tweens.add({
-      targets: member.creature,
-      x: baseX,
-      y: baseY,
-      scale,
-      alpha: entry.remote ? DIALOGUE_REMOTE.alpha : 1,
-      duration: DIALOGUE_ENTRANCE.moveMs,
+      targets: creature,
+      x: pose.baseX,
+      y: pose.baseY,
+      scale: pose.restScale,
+      alpha: remote ? DIALOGUE_REMOTE.alpha : 1,
+      duration: instant ? 0 : duration,
       ease: "Cubic.InOut",
+      onComplete: () => { member.settled = true; },
     });
   }
 
@@ -528,6 +571,7 @@ export class DialogueStage {
     for (const member of this.members.values()) {
       const speaking = member.id === speaker;
       member.creature.setDepth(speaking ? DIALOGUE_FOCUS.speakerDepth : DIALOGUE_FOCUS.listenerDepth);
+      this.applyPose(member, speaking, DIALOGUE_FOCUS.poseMs);
       if (member.veiled) continue;
       const lit = member.remote ? DIALOGUE_REMOTE.tint : 0xffffff;
       const dim = member.remote ? DIALOGUE_REMOTE.dimTint : DIALOGUE_FOCUS.dimTint;
@@ -570,11 +614,12 @@ export class DialogueStage {
     member.act = handle;
   }
 
-  /** 도는 몸짓을 끊는다. 멈춰 둔 idle·눌린 배율·덮인 색도 함께 되돌려, 끊긴 몸짓이 인물을 굳혀 두지 않게 한다. */
+  /** 도는 몸짓을 끊는다. 눌린 배율·덮인 색도 함께 되돌리고 idle은 화자일 때만 다시 튼다. */
   private stopAct(member: StageMember): void {
     member.act?.stop();
     member.act = undefined;
-    if (member.creature.active) member.creature.setAnimationFrozen(false);
+    // 듣는 사람은 몸짓이 끝나도 idle을 다시 틀지 않는다 — 말하지 않는 동안은 멈춰 서 있다.
+    if (member.creature.active) member.creature.setAnimationFrozen(!member.speaking);
   }
 
   // ── 무전 너머의 목소리 ─────────────────────────────────────────────

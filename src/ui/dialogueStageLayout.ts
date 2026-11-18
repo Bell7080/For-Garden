@@ -376,7 +376,8 @@ export const DIALOGUE_SIGN: Readonly<Record<DialogueSign, { color: number; textC
   announce: { color: 0x7fd4ff, textColor: "#d8f4ff" },
   warning: { color: 0xff4a4a, textColor: "#ffd9d9" },
   system: { color: 0x7dffb8, textColor: "#dcffee" },
-  broadcast: { color: 0xffc857, textColor: "#fff0cc" },
+  /** 1장 오프닝의 열차 경보 방송이 쓴다 — 위험을 알리는 방송이라 경고와 같은 붉은빛이다(응태 2026-11-18). */
+  broadcast: { color: 0xff4a4a, textColor: "#ffd9d9" },
   tower: { color: 0x9aa8ff, textColor: "#e3e7ff" },
 };
 

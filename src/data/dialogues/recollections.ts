@@ -30,4 +30,4 @@ export function getRecollectionStory(storyId: string): DialogueStory {
 
 // 본편·서브는 검수와 11개 언어 번역을 마친 본문부터 등록한다.
 for (const story of TRANSLATED_STORIES) registerDialogueTexts(story);
-registerReviewedStoryBodies(RECOLLECTION_STORIES);
+registerReviewedStoryBodies(RECOLLECTION_STORIES.filter((story) => !TRANSLATED_STORIES.includes(story)));

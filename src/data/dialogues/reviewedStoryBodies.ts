@@ -1,5 +1,7 @@
 import type { DialogueStory } from "../../core/dialogue";
 import { registerDataText } from "../../i18n";
+import { RELICS } from "../relics";
+import { speakerStanding } from "./speakerStanding";
 
 /** 본편·서브 원고 중 v0.449.6에서 검수와 11개 언어 번역을 함께 마친 본문만 등록한다. */
 export const REVIEWED_STORY_BODIES: Readonly<Record<string, readonly string[]>> = {
@@ -55,12 +57,56 @@ export const REVIEWED_STORY_BODIES: Readonly<Record<string, readonly string[]>> 
   "stage-7-6-side-post": ["fridge"],
 };
 
+/**
+ * 본문·선택지까지 열한 언어 번역을 모두 마친 본편·서브 이야기. 여기 오른 이야기는 노드마다 본문과 선택지를
+ * 등록한다. 장 단위로 검수·번역을 마칠 때마다 한 줄씩 늘린다.
+ */
+export const TRANSLATED_STORY_IDS: ReadonlySet<string> = new Set<string>([
+  // 1장
+  "stage-1-2-post",
+  "stage-1-4-pre",
+  "stage-1-5-pre",
+  "stage-1-5-post",
+  "stage-1-5-greenhouse-echo",
+  "stage-1-6-post",
+  "stage-1-7-pre",
+  "stage-1-8-pre",
+  "stage-1-8-side-pre",
+  "stage-1-8-side-post",
+  "stage-1-9-pre",
+  "stage-1-9-post",
+  "stage-1-10-pre",
+  "stage-1-10-post",
+]);
+
+/**
+ * 렐릭이 아닌 화자의 이름 키. 렐릭 화자는 도감 이름(`relic.<id>.name`)을 그대로 빌린다 — 대사마다 이름을 다시 옮기면
+ * 같은 사람이 도감과 대사에서 다른 표기로 선다.
+ */
+const SPEAKER_KEYS: Readonly<Record<string, string>> = {
+  "오비": "shopClerk.obi.name",
+};
+
+/** 정체를 감춘 화자. 어느 언어에서나 같은 표기라 옮기지 않는다. */
+const UNTRANSLATED_SPEAKERS = new Set(["???"]);
+
+const RELIC_NAME_KEY = new Map(RELICS.map((relic) => [relic.name, `relic.${relic.id}.name`]));
+
 export function registerReviewedStoryBodies(stories: readonly DialogueStory[]): void {
   for (const story of stories) {
     const reviewed = REVIEWED_STORY_BODIES[story.id];
-    if (!reviewed) continue;
+    const complete = TRANSLATED_STORY_IDS.has(story.id);
     for (const node of story.nodes) {
-      if (reviewed.includes(node.id)) registerDataText(node, "body", `dialogue.${story.id}.${node.id}.body`);
+      // 화자 이름을 옮기기 전에 그 얼굴을 굳힌다 — 런타임은 이름으로 원화를 찾으므로 이름이 번역되면 얼굴을 잃는다.
+      if (!node.standing && node.speaker) node.standing = speakerStanding(node.speaker);
+      if (node.speaker && !UNTRANSLATED_SPEAKERS.has(node.speaker)) {
+        const speakerKey = SPEAKER_KEYS[node.speaker] ?? RELIC_NAME_KEY.get(node.speaker);
+        if (!speakerKey) throw new Error(`이름 키가 없는 화자: ${story.id}.${node.id} ${node.speaker}`);
+        registerDataText(node, "speaker", speakerKey);
+      }
+      const key = `dialogue.${story.id}.${node.id}`;
+      if (complete || reviewed?.includes(node.id)) registerDataText(node, "body", `${key}.body`);
+      if (complete) node.choices?.forEach((choice, index) => registerDataText(choice, "label", `${key}.choice.${index}`));
     }
   }
 }

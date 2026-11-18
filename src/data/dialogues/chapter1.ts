@@ -129,12 +129,12 @@ export const STAGE_1_8_PRE: DialogueStory = {
     { id: "sit", speaker: "", body: "지하 배수로였다. 수문 손잡이 위에 베일을 쓴 작은 그림자가 앉아 있었다. 반짝이는 조각을 하나씩 소매에 집어넣는 중이었다.", standing: "torika", cast: ROGUE_TRIO },
     { id: "tia", speaker: "티아", body: "앗, 들켰다…! 여, 연구원님? 저는 그냥 보급품 줍는 중이에요! 수문 점검도요!", cast: TIA_TRIO, act: "recoil" },
     { id: "same", speaker: "토리카", body: "어, 티아잖아! 여기서 뭐 해? 설마 또 반짝이는 거 주워?", standing: "torika", act: "hop" },
-    { id: "veil", speaker: "티아", body: "아니거든요! 이 수문으로 보급 상자가 떠내려오니까, 쓸 만한 걸 건지는 중이에요!", act: "bounce" },
+    { id: "veil", speaker: "티아", body: "아니거든! 이 수문으로 보급 상자가 떠내려오니까, 쓸 만한 걸 건지는 중이야!", act: "bounce" },
     { id: "useless", speaker: "토리카", body: "그건 내려놓고 우리 좀 도와줄래? 문 안에 갇힌 사람이 있대.", standing: "torika", act: "lean" },
     { id: "droop", speaker: "티아", body: "사람이? …알았어. 이것만 넣고 갈게.", act: "faint" },
     { id: "oops", speaker: "토리카", body: "고마워. 돌아가는 길에 반짝이는 거 같이 주워 줄게.", standing: "torika", act: "shake" },
     { id: "cheer", speaker: "티아", body: "약속이야! 연구원님, 수문 쪽은 제가 알아요. 따라오세요.", act: "hopTwice" },
-    { id: "trail", speaker: "티아", body: "아, 혹시 코마 찾아요? 아까 이 수문 아래로 지나갔어요. 제가 아는 건 진짜 그게 다예요!", act: "nod" },
+    { id: "trail", speaker: "티아", body: "아, 혹시 꼬리에 톱니 달린 사람 찾아요? 아까 이 수문 아래로 지나갔어요. 제가 아는 건 진짜 그게 다예요!", act: "nod" },
     { id: "scent", speaker: "파루아", body: "…발자국이 하나 더 있어요. 물에서 올라온 것 같아요.", standing: "parua", act: "lean" },
     { id: "laugh", speaker: "티아", body: "아까 물속에서 누가 키득거리는 소리가 났어요. 저 아니에요, 진짜로! …다들 조심해요.", act: "shake" },
     { id: "gift", speaker: "티아", body: "수문은 제가 열게요! 이건 가다가 쓰세요. 아, 그건 안 돼요! 처음 주운 조각은 제 거예요!", act: "puff" },
@@ -163,8 +163,8 @@ export const STAGE_1_9_POST: DialogueStory = {
   nodes: linear([
     { id: "open", speaker: "", body: "문이 열렸다. 상자를 끌어안은 앳된 아이가 비틀거리며 걸어 나왔다.", standing: "torika", cast: ROGUE_TRIO },
     { id: "obi", speaker: "오비", body: "고, 고마워, 도디…! 연구원님도 고맙습니다! 저 오비예요. 여기서 보급품 검수하다가 갇혀 버렸어요.", cast: [{ id: "torika", slot: "left" }, { id: "obi", slot: "center" }, { id: "dodi", slot: "right" }], act: "bounce" },
-    { id: "store", speaker: "토리카", body: "어, 그거 A-LAB24 편의점 유니폼이지? 도시에도 그 가게가 있어?", standing: "torika", act: "hop" },
-    { id: "lab", speaker: "오비", body: "응, 중앙 연구소 1층에 있어. 오늘은 열차로 올 재고가 못 들어와서 텅 비었지만… 아, 연구원님, 이거요. 폐기 직전이라 제가 몰래 챙겨 둔 거예요.", act: "shrink" },
+    { id: "store", speaker: "토리카", body: "어, 그거 A-LAB24 편의점 유니폼이죠? 도시에도 그 가게가 있어요?", standing: "torika", act: "hop" },
+    { id: "lab", speaker: "오비", body: "네, 중앙 연구소 1층에 있어요. 오늘은 열차로 올 재고가 못 들어와서 텅 비었지만… 아, 연구원님, 이거요. 폐기 직전이라 제가 몰래 챙겨 둔 거예요.", act: "shrink" },
     { id: "gift", speaker: "오비", body: "치즈케이크랑 에너지 드링크예요. 오늘까지라 그냥 버리기 아까워서요. 드세요.", act: "nod" },
     { id: "dodi", speaker: "도디", body: "기한 직전 재고구나! 일지에는 구호 물자라고 적어 둘게!", standing: "dodi", act: "hopTwice" },
     { id: "wait", speaker: "오비", body: "연구소에 오시면 그땐 제대로 돈 받고 팔게요!", act: "bounce" },
@@ -222,4 +222,4 @@ export const CHAPTER_1_STORIES: readonly DialogueStory[] = [
   STAGE_1_7_PRE, STAGE_1_8_PRE, STAGE_1_9_PRE, STAGE_1_9_POST, STAGE_1_10_PRE, STAGE_1_10_POST,
 ];
 
-// 번역 등록(`registerDialogueTexts`)은 원고가 확정된 뒤에 한다 — 확정 전에 열한 언어를 채우면 고칠 때마다 전부 다시 옮겨야 한다.
+// 번역은 장 단위 검수를 마친 뒤 `TRANSLATED_STORY_IDS`(reviewedStoryBodies.ts)에 올려 등록한다.

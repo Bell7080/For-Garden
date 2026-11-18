@@ -124,12 +124,13 @@ describe("버그 — 날아가는 사람", () => {
 });
 
 describe("티아", () => {
-  it("의 1-8 대사는 연구원님을 부르는 해요체이고 소매의 첫 조각을 말한다", () => {
+  it("의 1-8 대사는 연구원님에게 해요체·친구 토리카에게 반말이고 소매의 첫 조각을 말한다", () => {
     const lines = STAGE_1_8_PRE.nodes.filter(({ speaker }) => speaker === "티아").map(({ body }) => body);
     expect(lines.length).toBeGreaterThanOrEqual(6);
     expect(lines.join(" ")).toContain("연구원님");
     expect(lines.join(" ")).toContain("처음 주운 조각");
-    for (const line of lines) expect(line, line).not.toMatch(/(했다|한다|이야|야)[.!]?$/);
+    for (const line of lines) expect(line, line).not.toMatch(/(했다|한다)[.!]?$/);
+    for (const line of lines.filter((text) => text.includes("연구원님"))) expect(line, line).not.toMatch(/(이야|야)[.!]?$/);
   });
 
   it("와 오비는 직접 만나기 전에는 문 너머 목소리로 선다", () => {

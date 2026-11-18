@@ -1,0 +1,110 @@
+{
+ "relic.carno.name": {
+  "en": "Kar",
+  "ja": "カル",
+  "zh-Hans": "卡尔",
+  "th": "คาร์",
+  "vi": "Kar",
+  "id": "Kar",
+  "es": "Kar",
+  "pt-BR": "Kar",
+  "de": "Kar",
+  "ru": "Кар"
+ },
+ "relic.raja.name": {
+  "en": "Raja",
+  "ja": "ラジャ",
+  "zh-Hans": "拉贾",
+  "th": "ราจา",
+  "vi": "Raja",
+  "id": "Raja",
+  "es": "Raja",
+  "pt-BR": "Raja",
+  "de": "Raja",
+  "ru": "Раджа"
+ },
+ "relic.atra.name": {
+  "en": "Atra",
+  "ja": "アトラ",
+  "zh-Hans": "阿特拉",
+  "th": "อาทรา",
+  "vi": "Atra",
+  "id": "Atra",
+  "es": "Atra",
+  "pt-BR": "Atra",
+  "de": "Atra",
+  "ru": "Атра"
+ },
+ "relic.pulsi.name": {
+  "en": "Pulsi",
+  "ja": "パルシ",
+  "zh-Hans": "帕尔希",
+  "th": "พัลซี",
+  "vi": "Pulsi",
+  "id": "Pulsi",
+  "es": "Pulsi",
+  "pt-BR": "Pulsi",
+  "de": "Pulsi",
+  "ru": "Пульси"
+ },
+ "relic.mir.name": {
+  "en": "Mir",
+  "ja": "ミル",
+  "zh-Hans": "米尔",
+  "th": "มีร์",
+  "vi": "Mir",
+  "id": "Mir",
+  "es": "Mir",
+  "pt-BR": "Mir",
+  "de": "Mir",
+  "ru": "Мир"
+ },
+ "relic.noa.name": {
+  "en": "Noa",
+  "ja": "ノア",
+  "zh-Hans": "诺亚",
+  "th": "โนอา",
+  "vi": "Noa",
+  "id": "Noa",
+  "es": "Noa",
+  "pt-BR": "Noa",
+  "de": "Noa",
+  "ru": "Ноа"
+ },
+ "relic.magasa.name": {
+  "en": "Magasa",
+  "ja": "マガサ",
+  "zh-Hans": "玛加莎",
+  "th": "มากาซา",
+  "vi": "Magasa",
+  "id": "Magasa",
+  "es": "Magasa",
+  "pt-BR": "Magasa",
+  "de": "Magasa",
+  "ru": "Магаса"
+ },
+ "relic.ikanixia.name": {
+  "en": "Ikanixia",
+  "ja": "イカニクシア",
+  "zh-Hans": "伊卡尼克西亚",
+  "th": "อิคานิกเซีย",
+  "vi": "Ikanixia",
+  "id": "Ikanixia",
+  "es": "Ikanixia",
+  "pt-BR": "Ikanixia",
+  "de": "Ikanixia",
+  "ru": "Иканиксия"
+ },
+ "relic.neuri.name": {
+  "en": "Neuri",
+  "ja": "ネウリ",
+  "zh-Hans": "涅乌莉",
+  "th": "เนอูรี",
+  "vi": "Neuri",
+  "id": "Neuri",
+  "es": "Neuri",
+  "pt-BR": "Neuri",
+  "de": "Neuri",
+  "ru": "Неури"
+ }
+}

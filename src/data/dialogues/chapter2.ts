@@ -156,7 +156,7 @@ export const STAGE_2_8_PRE: DialogueStory = {
     { id: "fight", speaker: "토리카", body: "싸우실 건가요, 코마 씨?", standing: "torika", cast: PAIR("koma"), act: "lean" },
     { id: "no", speaker: "코마", body: "싸우지 않는다.", standing: "koma" },
     { id: "above", speaker: "코마", body: "위에서는 아직 모른다. 이 표식을 닦는 것도. 너희가 여기까지 온 것도.", standing: "koma", act: "shrink" },
-    { id: "trio", speaker: "리파", body: "…코마 님, 지금 뭐 하시는 거예요? 위에서 모르는 일 하셔도 돼요?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "recoil" },
+    { id: "trio", speaker: "리파", body: "…코마 님, 지금 뭐 하시는 거예요? 대장님들이 모르는 일 하셔도 돼요?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "recoil" },
     { id: "leave", speaker: "코마", body: "…가라. 대신 다시는 이쪽으로 오지 마라.", standing: "koma", cast: [{ id: "ripa", slot: "left" }], act: "nod" },
   ]),
 };
@@ -171,7 +171,7 @@ export const STAGE_2_8_POST: DialogueStory = {
     { id: "hello", speaker: "네우리", body: "어머, 그쪽이 연구원님이세요? 후훗, 듣던 거랑은 좀 다르시네. …어흠.", standing: "neuri", act: "hop" },
     { id: "koma", speaker: "네우리", body: "그건 그렇고, 코마 님! 결국… 결국 실패하셨네요?", standing: "neuri", act: "lean" },
     { id: "komaReply", speaker: "코마", body: "…네우리. 보고를 받으러 왔나.", standing: "koma", act: "shrink" },
-    { id: "polite", speaker: "네우리", body: "어머, 보고라니요. 저희 같은 말단이 어찌 감히. 다만 위에서 「테러조는 이제 쉬셔도 된다」고 하셔서요. 아주, 아주 정중하게 전해 드리러 왔답니다.", standing: "neuri", act: "bounce" },
+    { id: "polite", speaker: "네우리", body: "어머, 보고라니요. 저희 같은 말단이 어찌 감히. 다만 대장님들께서 「테러조는 이제 쉬셔도 된다」고 하셔서요. 아주, 아주 정중하게 전해 드리러 왔답니다.", standing: "neuri", act: "bounce" },
     { id: "mir", speaker: "미르", body: "네우리, 길 막혔어요! 제가 치울게요!", standing: "mir", act: "nod" },
     { id: "bye", speaker: "네우리", body: "아, 그렇지, 미르. …그럼 연구원님, 다음에 또 뵙지요. 그때는 저희 회수조가 직접 모시러 오겠습니다.", standing: "neuri", act: "nod", leave: "rise", cast: [{ id: "koma", slot: "left" }] },
     { id: "torika", speaker: "토리카", body: "코마 씨… 실패하셨다는 게 무슨 말이에요?", standing: "torika", cast: PAIR("koma"), act: "lean" },
@@ -240,4 +240,4 @@ export const CHAPTER_2_STORIES: readonly DialogueStory[] = [
   STAGE_2_7_PRE, STAGE_2_7_POST, STAGE_2_8_PRE, STAGE_2_8_POST, STAGE_2_9_POST, STAGE_2_10_PRE, STAGE_2_10_POST,
 ];
 
-// 번역 등록(`registerDialogueTexts`)은 원고가 확정된 뒤에 한다 — 확정 전에 열한 언어를 채우면 고칠 때마다 전부 다시 옮겨야 한다.
+// 번역은 장 단위 검수를 마친 뒤 `TRANSLATED_STORY_IDS`(reviewedStoryBodies.ts)에 올려 등록한다.

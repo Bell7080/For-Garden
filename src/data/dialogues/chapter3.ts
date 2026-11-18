@@ -113,7 +113,7 @@ export const STAGE_3_9_POST: DialogueStory = {
   backdrop: "deepField",
   nodes: linear([
     { id: "split", speaker: "네우리", body: "어머… 잠깐만요. 왼쪽에서 들리는 저 소리는 뭘까요?", standing: "neuri", cast: [{ id: "neuri", slot: "left" }, { id: "mir", slot: "right" }], act: "lean", cue: "rumble" },
-    { id: "yuti", speaker: "유티", body: "보, 보스! 아니, 연구원님! 제가 옆으로 치고 들어가서 갈라 놓을게요!", standing: "yuti", cast: [{ id: "yuti", slot: "center" }], act: "bounce", cue: "impact" },
+    { id: "yuti", speaker: "유티", body: "보, 보스! 제, 제가 옆으로 치고 들어가서 갈라 놓을게요!", standing: "yuti", cast: [{ id: "yuti", slot: "center" }], act: "bounce", cue: "impact" },
     { id: "ark", speaker: "아크", body: "마스터, 제 뒤로 와요. …므하하, 여기서부턴 내가 상대해 주지!", standing: "ark", cast: [{ id: "ark", slot: "left" }, { id: "yuti", slot: "right" }], act: "nod" },
     { id: "mir", speaker: "미르", body: "에이, 놓쳤네요! 근데 이 사람들 진짜 튼튼하다!", standing: "mir", cast: [{ id: "mir", slot: "center" }], act: "hopTwice" },
   ]),

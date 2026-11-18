@@ -44,7 +44,7 @@ export const STAGE_2_6_SAME_LINE: DialogueStory = {
     { id: "back", speaker: "", body: "무인 생산선 뒤편, 불 꺼진 정비 통로. 코마가 벽에 기댄 채 사원증과 제 목덜미의 폐기 표식을 번갈아 보고 있었다.", standing: "koma", cast: SOLO("koma") },
     { id: "compare", speaker: "코마", body: "…당신 번호가 내 번호랑 같은 줄에 있다.", standing: "koma", cast: WITH_KOMA("lexia"), act: "lean" },
     { id: "what", speaker: "렉시아", body: "줄이라니, 무슨 줄? 알아듣게 말해!", standing: "lexia", act: "hop" },
-    { id: "count", speaker: "코마", body: "위에서는 우리를 번호로 센다. 나도, 당신도.", standing: "koma", act: "nod" },
+    { id: "count", speaker: "코마", body: "목록에서는 우리를 번호로 센다. 나도, 당신도.", standing: "koma", act: "nod" },
     {
       id: "choose", speaker: "", body: "연구원이 한 걸음 다가섰다.", standing: "koma",
       choices: [
@@ -65,14 +65,14 @@ export const STAGE_2_9_SECOND_CHASE: DialogueStory = {
   backdrop: "assembly",
   nodes: linear([
     { id: "edge", speaker: "", body: "컨베이어가 끊긴 막다른 난간. 곧게 뻗은 길의 끝에 코마가 서 있었다.", standing: "koma", cast: WITH_KOMA("torika"), cue: "rumble" },
-    { id: "bait", speaker: "코마", body: "…길이 너무 곧았다. 처음부터 위에서 깔아 둔 길이다. 나는 미끼였다.", standing: "koma", act: "recoil" },
+    { id: "bait", speaker: "코마", body: "…길이 너무 곧았다. 처음부터 누가 깔아 둔 길이다. 나는 미끼였다.", standing: "koma", act: "recoil" },
     { id: "know", speaker: "토리카", body: "알면서도… 여기까지 오신 거예요?", standing: "torika", act: "lean" },
     { id: "order", speaker: "코마", body: "명령이었다. 당신을 이 끝까지 끌고 오라고.", standing: "koma", act: "shrink" },
     { id: "clash", speaker: "", body: "코마가 소리 없이 뛰어들었다. 짧고 날카롭게 엇갈린 한 번. 이번에는 연구원의 지시가 한 박자 빨랐다.", standing: "koma", cue: "impact", act: "faint" },
     { id: "kneel", speaker: "코마", body: "…졌다. 이걸로 두 번째다.", standing: "koma", act: "squash" },
     { id: "give", speaker: "", body: "코마가 품에서 사원증을 꺼내 난간 위에 내려놓았다.", standing: "koma" },
-    { id: "promise", speaker: "코마", body: "돌려준다고 했다. 위에는 나 혼자 한 일이라고 하겠다.", standing: "koma", act: "nod" },
-    { id: "warn", speaker: "코마", body: "조심해라. 위가 찾는 건 내 번호가 아니라 당신 번호다.", standing: "koma", act: "lean" },
+    { id: "promise", speaker: "코마", body: "돌려준다고 했다. 보고는 나 혼자 한 일로 올리겠다.", standing: "koma", act: "nod" },
+    { id: "warn", speaker: "코마", body: "조심해라. 대장님들이 찾는 건 내 번호가 아니라 당신 번호다.", standing: "koma", act: "lean" },
     { id: "exit", speaker: "", body: "코마는 난간 아래 구멍으로 몸을 던졌다. 어둠이 소리도 없이 그 몸을 삼켰다.", standing: "koma", cast: [{ id: "torika", slot: "center" }], leave: "sink" },
   ]),
 };

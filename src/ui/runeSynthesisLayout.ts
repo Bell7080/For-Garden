@@ -1,7 +1,7 @@
 /**
  * 룬 합성대의 순수 배치표다. 모든 y는 화면 좌표다.
  *
- * **위가 합성대(삼각형), 가운데가 확률, 아래가 합성 버튼**이다. 특성 연구대와 같은 판·같은
+ * **위가 합성대(가운데 빛 + 나란한 재료 칸 셋), 가운데가 확률, 아래가 합성 버튼**이다. 특성 연구대와 같은 판·같은
  * 기둥(좌우 여백)을 써서 두 탭이 한 장비의 두 자리로 읽힌다.
  */
 import { RESEARCH_BENCH, RESEARCH_SHIFT_X } from "./researchBenchLayout";
@@ -10,10 +10,8 @@ export const RUNE_SYNTHESIS = {
   /** 합성대 판의 위·아래. */
   top: 320,
   bottom: 1030,
-  /** 삼각형의 중심에서 꼭짓점까지. */
-  radius: 280,
-  /** 꼭짓점 칸 한 변. */
-  slot: 210,
+  /** 재료 칸 한 변. */
+  slot: 180,
   /** 가운데 빛의 크기. 룬이 모여 터지는 자리다. */
   core: 120,
   /** 확률 판. 합성대 밑변에서 이만큼 아래에 선다. */
@@ -55,21 +53,28 @@ export function runeSynthesisPlateBounds(screenWidth: number): { left: number; r
   return { left: RESEARCH_BENCH.inset + RESEARCH_SHIFT_X, right: screenWidth - RESEARCH_BENCH.inset + RESEARCH_SHIFT_X, top: RUNE_SYNTHESIS.top, bottom: RUNE_SYNTHESIS.bottom };
 }
 
-/** 삼각형의 중심 — 합성대 판의 가운데에서 위아래만 맞춘다. */
-export function runeSynthesisCenter(screenWidth: number): { x: number; y: number } {
-  const bounds = runeSynthesisPlateBounds(screenWidth);
-  // 꼭짓점 칸이 판 안에 들도록, 위 꼭짓점과 아래 두 꼭짓점의 가운데가 판 가운데에 오게 내린다.
-  const middle = (bounds.top + bounds.bottom) / 2;
-  return { x: (bounds.left + bounds.right) / 2, y: middle + RUNE_SYNTHESIS.radius / 4 };
+/**
+ * 재료 칸 셋 — 왼쪽(1) → 가운데(2) → 오른쪽(3)으로 한 줄에 나란히 서고, 능력 판이 저마다 제 칸 바로 밑에 선다.
+ *
+ * 세 칸이 같은 높이·같은 폭이라 좌우가 맞고, 줄 수가 달라도 판의 윗변은 한 줄로 맞는다(응태 2026-11-18 —
+ * 삼각형 꼭짓점 곁에 판을 붙이던 때는 판 자리가 칸마다 달라 뒤죽박죽이었고 밑동이 비었다). 칸 줄은 확률
+ * 버튼(`RATES_SPOT.screen`) 밑에서 시작해 왼쪽 열의 칩들과 맞붙지 않고, 그 위 빈자리에는 셋이 모일 가운데
+ * 빛이 선다.
+ */
+export function runeSynthesisVertices(screenWidth: number): ReadonlyArray<{ x: number; y: number }> {
+  const I = RUNE_SYNTHESIS_INFO;
+  const plate = runeSynthesisPlateBounds(screenWidth);
+  const middle = (plate.left + plate.right) / 2;
+  const step = (plate.right - plate.left - I.inset * 2 - I.width) / 2;
+  const y = plate.bottom - I.insetY - runeSynthesisInfoHeight(I.maxLines) - I.gap - RUNE_SYNTHESIS.slot / 2;
+  return [-1, 0, 1].map((column) => ({ x: middle + column * step, y }));
 }
 
-/** 꼭짓점 셋 — 위 → 오른쪽 아래 → 왼쪽 아래(시계 방향). 넣는 순서도 이 차례다. */
-export function runeSynthesisVertices(screenWidth: number): ReadonlyArray<{ x: number; y: number }> {
-  const center = runeSynthesisCenter(screenWidth);
-  return [0, 1, 2].map((index) => {
-    const angle = -Math.PI / 2 + (index * Math.PI * 2) / 3;
-    return { x: center.x + Math.cos(angle) * RUNE_SYNTHESIS.radius, y: center.y + Math.sin(angle) * RUNE_SYNTHESIS.radius };
-  });
+/** 가운데 빛 — 칸 줄 위 빈자리의 한가운데. 셋이 여기로 모여 터진다. */
+export function runeSynthesisCenter(screenWidth: number): { x: number; y: number } {
+  const plate = runeSynthesisPlateBounds(screenWidth);
+  const middle = runeSynthesisVertices(screenWidth)[1];
+  return { x: middle.x, y: (plate.top + middle.y - RUNE_SYNTHESIS.slot / 2) / 2 };
 }
 
 /** 확률 판의 자리. */
@@ -85,21 +90,17 @@ export function runeSynthesisButtonCenter(screenWidth: number): { x: number; y: 
   return { x: (odds.left + odds.right) / 2, y: odds.bottom + RUNE_SYNTHESIS.buttonGap + RUNE_SYNTHESIS.buttonHeight / 2 };
 }
 
-/**
- * 넣은 룬의 능력 판(주 옵션 → 보조 옵션 → 특성). 꼭짓점 칸 곁, 삼각형 바깥 빈 자리에 선다.
- *
- * 액자만으로는 등급과 두 주 옵션의 색만 읽혀, 무엇을 녹이는지 알려면 칸을 하나씩 눌러 봐야 했다
- * (응태 2026-11-18). 위 꼭짓점은 칸 왼쪽에 윗변을 맞추고, 아래 둘은 제 칸 바로 위에 밑변을 맞춰
- * 위로 자란다 — 줄 수가 달라도 칸과 붙은 쪽은 움직이지 않는다.
- */
+/** 넣은 룬의 능력 판(주 옵션 → 보조 옵션 → 특성). 제 칸 바로 밑에 칸과 가운데를 맞춰 선다. */
 export const RUNE_SYNTHESIS_INFO = {
-  width: 244,
+  width: 264,
   /** 칸과 판 사이. */
   gap: 18,
-  /** 위 꼭짓점 판이 제 칸 윗변보다 올라서는 높이 — 아래 판과의 사이를 벌린다. */
-  lift: 16,
-  /** 아래 꼭짓점 판이 제 칸 바깥 변에서 더 내미는 폭. */
-  outset: 80,
+  /** 합성대 판 좌우 가장자리에서 비우는 폭. */
+  inset: 18,
+  /** 합성대 판 밑변에서 비우는 폭. */
+  insetY: 12,
+  /** 가장 긴 판의 줄 수 — 주 옵션 둘 + 보조 셋 + 특성. 칸 줄의 높이가 이 값으로 정해진다. */
+  maxLines: 6,
   pad: 12,
   lineHeight: 30,
   mainSize: 23,
@@ -111,21 +112,10 @@ export function runeSynthesisInfoHeight(lines: number): number {
   return RUNE_SYNTHESIS_INFO.pad * 2 + Math.max(1, lines) * RUNE_SYNTHESIS_INFO.lineHeight;
 }
 
-/** 꼭짓점 `index`의 능력 판 자리(화면 좌표). */
+/** 칸 `index`의 능력 판 자리(화면 좌표). */
 export function runeSynthesisInfoBounds(screenWidth: number, index: number, lines: number): { left: number; right: number; top: number; bottom: number } {
   const I = RUNE_SYNTHESIS_INFO;
   const vertex = runeSynthesisVertices(screenWidth)[index];
-  const plate = runeSynthesisPlateBounds(screenWidth);
-  const height = runeSynthesisInfoHeight(lines);
-  const half = RUNE_SYNTHESIS.slot / 2;
-  if (index === 0) {
-    const right = vertex.x - half - I.gap;
-    const top = vertex.y - half - I.lift;
-    return { left: right - I.width, right, top, bottom: top + height };
-  }
-  const bottom = vertex.y - half - I.gap;
-  const left = index === 1
-    ? Math.min(plate.right - 20, vertex.x + half + I.outset) - I.width
-    : Math.max(plate.left + 20, vertex.x - half - I.outset);
-  return { left, right: left + I.width, top: bottom - height, bottom };
+  const top = vertex.y + RUNE_SYNTHESIS.slot / 2 + I.gap;
+  return { left: vertex.x - I.width / 2, right: vertex.x + I.width / 2, top, bottom: top + runeSynthesisInfoHeight(lines) };
 }

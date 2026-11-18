@@ -121,6 +121,20 @@ export const TRANSLATED_STORY_IDS: ReadonlySet<string> = new Set<string>([
   "stage-4-8-post",
   "stage-4-10-pre",
   "stage-4-10-post",
+  // 5장
+  "stage-5-1-pre",
+  "stage-5-2-side-pre",
+  "stage-5-2-side-post",
+  "stage-5-3-post",
+  "stage-5-4-post",
+  "stage-5-5-pre",
+  "stage-5-5-post",
+  "stage-5-6-post",
+  "stage-5-8-post",
+  "stage-5-8-youngest-share",
+  "stage-5-9-post",
+  "stage-5-10-pre",
+  "stage-5-10-post",
 ]);
 
 /**

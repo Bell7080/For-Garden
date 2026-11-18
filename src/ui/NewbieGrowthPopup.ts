@@ -19,6 +19,9 @@ import { Button, CLAIM_ALL_BUTTON_STYLE } from "./Button";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { FaceFrame } from "./FaceFrame";
 import { chipPoints, drawLayer, drawShapeEdge, drawShapeOutline, HoloBar, HOLO, slantedRect, toPoints } from "./holo";
+import { addObjectiveShortcut, OBJECTIVE_SHORTCUT } from "./ObjectiveShortcut";
+import type { GuideNavigator } from "./guideNavigation";
+import { metricShortcut } from "../data/objectiveShortcuts";
 import { remainingDetail } from "./itemExpiry";
 import { NotificationDot } from "./NotificationDot";
 import { NEWBIE_GROWTH_LAYOUT as L, newbieGrowthDayX, newbieGrowthInitialDay, newbieGrowthMilestoneX, newbieGrowthRowY } from "./newbieGrowthLayout";
@@ -73,7 +76,7 @@ export class NewbieGrowthPopup {
   private day = 1;
   private claiming = false;
 
-  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi = gameApi, private readonly onChanged?: () => void) {}
+  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi = gameApi, private readonly onChanged?: () => void, private readonly navigator?: GuideNavigator) {}
 
   async open(): Promise<void> {
     if (this.body) return;
@@ -377,15 +380,21 @@ export class NewbieGrowthPopup {
     const shape = chipPoints(list.cardWidth, list.cardHeight, { bevel: { topLeft: 26, topRight: 0, bottomRight: 26, bottomLeft: 0 } });
     row.add(drawLayer(this.scene, 0, 0, shape, { fill: claimed ? 0x12161b : claimable ? 0x2e2412 : 0x18202a, alpha: claimed ? 0.6 : HOLO.glass }));
     if (!claimed) row.add(drawShapeEdge(this.scene, 0, 0, shape, "top", { color: claimable ? COLOR.missionClaim : tone, alpha: claimable ? 0.95 : 0.5, width: claimable ? 3 : 2 }));
-    const stripe = this.scene.add.graphics({ x: -halfW + 30, y: 0 });
-    stripe.fillStyle(tone, claimed || locked ? 0.35 : 0.95).fillPoints(toPoints(slantedRect(10, list.cardHeight - 46, 8)), true);
-    row.add(stripe);
+    // 그날 열린, 아직 못 채운 목표는 빗금 자리에 「바로가기」 칩이 선다.
+    const shortcutRight = !locked && goal.state === "progress"
+      ? addObjectiveShortcut(this.scene, row, { left: -halfW, y: 0, height: list.cardHeight - 40, tone, destination: metricShortcut(goal.metric), navigator: this.navigator, popups: this.popups })
+      : undefined;
+    if (shortcutRight === undefined) {
+      const stripe = this.scene.add.graphics({ x: -halfW + 30, y: 0 });
+      stripe.fillStyle(tone, claimed || locked ? 0.35 : 0.95).fillPoints(toPoints(slantedRect(10, list.cardHeight - 46, 8)), true);
+      row.add(stripe);
+    }
 
     const count = goal.rewards.length;
     const groupWidth = count * list.rewardSize + (count - 1) * list.rewardGap;
     const rewardX = halfW - 24 - groupWidth / 2;
     const textRight = rewardX - groupWidth / 2 - 26;
-    const left = -halfW + 60;
+    const left = shortcutRight === undefined ? -halfW + 60 : shortcutRight + OBJECTIVE_SHORTCUT.textGap;
     const ink = claimed || locked ? COLOR.inkDim : COLOR.ink;
     const objective = this.scene.add.text(left, -24, objectiveText(goal), textStyle({ role: "display", size: 30, color: ink })).setOrigin(0, 0.5);
     squeezeTextToWidth(objective, textRight - left);
@@ -441,6 +450,6 @@ export class NewbieGrowthPopup {
 }
 
 /** 로비 이벤트 판의 카드가 부르는 입구. 닫힐 때 `onChanged`로 카드의 점을 다시 맞춘다. */
-export async function openNewbieGrowthPopup(scene: Phaser.Scene, popups: PopupLayer, onChanged?: () => void): Promise<void> {
-  await new NewbieGrowthPopup(scene, popups, gameApi, onChanged).open();
+export async function openNewbieGrowthPopup(scene: Phaser.Scene, popups: PopupLayer, onChanged?: () => void, navigator?: GuideNavigator): Promise<void> {
+  await new NewbieGrowthPopup(scene, popups, gameApi, onChanged, navigator).open();
 }

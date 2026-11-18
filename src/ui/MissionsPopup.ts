@@ -19,6 +19,9 @@ import { attachDragScroll } from "./dragScroll";
 import { addScrollHint } from "./ScrollHint";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawLayer, drawShapeEdge, HoloBar, HOLO, slantedRect, toPoints } from "./holo";
+import { addObjectiveShortcut, OBJECTIVE_SHORTCUT } from "./ObjectiveShortcut";
+import type { GuideNavigator } from "./guideNavigation";
+import { missionShortcut } from "../data/objectiveShortcuts";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { RewardFrame } from "./RewardFrame";
 import { openRewardPopup } from "./RewardPopup";
@@ -78,7 +81,7 @@ export class MissionsPopup {
   private claiming = false;
   private readonly api: GameApi;
 
-  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, api: GameApi = gameApi, private readonly onWalletChanged?: () => void, private readonly onClose?: () => void) {
+  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, api: GameApi = gameApi, private readonly onWalletChanged?: () => void, private readonly onClose?: () => void, private readonly navigator?: GuideNavigator) {
     this.api = api; this.claims = new MissionClaimController(api);
   }
 
@@ -215,15 +218,21 @@ export class MissionsPopup {
     list.add(panel);
     if (!mission.claimed) list.add(drawShapeEdge(this.scene, 0, y, shape, "top", { color: tone, alpha: mission.claimable ? 0.95 : 0.5, width: mission.claimable ? 3 : 2 }));
     // 왼쪽 끝의 세로 빗금 한 줄이 상태를 색으로 먼저 말한다 — 글자를 읽기 전에 어느 줄이 받을 것인지 보인다.
-    const stripe = this.scene.add.graphics({ x: -halfW + 30, y });
-    stripe.fillStyle(tone, mission.claimed ? 0.35 : 0.95);
-    stripe.fillPoints(toPoints(slantedRect(10, layout.cardHeight - 52, 8)), true);
-    list.add(stripe);
+    // 아직 할 일이 남은 줄은 그 자리에 「바로가기」 칩이 선다 — 어디서 하는 일인지 바로 데려간다.
+    const shortcutRight = !mission.claimable && !mission.claimed
+      ? addObjectiveShortcut(this.scene, list, { left: -halfW, y, height: layout.cardHeight - 44, tone, destination: missionShortcut(mission.id), navigator: this.navigator, popups: this.popups })
+      : undefined;
+    if (shortcutRight === undefined) {
+      const stripe = this.scene.add.graphics({ x: -halfW + 30, y });
+      stripe.fillStyle(tone, mission.claimed ? 0.35 : 0.95);
+      stripe.fillPoints(toPoints(slantedRect(10, layout.cardHeight - 52, 8)), true);
+      list.add(stripe);
+    }
 
     const rewardSize = 112;
     const rewardX = halfW - 26 - rewardSize / 2;
     const textRight = rewardX - rewardSize / 2 - 26;
-    const left = -halfW + 58;
+    const left = shortcutRight === undefined ? -halfW + 58 : shortcutRight + OBJECTIVE_SHORTCUT.textGap;
     const stateLabel = mission.claimed ? t("missions.state.claimed") : mission.claimable ? t("missions.state.complete") : t("missions.state.inProgress");
     const state = this.scene.add.text(textRight, y - 30, stateLabel, textStyle({ role: "emphasis", size: 22, color: mission.claimable ? "#ffcf7a" : COLOR.inkDim })).setOrigin(1, 0.5);
     const title = this.scene.add.text(left, y - 30, mission.title, textStyle({ role: "emphasis", size: 30, color: mission.claimed ? COLOR.inkDim : COLOR.ink })).setOrigin(0, 0.5);

@@ -1,4 +1,5 @@
 import { audioManager } from "../managers/AudioManager";
+import type { GuideNavigator } from "../ui/guideNavigation";
 import { openRoulettePopup } from "../ui/RoulettePopup";
 import { openNewbieGrowthPopup } from "../ui/NewbieGrowthPopup";
 import { openChestForgePopup } from "../ui/ChestForgePopup";
@@ -660,7 +661,7 @@ export class LobbyScene extends Phaser.Scene {
         if (event.destination?.kind === "roulette") { void openRoulettePopup(this, this.popupLayer!, onChanged).catch(() => undefined); return; }
         if (event.destination?.kind === "chestForge") { void openChestForgePopup(this, this.popupLayer!, onChanged).catch((error) => logError("chestForge.open", "보물상자 열기 실패", error)); return; }
         if (event.destination?.kind === "delophyHunt") { void openDelophyHuntPopup(this, this.popupLayer!, onChanged).catch((error) => logError("delophyHunt.open", "델로피의 보물 찾기 열기 실패", error)); return; }
-        if (event.destination?.kind === "newbieGrowth") { void openNewbieGrowthPopup(this, this.popupLayer!, onChanged).catch((error) => logError("newbieGrowth.open", "성장 가이드 열기 실패", error)); return; }
+        if (event.destination?.kind === "newbieGrowth") { void openNewbieGrowthPopup(this, this.popupLayer!, onChanged, this.objectiveNavigator()).catch((error) => logError("newbieGrowth.open", "성장 가이드 열기 실패", error)); return; }
         if (event.destination?.kind === "shuteFishing") { void openShuteFishingPopup(this, this.popupLayer!, onChanged).catch((error) => logError("shuteFishing.open", "슈테의 리듬 낚시 열기 실패", error)); return; }
         if (event.destination?.kind === "lab") startScene(this, "lab", { bannerId: event.destination.bannerId });
         else startScene(this, "event", { eventId: event.id });
@@ -696,6 +697,8 @@ export class LobbyScene extends Phaser.Scene {
       case "excavation": this.guarded("excavation", () => this.openIdleExcavation())(); return;
       case "trade": this.guarded("trade", () => this.openTrade())(); return;
       case "missions": this.openMissions(); return;
+      case "codex": this.openCodex(); return;
+      case "inventory": this.openInventory(); return;
     }
   }
 
@@ -1077,10 +1080,15 @@ export class LobbyScene extends Phaser.Scene {
   /** 업적 창을 로비 위에서 연다 — 임무 기록과 같은 판이다. */
   private openAchievements(): void {
     if (!this.popupLayer) return;
-    new AchievementsPopup(this, this.popupLayer, gameApi, () => this.topBar?.refresh()).open();
+    new AchievementsPopup(this, this.popupLayer, gameApi, () => this.topBar?.refresh(), undefined, this.objectiveNavigator()).open();
   }
 
   /** 도감을 로비 위에서 연다 — 업적 창과 같은 판이다. */
+  /** 임무·업적·성장 가이드의 「바로가기」가 로비 위 판을 그 자리에서 열게 하는 길. */
+  private objectiveNavigator(): GuideNavigator {
+    return { scene: this, onLobbyPanel: (panel) => this.openLobbyPanel(panel) };
+  }
+
   private openCodex(): void {
     if (!this.popupLayer) return;
     new CodexPopup(this, this.popupLayer, gameApi, () => this.topBar?.refresh()).open();
@@ -1160,7 +1168,7 @@ export class LobbyScene extends Phaser.Scene {
   /** 씬 전환 없이 같은 PopupLayer에 임무 작업판 한 장만 연다. */
   private openMissions(): void {
     if (!this.popupLayer) return;
-    this.missionsPopup ??= new MissionsPopup(this, this.popupLayer, gameApi, () => this.topBar?.refresh(), () => { this.missionsPopup = undefined; });
+    this.missionsPopup ??= new MissionsPopup(this, this.popupLayer, gameApi, () => this.topBar?.refresh(), () => { this.missionsPopup = undefined; }, this.objectiveNavigator());
     this.missionsPopup.open();
   }
 

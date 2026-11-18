@@ -32,17 +32,22 @@ export type GuideRouteId =
 
 /** 줄 옆 화살표가 가는 곳. 잠긴 콘텐츠는 `content`로 개방을 먼저 묻는다. */
 export type GuideDestination =
-  | { readonly kind: "scene"; readonly scene: "lab" | "archaeology" | "duel" | "raid" | "expedition" | "stageMap" | "cakeOperation" | "bounty" | "relics" | "guild"; readonly content?: ContentId }
+  | { readonly kind: "scene"; readonly scene: "lab" | "archaeology" | "duel" | "raid" | "expedition" | "stageMap" | "cakeOperation" | "bounty" | "relics" | "guild" | "interaction" | "ancientStrata"; readonly content?: ContentId }
   | { readonly kind: "premium"; readonly tab?: PremiumCategory }
   | { readonly kind: "shop"; readonly storefront: Extract<ProductStorefront, "shop" | "archaeology" | "loot" | "mileage" | "duel">; readonly content?: ContentId }
   /** 로비 위에 뜨는 판 — 로비가 아닌 화면에서는 로비로 돌아가 그 판을 연다. */
-  | { readonly kind: "lobby"; readonly panel: "excavation" | "trade" | "missions" | "sortie"; readonly content?: ContentId }
+  | { readonly kind: "lobby"; readonly panel: "excavation" | "trade" | "missions" | "sortie" | "codex" | "inventory"; readonly content?: ContentId }
+  /**
+   * 관찰 질문 — 아직 답하지 않은 열린 질문이 있는 렐릭의 관찰 일지를 그 질문 쪽으로 곧장 연다(없으면 도감).
+   * 어느 렐릭인지는 누르는 순간의 상태가 정하므로 목적지에 적지 않는다.
+   */
+  | { readonly kind: "observation" }
   /** 스테미나 창 — 화면을 떠나지 않고 그 자리에서 연다. */
   | { readonly kind: "stamina" };
 
-const SCENE = (scene: Extract<GuideDestination, { kind: "scene" }>["scene"], content?: ContentId): GuideDestination => ({ kind: "scene", scene, content });
-const SHOP = (storefront: Extract<GuideDestination, { kind: "shop" }>["storefront"], content?: ContentId): GuideDestination => ({ kind: "shop", storefront, content });
-const LOBBY = (panel: Extract<GuideDestination, { kind: "lobby" }>["panel"], content?: ContentId): GuideDestination => ({ kind: "lobby", panel, content });
+export const SCENE = (scene: Extract<GuideDestination, { kind: "scene" }>["scene"], content?: ContentId): GuideDestination => ({ kind: "scene", scene, content });
+export const SHOP = (storefront: Extract<GuideDestination, { kind: "shop" }>["storefront"], content?: ContentId): GuideDestination => ({ kind: "shop", storefront, content });
+export const LOBBY = (panel: Extract<GuideDestination, { kind: "lobby" }>["panel"], content?: ContentId): GuideDestination => ({ kind: "lobby", panel, content });
 
 /** 줄마다 갈 곳. 갈 화면이 없는 줄(시간 회복·출석·룬 판매)은 비워 화살표를 세우지 않는다. */
 export const GUIDE_ROUTE_DESTINATION: Readonly<Record<GuideRouteId, GuideDestination | undefined>> = {

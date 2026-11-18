@@ -133,13 +133,16 @@ export class RelicsScene extends Phaser.Scene {
   private pendingOpenRelicId?: string;
   /** 무료 각인 체험을 마치고 넘어왔다 — 연 정보창의 룬 칸을 한 번 짚어 준다(장착은 시키지 않는다). */
   private pendingRuneEquipHint = false;
+  /** 바로가기(관찰 질문)로 들어오면 정보창을 연 뒤 관찰 일지를 이 쪽으로 곧장 연다. */
+  private pendingJournalPage?: number;
 
   constructor() {
     super("relics");
   }
 
-  init(data?: { openRelicId?: string; runeEquipHint?: boolean }): void {
+  init(data?: { openRelicId?: string; runeEquipHint?: boolean; openJournalPage?: number }): void {
     this.pendingOpenRelicId = typeof data?.openRelicId === "string" ? data.openRelicId : undefined;
+    this.pendingJournalPage = typeof data?.openJournalPage === "number" ? data.openJournalPage : undefined;
     this.pendingRuneEquipHint = data?.runeEquipHint === true;
     consumeSceneEntry(this);
   }
@@ -236,9 +239,12 @@ export class RelicsScene extends Phaser.Scene {
     this.pendingOpenRelicId = undefined;
     const runeHint = this.pendingRuneEquipHint;
     this.pendingRuneEquipHint = false;
+    const journalPage = this.pendingJournalPage;
+    this.pendingJournalPage = undefined;
     if (openId && relicCollection.owns(openId)) {
       this.info.showRelic(getRelic(openId), true);
       if (runeHint) this.showRuneEquipHint(openId);
+      if (journalPage !== undefined) this.info.openJournalPage(journalPage);
     } else this.startFeedTutorial(nav);
   }
 

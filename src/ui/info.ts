@@ -1977,11 +1977,19 @@ export class InfoManager {
    * 다르게 읽히지 않는다. 여기서 고르는 것은 문맥뿐이다: 보유 여부와, 매일의 인터뷰를
    * 세울지.
    */
-  private openJournal(from: PopupSource): void {
+  private openJournal(from: PopupSource, page?: number): void {
     const def = this.currentDef;
     if (!def) return;
     openObservationJournal({ scene: this.scene, popups: this.popups, keywords: this.keywords },
-      { def, owned: this.ownedNow, interviews: true, from });
+      { def, owned: this.ownedNow, interviews: true, from, page });
+  }
+
+  /**
+   * 지금 연 렐릭의 관찰 일지를 `page` 쪽(0 본문, 1~3 질문)으로 곧장 연다 — 임무·업적의 바로가기가 쓴다.
+   * 일지는 화면 가운데에 서므로 누른 자리 대신 화면 가운데를 넘긴다.
+   */
+  openJournalPage(page: number): void {
+    this.openJournal({ x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2, onClose: () => undefined }, page);
   }
 
   /**

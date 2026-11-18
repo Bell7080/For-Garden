@@ -19,6 +19,9 @@ import { addClippedHit } from "./clippedHit";
 import type { ClipRect } from "./clipRect";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawLayer, drawShapeEdge, HoloBar, HOLO, slantedRect, toPoints } from "./holo";
+import { addObjectiveShortcut, OBJECTIVE_SHORTCUT } from "./ObjectiveShortcut";
+import type { GuideNavigator } from "./guideNavigation";
+import { metricShortcut } from "../data/objectiveShortcuts";
 import { shapeClipMask } from "./popupArt";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { RewardFrame } from "./RewardFrame";
@@ -68,7 +71,7 @@ export class AchievementsPopup {
   private tabScrollTab?: AchievementTab;
   private claiming = false;
 
-  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi = gameApi, private readonly onWalletChanged?: () => void, private readonly onClose?: () => void) {}
+  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi = gameApi, private readonly onWalletChanged?: () => void, private readonly onClose?: () => void, private readonly navigator?: GuideNavigator) {}
 
   open(): void {
     if (this.body) return;
@@ -194,15 +197,23 @@ export class AchievementsPopup {
     const shape = chipPoints(layout.cardWidth, layout.cardHeight, { bevel: { topLeft: 28, topRight: 0, bottomRight: 28, bottomLeft: 0 } });
     row.add(drawLayer(this.scene, 0, 0, shape, { fill: complete ? 0x12161b : claimable ? 0x2e2412 : 0x18202a, alpha: complete ? 0.6 : HOLO.glass }));
     if (!complete) row.add(drawShapeEdge(this.scene, 0, 0, shape, "top", { color: claimable ? COLOR.missionClaim : categoryTone, alpha: claimable ? 0.95 : 0.5, width: claimable ? 3 : 2 }));
-    const stripe = this.scene.add.graphics({ x: -halfW + 30, y: 0 });
-    stripe.fillStyle(categoryTone, complete ? 0.35 : 0.95);
-    stripe.fillPoints(toPoints(slantedRect(10, layout.cardHeight - 52, 8)), true);
-    row.add(stripe);
+    // 아직 오를 단계가 남은 업적은 그 일을 하는 화면으로 가는 칩이 빗금 자리에 선다. 숨은 업적은 닿기 전에
+    // 무엇인지 알려 주지 않으므로 길도 말하지 않는다.
+    const hiddenGoal = series.hidden === true && series.claimedTiers + series.claimableTiers === 0;
+    const shortcutRight = !complete && !claimable && !hiddenGoal
+      ? addObjectiveShortcut(this.scene, row, { left: -halfW, y: 0, height: layout.cardHeight - 44, tone: categoryTone, destination: metricShortcut(series.metric), navigator: this.navigator, popups: this.popups })
+      : undefined;
+    if (shortcutRight === undefined) {
+      const stripe = this.scene.add.graphics({ x: -halfW + 30, y: 0 });
+      stripe.fillStyle(categoryTone, complete ? 0.35 : 0.95);
+      stripe.fillPoints(toPoints(slantedRect(10, layout.cardHeight - 52, 8)), true);
+      row.add(stripe);
+    }
 
     const rewardSize = rowLayout.rewardSize;
     const rewardX = halfW - 26 - rewardSize / 2;
     const textRight = rewardX - rewardSize / 2 - 26;
-    const left = -halfW + 58;
+    const left = shortcutRight === undefined ? -halfW + 58 : shortcutRight + OBJECTIVE_SHORTCUT.textGap;
     const dim = complete ? COLOR.inkDim : COLOR.ink;
 
     // 머리 줄 — 갈래 이름, 단계 마름모, 오른쪽 끝에 n/m단계(또는 완료).

@@ -53,7 +53,7 @@ export const STAGE_5_4_POST: DialogueStory = {
     { id: "panel", speaker: "", body: "복도 끝 제어반 앞에 가리개를 쓴 그림자가 서 있었다. 손가락이 마지막 단추 위에서 멈췄다.", standing: "koma", cast: [{ id: "koma", slot: "center" }], cue: "alarm" },
     { id: "koma", speaker: "코마", body: "…명령이다.", standing: "koma", act: "lean" },
     { id: "open", speaker: "", body: "감방 문이 한 칸씩 차례로 열렸다. 가장 가까운 칸에서 한쪽 팔만 유난히 굵은 그림자가 걸어 나왔다.", cast: [{ id: "koma", slot: "left" }, { id: "raja", slot: "right" }], cue: "impact" },
-    { id: "raja", speaker: "라자", body: "…072냐. 늦었다.", standing: "raja", act: "nod" },
+    { id: "raja", speaker: "라자", body: "…072입니까. 늦으셨습니다.", standing: "raja", act: "nod" },
     { id: "koma2", speaker: "코마", body: "…아래가 먼저다. 길을 막아라.", standing: "koma", act: "shrink" },
   ]),
 };
@@ -79,7 +79,7 @@ export const STAGE_5_5_POST: DialogueStory = {
     { id: "down", speaker: "라자", body: "…서열은 너희가 위다. 오늘만.", standing: "raja", cast: [{ id: "raja", slot: "center" }], act: "faint" },
     { id: "hum", speaker: "", body: "더 깊은 곳에서 콧노래가 올라왔다. 냄비 뚜껑이 달그락거리는 소리도 섞여 있었다.", cue: "rumble" },
     { id: "voice", speaker: "???", body: "라자~ 밥 식는다~ 손님 오셨으면 같이 데려오고~", cast: [{ id: "raja", slot: "left" }, { id: "magasa", slot: "right", veiled: true }] },
-    { id: "raja2", speaker: "라자", body: "…먼저 먹어.", standing: "raja", act: "shrink" },
+    { id: "raja2", speaker: "라자", body: "…먼저 드십시오.", standing: "raja", act: "shrink" },
   ]),
 };
 

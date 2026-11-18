@@ -368,7 +368,7 @@ export const STAGE_6_4_SIDE_PRE: DialogueStory = {
   nodes: linear([
     { id: "line", speaker: "", body: "환기 수직갱 아래, 바람이 거꾸로 빨려 올라갔다. 바닥에 분필로 새 줄이 그어져 있었고, 그 줄 앞에 라자가 서 있었다.", standing: "raja", cast: [{ id: "raja", slot: "left" }, { id: "pulsi", slot: "right" }] },
     { id: "daily", speaker: "라자", body: "서열은 그날그날 다시 정한다. 어제는 너희가 위였다. 오늘은 모른다.", standing: "raja", act: "nod" },
-    { id: "fun", speaker: "펄시", body: "난 서열 같은 거 몰라. 재밌어 보여서 따라온 거야.", standing: "pulsi", act: "lean" },
+    { id: "fun", speaker: "펄시", body: "전 서열 같은 거 몰라요. 재밌어 보여서 따라온 거예요.", standing: "pulsi", act: "lean" },
     { id: "kento", speaker: "켄토", body: "담당관은 줄 뒤에 있어. 서열이든 뭐든, 앞에서 받는 건 내가 할게.", standing: "kento", cast: [{ id: "kento", slot: "left" }, { id: "raja", slot: "center" }, { id: "pulsi", slot: "right" }], act: "nod" },
     { id: "wind", speaker: "스테라", body: "선배, 저 팔 쪽 바람이 무거워요. 첫 한 방이 제일 셀 거예요.", standing: "stella", cast: [{ id: "kento", slot: "left" }, { id: "stella", slot: "right" }], act: "lean" },
     { id: "cross", speaker: "라자", body: "덤벼라. 줄을 넘는 쪽이 앞이다.", standing: "raja", cast: [{ id: "raja", slot: "left" }, { id: "pulsi", slot: "right" }], act: "rage", cue: "impact" },

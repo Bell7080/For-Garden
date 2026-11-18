@@ -31,10 +31,10 @@ export const STAGE_3_1_PRE: DialogueStory = {
     { id: "atra", speaker: "아트라", body: "아, 안 돼요… 선, 선배는 아직… 아직 데려가시면 안 돼요…", standing: "atra", cast: [{ id: "koma", slot: "left" }, { id: "atra", slot: "center" }, { id: "ikanixia", slot: "right" }], act: "tremble" },
     { id: "smile", speaker: "이카닉시아", body: "어머, 우리 아트라는 상냥하기도 하지. 그럼 선배는 마지막에 모시죠.", standing: "ikanixia", act: "nod" },
     { id: "haul", speaker: "", body: "아트라의 마디진 꼬리 끝에 묶인 채 세 그림자가 끌려 나왔다. 아모와 토비, 리파였다.", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], cue: "impact" },
-    { id: "toby", speaker: "토비", body: "놔! 우리 발로 간다고 했잖아. 묶을 것까진 없잖아!", standing: "toby", act: "shake" },
+    { id: "toby", speaker: "토비", body: "놔요! 우리 발로 간다고 했잖아요. 묶을 것까진 없잖아요!", standing: "toby", act: "shake" },
     { id: "rule", speaker: "이카닉시아", body: "실패한 팀을 거두어 가는 것도 회수조 일이랍니다. 세 분께는 한 번만 더 일을 부탁드려야겠어요.", standing: "ikanixia", cast: [{ id: "toby", slot: "left" }, { id: "ikanixia", slot: "right" }], act: "lean" },
     { id: "ripa", speaker: "리파", body: "…이번에도 위에서 다 정했네. 우리한텐 묻지도 않고.", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "amo", slot: "right" }], act: "shrink" },
-    { id: "amo", speaker: "아모", body: "…연구원, 오지 마. 얘들은 너까지 데려갈 거야.", standing: "amo", act: "tremble" },
+    { id: "amo", speaker: "아모", body: "…연구원, 오지 마. 저분들은 너까지 데려갈 거야.", standing: "amo", act: "tremble" },
     { id: "you", speaker: "이카닉시아", body: "그쪽이 연구원님이시군요. 말씀 많이 들었어요. 이번에는 제가 정중히 모셔 가겠습니다.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
   ]),
 };

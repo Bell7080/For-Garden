@@ -244,13 +244,14 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
           holder: other && showHolder ? { relicId: holder } : undefined,
         });
         cell.add(card);
-        // 이 칸에 지금 저장된 룬은 오른쪽 위에 「장착」 꼬리표를 단다 — 아래 가운데의 전투력 차와 겹치지 않는다.
+        // 이 칸에 지금 저장된 룬은 오른쪽 위에 「장착」 꼬리표를 단다 — 오른쪽 아래의 전투력 차와 겹치지 않는다.
         if (base[part] === rune.instanceId) cell.add(addTag(scene, g.card / 2 - 6, -g.card / 2 + g.tag / 2 + 10, t("info.rune.workbench.equipped"), COLOR.accent, "#05070a", g.tag, 1));
         if (!picked) {
           const delta = runeCandidatePowerDelta(current, draft, part, rune.instanceId, session.runeInventory);
           if (delta !== 0) {
-            cell.add(scene.add.text(0, g.card / 2 - 14, (delta > 0 ? "+" : "") + delta.toLocaleString(), textStyle({ role: "emphasis", size: g.delta, color: delta > 0 ? UP_TEXT : DOWN_TEXT }))
-              .setOrigin(0.5).setStroke("#05070a", 5));
+            // 액자 수량과 같은 자리(우하단)에 검은 획으로 겹친다 — 가운데에 두면 조각 그림을 가렸다(응태 2026-11-18).
+            cell.add(scene.add.text(g.card / 2 - 8, g.card / 2 - 6, (delta > 0 ? "+" : "") + delta.toLocaleString(), textStyle({ role: "emphasis", size: g.delta, color: delta > 0 ? UP_TEXT : DOWN_TEXT }))
+              .setOrigin(1, 1).setStroke("#05070a", 5));
           }
         }
         const hit = addClippedHit(scene, cell, 0, 0, g.card, g.card, clip);

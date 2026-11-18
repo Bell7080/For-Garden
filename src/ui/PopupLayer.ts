@@ -391,8 +391,13 @@ export class PopupLayer {
       // same dispatch lets Phaser deliver the opening release to the newly-created backdrop as well, making
       // the note flash and disappear.  Arm dismissal on the next input frame so only a later outside click
       // can close it; controls inside the body remain above the backdrop and keep the note open.
+      // **바깥에서 누르고 바깥에서 뗀 손만** 닫는다. 꾹 눌러 연 판은 손가락이 아직 눌린 채로 서므로, 떼는
+      // 순간의 `pointerup`이 바깥 판에 닿아 열리자마자 닫혔다(룬 정비 창의 룬 꾹 누르기, 응태 2026-11-18).
       this.scene.time.delayedCall(0, () => {
-        if (layer.active && backdrop.active) backdrop.on("pointerup", () => userClose());
+        if (!layer.active || !backdrop.active) return;
+        let pressed = false;
+        backdrop.on("pointerdown", () => { pressed = true; });
+        backdrop.on("pointerup", () => { if (!pressed) return; pressed = false; userClose(); });
       });
     }
 

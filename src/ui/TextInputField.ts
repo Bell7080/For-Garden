@@ -101,10 +101,7 @@ export class TextInputField extends Phaser.GameObjects.Container {
       "padding:0", "margin:0", "color:transparent", "caret-color:transparent", ...(options.multiline ? ["resize:none", "overflow:hidden"] : []),
       // iOS는 16px보다 작은 입력 칸에 초점이 가면 화면을 확대한다. 보이지 않는 글자라 값만 맞춘다.
       "font-size:16px", "-webkit-appearance:none",
-      // **DOM 입력은 손을 받지 않는다** — 초점은 아래 Phaser 입력면이 준다. 이 요소는 캔버스 위에 떠 있어서
-      // 판이 그 칸을 덮어도 손가락이 곧장 닿았다 — 도감 검색 칸 위에 룬 정비 창이 떠 있으면 하트 조각을
-      // 누를 때마다 뒤의 검색 칸이 초점을 받아 자판이 올라왔다(응태 2026-11-18). Phaser 입력면은 판에 가려지면
-      // 눌리지 않는다.
+      // 손을 받을지는 아래 `follow`가 프레임마다 정한다(`pointer-events`) — 처음에는 받지 않는다.
       "pointer-events:none",
     ].join(";");
     this.dom = scene.add.dom(0, 0, this.field).setOrigin(0.5);
@@ -130,10 +127,40 @@ export class TextInputField extends Phaser.GameObjects.Container {
     });
     this.add(hit);
 
+    // **DOM 입력이 손을 직접 받는 것은 이 칸이 맨 위일 때뿐이다.**
+    // - 직접 받아야 하는 이유: iOS(Safari·앱 WebView)는 캔버스 `touchend` 안에서 부른 `focus()`로는 자판을 올리지 않는
+    //   경우가 있다 — v0.496.2에서 DOM이 손을 받지 않게 했더니 회원가입·로그인 칸이 눌리지 않았다(응태 2026-11-18).
+    //   입력 칸을 손가락이 직접 누르는 것만이 어느 브라우저에서나 자판을 올린다.
+    // - 맨 위일 때만인 이유: DOM은 캔버스 위에 떠 있어 판이 그 칸을 덮어도 손이 곧장 닿았다 — 도감 검색 칸 위에
+    //   룬 정비 창이 떠 있으면 하트 조각을 누를 때마다 검색 칸이 초점을 받았다. 그래서 칸 가운데에서 Phaser가 맨 위로
+    //   치는 입력면이 이 칸의 입력면일 때만 손을 연다(판·어둠막이 덮으면 그쪽이 맨 위다).
+    const reachable = (): boolean => {
+      if (!this.visible || !(this.parentContainer?.visible ?? true) || !scene.input.enabled || !scene.game.input.enabled) return false;
+      const camera = scene.cameras.main;
+      const world = this.getWorldTransformMatrix();
+      // 월드 자리 → 화면 자리(카메라 이동·배율). 진입 연출이 카메라를 움직이는 동안에도 같은 자리를 잰다.
+      const ox = camera.width * camera.originX, oy = camera.height * camera.originY;
+      const point = { x: camera.x + ox + (world.tx - camera.scrollX - ox) * camera.zoom, y: camera.y + oy + (world.ty - camera.scrollY - oy) * camera.zoom };
+      const input = scene.input as unknown as { _list: Phaser.GameObjects.GameObject[] };
+      const found = scene.input.manager.hitTest({ x: point.x, y: point.y } as Phaser.Input.Pointer, input._list, camera, []);
+      if (!found.includes(hit)) return false;
+      const sorted = scene.input.sortGameObjects(found, { camera } as Phaser.Input.Pointer);
+      return sorted[0] === hit;
+    };
+    let frame = 0;
+    let open = false;
     this.follow = () => {
       if (!this.active) return;
       const matrix = this.getWorldTransformMatrix();
       this.dom.setPosition(matrix.tx, matrix.ty).setVisible(this.visible && (this.parentContainer?.visible ?? true));
+      // 맨 위인지 재는 일은 가볍지 않으므로 몇 프레임에 한 번만 본다. 판이 열리는 연출보다 짧은 틈이다.
+      if (frame++ % 4 !== 0) return;
+      const next = reachable();
+      if (next === open) return;
+      open = next;
+      this.dom.pointerEvents = open ? "auto" : "none";
+      this.field.style.pointerEvents = this.dom.pointerEvents;
+      if (!open && document.activeElement === this.field) this.field.blur();
     };
     scene.events.on(Phaser.Scenes.Events.POST_UPDATE, this.follow);
     this.once(Phaser.GameObjects.Events.DESTROY, () => {

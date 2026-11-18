@@ -109,8 +109,12 @@ export function skipsUltimateCutIn(mode: UltimatePresentationMode): boolean {
   return mode !== "full";
 }
 
-/** 단축 연출의 작은 알림이 화면에 머무는 실제 시간(ms). 배속을 받지 않는다 — 컷인과 같은 이유다. */
-export const ULTIMATE_MINI_BANNER_TIMING = { enterMs: 180, holdMs: 1_150, exitMs: 220 } as const;
+/**
+ * 단축 연출의 일러스트 판이 움직이는 실제 시간(ms). 배속을 받지 않는다 — 컷인과 같은 이유다.
+ * 슈루룩 미끄러져 들고(`enterMs`) 머물렀다가, 살짝 움츠렸다(`windupMs`) 퓽 빠진다(`exitMs`).
+ * 다른 렐릭이 궁극기를 쓰면 지금 판은 `swapMs` 동안 뒤로 비켜 녹는다.
+ */
+export const ULTIMATE_MINI_BANNER_TIMING = { enterMs: 300, holdMs: 1_300, windupMs: 90, exitMs: 170, swapMs: 200 } as const;
 /**
  * **컷인은 배속을 받지 않는다**(실제 시간). 누가 무엇을 쓰는지를 알리는 한 장이라, 배속만큼
  * 당기던 때는 3배속에서 0.1초 남짓 번쩍하고 지나가 이름도 원화도 읽히지 않았다. 여는 숨

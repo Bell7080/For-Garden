@@ -18,7 +18,7 @@ const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", {
     Phaser: { Scene: class {
         } }, ...skirmish, ...ultimate, ...arenaView,
     performance: { now: () => clock }, audioManager: undefined, BOSS_STEP_MS: 20, formatBattleClock: () => "", hasMergedBattleHit: () => false,
-    ultimatePresentationFor: () => ({}), ultimatePresentationTiming: () => ({ rate: 1 }), shouldWaitForUltimatePresentation: () => false, skipsUltimateCutIn: (mode: string) => mode !== "full",
+    ultimatePresentationFor: () => ({}), ultimatePresentationTiming: () => ({ rate: 1 }), shouldWaitForUltimatePresentation: () => false, skipsUltimateCutIn: (mode: string) => mode !== "full", UltimateMiniBannerStack: class { show(): void {} },
 });
 function sceneFight(lease: ReturnType<typeof prepareCombat>, speed: number) {
     clock = 0;
@@ -29,7 +29,7 @@ function sceneFight(lease: ReturnType<typeof prepareCombat>, speed: number) {
         ultimateSequenceActive: false, scene: { isActive: () => true }, views: new Map(), tweens: { killTweensOf: noop },
         stepMeters: noop, refreshContribution: noop, syncCombatEffects: noop, syncGroundSurfaces: noop, refreshProfiles: noop,
         refreshDebug: noop, syncViews: noop, paintDeathClock: noop, simulationPaused: () => false, pressProfileCard: noop,
-        ultimatePresentationSkipped: () => true, ultimatePresentationMode: () => "skip",
+        ultimatePresentationMode: () => "skip",
         playEvent(event: skirmish.SkirmishEvent) { if (event.kind === "finish")
             this.finished = true; },
     });

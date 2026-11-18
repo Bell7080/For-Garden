@@ -19,7 +19,7 @@ const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", {
   Phaser: { Scene: class {} }, ...skirmish, ...ultimate, ...arenaView,
   performance: { now: () => clock }, audioManager: undefined, BOSS_STEP_MS: 20, formatBattleClock: () => "", hasMergedBattleHit: () => false,
   ultimatePresentationFor: () => ({ zoomScale: 1.2, zoomMs: 200, cameraShakeIntensity: 0 }), ultimatePresentationTiming: () => ({ rate: 1 }),
-  shouldWaitForUltimatePresentation: controls.shouldWaitForUltimatePresentation, skipsUltimateCutIn: controls.skipsUltimateCutIn, scaleUltimateDuration: () => 100, ULTIMATE_RECOVERY_RATIO: 0.5,
+  shouldWaitForUltimatePresentation: controls.shouldWaitForUltimatePresentation, skipsUltimateCutIn: controls.skipsUltimateCutIn, UltimateMiniBannerStack: class { show(): void {} }, scaleUltimateDuration: () => 100, ULTIMATE_RECOVERY_RATIO: 0.5,
   settingsManager: { get: () => ({ presentation: { graphicsQuality: "high" }, accessibility: { reduceFlashes: false } }), haptic: noop },
   UltimateCutIn: { create: () => new Promise((r) => later(3, () => r({ play: () => new Promise((p) => later(20, () => p(undefined))), destroy: noop }))) },
 });
@@ -29,7 +29,7 @@ function makeScene(skip: boolean) {
     tweens: { killTweensOf: noop, add: (cfg: any) => later(6, () => cfg.onComplete?.()) },
     stepMeters: noop, refreshContribution: noop, syncCombatEffects: noop, syncGroundSurfaces: noop, refreshProfiles: noop,
     refreshDebug: noop, syncViews: noop, paintDeathClock: noop, simulationPaused: () => false, pressProfileCard: noop,
-    ultimatePresentationSkipped: () => skip, ultimatePresentationMode: () => (skip ? "skip" : "full"), motion: { cameraShakeFactor: 0 }, cameras: { main: { shake: noop } }, contributionPanel: undefined,
+    ultimatePresentationMode: () => (skip ? "skip" : "full"), motion: { cameraShakeFactor: 0 }, cameras: { main: { shake: noop } }, contributionPanel: undefined,
     playEvent(this: { finished: boolean }, event: skirmish.SkirmishEvent) { if (event.kind === "finish") this.finished = true; return event.kind === "attack" ? { completed: new Promise((r) => later(8, () => r(undefined))) } : undefined; },
   });
   return scene;

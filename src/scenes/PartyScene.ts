@@ -1189,7 +1189,9 @@ export class PartyScene extends Phaser.Scene {
       const at = this.picked.indexOf(id);
       const chosen = at >= 0;
       entry.card.setSelected(chosen);
-      entry.card.setSub(chosen ? t("party.slot", { index: at + 1 }) : entry.role);
+      // 자리는 카드 한가운데 번호가 말하므로 아래 줄은 늘 직군을 지킨다.
+      entry.card.setSub(entry.role);
+      entry.card.setSlotNumber(chosen ? at + 1 : undefined);
       entry.card.setProgress(relicProgression.getProgress(id).level, relicProgression.getBreakthroughGrade(id));
     }
 

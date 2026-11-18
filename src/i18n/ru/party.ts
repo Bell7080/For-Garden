@@ -5,7 +5,6 @@ export const PARTY_RU = {
   "party.roleHint.show": "Показать роли",
   "party.start": "Начать бой",
   "party.saveFailed": "Не удалось сохранить построение. Попробуйте чуть позже.",
-  "party.slot": "Место {index}",
   "party.enemyPower": "Враги {power}",
   "party.allyPower": "Союзники {power}",
   "party.ready": "Построение готово",

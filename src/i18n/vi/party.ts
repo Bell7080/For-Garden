@@ -5,7 +5,6 @@ export const PARTY_VI = {
   "party.roleHint.show": "Hiện vai trò",
   "party.start": "Bắt đầu chiến đấu",
   "party.saveFailed": "Không lưu được Đội hình. Vui lòng thử lại sau.",
-  "party.slot": "Ô {index}",
   "party.enemyPower": "Địch {power}",
   "party.allyPower": "Ta {power}",
   "party.ready": "Đội hình sẵn sàng",

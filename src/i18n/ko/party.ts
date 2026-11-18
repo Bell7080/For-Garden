@@ -5,7 +5,6 @@ export const PARTY_KO = {
   "party.roleHint.show": "추천 켜기",
   "party.start": "전투 시작",
   "party.saveFailed": "편성을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
-  "party.slot": "{index}번 자리",
   "party.enemyPower": "적 {power}",
   "party.allyPower": "{power} 아군",
   "party.ready": "편성 완료",

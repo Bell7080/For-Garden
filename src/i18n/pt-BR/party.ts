@@ -5,7 +5,6 @@ export const PARTY_PT_BR = {
   "party.roleHint.show": "Mostrar funções",
   "party.start": "Iniciar batalha",
   "party.saveFailed": "Não foi possível salvar a formação. Tente novamente em instantes.",
-  "party.slot": "Posição {index}",
   "party.enemyPower": "Inimigos {power}",
   "party.allyPower": "Aliados {power}",
   "party.ready": "Formação pronta",

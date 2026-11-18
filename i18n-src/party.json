@@ -4,7 +4,6 @@
 "party.roleHint.show": ["显示职能", "แสดงบทบาท", "Hiện vai trò", "Tampilkan Peran", "Mostrar roles", "Mostrar funções", "Rollen anzeigen", "Показать роли"],
 "party.start": ["开始战斗", "เริ่มต่อสู้", "Bắt đầu chiến đấu", "Mulai Bertarung", "Iniciar combate", "Iniciar batalha", "Kampf starten", "Начать бой"],
 "party.saveFailed": ["无法保存编队，请稍后重试。", "บันทึกการจัดทีมไม่ได้ กรุณาลองใหม่ภายหลัง", "Không lưu được Đội hình. Vui lòng thử lại sau.", "Formasi tidak dapat disimpan. Coba lagi sebentar lagi.", "No se pudo guardar la formación. Inténtalo de nuevo más tarde.", "Não foi possível salvar a formação. Tente novamente em instantes.", "Formation konnte nicht gespeichert werden. Bitte später erneut versuchen.", "Не удалось сохранить построение. Попробуйте чуть позже."],
-"party.slot": ["{index}号位", "ช่อง {index}", "Ô {index}", "Slot {index}", "Posición {index}", "Posição {index}", "Platz {index}", "Место {index}"],
 "party.enemyPower": ["敌方 {power}", "ศัตรู {power}", "Địch {power}", "Musuh {power}", "Enemigos {power}", "Inimigos {power}", "Gegner {power}", "Враги {power}"],
 "party.allyPower": ["我方 {power}", "พันธมิตร {power}", "Ta {power}", "Sekutu {power}", "Aliados {power}", "Aliados {power}", "Verbündete {power}", "Союзники {power}"],
 "party.ready": ["编队完成", "จัดทีมเสร็จแล้ว", "Đội hình sẵn sàng", "Formasi Siap", "Formación lista", "Formação pronta", "Formation bereit", "Построение готово"],

@@ -5,7 +5,6 @@ export const PARTY_ZH_HANT = {
   "party.roleHint.show": "顯示職能",
   "party.start": "開始戰鬥",
   "party.saveFailed": "無法儲存編隊，請稍後重試。",
-  "party.slot": "{index}號位",
   "party.enemyPower": "敵方 {power}",
   "party.allyPower": "我方 {power}",
   "party.ready": "編隊完成",

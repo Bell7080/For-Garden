@@ -5,7 +5,6 @@ export const PARTY_EN = {
   "party.roleHint.show": "Show Roles",
   "party.start": "Start Battle",
   "party.saveFailed": "Could not save the Formation. Please try again shortly.",
-  "party.slot": "Slot {index}",
   "party.enemyPower": "Enemy {power}",
   "party.allyPower": "Allies {power}",
   "party.ready": "Formation Ready",

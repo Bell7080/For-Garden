@@ -242,6 +242,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private selectedHeadShade?: Phaser.GameObjects.Image;
   /** 파견 덮개의 몸통 면. 돌출 머리 몫(`awayHeadShade`)은 원화가 올라온 뒤에 이 면 바로 위에 낀다. */
   private awayVeil?: Phaser.GameObjects.Graphics;
+  /** 편성 자리 번호. 카드 한가운데에 크게 선다. */
+  private slotNumber?: Phaser.GameObjects.Text;
   private awayHeadShade?: Phaser.GameObjects.Image;
   /** 발광·확대와 함께 선택이 '눌린 면'으로 읽히게 하는 선택형 어두운 면이다. */
   private readonly selectedOverlay: Phaser.GameObjects.Graphics;
@@ -840,6 +842,31 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     const scale = pressed ? PRESSED_SELECTION.scale : style === "favorite" ? 1 : 1.06;
     this.setScale(selected ? scale : 1);
     this.syncMask();
+    return this;
+  }
+
+  /**
+   * 이 렐릭이 선 편성 자리 번호를 카드 **한가운데**에 크게 세운다(없으면 걷는다).
+   *
+   * 눌림 표시만으로는 "이미 나가 있다"까지만 읽히고 몇 번 칸인지는 아래 작은 글자를 읽어야
+   * 했다. 번호를 눌린 원화 위에 크게 세우면 그리드를 훑는 눈이 자리와 렐릭을 곧바로 잇는다.
+   */
+  setSlotNumber(index: number | undefined): this {
+    if (index === undefined) {
+      this.slotNumber?.setVisible(false);
+      return this;
+    }
+    if (!this.slotNumber) {
+      const size = Math.round(this.bodyHeight * 0.34);
+      this.slotNumber = this.scene.add
+        .text(0, -this.bodyHeight * 0.06, "", textStyle({ role: "display", size, color: COLOR.accentText }))
+        .setOrigin(0.5)
+        .setStroke("#05070a", Math.max(4, Math.round(size * 0.12)))
+        .setShadow(0, 4, "#000000", 10, true, true);
+      this.add(this.slotNumber);
+    }
+    this.bringToTop(this.slotNumber);
+    this.slotNumber.setText(`${index}`).setVisible(true);
     return this;
   }
 

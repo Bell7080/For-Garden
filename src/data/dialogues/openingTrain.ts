@@ -85,7 +85,7 @@ export const OPENING_TRAIN: DialogueStory = {
 
     // ── 공멸의 우당탕탕 삼인조 ──────────────────────────────────────
     { id: "toby", speaker: "토비", body: "찾았다아! 저기 있다, 그 연구원! 이번엔 내가 제일 먼저 잡는다!", standing: "toby", cast: RAID_TRIO, act: "hopTwice", cue: "impact", nextId: "amo" },
-    { id: "amo", speaker: "아모", body: "토, 토비… 목소리 좀 줄여. 코마가 조용히 움직이랬잖아…", standing: "amo", act: "tremble", nextId: "ripa" },
+    { id: "amo", speaker: "아모", body: "토, 토비… 목소리 좀 줄여. 코마 님이 조용히 움직이랬잖아…", standing: "amo", act: "tremble", nextId: "ripa" },
     { id: "ripa", speaker: "리파", body: "에이, 어차피 다 들켰는걸? 저쪽 셋 표정 좀 봐. 완전 재밌다!", standing: "ripa", act: "hop", nextId: "demand" },
     { id: "demand", speaker: "토비", body: "우리는 공멸이다! 그 연구원만 넘겨. 그럼 너희는 곱게 보내 줄게!", standing: "toby", act: "shake", nextId: "refuse" },
 

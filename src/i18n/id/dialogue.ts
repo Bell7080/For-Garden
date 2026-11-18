@@ -4,4 +4,13 @@ export const DIALOGUE_ID = {
   "dialogue.sign.system": "SISTEM",
   "dialogue.sign.broadcast": "SIARAN",
   "dialogue.sign.tower": "MENARA KONTROL",
+  "dialogue.title.terrorOfficer": "Perwira Regu Teror",
+  "dialogue.title.terrorMember": "Anggota Regu Teror",
+  "dialogue.title.retrievalOfficer": "Perwira Regu Penjemput",
+  "dialogue.title.retrievalSubOfficer": "Wakil Perwira Regu Penjemput",
+  "dialogue.title.retrievalMember": "Anggota Regu Penjemput",
+  "dialogue.title.confinementOfficer": "Perwira Regu Tahanan",
+  "dialogue.title.confinementSubOfficer": "Wakil Perwira Regu Tahanan",
+  "dialogue.title.viceCaptain": "Wakil Kapten Pemusnahan",
+  "dialogue.title.obi": "Kasir magang A-LAB24",
 } as const;

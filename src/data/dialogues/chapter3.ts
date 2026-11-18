@@ -26,7 +26,7 @@ export const STAGE_3_1_PRE: DialogueStory = {
   backdrop: "deepField",
   nodes: linear([
     { id: "land", speaker: "", body: "무릎 꿇은 코마 뒤로 찢어진 날개 망토가 내려앉았다. 서두르는 기색은 조금도 없었다.", standing: "ikanixia", cast: [{ id: "koma", slot: "left" }, { id: "ikanixia", slot: "right" }], cue: "rumble" },
-    { id: "greet", speaker: "이카닉시아", body: "수고하셨어요, 코마 님. 같은 간부끼리 이런 자리에서 뵙게 되다니, 조금 민망하네요.", standing: "ikanixia", act: "lean" },
+    { id: "greet", speaker: "이카닉시아", body: "수고했어, 코마. 같은 간부끼리 이런 데서 마주치니까… 좀 민망하다, 그치?", standing: "ikanixia", act: "lean" },
     { id: "mask", speaker: "", body: "코마가 입을 가리고 있던 가리개를 처음으로 내렸다.", standing: "koma", act: "recoil" },
     { id: "atra", speaker: "아트라", body: "아, 안 돼요… 선, 선배는 아직… 아직 데려가시면 안 돼요…", standing: "atra", cast: [{ id: "koma", slot: "left" }, { id: "atra", slot: "center" }, { id: "ikanixia", slot: "right" }], act: "tremble" },
     { id: "smile", speaker: "이카닉시아", body: "어머, 우리 아트라는 상냥하기도 하지. 그럼 선배는 마지막에 모시죠.", standing: "ikanixia", act: "nod" },

@@ -32,7 +32,7 @@ export const STAGE_1_2_POST: DialogueStory = {
     { id: "fall", speaker: "토비", body: "으윽… 유리 지붕이 이렇게 약할 줄은 몰랐어!", standing: "toby", cast: RAID_TRIO, act: "squash", cue: "impact" },
     { id: "hush", speaker: "아모", body: "내가 밟지 말랬잖아… 소리 나면 들킨다고.", standing: "amo", act: "shrink" },
     { id: "late", speaker: "리파", body: "이미 들켰는걸? 위에서 보니까 쟤네 우리 쪽으로 곧장 오던데.", standing: "ripa", act: "hop" },
-    { id: "where", speaker: "토비", body: "그보다 코마는 어디 갔어? 아직도 안 왔어?", standing: "toby", act: "hopTwice" },
+    { id: "where", speaker: "토비", body: "그보다 코마 님은 어디 가셨대? 아직도 안 오셨어?", standing: "toby", act: "hopTwice" },
     { id: "door", speaker: "아모", body: "…문 앞에 먼저 가 있을 거야. 언제나 그랬잖아.", standing: "amo", act: "nod" },
     { id: "heard", speaker: "파루아", body: "…코마라는 사람이 앞에서 기다리는 모양이에요. 먼저 가서 길을 막으려는 걸까요?", standing: "parua", cast: ROGUE_TRIO, act: "lean" },
     { id: "log", speaker: "도디", body: "저 셋이 계속 말하는 그 코마 말이죠? 대장님, 앞에서 누가 기다리고 있을지도 몰라요.", standing: "dodi", act: "hop" },
@@ -64,7 +64,7 @@ export const STAGE_1_5_PRE: DialogueStory = {
     { id: "hi", speaker: "토비", body: "늦었네, 연구원! 여기로 올 줄 알았지. 이번엔 못 지나가!", standing: "toby", cast: ALONE("toby"), act: "bounce" },
     { id: "torn", speaker: "토비", body: "뒤쪽 문은 내가 막아 놨어. …좀 뜯어지긴 했는데, 어쨌든 못 지나가는 건 똑같아!", standing: "toby", act: "shrink" },
     { id: "guard", speaker: "토리카", body: "대장님, 제 뒤에 계세요. 이번엔 혼자 와서 막겠다는 거예요?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "hop" },
-    { id: "split", speaker: "토비", body: "아모랑 리파는 코마가 시킨 대로 딴 길로 갔어. 나 혼자서도 충분하다고!", standing: "toby", act: "puff" },
+    { id: "split", speaker: "토비", body: "아모랑 리파는 코마 님이 시킨 대로 딴 길로 갔어. 나 혼자서도 충분하다고!", standing: "toby", act: "puff" },
     { id: "denial", speaker: "토비", body: "그, 그리고 이 방벽 장치는 내가 만진 게 아니야. 원래 켜져 있었어.", standing: "toby", act: "fright" },
     { id: "beep", speaker: "토리카", body: "방금 장치에서 삐— 소리 났는데요?", standing: "torika", act: "recoil" },
     { id: "fight", speaker: "토비", body: "으아, 잠깐! …아, 몰라! 너희부터 잡고 나서 끌 거야. 덤벼!", standing: "toby", act: "rage", cue: "impact" },
@@ -81,7 +81,7 @@ export const STAGE_1_5_POST: DialogueStory = {
     { id: "what", speaker: "토리카", body: "…지금 뭐 하세요?", standing: "torika", act: "lean" },
     { id: "excuse", speaker: "토비", body: "걸리적거려서 치운 거야! 쫓아오지 마, 알았지?", standing: "toby", act: "shake" },
     { id: "label", speaker: "도디", body: "그쪽은 막다른 길인데… 아, 옆문으로 갔어요!", standing: "dodi", cast: [{ id: "dodi", slot: "center" }, { id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "nod" },
-    { id: "away", speaker: "토비", body: "보, 보지 마! 코마한테는 말하지 마! 다음엔 진짜 이긴다~!", standing: "toby", cast: [{ id: "dodi", slot: "center" }, { id: "torika", slot: "left" }], act: "hopTwice", leave: "blastOff", cue: "impact" },
+    { id: "away", speaker: "토비", body: "보, 보지 마! 코마 님한테는 말하지 마! 다음엔 진짜 이긴다~!", standing: "toby", cast: [{ id: "dodi", slot: "center" }, { id: "torika", slot: "left" }], act: "hopTwice", leave: "blastOff", cue: "impact" },
   ]),
 };
 

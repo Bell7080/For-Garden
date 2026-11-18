@@ -4,4 +4,13 @@ export const DIALOGUE_DE = {
   "dialogue.sign.system": "SYSTEM",
   "dialogue.sign.broadcast": "DURCHSAGE",
   "dialogue.sign.tower": "KONTROLLTURM",
+  "dialogue.title.terrorOfficer": "Offizier des Terrortrupps",
+  "dialogue.title.terrorMember": "Mitglied des Terrortrupps",
+  "dialogue.title.retrievalOfficer": "Offizier des Bergungstrupps",
+  "dialogue.title.retrievalSubOfficer": "Unteroffizier des Bergungstrupps",
+  "dialogue.title.retrievalMember": "Mitglied des Bergungstrupps",
+  "dialogue.title.confinementOfficer": "Offizier des Kerkertrupps",
+  "dialogue.title.confinementSubOfficer": "Unteroffizier des Kerkertrupps",
+  "dialogue.title.viceCaptain": "Vizehauptmann der Vernichtung",
+  "dialogue.title.obi": "Aushilfe in Ausbildung bei A-LAB24",
 } as const;

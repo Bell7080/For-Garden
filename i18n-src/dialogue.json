@@ -48,5 +48,95 @@
     "TORRE DE CONTROLE",
     "KONTROLLTURM",
     "ДИСПЕТЧЕРСКАЯ"
+  ],
+  "dialogue.title.terrorOfficer": [
+    "恐怖组干部",
+    "ผู้บังคับการหน่วยก่อการร้าย",
+    "Cán bộ Đội Khủng Bố",
+    "Perwira Regu Teror",
+    "Oficial del Escuadrón Terror",
+    "Oficial do Esquadrão Terror",
+    "Offizier des Terrortrupps",
+    "Офицер отряда террора"
+  ],
+  "dialogue.title.terrorMember": [
+    "恐怖组组员",
+    "สมาชิกหน่วยก่อการร้าย",
+    "Thành viên Đội Khủng Bố",
+    "Anggota Regu Teror",
+    "Miembro del Escuadrón Terror",
+    "Membro do Esquadrão Terror",
+    "Mitglied des Terrortrupps",
+    "Боец отряда террора"
+  ],
+  "dialogue.title.retrievalOfficer": [
+    "回收组干部",
+    "ผู้บังคับการหน่วยเก็บกู้",
+    "Cán bộ Đội Thu Hồi",
+    "Perwira Regu Penjemput",
+    "Oficial del Escuadrón de Recuperación",
+    "Oficial do Esquadrão de Recuperação",
+    "Offizier des Bergungstrupps",
+    "Офицер отряда возврата"
+  ],
+  "dialogue.title.retrievalSubOfficer": [
+    "回收组副干部",
+    "รองผู้บังคับการหน่วยเก็บกู้",
+    "Phó cán bộ Đội Thu Hồi",
+    "Wakil Perwira Regu Penjemput",
+    "Suboficial del Escuadrón de Recuperación",
+    "Suboficial do Esquadrão de Recuperação",
+    "Unteroffizier des Bergungstrupps",
+    "Младший офицер отряда возврата"
+  ],
+  "dialogue.title.retrievalMember": [
+    "回收组组员",
+    "สมาชิกหน่วยเก็บกู้",
+    "Thành viên Đội Thu Hồi",
+    "Anggota Regu Penjemput",
+    "Miembro del Escuadrón de Recuperación",
+    "Membro do Esquadrão de Recuperação",
+    "Mitglied des Bergungstrupps",
+    "Боец отряда возврата"
+  ],
+  "dialogue.title.confinementOfficer": [
+    "监禁组干部",
+    "ผู้บังคับการหน่วยกักขัง",
+    "Cán bộ Đội Giam Cầm",
+    "Perwira Regu Tahanan",
+    "Oficial del Escuadrón Cautivo",
+    "Oficial do Esquadrão Cativo",
+    "Offizier des Kerkertrupps",
+    "Офицер узничьего отряда"
+  ],
+  "dialogue.title.confinementSubOfficer": [
+    "监禁组副干部",
+    "รองผู้บังคับการหน่วยกักขัง",
+    "Phó cán bộ Đội Giam Cầm",
+    "Wakil Perwira Regu Tahanan",
+    "Suboficial del Escuadrón Cautivo",
+    "Suboficial do Esquadrão Cativo",
+    "Unteroffizier des Kerkertrupps",
+    "Младший офицер узничьего отряда"
+  ],
+  "dialogue.title.viceCaptain": [
+    "歼灭副队长",
+    "รองหัวหน้าทำลายล้าง",
+    "Phó đội trưởng Hủy Diệt",
+    "Wakil Kapten Pemusnahan",
+    "Vicecapitán de Aniquilación",
+    "Vice-capitão da Aniquilação",
+    "Vizehauptmann der Vernichtung",
+    "Заместитель командира Истребления"
+  ],
+  "dialogue.title.obi": [
+    "A-LAB24 见习店员",
+    "พนักงานฝึกหัด A-LAB24",
+    "Nhân viên tập sự A-LAB24",
+    "Kasir magang A-LAB24",
+    "Dependiente en prácticas de A-LAB24",
+    "Atendente em treinamento do A-LAB24",
+    "Aushilfe in Ausbildung bei A-LAB24",
+    "Стажёр в A-LAB24"
   ]
 }

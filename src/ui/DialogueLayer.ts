@@ -13,6 +13,9 @@ import { DialogueStage } from "./DialogueStage";
 import { DIALOGUE_OVERSCAN, DIALOGUE_PANEL_TOP, DIALOGUE_VOICE } from "./dialogueStageLayout";
 import { drawGlassFade, drawHairline } from "./holo";
 import { addSectionTitle } from "./SectionTitle";
+import { addFactionMark } from "./FactionMark";
+import { DIALOGUE_PANEL, dialogueBodyHeight, dialogueChoiceShade, dialogueChoiceY } from "./dialoguePanelLayout";
+import { dialogueSpeakerId, dialogueSpeakerTitle } from "./dialogueSpeakerTitle";
 import { COLOR, textStyle } from "./theme";
 import { wrapDialogueText } from "../core/dialogueTextWrap";
 import { fitTextToBox } from "./textFit";
@@ -30,7 +33,7 @@ const PANEL_TOP = DIALOGUE_PANEL_TOP;
  * 같은 빗금으로 서므로, 짧은 한마디든 긴 이야기든 "누가 말하는가"가 한 양식으로 읽힌다.
  * 이름과 본문을 가르던 자리도 그 선 하나가 대신해 본문이 한 줄만큼 위로 올라온다.
  */
-const PANEL_TEXT = { nameX: 82, bodyX: 92, bodyY: PANEL_TOP + 74, nameSize: 34, bodySize: 38 } as const;
+const PANEL_TEXT = { nameX: DIALOGUE_PANEL.name.x, bodyX: DIALOGUE_PANEL.body.x, bodyY: DIALOGUE_PANEL.body.y, nameSize: DIALOGUE_PANEL.name.size, bodySize: DIALOGUE_PANEL.body.size } as const;
 
 /**
  * 자동 넘기기는 이야기를 오가도 유지되는 보기 습관이라 화면(레이어)이 아니라 모듈에 둔다. 저장하지 않는다 —
@@ -49,6 +52,8 @@ const LOG_LIMIT = 40;
 export class DialogueLayer extends Phaser.GameObjects.Container {
   /** 화자 이름표. 노드마다 글자 폭이 달라지므로 판 한 장을 다시 만든다. */
   private speakerPlate?: Phaser.GameObjects.Container;
+  /** 이름 아래 수식어(소속·직책) 한 줄과 엠블럼. 이름표와 함께 갈아 끼운다. */
+  private speakerTitle: Phaser.GameObjects.GameObject[] = [];
   private readonly bodyText: Phaser.GameObjects.Text;
   private readonly nextMark: Phaser.GameObjects.Text;
   private readonly choiceObjects: Phaser.GameObjects.GameObject[] = [];
@@ -100,7 +105,7 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     this.bodyText = scene.add.text(PANEL_TEXT.bodyX, PANEL_TEXT.bodyY, "", textStyle({ role: "body", size: PANEL_TEXT.bodySize, wrap: BASE_WIDTH - 184, lineSpacing: DIALOGUE_BUBBLE.lineSpacing + 6 }));
     this.bodyText.setWordWrapCallback((text: string, object: Phaser.GameObjects.Text) => wrapDialogueText(text, object.style.wordWrapWidth ?? BASE_WIDTH - 184,
       (value) => object.context.measureText(value).width, settingsManager.get().game.language));
-    this.nextMark = scene.add.text(BASE_WIDTH - 100, PANEL_TOP + 424, "▼", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
+    this.nextMark = scene.add.text(DIALOGUE_PANEL.next.x, DIALOGUE_PANEL.next.y, "▼", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
     this.add([glass, topLine, blocker, this.bodyText, this.nextMark]);
     this.addTools();
     this.setDepth(600);
@@ -129,7 +134,7 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     const generation = ++this.renderGeneration;
     this.cancelTyping();
     this.clearChoices();
-    this.setSpeaker(node.speaker);
+    this.setSpeaker(node.speaker, node.standing);
     this.history.push({ speaker: node.speaker, body: node.body });
     if (this.history.length > LOG_LIMIT) this.history.shift();
     this.pendingChoices = node.choices ?? [];
@@ -141,12 +146,23 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
   prefetch(order: readonly DialogueStandingAsset[]): void { this.stage.prefetch(order); }
 
   /** 화자 이름표를 판 윗선에 다시 세운다. 이름 길이가 노드마다 달라 판째로 갈아 끼운다. */
-  private setSpeaker(label: string): void {
+  private setSpeaker(label: string, standing?: DialogueNode["standing"]): void {
     this.speakerPlate?.destroy();
     this.speakerPlate = undefined;
+    this.speakerTitle.splice(0).forEach((object) => object.destroy());
     // 화자가 없는 줄은 지문이다. 이름표를 비워 두어 누가 말하는 것이 아님을 판이 말한다.
     if (!label) return;
-    this.speakerPlate = addSectionTitle(this.scene, PANEL_TEXT.nameX, PANEL_TOP - 10, label, { size: PANEL_TEXT.nameSize, parent: this });
+    this.speakerPlate = addSectionTitle(this.scene, PANEL_TEXT.nameX, DIALOGUE_PANEL.name.y, label, { size: PANEL_TEXT.nameSize, parent: this });
+    // 이름 아래 한 줄 — 누구 편이고 어느 자리인가. 정체를 감춘 화자(???)와 지문에는 서지 않는다.
+    const title = dialogueSpeakerTitle(dialogueSpeakerId(label, standing));
+    if (!title) return;
+    const spec = DIALOGUE_PANEL.title;
+    const mark = title.squad ? addFactionMark(this.scene, spec.x + spec.emblem / 2, spec.y, title.squad, { size: spec.emblem }) : undefined;
+    const textX = mark ? spec.x + spec.emblem + spec.gap : spec.x;
+    const text = this.scene.add.text(textX, spec.y, title.text, textStyle({ role: "emphasis", size: spec.size, color: COLOR.inkDim })).setOrigin(0, 0.5);
+    if (mark) { this.add(mark); this.speakerTitle.push(mark); }
+    this.add(text);
+    this.speakerTitle.push(text);
   }
 
   /**
@@ -163,7 +179,7 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     this.bodyText.setFontStyle(fontStyleFor(spec?.role ?? "body")).setColor(spec?.dim ? COLOR.inkDim : COLOR.ink);
     // 전체 문장으로 먼저 맞춰 타이핑 도중 글자 크기가 흔들리지 않게 한다.
     this.bodyText.setFontFamily(activeFontFamily()).setText(body);
-    fitTextToBox(this.bodyText, { width: BASE_WIDTH - 184, height: 350 }, { size, minSize: 26, step: 1 });
+    fitTextToBox(this.bodyText, { width: DIALOGUE_PANEL.body.width, height: dialogueBodyHeight() }, { size, minSize: DIALOGUE_PANEL.body.minSize, step: 1 });
     this.bodyText.setText("");
     if (spec && spec.bump > 0) this.bump(spec.bump);
     this.nextMark.setVisible(false);
@@ -296,9 +312,16 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
   }
 
   private buildChoices(choices: readonly DialogueChoice[]): void {
+    if (choices.length === 0) return;
+    const spec = DIALOGUE_PANEL.choice;
+    // 선택지 뒤로 어둠을 한 겹 깔아 스탠딩·배경 위에서도 버튼과 글자가 먼저 읽히게 한다.
+    const shadeSpan = dialogueChoiceShade(choices.length);
+    const shade = this.scene.add.rectangle(BASE_WIDTH / 2, (shadeSpan.top + shadeSpan.bottom) / 2, BASE_WIDTH, shadeSpan.bottom - shadeSpan.top, 0x000000, spec.shadeAlpha).setDepth(609);
+    this.choiceObjects.push(shade);
+    playFadeIn(this.scene, [shade]);
     choices.forEach((choice, index) => {
-      const button = new Button(this.scene, BASE_WIDTH / 2, 1050 + index * 130, {
-        width: BASE_WIDTH - 160, height: 104, label: choice.label, fontSize: 30,
+      const button = new Button(this.scene, BASE_WIDTH / 2, dialogueChoiceY(index, choices.length), {
+        width: spec.width, height: spec.height, label: choice.label, fontSize: spec.fontSize,
         onClick: () => {
           // 갈래를 고른 순간 — 대사 넘김(아무 소리 없음)과 갈리게 확정음을 낸다.
           audioManager?.playUi("ui.confirm");

@@ -90,8 +90,8 @@ export const STAGE_5_6_POST: DialogueStory = {
   backdrop: "prisonField",
   nodes: linear([
     { id: "water", speaker: "모사나", body: "물 깊어. 당신, 내 줄 놓지 마. 발밑은 내가 볼게.", standing: "mosana", cast: [{ id: "mosana", slot: "center" }], act: "lean", cue: "rumble" },
-    { id: "ika", speaker: "이카닉시아", body: "어머, 라자 님. 오랜만이에요. 갇혀 계신 동안에도 저희 회수조는 라자 님을 한시도 잊은 적이 없답니다.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "left" }, { id: "raja", slot: "right" }], act: "lean" },
-    { id: "raja", speaker: "라자", body: "…잊은 적이 없는데 한 번을 안 내려왔나. 거짓말은 여전하군.", standing: "raja", act: "nod" },
+    { id: "ika", speaker: "이카닉시아", body: "어머, 라자 님. 오랜만이에요. 그때 선두조를 두고 갈 수밖에 없어서… 저희도 마음이 아팠답니다. 한시도 잊은 적 없어요.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "left" }, { id: "raja", slot: "right" }], act: "lean" },
+    { id: "raja", speaker: "라자", body: "…잊은 적이 없는데 이제야 내려오셨습니까. 거짓말은 여전하십니다, 간부님.", standing: "raja", act: "nod" },
     { id: "ika2", speaker: "이카닉시아", body: "후훗. 그래도 연구원님을 모시는 일만큼은 함께하실 거죠?", standing: "ikanixia", act: "nod" },
   ]),
 };

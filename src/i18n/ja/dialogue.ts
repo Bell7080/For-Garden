@@ -4,4 +4,13 @@ export const DIALOGUE_JA = {
   "dialogue.sign.system": "システム",
   "dialogue.sign.broadcast": "放送",
   "dialogue.sign.tower": "管制塔",
+  "dialogue.title.terrorOfficer": "テロ班 幹部",
+  "dialogue.title.terrorMember": "テロ班 班員",
+  "dialogue.title.retrievalOfficer": "回収班 幹部",
+  "dialogue.title.retrievalSubOfficer": "回収班 副幹部",
+  "dialogue.title.retrievalMember": "回収班 班員",
+  "dialogue.title.confinementOfficer": "監禁班 幹部",
+  "dialogue.title.confinementSubOfficer": "監禁班 副幹部",
+  "dialogue.title.viceCaptain": "共滅 副隊長",
+  "dialogue.title.obi": "A-LAB24 見習いアルバイト",
 } as const;

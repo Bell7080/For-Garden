@@ -73,7 +73,7 @@ export const STAGE_7_5_POST: DialogueStory = {
   backdrop: "thirdBranchField",
   nodes: linear([
     { id: "fall", speaker: "이카닉시아", body: "…후훗. 서둘렀더니 이렇게 되네요. 역시 저한테는 천천히가 맞나 봐요.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "left" }, { id: "koma", slot: "right" }], act: "faint" },
-    { id: "ask", speaker: "이카닉시아", body: "코마 님. 설마 명령을 거스르실 생각은 아니시죠? 같은 간부로서 묻는 거예요.", standing: "ikanixia", act: "lean" },
+    { id: "ask", speaker: "이카닉시아", body: "코마. 설마 명령 거스를 생각은 아니지? 같은 간부로서 묻는 거야.", standing: "ikanixia", act: "lean" },
     { id: "koma", speaker: "", body: "코마는 대답하지 않았다. 이카닉시아 곁을 지나쳐, 연구원보다 한 걸음 앞에서 걷기 시작했다." },
   ]),
 };

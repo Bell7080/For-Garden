@@ -4,4 +4,13 @@ export const DIALOGUE_TH = {
   "dialogue.sign.system": "ระบบ",
   "dialogue.sign.broadcast": "กระจายเสียง",
   "dialogue.sign.tower": "หอควบคุม",
+  "dialogue.title.terrorOfficer": "ผู้บังคับการหน่วยก่อการร้าย",
+  "dialogue.title.terrorMember": "สมาชิกหน่วยก่อการร้าย",
+  "dialogue.title.retrievalOfficer": "ผู้บังคับการหน่วยเก็บกู้",
+  "dialogue.title.retrievalSubOfficer": "รองผู้บังคับการหน่วยเก็บกู้",
+  "dialogue.title.retrievalMember": "สมาชิกหน่วยเก็บกู้",
+  "dialogue.title.confinementOfficer": "ผู้บังคับการหน่วยกักขัง",
+  "dialogue.title.confinementSubOfficer": "รองผู้บังคับการหน่วยกักขัง",
+  "dialogue.title.viceCaptain": "รองหัวหน้าทำลายล้าง",
+  "dialogue.title.obi": "พนักงานฝึกหัด A-LAB24",
 } as const;

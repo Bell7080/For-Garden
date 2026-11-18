@@ -4,4 +4,13 @@ export const DIALOGUE_ZH_HANS = {
   "dialogue.sign.system": "系统",
   "dialogue.sign.broadcast": "广播",
   "dialogue.sign.tower": "管制塔",
+  "dialogue.title.terrorOfficer": "恐怖组干部",
+  "dialogue.title.terrorMember": "恐怖组组员",
+  "dialogue.title.retrievalOfficer": "回收组干部",
+  "dialogue.title.retrievalSubOfficer": "回收组副干部",
+  "dialogue.title.retrievalMember": "回收组组员",
+  "dialogue.title.confinementOfficer": "监禁组干部",
+  "dialogue.title.confinementSubOfficer": "监禁组副干部",
+  "dialogue.title.viceCaptain": "歼灭副队长",
+  "dialogue.title.obi": "A-LAB24 见习店员",
 } as const;

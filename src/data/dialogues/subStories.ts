@@ -27,7 +27,7 @@ export const STAGE_2_3_LOST_BADGE: DialogueStory = {
       id: "choose", speaker: "", body: "코마는 수로 끝에서 걸음을 멈추고 연구원을 돌아보았다.", standing: "koma",
       choices: [
         { id: "chase", label: "돌려받으러 쫓아간다", nextId: "plunge", effect: { type: "bondXp", relicId: "dodo", amount: 3 } },
-        { id: "wound", label: "손의 상처가 마음에 걸린다", nextId: "plunge", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
+        { id: "wound", label: "손에 난 상처부터 묻는다", nextId: "plunge", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
       ],
     },
     { id: "plunge", speaker: "", body: "대답은 없었다. 첨벙, 물소리 하나만 남기고 그림자는 수로 아래로 가라앉았다.", standing: "koma", cast: [], leave: "sink" },
@@ -134,7 +134,7 @@ export const STAGE_1_8_SIDE_POST: DialogueStory = {
     { id: "open", speaker: "", body: "상자를 열자 반짝이는 조각이 쏟아져 나왔다. 간식은 한 알도 없었다.", standing: "toby", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], act: "squash" },
     { id: "cry", speaker: "토비", body: "이게 뭐야! 못 먹는 거잖아! 아까 분명히 냄새 났는데!", standing: "toby", act: "faint" },
     { id: "sniff", speaker: "리파", body: "음… 그거, 토비 주머니에서 나는 냄새 아니야? 아까 간식 넣어 뒀잖아.", standing: "ripa", act: "lean" },
-    { id: "sigh", speaker: "아모", body: "…그럴 줄 알았어. 이제 그만 가자. 코마가 기다리겠다.", standing: "amo", act: "nod" },
+    { id: "sigh", speaker: "아모", body: "…그럴 줄 알았어. 이제 그만 가자. 코마 님 기다리시겠다.", standing: "amo", act: "nod" },
     { id: "tia", speaker: "티아", body: "으아앗, 내 보물! 다 흩어졌잖아요! 연구원님, 같이 주워 주실 거죠?", standing: "tia", cast: [{ id: "torika", slot: "left" }, { id: "tia", slot: "center" }, { id: "parua", slot: "right" }], act: "hopTwice" },
     { id: "pick", speaker: "토리카", body: "물론이죠! 반짝반짝해서 줍는 보람이 있네요.", standing: "torika", act: "hop" },
   ]),
@@ -216,7 +216,7 @@ export const STAGE_3_3_SIDE_POST: DialogueStory = {
       id: "choose", speaker: "", body: "젖은 점수판이 연구원의 손에 건네졌다.", standing: "mir",
       choices: [
         { id: "return", label: "그대로 돌려준다", nextId: "returnA", effect: { type: "bondXp", relicId: "rex", amount: 3 } },
-        { id: "fill", label: "첫 칸을 채워 준다", nextId: "fillB", effect: { type: "bondXp", relicId: "luka", amount: 3 } },
+        { id: "fill", label: "점수판 첫 칸을 채워 준다", nextId: "fillB", effect: { type: "bondXp", relicId: "luka", amount: 3 } },
       ],
     },
     { id: "returnA", speaker: "렉시아", body: "자, 돌려줄게. 다음엔 점수 말고 제대로 덤벼. 그럼 나도 제대로 상대해 줄게.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "mir", slot: "center" }, { id: "pulsi", slot: "right" }], act: "nod", nextId: "laugh" },
@@ -284,7 +284,7 @@ export const STAGE_4_7_SIDE_POST: DialogueStory = {
       id: "choose", speaker: "", body: "델로피가 장부를 든 채 연구원을 돌아보았다.", standing: "delopi",
       choices: [
         { id: "give", label: "장부를 돌려준다", nextId: "giveA", effect: { type: "bondXp", relicId: "delopi", amount: 3 } },
-        { id: "tear", label: "코마의 칸만 떼어 둔다", nextId: "tearB", effect: { type: "bondXp", relicId: "luka", amount: 3 } },
+        { id: "tear", label: "코마 칸만 몰래 떼어 둔다", nextId: "tearB", effect: { type: "bondXp", relicId: "luka", amount: 3 } },
       ],
     },
     { id: "giveA", speaker: "델로피", body: "네, 돌려드릴게요. 대신 마술 하나는 남겨 뒀어요. 펴 보시면 아실 거예요.", standing: "delopi", act: "nod", nextId: "neuri" },
@@ -302,7 +302,7 @@ export const STAGE_5_2_SIDE_PRE: DialogueStory = {
   nodes: linear([
     { id: "keys", speaker: "", body: "검문 격자 앞. 아트라가 허리에 매단 열쇠꾸러미를 소매 속에 감추며 뒷걸음질 쳤다. 그 뒤에서 미르가 팔짱을 끼고 서 있었다.", standing: "atra", cast: [{ id: "atra", slot: "left" }, { id: "mir", slot: "right" }] },
     { id: "no", speaker: "아트라", body: "이, 이건 못 드려요… 감, 감방 열쇠라서… 선배가 맡겨 둔 거라서…", standing: "atra", act: "tremble" },
-    { id: "score", speaker: "미르", body: "아트라, 그거 들고 있으면 점수가 두 배래요! 연구원님까지 모셔 가면 세 배!", standing: "mir", act: "bounce" },
+    { id: "score", speaker: "미르", body: "아트라 님, 그거 들고 계시면 점수가 두 배래요! 연구원님까지 모셔 가면 세 배!", standing: "mir", act: "bounce" },
     { id: "salvage", speaker: "모사나", body: "당신은 뒤에 있어. 열쇠는 내가 가져올게.", standing: "mosana", cast: [{ id: "mosana", slot: "left" }, { id: "atra", slot: "center" }, { id: "mir", slot: "right" }], act: "nod" },
     { id: "list", speaker: "아트라", body: "그, 그리고… 연구원님 이름, 아직 제 목록에 있어요. 지, 지우지 않았어요.", standing: "atra", act: "shrink" },
     { id: "go", speaker: "미르", body: "그럼 목록대로 모셔 가요! 간다아!", standing: "mir", act: "hop", cue: "impact" },
@@ -329,7 +329,7 @@ export const STAGE_5_2_SIDE_POST: DialogueStory = {
     { id: "returnA", speaker: "모사나", body: "…가져가. 우리가 찾는 문 열쇠는 여기 없으니까. 나머지까지 뺏을 필요는 없지.", standing: "mosana", act: "nod", nextId: "atraA" },
     { id: "atraA", speaker: "아트라", body: "…고, 고맙습니다. 그래도 목록에서는 안 지울 거예요.", standing: "atra", act: "nod", nextId: "mir" },
     { id: "eraseB", speaker: "아트라", body: "시, 싫어요… 지우면… 연구원님을 아무도 기억 안 하잖아요.", standing: "atra", act: "recoil", nextId: "mir" },
-    { id: "mir", speaker: "미르", body: "아트라, 열쇠 찾았으면 됐어요! 그럼 점수는 반만이에요!", standing: "mir", cast: [{ id: "atra", slot: "left" }, { id: "mir", slot: "right" }], act: "hop" },
+    { id: "mir", speaker: "미르", body: "아트라 님, 열쇠 찾으셨으면 됐어요! 그럼 점수는 반만이에요!", standing: "mir", cast: [{ id: "atra", slot: "left" }, { id: "mir", slot: "right" }], act: "hop" },
     { id: "ring", speaker: "", body: "두 그림자가 감방 사이 어둠으로 물러났다. 모사나는 빈 고리를 오래 들여다보았다.", standing: "mosana", cast: [{ id: "mosana", slot: "center" }] },
   ]),
 };
@@ -343,13 +343,13 @@ export const STAGE_5_8_YOUNGEST_SHARE: DialogueStory = {
     { id: "tray", speaker: "", body: "배식 통로 끝 모퉁이. 라자가 쟁반 하나에 국그릇을 다섯 개나 올린 채 배식구에 한 칸씩 밀어 넣고 있었다.", standing: "raja", cast: [{ id: "raja", slot: "center" }] },
     { id: "dont", speaker: "라자", body: "…보지 마라. 배식 시간이다.", standing: "raja", act: "shrink" },
     { id: "burn", speaker: "마키", body: "국 냄새가 좋다냥. 네가 끓였냥? 솥은 안 보이는데 어디서 가져왔냥?", standing: "maki", cast: [{ id: "maki", slot: "left" }, { id: "raja", slot: "right" }], act: "lean" },
-    { id: "carry", speaker: "라자", body: "…끓인 건 마가사다. 나는 나르기만 한다. 앞에 서는 놈이 나르는 거다.", standing: "raja", act: "nod" },
+    { id: "carry", speaker: "라자", body: "…끓인 건 마가사 간부님이다. 나는 나르기만 한다. 앞에 서는 놈이 나르는 거다.", standing: "raja", act: "nod" },
     { id: "last", speaker: "데이", body: "그럼 마지막 그릇은 누구 거야? 그 칸만 비어 있는데!", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "raja", slot: "right" }], act: "hop" },
-    { id: "youngest", speaker: "라자", body: "막내 몫이다. 겁이 많아서 사람이 있으면 안 나온다. …그래서 늘 식은 걸 먹는다.", standing: "raja", act: "lean" },
+    { id: "youngest", speaker: "라자", body: "노아 간부님 몫이다. 우리 중에 제일 어리고 겁이 많으셔서, 사람이 있으면 안 나오신다. …그래서 늘 식은 걸 드신다.", standing: "raja", act: "lean" },
     {
       id: "choose", speaker: "", body: "빈 배식구 앞에 그릇 하나가 놓였다. 아직 김이 올랐다.", standing: "raja",
       choices: [
-        { id: "step", label: "그릇을 두고 물러나 준다", nextId: "stepA", effect: { type: "bondXp", relicId: "deina", amount: 3 } },
+        { id: "step", label: "그릇만 두고 물러난다", nextId: "stepA", effect: { type: "bondXp", relicId: "deina", amount: 3 } },
         { id: "cover", label: "식지 않게 덮어 둔다", nextId: "coverB", effect: { type: "bondXp", relicId: "maki", amount: 3 } },
       ],
     },
@@ -394,7 +394,7 @@ export const STAGE_6_4_SIDE_POST: DialogueStory = {
     },
     { id: "kentoA", speaker: "켄토", body: "뒤에 있는 사람이 안 다치니까. 그거면 충분해.", standing: "kento", act: "nod", nextId: "noa" },
     { id: "askB", speaker: "스테라", body: "선배가 물어봐요. 라자 씨는 왜 늘 앞에 서요?", standing: "stella", cast: [{ id: "stella", slot: "left" }, { id: "raja", slot: "right" }], act: "lean", nextId: "noa" },
-    { id: "noa", speaker: "라자", body: "…앞이 버티면 노아가 안 나와도 된다. 겁 많은 애는 뒤에 있어야 한다.", standing: "raja", cast: [{ id: "raja", slot: "left" }, { id: "kento", slot: "right" }], act: "nod" },
+    { id: "noa", speaker: "라자", body: "…앞이 버티면 노아 간부님이 안 나오셔도 된다. 겁 많은 분은 뒤에 계셔야 한다.", standing: "raja", cast: [{ id: "raja", slot: "left" }, { id: "kento", slot: "right" }], act: "nod" },
     { id: "same", speaker: "라자", body: "같은 이유군. 내일 다시 긋겠다.", standing: "raja" },
     { id: "up", speaker: "", body: "라자는 바람을 거슬러 수직갱 위로 올라갔다. 위쪽 어딘가에서 작게 떨리는 숨소리가 라자를 맞았다.", standing: "raja", cast: [{ id: "kento", slot: "right" }], leave: "rise" },
   ]),
@@ -464,7 +464,7 @@ export const STAGE_7_6_SIDE_PRE: DialogueStory = {
     { id: "faces", speaker: "메론", body: "저, 저기요… 그 서랍, 얼굴 사진 들어 있는 거죠…? 아직 다 못 그렸는데요…?", standing: "meron", cast: [{ id: "meron", slot: "left" }, { id: "maddy", slot: "right" }], act: "shrink" },
     { id: "cold", speaker: "매디", body: "연구원 씨, 파워 냉방은 제 전문이에요. 저 자루째 얼려서 못 가져가게 할게요!", standing: "maddy", act: "bounce" },
     { id: "names", speaker: "아트라", body: "네, 네우리… 이건 그냥 두면 안 될까요… 이, 이름이 적혀 있는데…", standing: "atra", cast: [{ id: "atra", slot: "left" }, { id: "neuri", slot: "right" }], act: "tremble" },
-    { id: "erase", speaker: "네우리", body: "어머, 아트라. 이름 지우는 건 원래 회수조가 제일 잘하잖아요. 자, 연구원님부터 정중히 모실게요.", standing: "neuri", act: "lean", cue: "impact" },
+    { id: "erase", speaker: "네우리", body: "어머, 아트라 님. 이름 지우는 건 원래 회수조가 제일 잘하잖아요. 자, 연구원님부터 정중히 모실게요.", standing: "neuri", act: "lean", cue: "impact" },
   ]),
 };
 
@@ -488,7 +488,7 @@ export const STAGE_7_6_SIDE_POST: DialogueStory = {
     },
     { id: "thanksA", speaker: "아트라", body: "고, 고맙다는 말은… 제가 들을 말이 아닌데요…", standing: "atra", act: "recoil", nextId: "neuri" },
     { id: "askB", speaker: "아트라", body: "…아무도 안 적어 주면, 없었던 게 돼요. 그, 그래서 제가 적어요. 마음에 드는 사람부터…", standing: "atra", act: "lean", nextId: "neuri" },
-    { id: "neuri", speaker: "네우리", body: "아트라, 가요. 간부님께는 「기록 손상」이라고 올릴게요. …얼었으니까 거짓말은 아니죠.", standing: "neuri", cast: [{ id: "atra", slot: "left" }, { id: "neuri", slot: "right" }], act: "lean" },
+    { id: "neuri", speaker: "네우리", body: "아트라 님, 가요. 간부님께는 「기록 손상」이라고 올릴게요. …얼었으니까 거짓말은 아니죠.", standing: "neuri", cast: [{ id: "atra", slot: "left" }, { id: "neuri", slot: "right" }], act: "lean" },
     { id: "draw", speaker: "메론", body: "…이 얼굴들이랑, 아트라 씨 얼굴도 같이 그려 둘게요.", standing: "meron", cast: [{ id: "meron", slot: "center" }], act: "nod" },
   ]),
 };

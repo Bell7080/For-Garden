@@ -4,4 +4,13 @@ export const DIALOGUE_PT_BR = {
   "dialogue.sign.system": "SISTEMA",
   "dialogue.sign.broadcast": "TRANSMISSÃO",
   "dialogue.sign.tower": "TORRE DE CONTROLE",
+  "dialogue.title.terrorOfficer": "Oficial do Esquadrão Terror",
+  "dialogue.title.terrorMember": "Membro do Esquadrão Terror",
+  "dialogue.title.retrievalOfficer": "Oficial do Esquadrão de Recuperação",
+  "dialogue.title.retrievalSubOfficer": "Suboficial do Esquadrão de Recuperação",
+  "dialogue.title.retrievalMember": "Membro do Esquadrão de Recuperação",
+  "dialogue.title.confinementOfficer": "Oficial do Esquadrão Cativo",
+  "dialogue.title.confinementSubOfficer": "Suboficial do Esquadrão Cativo",
+  "dialogue.title.viceCaptain": "Vice-capitão da Aniquilação",
+  "dialogue.title.obi": "Atendente em treinamento do A-LAB24",
 } as const;

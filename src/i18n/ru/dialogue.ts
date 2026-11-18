@@ -4,4 +4,13 @@ export const DIALOGUE_RU = {
   "dialogue.sign.system": "СИСТЕМА",
   "dialogue.sign.broadcast": "ТРАНСЛЯЦИЯ",
   "dialogue.sign.tower": "ДИСПЕТЧЕРСКАЯ",
+  "dialogue.title.terrorOfficer": "Офицер отряда террора",
+  "dialogue.title.terrorMember": "Боец отряда террора",
+  "dialogue.title.retrievalOfficer": "Офицер отряда возврата",
+  "dialogue.title.retrievalSubOfficer": "Младший офицер отряда возврата",
+  "dialogue.title.retrievalMember": "Боец отряда возврата",
+  "dialogue.title.confinementOfficer": "Офицер узничьего отряда",
+  "dialogue.title.confinementSubOfficer": "Младший офицер узничьего отряда",
+  "dialogue.title.viceCaptain": "Заместитель командира Истребления",
+  "dialogue.title.obi": "Стажёр в A-LAB24",
 } as const;

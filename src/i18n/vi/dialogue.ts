@@ -4,4 +4,13 @@ export const DIALOGUE_VI = {
   "dialogue.sign.system": "HỆ THỐNG",
   "dialogue.sign.broadcast": "PHÁT THANH",
   "dialogue.sign.tower": "THÁP ĐIỀU KHIỂN",
+  "dialogue.title.terrorOfficer": "Cán bộ Đội Khủng Bố",
+  "dialogue.title.terrorMember": "Thành viên Đội Khủng Bố",
+  "dialogue.title.retrievalOfficer": "Cán bộ Đội Thu Hồi",
+  "dialogue.title.retrievalSubOfficer": "Phó cán bộ Đội Thu Hồi",
+  "dialogue.title.retrievalMember": "Thành viên Đội Thu Hồi",
+  "dialogue.title.confinementOfficer": "Cán bộ Đội Giam Cầm",
+  "dialogue.title.confinementSubOfficer": "Phó cán bộ Đội Giam Cầm",
+  "dialogue.title.viceCaptain": "Phó đội trưởng Hủy Diệt",
+  "dialogue.title.obi": "Nhân viên tập sự A-LAB24",
 } as const;

@@ -64,7 +64,7 @@ export const STAGE_2_4_PRE: DialogueStory = {
     { id: "parua", speaker: "파루아", body: "…도디, 쉿. 우리 말고 숨소리가 셋 더 있어.", standing: "parua", act: "tremble" },
     { id: "light", speaker: "", body: "딸깍, 스위치 소리와 함께 불이 들어왔다. 눈앞에 아모와 토비, 리파가 나란히 서 있었다.", cast: RAID_TRIO, cue: "impact" },
     { id: "toby", speaker: "토비", body: "으악! 불 켜지 말랬잖아!", standing: "toby", act: "fright" },
-    { id: "ripa", speaker: "리파", body: "또 너희네? 이번엔 코마가 오기 전에 붙잡아 둘까.", standing: "ripa", act: "hop" },
+    { id: "ripa", speaker: "리파", body: "또 너희네? 이번엔 코마 님 오시기 전에 붙잡아 둘까.", standing: "ripa", act: "hop" },
     { id: "amo", speaker: "아모", body: "…싸워야 하지? 정말 싸워야 해?", standing: "amo", act: "shrink" },
   ]),
 };
@@ -79,7 +79,7 @@ export const STAGE_2_5_PRE: DialogueStory = {
     { id: "alone", speaker: "토리카", body: "아모 씨 혼자예요? 토비 씨와 리파 씨는요?", standing: "torika", cast: PAIR("amo"), act: "lean" },
     { id: "away", speaker: "아모", body: "…오지 말라고 했어. 여기만큼은 나 혼자 서고 싶었거든.", standing: "amo", act: "nod" },
     { id: "why", speaker: "아모", body: "저기 라인 끝 보이지? 나, 저기 처음 올려졌다가 쓸 수 없음 표식을 달고 내려왔어.", standing: "amo", act: "shrink" },
-    { id: "ask", speaker: "아모", body: "코마가 그러더라. 연구원이 우리 같은 것한테도 말을 걸었다고. …진짜인지 내 눈으로 보고 싶었어. 그러니까 여기 지나가려면, 나부터 상대해.", standing: "amo", act: "tremble" },
+    { id: "ask", speaker: "아모", body: "코마 님이 그러시더라. 연구원이 우리 같은 것한테도 말을 걸었다고. …진짜인지 내 눈으로 보고 싶었어. 그러니까 여기 지나가려면, 나부터 상대해.", standing: "amo", act: "tremble" },
   ]),
 };
 
@@ -156,7 +156,7 @@ export const STAGE_2_8_PRE: DialogueStory = {
     { id: "fight", speaker: "토리카", body: "싸우실 건가요, 코마 씨?", standing: "torika", cast: PAIR("koma"), act: "lean" },
     { id: "no", speaker: "코마", body: "싸우지 않는다.", standing: "koma" },
     { id: "above", speaker: "코마", body: "위에서는 아직 모른다. 이 표식을 닦는 것도. 너희가 여기까지 온 것도.", standing: "koma", act: "shrink" },
-    { id: "trio", speaker: "리파", body: "…코마, 너 지금 뭐 하는 거야? 위에서 모르는 일을 해도 돼?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "recoil" },
+    { id: "trio", speaker: "리파", body: "…코마 님, 지금 뭐 하시는 거예요? 위에서 모르는 일 하셔도 돼요?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "recoil" },
     { id: "leave", speaker: "코마", body: "…가라. 대신 다시는 이쪽으로 오지 마라.", standing: "koma", cast: [{ id: "ripa", slot: "left" }], act: "nod" },
   ]),
 };
@@ -201,7 +201,7 @@ export const STAGE_2_10_PRE: DialogueStory = {
   backdrop: "battlefield",
   nodes: linear([
     { id: "gate", speaker: "", body: "잔향 지구의 관문이었다. 아모와 토비, 리파가 나란히 서서 길을 막고 있었다. 코마는 보이지 않았다.", cast: RAID_TRIO },
-    { id: "toby", speaker: "토비", body: "코마한테 안 물어봤어. 우리가 정했어. 여기서 막자고.", standing: "toby", act: "puff" },
+    { id: "toby", speaker: "토비", body: "코마 님한테는 안 여쭤봤어. 우리가 정했어. 여기서 막자고.", standing: "toby", act: "puff" },
     { id: "amo", speaker: "아모", body: "…나랑 토비랑 리파, 셋이서.", standing: "amo", act: "nod" },
     { id: "ripa", speaker: "리파", body: "지나갈 수 있을지는 우리가 정할 거야. 이번엔 누구 명령도 아니고.", standing: "ripa", act: "lean" },
     { id: "torika", speaker: "토리카", body: "…대장님한테는 못 보내요. 정말 싸울 거면 저부터 상대해요.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "nod" },
@@ -216,7 +216,7 @@ export const STAGE_2_10_POST: DialogueStory = {
   nodes: [
     { id: "lose", speaker: "", body: "셋은 서로를 붙든 채 그 자리에 주저앉았다. 아무도 도망치지 않았다.", cast: RAID_TRIO, nextId: "toby" },
     { id: "toby", speaker: "토비", body: "…졌네. 근데 이상하다. 하나도 안 분해.", standing: "toby", act: "shrink", nextId: "ripa" },
-    { id: "ripa", speaker: "리파", body: "코마가 시키지도 않았는데 끝까지 버텼네. 우리 셋 다.", standing: "ripa", act: "nod", nextId: "amo" },
+    { id: "ripa", speaker: "리파", body: "코마 님이 시키지도 않았는데 끝까지 버텼네. 우리 셋 다.", standing: "ripa", act: "nod", nextId: "amo" },
     { id: "amo", speaker: "아모", body: "…연구원.", standing: "amo", act: "tremble", nextId: "ask" },
     { id: "ask", speaker: "아모", body: "우리도 같이 가면 안 돼? 네 말을 다 믿는 건 아니야. 그냥… 더 들어 보고 싶어.", standing: "amo", act: "lean", nextId: "choose" },
     {

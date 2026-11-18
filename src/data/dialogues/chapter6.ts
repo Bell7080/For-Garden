@@ -33,7 +33,7 @@ export const STAGE_6_3_POST: DialogueStory = {
   nodes: linear([
     { id: "pot", speaker: "", body: "무너진 순찰로 한구석에 작은 불이 피어 있었다. 마가사가 솥을 걸어 놓고 라자에게 그릇을 내밀었다.", cast: [{ id: "raja", slot: "left" }, { id: "magasa", slot: "right" }] },
     { id: "magasa", speaker: "마가사", body: "라자, 많이 먹어. 앞에 서는 사람이 제일 먼저 배고프잖아.", standing: "magasa", act: "nod" },
-    { id: "raja", speaker: "라자", body: "…노아 몫은.", standing: "raja", act: "lean" },
+    { id: "raja", speaker: "라자", body: "…노아 간부님 몫은 있습니까.", standing: "raja", act: "lean" },
     { id: "magasa2", speaker: "마가사", body: "벌써 덜어 놨지~ 아, 연구원님 몫도 남겨 뒀는데. 오시면 같이 드세요.", standing: "magasa", act: "hop" },
     { id: "keris", speaker: "케리스", body: "…기록해 둘게요, 선배. 적이 우리 몫의 그릇을 따로 덜어 둔 건 처음이에요.", standing: "keris", cast: [{ id: "keris", slot: "center" }], act: "shrink" },
   ]),

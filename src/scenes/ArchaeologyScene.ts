@@ -25,7 +25,7 @@ import { BottomNav } from "../ui/BottomNav";
 import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { addRatesButton, RATES_SPOT } from "../ui/RatesButton";
 import { RailButton } from "../ui/RailButton";
-import { Button } from "../ui/Button";
+import { Button, DESTRUCTIVE_BUTTON_STYLE } from "../ui/Button";
 import { IconButton } from "../ui/IconButton";
 import { InventoryPopup } from "../ui/InventoryPopup";
 import { BACK_SLOT } from "../ui/popupGeometry";
@@ -671,7 +671,7 @@ export class ArchaeologyScene extends Phaser.Scene {
      */
     const finish = new Button(this, BASE_WIDTH / 2, ARCHAEOLOGY.finishButton.y, {
       width: ARCHAEOLOGY.finishButton.width, height: ARCHAEOLOGY.finishButton.height,
-      label: t("archaeology.finish"),
+      label: t("archaeology.finish"), ...DESTRUCTIVE_BUTTON_STYLE,
       onClick: () => { if (!this.digging) this.requestFinish(board); },
     });
     this.view.add(this.add.existing(finish));

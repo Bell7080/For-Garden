@@ -11,6 +11,12 @@ import { STRATA_REWARD_DISPLAY, type StrataLayerDefinition, type StrataRewardKin
 /** 범례 한 줄이 보여 줄 것의 최대 수다. */
 export const STRATA_LEGEND_MAX_KINDS = 3;
 
+/**
+ * 범례에 세우지 않는 종류 — 범례에 선 것은 그 구역에 반드시 한 칸 이상 깔리므로(`strataDig`), 호박석·다이아처럼
+ * 귀한 재화를 범례에 세우면 그 색 구역마다 한 칸씩 보장되어 공급이 몇 배로 뛴다(응태 2026-11-18 B안 결정).
+ */
+const LEGEND_EXCLUDED: ReadonlySet<StrataRewardKind> = new Set(["empty", "amber", "gems"]);
+
 /** 평균보다 이만큼은 더 나와야 그 색의 특징으로 친다. */
 const LIFT_THRESHOLD = 1.25;
 
@@ -45,7 +51,7 @@ export function strataLegend(layer: StrataLayerDefinition, tones: readonly Strat
   return order.filter((tone) => tones.includes(tone)).map((tone) => {
     const shares = perTone.get(tone) ?? new Map<StrataRewardKind, number>();
     const candidates = [...shares.entries()]
-      .filter(([kind, share]) => kind !== "empty" && STRATA_REWARD_DISPLAY[kind].reveal && share > 0)
+      .filter(([kind, share]) => !LEGEND_EXCLUDED.has(kind) && STRATA_REWARD_DISPLAY[kind].reveal && share > 0)
       .map(([kind, share]) => ({ kind, share, lift: average(kind) > 0 ? share / average(kind) : 0 }));
     const featured = candidates.filter(({ lift, share }) => lift >= LIFT_THRESHOLD && share >= 0.02).sort((a, b) => b.lift - a.lift);
     const chosen = featured.length > 0 ? featured : candidates.sort((a, b) => b.share - a.share);

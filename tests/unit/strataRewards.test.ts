@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { composeStrataFog, strataFogFields } from "../../src/core/strataFog";
 import { strataLegend } from "../../src/core/strataLegend";
-import { createStrataBoard, digStrataTile, strataBoardHaul, strataBoardView, strataHaulKey, strataRuneRarityOdds } from "../../src/core/strataDig";
+import { createStrataBoard, digStrataTile, strataBonusRuneTiles, strataBoardHaul, strataBoardView, strataHaulKey, strataRuneRarityOdds } from "../../src/core/strataDig";
 import { RUNE_TRAIT_ITEMS } from "../../src/data/runeTraits";
 import { STRATA_LAYERS, STRATA_RUNE_TILES, type StrataZoneTone } from "../../src/data/strataLayers";
 import { STRATA_LEGEND, STRATA_BOARD, STRATA_STAGE, strataBoardFrame, strataBracketBoxes, strataHaulLayout, strataLegendFrame, strataStageFrame } from "../../src/ui/strataBoardLayout";
@@ -61,8 +61,43 @@ describe("탐사 보상표", () => {
       for (let seed = 1; seed <= 60; seed += 1) {
         const board = createStrataBoard({ layerId: layer.id, random: seeded(seed * 104729) });
         const runes = board.tiles.filter((tile) => tile.kind === "rune").length;
-        expect(runes, `${layer.id}#${seed}`).toBeGreaterThanOrEqual(STRATA_RUNE_TILES.min);
-        expect(runes, `${layer.id}#${seed}`).toBeLessThanOrEqual(STRATA_RUNE_TILES.max);
+        const bonus = strataBonusRuneTiles(layer);
+        expect(runes, `${layer.id}#${seed}`).toBeGreaterThanOrEqual(STRATA_RUNE_TILES.min + bonus);
+        expect(runes, `${layer.id}#${seed}`).toBeLessThanOrEqual(STRATA_RUNE_TILES.max + bonus + layer.zones);
+        const uncommon = board.tiles.filter((tile) => tile.kind === "rune" && tile.runeRarity === "uncommon").length;
+        expect(uncommon, `${layer.id}#${seed}`).toBeGreaterThanOrEqual(bonus);
+      }
+    }
+  });
+
+  it("은 고급 룬 덤을 굴착 수에 맞춰 판당 평균 한 개쯤 캐지게 깐다", () => {
+    for (const layer of STRATA_LAYERS) {
+      const expectedDug = strataBonusRuneTiles(layer) * layer.digs / (layer.columns * layer.rows);
+      expect(expectedDug, layer.id).toBeGreaterThan(0.8);
+      expect(expectedDug, layer.id).toBeLessThan(1.2);
+    }
+  });
+
+  it("은 범례에 선 품목을 그 색 구역마다 한 칸 이상 깐다", () => {
+    for (const layer of STRATA_LAYERS) {
+      for (let seed = 1; seed <= 60; seed += 1) {
+        const board = createStrataBoard({ layerId: layer.id, random: seeded(seed * 15485863) });
+        const legend = new Map(strataLegend(layer, board.zones.map((zone) => zone.tone)).map((row) => [row.tone, row.kinds] as const));
+        for (const zone of board.zones) {
+          const inZone = board.tiles.filter((tile) => tile.zone === zone.index);
+          const required = legend.get(zone.tone) ?? [];
+          if (inZone.length < required.length) continue;
+          for (const kind of required) expect(inZone.some((tile) => tile.kind === kind), `${layer.id}#${seed} ${zone.tone} ${kind}`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("은 범례에 호박석·다이아를 세우지 않는다(구역마다 보장되면 공급이 몇 배로 뛴다)", () => {
+    for (const layer of STRATA_LAYERS) {
+      for (const row of strataLegend(layer, ["soil", "teal", "gold", "deep"])) {
+        expect(row.kinds, layer.id).not.toContain("amber");
+        expect(row.kinds, layer.id).not.toContain("gems");
       }
     }
   });

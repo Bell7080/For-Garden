@@ -224,6 +224,12 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
  */
 export const STRATA_RUNE_TILES = { min: 3, max: 5 } as const;
 
+/**
+ * 고급 룬 덤 — 한 판에서 평균으로 더 캐는 고급 룬 수(응태 2026-11-18). 판에 깔리는 덤 칸 수는
+ * `strataBonusRuneTiles`가 판 칸 수와 굴착 수에서 구한다. 덤 칸은 `STRATA_RUNE_TILES` 범위와 따로 센다.
+ */
+export const STRATA_BONUS_RUNES_PER_RUN = 1;
+
 /** 룬이 영웅·전설이 아닐 때 고급이 차지하는 몫이다. 나머지는 희귀다. */
 export const STRATA_RUNE_UNCOMMON_SHARE = 0.65;
 

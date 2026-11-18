@@ -9,9 +9,10 @@ import { strataRaidTicketTile } from "./raidTicketDrops";
  * 다른 것이 나오고, 「저 구역이 특별해 보인다」는 판단이 아무것도 가리키지 않게 된다.
  */
 
-import { findStrataLayer, STRATA_ART_COUNT, STRATA_CHARGE, STRATA_RUNE_TILES, STRATA_RUNE_UNCOMMON_SHARE, type StrataLayerDefinition, type StrataRewardKind, type StrataZoneTone } from "../data/strataLayers";
+import { findStrataLayer, STRATA_ART_COUNT, STRATA_BONUS_RUNES_PER_RUN, STRATA_CHARGE, STRATA_RUNE_TILES, STRATA_RUNE_UNCOMMON_SHARE, type StrataLayerDefinition, type StrataRewardKind, type StrataZoneTone } from "../data/strataLayers";
 import { findArchaeologySite } from "../data/archaeologySites";
 import { RUNE_TRAIT_ITEMS } from "../data/runeTraits";
+import { strataLegend } from "./strataLegend";
 import { strataRunModifiers } from "./strataCrystal";
 import { timeAccrualWindow } from "./timeAccrual";
 import type { RunePart, RuneRarity } from "./runes";
@@ -195,26 +196,77 @@ function withRuneDetail(layer: StrataLayerDefinition, tone: StrataZoneTone, rand
   return { runeRarity: rollStrataRuneRarity(layer, tone, random), runePart: Math.min(2, Math.floor(roll(random) * 3)) as RunePart };
 }
 
+/** 그 종류의 칸 수량을 보상표의 한 줄에서 굴린다(같은 종류가 여러 줄이면 그 색에서 가장 흔한 줄). */
+function rollAmountFor(layer: StrataLayerDefinition, tone: StrataZoneTone, kind: StrataRewardKind, random: () => number): number {
+  const rows = layer.rewards.filter((row) => row.kind === kind);
+  if (rows.length === 0) return 0;
+  const row = rows.reduce((best, candidate) => candidate.weight[tone] > best.weight[tone] ? candidate : best, rows[0]);
+  if (row.kind === "empty") return 0;
+  if (row.kind === "gems") return roll(random) < 0.75 ? row.min : row.max;
+  return row.min + Math.round(roll(random) * Math.max(0, row.max - row.min));
+}
+
+/**
+ * **범례에 선 것은 그 색 구역에 반드시 한 칸 이상 있다**(응태 2026-11-18).
+ *
+ * 범례가 「이 색에서 잘 나온다」고 말했는데 그 구역을 다 파도 없으면 범례가 거짓말이 된다. 구역마다 빠진
+ * 종류를 그 구역의 칸 하나로 채운다 — 범례에 서지 않은 종류 칸이나 같은 종류가 둘 이상인 칸만 바꾸고,
+ * 골드·원석 칸을 먼저 쓴다. 칸이 모자라는 작은 구역은 범례 순서(기울기가 강한 것)대로 들어가는 만큼만
+ * 채운다. 이렇게 세운 칸은 `guaranteed`로 돌려주어 룬 수를 맞출 때 걷히지 않게 한다.
+ */
+function guaranteeLegendKinds(layer: StrataLayerDefinition, zones: readonly StrataZone[], tiles: StrataTile[], random: () => number): Set<StrataTile> {
+  const guaranteed = new Set<StrataTile>();
+  const legend = new Map(strataLegend(layer, zones.map((zone) => zone.tone)).map((row) => [row.tone, row.kinds] as const));
+  for (const zone of zones) {
+    const required = legend.get(zone.tone) ?? [];
+    const inZone = tiles.filter((tile) => tile.zone === zone.index);
+    for (const kind of required) {
+      const present = inZone.find((tile) => tile.kind === kind && !guaranteed.has(tile));
+      if (present) { guaranteed.add(present); continue; }
+      const count = (k: StrataRewardKind) => inZone.filter((tile) => tile.kind === k).length;
+      const spare = inZone.filter((tile) => !guaranteed.has(tile) && (!required.includes(tile.kind) || count(tile.kind) > 1));
+      if (spare.length === 0) break;
+      const plain = spare.filter((tile) => tile.kind === "gold" || tile.kind === "rawStone");
+      const pool = plain.length > 0 ? plain : spare;
+      const pick = pool[Math.min(pool.length - 1, Math.floor(roll(random) * pool.length))];
+      pick.kind = kind; pick.amount = rollAmountFor(layer, zone.tone, kind, random);
+      guaranteed.add(pick);
+    }
+  }
+  return guaranteed;
+}
+
 /**
  * 룬 칸의 수를 `STRATA_RUNE_TILES` 범위로 맞춘다.
  *
  * 넘치는 룬은 그 판의 원석 칸으로, 모자라면 골드·원석 칸 중 하나가 룬으로 바뀐다 — 귀한 재화
- * 칸(화석·호박석·다이아·연구 재료)은 건드리지 않아 그 확률이 룬 때문에 움직이지 않는다.
+ * 칸(화석·호박석·다이아·연구 재료)은 건드리지 않아 그 확률이 룬 때문에 움직이지 않는다. 범례가 약속한
+ * 칸(`guaranteed`)은 걷지도 바꾸지도 않는다.
  */
-function fitRuneTileCount(layer: StrataLayerDefinition, tiles: StrataTile[], random: () => number): void {
+function fitRuneTileCount(layer: StrataLayerDefinition, tiles: StrataTile[], guaranteed: ReadonlySet<StrataTile>, random: () => number): void {
   const runes = tiles.filter((tile) => tile.kind === "rune");
+  const removable = runes.filter((tile) => !guaranteed.has(tile));
   const stone = layer.rewards.find((row) => row.kind === "rawStone");
   const stoneAmount = stone ? Math.round((stone.min + stone.max) / 2) : 0;
-  const excess = runes.length - STRATA_RUNE_TILES.max;
+  const excess = Math.min(removable.length, runes.length - STRATA_RUNE_TILES.max);
   for (let n = 0; n < excess; n += 1) {
-    const pick = runes.splice(Math.min(runes.length - 1, Math.floor(roll(random) * runes.length)), 1)[0];
+    const pick = removable.splice(Math.min(removable.length - 1, Math.floor(roll(random) * removable.length)), 1)[0];
     pick.kind = "rawStone"; pick.amount = stoneAmount;
   }
-  const candidates = tiles.filter((tile) => tile.kind === "gold" || tile.kind === "rawStone");
-  for (let n = runes.length; n < STRATA_RUNE_TILES.min && candidates.length > 0; n += 1) {
+  const count = tiles.filter((tile) => tile.kind === "rune").length;
+  const candidates = tiles.filter((tile) => (tile.kind === "gold" || tile.kind === "rawStone") && !guaranteed.has(tile));
+  for (let n = count; n < STRATA_RUNE_TILES.min && candidates.length > 0; n += 1) {
     const pick = candidates.splice(Math.min(candidates.length - 1, Math.floor(roll(random) * candidates.length)), 1)[0];
     pick.kind = "rune"; pick.amount = 1;
   }
+}
+
+/**
+ * 고급 룬 덤 칸 수 — 한 판에서 **평균 한 개쯤 더** 캐지도록(응태 2026-11-18) 판 칸 수 ÷ 굴착 수만큼 깐다.
+ * 굴착이 판의 몇 분의 일을 파므로, 그만큼 깔아야 기대 한 개가 손에 닿는다.
+ */
+export function strataBonusRuneTiles(layer: Pick<StrataLayerDefinition, "columns" | "rows" | "digs">): number {
+  return Math.max(0, Math.round(STRATA_BONUS_RUNES_PER_RUN * layer.columns * layer.rows / Math.max(1, layer.digs)));
 }
 
 /** 새 판을 만든다. 모든 칸의 내용이 이 순간 정해지고 그 뒤로는 바뀌지 않는다. */
@@ -229,7 +281,26 @@ export function createStrataBoard(input: { layerId: string; siteId?: string; cry
     const amount = row.kind === "empty" ? 0 : row.kind === "gems" ? (roll(input.random) < 0.75 ? row.min : row.max) : row.min + Math.round(roll(input.random) * span);
     return { index, zone, kind: row.kind, amount, revealed: false };
   });
-  fitRuneTileCount(layer, tiles, input.random);
+  // 범례 보장·룬 칸·고급 룬 덤은 골드·원석 칸을 빌려 쓰므로, 빌리기 전의 판 전체 골드·원석량을 남은 칸이 나눠 갖는다.
+  const plainTotal = (kind: "gold" | "rawStone") => tiles.reduce((sum, tile) => tile.kind === kind ? sum + tile.amount : sum, 0);
+  const goldBefore = plainTotal("gold");
+  const stoneBefore = plainTotal("rawStone");
+  const guaranteed = guaranteeLegendKinds(layer, zones, tiles, input.random);
+  fitRuneTileCount(layer, tiles, guaranteed, input.random);
+  // 고급 룬 덤: 범례가 약속한 칸이 아닌 골드·원석 칸을 고급 룬으로 바꾼다.
+  const bonusRunes = new Set<StrataTile>();
+  const goldPool = tiles.filter((tile) => tile.kind === "gold" && !guaranteed.has(tile));
+  const bonusPool = goldPool.length >= strataBonusRuneTiles(layer) ? goldPool : tiles.filter((tile) => (tile.kind === "gold" || tile.kind === "rawStone") && !guaranteed.has(tile));
+  for (let n = strataBonusRuneTiles(layer); n > 0 && bonusPool.length > 0; n -= 1) {
+    const pick = bonusPool.splice(Math.min(bonusPool.length - 1, Math.floor(roll(input.random) * bonusPool.length)), 1)[0];
+    pick.kind = "rune"; pick.amount = 1;
+    bonusRunes.add(pick);
+  }
+  for (const [kind, before] of [["gold", goldBefore], ["rawStone", stoneBefore]] as const) {
+    const after = plainTotal(kind);
+    if (after <= 0 || before <= after) continue;
+    for (const tile of tiles) if (tile.kind === kind) tile.amount = Math.max(1, Math.round(tile.amount * before / after));
+  }
   // 유적 배율은 칸이 정해진 **뒤에** 수량에만 곱한다 — 어느 칸이 무엇인지(난수)는 배율과 무관해야 같은
   // 씨앗이 결정 단계에 따라 다른 판 모양을 만들지 않는다. 룬 칸 수를 맞추며 바뀐 원석 칸도 함께 곱한다.
   const crystalStage = Math.max(0, Math.floor(input.crystalStage ?? 0));
@@ -240,12 +311,15 @@ export function createStrataBoard(input: { layerId: string; siteId?: string; cry
   }
   for (const tile of tiles) {
     const tone = zones[tile.zone].tone;
-    if (tile.kind === "rune") Object.assign(tile, withRuneDetail(layer, tone, input.random));
+    if (tile.kind === "rune") {
+      const detail = withRuneDetail(layer, tone, input.random);
+      Object.assign(tile, bonusRunes.has(tile) ? { ...detail, runeRarity: "uncommon" } : detail);
+    }
     else if (tile.kind === "researchItem") tile.itemId = rollStrataResearchItem(input.random);
   }
   // 판 한 장에 가끔(레이드가 열린 계정만) 일반 토벌권 칸이 섞인다(화석처럼 드문 덤). 골드·원석 칸 하나를 바꾸어 귀한 칸의 확률을 건드리지 않는다.
   const raidTicket = strataRaidTicketTile(input.random, input.raidOpen === true);
-  const plain = tiles.filter((tile) => tile.kind === "gold" || tile.kind === "rawStone");
+  const plain = tiles.filter((tile) => (tile.kind === "gold" || tile.kind === "rawStone") && !guaranteed.has(tile));
   if (raidTicket !== null && plain.length > 0) {
     const pick = plain[Math.min(plain.length - 1, Math.floor(roll(input.random) * plain.length))];
     pick.kind = "researchItem"; pick.amount = 1; pick.itemId = raidTicket;

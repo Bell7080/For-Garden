@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BASE_WIDTH } from "../../src/config/gameConfig";
-import { RUNE_SYNTHESIS, runeSynthesisInfoBounds, runeSynthesisPlateBounds, runeSynthesisVertices } from "../../src/ui/runeSynthesisLayout";
+import { RATES_BUTTON, RATES_SPOT } from "../../src/ui/ratesButtonLayout";
+import { RUNE_SYNTHESIS, runeSynthesisCenter, runeSynthesisInfoBounds, runeSynthesisPlateBounds, runeSynthesisVertices } from "../../src/ui/runeSynthesisLayout";
 
 type Box = { left: number; right: number; top: number; bottom: number };
 const overlaps = (a: Box, b: Box): boolean => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
@@ -22,6 +23,29 @@ describe("룬 합성 능력 판 자리", () => {
       expect(info.bottom).toBeLessThanOrEqual(plate.bottom);
       for (const frame of frames) expect(overlaps(info, frame)).toBe(false);
     }
+  });
+
+  it("위 두 칸 · 아래 한 칸이고 판은 위 왼쪽·위 오른쪽·아래에 선다", () => {
+    const [a, b, c] = vertices;
+    expect(a.y).toBe(b.y);
+    expect(c.y).toBeGreaterThan(a.y);
+    expect(a.x).toBeLessThan(c.x);
+    expect(b.x).toBeGreaterThan(c.x);
+    expect(infos[0].right).toBeLessThanOrEqual(frames[0].left);
+    expect(infos[1].left).toBeGreaterThanOrEqual(frames[1].right);
+    expect(infos[2].top).toBeGreaterThanOrEqual(frames[2].bottom);
+    // 양옆 판은 좌우 대칭이다.
+    expect(infos[0].left - plate.left).toBeCloseTo(plate.right - infos[1].right);
+  });
+
+  it("가운데 빛과 칸이 겹치지 않는다", () => {
+    const center = runeSynthesisCenter(BASE_WIDTH);
+    const core: Box = { left: center.x - RUNE_SYNTHESIS.core / 2, right: center.x + RUNE_SYNTHESIS.core / 2, top: center.y - RUNE_SYNTHESIS.core / 2, bottom: center.y + RUNE_SYNTHESIS.core / 2 };
+    for (const frame of frames) expect(overlaps(core, frame)).toBe(false);
+  });
+
+  it("왼쪽 판은 확률 버튼 윗변보다 위에서 끝난다(긴 언어에서 버튼이 넓어져도 겹치지 않는다)", () => {
+    expect(infos[0].bottom).toBeLessThanOrEqual(RATES_SPOT.screen.y - RATES_BUTTON.height / 2);
   });
 
   it("능력 판끼리 겹치지 않는다", () => {

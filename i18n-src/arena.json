@@ -19,15 +19,105 @@
     "Neu verbinden",
     "Переподключиться"
   ],
-  "arena.lobby.rules": [
-    "双方各禁用1名(同时、不公开) · 轮流选择放入1·2·3号位\n禁止重复选择同一遗物 · 双方自动释放必杀技",
-    "แบนฝ่ายละ 1 (พร้อมกัน แบบปิด) · ผลัดกันเลือกวางช่อง 1·2·3\nห้ามเลือกเรลิกซ้ำ · ท่าไม้ตายอัตโนมัติ",
-    "Mỗi bên cấm 1 (đồng thời, ẩn) · luân phiên chọn vào ô 1·2·3\nKhông chọn trùng di vật · tự động dùng tuyệt kỹ",
-    "Masing-masing 1 ban (serentak, tertutup) · bergiliran memilih ke slot 1·2·3\nTidak boleh relik ganda · ultimate otomatis",
-    "1 veto oculto por jugador · elecciones alternas en casillas 1·2·3\nSin reliquias repetidas · definitivas automáticas",
-    "1 banimento oculto por jogador · escolhas alternadas nos espaços 1·2·3\nSem relíquias repetidas · supremas automáticas",
-    "Je 1 verdeckter Bann · abwechselnd auf Plätze 1·2·3 wählen\nKeine doppelten Relikte · automatische Ultimativfähigkeiten",
-    "По 1 скрытому запрету · поочерёдный выбор в ячейки 1·2·3\nБез повторов реликтов · автоультимейты"
+  "arena.help.button": [
+    "帮助",
+    "ช่วยเหลือ",
+    "Trợ giúp",
+    "Bantuan",
+    "Ayuda",
+    "Ajuda",
+    "Hilfe",
+    "Справка"
+  ],
+  "arena.help.title": [
+    "竞技场帮助",
+    "ช่วยเหลืออารีนา",
+    "Trợ giúp Đấu trường",
+    "Bantuan Arena",
+    "Ayuda de la arena",
+    "Ajuda da arena",
+    "Arena-Hilfe",
+    "Справка по арене"
+  ],
+  "arena.help.ban.title": [
+    "禁用",
+    "แบน",
+    "Cấm",
+    "Ban",
+    "Veto",
+    "Banimento",
+    "Bann",
+    "Запрет"
+  ],
+  "arena.help.ban.body": [
+    "双方同时禁用对方的一名遗物。选定的禁用在双方都确认前不会公开。",
+    "ทั้งสองฝ่ายแบนเรลิกของอีกฝ่ายพร้อมกันฝ่ายละ 1 ตัว การแบนจะไม่เปิดเผยจนกว่าทั้งสองฝ่ายจะยืนยัน",
+    "Hai bên cùng lúc cấm một di vật của đối phương. Lượt cấm được giữ kín cho đến khi cả hai xác nhận.",
+    "Kedua pihak sekaligus melarang satu relik lawan. Ban tetap tersembunyi sampai keduanya mengonfirmasi.",
+    "Ambos jugadores vetan a la vez una reliquia rival. Los vetos se ocultan hasta que los dos confirman.",
+    "Os dois lados banem ao mesmo tempo uma relíquia adversária. Os banimentos ficam ocultos até ambos confirmarem.",
+    "Beide Seiten bannen gleichzeitig ein gegnerisches Relikt. Die Banns bleiben verdeckt, bis beide bestätigt haben.",
+    "Обе стороны одновременно запрещают по одному реликту соперника. Запреты скрыты, пока оба не подтвердят выбор."
+  ],
+  "arena.help.pick.title": [
+    "选择 · 布阵",
+    "เลือก · วางตำแหน่ง",
+    "Chọn · Xếp vị trí",
+    "Pilih · Penempatan",
+    "Elección · Colocación",
+    "Escolha · Posicionamento",
+    "Wahl · Aufstellung",
+    "Выбор · Расстановка"
+  ],
+  "arena.help.pick.body": [
+    "轮流每次选择一名遗物放入1·2·3号位。同一遗物在两队之间只能被选择一次。",
+    "ผลัดกันเลือกเรลิกทีละตัววางในช่อง 1·2·3 เรลิกเดียวกันเลือกได้ครั้งเดียวรวมทั้งสองทีม",
+    "Luân phiên chọn từng di vật vào ô 1·2·3. Mỗi di vật chỉ được chọn một lần cho cả hai đội.",
+    "Bergiliran memilih satu relik ke slot 1·2·3. Setiap relik hanya bisa dipilih sekali untuk kedua tim.",
+    "Por turnos, elige una reliquia cada vez para las casillas 1·2·3. Cada reliquia solo puede elegirse una vez entre ambos equipos.",
+    "Em turnos, escolha uma relíquia por vez para os espaços 1·2·3. Cada relíquia só pode ser escolhida uma vez entre as duas equipes.",
+    "Abwechselnd wird je ein Relikt auf die Plätze 1·2·3 gewählt. Jedes Relikt kann für beide Teams nur einmal gewählt werden.",
+    "По очереди выбирайте по одному реликту в ячейки 1·2·3. Каждый реликт можно выбрать лишь раз на обе команды."
+  ],
+  "arena.help.battle.title": [
+    "战斗",
+    "การต่อสู้",
+    "Chiến đấu",
+    "Pertarungan",
+    "Combate",
+    "Combate",
+    "Kampf",
+    "Бой"
+  ],
+  "arena.help.battle.body": [
+    "布阵结束后开始3对3自动战斗,双方都会自动释放必杀技。",
+    "เมื่อวางตำแหน่งเสร็จ การต่อสู้อัตโนมัติ 3 ต่อ 3 จะเริ่ม และทั้งสองทีมใช้ท่าไม้ตายอัตโนมัติ",
+    "Khi xếp xong, trận tự động 3 đấu 3 bắt đầu và cả hai đội tự dùng tuyệt kỹ.",
+    "Setelah penempatan selesai, pertarungan otomatis 3 lawan 3 dimulai dan kedua tim memakai ultimate secara otomatis.",
+    "Al terminar la colocación empieza un combate automático 3 contra 3 y ambos equipos usan sus definitivas solos.",
+    "Ao fim do posicionamento começa um combate automático 3 contra 3 e as duas equipes usam suas supremas sozinhas.",
+    "Nach der Aufstellung beginnt ein automatischer 3-gegen-3-Kampf und beide Teams setzen ihre Ultimativfähigkeiten selbst ein.",
+    "После расстановки начинается автобой 3 на 3, и обе команды применяют ульты автоматически."
+  ],
+  "arena.help.score.title": [
+    "分数",
+    "คะแนน",
+    "Điểm",
+    "Skor",
+    "Puntuación",
+    "Pontuação",
+    "Punkte",
+    "Очки"
+  ],
+  "arena.help.score.body": [
+    "胜利会提升RP,失败或弃权会扣除RP。排名奖励每周结算。",
+    "ชนะจะได้ RP เพิ่ม แพ้หรือยอมแพ้จะเสีย RP รางวัลอันดับสรุปทุกสัปดาห์",
+    "Thắng sẽ tăng RP, thua hoặc bỏ cuộc sẽ mất RP. Thưởng xếp hạng được tổng kết mỗi tuần.",
+    "Menang menaikkan RP, kalah atau menyerah menurunkannya. Hadiah peringkat dihitung setiap minggu.",
+    "Ganar sube tu RP; perder o rendirte lo baja. Las recompensas de clasificación se liquidan cada semana.",
+    "Vencer aumenta seu RP; perder ou desistir o reduz. As recompensas de ranking são pagas toda semana.",
+    "Siege erhöhen deine RP, Niederlagen und Aufgaben senken sie. Ranglistenbelohnungen werden wöchentlich abgerechnet.",
+    "Победы повышают RP, поражения и сдача — снижают. Награды рейтинга начисляются каждую неделю."
   ],
   "arena.resume": [
     "返回进行中的竞技场",

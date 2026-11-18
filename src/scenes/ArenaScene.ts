@@ -29,6 +29,7 @@ import { arenaResultFromRoom, arenaResultMe, arenaSeenFor, openArenaResultPopup 
 import { arenaUnseenResult } from '../core/arenaNotice';
 import { arenaStreakBonus } from '../core/arenaStanding';
 import { settingsManager } from '../managers/SettingsManager';
+import { openArenaHelpPopup } from '../ui/ArenaHelpPopup';
 
 /**
  * 아레나 입구 — 결투장 입구와 같은 구도로 **내 자리**를 보여 준다. 가운데 티어 휘장과 다음 티어까지의 게이지,
@@ -74,7 +75,10 @@ export class ArenaScene extends Phaser.Scene {
         this.paintSideChips(s, tierId);
         this.paintStanding(s.score);
         this.paintProfile(s);
-        this.view.add(this.add.text(540, S.rules.y, t("arena.lobby.rules"), textStyle({ role: "body", size: 26, color: COLOR.inkDim, align: 'center', wrap: S.rules.wrap })).setOrigin(.5).setShadow(0, 3, '#000000', 0, true, true));
+        // 규칙은 늘 떠 있는 글이 아니라 도움말 쪽지가 연다 — 매칭 버튼 위에서 읽지 않는 두 줄이 버튼과 무게를 다퉜다.
+        const help = new Button(this, 540, S.help.y, { width: S.help.width, height: S.help.height, label: t("arena.help.button"), icon: 'help', fontSize: 32, onClick: () => openArenaHelpPopup(this, this.popups) });
+        help.setName('arena-help');
+        this.view.add(help);
         const resume = s.room && !['done', 'declined'].includes(s.room.phase);
         this.view.add(new Button(this, 540, S.match.y, { width: S.match.width, height: S.match.height, label: resume ? t("arena.resume") : t("arena.match.start"), variant: 'primary', accentColor: ARENA_TONE.accent, accentTextColor: COLOR.ink, fill: ARENA_TONE.confirm, decorDots: true, onClick: () => startScene(this, resume ? 'arenaRoom' : 'arenaMatch', resume ? { roomId: s.room!.id } : undefined) }));
         this.noticeUnseenResult(s);
@@ -260,7 +264,8 @@ export class ArenaMatchScene extends Phaser.Scene {
                 this.startedAt = Date.parse(s.queuedAt);
             if (s.room) {
                 this.leaving = true;
-                startScene(this, 'arenaRoom', { roomId: s.room.id });
+                // 큐가 잡힌 순간이라 밴픽 화면이 「나 VS 상대」를 한 번 돌리고 시작한다.
+                startScene(this, 'arenaRoom', { roomId: s.room.id, intro: true });
             }
             else
                 this.error.setText('');
@@ -282,7 +287,7 @@ export class ArenaMatchScene extends Phaser.Scene {
             if (!this.scene.isActive())
                 return;
             if (s.room && !['done', 'declined'].includes(s.room.phase))
-                startScene(this, 'arenaRoom', { roomId: s.room.id });
+                startScene(this, 'arenaRoom', { roomId: s.room.id, intro: true });
             else
                 startScene(this, 'arena');
         }

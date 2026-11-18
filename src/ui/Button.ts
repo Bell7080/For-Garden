@@ -64,6 +64,22 @@ function toShapePoints(flat: number[]): { x: number; y: number }[] {
   return points;
 }
 
+/** 강조 버튼의 실루엣 — 왼쪽 위·오른쪽 아래를 높이의 52%만큼 깎는다. 버튼 뒤에 까는 빛·덮개도 이 모양을 받는다. */
+export function primaryButtonShape(width: number, height: number): number[] {
+  const b = height * 0.52;
+  return chipPoints(width, height, { bevel: { topLeft: b, topRight: 0, bottomRight: b, bottomLeft: 0 } });
+}
+
+/**
+ * 강조 버튼을 `grow`만큼 사방으로 넓힌 실루엣 — 버튼 뒤의 「누르라」 빛이 쓴다. 45° 빗변을 바깥으로 d만큼 밀면
+ * 넓힌 상자의 모서리에서 잰 깎임은 b + d(2 − √2)가 된다. 같은 깎임 값을 그대로 쓰면 빛의 빗변이 버튼 빗변과 어긋난다.
+ */
+export function primaryButtonGlowShape(width: number, height: number, grow: { x: number; y: number }): number[] {
+  const d = (grow.x + grow.y) / 2;
+  const b = height * 0.52 + d * (2 - Math.SQRT2);
+  return chipPoints(width + grow.x * 2, height + grow.y * 2, { bevel: { topLeft: b, topRight: 0, bottomRight: b, bottomLeft: 0 } });
+}
+
 /**
  * 강조 버튼(`variant: "primary"`) 판의 결 — 모든 강조 버튼이 같은 값을 쓴다. 판 색은 강조색을 짙게 누른 것이고
  * (`fill`을 넘기면 그 색), 위에서 같은 색이 옅게 비치며, 밑동은 한 톤 짙은 턱이다. 라벨은 강조색을 밝힌 색이다.
@@ -200,9 +216,7 @@ export class Button extends Phaser.GameObjects.Container {
     const shape = opts.perspective
       ? perspectiveRect(width, height, { tall: opts.perspective, taper: 0.42 })
       : primary
-        ? chipPoints(width, height, {
-            bevel: { topLeft: height * 0.52, topRight: 0, bottomRight: height * 0.52, bottomLeft: 0 },
-          })
+        ? primaryButtonShape(width, height)
         : slantedRect(width, height);
     // 강조 버튼은 **수단의 색으로 물든 판**이다(충전 칸의 버튼과 같은 한 벌 — `PRIMARY_PLATE`). 검은 유리 위에 금빛 윗줄·밑줄만
     // 긋던 때는 판이 비어 보여 「위아래 금테두리」로만 읽혔다. 이제 판 자체가 강조색을 짙게 머금고 위에서 빛을 받으며,

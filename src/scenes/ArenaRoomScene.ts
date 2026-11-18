@@ -3,7 +3,7 @@ import { subscribeArenaChanges } from "../api/arenaRealtime";
 import Phaser from 'phaser';
 import { arenaCall, arenaError, arenaForfeitOnExit, type ArenaStatus } from '../api/arenaApi';
 import { ARENA_HIDDEN_BAN, arenaCanAct, arenaPickable, type ArenaAction, type ArenaRoom, type ArenaUnit } from '../core/liveArena';
-import { Button, DESTRUCTIVE_BUTTON_STYLE } from '../ui/Button';
+import { Button, DESTRUCTIVE_BUTTON_STYLE, primaryButtonGlowShape } from '../ui/Button';
 import { PopupLayer } from '../ui/PopupLayer';
 import { textStyle, COLOR } from '../ui/theme';
 import { addSceneBackground, BACKGROUND } from '../ui/backgrounds';
@@ -30,6 +30,7 @@ import { bindLongPress } from "../ui/longPressInfo";
 import { showArenaUnit } from "../ui/arenaUnitInfo";
 import { addScrollHint } from "../ui/ScrollHint";
 import { shakeCamera } from "../ui/screenShake";
+import { playArenaMatchIntro } from "../ui/ArenaMatchIntro";
 
 /**
  * 밴픽 화면의 자리. 위가 상대, 아래가 나, 가운데가 고를 렐릭 격자, 왼쪽 띠가 서로의 밴이다.
@@ -110,6 +111,8 @@ export class ArenaRoomScene extends Phaser.Scene {
   private cancelButton!: Button;
   /** 친선전으로 들어왔다면 그 상대 — 방을 받기 전에도 나가는 길(친선전 선택판)을 안다. */
   private friendId?: string;
+  /** 큐가 막 잡혀 들어왔는가 — 첫 판을 그린 뒤 「나 VS 상대」를 한 번 돌린다(복귀·친선 수락으로 들어온 판은 돌지 않는다). */
+  private introPending = false;
   private backButton?: Phaser.GameObjects.GameObject;
   private error!: Phaser.GameObjects.Text;
   private hint!: Phaser.GameObjects.Text;
@@ -136,7 +139,7 @@ export class ArenaRoomScene extends Phaser.Scene {
   /** 밴이 끝난 뒤 한 번 — 밴 칸이 세 칸으로 갈라지는 연출을 다음 칠에서 돌린다. */
   private unfold = false;
   constructor() { super('arenaRoom'); }
-  init(input: { roomId: string; friendId?: string }): void { this.roomId = input.roomId; this.friendId = input.friendId; this.resultShown = false; }
+  init(input: { roomId: string; friendId?: string; intro?: boolean }): void { this.roomId = input.roomId; this.friendId = input.friendId; this.resultShown = false; this.introPending = input.intro === true; }
 
   create(): void {
     this.status = undefined;
@@ -320,6 +323,10 @@ export class ArenaRoomScene extends Phaser.Scene {
     this.signature = signature;
     this.paint(r, side);
     if (reveal) this.playBanReveal(r, side);
+    if (this.introPending && (r.phase === 'ban' || r.phase === 'place')) {
+      this.introPending = false;
+      playArenaMatchIntro(this, { me: r.players[side].name, foe: r.players[1 - side].name });
+    }
   }
 
   /** 지금 이 편이 손을 쓸 수 있는 단계인가. 공개 연출 동안에는 막는다. */
@@ -552,7 +559,7 @@ export class ArenaRoomScene extends Phaser.Scene {
     // 눌러야 할 때만 숨 쉬는 빛이 버튼 뒤에서 번진다(버튼 자체의 눌림 배율과 다투지 않도록 따로 세운다).
     if (ready) {
       // 빛은 커지지 않고 진하기만 숨 쉰다 — 배율로 부풀던 때는 위의 격자·아래의 내 칸과 되돌리기 버튼 위로 번졌다.
-      const glow = drawLayer(this, at.x, at.y, chipPoints(at.width + at.glow.x * 2, at.height + at.glow.y * 2), { fill: ban ? ARENA_TONE.ban : ARENA_TONE.glow, alpha: .45 });
+      const glow = drawLayer(this, at.x, at.y, primaryButtonGlowShape(at.width, at.height, at.glow), { fill: ban ? ARENA_TONE.ban : ARENA_TONE.glow, alpha: .45 });
       this.controls.add(glow);
       if (!session.settings.accessibility.reduceMotion) this.tweens.add({ targets: glow, alpha: .08, duration: 640, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }

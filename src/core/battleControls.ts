@@ -86,6 +86,31 @@ export function battleFightStartsAt(spawnedAt: number): number {
 }
 
 export const ULTIMATE_MIN_DURATION_MS = 24;
+
+/**
+ * 궁극기 연출의 세 단계 — **켜기 · 단축 · 스킵**. 전투 칩이 이 순서로 돌고 환경설정 줄도 같은 표를 읽는다.
+ *
+ * - `full`: 전신 컷인이 화면을 덮고 그동안 전투가 멈춘다.
+ * - `short`: 컷인 대신 화면 위쪽 빈 띠에 작은 알림(`UltimateMiniBanner`)만 스치고 전투는 멈추지 않는다.
+ *   공격 시각은 스킵과 같다 — 작은 알림은 보는 사람의 몫이라 전투를 붙잡지 않는다.
+ * - `skip`: 아무것도 띄우지 않고 곧바로 친다.
+ */
+export const ULTIMATE_PRESENTATION_MODES = ["full", "short", "skip"] as const;
+export type UltimatePresentationMode = typeof ULTIMATE_PRESENTATION_MODES[number];
+
+/** 칩을 한 번 누르면 넘어갈 단계. 마지막(스킵) 다음은 처음(켜기)이다. */
+export function nextUltimatePresentationMode(mode: UltimatePresentationMode): UltimatePresentationMode {
+  const index = ULTIMATE_PRESENTATION_MODES.indexOf(mode);
+  return ULTIMATE_PRESENTATION_MODES[(index + 1) % ULTIMATE_PRESENTATION_MODES.length];
+}
+
+/** 전신 컷인을 건너뛰는가(단축·스킵). 단축은 공격 시각이 스킵과 같고 작은 알림만 더한다. */
+export function skipsUltimateCutIn(mode: UltimatePresentationMode): boolean {
+  return mode !== "full";
+}
+
+/** 단축 연출의 작은 알림이 화면에 머무는 실제 시간(ms). 배속을 받지 않는다 — 컷인과 같은 이유다. */
+export const ULTIMATE_MINI_BANNER_TIMING = { enterMs: 180, holdMs: 1_150, exitMs: 220 } as const;
 /**
  * **컷인은 배속을 받지 않는다**(실제 시간). 누가 무엇을 쓰는지를 알리는 한 장이라, 배속만큼
  * 당기던 때는 3배속에서 0.1초 남짓 번쩍하고 지나가 이름도 원화도 읽히지 않았다. 여는 숨

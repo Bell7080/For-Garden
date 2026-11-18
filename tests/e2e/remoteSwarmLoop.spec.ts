@@ -16,7 +16,7 @@ test("치즈케이크 15명과 디안 소환수: 실제 로딩·사망 정지·�
     for (const id of s.party) { s.owned.add(id); s.relicProgress[id] = { ...createInitialRelicProgress(), level: 60, breakthrough: 4 }; }
     s.settings.game.autoUltimate = true;
     s.settings.game.battleSpeed = 2;
-    s.settings.game.skipUltimatePresentation = true;
+    s.settings.game.ultimatePresentation = "skip";
   });
   await page.evaluate(async()=>{
     const root='/src/';const {IndexedPuppetCreature}=await import(/* @vite-ignore */root+'puppets/IndexedPuppetCreature.ts');

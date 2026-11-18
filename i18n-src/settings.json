@@ -117,5 +117,9 @@
 "settings.action.reset": ["重置", "รีเซ็ต", "Đặt lại", "Reset", "Restablecer", "Redefinir", "Zurücksetzen", "Сбросить"],
 "settings.action.next": ["下一步", "ถัดไป", "Tiếp", "Berikutnya", "Siguiente", "Próximo", "Weiter", "Далее"],
 "settings.debug.grantedRelics": ["已发放{count}名新角色。", "มอบตัวละครใหม่ {count} ตัวแล้ว", "Đã trao {count} nhân vật mới.", "{count} karakter baru telah diberikan.", "Se otorgaron {count} personajes nuevos.", "Foram concedidos {count} personagens novos.", "{count} neue Charaktere wurden gewährt.", "Выдано новых персонажей: {count}."],
-  "settings.account.errorCode": ["错误代码：{code}", "รหัสข้อผิดพลาด: {code}", "Mã lỗi: {code}", "Kode kesalahan: {code}", "Código de error: {code}", "Código do erro: {code}", "Fehlercode: {code}", "Код ошибки: {code}"]
+"settings.account.errorCode": ["错误代码：{code}", "รหัสข้อผิดพลาด: {code}", "Mã lỗi: {code}", "Kode kesalahan: {code}", "Código de error: {code}", "Código do erro: {code}", "Fehlercode: {code}", "Код ошибки: {code}"],
+"settings.play.ultimatePresentation": ["必杀技特写", "คัตอินท่าไม้ตาย", "Cắt cảnh tuyệt kỹ", "Cut-in Ultimate", "Cinemática de definitiva", "Cinemática da suprema", "Ultimativ-Einblendung", "Вставка ультимейта"],
+"settings.play.ultimate.full": ["开启", "เปิด", "Bật", "Nyala", "Activada", "Ligada", "An", "Вкл."],
+"settings.play.ultimate.short": ["简短", "สั้น", "Ngắn", "Singkat", "Breve", "Curta", "Kurz", "Кратко"],
+"settings.play.ultimate.skip": ["跳过", "ข้าม", "Bỏ qua", "Lewati", "Omitir", "Pular", "Aus", "Пропуск"]
 }

@@ -68,6 +68,10 @@ export const SETTINGS_KO = {
   "settings.play.motion.off": "끔",
   "settings.play.battleSpeed": "전투 배속",
   "settings.play.autoUltimate": "자동 궁극기",
+  "settings.play.ultimatePresentation": "궁극기 연출",
+  "settings.play.ultimate.full": "켜기",
+  "settings.play.ultimate.short": "단축",
+  "settings.play.ultimate.skip": "스킵",
   "settings.play.textSpeed": "텍스트 속도",
 
   "settings.section.access": "접근성",

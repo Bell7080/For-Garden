@@ -60,6 +60,10 @@ export const SETTINGS_JA = {
   "settings.play.motion.off": "オフ",
   "settings.play.battleSpeed": "戦闘倍速",
   "settings.play.autoUltimate": "必殺技オート",
+  "settings.play.ultimatePresentation": "必殺技演出",
+  "settings.play.ultimate.full": "オン",
+  "settings.play.ultimate.short": "短縮",
+  "settings.play.ultimate.skip": "スキップ",
   "settings.play.textSpeed": "テキスト速度",
 
   "settings.section.access": "アクセシビリティ",

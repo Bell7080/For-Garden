@@ -399,11 +399,16 @@ test("전투 조작 칩으로 모든 배속과 자동 궁극기를 전환한다"
   // 자동 궁극기는 배속과 독립적으로 켜고 끌 수 있다.
   await tap(page, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY);
   await expect.poll(async () => (await battle(page))?.autoUltimate).toBe(true);
-  // 세 번째 칩도 같은 줄에 있으며 누르는 즉시 저장된 스킵 상태가 디버그 관찰값에 반영된다.
-  await tap(page, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY - BATTLE_CONTROLS.stackGap);
-  await expect.poll(async () => (await battle(page))?.skipUltimatePresentation).toBe(true);
+  // 세 번째 칩은 켜기 → 단축 → 스킵을 돌고 누르는 즉시 저장된 값이 디버그 관찰값에 반영된다.
+  for (const mode of ["short", "skip", "full", "short"] as const) {
+    await tap(page, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY - BATTLE_CONTROLS.stackGap);
+    await expect.poll(async () => (await battle(page))?.ultimatePresentation).toBe(mode);
+  }
   await expect.poll(async () => (await battle(page))?.autoUltimate).toBe(true);
   await captureGame(page, `test-results/${test.info().project.name}-battle-controls.png`);
+  // 단축에서는 컷인 대신 화면 위쪽에 작은 알림이 서고 전투는 멈추지 않는다.
+  await expect.poll(async () => (await battle(page))?.miniBanners ?? 0, { timeout: 60_000 }).toBeGreaterThan(0);
+  await captureGame(page, `test-results/${test.info().project.name}-battle-ultimate-short.png`);
 });
 
 test("@slow 실제 시간 전투는 한쪽이 전멸하면 끝난다", async ({ page }) => {

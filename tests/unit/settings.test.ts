@@ -21,9 +21,9 @@ describe("settings", () => {
   it("독립된 기본값을 만들고 음량 범위와 허용 목록 밖 값을 복구한다", () => {
     const first = createDefaultSettings(); const second = createDefaultSettings(); first.sound.masterVolume = 0;
     expect(second.sound.masterVolume).toBe(1);
-    expect(second.game.skipUltimatePresentation).toBe(false);
+    expect(second.game.ultimatePresentation).toBe("full");
     expect(second.presentation.powerSaving).toBe(false);
-    expect(normalizeSettings({ sound: { masterVolume: 8, musicVolume: -2 }, accessibility: { textScale: 9, reduceMotion: true }, game: { battleSpeed: 99, skipUltimatePresentation: "yes", textSpeed: "fast", language: "xx" }, account: { provider: "token", token: "secret" } })).toMatchObject({ sound: { masterVolume: 1, musicVolume: 0 }, accessibility: { textScale: 1, reduceMotion: true, reduceFlashes: false, colorAssist: false }, game: { battleSpeed: 1, skipUltimatePresentation: false, textSpeed: 1, language: "ko" }, account: { provider: "guest" } });
+    expect(normalizeSettings({ sound: { masterVolume: 8, musicVolume: -2 }, accessibility: { textScale: 9, reduceMotion: true }, game: { battleSpeed: 99, ultimatePresentation: "yes", textSpeed: "fast", language: "xx" }, account: { provider: "token", token: "secret" } })).toMatchObject({ sound: { masterVolume: 1, musicVolume: 0 }, accessibility: { textScale: 1, reduceMotion: true, reduceFlashes: false, colorAssist: false }, game: { battleSpeed: 1, ultimatePresentation: "full", textSpeed: 1, language: "ko" }, account: { provider: "guest" } });
   });
 
   it("절전 선택을 불리언으로만 보존하고 구버전 저장에는 false를 채운다", () => {
@@ -41,9 +41,13 @@ describe("settings", () => {
   it("옛 컷인 끄기를 새 전투 스킵으로 옮기고 폐기 필드는 저장 모델에서 제거한다", () => {
     const migrated = normalizeSettings({ presentation: { ultimateCutIn: false }, game: {} });
     // 옛 false만 스킵 true로 뒤집으며 새 필드를 이미 저장한 사용자의 선택은 마이그레이션보다 우선한다.
-    expect(migrated.game.skipUltimatePresentation).toBe(true);
+    expect(migrated.game.ultimatePresentation).toBe("skip");
     expect(migrated.presentation).not.toHaveProperty("ultimateCutIn");
-    expect(normalizeSettings({ presentation: { ultimateCutIn: false }, game: { skipUltimatePresentation: false } }).game.skipUltimatePresentation).toBe(false);
+    expect(normalizeSettings({ presentation: { ultimateCutIn: false }, game: { skipUltimatePresentation: false } }).game.ultimatePresentation).toBe("full");
+    // 옛 스킵 토글은 세 단계의 스킵으로 옮기고, 새 값이 있으면 옛 값을 보지 않는다.
+    expect(normalizeSettings({ game: { skipUltimatePresentation: true } }).game.ultimatePresentation).toBe("skip");
+    expect(normalizeSettings({ game: { skipUltimatePresentation: true, ultimatePresentation: "short" } }).game.ultimatePresentation).toBe("short");
+    expect(normalizeSettings({ game: {} }).game).not.toHaveProperty("skipUltimatePresentation");
   });
 
   it("전투 UI 움직임의 세 단계만 허용하고 이전 저장에는 기본 연출을 부여한다", () => {
@@ -81,10 +85,10 @@ describe("settings", () => {
 
   it("전투의 3배속과 자동 궁극기를 다음 판에 복원할 설정으로 함께 저장한다", () => {
     const state = createDefaultSession(); const save = vi.fn(); const manager = new SettingsManager(state, { save });
-    manager.update({ game: { battleSpeed: 3, autoUltimate: true, skipUltimatePresentation: true } });
+    manager.update({ game: { battleSpeed: 3, autoUltimate: true, ultimatePresentation: "short" } });
     // 전투 씬은 이 정규화된 스냅샷을 읽으므로 판을 새로 만들어도 두 선택이 유지된다.
-    expect(manager.get().game).toMatchObject({ battleSpeed: 3, autoUltimate: true, skipUltimatePresentation: true });
-    expect(state.settings.game).toMatchObject({ battleSpeed: 3, autoUltimate: true, skipUltimatePresentation: true });
+    expect(manager.get().game).toMatchObject({ battleSpeed: 3, autoUltimate: true, ultimatePresentation: "short" });
+    expect(state.settings.game).toMatchObject({ battleSpeed: 3, autoUltimate: true, ultimatePresentation: "short" });
     expect(save).toHaveBeenCalledOnce();
   });
 

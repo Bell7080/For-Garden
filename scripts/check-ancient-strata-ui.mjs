@@ -31,7 +31,7 @@ try {
   const state=s.session;state.tutorial=t.createCompletedTutorialState();state.party=['rex','torika','mette'];
   for(const id of state.party){state.owned.add(id);state.relicProgress[id]={...s.createInitialRelicProgress(),level:60,breakthrough:4,bondLevel:10,bondXp:650};}
   for(let i=1;i<=10;i++)state.cleared.add(`1-${i}`);
-  state.wallet.gems=1000;state.settings.accessibility.reduceMotion=true;state.settings.presentation.graphicsQuality='low';state.settings.presentation.frameRateLimit=30;state.settings.presentation.damageNumbers=false;state.settings.presentation.screenShake=false;state.settings.sound.masterMuted=true;state.settings.game.autoUltimate=true;state.settings.game.skipUltimatePresentation=true;state.settings.game.battleSpeed=3;
+  state.wallet.gems=1000;state.settings.accessibility.reduceMotion=true;state.settings.presentation.graphicsQuality='low';state.settings.presentation.frameRateLimit=30;state.settings.presentation.damageNumbers=false;state.settings.presentation.screenShake=false;state.settings.sound.masterMuted=true;state.settings.game.autoUltimate=true;state.settings.game.ultimatePresentation='skip';state.settings.game.battleSpeed=3;
   a.installGameApi(null);
   window.ancientFixture={state};window.ancientGame.scene.start('ancientStrata');window.ancientScene=window.ancientGame.scene.getScene('ancientStrata');
  });

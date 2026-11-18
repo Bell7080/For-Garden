@@ -4,6 +4,7 @@ import { isStoryDifficultyUnlocked, storyDifficultyOf } from "../core/storyDiffi
 /** 씬 사이를 오가는 런타임 상태다. JSON 경계에서는 반드시 SaveData로 변환한다. */
 
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
+import type { UltimatePresentationMode } from "../core/battleControls";
 import type { DuelState } from "../core/duelState";
 import { createEmptyAttendanceState, type AttendanceState } from "../core/attendance";
 import { emptyServerJournal, type ServerJournal } from "../core/serverJournal";
@@ -70,7 +71,8 @@ export interface GameSettings {
     pullAgainTaught: boolean;
     /** 광고를 봐야 받는 보상(돌림판 광고 보너스 등)에도 붉은 점을 세우는가. 공짜 보상이 아니라 기본은 끔이다 — 기기 선호다. */
     adRewardDot: boolean;
-    skipUltimatePresentation: boolean; textSpeed: 0.5 | 1 | 2; language: LanguageId;
+    /** 궁극기 연출 — 켜기(전신 컷인) · 단축(상단 작은 알림, 전투는 멈추지 않는다) · 스킵. */
+    ultimatePresentation: UltimatePresentationMode; textSpeed: 0.5 | 1 | 2; language: LanguageId;
     /**
      * 던전 입구에서 마지막으로 고른 단계 ID(비었으면 아직 고른 적 없음). 파밍하러 들어올 때마다
      * 한 칸 내려 고르지 않게 한다. 서버 진행이 아니라 화면 선호라 여기 둔다 — 없는 ID는 입구가

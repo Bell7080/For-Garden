@@ -9,7 +9,7 @@ import { normalizeSettings } from "./settings";
  * - **기기의 값**: 소리·진동·알림 예약·연출 강도·그래픽·글자 크기·움직임 줄이기·언어. 기기마다 달라야 하거나(스피커·
  *   화면·OS 알림 예약) 서버 답을 기다리기 전에 필요한 것(언어·글자 크기·소리)이라 로컬에만 둔다.
  */
-export const ACCOUNT_GAME_SETTING_KEYS = ["battleSpeed", "autoUltimate", "formationRoleHint", "skipUltimatePresentation", "textSpeed", "dungeonTiers", "partyPresets", "partyPresetIndex"] as const;
+export const ACCOUNT_GAME_SETTING_KEYS = ["battleSpeed", "autoUltimate", "formationRoleHint", "ultimatePresentation", "textSpeed", "dungeonTiers", "partyPresets", "partyPresetIndex"] as const;
 
 export type AccountGameSettingKey = (typeof ACCOUNT_GAME_SETTING_KEYS)[number];
 export type AccountGameSettings = Pick<GameSettings["game"], AccountGameSettingKey>;
@@ -17,7 +17,7 @@ export type SettingsPatch = { [K in keyof GameSettings]?: Partial<GameSettings[K
 
 /** 설정 한 벌에서 계정의 값만 뽑는다. */
 export function accountGameSettings(game: GameSettings["game"]): AccountGameSettings {
-  return { battleSpeed: game.battleSpeed, autoUltimate: game.autoUltimate, formationRoleHint: game.formationRoleHint, skipUltimatePresentation: game.skipUltimatePresentation, textSpeed: game.textSpeed, dungeonTiers: { ...game.dungeonTiers }, partyPresets: game.partyPresets.map((preset) => ({ name: preset.name, slots: [...preset.slots] })), partyPresetIndex: game.partyPresetIndex };
+  return { battleSpeed: game.battleSpeed, autoUltimate: game.autoUltimate, formationRoleHint: game.formationRoleHint, ultimatePresentation: game.ultimatePresentation, textSpeed: game.textSpeed, dungeonTiers: { ...game.dungeonTiers }, partyPresets: game.partyPresets.map((preset) => ({ name: preset.name, slots: [...preset.slots] })), partyPresetIndex: game.partyPresetIndex };
 }
 
 /** 부분 변경에서 계정의 값만 떼어 낸다. 없으면 `null`이다. 허용 목록 밖의 키는 버린다. */

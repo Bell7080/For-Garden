@@ -1,7 +1,7 @@
 import { clipInteractiveTree } from "../ui/clippedHit";
 import type { ClipRect } from "../ui/clipRect";
 import { openAccountEmailPopup } from "../ui/AccountEmailPopup";
-import { availableBattleSpeeds, usableBattleSpeed } from "../core/battleControls";
+import { availableBattleSpeeds, usableBattleSpeed, ULTIMATE_PRESENTATION_MODES } from "../core/battleControls";
 import { gameApi } from "../api/FakeServer";
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -283,6 +283,9 @@ export class SettingsScene extends Phaser.Scene {
       // 인게임 배속 칩과 같은 1·2·3배 선택지를 보여 주며 SettingsManager가 즉시 저장한다.
       this.content.add(this.battleSpeedRow = new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.battleSpeed"),usableBattleSpeed(s.game.battleSpeed,this.battleMember),availableBattleSpeeds(this.battleMember),v=>settingsManager.update({game:{battleSpeed:v}}))); y+=SETTINGS_ROW.step; divider();
       toggle(t("settings.play.autoUltimate"),'game','autoUltimate');
+      // 전투의 연출 칩과 같은 세 단계(켜기·단축·스킵)를 같은 표에서 읽는다 — 칩을 돌린 값이 여기에도 그대로 선다.
+      const ultimateKeys = { full: "settings.play.ultimate.full", short: "settings.play.ultimate.short", skip: "settings.play.ultimate.skip" } as const;
+      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.ultimatePresentation"),s.game.ultimatePresentation,ULTIMATE_PRESENTATION_MODES,v=>settingsManager.update({game:{ultimatePresentation:v}}),v=>t(ultimateKeys[v]))); y+=SETTINGS_ROW.step; divider();
       this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.textSpeed"),s.game.textSpeed,[0.5,1,2] as const,v=>settingsManager.update({game:{textSpeed:v}}))); y+=SETTINGS_ROW.step; divider();
       // 목록·표기는 core/language.ts 한 표가 갖는다. 각 언어는 제 이름으로 서야 지금 화면을
       // 읽지 못하는 사람도 제 언어를 찾는다.

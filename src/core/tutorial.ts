@@ -103,6 +103,17 @@ export const BATTLE_FEATURE_STEP: Readonly<Record<BattleTutorialFeature, Tutoria
   contribution: "contribution",
 };
 
+/**
+ * 누를 때마다 단계가 도는 조작 — 안내가 첫 누름에서 끝나지 않고 「한 번 더 누르면 …」을 한 번 더 가리킨다.
+ * 배속(1 → 1.5 → 2)과 궁극기 연출(켜기 → 단축 → 스킵)이 그렇다. 켜고 끄는 둘은 한 번이면 다 배운다.
+ */
+export const BATTLE_FEATURE_TAP_AGAIN: Readonly<Record<BattleTutorialFeature, boolean>> = {
+  speed: true,
+  auto: false,
+  presentation: true,
+  contribution: false,
+};
+
 /** 칸을 마칠 때 서버가 한 번만 주는 것. 지금은 뽑기 재료 한 가지뿐이다. */
 export const TUTORIAL_REWARDS: Readonly<Partial<Record<TutorialStepId, { fossil: number }>>> = {
   // 첫 복원 연구(배너 `welcome`)는 10연 전용이고 화석 8개가 든다 — 정확히 한 번 돌릴 몫이다.

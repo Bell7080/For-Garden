@@ -93,9 +93,10 @@ import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { SummonInfoPopup } from "../ui/SummonInfoPopup";
 import { placedEnemyIndex, type PlacedEnemy } from "../data/placedEnemies";
 import { UltimateCutIn } from "../ui/UltimateCutIn";
+import { UltimateMiniBannerStack } from "../ui/UltimateMiniBanner";
 import {
-  BATTLE_CLOSING_HOLD_MS, battleFightStartsAt, battleSpeedTier, nextBattleSpeed, usableBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
-  type BattleSpeed,
+  BATTLE_CLOSING_HOLD_MS, battleFightStartsAt, battleSpeedTier, nextBattleSpeed, nextUltimatePresentationMode, usableBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, skipsUltimateCutIn, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
+  type BattleSpeed, type UltimatePresentationMode,
 } from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
 import { BattlePauseButton } from "../ui/BattlePauseButton";
@@ -118,7 +119,7 @@ import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
 import { tutorialManager } from "../managers/TutorialManager";
-import { BATTLE_FEATURE_STEP, lobbyTutorialGateStage, stageClearAdvancesTutorial, type BattleTutorialFeature } from "../core/tutorial";
+import { BATTLE_FEATURE_STEP, BATTLE_FEATURE_TAP_AGAIN, lobbyTutorialGateStage, stageClearAdvancesTutorial, type BattleTutorialFeature } from "../core/tutorial";
 import { TutorialSpotlight } from "../ui/TutorialSpotlight";
 import { addUltimateTutorialPanel, ULTIMATE_TUTORIAL_PANEL } from "../ui/UltimateTutorialPanel";
 import { motionPolicy, type MotionPolicy } from "../core/settings";
@@ -465,6 +466,8 @@ export class BattleScene extends Phaser.Scene {
   private introBattleFlag = false;
   /** 이번 전투에서 새로 열어 알려 줄 조작. 없으면 안내 없이 열린 조작만 쓴다. */
   private teachFeature?: BattleTutorialFeature;
+  /** 단계가 도는 칩의 안내에서 첫 누름을 이미 받았나 — 둘째 누름이 안내를 마친다. */
+  private featureTappedOnce = false;
   private featureSpotlight?: TutorialSpotlight;
   private featureTaught = false;
   /**
@@ -476,6 +479,8 @@ export class BattleScene extends Phaser.Scene {
   private ultimateSequence: UltimateSequenceState = createUltimateSequenceState();
   /** 현재 컷인. 전투·씬 종료 정리에서 즉시 거두기 위한 참조다. */
   private activeCutIn?: UltimateCutIn;
+  /** 단축 연출의 상단 작은 알림들. 단축으로 처음 쓸 때 세운다. */
+  private miniBanners?: UltimateMiniBannerStack;
   /** 잠금 중에도 연출 주인공 카드만 밝게 남기기 위한 현재 전투원 id다. */
   private currentUltimateFighterId: string | null = null;
   private speedChip!: ControlChip;
@@ -628,6 +633,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 같은 씬 객체가 다음 판에 다시 쓰이므로 지난 판의 알림 묶음(이미 부서진 객체)을 들고 가지 않는다.
+    this.miniBanners = undefined;
     const generation=++this.combatGeneration;
     this.spawned=false; this.pendingResult=undefined;
     this.combatLease=undefined; this.combatTicks=0; this.combatActions=[];
@@ -658,6 +665,7 @@ export class BattleScene extends Phaser.Scene {
     this.teachFeature = this.battleInput.mode === "stage" && !this.introBattleFlag && this.stageTeachesTutorial() ? tutorialManager.featureToTeach() : undefined;
     this.featureSpotlight = undefined;
     this.featureTaught = false;
+    this.featureTappedOnce = false;
     // Phaser가 같은 Scene 인스턴스를 다시 쓰므로 지난 판의 요청/UI 잠금을 새 전투로 넘기지 않는다.
     completeBossSettlementAttempt(this.bossSettlementFailureState);
     this.bossSettlementFailureUi = undefined;
@@ -1135,15 +1143,17 @@ export class BattleScene extends Phaser.Scene {
         this.featureTapped("auto");
       },
     });
+    // 연출 칩은 켜기 → 단축 → 스킵 순으로 돈다(`ULTIMATE_PRESENTATION_MODES`). 켜기가 아닌 둘은 켜진 색이다 —
+    // 무언가를 줄여 둔 상태라는 것이 칩 색으로 읽혀야 한다.
     const refreshPresentationChip = (): void => {
-      const skipped = settingsManager.get().game.skipUltimatePresentation;
-      this.presentationChip.setLabel(skipped ? t("battle.chip.skipOn") : t("battle.chip.skipOff")).setActive(skipped);
+      const mode = settingsManager.get().game.ultimatePresentation;
+      this.presentationChip.setLabel(t(`battle.chip.presentation.${mode}`)).setActive(mode !== "full");
     };
     this.presentationChip = new ControlChip(this, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY - BATTLE_CONTROLS.stackGap, {
-      icon: "auto", label: t("battle.chip.skipOff"), width,
+      icon: "auto", label: t("battle.chip.presentation.full"), width,
       onClick: () => {
         // 전투 흐름을 바꾸는 값은 세션을 직접 고치지 않고 공용 manager 경계에서 즉시 영속화한다.
-        settingsManager.update({ game: { skipUltimatePresentation: !settingsManager.get().game.skipUltimatePresentation } });
+        settingsManager.update({ game: { ultimatePresentation: nextUltimatePresentationMode(settingsManager.get().game.ultimatePresentation) } });
         refreshPresentationChip(); this.refreshDebug();
         this.featureTapped("presentation");
       },
@@ -1563,7 +1573,10 @@ export class BattleScene extends Phaser.Scene {
       // 전신 컷인 한 장으로 "누가 무엇을 쓰는가"를 알린다. 다만 포효를 기다리지 않고 컷인이
       // 빠지는 즉시 친다 — 전투 중 여러 번 반복되는 연출이라 길이가 곧 기다림이다.
       const base = view.creature.scaleX;
-      const skipPresentation = this.ultimatePresentationSkipped();
+      const presentationMode = this.ultimatePresentationMode();
+      // 단축은 공격 시각이 스킵과 같다 — 작은 알림만 화면 위쪽에 띄우고 전투는 붙잡지 않는다.
+      const skipPresentation = skipsUltimateCutIn(presentationMode);
+      if (presentationMode === "short") (this.miniBanners ??= new UltimateMiniBannerStack(this)).show(fighter.def);
       // 컷인·확대·공격·복귀가 이 한 계산값을 공유한다. 전투 배속과 스킵을 단계마다 다시
       // 해석하면 서로 다른 시간축이 생기므로 pump 진입 시 한 번만 고정한다.
       const timing = ultimatePresentationTiming(skipPresentation);
@@ -1901,9 +1914,9 @@ export class BattleScene extends Phaser.Scene {
     return feature === this.teachFeature || tutorialManager.featureOpen(feature, this.battleInput.mode === "stage");
   }
 
-  /** 오프닝 첫 전투는 컷인을 끄는 설정을 따르지 않는다. */
-  private ultimatePresentationSkipped(): boolean {
-    return this.featureOpen("presentation") && settingsManager.get().game.skipUltimatePresentation;
+  /** 오프닝 첫 전투와 연출 칩이 아직 닫힌 판은 설정을 따르지 않고 늘 전신 컷인이다. */
+  private ultimatePresentationMode(): UltimatePresentationMode {
+    return this.featureOpen("presentation") ? settingsManager.get().game.ultimatePresentation : "full";
   }
 
   /**
@@ -1975,11 +1988,28 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
-  /** 조작 칩이 눌렸다. 그 조작을 가리키던 안내가 있으면 걷고 시간을 다시 흘리며 칸을 마친다. */
+  /**
+   * 조작 칩이 눌렸다. 그 조작을 가리키던 안내가 있으면 걷고 시간을 다시 흘리며 칸을 마친다.
+   *
+   * **배속·연출처럼 누를 때마다 단계가 도는 칩은 한 번 더 누르게 한다** — 첫 누름에서 안내를 걷으면
+   * 「한 번 누르면 켜지는 스위치」로만 배워 2배속·스킵이 있는 줄 모른다. 첫 누름 뒤에는 같은 칩을
+   * 그대로 가리킨 채 글만 「한 번 더 누르면 …」으로 바꾸고, 그 둘째 누름에서 안내를 마친다.
+   */
   private featureTapped(feature: BattleTutorialFeature): void {
     if (feature !== this.teachFeature || !this.featureSpotlight) return;
     this.featureSpotlight.destroy();
     this.featureSpotlight = undefined;
+    if (BATTLE_FEATURE_TAP_AGAIN[feature] && !this.featureTappedOnce) {
+      this.featureTappedOnce = true;
+      const chip = feature === "speed" ? this.speedChip : this.presentationChip;
+      const bounds = chip.getBounds();
+      this.featureSpotlight = new TutorialSpotlight(this, {
+        rect: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
+        text: t(`tutorial.battle.${feature as "speed" | "presentation"}.again`),
+        side: "above",
+      });
+      return;
+    }
     // 칸은 여기서 마치지 않는다 — 서버가 이 관문의 첫 클리어를 확정할 때 한 칸만 연다(`completeStage`).
     // 이 판 안에서는 다시 가리키지 않고 조작도 닫히지 않으며, 클리어 전에 나가면 다음 입장에서 다시 알려 준다.
     this.featureTaught = true;
@@ -3070,7 +3100,8 @@ export class BattleScene extends Phaser.Scene {
       enemyHp: teamHp(this.state, "enemy"),
       speed: this.battleSpeed,
       autoUltimate: this.autoUltimate,
-      skipUltimatePresentation: this.ultimatePresentationSkipped(),
+      ultimatePresentation: this.ultimatePresentationMode(),
+      miniBanners: this.miniBanners?.count ?? 0,
       ultimateSequenceActive: this.ultimateSequenceActive,
       ultimateQueue: [...this.ultimateSequence.queue],
       // 머리 위 칩은 Canvas 안에만 있어 DOM으로 자리를 알 수 없다. 그린 그대로만 노출한다.

@@ -293,3 +293,36 @@ export function scoreRankingRowTop(index: number, pinned = false): number {
   const L = SCORE_RANKING_HUD;
   return L.top + index * (L.rowHeight + L.rowGap) + (pinned && index > 0 ? L.pinGap : 0);
 }
+
+/**
+ * 단축 궁극기 연출의 작은 알림(`UltimateMiniBanner`) 자리.
+ *
+ * 전투 화면 위쪽에서 **아무 UI도 서지 않는 띠**를 쓴다 — 시계·정지 버튼(0~100), 레이드 시즌 줄과 점수(~215),
+ * 수호전 점수 줄(~195) 아래이고, 기여도 판(왼쪽 0~252, 312~)과 보스전 점수 랭킹 띠(왼쪽 24~396, 128~306)를 피해
+ * **오른쪽 벽에 붙는다**. 전장의 바닥(`BATTLE_ARENA.top` 600~)에 선 적의 머리보다 위에서 끝난다.
+ * 알림이 둘 겹치면 아래로 한 칸 쌓이고, 셋째부터는 가장 오래된 것을 밀어낸다.
+ */
+export const ULTIMATE_MINI_BANNER = {
+  right: 1080,
+  top: 236,
+  width: 470,
+  height: 84,
+  gap: 10,
+  slots: 2,
+  /** 얼굴 액자 한 변과 판 왼쪽 끝에서의 안쪽 여백. */
+  face: 66,
+  facePad: 34,
+  /** 글줄 — 개체 이름(작게) 위, 궁극기 이름(크게) 아래. */
+  nameSize: 22,
+  skillSize: 32,
+  textGap: 16,
+  /** 오른쪽 화면 끝에서 글이 끝나는 여백. */
+  textRight: 28,
+  depth: 330,
+} as const;
+
+/** i번째 칸의 위쪽 y. */
+export function ultimateMiniBannerTop(slot: number): number {
+  const L = ULTIMATE_MINI_BANNER;
+  return L.top + slot * (L.height + L.gap);
+}

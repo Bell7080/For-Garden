@@ -22,7 +22,7 @@ export function createFixture(mode: "stage" | "duel" | "raid" | "expedition" = "
     state.settings.game.autoUltimate = true;
     state.settings.game.battleSpeed = 2;
     // 종료/저장 경계 검사는 실제 연출 스킵 설정을 쓴다. 전투 규칙과 기록은 그대로다.
-    state.settings.game.skipUltimatePresentation = true;
+    state.settings.game.ultimatePresentation = "skip";
     for (const id of state.party) {
         state.owned.add(id);
         state.relicProgress[id] = { ...createInitialRelicProgress(), level: 30, breakthrough: 2 };

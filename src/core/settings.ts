@@ -4,7 +4,7 @@ import { normalizePartyPresets, normalizePresetIndex } from "./partyPresets";
 import { DEFAULT_AUTO_REPEAT_OPTIONS, normalizeAutoRepeatOptions } from "./autoRepeat";
 import type { GameSettings } from "../state/session";
 import { DEFAULT_LANGUAGE, normalizeLanguage } from "./language";
-import { BATTLE_SPEEDS } from "./battleControls";
+import { BATTLE_SPEEDS, ULTIMATE_PRESENTATION_MODES } from "./battleControls";
 import { RUNE_TRAIT_VIEWS } from "./runeListFilter";
 import { normalizeRosterViews } from "./rosterViewMemory";
 
@@ -190,7 +190,7 @@ export function createDefaultSettings(): GameSettings {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, adRewardDot: false, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null, arenaSeen: null, rosterViews: {} },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, adRewardDot: false, ultimatePresentation: "full", textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null, arenaSeen: null, rosterViews: {} },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" },
@@ -228,8 +228,10 @@ export function normalizeSettings(value: unknown): GameSettings {
       pullAgainTaught: bool(g.pullAgainTaught, d.game.pullAgainTaught),
       // 필드가 없던 저장은 꺼진 쪽이다 — 광고는 받을 수 있는 공짜 보상이 아니다.
       adRewardDot: bool(g.adRewardDot, d.game.adRewardDot),
-      // 새 필드가 없을 때만 옛 `컷인 끄기`를 `전체 궁극 연출 스킵`으로 승격한다. 명시된 새 값이 언제나 우선한다.
-      skipUltimatePresentation: typeof g.skipUltimatePresentation === "boolean" ? g.skipUltimatePresentation : p.ultimateCutIn === false,
+      // 세 단계(켜기·단축·스킵)가 생기기 전의 저장은 옛 스킵 토글(`skipUltimatePresentation`), 그보다 앞선
+      // `컷인 끄기`(`presentation.ultimateCutIn`) 순으로 읽어 이관한다. 명시된 새 값이 언제나 우선한다.
+      ultimatePresentation: allowed(g.ultimatePresentation, ULTIMATE_PRESENTATION_MODES,
+        (typeof g.skipUltimatePresentation === "boolean" ? g.skipUltimatePresentation : p.ultimateCutIn === false) ? "skip" : "full"),
       textSpeed: allowed(g.textSpeed, TEXT_SPEEDS, d.game.textSpeed),
       // 지원 언어 목록은 language.ts 하나가 가지므로 여기에 코드를 다시 적지 않는다.
       language: normalizeLanguage(g.language),

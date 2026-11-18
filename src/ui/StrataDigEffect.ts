@@ -1,10 +1,10 @@
 import Phaser from "phaser";
 import { audioManager } from "../managers/AudioManager";
-import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { UI_ICON } from "./icons";
 import { COLOR } from "./theme";
 import { PICKAXE_ORIGIN, pickaxePoses } from "./pickaxeSwing";
+import { shakeCamera } from "./screenShake";
 
 /** 서버 응답과 정확히 맞물릴 수 있도록 충돌과 전체 종료를 따로 공개한다. */
 export interface StrataDigPlayback {
@@ -105,8 +105,7 @@ export class StrataDigEffect {
    * 쓰지 않아 같은 타격이 늘 같은 그림을 그린다.
    */
   private burst(reduced: boolean, duration: number): void {
-    const shake = motionPolicy(session.settings).cameraShakeFactor;
-    if (shake > 0) this.scene.cameras.main.shake(IMPACT_SHAKE.duration, IMPACT_SHAKE.intensity * shake, true);
+    shakeCamera(this.scene.cameras.main, IMPACT_SHAKE.duration, IMPACT_SHAKE.intensity, true);
 
     // 금: 부딪힌 자리에서 네 갈래로 뻗는 얇은 별. 곡괭이 몸통 위가 아니라 칸에 그려 곡괭이와 함께 사라지지 않는다.
     const crack = this.scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);

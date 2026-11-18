@@ -6,6 +6,7 @@ import { COLOR, textStyle } from "./theme";
 import { t, type TextKey } from "../i18n";
 import { motionPolicy } from "../core/settings";
 import { settingsManager } from "../managers/SettingsManager";
+import { createSweepBudget } from "./sweepBudget";
 import { HOLO_SHIMMER, holoBreathe, holoGlowColor, holoSweepPhase, holoWobble, polygonSpans } from "./holoShimmer";
 
 /** 레이더에 표시하는 축은 항상 같은 순서와 상한을 사용한다. */
@@ -133,9 +134,11 @@ export class StatRadar extends Phaser.GameObjects.Container {
 
   /** 일렁임은 화면에 실제로 보일 때만 다시 그린다. 움직임 줄이기에서는 멈춘 결만 남는다. */
   private startShimmer(): void {
+    const budget = createSweepBudget();
     const tick = (): void => {
       if (!this.active || !this.shownDeep()) return;
       if (motionPolicy(settingsManager.get()).nonEssentialRepeatFactor === 0) return;
+      if (!budget()) return;
       this.paint(this.scene.time.now);
     };
     this.scene.events.on(Phaser.Scenes.Events.UPDATE, tick);

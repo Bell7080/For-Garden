@@ -55,6 +55,7 @@ import {
   showcaseSparkles,
   type ShowcaseComposition,
 } from "./newRelicShowcaseLayout";
+import { shakeCamera } from "./screenShake";
 
 export interface NewRelicShowcaseOptions {
   /** 이 장면이 서는 깊이. 원화와 정보는 그 위로 한 칸씩 쌓인다. */
@@ -270,7 +271,7 @@ class NewRelicShowcase {
         tween({ targets: line, scaleX: 1, duration: O.strikeMs, ease: "Expo.easeOut" });
         // 그어진 뒤에는 조금 가라앉아 다음 줄이 더 밝게 읽힌다.
         tween({ targets: line, alpha: 0.55, duration: 300, delay: O.strikeMs });
-        scene.cameras.main.shake(O.strikeShake.ms, O.strikeShake.intensity);
+        shakeCamera(scene.cameras.main, O.strikeShake.ms, O.strikeShake.intensity);
       });
     }
 
@@ -290,7 +291,7 @@ class NewRelicShowcase {
     crack.setAlpha(0).setScale(0.55);
     later(crackAt, () => {
       tween({ targets: crack, alpha: 1, scale: 1, duration: O.crackMs, ease: "Back.easeOut" });
-      scene.cameras.main.shake(O.strikeShake.ms * 2, O.strikeShake.intensity * 1.5);
+      shakeCamera(scene.cameras.main, O.strikeShake.ms * 2, O.strikeShake.intensity * 1.5);
     });
 
     const burstAt = crackAt + O.crackMs + O.crackHoldMs;
@@ -301,7 +302,7 @@ class NewRelicShowcase {
       tween({ targets: flash, alpha: 0, duration: O.burstMs, ease: "Quad.easeOut" });
       tween({ targets: [crack, ...lines], alpha: 0, duration: O.burstMs * 0.8, ease: "Quad.easeOut" });
       tween({ targets: crack, scale: 1.18, duration: O.burstMs, ease: "Cubic.easeOut" });
-      scene.cameras.main.shake(O.burstShake.ms, O.burstShake.intensity);
+      shakeCamera(scene.cameras.main, O.burstShake.ms, O.burstShake.intensity);
       for (const shard of fossilShards(O.shards, O.shardSpread, O.shardSize)) {
         const piece = scene.add.graphics({ x: W / 2, y: O.y });
         piece.fillStyle(0x0b0d10, 0.95);
@@ -592,7 +593,7 @@ class NewRelicShowcase {
       onRepeat: () => flash.setAlpha(0.6 * flashes.alphaRatio),
       onComplete: () => flash.destroy(),
     });
-    if (motion && composition.shake) scene.cameras.main.shake(composition.shake.ms, composition.shake.intensity);
+    if (motion && composition.shake) shakeCamera(scene.cameras.main, composition.shake.ms, composition.shake.intensity);
 
     // 목소리를 걷고 무대를 세운다.
     this.voice.setVisible(false);

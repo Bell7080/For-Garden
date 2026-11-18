@@ -9,6 +9,7 @@ import { toPoints } from "./holo";
 import { RAID_DIFFICULTY_TONE, RAID_SUMMON_INTENSITY, RAID_SUMMON_STAGE } from "./raidLayout";
 import { COLOR, textStyle } from "./theme";
 import { audioManager } from "../managers/AudioManager";
+import { shakeCamera } from "./screenShake";
 
 export interface RaidSummonCinematicOptions {
   bossRelicId: string;
@@ -94,7 +95,7 @@ export function playRaidSummonCinematic(scene: Phaser.Scene, options: RaidSummon
   }
   const tremble = scene.time.addEvent({
     delay: 60, repeat: Math.floor(intensity.charge / 60),
-    callback: () => camera.shake(60, intensity.shake * 0.25),
+    callback: () => shakeCamera(camera, 60, intensity.shake * 0.25),
   });
 
   let revealed = false;
@@ -110,7 +111,7 @@ export function playRaidSummonCinematic(scene: Phaser.Scene, options: RaidSummon
     shards.forEach((piece) => piece.destroy());
     // 2. 터짐 — 한계 돌파와 같은 폭발을 난이도의 색으로.
     addBreakthroughBurst(scene, cx, cy, tone, depth + 1);
-    camera.shake(320, intensity.shake);
+    shakeCamera(camera, 320, intensity.shake);
     // 3. 드러남 — 얼굴 액자가 튀어나오고 이름·난이도가 그 아래 선다.
     const def = getRelic(options.bossRelicId);
     const face = new FaceFrame(scene, cx, cy, { portraitAssetId: def.portraitAssetId, size: RAID_SUMMON_STAGE.face, color: tone });

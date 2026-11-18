@@ -221,8 +221,8 @@ interface ProjectileSlot {
 export class EffectManager {
   private readonly scene: Phaser.Scene;
   private readonly depth: number;
-  private readonly shakeEnabled: boolean;
-  private readonly shakeFactor: number;
+  private shakeEnabled: boolean;
+  private shakeFactor: number;
   private readonly groundDepth: number;
   private readonly bodyDepth: number;
   /** 바닥에 머무는 면들. 키는 그 판을 깔아 둔 개체와 판 번호다. */
@@ -230,7 +230,7 @@ export class EffectManager {
   private readonly quality: ReturnType<typeof presentationPolicy>;
   private readonly flashes: ReturnType<typeof flashPolicy>;
   /** 생성 시 받은 설정 스냅샷이며 피해량 텍스트에만 적용한다. */
-  private readonly damageNumbers: boolean;
+  private damageNumbers: boolean;
   /** 전장 경계. 가장자리 워시만 쓰며 씬이 `setArena`로 넘긴다. */
   private arena: { left: number; right: number; top: number; bottom: number } | undefined;
   private readonly emitters = new Map<EffectKind, Phaser.GameObjects.Particles.ParticleEmitter>();
@@ -1387,6 +1387,16 @@ export class EffectManager {
    * 크기·색·머무는 시간은 전부 `damageNumbers.ts`의 순수 규칙이 정한다. 세기가 클수록 글자가
    * 크고 오래 남아, 숫자를 읽지 않고 크기만 봐도 "세게 맞았다"가 전해진다.
    */
+  /**
+   * 전투 중 설정 창에서 바꾼 표시 설정을 이 판에 곧바로 들인다. 피해 수치와 화면 흔들림은 다음 판까지
+   * 기다릴 이유가 없는 값이라, 전투가 다시 깨어날 때 이 둘만 다시 읽는다.
+   */
+  applyLiveSettings(options: { damageNumbers: boolean; motion: ReturnType<typeof motionPolicy> }): void {
+    this.damageNumbers = options.damageNumbers;
+    this.shakeEnabled = options.motion.cameraShakeFactor > 0;
+    this.shakeFactor = options.motion.cameraShakeFactor;
+  }
+
   damage(x: number, y: number, request: DamagePopupRequest, options: BurstOptions = {}): void {
     // 정책을 풀 획득보다 먼저 적용해야 꺼진 피해 수치가 Phaser Text 객체조차 만들지 않는다.
     if (!shouldShowDamagePopup(request, this.damageNumbers)) return;

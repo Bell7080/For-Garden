@@ -37,6 +37,7 @@ import { EventScene } from "./scenes/EventScene";
 import { setDebugWebglRestore, debugPerfEnabled, publishDebugPerf } from "./debug";
 import { installCjkWrap } from "./ui/cjkWrap";
 import { installTapSlopGuard } from "./ui/tapSlopGuard";
+import { installScreenShakeGate } from "./ui/screenShake";
 import { installStaleBuildReload } from "./ui/staleBuildReload";
 import { guardFrame } from "./core/frameGuard";
 import { installErrorReporter } from "./managers/ErrorReporter";
@@ -44,6 +45,8 @@ import { logError } from "./managers/ErrorReporter";
 
 installCjkWrap();
 installTapSlopGuard();
+// 「화면 흔들림」을 끄면 어떤 길로 부른 카메라 흔들림도 시작하지 않는다.
+installScreenShakeGate();
 installStaleBuildReload();
 
 const game = new Phaser.Game({

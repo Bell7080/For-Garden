@@ -39,7 +39,7 @@ export function playExpeditionRestRecap(
   resolve: (relicId: string) => { profile: BattleProfile; maxHp: number } | undefined,
 ): void {
   const motion = motionPolicy(session.settings);
-  const effects = new EffectManager(scene, { depth: 1400, damageNumbers: true, motion });
+  const effects = new EffectManager(scene, { depth: 1400, damageNumbers: session.settings.presentation.damageNumbers, graphicsQuality: session.settings.presentation.graphicsQuality, reduceFlashes: session.settings.accessibility.reduceFlashes, motion });
   const profiles: BattleProfile[] = [];
   const shownRecap: Array<{ relicId: string; fromHp: number; toHp: number }> = [];
   let index = 0;

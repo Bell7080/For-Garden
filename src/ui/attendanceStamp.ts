@@ -3,6 +3,7 @@ import Phaser from "phaser";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { drawGlyph } from "./glyphs";
+import { shakeCamera } from "./screenShake";
 
 /**
  * 출석 도장 — 받은 칸에 **쾅** 찍히는 마름모 인장.
@@ -67,7 +68,7 @@ export function playAttendanceStamp(
     onComplete: () => {
       audioManager?.playUi("attendance.stamp");
       callbacks.onImpact?.();
-      if (motion.cameraShakeFactor > 0) scene.cameras.main.shake(ATTENDANCE_STAMP.shake.duration, ATTENDANCE_STAMP.shake.intensity * motion.cameraShakeFactor);
+      shakeCamera(scene.cameras.main, ATTENDANCE_STAMP.shake.duration, ATTENDANCE_STAMP.shake.intensity);
       if (motion.nonEssentialRepeatFactor > 0) burstShards(scene, parent, x, y, size, color);
       scene.tweens.add({
         targets: stamp, scaleX: ATTENDANCE_STAMP.squash + 0.14, scaleY: ATTENDANCE_STAMP.squash, duration: ATTENDANCE_STAMP.settleMs / 2,

@@ -53,6 +53,7 @@ import { drawVignette } from "./holo";
 import { textStyle } from "./theme";
 import { audioManager } from "../managers/AudioManager";
 import { logError } from "../managers/ErrorReporter";
+import { shakeCamera } from "./screenShake";
 
 /**
  * 대사 데이터의 스탠딩 키 → 전신 원화. 전신이 있는 개체는 누구든 도감의 원화 표를 그대로 따르고,
@@ -781,8 +782,7 @@ export class DialogueStage {
   }
 
   private shake(duration: number, intensity: number): void {
-    const factor = motionPolicy(settingsManager.get()).cameraShakeFactor;
-    if (factor > 0) this.scene.cameras.main.shake(duration, intensity * factor);
+    shakeCamera(this.scene.cameras.main, duration, intensity);
   }
 
   /** 옅은 흰 막. 번쩍임 줄이기를 켜면 절반 아래로 누른다. */

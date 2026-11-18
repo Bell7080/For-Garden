@@ -3,6 +3,8 @@ import type { Puppet } from "puppetforge/phaser";
 import type { PortraitAssetId, RaitiaAssetId } from "../core/types";
 import { emptyPuppetResidency, releasePuppet, retainPuppet, type PuppetResidency } from "../core/puppetResidency";
 import { changeDebugPuppetContainers } from "../debug";
+import { powerSavingPolicy } from "../core/settings";
+import { session } from "../state/session";
 import { ENEMY_SD_ASSET_IDS } from "./enemyAssetIds";
 import {
   computeAnchoredPlacement,
@@ -1426,6 +1428,10 @@ export async function spawnPuppet(
     releasePuppetAsset(scene, asset.url);
   });
 
+  // 절전·움직임 줄이기는 전장 밖에 서는 모든 Puppet의 idle 갱신을 줄인다. 화면마다 따로 걸던 때는
+  // 그 줄을 빠뜨린 화면(도감·상점·편성·대사 등)의 Puppet이 절전을 켜도 매 프레임 스키닝했다.
+  // 전투는 움직임이 곧 정보라 줄이지 않는다. 화면이 따로 값을 정하면 그 값이 이긴다.
+  if (sceneKey !== "battle") creature.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
   placePuppet(creature, asset, options);
   if (options.tint !== undefined) tintPuppet(creature, options.tint);
   if (options.depth !== undefined) creature.setDepth(options.depth);

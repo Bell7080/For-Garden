@@ -422,16 +422,25 @@ export class MissionsPopup {
     } finally { this.claiming = false; }
   }
 
-  /** 응답 스냅샷으로 목록·알림·지갑을 함께 갱신한 뒤 서버가 확정한 지급분만 영수증에 싣는다. */
+  /**
+   * 응답이 오면 **영수증부터 띄운다.** 목록 재조회와 알림 세 조회를 다 기다린 뒤에 띄우던 때는 왕복이
+   * 서너 번 줄을 서서, 받기를 누르고 한참 아무것도 뜨지 않았다. 목록은 그동안 뒤에서 다시 읽고,
+   * 연구도 게이지가 굴러가는 것을 보이도록 영수증이 닫힌 뒤에 다시 그린다. 알림 점은 기다리지 않는다.
+   */
   private async applyClaim(result: ClaimMissionRewardsResponse): Promise<void> {
     // 굴릴 시작점은 **수령 직전**의 값이다. 응답을 반영한 뒤에 읽으면 이미 오른 값이라 굴러갈 거리가 없다.
     this.rollFrom = this.research?.[this.period]?.points;
     if (!hasRemoteState(result)) session.wallet = { ...result.wallet }; this.onWalletChanged?.();
-    // 서버 응답의 단계 상태까지 다시 조회해 그래프와 알림 점이 같은 틱에 갱신되게 한다.
-    const latest = await this.api.getMissions(); this.missions = latest.missions; this.research = latest.research;
-    this.render();
-    await notificationManager.refresh();
+    const latest = this.api.getMissions();
+    // 같은 계정 조회를 겹치지 않게 목록이 온 뒤에 알림을 다시 읽는다(겹치면 서버 잠금을 기다린다).
+    void latest.then(() => notificationManager.refresh()).catch((error: unknown) => logError("missions.notice", "임무 알림 갱신 실패", error));
     const items = result.granted.filter(({ amount }) => amount > 0).map(({ currency, amount }) => ({ icon: CURRENCY_ICON_BY_WALLET[currency], amount }));
-    if (items.length) openRewardPopup(this.scene, this.popups, { title: t("missions.rewardTitle"), sound: "mission.claim", items });
+    const closed = new Promise<void>((resolve) => {
+      if (items.length) openRewardPopup(this.scene, this.popups, { title: t("missions.rewardTitle"), sound: "mission.claim", items, onConfirm: resolve });
+      else resolve();
+    });
+    const [missions] = await Promise.all([latest, closed]);
+    this.missions = missions.missions; this.research = missions.research;
+    this.render();
   }
 }

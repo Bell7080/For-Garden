@@ -204,6 +204,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   /** 1보다 작은 값은 비전투 장식의 프레임 일부를 버리며 누락 시간을 다음 프레임에 합치지 않는다. */
   private decorativeUpdateFactor = 1;
   private decorativeUpdateCredit = 0;
+  /** 절전이 건너뛴 프레임의 시간. 다음에 도는 프레임이 함께 적분해 idle이 느려지지 않게 한다. */
+  private decorativeCarryMs = 0;
   /**
    * 지금 몸 뒤에 함께 그릴 잔상 겹.
    *
@@ -313,7 +315,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     return this;
   }
 
-  /** 전투 개체는 호출하지 않는 opt-in 장식 예산 경계다. */
+  /** 장식 갱신 예산. 전장 밖 Puppet은 `spawnPuppet`이 절전 정책으로 기본값을 건다(전투는 1). */
   setDecorativeUpdateFactor(factor: number): this {
     this.decorativeUpdateFactor = Phaser.Math.Clamp(factor, 0, 1);
     this.decorativeUpdateCredit = 0;
@@ -328,8 +330,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     if (!this.active || !this.scene) return;
     // 어느 값이 실제 경과 시간인지는 프레임 제한 여부에 따라 달라진다(runtimeStep.ts 참고).
     // TimeStep.time은 rawDelta를 계속 더한 벽시계라 두 경우 모두에서 갱신 간격을 바로 준다.
-    // **버리는 프레임에서도 먼저 갱신한다** — 아래 두 조기 반환이 버린 시간은 그대로 잃어야
-    // 하고(장식 예산과 비가시성 모두 "따라잡지 않는다"가 계약이다), 여기서 갱신하지 않으면
+    // **버리는 프레임에서도 먼저 갱신한다** — 아래 조기 반환(비가시성·정지)이 버린 시간은 그대로 잃어야
+    // 하고("따라잡지 않는다"가 계약이다. 절전이 건너뛴 시간만 `decorativeCarryMs`로 넘긴다), 여기서 갱신하지 않으면
     // 다음에 도는 프레임이 그 시간까지 한꺼번에 삼켜 오히려 건너뛴 만큼을 되돌린다.
     const loop = this.scene.game.loop;
     const loopElapsed = this.lastLoopTime >= 0 ? loop.time - this.lastLoopTime : undefined;
@@ -351,10 +353,14 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
       }
       this.poseLeader = undefined;
     }
+    const frameElapsed = puppetElapsedMs(loop.rawDelta, delta, loopElapsed);
+    // 절전은 **갱신 횟수**를 줄이지 동작 속도를 늦추지 않는다. 건너뛴 프레임의 시간을 버리던 때는
+    // 절전을 켜면 idle이 절반 속도의 슬로 모션이 되었다. 비가시성·정지와 달리 이 시간은 다음 갱신이 함께 적분한다.
     this.decorativeUpdateCredit += this.decorativeUpdateFactor;
-    if (this.decorativeUpdateCredit < 1) return;
+    if (this.decorativeUpdateCredit < 1) { this.decorativeCarryMs = Math.min(this.decorativeCarryMs + frameElapsed, 250); return; }
     this.decorativeUpdateCredit -= 1;
-    const elapsed = puppetElapsedMs(loop.rawDelta, delta, loopElapsed);
+    const elapsed = frameElapsed + this.decorativeCarryMs;
+    this.decorativeCarryMs = 0;
     // 편집기보다 긴 프레임을 한 번에 적분하면 pinnedSoft 발 주변의 spring이 튀므로 잘게 나눈다.
     const started = debugPerfEnabled ? performance.now() : 0;
     const next = advancePuppet(this.puppet, elapsed / 1000);

@@ -15,7 +15,7 @@ function fixture() {
     advancePuppet, puppetElapsedMs, debugPerfEnabled: false,
   });
   const creature = Object.assign(Object.create(Creature.prototype), {
-    active: true, visible: true, alpha: 1, animationFrozen: false, decorativeUpdateCredit: 0,
+    active: true, visible: true, alpha: 1, animationFrozen: false, decorativeUpdateCredit: 0, decorativeCarryMs: 0,
     displayOriginX: 0, displayOriginY: 0, flipX: false, flipY: false,
     decorativeUpdateFactor: 1, lastLoopTime: -1, poseVersion: 0, uploadedPoseVersion: -1,
     positions: new Float32Array(6), uvs: new Float32Array(6), indices: new Uint16Array([0, 1, 2]),

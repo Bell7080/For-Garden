@@ -97,6 +97,7 @@ import { FeedLevelUpEffect } from "./feedLevelUpEffect";
 import { drawFeedPlate, drawFeedWindow, FEED_BUTTON } from "./feedButtonSkin";
 import { FEED_BULK_PANEL, FEED_BULK_TONES, feedBulkNoteCenter, feedBulkSparkles, feedBulkSpots } from "./feedBulkStyle";
 import { FEED_LEVEL_UP } from "./feedLevelUpStyle";
+import { createSweepBudget } from "./sweepBudget";
 import { HOLO_SHIMMER, holoBreathe, holoGlowColor, holoSweepPhase, polygonSpans } from "./holoShimmer";
 import { settingsManager } from "../managers/SettingsManager";
 import { openSkillGlancePopup } from "./SkillGlancePopup";
@@ -3154,8 +3155,10 @@ function paintBondHeart(scene: Phaser.Scene, size: number): Phaser.GameObjects.C
     while (node) { if (!node.visible || node.alpha <= 0) return false; node = node.parentContainer; }
     return true;
   };
+  const budget = createSweepBudget();
   const tick = (): void => {
     if (!holder.active || !shown()) return;
+    if (!still() && !budget()) return;
     sweep.clear();
     if (still()) { holder.setAlpha(1); return; }
     const now = scene.time.now;

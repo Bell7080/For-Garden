@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { audioManager } from "../managers/AudioManager";
 import { ensureEffectTextures, EFFECT_TEXTURE } from "./effectTextures";
 import { toPoints } from "./holo";
+import { shakeCamera } from "./screenShake";
 
 /**
  * 한계 돌파가 확정되는 순간의 연출.
@@ -117,7 +118,7 @@ export function addBreakthroughBurst(
     });
   }
 
-  camera.shake(shake.duration, shake.intensity);
+  shakeCamera(camera, shake.duration, shake.intensity);
   scene.time.delayedCall(flash.rise + flash.fall + ripple.duration + ripple.stagger * ripple.count, () => layer.destroy());
   return layer;
 }

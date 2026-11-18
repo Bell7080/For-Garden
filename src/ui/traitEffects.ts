@@ -4,6 +4,7 @@ import { session } from "../state/session";
 import { burstDiamond, breakthroughShardVector } from "./breakthroughBurst";
 import { ensureEffectTextures, EFFECT_TEXTURE } from "./effectTextures";
 import { toPoints } from "./holo";
+import { shakeCamera } from "./screenShake";
 
 /**
  * 특성 연구대에서 아이템·재해석을 쓰는 순간의 연출.
@@ -132,7 +133,7 @@ export function playTraitEffect(
         });
       }
     }
-    if (spec.shake > 0) camera.shake(240, spec.shake * motion.cameraShakeFactor);
+    if (spec.shake > 0) shakeCamera(camera, 240, spec.shake);
     scene.time.delayedCall(1700, () => layer.destroy());
   };
 

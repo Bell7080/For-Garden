@@ -10,6 +10,7 @@ import { t } from "../i18n";
 import { runeRarityLabel, type RuneInstance } from "../core/runes";
 import { addRuneFrame } from "./runeIcons";
 import { COLOR, textStyle } from "./theme";
+import { shakeCamera } from "./screenShake";
 
 /**
  * 룬 합성의 연출 — 셋이 가운데 빛으로 빨려 들고 → 팡 → 새 룬이 선다.
@@ -119,7 +120,7 @@ export function playRuneSynthesisEffect(options: RuneSynthesisEffectOptions): vo
         layer.add(mote);
         scene.tweens.add({ targets: mote, y: center.y - 170 - (index % 3) * 40, alpha: { from: 0.8, to: 0 }, duration: 950 + index * 60, delay: 140 + index * 45, ease: "Sine.easeOut", onComplete: () => mote.destroy() });
       }
-      camera.shake(260, 0.009 * motion.cameraShakeFactor);
+      shakeCamera(camera, 260, 0.009);
     } else if (!upgraded) {
       // 아쉬움 — 가운데에 남은 작은 빛이 한 번 숨을 내쉬듯 꺼지며 내려앉는다.
       const ember = scene.add.image(center.x, center.y, EFFECT_TEXTURE.glow).setTint(color).setDisplaySize(160, 130).setAlpha(0.5).setBlendMode(Phaser.BlendModes.ADD);

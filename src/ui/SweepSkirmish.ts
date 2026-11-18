@@ -18,6 +18,7 @@ import {
   SWEEP_SKIRMISH, sweepBandSlab, sweepLootArc, sweepLootPoint, sweepSkirmishDurationMs, sweepSkirmishTimeline,
   type SweepSkirmishAttacker,
 } from "./sweepSkirmishLayout";
+import { shakeCamera } from "./screenShake";
 
 export interface SweepSkirmishOptions {
   /** 싸우는 애착 렐릭. */
@@ -284,7 +285,7 @@ export function playSweepSkirmish(scene: Phaser.Scene, options: SweepSkirmishOpt
     const toX = cx + L.blastOff.toX;
     const toY = cy + L.blastOff.toY;
     scene.tweens.add({ targets: shadows.enemy, alpha: 0, duration: 200 });
-    if (!still) scene.cameras.main.shake(160, 0.005);
+    if (!still) shakeCamera(scene.cameras.main, 160, 0.005);
     audioManager?.playSfx("sweep.blastoff");
     if (enemy?.active) {
       playMotion(scene, enemy, "hit");

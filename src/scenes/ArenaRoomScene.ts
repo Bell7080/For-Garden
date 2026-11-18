@@ -29,6 +29,7 @@ import { isTap, onTap } from "../ui/tapGuard";
 import { bindLongPress } from "../ui/longPressInfo";
 import { showArenaUnit } from "../ui/arenaUnitInfo";
 import { addScrollHint } from "../ui/ScrollHint";
+import { shakeCamera } from "../ui/screenShake";
 
 /**
  * 밴픽 화면의 자리. 위가 상대, 아래가 나, 가운데가 고를 렐릭 격자, 왼쪽 띠가 서로의 밴이다.
@@ -578,7 +579,7 @@ export class ArenaRoomScene extends Phaser.Scene {
   private confirm(r: ArenaRoom, side: number): void {
     if (!this.canAct(r, side)) return;
     // 「쿵」 — 확정은 되돌릴 수 없는 한 번이라 화면이 짧게 내려앉는다.
-    if (!session.settings.accessibility.reduceMotion) this.cameras.main.shake(140, .004);
+    shakeCamera(this.cameras.main, 140, .004);
     if (r.phase === 'ban') { if (this.selectedRelic) void this.act({ kind: 'ban', relicId: this.selectedRelic }); return; }
     if (r.rules.placement === 'hidden' && r.picks[side].length >= 3) { void this.act({ kind: 'lock' }); return; }
     if (this.selectedRelic && this.selectedSlot >= 0) void this.act({ kind: 'place', relicId: this.selectedRelic, slot: this.selectedSlot });
@@ -788,7 +789,7 @@ export class ArenaRoomScene extends Phaser.Scene {
     }
     this.tweens.add({ targets: cards.map((c) => c.holder), x: 540, duration: 360, ease: 'Cubic.easeOut', onUpdate: sync });
     // X 덮개는 카드 안의 자식이라 배율 트윈 동안 덮개 마스크를 다시 맞춘다.
-    this.tweens.add({ targets: cards.map((c) => c.mark), scale: 1, alpha: 1, duration: 200, delay: 460, ease: 'Back.easeOut', onUpdate: sync, onComplete: () => this.cameras.main.shake(160, .006) });
+    this.tweens.add({ targets: cards.map((c) => c.mark), scale: 1, alpha: 1, duration: 200, delay: 460, ease: 'Back.easeOut', onUpdate: sync, onComplete: () => shakeCamera(this.cameras.main, 160, .006) });
     this.time.delayedCall(1500, () => {
       if (!layer.active) return;
       this.tweens.add({ targets: [dim, title], alpha: 0, duration: 420 });

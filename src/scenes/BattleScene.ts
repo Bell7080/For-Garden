@@ -172,6 +172,7 @@ import { PuppetCreationQueue } from "../puppets/creationQueue";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { addSdFootShadow } from "../ui/SdFootShadow";
 import { logError, reportError } from "../managers/ErrorReporter";
+import { shakeCamera } from "../ui/screenShake";
 
 /** 디버프 수치 색(문자열)을 연출이 쓰는 정수 색으로 옮긴다 — 같은 상태가 숫자와 조각에서 같은 색이어야 한다. */
 const debuffColor = (id: DebuffId): number => Phaser.Display.Color.HexStringToColor(DEBUFF_TONE[id]).color;
@@ -1224,6 +1225,8 @@ export class BattleScene extends Phaser.Scene {
     // 멈춰 있던 시간이 한 프레임에 한꺼번에 흘러들지 않게 한다.
     this.lastStepAt = now;
     const game = settingsManager.get().game;
+    // 피해 수치·화면 흔들림은 설정 창에서 돌아온 이 판부터 따른다.
+    this.effects.applyLiveSettings({ damageNumbers: settingsManager.get().presentation.damageNumbers, motion: motionPolicy(settingsManager.get()) });
     this.battleSpeed = this.featureOpen("speed") ? usableBattleSpeed(game.battleSpeed, this.battleMember) : 1;
     this.autoUltimate = this.battleInput.mode === "duel" || this.battleInput.mode === "guildGuard" || this.battleInput.mode === "guildWar" || this.autoRepeatContent() !== undefined || (this.featureOpen("auto") && game.autoUltimate);
     this.refreshSpeedChip();
@@ -1581,7 +1584,7 @@ export class BattleScene extends Phaser.Scene {
         }
         if (!this.sequenceValid(next.token, fighter)) return;
         // 정책이 0이면 카메라만 멈추고 뒤이어 재생되는 피해 숫자·색상·잔상 사건은 건드리지 않는다.
-        if (this.motion.cameraShakeFactor > 0) this.cameras.main.shake(180, presentation.cameraShakeIntensity * this.motion.cameraShakeFactor);
+        if (this.motion.cameraShakeFactor > 0) shakeCamera(this.cameras.main, 180, presentation.cameraShakeIntensity);
       }
 
       // 스킵도 입력 순간의 낡은 상태를 믿지 않는다. 컷인 유무와 무관하게 발사 직전 생존·게이지·종료를 재검증한다.

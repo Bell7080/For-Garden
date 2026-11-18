@@ -57,6 +57,7 @@ import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { TutorialSpotlight } from "../ui/TutorialSpotlight";
 import { contentOpen } from "../ui/contentLock";
 import { tutorialManager } from "../managers/TutorialManager";
+import { shakeCamera } from "../ui/screenShake";
 
 /**
  * 연구소 — 화석과 호박석으로 렐릭을 복원하는 기존 연구 시설이다.
@@ -593,7 +594,7 @@ export class LabScene extends Phaser.Scene {
     if (!this.presentation.wasSkipped) {
       content.removeAll(true);
       this.breakFossil(content, rarity);
-      this.cameras.main.shake(rarity === "SSR" ? 420 : 260, rarity === "SSR" ? 0.012 : 0.006);
+      shakeCamera(this.cameras.main, rarity === "SSR" ? 420 : 260, rarity === "SSR" ? 0.012 : 0.006);
       // 등급은 시각 연출에만 쓰며 사운드는 의미 키와 중앙 버스 설정으로 일관되게 재생한다.
       this.audioScope?.play("research.crack");
       await this.waitForStage(excavationStageDuration("crack", preferences.presentation.shortenExcavation), request);

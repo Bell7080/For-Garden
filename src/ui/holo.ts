@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { COLOR } from "./theme";
+import { createSweepBudget } from "./sweepBudget";
 import { gaugeFogPixels, gaugeSweepAlpha } from "../core/gaugeFog";
 
 /**
@@ -608,9 +609,11 @@ export class HoloBar {
         if (first) this.ambientTweens.push(scene.tweens.add({ targets: first, alpha: 0.35, duration: 2600, yoyo: true, repeat: -1, ease: "Sine.InOut", delay: lag }));
         if (second) this.ambientTweens.push(scene.tweens.add({ targets: second, alpha: 0.95, duration: 3300, yoyo: true, repeat: -1, ease: "Sine.InOut", delay: 400 + lag }));
         this.sheen = scene.add.graphics({ x, y }).setBlendMode(Phaser.BlendModes.ADD);
+        // 절전이면 훑는 빛을 덜 자주 다시 그린다(속도는 트윈 시각이 지킨다).
+        const sheenBudget = createSweepBudget();
         this.ambientTweens.push(scene.tweens.addCounter({
           from: 0, to: 1, duration: 2200, repeat: -1, repeatDelay: 2600, delay: 900 + phase * 900,
-          onUpdate: (tween) => { this.sheenPhase = tween.getValue() ?? 0; this.drawSheen(); },
+          onUpdate: (tween) => { this.sheenPhase = tween.getValue() ?? 0; if (sheenBudget()) this.drawSheen(); },
           onRepeat: () => { this.sheenPhase = -1; this.drawSheen(); },
         }));
       }

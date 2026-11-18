@@ -8,6 +8,7 @@ import { CHEST_ART, CHEST_ART_CONTENT, chestGlowColor, ensureChestTexture } from
 import { drawSparkle } from "./rouletteWheel";
 import { shrinkTextToWidth } from "./textFit";
 import { textStyle } from "./theme";
+import { shakeCamera } from "./screenShake";
 
 /**
  * 보물상자의 연출 — 상자 무대(등급이 오를수록 색·크기·빛이 달라지는 상자와 게이지), 카드 한 장의 「지이잉 → 핑 → 쾅」,
@@ -264,7 +265,7 @@ export class ChestStage {
     this.image.setScale(big * 1.25, big * 0.8);
     audioManager?.playUi("ui.breakthrough");
     if (this.grade >= 3) scene.time.delayedCall(260, () => audioManager?.playUi("success.fanfare"));
-    if (motion.shake > 0) scene.cameras.main.shake(220, 0.006 * motion.shake);
+    shakeCamera(scene.cameras.main, 220, 0.006);
     const glow = chestGlowColor(this.grade);
     if (motion.flash) {
       const flash = scene.add.graphics();
@@ -372,7 +373,6 @@ export async function flipCard(scene: Phaser.Scene, holder: Phaser.GameObjects.C
 
 /** 도장(쾅!) — 크게 떠 있다가 내려찍히며 먼지가 튀고 카드가 움찔한다. */
 export async function stampCard(scene: Phaser.Scene, holder: Phaser.GameObjects.Container, width: number, success: boolean, label: string, flair: number): Promise<void> {
-  const motion = chestFxMotion();
   const ink = success ? (flair >= 3 ? 0xd9930b : 0xe0483a) : 0x6f7480;
   const stampWidth = width * 0.9, stampHeight = 96;
   const stamp = scene.add.container(0, 18).setAngle(success ? -14 : 12);
@@ -387,7 +387,7 @@ export async function stampCard(scene: Phaser.Scene, holder: Phaser.GameObjects.
   holder.add(stamp);
   await tweenTo(scene, { targets: stamp, scale: 1, alpha: 1, duration: cardPace(120), ease: "Quad.In" });
   audioManager?.playUi("attendance.stamp");
-  if (motion.shake > 0) scene.cameras.main.shake(success ? 110 + flair * 25 : 140, (success ? 0.0035 + flair * 0.0012 : 0.005) * motion.shake);
+  shakeCamera(scene.cameras.main, success ? 110 + flair * 25 : 140, success ? 0.0035 + flair * 0.0012 : 0.005);
   // 먼지 — 도장 둘레로 짧게 퍼진다.
   for (let index = 0; index < 8; index += 1) {
     const angle = (index / 8) * Math.PI * 2;

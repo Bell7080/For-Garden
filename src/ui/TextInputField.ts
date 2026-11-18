@@ -101,8 +101,15 @@ export class TextInputField extends Phaser.GameObjects.Container {
       "padding:0", "margin:0", "color:transparent", "caret-color:transparent", ...(options.multiline ? ["resize:none", "overflow:hidden"] : []),
       // iOS는 16px보다 작은 입력 칸에 초점이 가면 화면을 확대한다. 보이지 않는 글자라 값만 맞춘다.
       "font-size:16px", "-webkit-appearance:none",
+      // **DOM 입력은 손을 받지 않는다** — 초점은 아래 Phaser 입력면이 준다. 이 요소는 캔버스 위에 떠 있어서
+      // 판이 그 칸을 덮어도 손가락이 곧장 닿았다 — 도감 검색 칸 위에 룬 정비 창이 떠 있으면 하트 조각을
+      // 누를 때마다 뒤의 검색 칸이 초점을 받아 자판이 올라왔다(응태 2026-11-18). Phaser 입력면은 판에 가려지면
+      // 눌리지 않는다.
+      "pointer-events:none",
     ].join(";");
     this.dom = scene.add.dom(0, 0, this.field).setOrigin(0.5);
+    // Phaser는 그릴 때마다 요소의 `pointer-events`를 이 값으로 덮어쓴다 — CSS만으로는 `auto`로 돌아간다.
+    this.dom.pointerEvents = "none";
     this.field.addEventListener("input", () => this.sync(true));
     // 한 줄 칸은 Enter로 끝내고, 여러 줄 칸은 줄을 바꾼다. 커서를 옮기는 입력도 캐럿 자리를 다시 잡는다.
     this.field.addEventListener("keydown", (event) => { if (event.key === "Enter" && !options.multiline) this.field.blur(); });

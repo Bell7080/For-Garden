@@ -14,7 +14,9 @@ describe("PopupLayer 부팅 계약", () => {
     expect(def).toContain("this.stack[this.stack.length - 1]");
     expect(def).toContain("top !== layer");
     expect(source).toContain("onClick: userClose");
-    expect(source).toContain('backdrop.on("pointerup", () => userClose())');
+    // 판을 연 꾹 누름의 손 떼기가 곧바로 닫지 않도록, 바깥에서 누른 뒤 뗀 손만 닫는다.
+    expect(source).toContain('backdrop.on("pointerdown", () => { pressed = true; })');
+    expect(source).toMatch(/backdrop\.on\("pointerup", \(\) => \{ if \(!pressed\) return; pressed = false; userClose\(\); \}\)/);
   });
 
   it("화면에 따로 선 로비 뒤로가기는 얹힌 판이 있으면 맨 위 판만 닫는다", () => {

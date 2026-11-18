@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { isTap } from "./tapGuard";
 import { t } from "../i18n";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawLayer, slantedRect, toPoints } from "./holo";
@@ -136,6 +137,10 @@ export class RelicControlBar {
       "-webkit-appearance:none",
     ].join(";");
     this.dom = scene.add.dom(spots.search.x + 37, y, this.input).setOrigin(0.5);
+    // **DOM 입력은 손을 받지 않는다** — 초점은 아래 Phaser 입력면이 준다. 캔버스 위에 떠 있는 요소라 위에
+    // 판이 열려도 손가락이 곧장 닿아, 정보창 → 룬 정비 창의 하트 조각을 누를 때마다 뒤의 이 칸이 초점을
+    // 받아 자판이 올라왔다(응태 2026-11-18). Phaser는 그릴 때마다 요소 스타일을 이 값으로 덮어쓴다.
+    this.dom.pointerEvents = "none";
     this.input.addEventListener("input", () => this.syncQuery());
     // 자판의 확인을 누르면 초점을 놓아 목록을 볼 수 있게 한다.
     this.input.addEventListener("keydown", (event) => { if (event.key === "Enter") this.input.blur(); });
@@ -143,7 +148,15 @@ export class RelicControlBar {
     this.input.addEventListener("blur", () => this.setCaretVisible(false));
     // 칸 어디를 눌러도 초점이 간다 — 투명한 입력면은 좁아 가장자리를 누르면 자판이 뜨지 않는다.
     const searchHit = scene.add.rectangle(spots.search.x, y, spots.search.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    searchHit.on("pointerup", () => this.input.focus());
+    // 칸 안에서 누르고 칸 안에서 뗀 탭만 — 목록을 끌어 올리다 칸 위에서 놓은 손은 자판을 열지 않는다.
+    let searchPressed = false;
+    searchHit.on("pointerdown", () => { searchPressed = true; });
+    searchHit.on("pointerout", () => { searchPressed = false; });
+    searchHit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      const tap = searchPressed && isTap(pointer);
+      searchPressed = false;
+      if (tap) this.input.focus();
+    });
 
     // ── 정렬 · 방향 ───────────────────────────────────────────────────────
     this.sort = new SortControl(scene, {

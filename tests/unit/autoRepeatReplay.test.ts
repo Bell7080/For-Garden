@@ -20,6 +20,7 @@ const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", {
   performance: { now: () => clock }, audioManager: undefined, BOSS_STEP_MS: 20, formatBattleClock: () => "", hasMergedBattleHit: () => false,
   ultimatePresentationFor: () => ({ zoomScale: 1.2, zoomMs: 200, cameraShakeIntensity: 0 }), ultimatePresentationTiming: () => ({ rate: 1 }),
   shouldWaitForUltimatePresentation: controls.shouldWaitForUltimatePresentation, skipsUltimateCutIn: controls.skipsUltimateCutIn, UltimateMiniBannerStack: class { show(): void {} }, scaleUltimateDuration: () => 100, ULTIMATE_RECOVERY_RATIO: 0.5,
+  ULTIMATE_STALL_MS: 12_000, PAUSE_REPORT_MS: 30_000, reportError: () => undefined,
   settingsManager: { get: () => ({ presentation: { graphicsQuality: "high" }, accessibility: { reduceFlashes: false } }), haptic: noop },
   UltimateCutIn: { create: () => new Promise((r) => later(3, () => r({ play: () => new Promise((p) => later(20, () => p(undefined))), destroy: noop }))) },
 });

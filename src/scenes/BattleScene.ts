@@ -95,7 +95,7 @@ import { placedEnemyIndex, type PlacedEnemy } from "../data/placedEnemies";
 import { UltimateCutIn } from "../ui/UltimateCutIn";
 import { UltimateMiniBannerStack } from "../ui/UltimateMiniBanner";
 import {
-  BATTLE_CLOSING_HOLD_MS, battleFightStartsAt, battleSpeedTier, nextBattleSpeed, nextUltimatePresentationMode, usableBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, skipsUltimateCutIn, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
+  BATTLE_CLOSING_HOLD_MS, PAUSE_REPORT_MS, ULTIMATE_STALL_MS, battleFightStartsAt, battleSpeedTier, nextBattleSpeed, nextUltimatePresentationMode, usableBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, skipsUltimateCutIn, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
   type BattleSpeed, type UltimatePresentationMode,
 } from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
@@ -110,7 +110,7 @@ import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { relicLevelCap, activeBreakthroughOf } from "../core/relicProgression";
-import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
+import { anyPopupOpen, blockingPopupTitles, PopupLayer } from "../ui/PopupLayer";
 import { CAKE_OPERATION_TIERS, cakeOperationEnemies, cakeOperationRole, cakeOperationRunCost, cakeOperationTierIndex, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { BATTLE_FIELD_FRAMING, battleArena } from "../core/battleArena";
 import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type DuelBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto, type RaidBattleInputDto } from "../core/expeditionBattle";
@@ -454,6 +454,12 @@ export class BattleScene extends Phaser.Scene {
   private autoUltimate = false;
   /** 공개적으로 읽기 쉬운 입력 잠금. 토큰 큐와 항상 함께 갱신한다. */
   private ultimateSequenceActive = false;
+  /** 지금 궁극기 연출이 잠금을 쥔 실제 시각 — 감시가 「풀리지 않은 잠금」을 재는 기준이다. */
+  private ultimateSequenceSince = 0;
+  /** 코어 시간이 멈춰 선 이유를 한 번만 보고하려고 둔 표식(판마다 처음으로). */
+  private stallReported = false;
+  /** 코어 시간이 판 때문에 멈추기 시작한 실제 시각. 멈추지 않았으면 undefined. */
+  private pausedSince?: number;
   /**
    * 오프닝 1-1의 궁극기 안내. 처음 켜진 카드 하나만 밝히고 나머지는 어둡게 덮은 채 시간을 멈춘다.
    * 한 번 쓰면(`done`) 다시 열리지 않는다.
@@ -800,6 +806,8 @@ export class BattleScene extends Phaser.Scene {
     // 자동 전투(반복 출격) 중에는 손이 없으므로 궁극기도 자동이다.
     this.autoUltimate = this.battleInput.mode === "duel" || this.battleInput.mode === "guildGuard" || this.battleInput.mode === "guildWar" || this.autoRepeatContent() !== undefined || (this.featureOpen("auto") && battleSettings.autoUltimate);
     this.ultimateTutorial = { fighterId: "", done: false, active: false, taught: [] };
+    this.stallReported = false;
+    this.pausedSince = undefined;
     this.ultimateSequenceActive = false;
     // 같은 씬이 다음 판을 다시 세우므로 토큰을 처음부터 세지 않는다. 지난 판의 연출이 아직 기다리는 중이면
     // 새 판의 같은 번호를 제 것으로 알고 새 판의 잠금을 풀어 버린다(자동 전투 둘째 판).
@@ -1559,6 +1567,7 @@ export class BattleScene extends Phaser.Scene {
     const next = beginNextUltimate(sequence);
     if (!next) return;
     this.ultimateSequenceActive = true;
+    this.ultimateSequenceSince = performance.now();
     this.currentUltimateFighterId = next.fighterId;
     this.refreshProfiles();
     this.refreshDebug();
@@ -1762,6 +1771,7 @@ export class BattleScene extends Phaser.Scene {
       audioManager?.playSfx("battle.start");
     }
     if (this.simulationPaused()) {
+      this.watchPausedSimulation(now);
       // 멈춘 동안에도 화면과 관찰값은 지금 상태를 말해야 한다. 여기서 그냥 돌아가면 프로필과
       // `__PF_DEBUG.battle`이 **판이 열리기 직전 값으로 얼어붙어**, 판이 눈앞에 펼쳐져 있는데도
       // 밖에서는 접혀 있다고 읽힌다.
@@ -1769,8 +1779,12 @@ export class BattleScene extends Phaser.Scene {
       this.refreshDebug();
       return;
     }
+    this.pausedSince = undefined;
     // 코어 시간과 전투 배속을 궁극기 연출과 분리한다. 연출 Puppet/tween은 씬의 정상 시계로 돈다.
-    if (this.ultimateSequenceActive) return;
+    if (this.ultimateSequenceActive) {
+      this.watchUltimateSequence(now);
+      return;
+    }
     // battleSpeed는 코어 시간에 여기서 정확히 한 번만 곱한다. 궁극기 연출 배율은 tween/Puppet에만
     // 쓰고 stepSkirmish에 넣지 않으므로 피해량·공격 주기·게이지 충전이 이중 가속되지 않는다.
     const events: SkirmishEvent[] = [];
@@ -1893,6 +1907,47 @@ export class BattleScene extends Phaser.Scene {
    * 멈추는 것은 코어 시간뿐이다 — 컷인·파티클 같은 씬 tween까지 함께 세우면 판을 여는 순간
    * 화면이 통째로 얼어 버린 것처럼 보인다.
    */
+  /**
+   * **전투 멈춤 감시.** 궁극기 연출이 잠금을 쥔 채 `ULTIMATE_STALL_MS`를 넘기면 스스로 푼다.
+   *
+   * 연출은 tween·컷인·Puppet 모션을 기다리는데, 그중 하나가 끝을 알리지 않으면 잠금이 영영 남아
+   * 조작 칩은 눌리는데 캐릭터만 서 있는 판이 된다. 가장 긴 연출(컷인 + 확대 + 복귀)도 몇 초라
+   * 그 몇 배를 넘긴 잠금은 고장이다 — 순서 상태를 새로 세워 늦게 끝난 옛 연출이 새 잠금을 풀지
+   * 못하게 하고(토큰이 갈린다), 무엇이 걸렸는지 오류 보고에 남긴다.
+   */
+  private watchUltimateSequence(now: number): void {
+    if (now - this.ultimateSequenceSince < ULTIMATE_STALL_MS) return;
+    reportError("battle.ultimateStall", new Error("ultimate sequence lock released by watchdog"), {
+      mode: this.battleInput.mode, fighter: this.currentUltimateFighterId ?? "", heldMs: Math.round(now - this.ultimateSequenceSince),
+    });
+    this.activeCutIn?.destroy();
+    this.activeCutIn = undefined;
+    this.ultimateSequence = createUltimateSequenceState();
+    this.ultimateSequenceActive = false;
+    this.contributionPanel?.setInputLocked(false);
+    this.currentUltimateFighterId = null;
+    this.lastStepAt = now;
+    this.syncViews();
+    this.refreshProfiles();
+    this.refreshDebug();
+  }
+
+  /**
+   * 판 때문에 코어 시간이 오래 멈춰 있으면 **무엇이 붙잡고 있는지** 한 번 보고한다. 판을 읽는 동안
+   * 멈추는 것은 정상이라 풀지는 않는다 — 다만 화면에 보이지 않는 무언가가 붙잡는 일이 다시 생기면
+   * 그 이름이 오류 보고(`client_errors`)에 남아 원인을 곧바로 짚을 수 있다.
+   */
+  private watchPausedSimulation(now: number): void {
+    this.pausedSince ??= now;
+    if (this.stallReported || now - this.pausedSince < PAUSE_REPORT_MS) return;
+    this.stallReported = true;
+    reportError("battle.pausedLong", new Error("battle simulation paused for long"), {
+      mode: this.battleInput.mode,
+      popup: anyPopupOpen(), popupTitles: blockingPopupTitles().join(","),
+      allyInfo: this.allyInfoRef?.isOpen ?? false, ultimateTutorial: this.ultimateTutorial.active, spotlight: this.featureSpotlight?.active ?? false,
+    });
+  }
+
   private simulationPaused(): boolean {
     // **펼친 기여도 판은 전투를 멈추지 않는다.** 그 판은 창이 아니라 화면 한쪽에 붙는 순위표라,
     // 열어 둔 채로 순위가 실시간으로 바뀌는 것을 보는 것이 그 판의 쓸모다 — 멈추면 열어 볼

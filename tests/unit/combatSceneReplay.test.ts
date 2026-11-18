@@ -19,6 +19,7 @@ const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", {
         } }, ...skirmish, ...ultimate, ...arenaView,
     performance: { now: () => clock }, audioManager: undefined, BOSS_STEP_MS: 20, formatBattleClock: () => "", hasMergedBattleHit: () => false,
     ultimatePresentationFor: () => ({}), ultimatePresentationTiming: () => ({ rate: 1 }), shouldWaitForUltimatePresentation: () => false, skipsUltimateCutIn: (mode: string) => mode !== "full", UltimateMiniBannerStack: class { show(): void {} },
+  ULTIMATE_STALL_MS: 12_000, PAUSE_REPORT_MS: 30_000, reportError: () => undefined,
 });
 function sceneFight(lease: ReturnType<typeof prepareCombat>, speed: number) {
     clock = 0;

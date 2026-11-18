@@ -113,13 +113,6 @@ export interface PopupOptions {
 const REFRESH_WINDOW_MS = 450;
 
 /**
- * 지금 화면에 떠 있는 팝업 장 수. 씬이 아니라 이 경계가 세는 이유는, 팝업 레이어가 화면마다
- * 그때그때 새로 만들어져 씬이 제 층을 전부 알지 못하기 때문이다. 전투는 이 값으로 코어 시간만
- * 멈춘다 — 판이 떠 있는 동안 뒤에서 전투가 굴러가면 읽는 사이에 판이 갈린다.
- */
-let openLayerCount = 0;
-
-/**
  * 지금 무언가를 열어 둔 팝업 층들. 관찰값(`popupTitles`)이 하나뿐이라 층마다 제 것만 올리면
  * 서로 지운다. 연 순서를 지켜 아래(먼저 연 층)부터 쌓이게 한다.
  *
@@ -128,9 +121,30 @@ let openLayerCount = 0;
  */
 const LIVE_LAYERS: PopupLayer[] = [];
 
-/** 팝업이 한 장이라도 떠 있는가. */
+/**
+ * 팝업이 한 장이라도 **지금 돌고 있는 화면에** 떠 있는가. 전투는 이 값으로 코어 시간만 멈춘다 —
+ * 판이 떠 있는 동안 뒤에서 전투가 굴러가면 읽는 사이에 판이 갈린다.
+ *
+ * **전역 셈(열 때 +1 · 닫을 때 −1)으로 두지 않는다.** 예전에는 그랬는데, 셈이 한 번 어긋나면
+ * 화면에 아무 판도 없는데도 전투가 시작하자마자 멈춰 섰다 — 조작 칩은 다 눌리는데 캐릭터만
+ * 서 있었다(v0.510.4). 어긋나는 길은 여럿이었다: 서버 응답이 늦게 와 **이미 내려간 화면**에 판이
+ * 열리면 그 씬의 종료 정리가 다시 오지 않고, 잠든 화면(겹쳐 연 이야기·설정의 주인)에 남은 판도
+ * 깨어 있는 화면을 붙잡았다. 그래서 셈 대신 **살아 있는 층을 그때그때 훑는다** — 돌고 있는 씬의
+ * 층이고, 그 판이 아직 부서지지 않았을 때만 센다(`holdsOpenPopup`).
+ */
 export function anyPopupOpen(): boolean {
-  return openLayerCount > 0;
+  return LIVE_LAYERS.some((layer) => layer.holdsOpenPopup());
+}
+
+/** 지금 화면을 붙잡고 있는 판들의 제목 — 전투 멈춤 감시가 무엇이 붙잡는지 보고할 때 읽는다. */
+export function blockingPopupTitles(): string[] {
+  return LIVE_LAYERS.filter((layer) => layer.holdsOpenPopup()).flatMap((layer) => layer.openTitles());
+}
+
+/** 씬이 이미 내려갔나(종료·파기). 잠든 씬은 다시 깨어나므로 내려간 것이 아니다. */
+function sceneGone(scene: Phaser.Scene): boolean {
+  const status = scene.sys.settings.status;
+  return status === Phaser.Scenes.SHUTDOWN || status === Phaser.Scenes.DESTROYED;
 }
 
 export class PopupLayer {
@@ -176,7 +190,6 @@ export class PopupLayer {
     if (this.shutdownHooked) return;
     this.shutdownHooked = true;
     this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      openLayerCount -= this.stack.length;
       this.stack.length = 0;
       this.canCloseByLayer.clear();
       this.shutdownHooked = false;
@@ -187,6 +200,15 @@ export class PopupLayer {
 
   get isOpen(): boolean {
     return this.stack.length > 0;
+  }
+
+  /**
+   * 이 층이 지금 화면을 붙잡고 있나(`anyPopupOpen`). 장부에 남았어도 **돌지 않는 씬**(잠들었거나
+   * 내려간 씬)의 판과 **이미 부서진 판**은 세지 않는다 — 보이지 않는 판이 전투를 멈추게 하면 안 된다.
+   */
+  holdsOpenPopup(): boolean {
+    if (!this.scene.sys.isActive()) return false;
+    return this.stack.some((layer) => layer.active);
   }
 
   /**
@@ -429,9 +451,11 @@ export class PopupLayer {
 
     if (options.title) this.titleByLayer.set(layer, options.title);
     this.bodyByLayer.set(layer, body);
+    // 이미 내려간 화면에 늦게 도착한 판(서버 응답 뒤에 여는 영수증 등)은 장부에 올리지 않는다 —
+    // 그 씬의 종료 정리는 이미 지나가 다시 오지 않으므로, 올리면 장부에만 영영 남는다.
+    if (sceneGone(this.scene)) return body;
     this.hookShutdown();
     this.stack.push(layer);
-    openLayerCount += 1;
     this.publishDebugTitles();
     return body;
   }
@@ -456,7 +480,7 @@ export class PopupLayer {
   }
 
   /** 이 층에 지금 열려 있는 제목들. 다른 층이 함께 올릴 수 있도록 열어 둔다. */
-  private openTitles(): string[] {
+  openTitles(): string[] {
     return this.stack.map((layer) => this.titleByLayer.get(layer)).filter((title): title is string => title !== undefined);
   }
 
@@ -545,7 +569,6 @@ export class PopupLayer {
     if (this.canCloseByLayer.get(layer)?.() === false) return;
     this.canCloseByLayer.delete(layer);
     this.stack.splice(index, 1);
-    openLayerCount -= 1;
     const closedTitle = this.titleByLayer.get(layer);
     if (closedTitle !== undefined) this.closingByTitle.set(closedTitle, { layer, body: this.bodyByLayer.get(layer), at: performance.now() });
     this.titleByLayer.delete(layer);

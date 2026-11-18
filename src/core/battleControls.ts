@@ -80,6 +80,15 @@ export const BATTLE_OPENING_HOLD_MS = 900;
  */
 export const BATTLE_CLOSING_HOLD_MS = 1_400;
 
+/**
+ * 궁극기 연출이 잠금을 쥘 수 있는 가장 긴 실제 시간(ms). 가장 긴 연출(전신 컷인 + 확대 + 복귀)도
+ * 몇 초라, 이보다 오래 쥔 잠금은 끝을 알리지 않은 tween·모션이 남긴 고장이다 — 전투가 스스로 푼다.
+ */
+export const ULTIMATE_STALL_MS = 12_000;
+
+/** 판 때문에 코어 시간이 이만큼(ms) 멈춰 있으면 무엇이 붙잡는지 오류 보고에 한 번 남긴다(풀지는 않는다). */
+export const PAUSE_REPORT_MS = 30_000;
+
 /** 전원이 선 시각에서 전투가 실제로 흐르기 시작하는 시각. */
 export function battleFightStartsAt(spawnedAt: number): number {
   return spawnedAt + BATTLE_OPENING_HOLD_MS;

@@ -14,12 +14,34 @@ export const diamond = (cx: number, cy: number, rx: number, ry: number): Phaser.
   [new Phaser.Geom.Point(cx, cy - ry), new Phaser.Geom.Point(cx + rx, cy), new Phaser.Geom.Point(cx, cy + ry), new Phaser.Geom.Point(cx - rx, cy)];
 
 /**
+ * 카드 그림을 텍스처로 한 번만 굽는다. Phaser의 Graphics는 그린 도형을 **매 프레임** 다시 쪼개 그리므로, 마름모 수십 개를
+ * 든 카드 뒷면이 판 위에 열 장 넘게 서고 델로피 둘레를 다섯 장이 돌면 모바일에서 섞는 동안 프레임이 흔들렸다. 굽고 나면
+ * 카드 한 장은 이미지 한 장이라 뒤집기(가로 배율)·섞기(이동)가 GPU 변환만으로 돈다. 같은 크기·같은 그림은 한 번만 굽는다.
+ */
+const BAKE_PAD = { left: 6, top: 6, right: 8, bottom: 14 } as const;
+export function bakedCardImage(scene: Phaser.Scene, key: string, width: number, height: number, draw: (g: Phaser.GameObjects.Graphics) => void): Phaser.GameObjects.Image {
+  const w = Math.ceil(width + BAKE_PAD.left + BAKE_PAD.right), h = Math.ceil(height + BAKE_PAD.top + BAKE_PAD.bottom);
+  const ox = width / 2 + BAKE_PAD.left, oy = height / 2 + BAKE_PAD.top;
+  if (!scene.textures.exists(key)) {
+    const g = scene.make.graphics({ x: 0, y: 0 }, false);
+    g.translateCanvas(ox, oy);
+    draw(g);
+    g.generateTexture(key, w, h);
+    g.destroy();
+  }
+  return scene.add.image(0, 0, key).setOrigin(ox / w, oy / h);
+}
+
+/**
  * 카드의 뒷면 — 양피지 테두리 안에 진홍·검정 마름모 무늬(커튼·배경 카드와 같은 결), 가운데에 금빛 마름모 문장.
  * 모든 카드가 같아야 정체가 드러나지 않는다.
  */
 export function paintBack(scene: Phaser.Scene, holder: Phaser.GameObjects.Container, width: number, height: number): void {
   holder.removeAll(true);
-  const g = scene.add.graphics();
+  holder.add(bakedCardImage(scene, `delopi-card-back-${Math.round(width)}x${Math.round(height)}`, width, height, (g) => drawCardBack(g, width, height)));
+}
+
+function drawCardBack(g: Phaser.GameObjects.Graphics, width: number, height: number): void {
   const left = -width / 2, top = -height / 2, radius = Math.max(8, width * 0.06), rim = Math.max(8, width * 0.055);
   g.fillStyle(DELO.shade, 0.28).fillRoundedRect(left + 4, top + 10, width, height, radius);
   g.fillStyle(DELO.ink, 1).fillRoundedRect(left - 3, top - 3, width + 6, height + 6, radius + 3);
@@ -40,7 +62,6 @@ export function paintBack(scene: Phaser.Scene, holder: Phaser.GameObjects.Contai
   g.fillStyle(DELO.gold, 1).fillPoints(diamond(0, 0, er * 0.78, er * 1.06), true);
   g.fillStyle(DELO.crimson, 1).fillPoints(diamond(0, 0, er * 0.44, er * 0.6), true);
   drawSparkle(g, 0, 0, er * 0.5, 0xffffff, 1);
-  holder.add(g);
 }
 
 /**

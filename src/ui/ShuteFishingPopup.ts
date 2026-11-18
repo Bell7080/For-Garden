@@ -5,8 +5,8 @@ import { gameApi } from "../api/FakeServer";
 import type { ShuteFishingResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
 import {
-  FISHING_DIFFICULTIES, FISH_TIER_FEEL, SHUTE_FISHING, fishTreasure, fishingDifficulty, gaugePosition, judgeCatch,
-  type FishTier, type FishingCatch, type FishingDifficultyId, type FishingJudgment, type ShuteFishingStatus,
+  FISHING_DIFFICULTIES, FISH_TIER_FEEL, SHUTE_FISHING, fishTreasure, fishingDifficulty, gaugePosition, reelFishing,
+  type FishTier, type FishingCatch, type FishingDifficultyId, type FishingJudgment, type FishingReel, type ShuteFishingStatus,
 } from "../core/shuteFishing";
 import type { ChestCardCurrency } from "../core/chestForge";
 import { motionPolicy } from "../core/settings";
@@ -31,7 +31,10 @@ import { BACKGROUND } from "./backgroundAssets";
 import { addEventPopupBackdrop } from "./eventBackdrop";
 import { addCurrencyChip } from "./CurrencyChip";
 import { pressIn, pressOut } from "./pressFeedback";
-import { SHUTE_TONE, chamferPoints, drawBulbOutline, drawSignalRings, drawStud, paintShuteGauge, shuteGaugeTrack } from "./shuteFishingStyle";
+import { SHUTE_TONE, chamferPoints, drawBulbOutline, drawSignalRings, drawStud, paintShuteGaugeBase, paintShuteNeedle, shuteGaugeTrack, shuteNeedleX } from "./shuteFishingStyle";
+import { holdLiveOps } from "../managers/liveOps";
+import { GameApiError } from "../api/contracts";
+import { pressMomentMs, SHUTE_PRESS_LAG_MS } from "../core/pressMoment";
 import { shrinkTextToWidth } from "./textFit";
 import { textStyle } from "./theme";
 
@@ -276,11 +279,15 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
   let status: ShuteFishingStatus = await gameApi.getShuteFishing();
   if (!scene.scene.isActive()) return;
   let busy = false, alive = true;
+  /** 아직 서버가 확정하지 않은 캐치 수 — 판정은 화면이 먼저 하고 서버는 뒤에서 같은 규칙으로 확정한다. */
+  let inflight = 0;
+  // 판이 열려 있는 동안 주기 조회를 쉰다 — 같은 계정의 조회가 캐치 확정 요청 앞에 끼어들면 그만큼 확정이 밀린다.
+  const releaseLiveOps = holdLiveOps();
   const pending = new Map<string, string>();
   const motion = (): number => motionPolicy(session.settings).nonEssentialDistanceFactor;
   popups.open({ width: FISH.width, height: FISH.height, title: t("event.shuteFishing.title"), dim: true,
-    closeOnBackdrop: true, canClose: () => !busy,
-    onClose: () => { alive = false; releaseBgm(); onChanged(); },
+    closeOnBackdrop: true, canClose: () => !busy && inflight === 0,
+    onClose: () => { alive = false; releaseLiveOps(); releaseBgm(); onChanged(); },
   }, (body) => {
     const shape = popupArtShape(FISH.width, FISH.height);
     const mask = popupBodyShapeMask(scene, body, shape);
@@ -322,10 +329,14 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
     const catchText = scene.add.text(FISH.play.fishX, FISH.play.notesY + 48, "", textStyle({ role: "emphasis", size: 24, color: INK })).setOrigin(0.5).setStroke(OUTLINE, 5);
     const judgeText = scene.add.text(0, FISH.play.judgeY, "", textStyle({ role: "display", size: 64, color: INK })).setOrigin(0.5).setStroke("#22222a", 10);
     const comboText = scene.add.text(0, FISH.play.comboY, "", textStyle({ role: "display", size: 32, color: "#22222a" })).setOrigin(0.5).setStroke(OUTLINE, 6).setAlpha(0);
+    // 판과 바늘을 따로 둔다 — 판은 칸·번쩍임이 바뀔 때만 다시 그리고, 바늘은 한 번 그려 둔 채 x만 옮긴다.
     const gauge = scene.add.graphics().setPosition(0, FISH.play.gaugeY);
+    const needle = scene.add.graphics().setPosition(0, FISH.play.gaugeY);
+    paintShuteNeedle(needle, FISH.play.gaugeHeight);
     const fx = scene.add.container(0, 0);
     const tap = scene.add.container(0, FISH.play.tapY);
     playPage.add([lives, collectedLabel, collectedRow, setlistRow, playStage, fishHolder, notes, catchText, gauge, judgeText, comboText, tap, fx]);
+    playPage.addAt(needle, playPage.getIndex(gauge) + 1);
     const note = scene.add.text(0, FISH.height / 2 - 70, "", textStyle({ role: "body", size: 21, color: INK_SOFT, wrap: 760, align: "center" })).setOrigin(0.5).setStroke(OUTLINE, 4);
     body.add(note);
 
@@ -354,7 +365,9 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
       flowTapBulbs = () => { lit = lit >= 0.5 ? 0 : 1; paintBulbs(); };
       tap.add([g, face]);
       const hit = addClippedHit(scene, tap, 0, 7, width + 120, height + 160, anywhere(scene), { useHandCursor: true });
-      hit.on("pointerdown", () => { face.setY(10); flowTapBulbs(); void press(); });
+      // 판정 시각은 핸들러가 깨어난 때가 아니라 손가락이 닿은 때(DOM 사건의 timeStamp)다 — 프레임이 바쁘면 핸들러가 늦게 돌아
+      // 바늘이 누른 자리를 지나쳐 멈췄다.
+      hit.on("pointerdown", (pointer: Phaser.Input.Pointer) => { const at = pressMomentMs(pointer.event); face.setY(10); flowTapBulbs(); press(at); });
       hit.on("pointerup", () => face.setY(0));
       hit.on("pointerout", () => face.setY(0));
     }
@@ -502,12 +515,18 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
       if (fishingTrack) holdBgm(fishingTrack);
       playShute.setTempo(spec.sweepMs);
     };
+    let paintedZone: FishingCatch | undefined | null = null, paintedFlash = -1;
     const tick = (): void => {
       if (!alive || !playPage.visible) return;
       flash = Math.max(0, flash - 0.06);
       const now = frozenAt ?? performance.now();
       const position = current ? gaugePosition(current.spec.sweepMs, now - current.startedAt) : 0;
-      paintShuteGauge(gauge, { width: FISH.play.gaugeWidth, height: FISH.play.gaugeHeight, zone: current?.spec, position, flash });
+      if (paintedZone !== current?.spec || paintedFlash !== flash) {
+        paintedZone = current?.spec; paintedFlash = flash;
+        gauge.clear();
+        paintShuteGaugeBase(gauge, { width: FISH.play.gaugeWidth, height: FISH.play.gaugeHeight, zone: current?.spec, flash });
+      }
+      needle.x = shuteNeedleX(FISH.play.gaugeWidth, FISH.play.gaugeHeight, position);
     };
     scene.events.on(Phaser.Scenes.Events.UPDATE, tick);
     body.once(Phaser.GameObjects.Events.DESTROY, () => scene.events.off(Phaser.Scenes.Events.UPDATE, tick));
@@ -576,6 +595,8 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
     async function enterRun(id: FishingDifficultyId): Promise<void> {
       if (busy || !fishingDifficulty(id)) return;
       busy = true; refresh();
+      await confirmed;
+      confirmedTotal = undefined;
       const key = `enter-${id}`;
       if (!pending.has(key)) pending.set(key, crypto.randomUUID());
       const result = await gameApi.enterShuteFishing({ requestId: pending.get(key)!, difficulty: id }).catch(fail);
@@ -624,38 +645,94 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
         });
         await waitFx(scene, landedFish.length * 80 + 760);
       } else await waitFx(scene, 1000);
+      // 받은 몫은 서버가 확정한 값으로 알린다(지갑 상한에서 깎였을 수 있다). 마지막 캐치의 확정을 여기서 기다린다.
+      await confirmed;
       if (!alive) return;
-      const items = currencyRecordToRewardItems(total);
+      const items = currencyRecordToRewardItems(confirmedTotal ?? total);
       if (items.length) await new Promise<void>((resolve) => openRewardPopup(scene, popups, { title: t("shuteFishing.reward"), titleSize: 36, dimAlpha: 0.66, items, onConfirm: resolve }));
       if (lineup.active) lineup.destroy();
       comboText.setAlpha(0);
     }
 
-    async function press(): Promise<void> {
-      if (busy || !current || frozenAt !== undefined) return;
-      const pressedAt = performance.now();
-      const elapsedMs = Math.round(pressedAt - current.startedAt);
-      frozenAt = pressedAt;
-      busy = true;
+    /**
+     * 서버 확정 줄 — 캐치는 화면이 같은 규칙(`reelFishing`)으로 곧바로 판정하고 다음 캐치를 건다. 서버는 바늘이 출발한 뒤
+     * 누르기까지의 시간만 받아 같은 삼각파로 다시 판정하므로 답이 갈릴 일이 없고, 답을 기다리는 동안 게임이 멈추지 않는다
+     * (예전에는 캐치마다 서버 왕복만큼 바늘이 서 있어 리듬이 끊겼다). 요청은 누른 순서대로 하나씩 보낸다.
+     */
+    let confirmed: Promise<void> = Promise.resolve();
+    let generation = 0;
+    let confirmedTotal: Partial<Record<ChestCardCurrency, number>> | undefined;
+    const sendReel = async (requestId: string, elapsedMs: number): Promise<ShuteFishingResponse> => {
+      for (let attempt = 0; ; attempt += 1) {
+        try { return await gameApi.reelShuteFishing({ requestId, elapsedMs }); } catch (error) {
+          // 규칙이 거절한 것은 다시 보내도 같다. 통신 실패만 같은 처리 ID로 다시 보낸다(서버가 영수증을 돌려준다).
+          if (error instanceof GameApiError || attempt >= 2 || !alive) throw error;
+          await new Promise((resolve) => globalThis.setTimeout(resolve, 500 * (attempt + 1)));
+        }
+      }
+    };
+    /** 화면과 서버가 갈렸거나 확정에 실패했다 — 서버의 판을 다시 읽어 그 자리부터 잇는다. */
+    const resync = async (error?: unknown): Promise<void> => {
+      generation += 1;
+      if (error) fail(error);
+      current = undefined; frozenAt = undefined;
+      const fresh = await gameApi.getShuteFishing().catch(() => undefined);
+      if (!alive || !fresh) return;
+      status = fresh;
+      publish();
+      busy = false;
+      if (status.run) { void paintRun(); armCatch(); } else refresh();
+    };
+    const confirmReel = (elapsedMs: number, expected: FishingReel): void => {
+      const gen = generation;
+      const requestId = crypto.randomUUID();
+      inflight += 1;
+      confirmed = confirmed.then(async () => {
+        if (gen !== generation || !alive) return;
+        let result: ShuteFishingResponse;
+        try { result = await sendReel(requestId, elapsedMs); } catch (error) { if (alive) await resync(error); return; }
+        const reel = result.reel;
+        if (!reel || reel.judgment !== expected.judgment || reel.landed !== expected.landed || reel.finished !== expected.finished) {
+          logError("shuteFishing.desync", "슈테의 리듬 낚시 화면 판정과 서버 판정이 다름", new Error(`${expected.judgment}/${reel?.judgment ?? "none"}`));
+          if (alive) await resync();
+          return;
+        }
+        if (reel.landed) {
+          publish();
+          if (alive && gen === generation) paintCollected(reel.total ?? result.status.run?.collected ?? {}, reel.granted?.currency as ChestCardCurrency | undefined);
+        }
+        if (reel.finished) confirmedTotal = reel.total ?? {};
+      }).catch((error) => logError("shuteFishing.confirm", "슈테의 리듬 낚시 확정 처리 실패", error)).finally(() => { inflight -= 1; });
+    };
+
+    function press(pressedAt: number): void {
+      if (busy || !current || frozenAt !== undefined || !status.run) return;
+      // 보이는 바늘에 맞춰 누른 시각 — 화면에 닿기까지의 어긋남을 덜어 낸다(`SHUTE_PRESS_LAG_MS`).
+      const elapsedMs = Math.max(0, Math.round(pressedAt - SHUTE_PRESS_LAG_MS - current.startedAt));
       const spec = current.spec;
-      // 화면이 먼저 같은 규칙으로 판정해 보여 준다 — 답을 기다리는 동안 손이 비어 보이지 않게. 확정은 서버의 답이다.
-      const guess = judgeCatch(spec, elapsedMs).judgment;
-      showJudge(guess);
-      if (guess !== "miss") { flash = 1; audioManager?.playUi("ui.tap"); if (guess === "perfect") perfectRing(spec); } else audioManager?.playUi("ui.deny");
-      const result: ShuteFishingResponse | undefined = await gameApi.reelShuteFishing({ requestId: crypto.randomUUID(), elapsedMs }).catch(fail);
-      if (!result?.reel) { busy = false; if (alive && current) { current.startedAt = performance.now(); frozenAt = undefined; } return; }
-      const reel = result.reel;
-      status = result.status;
-      if (!alive) { busy = false; return; }
-      if (reel.judgment !== guess) showJudge(reel.judgment);
+      let stepped: ReturnType<typeof reelFishing>;
+      try { stepped = reelFishing(status.run, elapsedMs); } catch (error) { void resync(error); return; }
+      // 바늘은 판정한 바로 그 자리에 선다.
+      frozenAt = current.startedAt + elapsedMs;
+      busy = true;
+      const reel = stepped.reel;
+      const treasure = reel.landed ? fishTreasure(reel.landed) : undefined;
+      const collected = treasure ? { ...status.run.collected, [treasure.currency]: (status.run.collected[treasure.currency] ?? 0) + treasure.amount } : status.run.collected;
+      status = { ...status, run: reel.finished ? null : { ...stepped.run, collected } };
+      confirmReel(elapsedMs, reel);
+      void playReel(reel, spec, collected, generation);
+    }
+
+    async function playReel(reel: FishingReel, spec: FishingCatch, collected: Partial<Record<ChestCardCurrency, number>>, gen: number): Promise<void> {
+      showJudge(reel.judgment);
+      if (reel.judgment !== "miss") { flash = 1; audioManager?.playUi("ui.tap"); if (reel.judgment === "perfect") perfectRing(spec); } else audioManager?.playUi("ui.deny");
       combo = reel.judgment === "miss" ? 0 : combo + 1;
       showCombo();
       if (reel.judgment === "miss") {
         playShute.flinch();
         paintLives(reel.misses);
-        if (status.run) await waitFx(scene, 420);
+        if (!reel.finished) await waitFx(scene, 420);
       } else if (reel.landed) {
-        publish();
         landedFish.push(reel.landed);
         const treasure = fishTreasure(reel.landed);
         burstSparkles(scene, playPage, FISH.play.fishX, FISH.play.fishY, { count: 10, radius: 110, size: 15, colors: [0xffffff, SHUTE_TONE.yellow, SHUTE_TONE.cyan], seed: reel.fishIndex + 7, rise: 24 });
@@ -664,16 +741,17 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
         paintFish(reel.landed, reel.caught);
         judgeText.setText(t("shuteFishing.landed")).setColor(JUDGE_COLOR.perfect).setAlpha(1);
         await flyCard(reel.landed);
-        if (alive) paintCollected(reel.total ?? status.run?.collected ?? {}, reel.granted?.currency as ChestCardCurrency | undefined);
+        if (alive && gen === generation) paintCollected(collected, treasure?.currency);
         await waitFx(scene, motion() > 0 ? 120 : 650);
       } else {
         const run = status.run;
         if (run) paintFish(run.fish[run.index], run.caught);
         await waitFx(scene, 260);
       }
+      // 확정이 갈려 서버의 판으로 다시 섰다면 이 연출의 뒤처리는 버린다.
+      if (!alive || gen !== generation) return;
       busy = false;
-      if (reel.finished) { await finish(reel.total ?? {}, reel.cleared); if (alive) refresh(); return; }
-      if (!alive) return;
+      if (reel.finished) { await finish(collected, reel.cleared); if (alive) refresh(); return; }
       void paintRun();
       armCatch();
     }

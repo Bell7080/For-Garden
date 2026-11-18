@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { notificationManager } from "../managers/NotificationManager";
+import { liveOpsHeld } from "../managers/liveOps";
 import { NOTIFICATION_DOT_STYLE, rotatedNotificationAnchor, type NotificationAnchorOptions } from "./notificationDotStyle";
 export { NOTIFICATION_DOT_STYLE } from "./notificationDotStyle";
 
@@ -72,7 +73,7 @@ const pageVisible = (): boolean => typeof document === "undefined" || document.v
 function watchNotificationClock(scene: Phaser.Scene): void {
   if (notificationClocks.has(scene)) return;
   notificationClocks.add(scene);
-  const refresh = (): void => { if (scene.sys.isActive() && pageVisible()) void notificationManager.refresh().catch(() => undefined); };
+  const refresh = (): void => { if (scene.sys.isActive() && pageVisible() && !liveOpsHeld()) void notificationManager.refresh().catch(() => undefined); };
   const clock = scene.time.addEvent({ delay: NOTIFICATION_FULL_REFRESH_MS, loop: true, callback: refresh });
   scene.game.events.on(Phaser.Core.Events.FOCUS, refresh);
   scene.events.on(Phaser.Scenes.Events.WAKE, refresh);

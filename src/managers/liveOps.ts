@@ -18,6 +18,9 @@ export function holdLiveOps(): () => void {
   return () => { if (released) return; released = true; holds = Math.max(0, holds - 1); };
 }
 
+/** 지금 주기 조회를 쉬는 중인가 — 화면마다 도는 전체 조회(`NotificationDot`)도 같은 문을 지난다. */
+export function liveOpsHeld(): boolean { return holds > 0; }
+
 const visible = (): boolean => typeof document === "undefined" || document.visibilityState !== "hidden";
 
 function poll(): void {

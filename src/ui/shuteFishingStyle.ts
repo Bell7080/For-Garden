@@ -89,14 +89,23 @@ export interface ShuteGaugeState {
 
 /**
  * 슈테 게이지 — 검은 패드 몸통에 같은 깎임의 시안 네온 테, 시안 신호 칸(가운데 PERFECT 띠는 더 밝다), 노란 삼각 바늘.
- * 바늘은 매 프레임 다시 그린다. 칸 좌표는 `shuteGaugeTrack`의 안쪽 칸 기준이다.
+ * 칸 좌표는 `shuteGaugeTrack`의 안쪽 칸 기준이다. 판(`paintShuteGaugeBase`)과 바늘(`paintShuteNeedle`)은 따로 그릴 수 있다 —
+ * 매 프레임 움직이는 것은 바늘뿐이라, 리듬 낚시는 판을 칸·번쩍임이 바뀔 때만 다시 그리고 바늘은 제자리에 한 번 그려 둔 채
+ * x만 옮긴다(Graphics를 매 프레임 지우고 다시 그리면 그때마다 도형을 다시 쪼개 모바일에서 프레임이 흔들렸다).
  */
 export function paintShuteGauge(g: Phaser.GameObjects.Graphics, state: ShuteGaugeState): void {
+  g.clear();
+  paintShuteGaugeBase(g, state);
+  const track = shuteGaugeTrack(state.width, state.height);
+  drawShuteNeedle(g, track.left + Math.max(0, Math.min(1, state.position)) * track.width, state.height, state.compact);
+}
+
+/** 바늘을 뺀 게이지 판. 지우지 않으므로 부르는 쪽이 먼저 `clear()`한다. */
+export function paintShuteGaugeBase(g: Phaser.GameObjects.Graphics, state: Omit<ShuteGaugeState, "position">): void {
   const { width, height, zone, flash, compact } = state;
   const left = -width / 2, top = -height / 2, cut = height * 0.32;
   const track = shuteGaugeTrack(width, height);
   const inset = compact ? 5 : 9;
-  g.clear();
   if (!compact) g.fillStyle(0x000000, 0.28).fillPoints(chamferPoints(left + 6, top + 12, width, height, cut), true);
   g.fillStyle(SHUTE_TONE.ink, 1).fillPoints(chamferPoints(left - 5, top - 5, width + 10, height + 10, cut + 3), true);
   g.fillStyle(SHUTE_TONE.track, 1).fillRect(track.left, top + inset, track.width, height - inset * 2);
@@ -115,7 +124,22 @@ export function paintShuteGauge(g: Phaser.GameObjects.Graphics, state: ShuteGaug
     g.lineStyle(compact ? 2 : 3, 0xffffff, 0.95).strokeRect(zx, zTop, zw, zHeight);
     if (flash > 0) g.lineStyle(compact ? 3 : 6, SHUTE_TONE.cyan, flash * 0.8).strokeRect(zx - 6, zTop - 6, zw + 12, zHeight + 12);
   }
-  const nx = track.left + Math.max(0, Math.min(1, state.position)) * track.width;
+}
+
+/** 노란 삼각 바늘을 x = 0 자리에 그린다 — 화면은 이 Graphics의 x만 옮긴다(`shuteNeedleX`). */
+export function paintShuteNeedle(g: Phaser.GameObjects.Graphics, height: number, compact?: boolean): void {
+  g.clear();
+  drawShuteNeedle(g, 0, height, compact);
+}
+
+/** 바늘 자리(0~1)를 게이지 안쪽 칸의 x로. */
+export function shuteNeedleX(width: number, height: number, position: number): number {
+  const track = shuteGaugeTrack(width, height);
+  return track.left + Math.max(0, Math.min(1, position)) * track.width;
+}
+
+function drawShuteNeedle(g: Phaser.GameObjects.Graphics, nx: number, height: number, compact?: boolean): void {
+  const top = -height / 2;
   const tip = compact ? 9 : 16;
   g.fillStyle(SHUTE_TONE.ink, 1).fillRect(nx - 5, top - 2, 10, height + 4);
   g.fillStyle(SHUTE_TONE.yellow, 1).fillRect(nx - 2.5, top + 1, 5, height - 2);

@@ -5,13 +5,15 @@ import { gameApi } from "../api/FakeServer";
 import type { DelophyHuntResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
 import {
-  DELOPHY_HUNT, HUNT_DIFFICULTIES, huntBoardColumns, huntDifficulty, huntHeat, huntTreasure,
-  type DelophyHuntStatus, type HuntDifficulty, type HuntDifficultyId, type HuntMove, type HuntTier, type HuntTreasure,
+  DELOPHY_HUNT, HUNT_DIFFICULTIES, applyHuntMoves, flipHuntSlot, huntBoardColumns, huntDifficulty, huntHeat, huntTreasure,
+  type DelophyHuntStatus, type HuntDifficulty, type HuntDifficultyId, type HuntFlip, type HuntMove, type HuntRun, type HuntTier, type HuntTreasure,
 } from "../core/delophyHunt";
 import type { ChestCardCurrency } from "../core/chestForge";
 import { motionPolicy } from "../core/settings";
 import { audioManager } from "../managers/AudioManager";
 import { logError } from "../managers/ErrorReporter";
+import { holdLiveOps } from "../managers/liveOps";
+import { GameApiError } from "../api/contracts";
 import { managerEvents } from "../managers/ManagerEvents";
 import { session } from "../state/session";
 import { burstSparkles, chestFxMotion, waitFx } from "./chestForgeFx";
@@ -33,7 +35,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { shrinkTextToWidth } from "./textFit";
 import type { TextKey } from "../i18n";
 import { COLOR, textStyle } from "./theme";
-import { DELO, DELOPHY_COIN_ICON, diamond, paintBack } from "./delophyCardArt";
+import { DELO, DELOPHY_COIN_ICON, bakedCardImage, diamond, paintBack } from "./delophyCardArt";
 
 /**
  * 델로피의 보물 찾기 창의 자리. 두 쪽이고 가운데에는 늘 카드를 돌리는 델로피가 선다(`DelophyDealer`).
@@ -107,8 +109,22 @@ function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, 
  */
 function paintFace(scene: Phaser.Scene, holder: Phaser.GameObjects.Container, treasure: HuntTreasure, width: number, height: number, found: boolean): void {
   holder.removeAll(true);
-  const tone = TIER_TONE[treasure.tier];
-  const g = scene.add.graphics();
+  const size = `${Math.round(width)}x${Math.round(height)}`;
+  // 판은 등급·맞춤·크기마다 한 번만 굽는다(`bakedCardImage` — 매 프레임 도형을 다시 쪼개지 않는다).
+  holder.add(bakedCardImage(scene, `delopi-card-face-${treasure.tier}-${found ? "found" : "open"}-${size}`, width, height, (g) => drawFacePlate(g, treasure.tier, width, height, found)));
+  const icon = Math.min(130, width * 0.62);
+  addFramedIcon(scene, holder, 0, -6, icon, CURRENCY_ICON_BY_WALLET[treasure.currency], { amount: formatCurrency(treasure.amount), amountRatio: 0.3 });
+  if (treasure.tier === "jackpot" || found) {
+    const color = treasure.tier === "jackpot" ? 0xffe38a : 0xffffff;
+    holder.add(bakedCardImage(scene, `delopi-card-sparkle-${color.toString(16)}-${size}`, width, height, (g) => {
+      const left = -width / 2, top = -height / 2;
+      for (const [x, y, spark] of [[left + 12, top + 100, 15], [width / 2 - 12, -30, 12], [width / 2 - 22, height / 2 - 70, 17]] as const) drawSparkle(g, x, y, spark, color, 1);
+    }));
+  }
+}
+
+function drawFacePlate(g: Phaser.GameObjects.Graphics, tier: HuntTreasure["tier"], width: number, height: number, found: boolean): void {
+  const tone = TIER_TONE[tier];
   const left = -width / 2, top = -height / 2, radius = Math.max(8, width * 0.06), rim = Math.max(8, width * 0.055);
   g.fillStyle(DELO.shade, 0.28).fillRoundedRect(left + 4, top + 10, width, height, radius);
   g.fillStyle(found ? DELO.gold : DELO.ink, 1).fillRoundedRect(left - 3, top - 3, width + 6, height + 6, radius + 3);
@@ -122,21 +138,11 @@ function paintFace(scene: Phaser.Scene, holder: Phaser.GameObjects.Container, tr
   // 가운데를 받치는 큰 마름모 — 액자가 이 위에 선다.
   g.fillStyle(0xffffff, 0.55).fillPoints(diamond(0, -6, iw * 0.46, ih * 0.34), true);
   // 모서리 표시 — 값진 보물일수록 마름모가 많다(어렵게 섞이는 정도를 카드가 미리 알려 준다).
-  const heat = huntHeat(treasure.tier);
+  const heat = huntHeat(tier);
   for (let index = 0; index < heat; index += 1) {
     const px = ix + 14 + index * 16, py = iy + 26, half = 6;
     g.fillStyle(DELO.ink, 1).fillPoints(diamond(px, py, half + 1, half * 1.4 + 1), true);
-    g.fillStyle(treasure.tier === "jackpot" ? DELO.gold : tone.face, 1).fillPoints(diamond(px, py, half - 1, half * 1.4 - 1), true);
-  }
-  holder.add(g);
-  const icon = Math.min(130, width * 0.62);
-  addFramedIcon(scene, holder, 0, -6, icon, CURRENCY_ICON_BY_WALLET[treasure.currency], { amount: formatCurrency(treasure.amount), amountRatio: 0.3 });
-  if (treasure.tier === "jackpot" || found) {
-    const sparkle = scene.add.graphics();
-    for (const [x, y, size] of [[left + 12, top + 100, 15], [width / 2 - 12, -30, 12], [width / 2 - 22, height / 2 - 70, 17]] as const) {
-      drawSparkle(sparkle, x, y, size, treasure.tier === "jackpot" ? 0xffe38a : 0xffffff, 1);
-    }
-    holder.add(sparkle);
+    g.fillStyle(tier === "jackpot" ? DELO.gold : tone.face, 1).fillPoints(diamond(px, py, half - 1, half * 1.4 - 1), true);
   }
 }
 
@@ -346,11 +352,15 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
   let status: DelophyHuntStatus = await gameApi.getDelophyHunt();
   if (!scene.scene.isActive()) return;
   let busy = false, alive = true;
+  /** 아직 서버가 확정하지 않은 뒤집기 수 — 뒤집기는 화면이 먼저 하고 서버는 뒤에서 같은 규칙으로 확정한다. */
+  let inflight = 0;
+  // 판이 열려 있는 동안 주기 조회를 쉰다 — 같은 계정의 조회가 뒤집기 확정 요청 앞에 끼어들면 그만큼 확정이 밀린다.
+  const releaseLiveOps = holdLiveOps();
   const pending = new Map<string, string>();
   const motion = (): number => motionPolicy(session.settings).nonEssentialDistanceFactor;
   popups.open({ width: HUNT.width, height: HUNT.height, title: t("event.delophyHunt.title"), dim: true,
-    closeOnBackdrop: true, canClose: () => !busy,
-    onClose: () => { alive = false; onChanged(); },
+    closeOnBackdrop: true, canClose: () => !busy && inflight === 0,
+    onClose: () => { alive = false; releaseLiveOps(); onChanged(); },
   }, (body) => {
     const shape = popupArtShape(HUNT.width, HUNT.height);
     const mask = popupBodyShapeMask(scene, body, shape);
@@ -691,6 +701,8 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
       const picked = huntDifficulty(id);
       if (!picked) return;
       busy = true; refresh();
+      await confirmed;
+      localRun = null; confirmedTotal = undefined;
       const result = await request(`enter-${id}`, (requestId) => gameApi.enterDelophyHunt({ requestId, difficulty: id }));
       if (!result?.show) { busy = false; if (alive) refresh(); return; }
       status = result.status;
@@ -720,6 +732,11 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
       await waitFx(scene, 180);
       dealer.setShuffling(false);
       phaseText.setText(t("delophyHunt.phase.find"));
+      // 섞는 길을 다 본 판은 정답 배치를 화면도 안다 — 뒤집기를 서버 답 없이 곧바로 보여 준다(`flipHuntSlot`).
+      if (status.run) {
+        const layout = applyHuntMoves(result.show.layout, result.show.moves);
+        localRun = { difficulty: id, pairs: [...status.run.pairs], layout, found: [], misses: 0, first: null, collected: {} };
+      }
       interactive = true;
       busy = false;
       refresh();
@@ -731,15 +748,121 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
       phaseText.setText(t(cleared ? "delophyHunt.cleared" : "delophyHunt.out"));
       if (cleared) cheer.cheer(3); else cheer.flinch();
       await Promise.all([collectFound(cleared), waitFx(scene, 800)]);
+      // 받은 몫은 서버가 확정한 값으로 알린다(지갑 상한에서 깎였을 수 있다). 마지막 뒤집기의 확정을 여기서 기다린다.
+      await confirmed;
       if (!alive) return;
-      const items = currencyRecordToRewardItems(total);
+      const items = currencyRecordToRewardItems(confirmedTotal ?? total);
       if (items.length) await new Promise<void>((resolve) => openRewardPopup(scene, popups, { title: t("delophyHunt.reward"), titleSize: 36, dimAlpha: 0.66, items, onConfirm: resolve }));
     }
+
+    /**
+     * 서버 확정 줄 — 섞는 길을 다 본 판은 정답 배치를 화면도 알므로 뒤집기를 곧바로 보여 주고(`localRun`), 서버는 뒤에서
+     * 같은 규칙으로 확정한다. 예전에는 카드마다 서버 왕복을 기다린 뒤에야 뒤집혀 손이 닿고 한참 뒤에 반응했다.
+     * 닫았다 다시 연 판은 정답 자리를 모르므로 예전처럼 답을 기다린다(`localRun`이 없다).
+     */
+    let localRun: HuntRun | null = null;
+    let confirmed: Promise<void> = Promise.resolve();
+    let generation = 0;
+    let confirmedTotal: HuntRun["collected"] | undefined;
+    const sendFlip = async (requestId: string, slot: number): Promise<DelophyHuntResponse> => {
+      for (let attempt = 0; ; attempt += 1) {
+        try { return await gameApi.flipDelophyCard({ requestId, slot }); } catch (error) {
+          // 규칙이 거절한 것은 다시 보내도 같다. 통신 실패만 같은 처리 ID로 다시 보낸다(서버가 영수증을 돌려준다).
+          if (error instanceof GameApiError || attempt >= 2 || !alive) throw error;
+          await new Promise((resolve) => globalThis.setTimeout(resolve, 500 * (attempt + 1)));
+        }
+      }
+    };
+    /** 화면과 서버가 갈렸거나 확정에 실패했다 — 서버의 판을 다시 읽어 답을 기다리는 방식으로 잇는다. */
+    const resync = async (error?: unknown): Promise<void> => {
+      generation += 1;
+      localRun = null;
+      interactive = false;
+      if (error) { logError("delophyHunt.request", "델로피의 보물 찾기 요청 실패", error); if (alive) note.setText(t("delophyHunt.error")); }
+      const fresh = await gameApi.getDelophyHunt().catch(() => undefined);
+      if (!alive || !fresh) return;
+      status = fresh;
+      publish();
+      busy = false;
+      if (status.run) restoreBoard(); else { boardLayer.removeAll(true); views = []; refresh(); }
+    };
+    const confirmFlip = (slot: number, expected: HuntFlip): void => {
+      const gen = generation;
+      const requestId = crypto.randomUUID();
+      inflight += 1;
+      confirmed = confirmed.then(async () => {
+        if (gen !== generation || !alive) return;
+        let result: DelophyHuntResponse;
+        try { result = await sendFlip(requestId, slot); } catch (error) { if (alive) await resync(error); return; }
+        const flip = result.flip;
+        if (!flip || flip.id !== expected.id || flip.step !== expected.step || flip.finished !== expected.finished) {
+          logError("delophyHunt.desync", "델로피의 보물 찾기 화면 판정과 서버 판정이 다름", new Error(`${expected.step}/${flip?.step ?? "none"}`));
+          if (alive) await resync();
+          return;
+        }
+        status = { ...result.status };
+        if (flip.step === "match") {
+          publish();
+          if (alive && gen === generation && playPage.visible) paintCollected(flip.total ?? result.status.run?.collected ?? {}, flip.granted?.currency as ChestCardCurrency | undefined);
+        }
+        if (flip.finished) confirmedTotal = flip.total ?? {};
+      }).catch((error) => logError("delophyHunt.confirm", "델로피의 보물 찾기 확정 처리 실패", error)).finally(() => { inflight -= 1; });
+    };
 
     async function flipSlot(slot: number): Promise<void> {
       if (busy || !interactive || !difficulty) return;
       const view = viewAt(slot);
       if (!view || view.up) return;
+      if (!localRun) { await flipSlotAwaitingServer(slot, view); return; }
+      let stepped: ReturnType<typeof flipHuntSlot>;
+      try { stepped = flipHuntSlot(localRun, slot); } catch { return; }
+      const before = localRun;
+      const flip = stepped.flip;
+      const treasure = huntTreasure(flip.id);
+      const collected = flip.step === "match" && treasure
+        ? { ...before.collected, [treasure.currency]: (before.collected[treasure.currency] ?? 0) + treasure.amount }
+        : before.collected;
+      localRun = { ...stepped.run, collected };
+      busy = true;
+      confirmFlip(slot, flip);
+      const gen = generation;
+      if (treasure && flip.id !== view.treasure.id) view.treasure = treasure;
+      await turn(view, true);
+      if (!alive || gen !== generation) return;
+      if (flip.step === "first") { busy = false; return; }
+      await playPair(view, flip, collected, gen);
+    }
+
+    /** 두 번째 카드를 뒤집은 뒤 — 맞으면 반짝이며 남고, 틀리면 두 장이 다시 엎인다. */
+    async function playPair(view: HuntCardView, flip: HuntFlip, collected: HuntRun["collected"], gen: number): Promise<void> {
+      if (!difficulty) return;
+      const other = viewAt(flip.firstSlot ?? -1);
+      const { width, height } = huntCardSize(difficulty);
+      if (flip.step === "match") {
+        if (other) { other.found = true; paintFace(scene, other.holder, other.treasure, width, height, true); }
+        view.found = true; paintFace(scene, view.holder, view.treasure, width, height, true);
+        for (const matched of [view, other]) if (matched) burstSparkles(scene, boardLayer, matched.holder.x, matched.holder.y, { count: 8, radius: 90, size: 14, colors: [0xffffff, 0xffe38a, 0xe9d4ff], seed: matched.slot + 5, rise: 20 });
+        cheer.cheer(view.treasure.tier === "jackpot" ? 3 : 1);
+        paintCollected(collected, view.treasure.currency);
+        await waitFx(scene, 240);
+      } else {
+        cheer.flinch();
+        phaseText.setText(t("delophyHunt.miss"));
+        paintLives(flip.misses);
+        await waitFx(scene, 620);
+        if (alive && gen === generation) { await Promise.all([turn(view, false), other ? turn(other, false) : Promise.resolve()]); phaseText.setText(t("delophyHunt.phase.find")); }
+      }
+      if (!alive || gen !== generation) return;
+      if (flip.finished) {
+        status = { ...status, run: null };
+        await finish(collected, flip.cleared); busy = false; if (alive) refresh(); return;
+      }
+      busy = false;
+    }
+
+    /** 닫았다 다시 연 판 — 정답 자리를 모르므로 서버의 답을 받은 뒤 뒤집는다. */
+    async function flipSlotAwaitingServer(slot: number, view: HuntCardView): Promise<void> {
+      if (!difficulty) return;
       busy = true;
       // 손이 닿는 순간 살짝 눌린다 — 접어 두고 답을 기다리면 그동안 접힌 채 멈춘 것처럼 보였다. 답이 오면 한 번에 뒤집는다.
       view.holder.setScale(0.94);
@@ -778,35 +901,40 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
       refresh();
     }
 
-    refresh();
-    // 닫았다 다시 연 판 — 섞는 길은 다시 보여 주지 않는다(한 번 본 것을 되돌려 보는 길을 막는다). 맞춘 카드와 틀린 횟수만 이어 선다.
-    const run = status.run;
-    if (run) {
-      const picked = huntDifficulty(run.difficulty);
-      if (picked) {
-        difficulty = picked;
-        dealer.setDifficulty(picked.id);
-        const layout = run.pairs.flatMap((id) => [id, id]);
-        buildBoard(layout, false);
-        // 정답 슬롯을 모르므로 맞춘 슬롯에 보물을 입히고, 나머지는 엎어 둔다.
-        run.found.forEach(({ slot, id }) => {
-          const view = views[slot];
-          const treasure = huntTreasure(id);
-          if (!view || !treasure) return;
-          view.treasure = treasure; view.slot = slot; view.up = true; view.found = true;
-          const { width, height } = huntCardSize(picked);
-          paintFace(scene, view.holder, treasure, width, height, true);
-        });
-        if (run.first) {
-          const view = views[run.first.slot];
-          const treasure = huntTreasure(run.first.id);
-          if (view && treasure) { view.treasure = treasure; view.up = true; paintFace(scene, view.holder, treasure, huntCardSize(picked).width, huntCardSize(picked).height, false); }
+    /** 서버의 판으로 판을 다시 세운다 — 섞는 길은 다시 보여 주지 않는다(한 번 본 것을 되돌려 보는 길을 막는다). 맞춘 카드와 틀린 횟수만 이어 선다. */
+    function restoreBoard(): void {
+      const run = status.run;
+      if (run) {
+        const picked = huntDifficulty(run.difficulty);
+        if (picked) {
+          difficulty = picked;
+          dealer.setDifficulty(picked.id);
+          const layout = run.pairs.flatMap((id) => [id, id]);
+          buildBoard(layout, false);
+          // 정답 슬롯을 모르므로 맞춘 슬롯에 보물을 입히고, 나머지는 엎어 둔다.
+          run.found.forEach(({ slot, id }) => {
+            const view = views[slot];
+            const treasure = huntTreasure(id);
+            if (!view || !treasure) return;
+            view.treasure = treasure; view.slot = slot; view.up = true; view.found = true;
+            const { width, height } = huntCardSize(picked);
+            paintFace(scene, view.holder, treasure, width, height, true);
+          });
+          if (run.first) {
+            const view = views[run.first.slot];
+            const treasure = huntTreasure(run.first.id);
+            if (view && treasure) { view.treasure = treasure; view.up = true; paintFace(scene, view.holder, treasure, huntCardSize(picked).width, huntCardSize(picked).height, false); }
+          }
+          paintLives(run.misses); paintCollected(run.collected);
+          phaseText.setText(t("delophyHunt.phase.find"));
+          interactive = true;
         }
-        paintLives(run.misses); paintCollected(run.collected);
-        phaseText.setText(t("delophyHunt.phase.find"));
-        interactive = true;
       }
     }
+
+    refresh();
+    // 닫았다 다시 연 판.
+    restoreBoard();
   });
 }
 

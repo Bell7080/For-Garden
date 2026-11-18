@@ -58,7 +58,10 @@ export function archaeologyRatingColor(group: "rawStone" | "rune" | "currency", 
  */
 export const STRATA_FOG_TONE: Readonly<Record<StrataZoneTone, { readonly color: number; readonly alpha: number }>> = {
   soil: { color: COLOR.archaeologySoil, alpha: 0 },
-  teal: { color: COLOR.raritySR, alpha: 0.44 },
-  gold: { color: COLOR.accent, alpha: 0.46 },
-  deep: { color: COLOR.raritySRAlt, alpha: 0.5 },
+  // 겹쳐 밝아지는 합성이라 흙빛(붉은 갈색) 위에 더해진다. 셋 모두 빨강을 품은 파스텔이던 때는
+  // 흙과 더해져 청록은 잿빛, 금빛은 흙과 같은 베이지, 보라는 분홍으로 번져 구역끼리 갈리지 않았다
+  // (응태 2026-11-18). 그래서 색상끼리 멀리 벌리고 흙이 이미 가진 빨강을 덜 품게 잡는다.
+  teal: { color: 0x2ac6ee, alpha: 0.46 },
+  gold: { color: 0xffb020, alpha: 0.44 },
+  deep: { color: 0x8a44ff, alpha: 0.52 },
 } as const;

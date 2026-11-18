@@ -346,7 +346,8 @@ export class ArchaeologyScene extends Phaser.Scene {
     setDebugStorefrontControls({ archaeology: { shop: { x: shopSlot.x, y: shopSlot.y } } });
     // **누른 자리에 붙이지 않는다** — 표 두 장이 든 큰 판이라 위로 붙이면 제목·횟수 줄을 덮는다.
     // 한동안 머무는 판은 화면 가운데에 서고 우하단 뒤로가기로 닫는다.
-    // 확률 글줄은 탭마다 제 표를 연다 — 합성 탭에서는 합성 확률, 나머지는 특성 확률이다.
+    // 확률 글줄은 그 표가 속한 탭에서만 선다 — 합성 탭은 합성 확률, 특성 연구 탭은 특성 확률이다.
+    // 지층 탐사에는 세우지 않는다(특성 확률은 탐사의 것이 아니고, 판·범례와 겹친다 — 응태 2026-11-18).
     // 연구소와 같은 자리·같은 청록 버튼(`RATES_SPOT.screen` — 곁 상점 칩 바로 아래)이다.
     const rates = RATES_SPOT.screen;
     this.traitOddsLink = addRatesButton(this, rates.x, rates.y, t("rune.trait.odds"), () => openRuneTraitOdds({ scene: this, popups: this.popups }));
@@ -500,7 +501,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.view.removeAll(true);
     this.chargeValueText = null; this.chargeNoteText = null; this.mapView = null;
     setDebugArchaeologyMap(undefined);
-    this.traitOddsLink?.setVisible(this.tab !== "synth");
+    this.traitOddsLink?.setVisible(this.tab === "research");
     this.synthOddsLink?.setVisible(this.tab === "synth");
     this.synthBagLink?.setVisible(this.tab === "synth");
     // 판을 파는 동안에는 판과 범례가 주인공이라 지도 안내를 걷는다.

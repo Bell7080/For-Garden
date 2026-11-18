@@ -118,7 +118,8 @@ export function composeStrataFog(fog: StrataFog, tones: Readonly<Record<StrataZo
       const a = (f + edge * 0.85) * tone.alpha * gain;
       if (a <= 0) continue;
       alpha += a;
-      const lift = edge * 0.55;
+      // 경계를 흰빛으로 너무 띄우면 모든 구역의 테두리가 같은 흰 띠가 되어 색이 갈리지 않는다.
+      const lift = edge * 0.3;
       const r = ((tone.color >> 16) & 255); const g = ((tone.color >> 8) & 255); const b = (tone.color & 255);
       red += (r + (255 - r) * lift) * a; green += (g + (255 - g) * lift) * a; blue += (b + (255 - b) * lift) * a;
     }

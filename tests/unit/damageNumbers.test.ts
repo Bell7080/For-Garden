@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   CRITICAL_COLOR, DAMAGE_FLAVOR_COLOR, DAMAGE_TIER_RATIOS, DAMAGE_TIER_SIZES, DEBUFF_TONE,
-  INCOMING_DAMAGE_TONE, MITIGATED_COLOR, attackDamagePopupRequest, damagePopupStyle, formatDamageAmount, risingAlpha,
+  INCOMING_DAMAGE_TONE, MITIGATED_COLOR, DAMAGE_TIER_STROKE, DEBUFF_PACE, POPUP_LANES, VOLLEY_MIN_GAP_MS, VOLLEY_MAX_SPAN_MS,
+  attackDamagePopupRequest, damagePopupStyle, formatDamageAmount, popupLaneOffset, popupLifeMs, volleyTickDelayMs,
 } from "../../src/ui/damageNumbers";
 import { COLOR } from "../../src/ui/theme";
 
@@ -23,18 +24,26 @@ describe("전투 수치 표시 규칙", () => {
     expect(request).not.toHaveProperty("bossScore");
   });
 
-  it("세기가 클수록 글자가 커지고 오래 남는다", () => {
+  it("세기가 클수록 글자가 크고 두껍고 오래 머문다", () => {
     const small = damagePopupStyle({ amount: 50, flavor: "damage", ...target });
     const big = damagePopupStyle({ amount: 3_000, flavor: "damage", ...target });
     expect(big.tier).toBeGreaterThan(small.tier);
     expect(big.size).toBeGreaterThan(small.size);
-    expect(big.holdMs + big.riseMs).toBeGreaterThan(small.holdMs + small.riseMs);
+    expect(big.strokeWidth).toBeGreaterThan(small.strokeWidth);
+    expect(big.holdMs).toBeGreaterThan(small.holdMs);
+    expect(popupLifeMs(big)).toBeGreaterThan(popupLifeMs(small));
     expect(big.punch).toBeGreaterThan(small.punch);
+    // 한 방은 잔타보다 확실히 오래 머물러야 "세게 맞았다"가 읽힌다.
+    const max = damagePopupStyle({ amount: 9_000, flavor: "damage", critical: true, ...target });
+    expect(max.holdMs).toBeGreaterThanOrEqual(small.holdMs * 2.5);
   });
 
   it("등급 표는 크기가 함께 커지도록 단조 증가한다", () => {
     for (let tier = 1; tier < DAMAGE_TIER_SIZES.length; tier += 1) {
       expect(DAMAGE_TIER_SIZES[tier]).toBeGreaterThan(DAMAGE_TIER_SIZES[tier - 1]);
+    }
+    for (let tier = 1; tier < DAMAGE_TIER_STROKE.length; tier += 1) {
+      expect(DAMAGE_TIER_STROKE[tier]).toBeGreaterThan(DAMAGE_TIER_STROKE[tier - 1]);
     }
     for (let step = 1; step < DAMAGE_TIER_RATIOS.length; step += 1) {
       expect(DAMAGE_TIER_RATIOS[step]).toBeGreaterThan(DAMAGE_TIER_RATIOS[step - 1]);
@@ -43,7 +52,7 @@ describe("전투 수치 표시 규칙", () => {
 
   it("가장 큰 한 방도 SD를 덮지 않을 만큼 작다", () => {
     // 화면에 여섯이 서 있고 수치는 그 위로 겹쳐 뜨므로, 읽히는 선에서 최대한 작게 잡는다.
-    expect(DAMAGE_TIER_SIZES[DAMAGE_TIER_SIZES.length - 1]).toBeLessThanOrEqual(56);
+    expect(DAMAGE_TIER_SIZES[DAMAGE_TIER_SIZES.length - 1]).toBeLessThanOrEqual(60);
   });
 
   it("등급은 절대 수치가 아니라 대상 최대 체력 대비 비율로 정해진다", () => {
@@ -115,13 +124,66 @@ describe("전투 수치 표시 규칙", () => {
     }
   });
 
-  it("수치는 캐릭터 위에서 가장 옅고 떠오르며 또렷해진다", () => {
-    const style = damagePopupStyle({ amount: 500, flavor: "damage", ...target });
-    expect(style.nearAlpha).toBeLessThan(style.peakAlpha);
-    expect(style.nearAlpha).toBeLessThanOrEqual(0.4);
-    expect(style.peakAlpha).toBeLessThanOrEqual(1);
-    // 캐릭터 키(210)를 넘겨 떠올라야 얼굴 위에 머물지 않는다.
-    expect(style.rise).toBeGreaterThan(160);
+  it("수치는 멀리 떠오르지 않고 톡 튀어나와 제자리에 머문다", () => {
+    for (const amount of [20, 600, 9_000]) {
+      const style = damagePopupStyle({ amount, flavor: "damage", ...target });
+      // 예전처럼 SD 키(210)를 넘겨 날아가면 읽기 전에 몸에서 멀어진다.
+      expect(style.hop + Math.abs(style.drift)).toBeLessThan(70);
+      // 머무는 시간이 사라지는 시간보다 길어야 "머물다 사라진다"가 된다.
+      expect(style.holdMs).toBeGreaterThan(style.fadeMs);
+      expect(style.alpha).toBeGreaterThanOrEqual(0.9);
+    }
+  });
+
+  it("박자가 사건의 종류를 가른다 — 지속 피해는 흘러내리고, 회복은 떠오르고, 연타는 짧다", () => {
+    const hit = damagePopupStyle({ amount: 300, flavor: "damage", ...target });
+    const tick = damagePopupStyle({ amount: 300, flavor: "debuff", debuff: "bleed", ...target });
+    const volley = damagePopupStyle({ amount: 300, flavor: "debuff", debuff: "observation", ...target });
+    const heal = damagePopupStyle({ amount: 300, flavor: "heal", ...target });
+    expect([hit.pace, tick.pace, volley.pace, heal.pace]).toEqual(["hit", "tick", "volley", "restore"]);
+    expect(tick.drift).toBeGreaterThan(0);
+    expect(heal.drift).toBeLessThan(hit.drift);
+    expect(volley.holdMs).toBeLessThan(hit.holdMs);
+    expect(tick.size).toBeLessThanOrEqual(hit.size);
+    // 잔타는 아무리 커도 한 방만큼 크지 않고 화면을 흔들지 않는다.
+    const hugeTick = damagePopupStyle({ amount: 9_000, flavor: "debuff", debuff: "poison", ...target });
+    expect(hugeTick.size).toBeLessThan(damagePopupStyle({ amount: 9_000, flavor: "damage", ...target }).size);
+    expect(hugeTick.shake).toBe(0);
+    // 상한에서 터진 한 방은 디버프 색이라도 한 방의 박자다.
+    expect(damagePopupStyle({ amount: 300, flavor: "debuff", debuff: "pressure", ...target }).pace).toBe("hit");
+    expect(damagePopupStyle({ amount: 300, flavor: "debuff", debuff: "poison", pace: "hit", ...target }).pace).toBe("hit");
+    expect(Object.keys(DEBUFF_PACE).sort()).toEqual(Object.keys(DEBUFF_TONE).sort());
+  });
+
+  it("같은 대상의 수치는 정해진 자리를 차례로 돌아 서로 겹치지 않는다", () => {
+    for (const [pace, lanes] of Object.entries(POPUP_LANES)) {
+      for (let a = 0; a < lanes.length; a += 1) {
+        for (let b = a + 1; b < lanes.length; b += 1) {
+          const gap = Math.hypot(lanes[a].x - lanes[b].x, lanes[a].y - lanes[b].y);
+          expect(gap, `${pace} ${a}-${b}`).toBeGreaterThanOrEqual(26);
+        }
+      }
+      expect(popupLaneOffset(pace as keyof typeof POPUP_LANES, lanes.length)).toEqual(popupLaneOffset(pace as keyof typeof POPUP_LANES, 0));
+    }
+    // 연타는 왼쪽 아래에서 오른쪽 위로 오르는 계단이다.
+    const volley = POPUP_LANES.volley;
+    for (let i = 1; i < volley.length; i += 1) {
+      expect(volley[i].x).toBeGreaterThan(volley[i - 1].x);
+      expect(volley[i].y).toBeLessThan(volley[i - 1].y);
+    }
+  });
+
+  it("관측 연타는 배속이 올라도 하나하나가 읽히는 간격 아래로 좁아지지 않는다", () => {
+    for (const speed of [1, 1.5, 2, 3]) {
+      for (const count of [2, 5, 15]) {
+        for (let index = 1; index < count; index += 1) {
+          const gap = volleyTickDelayMs(index, count, 0.6, speed) - volleyTickDelayMs(index - 1, count, 0.6, speed);
+          expect(gap).toBeGreaterThanOrEqual(Math.min(VOLLEY_MIN_GAP_MS, VOLLEY_MAX_SPAN_MS / (count - 1)) - 1);
+        }
+        expect(volleyTickDelayMs(count - 1, count, 0.6, speed)).toBeLessThanOrEqual(VOLLEY_MAX_SPAN_MS);
+      }
+    }
+    expect(volleyTickDelayMs(0, 15, 0.6, 3)).toBe(0);
   });
 
   it("무효는 세기와 무관하게 늘 같은 흐린 표식 하나이며 화면을 흔들지 않는다", () => {
@@ -149,31 +211,5 @@ describe("전투 수치 표시 규칙", () => {
     expect(formatDamageAmount(10_000)).toBe("10,000");
     expect(formatDamageAmount(12.6)).toBe("13");
     expect(formatDamageAmount(-5)).toBe("0");
-  });
-});
-
-describe("떠오르는 수치의 진하기", () => {
-  const near = 0.3;
-  const peak = 0.9;
-
-  it("캐릭터 위에서 출발할 때 가장 옅고 떠오르며 또렷해진다", () => {
-    // 예쁜 SD를 가리는 순간 수치는 정보가 아니라 방해다.
-    expect(risingAlpha(0, near, peak)).toBeCloseTo(near);
-    expect(risingAlpha(0.12, near, peak)).toBeGreaterThan(near);
-    expect(risingAlpha(0.25, near, peak)).toBeCloseTo(peak);
-    expect(risingAlpha(0.5, near, peak)).toBeCloseTo(peak);
-  });
-
-  it("끝에서 완전히 사라진다", () => {
-    expect(risingAlpha(0.8, near, peak)).toBeLessThan(peak);
-    expect(risingAlpha(1, near, peak)).toBeCloseTo(0);
-  });
-
-  it("진행 내내 진하기가 범위를 벗어나지 않는다", () => {
-    for (let step = 0; step <= 20; step += 1) {
-      const alpha = risingAlpha(step / 20, near, peak);
-      expect(alpha).toBeGreaterThanOrEqual(0);
-      expect(alpha).toBeLessThanOrEqual(peak);
-    }
   });
 });

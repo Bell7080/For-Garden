@@ -227,7 +227,7 @@ export const EFFECT_BUDGET = {
   /** 살아 있는 파문의 상한. 넘으면 가장 오래된 것을 즉시 회수한다. */
   maxRings: 14,
   /** 살아 있는 수치 글자의 상한. */
-  maxNumbers: 26,
+  maxNumbers: 30,
 } as const;
 
 /** 이번 프레임에 이 이펙트를 실제로 열지 정한다. 순수 판정이라 테스트가 그대로 고정한다. */

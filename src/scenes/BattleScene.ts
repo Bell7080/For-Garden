@@ -131,7 +131,7 @@ import { autoRepeat } from "../managers/AutoRepeatManager";
 import { AUTO_REPEAT_COUNTDOWN_MS, type AutoRepeatDecision } from "../core/autoRepeat";
 import type { AutoRepeatBannerOptions } from "../ui/AutoRepeatBanner";
 import { InventoryManager } from "../managers/InventoryManager";
-import { BATTLE_CLOCK_LAYOUT, BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT, GUILD_GUARD_BATTLE_HUD, GUILD_GUARD_PROFILES, RAID_BATTLE_HUD } from "../ui/battleStatusLayout";
+import { BATTLE_CLOCK_LAYOUT, BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT, BATTLE_UNIT_HEIGHT, GUILD_GUARD_BATTLE_HUD, GUILD_GUARD_PROFILES, RAID_BATTLE_HUD, unitOverheadSpots } from "../ui/battleStatusLayout";
 import { RAID_HP_BAR_COLOR } from "../ui/raidLayout";
 import { CONFIRM_DIALOG } from "../ui/confirmDialogLayout";
 import { formatBattleClock, isDeathClockRunning } from "../core/battleClock";
@@ -152,7 +152,7 @@ import { ensureEffectTextures } from "../ui/effectTextures";
 import { chargeAfterimageSteps } from "../ui/chargeAfterimage";
 import { FEVER_INK, feverBodyFill, feverFade, feverOutlineDirections, feverOutlineSteps, feverPulse } from "../ui/feverInk";
 import type { PuppetAfterimage } from "../puppets/IndexedPuppetCreature";
-import { attackDamagePopupRequest, DAMAGE_FLAVOR_COLOR, DEBUFF_TONE, type DamageFlavor, type DebuffId } from "../ui/damageNumbers";
+import { attackDamagePopupRequest, DAMAGE_FLAVOR_COLOR, DEBUFF_TONE, volleyTickDelayMs, type DamageFlavor, type DebuffId, type PopupPace } from "../ui/damageNumbers";
 import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 import { stepBattleScoreMotion } from "../ui/battleScoreMotion";
@@ -228,7 +228,7 @@ const SQUASH = { stretch: 0.55, ms: 150 } as const;
 const KNOCKBACK_SPIN = 1_080;
 
 /** SD 한 명의 화면 높이. 여섯이 겹치지 않도록 기존 300에서 0.7배로 줄였다. */
-const UNIT_HEIGHT = 210;
+const UNIT_HEIGHT = BATTLE_UNIT_HEIGHT;
 /** 보통 몸의 발밑 그림자 폭. 몸집(`bodyScale`)만큼 줄어든다. */
 const BATTLE_FOOT_SHADOW_WIDTH = 140;
 const PROFILE_TOP = 1430;
@@ -2142,7 +2142,8 @@ export class BattleScene extends Phaser.Scene {
       // 남은 몫을 한꺼번에 받은 한 방이라 매초 틱과 달리 피격 섬광을 함께 준다 — 같은 색
       // 숫자만 크게 뜨면 잔타가 우연히 커진 것처럼 읽힌다.
       flashHit(this, view.creature, this.bodyTint(view));
-      this.popNumber(view.fighter, event.amount, "debuff", { debuff: "poison" });
+      // 같은 중독 색이라도 한꺼번에 받은 한 방이라 매초 틱처럼 흘러내리지 않고 한 방의 박자로 선다.
+      this.popNumber(view.fighter, event.amount, "debuff", { debuff: "poison", pace: "hit" });
       this.playStatusCue(event.fighterId, "debuffBurst", debuffColor("poison"));
       return undefined;
     }
@@ -2292,9 +2293,11 @@ export class BattleScene extends Phaser.Scene {
       this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(view.fighter.hp, view.fighter.maxHp, "damage", event.amount);
       // 코어는 틱 전부를 한 프레임에 확정했다. 「티디디딕」은 화면이 창(window) 안에 흩어 뿌린다 —
       // 배속만큼 창도 줄여 3배속에서도 한 번의 발동이 다음 공격보다 길어지지 않는다.
-      const delayMs = event.count > 1 ? Math.round(event.windowSeconds * 1000 * event.index / event.count / this.battleSpeed) : 0;
+      // 틱 사이는 하나하나가 읽히는 간격 아래로 좁히지 않는다(`volleyTickDelayMs`) — 열다섯 겹이 13ms마다
+      // 서던 때는 한 덩어리로 뭉갰다. 자리도 몇 번째 틱인지로 계단처럼 비켜 선다(`lane`).
+      const delayMs = volleyTickDelayMs(event.index, event.count, event.windowSeconds, this.battleSpeed);
       const pop = (): void => {
-        this.popNumber(view.fighter, event.amount, "debuff", { debuff: "observation" });
+        this.popNumber(view.fighter, event.amount, "debuff", { debuff: "observation" }, event.index);
         if (event.index === 0) flashHit(this, view.creature, this.bodyTint(view));
       };
       if (delayMs <= 0) pop(); else this.time.delayedCall(delayMs, pop);
@@ -2318,10 +2321,12 @@ export class BattleScene extends Phaser.Scene {
         this.profiles.find((profile) => profile.fighter.id === guardian.fighter.id)
           ?.prefab.setHealthTarget(guardian.fighter.hp, guardian.fighter.maxHp, "damage", event.amount);
         flashHit(this, guardian.creature, this.bodyTint(guardian));
+        const guardSpot = unitOverheadSpots(guardian.fighter.x, guardian.fighter.y, guardian.fighter.bodyScale).popup;
         this.effects.damage(
-          guardian.fighter.x,
-          guardian.fighter.y - UNIT_HEIGHT * guardian.fighter.bodyScale * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio,
+          guardSpot.x,
+          guardSpot.y,
           attackDamagePopupRequest({ amount: event.amount, damageType: "physical", skill: "basic", critical: false }, this.popupTarget(guardian.fighter)),
+          { key: guardian.fighter.id, bodyScale: guardian.fighter.bodyScale },
         );
         // 아군이 맞았는데 앞에 선 개체가 깎이면, 잇는 선이 없으면 두 사건으로 읽힌다.
         const saved = this.views.get(event.fromFighterId);
@@ -2389,11 +2394,8 @@ export class BattleScene extends Phaser.Scene {
       // 경감·아군 피격)은 순수 변환 경계가 사건의 성격만 보고 정한다. 기여도와 보스 점수가
       // 실수로 화면 숫자에 섞이지 않도록 공격 사건은 완성된 요청 모델로 바로 전달한다.
       const popupRequest = attackDamagePopupRequest(event, this.popupTarget(target.fighter));
-      this.effects.damage(
-        target.fighter.x,
-        target.fighter.y - UNIT_HEIGHT * target.fighter.bodyScale * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio,
-        popupRequest,
-      );
+      const hitSpot = unitOverheadSpots(target.fighter.x, target.fighter.y, target.fighter.bodyScale).popup;
+      this.effects.damage(hitSpot.x, hitSpot.y, popupRequest, { key: target.fighter.id, bodyScale: target.fighter.bodyScale });
       // 파편은 때린 쪽에서 맞은 쪽을 향해 부채꼴로 튄다. 사방으로 고르게 뿌리면 누가 때렸는지
       // 방향이 사라져 여섯이 뒤엉킨 난전에서 타격이 제자리에 선 폭죽처럼 보인다.
       const height = UNIT_HEIGHT * target.fighter.bodyScale;
@@ -2466,18 +2468,22 @@ export class BattleScene extends Phaser.Scene {
     fighter: Fighter,
     amount: number,
     flavor: DamageFlavor,
-    extra: { critical?: boolean; ultimate?: boolean; mitigated?: boolean; debuff?: DebuffId } = {},
+    extra: { critical?: boolean; ultimate?: boolean; mitigated?: boolean; debuff?: DebuffId; pace?: PopupPace } = {},
+    lane?: number,
   ): void {
     const healing = flavor === "heal";
     // 상태의 실제 소유자는 src/core/skirmish.ts다. 이 개수는 표시 중인 회복 숫자만 센다.
     if (healing) this.healPopups += 1;
-    const height = UNIT_HEIGHT * fighter.bodyScale;
+    const spot = unitOverheadSpots(fighter.x, fighter.y, fighter.bodyScale).popup;
     this.effects.damage(
-      fighter.x,
-      fighter.y - height * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio,
+      spot.x,
+      spot.y,
       // 소수 HP가 생겨도 전투 숫자는 정수로 표시하되 사건 자체의 실제 값은 코어에 그대로 남는다.
       { amount, flavor, incoming: this.isAlly(fighter), maxHp: fighter.maxHp, ...extra },
-      { onDone: healing ? () => { this.healPopups = Math.max(0, this.healPopups - 1); } : undefined },
+      {
+        key: fighter.id, lane, bodyScale: fighter.bodyScale,
+        onDone: healing ? () => { this.healPopups = Math.max(0, this.healPopups - 1); } : undefined,
+      },
     );
   }
 
@@ -2837,8 +2843,10 @@ export class BattleScene extends Phaser.Scene {
       // 떠 있는 동안 그림자는 땅에 남되 작고 옅어진다.
       const lift = 1 - Math.min(pose.hop / 60, 0.45);
       view.shadow.setPosition(pose.shadowX, pose.shadowY + 4).setScale(lift).setAlpha(lift * entryAlpha);
-      const barY = pose.y - unitHeight - 26;
-      view.hpBar.setPosition(pose.x, barY).setDepth(DEPTH.hpBar).setValue(fighter.hp / fighter.maxHp).setAlpha(entryAlpha);
+      // 바·칩 줄·입력면의 자리는 한 함수(`unitOverheadSpots`)가 발끝과 몸집에서만 낸다.
+      const overhead = unitOverheadSpots(pose.x, pose.y, fighter.bodyScale);
+      const barY = overhead.hpBar.y;
+      view.hpBar.setPosition(overhead.hpBar.x, barY).setDepth(DEPTH.hpBar).setValue(fighter.hp / fighter.maxHp).setAlpha(entryAlpha);
       const stunned = fighter.stunnedFor > 0;
       // 상태의 실제 소유자는 src/core/skirmish.ts이며 Phaser 시계는 표시 여부를 결정하지 않는다.
       // 상태가 바뀐 프레임에만 유지 모션을 전환한다. 매 프레임 play하면 Puppet 재생 시각이 0으로
@@ -2852,13 +2860,13 @@ export class BattleScene extends Phaser.Scene {
       // 귀속 소환수는 지휘자의 머리 위에 함께 선다. 몇 마리가 서 있는지가 이 개체의 은신과
       // 치명타를 그대로 말하므로 상태 줄이 그 자리를 맡는다.
       const statuses = this.statusViewsOf(fighter);
-      view.statusChips.setPosition(pose.x, barY - BATTLE_STATUS_LAYOUT.chipRowLift)
+      view.statusChips.setPosition(overhead.statusRow.x, overhead.statusRow.y)
         .setDepth(DEPTH.hpBar + 2)
         .setVisible(statuses.length > 0);
       view.statusChips.update(statuses);
       // 입력면은 바와 칩 줄을 함께 덮되, 걸린 것이 없으면 받지 않는다.
       const rowWidth = Math.max(120, statuses.length * (BATTLE_STATUS_LAYOUT.chipSize + BATTLE_STATUS_LAYOUT.chipGap));
-      view.statusHit.setPosition(pose.x, barY - BATTLE_STATUS_LAYOUT.chipRowLift / 2)
+      view.statusHit.setPosition(overhead.statusHit.x, overhead.statusHit.y)
         .setSize(rowWidth, BATTLE_STATUS_LAYOUT.chipRowLift + BATTLE_STATUS_LAYOUT.chipSize)
         .setDepth(DEPTH.hpBar + 3);
       const statusHitEnabled = statuses.length > 0;

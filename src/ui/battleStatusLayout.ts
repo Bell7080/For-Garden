@@ -184,11 +184,37 @@ export const BATTLE_STATUS_LAYOUT = {
    */
   timeGauge: { gap: 2, height: 4, trackAlpha: 0.82 },
   /**
-   * 수치가 뜨는 높이. SD 키의 몇 할 위인지만 정하고, **떠오르는 거리와 시간은 세기에 따라
-   * 달라지므로** `src/ui/damageNumbers.ts`가 정한다.
+   * 수치가 서는 높이. SD 키의 몇 할 위인지만 정한다 — 머리 둘레다. 튀어 오르는 높이·머무는 시간·
+   * 비켜 서는 자리는 세기와 박자에 따라 달라지므로 `src/ui/damageNumbers.ts`가 정한다.
    */
-  popupBodyOffsetRatio: 0.72,
+  popupBodyOffsetRatio: 0.76,
+  /** 체력 바가 머리 끝(SD 키)에서 떠 있는 높이. */
+  hpBarLift: 26,
 } as const;
+
+/** 전장 SD 한 명의 기준 키(몸집 1). 머리 위에 다는 모든 것이 이 키에서 자리를 얻는다. */
+export const BATTLE_UNIT_HEIGHT = 210;
+
+/**
+ * 전장 SD 머리 위에 다는 것들의 자리 — **체력 바 → 상태 칩 줄 → 수치**가 한 함수에서 나온다.
+ *
+ * 예전에는 바는 `키 + 26`, 칩은 `바 − 32`, 수치는 `키 × 0.72`를 씬이 저마다 다른 줄에서 셈했다.
+ * 셋이 따로 셈하면 몸집이 다른 적(보스·늑대)에서 한쪽만 어긋나고, 새 HUD가 생길 때마다 또
+ * 다른 상수가 생긴다. **모두 발끝(`footY`)과 몸집에서만** 나온다.
+ */
+export function unitOverheadSpots(footX: number, footY: number, bodyScale = 1) {
+  const height = BATTLE_UNIT_HEIGHT * bodyScale;
+  const barY = footY - height - BATTLE_STATUS_LAYOUT.hpBarLift;
+  const chipRowY = barY - BATTLE_STATUS_LAYOUT.chipRowLift;
+  return {
+    height,
+    hpBar: { x: footX, y: barY },
+    statusRow: { x: footX, y: chipRowY },
+    /** 바와 칩 줄을 함께 덮는 입력면의 가운데. */
+    statusHit: { x: footX, y: barY - BATTLE_STATUS_LAYOUT.chipRowLift / 2 },
+    popup: { x: footX, y: footY - height * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio },
+  };
+}
 
 /**
  * 상태 칩 `count`장이 설 x 좌표. **체력 바 왼쪽 끝**부터 오른쪽으로 붙는다.

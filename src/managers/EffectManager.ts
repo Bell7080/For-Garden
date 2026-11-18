@@ -8,7 +8,7 @@ import { healVisual, SHIELD_AURA_SHAPE, shieldAuraStyle, shieldGainVisual } from
 import { lashPoints } from "../ui/reachStrikeShape";
 import { flatDiamondPoints, flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_INK_WIDTH, SIGNATURE_SPECS, waveCrestPoints, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
 import { allowStatusCue, cueAngle, STATUS_CUE, stunOrbit, type StatusCueId } from "../ui/statusCueEffects";
-import { damagePopupStyle, risingAlpha, shouldShowDamagePopup, type DamagePopupRequest } from "../ui/damageNumbers";
+import { damagePopupStyle, popupLaneOffset, POPUP_LANE_RESET_MS, shouldShowDamagePopup, type DamagePopupRequest, type DamagePopupStyle } from "../ui/damageNumbers";
 import { echoMarkPoints, laneEchoMarks, radialEchoMarks, ULTIMATE_ECHO, ultimateEchoFrame, type EchoMark, type EchoPoint } from "../ui/ultimateEcho";
 import { battlefieldWashBands, groundAreaStyle, laneAreaPoints, radialAreaPoints, type GroundAreaRequest, type GroundAreaShape, type GroundAreaStyle } from "../ui/groundAreas";
 import { COLOR, textStyle } from "../ui/theme";
@@ -140,6 +140,20 @@ interface NumberSlot {
   label: Phaser.GameObjects.Text;
   tweens: Phaser.Tweens.Tween[];
   openedAt: number;
+  /** 지금 서 있는 수치의 등급. 상한에 걸리면 낮은 등급부터 비킨다. */
+  tier: number;
+  /** 어느 대상 위의 수치인가. 같은 대상의 수치끼리만 서로 비켜 선다. */
+  key?: string;
+}
+
+/** 수치를 띄우는 자리의 선택값. 같은 대상의 수치가 겹치지 않게 자리를 돌린다. */
+export interface DamagePopupOptions extends BurstOptions {
+  /** 같은 대상을 가리키는 열쇠(전투원 id). 주면 그 대상 위에서 자리(`POPUP_LANES`)를 차례로 돈다. */
+  key?: string;
+  /** 자리를 직접 정한다. 연타처럼 몇 번째 틱인지 사건이 이미 아는 경우다. */
+  lane?: number;
+  /** 대상의 몸집. 큰 대상일수록 자리를 넓게 벌린다. */
+  bodyScale?: number;
 }
 
 type SustainedTag = ActiveCombatDisplayEffect["tag"];
@@ -1361,32 +1375,47 @@ export class EffectManager {
     for (const key of [...this.sustained.keys()]) if (key.startsWith(prefix)) this.removeSustained(key);
   }
 
-  /** 풀에서 수치 글자 하나를 꺼낸다. 상한을 넘으면 가장 오래된 것을 즉시 회수한다. */
+  /**
+   * 풀에서 수치 글자 하나를 꺼낸다.
+   *
+   * 상한을 넘으면 **가장 낮은 등급 중 가장 오래된 것**을 즉시 회수한다. 큰 한 방은 오래 머물러야
+   * 하는데, 그냥 오래된 순으로 걷으면 잔타가 쏟아지는 난전에서 정작 한 방이 먼저 지워진다.
+   */
   private acquireNumber(): NumberSlot {
     const free = this.numbers.find((slot) => !slot.label.visible);
     if (free) return free;
     if (this.numbers.length >= EFFECT_BUDGET.maxNumbers) {
-      const oldest = this.numbers.reduce((old, slot) => (slot.openedAt < old.openedAt ? slot : old));
-      oldest.tweens.forEach((tween) => tween.stop());
-      oldest.tweens = [];
-      oldest.label.setVisible(false);
-      return oldest;
+      const victim = this.numbers.reduce((pick, slot) => (
+        slot.tier < pick.tier || (slot.tier === pick.tier && slot.openedAt < pick.openedAt) ? slot : pick));
+      victim.tweens.forEach((tween) => tween.stop());
+      victim.tweens = [];
+      victim.label.setVisible(false);
+      return victim;
     }
     const slot: NumberSlot = {
       label: this.scene.add.text(0, 0, "", textStyle({ role: "display", size: 34 })).setOrigin(0.5).setDepth(this.depth + 20).setVisible(false),
       tweens: [],
       openedAt: 0,
+      tier: 0,
     };
     this.numbers.push(slot);
     return slot;
   }
 
-  /**
-   * 전투 수치 하나를 띄운다.
-   *
-   * 크기·색·머무는 시간은 전부 `damageNumbers.ts`의 순수 규칙이 정한다. 세기가 클수록 글자가
-   * 크고 오래 남아, 숫자를 읽지 않고 크기만 봐도 "세게 맞았다"가 전해진다.
-   */
+  /** 대상마다 몇 번째 수치인지. 쉼(`POPUP_LANE_RESET_MS`)이 지나면 다시 처음 자리다. */
+  private readonly popupLanes = new Map<string, { next: number; at: number }>();
+
+  private nextLane(key: string, now: number): number {
+    const last = this.popupLanes.get(key);
+    const lane = last && now - last.at < POPUP_LANE_RESET_MS ? last.next : 0;
+    this.popupLanes.set(key, { next: lane + 1, at: now });
+    // 사라진 대상의 열쇠가 쌓이지 않게, 오래 쉰 것은 가끔 걷어 낸다.
+    if (this.popupLanes.size > 64) {
+      for (const [entry, value] of this.popupLanes) if (now - value.at > POPUP_LANE_RESET_MS) this.popupLanes.delete(entry);
+    }
+    return lane;
+  }
+
   /**
    * 전투 중 설정 창에서 바꾼 표시 설정을 이 판에 곧바로 들인다. 피해 수치와 화면 흔들림은 다음 판까지
    * 기다릴 이유가 없는 값이라, 전투가 다시 깨어날 때 이 둘만 다시 읽는다.
@@ -1397,45 +1426,47 @@ export class EffectManager {
     this.shakeFactor = options.motion.cameraShakeFactor;
   }
 
-  damage(x: number, y: number, request: DamagePopupRequest, options: BurstOptions = {}): void {
+  /**
+   * 전투 수치 하나를 띄운다.
+   *
+   * 크기·색·박자·머무는 시간은 전부 `damageNumbers.ts`의 순수 규칙이 정한다. 움직임은 세 걸음이다 —
+   * **톡 튀어나와**(작게 시작해 넘쳤다 돌아오며 조금 올라선다) → **제자리에 머물고** → 박자에 맞는
+   * 쪽으로 조금 옮겨 가며 사라진다. 멀리 날려 보내지 않는다: 떠오르는 동안에만 읽을 수 있으면
+   * 숫자가 몸에서 멀어진 뒤에야 눈이 따라간다.
+   */
+  damage(x: number, y: number, request: DamagePopupRequest, options: DamagePopupOptions = {}): void {
     // 정책을 풀 획득보다 먼저 적용해야 꺼진 피해 수치가 Phaser Text 객체조차 만들지 않는다.
     if (!shouldShowDamagePopup(request, this.damageNumbers)) return;
     const style = damagePopupStyle(request);
+    const now = this.scene.time.now;
+    const lane = options.lane ?? (options.key ? this.nextLane(`${options.key}\u0000${style.pace}`, now) : 0);
+    const offset = popupLaneOffset(style.pace, lane, options.bodyScale);
     const slot = this.acquireNumber();
-    slot.openedAt = this.scene.time.now;
+    slot.openedAt = now;
+    slot.tier = style.tier;
     slot.tweens.forEach((tween) => tween.stop());
-    const label = slot.label
+    // 큰 한 방이 잔타 위에 선다. 풀에서 다시 쓰는 글자라 만든 순서로는 앞뒤가 정해지지 않는다.
+    slot.label.setDepth(this.depth + 20 + style.tier * 0.1 + (style.pace === "hit" ? 0.05 : 0));
+    slot.key = options.key;
+    slot.label
       .setText(style.text)
       .setStyle(textStyle({ role: "display", size: style.size, color: style.color }))
-      .setStroke(style.stroke, style.strokeWidth)
-      .setPosition(x + Phaser.Math.Between(-42, 42), y)
-      .setAlpha(style.nearAlpha)
-      .setScale(0.5)
+      .setStroke(style.stroke, style.strokeWidth);
+    const startX = x + offset.x;
+    const startY = y + offset.y - this.clearance(slot, startX, y + offset.y - style.hop * this.distanceFactor);
+    const label = slot.label
+      .setPosition(startX, startY)
+      .setAlpha(style.alpha)
+      .setScale(0.4)
       .setVisible(true);
-    slot.tweens = [
-      // 제 크기보다 조금 넘게 커졌다 돌아온다. 큰 한 방일수록 더 많이 튄다.
-      this.scene.tweens.add({ targets: label, scale: style.punch, duration: 110, ease: "Back.Out",
-        onComplete: () => { this.scene.tweens.add({ targets: label, scale: 1, duration: 90, ease: "Quad.Out" }); } }),
-      this.scene.tweens.add({
-        targets: label,
-        y: label.y - style.rise,
-        delay: style.holdMs,
-        duration: style.riseMs,
-        ease: "Quad.Out",
-        // 진하기는 tween이 아니라 여기서 높이에 따라 정한다. 캐릭터 위에 있는 동안은 거의
-        // 비쳐 보이고, 몸에서 떠오를수록 또렷해졌다가 끝에서 사라진다 — 예쁜 SD를 가리는
-        // 순간 수치는 정보가 아니라 방해다. 프레임당 곱셈 몇 번이라 부담이 없다.
-        onUpdate: (tween) => label.setAlpha(risingAlpha(tween.progress, style.nearAlpha, style.peakAlpha)),
-        onComplete: () => { label.setVisible(false); slot.tweens = []; options.onDone?.(); },
-      }),
-    ];
+    slot.tweens = this.popupTweens(label, style, startY, () => { label.setVisible(false); slot.tweens = []; options.onDone?.(); });
     if (style.sparks > 0) {
       // 치명타·궁극기만 숫자 뒤로 파편을 뿌린다. 잔타까지 뿌리면 난전이 반짝이로 덮인다.
       const spec = EFFECT_PRESETS.basic;
       const emitter = this.emitterFor("basic", spec);
       emitter.setParticleTint(options.color ?? Phaser.Display.Color.HexStringToColor(style.color).color);
       emitter.setEmitterAngle({ min: 0, max: 360 });
-      emitter.explode(style.sparks, x, y);
+      emitter.explode(style.sparks, startX, startY);
     }
     if (style.shake > 0 && this.shakeEnabled && this.shakeFactor > 0) {
       const shake = this.scene.cameras.main.shakeEffect;
@@ -1443,6 +1474,56 @@ export class EffectManager {
       const intensity = style.shake * this.shakeFactor;
       if (!shake.isRunning || shake.intensity.x < intensity) this.scene.cameras.main.shake(150, intensity);
     }
+  }
+
+  /**
+   * 같은 대상 위에 이미 서 있는 수치와 겹치면 **겹친 만큼만 위로** 비켜 선다.
+   *
+   * 자리 표(`POPUP_LANES`)는 보통 크기의 숫자를 기준으로 짰다. 네 자리 한 방은 폭이 그보다 넓어
+   * 옆 자리의 잔타를 통째로 덮을 수 있다 — 실제로 그린 글자의 폭으로 한 번 더 잰다. 최대 네 번만
+   * 밀어 올려, 쏟아지는 난전에서 숫자가 화면 위로 끝없이 쌓이지 않게 한다.
+   */
+  private clearance(slot: NumberSlot, x: number, landY: number): number {
+    if (!slot.key) return 0;
+    const width = slot.label.width;
+    const height = slot.label.height;
+    let lift = 0;
+    for (let pass = 0; pass < 4; pass += 1) {
+      const top = landY - lift - height / 2;
+      const bottom = landY - lift + height / 2;
+      const hit = this.numbers.find((other) => other !== slot && other.key === slot.key && other.label.visible
+        && Math.abs(other.label.x - x) < (width + other.label.width * other.label.scaleX) / 2 - 6
+        && top < other.label.y + (other.label.height * other.label.scaleY) / 2 - 4
+        && bottom > other.label.y - (other.label.height * other.label.scaleY) / 2 + 4);
+      if (!hit) break;
+      lift = landY - (hit.label.y - (hit.label.height * hit.label.scaleY) / 2 - height / 2 + 2);
+    }
+    return Math.max(0, lift);
+  }
+
+  /**
+   * 튀어나옴 → 머묾 → 사라짐을 **처음부터 세 개의 tween으로** 걸어 둔다. onComplete 안에서 다음
+   * tween을 만들면 회수할 때 그 뒤의 것을 놓쳐, 다른 숫자로 다시 쓰인 글자를 옛 tween이 지운다.
+   * 움직임 줄이기에서는 옮겨 가는 거리만 줄고 머무는 시간은 그대로다 — 읽을 틈은 줄이지 않는다.
+   */
+  private popupTweens(label: Phaser.GameObjects.Text, style: DamagePopupStyle, startY: number, done: () => void): Phaser.Tweens.Tween[] {
+    const distance = this.distanceFactor;
+    const settleMs = 90;
+    const landY = startY - style.hop * distance;
+    return [
+      this.scene.tweens.add({ targets: label, scale: style.punch, y: landY, duration: style.popMs, ease: "Back.Out" }),
+      this.scene.tweens.add({ targets: label, scale: 1, delay: style.popMs, duration: settleMs, ease: "Quad.Out" }),
+      this.scene.tweens.add({
+        targets: label,
+        alpha: 0,
+        y: landY + style.drift * distance,
+        scale: style.endScale,
+        delay: style.popMs + Math.max(settleMs, style.holdMs),
+        duration: style.fadeMs,
+        ease: "Quad.In",
+        onComplete: done,
+      }),
+    ];
   }
 
   /** Canvas DOM 밖 객체 생성을 E2E가 관찰하는 읽기 전용 진단값이다. 전투 규칙에는 사용하지 않는다. */

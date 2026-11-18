@@ -47,7 +47,7 @@ import { ELEMENT_ICON, ROLE_ICON } from "../ui/affinityIcons";
 import { addBreakthroughGradeMark } from "../ui/rarityMark";
 import { addUnitNameplate, addUnitPower } from "../ui/unitNameplate";
 import { groupCombatPower } from "../core/combatPower";
-import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
+import { applyRosterView, DEFAULT_ROSTER_VIEW, deployedFirst, type RosterView } from "../core/rosterView";
 import { RosterControls, ROSTER_CONTROLS } from "../ui/RosterControls";
 import { dropRosterRelic, formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
 import { bindRosterDragPick, type RosterDragPick } from "../ui/rosterDragPick";
@@ -185,6 +185,8 @@ export class PartyScene extends Phaser.Scene {
    */
   private selectedSlot: number | undefined;
   private cards = new Map<string, RosterCard>();
+  /** 그리드가 지금 선 순서(자리에 선 렐릭 먼저). 편성이 바뀌어 순서가 달라졌는지 가른다. */
+  private rosterOrderKey = "";
   /** 목록 위 조작 줄이 고른 필터·정렬. 씬이 다시 열릴 때까지만 기억한다. */
   private rosterView: RosterView = DEFAULT_ROSTER_VIEW;
   private allySlots: AllySlot[] = [];
@@ -1017,11 +1019,8 @@ export class PartyScene extends Phaser.Scene {
     const startY = portraitGridFirstRowY(this.rosterViewport.top, cardH, PORTRAIT_GRID_MASK_GAP);
     content.removeAll(true);
     this.cards.clear();
-    const powerOf = (relic: RelicDef): number => relicProgression.getCombatPower(relic.id, { pvp: this.pvp });
-    const roster = applyRosterView(relicCollection.owned, this.rosterView, powerOf);
-    setDebugGridCards("party", Object.fromEntries(roster.map((relic, i) => [relic.id, {
-      x: rosterColumnX(i % cols), y: startY + Math.floor(i / cols) * rowStep,
-    }])), this.rosterScrollY, this.rosterViewport);
+    const roster = this.rosterOrder();
+    this.noteRosterOrder(roster, startY);
     roster.forEach((relic, i) => {
       const x = rosterColumnX(i % cols);
       const y = startY + Math.floor(i / cols) * rowStep;
@@ -1052,6 +1051,52 @@ export class PartyScene extends Phaser.Scene {
     // 도감과 같은 28px 여유를 아래에도 둬 마지막 줄 밑변이 마스크 경계에 겹쳐 깎이지 않게 한다.
     this.rosterMinScroll = Math.min(0, viewportHeight - contentHeight - 28);
     this.scrollRosterTo(0);
+  }
+
+  /**
+   * 그리드에 세울 순서. **자리에 선 렐릭이 자리 순서대로 맨 위**에 서고 나머지는 필터·정렬을 그대로 따른다
+   * (`deployedFirst`). 정보창의 좌우 넘김도 이 순서를 따른다.
+   */
+  private rosterOrder(): RelicDef[] {
+    const powerOf = (relic: RelicDef): number => relicProgression.getCombatPower(relic.id, { pvp: this.pvp });
+    return deployedFirst(applyRosterView(relicCollection.owned, this.rosterView, powerOf), this.picked);
+  }
+
+  /** 지금 순서를 기억하고, 검사 채널과 정보창 넘김 순서를 같은 순서로 맞춘다. */
+  private noteRosterOrder(roster: readonly RelicDef[], startY: number): void {
+    const { columns: cols, rowStep } = ROSTER_GRID;
+    this.rosterOrderKey = roster.map((relic) => relic.id).join(",");
+    setDebugGridCards("party", Object.fromEntries(roster.map((relic, i) => [relic.id, {
+      x: rosterColumnX(i % cols), y: startY + Math.floor(i / cols) * rowStep,
+    }])), this.rosterScrollY, this.rosterViewport);
+    this.info?.setNeighborOrder(roster);
+  }
+
+  /**
+   * 편성이 바뀌어 맨 위에 설 렐릭이 달라지면 카드를 **다시 세우지 않고 새 칸으로 스르륵 옮긴다** —
+   * 다시 세우면 원화가 빠졌다 들어와 새로고침된 것처럼 읽힌다. 마스크는 스크롤 시계가 매 프레임 맞춘다.
+   */
+  private reflowRoster(): void {
+    const roster = this.rosterOrder();
+    // 정보창은 편성 화면보다 늦게 서므로 순서가 그대로여도 넘김 순서는 매번 맞춘다.
+    this.info?.setNeighborOrder(roster);
+    if (roster.map((relic) => relic.id).join(",") === this.rosterOrderKey) return;
+    const { columns: cols, cardHeight: cardH, rowStep } = ROSTER_GRID;
+    const startY = portraitGridFirstRowY(this.rosterViewport.top, cardH, PORTRAIT_GRID_MASK_GAP);
+    this.noteRosterOrder(roster, startY);
+    const duration = settingsManager.get().accessibility.reduceMotion ? 0 : 220;
+    roster.forEach((relic, i) => {
+      const card = this.cards.get(relic.id)?.card;
+      if (!card) return;
+      const x = rosterColumnX(i % cols);
+      const y = startY + Math.floor(i / cols) * rowStep;
+      this.tweens.killTweensOf(card);
+      if (duration === 0) card.setPosition(x, y);
+      else this.tweens.add({ targets: card, x, y, duration, ease: "Cubic.Out" });
+    });
+    const settle = (): void => syncPortraitResidency([...this.cards.values()].map(({ card }) => card), this.rosterScrollY, this.rosterViewport, cardH);
+    if (duration === 0) settle();
+    else this.time.delayedCall(duration + 20, settle);
   }
 
   /** 창 안에서만 흐르게 하는 휠·드래그 배선. 씬이 내려갈 때 리스너와 마스크를 함께 뗀다. */
@@ -1138,6 +1183,7 @@ export class PartyScene extends Phaser.Scene {
   }
 
   private refresh(): void {
+    this.reflowRoster();
     const members = formationMembers(this.picked);
     for (const [id, entry] of this.cards) {
       const at = this.picked.indexOf(id);

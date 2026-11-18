@@ -34,3 +34,18 @@ export function rosterFilterCount(view: RosterView): number {
 export function applyRosterView(relics: readonly RelicDef[], view: RosterView, powerOf: (relic: RelicDef) => number, context: RelicFilterContext = {}): RelicDef[] {
   return sortRelicsBy(relics.filter((relic) => matchesRelicFilter(relic, view.filter, context)), view.sortMode, view.descending, powerOf);
 }
+
+/**
+ * 편성 목록에서 **지금 자리에 선 렐릭을 자리 순서대로 맨 앞에** 올리고, 나머지는 받은 순서(필터·정렬)를 그대로 둔다.
+ * 목록에 없는 자리(빈 칸·필터에 걸러진 렐릭)는 건너뛴다 — 필터를 우회해 걸러진 렐릭을 다시 세우지 않는다.
+ * 그리드와 정보창의 좌우 넘김이 같은 함수를 읽어 두 순서가 갈리지 않는다.
+ */
+export function deployedFirst<T extends { readonly id: string }>(relics: readonly T[], picked: readonly (string | null | undefined)[]): T[] {
+  const byId = new Map(relics.map((relic) => [relic.id, relic]));
+  const front: T[] = [];
+  for (const id of picked) {
+    const relic = id ? byId.get(id) : undefined;
+    if (relic && !front.includes(relic)) front.push(relic);
+  }
+  return [...front, ...relics.filter((relic) => !front.includes(relic))];
+}

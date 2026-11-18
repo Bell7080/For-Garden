@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PLAYABLE_RELICS } from "../../src/data/relics";
 import { EMPTY_RELIC_FILTER } from "../../src/core/relicFilter";
-import { applyRosterView, DEFAULT_ROSTER_VIEW, rosterFilterCount, withRosterSort } from "../../src/core/rosterView";
+import { applyRosterView, DEFAULT_ROSTER_VIEW, deployedFirst, rosterFilterCount, withRosterSort } from "../../src/core/rosterView";
 
 const power = (relic: { specimenNumber: string }): number => Number(relic.specimenNumber.replace(/\D/g, "")) || 0;
 
@@ -24,5 +24,13 @@ describe("편성 목록 보기", () => {
   it("기준을 바꾸면 그 기준의 첫 방향으로 돌아간다", () => {
     expect(withRosterSort({ ...DEFAULT_ROSTER_VIEW, descending: true }, "number").descending).toBe(false);
     expect(withRosterSort(DEFAULT_ROSTER_VIEW, "power").descending).toBe(true);
+  });
+
+  it("자리에 선 렐릭은 자리 순서대로 맨 앞에 서고 나머지는 정렬을 지킨다", () => {
+    const list = ["a", "b", "c", "d", "e"].map((id) => ({ id }));
+    expect(deployedFirst(list, ["d", null, "b"]).map((r) => r.id)).toEqual(["d", "b", "a", "c", "e"]);
+    // 빈 칸·목록에 없는(필터에 걸러진) 렐릭은 끼우지 않는다.
+    expect(deployedFirst(list, [null, "z", "e"]).map((r) => r.id)).toEqual(["e", "a", "b", "c", "d"]);
+    expect(deployedFirst(list, [null, null, null]).map((r) => r.id)).toEqual(["a", "b", "c", "d", "e"]);
   });
 });

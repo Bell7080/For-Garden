@@ -653,6 +653,8 @@ export class InfoManager {
   private feedQueue = 0;
   private feedInFlight = 0;
   private feedQueueRelicId?: string;
+  /** 줄에 「N레벨」 묶음이 섞였는지 — 튜토리얼이 일반 급여와 레벨 급여를 가른다(`onFed`). */
+  private feedQueueLevel = false;
   private feedFlushing?: Promise<void>;
   private feeding = false;
   /** 급여 직후의 다시 칠하기에서만 경험치 줄을 미끄러뜨린다. */
@@ -1554,7 +1556,8 @@ export class InfoManager {
     this.feedOneTutorialHit = undefined;
     const def = this.currentDef;
     if (!def) { close(); return; }
-    const progress = relicProgression.getProgress(def.id);
+    const progress = this.previewProgress(def.id);
+    const available = this.availableCheesecake();
     // 상한에 닿는 순간 쪽지가 스스로 닫힌다 — 더 먹일 수 없는 판에 남아 있을 이유가 없고,
     // 다음에 할 일(한계 돌파)은 별 옆의 버튼이 제 자리에서 말한다.
     if (progress.level >= this.relicCap()) { close(); return; }
@@ -1567,7 +1570,7 @@ export class InfoManager {
     feedBulkSpots().forEach(({ tier, levels, x: bx, y: by }) => {
       const tone = FEED_BULK_TONES[tier];
       const cost = levels === "max" ? max.feeds * FEED_UNIT.cheesecake : this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
-      const enough = levels === "max" ? max.feeds > 0 : session.wallet.cheesecake >= cost;
+      const enough = levels === "max" ? max.feeds > 0 : available >= cost;
       // 칸 하나를 한 덩어리로 묶어야 눌림이 판·이름·값줄을 함께 누른다.
       const option = this.scene.add.container(bx, by);
       // 급여 버튼과 같은 덩어리에 단계의 색을 입힌다. 모자란 칸은 꺼진 판으로 가라앉는다.
@@ -1581,7 +1584,7 @@ export class InfoManager {
       option.add(squeezeTextToWidth(label, P.button.width - 40));
       // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
       const price = feedCostRow(this.scene, 0, P.priceY, P.priceWidth, 50, 32, `info-feed-popup:cheesecake:${levels}`, enough ? tone.window : undefined);
-      price.text.setText(formatCurrency(session.wallet.cheesecake) + "/" + formatCurrency(cost));
+      price.text.setText(formatCurrency(available) + "/" + formatCurrency(cost));
       price.text.setColor(enough ? FEED_TEXT : COLOR.dangerText);
       price.layout();
       option.add(price.container);
@@ -1599,12 +1602,14 @@ export class InfoManager {
         if (levels === "max") {
           // 쪽지를 닫고 확인 창을 연다 — 두드려 쌓인 몫이 먼저 나가야 창이 셈한 값이 맞는다.
           close();
-          void this.flushFeeds().then(() => this.openFeedMax());
+          this.openFeedMax();
           return;
         }
         burst.from({ x: body.x + bx, y: body.y + by - 40 }).feast(levels >= 10 ? FEED_TAP.pieces.tenLevels : FEED_TAP.pieces.level);
-        // 버튼으로 두드려 쌓인 몫이 먼저 나가야 이 칸이 셈한 값이 맞는다.
-        void this.flushFeeds().then(() => this.feedLevels(levels)).then(repaint);
+        // **서버를 기다리지 않는다**(v0.508.1) — 한 번 급여와 같은 줄에 넣고 그 자리에서 레벨을 올려 칠한다. 확정은 뒤에서
+        // 한 번의 요청으로 나가고, 예전처럼 응답이 올 때까지 레벨이 멈춰 있지 않는다(서버가 바쁜 순간 3~9초 걸렸다).
+        this.feedLevels(levels);
+        repaint();
       });
       option.add(hit);
     });
@@ -1617,12 +1622,12 @@ export class InfoManager {
   private feedMaxPlan(): { feeds: number; targetLevel: number } {
     const def = this.currentDef;
     if (!def) return { feeds: 0, targetLevel: 1 };
-    const progress = relicProgression.getProgress(def.id);
+    const progress = this.previewProgress(def.id);
     const cap = this.relicCap();
     if (progress.level >= cap) return { feeds: 0, targetLevel: progress.level };
     // **마지막으로 다 올릴 수 있는 레벨까지만** 먹인다(응태 요청) — 남는 치즈케이크로 다음 레벨의 경험치를 조금 채워
     // 두지 않는다. 그 몫은 레벨을 올리지 못한 채 묶이기만 한다.
-    const affordable = Math.floor(session.wallet.cheesecake / FEED_UNIT.cheesecake);
+    const affordable = Math.floor(this.availableCheesecake() / FEED_UNIT.cheesecake);
     let levels = 0;
     while (progress.level + levels < cap && this.feedsForLevels(levels + 1) <= affordable) levels += 1;
     const feeds = levels > 0 ? this.feedsForLevels(levels) : 0;
@@ -1635,7 +1640,7 @@ export class InfoManager {
     if (!def || !this.ownedNow || this.popups.isOpen) return;
     const plan = this.feedMaxPlan();
     if (plan.feeds <= 0) return;
-    const progress = relicProgression.getProgress(def.id);
+    const progress = this.previewProgress(def.id);
     openRelicFeedMaxPopup(this.scene, this.popups, {
       asset: this.figureAssetOf(def),
       level: progress.level,
@@ -1645,7 +1650,7 @@ export class InfoManager {
       if (this.currentDef?.id !== def.id) return;
       // 창을 보는 사이 값이 바뀌었을 수 있다 — 다시 셈해 보낸다(서버도 넘치는 몫은 깎는다).
       const feeds = this.feedMaxPlan().feeds;
-      if (feeds > 0) void this.feed(feeds, "level");
+      if (feeds > 0) this.queueLevelFeeds(feeds);
     });
   }
 
@@ -1660,7 +1665,8 @@ export class InfoManager {
   /** 지금 레벨에서 목표 레벨까지 필요한 급여 횟수. 팝업의 소모량 표기와 실제 요청이 같은 값을 쓴다. */
   private feedsForLevels(levels: number): number {
     if (!this.currentDef) return 1;
-    const progress = relicProgression.getProgress(this.currentDef.id);
+    // 줄에 쌓인 몫까지 먹인 것으로 친 진행에서 센다 — 「10레벨」을 연달아 눌러도 두 번째가 같은 10레벨을 다시 사지 않는다.
+    const progress = this.previewProgress(this.currentDef.id);
     let need = 0;
     let level = progress.level;
     let exp = progress.exp;
@@ -1691,7 +1697,20 @@ export class InfoManager {
   /** 줄에 쌓였거나 서버로 가는 중이라 아직 진행에 들지 않은 급여 수. */
   private pendingFeeds(): number {
     if (this.currentDef?.id !== this.feedQueueRelicId) return 0;
-    return this.feedQueue + (this.feeding ? this.feedInFlight : 0);
+    // 나간 몫은 응답이 진행에 들어가는 순간 0이 된다(`feedNow`) — 그 전까지는 `feeding`이 아직 서기 전이어도 센다.
+    return this.feedQueue + this.feedInFlight;
+  }
+
+  /** 줄에 쌓였거나 나가 있는 급여까지 먹인 것으로 친 진행. 쪽지의 값·MAX 계획이 이것을 읽는다. */
+  private previewProgress(relicId: string): RelicProgress {
+    const progress = relicProgression.getProgress(relicId);
+    const shown = previewFeedProgress(progress, this.pendingFeeds(), this.relicCap());
+    return { ...progress, level: shown.level, exp: shown.exp };
+  }
+
+  /** 줄에 쌓인 몫을 뺀, 지금 더 쓸 수 있는 치즈케이크. */
+  private availableCheesecake(): number {
+    return Math.max(0, session.wallet.cheesecake - this.pendingFeeds() * FEED_UNIT.cheesecake);
   }
 
   /** 누른 순간의 예상 진행으로 레벨·경험치 줄만 다시 칠한다(나머지 판은 서버 응답 뒤에 칠한다). */
@@ -1746,11 +1765,15 @@ export class InfoManager {
   private expLabelNeed = -1;
 
   private enqueueFeed(count: number): void {
+    this.enqueueFeedOnly(count);
+    void this.flushFeeds();
+  }
+
+  private enqueueFeedOnly(count: number): void {
     // 줄은 한 렐릭의 것이다. 쌓인 채로 옆 렐릭으로 넘어가면 그 몫이 엉뚱한 렐릭에게 먹여지므로 버린다.
     const relicId = this.currentDef?.id;
-    if (relicId !== this.feedQueueRelicId) { this.feedQueue = 0; this.feedQueueRelicId = relicId; }
+    if (relicId !== this.feedQueueRelicId) { this.feedQueue = 0; this.feedQueueLevel = false; this.feedQueueRelicId = relicId; }
     this.feedQueue += count;
-    void this.flushFeeds();
   }
 
   /** 줄을 비운다. 요청이 도는 중이면 그 요청이 끝난 뒤 이어서 보낸다. */
@@ -1760,18 +1783,42 @@ export class InfoManager {
       while (this.feedQueue > 0) {
         if (this.currentDef?.id !== this.feedQueueRelicId) { this.feedQueue = 0; break; }
         const count = this.feedQueue;
+        const mode = this.feedQueueLevel ? "level" : "normal";
         this.feedQueue = 0;
+        this.feedQueueLevel = false;
         this.feedInFlight = count;
-        await this.feed(count);
+        await this.feed(count, mode);
         this.feedInFlight = 0;
       }
     })().finally(() => { this.feedFlushing = undefined; });
     return this.feedFlushing;
   }
 
-  /** 필요한 급여 횟수를 한 번에 요청한다. */
-  private async feedLevels(levels: number): Promise<void> {
-    await this.feed(this.feedsForLevels(levels), "level");
+  /** 「N레벨」 — 필요한 급여 횟수를 한 번 급여와 같은 줄에 넣는다. */
+  private feedLevels(levels: number): void {
+    this.queueLevelFeeds(this.feedsForLevels(levels));
+  }
+
+  /**
+   * 레벨 묶음 급여를 줄에 넣고 곧바로 예상 레벨로 칠한다. 지갑·상한은 줄까지 셈해 넘치는 몫을 깎는다 — 서버도 깎지만,
+   * 화면이 먼저 막아야 먹이지 않은 레벨이 잠깐 서지 않는다.
+   */
+  private queueLevelFeeds(feeds: number): void {
+    const def = this.currentDef;
+    if (!def || !this.ownedNow) return;
+    const progress = this.previewProgress(def.id);
+    const cap = this.relicCap();
+    if (progress.level >= cap) return;
+    let room = 0;
+    for (let level = progress.level, exp = progress.exp; level < cap; level += 1, exp = 0) room += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp);
+    const count = Math.min(feeds, room, Math.floor(this.availableCheesecake() / FEED_UNIT.cheesecake));
+    if (count <= 0) return;
+    addDebugFeedTaps(count, 0);
+    // 다른 렐릭의 줄이 남아 있으면 그 줄을 버리는 것도 `enqueueFeed`가 맡으므로 표식은 그 뒤에 단다.
+    this.enqueueFeedOnly(count);
+    this.feedQueueLevel = true;
+    void this.flushFeeds();
+    this.paintFeedPreview();
   }
 
   /**
@@ -1797,7 +1844,7 @@ export class InfoManager {
     this.feeding = true;
     let changed = false;
     try {
-      const response = await gameApi.feedRelic(def.id, feeds);
+      const response = await gameApi.feedRelic(def.id, feeds).finally(() => { this.feedInFlight = 0; });
       addDebugFeedTaps(0, response.feeds);
       const after = relicProgression.getProgress(def.id);
       changed = after.level > before.level || after.exp > before.exp;

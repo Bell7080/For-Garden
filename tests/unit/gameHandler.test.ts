@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
-import { GameCallError, StateConflictError, handleGameCall, type StateStore, type StoredState } from "../../src/server/gameHandler";
+import { GameCallError, StateConflictError, handleGameCall, isInfrastructureAbort, type StateStore, type StoredState } from "../../src/server/gameHandler";
 import { SERVER_GAME_METHODS } from "../../src/server/gameMethods";
 import { setLiveSchedule } from "../../src/core/liveSchedule";
 
@@ -51,6 +51,17 @@ describe("서버 호출 처리기", () => {
     const err = await handleGameCall(P, { method: "rechargeStamina", args: [{ method: "gems", requestId: "req-aaaaaaaa" }] }, { store: m.store, ...fixed }).catch((e) => e);
     expect(err).toBeInstanceOf(GameCallError);
     expect(JSON.stringify(m.saves.get(P))).toBe(before);
+  });
+
+  it("저장소 조회가 시간 초과로 끊기면 422 「거절」이 아니라 그 오류를 그대로 던져 503으로 답하게 한다", async () => {
+    const m = memoryStore();
+    const timeout = Object.assign(new Error("signal timed out"), { name: "TimeoutError" });
+    const store = { ...m.store, async pendingRequests() { throw timeout; } };
+    const err = await handleGameCall(P, { method: "getNotificationSignals" }, { store, ...fixed }).catch((e) => e);
+    expect(err).toBe(timeout);
+    expect(err).not.toBeInstanceOf(GameCallError);
+    expect(isInfrastructureAbort(timeout)).toBe(true);
+    expect(isInfrastructureAbort(new Error("규칙"))).toBe(false);
   });
 
   it("저장소의 운영 일정을 호출 전에 입혀 상품 진열이 그 기간을 따른다", async () => {

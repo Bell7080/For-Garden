@@ -247,6 +247,10 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
         if (deps.strict) { verifyBossWallTime(timingState, req.method, args, result, now); recordBoundaryResult(state, req.method, args, now); }
       }
     } catch (error) {
+      // **시간 초과·중단은 규칙의 거절이 아니다** — 저장소 조회가 마감 신호로 끊긴 것을 422 「거절」로 돌려주면
+      // 클라이언트가 끝난 일로 보고 재시도 키를 버리며, 오류 보고에도 「규칙 거절」로 남았다(2026-11-18 지연 사고).
+      // 그대로 던져 진입점이 503(다시 시도해도 되는 서버 사정)으로 답하게 한다.
+      if (error instanceof GameCallError || isInfrastructureAbort(error)) throw error;
       // 규칙이 거절한 호출은 상태를 바꾸지 않았으므로 저장하지 않고 거절 사유만 돌려준다.
       throw new GameCallError(422, "rejected", error instanceof Error ? error.message : String(error), error instanceof GameApiError ? error.code : undefined, error instanceof CombatRejected ? error.reason : undefined);
     }
@@ -279,4 +283,9 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       throw error;
     }
   }
+}
+
+/** 마감 신호·네트워크 중단으로 끊긴 오류인가 — 규칙이 거절한 것과 가른다. */
+export function isInfrastructureAbort(error: unknown): boolean {
+  return error instanceof Error && !(error instanceof GameApiError) && (error.name === "TimeoutError" || error.name === "AbortError");
 }

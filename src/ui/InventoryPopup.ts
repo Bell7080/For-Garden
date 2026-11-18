@@ -145,7 +145,7 @@ export class InventoryPopup {
         if (!this.body || !this.view) return;
         this.unsubscribeInventory = managerEvents.subscribe("inventory", () => { this.inventoryDirty = true; });
         this.scene.events.on(Phaser.Scenes.Events.POST_UPDATE, this.refreshVisible);
-      });
+      }, (error: unknown) => logError("inventory.refresh", "가방 조회 실패", error));
     });
   }
 

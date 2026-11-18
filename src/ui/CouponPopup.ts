@@ -19,7 +19,7 @@ import { addSdFootShadow } from "./SdFootShadow";
 import { TextInputField } from "./TextInputField";
 import { startPuppetHop } from "./puppetHop";
 import { textStyle } from "./theme";
-import { logError } from "../managers/ErrorReporter";
+import { logError, reportCatch } from "../managers/ErrorReporter";
 
 const COUPON_GUIDE = "torika";
 const COUPON_MAX_GLYPHS = 40;
@@ -73,7 +73,7 @@ export function openCouponPopup(scene: Phaser.Scene, layer: PopupLayer): void {
     hop?.stop(); figure?.destroy(); shadow?.destroy();
     scene.events.off(Phaser.Scenes.Events.SHUTDOWN, cleanup);
   };
-  void couponApi().createWebTicket().then((result) => { if (result.ok) ticket = result.value; });
+  void couponApi().createWebTicket().then((result) => { if (result.ok) ticket = result.value; }, reportCatch("coupon.webTicket"));
   layer.open({ width: L.width, height: L.height, title: t("coupon.title"), dim: true, closeOnBackdrop: true, backButton: true, canClose: () => !pending }, (body, close) => {
     body.once(Phaser.GameObjects.Events.DESTROY, cleanup);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanup);

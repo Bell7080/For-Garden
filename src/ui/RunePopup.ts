@@ -34,6 +34,8 @@ import { LOCK_DIM } from "./lockStyle";
 import { startNavScene, startScene } from "./screenTransition";
 import { NAV_TABS, navTabDirection } from "../core/navTabs";
 import { tutorialManager } from "../managers/TutorialManager";
+import { logError, reportCatch } from "../managers/ErrorReporter";
+import { showContentToast } from "./ContentToast";
 import { guideFreeRuneCraft, unionRects } from "./freeRuneCraftTutorial";
 
 /**
@@ -260,7 +262,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
         balance: { iconKey: CURRENCY_ICON_BY_WALLET.rawStone, before: session.wallet.rawStone, after: session.wallet.rawStone + runeSellValue(rune) },
         confirmLabel: t("rune.sell"),
         destructive: true,
-      }, () => { void new InventoryManager(session).sellRunes(options.api ?? gameApi, [rune.instanceId]).then(() => { audioManager?.playUi("sell.coins"); close(); }); }),
+      }, () => { void new InventoryManager(session).sellRunes(options.api ?? gameApi, [rune.instanceId]).then(() => { audioManager?.playUi("sell.coins"); close(); }, (error: unknown) => logError("rune.sell", "룬 판매 실패", error)); }),
     });
     // 잠금과 즐겨찾기는 **머리글 아래 왼쪽 위**에 작은 칩 두 장으로 선다. 무엇을 가진
     // 룬인지 읽기 전에 "골라 둔 것인가"가 먼저 보이는 자리이고, 판매를 막는 자물쇠가
@@ -342,6 +344,11 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     // 정보창에서 연 룬이 **다른 자리**에 끼워져 있으면 해제가 아니라 옮겨 끼우기다. 장착을
     // 누르면 공용 확인 창이 「누구에게서 빼는지」를 묻고, 서버가 해제와 장착을 한 요청으로 확정한다.
     const moving = slot !== undefined && equip !== undefined && (slot.relicId !== equip.relicId || slot.slotIndex !== equip.slotIndex);
+    // 장착·해제가 거절되면 말없이 멈추지 않고 짧은 거절 토스트로 알린다.
+    const refuseRuneEquip = (error: unknown): void => {
+      logError("rune.equip", "룬 장착 변경 실패", error);
+      showContentToast(scene, t("info.rune.loadout.failed"), "refused");
+    };
     if (moving && equip && slot) {
       body.add(new Button(scene, RUNE_NOTE_BUTTONS.equipped.equipX, buttonY, {
         width: RUNE_NOTE_BUTTONS.equipped.width, height: panel.buttonHeight, label: t("rune.equip"), fontSize: 26,
@@ -355,7 +362,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
             close();
             equip.onEquipped?.();
             options.onChanged?.(rune);
-          });
+          }, refuseRuneEquip);
         }),
       }));
     } else if (slot) {
@@ -369,7 +376,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
             // 장착과 같은 신호를 쓴다 — 부른 화면은 "끼웠다"가 아니라 "칸이 바뀌었다"를 듣는다.
             equip?.onEquipped?.();
             options.onChanged?.(rune);
-          });
+          }, refuseRuneEquip);
         },
       }));
     } else if (equip) {
@@ -380,7 +387,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
             audioManager?.playUi("equip.on");
             close();
             equip.onEquipped?.();
-          });
+          }, refuseRuneEquip);
         },
       }));
     }
@@ -874,7 +881,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
           craftButton: () => bounds(action),
           onSkip: () => {
             if (pending) return;
-            void tutorialManager.dismissFreeRune().then(() => { if (!closed) render(); });
+            void tutorialManager.dismissFreeRune().then(() => { if (!closed) render(); }, reportCatch("rune.dismissFreeRune"));
           },
         });
       });

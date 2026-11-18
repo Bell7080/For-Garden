@@ -6,7 +6,7 @@ describe("전투 결과 UI 복구", () => {
         const completeStage = vi.fn().mockResolvedValueOnce(receipt).mockRejectedValue(Error("COMBAT_NOT_VERIFIED"));
         const open = vi.fn().mockImplementationOnce(() => { throw Error("render interrupted"); }).mockImplementation(() => undefined);
         const showResultFailure = vi.fn();
-        const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", {
+        const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", { withBusy: (_scene: unknown, task: Promise<unknown>) => task,
             Phaser: { Scene: class {
                 } }, gameApi: { completeStage }, session: { wallet: { stamina: 100 } }, battleStageStaminaCost: () => 5,
             rememberPlayerExp: vi.fn(), PopupLayer: class {
@@ -28,7 +28,7 @@ describe("전투 결과 UI 복구", () => {
     it("늦은 전투 검증 응답이 재입장한 전투의 발급표를 지우지 않는다", async () => {
         let resolve!: (value: unknown) => void;
         const promise = new Promise(r => { resolve = r; });
-        const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", { Phaser: { Scene: class {
+        const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", { withBusy: (_scene: unknown, task: Promise<unknown>) => task, Phaser: { Scene: class {
                 } }, gameApi: { finishCombat: () => promise }, session: { selectedStageId: "3-10" }, getBattleStage: () => ({ id: "3-10" }) });
         const finishStageVictory = vi.fn();
         const scene = Object.assign(Object.create(Battle.prototype), { combatLease: { id: "old" }, combatGeneration: 1, combatTicks: 100, combatActions: [], state: { phase: "victory" }, scene: { isActive: () => true }, battleInput: { mode: "stage" }, finishStageVictory });
@@ -46,7 +46,7 @@ describe("전투 결과 UI 복구", () => {
         let resolve!: (value: unknown) => void;
         const pending = new Promise(r => { resolve = r; });
         const complete = vi.fn();
-        const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", { Phaser: { Scene: class {
+        const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", { withBusy: (_scene: unknown, task: Promise<unknown>) => task, Phaser: { Scene: class {
                 } }, gameApi: { submitRaidDamage: () => pending }, BOSS_STEP_MS: 20, beginBossSettlementAttempt: () => true, completeBossSettlementAttempt: complete });
         const show = vi.fn();
         const scene = Object.assign(Object.create(Battle.prototype), { combatGeneration: 1, state: { phase: "fight", elapsed: 1.02 }, battleInput: { mode, raidId: "raid", requestId: "entry", replayVersion: 2 }, scene: { isActive: () => true }, showRaidResult: show, showBossResult: show, bossSettlement: { finish: () => pending } });
@@ -61,7 +61,7 @@ describe("전투 결과 UI 복구", () => {
 
 describe('치즈케이크 결과 표시', () => {
   it('결과 참가자는 소환수를 제외한 편성 렐릭만 포함한다', () => {
-    const Battle=sourceClass('src/scenes/BattleScene.ts','BattleScene',{Phaser:{Scene:class{}},arenaViewAlly:(side:string)=>side==='player'});
+    const Battle=sourceClass('src/scenes/BattleScene.ts','BattleScene',{withBusy:(_scene:unknown,task:Promise<unknown>)=>task,Phaser:{Scene:class{}},arenaViewAlly:(side:string)=>side==='player'});
     const scene=Object.assign(Object.create(Battle.prototype),{state:{fighters:[
       {id:'dian',def:{id:'dian'},side:'player',summonOwnerId:null},
       {id:'wolf',def:{id:'dian-wolf'},side:'player',summonOwnerId:'dian'},
@@ -73,7 +73,7 @@ describe('치즈케이크 결과 표시', () => {
     const completeCakeOperation=vi.fn().mockResolvedValueOnce({granted:{cheesecake:50},bonusItems:[]}).mockRejectedValue(Error('COMBAT_NOT_VERIFIED'));
     const open=vi.fn().mockImplementationOnce(()=>{throw Error('render interrupted');});
     const failure=vi.fn();
-    const Battle=sourceClass('src/scenes/BattleScene.ts','BattleScene',{
+    const Battle=sourceClass('src/scenes/BattleScene.ts','BattleScene',{withBusy:(_scene:unknown,task:Promise<unknown>)=>task,
       Phaser:{Scene:class{}},gameApi:{completeCakeOperation},session:{cakeOperation:{clearedIndex:0},wallet:{stamina:0}},
       rememberPlayerExp:vi.fn(),PopupLayer:class{},dungeonRewardItems:()=>[],withGreatSuccessBonus:(items:unknown)=>items,autoRepeat:{activeFor:()=>undefined},isCakeTierUnlocked:()=>false,CAKE_OPERATION_TIERS:[],cakeOperationTierIndex:()=>0,t:(k:string)=>k,
       StageCompletePopup:class{open=open;},

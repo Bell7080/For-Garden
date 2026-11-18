@@ -6,6 +6,7 @@ import type { PartyContent } from "../data/partyContent";
 import { rememberPlayerExp } from "../managers/PlayerExpReceipts";
 import { session } from "../state/session";
 import { startScene } from "../ui/screenTransition";
+import { withBusy } from "../ui/BusyOverlay";
 import { startArenaPractice } from "./arenaPractice";
 
 /**
@@ -23,7 +24,7 @@ export async function enterContentBattle(scene: Phaser.Scene, content: PartyCont
   const requestId = globalThis.crypto?.randomUUID?.() ?? `${content.content}-entry-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   if (content.content === "guildGuard") {
     // 수호전은 빈 칸까지 자리가 뜻을 가진다(앞줄·뒷줄) — 멤버 목록이 아니라 여섯 칸을 그대로 보낸다.
-    const admission = await gameApi.enterGuildGuard({ requestId, formation: [...formation] });
+    const admission = await withBusy(scene, gameApi.enterGuildGuard({ requestId, formation: [...formation] }));
     startScene(scene, "battle", {
       mode: "guildGuard", requestId: admission.requestId, element: admission.element, lineup: admission.lineup, seed: admission.seed,
     } satisfies GuildGuardBattleInputDto);
@@ -31,7 +32,7 @@ export async function enterContentBattle(scene: Phaser.Scene, content: PartyCont
   }
   if (content.content === "guildWar") {
     // 공격 한 번은 입장이 쓰고, 상대 칸의 방어덱 스냅샷을 영수증이 돌려준다.
-    const admission = await gameApi.enterGuildWarAttack({ requestId, slotId: content.slotId, relicIds: [...relicIds] });
+    const admission = await withBusy(scene, gameApi.enterGuildWarAttack({ requestId, slotId: content.slotId, relicIds: [...relicIds] }));
     startScene(scene, "battle", {
       mode: "guildWar", requestId: admission.requestId, slotId: admission.slotId, opponentName: admission.opponentName, defenderName: admission.defenderName,
       attack: admission.attack, defense: admission.defense, seed: admission.seed,
@@ -40,7 +41,7 @@ export async function enterContentBattle(scene: Phaser.Scene, content: PartyCont
   }
   if (content.content === "duel") {
     // 도전권은 입장이 쓰고, 상대의 가려진 칸까지 영수증이 실제 편성으로 돌려준다.
-    const admission = await gameApi.enterDuel({ opponentId: content.opponent.id, relicIds: [...relicIds], requestId });
+    const admission = await withBusy(scene, gameApi.enterDuel({ opponentId: content.opponent.id, relicIds: [...relicIds], requestId }));
     startScene(scene, "battle", {
       mode: "duel", requestId: admission.requestId, attack: [...relicIds], opponentName: admission.opponentName,
       opponentScore: admission.opponentScore, units: admission.units,
@@ -55,21 +56,21 @@ export async function enterContentBattle(scene: Phaser.Scene, content: PartyCont
   // 방어덱 게시는 전투가 아니다 — 편성 화면이 따로 저장한다.
   if (content.content === "duelDefense" || content.content === "guildWarDefense") return;
   if (content.content === "raid") {
-    const admission = await gameApi.enterRaid({ replayVersion: 2, raidId: content.raidId, requestId });
+    const admission = await withBusy(scene, gameApi.enterRaid({ replayVersion: 2, raidId: content.raidId, requestId }));
     rememberPlayerExp(admission.playerExp);
     startScene(scene, "battle", { mode: "raid", raidId: content.raidId, bossRelicId: content.bossRelicId, difficulty: content.difficulty, requestId: admission.requestId, seasonHp: admission.raid.remainingHp, relics: admission.relics, replaySeed: admission.replaySeed, replayVersion: admission.replayVersion } satisfies RaidBattleInputDto);
     return;
   }
   if (content.content === "bounty") {
-    const admission = await gameApi.enterBounty({ tierId: content.tierId, requestId });
+    const admission = await withBusy(scene, gameApi.enterBounty({ tierId: content.tierId, requestId }));
     startScene(scene, "battle", { mode: "bounty", tierId: admission.tierId, round: 0, requestId } satisfies BountyBattleInputDto);
     return;
   }
   if (content.content === "cake") {
-    const admission = await gameApi.enterCakeOperation({ tierId: content.tierId, requestId });
+    const admission = await withBusy(scene, gameApi.enterCakeOperation({ tierId: content.tierId, requestId }));
     startScene(scene, "battle", { mode: "cake", tierId: admission.tierId, requestId } satisfies CakeBattleInputDto);
     return;
   }
-  await gameApi.enterStage({ stageId: session.selectedStageId!, requestId });
+  await withBusy(scene, gameApi.enterStage({ stageId: session.selectedStageId!, requestId }));
   startScene(scene, "battle", { mode: "stage" });
 }

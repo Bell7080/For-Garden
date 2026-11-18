@@ -20,6 +20,7 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import { combatState, type CombatLease, type CombatProof } from "../core/combatProtocol";
 import { gameApi, usesRemoteGameApi } from "../api/FakeServer";
+import { withBusy } from "../ui/BusyOverlay";
 import { audioManager } from "../managers/AudioManager";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import { rememberPlayerExp } from "../managers/PlayerExpReceipts";
@@ -898,7 +899,7 @@ export class BattleScene extends Phaser.Scene {
     this.bossSettlementFailureUi?.destroy(true);
     this.bossSettlementFailureUi = undefined;
     try {
-      const result = await this.bossSettlement.finish(input, actions, this.bossStopAtMs());
+      const result = await withBusy(this, this.bossSettlement.finish(input, actions, this.bossStopAtMs()));
       if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       completeBossSettlementAttempt(this.bossSettlementFailureState);
       this.showBossResult(result.score, result.settlement);
@@ -952,7 +953,7 @@ export class BattleScene extends Phaser.Scene {
     const requestId = this.battleInput.requestId;
     const stopAtMs = this.bossStopAtMs();
     try {
-      const result = await gameApi.submitRaidDamage({ requestId, raidId, actions, ...(stopAtMs === undefined ? {} : { stopAtMs }), replayVersion: this.battleInput.replayVersion });
+      const result = await withBusy(this, gameApi.submitRaidDamage({ requestId, raidId, actions, ...(stopAtMs === undefined ? {} : { stopAtMs }), replayVersion: this.battleInput.replayVersion }));
       if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       completeBossSettlementAttempt(this.bossSettlementFailureState);
       this.showRaidResult(result);
@@ -1005,7 +1006,7 @@ export class BattleScene extends Phaser.Scene {
         this.bossLeaving = true;
         // 다른 콘텐츠의 「다시 하기」처럼 **입장부터** 지난다. 거절되면 전장이 아니라 그 판으로 돌아간다.
         const requestId = globalThis.crypto?.randomUUID?.() ?? `raid-entry-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        void gameApi.enterRaid({ replayVersion: 2, raidId: input.raidId, requestId }).then((admission) => {
+        void withBusy(this, gameApi.enterRaid({ replayVersion: 2, raidId: input.raidId, requestId })).then((admission) => {
           rememberPlayerExp(admission.playerExp);
           this.scene.start("boot", { destination: "raidBattle", raidBattle: { mode: "raid", raidId: input.raidId, bossRelicId: input.bossRelicId, difficulty: input.difficulty, requestId: admission.requestId, seasonHp: admission.raid.remainingHp, relics: admission.relics, replaySeed: admission.replaySeed, replayVersion: admission.replayVersion } satisfies RaidBattleInputDto });
         }).catch(() => { this.scene.start("boot", { destination: "raid", raidId: result.raid.id }); });
@@ -1231,7 +1232,7 @@ export class BattleScene extends Phaser.Scene {
     const input = this.battleInput;
     if (input.mode === "stage") {
       const requestId = globalThis.crypto?.randomUUID?.() ?? `stage-entry-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      void gameApi.enterStage({ stageId: session.selectedStageId!, requestId })
+      void withBusy(this, gameApi.enterStage({ stageId: session.selectedStageId!, requestId }))
         .then(() => { if (this.scene.isActive()) startScene(this, "battle", { ...input }); })
         .catch(() => { if (this.scene.isActive()) this.leaveBattle(); });
       return;
@@ -3135,7 +3136,7 @@ export class BattleScene extends Phaser.Scene {
     if(this.combatLease) {
       const lease=this.combatLease;
       const generation = this.combatGeneration;
-      const verify=(): void => { void gameApi.finishCombat({id:lease.id,ticks:this.combatTicks,actions:this.combatActions,abandoned:this.state.phase==="fight"}).then(verdict=>{
+      const verify=(): void => { void withBusy(this, gameApi.finishCombat({id:lease.id,ticks:this.combatTicks,actions:this.combatActions,abandoned:this.state.phase==="fight"})).then(verdict=>{
         if(!this.scene.isActive() || generation !== this.combatGeneration || this.combatLease !== lease) return;
         if(!verdict) throw new Error("combat_not_verified");
         this.combatLease=undefined;
@@ -3232,7 +3233,7 @@ export class BattleScene extends Phaser.Scene {
     try {
       // 저장 뒤 표시만 실패한 재시도는 소비된 전투를 다시 정산하지 않는다.
       const result = this.stageCompletion?.stageId === stage.id
-        ? this.stageCompletion.result : await gameApi.completeStage(stage.id, true);
+        ? this.stageCompletion.result : await withBusy(this, gameApi.completeStage(stage.id, true));
       if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       this.stageCompletion = { stageId: stage.id, result };
       // 첫 궁극기 판을 이겼는데 궁극기를 쓰지 못한 채 끝났어도(칸이 비어 있으면) 다음 칸으로 넘어가게 한다.
@@ -3317,7 +3318,7 @@ export class BattleScene extends Phaser.Scene {
     try {
       let result = this.cakeCompletion?.requestId === input.requestId ? this.cakeCompletion.result : undefined;
       if (!result) {
-        result = await gameApi.completeCakeOperation({ tierId: input.tierId, requestId: input.requestId, victory: won });
+        result = await withBusy(this, gameApi.completeCakeOperation({ tierId: input.tierId, requestId: input.requestId, victory: won }));
         if (!this.scene.isActive() || generation !== this.combatGeneration) return;
         this.cakeCompletion = { requestId: input.requestId, result };
         rememberPlayerExp(result.playerExp);
@@ -3500,7 +3501,7 @@ export class BattleScene extends Phaser.Scene {
     const openContribution = (onClosed: () => void): void => this.openContributionPopup(popups, onClosed);
     let settled;
     try {
-      settled = await gameApi.completeBounty({ tierId: input.tierId, requestId: input.requestId, victory: step.kind === "clear", clearedRounds });
+      settled = await withBusy(this, gameApi.completeBounty({ tierId: input.tierId, requestId: input.requestId, victory: step.kind === "clear", clearedRounds }));
     } catch (error) {
       // 정산이 늦어도 전장으로 되돌리지 않는다. 같은 영수증으로 다시 시도하게만 한다.
       if (!this.scene.isActive()) return;
@@ -3589,7 +3590,7 @@ export class BattleScene extends Phaser.Scene {
     const openContribution = (onClosed: () => void): void => this.openContributionPopup(popups, onClosed);
     let settled;
     try {
-      settled = await gameApi.resolveDuel({ requestId: input.requestId, won });
+      settled = await withBusy(this, gameApi.resolveDuel({ requestId: input.requestId, won }));
     } catch (error) {
       if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       this.showResultFailure(() => void this.finishDuel(input, won), () => startScene(this, "duel"), error, "duel");
@@ -3705,7 +3706,7 @@ export class BattleScene extends Phaser.Scene {
     const leave = (): void => startScene(this, "guild", { page: "guard" });
     let result: SubmitGuildGuardResponse;
     try {
-      result = await gameApi.submitGuildGuard({ requestId: input.requestId });
+      result = await withBusy(this, gameApi.submitGuildGuard({ requestId: input.requestId }));
     } catch (error) {
       if (this.scene.isActive() && generation === this.combatGeneration) this.showResultFailure(retry, leave, error, "guildGuard");
       return;
@@ -3736,7 +3737,7 @@ export class BattleScene extends Phaser.Scene {
     const leave = (): void => startScene(this, "guild", { page: "war" });
     let result: SubmitGuildWarAttackResponse;
     try {
-      result = await gameApi.submitGuildWarAttack({ requestId: input.requestId });
+      result = await withBusy(this, gameApi.submitGuildWarAttack({ requestId: input.requestId }));
     } catch (error) {
       if (this.scene.isActive() && generation === this.combatGeneration) this.showResultFailure(retry, leave, error, "guildWar");
       return;
@@ -3805,11 +3806,11 @@ export class BattleScene extends Phaser.Scene {
       // 시작부터 사망해 불참한 렐릭도 원래 ID·HP·생존 상태로 종료 DTO에 다시 합친다.
       const results = expeditionBattleResults(input, skirmishRelicResults(this.state));
       // 서버에는 HP만 제출하고 재화 필드는 계약에 존재하지 않아 임의 보상 주입을 막는다.
-      void gameApi.completeExpeditionNode({ requestId: `${input.runId}:${input.nodeId}`, runId: input.runId, nodeId: input.nodeId, relicHp: results.map(({ currentHp }) => currentHp) }).then((nodeResult) => {
+      void withBusy(this, gameApi.completeExpeditionNode({ requestId: `${input.runId}:${input.nodeId}`, runId: input.runId, nodeId: input.nodeId, relicHp: results.map(({ currentHp }) => currentHp) })).then((nodeResult) => {
         if (!won) {
           // 전멸은 추가 지도 입력을 거치지 않고 같은 멱등 정산 경계로 끝낸다. 결과는 스토리
           // 실패와 **같은 결산창**이 말하고, 그때까지 걷은 전리품이 보상 줄에 함께 선다.
-          return gameApi.settleExpeditionRun({ runId: input.runId, settlementId: `${input.runId}:defeat`, outcome: "abandoned" }).then((settlement) => {
+          return withBusy(this, gameApi.settleExpeditionRun({ runId: input.runId, settlementId: `${input.runId}:defeat`, outcome: "abandoned" })).then((settlement) => {
             const popups = new PopupLayer(this, 2200);
             let chosen = false;
             new StageCompletePopup(this, popups).open({

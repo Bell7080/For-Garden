@@ -1,4 +1,5 @@
 import { showStorySaveFailure } from "../ui/storySaveFailure";
+import { withBusy } from "../ui/BusyOverlay";
 import { speakerStanding } from "../data/dialogues/speakerStanding";
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -159,7 +160,7 @@ export class OpeningScene extends Phaser.Scene {
     const stageId = "1-1";
     try {
       const requestId = globalThis.crypto?.randomUUID?.() ?? `opening-${stageId}-${Date.now()}`;
-      await gameApi.enterStage({ stageId, requestId });
+      await withBusy(this, gameApi.enterStage({ stageId, requestId }));
       if (!this.scene.isActive()) return;
       session.selectedStageId = stageId;
       // 이기면 공멸 삼인조가 날아가는 막을 거쳐 로비로 나간다.

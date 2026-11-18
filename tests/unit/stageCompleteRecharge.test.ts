@@ -7,7 +7,7 @@ describe("결과판 충전 후 재입장", () => {
     let options: any;
     const session = { wallet: { stamina: 0 } };
     const blocked = vi.fn(), route = vi.fn(), retry = vi.fn(), close = vi.fn();
-    const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", {
+    const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", { withBusy: (_scene: unknown, task: Promise<unknown>) => task,
       Phaser: { Scene: class {} }, session,
       gameApi: { completeStage: async () => ({ firstClearRewards: [] }) },
       battleStageStaminaCost: (stage: any) => stage.id === "ancient:11" ? 8 : 6,

@@ -52,6 +52,32 @@ describe("notifications", () => {
     unsubscribe();
   });
 
+  it("조회가 나가 있는 동안 겹친 요청은 새로 보내지 않고 끝난 뒤 한 번만 다시 읽는다", async () => {
+    // 응답이 느린 날 씬 시계·실시간 폴링·저장 신호가 끝나지 않은 조회 위에 새 조회를 얹어 같은 계정 잠금을 두고 쌓였다.
+    const pending: ((value: unknown) => void)[] = [];
+    const signal = { pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 };
+    const api = {
+      getMissions: vi.fn().mockResolvedValue({ claimableCount: 0 }),
+      getIdleExcavation: vi.fn().mockResolvedValue({ harvestNotice: false }),
+      getNotificationSignals: vi.fn().mockImplementation(() => new Promise((done) => { pending.push(done); })),
+    } as unknown as GameApi;
+    const manager = new NotificationManager(api, new ManagerEvents());
+    const first = manager.refresh({ light: true });
+    const second = manager.refresh({ light: true });
+    const third = manager.refresh();
+    expect(api.getNotificationSignals).toHaveBeenCalledTimes(1);
+    expect(second).toBe(third);
+    pending.shift()!(signal);
+    await first;
+    await Promise.resolve(); await Promise.resolve();
+    // 겹친 요청 가운데 하나라도 전체 조회였으면 뒤의 한 번은 전체 조회다.
+    expect(api.getNotificationSignals).toHaveBeenCalledTimes(2);
+    expect(api.getMissions).toHaveBeenCalledTimes(1);
+    pending.shift()!(signal);
+    await third;
+    expect(api.getNotificationSignals).toHaveBeenCalledTimes(2);
+  });
+
   it("레이드 무료 패스 보상 달성·수령을 실제 API 신호에 반영한다", async () => {
     const state = createDefaultSession();
     const api = new FakeServer(state, { latencyMs: 0 });

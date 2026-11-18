@@ -5,7 +5,7 @@ import { lobbyTutorialGateStage } from "../../src/core/tutorial";
 it.each([["1-2", "feed"], ["1-5", "gift"]])("%s 튜토리얼 결과는 후 대사를 보존해 광장으로 돌아간다", async (id, step) => {
   let options: any;
   const goRoute = vi.fn();
-  const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", {
+  const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", { withBusy: (_scene: unknown, task: Promise<unknown>) => task,
     Phaser: { Scene: class {} }, gameApi: { completeStage: async () => ({ firstClear: true, firstClearRewards: [], cheesecakeEarned: 50 }) },
     session: { wallet: { stamina: 100 } }, battleStageStaminaCost: () => 5, rememberPlayerExp: vi.fn(),
     PopupLayer: class {}, StageCompletePopup: class { open(value: any) { options = value; } },
@@ -29,7 +29,7 @@ it.each([true, false])("패배 저장이 끝나야 재도전하며 떠난 화면
   let options: any, settle!: () => void;
   const saved = new Promise<void>(resolve => { settle = resolve; });
   const retryBattle = vi.fn();
-  const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", {
+  const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", { withBusy: (_scene: unknown, task: Promise<unknown>) => task,
     Phaser: { Scene: class {} }, gameApi: { completeStage: () => saved },
     session: { wallet: { stamina: 100 } }, battleStageStaminaCost: () => 5,
     PopupLayer: class {}, StageCompletePopup: class { open(value: any) { options = value; } },

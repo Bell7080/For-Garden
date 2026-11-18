@@ -59,13 +59,21 @@ export function bindNotificationDot(
   return dispose;
 }
 
-/** 서버 시간으로 바뀌는 무료 보급·우편 만료·발굴을 화면 재진입 없이 확인한다. 씬당 한 시계만 둔다. */
+/**
+ * 서버 시간으로 바뀌는 무료 보급·우편 만료·발굴을 화면 재진입 없이 확인한다. 씬당 한 시계만 둔다.
+ *
+ * 알림 신호 하나는 실시간 폴링(`liveOps` — 15초)이 이미 묻는다. 이 시계는 임무·발굴까지 세 조회를 함께 묻는
+ * 전체 조회라 더 드물게 돈다. 15초로 돌리던 때는 실시간 폴링과 겹쳐 같은 계정의 저장 조회가 15초마다 넷씩
+ * 나갔고, 응답이 느린 날 그것이 서로 잠금을 기다리며 쌓였다. 탭이 가려진 동안에는 묻지 않는다.
+ */
+export const NOTIFICATION_FULL_REFRESH_MS = 60_000;
 const notificationClocks = new WeakSet<Phaser.Scene>();
+const pageVisible = (): boolean => typeof document === "undefined" || document.visibilityState !== "hidden";
 function watchNotificationClock(scene: Phaser.Scene): void {
   if (notificationClocks.has(scene)) return;
   notificationClocks.add(scene);
-  const refresh = (): void => { if (scene.sys.isActive()) void notificationManager.refresh().catch(() => undefined); };
-  const clock = scene.time.addEvent({ delay: 15_000, loop: true, callback: refresh });
+  const refresh = (): void => { if (scene.sys.isActive() && pageVisible()) void notificationManager.refresh().catch(() => undefined); };
+  const clock = scene.time.addEvent({ delay: NOTIFICATION_FULL_REFRESH_MS, loop: true, callback: refresh });
   scene.game.events.on(Phaser.Core.Events.FOCUS, refresh);
   scene.events.on(Phaser.Scenes.Events.WAKE, refresh);
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {

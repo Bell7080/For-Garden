@@ -106,8 +106,7 @@ const NOT_DISPLAYED: Readonly<Record<string, "all" | readonly string[]>> = {
   "../../src/data/raid.ts": ["하늘정원", "이끼연구소", "비올라", "주전자", "정오의표본", "먼지떨이", "잔불", "석영", "밀물", "난초", "재", "고사리", "달무리", "조약돌", "신호탑", "등불", "골수연구", "버드나무", "돌풍", "호박빛", "점판암", "양피지", "표류", "가마"],
   // 결투장 표본 상대의 계정 이름. 실제 이용자 풀이 생기면 서버가 주는 이름이 그대로 선다.
   "../../src/data/duelNpcs.ts": "all",
-  // 본편 4장 이후 대사 원고. 장 단위 검수·번역(`TRANSLATED_STORY_IDS`)을 마치면 그 장의 줄을 지운다.
-  "../../src/data/dialogues/chapter4.ts": "all",
+  // 본편 5장 이후 대사 원고. 장 단위 검수·번역(`TRANSLATED_STORY_IDS`)을 마치면 그 장의 줄을 지운다.
   "../../src/data/dialogues/chapter5.ts": "all",
   "../../src/data/dialogues/chapter6.ts": "all",
   "../../src/data/dialogues/chapter7.ts": "all",

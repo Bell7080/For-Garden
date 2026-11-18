@@ -261,7 +261,7 @@ export const STAGE_4_7_SIDE_PRE: DialogueStory = {
   backdrop: "assembly",
   nodes: linear([
     { id: "ledger", speaker: "", body: "지하 정비동 한구석. 공구 선반에 걸터앉은 네우리가 두꺼운 장부를 넘기고 있었다. 펄시는 그 옆에서 하품을 했다.", standing: "neuri", cast: [{ id: "neuri", slot: "left" }, { id: "pulsi", slot: "right" }] },
-    { id: "hold", speaker: "네우리", body: "코마 님, 이번 주에도 「확보 실패」… 어머, 이 칸은 또 「보류」네요. 벌써 몇 번째 보류일까요.", standing: "neuri", act: "lean" },
+    { id: "hold", speaker: "네우리", body: "코마 님 쪽은 이번 주에도 「확보 실패」… 어머, 이 칸은 또 「보류」네요. 벌써 몇 번째일까요.", standing: "neuri", act: "lean" },
     { id: "fun", speaker: "펄시", body: "그거 위에 그대로 올리면 코마 님은 끝장이네? 와, 재밌겠다.", standing: "pulsi", act: "puff" },
     { id: "trick", speaker: "델로피", body: "짠~ 그 장부, 제가 지금부터 사라지게 해 볼게요. 연구원님, 박수 준비해 주세요.", standing: "delopi", cast: [{ id: "delopi", slot: "left" }, { id: "neuri", slot: "center" }, { id: "pulsi", slot: "right" }], act: "hop" },
     { id: "write", speaker: "네우리", body: "어머, 마술사님이시네요. 그럼 사라지기 전에 연구원님 이름부터 적어 둘게요. 「확보 완료」로요.", standing: "neuri", act: "nod" },

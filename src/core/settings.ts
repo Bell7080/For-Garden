@@ -97,12 +97,46 @@ export function motionPolicy(settings: MotionPolicySettings): MotionPolicy {
 /** 품질 프리셋을 시간과 무관한 순수 렌더 작업량 예산으로 바꾼다. */
 export function presentationPolicy(quality: GraphicsQuality) {
   // 게임플레이 코드는 이 반환값을 읽지 않고, 연출은 각 수치를 다시 해석하지 않는다.
+  // renderQuality는 three.js 연출 무대(연구 시네마틱·SSR 전조)의 픽셀 배율에 곱한다(`stagePixelRatio`).
   const budgets = {
     high: { particleRatio: 1, ringRatio: 1, fullBodyScale: 1, postProcessing: true, renderQuality: 1 },
     balanced: { particleRatio: 0.72, ringRatio: 0.75, fullBodyScale: 0.9, postProcessing: true, renderQuality: 0.9 },
     low: { particleRatio: 0.45, ringRatio: 0.5, fullBodyScale: 0.78, postProcessing: false, renderQuality: 0.75 },
   } as const;
   return budgets[quality];
+}
+
+/** 기기가 말해 주는 성능 단서. 브라우저마다 둘 다 비어 있을 수 있다. */
+export interface DeviceProfile { deviceMemory?: number; hardwareConcurrency?: number }
+
+/**
+ * 저장이 없는 첫 실행(과 설정 초기화)에서 고를 그래픽 품질이다.
+ *
+ * 메모리 단서(`deviceMemory`)가 있는 기기에서만 낮춘다 — 저사양 안드로이드가 바로 그 기기들이고,
+ * 메모리를 말하지 않는 브라우저(iOS Safari 등)는 코어 수를 사생활 보호로 줄여 보고하기도 해서 그 수만으로
+ * 내리면 멀쩡한 기기까지 함께 내려간다. 한 번 고른 뒤로는 저장값이 언제나 우선한다.
+ */
+export function deviceGraphicsQuality(device: DeviceProfile): GraphicsQuality {
+  const memory = typeof device.deviceMemory === "number" && Number.isFinite(device.deviceMemory) && device.deviceMemory > 0 ? device.deviceMemory : undefined;
+  if (memory === undefined) return "high";
+  const cores = typeof device.hardwareConcurrency === "number" && device.hardwareConcurrency > 0 ? device.hardwareConcurrency : undefined;
+  if (memory <= 2) return "low";
+  if (memory <= 4 || (cores !== undefined && cores <= 4)) return "balanced";
+  return "high";
+}
+
+/** 연출 무대(three.js)의 픽셀 배율 상한. 품질의 렌더 배율만큼 줄이되 1 아래로는 내리지 않는다. */
+export function stagePixelRatio(quality: GraphicsQuality, ceiling: number, devicePixelRatio = ceiling): number {
+  const base = Math.min(Math.max(1, devicePixelRatio), ceiling);
+  return Math.max(1, Math.round(base * presentationPolicy(quality).renderQuality * 100) / 100);
+}
+
+/** 연구 연출 줄이기가 켜지면 카드 한 장의 공개 시간을 이 배율로 줄이고, 그래도 이 값 아래로는 내리지 않는다. */
+export const SHORT_REVEAL = { factor: 0.5, minSeconds: 0.45 } as const;
+
+/** 카드 한 장이 뒤집혀 서는 시간(초). 연출 줄이기가 켜지면 줄어든다. */
+export function revealSeconds(base: number, shortenExcavation: boolean): number {
+  return shortenExcavation ? Math.max(SHORT_REVEAL.minSeconds, Math.round(base * SHORT_REVEAL.factor * 100) / 100) : base;
 }
 
 export type ExcavationPresentationStage = "scan" | "crack" | "rarity" | "firstMeeting";

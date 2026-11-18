@@ -652,6 +652,8 @@ export class LabScene extends Phaser.Scene {
       rewards,
       art,
       reducedMotion: preferences.accessibility.reduceMotion,
+      graphicsQuality: preferences.presentation.graphicsQuality,
+      shortenReveal: preferences.presentation.shortenExcavation,
       mileage,
       introduceSlots: showcase.flatMap((relicId, index) => (relicId ? [index] : [])),
       // 찬스로 오른 칸은 SR 뒷면으로 서 있다가 뒤집지 않고 떨리며 SSR로 격상되어 원래 SSR 소개로 넘어간다.

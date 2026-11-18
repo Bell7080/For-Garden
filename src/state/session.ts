@@ -51,7 +51,10 @@ export interface GameSettings {
     powerSaving: boolean;
     /** 로비 역광·빛 알갱이. 꺼도 연출 외에는 아무것도 달라지지 않는다. */
     lobbyAtmosphere: boolean;
-    /** 파티클·후처리·전신 렌더 배율만 결정하며 `presentationPolicy`가 유일한 소비 경계다. */
+    /**
+     * 파티클·후처리·전신 컷인 배율·연출 무대 픽셀 배율·폭주 테두리 겹 수를 정한다(`presentationPolicy`·`feverOutlineDirections`).
+     * 첫 실행에서만 기기 메모리로 고른다(`deviceGraphicsQuality`).
+     */
     graphicsQuality: "high" | "balanced" | "low";
     /** Phaser 런타임 시간 설정에서만 프레임 제한으로 소비하며 코어 dt와 배속은 바꾸지 않는다. */
     frameRateLimit: 30 | 60 | 120;

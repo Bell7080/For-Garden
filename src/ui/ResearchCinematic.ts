@@ -18,6 +18,7 @@ import { audioManager } from "../managers/AudioManager";
 import { activeFontFamily, fontStyleFor } from "./fonts";
 import { bakeCinematicFace, bakeCinematicIcon, bakeCinematicPortrait, prewarmCinematicArt } from "./researchCinematicArt";
 import { canCloseResult, RESULT_TAP_LOCK_MS, type CinematicCardArt, type CinematicReward } from "./researchCinematicModel";
+import { revealSeconds, stagePixelRatio, type GraphicsQuality } from "../core/settings";
 
 const SCRIPT_URL = "cinematic/researchCinematic.js";
 const STYLE_URL = "cinematic/researchCinematic.css";
@@ -110,6 +111,10 @@ export interface ResearchCinematicOptions {
   /** 카드마다 무엇을 세울지. 순서는 `rewards`와 같다. */
   art: readonly CinematicCardArt[];
   reducedMotion: boolean;
+  /** 그래픽 품질. 무대의 픽셀 배율 상한이 그 품질의 렌더 배율을 따른다(`stagePixelRatio`). */
+  graphicsQuality?: GraphicsQuality;
+  /** 연구 연출 줄이기. 카드 한 장이 뒤집혀 서는 시간이 줄어든다(`revealSeconds`). */
+  shortenReveal?: boolean;
   /** 이 연구가 지급한 DNA 마일리지 총량. 결산 상단 줄의 맨 끝 `DNA × N` 칩이 된다. */
   mileage: number;
   text: ResearchCinematicText;
@@ -196,6 +201,24 @@ function loadAsset(): Promise<CinematicBundle> {
 export function preloadResearchCinematic(): Promise<void> {
   if (!researchCinematicEnabled() || !supportsWebgl2()) return Promise.resolve();
   return loadAsset().then(() => undefined, () => undefined);
+}
+
+/** 묶음의 기본 픽셀 배율 상한(원본 값). 품질이 낮으면 이 값에서 줄인다. */
+const CINEMATIC_PIXEL_RATIO = 1.5;
+
+/** 묶음이 들고 있던 공개 시간의 원본. 줄이기를 껐다 켜도 원본에서 다시 셈한다. */
+let baseRevealSeconds: Record<string, number> | undefined;
+
+/**
+ * 카드 공개 시간은 묶음의 등급표(`tiers`) 한 곳이 갖는다 — 그 표를 열 때마다 원본에서 다시 맞춘다.
+ * 묶음을 고치지 않고 설정을 잇는 유일한 자리라, 굽는 스크립트가 표 이름을 바꾸면 여기만 따라간다.
+ */
+function applyRevealPace(bundle: CinematicBundle, shorten: boolean): void {
+  baseRevealSeconds ??= Object.fromEntries(Object.entries(bundle.tiers).map(([key, tier]) => [key, tier.duration]));
+  for (const [key, tier] of Object.entries(bundle.tiers)) {
+    const base = baseRevealSeconds[key];
+    if (typeof base === "number") tier.duration = revealSeconds(base, shorten);
+  }
 }
 
 export function researchCinematicEnabled(): boolean {
@@ -419,9 +442,11 @@ export class ResearchCinematic {
     });
 
     this.grades = options.rewards.map(({ rarity }) => rarity);
+    applyRevealPace(bundle, options.shortenReveal ?? false);
     this.instance = new bundle.Cinematic(root, {
       rewards: options.rewards,
       reducedMotion: options.reducedMotion,
+      maxPixelRatio: stagePixelRatio(options.graphicsQuality ?? "high", CINEMATIC_PIXEL_RATIO),
       onComplete: () => { this.settleResult(); },
       onContextLost: () => { this.close(); },
     });

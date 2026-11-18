@@ -5747,6 +5747,34 @@ export function signalRemoteMissionNotice(next: Session, now: Date = new Date())
   remoteMissionListeners.forEach((listener) => listener());
 }
 
+let lastRemoteStaminaAlert: string | undefined;
+let lastRemoteDailyAlert: string | undefined;
+
+/**
+ * 서버가 상태를 소유할 때의 기기 알림 예약. 이 기기의 임시 구현은 정산 경계(`settleStaminaNow`·`getMissions`)에서
+ * 예약하지만 서버 구현은 이 기기의 알림을 모르므로, 서버 상태를 받을 때마다 같은 시각을 여기서 다시 세운다.
+ * 같은 시각이면 다시 예약하지 않는다 — 조회마다 예약·저장을 되풀이하지 않게 한다.
+ */
+export function scheduleRemoteNotifications(next: Session, now: Date = new Date()): void {
+  // 알림을 켜고 끈 상태도 키에 넣는다 — 나중에 켜면 같은 시각이라도 그때 예약된다.
+  const prefs = settingsManager.get().notifications;
+  const gate = `${prefs.enabled}:${prefs.staminaFull}:${prefs.dailyMission}`;
+  const maximum = staminaMaxForPlayer(next);
+  const fullAt = staminaTiming(next.wallet.stamina, maximum, next.staminaUpdatedAt).fullAt;
+  const staminaKey = `${gate}:${fullAt ?? ""}`;
+  if (staminaKey !== lastRemoteStaminaAlert) {
+    lastRemoteStaminaAlert = staminaKey;
+    if (fullAt) void settingsManager.scheduleNotification({ id: `stamina-full:${fullAt}`, kind: "staminaFull", title: t("mail.stamina.title"), body: t("mail.stamina.body"), expiresAt: new Date(fullAt) }).catch(() => undefined);
+    else void settingsManager.cancelNotification("staminaFull").catch(() => undefined);
+  }
+  const resetAt = nextUtcDay(now);
+  const dailyKey = `${gate}:${resetAt.toISOString()}`;
+  if (dailyKey !== lastRemoteDailyAlert) {
+    lastRemoteDailyAlert = dailyKey;
+    void settingsManager.scheduleNotification({ id: `daily-mission:${resetAt.toISOString()}`, kind: "dailyMission", title: t("mail.daily.title"), body: t("mail.daily.body"), expiresAt: resetAt }).catch(() => undefined);
+  }
+}
+
 /** 서버가 상태를 소유하는 구현으로 갈아 끼운다. `null`이면 이 기기의 임시 구현으로 돌아간다. */
 export function usesRemoteGameApi(): boolean { return activeGameApi !== localGameApi; }
 

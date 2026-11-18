@@ -1,6 +1,6 @@
 import { sameArenaSeen, type ArenaSeenRecord } from "../core/arenaNotice";
 import type Phaser from "phaser";
-import { createDefaultSettings, normalizeSettings } from "../core/settings";
+import { createDefaultSettings, deviceGraphicsQuality, normalizeSettings, type DeviceProfile } from "../core/settings";
 import { sameContentSeen, type ContentSeenState } from "../core/contentFresh";
 import { normalizeRosterView, rosterViewFor, sameRosterView, type RosterViewScreen } from "../core/rosterViewMemory";
 import type { RosterView } from "../core/rosterView";
@@ -15,6 +15,13 @@ import { applyFrameRateLimit } from "../config/gameConfig";
 import { accountGameSettings, accountPartOfPatch, type SettingsPatch } from "../core/settingsOwnership";
 import { resolveServerApi, type SettingsApi } from "./serverApi";
 import { logError } from "./ErrorReporter";
+
+/** 브라우저가 말해 주는 성능 단서를 읽는다. 없는 환경(서버·시험)은 빈 값이다. */
+export function readDeviceProfile(): DeviceProfile {
+  if (typeof navigator === "undefined") return {};
+  const nav = navigator as Navigator & { deviceMemory?: number };
+  return { deviceMemory: nav.deviceMemory, hardwareConcurrency: nav.hardwareConcurrency };
+}
 
 /** 설정 변경자가 저장과 알림을 빠뜨리지 않도록 한 공개 변경 경계다. */
 export class SettingsManager extends EventTarget {
@@ -129,7 +136,9 @@ export class SettingsManager extends EventTarget {
   reset(): GameSettings {
     // 계정 연결은 환경설정이 아니므로 기본 게스트 값으로 덮지 않고 현재의 공개 표시 정보만 보존한다.
     const account = { ...this.get().account };
-    this.state.settings = { ...createDefaultSettings(), account };
+    const defaults = createDefaultSettings();
+    // 기본값으로 돌릴 때도 그래픽 품질은 첫 실행과 같이 이 기기에 맞춘다.
+    this.state.settings = { ...defaults, presentation: { ...defaults.presentation, graphicsQuality: deviceGraphicsQuality(readDeviceProfile()) }, account };
     // 씬을 다시 그리기 전에도 이후 생성되는 글자가 즉시 기본 배율을 사용하도록 공용 배율을 먼저 맞춘다.
     setTextScale(this.state.settings.accessibility.textScale);
     // 글꼴 스택과 문구 표도 같은 저장 경계에서 함께 바뀌어야 한다 — 따로 두면 언어만 바뀌고

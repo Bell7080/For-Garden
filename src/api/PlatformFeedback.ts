@@ -28,6 +28,19 @@ const HAPTICS: Readonly<Record<HapticPattern, readonly number[]>> = {
   uiTap: [12], battleHit: [18, 24, 26], ultimateReady: [35, 30, 70], rareExcavation: [30, 25, 30, 25, 90],
 };
 
+/** 앱 셸이 주입하는 햅틱 플러그인(`@capacitor/haptics`)의 쓰는 부분만. 웹 빌드에는 없다. */
+interface NativeHaptics {
+  impact?: (options: { style: "LIGHT" | "MEDIUM" | "HEAVY" }) => Promise<void> | void;
+  notification?: (options: { type: "SUCCESS" | "WARNING" | "ERROR" }) => Promise<void> | void;
+}
+
+const NATIVE_IMPACT: Record<Exclude<HapticPattern, "rareExcavation">, "LIGHT" | "MEDIUM" | "HEAVY"> = { uiTap: "LIGHT", battleHit: "MEDIUM", ultimateReady: "HEAVY" };
+
+function nativeHaptics(): NativeHaptics | undefined {
+  const bridge = (globalThis as { Capacitor?: { isNativePlatform?: () => boolean; Plugins?: { Haptics?: NativeHaptics } } }).Capacitor;
+  return bridge?.isNativePlatform?.() === true ? bridge.Plugins?.Haptics : undefined;
+}
+
 /** 웹 프로토타입 구현이다. 타이머는 탭이 살아 있는 동안만 유효하다. */
 export class BrowserPlatformFeedback implements PlatformFeedback {
   readonly notificationScheduling = typeof globalThis.Notification === "undefined" ? "unsupported" : "foreground-only" as const;
@@ -35,6 +48,14 @@ export class BrowserPlatformFeedback implements PlatformFeedback {
 
   /** API가 없거나 브라우저가 호출을 거절하면 예외를 전파하지 않는 폴백이다. */
   haptic(pattern: HapticPattern): boolean {
+    // 앱 셸(Capacitor)이 햅틱 플러그인을 실어 두었으면 그것을 먼저 쓴다 — iOS WebView에는 `navigator.vibrate`가 없다.
+    const native = nativeHaptics();
+    if (native) {
+      try {
+        const done = pattern === "rareExcavation" ? native.notification?.({ type: "SUCCESS" }) : native.impact?.({ style: NATIVE_IMPACT[pattern] });
+        if (done) { void Promise.resolve(done).catch(() => undefined); return true; }
+      } catch { /* 플러그인이 거절해도 아래 웹 진동으로 내려간다. */ }
+    }
     const vibrate = globalThis.navigator?.vibrate?.bind(globalThis.navigator);
     if (!vibrate) return false;
     try { return vibrate([...HAPTICS[pattern]]); } catch { return false; }

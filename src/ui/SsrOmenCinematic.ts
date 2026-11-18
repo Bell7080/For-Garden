@@ -19,6 +19,11 @@
  */
 
 import Phaser from "phaser";
+import { stagePixelRatio } from "../core/settings";
+import { session } from "../state/session";
+
+/** 묶음이 스스로 거는 픽셀 배율 상한(원본 값). */
+const OMEN_PIXEL_RATIO = 1.75;
 
 interface OmenInstance {
   play(): Promise<string>;
@@ -31,6 +36,8 @@ interface OmenBundle {
     sound?: boolean;
     volume?: number;
     reducedMotion?: boolean;
+    /** 무대의 픽셀 배율. 묶음이 기기 배율과 1.75 중 작은 값으로 다시 자른다. */
+    pixelRatio?: number;
     onReveal?: () => void;
   }) => OmenInstance;
   duration: number;
@@ -145,7 +152,9 @@ async function buildStage(game: Phaser.Game, reducedMotion: boolean): Promise<Om
   const built: OmenStage = { root, omen: undefined as unknown as OmenInstance, reducedMotion, busy: false, observer };
   try {
     // 소리는 판마다 볼륨이 달라질 수 있어 켜 두고, 끈 경우만 판을 열 때 무음으로 돌린다.
-    built.omen = new bundle.Omen(root, { sound: true, reducedMotion, onReveal: () => built.onReveal?.() });
+    // 픽셀 배율은 그래픽 품질의 렌더 배율을 따른다 — 무대는 연구소를 떠날 때 내려가므로 다음 입장에 새 값이 든다.
+    const pixelRatio = stagePixelRatio(session.settings.presentation.graphicsQuality, OMEN_PIXEL_RATIO, window.devicePixelRatio || 1);
+    built.omen = new bundle.Omen(root, { sound: true, reducedMotion, pixelRatio, onReveal: () => built.onReveal?.() });
   } catch {
     observer.disconnect();
     root.remove();

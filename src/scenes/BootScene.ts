@@ -12,6 +12,8 @@ import { setTextScale } from "../ui/textScale";
 import { setFontLanguage } from "../ui/fonts";
 import { setDataLanguage, setTextLanguage, type TextKey } from "../i18n";
 import { matchLanguage } from "../core/language";
+import { deviceGraphicsQuality } from "../core/settings";
+import { readDeviceProfile } from "../managers/SettingsManager";
 import { EffectOverlayScene } from "./EffectOverlayScene";
 import { settingsManager } from "../managers/SettingsManager";
 import { installBackend } from "../api/backendSession";
@@ -70,7 +72,8 @@ export class BootScene extends Phaser.Scene {
     // 기기 언어를 바꿨다고 플레이하던 언어가 말없이 바뀌면 안 된다.
     if (firstRun && typeof navigator !== "undefined") {
       const preferred = navigator.languages?.length ? navigator.languages : [navigator.language ?? ""];
-      settingsManager.update({ game: { language: matchLanguage(preferred) } });
+      // 그래픽 품질도 첫 실행에서만 기기가 말하는 메모리로 고른다(저사양이면 균형·낮음).
+      settingsManager.update({ game: { language: matchLanguage(preferred) }, presentation: { graphicsQuality: deviceGraphicsQuality(readDeviceProfile()) } });
     }
     // 글꼴 스택은 씬이 첫 글자를 그리기 전에 정해져 있어야 한다. Phaser Text는 그린 순간의
     // 글꼴로 텍스처를 굳히므로, 나중에 정하면 이미 그린 글자가 대체 글꼴로 남는다.

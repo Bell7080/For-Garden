@@ -18,7 +18,7 @@ import { session, type Session } from "../state/session";
 import type { SaveManager } from "../state/SaveManager";
 import type { AccountApi, AccountFailureCode } from "./AccountApi";
 import { AccountSaveSync, type SaveSyncChoice } from "./AccountSaveSync";
-import { installGameApi, signalRemoteMissionNotice } from "./FakeServer";
+import { installGameApi, scheduleRemoteNotifications, signalRemoteMissionNotice } from "./FakeServer";
 import { installSocialApi } from "./FakeSocialServer";
 import { createRemoteSocialApi } from "./RemoteSocialApi";
 import { createRemoteGuildApi } from "./RemoteGuildApi";
@@ -110,7 +110,7 @@ export async function connectServerProgress(deps: ServerProgressDeps): Promise<S
   const claimToken = await accessToken();
   if (claimToken) await claimDeviceSession(claimToken, endpoint, deps.fetchImpl ?? fetch);
   if(deps.isCurrent?.() === false)return {ok:false,code:"network-error"};
-  const remote=createRemoteGameApi({getAccessToken:accessToken,applyState:next=>{if(deps.isCurrent?.() === false)return;applyServerState(target,next,deps.saves);signalRemoteMissionNotice(target);},fetchImpl:deps.fetchImpl});
+  const remote=createRemoteGameApi({getAccessToken:accessToken,applyState:next=>{if(deps.isCurrent?.() === false)return;applyServerState(target,next,deps.saves);signalRemoteMissionNotice(target);if(target===session)scheduleRemoteNotifications(target);},fetchImpl:deps.fetchImpl});
   try { await remote.getPlayerState(); }
   catch (error) { return {ok:false,code:"network-error",detail:describeGameFailure(error)}; }
   if(deps.isCurrent?.() === false)return {ok:false,code:"network-error"};

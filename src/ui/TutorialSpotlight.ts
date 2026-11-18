@@ -1,7 +1,10 @@
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { settingsManager } from "../managers/SettingsManager";
+import { chipPoints, drawLayer } from "./holo";
+import { pressIn, pressOut } from "./pressFeedback";
 import { COLOR, textStyle } from "./theme";
+import { TUTORIAL_SKIP_CHIP, tutorialSkipSpot } from "./tutorialSkipLayout";
 
 /** 튜토리얼 안내가 서는 깊이. 팝업(2200~2400)과 결과판(5000대)보다 위다. */
 export const TUTORIAL_SPOTLIGHT_DEPTH = 6000;
@@ -127,12 +130,31 @@ export class TutorialSpotlight {
     }
 
     if (options.onSkip) {
-      const onSkip = options.onSkip;
-      const skip = scene.add.text(BASE_WIDTH - 48, 64, options.skipLabel ?? "", textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim }))
-        .setOrigin(1, 0).setDepth(depth + 3).setInteractive({ useHandCursor: true });
-      skip.on("pointerup", () => onSkip());
-      this.objects.push(skip);
+      // 구멍이 먼저, 안내 글·보조 글이 그다음 — 칩이 눌러야 할 자리나 읽어야 할 말을 덮지 않게 한다.
+      const avoid = [{ x: left, y: top, width: right - left, height: bottom - top }];
+      for (const text of this.objects) if (text instanceof Phaser.GameObjects.Text && text !== arrow) avoid.push(text.getBounds());
+      this.addSkipChip(options.onSkip, options.skipLabel ?? "", avoid, depth + 3);
     }
+  }
+
+  /**
+   * 「건너뛰기」 — 상단 재화 줄 아래 빈 띠에 서는 제 판 가진 칩(`tutorialSkipSpot`). 줄 안에 맨 글자로 세우면
+   * 스테미나 칸·설정 아이콘과 포개진다. 어둠 위에 떠야 하므로 판을 깔고 윗변에만 옅은 선을 긋는다.
+   */
+  private addSkipChip(onSkip: () => void, text: string, avoid: readonly { x: number; y: number; width: number; height: number }[], depth: number): void {
+    const scene = this.scene;
+    const label = scene.add.text(0, 0, text, textStyle({ role: "emphasis", size: TUTORIAL_SKIP_CHIP.fontSize, color: COLOR.ink })).setOrigin(0.5);
+    const spot = tutorialSkipSpot(label.width, avoid);
+    const chip = scene.add.container(spot.x, spot.y).setDepth(depth);
+    const plate = drawLayer(scene, 0, 0, chipPoints(spot.width, spot.height, { bevel: { topLeft: 14, bottomRight: 14 } }), {
+      fill: 0x05070a, alpha: 0.86, edge: COLOR.accent, edgeAlpha: 0.7,
+    });
+    chip.add([plate, label]);
+    const hit = scene.add.rectangle(spot.x, spot.y, spot.width + 16, spot.height + 16, 0xffffff, 0).setDepth(depth + 0.1).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => pressIn(chip));
+    hit.on("pointerout", () => pressOut(chip, "normal", { pop: false }));
+    hit.on("pointerup", () => { pressOut(chip); onSkip(); });
+    this.objects.push(chip, hit);
   }
 
   /**

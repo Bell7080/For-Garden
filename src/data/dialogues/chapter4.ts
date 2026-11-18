@@ -17,7 +17,7 @@ export const STAGE_4_1_PRE: DialogueStory = {
   backdrop: "deepField",
   nodes: linear([
     { id: "radio", speaker: "", body: "승강장 스피커에서 낮은 안내 방송이 흘러나왔다. 「합동 추격 개시. 대상 확보 후 코마 조 복귀.」", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "alarm" },
-    { id: "ika", speaker: "이카닉시아", body: "두 무리가 한 선로에 나란히 서는 일은 흔치 않죠. 서두를 생각은 없지만, 이번엔 아무도 놓치지 않을 거예요.", standing: "ikanixia", act: "lean" },
+    { id: "ika", speaker: "이카닉시아", body: "테러조랑 회수조가 한 선로에 같이 서다니, 별일이죠? 그만큼 이번엔 아무도 안 놓칠 거예요.", standing: "ikanixia", act: "lean" },
     { id: "lexia", speaker: "렉시아", body: "둘이 같이 오든 말든 상관없어! 마스터, 제 뒤에서 떨어지지 마요.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "ikanixia", slot: "right" }], act: "hop" },
   ]),
 };

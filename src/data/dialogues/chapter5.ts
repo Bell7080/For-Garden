@@ -91,7 +91,7 @@ export const STAGE_5_6_POST: DialogueStory = {
   nodes: linear([
     { id: "water", speaker: "모사나", body: "물 깊어. 당신, 내 줄 놓지 마. 발밑은 내가 볼게.", standing: "mosana", cast: [{ id: "mosana", slot: "center" }], act: "lean", cue: "rumble" },
     { id: "ika", speaker: "이카닉시아", body: "어머, 라자 님. 오랜만이에요. 갇혀 계신 동안에도 저희 회수조는 라자 님을 한시도 잊은 적이 없답니다.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "left" }, { id: "raja", slot: "right" }], act: "lean" },
-    { id: "raja", speaker: "라자", body: "…거짓말은 여전하군.", standing: "raja", act: "nod" },
+    { id: "raja", speaker: "라자", body: "…잊은 적이 없는데 한 번을 안 내려왔나. 거짓말은 여전하군.", standing: "raja", act: "nod" },
     { id: "ika2", speaker: "이카닉시아", body: "후훗. 그래도 연구원님을 모시는 일만큼은 함께하실 거죠?", standing: "ikanixia", act: "nod" },
   ]),
 };
@@ -142,7 +142,7 @@ export const STAGE_5_10_POST: DialogueStory = {
   backdrop: "detention",
   nodes: linear([
     { id: "laugh", speaker: "마가사", body: "아하하… 손맛 좋네요, 연구원님 쪽 사람들. 졌으니까 오늘 설거지는 제가 할게요.", standing: "magasa", cast: [{ id: "magasa", slot: "center" }], act: "faint" },
-    { id: "hint", speaker: "마가사", body: "그런데요, 맨 아래 부대장님 자물쇠는 사람 손이어야 열린대요. 연구원님 같은 진짜 사람 손.", standing: "magasa", act: "lean" },
+    { id: "hint", speaker: "마가사", body: "아, 진 김에 하나 알려 드릴까요? 맨 아래 부대장님 자물쇠는요, 사람 손이 닿아야 열린대요. …딱 연구원님 같은 손이요.", standing: "magasa", act: "lean" },
     { id: "deina", speaker: "데이", body: "…그래서 처음부터 아래로 몰았구나! 합동 추격도, 끊어진 승강기도 전부 한 길이었어.", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "magasa", slot: "right" }], act: "nod", cue: "heartbeat" },
     { id: "koma", speaker: "코마", body: "…아래로 가지 마라.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean", voice: "whisper" },
     { id: "gone", speaker: "", body: "그 한마디만 남기고 코마는 다음 계단 아래로 가라앉듯 사라졌다. 위로 가라는 말은 끝내 하지 않았다.", cast: [], leave: "sink" },

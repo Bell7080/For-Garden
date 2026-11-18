@@ -61,7 +61,7 @@ export const STAGE_7_5_PRE: DialogueStory = {
   nodes: linear([
     { id: "line", speaker: "", body: "좁은 통로를 날개 망토가 가득 메우고 있었다. 이번에는 위에서 내려서지 않고, 처음부터 그 자리에 버티고 서 있었다.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "rumble" },
     { id: "ika", speaker: "이카닉시아", body: "여기부터는 회수조가 모셔 가겠어요, 연구원님. 이번만큼은 정말 서두를게요.", standing: "ikanixia", act: "lean" },
-    { id: "why", speaker: "이카닉시아", body: "이상하게 여기실 것 없어요. 아래까지 모셔 오는 동안은 서두를 이유가 없었거든요. 물러날 때마다 길은 늘 한쪽만 열어 뒀으니까요. …이제는 있어요, 서두를 이유가.", standing: "ikanixia", act: "nod", cue: "heartbeat" },
+    { id: "why", speaker: "이카닉시아", body: "눈치 못 채셨어요? 저희가 물러날 때마다 길은 꼭 한쪽만 열려 있었잖아요. 아래까지 모셔 오는 동안엔 서두를 이유가 없었거든요. …근데 이제는 있네요.", standing: "ikanixia", act: "nod", cue: "heartbeat" },
     { id: "anka", speaker: "안카", body: "연구원 씨, 제 뒤에 있어요. 제가 틈을 만들면 바로 지나가요.", standing: "anka", cast: [{ id: "anka", slot: "left" }, { id: "ikanixia", slot: "right" }], act: "nod" },
   ]),
 };
@@ -128,7 +128,7 @@ export const STAGE_7_10_PRE: DialogueStory = {
   backdrop: "restraint",
   nodes: linear([
     { id: "shove", speaker: "", body: "묶인 어깨 하나가 코마를 벽까지 밀쳐 냈다. 자물쇠 하나가 터져 바닥을 굴렀다.", standing: "carno", cast: [{ id: "koma", slot: "left" }, { id: "carno", slot: "right" }], cue: "explosion" },
-    { id: "carno", speaker: "카르", body: "…연구원. 도망칠 것 없다. 필요한 건 네 손뿐이다.", standing: "carno", act: "lean" },
+    { id: "carno", speaker: "카르", body: "…연구원. 도망칠 거 없어. 내가 필요한 건 네 손 하나야.", standing: "carno", act: "lean" },
     { id: "lexia", speaker: "렉시아", body: "마스터 손에는 아무도 못 대! 다들, 전열 정렬!", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "carno", slot: "right" }], act: "hop", voice: "shout" },
     { id: "nodonia", speaker: "노도니아", body: "아가는 내 뒤에 있어. 저 자물쇠가 다 풀리기 전에 끝내자.", standing: "nodonia", cast: [{ id: "nodonia", slot: "center" }], act: "nod" },
   ]),

@@ -84,7 +84,7 @@ export const STAGE_6_7_POST: DialogueStory = {
   backdrop: "detention",
   nodes: linear([
     { id: "glass", speaker: "", body: "깨진 면회 창 너머에 의자 두 개가 마주 놓여 있었다. 한쪽 의자에만 손톱자국이 깊게 패어 있었다.", cast: [{ id: "ikanixia", slot: "left" }, { id: "neuri", slot: "right" }] },
-    { id: "ika", speaker: "이카닉시아", body: "부대장님이 깨어나시면 저희도 줄을 서야겠죠. 그분 앞에서는 간부도 조원도 한 줄이니까요.", standing: "ikanixia", act: "lean" },
+    { id: "ika", speaker: "이카닉시아", body: "부대장님 깨어나시면 저희도 줄 서야 돼요. 그분 앞에선 간부고 조원이고 다 한 줄이거든요.", standing: "ikanixia", act: "lean" },
     { id: "neuri", speaker: "네우리", body: "저희 간부님은 줄 같은 거 안 서세요! …서시나요?", standing: "neuri", act: "shake" },
     { id: "ika2", speaker: "이카닉시아", body: "후훗. 서는 척은 잘하죠.", standing: "ikanixia", act: "nod" },
   ]),

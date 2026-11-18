@@ -79,7 +79,7 @@ export const STAGE_2_5_PRE: DialogueStory = {
     { id: "alone", speaker: "토리카", body: "아모 씨 혼자예요? 토비 씨와 리파 씨는요?", standing: "torika", cast: PAIR("amo"), act: "lean" },
     { id: "away", speaker: "아모", body: "…오지 말라고 했어. 여기만큼은 나 혼자 서고 싶었거든.", standing: "amo", act: "nod" },
     { id: "why", speaker: "아모", body: "저기 라인 끝 보이지? 나, 저기 처음 올려졌다가 쓸 수 없음 표식을 달고 내려왔어.", standing: "amo", act: "shrink" },
-    { id: "ask", speaker: "아모", body: "코마한테 들었어. 연구원이 우리 같은 것한테도 말을 걸었다고. 그게 진짜인지 확인하러 왔어. 그러니까 지나가려면… 내가 먼저 확인해야겠어.", standing: "amo", act: "tremble" },
+    { id: "ask", speaker: "아모", body: "코마가 그러더라. 연구원이 우리 같은 것한테도 말을 걸었다고. …진짜인지 내 눈으로 보고 싶었어. 그러니까 여기 지나가려면, 나부터 상대해.", standing: "amo", act: "tremble" },
   ]),
 };
 
@@ -168,7 +168,7 @@ export const STAGE_2_8_POST: DialogueStory = {
   backdrop: "assembly",
   nodes: linear([
     { id: "drop", speaker: "", body: "용광로 위 파이프에서 가벼운 날갯소리가 났다. 잠자리 날개를 접은 그림자 하나와 몸집만 한 턱을 가진 그림자 하나가 사뿐히 내려섰다.", cast: [{ id: "koma", slot: "left" }, { id: "neuri", slot: "center" }, { id: "mir", slot: "right" }], cue: "impact" },
-    { id: "hello", speaker: "네우리", body: "후훗… 당신이… 연구원님이시군요? 역시… 듣던 대로… 어흠.", standing: "neuri", act: "hop" },
+    { id: "hello", speaker: "네우리", body: "어머, 그쪽이 연구원님이세요? 후훗, 듣던 거랑은 좀 다르시네. …어흠.", standing: "neuri", act: "hop" },
     { id: "koma", speaker: "네우리", body: "그건 그렇고, 코마 님! 결국… 결국 실패하셨네요?", standing: "neuri", act: "lean" },
     { id: "komaReply", speaker: "코마", body: "…네우리. 보고를 받으러 왔나.", standing: "koma", act: "shrink" },
     { id: "polite", speaker: "네우리", body: "어머, 보고라니요. 저희 같은 말단이 어찌 감히. 다만 위에서 「테러조는 이제 쉬셔도 된다」고 하셔서요. 아주, 아주 정중하게 전해 드리러 왔답니다.", standing: "neuri", act: "bounce" },

@@ -180,11 +180,11 @@ export const STAGE_1_10_PRE: DialogueStory = {
     { id: "wait", speaker: "", body: "경계문 앞이었다. 닫힌 문 앞에 코마가 서 있었다. 처음부터 그 자리에 있었던 것처럼.", standing: "koma", cast: ALONE("koma") },
     { id: "come", speaker: "코마", body: "여기까지 올 줄은 몰랐다.", standing: "koma", act: "nod" },
     { id: "name", speaker: "토리카", body: "코마… 맞죠? 열차를 폭파한 분.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "koma", slot: "right" }], act: "lean" },
-    { id: "goal", speaker: "코마", body: "목표는 연구원. 그것뿐이다. 해치지 않는다.", standing: "koma" },
+    { id: "goal", speaker: "코마", body: "목표는 연구원 하나다. 다치게 할 생각은 없다.", standing: "koma" },
     { id: "train", speaker: "도디", body: "그, 그치만 열차는 떨어졌잖아요!", standing: "dodi", cast: [{ id: "dodi", slot: "left" }, { id: "koma", slot: "right" }], act: "fright" },
     { id: "order", speaker: "코마", body: "…떨어뜨리라는 지시였다. 내가 정한 일이 아니다.", standing: "koma", act: "shrink" },
     { id: "who", speaker: "토리카", body: "누가요?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "koma", slot: "right" }] },
-    { id: "above", speaker: "코마", body: "…위에서. 문은 내가 막는다. 돌아가라, 연구원. 돌아가지 않으면 데려간다.", standing: "koma", cue: "impact", voice: "heavy" },
+    { id: "above", speaker: "코마", body: "…위에서. 문은 내가 막는다. 지금 돌아가라. 안 돌아가면 데려간다.", standing: "koma", cue: "impact", voice: "heavy" },
   ]),
 };
 

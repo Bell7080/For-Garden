@@ -4,6 +4,7 @@ import { handleArenaCall } from "./liveArena";
 import { GameCallError, handleGameCall } from "./gameHandler";
 import { clientResponseState } from "./clientState";
 import { createSupabaseStore } from "./supabaseStore";
+import { verifyAccessToken } from "./jwtVerify";
 import { refreshStaleProfileRecords } from "./friendProfileFallback";
 import { isServerGameMethod } from "./gameMethods";
 import { isSocialMethod } from "../api/RemoteSocialApi";
@@ -50,8 +51,13 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     if (!url || !serviceKey) throw new GameCallError(503,"server_not_configured");
     const auth = typeof req.headers.authorization === "string" ? req.headers.authorization : "";
     if (!/^Bearer \S+$/.test(auth)) throw new GameCallError(401,"not_authenticated");
-    const who = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anonKey ?? "", authorization: auth }, signal: AbortSignal.any([deadline, AbortSignal.timeout(10000)]) });
-    const user = who.ok ? await who.json() as { id?: string } : null;
+    // 서명 키로 서버 안에서 먼저 확인한다(`jwtVerify.ts`). 판단할 수 없을 때만 예전처럼 인증 서버에 묻는다.
+    const local = await verifyAccessToken(url, auth.slice(7), { signal: AbortSignal.any([deadline, AbortSignal.timeout(3000)]) }).catch(() => undefined);
+    if (local === null) throw new GameCallError(401,"not_authenticated");
+    const user = local ?? await (async () => {
+      const who = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anonKey ?? "", authorization: auth }, signal: AbortSignal.any([deadline, AbortSignal.timeout(10000)]) });
+      return who.ok ? await who.json() as { id?: string } : null;
+    })();
     if (!user?.id) throw new GameCallError(401,"not_authenticated");
     mark("auth");
     const store = createSupabaseStore({ url, serviceKey, signal: deadline });
@@ -92,7 +98,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
       if (["getFriends","getRequests","searchUsers","getRecommendations"].includes(method)) await refreshStaleProfileRecords(response?.result, (id) => store.load(id), new Date());
       res.status(200).json(response);
     } else {
-      const response = await handleGameCall(user.id,body,{store,strict:true,guild,signal:deadline,developmentTools:qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS) });
+      const response = await handleGameCall(user.id,body,{store,strict:true,guild,signal:deadline,onDequeue:()=>mark("queue"),developmentTools:qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS) });
       mark("game");
       res.status(200).json(clientResponseState(response, isReadMethod(body.method) ? (body as { knownRevision?: unknown }).knownRevision : undefined));
     }

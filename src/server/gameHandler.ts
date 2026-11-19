@@ -114,6 +114,8 @@ export interface GameHandlerDeps {
   developmentTools?: boolean;
   /** 길드 저장소. 지갑이 얽힌 길드 조작(`createGuild` 등)이 쓰며, 없으면 모든 조작이 `UNAVAILABLE`로 거절된다. */
   guild?: GuildBackend;
+  /** 줄 서기가 끝나 이 호출이 실제로 돌기 시작하는 순간 — 느린 호출 기록이 대기 시간을 따로 잰다. */
+  onDequeue?: () => void;
 }
 
 // 한 프로세스 안에서는 계정별로 호출을 줄 세운다. FakeServer가 모듈 단위 싱글턴을 일부 읽으므로
@@ -143,7 +145,7 @@ export function handleGameCall(playerId: string, req: GameCallRequest, deps: Gam
   if (req.args && req.args.length > 4) throw new GameCallError(400, "invalid_args");
   if (req.requestId !== undefined && !REQUEST_ID.test(req.requestId)) throw new GameCallError(400, "invalid_request_id");
   const call = isReadMethod(req.method) ? { ...req, requestId: undefined } : req;
-  return serialize(() => run(playerId, call, deps));
+  return serialize(() => { deps.onDequeue?.(); return run(playerId, call, deps); });
 }
 
 async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps): Promise<GameCallResponse> {

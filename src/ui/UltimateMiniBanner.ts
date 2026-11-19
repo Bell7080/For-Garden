@@ -2,17 +2,14 @@ import Phaser from "phaser";
 import type { RelicDef } from "../core/types";
 import { ULTIMATE_MINI_BANNER_TIMING } from "../core/battleControls";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
-import { computeFaceBandFrame } from "../puppets/anchors";
-import { withPuppetTexture } from "../puppets/assets";
+import { withPuppetTexture, type PuppetAsset } from "../puppets/assets";
 import { ULTIMATE_MINI_BANNER as L } from "./battleStatusLayout";
-import { bakeBandTexture } from "./faceTexture";
 import { chipPoints, drawLayer } from "./holo";
-import { portraitCardZoom } from "./portraitPlacement";
 import { ELEMENT_TINT } from "./skillArt";
 import { shrinkTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 
-/** 한 번 구운 일러스트 띠 — 같은 개체가 다시 쓰면 기다리지 않고 그 자리에서 선다. */
+/** 한 번 구운 전신 — 같은 개체가 다시 쓰면 기다리지 않고 그 자리에서 선다. */
 const BAKED_ART = new Map<string, string>();
 
 const CENTER_X = L.right - L.width / 2;
@@ -22,8 +19,9 @@ const CENTER_Y = L.top + L.height / 2;
  * **단축 궁극기 연출** — 전신 컷인 대신 화면 위쪽 빈 띠(`ULTIMATE_MINI_BANNER`)에 스치는 일러스트 한 장.
  *
  * 일러스트는 보고 싶지만 화면을 덮거나 전투가 멈추는 것은 싫은 사람의 몫이다. 그래서 그 개체의 전신을
- * 얼굴~가슴께로 잘라 판 실루엣대로 구워(레이드 층의 얼굴 띠와 같은 길) 오른쪽 벽에서 **슈루룩** 밀어
- * 넣고, 머문 뒤 살짝 움츠렸다 **퓽** 하고 오른쪽으로 빠져나간다. 손은 받지 않고 전투는 아래에서 계속 흐른다.
+ * **자르지 않고** 원화의 그림 상자(`content`) 그대로 한 장 구워, 판 오른쪽에 발을 딛고 머리는 판 위로 솟게
+ * 세운다. 오른쪽 벽에서 **슈루룩** 밀어 넣고, 머문 뒤 살짝 움츠렸다 **퓽** 하고 오른쪽으로 빠져나간다.
+ * 손은 받지 않고 전투는 아래에서 계속 흐른다.
  *
  * 움직임은 위치·가로 배율·투명도뿐이다 — 판을 다시 그리지 않으므로 난전 중에도 가볍다.
  * 시간은 배속을 받지 않는다(`ULTIMATE_MINI_BANNER_TIMING`) — 3배속에서도 그림과 이름이 읽혀야 한다.
@@ -46,7 +44,7 @@ class UltimateMiniBanner extends Phaser.GameObjects.Container {
     shrinkTextToWidth(name, L.textWidth);
     shrinkTextToWidth(skill, L.textWidth);
     this.add([name, skill]);
-    void this.loadArt(relic, shape);
+    void this.loadArt(relic);
     // 슈루룩 — 오른쪽 밖에서 가로로 조금 늘어난 채 미끄러져 들어와 제자리에서 살짝 넘쳤다 선다.
     this.x = CENTER_X + L.width * 0.9;
     this.setAlpha(0).setScale(1.1, 1);
@@ -55,31 +53,40 @@ class UltimateMiniBanner extends Phaser.GameObjects.Container {
     scene.time.delayedCall(enterMs + holdMs, () => this.zipOut());
   }
 
-  /** 일러스트 띠를 구워 판 바로 위(글 아래)에 끼운다. 이미 구웠으면 기다리지 않는다. */
-  private async loadArt(relic: RelicDef, shape: readonly number[]): Promise<void> {
+  /** 전신을 구워 판 오른쪽(글 위)에 세운다. 이미 구웠으면 기다리지 않는다. */
+  private async loadArt(relic: RelicDef): Promise<void> {
     const asset = relicAppearanceManager.portraitAssetFor(relic.id);
-    const cacheKey = `${asset.url}:${L.width}x${L.height}`;
+    const size = figureSize(asset);
+    const cacheKey = `${asset.url}:${size.width}x${size.height}`;
     const cached = BAKED_ART.get(cacheKey);
     if (cached && this.scene.textures.exists(cached)) {
-      this.addAt(this.scene.add.image(0, 0, cached), 1);
+      this.addFigure(cached, size, false);
       return;
     }
-    const { art } = L;
-    const key = await withPuppetTexture(this.scene, asset, ({ key: source, anchors }) => {
+    const key = await withPuppetTexture(this.scene, asset, ({ key: source }) => {
       if (!this.active) return undefined;
-      const crop = computeFaceBandFrame(asset, anchors.head, {
-        width: Math.round(L.width * (1 - art.from)), height: L.height,
-        crop: art.crop / portraitCardZoom(asset),
-        headX: art.headX, anchorY: art.anchorY,
-      });
-      return bakeBandTexture(this.scene, source, { width: L.width, height: L.height }, crop, { shape, from: art.from, fade: art.fade });
+      return bakeFigure(this.scene, source, asset, size);
     }).catch(() => undefined);
     if (!key) return;
     BAKED_ART.set(cacheKey, key);
     if (!this.active) return;
-    const image = this.scene.add.image(0, 0, key).setAlpha(0);
-    this.addAt(image, 1);
-    this.scene.tweens.add({ targets: image, alpha: 1, duration: 140 });
+    this.addFigure(key, size, true);
+  }
+
+  /** 발은 판 밑동 바로 위, 몸은 판 오른쪽 — 검은 복제 한 겹이 밝은 전장에서 실루엣을 떼어 놓는다. */
+  private addFigure(key: string, size: { width: number; height: number }, fadeIn: boolean): void {
+    const { figure } = L;
+    const x = L.width / 2 - figure.right - size.width / 2;
+    const y = L.height / 2 - figure.footInset;
+    const shadow = this.scene.add.image(x + 6, y + 6, key).setOrigin(0.5, 1).setTintFill(0x000000).setAlpha(0.45);
+    const image = this.scene.add.image(x, y, key).setOrigin(0.5, 1);
+    this.add([shadow, image]);
+    if (!fadeIn) return;
+    for (const part of [shadow, image]) {
+      const to = part.alpha;
+      part.setAlpha(0);
+      this.scene.tweens.add({ targets: part, alpha: to, duration: 140 });
+    }
   }
 
   /** 퓽 — 살짝 왼쪽으로 움츠렸다가 가로로 늘어나며 오른쪽 벽 밖으로 튕겨 나간다. */
@@ -117,6 +124,38 @@ class UltimateMiniBanner extends Phaser.GameObjects.Container {
     this.scene.tweens.killTweensOf(this);
     return true;
   }
+}
+
+/** 전신이 설 크기 — 높이에 맞추되 폭이 넘치는 원화는 폭에 맞춘다. 비율은 원화의 그림 상자 그대로다. */
+function figureSize(asset: PuppetAsset): { width: number; height: number } {
+  const { figure } = L;
+  const contentWidth = Math.max(1, asset.content.right - asset.content.left);
+  const contentHeight = Math.max(1, asset.content.bottom - asset.content.top);
+  const scale = Math.min(figure.height / contentHeight, figure.maxWidth / contentWidth);
+  return { width: Math.round(contentWidth * scale), height: Math.round(contentHeight * scale) };
+}
+
+/** 원화의 그림 상자를 통째로 작은 캔버스에 굽는다 — 원본은 굽는 동안만 붙잡는다. */
+function bakeFigure(scene: Phaser.Scene, sourceKey: string, asset: PuppetAsset, size: { width: number; height: number }): string {
+  const key = `ult-figure:${sourceKey}:${size.width}x${size.height}`;
+  if (scene.textures.exists(key)) return key;
+  const source = scene.textures.get(sourceKey).getSourceImage() as CanvasImageSource & { width: number; height: number };
+  const canvas = scene.textures.createCanvas(key, size.width, size.height);
+  if (!canvas) return sourceKey;
+  // 텍스처가 원화와 다른 해상도로 올라왔어도 그림 상자는 같은 비율로 짚는다.
+  const sx = source.width / Math.max(1, asset.imageWidth);
+  const sy = source.height / Math.max(1, asset.imageHeight);
+  const { content } = asset;
+  const ctx = canvas.getContext();
+  ctx.clearRect(0, 0, size.width, size.height);
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(
+    source,
+    content.left * sx, content.top * sy, (content.right - content.left) * sx, (content.bottom - content.top) * sy,
+    0, 0, size.width, size.height,
+  );
+  canvas.refresh();
+  return key;
 }
 
 /**

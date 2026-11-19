@@ -329,21 +329,22 @@ export function scoreRankingRowTop(index: number, pinned = false): number {
  * 칸은 하나뿐이다 — 다른 렐릭이 궁극기를 쓰면 지금 판이 뒤로 비켜 녹고 새 판이 그 자리로 미끄러져 든다.
  */
 export const ULTIMATE_MINI_BANNER = {
-  /** 판은 오른쪽 벽에 붙는다 — 시계·정지 버튼(~110) 아래, 전장 바닥(~600) 위의 빈 띠. */
+  /** 판은 오른쪽 벽에 붙는다 — 시계·정지 버튼(~100) 아래, 전장 바닥(~600) 위의 빈 띠. */
   right: 1080,
   top: 236,
-  width: 540,
+  width: 580,
   height: 220,
   /** 깎인 두 모서리(왼쪽 위·오른쪽 아래)의 깊이 — 판 높이에 대한 비율. */
   bevel: 0.3,
   /**
-   * 전신 원화를 얼굴~가슴께로 잘라 판 실루엣대로 굽는다(레이드 층의 얼굴 띠와 같은 길).
-   * `from`부터 그림이 서고 `fade`만큼 왼쪽이 녹아 글이 서는 자리가 어둡게 남는다.
+   * 전신 원화를 **자르지 않고** 통째로 세운다 — 판 오른쪽에 발을 딛고 머리는 판 윗변 위로 솟는다.
+   * 높이 `height`에 맞추되 폭이 `maxWidth`를 넘는 원화(날개·드론)는 폭에 맞춰 줄인다.
+   * 머리 끝은 정지 버튼(밑변 ~98) 아래에 머문다: 236 + 220 − footInset − height ≥ 110.
    */
-  art: { from: 0.16, fade: 0.34, crop: 0.5, headX: 0.56, anchorY: 0.4 },
-  /** 글은 왼쪽 아래 — 개체 이름(작게) 위, 궁극기 이름(크게) 아래. */
+  figure: { height: 330, maxWidth: 220, right: 20, footInset: 12 },
+  /** 글은 왼쪽 — 개체 이름(작게) 위, 궁극기 이름(크게) 아래. 오른쪽은 전신의 자리다. */
   textLeft: 34,
-  textWidth: 330,
+  textWidth: 290,
   nameY: 34,
   skillY: 70,
   nameSize: 24,

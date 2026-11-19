@@ -408,8 +408,8 @@ test("전투 조작 칩으로 모든 배속과 자동 궁극기를 전환한다"
   await captureGame(page, `test-results/${test.info().project.name}-battle-controls.png`);
   // 단축에서는 컷인 대신 화면 위쪽에 일러스트 판이 미끄러져 들고 전투는 멈추지 않는다.
   await expect.poll(async () => (await battle(page))?.miniBanners ?? 0, { timeout: 60_000 }).toBeGreaterThan(0);
-  // 슈루룩 들어와 일러스트가 구워져 설 때까지 한 박자 기다린다.
-  await page.waitForTimeout(450);
+  // 슈루룩 들어와 전신이 구워져 설 때까지 기다린다.
+  await page.waitForTimeout(900);
   await captureGame(page, `test-results/${test.info().project.name}-battle-ultimate-short.png`);
 });
 

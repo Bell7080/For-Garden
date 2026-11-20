@@ -550,4 +550,8 @@ export const MISC_JA = {
   "profile.frameGuide.firstPayment": "プロフィール写真にかぶせる金色のフレームです。アカウントの初回決済で一度だけ受け取れ、受け取るとプロフィールカスタムのフレーム一覧から選べます。",
   "trade.tag.season": "シーズン",
   "archaeology.synth.bag": "ルーンバッグ",
+  "title.login.soon": "準備中",
+  "title.login.soonTitle": "準備中です！",
+  "title.login.soonBody": "{provider}ログインはまだ準備中です！\n今はゲストで始めるか、認証のいらないIDアカウントを作ってください。",
+  "title.login.provider.email": "メール",
 } as const;

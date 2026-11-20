@@ -573,4 +573,8 @@ export const MISC_KO = {
   "profile.frameGuide.firstPayment": "프로필 사진에 씌우는 금빛 테두리입니다. 계정 첫 결제 때 한 번만 받으며, 받으면 프로필 꾸미기의 테두리 목록에서 고를 수 있습니다.",
   "trade.tag.season": "시즌",
   "archaeology.synth.bag": "룬 가방",
+  "title.login.soon": "준비 중",
+  "title.login.soonTitle": "준비 중이에요!",
+  "title.login.soonBody": "{provider} 로그인은 아직 준비 중이에요!\n지금은 게스트로 시작하거나, 인증이 필요 없는 아이디 계정을 만들어 주세요.",
+  "title.login.provider.email": "이메일",
 } as const;

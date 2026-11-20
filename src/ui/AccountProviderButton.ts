@@ -7,7 +7,7 @@ import { squeezeTextToWidth } from "./textFit";
 import { textStyle } from "./theme";
 
 const MARK: Readonly<Record<AccountButtonKind, GlyphName>> = {
-  google: "brand-google", apple: "brand-apple", password: "id-card", email: "mail", history: "receipt", restore: "restore",
+  guest: "sortie", google: "brand-google", apple: "brand-apple", password: "id-card", email: "mail", history: "receipt", restore: "restore",
 };
 
 export interface AccountProviderButtonOptions {
@@ -17,6 +17,12 @@ export interface AccountProviderButtonOptions {
   linked?: boolean;
   /** 누를 일. 없으면 눌리지 않는 표시판이다(이미 이어진 아이디처럼 해제할 길이 없는 수단). */
   onClick?: () => void;
+  /** 판 크기. 없으면 계정 판의 두 칸 격자 크기(`ACCOUNT_BUTTON`)다 — 타이틀의 로그인 줄은 한 줄짜리라 넓다. */
+  width?: number;
+  height?: number;
+  labelSize?: number;
+  /** 아직 열리지 않은 수단 — 오른쪽에 「준비 중」 딱지가 서고 판이 한 톤 가라앉는다. 눌리면 안내가 뜬다. */
+  soonLabel?: string;
 }
 
 /**
@@ -30,18 +36,31 @@ export class AccountProviderButton extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number, options: AccountProviderButtonOptions) {
     super(scene, x, y);
     const tone = ACCOUNT_BUTTON_TONE[options.kind];
-    const shape = chipPoints(B.width, B.height, { bevel: { topLeft: B.bevel, bottomRight: B.bevel } });
-    const left = -B.width / 2;
+    const width = options.width ?? B.width;
+    const height = options.height ?? B.height;
+    const shape = chipPoints(width, height, { bevel: { topLeft: B.bevel, bottomRight: B.bevel } });
+    const left = -width / 2;
     this.add(drawLayer(scene, 0, 0, shape, { fill: tone.fill, alpha: tone.alpha * (options.linked ? 0.82 : 1), shadow: { x: 0, y: 8 } }));
     this.add(drawShapeOutline(scene, 0, 0, shape, { color: tone.outline, alpha: tone.outlineAlpha, width: 2 }));
     this.add(drawGlyph(scene, MARK[options.kind], left + B.markX, 0, B.markSize, tone.mark, 1, Math.max(3, B.markSize * 0.09)));
-    const label = scene.add.text(left + B.labelX, 0, options.label, textStyle({ role: "emphasis", size: B.labelSize, color: tone.ink })).setOrigin(0, 0.5);
-    squeezeTextToWidth(label, B.width - B.labelX - B.labelRight);
+    const label = scene.add.text(left + B.labelX, 0, options.label, textStyle({ role: "emphasis", size: options.labelSize ?? B.labelSize, color: tone.ink })).setOrigin(0, 0.5);
+    let labelRoom = width - B.labelX - B.labelRight;
+    if (options.soonLabel) {
+      const soon = B.soon;
+      const tag = scene.add.text(0, 0, options.soonLabel, textStyle({ role: "emphasis", size: soon.fontSize, color: soon.ink })).setOrigin(0.5);
+      const tagWidth = tag.width + soon.padX * 2;
+      const tagX = width / 2 - soon.right - tagWidth / 2;
+      tag.setX(tagX);
+      this.add([drawLayer(scene, tagX, 0, chipPoints(tagWidth, soon.height, { bevel: { topLeft: 9, bottomRight: 9 } }), { fill: soon.fill, alpha: soon.alpha, shadow: false }), tag]);
+      labelRoom = Math.min(labelRoom, width - B.labelX - tagWidth - soon.right - 16);
+    }
+    squeezeTextToWidth(label, labelRoom);
     this.add(label);
-    if (options.linked) this.add(drawGlyph(scene, "check", B.width / 2 - B.checkX, 0, B.checkSize, options.kind === "google" ? 0x34a853 : tone.mark));
+    if (options.linked) this.add(drawGlyph(scene, "check", width / 2 - B.checkX, 0, B.checkSize, options.kind === "google" ? 0x34a853 : tone.mark));
+    if (options.soonLabel) this.setAlpha(B.soonAlpha);
     if (options.onClick) {
       const action = options.onClick;
-      const hit = scene.add.rectangle(0, 0, B.width, B.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => pressIn(this));
       hit.on("pointerout", () => pressOut(this, "normal", { pop: false }));
       hit.on("pointerup", () => { pressOut(this); action(); });

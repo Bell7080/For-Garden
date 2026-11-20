@@ -528,4 +528,8 @@ export const MISC_ZH_HANS = {
   "profile.frameGuide.firstPayment": "套在头像照片上的金色头像框。仅在账号首次付费时获得一次，获得后可在个人资料装扮的头像框列表中选择。",
   "trade.tag.season": "赛季",
   "archaeology.synth.bag": "符文背包",
+  "title.login.soon": "准备中",
+  "title.login.soonTitle": "正在准备中！",
+  "title.login.soonBody": "{provider}登录还在准备中！\n现在请以访客身份开始，或创建无需验证的ID账号。",
+  "title.login.provider.email": "邮箱",
 } as const;

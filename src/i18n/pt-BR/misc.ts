@@ -528,4 +528,8 @@ export const MISC_PT_BR = {
   "profile.frameGuide.firstPayment": "Uma moldura dourada para a foto de perfil. É recebida só uma vez, na primeira compra da conta, e depois aparece na lista de molduras ao personalizar o perfil.",
   "trade.tag.season": "Temporada",
   "archaeology.synth.bag": "Bolsa de runas",
+  "title.login.soon": "Em breve",
+  "title.login.soonTitle": "Em breve!",
+  "title.login.soonBody": "O login com {provider} ainda não está pronto!\nPor enquanto, comece como visitante ou crie uma conta de ID sem verificação.",
+  "title.login.provider.email": "E-mail",
 } as const;

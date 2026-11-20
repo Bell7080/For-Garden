@@ -4,7 +4,7 @@
  */
 import type { AccountResult } from "./AccountApi";
 
-export type TicketCategory = "inquiry" | "bug" | "report" | "privacy" | "other";
+export type TicketCategory = "inquiry" | "bug" | "report" | "privacy" | "feedback" | "other";
 export type TicketStatus = "open" | "in_progress" | "answered" | "closed";
 export type SupportError = "unsupported" | "network" | "no_player" | "invalid_category" | "invalid_text" | "rate_limited" | "not_found" | "ticket_closed";
 
@@ -42,6 +42,21 @@ export class SupportApi {
     if (!r.ok) return r;
     const v = r.value as { id?: string; ticket_no?: number };
     return typeof v.id === "string" && typeof v.ticket_no === "number" ? { ok: true, value: { id: v.id, ticketNo: v.ticket_no } } : { ok: false, error: "network" };
+  }
+
+  /** 게임 안 피드백(응원 메시지 포함). 첫 피드백이면 서버가 젬 500을 우편으로 보내고 `rewarded`로 알린다. */
+  async submitFeedback(body: string): Promise<SupportResult<{ rewarded: boolean }>> {
+    const r = await this.call("submit_feedback", { p_body: body, p_version: this.meta.version, p_platform: this.meta.platform });
+    if (!r.ok) return r;
+    const v = r.value as { rewarded?: unknown };
+    return { ok: true, value: { rewarded: v?.rewarded === true } };
+  }
+
+  /** 첫 피드백 보상을 이미 받았는가 — 창이 보상 줄을 세울지 고를 때만 쓴다. */
+  async feedbackRewarded(): Promise<SupportResult<boolean>> {
+    const r = await this.call("my_feedback_status", {});
+    if (!r.ok) return r;
+    return { ok: true, value: (r.value as { rewarded?: unknown } | null)?.rewarded === true };
   }
 
   async listMine(): Promise<SupportResult<TicketSummary[]>> {

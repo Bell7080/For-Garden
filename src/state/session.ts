@@ -69,6 +69,8 @@ export interface GameSettings {
     formationRoleHint: boolean;
     /** 단일 연구 결산의 「한 번 더」를 한 번이라도 눌렀는가. 누르기 전까지 화살표가 그 버튼을 가리킨다 — 기기 선호다. */
     pullAgainTaught: boolean;
+    /** 1-10을 넘긴 뒤 로비가 피드백·사전예약 안내를 한 번 띄웠는가(기기 기록 — 젬 지급 판정은 서버가 한다). */
+    feedbackAsked: boolean;
     /** 광고를 봐야 받는 보상(돌림판 광고 보너스 등)에도 붉은 점을 세우는가. 공짜 보상이 아니라 기본은 끔이다 — 기기 선호다. */
     adRewardDot: boolean;
     /** 궁극기 연출 — 켜기(전신 컷인) · 단축(상단 작은 알림, 전투는 멈추지 않는다) · 스킵. */

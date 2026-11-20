@@ -528,4 +528,8 @@ export const MISC_ID = {
   "profile.frameGuide.firstPayment": "Bingkai emas untuk foto profil. Hanya diterima sekali pada pembelian pertama akun, lalu bisa dipilih di daftar bingkai pada kustomisasi profil.",
   "trade.tag.season": "Musim",
   "archaeology.synth.bag": "Tas Rune",
+  "title.login.soon": "Segera hadir",
+  "title.login.soonTitle": "Masih disiapkan!",
+  "title.login.soonBody": "Masuk dengan {provider} belum siap!\nUntuk sekarang, mulai sebagai tamu atau buat akun ID tanpa verifikasi ya.",
+  "title.login.provider.email": "Email",
 } as const;

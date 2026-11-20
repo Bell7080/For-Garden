@@ -530,4 +530,8 @@ export const MISC_EN = {
   "profile.frameGuide.firstPayment": "A golden frame for your profile picture. It's given only once, with your account's first purchase, and then appears in the frame list under Customize Profile.",
   "trade.tag.season": "Season",
   "archaeology.synth.bag": "Rune Bag",
+  "title.login.soon": "Coming soon",
+  "title.login.soonTitle": "Coming soon!",
+  "title.login.soonBody": "{provider} sign-in isn't ready yet!\nFor now, start as a guest or create an ID account that needs no verification.",
+  "title.login.provider.email": "Email",
 } as const;

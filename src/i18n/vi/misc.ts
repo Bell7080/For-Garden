@@ -528,4 +528,8 @@ export const MISC_VI = {
   "profile.frameGuide.firstPayment": "Khung vàng cho ảnh hồ sơ. Chỉ nhận một lần khi tài khoản nạp lần đầu, sau đó có thể chọn trong danh sách khung ở mục tùy chỉnh hồ sơ.",
   "trade.tag.season": "Mùa",
   "archaeology.synth.bag": "Túi Rune",
+  "title.login.soon": "Sắp ra mắt",
+  "title.login.soonTitle": "Đang chuẩn bị nha!",
+  "title.login.soonBody": "Đăng nhập bằng {provider} vẫn đang chuẩn bị!\nBây giờ hãy bắt đầu với tư cách khách hoặc tạo tài khoản ID không cần xác thực nhé.",
+  "title.login.provider.email": "Email",
 } as const;

@@ -617,5 +617,265 @@
     "Denúncia: {name}",
     "Meldung: {name}",
     "Жалоба: {name}"
+  ],
+  "support.category.feedback": [
+    "反馈",
+    "ความคิดเห็น",
+    "Góp ý",
+    "Masukan",
+    "Comentarios",
+    "Feedback",
+    "Feedback",
+    "Отзыв"
+  ],
+  "settings.account.feedback": [
+    "反馈",
+    "ความคิดเห็น",
+    "Góp ý",
+    "Masukan",
+    "Comentarios",
+    "Feedback",
+    "Feedback",
+    "Отзыв"
+  ],
+  "settings.account.homepage": [
+    "官方网站",
+    "เว็บไซต์ทางการ",
+    "Trang chủ chính thức",
+    "Situs resmi",
+    "Web oficial",
+    "Site oficial",
+    "Offizielle Website",
+    "Официальный сайт"
+  ],
+  "feedback.title": [
+    "给开发者留句话",
+    "ฝากถึงผู้พัฒนา",
+    "Gửi nhà phát triển",
+    "Pesan untuk pengembang",
+    "Unas palabras al desarrollador",
+    "Um recado ao desenvolvedor",
+    "Ein Wort an den Entwickler",
+    "Пару слов разработчику"
+  ],
+  "feedback.greeting": [
+    "队长，你都走到这里啦！跟我说说到现在感觉怎么样吧。我会一字不落地转告开发者！",
+    "กัปตัน มาถึงตรงนี้แล้วเหรอ! เล่าให้ฟังหน่อยว่าที่ผ่านมาเป็นยังไงบ้าง เดี๋ยวจะส่งต่อให้ผู้พัฒนาครบทุกคำเลย!",
+    "Đội trưởng đã đi tới đây rồi! Kể em nghe đến giờ thấy thế nào nhé. Em sẽ chuyển đủ từng chữ cho nhà phát triển!",
+    "Kapten, sudah sampai sini ya! Ceritakan sedikit bagaimana sejauh ini. Akan kusampaikan ke pengembang tanpa ada yang terlewat!",
+    "¡Capitán, ya llegaste hasta aquí! Cuéntame qué tal te ha parecido. ¡Le pasaré cada palabra al desarrollador!",
+    "Capitão, já chegou até aqui! Conte como está sendo até agora. Vou passar cada palavra ao desenvolvedor!",
+    "Captain, du hast es bis hierher geschafft! Erzähl mir, wie es bisher war. Ich gebe jedes Wort an den Entwickler weiter!",
+    "Капитан, вот это путь! Расскажите, как вам пока что. Я передам разработчику всё до последнего слова!"
+  ],
+  "feedback.reward": [
+    "首次反馈谢礼 ×{amount}",
+    "ของขวัญขอบคุณความคิดเห็นแรก ×{amount}",
+    "Quà cảm ơn góp ý đầu tiên ×{amount}",
+    "Hadiah terima kasih masukan pertama ×{amount}",
+    "Regalo por tu primer comentario ×{amount}",
+    "Presente pelo primeiro feedback ×{amount}",
+    "Dankeschön fürs erste Feedback ×{amount}",
+    "Подарок за первый отзыв ×{amount}"
+  ],
+  "feedback.rewardDone": [
+    "谢礼已经领过啦。不过随时都欢迎告诉我！",
+    "รับของขวัญขอบคุณไปแล้วนะ แต่เล่าให้ฟังได้ตลอดเลย!",
+    "Quà cảm ơn đã nhận rồi. Nhưng lúc nào cũng cứ kể nhé!",
+    "Hadiahnya sudah diterima. Tapi kapan pun boleh cerita lagi!",
+    "El regalo ya está recibido. ¡Pero cuéntame cuando quieras!",
+    "O presente já foi recebido. Mas pode contar quando quiser!",
+    "Das Dankeschön ist schon abgeholt. Erzähl trotzdem jederzeit!",
+    "Подарок уже получен. Но пишите когда угодно!"
+  ],
+  "feedback.placeholder": [
+    "好玩的地方、不足的地方，什么都行",
+    "จุดที่สนุก จุดที่ยังขาด อะไรก็ได้",
+    "Điều vui, điều chưa ổn, gì cũng được",
+    "Yang seru, yang kurang, apa saja boleh",
+    "Lo divertido, lo que faltó, lo que sea",
+    "O que foi divertido, o que faltou, qualquer coisa",
+    "Was Spaß gemacht hat, was gefehlt hat, alles ist willkommen",
+    "Что понравилось, чего не хватило — что угодно"
+  ],
+  "feedback.cheer": [
+    "没有反馈的话，留句加油也好！听说开发者靠那一句话就能熬过通宵。",
+    "ถ้าไม่มีความคิดเห็น ฝากข้อความเป็นกำลังใจก็ได้นะ! ได้ยินว่าผู้พัฒนาใช้ประโยคเดียวนั้นอดหลับอดนอนทำงานไหว",
+    "Nếu không có góp ý thì để lại lời cổ vũ cũng được! Nghe nói nhà phát triển nhờ một dòng đó mà trụ qua đêm thức trắng.",
+    "Kalau tidak ada masukan, tinggalkan pesan semangat juga boleh! Katanya pengembang bisa begadang hanya dengan satu kalimat itu.",
+    "Si no tienes comentarios, ¡deja aunque sea un mensaje de ánimo! Dicen que el desarrollador aguanta las noches en vela con esa sola línea.",
+    "Se não tiver feedback, deixe pelo menos uma mensagem de apoio! Dizem que o desenvolvedor aguenta a madrugada só com essa linha.",
+    "Kein Feedback? Dann hinterlass wenigstens ein paar aufmunternde Worte! Angeblich übersteht der Entwickler damit ganze Nachtschichten.",
+    "Нет отзыва? Оставьте хотя бы слова поддержки! Говорят, разработчик на одной такой строчке переживает бессонные ночи."
+  ],
+  "feedback.submit": [
+    "发送",
+    "ส่ง",
+    "Gửi",
+    "Kirim",
+    "Enviar",
+    "Enviar",
+    "Senden",
+    "Отправить"
+  ],
+  "feedback.later": [
+    "下次再说",
+    "ไว้คราวหน้านะ",
+    "Để lần sau",
+    "Lain kali saja",
+    "Mejor luego",
+    "Fica pra depois",
+    "Vielleicht später",
+    "В другой раз"
+  ],
+  "feedback.sent.title": [
+    "谢谢！",
+    "ขอบคุณนะ!",
+    "Cảm ơn nhé!",
+    "Terima kasih!",
+    "¡Gracias!",
+    "Obrigado!",
+    "Danke!",
+    "Спасибо!"
+  ],
+  "feedback.sent.body": [
+    "已经仔细记进日志了。一定会转告开发者的！",
+    "จดลงสมุดบันทึกไว้ครบแล้ว จะส่งต่อให้ผู้พัฒนาแน่นอน!",
+    "Em đã ghi cẩn thận vào nhật ký rồi. Nhất định sẽ chuyển cho nhà phát triển!",
+    "Sudah kucatat rapi di jurnal. Pasti kusampaikan ke pengembang!",
+    "Lo anoté todo en el diario. ¡Se lo pasaré al desarrollador sin falta!",
+    "Anotei tudo no diário. Vou passar ao desenvolvedor sem falta!",
+    "Ich habe alles sorgfältig ins Logbuch übertragen. Ich gebe es ganz sicher an den Entwickler weiter!",
+    "Всё аккуратно записано в журнал. Обязательно передам разработчику!"
+  ],
+  "feedback.sent.rewarded": [
+    "已经仔细记进日志了。一定会转告开发者的！\n作为谢礼，{amount}颗宝石已经通过邮件寄给你啦！",
+    "จดลงสมุดบันทึกไว้ครบแล้ว จะส่งต่อให้ผู้พัฒนาแน่นอน!\nใส่เจม {amount} เม็ดไว้ในกล่องจดหมายเป็นของขวัญขอบคุณแล้วนะ!",
+    "Em đã ghi cẩn thận vào nhật ký rồi. Nhất định sẽ chuyển cho nhà phát triển!\nEm đã để {amount} ngọc vào hộp thư làm quà cảm ơn!",
+    "Sudah kucatat rapi di jurnal. Pasti kusampaikan ke pengembang!\nSebagai hadiah terima kasih, {amount} permata sudah kutaruh di kotak surat!",
+    "Lo anoté todo en el diario. ¡Se lo pasaré al desarrollador sin falta!\n¡Te mandé {amount} gemas por correo como agradecimiento!",
+    "Anotei tudo no diário. Vou passar ao desenvolvedor sem falta!\nDeixei {amount} gemas na sua caixa de correio como agradecimento!",
+    "Ich habe alles sorgfältig ins Logbuch übertragen. Ich gebe es ganz sicher an den Entwickler weiter!\nAls Dankeschön liegen {amount} Juwelen in deinem Postfach!",
+    "Всё аккуратно записано в журнал. Обязательно передам разработчику!\nВ благодарность {amount} самоцветов уже лежат в почтовом ящике!"
+  ],
+  "homepage.title": [
+    "预约登记说明",
+    "ลงทะเบียนล่วงหน้า",
+    "Đăng ký trước",
+    "Pra-registrasi",
+    "Prerregistro",
+    "Pré-registro",
+    "Vorregistrierung",
+    "Предрегистрация"
+  ],
+  "homepage.greeting": [
+    "队长，正式出发的消息我会第一个帮你留意！只要在官网预约登记就好。",
+    "กัปตัน ข่าวเปิดตัวอย่างเป็นทางการเดี๋ยวฉันเก็บไว้ให้ก่อนใครเลย! แค่ลงทะเบียนล่วงหน้าที่เว็บไซต์ไว้ก็พอ",
+    "Đội trưởng, tin ra mắt chính thức em sẽ giữ cho đầu tiên! Chỉ cần đăng ký trước trên trang chủ thôi.",
+    "Kapten, kabar peluncuran resminya akan kuamankan paling dulu! Cukup pra-registrasi di situs resmi saja.",
+    "¡Capitán, yo me encargo de ser el primero en saber del lanzamiento! Solo haz el prerregistro en la web.",
+    "Capitão, eu garanto a notícia do lançamento antes de todo mundo! É só fazer o pré-registro no site.",
+    "Captain, die Neuigkeiten zum Start sichere ich dir als Erstes! Registrier dich einfach vorab auf der Website.",
+    "Капитан, о запуске вы узнаете раньше всех — я прослежу! Просто пройдите предрегистрацию на сайте."
+  ],
+  "homepage.body": [
+    "抢先获取正式上线消息和预约奖励！",
+    "รับข่าวเปิดตัวและรางวัลลงทะเบียนล่วงหน้าก่อนใคร!",
+    "Nhận tin ra mắt và quà đăng ký trước sớm nhất!",
+    "Dapatkan kabar peluncuran dan hadiah pra-registrasi paling awal!",
+    "¡Recibe antes que nadie las noticias del lanzamiento y las recompensas de prerregistro!",
+    "Receba antes de todos as notícias do lançamento e as recompensas do pré-registro!",
+    "Erhalte als Erstes Startnews und Vorregistrierungsbelohnungen!",
+    "Первыми узнавайте о запуске и получайте награды за предрегистрацию!"
+  ],
+  "homepage.go": [
+    "前往预约登记",
+    "ไปลงทะเบียนล่วงหน้า",
+    "Đi đăng ký trước",
+    "Pra-registrasi sekarang",
+    "Ir al prerregistro",
+    "Ir para o pré-registro",
+    "Zur Vorregistrierung",
+    "Перейти к предрегистрации"
+  ],
+  "homepage.later": [
+    "之后再看",
+    "ไว้ดูทีหลัง",
+    "Để sau",
+    "Nanti saja",
+    "Más tarde",
+    "Depois",
+    "Später",
+    "Позже"
+  ],
+  "beta.title": [
+    "公测前测试说明",
+    "ประกาศการทดสอบก่อนเบต้า",
+    "Thông báo thử nghiệm trước beta",
+    "Info uji coba pra-beta",
+    "Aviso de prueba pre-beta",
+    "Aviso de teste pré-beta",
+    "Hinweis zum Pre-Beta-Test",
+    "О тесте до беты"
+  ],
+  "beta.greeting": [
+    "那个，队长……可以跟你说一件事吗？这里还……没有正式开门哦。",
+    "เอ่อ กัปตัน… ขอบอกอะไรอย่างหนึ่งได้ไหม? ที่นี่ยัง… ไม่ได้เปิดประตูอย่างเป็นทางการเลยนะ",
+    "Ừm, đội trưởng… em nói một chuyện được không? Nơi này vẫn… chưa chính thức mở cửa đâu.",
+    "Anu, Kapten… boleh aku bilang satu hal? Tempat ini masih… belum resmi dibuka.",
+    "Eh, Capitán… ¿puedo decirte una cosa? Este lugar todavía… no ha abierto sus puertas oficialmente.",
+    "Hã, Capitão… posso contar uma coisa? Este lugar ainda… não abriu as portas oficialmente.",
+    "Ähm, Captain… darf ich dir etwas sagen? Dieser Ort… hat seine Türen noch nicht offiziell geöffnet.",
+    "Эм, капитан… можно я скажу одну вещь? Это место ещё… официально не открылось."
+  ],
+  "beta.line.stage": [
+    "现在连正式公测都还不是，是更早的「公测前测试」期间！",
+    "ตอนนี้ยังไม่ใช่แม้แต่เบต้าอย่างเป็นทางการ แต่เป็นช่วง \"ทดสอบก่อนเบต้า\" ที่มาก่อนหน้านั้นอีก!",
+    "Hiện tại còn chưa phải beta chính thức, mà là giai đoạn \"thử nghiệm trước beta\" sớm hơn nữa!",
+    "Sekarang bahkan belum beta resmi, melainkan masa \"uji coba pra-beta\" yang lebih awal!",
+    "¡Ahora ni siquiera es la beta oficial, sino el periodo anterior de «prueba pre-beta»!",
+    "Agora nem é o beta oficial, e sim o período anterior de \"teste pré-beta\"!",
+    "Das ist noch nicht mal die offizielle Beta, sondern die Phase davor: der „Pre-Beta-Test“!",
+    "Сейчас это даже не официальная бета, а более ранний период «теста до беты»!"
+  ],
+  "beta.line.unstable": [
+    "服务器偶尔会变慢，也可能一夜之间迎来天翻地覆的更新。",
+    "เซิร์ฟเวอร์อาจช้าบ้างเป็นบางครั้ง หรืออาจมีแพตช์ที่เปลี่ยนไปแบบพลิกโฉมในชั่วข้ามคืน",
+    "Máy chủ đôi khi có thể chậm, hoặc có bản vá thay đổi chóng mặt chỉ sau một đêm.",
+    "Server kadang bisa lambat, atau bisa ada patch yang mengubah banyak hal dalam semalam.",
+    "El servidor puede ir lento a veces, y podría llegar un parche que lo cambie todo de la noche a la mañana.",
+    "O servidor pode ficar lento às vezes, e pode vir um patch que muda tudo da noite para o dia.",
+    "Der Server kann mal hängen, und Patches können über Nacht vieles komplett umkrempeln.",
+    "Сервер может иногда подтормаживать, а патчи — резко всё менять за одну ночь."
+  ],
+  "beta.line.reset": [
+    "正式开服时，进度记录可能会重置。",
+    "บันทึกความคืบหน้าอาจถูกรีเซ็ตเมื่อเปิดให้บริการอย่างเป็นทางการ",
+    "Tiến trình có thể được đặt lại khi chính thức mở cửa.",
+    "Catatan kemajuan bisa kembali ke awal saat peluncuran resmi.",
+    "El progreso podría reiniciarse con la apertura oficial.",
+    "O progresso pode ser redefinido na abertura oficial.",
+    "Der Spielfortschritt kann zum offiziellen Start zurückgesetzt werden.",
+    "Прогресс может быть сброшен при официальном открытии."
+  ],
+  "beta.line.report": [
+    "发现奇怪的地方，就悄悄通过设置里的客户支持告诉我们吧！",
+    "ถ้าเจอจุดแปลกๆ แอบบอกผ่านฝ่ายช่วยเหลือในการตั้งค่าได้นะ!",
+    "Nếu thấy chỗ nào lạ, hãy khẽ báo qua Hỗ trợ khách hàng trong Cài đặt nhé!",
+    "Kalau menemukan yang aneh, kabari pelan-pelan lewat Bantuan pelanggan di Pengaturan ya!",
+    "Si encuentras algo raro, ¡avísanos por Atención al cliente en Ajustes!",
+    "Se encontrar algo estranho, avise pelo Atendimento ao cliente nas Configurações!",
+    "Wenn dir etwas komisch vorkommt, sag uns kurz über den Kundendienst in den Einstellungen Bescheid!",
+    "Если заметите что-то странное, тихонько сообщите через Поддержку в настройках!"
+  ],
+  "beta.ok": [
+    "知道啦！",
+    "เข้าใจแล้ว!",
+    "Hiểu rồi!",
+    "Mengerti!",
+    "¡Entendido!",
+    "Entendido!",
+    "Alles klar!",
+    "Понятно!"
   ]
 }

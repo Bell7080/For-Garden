@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { sourceClass } from "../helpers/sourceClass";
 
-function fixture() {
+function fixture(ready = true) {
   const id = vi.fn(), email = vi.fn(), login = vi.fn(), getState = vi.fn();
   const reconcile = vi.fn(() => false);
   const backend = vi.fn((): unknown => null);
@@ -11,7 +11,7 @@ function fixture() {
     destroy() {} setAlpha() { return this; }
   }
   const Title = sourceClass("src/scenes/TitleScene.ts", "TitleScene", {
-    Phaser: { Scene: class {} }, Button, t: (key: string) => key,
+    Phaser: { Scene: class {} }, AccountProviderButton: Button, loginProviderReady: () => ready, t: (key: string) => key,
     TITLE_LOGIN_LAYOUT: { width: 100, height: 40 }, titleLoginSlots: () => [1, 2, 3, 4, 5],
     openAccountIdPopup: id, openAccountEmailPopup: email, accountApi: { login, getState },
     legalConsentCurrent: () => true, legalConsentKey: () => "k", openLegalConsentPopup: vi.fn(),
@@ -21,12 +21,13 @@ function fixture() {
   });
   const scene = Object.assign(Object.create(Title.prototype), {
     scene: { isActive: () => true, start: vi.fn() }, loginButtons: [], entryGeneration: 1, entryPending: false,
-    popups: {}, showConnectFailure: vi.fn(),
+    popups: { confirm: vi.fn() }, showConnectFailure: vi.fn(),
   });
   const done = vi.fn(), enter = vi.fn();
   const build = () => scene.showLoginButtons(540, enter, false, done);
   const click = (key: string) => scene.loginButtons.find((b: Button) => b.config.label === `title.login.${key}`).config.onClick();
-  build(); return { scene, id, email, login, getState, reconcile, backend, startup, done, enter, click, build };
+  const button = (key: string) => scene.loginButtons.find((b: Button) => b.config.label === `title.login.${key}`);
+  build(); return { scene, button, id, email, login, getState, reconcile, backend, startup, done, enter, click, build };
 }
 
 describe("타이틀 인증창 단일 소유권", () => {
@@ -85,4 +86,16 @@ it("초기 설정을 못 읽은 원격 빌드는 로그인 전 재시도하고 �
   expect(f.startup).toHaveBeenCalledTimes(1);
   expect(f.reconcile).toHaveBeenCalledWith("new");
   expect(f.getState).not.toHaveBeenCalled(); expect(f.login).not.toHaveBeenCalled();
+});
+
+it("아직 열지 않은 로그인 수단은 「준비 중」 딱지로 서고 누르면 안내만 띄운다", () => {
+  const f = fixture(false);
+  for (const key of ["google", "apple", "email"]) {
+    expect(f.button(key).config.soonLabel).toBe("title.login.soon");
+    f.click(key);
+  }
+  expect(f.login).not.toHaveBeenCalled(); expect(f.email).not.toHaveBeenCalled();
+  expect(f.scene.popups.confirm).toHaveBeenCalledTimes(3);
+  expect(f.button("guest").config.soonLabel).toBeUndefined();
+  expect(f.button("account").config.soonLabel).toBeUndefined();
 });

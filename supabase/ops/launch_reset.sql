@@ -51,6 +51,7 @@ declare
     'public.support_tickets',
     'public.support_messages',
     'public.support_limits',
+    'public.feedback_rewards',
     'public.client_errors',
     'public.legal_consents',
     'public.account_deletion_requests',

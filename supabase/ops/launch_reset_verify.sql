@@ -6,7 +6,7 @@ with
   reset_tables(t) as (values
     ('public.player_saves'), ('public.player_assets'), ('public.player_adjustments'), ('public.asset_ledger'), ('public.currency_log'), ('public.game_events'), ('public.game_call_daily'), ('public.mail_claims'),
     ('public.coupon_redemptions'), ('public.coupon_attempts'), ('public.coupon_web_tickets'), ('public.request_receipts'),
-    ('public.support_tickets'), ('public.support_messages'), ('public.support_limits'), ('public.client_errors'), ('public.legal_consents'), ('public.account_deletion_requests'),
+    ('public.support_tickets'), ('public.support_messages'), ('public.support_limits'), ('public.feedback_rewards'), ('public.client_errors'), ('public.legal_consents'), ('public.account_deletion_requests'),
     ('public.server_public_profiles'), ('public.server_friend_edges'), ('public.arena_signals'), ('public.arena_ratings'), ('public.arena_rooms'), ('public.arena_seats'), ('public.arena_queue'), ('public.arena_receipts'), ('public.server_friend_favorites'),
     ('public.server_social_wallets'), ('public.server_rate_windows'), ('public.player_device_sessions'), ('public.gift_orders'), ('public.gift_sender_flags'), ('public.player_store_regions'), ('public.store_refund_events'), ('public.server_social_receipts'),
     ('public.server_competitive_scores'), ('public.server_competitive_results'), ('public.server_competitive_awards'),

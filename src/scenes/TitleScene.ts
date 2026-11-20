@@ -37,7 +37,9 @@ import { openChoicePicker } from "../ui/SettingsPicker";
 import { accountApi, type AccountFailureCode } from "../api/AccountApi";
 import { openAccountIdPopup } from "../ui/AccountIdPopup";
 import { backendAccount, connectProgress, disconnectProgress } from "../api/backendSession";
-import { Button } from "../ui/Button";
+import { AccountProviderButton } from "../ui/AccountProviderButton";
+import type { AccountButtonKind } from "../ui/accountButtonStyle";
+import { loginProviderReady, type LoginProvider } from "../core/accountProviders";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { motionPolicy } from "../core/settings";
 import { openSaveConflictPopup, type SaveConflictChoice } from "../ui/SaveConflictPopup";
@@ -144,7 +146,7 @@ export class TitleScene extends Phaser.Scene {
   /** 언어가 바뀌면 문장을 다시 읽어 갈아 끼울 글자들. 그릴 때 문장을 굳히지 않고 읽는 법을 들고 있다. */
   private localized: Array<{ text: Phaser.GameObjects.Text; read: () => string }> = [];
   private actionRow?: TitleActionRow;
-  private loginButtons: Button[] = [];
+  private loginButtons: Phaser.GameObjects.Container[] = [];
   private authAttempt?: symbol;
   private entryPending = false;
   private entryGeneration = 0;
@@ -637,8 +639,10 @@ export class TitleScene extends Phaser.Scene {
         else if (result.code !== "cancelled") this.showConnectFailure(result.code);
       }).catch(() => { if (current()) this.showConnectFailure("network-error"); }).finally(release);
     };
-    const entries: Array<{ labelKey: TextKey; onClick: () => void; primary?: boolean }> = [
-      { labelKey: "title.login.guest", onClick: () => {
+    // 아직 열지 않은 수단은 숨기지 않고 「준비 중」으로 세운다 — 누르면 게스트·아이디 계정으로 시작하라는 안내가 뜬다.
+    const soon = (provider: LoginProvider) => (): void => this.showLoginSoon(provider);
+    const entries: Array<{ kind: AccountButtonKind; labelKey: TextKey; onClick: () => void; provider?: LoginProvider }> = [
+      { kind: "guest", labelKey: "title.login.guest", onClick: gated(() => {
         const release = acquire();
         if (!release) return;
         void accountApi.getState().then((result) => {
@@ -647,28 +651,42 @@ export class TitleScene extends Phaser.Scene {
           if (result.ok) done();
           else this.showConnectFailure(result.code);
         }).catch(() => { if (current()) this.showConnectFailure("network-error"); }).finally(release);
-      }, primary: true },
-      { labelKey: "title.login.google", onClick: () => social("google") },
-      { labelKey: "title.login.apple", onClick: () => social("apple") },
-      { labelKey: "title.login.email", onClick: () => { if (!this.popups) return; const release = acquire(); if (release) openAccountEmailPopup(this, this.popups, "sign-in", done, release); } },
+      }) },
       // 메일 인증 없이 아이디·비밀번호로 만드는 계정. 다른 기기에서 같은 계정으로 이어서 키울 수 있다.
-      { labelKey: "title.login.account", onClick: () => { if (!this.popups) return; const release = acquire(); if (release) openAccountIdPopup(this, this.popups, { mode: "both", onDone: done, onClose: release }); } },
+      { kind: "password", labelKey: "title.login.account", onClick: gated(() => { if (!this.popups) return; const release = acquire(); if (release) openAccountIdPopup(this, this.popups, { mode: "both", onDone: done, onClose: release }); }) },
+      { kind: "google", provider: "google", labelKey: "title.login.google", onClick: gated(() => social("google")) },
+      { kind: "apple", provider: "apple", labelKey: "title.login.apple", onClick: gated(() => social("apple")) },
+      { kind: "email", provider: "email", labelKey: "title.login.email", onClick: gated(() => { if (!this.popups) return; const release = acquire(); if (release) openAccountEmailPopup(this, this.popups, "sign-in", done, release); }) },
     ];
     const ys = titleLoginSlots(entries.length);
     entries.forEach((entry, i) => {
-      const button = new Button(this, cx, ys[i], {
+      const closed = entry.provider !== undefined && !loginProviderReady(entry.provider);
+      const button = new AccountProviderButton(this, cx, ys[i], {
+        kind: entry.kind,
+        label: t(entry.labelKey),
         width: TITLE_LOGIN_LAYOUT.width,
         height: TITLE_LOGIN_LAYOUT.height,
-        label: t(entry.labelKey),
-        fontSize: 34,
-        variant: entry.primary ? "primary" : "default",
-        onClick: gated(entry.onClick),
+        labelSize: entry.kind === "guest" ? 34 : 31,
+        soonLabel: closed ? t("title.login.soon") : undefined,
+        onClick: closed && entry.provider ? soon(entry.provider) : entry.onClick,
       });
       this.loginButtons.push(button);
       if (fade) {
+        const settled = button.alpha;
         button.setAlpha(0);
-        this.tweens.add({ targets: button, alpha: 1, duration: 260, delay: i * 70 });
+        this.tweens.add({ targets: button, alpha: settled, duration: 260, delay: i * 70 });
       }
+    });
+  }
+
+  /** 아직 열지 않은 로그인 수단을 누르면 — 지금 쓸 수 있는 두 길(게스트·아이디 계정)을 안내한다. */
+  private showLoginSoon(provider: LoginProvider): void {
+    const name = provider === "google" ? "Google" : provider === "apple" ? "Apple" : t("title.login.provider.email");
+    this.popups?.confirm({
+      title: t("title.login.soonTitle"),
+      message: t("title.login.soonBody", { provider: name }),
+      confirmLabel: t("settings.action.confirm"),
+      cancelLabel: false,
     });
   }
 

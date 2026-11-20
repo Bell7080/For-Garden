@@ -528,4 +528,8 @@ export const MISC_TH = {
   "profile.frameGuide.firstPayment": "กรอบสีทองสำหรับรูปโปรไฟล์ ได้รับเพียงครั้งเดียวจากการชำระเงินครั้งแรกของบัญชี แล้วจะเลือกได้ในรายการกรอบของการตกแต่งโปรไฟล์",
   "trade.tag.season": "ซีซัน",
   "archaeology.synth.bag": "กระเป๋ารูน",
+  "title.login.soon": "เร็วๆ นี้",
+  "title.login.soonTitle": "กำลังเตรียมอยู่นะ!",
+  "title.login.soonBody": "การเข้าสู่ระบบด้วย {provider} ยังไม่พร้อมนะ!\nตอนนี้เริ่มแบบผู้เยี่ยมชม หรือสร้างบัญชี ID ที่ไม่ต้องยืนยันตัวตนก่อนนะ",
+  "title.login.provider.email": "อีเมล",
 } as const;

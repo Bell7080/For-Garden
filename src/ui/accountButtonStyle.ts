@@ -8,7 +8,7 @@
  *
  * Phaser를 읽지 않는다 — 화면과 테스트가 같은 표를 읽는다.
  */
-export type AccountButtonKind = "password" | "google" | "apple" | "email" | "history" | "restore";
+export type AccountButtonKind = "guest" | "password" | "google" | "apple" | "email" | "history" | "restore";
 
 export interface AccountButtonTone {
   /** 판 면 색과 불투명도. 상표 버튼은 상표 면이라 유리처럼 비치지 않는다. */
@@ -26,6 +26,8 @@ export interface AccountButtonTone {
 export const ACCOUNT_BUTTON_TONE: Readonly<Record<AccountButtonKind, AccountButtonTone>> = {
   google: { fill: 0xffffff, alpha: 1, outline: 0xdadce0, outlineAlpha: 1, ink: "#1f1f1f", mark: 0x4285f4 },
   apple: { fill: 0x000000, alpha: 1, outline: 0x5a5d63, outlineAlpha: 0.9, ink: "#ffffff", mark: 0xffffff },
+  // 게스트는 이 게임 자신의 첫 길이라 강조색(호박빛)으로 가장 먼저 읽힌다.
+  guest: { fill: 0x5a4114, alpha: 0.97, outline: 0xf2c66d, outlineAlpha: 0.9, ink: "#fff4dc", mark: 0xffd98a },
   password: { fill: 0x1c3a42, alpha: 0.96, outline: 0x6fd3e0, outlineAlpha: 0.7, ink: "#e8fbff", mark: 0x8fe6f2 },
   email: { fill: 0x1f3a73, alpha: 0.96, outline: 0x7fa6ff, outlineAlpha: 0.7, ink: "#eef3ff", mark: 0xa9c3ff },
   history: { fill: 0x2a2418, alpha: 0.94, outline: 0xd8b978, outlineAlpha: 0.6, ink: "#f2e4c4", mark: 0xd8b978 },
@@ -47,6 +49,10 @@ export const ACCOUNT_BUTTON = {
   /** 연결된 수단의 체크 표식(판 오른쪽 끝에서 가운데까지). */
   checkX: 36,
   checkSize: 28,
+  /** 아직 열리지 않은 수단의 「준비 중」 딱지(판 오른쪽 끝에서 가운데까지 · 높이 · 글자). */
+  soon: { right: 20, height: 40, padX: 16, fontSize: 21, fill: 0x2b2f36, ink: "#ffe08a", alpha: 0.92 },
+  /** 준비 중인 수단 판 전체의 진하기 — 눌리지만(안내가 뜬다) 열린 수단보다 한 톤 가라앉는다. */
+  soonAlpha: 0.78,
 } as const;
 
 /** 계정 판 안의 두 칸 격자. 왼쪽 칸 가운데 x, 오른쪽 칸 가운데 x, 줄 간격. */

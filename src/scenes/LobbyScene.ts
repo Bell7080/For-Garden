@@ -6,10 +6,14 @@ import { openChestForgePopup } from "../ui/ChestForgePopup";
 import { openDelophyHuntPopup } from "../ui/DelophyHuntPopup";
 import { openShuteFishingPopup } from "../ui/ShuteFishingPopup";
 import { nicknameCreationRequired } from "../core/playerCard";
+import { openBetaNoticePopup } from "../ui/BetaNoticePopup";
+import { openFeedbackPopup } from "../ui/FeedbackPopup";
+import { openHomepagePopup } from "../ui/HomepagePopup";
 import { ARENA_TONE } from "../ui/arenaTheme";
 import { addArenaMascots } from "../ui/ArenaMascots";
 import { followTutorialTarget } from "../ui/tutorialTarget";
 import { tutorialManager } from "../managers/TutorialManager";
+import { settingsManager } from "../managers/SettingsManager";
 import Phaser from "phaser";
 import { shapeClipMask } from "../ui/popupArt";
 import type { PuppetCreature } from "../puppets/assets";
@@ -139,6 +143,9 @@ const EXCHANGE_BLUE = COLOR.exchange;
 const ATTENDANCE_AUTO_POPUP = import.meta.env?.MODE !== "test";
 /** 다른 판(레벨업 알림 등)이 닫히기를 기다리는 간격과 횟수. 넘기면 오늘은 저절로 열지 않는다. */
 const ATTENDANCE_AUTO_WAIT = { stepMs: 400, tries: 60 } as const;
+/** 피드백 창을 묻는 관문과, 로비가 선 뒤(열림 연출·토스트가 지나간 뒤) 기다리는 시간. */
+const FEEDBACK_ASK_STAGE = "1-10";
+const FEEDBACK_ASK_DELAY_MS = 1600;
 
 const SORTIE_MENU = {
   panel: SORTIE_MENU_PANEL,
@@ -424,6 +431,7 @@ export class LobbyScene extends Phaser.Scene {
         if (!this.scene.isActive()) return;
         this.input.enabled = true;
         releaseUnlockCelebrations(this);
+        if (!this.returnMenu) this.time.delayedCall(FEEDBACK_ASK_DELAY_MS, () => this.maybeAskFeedback());
       };
       const announce = (): void => {
         if (!this.scene.isActive()) return;
@@ -444,7 +452,9 @@ export class LobbyScene extends Phaser.Scene {
       openNicknameEditor(this, this.popupLayer, () => {
         if (!this.scene.isActive() || session.playerCard.nickname === "") return;
         managerEvents.publish("publicProfile", { profile: playerProfileDisplay(session, profileModifierManager.equipped()) });
-        continueEntry();
+        // 처음 이름을 정한 사람에게 한 번 — 지금은 정식 베타도 아닌 「베타 전 테스트」 기간이라는 안내가 선 뒤에 로비가 이어진다.
+        if (this.popupLayer) openBetaNoticePopup(this, this.popupLayer, { onClosed: () => this.time.delayedCall(0, continueEntry) });
+        else continueEntry();
       }, true);
     } else this.time.delayedCall(0, continueEntry);
 
@@ -539,6 +549,23 @@ export class LobbyScene extends Phaser.Scene {
       };
       this.whenPopupsClear(() => { void attendanceManager.markAutoShown(); openNext(); }, finish);
     }).catch(finish);
+  }
+
+  /**
+   * 1-10을 넘긴 사람에게 로비가 한 번 — 피드백 창, 닫히면 사전예약 홈페이지 안내. 튜토리얼 중이거나 다른 판이 떠 있으면
+   * 기다린다. 「물었다」는 기기 설정에 남기고, 젬 500을 줄지는 서버가 첫 피드백 한 번으로만 정한다.
+   */
+  private maybeAskFeedback(): void {
+    if (!this.sys.isActive() || !this.popupLayer || this.returnMenu) return;
+    if (settingsManager.get().game.feedbackAsked || !session.cleared.has(FEEDBACK_ASK_STAGE)) return;
+    if (tutorialManager.next() !== undefined) return;
+    this.whenPopupsClear(() => {
+      if (!this.popupLayer || settingsManager.get().game.feedbackAsked) return;
+      settingsManager.update({ game: { feedbackAsked: true } });
+      this.input.enabled = true;
+      const layer = this.popupLayer;
+      openFeedbackPopup(this, layer, { onClosed: () => this.time.delayedCall(0, () => this.whenPopupsClear(() => openHomepagePopup(this, layer))) });
+    });
   }
 
   /** 떠 있는 판이 없을 때 `action`을 부른다. 오래 닫히지 않으면 그만둔다. */

@@ -9,6 +9,7 @@ import { openCouponPage } from "../scenes/policyNavigation";
 import { COUPON_POPUP as L, COUPON_TONE as TONE } from "./couponPopupLayout";
 import { drawGlyph } from "./glyphs";
 import { paintCouponBackdrop } from "./couponBackdrop";
+import { drawCandyPlate, paintGradient } from "./candyPopupKit";
 import { SPARKLE_TEXTURE, ensureSparkleTexture } from "./WelcomeBannerCast";
 import { RouletteSpinButton } from "./RouletteSpinButton";
 import { motionPolicy } from "../core/settings";
@@ -28,26 +29,6 @@ const COUPON_WORDMARK = "COUPON";
 
 export function couponErrorKey(error: CouponError): TextKey {
   return `coupon.error.${error}` as TextKey;
-}
-
-/** 글자 높이를 따라 색이 흐르게 칠한다. */
-function paintGradient(text: Phaser.GameObjects.Text, stops: readonly [string, string, string]): void {
-  const gradient = text.context.createLinearGradient(0, 0, 0, text.height);
-  gradient.addColorStop(0, stops[0]);
-  gradient.addColorStop(0.55, stops[1]);
-  gradient.addColorStop(1, stops[2]);
-  text.setFill(gradient);
-}
-
-/** 굵은 외곽선 + 제 색 테 + 크림 면의 말랑한 판 — 돌림판 버튼과 같은 장난감 결. */
-function drawCandyPlate(scene: Phaser.Scene, x: number, y: number, width: number, height: number, radius: number, rim: number, outline: number): Phaser.GameObjects.Graphics {
-  const g = scene.add.graphics({ x, y });
-  g.fillStyle(0x000000, 0.18).fillRoundedRect(-width / 2 + 6, -height / 2 + 12, width, height, radius);
-  g.fillStyle(TONE.ink, 1).fillRoundedRect(-width / 2 - outline, -height / 2 - outline, width + outline * 2, height + outline * 2, radius + outline);
-  g.fillStyle(TONE.rim, 1).fillRoundedRect(-width / 2, -height / 2, width, height, radius);
-  g.fillStyle(TONE.cream, 1).fillRoundedRect(-width / 2 + rim, -height / 2 + rim, width - rim * 2, height - rim * 2, radius - rim);
-  g.fillStyle(0xffffff, 0.85).fillRoundedRect(-width / 2 + radius * 0.8, -height / 2 + rim + 8, width - radius * 1.6, 8, 4);
-  return g;
 }
 
 /**

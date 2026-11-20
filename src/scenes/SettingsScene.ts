@@ -31,6 +31,9 @@ import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { validateSettingsOverlay, validateSettingsReturn, type SettingsEntryData, type SettingsOverlayHost, type SettingsReturnScene } from "./settingsNavigation";
 import { isIosApp, openCouponPage, openPolicyDocument, type PolicyPath } from "./policyNavigation";
+import { loginProviderReady, type LoginProvider } from "../core/accountProviders";
+import { openFeedbackPopup } from "../ui/FeedbackPopup";
+import { openHomepagePopup } from "../ui/HomepagePopup";
 import { Button } from "../ui/Button";
 import { UI_ICON } from "../ui/icons";
 import { couponErrorKey, openCouponPopup } from "../ui/CouponPopup";
@@ -347,6 +350,16 @@ export class SettingsScene extends Phaser.Scene {
       label: t("settings.account.coupon"), fontSize: 30, art: UI_ICON.ticket, variant: "primary", fill: coupon.fill, decorDots: true,
       onClick: () => { if (!this.accountBusy) this.openCoupon(); },
     }).fitLabel(coupon.width - 130));
+    // 쿠폰 아래에는 피드백·공식 홈페이지가 반씩 나눠 선다 — 로비에서 한 번 떠오른 그 팝업을 언제든 다시 연다.
+    const shortcut = SETTINGS_SUPPORT.shortcut;
+    const shortcutY = y + coupon.dy + coupon.height / 2 + shortcut.gap + shortcut.height / 2;
+    const half = (coupon.width - shortcut.split) / 2;
+    ([["feedback", -1, shortcut.feedbackFill, () => openFeedbackPopup(this, this.popups)], ["homepage", 1, shortcut.homepageFill, () => openHomepagePopup(this, this.popups)]] as const).forEach(([key, side, fill, open]) => {
+      this.content.add(new Button(this, coupon.x + side * (half + shortcut.split) / 2, shortcutY, { width: half, height: shortcut.height,
+        label: t(key === "feedback" ? "settings.account.feedback" : "settings.account.homepage"), fontSize: 26, variant: "primary", fill,
+        onClick: () => { if (!this.accountBusy) open(); },
+      }).fitLabel(half - 28));
+    });
     y += SETTINGS_SUPPORT.accountSummaryRoom;
     // 로그인 수단은 맨 글자가 아니라 **그 플랫폼의 얼굴을 한 버튼**으로 두 칸씩 선다 — Google은 흰 면에 네 색 G,
     // Apple은 검은 면에 흰 사과라 읽기 전에 찾는다. 이어진 수단은 오른쪽에 체크가 서고 누르면 해제를 묻는다.
@@ -356,15 +369,20 @@ export class SettingsScene extends Phaser.Scene {
     const guard = (action: () => void) => (): void => { if (!this.accountBusy) action(); };
     const linkedId = this.accountIdentities.some(identity => identity.provider === "password") || account.provider === "password";
     place(0, linkedId ? { kind: "password", label: t("account.identity.connected", { provider: "ID" }), linked: true } : { kind: "password", label: t("settings.account.linkId"), onClick: guard(() => this.linkWithId()) });
+    // 아직 열지 않은 수단은 「준비 중」 딱지로 서고 누르면 안내만 뜬다(`LOGIN_PROVIDER_READY`). 이미 이어진 수단은 그대로 보인다.
+    const soon = (provider: LoginProvider): Pick<AccountProviderButtonOptions, "soonLabel" | "onClick"> => ({ soonLabel: t("title.login.soon"), onClick: () => this.showProviderSoon(provider) });
     for (const [index, provider] of (["google", "apple"] as const).entries()) {
       const identity = this.accountIdentities.find(item => item.provider === provider);
       const name = provider === "google" ? "Google" : "Apple";
+      const label = t(provider === "google" ? "settings.account.linkGoogle" : "settings.account.linkApple");
       place(index + 1, identity
         ? { kind: provider, label: t("account.identity.connected", { provider: name }), linked: true, onClick: guard(() => this.confirmUnlink(identity)) }
-        : { kind: provider, label: t(provider === "google" ? "settings.account.linkGoogle" : "settings.account.linkApple"), onClick: guard(() => void this.login(provider)) });
+        : loginProviderReady(provider) ? { kind: provider, label, onClick: guard(() => void this.login(provider)) } : { kind: provider, label, ...soon(provider) });
     }
     const email = this.accountIdentities.find(identity => identity.provider === "email");
-    place(3, email ? { kind: "email", label: email.maskedId, linked: true } : { kind: "email", label: t("account.email.link"), onClick: guard(() => openAccountEmailPopup(this, this.popups, "link", () => void this.refreshAccountView())) });
+    place(3, email ? { kind: "email", label: email.maskedId, linked: true }
+      : loginProviderReady("email") ? { kind: "email", label: t("account.email.link"), onClick: guard(() => openAccountEmailPopup(this, this.popups, "link", () => void this.refreshAccountView())) }
+      : { kind: "email", label: t("account.email.link"), ...soon("email") });
     // 결제 기록·구매 복원은 계정에 붙는 일이라 같은 판의 마지막 줄에 선다.
     place(4, { kind: "history", label: t("settings.account.history"), onClick: guard(() => void this.openPurchaseHistory()) });
     place(5, { kind: "restore", label: t("settings.account.restore"), onClick: guard(() => void this.restorePurchases()) });
@@ -429,6 +447,12 @@ export class SettingsScene extends Phaser.Scene {
     } catch {
       this.showRestoreNotice("settings.account.restoreFailed");
     } finally { this.accountBusy = false; }
+  }
+
+  /** 아직 열지 않은 로그인 수단 — 타이틀과 같은 안내다. */
+  private showProviderSoon(provider: LoginProvider): void {
+    const name = provider === "google" ? "Google" : provider === "apple" ? "Apple" : t("title.login.provider.email");
+    this.popups.confirm({ title: t("title.login.soonTitle"), message: t("title.login.soonBody", { provider: name }), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
   }
 
   private showRestoreNotice(key: TextKey): void {

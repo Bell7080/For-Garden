@@ -528,4 +528,8 @@ export const MISC_ES = {
   "profile.frameGuide.firstPayment": "Un marco dorado para tu foto de perfil. Se recibe solo una vez, con la primera compra de la cuenta, y luego aparece en la lista de marcos al personalizar el perfil.",
   "trade.tag.season": "Temporada",
   "archaeology.synth.bag": "Bolsa de runas",
+  "title.login.soon": "Próximamente",
+  "title.login.soonTitle": "¡Muy pronto!",
+  "title.login.soonBody": "¡El inicio de sesión con {provider} aún no está listo!\nPor ahora, empieza como invitado o crea una cuenta de ID sin verificación.",
+  "title.login.provider.email": "Correo",
 } as const;

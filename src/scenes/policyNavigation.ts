@@ -35,6 +35,13 @@ export function openCouponPage(ticket: string | null, browser: PolicyWindow = wi
   openHomepage(url.toString(), browser);
 }
 
+/** 홈페이지의 사전예약 칸(`#register`)으로 바로 간다 — 피드백 뒤의 안내창과 환경설정의 홈페이지 버튼이 부른다. */
+export function openPreregistrationPage(browser: PolicyWindow = window): void {
+  const url = new URL("/", HOMEPAGE_ORIGIN);
+  url.hash = "register";
+  openHomepage(url.toString(), browser);
+}
+
 function openHomepage(url: string, browser: PolicyWindow): void {
   // 앱 안에서 현재 창을 갈아 끼우면 게임이 통째로 사라져 돌아올 길이 없다 — 시스템 브라우저로 연다.
   const native = browser.Capacitor?.isNativePlatform?.() === true;

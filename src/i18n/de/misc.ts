@@ -528,4 +528,8 @@ export const MISC_DE = {
   "profile.frameGuide.firstPayment": "Ein goldener Rahmen für dein Profilbild. Es gibt ihn nur einmal, beim ersten Kauf des Kontos; danach steht er in der Rahmenliste der Profilgestaltung zur Auswahl.",
   "trade.tag.season": "Saison",
   "archaeology.synth.bag": "Runentasche",
+  "title.login.soon": "Bald verfügbar",
+  "title.login.soonTitle": "Kommt bald!",
+  "title.login.soonBody": "Die Anmeldung mit {provider} ist noch nicht fertig!\nStarte vorerst als Gast oder erstelle ein ID-Konto ohne Verifizierung.",
+  "title.login.provider.email": "E-Mail",
 } as const;

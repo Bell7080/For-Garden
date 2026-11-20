@@ -51,6 +51,9 @@ export class CombatRejected extends Error {
 const fail = (reason = "unspecified"): never => {
   throw new CombatRejected(reason);
 };
+/** 서버 재현이 기기보다 먼저 끝나도 받아 주는 틱 수(20ms × 50 = 1초). */
+export const COMBAT_END_DRIFT_TICKS = 50;
+
 export function combatJournal(state: Session): CombatJournal {
   const journal = state.serverJournal!;
   return (journal.combat ??= emptyCombatJournal());
@@ -316,6 +319,10 @@ export function finishCombat(
       return fail("action_shape");
     previous = action.tick;
   }
+  // 재현이 기기보다 몇 틱 먼저 끝나는 일이 있다(운영 기록 `ended_early@823/826:victory` — 엔진 차이로 마지막 자리가 갈린
+  // 경우). 승패는 어차피 서버 재현이 정하므로, 남은 궁극기 입력이 없고 차이가 작으면 서버가 끝낸 그 틱의 판정을 그대로 쓴다.
+  // 차이가 크면 다른 전투를 본 것이라 예전처럼 거절한다.
+  let endedAt = proof.ticks;
   for (let tick = 0; tick <= proof.ticks; tick++) {
     while (index < proof.actions.length && proof.actions[index].tick === tick) {
       const action = proof.actions[index++],
@@ -328,7 +335,13 @@ export function finishCombat(
       fireUltimate(battle, actor.id, rng);
     }
     if (tick < proof.ticks) {
-      if (battle.phase !== "fight") return fail(`ended_early@${tick}/${proof.ticks}:${battle.phase}`);
+      if (battle.phase !== "fight") {
+        if (index === proof.actions.length && proof.ticks - tick <= COMBAT_END_DRIFT_TICKS) {
+          endedAt = tick;
+          break;
+        }
+        return fail(`ended_early@${tick}/${proof.ticks}:${battle.phase}`);
+      }
       stepSkirmish(battle, COMBAT_STEP_MS / 1000, rng);
     }
   }
@@ -345,7 +358,7 @@ export function finishCombat(
     relicHp: party.map((id) =>
       victory ? (results.find((r) => r.relicId === id)?.currentHp ?? 0) : 0,
     ),
-    elapsedMs: proof.ticks * COMBAT_STEP_MS,
+    elapsedMs: endedAt * COMBAT_STEP_MS,
   };
   record.verdict = verdict;
   return structuredClone(verdict);

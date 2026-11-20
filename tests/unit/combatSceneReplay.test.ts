@@ -87,6 +87,27 @@ describe("실제 전투 씬 기록 → 서버 재현", () => {
             }
     // 메론의 궁극기는 덧칠된 적이 없으면 칠 대상이 없다 — 자동 궁극기가 그 헛방을 매 틱 쏘던 때는
     // 기록에 없는 시전이 표적·행동 번호를 바꿔 자동 전투 첫 판이 COMBAT_REJECTED로 끝났다.
+    it("서버 재현이 기기보다 조금 먼저 끝나면 서버가 끝낸 틱의 판정을 쓰고, 많이 어긋나면 거절한다", () => {
+        const party = ["meron", "nodonia", "parua"];
+        const state = createDefaultSession();
+        state.party = party;
+        for (const id of party) {
+            state.owned.add(id);
+            state.relicProgress[id] = { ...createInitialRelicProgress(), level: 32, breakthrough: 2 };
+        }
+        const now = new Date("2026-10-21T00:00:00Z");
+        const input = { tierId: "cake-4", requestId: "cake-drift" };
+        recordBoundaryResult(state, "enterCakeOperation", [input]);
+        const lease = prepareCombat(state, { input: { mode: "cake", ...input }, stageId: "1-1" }, now, "cake-drift");
+        const { scene, proof } = sceneFight(JSON.parse(JSON.stringify(lease)), 2);
+        const later = new Date(now.getTime() + 600000);
+        const exact = finishCombat(saveManager.parse(JSON.parse(JSON.stringify(saveManager.exportData(state)))), proof, later);
+        // 운영 기록 `ended_early@823/826:victory` — 기기가 세 틱 더 돌았다.
+        const drift = finishCombat(saveManager.parse(JSON.parse(JSON.stringify(saveManager.exportData(state)))), { ...proof, ticks: proof.ticks + 3 }, later);
+        expect(drift).toEqual(exact);
+        expect(drift.victory).toBe(scene.state.phase === "victory");
+        expect(() => finishCombat(saveManager.parse(JSON.parse(JSON.stringify(saveManager.exportData(state)))), { ...proof, ticks: proof.ticks + 200 }, later)).toThrow("COMBAT_REJECTED");
+    });
     it("덧칠이 없을 때 메론의 궁극기는 나가지 않고 판도 건드리지 않는다", () => {
         const party = ["meron", "nodonia", "parua"];
         const state = createDefaultSession();

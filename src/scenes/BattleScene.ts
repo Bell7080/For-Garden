@@ -19,7 +19,7 @@ import { BOSS_STEP_MS, bossBattleRandom } from "../core/bossSimulation";
 import { goRoute, partyRoute, victoryRoute } from "./stageStoryRoute";
 import Phaser from "phaser";
 import { t } from "../i18n";
-import { combatState, type CombatLease, type CombatProof } from "../core/combatProtocol";
+import { COMBAT_STEP_MS, combatState, type CombatLease, type CombatProof } from "../core/combatProtocol";
 import { gameApi, usesRemoteGameApi } from "../api/FakeServer";
 import { withBusy } from "../ui/BusyOverlay";
 import { audioManager } from "../managers/AudioManager";
@@ -3243,6 +3243,8 @@ export class BattleScene extends Phaser.Scene {
       const verify=(): void => { void withBusy(this, gameApi.finishCombat({id:lease.id,ticks:this.combatTicks,actions:this.combatActions,abandoned:this.state.phase==="fight"})).then(verdict=>{
         if(!this.scene.isActive() || generation !== this.combatGeneration || this.combatLease !== lease) return;
         if(!verdict) throw new Error("combat_not_verified");
+        // 서버 재현이 기기보다 먼저 끝났으면 판정은 받되 어긋남은 기록으로 남긴다(원인 추적용).
+        if(verdict.elapsedMs < this.combatTicks * COMBAT_STEP_MS) reportError("battle.replayDrift", new Error("combat_replay_drift"), { serverTicks: Math.round(verdict.elapsedMs / COMBAT_STEP_MS), clientTicks: this.combatTicks, victory: verdict.victory, mode: this.battleInput.mode });
         this.combatLease=undefined;
         this.openBattleResult(verdict.victory?"victory":"defeat");
       }).catch((error: unknown)=>{ if(this.scene.isActive() && generation === this.combatGeneration && this.combatLease === lease) this.showResultFailure(verify,()=>this.leaveFailedBattle(), error, "verify"); }); };

@@ -3,6 +3,9 @@ import { ArenaRoomScene } from "./scenes/ArenaRoomScene";
 import { ArenaNoticeScene } from "./scenes/ArenaNoticeScene";
 import Phaser from "phaser";
 import { QA_TOOLS_ENABLED } from "./core/buildFlavor";
+import { navigatorDeviceProfile, rendererAntialias, savedGraphicsQuality } from "./core/devicePerformance";
+import { deviceGraphicsQuality, type GraphicsQuality } from "./core/settings";
+import { LOCAL_SAVE_FLAVOR, LOCAL_SAVE_STORAGE_KEYS } from "./core/saveStorage";
 import "./style.css";
 import { BASE_WIDTH, BASE_HEIGHT } from "./config/gameConfig";
 import { BootScene } from "./scenes/BootScene";
@@ -40,6 +43,7 @@ import { installTapSlopGuard } from "./ui/tapSlopGuard";
 import { installScreenShakeGate } from "./ui/screenShake";
 import { installStaleBuildReload } from "./ui/staleBuildReload";
 import { guardFrame } from "./core/frameGuard";
+import { installBackgroundSleep } from "./ui/backgroundSleep";
 import { installErrorReporter } from "./managers/ErrorReporter";
 import { logError } from "./managers/ErrorReporter";
 
@@ -48,6 +52,12 @@ installTapSlopGuard();
 // 「화면 흔들림」을 끄면 어떤 길로 부른 카메라 흔들림도 시작하지 않는다.
 installScreenShakeGate();
 installStaleBuildReload();
+
+/** 게임을 만들기 전에 저장의 그래픽 품질만 읽는다. 저장이 없으면 첫 실행과 같이 기기 단서로 고른다. */
+function startupGraphicsQuality(): GraphicsQuality {
+  const fallback = deviceGraphicsQuality(navigatorDeviceProfile());
+  try { return savedGraphicsQuality(globalThis.localStorage?.getItem(LOCAL_SAVE_STORAGE_KEYS[LOCAL_SAVE_FLAVOR]), fallback); } catch { return fallback; }
+}
 
 const game = new Phaser.Game({
   // Puppet 원본 indexed mesh를 GPU로 직접 그리므로 중복 정점을 만드는 Canvas 폴백은 사용하지 않는다.
@@ -72,10 +82,16 @@ const game = new Phaser.Game({
   },
   render: {
     // 고해상도 모바일에서 Mesh 가장자리 품질은 유지하되 픽셀 반올림 진동은 막는다.
-    antialias: true,
+    // 낮음 품질에서만 MSAA를 끈다(발열). 컨텍스트를 만들 때 정해지므로 품질 변경은 다음 실행부터 든다.
+    antialias: rendererAntialias(startupGraphicsQuality()),
     roundPixels: false,
     powerPreference: "high-performance",
   },
+  // Phaser는 Pre FX(게임 객체의 glow·blur 등)를 위해 부팅 때 32~1056px 정사각 렌더 타깃을 크기마다 셋씩(99장)과
+  // 전체 화면 셋을 미리 잡는다. 실측으로 GPU 메모리 약 180MB이고, 이 게임은 Pre FX를 한 번도 쓰지 않는다(빛은 굽거나
+  // 겹쳐 그린다). 그 메모리가 모바일에서 발열·다른 앱 밀어내기(게임을 끈 뒤에도 남는 렉)로 돌아오므로 만들지 않는다.
+  // 마스크(BitmapMask)·Post FX는 다른 파이프라인이라 그대로다. Pre FX가 필요해지면 굽는 쪽을 먼저 검토한다.
+  disablePreFX: true,
   dom: {
     // 도감의 이름 검색 칸만 쓴다. 캔버스 위에 투명한 `<input>`을 겹쳐 두어야 모바일에서
     // 운영체제 자판이 올라오고, 글자·자리·깜빡이는 막대는 여전히 Phaser가 그린다.
@@ -99,6 +115,9 @@ const game = new Phaser.Game({
 });
 
 installErrorReporter();
+
+// 앱이 뒤로 가면 rAF까지 멈춘다 — Phaser 기본 숨김 처리는 시각만 적고 그리기를 브라우저에 맡긴다(이유는 ui/backgroundSleep).
+installBackgroundSleep(game);
 
 // 한 프레임의 예외가 게임 루프를 죽이지 않게 프레임 콜백을 감싼다(이유는 core/frameGuard).
 // 루프는 READY 직후 시작되므로 그 뒤 한 틱 늦게 감싼다. 로그는 같은 오류가 쏟아지지 않게 앞 몇 번만 남긴다.

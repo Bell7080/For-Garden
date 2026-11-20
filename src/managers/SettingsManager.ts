@@ -12,15 +12,14 @@ import { setFontLanguage } from "../ui/fonts";
 import { setDataLanguage, setTextLanguage } from "../i18n";
 import { adjustForQuietHours } from "../core/notificationSchedule";
 import { applyFrameRateLimit } from "../config/gameConfig";
+import { deviceFrameRateLimit, effectiveFrameRateLimit, navigatorDeviceProfile } from "../core/devicePerformance";
 import { accountGameSettings, accountPartOfPatch, type SettingsPatch } from "../core/settingsOwnership";
 import { resolveServerApi, type SettingsApi } from "./serverApi";
 import { logError } from "./ErrorReporter";
 
 /** 브라우저가 말해 주는 성능 단서를 읽는다. 없는 환경(서버·시험)은 빈 값이다. */
 export function readDeviceProfile(): DeviceProfile {
-  if (typeof navigator === "undefined") return {};
-  const nav = navigator as Navigator & { deviceMemory?: number };
-  return { deviceMemory: nav.deviceMemory, hardwareConcurrency: nav.hardwareConcurrency };
+  return navigatorDeviceProfile();
 }
 
 /** 설정 변경자가 저장과 알림을 빠뜨리지 않도록 한 공개 변경 경계다. */
@@ -55,7 +54,7 @@ export class SettingsManager extends EventTarget {
   get(): GameSettings { return normalizeSettings(this.state.settings); }
 
   /** 저장 로드 후와 사용자 변경이 같은 TimeStep 경계를 통과하게 한다. */
-  syncRuntime(game: Phaser.Game): void { this.runtimeGame = game; applyFrameRateLimit(game, this.get().presentation.frameRateLimit); }
+  syncRuntime(game: Phaser.Game): void { this.runtimeGame = game; applyFrameRateLimit(game, effectiveFrameRateLimit(this.get().presentation)); }
 
   /** 섹션 단위 부분 변경을 합친 뒤 보정·저장·이벤트를 항상 같은 순서로 수행한다. */
   /** 던전 입구에서 고른 단계를 기억한다. 같은 값이면 저장하지 않는다. */
@@ -125,7 +124,7 @@ export class SettingsManager extends EventTarget {
     setFontLanguage(this.state.settings.game.language);
     setTextLanguage(this.state.settings.game.language);
     setDataLanguage(this.state.settings.game.language);
-    if (this.runtimeGame) applyFrameRateLimit(this.runtimeGame, this.state.settings.presentation.frameRateLimit);
+    if (this.runtimeGame) applyFrameRateLimit(this.runtimeGame, effectiveFrameRateLimit(this.state.settings.presentation));
     this.saves.save(this.state);
     this.syncAccountPart(patch);
     this.dispatchEvent(new CustomEvent<GameSettings>("change", { detail: this.get() }));
@@ -138,7 +137,8 @@ export class SettingsManager extends EventTarget {
     const account = { ...this.get().account };
     const defaults = createDefaultSettings();
     // 기본값으로 돌릴 때도 그래픽 품질은 첫 실행과 같이 이 기기에 맞춘다.
-    this.state.settings = { ...defaults, presentation: { ...defaults.presentation, graphicsQuality: deviceGraphicsQuality(readDeviceProfile()) }, account };
+    const graphicsQuality = deviceGraphicsQuality(readDeviceProfile());
+    this.state.settings = { ...defaults, presentation: { ...defaults.presentation, graphicsQuality, frameRateLimit: deviceFrameRateLimit(graphicsQuality) }, account };
     // 씬을 다시 그리기 전에도 이후 생성되는 글자가 즉시 기본 배율을 사용하도록 공용 배율을 먼저 맞춘다.
     setTextScale(this.state.settings.accessibility.textScale);
     // 글꼴 스택과 문구 표도 같은 저장 경계에서 함께 바뀌어야 한다 — 따로 두면 언어만 바뀌고
@@ -146,7 +146,7 @@ export class SettingsManager extends EventTarget {
     setFontLanguage(this.state.settings.game.language);
     setTextLanguage(this.state.settings.game.language);
     setDataLanguage(this.state.settings.game.language);
-    if (this.runtimeGame) applyFrameRateLimit(this.runtimeGame, this.state.settings.presentation.frameRateLimit);
+    if (this.runtimeGame) applyFrameRateLimit(this.runtimeGame, effectiveFrameRateLimit(this.state.settings.presentation));
     this.saves.save(this.state);
     // 기본값으로 돌아간 계정의 값도 서버가 같은 값을 갖게 한다.
     this.syncAccountPart({ game: accountGameSettings(this.state.settings.game) });

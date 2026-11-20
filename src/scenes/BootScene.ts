@@ -13,6 +13,7 @@ import { setFontLanguage } from "../ui/fonts";
 import { setDataLanguage, setTextLanguage, type TextKey } from "../i18n";
 import { matchLanguage } from "../core/language";
 import { deviceGraphicsQuality } from "../core/settings";
+import { deviceFrameRateLimit } from "../core/devicePerformance";
 import { readDeviceProfile } from "../managers/SettingsManager";
 import { EffectOverlayScene } from "./EffectOverlayScene";
 import { settingsManager } from "../managers/SettingsManager";
@@ -73,7 +74,9 @@ export class BootScene extends Phaser.Scene {
     if (firstRun && typeof navigator !== "undefined") {
       const preferred = navigator.languages?.length ? navigator.languages : [navigator.language ?? ""];
       // 그래픽 품질도 첫 실행에서만 기기가 말하는 메모리로 고른다(저사양이면 균형·낮음).
-      settingsManager.update({ game: { language: matchLanguage(preferred) }, presentation: { graphicsQuality: deviceGraphicsQuality(readDeviceProfile()) } });
+      // 낮음 품질 기기는 프레임 제한도 30에서 시작한다(발열 — core/devicePerformance). 설정에서 언제든 올린다.
+      const graphicsQuality = deviceGraphicsQuality(readDeviceProfile());
+      settingsManager.update({ game: { language: matchLanguage(preferred) }, presentation: { graphicsQuality, frameRateLimit: deviceFrameRateLimit(graphicsQuality) } });
     }
     // 글꼴 스택은 씬이 첫 글자를 그리기 전에 정해져 있어야 한다. Phaser Text는 그린 순간의
     // 글꼴로 텍스처를 굳히므로, 나중에 정하면 이미 그린 글자가 대체 글꼴로 남는다.

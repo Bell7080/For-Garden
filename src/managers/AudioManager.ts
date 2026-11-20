@@ -80,6 +80,12 @@ export interface AudioBackend {
   cancelFade(sound: ManagedSound): void;
   /** 디코드하지 않고 흘려 재생할 긴 곡을 키에 묶는다(배경음). 대역 백엔드는 없어도 된다. */
   registerStream?(key: string, url: string): void;
+  /**
+   * 앱이 숨는 동안 오디오 출력 장치를 놓는다. 소리를 다 멈춰도 `AudioContext`가 `running`이면 기기의 오디오
+   * 스레드·출력 스트림이 계속 깨어 있어 배터리·발열이 남는다(Phaser는 창 blur에서만 내리는데, 앱 전환은
+   * visibilitychange만 오는 웹뷰가 있다). 대역 백엔드는 없어도 된다.
+   */
+  setSuspended?(suspended: boolean): void;
 }
 
 /** 씬이 중앙 사운드의 생성·정지를 직접 만지지 않도록 제공하는 수명 주기 핸들이다. */
@@ -356,6 +362,7 @@ export class AudioManager {
       if (hidden && sound.isPlaying) sound.pause();
       else if (!hidden && !sound.isPlaying) sound.resume();
     }
+    this.backend.setSuspended?.(hidden);
     this.applySettings(this.settings.get());
   }
 
@@ -425,6 +432,16 @@ export class PhaserAudioBackend implements AudioBackend {
   }
 
   registerStream(key: string, url: string): void { this.streams.set(key, url); }
+
+  /** 잠금이 풀린(사용자가 한 번 누른) 컨텍스트만 내리고 올린다 — 잠긴 컨텍스트는 Phaser의 해제 경로가 맡는다. */
+  setSuspended(suspended: boolean): void {
+    const manager = this.game.sound as Phaser.Sound.BaseSoundManager & { context?: AudioContext; locked?: boolean };
+    const context = manager.context;
+    if (!context || manager.locked) return;
+    const state = context.state as string;
+    if (suspended && state === "running") void context.suspend().catch(() => undefined);
+    else if (!suspended && (state === "suspended" || state === "interrupted")) void context.resume().catch(() => undefined);
+  }
 
   /**
    * 씬과 독립된 애니메이션 프레임으로 볼륨을 전환하고 완료 콜백을 한 번 전달한다. 프레임이 멎어도(앱이 숨었거나

@@ -4,6 +4,7 @@ import type { PortraitAssetId, RaitiaAssetId } from "../core/types";
 import { emptyPuppetResidency, releasePuppet, retainPuppet, type PuppetResidency } from "../core/puppetResidency";
 import { changeDebugPuppetContainers } from "../debug";
 import { powerSavingPolicy } from "../core/settings";
+import { currentIdleKeep } from "../core/devicePerformance";
 import { session } from "../state/session";
 import { ENEMY_SD_ASSET_IDS } from "./enemyAssetIds";
 import {
@@ -1093,7 +1094,7 @@ function retainPuppetAsset(url: string): void {
  * 그 개체가 다음부터 서지 못한다(`puppetResidency.ts` 머리 주석).
  */
 function releasePuppetAsset(scene: Phaser.Scene, url: string): void {
-  const next = releasePuppet(residency, url);
+  const next = releasePuppet(residency, url, currentIdleKeep().puppet);
   residency = next.state;
   for (const evicted of next.evict) {
     const key = textureKeys.get(evicted);

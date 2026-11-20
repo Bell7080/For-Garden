@@ -21,6 +21,7 @@ class FakeSound implements ManagedSound {
 class FakeBackend implements AudioBackend {
   sounds: FakeSound[] = [];
   fades: Array<{ sound: FakeSound; volume: number }> = [];
+  suspended: boolean[] = [];
   constructor(public available = true) {}
   has(): boolean { return this.available; }
   create(): FakeSound { const sound = new FakeSound(); this.sounds.push(sound); return sound; }
@@ -28,6 +29,7 @@ class FakeBackend implements AudioBackend {
     sound.setVolume(volume); this.fades.push({ sound: sound as FakeSound, volume }); done?.();
   }
   cancelFade(_sound: ManagedSound): void { /* 가짜 페이드는 즉시 끝나므로 취소할 예약 작업이 없다. */ }
+  setSuspended(suspended: boolean): void { this.suspended.push(suspended); }
 }
 
 /** 저장 부작용 없이 실제 SettingsManager 변경 이벤트를 사용하는 테스트 조립 함수다. */
@@ -92,6 +94,8 @@ describe("AudioManager", () => {
     expect(second.volume).toBeCloseTo(0.1);
     // 세워 둔 앞 곡은 복귀해도 다시 틀지 않는다.
     expect(first.isPlaying).toBe(false);
+    // 숨는 동안 오디오 출력 장치를 놓고(발열·배터리), 돌아오면 다시 잡는다.
+    expect(backend.suspended).toEqual([true, false]);
   });
 
   it("조금 전에 떠난 곡으로 돌아오면 새로 만들지 않고 멈춘 자리에서 이어 튼다", () => {

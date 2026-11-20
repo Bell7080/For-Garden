@@ -32,7 +32,7 @@ import { addBackButton } from "../ui/IconButton";
 import { BACK_SLOT } from "../ui/popupGeometry";
 import { clipHit } from "../ui/clippedHit";
 import { PortraitCard } from "../ui/PortraitCard";
-import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom, syncPortraitResidency } from "../ui/portraitGrid";
+import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom, syncPortraitResidency, cullGridCards } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { chipPoints, drawLayer, HOLO, slantedRect } from "../ui/holo";
@@ -1091,10 +1091,16 @@ export class PartyScene extends Phaser.Scene {
       const x = rosterColumnX(i % cols);
       const y = startY + Math.floor(i / cols) * rowStep;
       this.tweens.killTweensOf(card);
+      // 화면 밖에서 들어오는 카드도 옮겨 가는 동안 보여야 한다 — 끄는 일은 자리를 잡은 뒤(`settle`)다.
+      card.setVisible(true);
       if (duration === 0) card.setPosition(x, y);
       else this.tweens.add({ targets: card, x, y, duration, ease: "Cubic.Out" });
     });
-    const settle = (): void => syncPortraitResidency([...this.cards.values()].map(({ card }) => card), this.rosterScrollY, this.rosterViewport, cardH);
+    const settle = (): void => {
+      const cards = [...this.cards.values()].map(({ card }) => card);
+      syncPortraitResidency(cards, this.rosterScrollY, this.rosterViewport, cardH);
+      cullGridCards(cards, this.rosterScrollY, this.rosterViewport, cardH);
+    };
     if (duration === 0) settle();
     else this.time.delayedCall(duration + 20, settle);
   }
@@ -1143,7 +1149,10 @@ export class PartyScene extends Phaser.Scene {
     this.rosterScrollY = Phaser.Math.Clamp(value, this.rosterMinScroll, 0);
     setDebugGridOffset("party", this.rosterScrollY);
     this.rosterContent?.setY(this.rosterScrollY);
-    syncPortraitResidency([...this.cards.values()].map(({ card }) => card), this.rosterScrollY, this.rosterViewport, ROSTER_GRID.cardHeight);
+    const cards = [...this.cards.values()].map(({ card }) => card);
+    syncPortraitResidency(cards, this.rosterScrollY, this.rosterViewport, ROSTER_GRID.cardHeight);
+    // 창 밖 카드는 그리기 호출째 끈다(`cullGridCards`).
+    cullGridCards(cards, this.rosterScrollY, this.rosterViewport, ROSTER_GRID.cardHeight);
     this.syncRosterCardMasks();
   }
 

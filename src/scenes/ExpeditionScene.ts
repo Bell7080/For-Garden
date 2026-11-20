@@ -35,7 +35,7 @@ import { addUnitNameplate, addUnitPower } from "../ui/unitNameplate";
 import { BACK_SLOT } from "../ui/popupGeometry";
 import { clipHit } from "../ui/clippedHit";
 import { PortraitCard } from "../ui/PortraitCard";
-import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, syncPortraitResidency } from "../ui/portraitGrid";
+import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, syncPortraitResidency, cullGridCards } from "../ui/portraitGrid";
 import { addFramedIcon } from "../ui/itemFrame";
 import { PopupLayer } from "../ui/PopupLayer";
 import { COLOR, textStyle } from "../ui/theme";
@@ -996,6 +996,8 @@ export class ExpeditionScene extends Phaser.Scene {
     this.rosterScrollY = Phaser.Math.Clamp(value, this.rosterMinScroll, 0);
     this.rosterContent?.setY(this.rosterScrollY);
     syncPortraitResidency(this.cards.values(), this.rosterScrollY, ROSTER_VIEWPORT, ROSTER.cardHeight);
+    // 창 밖 카드는 그리기 호출째 끈다(`cullGridCards`).
+    cullGridCards(this.cards.values(), this.rosterScrollY, ROSTER_VIEWPORT, ROSTER.cardHeight);
   }
 
   /** PortraitCard의 자체 기하 마스크는 부모(그리드) 이동을 상속하지 않으므로 스크롤마다 다시 맞춘다. */

@@ -194,3 +194,24 @@ export function syncPortraitResidency(cards: Iterable<ResidentPortrait>, scrollY
     else if (y < top - cardHeight || y > bottom + cardHeight) card.hidePortrait();
   }
 }
+
+/** 보이지 않게 끌 수 있는 카드의 최소 모양. */
+interface CullableCard { readonly y: number; readonly visible: boolean; setVisible(value: boolean): unknown }
+
+/**
+ * 스크롤하는 카드 격자에서 뷰포트(위아래 카드 한 장 여유) 밖의 카드는 그리지 않는다.
+ *
+ * 목록은 scissor로 잘리지만 잘린 카드도 **그리기 호출은 그대로 낸다** — 카드 한 장이 칩 마스크(스텐실)
+ * 여러 장과 겹쳐 밝아지는 빛을 들고 있어, 도감이 가만히 있어도 프레임마다 그리기 호출이 290번이었다
+ * (로비 8번). 보이지 않는 카드까지 매 프레임 GPU를 돌리는 것이 그대로 발열이다. 여유를 한 장 두는 것은
+ * 빠져나온 머리와 들어오는 연출의 떠오름(`rise`)까지 덮기 위해서다.
+ */
+export function cullGridCards(cards: Iterable<CullableCard>, scrollY: number, viewport: { top: number; bottom: number }, cardHeight: number): void {
+  const top = viewport.top - cardHeight;
+  const bottom = viewport.bottom + cardHeight;
+  for (const card of cards) {
+    const y = card.y + scrollY;
+    const inside = y >= top && y <= bottom;
+    if (card.visible !== inside) card.setVisible(inside);
+  }
+}

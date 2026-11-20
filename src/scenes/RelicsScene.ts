@@ -17,7 +17,7 @@ import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
 import { PortraitCard } from "../ui/PortraitCard";
 import { clipHit } from "../ui/clippedHit";
-import { PORTRAIT_GRID_MASK_GAP, portraitGridFirstRowY, syncPortraitResidency } from "../ui/portraitGrid";
+import { cullGridCards, PORTRAIT_GRID_MASK_GAP, portraitGridFirstRowY, syncPortraitResidency } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
@@ -535,6 +535,8 @@ export class RelicsScene extends Phaser.Scene {
     if (this.content.y === this.minScrollY || this.content.y === 0) this.velocityY = 0;
     this.syncCardMasks();
     syncPortraitResidency(this.cards.values(), this.content.y, { top: VIEWPORT_TOP, bottom: VIEWPORT_BOTTOM }, GRID_CARD.height);
+    // 뷰포트 밖 카드는 그리기 호출째 끈다(`cullGridCards` — 정지 화면에서도 프레임마다 290번 그렸다).
+    cullGridCards(this.cards.values(), this.content.y, { top: VIEWPORT_TOP, bottom: VIEWPORT_BOTTOM }, GRID_CARD.height);
     setDebugGridOffset("relics", this.content.y);
     setDebugRelicScroll({ y: this.content.y, minY: this.minScrollY, maxY: 0, enabled: this.scrollEnabled(), viewportTop: VIEWPORT_TOP, viewportBottom: VIEWPORT_BOTTOM });
   }

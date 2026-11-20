@@ -28,12 +28,12 @@ export function openHomepagePopup(scene: Phaser.Scene, layer: PopupLayer, option
     paintCandyBackdrop(scene, body, { width: L.width, height: L.height, top: L.backdrop.top, bottom: L.backdrop.bottom, glowY: L.wordmark.y }, animate);
     addCandyWordmark(scene, body, HOMEPAGE_WORDMARK, L.wordmark, animate);
     addCandySparkles(scene, body, L.sparkles, animate);
-    addCandyGuide(scene, body, { relicId: HOMEPAGE_GUIDE, sd: L.sd, nameY: L.nameY, bubble: L.bubble, greeting: t("homepage.greeting"), greetingSize: 26 }, animate);
+    addCandyGuide(scene, body, { relicId: HOMEPAGE_GUIDE, sd: L.sd, nameY: L.nameY, bubble: L.bubble, greeting: t("homepage.greeting"), greetingSize: 29 }, animate);
 
     const { card } = L;
     body.add(drawCandyPlate(scene, 0, card.y, card.width, card.height, card.radius, card.rim, card.outline, 0xffc27a));
     const globeSize = 44;
-    const info = scene.add.text(-card.width / 2 + 70 + globeSize, card.y, t("homepage.body"), textStyle({ role: "emphasis", size: 27, color: TONE.inkText, lineSpacing: 8 })).setOrigin(0, .5);
+    const info = scene.add.text(-card.width / 2 + 70 + globeSize, card.y, t("homepage.body"), textStyle({ role: "emphasis", size: 31, color: TONE.inkText, lineSpacing: 8 })).setOrigin(0, .5);
     fitTextToBox(info, { width: card.width - 130 - globeSize, height: card.height - 40 });
     body.add([drawGlyph(scene, "globe", -card.width / 2 + 50 + globeSize / 2, card.y, globeSize, TONE.ink, 1, 3), info]);
 

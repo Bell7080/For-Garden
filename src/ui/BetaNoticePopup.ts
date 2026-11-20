@@ -28,7 +28,7 @@ export function openBetaNoticePopup(scene: Phaser.Scene, layer: PopupLayer, opti
     paintCandyBackdrop(scene, body, { width: L.width, height: L.height, top: L.backdrop.top, bottom: L.backdrop.bottom, glowY: L.wordmark.y }, animate);
     addCandyWordmark(scene, body, BETA_WORDMARK, L.wordmark, animate);
     addCandySparkles(scene, body, L.sparkles, animate);
-    addCandyGuide(scene, body, { relicId: BETA_GUIDE, sd: L.sd, nameY: L.nameY, bubble: L.bubble, greeting: t("beta.greeting"), greetingSize: 26 }, animate);
+    addCandyGuide(scene, body, { relicId: BETA_GUIDE, sd: L.sd, nameY: L.nameY, bubble: L.bubble, greeting: t("beta.greeting"), greetingSize: 29 }, animate);
 
     const { card } = L;
     body.add(drawCandyPlate(scene, 0, card.y, card.width, card.height, card.radius, card.rim, card.outline, 0xc9a6ff));
@@ -39,8 +39,8 @@ export function openBetaNoticePopup(scene: Phaser.Scene, layer: PopupLayer, opti
     const lines = BETA_LINES.map((key, index) => {
       // 첫 줄(지금이 어떤 기간인지)만 이름표 굵기로 세운다.
       const style = index === 0
-        ? textStyle({ role: "display", size: 27, color: "#7a3f9e", lineSpacing: 6 })
-        : textStyle({ role: "emphasis", size: 27, color: TONE.inkText, lineSpacing: 6 });
+        ? textStyle({ role: "display", size: 33, color: "#7a3f9e", lineSpacing: 7 })
+        : textStyle({ role: "emphasis", size: 31, color: TONE.inkText, lineSpacing: 7 });
       const line = scene.add.text(textX, 0, t(key), style).setOrigin(0, 0);
       fitTextToBox(line, { width: room });
       return line;
@@ -55,7 +55,7 @@ export function openBetaNoticePopup(scene: Phaser.Scene, layer: PopupLayer, opti
     let y = card.y - total / 2;
     lines.forEach((line, index) => {
       line.y = y;
-      const star = scene.add.image(left + card.bullet / 2, y + 18, SPARKLE_TEXTURE).setTint(index === 0 ? 0xb07cff : 0xff8fb8).setDisplaySize(card.bullet, card.bullet);
+      const star = scene.add.image(left + card.bullet / 2, y + 21, SPARKLE_TEXTURE).setTint(index === 0 ? 0xb07cff : 0xff8fb8).setDisplaySize(card.bullet, card.bullet);
       body.add([star, line]);
       y += line.displayHeight + card.lineGap;
     });

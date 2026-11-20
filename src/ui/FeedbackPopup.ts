@@ -49,13 +49,13 @@ export function openFeedbackPopup(scene: Phaser.Scene, layer: PopupLayer, option
     paintCandyBackdrop(scene, body, { width: L.width, height: L.height, top: L.backdrop.top, bottom: L.backdrop.bottom, glowY: L.wordmark.y, loot: L.loot }, animate);
     addCandyWordmark(scene, body, FEEDBACK_WORDMARK, L.wordmark, animate);
     addCandySparkles(scene, body, L.sparkles, animate);
-    addCandyGuide(scene, body, { relicId: FEEDBACK_GUIDE, sd: L.sd, nameY: L.nameY, bubble: L.bubble, greeting: t("feedback.greeting"), greetingSize: 26 }, animate);
+    addCandyGuide(scene, body, { relicId: FEEDBACK_GUIDE, sd: L.sd, nameY: L.nameY, bubble: L.bubble, greeting: t("feedback.greeting"), greetingSize: 29 }, animate);
 
     // 감사 선물 줄 — 받기 전에는 젬 그림과 수, 이미 받았으면 고마움만 말한다.
     const { reward } = L;
     body.add(drawCandyPlate(scene, 0, reward.y, reward.width, reward.height, reward.height / 2, 7, 5, 0x7ddbb4));
     const gem = scene.add.image(0, reward.y, CURRENCY_ICON_BY_WALLET.gems).setDisplaySize(reward.gem, reward.gem);
-    const rewardText = scene.add.text(0, reward.y, "", textStyle({ role: "display", size: 28, color: TONE.inkText })).setOrigin(0, .5);
+    const rewardText = scene.add.text(0, reward.y, "", textStyle({ role: "display", size: 32, color: TONE.inkText })).setOrigin(0, .5);
     body.add([gem, rewardText]);
     const paintReward = (rewarded: boolean): void => {
       if (disposed) return;
@@ -76,12 +76,12 @@ export function openFeedbackPopup(scene: Phaser.Scene, layer: PopupLayer, option
     const error = scene.add.text(0, L.errorY, "", textStyle({ role: "emphasis", size: 25, color: TONE.danger, align: "center", wrap: card.width })).setOrigin(.5).setStroke("#ffffff", 6);
     let submit: RouletteSpinButton | undefined;
     const field = new TextInputField(scene, 0, card.y, { ...L.field,
-      value: "", maxGlyphs: L.maxGlyphs, ariaLabel: t("feedback.title"), fontSize: 28, multiline: true, placeholder: t("feedback.placeholder"),
+      value: "", maxGlyphs: L.maxGlyphs, ariaLabel: t("feedback.title"), fontSize: 32, multiline: true, placeholder: t("feedback.placeholder"),
       palette: { fill: 0xffffff, fillAlpha: 1, ink: TONE.inkText, placeholder: TONE.placeholder, accent: 0x7ddbb4 },
       onChange: (value) => { error.setText(""); submit?.setEnabled(!pending && value.trim().length > 0); },
     });
     // 피드백이 없어도 응원 한 줄이면 된다 — 회색으로 작게, 부담 없이.
-    const cheer = scene.add.text(0, L.cheerY, t("feedback.cheer"), textStyle({ role: "body", size: 24, color: "#8b8794", align: "center", wrap: card.width - 20, lineSpacing: 6 })).setOrigin(.5);
+    const cheer = scene.add.text(0, L.cheerY, t("feedback.cheer"), textStyle({ role: "body", size: 27, color: "#8b8794", align: "center", wrap: card.width - 20, lineSpacing: 6 })).setOrigin(.5);
     body.add([field, cheer, error]);
 
     submit = new RouletteSpinButton(scene, 0, L.submitY, { ...L.submit,

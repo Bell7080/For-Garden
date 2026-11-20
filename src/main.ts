@@ -40,6 +40,7 @@ import { installTapSlopGuard } from "./ui/tapSlopGuard";
 import { installScreenShakeGate } from "./ui/screenShake";
 import { installStaleBuildReload } from "./ui/staleBuildReload";
 import { guardFrame } from "./core/frameGuard";
+import { installBackgroundSleep } from "./ui/backgroundSleep";
 import { installErrorReporter } from "./managers/ErrorReporter";
 import { logError } from "./managers/ErrorReporter";
 
@@ -76,6 +77,11 @@ const game = new Phaser.Game({
     roundPixels: false,
     powerPreference: "high-performance",
   },
+  // Phaser는 Pre FX(게임 객체의 glow·blur 등)를 위해 부팅 때 32~1056px 정사각 렌더 타깃을 크기마다 셋씩(99장)과
+  // 전체 화면 셋을 미리 잡는다. 실측으로 GPU 메모리 약 180MB이고, 이 게임은 Pre FX를 한 번도 쓰지 않는다(빛은 굽거나
+  // 겹쳐 그린다). 그 메모리가 모바일에서 발열·다른 앱 밀어내기(게임을 끈 뒤에도 남는 렉)로 돌아오므로 만들지 않는다.
+  // 마스크(BitmapMask)·Post FX는 다른 파이프라인이라 그대로다. Pre FX가 필요해지면 굽는 쪽을 먼저 검토한다.
+  disablePreFX: true,
   dom: {
     // 도감의 이름 검색 칸만 쓴다. 캔버스 위에 투명한 `<input>`을 겹쳐 두어야 모바일에서
     // 운영체제 자판이 올라오고, 글자·자리·깜빡이는 막대는 여전히 Phaser가 그린다.
@@ -99,6 +105,9 @@ const game = new Phaser.Game({
 });
 
 installErrorReporter();
+
+// 앱이 뒤로 가면 rAF까지 멈춘다 — Phaser 기본 숨김 처리는 시각만 적고 그리기를 브라우저에 맡긴다(이유는 ui/backgroundSleep).
+installBackgroundSleep(game);
 
 // 한 프레임의 예외가 게임 루프를 죽이지 않게 프레임 콜백을 감싼다(이유는 core/frameGuard).
 // 루프는 READY 직후 시작되므로 그 뒤 한 틱 늦게 감싼다. 로그는 같은 오류가 쏟아지지 않게 앞 몇 번만 남긴다.

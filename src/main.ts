@@ -3,6 +3,9 @@ import { ArenaRoomScene } from "./scenes/ArenaRoomScene";
 import { ArenaNoticeScene } from "./scenes/ArenaNoticeScene";
 import Phaser from "phaser";
 import { QA_TOOLS_ENABLED } from "./core/buildFlavor";
+import { navigatorDeviceProfile, rendererAntialias, savedGraphicsQuality } from "./core/devicePerformance";
+import { deviceGraphicsQuality, type GraphicsQuality } from "./core/settings";
+import { LOCAL_SAVE_FLAVOR, LOCAL_SAVE_STORAGE_KEYS } from "./core/saveStorage";
 import "./style.css";
 import { BASE_WIDTH, BASE_HEIGHT } from "./config/gameConfig";
 import { BootScene } from "./scenes/BootScene";
@@ -50,6 +53,12 @@ installTapSlopGuard();
 installScreenShakeGate();
 installStaleBuildReload();
 
+/** 게임을 만들기 전에 저장의 그래픽 품질만 읽는다. 저장이 없으면 첫 실행과 같이 기기 단서로 고른다. */
+function startupGraphicsQuality(): GraphicsQuality {
+  const fallback = deviceGraphicsQuality(navigatorDeviceProfile());
+  try { return savedGraphicsQuality(globalThis.localStorage?.getItem(LOCAL_SAVE_STORAGE_KEYS[LOCAL_SAVE_FLAVOR]), fallback); } catch { return fallback; }
+}
+
 const game = new Phaser.Game({
   // Puppet 원본 indexed mesh를 GPU로 직접 그리므로 중복 정점을 만드는 Canvas 폴백은 사용하지 않는다.
   type: Phaser.WEBGL,
@@ -73,7 +82,8 @@ const game = new Phaser.Game({
   },
   render: {
     // 고해상도 모바일에서 Mesh 가장자리 품질은 유지하되 픽셀 반올림 진동은 막는다.
-    antialias: true,
+    // 낮음 품질에서만 MSAA를 끈다(발열). 컨텍스트를 만들 때 정해지므로 품질 변경은 다음 실행부터 든다.
+    antialias: rendererAntialias(startupGraphicsQuality()),
     roundPixels: false,
     powerPreference: "high-performance",
   },

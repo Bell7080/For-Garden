@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { currentIdleKeep } from "../core/devicePerformance";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { BACKGROUND_ASSETS } from "./backgroundAssets";
 import {
@@ -87,7 +88,7 @@ export function useBackgroundTexture(
   const textures = scene.textures;
   residency = retainBackground(residency, key);
   image.once(Phaser.GameObjects.Events.DESTROY, () => {
-    const next = releaseBackground(residency, key);
+    const next = releaseBackground(residency, key, { idleKeep: currentIdleKeep().background });
     residency = next.state;
     // 붙잡은 곳이 하나도 없는 키만 목록에 오르므로 살아 있는 표시 객체를 지울 일이 없다.
     for (const evicted of next.evict) textures.remove(evicted);

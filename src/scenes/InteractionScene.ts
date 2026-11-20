@@ -10,6 +10,7 @@ import { session } from "../state/session";
 import type { InteractionDispatchSnapshot } from "../state/session";
 import { addBackButton } from "../ui/IconButton";
 import { addSceneBackground, BACKGROUND, useBackgroundTexture } from "../ui/backgrounds";
+import { showArtLoadingRing } from "../ui/ArtLoadingRing";
 import { drawFrameVignette, drawGlassFade, drawHairline, drawLayer, drawShapeOutline, drawVignette, slantedRect, toPoints } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
@@ -329,6 +330,8 @@ export class InteractionScene extends Phaser.Scene {
     // 이미 올라와 있는 원화는 **기다리지 않고 그 자리에서 선다** — 층을 갈아 끼울 때마다 0에서
     // 다시 밝아지면 그 층만 한 번 번쩍인다. 처음 도착하는 원화만 옅게 녹아 든다.
     const alreadyLoaded = this.textures.exists(view.city.illustration);
+    // 느린 망에서는 도시 원화가 몇 초씩 비어 덜 그려진 판으로 읽혔다 — 원화 자리에 로딩 고리를 띄운다.
+    const loading = alreadyLoaded ? undefined : showArtLoadingRing(this, 0, 0, { depth: 0, scale: 0.5, parent: layer });
     useBackgroundTexture(this, art, view.city.illustration, (loaded) => {
       const fit = interactionArtFit(loaded.width, loaded.height, width, height, slant);
       const crop = coverCrop(loaded.width, loaded.height, fit.width, height);
@@ -342,7 +345,7 @@ export class InteractionScene extends Phaser.Scene {
       const alpha = locked ? ART_LOCKED_ALPHA : ART_ALPHA;
       if (alreadyLoaded) loaded.setAlpha(alpha);
       else this.tweens.add({ targets: loaded, alpha, duration: 160 });
-    });
+    }, () => loading?.done());
 
     // 글이 서는 아래쪽만 어둠이 올라온다. 카드 전체를 누르면 원화가 잿빛이 된다.
     // 띠와 가장자리 누르기는 판 전체 폭으로 깔고 판 실루엣으로 잘라 낸다 — 원화가 좌우 삼각형까지

@@ -84,6 +84,8 @@ export function useBackgroundTexture(
   image: Phaser.GameObjects.Image,
   key: string,
   onReady?: (image: Phaser.GameObjects.Image) => void,
+  /** 섰든 못 읽었든 기다림이 끝났을 때 한 번(원화 로딩 고리를 걷는 데 쓴다). */
+  onSettled?: () => void,
 ): void {
   const textures = scene.textures;
   residency = retainBackground(residency, key);
@@ -101,13 +103,15 @@ export function useBackgroundTexture(
   if (textures.exists(key)) {
     image.setTexture(key);
     onReady?.(image);
+    onSettled?.();
     return;
   }
   void ensureBackgroundTexture(scene, key).then((ok) => {
     // 읽는 사이에 화면을 떠났을 수 있다. 죽은 객체에 텍스처를 물리면 렌더에서 터진다.
-    if (!ok || !image.active || !image.scene) return;
+    if (!ok || !image.active || !image.scene) { onSettled?.(); return; }
     image.setTexture(key);
     onReady?.(image);
+    onSettled?.();
   });
 }
 
@@ -245,3 +249,6 @@ export function addPopupBackgroundImage(
     },
   };
 }
+
+/** 배경 키의 파일 경로(로비 유휴 미리 받기용). 모르는 키는 `undefined`. */
+export function backgroundPath(key: string): string | undefined { return BACKGROUND_PATHS[key]; }

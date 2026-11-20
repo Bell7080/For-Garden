@@ -12,6 +12,7 @@ import { formatCurrency } from "../core/formatCurrency";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene, setDebugShopView, setDebugStorefrontControls } from "../debug";
 import { enableHitOnClick, portraitAssetFor, spawnPuppet } from "../puppets/assets";
+import { showArtLoadingRing } from "../ui/ArtLoadingRing";
 import type { PuppetAsset } from "../puppets/assets";
 import { shopStagePresentation, type ShopStagePresentation } from "../data/shopPresentation";
 import { MILEAGE_CLERK_LINE_COUNT, mileageFragmentRelicId, mileageWeeklyClerkId } from "../data/mileageClerk";
@@ -409,9 +410,11 @@ export class ShopScene extends Phaser.Scene {
     // 홀로그램 점원은 그 주의 SSR 개체의 전신이다. 미보유 표본은 정보창과 같은 검은 실루엣으로 선다.
     const holo = this.hologramLook();
     const asset: PuppetAsset = this.clerkRelicId ? portraitAssetFor(getRelic(this.clerkRelicId).portraitAssetId) : this.stage.merchant.asset;
+    // 점원 묶음은 처음 들어올 때 받는다 — 느린 망에서는 무대가 몇 초 비어 있어, 점원이 설 자리에 로딩 고리를 띄운다.
+    const loading = showArtLoadingRing(this, headX, (headY + SHOP_BOARD.top) / 2, { depth: 3, scale: 0.7 });
     const merchant = await spawnPuppet(this, asset, {
       focus: { anchor: "head", x: headX, y: headY }, height, depth: 2, ...(holo ? { tint: holo.tint } : {}),
-    });
+    }).finally(() => loading.done());
     // 비동기 로딩 사이 씬이 닫혔으면 새 Mesh를 남기지 않는다.
     if (!this.scene.isActive()) { merchant.destroy(); return; }
     // 점원도 다른 캐릭터와 같이 눌리면 반응한다 — 누르면 hit 모션이 한 번 돌고 다음 마디로

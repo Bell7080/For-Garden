@@ -33,7 +33,7 @@ import { TopBar } from "../ui/TopBar";
 import { chipPoints, drawLayer, drawVignette } from "../ui/holo";
 import { COLOR } from "../ui/theme";
 import { t } from "../i18n";
-import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { addSceneBackground, BACKGROUND, backgroundPath } from "../ui/backgrounds";
 import { gameApi } from "../api/FakeServer";
 import { presentRewardedAd } from "../platform/rewardedAds";
 import { loadPlayerProfileDisplay } from "../managers/PlayerProfileManager";
@@ -99,6 +99,10 @@ import { addScrollHint } from "../ui/ScrollHint";
 import { consumeSceneEntry } from "./sceneEntry";
 import { normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 import { prefetchIdlePuppets } from "../puppets/battlePrefetch";
+import { prefetchIdleFiles } from "../ui/idlePrefetch";
+import { INTERACTION_CITIES } from "../data/interactionCities";
+import { SHOP_MERCHANT_ASSET } from "../data/shopPresentation";
+
 import { syncGuildWarStandbyDaily } from "../managers/GuildWarStandbySync";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
@@ -202,6 +206,11 @@ interface SortieEntry {
  * 연구소 광장에 애착 렐릭이 서 있고, 그 위에 출격과 상점 같은 버튼이 얹힌다.
  * 앞으로 상점 · 프로필 · 우편 같은 것들이 붙을 자리라 버튼 자리를 미리 잡아 두었다.
  */
+/** 편성 SD 미리 읽기 뒤에 서도록 한참 늦게 건다(실제 시간 아님 — 씬 시계). */
+const LOBBY_FILE_PREFETCH_DELAY_MS = 6000;
+/** 교류 목록이 처음 열릴 때 화면에 드는 도시 수. */
+const INTERACTION_PREFETCH_CITIES = 3;
+
 export class LobbyScene extends Phaser.Scene {
   private favorite?: PuppetCreature;
   /** 비동기 외형 로딩이 역순으로 끝나도 마지막 요청 하나만 남기는 세대 번호다. */
@@ -463,6 +472,22 @@ export class LobbyScene extends Phaser.Scene {
     // 뒤에 시작한다** — 화면이 움직이는 동안 일꾼을 깨우면 그 연출이 먼저 끊긴다.
     this.time.delayedCall(TRANSITION.sceneIn.duration, () => prefetchIdlePuppets(this, relicCollection.validParty));
     this.time.delayedCall(TRANSITION.sceneIn.duration, () => syncGuildWarStandbyDaily());
+    // 교류의 첫 도시 원화와 상점 점원은 처음 들어갈 때 받아 느린 망에서 몇 초씩 비었다. 셀룰러·데이터 절약이 아니면
+    // 편성 SD 미리 읽기가 먼저 지나간 뒤 캐시에만 받아 둔다(`prefetchIdleFiles`).
+    this.time.delayedCall(LOBBY_FILE_PREFETCH_DELAY_MS, () => prefetchIdleFiles(this, this.idlePrefetchUrls()));
+  }
+
+  /** 열린 콘텐츠 중 처음 들어갈 때 받는 파일 — 교류 목록 첫 화면의 도시 원화, 일반 상점 점원. */
+  private idlePrefetchUrls(): string[] {
+    const urls: string[] = [];
+    if (contentOpen("interaction")) {
+      for (const city of INTERACTION_CITIES.slice(0, INTERACTION_PREFETCH_CITIES)) {
+        const path = backgroundPath(city.illustration);
+        if (path) urls.push(path);
+      }
+    }
+    if (contentOpen("shop")) urls.push(SHOP_MERCHANT_ASSET.url);
+    return urls;
   }
 
   /** TopBar가 건넨 공개 모델만 사용해 공용 레이어 기반 정보창을 연다. */

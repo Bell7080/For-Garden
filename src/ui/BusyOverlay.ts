@@ -12,6 +12,26 @@ const SPOKES = 8;
 const SPIN_MS = 1000;
 
 /**
+ * 기다림 고리 한 벌 — 마름모 여덟을 둘러 세우고 꼬리로 갈수록 옅게 한다. 기다림 막과 원화 로딩
+ * 표시(`ArtLoadingRing`)가 같은 고리를 쓴다. `scale`은 반지름·마름모를 함께 줄인다.
+ */
+export function addBusyRing(scene: Phaser.Scene, x: number, y: number, scale = 1): Phaser.GameObjects.Container {
+  const ring = scene.add.container(x, y);
+  for (let i = 0; i < SPOKES; i += 1) {
+    const angle = (i / SPOKES) * Math.PI * 2 - Math.PI / 2;
+    const spoke = scene.add.rectangle(Math.cos(angle) * 54 * scale, Math.sin(angle) * 54 * scale, 17 * scale, 17 * scale, COLOR.accent, 0.12 + (i / (SPOKES - 1)) * 0.88)
+      .setRotation(angle + Math.PI / 4);
+    ring.add(spoke);
+  }
+  return ring;
+}
+
+/** 고리를 한 바퀴 1초로 돌린다. */
+export function spinBusyRing(scene: Phaser.Scene, ring: Phaser.GameObjects.Container): Phaser.Tweens.Tween {
+  return scene.tweens.add({ targets: ring, angle: 360, duration: SPIN_MS, repeat: -1, ease: "Linear" });
+}
+
+/**
  * 화면이 멈추는 동안 세우는 공통 기다림 막: 반투명 검은 막 + 도는 마름모 고리.
  *
  * 글자는 적지 않는다 — 기다리는 이유를 읽어도 플레이어가 할 일은 없다. 고리는 동그라미 대신
@@ -66,15 +86,9 @@ class BusyOverlay {
     this.state = markBusyShown(this.state, Date.now());
     const scene = this.scene;
     const dim = scene.add.rectangle(0, 0, BASE_WIDTH, BASE_HEIGHT, 0x000000, BUSY_OVERLAY.dimAlpha).setOrigin(0).setInteractive();
-    const ring = scene.add.container(BASE_WIDTH / 2, BASE_HEIGHT / 2);
-    for (let i = 0; i < SPOKES; i += 1) {
-      const angle = (i / SPOKES) * Math.PI * 2 - Math.PI / 2;
-      const spoke = scene.add.rectangle(Math.cos(angle) * 54, Math.sin(angle) * 54, 17, 17, COLOR.accent, 0.12 + (i / (SPOKES - 1)) * 0.88)
-        .setRotation(angle + Math.PI / 4);
-      ring.add(spoke);
-    }
+    const ring = addBusyRing(scene, BASE_WIDTH / 2, BASE_HEIGHT / 2);
     this.root = scene.add.container(0, 0, [dim, ring]).setDepth(BUSY_DEPTH).setScrollFactor(0).setAlpha(0);
-    this.spin = scene.tweens.add({ targets: ring, angle: 360, duration: SPIN_MS, repeat: -1, ease: "Linear" });
+    this.spin = spinBusyRing(scene, ring);
     scene.tweens.add({ targets: this.root, alpha: 1, duration: BUSY_OVERLAY.fadeMs });
   }
 

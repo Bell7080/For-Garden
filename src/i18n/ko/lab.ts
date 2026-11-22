@@ -16,7 +16,7 @@ export const LAB_KO = {
   "lab.mileageShop.short": "마일리지",
   "lab.pity.label": "SSR 확정까지",
   "lab.pity.unit": "회",
-  "lab.pity.pickupNext": "다음 SSR 픽업 확정",
+  "lab.pity.pickupNext": "SSR 등장 시 픽업 확정",
   "lab.pull.one": "1회 연구",
   "lab.pull.freeToday": "오늘 무료!",
   "lab.pull.ten": "10회 연구",

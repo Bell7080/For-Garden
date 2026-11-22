@@ -16,7 +16,7 @@ export const LAB_JA = {
   "lab.mileageShop.short": "マイレージ",
   "lab.pity.label": "SSR確定まで",
   "lab.pity.unit": "回",
-  "lab.pity.pickupNext": "次のSSRはピックアップ確定",
+  "lab.pity.pickupNext": "SSR出現時ピックアップ確定",
   "lab.pull.one": "1回研究",
   "lab.pull.freeToday": "本日無料！",
   "lab.pull.ten": "10回研究",

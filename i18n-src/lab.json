@@ -160,14 +160,14 @@
 "раз"
 ],
 "lab.pity.pickupNext": [
-"下个SSR必为UP",
-"SSR ถัดไปคือตัวเรทอัป",
-"SSR kế tiếp là nhân vật tăng tỉ lệ",
-"SSR berikutnya pasti pickup",
-"El próximo SSR será el destacado",
-"O próximo SSR será o destaque",
-"Nächstes SSR ist das Pickup",
-"Следующий SSR — избранный"
+"出现SSR时必为UP",
+"เมื่อได้ SSR จะเป็นตัวเรทอัปแน่นอน",
+"Khi ra SSR chắc chắn là nhân vật tăng tỉ lệ",
+"Saat SSR muncul, pasti pickup",
+"Al salir un SSR, será el destacado",
+"Ao sair um SSR, será o destaque",
+"Bei SSR garantiert das Pickup",
+"Выпал SSR — это избранный"
 ],
 "lab.pull.againHint": [
 "再研究一次吧？",

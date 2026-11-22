@@ -16,7 +16,7 @@ export const LAB_VI = {
   "lab.mileageShop.short": "Tích điểm",
   "lab.pity.label": "Còn đến khi chắc chắn SSR",
   "lab.pity.unit": "lượt",
-  "lab.pity.pickupNext": "SSR kế tiếp là nhân vật tăng tỉ lệ",
+  "lab.pity.pickupNext": "Khi ra SSR chắc chắn là nhân vật tăng tỉ lệ",
   "lab.pull.one": "Nghiên cứu x1",
   "lab.pull.freeToday": "Miễn phí hôm nay!",
   "lab.pull.ten": "Nghiên cứu x10",

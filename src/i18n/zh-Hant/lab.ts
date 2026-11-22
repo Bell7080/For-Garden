@@ -16,7 +16,7 @@ export const LAB_ZH_HANT = {
   "lab.mileageShop.short": "里程",
   "lab.pity.label": "距離SSR保底",
   "lab.pity.unit": "次",
-  "lab.pity.pickupNext": "下個SSR必為UP",
+  "lab.pity.pickupNext": "出現SSR時必為UP",
   "lab.pull.one": "研究 x1",
   "lab.pull.freeToday": "今日免費！",
   "lab.pull.ten": "研究 x10",

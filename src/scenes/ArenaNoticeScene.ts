@@ -1,5 +1,6 @@
 import { t } from "../i18n";
-import { subscribeArenaChanges } from "../api/arenaRealtime";
+import { arenaRealtimeLive, subscribeArenaChanges } from "../api/arenaRealtime";
+import { ARENA_NOTICE_TICK_MS, arenaNoticePollDue } from "../core/arenaNoticePoll";
 import Phaser from 'phaser';
 import { arenaAvailable, arenaCall, arenaError } from '../api/arenaApi';
 import { Button } from '../ui/Button';
@@ -15,8 +16,10 @@ export class ArenaNoticeScene extends Phaser.Scene {
     private banner?: Phaser.GameObjects.Container;
     private pending = false;
     private shown = '';
+    /** 마지막으로 서버에 물은 시각 — 실시간 신호가 살아 있으면 1분에 한 번만 다시 묻는다. */
+    private lastPollAt = 0;
     constructor() { super({ key: 'arenaNotice', active: true }); }
-    create(): void { const unsubscribe=subscribeArenaChanges(() => void this.poll());this.events.once('shutdown',unsubscribe); this.time.addEvent({ delay: 8000, loop: true, callback: () => void this.poll() }); }
+    create(): void { const unsubscribe=subscribeArenaChanges(() => void this.poll());this.events.once('shutdown',unsubscribe); this.time.addEvent({ delay: ARENA_NOTICE_TICK_MS, loop: true, callback: () => { if (arenaNoticePollDue(Date.now(), this.lastPollAt, arenaRealtimeLive())) void this.poll(); } }); }
     private async poll(): Promise<void> {
         if (this.pending)
             return;
@@ -32,6 +35,7 @@ export class ArenaNoticeScene extends Phaser.Scene {
             return;
         }
         this.pending = true;
+        this.lastPollAt = Date.now();
         try {
             const status = await arenaCall();
             const invite = status.incoming[0];

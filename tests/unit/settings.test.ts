@@ -68,7 +68,14 @@ describe("settings", () => {
   it("잘못된 품질과 프레임 제한을 안전한 기본값으로 복구한다", () => {
     // 허용 목록 밖의 문자열·숫자는 저장에 다시 남지 않는다.
     expect(normalizeSettings({ presentation: { graphicsQuality: "ultra", frameRateLimit: 144 } }).presentation)
-      .toMatchObject({ graphicsQuality: "high", frameRateLimit: 60 });
+      .toMatchObject({ graphicsQuality: "high", frameRateLimit: 30 });
+  });
+
+  it("기본 30fps 일괄 전환은 표식 없는 저장을 한 번만 30으로 내리고 그 뒤의 선택은 지킨다", () => {
+    expect(normalizeSettings({ presentation: { frameRateLimit: 120 } }).presentation).toMatchObject({ frameRateLimit: 30, frameRate30Applied: true });
+    expect(normalizeSettings({ presentation: { frameRateLimit: 60, frameRate30Applied: true } }).presentation.frameRateLimit).toBe(60);
+    const migrated = normalizeSettings({ presentation: { frameRateLimit: 60 } });
+    expect(normalizeSettings(JSON.parse(JSON.stringify({ ...migrated, presentation: { ...migrated.presentation, frameRateLimit: 120 } }))).presentation.frameRateLimit).toBe(120);
   });
 
   it("부분 변경을 보정해 저장하고 초기화하되 진행과 계정 상태는 보존한다", () => {

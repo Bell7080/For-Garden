@@ -186,7 +186,7 @@ export function createDefaultSettings(): GameSettings {
     vibration: { enabled: true, combatHit: true, ultimate: true, excavationResult: true, uiInput: true },
     // 무료 모집·이벤트·우편은 현재 예약/서버 푸시 계약이 없어 선택값을 저장하지 않는다.
     notifications: { enabled: false, staminaFull: true, dailyMission: true, quietHours: true, quietHoursStart: "22:00", quietHoursEnd: "08:00", lastScheduledIds: {} },
-    presentation: { screenShake: true, damageNumbers: true, shortenExcavation: false, battleUiMotion: "default", powerSaving: false, lobbyAtmosphere: true, graphicsQuality: "high", frameRateLimit: 60 },
+    presentation: { screenShake: true, damageNumbers: true, shortenExcavation: false, battleUiMotion: "default", powerSaving: false, lobbyAtmosphere: true, graphicsQuality: "high", frameRateLimit: 30, frameRate30Applied: true },
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
@@ -218,7 +218,10 @@ export function normalizeSettings(value: unknown): GameSettings {
       battleUiMotion: allowed(p.battleUiMotion, BATTLE_UI_MOTIONS, d.presentation.battleUiMotion),
       // 새 명시값이 있으면 예전 토글보다 우선하고, 없을 때만 true를 low로 이관한다.
       graphicsQuality: allowed(p.graphicsQuality, GRAPHICS_QUALITIES, p.lowSpecMode === true ? "low" : d.presentation.graphicsQuality),
-      frameRateLimit: allowed(p.frameRateLimit, FRAME_RATE_LIMITS, d.presentation.frameRateLimit) },
+      // 기본 30fps 일괄 전환(v0.520.0): 표식이 없는 저장은 고른 값과 무관하게 한 번 30으로 내린다.
+      // 표식이 선 뒤에 플레이어가 다시 고른 60·120은 그대로 지킨다.
+      frameRateLimit: p.frameRate30Applied === true ? allowed(p.frameRateLimit, FRAME_RATE_LIMITS, d.presentation.frameRateLimit) : d.presentation.frameRateLimit,
+      frameRate30Applied: true },
     // 구버전의 subtitles 값은 필수 본문을 감추는 잘못된 의미라 저장 모델로 이관하지 않고 폐기한다.
     accessibility: { textScale: allowed(x.textScale, TEXT_SCALES, d.accessibility.textScale), reduceMotion: bool(x.reduceMotion, d.accessibility.reduceMotion), reduceFlashes: bool(x.reduceFlashes, d.accessibility.reduceFlashes), colorAssist: bool(x.colorAssist, d.accessibility.colorAssist) },
     game: { battleSpeed: allowed(g.battleSpeed, BATTLE_SPEEDS, d.game.battleSpeed), autoUltimate: bool(g.autoUltimate, d.game.autoUltimate),

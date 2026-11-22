@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CRITICAL_COLOR, DAMAGE_FLAVOR_COLOR, DAMAGE_TIER_RATIOS, DAMAGE_TIER_SIZES, DEBUFF_TONE,
   INCOMING_DAMAGE_TONE, MITIGATED_COLOR, DAMAGE_TIER_STROKE, DEBUFF_PACE, POPUP_LANES, VOLLEY_MIN_GAP_MS, VOLLEY_MAX_SPAN_MS,
-  attackDamagePopupRequest, damagePopupStyle, formatDamageAmount, popupLaneOffset, popupLifeMs, volleyTickDelayMs,
+  attackDamagePopupRequest, damagePopupStyle, formatDamageAmount, POPUP_CROWD, popupLaneOffset, popupLifeMs, volleyTickDelayMs,
 } from "../../src/ui/damageNumbers";
 import { COLOR } from "../../src/ui/theme";
 
@@ -211,5 +211,32 @@ describe("전투 수치 표시 규칙", () => {
     expect(formatDamageAmount(10_000)).toBe("10,000");
     expect(formatDamageAmount(12.6)).toBe("13");
     expect(formatDamageAmount(-5)).toBe("0");
+  });
+});
+
+describe("빽빽한 판(치즈케이크 대작전)의 수치 밀도", () => {
+  it("crowd는 머묾·사라짐만 줄이고 크기·색·등급은 그대로 둔다", () => {
+    for (const amount of [50, 900, 3_000]) {
+      const request = { flavor: "damage" as const, amount, ...target };
+      const normal = damagePopupStyle(request);
+      const crowd = damagePopupStyle(request, "crowd");
+      expect(crowd.holdMs).toBe(Math.round(normal.holdMs * POPUP_CROWD.hold));
+      expect(crowd.fadeMs).toBe(Math.round(normal.fadeMs * POPUP_CROWD.fade));
+      expect(popupLifeMs(crowd)).toBeLessThan(popupLifeMs(normal) * 0.65);
+      expect({ ...crowd, holdMs: 0, fadeMs: 0 }).toEqual({ ...normal, holdMs: 0, fadeMs: 0 });
+    }
+  });
+
+  it("crowd에서도 큰 한 방이 잔타보다 오래 머문다", () => {
+    const small = damagePopupStyle({ flavor: "damage", amount: 50, ...target }, "crowd");
+    const big = damagePopupStyle({ flavor: "damage", amount: 3_000, ...target }, "crowd");
+    expect(popupLifeMs(big)).toBeGreaterThan(popupLifeMs(small));
+    expect(POPUP_CROWD.maxNumbers).toBeLessThan(30);
+  });
+
+  it("대작전 전투만 crowd를 켠다", async () => {
+    const { readFileSync } = await import("node:fs");
+    const source = readFileSync("src/scenes/BattleScene.ts", "utf8");
+    expect(source).toMatch(/mode === "cake"\) this\.effects\.setPopupDensity\("crowd"\)/);
   });
 });

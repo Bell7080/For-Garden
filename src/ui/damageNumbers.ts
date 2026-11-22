@@ -329,8 +329,31 @@ export function popupPace(request: DamagePopupRequest): PopupPace {
   return "hit";
 }
 
+/**
+ * 수치가 얼마나 빽빽이 서는 판인가.
+ *
+ * `crowd`는 치즈케이크 대작전처럼 적이 열 명 넘게 한꺼번에 몰려와 광역 타격 하나가 숫자 열 개를
+ * 세우는 판이다(응태 2026-11-22 — "화면이 데미지 수치로 도배된다"). 거기서는 한 숫자가 오래 머물수록
+ * 다음 숫자들이 그 위에 쌓이므로, 머무는 시간과 사라지는 시간만 줄이고 크기·색·튀는 모양은 그대로 둔다.
+ * 등급 차이(큰 한 방이 더 오래)는 배율이라 그대로 남는다.
+ */
+export type PopupDensity = "normal" | "crowd";
+
+/** 빽빽한 판의 시간 배율과 살아 있는 수치 상한. */
+export const POPUP_CROWD = { hold: 0.45, fade: 0.65, maxNumbers: 18 } as const;
+
 /** 전투 수치 한 개의 최종 표시 계약을 만든다. 씬은 이 결과만 그린다. */
-export function damagePopupStyle(request: DamagePopupRequest): DamagePopupStyle {
+export function damagePopupStyle(request: DamagePopupRequest, density: PopupDensity = "normal"): DamagePopupStyle {
+  const style = baseDamagePopupStyle(request);
+  if (density !== "crowd") return style;
+  return {
+    ...style,
+    holdMs: Math.round(style.holdMs * POPUP_CROWD.hold),
+    fadeMs: Math.round(style.fadeMs * POPUP_CROWD.fade),
+  };
+}
+
+function baseDamagePopupStyle(request: DamagePopupRequest): DamagePopupStyle {
   const { flavor, amount } = request;
   if (flavor === "blocked") {
     // 무효는 세기가 없다. 늘 같은 크기의 흐린 표식 하나로만 알리고 화면을 흔들지 않는다.

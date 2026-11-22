@@ -8,7 +8,7 @@ import { healVisual, SHIELD_AURA_SHAPE, shieldAuraStyle, shieldGainVisual } from
 import { lashPoints } from "../ui/reachStrikeShape";
 import { flatDiamondPoints, flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_INK_WIDTH, SIGNATURE_SPECS, waveCrestPoints, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
 import { allowStatusCue, cueAngle, STATUS_CUE, stunOrbit, type StatusCueId } from "../ui/statusCueEffects";
-import { damagePopupStyle, popupLaneOffset, POPUP_LANE_RESET_MS, shouldShowDamagePopup, type DamagePopupRequest, type DamagePopupStyle } from "../ui/damageNumbers";
+import { damagePopupStyle, popupLaneOffset, POPUP_CROWD, POPUP_LANE_RESET_MS, shouldShowDamagePopup, type DamagePopupRequest, type DamagePopupStyle, type PopupDensity } from "../ui/damageNumbers";
 import { echoMarkPoints, laneEchoMarks, radialEchoMarks, ULTIMATE_ECHO, ultimateEchoFrame, type EchoMark, type EchoPoint } from "../ui/ultimateEcho";
 import { battlefieldWashBands, groundAreaStyle, laneAreaPoints, radialAreaPoints, type GroundAreaRequest, type GroundAreaShape, type GroundAreaStyle } from "../ui/groundAreas";
 import { COLOR, textStyle } from "../ui/theme";
@@ -245,6 +245,8 @@ export class EffectManager {
   private readonly flashes: ReturnType<typeof flashPolicy>;
   /** 생성 시 받은 설정 스냅샷이며 피해량 텍스트에만 적용한다. */
   private damageNumbers: boolean;
+  /** 수치가 빽빽이 서는 판인가(`PopupDensity`). 몰려오는 물량전만 `crowd`다. */
+  private popupDensity: PopupDensity = "normal";
   /** 전장 경계. 가장자리 워시만 쓰며 씬이 `setArena`로 넘긴다. */
   private arena: { left: number; right: number; top: number; bottom: number } | undefined;
   private readonly emitters = new Map<EffectKind, Phaser.GameObjects.Particles.ParticleEmitter>();
@@ -1384,7 +1386,8 @@ export class EffectManager {
   private acquireNumber(): NumberSlot {
     const free = this.numbers.find((slot) => !slot.label.visible);
     if (free) return free;
-    if (this.numbers.length >= EFFECT_BUDGET.maxNumbers) {
+    const cap = this.popupDensity === "crowd" ? POPUP_CROWD.maxNumbers : EFFECT_BUDGET.maxNumbers;
+    if (this.numbers.length >= cap) {
       const victim = this.numbers.reduce((pick, slot) => (
         slot.tier < pick.tier || (slot.tier === pick.tier && slot.openedAt < pick.openedAt) ? slot : pick));
       victim.tweens.forEach((tween) => tween.stop());
@@ -1416,6 +1419,11 @@ export class EffectManager {
     return lane;
   }
 
+  /** 이 판의 수치 밀도를 정한다. 몰려오는 물량전(치즈케이크 대작전)만 `crowd`로 짧게 머문다. */
+  setPopupDensity(density: PopupDensity): void {
+    this.popupDensity = density;
+  }
+
   /**
    * 전투 중 설정 창에서 바꾼 표시 설정을 이 판에 곧바로 들인다. 피해 수치와 화면 흔들림은 다음 판까지
    * 기다릴 이유가 없는 값이라, 전투가 다시 깨어날 때 이 둘만 다시 읽는다.
@@ -1437,7 +1445,7 @@ export class EffectManager {
   damage(x: number, y: number, request: DamagePopupRequest, options: DamagePopupOptions = {}): void {
     // 정책을 풀 획득보다 먼저 적용해야 꺼진 피해 수치가 Phaser Text 객체조차 만들지 않는다.
     if (!shouldShowDamagePopup(request, this.damageNumbers)) return;
-    const style = damagePopupStyle(request);
+    const style = damagePopupStyle(request, this.popupDensity);
     const now = this.scene.time.now;
     const lane = options.lane ?? (options.key ? this.nextLane(`${options.key}\u0000${style.pace}`, now) : 0);
     const offset = popupLaneOffset(style.pace, lane, options.bodyScale);

@@ -11,3 +11,22 @@ export function battleResultFailure(error: unknown, phase: BattleResultPhase) {
   const code = reason ?? (persistence ? "PERSISTENCE_FAILED" : status ? `HTTP_${status}` : error instanceof Error ? "CLIENT_OR_NETWORK" : "UNKNOWN");
   return { key, reference: `${phase}:${code}`, status };
 }
+
+/**
+ * 결과 확정이 **서버 사정**으로 끊겼는가 — 규칙이 거절한 판(4xx·재현 거절)이 아니라 잠깐의 망 단절·
+ * 서버 과부하·시간 초과라 같은 요청을 다시 보내면 되는 경우다. 결과판은 이때 사람에게 묻기 전에
+ * 조용히 몇 번 다시 보낸다(`RESULT_AUTO_RETRY_DELAYS_MS`). 2026-11-22 서버→DB 연결이 40초쯤 멎어
+ * `verify:HTTP_503`이 그대로 떴던 일이 그 예다 — 전투 영수증(lease)은 한 시간 살아 있어 다시 보내면 확정된다.
+ */
+export function isTransientResultFailure(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const value = error as { status?: unknown; code?: unknown; message?: unknown; name?: unknown };
+  if ([value.message, value.code].some(code => typeof code === "string" && (REPLAY_REASONS.has(code) || code === "PERSISTENCE_FAILED"))) return false;
+  const status = typeof value.status === "number" ? value.status : undefined;
+  if (status !== undefined && status > 0) return status === 408 || status >= 500 || (status === 409 && value.code === "save_conflict");
+  // 상태가 없거나 0이면 응답 자체를 받지 못한 것이다(망 단절·시간 초과).
+  return error instanceof Error && (status === 0 || value.name === "TypeError" || value.name === "TimeoutError" || value.name === "AbortError" || value.code === "network");
+}
+
+/** 결과 확정이 서버 사정으로 끊겼을 때 사람에게 묻기 전 조용히 다시 보내는 간격 — 실제 시간이다. */
+export const RESULT_AUTO_RETRY_DELAYS_MS = [1500, 4000, 8000] as const;

@@ -30,16 +30,38 @@ async function sha256Hex(text: string): Promise<string> {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/**
+ * DB에 닿지 못한 실패인가 — `fetch failed`(TypeError: 연결 실패·응답 전 끊김)와 한 번의 시간 초과다.
+ * 규칙·DB가 답한 실패는 여기 들지 않는다(그건 응답이 있다).
+ */
+export function isStalledConnection(error: unknown): boolean {
+  return error instanceof Error && (error.name === "TypeError" || error.name === "TimeoutError");
+}
+
 /** 서비스 롤 키로 DB 함수를 부르는 저장소다. 키는 서버 환경 변수에만 있고 클라이언트로 나가지 않는다. */
 export function createSupabaseStore(env: Env) {
   const f = env.fetchImpl ?? fetch;
-  async function rpc(name: string, body: Record<string, unknown>): Promise<unknown> {
-    const res = await f(`${env.url}/rest/v1/rpc/${name}`, {
+  async function send(name: string, payload: string, timeoutMs: number): Promise<Response> {
+    return f(`${env.url}/rest/v1/rpc/${name}`, {
       method: "POST",
       headers: { apikey: env.serviceKey, authorization: `Bearer ${env.serviceKey}`, "content-type": "application/json" },
-      body: JSON.stringify(body),
-      signal: env.signal ? AbortSignal.any([env.signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000),
+      body: payload,
+      signal: env.signal ? AbortSignal.any([env.signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs),
     });
+  }
+  async function rpc(name: string, body: Record<string, unknown>): Promise<unknown> {
+    const payload = JSON.stringify(body);
+    // 저장은 느려도 기다린다. 나머지는 한 번에 8초까지만 기다리고 **연결이 멎은 것**(응답 전 끊김·시간 초과)이면
+    // 한 번 더 보낸다 — 2026-11-22 새 연결 하나가 10초 동안 서지 못해 결과 확정이 통째로 503이 되었다.
+    // 저장이 실제로 들어간 뒤 답만 잃었어도 다시 보낸 저장은 revision 검사(409)에 걸리고, 처리기가 영수증을 되찾는다.
+    const timeoutMs = name === "server_commit_state" ? 15000 : 8000;
+    let res: Response;
+    try {
+      res = await send(name, payload, timeoutMs);
+    } catch (error) {
+      if (!isStalledConnection(error) || env.signal?.aborted) throw error;
+      res = await send(name, payload, timeoutMs);
+    }
     if (res.status === 409 && name === "server_commit_state") throw new StateConflictError();
     if (!res.ok) {
       const body = await res.json().catch(() => null) as { message?: string } | null;

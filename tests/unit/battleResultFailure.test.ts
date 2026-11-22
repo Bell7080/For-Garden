@@ -14,3 +14,22 @@ describe("전투 종료 진단", () => {
         expect(JSON.stringify(result)).not.toContain("private-player-data");
     });
 });
+
+import { isTransientResultFailure } from "../../src/core/battleResultFailure";
+import { RemoteGameApiError } from "../../src/api/RemoteGameApi";
+describe("결과 확정 자동 재시도 판정", () => {
+  it("서버 사정(5xx·시간 초과·망 단절)은 다시 보낸다", () => {
+    expect(isTransientResultFailure(new RemoteGameApiError(503, "service_unavailable"))).toBe(true);
+    expect(isTransientResultFailure(new RemoteGameApiError(408, "timeout"))).toBe(true);
+    expect(isTransientResultFailure(new RemoteGameApiError(0, "network"))).toBe(true);
+    expect(isTransientResultFailure(new TypeError("Failed to fetch"))).toBe(true);
+  });
+  it("규칙의 거절과 재현 거절은 다시 보내지 않는다", () => {
+    expect(isTransientResultFailure(new RemoteGameApiError(422, "rejected", "COMBAT_REJECTED"))).toBe(false);
+    expect(isTransientResultFailure(new RemoteGameApiError(503, "rejected", "COMBAT_NOT_VERIFIED"))).toBe(false);
+    expect(isTransientResultFailure(new RemoteGameApiError(400, "invalid_request"))).toBe(false);
+    expect(isTransientResultFailure(new RemoteGameApiError(409, "session_replaced"))).toBe(false);
+    expect(isTransientResultFailure(new Error("combat_not_verified"))).toBe(false);
+    expect(isTransientResultFailure(undefined)).toBe(false);
+  });
+});

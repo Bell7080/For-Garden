@@ -5497,9 +5497,9 @@ var LOBBY_KO = {
   "shuteFishing.difficulty.hard": "\uC5B4\uB824\uC6C0",
   "shuteFishing.difficulty.extreme": "\uB9E4\uC6B0 \uC5B4\uB824\uC6C0",
   "shuteFishing.hint.easy": "{fish}\uACE1 \xB7 \uB290\uAE0B\uD55C \uD15C\uD3EC",
-  "shuteFishing.hint.normal": "{fish}\uACE1 \xB7 \uBCF4\uC2A4\uACE1 \uC82C 500",
-  "shuteFishing.hint.hard": "{fish}\uACE1 \xB7 \uBCF4\uC2A4\uACE1 \uC82C 1,000 \uB178\uB824",
-  "shuteFishing.hint.extreme": "{fish}\uACE1 \xB7 \uBCF4\uC2A4\uACE1 \uC82C 1,000",
+  "shuteFishing.hint.normal": "{fish}\uACE1 \xB7 \uBCF4\uC2A4\uACE1 \uC82C 170~340",
+  "shuteFishing.hint.hard": "{fish}\uACE1 \xB7 \uBCF4\uC2A4\uACE1 \uC82C \uCD5C\uB300 700",
+  "shuteFishing.hint.extreme": "{fish}\uACE1 \xB7 \uBCF4\uC2A4\uACE1 \uC82C 350~700",
   "shuteFishing.jackpotNote": "\uB4E4\uC5B4\uAC00\uBA74 \uC14B\uB9AC\uC2A4\uD2B8\uAC00 \uC815\uD574\uC838. \uB4A4\uB85C \uAC08\uC218\uB85D, \uB9C8\uC9C0\uB9C9 \uBCF4\uC2A4\uACE1\uC77C\uC218\uB85D \uBCF4\uBB3C\uC774 \uCEE4!",
   "shuteFishing.collected": "\uB09A\uC740 \uBCF4\uBB3C",
   "shuteFishing.tap": "\uD0ED!",
@@ -26977,18 +26977,18 @@ function chestRunBox(run2) {
   return chestBox(run2?.box) ?? CHEST_BOXES[0];
 }
 var CHEST_CARDS = [
-  { id: "safe-gold", tier: "safe", currency: "gold", amount: 15e3, chance: 95 },
-  { id: "safe-cheesecake", tier: "safe", currency: "cheesecake", amount: 15, chance: 95 },
-  { id: "safe-stamina", tier: "safe", currency: "stamina", amount: 20, chance: 95 },
-  { id: "safe-stone", tier: "safe", currency: "rawStone", amount: 15, chance: 95 },
-  { id: "mid-gold", tier: "mid", currency: "gold", amount: 45e3, chance: 80 },
-  { id: "mid-cheesecake", tier: "mid", currency: "cheesecake", amount: 45, chance: 80 },
-  { id: "mid-gems", tier: "mid", currency: "gems", amount: 30, chance: 80 },
-  { id: "mid-stamina", tier: "mid", currency: "stamina", amount: 60, chance: 80 },
-  { id: "risk-gems", tier: "risk", currency: "gems", amount: 100, chance: 60 },
-  { id: "risk-cheesecake", tier: "risk", currency: "cheesecake", amount: 85, chance: 60 },
-  { id: "risk-gold", tier: "risk", currency: "gold", amount: 85e3, chance: 60 },
-  { id: "big-gems", tier: "big", currency: "gems", amount: 300, chance: 30 },
+  { id: "safe-gold", tier: "safe", currency: "gold", amount: 1e4, chance: 95 },
+  { id: "safe-cheesecake", tier: "safe", currency: "cheesecake", amount: 10, chance: 95 },
+  { id: "safe-stamina", tier: "safe", currency: "stamina", amount: 15, chance: 95 },
+  { id: "safe-stone", tier: "safe", currency: "rawStone", amount: 8, chance: 95 },
+  { id: "mid-gold", tier: "mid", currency: "gold", amount: 3e4, chance: 80 },
+  { id: "mid-cheesecake", tier: "mid", currency: "cheesecake", amount: 25, chance: 80 },
+  { id: "mid-gems", tier: "mid", currency: "gems", amount: 20, chance: 80 },
+  { id: "mid-stamina", tier: "mid", currency: "stamina", amount: 35, chance: 80 },
+  { id: "risk-gems", tier: "risk", currency: "gems", amount: 70, chance: 60 },
+  { id: "risk-cheesecake", tier: "risk", currency: "cheesecake", amount: 50, chance: 60 },
+  { id: "risk-gold", tier: "risk", currency: "gold", amount: 5e4, chance: 60 },
+  { id: "big-gems", tier: "big", currency: "gems", amount: 150, chance: 30 },
   { id: "big-fossil", tier: "big", currency: "fossil", amount: 1, chance: 35 },
   { id: "big-amber", tier: "big", currency: "amber", amount: 1, chance: 35 },
   { id: "jackpot-gems", tier: "jackpot", currency: "gems", amount: 1e3, chance: 30 },
@@ -27040,7 +27040,7 @@ function rollChestOffer(round, random) {
 function rollChestCard(card, random) {
   return clampRoll(random) < card.chance / 100;
 }
-var CHEST_GRADE_THRESHOLDS = [180, 380, 640, 920];
+var CHEST_GRADE_THRESHOLDS = [125, 265, 450, 650];
 var CHEST_GRADE_MAX = CHEST_GRADE_THRESHOLDS.length;
 var CHEST_FORGE_BUDGET = EVENT_REWARD_BUDGET.regular;
 function createEmptyChestForgeState() {
@@ -27388,23 +27388,23 @@ var FISH_TIER_FEEL = {
   jackpot: { catches: 5, speed: 0.8, width: 0.78 }
 };
 var FISH_TREASURES = [
-  { id: "gold-s", tier: "common", currency: "gold", amount: 25e3, weight: 1 },
-  { id: "cheesecake-s", tier: "common", currency: "cheesecake", amount: 25, weight: 1 },
-  { id: "stamina-s", tier: "common", currency: "stamina", amount: 50, weight: 1 },
-  { id: "stone-s", tier: "common", currency: "rawStone", amount: 10, weight: 1 },
-  { id: "gems-xs", tier: "common", currency: "gems", amount: 40, weight: 1 },
-  { id: "gold-m", tier: "fine", currency: "gold", amount: 7e4, weight: 1 },
-  { id: "cheesecake-m", tier: "fine", currency: "cheesecake", amount: 70, weight: 1 },
-  { id: "gems-s", tier: "fine", currency: "gems", amount: 100, weight: 1 },
-  { id: "stamina-m", tier: "fine", currency: "stamina", amount: 150, weight: 1 },
-  { id: "gems-m", tier: "rare", currency: "gems", amount: 200, weight: 3 },
-  { id: "gold-l", tier: "rare", currency: "gold", amount: 15e4, weight: 1 },
-  { id: "cheesecake-l", tier: "rare", currency: "cheesecake", amount: 150, weight: 1 },
-  { id: "gems-l", tier: "rare", currency: "gems", amount: 300, weight: 2 },
+  { id: "gold-s", tier: "common", currency: "gold", amount: 18e3, weight: 1 },
+  { id: "cheesecake-s", tier: "common", currency: "cheesecake", amount: 18, weight: 1 },
+  { id: "stamina-s", tier: "common", currency: "stamina", amount: 35, weight: 1 },
+  { id: "stone-s", tier: "common", currency: "rawStone", amount: 7, weight: 1 },
+  { id: "gems-xs", tier: "common", currency: "gems", amount: 30, weight: 1 },
+  { id: "gold-m", tier: "fine", currency: "gold", amount: 5e4, weight: 1 },
+  { id: "cheesecake-m", tier: "fine", currency: "cheesecake", amount: 50, weight: 1 },
+  { id: "gems-s", tier: "fine", currency: "gems", amount: 70, weight: 1 },
+  { id: "stamina-m", tier: "fine", currency: "stamina", amount: 100, weight: 1 },
+  { id: "gems-m", tier: "rare", currency: "gems", amount: 130, weight: 3 },
+  { id: "gold-l", tier: "rare", currency: "gold", amount: 1e5, weight: 1 },
+  { id: "cheesecake-l", tier: "rare", currency: "cheesecake", amount: 100, weight: 1 },
+  { id: "gems-l", tier: "rare", currency: "gems", amount: 200, weight: 2 },
   { id: "fossil", tier: "rare", currency: "fossil", amount: 1, weight: 2 },
   { id: "amber", tier: "rare", currency: "amber", amount: 1, weight: 2 },
-  { id: "jackpot-500", tier: "jackpot", currency: "gems", amount: 500, weight: 3 },
-  { id: "jackpot-1000", tier: "jackpot", currency: "gems", amount: 1e3, weight: 1 }
+  { id: "jackpot-500", tier: "jackpot", currency: "gems", amount: 340, weight: 3 },
+  { id: "jackpot-1000", tier: "jackpot", currency: "gems", amount: 700, weight: 1 }
 ];
 function fishTreasure(id) {
   return FISH_TREASURES.find((treasure) => treasure.id === id);
@@ -27419,8 +27419,9 @@ var FISHING_DIFFICULTIES = [
     fish: 3,
     sweepMs: 1300,
     zone: 0.34,
-    tierWeights: { common: 58, fine: 42, rare: 0 },
-    boss: [["gems-l", 3], ["fossil", 2], ["amber", 2], ["jackpot-500", 1]]
+    tierWeights: { common: 70, fine: 30, rare: 0 },
+    boss: [["gems-l", 5], ["fossil", 1], ["amber", 1], ["jackpot-500", 1]],
+    bossFloor: { "gems-l": 100, "jackpot-500": 150 }
   },
   {
     id: "normal",
@@ -27429,7 +27430,8 @@ var FISHING_DIFFICULTIES = [
     sweepMs: 1180,
     zone: 0.31,
     tierWeights: { common: 20, fine: 50, rare: 30 },
-    boss: [["jackpot-500", 1]]
+    boss: [["jackpot-500", 1]],
+    bossFloor: { "jackpot-500": 170 }
   },
   {
     id: "hard",
@@ -27438,7 +27440,8 @@ var FISHING_DIFFICULTIES = [
     sweepMs: 1040,
     zone: 0.28,
     tierWeights: { common: 0, fine: 45, rare: 55 },
-    boss: [["jackpot-500", 5], ["jackpot-1000", 1]]
+    boss: [["jackpot-500", 5], ["jackpot-1000", 1]],
+    bossFloor: { "jackpot-500": 170, "jackpot-1000": 320 }
   },
   {
     id: "extreme",
@@ -27447,11 +27450,34 @@ var FISHING_DIFFICULTIES = [
     sweepMs: 900,
     zone: 0.25,
     tierWeights: { common: 10, fine: 52, rare: 38 },
-    boss: [["jackpot-1000", 1]]
+    boss: [["jackpot-1000", 1]],
+    bossFloor: { "jackpot-1000": 350 }
   }
 ];
 function fishingDifficulty(id) {
   return FISHING_DIFFICULTIES.find((difficulty) => difficulty.id === id);
+}
+var BOSS_AMOUNT_STEP = 10;
+function bossAmountRange(difficulty, treasureId) {
+  const treasure = fishTreasure(treasureId);
+  if (!treasure) return void 0;
+  const floor = difficulty.bossFloor[treasureId];
+  return { min: floor !== void 0 ? Math.min(floor, treasure.amount) : treasure.amount, max: treasure.amount };
+}
+function rollBossAmount(difficulty, treasureId, random) {
+  const range = bossAmountRange(difficulty, treasureId);
+  if (!range) return 0;
+  const steps = Math.floor((range.max - range.min) / BOSS_AMOUNT_STEP);
+  return Math.min(range.max, range.min + Math.floor(clampRoll3(random) * (steps + 1)) * BOSS_AMOUNT_STEP);
+}
+function isBossAmountValid(difficulty, treasureId, amount) {
+  const range = bossAmountRange(difficulty, treasureId);
+  return !!range && Number.isInteger(amount) && amount >= range.min && amount <= range.max && (amount === range.max || (amount - range.min) % BOSS_AMOUNT_STEP === 0);
+}
+function fishAmount(run2, index) {
+  const treasure = fishTreasure(run2.fish[index]);
+  if (!treasure) return 0;
+  return index === run2.fish.length - 1 && run2.bossAmount !== void 0 ? run2.bossAmount : treasure.amount;
 }
 function gaugePosition(sweepMs, elapsedMs) {
   if (!(sweepMs > 0) || !Number.isFinite(elapsedMs) || elapsedMs <= 0) return 0;
@@ -27569,7 +27595,12 @@ function normalizeRun3(value) {
   for (const [currency3, amount] of Object.entries(raw)) {
     if (CURRENCIES3.includes(currency3) && Number.isInteger(amount) && amount > 0) collected[currency3] = amount;
   }
-  return { difficulty: difficulty.id, fish, catches, index, caught, misses, collected };
+  let bossAmount;
+  if (source.bossAmount !== void 0) {
+    if (!isBossAmountValid(difficulty, fish[fish.length - 1], source.bossAmount)) return null;
+    bossAmount = source.bossAmount;
+  }
+  return { difficulty: difficulty.id, fish, catches, ...bossAmount !== void 0 ? { bossAmount } : {}, index, caught, misses, collected };
 }
 function normalizeShuteFishingState(value) {
   const source = value && typeof value === "object" ? value : {};
@@ -28725,6 +28756,29 @@ var BACKGROUND = {
   ancientLoopC: "background-ancient-loop-c",
   ancientField: "background-ancient-field"
 };
+var CONTENT_ENTRY_ART = {
+  story: "content-story-entry",
+  expedition: "content-expedition-entry",
+  cake: "content-cake-entry",
+  bounty: "content-bounty-entry",
+  raid: "content-raid-entry",
+  duel: "content-duel-entry",
+  ancient: "content-ancient-entry",
+  journal: "content-observation-journal"
+};
+function contentEntryArtAssets() {
+  return [
+    [CONTENT_ENTRY_ART.story, "sprites/content/Content1_001.webp"],
+    [CONTENT_ENTRY_ART.expedition, "sprites/content/Content2_001.webp"],
+    [CONTENT_ENTRY_ART.cake, "sprites/content/Content3_001.webp"],
+    [CONTENT_ENTRY_ART.bounty, "sprites/content/Content4_001.webp"],
+    [CONTENT_ENTRY_ART.raid, "sprites/content/Content5_001.webp"],
+    [CONTENT_ENTRY_ART.duel, "sprites/content/Content6_001.webp"],
+    [CONTENT_ENTRY_ART.ancient, "sprites/content/Content7_001.webp"],
+    [CONTENT_ENTRY_ART.journal, "sprites/content/journal_001.webp"]
+  ];
+}
+var CONTENT_ENTRY_ART_PATHS = contentEntryArtAssets().map(([, path]) => path);
 var BACKGROUND_ASSETS = [
   [BACKGROUND.eventTiaCard, "sprites/events/tia-card.webp"],
   [BACKGROUND.eventTiaPopup, "sprites/events/tia-popup.webp"],
@@ -28826,7 +28880,8 @@ var BACKGROUND_ASSETS = [
   [BACKGROUND.storyLounge, "sprites/background/story_lounge.webp"],
   [BACKGROUND.storyCanal, "sprites/background/story_canal.webp"],
   [BACKGROUND.storyRooftopDawn, "sprites/background/story_rooftop_dawn.webp"],
-  [BACKGROUND.storyRooftopNight, "sprites/background/story_rooftop_night.webp"]
+  [BACKGROUND.storyRooftopNight, "sprites/background/story_rooftop_night.webp"],
+  ...contentEntryArtAssets()
 ];
 var BACKGROUND_BOOT_KEYS = [BACKGROUND.lobby, BACKGROUND.cardBackdrop];
 var BATTLE_FIELD_BACKGROUND = {
@@ -30393,7 +30448,7 @@ function createDefaultSettings() {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, feedbackAsked: false, adRewardDot: false, ultimatePresentation: "full", textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null, arenaSeen: null, rosterViews: {} },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, rhythmOffsetMs: 0, feedbackAsked: false, adRewardDot: false, ultimatePresentation: "full", textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null, arenaSeen: null, rosterViews: {} },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" }
@@ -30440,6 +30495,8 @@ function normalizeSettings(value) {
       formationRoleHint: bool(g.formationRoleHint, d.game.formationRoleHint),
       // 필드가 없던 저장은 아직 배우지 않은 쪽이다 — 화살표가 한 번 더 가리켜도 해가 없다.
       pullAgainTaught: bool(g.pullAgainTaught, d.game.pullAgainTaught),
+      // 리듬 낚시가 스스로 맞춘 이 기기의 입력·화면 지연 보정(ms). 필드가 없던 저장은 0에서 다시 배운다.
+      rhythmOffsetMs: typeof g.rhythmOffsetMs === "number" && Number.isFinite(g.rhythmOffsetMs) ? Math.min(80, Math.max(-40, g.rhythmOffsetMs)) : d.game.rhythmOffsetMs,
       feedbackAsked: bool(g.feedbackAsked, d.game.feedbackAsked),
       // 필드가 없던 저장은 꺼진 쪽이다 — 광고는 받을 수 있는 공짜 보상이 아니다.
       adRewardDot: bool(g.adRewardDot, d.game.adRewardDot),
@@ -46163,7 +46220,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.512.0",
+  version: "0.515.1",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -46198,7 +46255,7 @@ var package_default = {
   dependencies: {
     "@supabase/realtime-js": "2.118.0",
     phaser: "^3.90.0",
-    puppetforge: "github:Bell7080/WebGLE#8926b0c044d52df1a39e74bea0101bede939e8c5"
+    puppetforge: "github:Bell7080/WebGLE#31ab0fc7df52ddc5a386bcff9557895f08d150e5"
   },
   devDependencies: {
     "@playwright/test": "^1.55.0",
@@ -49122,10 +49179,11 @@ var FakeServer = class {
       if (before.coins < difficulty.entryCost) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uCF54\uC778\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
       const fish = rollFishingFish(difficulty, this.random);
       const catches = fish.map((id) => rollFishCatches(difficulty, id, this.random));
+      const bossAmount = rollBossAmount(difficulty, fish[fish.length - 1], this.random);
       next.shuteFishing = {
         ...ledger,
         spent: ledger.spent + difficulty.entryCost,
-        run: { difficulty: difficulty.id, fish, catches, index: 0, caught: 0, misses: 0, collected: {} }
+        run: { difficulty: difficulty.id, fish, catches, bossAmount, index: 0, caught: 0, misses: 0, collected: {} }
       };
     } else {
       const run2 = ledger.run;
@@ -49143,7 +49201,7 @@ var FakeServer = class {
       if (result.landed) {
         const treasure = fishTreasure(result.landed);
         const wallet = { ...this.state.wallet };
-        const amount = Math.max(0, Math.min(treasure.amount, WALLET_CAPS[treasure.currency] - wallet[treasure.currency]));
+        const amount = Math.max(0, Math.min(fishAmount(run2, result.fishIndex), WALLET_CAPS[treasure.currency] - wallet[treasure.currency]));
         wallet[treasure.currency] += amount;
         next.wallet = wallet;
         granted = { currency: treasure.currency, amount };
@@ -53099,15 +53157,29 @@ async function sha256Hex(text) {
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
+function isStalledConnection(error) {
+  return error instanceof Error && (error.name === "TypeError" || error.name === "TimeoutError");
+}
 function createSupabaseStore(env) {
   const f = env.fetchImpl ?? fetch;
-  async function rpc(name, body) {
-    const res = await f(`${env.url}/rest/v1/rpc/${name}`, {
+  async function send(name, payload, timeoutMs) {
+    return f(`${env.url}/rest/v1/rpc/${name}`, {
       method: "POST",
       headers: { apikey: env.serviceKey, authorization: `Bearer ${env.serviceKey}`, "content-type": "application/json" },
-      body: JSON.stringify(body),
-      signal: env.signal ? AbortSignal.any([env.signal, AbortSignal.timeout(15e3)]) : AbortSignal.timeout(15e3)
+      body: payload,
+      signal: env.signal ? AbortSignal.any([env.signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs)
     });
+  }
+  async function rpc(name, body) {
+    const payload = JSON.stringify(body);
+    const timeoutMs = name === "server_commit_state" ? 15e3 : 8e3;
+    let res;
+    try {
+      res = await send(name, payload, timeoutMs);
+    } catch (error) {
+      if (!isStalledConnection(error) || env.signal?.aborted) throw error;
+      res = await send(name, payload, timeoutMs);
+    }
     if (res.status === 409 && name === "server_commit_state") throw new StateConflictError();
     if (!res.ok) {
       const body2 = await res.json().catch(() => null);

@@ -12,7 +12,7 @@ import { arenaStreakBonus } from "../core/arenaStanding";
 import { enterArenaPractice } from "./arenaPractice";
 import type { ArenaRoom } from "../core/liveArena";
 import { arenaExitRoute } from "../core/arenaExit";
-import { battleResultFailure, type BattleResultPhase } from "../core/battleResultFailure";
+import { battleResultFailure, isTransientResultFailure, RESULT_AUTO_RETRY_DELAYS_MS, type BattleResultPhase } from "../core/battleResultFailure";
 import packageInfo from "../../package.json" with { type: "json" };
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { expeditionBossDamageScore } from "../core/expeditionScore";
@@ -643,6 +643,7 @@ export class BattleScene extends Phaser.Scene {
     // 같은 씬 객체가 다음 판에 다시 쓰이므로 지난 판의 알림 묶음(이미 부서진 객체)을 들고 가지 않는다.
     this.miniBanners = undefined;
     const generation=++this.combatGeneration;
+    this.resultAutoRetries = 0;
     this.spawned=false; this.pendingResult=undefined;
     this.combatLease=undefined; this.combatTicks=0; this.combatActions=[];
     this.stageCompletion = undefined;
@@ -3770,6 +3771,8 @@ export class BattleScene extends Phaser.Scene {
    * 이긴·진 결과를 그리는 모든 모드가 같은 판을 쓴다.
    */
   private resultFailureUi?: Phaser.GameObjects.Container;
+  /** 이번 판에서 결과 확정을 조용히 다시 보낸 횟수(`RESULT_AUTO_RETRY_DELAYS_MS`). */
+  private resultAutoRetries = 0;
   /**
    * 수호전 머리 — 시계 아래에 처치 점수가 크게, 그 아래 한 줄에 웨이브 번호와 필드에 선 적 수(상한까지)가 선다.
    * 필드 수가 상한에 가까워지면 붉어진다 — 그것이 이 판이 끝나는 두 길 중 하나다.
@@ -3873,6 +3876,17 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private showResultFailure(retry: () => void, leave: () => void, error?: unknown, phase: BattleResultPhase = "stage"): void {
+    // 망 단절·서버 과부하는 사람에게 묻기 전에 조용히 다시 보낸다 — 같은 요청 키라 서버는 한 번만 확정한다.
+    const delay = isTransientResultFailure(error) ? RESULT_AUTO_RETRY_DELAYS_MS[this.resultAutoRetries] : undefined;
+    if (delay !== undefined) {
+      this.resultAutoRetries += 1;
+      reportError(`battle.result.autoRetry`, error, { phase, attempt: this.resultAutoRetries, mode: this.battleInput.mode });
+      const generation = this.combatGeneration;
+      void withBusy(this, new Promise<void>(resolve => setTimeout(resolve, delay))).then(() => {
+        if (this.scene.isActive() && generation === this.combatGeneration) retry();
+      });
+      return;
+    }
     const failure = battleResultFailure(error, phase);
     console.error("[battle-result]", { ...failure, mode: this.battleInput.mode, stageId: session.selectedStageId, clientVersion: packageInfo.version });
     reportError(`battle.result.${phase}`, error ?? failure.reference, { ...failure, mode: this.battleInput.mode, stageId: session.selectedStageId });

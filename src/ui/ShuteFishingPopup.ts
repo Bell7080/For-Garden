@@ -5,7 +5,7 @@ import { gameApi } from "../api/FakeServer";
 import type { ShuteFishingResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
 import {
-  FISHING_DIFFICULTIES, FISH_TIER_FEEL, SHUTE_FISHING, fishTreasure, fishingDifficulty, gaugePosition, reelFishing,
+  FISHING_DIFFICULTIES, FISH_TIER_FEEL, SHUTE_FISHING, fishAmount, fishTreasure, fishingDifficulty, gaugePosition, reelFishing,
   type FishTier, type FishingCatch, type FishingDifficultyId, type FishingJudgment, type FishingReel, type ShuteFishingStatus,
 } from "../core/shuteFishing";
 import type { ChestCardCurrency } from "../core/chestForge";
@@ -246,7 +246,7 @@ class FishingPickButton extends Phaser.GameObjects.Container {
 }
 
 /** 낚은 보물 카드 — 아이보리 판에 등급 색 띠, 가운데 보물 그림과 수. 대박이면 금빛 반짝임이 붙는다. */
-function addTreasureCard(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, size: { width: number; height: number }, id: string): Phaser.GameObjects.Container {
+function addTreasureCard(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, size: { width: number; height: number }, id: string, amountValue?: number): Phaser.GameObjects.Container {
   const treasure = fishTreasure(id);
   const root = scene.add.container(x, y);
   parent.add(root);
@@ -262,7 +262,7 @@ function addTreasureCard(scene: Phaser.Scene, parent: Phaser.GameObjects.Contain
   drawSignalRings(g, 0, top + height * 0.45, width * 0.34, 0.35);
   root.add(g);
   const icon = scene.add.image(0, top + height * 0.45, CURRENCY_ICON_BY_WALLET[treasure.currency]).setDisplaySize(width * 0.56, width * 0.56);
-  const amount = scene.add.text(0, top + height * 0.84, formatCurrency(treasure.amount), textStyle({ role: "display", size: Math.round(height * 0.16), color: INK })).setOrigin(0.5);
+  const amount = scene.add.text(0, top + height * 0.84, formatCurrency(amountValue ?? treasure.amount), textStyle({ role: "display", size: Math.round(height * 0.16), color: INK })).setOrigin(0.5);
   shrinkTextToWidth(amount, width - 16);
   root.add([icon, amount]);
   if (treasure.tier === "jackpot") {
@@ -380,6 +380,9 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
     let combo = 0;
     /** 이번 판에 낚은 물고기 — 끝날 때 카드로 늘어선다. */
     let landedFish: string[] = [];
+    /** 이번 판의 보스 보물과 판을 열 때 서버가 고른 수량(최소~최대 사이) — 보물표의 수는 최대치라 이 값으로 그린다. */
+    let bossPrize: { id: string; amount: number } | undefined;
+    const amountOf = (id: string): number => (bossPrize?.id === id ? bossPrize.amount : fishTreasure(id)?.amount ?? 0);
     const gaugeTrack = shuteGaugeTrack(FISH.play.gaugeWidth, FISH.play.gaugeHeight);
 
     const paintLives = (misses: number): void => {
@@ -422,7 +425,7 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
         tag.fillStyle(SHUTE_TONE.ink, 1).fillPoints(diamond(0, -size * 0.72, 9, 11), true);
         tag.fillStyle(TIER_TONE[treasure.tier], 1).fillPoints(diamond(0, -size * 0.72, 6, 8), true);
         real.add(tag);
-        addFramedIcon(scene, real, 0, 0, size, CURRENCY_ICON_BY_WALLET[treasure.currency], { amount: formatCurrency(treasure.amount), amountRatio: 0.3 });
+        addFramedIcon(scene, real, 0, 0, size, CURRENCY_ICON_BY_WALLET[treasure.currency], { amount: formatCurrency(amountOf(id)), amountRatio: 0.3 });
         if (boss) {
           const plate = scene.add.graphics();
           const bw = 92, bh = 30, by = size / 2 + 22;
@@ -492,7 +495,7 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
       halo.fillStyle(TIER_TONE[treasure.tier], 0.32).fillPoints(diamond(0, 0, size * 0.78, size * 0.7), true);
       drawSignalRings(halo, 0, 0, size * 0.62, 0.45);
       fishHolder.add(halo);
-      addFramedIcon(scene, fishHolder, 0, 0, size, CURRENCY_ICON_BY_WALLET[treasure.currency], { amount: formatCurrency(treasure.amount), amountRatio: 0.3 });
+      addFramedIcon(scene, fishHolder, 0, 0, size, CURRENCY_ICON_BY_WALLET[treasure.currency], { amount: formatCurrency(amountOf(treasure.id)), amountRatio: 0.3 });
       if (treasure.tier === "jackpot") {
         const sparkle = scene.add.graphics();
         for (const [x, y, s] of [[-size * 0.6, -size * 0.4, 16], [size * 0.62, -size * 0.1, 13], [size * 0.5, size * 0.5, 18]] as const) drawSparkle(sparkle, x, y, s, 0xffe38a, 1);
@@ -558,7 +561,7 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
     /** 낚은 보물이 카드로 뒤집혀 서고, 위의 「낚은 보물」 줄로 날아 들어간다. */
     const flyCard = async (id: string): Promise<void> => {
       if (motion() <= 0) return;
-      const card = addTreasureCard(scene, fx, FISH.play.fishX, FISH.play.fishY, FISH.play.card, id);
+      const card = addTreasureCard(scene, fx, FISH.play.fishX, FISH.play.fishY, FISH.play.card, id, amountOf(id));
       card.setScale(0, 1);
       await new Promise<void>((resolve) => scene.tweens.add({ targets: card, scaleX: 1, duration: 200, ease: "Back.Out", onComplete: () => resolve() }));
       await waitFx(scene, 180);
@@ -581,6 +584,7 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
       const run = status.run;
       if (!run) return Promise.resolve();
       landedFish = run.fish.slice(0, run.index);
+      bossPrize = { id: run.fish[run.fish.length - 1], amount: fishAmount(run, run.fish.length - 1) };
       paintLives(run.misses); paintCollected(run.collected);
       paintFish(run.fish[run.index], run.caught);
       return paintSetlist(run.fish, run.index, reveal);
@@ -635,7 +639,7 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
         scene.tweens.add({ targets: band, alpha: 1, duration: 140 });
         const span = landedFish.length * width + (landedFish.length - 1) * gap;
         landedFish.forEach((id, order) => {
-          const card = addTreasureCard(scene, lineup, -span / 2 + width / 2 + order * (width + gap), y, { width, height }, id);
+          const card = addTreasureCard(scene, lineup, -span / 2 + width / 2 + order * (width + gap), y, { width, height }, id, amountOf(id));
           card.setScale(0);
           scene.time.delayedCall(order * 80, () => {
             if (!card.active) return;
@@ -717,7 +721,7 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
       busy = true;
       const reel = stepped.reel;
       const treasure = reel.landed ? fishTreasure(reel.landed) : undefined;
-      const collected = treasure ? { ...status.run.collected, [treasure.currency]: (status.run.collected[treasure.currency] ?? 0) + treasure.amount } : status.run.collected;
+      const collected = treasure ? { ...status.run.collected, [treasure.currency]: (status.run.collected[treasure.currency] ?? 0) + fishAmount(status.run, reel.fishIndex) } : status.run.collected;
       status = { ...status, run: reel.finished ? null : { ...stepped.run, collected } };
       confirmReel(elapsedMs, reel);
       void playReel(reel, spec, collected, generation);

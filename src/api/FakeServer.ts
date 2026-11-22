@@ -7,7 +7,7 @@ import {
   rollHuntLayout, rollHuntMoves, rollHuntPairs, type DelophyHuntState, type HuntDifficultyId,
 } from "../core/delophyHunt";
 import {
-  FishingReelError, SHUTE_FISHING, fishTreasure, fishingDifficulty, normalizeShuteFishingState, reelFishing, rollFishCatches, rollFishingFish,
+  FishingReelError, SHUTE_FISHING, fishAmount, fishTreasure, rollBossAmount, fishingDifficulty, normalizeShuteFishingState, reelFishing, rollFishCatches, rollFishingFish,
   rollShuteFishingWeek, shuteFishingPlayable, shuteFishingStatus, type FishingDifficultyId, type ShuteFishingState,
 } from "../core/shuteFishing";
 import { isRegularEventActive } from "../core/regularEventRotation";
@@ -2397,8 +2397,10 @@ export class FakeServer implements GameApi {
       if (before.coins < difficulty.entryCost) throw new GameApiError("INSUFFICIENT_CURRENCY", "코인이 부족합니다.");
       const fish = rollFishingFish(difficulty, this.random);
       const catches = fish.map((id) => rollFishCatches(difficulty, id, this.random));
+      // 보스 보물의 수량은 판을 여는 순간 서버가 최소~최대 사이에서 고르고 판에 굳힌다 — 낚을 때 그 값을 그대로 준다.
+      const bossAmount = rollBossAmount(difficulty, fish[fish.length - 1], this.random);
       next.shuteFishing = { ...ledger, spent: ledger.spent + difficulty.entryCost,
-        run: { difficulty: difficulty.id, fish, catches, index: 0, caught: 0, misses: 0, collected: {} } };
+        run: { difficulty: difficulty.id, fish, catches, bossAmount, index: 0, caught: 0, misses: 0, collected: {} } };
     } else {
       const run = ledger.run;
       if (!run) throw new GameApiError("INVALID_STATE", "연 판이 없습니다.");
@@ -2413,7 +2415,7 @@ export class FakeServer implements GameApi {
       if (result.landed) {
         const treasure = fishTreasure(result.landed)!;
         const wallet = { ...this.state.wallet };
-        const amount = Math.max(0, Math.min(treasure.amount, WALLET_CAPS[treasure.currency] - wallet[treasure.currency]));
+        const amount = Math.max(0, Math.min(fishAmount(run, result.fishIndex), WALLET_CAPS[treasure.currency] - wallet[treasure.currency]));
         wallet[treasure.currency] += amount;
         next.wallet = wallet;
         granted = { currency: treasure.currency, amount };

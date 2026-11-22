@@ -3,7 +3,7 @@ import { FakeServer } from "../../src/api/FakeServer";
 import { createDefaultSession } from "../../src/state/session";
 import { applyMissionEvent } from "../../src/core/missions";
 import {
-  FISHING_DIFFICULTIES, FISH_TREASURES, FishingReelError, MIN_WINDOW_MS, SHUTE_FISHING, SHUTE_FISHING_BUDGET, catchWindowMs, createEmptyShuteFishingState,
+  BOSS_AMOUNT_STEP, FISHING_DIFFICULTIES, FISH_TREASURES, FishingReelError, bossAmountRange, fishAmount, fishingRunExpectedGemValue, isBossAmountValid, rollBossAmount, MIN_WINDOW_MS, SHUTE_FISHING, SHUTE_FISHING_BUDGET, catchWindowMs, createEmptyShuteFishingState,
   fishTreasure, fishingDifficulty, fishingRunGemValue, gaugePosition, isValidShuteFishingState, judgeCatch, normalizeShuteFishingState,
   reelFishing, rollFishCatches, rollFishingFish, shuteFishingPlayable, shuteFishingStatus, type FishingCatch, type FishingRun,
 } from "../../src/core/shuteFishing";
@@ -30,15 +30,20 @@ const centerHit = (spec: FishingCatch) => Math.round(spec.center * spec.sweepMs)
 const MISS_AT = 0;
 
 describe("슈테의 리듬 낚시 규칙", () => {
-  it("다 낚았을 때의 기대 가치가 정규 이벤트 예산(코인 100당) 안이고, 판값은 입장값에 비례한다(1:2:3:4)", () => {
+  it("다 낚았을 때의 가치가 보스가 최대치에 당첨돼도 정규 이벤트 예산(코인 100당) 안이고, 기대 판값은 입장값에 비례한다(1:2:3:4)", () => {
     const per100: number[] = [];
     for (const difficulty of FISHING_DIFFICULTIES) {
       const random = lcg(difficulty.entryCost + 7);
-      let total = 0;
+      let ceiling = 0, total = 0;
       const runs = 6000;
-      for (let index = 0; index < runs; index += 1) total += fishingRunGemValue(rollFishingFish(difficulty, random));
+      for (let index = 0; index < runs; index += 1) {
+        const fish = rollFishingFish(difficulty, random);
+        ceiling += fishingRunGemValue(fish);
+        total += fishingRunExpectedGemValue(difficulty, fish);
+      }
+      expect(ceiling / runs / difficulty.entryCost * 100, difficulty.id).toBeLessThanOrEqual(SHUTE_FISHING_BUDGET.gemValuePer100Stamina);
       const value = total / runs / difficulty.entryCost * 100;
-      expect(value, difficulty.id).toBeLessThanOrEqual(SHUTE_FISHING_BUDGET.gemValuePer100Stamina);
+      expect(value, difficulty.id).toBeLessThan(ceiling / runs / difficulty.entryCost * 100);
       per100.push(value);
     }
     const base = per100[0];
@@ -78,6 +83,53 @@ describe("슈테의 리듬 낚시 규칙", () => {
     expect(FISHING_DIFFICULTIES.find((entry) => entry.id === "extreme")!.boss.every(([id]) => fishTreasure(id)!.tier === "jackpot")).toBe(true);
     const jackpots = FISH_TREASURES.filter((treasure) => treasure.tier === "jackpot");
     for (const treasure of jackpots) expect(treasure.currency === "gems" && treasure.amount >= 300 && treasure.amount <= 1000).toBe(true);
+  });
+
+  it("보스 보물은 난이도마다 최소치를 보장하고 표의 수량이 최대치이며, 그 사이에서 고르게 나온다", () => {
+    for (const difficulty of FISHING_DIFFICULTIES) {
+      for (const [id] of difficulty.boss) {
+        const range = bossAmountRange(difficulty, id)!;
+        const treasure = fishTreasure(id)!;
+        expect(range.max, `${difficulty.id}/${id}`).toBe(treasure.amount);
+        if (difficulty.bossFloor[id] === undefined) { expect(range.min).toBe(range.max); continue; }
+        // 최소치는 최대치의 40~50% — 기대값을 깎되 보스곡이 늘 앞의 곡보다 크게 남는다.
+        expect(range.min / range.max, `${difficulty.id}/${id}`).toBeGreaterThanOrEqual(0.4);
+        expect(range.min / range.max, `${difficulty.id}/${id}`).toBeLessThanOrEqual(0.5);
+        expect((range.max - range.min) % BOSS_AMOUNT_STEP).toBe(0);
+        expect(rollBossAmount(difficulty, id, () => 0)).toBe(range.min);
+        expect(rollBossAmount(difficulty, id, () => 0.999999)).toBe(range.max);
+        const random = lcg(difficulty.entryCost);
+        const seen = new Set<number>();
+        for (let index = 0; index < 4000; index += 1) {
+          const amount = rollBossAmount(difficulty, id, random);
+          expect(isBossAmountValid(difficulty, id, amount)).toBe(true);
+          seen.add(amount);
+        }
+        expect(seen.size).toBe((range.max - range.min) / BOSS_AMOUNT_STEP + 1);
+        expect(isBossAmountValid(difficulty, id, range.min - BOSS_AMOUNT_STEP)).toBe(false);
+        expect(isBossAmountValid(difficulty, id, range.max + BOSS_AMOUNT_STEP)).toBe(false);
+        expect(isBossAmountValid(difficulty, id, range.min + 1)).toBe(false);
+      }
+    }
+    // 같은 보물이라도 어려운 난이도의 바닥이 더 낮지 않다.
+    const floorOf = (difficultyId: string, id: string) => bossAmountRange(fishingDifficulty(difficultyId)!, id)!.min;
+    expect(floorOf("normal", "jackpot-500")).toBeGreaterThanOrEqual(floorOf("easy", "jackpot-500"));
+    expect(floorOf("hard", "jackpot-500")).toBeGreaterThanOrEqual(floorOf("normal", "jackpot-500"));
+    expect(floorOf("extreme", "jackpot-1000")).toBeGreaterThanOrEqual(floorOf("hard", "jackpot-1000"));
+  });
+
+  it("판에 굳힌 보스 수량은 저장 검증을 지나고, 범위 밖이면 판을 버리며, 수량이 없던 옛 판은 표의 수량을 준다", () => {
+    const difficulty = fishingDifficulty("extreme")!;
+    const random = lcg(21);
+    const fish = rollFishingFish(difficulty, random);
+    const base: FishingRun = { difficulty: "extreme", fish, catches: fish.map((id) => rollFishCatches(difficulty, id, random)), index: 0, caught: 0, misses: 0, collected: {} };
+    const ledger = (run: unknown) => ({ weekKey: "2026-11-16", spent: 400, run });
+    expect(isValidShuteFishingState(ledger({ ...base, bossAmount: 730 }))).toBe(true);
+    expect(normalizeShuteFishingState(ledger({ ...base, bossAmount: 1500 })).run).toBeNull();
+    expect(isValidShuteFishingState(ledger(base))).toBe(true);
+    expect(fishAmount(base, fish.length - 1)).toBe(1000);
+    expect(fishAmount({ ...base, bossAmount: 730 }, fish.length - 1)).toBe(730);
+    expect(fishAmount({ ...base, bossAmount: 730 }, 0)).toBe(fishTreasure(fish[0])!.amount);
   });
 
   it("물고기마다 캐치는 3~5번이고, 어떤 캐치도 판정 창이 MIN_WINDOW_MS보다 짧지 않다", () => {
@@ -182,6 +234,10 @@ describe("슈테의 리듬 낚시 서버 경계", () => {
     }
     expect(last!.reel!.cleared).toBe(true);
     expect(last!.status.run).toBeNull();
+    // 보스는 판을 열 때 서버가 고른 수량만큼 — 최소~최대 사이이고 그대로 지급된다.
+    const bossId = run.fish[run.fish.length - 1];
+    expect(isBossAmountValid(fishingDifficulty("normal")!, bossId, run.bossAmount)).toBe(true);
+    expect(last!.reel!.granted).toEqual({ currency: fishTreasure(bossId)!.currency, amount: run.bossAmount });
     for (const id of run.fish) {
       const treasure = fishTreasure(id)!;
       expect(state.wallet[treasure.currency]).toBeGreaterThan(before[treasure.currency]);

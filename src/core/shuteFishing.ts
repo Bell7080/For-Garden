@@ -108,6 +108,11 @@ export interface FishingDifficulty {
   readonly tierWeights: Readonly<Record<Exclude<FishTier, "jackpot">, number>>;
   /** 마지막 곡(보스)의 보물과 가중치 — 난이도마다 훨씬 좋게 짠다. */
   readonly boss: readonly (readonly [string, number])[];
+  /**
+   * 보스 보물이 보장하는 최소 수량(보물 ID → 수). 보물표의 수량이 **당첨될 수 있는 최대치**이고, 실제 수량은 판을 여는 순간
+   * 서버가 최소~최대 사이에서 고른다(`rollBossAmount`). 적히지 않은 보물(화석·호박석 한 개)은 표의 수량 그대로다.
+   */
+  readonly bossFloor: Readonly<Record<string, number>>;
 }
 
 /**
@@ -119,18 +124,57 @@ export interface FishingDifficulty {
  * 구간 폭은 "너무 어렵다"(응태 2026-11-03)는 말에 처음보다 1.4배 남짓 넓혔다.
  * 2026-11-11 「살짝 낮춰 주자」(응태): 쉬움은 그대로 두고 보통~매우 어려움의 바늘을 5~10% 늦추고 구간을 넓혔으며,
  * 가장 짧은 판정 창을 110 → 130ms로 올렸다(보스 대박 캐치가 그 바닥에 붙어 있었다).
+ * 2026-11-22 「보스급 보상이 정해진 게 너무 사기」(응태): 보스 보물의 수량은 표의 값이 **최대치**이고 난이도마다 최소치
+ * (`bossFloor`, 최대치의 약 40~50%)를 보장해 그 사이에서 고른다. 판의 기대 총가치는 코인 100당 약 485 → 410~440이다.
  */
 export const FISHING_DIFFICULTIES: readonly FishingDifficulty[] = [
   { id: "easy", entryCost: 100, fish: 3, sweepMs: 1300, zone: 0.34,
-    tierWeights: { common: 58, fine: 42, rare: 0 }, boss: [["gems-l", 3], ["fossil", 2], ["amber", 2], ["jackpot-500", 1]] },
+    tierWeights: { common: 58, fine: 42, rare: 0 }, boss: [["gems-l", 3], ["fossil", 2], ["amber", 2], ["jackpot-500", 1]],
+    bossFloor: { "gems-l": 150, "jackpot-500": 200 } },
   { id: "normal", entryCost: 200, fish: 4, sweepMs: 1180, zone: 0.31,
-    tierWeights: { common: 20, fine: 50, rare: 30 }, boss: [["jackpot-500", 1]] },
+    tierWeights: { common: 20, fine: 50, rare: 30 }, boss: [["jackpot-500", 1]],
+    bossFloor: { "jackpot-500": 250 } },
   { id: "hard", entryCost: 300, fish: 5, sweepMs: 1040, zone: 0.28,
-    tierWeights: { common: 0, fine: 45, rare: 55 }, boss: [["jackpot-500", 5], ["jackpot-1000", 1]] },
+    tierWeights: { common: 0, fine: 45, rare: 55 }, boss: [["jackpot-500", 5], ["jackpot-1000", 1]],
+    bossFloor: { "jackpot-500": 250, "jackpot-1000": 450 } },
   { id: "extreme", entryCost: 400, fish: 6, sweepMs: 900, zone: 0.25,
-    tierWeights: { common: 10, fine: 52, rare: 38 }, boss: [["jackpot-1000", 1]] },
+    tierWeights: { common: 10, fine: 52, rare: 38 }, boss: [["jackpot-1000", 1]],
+    bossFloor: { "jackpot-1000": 500 } },
 ];
 export function fishingDifficulty(id: unknown): FishingDifficulty | undefined { return FISHING_DIFFICULTIES.find((difficulty) => difficulty.id === id); }
+
+/** 보스 보물 수량이 오르내리는 단위 — 젬 10개씩 끊어 깔끔한 수만 나온다. */
+export const BOSS_AMOUNT_STEP = 10;
+
+/** 보스 보물이 당첨될 수 있는 수량의 범위. 바닥이 없는 보물은 표의 수량 하나다. */
+export function bossAmountRange(difficulty: FishingDifficulty, treasureId: string): { min: number; max: number } | undefined {
+  const treasure = fishTreasure(treasureId);
+  if (!treasure) return undefined;
+  const floor = difficulty.bossFloor[treasureId];
+  return { min: floor !== undefined ? Math.min(floor, treasure.amount) : treasure.amount, max: treasure.amount };
+}
+
+/** 보스 보물의 수량을 최소~최대 사이에서 고르게 고른다(`BOSS_AMOUNT_STEP` 단위, 양 끝 포함). */
+export function rollBossAmount(difficulty: FishingDifficulty, treasureId: string, random: () => number): number {
+  const range = bossAmountRange(difficulty, treasureId);
+  if (!range) return 0;
+  const steps = Math.floor((range.max - range.min) / BOSS_AMOUNT_STEP);
+  return Math.min(range.max, range.min + Math.floor(clampRoll(random) * (steps + 1)) * BOSS_AMOUNT_STEP);
+}
+
+/** 보스 보물이 당첨될 수 있는 수량인가 — 범위 안이고 단위에 맞는다. */
+export function isBossAmountValid(difficulty: FishingDifficulty, treasureId: string, amount: unknown): amount is number {
+  const range = bossAmountRange(difficulty, treasureId);
+  return !!range && Number.isInteger(amount) && (amount as number) >= range.min && (amount as number) <= range.max
+    && ((amount as number) === range.max || ((amount as number) - range.min) % BOSS_AMOUNT_STEP === 0);
+}
+
+/** 판에서 `index`번째 물고기를 낚으면 받는 수량 — 보스는 판을 열 때 고른 수량, 나머지는 보물표 그대로다. */
+export function fishAmount(run: Pick<FishingRun, "fish" | "bossAmount">, index: number): number {
+  const treasure = fishTreasure(run.fish[index]);
+  if (!treasure) return 0;
+  return index === run.fish.length - 1 && run.bossAmount !== undefined ? run.bossAmount : treasure.amount;
+}
 
 /** 캐치 한 번의 게이지 — 구간의 가운데·폭(0~1)과 바늘이 한쪽 끝에서 다른 끝까지 가는 시간. */
 export interface FishingCatch {
@@ -215,9 +259,20 @@ export function rollFishCatches(difficulty: FishingDifficulty, treasureId: strin
   return catches;
 }
 
-/** 물고기를 전부 낚았을 때 받는 총가치(젬 환산) — 난이도 예산을 재는 기준이다. */
+/** 물고기를 전부 낚았을 때 받을 수 있는 **최대** 총가치(젬 환산, 보스가 최대치에 당첨) — 난이도 예산의 상한을 재는 기준이다. */
 export function fishingRunGemValue(fish: readonly string[]): number {
   return fish.reduce((sum, id) => { const treasure = fishTreasure(id); return sum + (treasure ? fishTreasureGemValue(treasure) : 0); }, 0);
+}
+
+/** 물고기를 전부 낚았을 때의 **기대** 총가치(젬 환산) — 보스 수량은 범위의 평균으로 잰다. */
+export function fishingRunExpectedGemValue(difficulty: FishingDifficulty, fish: readonly string[]): number {
+  return fish.reduce((sum, id, index) => {
+    const treasure = fishTreasure(id);
+    if (!treasure) return sum;
+    const range = index === fish.length - 1 ? bossAmountRange(difficulty, id) : undefined;
+    const amount = range ? (range.min + range.min + Math.floor((range.max - range.min) / BOSS_AMOUNT_STEP) * BOSS_AMOUNT_STEP) / 2 : treasure.amount;
+    return sum + chestCurrencyGemValue(treasure.currency) * amount;
+  }, 0);
 }
 
 /** 정규 이벤트 예산 — 완벽한 판의 기대 총가치가 코인 100당 상한을 넘지 않는다. */
@@ -229,6 +284,8 @@ export interface FishingRun {
   fish: string[];
   /** 물고기마다의 캐치들. */
   catches: FishingCatch[][];
+  /** 판을 열 때 서버가 고른 보스 보물의 수량(`rollBossAmount`). 이 값이 생기기 전의 판에는 없고, 그때는 보물표 수량이다. */
+  bossAmount?: number;
   /** 지금 낚는 물고기의 차례. */
   index: number;
   /** 지금 물고기에서 쌓은 캐치 수. */
@@ -324,7 +381,12 @@ function normalizeRun(value: unknown): FishingRun | null {
   for (const [currency, amount] of Object.entries(raw)) {
     if ((CURRENCIES as readonly string[]).includes(currency) && Number.isInteger(amount) && (amount as number) > 0) collected[currency as ChestCardCurrency] = amount as number;
   }
-  return { difficulty: difficulty.id, fish, catches, index: index as number, caught: caught as number, misses: misses as number, collected };
+  let bossAmount: number | undefined;
+  if (source.bossAmount !== undefined) {
+    if (!isBossAmountValid(difficulty, fish[fish.length - 1], source.bossAmount)) return null;
+    bossAmount = source.bossAmount;
+  }
+  return { difficulty: difficulty.id, fish, catches, ...(bossAmount !== undefined ? { bossAmount } : {}), index: index as number, caught: caught as number, misses: misses as number, collected };
 }
 
 export function normalizeShuteFishingState(value: unknown): ShuteFishingState {

@@ -182,8 +182,8 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "selfAttackSpeedMultiplier") {
     // 들어서는 순간의 끌어당김이 먼저다 — 화면에서 확인할 첫 변화가 적이 한꺼번에 끌려오는 것이다.
     if (trait.pullOnEntry) return t("skill.ferocity.selfAttackSpeedMultiplier.pull", { percent: trait.bonusPercent });
-    // 손이 빨라지는 것과 함께 무는 만큼 되찾는다(아르사).
-    // 끊기지 않을수록 오르는 폭주(아르사) — 시작값·매초 오르는 몫·상한을 함께 말한다.
+    // 손이 빨라지는 것과 함께 무는 만큼 되찾는다(아르).
+    // 끊기지 않을수록 오르는 폭주(아르) — 시작값·매초 오르는 몫·상한을 함께 말한다.
     if (trait.ramp !== undefined) {
       const ramp = trait.ramp;
       return t("skill.ferocity.selfAttackSpeedMultiplier.ramp", { percent: trait.bonusPercent, perSecond: ramp.attackSpeedPercentPerSecond, max: ramp.maxAttackSpeedPercent, stealPerSecond: ramp.lifeStealPointsPerSecond, stealMax: ramp.maxLifeStealPoints });

@@ -4801,13 +4801,13 @@ export const RELICS: RelicDef[] = [
   },
   {
     /**
-     * 아르사(알로사우루스) — **야성을 빨리 채우고 오래 쥐는 불 전사**다. 공통 획득량(12)은 그대로 두고, 게이지를 작게(80) 잡아
+     * 아르(알로사우루스) — **야성을 빨리 채우고 오래 쥐는 불 전사**다. 공통 획득량(12)은 그대로 두고, 게이지를 작게(80) 잡아
      * 빨리 차게 하고, 패시브 「피 냄새」가 평타마다 야성을 더 끌어오며, 폭주 중에는 적중·처치가 폭주를 **닳지 않게 붙잡는다**
      * (한 번의 폭주에 최대 +6초). 폭주 연장은 로스터에서 이 개체만 쓰는 축이다. 불 전사는 렉시아(SSR) 하나뿐이던 자리다.
      */
-    id: "arsa",
+    id: "ar",
     squad: "gear",
-    name: "아르사",
+    name: "아르",
     // 034는 파루아의 번호라 원화 번호(char_034)와 갈린다 — 개체번호는 도감 순서의 값이다.
     specimenNumber: "035",
     projectName: "RELENTLESS HUNT",
@@ -4823,14 +4823,14 @@ export const RELICS: RelicDef[] = [
       weight: "44 kg",
     },
     catalogSummary: "신장 1.52m, 체중 44kg의 인간형 체격에 눈 위의 작은 뿔과 여러 번 아문 골절 흔적이 확인된 아성체 알로사우루스 화석 기반 표본.",
-    unlockRecord: { status: "recorded", text: "복원 후 아르사는 말을 걸어도 눈만 돌린다. 목까지 올린 코트 깃에는 이빨 모양 가시가 줄지어 있고, 버클로 감아 둔 꼬리는 걸을 때마다 바닥을 스친다. 인양 현장에서 표적을 한번 정하면 놓치는 법이 없다. 동료가 철수 신호를 보내도 \"아직\" 한마디만 남기고 끝까지 쫓아간 기록이 여러 번 있다. 돌아와서는 다친 데를 감추고 구석에서 야식을 먹는다. 붕대를 감아 주면 고맙다는 말 대신 제 몫의 야식을 반으로 쪼개 내민다." },
+    unlockRecord: { status: "recorded", text: "복원 후 아르는 말을 걸어도 눈만 돌린다. 목까지 올린 코트 깃에는 이빨 모양 가시가 줄지어 있고, 버클로 감아 둔 꼬리는 걸을 때마다 바닥을 스친다. 인양 현장에서 표적을 한번 정하면 놓치는 법이 없다. 동료가 철수 신호를 보내도 \"아직\" 한마디만 남기고 끝까지 쫓아간 기록이 여러 번 있다. 돌아와서는 다친 데를 감추고 구석에서 야식을 먹는다. 붕대를 감아 주면 고맙다는 말 대신 제 몫의 야식을 반으로 쪼개 내민다." },
     squadNote: "나이트 기어의 추격 담당. 인양 현장에서 달아나는 표적을 끝까지 쫓아 회수하고, 철수 신호가 와도 사냥이 끝날 때까지 돌아오지 않는다.",
     // 기어의 호칭 중 가장 짧고 건조한 말을 무심하게 쓴다.
     researcherTitle: "당신",
     rarity: "SR",
     // 게이지를 작게 잡아 빨리 찬다 — 공통 획득량을 올리지 않고 이 개체만의 속도를 낸다.
     ferocityMax: 80,
-    portraitAssetId: "arsa",
+    portraitAssetId: "ar",
     origin: "알로사우루스",
     element: "fire",
     role: "warrior",
@@ -4863,7 +4863,7 @@ export const RELICS: RelicDef[] = [
     passive: {
       // kind가 bloodScent인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
-      id: "arsa-passive",
+      id: "ar-passive",
       name: "피 냄새",
       kind: "bloodScent",
       iconAssetId: "skill-icon-buff",
@@ -4874,7 +4874,7 @@ export const RELICS: RelicDef[] = [
       desc: "기본 공격이 적중할 때마다 야성을 6 더 얻는다. 폭주 중에는 기본 공격 적중마다 0.5초, 적을 쓰러뜨리면 4초 동안 폭주가 닳지 않는다. 한 번의 폭주에 늘어나는 시간은 최대 6초다.",
     },
     basic: {
-      id: "arsa-basic",
+      id: "ar-basic",
       name: "물어뜯기",
       power: 100,
       iconAssetId: "skill-icon-physical",
@@ -4885,7 +4885,7 @@ export const RELICS: RelicDef[] = [
       statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 }],
     },
     ultimate: {
-      id: "arsa-ult",
+      id: "ar-ult",
       name: "포식자의 돌진",
       power: 220,
       iconAssetId: "skill-icon-physical",

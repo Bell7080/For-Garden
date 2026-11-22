@@ -23,7 +23,6 @@ export const EXCAVATION_VI = {
   "excavation.harvestFailed": "Thu hoạch thất bại. Hãy thử lại với cùng yêu cầu.",
   "excavation.ad.unavailable": "Dù không xem được quảng cáo, vẫn thu hoạch thường được.",
   "excavation.ad.cancelled": "Quảng cáo đã hủy hoặc chưa sẵn sàng. Hãy thu hoạch thường.",
-  "excavation.ad.applied": "Đã áp dụng thưởng Khai thác.",
   "excavation.ad.verifyFailed": "Xác minh quảng cáo thất bại. Vẫn thu hoạch thường được.",
   "excavation.ownedRelics": "Di vật sở hữu",
   "excavation.ownedRelicsForSlot": "Di vật sở hữu · Đặt vào ô {slot}",

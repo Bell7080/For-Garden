@@ -25,7 +25,7 @@ import { PortraitCard } from "./PortraitCard";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { resonanceOf } from "../core/relicResonance";
 import { settingsManager } from "../managers/SettingsManager";
-import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
+import { applyRosterView, DEFAULT_ROSTER_VIEW, deployedFirst, type RosterView } from "../core/rosterView";
 import { RosterControls } from "./RosterControls";
 import { autoAssignExcavation, type ExcavationAutoMode, type ExcavationCandidate } from "../core/excavationAutoAssign";
 import { ExcavationAutoPlace } from "./ExcavationAutoPlace";
@@ -56,13 +56,23 @@ import { FORMATION_DRAG_VISUAL } from "./formationDragVisual";
 import { applyLiftPose, clearLiftPose, createFormationDragVisualController, type FormationDragVisualController } from "./formationDragVisualController";
 import { withBusy } from "./BusyOverlay";
 import { addScrollHint } from "./ScrollHint";
+import { showContentToast } from "./ContentToast";
+
+/** 배치 그리드의 `index`번째 카드 자리(그리드 컨테이너 안 좌표). */
+function rosterCardSpot(index: number): { x: number; y: number } {
+  // 머리는 칩 밖으로 나오므로 첫 줄은 공용 안전 영역만큼 내려 세운다. 그러지 않으면 정수리가 잘린다.
+  return {
+    x: formationRosterColumnX(ROSTER, index % ROSTER.columns),
+    y: portraitGridFirstRowY(0, ROSTER.cardHeight, PORTRAIT_GRID_MASK_GAP) + Math.floor(index / ROSTER.columns) * ROSTER.rowStep,
+  };
+}
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
 /** 현황의 누적 액자 판. 배치 그리드도 같은 윗변에서 시작해 두 화면이 한 자리를 공유한다. */
 const STATUS_SUMMARY = { y: 30, width: 800, height: 205 } as const;
 /** 광고 효과 버튼 두 장의 자리. 효과가 돌면 밑변 아래에 남은 시간 줄이 붙으므로 안내 글은 그 아래에 선다. */
-const AD_OFFER = { x: 205, y: 375, width: 370, height: 82, messageY: 448 } as const;
+const AD_OFFER = { x: 205, y: 375, width: 370, height: 82 } as const;
 /**
  * 보유 렐릭은 이 창 안에서만 세로로 흐르며 상단 슬롯과 하단 완료 버튼을 침범하지 않는다.
  *
@@ -208,7 +218,8 @@ export class IdleExcavationPopup {
   private readonly speedBadges = new Map<string, Phaser.GameObjects.Text>();
   /** 보관 2배를 방금 받았으면 다음 현황에서 두 번째 줄이 펼쳐지는 연출을 한 번 돈다. */
   private storageUnfold = false;
-  private adMessage?: string;
+  /** 지금 그리드에 선 카드 순서 — 같으면 옮기지 않는다. */
+  private rosterOrderKey = "";
   private harvestError?: string;
   private ticker?: Phaser.Time.TimerEvent;
   private requestGeneration = 0;
@@ -539,24 +550,31 @@ export class IdleExcavationPopup {
       return { update: (now: number): void => { if (offer.active) button.update(excavationAdOfferDisplayModel(slotId, limit, remaining, activeLeft(now))); } };
     });
     setDebugExcavationAdOffers(debugOffers);
-    if (this.adMessage) content.add(this.scene.add.text(0, AD_OFFER.messageY, this.adMessage, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
     return offers;
+  }
+
+  /**
+   * 광고가 서지 못한 이유는 판 밑에 작은 글로 남기지 않고 공용 거절 토스트가 잠깐 말한다.
+   * 성공은 따로 알리지 않는다 — 효과 버튼의 남은 시간 줄과 게이지가 이미 바뀌어 선다.
+   */
+  private refuseAd(message: string): void {
+    if (this.body) showContentToast(this.scene, message, "refused");
   }
 
   /** 취소·동의 거부·SDK/재고 실패는 메시지만 바꾸며 일반 수확 버튼과 발굴 상태를 건드리지 않는다. */
   private async claimAdEffect(slotId: ExcavationAdOfferId): Promise<void> {
-    if (!this.presentAd || this.saving) { this.adMessage = t("excavation.ad.unavailable"); this.renderStatus(); return; }
+    if (!this.presentAd || this.saving) { this.refuseAd(t("excavation.ad.unavailable")); return; }
     const presentation = await this.presentAd(slotId);
     const verificationToken = completedAdToken(presentation);
-    if (!verificationToken) { this.adMessage = t("excavation.ad.cancelled"); this.renderStatus(); return; }
+    if (!verificationToken) { this.refuseAd(t("excavation.ad.cancelled")); return; }
     try {
       const result = await this.api.claimAdReward({ slotId, verificationToken, requestId: requestId() });
       if (result.excavation) session.idleExcavation = { ...result.excavation, assignedRelicIds: copyFormation(result.excavation.assignedRelicIds), unclaimed: { ...result.excavation.unclaimed } };
       session.dailyAdRewards = { date: result.dailyAdRewards.date, claimsBySlot: { ...result.dailyAdRewards.claimsBySlot }, requestIds: session.dailyAdRewards.requestIds };
       if (slotId === "excavation-storage") this.storageUnfold = true;
       // 광고 적용 뒤에도 임시 응답을 조립하지 않고 비율·알림이 포함된 발굴 API 스냅샷을 다시 받는다.
-      this.confirmed = await this.api.getIdleExcavation(); this.adMessage = t("excavation.ad.applied"); this.renderStatus();
-    } catch { this.adMessage = t("excavation.ad.verifyFailed"); this.renderStatus(); } finally { releaseAdWait(); }
+      this.confirmed = await this.api.getIdleExcavation(); this.renderStatus();
+    } catch { this.refuseAd(t("excavation.ad.verifyFailed")); } finally { releaseAdWait(); }
   }
 
   /** 생산 1.5배가 켜진 동안만 도약을 빠르게 하고 SD 머리 위에 배율 표식을 세운다. */
@@ -647,8 +665,8 @@ export class IdleExcavationPopup {
         this.renderEditor();
       },
     });
-    const powerOf = (relic: RelicDef): number => relicProgression.getCombatPower(relic.id);
-    const owned = applyRosterView(RELICS.filter((relic) => session.owned.has(relic.id)), this.rosterView, powerOf);
+    const owned = this.rosterOrder();
+    this.rosterOrderKey = owned.map((relic) => relic.id).join(",");
     // 그리드에 붙는 줄 — 도감과 같은 필터·정렬. 바뀌면 목록만 다시 세운다(편성 초안은 그대로다).
     new RosterControls(this.scene, {
       left: GRID_VIEW.left, right: GRID_VIEW.right, y: GRID_VIEW.top - 42, parent: content, view: this.rosterView,
@@ -659,9 +677,7 @@ export class IdleExcavationPopup {
     this.bindRosterPick(content);
     const grid = this.scene.add.container(0, GRID_VIEW.top + this.gridScrollY);
     owned.forEach((relic, index) => {
-      const x = formationRosterColumnX(ROSTER, index % ROSTER.columns);
-      // 머리는 칩 밖으로 나오므로 첫 줄은 공용 안전 영역만큼 내려 세운다. 그러지 않으면 정수리가 잘린다.
-      const y = portraitGridFirstRowY(0, ROSTER.cardHeight, PORTRAIT_GRID_MASK_GAP) + Math.floor(index / ROSTER.columns) * ROSTER.rowStep;
+      const { x, y } = rosterCardSpot(index);
       const detail = excavationProductionDisplayModel([relic.id, null, null], RELICS, session.relicProgress).relics[0];
       const progress = session.relicProgress[relic.id];
       const card = new PortraitCard(this.scene, x, y, {
@@ -840,6 +856,37 @@ export class IdleExcavationPopup {
     if (!this.draft) return;
     this.renderUpper(this.draft, true);
     for (const [relicId, card] of this.rosterCards) card.setSelected(this.draft.includes(relicId));
+    this.reflowRoster();
+  }
+
+  /**
+   * 그리드에 세울 순서. 편성 화면과 같이 **칸에 선 렐릭이 칸 순서대로 맨 위**에 서고 나머지는
+   * 필터·정렬을 그대로 따른다(`deployedFirst`).
+   */
+  private rosterOrder(): RelicDef[] {
+    const powerOf = (relic: RelicDef): number => relicProgression.getCombatPower(relic.id);
+    const owned = applyRosterView(RELICS.filter((relic) => session.owned.has(relic.id)), this.rosterView, powerOf);
+    return deployedFirst(owned, this.draft ?? []);
+  }
+
+  /**
+   * 배치가 바뀌어 맨 위에 설 렐릭이 달라지면 카드를 다시 세우지 않고 새 칸으로 스르륵 옮긴다 —
+   * 다시 세우면 원화가 빠졌다 들어와 새로고침된 것처럼 읽힌다. 마스크는 스크롤 시계가 매 프레임 맞춘다.
+   */
+  private reflowRoster(): void {
+    const roster = this.rosterOrder();
+    const key = roster.map((relic) => relic.id).join(",");
+    if (key === this.rosterOrderKey) return;
+    this.rosterOrderKey = key;
+    const duration = session.settings.accessibility.reduceMotion ? 0 : 220;
+    roster.forEach((relic, index) => {
+      const card = this.rosterCards.get(relic.id);
+      if (!card) return;
+      const { x, y } = rosterCardSpot(index);
+      this.scene.tweens.killTweensOf(card);
+      if (duration === 0) card.setPosition(x, y);
+      else this.scene.tweens.add({ targets: card, x, y, duration, ease: "Cubic.Out" });
+    });
   }
 
   /** 슬롯은 빈 판만 그리고 그 위에 SD가 선다. 어느 칸이 편집 대상인지는 밑판·확대가 알린다. */

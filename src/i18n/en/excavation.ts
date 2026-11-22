@@ -23,7 +23,6 @@ export const EXCAVATION_EN = {
   "excavation.harvestFailed": "The harvest failed. Please retry with the same request.",
   "excavation.ad.unavailable": "Even when ads are unavailable, a normal harvest still works.",
   "excavation.ad.cancelled": "The ad was cancelled or is not ready. Please use a normal harvest.",
-  "excavation.ad.applied": "The excavation bonus has been applied.",
   "excavation.ad.verifyFailed": "Ad verification failed. A normal harvest still works.",
   "excavation.ownedRelics": "Owned Relics",
   "excavation.ownedRelicsForSlot": "Owned Relics · Place in slot {slot}",

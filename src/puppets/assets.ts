@@ -76,8 +76,8 @@ import {
   BRIKA_SD_METADATA,
   BELZ_PORTRAIT_METADATA,
   BELZ_SD_METADATA,
-  ARSA_PORTRAIT_METADATA,
-  ARSA_SD_METADATA,
+  AR_PORTRAIT_METADATA,
+  AR_SD_METADATA,
   NODONIA_PORTRAIT_METADATA,
   NODONIA_SD_METADATA,
   PACHI_PORTRAIT_METADATA,
@@ -457,10 +457,10 @@ export const ARTE_ASSET: PuppetAsset = {
   ...ARTE_PORTRAIT_METADATA,
 };
 
-/** 34번 전신 일러스트: 아르사(알로사우루스). 흰 단발에 상어 이빨 무늬의 검붉은 가시 코트와 버클로 감은 가시 꼬리의 원화다. */
-export const ARSA_ASSET: PuppetAsset = {
+/** 34번 전신 일러스트: 아르(알로사우루스). 흰 단발에 상어 이빨 무늬의 검붉은 가시 코트와 버클로 감은 가시 꼬리의 원화다. */
+export const AR_ASSET: PuppetAsset = {
   url: `${base}puppets/char_034.zip`,
-  ...ARSA_PORTRAIT_METADATA,
+  ...AR_PORTRAIT_METADATA,
 };
 
 /** 33번 전신 일러스트: 벨즈(베엘제부포). 이빨 달린 개구리 후드와 사슬·수갑, 붉은 땋은 머리의 원화다. */
@@ -650,7 +650,7 @@ const PORTRAIT_ASSETS = {
   arte: ARTE_ASSET,
   brika: BRIKA_ASSET,
   belz: BELZ_ASSET,
-  arsa: ARSA_ASSET,
+  ar: AR_ASSET,
   // 늑대는 전신 원화가 따로 없다. SD 자체가 온전한 한 마리라 정보창도 같은 묶음을 세운다.
   kuro: KURO_SD_ASSET,
   dimo: DIMO_SD_ASSET,
@@ -895,10 +895,10 @@ export const ARTE_SD_ASSET: PuppetAsset = {
   ...ARTE_SD_METADATA,
 };
 
-/** 34번 SD: 아르사. */
-export const ARSA_SD_ASSET: PuppetAsset = {
+/** 34번 SD: 아르. */
+export const AR_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_034.zip`,
-  ...ARSA_SD_METADATA,
+  ...AR_SD_METADATA,
 };
 
 /** 33번 SD: 벨즈. */
@@ -992,7 +992,7 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   arte: ARTE_SD_ASSET,
   brika: BRIKA_SD_ASSET,
   belz: BELZ_SD_ASSET,
-  arsa: ARSA_SD_ASSET,
+  ar: AR_SD_ASSET,
   kuro: KURO_SD_ASSET,
   dimo: DIMO_SD_ASSET,
   shiro: SHIRO_SD_ASSET,

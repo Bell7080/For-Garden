@@ -23,7 +23,6 @@ export const EXCAVATION_PT_BR = {
   "excavation.harvestFailed": "A colheita falhou. Tente de novo com a mesma solicitação.",
   "excavation.ad.unavailable": "Mesmo sem anúncios, a colheita normal continua disponível.",
   "excavation.ad.cancelled": "O anúncio foi cancelado ou não está pronto. Use a colheita normal.",
-  "excavation.ad.applied": "O bônus de escavação foi aplicado.",
   "excavation.ad.verifyFailed": "A verificação do anúncio falhou. A colheita normal continua disponível.",
   "excavation.ownedRelics": "Relíquias obtidas",
   "excavation.ownedRelicsForSlot": "Relíquias obtidas · Colocar na posição {slot}",

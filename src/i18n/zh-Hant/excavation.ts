@@ -23,7 +23,6 @@ export const EXCAVATION_ZH_HANT = {
   "excavation.harvestFailed": "收穫失敗。請用相同請求重試。",
   "excavation.ad.unavailable": "即使無法觀看廣告，也可以普通收穫。",
   "excavation.ad.cancelled": "廣告已取消或尚未就緒。請使用普通收穫。",
-  "excavation.ad.applied": "採掘加成已生效。",
   "excavation.ad.verifyFailed": "廣告驗證失敗。仍可普通收穫。",
   "excavation.ownedRelics": "擁有的遺物",
   "excavation.ownedRelicsForSlot": "擁有的遺物 · 配置到{slot}號位",

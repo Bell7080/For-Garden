@@ -167,6 +167,17 @@ export function researchActionY(index: number): number {
     + index * (RESEARCH_BENCH.actionHeight + RESEARCH_BENCH.actionGap);
 }
 
+/**
+ * 룬이 비었을 때의 조작 줄(특성 일괄 부여) 중심 y.
+ *
+ * **빈 연구대는 화면 가운데에 서므로 끼운 뒤의 줄 자리를 그대로 쓰면 판 위에 겹친다** — 줄이
+ * 빈 칸 안내 글을 덮었다. 빈 판 밑변에서 특성 판과 같은 간격만큼 내려 선다.
+ */
+export function researchEmptyActionY(index: number): number {
+  return researchBenchTop(false) + RESEARCH_BENCH.height + RESEARCH_TRAIT.gap + RESEARCH_BENCH.actionHeight / 2
+    + index * (RESEARCH_BENCH.actionHeight + RESEARCH_BENCH.actionGap);
+}
+
 /** 버튼 줄이 실제로 차지하는 아래끝이다. 라벨 줄을 파고들지 않는지 테스트가 이 값으로 잰다. */
 export function researchActionsBottom(count: number): number {
   return count <= 0 ? researchActionsTop() : researchActionY(count - 1) + RESEARCH_BENCH.actionHeight / 2;

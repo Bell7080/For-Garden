@@ -34,7 +34,8 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { SHUTE_TONE, chamferPoints, drawBulbOutline, drawSignalRings, drawStud, paintShuteGaugeBase, paintShuteNeedle, shuteGaugeTrack, shuteNeedleX } from "./shuteFishingStyle";
 import { holdLiveOps } from "../managers/liveOps";
 import { GameApiError } from "../api/contracts";
-import { pressMomentMs, SHUTE_PRESS_LAG_MS } from "../core/pressMoment";
+import { nextFrameInterval, nextTimingBias, pressMomentMs, shutePressLagMs, timingErrorMs } from "../core/pressMoment";
+import { settingsManager } from "../managers/SettingsManager";
 import { shrinkTextToWidth } from "./textFit";
 import { textStyle } from "./theme";
 
@@ -285,9 +286,14 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
   const releaseLiveOps = holdLiveOps();
   const pending = new Map<string, string>();
   const motion = (): number => motionPolicy(session.settings).nonEssentialDistanceFactor;
+  /** 이 기기에 맞춰 스스로 배운 지연 보정 — 판이 열린 동안 메모리에서 고치고 닫을 때 한 번 남긴다. */
+  let timingBias = settingsManager.get().game.rhythmOffsetMs;
+  const saveTimingBias = (): void => {
+    if (timingBias !== settingsManager.get().game.rhythmOffsetMs) settingsManager.update({ game: { rhythmOffsetMs: timingBias } });
+  };
   popups.open({ width: FISH.width, height: FISH.height, title: t("event.shuteFishing.title"), dim: true,
     closeOnBackdrop: true, canClose: () => !busy && inflight === 0,
-    onClose: () => { alive = false; releaseLiveOps(); releaseBgm(); onChanged(); },
+    onClose: () => { alive = false; saveTimingBias(); releaseLiveOps(); releaseBgm(); onChanged(); },
   }, (body) => {
     const shape = popupArtShape(FISH.width, FISH.height);
     const mask = popupBodyShapeMask(scene, body, shape);
@@ -519,10 +525,15 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
       playShute.setTempo(spec.sweepMs);
     };
     let paintedZone: FishingCatch | undefined | null = null, paintedFlash = -1;
+    // 바늘이 실제로 그려지는 간격 — 판정 지연 보정이 그 기기의 프레임 속도를 따라간다(`shutePressLagMs`).
+    let lastTickAt: number | undefined, frameInterval = 1000 / 60;
     const tick = (): void => {
-      if (!alive || !playPage.visible) return;
+      if (!alive || !playPage.visible) { lastTickAt = undefined; return; }
+      const tickAt = performance.now();
+      if (lastTickAt !== undefined) frameInterval = nextFrameInterval(frameInterval, tickAt - lastTickAt);
+      lastTickAt = tickAt;
       flash = Math.max(0, flash - 0.06);
-      const now = frozenAt ?? performance.now();
+      const now = frozenAt ?? tickAt;
       const position = current ? gaugePosition(current.spec.sweepMs, now - current.startedAt) : 0;
       if (paintedZone !== current?.spec || paintedFlash !== flash) {
         paintedZone = current?.spec; paintedFlash = flash;
@@ -711,8 +722,8 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
 
     function press(pressedAt: number): void {
       if (busy || !current || frozenAt !== undefined || !status.run) return;
-      // 보이는 바늘에 맞춰 누른 시각 — 화면에 닿기까지의 어긋남을 덜어 낸다(`SHUTE_PRESS_LAG_MS`).
-      const elapsedMs = Math.max(0, Math.round(pressedAt - SHUTE_PRESS_LAG_MS - current.startedAt));
+      // 보이는 바늘에 맞춰 누른 시각 — 입력·화면·프레임 간격만큼의 어긋남과 이 기기에서 배운 쏠림을 덜어 낸다.
+      const elapsedMs = Math.max(0, Math.round(pressedAt - shutePressLagMs(frameInterval, timingBias) - current.startedAt));
       const spec = current.spec;
       let stepped: ReturnType<typeof reelFishing>;
       try { stepped = reelFishing(status.run, elapsedMs); } catch (error) { void resync(error); return; }
@@ -720,6 +731,8 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
       frozenAt = current.startedAt + elapsedMs;
       busy = true;
       const reel = stepped.reel;
+      // 맞힌 누름이 한가운데에서 쏠린 만큼을 다음 누름의 보정에 조금 싣는다(빗나간 누름은 노린 자리를 모른다).
+      if (reel.judgment !== "miss") timingBias = nextTimingBias(timingBias, timingErrorMs(spec, elapsedMs), (spec.width / 2) * spec.sweepMs);
       const treasure = reel.landed ? fishTreasure(reel.landed) : undefined;
       const collected = treasure ? { ...status.run.collected, [treasure.currency]: (status.run.collected[treasure.currency] ?? 0) + fishAmount(status.run, reel.fishIndex) } : status.run.collected;
       status = { ...status, run: reel.finished ? null : { ...stepped.run, collected } };

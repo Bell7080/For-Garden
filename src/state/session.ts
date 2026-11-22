@@ -69,6 +69,8 @@ export interface GameSettings {
     formationRoleHint: boolean;
     /** 단일 연구 결산의 「한 번 더」를 한 번이라도 눌렀는가. 누르기 전까지 화살표가 그 버튼을 가리킨다 — 기기 선호다. */
     pullAgainTaught: boolean;
+    /** 슈테의 리듬 낚시가 맞힌 누름의 쏠림으로 스스로 맞춘 이 기기의 입력·화면 지연 보정(ms) — 기기 값이다. */
+    rhythmOffsetMs: number;
     /** 1-10을 넘긴 뒤 로비가 피드백·사전예약 안내를 한 번 띄웠는가(기기 기록 — 젬 지급 판정은 서버가 한다). */
     feedbackAsked: boolean;
     /** 광고를 봐야 받는 보상(돌림판 광고 보너스 등)에도 붉은 점을 세우는가. 공짜 보상이 아니라 기본은 끔이다 — 기기 선호다. */

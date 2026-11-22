@@ -190,7 +190,7 @@ export function createDefaultSettings(): GameSettings {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, feedbackAsked: false, adRewardDot: false, ultimatePresentation: "full", textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null, arenaSeen: null, rosterViews: {} },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, rhythmOffsetMs: 0, feedbackAsked: false, adRewardDot: false, ultimatePresentation: "full", textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null, arenaSeen: null, rosterViews: {} },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" },
@@ -226,6 +226,8 @@ export function normalizeSettings(value: unknown): GameSettings {
       formationRoleHint: bool(g.formationRoleHint, d.game.formationRoleHint),
       // 필드가 없던 저장은 아직 배우지 않은 쪽이다 — 화살표가 한 번 더 가리켜도 해가 없다.
       pullAgainTaught: bool(g.pullAgainTaught, d.game.pullAgainTaught),
+      // 리듬 낚시가 스스로 맞춘 이 기기의 입력·화면 지연 보정(ms). 필드가 없던 저장은 0에서 다시 배운다.
+      rhythmOffsetMs: typeof g.rhythmOffsetMs === "number" && Number.isFinite(g.rhythmOffsetMs) ? Math.min(80, Math.max(-40, g.rhythmOffsetMs)) : d.game.rhythmOffsetMs,
       feedbackAsked: bool(g.feedbackAsked, d.game.feedbackAsked),
       // 필드가 없던 저장은 꺼진 쪽이다 — 광고는 받을 수 있는 공짜 보상이 아니다.
       adRewardDot: bool(g.adRewardDot, d.game.adRewardDot),

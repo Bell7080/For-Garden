@@ -96,7 +96,6 @@ export const GUILD_ID = {
   "guild.members.kick": "Keluarkan",
   "guild.members.kickTitle": "Keluarkan anggota",
   "guild.members.kickConfirm": "Keluarkan {name} dari guild.",
-  "guild.members.close": "Tutup",
   "guild.time.hm": "{h} j {m} m",
   "guild.time.m": "{m} m",
   "guild.shop.buy": "Beli",

@@ -27,10 +27,36 @@ export const LAB_CHROME = {
   pickupInfo: { x: 1080 - 36 - 140, y: NAV_TOP - 440 - 42 - 20 - 38, width: 280, height: 76, fontSize: 28, enterDistance: 180 },
 } as const;
 
+/**
+ * 「다음 SSR 픽업 확정」 딱지 — 확정 판 밑변에 비스듬히 붙는 붉은 스티커.
+ *
+ * 판 아래 맨 글자 한 줄이던 때는 확정이 걸려 있다는 가장 반가운 소식이 설명문처럼 묻혔다. 10연 할인
+ * 딱지와 같은 붉은 판 + 흰 테 + 아래로 떨어지는 검은 복제로 세우고, 통통 숨 쉬는 맥동(배율·기울기만 —
+ * 트윈 하나)으로 손이 가게 한다. 움직임 줄이기에서는 서 있기만 하고, 확정이 없어 숨으면 트윈도 멈춘다.
+ */
+export const LAB_PICKUP_STICKER = {
+  /** 확정 판 중심에서 딱지 중심까지. */
+  dy: LAB_CHROME.pity.height / 2 + 24,
+  height: 52,
+  padX: 30,
+  /** 딱지 폭 상한 — 이보다 긴 언어는 글자를 가로로만 누른다. */
+  maxWidth: 520,
+  font: 28,
+  tilt: -3,
+  fill: 0xd9463b,
+  /** 왼쪽 위·오른쪽 아래에 박히는 금빛 마름모 반짝이. */
+  sparkle: { size: 9, color: 0xffd76a },
+  pulse: { scale: 1.07, wobble: 1.5, durationMs: 620 },
+} as const;
+
 /** 확정 판이 버튼(눌린 두께 12 포함)과 겹치지 않고, 그 아래 픽업 한 줄이 들어갈 틈이 남는지. */
 export function labPityGap(): number {
   const pullTop = LAB_CHROME.pull.y - LAB_CHROME.pull.size.height / 2;
-  const noteBottom = LAB_CHROME.pity.y + LAB_CHROME.pity.height / 2 + 26 + 14;
+  // 딱지가 맥동으로 가장 커지고 가장 기운 순간의 밑변 — 가장 넓은 딱지의 끝이 기울기만큼 내려온다.
+  const s = LAB_PICKUP_STICKER;
+  const tilt = (Math.abs(s.tilt) + s.pulse.wobble) * (Math.PI / 180);
+  const reach = (s.height / 2) * Math.cos(tilt) + (s.maxWidth / 2) * Math.sin(tilt);
+  const noteBottom = LAB_CHROME.pity.y + s.dy + reach * s.pulse.scale;
   return pullTop - noteBottom;
 }
 

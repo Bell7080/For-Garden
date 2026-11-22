@@ -16,7 +16,7 @@ export const LAB_ES = {
   "lab.mileageShop.short": "Millas",
   "lab.pity.label": "SSR garantizado en",
   "lab.pity.unit": "tiradas",
-  "lab.pity.pickupNext": "El próximo SSR será el destacado",
+  "lab.pity.pickupNext": "Al salir un SSR, será el destacado",
   "lab.pull.one": "Investigar x1",
   "lab.pull.freeToday": "¡Gratis hoy!",
   "lab.pull.ten": "Investigar x10",

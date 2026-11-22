@@ -55,8 +55,11 @@ export interface ArchaeologySitePopupLayout {
   buttonY: number;
   buttonWidth: number;
   buttonHeight: number;
-  /** 닫기·시작 두 버튼의 중심 x다. */
-  buttonCenters: readonly [number, number];
+  /**
+   * 「탐사 시작」 버튼의 중심 x다. 닫는 길은 판 밖 우하단 뒤로가기와 판 밖 누르기라 판 안에 닫기를 두지 않는다
+   * (응태 2026-11-11 · 2026-11-22) — 진행 버튼 하나만 가운데에 선다.
+   */
+  startX: number;
 }
 
 /** 보상 줄 수만 받으면 창 하나의 모든 자리가 나온다. */
@@ -73,7 +76,7 @@ export function archaeologySitePopupLayout(rows: number, withCrystal = false): A
   const crystalTop = panelTop + panelHeight + BASE.crystalGap;
   const reasonY = panelTop + panelHeight + BASE.panelToReason + extra;
   const buttonY = reasonY + BASE.reasonToButton;
-  const buttonWidth = (panelWidth - 28) / 2;
+  const buttonWidth = Math.round(panelWidth * 0.6);
   return {
     width: BASE.width,
     height,
@@ -89,6 +92,6 @@ export function archaeologySitePopupLayout(rows: number, withCrystal = false): A
     buttonY,
     buttonWidth,
     buttonHeight: BASE.buttonHeight,
-    buttonCenters: [-(buttonWidth + 28) / 2, (buttonWidth + 28) / 2],
+    startX: 0,
   };
 }

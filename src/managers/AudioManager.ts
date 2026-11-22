@@ -310,7 +310,9 @@ export class AudioManager {
     this.musicKey = key;
     this.musicGain = gain;
     const target = this.hidden ? 0 : this.volume("music") * gain;
-    if (this.hidden) {
+    // 배경음을 0으로 꺼 둔 사람에게는 곡을 흘리지 않는다 — 소리 없는 곡도 디코드·오디오 그래프가 계속 돌아
+    // 배터리를 쓴다(2026-11-22 발열 재진단). 숨김과 같이 자리만 잡아 두고 볼륨을 올리면 `applySettings`가 다시 튼다.
+    if (this.hidden || target <= 0) {
       next.setVolume(0);
       if (!resumed) { next.play(); next.pause(); }
     } else {
@@ -390,7 +392,13 @@ export class AudioManager {
       // 내려가는(세워 둔) 앞 곡의 페이드를 끊으면 그 곡이 제 볼륨으로 되살아나 두 곡이 겹친다.
       if (this.isParked(sound)) continue;
       this.backend.cancelFade(sound);
-      sound.setVolume(this.hidden ? 0 : this.volume(bus, value) * this.gainOf(sound));
+      const volume = this.hidden ? 0 : this.volume(bus, value) * this.gainOf(sound);
+      sound.setVolume(volume);
+      // 배경음 볼륨이 0이면 곡을 멈추고(흘려도 들리지 않고 배터리만 쓴다) 다시 올리면 그 자리에서 잇는다.
+      if (sound === this.music && !this.hidden) {
+        if (volume <= 0 && sound.isPlaying) sound.pause();
+        else if (volume > 0 && !sound.isPlaying) sound.resume();
+      }
     }
   }
 

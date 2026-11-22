@@ -236,8 +236,8 @@ export class PopupLayer {
    *
    * 몸판 안에 **문장을 담는 유리 판**을 한 겹 더 깔아 무엇을 묻는지가 판 안에서 또렷이 읽히고,
    * 치를 것이 있으면 그 판 안에 **액자로** 선다(`costs` — 글로 「젬 2,700개」라 적으면 값이 문장에 묻힌다).
-   * 버튼은 맨 글자가 아니라 **제 판을 가진 버튼 둘**이다 — 왼쪽 취소는 옅은 유리, 오른쪽 확정은 강조 판이고
-   * 파괴적 조작이면 확정 판과 안쪽 판 윗변이 붉다. 알리기만 하는 창은 `cancelLabel: false`로 버튼 하나만 선다.
+   * 버튼은 맨 글자가 아니라 **제 판을 가진 버튼 둘**이다 — 왼쪽 취소는 붉은 판(나가기와 같은 한 벌), 오른쪽 확정은 강조 판이고
+   * 파괴적 조작이면 확정 판과 안쪽 판 윗변이 붉고 취소는 옅은 유리로 물러난다. 알리기만 하는 창은 `cancelLabel: false`로 버튼 하나만 선다.
    * 오른쪽 위 X는 두지 않는다 — 취소 버튼(과 판 밖 누르기)이 그 몫이고, 한 창에 닫는 길이 둘이면 무엇이 취소인지 흐려진다.
    * 자리와 창 높이는 `confirmDialogLayout.ts`가 쌓인 내용에서 거꾸로 구한다.
    */
@@ -286,7 +286,10 @@ export class PopupLayer {
       const xs = confirmButtonXs(single ? 1 : 2);
       const common = { width: L.button.width, height: L.button.height, fontSize: L.button.fontSize };
       if (!single) {
-        body.add(new Button(this.scene, xs[0], buttonY, { ...common, label: typeof options.cancelLabel === "string" ? options.cancelLabel : t("popup.cancel"), ...(options.cancelDestructive ? DESTRUCTIVE_BUTTON_STYLE : {}), onClick: () => { close(); options.onCancel?.(); } }));
+        // 물러나는 버튼은 화면 어디서나 붉다(나가기와 같은 `DESTRUCTIVE_BUTTON_STYLE` · 응태 2026-11-22). 다만 확정이
+        // 파괴적 조작이라 이미 붉으면 두 버튼이 같은 색이 되므로, 그때만 취소는 옅은 유리로 남는다.
+        const cancelRed = options.cancelDestructive || !options.destructive;
+        body.add(new Button(this.scene, xs[0], buttonY, { ...common, label: typeof options.cancelLabel === "string" ? options.cancelLabel : t("popup.cancel"), ...(cancelRed ? DESTRUCTIVE_BUTTON_STYLE : {}), onClick: () => { close(); options.onCancel?.(); } }));
       }
       body.add(new Button(this.scene, xs[xs.length - 1], buttonY, {
         ...common,

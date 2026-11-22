@@ -85,9 +85,9 @@ describe("유적 미리보기 창", () => {
     const panelTop = spot.panel.y - spot.panel.height / 2;
     // 왼쪽 위 빗변: (x + w/2) + (y + h/2) 가 깎인 길이보다 커야 그 안에 든다.
     expect((panelLeft + spot.width / 2) + (panelTop + spot.height / 2)).toBeGreaterThan(bevel);
-    // 두 버튼이 판 폭 안에서 겹치지 않는다.
-    expect(spot.buttonCenters[0] + spot.buttonWidth / 2).toBeLessThan(spot.buttonCenters[1] - spot.buttonWidth / 2);
-    expect(spot.buttonCenters[0] - spot.buttonWidth / 2).toBeGreaterThan(-spot.width / 2);
+    // 시작 버튼은 판 폭 안 가운데에 선다(닫기는 판 밖 우하단 뒤로가기가 맡는다).
+    expect(spot.startX - spot.buttonWidth / 2).toBeGreaterThan(-spot.panel.width / 2);
+    expect(spot.startX + spot.buttonWidth / 2).toBeLessThan(spot.panel.width / 2);
     expect(spot.buttonY + spot.buttonHeight / 2).toBeLessThan(spot.height / 2);
     // 게이지도 판 오른쪽 변 안에 든다.
     expect(spot.gaugeX + spot.gauge.width / 2).toBeLessThanOrEqual(spot.panel.width / 2);

@@ -96,7 +96,6 @@ export const GUILD_VI = {
   "guild.members.kick": "Loại",
   "guild.members.kickTitle": "Loại thành viên",
   "guild.members.kickConfirm": "Loại {name} khỏi Bang hội.",
-  "guild.members.close": "Đóng",
   "guild.time.hm": "{h} giờ {m} phút",
   "guild.time.m": "{m} phút",
   "guild.shop.buy": "Mua",

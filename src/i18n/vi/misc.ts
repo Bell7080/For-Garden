@@ -130,7 +130,6 @@ export const MISC_VI = {
   "archaeology.map.available": "Có thể đến",
   "archaeology.map.needLevel": "Cần LV.{level}",
   "archaeology.map.start": "Bắt đầu thám sát",
-  "archaeology.map.close": "Đóng",
   "archaeology.map.cooling": "Mở lại sau {time}",
   "archaeology.map.noCharge": "Không còn lượt thám sát",
   "archaeology.finish": "Kết thúc thám sát",

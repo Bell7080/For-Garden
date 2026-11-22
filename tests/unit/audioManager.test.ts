@@ -78,6 +78,18 @@ describe("AudioManager", () => {
     expect(backend.sounds[0].volume).toBe(0);
   });
 
+  it("배경음 볼륨이 0이면 곡을 흘리지 않고, 다시 올리면 그 자리에서 잇는다(배터리)", () => {
+    const { audio, settings, backend } = setup();
+    settings.update({ sound: { musicMuted: true } });
+    audio.playMusic("bgm-lobby");
+    expect(backend.sounds[0].isPlaying).toBe(false);
+    settings.update({ sound: { musicMuted: false } });
+    expect(backend.sounds[0].isPlaying).toBe(true);
+    expect(backend.sounds[0].volume).toBeGreaterThan(0);
+    settings.update({ sound: { musicVolume: 0 } });
+    expect(backend.sounds[0].isPlaying).toBe(false);
+  });
+
   it("배경음을 크로스페이드하고 숨김/복귀 때 현재 설정으로 재개한다", () => {
     const { audio, settings, backend } = setup();
     audio.playMusic("bgm-a");

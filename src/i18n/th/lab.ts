@@ -16,7 +16,7 @@ export const LAB_TH = {
   "lab.mileageShop.short": "ไมล์",
   "lab.pity.label": "จนกว่าจะการันตี SSR",
   "lab.pity.unit": "ครั้ง",
-  "lab.pity.pickupNext": "SSR ถัดไปคือตัวเรทอัป",
+  "lab.pity.pickupNext": "เมื่อได้ SSR จะเป็นตัวเรทอัปแน่นอน",
   "lab.pull.one": "วิจัย x1",
   "lab.pull.freeToday": "ฟรีวันนี้!",
   "lab.pull.ten": "วิจัย x10",

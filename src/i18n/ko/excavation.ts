@@ -5,7 +5,16 @@ export const EXCAVATION_KO = {
   "excavation.loadFailed": "발굴 기록을 불러오지 못했습니다.",
   "excavation.retry": "다시 시도",
 
-  "excavation.storage": "보관량 {percent}%",
+  "excavation.storage": "보관량",
+  "excavation.untilFull": "가득 차기까지 {time}",
+  "excavation.storageFull": "보관 가득 · 수확해 주세요",
+  "excavation.noProduction": "배치한 렐릭이 없어 쌓이지 않습니다",
+  "excavation.ad.withDuration": "{effect} · {duration}",
+  "excavation.duration.hours": "{hours}시간",
+  "excavation.duration.minutes": "{minutes}분",
+  "excavation.ad.active": "진행 중",
+  "excavation.ad.activeSub": "남은 시간 {time} · {usage}",
+  "excavation.ad.idleSub": "광고 보기 {usage}",
   "excavation.accumulated": "누적 발굴",
 
   "excavation.harvestCapped": "수확 완료 · 지갑 상한 손실",

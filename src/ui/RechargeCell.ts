@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { formatCurrency } from "../core/formatCurrency";
 import { Button } from "./Button";
 import { chipPoints, drawLayer } from "./holo";
+import { AD_TONE } from "./adTone";
 import { addFramedIcon } from "./itemFrame";
 import { POPUP_BEVEL_RATIO, STAMINA_CELL } from "./staminaPopupLayout";
 import { squeezeTextToWidth } from "./textFit";
@@ -12,7 +13,7 @@ import { COLOR, textStyle } from "./theme";
  *
  * 예전에는 세 창이 공용 강조 버튼(어두운 판 + 금빛 윗줄)에 값만 얹어, 젬으로 사는 칸·광고 칸·병을 쓰는 칸이
  * 모두 같은 판이었고 버튼 안의 젬 그림과 수가 작아 「얼마를 치르나」가 먼저 읽히지 않았다. 이제 무엇으로
- * 채우는가(`RechargeKind`)가 판의 색을 정한다 — 쓰기는 호박, 젬은 청록, 광고는 보랏빛. 칸의 윗줄도 같은 색이라
+ * 채우는가(`RechargeKind`)가 판의 색을 정한다 — 쓰기는 호박, 젬은 청록, 광고는 모든 광고 칸과 같은 와인빛(`AD_TONE`). 칸의 윗줄도 같은 색이라
  * 어느 칸이 어느 수단인지 그림보다 먼저 색이 말한다. 값의 그림·수는 버튼 글자보다 한 뼘 크다.
  */
 export type RechargeKind = "use" | "gem" | "ad";
@@ -20,7 +21,7 @@ export type RechargeKind = "use" | "gem" | "ad";
 export const RECHARGE_TONE: Readonly<Record<RechargeKind, { accent: number; fill: number; text: string }>> = {
   use: { accent: 0xf2c25a, fill: 0x2b2008, text: "#ffe2a0" },
   gem: { accent: 0x5ad8e6, fill: 0x0a2830, text: "#b4f4fb" },
-  ad: { accent: 0xb894ff, fill: 0x1f1538, text: "#ded0ff" },
+  ad: { accent: AD_TONE.accent, fill: AD_TONE.fill, text: AD_TONE.text },
 };
 
 /** 버튼 안 글자·값 그림의 크기. 칸이 작은 던전 창도 같은 비율로 줄여 쓴다. */

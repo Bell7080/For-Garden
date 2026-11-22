@@ -96,7 +96,6 @@ export const GUILD_DE = {
   "guild.members.kick": "Entfernen",
   "guild.members.kickTitle": "Mitglied entfernen",
   "guild.members.kickConfirm": "{name} aus der Gilde entfernen.",
-  "guild.members.close": "Schließen",
   "guild.time.hm": "{h} Std. {m} Min.",
   "guild.time.m": "{m} Min.",
   "guild.shop.buy": "Kaufen",

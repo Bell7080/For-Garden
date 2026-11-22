@@ -35,7 +35,8 @@ import { openGachaHistory } from "../ui/GachaHistoryPopup";
 import { ResearchPullButton, type ResearchPullCostPart } from "../ui/ResearchPullButton";
 import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { addRatesButton, RATES_SPOT } from "../ui/RatesButton";
-import { LAB_CHROME, LAB_TITLE } from "../ui/labLayout";
+import { LAB_CHROME, LAB_PICKUP_STICKER, LAB_TITLE } from "../ui/labLayout";
+import { squeezeTextToWidth } from "../ui/textFit";
 import { NotificationDot } from "../ui/NotificationDot";
 import { notificationManager } from "../managers/NotificationManager";
 import { addBannerArrow, addBannerTitle, drawBannerPages } from "../ui/LabBannerTitle";
@@ -87,6 +88,9 @@ export class LabScene extends Phaser.Scene {
   private pityText!: Phaser.GameObjects.Text;
   private pityUnit!: Phaser.GameObjects.Text;
   private pityNote!: Phaser.GameObjects.Text;
+  private pickupSticker!: Phaser.GameObjects.Container;
+  private pickupStickerPlate!: Phaser.GameObjects.Container;
+  private pickupStickerPulse?: Phaser.Tweens.Tween;
   private oneButton!: ResearchPullButton;
   private tenButton!: ResearchPullButton;
   /**
@@ -295,9 +299,66 @@ export class LabScene extends Phaser.Scene {
     this.pityText = this.add.text(0, -2, "", textStyle({ role: "display", size: 44, color: COLOR.accentText })).setOrigin(0, 0.5)
       .setShadow(0, 3, "#05070a", 6, false, true);
     this.pityUnit = this.add.text(0, 2, "", textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0, 0.5);
-    this.pityNote = this.add.text(0, height / 2 + 26, "", textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0.5)
-      .setShadow(0, 2, "#05070a", 6, false, true);
-    plate.add([this.pityLabel, this.pityText, this.pityUnit, this.pityNote]);
+    plate.add([this.pityLabel, this.pityText, this.pityUnit]);
+    this.addPickupSticker(plate);
+  }
+
+  /**
+   * 「다음 SSR 픽업 확정」 딱지 — 확정 판 밑변에 비스듬히 붙는 붉은 스티커(`LAB_PICKUP_STICKER`).
+   *
+   * 판은 글자 폭이 정해질 때(`syncPickupSticker`)마다 다시 깔고, 맥동은 딱지 컨테이너의 배율·기울기만
+   * 움직이는 트윈 하나다 — 매 프레임 다시 그리는 것이 없다. 숨어 있는 동안은 트윈을 멈춘다.
+   */
+  private addPickupSticker(parent: Phaser.GameObjects.Container): void {
+    const spec = LAB_PICKUP_STICKER;
+    this.pickupSticker = this.add.container(0, spec.dy).setAngle(spec.tilt).setVisible(false);
+    this.pickupStickerPlate = this.add.container(0, 0);
+    this.pityNote = this.add.text(0, 1, "", textStyle({ role: "display", size: spec.font, color: COLOR.ink })).setOrigin(0.5)
+      .setStroke("#5a0f0b", 5);
+    this.pickupSticker.add([this.pickupStickerPlate, this.pityNote]);
+    parent.add(this.pickupSticker);
+  }
+
+  private syncPickupSticker(label: string): void {
+    const spec = LAB_PICKUP_STICKER;
+    const show = label !== "";
+    if (show && this.pityNote.text !== label) {
+      this.pityNote.setText(label).setScale(1);
+      squeezeTextToWidth(this.pityNote, spec.maxWidth - spec.padX * 2);
+      const width = Math.min(spec.maxWidth, this.pityNote.displayWidth + spec.padX * 2);
+      const shape = slantedRect(width, spec.height, 14);
+      this.pickupStickerPlate.removeAll(true);
+      this.pickupStickerPlate.add(drawLayer(this, 4, 6, shape, { fill: 0x000000, alpha: 0.5, shadow: false }));
+      this.pickupStickerPlate.add(drawLayer(this, 0, 0, shape, { fill: spec.fill, alpha: 0.98, shadow: false }));
+      // 흰 테 한 겹 — 스티커가 판 위에 "붙은" 것으로 읽히게 하는 가장자리.
+      const rim = this.add.graphics();
+      rim.lineStyle(3, 0xffffff, 0.9).strokePoints(toPoints(shape), true);
+      this.pickupStickerPlate.add(rim);
+      const sparkle = this.add.graphics().fillStyle(spec.sparkle.color, 1);
+      const k = spec.sparkle.size;
+      for (const [x, y, r] of [[-width / 2 + 12, -spec.height / 2 + 2, k], [width / 2 - 12, spec.height / 2 - 2, k * 0.75]] as const) {
+        sparkle.fillPoints([new Phaser.Geom.Point(x, y - r), new Phaser.Geom.Point(x + r * 0.62, y), new Phaser.Geom.Point(x, y + r), new Phaser.Geom.Point(x - r * 0.62, y)], true);
+      }
+      this.pickupStickerPlate.add(sparkle);
+    }
+    this.pickupSticker.setVisible(show);
+    const reduceMotion = settingsManager.get().accessibility.reduceMotion;
+    if (!show || reduceMotion) {
+      this.pickupStickerPulse?.stop();
+      this.pickupStickerPulse = undefined;
+      this.pickupSticker.setScale(1).setAngle(spec.tilt);
+      return;
+    }
+    if (this.pickupStickerPulse?.isPlaying()) return;
+    this.pickupStickerPulse = this.tweens.add({
+      targets: this.pickupSticker,
+      scale: spec.pulse.scale,
+      angle: spec.tilt - spec.pulse.wobble,
+      duration: spec.pulse.durationMs,
+      ease: "Sine.InOut",
+      yoyo: true,
+      repeat: -1,
+    });
   }
 
   /**
@@ -973,7 +1034,7 @@ export class LabScene extends Phaser.Scene {
     this.pityLabel.setX(-total / 2);
     this.pityText.setX(this.pityLabel.x + this.pityLabel.width + gap);
     this.pityUnit.setX(this.pityText.x + this.pityText.width + 6);
-    this.pityNote.setText(currentPity.pickupGuaranteed && pickupNames.length > 0 ? t("lab.pity.pickupNext") : "");
+    this.syncPickupSticker(currentPity.pickupGuaranteed && pickupNames.length > 0 ? t("lab.pity.pickupNext") : "");
 
     /*
      * 10연 전용 배너는 1회 버튼을 세우지 않고 10회 버튼을 가운데로 옮긴다 — 누를 수 없는 버튼을

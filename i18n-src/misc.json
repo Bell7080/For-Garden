@@ -843,16 +843,6 @@
 "Erkundung starten",
 "Начать разведку"
 ],
-"archaeology.map.close": [
-"关闭",
-"ปิด",
-"Đóng",
-"Tutup",
-"Cerrar",
-"Fechar",
-"Schließen",
-"Закрыть"
-],
 "archaeology.map.cooling": [
 "{time}后重新开放",
 "เปิดอีกครั้งใน {time}",

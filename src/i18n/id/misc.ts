@@ -130,7 +130,6 @@ export const MISC_ID = {
   "archaeology.map.available": "Tersedia",
   "archaeology.map.needLevel": "Butuh LV.{level}",
   "archaeology.map.start": "Mulai Survei",
-  "archaeology.map.close": "Tutup",
   "archaeology.map.cooling": "Dibuka lagi dalam {time}",
   "archaeology.map.noCharge": "Kesempatan survei habis",
   "archaeology.finish": "Akhiri Survei",

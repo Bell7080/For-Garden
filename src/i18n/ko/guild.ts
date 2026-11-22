@@ -104,7 +104,6 @@ export const GUILD_KO = {
   "guild.members.kick": "추방",
   "guild.members.kickTitle": "멤버 추방",
   "guild.members.kickConfirm": "{name:을} 길드에서 내보냅니다.",
-  "guild.members.close": "닫기",
 
   // 출석
   "guild.time.hm": "{h}시간 {m}분",

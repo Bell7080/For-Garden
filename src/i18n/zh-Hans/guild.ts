@@ -96,7 +96,6 @@ export const GUILD_ZH_HANS = {
   "guild.members.kick": "移出",
   "guild.members.kickTitle": "移出成员",
   "guild.members.kickConfirm": "将{name}移出公会。",
-  "guild.members.close": "关闭",
   "guild.time.hm": "{h}小时{m}分钟",
   "guild.time.m": "{m}分钟",
   "guild.shop.buy": "购买",

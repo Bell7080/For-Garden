@@ -1032,7 +1032,7 @@ export class ArchaeologyScene extends Phaser.Scene {
 
     this.popups.open({
       width: spot.width, height: spot.height, title: t(site.nameKey as TextKey),
-      dim: true, closeOnBackdrop: true, hideCloseButton: true,
+      dim: true, closeOnBackdrop: true,
     }, (body, close) => {
       body.add(this.add.text(0, spot.subtitleY,
         // 굴착 횟수는 「8/8」이 아니라 이름이 붙은 한 마디여야 한다 — 미리보기에는 아직 쓴
@@ -1101,10 +1101,8 @@ export class ArchaeologyScene extends Phaser.Scene {
       body.add(this.add.text(0, spot.reasonY, reason,
         textStyle({ role: "emphasis", size: 27, color: startable ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5));
 
-      const closeButton = new Button(this, spot.buttonCenters[0], spot.buttonY, {
-        width: spot.buttonWidth, height: spot.buttonHeight, label: t("archaeology.map.close"), onClick: close,
-      });
-      const start = new Button(this, spot.buttonCenters[1], spot.buttonY, {
+      // 닫는 길은 판 밖 우하단 뒤로가기와 판 밖 누르기다 — 판 안에 「닫기」를 나란히 세우지 않는다.
+      const start = new Button(this, spot.startX, spot.buttonY, {
         width: spot.buttonWidth, height: spot.buttonHeight, label: t("archaeology.map.start"), variant: "primary",
         onClick: () => {
           if (!startable) return;
@@ -1116,7 +1114,7 @@ export class ArchaeologyScene extends Phaser.Scene {
         },
       });
       start.setEnabled(startable);
-      body.add([closeButton, start]);
+      body.add(start);
     });
   }
 

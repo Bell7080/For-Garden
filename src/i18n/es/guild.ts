@@ -96,7 +96,6 @@ export const GUILD_ES = {
   "guild.members.kick": "Expulsar",
   "guild.members.kickTitle": "Expulsar miembro",
   "guild.members.kickConfirm": "Expulsar a {name} del gremio.",
-  "guild.members.close": "Cerrar",
   "guild.time.hm": "{h} h {m} min",
   "guild.time.m": "{m} min",
   "guild.shop.buy": "Comprar",

@@ -130,7 +130,6 @@ export const MISC_EN = {
   "archaeology.map.available": "Available",
   "archaeology.map.needLevel": "Requires LV.{level}",
   "archaeology.map.start": "Begin Survey",
-  "archaeology.map.close": "Close",
   "archaeology.map.cooling": "Reopens in {time}",
   "archaeology.map.noCharge": "No survey attempts left",
   "archaeology.finish": "End Survey",

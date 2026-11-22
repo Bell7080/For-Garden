@@ -2,11 +2,27 @@ import { describe, expect, it } from "vitest";
 import { FEVER_INK, feverAngerPlacement, feverBodyFill, feverFade, feverOutlineDirections, feverOutlineSteps, feverPulse, feverSirenRings } from "../../src/ui/feverInk";
 
 describe("폭주의 잉크 테두리", () => {
-  it("물량전에서도 먹선·붉은 띠를 유지하면서 본체 복제 draw를 24회에서 12회로 줄인다",()=>{
-    expect(feverOutlineSteps(1,1,1,feverOutlineDirections(6))).toHaveLength(24);
-    const crowded=feverOutlineSteps(1,1,.7,feverOutlineDirections(18));
-    expect(crowded).toHaveLength(12);
-    expect(new Set(crowded.map(s=>s.color)).size).toBe(2);
+  it("겹 수는 한 프레임 예산을 나눠 가져, 폭주한 몸이 늘어도 그리기가 불지 않는다", () => {
+    expect(feverOutlineSteps(1, 1, 1, feverOutlineDirections(1))).toHaveLength(24);
+    expect(feverOutlineSteps(1, 1, 1, feverOutlineDirections(2))).toHaveLength(24);
+    for (const quality of ["high", "balanced", "low"] as const) {
+      for (let bodies = 1; bodies <= 6; bodies += 1) {
+        const perBody = feverOutlineDirections(bodies, quality) * 2;
+        // 바닥(네 방향)에 닿기 전까지는 예산을 넘지 않는다.
+        if (feverOutlineDirections(bodies, quality) > FEVER_INK.minDirections) expect(perBody * bodies).toBeLessThanOrEqual(FEVER_INK.outlineBudget[quality]);
+        expect(feverOutlineDirections(bodies, quality)).toBeLessThanOrEqual(FEVER_INK.qualityDirections[quality]);
+      }
+    }
+    const crowded = feverOutlineSteps(1, 1, 0.7, feverOutlineDirections(15));
+    expect(crowded).toHaveLength(FEVER_INK.minDirections * 2);
+    expect(new Set(crowded.map((s) => s.color)).size).toBe(2);
+  });
+
+  it("방향이 적으면 붉은 띠가 먹선과 반 칸 엇갈려 빈 모서리를 메운다", () => {
+    const steps = feverOutlineSteps(1, 1, 1, 4);
+    const inkAngle = Math.atan2(steps[0].dy, steps[0].dx);
+    const redAngle = Math.atan2(steps[4].dy, steps[4].dx);
+    expect(Math.abs(redAngle - inkAngle)).toBeCloseTo(Math.PI / 4, 5);
   });
   it("먹선이 붉은 띠보다 바깥에, 먼저 그려진다", () => {
     const steps = feverOutlineSteps(1, 1);

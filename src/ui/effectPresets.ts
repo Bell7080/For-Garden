@@ -226,8 +226,8 @@ export const EFFECT_BUDGET = {
   minGapMs: { basic: 90, heal: 90, shield: 90, passive: 120, tap: 40, tapBattle: 40, ultimate: 0, fever: 0, death: 0, craftSuccess: 0, craftFail: 0, craftEngrave: 0 } as Record<EffectKind, number>,
   /** 살아 있는 파문의 상한. 넘으면 가장 오래된 것을 즉시 회수한다. */
   maxRings: 14,
-  /** 살아 있는 수치 글자의 상한. */
-  maxNumbers: 30,
+  /** 살아 있는 수치 글자의 상한. 30이던 때는 물량전(치즈케이크 대작전)에서 화면이 숫자로 덮였다(2026-11-22). */
+  maxNumbers: 18,
 } as const;
 
 /** 이번 프레임에 이 이펙트를 실제로 열지 정한다. 순수 판정이라 테스트가 그대로 고정한다. */

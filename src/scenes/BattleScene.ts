@@ -826,8 +826,6 @@ export class BattleScene extends Phaser.Scene {
     // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
     // 광역 범위만 배경 원화 위·SD 아래에 깔려 누가 어디 섰는지 가리지 않는다.
     this.effects = new EffectManager(this, { depth: DEPTH.burst, groundDepth: DEPTH.ground, bodyDepth: DEPTH.hpBar - 1, motion: this.motion, damageNumbers: currentSettings.presentation.damageNumbers, graphicsQuality: currentSettings.presentation.graphicsQuality, reduceFlashes: currentSettings.accessibility.reduceFlashes });
-    // 몰려오는 물량전은 광역 한 번에 숫자가 열 개씩 서므로 수치를 짧게 머물게 한다(응태 2026-11-22).
-    if (this.battleInput.mode === "cake") this.effects.setPopupDensity("crowd");
     this.combatEffects = new CombatEffectPresenter(this.effects);
     // 전장 전체를 때리는 궁극기는 그릴 경계가 없어 가장자리 워시로 알린다. 그 자리를 알려 준다.
     this.effects.setArena(this.state.arena);

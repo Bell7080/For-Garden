@@ -793,26 +793,6 @@
 "Der erste Samen",
 "Первое семя"
 ],
-"archaeology.map.digs": [
-"{count}次挖掘",
-"ขุด {count} ครั้ง",
-"{count} lượt đào",
-"{count} galian",
-"{count} excavaciones",
-"{count} escavações",
-"{count} Grabungen",
-"Раскопов: {count}"
-],
-"archaeology.map.recommended": [
-"推荐 LV.{level}",
-"แนะนำ LV.{level}",
-"Đề xuất LV.{level}",
-"Disarankan LV.{level}",
-"Recomendado LV.{level}",
-"Recomendado LV.{level}",
-"Empfohlen LV.{level}",
-"Рекоменд. LV.{level}"
-],
 "archaeology.map.available": [
 "可前往",
 "ไปได้",
@@ -823,6 +803,12 @@
 "Verfügbar",
 "Доступно"
 ],
+"archaeology.preview.board": ["盘面大小", "ขนาดกระดาน", "Cỡ bàn", "Ukuran papan", "Tamaño del tablero", "Tamanho do tabuleiro", "Feldgröße", "Размер поля"],
+"archaeology.preview.digs": ["挖掘次数", "จำนวนการขุด", "Lượt đào", "Jumlah galian", "Excavaciones", "Escavações", "Grabungen", "Раскопы"],
+"archaeology.preview.digsBonus": ["结晶 +{count}", "ผลึก +{count}", "Tinh thể +{count}", "Kristal +{count}", "Cristal +{count}", "Cristal +{count}", "Kristall +{count}", "Кристалл +{count}"],
+"archaeology.preview.unlock": ["解锁 LV.{level}", "ปลดล็อก LV.{level}", "Mở LV.{level}", "Terbuka LV.{level}", "Desbloqueo LV.{level}", "Desbloqueio LV.{level}", "Frei ab LV.{level}", "Открытие LV.{level}"],
+"archaeology.preview.cooling": ["距离再次探索", "สำรวจอีกครั้งใน", "Thám hiểm lại sau", "Jelajah lagi dalam", "Nueva exploración en", "Nova exploração em", "Erneut erkunden in", "Снова через"],
+"archaeology.preview.lockAfter": ["探索后锁定{hours}小时", "ล็อก {hours} ชม. หลังสำรวจ", "Khóa {hours} giờ sau khi đào", "Terkunci {hours} jam setelahnya", "Se bloquea {hours} h después", "Bloqueia {hours} h depois", "Danach {hours} Std. gesperrt", "Блок на {hours} ч после"],
 "archaeology.map.needLevel": [
 "需要 LV.{level}",
 "ต้องการ LV.{level}",

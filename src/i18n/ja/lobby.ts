@@ -147,7 +147,7 @@ export const LOBBY_JA = {
   "shuteFishing.difficulty.hard": "むずかしい",
   "shuteFishing.difficulty.extreme": "超むずかしい",
   "shuteFishing.hint.easy": "{fish}曲 · のんびりテンポ",
-  "shuteFishing.hint.normal": "{fish}曲 · ボス曲はジェム170~340",
+  "shuteFishing.hint.normal": "{fish}曲 · ボス曲はジェム150~350",
   "shuteFishing.hint.hard": "{fish}曲 · ボス曲で最大ジェム700",
   "shuteFishing.hint.extreme": "{fish}曲 · ボス曲はジェム350~700",
   "shuteFishing.jackpotNote": "始めるとセットリストが決まる。後ろの曲ほど、最後のボス曲ほどお宝が大きい！",

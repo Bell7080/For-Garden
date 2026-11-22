@@ -4,6 +4,7 @@ import type { ClipRect } from "./clipRect";
 import { addClippedHit } from "./clippedHit";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawLayer, slantedRect } from "./holo";
+import { AD_TONE } from "./adTone";
 import { addFrameAmount, addFramedIcon } from "./itemFrame";
 import { UI_ICON } from "./icons";
 import { pressIn, pressOut } from "./pressFeedback";
@@ -65,7 +66,7 @@ export function addAdRewardCard(scene: Phaser.Scene, parent: Phaser.GameObjects.
   const buttonWidth = width - 64;
   const buttonHeight = Math.round(height * 0.17);
   const bar = scene.add.container(0, height * 0.34);
-  bar.add(drawLayer(scene, 0, 0, chipPoints(buttonWidth, buttonHeight, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.7 }));
+  bar.add(drawLayer(scene, 0, 0, chipPoints(buttonWidth, buttonHeight, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } }), { fill: AD_TONE.fill, alpha: 0.96, edge: AD_TONE.accent, edgeAlpha: 0.9 }));
   addAdCountLabel(scene, bar, 0, 0, options.remaining, options.limit, done, Math.round(buttonHeight * 0.74));
   card.add(bar);
   if (options.badge) {
@@ -90,7 +91,7 @@ export function addAdRewardCard(scene: Phaser.Scene, parent: Phaser.GameObjects.
 
 /** 광고 칸의 간결한 표기 — 광고 아이콘과 `남은/한도`만 가운데에 나란히 세운다. */
 export function addAdCountLabel(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, remaining: number, limit: number, done: boolean, iconSize: number): void {
-  const label = scene.add.text(0, 0, `${remaining}/${limit}`, textStyle({ role: "display", size: 34, color: done ? COLOR.dangerText : COLOR.accentText })).setOrigin(0, 0.5).setStroke("#000000", 6);
+  const label = scene.add.text(0, 0, `${remaining}/${limit}`, textStyle({ role: "display", size: 34, color: done ? COLOR.dangerText : AD_TONE.value })).setOrigin(0, 0.5).setStroke("#000000", 6);
   const gap = Math.round(iconSize * 0.2);
   const left = x - (iconSize + gap + label.width) / 2;
   label.setPosition(left + iconSize + gap, y);

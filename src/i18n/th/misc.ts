@@ -130,7 +130,6 @@ export const MISC_TH = {
   "archaeology.map.available": "ไปได้",
   "archaeology.map.needLevel": "ต้องการ LV.{level}",
   "archaeology.map.start": "เริ่มสำรวจ",
-  "archaeology.map.close": "ปิด",
   "archaeology.map.cooling": "เปิดอีกครั้งใน {time}",
   "archaeology.map.noCharge": "ไม่มีจำนวนครั้งสำรวจเหลือ",
   "archaeology.finish": "จบการสำรวจ",

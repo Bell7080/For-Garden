@@ -130,7 +130,6 @@ export const MISC_RU = {
   "archaeology.map.available": "Доступно",
   "archaeology.map.needLevel": "Нужен LV.{level}",
   "archaeology.map.start": "Начать разведку",
-  "archaeology.map.close": "Закрыть",
   "archaeology.map.cooling": "Откроется через {time}",
   "archaeology.map.noCharge": "Попыток разведки не осталось",
   "archaeology.finish": "Завершить разведку",

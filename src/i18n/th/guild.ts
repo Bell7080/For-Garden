@@ -96,7 +96,6 @@ export const GUILD_TH = {
   "guild.members.kick": "นำออก",
   "guild.members.kickTitle": "นำสมาชิกออก",
   "guild.members.kickConfirm": "นำ {name} ออกจากกิลด์",
-  "guild.members.close": "ปิด",
   "guild.time.hm": "{h} ชม. {m} นาที",
   "guild.time.m": "{m} นาที",
   "guild.shop.buy": "ซื้อ",

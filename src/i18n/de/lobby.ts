@@ -137,7 +137,7 @@ export const LOBBY_DE = {
   "shuteFishing.difficulty.hard": "Schwer",
   "shuteFishing.difficulty.extreme": "Extrem",
   "shuteFishing.hint.easy": "{fish} Tracks · Gemütliches Tempo",
-  "shuteFishing.hint.normal": "{fish} Tracks · Boss-Track: 170–340 Juwelen",
+  "shuteFishing.hint.normal": "{fish} Tracks · Boss-Track: 150–350 Juwelen",
   "shuteFishing.hint.hard": "{fish} Tracks · Boss-Track bis 700 Juwelen",
   "shuteFishing.hint.extreme": "{fish} Tracks · Boss-Track: 350–700 Juwelen",
   "shuteFishing.jackpotNote": "Die Setlist steht beim Start fest. Je später der Track, desto größer der Schatz – der finale Boss-Track ist der beste!",

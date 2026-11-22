@@ -5,6 +5,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { archaeologySitePopupLayout } from "../../src/ui/archaeologySitePopupLayout";
 import { ARCHAEOLOGY_SITES } from "../../src/data/archaeologySites";
 import { RATES_SPOT } from "../../src/ui/ratesButtonLayout";
+import { BACK_SLOT } from "../../src/ui/popupGeometry";
 import { generateRune } from "../../src/core/runes";
 
 /**
@@ -68,13 +69,12 @@ function previewLayout(siteId: string): ReturnType<typeof archaeologySitePopupLa
 /** 미리보기 창의 「탐사 시작」. 창 크기는 보상 줄 수에서 자라므로 자리도 그 표에서 읽는다. */
 async function tapPreviewStart(page: Page, siteId = "garden-gate"): Promise<void> {
   const spot = previewLayout(siteId);
-  await tap(page, BASE_WIDTH / 2 + spot.buttonCenters[1], BASE_HEIGHT / 2 + spot.buttonY);
+  await tap(page, BASE_WIDTH / 2 + spot.startX, BASE_HEIGHT / 2 + spot.buttonY);
 }
 
-/** 같은 창의 「닫기」. */
-async function tapPreviewClose(page: Page, siteId = "garden-gate"): Promise<void> {
-  const spot = previewLayout(siteId);
-  await tap(page, BASE_WIDTH / 2 + spot.buttonCenters[0], BASE_HEIGHT / 2 + spot.buttonY);
+/** 같은 창을 닫는다 — 판 안에 닫기가 없으므로 판 밖 우하단 뒤로가기를 누른다. */
+async function tapPreviewClose(page: Page): Promise<void> {
+  await tap(page, BACK_SLOT.x, BACK_SLOT.y);
 }
 
 test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, testInfo) => {
@@ -244,7 +244,7 @@ test("유적 지도 이동 → 잠긴 유적 확인 → 열린 유적 미리보�
   // 잠긴 미리보기의 시작 자리는 입력해도 판이 생기지 않는다.
   await tapPreviewStart(page, "deep-sanctum");
   expect(await page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.tiles.length ?? 0)).toBe(0);
-  await tapPreviewClose(page, "deep-sanctum");
+  await tapPreviewClose(page);
   await page.waitForTimeout(250);
 
   // 지도를 원위치로 되밀고 열린 첫 유적의 미리보기에서 탐사를 시작한다.

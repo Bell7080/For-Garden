@@ -137,7 +137,7 @@ export const LOBBY_ES = {
   "shuteFishing.difficulty.hard": "Difícil",
   "shuteFishing.difficulty.extreme": "Extremo",
   "shuteFishing.hint.easy": "{fish} temas · Tempo relajado",
-  "shuteFishing.hint.normal": "{fish} temas · Tema jefe: 170–340 gemas",
+  "shuteFishing.hint.normal": "{fish} temas · Tema jefe: 150–350 gemas",
   "shuteFishing.hint.hard": "{fish} temas · Tema jefe hasta 700 gemas",
   "shuteFishing.hint.extreme": "{fish} temas · Tema jefe: 350–700 gemas",
   "shuteFishing.jackpotNote": "La lista se decide al empezar. Cuanto más avanzas, mejor el tesoro, ¡y el tema jefe final es el mejor!",

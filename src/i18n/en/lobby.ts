@@ -142,7 +142,7 @@ export const LOBBY_EN = {
   "shuteFishing.difficulty.hard": "Hard",
   "shuteFishing.difficulty.extreme": "Extreme",
   "shuteFishing.hint.easy": "{fish} tracks · Chill tempo",
-  "shuteFishing.hint.normal": "{fish} tracks · Boss track: 170–340 gems",
+  "shuteFishing.hint.normal": "{fish} tracks · Boss track: 150–350 gems",
   "shuteFishing.hint.hard": "{fish} tracks · Boss track up to 700 gems",
   "shuteFishing.hint.extreme": "{fish} tracks · Boss track: 350–700 gems",
   "shuteFishing.jackpotNote": "The setlist is set when you start. Later tracks pay more, and the final boss track pays the most!",

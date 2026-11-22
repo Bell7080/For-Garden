@@ -4,7 +4,6 @@ import { audioManager } from "../managers/AudioManager";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import Phaser from "phaser";
 import { releaseAdWait } from "../platform/rewardedAds";
-import { UI_ICON } from "./icons";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
 import type { AdPresentationResult, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
@@ -20,7 +19,7 @@ import { setDebugExcavationAdOffers, setDebugFormationDragVisual, setDebugIdleEx
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { notificationManager } from "../managers/NotificationManager";
 import { Button } from "./Button";
-import { chipPoints, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
+import { chipPoints, drawHairline, drawLayer, HOLO, slantedRect } from "./holo";
 import { clipHit, containerClip } from "./clippedHit";
 import { PortraitCard } from "./PortraitCard";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -44,7 +43,9 @@ import { addPopupBackgroundImage, BACKGROUND, type PopupBackgroundImage } from "
 import { addSectionTitle } from "./SectionTitle";
 import { excavationDisplayModel } from "./excavationDisplayModel";
 import { ExcavationCurrencyFrame, formatRate } from "./ExcavationCurrencyFrame";
-import { excavationAdOfferDisplayModel, formatEffectRemaining, type ExcavationAdOfferId } from "./excavationAdOfferModel";
+import { excavationAdOfferDisplayModel, excavationStorageEtaSeconds, type ExcavationAdOfferId } from "./excavationAdOfferModel";
+import { AdEffectButton } from "./AdEffectButton";
+import { EXCAVATION_EFFECT_TONE, ExcavationStorageGauge } from "./ExcavationStorageGauge";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { startPuppetHop } from "./puppetHop";
@@ -60,10 +61,8 @@ import { addScrollHint } from "./ScrollHint";
 const PANEL = { width: 900, height: 1320 } as const;
 /** 현황의 누적 액자 판. 배치 그리드도 같은 윗변에서 시작해 두 화면이 한 자리를 공유한다. */
 const STATUS_SUMMARY = { y: 30, width: 800, height: 205 } as const;
-/** SD 발밑과 누적 액자 사이, 보관 한도가 찬 비율을 보여주는 좁은 자리다. */
-const STORAGE_GAUGE = { labelY: -158, y: -128, width: 700, height: 20, rowGap: 26 } as const;
-/** 켜져 있는 효과 칩. 보관 게이지 라벨 양옆에 배율과 남은 시간 카운트만 적는다. */
-const EFFECT_CHIP = { width: 210, height: 36, x: 300 } as const;
+/** 광고 효과 버튼 두 장의 자리. 효과가 돌면 밑변 아래에 남은 시간 줄이 붙으므로 안내 글은 그 아래에 선다. */
+const AD_OFFER = { x: 205, y: 375, width: 370, height: 82, messageY: 448 } as const;
 /**
  * 보유 렐릭은 이 창 안에서만 세로로 흐르며 상단 슬롯과 하단 완료 버튼을 침범하지 않는다.
  *
@@ -232,8 +231,8 @@ export class IdleExcavationPopup {
       harvest: { x: POPUP_CENTER.x, y: POPUP_CENTER.y + BOTTOM_ACTION.y },
       cancelEdit: { x: POPUP_CENTER.x + BOTTOM_ACTION.cancelX, y: POPUP_CENTER.y + BOTTOM_ACTION.y },
       ads: [
-        { slotId: "excavation-speed", x: POPUP_CENTER.x - 205, y: POPUP_CENTER.y + 385 },
-        { slotId: "excavation-storage", x: POPUP_CENTER.x + 205, y: POPUP_CENTER.y + 385 },
+        { slotId: "excavation-speed", x: POPUP_CENTER.x - AD_OFFER.x, y: POPUP_CENTER.y + AD_OFFER.y },
+        { slotId: "excavation-storage", x: POPUP_CENTER.x + AD_OFFER.x, y: POPUP_CENTER.y + AD_OFFER.y },
       ],
     });
     void this.fetch();
@@ -408,38 +407,28 @@ export class IdleExcavationPopup {
     if (!content) return;
     const baseServerMs = new Date(response.serverTime).getTime();
     let harvestButton: Button | undefined;
-    // SD 발밑과 누적 액자 사이: 생산을 이어 담을 수 있는 보관 한도가 지금 몇 % 찼는지 보여 준다.
-    const storageLabel = this.scene.add.text(0, STORAGE_GAUGE.labelY, "", textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0.5);
-    content.add(storageLabel);
-    const storageGauge = new HoloBar(this.scene, 0, STORAGE_GAUGE.y, STORAGE_GAUGE.width, STORAGE_GAUGE.height, { color: COLOR.accent, trackAlpha: 0.8, outline: true }).addTo(content);
-    // 보관 2배가 켜져 있으면 줄이 하나 더 늘어 두 줄(최대 200%)이 된다. 아래 줄이 100%를 채운 몫이 위 줄로 이어진다.
+    // SD 발밑과 누적 액자 사이: 보관 한도가 지금 몇 % 찼는지와 가득 차기까지 남은 시간을 보여 준다.
     const nowAtRender = Date.now();
     const remainingOf = (iso: string | null | undefined): number => (iso ? Date.parse(iso) - nowAtRender : 0);
     const storageLeft = remainingOf(response.excavation.storageExtensionExpiresAt);
     const speedLeft = response.excavation.activeProductionMultiplier > 1 ? remainingOf(response.excavation.productionMultiplierExpiresAt) : 0;
     const extActive = storageLeft > 0, speedOn = speedLeft > 0;
-    // 확장이 끝나도 이미 100%를 넘어 담긴 몫은 수령 전까지 남으므로, 그 몫이 있으면 둘째 줄을 계속 세운다.
+    // 확장이 끝나도 이미 100%를 넘어 담긴 몫은 수령 전까지 남으므로, 그 몫이 있으면 늘어난 몫의 칸을 계속 세운다.
     const overflowKept = excavationStorageFillOfBase(response.excavation.unclaimed, rate, response.excavation.baseStorageSeconds, STORAGE_EXTENSION_MULTIPLIER) > 1;
-    const storageGauge2 = extActive || overflowKept ? new HoloBar(this.scene, 0, STORAGE_GAUGE.y + STORAGE_GAUGE.rowGap, STORAGE_GAUGE.width, STORAGE_GAUGE.height, { color: COLOR.excavationStorage, trackAlpha: 0.8, outline: true }).addTo(content) : undefined;
+    const limitRatio = extActive ? STORAGE_EXTENSION_MULTIPLIER : 1;
+    const storageGauge = new ExcavationStorageGauge(this.scene, content, { extended: extActive || overflowKept, limitRatio: extActive || overflowKept ? STORAGE_EXTENSION_MULTIPLIER : 1, reduceMotion: session.settings.accessibility.reduceMotion });
+    const producing = EXCAVATION_CURRENCIES.some((currency) => rate[currency] > 0);
     const reveal = { v: extActive && this.storageUnfold ? 0 : 1 };
     let storageTotal = 0;
     const paintGauges = (): void => {
-      storageGauge.setValue(Math.min(1, storageTotal));
-      storageGauge2?.setValue(Math.max(0, Math.min(1, storageTotal - 1)) * reveal.v);
-      storageLabel.setText(t("excavation.storage", { percent: Math.round(storageTotal * 100) }));
+      storageGauge.setFill(storageTotal, reveal.v);
+      const speedRemaining = response.excavation.activeProductionMultiplier > 1 ? Math.max(0, Date.parse(response.excavation.productionMultiplierExpiresAt ?? "") - Date.now()) / 1000 : 0;
+      storageGauge.setEta(excavationStorageEtaSeconds({ fill: storageTotal, limitRatio, baseStorageSeconds: response.excavation.baseStorageSeconds, producing, speed: { multiplier: response.excavation.activeProductionMultiplier, remainingSeconds: speedRemaining } }));
     };
     if (extActive && this.storageUnfold) {
       this.storageUnfold = false;
       this.scene.tweens.add({ targets: reveal, v: 1, duration: 700, ease: "Cubic.easeOut", onUpdate: paintGauges });
     }
-    const addChip = (x: number, accent: number): Phaser.GameObjects.Text => {
-      content.add(drawLayer(this.scene, x, STORAGE_GAUGE.labelY, slantedRect(EFFECT_CHIP.width, EFFECT_CHIP.height), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: accent, edgeAlpha: 0.8 }));
-      const label = this.scene.add.text(x, STORAGE_GAUGE.labelY, "", textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0.5);
-      content.add(label);
-      return label;
-    };
-    const speedChip = speedOn ? addChip(-EFFECT_CHIP.x, COLOR.excavationProduction) : undefined;
-    const storageChip = extActive ? addChip(EFFECT_CHIP.x, COLOR.excavationStorage) : undefined;
     // 발굴 전용 액자는 큰 누적값을, 아래의 독립 칩은 같은 아이콘과 생산 속도만 책임진다.
     // 3순위 누적 보상: SD 아래에서 현재 수확량과 시간당 생산량을 한 번에 훑는다.
     content.add(drawLayer(this.scene, 0, STATUS_SUMMARY.y, slantedRect(STATUS_SUMMARY.width, STATUS_SUMMARY.height), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: COLOR.accent, edgeAlpha: 0.42 }));
@@ -452,6 +441,8 @@ export class IdleExcavationPopup {
     });
     // 판의 이름은 설명 문장이 아니라 판 윗변에 걸터앉은 제목표가 맡는다.
     addSectionTitle(this.scene, -STATUS_SUMMARY.width / 2 + 10, STATUS_SUMMARY.y - STATUS_SUMMARY.height / 2, t("excavation.accumulated"), { size: 26, parent: content });
+    // 광고 버튼은 초마다 남은 시간을 갈아 끼우므로 시계보다 먼저 선다.
+    const adOffers = this.addAdOffers(content, response);
     const refreshEstimate = (): void => {
       // 서버 응답 이후의 로컬 경과분만 더하는 표시용 예상치이며 정산 기준 시각은 절대 갱신하지 않는다.
       const elapsedHours = Math.max(0, Date.now() - baseServerMs) / 3_600_000;
@@ -481,8 +472,8 @@ export class IdleExcavationPopup {
       const speedNow = response.excavation.activeProductionMultiplier > 1 && Date.parse(response.excavation.productionMultiplierExpiresAt ?? "") > now;
       const extNow = Date.parse(response.excavation.storageExtensionExpiresAt ?? "") > now;
       if (speedNow !== speedOn || extNow !== extActive) { this.renderStatus(); return; }
-      speedChip?.setText(`×${response.excavation.activeProductionMultiplier}  ${formatEffectRemaining(Date.parse(response.excavation.productionMultiplierExpiresAt ?? "") - now)}`);
-      storageChip?.setText(`×${STORAGE_EXTENSION_MULTIPLIER}  ${formatEffectRemaining(Date.parse(response.excavation.storageExtensionExpiresAt ?? "") - now)}`);
+      // 광고 버튼의 남은 시간 줄과 아래 글만 초마다 갈아 끼운다.
+      for (const offer of adOffers) offer.update(now);
       this.setSpeedActive(speedNow);
     };
     refreshEstimate();
@@ -495,7 +486,6 @@ export class IdleExcavationPopup {
     // 빈 칸의 규칙 같은 설명은 조작을 바꾸지 않으므로 세우지 않는다.
     const notice = this.harvestError ?? (discarded > 0 ? t("excavation.harvestCapped") : undefined);
     if (notice) content.add(this.scene.add.text(0, 250, notice, textStyle({ role: "body", size: 21, color: COLOR.dangerText, align: "center" })).setOrigin(0.5));
-    this.addAdOffers(content, response.serverTime);
     // 5순위 주요 행동: 별도 편성 버튼은 없애고, 하단 전체 폭은 수확 primary 하나에만 준다.
     harvestButton = new Button(this.scene, 0, BOTTOM_ACTION.y, { width: 520, height: 98, label: this.saving ? t("excavation.harvestBusy") : t("excavation.harvest"), variant: "primary", onClick: () => void this.harvest() });
     // 서버 확정 누적량이 1 미만이거나 요청 중이면 지급할 것이 없으므로 입력부터 막는다.
@@ -519,34 +509,38 @@ export class IdleExcavationPopup {
   /**
    * 광고 칸은 서버 운영 설정과 무관하게 슬롯 정의와 오늘 남은 횟수로만 그린다 — 상점·스테미나의 광고 칸과 같다.
    * 광고를 실제로 못 쓰는 환경은 광고 실행 단계(`claimAdEffect`)가 안내한다.
+   *
+   * 효과가 켜져 있으면 같은 버튼이 「진행 중」을 달고 남은 시간을 말한다. 돌려주는 `update`가 초마다 그 글을 갈아 끼운다.
    */
-  private addAdOffers(content: Phaser.GameObjects.Container, serverTime: string): void {
+  private addAdOffers(content: Phaser.GameObjects.Container, response: IdleExcavationResponse): Array<{ update: (now: number) => void }> {
     const slotIds: readonly ExcavationAdOfferId[] = ["excavation-speed", "excavation-storage"];
     const debugOffers: NonNullable<Window["__PF_DEBUG"]>["excavationAdOffers"] = [];
-    slotIds.forEach((slotId, index) => {
+    const reduceMotion = session.settings.accessibility.reduceMotion;
+    const offers = slotIds.map((slotId, index) => {
       const limit = findAdRewardSlot(slotId)?.dailyLimitUtc ?? 0;
-      const sameUtcDay = session.dailyAdRewards.date === serverTime.slice(0, 10);
+      const sameUtcDay = session.dailyAdRewards.date === response.serverTime.slice(0, 10);
       const remaining = Math.max(0, limit - (sameUtcDay ? session.dailyAdRewards.claimsBySlot[slotId] ?? 0 : 0));
-      const offer = excavationAdOfferDisplayModel(slotId, limit, remaining);
       const production = slotId === "excavation-speed";
+      const expiresAt = production
+        ? (response.excavation.activeProductionMultiplier > 1 ? response.excavation.productionMultiplierExpiresAt : null)
+        : response.excavation.storageExtensionExpiresAt;
+      const activeLeft = (now: number): number => Math.max(0, Date.parse(expiresAt ?? "") - now) || 0;
+      const offer = excavationAdOfferDisplayModel(slotId, limit, remaining, activeLeft(Date.now()));
+      const enabled = offer.enabled && !this.saving;
       // E2E에는 Canvas에서 사용자가 읽는 값만 노출하고 광고 토큰은 제외한다.
-      debugOffers.push({ slotId, label: offer.label, usage: offer.usage, enabled: offer.enabled && !this.saving });
-      // 4순위 보조 혜택: 광고는 primary와 거리를 두고 더 낮고 작은 보조 버튼으로만 제안한다.
-      const button = new Button(this.scene, index === 0 ? -205 : 205, 385, {
-        width: 350, height: 78, label: offer.label, sub: offer.usage, fontSize: 27, subFontSize: 17,
-        // 광고를 보고 받는 자리라는 것은 스테미나 광고 칸과 같은 그림이 말한다.
-        art: UI_ICON.ad,
-        // 생산은 청록/푸른 강조, 보관은 보라 강조와 어두운 호박 면으로 기존 토큰의 채도를 따른다.
-        accentColor: production ? COLOR.excavationProduction : COLOR.excavationStorage,
-        fill: production ? COLOR.panel : COLOR.excavationStorageFill,
-        onClick: () => void this.claimAdEffect(slotId),
+      debugOffers.push({ slotId, label: offer.label, usage: offer.usage, enabled });
+      // 4순위 보조 혜택: 광고는 수확 버튼보다 낮고 작은 와인빛 판으로 제안한다.
+      const button = new AdEffectButton(this.scene, index === 0 ? -AD_OFFER.x : AD_OFFER.x, AD_OFFER.y, {
+        width: AD_OFFER.width, height: AD_OFFER.height, view: { ...offer, enabled },
+        effectColor: production ? EXCAVATION_EFFECT_TONE.production : EXCAVATION_EFFECT_TONE.storage,
+        reduceMotion, onClick: () => void this.claimAdEffect(slotId),
       });
-      // 한도를 다 쓴 2/2 같은 상태도 진행 정보로 남기되 입력과 손 모양은 비활성화한다.
-      button.setEnabled(offer.enabled && !this.saving);
       content.add(button);
+      return { update: (now: number): void => { if (offer.active) button.update(excavationAdOfferDisplayModel(slotId, limit, remaining, activeLeft(now))); } };
     });
     setDebugExcavationAdOffers(debugOffers);
-    if (this.adMessage) content.add(this.scene.add.text(0, 438, this.adMessage, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
+    if (this.adMessage) content.add(this.scene.add.text(0, AD_OFFER.messageY, this.adMessage, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
+    return offers;
   }
 
   /** 취소·동의 거부·SDK/재고 실패는 메시지만 바꾸며 일반 수확 버튼과 발굴 상태를 건드리지 않는다. */

@@ -137,7 +137,7 @@ export const LOBBY_ZH_HANS = {
   "shuteFishing.difficulty.hard": "困难",
   "shuteFishing.difficulty.extreme": "极难",
   "shuteFishing.hint.easy": "{fish}首 · 悠闲的节奏",
-  "shuteFishing.hint.normal": "{fish}首 · Boss曲宝石170–340",
+  "shuteFishing.hint.normal": "{fish}首 · Boss曲宝石150–350",
   "shuteFishing.hint.hard": "{fish}首 · Boss曲最高宝石700",
   "shuteFishing.hint.extreme": "{fish}首 · Boss曲宝石350–700",
   "shuteFishing.jackpotNote": "开始时就会定好歌单。越往后、越是最后的Boss曲，宝物越大！",

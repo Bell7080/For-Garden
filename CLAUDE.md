@@ -688,6 +688,7 @@
   없다. 단계는 **판을 만들 때 굳히고**(`StrataBoard.crystalStage`) 골드는 제곱근으로만, 치즈케이크·젬·화석·호박석·룬
   수량은 늘리지 않는다(프리미엄 재화 인플레를 막는다). 높은 유적에는 결정이 없다. 지도 노드 오른쪽 위의 마름모가
   단계를, 미리보기 팝업의 결정 줄이 단계·굴착 보너스·다음 단계까지 남은 시간을 말한다.
+- **유적 미리보기는 규격 칸 둘 → 기대 획득 → (결정 띠) → 시간 레이어 → 탐사 시작 순이다**(`ArchaeologySitePreviewParts.ts` · 자리 `archaeologySitePopupLayout`, 응태 2026-11-23). 판 크기·굴착 횟수는 같은 크기의 칸 둘, **권장 레벨은 적지 않고 해금 레벨만** 몸판 윗변 오른쪽 표식으로, 들어갈 수 있는지와 재사용 대기 시간·탐사 후 잠금 시간은 시간 레이어 한 장이 말한다. 흐린 글 한 줄로 되돌리지 않는다.
 - **못 가는 이유를 한 낱말로 뭉치지 않는다**(`archaeologyNodeState`). 레벨 부족·재사용 대기·
   횟수 부족은 플레이어가 지금 할 일이 저마다 다르다(레벨을 올린다 · 기다린다 · 다른 자리를
   판다). 진행 중인 판이 무엇보다 먼저이고, 대기는 완료보다 앞선다.
@@ -915,7 +916,7 @@
 - **WebGL 컨텍스트는 게임 캔버스 하나만 상시 유지한다.** 연구소의 SSR 전조(three.js)처럼 컨텍스트를 하나 더 쓰는 무대는 미리 세우더라도 그 화면을 떠날 때 `releaseSsrOmen`처럼 `dispose`와 DOM 제거로 반드시 내린다. 컨텍스트가 둘 이상 상주하면 GPU 메모리가 두 벌이 되어 모바일에서 탭이 죽는다.
 - **바뀌지 않는 많은 도형은 굽는다**(`ui/bakedGraphics.ts`의 `bakedGraphicsImage`). Graphics는 그린 명령을 매 프레임 다시 풀어 그리므로 점 무늬(원 217개)·돌림판처럼 정지한 도형 수백 개를 Graphics로 세워 두면 서 있는 내내 그만큼 그린다. 움직임은 구운 이미지의 회전·알파 트윈으로 낸다.
 - **스킬 일러스트·출격 칸 원화는 타이틀이 캐시에만 받는다**(`prefetchCachedFiles`). 스킬 일러스트는 액자·쪽지가 설 때 `skillArtLoader.ensureSkillArt`가 올리고(전투는 `ensureSkillArtFor`로 미리), 출격 칸 원화는 배경과 같은 거주 규칙(`CONTENT_ENTRY_ART`)이다. 새로 그리는 자리도 `textures.exists`로 가르지 말고 그 길을 지난다.
-- **배경 원화는 올리기 전에 미리 풀어 둔다**(`backgrounds.ts`의 `decodeAhead` — 그림 요소의 `decode()`). `createImageBitmap`으로 올리지 않는다 — v0.514.0에 그 길을 탔더니 갤럭시 노트20에서 스토리 지도 진입이 까만 화면으로 굳었다(v0.517.1에서 걷었다). 한 변이 4,096px를 넘는 원화를 두지 않는다. 로더 길은 `decode`가 없을 때의 되돌이다.
+- **배경 원화는 올리기 전에 미리 풀어 둔다**(`backgrounds.ts`의 `decodeAhead` — 그림 요소의 `decode()`). `createImageBitmap`으로 올리지 않는다 — v0.514.0에 그 길을 탔더니 갤럭시 노트20에서 스토리 지도 진입이 까만 화면으로 굳었다(v0.517.2에서 걷었다). 한 변이 4,096px를 넘는 원화를 두지 않는다. 로더 길은 `decode`가 없을 때의 되돌이다.
 - **WebGL 컨텍스트를 잃고 4초(보이는 동안) 안에 돌아오지 않으면 보고하고 새로 띄운다**(`ui/webglWatchdog.ts` · 규칙 `core/webglRecovery.ts` — 10분에 두 번까지). 잃은 순간도 `webgl.contextLost`로 GPU 이름과 함께 남는다.
 - **Pre FX는 꺼 두었다**(`main.ts`의 `disablePreFX: true` — 부팅 때 미리 잡던 렌더 타깃 약 180MB). 게임 객체의 `.preFX`(glow·blur)를 쓰지 않는다 — 필요하면 굽거나 겹쳐 그린다.
 - **저사양·절전의 렌더 부담은 `core/devicePerformance.ts` 한 곳이 정한다** — 낮음 품질 첫 실행 30fps · 절전은 적용만 30fps · 낮음 품질 MSAA 끔(다음 실행부터) · 저메모리 기기의 유휴 원화 보관 축소. 프레임 제한을 TimeStep에 걸 때는 저장값이 아니라 `effectiveFrameRateLimit`을 지난다.

@@ -54,13 +54,33 @@ describe("지도 노드 상태", () => {
 describe("유적 미리보기 창", () => {
   const spot = archaeologySitePopupLayout(3);
 
-  it("의 결정 띠는 기대 획득 판과 이유 줄 사이에 겹치지 않고 선다", () => {
+  it("의 결정 띠는 기대 획득 판과 시간 레이어 사이에 겹치지 않고 선다", () => {
     const withCrystal = archaeologySitePopupLayout(3, true);
     const band = withCrystal.crystal;
     expect(band.y - band.height / 2).toBeGreaterThan(withCrystal.panel.y + withCrystal.panel.height / 2);
-    expect(band.y + band.height / 2).toBeLessThan(withCrystal.reasonY - 14);
+    expect(band.y + band.height / 2).toBeLessThan(withCrystal.status.y - withCrystal.status.height / 2 - 14);
     expect(band.width).toBe(withCrystal.panel.width);
     expect(withCrystal.height - spot.height).toBeGreaterThanOrEqual(band.height);
+  });
+
+  it("의 위아래 조각은 서로 겹치지 않고 쌓인다(규격 칸 → 기대 획득 → 시간 레이어 → 버튼)", () => {
+    for (const layout of [spot, archaeologySitePopupLayout(3, true)]) {
+      const specsBottom = layout.specs.y + layout.specs.height / 2;
+      // 기대 획득 판의 제목표가 윗변에 걸터앉으므로 그만큼 띄운다.
+      expect(layout.panel.y - layout.panel.height / 2 - specsBottom).toBeGreaterThanOrEqual(40);
+      expect(layout.specs.y - layout.specs.height / 2).toBeGreaterThan(-layout.height / 2 + 30);
+      const statusTop = layout.status.y - layout.status.height / 2;
+      expect(statusTop).toBeGreaterThan(layout.panel.y + layout.panel.height / 2);
+      expect(layout.buttonY - layout.buttonHeight / 2).toBeGreaterThan(layout.status.y + layout.status.height / 2);
+      expect(layout.buttonY + layout.buttonHeight / 2).toBeLessThan(layout.height / 2);
+    }
+    // 규격 칸 둘은 같은 크기로 판 폭 안에 나란히 선다.
+    const [left, right] = spot.specs.xs;
+    expect(left + spot.specs.width / 2).toBeLessThan(right - spot.specs.width / 2);
+    expect(right + spot.specs.width / 2).toBeLessThanOrEqual(spot.panel.width / 2 + 0.5);
+    // 해금 표식은 몸판 윗변 오른쪽에 걸터앉고 판 밖으로 나가지 않는다.
+    expect(spot.unlockTag.y).toBe(-spot.height / 2);
+    expect(spot.unlockTag.x + spot.unlockTag.width / 2).toBeLessThan(spot.width / 2);
   });
 
   it("의 높이는 보상 줄 수에서 자란다", () => {

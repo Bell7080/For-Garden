@@ -5,7 +5,16 @@ export const EXCAVATION_JA = {
   "excavation.loadFailed": "採掘記録を読み込めませんでした。",
   "excavation.retry": "再試行",
 
-  "excavation.storage": "保管量 {percent}%",
+  "excavation.storage": "保管量",
+  "excavation.untilFull": "満杯まで {time}",
+  "excavation.storageFull": "保管いっぱい · 回収してください",
+  "excavation.noProduction": "レリックを配置していないため貯まりません",
+  "excavation.ad.withDuration": "{effect} · {duration}",
+  "excavation.duration.hours": "{hours}時間",
+  "excavation.duration.minutes": "{minutes}分",
+  "excavation.ad.active": "発動中",
+  "excavation.ad.activeSub": "残り {time} · {usage}",
+  "excavation.ad.idleSub": "広告を見る {usage}",
   "excavation.accumulated": "採掘の蓄積",
 
   "excavation.harvestCapped": "回収完了 · 財布上限による損失",

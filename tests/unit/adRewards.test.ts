@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AD_REWARD_SLOTS, completedAdToken, findAdRewardSlot } from "../../src/data/adRewards";
-import { excavationAdOfferDisplayModel } from "../../src/ui/excavationAdOfferModel";
+import { excavationAdEffectSeconds, excavationAdOfferDisplayModel, excavationStorageEtaSeconds, formatEffectDuration } from "../../src/ui/excavationAdOfferModel";
 import { createIdleExcavationState, STORAGE_EXTENSION_MULTIPLIER } from "../../src/core/idleExcavation";
 
 /** 광고 운영표가 희소 가챠 재화를 우회 지급하지 못하도록 허용 목록을 고정한다. */
@@ -54,8 +54,26 @@ describe("광고 보상 정적 정의", () => {
 
   it("발굴 버튼은 서버 문구 대신 슬롯별 라벨과 사용/한도 상태를 표시한다", () => {
     // 남은 횟수 2는 사용량 0으로, 남은 횟수 0은 사용량 2와 비활성 상태로 바뀌어야 한다.
-    expect(excavationAdOfferDisplayModel("excavation-speed", 2, 2)).toEqual({ label: "생산량 ×1.5", usage: "2/2", used: 0, limit: 2, enabled: true });
-    expect(excavationAdOfferDisplayModel("excavation-storage", 2, 0)).toEqual({ label: "보관량 ×2", usage: "0/2", used: 2, limit: 2, enabled: false });
+    expect(excavationAdOfferDisplayModel("excavation-speed", 2, 2)).toEqual({ label: "생산량 ×1.5 · 1시간", usage: "2/2", sub: "광고 보기 2/2", used: 0, limit: 2, enabled: true, active: false, progress: 0 });
+    expect(excavationAdOfferDisplayModel("excavation-storage", 2, 0)).toEqual({ label: "보관량 ×2 · 16시간", usage: "0/2", sub: "광고 보기 0/2", used: 2, limit: 2, enabled: false, active: false, progress: 0 });
+  });
+
+  it("광고를 본 뒤에는 남은 시간과 그 몫이 버튼에 선다", () => {
+    const half = excavationAdOfferDisplayModel("excavation-speed", 2, 1, 30 * 60 * 1000);
+    expect(half).toMatchObject({ active: true, sub: "남은 시간 30:00 · 1/2" });
+    expect(half.progress).toBeCloseTo(0.5);
+    expect(excavationAdEffectSeconds("excavation-storage")).toBe(16 * 3600);
+    expect(formatEffectDuration(3600)).toBe("1시간");
+    expect(formatEffectDuration(45 * 60)).toBe("45분");
+  });
+
+  it("가득 차기까지 남은 시간은 생산 가속이 도는 동안만 빨리 찬다", () => {
+    const base = 8 * 3600;
+    expect(excavationStorageEtaSeconds({ fill: 1, limitRatio: 1, baseStorageSeconds: base, producing: true })).toBe(0);
+    expect(excavationStorageEtaSeconds({ fill: 0.5, limitRatio: 1, baseStorageSeconds: base, producing: false })).toBeUndefined();
+    expect(excavationStorageEtaSeconds({ fill: 0.5, limitRatio: 1, baseStorageSeconds: base, producing: true })).toBe(4 * 3600);
+    // 남은 4시간 몫 중 1시간 동안 ×1.5로 1.5시간 몫을 채우고, 나머지 2.5시간 몫은 기본 속도다.
+    expect(excavationStorageEtaSeconds({ fill: 0.5, limitRatio: 1, baseStorageSeconds: base, producing: true, speed: { multiplier: 1.5, remainingSeconds: 3600 } })).toBe(3600 + 2.5 * 3600);
   });
 
   it("광고 취소·SDK 실패·재고 없음은 검증 토큰 없이 기본 흐름으로 돌아간다", () => {

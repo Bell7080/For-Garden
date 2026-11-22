@@ -1,4 +1,5 @@
 import { showContentToast } from "../ui/ContentToast";
+import { AD_TONE } from "../ui/adTone";
 import Phaser from "phaser";
 import { withBusy } from "../ui/BusyOverlay";
 import { t, type TextKey } from "../i18n";
@@ -776,6 +777,8 @@ export class ShopScene extends Phaser.Scene {
     card.add(styleLimitCount(this.add.text(0, SHOP_CARD.remainingY, t("shop.exchangeRemaining", { remaining: formatCurrency(status.remaining), limit: formatCurrency(status.limit) }), textStyle({ role: "emphasis", size: 27 })).setOrigin(0.5), done));
     // 값 줄 자리: 무료 칸의 「무료」와 같은 글자 양식에 광고 표식을 앞세운다.
     const word = addShopPriceWord(this, t("shop.premium.dailyAdTag"), done);
+    // 광고 칸의 값 글자는 모든 광고 칸과 같은 와인빛 한 벌(`AD_TONE`)로 선다.
+    if (!done) word.setColor(AD_TONE.value);
     const iconSize = 44;
     const gap = 10;
     const left = -(iconSize + gap + word.width) / 2;

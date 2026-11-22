@@ -95,7 +95,7 @@ export function simulateDuel(left: RelicDef, right: RelicDef, seed: number): Due
   return runDuel(left, right, seed);
 }
 
-/** 레벨 60·돌파 V(4단계)의 실제 성장치와 전용 돌파 효과를 모두 켠 한 판이다. */
+/** 레벨 60·돌파 IV(4단계)의 실제 성장치와 전용 돌파 효과를 모두 켠 한 판이다. */
 export function simulateMaxedDuel(left: RelicDef, right: RelicDef, seed: number): DuelRun {
   const level = 60;
   const grown = (def: RelicDef): RelicDef => ({ ...def, stats: applyLevelGrowth(def.stats, level, def.rarity, BREAKTHROUGH_CAP) });

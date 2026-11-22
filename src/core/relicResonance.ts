@@ -2,7 +2,7 @@ import type { HeartGemStatEffect } from "../data/heartGems";
 import type { RelicProgress, RelicRarity, Stats } from "./types";
 
 /**
- * **공명 I~V — 돌파 V 이후의 성장 축**(응태 승인 2026-11-09).
+ * **공명 I~V — 돌파 IV 이후의 성장 축**(응태 승인 2026-11-09).
  *
  * 돌파를 끝낸 개체의 중복은 예전에는 곧바로 DNA 마일리지가 되었다. 이제는 그 개체의 파편으로 남아 공명을 한 단계씩 올리고,
  * 공명 V까지 드는 파편을 다 갖춘 뒤의 중복만 마일리지가 된다(`resonanceFragmentRoom`).
@@ -42,7 +42,7 @@ export function remainingResonanceFragments(rarity: RelicRarity, resonance: numb
 }
 
 /**
- * 돌파 V인 개체가 **파편을 몇 장 더 받아 쓸 수 있는가** — 공명 V까지 남은 파편에서 가진 파편을 뺀 값.
+ * 돌파 IV인 개체가 **파편을 몇 장 더 받아 쓸 수 있는가** — 공명 V까지 남은 파편에서 가진 파편을 뺀 값.
  *
  * 연구소 중복·선택권·마일리지 상점의 파편이 이 한 값을 읽는다: 0보다 크면 파편으로 받고, 0이면 쓸 곳이 없어
  * 마일리지로 바뀌거나(뽑기) 값을 받기 전에 거절한다(상점·선택권).
@@ -77,7 +77,7 @@ export function resonanceStatEffect(resonance: number): HeartGemStatEffect {
 
 /**
  * 그 렐릭이 파편을 몇 장 더 받아 쓸 수 있는가 — 서버(연구소 중복·선택권·마일리지 파편)와 화면(선택권 고르기)이 같은 값을 읽는다.
- * 보유하지 않았거나 돌파 중이면 끝이 없고, 돌파 V면 공명 V까지 남은 몫에서 가진 파편을 뺀다.
+ * 보유하지 않았거나 돌파 중이면 끝이 없고, 돌파 IV면 공명 V까지 남은 몫에서 가진 파편을 뺀다.
  */
 export function relicFragmentRoom(rarity: RelicRarity, progress: Pick<RelicProgress, "breakthrough" | "resonance"> | undefined, held: number, breakthroughCap: number): number {
   if (!progress || progress.breakthrough < breakthroughCap) return Number.POSITIVE_INFINITY;

@@ -111,7 +111,7 @@ export class FakeGuildServer implements GuildBackend {
         const frameId = level >= 45 ? "garden" : level >= 30 ? "abyss" : level >= 20 ? "amber" : "holo";
         const card: GuildMemberCard = {
           uid: `QA${String(seed).padStart(10, "0").slice(0, 10)}`, bio: SAMPLE_BIOS[seed % SAMPLE_BIOS.length],
-          favorite: { relicId: relic.id, level, breakthroughGrade: Math.min(5, 1 + Math.floor(level / 14)), power: Math.round(combatPower(relic.stats) * (0.6 + level / 40)), skinId: null },
+          favorite: { relicId: relic.id, level, breakthroughGrade: Math.min(4, Math.floor(level / 14)), power: Math.round(combatPower(relic.stats) * (0.6 + level / 40)), skinId: null },
           highestStageId: level >= 30 ? "2-5" : "1-8", expeditionBest: (seed % 90) * 1_000,
         };
         const member = this.newMember({ userId, name: memberName, level, avatarRelicId: relic.id, frameId, card }, role, this.now() - i * 3_600_000);

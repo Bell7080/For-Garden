@@ -4,6 +4,7 @@ import { RAID_TICKET_TEST_KIT } from "../data/raid";
 import { previewCompletedRaids, RAID_HISTORY_PREVIEW_PREFIX } from "../core/raid";
 import { SWEEP_TICKET_TEST_KIT } from "../core/dungeonShortcut";
 import { calculateFinalStats, breakthroughGrade, UNIVERSAL_FRAGMENT_ITEM } from "../core/relicProgression";
+import { resonanceOf } from "../core/relicResonance";
 import type { RelicProgress, RelicRarity, Stats } from "../core/types";
 import { getRelic } from "../data/relics";
 import { backfillStarterRuneTraits, createStarterRunes, STARTER_RUNE_TRAIT_KIT } from "../data/runes";
@@ -37,9 +38,14 @@ export class RelicProgressionManager {
     this.persistSharedSession();
   }
 
-  /** 지금 별(1~5). 화면은 돌파 단계가 아니라 이 값을 읽는다. */
+  /** 지금 돌파 등급(0~4 — 0은 표식 없음). 화면은 돌파 단계가 아니라 이 값을 읽는다. */
   getBreakthroughGrade(relicId: string): number {
     return breakthroughGrade(this.getProgress(relicId).breakthrough);
+  }
+
+  /** 지금 공명 단계(0~5). 1 이상이면 카드의 등급 자리를 공명 등급이 대신한다. */
+  getResonance(relicId: string): number {
+    return resonanceOf(this.getProgress(relicId));
   }
 
   /** 그 개체의 파편 보유량. 없으면 0이다 — 없는 개체를 위해 표를 만들지 않는다. */

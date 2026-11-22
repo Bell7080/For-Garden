@@ -10,7 +10,7 @@ export function expeditionSnapshotProfile(relicId: string, snapshot: ExpeditionR
     relicId,
     equippedSkinId: snapshot.skinId ?? undefined,
     level: snapshot.level,
-    breakthroughGrade: snapshot.breakthrough + 1,
+    breakthroughGrade: snapshot.breakthrough,
     stats: { ...snapshot.stats },
     skillIds: [],
   };

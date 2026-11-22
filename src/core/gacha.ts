@@ -396,16 +396,16 @@ export interface AcquisitionOutcome {
 /**
  * 슬롯 순서대로 신규/파편/마일리지를 계산하는 Phaser 비의존 순수 규칙이다.
  *
- * 중복 한 장은 **그 개체의 파편** 한 개다. 별이 이미 다섯인 개체(`breakthroughGradeById`가 상한)만
+ * 중복 한 장은 **그 개체의 파편** 한 개다. 돌파 IV를 마친 개체(`breakthroughGradeById`가 상한)만
  * 공용 DNA 조각으로 바뀐다 — 더 올릴 별이 없는 파편은 쓸 곳이 없기 때문이다.
  */
 export function resolveAcquisitions(
   ownedRelicIds: ReadonlySet<string>,
   fragmentsById: Readonly<Record<string, number>>,
   results: readonly string[],
-  /** 개체별 현재 별(1~5). 주지 않은 개체는 별 하나로 본다. */
+  /** 개체별 현재 돌파 등급(0~4). 주지 않은 개체는 0으로 본다. */
   breakthroughGradeById: Readonly<Record<string, number>> = {},
-  maxStars = 5,
+  maxStars = 4,
   /** 풀돌 개체의 중복 한 장이 바뀌는 마일리지 수. 주지 않으면 1이다. */
   overflowAmountOf: (relicId: string) => number = () => 1,
   /** 풀돌 개체가 공명에 쓰려고 더 받을 수 있는 파편 수. 남은 몫만큼은 파편으로, 그 뒤만 마일리지가 된다. 없으면 0이다. */
@@ -427,14 +427,14 @@ export function resolveAcquisitions(
       continue;
     }
     duplicateRelicIds.push(relicId);
-    if ((breakthroughGradeById[relicId] ?? 1) >= maxStars && (room[relicId] ?? 0) <= 0) {
+    if ((breakthroughGradeById[relicId] ?? 0) >= maxStars && (room[relicId] ?? 0) <= 0) {
       // 풀돌 개체의 중복은 파편으로 한 번, 파편이 쓸 곳이 없어 마일리지로 한 번 더 바뀐다(양은 등급이 정한다).
       const amount = overflowAmountOf(relicId);
       overflowFragments += amount;
       slots.push({ relicId, kind: "overflow", fragments: 0, overflowFragments: amount });
     } else {
       fragments[relicId] = (fragments[relicId] ?? 0) + 1;
-      if ((breakthroughGradeById[relicId] ?? 1) >= maxStars) room[relicId] = (room[relicId] ?? 0) - 1;
+      if ((breakthroughGradeById[relicId] ?? 0) >= maxStars) room[relicId] = (room[relicId] ?? 0) - 1;
       slots.push({ relicId, kind: "fragment", fragments: 1, overflowFragments: 0 });
     }
   }

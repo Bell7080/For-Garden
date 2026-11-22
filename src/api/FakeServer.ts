@@ -3137,7 +3137,7 @@ export class FakeServer implements GameApi {
   }
 
   /**
-   * 공명 한 단계 — 돌파 V 개체의 파편(모자란 몫은 같은 등급 만능 파편)만 쓴다. 차감과 단계 확정은 한 저장이다.
+   * 공명 한 단계 — 돌파 IV 개체의 파편(모자란 몫은 같은 등급 만능 파편)만 쓴다. 차감과 단계 확정은 한 저장이다.
    * 응답 모양은 돌파와 같고 `resonance`가 더 붙는다(돌파 단계는 그대로 V).
    */
   private resonateRelic(relicId: string, current: Session["relicProgress"][string]): BreakThroughResponse {
@@ -3159,7 +3159,7 @@ export class FakeServer implements GameApi {
   }
 
   /**
-   * 그 렐릭이 파편을 몇 장 더 받아 쓸 수 있는가. 돌파 중이면 끝이 없고(`Infinity`), 돌파 V면 공명 V까지 남은 몫에서 가진 파편을 뺀다.
+   * 그 렐릭이 파편을 몇 장 더 받아 쓸 수 있는가. 돌파 중이면 끝이 없고(`Infinity`), 돌파 IV면 공명 V까지 남은 몫에서 가진 파편을 뺀다.
    * 연구소 중복·선택권·마일리지 상점 파편이 같은 값을 읽는다.
    */
   private relicFragmentRoom(relicId: string): number {

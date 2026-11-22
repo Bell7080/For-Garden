@@ -1465,7 +1465,7 @@ export class BattleScene extends Phaser.Scene {
       const x = six ? GUILD_GUARD_PROFILES.centersX[index] : 190 + index * 350;
       // 세 화면은 같은 프리팹을 쓰며 전투 씬은 실시간 입력만 연결한다.
       const prefab = new BattleProfile(this, x, six ? GUILD_GUARD_PROFILES.centerY : 1620, {
-        relic: fighter.def, level: this.frozenRelics?.get(fighter.def.id)?.level ?? relicProgression.getProgress(fighter.def.id).level, breakthroughGrade: fighter.breakthrough + 1,
+        relic: fighter.def, level: this.frozenRelics?.get(fighter.def.id)?.level ?? relicProgression.getProgress(fighter.def.id).level, breakthroughGrade: fighter.breakthrough,
         skinId: this.frozenRelics?.get(fighter.def.id)?.skinId,
         currentHp: fighter.hp, maxHp: fighter.maxHp, ferocity: fighter.ferocity,
         active: false, readOnly: false, sub: fighter.def.ultimate.name,

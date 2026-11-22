@@ -34,7 +34,7 @@ describe("player profile display", () => {
     const hidden = await loadPlayerProfileDisplay(state, { arenaScore: async () => null });
     expect(hidden.competitiveStats).toMatchObject({ favoriteRelic: { relicId: "rex", displayName: "렉시아", portraitAssetId: "lexia" }, highestStage: { stageId: "1-3" }, expedition: { label: "역대 최고", score: 4321 } });
     // 애착 무대는 레벨·돌파·유대·전투력을 함께 싣고, 스토리 진행은 깬 수와 전체 수를 함께 싣는다.
-    expect(hidden.competitiveStats.favoriteRelic).toMatchObject({ level: 1, breakthroughGrade: 1, rarity: "SSR" });
+    expect(hidden.competitiveStats.favoriteRelic).toMatchObject({ level: 1, breakthroughGrade: 0, rarity: "SSR" });
     expect(hidden.competitiveStats.favoriteRelic!.power).toBeGreaterThan(0);
     expect(hidden.competitiveStats.storyProgress!.cleared).toBe(2);
     expect(hidden.collection!.owned).toBeGreaterThan(0);
@@ -59,13 +59,13 @@ describe("player profile display", () => {
     expect(playerProfileDisplay(state, [], undefined, now).competitiveStats.duelScore).toBeUndefined();
     state.duel = { ...createEmptyDuelState(), seasonId: duelSeasonId(now), score: 1420 };
     expect(playerProfileDisplay(state, [], undefined, now).competitiveStats.duelScore).toBe(1420);
-    // 서버가 친구에게 공개하는 값 — 돌파 등급은 표식 등급(I~V)이다.
+    // 서버가 친구에게 공개하는 값 — 돌파 등급은 표식 등급(0~IV — 0은 표식 없음)이다.
     const shared = publicProfile(state, "player-1", now);
     expect(shared.competitiveStats).toMatchObject({ highestStage: { stageId: "1-3" }, expeditionScore: 4321, ancientFloor: 12, duelScore: 1420 });
-    expect(shared.favoriteRelic.breakthroughGrade).toBe(1);
+    expect(shared.favoriteRelic.breakthroughGrade).toBe(0);
     const friend = friendProfileDisplay({ ...shared, lastActive: "" });
     expect(friend.competitiveStats).toMatchObject({ highestStage: { stageId: "1-3" }, expedition: { score: 4321 }, ancientFloor: 12, duelScore: 1420 });
-    expect(friend.competitiveStats.favoriteRelic?.breakthroughGrade).toBe(1);
+    expect(friend.competitiveStats.favoriteRelic?.breakthroughGrade).toBe(0);
   });
 
   it("스토리 기록이 빠진 예전 공개 프로필은 그 친구의 저장에서 기록 칸을 다시 짓는다", async () => {

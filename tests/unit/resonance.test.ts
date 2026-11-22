@@ -37,7 +37,7 @@ describe("공명 규칙", () => {
     expect(canResonate("SSR", { breakthrough: BREAKTHROUGH_CAP, resonance: RESONANCE_CAP }, BREAKTHROUGH_CAP, 9, 0)).toBe(false);
   });
 
-  it("받을 수 있는 파편 수는 돌파 중이면 끝이 없고 돌파 V면 공명 V까지 남은 몫이다", () => {
+  it("받을 수 있는 파편 수는 돌파 중이면 끝이 없고 돌파 IV면 공명 V까지 남은 몫이다", () => {
     expect(relicFragmentRoom("SR", { breakthrough: 2 }, 40, BREAKTHROUGH_CAP)).toBe(Number.POSITIVE_INFINITY);
     expect(relicFragmentRoom("SR", { breakthrough: BREAKTHROUGH_CAP }, 3, BREAKTHROUGH_CAP)).toBe(11);
     expect(resonanceFragmentRoom("SSR", RESONANCE_CAP, 0)).toBe(0);
@@ -58,8 +58,8 @@ describe("공명 규칙", () => {
 });
 
 describe("연구소 중복", () => {
-  it("돌파 V 개체의 중복은 공명에 쓸 몫만큼 파편이 되고 그 뒤만 마일리지가 된다", () => {
-    const outcome = resolveAcquisitions(new Set(["a"]), { a: 0 }, ["a", "a", "a"], { a: 5 }, 5, () => 30, { a: 2 });
+  it("돌파 IV 개체의 중복은 공명에 쓸 몫만큼 파편이 되고 그 뒤만 마일리지가 된다", () => {
+    const outcome = resolveAcquisitions(new Set(["a"]), { a: 0 }, ["a", "a", "a"], { a: 4 }, 4, () => 30, { a: 2 });
     expect(outcome.slots.map(({ kind }) => kind)).toEqual(["fragment", "fragment", "overflow"]);
     expect(outcome.fragmentsById.a).toBe(2);
     expect(outcome.overflowFragments).toBe(30);
@@ -74,7 +74,7 @@ describe("FakeServer 공명", () => {
     return { state, api: new FakeServer(state, { latencyMs: 0, persistSession: () => undefined }) };
   }
 
-  it("돌파 V에서 같은 조작이 공명을 한 단계 올리고 파편·만능 파편만 쓴다 — 치즈케이크는 그대로다", async () => {
+  it("돌파 IV에서 같은 조작이 공명을 한 단계 올리고 파편·만능 파편만 쓴다 — 치즈케이크는 그대로다", async () => {
     const { state, api } = setup();
     state.relicFragments.torika = 1;
     state.itemInventory = [...state.itemInventory.filter(({ itemId }) => itemId !== "universal-fragment-sr"), { itemId: "universal-fragment-sr", quantity: 2 }];
@@ -94,7 +94,7 @@ describe("FakeServer 공명", () => {
     await expect(api.breakThroughRelic("torika")).rejects.toMatchObject({ code: "RELIC_MAX_LEVEL" });
   });
 
-  it("저장은 돌파 V 아래의 공명과 범위 밖 값을 거절하고 정상 값은 그대로 오간다", () => {
+  it("저장은 돌파 IV 아래의 공명과 범위 밖 값을 거절하고 정상 값은 그대로 오간다", () => {
     const { state } = setup();
     const saves = new SaveManager(undefined);
     state.relicProgress.torika = { ...state.relicProgress.torika!, resonance: 3 };

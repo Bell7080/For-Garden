@@ -123,9 +123,9 @@ describe("렐릭 성장 규칙", () => {
     expect(top.hp).toBe(Math.round(BASE.hp * (1 + (49 * 2.4 + 40) / 100)));
   });
 
-  it("별은 돌파 단계 + 1이고 모든 개체가 하나에서 시작한다", () => {
+  it("돌파 등급은 뚫은 단계 그대로이고 모든 개체가 0(표식 없음)에서 시작한다", () => {
     const manager = new RelicProgressionManager(makeSession());
-    expect(manager.getBreakthroughGrade("rex")).toBe(1);
+    expect(manager.getBreakthroughGrade("rex")).toBe(0);
     expect(manager.getFragments("rex")).toBe(0);
     expect(breakthroughGrade(BREAKTHROUGH_STEPS.length)).toBe(BREAKTHROUGH_GRADE_CAP);
     for (const invalid of [-1, BREAKTHROUGH_STEPS.length + 1, 2.5]) expect(() => breakthroughGrade(invalid)).toThrow(RangeError);
@@ -263,8 +263,8 @@ describe("돌파", () => {
     expect(isBreakthroughSlotOpen(1, "basic")).toBe(true);
     expect(isBreakthroughSlotOpen(1, "ultimate")).toBe(false);
     expect(isBreakthroughSlotOpen(BREAKTHROUGH_STEPS.length, "passive")).toBe(true);
-    // 별 둘이 첫 슬롯을 연다. 표의 첫 줄이 곧 "별 둘로 가는 길"이다.
-    expect(breakthroughSlotGrade("basic")).toBe(2);
+    // 돌파 I이 첫 슬롯을 연다.
+    expect(breakthroughSlotGrade("basic")).toBe(1);
     expect(breakthroughSlotGrade("passive")).toBe(BREAKTHROUGH_GRADE_CAP);
   });
 

@@ -380,7 +380,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       const badgeX = x - half + badge * 0.62;
       this.add(new AffinityBadge(this.scene, badgeX, badgeTop, ELEMENT_ICON[enemy.element], badge, 0.62));
       this.add(new AffinityBadge(this.scene, badgeX, badgeTop + badge * 0.94, ROLE_ICON[enemy.role], badge * 0.74, 0.62));
-      addBreakthroughGradeMark(this.scene, this, x + half - badge * 0.38, badgeTop - 4, badge * 0.8, growth.breakthrough + 1);
+      addBreakthroughGradeMark(this.scene, this, x + half - badge * 0.38, badgeTop - 4, badge * 0.8, growth.breakthrough);
       addUnitNameplate(this.scene, this, x, nameY, growth.level, enemy.name, row.nameSize, row.nameWidth);
       this.overlay.add(addUnitPower(this.scene, undefined, x, nameY - 4, encounterUnitPower(enemy.stats, enemy.encounterRole, encounterEliteCount(this.options.enemies), baseStatsOf(enemy.id)), row.powerSize, COLOR.dangerText));
       const hit = this.scene.add.rectangle(x, ground - 70, slotWidth, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });

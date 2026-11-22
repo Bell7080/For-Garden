@@ -528,7 +528,7 @@ describe("FakeServer", () => {
     const server = new FakeServer(state, { latencyMs: 0 });
     await expect(server.feedRelic("torika")).rejects.toMatchObject({ code: "RELIC_MAX_LEVEL" });
     const response = await server.breakThroughRelic("torika");
-    expect(response).toMatchObject({ relicId: "torika", breakthrough: 1, levelCap: RELIC_BASE_LEVEL_CAP, breakthroughGrade: 2, fragments: 0 });
+    expect(response).toMatchObject({ relicId: "torika", breakthrough: 1, levelCap: RELIC_BASE_LEVEL_CAP, breakthroughGrade: 1, fragments: 0 });
     expect(state.relicFragments.torika).toBe(0);
     expect(state.wallet).toMatchObject({ cheesecake: 0 });
     // 다음 단계도 레벨이 아니라 파편이 막는다.
@@ -1811,7 +1811,7 @@ describe("FakeServer 마일리지 상점", () => {
     const state = makeSession(); state.wallet.dnaFragments = 200;
     const clerk = mileageWeeklyClerkId(WEEK)!;
     state.owned.add(clerk);
-    state.relicProgress[clerk] = { level: 1, exp: 0, breakthrough: BREAKTHROUGH_GRADE_CAP - 1, resonance: 5, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    state.relicProgress[clerk] = { level: 1, exp: 0, breakthrough: BREAKTHROUGH_GRADE_CAP, resonance: 5, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
     await expect(server.purchaseProduct({ storefront: "mileage", productId: "mileage-weekly-ssr", quantity: 1 })).rejects.toMatchObject({ code: "RELIC_MAX_BREAKTHROUGH" });
     expect(state.wallet.dnaFragments).toBe(200);
@@ -1838,7 +1838,7 @@ describe("FakeServer 마일리지 상점", () => {
     expect(owner.relicFragments.dian).toBe(1);
 
     const maxed = makeSession(); maxed.wallet.dnaFragments = 250; maxed.owned.add("dian");
-    maxed.relicProgress.dian = { level: 1, exp: 0, breakthrough: BREAKTHROUGH_GRADE_CAP - 1, resonance: 5, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    maxed.relicProgress.dian = { level: 1, exp: 0, breakthrough: BREAKTHROUGH_GRADE_CAP, resonance: 5, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     await expect(new FakeServer(maxed, { latencyMs: 0, now: () => WEEK }).purchaseProduct({ storefront: "mileage", productId, quantity: 1 })).rejects.toMatchObject({ code: "RELIC_MAX_BREAKTHROUGH" });
     expect(maxed.wallet.dnaFragments).toBe(250);
   });

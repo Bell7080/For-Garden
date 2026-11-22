@@ -30,7 +30,7 @@ import { addBackButton } from "../ui/IconButton";
 import { AffinityBadge } from "../ui/AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "../ui/affinityIcons";
 import { PARTY_POWER_PLATE } from "../ui/partyPreviewLayout";
-import { addBreakthroughGradeMark } from "../ui/rarityMark";
+import { addGrowthGradeMark } from "../ui/rarityMark";
 import { addUnitNameplate, addUnitPower } from "../ui/unitNameplate";
 import { BACK_SLOT } from "../ui/popupGeometry";
 import { clipHit } from "../ui/clippedHit";
@@ -569,7 +569,7 @@ export class ExpeditionScene extends Phaser.Scene {
       // 지도는 카드·게이지·글자를 개별 축소하지 않고 전투와 같은 한 칸을 그대로 세운다.
       // 생존은 노란 발광으로 알리지 않는다 — 그 발광은 전투에서 "궁극기가 찼다"는 뜻이다.
       const profile = new BattleProfile(this, x, BATTLE_PROFILE_LAYOUT.expedition.centerY, {
-        relic: def, level: frozen.level, breakthroughGrade: frozen.breakthrough + 1, skinId: frozen.skinId,
+        relic: def, level: frozen.level, breakthroughGrade: frozen.breakthrough, skinId: frozen.skinId,
         currentHp, maxHp, ferocity: 0, active: false, readOnly: true, dead: !shown.alive,
       }).setScale(BATTLE_PROFILE_LAYOUT.expedition.scale);
       // 지도 HUD의 칸도 편성 그리드와 같은 꾹 누름으로 상세를 연다. 증강 대상 고르기는
@@ -963,6 +963,7 @@ export class ExpeditionScene extends Phaser.Scene {
         level: relicProgression.getProgress(relic.id).level,
         rarity: relic.rarity,
         breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id),
+        resonance: relicProgression.getResonance(relic.id),
         affinity: { element: relic.element, role: relic.role },
         // 이미 편성판에 나가 있는 카드는 떠오르지 않고 눌려 들어간다.
         selectedStyle: "pressed",
@@ -1070,7 +1071,7 @@ export class ExpeditionScene extends Phaser.Scene {
         const badgeTop = FORMATION.y - FORMATION.height / 2 + 34;
         chrome.add(new AffinityBadge(this, x - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62));
         chrome.add(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62));
-        addBreakthroughGradeMark(this, chrome, x + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(relicId));
+        addGrowthGradeMark(this, chrome, x + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(relicId), relicProgression.getResonance(relicId));
         addUnitPower(this, chrome, x, groundY + 22, relicProgression.getCombatPower(relicId), 24, COLOR.accentText);
         addUnitNameplate(this, chrome, x, groundY + 26, relicProgression.getProgress(relicId).level, def.name, 30);
       }
@@ -1206,7 +1207,7 @@ export class ExpeditionScene extends Phaser.Scene {
   /** 목록 카드의 레벨·돌파 등급을 지금 값으로 맞춘다. 카드를 다시 세우지 않는다. */
   private syncRosterProgress(): void {
     this.cards.forEach((card, id) => {
-      if (card.active) card.setProgress(relicProgression.getProgress(id).level, relicProgression.getBreakthroughGrade(id));
+      if (card.active) card.setProgress(relicProgression.getProgress(id).level, relicProgression.getBreakthroughGrade(id), relicProgression.getResonance(id));
     });
   }
 

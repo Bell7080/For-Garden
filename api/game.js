@@ -8800,9 +8800,9 @@ var HELP_KO = {
   "help.term.fragment.name": "\uD30C\uD3B8",
   "help.term.fragment.body": "\uAC19\uC740 \uB810\uB9AD\uC744 \uB2E4\uC2DC \uB9CC\uB098\uBA74 \uADF8 \uB810\uB9AD\uC758 \uD30C\uD3B8\uC774 \uC313\uC5EC\uC694. \uD55C\uACC4 \uB3CC\uD30C\uC640 \uACF5\uBA85\uC5D0 \uC368\uC694.",
   "help.term.breakthrough.name": "\uD55C\uACC4 \uB3CC\uD30C",
-  "help.term.breakthrough.body": "\uD30C\uD3B8\uC744 \uC368\uC11C \uB3CC\uD30C \uB4F1\uAE09\uC744 I\uC5D0\uC11C V\uAE4C\uC9C0 \uC62C\uB824\uC694. \uB2E8\uACC4\uB9C8\uB2E4 \uB2A5\uB825\uCE58 \uC131\uC7A5\uC774 \uC624\uB974\uACE0 \uC2A4\uD0AC \uD6A8\uACFC\uAC00 \uC5F4\uB824\uC694.",
+  "help.term.breakthrough.body": "\uD30C\uD3B8\uC744 \uC368\uC11C \uB3CC\uD30C \uB4F1\uAE09\uC744 I\uC5D0\uC11C IV\uAE4C\uC9C0 \uC62C\uB824\uC694. \uB2E8\uACC4\uB9C8\uB2E4 \uB2A5\uB825\uCE58 \uC131\uC7A5\uC774 \uC624\uB974\uACE0 \uC2A4\uD0AC \uD6A8\uACFC\uAC00 \uC5F4\uB824\uC694.",
   "help.term.resonance.name": "\uACF5\uBA85",
-  "help.term.resonance.body": "\uB3CC\uD30C V \uB2E4\uC74C \uB2E8\uACC4\uC608\uC694. \uD30C\uD3B8\uB9CC \uB4E4\uACE0, \uB2E8\uACC4\uB9C8\uB2E4 \uB2A5\uB825\uCE58\uAC00 5% \uC62C\uB77C\uC694. \uACB0\uD22C\uC7A5\uC5D0\uC11C\uB294 \uAEBC\uC838\uC694.",
+  "help.term.resonance.body": "\uB3CC\uD30C IV \uB2E4\uC74C \uB2E8\uACC4\uC608\uC694. \uD30C\uD3B8\uB9CC \uB4E4\uACE0, \uB2E8\uACC4\uB9C8\uB2E4 \uB2A5\uB825\uCE58\uAC00 5% \uC62C\uB77C\uC694. \uACB0\uD22C\uC7A5\uC5D0\uC11C\uB294 \uAEBC\uC838\uC694.",
   "help.term.bond.name": "\uC720\uB300",
   "help.term.bond.body": "\uB810\uB9AD\uB9C8\uB2E4 \uC313\uC774\uB294 \uAD00\uACC4 \uC218\uCE58\uC608\uC694. \uD68D\uB4DD\xB7\uC2B9\uB9AC\xB7\uB9E4\uC77C\uC758 \uC0C1\uD638\uC791\uC6A9\uC73C\uB85C \uC624\uB974\uACE0, \uB192\uC744\uC218\uB85D \uC804\uD22C\uC5D0\uC11C \uC57C\uC131\uC774 \uBE68\uB9AC \uCC28\uC694.",
   "help.term.favorite.name": "\uC560\uCC29",
@@ -9659,12 +9659,12 @@ function breakthroughFragmentCost(rarity, breakthrough) {
   return costs[Math.max(0, Math.min(costs.length - 1, breakthrough))];
 }
 var BREAKTHROUGH_CAP = BREAKTHROUGH_STEPS.length;
-var BREAKTHROUGH_GRADE_CAP = BREAKTHROUGH_CAP + 1;
+var BREAKTHROUGH_GRADE_CAP = BREAKTHROUGH_CAP;
 function breakthroughGrade(breakthrough) {
   if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) {
     throw new RangeError("\uB3CC\uD30C \uB2E8\uACC4\uAC00 \uBC94\uC704\uB97C \uBC97\uC5B4\uB0AC\uC2B5\uB2C8\uB2E4.");
   }
-  return breakthrough + 1;
+  return breakthrough;
 }
 function relicLevelCap(researchLevel) {
   const level = Math.floor(Number.isFinite(researchLevel) ? researchLevel : 1);
@@ -29558,9 +29558,9 @@ init_define_import_meta_env();
 var NOW = Date.now();
 var SAMPLE_FRIENDS = [
   // 샘플도 공개 화이트리스트만 명시해 실제 응답에 계정 키·재화·편성이 섞이는 일을 조기에 드러낸다.
-  { id: "friend-haneul", uid: "418207735", frameId: "holo", displayName: "\uD558\uB298\uC815\uC6D0", level: 27, status: "\uC0C8 \uD45C\uBCF8\uC758 \uD754\uC801\uC744 \uCC3E\uB294 \uC911", lastActiveAt: NOW - 3e4, equippedModifiers: [{ id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare" }], favoriteRelic: { relicId: "rex", level: 24, breakthroughGrade: 5, stats: { hp: 820, def: 42, res: 36, atk: 132, ap: 76, attackSpeed: 112, moveSpeed: 108, critChance: 20, critDamage: 160, energyGain: 28, lifeSteal: 0, ferocityGain: 12 }, skillIds: ["rex-basic", "rex-passive", "rex-ultimate"] }, competitiveStats: { highestStage: { stageId: "stage-2-5", displayValue: "2-5 \uBD89\uC740 \uD611\uACE1" }, arenaScore: 1350, expeditionScore: 18420, ancientFloor: 23 } },
+  { id: "friend-haneul", uid: "418207735", frameId: "holo", displayName: "\uD558\uB298\uC815\uC6D0", level: 27, status: "\uC0C8 \uD45C\uBCF8\uC758 \uD754\uC801\uC744 \uCC3E\uB294 \uC911", lastActiveAt: NOW - 3e4, equippedModifiers: [{ id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare" }], favoriteRelic: { relicId: "rex", level: 24, breakthroughGrade: 4, stats: { hp: 820, def: 42, res: 36, atk: 132, ap: 76, attackSpeed: 112, moveSpeed: 108, critChance: 20, critDamage: 160, energyGain: 28, lifeSteal: 0, ferocityGain: 12 }, skillIds: ["rex-basic", "rex-passive", "rex-ultimate"] }, competitiveStats: { highestStage: { stageId: "stage-2-5", displayValue: "2-5 \uBD89\uC740 \uD611\uACE1" }, arenaScore: 1350, expeditionScore: 18420, ancientFloor: 23 } },
   // 두 번째 샘플은 선택 기록과 수식어가 없는 정상 응답을 검수하며 빈 상태 문구 대신 렌더링 생략을 확인한다.
-  { id: "friend-moss", uid: "602913548", frameId: "field", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", level: 19, status: "\uC624\uB298\uB3C4 \uCC9C\uCC9C\uD788 \uBCF5\uC6D0", lastActiveAt: NOW - 12 * 6e4, equippedModifiers: [], favoriteRelic: { relicId: "torika", level: 18, breakthroughGrade: 4, stats: { hp: 1420, def: 128, res: 92, atk: 74, ap: 52, attackSpeed: 78, moveSpeed: 72, critChance: 5, critDamage: 140, energyGain: 20, lifeSteal: 0, ferocityGain: 12 }, skillIds: ["torika-basic", "torika-passive", "torika-ultimate"] }, competitiveStats: { ancientFloor: 7 } }
+  { id: "friend-moss", uid: "602913548", frameId: "field", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", level: 19, status: "\uC624\uB298\uB3C4 \uCC9C\uCC9C\uD788 \uBCF5\uC6D0", lastActiveAt: NOW - 12 * 6e4, equippedModifiers: [], favoriteRelic: { relicId: "torika", level: 18, breakthroughGrade: 3, stats: { hp: 1420, def: 128, res: 92, atk: 74, ap: 52, attackSpeed: 78, moveSpeed: 72, critChance: 5, critDamage: 140, energyGain: 20, lifeSteal: 0, ferocityGain: 12 }, skillIds: ["torika-basic", "torika-passive", "torika-ultimate"] }, competitiveStats: { ancientFloor: 7 } }
 ];
 var PREVIEW_FRIENDS = QA_TOOLS_ENABLED ? SAMPLE_FRIENDS : [];
 for (const friend of PREVIEW_FRIENDS) {
@@ -38625,6 +38625,7 @@ function favoriteShowcase(state) {
     portraitAssetId: relic.portraitAssetId,
     level: progress?.level ?? 1,
     breakthroughGrade: breakthroughGrade(activeBreakthroughOf(progress)),
+    resonance: resonanceOf(progress),
     bondLevel: progress?.bondLevel ?? 0,
     rarity: relic.rarity,
     element: relic.element,
@@ -41401,7 +41402,7 @@ function spend(wallet, banner, count3, pity) {
   const payment = pullPayment(wallet, banner, count3, pity);
   return { ...wallet, [banner.currency]: wallet[banner.currency] - payment.tickets, gems: wallet.gems - payment.gems };
 }
-function resolveAcquisitions(ownedRelicIds, fragmentsById, results, breakthroughGradeById = {}, maxStars = 5, overflowAmountOf = () => 1, resonanceRoomById = {}) {
+function resolveAcquisitions(ownedRelicIds, fragmentsById, results, breakthroughGradeById = {}, maxStars = 4, overflowAmountOf = () => 1, resonanceRoomById = {}) {
   const room = { ...resonanceRoomById };
   const owned = new Set(ownedRelicIds);
   const fragments = { ...fragmentsById };
@@ -41417,13 +41418,13 @@ function resolveAcquisitions(ownedRelicIds, fragmentsById, results, breakthrough
       continue;
     }
     duplicateRelicIds.push(relicId);
-    if ((breakthroughGradeById[relicId] ?? 1) >= maxStars && (room[relicId] ?? 0) <= 0) {
+    if ((breakthroughGradeById[relicId] ?? 0) >= maxStars && (room[relicId] ?? 0) <= 0) {
       const amount = overflowAmountOf(relicId);
       overflowFragments += amount;
       slots.push({ relicId, kind: "overflow", fragments: 0, overflowFragments: amount });
     } else {
       fragments[relicId] = (fragments[relicId] ?? 0) + 1;
-      if ((breakthroughGradeById[relicId] ?? 1) >= maxStars) room[relicId] = (room[relicId] ?? 0) - 1;
+      if ((breakthroughGradeById[relicId] ?? 0) >= maxStars) room[relicId] = (room[relicId] ?? 0) - 1;
       slots.push({ relicId, kind: "fragment", fragments: 1, overflowFragments: 0 });
     }
   }
@@ -41475,23 +41476,23 @@ function preview(id, uid, displayName, level, frameId, status, relicId, relicLev
       relicId,
       level: relicLevel,
       breakthroughGrade: breakthroughGrade2,
-      stats: applyLevelGrowth(relic.stats, relicLevel, relic.rarity, Math.max(0, breakthroughGrade2 - 1)),
+      stats: applyLevelGrowth(relic.stats, relicLevel, relic.rarity, Math.max(0, breakthroughGrade2)),
       skillIds: [`${relicId}-basic`, `${relicId}-passive`, `${relicId}-ultimate`]
     },
     competitiveStats: {}
   };
 }
 var SAMPLE_DIRECTORY = [
-  { relation: "friend", profile: preview("friend-dawn", "275810396", "\uC0C8\uBCBD\uD45C\uBCF8", 22, "field", "\uC544\uCE68 \uC21C\uCC30 \uC911", "parua", 20, 3, NOW2 - 3 * 60 * MINUTE) },
-  { relation: "friend", favorite: true, profile: preview("friend-amber", "930274815", "\uD638\uBC15\uC0C1\uC790", 35, "amber", "\uBC1C\uAD74 \uC77C\uC9C0 \uC815\uB9AC", "stella", 32, 4, NOW2 - 2 * 24 * 60 * MINUTE) },
-  { relation: "friend", profile: preview("friend-wave", "514602783", "\uD30C\uB3C4\uC18C\uB9AC", 14, "field", "\uCC9C\uCC9C\uD788 \uD0A4\uC6B0\uB294 \uC911", "dodo", 12, 2, NOW2 - 2e4) },
-  { relation: "incoming", requestedAt: NOW2 - 25 * MINUTE, profile: preview("user-fog", "187305926", "\uC548\uAC1C\uAE30\uB85D", 24, "holo", "\uAC19\uC774 \uD574\uC694", "luka", 21, 3, NOW2 - 8 * MINUTE) },
-  { relation: "incoming", requestedAt: NOW2 - 5 * 60 * MINUTE, profile: preview("user-sand", "706418259", "\uBAA8\uB798\uC2DC\uACC4", 11, "field", "\uCC98\uC74C \uC2DC\uC791\uD588\uC5B4\uC694", "toby", 9, 1, NOW2 - 2 * 60 * MINUTE) },
-  { relation: "outgoing", requestedAt: NOW2 - 3 * 60 * MINUTE, profile: preview("user-lighthouse", "362591048", "\uD478\uB978\uB4F1\uB300", 40, "abyss", "\uB808\uC774\uB4DC \uAC19\uC774 \uB3CC \uBD84", "rex", 38, 5, NOW2 - 4e4) },
-  { relation: "none", profile: preview("user-stars", "849062317", "\uBCC4\uBB34\uB9AC", 29, "holo", "\uD45C\uBCF8 \uC218\uC9D1\uAC00", "torika", 26, 4, NOW2 - 15 * MINUTE) },
-  { relation: "none", profile: preview("user-fern", "621874503", "\uACE0\uC0AC\uB9AC\uC232", 18, "field", "\uC870\uC6A9\uD788 \uD50C\uB808\uC774", "kento", 16, 2, NOW2 - 26 * 60 * MINUTE) },
-  { relation: "none", profile: preview("user-late", "453719806", "\uB2A6\uC740\uD45C\uBCF8", 31, "amber", "\uBC24\uC5D0 \uC811\uC18D\uD574\uC694", "mosana", 28, 3, NOW2 - 4 * 24 * 60 * MINUTE) },
-  { relation: "none", profile: preview("user-garden", "198456230", "\uC815\uC6D0\uC0AC\uD558\uB8E8", 47, "garden", "\uC815\uC6D0 \uAD00\uB9AC \uC911", "ella", 44, 5, NOW2 - 9e4) }
+  { relation: "friend", profile: preview("friend-dawn", "275810396", "\uC0C8\uBCBD\uD45C\uBCF8", 22, "field", "\uC544\uCE68 \uC21C\uCC30 \uC911", "parua", 20, 2, NOW2 - 3 * 60 * MINUTE) },
+  { relation: "friend", favorite: true, profile: preview("friend-amber", "930274815", "\uD638\uBC15\uC0C1\uC790", 35, "amber", "\uBC1C\uAD74 \uC77C\uC9C0 \uC815\uB9AC", "stella", 32, 3, NOW2 - 2 * 24 * 60 * MINUTE) },
+  { relation: "friend", profile: preview("friend-wave", "514602783", "\uD30C\uB3C4\uC18C\uB9AC", 14, "field", "\uCC9C\uCC9C\uD788 \uD0A4\uC6B0\uB294 \uC911", "dodo", 12, 1, NOW2 - 2e4) },
+  { relation: "incoming", requestedAt: NOW2 - 25 * MINUTE, profile: preview("user-fog", "187305926", "\uC548\uAC1C\uAE30\uB85D", 24, "holo", "\uAC19\uC774 \uD574\uC694", "luka", 21, 2, NOW2 - 8 * MINUTE) },
+  { relation: "incoming", requestedAt: NOW2 - 5 * 60 * MINUTE, profile: preview("user-sand", "706418259", "\uBAA8\uB798\uC2DC\uACC4", 11, "field", "\uCC98\uC74C \uC2DC\uC791\uD588\uC5B4\uC694", "toby", 9, 0, NOW2 - 2 * 60 * MINUTE) },
+  { relation: "outgoing", requestedAt: NOW2 - 3 * 60 * MINUTE, profile: preview("user-lighthouse", "362591048", "\uD478\uB978\uB4F1\uB300", 40, "abyss", "\uB808\uC774\uB4DC \uAC19\uC774 \uB3CC \uBD84", "rex", 38, 4, NOW2 - 4e4) },
+  { relation: "none", profile: preview("user-stars", "849062317", "\uBCC4\uBB34\uB9AC", 29, "holo", "\uD45C\uBCF8 \uC218\uC9D1\uAC00", "torika", 26, 3, NOW2 - 15 * MINUTE) },
+  { relation: "none", profile: preview("user-fern", "621874503", "\uACE0\uC0AC\uB9AC\uC232", 18, "field", "\uC870\uC6A9\uD788 \uD50C\uB808\uC774", "kento", 16, 1, NOW2 - 26 * 60 * MINUTE) },
+  { relation: "none", profile: preview("user-late", "453719806", "\uB2A6\uC740\uD45C\uBCF8", 31, "amber", "\uBC24\uC5D0 \uC811\uC18D\uD574\uC694", "mosana", 28, 2, NOW2 - 4 * 24 * 60 * MINUTE) },
+  { relation: "none", profile: preview("user-garden", "198456230", "\uC815\uC6D0\uC0AC\uD558\uB8E8", 47, "garden", "\uC815\uC6D0 \uAD00\uB9AC \uC911", "ella", 44, 4, NOW2 - 9e4) }
 ];
 var PREVIEW_DIRECTORY = QA_TOOLS_ENABLED ? [
   ...PREVIEW_FRIENDS.map((profile) => ({ profile, relation: "friend", favorite: profile.id === "friend-haneul" })),
@@ -43817,7 +43818,7 @@ var FakeGuildServer = class _FakeGuildServer {
         const card = {
           uid: `QA${String(seed).padStart(10, "0").slice(0, 10)}`,
           bio: SAMPLE_BIOS[seed % SAMPLE_BIOS.length],
-          favorite: { relicId: relic.id, level, breakthroughGrade: Math.min(5, 1 + Math.floor(level / 14)), power: Math.round(combatPower(relic.stats) * (0.6 + level / 40)), skinId: null },
+          favorite: { relicId: relic.id, level, breakthroughGrade: Math.min(4, Math.floor(level / 14)), power: Math.round(combatPower(relic.stats) * (0.6 + level / 40)), skinId: null },
           highestStageId: level >= 30 ? "2-5" : "1-8",
           expeditionBest: seed % 90 * 1e3
         };
@@ -46162,7 +46163,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.511.5",
+  version: "0.512.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -49834,7 +49835,7 @@ var FakeServer = class {
     return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(this.state.playerResearch.level), breakthroughGrade: breakthroughGrade(breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend2.universal };
   }
   /**
-   * 공명 한 단계 — 돌파 V 개체의 파편(모자란 몫은 같은 등급 만능 파편)만 쓴다. 차감과 단계 확정은 한 저장이다.
+   * 공명 한 단계 — 돌파 IV 개체의 파편(모자란 몫은 같은 등급 만능 파편)만 쓴다. 차감과 단계 확정은 한 저장이다.
    * 응답 모양은 돌파와 같고 `resonance`가 더 붙는다(돌파 단계는 그대로 V).
    */
   resonateRelic(relicId, current2) {
@@ -49857,7 +49858,7 @@ var FakeServer = class {
     return { ...this.snapshot(), relicId, breakthrough: current2.breakthrough, levelCap: relicLevelCap(this.state.playerResearch.level), breakthroughGrade: breakthroughGrade(current2.breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend2.universal, resonance: resonance + 1 };
   }
   /**
-   * 그 렐릭이 파편을 몇 장 더 받아 쓸 수 있는가. 돌파 중이면 끝이 없고(`Infinity`), 돌파 V면 공명 V까지 남은 몫에서 가진 파편을 뺀다.
+   * 그 렐릭이 파편을 몇 장 더 받아 쓸 수 있는가. 돌파 중이면 끝이 없고(`Infinity`), 돌파 IV면 공명 V까지 남은 몫에서 가진 파편을 뺀다.
    * 연구소 중복·선택권·마일리지 상점 파편이 같은 값을 읽는다.
    */
   relicFragmentRoom(relicId) {
@@ -52388,9 +52389,13 @@ var RelicProgressionManager = class {
     Object.assign(this.ownedProgress(relicId), { level, exp: 0 });
     this.persistSharedSession();
   }
-  /** 지금 별(1~5). 화면은 돌파 단계가 아니라 이 값을 읽는다. */
+  /** 지금 돌파 등급(0~4 — 0은 표식 없음). 화면은 돌파 단계가 아니라 이 값을 읽는다. */
   getBreakthroughGrade(relicId) {
     return breakthroughGrade(this.getProgress(relicId).breakthrough);
+  }
+  /** 지금 공명 단계(0~5). 1 이상이면 카드의 등급 자리를 공명 등급이 대신한다. */
+  getResonance(relicId) {
+    return resonanceOf(this.getProgress(relicId));
   }
   /** 그 개체의 파편 보유량. 없으면 0이다 — 없는 개체를 위해 표를 만들지 않는다. */
   getFragments(relicId) {

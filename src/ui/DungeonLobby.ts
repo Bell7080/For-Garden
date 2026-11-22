@@ -306,7 +306,7 @@ export class DungeonLobby {
       } else {
         labels.add(new AffinityBadge(scene, spot.x - 104 * k, badgeTop, ELEMENT_ICON[unit.element], 52 * k, 0.62));
         labels.add(new AffinityBadge(scene, spot.x - 104 * k, badgeTop + 49 * k, ROLE_ICON[unit.role], 38 * k, 0.62));
-        addBreakthroughGradeMark(scene, labels, spot.x + 104 * k, badgeTop - 4, 42 * k, unit.breakthrough + 1);
+        addBreakthroughGradeMark(scene, labels, spot.x + 104 * k, badgeTop - 4, 42 * k, unit.breakthrough);
       }
       addUnitPower(scene, labels, spot.x, spot.ground + 18, unit.power, spot.crowd ? 20 : 26, COLOR.dangerText);
       addUnitNameplate(scene, labels, spot.x, spot.ground + 22, unit.level, unit.name, spot.crowd ? 24 : 30, spot.crowd ? 150 : 270);

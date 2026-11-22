@@ -484,7 +484,7 @@ export class ShopScene extends Phaser.Scene {
     drawHairline(this, x + 150, y - 12, 300, { color: 0x8fe9ff, alpha: 0.5 }).setDepth(4);
     line(t("shop.mileage.specimen", { number: def.specimenNumber }), "#8fe9ff", 24);
     line(`${def.name} · ${def.origin}`, "#d8f6ff", 26);
-    line(owned ? t("shop.mileage.owned", { grade: BREAKTHROUGH_GRADE_ROMAN[breakthroughGrade(progress.breakthrough) - 1] ?? "I" }) : t("shop.mileage.unowned"), owned ? "#8fe9ff" : COLOR.inkDim, 22);
+    line(owned ? t("shop.mileage.owned", { grade: BREAKTHROUGH_GRADE_ROMAN[breakthroughGrade(progress.breakthrough) - 1] ?? "0" }) : t("shop.mileage.unowned"), owned ? "#8fe9ff" : COLOR.inkDim, 22);
     line(t("shop.mileage.fragments", { count: formatCurrency(session.relicFragments[def.id] ?? 0) }), COLOR.inkDim, 22);
   }
 

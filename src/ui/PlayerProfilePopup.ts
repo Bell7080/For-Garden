@@ -21,7 +21,7 @@ import { ProfileAvatar } from "./ProfileAvatar";
 import { addSectionTitle } from "./SectionTitle";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
-import { addBreakthroughGradeMark, RARITY_TONE } from "./rarityMark";
+import { addGrowthGradeMark, RARITY_TONE } from "./rarityMark";
 import { drawGlyph, type GlyphName } from "./glyphs";
 import { battleAssetFor, enableHitOnClick, portraitAssetForSkin, sdAssetForSkin, spawnPuppet, withPuppetTexture } from "../puppets/assets";
 import { computeFaceBandFrame } from "../puppets/anchors";
@@ -344,7 +344,7 @@ export class PlayerProfilePopup {
     const relic = getRelic(favorite.relicId);
     body.add(this.scene.add.text(info.left, info.rarityY, favorite.rarity, textStyle({ role: "display", size: 32, color: hex(RARITY_TONE[favorite.rarity].chip) })).setOrigin(0, 0.5));
     body.add(this.scene.add.text(info.left, info.nameY, compactProfileText(favorite.displayName, 9), textStyle({ role: "display", size: 48, color: COLOR.ink })).setOrigin(0, 0.5).setShadow(0, 3, "#000000", 6, false, true));
-    addBreakthroughGradeMark(this.scene, body, showcase.width / 2 - 64, info.rarityY + 16, 54, favorite.breakthroughGrade);
+    addGrowthGradeMark(this.scene, body, showcase.width / 2 - 64, info.rarityY + 16, 54, favorite.breakthroughGrade, favorite.resonance);
     body.add(new AffinityBadge(this.scene, info.left + 34, info.badgeY, ELEMENT_ICON[relic.element], 64, 0.6));
     body.add(new AffinityBadge(this.scene, info.left + 104, info.badgeY + 4, ROLE_ICON[relic.role], 50, 0.6));
 

@@ -96,13 +96,13 @@ export interface RelicProgress {
   /** 현재 레벨에서 다음 레벨까지 쌓은 경험치다. 레벨이 오르면 남은 만큼만 이월한다. */
   exp: number;
   /**
-   * 한계 돌파 단계(0~4). 화면에 서는 **돌파 등급**은 이 값 + 1이다(`breakthroughGrade`).
+   * 한계 돌파 단계(0~4). 화면에 서는 **돌파 등급**도 이 값 그대로다(0은 표식 없음 · I~IV, `breakthroughGrade`).
    *
    * 레벨이 "얼마나 먹였나"라면 돌파 등급은 "같은 개체를 몇 번 더 만났나"다. 연구소 중복 획득으로 모은 그
    * 개체의 파편을 써서 올리며, 한 단계마다 레벨 상한과 해금 효과가 함께 열린다.
    */
   breakthrough: number;
-  /** 공명 단계(0~5) — 돌파 V 뒤 중복 파편으로 올리는 오각형 성장(`core/relicResonance.ts`). 없으면 0이다. */
+  /** 공명 단계(0~4) — 돌파 IV 뒤 중복 파편으로 올리는 오각형 성장(`core/relicResonance.ts`). 없으면 0이다. */
   resonance?: number;
   /** 플레이어별 유대 레벨. 야성 증가를 완화하며 정적 렐릭 정의에는 두지 않는다. */
   bondLevel: number;

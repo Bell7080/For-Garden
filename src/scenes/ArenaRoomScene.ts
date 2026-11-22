@@ -437,7 +437,7 @@ export class ArenaRoomScene extends Phaser.Scene {
     const def = unit?.def;
     const card = new PortraitCard(this, x, y, {
       width, height, relicId, label: def?.name ?? relicId, level: showLevel ? unit?.level : undefined, rarity: def?.rarity,
-      breakthroughGrade: unit ? unit.breakthrough + 1 : undefined,
+      breakthroughGrade: unit ? unit.breakthrough : undefined,
       affinity: def ? { element: def.element, role: def.role } : undefined,
       head: 'inside', selectedStyle: 'pressed',
     });
@@ -630,7 +630,7 @@ export class ArenaRoomScene extends Phaser.Scene {
       // 머리를 칸 안에 가둔다 — 격자 창의 윗변 마스크에 정수리가 잘리지 않고, 덮개·X가 카드 전체를 같은 모양으로 덮는다.
       const card = new PortraitCard(this, x, y, {
         width: GRID.cardWidth, height: GRID.cardHeight, relicId: unit.def.id, label: unit.def.name, level: showLevel ? unit.level : undefined,
-        rarity: unit.def.rarity, breakthroughGrade: unit.breakthrough + 1, affinity: { element: unit.def.element, role: unit.def.role },
+        rarity: unit.def.rarity, breakthroughGrade: unit.breakthrough, affinity: { element: unit.def.element, role: unit.def.role },
         head: 'inside', selectedStyle: 'pressed',
       });
       card.setName(`arena-card-${unit.def.id}`);

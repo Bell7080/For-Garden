@@ -74,7 +74,7 @@ export function mileageRotatingFragmentId(rarity: "SR" | "R", period: "weekly" |
 export function mileageFragmentRelicId(grant: ProductDefinition["grants"][number], now: Date): string | undefined {
   if (grant.kind === "weekly_ssr_fragment") return mileageWeeklyClerkId(now);
   if (grant.kind === "rotating_fragment") return mileageRotatingFragmentId(grant.rarity, grant.period, now);
-  // 개체가 정해진 파편(한정 픽업 렐릭)도 같은 얼굴 액자·같은 돌파 V 거절을 지난다.
+  // 개체가 정해진 파편(한정 픽업 렐릭)도 같은 얼굴 액자·같은 돌파 IV 거절을 지난다.
   if (grant.kind === "relic_fragment") return grant.relicId;
   return undefined;
 }

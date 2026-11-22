@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import type { RelicRarity } from "../core/types";
 import { BREAKTHROUGH_GRADE_ROMAN } from "../core/relicProgression";
 import { textStyle } from "./theme";
+import { RESONANCE_CAP } from "../core/relicResonance";
 
 /**
  * 돌파 등급 표식.
@@ -10,8 +11,8 @@ import { textStyle } from "./theme";
  * 반짝여 얼굴보다 먼저 눈에 들어왔다. 로마자는 한 글자라 자리를 적게 먹고, 크기와 색만으로
  * 위계가 읽힌다.
  *
- * 여기서 세는 것은 **희귀도가 아니라 한계 돌파 단계**다. 모든 개체가 `I`로 시작해 중복
- * 발굴로 모은 파편으로 돌파할 때마다 하나씩 올라 `V`에서 멈춘다. 희귀도는 카드 바탕색
+ * 여기서 세는 것은 **희귀도가 아니라 한계 돌파 단계**다. 모든 개체가 표식 없이(돌파 0) 시작해 중복
+ * 발굴로 모은 파편으로 돌파할 때마다 하나씩 올라 `IV`에서 멈춘다. 희귀도는 카드 바탕색
  * (`RARITY_TONE`)이 맡는다 — 둘은 서로 다른 축이라 같은 자리에서 겹쳐 말하지 않는다.
  */
 export { BREAKTHROUGH_GRADE_ROMAN };
@@ -54,8 +55,10 @@ export function addBreakthroughGradeMark(
   size: number,
   breakthroughGrade: number,
 ): void {
-  const numeral = BREAKTHROUGH_GRADE_ROMAN[Math.max(1, Math.min(BREAKTHROUGH_GRADE_ROMAN.length, Math.round(breakthroughGrade))) - 1];
-  paintRomanMark(scene, parent, x, y, size, numeral, GRADE_MARK_TONE);
+  // 돌파 0(한 번도 뚫지 않음)은 표식이 없다 — 얻자마자 「I」가 서면 뚫지 않은 개체가 1돌로 읽혔다(응태 2026-11-22).
+  const grade = Math.min(BREAKTHROUGH_GRADE_ROMAN.length, Math.round(breakthroughGrade));
+  if (!(grade >= 1)) return;
+  paintRomanMark(scene, parent, x, y, size, BREAKTHROUGH_GRADE_ROMAN[grade - 1], GRADE_MARK_TONE);
 }
 
 /**
@@ -92,37 +95,41 @@ export function addResonanceGradeMark(scene: Phaser.Scene, parent: Phaser.GameOb
 }
 
 /**
- * 공명 표식 — 돌파 등급 글자 **아래**에 붉은 로마자 한 글자와, 공명 V의 붉은 두 겹 테두리.
+ * 성장 등급 표식 한 글자 — **공명이 걸리면 돌파 등급 자리를 공명 등급이 대신한다**(응태 결정 2026-11-22).
  *
- * 공명은 돌파 V 다음의 축이라 그 표식에 붙는다. 마름모 다섯을 세던 때는 칸을 세어야 몇 단계인지 알 수 있어,
- * 돌파와 같은 로마자로 바꿨다. 다섯이 다 차면 돌파 글자 둘레에 붉은 테가 두 겹 둘러 「끝까지 키운 개체」를
- * 말한다. 공명이 0이면 아무것도 그리지 않는다(돌파 중인 개체에 빈 자리가 서면 할 일처럼 읽힌다).
+ * 공명은 돌파 IV 다음 칸이라 공명 I부터는 호박 `IV` 대신 그 자리에 붉은 로마자(`I`~`V`)가 선다 — 두 글자를 위아래로
+ * 겹쳐 세우던 때는 작은 카드에서 무엇이 지금 등급인지 갈리지 않았다. 색이 축을 말하므로 붉으면 곧 돌파 IV를 마친
+ * 개체다. 공명 V면 그 글자 둘레에 붉은 두 겹 테가 둘러 「끝까지 키운 개체」를 말한다. 공명이 0이면 돌파 표식 그대로다.
+ * 공명을 알 수 없는 자리(적·공개 프로필)는 `resonance`를 넘기지 않는다.
  */
-export function addResonanceMark(
+export function addGrowthGradeMark(
   scene: Phaser.Scene,
   parent: Phaser.GameObjects.Container,
   x: number,
   y: number,
   size: number,
-  resonance: number,
-  cap: number,
+  breakthroughGrade: number,
+  resonance = 0,
 ): void {
-  if (resonance <= 0) return;
-  addResonanceGradeMark(scene, parent, x, y + size * 0.86, size * 0.52, Math.min(cap, resonance));
-  if (resonance >= cap) {
-    // 공명 V — 돌파 글자를 두 겹으로 감싸는 붉은 테. 판·칩과 같이 왼쪽 위·오른쪽 아래만 깎는다.
-    const g = scene.add.graphics();
-    for (const [grow, alpha, width] of [[0, 1, 3], [size * 0.12, 0.5, 2]] as const) {
-      const hw = size * 0.56 + grow;
-      const hh = size * 0.66 + grow;
-      const cut = size * 0.22;
-      g.lineStyle(width, RESONANCE_MARK_TONE.frame, alpha);
-      g.strokePoints([
-        new Phaser.Math.Vector2(x - hw + cut, y - hh), new Phaser.Math.Vector2(x + hw, y - hh),
-        new Phaser.Math.Vector2(x + hw, y + hh - cut), new Phaser.Math.Vector2(x + hw - cut, y + hh),
-        new Phaser.Math.Vector2(x - hw, y + hh), new Phaser.Math.Vector2(x - hw, y - hh + cut),
-      ], true);
-    }
-    parent.addAt(g, 0);
+  const shown = Math.min(RESONANCE_CAP, Math.max(0, Math.round(resonance)));
+  if (!(shown >= 1)) {
+    addBreakthroughGradeMark(scene, parent, x, y, size, breakthroughGrade);
+    return;
   }
+  addResonanceGradeMark(scene, parent, x, y, size, shown);
+  if (shown < RESONANCE_CAP) return;
+  // 공명 V — 글자를 두 겹으로 감싸는 붉은 테. 판·칩과 같이 왼쪽 위·오른쪽 아래만 깎는다.
+  const g = scene.add.graphics();
+  for (const [grow, alpha, width] of [[0, 1, 3], [size * 0.12, 0.5, 2]] as const) {
+    const hw = size * 0.56 + grow;
+    const hh = size * 0.66 + grow;
+    const cut = size * 0.22;
+    g.lineStyle(width, RESONANCE_MARK_TONE.frame, alpha);
+    g.strokePoints([
+      new Phaser.Math.Vector2(x - hw + cut, y - hh), new Phaser.Math.Vector2(x + hw, y - hh),
+      new Phaser.Math.Vector2(x + hw, y + hh - cut), new Phaser.Math.Vector2(x + hw - cut, y + hh),
+      new Phaser.Math.Vector2(x - hw, y + hh), new Phaser.Math.Vector2(x - hw, y - hh + cut),
+    ], true);
+  }
+  parent.addAt(g, 0);
 }

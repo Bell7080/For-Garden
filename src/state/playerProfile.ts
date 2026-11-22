@@ -7,6 +7,7 @@ import { STAGES, storyStages } from "../data/stages";
 import { sanitizeStoryClears, storyClearRecords, type StoryClearRecord } from "../core/storyClearRecord";
 import { highestClearedStage } from "../core/stageProgress";
 import { activeBreakthroughOf, breakthroughGrade, calculateFinalStats } from "../core/relicProgression";
+import { resonanceOf } from "../core/relicResonance";
 import { combatPower } from "../core/combatPower";
 import { nextContentUnlock, nextStageUnlock, type ContentId } from "../core/contentUnlock";
 import { researchDays } from "../core/playerCard";
@@ -64,6 +65,8 @@ export interface FavoriteRelicShowcase {
   portraitAssetId: PortraitAssetId;
   level: number;
   breakthroughGrade: number;
+  /** 공명 단계. 본인 카드만 싣는다 — 1 이상이면 돌파 등급 자리를 공명 등급이 대신한다. */
+  resonance?: number;
   /** 유대는 본인만 보는 값이라 친구 카드에서는 비어 있다(그 줄이 서지 않는다). */
   bondLevel?: number;
   /** 입고 있는 외형. 친구 카드는 서버가 공개한 외형을, 자기 카드는 비워 두고 제 장착을 읽는다. */
@@ -124,7 +127,7 @@ function favoriteShowcase(state: Session): FavoriteRelicShowcase | null {
   const stats = progress ? calculateFinalStats(relic.stats, progress, gems, relic.rarity) : relic.stats;
   return {
     relicId: relic.id, displayName: relic.name, portraitAssetId: relic.portraitAssetId,
-    level: progress?.level ?? 1, breakthroughGrade: breakthroughGrade(activeBreakthroughOf(progress)), bondLevel: progress?.bondLevel ?? 0,
+    level: progress?.level ?? 1, breakthroughGrade: breakthroughGrade(activeBreakthroughOf(progress)), resonance: resonanceOf(progress), bondLevel: progress?.bondLevel ?? 0,
     rarity: relic.rarity, element: relic.element, role: relic.role, power: combatPower(stats, relic.stats),
   };
 }

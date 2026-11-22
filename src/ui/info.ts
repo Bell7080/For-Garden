@@ -47,7 +47,7 @@ import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { openElementPopup, openRolePopup } from "./affinityPopups";
 import { breakthroughEffectText, breakthroughEffectKeywords } from "./skillPresentation";
 import { formatBreakthroughDescription } from "./skillExplanation";
-import { addBreakthroughGradeMark, addResonanceGradeMark, addResonanceMark, RARITY_TONE } from "./rarityMark";
+import { addBreakthroughGradeMark, addGrowthGradeMark, addResonanceGradeMark, RARITY_TONE } from "./rarityMark";
 import { RESONANCE_CAP, RESONANCE_STAT_PERCENT, canResonate, resonanceFragmentCost, resonanceFragmentSpend, resonanceOf } from "../core/relicResonance";
 import { addFramedIcon } from "./itemFrame";
 import { FaceFrame } from "./FaceFrame";
@@ -1174,7 +1174,7 @@ export class InfoManager {
     const universal = def ? relicProgression.getUniversalFragments(def.rarity) : 0;
     // 드는 파편 수는 등급이 정한다 — 같은 단계라도 R은 넷, SSR은 하나다.
     const need = def && step ? breakthroughFragmentCost(def.rarity, progress.breakthrough) : 0;
-    // **돌파 V 뒤의 같은 버튼은 공명을 맡는다.** 새 버튼을 세우지 않는 이유는 둘 다 「같은 개체를 또
+    // **돌파 IV 뒤의 같은 버튼은 공명을 맡는다.** 새 버튼을 세우지 않는 이유는 둘 다 「같은 개체를 또
     // 만나 모은 파편으로 그 개체를 키운다」는 한 조작이라서다 — 자리가 갈리면 다음 할 일이 어디인지 흐려진다.
     const resonance = resonanceOf(progress);
     const resonating = !step && resonance < RESONANCE_CAP;
@@ -1289,7 +1289,9 @@ export class InfoManager {
       // **올라가는 것은 별 개수가 아니라 등급이다.** 카드 오른쪽 위에 박히는 로마자와 같은
       // 표식을 그대로 크게 세우고, 그 사이에 화살표만 둔다 — "1 → 2"라고 적으면 화면 어디에도
       // 없는 숫자를 새로 배우게 된다.
-      addBreakthroughGradeMark(this.scene, body, -140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize, breakthroughGrade(progress.breakthrough));
+      // 첫 돌파(0 → I)는 왼쪽에 표식이 없으므로 흐린 「—」 한 획이 「아직 없음」을 지킨다.
+      if (progress.breakthrough > 0) addBreakthroughGradeMark(this.scene, body, -140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize, breakthroughGrade(progress.breakthrough));
+      else body.add(this.scene.add.text(-140, top + BREAK_CONFIRM.gradeY, "—", textStyle({ role: "display", size: BREAK_CONFIRM.gradeSize * 0.7, color: COLOR.inkDim })).setOrigin(0.5));
       body.add(this.scene.add.text(0, top + BREAK_CONFIRM.gradeY, "▶", textStyle({ role: "display", size: 34, color: COLOR.inkDim })).setOrigin(0.5));
       addBreakthroughGradeMark(this.scene, body, 140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize, breakthroughGrade(progress.breakthrough) + 1);
 
@@ -1368,8 +1370,8 @@ export class InfoManager {
     const top = -height / 2;
     const resonance = resonanceOf(progress);
     // 공명 단계는 「공명 n」 글자가 아니라 붉은 로마자 표식으로 선다 — 정보창의 표식과 같은 한 장이다.
-    // **첫 공명의 왼쪽은 「—」가 아니라 돌파 V다**(응태 2026-11-13). 공명은 돌파 V 다음 칸이라 `V ▶ I`로 읽혀야 하고,
-    // 「— ▶ I」는 공명이 없던 개체가 공명으로 「바뀌는」 것처럼 읽혔다. 호박 V와 붉은 I가 색으로 축이 이어짐을 말한다.
+    // **첫 공명의 왼쪽은 「—」가 아니라 돌파 IV다**(응태 2026-11-13). 공명은 돌파 IV 다음 칸이라 `IV ▶ I`로 읽혀야 하고,
+    // 「— ▶ I」는 공명이 없던 개체가 공명으로 「바뀌는」 것처럼 읽혔다. 호박 IV와 붉은 I가 색으로 축이 이어짐을 말한다.
     if (resonance > 0) addResonanceGradeMark(this.scene, body, -140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize * 0.82, resonance);
     else addBreakthroughGradeMark(this.scene, body, -140, top + BREAK_CONFIRM.gradeY, BREAK_CONFIRM.gradeSize * 0.82, breakthroughGrade(progress.breakthrough));
     body.add(this.scene.add.text(0, top + BREAK_CONFIRM.gradeY, "▶", textStyle({ role: "display", size: 34, color: COLOR.inkDim })).setOrigin(0.5));
@@ -2683,7 +2685,7 @@ export class InfoManager {
    * — 예전에는 친구 창의 스킬 쪽지가 내 렐릭의 능력치로 수치를 적었다.
    */
   private shownBreakthrough(def: RelicDef): number {
-    return this.publicProfile ? Math.max(0, this.publicProfile.breakthroughGrade - 1) : relicProgression.getProgress(def.id).breakthrough;
+    return this.publicProfile ? Math.max(0, this.publicProfile.breakthroughGrade) : relicProgression.getProgress(def.id).breakthrough;
   }
 
   private shownStats(def: RelicDef): Stats {
@@ -2926,9 +2928,9 @@ export class InfoManager {
   private paintStars(def: RelicDef): void {
     this.starRow.removeAll(true);
     const stars = breakthroughGrade(this.shownBreakthrough(def));
-    addBreakthroughGradeMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, stars);
-    // 공명은 내 렐릭에게만 있다 — 공개 프로필은 공명을 알려 주지 않으므로 그리지 않는다.
-    if (!this.publicProfile) addResonanceMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, resonanceOf(relicProgression.getProgress(def.id)), RESONANCE_CAP);
+    // 공명이 걸리면 돌파 등급 자리를 공명 등급이 대신한다. 공명은 내 렐릭에게만 있다 — 공개 프로필은 공명을 알려 주지 않는다.
+    const resonance = this.publicProfile ? 0 : resonanceOf(relicProgression.getProgress(def.id));
+    addGrowthGradeMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, stars, resonance);
   }
 
   /** 레벨·경험치·유대·능력치·젬을 지금 상태로 다시 칠한다. */
@@ -3550,8 +3552,8 @@ export function openBreakthroughStepsPopup(
     const slant = 16;
     const breathe = motionPolicy(session.settings).nonEssentialRepeatFactor !== 0;
     BREAKTHROUGH_STEPS.forEach((entry, index) => {
-      // 돌파 한 번이 등급 하나다. 표의 첫 카드가 곧 "II로 가는 길"이다.
-      const rowGrade = index + 2;
+      // 돌파 한 번이 등급 하나다. 표의 첫 카드가 곧 "I로 가는 길"이다.
+      const rowGrade = index + 1;
       const y = top + layout.rows[index];
       const cardHeight = layout.rowHeights[index];
       const cardTop = y - cardHeight / 2;
@@ -3655,7 +3657,7 @@ export function openBreakthroughStepsPopup(
         label: skillSlotLabel(entry.slot),
         // 이미 뚫은 카드는 정보창 아래 액자 줄과 **같은 얼굴**로 선다(강조색 + 이름 뒤의 `+`).
         // "없음"으로 정해 둔 자리는 뚫었어도 `+`를 달지 않는다 — 달라진 것이 없다.
-        enhanced: breakthroughEnhances(def, grade - 1, entry.slot),
+        enhanced: breakthroughEnhances(def, grade, entry.slot),
         dimAlpha: reached ? undefined : BREAK_STEPS.lockedIconAlpha,
       });
       icon.setPosition(BREAK_STEPS.icon.x + shiftAt(bodyY - cardTop), bodyY);

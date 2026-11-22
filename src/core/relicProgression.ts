@@ -43,7 +43,7 @@ export const RELIC_LEVEL_CAP_BY_RESEARCH: readonly { readonly researchLevel: num
  * 한계 돌파 한 단계가 오각형 다섯에 더하는 성장 몫(%p) — **레벨 성장 %에 더한다**(응태 결정, 2026-11-11).
  *
  * 레벨 상한을 내려놓은 돌파가 무엇으로 값을 하는가에 대한 답이다. 슬롯 효과(개체의 정체성)는 그대로 열고,
- * 거기에 **볼륨**을 얹는다 — 돌파 V는 +40%p라 SSR Lv60은 성장 합 153.4% → 193.4%다. 적도 사다리의
+ * 거기에 **볼륨**을 얹는다 — 돌파 IV는 +40%p라 SSR Lv60은 성장 합 153.4% → 193.4%다. 적도 사다리의
  * 돌파 단계만큼 같은 몫을 받으므로(`applyEncounterScaling`) 사다리대로 뚫은 플레이어에게 난이도는 그대로다.
  * 공용 배율이지만 예전처럼 "끝까지 키워도 무엇이 달라지는가"를 덮지 않는다 — 그 말은 슬롯 효과가 한다.
  */
@@ -78,7 +78,7 @@ export type BreakthroughSlot = "basic" | "ultimate" | "ferocity" | "passive";
  * 한계 돌파 한 단계. **드는 것은 파편뿐이다**(응태 결정 2026-11-15) — 요구 레벨·치즈케이크를 걷었다.
  *
  * 요구 레벨(20·30·40·50)이 있던 때는 레벨 초기화가 뚫어 둔 단계를 꺼 두어야 했고(낮은 레벨에 돌파 효과를 공짜로
- * 얹는 조합을 막으려고), 표식이 회색으로 가라앉았다. 돌파가 레벨과 무관해지자 1레벨의 돌파 V가 누구에게나 정상
+ * 얹는 조합을 막으려고), 표식이 회색으로 가라앉았다. 돌파가 레벨과 무관해지자 1레벨의 돌파 IV가 누구에게나 정상
  * 상태라 꺼 둘 이유가 사라졌다. 레벨 축은 연구원 레벨이, 돌파 축은 중복(파편)이 맡는다. 적의 돌파는 여전히 레벨이
  * 정한다(`ENEMY_BREAKTHROUGH_LEVELS` — 적의 레벨 곡선은 이 표와 무관하다).
  */
@@ -116,14 +116,14 @@ export function referenceBreakthroughAt(level: number): number {
 }
 
 /**
- * 등급별 한 단계 파편 수 — 돌파 네 번(I→II · II→III · III→IV · IV→V)의 값을 순서대로 적는다.
+ * 등급별 한 단계 파편 수 — 돌파 네 번(0→I · I→II · II→III · III→IV)의 값을 순서대로 적는다.
  *
  * 같은 개체를 다시 만나는 빈도가 등급마다 다르므로 **파편 수도 등급이 정한다** — SSR은 앞 단계가
  * 한 장이지만 R은 네 장을 모아야 한다. 단계마다 수를 적어 두므로 한 단계만 따로 조일 수 있다.
  *
- * **뒤로 갈수록 더 든다.** 별 다섯은 그 개체를 끝까지 키운 표식인데 앞 단계와 같은 값이면
+ * **뒤로 갈수록 더 든다.** 돌파 IV는 그 개체를 끝까지 키운 표식인데 앞 단계와 같은 값이면
  * SSR은 네 번 다시 만나는 것으로 끝난다.
- * III→IV(돌파 등급 IV)는 앞 단계보다 한 장 더(R은 둘 더) 들고, 마지막은 그보다 더 든다.
+ * II→III(돌파 등급 III)은 앞 단계보다 한 장 더(R은 둘 더) 들고, 마지막(IV)은 그보다 더 든다.
  */
 export const BREAKTHROUGH_FRAGMENTS: Readonly<Record<RelicRarity, readonly [number, number, number, number]>> = {
   SSR: [1, 1, 2, 3],
@@ -173,11 +173,14 @@ export function breakthroughFragmentCost(rarity: RelicRarity, breakthrough: numb
   return costs[Math.max(0, Math.min(costs.length - 1, breakthrough))];
 }
 
-/** 한계를 몇 번까지 뚫을 수 있는지. 별 하나에서 시작하므로 최대 별은 이 값 + 1이다. */
+/** 한계를 몇 번까지 뚫을 수 있는지. 돌파 등급도 0에서 시작해 이 값(IV)에서 끝난다. */
 export const BREAKTHROUGH_CAP = BREAKTHROUGH_STEPS.length;
 
-/** 화면에 로마자로 서는 돌파 등급. 돌파 0단계가 등급 I다. */
-export const BREAKTHROUGH_GRADE_CAP = BREAKTHROUGH_CAP + 1;
+/**
+ * 화면에 로마자로 서는 돌파 등급의 끝(IV). **돌파 0단계는 등급 0이고 아무 표식도 서지 않는다**(응태 결정 2026-11-22 —
+ * 얻자마자 「I」가 서면 한 번도 뚫지 않았는데 1돌로 읽혔다). 뚫은 횟수가 곧 등급이다.
+ */
+export const BREAKTHROUGH_GRADE_CAP = BREAKTHROUGH_CAP;
 
 /**
  * 돌파 등급의 표기 — **로마자 한 글자**다.
@@ -186,14 +189,14 @@ export const BREAKTHROUGH_GRADE_CAP = BREAKTHROUGH_CAP + 1;
  * 섞인다. 표를 코어에 두는 이유는 전투 머리글(`expeditionBattle`)과 표식(`rarityMark`)이
  * **같은 글자**를 써야 하기 때문이다.
  */
-export const BREAKTHROUGH_GRADE_ROMAN: readonly string[] = ["I", "II", "III", "IV", "V"];
+export const BREAKTHROUGH_GRADE_ROMAN: readonly string[] = ["I", "II", "III", "IV"];
 
-/** 돌파 단계를 별 개수로 바꾼다. 별을 세는 곳은 전부 이 함수를 쓴다. */
+/** 돌파 단계를 화면의 돌파 등급(0~IV)으로 바꾼다. 뚫은 횟수와 같다 — 등급을 세는 곳은 전부 이 함수를 쓴다. */
 export function breakthroughGrade(breakthrough: number): number {
   if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) {
     throw new RangeError("돌파 단계가 범위를 벗어났습니다.");
   }
-  return breakthrough + 1;
+  return breakthrough;
 }
 
 /**
@@ -214,7 +217,7 @@ export function researchLevelForRelicCap(levelCap: number): number | undefined {
 }
 
 /**
- * 그 성장 상태가 **저장으로 받아들일 수 있는 값인가.** 돌파가 레벨과 무관해졌으므로(파편만 든다) 1레벨에 돌파 V도
+ * 그 성장 상태가 **저장으로 받아들일 수 있는 값인가.** 돌파가 레벨과 무관해졌으므로(파편만 든다) 1레벨에 돌파 IV도
  * 정상이다 — 레벨은 렐릭 레벨의 끝(`RELIC_MAX_LEVEL`), 돌파는 0~`BREAKTHROUGH_CAP` 범위만 본다.
  */
 export function isGrowthReachable(level: number, breakthrough: number): boolean {
@@ -232,7 +235,7 @@ export function activeBreakthroughOf(progress: Pick<RelicProgress, "breakthrough
   return progress ? Math.max(0, Math.min(BREAKTHROUGH_CAP, Math.floor(progress.breakthrough))) : 0;
 }
 
-/** 다음 돌파에 드는 재료. 이미 별 다섯이면 없다. */
+/** 다음 돌파에 드는 재료. 이미 돌파 IV면 없다. */
 export function nextBreakthrough(breakthrough: number): BreakthroughStep | undefined {
   return BREAKTHROUGH_STEPS[breakthrough];
 }
@@ -276,10 +279,10 @@ export function breakthroughEnhances(def: Pick<RelicDef, "breakthroughEffects">,
 /** 그 슬롯을 여는 돌파 등급(로마자로 세는 수). 화면이 "몇 등급에서 열리는가"를 적을 때 쓴다. */
 export function breakthroughSlotGrade(slot: BreakthroughSlot): number {
   const index = BREAKTHROUGH_STEPS.findIndex((step) => step.slot === slot);
-  return index < 0 ? BREAKTHROUGH_GRADE_CAP : index + 2;
+  return index < 0 ? BREAKTHROUGH_GRADE_CAP : index + 1;
 }
 
-/** 지금 상태에서 돌파 V까지 남은 파편 수(그 개체의 파편 기준). 화면·테스트 지급·안내가 같은 값을 읽는다. */
+/** 지금 상태에서 돌파 IV까지 남은 파편 수(그 개체의 파편 기준). 화면·테스트 지급·안내가 같은 값을 읽는다. */
 export function remainingBreakthroughFragments(rarity: RelicRarity, breakthrough: number): number {
   let fragments = 0;
   for (let step = Math.max(0, breakthrough); step < BREAKTHROUGH_CAP; step += 1) fragments += breakthroughFragmentCost(rarity, step);

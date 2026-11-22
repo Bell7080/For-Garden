@@ -170,14 +170,14 @@
     "Прорыв"
   ],
   "help.term.breakthrough.body": [
-    "使用碎片将突破等级从I提升到V。每一阶都会提高能力值成长，并开放技能效果。",
-    "ใช้เศษเพื่อเพิ่มระดับทะลวงจาก I ถึง V ทุกขั้นจะเพิ่มการเติบโตของค่าสถานะและเปิดเอฟเฟกต์สกิล",
-    "Dùng Mảnh để nâng bậc Đột phá từ I đến V. Mỗi bậc tăng mức tăng trưởng chỉ số và mở hiệu ứng kỹ năng.",
-    "Gunakan Serpihan untuk menaikkan tingkat Terobosan dari I sampai V. Tiap tahap menambah pertumbuhan stat dan membuka efek skill.",
-    "Gasta Fragmentos para subir el grado de Ruptura de I a V. Cada paso aumenta el crecimiento de atributos y abre un efecto de habilidad.",
-    "Gaste Fragmentos para subir o grau de Ruptura de I a V. Cada etapa aumenta o crescimento de atributos e libera um efeito de habilidade.",
-    "Mit Splittern hebst du die Durchbruchstufe von I bis V an. Jede Stufe steigert das Wertewachstum und schaltet einen Fertigkeitseffekt frei.",
-    "Тратьте Фрагменты, чтобы поднять ступень Прорыва с I до V. Каждая ступень усиливает рост характеристик и открывает эффект навыка."
+    "使用碎片将突破等级从I提升到IV。每一阶都会提高能力值成长，并开放技能效果。",
+    "ใช้เศษเพื่อเพิ่มระดับทะลวงจาก I ถึง IV ทุกขั้นจะเพิ่มการเติบโตของค่าสถานะและเปิดเอฟเฟกต์สกิล",
+    "Dùng Mảnh để nâng bậc Đột phá từ I đến IV. Mỗi bậc tăng mức tăng trưởng chỉ số và mở hiệu ứng kỹ năng.",
+    "Gunakan Serpihan untuk menaikkan tingkat Terobosan dari I sampai IV. Tiap tahap menambah pertumbuhan stat dan membuka efek skill.",
+    "Gasta Fragmentos para subir el grado de Ruptura de I a IV. Cada paso aumenta el crecimiento de atributos y abre un efecto de habilidad.",
+    "Gaste Fragmentos para subir o grau de Ruptura de I a IV. Cada etapa aumenta o crescimento de atributos e libera um efeito de habilidade.",
+    "Mit Splittern hebst du die Durchbruchstufe von I bis IV an. Jede Stufe steigert das Wertewachstum und schaltet einen Fertigkeitseffekt frei.",
+    "Тратьте Фрагменты, чтобы поднять ступень Прорыва с I до IV. Каждая ступень усиливает рост характеристик и открывает эффект навыка."
   ],
   "help.term.resonance.name": [
     "共鸣",
@@ -190,14 +190,14 @@
     "Резонанс"
   ],
   "help.term.resonance.body": [
-    "突破V之后的阶段。只消耗碎片，每一阶能力值提升5%。在决斗场中无效。",
-    "ขั้นถัดจากทะลวงขีดจำกัด V ใช้เพียงเศษ และเพิ่มค่าสถานะ 5% ทุกขั้น ปิดใช้งานในสนามดวล",
-    "Bậc tiếp theo sau Đột phá V. Chỉ tốn Mảnh và tăng chỉ số 5% mỗi bậc. Bị tắt trong Đấu trường.",
-    "Tahap setelah Terobosan V. Hanya butuh Serpihan dan menaikkan stat 5% per tahap. Tidak berlaku di Arena Duel.",
-    "El paso tras la Ruptura V. Solo cuesta Fragmentos y sube los atributos un 5% por paso. Se desactiva en la Arena de duelos.",
-    "A etapa após a Ruptura V. Custa apenas Fragmentos e aumenta os atributos em 5% por etapa. Fica desativada na Arena de Duelos.",
-    "Die Stufe nach Durchbruch V. Sie kostet nur Splitter und erhöht die Werte um 5% pro Stufe. In der Duellarena ist sie deaktiviert.",
-    "Ступень после Прорыва V. Требует только Фрагменты и повышает характеристики на 5% за ступень. На Арене дуэлей отключён."
+    "突破IV之后的阶段。只消耗碎片，每一阶能力值提升5%。在决斗场中无效。",
+    "ขั้นถัดจากทะลวงขีดจำกัด IV ใช้เพียงเศษ และเพิ่มค่าสถานะ 5% ทุกขั้น ปิดใช้งานในสนามดวล",
+    "Bậc tiếp theo sau Đột phá IV. Chỉ tốn Mảnh và tăng chỉ số 5% mỗi bậc. Bị tắt trong Đấu trường.",
+    "Tahap setelah Terobosan IV. Hanya butuh Serpihan dan menaikkan stat 5% per tahap. Tidak berlaku di Arena Duel.",
+    "El paso tras la Ruptura IV. Solo cuesta Fragmentos y sube los atributos un 5% por paso. Se desactiva en la Arena de duelos.",
+    "A etapa após a Ruptura IV. Custa apenas Fragmentos e aumenta os atributos em 5% por etapa. Fica desativada na Arena de Duelos.",
+    "Die Stufe nach Durchbruch IV. Sie kostet nur Splitter und erhöht die Werte um 5% pro Stufe. In der Duellarena ist sie deaktiviert.",
+    "Ступень после Прорыва IV. Требует только Фрагменты и повышает характеристики на 5% за ступень. На Арене дуэлей отключён."
   ],
   "help.term.bond.name": [
     "羁绊",

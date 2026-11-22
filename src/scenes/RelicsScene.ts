@@ -399,6 +399,7 @@ export class RelicsScene extends Phaser.Scene {
         level: owned ? relicProgression.getProgress(relic.id).level : undefined,
         rarity: relic.rarity,
         breakthroughGrade: owned ? relicProgression.getBreakthroughGrade(relic.id) : undefined,
+        resonance: owned ? relicProgression.getResonance(relic.id) : undefined,
         bookmarked: owned && relicCollection.isBookmarked(relic.id),
         affinity: { element: relic.element, role: relic.role },
         locked: !owned,

@@ -8,7 +8,7 @@ import { chipPoints, HOLO, toPoints } from "./holo";
 import { BACKGROUND } from "./backgrounds";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
-import { addBreakthroughGradeMark, RARITY_TONE } from "./rarityMark";
+import { addGrowthGradeMark, RARITY_TONE } from "./rarityMark";
 import { COLOR, textStyle } from "./theme";
 import { portraitCardHeadWindow, portraitCardOverhang } from "./portraitGrid";
 import { addBookmarkMark } from "./bookmarkMark";
@@ -56,12 +56,14 @@ export interface PortraitCardOptions {
   /** 희귀도. 칩 바탕색이 여기서 나온다(SSR 황금 호박 · SR 보랏빛 · R 하늘빛). */
   rarity?: RelicRarity;
   /**
-   * 별(1~5). 오른쪽 위에 로마자로 선다.
+   * 돌파 등급(0~4 — 0은 표식 없음). 오른쪽 위에 로마자로 선다.
    *
    * 희귀도와 다른 축이다 — 별은 같은 개체를 몇 번 더 만나 한계를 돌파했는지이고, 희귀도는
    * 개체가 원래 얼마나 귀한지다. 그래서 색(바탕)과 글자(별)가 서로 다른 값에서 나온다.
    */
   breakthroughGrade?: number;
+  /** 공명 단계(0~5). 1 이상이면 돌파 등급 자리를 붉은 공명 등급이 대신한다(`addGrowthGradeMark`). */
+  resonance?: number;
   /** 보유 렐릭 즐겨찾기. 한계 돌파 로마자 아래에 전용 별표로만 표시한다. */
   bookmarked?: boolean;
   /** 미발굴 카드. 원화를 실루엣으로 덮고 이름을 감춘다. */
@@ -225,6 +227,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private gradeSpot?: { x: number; y: number; size: number };
   private shownLevel?: number;
   private shownGrade?: number;
+  private shownResonance = 0;
   private readonly options: PortraitCardOptions;
   private readonly bodyHeight: number;
   private readonly overhang: number;
@@ -465,7 +468,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       this.gradeSpot = { x: width / 2 - CHIP_INSET - 22, y: -height / 2 + 34, size: Math.min(46, width / 6) };
       this.gradeMark = scene.add.container(0, 0);
       this.add(this.gradeMark);
-      this.paintGrade(options.breakthroughGrade);
+      this.paintGrade(options.breakthroughGrade, options.resonance ?? 0);
     } else if (options.badge) {
       this.add(
         scene.add
@@ -882,7 +885,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
    * 목록의 카드는 옛 값을 들고 있었다. 카드를 통째로 다시 세우면 원화를 다시 읽어 깜빡이므로
    * 숫자와 표식만 갈아 끼운다. 바뀐 것이 없으면 아무것도 하지 않는다.
    */
-  setProgress(level: number | undefined, breakthroughGrade: number | undefined): this {
+  setProgress(level: number | undefined, breakthroughGrade: number | undefined, resonance?: number): this {
     if (level !== undefined && this.levelText && level !== this.shownLevel) {
       this.shownLevel = level;
       this.levelText.setText(`${level}`);
@@ -892,15 +895,17 @@ export class PortraitCard extends Phaser.GameObjects.Container {
         this.nameText.setX(this.levelText.x + Math.max(this.levelText.width, this.levelTag.width) + nameSize * 0.42);
       }
     }
-    if (breakthroughGrade !== undefined && this.gradeMark && breakthroughGrade !== this.shownGrade) this.paintGrade(breakthroughGrade);
+    const nextResonance = resonance ?? this.shownResonance;
+    if (breakthroughGrade !== undefined && this.gradeMark && (breakthroughGrade !== this.shownGrade || nextResonance !== this.shownResonance)) this.paintGrade(breakthroughGrade, nextResonance);
     return this;
   }
 
-  private paintGrade(grade: number): void {
+  private paintGrade(grade: number, resonance: number): void {
     if (!this.gradeMark || !this.gradeSpot) return;
     this.shownGrade = grade;
+    this.shownResonance = resonance;
     this.gradeMark.removeAll(true);
-    addBreakthroughGradeMark(this.scene, this.gradeMark, this.gradeSpot.x, this.gradeSpot.y, this.gradeSpot.size, grade);
+    addGrowthGradeMark(this.scene, this.gradeMark, this.gradeSpot.x, this.gradeSpot.y, this.gradeSpot.size, grade, resonance);
   }
 
 }

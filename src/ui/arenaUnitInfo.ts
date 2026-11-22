@@ -8,7 +8,7 @@ import { sceneInfoManager, type InfoManager } from "./info";
  * 그대로 실린다 — 내 렐릭이든 상대 렐릭이든 이 판에서 싸우는 값을 보여 준다.
  */
 export function arenaUnitProfile(unit: ArenaUnit): PublicRelicProfileDto {
-  return { relicId: unit.def.id, level: unit.level, breakthroughGrade: unit.breakthrough + 1, stats: { ...unit.def.stats }, skillIds: [] };
+  return { relicId: unit.def.id, level: unit.level, breakthroughGrade: unit.breakthrough, stats: { ...unit.def.stats }, skillIds: [] };
 }
 
 /**

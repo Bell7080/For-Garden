@@ -44,7 +44,7 @@ import type { SetPartyFailureReason } from "../managers/RelicCollectionManager";
 import { AffinityDirection } from "../ui/AffinityDirection";
 import { AffinityBadge } from "../ui/AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "../ui/affinityIcons";
-import { addBreakthroughGradeMark } from "../ui/rarityMark";
+import { addBreakthroughGradeMark, addGrowthGradeMark } from "../ui/rarityMark";
 import { addUnitNameplate, addUnitPower } from "../ui/unitNameplate";
 import { groupCombatPower } from "../core/combatPower";
 import { applyRosterView, DEFAULT_ROSTER_VIEW, deployedFirst, type RosterView } from "../core/rosterView";
@@ -770,7 +770,7 @@ export class PartyScene extends Phaser.Scene {
     this.add.existing(new AffinityBadge(this, badgeX, badgeTop + (crowded ? 42 : 49), ROLE_ICON[def.role], crowded ? 32 : 38, 0.62)).setDepth(3);
     if (!crowded) {
       const marks = this.add.container(0, 0).setDepth(3);
-      addBreakthroughGradeMark(this, marks, x + 104, badgeTop - 4, 42, enemy.breakthrough + 1);
+      addBreakthroughGradeMark(this, marks, x + 104, badgeTop - 4, 42, enemy.breakthrough);
     }
 
     // 체력은 적지 않는다 — 붙어 볼지 정하는 데 필요한 것은 개체별 수치가 아니라 아래의
@@ -1033,6 +1033,7 @@ export class PartyScene extends Phaser.Scene {
         level: relicProgression.getProgress(relic.id).level,
         rarity: relic.rarity,
         breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id),
+        resonance: relicProgression.getResonance(relic.id),
         affinity: { element: relic.element, role: relic.role },
         // 이미 자리에 나가 있는 카드는 떠오르지 않고 눌려 들어간다 — 발광은 "지금 고를 수 있다"로
         // 읽혀 이미 세운 렐릭과 아직 고를 수 있는 렐릭이 같은 무게가 된다.
@@ -1201,7 +1202,7 @@ export class PartyScene extends Phaser.Scene {
       // 자리는 카드 한가운데 번호가 말하므로 아래 줄은 늘 직군을 지킨다.
       entry.card.setSub(entry.role);
       entry.card.setSlotNumber(chosen ? at + 1 : undefined);
-      entry.card.setProgress(relicProgression.getProgress(id).level, relicProgression.getBreakthroughGrade(id));
+      entry.card.setProgress(relicProgression.getProgress(id).level, relicProgression.getBreakthroughGrade(id), relicProgression.getResonance(id));
     }
 
     const plate = this.slotPlate;
@@ -1249,7 +1250,7 @@ export class PartyScene extends Phaser.Scene {
         const badgeTop = row - PREVIEW_HEIGHT + 34;
         marks.add(new AffinityBadge(this, x - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62));
         marks.add(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62));
-        addBreakthroughGradeMark(this, marks, x + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(id));
+        addGrowthGradeMark(this, marks, x + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(id), relicProgression.getResonance(id));
         addUnitNameplate(this, marks, x, row + 26, relicProgression.getProgress(id).level, def.name, 30);
         addUnitPower(this, marks, x, row + 22, relicProgression.getCombatPower(id, { pvp: this.pvp }), 24, COLOR.accentText);
       }

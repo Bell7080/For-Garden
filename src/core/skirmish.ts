@@ -10,7 +10,7 @@ import { actionFerocityGain, drainFerocityFever, FEROCITY_RULES, feverDrainPerSe
 import { isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
 import { ENCOUNTER_ROLE, encounterRampFactor, type EncounterDamageReduction, type EncounterTenacity } from "./levelDesign";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, flatStatPoints, highHpDamageMultiplier, lowHpDamageMultiplier, nthBasicBonusMultiplier, openingCritCount, periodicCritEvery, sameTargetStreakMultiplier, shieldedDamageMultiplier, warmUpAttackSpeedPercent, type ExpeditionAugmentEffect, type FlatStatKind, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
-import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, Passive, ReachTier, RelicDef, Role, Side, Skill, Stats, TeamBuff, DeepCleanBuff } from "./types";
+import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, Passive, ReachTier, RelicDef, Role, Side, Skill, Stats, TeamBuff, DeepCleanBuff, GulpBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX, ultimateEnergyCap } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
 import { PUP } from "./pup";
@@ -562,6 +562,14 @@ export interface Fighter extends Combatant {
    * 때문이다 — 기절로 묶으면 메테가 있는 편성에서 즉시 풀려 **무적인 채로 싸우게 된다.**
    */
   undying: { remaining: number; total: number } | null;
+  /** 「혀 낚아채기」(벨즈) — 다음으로 아군을 끌어오기까지 남은 시간(초). 패시브가 없는 개체는 늘 0이다. */
+  tongueIn: number;
+  /** 「피 냄새」(아르사) — 폭주가 닳지 않고 버티는 남은 시간(초). 폭주가 닳는 시계보다 먼저 흐른다. */
+  feverHold: number;
+  /** 이번 폭주에 이미 늘린 시간의 합(초). 폭주에 들어설 때마다 0으로 돌아간다. */
+  feverHoldGranted: number;
+  /** 이번 폭주가 끊기지 않고 이어진 시간(초). 폭주가 끝나거나 새로 들면 0이다 — 오르는 폭주(`ramp`)가 읽는다. */
+  feverElapsed: number;
   /**
   /**
    * 도발당해 특정 상대만 노리는 중. 없으면 평소의 거리·혼잡도 규칙으로 고른다.
@@ -1518,6 +1526,10 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     stealthBreaksOnBasic: false,
     undying: null,
     undyingPending: false,
+    tongueIn: def.passive.tongue?.intervalSeconds ?? 0,
+    feverHold: 0,
+    feverHoldGranted: 0,
+    feverElapsed: 0,
     taunted: null,
     elation: null,
     prickle: null,
@@ -4060,6 +4072,12 @@ function tickRaiders(fighter: Fighter, dt: number, state: SkirmishState): Skirmi
 
 /** 기술을 쓴 순간 제 몸에 두르는 막(`selfShieldMaxHpPercent`). 궁극기를 치른 자리에서만 부른다. */
 function grantCastShield(attacker: Fighter, skill: Skill, state: SkirmishState, events: SkirmishEvent[]): void {
+  // 시전 한 번에 한 번 — 쏜 사람의 야성(아르사). 막을 두르는 자리와 같은 경계라 대상 수만큼 되풀이되지 않는다.
+  const surge = skill.id === attacker.def.ultimate.id ? attacker.def.ultimate.selfFerocity : undefined;
+  if (surge && isFighterAlive(attacker)) {
+    if (attacker.ferocityFever) extendFever(attacker, surge.feverExtendSeconds);
+    else gainFerocity(attacker, surge.amount, state, events);
+  }
   const percent = skill.selfShieldMaxHpPercent ?? 0;
   if (percent <= 0 || !isFighterAlive(attacker)) return;
   grantShield(state, attacker, attacker.id, Math.max(1, Math.round((attacker.shieldHpBasis ?? attacker.maxHp) * percent / 100)), events);
@@ -4814,6 +4832,9 @@ function triggerBreakthroughOnKill(attacker: Fighter, useUltimate: boolean, vict
   const hum = attacker.def.passive.wingHum;
   if (hum && isFighterAlive(attacker)) giveEnergy(attacker, hum.energyOnKill);
   // 처치 가속(`killHaste`) — 어떤 경로로 쓰러뜨렸든 이 훅을 지나므로 평타·궁극기·지속 피해가 같은 값을 얻는다.
+  // 피 냄새(아르사) — 폭주 중에 쓰러뜨리면 폭주가 늘어난다.
+  const scent = attacker.def.passive.bloodScent;
+  if (scent && attacker.ferocityFever && isFighterAlive(attacker)) extendFever(attacker, scent.extendPerKillSeconds);
   const haste = attacker.def.passive.killHaste;
   if (haste && isFighterAlive(attacker)) {
     attacker.killHaste = { remaining: haste.seconds, attackSpeedPercent: haste.attackSpeedPercent, moveSpeedPercent: haste.moveSpeedPercent, total: haste.seconds };
@@ -5907,7 +5928,7 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       description: "폭주 중 아군의 기본 공격 적중에 스타카토 추가타를 연주",
       timing: {
         kind: "ferocity",
-        remainingSeconds: player.ferocity / feverDrainPerSecond(player.def),
+        remainingSeconds: player.ferocity / feverDrainPerSecond(player.def) + player.feverHold,
         totalSeconds: FEROCITY_RULES.feverSeconds,
       },
     });
@@ -6282,7 +6303,7 @@ export function attackInterval(fighter: Fighter, state?: SkirmishState): number 
         ? 1 / (1 + trait.attackSpeedPercent / 100)
       : fighter.ferocityFever && trait.effectId === "selfAttackSpeedMultiplier"
         // +100%는 공격 속도 x2이고, 속도의 역수인 공격 간격은 정확히 50%가 된다. 폭주 돌파(`swiftHands`)는 같은 합에 더해진다.
-        ? 1 / (1 + (trait.bonusPercent + swiftHandsPercent(fighter)) / 100)
+        ? 1 / (1 + (feverRamp(fighter).attackSpeedPercent + swiftHandsPercent(fighter)) / 100)
       : fighter.ferocityFever && trait.effectId === "adamantBody" && fighter.hastenedAttacksLeft > 0
         // 남은 횟수가 있을 때만 빨라진다. 다 쓰면 방어 상승만 남는다.
         ? 1 / (1 + trait.attackSpeedPercent / 100)
@@ -7246,6 +7267,44 @@ function cleanseAllDebuffs(fighter: Fighter): void {
   fighter.intimidation = null; fighter.fear = null;
 }
 
+/**
+ * 폭주를 늘린다(「피 냄새」 · 아르사). 게이지를 더 채우지 않고 **닳지 않는 시간**을 쌓는다 — 가득 찬 게이지에는 더 얹을 자리가
+ * 없고, 채우면 피해 구간 계산까지 흔들린다. 한 번의 폭주에 늘어나는 시간은 그 개체의 상한(`maxExtendSeconds`)까지다.
+ */
+function extendFever(fighter: Fighter, seconds: number): void {
+  const plan = fighter.def.passive.bloodScent;
+  if (!plan || !fighter.ferocityFever || seconds <= 0) return;
+  const room = Math.max(0, plan.maxExtendSeconds - fighter.feverHoldGranted);
+  const added = Math.min(seconds, room);
+  fighter.feverHold += added;
+  fighter.feverHoldGranted += added;
+}
+
+/**
+ * 지금 폭주가 주는 공격 속도·흡혈(`selfAttackSpeedMultiplier`). 오르는 폭주(`ramp`)는 이어진 시간만큼 시작값 위에 쌓이고 상한에서 멈춘다.
+ * 폭주가 아니거나 다른 특성이면 0이다.
+ */
+export function feverRamp(fighter: Fighter): { attackSpeedPercent: number; lifeStealPoints: number } {
+  const trait = fighter.def.ferocityTrait;
+  if (!fighter.ferocityFever || trait.effectId !== "selfAttackSpeedMultiplier") return { attackSpeedPercent: 0, lifeStealPoints: 0 };
+  const ramp = trait.ramp;
+  const baseSpeed = trait.bonusPercent;
+  const baseSteal = trait.lifeStealPoints ?? 0;
+  if (!ramp) return { attackSpeedPercent: baseSpeed, lifeStealPoints: baseSteal };
+  return {
+    attackSpeedPercent: Math.min(ramp.maxAttackSpeedPercent, baseSpeed + ramp.attackSpeedPercentPerSecond * fighter.feverElapsed),
+    lifeStealPoints: Math.min(ramp.maxLifeStealPoints, baseSteal + ramp.lifeStealPointsPerSecond * fighter.feverElapsed),
+  };
+}
+
+/** 「피 냄새」의 평타 몫 — 폭주 중이면 폭주를 늘리고, 아니면 공통 획득량 위에 야성을 더 끌어온다. 연장 상한은 `extendFever`가 지킨다. */
+function scentOnBasicHit(attacker: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = attacker.def.passive.bloodScent;
+  if (!plan || !isFighterAlive(attacker)) return;
+  if (attacker.ferocityFever) extendFever(attacker, plan.extendPerHitSeconds);
+  else gainFerocity(attacker, plan.bonusFerocityPerHit, state, events);
+}
+
 /** 실시간 전투도 턴제와 같은 사건별 증가 및 임계 로그 계약을 사용한다. */
 export function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, events: SkirmishEvent[]): void {
   const before = fighter.ferocity;
@@ -7264,6 +7323,9 @@ export function gainFerocity(fighter: Fighter, base: number, state: SkirmishStat
     // 피해로 보호막을 짓는다.
     fighter.feverDamageTaken = 0;
     fighter.bt.feverHealingDone = 0;
+    fighter.feverHold = 0;
+    fighter.feverHoldGranted = 0;
+    fighter.feverElapsed = 0;
     // 폭주 돌파 — 들어서는 순간의 효과들. 개체 이름이 아니라 열린 돌파 계약만 읽는다.
     const feverBreakthrough = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
     if (feverBreakthrough?.kind === "feverAmbush") {
@@ -7725,6 +7787,7 @@ function offensiveDefinition(attacker: Fighter): RelicDef {
 function damageHealingRate(attacker: Fighter, skill: Skill, attackingInFever: boolean, target: Fighter): number {
   const trait = attacker.def.ferocityTrait;
   const fever = attackingInFever && trait.effectId === "rexBattleQueen" ? trait.allDamageLifeStealPoints
+    : attackingInFever && trait.effectId === "selfAttackSpeedMultiplier" ? feverRamp(attacker).lifeStealPoints
     : 0;
   // 매디 전용: 때리기 전부터 이미 빙결 중이던 적에게만 붙는 흡혈이다. 이번 타격이 새로 건
   // 빙결에는 적용하지 않는다 — 상태 효과는 이 계산 뒤에 적용된다.
@@ -8283,6 +8346,59 @@ function shareWithBulwark(target: Fighter, amount: number, events: SkirmishEvent
   // 이어 가, 가장 많이 맞는 순간에 겹이 도리어 끊긴다.
   gainElation(guardian);
   return share;
+}
+
+/**
+ * 「혀 낚아채기」(벨즈) — 주기마다 체력 비율이 가장 낮은 다른 아군을 끌어와 곁에 세우고 막을 두른다. 끌려온 아군을 노리던 적은
+ * 표적을 모두 잃는다. 체력이 가득 찬 아군뿐이면 끌어오지 않고 기다린다(헛되이 주기를 쓰지 않는다).
+ */
+function tickTongue(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = fighter.def.passive.tongue;
+  if (!plan || state.phase !== "fight" || !isFighterAlive(fighter)) return;
+  fighter.tongueIn = Math.max(0, fighter.tongueIn - dt);
+  if (fighter.tongueIn > 0) return;
+  const ally = aliveFighters(state, fighter.side)
+    .filter((other) => other.id !== fighter.id && isPartyFighter(other) && other.hp < other.maxHp)
+    .reduce<Fighter | undefined>((best, other) => !best || other.hp / other.maxHp < best.hp / best.maxHp ? other : best, undefined);
+  if (!ally) return;
+  fighter.tongueIn = plan.intervalSeconds;
+  // 벨즈의 뒤쪽(제 편 진영 쪽)으로 끌어와 세운다 — 앞에 세우면 끌어온 몸을 도로 적 앞에 내놓는다.
+  const back = fighter.side === "player" ? 1 : -1;
+  ally.x = Math.min(state.arena.right, Math.max(state.arena.left, fighter.x + (ally.x >= fighter.x ? 1 : -1) * plan.landDistance * 0.6));
+  ally.y = Math.min(state.arena.bottom, Math.max(state.arena.top, fighter.y + back * plan.landDistance * 0.8));
+  ally.knockback = null;
+  grantShield(state, ally, fighter.id, Math.max(1, Math.round(ally.maxHp * plan.shieldMaxHpPercent / 100)), events);
+  untarget(state, ally);
+  events.push({ kind: "combatEffect", fighterId: ally.id, effect: { tag: "shieldGain", intensity: 1.2 } });
+  state.log.push(`${fighter.def.name} 혀 → ${ally.def.name}`);
+}
+
+/** 이 아군을 노리던 적의 표적을 모두 푼다 — 다음 프레임에 처음부터 다시 고른다. */
+function untarget(state: SkirmishState, ally: Fighter): void {
+  for (const other of state.fighters) {
+    if (other.side === ally.side || other.targetId !== ally.id) continue;
+    other.targetId = null;
+    other.engaged = false;
+  }
+}
+
+/** 「꿀꺽」이 걸릴 아군 — 체력 비율이 가장 낮은 다른 아군, 없으면 시전자 자신이다. */
+function gulpTarget(state: SkirmishState, caster: Fighter): Fighter {
+  return aliveFighters(state, caster.side)
+    .filter((other) => other.id !== caster.id && isPartyFighter(other))
+    .reduce<Fighter | undefined>((best, other) => !best || other.hp / other.maxHp < best.hp / best.maxHp ? other : best, undefined) ?? caster;
+}
+
+/** 「꿀꺽」 — 은신(때려도 풀리지 않는다)과 지속 회복을 함께 건다. 이미 더 긴 은신·더 센 회복이 걸려 있으면 그쪽을 남긴다. */
+function applyGulp(ally: Fighter, caster: Fighter, buff: GulpBuff, state: SkirmishState): void {
+  ally.stealthFor = Math.max(ally.stealthFor, buff.seconds);
+  ally.stealthBreaksOnBasic = false;
+  untarget(state, ally);
+  const current = ally.regeneration;
+  if (!current || current.percentPerTick <= buff.healMaxHpPercentPerSecond) {
+    ally.regeneration = { remaining: Math.max(current?.remaining ?? 0, buff.seconds), tickIn: current?.tickIn ?? 1, percentPerTick: buff.healMaxHpPercentPerSecond };
+  }
+  state.log.push(`${caster.def.name} 꿀꺽 → ${ally.def.name}`);
 }
 
 /** 불멸을 지금 켤 수 있는가. 전투당 한 번뿐이고 이미 버티는 중에는 다시 켜지지 않는다. */
@@ -9178,6 +9294,10 @@ function strike(
     // 아군 전체 충전은 시전자 자신의 충전과 같은 경계에서, 한 공격 행동에 한 번만 나눠 준다.
     grantAllyEnergy(attacker, skill, state);
   grantDuoCharge(attacker, skill, state, events);
+    if (!useUltimate) scentOnBasicHit(attacker, state, events);
+    if (!useUltimate && "passiveCooldownReductionSeconds" in skill && skill.passiveCooldownReductionSeconds !== undefined && attacker.def.passive.tongue) {
+      attacker.tongueIn = Math.max(0, attacker.tongueIn - skill.passiveCooldownReductionSeconds);
+    }
     gainFerocity(attacker, actionFerocityGain(attacker.def.stats, useUltimate), state, events);
   }
   // 무효 공격은 실제 피격이 아니므로 피격 야성과 그에 따른 폭주 전환을 만들지 않는다.
@@ -10626,6 +10746,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     }
     // 가로챈 죽음은 다음 일이 일어나기 전에 마무리한다 — 밀어내기가 늦으면 그 사이 한 대 더 맞는다.
     if (fighter.undyingPending) startUndying(fighter, state, events);
+    tickTongue(fighter, dt, state, events);
     // 출혈은 붙어 있든 달려가든 흐르는 시간만큼 깎는다. 중독도 같은 축이라 나란히 흐른다.
     tickBleed(fighter, dt, state, events);
     if (!isFighterAlive(fighter)) continue;
@@ -11072,6 +11193,14 @@ function fireUltimateCore(
     attacker.attackCooldown = attackInterval(attacker, state);
     return events;
   }
+  if (teamUltimate.targeting === "battlefieldAllies" && teamUltimate.teamBuff?.kind === "gulp") {
+    attacker.energy -= ultimateCost(state, attacker, true);
+    const ally = gulpTarget(state, attacker);
+    applyGulp(ally, attacker, teamUltimate.teamBuff, state);
+    events.push({ kind: "teamBuff", fighterId: ally.id, buff: teamUltimate.teamBuff, sourceId: attacker.id });
+    attacker.attackCooldown = attackInterval(attacker, state);
+    return events;
+  }
   if (teamUltimate.targeting === "battlefieldAllies" && teamUltimate.teamBuff !== undefined) {
     // 피해도 회복도 없는 지원 궁극기다. 게이지만 쓰고 생존 아군 전체에 지속 강화를 건다.
     attacker.energy -= ultimateCost(state, attacker, true);
@@ -11515,7 +11644,16 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
     // 비교해야 한 번만 터진다(은신·광란 전환과 같은 방식이다).
     state.fighters.forEach((fighter) => {
       const feverBefore = fighter.ferocityFever;
-      drainFerocityFever(fighter, step);
+      // 「피 냄새」가 붙잡아 둔 시간만큼은 닳지 않는다 — 남은 몫이 먼저 흐르고, 넘친 시간만 게이지를 깎는다.
+      let drainStep = step;
+      if (fighter.ferocityFever && fighter.feverHold > 0) {
+        const held = Math.min(fighter.feverHold, drainStep);
+        fighter.feverHold -= held;
+        drainStep -= held;
+      }
+      if (!fighter.ferocityFever) fighter.feverHold = 0;
+      fighter.feverElapsed = fighter.ferocityFever ? fighter.feverElapsed + step : 0;
+      drainFerocityFever(fighter, drainStep);
       if (feverBefore && !fighter.ferocityFever) applyFerocityBreakthrough(fighter, state, events);
     });
     state.fighters.forEach((fighter) => { tickUltimateBreakthrough(fighter, step, state, events); tickTidalEchoes(fighter, step, state, events); tickStarfalls(fighter, step, state, events); tickArrowEchoes(fighter, step, state, events); tickAfterimages(fighter, step, state, events); tickTankBreakthroughs(fighter, step, state, events); tickBossBreakthroughs(fighter, step, state, events); tickAfterglow(fighter, state, events); });

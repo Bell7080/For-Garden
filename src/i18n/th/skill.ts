@@ -567,4 +567,10 @@ export const SKILL_TH = {
   "skill.breakthrough.effect.basic.chainSnare": "ทุกครั้งที่ {every} ของ \"{name}\" จะติด[[chill|ชะลอ]] {percent}% ให้ศัตรูที่โดนเป็นเวลา {seconds} วินาที",
   "skill.breakthrough.effect.ultimate.canopySweep": "ทันทีที่ใช้ \"{name}\" จะผลักศัตรูรอบตัวออกไปด้านนอก",
   "skill.breakthrough.effect.passive.shadeRetort": "{percent}% ของความเสียหายที่รับแทนจะสะสมไว้ แล้วเพิ่มเป็น[[fixed-damage|ความเสียหายคงที่]]ในการโจมตีพื้นฐานครั้งถัดไปในครั้งเดียว สะสมได้สูงสุด {cap}",
+  "skill.passive.tonguePull": "ทุก {seconds} วินาที ใช้ลิ้นดึงพันธมิตรคนอื่นที่มี HP เป็นสัดส่วนต่ำสุดมายืนข้างตัว และสร้าง[[shield|โล่]] {shield}% ของ HP สูงสุดของพันธมิตรนั้น ศัตรูที่เล็งพันธมิตรนั้นอยู่จะเสียเป้าหมายทั้งหมด",
+  "skill.sentence.gulp": "[[gulp|อึก]]พันธมิตรคนอื่นที่มี HP เป็นสัดส่วนต่ำสุดหนึ่งคนเป็นเวลา {seconds} วินาที",
+  "skill.passive.bloodScent": "ทุกครั้งที่[[basic-attack|การโจมตีปกติ]]โดนเป้า จะได้รับ[[ferocity|ความดุร้าย]]เพิ่ม {bonus} ระหว่าง[[ferocity|คลั่ง]] การโจมตีปกติที่โดนแต่ละครั้งทำให้ภาวะคลั่งไม่ลดลง {hit} วินาที และการล้มศัตรูทำให้ไม่ลดลง {kill} วินาที การคลั่งหนึ่งครั้งยืดได้สูงสุด {cap} วินาที",
+  "skill.clause.selfFerocity": "ได้รับ[[ferocity|ความดุร้าย]] {amount} หากอยู่ใน[[ferocity|คลั่ง]]แล้ว ภาวะคลั่งจะไม่ลดลง {seconds} วินาทีแทน",
+  "skill.ferocity.selfAttackSpeedMultiplier.ramp": "ระหว่างที่ภาวะคลั่งต่อเนื่องไม่ขาด [[attack-speed|ความเร็วโจมตี]]จะเริ่มที่ +{percent}% และเพิ่มขึ้นวินาทีละ {perSecond}% สูงสุด +{max}% และการดูดเลือดจากความเสียหายทั้งหมดเพิ่มขึ้นวินาทีละ {stealPerSecond}% สูงสุด {stealMax}% เมื่อภาวะคลั่งจบจะเริ่มนับใหม่",
+  "skill.clause.passiveCooldownReduction": "ทุกครั้งที่โดนเป้า รอบที่เหลือของพาสซีฟจะลดลง {seconds} วินาที",
 } as const;

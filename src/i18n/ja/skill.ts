@@ -591,4 +591,10 @@ export const SKILL_JA = {
   "skill.breakthrough.effect.basic.chainSnare": "「{name}」{every}回目ごとに、当たった敵に{seconds}秒間{percent}%の[[chill|鈍化]]をかける。",
   "skill.breakthrough.effect.ultimate.canopySweep": "「{name}」を広げた瞬間、周囲の敵を外側へ押し出す。",
   "skill.breakthrough.effect.passive.shadeRetort": "代わりに受けたダメージの{percent}%が蓄積し、次の通常攻撃に[[fixed-damage|固定ダメージ]]としてまとめて上乗せされる。蓄積は最大{cap}まで。",
+  "skill.passive.tonguePull": "{seconds}秒ごとに、体力の割合が最も低い他の味方を舌で引き寄せてそばに立たせ、その味方の最大体力の{shield}%分の[[shield|シールド]]を付与する。引き寄せた味方を狙っていた敵は標的をすべて失う。",
+  "skill.sentence.gulp": "体力の割合が最も低い他の味方1人を{seconds}秒間[[gulp|ゴクン]]する。",
+  "skill.passive.bloodScent": "[[basic-attack|通常攻撃]]が命中するたびに[[ferocity|野性]]を{bonus}追加で得る。[[ferocity|暴走]]中は通常攻撃の命中ごとに{hit}秒、敵を倒すと{kill}秒のあいだ暴走が減らない。1回の暴走で延びる時間は最大{cap}秒。",
+  "skill.clause.selfFerocity": "自身の[[ferocity|野性]]を{amount}得る。すでに[[ferocity|暴走]]中なら、代わりに暴走が{seconds}秒間減らない",
+  "skill.ferocity.selfAttackSpeedMultiplier.ramp": "暴走が途切れずに続くあいだ、[[attack-speed|攻撃速度]]が+{percent}%から毎秒{perSecond}%ずつ上がって最大+{max}%、すべてのダメージ吸血が毎秒{stealPerSecond}%ずつ上がって最大{stealMax}%になる。暴走が終わると最初に戻る。",
+  "skill.clause.passiveCooldownReduction": "命中するたびにパッシブの残りの周期が{seconds}秒短くなる",
 } as const;

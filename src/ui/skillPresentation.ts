@@ -182,6 +182,12 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "selfAttackSpeedMultiplier") {
     // 들어서는 순간의 끌어당김이 먼저다 — 화면에서 확인할 첫 변화가 적이 한꺼번에 끌려오는 것이다.
     if (trait.pullOnEntry) return t("skill.ferocity.selfAttackSpeedMultiplier.pull", { percent: trait.bonusPercent });
+    // 손이 빨라지는 것과 함께 무는 만큼 되찾는다(아르사).
+    // 끊기지 않을수록 오르는 폭주(아르사) — 시작값·매초 오르는 몫·상한을 함께 말한다.
+    if (trait.ramp !== undefined) {
+      const ramp = trait.ramp;
+      return t("skill.ferocity.selfAttackSpeedMultiplier.ramp", { percent: trait.bonusPercent, perSecond: ramp.attackSpeedPercentPerSecond, max: ramp.maxAttackSpeedPercent, stealPerSecond: ramp.lifeStealPointsPerSecond, stealMax: ramp.maxLifeStealPoints });
+    }
     // 고친 자리에 한 겹 덮는 몫은 손이 빨라지는 것과 다른 축이라 제 절로 선다.
     return trait.healingShieldPercent === undefined
       ? t("skill.ferocity.selfAttackSpeedMultiplier", { percent: trait.bonusPercent })
@@ -818,6 +824,15 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     });
   }
   // 대신 받는 몫·막으로 바뀌는 몫·막 상한을 한 번에 말한다. 상한은 제 최대 체력에서 재는 값이라 실제 수로 세운다.
+  // 더 끌어오는 야성 · 적중과 처치가 늘리는 폭주 · 연장 상한을 한 번에 말한다.
+  if (passive.kind === "bloodScent" && passive.bloodScent !== undefined) {
+    const plan = passive.bloodScent;
+    return t("skill.passive.bloodScent", { bonus: plan.bonusFerocityPerHit, hit: plan.extendPerHitSeconds, kill: plan.extendPerKillSeconds, cap: plan.maxExtendSeconds });
+  }
+  // 주기·누구를·막의 크기·표적 풀기를 한 번에 말한다. 막은 끌려오는 아군의 최대 체력에서 재므로 %로 남긴다.
+  if (passive.kind === "tonguePull" && passive.tongue !== undefined) {
+    return t("skill.passive.tonguePull", { seconds: passive.tongue.intervalSeconds, shield: passive.tongue.shieldMaxHpPercent });
+  }
   if (passive.kind === "canopyShade" && passive.canopy !== undefined) {
     const plan = passive.canopy;
     return t("skill.passive.canopyShade", { percent: plan.sharePercent, shield: plan.shieldFromSharePercent, cap: scaled("shield", "hp", plan.shieldCapMaxHpPercent, own?.maxHp) });
@@ -1056,6 +1071,10 @@ export function skillDescription(
       return buff.maxHpRegenPercentPerSecond === undefined
         ? t("skill.sentence.tailwind", { seconds: buff.seconds })
         : t("skill.sentence.tailwindRegen", { seconds: buff.seconds, percent: buff.maxHpRegenPercentPerSecond });
+    }
+    // 한 명을 숨기는 「꿀꺽」. 숨는 동안 무엇이 되는지는 「꿀꺽」 태그가 말한다(쓰는 개체가 하나뿐인 규칙어).
+    if ("teamBuff" in skill && skill.teamBuff?.kind === "gulp") {
+      return t("skill.sentence.gulp", { seconds: skill.teamBuff.seconds });
     }
     return skill.desc ?? "";
   }
@@ -1300,6 +1319,12 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   if ("defenseIgnorePercent" in skill && skill.defenseIgnorePercent !== undefined) {
     const key = "damageType" in skill && skill.damageType === "magical" ? "skill.clause.defenseIgnore.res" : "skill.clause.defenseIgnore.def";
     clauses.push({ text: t(key, { percent: skill.defenseIgnorePercent }), standalone: true });
+  }
+  if ("passiveCooldownReductionSeconds" in skill && skill.passiveCooldownReductionSeconds !== undefined) {
+    clauses.push({ text: t("skill.clause.passiveCooldownReduction", { seconds: skill.passiveCooldownReductionSeconds }), standalone: true });
+  }
+  if ("selfFerocity" in skill && skill.selfFerocity !== undefined) {
+    clauses.push({ text: t("skill.clause.selfFerocity", { amount: skill.selfFerocity.amount, seconds: skill.selfFerocity.feverExtendSeconds }), standalone: true });
   }
   if ("energyRefundOnKill" in skill && skill.energyRefundOnKill !== undefined) {
     clauses.push({ text: t("skill.clause.energyRefundOnKill", { value: skill.energyRefundOnKill }), standalone: true });

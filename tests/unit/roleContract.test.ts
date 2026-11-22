@@ -78,7 +78,7 @@ function ferocitySustains(relic: RelicDef): boolean {
   const trait = relic.ferocityTrait as unknown as Record<string, unknown>;
   return trait.healPercent !== undefined || trait.shieldMaxHpPercent !== undefined
     || trait.missingHpShieldPercent !== undefined || trait.missingHpRegenPercentPerSecond !== undefined
-    || trait.allDamageLifeStealPoints !== undefined || trait.healingShieldPercent !== undefined
+    || trait.allDamageLifeStealPoints !== undefined || trait.lifeStealPoints !== undefined || trait.ramp !== undefined || trait.healingShieldPercent !== undefined
     || trait.shieldPercentOfDamageTaken !== undefined;
 }
 

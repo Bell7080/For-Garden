@@ -567,4 +567,10 @@ export const SKILL_PT_BR = {
   "skill.breakthrough.effect.basic.chainSnare": "A cada {every}º \"{name}\", aplica [[chill|Lentidão]] de {percent}% ao alvo por {seconds} s.",
   "skill.breakthrough.effect.ultimate.canopySweep": "Ao usar \"{name}\", empurra os inimigos próximos para longe.",
   "skill.breakthrough.effect.passive.shadeRetort": "{percent}% do dano recebido no lugar dos aliados é acumulado e somado de uma vez ao próximo ataque básico como [[fixed-damage|dano fixo]]. Acumula até {cap}.",
+  "skill.passive.tonguePull": "A cada {seconds} s, puxa com a língua o outro aliado com a menor porcentagem de vida para o seu lado e lhe dá um [[shield|Escudo]] igual a {shield}% da vida máxima dele. Os inimigos que o miravam perdem o alvo.",
+  "skill.sentence.gulp": "Faz [[gulp|Glup]] no outro aliado com a menor porcentagem de vida por {seconds} s.",
+  "skill.passive.bloodScent": "Cada acerto de [[basic-attack|ataque básico]] concede {bonus} de [[ferocity|Ferocidade]] extra. Durante o [[ferocity|Frenesi]], cada acerto de ataque básico impede que ele se esgote por {hit} s, e cada abate por {kill} s. Um Frenesi pode ser estendido em até {cap} s no total.",
+  "skill.clause.selfFerocity": "Ganha {amount} de [[ferocity|Ferocidade]]. Se já estiver em [[ferocity|Frenesi]], em vez disso ele não se esgota por {seconds} s",
+  "skill.ferocity.selfAttackSpeedMultiplier.ramp": "Enquanto o Frenesi continuar sem interrupção, a [[attack-speed|Velocidade de ataque]] começa em +{percent}% e sobe {perSecond}% a cada segundo até +{max}%, e o roubo de vida de todo o dano sobe {stealPerSecond}% a cada segundo até {stealMax}%. Ambos recomeçam quando o Frenesi termina.",
+  "skill.clause.passiveCooldownReduction": "Cada acerto reduz em {seconds} s o tempo restante da passiva",
 } as const;

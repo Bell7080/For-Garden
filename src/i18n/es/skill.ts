@@ -567,4 +567,10 @@ export const SKILL_ES = {
   "skill.breakthrough.effect.basic.chainSnare": "Cada {every}.º \"{name}\" aplica una [[chill|Ralentización]] del {percent}% al objetivo durante {seconds} s.",
   "skill.breakthrough.effect.ultimate.canopySweep": "Al lanzar \"{name}\", empuja hacia fuera a los enemigos cercanos.",
   "skill.breakthrough.effect.passive.shadeRetort": "El {percent}% del daño recibido en lugar de los aliados se acumula y se suma de golpe al siguiente ataque básico como [[fixed-damage|daño fijo]]. Acumula hasta {cap}.",
+  "skill.passive.tonguePull": "Cada {seconds} s, atrae con la lengua al otro aliado con menor porcentaje de vida a su lado y le da un [[shield|Escudo]] igual al {shield}% de su vida máxima. Los enemigos que lo apuntaban pierden su objetivo.",
+  "skill.sentence.gulp": "Hace [[gulp|Glup]] al otro aliado con menor porcentaje de vida durante {seconds} s.",
+  "skill.passive.bloodScent": "Cada impacto de [[basic-attack|ataque básico]] otorga {bonus} de [[ferocity|Ferocidad]] extra. Durante el [[ferocity|Frenesí]], cada impacto de ataque básico evita que se agote durante {hit} s, y cada derribo durante {kill} s. Un Frenesí puede alargarse hasta {cap} s en total.",
+  "skill.clause.selfFerocity": "Obtiene {amount} de [[ferocity|Ferocidad]]. Si ya está en [[ferocity|Frenesí]], en su lugar este no se agota durante {seconds} s",
+  "skill.ferocity.selfAttackSpeedMultiplier.ramp": "Mientras el Frenesí continúe sin interrupción, la [[attack-speed|Velocidad de ataque]] empieza en +{percent}% y sube un {perSecond}% cada segundo hasta +{max}%, y el robo de vida de todo el daño sube un {stealPerSecond}% cada segundo hasta {stealMax}%. Ambos se reinician al terminar el Frenesí.",
+  "skill.clause.passiveCooldownReduction": "Cada impacto acorta {seconds} s el tiempo restante de la pasiva",
 } as const;

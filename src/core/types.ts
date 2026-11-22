@@ -52,7 +52,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno" | "plesha" | "arte" | "brika";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno" | "plesha" | "arte" | "brika" | "belz" | "arsa";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -344,6 +344,10 @@ export type AttackSkill = SkillBase & {
    * 그것은 궁극기 돌파(`spotlessFinish`)의 몫이다.
    */
   allyScrub?: DeepCleanBuff;
+  /**
+   * 이 공격이 적중할 때마다 **제 패시브의 주기**를 이만큼(초) 당긴다(벨즈의 「족쇄 채찍」 → 「혀 낚아채기」). 공격 행동 한 번에 한 번이다.
+   */
+  passiveCooldownReductionSeconds?: number;
   healing?: never;
   teamBuff?: never;
   selfSetup?: never;
@@ -656,10 +660,28 @@ export type TeamBuff =
       /** 유지 시간(초). */
       seconds: number;
       attackSpeedPercent?: never;
+    }
+  | {
+      /**
+       * 「꿀꺽」(벨즈). **체력 비율이 가장 낮은 다른 아군 한 명**에게만 걸린다(전장에 벨즈 혼자면 자신). 그 시간 동안 은신해 적의 표적에서
+       * 벗어나고 매초 최대 체력 `healMaxHpPercentPerSecond`%를 회복한다. 삼켜서 묶는 것이 아니라 숨겨 주는 것이라, 걸린 아군은 그대로
+       * 움직이고 싸운다(때려도 은신이 풀리지 않는다).
+       *
+       * 순풍·오더·공명 칸이 아니라 은신(`stealthFor`)과 지속 회복(`regeneration`) 칸에 선다 — 순풍 칸을 쓰면 스테라의 순풍과 덮어쓴다.
+       */
+      kind: "gulp";
+      /** 은신 시간(초). */
+      seconds: number;
+      /** 그동안 매초 회복하는 최대 체력 비율(%). */
+      healMaxHpPercentPerSecond: number;
+      attackSpeedPercent?: never;
     };
 
 /** 「대청소」가 아군에게 남기는 막·방어 강화 한 벌. */
 export type DeepCleanBuff = Extract<TeamBuff, { kind: "deepClean" }>;
+
+/** 「꿀꺽」이 아군 한 명에게 남기는 한 벌. */
+export type GulpBuff = Extract<TeamBuff, { kind: "gulp" }>;
 
 /** 모든 스킬의 판별 유니온이며 `damageType in skill`로 공격 여부를 좁힌다. */
 export type Skill = AttackSkill | HealingSkill | SupportSkill | SetupSkill;
@@ -1197,6 +1219,11 @@ export type Ultimate = Skill & {
   /** 이 궁극기로 대상을 처치하면 되돌려받는 궁극기 게이지다. 빗나가거나 살아남으면 없다. */
   energyRefundOnKill?: number;
   /**
+   * 쏜 사람이 얻는 야성(아르사). 폭주 중이 아니면 `amount`만큼 오르고, 이미 폭주 중이면 그 대신 폭주가 `feverExtendSeconds`초 늘어난다
+   * (「피 냄새」의 연장 상한을 함께 쓴다). 시전 한 번에 한 번이다.
+   */
+  selfFerocity?: { amount: number; feverExtendSeconds: number };
+  /**
    * 지휘자 전용: 이 궁극기가 들어간 표적에게 **살아 있는 귀속 소환수가 곧바로 제 궁극기를 쓴다.**
    *
    * 늑대의 게이지는 쓰지 않는다. 무엇을 하는지는 늑대 정의가 갖는다.
@@ -1477,7 +1504,11 @@ export type PassiveKind =
   /** 플레샤 전용: 기본 공격 몇 번째마다 표적 자리에 유성이 늦게 떨어져 적을 치고, 그 피해로 가장 다친 아군을 회복한다. */
   | "starfall"
   /** 브리카 전용: 둘레 반경 안의 아군이 받는 피해 일부를 대신 받고, 대신 받은 몫의 일부를 보호막으로 바꾼다. */
-  | "canopyShade";
+  | "canopyShade"
+  /** 벨즈 전용: 몇 초마다 체력 비율이 가장 낮은 아군을 혀로 끌어와 곁에 세우고 보호막을 두르며, 그 아군을 노리던 적의 표적을 모두 풀어 버린다. */
+  | "tonguePull"
+  /** 아르사 전용: 평타가 야성을 더 끌어오고, 폭주 중 적중·처치가 폭주를 늘린다. */
+  | "bloodScent";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
@@ -1641,6 +1672,14 @@ export type FerocityTrait = {
        * 끌려오는 한 순간이 있어야 게이지가 찬 것이 화면에서 읽힌다.
        */
       pullOnEntry?: { radius: number; distance: number };
+      /** 폭주 중 모든 직접 피해에 더하는 흡혈(퍼센트포인트, 아르사). 선택이다. */
+      lifeStealPoints?: number;
+      /**
+       * 폭주가 **끊기지 않고 이어진 시간**만큼 오르는 몫(아르사). 폭주에 든 순간부터 매초 공격 속도·흡혈이 더해지고, 합이 상한에서
+       * 멈춘다(상한은 `bonusPercent`·`lifeStealPoints`를 더한 전체 값이다). 폭주가 끝나면 처음으로 돌아간다 — 상시 보너스가 아니라
+       * 오래 물고 늘어질수록 세지는 폭주다. 선택이다.
+       */
+      ramp?: { attackSpeedPercentPerSecond: number; maxAttackSpeedPercent: number; lifeStealPointsPerSecond: number; maxLifeStealPoints: number };
     }
   | {
       /**
@@ -2543,6 +2582,18 @@ export interface Passive {
    * 넘지 않는 선까지만 채운다. 궁극기의 앞에 서기가 더 큰 몫을 받으면 그쪽이 먼저다.
    */
   canopy?: { radius: number; sharePercent: number; shieldFromSharePercent: number; shieldCapMaxHpPercent: number };
+  /**
+   * 「혀 낚아채기」(벨즈). `intervalSeconds`초마다 **체력 비율이 가장 낮은 다른 아군**(체력이 가득 찬 아군은 고르지 않는다)을 혀로
+   * 끌어와 제 곁 `landDistance`px에 세우고, 그 아군의 최대 체력 `shieldMaxHpPercent`%만큼 보호막을 두른다. 끌려온 아군을 노리던 적은
+   * **표적을 모두 잃고** 처음부터 다시 고른다. 기본 공격이 주기를 당길 수 있다(`AttackSkill.passiveCooldownReductionSeconds`).
+   */
+  tongue?: { intervalSeconds: number; shieldMaxHpPercent: number; landDistance: number };
+  /**
+   * 「피 냄새」(아르사). 기본 공격이 적중할 때마다 야성을 `bonusFerocityPerHit`만큼 더 얻는다(공통 획득량은 그대로다).
+   * 폭주 중에는 기본 공격 적중마다 `extendPerHitSeconds`초, 적을 쓰러뜨리면 `extendPerKillSeconds`초 동안 폭주가 닳지 않는다 —
+   * 한 번의 폭주에 늘어나는 시간은 모두 합쳐 `maxExtendSeconds`초까지다(끝나지 않는 폭주를 막는다).
+   */
+  bloodScent?: { bonusFerocityPerHit: number; extendPerHitSeconds: number; extendPerKillSeconds: number; maxExtendSeconds: number };
   /** 전투 한정 누적 패시브가 쌓을 수 있는 최대 횟수. 상한이 없으면 한 판이 길수록 끝없이 자란다. */
   maxStacks?: number;
   /**

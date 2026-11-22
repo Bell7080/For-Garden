@@ -137,7 +137,7 @@ export const LOBBY_ID = {
   "shuteFishing.difficulty.hard": "Sulit",
   "shuteFishing.difficulty.extreme": "Sangat Sulit",
   "shuteFishing.hint.easy": "{fish} lagu · Tempo santai",
-  "shuteFishing.hint.normal": "{fish} lagu · Lagu bos: 170–340 permata",
+  "shuteFishing.hint.normal": "{fish} lagu · Lagu bos: 150–350 permata",
   "shuteFishing.hint.hard": "{fish} lagu · Lagu bos hingga 700 permata",
   "shuteFishing.hint.extreme": "{fish} lagu · Lagu bos: 350–700 permata",
   "shuteFishing.jackpotNote": "Setlist ditentukan saat mulai. Makin akhir lagunya, apalagi lagu bos terakhir, makin besar hartanya!",

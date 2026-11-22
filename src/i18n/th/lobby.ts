@@ -137,7 +137,7 @@ export const LOBBY_TH = {
   "shuteFishing.difficulty.hard": "ยาก",
   "shuteFishing.difficulty.extreme": "ยากมาก",
   "shuteFishing.hint.easy": "{fish} เพลง · จังหวะชิล ๆ",
-  "shuteFishing.hint.normal": "{fish} เพลง · เพลงบอส เจม 170–340",
+  "shuteFishing.hint.normal": "{fish} เพลง · เพลงบอส เจม 150–350",
   "shuteFishing.hint.hard": "{fish} เพลง · เพลงบอสสูงสุดเจม 700",
   "shuteFishing.hint.extreme": "{fish} เพลง · เพลงบอส เจม 350–700",
   "shuteFishing.jackpotNote": "เริ่มเล่นแล้วเซ็ตลิสต์จะถูกกำหนด ยิ่งเพลงหลัง ๆ และเพลงบอสสุดท้าย สมบัติยิ่งใหญ่!",

@@ -380,8 +380,15 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
 
     const publish = (): void => managerEvents.publish("wallet", { wallet: session.wallet });
     /** 지금 도는 캐치 — 바늘이 출발한 시각(`performance.now`)과 그 캐치의 게이지. */
-    let current: { spec: FishingCatch; tier: FishTier; startedAt: number } | undefined;
-    let frozenAt: number | undefined;
+    /**
+     * 지금 캐치. `delayMs`는 바늘을 실제 시각보다 그만큼 늦춰 그리는 몫(입력·화면·프레임 지연 + 이 기기에서 배운 쏠림,
+     * `shutePressLagMs`)이다 — 캐치를 걸 때 한 번 정해 그 캐치 동안 바꾸지 않는다(도중에 바뀌면 바늘이 튄다).
+     */
+    let current: { spec: FishingCatch; tier: FishTier; startedAt: number; delayMs: number } | undefined;
+    /** 멈춘 바늘의 경과(ms) — 누른 순간 **화면에 그려져 있던** 바로 그 값이고, 판정도 같은 값으로 한다. */
+    let frozenElapsed: number | undefined;
+    /** 마지막으로 그린 바늘의 경과(ms). 누르면 이 자리에 그대로 멈춘다. */
+    let drawnElapsed: number | undefined;
     let flash = 0;
     let combo = 0;
     /** 이번 판에 낚은 물고기 — 끝날 때 카드로 늘어선다. */
@@ -518,8 +525,8 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
       const spec = run?.catches[run.index]?.[run.caught];
       const treasure = run ? fishTreasure(run.fish[run.index]) : undefined;
       if (!run || !spec || !treasure) { current = undefined; return; }
-      current = { spec, tier: treasure.tier, startedAt: performance.now() };
-      frozenAt = undefined;
+      current = { spec, tier: treasure.tier, startedAt: performance.now(), delayMs: shutePressLagMs(frameInterval, timingBias) };
+      frozenElapsed = undefined; drawnElapsed = undefined;
       const fishingTrack = fishingBgmTrack(run.difficulty, run.index === run.fish.length - 1);
       if (fishingTrack) holdBgm(fishingTrack);
       playShute.setTempo(spec.sweepMs);
@@ -533,8 +540,11 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
       if (lastTickAt !== undefined) frameInterval = nextFrameInterval(frameInterval, tickAt - lastTickAt);
       lastTickAt = tickAt;
       flash = Math.max(0, flash - 0.06);
-      const now = frozenAt ?? tickAt;
-      const position = current ? gaugePosition(current.spec.sweepMs, now - current.startedAt) : 0;
+      // 바늘은 실제 시각보다 `delayMs`만큼 늦게 그린다 — 사람은 보이는 바늘에 맞춰 누르므로, 그 늦음을 그리는 쪽이 먼저
+      // 치러 두면 누른 순간 화면의 바늘이 곧 판정할 자리다(예전처럼 누른 뒤 판정 시각으로 되돌려 그리면 바늘이 뒤로 튀었다).
+      const elapsed = current ? frozenElapsed ?? Math.max(0, tickAt - current.startedAt - current.delayMs) : 0;
+      if (current) drawnElapsed = elapsed;
+      const position = current ? gaugePosition(current.spec.sweepMs, elapsed) : 0;
       if (paintedZone !== current?.spec || paintedFlash !== flash) {
         paintedZone = current?.spec; paintedFlash = flash;
         gauge.clear();
@@ -690,7 +700,7 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
     const resync = async (error?: unknown): Promise<void> => {
       generation += 1;
       if (error) fail(error);
-      current = undefined; frozenAt = undefined;
+      current = undefined; frozenElapsed = undefined; drawnElapsed = undefined;
       const fresh = await gameApi.getShuteFishing().catch(() => undefined);
       if (!alive || !fresh) return;
       status = fresh;
@@ -721,14 +731,15 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
     };
 
     function press(pressedAt: number): void {
-      if (busy || !current || frozenAt !== undefined || !status.run) return;
-      // 보이는 바늘에 맞춰 누른 시각 — 입력·화면·프레임 간격만큼의 어긋남과 이 기기에서 배운 쏠림을 덜어 낸다.
-      const elapsedMs = Math.max(0, Math.round(pressedAt - shutePressLagMs(frameInterval, timingBias) - current.startedAt));
+      if (busy || !current || frozenElapsed !== undefined || !status.run) return;
+      // 누른 순간 화면에 그려져 있던 바늘의 자리 그대로 판정하고 그 자리에 멈춘다 — 화면과 판정이 한 값이다.
+      // 아직 한 번도 그리기 전이면(캐치를 건 같은 프레임) 누른 시각에서 같은 늦춤을 덜어 구한다.
+      const elapsedMs = Math.max(0, Math.round(drawnElapsed ?? pressedAt - current.startedAt - current.delayMs));
       const spec = current.spec;
       let stepped: ReturnType<typeof reelFishing>;
       try { stepped = reelFishing(status.run, elapsedMs); } catch (error) { void resync(error); return; }
-      // 바늘은 판정한 바로 그 자리에 선다.
-      frozenAt = current.startedAt + elapsedMs;
+      // 바늘은 판정한 바로 그 자리(= 방금 그려져 있던 자리)에 선다.
+      frozenElapsed = elapsedMs;
       busy = true;
       const reel = stepped.reel;
       // 맞힌 누름이 한가운데에서 쏠린 만큼을 다음 누름의 보정에 조금 싣는다(빗나간 누름은 노린 자리를 모른다).

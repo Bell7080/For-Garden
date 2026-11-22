@@ -1,3 +1,4 @@
+import { isCleanPaidAmount } from "../../src/core/paidAmountUnit";
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import { createDefaultSession } from "../../src/state/session";
@@ -128,8 +129,11 @@ describe("슈테의 리듬 낚시 규칙", () => {
     expect(normalizeShuteFishingState(ledger({ ...base, bossAmount: 1000 })).run).toBeNull();
     expect(isValidShuteFishingState(ledger(base))).toBe(true);
     expect(fishAmount(base, fish.length - 1)).toBe(700);
-    expect(fishAmount({ ...base, bossAmount: 510 }, fish.length - 1)).toBe(510);
+    // 예전(10 단위) 판의 510은 저장에서 버리지 않고 지급할 때 500으로 맞춘다.
+    expect(fishAmount({ ...base, bossAmount: 510 }, fish.length - 1)).toBe(500);
+    expect(fishAmount({ ...base, bossAmount: 550 }, fish.length - 1)).toBe(550);
     expect(fishAmount({ ...base, bossAmount: 510 }, 0)).toBe(fishTreasure(fish[0])!.amount);
+    expect(isValidShuteFishingState(ledger({ ...base, bossAmount: 515 }))).toBe(false);
   });
 
   it("물고기마다 캐치는 3~5번이고, 어떤 캐치도 판정 창이 MIN_WINDOW_MS보다 짧지 않다", () => {
@@ -252,5 +256,15 @@ describe("슈테의 리듬 낚시 서버 경계", () => {
     expect(last!.reel!.finished).toBe(true);
     expect(last!.status.run).toBeNull();
     expect(last!.status.coins).toBe(700);
+  });
+});
+
+describe("슈테의 리듬 낚시 보상 단위", () => {
+  it("모든 보물·보스 범위가 깔끔한 단위다(유료 수량 규칙과 같은 끊음)", () => {
+    for (const treasure of FISH_TREASURES) expect(isCleanPaidAmount(treasure.amount), treasure.id).toBe(true);
+    for (const difficulty of FISHING_DIFFICULTIES) {
+      for (const floor of Object.values(difficulty.bossFloor)) expect(floor % BOSS_AMOUNT_STEP, difficulty.id).toBe(0);
+    }
+    expect(BOSS_AMOUNT_STEP).toBe(50);
   });
 });

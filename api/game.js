@@ -5497,7 +5497,7 @@ var LOBBY_KO = {
   "shuteFishing.difficulty.hard": "\uC5B4\uB824\uC6C0",
   "shuteFishing.difficulty.extreme": "\uB9E4\uC6B0 \uC5B4\uB824\uC6C0",
   "shuteFishing.hint.easy": "{fish}\uACE1 \xB7 \uB290\uAE0B\uD55C \uD15C\uD3EC",
-  "shuteFishing.hint.normal": "{fish}\uACE1 \xB7 \uBCF4\uC2A4\uACE1 \uC82C 170~340",
+  "shuteFishing.hint.normal": "{fish}\uACE1 \xB7 \uBCF4\uC2A4\uACE1 \uC82C 150~350",
   "shuteFishing.hint.hard": "{fish}\uACE1 \xB7 \uBCF4\uC2A4\uACE1 \uC82C \uCD5C\uB300 700",
   "shuteFishing.hint.extreme": "{fish}\uACE1 \xB7 \uBCF4\uC2A4\uACE1 \uC82C 350~700",
   "shuteFishing.jackpotNote": "\uB4E4\uC5B4\uAC00\uBA74 \uC14B\uB9AC\uC2A4\uD2B8\uAC00 \uC815\uD574\uC838. \uB4A4\uB85C \uAC08\uC218\uB85D, \uB9C8\uC9C0\uB9C9 \uBCF4\uC2A4\uACE1\uC77C\uC218\uB85D \uBCF4\uBB3C\uC774 \uCEE4!",
@@ -27388,8 +27388,8 @@ var FISH_TIER_FEEL = {
   jackpot: { catches: 5, speed: 0.8, width: 0.78 }
 };
 var FISH_TREASURES = [
-  { id: "gold-s", tier: "common", currency: "gold", amount: 18e3, weight: 1 },
-  { id: "cheesecake-s", tier: "common", currency: "cheesecake", amount: 18, weight: 1 },
+  { id: "gold-s", tier: "common", currency: "gold", amount: 2e4, weight: 1 },
+  { id: "cheesecake-s", tier: "common", currency: "cheesecake", amount: 20, weight: 1 },
   { id: "stamina-s", tier: "common", currency: "stamina", amount: 35, weight: 1 },
   { id: "stone-s", tier: "common", currency: "rawStone", amount: 7, weight: 1 },
   { id: "gems-xs", tier: "common", currency: "gems", amount: 30, weight: 1 },
@@ -27397,13 +27397,13 @@ var FISH_TREASURES = [
   { id: "cheesecake-m", tier: "fine", currency: "cheesecake", amount: 50, weight: 1 },
   { id: "gems-s", tier: "fine", currency: "gems", amount: 70, weight: 1 },
   { id: "stamina-m", tier: "fine", currency: "stamina", amount: 100, weight: 1 },
-  { id: "gems-m", tier: "rare", currency: "gems", amount: 130, weight: 3 },
+  { id: "gems-m", tier: "rare", currency: "gems", amount: 150, weight: 3 },
   { id: "gold-l", tier: "rare", currency: "gold", amount: 1e5, weight: 1 },
   { id: "cheesecake-l", tier: "rare", currency: "cheesecake", amount: 100, weight: 1 },
   { id: "gems-l", tier: "rare", currency: "gems", amount: 200, weight: 2 },
   { id: "fossil", tier: "rare", currency: "fossil", amount: 1, weight: 2 },
   { id: "amber", tier: "rare", currency: "amber", amount: 1, weight: 2 },
-  { id: "jackpot-500", tier: "jackpot", currency: "gems", amount: 340, weight: 3 },
+  { id: "jackpot-500", tier: "jackpot", currency: "gems", amount: 350, weight: 3 },
   { id: "jackpot-1000", tier: "jackpot", currency: "gems", amount: 700, weight: 1 }
 ];
 function fishTreasure(id) {
@@ -27431,7 +27431,7 @@ var FISHING_DIFFICULTIES = [
     zone: 0.31,
     tierWeights: { common: 20, fine: 50, rare: 30 },
     boss: [["jackpot-500", 1]],
-    bossFloor: { "jackpot-500": 170 }
+    bossFloor: { "jackpot-500": 150 }
   },
   {
     id: "hard",
@@ -27441,7 +27441,7 @@ var FISHING_DIFFICULTIES = [
     zone: 0.28,
     tierWeights: { common: 0, fine: 45, rare: 55 },
     boss: [["jackpot-500", 5], ["jackpot-1000", 1]],
-    bossFloor: { "jackpot-500": 170, "jackpot-1000": 320 }
+    bossFloor: { "jackpot-500": 150, "jackpot-1000": 300 }
   },
   {
     id: "extreme",
@@ -27457,7 +27457,7 @@ var FISHING_DIFFICULTIES = [
 function fishingDifficulty(id) {
   return FISHING_DIFFICULTIES.find((difficulty) => difficulty.id === id);
 }
-var BOSS_AMOUNT_STEP = 10;
+var BOSS_AMOUNT_STEP = 50;
 function bossAmountRange(difficulty, treasureId) {
   const treasure = fishTreasure(treasureId);
   if (!treasure) return void 0;
@@ -27470,14 +27470,22 @@ function rollBossAmount(difficulty, treasureId, random) {
   const steps = Math.floor((range.max - range.min) / BOSS_AMOUNT_STEP);
   return Math.min(range.max, range.min + Math.floor(clampRoll3(random) * (steps + 1)) * BOSS_AMOUNT_STEP);
 }
+var LEGACY_BOSS_AMOUNT_STEP = 10;
 function isBossAmountValid(difficulty, treasureId, amount) {
   const range = bossAmountRange(difficulty, treasureId);
-  return !!range && Number.isInteger(amount) && amount >= range.min && amount <= range.max && (amount === range.max || (amount - range.min) % BOSS_AMOUNT_STEP === 0);
+  return !!range && Number.isInteger(amount) && amount >= range.min && amount <= range.max && (amount === range.max || (amount - range.min) % LEGACY_BOSS_AMOUNT_STEP === 0);
+}
+function snapBossAmount(range, amount) {
+  const snapped = range.min + Math.round((amount - range.min) / BOSS_AMOUNT_STEP) * BOSS_AMOUNT_STEP;
+  return Math.min(range.max, Math.max(range.min, snapped));
 }
 function fishAmount(run2, index) {
   const treasure = fishTreasure(run2.fish[index]);
   if (!treasure) return 0;
-  return index === run2.fish.length - 1 && run2.bossAmount !== void 0 ? run2.bossAmount : treasure.amount;
+  if (index !== run2.fish.length - 1 || run2.bossAmount === void 0) return treasure.amount;
+  const difficulty = fishingDifficulty(run2.difficulty);
+  const range = difficulty ? bossAmountRange(difficulty, treasure.id) : void 0;
+  return range ? snapBossAmount(range, run2.bossAmount) : run2.bossAmount;
 }
 function gaugePosition(sweepMs, elapsedMs) {
   if (!(sweepMs > 0) || !Number.isFinite(elapsedMs) || elapsedMs <= 0) return 0;
@@ -46220,7 +46228,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.515.1",
+  version: "0.515.2",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {

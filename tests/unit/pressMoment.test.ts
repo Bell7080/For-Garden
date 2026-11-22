@@ -46,3 +46,13 @@ describe("리듬 판정 시각", () => {
     expect(nextTimingBias(0, 1e9, Infinity)).toBeLessThanOrEqual(SHUTE_TIMING_BIAS_RANGE_MS.max);
   });
 });
+
+describe("슈테 리듬 낚시 — 멈춘 바늘이 튀지 않는다", () => {
+  it("누르면 마지막으로 그린 바늘 자리 그대로 멈추고 그 값으로 판정한다(누른 시각에서 지연을 덜어 되돌려 그리지 않는다)", async () => {
+    const { readFileSync } = await import("node:fs");
+    const source = readFileSync(new URL("../../src/ui/ShuteFishingPopup.ts", import.meta.url), "utf8");
+    expect(source).toContain("Math.round(drawnElapsed ??");
+    expect(source).toContain("frozenElapsed = elapsedMs;");
+    expect(source).not.toMatch(/frozenAt\s*=\s*current\.startedAt/);
+  });
+});

@@ -616,4 +616,10 @@ export const SKILL_KO = {
   "skill.breakthrough.effect.basic.chainSnare": "「{name}」 {every}번째마다 맞은 적에게 {seconds}초 동안 {percent}% [[chill|둔화]]를 건다.",
   "skill.breakthrough.effect.ultimate.canopySweep": "「{name}」{name!을} 펼치는 순간 주위의 적을 바깥으로 밀어낸다.",
   "skill.breakthrough.effect.passive.shadeRetort": "대신 받은 피해의 {percent}%가 쌓였다가 다음 일반 공격에 [[fixed-damage|고정 피해]]로 한꺼번에 더해진다. 최대 {cap}까지 쌓인다.",
+  "skill.passive.tonguePull": "{seconds}초마다 체력 비율이 가장 낮은 다른 아군을 혀로 끌어와 곁에 세우고, 그 아군의 최대 체력 {shield}%만큼 [[shield|보호막]]을 두른다. 끌려온 아군을 노리던 적은 표적을 모두 잃는다.",
+  "skill.sentence.gulp": "체력 비율이 가장 낮은 다른 아군 한 명을 {seconds}초 동안 [[gulp|꿀꺽]]한다.",
+  "skill.passive.bloodScent": "[[basic-attack|기본 공격]]이 적중할 때마다 [[ferocity|야성]]을 {bonus} 더 얻는다. [[ferocity|폭주]] 중에는 기본 공격 적중마다 {hit}초, 적을 쓰러뜨리면 {kill}초 동안 폭주가 닳지 않는다. 한 번의 폭주에 늘어나는 시간은 최대 {cap}초다.",
+  "skill.clause.selfFerocity": "자신의 [[ferocity|야성]]을 {amount} 얻는다. 이미 [[ferocity|폭주]] 중이면 대신 폭주가 {seconds}초 동안 닳지 않는다",
+  "skill.ferocity.selfAttackSpeedMultiplier.ramp": "폭주가 끊기지 않고 이어지는 동안 [[attack-speed|공격 속도]]가 +{percent}%에서 매초 {perSecond}%씩 올라 최대 +{max}%, 모든 피해 흡혈이 매초 {stealPerSecond}%씩 올라 최대 {stealMax}%가 된다. 폭주가 끝나면 처음으로 돌아간다.",
+  "skill.clause.passiveCooldownReduction": "적중할 때마다 패시브의 남은 주기가 {seconds}초 줄어든다",
 } as const;

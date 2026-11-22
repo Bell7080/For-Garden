@@ -569,4 +569,10 @@ export const SKILL_EN = {
   "skill.breakthrough.effect.basic.chainSnare": "Every {every}th \"{name}\" applies a {percent}% [[chill|Chill]] to the target for {seconds}s.",
   "skill.breakthrough.effect.ultimate.canopySweep": "When \"{name}\" is cast, pushes nearby enemies outward.",
   "skill.breakthrough.effect.passive.shadeRetort": "{percent}% of the damage taken for allies is stored and added all at once to the next basic attack as [[fixed-damage|fixed damage]]. Stores up to {cap}.",
+  "skill.passive.tonguePull": "Every {seconds}s, pulls the other ally with the lowest HP ratio to its side with its tongue and grants them a [[shield|Shield]] equal to {shield}% of their max HP. Enemies targeting that ally lose their target.",
+  "skill.sentence.gulp": "[[gulp|Gulps]] the other ally with the lowest HP ratio for {seconds}s.",
+  "skill.passive.bloodScent": "Each [[basic-attack|Basic Attack]] hit grants {bonus} extra [[ferocity|Ferocity]]. During [[ferocity|Frenzy]], each basic attack hit stops it from draining for {hit}s, and each kill for {kill}s. One Frenzy can be extended by up to {cap}s in total.",
+  "skill.clause.selfFerocity": "Gains {amount} [[ferocity|Ferocity]]. If already in [[ferocity|Frenzy]], the Frenzy instead stops draining for {seconds}s",
+  "skill.ferocity.selfAttackSpeedMultiplier.ramp": "While Frenzy continues unbroken, [[attack-speed|Attack Speed]] starts at +{percent}% and rises by {perSecond}% every second up to +{max}%, and life steal on all damage rises by {stealPerSecond}% every second up to {stealMax}%. Both reset when Frenzy ends.",
+  "skill.clause.passiveCooldownReduction": "Each hit shortens the passive's remaining cooldown by {seconds}s",
 } as const;

@@ -567,4 +567,10 @@ export const SKILL_ZH_HANS = {
   "skill.breakthrough.effect.basic.chainSnare": "每第{every}次「{name}」对命中的敌人施加{seconds}秒{percent}%的[[chill|减速]]。",
   "skill.breakthrough.effect.ultimate.canopySweep": "施放「{name}」的瞬间，将周围的敌人向外推开。",
   "skill.breakthrough.effect.passive.shadeRetort": "代受伤害的{percent}%会累积起来，在下一次普通攻击时一次性作为[[fixed-damage|固定伤害]]附加。最多累积{cap}。",
+  "skill.passive.tonguePull": "每{seconds}秒用舌头把生命比例最低的其他友方拉到身边，并为其附加相当于其最大生命{shield}%的[[shield|护盾]]。正在瞄准该友方的敌人全部失去目标。",
+  "skill.sentence.gulp": "将生命比例最低的一名其他友方[[gulp|咕嘟]]{seconds}秒。",
+  "skill.passive.bloodScent": "[[basic-attack|普通攻击]]每次命中额外获得{bonus}点[[ferocity|野性]]。[[ferocity|暴走]]期间，普通攻击每次命中使暴走{hit}秒内不衰减，击倒敌人则{kill}秒内不衰减。单次暴走最多延长{cap}秒。",
+  "skill.clause.selfFerocity": "自身获得{amount}点[[ferocity|野性]]。若已处于[[ferocity|暴走]]，则改为暴走{seconds}秒内不衰减",
+  "skill.ferocity.selfAttackSpeedMultiplier.ramp": "暴走不间断持续期间，[[attack-speed|攻击速度]]从+{percent}%起每秒提升{perSecond}%，最多+{max}%；全伤害吸血每秒提升{stealPerSecond}%，最多{stealMax}%。暴走结束后重新计算。",
+  "skill.clause.passiveCooldownReduction": "每次命中使被动的剩余周期缩短{seconds}秒",
 } as const;

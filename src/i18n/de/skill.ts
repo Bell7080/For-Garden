@@ -567,4 +567,10 @@ export const SKILL_DE = {
   "skill.breakthrough.effect.basic.chainSnare": "Jeder {every}. \"{name}\" belegt das Ziel {seconds} s lang mit {percent} % [[chill|Verlangsamung]].",
   "skill.breakthrough.effect.ultimate.canopySweep": "Beim Einsatz von \"{name}\" werden Gegner in der Nähe nach außen gestoßen.",
   "skill.breakthrough.effect.passive.shadeRetort": "{percent} % des für Verbündete übernommenen Schadens wird gespeichert und dem nächsten Normalangriff auf einmal als [[fixed-damage|fixen Schaden]] hinzugefügt. Speichert bis zu {cap}.",
+  "skill.passive.tonguePull": "Alle {seconds} s zieht es den anderen Verbündeten mit dem niedrigsten Lebensanteil mit der Zunge an seine Seite und gewährt ihm einen [[shield|Schild]] in Höhe von {shield} % seines maximalen Lebens. Gegner, die ihn anvisierten, verlieren ihr Ziel.",
+  "skill.sentence.gulp": "[[gulp|Schluck]]t den anderen Verbündeten mit dem niedrigsten Lebensanteil {seconds} s lang.",
+  "skill.passive.bloodScent": "Jeder Treffer eines [[basic-attack|Standardangriffs]] gewährt {bonus} zusätzliche [[ferocity|Wildheit]]. Während der [[ferocity|Raserei]] hält jeder Treffer eines Standardangriffs sie {hit} s lang auf, jeder Niederschlag {kill} s lang. Eine Raserei kann insgesamt um höchstens {cap} s verlängert werden.",
+  "skill.clause.selfFerocity": "Erhält {amount} [[ferocity|Wildheit]]. Ist die [[ferocity|Raserei]] schon aktiv, läuft sie stattdessen {seconds} s lang nicht ab",
+  "skill.ferocity.selfAttackSpeedMultiplier.ramp": "Solange die Raserei ununterbrochen anhält, beginnt die [[attack-speed|Angriffsgeschwindigkeit]] bei +{percent} % und steigt jede Sekunde um {perSecond} % bis +{max} %, und der Lebensraub aus allem Schaden steigt jede Sekunde um {stealPerSecond} % bis {stealMax} %. Beides beginnt von vorn, wenn die Raserei endet.",
+  "skill.clause.passiveCooldownReduction": "Jeder Treffer verkürzt die verbleibende Abklingzeit der Passiven um {seconds} s",
 } as const;

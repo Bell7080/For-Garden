@@ -115,9 +115,9 @@ function packChipId(wolf: Fighter): "packKuro" | "packShiro" | "packDimo" {
 
 export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = []): UnitStatusView[] {
   const views: UnitStatusView[] = [];
-  // 대청소(`deepClean`)는 순풍 칸이 아니라 따로 선 `scrub` 칸에 실리므로 여기 오지 않는다.
+  // 대청소(`deepClean`)·꿀꺽(`gulp`)은 순풍 칸이 아니라 따로 선 칸(`scrub`·은신·재생)에 실리므로 여기 오지 않는다.
   const teamBuff = fighter.tailwindFor > 0 ? fighter.tailwind : null;
-  if (teamBuff && teamBuff.kind !== "deepClean") {
+  if (teamBuff && teamBuff.kind !== "deepClean" && teamBuff.kind !== "gulp") {
     const buff = teamBuff;
     const detail = buff.kind === "resonance"
       ? `${t("augment.percent", { label: t("stat.attackSpeed"), percent: buff.attackSpeedPercent })} · ${t("status.seconds", { value: fighter.tailwindFor.toFixed(1) })}`

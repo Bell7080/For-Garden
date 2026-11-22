@@ -36,6 +36,7 @@ import { ResearchPullButton, type ResearchPullCostPart } from "../ui/ResearchPul
 import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { addRatesButton, RATES_SPOT } from "../ui/RatesButton";
 import { LAB_CHROME, LAB_TITLE } from "../ui/labLayout";
+import { LabAurora } from "../ui/LabAurora";
 import { NotificationDot } from "../ui/NotificationDot";
 import { notificationManager } from "../managers/NotificationManager";
 import { addBannerArrow, addBannerTitle, drawBannerPages } from "../ui/LabBannerTitle";
@@ -174,6 +175,9 @@ export class LabScene extends Phaser.Scene {
     // 원화를 탁하게 덮는 막과 가로선을 깔지 않는다 — 모집 원화가 곧 이 화면이라 그 위에 한 겹을
     // 더 두르면 밝은 파스텔이 잿빛으로 가라앉는다. 양옆만 눌러 가운데로 눈이 가게 한다.
     this.drawSideVignette();
+    // 모집 원화 위의 오로라 일렁임 — 작은 버퍼에만 셰이더를 돌려 위쪽 띠에 늘려 얹는다(`ui/LabAurora.ts`).
+    // 낮음 품질·WebGL 없음·셰이더 실패면 세우지 않고 원화만 선다.
+    this.aurora = LabAurora.create(this, LAB_CHROME.depth.aurora, bannerPresentation(this.banner)?.tone ?? "standard");
 
     // 모집 화면은 "무엇으로 뽑을 수 있나"를 묻는다. 상단 줄도 다이아·화석·호박석으로 바꾼다.
     bindCurrencyGuide({ scene: this, popups: this.popupLayer });
@@ -212,6 +216,7 @@ export class LabScene extends Phaser.Scene {
     new BottomNav(this, "lab");
     // 씬을 떠난 뒤 끝나는 비동기 로딩도 무효화하고 현재 Puppet을 정리한다.
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.aurora = undefined;
       this.showcase?.destroy();
       this.showcase = undefined;
       releaseSsrOmen();
@@ -258,6 +263,7 @@ export class LabScene extends Phaser.Scene {
   }
 
   private pullSpotlight?: TutorialSpotlight;
+  private aurora?: LabAurora;
 
   private clearPullSpotlight(): void {
     this.pullSpotlight?.destroy();
@@ -568,6 +574,7 @@ export class LabScene extends Phaser.Scene {
     this.presentationLayer?.destroy(true);
     const layer = this.add.container(0, 0).setDepth(900);
     this.presentationLayer = layer;
+    this.aurora?.setPaused(true);
     // 결과가 나오는 동안에는 뒤 화면을 짙게 덮는다. 얇은 암막으로는 배너 제목·확률 정보·연구
     // 버튼이 그대로 비쳐, 뒤집힌 칸과 글자가 어느 화면의 것인지 뒤섞여 읽힌다.
     const shade = this.add.rectangle(BASE_WIDTH / 2, 960, BASE_WIDTH, 1920, COLOR.void, 0.93).setInteractive();
@@ -680,10 +687,13 @@ export class LabScene extends Phaser.Scene {
     if (!this.presentation.isCurrent(request)) { cinematic.close(); return true; }
     this.cinematic?.close();
     this.cinematic = cinematic;
+    // 3D 연출이 화면을 덮는 동안 오로라는 그리지 않는다.
+    this.aurora?.setPaused(true);
     setDebugResearchBoard({ slots: results.length, opened: 0 });
     this.audioScope?.play("research.crack");
     await cinematic.done();
     this.cinematic = undefined;
+    this.aurora?.setPaused(false);
     if (cinematic.againCount && this.presentation.isCurrent(request)) {
       this.pullAgain = cinematic.againCount;
       if (!settingsManager.get().game.pullAgainTaught) settingsManager.update({ game: { pullAgainTaught: true } });
@@ -944,13 +954,17 @@ export class LabScene extends Phaser.Scene {
     this.boardLayer?.destroy(true);
     this.boardLayer = undefined;
     this.presentationLayer = undefined;
+    this.aurora?.setPaused(false);
   }
 
   private refresh(): void {
     const banner = this.banner;
     const pity = this.pityOf(banner);
     // 첫 복원 연구를 다 써서 목록에서 사라졌으면 그 자리의 배너로 원화도 갈아 끼운다.
-    if (this.shownBannerId !== banner.id) this.showcaseRelic();
+    if (this.shownBannerId !== banner.id) {
+      this.showcaseRelic();
+      this.aurora?.setTone(bannerPresentation(banner)?.tone ?? "standard");
+    }
     this.syncBannerTitle(banner, pity);
     const pages = this.banners;
     drawBannerPages(this.bannerPages, pages.length, pages.indexOf(banner), BANNER_TONE[bannerPresentation(banner)?.tone ?? "standard"].accent);

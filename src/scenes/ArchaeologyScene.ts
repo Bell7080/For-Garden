@@ -12,6 +12,7 @@ import { findStrataLayer } from "../data/strataLayers";
 import { ARCHAEOLOGY_SITES, type ArchaeologySiteDefinition } from "../data/archaeologySites";
 import { resolveArchaeologyFocusSite, siteRewardRating, type ArchaeologyPreviewReward } from "../core/archaeologyMap";
 import { archaeologySitePopupLayout } from "../ui/archaeologySitePopupLayout";
+import { addSiteSpecCell, addSiteStatusLayer, addSiteUnlockTag } from "../ui/ArchaeologySitePreviewParts";
 import { archaeologyRatingColor, STRATA_FOG_TONE } from "../ui/strataTones";
 import { ArchaeologyMapView } from "../ui/ArchaeologyMapView";
 import { addStrataCrystalBand } from "../ui/StrataCrystalBand";
@@ -1036,11 +1037,21 @@ export class ArchaeologyScene extends Phaser.Scene {
       width: spot.width, height: spot.height, title: t(site.nameKey as TextKey),
       dim: true, closeOnBackdrop: true,
     }, (body, close) => {
-      body.add(this.add.text(0, spot.subtitleY,
-        // 굴착 횟수는 「8/8」이 아니라 이름이 붙은 한 마디여야 한다 — 미리보기에는 아직 쓴
-        // 횟수가 없어 같은 수 둘이 마주 보면 무엇을 세는 자리인지 말하지 못한다.
-        `${layer.columns}×${layer.rows}  ·  ${t("archaeology.map.digs", { count: layer.digs + modifiers.digs })}  ·  ${t("archaeology.map.recommended", { level: site.recommendedLevel })}`,
-        textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5));
+      // 판 규격 칸 둘 — 판 크기와 한 판에 휘두를 굴착 수. 결정이 더해 준 굴착은 값 옆에 결정색으로 붙는다.
+      body.add(addSiteSpecCell(this, spot.specs.xs[0], spot.specs.y, {
+        width: spot.specs.width, height: spot.specs.height, kind: "board",
+        value: `${layer.columns}×${layer.rows}`, label: t("archaeology.preview.board"), grid: { columns: layer.columns, rows: layer.rows },
+      }));
+      body.add(addSiteSpecCell(this, spot.specs.xs[1], spot.specs.y, {
+        width: spot.specs.width, height: spot.specs.height, kind: "digs",
+        value: String(layer.digs + modifiers.digs), label: t("archaeology.preview.digs"),
+        ...(modifiers.digs > 0 ? { bonus: t("archaeology.preview.digsBonus", { count: modifiers.digs }) } : {}),
+      }));
+      // 해금 레벨 — 권장 레벨 대신 이 유적이 열리는 레벨 하나만 말한다. 제목표 반대쪽 윗변에 걸터앉는다.
+      body.add(addSiteUnlockTag(this, spot.unlockTag.x, spot.unlockTag.y, {
+        width: spot.unlockTag.width, height: spot.unlockTag.height, unlocked: state.unlocked,
+        label: t("archaeology.preview.unlock", { level: site.minimumLevel }),
+      }));
 
       // 기대 획득 판. 제목표가 윗변에 걸터앉는 화면 전체의 문법을 그대로 쓴다.
       const panel = this.add.container(0, spot.panel.y);
@@ -1093,15 +1104,33 @@ export class ArchaeologyScene extends Phaser.Scene {
       }
 
       /*
-       * 못 들어가는 이유는 저마다 다르고 지금 할 일도 그만큼 다르다 — 레벨을 올린다,
-       * 기다린다, 횟수가 차기를 기다린다. 한 마디로 뭉치지 않는다.
+       * 시간 레이어. 못 들어가는 이유는 저마다 다르고 지금 할 일도 그만큼 다르다 — 레벨을 올린다,
+       * 기다린다, 횟수가 차기를 기다린다. 한 마디로 뭉치지 않고, 기다리는 중이면 남은 시간이 시계처럼 선다.
        */
-      const reason = cooling
-        ? t("archaeology.map.cooling", { time: formatCountdown((coolingUntil ?? 0) - Date.now()) })
-        : !state.unlocked ? t("archaeology.map.needLevel", { level: site.minimumLevel })
-          : this.charges <= 0 ? t("archaeology.map.noCharge") : t("archaeology.map.available");
-      body.add(this.add.text(0, spot.reasonY, reason,
-        textStyle({ role: "emphasis", size: 27, color: startable ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5));
+      const statusState = cooling ? "cooling" : !state.unlocked ? "locked" : this.charges <= 0 ? "noCharge" : "ready";
+      const status = addSiteStatusLayer(this, 0, spot.status.y, {
+        width: spot.status.width, height: spot.status.height, state: statusState,
+        title: statusState === "cooling" ? t("archaeology.preview.cooling")
+          : statusState === "locked" ? t("archaeology.map.needLevel", { level: site.minimumLevel })
+            : statusState === "noCharge" ? t("archaeology.map.noCharge") : t("archaeology.map.available"),
+        ...(cooling ? { time: formatCountdown((coolingUntil ?? 0) - Date.now()) } : {}),
+        note: t("archaeology.preview.lockAfter", { hours: site.cooldownHours }),
+      });
+      body.add(status.container);
+      if (cooling) {
+        // 남은 시간은 초마다 줄고, 다 지나면 같은 창을 그 자리에서 다시 세워 「탐사 가능」으로 바꾼다.
+        const tick = this.time.addEvent({
+          delay: 1000, loop: true,
+          callback: () => {
+            const left = (coolingUntil ?? 0) - Date.now();
+            if (left > 0) { status.setTime(formatCountdown(left)); return; }
+            tick.remove();
+            close();
+            this.openSitePreview(site);
+          },
+        });
+        status.container.once(Phaser.GameObjects.Events.DESTROY, () => tick.remove());
+      }
 
       // 닫는 길은 판 밖 우하단 뒤로가기와 판 밖 누르기다 — 판 안에 「닫기」를 나란히 세우지 않는다.
       const start = new Button(this, spot.startX, spot.buttonY, {

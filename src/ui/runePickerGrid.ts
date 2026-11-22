@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import type { RuneInstance } from "../core/runes";
+import type { InventorySort } from "../managers/InventoryManager";
 import { session } from "../state/session";
 import { attachDragScroll } from "./dragScroll";
 import { addScrollHint } from "./ScrollHint";
@@ -49,6 +50,8 @@ export function mountRunePickerGrid(
     top?: number;
     /** 고른 표시 — 참이면 카드에 고른 칸 표식이 선다. */
     isSelected?: (rune: RuneInstance) => boolean;
+    /** 처음 정렬. 주지 않으면 가방 기본 정렬이다(특성 일괄 부여는 세공 많은 순으로 연다). */
+    initialSort?: InventorySort;
   },
 ): RunePickerGridHandle {
   const g = RUNE_PICK_GRID;
@@ -56,7 +59,7 @@ export function mountRunePickerGrid(
   const { width, height, viewHeight } = runePickerSize(options.sizeFor ?? readRunes().length, options.maxRows);
   const top = options.top ?? -height / 2;
   const firstX = -((g.columns - 1) * g.cellWidth) / 2;
-  const state = createRuneListState();
+  const state = createRuneListState(options.initialSort);
 
   // 목록 틀 — 마스크와 끌기 영역이 같은 사각형을 쓴다(마스크는 매 프레임 틀의 월드 자리로 따라간다).
   const frame = scene.add.container(0, top + runePickerListTop());

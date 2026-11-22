@@ -20,6 +20,8 @@ import { canGrantRuneTraitAtLeast, canUpgradeRuneTraitGrade, RUNE_TRAIT_RULES } 
 import { RUNE_TRAIT_ITEMS } from "../data/runeTraits";
 import type { RuneInstance, RunePart, RuneRarity } from "../core/runes";
 import { addResearchBench, type ResearchBenchAction } from "../ui/ResearchBench";
+import { openRuneTraitBulkPopup } from "../ui/RuneTraitBulkPopup";
+import { runeTraitBulkCandidateCount } from "../core/runeTraitBulk";
 import { addSceneBackground, BACKGROUND, useBackgroundTexture } from "../ui/backgrounds";
 import { BottomNav } from "../ui/BottomNav";
 import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
@@ -1357,7 +1359,7 @@ export class ArchaeologyScene extends Phaser.Scene {
       scene: this, parent: shifted, popups: this.popups, keywords: this.keywords, rune, animate,
       onPick: (picked) => { this.benchRuneId = picked.instanceId; this.benchJustSlotted = true; this.paintView(); },
       onClear: () => { this.benchRuneId = null; this.paintView(); },
-      actions: rune === undefined ? [] : this.traitActions(rune),
+      actions: rune === undefined ? this.emptyBenchActions() : this.traitActions(rune),
     });
   }
 
@@ -1450,6 +1452,22 @@ export class ArchaeologyScene extends Phaser.Scene {
       spot.x += RESEARCH_SHIFT_X;
       playTraitEffect(this, kind, spot.x, spot.y, 2500, () => { this.traitBusy = false; onImpact(result); }, tint(result));
     }).catch(() => { this.traitBusy = false; this.paintView(); });
+  }
+
+  /**
+   * 룬을 끼우기 전의 조작 — 특성 일괄 부여 한 줄. 가진 미지의 고대 핵으로 특성 없는 룬 여럿을 골라 한 번에 부여한다
+   * (`openRuneTraitBulkPopup`). 드는 수는 특성 없는 룬 전부를 채우는 데 드는 핵이고, 하나라도 있으면 누를 수 있다.
+   */
+  private emptyBenchActions(): ResearchBenchAction[] {
+    const itemId = RUNE_TRAIT_ITEMS.grant.itemId;
+    const owned = session.itemInventory.find((stack) => stack.itemId === itemId)?.quantity ?? 0;
+    const needed = runeTraitBulkCandidateCount(session.runeInventory);
+    return [{
+      labelKey: "rune.traitBulk.title",
+      enabled: owned > 0 && needed > 0,
+      item: { itemId, owned, cost: Math.max(1, needed) },
+      onPress: () => openRuneTraitBulkPopup(this, this.popups, gameApi, () => this.paintView()),
+    }];
   }
 
   private traitActions(rune: RuneInstance): ResearchBenchAction[] {

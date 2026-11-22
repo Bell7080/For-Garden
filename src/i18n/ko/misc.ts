@@ -91,7 +91,6 @@ export const MISC_KO = {
   "intro.prev": "이전",
   "intro.next": "다음",
   "archaeology.bench.pick": "룬 고르기",
-  "archaeology.bench.clear": "빼기",
   "archaeology.bench.empty": "룬을 끼워 주세요",
   "archaeology.tab.strata": "지층 탐사",
   "archaeology.tab.research": "특성 연구",

@@ -156,4 +156,11 @@ export const RUNE_TH = {
   "rune.bulkCraft.confirmEngrave": "เจียระไนที่เหลือ {attempts} ครั้งให้รูน {count} ชิ้น และสลัก {engravings} ชิ้นที่{target} การสลักย้อนกลับไม่ได้",
   "rune.bulkCraft.done": "เจียระไนสำเร็จ {successes}/{attempts} ครั้ง · สลัก {engraved} ชิ้น",
   "rune.bulkCraft.failed": "เจียระไนแบบรวมล้มเหลว",
+  "rune.traitBulk.title": "มอบคุณลักษณะแบบรวม",
+  "rune.traitBulk.selected": "เลือก {count} / {total} · แกน {cores}",
+  "rune.traitBulk.button": "มอบ {count} ชิ้น",
+  "rune.traitBulk.confirm": "ใช้แกนโบราณไร้ชื่อชิ้นละ 1 กับรูนที่เลือก {count} ชิ้น เพื่อมอบคุณลักษณะแบบสุ่ม",
+  "rune.traitBulk.done": "มอบคุณลักษณะ {count} รายการ · {summary}",
+  "rune.traitBulk.failed": "มอบคุณลักษณะแบบรวมล้มเหลว",
+  "rune.traitBulk.lacking": "แกนโบราณไร้ชื่อไม่พอ",
 } as const;

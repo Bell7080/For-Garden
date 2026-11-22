@@ -156,4 +156,11 @@ export const RUNE_RU = {
   "rune.bulkCraft.confirmEngrave": "Выполнить {attempts} оставшихся огранок для {count} рун и выгравировать {engravings} на {target}. Гравировку нельзя отменить.",
   "rune.bulkCraft.done": "Огранка: успешно {successes} из {attempts} · гравировок {engraved}",
   "rune.bulkCraft.failed": "Массовая огранка не удалась.",
+  "rune.traitBulk.title": "Массовая выдача черт",
+  "rune.traitBulk.selected": "Выбрано {count} / {total} · Ядра {cores}",
+  "rune.traitBulk.button": "Выдать {count}",
+  "rune.traitBulk.confirm": "На каждую из {count} выбранных рун уйдёт по одному Неизвестному древнему ядру — они получат случайную черту.",
+  "rune.traitBulk.done": "Выдано черт: {count} · {summary}",
+  "rune.traitBulk.failed": "Не удалось выдать черты.",
+  "rune.traitBulk.lacking": "Не хватает Неизвестных древних ядер.",
 } as const;

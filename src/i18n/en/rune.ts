@@ -159,4 +159,11 @@ export const RUNE_EN = {
   "rune.bulkCraft.confirmEngrave": "Run the remaining {attempts} polishes on {count} runes and engrave {engravings} on the {target}. Engraving can't be undone.",
   "rune.bulkCraft.done": "{successes} of {attempts} polishes succeeded · {engraved} engraved",
   "rune.bulkCraft.failed": "Bulk polish failed.",
+  "rune.traitBulk.title": "Bulk Grant Traits",
+  "rune.traitBulk.selected": "Selected {count} / {total} · Cores {cores}",
+  "rune.traitBulk.button": "Grant {count}",
+  "rune.traitBulk.confirm": "Use one Unknown Ancient Core on each of the {count} selected runes to grant a random trait.",
+  "rune.traitBulk.done": "Granted {count} traits · {summary}",
+  "rune.traitBulk.failed": "Bulk trait grant failed.",
+  "rune.traitBulk.lacking": "Not enough Unknown Ancient Cores.",
 } as const;

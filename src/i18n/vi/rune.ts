@@ -156,4 +156,11 @@ export const RUNE_VI = {
   "rune.bulkCraft.confirmEngrave": "Thực hiện {attempts} lần mài còn lại cho {count} Rune và khắc ấn {engravings} cái vào {target}. Không thể hoàn tác khắc ấn.",
   "rune.bulkCraft.done": "Mài thành công {successes}/{attempts} lần · Khắc ấn {engraved}",
   "rune.bulkCraft.failed": "Mài hàng loạt thất bại.",
+  "rune.traitBulk.title": "Ban đặc tính hàng loạt",
+  "rune.traitBulk.selected": "Đã chọn {count} / {total} · Lõi {cores}",
+  "rune.traitBulk.button": "Ban {count}",
+  "rune.traitBulk.confirm": "Dùng mỗi rune 1 Lõi cổ đại chưa rõ cho {count} rune đã chọn để ban đặc tính ngẫu nhiên.",
+  "rune.traitBulk.done": "Đã ban {count} đặc tính · {summary}",
+  "rune.traitBulk.failed": "Ban đặc tính hàng loạt thất bại.",
+  "rune.traitBulk.lacking": "Không đủ Lõi cổ đại chưa rõ.",
 } as const;

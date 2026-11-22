@@ -123,6 +123,7 @@ import { claimNewbieGrowth as calculateNewbieGrowthClaim, newbieGrowthClaimableC
 import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, runeBatchEnhancementTargets, runePartLabel, RUNE_MAIN_STAT_KEYS, type RuneMainStatKey, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
 import { runeBatchEnhancementGoldCost, runeBulkCraftGoldCost, runeEnhancementGoldCost, runeSellValue } from "../data/runes";
 import { isRuneBulkCraftCandidate, runeBulkEngraveStat } from "../core/runeBulkCraft";
+import { isRuneTraitBulkCandidate, RUNE_TRAIT_BULK_MAX } from "../core/runeTraitBulk";
 import { rotationOffer, rotationRunePart } from "../core/shopRotation";
 import { rollRandomRuneRarity, rollRuneSynthesisPart, rollRuneSynthesisRarity, rollRuneSynthesisTraitGrade, runeSynthesisRefusal, RUNE_SYNTHESIS_RULES } from "../core/runeSynthesis";
 import { rotationSlot } from "../data/runeRotation";
@@ -134,7 +135,7 @@ import { findStrataLayer, STRATA_CHARGE } from "../data/strataLayers";
 const STRATA_TICKET_ITEM = "strata-ticket";
 import { ARCHAEOLOGY_SITES, findArchaeologySite } from "../data/archaeologySites";
 import { archaeologySiteAvailability } from "../core/archaeologyMap";
-import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
+import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, GrantRuneTraitsBulkRequest, GrantRuneTraitsBulkResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { sortByRewardPriority } from "../data/rewardPriority";
 import { findItem, type ItemDefinition, type WalletItemKey } from "../data/items";
 import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, raidRunStamina, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_SUMMON_TICKET_COST, RAID_TICKET_ITEM } from "../data/raid";
@@ -300,6 +301,7 @@ export class FakeServer implements GameApi {
   private readonly runeSaleResults = new Map<string, SellRunesResponse>();
   private readonly runeSynthesisResults = new Map<string, SynthesizeRunesResponse>();
   private readonly runeCraftResults = new Map<string, CraftRunesResponse>();
+  private readonly runeTraitBulkResults = new Map<string, GrantRuneTraitsBulkResponse>();
   /** 일반 스테이지 입장 재전송이 중복 승리 대기 건을 만들지 않게 하는 서버 영수증 표다. */
   private readonly stageAdmissionResults = new Map<string, EnterStageResponse>();
   /** 입장 때 커밋한 요청을 보관하고 완료 정산이 해당 전투의 대기 건 하나만 소비하게 한다. */
@@ -5311,6 +5313,40 @@ export class FakeServer implements GameApi {
     this.persist(this.state);
     const inventory = await this.getInventory();
     return { rune: this.cloneRune(rune), items: inventory.items };
+  }
+
+  /**
+   * 특성 일괄 부여. 고른 룬(모두 특성 없음)마다 미지의 고대 핵 하나를 쓰고 일반 부여와 같은 추첨으로 특성을 붙인다.
+   * 핵 총량을 먼저 확인해 한 번에 빼고 저장도 한 번이다. 같은 requestId는 같은 결과를 돌려준다.
+   */
+  async grantRuneTraitsBulk(request: GrantRuneTraitsBulkRequest): Promise<GrantRuneTraitsBulkResponse> {
+    await this.delay();
+    const cached = this.runeTraitBulkResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    const ids = request.runeInstanceIds;
+    if (!request.requestId || !Array.isArray(ids) || ids.length === 0 || ids.length > RUNE_TRAIT_BULK_MAX || new Set(ids).size !== ids.length) {
+      throw new GameApiError("RUNE_TRAIT_BULK_INVALID", "일괄 부여 요청 ID와 중복 없는 룬이 필요합니다.");
+    }
+    const selected = ids.map((id) => this.ownedRune(id));
+    if (selected.some((rune) => !isRuneTraitBulkCandidate(rune))) throw new GameApiError("RUNE_TRAIT_EXISTS", "이미 특성이 있는 룬이 섞여 있습니다.");
+    const grant = RUNE_TRAIT_ITEMS.grant;
+    const stack = this.state.itemInventory.find((entry) => entry.itemId === grant.itemId);
+    if (!stack || stack.quantity < selected.length) throw new GameApiError("INSUFFICIENT_ITEMS", "아이템 수량이 부족합니다.");
+    this.state.itemInventory = this.state.itemInventory.flatMap((entry) =>
+      entry.itemId === grant.itemId ? (entry.quantity > selected.length ? [{ ...entry, quantity: entry.quantity - selected.length }] : []) : [{ ...entry }]);
+    const granted = selected.map((current) => {
+      const trait = rollRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: grant.minimumGrade, random: this.random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE });
+      const rune: RuneInstance = { ...current, trait };
+      assertValidRuneInstance(rune);
+      this.replaceRune(rune);
+      if (this.state.archaeology.pendingReroll?.runeInstanceId === rune.instanceId) this.state.archaeology.pendingReroll = null;
+      return rune;
+    });
+    this.persist(this.state);
+    const inventory = await this.getInventory();
+    const response: GrantRuneTraitsBulkResponse = { runes: granted.map((rune) => this.cloneRune(rune)), items: inventory.items };
+    this.runeTraitBulkResults.set(request.requestId, structuredClone(response));
+    return response;
   }
 
   async rerollRuneTrait(request: RerollRuneTraitRequest): Promise<RerollRuneTraitResponse> {

@@ -82,7 +82,6 @@ export const MISC_RU = {
   "intro.prev": "Назад",
   "intro.next": "Далее",
   "archaeology.bench.pick": "Выберите руну",
-  "archaeology.bench.clear": "Убрать",
   "archaeology.bench.empty": "Вставьте руну",
   "archaeology.tab.strata": "Разведка пластов",
   "archaeology.tab.research": "Исследование черт",

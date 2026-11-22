@@ -82,7 +82,6 @@ export const MISC_ZH_HANT = {
   "intro.prev": "上一頁",
   "intro.next": "下一頁",
   "archaeology.bench.pick": "選擇符文",
-  "archaeology.bench.clear": "移除",
   "archaeology.bench.empty": "放入符文",
   "archaeology.tab.strata": "地層探查",
   "archaeology.tab.research": "特性研究",

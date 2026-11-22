@@ -82,7 +82,6 @@ export const MISC_ID = {
   "intro.prev": "Kembali",
   "intro.next": "Lanjut",
   "archaeology.bench.pick": "Pilih Rune",
-  "archaeology.bench.clear": "Lepas",
   "archaeology.bench.empty": "Masukkan rune",
   "archaeology.tab.strata": "Survei Strata",
   "archaeology.tab.research": "Riset Sifat",

@@ -156,4 +156,11 @@ export const RUNE_DE = {
   "rune.bulkCraft.confirmEngrave": "Die restlichen {attempts} Veredelungen an {count} Runen ausführen und {engravings} auf {target} gravieren. Gravuren sind endgültig.",
   "rune.bulkCraft.done": "{successes} von {attempts} Veredelungen erfolgreich · {engraved} graviert",
   "rune.bulkCraft.failed": "Massen-Veredelung fehlgeschlagen.",
+  "rune.traitBulk.title": "Merkmale massenhaft verleihen",
+  "rune.traitBulk.selected": "Gewählt {count} / {total} · Kerne {cores}",
+  "rune.traitBulk.button": "{count} verleihen",
+  "rune.traitBulk.confirm": "Für jede der {count} gewählten Runen wird ein Unbekannter uralter Kern verbraucht, um ein zufälliges Merkmal zu verleihen.",
+  "rune.traitBulk.done": "{count} Merkmale verliehen · {summary}",
+  "rune.traitBulk.failed": "Massenverleihung fehlgeschlagen.",
+  "rune.traitBulk.lacking": "Nicht genug Unbekannte uralte Kerne.",
 } as const;

@@ -82,7 +82,6 @@ export const MISC_TH = {
   "intro.prev": "ก่อนหน้า",
   "intro.next": "ถัดไป",
   "archaeology.bench.pick": "เลือกรูน",
-  "archaeology.bench.clear": "นำออก",
   "archaeology.bench.empty": "ใส่รูน",
   "archaeology.tab.strata": "สำรวจชั้นดิน",
   "archaeology.tab.research": "วิจัยคุณลักษณะ",

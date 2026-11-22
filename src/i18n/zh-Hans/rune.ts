@@ -156,4 +156,11 @@ export const RUNE_ZH_HANS = {
   "rune.bulkCraft.confirmEngrave": "对 {count} 个符文进行剩余的 {attempts} 次打磨，并将 {engravings} 个刻印于{target}。刻印无法撤销。",
   "rune.bulkCraft.done": "打磨 {attempts} 次中成功 {successes} 次 · 刻印 {engraved} 个",
   "rune.bulkCraft.failed": "批量打磨失败。",
+  "rune.traitBulk.title": "批量赋予特性",
+  "rune.traitBulk.selected": "已选 {count} / {total} · 核心 {cores}",
+  "rune.traitBulk.button": "赋予 {count} 个",
+  "rune.traitBulk.confirm": "对所选的 {count} 个符文各使用 1 个未知的古代核心，赋予随机特性。",
+  "rune.traitBulk.done": "已赋予 {count} 个特性 · {summary}",
+  "rune.traitBulk.failed": "批量赋予特性失败。",
+  "rune.traitBulk.lacking": "未知的古代核心不足。",
 } as const;

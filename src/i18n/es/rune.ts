@@ -156,4 +156,11 @@ export const RUNE_ES = {
   "rune.bulkCraft.confirmEngrave": "Se harán los {attempts} tallados restantes de {count} runas y se grabarán {engravings} en {target}. El grabado no se puede deshacer.",
   "rune.bulkCraft.done": "{successes} de {attempts} tallados con éxito · {engraved} grabadas",
   "rune.bulkCraft.failed": "Falló el tallado masivo.",
+  "rune.traitBulk.title": "Otorgar rasgos en masa",
+  "rune.traitBulk.selected": "Elegidas {count} / {total} · Núcleos {cores}",
+  "rune.traitBulk.button": "Otorgar {count}",
+  "rune.traitBulk.confirm": "Se usará un Núcleo antiguo desconocido en cada una de las {count} runas elegidas para otorgar un rasgo aleatorio.",
+  "rune.traitBulk.done": "{count} rasgos otorgados · {summary}",
+  "rune.traitBulk.failed": "Falló la asignación masiva de rasgos.",
+  "rune.traitBulk.lacking": "No hay suficientes Núcleos antiguos desconocidos.",
 } as const;

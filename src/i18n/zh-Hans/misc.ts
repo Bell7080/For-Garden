@@ -82,7 +82,6 @@ export const MISC_ZH_HANS = {
   "intro.prev": "上一页",
   "intro.next": "下一页",
   "archaeology.bench.pick": "选择符文",
-  "archaeology.bench.clear": "移除",
   "archaeology.bench.empty": "放入符文",
   "archaeology.tab.strata": "地层探查",
   "archaeology.tab.research": "特性研究",

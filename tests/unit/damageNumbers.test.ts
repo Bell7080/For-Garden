@@ -213,3 +213,13 @@ describe("전투 수치 표시 규칙", () => {
     expect(formatDamageAmount(-5)).toBe("0");
   });
 });
+
+describe("수치 체류 시간(2026-11-22 단축)", () => {
+  it("잔타는 0.5초 안, 가장 큰 한 방도 0.9초 안에 사라진다", () => {
+    const small = damagePopupStyle({ flavor: "damage", amount: 50, ...target });
+    const big = damagePopupStyle({ flavor: "damage", amount: 9_000, ...target });
+    expect(popupLifeMs(small)).toBeLessThanOrEqual(500);
+    expect(popupLifeMs(big)).toBeLessThanOrEqual(900);
+    expect(popupLifeMs(big)).toBeGreaterThan(popupLifeMs(small));
+  });
+});

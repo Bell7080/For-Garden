@@ -227,8 +227,8 @@ export const DAMAGE_TIER_SIZES: readonly number[] = [24, 30, 37, 46, 58];
 /** 외곽선 두께. 큰 한 방일수록 **두껍게** 서야 같은 크기 안에서도 무게가 갈린다. */
 export const DAMAGE_TIER_STROKE: readonly number[] = [4, 5, 6, 8, 10];
 /** 머무는 시간(ms). 숫자를 읽을 틈이 곧 세기다 — 한 방은 잔타의 세 배 가까이 머문다. */
-export const DAMAGE_TIER_HOLD_MS: readonly number[] = [360, 460, 600, 800, 1_080];
-const TIER_FADE_MS: readonly number[] = [200, 220, 250, 290, 340];
+export const DAMAGE_TIER_HOLD_MS: readonly number[] = [160, 210, 270, 360, 490];
+const TIER_FADE_MS: readonly number[] = [130, 140, 160, 190, 220];
 const TIER_HOP_PX: readonly number[] = [16, 20, 26, 32, 40];
 const TIER_PUNCH: readonly number[] = [1.12, 1.18, 1.26, 1.36, 1.5];
 const TIER_SPARKS: readonly number[] = [0, 0, 3, 4, 6];
@@ -336,7 +336,7 @@ export function damagePopupStyle(request: DamagePopupRequest): DamagePopupStyle 
     // 무효는 세기가 없다. 늘 같은 크기의 흐린 표식 하나로만 알리고 화면을 흔들지 않는다.
     return {
       text: t("damage.immune"), tier: 0, pace: "blocked", size: 24, color: DAMAGE_FLAVOR_COLOR.blocked, stroke: "#14171a", strokeWidth: 4,
-      punch: 1.08, hop: 12, popMs: 110, holdMs: 320, fadeMs: 200, drift: -8, endScale: 0.9, alpha: 0.8, shake: 0, sparks: 0,
+      punch: 1.08, hop: 12, popMs: 110, holdMs: 140, fadeMs: 130, drift: -8, endScale: 0.9, alpha: 0.8, shake: 0, sparks: 0,
     };
   }
   const pace = popupPace(request) as Exclude<PopupPace, "blocked">;

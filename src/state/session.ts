@@ -59,6 +59,11 @@ export interface GameSettings {
     graphicsQuality: "high" | "balanced" | "low";
     /** Phaser 런타임 시간 설정에서만 프레임 제한으로 소비하며 코어 dt와 배속은 바꾸지 않는다. */
     frameRateLimit: 30 | 60 | 120;
+    /**
+     * 기본 30fps 일괄 전환(v0.520.0, 2026-11-23 응태 결정 — 발열·배터리)을 이 저장이 이미 지났는가.
+     * 표식이 없는 저장은 한 번 30으로 내리고 표식을 세운다. 그 뒤에 고른 60·120은 그대로 둔다.
+     */
+    frameRate30Applied: boolean;
   };
   /** `reduceFlashes`와 `colorAssist`는 공용 효과·의미 표식 경계에서 소비한다. 필수 대사는 숨기지 않는다. */
   accessibility: { textScale: 1 | 1.15 | 1.3; reduceMotion: boolean; reduceFlashes: boolean; colorAssist: boolean };

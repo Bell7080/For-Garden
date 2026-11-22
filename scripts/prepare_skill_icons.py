@@ -64,6 +64,7 @@ RELICS.update({relic: relic for relic in (
     "kento", "mosana", "anka", "irna", "ark", "yuti", "teku", "plesha",
     "ikanixia", "atra", "pulsi", "neuri", "mir", "magasa", "noa", "raja", "carno",
     "maddy", "terisa", "shute", "morphe", "dimo", "dian", "kuro", "shiro", "quetzalcoatlus", "arte",
+    "brika", "belz", "ar",
 )})
 
 # 적 정보창의 **역할** 아이콘. 원본 이름은 `:{번호}.png`이고 번호는 잡졸부터 불사까지의 순서다.

@@ -10,9 +10,12 @@ import type { DeviceProfile, GraphicsQuality } from "./settings";
 /** 절전 모드가 켜지면 프레임 제한을 이 값 아래로 내린다. 저장된 선택은 그대로 두고 적용만 낮춘다. */
 export const POWER_SAVING_FRAME_RATE = 30 as const;
 
-/** 첫 실행(과 설정 초기화)에서 고를 프레임 제한. 낮음 품질 기기만 30, 나머지는 기본 60이다. */
-export function deviceFrameRateLimit(quality: GraphicsQuality): 30 | 60 {
-  return quality === "low" ? 30 : 60;
+/**
+ * 첫 실행(과 설정 초기화)에서 고를 프레임 제한. 품질과 무관하게 30이다(2026-11-23 응태 결정 — 아이폰16 발열·배터리).
+ * 60·120은 플레이어가 설정에서 직접 고를 때만 든다.
+ */
+export function deviceFrameRateLimit(_quality: GraphicsQuality): 30 {
+  return 30;
 }
 
 /** 실제로 TimeStep에 걸 프레임 제한. 절전은 30에서 멈추고, 끄면 저장된 값이 그대로 돌아온다. */

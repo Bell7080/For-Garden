@@ -7,8 +7,8 @@ import { readFileSync } from "node:fs";
 describe("기기 성능 규칙 — 발열 줄이기", () => {
   it("낮음 품질 기기만 30fps로 시작하고 나머지는 60이다", () => {
     expect(deviceFrameRateLimit("low")).toBe(30);
-    expect(deviceFrameRateLimit("balanced")).toBe(60);
-    expect(deviceFrameRateLimit("high")).toBe(60);
+    expect(deviceFrameRateLimit("balanced")).toBe(30);
+    expect(deviceFrameRateLimit("high")).toBe(30);
   });
 
   it("절전은 적용만 30으로 낮추고 저장된 선택은 건드리지 않는다", () => {

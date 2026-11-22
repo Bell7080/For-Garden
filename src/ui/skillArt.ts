@@ -24,6 +24,7 @@ const ART_FOLDERS: readonly string[] = [
   "toby", "amo", "ripa", "pontos", "koma", "parua", "sukusuino", "taboa", "raitia",
   "kento", "mosana", "anka", "irna", "ark", "yuti", "teku", "plesha", "ikanixia", "atra", "pulsi", "neuri", "mir", "magasa", "noa", "raja", "carno",
   "maddy", "terisa", "shute", "morphe", "dimo", "dian", "kuro", "shiro", "quetzalcoatlus", "arte",
+  "brika", "belz", "ar",
 ];
 
 /**

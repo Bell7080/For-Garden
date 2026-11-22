@@ -23,7 +23,6 @@ export const EXCAVATION_RU = {
   "excavation.harvestFailed": "Сбор не удался. Повторите тот же запрос.",
   "excavation.ad.unavailable": "Даже без рекламы обычный сбор доступен.",
   "excavation.ad.cancelled": "Реклама отменена или не готова. Используйте обычный сбор.",
-  "excavation.ad.applied": "Бонус раскопок применён.",
   "excavation.ad.verifyFailed": "Проверка рекламы не удалась. Обычный сбор доступен.",
   "excavation.ownedRelics": "Ваши реликты",
   "excavation.ownedRelicsForSlot": "Ваши реликты · Поставить на место {slot}",

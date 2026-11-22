@@ -10,15 +10,50 @@ export interface NotificationDotOptions extends NotificationAnchorOptions {
   y: number;
 }
 
+const DOT_TEXTURE = "ui-notification-dot";
+/** 구울 때의 배율 — 화면에서 다시 줄여 세우므로 확대된 화면에서도 가장자리가 부드럽다. */
+const DOT_BAKE_SCALE = 2;
+
+/**
+ * 점 한 장을 한 번만 굽는다. 원(`add.circle`)은 둘레를 백 개 남짓의 점으로 나눠 **매 프레임** 삼각형을 다시 만들어
+ * 올리는데, 점 하나가 원 두 개(그림자 + 외곽선 두른 몸)라 로비에 점이 열 개만 서도 화면 그리기 자료의 절반이
+ * 점이었다(2026-11-23 실측 — 정지 로비 한 프레임 808KB 중 약 400KB). 구운 그림은 네모 하나다.
+ */
+function ensureDotTexture(scene: Phaser.Scene): { key: string; originX: number; originY: number; width: number; height: number } {
+  const style = NOTIFICATION_DOT_STYLE;
+  const half = Math.max(style.radius + 2, style.radius + style.outlineWidth / 2) + 1;
+  const top = half;
+  const bottom = style.shadowOffsetY + style.radius + 2 + 1;
+  const width = half * 2;
+  const height = top + bottom;
+  const result = { key: DOT_TEXTURE, originX: 0.5, originY: top / height, width, height };
+  if (scene.textures.exists(DOT_TEXTURE)) return result;
+  const k = DOT_BAKE_SCALE;
+  const canvas = scene.textures.createCanvas(DOT_TEXTURE, width * k, height * k);
+  const ctx = canvas?.getContext();
+  if (!canvas || !ctx) return result;
+  const css = (color: number, alpha = 1): string => `rgba(${(color >> 16) & 255},${(color >> 8) & 255},${color & 255},${alpha})`;
+  ctx.scale(k, k);
+  ctx.translate(half, top);
+  ctx.fillStyle = css(style.shadow, style.shadowAlpha);
+  ctx.beginPath(); ctx.arc(0, style.shadowOffsetY, style.radius + 2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = css(style.fill);
+  ctx.beginPath(); ctx.arc(0, 0, style.radius, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = css(style.outline);
+  ctx.lineWidth = style.outlineWidth;
+  ctx.stroke();
+  canvas.refresh();
+  return result;
+}
+
 /** 숫자 없이 붉은 원·흰 외곽선·짙은 그림자를 한곳에서 그리는 공용 프리팹이다. */
 export class NotificationDot extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, target: Phaser.GameObjects.Container, options: NotificationDotOptions) {
     // super 호출 전에 this를 만들 수 없으므로 같은 순수 계산의 두 축을 생성자 인자로 바로 넘긴다.
     super(scene, rotatedNotificationAnchor(options).x, rotatedNotificationAnchor(options).y);
-    const style = NOTIFICATION_DOT_STYLE;
-    // 그림자를 아래로 분리해 밝고 복잡한 로비 원화에서도 흰 외곽선이 묻히지 않게 한다.
-    this.add(scene.add.circle(0, style.shadowOffsetY, style.radius + 2, style.shadow, style.shadowAlpha));
-    this.add(scene.add.circle(0, 0, style.radius, style.fill).setStrokeStyle(style.outlineWidth, style.outline, 1));
+    // 그림자를 아래로 분리해 밝고 복잡한 로비 원화에서도 흰 외곽선이 묻히지 않게 한다(한 장으로 구워 둔다).
+    const dot = ensureDotTexture(scene);
+    this.add(scene.add.image(0, 0, dot.key).setOrigin(dot.originX, dot.originY).setDisplaySize(dot.width, dot.height));
     target.add(this);
   }
 }

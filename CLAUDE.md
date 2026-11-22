@@ -916,7 +916,8 @@
 - **WebGL 컨텍스트는 게임 캔버스 하나만 상시 유지한다.** 연구소의 SSR 전조(three.js)처럼 컨텍스트를 하나 더 쓰는 무대는 미리 세우더라도 그 화면을 떠날 때 `releaseSsrOmen`처럼 `dispose`와 DOM 제거로 반드시 내린다. 컨텍스트가 둘 이상 상주하면 GPU 메모리가 두 벌이 되어 모바일에서 탭이 죽는다.
 - **바뀌지 않는 많은 도형은 굽는다**(`ui/bakedGraphics.ts`의 `bakedGraphicsImage`). Graphics는 그린 명령을 매 프레임 다시 풀어 그리므로 점 무늬(원 217개)·돌림판처럼 정지한 도형 수백 개를 Graphics로 세워 두면 서 있는 내내 그만큼 그린다. 움직임은 구운 이미지의 회전·알파 트윈으로 낸다.
 - **스킬 일러스트·출격 칸 원화는 타이틀이 캐시에만 받는다**(`prefetchCachedFiles`). 스킬 일러스트는 액자·쪽지가 설 때 `skillArtLoader.ensureSkillArt`가 올리고(전투는 `ensureSkillArtFor`로 미리), 출격 칸 원화는 배경과 같은 거주 규칙(`CONTENT_ENTRY_ART`)이다. 새로 그리는 자리도 `textures.exists`로 가르지 말고 그 길을 지난다.
-- **배경 원화는 메인 스레드 밖에서 디코드한다**(`backgrounds.ts`의 `decodeOffThread` — `createImageBitmap`, 내릴 때 `close`). 로더 길은 그 API가 없을 때의 되돌이다.
+- **배경 원화는 올리기 전에 미리 풀어 둔다**(`backgrounds.ts`의 `decodeAhead` — 그림 요소의 `decode()`). `createImageBitmap`으로 올리지 않는다 — v0.514.0에 그 길을 탔더니 갤럭시 노트20에서 스토리 지도 진입이 까만 화면으로 굳었다(v0.519.3에서 걷었다). 한 변이 4,096px를 넘는 원화를 두지 않는다. 로더 길은 `decode`가 없을 때의 되돌이다.
+- **WebGL 컨텍스트를 잃고 4초(보이는 동안) 안에 돌아오지 않으면 보고하고 새로 띄운다**(`ui/webglWatchdog.ts` · 규칙 `core/webglRecovery.ts` — 10분에 두 번까지). 잃은 순간도 `webgl.contextLost`로 GPU 이름과 함께 남는다.
 - **Pre FX는 꺼 두었다**(`main.ts`의 `disablePreFX: true` — 부팅 때 미리 잡던 렌더 타깃 약 180MB). 게임 객체의 `.preFX`(glow·blur)를 쓰지 않는다 — 필요하면 굽거나 겹쳐 그린다.
 - **저사양·절전의 렌더 부담은 `core/devicePerformance.ts` 한 곳이 정한다** — 낮음 품질 첫 실행 30fps · 절전은 적용만 30fps · 낮음 품질 MSAA 끔(다음 실행부터) · 저메모리 기기의 유휴 원화 보관 축소. 프레임 제한을 TimeStep에 걸 때는 저장값이 아니라 `effectiveFrameRateLimit`을 지난다.
 - **앱이 뒤로 가면 게임 루프가 잠든다**(`ui/backgroundSleep.ts` — rAF 정지, `AudioManager`가 AudioContext도 멈춘다). Phaser 기본 숨김 처리는 그리기를 멈추지 않으므로 이 연결을 걷지 않는다.
@@ -2617,7 +2618,7 @@
   부풀었다 줄며 좌우를 오간다(`EffectManager.syncFeverMarks`). 원화에는 붉은 기운을 1할 남짓만
   덮는다(`setBodyFill`) — 예전처럼 속성색 tint로 몸을 물들이면 누구인지가 흐려졌다.
   **주위에 발광을 두르지 않는다** — 겹쳐 두면 밝은 배경 원화 위에서 하얗게 떠 정작 봐야 할
-  캐릭터가 그 속에 묻힌다(그래서 v0.36.0에서 걷어 냈다). 테두리는 폭주 중인 개체에만 든다. 생존 개체가 10명을 넘는 물량전은 여섯 방향씩 12겹으로 줄여, 두 색의 테두리·몸 채움·빠직 표식은 유지하면서 본체 복제 draw를 절반으로 줄인다.
+  캐릭터가 그 속에 묻힌다(그래서 v0.36.0에서 걷어 냈다). 테두리는 폭주 중인 개체에만 든다. **겹 수는 몸마다가 아니라 한 프레임 예산이다**(`FEVER_INK.outlineBudget` — 높음 48 · 보통 32 · 낮음 24겹을 지금 테두리를 두른 몸 수로 나누고, 품질 상한 12/8/6 방향 · 바닥 4 방향). 폭주한 몸이 늘어도 그리기가 불지 않으므로 캐릭터·모드가 늘어도 그 표만 본다 — 개체·콘텐츠로 겹 수를 가르지 않는다. 방향이 여덟보다 적으면 붉은 띠를 반 칸 돌려 먹선의 빈 모서리를 메운다.
 - 상태이상은 숫자가 아니라 표식으로 알린다. 출혈(`BLEED`)처럼 전투 규칙이 있는 것은
   `src/core/skirmish.ts`가 계산하고 씬은 뱃지와 피해 숫자만 그린다.
 - **밀어내기가 걸음을 통째로 먹지 않게 한다.** 겹치지 않으려 서로 밀어내는 힘(`separate`)은

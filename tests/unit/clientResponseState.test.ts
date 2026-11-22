@@ -19,10 +19,10 @@ describe("응답 상태 다듬기", () => {
 });
 
 describe("폭주 테두리 겹 수", () => {
-  it("그래픽 품질이 낮을수록 줄고 북적이는 판의 상한을 넘지 않는다", () => {
-    expect(feverOutlineDirections(6)).toBe(12);
-    expect(feverOutlineDirections(6, "balanced")).toBe(8);
-    expect(feverOutlineDirections(6, "low")).toBe(6);
-    expect(feverOutlineDirections(18, "high")).toBe(6);
+  it("그래픽 품질이 낮을수록 줄고 테두리를 두른 몸이 늘면 한 프레임 예산을 나눠 갖는다", () => {
+    expect(feverOutlineDirections(1)).toBe(12);
+    expect(feverOutlineDirections(1, "balanced")).toBe(8);
+    expect(feverOutlineDirections(1, "low")).toBe(6);
+    expect(feverOutlineDirections(18, "high")).toBe(4);
   });
 });

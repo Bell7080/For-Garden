@@ -53,42 +53,44 @@ function loadBackgroundOnce(scene: Phaser.Scene, key: string, round: number): Pr
   if (existing) return existing;
 
   const url = round > 0 ? `${path}${path.includes("?") ? "&" : "?"}retry=${round}` : path;
-  // 먼저 일꾼 스레드 디코드 길을 탄다. 안 되면(없는 API·실패) 예전 로더 길로 넘어간다.
-  const job = decodeOffThread(scene, key, url).then((ok) => ok || loadWithLoader(scene, key, url));
+  // 먼저 미리 풀어 두는 길을 탄다. 안 되면(없는 API·실패) 예전 로더 길로 넘어간다.
+  const job = decodeAhead(scene, key, url).then((ok) => ok || loadWithLoader(scene, key, url));
   pendingLoads.set(key, job);
   void job.then(() => pendingLoads.delete(key));
   return job;
 }
 
 /**
- * 원화를 **메인 스레드 밖에서** 픽셀로 풀어 올린다.
+ * 원화를 **GPU에 올리기 전에** 브라우저에게 미리 풀어 두게 한다(`HTMLImageElement.decode`).
  *
  * 로더(`load.image`)로 받으면 브라우저가 그림을 처음 GPU에 올리는 순간(`texImage2D`) 메인 스레드에서 디코드한다 —
- * 1882×3344 원화 한 장이 중저가 폰에서 수백 ms라, 화면이 넘어가는 그 프레임이 통째로 멎었다. `createImageBitmap`은
- * 디코드를 다른 스레드에서 끝내고 올리기만 남긴다(Puppet 원화가 이미 쓰는 길과 같다). 픽셀은 내릴 때 `close`로 놓는다.
+ * 1882×3344 원화 한 장이 중저가 폰에서 수백 ms라, 화면이 넘어가는 그 프레임이 통째로 멎었다. `decode()`는 그 일을
+ * 다른 스레드에서 끝낸 뒤에 돌아온다.
+ *
+ * **`createImageBitmap`으로 올리지 않는다**(v0.514.0에 그 길을 탔다가 v0.519.3에서 걷었다). 갤럭시 노트20에서
+ * 출격 → 스토리로 들어가는 순간 화면이 까맣게 굳고 소리만 남았다 — 4,000px를 넘는 지도 원화를 ImageBitmap으로
+ * 올리던 그 화면이 그 버전부터 새로 탄 길이었다. 그림 요소는 모든 기기가 오래 써 온 업로드 길이고, 따로 픽셀을
+ * 붙잡아 둘 일도 없다.
  */
-const decodedBitmaps = new Map<string, ImageBitmap>();
-
-async function decodeOffThread(scene: Phaser.Scene, key: string, url: string): Promise<boolean> {
-  if (typeof createImageBitmap !== "function" || typeof fetch !== "function") return false;
+async function decodeAhead(scene: Phaser.Scene, key: string, url: string): Promise<boolean> {
+  if (typeof Image !== "function") return false;
+  const image = new Image();
+  if (!("decode" in image)) return false;
   try {
-    const response = await fetch(url);
-    if (!response.ok) return false;
-    const bitmap = await createImageBitmap(await response.blob(), { premultiplyAlpha: "premultiply" });
-    if (scene.textures.exists(key)) { bitmap.close(); return true; }
-    scene.textures.addImage(key, bitmap as unknown as HTMLImageElement);
-    decodedBitmaps.set(key, bitmap);
+    image.decoding = "async";
+    image.src = url;
+    await image.decode();
+    if (scene.textures.exists(key)) return true;
+    scene.textures.addImage(key, image);
     return true;
   } catch {
     return false;
   }
 }
 
-/** 텍스처를 내리고, 일꾼이 푼 픽셀이 있으면 함께 놓는다. */
+/** 텍스처를 내린다. */
 function removeBackgroundTexture(textures: Phaser.Textures.TextureManager, key: string): void {
   textures.remove(key);
-  decodedBitmaps.get(key)?.close();
-  decodedBitmaps.delete(key);
 }
 
 function loadWithLoader(scene: Phaser.Scene, key: string, url: string): Promise<boolean> {

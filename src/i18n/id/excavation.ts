@@ -23,7 +23,6 @@ export const EXCAVATION_ID = {
   "excavation.harvestFailed": "Panen gagal. Coba lagi dengan permintaan yang sama.",
   "excavation.ad.unavailable": "Meski iklan tidak tersedia, panen biasa tetap bisa.",
   "excavation.ad.cancelled": "Iklan dibatalkan atau belum siap. Gunakan panen biasa.",
-  "excavation.ad.applied": "Bonus penggalian telah diterapkan.",
   "excavation.ad.verifyFailed": "Verifikasi iklan gagal. Panen biasa tetap bisa.",
   "excavation.ownedRelics": "Relik Dimiliki",
   "excavation.ownedRelicsForSlot": "Relik Dimiliki · Tempatkan di slot {slot}",

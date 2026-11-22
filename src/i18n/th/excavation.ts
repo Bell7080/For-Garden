@@ -23,7 +23,6 @@ export const EXCAVATION_TH = {
   "excavation.harvestFailed": "เก็บเกี่ยวล้มเหลว ลองใหม่ด้วยคำขอเดิม",
   "excavation.ad.unavailable": "แม้ดูโฆษณาไม่ได้ ก็ยังเก็บเกี่ยวแบบปกติได้",
   "excavation.ad.cancelled": "โฆษณาถูกยกเลิกหรือยังไม่พร้อม ใช้การเก็บเกี่ยวแบบปกติ",
-  "excavation.ad.applied": "ใช้โบนัสการขุดหาแล้ว",
   "excavation.ad.verifyFailed": "ตรวจสอบโฆษณาล้มเหลว ยังเก็บเกี่ยวแบบปกติได้",
   "excavation.ownedRelics": "เรลิกที่มี",
   "excavation.ownedRelicsForSlot": "เรลิกที่มี · วางในช่อง {slot}",

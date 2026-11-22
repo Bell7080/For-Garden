@@ -23,7 +23,6 @@ export const EXCAVATION_ZH_HANS = {
   "excavation.harvestFailed": "收获失败。请用相同请求重试。",
   "excavation.ad.unavailable": "即使无法观看广告，也可以普通收获。",
   "excavation.ad.cancelled": "广告已取消或尚未就绪。请使用普通收获。",
-  "excavation.ad.applied": "采掘加成已生效。",
   "excavation.ad.verifyFailed": "广告验证失败。仍可普通收获。",
   "excavation.ownedRelics": "拥有的遗物",
   "excavation.ownedRelicsForSlot": "拥有的遗物 · 配置到{slot}号位",

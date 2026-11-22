@@ -2795,7 +2795,14 @@ export class BattleScene extends Phaser.Scene {
 
   /** 좌표·방향·체력 바·앞뒤 순서를 시뮬레이션 상태에 맞춘다. */
   private syncViews(): void {
-    const outlineDirections = feverOutlineDirections(this.state.fighters.filter(isFighterAlive).length, this.graphicsQuality);
+    // 테두리 겹은 한 프레임 예산을 지금 테두리를 두른 몸 수로 나눈다(`feverInk.ts`) — 폭주한 몸이 늘어도 그리기가 불지 않는다.
+    const outlinedNow = this.time.now;
+    let outlined = 0;
+    this.views.forEach((view) => {
+      if (view.dead) return;
+      if (view.fighter.ferocityFever || (view.feverEndedAt !== undefined && outlinedNow - view.feverEndedAt < FEVER_INK.fadeOutMs)) outlined += 1;
+    });
+    const outlineDirections = feverOutlineDirections(outlined, this.graphicsQuality);
     const feverMarks: Parameters<EffectManager["syncFeverMarks"]>[0][number][] = [];
     this.views.forEach((view) => {
       // 사망 사건을 놓친 몸도 여기서 붙잡는다 — 코어가 쓰러뜨렸는데 화면만 모르면 시체가 선 채로 남는다.

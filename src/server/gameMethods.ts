@@ -14,7 +14,7 @@ export const SERVER_GAME_METHODS = [
   "enterStage", "equipProfileModifiers", "equipRelicSkin", "equipRune", "feedRelic", "fulfillPlatformPurchase", "getAchievements", "getCodex", "claimCodexRewards", "getNewbieGrowth", "claimNewbieGrowth", "getAdOperationsConfig", "getAsyncArenaServerState", "getAttendance",
   "getAncientRanking", "getBountyStatus", "getDuelRanking", "getDuelStatus", "getEvents", "getRegularEvent", "getExpeditionLeaderboard", "getExpeditionWeeklyBest", "getFreeResearchStatus",
   "getIdleExcavation", "getInteractionCities", "getInteractionDispatch", "getInventory", "getMails", "getMissions", "getNotificationSignals",
-  "getPlayerState", "getProducts", "getPurchaseHistory", "getProgressPasses", "getRaids", "getStaminaRechargeStatus", "grantRuneTrait", "harvestExcavation",
+  "getPlayerState", "getProducts", "getPurchaseHistory", "getProgressPasses", "getRaids", "getStaminaRechargeStatus", "grantRuneTrait", "grantRuneTraitsBulk", "harvestExcavation",
   "deleteMails", "dismissFreeRuneCraft", "interactInLobby", "markAttendanceAutoShown", "markContentIntroSeen", "markInteractionJournalRead", "markMailsRead", "markRune", "prepareExpeditionBoss", "pullRelics", "purchaseProduct", "purchaseRelicSkin",
   "rechargeStamina", "refreshDuelOpponents", "renameRune", "rerollRuneTrait", "resolveDuel", "resolveRuneTraitReroll", "resetRelic", "saveExcavationFormation",
   "selectArchaeologySite", "sellRunes", "setDuelDefense", "setFavorite", "setParty", "setRuneLoadout", "setRelicBookmark", "settleExpeditionRun", "settleRaid", "startExpeditionRun", "startInteractionDispatch", "startStrataRun", "submitExpeditionBossScore",

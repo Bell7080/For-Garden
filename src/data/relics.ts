@@ -4703,6 +4703,203 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
+    /**
+     * 벨즈(베엘제부포) — **아군을 구해 내는 지원가**다. 회복(메테·플레샤·도디)·보호막(테리사)·강화(스테라·슈테)·약화(메론)·
+     * 정리(아르테)는 있었지만, 몰린 아군을 **그 자리에서 빼내는** 손은 로스터에 없었다.
+     *
+     * 패시브 「혀 낚아채기」가 주기마다 가장 다친 아군을 제 곁으로 끌어와 막을 두르고 그 아군을 노리던 표적을 모두 풀어 버린다.
+     * 평타 「족쇄 채찍」은 적중마다 그 주기를 0.1초 당기고, 궁극기는 「꿀꺽」 — 삼켜서 묶는 것이 아니라 아군 한 명을 입 안에
+     * 숨겨(은신) 그대로 싸우게 한다(응태 결정 2026-11-22 · B안).
+     */
+    id: "belz",
+    squad: "fang",
+    name: "벨즈",
+    specimenNumber: "033",
+    projectName: "BINDING PROMISE",
+    excavationSite: "마다가스카르 마하장가 분지 마에바라노층",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "강가 사암층에서 납작하고 넓은 두개골이 위턱째 드러났다. 머리뼈 겉면이 오돌토돌한 골판으로 덮여 투구를 쓴 것처럼 단단했고, 입은 몸통 절반을 차지할 만큼 넓었다. 발굴진은 부서지기 쉬운 골판을 조각마다 번호를 붙여 떼어 냈다. 턱 안쪽에는 이빨 자국이 난 작은 뼈가 함께 굳어 있었다. 복원은 넓은 턱이 닫히는 각도를 먼저 맞추고 나머지 몸을 거기에 따랐다.",
+    observationProfile: {
+      originYear: "약 6,800만 년 전",
+      // 낯을 가리는 어린 몸이지만 한번 한 약속은 놓지 않는 고집이 있어 열셋 언저리에 둔다.
+      restorationYear: "E.C. 13년",
+      lifeStage: "유체",
+      height: "1.46 m",
+      weight: "38 kg",
+    },
+    catalogSummary: "신장 1.46m, 체중 38kg의 인간형 체격에 골판으로 덮인 넓은 두개골이 확인된 유체 베엘제부포 화석 기반 표본.",
+    unlockRecord: { status: "recorded", text: "복원 후 벨즈는 낯선 사람 앞에서 소매로 입을 가리고 웃는다. 목의 버클과 몸에 감긴 사슬은 구속구가 아니다. 앱솔루트 팽이 폭주한 개체를 붙잡을 때 쓰는 장비인데, 둘 곳이 없다며 제 몸에 걸고 다닌다. 말수는 적다. 대신 한번 한 약속은 사슬처럼 놓지 않는다. 쓰러지려는 동료의 손목에 수갑을 채우며 \"아직 계약 기간이에요\" 하고 속삭인 기록이 남아 있다. 장난이었는지 물으면, 대답 대신 개구리 후드를 눌러쓴다." },
+    squadNote: "앱솔루트 팽의 구속 장비 담당. 폭주한 개체를 붙잡을 사슬과 수갑을 몸에 걸고 다니고, 쓰러지려는 동료도 같은 사슬로 붙들어 전선에 남긴다.",
+    // 팽의 호칭 중 가장 짧고 무거운 말을, 낯가리는 목소리로 작게 부른다.
+    researcherTitle: "보스",
+    rarity: "SR",
+    portraitAssetId: "belz",
+    origin: "베엘제부포",
+    // 늪과 물가의 개구리다 — 풀 지원가는 메테 하나뿐이던 자리다.
+    element: "grass",
+    role: "support",
+    // 사슬이 닿는 거리에서 아군 뒤를 지킨다. 붙잡을 몸이 쓰러지는 자리를 늘 볼 수 있어야 한다.
+    reachTier: "mid",
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.04, efficiencyMultiplier: 1.08 },
+    /*
+     * SR 지원가 띠 안에서 체력·저항에 몫을 둔다 — 계약의 대가를 제 체력으로 치르므로 몸이 얇으면 두 번째 계약을 치르지 못한다.
+     * 손은 주문력 하나라 공격력은 낮게 둔다. 공속·이속은 로스터 중간이다.
+     */
+    stats: {
+      hp: 1080,
+      def: 70,
+      res: 98,
+      atk: 46,
+      ap: 132,
+      attackSpeed: 96,
+      moveSpeed: 92,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 12,
+    },
+    // 한계 돌파는 아직 설계하지 않았다 — `docs/breakthrough-design.md` 절차대로 추천안을 확인받은 뒤 채운다.
+    // 폭주에는 손이 빨라진다 — 평타가 혀의 주기를 당기므로 빨라진 손이 곧 더 자주 끌어오는 혀다.
+    ferocityTrait: { name: "배고파요", effectId: "selfAttackSpeedMultiplier", bonusPercent: 40 },
+    passive: {
+      // kind가 tonguePull인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "belz-passive",
+      name: "혀 낚아채기",
+      kind: "tonguePull",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 0,
+      // 대상은 체력 비율이 가장 낮은 아군 — 응태 결정(2026-11-22). 표적을 모두 풀어 몰린 아군이 숨 돌릴 틈을 만든다.
+      tongue: { intervalSeconds: 8, shieldMaxHpPercent: 12, landDistance: 90 },
+      desc: "8초마다 체력 비율이 가장 낮은 다른 아군을 혀로 끌어와 곁에 세우고, 그 아군의 최대 체력 12%만큼 보호막을 두른다. 끌려온 아군을 노리던 적은 표적을 모두 잃는다.",
+    },
+    basic: {
+      id: "belz-basic",
+      name: "족쇄 채찍",
+      power: 80,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      targeting: "single",
+      // 공속 감소 대신 혀의 주기를 당긴다(응태 결정 2026-11-22) — 때릴수록 더 자주 구해 낸다.
+      passiveCooldownReductionSeconds: 0.1,
+    },
+    ultimate: {
+      id: "belz-ult",
+      name: "꿀꺽",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 130,
+      // 피해 없는 지원 궁극기다 — 코어는 teamBuff 계약만 읽고, 꿀꺽은 전장의 아군 중 체력 비율이 가장 낮은 한 명에게만 건다.
+      // 삼켜서 묶지 않는다: 걸린 아군은 은신한 채 그대로 싸운다(탐켄치처럼 아무것도 못 하는 시간이 아니다).
+      targeting: "battlefieldAllies",
+      teamBuff: { kind: "gulp", seconds: 3, healMaxHpPercentPerSecond: 6 },
+    },
+  },
+  {
+    /**
+     * 아르사(알로사우루스) — **야성을 빨리 채우고 오래 쥐는 불 전사**다. 공통 획득량(12)은 그대로 두고, 게이지를 작게(80) 잡아
+     * 빨리 차게 하고, 패시브 「피 냄새」가 평타마다 야성을 더 끌어오며, 폭주 중에는 적중·처치가 폭주를 **닳지 않게 붙잡는다**
+     * (한 번의 폭주에 최대 +6초). 폭주 연장은 로스터에서 이 개체만 쓰는 축이다. 불 전사는 렉시아(SSR) 하나뿐이던 자리다.
+     */
+    id: "arsa",
+    squad: "gear",
+    name: "아르사",
+    // 034는 파루아의 번호라 원화 번호(char_034)와 갈린다 — 개체번호는 도감 순서의 값이다.
+    specimenNumber: "035",
+    projectName: "RELENTLESS HUNT",
+    excavationSite: "미국 와이오밍 모리슨층 하우 채석장",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "채석장 바닥의 이암에서 거의 온전한 골격이 옆으로 누운 채 드러났다. 눈 위로 솟은 작은 뿔 한 쌍이 그대로 남아 있었고, 갈비뼈 몇 개와 발가락뼈에는 부러졌다 다시 붙은 자국이 겹겹이 있었다. 다친 몸으로도 사냥을 멈추지 않았다는 뜻이라, 발굴진은 그 자국을 하나도 메우지 않고 기록했다. 복원은 상처 난 뼈의 모양을 그대로 살리는 쪽을 골랐다.",
+    observationProfile: {
+      originYear: "약 1억 5,000만 년 전",
+      // 무심한 얼굴로 끝까지 쫓는 젊은 사냥꾼이라 열다섯 언저리에 둔다.
+      restorationYear: "E.C. 15년",
+      lifeStage: "아성체",
+      height: "1.52 m",
+      weight: "44 kg",
+    },
+    catalogSummary: "신장 1.52m, 체중 44kg의 인간형 체격에 눈 위의 작은 뿔과 여러 번 아문 골절 흔적이 확인된 아성체 알로사우루스 화석 기반 표본.",
+    unlockRecord: { status: "recorded", text: "복원 후 아르사는 말을 걸어도 눈만 돌린다. 목까지 올린 코트 깃에는 이빨 모양 가시가 줄지어 있고, 버클로 감아 둔 꼬리는 걸을 때마다 바닥을 스친다. 인양 현장에서 표적을 한번 정하면 놓치는 법이 없다. 동료가 철수 신호를 보내도 \"아직\" 한마디만 남기고 끝까지 쫓아간 기록이 여러 번 있다. 돌아와서는 다친 데를 감추고 구석에서 야식을 먹는다. 붕대를 감아 주면 고맙다는 말 대신 제 몫의 야식을 반으로 쪼개 내민다." },
+    squadNote: "나이트 기어의 추격 담당. 인양 현장에서 달아나는 표적을 끝까지 쫓아 회수하고, 철수 신호가 와도 사냥이 끝날 때까지 돌아오지 않는다.",
+    // 기어의 호칭 중 가장 짧고 건조한 말을 무심하게 쓴다.
+    researcherTitle: "당신",
+    rarity: "SR",
+    // 게이지를 작게 잡아 빨리 찬다 — 공통 획득량을 올리지 않고 이 개체만의 속도를 낸다.
+    ferocityMax: 80,
+    portraitAssetId: "arsa",
+    origin: "알로사우루스",
+    element: "fire",
+    role: "warrior",
+    reachTier: "melee",
+    strike: "slash",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 132.5, efficiencyMultiplier: 1.07 },
+    /*
+     * SR 전사 띠 안에서 공격력에 몫을 몰았다. 폭주를 오래 쥐는 개체라 버티는 몸이 조금 있어야 하므로 체력은 전사 중간이다.
+     * 쓰는 스킬이 없는 주문력은 낮게 둔다. 끝까지 쫓아가는 사냥꾼이라 이속은 높게, 공속은 중간에 둔다 — 빨라지는 몫은 폭주가 준다.
+     */
+    stats: {
+      hp: 1060,
+      def: 70,
+      res: 58,
+      atk: 156,
+      ap: 22,
+      attackSpeed: 104,
+      moveSpeed: 116,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 12,
+    },
+    // 한계 돌파는 아직 설계하지 않았다 — `docs/breakthrough-design.md` 절차대로 추천안을 확인받은 뒤 채운다.
+    // 상시 보너스가 아니라 끊기지 않을수록 오르는 폭주다(응태 2026-11-22) — 공속 +10%에서 매초 +5%(최대 +50%), 흡혈 매초 +1.5(최대 12).
+    // 「피 냄새」가 폭주를 붙잡을수록 상한까지 닿는다: 기본 8초 폭주면 공속 +50%에 막 닿고, 연장 6초가 그 꼭대기를 오래 쥔다.
+    ferocityTrait: { name: "멈추지 않는 이빨", effectId: "selfAttackSpeedMultiplier", bonusPercent: 10,
+      ramp: { attackSpeedPercentPerSecond: 5, maxAttackSpeedPercent: 50, lifeStealPointsPerSecond: 1.5, maxLifeStealPoints: 12 } },
+    passive: {
+      // kind가 bloodScent인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "arsa-passive",
+      name: "피 냄새",
+      kind: "bloodScent",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 0,
+      // 처치 4초는 응태 결정(2026-11-22). 상한 6초 — 처치 한 번과 적중 네 번이면 다 찬다.
+      bloodScent: { bonusFerocityPerHit: 6, extendPerHitSeconds: 0.5, extendPerKillSeconds: 4, maxExtendSeconds: 6 },
+      desc: "기본 공격이 적중할 때마다 야성을 6 더 얻는다. 폭주 중에는 기본 공격 적중마다 0.5초, 적을 쓰러뜨리면 4초 동안 폭주가 닳지 않는다. 한 번의 폭주에 늘어나는 시간은 최대 6초다.",
+    },
+    basic: {
+      id: "arsa-basic",
+      name: "물어뜯기",
+      power: 100,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      statusEffectEvery: 3,
+      statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 }],
+    },
+    ultimate: {
+      id: "arsa-ult",
+      name: "포식자의 돌진",
+      power: 220,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 120,
+      // 뚫고 지나가는 통로의 반폭(px)이다. 나아가는 거리는 이동 속도가 정한다.
+      targeting: "chargeLine",
+      radius: 90,
+      // 폭주 전이면 게이지를 끌어오고, 폭주 중이면 폭주를 붙잡는다.
+      selfFerocity: { amount: 40, feverExtendSeconds: 2 },
+    },
+  },
+  {
     id: "parua",
     squad: "rogue",
     name: "파루아",

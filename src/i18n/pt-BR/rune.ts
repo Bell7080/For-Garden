@@ -156,4 +156,11 @@ export const RUNE_PT_BR = {
   "rune.bulkCraft.confirmEngrave": "Fazer as {attempts} lapidações restantes em {count} runas e gravar {engravings} em {target}. A gravação não pode ser desfeita.",
   "rune.bulkCraft.done": "{successes} de {attempts} lapidações com sucesso · {engraved} gravadas",
   "rune.bulkCraft.failed": "Falha na lapidação em massa.",
+  "rune.traitBulk.title": "Conceder traços em massa",
+  "rune.traitBulk.selected": "Selecionadas {count} / {total} · Núcleos {cores}",
+  "rune.traitBulk.button": "Conceder {count}",
+  "rune.traitBulk.confirm": "Será usado um Núcleo antigo desconhecido em cada uma das {count} runas selecionadas para conceder um traço aleatório.",
+  "rune.traitBulk.done": "{count} traços concedidos · {summary}",
+  "rune.traitBulk.failed": "Falha ao conceder traços em massa.",
+  "rune.traitBulk.lacking": "Núcleos antigos desconhecidos insuficientes.",
 } as const;

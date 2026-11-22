@@ -2005,3 +2005,35 @@ describe("1-5 무료 세공·각인 체험", () => {
     expect(state.tutorial?.freeRuneCraft).toBeUndefined();
   });
 });
+
+describe("FakeServer 특성 일괄 부여", () => {
+  function setup(cores: number) {
+    const state = makeSession();
+    state.runeInventory = [makeRune("rune-a"), makeRune("rune-b"), makeRune("rune-c")];
+    state.itemInventory = [{ itemId: "ancient-core", quantity: cores }];
+    return { state, server: new FakeServer(state, { latencyMs: 0 }) };
+  }
+
+  it("고른 룬마다 핵 하나를 쓰고 특성을 붙인다", async () => {
+    const { state, server } = setup(5);
+    const response = await server.grantRuneTraitsBulk({ runeInstanceIds: ["rune-a", "rune-c"], requestId: "bulk-1" });
+    expect(response.runes.map(({ instanceId }) => instanceId)).toEqual(["rune-a", "rune-c"]);
+    expect(response.runes.every((rune) => rune.trait !== undefined)).toBe(true);
+    expect(state.itemInventory).toEqual([{ itemId: "ancient-core", quantity: 3 }]);
+    expect(state.runeInventory.find(({ instanceId }) => instanceId === "rune-b")?.trait).toBeUndefined();
+    // 같은 요청은 핵을 다시 쓰지 않는다.
+    await server.grantRuneTraitsBulk({ runeInstanceIds: ["rune-a", "rune-c"], requestId: "bulk-1" });
+    expect(state.itemInventory).toEqual([{ itemId: "ancient-core", quantity: 3 }]);
+  });
+
+  it("핵이 모자라거나 이미 특성이 있으면 아무것도 바꾸지 않는다", async () => {
+    const { state, server } = setup(1);
+    await expect(server.grantRuneTraitsBulk({ runeInstanceIds: ["rune-a", "rune-b"], requestId: "bulk-2" })).rejects.toMatchObject({ code: "INSUFFICIENT_ITEMS" });
+    expect(state.itemInventory).toEqual([{ itemId: "ancient-core", quantity: 1 }]);
+    await server.grantRuneTraitsBulk({ runeInstanceIds: ["rune-a"], requestId: "bulk-3" });
+    state.itemInventory = [{ itemId: "ancient-core", quantity: 4 }];
+    await expect(server.grantRuneTraitsBulk({ runeInstanceIds: ["rune-a", "rune-b"], requestId: "bulk-4" })).rejects.toMatchObject({ code: "RUNE_TRAIT_EXISTS" });
+    await expect(server.grantRuneTraitsBulk({ runeInstanceIds: ["rune-b", "rune-b"], requestId: "bulk-5" })).rejects.toMatchObject({ code: "RUNE_TRAIT_BULK_INVALID" });
+    expect(state.itemInventory).toEqual([{ itemId: "ancient-core", quantity: 4 }]);
+  });
+});

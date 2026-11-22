@@ -82,7 +82,6 @@ export const MISC_EN = {
   "intro.prev": "Back",
   "intro.next": "Next",
   "archaeology.bench.pick": "Choose a Rune",
-  "archaeology.bench.clear": "Remove",
   "archaeology.bench.empty": "Insert a rune",
   "archaeology.tab.strata": "Strata Survey",
   "archaeology.tab.research": "Trait Research",

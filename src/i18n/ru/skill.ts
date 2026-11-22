@@ -567,4 +567,10 @@ export const SKILL_RU = {
   "skill.breakthrough.effect.basic.chainSnare": "Каждый {every}-й «{name}» накладывает на цель [[chill|замедление]] на {percent}% на {seconds} с.",
   "skill.breakthrough.effect.ultimate.canopySweep": "При использовании «{name}» отталкивает ближайших врагов.",
   "skill.breakthrough.effect.passive.shadeRetort": "{percent}% урона, принятого за союзников, накапливается и добавляется к следующей обычной атаке как [[fixed-damage|фиксированный урон]]. Накапливается до {cap}.",
+  "skill.passive.tonguePull": "Каждые {seconds} с притягивает языком к себе другого союзника с наименьшей долей ОЗ и даёт ему [[shield|щит]] в {shield}% его макс. ОЗ. Враги, целившиеся в него, теряют цель.",
+  "skill.sentence.gulp": "Делает [[gulp|Глоть]] другому союзнику с наименьшей долей ОЗ на {seconds} с.",
+  "skill.passive.bloodScent": "Каждое попадание [[basic-attack|обычной атаки]] даёт ещё {bonus} [[ferocity|ярости]]. Во время [[ferocity|неистовства]] каждое попадание обычной атаки не даёт ему убывать {hit} с, а каждое добивание — {kill} с. Одно Неистовство можно продлить в сумме не более чем на {cap} с.",
+  "skill.clause.selfFerocity": "Получает {amount} [[ferocity|ярости]]. Если [[ferocity|Неистовство]] уже идёт, вместо этого оно не убывает {seconds} с",
+  "skill.ferocity.selfAttackSpeedMultiplier.ramp": "Пока Неистовство длится без перерыва, [[attack-speed|скорость атаки]] начинает с +{percent}% и растёт на {perSecond}% в секунду до +{max}%, а вампиризм от любого урона растёт на {stealPerSecond}% в секунду до {stealMax}%. Когда Неистовство заканчивается, всё начинается заново.",
+  "skill.clause.passiveCooldownReduction": "Каждое попадание сокращает оставшийся период пассивного умения на {seconds} с",
 } as const;

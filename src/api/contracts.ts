@@ -922,6 +922,12 @@ export interface DigStrataTileResponse extends ArchaeologyStateResponse {
 /** 특성 부여·재부여 요청이다. 어느 아이템을 쓰는지는 서버가 표에서 확인한다. */
 export interface GrantRuneTraitRequest { runeInstanceId: string; itemId: string; requestId: string; }
 export interface GrantRuneTraitResponse { rune: RuneInstance; items: InventoryItemDto[]; }
+/**
+ * 특성 일괄 부여 요청이다. 미지의 고대 핵을 룬마다 하나씩 쓴다 — 대상은 특성이 없는 룬뿐이고
+ * (`isRuneTraitBulkCandidate`) 서버가 다시 확인한다. 같은 requestId는 같은 결과를 돌려준다.
+ */
+export interface GrantRuneTraitsBulkRequest { runeInstanceIds: readonly string[]; requestId: string; }
+export interface GrantRuneTraitsBulkResponse { runes: RuneInstance[]; items: InventoryItemDto[]; }
 /** 재해석 요청이다. 비용은 서버가 정하고 요청은 대상만 보낸다. */
 export interface RerollRuneTraitRequest { runeInstanceId: string; requestId: string; }
 /**
@@ -953,7 +959,7 @@ export interface UpgradeRuneTraitResponse { rune: RuneInstance; items: Inventory
 export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_DAILY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_NOT_ENTERED" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "AD_PREREQUISITE" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "PASS_BONUS_CLAIMED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "BANNER_NOT_ACTIVE" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RELIC_MAX_BREAKTHROUGH" | "RUNE_CHOICE_REQUIRED" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE" | "NOTHING_TO_CLAIM" | "DUEL_UNAVAILABLE" | "DUEL_OPPONENT_NOT_FOUND" | "DUEL_OPPONENT_FOUGHT" | "DUEL_NO_ATTEMPTS" | "DUEL_ATTEMPT_LIMIT" | "DUEL_INVALID_TEAM" | "DUEL_ADMISSION_NOT_FOUND"
   | "GIFT_UNAVAILABLE" | "GIFT_NOT_ELIGIBLE" | "GIFT_NOT_FOUND" | "GIFT_STATE_INVALID"
   | "STRATA_NO_CHARGE" | "STRATA_CHARGE_FULL" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_SITE_COOLING" | "STRATA_TILE_UNAVAILABLE"
-  | "RUNE_SYNTHESIS_INVALID" | "RUNE_CRAFT_INVALID" | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_GRADE_REACHED" | "RUNE_TRAIT_REROLL_PENDING"
+  | "RUNE_SYNTHESIS_INVALID" | "RUNE_CRAFT_INVALID" | "RUNE_TRAIT_BULK_INVALID" | "RUNE_TRAIT_EXISTS" | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_GRADE_REACHED" | "RUNE_TRAIT_REROLL_PENDING"
   | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "DUNGEON_NOT_CLEARED" | "SWEEP_TICKET_SHORTAGE"
   | "RELIC_STORY_NOT_FOUND" | "RELIC_STORY_LOCKED" | "RELIC_STORY_ALREADY_CLAIMED" | "PROFILE_MODIFIER_INVALID" | "DEBUG_TOOLS_DISABLED";
 
@@ -1388,6 +1394,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   abandonStrataRun(request: AbandonStrataRunRequest): Promise<ArchaeologyStateResponse>;
   /** 아이템을 써서 특성을 부여하거나 다시 부여한다. */
   grantRuneTrait(request: GrantRuneTraitRequest): Promise<GrantRuneTraitResponse>;
+  /** 특성 없는 룬 여럿에 미지의 고대 핵으로 특성을 한 번에 부여한다. */
+  grantRuneTraitsBulk(request: GrantRuneTraitsBulkRequest): Promise<GrantRuneTraitsBulkResponse>;
   /** 원석을 치르고 특성을 재해석한다. 룬은 아직 바뀌지 않는다. */
   rerollRuneTrait(request: RerollRuneTraitRequest): Promise<RerollRuneTraitResponse>;
   /** 재해석 후보를 적용하거나 버린다. */

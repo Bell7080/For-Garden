@@ -49,6 +49,8 @@ import {
   PLESHA_PORTRAIT_METADATA,
   ARTE_PORTRAIT_METADATA,
   BRIKA_PORTRAIT_METADATA,
+  BELZ_PORTRAIT_METADATA,
+  ARSA_PORTRAIT_METADATA,
   ARK_PORTRAIT_METADATA,
   TIA_PORTRAIT_METADATA,
   TORIKA_PORTRAIT_METADATA,
@@ -381,6 +383,8 @@ const REAL_PORTRAITS = [
   { name: "플레샤", metadata: PLESHA_PORTRAIT_METADATA, head: { x: 445, y: 281 }, eyes: [{ x: 423, y: 266 }, { x: 477, y: 255 }] },
   { name: "아르테", metadata: ARTE_PORTRAIT_METADATA, head: { x: 579, y: 204 }, eyes: [{ x: 547, y: 189 }, { x: 607, y: 223 }] },
   { name: "브리카", metadata: BRIKA_PORTRAIT_METADATA, head: { x: 595, y: 250 }, eyes: [{ x: 561, y: 243 }, { x: 622, y: 232 }] },
+  { name: "벨즈", metadata: BELZ_PORTRAIT_METADATA, head: { x: 530, y: 278 }, eyes: [{ x: 504, y: 277 }, { x: 570, y: 244 }] },
+  { name: "아르사", metadata: ARSA_PORTRAIT_METADATA, head: { x: 446, y: 194 }, eyes: [{ x: 419, y: 199 }, { x: 456, y: 163 }] },
   { name: "이르나", metadata: IRNA_PORTRAIT_METADATA, head: { x: 600, y: 254 }, eyes: [{ x: 567, y: 230 }, { x: 623, y: 265 }] },
   { name: "아크", metadata: ARK_PORTRAIT_METADATA, head: { x: 595, y: 338 }, eyes: [{ x: 558, y: 306 }, { x: 620, y: 339 }] },
   // 레이티아 다섯 자매. 같은 몸이지만 묶음마다 캔버스와 여백이 달라 다섯을 모두 건다.

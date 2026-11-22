@@ -82,7 +82,6 @@ export const MISC_VI = {
   "intro.prev": "Trước",
   "intro.next": "Tiếp",
   "archaeology.bench.pick": "Chọn Rune",
-  "archaeology.bench.clear": "Gỡ ra",
   "archaeology.bench.empty": "Đặt Rune vào",
   "archaeology.tab.strata": "Thám sát địa tầng",
   "archaeology.tab.research": "Nghiên cứu đặc tính",

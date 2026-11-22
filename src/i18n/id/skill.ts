@@ -567,4 +567,10 @@ export const SKILL_ID = {
   "skill.breakthrough.effect.basic.chainSnare": "Setiap \"{name}\" ke-{every} memberi [[chill|Perlambatan]] {percent}% pada musuh yang terkena selama {seconds} detik.",
   "skill.breakthrough.effect.ultimate.canopySweep": "Saat \"{name}\" digunakan, mendorong musuh di sekitar menjauh.",
   "skill.breakthrough.effect.passive.shadeRetort": "{percent}% kerusakan yang ditanggung untuk sekutu tersimpan, lalu ditambahkan sekaligus ke serangan dasar berikutnya sebagai [[fixed-damage|kerusakan tetap]]. Tersimpan hingga {cap}.",
+  "skill.passive.tonguePull": "Setiap {seconds} dtk, menarik sekutu lain dengan rasio HP terendah ke sisinya dengan lidah dan memberinya [[shield|Perisai]] sebesar {shield}% HP maksimumnya. Musuh yang membidik sekutu itu kehilangan targetnya.",
+  "skill.sentence.gulp": "Melakukan [[gulp|Glek]] pada satu sekutu lain dengan rasio HP terendah selama {seconds} dtk.",
+  "skill.passive.bloodScent": "Setiap [[basic-attack|serangan dasar]] yang mengenai memberi {bonus} [[ferocity|Keganasan]] tambahan. Selama [[ferocity|Amukan]], setiap serangan dasar yang mengenai membuat Amukan tidak berkurang selama {hit} dtk, dan menumbangkan musuh selama {kill} dtk. Satu Amukan bisa diperpanjang maksimal {cap} dtk.",
+  "skill.clause.selfFerocity": "Mendapat {amount} [[ferocity|Keganasan]]. Jika sudah dalam [[ferocity|Amukan]], Amukan tidak berkurang selama {seconds} dtk sebagai gantinya",
+  "skill.ferocity.selfAttackSpeedMultiplier.ramp": "Selama Amukan berlanjut tanpa terputus, [[attack-speed|Kecepatan Serang]] mulai dari +{percent}% dan naik {perSecond}% tiap detik hingga +{max}%, dan curi nyawa dari semua kerusakan naik {stealPerSecond}% tiap detik hingga {stealMax}%. Keduanya kembali ke awal saat Amukan berakhir.",
+  "skill.clause.passiveCooldownReduction": "Setiap kena, sisa jeda pasif berkurang {seconds} dtk",
 } as const;

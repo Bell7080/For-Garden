@@ -82,7 +82,6 @@ export const MISC_ES = {
   "intro.prev": "Atrás",
   "intro.next": "Siguiente",
   "archaeology.bench.pick": "Elige una Runa",
-  "archaeology.bench.clear": "Quitar",
   "archaeology.bench.empty": "Coloca una runa",
   "archaeology.tab.strata": "Estudio de estratos",
   "archaeology.tab.research": "Investigación de rasgos",

@@ -161,4 +161,11 @@ export const RUNE_JA = {
   "rune.bulkCraft.confirmEngrave": "ルーン{count}個の残り研磨{attempts}回を行い、{engravings}個を{target}に刻印します。刻印は元に戻せません。",
   "rune.bulkCraft.done": "研磨{attempts}回中{successes}回成功 · 刻印{engraved}個",
   "rune.bulkCraft.failed": "一括研磨に失敗しました。",
+  "rune.traitBulk.title": "特性一括付与",
+  "rune.traitBulk.selected": "選択 {count} / {total} · 核 {cores}",
+  "rune.traitBulk.button": "{count}個付与",
+  "rune.traitBulk.confirm": "選んだルーン{count}個に未知の古代核を1個ずつ使い、ランダムな特性を付与します。",
+  "rune.traitBulk.done": "特性{count}個付与 · {summary}",
+  "rune.traitBulk.failed": "特性一括付与に失敗しました。",
+  "rune.traitBulk.lacking": "未知の古代核が足りません。",
 } as const;

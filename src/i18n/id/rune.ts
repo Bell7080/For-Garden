@@ -156,4 +156,11 @@ export const RUNE_ID = {
   "rune.bulkCraft.confirmEngrave": "Jalankan {attempts} asah tersisa pada {count} Rune dan ukir {engravings} pada {target}. Ukiran tidak bisa dibatalkan.",
   "rune.bulkCraft.done": "Asah berhasil {successes}/{attempts} · Diukir {engraved}",
   "rune.bulkCraft.failed": "Asah massal gagal.",
+  "rune.traitBulk.title": "Beri Sifat Massal",
+  "rune.traitBulk.selected": "Dipilih {count} / {total} · Inti {cores}",
+  "rune.traitBulk.button": "Beri {count}",
+  "rune.traitBulk.confirm": "Gunakan 1 Inti Purba Tak Dikenal untuk masing-masing {count} rune terpilih guna memberi sifat acak.",
+  "rune.traitBulk.done": "{count} sifat diberikan · {summary}",
+  "rune.traitBulk.failed": "Pemberian sifat massal gagal.",
+  "rune.traitBulk.lacking": "Inti Purba Tak Dikenal tidak cukup.",
 } as const;

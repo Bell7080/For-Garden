@@ -16,6 +16,7 @@ import { addRuneFrame, RUNE_ACCENT } from "./runeIcons";
 import { runeStatLabel } from "./RunePopup";
 import { runeTraitView } from "./runeTraitPresentation";
 import { addSectionTitle } from "./SectionTitle";
+import { addFormationRemoveChip } from "./formationSlotChrome";
 import { COLOR, textStyle } from "./theme";
 import { mountRunePickerGrid } from "./runePickerGrid";
 import { runePickerSize } from "./runePickerLayout";
@@ -229,10 +230,9 @@ export function addResearchBench(options: ResearchBenchOptions): void {
     paintTrait({ scene, parent: trait, keywords: options.keywords, rune });
     if (rising) scene.tweens.add({ targets: trait, y: 0, alpha: 1, delay: RESEARCH_BENCH.traitDelay, duration: 220, ease: "Cubic.Out" });
 
-    const clear = scene.add.text(BASE_WIDTH - RESEARCH_BENCH.inset - 30, top + 22,
-      t("archaeology.bench.clear"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0);
-    clear.setInteractive({ useHandCursor: true }).on("pointerup", () => options.onClear());
-    bench.add(clear);
+    // **빼기는 편성 칸과 같은 붉은 빼기 칩이다**(`addFormationRemoveChip`) — 판 구석의 흐린 「빼기」 글자는
+    // 무엇을 빼는지 칸과 떨어져 읽혔다. 칩은 룬 칸의 오른쪽 위 모서리 안쪽에 앉아 그 칸을 비우는 조작임을 자리가 말한다.
+    addFormationRemoveChip(scene, holder, { x: 0, y: 0, width: RESEARCH_BENCH.slot, height: RESEARCH_BENCH.slot }, () => options.onClear());
   }
 
   options.actions.forEach((action, index) => {

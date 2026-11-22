@@ -87,7 +87,6 @@ export const MISC_JA = {
   "intro.prev": "戻る",
   "intro.next": "次へ",
   "archaeology.bench.pick": "ルーンを選ぶ",
-  "archaeology.bench.clear": "外す",
   "archaeology.bench.empty": "ルーンを差し込んでください",
   "archaeology.tab.strata": "地層探査",
   "archaeology.tab.research": "特性研究",

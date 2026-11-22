@@ -160,4 +160,11 @@ export const RUNE_KO = {
   "rune.bulkCraft.confirmEngrave": "룬 {count}개의 남은 세공 {attempts}회를 진행하고, {engravings}개를 {target}에 각인합니다. 각인은 되돌릴 수 없습니다.",
   "rune.bulkCraft.done": "세공 {attempts}회 중 {successes}회 성공 · 각인 {engraved}개",
   "rune.bulkCraft.failed": "일괄 세공에 실패했습니다.",
+  "rune.traitBulk.title": "특성 일괄 부여",
+  "rune.traitBulk.selected": "선택 {count} / {total} · 핵 {cores}",
+  "rune.traitBulk.button": "{count}개 부여",
+  "rune.traitBulk.confirm": "고른 룬 {count}개에 미지의 고대 핵을 하나씩 써서 무작위 특성을 부여합니다.",
+  "rune.traitBulk.done": "특성 {count}개 부여 · {summary}",
+  "rune.traitBulk.failed": "특성 일괄 부여에 실패했습니다.",
+  "rune.traitBulk.lacking": "미지의 고대 핵이 모자랍니다.",
 } as const;

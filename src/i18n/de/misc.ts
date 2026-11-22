@@ -82,7 +82,6 @@ export const MISC_DE = {
   "intro.prev": "Zurück",
   "intro.next": "Weiter",
   "archaeology.bench.pick": "Rune wählen",
-  "archaeology.bench.clear": "Entfernen",
   "archaeology.bench.empty": "Rune einsetzen",
   "archaeology.tab.strata": "Schichtenerkundung",
   "archaeology.tab.research": "Merkmalsforschung",

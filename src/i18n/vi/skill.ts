@@ -567,4 +567,10 @@ export const SKILL_VI = {
   "skill.breakthrough.effect.basic.chainSnare": "Mỗi lần thứ {every} của \"{name}\" gây [[chill|Làm chậm]] {percent}% lên kẻ địch trúng đòn trong {seconds} giây.",
   "skill.breakthrough.effect.ultimate.canopySweep": "Ngay khi dùng \"{name}\", đẩy các kẻ địch xung quanh ra xa.",
   "skill.breakthrough.effect.passive.shadeRetort": "{percent}% sát thương đã gánh thay được tích lũy và cộng một lần vào đòn đánh thường kế tiếp dưới dạng [[fixed-damage|sát thương cố định]]. Tích lũy tối đa {cap}.",
+  "skill.passive.tonguePull": "Cứ mỗi {seconds} giây, dùng lưỡi kéo đồng minh khác có tỉ lệ HP thấp nhất về bên cạnh và tạo [[shield|Lá chắn]] bằng {shield}% HP tối đa của họ. Kẻ địch đang nhắm vào đồng minh đó mất mục tiêu.",
+  "skill.sentence.gulp": "[[gulp|Ực]] một đồng minh khác có tỉ lệ HP thấp nhất trong {seconds} giây.",
+  "skill.passive.bloodScent": "Mỗi lần [[basic-attack|đòn đánh thường]] trúng nhận thêm {bonus} [[ferocity|Dã tính]]. Trong [[ferocity|Cuồng bạo]], mỗi đòn đánh thường trúng khiến Cuồng bạo không giảm trong {hit} giây, hạ gục kẻ địch thì {kill} giây. Một lần Cuồng bạo kéo dài thêm tối đa {cap} giây.",
+  "skill.clause.selfFerocity": "Nhận {amount} [[ferocity|Dã tính]]. Nếu đang [[ferocity|Cuồng bạo]], thay vào đó Cuồng bạo không giảm trong {seconds} giây",
+  "skill.ferocity.selfAttackSpeedMultiplier.ramp": "Khi Cuồng bạo kéo dài không đứt quãng, [[attack-speed|Tốc độ đánh]] bắt đầu từ +{percent}% và tăng {perSecond}% mỗi giây, tối đa +{max}%; hút máu trên mọi sát thương tăng {stealPerSecond}% mỗi giây, tối đa {stealMax}%. Khi Cuồng bạo kết thúc sẽ đặt lại.",
+  "skill.clause.passiveCooldownReduction": "Mỗi lần trúng, chu kỳ còn lại của nội tại giảm {seconds} giây",
 } as const;

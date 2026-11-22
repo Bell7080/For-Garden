@@ -9,7 +9,7 @@ import { addResearchActionRow, type ResearchActionRowSpec } from "./ResearchActi
 import { chipPoints, drawHairline, drawLayer, drawShapeEdge, HOLO, slantedRect } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import {
-  RESEARCH_BENCH, RESEARCH_TRAIT, researchActionY, researchBenchTop,
+  RESEARCH_BENCH, RESEARCH_TRAIT, researchActionY, researchBenchTop, researchEmptyActionY,
   researchDetailBounds, researchPlateBevel, researchSlotCenter, researchTraitBounds,
 } from "./researchBenchLayout";
 import { addRuneFrame, RUNE_ACCENT } from "./runeIcons";
@@ -236,7 +236,7 @@ export function addResearchBench(options: ResearchBenchOptions): void {
   }
 
   options.actions.forEach((action, index) => {
-    const button = addResearchActionRow(scene, parent, BASE_WIDTH / 2, researchActionY(index), action);
+    const button = addResearchActionRow(scene, parent, BASE_WIDTH / 2, slotted ? researchActionY(index) : researchEmptyActionY(index), action);
     if (!rising) return;
     // **버튼은 한 줄씩 늦게 선다.** 넷이 한꺼번에 뜨면 특성을 읽기도 전에 고르는 줄이 먼저 찬다.
     button.setAlpha(0);

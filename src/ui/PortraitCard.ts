@@ -219,6 +219,8 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private backdrop?: Phaser.GameObjects.Image;
   private readonly nameText?: Phaser.GameObjects.Text;
   private readonly subText?: Phaser.GameObjects.Text;
+  /** 재화 줄(`subStyle: "currency"`)의 그림 — 수가 바뀔 때 덩어리를 다시 가운데에 맞춘다. */
+  private currencyRow?: { icon?: Phaser.GameObjects.Image; shadow?: Phaser.GameObjects.Image; iconSize: number; lead: number };
   /** 레벨 숫자와 그 위 태그. 급여로 레벨이 오르면 카드를 다시 세우지 않고 이 둘만 고친다. */
   private levelText?: Phaser.GameObjects.Text;
   private levelTag?: Phaser.GameObjects.Text;
@@ -445,18 +447,24 @@ export class PortraitCard extends Phaser.GameObjects.Container {
         // 획은 얇게 두르고(두꺼우면 획 사이가 메워진다) 그 밖으로 흐린 그림자를 넓게 번지게 한다.
         if (currencyRow) this.subText.setStroke("#05070a", 3).setShadow(0, 2, "#000000", 10, true, true);
         this.add(this.subText);
-        if (options.subIcon && scene.textures.exists(options.subIcon)) {
+        const hasSubIcon = Boolean(options.subIcon && scene.textures.exists(options.subIcon));
+        if (options.subIcon && hasSubIcon) {
           const iconY = currencyRow ? subBottom - subIconSize / 2 + 2 : baseline + 10 + subIconSize / 2;
           const icon = scene.add.image(nameLeft + subIconSize / 2, iconY, options.subIcon).setDisplaySize(subIconSize, subIconSize);
           // 재화 그림은 제 색을 갖는다 — tint를 먹이면 무슨 재화인지 알 수 없다. 대신 그림 뒤로
           // 같은 그림을 검게 한 겹 깔아 밝은 원화 위에서 실루엣이 떨어져 나오게 한다.
           if (currencyRow) {
-            this.add(scene.add.image(icon.x + 3, iconY + 3, options.subIcon).setDisplaySize(subIconSize, subIconSize).setTint(0x000000).setAlpha(0.45));
+            const shadow = scene.add.image(icon.x + 3, iconY + 3, options.subIcon).setDisplaySize(subIconSize, subIconSize).setTint(0x000000).setAlpha(0.45);
+            this.add(shadow);
+            this.currencyRow = { icon, shadow, iconSize: subIconSize, lead: currencyIconLead };
           } else {
             icon.setTint(COLOR.accent).setAlpha(0.72);
           }
           this.add(icon);
+        } else if (currencyRow) {
+          this.currencyRow = { iconSize: 0, lead: 0 };
         }
+        this.centerCurrencyRow();
       }
     }
 
@@ -885,7 +893,26 @@ export class PortraitCard extends Phaser.GameObjects.Container {
 
   setSub(text: string): this {
     this.subText?.setText(text);
+    this.centerCurrencyRow();
     return this;
+  }
+
+  /**
+   * **재화 줄은 카드 가운데에 선다.** 이름 시작선에 붙여 두면 `112/H`와 `1/D`처럼 수의 길이가
+   * 재화마다 달라 줄이 저마다 다른 자리에서 끝나, 카드마다 한쪽으로 쏠린 것처럼 읽혔다.
+   * 그림 + 수를 한 덩어리로 재서 그 가운데를 카드 가운데에 맞춘다. 그림은 투명 여백이 굽혀
+   * 있어 실제로 보이는 폭(`lead`)으로 잰다.
+   */
+  private centerCurrencyRow(): void {
+    const row = this.currencyRow;
+    const text = this.subText;
+    if (!row || !text) return;
+    const { iconSize, lead } = row;
+    // 보이는 덩어리 = 그림의 보이는 왼쪽 끝(중심 − lead/2) ~ 수의 오른쪽 끝.
+    const iconX = row.icon ? (iconSize / 2 - lead / 2 - text.width) / 2 : 0;
+    text.setX(row.icon ? iconX + lead - iconSize / 2 : -text.width / 2);
+    row.icon?.setX(iconX);
+    row.shadow?.setX(iconX + 3);
   }
 
   /**

@@ -23,7 +23,6 @@ export const EXCAVATION_DE = {
   "excavation.harvestFailed": "Die Ernte ist fehlgeschlagen. Versuche es mit derselben Anfrage erneut.",
   "excavation.ad.unavailable": "Auch ohne Werbung funktioniert die normale Ernte.",
   "excavation.ad.cancelled": "Die Werbung wurde abgebrochen oder ist nicht bereit. Nutze die normale Ernte.",
-  "excavation.ad.applied": "Der Grabungsbonus wurde angewendet.",
   "excavation.ad.verifyFailed": "Werbeprüfung fehlgeschlagen. Die normale Ernte funktioniert weiterhin.",
   "excavation.ownedRelics": "Eigene Relikte",
   "excavation.ownedRelicsForSlot": "Eigene Relikte · Auf Platz {slot} setzen",

@@ -4,7 +4,6 @@ export const LOBBY_RU = {
   "lobby.sortie": "В  Б О Й",
   "lobby.interaction": "Обмен",
   "lobby.excavation": "Раскопки",
-  "lobby.excavation.sub": "Сбор ресурсов",
   "lobby.sortie.title": "В бой",
   "lobby.sortie.story": "Сюжет",
   "lobby.sortie.story.status": "Основная операция",

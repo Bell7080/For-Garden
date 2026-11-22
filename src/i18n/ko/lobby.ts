@@ -5,7 +5,6 @@ export const LOBBY_KO = {
   "lobby.sortie": "출  격",
   "lobby.interaction": "교류",
   "lobby.excavation": "발굴",
-  "lobby.excavation.sub": "자원 수집",
 
   "lobby.sortie.title": "출격",
   "lobby.sortie.story": "스토리",

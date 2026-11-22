@@ -4,7 +4,6 @@ export const LOBBY_JA = {
   "lobby.sortie": "出  撃",
   "lobby.interaction": "交流",
   "lobby.excavation": "採掘",
-  "lobby.excavation.sub": "資源収集",
 
   "lobby.sortie.title": "出撃",
   "lobby.sortie.story": "ストーリー",

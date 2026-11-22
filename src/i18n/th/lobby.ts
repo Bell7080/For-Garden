@@ -4,7 +4,6 @@ export const LOBBY_TH = {
   "lobby.sortie": "ออ ก รบ",
   "lobby.interaction": "แลกเปลี่ยน",
   "lobby.excavation": "ขุดหา",
-  "lobby.excavation.sub": "เก็บทรัพยากร",
   "lobby.sortie.title": "ออกรบ",
   "lobby.sortie.story": "เนื้อเรื่อง",
   "lobby.sortie.story.status": "ปฏิบัติการหลัก",

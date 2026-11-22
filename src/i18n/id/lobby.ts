@@ -4,7 +4,6 @@ export const LOBBY_ID = {
   "lobby.sortie": "B E R A N G K A T",
   "lobby.interaction": "Pertukaran",
   "lobby.excavation": "Penggalian",
-  "lobby.excavation.sub": "Kumpulkan Sumber Daya",
   "lobby.sortie.title": "Berangkat",
   "lobby.sortie.story": "Cerita",
   "lobby.sortie.story.status": "Operasi Utama",

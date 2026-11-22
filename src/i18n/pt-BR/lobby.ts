@@ -4,7 +4,6 @@ export const LOBBY_PT_BR = {
   "lobby.sortie": "P A R T I R",
   "lobby.interaction": "Intercâmbio",
   "lobby.excavation": "Escavação",
-  "lobby.excavation.sub": "Coleta de recursos",
   "lobby.sortie.title": "Partida",
   "lobby.sortie.story": "História",
   "lobby.sortie.story.status": "Operação principal",

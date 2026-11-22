@@ -4,7 +4,6 @@ export const LOBBY_ZH_HANT = {
   "lobby.sortie": "出 擊",
   "lobby.interaction": "交流",
   "lobby.excavation": "採掘",
-  "lobby.excavation.sub": "資源收集",
   "lobby.sortie.title": "出擊",
   "lobby.sortie.story": "故事",
   "lobby.sortie.story.status": "主線作戰",

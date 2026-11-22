@@ -4,7 +4,6 @@ export const LOBBY_EN = {
   "lobby.sortie": "S O R T I E",
   "lobby.interaction": "Exchange",
   "lobby.excavation": "Excavation",
-  "lobby.excavation.sub": "Resource Gathering",
   "lobby.sortie.title": "Sortie",
   "lobby.sortie.story": "Story",
   "lobby.sortie.story.status": "Main Operation",

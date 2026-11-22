@@ -4,7 +4,6 @@ export const LOBBY_ZH_HANS = {
   "lobby.sortie": "出 击",
   "lobby.interaction": "交流",
   "lobby.excavation": "采掘",
-  "lobby.excavation.sub": "资源收集",
   "lobby.sortie.title": "出击",
   "lobby.sortie.story": "故事",
   "lobby.sortie.story.status": "主线作战",

@@ -1,4 +1,5 @@
 import type { ContentId } from "../core/contentUnlock";
+import { LOBBY_ENTRANCE_SIZE } from "./lobbyEntranceStyle";
 
 /**
  * 연구원 레벨업 판의 자리 — Phaser를 모르는 순수 배치표.
@@ -53,9 +54,9 @@ export const LEVEL_UP_POPUP = {
  * 출격판의 원화 칸이 입구면 그 칸(`sortie`)을 **원본 크기·비율 그대로** 세운다(값은 로비·출격판과 같다).
  */
 export const LEVEL_UP_ENTRANCE: Partial<Record<ContentId, { kind: "lobby" | "sortie"; width: number; height: number; split?: "left" | "right" }>> = {
-  interaction: { kind: "lobby", width: 292, height: 106 },
-  excavation: { kind: "lobby", width: 292, height: 106 },
-  duel: { kind: "lobby", width: 292, height: 106 },
+  interaction: { kind: "lobby", width: LOBBY_ENTRANCE_SIZE.width, height: LOBBY_ENTRANCE_SIZE.height },
+  excavation: { kind: "lobby", width: LOBBY_ENTRANCE_SIZE.width, height: LOBBY_ENTRANCE_SIZE.height },
+  duel: { kind: "lobby", width: LOBBY_ENTRANCE_SIZE.width, height: LOBBY_ENTRANCE_SIZE.height },
   cakeOperation: { kind: "sortie", width: 392, height: 200, split: "left" },
   bounty: { kind: "sortie", width: 392, height: 200, split: "right" },
   raid: { kind: "sortie", width: 800, height: 200 },

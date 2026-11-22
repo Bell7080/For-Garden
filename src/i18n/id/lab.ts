@@ -16,7 +16,7 @@ export const LAB_ID = {
   "lab.mileageShop.short": "Poin",
   "lab.pity.label": "Hingga SSR terjamin",
   "lab.pity.unit": "kali",
-  "lab.pity.pickupNext": "SSR berikutnya pasti pickup",
+  "lab.pity.pickupNext": "Saat SSR muncul, pasti pickup",
   "lab.pull.one": "Riset x1",
   "lab.pull.freeToday": "Gratis hari ini!",
   "lab.pull.ten": "Riset x10",

@@ -918,7 +918,7 @@
 - **스킬 일러스트·출격 칸 원화는 타이틀이 캐시에만 받는다**(`prefetchCachedFiles`). 스킬 일러스트는 액자·쪽지가 설 때 `skillArtLoader.ensureSkillArt`가 올리고(전투는 `ensureSkillArtFor`로 미리), 출격 칸 원화는 배경과 같은 거주 규칙(`CONTENT_ENTRY_ART`)이다. 새로 그리는 자리도 `textures.exists`로 가르지 말고 그 길을 지난다.
 - **배경 원화는 메인 스레드 밖에서 디코드한다**(`backgrounds.ts`의 `decodeOffThread` — `createImageBitmap`, 내릴 때 `close`). 로더 길은 그 API가 없을 때의 되돌이다.
 - **Pre FX는 꺼 두었다**(`main.ts`의 `disablePreFX: true` — 부팅 때 미리 잡던 렌더 타깃 약 180MB). 게임 객체의 `.preFX`(glow·blur)를 쓰지 않는다 — 필요하면 굽거나 겹쳐 그린다.
-- **저사양·절전의 렌더 부담은 `core/devicePerformance.ts` 한 곳이 정한다** — 낮음 품질 첫 실행 30fps · 절전은 적용만 30fps · 낮음 품질 MSAA 끔(다음 실행부터) · 저메모리 기기의 유휴 원화 보관 축소. 프레임 제한을 TimeStep에 걸 때는 저장값이 아니라 `effectiveFrameRateLimit`을 지난다.
+- **저사양·절전의 렌더 부담은 `core/devicePerformance.ts` 한 곳이 정한다** — **기본 프레임 제한은 30fps다**(2026-11-23 응태 결정 — 60·120은 설정에서 직접 고를 때만 · 기존 저장은 `frameRate30Applied` 표식으로 한 번만 30으로 내리고 그 뒤 선택은 지킨다) · 절전은 적용만 30fps · 낮음 품질 MSAA 끔(다음 실행부터) · 저메모리 기기의 유휴 원화 보관 축소. 프레임 제한을 TimeStep에 걸 때는 저장값이 아니라 `effectiveFrameRateLimit`을 지난다.
 - **앱이 뒤로 가면 게임 루프가 잠든다**(`ui/backgroundSleep.ts` — rAF 정지, `AudioManager`가 AudioContext도 멈춘다). Phaser 기본 숨김 처리는 그리기를 멈추지 않으므로 이 연결을 걷지 않는다.
 - **프레임 콜백은 `guardFrame`으로 감싸져 있다**(`core/frameGuard.ts`). Phaser는 콜백 뒤에 다음 프레임을 예약하므로 예외 하나가 루프를 죽인다. 이 보호를 걷거나 우회하지 않는다.
 

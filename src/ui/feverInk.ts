@@ -8,20 +8,27 @@ import type { PuppetAfterimage } from "../puppets/IndexedPuppetCreature";
  * 마름모가 같은 박자로 퍼지고, 머리 옆에는 빠직 표식(💢)이 박자에 맞춰 부풀었다 줄며 좌우를
  * 오간다. 몸 자체에는 붉은 기운을 아주 옅게만 덮는다 — 원화를 물들이면 누구인지가 흐려진다.
  *
- * 예전의 속성색 tint 맥동을 대신한다. 폭주 중에만 기본 24겹, 생존 10명 초과 물량전은 12겹으로 그린다.
+ * 예전의 속성색 tint 맥동을 대신한다.
+ *
+ * **겹 수는 개체마다가 아니라 한 프레임 전체의 예산이다**(`outlineBudget`). 겹 하나가 SD 한 몸을 통째로 다시
+ * 그리는 것이라, 몸마다 24겹을 주면 폭주한 몸이 늘수록 그리기가 그대로 불어난다(아이폰 발열의 큰 몫). 예산을 지금
+ * 테두리를 두른 몸 수로 나눠 방향을 정하고, 아무리 많아도 `minDirections` 아래로는 내리지 않는다. 캐릭터·모드가
+ * 늘어도 이 표 하나만 보면 되고, 개체 이름이나 콘텐츠로 겹 수를 가르지 않는다.
  */
 export const FEVER_INK = {
   /** 경보 한 박자(ms). 두께·발밑 마름모·표식이 모두 이 박자를 탄다. */
   sirenMs: 640,
   /** 몸 둘레로 비껴 그리는 방향 수. */
   directions: 12,
-  crowdThreshold: 10,
-  crowdDirections: 6,
-  /**
-   * 그래픽 품질이 낮을수록 줄이는 방향 수. 겹 하나가 SD 한 몸을 다시 그리는 것이라, 폭주한 몸 하나가 방향 수의 두 배만큼
-   * 더 그려진다 — 「낮음」을 골라도 이 몫이 그대로여서 품질 설정이 전투에서 거의 듣지 않았다.
-   */
+  /** 몸 하나가 받을 수 있는 가장 많은 방향 수 — 그래픽 품질이 낮을수록 줄인다. */
   qualityDirections: { high: 12, balanced: 8, low: 6 },
+  /**
+   * 한 프레임에 테두리로 다시 그릴 수 있는 몸의 총 겹 수(먹선 + 붉은 띠). 혼자 폭주하면 품질 상한까지, 여럿이면 나눠 갖는다.
+   * 「높음」 48은 둘까지 열두 방향 그대로다.
+   */
+  outlineBudget: { high: 48, balanced: 32, low: 24 },
+  /** 아무리 붐벼도 이 아래로는 내리지 않는다 — 네 방향이면 먹선과 붉은 띠를 반 칸 엇갈려 여덟 방향처럼 메운다. */
+  minDirections: 4,
   /** 붉은 띠의 두께(px) — 가장 얇을 때와 박자의 정점에서 더하는 몫. */
   thickness: [5, 9],
   /** 먹선은 붉은 띠보다 이만큼 더 바깥에 선다. */
@@ -59,9 +66,10 @@ export function feverFade(ageMs: number, endedMs?: number): number {
  * 몸 둘레로 비껴 그릴 겹들. **먹선이 먼저**(더 바깥, 더 뒤), 붉은 띠가 그 안쪽이다 — 순서가
  * 바뀌면 붉은 띠를 먹이 덮어 테두리가 검게만 보인다.
  */
-export function feverOutlineDirections(livingCount: number, quality: keyof typeof FEVER_INK.qualityDirections = "high"): number {
-  const byQuality = FEVER_INK.qualityDirections[quality];
-  return livingCount > FEVER_INK.crowdThreshold ? Math.min(byQuality, FEVER_INK.crowdDirections) : byQuality;
+export function feverOutlineDirections(outlinedCount: number, quality: keyof typeof FEVER_INK.qualityDirections = "high"): number {
+  const cap = FEVER_INK.qualityDirections[quality];
+  const share = Math.floor(FEVER_INK.outlineBudget[quality] / (2 * Math.max(1, outlinedCount)));
+  return Math.max(FEVER_INK.minDirections, Math.min(cap, share));
 }
 
 export function feverOutlineSteps(pulse: number, fade: number, scale = 1, directions: number = FEVER_INK.directions): PuppetAfterimage[] {
@@ -70,11 +78,12 @@ export function feverOutlineSteps(pulse: number, fade: number, scale = 1, direct
   const red = (base + swing * pulse) * fade * scale;
   const ink = red + FEVER_INK.inkGap * scale;
   const redColor = FEVER_INK.red[pulse > 0.5 ? 1 : 0];
-  const ring = (distance: number, color: number): PuppetAfterimage[] => Array.from({ length: directions }, (_, index) => {
-    const angle = (index / directions) * Math.PI * 2;
+  const ring = (distance: number, color: number, turn: number): PuppetAfterimage[] => Array.from({ length: directions }, (_, index) => {
+    const angle = ((index + turn) / directions) * Math.PI * 2;
     return { dx: Math.cos(angle) * distance, dy: Math.sin(angle) * distance, alpha: fade, color };
   });
-  return [...ring(ink, FEVER_INK.ink), ...ring(red, redColor)];
+  // 방향이 적을 때는 붉은 띠를 반 칸 돌려 먹선의 빈 모서리를 메운다(여덟 방향 아래에서만 — 그 위는 이미 촘촘하다).
+  return [...ring(ink, FEVER_INK.ink, 0), ...ring(red, redColor, directions < 8 ? 0.5 : 0)];
 }
 
 /** 몸 위에 덮을 붉은 기운의 양. */

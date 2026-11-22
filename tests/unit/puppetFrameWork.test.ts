@@ -1,18 +1,27 @@
 import { describe, expect, it, vi } from "vitest";
 import { sourceClass } from "../helpers/sourceClass";
-import { advancePuppet, puppetElapsedMs } from "../../src/puppets/runtimeStep";
+import { advancePuppet, advancePuppetSkin, puppetElapsedMs } from "../../src/puppets/runtimeStep";
 import { puppetAffineUniform, puppetOffsetUniform } from "../../src/puppets/renderTransform";
 
-function fixture() {
+const skinTable = { bones: new Float32Array(12), normal: new Float32Array(12), posed: new Float32Array(12) };
+const skinFrame = { mode: "palette", table: skinTable, palette: new Float32Array(24) };
+
+function fixture(gpu = false) {
   const gl: any = new Proxy({ ARRAY_BUFFER: 1, ELEMENT_ARRAY_BUFFER: 2, STATIC_DRAW: 3, DYNAMIC_DRAW: 4 }, {
     get(target: any, key) { return target[key] ??= vi.fn(() => ({})); },
   });
   const calculateMatrix=vi.fn(() => ({ calc: {a:1,b:0,c:0,d:1,e:0,f:0}, camera: {a:1,b:0,c:0,d:1} }));
+  const program = gpu ? { skinning: true, position: 0, uv: 1, skinBones: 2, skinNormal: 3, skinPosed: 4, palette: {} } : {};
   const Creature = sourceClass("src/puppets/IndexedPuppetCreature.ts", "IndexedPuppetCreature", {
     Phaser: { GameObjects: { Image: class {}, GetCalcMatrix: calculateMatrix } },
-    gpuGeneration: 0, programs: new WeakMap([[gl, {}]]), watchContextRestore: () => {},
+    gpuGeneration: 0, programs: new WeakMap([[gl, program]]), watchContextRestore: () => {},
     puppetAffineUniform, puppetOffsetUniform, puppetShaderAlpha: (a: number, b: number) => a * b,
-    advancePuppet, puppetElapsedMs, debugPerfEnabled: false,
+    advancePuppet, advancePuppetSkin, puppetElapsedMs, debugPerfEnabled: false,
+    // 기본은 CPU 정점 경로의 예산을 본다. 정점이 같은지는 gpuSkinParity가 실제 묶음으로 본다.
+    gpuSkinningAvailable: gpu, gpuSkinningDisabled: false,
+    SKIN_MAX_BONES: 36, SKIN_PALETTE_STRIDE: 12, SKIN_MAX_INFLUENCES: 4, tableBuffers: new Map(),
+    applySkinTable: vi.fn(), bindAttribute: vi.fn(),
+    createTableBuffers: vi.fn(() => ({ generation: 0, rest: {}, bones: {}, normal: {}, posed: {} })),
   });
   const creature = Object.assign(Object.create(Creature.prototype), {
     active: true, visible: true, alpha: 1, animationFrozen: false, decorativeUpdateCredit: 0, decorativeCarryMs: 0,
@@ -21,7 +30,8 @@ function fixture() {
     positions: new Float32Array(6), uvs: new Float32Array(6), indices: new Uint16Array([0, 1, 2]),
     scene: { game: { loop: { time: 100, rawDelta: 16 } } },
     frame: { glTexture: { webGLTexture: {} } }, afterimages: [], bodyFill: { color: 0, amount: 0 },
-    puppet: { update: vi.fn(() => new Float32Array(6)) },
+    heldTables: new Set(), skin: null,
+    puppet: { update: vi.fn(() => new Float32Array(6)), updateSkin: vi.fn(() => skinFrame), restVertices: [0, 0, 1, 0, 0, 1] },
   });
   const renderer = { gl, width: 1080, height: 1920, pipelines: { clear: vi.fn(), rebind: vi.fn() } };
   const camera = { addToRenderList: vi.fn(), alpha: 1 };
@@ -64,5 +74,16 @@ describe("캐릭터 프레임 작업 예산", () => {
     expect(gl.bufferData).toHaveBeenCalledTimes(6);
     expect(gl.bufferSubData).toHaveBeenCalledTimes(3);
     expect(renderer.pipelines.rebind).toHaveBeenCalledTimes(5);
+  });
+  it("GPU 스키닝은 정점을 옮기거나 올리지 않고 관절 행렬만 올리며, 계수표 버퍼는 한 번만 만든다", () => {
+    const { creature: c, gl, renderer, camera } = fixture(true);
+    const draw = () => c.renderWebGL(renderer, c, camera);
+    for (let frame = 0; frame < 3; frame++) { c.scene.game.loop.time += 16; c.step(0, 16); draw(); }
+    expect(c.puppet.update).not.toHaveBeenCalled();
+    expect(c.puppet.updateSkin).toHaveBeenCalledTimes(3);
+    expect(gl.bufferSubData).not.toHaveBeenCalled();
+    expect(gl.uniform4fv).toHaveBeenCalledTimes(3);
+    expect(gl.uniform4fv).toHaveBeenLastCalledWith(expect.anything(), skinFrame.palette);
+    expect(gl.drawElements).toHaveBeenCalledTimes(3);
   });
 });

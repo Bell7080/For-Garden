@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import type { PlayOptions, Puppet } from "puppetforge";
-import { advancePuppet, puppetElapsedMs } from "./runtimeStep";
+import { applySkinTable, SKIN_MAX_INFLUENCES, SKIN_PALETTE_STRIDE, type PlayOptions, type Puppet, type PuppetSkinFrame, type SkinTable } from "puppetforge";
+import { advancePuppet, advancePuppetSkin, puppetElapsedMs } from "./runtimeStep";
 import { drawableKey, lookupDrawableIndices } from "./drawableCells";
 import { countDebugPuppetUpdate, debugPerfEnabled } from "../debug";
 import { puppetAffineUniform, puppetOffsetUniform, puppetShaderAlpha } from "./renderTransform";
@@ -10,6 +10,16 @@ interface SharedGpuProgram {
   program: WebGLProgram;
   position: number;
   uv: number;
+  /**
+   * 정점 셰이더가 스키닝을 하는가. 기기가 필요한 uniform을 못 주거나 셰이더가 실패하면 false이고,
+   * 그때는 예전처럼 CPU가 정점을 옮겨 올린다(`applySkinTable`·`advancePuppet`).
+   */
+  skinning: boolean;
+  /** 스키닝 attribute·uniform. `skinning`이 false면 쓰지 않는다. */
+  skinBones: number;
+  skinNormal: number;
+  skinPosed: number;
+  palette: WebGLUniformLocation | null;
   /** Puppet 로컬 픽셀을 카메라가 투영한 화면 픽셀로 옮기는 완전한 2D affine 행렬이다. */
   transform: WebGLUniformLocation;
   viewport: WebGLUniformLocation;
@@ -28,6 +38,39 @@ interface CreatureGpuBuffers {
 
 const programs = new WeakMap<WebGLRenderingContext, SharedGpuProgram>();
 
+/**
+ * 정점 셰이더가 받는 관절 수의 상한. 관절 하나가 vec4 셋이라 36이면 108칸이고, 행렬·화면 크기까지
+ * 더해도 WebGL1이 **모든 기기에 보장하는** 정점 uniform 128칸 안에 든다. 지금 묶음은 최대 29관절이다.
+ */
+export const SKIN_MAX_BONES = 36;
+/** 스키닝 셰이더가 쓰는 정점 uniform 칸 수. 관절 + uTransform(mat3 = 3) + uViewport(1). */
+const SKIN_UNIFORM_VECTORS = SKIN_MAX_BONES * 3 + 4;
+
+/**
+ * 이 기기에서 GPU 스키닝을 쓸 수 있는지. 첫 program을 만들 때 정해진다.
+ * 정해지기 전에는 GPU 경로로 굴리고, 안 되면 그때부터 CPU 경로로 돌아간다.
+ */
+let gpuSkinningAvailable: boolean | undefined;
+
+/** QA·측정용 강제 끄기. 끄면 예전과 똑같이 CPU가 정점을 옮긴다. */
+let gpuSkinningDisabled = false;
+export function setPuppetGpuSkinning(enabled: boolean): void {
+  gpuSkinningDisabled = !enabled;
+}
+
+/**
+ * 정점 계수표의 GPU 버퍼. 같은 묶음·같은 고정 방식의 개체가 모두 한 벌을 나눠 쓴다 — 전투에
+ * 같은 SD가 여럿 서도 정점 계수는 한 번만 올린다. 쓰는 개체가 없어지면 지운다.
+ */
+interface TableBuffers {
+  generation: number;
+  rest: WebGLBuffer;
+  bones: WebGLBuffer;
+  normal: WebGLBuffer;
+  posed: WebGLBuffer;
+  users: number;
+}
+const tableBuffers = new Map<SkinTable, TableBuffers>();
 /**
  * 컨텍스트가 복구될 때마다 오른다. 이 세대가 다른 GPU 손잡이는 이미 죽은 것이다.
  *
@@ -75,6 +118,50 @@ void main() {
   vUv = aUv;
 }`;
 
+/**
+ * GPU 스키닝 정점 셰이더. PuppetForge `applySkinTable`과 같은 식이다.
+ *
+ *   p = (1 − Σ(a + b))·v + Σ (a·N + b·M)·v
+ *
+ * 관절 하나는 vec4 셋 — [Ma Mb Mc Md] [Mtx Mty Na Nb] [Nc Nd Ntx Nty]. 계수가 모두 0인 정점
+ * (가중치 없음·완전 고정)은 원래 자리에 남는다. CPU가 옮긴 정점을 그릴 때는 계수 attribute를
+ * 0으로 꺼 두므로 같은 program이 그 정점을 그대로 그린다.
+ */
+const SKIN_VERTEX_SHADER = `
+attribute vec2 aPosition;
+attribute vec2 aUv;
+attribute vec4 aSkinBones;
+attribute vec4 aSkinNormal;
+attribute vec4 aSkinPosed;
+uniform mat3 uTransform;
+uniform vec2 uViewport;
+uniform vec4 uPalette[${SKIN_MAX_BONES * 3}];
+varying vec2 vUv;
+vec2 influence(float bone, float a, float b, vec2 v) {
+  int o = int(bone + 0.5) * 3;
+  vec4 m0 = uPalette[o];
+  vec4 m1 = uPalette[o + 1];
+  vec4 m2 = uPalette[o + 2];
+  vec2 posed = vec2(m0.x * v.x + m0.z * v.y + m1.x, m0.y * v.x + m0.w * v.y + m1.y);
+  vec2 normal = vec2(m1.z * v.x + m2.x * v.y + m2.z, m1.w * v.x + m2.y * v.y + m2.w);
+  return b * posed + a * normal;
+}
+void main() {
+  vec2 v = aPosition;
+  float total = dot(aSkinNormal, vec4(1.0)) + dot(aSkinPosed, vec4(1.0));
+  vec2 p = (1.0 - total) * v;
+  if (total > 0.0) {
+    p += influence(aSkinBones.x, aSkinNormal.x, aSkinPosed.x, v);
+    p += influence(aSkinBones.y, aSkinNormal.y, aSkinPosed.y, v);
+    p += influence(aSkinBones.z, aSkinNormal.z, aSkinPosed.z, v);
+    p += influence(aSkinBones.w, aSkinNormal.w, aSkinPosed.w, v);
+  }
+  vec2 screen = (uTransform * vec3(p, 1.0)).xy;
+  vec2 clip = vec2(screen.x / uViewport.x * 2.0 - 1.0, 1.0 - screen.y / uViewport.y * 2.0);
+  gl_Position = vec4(clip, 0.0, 1.0);
+  vUv = aUv;
+}`;
+
 const FRAGMENT_SHADER = `
 precision mediump float;
 uniform sampler2D uTexture;
@@ -103,9 +190,29 @@ function compileShader(gl: WebGLRenderingContext, type: number, source: string):
   return shader;
 }
 
-/** Puppet 전용 indexed WebGL 프로그램을 만들고 uniform 위치를 검증한다. */
+/**
+ * Puppet 전용 indexed WebGL 프로그램을 만든다. 먼저 GPU 스키닝 program을 시도하고, 기기가
+ * uniform 칸을 못 주거나 컴파일·연결이 실패하면 예전 program으로 되돌아간다.
+ */
 function createProgram(gl: WebGLRenderingContext): SharedGpuProgram {
-  const vertex = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER);
+  const limit = Number(gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS)) || 0;
+  // 강제 끄기와 무관하게 기기가 되는지만 본다. 끈 동안 만든 program이 다시 켠 뒤에도 남으면
+  // 그 세션 내내 CPU로 굳는다. 스키닝 program은 계수를 0으로 두면 CPU가 옮긴 정점도 그린다.
+  if (limit >= SKIN_UNIFORM_VECTORS) {
+    try {
+      const program = linkProgram(gl, SKIN_VERTEX_SHADER, true);
+      gpuSkinningAvailable = true;
+      return program;
+    } catch {
+      // 드라이버가 동적 uniform 색인을 못 받는 등 드문 경우다. CPU 경로가 같은 그림을 그린다.
+    }
+  }
+  gpuSkinningAvailable = false;
+  return linkProgram(gl, VERTEX_SHADER, false);
+}
+
+function linkProgram(gl: WebGLRenderingContext, vertexSource: string, skinning: boolean): SharedGpuProgram {
+  const vertex = compileShader(gl, gl.VERTEX_SHADER, vertexSource);
   const fragment = compileShader(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER);
   const program = gl.createProgram();
   if (!program) throw new Error("Puppet GPU program을 만들 수 없습니다.");
@@ -129,6 +236,11 @@ function createProgram(gl: WebGLRenderingContext): SharedGpuProgram {
     program,
     position: gl.getAttribLocation(program, "aPosition"),
     uv: gl.getAttribLocation(program, "aUv"),
+    skinning,
+    skinBones: skinning ? gl.getAttribLocation(program, "aSkinBones") : -1,
+    skinNormal: skinning ? gl.getAttribLocation(program, "aSkinNormal") : -1,
+    skinPosed: skinning ? gl.getAttribLocation(program, "aSkinPosed") : -1,
+    palette: skinning ? uniform("uPalette[0]") : null,
     transform: uniform("uTransform"),
     viewport: uniform("uViewport"),
     tint: uniform("uTint"),
@@ -194,6 +306,16 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   private readonly indices: Uint16Array;
   private readonly uvs: Float32Array;
   private positions: Float32Array;
+  /**
+   * GPU 스키닝 자세. 있으면 정점 대신 관절 행렬(palette)을 올리고 정점 셰이더가 `table`로 옮긴다.
+   * null이면 `positions`(CPU가 옮긴 정점)를 그린다 — 처음 서는 순간, 블렌드 도중 고정 방식이
+   * 바뀌는 짧은 구간, GPU 스키닝을 못 쓰는 기기.
+   */
+  private skin: { table: SkinTable; palette: Float32Array } | null = null;
+  /** 이 개체가 붙잡은 계수표 버퍼. 놓을 때 쓰는 개체 수를 줄인다. */
+  private heldTables = new Set<SkinTable>();
+  /** GPU 스키닝을 못 쓰는 기기에서 행렬 자세를 정점으로 풀어 둘 자리. */
+  private cpuPositions?: Float32Array;
   private buffers?: CreatureGpuBuffers;
   /** 지금 들고 있는 버퍼를 만든 컨텍스트 세대. 다르면 죽은 손잡이라 지우지도 쓰지도 않는다. */
   private buffersGeneration = -1;
@@ -347,6 +469,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
         if (leader.poseVersion !== this.mirroredLeaderVersion) {
           this.mirroredLeaderVersion = leader.poseVersion;
           this.positions = leader.positions;
+          this.skin = leader.skin;
           this.poseVersion += 1;
         }
         return;
@@ -363,9 +486,44 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     this.decorativeCarryMs = 0;
     // 편집기보다 긴 프레임을 한 번에 적분하면 pinnedSoft 발 주변의 spring이 튀므로 잘게 나눈다.
     const started = debugPerfEnabled ? performance.now() : 0;
-    const next = advancePuppet(this.puppet, elapsed / 1000);
-    if (next) { this.positions = next; this.poseVersion += 1; }
+    // GPU 스키닝을 쓸 수 있으면 관절 행렬만 굴린다. 못 쓰는 기기로 판명되면 예전처럼 정점을 옮긴다.
+    if (gpuSkinningAvailable !== false && !gpuSkinningDisabled) {
+      const frame = advancePuppetSkin(this.puppet, elapsed / 1000);
+      if (frame) this.acceptSkinFrame(frame);
+    } else {
+      const next = advancePuppet(this.puppet, elapsed / 1000);
+      if (next) { this.positions = next; this.skin = null; this.poseVersion += 1; }
+    }
     if (debugPerfEnabled) countDebugPuppetUpdate(performance.now() - started);
+  }
+
+  private acceptSkinFrame(frame: PuppetSkinFrame): void {
+    if (frame.mode === "palette") {
+      this.skin = { table: frame.table, palette: frame.palette };
+    } else {
+      this.skin = null;
+      this.positions = frame.vertices;
+    }
+    this.poseVersion += 1;
+  }
+
+  /** 계수표 버퍼를 붙잡는다. 없으면 만들고, 컨텍스트가 바뀐 뒤라면 다시 만든다. */
+  private holdTable(gl: WebGLRenderingContext, table: SkinTable): TableBuffers {
+    let held = tableBuffers.get(table);
+    if (held && held.generation !== gpuGeneration) {
+      // 죽은 컨텍스트의 손잡이는 지우지 않고 버린다. 쓰는 개체 수는 그대로 이어 간다.
+      held = { ...createTableBuffers(gl, table, this.puppet.restVertices), users: held.users };
+      tableBuffers.set(table, held);
+    }
+    if (!held) {
+      held = { ...createTableBuffers(gl, table, this.puppet.restVertices), users: 0 };
+      tableBuffers.set(table, held);
+    }
+    if (!this.heldTables.has(table)) {
+      this.heldTables.add(table);
+      held.users += 1;
+    }
+    return held;
   }
 
   /** 최초 렌더 때만 GPU Buffer를 만들며, UV와 index는 이후 다시 올리지 않는다. */
@@ -414,14 +572,41 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
       if (!frameTexture) return;
 
       gl.useProgram(shared.program);
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-      // 같은 자세를 여러 카메라가 그리거나 정지했을 때는 GPU 전송을 반복하지 않는다.
-      if (this.uploadedPoseVersion !== this.poseVersion) {
-        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.positions);
-        this.uploadedPoseVersion = this.poseVersion;
+      const skin = this.skin;
+      const gpuSkin = skin !== null && shared.skinning && skin.palette.length <= SKIN_MAX_BONES * SKIN_PALETTE_STRIDE;
+      if (gpuSkin) {
+        // 정점은 기준 자세 그대로 두고 관절 행렬만 올린다. 정점 계수는 묶음끼리 나눠 쓰는 정적 버퍼다.
+        const table = this.holdTable(gl, skin.table);
+        gl.uniform4fv(shared.palette, skin.palette);
+        bindAttribute(gl, shared.position, table.rest, 2);
+        bindAttribute(gl, shared.skinBones, table.bones, SKIN_MAX_INFLUENCES);
+        bindAttribute(gl, shared.skinNormal, table.normal, SKIN_MAX_INFLUENCES);
+        bindAttribute(gl, shared.skinPosed, table.posed, SKIN_MAX_INFLUENCES);
+      } else {
+        if (skin) {
+          // GPU 스키닝을 못 쓰는 기기에서 행렬로 받은 자세 — 셰이더와 같은 식으로 CPU가 정점을 푼다.
+          // 자세가 바뀌었을 때만 푼다(같은 자세를 여러 카메라가 그리는 경우).
+          if (this.uploadedPoseVersion !== this.poseVersion) {
+            this.positions = applySkinTable(this.puppet.restVertices, skin.table, skin.palette, this.cpuPositions ??= new Float32Array(this.positions.length));
+          }
+        }
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+        // 같은 자세를 여러 카메라가 그리거나 정지했을 때는 GPU 전송을 반복하지 않는다.
+        if (this.uploadedPoseVersion !== this.poseVersion) {
+          gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.positions);
+          this.uploadedPoseVersion = this.poseVersion;
+        }
+        gl.enableVertexAttribArray(shared.position);
+        gl.vertexAttribPointer(shared.position, 2, gl.FLOAT, false, 0, 0);
+        if (shared.skinning) {
+          // 계수를 0으로 두면 같은 program이 올린 정점을 그대로 그린다.
+          for (const location of [shared.skinBones, shared.skinNormal, shared.skinPosed]) {
+            if (location < 0) continue;
+            gl.disableVertexAttribArray(location);
+            gl.vertexAttrib4f(location, 0, 0, 0, 0);
+          }
+        }
       }
-      gl.enableVertexAttribArray(shared.position);
-      gl.vertexAttribPointer(shared.position, 2, gl.FLOAT, false, 0, 0);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.uv);
       gl.enableVertexAttribArray(shared.uv);
       gl.vertexAttribPointer(shared.uv, 2, gl.FLOAT, false, 0, 0);
@@ -471,6 +656,12 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
       // Container renderer가 호출 직전에 누적 부모 alpha를 this.alpha에 곱하므로 카메라 alpha만 마저 합친다.
       gl.uniform1f(shared.alpha, puppetShaderAlpha(this.alpha, camera.alpha));
       gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);
+      if (gpuSkin) {
+        // Phaser의 다음 batch가 남은 attribute 배열을 제 것으로 오해하지 않게 스키닝 배열은 꺼 둔다.
+        for (const location of [shared.skinBones, shared.skinNormal, shared.skinPosed]) {
+          if (location >= 0) gl.disableVertexAttribArray(location);
+        }
+      }
     } finally {
       // texture 누락·shader/buffer 오류를 포함한 모든 종료 경로에서 Phaser의 program과
       // vertex state를 복원해, 뒤따르는 Image·Graphics·Text가 Puppet shader로 그려지지 않게 한다.
@@ -478,9 +669,29 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     }
   }
 
+  /** 붙잡은 계수표 버퍼를 놓는다. 마지막 개체가 놓으면 지운다(죽은 컨텍스트의 것이면 버리기만 한다). */
+  private releaseTables(): void {
+    const gl = (this.scene?.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer | undefined)?.gl;
+    for (const table of this.heldTables) {
+      const held = tableBuffers.get(table);
+      if (!held) continue;
+      held.users -= 1;
+      if (held.users > 0) continue;
+      tableBuffers.delete(table);
+      if (gl && held.generation === gpuGeneration) {
+        gl.deleteBuffer(held.rest);
+        gl.deleteBuffer(held.bones);
+        gl.deleteBuffer(held.normal);
+        gl.deleteBuffer(held.posed);
+      }
+    }
+    this.heldTables.clear();
+  }
+
   /** scene 종료 시 update listener와 개체 전용 GPU Buffer를 함께 해제한다. */
   private release(): void {
     this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.step, this);
+    this.releaseTables();
     if (!this.buffers) return;
     // 컨텍스트가 바뀐 뒤라면 이 손잡이는 죽은 컨텍스트의 것이다. 새 컨텍스트에 지우라고 하면
     // INVALID_OPERATION이므로 참조만 버린다 — 죽은 컨텍스트의 자원은 브라우저가 회수한다.
@@ -492,4 +703,30 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     }
     this.buffers = undefined;
   }
+}
+
+/** 한 attribute를 정적 버퍼에 묶는다. */
+function bindAttribute(gl: WebGLRenderingContext, location: number, buffer: WebGLBuffer, size: number): void {
+  if (location < 0) return;
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.enableVertexAttribArray(location);
+  gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
+}
+
+/** 계수표와 기준 정점을 정적 버퍼로 올린다. 고정 방식이 같은 동안 다시 올리지 않는다. */
+function createTableBuffers(gl: WebGLRenderingContext, table: SkinTable, rest: readonly number[]): Omit<TableBuffers, "users"> {
+  const upload = (data: Float32Array): WebGLBuffer => {
+    const buffer = gl.createBuffer();
+    if (!buffer) throw new Error("Puppet GPU buffer를 만들 수 없습니다.");
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    return buffer;
+  };
+  return {
+    generation: gpuGeneration,
+    rest: upload(new Float32Array(rest)),
+    bones: upload(table.bones),
+    normal: upload(table.normal),
+    posed: upload(table.posed),
+  };
 }

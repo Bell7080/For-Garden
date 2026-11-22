@@ -1,4 +1,4 @@
-import type { Puppet } from "puppetforge";
+import type { Puppet, PuppetSkinFrame } from "puppetforge";
 
 /**
  * Secondary motion is a spring simulation, so one large frame is not equivalent to several editor frames.
@@ -61,6 +61,20 @@ export function puppetElapsedMs(rawDeltaMs: number, smoothedDeltaMs: number, loo
 
 /** Advance one Puppet through stable, editor-sized steps (at most PUPPET_MAX_STEPS_PER_FRAME) and return the last vertex buffer. */
 export function advancePuppet(puppet: Puppet, elapsedSeconds: number): Float32Array | null {
+  return stepPuppet(elapsedSeconds, (step) => puppet.update(step));
+}
+
+/**
+ * `advancePuppet`과 같은 간격으로 굴리되 정점 대신 관절 행렬을 받는다(GPU 스키닝).
+ *
+ * 서브스텝마다 흔들림(secondary)은 그대로 적분하고, 정점 계산은 마지막 한 번도 하지 않는다 —
+ * 정점은 정점 셰이더가 옮긴다. 그래서 느린 프레임에 서브스텝이 셋으로 늘어도 정점 일은 늘지 않는다.
+ */
+export function advancePuppetSkin(puppet: Puppet, elapsedSeconds: number): PuppetSkinFrame | null {
+  return stepPuppet(elapsedSeconds, (step) => puppet.updateSkin(step));
+}
+
+function stepPuppet<T>(elapsedSeconds: number, advance: (step: number) => T | null): T | null {
   // Negative/non-finite deltas are not real elapsed time, so they must neither rewind nor poison the remainder.
   if (!Number.isFinite(elapsedSeconds) || elapsedSeconds <= 0) return null;
 
@@ -69,7 +83,7 @@ export function advancePuppet(puppet: Puppet, elapsedSeconds: number): Float32Ar
     return null;
   }
 
-  let vertices: Float32Array | null = null;
+  let result: T | null = null;
   // 경계 바로 위의 값을 한 번으로 삼킨다. 이유는 PUPPET_STEP_TOLERANCE 주석에 있다.
   const stepCount = Math.min(
     PUPPET_MAX_STEPS_PER_FRAME,
@@ -79,7 +93,7 @@ export function advancePuppet(puppet: Puppet, elapsedSeconds: number): Float32Ar
 
   // Substep size protects secondary integration; consuming every substep now keeps the coupled timeline truthful.
   for (let index = 0; index < stepCount; index += 1) {
-    vertices = puppet.update(step) ?? vertices;
+    result = advance(step) ?? result;
   }
-  return vertices;
+  return result;
 }

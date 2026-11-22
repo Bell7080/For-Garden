@@ -2878,12 +2878,17 @@
 - `puppetforge`는 GitHub 저장소(`github:Bell7080/WebGLE#<커밋 SHA>`)에서 직접 받는다. 반드시
   `Bell7080/WebGLE`의 `main`에 실제로 남아 있는 전체 SHA로 고정한다. 병합 후 삭제된 작업
   브랜치의 커밋을 가리키면 그 커밋이 사라져 `npm install` 자체가 실패한다.
-- 현재 고정 커밋은 `b5af06a`(v0.41.0)이며 `pinnedSoft` 반경 감쇠가 게임 Runtime에도 들어 있다.
+- 현재 고정 커밋은 `31ab0fc`(v0.45.0)이며 `pinnedSoft` 반경 감쇠와 GPU 스키닝 출력(`updateSkin`)이 게임 Runtime에 들어 있다.
   범위 없는 GitHub 의존성으로 되돌리면 lockfile이 예전 Runtime을 계속 가리켜 발 고정 영역이
   통째로 딱딱하게 붙고 외곽 정점이 찌그러질 수 있으므로, 버전을 바꿀 때 ZIP과 Runtime을 함께
   회귀 검증한다.
 - 최신 PuppetForge를 반영하려면 `main`의 최신 커밋 SHA로 `package.json`을 바꾸고
   `npm install`로 lockfile을 갱신한다. SHA를 그대로 두면 npm은 절대 새 커밋을 가져오지 않는다.
+- **캐릭터 몸 변형은 GPU가 한다**(`IndexedPuppetCreature` — PuppetForge `updateSkin` + 스키닝 정점 셰이더). CPU는 관절 행렬만 굴리고
+  정점은 셰이더가 옮긴다. 셰이더 식은 PuppetForge `applySkinTable`과 **글자 그대로 같아야 하고**, 실제 묶음 전부가 `update()`와 같은 정점을
+  내는지 `gpuSkinParity.test`가 지킨다 — 묶음을 더하거나 PuppetForge를 올리면 그 테스트가 함께 돈다. WebGL1 기본 기능만 쓰며(관절 상한
+  `SKIN_MAX_BONES` 36 = 정점 uniform 108칸), 그 밖의 확장·텍스처 조회를 끌어들이지 않는다. 못 쓰는 기기는 예전 셰이더 + CPU 정점 경로로
+  돌아가므로 **두 경로를 함께 유지한다.** 정점 좌표(`positions`)를 그리기 밖에서 읽지 않는다 — GPU 경로에서는 그 값이 기준 자세 그대로다.
 - **WebGL 컨텍스트 복구를 반드시 함께 처리한다.** 모바일에서 앱을 백그라운드로 보냈다 돌아오면
   컨텍스트가 날아가는 것이 정상 동작이고, Phaser는 **제가 감싼 자원만** 되살린다. `raw gl`로 만든
   program·buffer는 손대지 않으며, **복구 뒤에도 `renderer.gl`은 같은 객체**라 그것으로 키를 삼은

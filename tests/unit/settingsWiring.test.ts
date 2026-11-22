@@ -42,6 +42,7 @@ describe("설정이 실제 경로에 닿는다", () => {
       Phaser: { GameObjects: { Image: class {} }, Math: { Clamp: (v: number, a: number, b: number) => Math.min(b, Math.max(a, v)) } },
       gpuGeneration: 0, programs: new WeakMap(), watchContextRestore: () => {},
       advancePuppet: advance, puppetElapsedMs, debugPerfEnabled: false,
+      gpuSkinningAvailable: false, gpuSkinningDisabled: false,
     });
     const loop = { time: 0, rawDelta: 16 };
     const creature = Object.assign(Object.create(Creature.prototype), {

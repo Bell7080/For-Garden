@@ -102,7 +102,7 @@ describe("보물상자 등급", () => {
   });
   it("모은 몫으로 등급과 다음 문턱까지의 비율을 구하고, 화려함은 카드 등급 차례다", () => {
     expect(chestGrade(0)).toBe(0);
-    expect(chestGradeProgress(90)).toEqual({ grade: 0, ratio: 0.5 });
+    expect(chestGradeProgress(25)).toEqual({ grade: 0, ratio: 0.2 });
     expect(chestGrade(chestCollectedValue({ gems: 100, gold: 40_000 }))).toBe(1);
     expect(chestGradeProgress(5_000)).toEqual({ grade: CHEST_GRADE_MAX, ratio: 1 });
     expect(chestCardFlair(chestCard("safe-gold")!)).toBe(0);

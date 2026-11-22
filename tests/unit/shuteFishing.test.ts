@@ -124,12 +124,12 @@ describe("슈테의 리듬 낚시 규칙", () => {
     const fish = rollFishingFish(difficulty, random);
     const base: FishingRun = { difficulty: "extreme", fish, catches: fish.map((id) => rollFishCatches(difficulty, id, random)), index: 0, caught: 0, misses: 0, collected: {} };
     const ledger = (run: unknown) => ({ weekKey: "2026-11-16", spent: 400, run });
-    expect(isValidShuteFishingState(ledger({ ...base, bossAmount: 730 }))).toBe(true);
-    expect(normalizeShuteFishingState(ledger({ ...base, bossAmount: 1500 })).run).toBeNull();
+    expect(isValidShuteFishingState(ledger({ ...base, bossAmount: 510 }))).toBe(true);
+    expect(normalizeShuteFishingState(ledger({ ...base, bossAmount: 1000 })).run).toBeNull();
     expect(isValidShuteFishingState(ledger(base))).toBe(true);
-    expect(fishAmount(base, fish.length - 1)).toBe(1000);
-    expect(fishAmount({ ...base, bossAmount: 730 }, fish.length - 1)).toBe(730);
-    expect(fishAmount({ ...base, bossAmount: 730 }, 0)).toBe(fishTreasure(fish[0])!.amount);
+    expect(fishAmount(base, fish.length - 1)).toBe(700);
+    expect(fishAmount({ ...base, bossAmount: 510 }, fish.length - 1)).toBe(510);
+    expect(fishAmount({ ...base, bossAmount: 510 }, 0)).toBe(fishTreasure(fish[0])!.amount);
   });
 
   it("물고기마다 캐치는 3~5번이고, 어떤 캐치도 판정 창이 MIN_WINDOW_MS보다 짧지 않다", () => {

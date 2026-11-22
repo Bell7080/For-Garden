@@ -58,22 +58,22 @@ export interface ChestCard {
 }
 
 /**
- * 카드표(응태 결정, 2026-11-02 · 2026-11-03 상자 값 300 → 200, 골드·치즈케이크·원석 상향). 젬 환산(`TRADE_GEM_RATE`): 골드 500 · 치즈케이크 2 · 원석 5 · 스테미나 0.83 · 화석/호박석 300.
+ * 카드표(응태 결정, 2026-11-02 · 2026-11-03 상자 값 300 → 200, 골드·치즈케이크·원석 상향 · 2026-11-22 「델로피선으로 맞추자」 — 대박 둘·화석·호박석은 그대로 두고 나머지를 깎아 실패를 넣은 기대값이 코인 100당 488 → 341). 젬 환산(`TRADE_GEM_RATE`): 골드 500 · 치즈케이크 2 · 원석 5 · 스테미나 0.83 · 화석/호박석 300.
  * 원석은 고고학이 주 수급처라 안전 카드에만 둔다(`rawStoneSupply.test`).
  */
 export const CHEST_CARDS: readonly ChestCard[] = [
-  { id: "safe-gold", tier: "safe", currency: "gold", amount: 15_000, chance: 95 },
-  { id: "safe-cheesecake", tier: "safe", currency: "cheesecake", amount: 15, chance: 95 },
-  { id: "safe-stamina", tier: "safe", currency: "stamina", amount: 20, chance: 95 },
-  { id: "safe-stone", tier: "safe", currency: "rawStone", amount: 15, chance: 95 },
-  { id: "mid-gold", tier: "mid", currency: "gold", amount: 45_000, chance: 80 },
-  { id: "mid-cheesecake", tier: "mid", currency: "cheesecake", amount: 45, chance: 80 },
-  { id: "mid-gems", tier: "mid", currency: "gems", amount: 30, chance: 80 },
-  { id: "mid-stamina", tier: "mid", currency: "stamina", amount: 60, chance: 80 },
-  { id: "risk-gems", tier: "risk", currency: "gems", amount: 100, chance: 60 },
-  { id: "risk-cheesecake", tier: "risk", currency: "cheesecake", amount: 85, chance: 60 },
-  { id: "risk-gold", tier: "risk", currency: "gold", amount: 85_000, chance: 60 },
-  { id: "big-gems", tier: "big", currency: "gems", amount: 300, chance: 30 },
+  { id: "safe-gold", tier: "safe", currency: "gold", amount: 10_000, chance: 95 },
+  { id: "safe-cheesecake", tier: "safe", currency: "cheesecake", amount: 10, chance: 95 },
+  { id: "safe-stamina", tier: "safe", currency: "stamina", amount: 15, chance: 95 },
+  { id: "safe-stone", tier: "safe", currency: "rawStone", amount: 8, chance: 95 },
+  { id: "mid-gold", tier: "mid", currency: "gold", amount: 30_000, chance: 80 },
+  { id: "mid-cheesecake", tier: "mid", currency: "cheesecake", amount: 25, chance: 80 },
+  { id: "mid-gems", tier: "mid", currency: "gems", amount: 20, chance: 80 },
+  { id: "mid-stamina", tier: "mid", currency: "stamina", amount: 35, chance: 80 },
+  { id: "risk-gems", tier: "risk", currency: "gems", amount: 70, chance: 60 },
+  { id: "risk-cheesecake", tier: "risk", currency: "cheesecake", amount: 50, chance: 60 },
+  { id: "risk-gold", tier: "risk", currency: "gold", amount: 50_000, chance: 60 },
+  { id: "big-gems", tier: "big", currency: "gems", amount: 150, chance: 30 },
   { id: "big-fossil", tier: "big", currency: "fossil", amount: 1, chance: 35 },
   { id: "big-amber", tier: "big", currency: "amber", amount: 1, chance: 35 },
   { id: "jackpot-gems", tier: "jackpot", currency: "gems", amount: 1_000, chance: 30 },
@@ -165,11 +165,11 @@ export function chestCardFlair(card: ChestCard): number { return Math.max(0, CHE
 
 /**
  * 상자 등급 문턱 — 이 상자에서 **지금까지 모은 몫**의 젬 환산 가치가 넘을 때마다 상자가 한 단계 화려해진다.
- * 기대값이 가장 큰 카드를 고르는 상자 20만 번 모의의 최종 가치 분포에서 잡았다: 180은 열에 아홉이 닿는 첫 단계,
- * 380은 중앙값 조금 아래, 640은 상위 4분의 1, 920은 상위 4% 남짓(사실상 대형 둘이나 대박)이다.
+ * 기대값이 가장 큰 카드를 고르는 상자 20만 번 모의의 최종 가치 분포에서 잡았다(2026-11-22 카드표를 줄이며 다시 쟀다): 125는 열에 여덟 가까이 닿는 첫 단계,
+ * 265는 중앙값 조금 아래, 450은 상위 4분의 1, 650은 상위 4% 남짓(사실상 대형 둘이나 대박)이다.
  * 모은 몫은 줄지 않으므로 등급도 내려가지 않는다. 값을 바꾸면 `chestForge.test`의 분포 띠를 함께 다시 잰다.
  */
-export const CHEST_GRADE_THRESHOLDS = [180, 380, 640, 920] as const;
+export const CHEST_GRADE_THRESHOLDS = [125, 265, 450, 650] as const;
 export const CHEST_GRADE_MAX = CHEST_GRADE_THRESHOLDS.length;
 export function chestCollectedValue(collected: Partial<Record<ChestCardCurrency, number>>): number {
   return (Object.entries(collected) as [ChestCardCurrency, number | undefined][])

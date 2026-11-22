@@ -71,23 +71,23 @@ export interface FishTreasure {
  * 캐치가 많고 빠르다. 대박은 젬 500·1,000("가끔 젬 300~1,000급 대박" — 응태 2026-11-03).
  */
 export const FISH_TREASURES: readonly FishTreasure[] = [
-  { id: "gold-s", tier: "common", currency: "gold", amount: 25_000, weight: 1 },
-  { id: "cheesecake-s", tier: "common", currency: "cheesecake", amount: 25, weight: 1 },
-  { id: "stamina-s", tier: "common", currency: "stamina", amount: 50, weight: 1 },
-  { id: "stone-s", tier: "common", currency: "rawStone", amount: 10, weight: 1 },
-  { id: "gems-xs", tier: "common", currency: "gems", amount: 40, weight: 1 },
-  { id: "gold-m", tier: "fine", currency: "gold", amount: 70_000, weight: 1 },
-  { id: "cheesecake-m", tier: "fine", currency: "cheesecake", amount: 70, weight: 1 },
-  { id: "gems-s", tier: "fine", currency: "gems", amount: 100, weight: 1 },
-  { id: "stamina-m", tier: "fine", currency: "stamina", amount: 150, weight: 1 },
-  { id: "gems-m", tier: "rare", currency: "gems", amount: 200, weight: 3 },
-  { id: "gold-l", tier: "rare", currency: "gold", amount: 150_000, weight: 1 },
-  { id: "cheesecake-l", tier: "rare", currency: "cheesecake", amount: 150, weight: 1 },
-  { id: "gems-l", tier: "rare", currency: "gems", amount: 300, weight: 2 },
+  { id: "gold-s", tier: "common", currency: "gold", amount: 18_000, weight: 1 },
+  { id: "cheesecake-s", tier: "common", currency: "cheesecake", amount: 18, weight: 1 },
+  { id: "stamina-s", tier: "common", currency: "stamina", amount: 35, weight: 1 },
+  { id: "stone-s", tier: "common", currency: "rawStone", amount: 7, weight: 1 },
+  { id: "gems-xs", tier: "common", currency: "gems", amount: 30, weight: 1 },
+  { id: "gold-m", tier: "fine", currency: "gold", amount: 50_000, weight: 1 },
+  { id: "cheesecake-m", tier: "fine", currency: "cheesecake", amount: 50, weight: 1 },
+  { id: "gems-s", tier: "fine", currency: "gems", amount: 70, weight: 1 },
+  { id: "stamina-m", tier: "fine", currency: "stamina", amount: 100, weight: 1 },
+  { id: "gems-m", tier: "rare", currency: "gems", amount: 130, weight: 3 },
+  { id: "gold-l", tier: "rare", currency: "gold", amount: 100_000, weight: 1 },
+  { id: "cheesecake-l", tier: "rare", currency: "cheesecake", amount: 100, weight: 1 },
+  { id: "gems-l", tier: "rare", currency: "gems", amount: 200, weight: 2 },
   { id: "fossil", tier: "rare", currency: "fossil", amount: 1, weight: 2 },
   { id: "amber", tier: "rare", currency: "amber", amount: 1, weight: 2 },
-  { id: "jackpot-500", tier: "jackpot", currency: "gems", amount: 500, weight: 3 },
-  { id: "jackpot-1000", tier: "jackpot", currency: "gems", amount: 1_000, weight: 1 },
+  { id: "jackpot-500", tier: "jackpot", currency: "gems", amount: 340, weight: 3 },
+  { id: "jackpot-1000", tier: "jackpot", currency: "gems", amount: 700, weight: 1 },
 ];
 export function fishTreasure(id: string): FishTreasure | undefined { return FISH_TREASURES.find((treasure) => treasure.id === id); }
 export function fishTreasureGemValue(treasure: FishTreasure): number { return chestCurrencyGemValue(treasure.currency) * treasure.amount; }
@@ -120,26 +120,28 @@ export interface FishingDifficulty {
  * 판에 물리는 기대 총가치는 입장값에 비례한다 — 100 : 200 : 300 : 400 = 1 : 2 : 3 : 4배.
  *
  * 판을 열면 셋리스트가 팅팅 정해지고 **뒤로 갈수록 좋아지며 마지막 곡(보스)이 난이도에 맞춰 훨씬 좋다**(응태 2026-11-03):
- * 쉬움은 젬 300·화석·호박석, 보통은 젬 500, 어려움은 젬 500~1,000, 매우 어려움은 늘 젬 1,000이다.
+ * 쉬움은 젬 300·화석·호박석, 보통은 젬 500, 어려움은 젬 500~1,000, 매우 어려움은 늘 젬 1,000이다(2026-11-22부터 각각 200 · 340 · 340~700 · 700).
  * 구간 폭은 "너무 어렵다"(응태 2026-11-03)는 말에 처음보다 1.4배 남짓 넓혔다.
  * 2026-11-11 「살짝 낮춰 주자」(응태): 쉬움은 그대로 두고 보통~매우 어려움의 바늘을 5~10% 늦추고 구간을 넓혔으며,
  * 가장 짧은 판정 창을 110 → 130ms로 올렸다(보스 대박 캐치가 그 바닥에 붙어 있었다).
  * 2026-11-22 「보스급 보상이 정해진 게 너무 사기」(응태): 보스 보물의 수량은 표의 값이 **최대치**이고 난이도마다 최소치
  * (`bossFloor`, 최대치의 약 40~50%)를 보장해 그 사이에서 고른다. 판의 기대 총가치는 코인 100당 약 485 → 410~440이다.
+ * 2026-11-22 「델로피선으로 맞추자」(응태): 보물표를 약 0.7배로 줄여, 다 낚고 보스가 최대치일 때 코인 100당 470~484 → 341~348
+ * (델로피의 보물 찾기를 다 맞춘 338~346과 같은 선)이다. 쉬움은 화석·호박석 몫이 줄지 않아 흔한 물고기 몫과 보스 가중치로 맞췄다.
  */
 export const FISHING_DIFFICULTIES: readonly FishingDifficulty[] = [
   { id: "easy", entryCost: 100, fish: 3, sweepMs: 1300, zone: 0.34,
-    tierWeights: { common: 58, fine: 42, rare: 0 }, boss: [["gems-l", 3], ["fossil", 2], ["amber", 2], ["jackpot-500", 1]],
-    bossFloor: { "gems-l": 150, "jackpot-500": 200 } },
+    tierWeights: { common: 70, fine: 30, rare: 0 }, boss: [["gems-l", 5], ["fossil", 1], ["amber", 1], ["jackpot-500", 1]],
+    bossFloor: { "gems-l": 100, "jackpot-500": 150 } },
   { id: "normal", entryCost: 200, fish: 4, sweepMs: 1180, zone: 0.31,
     tierWeights: { common: 20, fine: 50, rare: 30 }, boss: [["jackpot-500", 1]],
-    bossFloor: { "jackpot-500": 250 } },
+    bossFloor: { "jackpot-500": 170 } },
   { id: "hard", entryCost: 300, fish: 5, sweepMs: 1040, zone: 0.28,
     tierWeights: { common: 0, fine: 45, rare: 55 }, boss: [["jackpot-500", 5], ["jackpot-1000", 1]],
-    bossFloor: { "jackpot-500": 250, "jackpot-1000": 450 } },
+    bossFloor: { "jackpot-500": 170, "jackpot-1000": 320 } },
   { id: "extreme", entryCost: 400, fish: 6, sweepMs: 900, zone: 0.25,
     tierWeights: { common: 10, fine: 52, rare: 38 }, boss: [["jackpot-1000", 1]],
-    bossFloor: { "jackpot-1000": 500 } },
+    bossFloor: { "jackpot-1000": 350 } },
 ];
 export function fishingDifficulty(id: unknown): FishingDifficulty | undefined { return FISHING_DIFFICULTIES.find((difficulty) => difficulty.id === id); }
 

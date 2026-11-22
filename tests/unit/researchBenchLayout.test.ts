@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
   RESEARCH_BENCH, researchActionsBottom, researchActionsTop, researchActionY, researchBenchTop,
-  researchBenchWidth, researchDetailBounds, researchSlotCenter, researchTraitBounds,
+  researchBenchWidth, researchDetailBounds, researchEmptyActionY, researchSlotCenter, researchTraitBounds,
 } from "../../src/ui/researchBenchLayout";
 
 /** 좌하단 라벨 줄의 윗변. 버튼 줄이 여기를 파고들면 안 된다. */
@@ -62,5 +62,12 @@ describe("특성 연구대 배치", () => {
   it("의 버튼은 서로 겹치지 않는다", () => {
     expect(researchActionY(1) - researchActionY(0))
       .toBe(RESEARCH_BENCH.actionHeight + RESEARCH_BENCH.actionGap);
+  });
+
+  it("의 빈 판 조작 줄은 빈 연구대 아래에 서고 라벨 줄을 파고들지 않는다", () => {
+    // 끼운 뒤의 줄 자리를 쓰던 때는 일괄 부여 줄이 가운데에 선 빈 판과 안내 글을 덮었다.
+    expect(researchEmptyActionY(0) - RESEARCH_BENCH.actionHeight / 2)
+      .toBeGreaterThanOrEqual(researchBenchTop(false) + RESEARCH_BENCH.height);
+    expect(researchEmptyActionY(0) + RESEARCH_BENCH.actionHeight / 2).toBeLessThanOrEqual(TAB_TOP);
   });
 });

@@ -14,6 +14,8 @@ import { portraitCardHeadWindow, portraitCardOverhang } from "./portraitGrid";
 import { addBookmarkMark } from "./bookmarkMark";
 import { session } from "../state/session";
 import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
+import { addFactionMark } from "./FactionMark";
+import type { SquadId } from "../data/factions";
 
 /** 카드 한 장의 조립 옵션. 크기와 라벨만 주면 나머지 연출은 프리팹이 맞춘다. */
 export interface PortraitCardOptions {
@@ -70,8 +72,20 @@ export interface PortraitCardOptions {
   locked?: boolean;
   /** 칩 오른쪽 위의 작은 표식. 등급을 주면 그 자리는 로마자 표식이 가져간다. */
   badge?: string;
-  /** 카드 왼쪽에 세로로 서는 속성·직군. 속성이 크고 직군이 조금 작다. */
-  affinity?: { element: Element; role: Role };
+  /**
+   * 카드 왼쪽에 세로로 서는 속성·직군. 속성이 크고 직군이 조금 작다.
+   *
+   * `squad`를 주면 직군 아래에 소속 엠블럼이 한 칸 더 선다 — 교류처럼 소속이 고르는 이유가 되는
+   * 목록에서만 넘긴다. 엠블럼 그림이 없는 스쿼드는 아무것도 세우지 않는다(`addFactionMark`).
+   */
+  affinity?: { element: Element; role: Role; squad?: SquadId };
+  /**
+   * 이름 바로 위, 카드 가운데에 서는 강조 딱지(교류의 「특화 2」처럼 이 목록에서 카드를 고르는 이유).
+   *
+   * 이름 아래 보조 줄(`sub`)과 달리 이름을 위로 밀어 올리지 않는다 — 이름·레벨은 늘 같은 자리에
+   * 서고, 딱지만 그 위에 얹힌다. 색은 `tone`(기본 강조색), 글자는 짙은 먹색이다.
+   */
+  centerTag?: { text: string; tone?: number };
   /** 선택 시 카드 안을 누르는 반투명 검정. 편성처럼 명시적인 눌림 피드백이 필요할 때만 켠다. */
   selectedOverlayAlpha?: number;
   /**
@@ -194,6 +208,12 @@ const SHADE_RATIO = 0.46;
  * 정수리 근처의 실제 폭은 이 값이 아니라 `portraitCardHeadWindow`의 `topWidth`가 정한다.
  */
 const CHIP_NOTCH_WIDTH = 0.8;
+
+/** 이름 위 가운데 딱지의 글자 크기(카드 폭 대비)와 이름 블록과의 틈. */
+const PORTRAIT_CENTER_TAG = { fontRatio: 0.155, maxFont: 30, gap: 8 } as const;
+
+/** 직군 아래 소속 엠블럼 — 크기는 직군 뱃지 대비, 자리는 직군 중심에서 내려가는 거리(직군 뱃지 대비). */
+const PORTRAIT_SQUAD_MARK = { sizeRatio: 1, stepRatio: 1.1 } as const;
 
 /** 레벨 숫자를 세로로 늘리는 비율. 계기판 숫자처럼 보이게 하는 최소한의 왜곡이다. */
 const LEVEL_STRETCH = 1.26;
@@ -469,6 +489,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     }
 
     if (options.affinity) this.addAffinity(options.affinity, width, height);
+    if (options.centerTag && options.label && !options.locked) this.addCenterTag(options.centerTag, width, height);
     if (options.rarity && !options.locked) {
       // 희귀도는 속성과 반대쪽 고정 앵커를 사용해 두 의미가 카드 이름과 서로 밀지 않는다.
       addColorAssistMark(scene, this, width / 2 - 72, -height / 2 + COLOR_ASSIST_LAYOUT.card.inset, COLOR_ASSIST_LAYOUT.card.size, session.settings.accessibility.colorAssist, "rarity", options.rarity);
@@ -587,12 +608,48 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   }
 
   /**
+   * 이름 위 가운데 딱지.
+   *
+   * 판때기 대신 카드와 같은 실루엣(왼쪽 위·오른쪽 아래만 깎인 칩)을 강조색으로 채우고 아래로
+   * 검은 복제 한 겹을 깐다 — 밝은 원화 위에서도 「이 카드는 여기에 맞는다」가 얼굴 다음으로 읽힌다.
+   * 이름 블록(레벨 숫자 포함)의 윗선 바로 위에 밑변을 맞춘다.
+   */
+  private addCenterTag(tag: { text: string; tone?: number }, width: number, height: number): void {
+    const tone = tag.tone ?? COLOR.accent;
+    const fontSize = Math.round(Math.min(PORTRAIT_CENTER_TAG.maxFont, width * PORTRAIT_CENTER_TAG.fontRatio));
+    const label = this.scene.add.text(0, 0, tag.text, textStyle({ role: "display", size: fontSize, color: "#0b1220" })).setOrigin(0.5);
+    // 왼쪽에는 속성·직군·소속 열이 세로로 서 있다. 딱지는 그 열을 비켜 **남은 원화 폭의 가운데**에 선다 —
+    // 카드 정중앙에 두면 그 열의 아이콘과 겹친다.
+    const main = Math.min(60, width * 0.33);
+    const left = this.options.affinity ? -width / 2 + main * 1.3 : -width / 2 + CHIP_INSET + 4;
+    const right = width / 2 - CHIP_INSET - 4;
+    const tagWidth = Math.min(right - left, label.width + fontSize * 1.3);
+    if (label.width > tagWidth - fontSize * 0.6) label.setScale((tagWidth - fontSize * 0.6) / label.width, 1);
+    const tagHeight = Math.round(fontSize * 1.42);
+    const blockTop = Math.min(
+      this.levelTag ? this.levelTag.y - this.levelTag.height : Number.POSITIVE_INFINITY,
+      this.nameText ? this.nameText.y - this.nameText.height : height / 2 - 60,
+    );
+    const centerY = blockTop - PORTRAIT_CENTER_TAG.gap - tagHeight / 2;
+    const bevel = Math.round(tagHeight * 0.34);
+    const shape = chipPoints(tagWidth, tagHeight, { bevel: { topLeft: bevel, bottomRight: bevel } });
+    const plate = this.scene.add.graphics();
+    plate.fillStyle(0x000000, 0.55);
+    plate.fillPoints(toPoints(shape.map((value, index) => value + (index % 2 === 1 ? 4 : 0))), true);
+    plate.fillStyle(tone, 0.96);
+    plate.fillPoints(toPoints(shape), true);
+    plate.fillStyle(0xffffff, 0.28);
+    plate.fillRect(-tagWidth / 2 + bevel, -tagHeight / 2, tagWidth - bevel, 2);
+    this.add(this.scene.add.container((left + right) / 2, centerY, [plate, label]));
+  }
+
+  /**
    * 속성과 직군.
    *
    * 카드 왼쪽 위에 세로로 선다. 속성이 먼저 읽혀야 하므로 크게, 직군은 그 아래 조금 작게
    * 둔다 — 둘이 같은 크기면 무엇을 먼저 봐야 하는지 알 수 없다.
    */
-  private addAffinity(affinity: { element: Element; role: Role }, width: number, height: number): void {
+  private addAffinity(affinity: { element: Element; role: Role; squad?: SquadId }, width: number, height: number): void {
     const main = Math.min(60, width * 0.33);
     const sub = main * 0.74;
     // 발광이 칩 밖으로 새지 않도록 안쪽으로 충분히 들인다.
@@ -600,7 +657,14 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     const top = -height / 2 + main * 0.66;
     // 카드의 원화는 밝고 복잡하다. 그늘을 진하게 줘야 실루엣이 옷 무늬에 묻히지 않는다.
     this.add(new AffinityBadge(this.scene, x, top, ELEMENT_ICON[affinity.element], main, 0.62));
-    this.add(new AffinityBadge(this.scene, x, top + main * 0.94, ROLE_ICON[affinity.role], sub, 0.62));
+    const roleY = top + main * 0.94;
+    this.add(new AffinityBadge(this.scene, x, roleY, ROLE_ICON[affinity.role], sub, 0.62));
+    // 소속은 직군 아래 한 칸 — 같은 열에 서야 「이 개체는 무엇인가」가 한 줄기로 읽힌다.
+    if (affinity.squad) {
+      const markSize = sub * PORTRAIT_SQUAD_MARK.sizeRatio;
+      const mark = addFactionMark(this.scene, x, roleY + sub * PORTRAIT_SQUAD_MARK.stepRatio, affinity.squad, { size: markSize });
+      if (mark) this.add(mark);
+    }
     // 속성 표식은 이름 흐름 밖 카드 모서리에 고정해 텍스트 배율이 커져도 밀리지 않는다.
     addColorAssistMark(this.scene, this, x + main * 0.42, top - main * 0.38, COLOR_ASSIST_LAYOUT.card.size, session.settings.accessibility.colorAssist, "element", affinity.element);
   }

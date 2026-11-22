@@ -105,7 +105,7 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // 큰 몸이 천천히 그늘을 펼치는 기술이라 한 박자 오래 머물고 흔들림은 낮다.
   // 사슬이 아군 모두에게 감기는 기술이라 한 박자 머물고 흔들림은 낮다.
   // 한 번에 파고드는 돌진이라 짧고 세게 친다.
-  arsa: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.96, cutInHoldMs: 130, zoomScale: 1.18, zoomMs: 105, cameraShakeIntensity: 0.008 },
+  ar: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.96, cutInHoldMs: 130, zoomScale: 1.18, zoomMs: 105, cameraShakeIntensity: 0.008 },
   belz: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.98, cutInHoldMs: 160, zoomScale: 1.12, zoomMs: 120, cameraShakeIntensity: 0.005 },
   brika: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, cutInHoldMs: 180, zoomScale: 1.12, zoomMs: 130, cameraShakeIntensity: 0.005 },
   ark: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.96, zoomScale: 1.2, zoomMs: 115, cameraShakeIntensity: 0.009 },

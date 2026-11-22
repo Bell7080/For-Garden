@@ -934,8 +934,8 @@ export const BELZ_SD_METADATA: Omit<PuppetAsset, "url"> = {
   joints: { center: [616, 564], head: [593, 463], eyes: null, feet: [[463, 1203], [593, 1200]] },
 };
 
-/** 아르사 전신: 중심1·머리1·눈1·눈2·발1·발2를 프로젝트에서 읽었다. alpha > 16 경계는 (91,43)–(1000,1404)이다. */
-export const ARSA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+/** 아르 전신: 중심1·머리1·눈1·눈2·발1·발2를 프로젝트에서 읽었다. alpha > 16 경계는 (91,43)–(1000,1404)이다. */
+export const AR_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086,
   imageHeight: 1448,
   content: { left: 91, top: 43, right: 1000, bottom: 1404 },
@@ -944,8 +944,8 @@ export const ARSA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   lobbyZoom: 0.886,
 };
 
-/** 아르사 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. alpha > 16 경계는 (272,29)–(1039,1232)이다. */
-export const ARSA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+/** 아르 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. alpha > 16 경계는 (272,29)–(1039,1232)이다. */
+export const AR_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254,
   imageHeight: 1254,
   content: { left: 272, top: 29, right: 1039, bottom: 1232 },

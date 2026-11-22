@@ -53,7 +53,7 @@ import { currencyRecordToRewardItems, openRewardPopup } from "./RewardPopup";
 import { interactionRemainingLabel, relicsAwayOnInteraction, autoAssignInteractionParty, interactionLayerViews, type InteractionLayerView } from "./interactionLayerModel";
 import type { RelicDef } from "../core/types";
 import { settingsManager } from "../managers/SettingsManager";
-import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
+import { applyRosterView, DEFAULT_ROSTER_VIEW, deployedFirst, type RosterView } from "../core/rosterView";
 import { RosterControls } from "./RosterControls";
 import { dropRosterRelic, tapFormationSlot, tapRosterRelic, toFormationSlots, formationMembers } from "../core/formationSlots";
 import { bindRosterDragPick, type RosterDragPick } from "./rosterDragPick";
@@ -137,6 +137,10 @@ export class InteractionCityPopup {
   private readonly puppetLoading = new Set<string>();
   /** 목록 카드. 편성이 바뀌면 눌림 표시만 갈아 끼워 그리드를 다시 만들지 않는다. */
   private readonly rosterCards = new Map<string, PortraitCard>();
+  /** 목록이 거른 렐릭과 나가 있는 렐릭 — 편성이 바뀌면 이것으로 순서만 다시 정한다. */
+  private rosterSource?: { shown: RelicDef[]; away: ReadonlySet<string> };
+  /** 지금 카드가 선 순서. 같으면 옮기지 않는다. */
+  private rosterOrderKey = "";
   /** 어느 자리에 세우는 중인지 말하는 줄. 고른 칸이 바뀌면 글자만 갈아 끼운다. */
   private rosterHint?: Phaser.GameObjects.Text;
   private sdLayer?: Phaser.GameObjects.Container;
@@ -341,6 +345,39 @@ export class InteractionCityPopup {
     this.renderActions(view);
     this.rosterHint?.setText(this.rosterHintText());
     for (const [relicId, card] of this.rosterCards) card.setSelected(this.party.includes(relicId));
+    this.reflowRoster();
+  }
+
+  /**
+   * 목록 순서 — **지금 칸에 선 렐릭이 1·2·3번 순서로 맨 앞**에 서고(`deployedFirst`, 편성 화면과 같은 규칙),
+   * 그 뒤를 고를 수 있는 이가, 맨 끝을 다른 도시에 나가 있는 이가 잇는다.
+   */
+  private rosterOrder(): RelicDef[] {
+    const source = this.rosterSource;
+    if (!source) return [];
+    const ready = source.shown.filter((relic) => !source.away.has(relic.id));
+    return [...deployedFirst(ready, this.party), ...source.shown.filter((relic) => source.away.has(relic.id))];
+  }
+
+  /**
+   * 편성이 바뀌어 맨 앞에 설 렐릭이 달라지면 카드를 **다시 세우지 않고 새 칸으로 스르륵 옮긴다** —
+   * 다시 세우면 원화가 빠졌다 들어와 새로고침된 것처럼 읽힌다. 마스크는 스크롤 시계가 매 프레임 맞춘다.
+   */
+  private reflowRoster(): void {
+    const roster = this.rosterOrder();
+    const key = roster.map((relic) => relic.id).join(",");
+    if (key === this.rosterOrderKey) return;
+    this.rosterOrderKey = key;
+    const duration = settingsManager.get().accessibility.reduceMotion ? 0 : 220;
+    roster.forEach((relic, index) => {
+      const card = this.rosterCards.get(relic.id);
+      if (!card || !card.active) return;
+      const x = formationRosterColumnX(ROSTER, index % ROSTER.columns);
+      const y = portraitGridFirstRowY(0, ROSTER.cardHeight, PORTRAIT_GRID_MASK_GAP) + Math.floor(index / ROSTER.columns) * ROSTER.rowStep;
+      this.scene.tweens.killTweensOf(card);
+      if (duration === 0) card.setPosition(x, y);
+      else this.scene.tweens.add({ targets: card, x, y, duration, ease: "Cubic.Out" });
+    });
   }
 
   /**
@@ -557,7 +594,9 @@ export class InteractionCityPopup {
     const powerOf = (relic: RelicDef): number => relicProgression.getCombatPower(relic.id);
     // 필터의 「특화 일치만」은 이 도시의 특화(속성·직군·스쿼드)에 하나라도 맞는 이만 남긴다.
     const shown = applyRosterView(owned, this.rosterView, powerOf, { specialtyOf: (relic) => interactionSpecialtyMatches(view.city, relic) });
-    const roster = [...shown.filter((relic) => !away.has(relic.id)), ...shown.filter((relic) => away.has(relic.id))];
+    this.rosterSource = { shown, away };
+    const roster = this.rosterOrder();
+    this.rosterOrderKey = roster.map((relic) => relic.id).join(",");
     const awayUntil = new Map<string, number>();
     for (const dispatch of dispatches) if (!dispatch.claimed) for (const id of dispatch.party) awayUntil.set(id, Date.parse(dispatch.completesAt));
     this.rosterCards.clear();
@@ -602,9 +641,11 @@ export class InteractionCityPopup {
       const card = new PortraitCard(this.scene, x, y, {
         width: ROSTER.cardWidth, height: ROSTER.cardHeight, relicId: relic.id,
         label: relic.name, level: progress.level, rarity: relic.rarity, breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id), resonance: relicProgression.getResonance(relic.id),
-        affinity: { element: relic.element, role: relic.role },
-        // 그 도시에 맞는 칸이 있으면 이름 아래에 몇 칸인지 선다 — 누가 더 가져올지가 카드에서 읽힌다.
-        ...(matches > 0 ? { sub: t("interaction.specialtyMatch", { count: matches }), subStyle: "accent" as const } : {}),
+        // 교류의 특화는 속성·직군·스쿼드라, 소속도 직군 아래에 함께 선다.
+        affinity: { element: relic.element, role: relic.role, squad: relic.squad },
+        // 그 도시에 맞는 칸이 있으면 이름 위 가운데에 몇 칸인지 딱지가 선다 — 누가 더 가져올지가
+        // 얼굴 다음으로 읽힌다. 이름은 다른 목록과 같은 자리를 지킨다.
+        ...(matches > 0 ? { centerTag: { text: t("interaction.specialtyMatch", { count: matches }), tone: BLUE } } : {}),
         // 이미 자리에 나가 있는 카드는 떠오르지 않고 눌려 들어간다.
         selectedStyle: "pressed",
       });

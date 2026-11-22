@@ -52,7 +52,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno" | "plesha" | "arte" | "brika" | "belz" | "arsa";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno" | "plesha" | "arte" | "brika" | "belz" | "ar";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -1219,7 +1219,7 @@ export type Ultimate = Skill & {
   /** 이 궁극기로 대상을 처치하면 되돌려받는 궁극기 게이지다. 빗나가거나 살아남으면 없다. */
   energyRefundOnKill?: number;
   /**
-   * 쏜 사람이 얻는 야성(아르사). 폭주 중이 아니면 `amount`만큼 오르고, 이미 폭주 중이면 그 대신 폭주가 `feverExtendSeconds`초 늘어난다
+   * 쏜 사람이 얻는 야성(아르). 폭주 중이 아니면 `amount`만큼 오르고, 이미 폭주 중이면 그 대신 폭주가 `feverExtendSeconds`초 늘어난다
    * (「피 냄새」의 연장 상한을 함께 쓴다). 시전 한 번에 한 번이다.
    */
   selfFerocity?: { amount: number; feverExtendSeconds: number };
@@ -1507,7 +1507,7 @@ export type PassiveKind =
   | "canopyShade"
   /** 벨즈 전용: 몇 초마다 체력 비율이 가장 낮은 아군을 혀로 끌어와 곁에 세우고 보호막을 두르며, 그 아군을 노리던 적의 표적을 모두 풀어 버린다. */
   | "tonguePull"
-  /** 아르사 전용: 평타가 야성을 더 끌어오고, 폭주 중 적중·처치가 폭주를 늘린다. */
+  /** 아르 전용: 평타가 야성을 더 끌어오고, 폭주 중 적중·처치가 폭주를 늘린다. */
   | "bloodScent";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
@@ -1672,10 +1672,10 @@ export type FerocityTrait = {
        * 끌려오는 한 순간이 있어야 게이지가 찬 것이 화면에서 읽힌다.
        */
       pullOnEntry?: { radius: number; distance: number };
-      /** 폭주 중 모든 직접 피해에 더하는 흡혈(퍼센트포인트, 아르사). 선택이다. */
+      /** 폭주 중 모든 직접 피해에 더하는 흡혈(퍼센트포인트, 아르). 선택이다. */
       lifeStealPoints?: number;
       /**
-       * 폭주가 **끊기지 않고 이어진 시간**만큼 오르는 몫(아르사). 폭주에 든 순간부터 매초 공격 속도·흡혈이 더해지고, 합이 상한에서
+       * 폭주가 **끊기지 않고 이어진 시간**만큼 오르는 몫(아르). 폭주에 든 순간부터 매초 공격 속도·흡혈이 더해지고, 합이 상한에서
        * 멈춘다(상한은 `bonusPercent`·`lifeStealPoints`를 더한 전체 값이다). 폭주가 끝나면 처음으로 돌아간다 — 상시 보너스가 아니라
        * 오래 물고 늘어질수록 세지는 폭주다. 선택이다.
        */
@@ -2589,7 +2589,7 @@ export interface Passive {
    */
   tongue?: { intervalSeconds: number; shieldMaxHpPercent: number; landDistance: number };
   /**
-   * 「피 냄새」(아르사). 기본 공격이 적중할 때마다 야성을 `bonusFerocityPerHit`만큼 더 얻는다(공통 획득량은 그대로다).
+   * 「피 냄새」(아르). 기본 공격이 적중할 때마다 야성을 `bonusFerocityPerHit`만큼 더 얻는다(공통 획득량은 그대로다).
    * 폭주 중에는 기본 공격 적중마다 `extendPerHitSeconds`초, 적을 쓰러뜨리면 `extendPerKillSeconds`초 동안 폭주가 닳지 않는다 —
    * 한 번의 폭주에 늘어나는 시간은 모두 합쳐 `maxExtendSeconds`초까지다(끝나지 않는 폭주를 막는다).
    */

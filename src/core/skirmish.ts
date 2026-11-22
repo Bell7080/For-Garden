@@ -564,7 +564,7 @@ export interface Fighter extends Combatant {
   undying: { remaining: number; total: number } | null;
   /** 「혀 낚아채기」(벨즈) — 다음으로 아군을 끌어오기까지 남은 시간(초). 패시브가 없는 개체는 늘 0이다. */
   tongueIn: number;
-  /** 「피 냄새」(아르사) — 폭주가 닳지 않고 버티는 남은 시간(초). 폭주가 닳는 시계보다 먼저 흐른다. */
+  /** 「피 냄새」(아르) — 폭주가 닳지 않고 버티는 남은 시간(초). 폭주가 닳는 시계보다 먼저 흐른다. */
   feverHold: number;
   /** 이번 폭주에 이미 늘린 시간의 합(초). 폭주에 들어설 때마다 0으로 돌아간다. */
   feverHoldGranted: number;
@@ -4072,7 +4072,7 @@ function tickRaiders(fighter: Fighter, dt: number, state: SkirmishState): Skirmi
 
 /** 기술을 쓴 순간 제 몸에 두르는 막(`selfShieldMaxHpPercent`). 궁극기를 치른 자리에서만 부른다. */
 function grantCastShield(attacker: Fighter, skill: Skill, state: SkirmishState, events: SkirmishEvent[]): void {
-  // 시전 한 번에 한 번 — 쏜 사람의 야성(아르사). 막을 두르는 자리와 같은 경계라 대상 수만큼 되풀이되지 않는다.
+  // 시전 한 번에 한 번 — 쏜 사람의 야성(아르). 막을 두르는 자리와 같은 경계라 대상 수만큼 되풀이되지 않는다.
   const surge = skill.id === attacker.def.ultimate.id ? attacker.def.ultimate.selfFerocity : undefined;
   if (surge && isFighterAlive(attacker)) {
     if (attacker.ferocityFever) extendFever(attacker, surge.feverExtendSeconds);
@@ -4832,7 +4832,7 @@ function triggerBreakthroughOnKill(attacker: Fighter, useUltimate: boolean, vict
   const hum = attacker.def.passive.wingHum;
   if (hum && isFighterAlive(attacker)) giveEnergy(attacker, hum.energyOnKill);
   // 처치 가속(`killHaste`) — 어떤 경로로 쓰러뜨렸든 이 훅을 지나므로 평타·궁극기·지속 피해가 같은 값을 얻는다.
-  // 피 냄새(아르사) — 폭주 중에 쓰러뜨리면 폭주가 늘어난다.
+  // 피 냄새(아르) — 폭주 중에 쓰러뜨리면 폭주가 늘어난다.
   const scent = attacker.def.passive.bloodScent;
   if (scent && attacker.ferocityFever && isFighterAlive(attacker)) extendFever(attacker, scent.extendPerKillSeconds);
   const haste = attacker.def.passive.killHaste;
@@ -7268,7 +7268,7 @@ function cleanseAllDebuffs(fighter: Fighter): void {
 }
 
 /**
- * 폭주를 늘린다(「피 냄새」 · 아르사). 게이지를 더 채우지 않고 **닳지 않는 시간**을 쌓는다 — 가득 찬 게이지에는 더 얹을 자리가
+ * 폭주를 늘린다(「피 냄새」 · 아르). 게이지를 더 채우지 않고 **닳지 않는 시간**을 쌓는다 — 가득 찬 게이지에는 더 얹을 자리가
  * 없고, 채우면 피해 구간 계산까지 흔들린다. 한 번의 폭주에 늘어나는 시간은 그 개체의 상한(`maxExtendSeconds`)까지다.
  */
 function extendFever(fighter: Fighter, seconds: number): void {

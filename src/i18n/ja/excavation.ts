@@ -25,7 +25,6 @@ export const EXCAVATION_JA = {
 
   "excavation.ad.unavailable": "広告が利用できなくても通常の回収は続けられます。",
   "excavation.ad.cancelled": "広告がキャンセルされたか、準備できていません。通常の回収をご利用ください。",
-  "excavation.ad.applied": "採掘効果が適用されました。",
   "excavation.ad.verifyFailed": "広告の検証に失敗しました。通常の回収はそのまま行えます。",
 
   "excavation.ownedRelics": "所持レリック",

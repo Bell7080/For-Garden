@@ -26,7 +26,6 @@ export const EXCAVATION_KO = {
 
   "excavation.ad.unavailable": "광고를 이용할 수 없어도 일반 수확은 계속할 수 있습니다.",
   "excavation.ad.cancelled": "광고가 취소되었거나 준비되지 않았습니다. 일반 수확을 이용해 주세요.",
-  "excavation.ad.applied": "발굴 효과가 적용되었습니다.",
   "excavation.ad.verifyFailed": "광고 검증에 실패했습니다. 일반 수확은 그대로 가능합니다.",
 
   "excavation.ownedRelics": "보유 렐릭",

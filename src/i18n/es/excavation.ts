@@ -23,7 +23,6 @@ export const EXCAVATION_ES = {
   "excavation.harvestFailed": "La cosecha falló. Reintenta con la misma solicitud.",
   "excavation.ad.unavailable": "Aunque no haya anuncios, la cosecha normal sigue disponible.",
   "excavation.ad.cancelled": "El anuncio se canceló o no está listo. Usa la cosecha normal.",
-  "excavation.ad.applied": "Se aplicó la bonificación de excavación.",
   "excavation.ad.verifyFailed": "Falló la verificación del anuncio. La cosecha normal sigue disponible.",
   "excavation.ownedRelics": "Reliquias obtenidas",
   "excavation.ownedRelicsForSlot": "Reliquias obtenidas · Colocar en la posición {slot}",

@@ -1,4 +1,5 @@
 import { profileFace } from "../state/playerProfile";
+import { ensureSkillArtFor } from "../ui/skillArtLoader";
 import { holdLiveOps } from "../managers/liveOps";
 import { ancientStageFloor, ancientStageId, ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import { getAncientStrataFloor } from "../core/ancientStrataBattle";
@@ -1316,6 +1317,8 @@ export class BattleScene extends Phaser.Scene {
     const creationQueue = new PuppetCreationQueue({ isCurrent });
     this.fighterCreationQueue = creationQueue;
     ensureEffectTextures(this);
+    // 프로필 버프 칩이 그 스킬의 일러스트를 쓴다 — 스킬 그림은 쓸 때 올리므로 서는 개체 몫을 지금 올려 둔다.
+    void ensureSkillArtFor(this, this.state.fighters.map((fighter) => fighter.def.id));
     // 번호별 전용 적 SD도 원화 색을 보존하므로 더 이상 임시 허스크 tint를 입히지 않는다.
     const tint = 0xffffff;
     // **여섯을 한꺼번에 읽는다.** 루프 안에서 `await`하던 때는 한 마리가 끝나야 다음이

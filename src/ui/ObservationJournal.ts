@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { CONTENT_ENTRY_ART } from "./backgroundAssets";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 import type { RelicDef } from "../core/types";
 import { SQUADS } from "../data/factions";
@@ -308,10 +309,11 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
   popups.open({ width: journal.popup.width, height: flow.popupHeight, title: t("info.journal.title"), titleSize: journal.font.title, tilt: journal.popup.tilt, ...sourceOf(from) }, (body, close) => {
     const artWidth = journal.popup.width - journal.art.inset * 2;
     const artHeight = flow.popupHeight - journal.art.inset * 2;
-    if (scene.textures.exists("content-observation-journal")) {
+    {
+      // 종이 원화는 일지를 열 때 올린다(배경과 같은 거주 규칙) — 도착하기 전에는 판만 선다.
       const journalMask = chipPoints(artWidth, artHeight, { bevel: { topLeft: artWidth * 0.14, topRight: 0, bottomRight: artWidth * 0.14, bottomLeft: 0 } });
-      const journalArt = addPopupBackgroundImage(scene, body, "content-observation-journal", { x: 0, y: 0, width: artWidth, height: artHeight, maskShape: journalMask, fit: "native-center" });
-      journalArt.image.setAlpha(JOURNAL_ART_ALPHA); journalArt.fade.setAlpha(JOURNAL_TEXT_FADE_ALPHA); journalArt.syncMask();
+      const journalArt = addPopupBackgroundImage(scene, body, CONTENT_ENTRY_ART.journal, { x: 0, y: 0, width: artWidth, height: artHeight, maskShape: journalMask, fit: "native-center", imageAlpha: JOURNAL_ART_ALPHA });
+      journalArt.fade.setAlpha(JOURNAL_TEXT_FADE_ALPHA); journalArt.syncMask();
     }
 
     // 흐르는 본문만 별도 컨테이너에 담아, 화면 안전 높이를 넘을 때 판과 배경은 고정한 채 스크롤한다.

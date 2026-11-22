@@ -52,7 +52,49 @@ function loadBackgroundOnce(scene: Phaser.Scene, key: string, round: number): Pr
   const existing = pendingLoads.get(key);
   if (existing) return existing;
 
-  const job = new Promise<boolean>((resolve) => {
+  const url = round > 0 ? `${path}${path.includes("?") ? "&" : "?"}retry=${round}` : path;
+  // 먼저 일꾼 스레드 디코드 길을 탄다. 안 되면(없는 API·실패) 예전 로더 길로 넘어간다.
+  const job = decodeOffThread(scene, key, url).then((ok) => ok || loadWithLoader(scene, key, url));
+  pendingLoads.set(key, job);
+  void job.then(() => pendingLoads.delete(key));
+  return job;
+}
+
+/**
+ * 원화를 **메인 스레드 밖에서** 픽셀로 풀어 올린다.
+ *
+ * 로더(`load.image`)로 받으면 브라우저가 그림을 처음 GPU에 올리는 순간(`texImage2D`) 메인 스레드에서 디코드한다 —
+ * 1882×3344 원화 한 장이 중저가 폰에서 수백 ms라, 화면이 넘어가는 그 프레임이 통째로 멎었다. `createImageBitmap`은
+ * 디코드를 다른 스레드에서 끝내고 올리기만 남긴다(Puppet 원화가 이미 쓰는 길과 같다). 픽셀은 내릴 때 `close`로 놓는다.
+ */
+const decodedBitmaps = new Map<string, ImageBitmap>();
+
+async function decodeOffThread(scene: Phaser.Scene, key: string, url: string): Promise<boolean> {
+  if (typeof createImageBitmap !== "function" || typeof fetch !== "function") return false;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return false;
+    const bitmap = await createImageBitmap(await response.blob(), { premultiplyAlpha: "premultiply" });
+    if (scene.textures.exists(key)) { bitmap.close(); return true; }
+    scene.textures.addImage(key, bitmap as unknown as HTMLImageElement);
+    decodedBitmaps.set(key, bitmap);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** 텍스처를 내리고, 일꾼이 푼 픽셀이 있으면 함께 놓는다. */
+function removeBackgroundTexture(textures: Phaser.Textures.TextureManager, key: string): void {
+  textures.remove(key);
+  decodedBitmaps.get(key)?.close();
+  decodedBitmaps.delete(key);
+}
+
+function loadWithLoader(scene: Phaser.Scene, key: string, url: string): Promise<boolean> {
+  if (scene.textures.exists(key)) return Promise.resolve(true);
+  if (scene.sys.settings.status >= Phaser.Scenes.SHUTDOWN) return Promise.resolve(false);
+  return new Promise<boolean>((resolve) => {
     const done = (ok: boolean): void => {
       scene.load.off(Phaser.Loader.Events.FILE_LOAD_ERROR, onError);
       scene.events.off(Phaser.Scenes.Events.SHUTDOWN, onShutdown);
@@ -64,13 +106,10 @@ function loadBackgroundOnce(scene: Phaser.Scene, key: string, round: number): Pr
     scene.load.once(`filecomplete-image-${key}`, () => done(true));
     scene.load.on(Phaser.Loader.Events.FILE_LOAD_ERROR, onError);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, onShutdown);
-    // 다시 받을 때는 실패한 응답이 캐시에서 돌아오지 않도록 주소를 바꾼다.
-    scene.load.image(key, round > 0 ? `${path}${path.includes("?") ? "&" : "?"}retry=${round}` : path);
+    // 다시 받을 때는 실패한 응답이 캐시에서 돌아오지 않도록 주소를 바꾼다(`url`).
+    scene.load.image(key, url);
     scene.load.start();
   });
-  pendingLoads.set(key, job);
-  void job.then(() => pendingLoads.delete(key));
-  return job;
 }
 
 /**
@@ -93,7 +132,7 @@ export function useBackgroundTexture(
     const next = releaseBackground(residency, key, { idleKeep: currentIdleKeep().background });
     residency = next.state;
     // 붙잡은 곳이 하나도 없는 키만 목록에 오르므로 살아 있는 표시 객체를 지울 일이 없다.
-    for (const evicted of next.evict) textures.remove(evicted);
+    for (const evicted of next.evict) removeBackgroundTexture(textures, evicted);
   });
 
   // **이미 올라와 있어도 그림은 물려야 한다.** 세우는 쪽은 `__DEFAULT`로 만든 빈 이미지를

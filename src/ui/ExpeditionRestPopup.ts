@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { useBackgroundTexture } from "./backgrounds";
 import { applyExpeditionRest, type ExpeditionRelicHealth } from "../core/expeditionAugments";
 import { motionPolicy } from "../core/settings";
 import { EXPEDITION_REST_RULES } from "../data/expedition";
@@ -83,9 +84,11 @@ export function openExpeditionRestPopup(
       C.glow.grow.forEach((grow, layerIndex) => glow.add(drawLayer(scene, 0, 0, chipPoints(C.width + grow * 2, C.height + grow * 2, { bevel: { topLeft: C.bevel + grow * 0.6, bottomRight: C.bevel + grow * 0.6 } }), { fill: COLOR.accent, alpha: C.glow.alpha[layerIndex] })));
       card.add(glow);
       card.add(drawLayer(scene, 0, 0, shape, { fill: 0x0d1219, alpha: HOLO.glass }));
-      if (scene.textures.exists(REST_CARD_ART)) {
-        const art = scene.add.image(0, 0, REST_CARD_ART);
-        art.setScale(Math.max(C.width / art.width, C.height / art.height)).setAlpha(C.art.alpha).setMask(shapeClipMask(scene, card, shape));
+      {
+        const art = scene.add.image(0, 0, scene.textures.exists(REST_CARD_ART) ? REST_CARD_ART : "__DEFAULT").setAlpha(0).setMask(shapeClipMask(scene, card, shape));
+        useBackgroundTexture(scene, art, REST_CARD_ART, (loaded) => {
+          loaded.setScale(Math.max(C.width / loaded.width, C.height / loaded.height)).setAlpha(C.art.alpha);
+        });
         card.add(art);
       }
       card.add(drawFrameVignette(scene, 0, 0, C.width, C.height, { strength: 0.7, spread: 0.3 }).setMask(shapeClipMask(scene, card, shape)));

@@ -251,6 +251,10 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   /** 발광·확대와 함께 선택이 '눌린 면'으로 읽히게 하는 선택형 어두운 면이다. */
   private readonly selectedOverlay: Phaser.GameObjects.Graphics;
   private readonly maskOffsetY: number;
+  /** `syncMask`가 돌려 쓰는 행렬 두 벌과 마지막으로 맞춘 자리. */
+  private readonly maskMatrix = new Phaser.GameObjects.Components.TransformMatrix();
+  private readonly maskParentMatrix = new Phaser.GameObjects.Components.TransformMatrix();
+  private maskPlaced?: { x: number; y: number; sx: number; sy: number; offset: number; overlays: number };
   private readonly shadeHeight: number;
   /** 눌림 표시의 실제 진하기. 양식과 호출부 값이 여기 한 번만 접힌다. */
   private readonly overlayAlpha: number;
@@ -773,8 +777,14 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   /** 마스크를 카드의 현재 화면 위치·배율에 맞춘다. 카드를 옮기거나 키운 뒤에 부른다. */
   // 컨테이너를 스크롤하는 화면도 내부 기하 마스크를 월드 좌표에 다시 맞출 수 있어야 한다.
   public syncMask(): void {
-    const matrix = this.getWorldTransformMatrix();
+    // 목록은 매 프레임 이것을 부른다 — 행렬은 한 벌을 돌려 쓰고, 자리가 그대로면 마스크를 건드리지 않는다.
+    const matrix = this.getWorldTransformMatrix(this.maskMatrix, this.maskParentMatrix);
     const decomposed = matrix.decomposeMatrix() as { translateX: number; translateY: number; scaleX: number; scaleY: number };
+    const last = this.maskPlaced;
+    const overlays = this.managedOverlays.length;
+    if (last && last.x === decomposed.translateX && last.y === decomposed.translateY && last.sx === decomposed.scaleX
+      && last.sy === decomposed.scaleY && last.offset === this.maskOffsetY && last.overlays === overlays) return;
+    this.maskPlaced = { x: decomposed.translateX, y: decomposed.translateY, sx: decomposed.scaleX, sy: decomposed.scaleY, offset: this.maskOffsetY, overlays };
     for (const mask of [this.portraitMask, this.bodyMask, this.notchMask, ...this.managedOverlays.map(({ headMask }) => headMask)]) {
       mask
         .setPosition(decomposed.translateX, decomposed.translateY + this.maskOffsetY * decomposed.scaleY)

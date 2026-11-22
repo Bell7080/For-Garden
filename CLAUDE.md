@@ -913,6 +913,9 @@
 
 - **배경음은 디코드하지 않고 흘려 재생한다**(`AudioManager.registerStream` → `<audio>` + `MediaElementAudioSourceNode`). PCM은 mp3 용량이 아니라 길이×샘플레이트×채널×4바이트라 곡당 50~60MB이고, 디코드가 데스크톱에서도 1초·메인 스레드 300ms를 붙잡아 화면을 옮길 때마다 진입이 멎었다. 모바일 브라우저는 탭 메모리가 한도를 넘으면 경고 없이 탭을 죽인다. 음량은 이득 노드가 맡는다(iOS는 요소의 `volume`을 무시한다). 새 긴 오디오도 `decodeAudioData`로 통째로 풀지 않는다.
 - **WebGL 컨텍스트는 게임 캔버스 하나만 상시 유지한다.** 연구소의 SSR 전조(three.js)처럼 컨텍스트를 하나 더 쓰는 무대는 미리 세우더라도 그 화면을 떠날 때 `releaseSsrOmen`처럼 `dispose`와 DOM 제거로 반드시 내린다. 컨텍스트가 둘 이상 상주하면 GPU 메모리가 두 벌이 되어 모바일에서 탭이 죽는다.
+- **바뀌지 않는 많은 도형은 굽는다**(`ui/bakedGraphics.ts`의 `bakedGraphicsImage`). Graphics는 그린 명령을 매 프레임 다시 풀어 그리므로 점 무늬(원 217개)·돌림판처럼 정지한 도형 수백 개를 Graphics로 세워 두면 서 있는 내내 그만큼 그린다. 움직임은 구운 이미지의 회전·알파 트윈으로 낸다.
+- **스킬 일러스트·출격 칸 원화는 타이틀이 캐시에만 받는다**(`prefetchCachedFiles`). 스킬 일러스트는 액자·쪽지가 설 때 `skillArtLoader.ensureSkillArt`가 올리고(전투는 `ensureSkillArtFor`로 미리), 출격 칸 원화는 배경과 같은 거주 규칙(`CONTENT_ENTRY_ART`)이다. 새로 그리는 자리도 `textures.exists`로 가르지 말고 그 길을 지난다.
+- **배경 원화는 메인 스레드 밖에서 디코드한다**(`backgrounds.ts`의 `decodeOffThread` — `createImageBitmap`, 내릴 때 `close`). 로더 길은 그 API가 없을 때의 되돌이다.
 - **Pre FX는 꺼 두었다**(`main.ts`의 `disablePreFX: true` — 부팅 때 미리 잡던 렌더 타깃 약 180MB). 게임 객체의 `.preFX`(glow·blur)를 쓰지 않는다 — 필요하면 굽거나 겹쳐 그린다.
 - **저사양·절전의 렌더 부담은 `core/devicePerformance.ts` 한 곳이 정한다** — 낮음 품질 첫 실행 30fps · 절전은 적용만 30fps · 낮음 품질 MSAA 끔(다음 실행부터) · 저메모리 기기의 유휴 원화 보관 축소. 프레임 제한을 TimeStep에 걸 때는 저장값이 아니라 `effectiveFrameRateLimit`을 지난다.
 - **앱이 뒤로 가면 게임 루프가 잠든다**(`ui/backgroundSleep.ts` — rAF 정지, `AudioManager`가 AudioContext도 멈춘다). Phaser 기본 숨김 처리는 그리기를 멈추지 않으므로 이 연결을 걷지 않는다.

@@ -9,6 +9,7 @@ import { CONFIRM_DIALOG } from "./confirmDialogLayout";
 import { COLOR, textStyle } from "./theme";
 import { settingsManager } from "../managers/SettingsManager";
 import { pressIn, pressOut } from "./pressFeedback";
+import { bakedGraphicsImage, bakeKey } from "./bakedGraphics";
 import type { PressTier } from "./pressFeedbackStyle";
 
 /** 버튼 탭과 스크롤 드래그를 구분하는 공용 게임 좌표 거리다. */
@@ -31,30 +32,34 @@ export function dotPattern(
   color: number,
   /** 점이 흩어지는 깊이(판 폭 대비)와 가장자리 점의 진하기. 기본은 출격 버튼의 값이다. */
   options: { reach?: number; alpha?: number } = {},
-): Phaser.GameObjects.Graphics {
+): Phaser.GameObjects.Image {
   const points = toShapePoints([...shape]);
-  const polygon = new Phaser.Geom.Polygon(points.map((point) => new Phaser.Geom.Point(point.x, point.y)));
   const left = Math.min(...points.map((point) => point.x));
   const right = Math.max(...points.map((point) => point.x));
   const top = Math.min(...points.map((point) => point.y));
   const bottom = Math.max(...points.map((point) => point.y));
-  const step = 15;
-  // 점이 흩어지는 깊이. 판 폭의 절반을 넘기면 가운데에서 두 무늬가 만나 지저분해진다.
-  const reach = (right - left) * (options.reach ?? 0.34);
-  const graphics = scene.add.graphics();
-  for (let y = top + step / 2; y < bottom; y += step) {
-    // 줄마다 반 칸씩 어긋나게 찍어 격자가 아니라 흩뿌린 것처럼 보이게 한다.
-    const offset = Math.round((y - top) / step) % 2 === 0 ? 0 : step / 2;
-    for (let x = left + offset; x < right; x += step) {
-      const depth = Math.min(x - left, right - x);
-      if (depth > reach) continue;
-      const fade = 1 - depth / reach;
-      if (!polygon.contains(x, y)) continue;
-      graphics.fillStyle(color, (options.alpha ?? 0.5) * fade * fade);
-      graphics.fillCircle(x, y, 1.2 + 1.8 * fade);
+  const reachRatio = options.reach ?? 0.34;
+  const alpha = options.alpha ?? 0.5;
+  // 점이 수백 개라 매 프레임 다시 그리지 않고 한 번 굽는다(`bakedGraphicsImage`). 같은 모양·색의 버튼은 한 장을 함께 쓴다.
+  const key = bakeKey("dots", [color, reachRatio, alpha, ...shape]);
+  return bakedGraphicsImage(scene, key, { left, top, right, bottom }, (graphics) => {
+    const polygon = new Phaser.Geom.Polygon(points.map((point) => new Phaser.Geom.Point(point.x, point.y)));
+    const step = 15;
+    // 점이 흩어지는 깊이. 판 폭의 절반을 넘기면 가운데에서 두 무늬가 만나 지저분해진다.
+    const reach = (right - left) * reachRatio;
+    for (let y = top + step / 2; y < bottom; y += step) {
+      // 줄마다 반 칸씩 어긋나게 찍어 격자가 아니라 흩뿌린 것처럼 보이게 한다.
+      const offset = Math.round((y - top) / step) % 2 === 0 ? 0 : step / 2;
+      for (let x = left + offset; x < right; x += step) {
+        const depth = Math.min(x - left, right - x);
+        if (depth > reach) continue;
+        const fade = 1 - depth / reach;
+        if (!polygon.contains(x, y)) continue;
+        graphics.fillStyle(color, alpha * fade * fade);
+        graphics.fillCircle(x, y, 1.2 + 1.8 * fade);
+      }
     }
-  }
-  return graphics;
+  });
 }
 
 /** 평평한 좌표 배열을 점 목록으로 바꾼다. 아래 변을 찾을 때만 쓴다. */

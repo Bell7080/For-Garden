@@ -2,6 +2,8 @@ import type Phaser from "phaser";
 import { CHEST_ART_ASSETS } from "../ui/chestArt";
 import { preloadPuppetAssets, PUPPET_PRELOAD_GROUPS } from "../puppets/assets";
 import { BACKGROUND_ASSETS, BACKGROUND_BOOT_KEYS } from "../ui/backgrounds";
+import { CONTENT_ENTRY_ART_PATHS } from "../ui/backgroundAssets";
+import { prefetchCachedFiles } from "../ui/cachedFilePrefetch";
 import { loadGameFonts } from "../ui/fonts";
 import { loadDataOverlay, loadTextCatalog } from "../i18n";
 import { BATTLE_SOUND_ASSETS, RESEARCH_SOUND_ASSETS, SCENE_SOUND_ASSETS, UI_SOUND_ASSETS } from "../managers/AudioManager";
@@ -105,25 +107,13 @@ function loadWithPhaser(scene: Phaser.Scene, queue: () => void): Promise<void> {
  */
 const SVG_BAKE = { skill: 256, uiScale: 2 } as const;
 
-/** 배경이 아닌 콘텐츠 원화의 중앙 로딩 표. 진입 액자와 관찰 일지가 이 표만 사용한다. */
-const CONTENT_ART_ASSETS = [
-  ...CHEST_ART_ASSETS,
-  // Content1_001은 출격 선택판의 스토리 입구 안에서만 보이는 작전 일러스트다.
-  ["content-story-entry", "sprites/content/Content1_001.webp"],
-  // Content2_001은 로비 출격 메뉴에서 원정 진입점을 구별하는 버튼 일러스트다.
-  ["content-expedition-entry", "sprites/content/Content2_001.webp"],
-  // Content3_001·Content4_001은 같은 출격 선택판의 두 일일 던전을 구별하는 버튼 일러스트다.
-  ["content-cake-entry", "sprites/content/Content3_001.webp"],
-  ["content-bounty-entry", "sprites/content/Content4_001.webp"],
-  // Content5_001은 그 아래 전체 폭으로 선 레이드 입구의 버튼 일러스트다.
-  ["content-raid-entry", "sprites/content/Content5_001.webp"],
-  // Content6_001은 결투 선택판의 결투장 입구 일러스트다.
-  ["content-duel-entry", "sprites/content/Content6_001.webp"],
-  // Content7_001은 고대 지층(무한 지층 탐사) 입구 — 지하 탑 입구 원화를 가로로 잘라 구운 버튼 일러스트다.
-  ["content-ancient-entry", "sprites/content/Content7_001.webp"],
-  // journal_001은 관찰 일지 판 안에서 원본 크기를 유지한 채 잘라 쓰는 종이 질감 원화다.
-  ["content-observation-journal", "sprites/content/journal_001.webp"],
-] as const;
+/**
+ * 타이틀이 GPU까지 올리는 콘텐츠 원화 — 보물상자 둘뿐이다(굽는 함수가 원본을 곧바로 읽는다).
+ *
+ * 출격·결투 칸과 관찰 일지의 원화는 여기서 올리지 않는다 — 배경과 같은 거주 규칙으로 그 칸이 설 때 올린다
+ * (`CONTENT_ENTRY_ART`). 파일만 캐시에 받아 둔다(아래 「배경 원화」 단계).
+ */
+const CONTENT_ART_ASSETS = [...CHEST_ART_ASSETS] as const;
 
 /**
  * **출시 전에 채울 자리 — 지금 목록은 일부러 좁다.**
@@ -180,9 +170,8 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
           const path = paths.get(key);
           if (path) scene.load.image(key, path);
         });
-        // 진입 버튼(Content2_001)은 화면 배경이 아니므로 이 중앙 콘텐츠 표에서 함께 적재한다.
         CONTENT_ART_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
-      }),
+      }).then(() => prefetchCachedFiles(CONTENT_ENTRY_ART_PATHS)),
   },
   {
     label: "조작·스킬 아이콘",
@@ -191,8 +180,6 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
         // SVG를 그대로 이미지로 받으면 파일에 적힌 크기 그대로 구워져 확대할 때 뭉갠다.
         // 화면에서 쓰는 크기보다 넉넉히 크게 래스터화해 두고 줄여 쓴다.
         SKILL_ICON_ASSETS.forEach(([key, path]) => scene.load.svg(key, path, { width: SVG_BAKE.skill, height: SVG_BAKE.skill }));
-        // 전용 스킬 일러스트는 흰 실루엣 WebP다. 색은 화면이 tint로 입힌다.
-        SKILL_ART_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         // 속성·직군은 이미 구워 둔 WebP라 그대로 읽는다.
         AFFINITY_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         // 적 정보창의 역할 아이콘도 스킬 일러스트와 같은 흰 실루엣 WebP다.
@@ -212,7 +199,9 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
         UI_RASTER_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         // 발굴 특화는 카드 보조 정보 크기의 단색 SVG라 UI 아이콘과 같은 배율로 미리 굽는다.
         EXCAVATION_TRAIT_ICON_ASSETS.forEach(([key, path]) => scene.load.svg(key, path, { width: 64, height: 64 }));
-      }),
+        // 전용 스킬 일러스트(흰 실루엣 WebP)는 **캐시에만** 받는다 — 214장을 다 올리면 56MB인데 한 번에 보는 것은
+        // 렐릭 몇 명 몫이다. 그 액자가 설 때 올린다(`skillArtLoader.ts`).
+      }).then(() => prefetchCachedFiles(SKILL_ART_ASSETS.map(([, path]) => path))),
   },
   {
     label: "렐릭 스탠딩",

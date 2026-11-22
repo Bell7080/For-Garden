@@ -6,6 +6,7 @@ import { formatCurrency } from "../core/formatCurrency";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { drawGlyph } from "./glyphs";
 import { addFramedIcon } from "./itemFrame";
+import { bakedGraphicsImage, bakeKey } from "./bakedGraphics";
 
 /**
  * 행운의 돌림판 한 벌 — 팝업의 큰 바퀴와 이벤트 카드의 반쯤 솟은 작은 바퀴가 **같은 그림**을 쓴다.
@@ -79,29 +80,43 @@ export function addRouletteWheel(scene: Phaser.Scene, parent: Phaser.GameObjects
   // 그림자 한 장 — 아래로 민 같은 원(장난감이 판 위에 놓인 것처럼).
   const shadow = scene.add.circle(x + radius * 0.03, y + radius * 0.07, radius + rimWidth + 4, 0x000000, 0.32);
   // 테두리 — 분홍 테 + 크림 안쪽 띠 + 짙은 외곽선.
-  const rim = scene.add.graphics({ x, y });
-  rim.fillStyle(ROULETTE_TONE.ink, 1).fillCircle(0, 0, radius + rimWidth + ink);
-  rim.fillStyle(ROULETTE_TONE.rimDark, 1).fillCircle(0, ink * 0.8, radius + rimWidth);
-  rim.fillStyle(ROULETTE_TONE.rim, 1).fillCircle(0, 0, radius + rimWidth - ink * 0.6);
-  rim.fillStyle(ROULETTE_TONE.cream, 1).fillCircle(0, 0, radius + ink * 0.8);
+  // 바퀴의 도형은 전부 움직이지 않는 그림이라 한 번 구워 이미지로 세운다 — Graphics로 두면 이벤트 카드 하나가
+  // 매 프레임 원·부채꼴 수백 개를 다시 쪼갰다(v0.514.0 실측 약 4ms). 돌기·깜빡임은 이미지의 각도·알파가 맡는다.
+  const sig = [radius, options.bulbs];
+  const outer = radius + rimWidth + ink;
+  const baked = (name: string, reach: number, draw: (g: Phaser.GameObjects.Graphics) => void, at = { x: 0, y: 0 }): Phaser.GameObjects.Image => {
+    const image = bakedGraphicsImage(scene, bakeKey(`roulette-${name}`, sig), { left: -reach, top: -reach, right: reach, bottom: reach }, draw);
+    return image.setPosition(image.x + at.x, image.y + at.y);
+  };
+  const rim = baked("rim", outer + ink, (g) => {
+    g.fillStyle(ROULETTE_TONE.ink, 1).fillCircle(0, 0, radius + rimWidth + ink);
+    g.fillStyle(ROULETTE_TONE.rimDark, 1).fillCircle(0, ink * 0.8, radius + rimWidth);
+    g.fillStyle(ROULETTE_TONE.rim, 1).fillCircle(0, 0, radius + rimWidth - ink * 0.6);
+    g.fillStyle(ROULETTE_TONE.cream, 1).fillCircle(0, 0, radius + ink * 0.8);
+  }, { x, y });
   parent.add([shadow, rim]);
 
   // 전구 — 꺼진 바닥 한 벌 위에 짝·홀 두 벌이 번갈아 켜진다.
   const bulbRadius = rimWidth * 0.3;
   const bulbAt = (index: number): { x: number; y: number } => {
     const angle = -Math.PI / 2 + (index + 0.5) * Math.PI * 2 / options.bulbs;
-    return { x: x + Math.cos(angle) * (radius + rimWidth * 0.52), y: y + Math.sin(angle) * (radius + rimWidth * 0.52) };
+    return { x: Math.cos(angle) * (radius + rimWidth * 0.52), y: Math.sin(angle) * (radius + rimWidth * 0.52) };
   };
-  const bulbBase = scene.add.graphics();
-  const bulbGroups = [scene.add.graphics(), scene.add.graphics()];
-  for (let index = 0; index < options.bulbs; index += 1) {
-    const at = bulbAt(index);
-    bulbBase.fillStyle(ROULETTE_TONE.bulbOff, 1).fillCircle(at.x, at.y, bulbRadius);
-    const lit = bulbGroups[index % 2];
-    lit.fillStyle(ROULETTE_TONE.bulbOn, 0.35).fillCircle(at.x, at.y, bulbRadius * 1.9);
-    lit.fillStyle(ROULETTE_TONE.bulbOn, 1).fillCircle(at.x, at.y, bulbRadius);
-    lit.fillStyle(0xffffff, 0.9).fillCircle(at.x - bulbRadius * 0.3, at.y - bulbRadius * 0.3, bulbRadius * 0.35);
-  }
+  const bulbReach = radius + rimWidth * 0.52 + bulbRadius * 2;
+  const bulbBase = baked("bulb-off", bulbReach, (g) => {
+    for (let index = 0; index < options.bulbs; index += 1) {
+      const at = bulbAt(index);
+      g.fillStyle(ROULETTE_TONE.bulbOff, 1).fillCircle(at.x, at.y, bulbRadius);
+    }
+  }, { x, y });
+  const bulbGroups = [0, 1].map((parity) => baked(`bulb-on-${parity}`, bulbReach, (g) => {
+    for (let index = parity; index < options.bulbs; index += 2) {
+      const at = bulbAt(index);
+      g.fillStyle(ROULETTE_TONE.bulbOn, 0.35).fillCircle(at.x, at.y, bulbRadius * 1.9);
+      g.fillStyle(ROULETTE_TONE.bulbOn, 1).fillCircle(at.x, at.y, bulbRadius);
+      g.fillStyle(0xffffff, 0.9).fillCircle(at.x - bulbRadius * 0.3, at.y - bulbRadius * 0.3, bulbRadius * 0.35);
+    }
+  }, { x, y }));
   parent.add([bulbBase, ...bulbGroups]);
   const repeat = motionPolicy(session.settings).nonEssentialRepeatFactor > 0;
   bulbGroups[1].setAlpha(0.15);
@@ -111,7 +126,7 @@ export function addRouletteWheel(scene: Phaser.Scene, parent: Phaser.GameObjects
 
   // 도는 몸.
   const wheel = scene.add.container(x, y);
-  const faces = scene.add.graphics();
+  const faces = baked("faces", radius + 2, (faces) => {
   ROULETTE_REWARDS.forEach((reward, index) => {
     const start = rouletteSliceAngle(index) - step / 2;
     const jackpot = reward.tier === "jackpot";
@@ -141,6 +156,7 @@ export function addRouletteWheel(scene: Phaser.Scene, parent: Phaser.GameObjects
     faces.lineBetween(Math.cos(angle) * radius * 0.2, Math.sin(angle) * radius * 0.2, Math.cos(angle) * radius, Math.sin(angle) * radius);
     faces.fillStyle(ROULETTE_TONE.cream, 1).fillCircle(Math.cos(angle) * radius * 0.92, Math.sin(angle) * radius * 0.92, radius * 0.022);
   }
+  });
   wheel.add(faces);
 
   const holders: Phaser.GameObjects.Container[] = [];
@@ -172,27 +188,29 @@ export function addRouletteWheel(scene: Phaser.Scene, parent: Phaser.GameObjects
   parent.add(wheel);
 
   // 가운데 뚜껑 — 분홍 단추 + 하트.
-  const hub = scene.add.graphics({ x, y });
   const hubRadius = radius * 0.19;
-  hub.fillStyle(ROULETTE_TONE.ink, 1).fillCircle(0, hubRadius * 0.12, hubRadius + ink);
-  hub.fillStyle(ROULETTE_TONE.cream, 1).fillCircle(0, 0, hubRadius);
-  hub.fillStyle(ROULETTE_TONE.hub, 1).fillCircle(0, 0, hubRadius * 0.74);
-  hub.fillStyle(0xffffff, 0.7).fillCircle(-hubRadius * 0.28, -hubRadius * 0.3, hubRadius * 0.16);
+  const hub = baked("hub", hubRadius * 1.2 + ink, (g) => {
+    g.fillStyle(ROULETTE_TONE.ink, 1).fillCircle(0, hubRadius * 0.12, hubRadius + ink);
+    g.fillStyle(ROULETTE_TONE.cream, 1).fillCircle(0, 0, hubRadius);
+    g.fillStyle(ROULETTE_TONE.hub, 1).fillCircle(0, 0, hubRadius * 0.74);
+    g.fillStyle(0xffffff, 0.7).fillCircle(-hubRadius * 0.28, -hubRadius * 0.3, hubRadius * 0.16);
+  }, { x, y });
   parent.add(hub);
   parent.add(drawGlyph(scene, "heart", x, y + hubRadius * 0.04, hubRadius * 0.9, 0xffffff, 1));
 
   // 바늘 — 12시의 분홍 물방울 핀. 칸을 넘을 때마다 톡 튕긴다.
   const pointer = scene.add.container(x, y - radius - rimWidth * 0.2);
-  const pin = scene.add.graphics();
   const head = Math.max(12, radius * 0.085);
   const tipY = rimWidth * 0.2 + radius * 0.13;
-  pin.fillStyle(ROULETTE_TONE.ink, 1);
-  pin.fillCircle(0, -head * 0.9, head + ink);
-  pin.fillTriangle(-head - ink * 0.7, -head * 0.6, head + ink * 0.7, -head * 0.6, 0, tipY + ink * 1.4);
-  pin.fillStyle(ROULETTE_TONE.pointer, 1);
-  pin.fillCircle(0, -head * 0.9, head);
-  pin.fillTriangle(-head, -head * 0.62, head, -head * 0.62, 0, tipY);
-  pin.fillStyle(0xffffff, 0.85).fillCircle(-head * 0.32, -head * 1.2, head * 0.3);
+  const pin = baked("pin", Math.max(head * 2 + ink * 2, tipY + ink * 2), (g) => {
+    g.fillStyle(ROULETTE_TONE.ink, 1);
+    g.fillCircle(0, -head * 0.9, head + ink);
+    g.fillTriangle(-head - ink * 0.7, -head * 0.6, head + ink * 0.7, -head * 0.6, 0, tipY + ink * 1.4);
+    g.fillStyle(ROULETTE_TONE.pointer, 1);
+    g.fillCircle(0, -head * 0.9, head);
+    g.fillTriangle(-head, -head * 0.62, head, -head * 0.62, 0, tipY);
+    g.fillStyle(0xffffff, 0.85).fillCircle(-head * 0.32, -head * 1.2, head * 0.3);
+  });
   pointer.add(pin);
   parent.add(pointer);
 
@@ -209,7 +227,7 @@ export function addRouletteWheel(scene: Phaser.Scene, parent: Phaser.GameObjects
   };
   return {
     wheel, holders, pointer, sync,
-    setBulbSpeed: (scale) => { tweens.forEach((tween) => { if (tween.targets.some((target) => bulbGroups.includes(target as Phaser.GameObjects.Graphics))) tween.timeScale = scale; }); },
+    setBulbSpeed: (scale) => { tweens.forEach((tween) => { if (tween.targets.some((target) => bulbGroups.includes(target as Phaser.GameObjects.Image))) tween.timeScale = scale; }); },
     celebrate: (index) => {
       const holder = holders[index];
       if (holder) scene.tweens.add({ targets: holder, scale: 1.28, duration: 180, yoyo: true, repeat: 2, ease: "Back.Out" });

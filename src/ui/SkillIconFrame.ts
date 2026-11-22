@@ -6,6 +6,7 @@ import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { skillArtFor, skillArtTint, SKILL_ART_WASH_ALPHA, type SkillArtSlot } from "./skillArt";
+import { ensureSkillArt, isLazySkillArt } from "./skillArtLoader";
 import { COLOR, textStyle } from "./theme";
 import { squeezeTextToWidth } from "./textFit";
 
@@ -117,7 +118,9 @@ export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOp
   const innerY = -labelRoom / 2.4;
   frame.add(drawLayer(scene, 0, innerY, inner, { fill: tone?.inner ?? 0x05080c, alpha: 1, shadow: false }));
   const art = options.artKey ?? (options.relicId === undefined ? undefined : skillArtFor(options.relicId, options.slot));
-  const hasArt = art !== undefined && scene.textures.exists(art);
+  // 스킬 일러스트는 액자가 설 때 올린다(`skillArtLoader.ts`) — 아직이면 같은 자리에 빈 그림을 세워 두고 채운다.
+  const lateArt = isLazySkillArt(scene, art) ? art : undefined;
+  const hasArt = lateArt !== undefined || (art !== undefined && scene.textures.exists(art));
   // 그림 자리에 같은 색을 아주 옅게 깔아 아이콘이 색판 위에 앉은 것처럼 보이게 한다. 전용
   // 아트가 없는 개체도 같은 색판을 깐다 — 그림만 공용 아이콘일 뿐 액자는 같은 체계여야 한다.
   frame.add(drawLayer(scene, 0, innerY, inner, { fill: tint, alpha: hasArt ? SKILL_ART_WASH_ALPHA : SKILL_ART_WASH_ALPHA * 0.7, shadow: false }));
@@ -133,9 +136,22 @@ export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOp
      * (`bakeChipArt`). 덮지도 마스크를 쓰지도 않는 이유는 이 액자가 눌릴 때 커지기 때문이다 —
      * 기하 마스크는 그 배율을 물려받지 않아 어긋난다.
      */
-    const baked = bakeChipArt(scene, art, innerSize, innerHeight, SKILL_ICON_FRAME.innerBevel);
-    // 전용 일러스트는 흰 실루엣이라 여기서 속성·직군을 섞은 색을 입는다.
-    frame.add(scene.add.image(0, innerY, baked).setDisplaySize(innerSize, innerHeight).setTint(tint));
+    const fill = (image: Phaser.GameObjects.Image, source: string): void => {
+      // 전용 일러스트는 흰 실루엣이라 여기서 속성·직군을 섞은 색을 입는다.
+      image.setTexture(bakeChipArt(scene, source, innerSize, innerHeight, SKILL_ICON_FRAME.innerBevel)).setDisplaySize(innerSize, innerHeight).setTint(tint);
+    };
+    const image = scene.add.image(0, innerY, "__DEFAULT");
+    frame.add(image);
+    if (lateArt === undefined) fill(image, art as string);
+    else {
+      image.setAlpha(0);
+      void ensureSkillArt(scene, lateArt).then((ok) => {
+        if (!image.active) return;
+        if (ok) fill(image, lateArt);
+        else image.setTexture(FALLBACK_SKILL_ICON).setDisplaySize(size * SKILL_ICON_FRAME.iconRatio, size * SKILL_ICON_FRAME.iconRatio);
+        image.setAlpha(1);
+      });
+    }
   } else if (options.fallbackGlyph) {
     // 그림 파일이 없는 자리(폭주)는 글리프로 되돌아간다. 그것도 그림이 아니라 **상징 하나**라
     // 채우지 않고 가운데에 작게 선다.

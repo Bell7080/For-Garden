@@ -187,6 +187,40 @@ export const BACKGROUND = {
 } as const;
 
 /**
+ * 콘텐츠 입구 원화 — 출격·결투 선택판의 칸과 관찰 일지 종이.
+ *
+ * 화면 배경은 아니지만 **배경과 같은 거주 규칙**을 쓴다. 한 장이 디코드되면 6MB 안팎이라 타이틀에서 여덟 장을
+ * 다 올리던 때는 출격판을 열지 않아도 58MB가 끝까지 붙잡혔다(v0.514.0 실측). 파일은 타이틀이 캐시에만 받아 두고
+ * (`prefetchCachedFiles`), GPU에는 그 칸이 설 때 올리고 칸이 사라지면 놓는다(`useBackgroundTexture`).
+ */
+export const CONTENT_ENTRY_ART = {
+  story: "content-story-entry",
+  expedition: "content-expedition-entry",
+  cake: "content-cake-entry",
+  bounty: "content-bounty-entry",
+  raid: "content-raid-entry",
+  duel: "content-duel-entry",
+  ancient: "content-ancient-entry",
+  journal: "content-observation-journal",
+} as const;
+
+function contentEntryArtAssets(): ReadonlyArray<readonly [string, string]> {
+  return [
+    [CONTENT_ENTRY_ART.story, "sprites/content/Content1_001.webp"],
+    [CONTENT_ENTRY_ART.expedition, "sprites/content/Content2_001.webp"],
+    [CONTENT_ENTRY_ART.cake, "sprites/content/Content3_001.webp"],
+    [CONTENT_ENTRY_ART.bounty, "sprites/content/Content4_001.webp"],
+    [CONTENT_ENTRY_ART.raid, "sprites/content/Content5_001.webp"],
+    [CONTENT_ENTRY_ART.duel, "sprites/content/Content6_001.webp"],
+    [CONTENT_ENTRY_ART.ancient, "sprites/content/Content7_001.webp"],
+    [CONTENT_ENTRY_ART.journal, "sprites/content/journal_001.webp"],
+  ];
+}
+
+/** 타이틀이 캐시에만 받아 두는 콘텐츠 입구 원화의 경로. */
+export const CONTENT_ENTRY_ART_PATHS: readonly string[] = contentEntryArtAssets().map(([, path]) => path);
+
+/**
  * 배경 키와 파일의 유일한 대응표.
  *
  * **이 목록 전부를 부트에서 읽지 않는다.** 한 장이 디코드되면 25MB라 열여덟 장이면 로비에
@@ -297,6 +331,7 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.storyCanal, "sprites/background/story_canal.webp"],
   [BACKGROUND.storyRooftopDawn, "sprites/background/story_rooftop_dawn.webp"],
   [BACKGROUND.storyRooftopNight, "sprites/background/story_rooftop_night.webp"],
+  ...contentEntryArtAssets(),
 ] as const;
 
 /**

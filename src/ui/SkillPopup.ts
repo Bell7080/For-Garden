@@ -9,6 +9,7 @@ import { drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./
 import type { PopupLayer } from "./PopupLayer";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { SKILL_ART_WASH_ALPHA } from "./skillArt";
+import { ensureSkillArt, isLazySkillArt } from "./skillArtLoader";
 import { skillKeywordLayoutOptions } from "./skillPresentation";
 import { addSkillTagRow } from "./SkillTagRow";
 import { buildSkillTags, type SkillTag } from "./skillTags";
@@ -204,13 +205,19 @@ export function openSkillPopup(
     const chip = chipArtShape(iconSize, iconSize, ICON_BEVEL);
     // 도감 아이콘과 같은 액자다 — 불투명한 판, 안쪽으로 스미는 어둠, 사방 한 줄.
     body.add(drawLayer(scene, iconX, iconY, chip, { fill: 0x11161d, alpha: 1, edge: COLOR.accent, edgeAlpha: 0.6 }));
-    const art = skill.art && scene.textures.exists(skill.art) ? skill.art : undefined;
+    const lateArt = isLazySkillArt(scene, skill.art) ? skill.art : undefined;
+    const art = lateArt ?? (skill.art && scene.textures.exists(skill.art) ? skill.art : undefined);
     if (art && skill.tint !== undefined) body.add(drawLayer(scene, iconX, iconY, chip, { fill: skill.tint, alpha: SKILL_ART_WASH_ALPHA, shadow: false }));
     if (art) {
       // 정보창의 액자와 같은 규칙이다 — 전용 일러스트는 칸을 꽉 채우고, 깎인 두 모서리는
-      // 구워서 그림 자체에서 지운다(`bakeChipArt`).
-      const image = scene.add.image(iconX, iconY, bakeChipArt(scene, art, iconSize, iconSize, ICON_BEVEL)).setDisplaySize(iconSize, iconSize);
-      if (skill.tint !== undefined) image.setTint(skill.tint);
+      // 구워서 그림 자체에서 지운다(`bakeChipArt`). 아직 올라오지 않은 그림은 도착하는 대로 채운다.
+      const image = scene.add.image(iconX, iconY, "__DEFAULT").setAlpha(lateArt ? 0 : 1);
+      const fill = (): void => {
+        image.setTexture(bakeChipArt(scene, art, iconSize, iconSize, ICON_BEVEL)).setDisplaySize(iconSize, iconSize).setAlpha(1);
+        if (skill.tint !== undefined) image.setTint(skill.tint);
+      };
+      if (lateArt) void ensureSkillArt(scene, lateArt).then((ok) => { if (ok && image.active) fill(); });
+      else fill();
       body.add(image);
     } else {
       // 공용 효과 아이콘은 그림이 아니라 상징 하나라 채우지 않고 가운데에 작게 선다.

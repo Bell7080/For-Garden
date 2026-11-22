@@ -33,7 +33,12 @@ import { TopBar } from "../ui/TopBar";
 import { chipPoints, drawLayer, drawVignette } from "../ui/holo";
 import { COLOR } from "../ui/theme";
 import { t } from "../i18n";
-import { addSceneBackground, BACKGROUND, backgroundPath } from "../ui/backgrounds";
+import { addSceneBackground, BACKGROUND, backgroundPath, stageMapBackground } from "../ui/backgrounds";
+import { storyStages } from "../data/stages";
+import { latestUnlockedStage } from "../core/stageProgress";
+import { storyDifficultyOf } from "../core/storyDifficulty";
+import { researchBanners } from "../data/banners";
+import { bannerActive } from "../core/gacha";
 import { gameApi } from "../api/FakeServer";
 import { presentRewardedAd } from "../platform/rewardedAds";
 import { loadPlayerProfileDisplay } from "../managers/PlayerProfileManager";
@@ -477,9 +482,24 @@ export class LobbyScene extends Phaser.Scene {
     this.time.delayedCall(LOBBY_FILE_PREFETCH_DELAY_MS, () => prefetchIdleFiles(this, this.idlePrefetchUrls()));
   }
 
-  /** 열린 콘텐츠 중 처음 들어갈 때 받는 파일 — 교류 목록 첫 화면의 도시 원화, 일반 상점 점원. */
+  /**
+   * 열린 콘텐츠 중 처음 들어갈 때 받는 파일.
+   *
+   * 앞의 배경 원화는 로비에서 가장 자주 넘어가는 화면들(정보창·도감·하단 탭·편성)이 들어서는 순간 받던 것이다 —
+   * 원화 한 장이 0.4~2.4MB라 느린 망에서는 전환이 그 다운로드를 기다렸다. 캐시에만 두므로 GPU는 그 화면이 설 때 쓴다.
+   */
   private idlePrefetchUrls(): string[] {
     const urls: string[] = [];
+    const stages = storyStages(storyDifficultyOf(session.selectedStageId));
+    const chapter = (latestUnlockedStage(stages, session.cleared) ?? stages[0])?.chapter ?? 1;
+    const backgrounds: string[] = [BACKGROUND.info, BACKGROUND.relics, stageMapBackground(chapter), BACKGROUND.combat, BACKGROUND.premiumShop];
+    // 연구소는 배경이 곧 지금 서 있는 배너의 모집 원화다.
+    if (contentOpen("lab")) for (const banner of researchBanners(false)) if (banner.artKey && bannerActive(banner, new Date())) backgrounds.push(banner.artKey);
+    if (contentOpen("archaeology")) backgrounds.push(BACKGROUND.archaeology);
+    for (const key of backgrounds) {
+      const path = backgroundPath(key);
+      if (path) urls.push(path);
+    }
     if (contentOpen("interaction")) {
       for (const city of INTERACTION_CITIES.slice(0, INTERACTION_PREFETCH_CITIES)) {
         const path = backgroundPath(city.illustration);

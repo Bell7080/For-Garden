@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { useBackgroundTexture } from "./backgrounds";
 import { t } from "../i18n";
 import { chipPoints, drawFrameVignette, drawLayer, drawShapeOutline, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
@@ -117,8 +118,12 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
     const accent = options.accentColor ?? COLOR.sortie;
     const accentText = options.accentTextColor ?? COLOR.sortieText;
     this.add(drawLayer(scene, 0, 0, shape, { fill: 0x0d1219, alpha: HOLO.glass, edge: accent, edgeAlpha: 0.95 }));
-    const art = scene.add.image(0, 0, options.artKey ?? EXPEDITION_ENTRY_ART);
-    art.setScale(Math.max(options.width / art.width, options.height / art.height)).setAlpha(0.68);
+    // 원화는 칸이 설 때 GPU에 올리고 칸이 사라지면 놓는다(배경과 같은 거주 규칙 — 파일은 타이틀이 캐시에 받아 둔다).
+    const artKey = options.artKey ?? EXPEDITION_ENTRY_ART;
+    const art = scene.add.image(0, 0, scene.textures.exists(artKey) ? artKey : "__DEFAULT").setAlpha(0);
+    useBackgroundTexture(scene, art, artKey, (loaded) => {
+      loaded.setScale(Math.max(options.width / loaded.width, options.height / loaded.height)).setAlpha(0.68);
+    });
     // 원화는 버튼 비율로 cover하므로 반드시 칩 실루엣에 마스킹한다. 그렇지 않으면 확대된
     // 사각 이미지가 크게 깎인 좌상단과 우하단 밖으로 삐져나온다.
     //

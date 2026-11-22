@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import * as geometry from "../../src/ui/popupGeometry";
 
@@ -22,5 +22,16 @@ describe("팝업 닫기 규칙", () => {
 
   it("판 밖 누르기가 기본으로 닫는다", () => {
     expect(source).toContain("options.closeOnBackdrop !== false");
+  });
+
+  it("판 안에 「닫기」 라벨 버튼을 두지 않는다(응태 2026-11-22)", () => {
+    const dir = "src/i18n/ko";
+    const closeKeys = readdirSync(dir).flatMap((file) => [...readFileSync(`${dir}/${file}`, "utf8").matchAll(/"([^"]+)":\s*"닫기"/g)].map((match) => match[1]));
+    expect(closeKeys).toEqual([]);
+  });
+
+  it("확인 창의 취소는 나가기와 같은 붉은 판이다 — 확정이 이미 붉은 파괴적 조작일 때만 물러난다", () => {
+    expect(source).toContain("const cancelRed = options.cancelDestructive || !options.destructive;");
+    expect(source).toMatch(/\.\.\.\(cancelRed \? DESTRUCTIVE_BUTTON_STYLE : \{\}\)/);
   });
 });

@@ -137,7 +137,7 @@ export const LOBBY_ZH_HANT = {
   "shuteFishing.difficulty.hard": "困難",
   "shuteFishing.difficulty.extreme": "極難",
   "shuteFishing.hint.easy": "{fish}首 · 悠閒的節奏",
-  "shuteFishing.hint.normal": "{fish}首 · Boss曲寶石170–340",
+  "shuteFishing.hint.normal": "{fish}首 · Boss曲寶石150–350",
   "shuteFishing.hint.hard": "{fish}首 · Boss曲最高寶石700",
   "shuteFishing.hint.extreme": "{fish}首 · Boss曲寶石350–700",
   "shuteFishing.jackpotNote": "開始時就會定好歌單。越往後、越是最後的Boss曲，寶物越大！",

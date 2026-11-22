@@ -96,7 +96,6 @@ export const GUILD_JA = {
   "guild.members.kick": "追放",
   "guild.members.kickTitle": "メンバー追放",
   "guild.members.kickConfirm": "{name}をギルドから追放します。",
-  "guild.members.close": "閉じる",
   "guild.time.hm": "{h}時間{m}分",
   "guild.time.m": "{m}分",
   "guild.shop.buy": "購入",

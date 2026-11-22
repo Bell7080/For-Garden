@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LAB_CHROME } from "../../src/ui/labLayout";
+import { LAB_CHROME, LAB_PICKUP_STICKER, labPityGap } from "../../src/ui/labLayout";
 
 describe("연구소 배경 층 순서", () => {
   it("비네트는 녹아 드는 원화와 자리 잡은 원화보다 모두 위에 선다", () => {
@@ -20,5 +20,16 @@ describe("픽업 정보 버튼 자리", () => {
     expect(x - width / 2).toBeGreaterThan(540);
     // 오른쪽 배너 넘김 꺾쇠(화면 중단)와도 겹치지 않는다.
     expect(y - height / 2).toBeGreaterThan(LAB_TITLE.arrow.y + LAB_TITLE.arrow.height / 2);
+  });
+});
+
+describe("픽업 확정 딱지", () => {
+  it("맥동으로 가장 커지고 기운 순간에도 연구 버튼에 닿지 않는다", () => {
+    expect(labPityGap()).toBeGreaterThan(4);
+  });
+
+  it("맥동은 귀엽게 — 한 뼘 안쪽으로만 부풀고 기울기는 몇 도에 그친다", () => {
+    expect(LAB_PICKUP_STICKER.pulse.scale).toBeLessThanOrEqual(1.1);
+    expect(Math.abs(LAB_PICKUP_STICKER.tilt) + LAB_PICKUP_STICKER.pulse.wobble).toBeLessThanOrEqual(6);
   });
 });

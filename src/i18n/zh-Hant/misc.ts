@@ -130,7 +130,6 @@ export const MISC_ZH_HANT = {
   "archaeology.map.available": "可前往",
   "archaeology.map.needLevel": "需要 LV.{level}",
   "archaeology.map.start": "開始探查",
-  "archaeology.map.close": "關閉",
   "archaeology.map.cooling": "{time}後重新開放",
   "archaeology.map.noCharge": "沒有剩餘探查次數",
   "archaeology.finish": "結束探查",

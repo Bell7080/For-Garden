@@ -137,7 +137,7 @@ export const LOBBY_PT_BR = {
   "shuteFishing.difficulty.hard": "Difícil",
   "shuteFishing.difficulty.extreme": "Extremo",
   "shuteFishing.hint.easy": "{fish} faixas · Ritmo tranquilo",
-  "shuteFishing.hint.normal": "{fish} faixas · Faixa chefe: 170–340 gemas",
+  "shuteFishing.hint.normal": "{fish} faixas · Faixa chefe: 150–350 gemas",
   "shuteFishing.hint.hard": "{fish} faixas · Faixa chefe até 700 gemas",
   "shuteFishing.hint.extreme": "{fish} faixas · Faixa chefe: 350–700 gemas",
   "shuteFishing.jackpotNote": "A setlist é definida ao começar. Quanto mais pro fim, melhor o tesouro, e a faixa chefe final é a melhor!",

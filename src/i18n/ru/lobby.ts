@@ -137,7 +137,7 @@ export const LOBBY_RU = {
   "shuteFishing.difficulty.hard": "Сложно",
   "shuteFishing.difficulty.extreme": "Экстрим",
   "shuteFishing.hint.easy": "Треков: {fish} · Спокойный темп",
-  "shuteFishing.hint.normal": "Треков: {fish} · Босс-трек: 170–340 самоцветов",
+  "shuteFishing.hint.normal": "Треков: {fish} · Босс-трек: 150–350 самоцветов",
   "shuteFishing.hint.hard": "Треков: {fish} · Босс-трек до 700 самоцветов",
   "shuteFishing.hint.extreme": "Треков: {fish} · Босс-трек: 350–700 самоцветов",
   "shuteFishing.jackpotNote": "Сет-лист определяется в начале. Чем дальше трек, тем больше сокровище, а финальный босс-трек — лучший!",

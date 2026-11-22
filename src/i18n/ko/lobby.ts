@@ -148,7 +148,7 @@ export const LOBBY_KO = {
   "shuteFishing.difficulty.hard": "어려움",
   "shuteFishing.difficulty.extreme": "매우 어려움",
   "shuteFishing.hint.easy": "{fish}곡 · 느긋한 템포",
-  "shuteFishing.hint.normal": "{fish}곡 · 보스곡 젬 170~340",
+  "shuteFishing.hint.normal": "{fish}곡 · 보스곡 젬 150~350",
   "shuteFishing.hint.hard": "{fish}곡 · 보스곡 젬 최대 700",
   "shuteFishing.hint.extreme": "{fish}곡 · 보스곡 젬 350~700",
   "shuteFishing.jackpotNote": "들어가면 셋리스트가 정해져. 뒤로 갈수록, 마지막 보스곡일수록 보물이 커!",

@@ -44,6 +44,7 @@ import { installScreenShakeGate } from "./ui/screenShake";
 import { installStaleBuildReload } from "./ui/staleBuildReload";
 import { guardFrame } from "./core/frameGuard";
 import { installBackgroundSleep } from "./ui/backgroundSleep";
+import { installBrowserScreenWakeLock } from "./ui/screenWakeLock";
 import { installErrorReporter } from "./managers/ErrorReporter";
 import { logError } from "./managers/ErrorReporter";
 
@@ -118,6 +119,9 @@ installErrorReporter();
 
 // 앱이 뒤로 가면 rAF까지 멈춘다 — Phaser 기본 숨김 처리는 시각만 적고 그리기를 브라우저에 맡긴다(이유는 ui/backgroundSleep).
 installBackgroundSleep(game);
+
+// 게임이 앞에 떠 있는 동안 화면 자동 꺼짐을 막는다(자동 전투를 지켜보는 동안 잠기지 않게, 이유는 ui/screenWakeLock).
+installBrowserScreenWakeLock();
 
 // 한 프레임의 예외가 게임 루프를 죽이지 않게 프레임 콜백을 감싼다(이유는 core/frameGuard).
 // 루프는 READY 직후 시작되므로 그 뒤 한 틱 늦게 감싼다. 로그는 같은 오류가 쏟아지지 않게 앞 몇 번만 남긴다.

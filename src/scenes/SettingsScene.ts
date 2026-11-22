@@ -15,6 +15,9 @@ import { saveManager } from "../state/SaveManager";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { addBackButton } from "../ui/IconButton";
 import { drawHairline, drawLayer, HOLO, slantedRect } from "../ui/holo";
+import { addSettingsPlate } from "../ui/SettingsPlate";
+import { drawGlyph } from "../ui/glyphs";
+import { squeezeTextToWidth } from "../ui/textFit";
 import { SettingsSelectRow } from "../ui/SettingsSelectRow";
 import { SettingsSlider } from "../ui/SettingsSlider";
 import { SettingsToggle } from "../ui/SettingsToggle";
@@ -26,7 +29,7 @@ import { openAccountIdPopup } from "../ui/AccountIdPopup";
 import { openSupportPopup } from "../ui/SupportPopup";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openDebugToolsMenu } from "../ui/DebugToolsMenu";
-import { SETTINGS_HEAD, SETTINGS_ROW, SETTINGS_SECTION, SETTINGS_SUPPORT, SETTINGS_TEXT, settingsSectionHeight, settingsTabSlot } from "../ui/settingsLayout";
+import { SETTINGS_HEAD, SETTINGS_PLATE, SETTINGS_ROW, SETTINGS_SECTION, SETTINGS_SUPPORT, SETTINGS_TEXT, settingsSectionHeight, settingsTabSlot } from "../ui/settingsLayout";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { validateSettingsOverlay, validateSettingsReturn, type SettingsEntryData, type SettingsOverlayHost, type SettingsReturnScene } from "./settingsNavigation";
@@ -112,7 +115,13 @@ export class SettingsScene extends Phaser.Scene {
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.82).setDepth(-20);
     // 제목 아래 `SYSTEM CONFIGURATION`이 한 줄 서 있었다 — 「환경 설정」을 영어로 한 번 더
     // 풀이할 뿐이라 없어도 조작 결과가 같다. 화면 문구는 행동을 정하는 것만 남긴다.
-    this.add.text(SETTINGS_HEAD.titleX, SETTINGS_HEAD.titleY, t("settings.title"), textStyle({ role: "display", size: SETTINGS_HEAD.titleSize })).setDepth(20);
+    // 제목은 맨 글자로 떠 있지 않게 톱니 표식과 오른쪽 끝까지 흐르는 강조선이 받친다 — 화면 머리가 탭 줄과 한 덩어리로 읽힌다.
+    const head = SETTINGS_HEAD;
+    drawGlyph(this, "settings", head.titleX + head.glyphSize / 2, head.titleY + head.titleSize / 2, head.glyphSize, COLOR.accent, 0.95, 4).setDepth(20);
+    const title = this.add.text(head.titleX + head.glyphSize + 16, head.titleY, t("settings.title"), textStyle({ role: "display", size: head.titleSize })).setDepth(20);
+    const lineLeft = title.x + title.width + 28;
+    const lineRight = BASE_WIDTH - head.tabMargin;
+    if (lineRight > lineLeft) drawHairline(this, (lineLeft + lineRight) / 2, head.titleY + head.titleSize / 2 + 4, lineRight - lineLeft, { alpha: 0.32 }).setDepth(20);
     this.buildTabs();
     this.content = this.add.container(0, SETTINGS_HEAD.contentTop);
     const maskShape = this.make.graphics({ x: 0, y: 0 }, false);
@@ -214,7 +223,6 @@ export class SettingsScene extends Phaser.Scene {
      * 자식의 depth가 아니라 넣은 순서대로 그린다.
      */
     const endSection = (): void => {
-      trailingDivider?.destroy(); trailingDivider = undefined;
       const open = openSection;
       if (!open) return;
       openSection = undefined;
@@ -234,11 +242,13 @@ export class SettingsScene extends Phaser.Scene {
       y += SETTINGS_SECTION.headRoom;
       return y;
     };
-    // 섹션이 끝나면 마지막 줄 뒤의 선은 가를 것이 없다 — 다음 판을 세울 때 걷어 낸다.
-    let trailingDivider: Phaser.GameObjects.GameObject | undefined;
+    /*
+     * 방금 넣은 줄 뒤에 그 줄의 판을 깐다(`addSettingsPlate`). 판 사이의 틈이 줄을 가르므로 구분선은 긋지 않는다 —
+     * 큰 판 위에 맨 글자와 머리카락 선만 늘어서던 때는 어디까지가 한 줄인지가 선 한 줄에 기대고 있었다.
+     * 판은 줄보다 **앞 순서**에 끼워 줄 뒤로 깔린다(컨테이너는 넣은 순서대로 그린다).
+     */
     const divider = (): void => {
-      trailingDivider = drawHairline(this, (SETTINGS_ROW.left + SETTINGS_ROW.right) / 2, y - SETTINGS_ROW.step / 2, SETTINGS_ROW.right - SETTINGS_ROW.left, { alpha: 0.16 });
-      this.content.add(trailingDivider);
+      this.content.addAt(addSettingsPlate(this, y - SETTINGS_ROW.step), this.content.length - 1);
     };
     const toggle = <K extends "vibration" | "notifications" | "presentation" | "game" | "accessibility">(label: string, group: K, key: keyof typeof s[K]): void => {
       this.content.add(new SettingsToggle(this, SETTINGS_ROW.left, y, label, s[group][key] as boolean, value => settingsManager.update({ [group]: { [key]: value } })));
@@ -252,11 +262,12 @@ export class SettingsScene extends Phaser.Scene {
     } else if (this.activeTab === "alerts") {
       section(t("settings.section.alerts"));
       const permission = platformFeedback.getNotificationPermission();
-      this.addTextAction(90, y, t(s.notifications.enabled ? "settings.alerts.enabled" : "settings.alerts.confirm"), () => void settingsManager.confirmNotifications().then(() => this.buildRows())); y += 64;
+      this.addTextAction(90, y, t(s.notifications.enabled ? "settings.alerts.enabled" : "settings.alerts.confirm"), () => void settingsManager.confirmNotifications().then(() => this.buildRows())); y += SETTINGS_SUPPORT.actionStep;
       // 플랫폼 차이는 구현 용어 대신 플레이어가 기대할 수 있는 짧은 상태명으로만 구분한다.
       const scheduling = t(platformFeedback.notificationScheduling === "persistent" ? "settings.alerts.device" : platformFeedback.notificationScheduling === "foreground-only" ? "settings.alerts.foreground" : "settings.alerts.unsupported");
       const permissionLabel = t(permission === "granted" ? "settings.alerts.permissionGranted" : "settings.alerts.permissionNeeded");
-      this.content.add(this.add.text(90, y, t("settings.alerts.status", { scheduling, permission: permissionLabel }), textStyle({ role: "body", size: SETTINGS_TEXT.note, color: COLOR.inkDim }))); y += 72;
+      // 읽기만 하는 상태 줄은 한 단계 옅은 판에 담는다 — 맨 글자로 두면 바로 아래 스위치 줄의 이름처럼 붙어 읽혔다.
+      y = this.addNote(y, t("settings.alerts.status", { scheduling, permission: permissionLabel }));
       // 알림 행은 저장과 플랫폼 예약 해제를 함께 처리하는 manager 전용 경계를 통과시킨다.
       ([["settings.alerts.all",'enabled'],["settings.alerts.staminaFull",'staminaFull'],["settings.alerts.dailyMission",'dailyMission'],["settings.alerts.quietHours",'quietHours']] as const).forEach(([label, key]) => {
         this.content.add(new SettingsToggle(this, SETTINGS_ROW.left, y, t(label), s.notifications[key], value => settingsManager.updateNotificationPreferences({ [key]: value })));
@@ -343,7 +354,10 @@ export class SettingsScene extends Phaser.Scene {
   private buildSupportRows(y: number, section: (title: string) => number): number {
     y = section(t("settings.section.account"));
     const account = this.accountState;
-    this.content.add(this.add.text(90, y, t("settings.account.summary", { kind: t(account.kind === "guest" ? "settings.account.guest" : "settings.account.linked"), provider: account.provider.toUpperCase(), maskedId: account.maskedId }), textStyle({ role: "body", size: SETTINGS_TEXT.note, color: COLOR.inkDim, lineSpacing: 10 })));
+    // 계정 요약은 쿠폰·바로가기 버튼 묶음과 같은 높이의 옅은 판에 담는다 — 맨 글자로 섰을 때는 오른쪽 버튼 묶음 옆에 글이 떠 있었다.
+    const summary = SETTINGS_SUPPORT.summary;
+    this.content.add(addSettingsPlate(this, y + summary.dy, "note", summary.height, summary.width, summary.x));
+    this.content.add(this.add.text(90, y + summary.textDy, t("settings.account.summary", { kind: t(account.kind === "guest" ? "settings.account.guest" : "settings.account.linked"), provider: account.provider.toUpperCase(), maskedId: account.maskedId }), textStyle({ role: "body", size: SETTINGS_TEXT.note, color: COLOR.inkDim, lineSpacing: 10 })));
     // 쿠폰은 계정에 붙는 일이라 계정 판의 오른쪽 위, 요약 옆에 크게 선다 — 지원 판의 글자 줄 사이에 묻히지 않게.
     const coupon = SETTINGS_SUPPORT.coupon;
     this.content.add(new Button(this, coupon.x, y + coupon.dy, { width: coupon.width, height: coupon.height,
@@ -387,7 +401,7 @@ export class SettingsScene extends Phaser.Scene {
     place(4, { kind: "history", label: t("settings.account.history"), onClick: guard(() => void this.openPurchaseHistory()) });
     place(5, { kind: "restore", label: t("settings.account.restore"), onClick: guard(() => void this.restorePurchases()) });
     y = cell(5).y + ACCOUNT_BUTTON.height / 2 + SETTINGS_SUPPORT.accountFootRoom;
-    if (account.kind !== "guest") { this.addTextAction(90, y, t("settings.account.signOut"), () => this.confirmAccountAction(t("settings.account.signOut"), t("settings.account.signOutNotice"), () => this.signOut()), true, 250); y += SETTINGS_SUPPORT.actionStep; }
+    if (account.kind !== "guest") { this.addTextAction(90, y, t("settings.account.signOut"), () => this.confirmAccountAction(t("settings.account.signOut"), t("settings.account.signOutNotice"), () => this.signOut()), true); y += SETTINGS_SUPPORT.actionStep; }
     // 두 번째 판은 **정해진 자리**에서 시작한다. 계정 판이 언어에 따라 길어지면 그때만
     // 밀려나며(`section`의 `Math.max`), 그 밖에는 줄 자리가 언제나 같아 E2E가 짚을 수 있다.
     y = Math.max(y, SETTINGS_SUPPORT.sectionTop);
@@ -408,12 +422,33 @@ export class SettingsScene extends Phaser.Scene {
     return y;
   }
 
-  /** 텍스트형 진입점도 최소 88px 터치 영역과 눌림 확대 규칙을 갖는다. */
-  private addTextAction(x: number, y: number, label: string, action: () => void, destructive = false, hitWidth = 840): void {
-    const button = this.add.text(x, y, label, textStyle({ role: "emphasis", size: SETTINGS_TEXT.action, color: destructive ? COLOR.dangerText : COLOR.accentText })).setOrigin(0, 0.5);
-    const hit = this.add.rectangle(x + hitWidth / 2, y, hitWidth, 88, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => pressIn(button)); hit.on("pointerout", () => pressOut(button, "normal", { pop: false })); hit.on("pointerup", () => { pressOut(button); if (!this.accountBusy) action(); });
-    this.content.add([button, hit]);
+  /**
+   * 눌러서 무언가 여는 줄(문의·약관·초기화 등). 맨 글자로 서던 때는 무엇이 눌리는지 색으로만 읽혔다 —
+   * 지금은 스위치 줄과 같은 판 위에 이름이 서고, 오른쪽 꺾쇠가 「누르면 열린다」를 말한다. 되돌릴 수 없는
+   * 조작은 판째 붉게 물든다. 입력면은 88px이고 눌림은 판과 글자를 한 덩어리로 누른다.
+   */
+  private addTextAction(x: number, y: number, label: string, action: () => void, destructive = false): void {
+    const row = addSettingsPlate(this, y, destructive ? "danger" : "normal");
+    const left = x - row.x;
+    const text = this.add.text(left, 0, label, textStyle({ role: "emphasis", size: SETTINGS_TEXT.action, color: destructive ? COLOR.dangerText : COLOR.ink })).setOrigin(0, 0.5);
+    squeezeTextToWidth(text, SETTINGS_PLATE.chevron.x - SETTINGS_PLATE.chevron.size - 24, 0.8);
+    row.add([text, drawGlyph(this, "page-next", left + SETTINGS_PLATE.chevron.x, 0, SETTINGS_PLATE.chevron.size, destructive ? COLOR.danger : COLOR.accent, 0.85, 3)]);
+    const hit = this.add.rectangle(row.x, y, SETTINGS_PLATE.width, SETTINGS_ROW.hitHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => pressIn(row)); hit.on("pointerout", () => pressOut(row, "normal", { pop: false })); hit.on("pointerup", () => { pressOut(row); if (!this.accountBusy) action(); });
+    this.content.add([row, hit]);
+  }
+
+  /**
+   * 읽기만 하는 상태 문단을 옅은 판에 담는다. `y`는 줄 하나가 설 자리의 가운데이고, 다음 줄이 설 가운데를 돌려준다.
+   * 판 높이는 글의 줄 수에서 나온다 — 언어가 바뀌어 두 줄이 되어도 판 밖으로 흐르지 않는다.
+   */
+  private addNote(y: number, message: string): number {
+    const top = y - SETTINGS_PLATE.height / 2;
+    const text = this.add.text(SETTINGS_ROW.left, 0, message, textStyle({ role: "body", size: SETTINGS_TEXT.note, color: COLOR.inkDim })).setOrigin(0, 0.5).setWordWrapWidth(SETTINGS_ROW.right - SETTINGS_ROW.left);
+    const height = Math.max(60, Math.ceil(text.height) + SETTINGS_PLATE.note.padY * 2);
+    text.setY(top + height / 2);
+    this.content.add([addSettingsPlate(this, top + height / 2, "note", height), text]);
+    return top + height + (SETTINGS_ROW.step - SETTINGS_PLATE.height) + SETTINGS_PLATE.height / 2;
   }
 
   /** 결제·선물 기록은 서버가 장부에서 읽어 준 그대로 세운다. 실패하면 비우지 않고 안내만 한다. */

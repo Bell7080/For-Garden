@@ -1494,7 +1494,8 @@ export class ArchaeologyScene extends Phaser.Scene {
     return [{
       labelKey: "rune.traitBulk.title",
       enabled: owned > 0 && needed > 0,
-      item: { itemId, owned, cost: Math.max(1, needed) },
+      // 한 번에 태울 수 있는 최대치 — 후보가 많아도 가진 핵보다 많이는 쓰지 않는다.
+      item: { itemId, owned, cost: Math.max(1, Math.min(owned, needed)), costLabelKey: "rune.traitBulk.costMax" },
       onPress: () => openRuneTraitBulkPopup(this, this.popups, gameApi, () => this.paintView()),
     }];
   }

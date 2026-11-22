@@ -29,7 +29,7 @@ export interface ResearchActionRowSpec {
   labelKey: TextKey;
   enabled: boolean;
   /** 아이템을 태우는 조작. 액자에 그 그림과 **보유량**이 서고, 모자라면 그 수가 붉어진다. */
-  item?: { itemId: string; owned: number; cost: number };
+  item?: { itemId: string; owned: number; cost: number; costLabelKey?: TextKey };
   /** 재화를 치르는 조작. 액자 없이 그림과 수를 바짝 붙인다. */
   cost?: { icon: CurrencyIconKey; amount: number };
   onPress: () => void;
@@ -59,7 +59,7 @@ export function addResearchActionRow(
   const textLeft = left + RESEARCH_ACTION.frame + RESEARCH_ACTION.gap;
 
   if (spec.item !== undefined) {
-    const { itemId, owned, cost } = spec.item;
+    const { itemId, owned, cost, costLabelKey } = spec.item;
     addItemPriceTag(scene, row, left + RESEARCH_ACTION.frame / 2, 0, itemId, owned, {
       size: RESEARCH_ACTION.frame,
       // 값이 아니라 **가진 수**다. 모자란 줄만 그 수가 붉어져 왜 못 누르는지를 수가 직접 말한다.
@@ -67,11 +67,15 @@ export function addResearchActionRow(
     });
     row.add(scene.add.text(textLeft, -14, t(spec.labelKey),
       textStyle({ role: "display", size: RESEARCH_ACTION.labelSize })).setOrigin(0, 0.5));
-    row.add(scene.add.text(textLeft, 22, findItem(itemId)?.name ?? itemId,
+    // 이름 옆에 보유량을 글로도 적는다 — 액자 우하단의 수만으로는 「가진 수」인지 「드는 수」인지 갈리지 않는다.
+    row.add(scene.add.text(textLeft, 22, t("rune.research.itemOwned", { name: findItem(itemId)?.name ?? itemId, owned: owned.toLocaleString() }),
       textStyle({ role: "body", size: RESEARCH_ACTION.itemNameSize, color: COLOR.inkDim })).setOrigin(0, 0.5));
     // 드는 수는 오른쪽 끝이다. 액자 안의 보유량과 마주 보아 "가진 것 / 드는 것"이 한 줄에 선다.
-    row.add(scene.add.text(right, 0, `×${cost}`,
-      textStyle({ role: "display", size: RESEARCH_ACTION.costSize, color: COLOR.accentText })).setOrigin(1, 0.5));
+    // 그 위에 「소모」 이름표를 얹어 오른쪽 수가 태우는 개수라는 것을 글이 말한다.
+    row.add(scene.add.text(right, -20, t(costLabelKey ?? "rune.traitBulk.cost"),
+      textStyle({ role: "emphasis", size: RESEARCH_ACTION.itemNameSize, color: COLOR.inkDim })).setOrigin(1, 0.5));
+    row.add(scene.add.text(right, 14, `×${cost.toLocaleString()}`,
+      textStyle({ role: "display", size: RESEARCH_ACTION.costSize, color: owned < cost ? COLOR.dangerText : COLOR.accentText })).setOrigin(1, 0.5));
   } else {
     row.add(scene.add.text(textLeft, 0, t(spec.labelKey),
       textStyle({ role: "display", size: RESEARCH_ACTION.labelSize })).setOrigin(0, 0.5));

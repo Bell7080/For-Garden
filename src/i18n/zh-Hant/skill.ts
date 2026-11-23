@@ -575,4 +575,12 @@ export const SKILL_ZH_HANT = {
   "skill.clause.selfFerocity": "自身獲得{amount}點[[ferocity|野性]]。若已處於[[ferocity|暴走]]，則改為暴走{seconds}秒內不衰減",
   "skill.ferocity.selfAttackSpeedMultiplier.ramp": "暴走不間斷持續期間，[[attack-speed|攻擊速度]]從+{percent}%起每秒提升{perSecond}%，最多+{max}%；全傷害吸血每秒提升{stealPerSecond}%，最多{stealMax}%。暴走結束後重新計算。",
   "skill.clause.passiveCooldownReduction": "每次命中使被動的剩餘週期縮短{seconds}秒",
+  "skill.breakthrough.effect.basic.tongueTug": "[[basic-attack|普通攻擊]]每次命中時，「{name}」的剩餘週期縮短{seconds}秒。",
+  "skill.breakthrough.effect.ultimate.spitOut": "被「{name}」吞下的隊友被吐出時，該隊友獲得相當於其最大生命{percent}%的[[shield|護盾]]。",
+  "skill.breakthrough.effect.ultimate.chargeImpact": "「{name}」的突進停下的位置周圍所有敵人受到{percent}的[[physical-damage|物理傷害]]。",
+  "skill.breakthrough.effect.ferocity.tongueSnap": "進入[[ferocity|暴走]]的瞬間，「{name}」立即發動，其[[shield|護盾]]變為{multiplier}倍。",
+  "skill.breakthrough.effect.ferocity.hotFangs": "[[ferocity|暴走]]的攻擊速度提升從{percent}%開始。",
+  "skill.breakthrough.effect.passive.stillUnderContract": "隊友生命低於{hp}%時，「{name}」立即發動。這種立即發動每{seconds}秒僅一次。",
+  "skill.breakthrough.effect.passive.scentLinger": "[[ferocity|暴走]]結束後，野性槽仍保留{percent}%。",
+  "skill.ferocity.selfAttackSpeedMultiplier.passivePull": "[[attack-speed|攻擊速度]]提升{percent}%，普通攻擊每次命中時，被動的剩餘週期縮短{seconds}秒。",
 } as const;

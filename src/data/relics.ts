@@ -4759,9 +4759,16 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 12,
     },
-    // 한계 돌파는 아직 설계하지 않았다 — `docs/breakthrough-design.md` 절차대로 추천안을 확인받은 뒤 채운다.
-    // 폭주에는 손이 빨라진다 — 평타가 혀의 주기를 당기므로 빨라진 손이 곧 더 자주 끌어오는 혀다.
-    ferocityTrait: { name: "배고파요", effectId: "selfAttackSpeedMultiplier", bonusPercent: 40 },
+    // 한계 돌파(응태 결정 2026-11-23): 평타가 혀를 더 당기고, 삼킨 아군을 뱉을 때 막을 씌우고,
+    // 폭주에 들어서는 순간 두 배 막의 혀가 나가며, 쓰러질 듯한 아군에게는 10초에 한 번 곧바로 혀가 나간다.
+    breakthroughEffects: {
+      basic: { kind: "tongueTug", seconds: 0.25 },
+      ultimate: { kind: "spitOut", shieldMaxHpPercent: 15 },
+      ferocity: { kind: "tongueSnap", shieldMultiplier: 2 },
+      passive: { kind: "stillUnderContract", belowHpPercent: 30, lockoutSeconds: 10 },
+    },
+    // 폭주에는 손이 빨라지고, 평타 한 번이 혀의 주기를 0.5초씩 당긴다(평소 0.1초 — 응태 2026-11-23).
+    ferocityTrait: { name: "배고파요", effectId: "selfAttackSpeedMultiplier", bonusPercent: 40, feverPassiveCooldownReductionSeconds: 0.5 },
     passive: {
       // kind가 tonguePull인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -4855,7 +4862,14 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 12,
     },
-    // 한계 돌파는 아직 설계하지 않았다 — `docs/breakthrough-design.md` 절차대로 추천안을 확인받은 뒤 채운다.
+    // 한계 돌파(응태 결정 2026-11-23): 출혈에 둔화가 붙고, 돌진이 멈춘 자리가 터지며,
+    // 폭주가 +30%부터 달아오르고, 폭주가 끝나도 야성 30%가 남는다.
+    breakthroughEffects: {
+      basic: { kind: "chainSnare", slowPercent: 30, seconds: 3 },
+      ultimate: { kind: "chargeImpact", radius: 160, powerPercent: 60 },
+      ferocity: { kind: "hotFangs", startAttackSpeedPercent: 30 },
+      passive: { kind: "scentLinger", ferocityPercent: 30 },
+    },
     // 상시 보너스가 아니라 끊기지 않을수록 오르는 폭주다(응태 2026-11-22) — 공속 +10%에서 매초 +5%(최대 +50%), 흡혈 매초 +1.5(최대 12).
     // 「피 냄새」가 폭주를 붙잡을수록 상한까지 닿는다: 기본 8초 폭주면 공속 +50%에 막 닿고, 연장 6초가 그 꼭대기를 오래 쥔다.
     ferocityTrait: { name: "멈추지 않는 이빨", effectId: "selfAttackSpeedMultiplier", bonusPercent: 10,

@@ -1672,6 +1672,11 @@ export type FerocityTrait = {
        * 끌려오는 한 순간이 있어야 게이지가 찬 것이 화면에서 읽힌다.
        */
       pullOnEntry?: { radius: number; distance: number };
+      /**
+       * 폭주 중에는 기본 공격 적중이 패시브 주기를 평소(`passiveCooldownReductionSeconds`) 대신 이만큼 당긴다(벨즈 — 혀 낚아채기).
+       * 빨라진 손이 곧 더 잦은 혀로 이어져야 폭주가 지원가의 몫을 키운다. 선택이다.
+       */
+      feverPassiveCooldownReductionSeconds?: number;
       /** 폭주 중 모든 직접 피해에 더하는 흡혈(퍼센트포인트, 아르). 선택이다. */
       lifeStealPoints?: number;
       /**
@@ -2927,6 +2932,10 @@ export interface BreakthroughNone {
  * (`BasicAttack.statusEffectEvery`)을 그대로 타고 세 번에 한 번만 일어난다.
  */
 export type BasicBreakthrough = {
+  /** 일반 공격 적중이 패시브 주기를 평소(`passiveCooldownReductionSeconds`) 대신 이만큼 당긴다(벨즈의 「조여드는 족쇄」). 폭주 중 값이 더 크면 폭주 값이 앞선다. */
+  kind: "tongueTug";
+  seconds: number;
+} | {
   /** 주기가 채워지는 일반 공격(도발이 걸리는 한 방)이 맞은 적의 공격 속도·이동 속도를 `seconds`초 동안 `slowPercent`% 깎는다(브리카의 「얽힌 사슬」). 공용 둔화(`chill`) 한 겹이라 강인함·정화가 그대로 지난다. */
   kind: "chainSnare";
   slowPercent: number;
@@ -3202,6 +3211,15 @@ export type BasicBreakthrough = {
  * 궁극기가 세 번이 된다(채널링 궁극기와 같은 규칙이다).
  */
 export type UltimateBreakthrough = {
+  /** 「꿀꺽」이 끝나는 순간 숨겨 둔 아군을 뱉어 내며 그 아군의 최대 체력 이 비율만큼 보호막을 두른다(벨즈의 「퉤!」). */
+  kind: "spitOut";
+  shieldMaxHpPercent: number;
+} | {
+  /** 돌진이 멈춘 자리 주위(`radius`)의 적 전원에게 공격력 `powerPercent`%의 물리 피해를 더 준다(아르). */
+  kind: "chargeImpact";
+  radius: number;
+  powerPercent: number;
+} | {
   /** 궁극기를 펼치는 순간 반경 `radius` 안의 적을 자신에게서 바깥으로 `distance`만큼 밀어낸다(브리카의 「가지 걷어내기」). 행동은 막지 않고 자리만 옮기며 강인함 경계를 지난다. */
   kind: "canopySweep";
   radius: number;
@@ -3466,6 +3484,14 @@ export type UltimateBreakthrough = {
  * 세져 그 시간만 부풀고, 끝나고 가장 약해지는 자리를 메우지 못한다.
  */
 export type FerocityBreakthrough = {
+  /** 폭주에 들어서는 순간 패시브 「혀 낚아채기」가 주기와 상관없이 곧바로 한 번 나가고, 그 막은 `shieldMultiplier`배다(벨즈의 「덥석」). 다친 아군이 없으면 나가지 않는다. */
+  kind: "tongueSnap";
+  shieldMultiplier: number;
+} | {
+  /** 오르는 폭주의 시작 공격 속도가 이 값이다(아르의 「달아오른 이빨」). 상한은 그대로다. */
+  kind: "hotFangs";
+  startAttackSpeedPercent: number;
+} | {
   /** 폭주에 들어서는 순간 살아 있는 아군 모두의 공격 속도가 폭주가 이어지는 동안(8초) 오른다(플레샤). */
   kind: "starlitCheer";
   attackSpeedPercent: number;
@@ -3706,6 +3732,15 @@ export type FerocityBreakthrough = {
  * 패시브의 조건(체력 절반 등)을 그대로 타므로 새 발동 조건을 만들지 않는다.
  */
 export type PassiveBreakthrough = {
+  /** 아군의 체력이 `belowHpPercent`% 아래로 떨어지면 혀 주기가 남아 있어도 곧바로 끌어온다. 이 즉시 발동은 `lockoutSeconds`초에 한 번(벨즈의 「아직 계약 기간」). */
+  kind: "stillUnderContract";
+  belowHpPercent: number;
+  lockoutSeconds: number;
+} | {
+  /** 폭주가 끝날 때 야성 게이지를 최대치의 이 비율만큼 남긴 채 내려온다(아르의 「아직」). */
+  kind: "scentLinger";
+  ferocityPercent: number;
+} | {
   /**
    * 대신 받은 피해(원래 피해 기준)의 `storePercent`%가 쌓였다가 다음 일반 공격에 고정 피해로 한꺼번에 얹힌다(브리카의 「되갚는 그늘」).
    * 쌓이는 몫은 최대 체력의 `capMaxHpPercent`%에서 멈춘다 — 상한이 없으면 대신 받기 궁극기 한 번이 한 방을 끝없이 키운다.

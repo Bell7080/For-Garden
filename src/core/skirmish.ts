@@ -468,6 +468,10 @@ export interface Fighter extends Combatant {
     orderStruck: string[];
     /** 평타 돌파(`farPing`)가 올려 주는 사거리(px). 열려 있지 않으면 0이다 — 매 프레임 읽는 값이라 전투가 열릴 때 한 번 굳힌다. */
     reachFloor: number;
+    /** 궁극기 돌파(`spitOut`) — 꿀꺽으로 숨겨 둔 아군과 뱉을 때까지 남은 시간·막 비율. */
+    spits: { allyId: string; remaining: number; percent: number }[];
+    /** 패시브 돌파(`stillUnderContract`) — 위기 즉시 혀가 다시 나갈 수 있는 전투 시각(`state.elapsed`). */
+    contractReadyAt: number;
     /** 패시브 돌파(`rescueShield`)의 계약. 열려 있지 않으면 null이다 — 모든 피해 경계에서 읽으므로 한 번 굳힌다. */
     rescuePlan: { belowHpPercent: number; apPercent: number } | null;
     /** 평타 돌파(`staccatoChain`) — 직전에 맞힌 적과 연속 적중 수. */
@@ -1471,6 +1475,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       napsUsed: 0,
       finalStrike: false,
       tidalEchoes: [],
+      spits: [],
+      contractReadyAt: 0,
       arrowEchoes: [],
       afterimages: [],
       stunLockouts: {},
@@ -4902,6 +4908,7 @@ function armUltimateBreakthrough(attacker: Fighter): void {
  * 게이지·야성·쿨다운까지 함께 건드리므로, 자원을 쓰지 않아야 하는 되풀이에는 쓸 수 없다.
  */
 function tickUltimateBreakthrough(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  tickSpits(fighter, dt, state, events);
   const echo = fighter.breakthroughEcho;
   if (!echo) return;
   if (!isFighterAlive(fighter)) { fighter.breakthroughEcho = null; return; }
@@ -4952,6 +4959,11 @@ function applyFerocityBreakthrough(fighter: Fighter, state: SkirmishState, event
   fighter.bt.ambushCritReady = false;
   fighter.feverDamageTaken = 0;
   fighter.bt.feverHealingDone = 0;
+  // 패시브 돌파(`scentLinger`) — 게이지를 다 비우지 않고 일부를 남긴 채 내려온다. 남긴 몫은 다음 폭주까지의 거리만 줄인다.
+  const linger = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  if (linger?.kind === "scentLinger" && isFighterAlive(fighter)) {
+    fighter.ferocity = Math.max(fighter.ferocity, ferocityMaxOf(fighter.def) * linger.ferocityPercent / 100);
+  }
   const effect = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
   if (effect?.kind === "feverShare") {
     // 총량을 살아 있는 아군(자신 포함)에게 똑같이 나눈다 — 머릿수가 늘어도 보호막 총량은 그대로다.
@@ -5358,6 +5370,16 @@ function afterUltimateBreakthrough(attacker: Fighter, state: SkirmishState, even
   if (plan?.kind === "cheekShield") grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * plan.shieldMaxHpPercent / 100)), events);
   if (plan?.kind === "chasingBlink" && attacker.def.passive.kind === "stalkerBlink") attacker.huntCooldown = 0;
   // 흙먼지(`dustCloud`) — 질주가 끝난 자리 주변의 적 전원이 느려진다. 기절은 질주 본문이 이미 갖고 있어 건드리지 않는다.
+  if (plan?.kind === "chargeImpact" && attacker.def.ultimate.targeting === "chargeLine") {
+    // 멈춘 자리의 충격 — 돌진이 끝난 자리 주위의 적 전원이 한 번 더 맞는다. 자원은 더 얻지 않는다.
+    const stat = attacker.def.ultimate.scalingStat === "ap" ? "ap" : "atk";
+    for (const foe of aliveFighters(state, attacker.side === "player" ? "enemy" : "player")) {
+      if (distance(attacker, foe) > plan.radius) continue;
+      extraStrike(attacker, foe, plan.powerPercent, stat, attacker.def.ultimate.damageType === "magical" ? "magical" : "physical", state, events);
+    }
+    events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: true, damageType: "physical",
+      area: { shape: "radial", x: attacker.x, y: attacker.y, radius: plan.radius } });
+  }
   if (plan?.kind === "dustCloud" && attacker.def.ultimate.targeting === "chargeLine") {
     for (const foe of aliveFighters(state, attacker.side === "player" ? "enemy" : "player")) {
       if (distance(attacker, foe) > plan.radius) continue;
@@ -7288,7 +7310,9 @@ export function feverRamp(fighter: Fighter): { attackSpeedPercent: number; lifeS
   const trait = fighter.def.ferocityTrait;
   if (!fighter.ferocityFever || trait.effectId !== "selfAttackSpeedMultiplier") return { attackSpeedPercent: 0, lifeStealPoints: 0 };
   const ramp = trait.ramp;
-  const baseSpeed = trait.bonusPercent;
+  // 폭주 돌파(`hotFangs`) — 오르는 폭주가 더 높은 자리에서 시작한다. 상한은 그대로다.
+  const fangs = ramp ? openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity) : undefined;
+  const baseSpeed = fangs?.kind === "hotFangs" ? Math.max(trait.bonusPercent, fangs.startAttackSpeedPercent) : trait.bonusPercent;
   const baseSteal = trait.lifeStealPoints ?? 0;
   if (!ramp) return { attackSpeedPercent: baseSpeed, lifeStealPoints: baseSteal };
   return {
@@ -7364,6 +7388,8 @@ export function gainFerocity(fighter: Fighter, base: number, state: SkirmishStat
       }
     }
     if (feverBreakthrough?.kind === "doubleMag") fighter.bt.doubleMagUsed = false;
+    // 덥석 — 폭주 진입 즉발. 혀가 주기와 상관없이 곧바로 한 번 나가고 막이 두꺼워진다. 다친 아군이 없으면 나가지 않는다.
+    if (feverBreakthrough?.kind === "tongueSnap") fireTongue(fighter, feverBreakthrough.shieldMultiplier, state, events);
     if (feverBreakthrough?.kind === "roarEntry") {
       // 포효 진입 — 주변 적 전원에게 위압 한 겹. 상한(3겹)에 닿은 적은 위압 규칙대로 스스로 공포에 빠진다.
       const intimidate = fighter.def.passive.looming?.intimidate;
@@ -8356,21 +8382,51 @@ function tickTongue(fighter: Fighter, dt: number, state: SkirmishState, events: 
   const plan = fighter.def.passive.tongue;
   if (!plan || state.phase !== "fight" || !isFighterAlive(fighter)) return;
   fighter.tongueIn = Math.max(0, fighter.tongueIn - dt);
-  if (fighter.tongueIn > 0) return;
+  if (fighter.tongueIn > 0) {
+    // 패시브 돌파(`stillUnderContract`) — 쓰러지려는 아군이 있으면 주기를 기다리지 않는다. 즉시 발동은 잠금 시간에 한 번이다.
+    const contract = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+    if (contract?.kind !== "stillUnderContract" || state.elapsed < fighter.bt.contractReadyAt) return;
+    const inDanger = aliveFighters(state, fighter.side)
+      .some((other) => other.id !== fighter.id && isPartyFighter(other) && other.hp / other.maxHp * 100 < contract.belowHpPercent);
+    if (!inDanger) return;
+    if (fireTongue(fighter, 1, state, events)) fighter.bt.contractReadyAt = state.elapsed + contract.lockoutSeconds;
+    return;
+  }
+  fireTongue(fighter, 1, state, events);
+}
+
+/** 혀를 한 번 내민다 — 체력 비율이 가장 낮은 다친 아군을 끌어와 막을 두른다. 다친 아군이 없으면 나가지 않고 `false`다. */
+function fireTongue(fighter: Fighter, shieldMultiplier: number, state: SkirmishState, events: SkirmishEvent[]): boolean {
+  const plan = fighter.def.passive.tongue;
+  if (!plan || !isFighterAlive(fighter)) return false;
   const ally = aliveFighters(state, fighter.side)
     .filter((other) => other.id !== fighter.id && isPartyFighter(other) && other.hp < other.maxHp)
     .reduce<Fighter | undefined>((best, other) => !best || other.hp / other.maxHp < best.hp / best.maxHp ? other : best, undefined);
-  if (!ally) return;
+  if (!ally) return false;
   fighter.tongueIn = plan.intervalSeconds;
   // 벨즈의 뒤쪽(제 편 진영 쪽)으로 끌어와 세운다 — 앞에 세우면 끌어온 몸을 도로 적 앞에 내놓는다.
   const back = fighter.side === "player" ? 1 : -1;
   ally.x = Math.min(state.arena.right, Math.max(state.arena.left, fighter.x + (ally.x >= fighter.x ? 1 : -1) * plan.landDistance * 0.6));
   ally.y = Math.min(state.arena.bottom, Math.max(state.arena.top, fighter.y + back * plan.landDistance * 0.8));
   ally.knockback = null;
-  grantShield(state, ally, fighter.id, Math.max(1, Math.round(ally.maxHp * plan.shieldMaxHpPercent / 100)), events);
+  grantShield(state, ally, fighter.id, Math.max(1, Math.round(ally.maxHp * plan.shieldMaxHpPercent * shieldMultiplier / 100)), events);
   untarget(state, ally);
   events.push({ kind: "combatEffect", fighterId: ally.id, effect: { tag: "shieldGain", intensity: 1.2 } });
   state.log.push(`${fighter.def.name} 혀 → ${ally.def.name}`);
+  return true;
+}
+
+/** 궁극기 돌파(`spitOut`) — 꿀꺽이 끝나는 순간 숨겨 둔 아군에게 막을 두른다. 그 아군이 쓰러졌으면 아무것도 하지 않는다. */
+function tickSpits(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (fighter.bt.spits.length === 0) return;
+  const pending: typeof fighter.bt.spits = [];
+  for (const spit of fighter.bt.spits) {
+    const remaining = spit.remaining - dt;
+    if (remaining > EMERGENCY_RECOVERY.epsilon) { pending.push({ ...spit, remaining }); continue; }
+    const ally = findFighter(state, spit.allyId);
+    if (ally && isFighterAlive(ally) && isFighterAlive(fighter)) grantProvidedShield(state, fighter, ally, spit.percent, events);
+  }
+  fighter.bt.spits = pending;
 }
 
 /** 이 아군을 노리던 적의 표적을 모두 푼다 — 다음 프레임에 처음부터 다시 고른다. */
@@ -9296,7 +9352,12 @@ function strike(
   grantDuoCharge(attacker, skill, state, events);
     if (!useUltimate) scentOnBasicHit(attacker, state, events);
     if (!useUltimate && "passiveCooldownReductionSeconds" in skill && skill.passiveCooldownReductionSeconds !== undefined && attacker.def.passive.tongue) {
-      attacker.tongueIn = Math.max(0, attacker.tongueIn - skill.passiveCooldownReductionSeconds);
+      const trait = attacker.def.ferocityTrait;
+      const feverPull = attacker.ferocityFever && trait.effectId === "selfAttackSpeedMultiplier" ? trait.feverPassiveCooldownReductionSeconds : undefined;
+      // 평타 돌파(`tongueTug`)가 평소 당김을 늘린다. 폭주 값이 더 크면 폭주 값이 앞선다.
+      const tug = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+      const usual = tug?.kind === "tongueTug" ? tug.seconds : skill.passiveCooldownReductionSeconds;
+      attacker.tongueIn = Math.max(0, attacker.tongueIn - Math.max(usual, feverPull ?? 0));
     }
     gainFerocity(attacker, actionFerocityGain(attacker.def.stats, useUltimate), state, events);
   }
@@ -11197,6 +11258,12 @@ function fireUltimateCore(
     attacker.energy -= ultimateCost(state, attacker, true);
     const ally = gulpTarget(state, attacker);
     applyGulp(ally, attacker, teamUltimate.teamBuff, state);
+    // 궁극기 돌파(`spitOut`) — 숨겨 둔 시간이 끝나는 순간 뱉어 내며 막을 두른다. 같은 아군을 다시 삼키면 시계를 새로 잡는다.
+    const spit = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    if (spit?.kind === "spitOut") {
+      attacker.bt.spits = [...attacker.bt.spits.filter((entry) => entry.allyId !== ally.id),
+        { allyId: ally.id, remaining: teamUltimate.teamBuff.seconds, percent: spit.shieldMaxHpPercent }];
+    }
     events.push({ kind: "teamBuff", fighterId: ally.id, buff: teamUltimate.teamBuff, sourceId: attacker.id });
     attacker.attackCooldown = attackInterval(attacker, state);
     return events;

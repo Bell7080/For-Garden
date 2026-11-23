@@ -188,6 +188,10 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
       const ramp = trait.ramp;
       return t("skill.ferocity.selfAttackSpeedMultiplier.ramp", { percent: trait.bonusPercent, perSecond: ramp.attackSpeedPercentPerSecond, max: ramp.maxAttackSpeedPercent, stealPerSecond: ramp.lifeStealPointsPerSecond, stealMax: ramp.maxLifeStealPoints });
     }
+    // 빨라진 손이 패시브 주기를 더 세게 당긴다(벨즈) — 같은 문장에 이어 둔다.
+    if (trait.feverPassiveCooldownReductionSeconds !== undefined) {
+      return t("skill.ferocity.selfAttackSpeedMultiplier.passivePull", { percent: trait.bonusPercent, seconds: trait.feverPassiveCooldownReductionSeconds });
+    }
     // 고친 자리에 한 겹 덮는 몫은 손이 빨라지는 것과 다른 축이라 제 절로 선다.
     return trait.healingShieldPercent === undefined
       ? t("skill.ferocity.selfAttackSpeedMultiplier", { percent: trait.bonusPercent })
@@ -1618,6 +1622,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     const effect = effects.basic;
     if (effect.kind === "none") return undefined;
     if (effect.kind === "pressStagger") return t("skill.breakthrough.effect.basic.pressStagger", { seconds: trim(effect.seconds) });
+    if (effect.kind === "tongueTug") return t("skill.breakthrough.effect.basic.tongueTug", { name: def.passive.name, seconds: trim(effect.seconds) });
     if (effect.kind === "fangShave") return t("skill.breakthrough.effect.basic.fangShave", { name: def.basic.name, percent: trim(effect.defensePercent), seconds: trim(effect.seconds), max: trim(effect.maxStacks) });
     if (effect.kind === "pincerPair") return t("skill.breakthrough.effect.basic.pincerPair", { name: def.basic.name, every: trim(effect.every) });
     if (effect.kind === "shellKnock") return t("skill.breakthrough.effect.basic.shellKnock", { name: def.basic.name, seconds: trim(effect.seconds) });
@@ -1692,6 +1697,8 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "unhealedMark") return t("skill.breakthrough.effect.ultimate.unhealedMark", { percent: trim(effect.reductionPercent), seconds: trim(effect.seconds) });
     if (effect.kind === "doublePlume") return t("skill.breakthrough.effect.ultimate.doublePlume", { name: def.ultimate.name, count: trim(1 + effect.extraStacks) });
     if (effect.kind === "ultimateLifeSteal") return t("skill.breakthrough.effect.ultimate.ultimateLifeSteal", { percent: trim(effect.damageHealingPercent) });
+    if (effect.kind === "spitOut") return t("skill.breakthrough.effect.ultimate.spitOut", { name: def.ultimate.name, percent: trim(effect.shieldMaxHpPercent) });
+    if (effect.kind === "chargeImpact") return t("skill.breakthrough.effect.ultimate.chargeImpact", { name: def.ultimate.name, percent: sv("damage", "atk", effect.powerPercent) });
     if (effect.kind === "forestSight") return t("skill.breakthrough.effect.ultimate.forestSight", { hits: trim(def.ultimate.selfVolley ? def.ultimate.selfVolley.hitCount + effect.extraHits : effect.extraHits), seconds: trim(effect.extraSeconds) });
     if (effect.kind === "lightChorus") return t("skill.breakthrough.effect.ultimate.lightChorus", { name: def.ultimate.name, cost: trim(effect.costReduction), percent: trim(effect.fullHpShieldPercent) });
     if (effect.kind === "orderStrike") return t("skill.breakthrough.effect.ultimate.orderStrike");
@@ -1740,6 +1747,8 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     const effect = effects.ferocity;
     if (effect.kind === "none") return undefined;
     if (effect.kind === "doubleMag") return t("skill.breakthrough.effect.ferocity.doubleMag");
+    if (effect.kind === "tongueSnap") return t("skill.breakthrough.effect.ferocity.tongueSnap", { name: def.passive.name, multiplier: trim(effect.shieldMultiplier) });
+    if (effect.kind === "hotFangs") return t("skill.breakthrough.effect.ferocity.hotFangs", { percent: trim(effect.startAttackSpeedPercent) });
     if (effect.kind === "feverWidenBasic") return t("skill.breakthrough.effect.ferocity.feverWidenBasic", { percent: trim(widerPercent("radius" in def.basic ? def.basic.radius : undefined, effect.radius)) });
     if (effect.kind === "hungryStride") return t("skill.breakthrough.effect.ferocity.hungryStride", { percent: trim(effect.moveSpeedPercent) });
     if (effect.kind === "longFeast") return t("skill.breakthrough.effect.ferocity.longFeast", { percent: trim(widerPercent(def.ferocityTrait.effectId === "selfAttackSpeedMultiplier" ? def.ferocityTrait.pullOnEntry?.radius : undefined, effect.radius)) });
@@ -1794,6 +1803,8 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effects.passive.kind === "reloadSip") return t("skill.breakthrough.effect.passive.reloadSip", { percent: sv("shield", "hp", effects.passive.shieldMaxHpPercent), cap: sv("shield", "hp", effects.passive.capMaxHpPercent) });
     if (effects.passive.kind === "pressureCrack") return t("skill.breakthrough.effect.passive.pressureCrack", { seconds: trim(effects.passive.intervalSeconds), percent: sv("damage", "ap", effects.passive.powerPercent) });
     if (effects.passive.kind === "scarMight") return t("skill.breakthrough.effect.passive.scarMight", { percent: trim(effects.passive.damagePercentPerStack) });
+    if (effects.passive.kind === "stillUnderContract") return t("skill.breakthrough.effect.passive.stillUnderContract", { name: def.passive.name, hp: trim(effects.passive.belowHpPercent), seconds: trim(effects.passive.lockoutSeconds) });
+    if (effects.passive.kind === "scentLinger") return t("skill.breakthrough.effect.passive.scentLinger", { percent: trim(effects.passive.ferocityPercent) });
     if (effects.passive.kind === "lightSleeper") return t("skill.breakthrough.effect.passive.lightSleeper", { name: def.passive.name });
     if (effects.passive.kind === "lingeringVenom") return t("skill.breakthrough.effect.passive.lingeringVenom", { name: def.passive.name, seconds: trim(effects.passive.poisonSeconds) });
     if (effects.passive.kind === "deeperMarch") return t("skill.breakthrough.effect.passive.deeperMarch", { percent: trim(effects.passive.regenMaxHpPercentPerAllyPerSecond) });

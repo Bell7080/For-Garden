@@ -228,6 +228,14 @@ const CATEGORY: Record<EffectKind, Category> = {
   twinHum: "support",
   swarmDeepen: "survival",
   longGust: "support",
+  // 벨즈 — 혀가 더 자주·더 두껍게 끌어온다. 아르 — 돌진이 터지고 폭주가 더 뜨겁게, 더 오래 남는다.
+  tongueTug: "support",
+  spitOut: "survival",
+  tongueSnap: "survival",
+  stillUnderContract: "survival",
+  chargeImpact: "damage",
+  hotFangs: "damage",
+  scentLinger: "damage",
 };
 
 /** 직군이 받을 수 없는 분류. 암살자·원거리 딜러는 은신이 아닌 생존 유틸과 게이지 조작을 받지 않는다. */

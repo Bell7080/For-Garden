@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import { claimableProgressPassFreeThresholds, claimableProgressPassThresholds, progressPassFreeStates, progressPassGoal, progressPassLevel, progressPassMilestoneStates } from "../../src/core/progressPass";
-import { POPUP_BODY_BEVEL_RATIO } from "../../src/ui/popupGeometry";
+import { BACK_BUTTON_SIZE, BACK_SLOT, POPUP_BODY_BEVEL_RATIO } from "../../src/ui/popupGeometry";
+import { BASE_HEIGHT } from "../../src/config/gameConfig";
 import { PROGRESS_PASSES, findProgressPass } from "../../src/data/progressPasses";
 import { PREMIUM_PRODUCTS } from "../../src/data/premiumProducts";
 import { CURRENT_SAVE_VERSION, SAVE_STORAGE_KEY, SaveManager } from "../../src/state/SaveManager";
@@ -111,6 +112,18 @@ describe("로비 패스 창 모델", () => {
     // 미션·보상 줄은 패스 탭 줄 위에 겹치지 않고 붙는다.
     const modeBottom = PASS_POPUP.height / 2 - PASS_POPUP.modeRow.fromBottom + PASS_POPUP.modeRow.tabHeight / 2;
     expect(modeBottom).toBeLessThanOrEqual(strip.top + 22);
+  });
+
+  it("창은 상단 재화 줄 아래, 판 밖 뒤로가기 위에 서고 「패스 열기」 꼬리표도 상단 줄을 넘지 않는다", () => {
+    const top = BASE_HEIGHT / 2 - PASS_POPUP.height / 2;
+    const bottom = BASE_HEIGHT / 2 + PASS_POPUP.height / 2;
+    const { offer } = PASS_POPUP;
+    // 꼬리표가 카드 윗변 위로 뻗는 몫(`SHOWCASE_CARD.tag` — overhangY 18 + height 46 / 2). 그 모듈은 Phaser를 읽어 여기서 import하지 않는다.
+    const TAG_REACH = 18 + 46 / 2;
+    const tagTop = top + offer.centerY - offer.height / 2 - TAG_REACH;
+    // 상단 줄(재화 칩·경계선)은 y 135 안쪽에서 끝난다.
+    expect(tagTop).toBeGreaterThanOrEqual(135);
+    expect(bottom).toBeLessThanOrEqual(BACK_SLOT.y - BACK_BUTTON_SIZE / 2);
   });
 
   it("스토리 패스는 문턱을 관문 이름으로 읽는다", () => {

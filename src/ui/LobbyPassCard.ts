@@ -10,6 +10,24 @@ import { PROGRESS_PASS_TONE, progressPassProgressLabel } from "./PassPopup";
 import { pressIn, pressOut } from "./pressFeedback";
 import { COLOR, textStyle } from "./theme";
 import { squeezeTextToWidth } from "./textFit";
+import { playFadeIn } from "./screenTransition";
+import { PRODUCTS } from "../data/shopCatalog";
+import { session } from "../state/session";
+
+/**
+ * 마지막으로 받은 패스 목록 — 로비를 다시 세울 때마다 빈 판으로 서서 서버 답을 기다리지 않도록 계정마다 하나 기억한다.
+ * 하단 탭으로 로비에 돌아오면 이 값으로 **곧바로** 그리고, 새 답이 오면 바뀐 것이 있을 때만 그 자리에서 갈아 끼운다.
+ */
+let remembered: { owner: string; passes: ProgressPassDto[]; index: number } | undefined;
+/** 진행 중인 조회 — 로비가 연달아 서도(탭 왕복) 같은 조회를 겹쳐 보내지 않는다. */
+let inflight: Promise<ProgressPassDto[]> | undefined;
+
+function ownerKey(): string { return session.playerCard.uid ?? ""; }
+
+/** 패스 이름은 상품 정의가 갖는다(언어마다 갈아 끼워진다) — 이름 하나를 읽으려 프리미엄 상품 목록 전체를 묻지 않는다. */
+function passName(pass: ProgressPassDto): string {
+  return PRODUCTS.find(({ id }) => id === pass.productId)?.name ?? pass.id;
+}
 
 /**
  * 로비 왼쪽 위의 **패스 카드** — 스토리·레벨·레이드 패스가 한 장씩 서고, 일정 간격으로 다음 패스가 오른쪽에서
@@ -24,7 +42,8 @@ export class LobbyPassCard {
   private readonly slides: Phaser.GameObjects.Container;
   private readonly dots: Phaser.GameObjects.Graphics;
   private passes: ProgressPassDto[] = [];
-  private names = new Map<string, string>();
+  /** 지금 그린 패스 목록의 서명 — 다시 받은 답이 같으면 다시 그리지 않는다(새로고침처럼 깜빡이지 않게). */
+  private signature = "";
   private index = 0;
   private current?: Phaser.GameObjects.Container;
   /** 넘김 시계 — 씬 시계가 아니라 실제 시간이다. 씬 타이머는 프레임이 돌아야 깨어나 로비에서 깨어나지 않는 일이 있었다. */
@@ -51,6 +70,10 @@ export class LobbyPassCard {
     this.frame.add(hit);
     bindNotificationDot(scene, this.frame, { x: C.width / 2 - 12, y: -C.height / 2 + 12 }, (listener) => notificationManager.subscribe("passReward", listener));
     this.frame.once(Phaser.GameObjects.Events.DESTROY, () => window.clearInterval(this.timer));
+    const cached = remembered?.owner === ownerKey() ? remembered : undefined;
+    if (cached) this.show(cached.passes, cached.index);
+    // 처음 한 번은 기억한 것이 없다 — 빈 유리판을 먼저 세워 두지 않고, 답이 오면 판째 옅게 떠오른다.
+    else this.frame.setAlpha(0);
     this.refresh();
   }
 
@@ -59,22 +82,36 @@ export class LobbyPassCard {
   setVisible(visible: boolean): void { this.frame.setVisible(visible); }
 
   refresh(): void {
-    void Promise.all([this.api.getProgressPasses(), this.api.getProducts("premium")]).then(([list, catalog]) => {
-      if (!this.frame.active) return;
+    const request = inflight ?? this.api.getProgressPasses().then((list) => list.passes);
+    inflight = request;
+    const owner = ownerKey();
+    void request.finally(() => { if (inflight === request) inflight = undefined; }).then((passes) => {
+      if (!this.frame.active || owner !== ownerKey()) return;
       const first = this.passes.length === 0;
       const keep = this.passes[this.index]?.id;
-      this.passes = list.passes;
-      this.names = new Map(catalog.products.map((product) => [product.id, product.name]));
-      const target = first ? passToOpen(this.passes)?.id : keep;
-      this.index = Math.max(0, this.passes.findIndex(({ id }) => id === target));
-      this.current?.destroy();
-      this.current = this.paintSlide(this.index);
-      this.paintDots();
-      window.clearInterval(this.timer);
-      this.timer = undefined;
-      if (this.passes.length > 1) this.timer = window.setInterval(() => this.advance(), LOBBY_PASS_CARD.cycleMs);
+      const target = first ? passToOpen(passes)?.id : keep;
+      const index = Math.max(0, passes.findIndex(({ id }) => id === target));
+      if (passSignature(passes) === this.signature) { this.passes = passes; this.remember(); return; }
+      this.show(passes, index);
+      if (first) playFadeIn(this.scene, [this.frame]);
     }).catch(() => undefined);
   }
+
+  /** 패스 목록을 판에 세운다 — 지금 장을 갈아 끼우고 점 줄과 넘김 시계를 맞춘다. */
+  private show(passes: ProgressPassDto[], index: number): void {
+    this.passes = passes;
+    this.signature = passSignature(passes);
+    this.index = Math.min(Math.max(0, index), Math.max(0, passes.length - 1));
+    this.current?.destroy();
+    this.current = passes.length > 0 ? this.paintSlide(this.index) : undefined;
+    this.paintDots();
+    this.remember();
+    window.clearInterval(this.timer);
+    this.timer = undefined;
+    if (this.passes.length > 1) this.timer = window.setInterval(() => this.advance(), LOBBY_PASS_CARD.cycleMs);
+  }
+
+  private remember(): void { remembered = { owner: ownerKey(), passes: this.passes, index: this.index }; }
 
   /** 다음 패스가 오른쪽에서 쓱 밀려 들어오고 지금 패스는 왼쪽으로 빠지며 옅어진다. */
   private advance(): void {
@@ -83,6 +120,7 @@ export class LobbyPassCard {
     const C = LOBBY_PASS_CARD;
     const old = this.current;
     this.index = (this.index + 1) % this.passes.length;
+    this.remember();
     const next = this.paintSlide(this.index).setAlpha(0);
     this.current = next;
     this.paintDots();
@@ -139,7 +177,7 @@ export class LobbyPassCard {
     const level = passLevelOf(pass);
     const levelText = scene.add.text(contentRight, C.nameY + 2, t("lobby.pass.level", { level: level.level, max: level.max }), textStyle({ role: "emphasis", size: C.levelSize, color: `#${tone.toString(16).padStart(6, "0")}` }))
       .setOrigin(1, 0.5).setStroke("#05070a", 4);
-    const name = scene.add.text(contentLeft, C.nameY, this.names.get(pass.productId) ?? pass.id, textStyle({ role: "display", size: C.nameSize, color: COLOR.ink }))
+    const name = scene.add.text(contentLeft, C.nameY, passName(pass), textStyle({ role: "display", size: C.nameSize, color: COLOR.ink }))
       .setOrigin(0, 0.5).setStroke("#05070a", 5);
     squeezeTextToWidth(name, contentRight - levelText.width - 16 - contentLeft, 0.7);
     fg.add([name, levelText]);
@@ -178,6 +216,11 @@ export class LobbyPassCard {
         .fillPoints(toPoints([cx, D.y - h, cx + w, D.y, cx, D.y + h, cx - w, D.y]), true);
     });
   }
+}
+
+/** 판에 서는 값(레벨·받을 칸·진행도)만 모은 서명. */
+function passSignature(passes: readonly ProgressPassDto[]): string {
+  return JSON.stringify(passes.map((pass) => [pass.id, pass.owned, pass.progress, passReadyCount(pass), passLevelOf(pass).level, progressPassProgressLabel(pass)]));
 }
 
 /** 다각형(x, y 평탄 배열)을 세로 띠 [minX, maxX]로 자른다 — 볼록 도형이면 충분하다. */

@@ -11,7 +11,11 @@ import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
  */
 export const PASS_POPUP = {
   width: 1000,
-  height: 1600,
+  /**
+   * 상단 재화 줄과 판 밖 뒤로가기 사이에 든다. 1600일 때는 「패스 열기」 꼬리표가 재화 칩 밑변까지 올라가
+   * 상단 줄과 겹쳐 보였다 — 창이 가운데에 서므로 높이를 줄이면 위아래가 함께 물러난다.
+   */
+  height: 1540,
   /** 판 안쪽 여백. 줄·게이지·탭이 모두 이 폭 안에 든다. */
   inner: 920,
   header: { levelY: 92, levelSize: 52, progressSize: 26, gaugeY: 160, gaugeHeight: 26 },

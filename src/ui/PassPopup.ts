@@ -1,4 +1,6 @@
 import { formatStorePrice } from "../core/storePrice";
+import { notificationCorner } from "./notificationDotStyle";
+import { addClaimHalo } from "./claimHalo";
 import Phaser from "phaser";
 import { addScrollHint } from "./ScrollHint";
 import type { GameApi, ProductDto, ProgressPassDto, ProgressPassMilestoneDto } from "../api/contracts";
@@ -16,7 +18,7 @@ import { TabStripEdgeHint } from "./TabStripEdgeHint";
 import { hiddenDotSides, nearestHiddenDot, type TabStripSpec } from "../core/tabStrip";
 import { drawGlyph } from "./glyphs";
 import { addBannerArrow } from "./LabBannerTitle";
-import { chipPoints, drawLayer, drawShapeOutline, HoloBar, slantedRect, toPoints } from "./holo";
+import { chipPoints, drawLayer, drawShapeOutline, HoloBar, slantedRect } from "./holo";
 import { addFrameAmount, addFramedIcon, guideForIcon } from "./itemFrame";
 import { PASS_POPUP, passPopupArrowSpot, passPopupCanStep, passPopupColumns, passPopupFrameXs, passPopupListHeaderY, passPopupMinScroll, passPopupPassFollow, passPopupPassMinScroll, passPopupPassStrip, passPopupPassTabs, passPopupRailFill, passPopupRowY, passPopupScrollFor, passPopupViewport } from "./passPopupLayout";
 import { passLevelOf, passReadyCount, storyPassStageId } from "./passPopupModel";
@@ -197,7 +199,7 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
         root.add(scene.add.text(0, height / 2 - C.fromBottom - C.height / 2 - 30, message, textStyle({ role: "body", size: 22, color: COLOR.dangerText, align: "center", wrap: inner })).setOrigin(0.5));
       }
 
-      // 맨 아래 — 패스 탭. 받을 것이 있는 패스는 이름 뒤에 그 수가 붙는다.
+      // 맨 아래 — 패스 탭. 받을 것이 있는 패스는 붉은 점 하나가 말한다(수는 액자의 몫이다).
       const P = PASS_POPUP.passRow;
       const tabs = passPopupPassTabs(passes.length);
       const strip = mountPassStrip(scene, root, passes.length, passes.findIndex(({ id }) => id === pass.id), stripScroll, (value) => { stripScroll = value; });
@@ -207,13 +209,13 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
         const count = passReadyCount(entry);
         const tab = addCategoryTab(scene, undefined, {
           x: tabs.xs[index]!, y: 0, width: tabs.width, height: P.tabHeight,
-          label: count > 0 ? t("lobby.pass.tabCount", { name, count }) : name, selected: entry.id === pass.id,
+          label: name, selected: entry.id === pass.id,
           // 옆으로 끌다 놓은 손은 탭을 고르지 않는다.
           onSelect: () => { if (!strip.dragging()) goPass(entry.id); },
         });
         // 받을 것이 남은 다른 패스에는 어디서나 같은 붉은 점이 선다.
         dotted[index] = count > 0 && entry.id !== pass.id;
-        if (dotted[index]) new NotificationDot(scene, tab, { x: tabs.width / 2 - 22, y: -P.tabHeight / 2 + 12 });
+        if (dotted[index]) new NotificationDot(scene, tab, notificationCorner("tab", tabs.width, P.tabHeight));
         strip.add(tab);
       });
       // 그 패스가 창 밖에 가려져 있으면 그쪽 줄 끝이 붉게 숨 쉰다.
@@ -581,11 +583,9 @@ function paintRewardCell(scene: Phaser.Scene, list: PassScrollList, row: Phaser.
     const holder = scene.add.container(x + xs[index]!, 0);
     row.add(holder);
     if (ready) {
-      const glow = L.frame + Pulse.halo;
-      const halo = scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
-      halo.fillStyle(COLOR.missionClaim, Pulse.haloAlpha).fillPoints(toPoints(chipPoints(glow, glow, { bevel: { topLeft: glow * 0.28, topRight: 0, bottomRight: glow * 0.28, bottomLeft: 0 } })), true);
-      holder.add(halo);
-      list.track(scene.tweens.add({ targets: halo, alpha: { from: 0.3, to: 1 }, duration: Pulse.ms + 80, yoyo: true, repeat: -1, ease: "Sine.InOut" }));
+      const halo = addClaimHalo(scene, { size: L.frame, spread: Pulse.halo, alpha: Pulse.haloAlpha, duration: Pulse.ms + 80 });
+      holder.add(halo.image);
+      list.track(halo.tween);
     }
     const frame = addFramedIcon(scene, holder, 0, 0, L.frame, tile.icon, {
       plain: true, iconAlpha: claimed ? 0.35 : locked ? 0.7 : 1,

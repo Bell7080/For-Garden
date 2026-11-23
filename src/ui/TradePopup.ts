@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import type { GameApi, ProductDto, PurchaseProductResponse } from "../api/contracts";
 import type { Wallet } from "../core/gacha";
-import { TRADE_PACKAGES } from "../data/tradePackages";
+import { TRADE_DISPLAY_MAX } from "../data/tradePackages";
 import { Button } from "./Button";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
 import { PurchasePopup } from "./PurchasePopup";
@@ -34,6 +34,8 @@ export class TradePopup {
   /** 서버 응답마다 갈아 끼우는 상품 행만 소유해, 팝업 제목 같은 chrome의 수명과 분리한다. */
   private productList?: Phaser.GameObjects.Container;
   private products: ProductDto[] = [];
+  /** 서버 시각 − 기기 시각. 「교체까지」가 서버 시계로 센다. */
+  private serverOffsetMs = 0;
   private generation = 0;
   /** 재시도 버튼 연타가 동일 카탈로그 요청을 겹치지 않게 한다. */
   private readonly requestGate = new TradePopupRequestGate();
@@ -41,7 +43,7 @@ export class TradePopup {
    * 창 규격. 전시할 수 있는 최대 품목 수(정적 카탈로그)로 한 번 정한다 — 팝업은 열린 뒤 크기를
    * 바꿀 수 없고, 조회는 창을 띄운 다음에 끝나기 때문이다.
    */
-  private readonly shell = tradePackageLayout(TRADE_PACKAGES.length);
+  private readonly shell = tradePackageLayout(TRADE_DISPLAY_MAX);
   /** 판 원점의 화면 좌표. E2E에 넘길 입력 중심만 이 기준으로 절대 좌표로 옮긴다. */
   private readonly origin = { x: 540, y: this.shell.centerY } as const;
   /** 목록이 흐른 거리(≤ 0)와 그 한계. 서버가 돌려준 장수마다 한계를 다시 구한다. */
@@ -141,6 +143,7 @@ export class TradePopup {
       // 닫힌 뒤 또는 다른 세대에 도착한 성공 응답은 파괴된 Phaser 자식층을 만지지 않고 폐기한다.
       if (!this.isCurrent(generation)) return;
       this.products = tradePopupModel(response.products);
+      this.serverOffsetMs = Date.parse(response.serverTime) - Date.now();
       this.render();
     } catch {
       // 거절도 늦게 도착할 수 있으므로 현재 열린 세대일 때만 동적 영역을 실패 조작으로 교체한다.
@@ -192,6 +195,7 @@ export class TradePopup {
       this.productList?.add(new TradePackageCard(this.scene, 0, centers[index], {
         metrics: this.shell.card,
         view,
+        now: () => new Date(Date.now() + this.serverOffsetMs),
         onClick: (pointer) => {
           if (this.insideView(pointer)) { if (product) this.openPurchase(product); return; }
           // 판 밖으로 흘러나간(가려진) 카드 위에서 끝난 손은 판 밖을 누른 손이다 — 바깥 누르기와 같이 닫는다.

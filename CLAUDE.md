@@ -1732,7 +1732,7 @@
   선다), 자릿수가 늘어난 만큼 글자만 한 뼘 줄인다(`valueRatio`). 회복 시간처럼 **지금 당장
   조작을 바꾸지 않는 수는 칸에 넣지 않고** 눌러서 여는 창이 맡는다 — 한 줄에 다 넣으면 글자가
   칸을 넘고 정작 자주 보는 두 수가 작아진다.
-- **상단 줄의 설정 아이콘은 어느 화면에서나 눌린다**(`TopBarOptions.onSettings` 필수). 돌아올 자리를 진입 데이터로 다시 세울 수 없는 화면(편성·스토리 지도·던전 입구·레이드·결투장·길드 등)은 설정을 겹쳐 열고 잠들어 기다린다(`openSettingsOver` · 허용 목록 `SETTINGS_OVERLAY_HOSTS`). 서 있는데 눌리지 않는 아이콘을 다시 만들지 않는다.
+- **상단 줄의 설정 아이콘은 어느 화면에서나 눌린다**(`TopBarOptions.onSettings` 필수). 돌아올 자리를 진입 데이터로 다시 세울 수 없는 화면(편성·스토리 지도·던전 입구·레이드·결투장·길드 등)은 설정을 겹쳐 열고 잠들어 기다린다(`openSettingsOver` · 허용 목록 `SETTINGS_OVERLAY_HOSTS`). 서 있는데 눌리지 않는 아이콘을 다시 만들지 않는다. **대사 화면(오프닝·관문 이야기)은 대사판 조작 줄의 설정 칩**이 같은 겹침을 열고, 다시 세울 때는 `resumeNodeId`로 같은 노드에서 잇는다. **튜토리얼 막은 설정 입구를 막 위로 올린다**(`ui/settingsAccess.ts` — 새 설정 입구·정지 버튼은 `registerSettingsAccess`로 적는다). 설정이 부트로 나갈 때는 잠든 화면을 함께 멈춘다(`settingsLeaveStopKeys`).
 - **스테미나를 쓰는 입구는 상단 줄을 세운다** — 스토리 지도도 던전 입구와 같은 `TopBar`(프로필 없이)를 세우고,
   스테미나 칸을 누르면 그 자리에서 충전 창이 열린다. 흐르는 지도 위에 서야 하는 줄은 `depth`로 올린다.
 - **스테미나만 전용 창이다**(`src/ui/StaminaPopup.ts`). 다른 재화는 "무엇으로 얻고 어디에 쓰는가"만
@@ -2981,6 +2981,9 @@
 - 미보유 렐릭의 선택 유대는 `serverJournal.pendingStoryBondXp`에 적립하고 최초 획득의 복제 상태에서 지급·소진한다. 새 획득 경로는 `redeemDeferredStoryBond`를 같은 저장 전에 호출해야 한다. 두 장부는 선택 JSON 필드이며 구 저장은 빈 장부다. 과거 완료분의 선택을 추측해 소급 지급하지 않는다.
 
 - **한 계정은 한 기기에서만 플레이한다 — 나중에 접속한 기기가 이긴다**(`src/api/deviceSession.ts` · 표 `player_device_sessions`). 서버 연결이 서는 순간 `session.claim`이 앱을 띄울 때마다 새로 만든 기기 표식을 그 계정의 지금 기기로 세우고, 모든 `/api/game` 호출은 본문의 `device`로 표식을 싣는다. 표식이 다르면 `vercelEntry`가 규칙을 돌리기 전에 `409 session_replaced`로 거절해 밀려난 기기의 조작은 하나도 저장되지 않는다. 호출이 없어도 45초마다·앱이 앞으로 돌아올 때 `session.check`가 묻고, 겹 화면(`EffectOverlayScene`)이 모든 씬을 멈춘 뒤 「다른 기기에서 접속됨 · 다시 접속」 창을 띄운다(다시 접속은 새로 띄워 부트부터 지난다). **새 `/api/game` 호출 경로를 만들면 `deviceSessionField()`를 본문에 싣고 `noteDeviceSessionResponse`로 응답을 읽는다.** 표식이 없거나 표·함수가 없으면 막지 않는다(예전 클라이언트·마이그레이션 전). 표식은 인증 수단이 아니고 저장하지 않는다.
+- **서버만 알아야 하는 값은 응답으로 나가는 저장에서 가린다**(`server/clientState.ts` — `serverJournal`, 아직 파지 않은 고고학 칸). 저장에 새 서버 전용 값(씨앗·미공개 결과)을 두면 그 파일에서 함께 가리고 `clientResponseState.test`에 더한다. `download_my_save`는 같은 이유로 닫혀 있다 — 저장을 통째로 내주는 RPC를 로그인 사용자에게 다시 열지 않는다.
+- **전투 씨앗은 입장에 묶이고, 버린 판은 패배다.** 같은 입장의 발급표는 다시 받아도 같은 씨앗이다(`combatAuthority`의 `seeds`). 결투는 결과를 보내지 않은 판을 `forfeitOpenDuels`가 패배로 정산한다(다음 입장은 전부 · 그 밖의 결투 쓰기는 `DUEL_FORFEIT_AFTER_MS` 지난 판). 입장에서 값을 치르고 결과로 점수가 갈리는 새 경쟁 콘텐츠도 「끊으면 없던 판」이 되지 않게 같은 길을 둔다.
+- **기기 표식은 필수다** — 지금 기기가 세워진 계정은 표식 없는 호출도 거절한다(`deviceSessionAllowed`). 운영 계정은 인증 앱을 등록하면 2단계를 통과한 세션만 권한을 갖는다(`private.admin_mfa_ok`) — 운영 권한을 새로 판정하는 SQL은 `admin_roles`를 직접 읽지 말고 `private.admin_can`·`is_admin`을 지난다.
 - **앱은 원격 코드를 받지 않는다**(2026-11-16 응태 결정). 웹 자산은 앱 안에 번들하고 원격 `server.url`·라이브 업데이트를 쓰지 않으며, 서버가 내려주는 것은 데이터(`get_public_config`)뿐이다. 새 외부 SDK 도메인은 CSP에 더한다. 인증서 피닝은 하지 않는다. 체크리스트는 `docs/security-audit-2026-10-25.md`의 「앱 코드 배포 원칙」.
 - 친구·공유 레이드·전투 검증·속도 제한은 `docs/server-release.md`의 계약을 따른다. 새 RPC 마이그레이션을 먼저 적용한 뒤 서버/클라이언트를 같은 버전으로 배포한다.
 - **전투 코어는 엔진이 정의하는 수학 함수를 쓰지 않는다**(`src/core/detMath.ts`). `Math.hypot`·`sin`·`cos`·`atan2`·`exp`·`pow`는 V8(서버)과 JavaScriptCore(iOS)에서 마지막 자리가 달라질 수 있고, 그 한 자리가 사거리 비교를 뒤집으면 서버 재현이 어긋나 정상 승리가 `COMBAT_REJECTED`로 끝난다. `skirmish.ts`에는 `dHypot` 등 결정적 구현만 쓰며 `detMath.test`가 소스 모양으로 지킨다. 거절 사유는 응답 `detail`로 `client_errors`에 남는다.

@@ -13,6 +13,12 @@ export const ROTATION_SLOTS: readonly RotationSlot[] = [
   { id: "shop-weekly", period: "weekly", chancePercent: 25, candidates: ["shop-rune-weekly"] },
   { id: "raid-weekly", period: "weekly", chancePercent: 30, candidates: ["raid-rune-weekly"] },
   { id: "loot-weekly", period: "weekly", chancePercent: 30, candidates: ["loot-rune-weekly"] },
+  // 무역 전시대 — 룬이 아니라 재화 묶음이 돈다(`tradePackages.ts`). 셋은 늘 열리고 후보만 바뀌며,
+  // 연구 칸(화석·호박석)만 가끔 열리되 4주 연속 닫히면 다음 주는 확정이다(응태 승인 2026-11-23).
+  { id: "trade-weekly-supply", period: "weekly", chancePercent: 100, candidates: ["trade-cheesecake-supply", "trade-cheesecake-bulk"] },
+  { id: "trade-weekly-funds", period: "weekly", chancePercent: 100, candidates: ["trade-research-grant", "trade-gold-vault"] },
+  { id: "trade-weekly-research", period: "weekly", chancePercent: 35, pityAfterMisses: 4, candidates: ["trade-fossil-case", "trade-amber-case"] },
+  { id: "trade-daily", period: "daily", chancePercent: 100, candidates: ["trade-daily-bundle", "trade-gold-bundle", "trade-cheesecake-bundle"] },
 ];
 
 export function rotationSlot(id: string): RotationSlot | undefined {

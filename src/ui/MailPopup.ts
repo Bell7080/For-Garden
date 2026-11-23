@@ -1,4 +1,5 @@
 import { NotificationDot } from "./NotificationDot";
+import { notificationCorner } from "./notificationDotStyle";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import type { GameApi, MailDto, MailListResponse, MailRewardDto } from "../api/contracts";
@@ -345,7 +346,8 @@ export class MailPopup {
       const pending = this.result!.mails.filter((mail) => mailTabOf(mail) === tab && !isMailExpired(mail, nowMs) && (tab === "reward" ? !mail.claimed : !mail.read)).length;
       const label = addCategoryTab(this.scene, footer, { x: mailTabX(index), y: layout.tabY, width: layout.tab.width, height: layout.tab.height, label: t(`mail.tab.${tab}`), selected: tab === this.tab, onSelect: () => this.select(tab) });
       // 받을 것·읽을 것이 남은 탭은 공용 붉은 점 한 장이 말한다 — 숫자 판을 따로 세우던 때는 이 창만 다른 양식이었다.
-      if (pending > 0) new NotificationDot(this.scene, label, { x: layout.tab.width / 2 - 16, y: -layout.tab.height / 2 + 8 });
+      // 지금 열린 탭에는 세우지 않는다 — 그 목록의 우편이 저마다 점을 달고 있다.
+      if (pending > 0 && tab !== this.tab) new NotificationDot(this.scene, label, notificationCorner("tab", layout.tab.width, layout.tab.height));
     });
     const claimable = this.manager.claimableIds(this.result);
     const unreadNotices = this.result.mails.filter((mail) => mailTabOf(mail) === this.tab && !mail.read).map(({ id }) => id);

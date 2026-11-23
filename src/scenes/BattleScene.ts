@@ -101,6 +101,7 @@ import {
 } from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
 import { BattlePauseButton } from "../ui/BattlePauseButton";
+import { raiseSettingsAccess, registerSettingsAccess } from "../ui/settingsAccess";
 import { battlePauseActions } from "../core/battlePauseMenu";
 import { EffectOverlayScene } from "./EffectOverlayScene";
 import {
@@ -481,7 +482,7 @@ export class BattleScene extends Phaser.Scene {
    * 1-1 궁극기 안내. 렐릭마다 처음 궁극기가 찬 순간 한 번씩 멈추고 그 궁극기를 소개한다(`taught`).
    * 셋을 다 소개하면 `done`이다.
    */
-  private ultimateTutorial: { fighterId: string; done: boolean; active: boolean; taught: string[]; layer?: Phaser.GameObjects.GameObject[] } = { fighterId: "", done: false, active: false, taught: [] };
+  private ultimateTutorial: { fighterId: string; done: boolean; active: boolean; taught: string[]; layer?: Phaser.GameObjects.GameObject[]; releaseSettings?: () => void } = { fighterId: "", done: false, active: false, taught: [] };
   /** 자동 동시 준비를 직렬화하고 오래된 async 완료를 구분하는 순수 상태다. */
   private ultimateSequence: UltimateSequenceState = createUltimateSequenceState();
   /** 현재 컷인. 전투·씬 종료 정리에서 즉시 거두기 위한 참조다. */
@@ -856,7 +857,8 @@ export class BattleScene extends Phaser.Scene {
     if (this.battleInput.mode === "guildGuard") this.buildGuardHud();
 
     this.buildBattleControls();
-    new BattlePauseButton(this, () => this.openPauseMenu());
+    // 정지 버튼은 설정으로 가는 문이다 — 튜토리얼 막이 덮는 동안에도 그 위에 서서 눌린다(`settingsAccess`).
+    registerSettingsAccess(this, [new BattlePauseButton(this, () => this.openPauseMenu())]);
     this.buildAutoRepeatChip();
     const onSleep = (): void => { this.sleptAt = performance.now(); };
     const onWake = (): void => this.onWake();
@@ -1199,6 +1201,9 @@ export class BattleScene extends Phaser.Scene {
     if (this.finished || !this.spawned || this.ultimateSequenceActive) return;
     const popups = this.pausePopups ??= new PopupLayer(this, 2400);
     if (popups.isOpen) return;
+    // 조작 안내 막(6000)은 정지 창(2400)보다 위라 창을 가린다 — 창이 떠 있는 동안 걷고, 닫히면 다음 프레임에 다시 선다.
+    // 체험을 마친 것으로 치지 않으므로 둘째 누름 안내(「한 번 더」)도 그대로 이어진다.
+    if (this.featureSpotlight) { this.featureSpotlight.destroy(); this.featureSpotlight = undefined; }
     const actions = battlePauseActions(this.battleInput.mode, this.openingBattle());
     const rows: { label: string; primary?: boolean; destructive?: boolean; onPress: (close: () => void) => void }[] = [
       { label: t(this.openingBattle() ? "battle.pause.continue" : "battle.pause.resume"), primary: true, onPress: (close) => close() },
@@ -2010,6 +2015,8 @@ export class BattleScene extends Phaser.Scene {
     if (this.motion.battleUiFactor > 0) this.tweens.add({ targets: arrow, y: arrow.y + 18, duration: 520, yoyo: true, repeat: -1, ease: "Sine.InOut" });
     pick.prefab.setDepth(TUTORIAL_DEPTH + 1);
     tutorial.layer = [dim, panel, arrow];
+    // 안내가 덮는 동안에도 정지(설정) 버튼은 눌린다. 정지 창(2400)은 이 막(2000)보다 위다.
+    tutorial.releaseSettings = raiseSettingsAccess(this, TUTORIAL_DEPTH + 2);
   }
 
   /** 안내를 걷고 시간을 다시 흘린다. 궁극기를 눌렀을 때와 씬이 닫힐 때 부른다. */
@@ -2021,6 +2028,8 @@ export class BattleScene extends Phaser.Scene {
       object.destroy();
     });
     tutorial.layer = undefined;
+    tutorial.releaseSettings?.();
+    tutorial.releaseSettings = undefined;
     tutorial.active = false;
     if (tutorial.fighterId && !tutorial.taught.includes(tutorial.fighterId)) tutorial.taught.push(tutorial.fighterId);
     const allies = this.profiles.filter((profile) => profile.fighter.side === "player");
@@ -2037,12 +2046,15 @@ export class BattleScene extends Phaser.Scene {
   private maybeStartFeatureTutorial(): void {
     const feature = this.teachFeature;
     if (!feature || this.featureTaught || this.featureSpotlight || this.finished || this.ultimateSequenceActive || performance.now() < this.fightStartsAt) return;
+    if (this.pausePopups?.isOpen) return;
     if (tutorialManager.isDone(BATTLE_FEATURE_STEP[feature])) return;
     const chip = { speed: this.speedChip, auto: this.autoChip, presentation: this.presentationChip, contribution: this.contributionChip }[feature];
     const bounds = chip.getBounds();
+    // 정지 창에서 돌아와 다시 서는 안내는 첫 누름을 마친 칩이면 「한 번 더」 글을 잇는다.
+    const again = this.featureTappedOnce && BATTLE_FEATURE_TAP_AGAIN[feature];
     this.featureSpotlight = new TutorialSpotlight(this, {
       rect: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
-      text: t(`tutorial.battle.${feature}`),
+      text: again ? t(`tutorial.battle.${feature as "speed" | "presentation"}.again`) : t(`tutorial.battle.${feature}`),
       side: "above",
     });
   }

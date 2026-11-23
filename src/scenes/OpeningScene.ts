@@ -23,6 +23,7 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { t } from "../i18n";
 import { logError, reportCatch } from "../managers/ErrorReporter";
+import { openSettingsOver } from "./settingsOverlay";
 
 /**
  * 개발자용 건너뛰기. QA 빌드에서만 오프닝 상단에 버튼이 서고, 누르면 오프닝을 완료로 저장한 뒤
@@ -47,19 +48,31 @@ export class OpeningScene extends Phaser.Scene {
   private popups!: PopupLayer;
   /** 마지막 입력이 겹쳐도 완료 저장과 다음 화면(1-1 또는 로비) 전환은 한 번만 수행한다. */
   private transitioningOut = false;
+  /** 설정에서 언어·글자 크기를 바꿔 다시 선 화면이면 제목표를 건너뛰고 읽던 노드에서 잇는다. */
+  private resuming = false;
 
   constructor() { super("opening"); }
 
-  create(): void {
+  create(data: { resumeNodeId?: string } = {}): void {
     // 이 씬이 ready를 소유하는 동안 시작과 종료 모두 공용 수명주기 규칙으로 false를 보장한다.
     bindDebugReadyLifecycle(this.events);
     // Phaser가 같은 Scene 인스턴스를 회상에 재사용하므로 커서를 시작 노드로 되돌린다.
-    this.flow = new DialogueFlow(OPENING_TRAIN);
+    this.flow = new DialogueFlow(OPENING_TRAIN, data.resumeNodeId);
+    this.resuming = data.resumeNodeId !== undefined && this.flow.current.id === data.resumeNodeId;
     this.transitioningOut = false;
     setDebugScene("opening");
     // 배경 원화가 도착하기 전과 원화가 없는 빌드에서도 빈 캔버스가 아니라 어두운 판이 선다.
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void).setDepth(-40);
-    this.layer = new DialogueLayer(this, (choice) => this.advance(choice), { backdrop: OPENING_TRAIN.backdrop });
+    this.layer = new DialogueLayer(this, (choice) => this.advance(choice), {
+      backdrop: OPENING_TRAIN.backdrop,
+      // 완료 저장과 1-1 입장이 도는 중에는 열지 않는다 — 잠든 사이 그 길이 끝나면 전투가 설정 뒤에서 시작한다.
+      onSettings: () => {
+        if (this.transitioningOut) return;
+        openSettingsOver(this, "opening", { restartData: () => ({ resumeNodeId: this.flow.current.id }) });
+        // 깨어날 때 씬 경계가 비운 검사용 대사를 다시 게시한다(겹쳐 열기의 깨움 처리 뒤에 돈다).
+        this.events.once(Phaser.Scenes.Events.WAKE, () => setDebugDialogue(this.flow.current));
+      },
+    });
     this.layer.prefetch(dialogueStandingOrder(OPENING_TRAIN, speakerStanding));
     // 첫 노드 정보를 먼저 게시하되 DialogueFlow 잠금은 제목표와 Puppet 표시가 끝날 때까지 유지한다.
     setDebugDialogue(this.flow.current);
@@ -106,7 +119,7 @@ export class OpeningScene extends Phaser.Scene {
 
   /** 제목표가 걷힌 뒤에 첫 대사를 연다. 막 뒤에서 글이 먼저 흘러가지 않게 한다. */
   private async openStory(): Promise<void> {
-    if (OPENING_TRAIN.titleCard) {
+    if (OPENING_TRAIN.titleCard && !this.resuming) {
       await playStoryTitleCard(this, OPENING_TRAIN.titleCard);
       // 제목표가 도는 사이 씬이 닫혔으면 첫 대사를 열지 않는다.
       if (!this.scene.isActive()) return;

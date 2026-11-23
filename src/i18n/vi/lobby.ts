@@ -38,7 +38,6 @@ export const LOBBY_VI = {
   "lobby.pass.level": "Lv.{level} / {max}",
   "lobby.pass.tab.mission": "Nhiệm vụ",
   "lobby.pass.tab.reward": "Phần thưởng",
-  "lobby.pass.tabCount": "{name} · {count}",
   "lobby.pass.column.free": "Miễn phí",
   "lobby.pass.column.level": "Cấp",
   "lobby.pass.column.paid": "Thẻ",

@@ -106,7 +106,11 @@ export function showcaseCardShape(width: number, height: number, grow = 0): numb
  * 비네트는 카드의 월드 도형으로 매 프레임 마스킹한다 — 줄여 가며 두르는 옛 비네트는 가로로 긴
  * 카드에서 검은 잔상을 남긴다(`drawFrameVignette`). 마스크는 카드가 사는 동안만 산다.
  */
-export function paintShowcaseCard(scene: Phaser.Scene, card: Phaser.GameObjects.Container, options: ShowcaseChromeOptions): void {
+/**
+ * 카드 겉모습을 그린다. 꼬리표를 세웠으면 그 **오른쪽 끝과 높이**를 돌려준다 — 꼬리표 옆에 붙는
+ * 곁말(무역의 「교체까지」)이 자리를 다시 셈하지 않게 한다.
+ */
+export function paintShowcaseCard(scene: Phaser.Scene, card: Phaser.GameObjects.Container, options: ShowcaseChromeOptions): { tagRight: number; tagY: number } | undefined {
   const { width, height, accent } = options;
   const dim = options.dim ?? false;
   const shape = showcaseCardShape(width, height);
@@ -173,7 +177,9 @@ export function paintShowcaseCard(scene: Phaser.Scene, card: Phaser.GameObjects.
     const tagY = -height / 2 - tag.overhangY;
     card.add(drawLayer(scene, tagX, tagY, slantedRect(tagWidth, tag.height, 14), { fill: accent, alpha: dim ? 0.45 : 1 }));
     card.add(label.setPosition(tagX, tagY + 1));
+    return { tagRight: tagX + tagWidth / 2, tagY };
   }
+  return undefined;
 }
 
 /** 상품 받침 한 장. 판 위로 강조색 빛이 고이고, 판 윗변에 강조선 한 줄이 선다. */

@@ -4,8 +4,9 @@ import { startAfterOpening } from "./openingSave";
 import { RELICS, sortRelicsBySpecimenNumber } from "../../src/data/relics";
 import { compareBookmarkedOwnedRelics } from "../../src/core/relicCatalog";
 import type { Session } from "../../src/state/session";
-import { canvasBox, captureGame, tap, tapUntil, waitForCanvasInputFrame } from "./canvasInput";
+import { canvasBox, captureGame, longPress, tap, tapUntil, waitForCanvasInputFrame } from "./canvasInput";
 import { RUNE_CRAFT_PANEL, runeCraftLayout } from "../../src/ui/runeCraftLayout";
+import { RUNE_NAME_EDITOR } from "../../src/ui/runeNameEditorLayout";
 import { RUNE_PICK_GRID, runePickerListTop, runePickerSize } from "../../src/ui/runePickerLayout";
 
 test("룬 선택창은 검색과 필터 초기화를 지원하고 상세창 뒤의 입력을 숨긴다", async ({ page }, testInfo) => {
@@ -74,8 +75,8 @@ function firstCatalogRelicId(session: Session): string {
  * 세공 버튼은 조각 위쪽으로 붙는 팝업의 아래쪽에 서므로, 조각 좌표에서 일정한 거리만큼 위다.
  */
 async function openFirstRune(page: Page): Promise<void> {
-  await tap(page, W / 2, H / 2);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  // 타이틀은 로딩이 끝난 뒤에야 누름을 받는다 — 한 번 누르고 기다리면 이른 누름이 버려진다.
+  await tapUntil(page, W / 2, H / 2, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "lobby");
   // 로비는 이름이 바뀐 뒤에도 하단 탭의 입력면을 마저 만든다 — 될 때까지 다시 누른다.
   await tapUntil(page, W * 0.3, H - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
   // **도감의 첫 카드**를 연다 — 룬을 끼운 렐릭과 같은 자리여야 한다. 예전에는 두 번째 칸을
@@ -92,6 +93,10 @@ async function openFirstRune(page: Page): Promise<void> {
   await page.waitForTimeout(1200);
   await expect.poll(() => page.evaluate(() => Boolean(window.__PF_DEBUG?.infoGemSlots?.[0])), { timeout: 15_000 }).toBe(true);
   await tap(page, 688, 1350);
+  // 룬 칸은 룬 정비 창을 연다. 그 창의 하트 1번 조각을 꾹 누르면 그 룬의 쪽지가 열린다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("룬 정비");
+  await page.waitForTimeout(400);
+  await longPress(page, 471, 245);
   // 쪽지의 세공 버튼은 줄 구성(세공·해제 / 세공·장착·판매)에 따라 자리가 달라진다 — 화면이
   // 알려 주는 좌표를 쓴다. 좌표를 적어 두면 쪽지 바깥을 눌러 그냥 닫아 버린다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.runeNoteCraft !== undefined)).toBe(true);
@@ -119,10 +124,15 @@ test("세로 화면에서 전설 5행×3칸, 긴 옵션명, 키보드 이름 입
   await tap(page, pencil.x, pencil.y);
   const input = page.getByLabel("룬 이름");
   await expect(input).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("룬 이름");
+  // 글자 수 상한(20자)을 넘는 입력은 칸이 잘라 낸다 — 서버와 같은 규칙이다.
   await input.fill("긴 이름을 가진 전설의 궁극기 충전 룬");
   await input.press("Enter");
   await captureGame(page, `test-results/${test.info().project.name}-rune-legendary.png`);
-  await tap(page, 20, 20);
+  // 저장은 판 안의 버튼 하나뿐이다. 자리는 변경창 배치표에서 얻는다.
+  const editorTop = H * RUNE_NAME_EDITOR.centerRatio - RUNE_NAME_EDITOR.height / 2;
+  await tap(page, W / 2, editorTop + RUNE_NAME_EDITOR.save.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).not.toContain("룬 이름");
   await expect(input).toBeHidden();
 });
 

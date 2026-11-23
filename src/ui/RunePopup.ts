@@ -39,6 +39,7 @@ import { tutorialManager } from "../managers/TutorialManager";
 import { logError, reportCatch } from "../managers/ErrorReporter";
 import { showContentToast } from "./ContentToast";
 import { guideFreeRuneCraft, unionRects } from "./freeRuneCraftTutorial";
+import { openRuneNamePopup } from "./RuneNamePopup";
 import { addPageChevrons } from "./PageChevrons";
 import { runeBrowseNeighbor, runeBrowsePosition, runeBrowseSwipe } from "../core/runeBrowse";
 
@@ -144,28 +145,6 @@ function addEquippedHolderLine(scene: Phaser.Scene, body: Phaser.GameObjects.Con
 /** 등급색을 텍스트 스타일이 받는 `#rrggbb` 문자열로 바꾼다. */
 function hex(color: number): string {
   return `#${color.toString(16).padStart(6, "0")}`;
-}
-
-/** 캔버스 위에 잠깐 놓는 이름 입력이다. 완료/취소 때 반드시 제거해 씬에 DOM 잔여물을 남기지 않는다. */
-function requestRuneName(scene: Phaser.Scene, current: string, commit: (name: string) => Promise<void>): void {
-  const input = document.createElement("input");
-  input.value = current;
-  input.maxLength = 16;
-  input.placeholder = t("rune.namePlaceholder");
-  input.setAttribute("aria-label", t("rune.nameTitle"));
-  Object.assign(input.style, { position: "fixed", left: "50%", top: "19%", transform: "translateX(-50%)", width: "min(70vw, 520px)", padding: "14px", zIndex: "10000", background: "#0b0f15", color: "#f2f0ec", border: "1px solid #62d9ff", fontSize: "20px" });
-  document.body.append(input);
-  input.focus(); input.select();
-  let done = false;
-  const finish = async (save: boolean): Promise<void> => {
-    if (done) return;
-    done = true;
-    input.remove();
-    if (save && input.value.trim()) await commit(input.value);
-  };
-  input.addEventListener("keydown", (event) => { if (event.key === "Enter") void finish(true); if (event.key === "Escape") void finish(false); });
-  input.addEventListener("blur", () => void finish(true));
-  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => void finish(false));
 }
 
 /**
@@ -813,15 +792,17 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         setDebugRuneForgeRename({ x: bounds.centerX, y: bounds.centerY });
       });
       renameHit.once(Phaser.GameObjects.Events.DESTROY, () => setDebugRuneForgeRename(undefined));
-      renameHit.on("pointerup", (pointer: Phaser.Input.Pointer) => !draggedPointer(pointer) && requestRuneName(scene, rune!.customName ?? "", async (value) => {
-        if (pending) return; pending = true;
-        try {
-          const response = await inventory.renameRune(api, rune!.instanceId, value);
-          rune = response.rune; options.onChanged?.(rune);
-          pending = false;
-          render(t("rune.nameSaved"));
-        } catch (error) { pending = false; throw error; }
-      }));
+      renameHit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (draggedPointer(pointer) || pending || !rune) return;
+        openRuneNamePopup(scene, popups, {
+          rune,
+          save: async (value) => {
+            const response = await inventory.renameRune(api, rune!.instanceId, value);
+            rune = response.rune; options.onChanged?.(rune);
+            if (!closed) render(t("rune.nameSaved"));
+          },
+        });
+      });
       content.add(renameHit);
 
       // 확률 줄 — 한 줄을 성공과 실패가 나눠 가지고, 그 위의 두 수치가 같은 값을 함께 읽는다.

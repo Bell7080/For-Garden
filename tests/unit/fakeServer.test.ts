@@ -412,6 +412,15 @@ describe("FakeServer", () => {
     expect(state.relicProgress.torika.heartGemSlots).toEqual(["rune-1", null, null]);
   });
 
+  it("룬 이름은 공용 규칙으로 다듬고 금칙어를 따로 거부한다", async () => {
+    const state = makeSession(); state.runeInventory = [makeRune()];
+    const server = new FakeServer(state, { latencyMs: 0, bannedWords: ["운영자"] });
+    await expect(server.renameRune({ runeInstanceId: "rune-1", name: "운영자 룬" })).rejects.toMatchObject({ code: "RUNE_NAME_BANNED" });
+    await expect(server.renameRune({ runeInstanceId: "rune-1", name: "가".repeat(21) })).rejects.toMatchObject({ code: "INVALID_RUNE_NAME" });
+    const renamed = await server.renameRune({ runeInstanceId: "rune-1", name: "  붉은   🔥  룬 " });
+    expect(renamed.rune.customName).toBe("붉은 🔥 룬");
+  });
+
   it("옮겨 끼우기를 허용하면 원래 렐릭에서 빼고 한 저장으로 새 렐릭에 끼운다", async () => {
     const state = makeSession(); state.runeInventory = [makeRune()];
     const server = new FakeServer(state, { latencyMs: 0 });

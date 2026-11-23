@@ -308,8 +308,8 @@ function __spreadArrays() {
       r[k] = a[j];
   return r;
 }
-function __spreadArray(to, from, pack) {
-  if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+function __spreadArray(to, from, pack2) {
+  if (pack2 || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
     if (ar || !(i in from)) {
       if (!ar) ar = Array.prototype.slice.call(from, 0, i);
       ar[i] = from[i];
@@ -5271,6 +5271,8 @@ var SETTINGS_KO = {
   "settings.play.powerSaving": "\uC808\uC804 \uBAA8\uB4DC",
   "settings.play.lobbyAtmosphere": "\uB85C\uBE44 \uBE5B \uD6A8\uACFC",
   "settings.play.graphicsQuality": "\uADF8\uB798\uD53D \uD488\uC9C8",
+  "settings.play.antialias": "\uC548\uD2F0\uC5D0\uC77C\uB9AC\uC5B4\uC2F1",
+  "settings.play.antialiasNote": "\uB044\uBA74 \uAC00\uBCBC\uC6CC\uC9C0\uC9C0\uB9CC \uAC00\uC7A5\uC790\uB9AC\uAC00 \uAC70\uCE60\uC5B4\uC9D1\uB2C8\uB2E4. \uB2E4\uC74C \uC2E4\uD589\uBD80\uD130 \uC801\uC6A9\uB429\uB2C8\uB2E4.",
   "settings.play.quality.high": "\uB192\uC74C",
   "settings.play.quality.balanced": "\uADE0\uD615",
   "settings.play.quality.low": "\uB0AE\uC74C",
@@ -5359,7 +5361,6 @@ var LOBBY_KO = {
   "lobby.sortie": "\uCD9C  \uACA9",
   "lobby.interaction": "\uAD50\uB958",
   "lobby.excavation": "\uBC1C\uAD74",
-  "lobby.excavation.sub": "\uC790\uC6D0 \uC218\uC9D1",
   "lobby.sortie.title": "\uCD9C\uACA9",
   "lobby.sortie.story": "\uC2A4\uD1A0\uB9AC",
   "lobby.sortie.story.status": "\uBA54\uC778 \uC791\uC804",
@@ -5399,7 +5400,6 @@ var LOBBY_KO = {
   "lobby.pass.level": "Lv.{level} / {max}",
   "lobby.pass.tab.mission": "\uBBF8\uC158",
   "lobby.pass.tab.reward": "\uBCF4\uC0C1",
-  "lobby.pass.tabCount": "{name} \xB7 {count}",
   "lobby.pass.column.free": "\uBB34\uB8CC",
   "lobby.pass.column.level": "\uB808\uBCA8",
   "lobby.pass.column.paid": "\uD328\uC2A4",
@@ -5712,7 +5712,6 @@ var INFO_KO = {
   "info.rune.threeSlots": "\uB8EC \uC138 \uC790\uB9AC",
   "info.rune.complete": "\uC138 \uC870\uAC01\uC774 \uBAA8\uB450 \uB9DE\uBB3C\uB838\uB2E4.",
   "info.rune.filled": "\uCC44\uC6B4 \uC790\uB9AC {count}",
-  "info.rune.loadout.recommend": "\uCD94\uCC9C \uC7A5\uCC29",
   "info.rune.loadout.clear": "\uBAA8\uB450 \uD574\uC81C",
   "info.rune.loadout.none": "\uC9C0\uAE08\uBCF4\uB2E4 \uB098\uC740 \uB8EC\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "info.rune.loadout.done": "\uC804\uD22C\uB825 {before} \u2192 {after}",
@@ -5730,16 +5729,18 @@ var INFO_KO = {
   "info.rune.workbench.unequip": "\uD574\uC81C",
   "info.rune.workbench.apply": "\uC801\uC6A9 ({count}\uCE78)",
   "info.rune.workbench.applyNone": "\uC801\uC6A9",
-  "info.rune.workbench.drafted": "\uC784\uC2DC\uB85C \uCC44\uC6E0\uC2B5\uB2C8\uB2E4 \xB7 \uC801\uC6A9\uC744 \uB20C\uB7EC \uC800\uC7A5",
+  "info.rune.workbench.drafted": "\uAD50\uCCB4 \uBE44\uAD50\uC5D0 \uC62C\uB838\uC2B5\uB2C8\uB2E4 \xB7 \uC801\uC6A9\uC744 \uB20C\uB7EC \uC7A5\uCC29",
   "info.rune.workbench.unsavedTitle": "\uBCC0\uACBD \uC801\uC6A9",
   "info.rune.workbench.unsaved": "\uBC14\uAFBC \uCE78 {count}\uAC1C\uB97C \uC801\uC6A9\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.\n\uC801\uC6A9\uD560\uAE4C\uC694?",
   "info.rune.workbench.applyAndLeave": "\uC801\uC6A9\uD558\uAE30",
   "info.rune.workbench.discard": "\uC801\uC6A9\uD558\uC9C0 \uC54A\uAE30",
   "info.rune.workbench.compareTitle": "\uAD50\uCCB4 \uBE44\uAD50",
   "info.rune.workbench.moveLead": "\uB2E4\uB978 \uB810\uB9AD\uC774 \uB07C\uACE0 \uC788\uB294 \uC544\uB798 \uB8EC\uC744 \uBE7C \uC640\uC11C \uB07C\uC6C1\uB2C8\uB2E4.",
+  "info.rune.workbench.freeLead": "\uC544\uBB34\uB3C4 \uB07C\uC9C0 \uC54A\uC740 \uB8EC\uC73C\uB85C \uACE0\uB978 \uCD94\uCC9C\uC785\uB2C8\uB2E4.",
+  "info.rune.workbench.toCompare": "\uAD50\uCCB4 \uBE44\uAD50\uC5D0 \uC62C\uB9AC\uAE30",
   "info.rune.workbench.moveSlot": "{slot}\uBC88 \uCE78",
   "info.rune.workbench.moveAccept": "\uC62E\uACA8 \uB07C\uAE30",
-  "info.rune.workbench.moveFree": "\uB0A8\uC740 \uB8EC\uB9CC",
+  "info.rune.workbench.moveFree": "\uB0A8\uC740 \uB8EC \uB07C\uAE30",
   "info.journal.title": "\uAD00\uCC30 \uC77C\uC9C0",
   "info.journal.fossilRecord": "\uBC1C\uAD74 \uAE30\uB85D",
   "info.journal.diaryTitle": "\uAD00\uCC30 \uC77C\uAE30",
@@ -5903,7 +5904,7 @@ var LAB_KO = {
   "lab.mileageShop.short": "\uB9C8\uC77C\uB9AC\uC9C0",
   "lab.pity.label": "SSR \uD655\uC815\uAE4C\uC9C0",
   "lab.pity.unit": "\uD68C",
-  "lab.pity.pickupNext": "\uB2E4\uC74C SSR \uD53D\uC5C5 \uD655\uC815",
+  "lab.pity.pickupNext": "SSR \uB4F1\uC7A5 \uC2DC \uD53D\uC5C5 \uD655\uC815",
   "lab.pull.one": "1\uD68C \uC5F0\uAD6C",
   "lab.pull.freeToday": "\uC624\uB298 \uBB34\uB8CC!",
   "lab.pull.ten": "10\uD68C \uC5F0\uAD6C",
@@ -6119,7 +6120,16 @@ var EXCAVATION_KO = {
   "excavation.settling": "\uBC1C\uAD74 \uD604\uD669\uC744 \uD655\uC778\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4\u2026",
   "excavation.loadFailed": "\uBC1C\uAD74 \uAE30\uB85D\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
   "excavation.retry": "\uB2E4\uC2DC \uC2DC\uB3C4",
-  "excavation.storage": "\uBCF4\uAD00\uB7C9 {percent}%",
+  "excavation.storage": "\uBCF4\uAD00\uB7C9",
+  "excavation.untilFull": "\uAC00\uB4DD \uCC28\uAE30\uAE4C\uC9C0 {time}",
+  "excavation.storageFull": "\uBCF4\uAD00 \uAC00\uB4DD \xB7 \uC218\uD655\uD574 \uC8FC\uC138\uC694",
+  "excavation.noProduction": "\uBC30\uCE58\uD55C \uB810\uB9AD\uC774 \uC5C6\uC5B4 \uC313\uC774\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4",
+  "excavation.ad.withDuration": "{effect} \xB7 {duration}",
+  "excavation.duration.hours": "{hours}\uC2DC\uAC04",
+  "excavation.duration.minutes": "{minutes}\uBD84",
+  "excavation.ad.active": "\uC9C4\uD589 \uC911",
+  "excavation.ad.activeSub": "\uB0A8\uC740 \uC2DC\uAC04 {time} \xB7 {usage}",
+  "excavation.ad.idleSub": "\uAD11\uACE0 \uBCF4\uAE30 {usage}",
   "excavation.accumulated": "\uB204\uC801 \uBC1C\uAD74",
   "excavation.harvestCapped": "\uC218\uD655 \uC644\uB8CC \xB7 \uC9C0\uAC11 \uC0C1\uD55C \uC190\uC2E4",
   "excavation.harvestBusy": "\uC218\uD655 \uC911\u2026",
@@ -6129,7 +6139,6 @@ var EXCAVATION_KO = {
   "excavation.harvestFailed": "\uC218\uD655\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uAC19\uC740 \uC694\uCCAD\uC73C\uB85C \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "excavation.ad.unavailable": "\uAD11\uACE0\uB97C \uC774\uC6A9\uD560 \uC218 \uC5C6\uC5B4\uB3C4 \uC77C\uBC18 \uC218\uD655\uC740 \uACC4\uC18D\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
   "excavation.ad.cancelled": "\uAD11\uACE0\uAC00 \uCDE8\uC18C\uB418\uC5C8\uAC70\uB098 \uC900\uBE44\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. \uC77C\uBC18 \uC218\uD655\uC744 \uC774\uC6A9\uD574 \uC8FC\uC138\uC694.",
-  "excavation.ad.applied": "\uBC1C\uAD74 \uD6A8\uACFC\uAC00 \uC801\uC6A9\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
   "excavation.ad.verifyFailed": "\uAD11\uACE0 \uAC80\uC99D\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC77C\uBC18 \uC218\uD655\uC740 \uADF8\uB300\uB85C \uAC00\uB2A5\uD569\uB2C8\uB2E4.",
   "excavation.ownedRelics": "\uBCF4\uC720 \uB810\uB9AD",
   "excavation.ownedRelicsForSlot": "\uBCF4\uC720 \uB810\uB9AD \xB7 {slot}\uBC88 \uCE78\uC5D0 \uBC30\uCE58",
@@ -6408,8 +6417,6 @@ var GUILD_KO = {
   "guild.info.perkNone": "\uD61C\uD0DD\uC740 \uB808\uBCA8 3\uBD80\uD130 \uC5F4\uB9BD\uB2C8\uB2E4",
   "guild.info.perkShop": "\uAE38\uB4DC \uC0C1\uC810 \uB808\uBCA8 \uCE78 \uAC1C\uBC29",
   "guild.levelUp.title": "\uAE38\uB4DC \uB808\uBCA8 \uC5C5",
-  "guild.levelUp.message": "\uAE38\uB4DC\uAC00 Lv.{level:\uC774} \uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
-  "guild.levelUp.ok": "\uD655\uC778",
   "guild.info.noticeEmpty": "\uACF5\uC9C0\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4",
   "guild.info.settings": "\uAE38\uB4DC \uC124\uC815",
   "guild.info.leave": "\uD0C8\uD1F4",
@@ -6448,7 +6455,6 @@ var GUILD_KO = {
   "guild.members.kick": "\uCD94\uBC29",
   "guild.members.kickTitle": "\uBA64\uBC84 \uCD94\uBC29",
   "guild.members.kickConfirm": "{name:\uC744} \uAE38\uB4DC\uC5D0\uC11C \uB0B4\uBCF4\uB0C5\uB2C8\uB2E4.",
-  "guild.members.close": "\uB2EB\uAE30",
   // 출석
   "guild.time.hm": "{h}\uC2DC\uAC04 {m}\uBD84",
   "guild.time.m": "{m}\uBD84",
@@ -6506,8 +6512,6 @@ var GUILD_KO = {
   "guild.guard.reward": "\uC77C\uC77C \uBCF4\uC0C1",
   "guild.guard.rules": "\uB9E4\uC77C 00:00(UTC)\uC5D0 \uADF8\uB0A0 \uAE38\uB4DC\uC6D0 \uCD5C\uACE0 \uC810\uC218\uC758 \uD569\uC73C\uB85C \uAE38\uB4DC \uC21C\uC704\uAC00 \uC815\uD574\uC9D1\uB2C8\uB2E4. \uADF8\uB0A0 \uC218\uD638\uC804\uC744 \uD55C \uAE38\uB4DC\uC6D0 \uBAA8\uB450\uAC00 \uAE38\uB4DC \uCF54\uC778\uC744 \uBC1B\uC2B5\uB2C8\uB2E4.",
   "guild.guard.notice.title": "\uC218\uD638\uC804 \uC21C\uC704 \uBCF4\uC0C1",
-  "guild.guard.notice.message": "\uC5B4\uC81C \uC218\uD638\uC804\uC5D0\uC11C \uAE38\uB4DC\uAC00 {rank}\uC704\uC5D0 \uC62C\uB790\uC2B5\uB2C8\uB2E4.\n\uAE38\uB4DC \uCF54\uC778 {coin}\uAC1C\uB97C \uBC1B\uC558\uC2B5\uB2C8\uB2E4.",
-  "guild.guard.notice.ok": "\uD655\uC778",
   "guild.attendance.raceRank": "{rank}\uC704",
   "guild.attendance.raceLabel": "\uC774\uBC88 \uC8FC \uAE30\uC5EC",
   "guild.attendance.overtake": "\uC5ED\uC804!",
@@ -6617,12 +6621,16 @@ var GUILD_KO = {
   "guild.war.front.closedElite": "\uC77C\uBC18 \uCE78 \uC808\uBC18\uC774 \uBB34\uB108\uC9C0\uBA74 \uC5F4\uB9BD\uB2C8\uB2E4",
   "guild.war.front.closedBoss": "\uC815\uC608 \uB458\uC774 \uBB34\uB108\uC9C0\uBA74 \uC5F4\uB9BD\uB2C8\uB2E4",
   "guild.war.front.attack": "\uACF5\uACA9",
-  "guild.war.notice.title": "\uAE38\uB4DC\uC804 \uACB0\uACFC",
-  "guild.war.notice.win": "{name}\uC5D0\uAC8C \uC2B9\uB9AC\uD588\uC2B5\uB2C8\uB2E4",
-  "guild.war.notice.loss": "{name}\uC5D0\uAC8C \uD328\uBC30\uD588\uC2B5\uB2C8\uB2E4",
-  "guild.war.notice.bye": "\uB9DE\uBD99\uC744 \uC0C1\uB300\uAC00 \uC5C6\uC5B4 \uBD80\uC804\uC2B9\uC785\uB2C8\uB2E4",
-  "guild.war.notice.forfeit": "\uACF5\uACA9\uD558\uC9C0 \uC54A\uC544 \uAE30\uAD8C \uCC98\uB9AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4",
-  "guild.war.notice.detail": "\uC810\uC218 {mine} : {theirs} \xB7 \uAE38\uB4DC\uC804 \uC810\uC218 {delta} \xB7 \uAE38\uB4DC \uCF54\uC778 {coin}\uAC1C"
+  "guild.war.result.win": "\uC2B9\uB9AC",
+  "guild.war.result.loss": "\uD328\uBC30",
+  "guild.war.result.bye": "\uBD80\uC804\uC2B9",
+  "guild.war.result.forfeit": "\uAE30\uAD8C",
+  "guild.war.result.noOpponent": "\uC0C1\uB300 \uC5C6\uC74C",
+  "guild.war.result.delta": "\uAE38\uB4DC\uC804 \uC810\uC218 {delta}",
+  "guild.guard.result.label": "\uC5B4\uC81C \uC218\uD638\uC804 \uC21C\uC704",
+  "guild.guard.result.rank": "{rank}\uC704",
+  "guild.levelUp.gained": "\uC0C8\uB85C \uC5F4\uB9B0 \uD61C\uD0DD",
+  "guild.war.notice.title": "\uAE38\uB4DC\uC804 \uACB0\uACFC"
 };
 
 // src/i18n/ko/rune.ts
@@ -6642,9 +6650,13 @@ var RUNE_KO = {
   "rune.bag.trait.without": "\uD2B9\uC131 \uC5C6\uC74C",
   "rune.search": "\uC774\uB984\xB7\uC635\uC158\xB7\uD2B9\uC131 \uAC80\uC0C9",
   "rune.list.count": "{shown} / {total}",
-  "rune.namePlaceholder": "\uB8EC \uC774\uB984 (1~16\uC790)",
   "rune.nameTitle": "\uB8EC \uC774\uB984",
   "rune.nameSaved": "\uC774\uB984\uC744 \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4.",
+  "rune.nameSave": "\uC774\uB984 \uC800\uC7A5",
+  "rune.nameError.empty": "\uC774\uB984\uC744 \uC785\uB825\uD574 \uC8FC\uC138\uC694.",
+  "rune.nameError.invalid": "\uC4F8 \uC218 \uC5C6\uB294 \uAE00\uC790\uAC00 \uB4E4\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.",
+  "rune.nameError.banned": "\uC4F8 \uC218 \uC5C6\uB294 \uB9D0\uC774 \uB4E4\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.",
+  "rune.nameError.failed": "\uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "rune.sell": "\uD310\uB9E4",
   "rune.sell.title": "\uB8EC \uD310\uB9E4",
   "rune.sell.message": "\uC774 \uB8EC\uC744 \uD310\uB9E4\uD569\uB2C8\uB2E4. \uD310\uB9E4\uD55C \uB8EC\uC740 \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
@@ -6701,6 +6713,11 @@ var RUNE_KO = {
   "rune.trait.odds.percent": "{percent}%",
   "rune.trait.odds.pity": "{count}\uD68C",
   "rune.trait.odds.max": "\uCD5C\uACE0 \uB4F1\uAE09",
+  "rune.trait.odds.tip.grade": "\uC7AC\uD574\uC11D\uC73C\uB85C \uC815\uD574\uC9C0\uB294 \uD2B9\uC131\uC758 \uB4F1\uAE09\uC785\uB2C8\uB2E4. \uB192\uC744\uC218\uB85D \uD2B9\uC131 \uC218\uCE58\uAC00 \uD07D\uB2C8\uB2E4.",
+  "rune.trait.odds.tip.chance": "\uC7AC\uD574\uC11D \uD55C \uBC88\uC5D0 \uD2B9\uC131\uC774 \uD55C \uB4F1\uAE09 \uC624\uB97C \uD655\uB960\uC785\uB2C8\uB2E4. \uC904\uC744 \uB204\uB974\uBA74 \uADF8 \uB4F1\uAE09\uC758 \uD2B9\uC131 \uC218\uCE58\uAC00 \uD3BC\uCCD0\uC9D1\uB2C8\uB2E4.",
+  "rune.trait.odds.tip.pity": "\uC7AC\uD574\uC11D\uC774 {count}\uBC88 \uC5F0\uB2EC\uC544 \uC624\uB974\uC9C0 \uBABB\uD558\uBA74 \uB2E4\uC74C \uC7AC\uD574\uC11D\uC740 \uBC18\uB4DC\uC2DC \uD55C \uB4F1\uAE09 \uC624\uB985\uB2C8\uB2E4.",
+  "rune.trait.odds.tip.top": "\uCD5C\uACE0 \uB4F1\uAE09\uC774\uB77C \uB354 \uC624\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+  "rune.trait.odds.tip.cost": "\uC774 \uB4F1\uAE09\uC758 \uD2B9\uC131\uC744 \uC7AC\uD574\uC11D\uD560 \uB54C\uB9C8\uB2E4 \uC6D0\uC11D {cost}\uAC1C\uAC00 \uB4ED\uB2C8\uB2E4.",
   "rune.trait.stack.sum": "\uC218\uCE58\uAC00 \uD569\uC0B0\uB41C\uB2E4.",
   "rune.trait.stack.independent": "\uB8EC\uB9C8\uB2E4 \uB530\uB85C \uBC1C\uB3D9\uD55C\uB2E4.",
   "rune.trait.stack.none": "\uC911\uCCA9\uB418\uC9C0 \uC54A\uB294\uB2E4.",
@@ -6783,7 +6800,17 @@ var RUNE_KO = {
   "rune.bulkCraft.confirm": "\uB8EC {count}\uAC1C\uC758 \uB0A8\uC740 \uC138\uACF5 {attempts}\uD68C\uB97C \uC9C4\uD589\uD569\uB2C8\uB2E4.",
   "rune.bulkCraft.confirmEngrave": "\uB8EC {count}\uAC1C\uC758 \uB0A8\uC740 \uC138\uACF5 {attempts}\uD68C\uB97C \uC9C4\uD589\uD558\uACE0, {engravings}\uAC1C\uB97C {target}\uC5D0 \uAC01\uC778\uD569\uB2C8\uB2E4. \uAC01\uC778\uC740 \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "rune.bulkCraft.done": "\uC138\uACF5 {attempts}\uD68C \uC911 {successes}\uD68C \uC131\uACF5 \xB7 \uAC01\uC778 {engraved}\uAC1C",
-  "rune.bulkCraft.failed": "\uC77C\uAD04 \uC138\uACF5\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4."
+  "rune.bulkCraft.failed": "\uC77C\uAD04 \uC138\uACF5\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.",
+  "rune.traitBulk.title": "\uD2B9\uC131 \uC77C\uAD04 \uBD80\uC5EC",
+  "rune.traitBulk.selected": "\uC120\uD0DD {count} / {total}",
+  "rune.traitBulk.cost": "\uC18C\uBAA8",
+  "rune.traitBulk.costMax": "\uCD5C\uB300 \uC18C\uBAA8",
+  "rune.research.itemOwned": "{name} \xB7 \uBCF4\uC720 {owned}",
+  "rune.traitBulk.button": "{count}\uAC1C \uBD80\uC5EC",
+  "rune.traitBulk.confirm": "\uACE0\uB978 \uB8EC {count}\uAC1C\uC5D0 \uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575\uC744 \uD558\uB098\uC529 \uC368\uC11C \uBB34\uC791\uC704 \uD2B9\uC131\uC744 \uBD80\uC5EC\uD569\uB2C8\uB2E4.",
+  "rune.traitBulk.done": "\uD2B9\uC131 {count}\uAC1C \uBD80\uC5EC \xB7 {summary}",
+  "rune.traitBulk.failed": "\uD2B9\uC131 \uC77C\uAD04 \uBD80\uC5EC\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.",
+  "rune.traitBulk.lacking": "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575\uC774 \uBAA8\uC790\uB78D\uB2C8\uB2E4."
 };
 
 // src/i18n/ko/party.ts
@@ -6825,11 +6852,11 @@ init_define_import_meta_env();
 var SAVE_CONFLICT_KO = {
   "saveConflict.title": "\uC800\uC7A5 \uB370\uC774\uD130 \uCDA9\uB3CC",
   "saveConflict.notice": "\uC790\uB3D9\uC73C\uB85C \uB36E\uC5B4\uC4F0\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uC0AC\uC6A9\uD560 \uC9C4\uD589\uC744 \uBE44\uAD50\uD574 \uC120\uD0DD\uD574 \uC8FC\uC138\uC694.",
-  "saveConflict.summary": "\uD50C\uB808\uC774\uC5B4 \uB808\uBCA8  {level}\n\uC82C  {gems}  \xB7  \uACE8\uB4DC  {gold}\n\uCD5C\uADFC \uD50C\uB808\uC774  {lastPlayed}",
+  "saveConflict.lastPlayed": "\uCD5C\uADFC \uD50C\uB808\uC774",
+  "saveConflict.latest": "\uCD5C\uC2E0",
   "saveConflict.local": "\uC774 \uAE30\uAE30",
   "saveConflict.remote": "\uC11C\uBC84",
   "saveConflict.useLocal": "\uC774 \uAE30\uAE30 \uC0AC\uC6A9",
-  "saveConflict.cancel": "\uC120\uD0DD \uCDE8\uC18C",
   "saveConflict.useRemote": "\uC11C\uBC84 \uC0AC\uC6A9"
 };
 
@@ -7210,7 +7237,6 @@ var MISC_KO = {
   "intro.prev": "\uC774\uC804",
   "intro.next": "\uB2E4\uC74C",
   "archaeology.bench.pick": "\uB8EC \uACE0\uB974\uAE30",
-  "archaeology.bench.clear": "\uBE7C\uAE30",
   "archaeology.bench.empty": "\uB8EC\uC744 \uB07C\uC6CC \uC8FC\uC138\uC694",
   "archaeology.tab.strata": "\uC9C0\uCE35 \uD0D0\uC0AC",
   "archaeology.tab.research": "\uD2B9\uC131 \uC5F0\uAD6C",
@@ -7236,6 +7262,21 @@ var MISC_KO = {
   "archaeology.synth.oddsTrait": "\uACB0\uACFC \uD2B9\uC131",
   "archaeology.synth.oddsBest": "\uCD5C\uACE0 \uD2B9\uC131",
   "archaeology.synth.oddsNote": "\uB123\uC740 \uB8EC \uC911 \uAC00\uC7A5 \uB192\uC740 \uD2B9\uC131 \uB4F1\uAE09\uC774 \uC904\uC744 \uC815\uD569\uB2C8\uB2E4. \uD2B9\uC131 \uB2EC\uB9B0 \uB8EC\uC774 \uD558\uB098 \uB354 \uC788\uC744 \uB54C\uB9C8\uB2E4 \u300C\uD2B9\uC131 \uC5C6\uC74C\u300D\uC5D0\uC11C {shift}%\uAC00 \uADF8 \uB4F1\uAE09\uC73C\uB85C \uC62E\uACA8 \uAC11\uB2C8\uB2E4.",
+  "archaeology.synth.tip.input": "\uD569\uC131\uB300\uC5D0 \uB123\uC740 \uB8EC \uC14B\uC758 \uB4F1\uAE09\uC785\uB2C8\uB2E4. \uAC01\uC778\uAE4C\uC9C0 \uB9C8\uCE5C \uAC19\uC740 \uB4F1\uAE09 \uB8EC \uC14B\uC744 \uB123\uC2B5\uB2C8\uB2E4.",
+  "archaeology.synth.tip.same": "\uACB0\uACFC \uB8EC\uC774 \uB123\uC740 \uB8EC\uACFC \uAC19\uC740 \uB4F1\uAE09\uC73C\uB85C \uB098\uC62C \uD655\uB960\uC785\uB2C8\uB2E4.",
+  "archaeology.synth.tip.up": "\uACB0\uACFC \uB8EC\uC774 \uD55C \uB4F1\uAE09 \uC704\uB85C \uB098\uC62C \uD655\uB960\uC785\uB2C8\uB2E4. \uB4F1\uAE09\uC774 \uB0B4\uB824\uAC00\uB294 \uC77C\uC740 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "archaeology.synth.tip.gold": "\uD569\uC131 \uD55C \uBC88\uC5D0 \uB4DC\uB294 \uACE8\uB4DC\uC785\uB2C8\uB2E4. \uB123\uC740 \uB8EC\uC758 \uB4F1\uAE09\uC774 \uAC12\uC744 \uC815\uD569\uB2C8\uB2E4.",
+  "archaeology.synth.tip.best": "\uB123\uC740 \uB8EC \uC14B \uC911 \uAC00\uC7A5 \uB192\uC740 \uD2B9\uC131 \uB4F1\uAE09\uC785\uB2C8\uB2E4. \uC774 \uB4F1\uAE09\uC774 \uD45C\uC758 \uC904\uC744 \uACE0\uB985\uB2C8\uB2E4.",
+  "archaeology.synth.tip.result": "\uACB0\uACFC \uB8EC\uC5D0 \uBD99\uB294 \uD2B9\uC131\uC758 \uB4F1\uAE09\uC785\uB2C8\uB2E4. \u300C\uD2B9\uC131 \uC5C6\uC74C\u300D\uC774\uBA74 \uD2B9\uC131\uC774 \uBD99\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+  "archaeology.synth.tip.rowTerm": "{grade} \uD569\uC131",
+  "archaeology.synth.tip.row": "\uACE8\uB4DC {gold}\uB85C {grade} \uB8EC \uC14B\uC744 \uD569\uC131\uD569\uB2C8\uB2E4. \uAC19\uC740 \uB4F1\uAE09\uC774 {same}%, \uD55C \uB4F1\uAE09 \uC704\uAC00 {up}% \uD655\uB960\uB85C \uB098\uC635\uB2C8\uB2E4.",
+  "archaeology.synth.tip.rowTop": "\uACE8\uB4DC {gold}\uB85C {grade} \uB8EC \uC14B\uC744 \uD569\uC131\uD569\uB2C8\uB2E4. \uB298 \uC0C8 {grade} \uB8EC\uC774 \uB098\uC624\uACE0 \uC635\uC158\uACFC \uD2B9\uC131\uB9CC \uB2E4\uC2DC \uC815\uD574\uC9D1\uB2C8\uB2E4.",
+  "archaeology.synth.tip.rarityCell": "{input} \uB8EC \uC14B\uC744 \uD569\uC131\uD558\uBA74 {percent}% \uD655\uB960\uB85C {result} \uB8EC\uC774 \uB098\uC635\uB2C8\uB2E4.",
+  "archaeology.synth.tip.noUp": "{grade:\uC740} \uB354 \uC624\uB97C \uB4F1\uAE09\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "archaeology.synth.tip.goldCell": "{grade} \uB8EC \uC14B\uC744 \uD55C \uBC88 \uD569\uC131\uD558\uB294 \uAC12\uC740 \uACE8\uB4DC {gold}\uC785\uB2C8\uB2E4.",
+  "archaeology.synth.tip.bestRow": "\uB123\uC740 \uB8EC \uC14B \uC911 \uAC00\uC7A5 \uB192\uC740 \uD2B9\uC131\uC774 \u300C{best}\u300D\uC77C \uB54C \uACB0\uACFC \uD2B9\uC131\uC774 \uB098\uC624\uB294 \uD655\uB960\uC785\uB2C8\uB2E4.",
+  "archaeology.synth.tip.traitCell": "\uB123\uC740 \uB8EC\uC758 \uCD5C\uACE0 \uD2B9\uC131\uC774 \u300C{best}\u300D\uC774\uBA74 {percent}% \uD655\uB960\uB85C \uACB0\uACFC \uD2B9\uC131\uC774 \u300C{result}\u300D\uC785\uB2C8\uB2E4.",
+  "archaeology.synth.tip.traitNever": "\uB123\uC740 \uB8EC\uC758 \uCD5C\uACE0 \uD2B9\uC131\uC774 \u300C{best}\u300D\uC774\uBA74 \u300C{result}\u300D \uD2B9\uC131\uC740 \uB098\uC624\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
   "archaeology.chargeCountdown": "{charges}/{max}",
   "archaeology.chargeFull": "{charges}/{max}",
   "archaeology.digsCount": "{current}/{max}",
@@ -7255,12 +7296,15 @@ var MISC_KO = {
   "archaeology.site.hollow-spire.name": "\uD145 \uBE48 \uCCA8\uD0D1",
   "archaeology.site.tideless-vault.name": "\uC870\uC218 \uC5C6\uB294 \uAE08\uACE0",
   "archaeology.site.first-seed.name": "\uCD5C\uCD08\uC758 \uC528\uC557",
-  "archaeology.map.digs": "\uAD74\uCC29 {count}\uD68C",
-  "archaeology.map.recommended": "\uAD8C\uC7A5 LV.{level}",
   "archaeology.map.available": "\uD0D0\uC0AC \uAC00\uB2A5",
+  "archaeology.preview.board": "\uD310 \uD06C\uAE30",
+  "archaeology.preview.digs": "\uAD74\uCC29 \uD69F\uC218",
+  "archaeology.preview.digsBonus": "\uACB0\uC815 +{count}",
+  "archaeology.preview.unlock": "\uD574\uAE08 LV.{level}",
+  "archaeology.preview.cooling": "\uC7AC\uD0D0\uC0AC\uAE4C\uC9C0",
+  "archaeology.preview.lockAfter": "\uD0D0\uC0AC \uD6C4 {hours}\uC2DC\uAC04 \uC7A0\uAE08",
   "archaeology.map.needLevel": "\uCD5C\uC18C LV.{level} \uD544\uC694",
   "archaeology.map.start": "\uD0D0\uC0AC \uC2DC\uC791",
-  "archaeology.map.close": "\uB2EB\uAE30",
   // 한 번 판 자리는 여섯 시간 동안 잠긴다. 남은 시간이 곧 그 자리에 갈 수 있는지다.
   "archaeology.map.cooling": "\uC7AC\uD0D0\uC0AC\uAE4C\uC9C0 {time}",
   "archaeology.map.noCharge": "\uD0D0\uC0AC \uD69F\uC218\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4",
@@ -7288,6 +7332,7 @@ var MISC_KO = {
   "mail.tab.patch": "\uD328\uCE58\uB178\uD2B8",
   "mail.claim": "\uBC1B\uAE30",
   "mail.rewardTitle": "\uC6B0\uD3B8 \uBCF4\uC0C1",
+  "mail.claimFailed": "\uC6B0\uD3B8\uC744 \uBC1B\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uBAA9\uB85D\uC744 \uC0C8\uB85C \uBD88\uB7EC\uC654\uC2B5\uB2C8\uB2E4.",
   "mail.attachments": "\uCCA8\uBD80 {count}",
   "mail.readAll": "\uBAA8\uB450 \uC77D\uC74C",
   "mail.delete.title": "\uBC1B\uC740 \uC6B0\uD3B8 \uC0AD\uC81C",
@@ -7415,6 +7460,8 @@ var MISC_KO = {
   "battle.profile.down": "\uC804\uD22C \uBD88\uB2A5",
   "battle.profile.ferocity": "\uC57C\uC131 {value} / {max}",
   "reward.title": "\uD68D\uB4DD \uBCF4\uC0C1",
+  "reward.note.frame": "\uD504\uB85C\uD544 \uD14C\uB450\uB9AC",
+  "reward.note.item": "\uC544\uC774\uD15C",
   "reward.tapHint": "\uD654\uBA74\uC744 \uB20C\uB7EC \uD655\uC778",
   // 적 미리보기·룬 확률
   "enemyPreview.title": "\uC801 \uD3B8\uC131",
@@ -7463,6 +7510,7 @@ var MISC_KO = {
   "trade.tag.monthly": "\uC6D4\uAC04 \uD2B9\uAC00",
   "trade.tag.none": "\uC0C1\uC2DC \uD310\uB9E4",
   "trade.soldOut": "\uB9E4\uC9C4",
+  "trade.rotatesIn": "\uAD50\uCCB4\uAE4C\uC9C0 {time}",
   "trade.disconnected": "\uAD50\uC2E0 \uB450\uC808",
   "trade.reconnect": "\uC7AC\uC811\uC18D",
   "trade.title": "\uBB34\uC5ED",
@@ -7544,6 +7592,7 @@ var MISC_KO = {
   "dialogue.auto": "\uC790\uB3D9",
   "dialogue.log": "\uB85C\uADF8",
   "dialogue.hide": "\uC228\uAE30\uAE30",
+  "dialogue.settings": "\uC124\uC815",
   "intro.title": "\uC548\uB0B4",
   "intro.confirm": "\uC54C\uACA0\uC5B4\uC694",
   "tutorial.tour.next": "\uD654\uBA74\uC744 \uB20C\uB7EC \uACC4\uC18D \xB7 {step}/{total}",
@@ -7707,6 +7756,8 @@ var SKILL_KO = {
   "skill.keywordKind.state": "\uC0C1\uD0DC",
   "skill.keywordKind.rule": "\uADDC\uCE59",
   "skill.keywordKind.summon": "\uC18C\uD658\uC218",
+  "skill.keywordKind.odds": "\uD655\uB960",
+  "skill.keywordKind.runeTrait": "\uB8EC \uD2B9\uC131",
   // ── 요약줄의 대상 ────────────────────────────────────────────────────────
   "skill.target.single": "\uC801 \uD55C \uBA85",
   "skill.target.nearbyEnemies": "\uC790\uC2E0\uC758 \uC8FC\uC704 \uBAA8\uB4E0 \uC801",
@@ -7767,6 +7818,7 @@ var SKILL_KO = {
   "skill.ferocity.vanguardCharge": "[[missing-hp|\uC783\uC740 \uCCB4\uB825]]\uC758 {shield}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uACE0 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC99D\uAC00\uD55C\uB2E4.",
   "skill.ferocity.selfAttackSpeedMultiplier": "[[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC99D\uAC00\uD55C\uB2E4.",
   "skill.ferocity.selfAttackSpeedMultiplier.shield": "[[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC99D\uAC00\uD558\uACE0, \uD68C\uBCF5\uC2DC\uD0A8 \uC591\uC758 {shield}%\uB9CC\uD07C \uADF8 \uC544\uAD70\uC5D0\uAC8C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB367\uC50C\uC6B4\uB2E4.",
+  "skill.ferocity.selfAttackSpeedMultiplier.passivePull": "[[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC99D\uAC00\uD558\uACE0, \uAE30\uBCF8 \uACF5\uACA9\uC774 \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 \uD328\uC2DC\uBE0C\uC758 \uB0A8\uC740 \uC8FC\uAE30\uAC00 {seconds}\uCD08 \uC904\uC5B4\uB4E0\uB2E4.",
   "skill.ferocity.selfAttackSpeedMultiplier.pull": "\uD3ED\uC8FC\uC5D0 \uB4E4\uC5B4\uAC00\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uBAA8\uB4E0 \uC801\uC744 [[pull|\uB04C\uC5B4\uB2F9\uAE34\uB2E4]]. \uD3ED\uC8FC \uC911 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC99D\uAC00\uD55C\uB2E4.",
   "skill.ferocity.packHunt": "{seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD558\uACE0 [[pack-hunt|\uBB34\uB9AC \uC0AC\uB0E5]]\uC744 \uB2E4\uC2DC \uBC1C\uB3D9\uD55C\uB2E4. \uD3ED\uC8FC \uC911 \uC790\uC2E0\uC744 \uD3EC\uD568\uD574 \uAC19\uC740 \uC801\uC744 \uD45C\uC801\uC73C\uB85C \uC0BC\uC740 \uC0DD\uC874 \uC544\uAD70\uC758 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC99D\uAC00\uD55C\uB2E4.",
   "skill.ferocity.crescendoStaccato": "\uD3ED\uC8FC \uC911 \uC544\uAD70 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] \uC801\uC911\uB9C8\uB2E4 {damage} \uD53C\uD574\uB7C9\uC744 \uAC00\uC9C4 [[mette-staccato|\uC2A4\uD0C0\uCE74\uD1A0]]\uAC00 \uCD94\uAC00\uB85C \uBC1C\uB3D9\uD55C\uB2E4.",
@@ -8270,7 +8322,20 @@ var SKILL_KO = {
   "skill.sentence.selfBulwarkNear": "\uC790\uC2E0\uC5D0\uAC8C {shield}\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB974\uACE0, {seconds}\uCD08 \uB3D9\uC548 \uB113\uC740 \uBC94\uC704\uC758 \uC544\uAD70\uC774 \uBC1B\uB294 \uD53C\uD574\uC758 {percent}%\uB97C \uB300\uC2E0 \uBC1B\uB294\uB2E4.",
   "skill.breakthrough.effect.basic.chainSnare": "\u300C{name}\u300D {every}\uBC88\uC9F8\uB9C8\uB2E4 \uB9DE\uC740 \uC801\uC5D0\uAC8C {seconds}\uCD08 \uB3D9\uC548 {percent}% [[chill|\uB454\uD654]]\uB97C \uAC74\uB2E4.",
   "skill.breakthrough.effect.ultimate.canopySweep": "\u300C{name}\u300D{name!\uC744} \uD3BC\uCE58\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801\uC744 \uBC14\uAE65\uC73C\uB85C \uBC00\uC5B4\uB0B8\uB2E4.",
-  "skill.breakthrough.effect.passive.shadeRetort": "\uB300\uC2E0 \uBC1B\uC740 \uD53C\uD574\uC758 {percent}%\uAC00 \uC313\uC600\uB2E4\uAC00 \uB2E4\uC74C \uC77C\uBC18 \uACF5\uACA9\uC5D0 [[fixed-damage|\uACE0\uC815 \uD53C\uD574]]\uB85C \uD55C\uAEBC\uBC88\uC5D0 \uB354\uD574\uC9C4\uB2E4. \uCD5C\uB300 {cap}\uAE4C\uC9C0 \uC313\uC778\uB2E4."
+  "skill.breakthrough.effect.passive.shadeRetort": "\uB300\uC2E0 \uBC1B\uC740 \uD53C\uD574\uC758 {percent}%\uAC00 \uC313\uC600\uB2E4\uAC00 \uB2E4\uC74C \uC77C\uBC18 \uACF5\uACA9\uC5D0 [[fixed-damage|\uACE0\uC815 \uD53C\uD574]]\uB85C \uD55C\uAEBC\uBC88\uC5D0 \uB354\uD574\uC9C4\uB2E4. \uCD5C\uB300 {cap}\uAE4C\uC9C0 \uC313\uC778\uB2E4.",
+  "skill.passive.tonguePull": "{seconds}\uCD08\uB9C8\uB2E4 \uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uB2E4\uB978 \uC544\uAD70\uC744 \uD600\uB85C \uB04C\uC5B4\uC640 \uACC1\uC5D0 \uC138\uC6B0\uACE0, \uADF8 \uC544\uAD70\uC758 \uCD5C\uB300 \uCCB4\uB825 {shield}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978\uB2E4. \uB04C\uB824\uC628 \uC544\uAD70\uC744 \uB178\uB9AC\uB358 \uC801\uC740 \uD45C\uC801\uC744 \uBAA8\uB450 \uC783\uB294\uB2E4.",
+  "skill.sentence.gulp": "\uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uB2E4\uB978 \uC544\uAD70 \uD55C \uBA85\uC744 {seconds}\uCD08 \uB3D9\uC548 [[gulp|\uAFC0\uAEBD]]\uD55C\uB2E4.",
+  "skill.passive.bloodScent": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 [[ferocity|\uC57C\uC131]]\uC744 {bonus} \uB354 \uC5BB\uB294\uB2E4. [[ferocity|\uD3ED\uC8FC]] \uC911\uC5D0\uB294 \uAE30\uBCF8 \uACF5\uACA9 \uC801\uC911\uB9C8\uB2E4 {hit}\uCD08, \uC801\uC744 \uC4F0\uB7EC\uB728\uB9AC\uBA74 {kill}\uCD08 \uB3D9\uC548 \uD3ED\uC8FC\uAC00 \uB2F3\uC9C0 \uC54A\uB294\uB2E4. \uD55C \uBC88\uC758 \uD3ED\uC8FC\uC5D0 \uB298\uC5B4\uB098\uB294 \uC2DC\uAC04\uC740 \uCD5C\uB300 {cap}\uCD08\uB2E4.",
+  "skill.clause.selfFerocity": "\uC790\uC2E0\uC758 [[ferocity|\uC57C\uC131]]\uC744 {amount} \uC5BB\uB294\uB2E4. \uC774\uBBF8 [[ferocity|\uD3ED\uC8FC]] \uC911\uC774\uBA74 \uB300\uC2E0 \uD3ED\uC8FC\uAC00 {seconds}\uCD08 \uB3D9\uC548 \uB2F3\uC9C0 \uC54A\uB294\uB2E4",
+  "skill.ferocity.selfAttackSpeedMultiplier.ramp": "\uD3ED\uC8FC\uAC00 \uB04A\uAE30\uC9C0 \uC54A\uACE0 \uC774\uC5B4\uC9C0\uB294 \uB3D9\uC548 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 +{percent}%\uC5D0\uC11C \uB9E4\uCD08 {perSecond}%\uC529 \uC62C\uB77C \uCD5C\uB300 +{max}%, \uBAA8\uB4E0 \uD53C\uD574 \uD761\uD608\uC774 \uB9E4\uCD08 {stealPerSecond}%\uC529 \uC62C\uB77C \uCD5C\uB300 {stealMax}%\uAC00 \uB41C\uB2E4. \uD3ED\uC8FC\uAC00 \uB05D\uB098\uBA74 \uCC98\uC74C\uC73C\uB85C \uB3CC\uC544\uAC04\uB2E4.",
+  "skill.clause.passiveCooldownReduction": "\uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 \uD328\uC2DC\uBE0C\uC758 \uB0A8\uC740 \uC8FC\uAE30\uAC00 {seconds}\uCD08 \uC904\uC5B4\uB4E0\uB2E4",
+  "skill.breakthrough.effect.basic.tongueTug": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 \u300C{name}\u300D\uC758 \uB0A8\uC740 \uC8FC\uAE30\uAC00 {seconds}\uCD08 \uC904\uC5B4\uB4E0\uB2E4.",
+  "skill.breakthrough.effect.ultimate.spitOut": "\u300C{name}\u300D\uB85C \uC0BC\uCF30\uB358 \uC544\uAD70\uC744 \uBC49\uC744 \uB54C \uADF8 \uC544\uAD70\uC774 \uC790\uAE30 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4.",
+  "skill.breakthrough.effect.ultimate.chargeImpact": "\u300C{name}\u300D\uC758 \uB3CC\uC9C4\uC774 \uBA48\uCD98 \uC790\uB9AC \uC8FC\uC704\uC758 \uC801 \uC804\uC6D0\uC5D0\uAC8C {percent}\uB9CC\uD07C [[physical-damage|\uBB3C\uB9AC \uD53C\uD574]]\uB97C \uC900\uB2E4.",
+  "skill.breakthrough.effect.ferocity.tongueSnap": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \u300C{name}\u300D\uC774 \uACE7\uBC14\uB85C \uB098\uAC00\uACE0, \uADF8 [[shield|\uBCF4\uD638\uB9C9]]\uC774 {multiplier}\uBC30\uAC00 \uB41C\uB2E4.",
+  "skill.breakthrough.effect.ferocity.hotFangs": "[[ferocity|\uD3ED\uC8FC]]\uC758 \uACF5\uACA9 \uC18D\uB3C4 \uC0C1\uC2B9\uC774 {percent}%\uC5D0\uC11C \uC2DC\uC791\uD55C\uB2E4.",
+  "skill.breakthrough.effect.passive.stillUnderContract": "\uC544\uAD70\uC758 \uCCB4\uB825\uC774 {hp}% \uC544\uB798\uB85C \uB5A8\uC5B4\uC9C0\uBA74 \u300C{name}\u300D\uC774 \uACE7\uBC14\uB85C \uB098\uAC04\uB2E4. \uC774\uB807\uAC8C \uACE7\uBC14\uB85C \uB098\uAC00\uB294 \uAC83\uC740 {seconds}\uCD08\uC5D0 \uD55C \uBC88\uBFD0\uC774\uB2E4.",
+  "skill.breakthrough.effect.passive.scentLinger": "[[ferocity|\uD3ED\uC8FC]]\uAC00 \uB05D\uB098\uB3C4 \uC57C\uC131 \uAC8C\uC774\uC9C0\uAC00 {percent}% \uB0A8\uB294\uB2E4."
 };
 
 // src/i18n/ko/system.ts
@@ -8332,6 +8397,7 @@ var SYSTEM_KO = {
   "ops.notice.title": "\uC6B4\uC601\uD300 \uC548\uB0B4",
   "ops.notice.gain": "{name} {amount}\uAC1C\uAC00 \uC9C0\uAE09\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
   "ops.notice.loss": "{name} {amount}\uAC1C\uAC00 \uD68C\uC218\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+  "ops.notice.lossHead": "\uC6B4\uC601 \uC870\uCE58\uB85C \uC544\uB798 \uC7AC\uD654\uAC00 \uD68C\uC218\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
   "ops.notice.mail": "\uC0C8 \uC6B0\uD3B8 {count}\uD1B5\uC774 \uB3C4\uCC29\uD588\uC2B5\uB2C8\uB2E4.",
   "ops.notice.reason": "\uC0AC\uC720: {reason}",
   "ops.notice.nicknameReset": "\uC6B4\uC601 \uC815\uCC45\uC5D0 \uB530\uB77C \uB2C9\uB124\uC784\uC774 \uCD08\uAE30\uD654\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uC0C8 \uB2C9\uB124\uC784\uC744 \uC815\uD574 \uC8FC\uC138\uC694.",
@@ -8565,7 +8631,6 @@ var DUEL_KO = {
   "duel.error.opponentGone": "\uC0C1\uB300 \uBAA9\uB85D\uC774 \uBC14\uB00C\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uACE8\uB77C \uC8FC\uC138\uC694.",
   "duel.error.noGems": "\uC82C\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.",
   "duel.error.attemptLimit": "\uC624\uB298\uC740 \uB3C4\uC804\uAD8C\uC744 \uB354 \uC0B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
-  "duel.ok": "\uD655\uC778",
   "duel.tier.bronze": "\uBE0C\uB860\uC988",
   "duel.tier.silver": "\uC2E4\uBC84",
   "duel.tier.gold": "\uACE8\uB4DC",
@@ -9099,7 +9164,6 @@ var SUPPORT_KO = {
   "feedback.later": "\uB2E4\uC74C\uC5D0 \uD560\uAC8C\uC694",
   "feedback.sent.title": "\uACE0\uB9C8\uC6CC\uC694!",
   "feedback.sent.body": "\uC77C\uC9C0\uC5D0 \uAF3C\uAF3C\uD788 \uC62E\uACA8 \uC801\uC5C8\uC5B4\uC694. \uAC1C\uBC1C\uC790\uB2D8\uAED8 \uAF2D \uC804\uD574 \uB4DC\uB9B4\uAC8C\uC694!",
-  "feedback.sent.rewarded": "\uC77C\uC9C0\uC5D0 \uAF3C\uAF3C\uD788 \uC62E\uACA8 \uC801\uC5C8\uC5B4\uC694. \uAC1C\uBC1C\uC790\uB2D8\uAED8 \uAF2D \uC804\uD574 \uB4DC\uB9B4\uAC8C\uC694!\n\uAC10\uC0AC \uC120\uBB3C\uB85C \uC82C {amount}\uAC1C\uB97C \uC6B0\uD3B8\uD568\uC5D0 \uB123\uC5B4 \uB480\uC5B4\uC694!",
   "homepage.title": "\uC0AC\uC804\uC608\uC57D \uC548\uB0B4",
   "homepage.greeting": "\uB300\uC7A5\uB2D8, \uC815\uC2DD \uCD9C\uBC1C \uC18C\uC2DD\uC740 \uC81C\uAC00 \uC81C\uC77C \uBA3C\uC800 \uCC59\uACA8 \uB458\uAC8C\uC694! \uD648\uD398\uC774\uC9C0\uC5D0\uC11C \uC0AC\uC804\uC608\uC57D\uB9CC \uD574 \uB450\uC2DC\uBA74 \uB3FC\uC694.",
   "homepage.body": "\uC815\uC2DD \uCD9C\uC2DC \uC18C\uC2DD\uACFC \uC0AC\uC804\uC608\uC57D \uBCF4\uC0C1\uC744 \uAC00\uC7A5 \uBA3C\uC800 \uBC1B\uC544 \uBCF4\uC138\uC694!",
@@ -11330,6 +11394,8 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
       napsUsed: 0,
       finalStrike: false,
       tidalEchoes: [],
+      spits: [],
+      contractReadyAt: 0,
       arrowEchoes: [],
       afterimages: [],
       stunLockouts: {},
@@ -11381,6 +11447,10 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     stealthBreaksOnBasic: false,
     undying: null,
     undyingPending: false,
+    tongueIn: def.passive.tongue?.intervalSeconds ?? 0,
+    feverHold: 0,
+    feverHoldGranted: 0,
+    feverElapsed: 0,
     taunted: null,
     elation: null,
     prickle: null,
@@ -13210,6 +13280,11 @@ function tickRaiders(fighter, dt, state) {
   return events;
 }
 function grantCastShield(attacker, skill, state, events) {
+  const surge = skill.id === attacker.def.ultimate.id ? attacker.def.ultimate.selfFerocity : void 0;
+  if (surge && isFighterAlive(attacker)) {
+    if (attacker.ferocityFever) extendFever(attacker, surge.feverExtendSeconds);
+    else gainFerocity(attacker, surge.amount, state, events);
+  }
   const percent = skill.selfShieldMaxHpPercent ?? 0;
   if (percent <= 0 || !isFighterAlive(attacker)) return;
   grantShield(state, attacker, attacker.id, Math.max(1, Math.round((attacker.shieldHpBasis ?? attacker.maxHp) * percent / 100)), events);
@@ -13876,6 +13951,8 @@ function triggerBreakthroughOnKill(attacker, useUltimate, victim) {
   }
   const hum = attacker.def.passive.wingHum;
   if (hum && isFighterAlive(attacker)) giveEnergy(attacker, hum.energyOnKill);
+  const scent = attacker.def.passive.bloodScent;
+  if (scent && attacker.ferocityFever && isFighterAlive(attacker)) extendFever(attacker, scent.extendPerKillSeconds);
   const haste = attacker.def.passive.killHaste;
   if (haste && isFighterAlive(attacker)) {
     attacker.killHaste = { remaining: haste.seconds, attackSpeedPercent: haste.attackSpeedPercent, moveSpeedPercent: haste.moveSpeedPercent, total: haste.seconds };
@@ -13920,6 +13997,7 @@ function armUltimateBreakthrough(attacker) {
   attacker.breakthroughEcho = { nextIn: effect.intervalSeconds, casts: effect.casts };
 }
 function tickUltimateBreakthrough(fighter, dt, state, events) {
+  tickSpits(fighter, dt, state, events);
   const echo = fighter.breakthroughEcho;
   if (!echo) return;
   if (!isFighterAlive(fighter)) {
@@ -13986,6 +14064,10 @@ function applyFerocityBreakthrough(fighter, state, events) {
   fighter.bt.ambushCritReady = false;
   fighter.feverDamageTaken = 0;
   fighter.bt.feverHealingDone = 0;
+  const linger = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  if (linger?.kind === "scentLinger" && isFighterAlive(fighter)) {
+    fighter.ferocity = Math.max(fighter.ferocity, ferocityMaxOf(fighter.def) * linger.ferocityPercent / 100);
+  }
   const effect = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
   if (effect?.kind === "feverShare") {
     const allies = aliveFighters(state, fighter.side).filter(isPartyFighter);
@@ -14331,6 +14413,20 @@ function afterUltimateBreakthrough(attacker, state, events) {
   const plan = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
   if (plan?.kind === "cheekShield") grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * plan.shieldMaxHpPercent / 100)), events);
   if (plan?.kind === "chasingBlink" && attacker.def.passive.kind === "stalkerBlink") attacker.huntCooldown = 0;
+  if (plan?.kind === "chargeImpact" && attacker.def.ultimate.targeting === "chargeLine") {
+    const stat = attacker.def.ultimate.scalingStat === "ap" ? "ap" : "atk";
+    for (const foe of aliveFighters(state, attacker.side === "player" ? "enemy" : "player")) {
+      if (distance(attacker, foe) > plan.radius) continue;
+      extraStrike(attacker, foe, plan.powerPercent, stat, attacker.def.ultimate.damageType === "magical" ? "magical" : "physical", state, events);
+    }
+    events.push({
+      kind: "areaImpact",
+      attackerId: attacker.id,
+      ultimate: true,
+      damageType: "physical",
+      area: { shape: "radial", x: attacker.x, y: attacker.y, radius: plan.radius }
+    });
+  }
   if (plan?.kind === "dustCloud" && attacker.def.ultimate.targeting === "chargeLine") {
     for (const foe of aliveFighters(state, attacker.side === "player" ? "enemy" : "player")) {
       if (distance(attacker, foe) > plan.radius) continue;
@@ -14813,7 +14909,7 @@ function swiftHandsPercent(fighter) {
 }
 function attackInterval(fighter, state) {
   const trait = fighter.def.ferocityTrait;
-  const feverMultiplier = fighter.ferocityFever && trait.effectId === "splashDamage" && trait.attackSpeedBonusPercent !== void 0 ? 1 / (1 + trait.attackSpeedBonusPercent / 100) : fighter.ferocityFever && trait.effectId === "extraFork" ? 1 / (1 + trait.attackSpeedBonusPercent / 100) : fighter.ferocityFever && trait.effectId === "packBody" ? 1 / (1 + trait.attackSpeedPercent / 100) : fighter.ferocityFever && trait.effectId === "selfAttackSpeedMultiplier" ? 1 / (1 + (trait.bonusPercent + swiftHandsPercent(fighter)) / 100) : fighter.ferocityFever && trait.effectId === "adamantBody" && fighter.hastenedAttacksLeft > 0 ? 1 / (1 + trait.attackSpeedPercent / 100) : fighter.ferocityFever && trait.effectId === "venomousEncore" ? 1 / (1 + trait.attackSpeedBonusPercent / 100) : fighter.ferocityFever && trait.effectId === "vanguardCharge" ? 1 / (1 + trait.attackSpeedPercent / 100) : fighter.ferocityFever && trait.effectId === "butcherFeast" && openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity)?.kind === "swiftHands" ? 1 / (1 + swiftHandsPercent(fighter) / 100) : fighter.ferocityFever && trait.effectId === "cautery" ? 1 / (1 + trait.attackSpeedPercent / 100) : fighter.ferocityFever && (trait.effectId === "overclock" || trait.effectId === "overclockBody") ? 1 / (1 + trait.attackSpeedPercent / 100) : 1;
+  const feverMultiplier = fighter.ferocityFever && trait.effectId === "splashDamage" && trait.attackSpeedBonusPercent !== void 0 ? 1 / (1 + trait.attackSpeedBonusPercent / 100) : fighter.ferocityFever && trait.effectId === "extraFork" ? 1 / (1 + trait.attackSpeedBonusPercent / 100) : fighter.ferocityFever && trait.effectId === "packBody" ? 1 / (1 + trait.attackSpeedPercent / 100) : fighter.ferocityFever && trait.effectId === "selfAttackSpeedMultiplier" ? 1 / (1 + (feverRamp(fighter).attackSpeedPercent + swiftHandsPercent(fighter)) / 100) : fighter.ferocityFever && trait.effectId === "adamantBody" && fighter.hastenedAttacksLeft > 0 ? 1 / (1 + trait.attackSpeedPercent / 100) : fighter.ferocityFever && trait.effectId === "venomousEncore" ? 1 / (1 + trait.attackSpeedBonusPercent / 100) : fighter.ferocityFever && trait.effectId === "vanguardCharge" ? 1 / (1 + trait.attackSpeedPercent / 100) : fighter.ferocityFever && trait.effectId === "butcherFeast" && openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity)?.kind === "swiftHands" ? 1 / (1 + swiftHandsPercent(fighter) / 100) : fighter.ferocityFever && trait.effectId === "cautery" ? 1 / (1 + trait.attackSpeedPercent / 100) : fighter.ferocityFever && (trait.effectId === "overclock" || trait.effectId === "overclockBody") ? 1 / (1 + trait.attackSpeedPercent / 100) : 1;
   return Math.max(SKIRMISH.minimumAttackInterval, SKIRMISH.attackInterval * 100 / Math.max(1, currentAttackSpeed(fighter, state)) * feverMultiplier);
 }
 function strongestLivingAura(state, receiverSide, field) {
@@ -15515,6 +15611,33 @@ function cleanseAllDebuffs(fighter) {
   fighter.intimidation = null;
   fighter.fear = null;
 }
+function extendFever(fighter, seconds) {
+  const plan = fighter.def.passive.bloodScent;
+  if (!plan || !fighter.ferocityFever || seconds <= 0) return;
+  const room = Math.max(0, plan.maxExtendSeconds - fighter.feverHoldGranted);
+  const added = Math.min(seconds, room);
+  fighter.feverHold += added;
+  fighter.feverHoldGranted += added;
+}
+function feverRamp(fighter) {
+  const trait = fighter.def.ferocityTrait;
+  if (!fighter.ferocityFever || trait.effectId !== "selfAttackSpeedMultiplier") return { attackSpeedPercent: 0, lifeStealPoints: 0 };
+  const ramp = trait.ramp;
+  const fangs = ramp ? openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity) : void 0;
+  const baseSpeed = fangs?.kind === "hotFangs" ? Math.max(trait.bonusPercent, fangs.startAttackSpeedPercent) : trait.bonusPercent;
+  const baseSteal = trait.lifeStealPoints ?? 0;
+  if (!ramp) return { attackSpeedPercent: baseSpeed, lifeStealPoints: baseSteal };
+  return {
+    attackSpeedPercent: Math.min(ramp.maxAttackSpeedPercent, baseSpeed + ramp.attackSpeedPercentPerSecond * fighter.feverElapsed),
+    lifeStealPoints: Math.min(ramp.maxLifeStealPoints, baseSteal + ramp.lifeStealPointsPerSecond * fighter.feverElapsed)
+  };
+}
+function scentOnBasicHit(attacker, state, events) {
+  const plan = attacker.def.passive.bloodScent;
+  if (!plan || !isFighterAlive(attacker)) return;
+  if (attacker.ferocityFever) extendFever(attacker, plan.extendPerHitSeconds);
+  else gainFerocity(attacker, plan.bonusFerocityPerHit, state, events);
+}
 function gainFerocity(fighter, base, state, events) {
   const before = fighter.ferocity;
   if (fighter.ferocityFever) return;
@@ -15526,6 +15649,9 @@ function gainFerocity(fighter, base, state, events) {
     fighter.ferocityFever = true;
     fighter.feverDamageTaken = 0;
     fighter.bt.feverHealingDone = 0;
+    fighter.feverHold = 0;
+    fighter.feverHoldGranted = 0;
+    fighter.feverElapsed = 0;
     const feverBreakthrough2 = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
     if (feverBreakthrough2?.kind === "feverAmbush") {
       fighter.stealthFor = Math.max(fighter.stealthFor, feverBreakthrough2.stealthSeconds);
@@ -15567,6 +15693,7 @@ function gainFerocity(fighter, base, state, events) {
       }
     }
     if (feverBreakthrough2?.kind === "doubleMag") fighter.bt.doubleMagUsed = false;
+    if (feverBreakthrough2?.kind === "tongueSnap") fireTongue(fighter, feverBreakthrough2.shieldMultiplier, state, events);
     if (feverBreakthrough2?.kind === "roarEntry") {
       const intimidate = fighter.def.passive.looming?.intimidate;
       if (intimidate) {
@@ -15896,7 +16023,7 @@ function offensiveDefinition(attacker) {
 }
 function damageHealingRate(attacker, skill, attackingInFever, target) {
   const trait = attacker.def.ferocityTrait;
-  const fever = attackingInFever && trait.effectId === "rexBattleQueen" ? trait.allDamageLifeStealPoints : 0;
+  const fever = attackingInFever && trait.effectId === "rexBattleQueen" ? trait.allDamageLifeStealPoints : attackingInFever && trait.effectId === "selfAttackSpeedMultiplier" ? feverRamp(attacker).lifeStealPoints : 0;
   const frozenBonus = target.frozen !== null ? skill.damageHealingPercentIfFrozen ?? 0 : 0;
   const blood = attackingInFever ? feverBreakthrough(attacker) : void 0;
   const ultimate = skill.id === attacker.def.ultimate.id ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : void 0;
@@ -16301,6 +16428,70 @@ function shareWithBulwark(target, amount, events, state) {
   releaseHeatBurst(guardian, state, events);
   gainElation(guardian);
   return share;
+}
+function tickTongue(fighter, dt, state, events) {
+  const plan = fighter.def.passive.tongue;
+  if (!plan || state.phase !== "fight" || !isFighterAlive(fighter)) return;
+  fighter.tongueIn = Math.max(0, fighter.tongueIn - dt);
+  if (fighter.tongueIn > 0) {
+    const contract = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+    if (contract?.kind !== "stillUnderContract" || state.elapsed < fighter.bt.contractReadyAt) return;
+    const inDanger = aliveFighters(state, fighter.side).some((other) => other.id !== fighter.id && isPartyFighter(other) && other.hp / other.maxHp * 100 < contract.belowHpPercent);
+    if (!inDanger) return;
+    if (fireTongue(fighter, 1, state, events)) fighter.bt.contractReadyAt = state.elapsed + contract.lockoutSeconds;
+    return;
+  }
+  fireTongue(fighter, 1, state, events);
+}
+function fireTongue(fighter, shieldMultiplier, state, events) {
+  const plan = fighter.def.passive.tongue;
+  if (!plan || !isFighterAlive(fighter)) return false;
+  const ally = aliveFighters(state, fighter.side).filter((other) => other.id !== fighter.id && isPartyFighter(other) && other.hp < other.maxHp).reduce((best, other) => !best || other.hp / other.maxHp < best.hp / best.maxHp ? other : best, void 0);
+  if (!ally) return false;
+  fighter.tongueIn = plan.intervalSeconds;
+  const back = fighter.side === "player" ? 1 : -1;
+  ally.x = Math.min(state.arena.right, Math.max(state.arena.left, fighter.x + (ally.x >= fighter.x ? 1 : -1) * plan.landDistance * 0.6));
+  ally.y = Math.min(state.arena.bottom, Math.max(state.arena.top, fighter.y + back * plan.landDistance * 0.8));
+  ally.knockback = null;
+  grantShield(state, ally, fighter.id, Math.max(1, Math.round(ally.maxHp * plan.shieldMaxHpPercent * shieldMultiplier / 100)), events);
+  untarget(state, ally);
+  events.push({ kind: "combatEffect", fighterId: ally.id, effect: { tag: "shieldGain", intensity: 1.2 } });
+  state.log.push(`${fighter.def.name} \uD600 \u2192 ${ally.def.name}`);
+  return true;
+}
+function tickSpits(fighter, dt, state, events) {
+  if (fighter.bt.spits.length === 0) return;
+  const pending2 = [];
+  for (const spit of fighter.bt.spits) {
+    const remaining = spit.remaining - dt;
+    if (remaining > EMERGENCY_RECOVERY.epsilon) {
+      pending2.push({ ...spit, remaining });
+      continue;
+    }
+    const ally = findFighter(state, spit.allyId);
+    if (ally && isFighterAlive(ally) && isFighterAlive(fighter)) grantProvidedShield(state, fighter, ally, spit.percent, events);
+  }
+  fighter.bt.spits = pending2;
+}
+function untarget(state, ally) {
+  for (const other of state.fighters) {
+    if (other.side === ally.side || other.targetId !== ally.id) continue;
+    other.targetId = null;
+    other.engaged = false;
+  }
+}
+function gulpTarget(state, caster) {
+  return aliveFighters(state, caster.side).filter((other) => other.id !== caster.id && isPartyFighter(other)).reduce((best, other) => !best || other.hp / other.maxHp < best.hp / best.maxHp ? other : best, void 0) ?? caster;
+}
+function applyGulp(ally, caster, buff, state) {
+  ally.stealthFor = Math.max(ally.stealthFor, buff.seconds);
+  ally.stealthBreaksOnBasic = false;
+  untarget(state, ally);
+  const current2 = ally.regeneration;
+  if (!current2 || current2.percentPerTick <= buff.healMaxHpPercentPerSecond) {
+    ally.regeneration = { remaining: Math.max(current2?.remaining ?? 0, buff.seconds), tickIn: current2?.tickIn ?? 1, percentPerTick: buff.healMaxHpPercentPerSecond };
+  }
+  state.log.push(`${caster.def.name} \uAFC0\uAEBD \u2192 ${ally.def.name}`);
 }
 function canStartUndying(fighter) {
   return fighter.def.passive.kind === "undyingTalisman" && !fighter.passiveTriggered && fighter.undying === null && !fighter.undyingPending;
@@ -16968,6 +17159,14 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     } else gainEnergy(attacker, state);
     grantAllyEnergy(attacker, skill, state);
     grantDuoCharge(attacker, skill, state, events);
+    if (!useUltimate) scentOnBasicHit(attacker, state, events);
+    if (!useUltimate && "passiveCooldownReductionSeconds" in skill && skill.passiveCooldownReductionSeconds !== void 0 && attacker.def.passive.tongue) {
+      const trait = attacker.def.ferocityTrait;
+      const feverPull = attacker.ferocityFever && trait.effectId === "selfAttackSpeedMultiplier" ? trait.feverPassiveCooldownReductionSeconds : void 0;
+      const tug = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+      const usual = tug?.kind === "tongueTug" ? tug.seconds : skill.passiveCooldownReductionSeconds;
+      attacker.tongueIn = Math.max(0, attacker.tongueIn - Math.max(usual, feverPull ?? 0));
+    }
     gainFerocity(attacker, actionFerocityGain(attacker.def.stats, useUltimate), state, events);
   }
   if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state, events);
@@ -18039,6 +18238,7 @@ function advance(state, dt, rng, events) {
       continue;
     }
     if (fighter.undyingPending) startUndying(fighter, state, events);
+    tickTongue(fighter, dt, state, events);
     tickBleed(fighter, dt, state, events);
     if (!isFighterAlive(fighter)) continue;
     tickFrostbite(fighter, dt, state, events);
@@ -18325,6 +18525,21 @@ function fireUltimateCore(state, fighterId, rng = NO_CRIT, targetPoint) {
     applyTeamBuff(duo, teamUltimate.teamBuff);
     duo.bt.orderStruck = [];
     events.push({ kind: "teamBuff", fighterId: duo.id, buff: teamUltimate.teamBuff, sourceId: attacker.id });
+    attacker.attackCooldown = attackInterval(attacker, state);
+    return events;
+  }
+  if (teamUltimate.targeting === "battlefieldAllies" && teamUltimate.teamBuff?.kind === "gulp") {
+    attacker.energy -= ultimateCost(state, attacker, true);
+    const ally = gulpTarget(state, attacker);
+    applyGulp(ally, attacker, teamUltimate.teamBuff, state);
+    const spit = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    if (spit?.kind === "spitOut") {
+      attacker.bt.spits = [
+        ...attacker.bt.spits.filter((entry) => entry.allyId !== ally.id),
+        { allyId: ally.id, remaining: teamUltimate.teamBuff.seconds, percent: spit.shieldMaxHpPercent }
+      ];
+    }
+    events.push({ kind: "teamBuff", fighterId: ally.id, buff: teamUltimate.teamBuff, sourceId: attacker.id });
     attacker.attackCooldown = attackInterval(attacker, state);
     return events;
   }
@@ -18683,7 +18898,15 @@ function stepSkirmish(state, dt, rng = NO_CRIT) {
     }
     state.fighters.forEach((fighter) => {
       const feverBefore = fighter.ferocityFever;
-      drainFerocityFever(fighter, step2);
+      let drainStep = step2;
+      if (fighter.ferocityFever && fighter.feverHold > 0) {
+        const held = Math.min(fighter.feverHold, drainStep);
+        fighter.feverHold -= held;
+        drainStep -= held;
+      }
+      if (!fighter.ferocityFever) fighter.feverHold = 0;
+      fighter.feverElapsed = fighter.ferocityFever ? fighter.feverElapsed + step2 : 0;
+      drainFerocityFever(fighter, drainStep);
       if (feverBefore && !fighter.ferocityFever) applyFerocityBreakthrough(fighter, state, events);
     });
     state.fighters.forEach((fighter) => {
@@ -24148,6 +24371,221 @@ var RELICS = [
     }
   },
   {
+    /**
+     * 벨즈(베엘제부포) — **아군을 구해 내는 지원가**다. 회복(메테·플레샤·도디)·보호막(테리사)·강화(스테라·슈테)·약화(메론)·
+     * 정리(아르테)는 있었지만, 몰린 아군을 **그 자리에서 빼내는** 손은 로스터에 없었다.
+     *
+     * 패시브 「혀 낚아채기」가 주기마다 가장 다친 아군을 제 곁으로 끌어와 막을 두르고 그 아군을 노리던 표적을 모두 풀어 버린다.
+     * 평타 「족쇄 채찍」은 적중마다 그 주기를 0.1초 당기고, 궁극기는 「꿀꺽」 — 삼켜서 묶는 것이 아니라 아군 한 명을 입 안에
+     * 숨겨(은신) 그대로 싸우게 한다(응태 결정 2026-11-22 · B안).
+     */
+    id: "belz",
+    squad: "fang",
+    name: "\uBCA8\uC988",
+    specimenNumber: "033",
+    projectName: "BINDING PROMISE",
+    excavationSite: "\uB9C8\uB2E4\uAC00\uC2A4\uCE74\uB974 \uB9C8\uD558\uC7A5\uAC00 \uBD84\uC9C0 \uB9C8\uC5D0\uBC14\uB77C\uB178\uCE35",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "\uAC15\uAC00 \uC0AC\uC554\uCE35\uC5D0\uC11C \uB0A9\uC791\uD558\uACE0 \uB113\uC740 \uB450\uAC1C\uACE8\uC774 \uC704\uD131\uC9F8 \uB4DC\uB7EC\uB0AC\uB2E4. \uBA38\uB9AC\uBF08 \uAC89\uBA74\uC774 \uC624\uB3CC\uD1A0\uB3CC\uD55C \uACE8\uD310\uC73C\uB85C \uB36E\uC5EC \uD22C\uAD6C\uB97C \uC4F4 \uAC83\uCC98\uB7FC \uB2E8\uB2E8\uD588\uACE0, \uC785\uC740 \uBAB8\uD1B5 \uC808\uBC18\uC744 \uCC28\uC9C0\uD560 \uB9CC\uD07C \uB113\uC5C8\uB2E4. \uBC1C\uAD74\uC9C4\uC740 \uBD80\uC11C\uC9C0\uAE30 \uC26C\uC6B4 \uACE8\uD310\uC744 \uC870\uAC01\uB9C8\uB2E4 \uBC88\uD638\uB97C \uBD99\uC5EC \uB5BC\uC5B4 \uB0C8\uB2E4. \uD131 \uC548\uCABD\uC5D0\uB294 \uC774\uBE68 \uC790\uAD6D\uC774 \uB09C \uC791\uC740 \uBF08\uAC00 \uD568\uAED8 \uAD73\uC5B4 \uC788\uC5C8\uB2E4. \uBCF5\uC6D0\uC740 \uB113\uC740 \uD131\uC774 \uB2EB\uD788\uB294 \uAC01\uB3C4\uB97C \uBA3C\uC800 \uB9DE\uCD94\uACE0 \uB098\uBA38\uC9C0 \uBAB8\uC744 \uAC70\uAE30\uC5D0 \uB530\uB790\uB2E4.",
+    observationProfile: {
+      originYear: "\uC57D 6,800\uB9CC \uB144 \uC804",
+      // 낯을 가리는 어린 몸이지만 한번 한 약속은 놓지 않는 고집이 있어 열셋 언저리에 둔다.
+      restorationYear: "E.C. 13\uB144",
+      lifeStage: "\uC720\uCCB4",
+      height: "1.46 m",
+      weight: "38 kg"
+    },
+    catalogSummary: "\uC2E0\uC7A5 1.46m, \uCCB4\uC911 38kg\uC758 \uC778\uAC04\uD615 \uCCB4\uACA9\uC5D0 \uACE8\uD310\uC73C\uB85C \uB36E\uC778 \uB113\uC740 \uB450\uAC1C\uACE8\uC774 \uD655\uC778\uB41C \uC720\uCCB4 \uBCA0\uC5D8\uC81C\uBD80\uD3EC \uD654\uC11D \uAE30\uBC18 \uD45C\uBCF8.",
+    unlockRecord: { status: "recorded", text: '\uBCF5\uC6D0 \uD6C4 \uBCA8\uC988\uB294 \uB0AF\uC120 \uC0AC\uB78C \uC55E\uC5D0\uC11C \uC18C\uB9E4\uB85C \uC785\uC744 \uAC00\uB9AC\uACE0 \uC6C3\uB294\uB2E4. \uBAA9\uC758 \uBC84\uD074\uACFC \uBAB8\uC5D0 \uAC10\uAE34 \uC0AC\uC2AC\uC740 \uAD6C\uC18D\uAD6C\uAC00 \uC544\uB2C8\uB2E4. \uC571\uC194\uB8E8\uD2B8 \uD33D\uC774 \uD3ED\uC8FC\uD55C \uAC1C\uCCB4\uB97C \uBD99\uC7A1\uC744 \uB54C \uC4F0\uB294 \uC7A5\uBE44\uC778\uB370, \uB458 \uACF3\uC774 \uC5C6\uB2E4\uBA70 \uC81C \uBAB8\uC5D0 \uAC78\uACE0 \uB2E4\uB2CC\uB2E4. \uB9D0\uC218\uB294 \uC801\uC5B4\uB3C4 \uC190\uBCF4\uB2E4 \uD600\uAC00 \uBE60\uB974\uB2E4. \uBB34\uB108\uC9C0\uB294 \uC794\uD574 \uC55E\uC5D0 \uC120 \uB3D9\uB8CC\uB97C \uD600\uB85C \uB09A\uC544\uCC44 \uC81C \uC606\uC5D0 \uC138\uC6CC \uB193\uACE0\uB294, \uB180\uB780 \uC5BC\uAD74\uC744 \uBCF4\uBA74 \uADF8\uC81C\uC57C "\u2026\uC8C4\uC1A1\uD574\uC694, \uAE09\uD574\uC11C\uC694" \uD558\uACE0 \uC791\uAC8C \uC0AC\uACFC\uD55C\uB2E4. \uAC81\uBA39\uC740 \uAF2C\uB9C8 \uB810\uB9AD\uC744 \uAC1C\uAD6C\uB9AC \uD6C4\uB4DC \uADF8\uB298\uC5D0 \uC228\uACA8 \uC900 \uC801\uB3C4 \uC788\uB2E4. \uC65C \uC228\uACA8 \uC92C\uB290\uB0D0\uACE0 \uBB3C\uC73C\uBA74, \uB300\uB2F5 \uB300\uC2E0 \uD6C4\uB4DC\uB97C \uB20C\uB7EC\uC4F4\uB2E4.' },
+    squadNote: "\uC571\uC194\uB8E8\uD2B8 \uD33D\uC758 \uAD6C\uC18D \uC7A5\uBE44 \uB2F4\uB2F9. \uD3ED\uC8FC\uD55C \uAC1C\uCCB4\uB97C \uBD99\uC7A1\uC744 \uC0AC\uC2AC\uACFC \uC5F4\uC1E0 \uAFB8\uB7EC\uBBF8\uB97C \uBAB8\uC5D0 \uAC78\uACE0 \uB2E4\uB2C8\uACE0, \uC704\uD5D8\uD55C \uC790\uB9AC\uC5D0 \uC120 \uB3D9\uB8CC\uB294 \uD600\uB85C \uB04C\uC5B4\uC640 \uC81C \uB4A4\uC5D0 \uC228\uAE34\uB2E4.",
+    // 팽의 호칭 중 가장 짧고 무거운 말을, 낯가리는 목소리로 작게 부른다.
+    researcherTitle: "\uBCF4\uC2A4",
+    rarity: "SR",
+    portraitAssetId: "belz",
+    origin: "\uBCA0\uC5D8\uC81C\uBD80\uD3EC",
+    // 늪과 물가의 개구리다 — 풀 지원가는 메테 하나뿐이던 자리다.
+    element: "grass",
+    role: "support",
+    // 사슬이 닿는 거리에서 아군 뒤를 지킨다. 붙잡을 몸이 쓰러지는 자리를 늘 볼 수 있어야 한다.
+    reachTier: "mid",
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.04, efficiencyMultiplier: 1.08 },
+    /*
+     * SR 지원가 띠 안에서 체력·저항에 몫을 둔다 — 계약의 대가를 제 체력으로 치르므로 몸이 얇으면 두 번째 계약을 치르지 못한다.
+     * 손은 주문력 하나라 공격력은 낮게 둔다. 공속·이속은 로스터 중간이다.
+     */
+    stats: {
+      hp: 1080,
+      def: 70,
+      res: 98,
+      atk: 46,
+      ap: 132,
+      attackSpeed: 96,
+      moveSpeed: 92,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 12
+    },
+    // 한계 돌파(응태 결정 2026-11-23): 평타가 혀를 더 당기고, 삼킨 아군을 뱉을 때 막을 씌우고,
+    // 폭주에 들어서는 순간 두 배 막의 혀가 나가며, 쓰러질 듯한 아군에게는 10초에 한 번 곧바로 혀가 나간다.
+    breakthroughEffects: {
+      basic: { kind: "tongueTug", seconds: 0.25 },
+      ultimate: { kind: "spitOut", shieldMaxHpPercent: 15 },
+      ferocity: { kind: "tongueSnap", shieldMultiplier: 2 },
+      passive: { kind: "stillUnderContract", belowHpPercent: 30, lockoutSeconds: 10 }
+    },
+    // 폭주에는 손이 빨라지고, 평타 한 번이 혀의 주기를 0.5초씩 당긴다(평소 0.1초 — 응태 2026-11-23).
+    ferocityTrait: { name: "\uBC30\uACE0\uD30C\uC694", effectId: "selfAttackSpeedMultiplier", bonusPercent: 40, feverPassiveCooldownReductionSeconds: 0.5 },
+    passive: {
+      // kind가 tonguePull인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "belz-passive",
+      name: "\uD600 \uB09A\uC544\uCC44\uAE30",
+      kind: "tonguePull",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 0,
+      // 대상은 체력 비율이 가장 낮은 아군 — 응태 결정(2026-11-22). 표적을 모두 풀어 몰린 아군이 숨 돌릴 틈을 만든다.
+      tongue: { intervalSeconds: 8, shieldMaxHpPercent: 12, landDistance: 90 },
+      desc: "8\uCD08\uB9C8\uB2E4 \uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uB2E4\uB978 \uC544\uAD70\uC744 \uD600\uB85C \uB04C\uC5B4\uC640 \uACC1\uC5D0 \uC138\uC6B0\uACE0, \uADF8 \uC544\uAD70\uC758 \uCD5C\uB300 \uCCB4\uB825 12%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uB450\uB978\uB2E4. \uB04C\uB824\uC628 \uC544\uAD70\uC744 \uB178\uB9AC\uB358 \uC801\uC740 \uD45C\uC801\uC744 \uBAA8\uB450 \uC783\uB294\uB2E4."
+    },
+    basic: {
+      id: "belz-basic",
+      name: "\uC871\uC1C4 \uCC44\uCC0D",
+      power: 80,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      targeting: "single",
+      // 공속 감소 대신 혀의 주기를 당긴다(응태 결정 2026-11-22) — 때릴수록 더 자주 구해 낸다.
+      passiveCooldownReductionSeconds: 0.1
+    },
+    ultimate: {
+      id: "belz-ult",
+      name: "\uAFC0\uAEBD",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 130,
+      // 피해 없는 지원 궁극기다 — 코어는 teamBuff 계약만 읽고, 꿀꺽은 전장의 아군 중 체력 비율이 가장 낮은 한 명에게만 건다.
+      // 삼켜서 묶지 않는다: 걸린 아군은 은신한 채 그대로 싸운다(탐켄치처럼 아무것도 못 하는 시간이 아니다).
+      targeting: "battlefieldAllies",
+      teamBuff: { kind: "gulp", seconds: 3, healMaxHpPercentPerSecond: 6 }
+    }
+  },
+  {
+    /**
+     * 아르(알로사우루스) — **야성을 빨리 채우고 오래 쥐는 불 전사**다. 공통 획득량(12)은 그대로 두고, 게이지를 작게(80) 잡아
+     * 빨리 차게 하고, 패시브 「피 냄새」가 평타마다 야성을 더 끌어오며, 폭주 중에는 적중·처치가 폭주를 **닳지 않게 붙잡는다**
+     * (한 번의 폭주에 최대 +6초). 폭주 연장은 로스터에서 이 개체만 쓰는 축이다. 불 전사는 렉시아(SSR) 하나뿐이던 자리다.
+     */
+    id: "ar",
+    squad: "gear",
+    name: "\uC544\uB974",
+    // 034는 파루아의 번호라 원화 번호(char_034)와 갈린다 — 개체번호는 도감 순서의 값이다.
+    specimenNumber: "035",
+    projectName: "RELENTLESS HUNT",
+    excavationSite: "\uBBF8\uAD6D \uC640\uC774\uC624\uBC0D \uBAA8\uB9AC\uC2A8\uCE35 \uD558\uC6B0 \uCC44\uC11D\uC7A5",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "\uCC44\uC11D\uC7A5 \uBC14\uB2E5\uC758 \uC774\uC554\uC5D0\uC11C \uAC70\uC758 \uC628\uC804\uD55C \uACE8\uACA9\uC774 \uC606\uC73C\uB85C \uB204\uC6B4 \uCC44 \uB4DC\uB7EC\uB0AC\uB2E4. \uB208 \uC704\uB85C \uC19F\uC740 \uC791\uC740 \uBFD4 \uD55C \uC30D\uC774 \uADF8\uB300\uB85C \uB0A8\uC544 \uC788\uC5C8\uACE0, \uAC08\uBE44\uBF08 \uBA87 \uAC1C\uC640 \uBC1C\uAC00\uB77D\uBF08\uC5D0\uB294 \uBD80\uB7EC\uC84C\uB2E4 \uB2E4\uC2DC \uBD99\uC740 \uC790\uAD6D\uC774 \uACB9\uACB9\uC774 \uC788\uC5C8\uB2E4. \uB2E4\uCE5C \uBAB8\uC73C\uB85C\uB3C4 \uC0AC\uB0E5\uC744 \uBA48\uCD94\uC9C0 \uC54A\uC558\uB2E4\uB294 \uB73B\uC774\uB77C, \uBC1C\uAD74\uC9C4\uC740 \uADF8 \uC790\uAD6D\uC744 \uD558\uB098\uB3C4 \uBA54\uC6B0\uC9C0 \uC54A\uACE0 \uAE30\uB85D\uD588\uB2E4. \uBCF5\uC6D0\uC740 \uC0C1\uCC98 \uB09C \uBF08\uC758 \uBAA8\uC591\uC744 \uADF8\uB300\uB85C \uC0B4\uB9AC\uB294 \uCABD\uC744 \uACE8\uB790\uB2E4.",
+    observationProfile: {
+      originYear: "\uC57D 1\uC5B5 5,000\uB9CC \uB144 \uC804",
+      // 무심한 얼굴로 끝까지 쫓는 젊은 사냥꾼이라 열다섯 언저리에 둔다.
+      restorationYear: "E.C. 15\uB144",
+      lifeStage: "\uC544\uC131\uCCB4",
+      height: "1.52 m",
+      weight: "44 kg"
+    },
+    catalogSummary: "\uC2E0\uC7A5 1.52m, \uCCB4\uC911 44kg\uC758 \uC778\uAC04\uD615 \uCCB4\uACA9\uC5D0 \uB208 \uC704\uC758 \uC791\uC740 \uBFD4\uACFC \uC5EC\uB7EC \uBC88 \uC544\uBB38 \uACE8\uC808 \uD754\uC801\uC774 \uD655\uC778\uB41C \uC544\uC131\uCCB4 \uC54C\uB85C\uC0AC\uC6B0\uB8E8\uC2A4 \uD654\uC11D \uAE30\uBC18 \uD45C\uBCF8.",
+    unlockRecord: { status: "recorded", text: '\uBCF5\uC6D0 \uD6C4 \uC544\uB974\uB294 \uB9D0\uC744 \uAC78\uC5B4\uB3C4 \uB208\uB9CC \uB3CC\uB9B0\uB2E4. \uBAA9\uAE4C\uC9C0 \uC62C\uB9B0 \uCF54\uD2B8 \uAE43\uC5D0\uB294 \uC774\uBE68 \uBAA8\uC591 \uAC00\uC2DC\uAC00 \uC904\uC9C0\uC5B4 \uC788\uACE0, \uBC84\uD074\uB85C \uAC10\uC544 \uB454 \uAF2C\uB9AC\uB294 \uAC78\uC744 \uB54C\uB9C8\uB2E4 \uBC14\uB2E5\uC744 \uC2A4\uCE5C\uB2E4. \uC778\uC591 \uD604\uC7A5\uC5D0\uC11C \uD45C\uC801\uC744 \uD55C\uBC88 \uC815\uD558\uBA74 \uB193\uCE58\uB294 \uBC95\uC774 \uC5C6\uB2E4. \uB3D9\uB8CC\uAC00 \uCCA0\uC218 \uC2E0\uD638\uB97C \uBCF4\uB0B4\uB3C4 "\uC544\uC9C1" \uD55C\uB9C8\uB514\uB9CC \uB0A8\uAE30\uACE0 \uB05D\uAE4C\uC9C0 \uCAD3\uC544\uAC04 \uAE30\uB85D\uC774 \uC5EC\uB7EC \uBC88 \uC788\uB2E4. \uB3CC\uC544\uC640\uC11C\uB294 \uB2E4\uCE5C \uB370\uB97C \uAC10\uCD94\uACE0 \uAD6C\uC11D\uC5D0\uC11C \uC57C\uC2DD\uC744 \uBA39\uB294\uB2E4. \uBD95\uB300\uB97C \uAC10\uC544 \uC8FC\uBA74 \uACE0\uB9D9\uB2E4\uB294 \uB9D0 \uB300\uC2E0 \uC81C \uBAAB\uC758 \uC57C\uC2DD\uC744 \uBC18\uC73C\uB85C \uCABC\uAC1C \uB0B4\uBBFC\uB2E4.' },
+    squadNote: "\uB098\uC774\uD2B8 \uAE30\uC5B4\uC758 \uCD94\uACA9 \uB2F4\uB2F9. \uC778\uC591 \uD604\uC7A5\uC5D0\uC11C \uB2EC\uC544\uB098\uB294 \uD45C\uC801\uC744 \uB05D\uAE4C\uC9C0 \uCAD3\uC544 \uD68C\uC218\uD558\uACE0, \uCCA0\uC218 \uC2E0\uD638\uAC00 \uC640\uB3C4 \uC0AC\uB0E5\uC774 \uB05D\uB0A0 \uB54C\uAE4C\uC9C0 \uB3CC\uC544\uC624\uC9C0 \uC54A\uB294\uB2E4.",
+    // 기어의 호칭 중 가장 짧고 건조한 말을 무심하게 쓴다.
+    researcherTitle: "\uB2F9\uC2E0",
+    rarity: "SR",
+    // 게이지를 작게 잡아 빨리 찬다 — 공통 획득량을 올리지 않고 이 개체만의 속도를 낸다.
+    ferocityMax: 80,
+    portraitAssetId: "ar",
+    origin: "\uC54C\uB85C\uC0AC\uC6B0\uB8E8\uC2A4",
+    element: "fire",
+    role: "warrior",
+    reachTier: "melee",
+    strike: "slash",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 132.5, efficiencyMultiplier: 1.07 },
+    /*
+     * SR 전사 띠 안에서 공격력에 몫을 몰았다. 폭주를 오래 쥐는 개체라 버티는 몸이 조금 있어야 하므로 체력은 전사 중간이다.
+     * 쓰는 스킬이 없는 주문력은 낮게 둔다. 끝까지 쫓아가는 사냥꾼이라 이속은 높게, 공속은 중간에 둔다 — 빨라지는 몫은 폭주가 준다.
+     */
+    stats: {
+      hp: 1060,
+      def: 70,
+      res: 58,
+      atk: 156,
+      ap: 22,
+      attackSpeed: 104,
+      moveSpeed: 116,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 12
+    },
+    // 한계 돌파(응태 결정 2026-11-23): 출혈에 둔화가 붙고, 돌진이 멈춘 자리가 터지며,
+    // 폭주가 +30%부터 달아오르고, 폭주가 끝나도 야성 30%가 남는다.
+    breakthroughEffects: {
+      basic: { kind: "chainSnare", slowPercent: 30, seconds: 3 },
+      ultimate: { kind: "chargeImpact", radius: 160, powerPercent: 60 },
+      ferocity: { kind: "hotFangs", startAttackSpeedPercent: 30 },
+      passive: { kind: "scentLinger", ferocityPercent: 30 }
+    },
+    // 상시 보너스가 아니라 끊기지 않을수록 오르는 폭주다(응태 2026-11-22) — 공속 +10%에서 매초 +5%(최대 +50%), 흡혈 매초 +1.5(최대 12).
+    // 「피 냄새」가 폭주를 붙잡을수록 상한까지 닿는다: 기본 8초 폭주면 공속 +50%에 막 닿고, 연장 6초가 그 꼭대기를 오래 쥔다.
+    ferocityTrait: {
+      name: "\uBA48\uCD94\uC9C0 \uC54A\uB294 \uC774\uBE68",
+      effectId: "selfAttackSpeedMultiplier",
+      bonusPercent: 10,
+      ramp: { attackSpeedPercentPerSecond: 5, maxAttackSpeedPercent: 50, lifeStealPointsPerSecond: 1.5, maxLifeStealPoints: 12 }
+    },
+    passive: {
+      // kind가 bloodScent인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "ar-passive",
+      name: "\uD53C \uB0C4\uC0C8",
+      kind: "bloodScent",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 0,
+      // 처치 4초는 응태 결정(2026-11-22). 상한 6초 — 처치 한 번과 적중 네 번이면 다 찬다.
+      bloodScent: { bonusFerocityPerHit: 6, extendPerHitSeconds: 0.5, extendPerKillSeconds: 4, maxExtendSeconds: 6 },
+      desc: "\uAE30\uBCF8 \uACF5\uACA9\uC774 \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 \uC57C\uC131\uC744 6 \uB354 \uC5BB\uB294\uB2E4. \uD3ED\uC8FC \uC911\uC5D0\uB294 \uAE30\uBCF8 \uACF5\uACA9 \uC801\uC911\uB9C8\uB2E4 0.5\uCD08, \uC801\uC744 \uC4F0\uB7EC\uB728\uB9AC\uBA74 4\uCD08 \uB3D9\uC548 \uD3ED\uC8FC\uAC00 \uB2F3\uC9C0 \uC54A\uB294\uB2E4. \uD55C \uBC88\uC758 \uD3ED\uC8FC\uC5D0 \uB298\uC5B4\uB098\uB294 \uC2DC\uAC04\uC740 \uCD5C\uB300 6\uCD08\uB2E4."
+    },
+    basic: {
+      id: "ar-basic",
+      name: "\uBB3C\uC5B4\uB72F\uAE30",
+      power: 100,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      statusEffectEvery: 3,
+      statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 }]
+    },
+    ultimate: {
+      id: "ar-ult",
+      name: "\uD3EC\uC2DD\uC790\uC758 \uB3CC\uC9C4",
+      power: 220,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 120,
+      // 뚫고 지나가는 통로의 반폭(px)이다. 나아가는 거리는 이동 속도가 정한다.
+      targeting: "chargeLine",
+      radius: 90,
+      // 폭주 전이면 게이지를 끌어오고, 폭주 중이면 폭주를 붙잡는다.
+      selfFerocity: { amount: 40, feverExtendSeconds: 2 }
+    }
+  },
+  {
     id: "parua",
     squad: "rogue",
     name: "\uD30C\uB8E8\uC544",
@@ -28478,6 +28916,7 @@ function clamp(value, min, max) {
 
 // src/core/duelState.ts
 var DUEL_HISTORY_LIMIT = 10;
+var DUEL_FORFEIT_AFTER_MS = 60 * 60 * 1e3;
 function cloneDuelState(state) {
   return {
     ...state,
@@ -30432,6 +30871,32 @@ function sameRosterView(a, b, screen) {
   return JSON.stringify(normalizeRosterView(a, screen)) === JSON.stringify(normalizeRosterView(b, screen));
 }
 
+// src/core/interactionPartyMemory.ts
+init_define_import_meta_env();
+var INTERACTION_PARTY_SLOTS = 3;
+var MAX_CITIES = 64;
+var MAX_ID_LENGTH = 64;
+function normalizeInteractionParties(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const out = {};
+  for (const [cityId, slots] of Object.entries(value).slice(0, MAX_CITIES)) {
+    if (cityId.length === 0 || cityId.length > MAX_ID_LENGTH || !Array.isArray(slots)) continue;
+    const seen = /* @__PURE__ */ new Set();
+    const cleaned = Array.from({ length: INTERACTION_PARTY_SLOTS }, (_, index) => {
+      const id = slots[index];
+      if (typeof id !== "string" || id.length === 0 || id.length > MAX_ID_LENGTH || seen.has(id)) return null;
+      seen.add(id);
+      return id;
+    });
+    if (cleaned.some((id) => id !== null)) out[cityId] = cleaned;
+  }
+  return out;
+}
+function interactionPartyToRemember(party) {
+  const slots = normalizeInteractionParties({ city: party }).city;
+  return slots;
+}
+
 // src/core/settings.ts
 var TEXT_SPEEDS = [0.5, 1, 2];
 var TEXT_SCALES = [1, 1.15, 1.3];
@@ -30452,11 +30917,11 @@ function createDefaultSettings() {
     vibration: { enabled: true, combatHit: true, ultimate: true, excavationResult: true, uiInput: true },
     // 무료 모집·이벤트·우편은 현재 예약/서버 푸시 계약이 없어 선택값을 저장하지 않는다.
     notifications: { enabled: false, staminaFull: true, dailyMission: true, quietHours: true, quietHoursStart: "22:00", quietHoursEnd: "08:00", lastScheduledIds: {} },
-    presentation: { screenShake: true, damageNumbers: true, shortenExcavation: false, battleUiMotion: "default", powerSaving: false, lobbyAtmosphere: true, graphicsQuality: "high", frameRateLimit: 60 },
+    presentation: { screenShake: true, damageNumbers: true, shortenExcavation: false, battleUiMotion: "default", powerSaving: false, lobbyAtmosphere: true, graphicsQuality: "high", frameRateLimit: 30, frameRate30Applied: true, antialias: true },
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, rhythmOffsetMs: 0, feedbackAsked: false, adRewardDot: false, ultimatePresentation: "full", textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null, arenaSeen: null, rosterViews: {} },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, rhythmOffsetMs: 0, feedbackAsked: false, adRewardDot: false, ultimatePresentation: "full", textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null, arenaSeen: null, rosterViews: {}, interactionParties: {} },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" }
@@ -30492,7 +30957,12 @@ function normalizeSettings(value) {
       battleUiMotion: allowed(p.battleUiMotion, BATTLE_UI_MOTIONS, d.presentation.battleUiMotion),
       // 새 명시값이 있으면 예전 토글보다 우선하고, 없을 때만 true를 low로 이관한다.
       graphicsQuality: allowed(p.graphicsQuality, GRAPHICS_QUALITIES, p.lowSpecMode === true ? "low" : d.presentation.graphicsQuality),
-      frameRateLimit: allowed(p.frameRateLimit, FRAME_RATE_LIMITS, d.presentation.frameRateLimit)
+      // 기본 30fps 일괄 전환(v0.520.0): 표식이 없는 저장은 고른 값과 무관하게 한 번 30으로 내린다.
+      // 표식이 선 뒤에 플레이어가 다시 고른 60·120은 그대로 지킨다.
+      frameRateLimit: p.frameRate30Applied === true ? allowed(p.frameRateLimit, FRAME_RATE_LIMITS, d.presentation.frameRateLimit) : d.presentation.frameRateLimit,
+      frameRate30Applied: true,
+      // v0.525.0까지는 이 값이 없었다(낮음 품질만 끔 · 아이폰은 늘 끔). 없던 저장은 품질에서 고른다 — 아이폰은 켬으로 돌아온다.
+      antialias: bool(p.antialias, allowed(p.graphicsQuality, GRAPHICS_QUALITIES, p.lowSpecMode === true ? "low" : d.presentation.graphicsQuality) !== "low")
     },
     // 구버전의 subtitles 값은 필수 본문을 감추는 잘못된 의미라 저장 모델로 이관하지 않고 폐기한다.
     accessibility: { textScale: allowed(x.textScale, TEXT_SCALES, d.accessibility.textScale), reduceMotion: bool(x.reduceMotion, d.accessibility.reduceMotion), reduceFlashes: bool(x.reduceFlashes, d.accessibility.reduceFlashes), colorAssist: bool(x.colorAssist, d.accessibility.colorAssist) },
@@ -30544,7 +31014,9 @@ function normalizeSettings(value) {
       // 필드가 없던 저장은 기록 없음 — 처음 들어온 입구가 지금 전적으로 시작한다.
       arenaSeen: normalizeArenaSeen(g.arenaSeen),
       // 필드가 없던 저장은 기억 없음 — 모든 목록이 기본 필터·정렬로 선다. 없어진 옵션은 기본값으로 떨어진다.
-      rosterViews: normalizeRosterViews(g.rosterViews)
+      rosterViews: normalizeRosterViews(g.rosterViews),
+      // 필드가 없던 저장은 기억 없음 — 교류 판이 빈 칸으로 선다.
+      interactionParties: normalizeInteractionParties(g.interactionParties)
     },
     // 인증 토큰은 이 모델에 애초에 자리를 만들지 않아 로컬 저장으로 새는 경로를 차단한다.
     account: { provider: allowed(a.provider, ["guest", "google", "apple"], d.account.provider), displayId: typeof a.displayId === "string" && a.displayId.length <= 80 ? a.displayId : d.account.displayId }
@@ -37143,7 +37615,7 @@ var PLESHA_STORY = {
     // 4 — 장 4 이후: 관측 지점 확인 이후.
     ["\uADF8\uB0A0 \uAD50\uC2E0 \uD749\uB0B4 \uB0B8 \uAC70, \uC815\uB9D0 \uC78A\uC73C\uC168\uC8E0? \u2026\uD45C\uC815 \uBCF4\uB2C8\uAE4C \uC548 \uC78A\uC73C\uC168\uB124\uC694.", "\uC77C\uACF1 \uBC88\uC9F8 \uBCC4 \uC544\uC9C1 \uC544\uAEF4 \uB450\uACE0 \uC788\uC5B4\uC694. \uC120\uBC30 \uC62C\uB77C\uC624\uB294 \uB0A0 \uC140 \uAC70\uC608\uC694.", "\uB3D7\uC790\uB9AC\uB97C \uC870\uAE08 \uD070 \uAC78\uB85C \uBC14\uAFE8\uC5B4\uC694. \uC774\uC720\uB294\u2026 \uADF8\uB0E5\uC774\uC694, \uC120\uBC30."],
     // 5
-    ["\uC624\uB298\uC740 \uAD6C\uB984\uC774 \uB9CE\uC544\uC11C \uAD00\uCE21 \uC26C\uB294 \uB0A0\uC774\uC5D0\uC694. \uB300\uC2E0 \uC218\uCCA9 \uC815\uB9AC\uD588\uC5B4\uC694. \uC120\uBC30\uB791 \uBCF8 \uB0A0\uC5D4 \uBCC4\uD45C\uB97C \uBD99\uC600\uC5B4\uC694.", "\uBCC4 \uBAA8\uC591 \uC8FC\uBA39\uBC25, \uC624\uB298\uC740 \uAF64 \uBCC4 \uAC19\uC544\uC694. \uB4DC\uC154 \uBCF4\uC2E4\uB798\uC694?", "\uBCC4\uB625\uBCC4\uC740 \uAC70\uC758 \uB2E4 \uD0C0 \uBC84\uB9B0\uB300\uC694. \uADFC\uB370 \uAC70\uC758\uB2C8\uAE4C, \uB2E4\uB294 \uC544\uB2C8\uB77C\uB294 \uB73B\uC774\uC796\uC544\uC694."],
+    ["\uAD6C\uB984 \uB080 \uB0A0\uC740 \uAD00\uCE21 \uC26C\uB294 \uB0A0\uC774\uC5D0\uC694. \uADF8\uB798\uC11C \uC624\uB298\uC740 \uB3C4\uC2DC\uB77D\uB9CC \uC30C\uC5B4\uC694. \u2026\uAC19\uC774 \uBA39\uC744 \uC0AC\uB78C\uC774 \uD544\uC694\uD574\uC11C\uC694.", "\uBCC4 \uBAA8\uC591 \uC8FC\uBA39\uBC25, \uC624\uB298\uC740 \uAF64 \uBCC4 \uAC19\uC544\uC694. \uB4DC\uC154 \uBCF4\uC2E4\uB798\uC694?", "\uBCC4\uB625\uBCC4\uC740 \uAC70\uC758 \uB2E4 \uD0C0 \uBC84\uB9B0\uB300\uC694. \uADFC\uB370 \uAC70\uC758\uB2C8\uAE4C, \uB2E4\uB294 \uC544\uB2C8\uB77C\uB294 \uB73B\uC774\uC796\uC544\uC694."],
     // 6 — 장 6 이후: 떨어진 자리 이후.
     ["\uADF8\uB54C \uCC3E\uC740 \uC870\uC57D\uB3CC, \uCC3D\uAC00\uC5D0 \uB480\uC5B4\uC694. \uBC18\uC740 \uC120\uBC30 \uAC70\uB77C\uC11C \uBC18\uB9CC \uD587\uBE5B \uBCF4\uC774\uAC8C \uB194\uB480\uC5B4\uC694.", "\u300C\uBBF8\uD655\uC778\u300D \uC904\uC774 \uD558\uB098 \uC904\uC5C8\uC5B4\uC694. \uC120\uBC30 \uB355\uBD84\uC774\uC5D0\uC694.", "\uB2E4\uC74C\uC5D4 \uB354 \uBA3C \uB370 \uB5A8\uC5B4\uC9C4 \uAC70 \uCC3E\uC73C\uB7EC \uAC00\uC694. \uC120\uBC30 \uB2E4\uB9AC\uAC00 \uAD1C\uCC2E\uC73C\uC2DC\uBA74\uC694."],
     // 7
@@ -37218,7 +37690,7 @@ var CHAPTER_831 = {
       { id: "sit", label: "\uC544\uBB34\uAC83\uB3C4 \uC548 \uD574\uB3C4 \uB41C\uB2E4\uACE0 \uB9D0\uD55C\uB2E4", nextId: "n6b" }
     ] },
     { id: "n6a", speaker: "\uC544\uB974\uD14C", body: "\uC774\uAC70\uC694? \u2026\uC81C \uD654\uC11D\uC5D0\uB294 \uAE43\uD138 \uC790\uAD6D\uC774 \uD55C \uC62C\uAE4C\uC9C0 \uB0A8\uC544 \uC788\uC5C8\uB300\uC694. \uB3CC\uC5D0 \uADF8\uB300\uB85C \uCC0D\uD78C \uCC44\uB85C\uC694. \uADF8\uB798\uC11C \uC774\uB807\uAC8C \uBCF5\uC6D0\uB41C \uAC70\uB798\uC694.", nextId: "n7" },
-    { id: "n6b", speaker: "\uC544\uB974\uD14C", body: "\uC544\uBB34\uAC83\uB3C4\uC694? \uADF8\uAC8C \uC81C\uC77C \uC5B4\uB824\uC6B4\uB370\u2026 \uBCF4\uC138\uC694, \uC190\uC774 \uB610 \uAE43\uC744 \uB9CC\uC9C0\uACE0 \uC788\uC796\uC544\uC694. \uC81C \uD654\uC11D\uC5D4 \uC774 \uAE43\uD138 \uC790\uAD6D\uC774 \uD55C \uC62C\uAE4C\uC9C0 \uB2E4 \uB0A8\uC544 \uC788\uC5C8\uB300\uC694.", nextId: "n7" },
+    { id: "n6b", speaker: "\uC544\uB974\uD14C", body: "\uC544\uBB34\uAC83\uB3C4\uC694? \uADF8\uAC8C \uC81C\uC77C \uC5B4\uB824\uC6B4\uB370\u2026 \uBCF4\uC138\uC694, \uC190\uC774 \uB610 \uAE43\uC744 \uB9CC\uC9C0\uACE0 \uC788\uC796\uC544\uC694. \uC774 \uAE43, \uB3CC\uC5D0 \uD55C \uC62C\uAE4C\uC9C0 \uCC0D\uD600 \uC788\uC5C8\uB300\uC694. \uADF8\uB798\uC11C \uC81C\uAC00 \uC774\uB807\uAC8C \uB098\uC628 \uAC70\uACE0\uC694.", nextId: "n7" },
     { id: "n7", speaker: "\uC544\uB974\uD14C", body: "\uC6C3\uAE30\uC8E0. \uC800\uB294 \uB9E4\uC77C \uC790\uAD6D\uC744 \uC9C0\uC6B0\uB294\uB370, \uC81C\uAC00 \uC5EC\uAE30 \uC788\uB294 \uAC74 \uC790\uAD6D\uC774 \uC548 \uC9C0\uC6CC\uC84C\uAE30 \uB54C\uBB38\uC774\uC5D0\uC694.", nextId: "n8" },
     { id: "n8", speaker: "", body: "\uC544\uB974\uD14C\uC758 \uC190\uC774 \uBA48\uCDC4\uB2E4. \uAE43 \uD558\uB098\uAC00 \uBC18\uB4EF\uD558\uAC8C \uC81C\uC790\uB9AC\uC5D0 \uB215\uD600\uC84C\uB2E4.", nextId: "n9" },
     { id: "n9", speaker: "\uC544\uB974\uD14C", body: "\uADF8\uB798\uC11C \uC694\uC998\uC740 \uC9C0\uC6B0\uAE30 \uC804\uC5D0 \uD55C \uBC88 \uB354 \uBD10\uC694. \uB0A8\uACA8\uC57C \uD558\uB294 \uC790\uAD6D\uC778\uC9C0 \uC544\uB2CC\uC9C0\uC694. \u2026\uC774\uAC83\uB3C4 \uC77C\uC774\uB124\uC694. \uC26C\uB294 \uB0A0\uC778\uB370.", nextId: "n10" },
@@ -37334,7 +37806,7 @@ var ARTE_STORY = {
     // 1
     ["\uC624\uB298 \uC138 \uAD70\uB370 \uB3CC\uC558\uC5B4\uC694. \uB450 \uAD70\uB370\uB294 \uC2ED\uC624 \uBD84 \uC548\uC5D0 \uB05D\uB0AC\uACE0\uC694.", "\uC5F0\uAD6C\uC6D0\uB2D8 \uCC45\uC0C1 \uC704, \uC815\uB9AC\uD574\uB3C4 \uB420\uAE4C\uC694? \uC11C\uB958 \uC21C\uC11C\uB294 \uC548 \uAC74\uB4DC\uB9B4\uAC8C\uC694.", "\uB300\uAC78\uB808 \uC790\uB8E8\uB294 \uB9E4\uC77C \uB2E6\uC544\uC694. \uC190\uC774 \uB2FF\uB294 \uB370\uAC00 \uC81C\uC77C \uBA3C\uC800 \uB354\uB7EC\uC6CC\uC9C0\uAC70\uB4E0\uC694."],
     // 2
-    ["\uC5BC\uB8E9\uC740 \uB9C8\uB974\uAE30 \uC804\uC5D0 \uD138\uC5B4\uC57C \uD574\uC694. \uB9C8\uB974\uBA74 \uB450 \uBC30\uB85C \uD798\uB4E4\uC5B4\uC694.", "\uC790\uC8FC\uB4E4 \uBB3C\uC5B4\uBCF4\uC154\uC11C\uC694. \uC774 \uBA3C\uC9C0\uB5A8\uC774, \uC81C \uAE43\uC73C\uB85C \uB9CC\uB4E0 \uAC70 \uC544\uB2C8\uC5D0\uC694. \uD68C\uC0AC \uC9C0\uAE09\uD488\uC774\uC5D0\uC694.", "\uD734\uAC8C\uC2E4 \uCEF5 \uC790\uAD6D, \uC81C\uAC00 \uC9C0\uC6E0\uC5B4\uC694. \uB204\uAC00 \uB0A8\uACBC\uB294\uC9C0\uB294 \uC548 \uC5EC\uCB50\uAC8C\uC694."],
+    ["\uC5BC\uB8E9\uC740 \uB9C8\uB974\uAE30 \uC804\uC5D0 \uD138\uC5B4\uC57C \uD574\uC694. \uB9C8\uB974\uBA74 \uB450 \uBC30\uB85C \uD798\uB4E4\uC5B4\uC694.", "\uC774 \uBA3C\uC9C0\uB5A8\uC774\uC694? \uC81C \uAE43 \uC544\uB2C8\uC5D0\uC694. \uB2E4\uB4E4 \uADF8\uB807\uAC8C \uBB3C\uC5B4\uBCF4\uC154\uC11C\u2026 \uD68C\uC0AC \uC9C0\uAE09\uD488\uC774\uC5D0\uC694.", "\uD734\uAC8C\uC2E4 \uCEF5 \uC790\uAD6D, \uC81C\uAC00 \uC9C0\uC6E0\uC5B4\uC694. \uB204\uAC00 \uB0A8\uACBC\uB294\uC9C0\uB294 \uC548 \uC5EC\uCB50\uAC8C\uC694."],
     // 3
     ["\uC624\uB298 \uD3C9\uAC00 \uBC1B\uC558\uC5B4\uC694. \uACB0\uACFC\uB294\u2026 \uB098\uC058\uC9C0 \uC54A\uC558\uB2E4\uACE0\uB9CC \uB9D0\uC500\uB4DC\uB9B4\uAC8C\uC694.", "\uC5F0\uAD6C\uC6D0\uB2D8, \uC2E0\uBC1C \uB048 \uD480\uB838\uC5B4\uC694. \u2026\uC81C\uAC00 \uBB36\uC5B4 \uB4DC\uB9AC\uB294 \uAC74 \uC5C5\uBB34 \uBC94\uC704\uAC00 \uC544\uB2C8\uB77C\uC11C\uC694.", "\uC0AC\uC9C4\uCCA9 \uD55C \uAD8C\uC774 \uB2E4 \uCC3C\uC5B4\uC694. \uC804\uBD80 \uBC14\uB2E5 \uC0AC\uC9C4\uC774\uC5D0\uC694. \uBCF4\uC2E4\uB798\uC694? \u2026\uC544\uB2C8\uC5D0\uC694, \uC7AC\uBBF8\uC5C6\uC73C\uC2E4 \uAC70\uC608\uC694."],
     // 4 — 장 4 이후: 현장 도착 이후.
@@ -37344,13 +37816,604 @@ var ARTE_STORY = {
     // 6 — 장 6 이후: 지우지 않은 화살표 이후.
     ["\uC218\uB85C \uD654\uC0B4\uD45C \uC544\uC9C1 \uC788\uC5B4\uC694. \uC9C0\uB098\uAC08 \uB54C\uB9C8\uB2E4 \uB458\uB808\uB9CC \uB2E6\uC544\uC694.", "\uBAA9\uB85D\uC5D0 \u300C\uD604\uC7A5 \uD310\uB2E8\uC73C\uB85C \uBCF4\uC874\u300D \uCE78\uC774 \uC0DD\uACBC\uC5B4\uC694. \uC81C\uAC00 \uB9CC\uB4E0 \uCE78\uC774\uC5D0\uC694.", "\uB370\uC774 \uC528\uAC00 \uB610 \uADF8\uB9AC\uC790\uACE0 \uD574\uC694. \uC548 \uADF8\uB824\uC694. \u2026\uB458\uB808\uB294 \uB2E6\uC544 \uC904 \uAC70\uC608\uC694."],
     // 7
-    ["\uC694\uC998\uC740 \uC9C0\uC6B0\uAE30 \uC804\uC5D0 \uD55C \uBC88 \uB354 \uBD10\uC694. \uB0A8\uACA8\uC57C \uD558\uB294 \uAC74\uC9C0\uC694.", "\uACE7 \uD734\uBB34\uB798\uC694. \uC5F0\uAD6C\uC6D0\uB2D8\uC740 \uC26C\uB294 \uB0A0\uC5D0 \uBB50 \uD558\uC138\uC694? \uCC38\uACE0\uD558\uB824\uACE0\uC694.", "\uAE43\uC744 \uACE0\uB974\uB294 \uAC74 \uBC84\uB987\uC774\uC5D0\uC694. \uC2E0\uACBD \uC4F0\uC774\uC2DC\uBA74 \uB9D0\uC500\uD574 \uC8FC\uC138\uC694. \uBA48\uCDB0 \uBCFC\uAC8C\uC694."],
+    ["\uC694\uC998\uC740 \uC9C0\uC6B0\uAE30 \uC804\uC5D0 \uD55C \uBC88 \uB354 \uBD10\uC694. \uB0A8\uACA8\uC57C \uD558\uB294 \uAC74\uC9C0\uC694.", "\uACE7 \uD734\uBB34\uB798\uC694. \uC5F0\uAD6C\uC6D0\uB2D8\uC740 \uC26C\uB294 \uB0A0\uC5D0 \uBB50 \uD558\uC138\uC694? \uCC38\uACE0\uD558\uB824\uACE0\uC694.", "\uC544, \uB610 \uAE43 \uB9CC\uC9C0\uACE0 \uC788\uC5C8\uB124\uC694. \uC2E0\uACBD \uC4F0\uC774\uC2DC\uBA74 \uB9D0\uC500\uD574 \uC8FC\uC138\uC694. \uBA48\uCDB0 \uBCFC\uAC8C\uC694."],
     // 8 — 장 8 이후: 쉬는 날 이후.
     ["\uADF8\uB0A0 \uC18C\uD30C\uC5D0 \uC549\uC544 \uC788\uC5C8\uB358 \uAC70, \uC81C \uCCAB \uD734\uBB34 \uAE30\uB85D\uC774\uC5D0\uC694. \uAF64 \uC798 \uC270 \uAC83 \uAC19\uC544\uC694.", "\uC81C \uD654\uC11D \uC598\uAE30, \uC544\uBB34\uD55C\uD14C\uB3C4 \uC548 \uD588\uC5C8\uC5B4\uC694. \uC5F0\uAD6C\uC6D0\uB2D8\uC774 \uCC98\uC74C\uC774\uC5D0\uC694.", "\uC790\uAD6D\uC774 \uB0A8\uC544\uC11C \uC81C\uAC00 \uC5EC\uAE30 \uC788\uB300\uC694. \uADF8 \uC0DD\uAC01\uC744 \uD558\uBA74 \uB2E6\uB294 \uC190\uC774 \uC870\uAE08 \uB290\uB824\uC838\uC694."],
     // 9
     ["\uC0AC\uC9C4\uCCA9 \uB9C8\uC9C0\uB9C9 \uC7A5\uB9CC \uB0A8\uC558\uC5B4\uC694. \uBB58 \uCC0D\uC744\uC9C0 \uC544\uC9C1 \uBABB \uC815\uD588\uC5B4\uC694.", "\uC5F0\uAD6C\uC6D0\uB2D8, \uB2E4\uC74C \uC8FC \uB2A6\uC740 \uBC24\uC5D0 \uC2DC\uAC04 \uC788\uC73C\uC138\uC694? \uBCF4\uACE0\uB4DC\uB9B4 \uAC8C \uC788\uC5B4\uC694. \uC5C5\uBB34 \uB9D0\uACE0\uC694.", "\uAD00\uC81C\uC2E4 \uBC14\uB2E5, \uC624\uB298 \uC720\uB09C\uD788 \uBC18\uC9DD\uC774\uAC8C \uB2E6\uC558\uC5B4\uC694. \uC774\uC720\uB294 \uADF8\uB0A0 \uB9D0\uC500\uB4DC\uB9B4\uAC8C\uC694."],
     // 10 — 마음을 연 사이. 현장 사진첩 이후.
     ["\uC0AC\uC9C4\uCCA9 \uB9C8\uC9C0\uB9C9 \uC7A5, \uB9E4\uC77C \uD55C \uBC88\uC529 \uBD10\uC694. \uC5F0\uAD6C\uC6D0\uB2D8 \uC2E0\uBC1C \uC790\uAD6D\uC774 \uC8FC\uC778\uACF5\uC774\uC5D0\uC694.", "\uC0C8 \uC0AC\uC9C4\uCCA9 \uC0C0\uC5B4\uC694. \uCCAB \uC7A5\uC740 \uBE44\uC6CC \uB480\uC5B4\uC694. \uC5F0\uAD6C\uC6D0\uB2D8\uC774\uB791 \uCC0D\uC744 \uC790\uB9AC\uC608\uC694.", "\uD604\uC7A5 \uC815\uB9AC \uC644\uB8CC\uD588\uC2B5\uB2C8\uB2E4, \uC5F0\uAD6C\uC6D0\uB2D8. \u2026\uC624\uB298\uC740 \uC9C0\uC6B4 \uAC83\uBCF4\uB2E4 \uB0A8\uAE34 \uAC8C \uB354 \uB9CE\uC544\uC694."]
+  ]
+};
+
+// src/data/relicStories/brika.ts
+init_define_import_meta_env();
+var CHAPTER_432 = {
+  id: "bond.brika.4",
+  backdrop: "assembly",
+  startNodeId: "n1",
+  titleCard: { title: "\uB9E8 \uB4B7\uC904", subtitle: "\uBE0C\uB9AC\uCE74 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 1" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uC544\uCE68 \uC810\uD638\uAC00 \uB05D\uB09C \uC9D1\uACB0\uC9C0. \uB2E4\uB4E4 \uC55E\uCABD\uC73C\uB85C \uBAB0\uB824\uAC00\uB294\uB370, \uBE0C\uB9AC\uCE74\uB9CC \uB300\uC5F4 \uB9E8 \uB05D\uC5D0 \uC11C\uC11C \uC6C0\uC9C1\uC774\uC9C0 \uC54A\uC558\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uC55E\uC904\uC740 \uBE44\uC5B4 \uC788\uB294\uB370, \uB9E8 \uB4A4 \uD55C \uC790\uB9AC\uB9CC \uAF49 \uCC28 \uC788\uB2E4.)", choices: [
+      { id: "front", label: "\uC55E\uC73C\uB85C \uC640\uB3C4 \uB41C\uB2E4\uACE0 \uC190\uC9D3\uD55C\uB2E4", nextId: "n3a" },
+      { id: "beside", label: "\uB9E8 \uB4A4\uB85C \uAC00\uC11C \uC606\uC5D0 \uC120\uB2E4", nextId: "n3b" }
+    ] },
+    { id: "n3a", speaker: "\uBE0C\uB9AC\uCE74", body: "\uC544, \uC544\uB2C8\uC5D0\uC694. \uC800\uB294 \uC5EC\uAE30\uAC00 \uC88B\uC544\uC694\u2026 \uC81C\uAC00 \uC55E\uC5D0 \uC11C\uBA74 \uB4A4\uC5D0 \uC120 \uC0AC\uB78C\uB4E4\uC774 \uC544\uBB34\uAC83\uB3C4 \uBABB \uBCF4\uAC70\uB4E0\uC694.", nextId: "n4" },
+    { id: "n3b", speaker: "\uBE0C\uB9AC\uCE74", body: "\u2026\uC5F0\uAD6C\uC6D0\uB2D8\uAE4C\uC9C0 \uB4A4\uB85C \uC624\uC2DC\uBA74 \uC5B4\uB5A1\uD574\uC694. \uC55E\uC5D0\uC11C \uBD80\uB974\uC2E4 \uC77C \uC788\uC73C\uBA74 \uC81C\uAC00 \uAC08\uAC8C\uC694. \uC5EC\uAE30\uC11C\uB3C4 \uB2E4 \uBCF4\uC5EC\uC11C\uC694.", nextId: "n4" },
+    { id: "n4", speaker: "", body: "\uBE0C\uB9AC\uCE74\uAC00 \uC18C\uB9E4\uB85C \uC785\uAC00\uB97C \uAC00\uB9AC\uACE0 \uACE0\uAC1C\uB97C \uC219\uC600\uB2E4. \uADF8\uB798\uB3C4 \uC815\uC218\uB9AC\uB294 \uC55E\uC904 \uB204\uAD6C\uBCF4\uB2E4 \uB192\uC740 \uB370 \uC788\uC5C8\uB2E4.", nextId: "n5" },
+    { id: "n5", speaker: "\uBAA8\uC0AC\uB098", body: "\uBE0C\uB9AC\uCE74. \uC800 \uC55E \uCEE8\uD14C\uC774\uB108 \uC704, \uD45C\uC2DD \uBCF4\uC5EC?", nextId: "n6" },
+    { id: "n6", speaker: "\uBE0C\uB9AC\uCE74", body: "\uB124\u2026 \uBE68\uAC04 \uAE43\uBC1C \uB450 \uAC1C\uC694. \uC67C\uCABD \uAC70\uB294 \uBC18\uCBE4 \uB118\uC5B4\uC838 \uC788\uC5B4\uC694.", nextId: "n7" },
+    { id: "n7", speaker: "", body: "\uBAA8\uC0AC\uB098\uB294 \uACE0\uAC1C\uB9CC \uD55C \uBC88 \uB044\uB355\uC774\uACE0 \uC55E\uC73C\uB85C \uAC78\uC5B4\uAC14\uB2E4. \uBE0C\uB9AC\uCE74\uC758 \uC5B4\uAE68\uAC00 \uC544\uC8FC \uC870\uAE08 \uD3B4\uC84C\uB2E4\uAC00, \uC774\uB0B4 \uB2E4\uC2DC \uC6C0\uCE20\uB7EC\uB4E4\uC5C8\uB2E4.", nextId: "n8" },
+    { id: "n8", speaker: "\uBE0C\uB9AC\uCE74", body: "\u2026\uBC29\uAE08 \uAC70, \uCE6D\uCC2C \uC544\uB2C8\uC8E0? \uADF8\uB0E5 \uBB3C\uC5B4\uBCF4\uC2E0 \uAC70\uC8E0?", nextId: "n9" },
+    { id: "n9", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uB300\uB2F5\uC744 \uAE30\uB2E4\uB9AC\uB294 \uB208\uC774 \uC0DD\uAC01\uBCF4\uB2E4 \uC9C4\uC9C0\uD558\uB2E4.)", nextId: "n10" },
+    { id: "n10", speaker: "\uBE0C\uB9AC\uCE74", body: "\uB300\uB2F5 \uC548 \uD558\uC154\uB3C4 \uB3FC\uC694. \uC800\uB294 \uACC4\uC18D \uC5EC\uAE30 \uC788\uC744\uAC8C\uC694, \uC5F0\uAD6C\uC6D0\uB2D8. \uB9E8 \uB4A4\uC5D0\uC11C\uB294\u2026 \uB2E4\uB4E4 \uD55C\uB208\uC5D0 \uBCF4\uC774\uAC70\uB4E0\uC694." }
+  ]
+};
+var CHAPTER_632 = {
+  id: "bond.brika.6",
+  backdrop: "library",
+  startNodeId: "n1",
+  titleCard: { title: "\uB192\uC740 \uC120\uBC18", subtitle: "\uBE0C\uB9AC\uCE74 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 2" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uC790\uB8CC\uC2E4 \uB9E8 \uC548\uCABD. \uCC9C\uC7A5\uC5D0 \uB2FF\uC744 \uB4EF\uD55C \uC120\uBC18 \uAF2D\uB300\uAE30\uC5D0 \uBA3C\uC9C0 \uC549\uC740 \uC0C1\uC790 \uD558\uB098\uAC00 \uC5B9\uD600 \uC788\uC5C8\uB2E4. \uC0AC\uB2E4\uB9AC\uB294 \uB2E4\uB9AC \uD558\uB098\uAC00 \uBD80\uB7EC\uC838 \uBCBD\uC5D0 \uAE30\uB300 \uC788\uC5C8\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "\uC544\uB974\uD14C", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC800 \uC0C1\uC790\uC694. \uC624\uB298 \uC815\uB9AC \uBAA9\uB85D\uC5D0 \uC788\uB294\uB370 \uC190\uC774 \uC548 \uB2FF\uC544\uC694. \uC0AC\uB2E4\uB9AC\uB294 \uC218\uB9AC \uC2E0\uCCAD\uD574 \uB480\uACE0\uC694.", nextId: "n3" },
+    { id: "n3", speaker: "", body: "\uB450 \uC0AC\uB78C\uC758 \uC2DC\uC120\uC774 \uB3D9\uC2DC\uC5D0 \uBB38\uAC04\uC73C\uB85C \uD5A5\uD588\uB2E4. \uC9C0\uB098\uAC00\uB358 \uBE0C\uB9AC\uCE74\uAC00 \uBC1C\uC744 \uBA48\uCD94\uB354\uB2C8, \uB208\uC774 \uB9C8\uC8FC\uCE58\uC790 \uD55C \uAC78\uC74C \uBB3C\uB7EC\uC130\uB2E4.", nextId: "n4" },
+    { id: "n4", speaker: "\uBE0C\uB9AC\uCE74", body: "\u2026\uC800\uC694? \uC544, \uB124. \uAEBC\uB0B4 \uB4DC\uB9B4\uAC8C\uC694. \uB300\uC2E0 \uD0A4 \uC598\uAE30\uB294 \uD558\uC9C0 \uB9D0\uC544 \uC8FC\uC138\uC694.", nextId: "n5" },
+    { id: "n5", speaker: "", body: "\uBE0C\uB9AC\uCE74\uAC00 \uB54B\uC740 \uBA38\uB9AC\uB97C \uD55C \uBC88 \uD718\uB450\uB974\uC790, \uB05D\uC5D0 \uC5EE\uC778 \uAE08\uBE5B \uACE0\uB9AC\uAC00 \uC0C1\uC790 \uC190\uC7A1\uC774\uC5D0 \uAC78\uB838\uB2E4. \uC0C1\uC790\uB294 \uBA3C\uC9C0 \uD55C \uC90C\uB9CC \uB5A8\uAD6C\uACE0 \uC58C\uC804\uD788 \uB0B4\uB824\uC654\uB2E4.", nextId: "n6" },
+    { id: "n6", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uACE0\uB9AC \uD558\uB098\uB85C \uC815\uD655\uD788 \uAC78\uC5B4 \uB0C8\uB2E4. \uAF64 \uC5F0\uC2B5\uD55C \uC190\uB180\uB9BC\uC774\uB2E4.)", choices: [
+      { id: "praise", label: "\uB300\uB2E8\uD558\uB2E4\uACE0 \uB9D0\uD55C\uB2E4", nextId: "n7a" },
+      { id: "hair", label: "\uB54B\uC740 \uBA38\uB9AC\uC5D0 \uB300\uD574 \uBB3B\uB294\uB2E4", nextId: "n7b" }
+    ] },
+    { id: "n7a", speaker: "\uBE0C\uB9AC\uCE74", body: "\uB300, \uB300\uB2E8\uD55C \uAC70 \uC544\uB2C8\uC5D0\uC694. \uADF8\uB0E5 \uBA38\uB9AC\uAC00 \uAE38\uC5B4\uC11C\u2026 \uC544\uB2C8, \uD0A4 \uC598\uAE30 \uC544\uB2C8\uC5D0\uC694. \uBA38\uB9AC\uCE74\uB77D \uC598\uAE30\uC608\uC694.", nextId: "n8" },
+    { id: "n7b", speaker: "\uBE0C\uB9AC\uCE74", body: "\uACE0\uB9AC\uB97C \uC5EE\uC5B4 \uB450\uBA74 \uC190\uC774 \uC548 \uB2FF\uB294 \uB370\uB3C4 \uAC78 \uC218 \uC788\uC5B4\uC694. \uC608\uC058\uB77C\uACE0 \uD55C \uAC74 \uC544\uB2C8\uC5D0\uC694\u2026 \uBC18\uC740 \uADF8\uB807\uAE34 \uD55C\uB370\uC694.", nextId: "n8" },
+    { id: "n8", speaker: "\uC544\uB974\uD14C", body: "\uC815\uB9AC \uC644\uB8CC\uD588\uC2B5\uB2C8\uB2E4. \uBE0C\uB9AC\uCE74 \uC528, \uB2E4\uC74C\uC5D0\uB3C4 \uBD80\uD0C1\uB4DC\uB824\uB3C4 \uB420\uAE4C\uC694? \uB192\uC740 \uC120\uBC18\uC774 \uC544\uC9C1 \uC77C\uACF1 \uAC1C \uB354 \uC788\uC5B4\uC694.", nextId: "n9" },
+    { id: "n9", speaker: "", body: "\uBE0C\uB9AC\uCE74\uB294 \uC18C\uB9E4\uB85C \uC785\uC744 \uAC00\uB9B0 \uCC44 \uACE0\uAC1C\uB97C \uB044\uB355\uC600\uB2E4. \uC18C\uB9E4 \uB108\uBA38\uB85C \uC785\uAF2C\uB9AC\uAC00 \uC62C\uB77C\uAC00 \uC788\uB294 \uAC8C \uB2E4 \uBCF4\uC600\uB2E4.", nextId: "n10" },
+    { id: "n10", speaker: "\uBE0C\uB9AC\uCE74", body: "\uC77C\uACF1 \uAC1C\uC694? \u2026\uADF8\uB7FC \uADF8\uB0A0\uC740 \uB9E8 \uB4A4\uC5D0 \uC548 \uC788\uACE0 \uC5EC\uAE30 \uC788\uC744\uAC8C\uC694. \uB192\uC740 \uB370\uB294, \uC81C\uAC00 \uB9E1\uC744\uAC8C\uC694." }
+  ]
+};
+var CHAPTER_832 = {
+  id: "bond.brika.8",
+  backdrop: "canal",
+  startNodeId: "n1",
+  titleCard: { title: "\uBE44 \uC624\uB294 \uB0A0", subtitle: "\uBE0C\uB9AC\uCE74 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 3" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uCCA0\uC218\uD558\uB358 \uAE38\uC5D0 \uC18C\uB098\uAE30\uAC00 \uC3DF\uC544\uC84C\uB2E4. \uC6B0\uC0B0\uC740 \uD558\uB098\uBFD0\uC774\uC5C8\uACE0, \uC218\uB85C \uC606 \uCC98\uB9C8\uB294 \uB450 \uC0AC\uB78C\uC774 \uC11C\uAE30\uC5D0\uB3C4 \uC881\uC558\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "\uBE0C\uB9AC\uCE74", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC6B0\uC0B0 \uC4F0\uC138\uC694. \uC800\uB294 \uAD1C\uCC2E\uC544\uC694. \uBE44\uB294 \uC800\uD55C\uD14C \uC81C\uC77C \uBA3C\uC800 \uB5A8\uC5B4\uC9C0\uB2C8\uAE4C\u2026 \uC544, \uC774\uAC83\uB3C4 \uD0A4 \uC598\uAE30\uB124\uC694.", nextId: "n3" },
+    { id: "n3", speaker: "", body: "\uBE0C\uB9AC\uCE74\uB294 \uCC98\uB9C8 \uB05D\uC5D0 \uBE44\uCF1C\uC11C\uB354\uB2C8, \uC816\uC740 \uC678\uD22C \uC790\uB77D\uC744 \uD3BC\uCCD0 \uCC98\uB9C8 \uBC11\uC73C\uB85C \uB4E4\uC774\uCE58\uB294 \uBE57\uC904\uAE30\uB97C \uB9C9\uC558\uB2E4. \uADF8 \uC544\uB798 \uB4E4\uC5B4\uAC04 \uB3D9\uB8CC \uB458\uC774 \uADF8\uC81C\uC57C \uC228\uC744 \uB3CC\uB838\uB2E4.", nextId: "n4" },
+    { id: "n4", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uBA38\uB9AC\uB05D\uC5D0\uC11C \uBE57\uBB3C\uC774 \uB69D\uB69D \uB5A8\uC5B4\uC9C4\uB2E4. \uADF8\uB7F0\uB370\uB3C4 \uBE44\uCF1C\uC124 \uC0DD\uAC01\uC774 \uC5C6\uC5B4 \uBCF4\uC778\uB2E4.)", choices: [
+      { id: "umbrella", label: "\uC6B0\uC0B0\uC744 \uAC19\uC774 \uC4F0\uC790\uACE0 \uB0B4\uBBFC\uB2E4", nextId: "n5a" },
+      { id: "stand", label: "\uC606\uC5D0 \uC11C\uC11C \uAC19\uC774 \uB9C9\uB294\uB2E4", nextId: "n5b" }
+    ] },
+    { id: "n5a", speaker: "\uBE0C\uB9AC\uCE74", body: "\u2026\uAC19\uC774\uC694? \uADF8\uB7FC \uC6B0\uC0B0\uC744 \uB192\uC774 \uB4DC\uC154\uC57C \uD574\uC694. \uC81C \uBA38\uB9AC\uC5D0 \uAC78\uB9AC\uBA74 \uC5F0\uAD6C\uC6D0\uB2D8\uC774 \uB2E4 \uC816\uC73C\uC138\uC694. \uB354, \uC870\uAE08\uB9CC \uB354\uC694.", nextId: "n6" },
+    { id: "n5b", speaker: "\uBE0C\uB9AC\uCE74", body: "\uC5F0\uAD6C\uC6D0\uB2D8\uAE4C\uC9C0 \uC816\uC73C\uC2DC\uBA74 \uC548 \uB418\uB294\uB370\u2026 \uADF8\uB798\uB3C4, \uB458\uC774 \uC11C\uB2C8\uAE4C \uCC98\uB9C8\uAC00 \uB113\uC5B4\uC84C\uB124\uC694.", nextId: "n6" },
+    { id: "n6", speaker: "", body: "\uBE57\uC18C\uB9AC\uAC00 \uC870\uAE08 \uC7A6\uC544\uB4E4\uC5C8\uB2E4. \uBE0C\uB9AC\uCE74\uAC00 \uACE0\uAC1C\uB97C \uB4E4\uC5B4 \uC790\uAE30 \uBA38\uB9AC \uC704\uB85C \uC3DF\uC544\uC9C0\uB294 \uBE44\uB97C \uC62C\uB824\uB2E4\uBCF4\uC558\uB2E4.", nextId: "n7" },
+    { id: "n7", speaker: "\uBE0C\uB9AC\uCE74", body: "\uC61B\uB0A0 \uC81C \uBAB8\uC740 \uB192\uC740 \uAC00\uC9C0\uC758 \uC78E\uC744 \uBA39\uC5C8\uB300\uC694. \uC544\uBB34\uB3C4 \uBABB \uB2FF\uB294 \uB370\uAE4C\uC9C0 \uBAA9\uC744 \uBED7\uC5B4\uC11C\uC694. \uADF8\uB7EC\uB2C8\uAE4C\u2026 \uC6D0\uB798\uBD80\uD130 \uB192\uC740 \uB370 \uC788\uC73C\uB77C\uACE0 \uC0DD\uAE34 \uBAB8\uC778\uAC00 \uBD10\uC694.", nextId: "n8" },
+    { id: "n8", speaker: "\uBE0C\uB9AC\uCE74", body: "\uD06C\uB2E4\uB294 \uB9D0\uC740 \uC544\uC9C1\uB3C4 \uC2EB\uC5B4\uC694. \uADFC\uB370 \uC624\uB298\uCC98\uB7FC \uC81C \uC544\uB798\uC5D0 \uB204\uAC00 \uBE44\uB97C \uD53C\uD558\uACE0 \uC788\uC73C\uBA74\u2026 \uC774 \uD0A4\uAC00 \uC870\uAE08\uC740 \uAD1C\uCC2E\uC740 \uAC83 \uAC19\uC544\uC694.", nextId: "n9" },
+    { id: "n9", speaker: "", body: "\uCC98\uB9C8 \uBC11\uC758 \uB3D9\uB8CC \uD558\uB098\uAC00 \uACE0\uB9D9\uB2E4\uACE0 \uC190\uC744 \uD754\uB4E4\uC5C8\uB2E4. \uBE0C\uB9AC\uCE74\uB294 \uC18C\uB9E4\uB97C \uB4E4\uC5B4 \uC62C\uB9AC\uB2E4\uAC00, \uC774\uBC88\uC5D0\uB294 \uC785\uC744 \uAC00\uB9AC\uC9C0 \uC54A\uC558\uB2E4.", nextId: "n10" },
+    { id: "n10", speaker: "\uBE0C\uB9AC\uCE74", body: "\uBE44 \uADF8\uCE58\uBA74 \uC81C\uC77C \uBA3C\uC800 \uC54C\uB824 \uB4DC\uB9B4\uAC8C\uC694, \uC5F0\uAD6C\uC6D0\uB2D8. \uD558\uB298\uC740 \uC81C\uAC00 \uC81C\uC77C \uAC00\uAE4C\uC774 \uC788\uC73C\uB2C8\uAE4C\uC694." }
+  ]
+};
+var CHAPTER_1032 = {
+  id: "bond.brika.10",
+  backdrop: "rooftopDawn",
+  startNodeId: "n1",
+  titleCard: { title: "\uAC19\uC740 \uB208\uB192\uC774", subtitle: "\uBE0C\uB9AC\uCE74 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 4" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uC0C8\uBCBD\uC758 \uC625\uC0C1. \uB09C\uAC04 \uC55E\uC5D0\uC11C \uBE0C\uB9AC\uCE74\uAC00 \uB54B\uC740 \uBA38\uB9AC\uB97C \uC55E\uC73C\uB85C \uB118\uACA8 \uC950\uACE0 \uC788\uC5C8\uB2E4. \uACE0\uB9AC\uC640 \uC0AC\uC2AC \uC0AC\uC774\uC5D0 \uC791\uC740 \uBCC4 \uC7A5\uC2DD\uC774 \uBA87 \uAC1C \uC5EE\uC5EC \uC788\uC5C8\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "\uBE0C\uB9AC\uCE74", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC774\uB978 \uC2DC\uAC04\uC5D0 \uC8C4\uC1A1\uD574\uC694. \uC5EC\uAE30\uC11C\uB294 \uC544\uBB34\uB3C4 \uC800\uB97C \uC62C\uB824\uB2E4\uBCF4\uC9C0 \uC54A\uC544\uC11C\u2026 \uC598\uAE30\uD558\uAE30 \uD3B8\uD558\uAC70\uB4E0\uC694.", nextId: "n3" },
+    { id: "n3", speaker: "\uBE0C\uB9AC\uCE74", body: "\uC774 \uBCC4\uB4E4\uC774\uC694, \uD558\uB098\uC529 \uB298\uC5B4\uB0A0 \uB54C\uB9C8\uB2E4 \uC81C\uAC00 \uB9E8 \uB4A4\uC5D0\uC11C \uD55C \uAC78\uC74C\uC529 \uB098\uC628 \uB0A0\uC774\uC5D0\uC694. \uB192\uC740 \uC120\uBC18 \uB0A0, \uBE44 \uC624\uB358 \uB0A0\u2026 \uC138\uC5B4 \uBCF4\uBA74 \uAF64 \uB9CE\uC544\uC694.", nextId: "n4" },
+    { id: "n4", speaker: "", body: "\uBE0C\uB9AC\uCE74\uAC00 \uC8FC\uBA38\uB2C8\uC5D0\uC11C \uBCC4 \uC7A5\uC2DD \uD558\uB098\uB97C \uAEBC\uB0B4 \uB0B4\uBC00\uC5C8\uB2E4. \uC544\uC9C1 \uC5EE\uC9C0 \uC54A\uC740, \uC0C8\uAC83\uC774\uC5C8\uB2E4.", nextId: "n5" },
+    { id: "n5", speaker: "\uBE0C\uB9AC\uCE74", body: "\uC624\uB298 \uAC70\uB294\u2026 \uC5F0\uAD6C\uC6D0\uB2D8\uC774 \uC5EE\uC5B4 \uC8FC\uC168\uC73C\uBA74 \uD574\uC11C\uC694. \uADF8\uB7EC\uB824\uBA74 \uC81C\uAC00 \uC219\uC5EC\uC57C \uD558\uB294\uB370, \uADF8\uAC8C \uC880 \uBD80\uB044\uB7EC\uC6CC\uC11C \uC544\uC9C1 \uBABB \uD588\uC5B4\uC694.", nextId: "n6" },
+    { id: "n6", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uC190\uC744 \uBED7\uC5B4\uB3C4 \uB54B\uC740 \uBA38\uB9AC \uC704\uCABD\uAE4C\uC9C0\uB294 \uB2FF\uC9C0 \uC54A\uB294\uB2E4.)", choices: [
+      { id: "tiptoe", label: "\uAE4C\uCE58\uBC1C\uC744 \uB4E0\uB2E4", nextId: "n7a" },
+      { id: "end", label: "\uB54B\uC740 \uBA38\uB9AC \uB05D\uC5D0 \uC5EE\uACA0\uB2E4\uACE0 \uD55C\uB2E4", nextId: "n7b" }
+    ] },
+    { id: "n7a", speaker: "\uBE0C\uB9AC\uCE74", body: "\uAE4C, \uAE4C\uCE58\uBC1C\uAE4C\uC9C0\uC694? \u2026\uC548 \uB3FC\uC694, \uB118\uC5B4\uC9C0\uC138\uC694. \uC81C\uAC00 \uC219\uC77C\uAC8C\uC694. \uC9C0\uAE08\uC740 \uC219\uC5EC\uB3C4 \uAD1C\uCC2E\uC744 \uAC83 \uAC19\uC544\uC694.", nextId: "n8" },
+    { id: "n7b", speaker: "\uBE0C\uB9AC\uCE74", body: "\uB05D\uC774\uC694? \uAC70\uAE30\uB294 \uB545\uC5D0 \uB04C\uB9AC\uB294 \uB370\uB77C\u2026 \uC544\uB2C8\uC5D0\uC694, \uC81C\uAC00 \uC219\uC77C\uAC8C\uC694. \uC81C\uC77C \uC798 \uBCF4\uC774\uB294 \uB370\uC5D0 \uC5EE\uC5B4 \uC8FC\uC138\uC694.", nextId: "n8" },
+    { id: "n8", speaker: "", body: "\uBE0C\uB9AC\uCE74\uAC00 \uCC9C\uCC9C\uD788 \uD5C8\uB9AC\uB97C \uAD7D\uD614\uB2E4. \uCC98\uC74C\uC73C\uB85C \uB450 \uC0AC\uB78C\uC758 \uB208\uB192\uC774\uAC00 \uAC19\uC544\uC84C\uB2E4. \uBCC4 \uD558\uB098\uAC00 \uACE0\uB9AC \uC0AC\uC774\uC5D0 \uC5EE\uC774\uC790, \uBE0C\uB9AC\uCE74\uAC00 \uC228\uC744 \uD55C \uBC88 \uB4E4\uC774\uC26C\uACE0 \uD5C8\uB9AC\uB97C \uCB49 \uD3C8\uB2E4.", nextId: "n9" },
+    { id: "n9", speaker: "", body: "\uD574\uAC00 \uB5A0\uC62C\uB790\uB2E4. \uC625\uC0C1 \uBC14\uB2E5\uC5D0 \uAE34 \uADF8\uB9BC\uC790\uAC00 \uB4DC\uB9AC\uC6CC\uC84C\uACE0, \uADF8 \uADF8\uB9BC\uC790 \uB05D\uC774 \uC5F0\uAD6C\uC6D0\uC758 \uBC1C\uCE58\uB97C \uB36E\uC5C8\uB2E4.", nextId: "n10" },
+    { id: "n10", speaker: "\uBE0C\uB9AC\uCE74", body: "\u2026\uD06C\uC8E0? \uAD1C\uCC2E\uC544\uC694, \uC624\uB298\uC740 \uADF8 \uB9D0 \uB4E4\uC5B4\uB3C4 \uB3FC\uC694. \uC5F0\uAD6C\uC6D0\uB2D8 \uC11C \uACC4\uC2E0 \uB370\uAE4C\uC9C0 \uADF8\uB298\uC774 \uB2FF\uC73C\uB2C8\uAE4C\uC694." }
+  ]
+};
+var BRIKA_STORY = {
+  relicId: "brika",
+  fossilRecord: "\uAC15\uBC14\uB2E5 \uC0AC\uC554\uCE35\uC5D0\uC11C \uBAA9\uBF08\uAC00 \uD55C \uC904\uB85C \uC774\uC5B4\uC9C4 \uCC44 \uB4DC\uB7EC\uB0AC\uB2E4. \uBAA9\uBF08 \uD558\uB098\uD558\uB098\uAC00 \uC0AC\uB78C \uD314\uB69D\uB9CC\uD07C \uAE38\uC5C8\uACE0, \uB05D\uC73C\uB85C \uAC08\uC218\uB85D \uC544\uB798\uB85C \uD718\uC5B4 \uBA38\uB9AC\uAC00 \uB545\uC744 \uB0B4\uB824\uB2E4\uBCF4\uB294 \uC790\uC138\uB85C \uAD73\uC5B4 \uC788\uC5C8\uB2E4. \uBC1C\uAD74\uC9C4\uC740 \uBAA9\uC744 \uB9C8\uB514\uB9C8\uB2E4 \uB098\uB220 \uC11D\uACE0\uB85C \uAC10\uC2FC \uB4A4 \uBC88\uD638\uB97C \uB9E4\uACA8 \uC62E\uACBC\uB2E4. \uC55E\uB2E4\uB9AC\uAC00 \uB4B7\uB2E4\uB9AC\uBCF4\uB2E4 \uAE38\uC5B4 \uC5B4\uAE68\uAC00 \uB192\uC774 \uC19F\uC740 \uBAB8\uC774\uC5C8\uACE0, \uBF08\uC758 \uC131\uC7A5\uC120\uC740 \uC544\uC9C1 \uB2E4 \uB2EB\uD788\uC9C0 \uC54A\uC558\uB2E4. \uBCF5\uC6D0\uC740 \uAE34 \uBAA9\uC758 \uADE0\uD615\uC744 \uBA3C\uC800 \uB9DE\uCD94\uACE0 \uB098\uBA38\uC9C0 \uCCB4\uACA9\uC744 \uAC70\uAE30\uC5D0 \uB9DE\uCDC4\uB2E4.",
+  diary: "\uBCF5\uC6D0 \uD6C4 \uBE0C\uB9AC\uCE74\uB294 \uB298 \uBB34\uB9AC\uC758 \uB9E8 \uB4A4\uC5D0 \uC120\uB2E4. \uD06C\uB2E4\uB294 \uB9D0\uC744 \uB4E4\uC73C\uBA74 \uC18C\uB9E4\uB85C \uC785\uC744 \uAC00\uB9AC\uACE0 \uACE0\uAC1C\uB97C \uC219\uC774\uC9C0\uB9CC, \uC219\uC5EC\uB3C4 \uBA38\uB9AC\uB294 \uB0A8\uB4E4\uBCF4\uB2E4 \uB192\uC774 \uC788\uB2E4. \uAE08\uBE5B \uACE0\uB9AC\uC640 \uC0AC\uC2AC, \uC791\uC740 \uBCC4\uC744 \uC5EE\uC5B4 \uB54B\uC740 \uBA38\uB9AC\uB294 \uC190\uC774 \uB2FF\uC9C0 \uC54A\uB294 \uC120\uBC18\uC758 \uC0C1\uC790\uB97C \uB04C\uC5B4\uB0B4\uB9B4 \uB54C \uC4F4\uB2E4. \uC55E\uC5D0 \uC11C\uB294 \uC77C\uC740 \uB05D\uB0B4 \uC0AC\uC591\uD558\uBA74\uC11C\uB3C4, \uB3D9\uB8CC\uAC00 \uBE44\uD2C0\uAC70\uB9AC\uBA74 \uB9D0\uC5C6\uC774 \uB4A4\uC5D0\uC11C \uADF8 \uC5B4\uAE68 \uC704\uB85C \uADF8\uB298\uC744 \uB4DC\uB9AC\uC6B4\uB2E4. \uC790\uAE30\uB97C \uC62C\uB824\uB2E4\uBCF4\uB294 \uC2DC\uC120\uC774 \uC2EB\uB2E4\uACE0 \uD558\uBA74\uC11C, \uB0B4\uB824\uB2E4\uBCF4\uBA70 \uC9C0\uCF1C \uC8FC\uB294 \uC77C\uC740 \uC880\uCC98\uB7FC \uADF8\uB9CC\uB450\uC9C0 \uC54A\uB294\uB2E4.",
+  /** 일지 맨 끝에 회색으로 서는, 브리카가 연구원에게 건네는 한마디. 뽑기 대사와 다른 일상의 목소리다. */
+  closingLine: "\uC5F0\uAD6C\uC6D0\uB2D8, \uB192\uC740 \uB370 \uB193\uC778 \uAC70 \uC788\uC73C\uBA74 \uB9D0\uC500\uD558\uC138\uC694\u2026 \uAEBC\uB0B4 \uB4DC\uB9B4\uAC8C\uC694. \uB300\uC2E0 \uACE0\uB9D9\uB2E4\uB294 \uB9D0\uC740 \uC791\uAC8C \uD574 \uC8FC\uC138\uC694.",
+  questions: [
+    {
+      id: "brika-back",
+      prompt: "\uBE0C\uB9AC\uCE74\uB294 \uC65C \uB298 \uB9E8 \uB4A4\uC5D0 \uC11C?",
+      choices: [
+        {
+          id: "shy",
+          label: "\uC55E\uC5D0 \uC11C\uAE30 \uC2EB\uC740\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uC2EB\uB2E4\uAE30\uBCF4\uB2E4\u2026 \uC81C\uAC00 \uC55E\uC5D0 \uC11C\uBA74 \uB2E4\uB4E4 \uC800\uB9CC \uBCF4\uC796\uC544\uC694. \uB4A4\uC5D0 \uC788\uC73C\uBA74 \uC81C\uAC00 \uB2E4\uB4E4 \uBCFC \uC218 \uC788\uACE0\uC694.",
+          note: "\uC55E\uC5D0 \uC11C\uAE30 \uC2EB\uC73C\uB0D0\uACE0 \uBB3B\uC790, \uC55E\uC5D0 \uC11C\uBA74 \uB2E4\uB4E4 \uC790\uAE30\uB9CC \uBCF8\uB2E4\uACE0 \uD588\uB2E4. \uB4A4\uC5D0\uC11C\uB294 \uC790\uAE30\uAC00 \uBAA8\uB450\uB97C \uBCFC \uC218 \uC788\uB2E4\uACE0 \uD588\uB2E4."
+        },
+        {
+          id: "view",
+          label: "\uB4A4\uC5D0\uC11C \uBB50\uAC00 \uBCF4\uC774\uB294\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uB2E4\uC694. \uB204\uAC00 \uC9C0\uCCE4\uB294\uC9C0, \uB204\uAC00 \uC2E0\uBC1C \uB048\uC774 \uD480\uB838\uB294\uC9C0\u2026 \uC55E\uC5D0\uC11C\uB294 \uC548 \uBCF4\uC774\uB294 \uAC83\uB4E4\uC774\uC694.",
+          note: "\uB4A4\uC5D0\uC11C \uBB34\uC5C7\uC774 \uBCF4\uC774\uB290\uB0D0\uACE0 \uBB3B\uC790 \uB2E4 \uBCF4\uC778\uB2E4\uACE0 \uD588\uB2E4. \uC9C0\uCE5C \uC0AC\uB78C, \uD480\uB9B0 \uC2E0\uBC1C \uB048\uAE4C\uC9C0."
+        },
+        {
+          id: "lonely",
+          label: "\uD63C\uC790 \uB4A4\uC5D0 \uC788\uC73C\uBA74 \uC4F8\uC4F8\uD558\uC9C0 \uC54A\uC740\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uAC00\uB054\uC694. \uADF8\uB798\uB3C4 \uB204\uAC00 \uB4A4\uB3CC\uC544\uBCF4\uBA74 \uC81C\uC77C \uBA3C\uC800 \uB208\uC774 \uB9C8\uC8FC\uCE58\uB294 \uAC74 \uC800\uB77C\uC11C\u2026 \uADF8\uAC74 \uC88B\uC544\uC694.",
+          note: "\uD63C\uC790 \uB4A4\uC5D0 \uC788\uC73C\uBA74 \uC4F8\uC4F8\uD558\uC9C0 \uC54A\uC73C\uB0D0\uACE0 \uBB3B\uC790 \uAC00\uB054 \uADF8\uB807\uB2E4\uACE0 \uD588\uB2E4. \uB204\uAC00 \uB3CC\uC544\uBCF4\uBA74 \uAC00\uC7A5 \uBA3C\uC800 \uB208\uC774 \uB9C8\uC8FC\uCE58\uB294 \uAC8C \uC88B\uB2E4\uACE0 \uD588\uB2E4."
+        }
+      ]
+    },
+    {
+      id: "brika-braid",
+      prompt: "\uBE0C\uB9AC\uCE74\uC758 \uB54B\uC740 \uBA38\uB9AC\uC5D0\uB294 \uBB50\uAC00 \uC5EE\uC5EC \uC788\uC5B4?",
+      choices: [
+        {
+          id: "rings",
+          label: "\uAE08\uBE5B \uACE0\uB9AC\uC5D0 \uB300\uD574 \uBB3B\uB294\uB2E4",
+          reply: "\uC120\uBC18 \uC704 \uC0C1\uC790 \uC190\uC7A1\uC774\uC5D0 \uAC78\uB824\uACE0 \uC5EE\uC5C8\uC5B4\uC694. \uC190\uC73C\uB85C\uB294 \uC548 \uB2FF\uB294 \uB370\uB3C4 \uACE0\uB9AC\uB294 \uB2FF\uAC70\uB4E0\uC694.",
+          note: "\uAE08\uBE5B \uACE0\uB9AC\uB97C \uBB3B\uC790 \uC120\uBC18 \uC704 \uC0C1\uC790\uB97C \uAC78\uC5B4 \uB0B4\uB9AC\uB824\uACE0 \uC5EE\uC5C8\uB2E4\uACE0 \uD588\uB2E4. \uC190\uC774 \uC548 \uB2FF\uB294 \uB370\uB3C4 \uACE0\uB9AC\uB294 \uB2FF\uB294\uB2E4\uACE0 \uD588\uB2E4."
+        },
+        {
+          id: "stars",
+          label: "\uC791\uC740 \uBCC4 \uC7A5\uC2DD\uC5D0 \uB300\uD574 \uBB3B\uB294\uB2E4",
+          reply: "\uADF8\uAC74\u2026 \uBE44\uBC00\uC774\uC5D0\uC694. \uD558\uB098 \uB298 \uB54C\uB9C8\uB2E4 \uC88B\uC740 \uC77C\uC774 \uC788\uC5C8\uB2E4\uB294 \uAC83\uB9CC \uB9D0\uC500\uB4DC\uB9B4\uAC8C\uC694.",
+          note: "\uBCC4 \uC7A5\uC2DD\uC744 \uBB3B\uC790 \uBE44\uBC00\uC774\uB77C\uACE0 \uD588\uB2E4. \uD558\uB098\uC529 \uB298 \uB54C\uB9C8\uB2E4 \uC88B\uC740 \uC77C\uC774 \uC788\uC5C8\uB2E4\uB294 \uAC83\uB9CC \uC54C\uB824 \uC8FC\uC5C8\uB2E4."
+        },
+        {
+          id: "heavy",
+          label: "\uBB34\uAC81\uC9C0 \uC54A\uC740\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uC870\uAE08\uC694. \uADF8\uB798\uB3C4 \uACE0\uAC1C \uC219\uC774\uACE0 \uC788\uC73C\uBA74 \uBB34\uAC8C \uB54C\uBB38\uC778 \uCC99\uD560 \uC218 \uC788\uC5B4\uC11C\u2026 \uC544, \uC774\uAC74 \uBABB \uB4E4\uC740 \uAC78\uB85C \uD574 \uC8FC\uC138\uC694.",
+          note: "\uBB34\uAC81\uC9C0 \uC54A\uC73C\uB0D0\uACE0 \uBB3B\uC790 \uC870\uAE08 \uADF8\uB807\uB2E4\uACE0 \uD588\uB2E4. \uACE0\uAC1C\uB97C \uC219\uC774\uB294 \uD551\uACC4\uAC00 \uB41C\uB2E4\uACE0 \uB9D0\uD588\uB2E4\uAC00 \uBABB \uB4E4\uC740 \uAC78\uB85C \uD574 \uB2EC\uB77C\uACE0 \uD588\uB2E4."
+        }
+      ]
+    },
+    {
+      id: "brika-tall",
+      prompt: "\uBE0C\uB9AC\uCE74\uB294 \uC790\uAE30 \uD0A4\uB97C \uC5B4\uB5BB\uAC8C \uC0DD\uAC01\uD574?",
+      choices: [
+        {
+          id: "dislike",
+          label: "\uD0A4\uAC00 \uC2EB\uC740\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uC2EB\uC5B4\uC694\u2026 \uC544\uB2C8, \uC2EB\uB2E4\uACE0 \uD558\uBA74 \uAC70\uC9D3\uB9D0\uC77C\uC9C0\uB3C4 \uBAB0\uB77C\uC694. \uB192\uC740 \uC120\uBC18 \uC55E\uC5D0 \uC11C\uBA74 \uC870\uAE08 \uC88B\uAC70\uB4E0\uC694.",
+          note: "\uD0A4\uAC00 \uC2EB\uC73C\uB0D0\uACE0 \uBB3B\uC790 \uC2EB\uB2E4\uACE0 \uD588\uB2E4\uAC00, \uB192\uC740 \uC120\uBC18 \uC55E\uC5D0\uC11C\uB294 \uC870\uAE08 \uC88B\uB2E4\uBA70 \uB9D0\uC744 \uACE0\uCCE4\uB2E4."
+        },
+        {
+          id: "useful",
+          label: "\uC4F8\uBAA8 \uC788\uB294 \uD0A4\uB77C\uACE0 \uB9D0\uD574 \uC900\uB2E4",
+          reply: "\uC4F8\uBAA8\uC694? \u2026\uADF8 \uB9D0\uC740 \uAD1C\uCC2E\uC544\uC694. \uD06C\uB2E4\uB294 \uB9D0\uBCF4\uB2E4 \uD6E8\uC52C \uAD1C\uCC2E\uC544\uC694. \uD55C \uBC88 \uB354 \uD574 \uC8FC\uC154\uB3C4 \uB3FC\uC694.",
+          note: "\uC4F8\uBAA8 \uC788\uB294 \uD0A4\uB77C\uACE0 \uD558\uC790, \uD06C\uB2E4\uB294 \uB9D0\uBCF4\uB2E4 \uD6E8\uC52C \uAD1C\uCC2E\uB2E4\uBA70 \uD55C \uBC88 \uB354 \uD574 \uB2EC\uB77C\uACE0 \uD588\uB2E4."
+        },
+        {
+          id: "sky",
+          label: "\uD558\uB298\uC774 \uAC00\uAE4C\uC6CC\uC11C \uC88B\uACA0\uB2E4\uACE0 \uB9D0\uD55C\uB2E4",
+          reply: "\uBE44\uB294 \uC81C\uC77C \uBA3C\uC800 \uB9DE\uC544\uC694. \uB300\uC2E0 \uD574\uB3C4 \uC81C\uC77C \uBA3C\uC800 \uBD10\uC694. \uC544\uCE68\uC5D4 \uADF8\uAC8C \uC880 \uC88B\uC544\uC694.",
+          note: "\uD558\uB298\uC774 \uAC00\uAE4C\uC6CC\uC11C \uC88B\uACA0\uB2E4\uACE0 \uD558\uC790, \uBE44\uB97C \uBA3C\uC800 \uB9DE\uB294 \uB300\uC2E0 \uD574\uB3C4 \uBA3C\uC800 \uBCF8\uB2E4\uACE0 \uD588\uB2E4."
+        }
+      ]
+    }
+  ],
+  bondStories: { 4: CHAPTER_432, 6: CHAPTER_632, 8: CHAPTER_832, 10: CHAPTER_1032 },
+  bondLines: [
+    // 0 — 낯선 사이. 소매 뒤로 숨는다.
+    ["\uBE0C\uB9AC\uCE74\uC608\uC694\u2026 \uC544, \uD0A4 \uC598\uAE30\uB294 \uC548 \uD558\uC154\uB3C4 \uB3FC\uC694. \uB2E4\uB4E4 \uD558\uC2DC\uB2C8\uAE4C\uC694.", "\uC800\uB294 \uB4A4\uC5D0 \uC788\uC744\uAC8C\uC694, \uC5F0\uAD6C\uC6D0\uB2D8. \uBD80\uB974\uC2DC\uBA74 \uB4E4\uB824\uC694.", "\u2026\uBB50 \uD544\uC694\uD558\uC2E0 \uAC70 \uC788\uC73C\uC138\uC694? \uB192\uC740 \uB370 \uAC70\uB77C\uBA74 \uAEBC\uB0B4 \uB4DC\uB9B4 \uC218 \uC788\uC5B4\uC694."],
+    // 1
+    ["\uC624\uB298\uB3C4 \uB9E8 \uB4A4\uC5D0 \uC130\uC5B4\uC694. \uAC70\uAE30\uAC00 \uC81C\uC77C \uD3B8\uD574\uC694.", "\uBB38\uD2C0\uC5D0 \uC774\uB9C8 \uBD80\uB52A\uD614\uC5B4\uC694\u2026 \uC544\uB2C8\uC5D0\uC694, \uC548 \uC544\uD30C\uC694. \uBB38\uC774 \uB0AE\uC740 \uAC70\uC608\uC694.", "\uC5F0\uAD6C\uC6D0\uB2D8 \uCC45\uC0C1 \uC704 \uC804\uB4F1, \uC870\uAE08 \uAE30\uC6B8\uC5B4\uC838 \uC788\uC5B4\uC694. \uACE0\uCCD0 \uB4DC\uB9B4\uAE4C\uC694? \uC190 \uB2FF\uAC70\uB4E0\uC694."],
+    // 2
+    ["\uB2E4\uB4E4 \uC800\uB97C \uC62C\uB824\uB2E4\uBCF4\uBA74\uC11C \uC598\uAE30\uD574\uC694. \uC5F0\uAD6C\uC6D0\uB2D8\uB3C4\uC694. \u2026\uAD1C\uCC2E\uC544\uC694, \uC775\uC219\uD574\uC694.", "\uC790\uB8CC\uC2E4 \uC0AC\uB2E4\uB9AC\uAC00 \uB610 \uBD80\uB7EC\uC84C\uB300\uC694. \uC800 \uBD80\uB974\uC2DC\uBA74 \uB3FC\uC694. \uC0AC\uB2E4\uB9AC\uBCF4\uB2E4\uB294 \uD2BC\uD2BC\uD574\uC694.", "\uACE0\uAC1C \uC219\uC774\uACE0 \uB2E4\uB2C8\uBA74 \uBAA9\uC774 \uC544\uD30C\uC694. \uADF8\uB798\uB3C4 \uC219\uC774\uACE0 \uB2E4\uB140\uC694."],
+    // 3
+    ["\uC624\uB298 \uB204\uAC00 \uC81C \uADF8\uB9BC\uC790 \uC548\uC5D0\uC11C \uB0AE\uC7A0 \uC7A4\uC5B4\uC694. \uAE68\uC6B8\uAE4C \uD558\uB2E4\uAC00 \uADF8\uB0E5 \uC11C \uC788\uC5C8\uC5B4\uC694.", "\uB192\uC740 \uB370 \uC788\uB294 \uAC70 \uAEBC\uB0B4 \uB4DC\uB9AC\uBA74 \uB2E4\uB4E4 \uACE0\uB9D9\uB2E4\uACE0 \uD574\uC694. \uADF8\uAC74\u2026 \uC2EB\uC9C0 \uC54A\uC544\uC694.", "\uC5F0\uAD6C\uC6D0\uB2D8\uC740 \uD0A4 \uC598\uAE30 \uD55C \uBC88\uB3C4 \uC548 \uD558\uC168\uC8E0? \uADF8\uAC70 \uC54C\uACE0 \uC788\uC5B4\uC694."],
+    // 4 — 장 4 이후: 맨 뒷줄 이후.
+    ["\uB9E8 \uB4A4\uC5D0\uC11C\uB294 \uB2E4 \uBCF4\uC778\uB2E4\uB294 \uAC70, \uC5F0\uAD6C\uC6D0\uB2D8\uD55C\uD14C\uB9CC \uB9D0\uD55C \uAC70\uC608\uC694.", "\uBAA8\uC0AC\uB098 \uC528\uAC00 \uB610 \uD45C\uC2DD\uC744 \uBB3C\uC5B4\uBD24\uC5B4\uC694. \uCE6D\uCC2C\uC740 \uC544\uB2C8\uC5C8\uC5B4\uC694. \u2026\uC544\uB9C8\uB3C4\uC694.", "\uC810\uD638 \uB54C \uC5F0\uAD6C\uC6D0\uB2D8\uC774 \uB4A4\uB97C \uB3CC\uC544\uBCF4\uC2DC\uBA74, \uC81C\uC77C \uBA3C\uC800 \uB208 \uB9C8\uC8FC\uCE58\uB294 \uAC74 \uC800\uC608\uC694."],
+    // 5
+    ["\uC624\uB298\uC740 \uD55C \uC904 \uC55E\uC5D0 \uC130\uC5B4\uC694. \uD55C \uC904\uB9CC\uC694.", "\uB54B\uC740 \uBA38\uB9AC \uB2E4\uC2DC \uB54B\uC558\uC5B4\uC694. \uACE0\uB9AC\uB97C \uD558\uB098 \uB354 \uC5EE\uC5C8\uC5B4\uC694. \uBCC4\uC740\u2026 \uC544\uC9C1\uC774\uC5D0\uC694.", "\uC5F0\uAD6C\uC6D0\uB2D8 \uC5B4\uAE68\uC5D0 \uBA3C\uC9C0 \uBB3B\uC5C8\uC5B4\uC694. \uC704\uC5D0\uC11C \uBCF4\uBA74 \uB2E4 \uBCF4\uC5EC\uC694."],
+    // 6 — 장 6 이후: 높은 선반 이후.
+    ["\uB192\uC740 \uC120\uBC18, \uC77C\uACF1 \uAC1C \uB2E4 \uC815\uB9AC\uD588\uC5B4\uC694. \uC544\uB974\uD14C \uC528\uAC00 \uD45C\uB97C \uB9CC\uB4E4\uC5B4 \uC92C\uC5B4\uC694.", "\uC790\uB8CC\uC2E4\uC5D0 \uC81C \uC774\uB984 \uBD99\uC740 \uCE78\uC774 \uC0DD\uACBC\uC5B4\uC694. \u300C\uB192\uC740 \uB370 \uB2F4\uB2F9\u300D\uC774\uC694. \u2026\uBD80\uB044\uB7EC\uC6CC\uC694.", "\uCE6D\uCC2C\uC740 \uC791\uAC8C \uD574 \uC8FC\uC138\uC694. \uD06C\uAC8C \uD558\uC2DC\uBA74 \uACE0\uAC1C\uB97C \uB354 \uC219\uC774\uAC8C \uB3FC\uC694."],
+    // 7
+    ["\uC694\uC998 \uBCC4 \uC7A5\uC2DD\uC774 \uD558\uB098 \uB298\uC5C8\uC5B4\uC694. \uC774\uC720\uB294 \uC544\uC9C1 \uBE44\uBC00\uC774\uC5D0\uC694.", "\uBE44 \uC624\uB294 \uB0A0\uC5D4 \uC81C\uAC00 \uC81C\uC77C \uBA3C\uC800 \uC816\uC5B4\uC694. \uADF8\uB798\uB3C4 \uC6B0\uC0B0\uC740 \uB2E4\uB978 \uBD84 \uB4DC\uB824\uC694.", "\uC5F0\uAD6C\uC6D0\uB2D8 \uD0A4\uB294 \uC9C0\uAE08\uC774 \uB531 \uC88B\uC544\uC694. \uC81C\uAC00 \uB0B4\uB824\uB2E4\uBCF4\uAE30 \uC88B\uC740 \uB192\uC774\uC694."],
+    // 8 — 장 8 이후: 비 오는 날 이후.
+    ["\uADF8\uB0A0 \uCC98\uB9C8 \uBC11\uC5D0 \uC788\uB358 \uBD84\uC774 \uACE0\uB9D9\uB2E4\uACE0 \uB610 \uC778\uC0AC\uD588\uC5B4\uC694. \uC774\uBC88\uC5D4 \uC785 \uC548 \uAC00\uB838\uC5B4\uC694.", "\uC81C \uBAB8\uC774 \uC6D0\uB798 \uB192\uC740 \uB370 \uC788\uC73C\uB77C\uACE0 \uC0DD\uAE34 \uAC70\uB798\uC694. \uADF8 \uC598\uAE30, \uC5F0\uAD6C\uC6D0\uB2D8\uD55C\uD14C\uB9CC \uD588\uC5B4\uC694.", "\uBE44 \uC608\uBCF4 \uC788\uC73C\uBA74 \uC54C\uB824 \uC8FC\uC138\uC694. \uCC98\uB9C8 \uB05D\uC740 \uC81C \uC790\uB9AC\uC608\uC694."],
+    // 9
+    ["\uBCC4 \uC7A5\uC2DD\uC774 \uBA87 \uAC1C \uB298\uC5C8\uB294\uC9C0 \uC138\uC5B4 \uBD24\uC5B4\uC694. \uB2E4\uC74C \uAC74 \uC870\uAE08 \uD2B9\uBCC4\uD588\uC73C\uBA74 \uC88B\uACA0\uC5B4\uC694.", "\uC0C8\uBCBD \uC625\uC0C1\uC5D0 \uAC00 \uBCF4\uC168\uC5B4\uC694? \uAC70\uAE30\uB294 \uC544\uBB34\uB3C4 \uC800\uB97C \uC62C\uB824\uB2E4\uBCF4\uC9C0 \uC54A\uC544\uC694.", "\uC5F0\uAD6C\uC6D0\uB2D8, \uB2E4\uC74C\uC5D0 \uC625\uC0C1\uC5D0\uC11C \uBD50 \uC218 \uC788\uC744\uAE4C\uC694? \uB4DC\uB9B4 \uAC8C \uC788\uC5B4\uC694."],
+    // 10 — 마음을 연 사이. 같은 눈높이 이후.
+    ["\uC774 \uBCC4, \uC5F0\uAD6C\uC6D0\uB2D8\uC774 \uC5EE\uC5B4 \uC8FC\uC2E0 \uAC70\uC608\uC694. \uC81C\uC77C \uC798 \uBCF4\uC774\uB294 \uB370 \uC788\uC5B4\uC694.", "\uD06C\uB2E4\uACE0 \uD558\uC154\uB3C4 \uAD1C\uCC2E\uC544\uC694. \uC5F0\uAD6C\uC6D0\uB2D8\uC774 \uD558\uC2DC\uB294 \uAC74\uC694.", "\uC624\uB298\uC740 \uD5C8\uB9AC \uD3B4\uACE0 \uC130\uC5B4\uC694. \uADF8\uB298\uC774 \uC5F0\uAD6C\uC6D0\uB2D8\uAE4C\uC9C0 \uB2FF\uAC8C\uC694."]
+  ]
+};
+
+// src/data/relicStories/belz.ts
+init_define_import_meta_env();
+var CHAPTER_433 = {
+  id: "bond.belz.4",
+  backdrop: "wreck",
+  startNodeId: "n1",
+  titleCard: { title: "\uAC1C\uAD74", subtitle: "\uBCA8\uC988 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 1" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uC791\uC804\uC774 \uB05D\uB09C \uC794\uD574 \uAD6C\uC5ED. \uC5F0\uAD6C\uC6D0\uC774 \uAE30\uC6B4 \uCCA0\uACE8 \uC544\uB798\uC5D0 \uC11C\uC11C \uAE30\uB85D\uD310\uC744 \uB118\uAE30\uACE0 \uC788\uC5C8\uB2E4. \uBA38\uB9AC \uC704\uC5D0\uC11C \uBCFC\uD2B8 \uD558\uB098\uAC00 \uB07C\uC775, \uC18C\uB9AC\uB97C \uB0C8\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "", body: "\uCCA0\uCEF9. \uBB34\uC5B8\uAC00\uAC00 \uD5C8\uB9AC\uB97C \uD718\uAC10\uB294\uAC00 \uC2F6\uB354\uB2C8 \uBAB8\uC774 \uB4A4\uB85C \uD655 \uB04C\uB824\uAC14\uB2E4. \uBC29\uAE08 \uC11C \uC788\uB358 \uC790\uB9AC\uC5D0 \uCCA0\uD310\uC774 \uCF85 \uD558\uACE0 \uB5A8\uC5B4\uC84C\uB2E4.", nextId: "n3" },
+    { id: "n3", speaker: "\uBCA8\uC988", body: "\u2026\uC8C4, \uC8C4\uC1A1\uD574\uC694, \uBCF4\uC2A4. \uAE09\uD574\uC11C \uD600\uAC00 \uBA3C\uC800 \uB098\uAC14\uC5B4\uC694. \uB2E4\uCE58\uC2E0 \uB370 \uC5C6\uC73C\uC138\uC694?", nextId: "n4" },
+    { id: "n4", speaker: "", body: "\uBCA8\uC988\uAC00 \uC18C\uB9E4\uB85C \uC785\uC744 \uAC00\uB9B0 \uCC44 \uC5F0\uAD6C\uC6D0\uC758 \uD314\uACFC \uC5B4\uAE68\uB97C \uCC28\uB840\uB85C \uC0B4\uD3C8\uB2E4. \uC190\uB05D\uC774 \uC870\uAE08 \uB5A8\uB9AC\uACE0 \uC788\uC5C8\uB2E4.", nextId: "n5" },
+    { id: "n5", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uD5C8\uB9AC\uC5D0 \uC544\uC9C1 \uB048\uC801\uD55C \uAC10\uCD09\uC774 \uB0A8\uC544 \uC788\uB2E4. \uADF8\uB798\uB3C4 \uB355\uBD84\uC5D0 \uBA40\uCA61\uD558\uB2E4.)", choices: [
+      { id: "thanks", label: "\uACE0\uB9D9\uB2E4\uACE0 \uB9D0\uD55C\uB2E4", nextId: "n6a" },
+      { id: "tongue", label: "\uBC29\uAE08 \uADF8\uAC8C \uD600\uC600\uB294\uC9C0 \uBB3B\uB294\uB2E4", nextId: "n6b" }
+    ] },
+    { id: "n6a", speaker: "\uBCA8\uC988", body: "\uACE0\uB9D9\uB2E4\uACE0 \uD558\uC2DC\uBA74\u2026 \uACE4\uB780\uD574\uC694. \uD5C8\uB77D\uB3C4 \uC548 \uBC1B\uACE0 \uB04C\uC5B4\uB2F9\uAE34 \uAC70\uB77C\uC11C\uC694. \uB2E4\uC74C\uC5D4 \uBBF8\uB9AC \uB9D0\uC500\uB4DC\uB9B4\uAC8C\uC694. \uC2DC\uAC04\uC774 \uC788\uC73C\uBA74\uC694.", nextId: "n7" },
+    { id: "n6b", speaker: "\uBCA8\uC988", body: "\uB124\u2026 \uD600\uC608\uC694. \uB180\uB77C\uC168\uC8E0. \uB2E4\uB4E4 \uCC98\uC74C\uC5D4 \uB180\uB77C\uC694. \uADF8\uB798\uC11C \uB0AF\uC120 \uBD84 \uC55E\uC5D0\uC120 \uC548 \uC4F0\uB824\uACE0 \uD588\uB294\uB370, \uBC29\uAE08\uC740 \uC0DD\uAC01\uD560 \uD2C8\uC774 \uC5C6\uC5C8\uC5B4\uC694.", nextId: "n7" },
+    { id: "n7", speaker: "\uB809\uC2DC\uC544", body: "\uBCA8\uC988, \uC798\uD588\uC5B4. \uC5F0\uAD6C\uC6D0\uB3C4 \uAD1C\uCC2E\uC9C0? \uB2E4\uC74C\uBD80\uD134 \uCCA0\uACE8 \uBC11\uC5D0 \uC11C \uC788\uC9C0 \uB9C8. \uC6B0\uB9AC \uC560\uAC00 \uB9E4\uBC88 \uB09A\uC544 \uC904 \uC21C \uC5C6\uC73C\uB2C8\uAE4C.", nextId: "n8" },
+    { id: "n8", speaker: "", body: "\uBCA8\uC988\uB294 \uACE0\uAC1C\uB97C \uD479 \uC219\uC774\uACE0 \uAC1C\uAD6C\uB9AC \uD6C4\uB4DC\uB97C \uB20C\uB7EC\uC37C\uB2E4. \uC18C\uB9E4 \uB108\uBA38\uB85C \uC791\uAC8C \uC6C3\uB294 \uC18C\uB9AC\uAC00 \uC0C8\uC5B4 \uB098\uC654\uB2E4.", nextId: "n9" },
+    { id: "n9", speaker: "\uBCA8\uC988", body: "\u2026\uCE6D\uCC2C\uBC1B\uC558\uC5B4\uC694. \uCC98\uC74C\uC774\uC5D0\uC694. \uD600 \uC4F0\uACE0 \uCE6D\uCC2C\uBC1B\uC740 \uAC70.", nextId: "n10" },
+    { id: "n10", speaker: "\uBCA8\uC988", body: "\uBCF4\uC2A4, \uC704\uD5D8\uD55C \uB370 \uC11C\uC2E4 \uB550 \uAF2D \uC81C\uAC00 \uBCF4\uC774\uB294 \uB370 \uC11C \uC8FC\uC138\uC694. \uADF8\uB7EC\uBA74\u2026 \uB193\uCE58\uC9C0 \uC54A\uC744\uAC8C\uC694." }
+  ]
+};
+var CHAPTER_633 = {
+  id: "bond.belz.6",
+  backdrop: "detention",
+  startNodeId: "n1",
+  titleCard: { title: "\uC5F4\uC1E0 \uAFB8\uB7EC\uBBF8", subtitle: "\uBCA8\uC988 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 2" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uBC24\uC758 \uC7A5\uBE44\uC2E4. \uBCA8\uC988\uAC00 \uBC14\uB2E5\uC5D0 \uC549\uC544 \uC0AC\uC2AC\uACFC \uC218\uAC11\uC744 \uD558\uB098\uC529 \uB298\uC5B4\uB193\uACE0 \uC788\uC5C8\uB2E4. \uC606\uC5D0\uB294 \uC5F4\uC1E0 \uAFB8\uB7EC\uBBF8\uAC00 \uC9E4\uB791\uAC70\uB9AC\uBA70 \uB193\uC5EC \uC788\uC5C8\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "\uBCA8\uC988", body: "\uC544, \uBCF4\uC2A4. \uC810\uAC80 \uC911\uC774\uC5D0\uC694. \uC624\uB298 \uB098\uAC04 \uC218\uAC11\uC774\uB791 \uB3CC\uC544\uC628 \uC218\uAC11 \uAC1C\uC218\uB97C \uB9DE\uCD94\uB294 \uAC70\uC608\uC694.", nextId: "n3" },
+    { id: "n3", speaker: "", body: "\uBCA8\uC988\uAC00 \uC218\uAC11 \uD558\uB098\uB97C \uC9D1\uC5B4 \uC5F4\uC1E0\uB97C \uAF42\uC558\uB2E4. \uCC30\uCE75. \uC218\uAC11\uC774 \uBD80\uB4DC\uB7FD\uAC8C \uC5F4\uB838\uB2E4. \uB2E4\uC74C \uAC83\uB3C4, \uADF8\uB2E4\uC74C \uAC83\uB3C4.", nextId: "n4" },
+    { id: "n4", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uC5F4\uC1E0\uB97C \uB3CC\uB9AC\uB294 \uC190\uC774 \uC775\uC219\uD558\uB2E4. \uADF8\uB7F0\uB370 \uC218\uAC11\uC744 \uC7A0\uADF8\uB294 \uB3D9\uC791\uC740 \uD55C \uBC88\uB3C4 \uC5C6\uB2E4.)", choices: [
+      { id: "count", label: "\uC624\uB298\uC740 \uBA87 \uAC1C\uB098 \uC37C\uB294\uC9C0 \uBB3B\uB294\uB2E4", nextId: "n5a" },
+      { id: "keys", label: "\uC5F4\uC1E0 \uAFB8\uB7EC\uBBF8\uC5D0 \uB300\uD574 \uBB3B\uB294\uB2E4", nextId: "n5b" }
+    ] },
+    { id: "n5a", speaker: "\uBCA8\uC988", body: "\uB450 \uAC1C\uC694. \uB098\uBA38\uC9C0\uB294 \uD558\uB098\uB3C4 \uC548 \uC37C\uC5B4\uC694. \u2026\uC548 \uC4F4 \uAC8C \uB9CE\uC744\uC218\uB85D \uC88B\uC740 \uB0A0\uC774\uC5D0\uC694. \uB2E4\uB4E4 \uD3ED\uC8FC \uC548 \uD558\uACE0 \uB3CC\uC544\uC654\uB2E4\uB294 \uB73B\uC774\uB2C8\uAE4C\uC694.", nextId: "n6" },
+    { id: "n5b", speaker: "\uBCA8\uC988", body: "\uC774\uAC74 \uCC44\uC6B0\uB294 \uC5F4\uC1E0\uAC00 \uC544\uB2C8\uB77C \uD478\uB294 \uC5F4\uC1E0\uC608\uC694. \uBD99\uC7A1\uC740 \uC544\uC774\uAC00 \uC9C4\uC815\uB418\uBA74, \uC81C\uC77C \uBA3C\uC800 \uD480\uC5B4 \uC8FC\uB294 \uAC8C \uC81C \uC77C\uC774\uC5D0\uC694.", nextId: "n6" },
+    { id: "n6", speaker: "", body: "\uBCA8\uC988\uB294 \uB9C8\uC9C0\uB9C9 \uC218\uAC11\uC744 \uC5F4\uC5B4 \uB454 \uCC44 \uBC14\uAD6C\uB2C8\uC5D0 \uB2F4\uC558\uB2E4. \uADF8\uB9AC\uACE0 \uC5F4\uC1E0 \uAFB8\uB7EC\uBBF8\uB97C \uC190\uBC14\uB2E5 \uC704\uC5D0 \uC62C\uB824\uB193\uACE0 \uD55C\uCC38 \uB0B4\uB824\uB2E4\uBCF4\uC558\uB2E4.", nextId: "n7" },
+    { id: "n7", speaker: "\uBCA8\uC988", body: "\uC0AC\uB78C\uB4E4\uC740 \uC81C\uAC00 \uC0AC\uC2AC\uC744 \uAC10\uACE0 \uB2E4\uB2C8\uB2C8\uAE4C \uBB34\uC11C\uC6CC\uD574\uC694. \uADF8\uB798\uC11C \uB9D0\uC744 \uC798 \uBABB \uAC78\uC5B4\uC694. \uADFC\uB370 \uC0AC\uC2AC\uC740 \uADF8\uB0E5\u2026 \uB458 \uB370\uAC00 \uC5C6\uC5B4\uC11C \uAC78\uACE0 \uB2E4\uB2C8\uB294 \uAC70\uC608\uC694.", nextId: "n8" },
+    { id: "n8", speaker: "\uBCA8\uC988", body: "\uC5F4\uC1E0\uB294 \uB2EC\uB77C\uC694. \uC774\uAC74 \uC77C\uBD80\uB7EC \uB4E4\uACE0 \uB2E4\uB140\uC694. \uB204\uAC00 \uAC07\uD788\uBA74 \uBC14\uB85C \uD480\uC5B4 \uC904 \uC218 \uC788\uAC8C\uC694.", nextId: "n9" },
+    { id: "n9", speaker: "", body: "\uC5F4\uC1E0 \uAFB8\uB7EC\uBBF8\uAC00 \uB2E4\uC2DC \uC9E4\uB791 \uC18C\uB9AC\uB97C \uB0C8\uB2E4. \uBCA8\uC988\uAC00 \uC18C\uB9E4\uB85C \uC785\uC744 \uAC00\uB9AC\uACE0 \uC791\uAC8C \uC6C3\uC5C8\uB2E4.", nextId: "n10" },
+    { id: "n10", speaker: "\uBCA8\uC988", body: "\uBCF4\uC2A4\uD55C\uD14C\uB294 \uC218\uAC11 \uC4F8 \uC77C \uC5C6\uC744 \uAC70\uC608\uC694. \uC5F4\uC1E0\uB9CC \uC4F8\uAC8C\uC694. \u2026\uD544\uC694\uD558\uC2DC\uBA74\uC694." }
+  ]
+};
+var CHAPTER_833 = {
+  id: "bond.belz.8",
+  backdrop: "careRoom",
+  startNodeId: "n1",
+  titleCard: { title: "\uAFC0\uAEBD", subtitle: "\uBCA8\uC988 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 3" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uACBD\uBCF4 \uD6C8\uB828\uC774 \uB05D\uB09C \uCF00\uC5B4\uC2E4. \uAD6C\uC11D\uC5D0\uC11C \uAF2C\uB9C8 \uB810\uB9AD \uD558\uB098\uAC00 \uADC0\uB97C \uB9C9\uACE0 \uC6C5\uD06C\uB824 \uC788\uC5C8\uB2E4. \uC544\uC9C1 \uC0AC\uC774\uB80C \uC18C\uB9AC\uAC00 \uADD3\uAC00\uC5D0 \uB0A8\uC740 \uC5BC\uAD74\uC774\uC5C8\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "", body: "\uBCA8\uC988\uAC00 \uB2E4\uAC00\uAC00 \uADF8 \uC606\uC5D0 \uCABC\uADF8\uB824 \uC549\uB354\uB2C8, \uAC1C\uAD6C\uB9AC \uD6C4\uB4DC \uC790\uB77D\uC744 \uD3BC\uCCD0 \uC544\uC774\uC758 \uBA38\uB9AC \uC704\uB85C \uB36E\uC5B4 \uC8FC\uC5C8\uB2E4.", nextId: "n3" },
+    { id: "n3", speaker: "\uBCA8\uC988", body: "\uAFC0\uAEBD. \u2026\uC790, \uC774\uC81C \uC544\uBB34\uB3C4 \uC548 \uBCF4\uC5EC\uC694. \uC5EC\uAE30 \uB4E4\uC5B4\uC624\uBA74 \uC800 \uB9D0\uACE0\uB294 \uBABB \uCC3E\uC544\uC694.", nextId: "n4" },
+    { id: "n4", speaker: "", body: "\uD6C4\uB4DC \uADF8\uB298 \uC544\uB798\uC5D0\uC11C \uD6CC\uCA4D\uC774\uB358 \uC18C\uB9AC\uAC00 \uC870\uAE08\uC529 \uC7A6\uC544\uB4E4\uC5C8\uB2E4. \uBCA8\uC988\uB294 \uC544\uBB34 \uB9D0 \uC5C6\uC774 \uADF8 \uC790\uB9AC\uC5D0 \uC549\uC544 \uC788\uC5C8\uB2E4.", nextId: "n5" },
+    { id: "n5", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uC544\uC774\uAC00 \uC7A0\uB4E4 \uB54C\uAE4C\uC9C0 \uAF3C\uC9DD\uD558\uC9C0 \uC54A\uC744 \uAE30\uC138\uB2E4.)", choices: [
+      { id: "sit", label: "\uC606\uC5D0 \uAC19\uC774 \uC549\uB294\uB2E4", nextId: "n6a" },
+      { id: "ask", label: "\uC5B4\uB514\uC11C \uBC30\uC6B4 \uAC74\uC9C0 \uBB3B\uB294\uB2E4", nextId: "n6b" }
+    ] },
+    { id: "n6a", speaker: "\uBCA8\uC988", body: "\u2026\uBCF4\uC2A4\uB3C4 \uB4E4\uC5B4\uC624\uC2E4\uB798\uC694? \uC790\uB9AC\uB294 \uC881\uC740\uB370, \uC18C\uB9AC\uB294 \uC798 \uB9C9\uC544 \uC918\uC694.", nextId: "n7" },
+    { id: "n6b", speaker: "\uBCA8\uC988", body: "\uBC30\uC6B4 \uAC74 \uC544\uB2C8\uC5D0\uC694. \uC81C\uAC00 \uADF8\uB7EC\uACE0 \uC2F6\uC5C8\uB358 \uAC70\uC608\uC694. \uC608\uC804\uC5D0\uC694.", nextId: "n7" },
+    { id: "n7", speaker: "\uBCA8\uC988", body: "\uBCF5\uC6D0\uB418\uACE0 \uC5BC\uB9C8 \uC548 \uB410\uC744 \uB54C, \uC800 \uB9CE\uC774 \uC228\uC5C8\uC5B4\uC694. \uC81C \uC785\uC774 \uC774\uB807\uAC8C \uD070 \uAC8C \uBB34\uC12D\uB2E4\uACE0\uB4E4 \uD574\uC11C\uC694. \uADF8\uB54C \uB204\uAC00 \uC774\uB807\uAC8C \uB36E\uC5B4 \uC92C\uC73C\uBA74 \uC88B\uACA0\uB2E4\uACE0 \uC0DD\uAC01\uD588\uC5B4\uC694.", nextId: "n8" },
+    { id: "n8", speaker: "\uBCA8\uC988", body: "\uC61B\uB0A0 \uC81C \uBAB8\uC740 \uC785\uC774 \uBAB8\uD1B5 \uC808\uBC18\uB9CC \uD588\uB300\uC694. \uBB50\uB4E0 \uAFC0\uAEBD \uC0BC\uCF30\uB2E4\uACE0\uC694. \uC800\uB294 \uADF8 \uC785\uC73C\uB85C \uC0BC\uD0A4\uB294 \uB300\uC2E0\u2026 \uC228\uACA8 \uC8FC\uACE0 \uC2F6\uC5B4\uC694.", nextId: "n9" },
+    { id: "n9", speaker: "", body: "\uD6C4\uB4DC \uC544\uB798\uC5D0\uC11C \uC0C8\uADFC\uAC70\uB9AC\uB294 \uC228\uC18C\uB9AC\uAC00 \uB4E4\uB824\uC654\uB2E4. \uBCA8\uC988\uAC00 \uC544\uC774\uC758 \uB4F1\uC744 \uD55C \uBC88 \uD1A0\uB2E5\uC774\uACE0, \uC5F0\uAD6C\uC6D0\uC744 \uC62C\uB824\uB2E4\uBCF4\uC558\uB2E4.", nextId: "n10" },
+    { id: "n10", speaker: "\uBCA8\uC988", body: "\uBCF4\uC2A4\uAC00 \uBB34\uC11C\uC6B4 \uB0A0\uC5D0\uB3C4 \uB9D0\uC500\uD558\uC138\uC694. \uAFC0\uAEBD\uD574 \uB4DC\uB9B4\uAC8C\uC694. \uC548\uC5D0\uC11C\uB294 \uD558\uACE0 \uC2F6\uC740 \uAC70 \uB2E4 \uD558\uC154\uB3C4 \uB3FC\uC694. \uC228\uACA8\uB9CC \uB4DC\uB9AC\uB294 \uAC70\uB2C8\uAE4C\uC694." }
+  ]
+};
+var CHAPTER_1033 = {
+  id: "bond.belz.10",
+  backdrop: "battlefield",
+  startNodeId: "n1",
+  titleCard: { title: "\uB193\uC9C0 \uC54A\uAE30", subtitle: "\uBCA8\uC988 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 4" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uC678\uBCBD \uBC29\uC5B4\uC120 \uB108\uBA38, \uC804\uD22C\uAC00 \uB9C9 \uB05D\uB09C \uB4E4\uD310. \uC5F0\uAE30\uAC00 \uAC77\uD788\uB294 \uC0AC\uC774\uB85C \uBCA8\uC988\uAC00 \uC5F0\uAD6C\uC6D0 \uCABD\uC73C\uB85C \uCC9C\uCC9C\uD788 \uAC78\uC5B4\uC654\uB2E4. \uC0AC\uC2AC\uC774 \uBC1C\uAC78\uC74C\uB9C8\uB2E4 \uC9E4\uB791\uAC70\uB838\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "\uBCA8\uC988", body: "\uBCF4\uC2A4. \uC624\uB298 \uD600\uB97C \uC77C\uACF1 \uBC88 \uC37C\uC5B4\uC694. \uC77C\uACF1 \uBA85 \uB2E4 \uB2E4\uCE58\uC9C0 \uC54A\uACE0 \uB3CC\uC544\uC654\uC5B4\uC694.", nextId: "n3" },
+    { id: "n3", speaker: "\uBCA8\uC988", body: "\uADFC\uB370 \uC800, \uC624\uB298 \uCC98\uC74C\uC73C\uB85C \uBB34\uC11C\uC6E0\uC5B4\uC694. \uD600\uAC00 \uC548 \uB2FF\uB294 \uB370 \uBCF4\uC2A4\uAC00 \uC11C \uACC4\uC168\uAC70\uB4E0\uC694. \uD55C \uAC78\uC74C\uB9CC \uB354 \uBA40\uC5C8\uC73C\uBA74 \uBABB \uC7A1\uC558\uC744 \uAC70\uC608\uC694.", nextId: "n4" },
+    { id: "n4", speaker: "", body: "\uBCA8\uC988\uAC00 \uC5F4\uC1E0 \uAFB8\uB7EC\uBBF8\uB97C \uAEBC\uB0B4 \uB4E4\uC5C8\uB2E4\uAC00, \uB2E4\uC2DC \uC8FC\uBA38\uB2C8\uC5D0 \uB123\uC5C8\uB2E4. \uADF8\uB9AC\uACE0 \uBE48\uC190\uC744 \uC5F0\uAD6C\uC6D0 \uCABD\uC73C\uB85C \uB0B4\uBC00\uC5C8\uB2E4.", nextId: "n5" },
+    { id: "n5", speaker: "\uBCA8\uC988", body: "\uC218\uAC11 \uB9D0\uACE0\uC694. \uC5F4\uC1E0\uB3C4 \uB9D0\uACE0\uC694. \uADF8\uB0E5\u2026 \uC774\uB807\uAC8C \uC7A1\uACE0 \uC788\uC73C\uBA74 \uC548 \uB420\uAE4C\uC694. \uD600\uBCF4\uB2E4 \uC774\uAC8C \uB354 \uD655\uC2E4\uD560 \uAC83 \uAC19\uC544\uC11C\uC694.", nextId: "n6" },
+    { id: "n6", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uB0B4\uBBFC \uC190\uB05D\uC774 \uB5A8\uB9B0\uB2E4. \uC18C\uB9E4\uB85C \uC785\uC744 \uAC00\uB9AC\uC9C0\uB3C4 \uC54A\uC558\uB2E4.)", choices: [
+      { id: "hold", label: "\uC190\uC744 \uC7A1\uB294\uB2E4", nextId: "n7a" },
+      { id: "promise", label: "\uB2E4\uC74C\uC5D4 \uAF2D \uBCF4\uC774\uB294 \uB370 \uC11C\uACA0\uB2E4\uACE0 \uC57D\uC18D\uD55C\uB2E4", nextId: "n7b" }
+    ] },
+    { id: "n7a", speaker: "\uBCA8\uC988", body: "\u2026\uB530\uB73B\uD558\uB124\uC694. \uC0AC\uC2AC\uBCF4\uB2E4 \uD6E8\uC52C \uAC00\uBCBC\uC6CC\uC694. \uC774\uAC74 \uC5B8\uC81C\uB4E0 \uB193\uC744 \uC218 \uC788\uB294\uB370, \uC774\uC0C1\uD558\uAC8C \uB193\uAE30\uAC00 \uC2EB\uC5B4\uC694.", nextId: "n8" },
+    { id: "n7b", speaker: "\uBCA8\uC988", body: "\uC57D\uC18D\uC774\uC694? \u2026\uADF8\uB7FC \uC57D\uC18D\uD558\uB294 \uB3D9\uC548\uB9CC\uC774\uB77C\uB3C4 \uC7A1\uACE0 \uC788\uC744\uAC8C\uC694. \uC190\uAC00\uB77D \uAC78\uBA74 \uC548 \uB193\uCE58\uAC70\uB4E0\uC694.", nextId: "n8" },
+    { id: "n8", speaker: "", body: "\uB450 \uC0AC\uB78C\uC740 \uC5F0\uAE30\uAC00 \uB2E4 \uAC77\uD790 \uB54C\uAE4C\uC9C0 \uADF8\uB807\uAC8C \uC11C \uC788\uC5C8\uB2E4. \uBCA8\uC988\uC758 \uC0AC\uC2AC\uC740 \uADF8\uB0A0 \uD55C \uBC88\uB3C4 \uC18C\uB9AC\uB97C \uB0B4\uC9C0 \uC54A\uC558\uB2E4.", nextId: "n9" },
+    { id: "n9", speaker: "\uBCA8\uC988", body: "\uBCF4\uC2A4, \uC800 \uC774\uC81C \uC0AC\uB78C\uB4E4 \uC55E\uC5D0\uC11C \uD600 \uC368\uB3C4 \uC548 \uBD80\uB044\uB7EC\uC6CC\uC694. \uBB34\uC11C\uC6CC\uD558\uB294 \uC0AC\uB78C\uBCF4\uB2E4, \uACE0\uB9D9\uB2E4\uACE0 \uD558\uB294 \uC0AC\uB78C\uC774 \uB354 \uB9CE\uC544\uC84C\uAC70\uB4E0\uC694.", nextId: "n10" },
+    { id: "n10", speaker: "\uBCA8\uC988", body: "\uADF8\uB798\uB3C4 \uBCF4\uC2A4\uB294 \uD600\uB85C \uC548 \uC7A1\uC744\uAC8C\uC694. \uC774\uB807\uAC8C \uC190\uC73C\uB85C \uC7A1\uC744\uAC8C\uC694. \u2026\uC81C\uC77C \uC18C\uC911\uD55C \uAC74, \uC81C\uC77C \uAC00\uAE4C\uC774\uC11C \uC7A1\uB294 \uAC70\uB2C8\uAE4C\uC694." }
+  ]
+};
+var BELZ_STORY = {
+  relicId: "belz",
+  fossilRecord: "\uAC15\uAC00 \uC0AC\uC554\uCE35\uC5D0\uC11C \uB0A9\uC791\uD558\uACE0 \uB113\uC740 \uB450\uAC1C\uACE8\uC774 \uC704\uD131\uC9F8 \uB4DC\uB7EC\uB0AC\uB2E4. \uBA38\uB9AC\uBF08 \uAC89\uBA74\uC774 \uC624\uB3CC\uD1A0\uB3CC\uD55C \uACE8\uD310\uC73C\uB85C \uB36E\uC5EC \uD22C\uAD6C\uB97C \uC4F4 \uAC83\uCC98\uB7FC \uB2E8\uB2E8\uD588\uACE0, \uC785\uC740 \uBAB8\uD1B5 \uC808\uBC18\uC744 \uCC28\uC9C0\uD560 \uB9CC\uD07C \uB113\uC5C8\uB2E4. \uBC1C\uAD74\uC9C4\uC740 \uBD80\uC11C\uC9C0\uAE30 \uC26C\uC6B4 \uACE8\uD310\uC744 \uC870\uAC01\uB9C8\uB2E4 \uBC88\uD638\uB97C \uBD99\uC5EC \uB5BC\uC5B4 \uB0C8\uB2E4. \uD131 \uC548\uCABD\uC5D0\uB294 \uC774\uBE68 \uC790\uAD6D\uC774 \uB09C \uC791\uC740 \uBF08\uAC00 \uD568\uAED8 \uAD73\uC5B4 \uC788\uC5C8\uB2E4. \uBCF5\uC6D0\uC740 \uB113\uC740 \uD131\uC774 \uB2EB\uD788\uB294 \uAC01\uB3C4\uB97C \uBA3C\uC800 \uB9DE\uCD94\uACE0 \uB098\uBA38\uC9C0 \uBAB8\uC744 \uAC70\uAE30\uC5D0 \uB530\uB790\uB2E4.",
+  diary: '\uBCF5\uC6D0 \uD6C4 \uBCA8\uC988\uB294 \uB0AF\uC120 \uC0AC\uB78C \uC55E\uC5D0\uC11C \uC18C\uB9E4\uB85C \uC785\uC744 \uAC00\uB9AC\uACE0 \uC6C3\uB294\uB2E4. \uBAA9\uC758 \uBC84\uD074\uACFC \uBAB8\uC5D0 \uAC10\uAE34 \uC0AC\uC2AC\uC740 \uAD6C\uC18D\uAD6C\uAC00 \uC544\uB2C8\uB2E4. \uC571\uC194\uB8E8\uD2B8 \uD33D\uC774 \uD3ED\uC8FC\uD55C \uAC1C\uCCB4\uB97C \uBD99\uC7A1\uC744 \uB54C \uC4F0\uB294 \uC7A5\uBE44\uC778\uB370, \uB458 \uACF3\uC774 \uC5C6\uB2E4\uBA70 \uC81C \uBAB8\uC5D0 \uAC78\uACE0 \uB2E4\uB2CC\uB2E4. \uB9D0\uC218\uB294 \uC801\uC5B4\uB3C4 \uC190\uBCF4\uB2E4 \uD600\uAC00 \uBE60\uB974\uB2E4. \uBB34\uB108\uC9C0\uB294 \uC794\uD574 \uC55E\uC5D0 \uC120 \uB3D9\uB8CC\uB97C \uD600\uB85C \uB09A\uC544\uCC44 \uC81C \uC606\uC5D0 \uC138\uC6CC \uB193\uACE0\uB294, \uB180\uB780 \uC5BC\uAD74\uC744 \uBCF4\uBA74 \uADF8\uC81C\uC57C "\u2026\uC8C4\uC1A1\uD574\uC694, \uAE09\uD574\uC11C\uC694" \uD558\uACE0 \uC791\uAC8C \uC0AC\uACFC\uD55C\uB2E4. \uAC81\uBA39\uC740 \uAF2C\uB9C8 \uB810\uB9AD\uC744 \uAC1C\uAD6C\uB9AC \uD6C4\uB4DC \uADF8\uB298\uC5D0 \uC228\uACA8 \uC900 \uC801\uB3C4 \uC788\uB2E4. \uC65C \uC228\uACA8 \uC92C\uB290\uB0D0\uACE0 \uBB3C\uC73C\uBA74, \uB300\uB2F5 \uB300\uC2E0 \uD6C4\uB4DC\uB97C \uB20C\uB7EC\uC4F4\uB2E4.',
+  /** 일지 맨 끝에 회색으로 서는, 벨즈가 연구원에게 건네는 한마디. 뽑기 대사와 다른 일상의 목소리다. */
+  closingLine: "\uBCF4\uC2A4, \uC624\uB298 \uC218\uAC11\uC740 \uD558\uB098\uB3C4 \uC548 \uC37C\uC5B4\uC694. \uC88B\uC740 \uB0A0\uC774\uC5D0\uC694. \u2026\uADF8\uB7EC\uB2C8\uAE4C \uBCF4\uC2A4\uB3C4 \uC624\uB298\uC740 \uC77C\uCC0D \uC26C\uC138\uC694.",
+  questions: [
+    {
+      id: "belz-tongue",
+      prompt: "\uBCA8\uC988\uB294 \uC65C \uD600\uBD80\uD130 \uB098\uAC00?",
+      choices: [
+        {
+          id: "fast",
+          label: "\uC190\uBCF4\uB2E4 \uBE60\uB978\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uB124, \uD6E8\uC52C\uC694. \uC190\uC740 \uBED7\uB294 \uC0AC\uC774\uC5D0 \uB2A6\uC5B4\uC694. \uD600\uB294\u2026 \uC0DD\uAC01\uD558\uAE30 \uC804\uC5D0 \uC774\uBBF8 \uAC00 \uC788\uC5B4\uC694.",
+          note: "\uD600\uAC00 \uC190\uBCF4\uB2E4 \uBE60\uB974\uB0D0\uACE0 \uBB3B\uC790 \uD6E8\uC52C \uBE60\uB974\uB2E4\uACE0 \uD588\uB2E4. \uC0DD\uAC01\uD558\uAE30 \uC804\uC5D0 \uC774\uBBF8 \uAC00 \uC788\uB2E4\uACE0 \uD588\uB2E4."
+        },
+        {
+          id: "shy",
+          label: "\uB0A8\uB4E4 \uC55E\uC5D0\uC11C \uC4F0\uAE30 \uBD80\uB044\uB7FD\uC9C0 \uC54A\uC740\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uBD80\uB044\uB7EC\uC6CC\uC694. \uADF8\uB798\uB3C4 \uB204\uAC00 \uB2E4\uCE60 \uAC83 \uAC19\uC73C\uBA74 \uBD80\uB044\uB7EC\uC6B4 \uAC74 \uB098\uC911\uC5D0 \uD574\uC694. \uC0AC\uACFC\uB3C4 \uB098\uC911\uC5D0 \uD558\uACE0\uC694.",
+          note: "\uBD80\uB044\uB7FD\uC9C0 \uC54A\uC73C\uB0D0\uACE0 \uBB3B\uC790 \uBD80\uB044\uB7FD\uB2E4\uACE0 \uD588\uB2E4. \uB204\uAC00 \uB2E4\uCE60 \uAC83 \uAC19\uC73C\uBA74 \uBD80\uB044\uB7EC\uC6C0\uB3C4 \uC0AC\uACFC\uB3C4 \uB098\uC911\uC5D0 \uD55C\uB2E4\uACE0 \uD588\uB2E4."
+        },
+        {
+          id: "taste",
+          label: "\uB9DB\uC774 \uB290\uAEF4\uC9C0\uB294\uC9C0 \uC7A5\uB09C\uC2A4\uB7FD\uAC8C \uBB3B\uB294\uB2E4",
+          reply: "\u2026\uB290\uAEF4\uC838\uC694. \uBCF4\uC2A4\uB294 \uC789\uD06C \uB9DB\uC774 \uB0AC\uC5B4\uC694. \uAE30\uB85D\uD310 \uB9CC\uC9C0\uACE0 \uACC4\uC168\uC796\uC544\uC694. \uC544, \uC774\uAC74 \uB9D0\uD558\uBA74 \uC548 \uB418\uB294 \uAC70\uC600\uB294\uB370.",
+          note: "\uD600\uB85C \uB9DB\uC774 \uB290\uAEF4\uC9C0\uB290\uB0D0\uACE0 \uBB3B\uC790 \uB290\uAEF4\uC9C4\uB2E4\uACE0 \uD588\uB2E4. \uC789\uD06C \uB9DB\uC774 \uB0AC\uB2E4\uACE0 \uB9D0\uD558\uACE0\uB294 \uC18C\uB9E4\uB85C \uC785\uC744 \uAC00\uB838\uB2E4."
+        }
+      ]
+    },
+    {
+      id: "belz-chain",
+      prompt: "\uBCA8\uC988\uB294 \uC65C \uC0AC\uC2AC\uC744 \uBAB8\uC5D0 \uAC10\uACE0 \uB2E4\uB140?",
+      choices: [
+        {
+          id: "heavy",
+          label: "\uBB34\uAC81\uC9C0 \uC54A\uC740\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uC870\uAE08 \uBB34\uAC70\uC6CC\uC694. \uADF8\uB798\uB3C4 \uC7A5\uBE44\uC2E4\uAE4C\uC9C0 \uAC00\uC9C0\uB7EC \uAC00\uB294 \uC0AC\uC774\uC5D0 \uB204\uAC00 \uD3ED\uC8FC\uD558\uBA74 \uB2A6\uC73C\uB2C8\uAE4C\uC694.",
+          note: "\uBB34\uAC81\uC9C0 \uC54A\uC73C\uB0D0\uACE0 \uBB3B\uC790 \uC870\uAE08 \uBB34\uAC81\uB2E4\uACE0 \uD588\uB2E4. \uAC00\uC9C0\uB7EC \uAC00\uB294 \uC0AC\uC774\uC5D0 \uB2A6\uC744\uAE4C \uBD10 \uB298 \uAC78\uACE0 \uB2E4\uB2CC\uB2E4\uACE0 \uD588\uB2E4."
+        },
+        {
+          id: "scary",
+          label: "\uB2E4\uB4E4 \uBB34\uC11C\uC6CC\uD558\uC9C0 \uC54A\uB294\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uBB34\uC11C\uC6CC\uD574\uC694. \uADF8\uB798\uC11C \uB9D0\uC744 \uC798 \uC548 \uAC78\uC5B4\uC694. \u2026\uBCF4\uC2A4\uB294 \uCC98\uC74C\uBD80\uD130 \uAC78\uC5B4 \uC8FC\uC168\uC8E0. \uAE30\uC5B5\uD558\uACE0 \uC788\uC5B4\uC694.",
+          note: "\uB2E4\uB4E4 \uBB34\uC11C\uC6CC\uD558\uC9C0 \uC54A\uB290\uB0D0\uACE0 \uBB3B\uC790 \uADF8\uB807\uB2E4\uACE0 \uD588\uB2E4. \uCC98\uC74C\uBD80\uD130 \uB9D0\uC744 \uAC78\uC5B4 \uC900 \uAC83\uC744 \uAE30\uC5B5\uD55C\uB2E4\uACE0 \uD588\uB2E4."
+        },
+        {
+          id: "keys",
+          label: "\uC5F4\uC1E0\uB294 \uC5B4\uB514 \uC788\uB294\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uC5EC\uAE30\uC694. \uC0AC\uC2AC\uC740 \uB458 \uB370\uAC00 \uC5C6\uC5B4\uC11C \uAC78\uACE0 \uB2E4\uB2C8\uB294\uB370, \uC5F4\uC1E0\uB294 \uC77C\uBD80\uB7EC \uB4E4\uACE0 \uB2E4\uB140\uC694. \uD478\uB294 \uAC8C \uB354 \uC911\uC694\uD558\uAC70\uB4E0\uC694.",
+          note: "\uC5F4\uC1E0\uB294 \uC5B4\uB514 \uB450\uC5C8\uB290\uB0D0\uACE0 \uBB3B\uC790 \uC8FC\uBA38\uB2C8\uB97C \uBCF4\uC5EC \uC92C\uB2E4. \uC0AC\uC2AC\uBCF4\uB2E4 \uD478\uB294 \uC5F4\uC1E0\uAC00 \uB354 \uC911\uC694\uD558\uB2E4\uACE0 \uD588\uB2E4."
+        }
+      ]
+    },
+    {
+      id: "belz-hood",
+      prompt: "\uBCA8\uC988\uB294 \uC65C \uD6C4\uB4DC\uB97C \uB20C\uB7EC\uC368?",
+      choices: [
+        {
+          id: "face",
+          label: "\uC5BC\uAD74\uC744 \uAC00\uB9AC\uACE0 \uC2F6\uC740\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uC785\uC744\uC694. \uC81C \uC785\uC774 \uD06C\uB2E4\uACE0 \uB2E4\uB4E4 \uB180\uB77C\uC11C\uC694. \uD6C4\uB4DC\uB97C \uC4F0\uBA74 \uB2E4\uB4E4 \uAC1C\uAD6C\uB9AC \uC5BC\uAD74\uB9CC \uBD10\uC694. \uADF8\uAC8C \uD3B8\uD574\uC694.",
+          note: "\uC5BC\uAD74\uC744 \uAC00\uB9AC\uACE0 \uC2F6\uC73C\uB0D0\uACE0 \uBB3B\uC790 \uC785\uC744 \uAC00\uB9AC\uACE0 \uC2F6\uB2E4\uACE0 \uD588\uB2E4. \uD6C4\uB4DC\uB97C \uC4F0\uBA74 \uB2E4\uB4E4 \uAC1C\uAD6C\uB9AC \uC5BC\uAD74\uB9CC \uBCF8\uB2E4\uACE0 \uD588\uB2E4."
+        },
+        {
+          id: "cute",
+          label: "\uD6C4\uB4DC\uAC00 \uADC0\uC5FD\uB2E4\uACE0 \uB9D0\uD574 \uC900\uB2E4",
+          reply: "\uADC0, \uADC0\uC5FD\uB2E4\uACE0\uC694? \uC774\uBE68\uB3C4 \uB2EC\uB838\uB294\uB370\uC694\u2026 \uADF8\uB7FC, \uB0B4\uC77C\uB3C4 \uC4F8\uAC8C\uC694. \uC544\uB2C8, \uC6D0\uB798 \uB9E4\uC77C \uC368\uC694.",
+          note: "\uD6C4\uB4DC\uAC00 \uADC0\uC5FD\uB2E4\uACE0 \uD558\uC790 \uC774\uBE68\uB3C4 \uB2EC\uB838\uB294\uB370 \uADC0\uC5FD\uB0D0\uBA70 \uB418\uBB3C\uC5C8\uB2E4. \uB0B4\uC77C\uB3C4 \uC4F0\uACA0\uB2E4\uB354\uB2C8, \uC6D0\uB798 \uB9E4\uC77C \uC4F4\uB2E4\uACE0 \uD588\uB2E4."
+        },
+        {
+          id: "hide",
+          label: "\uADF8 \uC548\uC5D0 \uB204\uAD6C\uB97C \uC228\uACA8 \uC900 \uC801 \uC788\uB294\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uC788\uC5B4\uC694. \uAC81\uBA39\uC740 \uC544\uC774\uC694. \uB36E\uC5B4 \uC8FC\uBA74 \uAE08\uBC29 \uC870\uC6A9\uD574\uC838\uC694. \u2026\uC800\uB3C4 \uC608\uC804\uC5D0 \uADF8\uB7EC\uACE0 \uC2F6\uC5C8\uAC70\uB4E0\uC694.",
+          note: "\uD6C4\uB4DC \uC548\uC5D0 \uB204\uAD6C\uB97C \uC228\uACA8 \uC900 \uC801\uC774 \uC788\uB290\uB0D0\uACE0 \uBB3B\uC790 \uAC81\uBA39\uC740 \uC544\uC774\uB97C \uC228\uACA8 \uC92C\uB2E4\uACE0 \uD588\uB2E4. \uC790\uAE30\uB3C4 \uC608\uC804\uC5D0 \uADF8\uB7EC\uACE0 \uC2F6\uC5C8\uB2E4\uACE0 \uD588\uB2E4."
+        }
+      ]
+    }
+  ],
+  bondStories: { 4: CHAPTER_433, 6: CHAPTER_633, 8: CHAPTER_833, 10: CHAPTER_1033 },
+  bondLines: [
+    // 0 — 낯선 사이. 소매 뒤에서 작게 말한다.
+    ["\uBCA8\uC988\uC608\uC694\u2026 \uC0AC\uC2AC\uC740 \uC2E0\uACBD \uC4F0\uC9C0 \uB9C8\uC138\uC694, \uBCF4\uC2A4. \uC7A5\uBE44\uC608\uC694.", "\u2026\uC704\uD5D8\uD55C \uB370 \uC11C \uACC4\uC2DC\uBA74 \uB9D0\uC500\uB4DC\uB9B4\uAC8C\uC694. \uB9D0\uB85C\uC694. \uB418\uB3C4\uB85D\uC774\uBA74\uC694.", "\uC8C4\uC1A1\uD574\uC694, \uB0AF\uC744 \uC880 \uAC00\uB824\uC694. \uAE08\uBC29 \uAD1C\uCC2E\uC544\uC9C8 \uAC70\uC608\uC694."],
+    // 1
+    ["\uC624\uB298 \uC7A5\uBE44 \uC810\uAC80 \uB05D\uB0AC\uC5B4\uC694. \uC218\uAC11\uC740 \uD558\uB098\uB3C4 \uC548 \uC37C\uC5B4\uC694.", "\uBCF4\uC2A4 \uAE30\uB85D\uD310, \uC789\uD06C\uAC00 \uBC88\uC84C\uC5B4\uC694. \uB2E6\uC544 \uB4DC\uB9B4\uAE4C\uC694? \uC18C\uB9E4\uB85C\uC694.", "\uC0AC\uC2AC \uC18C\uB9AC \uC2DC\uB044\uB7EC\uC6B0\uC2DC\uBA74 \uB9D0\uC500\uD558\uC138\uC694. \uCC9C\uCC9C\uD788 \uAC78\uC744\uAC8C\uC694."],
+    // 2
+    ["\uB2E4\uB4E4 \uC81C \uC785\uC774 \uD06C\uB2E4\uACE0 \uB180\uB77C\uC694. \u2026\uBCF4\uC2A4\uB294 \uC548 \uB180\uB77C\uC168\uC8E0?", "\uAC1C\uAD74. \u2026\uC544, \uBC29\uAE08 \uAC74 \uBABB \uB4E4\uC73C\uC2E0 \uAC78\uB85C \uD574 \uC8FC\uC138\uC694.", "\uB192\uC740 \uB370\uC11C \uB5A8\uC5B4\uC9C0\uB294 \uAC70, \uC81C\uAC00 \uC81C\uC77C \uBA3C\uC800 \uBD10\uC694. \uC704\uB97C \uC790\uC8FC \uBCF4\uAC70\uB4E0\uC694."],
+    // 3
+    ["\uC624\uB298 \uD6C8\uB828\uC5D0\uC11C \uD600\uB97C \uC37C\uC5B4\uC694. \uD45C\uC801\uC774 \uB180\uB77C\uC11C \uB118\uC5B4\uC84C\uC5B4\uC694. \uC8C4\uC1A1\uD588\uC5B4\uC694.", "\uBCF4\uC2A4, \uCCA0\uACE8 \uBC11\uC5D0 \uC11C\uC9C0 \uB9C8\uC138\uC694. \uADF8\uB7F0 \uB370\uB294 \uAF2D \uBB50\uAC00 \uB5A8\uC5B4\uC838\uC694.", "\uB809\uC2DC\uC544 \uC120\uBC30\uAC00 \uC798\uD55C\uB2E4\uACE0 \uD574 \uC8FC\uBA74 \uD558\uB8E8 \uC885\uC77C \uAE30\uBD84\uC774 \uC88B\uC544\uC694."],
+    // 4 — 장 4 이후: 개굴 이후.
+    ["\uADF8\uB0A0 \uD600\uB85C \uB04C\uC5B4\uB2F9\uAE34 \uAC70, \uC544\uC9C1\uB3C4 \uC8C4\uC1A1\uD574\uC694. \uADF8\uB798\uB3C4 \uB610 \uADF8\uB7F4 \uAC70\uC608\uC694.", "\uC704\uD5D8\uD55C \uB370 \uC11C\uC2E4 \uB550 \uC81C\uAC00 \uBCF4\uC774\uB294 \uB370 \uC11C \uC8FC\uC138\uC694. \uC57D\uC18D\uC774\uC5D0\uC694.", "\uCE6D\uCC2C\uBC1B\uACE0 \uD600 \uC4F4 \uAC70, \uADF8\uB0A0\uC774 \uCC98\uC74C\uC774\uC5C8\uC5B4\uC694. \uAE30\uC5B5\uD558\uACE0 \uC788\uC5B4\uC694."],
+    // 5
+    ["\uC624\uB298\uC740 \uD600\uB97C \uB450 \uBC88 \uC37C\uC5B4\uC694. \uB450 \uBC88 \uB2E4 \uC0AC\uACFC \uC548 \uD588\uC5B4\uC694. \uC798\uD55C \uAC70\uC8E0?", "\uBCF4\uC2A4\uAC00 \uBCF4\uC774\uB294 \uB370 \uACC4\uC2DC\uBA74 \uB9C8\uC74C\uC774 \uD3B8\uD574\uC694. \uC624\uB298\uC740 \uACC4\uC18D \uBCF4\uC600\uC5B4\uC694.", "\uD6C4\uB4DC\uC5D0 \uC774\uBE68 \uB2EC\uB9B0 \uAC70, \uC6D0\uB798\uB294 \uC7A5\uC2DD\uC774\uC5D0\uC694. \uBB34\uC11C\uC6B0\uB77C\uACE0 \uB2E8 \uAC70 \uC544\uB2C8\uC5D0\uC694."],
+    // 6 — 장 6 이후: 열쇠 꾸러미 이후.
+    ["\uC624\uB298 \uC4F4 \uC218\uAC11\uC740 \uD558\uB098\uC608\uC694. \uAE08\uBC29 \uD480\uC5B4 \uC92C\uC5B4\uC694. \uC88B\uC740 \uB0A0\uC774\uC5D0\uC694.", "\uC5F4\uC1E0 \uAFB8\uB7EC\uBBF8\uC5D0 \uC5F4\uC1E0 \uD558\uB098 \uB354 \uC0DD\uACBC\uC5B4\uC694. \uC7A5\uBE44\uC2E4 \uAC70\uC608\uC694. \uBCF4\uC2A4\uD55C\uD14C\uB9CC \uC54C\uB824 \uB4DC\uB824\uC694.", "\uC0AC\uC2AC\uC740 \uAC78\uACE0 \uB2E4\uB2C8\uACE0, \uC5F4\uC1E0\uB294 \uB4E4\uACE0 \uB2E4\uB140\uC694. \uADF8 \uCC28\uC774, \uBCF4\uC2A4\uB294 \uC544\uC2DC\uC8E0?"],
+    // 7
+    ["\uC694\uC998 \uCF00\uC5B4\uC2E4 \uC544\uC774\uB4E4\uC774 \uC800\uB97C \uCC3E\uC544\uC640\uC694. \uBB34\uC11C\uC6B4 \uAFC8\uC744 \uAFB8\uBA74\uC694.", "\uBCF4\uC2A4, \uC624\uB298 \uD45C\uC815\uC774 \uC880 \uBB34\uAC70\uC6CC \uBCF4\uC5EC\uC694. \uD6C4\uB4DC \uBE4C\uB824 \uB4DC\uB9B4\uAE4C\uC694?", "\uC81C \uC785\uC774 \uCEE4\uC11C \uC88B\uC740 \uC810\uB3C4 \uC788\uC5B4\uC694. \uC228\uACA8 \uC904 \uB370\uAC00 \uB113\uC5B4\uC694."],
+    // 8 — 장 8 이후: 꿀꺽 이후.
+    ["\uADF8\uB0A0 \uCF00\uC5B4\uC2E4 \uC544\uC774, \uC624\uB298 \uC800\uD55C\uD14C \uACE0\uB9D9\uB2E4\uACE0 \uD588\uC5B4\uC694. \uADC0\uAE4C\uC9C0 \uBE68\uAC1C\uC84C\uC5B4\uC694.", "\uAFC0\uAEBD\uD574 \uB4DC\uB9B0\uB2E4\uB294 \uB9D0, \uC9C4\uC9DC\uC608\uC694. \uC5B8\uC81C\uB4E0\uC694.", "\uC228\uACA8 \uC8FC\uB294 \uAC70\uB791 \uAC00\uB450\uB294 \uAC70\uB294 \uB2EC\uB77C\uC694. \uC228\uC740 \uC0AC\uB78C\uC740 \uC5B8\uC81C\uB4E0 \uB098\uC62C \uC218 \uC788\uC5B4\uC694."],
+    // 9
+    ["\uC694\uC998 \uD600\uAC00 \uC548 \uB2FF\uB294 \uAC70\uB9AC\uB97C \uC790\uAFB8 \uC7AC \uBD10\uC694. \uBCF4\uC2A4\uB791 \uC800 \uC0AC\uC774 \uAC70\uB9AC\uC694.", "\uBCF4\uC2A4, \uB2E4\uC74C \uC791\uC804 \uB54C \uB108\uBB34 \uBA40\uB9AC \uAC00\uC9C0 \uB9C8\uC138\uC694. \uADF8\uAC8C \uC81C\uC77C \uBB34\uC11C\uC6CC\uC694.", "\uC5F4\uC1E0 \uAFB8\uB7EC\uBBF8 \uB9D0\uACE0, \uBE48\uC190\uC73C\uB85C \uC7A1\uC744 \uC218 \uC788\uB294 \uAC8C \uC788\uC5C8\uC73C\uBA74 \uC88B\uACA0\uC5B4\uC694."],
+    // 10 — 마음을 연 사이. 놓지 않기 이후.
+    ["\uC624\uB298\uB3C4 \uC190 \uC7A1\uC544\uB3C4 \uB3FC\uC694? \uD600\uBCF4\uB2E4 \uC774\uAC8C \uD655\uC2E4\uD574\uC694.", "\uC0AC\uB78C\uB4E4 \uC55E\uC5D0\uC11C \uD600 \uC4F0\uB294 \uAC70, \uC774\uC81C \uC548 \uBD80\uB044\uB7EC\uC6CC\uC694. \uBCF4\uC2A4 \uB355\uBD84\uC774\uC5D0\uC694.", "\uBCF4\uC2A4\uB294 \uC218\uAC11\uB3C4 \uC5F4\uC1E0\uB3C4 \uC548 \uC368\uC694. \uC190\uB9CC \uC368\uC694. \uADF8\uAC8C \uC81C \uADDC\uCE59\uC774\uC5D0\uC694."]
+  ]
+};
+
+// src/data/relicStories/ar.ts
+init_define_import_meta_env();
+var CHAPTER_434 = {
+  id: "bond.ar.4",
+  backdrop: "deepField",
+  startNodeId: "n1",
+  titleCard: { title: "\uC544\uC9C1", subtitle: "\uC544\uB974 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 1" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uCCA0\uC218 \uC2E0\uD638\uAC00 \uC6B8\uB9B0 \uC9C0 \uD55C \uC2DC\uAC04\uC774 \uC9C0\uB09C \uD68C\uC218 \uC9C0\uC810. \uB2E4\uB4E4 \uB3CC\uC544\uAC14\uB294\uB370, \uC5F0\uAD6C\uC6D0 \uD63C\uC790 \uCC28\uB7C9 \uC606\uC5D0 \uB0A8\uC544 \uC788\uC5C8\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "", body: "\uC5B4\uB460 \uC18D\uC5D0\uC11C \uBC1C\uC18C\uB9AC\uAC00 \uB0AC\uB2E4. \uC544\uB974\uAC00 \uAF2C\uB9AC\uB97C \uBC14\uB2E5\uC5D0 \uB04C\uBA70 \uAC78\uC5B4 \uB098\uC654\uB2E4. \uD55C \uC190\uC5D0 \uD68C\uC218\uD55C \uCF54\uC5B4\uB97C \uC950\uACE0 \uC788\uC5C8\uB2E4.", nextId: "n3" },
+    { id: "n3", speaker: "\uC544\uB974", body: "\u2026\uD68C\uC218 \uB05D. \uC65C \uC544\uC9C1 \uC788\uC5B4?", nextId: "n4" },
+    { id: "n4", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uCF54\uD2B8 \uC18C\uB9E4 \uB05D\uC774 \uCC22\uC5B4\uC838 \uC788\uB2E4. \uBCF8\uC778\uC740 \uBAA8\uB974\uB294 \uCC99\uD55C\uB2E4.)", choices: [
+      { id: "wait", label: "\uAE30\uB2E4\uB838\uB2E4\uACE0 \uB9D0\uD55C\uB2E4", nextId: "n5a" },
+      { id: "core", label: "\uCF54\uC5B4\uBD80\uD130 \uBC1B\uB294\uB2E4", nextId: "n5b" }
+    ] },
+    { id: "n5a", speaker: "\uC544\uB974", body: "\u2026\uAE30\uB2E4\uB9AC\uB77C\uACE0 \uD55C \uC801 \uC5C6\uC5B4. \uB2E4\uC74C\uBD80\uD134 \uBA3C\uC800 \uAC00. \uC2E0\uD638 \uBB34\uC2DC\uD55C \uAC74 \uB098\uB2C8\uAE4C.", nextId: "n6" },
+    { id: "n5b", speaker: "\uC544\uB974", body: "\uD760\uC9D1 \uC5C6\uC5B4. \uB05D\uAE4C\uC9C0 \uCAD3\uC558\uC73C\uB2C8\uAE4C. \u2026\uBC1B\uC558\uC73C\uBA74 \uC774\uC81C \uAC00. \uCD94\uC6CC.", nextId: "n6" },
+    { id: "n6", speaker: "", body: "\uC544\uB974\uB294 \uCC28\uB7C9\uC5D0 \uC62C\uB77C\uD0C0 \uCC3D\uAC00 \uC790\uB9AC\uC5D0 \uC549\uC558\uB2E4. \uCC22\uC5B4\uC9C4 \uC18C\uB9E4\uB97C \uBB34\uB98E \uC544\uB798\uB85C \uAC10\uCD94\uACE0 \uCC3D\uBC16\uB9CC \uBCF4\uC558\uB2E4.", nextId: "n7" },
+    { id: "n7", speaker: "\uC544\uB974", body: "\uCCA0\uC218 \uC2E0\uD638 \uB4E4\uB9AC\uBA74 \u300C\uC544\uC9C1\u300D\uC774\uB77C\uACE0 \uD558\uACE0 \uAC00\uB294 \uAC70, \uBC84\uB987\uC774\uC57C. \uB2E4 \uC7A1\uC744 \uB54C\uAE4C\uC9C4 \uC548 \uB05D\uB09C \uAC70\uB77C\uC11C.", nextId: "n8" },
+    { id: "n8", speaker: "", body: "\uCC28\uAC00 \uCD9C\uBC1C\uD588\uB2E4. \uD55C\uCC38 \uB9D0\uC774 \uC5C6\uB2E4\uAC00, \uC544\uB974\uAC00 \uCC3D\uC5D0 \uBE44\uCE5C \uC5F0\uAD6C\uC6D0\uC744 \uD758\uB054 \uBCF4\uC558\uB2E4.", nextId: "n9" },
+    { id: "n9", speaker: "\uC544\uB974", body: "\uADFC\uB370 \uB3CC\uC544\uC654\uB294\uB370 \uB204\uAC00 \uC788\uB294 \uAC74\u2026 \uCC98\uC74C\uC774\uC57C.", nextId: "n10" },
+    { id: "n10", speaker: "\uC544\uB974", body: "\uB2E4\uC74C\uC5D0\uB3C4 \u300C\uC544\uC9C1\u300D\uC774\uB77C\uACE0 \uD560 \uAC70\uC57C. \uADF8\uB798\uB3C4 \uB3CC\uC544\uC624\uAE34 \uD560\uAC8C. \uB2F9\uC2E0\uC774 \uAE30\uB2E4\uB9AC\uBA74 \uADC0\uCC2E\uC73C\uB2C8\uAE4C." }
+  ]
+};
+var CHAPTER_634 = {
+  id: "bond.ar.6",
+  backdrop: "careRoomNight",
+  startNodeId: "n1",
+  titleCard: { title: "\uBD95\uB300", subtitle: "\uC544\uB974 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 2" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uB2A6\uC740 \uBC24\uC758 \uCF00\uC5B4\uC2E4. \uBD88 \uAEBC\uC9C4 \uCE68\uB300 \uC0AC\uC774\uB85C \uBD95\uB300 \uC0C1\uC790\uB97C \uB4A4\uC9C0\uB294 \uC18C\uB9AC\uAC00 \uB0AC\uB2E4. \uC544\uB974\uAC00 \uD55C \uC190\uC73C\uB85C \uB2E4\uB978 \uCABD \uC190\uBAA9\uC744 \uAC10\uC73C\uB824 \uC560\uC4F0\uACE0 \uC788\uC5C8\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "\uC544\uB974", body: "\u2026\uC65C \uC654\uC5B4. \uC544\uBB34 \uC77C\uB3C4 \uC5C6\uC5B4.", nextId: "n3" },
+    { id: "n3", speaker: "", body: "\uC190\uBAA9\uC5D0 \uAE01\uD78C \uC0C1\uCC98\uAC00 \uAE38\uAC8C \uB098 \uC788\uC5C8\uB2E4. \uBD95\uB300\uB294 \uBC18\uCBE4 \uD480\uB9B0 \uCC44 \uC5C9\uCF1C \uC788\uC5C8\uB2E4.", nextId: "n4" },
+    { id: "n4", speaker: "\uB9C8\uD0A4", body: "\uCC98\uBC29\uC774\uB2E4\uB0E5. \uD63C\uC790 \uAC10\uC73C\uBA74 \uB367\uB09C\uB2E4. \uADF8\uB9AC\uACE0 \uB2E4\uCE5C \uAC74 \uC228\uAE30\uB294 \uAC8C \uC544\uB2C8\uB77C \uBCF4\uC5EC \uC8FC\uB294 \uAC70\uB2E4\uB0E5.", nextId: "n5" },
+    { id: "n5", speaker: "\uC544\uB974", body: "\u2026\uB9C8\uD0A4, \uC5B8\uC81C\uBD80\uD130 \uC788\uC5C8\uC5B4. \uBB38 \uB2EB\uACE0 \uB098\uAC00.", nextId: "n6" },
+    { id: "n6", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uC544\uB974\uAC00 \uC190\uBAA9\uC744 \uB4F1 \uB4A4\uB85C \uAC10\uCD98\uB2E4. \uADF8\uB798\uB3C4 \uBD95\uB300 \uB05D\uC774 \uC090\uC838\uB098\uC640 \uC788\uB2E4.)", choices: [
+      { id: "wrap", label: "\uBD95\uB300\uB97C \uAC10\uC544 \uC8FC\uACA0\uB2E4\uACE0 \uD55C\uB2E4", nextId: "n7a" },
+      { id: "why", label: "\uC65C \uC228\uAE30\uB294\uC9C0 \uBB3B\uB294\uB2E4", nextId: "n7b" }
+    ] },
+    { id: "n7a", speaker: "\uC544\uB974", body: "\u2026\uC138\uAC8C \uAC10\uC9C0 \uB9C8. \uC190\uBAA9 \uB3CC\uB824\uC57C \uD574. \uADF8\uB9AC\uACE0 \uC544\uBB34\uD55C\uD14C\uB3C4 \uB9D0\uD558\uC9C0 \uB9C8.", nextId: "n8" },
+    { id: "n7b", speaker: "\uC544\uB974", body: "\uB2E4\uCCE4\uB2E4\uACE0 \uD558\uBA74 \uB2E4\uC74C \uC0AC\uB0E5\uC5D0\uC11C \uBE7C\uC796\uC544. \uADF8\uAC8C \uC2EB\uC5B4. \u2026\uAC10\uC744 \uC904 \uC54C\uBA74 \uAC10\uC544. \uD63C\uC790\uB294 \uC798 \uC548 \uB3FC.", nextId: "n8" },
+    { id: "n8", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC774 \uBD95\uB300\uB97C \uAC10\uB294 \uB3D9\uC548 \uC544\uB974\uB294 \uD55C \uBC88\uB3C4 \uC6C0\uCC14\uD558\uC9C0 \uC54A\uC558\uB2E4. \uB300\uC2E0 \uAC10\uC740 \uC790\uB9AC\uB97C \uBA87 \uBC88\uC774\uACE0 \uC190\uAC00\uB77D\uC73C\uB85C \uB20C\uB7EC \uBCF4\uC558\uB2E4.", nextId: "n9" },
+    { id: "n9", speaker: "\uC544\uB974", body: "\uB0B4 \uD654\uC11D, \uBD80\uB7EC\uC84C\uB2E4 \uBD99\uC740 \uBF08\uAC00 \uC794\uB729\uC774\uB798. \uB2E4\uCCD0\uB3C4 \uC0AC\uB0E5\uC740 \uC548 \uBA48\uCDC4\uB2E4\uB294 \uAC70\uC9C0. \u2026\uADF8\uB798\uC11C \uB2E4\uCCD0\uB3C4 \uB9D0 \uC548 \uD574. \uC6D0\uB798 \uADF8\uB7F0 \uBAB8\uC774\uB77C.", nextId: "n10" },
+    { id: "n10", speaker: "\uC544\uB974", body: "\uADFC\uB370 \uC774\uAC74 \uC548 \uD480\uB798. \uB2E4 \uB098\uC544\uB3C4. \u2026\uB2F9\uC2E0\uC774 \uAC10\uC740 \uAC70\uB2C8\uAE4C. \uC774\uC720\uB294 \uBB3B\uC9C0 \uB9C8." }
+  ]
+};
+var CHAPTER_834 = {
+  id: "bond.ar.8",
+  backdrop: "quartersNight",
+  startNodeId: "n1",
+  titleCard: { title: "\uBC18\uCABD \uC57C\uC2DD", subtitle: "\uC544\uB974 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 3" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uC0C8\uBCBD \uB450 \uC2DC\uC758 \uC219\uC18C \uD734\uAC8C \uAD6C\uC11D. \uC544\uB974\uAC00 \uBB34\uB98E \uC704\uC5D0 \uBE75 \uBD09\uC9C0\uB97C \uC62C\uB824\uB193\uACE0 \uC549\uC544 \uC788\uC5C8\uB2E4. \uC190\uBAA9\uC5D0\uB294 \uBC14\uB79C \uBD95\uB300\uAC00 \uADF8\uB300\uB85C \uAC10\uACA8 \uC788\uC5C8\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "\uC2A4\uD53C\uB098", body: "\uC544\uB974, \uB610 \uAC70\uAE30 \uC788\uC5B4? \u2026\uC544, \uC5F0\uAD6C\uC6D0\uB3C4. \uB09C \uBA3C\uC800 \uC794\uB2E4. \uB0B4\uC77C \uC544\uCE68 \uD68C\uC218, \uB2A6\uC9C0 \uB9C8.", nextId: "n3" },
+    { id: "n3", speaker: "", body: "\uC2A4\uD53C\uB098\uAC00 \uB3CC\uC544\uC11C\uC790 \uD734\uAC8C \uAD6C\uC11D\uC5D0\uB294 \uB458\uB9CC \uB0A8\uC558\uB2E4. \uC544\uB974\uAC00 \uBE75 \uBD09\uC9C0\uB97C \uB72F\uACE0, \uBE75 \uD558\uB098\uB97C \uAEBC\uB0B4 \uD55C\uCC38 \uB0B4\uB824\uB2E4\uBCF4\uC558\uB2E4.", nextId: "n4" },
+    { id: "n4", speaker: "", body: "\uADF8\uB7EC\uB354\uB2C8 \uBE75\uC744 \uBC18\uC73C\uB85C \uCABC\uAC1C, \uD070 \uCABD\uC744 \uBA3C\uC800 \uB0B4\uBC00\uC5C8\uB2E4.", nextId: "n5" },
+    { id: "n5", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uBD95\uB300\uB97C \uAC10\uC544 \uC900 \uAC83\uB3C4, \uBB34\uC5C7\uC744 \uD574 \uC900 \uAC83\uB3C4 \uC5C6\uB294 \uB0A0\uC774\uB2E4.)", choices: [
+      { id: "why", label: "\uC624\uB298\uC740 \uC65C \uC8FC\uB294\uC9C0 \uBB3B\uB294\uB2E4", nextId: "n6a" },
+      { id: "small", label: "\uC791\uC740 \uCABD\uC744 \uC9D1\uB294\uB2E4", nextId: "n6b" }
+    ] },
+    { id: "n6a", speaker: "\uC544\uB974", body: "\u2026\uAC1A\uB294 \uAC70 \uC544\uB2C8\uC57C. \uADF8\uB0E5 \uC8FC\uACE0 \uC2F6\uC5B4\uC11C. \uADF8\uB7F0 \uAC83\uB3C4 \uC788\uC796\uC544.", nextId: "n7" },
+    { id: "n6b", speaker: "\uC544\uB974", body: "\uADF8\uAC70 \uB0B4 \uAC70\uC57C. \uD070 \uAC70 \uBA39\uC5B4. \u2026\uC624\uB298\uC740 \uADF8\uCABD\uC774 \uB2F9\uC2E0 \uAC70\uC57C.", nextId: "n7" },
+    { id: "n7", speaker: "\uC544\uB974", body: "\uC804\uC5D4 \uBB58 \uBC1B\uC73C\uBA74 \uBC18 \uCABC\uAC1C\uC11C \uB3CC\uB824\uC92C\uC5B4. \uBE5A\uC9C0\uB294 \uAC8C \uC2EB\uC5B4\uC11C. \uADFC\uB370 \uC624\uB298\uC740 \uBC1B\uC740 \uAC8C \uC5C6\uB294\uB370\uB3C4 \uCABC\uAC1C\uACE0 \uC788\uB354\uB77C.", nextId: "n8" },
+    { id: "n8", speaker: "", body: "\uC544\uB974\uAC00 \uBE75\uC744 \uD55C \uC785 \uBCA0\uC5B4 \uBB3C\uC5C8\uB2E4. \uD55C\uB3D9\uC548 \uC544\uBB34\uB3C4 \uB9D0\uD558\uC9C0 \uC54A\uC558\uB2E4. \uCC3D\uBC16\uC5D0\uC11C \uC21C\uCC30 \uB4DC\uB860 \uBD88\uBE5B\uC774 \uD55C \uBC88 \uC9C0\uB098\uAC14\uB2E4.", nextId: "n9" },
+    { id: "n9", speaker: "\uC544\uB974", body: "\uC0AC\uB0E5\uD560 \uB550 \uBB50\uB4E0 \uD63C\uC790 \uB2E4 \uBA39\uC5B4\uB3C4 \uB3FC. \uADFC\uB370 \uC5EC\uAE30\uC120\u2026 \uBC18 \uB098\uB204\uB294 \uAC8C \uB354 \uB9DB\uC788\uC5B4. \uC774\uC0C1\uD558\uC9C0.", nextId: "n10" },
+    { id: "n10", speaker: "\uC544\uB974", body: "\uB0B4\uC77C\uB3C4 \uC5EC\uAE30 \uC788\uC744 \uAC70\uC57C. \uBE75\uC740 \uB450 \uAC1C \uC0B4\uAC8C. \uD558\uB098\uB294 \uC548 \uCABC\uAC1C\uB3C4 \uB418\uAC8C." }
+  ]
+};
+var CHAPTER_1034 = {
+  id: "bond.ar.10",
+  backdrop: "rooftopNight",
+  startNodeId: "n1",
+  titleCard: { title: "\uC0AC\uB0E5\uC774 \uB05D\uB098\uBA74", subtitle: "\uC544\uB974 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 4" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uD070 \uD68C\uC218 \uC791\uC804\uC774 \uB05D\uB09C \uBC24. \uC625\uC0C1 \uB09C\uAC04\uC5D0 \uAE30\uB300 \uC788\uB358 \uC5F0\uAD6C\uC6D0\uC758 \uB4A4\uC5D0\uC11C, \uBC14\uB2E5\uC744 \uC2A4\uCE58\uB294 \uAF2C\uB9AC \uC18C\uB9AC\uAC00 \uB2E4\uAC00\uC654\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "\uC544\uB974", body: "\u2026\uAC70\uAE30 \uC788\uC5C8\uB124. \uCC3E\uC558\uC5B4.", nextId: "n3" },
+    { id: "n3", speaker: "", body: "\uC544\uB974\uAC00 \uC606\uC5D0 \uC640 \uC130\uB2E4. \uCF54\uD2B8 \uAE43\uC744 \uB04C\uC5B4\uB0B4\uB9AC\uC790 \uCC98\uC74C\uC73C\uB85C \uC5BC\uAD74 \uC804\uCCB4\uAC00 \uB4DC\uB7EC\uB0AC\uB2E4. \uC190\uBAA9\uC5D0\uB294 \uC5EC\uC804\uD788 \uADF8 \uBD95\uB300\uAC00 \uAC10\uACA8 \uC788\uC5C8\uB2E4.", nextId: "n4" },
+    { id: "n4", speaker: "\uC544\uB974", body: "\uCC98\uC74C \uB9CC\uB0AC\uC744 \uB54C \uB0B4\uAC00 \uBB50\uB77C\uACE0 \uD588\uB294\uC9C0 \uAE30\uC5B5\uD574? \uC0AC\uB0E5 \uB05D\uB098\uBA74 \uB9D0 \uAC78\uB77C\uACE0 \uD588\uC796\uC544.", nextId: "n5" },
+    { id: "n5", speaker: "\uC544\uB974", body: "\uC624\uB298 \uC0AC\uB0E5, \uB05D\uB0AC\uC5B4. \uB2E4 \uC7A1\uC558\uC5B4. \uC544\uBB34\uB3C4 \uC548 \uB193\uCCE4\uC5B4. \u2026\uADF8\uB798\uC11C \uC774\uBC88\uC5D4 \uB0B4\uAC00 \uBA3C\uC800 \uB9D0 \uAC78\uB824\uACE0.", nextId: "n6" },
+    { id: "n6", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uC544\uB974\uAC00 \uBB34\uC5B8\uAC00\uB97C \uB9D0\uD558\uB824\uB2E4 \uBA48\uCD98\uB2E4. \uAF2C\uB9AC \uB05D\uC774 \uBC14\uB2E5\uC744 \uD1A1\uD1A1 \uB450\uB4DC\uB9B0\uB2E4.)", choices: [
+      { id: "listen", label: "\uAE30\uB2E4\uB9B0\uB2E4", nextId: "n7a" },
+      { id: "first", label: "\uBA3C\uC800 \uC218\uACE0\uD588\uB2E4\uACE0 \uB9D0\uD55C\uB2E4", nextId: "n7b" }
+    ] },
+    { id: "n7a", speaker: "\uC544\uB974", body: "\u2026\uC7AC\uCD09 \uC548 \uD558\uB124. \uADF8\uB798\uC11C \uD3B8\uD574. \uB2F9\uC2E0 \uC55E\uC5D0\uC120 \uB2E4 \uB9D0\uD574\uB3C4 \uB420 \uAC83 \uAC19\uC544.", nextId: "n8" },
+    { id: "n7b", speaker: "\uC544\uB974", body: "\u2026\uADF8\uAC70, \uB0B4\uAC00 \uBA3C\uC800 \uD558\uB824\uACE0 \uD588\uB294\uB370. \uB610 \uC84C\uB124. \uB2F9\uC2E0\uD55C\uD150 \uB298 \uD55C \uBC15\uC790 \uB2A6\uC5B4.", nextId: "n8" },
+    { id: "n8", speaker: "\uC544\uB974", body: "\uB098 \uC6D0\uB798 \uD45C\uC801\uB9CC \uBD10. \uB2E4\uB978 \uAC74 \uC548 \uBD10. \uADFC\uB370 \uC694\uC998\uC740 \uC0AC\uB0E5\uD558\uB2E4\uAC00\uB3C4 \uB3CC\uC544\uAC08 \uB370\uB97C \uD55C \uBC88\uC529 \uBD10. \uAC70\uAE30 \uB2F9\uC2E0\uC774 \uC788\uB294\uC9C0.", nextId: "n9" },
+    { id: "n9", speaker: "", body: "\uBC14\uB78C\uC774 \uBD88\uC5B4 \uBD95\uB300 \uB05D\uC774 \uD754\uB4E4\uB838\uB2E4. \uC544\uB974\uAC00 \uADF8 \uB05D\uC744 \uC190\uAC00\uB77D\uC73C\uB85C \uAC10\uC544\uC950\uC5C8\uB2E4.", nextId: "n10" },
+    { id: "n10", speaker: "\uC544\uB974", body: "\uADF8\uB7EC\uB2C8\uAE4C \uC55E\uC73C\uB85C\uB3C4 \uAC70\uAE30 \uC788\uC5B4. \uC5B4\uB514\uAE4C\uC9C0 \uCAD3\uC544\uAC00\uB3C4, \uB3CC\uC544\uC624\uB294 \uAC74 \uB2F9\uC2E0\uD55C\uD14C\uB85C \uD560 \uD14C\uB2C8\uAE4C." }
+  ]
+};
+var AR_STORY = {
+  relicId: "ar",
+  fossilRecord: "\uCC44\uC11D\uC7A5 \uBC14\uB2E5\uC758 \uC774\uC554\uC5D0\uC11C \uAC70\uC758 \uC628\uC804\uD55C \uACE8\uACA9\uC774 \uC606\uC73C\uB85C \uB204\uC6B4 \uCC44 \uB4DC\uB7EC\uB0AC\uB2E4. \uB208 \uC704\uB85C \uC19F\uC740 \uC791\uC740 \uBFD4 \uD55C \uC30D\uC774 \uADF8\uB300\uB85C \uB0A8\uC544 \uC788\uC5C8\uACE0, \uAC08\uBE44\uBF08 \uBA87 \uAC1C\uC640 \uBC1C\uAC00\uB77D\uBF08\uC5D0\uB294 \uBD80\uB7EC\uC84C\uB2E4 \uB2E4\uC2DC \uBD99\uC740 \uC790\uAD6D\uC774 \uACB9\uACB9\uC774 \uC788\uC5C8\uB2E4. \uB2E4\uCE5C \uBAB8\uC73C\uB85C\uB3C4 \uC0AC\uB0E5\uC744 \uBA48\uCD94\uC9C0 \uC54A\uC558\uB2E4\uB294 \uB73B\uC774\uB77C, \uBC1C\uAD74\uC9C4\uC740 \uADF8 \uC790\uAD6D\uC744 \uD558\uB098\uB3C4 \uBA54\uC6B0\uC9C0 \uC54A\uACE0 \uAE30\uB85D\uD588\uB2E4. \uBCF5\uC6D0\uC740 \uC0C1\uCC98 \uB09C \uBF08\uC758 \uBAA8\uC591\uC744 \uADF8\uB300\uB85C \uC0B4\uB9AC\uB294 \uCABD\uC744 \uACE8\uB790\uB2E4.",
+  diary: '\uBCF5\uC6D0 \uD6C4 \uC544\uB974\uB294 \uB9D0\uC744 \uAC78\uC5B4\uB3C4 \uB208\uB9CC \uB3CC\uB9B0\uB2E4. \uBAA9\uAE4C\uC9C0 \uC62C\uB9B0 \uCF54\uD2B8 \uAE43\uC5D0\uB294 \uC774\uBE68 \uBAA8\uC591 \uAC00\uC2DC\uAC00 \uC904\uC9C0\uC5B4 \uC788\uACE0, \uBC84\uD074\uB85C \uAC10\uC544 \uB454 \uAF2C\uB9AC\uB294 \uAC78\uC744 \uB54C\uB9C8\uB2E4 \uBC14\uB2E5\uC744 \uC2A4\uCE5C\uB2E4. \uC778\uC591 \uD604\uC7A5\uC5D0\uC11C \uD45C\uC801\uC744 \uD55C\uBC88 \uC815\uD558\uBA74 \uB193\uCE58\uB294 \uBC95\uC774 \uC5C6\uB2E4. \uB3D9\uB8CC\uAC00 \uCCA0\uC218 \uC2E0\uD638\uB97C \uBCF4\uB0B4\uB3C4 "\uC544\uC9C1" \uD55C\uB9C8\uB514\uB9CC \uB0A8\uAE30\uACE0 \uB05D\uAE4C\uC9C0 \uCAD3\uC544\uAC04 \uAE30\uB85D\uC774 \uC5EC\uB7EC \uBC88 \uC788\uB2E4. \uB3CC\uC544\uC640\uC11C\uB294 \uB2E4\uCE5C \uB370\uB97C \uAC10\uCD94\uACE0 \uAD6C\uC11D\uC5D0\uC11C \uC57C\uC2DD\uC744 \uBA39\uB294\uB2E4. \uBD95\uB300\uB97C \uAC10\uC544 \uC8FC\uBA74 \uACE0\uB9D9\uB2E4\uB294 \uB9D0 \uB300\uC2E0 \uC81C \uBAAB\uC758 \uC57C\uC2DD\uC744 \uBC18\uC73C\uB85C \uCABC\uAC1C \uB0B4\uBBFC\uB2E4.',
+  /** 일지 맨 끝에 회색으로 서는, 아르가 연구원에게 건네는 한마디. 뽑기 대사와 다른 일상의 목소리다. */
+  closingLine: "\u2026\uC624\uB298 \uD68C\uC218, \uD558\uB098\uB3C4 \uC548 \uB193\uCCE4\uC5B4. \uADF8\uB0E5 \uADF8\uB807\uB2E4\uACE0. \uBE75 \uB0A8\uC558\uB294\uB370 \uBC18 \uBA39\uC744\uB798?",
+  questions: [
+    {
+      id: "ar-hunt",
+      prompt: "\uC544\uB974\uB294 \uC65C \uCCA0\uC218 \uC2E0\uD638\uC5D0\uB3C4 \uC548 \uB3CC\uC544\uC640?",
+      choices: [
+        {
+          id: "finish",
+          label: "\uB05D\uC744 \uBD10\uC57C \uD558\uB294\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uC751. \uB193\uCE58\uBA74 \uADF8\uAC8C \uACC4\uC18D \uBA38\uB9AC\uC5D0 \uB0A8\uC544. \uC7A1\uACE0 \uC640\uC57C \uC7A0\uC774 \uC640.",
+          note: "\uB05D\uC744 \uBD10\uC57C \uD558\uB290\uB0D0\uACE0 \uBB3B\uC790 \uADF8\uB807\uB2E4\uACE0 \uD588\uB2E4. \uB193\uCE58\uBA74 \uACC4\uC18D \uBA38\uB9AC\uC5D0 \uB0A8\uC544\uC11C \uC7A1\uACE0 \uC640\uC57C \uC7A0\uC774 \uC628\uB2E4\uACE0 \uD588\uB2E4."
+        },
+        {
+          id: "scold",
+          label: "\uC704\uD5D8\uD558\uB2E4\uACE0 \uD0C0\uC774\uB978\uB2E4",
+          reply: "\uC54C\uC544. \uADF8\uB798\uB3C4 \uAC08 \uAC70\uC57C. \u2026\uB300\uC2E0 \uB3CC\uC544\uC624\uB294 \uAE38\uC740 \uC548 \uD5E4\uB9E4. \uADF8\uAC74 \uC57D\uC18D\uD560\uAC8C.",
+          note: "\uC704\uD5D8\uD558\uB2E4\uACE0 \uD0C0\uC774\uB974\uC790 \uC54C\uACE0 \uC788\uB2E4\uACE0 \uD588\uB2E4. \uADF8\uB798\uB3C4 \uAC00\uACA0\uC9C0\uB9CC \uB3CC\uC544\uC624\uB294 \uAE38\uC740 \uD5E4\uB9E4\uC9C0 \uC54A\uACA0\uB2E4\uACE0 \uC57D\uC18D\uD588\uB2E4."
+        },
+        {
+          id: "track",
+          label: "\uC5B4\uB5BB\uAC8C \uB05D\uAE4C\uC9C0 \uB530\uB77C\uAC00\uB294\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uB0C4\uC0C8. \uBC1C\uC790\uAD6D. \uADF8\uB9AC\uACE0 \uD45C\uC801\uC774 \uBB58 \uBB34\uC11C\uC6CC\uD558\uB294\uC9C0. \uADF8\uAC78 \uC54C\uBA74 \uC5B4\uB514\uB85C \uC228\uC744\uC9C0 \uBCF4\uC5EC.",
+          note: "\uC5B4\uB5BB\uAC8C \uB05D\uAE4C\uC9C0 \uB530\uB77C\uAC00\uB290\uB0D0\uACE0 \uBB3B\uC790 \uB0C4\uC0C8\uC640 \uBC1C\uC790\uAD6D, \uADF8\uB9AC\uACE0 \uD45C\uC801\uC774 \uBB34\uC11C\uC6CC\uD558\uB294 \uAC83\uC744 \uBCF8\uB2E4\uACE0 \uD588\uB2E4."
+        }
+      ]
+    },
+    {
+      id: "ar-snack",
+      prompt: "\uC544\uB974\uB294 \uC57C\uC2DD\uC744 \uC65C \uBC18\uC73C\uB85C \uCABC\uAC1C?",
+      choices: [
+        {
+          id: "debt",
+          label: "\uBE5A\uC9C0\uAE30 \uC2EB\uC5B4\uC11C\uC778\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uC751. \uBC1B\uAE30\uB9CC \uD558\uBA74 \uC2E0\uACBD \uC4F0\uC5EC. \uBC18 \uC8FC\uBA74 \uB05D\uC774\uC796\uC544. \uAE54\uB054\uD558\uAC8C.",
+          note: "\uBE5A\uC9C0\uAE30 \uC2EB\uC5B4\uC11C\uB0D0\uACE0 \uBB3B\uC790 \uADF8\uB807\uB2E4\uACE0 \uD588\uB2E4. \uBC1B\uAE30\uB9CC \uD558\uBA74 \uC2E0\uACBD \uC4F0\uC5EC\uC11C, \uBC18\uC744 \uC8FC\uBA74 \uAE54\uB054\uD558\uAC8C \uB05D\uB09C\uB2E4\uACE0 \uD588\uB2E4."
+        },
+        {
+          id: "favorite",
+          label: "\uC88B\uC544\uD558\uB294 \uC57C\uC2DD\uC774 \uBB54\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uB531\uB531\uD55C \uBE75. \uCABC\uAC24 \uB54C \uC18C\uB9AC\uAC00 \uB098\uB294 \uAC70. \u2026\uC65C \uC6C3\uC5B4.",
+          note: "\uC88B\uC544\uD558\uB294 \uC57C\uC2DD\uC744 \uBB3B\uC790 \uCABC\uAC24 \uB54C \uC18C\uB9AC\uAC00 \uB098\uB294 \uB531\uB531\uD55C \uBE75\uC774\uB77C\uACE0 \uD588\uB2E4. \uC6C3\uC790 \uC65C \uC6C3\uB290\uB0D0\uACE0 \uB418\uBB3C\uC5C8\uB2E4."
+        },
+        {
+          id: "big",
+          label: "\uD070 \uCABD\uC744 \uB204\uAD6C \uC8FC\uB294\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\u2026\uBC1B\uC740 \uCABD. \uADF8\uAC8C \uADDC\uCE59\uC774\uC57C. \uB0B4\uAC00 \uC815\uD588\uC5B4. \uBC29\uAE08.",
+          note: "\uD070 \uCABD\uC740 \uB204\uAD6C\uC5D0\uAC8C \uC8FC\uB290\uB0D0\uACE0 \uBB3B\uC790 \uBC1B\uC740 \uCABD\uC5D0\uAC8C \uC900\uB2E4\uACE0 \uD588\uB2E4. \uBC29\uAE08 \uC815\uD55C \uADDC\uCE59\uC774\uB77C\uACE0 \uB367\uBD99\uC600\uB2E4."
+        }
+      ]
+    },
+    {
+      id: "ar-tail",
+      prompt: "\uC544\uB974\uB294 \uAF2C\uB9AC\uB97C \uC65C \uBC84\uD074\uB85C \uAC10\uC544 \uB46C?",
+      choices: [
+        {
+          id: "quiet",
+          label: "\uC18C\uB9AC \uB54C\uBB38\uC778\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uC751. \uD480\uC5B4 \uB450\uBA74 \uAC00\uC2DC\uAC00 \uBD80\uB52A\uCCD0\uC11C \uC2DC\uB044\uB7EC\uC6CC. \uC0AC\uB0E5\uD560 \uB550 \uC870\uC6A9\uD574\uC57C \uD574.",
+          note: "\uC18C\uB9AC \uB54C\uBB38\uC774\uB0D0\uACE0 \uBB3B\uC790 \uADF8\uB807\uB2E4\uACE0 \uD588\uB2E4. \uD480\uC5B4 \uB450\uBA74 \uAC00\uC2DC\uB07C\uB9AC \uBD80\uB52A\uCCD0 \uC2DC\uB044\uB7FD\uB2E4\uACE0 \uD588\uB2E4."
+        },
+        {
+          id: "hurt",
+          label: "\uAF2C\uB9AC\uB3C4 \uB2E4\uCE5C \uC801 \uC788\uB294\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uC788\uC5B4. \uBA87 \uBC88. \uBC84\uD074 \uC544\uB798\uB294 \uC548 \uBCF4\uC774\uB2C8\uAE4C \uC544\uBB34\uB3C4 \uBAB0\uB77C. \u2026\uB2F9\uC2E0\uC740 \uC774\uC81C \uC54C\uAC8C \uB410\uB124.",
+          note: "\uAF2C\uB9AC\uB3C4 \uB2E4\uCE5C \uC801\uC774 \uC788\uB290\uB0D0\uACE0 \uBB3B\uC790 \uBA87 \uBC88 \uC788\uB2E4\uACE0 \uD588\uB2E4. \uBC84\uD074 \uC544\uB798\uB77C \uC544\uBB34\uB3C4 \uBAA8\uB974\uB294\uB370, \uC774\uC81C \uC54C\uAC8C \uB410\uB2E4\uACE0 \uD588\uB2E4."
+        },
+        {
+          id: "drag",
+          label: "\uBC14\uB2E5\uC5D0 \uB04C\uB9AC\uC9C0 \uC54A\uB294\uC9C0 \uBB3B\uB294\uB2E4",
+          reply: "\uB04C\uB824. \uADF8\uB798\uC11C \uB0B4\uAC00 \uC5B4\uB514 \uAC14\uB294\uC9C0 \uB2E4 \uD2F0 \uB098. \u2026\uB3CC\uC544\uC624\uB294 \uAE38 \uCC3E\uC744 \uB550 \uADF8\uAC8C \uD3B8\uD574.",
+          note: "\uAF2C\uB9AC\uAC00 \uBC14\uB2E5\uC5D0 \uB04C\uB9AC\uC9C0 \uC54A\uB290\uB0D0\uACE0 \uBB3B\uC790 \uB04C\uB9B0\uB2E4\uACE0 \uD588\uB2E4. \uB300\uC2E0 \uB3CC\uC544\uC624\uB294 \uAE38\uC744 \uCC3E\uC744 \uB54C \uD3B8\uD558\uB2E4\uACE0 \uD588\uB2E4."
+        }
+      ]
+    }
+  ],
+  bondStories: { 4: CHAPTER_434, 6: CHAPTER_634, 8: CHAPTER_834, 10: CHAPTER_1034 },
+  bondLines: [
+    // 0 — 낯선 사이. 눈만 돌린다.
+    ["\u2026\uC544\uB974. \uBCFC\uC77C \uC788\uC73C\uBA74 \uC9E7\uAC8C.", "\uC9C0\uAE08 \uC0AC\uB0E5 \uC911\uC774\uC57C. \uC0DD\uAC01\uC73C\uB85C.", "\u2026\uBB58 \uBD10."],
+    // 1
+    ["\uD68C\uC218 \uD558\uB098 \uB05D. \uB2E4\uC74C \uAC70 \uC788\uC5B4?", "\uB9D0 \uAC78\uC5B4\uB3C4 \uB3FC. \uB300\uB2F5\uC740 \uC548 \uD560 \uC218\uB3C4 \uC788\uC5B4.", "\uCF54\uD2B8 \uAE43\uC740 \uC548 \uB0B4\uB824. \uBC14\uB78C \uB4E4\uC5B4\uC640."],
+    // 2
+    ["\uC624\uB298 \uB193\uCE5C \uAC70 \uC5C6\uC5B4. \uADF8\uB0E5 \uC54C\uC544 \uB46C.", "\uAF2C\uB9AC \uBC1F\uC9C0 \uB9C8. \uBC84\uD074 \uD480\uB824.", "\uC57C\uC2DD \uBA39\uC744 \uAC70\uC57C. \u2026\uB2F9\uC2E0 \uAC74 \uC5C6\uC5B4. \uC544\uC9C1\uC740."],
+    // 3
+    ["\uCCA0\uC218 \uC2E0\uD638, \uB4E4\uC5C8\uC5B4. \uBB34\uC2DC\uD588\uC5B4. \uB2E4 \uC7A1\uC558\uC73C\uB2C8\uAE4C \uB410\uC796\uC544.", "\uB2F9\uC2E0 \uBC1C\uC18C\uB9AC\uB294 \uC54C\uC544. \uC774\uC81C \uC548 \uB3CC\uC544\uBD10\uB3C4 \uB3FC.", "\u2026\uBE75 \uBC18 \uB0A8\uC558\uC5B4. \uBA39\uB4E0\uC9C0."],
+    // 4 — 장 4 이후: 아직 이후.
+    ["\uADF8\uB0A0 \uC65C \uAE30\uB2E4\uB838\uC5B4. \u2026\uC544\uB2C8, \uB300\uB2F5 \uC548 \uD574\uB3C4 \uB3FC.", "\uB2E4\uC74C\uC5D0\uB3C4 \u300C\uC544\uC9C1\u300D\uC774\uB77C\uACE0 \uD560 \uAC70\uC57C. \uADFC\uB370 \uB3CC\uC544\uC624\uAE34 \uD574.", "\uD68C\uC218 \uC9C0\uC810\uC5D0 \uB204\uAC00 \uC788\uB294 \uAC70, \uC0DD\uAC01\uBCF4\uB2E4 \uAD1C\uCC2E\uB354\uB77C."],
+    // 5
+    ["\uC624\uB298\uC740 \uC2E0\uD638 \uB4E3\uACE0 \uBC14\uB85C \uC654\uC5B4. \uD55C \uBC88\uC740 \uADF8\uB798 \uBD24\uC5B4.", "\uC2A4\uD53C\uB098\uAC00 \uB098\uBCF4\uACE0 \uC694\uC998 \uB9D0 \uB9CE\uB300. \uC548 \uB9CE\uC544.", "\uCD94\uC6B0\uBA74 \uB9D0\uD574. \uCF54\uD2B8 \uAE43 \uD558\uB098\uB294 \uBE4C\uB824\uC904 \uC218 \uC788\uC5B4."],
+    // 6 — 장 6 이후: 붕대 이후.
+    ["\uBD95\uB300, \uC544\uC9C1 \uAC10\uACE0 \uC788\uC5B4. \uB2E4 \uB098\uC558\uB294\uB370.", "\uB2E4\uCE5C \uAC70 \uC774\uC81C \uB2F9\uC2E0\uD55C\uD150 \uB9D0\uD560\uAC8C. \uB2E4\uB978 \uC0AC\uB78C\uD55C\uD150 \uC548 \uD574.", "\uB9C8\uD0A4\uAC00 \uBD95\uB300 \uBCF4\uACE0 \uC6C3\uC5C8\uC5B4. \u2026\uB2F9\uC2E0\uC774 \uAC10\uC740 \uAC70 \uD2F0 \uB098\uB098 \uBD10."],
+    // 7
+    ["\uC694\uC998 \uC0AC\uB0E5\uD558\uB2E4\uAC00 \uB3CC\uC544\uAC08 \uB370\uB97C \uD55C \uBC88\uC529 \uBD10. \uC2B5\uAD00 \uC0DD\uACBC\uC5B4.", "\uBE75 \uC0B4 \uB54C \uB450 \uAC1C \uC0AC\uAC8C \uB3FC. \uC65C\uC778\uC9C0\uB294 \uBAB0\uB77C.", "\uB2F9\uC2E0\uC740 \uD45C\uC801 \uC544\uB2C8\uC57C. \uCAD3\uC744 \uD544\uC694 \uC5C6\uB294 \uC0AC\uB78C\uC774\uC57C. \u2026\uADF8\uB798\uC11C \uC774\uC0C1\uD574."],
+    // 8 — 장 8 이후: 반쪽 야식 이후.
+    ["\uC624\uB298 \uBE75 \uB450 \uAC1C \uC0C0\uC5B4. \uD558\uB098\uB294 \uC548 \uCABC\uAC1C\uB3C4 \uB3FC.", "\uBC18 \uB098\uB204\uB294 \uAC8C \uB354 \uB9DB\uC788\uB2E4\uB294 \uAC70, \uC544\uC9C1\uB3C4 \uC774\uC0C1\uD574.", "\uC0C8\uBCBD \uB450 \uC2DC, \uAC70\uAE30 \uC788\uC744 \uAC70\uC57C. \uC624\uB4E0\uC9C0."],
+    // 9
+    ["\uB2E4\uC74C \uC791\uC804 \uD06C\uB300. \uB05D\uB098\uBA74 \uD560 \uB9D0 \uC788\uC5B4.", "\uC694\uC998\uC740 \uB2F9\uC2E0\uD55C\uD14C \uBA3C\uC800 \uB9D0 \uAC78\uC5B4 \uBCF4\uB824\uACE0 \uC5F0\uC2B5 \uC911\uC774\uC57C. \u2026\uBC29\uAE08 \uAC70 \uC5F0\uC2B5 \uC544\uB2C8\uC57C.", "\uBD95\uB300\uAC00 \uBC14\uB7AC\uC5B4. \uADF8\uB798\uB3C4 \uC548 \uBC14\uAFC0 \uAC70\uC57C."],
+    // 10 — 마음을 연 사이. 사냥이 끝나면 이후.
+    ["\uC0AC\uB0E5 \uB05D\uB0AC\uC5B4. \uADF8\uB7EC\uB2C8\uAE4C \uC9C0\uAE08\uC740 \uB2F9\uC2E0\uC774\uB791 \uC598\uAE30\uD560 \uC2DC\uAC04\uC774\uC57C.", "\uC5B4\uB514\uAE4C\uC9C0 \uCAD3\uC544\uAC00\uB3C4 \uB3CC\uC544\uC624\uB294 \uAC74 \uB2F9\uC2E0\uD55C\uD14C\uB85C\uC57C. \uC78A\uC9C0 \uB9C8.", "\u2026\uCC3E\uC558\uB2E4. \uC624\uB298\uB3C4 \uAC70\uAE30 \uC788\uC5C8\uB124."]
   ]
 };
 
@@ -37438,7 +38501,10 @@ var RELIC_STORIES = {
   irna: IRNA_STORY,
   teku: TEKU_STORY,
   plesha: PLESHA_STORY,
-  arte: ARTE_STORY
+  arte: ARTE_STORY,
+  brika: BRIKA_STORY,
+  belz: BELZ_STORY,
+  ar: AR_STORY
 };
 for (const story of Object.values(RELIC_STORIES)) registerRelicStoryTexts(story);
 function relicStoryFor(relicId) {
@@ -39103,16 +40169,41 @@ function combatKey(input) {
   const b = input.input;
   return b.mode === "stage" ? `stage:${input.stageId}` : b.mode === "expedition" ? `expedition:${b.runId}:${b.nodeId}` : b.mode === "duel" ? `duel:${b.requestId}` : b.mode === "cake" || b.mode === "bounty" ? `${b.mode}:${b.requestId}` : fail("bad_mode");
 }
+function seedKey(input) {
+  const b = input.input;
+  return b.mode === "bounty" ? `${combatKey(input)}#${b.round}` : combatKey(input);
+}
+function seedFor(journal, input, fresh) {
+  const seeds = journal.seeds ??= {};
+  return seeds[seedKey(input)] ??= fresh;
+}
+function pruneRecords(state, journal, now) {
+  const runId = state.expedition.run?.runId;
+  const staleRun = (key) => key.startsWith("expedition:") && key.split(":")[1] !== runId;
+  journal.records = Object.fromEntries(Object.entries(journal.records).filter(([, r]) => {
+    const key = combatKey(r.input), mode = r.input.input.mode;
+    if (staleRun(key)) return false;
+    if (r.verdict && (mode === "expedition" || mode === "duel" && journal.tickets[key])) return true;
+    return Date.parse(r.lease.expiresAt) > now.getTime();
+  }));
+  if (journal.seeds) {
+    for (const key of Object.keys(journal.seeds)) if (staleRun(key)) delete journal.seeds[key];
+  }
+}
+function standing(record3, now) {
+  const mode = record3.input.input.mode;
+  return Date.parse(record3.lease.expiresAt) > now.getTime() || !!record3.verdict && (mode === "expedition" || mode === "duel");
+}
 function prepareCombat(state, request, now, id) {
   if (request?.input?.mode === "duel") {
     const key2 = combatKey(request), records2 = combatJournal(state), ticket2 = records2.tickets[key2];
     if (!ticket2?.duel || ticket2.kind !== "duel") return fail("no_duel_ticket");
-    const active4 = Object.values(records2.records).find((row) => combatKey(row.input) === key2 && Date.parse(row.lease.expiresAt) > now.getTime());
+    const active4 = Object.values(records2.records).find((row) => combatKey(row.input) === key2 && standing(row, now));
     if (active4) return structuredClone(active4.lease);
     const setup2 = structuredClone(ticket2.duel.setup);
     if (request.automaticUltimates !== true && setup2.options) delete setup2.options.automaticUltimates;
-    const lease2 = { id, seed: id, setup: setup2, expiresAt: new Date(now.getTime() + 36e5).toISOString() };
-    records2.records = Object.fromEntries(Object.entries(records2.records).filter(([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()));
+    const lease2 = { id, seed: seedFor(records2, request, id), setup: setup2, expiresAt: new Date(now.getTime() + 36e5).toISOString() };
+    pruneRecords(state, records2, now);
     if (Object.keys(records2.records).length >= 8) return fail("too_many_leases");
     records2.records[id] = { lease: lease2, input: structuredClone(request), issuedAt: now.toISOString() };
     return structuredClone(lease2);
@@ -39121,7 +40212,7 @@ function prepareCombat(state, request, now, id) {
     return fail("bad_input");
   const records = combatJournal(state), input = structuredClone(request), key = combatKey(input), mode = input.input.mode;
   const active3 = Object.values(records.records).find(
-    (row) => combatKey(row.input) === key && (row.input.input.mode !== "bounty" || input.input.mode !== "bounty" || row.input.input.round === input.input.round) && Date.parse(row.lease.expiresAt) > now.getTime()
+    (row) => combatKey(row.input) === key && (row.input.input.mode !== "bounty" || input.input.mode !== "bounty" || row.input.input.round === input.input.round) && standing(row, now)
   );
   if (active3) return structuredClone(active3.lease);
   let b = input.input;
@@ -39217,16 +40308,12 @@ function prepareCombat(state, request, now, id) {
   const lease = JSON.parse(
     JSON.stringify({
       id,
-      seed: id,
+      seed: seedFor(records, input, id),
       setup,
       expiresAt: new Date(now.getTime() + 36e5).toISOString()
     })
   );
-  records.records = Object.fromEntries(
-    Object.entries(records.records).filter(
-      ([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()
-    )
-  );
+  pruneRecords(state, records, now);
   if (Object.keys(records.records).length >= 8) return fail("too_many_leases");
   records.records[id] = {
     lease: structuredClone(lease),
@@ -39240,8 +40327,8 @@ function finishCombat(state, proof, now) {
     return fail("proof_shape");
   const record3 = combatJournal(state).records[proof.id];
   if (!record3) return fail("no_record");
-  if (Date.parse(record3.lease.expiresAt) < now.getTime()) return fail("lease_expired");
   if (record3.verdict) return structuredClone(record3.verdict);
+  if (Date.parse(record3.lease.expiresAt) < now.getTime()) return fail("lease_expired");
   if (record3.lease.setup.options?.automaticUltimates && proof.actions.length) return fail("auto_ultimate_actions");
   if (proof.ticks * COMBAT_STEP_MS > Math.max(0, now.getTime() - Date.parse(record3.issuedAt)) * 3 + 2e3)
     return fail("too_fast");
@@ -39294,6 +40381,12 @@ function consumeCombat(state, key) {
   delete journal.tickets[key];
   for (const [id, record3] of Object.entries(journal.records))
     if (combatKey(record3.input) === key) delete journal.records[id];
+  if (journal.seeds) {
+    for (const seed of Object.keys(journal.seeds)) if (seed === key || seed.startsWith(`${key}#`)) delete journal.seeds[seed];
+  }
+}
+function combatVerdictFor(state, key) {
+  return Object.values(combatJournal(state).records).find((record3) => record3.verdict && combatKey(record3.input) === key)?.verdict;
 }
 
 // src/api/storyAuthority.ts
@@ -42762,68 +43855,40 @@ var REFRESH_LABEL = {
   none: "\uC0C1\uC2DC",
   season: "\uC2DC\uC98C"
 };
+var ALWAYS = { visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" };
+function pack(id, category, iconKey, name, description, gems4, grants2, purchaseLimit, refresh, rotationSlot2) {
+  return {
+    id,
+    storefront: "trade",
+    category,
+    iconKey,
+    name,
+    description,
+    acquisition: { kind: "currency", currency: "gems", amount: gems4 },
+    grants: grants2,
+    defaultQuantity: 1,
+    purchaseLimit,
+    refresh,
+    ...ALWAYS,
+    ...rotationSlot2 ? { rotationSlot: rotationSlot2 } : {}
+  };
+}
+var cur = (currency3, amount) => ({ kind: "currency", currency: currency3, amount });
 var TRADE_PACKAGES = [
-  {
-    id: "trade-excavation-crate",
-    storefront: "trade",
-    category: "special",
-    iconKey: "shop-product-supplies",
-    name: "\uBC1C\uAD74 \uC7A5\uBE44 \uBCF4\uAE09\uD568",
-    description: "\uD654\uC11D 4\uAC1C\uC640 \uD638\uBC15\uC11D 2\uAC1C",
-    acquisition: { kind: "currency", currency: "gems", amount: 700 },
-    grants: [{ kind: "currency", currency: "fossil", amount: 4 }, { kind: "currency", currency: "amber", amount: 2 }],
-    defaultQuantity: 1,
-    purchaseLimit: 1,
-    refresh: "once",
-    visibleFrom: "2026-01-01T00:00:00Z",
-    visibleUntil: "2030-01-01T00:00:00Z"
-  },
-  {
-    id: "trade-cheesecake-supply",
-    storefront: "trade",
-    category: "weekly",
-    iconKey: "shop-product-supplies",
-    name: "\uCE58\uC988\uCF00\uC774\uD06C \uBCF4\uAE09",
-    description: "\uCE58\uC988\uCF00\uC774\uD06C 600\uAC1C",
-    acquisition: { kind: "currency", currency: "gems", amount: 150 },
-    grants: [{ kind: "currency", currency: "cheesecake", amount: 600 }],
-    defaultQuantity: 1,
-    purchaseLimit: 3,
-    refresh: "weekly",
-    visibleFrom: "2026-01-01T00:00:00Z",
-    visibleUntil: "2030-01-01T00:00:00Z"
-  },
-  {
-    id: "trade-research-grant",
-    storefront: "trade",
-    category: "weekly",
-    iconKey: "shop-product-enhancement",
-    name: "\uC5F0\uAD6C \uBCF4\uC870\uAE08",
-    description: "\uACE8\uB4DC 175,000\uAC1C",
-    acquisition: { kind: "currency", currency: "gems", amount: 200 },
-    grants: [{ kind: "currency", currency: "gold", amount: 175e3 }],
-    defaultQuantity: 1,
-    purchaseLimit: 1,
-    refresh: "weekly",
-    visibleFrom: "2026-01-01T00:00:00Z",
-    visibleUntil: "2030-01-01T00:00:00Z"
-  },
-  {
-    id: "trade-daily-bundle",
-    storefront: "trade",
-    category: "daily",
-    iconKey: "shop-product-supplies",
-    name: "\uC624\uB298\uC758 \uD2B9\uAC00 \uAFB8\uB7EC\uBBF8",
-    description: "\uACE8\uB4DC 40,000\uACFC \uCE58\uC988\uCF00\uC774\uD06C 60\uAC1C",
-    acquisition: { kind: "currency", currency: "gems", amount: 50 },
-    grants: [{ kind: "currency", currency: "gold", amount: 4e4 }, { kind: "currency", currency: "cheesecake", amount: 60 }],
-    defaultQuantity: 1,
-    purchaseLimit: 1,
-    refresh: "daily",
-    visibleFrom: "2026-01-01T00:00:00Z",
-    visibleUntil: "2030-01-01T00:00:00Z"
-  }
+  pack("trade-excavation-crate", "special", "shop-product-supplies", "\uBC1C\uAD74 \uC7A5\uBE44 \uBCF4\uAE09\uD568", "\uD654\uC11D 4\uAC1C\uC640 \uD638\uBC15\uC11D 2\uAC1C", 700, [cur("fossil", 4), cur("amber", 2)], 1, "once"),
+  pack("trade-pioneer-crate", "special", "shop-product-supplies", "\uAC1C\uCC99 \uBCF4\uAE09\uD568", "\uACE8\uB4DC 200,000\uACFC \uCE58\uC988\uCF00\uC774\uD06C 800\uAC1C", 300, [cur("gold", 2e5), cur("cheesecake", 800)], 1, "once"),
+  pack("trade-research-kickoff", "special", "shop-product-supplies", "\uC5F0\uAD6C \uCC29\uC218 \uC9C0\uC6D0", "\uD654\uC11D 3\uAC1C\uC640 \uD638\uBC15\uC11D 3\uAC1C", 750, [cur("fossil", 3), cur("amber", 3)], 1, "once"),
+  pack("trade-cheesecake-supply", "weekly", "shop-product-supplies", "\uCE58\uC988\uCF00\uC774\uD06C \uBCF4\uAE09", "\uCE58\uC988\uCF00\uC774\uD06C 600\uAC1C", 150, [cur("cheesecake", 600)], 3, "weekly", "trade-weekly-supply"),
+  pack("trade-cheesecake-bulk", "weekly", "shop-product-supplies", "\uCE58\uC988\uCF00\uC774\uD06C \uB300\uBCF4\uAE09", "\uCE58\uC988\uCF00\uC774\uD06C 1,600\uAC1C\uC640 \uACE8\uB4DC 50,000", 400, [cur("cheesecake", 1600), cur("gold", 5e4)], 1, "weekly", "trade-weekly-supply"),
+  pack("trade-research-grant", "weekly", "shop-product-enhancement", "\uC5F0\uAD6C \uBCF4\uC870\uAE08", "\uACE8\uB4DC 175,000\uAC1C", 200, [cur("gold", 175e3)], 1, "weekly", "trade-weekly-funds"),
+  pack("trade-gold-vault", "weekly", "shop-product-enhancement", "\uACE8\uB4DC \uAE08\uACE0", "\uACE8\uB4DC 90,000\uAC1C", 100, [cur("gold", 9e4)], 2, "weekly", "trade-weekly-funds"),
+  pack("trade-fossil-case", "weekly", "shop-product-supplies", "\uD654\uC11D \uC0C1\uC790", "\uD654\uC11D 3\uAC1C", 750, [cur("fossil", 3)], 1, "weekly", "trade-weekly-research"),
+  pack("trade-amber-case", "weekly", "shop-product-supplies", "\uD638\uBC15\uC11D \uC0C1\uC790", "\uD638\uBC15\uC11D 3\uAC1C", 750, [cur("amber", 3)], 1, "weekly", "trade-weekly-research"),
+  pack("trade-daily-bundle", "daily", "shop-product-supplies", "\uC624\uB298\uC758 \uD2B9\uAC00 \uAFB8\uB7EC\uBBF8", "\uACE8\uB4DC 40,000\uACFC \uCE58\uC988\uCF00\uC774\uD06C 60\uAC1C", 50, [cur("gold", 4e4), cur("cheesecake", 60)], 1, "daily", "trade-daily"),
+  pack("trade-gold-bundle", "daily", "shop-product-enhancement", "\uACE8\uB4DC \uAFB8\uB7EC\uBBF8", "\uACE8\uB4DC 55,000", 50, [cur("gold", 55e3)], 1, "daily", "trade-daily"),
+  pack("trade-cheesecake-bundle", "daily", "shop-product-supplies", "\uCE58\uC988\uCF00\uC774\uD06C \uAFB8\uB7EC\uBBF8", "\uCE58\uC988\uCF00\uC774\uD06C 220\uAC1C", 50, [cur("cheesecake", 220)], 1, "daily", "trade-daily")
 ];
+var TRADE_DISPLAY_MAX = TRADE_PACKAGES.filter(({ rotationSlot: rotationSlot2 }) => !rotationSlot2).length + new Set(TRADE_PACKAGES.flatMap(({ rotationSlot: rotationSlot2 }) => rotationSlot2 ? [rotationSlot2] : [])).size;
 for (const pkg of TRADE_PACKAGES) {
   registerDataText(pkg, "name", `trade.${pkg.id}.name`);
   registerDataText(pkg, "description", `trade.${pkg.id}.description`);
@@ -43335,6 +44400,20 @@ function simulateDuelDefenses(state, now, pool, defensePower, random) {
   next.defenseSimAt = new Date(simMs + due * interval).toISOString();
   next.history = [...[...entries].reverse(), ...next.history].slice(0, DUEL_HISTORY_LIMIT);
   return { state: next, entries, reachedTiers };
+}
+
+// src/core/runeName.ts
+init_define_import_meta_env();
+var MAX_RUNE_NAME_LENGTH = 20;
+function normalizeRuneName(value) {
+  return value.replace(/\s+/gu, " ").trim();
+}
+function runeNameProblem(value) {
+  const name = normalizeRuneName(value);
+  if (!name) return "empty";
+  if ([...name].length > MAX_RUNE_NAME_LENGTH) return "tooLong";
+  if (/[\u0000-\u001F\u007F-\u009F‎‏‪-‮⁦-⁩﻿]/u.test(name)) return "invalid";
+  return void 0;
 }
 
 // src/core/debugCommand.ts
@@ -44371,14 +45450,14 @@ var FakeGuildServer = class _FakeGuildServer {
     });
   }
   // ── 길드 주간 순위 ─────────────────────────────────────────────────────────
-  rankingEntry(guild, standing, mine) {
-    return { ...this.summary(guild), rank: standing?.rank ?? null, weekScore: standing?.score ?? 0, isMine: guild.id === mine };
+  rankingEntry(guild, standing2, mine) {
+    return { ...this.summary(guild), rank: standing2?.rank ?? null, weekScore: standing2?.score ?? 0, isMine: guild.id === mine };
   }
   async getRanking(actor) {
     const mine = this.myGuild(actor);
     const week = guildWeekKey(this.now());
     const standings = this.weekStandings(week);
-    const guilds = standings.filter(({ guildId }) => this.guilds.has(guildId)).slice(0, 50).map((standing) => this.rankingEntry(this.guilds.get(standing.guildId), standing, mine?.id));
+    const guilds = standings.filter(({ guildId }) => this.guilds.has(guildId)).slice(0, 50).map((standing2) => this.rankingEntry(this.guilds.get(standing2.guildId), standing2, mine?.id));
     const mineEntry = mine ? this.rankingEntry(mine, standings.find(({ guildId }) => guildId === mine.id), mine.id) : null;
     return { week, guilds, mine: mineEntry, total: standings.length, serverTime: this.now() };
   }
@@ -45437,6 +46516,13 @@ function runeBulkEngraveStat(rune, engrave) {
   return rune.mainStats[engrave].key;
 }
 
+// src/core/runeTraitBulk.ts
+init_define_import_meta_env();
+var RUNE_TRAIT_BULK_MAX = 100;
+function isRuneTraitBulkCandidate(rune) {
+  return rune.trait === void 0;
+}
+
 // src/core/shopRotation.ts
 init_define_import_meta_env();
 var ROTATION_EPOCH = "2026-01-05";
@@ -45479,6 +46565,11 @@ function rotationOffer(slot, periodKey) {
 }
 function rotationRunePart(slot, periodKey) {
   return Math.min(2, Math.floor(rotationRoll(`${slot.id}:part:${periodKey}`) * 3));
+}
+function rotationPeriodEnd(period, periodKey) {
+  const date = /* @__PURE__ */ new Date(`${periodKey}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + (period === "weekly" ? 7 : 1));
+  return date.toISOString();
 }
 
 // src/core/runeSynthesis.ts
@@ -45569,7 +46660,13 @@ var ROTATION_SLOTS = [
   { id: "arch-weekly-b", period: "weekly", chancePercent: 20, pityAfterMisses: 4, candidates: ["arch-rune-pick-epic"] },
   { id: "shop-weekly", period: "weekly", chancePercent: 25, candidates: ["shop-rune-weekly"] },
   { id: "raid-weekly", period: "weekly", chancePercent: 30, candidates: ["raid-rune-weekly"] },
-  { id: "loot-weekly", period: "weekly", chancePercent: 30, candidates: ["loot-rune-weekly"] }
+  { id: "loot-weekly", period: "weekly", chancePercent: 30, candidates: ["loot-rune-weekly"] },
+  // 무역 전시대 — 룬이 아니라 재화 묶음이 돈다(`tradePackages.ts`). 셋은 늘 열리고 후보만 바뀌며,
+  // 연구 칸(화석·호박석)만 가끔 열리되 4주 연속 닫히면 다음 주는 확정이다(응태 승인 2026-11-23).
+  { id: "trade-weekly-supply", period: "weekly", chancePercent: 100, candidates: ["trade-cheesecake-supply", "trade-cheesecake-bulk"] },
+  { id: "trade-weekly-funds", period: "weekly", chancePercent: 100, candidates: ["trade-research-grant", "trade-gold-vault"] },
+  { id: "trade-weekly-research", period: "weekly", chancePercent: 35, pityAfterMisses: 4, candidates: ["trade-fossil-case", "trade-amber-case"] },
+  { id: "trade-daily", period: "daily", chancePercent: 100, candidates: ["trade-daily-bundle", "trade-gold-bundle", "trade-cheesecake-bundle"] }
 ];
 function rotationSlot(id) {
   return ROTATION_SLOTS.find((slot) => slot.id === id);
@@ -46209,8 +47306,8 @@ function applyFrameRateLimit(game, limit) {
 // src/core/devicePerformance.ts
 init_define_import_meta_env();
 var POWER_SAVING_FRAME_RATE = 30;
-function deviceFrameRateLimit(quality) {
-  return quality === "low" ? 30 : 60;
+function deviceFrameRateLimit(_quality) {
+  return 30;
 }
 function effectiveFrameRateLimit(presentation) {
   return presentation.powerSaving ? Math.min(presentation.frameRateLimit, POWER_SAVING_FRAME_RATE) : presentation.frameRateLimit;
@@ -46218,7 +47315,10 @@ function effectiveFrameRateLimit(presentation) {
 function navigatorDeviceProfile() {
   if (typeof navigator === "undefined") return {};
   const nav = navigator;
-  return { deviceMemory: nav.deviceMemory, hardwareConcurrency: nav.hardwareConcurrency };
+  return {
+    deviceMemory: nav.deviceMemory,
+    hardwareConcurrency: nav.hardwareConcurrency
+  };
 }
 
 // src/managers/ErrorReporter.ts
@@ -46228,7 +47328,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.515.2",
+  version: "0.534.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -46523,6 +47623,7 @@ var SERVER_GAME_METHODS = [
   "getRaids",
   "getStaminaRechargeStatus",
   "grantRuneTrait",
+  "grantRuneTraitsBulk",
   "harvestExcavation",
   "deleteMails",
   "dismissFreeRuneCraft",
@@ -46757,7 +47858,7 @@ var ReportThrottle = class {
   }
 };
 function isNoise(message) {
-  return /ResizeObserver loop|Script error\.?$|AbortError|The play\(\) request was interrupted|NotAllowedError.*play|Load failed$|Failed to fetch$|NetworkError|network request failed/i.test(message);
+  return /ResizeObserver loop|Script error\.?$|AbortError|The play\(\) request was interrupted|NotAllowedError.*play|Load failed$|Failed to fetch$|NetworkError|network request failed|window\.ethereum|ethereum\.selectedAddress/i.test(message);
 }
 
 // src/managers/ErrorReporter.ts
@@ -46863,6 +47964,17 @@ var SettingsManager = class extends EventTarget {
     const current2 = this.get().game.dungeonTiers;
     if (current2[dungeon] === tierId2) return;
     this.update({ game: { dungeonTiers: { ...current2, [dungeon]: tierId2 } } });
+  }
+  /** 그 교류 도시에 마지막으로 보낸 파견대의 자리(`core/interactionPartyMemory.ts`). 기억이 없으면 `undefined`다. */
+  interactionParty(cityId) {
+    return this.get().game.interactionParties[cityId];
+  }
+  /** 교류 도시에 보낸 파견대를 자리째 기억한다. 같은 값이면 저장하지 않는다. */
+  rememberInteractionParty(cityId, party) {
+    const current2 = this.get().game.interactionParties;
+    const next = interactionPartyToRemember(party);
+    if (!next || JSON.stringify(current2[cityId] ?? null) === JSON.stringify(next)) return;
+    this.update({ game: { interactionParties: { ...current2, [cityId]: next } } });
   }
   /** 렐릭 목록 화면이 지금 세울 필터·정렬(`core/rosterViewMemory.ts`). 기억이 없거나 쓸 수 없는 값이면 기본값이다. */
   rosterView(screen) {
@@ -47004,7 +48116,6 @@ var settingsManager = new SettingsManager();
 
 // src/api/FakeServer.ts
 var STRATA_TICKET_ITEM2 = "strata-ticket";
-var MAX_RUNE_NAME_LENGTH = 20;
 var RECEIPT_KEEP = 48;
 var QA_ANCIENT_RANKING = [
   { playerId: "user-stars", displayName: "DeepDiver", floor: 118, favoriteRelicId: "koma" },
@@ -47139,6 +48250,7 @@ var FakeServer = class {
   runeSaleResults = /* @__PURE__ */ new Map();
   runeSynthesisResults = /* @__PURE__ */ new Map();
   runeCraftResults = /* @__PURE__ */ new Map();
+  runeTraitBulkResults = /* @__PURE__ */ new Map();
   /** 일반 스테이지 입장 재전송이 중복 승리 대기 건을 만들지 않게 하는 서버 영수증 표다. */
   stageAdmissionResults = /* @__PURE__ */ new Map();
   /** 입장 때 커밋한 요청을 보관하고 완료 정산이 해당 전투의 대기 건 하나만 소비하게 한다. */
@@ -50402,7 +51514,7 @@ var FakeServer = class {
     return new RelicProgressionManager(this.state).getCombatPower(relicId, { pvp: true });
   }
   duelStatusDto(duel2, now) {
-    const standing = duelStanding(duel2.score);
+    const standing2 = duelStanding(duel2.score);
     const blindCount = duelBlindCount(duel2.score);
     const pool = this.duelPool(now);
     const opponents = duel2.candidateIds.flatMap((id) => {
@@ -50431,8 +51543,8 @@ var FakeServer = class {
       seasonId: duel2.seasonId,
       seasonEndsAt: duelSeasonEndsAt(now).toISOString(),
       score: duel2.score,
-      tierId: standing.tier.id,
-      division: standing.division,
+      tierId: standing2.tier.id,
+      division: standing2.division,
       rank: this.duelMyRank(duel2),
       wins: duel2.wins,
       losses: duel2.losses,
@@ -50475,6 +51587,7 @@ var FakeServer = class {
     await this.delay();
     if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const now = this.now();
+    this.forfeitOpenDuels(now, true);
     const duel2 = this.duelNow(now);
     const price = duelRefreshPrice(duel2.refreshesUsed);
     if (this.state.wallet.gems < price) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uC82C\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
@@ -50490,6 +51603,7 @@ var FakeServer = class {
     await this.delay();
     if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const now = this.now();
+    this.forfeitOpenDuels(now, true);
     const duel2 = this.duelNow(now);
     const price = duelExtraAttemptPrice(duel2.attemptsPurchased);
     if (price === void 0) throw new GameApiError("DUEL_ATTEMPT_LIMIT", "\uC624\uB298\uC740 \uB3C4\uC804\uAD8C\uC744 \uB354 \uC0B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
@@ -50511,6 +51625,7 @@ var FakeServer = class {
     await this.delay();
     const now = this.now();
     this.assertDuelTeam(request.relicIds);
+    this.forfeitOpenDuels(now, true);
     const blindChoice = [...new Set(request.blindChoice)].filter((id) => request.relicIds.includes(id)).slice(0, DUEL_MAX_BLIND);
     const next = { ...this.duelNow(now), defense: [...request.relicIds], defenseCustomized: true, blindChoice };
     this.persist({ ...this.state, duel: next });
@@ -50524,8 +51639,9 @@ var FakeServer = class {
     if (cached) return structuredClone(cached);
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "\uC785\uC7A5 \uC694\uCCAD ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const now = this.now();
-    const duel2 = this.duelNow(now);
     this.assertDuelTeam(request.relicIds);
+    this.forfeitOpenDuels(now, false);
+    const duel2 = this.duelNow(now);
     const npc = duel2.candidateIds.includes(request.opponentId) ? this.duelPool(now).find((p) => p.id === request.opponentId) : void 0;
     if (!npc) throw new GameApiError("DUEL_OPPONENT_NOT_FOUND", "\uC9C0\uAE08 \uC138\uC6CC \uB454 \uC0C1\uB300\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
     if (duel2.foughtIds.includes(npc.id)) throw new GameApiError("DUEL_OPPONENT_FOUGHT", "\uC774\uBBF8 \uC2F8\uC6B4 \uC0C1\uB300\uC785\uB2C8\uB2E4.");
@@ -50546,8 +51662,7 @@ var FakeServer = class {
     if (this.duelContext) {
       const row = this.duelContext.records.find((row2) => row2.id === npc.id);
       const journal = combatJournal(this.state);
-      for (const [key, ticket] of Object.entries(journal.tickets)) if (ticket.kind === "duel") consumeCombat(this.state, key);
-      journal.tickets[`duel:${request.requestId}`] = { kind: "duel", target: npc.id, requestId: request.requestId, duel: { opponent: structuredClone(npc), setup: duelCombatSetup(this.state, duelParticipant(row, now).state, request.relicIds) } };
+      journal.tickets[`duel:${request.requestId}`] = { kind: "duel", target: npc.id, requestId: request.requestId, enteredAt: now.toISOString(), duel: { opponent: structuredClone(npc), setup: duelCombatSetup(this.state, duelParticipant(row, now).state, request.relicIds) } };
     }
     this.duelAdmissionResults.set(request.requestId, structuredClone(response));
     return response;
@@ -50559,10 +51674,15 @@ var FakeServer = class {
     if (cached) return structuredClone(cached);
     const pending2 = this.pendingDuels.get(request.requestId);
     if (!pending2) throw new GameApiError("DUEL_ADMISSION_NOT_FOUND", "\uC785\uC7A5\uD558\uC9C0 \uC54A\uC740 \uACB0\uD22C\uC785\uB2C8\uB2E4.");
-    const now = this.now();
+    return this.settleDuel(request, pending2, this.now());
+  }
+  /** 결투 한 판의 정산. 결과 확정(`resolveDuel`)과 끝내지 않고 버린 판의 몰수(`forfeitOpenDuels`)가 같은 길을 지난다. */
+  settleDuel(request, pending2, now) {
     if (this.duelContext) {
       const ticket = combatJournal(this.state).tickets[`duel:${request.requestId}`];
-      recordPlayerDefense(this.duelContext, pending2.opponentId, this.state, ticket.duel.setup.players.map((p) => p.id), request.won, now);
+      if (ticket?.duel && this.duelContext.records.some((row) => row.id === pending2.opponentId)) {
+        recordPlayerDefense(this.duelContext, pending2.opponentId, this.state, ticket.duel.setup.players.map((p) => p.id), request.won, now);
+      }
     }
     const duel2 = this.duelNow(now);
     const scoreBefore = duel2.score;
@@ -50622,6 +51742,22 @@ var FakeServer = class {
     this.duelResolveResults.set(request.requestId, structuredClone(response));
     return response;
   }
+  /**
+   * 끝내지 않고 버린 결투는 진 판이다. 입장만 하고 결과를 확정하지 않으면 점수·연승이 그대로 남아
+   * 질 것 같은 판을 끊고 나오는 것이 늘 이득이었다. 서버가 이미 판정한 판은 그 판정대로(이긴 판은 이긴 대로),
+   * 판정이 없는 판은 패배로 정산한다. `staleOnly`면 입장한 지 `DUEL_FORFEIT_AFTER_MS`가 지난 판만 본다.
+   */
+  forfeitOpenDuels(now, staleOnly) {
+    if (!this.duelContext) return;
+    const journal = combatJournal(this.state);
+    for (const [key, ticket] of Object.entries(journal.tickets)) {
+      if (ticket.kind !== "duel") continue;
+      if (staleOnly && !(ticket.enteredAt && now.getTime() - Date.parse(ticket.enteredAt) >= DUEL_FORFEIT_AFTER_MS)) continue;
+      const pending2 = this.pendingDuels.get(ticket.requestId);
+      if (pending2) this.settleDuel({ requestId: ticket.requestId, won: combatVerdictFor(this.state, key)?.victory ?? false }, pending2, now);
+      consumeCombat(this.state, key);
+    }
+  }
   async getDuelRanking() {
     await this.delay();
     if (this.duelContext) {
@@ -50663,6 +51799,7 @@ var FakeServer = class {
   async claimDuelSeasonReward() {
     await this.delay();
     if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
+    this.forfeitOpenDuels(this.now(), true);
     const duel2 = this.duelNow(this.now());
     const pending2 = duel2.pendingSeasonReward;
     const tier = pending2 ? getDuelTier(pending2.tierId) : void 0;
@@ -51196,7 +52333,7 @@ var FakeServer = class {
       const paymentUnavailable = this.paymentUnavailable(product);
       return {
         ...product,
-        visibleUntil: product.situational ? activeSituationalOffer(this.state.situationalOffers, product.id, now)?.expiresAt : this.productWindow(product, now).endsAt,
+        visibleUntil: product.situational ? activeSituationalOffer(this.state.situationalOffers, product.id, now)?.expiresAt : this.visibleUntil(product, now),
         remaining,
         purchasable: remaining > 0 && !paymentUnavailable,
         disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : void 0,
@@ -51452,12 +52589,13 @@ var FakeServer = class {
     this.state.tutorial = nextTutorial;
     return { rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
   }
-  /** 이름을 trim한 뒤 빈 값·길이·제어문자를 서버 경계에서 거부한다. */
+  /** 이름을 다듬은 뒤(`normalizeRuneName`) 빈 값·길이·제어문자·금칙어를 서버 경계에서 거부한다. */
   async renameRune(request) {
     await this.delay();
     const current2 = this.ownedRune(request.runeInstanceId);
-    const name = request.name.trim();
-    if (!name || [...name].length > MAX_RUNE_NAME_LENGTH || /[\u0000-\u001F\u007F-\u009F]/u.test(name)) throw new GameApiError("INVALID_RUNE_NAME", `\uB8EC \uC774\uB984\uC740 \uC81C\uC5B4\uBB38\uC790 \uC5C6\uC774 1~${MAX_RUNE_NAME_LENGTH}\uAE00\uC790\uC5EC\uC57C \uD569\uB2C8\uB2E4.`);
+    const name = normalizeRuneName(request.name);
+    if (runeNameProblem(name)) throw new GameApiError("INVALID_RUNE_NAME", `\uB8EC \uC774\uB984\uC740 \uC81C\uC5B4\uBB38\uC790 \uC5C6\uC774 1~${MAX_RUNE_NAME_LENGTH}\uAE00\uC790\uC5EC\uC57C \uD569\uB2C8\uB2E4.`);
+    if (containsBannedWord(name, this.bannedWords)) throw new GameApiError("RUNE_NAME_BANNED", "\uB8EC \uC774\uB984\uC5D0 \uC4F8 \uC218 \uC5C6\uB294 \uB9D0\uC774 \uB4E4\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.");
     const rune = { ...current2, customName: name };
     assertValidRuneInstance(rune);
     const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
@@ -51713,6 +52851,14 @@ var FakeServer = class {
     const startsAt = later(own.startsAt, linked.startsAt);
     const endsAt = earlier(own.endsAt, linked.endsAt);
     return { ...startsAt !== void 0 ? { startsAt } : {}, ...endsAt !== void 0 ? { endsAt } : {}, enabled: own.enabled && linked.enabled };
+  }
+  /** 노출이 끝나는 시각. 로테이션 칸의 상품은 그 기간이 끝나는 순간(다음 상품으로 바뀌는 때)까지만 선다. */
+  visibleUntil(product, now) {
+    const endsAt = this.productWindow(product, now).endsAt;
+    const slot = product.rotationSlot ? rotationSlot(product.rotationSlot) : void 0;
+    if (!slot) return endsAt;
+    const periodEnd = rotationPeriodEnd(slot.period, this.productPeriodKey(product, now));
+    return endsAt === void 0 || Date.parse(periodEnd) < Date.parse(endsAt) ? periodEnd : endsAt;
   }
   isVisible(product, now) {
     if (product.situational) return activeSituationalOffer(this.state.situationalOffers, product.id, now) !== void 0;
@@ -52019,6 +53165,38 @@ var FakeServer = class {
     this.persist(this.state);
     const inventory = await this.getInventory();
     return { rune: this.cloneRune(rune), items: inventory.items };
+  }
+  /**
+   * 특성 일괄 부여. 고른 룬(모두 특성 없음)마다 미지의 고대 핵 하나를 쓰고 일반 부여와 같은 추첨으로 특성을 붙인다.
+   * 핵 총량을 먼저 확인해 한 번에 빼고 저장도 한 번이다. 같은 requestId는 같은 결과를 돌려준다.
+   */
+  async grantRuneTraitsBulk(request) {
+    await this.delay();
+    const cached = this.runeTraitBulkResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    const ids = request.runeInstanceIds;
+    if (!request.requestId || !Array.isArray(ids) || ids.length === 0 || ids.length > RUNE_TRAIT_BULK_MAX || new Set(ids).size !== ids.length) {
+      throw new GameApiError("RUNE_TRAIT_BULK_INVALID", "\uC77C\uAD04 \uBD80\uC5EC \uC694\uCCAD ID\uC640 \uC911\uBCF5 \uC5C6\uB294 \uB8EC\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    }
+    const selected = ids.map((id) => this.ownedRune(id));
+    if (selected.some((rune) => !isRuneTraitBulkCandidate(rune))) throw new GameApiError("RUNE_TRAIT_EXISTS", "\uC774\uBBF8 \uD2B9\uC131\uC774 \uC788\uB294 \uB8EC\uC774 \uC11E\uC5EC \uC788\uC2B5\uB2C8\uB2E4.");
+    const grant = RUNE_TRAIT_ITEMS.grant;
+    const stack = this.state.itemInventory.find((entry) => entry.itemId === grant.itemId);
+    if (!stack || stack.quantity < selected.length) throw new GameApiError("INSUFFICIENT_ITEMS", "\uC544\uC774\uD15C \uC218\uB7C9\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    this.state.itemInventory = this.state.itemInventory.flatMap((entry) => entry.itemId === grant.itemId ? entry.quantity > selected.length ? [{ ...entry, quantity: entry.quantity - selected.length }] : [] : [{ ...entry }]);
+    const granted = selected.map((current2) => {
+      const trait = grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: grant.minimumGrade, random: this.random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE });
+      const rune = { ...current2, trait };
+      assertValidRuneInstance(rune);
+      this.replaceRune(rune);
+      if (this.state.archaeology.pendingReroll?.runeInstanceId === rune.instanceId) this.state.archaeology.pendingReroll = null;
+      return rune;
+    });
+    this.persist(this.state);
+    const inventory = await this.getInventory();
+    const response = { runes: granted.map((rune) => this.cloneRune(rune)), items: inventory.items };
+    this.runeTraitBulkResults.set(request.requestId, structuredClone(response));
+    return response;
   }
   async rerollRuneTrait(request) {
     await this.delay();
@@ -52665,8 +53843,8 @@ async function handleArenaCall(rpc, player, method, args, requestId) {
     }
   }
   if (room?.phase === "done" || kind === "status") {
-    const standing = await rpc("server_arena_standing", { p_player: player });
-    context = { ...context, ...standing };
+    const standing2 = await rpc("server_arena_standing", { p_player: player });
+    context = { ...context, ...standing2 };
   }
   delete context.receiptFingerprint;
   context = { ...context, room: room ? publicArenaRoom(room, player) : null, records: [] };
@@ -52994,7 +54172,7 @@ async function run(playerId, req, deps) {
       /^(getExpeditionWeeklyBest|getExpeditionLeaderboard)$/.test(req.method) && deps.store.expeditionContext ? deps.store.expeditionContext(playerId, now) : void 0,
       req.method === "getAncientRanking" && deps.store.ancientRanking ? deps.store.ancientRanking(playerId) : void 0,
       req.method === "getRegularEvent" && deps.store.regularEvent ? deps.store.regularEvent().catch(() => null) : void 0,
-      req.method === "updatePlayerCard" && deps.store.bannedWords ? deps.store.bannedWords().catch(() => []) : void 0,
+      (req.method === "updatePlayerCard" || req.method === "renameRune") && deps.store.bannedWords ? deps.store.bannedWords().catch(() => []) : void 0,
       deps.store.liveSchedule ? deps.store.liveSchedule().catch(() => void 0) : void 0,
       deps.store.launchAt ? deps.store.launchAt().catch(() => void 0) : void 0,
       wantsGift ? deps.store.giftContext(playerId, giftRecipientId, now) : void 0
@@ -53117,9 +54295,20 @@ function clientResponseState(response, knownRevision) {
 }
 function withoutReceipts(state) {
   if (!state || typeof state !== "object") return state;
-  const journal = state.serverJournal;
-  if (!journal || typeof journal !== "object") return state;
-  return { ...state, serverJournal: { ...journal, receipts: {} } };
+  const source = state;
+  let next = source;
+  if (source.serverJournal && typeof source.serverJournal === "object") next = { ...next, serverJournal: { receipts: {}, raidAdmissions: {} } };
+  const archaeology = source.archaeology;
+  const tiles = archaeology?.board?.tiles;
+  if (archaeology && archaeology.board && Array.isArray(tiles)) {
+    const hidden = tiles.map((tile) => {
+      if (!tile || typeof tile !== "object" || tile.revealed === true) return tile;
+      const { index, zone } = tile;
+      return { index, zone, kind: "empty", amount: 0, revealed: false };
+    });
+    next = { ...next, archaeology: { ...archaeology, board: { ...archaeology.board, tiles: hidden } } };
+  }
+  return next;
 }
 
 // src/server/supabaseStore.ts
@@ -53303,9 +54492,11 @@ function createSupabaseStore(env) {
       await rpc("server_claim_device_session", { p_player: playerId, p_session: device }).catch(() => void 0);
       return true;
     },
-    /** 표식이 지금 기기와 같은가. 표식이 없거나, 세운 기기가 없거나, 함수가 없으면 지난다. */
+    /**
+     * 표식이 지금 기기와 같은가. 세운 기기가 없거나 함수가 없으면 지난다. **세운 기기가 있는 계정은 표식 없는 호출도
+     * 막는다** — 표식을 빼고 부르면 한 기기 규칙을 통째로 비껴가던 길이다(토큰을 빼낸 스크립트가 게임과 나란히 돈다).
+     */
     async deviceSessionAllowed(playerId, device) {
-      if (!device) return true;
       const active3 = await rpc("server_device_session", { p_player: playerId }).catch(() => null);
       return typeof active3 !== "string" || active3.length === 0 || active3 === device;
     },

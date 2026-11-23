@@ -89,6 +89,7 @@ import { setActiveAncientSeason } from "../core/ancientStrataBattle";
 import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import type { AncientRankingResponse, ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
+import { MAX_RUNE_NAME_LENGTH, normalizeRuneName, runeNameProblem } from "../core/runeName";
 import { containsBannedWord, isOpsMailId, markMailsDeleted, markOpsMailsRead, opsMailToDto, opsPatchNoteToDto, type OpsMailSource, type OpsPatchNoteSource } from "../core/opsInbox";
 import { applyDebugCommand, type DebugCommand, type DebugCommandResponse, type DebugTarget } from "../core/debugCommand";
 import { GUILD_BADGE_CHANGE_GEMS, GUILD_RENAME_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct, guildDispatchMinutes, guildExcavationBonus, guildPerks, type GuildPerks, validateGuildName } from "../core/guild";
@@ -179,7 +180,7 @@ import { nextUtcDay } from "../core/notificationSchedule";
 import { t } from "../i18n";
 
 /** 사용자 룬 이름의 서버 정책이다. UI 글자 수와 무관하게 API 경계가 최종 권한을 가진다. */
-export const MAX_RUNE_NAME_LENGTH = 20;
+export { MAX_RUNE_NAME_LENGTH } from "../core/runeName";
 /**
  * 저장 장부에 남기는 일반 처리 영수증 수. 같은 요청의 재전송을 되찾는 몫이라 최근 것만 있으면 된다 — 서버는 요청 ID별
  * 영수증 표(`findReceipt`)를 따로 둔다. 256개를 두던 때는 장부가 저장의 8할(267KB)이 되어 읽기·쓰기·비교가 모두 느려졌다.
@@ -4717,12 +4718,13 @@ export class FakeServer implements GameApi {
     return { rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
   }
 
-  /** 이름을 trim한 뒤 빈 값·길이·제어문자를 서버 경계에서 거부한다. */
+  /** 이름을 다듬은 뒤(`normalizeRuneName`) 빈 값·길이·제어문자·금칙어를 서버 경계에서 거부한다. */
   async renameRune(request: RenameRuneRequest): Promise<RenameRuneResponse> {
     await this.delay();
     const current = this.ownedRune(request.runeInstanceId);
-    const name = request.name.trim();
-    if (!name || [...name].length > MAX_RUNE_NAME_LENGTH || /[\u0000-\u001F\u007F-\u009F]/u.test(name)) throw new GameApiError("INVALID_RUNE_NAME", `룬 이름은 제어문자 없이 1~${MAX_RUNE_NAME_LENGTH}글자여야 합니다.`);
+    const name = normalizeRuneName(request.name);
+    if (runeNameProblem(name)) throw new GameApiError("INVALID_RUNE_NAME", `룬 이름은 제어문자 없이 1~${MAX_RUNE_NAME_LENGTH}글자여야 합니다.`);
+    if (containsBannedWord(name, this.bannedWords)) throw new GameApiError("RUNE_NAME_BANNED", "룬 이름에 쓸 수 없는 말이 들어 있습니다.");
     const rune = { ...current, customName: name };
     assertValidRuneInstance(rune);
     const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);

@@ -139,16 +139,6 @@
 "{shown} / {total}",
 "{shown} / {total}"
 ],
-"rune.namePlaceholder": [
-"符文名称（1-16字）",
-"ชื่อรูน (1-16 ตัวอักษร)",
-"Tên Rune (1-16 ký tự)",
-"Nama Rune (1-16 karakter)",
-"Nombre de la Runa (1-16 caracteres)",
-"Nome da Runa (1-16 caracteres)",
-"Runenname (1–16 Zeichen)",
-"Имя руны (1–16 символов)"
-],
 "rune.nameTitle": [
 "符文名称",
 "ชื่อรูน",
@@ -168,6 +158,56 @@
 "O nome foi salvo.",
 "Der Name wurde gespeichert.",
 "Имя сохранено."
+],
+"rune.nameSave": [
+"保存名称",
+"บันทึกชื่อ",
+"Lưu tên",
+"Simpan Nama",
+"Guardar nombre",
+"Salvar nome",
+"Namen speichern",
+"Сохранить имя"
+],
+"rune.nameError.empty": [
+"请输入名称。",
+"กรุณาใส่ชื่อ",
+"Hãy nhập tên.",
+"Masukkan nama.",
+"Introduce un nombre.",
+"Digite um nome.",
+"Bitte gib einen Namen ein.",
+"Введите имя."
+],
+"rune.nameError.invalid": [
+"包含无法使用的字符。",
+"มีตัวอักษรที่ใช้ไม่ได้",
+"Tên có ký tự không dùng được.",
+"Ada karakter yang tidak dapat digunakan.",
+"Contiene caracteres no permitidos.",
+"Contém caracteres não permitidos.",
+"Enthält unzulässige Zeichen.",
+"Содержит недопустимые символы."
+],
+"rune.nameError.banned": [
+"包含无法使用的词语。",
+"มีคำที่ใช้ไม่ได้",
+"Tên có từ không được phép.",
+"Ada kata yang tidak dapat digunakan.",
+"Contiene una palabra no permitida.",
+"Contém uma palavra não permitida.",
+"Enthält ein unzulässiges Wort.",
+"Содержит недопустимое слово."
+],
+"rune.nameError.failed": [
+"保存失败，请重试。",
+"บันทึกไม่สำเร็จ กรุณาลองอีกครั้ง",
+"Không lưu được. Hãy thử lại.",
+"Gagal menyimpan. Coba lagi.",
+"No se pudo guardar. Inténtalo de nuevo.",
+"Não foi possível salvar. Tente novamente.",
+"Speichern fehlgeschlagen. Bitte versuche es erneut.",
+"Не удалось сохранить. Попробуйте ещё раз."
 ],
 "rune.sell": [
 "出售",
@@ -729,11 +769,56 @@
 "Höchste Stufe",
 "Макс. ранг"
 ],
-"rune.trait.odds.tip.grade": ["重新解读时决定的特性等级。等级越高，特性数值越大。", "ระดับของคุณลักษณะที่ได้จากการตีความใหม่ ยิ่งสูงค่ายิ่งมาก", "Cấp của đặc tính khi diễn giải lại. Cấp càng cao, chỉ số càng lớn.", "Tingkat sifat yang didapat saat tafsir ulang. Makin tinggi, makin besar nilainya.", "El rango que obtiene un rasgo al reinterpretarlo. Cuanto más alto, mayores valores.", "O nível que um traço recebe ao reinterpretar. Quanto maior, maiores os valores.", "Die Stufe, die ein Merkmal bei der Neudeutung erhält. Je höher, desto größer die Werte.", "Ранг черты при переосмыслении. Чем выше ранг, тем больше значения."],
-"rune.trait.odds.tip.chance": ["每次重新解读时特性升高1个等级的概率。点击行可展开该等级的特性数值。", "โอกาสที่คุณลักษณะจะขึ้น 1 ระดับต่อการตีความใหม่ 1 ครั้ง แตะแถวเพื่อดูค่าคุณลักษณะของระดับนั้น", "Xác suất đặc tính lên 1 cấp mỗi lần diễn giải lại. Chạm vào hàng để xem chỉ số đặc tính của cấp đó.", "Peluang sifat naik satu tingkat per tafsir ulang. Ketuk baris untuk melihat nilai sifat tingkat itu.", "Probabilidad de que un rasgo suba un rango por reinterpretación. Toca una fila para ver sus valores.", "Chance de um traço subir um nível por reinterpretação. Toque numa linha para ver os valores.", "Chance, dass ein Merkmal pro Neudeutung eine Stufe steigt. Tippe auf eine Zeile für ihre Werte.", "Шанс, что черта поднимется на ранг за одно переосмысление. Нажмите строку, чтобы увидеть значения."],
-"rune.trait.odds.tip.pity": ["若连续{count}次重新解读都未升级，下一次必定升高1个等级。", "หากตีความใหม่ {count} ครั้งติดกันแล้วไม่ขึ้นระดับ ครั้งถัดไปจะขึ้น 1 ระดับแน่นอน", "Nếu {count} lần diễn giải lại liên tiếp không lên cấp, lần tiếp theo chắc chắn lên 1 cấp.", "Jika {count} tafsir ulang berturut-turut gagal naik, berikutnya pasti naik satu tingkat.", "Si {count} reinterpretaciones seguidas no suben, la siguiente sube un rango garantizado.", "Se {count} reinterpretações seguidas não subirem, a próxima sobe um nível garantido.", "Steigt das Merkmal {count}-mal in Folge nicht, steigt es bei der nächsten Neudeutung garantiert.", "Если {count} переосмыслений подряд не дали повышения, следующее гарантированно поднимет ранг."],
-"rune.trait.odds.tip.top": ["已是最高等级，无法继续升级。", "เป็นระดับสูงสุดแล้ว ไม่สามารถขึ้นได้อีก", "Đã là cấp cao nhất, không thể lên thêm.", "Tingkat tertinggi. Tidak bisa naik lagi.", "Rango máximo. No puede subir más.", "Nível máximo. Não sobe mais.", "Höchste Stufe. Sie steigt nicht weiter.", "Высший ранг. Выше не поднимается."],
-"rune.trait.odds.tip.cost": ["每次重新解读该等级的特性需要{cost}个原石。", "ตีความคุณลักษณะระดับนี้ใหม่แต่ละครั้งใช้หินดิบ {cost} ชิ้น", "Mỗi lần diễn giải lại đặc tính cấp này tốn {cost} Đá thô.", "Tiap tafsir ulang sifat tingkat ini memerlukan {cost} Batu Mentah.", "Cada reinterpretación de un rasgo de este rango cuesta {cost} de piedra en bruto.", "Cada reinterpretação de um traço deste nível custa {cost} de pedra bruta.", "Jede Neudeutung eines Merkmals dieser Stufe kostet {cost} Rohstein.", "Каждое переосмысление черты этого ранга стоит {cost} необработанного камня."],
+"rune.trait.odds.tip.grade": [
+"重新解读时决定的特性等级。等级越高，特性数值越大。",
+"ระดับของคุณลักษณะที่ได้จากการตีความใหม่ ยิ่งสูงค่ายิ่งมาก",
+"Cấp của đặc tính khi diễn giải lại. Cấp càng cao, chỉ số càng lớn.",
+"Tingkat sifat yang didapat saat tafsir ulang. Makin tinggi, makin besar nilainya.",
+"El rango que obtiene un rasgo al reinterpretarlo. Cuanto más alto, mayores valores.",
+"O nível que um traço recebe ao reinterpretar. Quanto maior, maiores os valores.",
+"Die Stufe, die ein Merkmal bei der Neudeutung erhält. Je höher, desto größer die Werte.",
+"Ранг черты при переосмыслении. Чем выше ранг, тем больше значения."
+],
+"rune.trait.odds.tip.chance": [
+"每次重新解读时特性升高1个等级的概率。点击行可展开该等级的特性数值。",
+"โอกาสที่คุณลักษณะจะขึ้น 1 ระดับต่อการตีความใหม่ 1 ครั้ง แตะแถวเพื่อดูค่าคุณลักษณะของระดับนั้น",
+"Xác suất đặc tính lên 1 cấp mỗi lần diễn giải lại. Chạm vào hàng để xem chỉ số đặc tính của cấp đó.",
+"Peluang sifat naik satu tingkat per tafsir ulang. Ketuk baris untuk melihat nilai sifat tingkat itu.",
+"Probabilidad de que un rasgo suba un rango por reinterpretación. Toca una fila para ver sus valores.",
+"Chance de um traço subir um nível por reinterpretação. Toque numa linha para ver os valores.",
+"Chance, dass ein Merkmal pro Neudeutung eine Stufe steigt. Tippe auf eine Zeile für ihre Werte.",
+"Шанс, что черта поднимется на ранг за одно переосмысление. Нажмите строку, чтобы увидеть значения."
+],
+"rune.trait.odds.tip.pity": [
+"若连续{count}次重新解读都未升级，下一次必定升高1个等级。",
+"หากตีความใหม่ {count} ครั้งติดกันแล้วไม่ขึ้นระดับ ครั้งถัดไปจะขึ้น 1 ระดับแน่นอน",
+"Nếu {count} lần diễn giải lại liên tiếp không lên cấp, lần tiếp theo chắc chắn lên 1 cấp.",
+"Jika {count} tafsir ulang berturut-turut gagal naik, berikutnya pasti naik satu tingkat.",
+"Si {count} reinterpretaciones seguidas no suben, la siguiente sube un rango garantizado.",
+"Se {count} reinterpretações seguidas não subirem, a próxima sobe um nível garantido.",
+"Steigt das Merkmal {count}-mal in Folge nicht, steigt es bei der nächsten Neudeutung garantiert.",
+"Если {count} переосмыслений подряд не дали повышения, следующее гарантированно поднимет ранг."
+],
+"rune.trait.odds.tip.top": [
+"已是最高等级，无法继续升级。",
+"เป็นระดับสูงสุดแล้ว ไม่สามารถขึ้นได้อีก",
+"Đã là cấp cao nhất, không thể lên thêm.",
+"Tingkat tertinggi. Tidak bisa naik lagi.",
+"Rango máximo. No puede subir más.",
+"Nível máximo. Não sobe mais.",
+"Höchste Stufe. Sie steigt nicht weiter.",
+"Высший ранг. Выше не поднимается."
+],
+"rune.trait.odds.tip.cost": [
+"每次重新解读该等级的特性需要{cost}个原石。",
+"ตีความคุณลักษณะระดับนี้ใหม่แต่ละครั้งใช้หินดิบ {cost} ชิ้น",
+"Mỗi lần diễn giải lại đặc tính cấp này tốn {cost} Đá thô.",
+"Tiap tafsir ulang sifat tingkat ini memerlukan {cost} Batu Mentah.",
+"Cada reinterpretación de un rasgo de este rango cuesta {cost} de piedra en bruto.",
+"Cada reinterpretação de um traço deste nível custa {cost} de pedra bruta.",
+"Jede Neudeutung eines Merkmals dieser Stufe kostet {cost} Rohstein.",
+"Каждое переосмысление черты этого ранга стоит {cost} необработанного камня."
+],
 "rune.trait.vanguard.name": [
 "先锋",
 "กองหน้า",
@@ -1424,28 +1509,244 @@
 "Gratis veredeln",
 "Бесплатная огранка"
 ],
-"rune.bulkCraft.title": ["批量打磨", "เจียระไนแบบรวม", "Mài hàng loạt", "Asah Massal", "Tallado masivo", "Lapidação em massa", "Massen-Veredelung", "Массовая огранка"],
-"rune.bulkCraft.entry": ["批量打磨", "เจียระไนรวม", "Mài loạt", "Asah Massal", "Tallado masivo", "Lapidar em massa", "Massen-Veredelung", "Огранить пачкой"],
-"rune.bulkCraft.selected": ["已选 {count} / {total}", "เลือก {count} / {total}", "Đã chọn {count} / {total}", "Dipilih {count} / {total}", "Elegidas {count} / {total}", "Selecionadas {count} / {total}", "Gewählt {count} / {total}", "Выбрано {count} / {total}"],
-"rune.bulkCraft.selectAll": ["全选", "เลือกทั้งหมด", "Chọn tất cả", "Pilih Semua", "Elegir todas", "Selecionar tudo", "Alle wählen", "Выбрать все"],
-"rune.bulkCraft.clearAll": ["取消选择", "ยกเลิกเลือก", "Bỏ chọn", "Batalkan", "Quitar selección", "Limpar seleção", "Abwählen", "Сбросить"],
-"rune.bulkCraft.engrave": ["刻印", "สลัก", "Khắc ấn", "Ukir", "Grabado", "Gravação", "Gravur", "Гравировка"],
-"rune.bulkCraft.engrave.none": ["不刻印", "ไม่สลัก", "Không", "Tidak", "No", "Não", "Keine", "Нет"],
-"rune.bulkCraft.engrave.top": ["上方主属性", "หลักบน", "Chính trên", "Utama atas", "Principal sup.", "Principal sup.", "Obere Haupt", "Верхняя осн."],
-"rune.bulkCraft.engrave.bottom": ["下方主属性", "หลักล่าง", "Chính dưới", "Utama bawah", "Principal inf.", "Principal inf.", "Untere Haupt", "Нижняя осн."],
-"rune.bulkCraft.button": ["打磨 {count} 个", "เจียระไน {count} ชิ้น", "Mài {count}", "Asah {count}", "Tallar {count}", "Lapidar {count}", "{count} veredeln", "Огранить {count}"],
-"rune.bulkCraft.confirm": ["对 {count} 个符文进行剩余的 {attempts} 次打磨。", "เจียระไนที่เหลือ {attempts} ครั้งให้รูน {count} ชิ้น", "Thực hiện {attempts} lần mài còn lại cho {count} Rune.", "Jalankan {attempts} asah tersisa pada {count} Rune.", "Se harán los {attempts} tallados restantes de {count} runas.", "Fazer as {attempts} lapidações restantes em {count} runas.", "Die restlichen {attempts} Veredelungen an {count} Runen ausführen.", "Выполнить оставшиеся {attempts} огранок для {count} рун."],
-"rune.bulkCraft.confirmEngrave": ["对 {count} 个符文进行剩余的 {attempts} 次打磨，并将 {engravings} 个刻印于{target}。刻印无法撤销。", "เจียระไนที่เหลือ {attempts} ครั้งให้รูน {count} ชิ้น และสลัก {engravings} ชิ้นที่{target} การสลักย้อนกลับไม่ได้", "Thực hiện {attempts} lần mài còn lại cho {count} Rune và khắc ấn {engravings} cái vào {target}. Không thể hoàn tác khắc ấn.", "Jalankan {attempts} asah tersisa pada {count} Rune dan ukir {engravings} pada {target}. Ukiran tidak bisa dibatalkan.", "Se harán los {attempts} tallados restantes de {count} runas y se grabarán {engravings} en {target}. El grabado no se puede deshacer.", "Fazer as {attempts} lapidações restantes em {count} runas e gravar {engravings} em {target}. A gravação não pode ser desfeita.", "Die restlichen {attempts} Veredelungen an {count} Runen ausführen und {engravings} auf {target} gravieren. Gravuren sind endgültig.", "Выполнить {attempts} оставшихся огранок для {count} рун и выгравировать {engravings} на {target}. Гравировку нельзя отменить."],
-"rune.bulkCraft.done": ["打磨 {attempts} 次中成功 {successes} 次 · 刻印 {engraved} 个", "เจียระไนสำเร็จ {successes}/{attempts} ครั้ง · สลัก {engraved} ชิ้น", "Mài thành công {successes}/{attempts} lần · Khắc ấn {engraved}", "Asah berhasil {successes}/{attempts} · Diukir {engraved}", "{successes} de {attempts} tallados con éxito · {engraved} grabadas", "{successes} de {attempts} lapidações com sucesso · {engraved} gravadas", "{successes} von {attempts} Veredelungen erfolgreich · {engraved} graviert", "Огранка: успешно {successes} из {attempts} · гравировок {engraved}"],
-"rune.bulkCraft.failed": ["批量打磨失败。", "เจียระไนแบบรวมล้มเหลว", "Mài hàng loạt thất bại.", "Asah massal gagal.", "Falló el tallado masivo.", "Falha na lapidação em massa.", "Massen-Veredelung fehlgeschlagen.", "Массовая огранка не удалась."],
-"rune.traitBulk.title": ["批量赋予特性", "มอบคุณลักษณะแบบรวม", "Ban đặc tính hàng loạt", "Beri Sifat Massal", "Otorgar rasgos en masa", "Conceder traços em massa", "Merkmale massenhaft verleihen", "Массовая выдача черт"],
-"rune.traitBulk.selected": ["已选 {count} / {total}", "เลือก {count} / {total}", "Đã chọn {count} / {total}", "Dipilih {count} / {total}", "Elegidas {count} / {total}", "Selecionadas {count} / {total}", "Gewählt {count} / {total}", "Выбрано {count} / {total}"],
-"rune.traitBulk.cost": ["消耗", "ใช้", "Tiêu hao", "Biaya", "Coste", "Custo", "Kosten", "Расход"],
-"rune.traitBulk.costMax": ["最多消耗", "ใช้สูงสุด", "Tiêu hao tối đa", "Biaya maks.", "Coste máx.", "Custo máx.", "Max. Kosten", "Макс. расход"],
-"rune.research.itemOwned": ["{name} · 持有 {owned}", "{name} · มี {owned}", "{name} · Có {owned}", "{name} · Dimiliki {owned}", "{name} · Tienes {owned}", "{name} · Possui {owned}", "{name} · Besitz {owned}", "{name} · В наличии {owned}"],
-"rune.traitBulk.button": ["赋予 {count} 个", "มอบ {count} ชิ้น", "Ban {count}", "Beri {count}", "Otorgar {count}", "Conceder {count}", "{count} verleihen", "Выдать {count}"],
-"rune.traitBulk.confirm": ["对所选的 {count} 个符文各使用 1 个未知的古代核心，赋予随机特性。", "ใช้แกนโบราณไร้ชื่อชิ้นละ 1 กับรูนที่เลือก {count} ชิ้น เพื่อมอบคุณลักษณะแบบสุ่ม", "Dùng mỗi rune 1 Lõi cổ đại chưa rõ cho {count} rune đã chọn để ban đặc tính ngẫu nhiên.", "Gunakan 1 Inti Purba Tak Dikenal untuk masing-masing {count} rune terpilih guna memberi sifat acak.", "Se usará un Núcleo antiguo desconocido en cada una de las {count} runas elegidas para otorgar un rasgo aleatorio.", "Será usado um Núcleo antigo desconhecido em cada uma das {count} runas selecionadas para conceder um traço aleatório.", "Für jede der {count} gewählten Runen wird ein Unbekannter uralter Kern verbraucht, um ein zufälliges Merkmal zu verleihen.", "На каждую из {count} выбранных рун уйдёт по одному Неизвестному древнему ядру — они получат случайную черту."],
-"rune.traitBulk.done": ["已赋予 {count} 个特性 · {summary}", "มอบคุณลักษณะ {count} รายการ · {summary}", "Đã ban {count} đặc tính · {summary}", "{count} sifat diberikan · {summary}", "{count} rasgos otorgados · {summary}", "{count} traços concedidos · {summary}", "{count} Merkmale verliehen · {summary}", "Выдано черт: {count} · {summary}"],
-"rune.traitBulk.failed": ["批量赋予特性失败。", "มอบคุณลักษณะแบบรวมล้มเหลว", "Ban đặc tính hàng loạt thất bại.", "Pemberian sifat massal gagal.", "Falló la asignación masiva de rasgos.", "Falha ao conceder traços em massa.", "Massenverleihung fehlgeschlagen.", "Не удалось выдать черты."],
-"rune.traitBulk.lacking": ["未知的古代核心不足。", "แกนโบราณไร้ชื่อไม่พอ", "Không đủ Lõi cổ đại chưa rõ.", "Inti Purba Tak Dikenal tidak cukup.", "No hay suficientes Núcleos antiguos desconocidos.", "Núcleos antigos desconhecidos insuficientes.", "Nicht genug Unbekannte uralte Kerne.", "Не хватает Неизвестных древних ядер."]
+"rune.bulkCraft.title": [
+"批量打磨",
+"เจียระไนแบบรวม",
+"Mài hàng loạt",
+"Asah Massal",
+"Tallado masivo",
+"Lapidação em massa",
+"Massen-Veredelung",
+"Массовая огранка"
+],
+"rune.bulkCraft.entry": [
+"批量打磨",
+"เจียระไนรวม",
+"Mài loạt",
+"Asah Massal",
+"Tallado masivo",
+"Lapidar em massa",
+"Massen-Veredelung",
+"Огранить пачкой"
+],
+"rune.bulkCraft.selected": [
+"已选 {count} / {total}",
+"เลือก {count} / {total}",
+"Đã chọn {count} / {total}",
+"Dipilih {count} / {total}",
+"Elegidas {count} / {total}",
+"Selecionadas {count} / {total}",
+"Gewählt {count} / {total}",
+"Выбрано {count} / {total}"
+],
+"rune.bulkCraft.selectAll": [
+"全选",
+"เลือกทั้งหมด",
+"Chọn tất cả",
+"Pilih Semua",
+"Elegir todas",
+"Selecionar tudo",
+"Alle wählen",
+"Выбрать все"
+],
+"rune.bulkCraft.clearAll": [
+"取消选择",
+"ยกเลิกเลือก",
+"Bỏ chọn",
+"Batalkan",
+"Quitar selección",
+"Limpar seleção",
+"Abwählen",
+"Сбросить"
+],
+"rune.bulkCraft.engrave": [
+"刻印",
+"สลัก",
+"Khắc ấn",
+"Ukir",
+"Grabado",
+"Gravação",
+"Gravur",
+"Гравировка"
+],
+"rune.bulkCraft.engrave.none": [
+"不刻印",
+"ไม่สลัก",
+"Không",
+"Tidak",
+"No",
+"Não",
+"Keine",
+"Нет"
+],
+"rune.bulkCraft.engrave.top": [
+"上方主属性",
+"หลักบน",
+"Chính trên",
+"Utama atas",
+"Principal sup.",
+"Principal sup.",
+"Obere Haupt",
+"Верхняя осн."
+],
+"rune.bulkCraft.engrave.bottom": [
+"下方主属性",
+"หลักล่าง",
+"Chính dưới",
+"Utama bawah",
+"Principal inf.",
+"Principal inf.",
+"Untere Haupt",
+"Нижняя осн."
+],
+"rune.bulkCraft.button": [
+"打磨 {count} 个",
+"เจียระไน {count} ชิ้น",
+"Mài {count}",
+"Asah {count}",
+"Tallar {count}",
+"Lapidar {count}",
+"{count} veredeln",
+"Огранить {count}"
+],
+"rune.bulkCraft.confirm": [
+"对 {count} 个符文进行剩余的 {attempts} 次打磨。",
+"เจียระไนที่เหลือ {attempts} ครั้งให้รูน {count} ชิ้น",
+"Thực hiện {attempts} lần mài còn lại cho {count} Rune.",
+"Jalankan {attempts} asah tersisa pada {count} Rune.",
+"Se harán los {attempts} tallados restantes de {count} runas.",
+"Fazer as {attempts} lapidações restantes em {count} runas.",
+"Die restlichen {attempts} Veredelungen an {count} Runen ausführen.",
+"Выполнить оставшиеся {attempts} огранок для {count} рун."
+],
+"rune.bulkCraft.confirmEngrave": [
+"对 {count} 个符文进行剩余的 {attempts} 次打磨，并将 {engravings} 个刻印于{target}。刻印无法撤销。",
+"เจียระไนที่เหลือ {attempts} ครั้งให้รูน {count} ชิ้น และสลัก {engravings} ชิ้นที่{target} การสลักย้อนกลับไม่ได้",
+"Thực hiện {attempts} lần mài còn lại cho {count} Rune và khắc ấn {engravings} cái vào {target}. Không thể hoàn tác khắc ấn.",
+"Jalankan {attempts} asah tersisa pada {count} Rune dan ukir {engravings} pada {target}. Ukiran tidak bisa dibatalkan.",
+"Se harán los {attempts} tallados restantes de {count} runas y se grabarán {engravings} en {target}. El grabado no se puede deshacer.",
+"Fazer as {attempts} lapidações restantes em {count} runas e gravar {engravings} em {target}. A gravação não pode ser desfeita.",
+"Die restlichen {attempts} Veredelungen an {count} Runen ausführen und {engravings} auf {target} gravieren. Gravuren sind endgültig.",
+"Выполнить {attempts} оставшихся огранок для {count} рун и выгравировать {engravings} на {target}. Гравировку нельзя отменить."
+],
+"rune.bulkCraft.done": [
+"打磨 {attempts} 次中成功 {successes} 次 · 刻印 {engraved} 个",
+"เจียระไนสำเร็จ {successes}/{attempts} ครั้ง · สลัก {engraved} ชิ้น",
+"Mài thành công {successes}/{attempts} lần · Khắc ấn {engraved}",
+"Asah berhasil {successes}/{attempts} · Diukir {engraved}",
+"{successes} de {attempts} tallados con éxito · {engraved} grabadas",
+"{successes} de {attempts} lapidações com sucesso · {engraved} gravadas",
+"{successes} von {attempts} Veredelungen erfolgreich · {engraved} graviert",
+"Огранка: успешно {successes} из {attempts} · гравировок {engraved}"
+],
+"rune.bulkCraft.failed": [
+"批量打磨失败。",
+"เจียระไนแบบรวมล้มเหลว",
+"Mài hàng loạt thất bại.",
+"Asah massal gagal.",
+"Falló el tallado masivo.",
+"Falha na lapidação em massa.",
+"Massen-Veredelung fehlgeschlagen.",
+"Массовая огранка не удалась."
+],
+"rune.traitBulk.title": [
+"批量赋予特性",
+"มอบคุณลักษณะแบบรวม",
+"Ban đặc tính hàng loạt",
+"Beri Sifat Massal",
+"Otorgar rasgos en masa",
+"Conceder traços em massa",
+"Merkmale massenhaft verleihen",
+"Массовая выдача черт"
+],
+"rune.traitBulk.selected": [
+"已选 {count} / {total}",
+"เลือก {count} / {total}",
+"Đã chọn {count} / {total}",
+"Dipilih {count} / {total}",
+"Elegidas {count} / {total}",
+"Selecionadas {count} / {total}",
+"Gewählt {count} / {total}",
+"Выбрано {count} / {total}"
+],
+"rune.traitBulk.cost": [
+"消耗",
+"ใช้",
+"Tiêu hao",
+"Biaya",
+"Coste",
+"Custo",
+"Kosten",
+"Расход"
+],
+"rune.traitBulk.costMax": [
+"最多消耗",
+"ใช้สูงสุด",
+"Tiêu hao tối đa",
+"Biaya maks.",
+"Coste máx.",
+"Custo máx.",
+"Max. Kosten",
+"Макс. расход"
+],
+"rune.research.itemOwned": [
+"{name} · 持有 {owned}",
+"{name} · มี {owned}",
+"{name} · Có {owned}",
+"{name} · Dimiliki {owned}",
+"{name} · Tienes {owned}",
+"{name} · Possui {owned}",
+"{name} · Besitz {owned}",
+"{name} · В наличии {owned}"
+],
+"rune.traitBulk.button": [
+"赋予 {count} 个",
+"มอบ {count} ชิ้น",
+"Ban {count}",
+"Beri {count}",
+"Otorgar {count}",
+"Conceder {count}",
+"{count} verleihen",
+"Выдать {count}"
+],
+"rune.traitBulk.confirm": [
+"对所选的 {count} 个符文各使用 1 个未知的古代核心，赋予随机特性。",
+"ใช้แกนโบราณไร้ชื่อชิ้นละ 1 กับรูนที่เลือก {count} ชิ้น เพื่อมอบคุณลักษณะแบบสุ่ม",
+"Dùng mỗi rune 1 Lõi cổ đại chưa rõ cho {count} rune đã chọn để ban đặc tính ngẫu nhiên.",
+"Gunakan 1 Inti Purba Tak Dikenal untuk masing-masing {count} rune terpilih guna memberi sifat acak.",
+"Se usará un Núcleo antiguo desconocido en cada una de las {count} runas elegidas para otorgar un rasgo aleatorio.",
+"Será usado um Núcleo antigo desconhecido em cada uma das {count} runas selecionadas para conceder um traço aleatório.",
+"Für jede der {count} gewählten Runen wird ein Unbekannter uralter Kern verbraucht, um ein zufälliges Merkmal zu verleihen.",
+"На каждую из {count} выбранных рун уйдёт по одному Неизвестному древнему ядру — они получат случайную черту."
+],
+"rune.traitBulk.done": [
+"已赋予 {count} 个特性 · {summary}",
+"มอบคุณลักษณะ {count} รายการ · {summary}",
+"Đã ban {count} đặc tính · {summary}",
+"{count} sifat diberikan · {summary}",
+"{count} rasgos otorgados · {summary}",
+"{count} traços concedidos · {summary}",
+"{count} Merkmale verliehen · {summary}",
+"Выдано черт: {count} · {summary}"
+],
+"rune.traitBulk.failed": [
+"批量赋予特性失败。",
+"มอบคุณลักษณะแบบรวมล้มเหลว",
+"Ban đặc tính hàng loạt thất bại.",
+"Pemberian sifat massal gagal.",
+"Falló la asignación masiva de rasgos.",
+"Falha ao conceder traços em massa.",
+"Massenverleihung fehlgeschlagen.",
+"Не удалось выдать черты."
+],
+"rune.traitBulk.lacking": [
+"未知的古代核心不足。",
+"แกนโบราณไร้ชื่อไม่พอ",
+"Không đủ Lõi cổ đại chưa rõ.",
+"Inti Purba Tak Dikenal tidak cukup.",
+"No hay suficientes Núcleos antiguos desconocidos.",
+"Núcleos antigos desconhecidos insuficientes.",
+"Nicht genug Unbekannte uralte Kerne.",
+"Не хватает Неизвестных древних ядер."
+]
 }

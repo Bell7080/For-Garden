@@ -30,6 +30,9 @@ import { IRNA_STORY } from "./irna";
 import { TEKU_STORY } from "./teku";
 import { PLESHA_STORY } from "./plesha";
 import { ARTE_STORY } from "./arte";
+import { BRIKA_STORY } from "./brika";
+import { BELZ_STORY } from "./belz";
+import { AR_STORY } from "./ar";
 import { registerRelicStoryTexts } from "./registerStory";
 
 /**
@@ -68,6 +71,9 @@ export const RELIC_STORIES: Readonly<Record<string, RelicStoryProfile>> = {
   teku: TEKU_STORY,
   plesha: PLESHA_STORY,
   arte: ARTE_STORY,
+  brika: BRIKA_STORY,
+  belz: BELZ_STORY,
+  ar: AR_STORY,
 };
 
 for (const story of Object.values(RELIC_STORIES)) registerRelicStoryTexts(story);

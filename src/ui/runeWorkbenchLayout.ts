@@ -13,8 +13,11 @@ import { RUNE_LIST_CONTROLS } from "./runeListControlsLayout";
 export const RUNE_WORKBENCH = {
   width: 960,
   padX: 40,
-  /** 제목표 오른쪽 띠의 전투력 줄(오른쪽 정렬). */
-  power: { y: 44, label: 20, value: 34, gap: 6 },
+  /**
+   * 제목표 오른쪽 띠의 전투력 줄(오른쪽 정렬). 이 창에서 가장 먼저 읽는 수라 크게 세우고(응태 2026-11-23),
+   * 하트 판 윗변(`heart.top`)과 한 뼘 띄운다. `room`은 제목표를 비켜 수가 쓸 수 있는 폭이다.
+   */
+  power: { y: 60, label: 24, value: 50, gap: 6, room: 560 },
   /** 버튼 셋이 판 안쪽 폭을 나눠 갖는 사이. */
   slots: { gap: 14 },
   /**
@@ -22,16 +25,16 @@ export const RUNE_WORKBENCH = {
    * 옆 글 판(`side`)은 하트 기준점에서 `y`만큼 위에, 아래 글 판(`bottom`)은 `y`만큼 아래에 선다.
    */
   heart: {
-    top: 84, height: 355, size: 340, centerY: 122, pop: 16, number: 40, tag: 18,
+    top: 112, height: 355, size: 340, centerY: 122, pop: 16, number: 40, tag: 18,
     side: { gap: 14, y: -14, height: 132, name: 26, stat: 20, line: 30 },
     bottom: { y: 180, width: 500, height: 74, name: 26, stat: 20 },
   },
   /** 비교 판. `gap`은 제목표가 걸터앉을 자리까지 품는다. */
   compare: { gap: 44, height: 262, pad: 22, label: 19, title: 26, icon: 64, name: 28, line: 21, lineHeight: 27, arrow: 26, moved: 20 },
   actions: { gap: 14, height: 64, fontSize: 24 },
-  controls: { gap: 18 },
+  controls: { gap: 14 },
   grid: { columns: 5, card: 152, cell: 172, rows: 3, listGap: 18, delta: 22, tag: 23 },
-  footer: { gap: 22, height: 84, fontSize: 26, bottom: 32 },
+  footer: { gap: 22, height: 84, fontSize: 26, bottom: 24 },
 } as const;
 
 const W = RUNE_WORKBENCH;
@@ -39,7 +42,7 @@ const W = RUNE_WORKBENCH;
 /** 하트 원화가 기준점에서 옆으로 뻗는 몫(캔버스 한 변에 대한 비율 — 알파 경계 실측 46~214 / 256). */
 export const RUNE_HEART_REACH = 0.33;
 
-/** 둘씩 서는 조작 줄(해제 · 모두 해제 / 추천 장착 · 적용)이 판 안쪽 폭을 반씩 나눠 갖는 폭. */
+/** 둘씩 서는 조작 줄(해제 · 모두 해제)이 판 안쪽 폭을 반씩 나눠 갖는 폭. */
 export function runeWorkbenchFooterWidth(): number {
   return (W.width - W.padX * 2 - W.slots.gap) / 2;
 }
@@ -48,6 +51,19 @@ export function runeWorkbenchFooterWidth(): number {
 export function runeWorkbenchFooterX(index: 0 | 1): number {
   const half = (runeWorkbenchFooterWidth() + W.slots.gap) / 2;
   return index === 0 ? -half : half;
+}
+
+/**
+ * 맨 아래 조작 셋(남은 룬 끼기 · 옮겨 끼기 · 적용)이 판 안쪽 폭을 셋으로 나눠 갖는 폭. 추천 둘을 한 버튼에 묶어 두던
+ * 때는 늘 옮겨 끼기 쪽만 물었다(응태 2026-11-23) — 어느 룬으로 채울지를 버튼이 먼저 가른다.
+ */
+export function runeWorkbenchFooter3Width(): number {
+  return (W.width - W.padX * 2 - W.slots.gap * 2) / 3;
+}
+
+/** 아래 조작 셋의 가로 중심(0 왼쪽 · 1 가운데 · 2 오른쪽). */
+export function runeWorkbenchFooter3X(index: 0 | 1 | 2): number {
+  return (index - 1) * (runeWorkbenchFooter3Width() + W.slots.gap);
 }
 
 export interface RuneWorkbenchRows {

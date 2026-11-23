@@ -445,16 +445,6 @@
 "Belegt {count}",
 "Занято {count}"
 ],
-"info.rune.loadout.recommend": [
-"推荐装备",
-"สวมที่แนะนำ",
-"Trang bị đề xuất",
-"Pasang Saran",
-"Recomendado",
-"Recomendado",
-"Empfohlen",
-"Рекомендуемое"
-],
 "info.rune.loadout.clear": [
 "全部卸下",
 "ถอดทั้งหมด",
@@ -625,16 +615,7 @@
 "Übernehmen",
 "Применить"
 ],
-"info.rune.workbench.drafted": [
-"已临时填入 · 点击应用保存",
-"ใส่ชั่วคราวแล้ว · กดใช้เพื่อบันทึก",
-"Đã điền tạm · Nhấn Áp dụng để lưu",
-"Diisi sementara · Ketuk Terapkan untuk simpan",
-"Borrador listo · Pulsa Aplicar para guardar",
-"Rascunho pronto · Toque em Aplicar para salvar",
-"Als Entwurf gesetzt · Zum Speichern übernehmen",
-"Черновик готов · Нажмите «Применить»"
-],
+"info.rune.workbench.drafted": ["已加入更换对比 · 点击应用以装备", "เพิ่มในการเปรียบเทียบแล้ว · กดใช้เพื่อสวม", "Đã thêm vào so sánh · Nhấn Áp dụng để trang bị", "Ditambahkan ke perbandingan · Ketuk Terapkan untuk memasang", "Añadido a la comparación · Pulsa Aplicar para equipar", "Adicionado à comparação · Toque em Aplicar para equipar", "Zum Vergleich hinzugefügt · Mit Übernehmen anlegen", "Добавлено в сравнение · Нажмите «Применить», чтобы надеть"],
 "info.rune.workbench.unsavedTitle": [
 "应用变更",
 "ใช้การเปลี่ยนแปลง",
@@ -650,9 +631,11 @@
 "info.rune.workbench.discard": ["不应用", "ไม่ใช้", "Không áp dụng", "Jangan terapkan", "No aplicar", "Não aplicar", "Nicht übernehmen", "Не применять"],
 "info.rune.workbench.compareTitle": ["更换对比", "เปรียบเทียบการเปลี่ยน", "So sánh thay đổi", "Bandingkan", "Comparar", "Comparar", "Vergleich", "Сравнение"],
 "info.rune.workbench.moveLead": ["把其他遗物装备的以下符文移过来装备。", "จะย้ายรูนด้านล่างที่เรลิกอื่นสวมอยู่มาสวมให้", "Chuyển các Rune dưới đây từ Di vật khác sang trang bị.", "Rune di bawah ini akan dipindahkan dari Relik lain.", "Se tomarán estas Runas de otras Reliquias.", "Estas Runas serão tiradas de outras Relíquias.", "Diese Runen werden von anderen Relikten übernommen.", "Эти руны будут забраны у других Реликтов."],
+"info.rune.workbench.freeLead": ["从无人装备的符文中挑选的推荐。", "คำแนะนำจากรูนที่ไม่มีใครสวมอยู่", "Gợi ý từ các Rune chưa ai trang bị.", "Rekomendasi dari Rune yang tidak dipakai siapa pun.", "Recomendación con Runas que nadie usa.", "Recomendação com Runas que ninguém usa.", "Empfehlung aus Runen, die niemand trägt.", "Рекомендация из рун, которые никто не носит."],
+"info.rune.workbench.toCompare": ["加入更换对比", "เพิ่มในการเปรียบเทียบ", "Thêm vào so sánh", "Tambah ke perbandingan", "Añadir a la comparación", "Adicionar à comparação", "Zum Vergleich", "Добавить в сравнение"],
 "info.rune.workbench.moveSlot": ["{slot}号格", "ช่อง {slot}", "Ô {slot}", "Slot {slot}", "Casilla {slot}", "Espaço {slot}", "Platz {slot}", "Ячейка {slot}"],
-"info.rune.workbench.moveAccept": ["移过来", "ย้ายมา", "Chuyển sang", "Pindahkan", "Tomarlas", "Tirar", "Übernehmen", "Забрать"],
-"info.rune.workbench.moveFree": ["仅用空闲符文", "เฉพาะรูนว่าง", "Chỉ Rune trống", "Hanya Rune bebas", "Solo Runas libres", "Só Runas livres", "Nur freie Runen", "Только свободные руны"],
+"info.rune.workbench.moveAccept": ["移过来", "ย้ายมา", "Chuyển sang", "Pindahkan", "Tomar Runas", "Tirar", "Runen holen", "Забрать"],
+"info.rune.workbench.moveFree": ["装备空闲符文", "สวมรูนว่าง", "Trang bị Rune trống", "Pasang Rune bebas", "Equipar Runas libres", "Equipar Runas livres", "Freie Runen anlegen", "Надеть свободные руны"],
 "info.journal.title": [
 "观察日志",
 "บันทึกการสังเกต",

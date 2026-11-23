@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
   BREAK_CONFIRM,
+  BREAK_CONFIRM_CARD,
   BREAK_STEPS,
+  breakConfirmCardLayout,
   breakConfirmHeight,
   breakthroughStepsLayout,
   stepsFirstRowClearsBevel,
@@ -134,6 +136,34 @@ describe("한계 돌파 확정 창", () => {
     expect(BREAK_CONFIRM.capY - BREAK_CONFIRM.gradeY).toBeGreaterThanOrEqual(BREAK_CONFIRM.gradeSize);
     expect(BREAK_CONFIRM.actionY - BREAK_CONFIRM.action.height / 2)
       .toBeGreaterThan(BREAK_CONFIRM.costY + BREAK_CONFIRM.costFrame / 2 + 58);
+  });
+
+  it("은 이번 단계의 효과 카드를 표와 같은 한 장으로 세운다", () => {
+    // 응태 요청 2026-11-23 — 파편만 보이던 창에 이번에 열리는 효과를 돋보기 표와 같은 카드로 세운다.
+    expect(INFO_SOURCE).toMatch(/addBreakthroughStepCard\(this\.scene, body, def, progress\.breakthrough, step/);
+    expect(BREAK_CONFIRM_CARD.width).toBe(BREAK_STEPS.width);
+  });
+
+  it("은 효과 카드가 길어져도 줄끼리 겹치지 않고 화면 안에 든다", () => {
+    const longest = breakthroughStepsLayout(1, [BREAK_STEPS.textSize * 6]).rowHeights[0];
+    for (const cardHeight of [BREAK_STEPS.row.height, longest]) {
+      for (const notice of [false, true]) {
+        const layout = breakConfirmCardLayout(cardHeight, notice);
+        const cardBottom = layout.cardY + cardHeight / 2;
+        // 카드는 성장 줄 아래에서 시작하고, 「다음 단계」 이름표(윗변에 걸터앉는다)도 성장 줄을 덮지 않는다.
+        expect(layout.cardY - cardHeight / 2 - BREAK_STEPS.next.tagHeight / 2 - BREAK_STEPS.next.tagLift).toBeGreaterThan(BREAK_CONFIRM.capY + 26);
+        if (notice) {
+          expect(layout.universalNoticeY).toBeGreaterThan(cardBottom + 20);
+          expect(layout.costY - BREAK_CONFIRM.costFrame / 2).toBeGreaterThan(layout.universalNoticeY + 20);
+        } else {
+          expect(layout.costY - BREAK_CONFIRM.costFrame / 2).toBeGreaterThan(cardBottom + 20);
+        }
+        expect(layout.actionY - BREAK_CONFIRM.action.height / 2).toBeGreaterThan(layout.costY + BREAK_CONFIRM.costFrame / 2 + 58);
+        expect(layout.height).toBe(layout.actionY + BREAK_CONFIRM.action.height / 2 + BREAK_CONFIRM.actionBottomMargin);
+        // 화면 가운데에 선 판이 판 밖 뒤로가기를 덮지 않는다.
+        expect(BASE_HEIGHT / 2 + layout.height / 2).toBeLessThan(BACK_SLOT.y - BACK_BUTTON_SIZE / 2);
+      }
+    }
   });
 
   it("은 두 창이 같은 별 수를 말한다", () => {

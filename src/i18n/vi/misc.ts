@@ -352,6 +352,7 @@ export const MISC_VI = {
   "dialogue.auto": "Tự động",
   "dialogue.log": "Nhật ký",
   "dialogue.hide": "Ẩn",
+  "dialogue.settings": "Cài đặt",
   "intro.title": "Hướng dẫn",
   "intro.confirm": "Đã hiểu",
   "tutorial.tour.next": "Chạm màn hình để tiếp tục · {step}/{total}",

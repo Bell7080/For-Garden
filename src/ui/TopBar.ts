@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { registerSettingsAccess } from "./settingsAccess";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugProgress } from "../debug";
 import { session } from "../state/session";
@@ -114,6 +115,8 @@ export class TopBar {
     if (before && options.depth !== undefined) {
       for (const child of scene.children.list) if (!before.has(child)) (child as unknown as Phaser.GameObjects.Components.Depth).setDepth?.(options.depth);
     }
+    // 튜토리얼 막이 화면을 덮어도 설정만은 열리게 막 위로 올라갈 수 있게 적어 둔다(`settingsAccess`).
+    registerSettingsAccess(scene, [settings], hit);
     this.refresh();
     // 회복 카운트다운은 표시만 갱신하며 확정 스테미나는 다음 서버 응답만 반영한다.
     scene.time.addEvent({ delay: 1_000, loop: true, callback: () => this.refresh() });

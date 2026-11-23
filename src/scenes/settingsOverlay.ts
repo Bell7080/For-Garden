@@ -12,7 +12,17 @@ import type { SettingsOverlayHost } from "./settingsNavigation";
  *
  * 언어·글자 크기는 그린 순간의 글자를 굳히므로, 그 둘이 바뀌어 돌아오면 그 화면을 같은 진입 데이터로 다시 세운다.
  */
-export function openSettingsOver(scene: Phaser.Scene, host: Exclude<SettingsOverlayHost, "battle">): void {
+export function openSettingsOver(
+  scene: Phaser.Scene,
+  host: Exclude<SettingsOverlayHost, "battle">,
+  options: {
+    /**
+     * 언어·글자 크기가 바뀌어 다시 세울 때 넘길 진입 데이터. 없으면 처음 들어온 데이터 그대로다 — 이야기 화면은
+     * 지금 읽던 대사 노드를 실어 처음으로 돌아가지 않게 한다.
+     */
+    restartData?: () => object;
+  } = {},
+): void {
   scene.scene.launch("settings", { overlayOf: host });
   scene.scene.bringToTop("settings");
   // 누른 자리 파문은 어느 화면에서나 맨 위다 — 설정을 올린 뒤 그 층을 다시 맨 위로 올린다.
@@ -21,7 +31,7 @@ export function openSettingsOver(scene: Phaser.Scene, host: Exclude<SettingsOver
   const before = look();
   const onWake = () => {
     setDebugScene(host);
-    if (look() !== before) restartScene(scene, scene.sys.settings.data as object | undefined);
+    if (look() !== before) restartScene(scene, options.restartData?.() ?? scene.sys.settings.data as object | undefined);
   };
   scene.events.once(Phaser.Scenes.Events.WAKE, onWake);
   // 설정이 부트로 나가며 이 씬을 멈추면 깨어날 일이 없다 — 걸어 둔 리스너가 다음 잠듦까지 남지 않게 걷는다.

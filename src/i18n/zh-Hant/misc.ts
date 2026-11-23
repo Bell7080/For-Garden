@@ -352,6 +352,7 @@ export const MISC_ZH_HANT = {
   "dialogue.auto": "自動",
   "dialogue.log": "記錄",
   "dialogue.hide": "隱藏",
+  "dialogue.settings": "設定",
   "intro.title": "指引",
   "intro.confirm": "知道了",
   "tutorial.tour.next": "點選螢幕繼續 · {step}/{total}",

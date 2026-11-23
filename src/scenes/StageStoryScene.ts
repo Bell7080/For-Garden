@@ -17,6 +17,7 @@ import { t } from "../i18n";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { playStoryTitleCard } from "../ui/StoryTitleCard";
 import type { SceneRoute } from "./stageStoryRoute";
+import { openSettingsOver } from "./settingsOverlay";
 
 /** 지도 서브 노드의 정적 대사를 재생하고 완료 저장 뒤 지도를 새로 만드는 전용 씬이다. */
 export class StageStoryScene extends Phaser.Scene {
@@ -35,7 +36,10 @@ export class StageStoryScene extends Phaser.Scene {
 
   constructor() { super("stageStory"); }
 
-  create(data: { storyId: string; exitTo?: "lobby" | "stageMap"; then?: SceneRoute; overlayOf?: string }): void {
+  /** 설정에서 언어·글자 크기를 바꿔 다시 세울 때 이어 갈 대사 노드. 없으면 처음부터다. */
+  private resuming = false;
+
+  create(data: { storyId: string; exitTo?: "lobby" | "stageMap"; then?: SceneRoute; overlayOf?: string; resumeNodeId?: string }): void {
     this.exitTo = data.exitTo ?? "stageMap";
     this.then = data.then;
     this.overlayOf = data.overlayOf;
@@ -43,10 +47,18 @@ export class StageStoryScene extends Phaser.Scene {
     // 대사 씬도 다른 ready 소유 씬과 같은 시작/종료 초기화 규칙을 사용한다.
     bindDebugReadyLifecycle(this.events);
     this.story = getRecollectionStory(data.storyId);
-    this.flow = new DialogueFlow(this.story);
+    this.flow = new DialogueFlow(this.story, data.resumeNodeId);
+    this.resuming = data.resumeNodeId !== undefined && this.flow.current.id === data.resumeNodeId;
     setDebugScene("stageStory");
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void).setDepth(-40);
-    this.layer = new DialogueLayer(this, (choice) => this.advance(choice), { backdrop: this.story.backdrop ?? "relics" });
+    this.layer = new DialogueLayer(this, (choice) => this.advance(choice), {
+      backdrop: this.story.backdrop ?? "relics",
+      // 끝내는 저장이 도는 중에는 열지 않는다 — 잠든 사이 끝난 저장이 다음 화면으로 넘어가 버린다.
+      onSettings: () => {
+        if (this.leaving) return;
+        openSettingsOver(this, "stageStory", { restartData: () => ({ ...data, resumeNodeId: this.flow.current.id }) });
+      },
+    });
     this.layer.prefetch(dialogueStandingOrder(this.story, speakerStanding));
     void this.openStory();
     this.popups = new PopupLayer(this, 2500);
@@ -68,7 +80,8 @@ export class StageStoryScene extends Phaser.Scene {
 
   /** 제목표가 있는 이야기는 그것이 걷힌 뒤에 첫 대사를 연다. */
   private async openStory(): Promise<void> {
-    if (this.story.titleCard) {
+    // 설정에서 돌아와 다시 선 화면은 제목표를 다시 틀지 않고 읽던 대사에서 잇는다.
+    if (this.story.titleCard && !this.resuming) {
       await playStoryTitleCard(this, this.story.titleCard);
       // 제목표가 도는 사이 씬이 닫혔으면 첫 대사를 열지 않는다.
       if (!this.scene.isActive()) return;

@@ -25,7 +25,8 @@ const GLOW = { width: 96, alpha: 0.5, pulseLow: 0.45, pulseMs: 760 } as const;
  */
 export class TabStripEdgeHint {
   private readonly sides: Record<"left" | "right", Phaser.GameObjects.Container>;
-  private readonly tweens: Phaser.Tweens.Tween[] = [];
+  /** 쪽마다 숨 쉬는 트윈 — 숨은 쪽은 멈춰 두어 보이지 않는 동안 프레임을 쓰지 않는다. */
+  private readonly sideTweens: Record<"left" | "right", Phaser.Tweens.Tween[]> = { left: [], right: [] };
 
   constructor(scene: Phaser.Scene, parent: Phaser.GameObjects.Container | undefined, options: TabStripEdgeHintOptions) {
     const make = (side: "left" | "right"): Phaser.GameObjects.Container => {
@@ -57,8 +58,11 @@ export class TabStripEdgeHint {
       }
       parent?.add(node);
       if (motionPolicy(session.settings).nonEssentialRepeatFactor > 0) {
-        this.tweens.push(scene.tweens.add({ targets: node, alpha: GLOW.pulseLow, duration: GLOW.pulseMs, yoyo: true, repeat: -1, ease: "Sine.easeInOut" }));
-        this.tweens.push(scene.tweens.add({ targets: chevron, x: -inward * 5, duration: GLOW.pulseMs, yoyo: true, repeat: -1, ease: "Sine.easeInOut" }));
+        const tweens = this.sideTweens[side];
+        tweens.push(scene.tweens.add({ targets: node, alpha: GLOW.pulseLow, duration: GLOW.pulseMs, yoyo: true, repeat: -1, ease: "Sine.easeInOut", paused: true }));
+        tweens.push(scene.tweens.add({ targets: chevron, x: -inward * 5, duration: GLOW.pulseMs, yoyo: true, repeat: -1, ease: "Sine.easeInOut", paused: true }));
+        // 줄째 부서져도(부모 컨테이너가 먼저 걷혀도) 트윈이 남아 돌지 않게 한다.
+        node.once(Phaser.GameObjects.Events.DESTROY, () => { tweens.forEach((tween) => tween.remove()); tweens.length = 0; });
       }
       return node;
     };
@@ -66,15 +70,19 @@ export class TabStripEdgeHint {
   }
 
   setSides(sides: { left: boolean; right: boolean }): void {
-    if (this.sides.left.active) this.sides.left.setVisible(sides.left);
-    if (this.sides.right.active) this.sides.right.setVisible(sides.right);
+    (["left", "right"] as const).forEach((side) => {
+      const node = this.sides[side];
+      if (!node.active) return;
+      node.setVisible(sides[side]);
+      this.sideTweens[side].forEach((tween) => { if (sides[side]) tween.resume(); else tween.pause(); });
+    });
   }
 
   /** 줄을 담은 컨테이너 위에 서야 하므로 깊이를 맞출 때 쓴다(씬 직속일 때). */
   setDepth(depth: number): this { this.sides.left.setDepth(depth); this.sides.right.setDepth(depth); return this; }
 
   destroy(): void {
-    this.tweens.forEach((tween) => tween.remove());
+    this.sideTweens.left.forEach((tween) => tween.remove()); this.sideTweens.right.forEach((tween) => tween.remove());
     this.sides.left.destroy(); this.sides.right.destroy();
   }
 }

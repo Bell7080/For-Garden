@@ -22,6 +22,8 @@ export interface SettingsEntryData {
 /** 설정을 겹쳐 열 수 있는 씬. 외부 입력이 임의 씬을 깨우지 못하게 목록으로 받는다. */
 export const SETTINGS_OVERLAY_HOSTS = [
   "battle", "party", "stageMap", "raid", "bounty", "cakeOperation", "duel", "guild", "event", "pvpPreview",
+  // 이야기 화면(오프닝·지도 곁 이야기·애착 스토리) — 대사 도중에도 설정을 열고, 닫으면 그 대사에서 이어 간다.
+  "opening", "stageStory",
 ] as const;
 export type SettingsOverlayHost = typeof SETTINGS_OVERLAY_HOSTS[number];
 
@@ -44,4 +46,20 @@ export function validateSettingsReturn(data: unknown): Required<Pick<SettingsEnt
   if (returnScene !== "premium" || !candidate.returnData || typeof candidate.returnData !== "object") return { returnScene };
   const section = (candidate.returnData as Record<string, unknown>).section;
   return section === "premium" ? { returnScene, returnData: { section } } : { returnScene };
+}
+
+/**
+ * Phaser 씬 상태 중 「설정 아래에서 기다리는」 구간 — PAUSED(6)·SLEEPING(7). 돌고 있는 씬(RUNNING 5)은 걷지 않는다:
+ * 아레나 알림 띠(`arenaNotice`)처럼 처음부터 늘 떠 있는 겹이 있고, 부트가 그 겹들을 다시 세우지 않는다.
+ */
+const SCENE_WAITING = { from: 6, to: 7 } as const;
+
+/**
+ * 설정이 부트로 나갈 때(로그아웃·탈퇴·저장 초기화·계정 전환) 함께 멈출 씬들. 설정 자신과 어느 화면에서나 늘 떠 있는
+ * 겹(`keepKey` — 누른 자리 파문·운영 안내)을 빼고, 잠들었거나 멈춘 채 기다리던 씬을 모두 걷는다.
+ */
+export function settingsLeaveStopKeys(scenes: readonly { key: string; status: number }[], selfKey: string, keepKey: string): string[] {
+  return scenes
+    .filter(({ key, status }) => key !== selfKey && key !== keepKey && status >= SCENE_WAITING.from && status <= SCENE_WAITING.to)
+    .map(({ key }) => key);
 }

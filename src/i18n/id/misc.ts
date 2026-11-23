@@ -351,6 +351,7 @@ export const MISC_ID = {
   "dialogue.auto": "Otomatis",
   "dialogue.log": "Log",
   "dialogue.hide": "Sembunyi",
+  "dialogue.settings": "Pengaturan",
   "intro.title": "Panduan",
   "intro.confirm": "Mengerti",
   "tutorial.tour.next": "Ketuk layar untuk lanjut · {step}/{total}",

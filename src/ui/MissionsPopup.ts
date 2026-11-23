@@ -1,4 +1,6 @@
 import { NotificationDot } from "./NotificationDot";
+import { notificationCorner } from "./notificationDotStyle";
+import { addClaimHalo } from "./claimHalo";
 import { onAccountSwitch } from "../core/accountScope";
 import { hasRemoteState } from "../api/resultState";
 import { setDebugMissionsPeriod } from "../debug";
@@ -63,6 +65,7 @@ export class MissionsPopup {
   private footer?: Phaser.GameObjects.Container;
   private resetText?: Phaser.GameObjects.Text;
   private resetTimer?: Phaser.Time.TimerEvent;
+  private stopNotice?: () => void;
   private bars: HoloBar[] = [];
   /** 흐르는 목록과 그 줄들. 줄 하나가 컨테이너 하나라 창 밖으로 나간 줄을 통째로 감춘다. */
   private scrollContent?: Phaser.GameObjects.Container;
@@ -86,10 +89,12 @@ export class MissionsPopup {
     const { popup } = MISSIONS_POPUP_LAYOUT;
     const width = BASE_WIDTH - popup.widthInset;
     const height = BASE_HEIGHT - popup.heightInset;
-    this.popups.open({ width, height, title: t("missions.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: true, backButton: true, onClose: () => { this.destroyContent(); this.footer?.destroy(); this.footer = undefined; this.resetTimer?.remove(); this.resetTimer = undefined; this.body = undefined; this.onClose?.(); } }, (body) => {
+    this.popups.open({ width, height, title: t("missions.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: true, backButton: true, onClose: () => { this.stopNotice?.(); this.stopNotice = undefined; this.destroyContent(); this.footer?.destroy(); this.footer = undefined; this.resetTimer?.remove(); this.resetTimer = undefined; this.body = undefined; this.onClose?.(); } }, (body) => {
       this.body = body;
       // 초기화 시각은 1초마다 글자만 갈아 끼운다 — 판을 다시 세우면 화면이 깜빡인다.
       this.resetTimer = this.scene.time.addEvent({ delay: 1000, loop: true, callback: () => this.paintReset() });
+      // 급여·수확·연구처럼 창 밖에서 찬 임무도 열린 창의 점·후광이 곧바로 따라온다. 서버가 받을 수가 바뀌었을 때만 알린다.
+      this.stopNotice = this.api.subscribeMissionNotice?.(() => void this.refreshQuietly());
       void this.refresh();
     });
   }
@@ -105,6 +110,18 @@ export class MissionsPopup {
     const result = await withBusy(this.scene, this.api.getMissions());
     this.missions = result.missions; this.research = result.research;
     this.render(); setDebugMissionsPeriod(this.period);
+  }
+
+  /** 알림으로 다시 읽을 때는 기다림 표시 없이 읽고, 바뀐 것이 있을 때만 그 자리에서 다시 그린다. */
+  private async refreshQuietly(): Promise<void> {
+    if (!this.body || this.claiming) return;
+    try {
+      const result = await this.api.getMissions();
+      if (!this.body || this.claiming) return;
+      if (JSON.stringify([result.missions, result.research]) === JSON.stringify([this.missions, this.research])) return;
+      this.missions = result.missions; this.research = result.research;
+      this.render();
+    } catch (error) { logError("missions.live", "임무 실시간 갱신 실패", error); }
   }
 
   private destroyContent(): void { this.bars.forEach((bar) => bar.destroy()); this.bars = []; this.list?.destroy(); this.list = undefined; this.scrollContent = undefined; this.rows = []; this.resetText = undefined; }
@@ -249,16 +266,15 @@ export class MissionsPopup {
     const holder = this.scene.add.container(rewardX, y);
     list.add(holder);
     if (mission.claimable) {
-      const halo = this.scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
-      halo.fillStyle(COLOR.missionClaim, 0.4).fillPoints(toPoints(chipPoints(rewardSize + 24, rewardSize + 24, { bevel: { topLeft: rewardSize * 0.28, topRight: 0, bottomRight: rewardSize * 0.28, bottomLeft: 0 } })), true);
-      holder.add(halo);
-      this.scene.tweens.add({ targets: halo, alpha: { from: 0.3, to: 1 }, duration: 700, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+      holder.add(addClaimHalo(this.scene, { size: rewardSize }).image);
     }
     const reward = new RewardFrame(this.scene, 0, 0, { icon: CURRENCY_ICON_BY_WALLET[mission.reward.currency], amount: mission.reward.amount, size: rewardSize, state: mission.state, onClick: mission.claimable ? () => void this.claimOne(mission.id) : undefined });
     // **아직 못 받는 보상은 반투명하다.** 받을 수 있는 것과 같은 진하기로 서 있으면 "지금
     // 누를 수 있는가"를 액자가 아니라 글자로 세어야 한다.
     if (!mission.claimable && !mission.claimed) reward.setAlpha(0.55);
     holder.add(reward);
+    // 받을 수 있는 액자는 업적·도감과 같은 자리(우상단 안쪽)에 공용 붉은 점이 선다.
+    if (mission.claimable) new NotificationDot(this.scene, holder, notificationCorner("frame", rewardSize, rewardSize));
     if (mission.claimable && motionPolicy(session.settings).nonEssentialDistanceFactor > 0) {
       this.scene.tweens.add({ targets: holder, scale: { from: 1, to: 1.08 }, duration: 620, yoyo: true, repeat: -1, ease: "Sine.InOut" });
     }
@@ -334,16 +350,14 @@ export class MissionsPopup {
     const onClick = claimable ? () => void this.claimStage(stage.id) : undefined;
     if (claimable) {
       // 받을 수 있는 마디는 액자 뒤에서 호박빛이 숨 쉰다 — 게이지를 채운 끝에 무엇을 누를지가 한눈에 읽힌다.
-      const halo = this.scene.add.graphics({ x, y: layout.frameY }).setBlendMode(Phaser.BlendModes.ADD);
-      halo.fillStyle(COLOR.missionClaim, 0.4).fillPoints(toPoints(chipPoints(frameSize + 26, frameSize + 26, { bevel: { topLeft: frameSize * 0.28, topRight: 0, bottomRight: frameSize * 0.28, bottomLeft: 0 } })), true);
-      list.add(halo);
-      this.scene.tweens.add({ targets: halo, alpha: { from: 0.35, to: 1 }, duration: 700, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+      list.add(addClaimHalo(this.scene, { size: frameSize, spread: 26, from: 0.35, x, y: layout.frameY }).image);
     }
     const holder = this.scene.add.container(x, layout.frameY);
     list.add(holder);
     const frame = new RewardFrame(this.scene, 0, 0, { icon: CURRENCY_ICON_BY_WALLET[primary.currency], amount: primary.amount, size: frameSize, state, onClick });
     if (!stage.achieved) frame.setAlpha(0.72);
     holder.add(frame);
+    if (claimable) new NotificationDot(this.scene, holder, notificationCorner("frame", frameSize, frameSize));
     // 열린 마디는 임무 액자와 같은 박자로 숨 쉰다 — 임무를 받는 손과 따로, 여기서 받는다.
     if (claimable && motionPolicy(session.settings).nonEssentialDistanceFactor > 0) {
       this.scene.tweens.add({ targets: holder, scale: { from: 1, to: 1.08 }, duration: 620, yoyo: true, repeat: -1, ease: "Sine.InOut" });
@@ -360,7 +374,8 @@ export class MissionsPopup {
       const pending = this.claimableCount(period);
       const tab = addCategoryTab(this.scene, footer, { x: missionsTabX(index), y: layout.tabY, width: layout.tab.width, height: layout.tab.height, label: t(period === "daily" ? "missions.tab.daily" : "missions.tab.weekly"), selected: period === this.period, onSelect: () => this.select(period) });
       // 다른 기간에 받을 것이 남아 있으면 라벨 오른쪽 위에 공용 붉은 점이 선다(로비·업적·패스 탭과 같은 한 장).
-      if (pending > 0) new NotificationDot(this.scene, tab, { x: layout.tab.width / 2 - 16, y: -layout.tab.height / 2 + 8 });
+      // 지금 열린 탭에는 세우지 않는다 — 그 목록의 액자들이 이미 저마다 점을 달고 있다.
+      if (pending > 0 && period !== this.period) new NotificationDot(this.scene, tab, notificationCorner("tab", layout.tab.width, layout.tab.height));
     });
     const claimable = this.claimableCount(this.period);
     const claim = new Button(this.scene, layout.claim.x, layout.claim.y, { width: layout.claim.width, height: layout.claim.height, label: t("missions.claimAll"), ...CLAIM_ALL_BUTTON_STYLE, onClick: () => void this.claimAll() });

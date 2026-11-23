@@ -33,6 +33,7 @@ import { tradePackageValuePercent } from "../data/tradePackages";
 import { openRewardPopup, productGrantsToRewardItems } from "../ui/RewardPopup";
 import { notificationManager } from "../managers/NotificationManager";
 import { NotificationDot } from "../ui/NotificationDot";
+import { notificationCorner } from "../ui/notificationDotStyle";
 import { addSoldOutStamp, forgetSoldOutStamp, styleLimitCount } from "../ui/soldOutStamp";
 import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { DialogueBubble } from "../ui/DialogueBubble";
@@ -683,7 +684,7 @@ export class ShopScene extends Phaser.Scene {
     if (soldOut) addSoldOutStamp(this, card, width, SHOP_CARD.height, showcaseCardBevel(width, SHOP_CARD.height), product.id);
     else forgetSoldOutStamp(product.id);
     // 아직 받지 않은 무료 칸은 로비 상점 칩의 붉은 점이 가리키는 그 칸이다 — 같은 점을 여기에도 단다.
-    if (product.acquisition.kind === "free" && product.purchasable) new NotificationDot(this, card, { x: width / 2 - 20, y: -SHOP_CARD.height / 2 + 20 });
+    if (product.acquisition.kind === "free" && product.purchasable) new NotificationDot(this, card, notificationCorner("card", width, SHOP_CARD.height));
     /*
      * **창 밖으로 흘러간 칸은 손을 받지 않는다.** GeometryMask는 그리기만 자르므로, 위로 흘러가
      * 가려진 칸의 입력면이 무대 위에 그대로 남아 점원을 누른 손을 가로챘다(카드가 점원보다 위
@@ -854,8 +855,9 @@ export class ShopScene extends Phaser.Scene {
       const freeId = this.stage.ad?.freeProductId;
       const freeHere = productsForShopTab(this.products, tab.id, this.storefront).some((product) => product.id !== freeId && product.acquisition.kind === "free" && product.purchasable)
         || (this.freeAdSlotOn(tab.id) && this.freeProduct()?.purchasable === true);
-      if (freeHere) {
-        new NotificationDot(this, tabObject, { x: SHOP_TAB_ROW.width / 2 - 18, y: -SHOP_TAB_ROW.height / 2 + 10 });
+      // 지금 열린 탭은 무료 칸 자신이 점을 달고 있다.
+      if (freeHere && tab.id !== this.selectedCategory) {
+        new NotificationDot(this, tabObject, notificationCorner("tab", SHOP_TAB_ROW.width, SHOP_TAB_ROW.height));
       }
     });
   }

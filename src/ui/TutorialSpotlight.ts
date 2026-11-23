@@ -3,6 +3,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { settingsManager } from "../managers/SettingsManager";
 import { chipPoints, drawLayer } from "./holo";
 import { pressIn, pressOut } from "./pressFeedback";
+import { raiseSettingsAccess, settingsAccessRects } from "./settingsAccess";
 import { COLOR, textStyle } from "./theme";
 import { TUTORIAL_SKIP_CHIP, tutorialSkipSpot } from "./tutorialSkipLayout";
 
@@ -55,6 +56,7 @@ const DIM_ALPHA = 0.66;
 export class TutorialSpotlight {
   private readonly objects: Phaser.GameObjects.GameObject[] = [];
   private destroyed = false;
+  private releaseSettings?: () => void;
 
   constructor(private readonly scene: Phaser.Scene, options: TutorialSpotlightOptions) {
     const depth = options.depth ?? TUTORIAL_SPOTLIGHT_DEPTH;
@@ -67,6 +69,8 @@ export class TutorialSpotlight {
       this.objects.push(scene.add.rectangle(x + width / 2, y + height / 2, width, height, 0x000000, DIM_ALPHA).setDepth(depth).setInteractive());
     };
     if (!options.passive) {
+      // 막이 덮는 동안에도 설정은 열린다 — 막 위로 올렸다가 막이 걷힐 때 내린다.
+      this.releaseSettings = raiseSettingsAccess(scene, depth);
       dim(0, 0, BASE_WIDTH, top);
       dim(0, bottom, BASE_WIDTH, BASE_HEIGHT - bottom);
       dim(0, top, left, bottom - top);
@@ -131,7 +135,7 @@ export class TutorialSpotlight {
 
     if (options.onSkip) {
       // 구멍이 먼저, 안내 글·보조 글이 그다음 — 칩이 눌러야 할 자리나 읽어야 할 말을 덮지 않게 한다.
-      const avoid = [{ x: left, y: top, width: right - left, height: bottom - top }];
+      const avoid = [{ x: left, y: top, width: right - left, height: bottom - top }, ...settingsAccessRects(scene)];
       for (const text of this.objects) if (text instanceof Phaser.GameObjects.Text && text !== arrow) avoid.push(text.getBounds());
       this.addSkipChip(options.onSkip, options.skipLabel ?? "", avoid, depth + 3);
     }
@@ -217,6 +221,7 @@ export class TutorialSpotlight {
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
+    this.releaseSettings?.();
     // TweenChain.remove(tween)는 사슬에서 한 고리를 빼는 함수라 인자 없이 부르면 던진다 — 사슬 전체는 stop으로 멈춘다.
     this.chain?.stop();
     for (const object of this.objects) {

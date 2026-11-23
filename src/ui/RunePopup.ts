@@ -28,16 +28,20 @@ import { addMarkChip } from "./MarkChip";
 import { formatCurrency } from "../core/formatCurrency";
 import { FaceFrame } from "./FaceFrame";
 import { COLOR, textStyle } from "./theme";
+import { BASE_WIDTH } from "../config/gameConfig";
+import { BACK_SLOT } from "./popupGeometry";
 import { audioManager } from "../managers/AudioManager";
 import { contentOpen, showContentLockedToast } from "./contentLock";
 import { LOCK_DIM } from "./lockStyle";
-import { startNavScene, startScene } from "./screenTransition";
+import { slideTabPage, startNavScene, startScene } from "./screenTransition";
 import { NAV_TABS, navTabDirection } from "../core/navTabs";
 import { tutorialManager } from "../managers/TutorialManager";
 import { logError, reportCatch } from "../managers/ErrorReporter";
 import { showContentToast } from "./ContentToast";
 import { guideFreeRuneCraft, unionRects } from "./freeRuneCraftTutorial";
 import { openRuneNamePopup } from "./RuneNamePopup";
+import { addPageChevrons } from "./PageChevrons";
+import { runeBrowseNeighbor, runeBrowsePosition, runeBrowseSwipe } from "../core/runeBrowse";
 
 /**
  * 룬 옵션 키의 공용 표시명이다.
@@ -66,6 +70,13 @@ export interface RunePopupOptions {
   /** 테스트와 실제 HTTP 구현 교체를 위해 API 경계를 주입할 수 있다. */
   api?: GameApi;
   onChanged?: (rune: RuneInstance) => void;
+  /**
+   * 「좌우로 넘기기」 — 가방에서 연 판만 받는다. 연 순간 가방이 그려 둔 룬 줄(정렬·필터·검색을 지난 그대로)이고,
+   * 쪽지·세공 판 양옆 꺾쇠·쓸어 넘기기·방향키가 그 줄의 옆 룬으로 같은 판을 갈아 끼운다(`core/runeBrowse.ts`).
+   */
+  browse?: { order: readonly string[] };
+  /** 넘겨서 들어온 판이면 그 방향. 새 판이 그 쪽에서 밀려 들어온다. */
+  browseFrom?: -1 | 1;
 }
 
 /** 정보창에서 열었을 때만 주어지는 장착 대상. 없으면 정보 쪽지에 장착 버튼이 서지 않는다. */
@@ -228,8 +239,14 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
   const showBag = options.openBag !== undefined && equippedRuneSlot(rune.instanceId) !== undefined;
   const showTrait = options.traitResearch === true;
   const layout = runeNoteLayout(stats.length, traitBody ? Math.max(1, traitBody.getBounds().height) : 0, showBag || showTrait);
-  popups.open({ width: panel.width, height: layout.height, title: t("rune.title"), titleSize: POPUP_TITLE_SIZE.workboard, y: panel.centerY, dim: true, backButton: true, onClose: options.onClose }, (body, close) => {
+  /** 옆 룬으로 갈아 끼우는 닫기는 판을 떠나는 닫기가 아니다 — 부른 화면의 `onClose`를 부르지 않는다. */
+  let browsing = false;
+  popups.open({ width: panel.width, height: layout.height, title: t("rune.title"), titleSize: POPUP_TITLE_SIZE.workboard, y: panel.centerY, dim: true, backButton: true, onClose: () => { if (!browsing) options.onClose?.(); } }, (body, close) => {
     const top = -layout.height / 2;
+    mountRuneBrowse(scene, popups, body, {
+      width: panel.width, height: layout.height, currentId: rune.instanceId, options, canStep: () => true,
+      onStep: (nextId, step) => { browsing = true; close(); openRuneInfoPopup(scene, popups, { ...options, runeInstanceId: nextId, browseFrom: step }); },
+    });
     const slot = equippedRuneSlot(rune.instanceId);
     const equipped = slot !== undefined;
     // 판매는 판 오른쪽 위 구석의 휴지통 칩 하나다. 되돌릴 수 없어 공용 확인 창이 한 번 묻고, 받을 원석이 보유 줄로 선다.
@@ -308,7 +325,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
       width: main.width, height: panel.buttonHeight, label: t("rune.craft"), fontSize: 26, variant: "primary", accentColor: accent,
       onClick: () => {
         close();
-        openRunePopup(scene, popups, options);
+        openRunePopup(scene, popups, { ...options, browseFrom: undefined });
       },
     });
     body.add(craft);
@@ -407,6 +424,87 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
 }
 
 /**
+ * 넘김 꺾쇠·위치 표기의 자리. 꺾쇠는 판 양옆 바깥, 위치 표기는 화면 밑동 가운데 — 판 밖 뒤로가기와 같은 줄이다.
+ * 판 밑변 바로 아래에 두면 세공 판처럼 키 큰 판에서 뒤에 깔린 가방의 탭 줄과 겹친다.
+ */
+const RUNE_BROWSE = {
+  /** 판 옆변에서 꺾쇠 가운데까지. 세공 판(940)에서는 화면 끝에서 34px 안쪽에 선다. */
+  chevronGap: 36,
+  counter: { width: 156, height: 50, size: 26 },
+  /** 행·버튼에서 이만큼 넘게 끌린 손은 누름이 아니라 쓸어 넘기기다. */
+  dragTolerance: 24,
+} as const;
+
+const runeExists = (instanceId: string): boolean => session.runeInventory.some((rune) => rune.instanceId === instanceId);
+
+/** 끌린 손인가 — 쓸어 넘기다 행 위에서 손을 떼도 그 행이 골라지지 않게 한다. */
+function draggedPointer(pointer: Phaser.Input.Pointer): boolean {
+  return pointer.getDistance() > RUNE_BROWSE.dragTolerance;
+}
+
+/**
+ * 가방 순서로 옆 룬을 보는 손잡이를 판에 단다 — 양옆 꺾쇠(`addPageChevrons`) · 판 안에서 쓸어 넘기기 · 방향키 ←→,
+ * 그리고 판 밑변 아래의 `3 / 42`. 넘길 수 없는 때(`canStep` — 세공 응답을 기다리는 중)에는 셋 다 아무 일도 하지 않고,
+ * 판이 맨 위가 아닐 때(확인 창·이름 입력이 덮었을 때)도 그렇다. 끝에서는 멈춘다.
+ */
+function mountRuneBrowse(scene: Phaser.Scene, popups: PopupLayer, body: Phaser.GameObjects.Container, spec: {
+  width: number; height: number; currentId: string; options: RunePopupOptions;
+  canStep: () => boolean; onStep: (nextId: string, step: -1 | 1) => void;
+}): void {
+  const order = spec.options.browse?.order;
+  if (order) {
+    const position = runeBrowsePosition(order, spec.currentId, runeExists);
+    if (position && position.total > 1) {
+      const go = (step: -1 | 1): void => {
+        if (!body.active || !popups.isTop(body) || !spec.canStep()) return;
+        const next = runeBrowseNeighbor(order, spec.currentId, step, runeExists);
+        if (next) spec.onStep(next, step);
+      };
+      const half = spec.width / 2;
+      const chevrons = addPageChevrons(scene, { leftX: -half - RUNE_BROWSE.chevronGap, rightX: half + RUNE_BROWSE.chevronGap, y: 0 }, go);
+      chevrons.setEdges(position.index > 1, position.index < position.total);
+      body.add(chevrons.container);
+      const { width, height, size } = RUNE_BROWSE.counter;
+      // 판은 화면 좌표의 컨테이너라 화면 자리에서 판 원점을 빼면 판 안 자리다.
+      const x = BASE_WIDTH / 2 - body.x;
+      const y = BACK_SLOT.y - body.y;
+      body.add(drawLayer(scene, x, y, slantedRect(width, height, 10), { fill: COLOR.void, alpha: 0.72 }));
+      body.add(scene.add.text(x, y, `${position.index} / ${position.total}`, textStyle({ role: "display", size, color: COLOR.ink })).setOrigin(0.5, 0.5));
+      // 쓸어 넘기기는 판 안(꺾쇠 자리까지)에서 시작한 손만 읽는다 — 판 밖 어둠을 누르면 닫히는 손과 섞이지 않게.
+      let start: { x: number; y: number } | undefined;
+      const reach = half + RUNE_BROWSE.chevronGap + 48;
+      const down = (pointer: Phaser.Input.Pointer): void => {
+        start = undefined;
+        if (!body.active || !popups.isTop(body)) return;
+        const local = body.pointToContainer(new Phaser.Math.Vector2(pointer.x, pointer.y)) as Phaser.Math.Vector2;
+        if (Math.abs(local.x) <= reach && Math.abs(local.y) <= spec.height / 2) start = { x: pointer.x, y: pointer.y };
+      };
+      const up = (pointer: Phaser.Input.Pointer): void => {
+        const from = start;
+        start = undefined;
+        if (!from) return;
+        const step = runeBrowseSwipe(pointer.x - from.x, pointer.y - from.y);
+        if (step !== 0) go(step);
+      };
+      const key = (event: KeyboardEvent): void => {
+        const step = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
+        if (step !== 0) go(step);
+      };
+      scene.input.on("pointerdown", down);
+      scene.input.on("pointerup", up);
+      scene.input.keyboard?.on("keydown", key);
+      body.once(Phaser.GameObjects.Events.DESTROY, () => {
+        scene.input.off("pointerdown", down);
+        scene.input.off("pointerup", up);
+        scene.input.keyboard?.off("keydown", key);
+      });
+    }
+  }
+  // 넘겨서 들어온 판은 그 쪽에서 밀려 들어온다 — 탭 목록을 갈아 끼울 때와 같은 표(`slideTabPage`)다.
+  if (spec.options.browseFrom) slideTabPage(scene, [body], spec.options.browseFrom > 0 ? 0 : 1, spec.options.browseFrom > 0 ? 1 : 0);
+}
+
+/**
  * 특성 연구대로 건너간다.
  *
  * 고고학은 하단 탭의 한 자리라 **탭을 누를 때와 같은 옆걸음**(`startNavScene`)으로 들어가고, 지금
@@ -477,7 +575,14 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
   const freeNow = (): boolean => tutorialManager.freeRuneId() === rune?.instanceId;
   const stopCrafting = (): void => { closed = true; queued = 0; };
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, stopCrafting);
-  popups.open({ width: panel.width, height: layout.height, title: t("rune.craftTitle"), y: panel.centerY, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true, onClose: () => { closed = true; queued = 0; scene.events.off(Phaser.Scenes.Events.SHUTDOWN, stopCrafting); options.onClose?.(); } }, (body) => {
+  /** 옆 룬으로 갈아 끼우는 닫기는 판을 떠나는 닫기가 아니다 — 부른 화면의 `onClose`를 부르지 않는다. */
+  let browsing = false;
+  popups.open({ width: panel.width, height: layout.height, title: t("rune.craftTitle"), y: panel.centerY, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true, onClose: () => { closed = true; queued = 0; scene.events.off(Phaser.Scenes.Events.SHUTDOWN, stopCrafting); if (!browsing) options.onClose?.(); } }, (body, close) => {
+    // 응답을 기다리거나 눌러 둔 세공이 남은 동안에는 넘기지 않는다 — 그 결과가 박힐 판이 사라진다.
+    mountRuneBrowse(scene, popups, body, {
+      width: panel.width, height: layout.height, currentId: rune!.instanceId, options, canStep: () => !pending && queued === 0,
+      onStep: (nextId, step) => { browsing = true; close(); openRunePopup(scene, popups, { ...options, runeInstanceId: nextId, browseFrom: step }); },
+    });
     let action: Button | undefined;
     const content = scene.add.container(0, 0);
     body.add(content);
@@ -685,8 +790,8 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         setDebugRuneForgeRename({ x: bounds.centerX, y: bounds.centerY });
       });
       renameHit.once(Phaser.GameObjects.Events.DESTROY, () => setDebugRuneForgeRename(undefined));
-      renameHit.on("pointerup", () => {
-        if (pending || !rune) return;
+      renameHit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+        if (draggedPointer(pointer) || pending || !rune) return;
         openRuneNamePopup(scene, popups, {
           rune,
           save: async (value) => {
@@ -772,7 +877,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         }
         const hit = scene.add.rectangle(0, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: usable });
         if (usable) bindPressFlash(hit, 0.12);
-        hit.on("pointerup", () => { if (!pending && usable) { selected = stat.key; render(); } });
+        hit.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (!pending && usable && !draggedPointer(pointer)) { selected = stat.key; render(); } });
         content.add(hit);
         if (usable) rowHits.push({ hit, main });
       };

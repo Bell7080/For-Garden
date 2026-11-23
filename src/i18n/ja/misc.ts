@@ -370,6 +370,7 @@ export const MISC_JA = {
   "dialogue.auto": "自動",
   "dialogue.log": "ログ",
   "dialogue.hide": "隠す",
+  "dialogue.settings": "設定",
   "intro.title": "ご案内",
   "intro.confirm": "わかりました",
   "tutorial.tour.next": "画面をタップして次へ · {step}/{total}",

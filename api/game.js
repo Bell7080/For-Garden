@@ -5400,7 +5400,6 @@ var LOBBY_KO = {
   "lobby.pass.level": "Lv.{level} / {max}",
   "lobby.pass.tab.mission": "\uBBF8\uC158",
   "lobby.pass.tab.reward": "\uBCF4\uC0C1",
-  "lobby.pass.tabCount": "{name} \xB7 {count}",
   "lobby.pass.column.free": "\uBB34\uB8CC",
   "lobby.pass.column.level": "\uB808\uBCA8",
   "lobby.pass.column.paid": "\uD328\uC2A4",
@@ -7589,6 +7588,7 @@ var MISC_KO = {
   "dialogue.auto": "\uC790\uB3D9",
   "dialogue.log": "\uB85C\uADF8",
   "dialogue.hide": "\uC228\uAE30\uAE30",
+  "dialogue.settings": "\uC124\uC815",
   "intro.title": "\uC548\uB0B4",
   "intro.confirm": "\uC54C\uACA0\uC5B4\uC694",
   "tutorial.tour.next": "\uD654\uBA74\uC744 \uB20C\uB7EC \uACC4\uC18D \xB7 {step}/{total}",
@@ -47325,7 +47325,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.529.0",
+  version: "0.532.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {

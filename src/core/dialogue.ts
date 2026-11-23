@@ -219,11 +219,15 @@ export class DialogueFlow {
   /** 최초 노드는 Puppet 비동기 표시가 끝나기 전 생성 입력과 경쟁하지 않도록 잠긴 채 시작한다. */
   private inputLocked = true;
 
-  constructor(readonly story: DialogueStory) {
+  /**
+   * `resumeNodeId`가 있으면 그 노드에서 다시 시작한다 — 이야기 도중 설정에서 언어·글자 크기를 바꿔 화면을 다시
+   * 세울 때 처음으로 돌아가지 않게 한다. 모르는 ID면 시작 노드로 떨어진다(저장된 값이 아니라 화면이 넘긴 값이다).
+   */
+  constructor(readonly story: DialogueStory, resumeNodeId?: string) {
     this.byId = new Map(story.nodes.map((node) => [node.id, node]));
     if (this.byId.size !== story.nodes.length) throw new Error("대사 노드 ID는 중복될 수 없습니다.");
     if (!this.byId.has(story.startNodeId)) throw new Error("대사 시작 노드가 없습니다.");
-    this.currentId = story.startNodeId;
+    this.currentId = resumeNodeId && this.byId.has(resumeNodeId) ? resumeNodeId : story.startNodeId;
     for (const node of story.nodes) {
       if (node.nextId && !this.byId.has(node.nextId)) throw new Error(`다음 대사 노드가 없습니다: ${node.nextId}`);
       for (const choice of node.choices ?? []) if (choice.nextId && !this.byId.has(choice.nextId)) throw new Error(`선택지 다음 노드가 없습니다: ${choice.nextId}`);

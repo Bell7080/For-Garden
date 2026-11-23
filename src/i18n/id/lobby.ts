@@ -38,7 +38,6 @@ export const LOBBY_ID = {
   "lobby.pass.level": "Lv.{level} / {max}",
   "lobby.pass.tab.mission": "Misi",
   "lobby.pass.tab.reward": "Hadiah",
-  "lobby.pass.tabCount": "{name} · {count}",
   "lobby.pass.column.free": "Gratis",
   "lobby.pass.column.level": "Level",
   "lobby.pass.column.paid": "Pass",

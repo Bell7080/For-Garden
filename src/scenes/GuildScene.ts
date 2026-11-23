@@ -1,4 +1,5 @@
 import { NotificationDot } from "../ui/NotificationDot";
+import { notificationCorner } from "../ui/notificationDotStyle";
 import Phaser from "phaser";
 import { openSettingsOver } from "./settingsOverlay";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
@@ -387,7 +388,8 @@ export class GuildScene extends Phaser.Scene {
         },
       });
       if (key !== "info" && this.page !== key && guildPageHasNews(key, seen[key], this.now)) {
-        new NotificationDot(this, this.tabRow, { x: x + S.pages.width / 2 - 24, y: S.pages.y - S.pages.height / 2 + 8 });
+        const corner = notificationCorner("tab", S.pages.width, S.pages.height);
+        new NotificationDot(this, this.tabRow, { x: x + corner.x, y: S.pages.y + corner.y });
       }
     });
   }
@@ -422,7 +424,11 @@ export class GuildScene extends Phaser.Scene {
       });
     });
     const pending = this.state?.pendingRequests ?? 0;
-    if (pending > 0) new NotificationDot(this, this.tabRow, { x: guildTabX(1) + S.tabs.width / 2 - 16, y: S.tabs.y - S.tabs.height / 2 + 8 });
+    // 가입 신청은 멤버 탭이 받는다. 이미 그 탭을 보고 있으면 목록이 말하므로 점을 세우지 않는다.
+    if (pending > 0 && this.tab !== "members") {
+      const corner = notificationCorner("tab", S.tabs.width, S.tabs.height);
+      new NotificationDot(this, this.tabRow, { x: guildTabX(1) + corner.x, y: S.tabs.y + corner.y });
+    }
   }
 
   /**

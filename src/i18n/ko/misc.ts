@@ -454,6 +454,7 @@ export const MISC_KO = {
   "dialogue.auto": "자동",
   "dialogue.log": "로그",
   "dialogue.hide": "숨기기",
+  "dialogue.settings": "설정",
   "intro.title": "안내",
   "intro.confirm": "알겠어요",
   "tutorial.tour.next": "화면을 눌러 계속 · {step}/{total}",

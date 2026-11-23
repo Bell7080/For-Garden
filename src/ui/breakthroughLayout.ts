@@ -11,16 +11,18 @@
 import { BASE_HEIGHT } from "../config/gameConfig";
 import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
 
+/** 표의 폭 — 확정 창의 효과 카드도 같은 폭이라 둘이 함께 읽는다. */
+const BREAK_STEPS_WIDTH = 980;
+
 /**
- * 확정 창 — 드는 재료 셋과 이 별에서 열리는 효과 한 줄.
+ * 확정 창 — 드는 파편 액자와 (돌파라면) 이번 단계에서 열리는 효과 카드.
  *
  * 「돌파하기」는 액자 밑의 두 줄(이름·`필요 N`)보다 충분히 내려앉아야 한다. 붙이면 버튼 판이
  * 그 글자를 파고들어 요구 수치가 버튼에 눌린 것처럼 보인다.
  *
- * **버튼 아래에 열리는 효과를 적지 않는다.** 그 문장은 등급 돋보기가 여는 표와 그 기술의 스킬
- * 쪽지가 이미 말하고(돌파로 붙은 줄은 노란 글씨로 따로 선다), 확정 창에서 읽어야 하는 것은
- * "무엇이 들고 무엇이 확정되는가"다 — 궁금하면 어디서든 열 수 있는 설명을 이 자리에 다시 두면
- * 판만 길어진다.
+ * **열리는 효과는 문장 한 줄이 아니라 표의 카드 한 장으로 선다**(응태 요청 2026-11-23 — 파편만 보고는
+ * 무엇을 얻는지 몰라 돋보기를 따로 열어야 했다). 자리는 `breakConfirmCardLayout`이 정하고, 아래 값은
+ * 카드가 없는 공명 확정의 자리다. 버튼 **아래**에는 여전히 아무 줄도 두지 않는다.
  */
 export const BREAK_CONFIRM = {
   width: 780,
@@ -53,6 +55,54 @@ export function breakConfirmHeight(): number {
 }
 
 /**
+ * 돌파 확정 창에 **이번 단계에서 열리는 효과 카드**가 끼어들 때의 자리(응태 요청 2026-11-23).
+ *
+ * 카드는 등급 돋보기가 여는 표의 카드와 **같은 한 장**이라(`addBreakthroughStepCard`) 폭도 그 표의 줄 폭을
+ * 그대로 쓴다 — 그래서 이 창의 폭은 표와 같다. 카드는 성장 줄 아래, 드는 파편 액자 위에 서고 효과 문장이
+ * 길면 카드가 자라는 만큼 아래 줄들이 함께 내려앉는다. 공명 확정(열릴 효과가 없다)은 예전 자리를 쓴다.
+ */
+export const BREAK_CONFIRM_CARD = {
+  width: BREAK_STEPS_WIDTH,
+  /** 카드 윗변 — 성장 줄 아래, 카드 윗변에 걸터앉는 「다음 단계」 이름표까지 피한다. */
+  cardTop: 300,
+  /** 카드 밑변에서 만능 파편 안내 줄까지. */
+  noticeGap: 44,
+  /** 카드 밑변(또는 안내 줄)에서 액자 윗변까지. */
+  costGap: 56,
+  noticeCostGap: 48,
+} as const;
+
+export interface BreakConfirmCardLayout {
+  width: number;
+  /** 카드 가운데 y와 높이(판 윗변 기준). */
+  cardY: number;
+  cardHeight: number;
+  universalNoticeY: number;
+  costY: number;
+  actionY: number;
+  height: number;
+}
+
+/** 효과 카드 높이와 만능 파편 안내 줄 유무에서 확정 창 전체의 자리를 구한다. */
+export function breakConfirmCardLayout(cardHeight: number, notice: boolean): BreakConfirmCardLayout {
+  const panel = BREAK_CONFIRM_CARD;
+  const cardBottom = panel.cardTop + cardHeight;
+  const universalNoticeY = cardBottom + panel.noticeGap;
+  const frameTop = notice ? universalNoticeY + panel.noticeCostGap : cardBottom + panel.costGap;
+  const costY = frameTop + BREAK_CONFIRM.costFrame / 2;
+  const actionY = costY + (BREAK_CONFIRM.actionY - BREAK_CONFIRM.costY);
+  return {
+    width: panel.width,
+    cardY: panel.cardTop + cardHeight / 2,
+    cardHeight,
+    universalNoticeY,
+    costY,
+    actionY,
+    height: actionY + BREAK_CONFIRM.action.height / 2 + BREAK_CONFIRM.actionBottomMargin,
+  };
+}
+
+/**
  * 표 — **돌파 단계마다 무엇이 열리는가**를 카드 넷으로 읽는 창이다.
  *
  * 여기에는 파편 수도, 가진 파편도, 별 몇 개인지도 적지 않는다. 그 셋은 **확정 창**이 이미
@@ -64,7 +114,7 @@ export function breakConfirmHeight(): number {
  */
 export const BREAK_STEPS = {
   /** 설명이 두 줄로 들어갈 만큼 넓다. 좁으면 네 줄이 모두 세 줄짜리 문단이 된다. */
-  width: 980,
+  width: BREAK_STEPS_WIDTH,
   /** 판 가운데가 앉는 화면 y. 돋보기 자리에 붙이지 않고 **화면 가운데**에 세운다. */
   centerY: BASE_HEIGHT / 2,
   /** 줄 판이 판 좌우에서 안으로 들어오는 여백(양쪽 합). */

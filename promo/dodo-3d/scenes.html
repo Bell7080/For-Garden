@@ -76,6 +76,24 @@ SC.tilt=()=>{const {scene,cam}=mk({sky:['#5b8fd0','#b4dcf0','#fff3d0'],sunPos:[-
   if(t>2.2){d.walk(t,.6);d.g.position.x=-1.2+(t-2.2)*.5;}
   setSprite(qc,1.0,t>1.0?pop(t,1.0):0);qc.position.y=4.4+Math.sin(t*3)*.08;setSprite(hearts,.7,t>2.3?pop(t,2.3):0);
   cam.position.set(1.4+t*.1,3.4,15-t*.5);cam.lookAt(1.0,2.0,0);};};
+// 6-2. 잡아먹기도 했지만 — 주범은 아니었다
+SC.hunt=()=>{const {scene,cam}=mk({sky:['#5b8fd0','#b4dcf0','#fff3d0'],sunPos:[-6,9,7]});
+ L.sea(scene);add(scene,C(9,10,.6,48),toon(0xf2d39a),[0,-.3,0],null,null,false).receiveShadow=true;L.palm(scene,-4,-3,1.2);L.palm(scene,4.2,-4,1);
+ const boat=L.makeBoat(scene);boat.position.set(5.5,0,4.5);boat.rotation.y=-.6;
+ const a=L.makeSailor(scene,{scale:1.15});const b=L.makeSailor(scene,{scale:1.15,coat:0x9e3a2f});
+ const d1=L.makeDodo(scene,{scale:.9});const d2=L.makeDodo(a.g,{scale:.55});d2.g.position.set(0,2.55,.1);d2.g.rotation.x=.4;
+ const q=label(scene,'주범?',{size:200,w:768,fill:'#fff6c8'});q.position.set(0,5.3,0);
+ const xg=new THREE.Group();scene.add(xg);const xm=new THREE.MeshBasicMaterial({color:0xe8413a});
+ [1,-1].forEach(k=>{const m=new THREE.Mesh(new THREE.BoxGeometry(3.6,.42,.1),xm);m.rotation.z=k*.75;xg.add(m);});xg.position.set(0,5.3,.4);
+ return t=>{// 선원 b가 도도새를 쫓고, 선원 a는 한 마리를 머리 위로 들고 배로 간다
+  const ct=Math.min(t,3.1);d1.walk(t,1.4);d1.g.position.set(-4.2+ct*1.0,0,2.6);d1.g.rotation.y=Math.PI/2;
+  b.walk(ct,t<3.1?1.4:0);b.g.position.set(-6.4+ct*1.0,0,2.3);b.g.rotation.y=Math.PI/2;b.arms[1].rotation.x=-1.5;b.arms[0].rotation.x=-1.2;
+  a.walk(Math.min(t,3.1),t<3.1?.9:0);a.g.position.set(.9+Math.min(t,3.1)*.3,0,-2.6+Math.min(t,3.1)*.2);a.g.rotation.y=.9;
+  a.arms[0].rotation.x=-2.9;a.arms[1].rotation.x=-2.9;d2.flap?d2.flap(t):d2.idle(t);
+  // 3.1초 정지 → 주범? → 4.1초 X 도장
+  setSprite(q,1.5,t>3.2?pop(t,3.2):0);const xk=t>4.1?clamp01((t-4.1)/.12):0;xg.visible=t>4.1;xg.scale.setScalar(lerp(2.2,1,xk));
+  const sh=t>4.1&&t<4.4?Math.sin(t*60)*.08:0;
+  cam.position.set(.2+sh,4.6,21-Math.min(t,3.1)*.5);cam.lookAt(0,2.6,0);};};
 // 7. 진범 공개 — 나무 상자 속 빛나는 눈
 SC.crate=()=>{const {scene,cam}=mk({sky:['#1d2350','#3a3f7a','#5a4f7a'],hemi:.9,sunI:1.0,sunPos:[-4,8,6]});
  add(scene,C(30,30,.4,48),toon(0x3a4a5a),[0,-.2,0],null,null,false).receiveShadow=true;

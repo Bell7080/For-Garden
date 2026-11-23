@@ -110,6 +110,23 @@ export function pickRuneTraitId(pool: readonly RuneTraitPoolEntry[], grade: Rune
   return pick(eligible.map(({ id }) => id), random());
 }
 
+/**
+ * 그 등급의 특성을 하나 뽑을 때 `id`가 나올 확률(0~1)이다. `pickRuneTraitId`와 같은 길을 셈으로 옮긴 것이라
+ * 확률표가 추첨을 따로 흉내 내지 않는다 — 풀 안은 균등, 전설은 전용 몫(`exclusiveShare`)을 먼저 가른다.
+ */
+export function runeTraitPickChance(pool: readonly RuneTraitPoolEntry[], grade: RuneTraitGrade, id: string, exclusiveShare = DEFAULT_LEGENDARY_EXCLUSIVE_SHARE): number {
+  const eligible = pool.filter((entry) => RUNE_TRAIT_GRADES.indexOf(entry.minGrade) <= RUNE_TRAIT_GRADES.indexOf(grade));
+  const entry = eligible.find((candidate) => candidate.id === id);
+  if (!entry) return 0;
+  if (grade === "legendary") {
+    const exclusive = eligible.filter((candidate) => candidate.minGrade === "legendary");
+    const general = eligible.filter((candidate) => candidate.minGrade !== "legendary");
+    const exclusiveChance = exclusive.length === 0 ? 0 : general.length === 0 ? 1 : exclusiveShare;
+    return entry.minGrade === "legendary" ? exclusiveChance / exclusive.length : (1 - exclusiveChance) / general.length;
+  }
+  return 1 / eligible.length;
+}
+
 /** 주입된 [0, 1) 난수로 목록에서 하나를 고른다. 범위를 벗어난 난수는 조용히 통과시키지 않는다. */
 function pick<T>(pool: readonly T[], random: number): T {
   if (pool.length === 0) throw new RangeError("특성 풀이 비어 있습니다.");

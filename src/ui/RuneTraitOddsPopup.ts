@@ -1,8 +1,9 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { runeRarityLabel } from "../core/runes";
-import { RUNE_TRAIT_GRADES, RUNE_TRAIT_RULES, type RuneTraitGrade } from "../core/runeTraits";
-import { RUNE_TRAIT_DEFS, runeTraitValue } from "../data/runeTraits";
+import { formatRatePercent } from "../core/gachaRateTable";
+import { RUNE_TRAIT_GRADES, RUNE_TRAIT_RULES, runeTraitPickChance, type RuneTraitGrade } from "../core/runeTraits";
+import { LEGENDARY_EXCLUSIVE_SHARE, RUNE_TRAIT_DEFS, RUNE_TRAIT_POOL } from "../data/runeTraits";
 import { KeywordManager } from "../managers/KeywordManager";
 import { drawGlyph } from "./glyphs";
 import { addOddsTip, drawTipUnderline } from "./oddsTip";
@@ -214,7 +215,7 @@ function paintExpanded(
     tick.fillStyle(tone, 0.9);
     tick.fillPoints([new Phaser.Geom.Point(-half / 2 + 12, cellHeight / 2 - 10), new Phaser.Geom.Point(-half / 2 + 18, -cellHeight / 2 + 10), new Phaser.Geom.Point(-half / 2 + 24, -cellHeight / 2 + 10), new Phaser.Geom.Point(-half / 2 + 18, cellHeight / 2 - 10)], true);
     holder.add(tick);
-    const value = scene.add.text(half / 2 - 16, 0, traitValueLabel(runeTraitValue(def.id, grade)),
+    const value = scene.add.text(half / 2 - 16, 0, `${formatRatePercent(runeTraitPickChance(RUNE_TRAIT_POOL, grade, def.id, LEGENDARY_EXCLUSIVE_SHARE))}%`,
       textStyle({ role: "display", size: 26, color: gradeHex(grade) })).setOrigin(1, 0.5).setShadow(0, 3, "#000000", 4, false, true);
     const name = scene.add.text(-half / 2 + 36, -2, runeTraitName(def.id), textStyle({ role: "emphasis", size: 25, color: COLOR.ink })).setOrigin(0, 0.5);
     shrinkTextToWidth(name, half - value.width - 70);

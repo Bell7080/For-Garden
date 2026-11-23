@@ -70,6 +70,37 @@ export function combatKey(input: CombatPrepare): string {
         : fail("bad_mode");
 }
 
+/** 시드가 묶이는 자리 — 현상수배는 라운드마다 다른 판이다. */
+function seedKey(input: CombatPrepare): string {
+  const b = input.input;
+  return b.mode === "bounty" ? `${combatKey(input)}#${b.round}` : combatKey(input);
+}
+/** 그 판의 시드. 처음이면 새 값을 굳히고, 임대를 다시 발급해도 같은 값을 돌려준다. */
+function seedFor(journal: CombatJournal, input: CombatPrepare, fresh: string): string {
+  const seeds = (journal.seeds ??= {});
+  return (seeds[seedKey(input)] ??= fresh);
+}
+/**
+ * 만료된 임대를 걷는다. **판정이 난 원정·결투 기록은 정산될 때까지 남긴다** — 걷으면 진 판을 묵혀 두었다가
+ * 판정 없는 새 임대로 다시 싸울 수 있다. 끝난 런의 원정 기록·시드는 여기서 함께 걷는다.
+ */
+function pruneRecords(state: Session, journal: CombatJournal, now: Date): void {
+  const runId = state.expedition.run?.runId;
+  const staleRun = (key: string) => key.startsWith("expedition:") && key.split(":")[1] !== runId;
+  journal.records = Object.fromEntries(Object.entries(journal.records).filter(([, r]) => {
+    const key = combatKey(r.input), mode = r.input.input.mode;
+    if (staleRun(key)) return false;
+    if (r.verdict && (mode === "expedition" || (mode === "duel" && journal.tickets[key]))) return true;
+    return Date.parse(r.lease.expiresAt) > now.getTime();
+  }));
+  if (journal.seeds) for (const key of Object.keys(journal.seeds)) if (staleRun(key)) delete journal.seeds[key];
+}
+/** 지금 쓸 임대인가 — 만료 전이거나, 판정이 이미 난 원정·결투 기록이다(그 판정을 그대로 돌려준다). */
+function standing(record: { lease: CombatLease; input: CombatPrepare; verdict?: CombatVerdict }, now: Date): boolean {
+  const mode = record.input.input.mode;
+  return Date.parse(record.lease.expiresAt) > now.getTime() || (!!record.verdict && (mode === "expedition" || mode === "duel"));
+}
+
 /** 적·편성·성장·노드는 서버 저장과 정적 정의에서만 복원한다. */
 export function prepareCombat(
   state: Session,
@@ -80,13 +111,13 @@ export function prepareCombat(
   if (request?.input?.mode === "duel") {
     const key = combatKey(request), records = combatJournal(state), ticket = records.tickets[key];
     if (!ticket?.duel || ticket.kind !== "duel") return fail("no_duel_ticket");
-    const active = Object.values(records.records).find(row => combatKey(row.input) === key && Date.parse(row.lease.expiresAt) > now.getTime());
+    const active = Object.values(records.records).find(row => combatKey(row.input) === key && standing(row, now));
     if (active) return structuredClone(active.lease);
     const setup = structuredClone(ticket.duel.setup);
     // 열린 구형 클라이언트는 새 코어 옵션을 모른다. 지원 여부를 요청한 새 전투만 전환한다.
     if (request.automaticUltimates !== true && setup.options) delete setup.options.automaticUltimates;
-    const lease: CombatLease = { id, seed: id, setup, expiresAt: new Date(now.getTime() + 3600000).toISOString() };
-    records.records = Object.fromEntries(Object.entries(records.records).filter(([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()));
+    const lease: CombatLease = { id, seed: seedFor(records, request, id), setup, expiresAt: new Date(now.getTime() + 3600000).toISOString() };
+    pruneRecords(state, records, now);
     if (Object.keys(records.records).length >= 8) return fail("too_many_leases");
     records.records[id] = { lease, input: structuredClone(request), issuedAt: now.toISOString() };
     return structuredClone(lease);
@@ -107,7 +138,7 @@ export function prepareCombat(
       (row.input.input.mode !== "bounty" ||
         input.input.mode !== "bounty" ||
         row.input.input.round === input.input.round) &&
-      Date.parse(row.lease.expiresAt) > now.getTime(),
+      standing(row, now),
   );
   if (active) return structuredClone(active.lease);
   let b = input.input;
@@ -256,16 +287,12 @@ export function prepareCombat(
   const lease: CombatLease = JSON.parse(
     JSON.stringify({
       id,
-      seed: id,
+      seed: seedFor(records, input, id),
       setup,
       expiresAt: new Date(now.getTime() + 3600000).toISOString(),
     }),
   );
-  records.records = Object.fromEntries(
-    Object.entries(records.records).filter(
-      ([, r]) => Date.parse(r.lease.expiresAt) > now.getTime(),
-    ),
-  );
+  pruneRecords(state, records, now);
   if (Object.keys(records.records).length >= 8) return fail("too_many_leases");
   records.records[id] = {
     lease: structuredClone(lease),
@@ -294,8 +321,9 @@ export function finishCombat(
     return fail("proof_shape");
   const record = combatJournal(state).records[proof.id];
   if (!record) return fail("no_record");
-  if (Date.parse(record.lease.expiresAt) < now.getTime()) return fail("lease_expired");
+  // 이미 난 판정은 임대가 만료돼도 그대로다 — 만료를 기다려 다른 입력으로 다시 내는 길을 막는다.
   if (record.verdict) return structuredClone(record.verdict);
+  if (Date.parse(record.lease.expiresAt) < now.getTime()) return fail("lease_expired");
   if (record.lease.setup.options?.automaticUltimates && proof.actions.length) return fail("auto_ultimate_actions");
   // 공식 최대 배속보다 빨리 끝나는 제출은 재현 전에 거절한다. 일시 정지는 상한을 늘리지 않는다.
   if (
@@ -369,4 +397,10 @@ export function consumeCombat(state: Session, key: string): void {
   delete journal.tickets[key];
   for (const [id, record] of Object.entries(journal.records))
     if (combatKey(record.input) === key) delete journal.records[id];
+  if (journal.seeds) for (const seed of Object.keys(journal.seeds)) if (seed === key || seed.startsWith(`${key}#`)) delete journal.seeds[seed];
+}
+
+/** 그 입장(`combatKey`)에 서버가 이미 내린 판정. 결과를 확정하지 않고 버린 판을 정산할 때 읽는다. */
+export function combatVerdictFor(state: Session, key: string): CombatVerdict | undefined {
+  return Object.values(combatJournal(state).records).find((record) => record.verdict && combatKey(record.input) === key)?.verdict;
 }

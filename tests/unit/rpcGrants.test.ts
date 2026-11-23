@@ -42,7 +42,8 @@ describe("rpc 실행 권한 계약", () => {
   const can = (name: string, role: Role) => grants.get(name)?.has(role) ?? false;
 
   // 서버 권한으로만 쓰도록 회수된 쓰기 함수다. 클라이언트 코드에 호출이 남아 있다면 알려진 잔재로만 허용한다.
-  const REVOKED_FROM_CLIENT = ["upload_my_save", "remove_my_save"];
+  // download_my_save는 서버 전용 값(전투 씨앗·지층 칸)까지 통째로 내주므로 20261201000000에서 닫았다.
+  const REVOKED_FROM_CLIENT = ["upload_my_save", "remove_my_save", "download_my_save"];
 
   const clientCalls = [
     ...names(read("src/api/SupabaseAccountApi.ts"), /this\.rpc\("([a-z_]+)"/g),

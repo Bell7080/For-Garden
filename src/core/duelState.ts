@@ -89,6 +89,8 @@ export interface DuelState {
 }
 
 export const DUEL_HISTORY_LIMIT = 10;
+/** 입장만 하고 결과를 확정하지 않은 결투를 패배로 정산하는 기한. 전투 발급표의 수명(1시간)과 같다 — 멈춰 둔 정상 판은 건드리지 않는다. */
+export const DUEL_FORFEIT_AFTER_MS = 60 * 60 * 1000;
 
 export function createEmptyDuelState(): DuelState {
   return {

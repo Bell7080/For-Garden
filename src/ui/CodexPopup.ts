@@ -1,4 +1,6 @@
 import { hasRemoteState } from "../api/resultState";
+import { notificationCorner } from "./notificationDotStyle";
+import { addClaimHalo } from "./claimHalo";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import type { ClaimCodexRewardsResponse, CodexEntryDto, CodexResponse, GameApi } from "../api/contracts";
@@ -20,7 +22,7 @@ import { addScrollHint } from "./ScrollHint";
 import { addClippedHit } from "./clippedHit";
 import type { ClipRect } from "./clipRect";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
-import { chipPoints, drawLayer, drawShapeEdge, HoloBar, toPoints } from "./holo";
+import { chipPoints, drawLayer, drawShapeEdge, HoloBar } from "./holo";
 import { shapeClipMask } from "./popupArt";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
 import { RewardFrame } from "./RewardFrame";
@@ -160,16 +162,13 @@ export class CodexPopup {
     list.add(holder);
     const size = summary.rewardSize;
     if (claimable) {
-      const halo = this.scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
-      halo.fillStyle(COLOR.missionClaim, 0.4).fillPoints(toPoints(chipPoints(size + 24, size + 24, { bevel: { topLeft: size * 0.28, topRight: 0, bottomRight: size * 0.28, bottomLeft: 0 } })), true);
-      holder.add(halo);
-      this.scene.tweens.add({ targets: halo, alpha: { from: 0.3, to: 1 }, duration: 700, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+      holder.add(addClaimHalo(this.scene, { size }).image);
     }
     const allClaimed = !claimable && !locked;
     const reward = new RewardFrame(this.scene, 0, 0, { icon: CURRENCY_ICON_BY_WALLET[shown.reward.currency], amount: shown.reward.amount, size, state: allClaimed ? "claimed" : claimable ? "claimable" : "normal", onClick: claimable ? () => void this.claim() : undefined });
     if (!claimable && !allClaimed) reward.setAlpha(0.55);
     holder.add(reward);
-    if (claimable) new NotificationDot(this.scene, holder, { x: size / 2 - 8, y: -size / 2 + 8 });
+    if (claimable) new NotificationDot(this.scene, holder, notificationCorner("frame", size, size));
     if (data.claimableCount > 1) {
       holder.add(this.scene.add.text(-size / 2 + 16, -size / 2 + 14, `×${data.claimableCount}`, textStyle({ role: "display", size: 24, color: "#ffcf7a" })).setOrigin(0.5).setStroke("#05070a", 6));
     }

@@ -38,7 +38,6 @@ export const LOBBY_RU = {
   "lobby.pass.level": "Ур.{level} / {max}",
   "lobby.pass.tab.mission": "Задания",
   "lobby.pass.tab.reward": "Награды",
-  "lobby.pass.tabCount": "{name} · {count}",
   "lobby.pass.column.free": "Бесплатно",
   "lobby.pass.column.level": "Уровень",
   "lobby.pass.column.paid": "Пропуск",

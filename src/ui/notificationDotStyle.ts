@@ -59,3 +59,22 @@ export function perspectiveButtonBadgeAnchor(options: {
   const cornerY = options.tall === "left" ? -halfHeight : -halfHeight * (1 - 0.42);
   return rotatedNotificationAnchor({ x: -options.width / 2 + options.inset, y: cornerY, rotation: options.rotation });
 }
+
+/**
+ * 붉은 점이 판의 우상단에서 얼마나 안쪽에 서는가 — 자리의 종류마다 한 값이다.
+ * 탭(라벨)·액자(보상 칸)·카드(상품·우편 칸)가 화면마다 제 눈대중 값을 적던 때는 같은 점이
+ * 어디서는 모서리에 걸치고 어디서는 한참 안쪽에 섰다. 깎인 우상단이 없는 칸이라 같은 값으로 충분하다.
+ */
+export const NOTIFICATION_DOT_INSET = {
+  tab: { x: 22, y: 12 },
+  frame: { x: 8, y: 8 },
+  card: { x: 20, y: 20 },
+} as const;
+
+export type NotificationDotPlace = keyof typeof NOTIFICATION_DOT_INSET;
+
+/** 가운데가 (0,0)인 판의 우상단 안쪽 점 자리. */
+export function notificationCorner(place: NotificationDotPlace, width: number, height: number): { x: number; y: number } {
+  const inset = NOTIFICATION_DOT_INSET[place];
+  return { x: width / 2 - inset.x, y: -height / 2 + inset.y };
+}

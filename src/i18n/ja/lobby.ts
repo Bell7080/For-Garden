@@ -47,7 +47,6 @@ export const LOBBY_JA = {
   "lobby.pass.level": "Lv.{level} / {max}",
   "lobby.pass.tab.mission": "ミッション",
   "lobby.pass.tab.reward": "報酬",
-  "lobby.pass.tabCount": "{name} · {count}",
   "lobby.pass.column.free": "無料",
   "lobby.pass.column.level": "レベル",
   "lobby.pass.column.paid": "パス",

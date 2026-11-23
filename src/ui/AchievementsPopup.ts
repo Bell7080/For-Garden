@@ -1,4 +1,6 @@
 import { hasRemoteState } from "../api/resultState";
+import { notificationCorner } from "./notificationDotStyle";
+import { addClaimHalo } from "./claimHalo";
 import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import type { AchievementListResponse, AchievementSeriesDto, ClaimAchievementRewardsResponse, GameApi } from "../api/contracts";
@@ -282,16 +284,13 @@ export class AchievementsPopup {
     const holder = this.scene.add.container(rewardX, 0);
     row.add(holder);
     if (claimable) {
-      const halo = this.scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
-      halo.fillStyle(COLOR.missionClaim, 0.4).fillPoints(toPoints(chipPoints(rewardSize + 24, rewardSize + 24, { bevel: { topLeft: rewardSize * 0.28, topRight: 0, bottomRight: rewardSize * 0.28, bottomLeft: 0 } })), true);
-      holder.add(halo);
-      this.scene.tweens.add({ targets: halo, alpha: { from: 0.3, to: 1 }, duration: 700, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+      holder.add(addClaimHalo(this.scene, { size: rewardSize }).image);
     }
     const reward = new RewardFrame(this.scene, 0, 0, { icon: CURRENCY_ICON_BY_WALLET[rewardTier.reward.currency], amount: rewardTier.reward.amount, size: rewardSize, state: complete ? "claimed" : claimable ? "claimable" : "normal", onClick: claimable ? () => void this.claim([series.id]) : undefined });
     if (!claimable && !complete) reward.setAlpha(0.55);
     holder.add(reward);
     // 받을 수 있는 액자에는 어디서나 같은 붉은 점이 선다 — 탭·로비 버튼의 점과 한 양식이다.
-    if (claimable) new NotificationDot(this.scene, holder, { x: rewardSize / 2 - 8, y: -rewardSize / 2 + 8 });
+    if (claimable) new NotificationDot(this.scene, holder, notificationCorner("frame", rewardSize, rewardSize));
     // 한 번에 여러 단계가 열려 있으면 액자의 깎인 왼쪽 위 모서리에 몇 단계인지 붙인다 — 누르면 그만큼 함께 받는다.
     if (series.claimableTiers > 1) {
       const badge = this.scene.add.text(-rewardSize / 2 + 16, -rewardSize / 2 + 14, `×${series.claimableTiers}`, textStyle({ role: "display", size: 24, color: "#ffcf7a" })).setOrigin(0.5).setStroke("#05070a", 6);
@@ -329,7 +328,7 @@ export class AchievementsPopup {
       const label = t(tab === "all" ? "achievement.tab.all" : `achievement.category.${tab}` as TextKey);
       const node = addCategoryTab(this.scene, row, { x: tabStripSpotX(spec, index), y: 0, width: layout.tab.width, height: layout.tab.height, label, selected: tab === this.tab, onSelect: () => { if (!drag?.dragging()) this.select(tab); } });
       dotted[index] = pending > 0 && tab !== this.tab;
-      if (dotted[index]) new NotificationDot(this.scene, node, { x: layout.tab.width / 2 - 22, y: -layout.tab.height / 2 + 12 });
+      if (dotted[index]) new NotificationDot(this.scene, node, notificationCorner("tab", layout.tab.width, layout.tab.height));
       nodes.push(node);
     });
     const hint = new TabStripEdgeHint(this.scene, strip, {

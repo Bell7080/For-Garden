@@ -1059,6 +1059,16 @@
 "Post-Belohnungen",
 "Награды почты"
 ],
+"mail.claimFailed": [
+"未能领取邮件。已重新加载列表。",
+"รับจดหมายไม่สำเร็จ รีเฟรชรายการแล้ว",
+"Không thể nhận thư. Đã tải lại danh sách.",
+"Gagal mengambil surat. Daftar telah dimuat ulang.",
+"No se pudo recibir el correo. Se actualizó la lista.",
+"Não foi possível receber o correio. A lista foi atualizada.",
+"Die Post konnte nicht abgeholt werden. Die Liste wurde aktualisiert.",
+"Не удалось получить почту. Список обновлён."
+],
 "mail.attachments": [
 "附件 {count}",
 "สิ่งที่แนบ {count}",

@@ -78,7 +78,7 @@ import { addSkillIconFrame, skillSlotLabel, type SkillIconFrameOptions, type Ski
 import { encounterRoleDescription, encounterRoleIcon, encounterRoleName } from "./encounterRolePresentation";
 import type { EncounterRole } from "../core/levelDesign";
 import { fitTextToBox, squeezeTextToWidth } from "./textFit";
-import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
+import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmCardLayout, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
 import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, breakthroughFragmentSpend, type BreakthroughStep, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as simulateFeed, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade, breakthroughGrowthPercent, RELIC_MAX_LEVEL } from "../core/relicProgression";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
@@ -1271,16 +1271,27 @@ export class InfoManager {
     if (!def) return;
     const progress = relicProgression.getProgress(def.id);
     const step = nextBreakthrough(progress.breakthrough);
-    const height = breakConfirmHeight();
     const resonance = resonanceOf(progress);
+    // 이번 단계에서 열리는 효과 카드 — 등급 돋보기의 표와 같은 한 장이다(응태 요청 2026-11-23).
+    // 문장 높이를 먼저 재야 카드와 판의 높이가 나온다.
+    const held = relicProgression.getFragments(def.id);
+    const universal = relicProgression.getUniversalFragments(def.rarity);
+    const spend = step ? breakthroughFragmentSpend(def.rarity, progress.breakthrough, held, universal) : undefined;
+    const usesUniversal = !!spend && spend.enough && spend.universal > 0;
+    const stepsLayout = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length);
+    const stepLine = step ? breakthroughStepLine(this.keywords, def, step.slot, this.shownStats(def), stepsLayout.textWrap) : undefined;
+    const cardHeight = stepLine ? breakthroughStepsLayout(1, [stepLine.height]).rowHeights[0] : 0;
+    const cardLayout = step ? breakConfirmCardLayout(cardHeight, usesUniversal) : undefined;
+    const height = cardLayout?.height ?? breakConfirmHeight();
     // **누른 자리에 붙지 않고 화면 가운데에 선다.** 돌파 버튼은 오른쪽 기둥 위쪽에 있어, 거기
     // 매달면 판이 화면 한쪽으로 쏠려 액자 셋이 가장자리에 붙는다. 닫기 X도 두지 않는다 —
     // 고를 것이 「돌파하기」 하나뿐이라, 그만두는 손짓은 판 밖을 누르는 것으로 충분하다.
     this.popups.open({
-      width: BREAK_CONFIRM.width, height, title: step ? t("info.breakthrough") : t("info.resonance"), tilt: -1.2,
+      width: cardLayout?.width ?? BREAK_CONFIRM.width, height, title: step ? t("info.breakthrough") : t("info.resonance"), tilt: -1.2,
       dim: true, hideCloseButton: true, onClose: from.onClose,
     }, (body, close) => {
-      if (!step) {
+      if (!step || !cardLayout || !stepLine) {
+        stepLine?.destroy();
         if (resonance < RESONANCE_CAP) { this.paintResonanceConfirm(body, close, def, progress, height); return; }
         body.add(this.scene.add.text(0, 20, t("info.resonance.alreadyMax"), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(640));
         return;
@@ -1312,16 +1323,18 @@ export class InfoManager {
       capLine.add([capLabel, capFrom, capArrow, capTo]);
       body.add(capLine);
 
-      // **드는 것은 액자 셋이다.** 레벨은 재화가 아니지만 같은 조건이라 같은 얼굴로 서고,
-      // 파편은 그 개체의 얼굴이 크게 박힌 보석 조각이다. 가진 수는 액자 우하단, 드는 수는 그 아래다.
-      const held = relicProgression.getFragments(def.id);
-      const universal = relicProgression.getUniversalFragments(def.rarity);
+      // 이번 단계 카드 — 아직 뚫지 않은 단계라 자물쇠와 「다음 단계」 이름표가 함께 서고, 테두리가 숨 쉰다.
+      const breathe = motionPolicy(session.settings).nonEssentialRepeatFactor !== 0;
+      addBreakthroughStepCard(this.scene, body, def, progress.breakthrough, step, progress.breakthrough + 1, {
+        y: top + cardLayout.cardY, height: cardLayout.cardHeight, width: stepsLayout.rowWidth, line: stepLine, breathe,
+      });
+
+      // **드는 것은 파편 액자다.** 그 개체의 얼굴이 크게 박힌 보석 조각이고, 가진 수는 액자 우하단, 드는 수는 그 아래다.
       // 그 개체의 파편을 먼저 다 쓰고 **모자란 몫만** 만능 파편이 채운다. 쓰일 몫이 있으면 파편 칸의 `필요`는
       // 그 개체 몫만 적고, 만능 파편이 제 칸과 금빛 `소모 N`으로 따로 선다 — 무엇이 사라지는지 숨기지 않는다.
-      const spend = breakthroughFragmentSpend(def.rarity, progress.breakthrough, held, universal);
-      const usesUniversal = spend.enough && spend.universal > 0;
+      if (!spend) return;
       const fragmentCost = usesUniversal ? spend.own : breakthroughFragmentCost(def.rarity, progress.breakthrough);
-      const costY = top + BREAK_CONFIRM.costY;
+      const costY = top + cardLayout.costY;
       const universalName = findItem(UNIVERSAL_FRAGMENT_ITEM[def.rarity])?.name ?? "";
       const costs: BreakthroughCost[] = [
         { kind: "fragment", label: t("info.breakthrough.fragment", { name: def.name }), need: fragmentCost, have: held },
@@ -1341,16 +1354,14 @@ export class InfoManager {
       if (usesUniversal) {
         // 함께 소모되는 것을 한 줄로 못 박는다 — 칸만 하나 늘면 그냥 지나칠 수 있다.
         body.add(this.scene.add
-          .text(0, top + BREAK_CONFIRM.universalNoticeY, t("info.breakthrough.universalNotice", { name: universalName, count: formatCurrency(spend.universal) }), textStyle({ role: "emphasis", size: 22, color: UNIVERSAL_SPEND_TEXT }))
+          .text(0, top + cardLayout.universalNoticeY, t("info.breakthrough.universalNotice", { name: universalName, count: formatCurrency(spend.universal) }), textStyle({ role: "emphasis", size: 22, color: UNIVERSAL_SPEND_TEXT }))
           .setOrigin(0.5));
       }
 
       const ready = canBreakThrough(def.rarity, progress, held, universal);
-      const actionY = top + BREAK_CONFIRM.actionY;
+      const actionY = top + cardLayout.actionY;
       // 확정은 확인 창(`PopupLayer.confirm`)과 같은 **제 판을 가진 강조 버튼**이다 — 판 하나에 투명한
       // 입력면을 얹어 두던 때는 눌려도 손맛이 없었고 다른 확정 버튼과 다른 물건으로 읽혔다.
-      // 열리는 효과를 여기 적지 않는다 — 등급 돋보기가 여는 표와 그 기술의 스킬 쪽지가 이미
-      // 말하고(돌파로 붙은 줄은 노란 글씨로 선다), 이 창은 드는 것과 확정만 맡는다.
       body.add(new Button(this.scene, 0, actionY, {
         width: BREAK_CONFIRM.action.width, height: BREAK_CONFIRM.action.height, label: t("info.breakthrough.do"), fontSize: 34,
         variant: "primary", fill: 0x2d2440, decorDots: true, accentColor: BREAK_EDGE, accentTextColor: COLOR.ink,
@@ -3529,12 +3540,7 @@ export function openBreakthroughStepsPopup(
   const textWrap = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length).textWrap;
   // 먼저 실제 문장을 세워 높이를 잰다. 문장이 긴 캐릭터도 글자를 줄이지 않고
   // 문장마다 끊어 읽으며, 설명에 맞춰 해당 행과 판이 함께 자란다.
-  const lines = BREAKTHROUGH_STEPS.map(entry => keywords.layout(
-    formatBreakthroughDescription(breakthroughEffectText(def, entry.slot, stats) ?? t("skill.breakthrough.effect.none")), {
-      width: textWrap, size: BREAK_STEPS.textSize, lineSpacing: 8,
-      contextualKeywords: breakthroughEffectKeywords(def, entry.slot, stats),
-    },
-  ));
+  const lines = BREAKTHROUGH_STEPS.map(entry => breakthroughStepLine(keywords, def, entry.slot, stats, textWrap));
   const layout = breakthroughStepsLayout(BREAKTHROUGH_STEPS.length, lines.map(line => line.height));
   // **돋보기 자리에 붙이지 않고 화면 가운데에 선다.** 네 줄이 저마다 설명을 이고 있어 판이
   // 길어지는데, 돋보기에 붙이면 그 판이 화면 한쪽으로 쏠려 위나 아래가 잘린다.
@@ -3548,126 +3554,155 @@ export function openBreakthroughStepsPopup(
     backButton: true,
   }, (body) => {
     const top = -layout.height / 2;
-    const half = layout.rowWidth / 2;
-    const slant = 16;
     const breathe = motionPolicy(session.settings).nonEssentialRepeatFactor !== 0;
     BREAKTHROUGH_STEPS.forEach((entry, index) => {
-      // 돌파 한 번이 등급 하나다. 표의 첫 카드가 곧 "I로 가는 길"이다.
-      const rowGrade = index + 1;
-      const y = top + layout.rows[index];
-      const cardHeight = layout.rowHeights[index];
-      const cardTop = y - cardHeight / 2;
-      const reached = grade >= rowGrade;
-      // 다음에 뚫을 카드 — 이 창에서 가장 먼저 눈이 가야 하는 자리다.
-      const next = !reached && rowGrade === grade + 1;
-      // 열린 카드와 안 열린 카드를 **밝기가 아니라 결**로 가른다(`BREAK_STEPS.tone` 주석 참고).
-      const tone = reached ? BREAK_STEPS.tone.reached : BREAK_STEPS.tone.locked;
-      const cardShape = slantedRect(layout.rowWidth, cardHeight, slant);
-      body.add(drawLayer(scene, 0, y, cardShape, {
-        fill: tone.fill,
-        alpha: tone.alpha,
-        edge: COLOR.accent,
-        edgeAlpha: next ? 1 : tone.edgeAlpha,
-      }));
-      // **머리 띠는 카드와 같은 기울기로 깎는다.** 띠만 반듯하면 카드 위에 다른 판이 붙은 것처럼 보인다.
-      const headerBottom = BREAK_STEPS.header;
-      const shiftAt = (depth: number): number => slant / 2 - (slant * depth) / cardHeight;
-      const band = scene.add.graphics({ x: 0, y });
-      band.fillStyle(tone.header, tone.headerAlpha);
-      band.fillPoints([
-        new Phaser.Math.Vector2(-half + shiftAt(0), -cardHeight / 2),
-        new Phaser.Math.Vector2(half + shiftAt(0), -cardHeight / 2),
-        new Phaser.Math.Vector2(half + shiftAt(headerBottom), -cardHeight / 2 + headerBottom),
-        new Phaser.Math.Vector2(-half + shiftAt(headerBottom), -cardHeight / 2 + headerBottom),
-      ], true);
-      band.lineStyle(2, COLOR.accent, reached ? 0.55 : 0.22);
-      band.lineBetween(-half + shiftAt(headerBottom), -cardHeight / 2 + headerBottom, half + shiftAt(headerBottom), -cardHeight / 2 + headerBottom);
-      body.add(band);
-      if (next) {
-        // 다음 카드만 **테두리가** 빛나고 느리게 숨 쉰다 — 어디까지 왔고 무엇이 다음인지가 한눈에 읽힌다.
-        // 안쪽으로 겹겹이 번지던 빛은 카드 글자까지 덮어 과했다(응태 2026-11-13). 넓고 옅은 선 위에 가는 선 하나만 긋는다.
-        const glow = scene.add.container(0, y);
-        glow.add(drawShapeOutline(scene, 0, 0, cardShape, { color: COLOR.accent, alpha: BREAK_STEPS.next.haloAlpha, width: BREAK_STEPS.next.haloWidth }));
-        glow.add(drawShapeOutline(scene, 0, 0, cardShape, { color: COLOR.accent, alpha: 0.95, width: BREAK_STEPS.next.lineWidth }));
-        body.add(glow);
-        if (breathe) {
-          const tween = scene.tweens.add({ targets: glow, alpha: { from: 1, to: 0.35 }, duration: BREAK_STEPS.next.breatheMs, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-          glow.once(Phaser.GameObjects.Events.DESTROY, () => tween.remove());
-        }
-      }
-      const headerY = cardTop + headerBottom / 2;
-      const mark = scene.add.container(BREAK_STEPS.gradeMark.x + shiftAt(headerBottom / 2), headerY);
-      addBreakthroughGradeMark(scene, mark, 0, 0, BREAK_STEPS.gradeMark.size, rowGrade);
-      mark.setAlpha(tone.gradeMark);
-      body.add(mark);
-      // 머리 띠 오른쪽 — 이 단계가 오각형에 더하는 성장. 효과 문장과 다른 축이라 띠에 따로 선다.
-      // 돌파는 파편만 들어 요구 레벨이 없으므로 레벨 칩을 세우지 않는다. 아직 못 연 단계만 맨 끝에 자물쇠가 선다.
-      const right = half + shiftAt(headerBottom / 2) - BREAK_STEPS.headerRight.margin;
-      let cursor = right;
-      if (!reached) {
-        body.add(drawGlyph(scene, "lock", cursor - 11, headerY, 22, next ? COLOR.accent : 0xa9a7a2, 0.95, 3));
-        cursor -= 22 + BREAK_STEPS.headerRight.gap;
-      }
-      const growthValue = scene.add
-        .text(cursor, headerY, `+${breakthroughGrowthPercent(1)}%`, textStyle({ role: "display", size: BREAK_STEPS.headerRight.levelSize, color: reached ? "#9fe08a" : COLOR.ink }))
-        .setOrigin(1, 0.5);
-      body.add(growthValue);
-      cursor -= growthValue.displayWidth + 8;
-      const growthLabel = scene.add
-        .text(cursor, headerY, t("info.breakthrough.growth"), textStyle({ role: "emphasis", size: BREAK_STEPS.headerRight.growthSize, color: COLOR.inkDim }))
-        .setOrigin(1, 0.5);
-      squeezeTextToWidth(growthLabel, 150);
-      body.add(growthLabel);
-      cursor -= growthLabel.displayWidth;
-      // 머리 띠 왼쪽 — 어느 칸(슬롯)의 어느 기술이 강해지는가. 스킬 이름이 이 카드의 제목이다.
-      const textLeft = BREAK_STEPS.headerText.x + shiftAt(headerBottom / 2);
-      const slotLabel = scene.add
-        .text(textLeft, headerY, skillSlotLabel(entry.slot), textStyle({ role: "emphasis", size: BREAK_STEPS.headerText.slotSize, color: COLOR.inkDim }))
-        .setOrigin(0, 0.5);
-      squeezeTextToWidth(slotLabel, 130);
-      body.add(slotLabel);
-      const nameLeft = textLeft + slotLabel.displayWidth + BREAK_STEPS.headerText.gap;
-      const skillName = scene.add
-        .text(nameLeft, headerY, breakthroughSlotSkillName(def, entry.slot), textStyle({ role: "display", size: BREAK_STEPS.headerText.nameSize, color: reached ? COLOR.accentText : COLOR.ink }))
-        .setOrigin(0, 0.5);
-      squeezeTextToWidth(skillName, Math.max(80, cursor - BREAK_STEPS.headerRight.gap - nameLeft));
-      body.add(skillName);
-      if (next) {
-        // 「다음 단계」 이름표는 카드 윗변에 걸터앉는다 — 머리 띠의 글을 덮지 않는 슬롯 이름 위쪽이다.
-        const tag = scene.add.text(0, 0, t("info.breakthrough.next"), textStyle({ role: "display", size: BREAK_STEPS.next.tagSize, color: "#1a1d21" })).setOrigin(0.5);
-        squeezeTextToWidth(tag, 220);
-        const tagWidth = tag.displayWidth + BREAK_STEPS.next.tagPadX * 2;
-        const tagX = textLeft + tagWidth / 2;
-        const tagY = cardTop - BREAK_STEPS.next.tagLift;
-        const tagBox = drawLayer(scene, tagX, tagY, chipPoints(tagWidth, BREAK_STEPS.next.tagHeight, {
-          bevel: { topLeft: 10, topRight: 0, bottomRight: 10, bottomLeft: 0 },
-        }), { fill: COLOR.accent, alpha: 1, shadow: { x: 0, y: 4 } });
-        tag.setPosition(tagX, tagY);
-        body.add([tagBox, tag]);
-      }
-      // 몸통 — **어느 기술이 열리는지는 그 기술의 액자가 말한다.** 정보창 아래 네 칸과 같은 프리팹이다.
-      const bodyY = cardTop + headerBottom + (cardHeight - headerBottom) / 2;
-      const icon = addSkillIconFrame(scene, {
-        size: BREAK_STEPS.icon.size,
-        slot: entry.slot,
-        relicId: def.id,
-        fallbackIcon: slotFallbackIcon(def, entry.slot),
-        element: def.element,
-        role: def.role,
-        label: skillSlotLabel(entry.slot),
-        // 이미 뚫은 카드는 정보창 아래 액자 줄과 **같은 얼굴**로 선다(강조색 + 이름 뒤의 `+`).
-        // "없음"으로 정해 둔 자리는 뚫었어도 `+`를 달지 않는다 — 달라진 것이 없다.
-        enhanced: breakthroughEnhances(def, grade, entry.slot),
-        dimAlpha: reached ? undefined : BREAK_STEPS.lockedIconAlpha,
+      addBreakthroughStepCard(scene, body, def, grade, entry, index + 1, {
+        y: top + layout.rows[index], height: layout.rowHeights[index], width: layout.rowWidth, line: lines[index], breathe,
       });
-      icon.setPosition(BREAK_STEPS.icon.x + shiftAt(bodyY - cardTop), bodyY);
-      body.add(icon);
-      // 열리는 것은 **이 개체의** 효과다. 문구는 정의에서 조립하고, 강조된 말은 스킬 쪽지와 같은 경계로 그려 눌린다.
-      const line = lines[index];
-      line.setPosition(BREAK_STEPS.textX + shiftAt(bodyY - cardTop), bodyY - line.height / 2);
-      body.add(line);
     });
   });
+}
+
+/** 돌파 카드 몸통의 효과 문장 — 표와 확정 창이 같은 문장·같은 태그를 세운다. */
+export function breakthroughStepLine(keywords: KeywordManager, def: RelicDef, slot: BreakthroughStep["slot"], stats: Stats | undefined, width: number): Phaser.GameObjects.Container {
+  return keywords.layout(
+    formatBreakthroughDescription(breakthroughEffectText(def, slot, stats) ?? t("skill.breakthrough.effect.none")), {
+      width, size: BREAK_STEPS.textSize, lineSpacing: 8,
+      contextualKeywords: breakthroughEffectKeywords(def, slot, stats),
+    },
+  );
+}
+
+/**
+ * 돌파 단계 카드 한 장 — 머리 띠(등급 · 슬롯 · 스킬 이름 · 능력치 성장 · 자물쇠) + 몸통(스킬 액자 · 열리는 효과).
+ *
+ * 등급 돋보기의 표가 넷을 쌓고, 한계 돌파 확정 창이 **이번에 열리는 한 장**을 세운다. 두 창이 같은 함수를
+ * 지나야 같은 단계가 창마다 다른 얼굴로 서지 않는다.
+ */
+export function addBreakthroughStepCard(
+  scene: Phaser.Scene,
+  body: Phaser.GameObjects.Container,
+  def: RelicDef,
+  /** 지금 돌파 등급. */
+  grade: number,
+  entry: BreakthroughStep,
+  /** 이 카드가 여는 등급. */
+  rowGrade: number,
+  place: { y: number; height: number; width: number; line: Phaser.GameObjects.Container; breathe: boolean },
+): void {
+  const { y, width: rowWidth, line, breathe } = place;
+  const cardHeight = place.height;
+  const half = rowWidth / 2;
+  const slant = 16;
+  const cardTop = y - cardHeight / 2;
+  const reached = grade >= rowGrade;
+  // 다음에 뚫을 카드 — 이 창에서 가장 먼저 눈이 가야 하는 자리다.
+  const next = !reached && rowGrade === grade + 1;
+  // 열린 카드와 안 열린 카드를 **밝기가 아니라 결**로 가른다(`BREAK_STEPS.tone` 주석 참고).
+  const tone = reached ? BREAK_STEPS.tone.reached : BREAK_STEPS.tone.locked;
+  const cardShape = slantedRect(rowWidth, cardHeight, slant);
+  body.add(drawLayer(scene, 0, y, cardShape, {
+    fill: tone.fill,
+    alpha: tone.alpha,
+    edge: COLOR.accent,
+    edgeAlpha: next ? 1 : tone.edgeAlpha,
+  }));
+  // **머리 띠는 카드와 같은 기울기로 깎는다.** 띠만 반듯하면 카드 위에 다른 판이 붙은 것처럼 보인다.
+  const headerBottom = BREAK_STEPS.header;
+  const shiftAt = (depth: number): number => slant / 2 - (slant * depth) / cardHeight;
+  const band = scene.add.graphics({ x: 0, y });
+  band.fillStyle(tone.header, tone.headerAlpha);
+  band.fillPoints([
+    new Phaser.Math.Vector2(-half + shiftAt(0), -cardHeight / 2),
+    new Phaser.Math.Vector2(half + shiftAt(0), -cardHeight / 2),
+    new Phaser.Math.Vector2(half + shiftAt(headerBottom), -cardHeight / 2 + headerBottom),
+    new Phaser.Math.Vector2(-half + shiftAt(headerBottom), -cardHeight / 2 + headerBottom),
+  ], true);
+  band.lineStyle(2, COLOR.accent, reached ? 0.55 : 0.22);
+  band.lineBetween(-half + shiftAt(headerBottom), -cardHeight / 2 + headerBottom, half + shiftAt(headerBottom), -cardHeight / 2 + headerBottom);
+  body.add(band);
+  if (next) {
+    // 다음 카드만 **테두리가** 빛나고 느리게 숨 쉰다 — 어디까지 왔고 무엇이 다음인지가 한눈에 읽힌다.
+    // 안쪽으로 겹겹이 번지던 빛은 카드 글자까지 덮어 과했다(응태 2026-11-13). 넓고 옅은 선 위에 가는 선 하나만 긋는다.
+    const glow = scene.add.container(0, y);
+    glow.add(drawShapeOutline(scene, 0, 0, cardShape, { color: COLOR.accent, alpha: BREAK_STEPS.next.haloAlpha, width: BREAK_STEPS.next.haloWidth }));
+    glow.add(drawShapeOutline(scene, 0, 0, cardShape, { color: COLOR.accent, alpha: 0.95, width: BREAK_STEPS.next.lineWidth }));
+    body.add(glow);
+    if (breathe) {
+      const tween = scene.tweens.add({ targets: glow, alpha: { from: 1, to: 0.35 }, duration: BREAK_STEPS.next.breatheMs, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+      glow.once(Phaser.GameObjects.Events.DESTROY, () => tween.remove());
+    }
+  }
+  const headerY = cardTop + headerBottom / 2;
+  const mark = scene.add.container(BREAK_STEPS.gradeMark.x + shiftAt(headerBottom / 2), headerY);
+  addBreakthroughGradeMark(scene, mark, 0, 0, BREAK_STEPS.gradeMark.size, rowGrade);
+  mark.setAlpha(tone.gradeMark);
+  body.add(mark);
+  // 머리 띠 오른쪽 — 이 단계가 오각형에 더하는 성장. 효과 문장과 다른 축이라 띠에 따로 선다.
+  // 돌파는 파편만 들어 요구 레벨이 없으므로 레벨 칩을 세우지 않는다. 아직 못 연 단계만 맨 끝에 자물쇠가 선다.
+  const right = half + shiftAt(headerBottom / 2) - BREAK_STEPS.headerRight.margin;
+  let cursor = right;
+  if (!reached) {
+    body.add(drawGlyph(scene, "lock", cursor - 11, headerY, 22, next ? COLOR.accent : 0xa9a7a2, 0.95, 3));
+    cursor -= 22 + BREAK_STEPS.headerRight.gap;
+  }
+  const growthValue = scene.add
+    .text(cursor, headerY, `+${breakthroughGrowthPercent(1)}%`, textStyle({ role: "display", size: BREAK_STEPS.headerRight.levelSize, color: reached ? "#9fe08a" : COLOR.ink }))
+    .setOrigin(1, 0.5);
+  body.add(growthValue);
+  cursor -= growthValue.displayWidth + 8;
+  const growthLabel = scene.add
+    .text(cursor, headerY, t("info.breakthrough.growth"), textStyle({ role: "emphasis", size: BREAK_STEPS.headerRight.growthSize, color: COLOR.inkDim }))
+    .setOrigin(1, 0.5);
+  squeezeTextToWidth(growthLabel, 150);
+  body.add(growthLabel);
+  cursor -= growthLabel.displayWidth;
+  // 머리 띠 왼쪽 — 어느 칸(슬롯)의 어느 기술이 강해지는가. 스킬 이름이 이 카드의 제목이다.
+  const textLeft = BREAK_STEPS.headerText.x + shiftAt(headerBottom / 2);
+  const slotLabel = scene.add
+    .text(textLeft, headerY, skillSlotLabel(entry.slot), textStyle({ role: "emphasis", size: BREAK_STEPS.headerText.slotSize, color: COLOR.inkDim }))
+    .setOrigin(0, 0.5);
+  squeezeTextToWidth(slotLabel, 130);
+  body.add(slotLabel);
+  const nameLeft = textLeft + slotLabel.displayWidth + BREAK_STEPS.headerText.gap;
+  const skillName = scene.add
+    .text(nameLeft, headerY, breakthroughSlotSkillName(def, entry.slot), textStyle({ role: "display", size: BREAK_STEPS.headerText.nameSize, color: reached ? COLOR.accentText : COLOR.ink }))
+    .setOrigin(0, 0.5);
+  squeezeTextToWidth(skillName, Math.max(80, cursor - BREAK_STEPS.headerRight.gap - nameLeft));
+  body.add(skillName);
+  if (next) {
+    // 「다음 단계」 이름표는 카드 윗변에 걸터앉는다 — 머리 띠의 글을 덮지 않는 슬롯 이름 위쪽이다.
+    const tag = scene.add.text(0, 0, t("info.breakthrough.next"), textStyle({ role: "display", size: BREAK_STEPS.next.tagSize, color: "#1a1d21" })).setOrigin(0.5);
+    squeezeTextToWidth(tag, 220);
+    const tagWidth = tag.displayWidth + BREAK_STEPS.next.tagPadX * 2;
+    const tagX = textLeft + tagWidth / 2;
+    const tagY = cardTop - BREAK_STEPS.next.tagLift;
+    const tagBox = drawLayer(scene, tagX, tagY, chipPoints(tagWidth, BREAK_STEPS.next.tagHeight, {
+      bevel: { topLeft: 10, topRight: 0, bottomRight: 10, bottomLeft: 0 },
+    }), { fill: COLOR.accent, alpha: 1, shadow: { x: 0, y: 4 } });
+    tag.setPosition(tagX, tagY);
+    body.add([tagBox, tag]);
+  }
+  // 몸통 — **어느 기술이 열리는지는 그 기술의 액자가 말한다.** 정보창 아래 네 칸과 같은 프리팹이다.
+  const bodyY = cardTop + headerBottom + (cardHeight - headerBottom) / 2;
+  const icon = addSkillIconFrame(scene, {
+    size: BREAK_STEPS.icon.size,
+    slot: entry.slot,
+    relicId: def.id,
+    fallbackIcon: slotFallbackIcon(def, entry.slot),
+    element: def.element,
+    role: def.role,
+    label: skillSlotLabel(entry.slot),
+    // 이미 뚫은 카드는 정보창 아래 액자 줄과 **같은 얼굴**로 선다(강조색 + 이름 뒤의 `+`).
+    // "없음"으로 정해 둔 자리는 뚫었어도 `+`를 달지 않는다 — 달라진 것이 없다.
+    enhanced: breakthroughEnhances(def, grade, entry.slot),
+    dimAlpha: reached ? undefined : BREAK_STEPS.lockedIconAlpha,
+  });
+  icon.setPosition(BREAK_STEPS.icon.x + shiftAt(bodyY - cardTop), bodyY);
+  body.add(icon);
+  // 열리는 것은 **이 개체의** 효과다. 문구는 정의에서 조립하고, 강조된 말은 스킬 쪽지와 같은 경계로 그려 눌린다.
+  line.setPosition(BREAK_STEPS.textX + shiftAt(bodyY - cardTop), bodyY - line.height / 2);
+  body.add(line);
 }
 
 /** 돌파 카드의 제목 — 그 슬롯에 실제로 선 기술의 이름. */

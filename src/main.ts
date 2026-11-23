@@ -38,6 +38,7 @@ import { DuelScene } from "./scenes/DuelScene";
 import { PvpPreviewScene } from "./scenes/PvpPreviewScene";
 import { EventScene } from "./scenes/EventScene";
 import { installWebglWatchdog } from "./ui/webglWatchdog";
+import { installDestroyedTextGuard } from "./ui/destroyedTextGuard";
 import { setDebugWebglRestore, debugPerfEnabled, publishDebugPerf } from "./debug";
 import { installCjkWrap } from "./ui/cjkWrap";
 import { installTapSlopGuard } from "./ui/tapSlopGuard";
@@ -61,6 +62,7 @@ function startupAntialias(): boolean {
   try { return savedAntialias(globalThis.localStorage?.getItem(LOCAL_SAVE_STORAGE_KEYS[LOCAL_SAVE_FLAVOR]), fallback); } catch { return fallback !== "low"; }
 }
 
+installDestroyedTextGuard();
 const game = new Phaser.Game({
   // Puppet 원본 indexed mesh를 GPU로 직접 그리므로 중복 정점을 만드는 Canvas 폴백은 사용하지 않는다.
   type: Phaser.WEBGL,
@@ -124,7 +126,7 @@ installBackgroundSleep(game);
 // 게임이 앞에 떠 있는 동안 화면 자동 꺼짐을 막는다(자동 전투를 지켜보는 동안 잠기지 않게, 이유는 ui/screenWakeLock).
 installBrowserScreenWakeLock();
 // 컨텍스트를 잃고 돌아오지 않으면 까만 화면에 소리만 남는다 — 보고하고 새로 띄운다(core/webglRecovery).
-installWebglWatchdog(game.canvas, (game.renderer as Partial<Phaser.Renderer.WebGL.WebGLRenderer>).gl ?? null);
+installWebglWatchdog(game.canvas, (game.renderer as Partial<Phaser.Renderer.WebGL.WebGLRenderer>).gl ?? null, game.renderer as Partial<Phaser.Renderer.WebGL.WebGLRenderer>);
 
 // 한 프레임의 예외가 게임 루프를 죽이지 않게 프레임 콜백을 감싼다(이유는 core/frameGuard).
 // 루프는 READY 직후 시작되므로 그 뒤 한 틱 늦게 감싼다. 로그는 같은 오류가 쏟아지지 않게 앞 몇 번만 남긴다.

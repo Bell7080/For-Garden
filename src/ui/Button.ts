@@ -11,6 +11,7 @@ import { settingsManager } from "../managers/SettingsManager";
 import { pressIn, pressOut } from "./pressFeedback";
 import { bakedGraphicsImage, bakeKey } from "./bakedGraphics";
 import type { PressTier } from "./pressFeedbackStyle";
+import type { EntranceMotif } from "./lobbyEntranceStyle";
 
 /** 버튼 탭과 스크롤 드래그를 구분하는 공용 게임 좌표 거리다. */
 /** 버튼 비용 글자. 줄여 적는 버튼만 K·M으로 접는다. */
@@ -69,6 +70,80 @@ function toShapePoints(flat: number[]): { x: number; y: number }[] {
   return points;
 }
 
+/**
+ * 로비 입구 판의 무늬 — 판의 **바깥(키 큰) 변**에서 안쪽으로 옅어지는 한 가지 결(`lobbyEntranceStyle.ts`).
+ *
+ * 점 무늬와 같이 한 번 굽고(`bakedGraphicsImage`) 같은 모양·색은 텍스처 한 장을 나눠 쓴다. 판 모양 안에 드는 조각만
+ * 찍어 기울어진 사다리꼴 밖으로 새지 않는다. 난수를 쓰지 않는다.
+ */
+export function entranceMotif(
+  scene: Phaser.Scene,
+  shape: readonly number[],
+  color: number,
+  motif: Exclude<EntranceMotif, "dots">,
+  outer: "left" | "right",
+): Phaser.GameObjects.Image {
+  const points = toShapePoints([...shape]);
+  const left = Math.min(...points.map((point) => point.x));
+  const right = Math.max(...points.map((point) => point.x));
+  const top = Math.min(...points.map((point) => point.y));
+  const bottom = Math.max(...points.map((point) => point.y));
+  const key = bakeKey(`motif-${motif}`, [color, outer, ...shape]);
+  return bakedGraphicsImage(scene, key, { left, top, right, bottom }, (graphics) => {
+    const polygon = new Phaser.Geom.Polygon(points.map((point) => new Phaser.Geom.Point(point.x, point.y)));
+    const inside = (x: number, y: number): boolean => polygon.contains(x, y);
+    const reach = (right - left) * 0.42;
+    // 바깥 변에서 잰 깊이 0 → 1(무늬가 끝나는 자리).
+    const depthOf = (x: number): number => (outer === "left" ? x - left : right - x) / reach;
+    const fromOuter = (d: number): number => (outer === "left" ? left + d : right - d);
+    if (motif === "streams") {
+      // 가는 신호선 — 줄마다 길이와 시작점을 어긋나게 해 흘러드는 것처럼 읽힌다.
+      const lengths = [0.92, 0.48, 0.74, 0.3, 0.62, 0.86, 0.4, 0.68, 0.24];
+      let row = 0;
+      for (let y = top + 9; y < bottom - 5; y += 10, row += 1) {
+        const length = reach * lengths[row % lengths.length]!;
+        const start = reach * 0.06 * (row % 3);
+        for (let d = start; d < start + length; d += 4) {
+          const x = fromOuter(d);
+          if (!inside(x, y) || !inside(fromOuter(d + 4), y)) continue;
+          const fade = 1 - Math.min(1, d / reach);
+          graphics.fillStyle(color, 0.55 * fade * fade);
+          graphics.fillRect(Math.min(x, fromOuter(d + 4)), y - 1, 4, 2);
+        }
+      }
+    } else if (motif === "strata") {
+      // 지층 띠 — 밑동부터 위로 얇아지고 옅어지는 가로 띠 셋, 바깥 변에서 안쪽으로 짧아진다.
+      const bands = [{ y: 0.84, h: 12, alpha: 0.42, reach: 1.25 }, { y: 0.68, h: 6, alpha: 0.3, reach: 0.95 }, { y: 0.57, h: 3, alpha: 0.2, reach: 0.65 }];
+      for (const band of bands) {
+        const y = top + (bottom - top) * band.y;
+        for (let d = 0; d < reach * band.reach; d += 3) {
+          const x = fromOuter(d);
+          if (!inside(x, y - band.h / 2) || !inside(x, y + band.h / 2)) continue;
+          const fade = 1 - d / (reach * band.reach);
+          graphics.fillStyle(color, band.alpha * fade);
+          graphics.fillRect(Math.min(x, fromOuter(d + 3)), y - band.h / 2, 3, band.h);
+        }
+      }
+    } else {
+      // 빗금 — 바깥 변을 따라 같은 간격의 사선, 안쪽으로 갈수록 옅다.
+      const slope = 0.62;
+      const span = bottom - top;
+      for (let d = -span * slope; d < reach; d += 14) {
+        for (let t = 0; t < span; t += 3) {
+          const along = d + t * slope;
+          if (along < 0 || along > reach) continue;
+          const x = fromOuter(along);
+          const y = bottom - t;
+          if (!inside(x, y)) continue;
+          const fade = 1 - depthOf(x);
+          graphics.fillStyle(color, 0.5 * fade * fade);
+          graphics.fillRect(x - 1.5, y - 1.5, 3, 3);
+        }
+      }
+    }
+  });
+}
+
 /** 강조 버튼의 실루엣 — 왼쪽 위·오른쪽 아래를 높이의 52%만큼 깎는다. 버튼 뒤에 까는 빛·덮개도 이 모양을 받는다. */
 export function primaryButtonShape(width: number, height: number): number[] {
   const b = height * 0.52;
@@ -99,6 +174,18 @@ export const PRIMARY_PLATE = {
   ledgeShade: 0.5,
   ledgeAlpha: 0.95,
   labelTint: 0.45,
+} as const;
+
+/**
+ * 로비 입구 판(`variant: "entrance"` — 교류·발굴·결투)의 결. 강조 판보다 한 단계 가볍다: 강조색을 머금은 유리면에
+ * 윗변 한 줄과 아랫변 원근선만 있고, 위에서 비치는 빛(glow)·밑동 턱은 없다 — 무게는 출격 하나가 갖는다.
+ */
+export const ENTRANCE_PLATE = {
+  fillShade: 0.26,
+  alpha: 0.84,
+  sheen: 0.04,
+  edgeAlpha: 0.85,
+  labelTint: 0.82,
 } as const;
 
 /** 색을 검정 쪽으로 누른다(`amount` = 남기는 몫). */
@@ -162,7 +249,7 @@ export interface ButtonOptions {
    *
    * `primary`는 강조색 면과 두 겹의 밝은 선을 쓰고 모서리를 크게 깎는다. 한 화면에 하나만 둔다.
    */
-  variant?: "default" | "primary";
+  variant?: "default" | "primary" | "entrance";
   /** 판을 실제로 기울이는 각도(도). 출격처럼 비스듬히 꽂힌 판을 만들 때 쓴다. */
   tilt?: number;
   /** 강조색을 바꾼다. 출격(금)과 성격이 다른 입구를 색으로 가를 때만 쓴다. */
@@ -177,6 +264,11 @@ export interface ButtonOptions {
    * 화면에서 가장 중요한 버튼 하나에만 쓴다.
    */
   decorDots?: boolean;
+  /**
+   * 로비 입구 판의 무늬(`lobbyEntranceStyle.ts`). `dots`는 `decorDots`와 같다. 판 바깥 변에서 안쪽으로 옅어지는 결이고
+   * 한 번 구워 세운다. 무늬는 늘 글자 **아래** 층이다.
+   */
+  motif?: EntranceMotif;
   /**
    * 원근. **키가 큰 변**을 알려 주면 반대쪽이 좁아진 사다리꼴이 된다.
    * 화면 가장자리 쪽이 커야 바깥에서 안으로 들어오는 판처럼 보이므로, 왼쪽 끝 버튼은
@@ -209,6 +301,7 @@ export class Button extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number, opts: ButtonOptions) {
     super(scene, x, y);
     const primary = opts.variant === "primary";
+    const entrance = opts.variant === "entrance";
     const pressTier: PressTier = opts.pressTier ?? (primary ? "primary" : "normal");
     const { width, height } = opts;
     const accent = opts.accentColor ?? COLOR.accent;
@@ -227,22 +320,26 @@ export class Button extends Phaser.GameObjects.Container {
     // 긋던 때는 판이 비어 보여 「위아래 금테두리」로만 읽혔다. 이제 판 자체가 강조색을 짙게 머금고 위에서 빛을 받으며,
     // 밑동은 밝은 선이 아니라 한 톤 짙은 턱이 두께를 만든다. 라벨도 강조색을 밝힌 색이다.
     const P = PRIMARY_PLATE;
-    plate.add(drawLayer(scene, 0, 0, shape, {
+    const E = ENTRANCE_PLATE;
+    // 판 바탕 층들. 원근 판(로비 입구 넷)은 움직이지 않으므로 아래에서 한 장으로 굽는다.
+    const baseLayers: Phaser.GameObjects.Graphics[] = [];
+    const fillColor = opts.fill ?? (primary ? shadeColor(accent, P.fillShade) : entrance ? shadeColor(accent, E.fillShade) : 0x1b2029);
+    baseLayers.push(drawLayer(scene, 0, 0, shape, {
       // 유리판이라 바탕을 짙게 칠하지 않는다. 뒤 배경이 비쳐야 두께가 느껴진다.
-      fill: opts.fill ?? (primary ? shadeColor(accent, P.fillShade) : 0x1b2029),
-      alpha: primary ? P.alpha : HOLO.glass,
-      sheen: primary ? P.sheen : 0.04,
+      fill: fillColor,
+      alpha: primary ? P.alpha : entrance ? E.alpha : HOLO.glass,
+      sheen: primary ? P.sheen : entrance ? E.sheen : 0.04,
       ...(primary ? { glow: { color: accent, strength: P.glow, height: P.glowHeight } } : {}),
       // 사방을 두르지 않고 빛이 닿는 윗변 한 줄만 긋는다.
       edge: accent,
-      edgeAlpha: primary ? 0.95 : 0.4,
+      edgeAlpha: primary ? 0.95 : entrance ? E.edgeAlpha : 0.4,
     }));
     if (primary && !opts.perspective) {
       // 밑동의 턱 — 밝은 금선 대신 판보다 한 톤 짙은 띠가 아래 변을 받쳐 눌리는 판의 두께를 만든다.
       const ledge = scene.add.graphics();
       ledge.lineStyle(P.ledgeWidth, shadeColor(accent, P.ledgeShade), P.ledgeAlpha);
       ledge.lineBetween(-width / 2, height / 2 - P.ledgeWidth / 2, width / 2 - height * 0.52 - P.ledgeWidth / 2, height / 2 - P.ledgeWidth / 2);
-      plate.add(ledge);
+      baseLayers.push(ledge);
     }
     if (opts.perspective) {
       // 사다리꼴은 아래 변도 기울어 있다. 그 변을 따라 한 줄 그어 원근을 한 번 더 알린다.
@@ -250,14 +347,31 @@ export class Button extends Phaser.GameObjects.Container {
       const line = scene.add.graphics();
       line.lineStyle(3, accent, 0.55);
       line.lineBetween(bottom[0].x, bottom[0].y, bottom[1].x, bottom[1].y);
-      plate.add(line);
+      baseLayers.push(line);
     }
+    if (opts.perspective) {
+      // Graphics는 명령을 매 프레임 다시 풀어 그린다(glow 아홉 겹 포함). 로비 입구 판은 서 있기만 하므로 한 번 굽고
+      // 같은 모양·색은 한 장을 나눠 쓴다 — 정지 로비 그리기가 판 수만큼 늘지 않게 한다(`bakedGraphicsImage`).
+      const xs = shape.filter((_, i) => i % 2 === 0), ys = shape.filter((_, i) => i % 2 === 1);
+      const key = bakeKey("plate", [opts.variant ?? "default", fillColor, accent, ...shape]);
+      const reach = { x: Math.max(0, HOLO.shadow.x), y: Math.max(0, HOLO.shadow.y) };
+      plate.add(bakedGraphicsImage(scene, key, { left: Math.min(...xs) - 4, top: Math.min(...ys) - 4, right: Math.max(...xs) + reach.x + 4, bottom: Math.max(...ys) + reach.y + 4 }, (g) => {
+        for (const layer of baseLayers) g.commandBuffer.push(...layer.commandBuffer);
+      }));
+      for (const layer of baseLayers) layer.destroy();
+    } else {
+      plate.add(baseLayers);
+    }
+    // 무늬는 판 바로 위, 글자 아래 층이다 — 글자 위에 찍으면 라벨 가장자리가 점에 갉힌다.
+    const motif = opts.motif ?? (opts.decorDots ? "dots" : undefined);
+    if (motif === "dots") plate.add(dotPattern(scene, shape, accent));
+    else if (motif) plate.add(entranceMotif(scene, shape, accent, motif, opts.perspective ?? "right"));
 
     const hasSub = opts.sub !== undefined;
     const fontSize = opts.fontSize ?? 36;
     const iconSize = fontSize * 1.35;
     const label = scene.add
-      .text(0, hasSub ? -14 : 0, opts.label, textStyle({ role: "display", size: fontSize, ...(opts.labelColor ? { color: opts.labelColor } : primary ? { color: tintColor(accent, PRIMARY_PLATE.labelTint) } : {}) }))
+      .text(0, hasSub ? -14 : 0, opts.label, textStyle({ role: "display", size: fontSize, ...(opts.labelColor ? { color: opts.labelColor } : primary ? { color: tintColor(accent, PRIMARY_PLATE.labelTint) } : entrance ? { color: tintColor(accent, ENTRANCE_PLATE.labelTint) } : {}) }))
       .setOrigin(0.5);
     plate.add(label);
     // 언어마다 길이가 다른 라벨이 판을 넘지 않게, 글자만 서는 버튼은 깎인 모서리 안쪽 폭으로 가로만 누른다(넘칠 때만).
@@ -331,11 +445,10 @@ export class Button extends Phaser.GameObjects.Container {
       ribbon.add(ribbonText);
       plate.add(ribbon);
     }
-    if (opts.decorDots) plate.add(dotPattern(scene, shape, accent));
     if (hasSub) {
       // 보조 문구는 본문 굵기를 유지하고 크기만 선택할 수 있어 주 라벨보다 먼저 읽히지 않는다.
       this.subText = scene.add
-        .text(label.x, height * 0.24, opts.sub ?? "", textStyle({ role: "body", size: opts.subFontSize ?? 26, color: primary ? accentText : COLOR.inkDim }))
+        .text(label.x, height * 0.24, opts.sub ?? "", textStyle({ role: "body", size: opts.subFontSize ?? 26, color: primary || entrance ? accentText : COLOR.inkDim }))
         .setOrigin(0.5);
       plate.add(this.subText);
     }

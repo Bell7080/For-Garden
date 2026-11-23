@@ -23,10 +23,10 @@ import { bindDebugReadyLifecycle, setDebugReady, setDebugScene, setDebugStorefro
 import { getRelic } from "../data/relics";
 import { spawnPuppet } from "../puppets/assets";
 import { session } from "../state/session";
-import { latinEcho } from "../ui/latinEcho";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { startLobbyTutorial } from "../ui/tutorialLobbyFlow";
 import { Button } from "../ui/Button";
+import { lobbyEntranceButton } from "../ui/lobbyEntranceStyle";
 import { RailButton } from "../ui/RailButton";
 import { POPUP_BODY_BEVEL_RATIO } from "../ui/popupGeometry";
 import { TopBar } from "../ui/TopBar";
@@ -337,13 +337,7 @@ export class LobbyScene extends Phaser.Scene {
 
     // 결투 — 기존 원정 자리를 독립 PvP 모드 선택 화면으로 연결한다.
     const duelButton = new Button(this, LOBBY_ACTION_BOUNDS.expedition.x, LOBBY_ACTION_BOUNDS.expedition.y, {
-      width: LOBBY_ACTION_BOUNDS.expedition.width,
-      height: LOBBY_ACTION_BOUNDS.expedition.height,
-      label: t("lobby.duel"),
-      fontSize: 34,
-      // 출격과 성격이 다른 입구라 강조 양식을 쓰지 않는다. 같은 원근만 공유한다.
-      perspective: "right",
-      tilt: -6,
+      ...lobbyEntranceButton("duel", t("lobby.duel")),
       onClick: this.guarded("duel", () => (PVP_MODE_SELECT_ENABLED ? this.openPvpMenu() : startScene(this, "duel"))),
     });
     this.gateEntrance("duel", duelButton, { width: LOBBY_ACTION_BOUNDS.expedition.width, height: LOBBY_ACTION_BOUNDS.expedition.height, tall: "right", tilt: -6 });
@@ -353,17 +347,7 @@ export class LobbyScene extends Phaser.Scene {
 
     // 출격 — 로비에서 가장 큰 버튼이다. 주황빛 강조로 다른 입구와 구분한다.
     const sortieButton = new Button(this, LOBBY_ACTION_BOUNDS.sortie.x, LOBBY_ACTION_BOUNDS.sortie.y, {
-      width: LOBBY_ACTION_BOUNDS.sortie.width,
-      height: LOBBY_ACTION_BOUNDS.sortie.height,
-      label: t("lobby.sortie"),
-      sub: latinEcho(t("lobby.sortie"), "SORTIE"),
-      fontSize: 52,
-      variant: "primary",
-      perspective: "right",
-      tilt: -6,
-      accentColor: COLOR.sortie,
-      accentTextColor: COLOR.sortieText,
-      decorDots: true,
+      ...lobbyEntranceButton("sortie", t("lobby.sortie")),
       onClick: () => this.openSortieMenu(),
     });
 
@@ -374,15 +358,7 @@ export class LobbyScene extends Phaser.Scene {
 
     // 교류 — 맞은편이라 기울기와 원근을 뒤집어 `\` 방향으로 눕힌다.
     const interactionButton = new Button(this, 250, NAV_TOP - 400, {
-      width: 292,
-      height: 106,
-      label: t("lobby.interaction"),
-      sub: latinEcho(t("lobby.interaction"), "EXCHANGE"),
-      fontSize: 34,
-      perspective: "left",
-      tilt: 6,
-      accentColor: EXCHANGE_BLUE,
-      accentTextColor: "#9fd0f0",
+      ...lobbyEntranceButton("interaction", t("lobby.interaction")),
       onClick: this.guarded("interaction", () => startScene(this, "interaction")),
     });
     this.gateEntrance("interaction", interactionButton, { width: 292, height: 106, tall: "left", tilt: 6 });
@@ -392,15 +368,7 @@ export class LobbyScene extends Phaser.Scene {
     // 발굴 — 출격과 같은 줄에 서지만 크기는 교류와 같다. 왼쪽은 서브 콘텐츠 자리라, 오른쪽의
     // 큰 주황 버튼과 크기로 위계를 가른다. 색도 교류와 같은 푸른 계열로 묶는다.
     const excavationButton = new Button(this, 250, NAV_TOP - 245, {
-      width: 292,
-      height: 106,
-      label: t("lobby.excavation"),
-      sub: t("lobby.excavation.sub"),
-      fontSize: 34,
-      perspective: "left",
-      tilt: 6,
-      accentColor: EXCHANGE_BLUE,
-      accentTextColor: "#9fd0f0",
+      ...lobbyEntranceButton("excavation", t("lobby.excavation")),
       onClick: this.guarded("excavation", () => this.openIdleExcavation()),
     });
     // 발굴 저장 상한 판정은 manager가 API 결과로 합성하며 버튼은 공용 점만 구독한다.

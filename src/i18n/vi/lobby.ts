@@ -4,7 +4,6 @@ export const LOBBY_VI = {
   "lobby.sortie": "X U Ấ T  K Í C H",
   "lobby.interaction": "Giao lưu",
   "lobby.excavation": "Khai thác",
-  "lobby.excavation.sub": "Thu thập tài nguyên",
   "lobby.sortie.title": "Xuất kích",
   "lobby.sortie.story": "Cốt truyện",
   "lobby.sortie.story.status": "Tác chiến chính",

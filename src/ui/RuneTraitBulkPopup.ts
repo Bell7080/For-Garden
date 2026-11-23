@@ -15,6 +15,8 @@ import { showContentToast } from "./ContentToast";
 import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
 import { mountRunePickerGrid } from "./runePickerGrid";
 import { RUNE_PICK_GRID, runePickerListTop, runePickerSize } from "./runePickerLayout";
+import { chipPoints, drawLayer } from "./holo";
+import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
 import { COLOR, textStyle } from "./theme";
 
 /** 판의 자리. 목록 세 줄 아래로 고른 수 줄과 부여 버튼이 선다 — 높이는 쌓인 줄에서 거꾸로 구한다. */
@@ -23,6 +25,12 @@ const TRAIT_BULK = {
   listGap: 26,
   selectHeight: 60,
   selectButtonWidth: 230,
+  /** 소모·보유 판 — 무엇을 몇 개 쓰고 얼마가 남는지를 재화 그림과 값 글자로 마주 세운다. */
+  ledgerGap: 22,
+  ledgerHeight: 96,
+  ledgerLabelSize: 24,
+  ledgerIcon: 48,
+  ledgerValueSize: 34,
   buttonGap: 30,
   buttonWidth: 460,
   buttonHeight: 88,
@@ -49,7 +57,8 @@ export function openRuneTraitBulkPopup(scene: Phaser.Scene, popups: PopupLayer, 
   const sizeFor = session.runeInventory.filter(isRuneTraitBulkCandidate).length;
   const picker = runePickerSize(sizeFor, L.maxRows);
   let cursor = runePickerListTop() + picker.viewHeight + L.listGap;
-  const selectTop = cursor; cursor += L.selectHeight + L.buttonGap;
+  const selectTop = cursor; cursor += L.selectHeight + L.ledgerGap;
+  const ledgerTop = cursor; cursor += L.ledgerHeight + L.buttonGap;
   const buttonTop = cursor; cursor += L.buttonHeight + L.bottom;
   const width = picker.width;
   const height = cursor;
@@ -101,6 +110,42 @@ export function openRuneTraitBulkPopup(scene: Phaser.Scene, popups: PopupLayer, 
     });
     body.add(selectButton);
 
+    // 소모 | 보유 판. 몸판과 같은 비율로 깎아 판 안에 앉히고, 가운데 세로선이 두 칸을 가른다.
+    const ledgerWidth = right - left;
+    const ledgerY = ledgerTop + L.ledgerHeight / 2 - half;
+    const unit = Math.min(ledgerWidth, L.ledgerHeight) * POPUP_BODY_BEVEL_RATIO;
+    body.add(drawLayer(scene, 0, ledgerY, chipPoints(ledgerWidth, L.ledgerHeight, { bevel: { topLeft: unit, topRight: 0, bottomRight: unit, bottomLeft: 0 } }), { fill: 0x121821, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.55 }));
+    body.add(scene.add.rectangle(0, ledgerY, 2, L.ledgerHeight * 0.56, 0xffffff, 0.18));
+    const ledger = scene.add.container(0, ledgerY);
+    body.add(ledger);
+
+    /** `이름표 [그림] 값들…`을 한 덩어리로 `centerX`에 세운다. */
+    function ledgerGroup(centerX: number, label: string, values: { text: string; color: string }[]): void {
+      const gap = 12;
+      const parts: Phaser.GameObjects.GameObject[] = [];
+      const labelText = scene.add.text(0, 0, label, textStyle({ role: "emphasis", size: L.ledgerLabelSize, color: COLOR.inkDim })).setOrigin(0, 0.5);
+      const hasIcon = scene.textures.exists(iconKey);
+      const shadow = hasIcon ? scene.add.image(0, 4, iconKey).setDisplaySize(L.ledgerIcon, L.ledgerIcon).setTint(0x05070a).setAlpha(0.55) : undefined;
+      const image = hasIcon ? scene.add.image(0, 0, iconKey).setDisplaySize(L.ledgerIcon, L.ledgerIcon) : undefined;
+      const texts = values.map((value) => scene.add.text(0, 0, value.text, textStyle({ role: "display", size: L.ledgerValueSize, color: value.color })).setOrigin(0, 0.5));
+      const iconWidth = hasIcon ? L.ledgerIcon + gap * 0.6 : 0;
+      const total = labelText.width + gap * 1.4 + iconWidth + texts.reduce((sum, text) => sum + text.width, 0) + gap * (texts.length - 1);
+      let x = centerX - total / 2;
+      labelText.setX(x); x += labelText.width + gap * 1.4;
+      if (shadow && image) { shadow.setX(x + L.ledgerIcon / 2 + 3); image.setX(x + L.ledgerIcon / 2); x += iconWidth; parts.push(shadow, image); }
+      texts.forEach((text) => { text.setX(x); x += text.width + gap; });
+      ledger.add([labelText, ...parts, ...texts]);
+    }
+
+    function paintLedger(count: number, cores: number): void {
+      ledger.removeAll(true);
+      ledgerGroup(-ledgerWidth / 4, t("rune.traitBulk.cost"), [{ text: `×${count.toLocaleString()}`, color: count > cores ? COLOR.dangerText : count > 0 ? COLOR.accentText : COLOR.inkDim }]);
+      const after = cores - count;
+      ledgerGroup(ledgerWidth / 4, t("popup.balance"), count > 0
+        ? [{ text: cores.toLocaleString(), color: COLOR.ink }, { text: "→", color: COLOR.inkDim }, { text: after.toLocaleString(), color: COLOR.dangerText }]
+        : [{ text: cores.toLocaleString(), color: COLOR.ink }]);
+    }
+
     const grantButton = new Button(scene, 0, buttonTop + L.buttonHeight / 2 - half, {
       width: L.buttonWidth, height: L.buttonHeight, label: t("rune.traitBulk.title"), fontSize: 32, variant: "primary",
       onClick: () => confirmGrant(),
@@ -110,7 +155,8 @@ export function openRuneTraitBulkPopup(scene: Phaser.Scene, popups: PopupLayer, 
     function paint(): void {
       const count = picked().length;
       const cores = ownedCores();
-      countText.setText(t("rune.traitBulk.selected", { count: count.toLocaleString(), total: candidates().length.toLocaleString(), cores: cores.toLocaleString() }));
+      countText.setText(t("rune.traitBulk.selected", { count: count.toLocaleString(), total: candidates().length.toLocaleString() }));
+      paintLedger(count, cores);
       const shown = grid.shown();
       const room = runeTraitBulkSelectable(cores);
       const all = shown.length > 0 && room > 0 && shown.slice(0, room).every((rune) => selected.includes(rune.instanceId));

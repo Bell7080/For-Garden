@@ -17,7 +17,7 @@ import type { PortraitAssetId } from "../core/types";
 import { session } from "../state/session";
 import { drawIcon } from "./BottomNav";
 import { Button } from "./Button";
-import { latinEcho } from "./latinEcho";
+import { lobbyEntranceButton, type LobbyEntranceId } from "./lobbyEntranceStyle";
 import { ExpeditionEntryButton } from "./ExpeditionEntryButton";
 import { FaceFrame } from "./FaceFrame";
 import { contentNameKey } from "./contentLock";
@@ -208,15 +208,8 @@ function entrancePanel(scene: Phaser.Scene, id: ContentId): Phaser.GameObjects.C
   const label = t(contentNameKey(id));
   let panel: Phaser.GameObjects.Container;
   if (spec.kind === "lobby") {
-    // 교류·발굴은 왼쪽의 푸른 서브 입구, 결투는 오른쪽 원근의 기본 판이다(로비와 같다).
-    const blue = id !== "duel";
-    panel = new Button(scene, 0, 0, {
-      width: spec.width, height: spec.height, label, fontSize: 34,
-      sub: id === "excavation" ? t("lobby.excavation.sub") : id === "interaction" ? latinEcho(label, "EXCHANGE") : undefined,
-      perspective: blue ? "left" : "right", tilt: blue ? 6 : -6,
-      ...(blue ? { accentColor: COLOR.exchange, accentTextColor: COLOR.exchangeText } : {}),
-      onClick: () => undefined,
-    });
+    // 로비와 같은 입구 판 — 같은 표(`lobbyEntranceStyle.ts`)를 지나 같은 색·무늬·글 양식으로 선다.
+    panel = new Button(scene, 0, 0, { ...lobbyEntranceButton(id as LobbyEntranceId, label), onClick: () => undefined });
   } else {
     const art = SORTIE_ART[id] ?? {};
     panel = new ExpeditionEntryButton(scene, 0, 0, {

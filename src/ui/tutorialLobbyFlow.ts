@@ -36,7 +36,7 @@ export function startLobbyTutorial(scene: Phaser.Scene, nav: BottomNav, popups: 
     if (!giftAnnounced) {
       giftAnnounced = true;
       popups.open({ width: 820, height: 650, title: t("tutorial.research.open.title"), hideCloseButton: true, closeOnBackdrop: false }, (body, close) => {
-        const icon = drawIcon(scene, "lab", 0, -125, COLOR.accent).setScale(2);
+        const icon = drawIcon(scene, "lab", 0, -125, COLOR.accent, 2);
         body.add(icon);
         if (!settingsManager.get().accessibility.reduceMotion) {
           icon.setScale(1).setAlpha(0);

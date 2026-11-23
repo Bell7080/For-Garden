@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { bakeKey, bakedCenteredImage } from "./bakedGraphics";
 import { padlockGeometry } from "./lockStyle";
 
 /**
@@ -120,7 +121,13 @@ function points(...pairs: number[]): Phaser.Geom.Point[] {
   return list;
 }
 
-/** 글리프 하나를 그린다. 반환한 Graphics는 이미 씬에 올라가 있다. */
+/**
+ * 글리프 하나를 세운다. 반환한 이미지는 이미 씬에 올라가 있고, 가운데가 (x, y)다.
+ *
+ * **한 번 구운 그림 한 장이다**(`bakedGraphicsImage`). Graphics로 세워 두면 아무것도 움직이지 않는 로비에서도 매 프레임
+ * 선을 삼각형으로 다시 쪼개 GPU로 올린다 — 원·호를 두른 아이콘 하나가 프레임마다 수십 KB였다(v0.523.0 실측: 친구 아이콘
+ * 133KB · 설정 톱니 34KB). 같은 모양·크기·색은 텍스처를 함께 쓴다.
+ */
 export function drawGlyph(
   scene: Phaser.Scene,
   name: GlyphName,
@@ -131,10 +138,17 @@ export function drawGlyph(
   alpha = 1,
   /** 선 두께. 작게 그릴수록 기본 비례로는 가늘어지므로 필요한 자리에서만 굵게 준다. */
   lineWidth?: number,
-): Phaser.GameObjects.Graphics {
-  const g = scene.add.graphics({ x, y });
+): Phaser.GameObjects.Image {
+  const stroke = lineWidth ?? Math.max(2, size * 0.09);
+  const half = Math.ceil(size + stroke);
+  const key = bakeKey("glyph", [name, size, color, alpha, stroke]);
+  return bakedCenteredImage(scene, key, half, (g) => paintGlyph(g, name, size, color, alpha, stroke)).setPosition(x, y);
+}
+
+/** 글리프의 선을 Graphics에 그린다(가운데가 0, 0). 굽는 일만 부른다. */
+function paintGlyph(g: Phaser.GameObjects.Graphics, name: GlyphName, size: number, color: number, alpha: number, stroke: number): void {
   const r = size / 2;
-  g.lineStyle(lineWidth ?? Math.max(2, size * 0.09), color, alpha);
+  g.lineStyle(stroke, color, alpha);
   switch (name) {
     case "globe":
       // 각진 팔각 윤곽 + 세로 자오선 마름모 + 적도선. 둥근 선을 쓰지 않는 아이콘 결을 따른다.
@@ -675,5 +689,4 @@ export function drawGlyph(
       break;
     }
   }
-  return g;
 }

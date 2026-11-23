@@ -84,8 +84,8 @@ const game = new Phaser.Game({
   },
   render: {
     // 고해상도 모바일에서 Mesh 가장자리 품질은 유지하되 픽셀 반올림 진동은 막는다.
-    // 낮음 품질에서만 MSAA를 끈다(발열). 컨텍스트를 만들 때 정해지므로 품질 변경은 다음 실행부터 든다.
-    antialias: rendererAntialias(startupGraphicsQuality()),
+    // 낮음 품질과 iPhone·iPad에서 MSAA를 끈다(발열). 컨텍스트를 만들 때 정해지므로 품질 변경은 다음 실행부터 든다.
+    antialias: rendererAntialias(startupGraphicsQuality(), navigatorDeviceProfile()),
     roundPixels: false,
     powerPreference: "high-performance",
   },

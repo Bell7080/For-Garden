@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { COLOR } from "./theme";
+import { bakeKey, bakedGraphicsImage } from "./bakedGraphics";
 import { createSweepBudget } from "./sweepBudget";
 import { gaugeFogPixels, gaugeSweepAlpha } from "../core/gaugeFog";
 
@@ -258,11 +259,16 @@ export function drawRoundedLayer(
   width: number,
   height: number,
   options: { fill: number; alpha?: number; radius?: number } = { fill: 0x05070a },
-): Phaser.GameObjects.Graphics {
-  const graphics = scene.add.graphics({ x, y });
-  graphics.fillStyle(options.fill, options.alpha ?? HOLO.glass);
-  graphics.fillRoundedRect(-width / 2, -height / 2, width, height, options.radius ?? height / 2);
-  return graphics;
+): Phaser.GameObjects.Image {
+  // 상단 재화 줄에 늘 서 있는 면이라 한 장으로 굽는다 — 둥근 모서리의 호를 매 프레임 삼각형으로 다시 올리면 칸 하나가 33KB였다.
+  const alpha = options.alpha ?? HOLO.glass;
+  const radius = options.radius ?? height / 2;
+  const key = bakeKey("rounded-layer", [width, height, options.fill, alpha, radius]);
+  const image = bakedGraphicsImage(scene, key, { left: -width / 2, top: -height / 2, right: width / 2, bottom: height / 2 }, (g) => {
+    g.fillStyle(options.fill, alpha);
+    g.fillRoundedRect(-width / 2, -height / 2, width, height, radius);
+  });
+  return image.setPosition(image.x + x, image.y + y);
 }
 
 /** 레이어와 같은 모양의 마스크를 만든다. 그림에만 씌우고 화면에는 보이지 않는다. */

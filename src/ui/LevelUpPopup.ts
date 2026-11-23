@@ -256,7 +256,7 @@ function buildUnlocks(scene: Phaser.Scene, body: Phaser.GameObjects.Container, t
       ], { fill: tone, alpha: 0.14 }));
       const picture = unlock.kind === "content" ? CONTENT_PICTURE[unlock.id] : undefined;
       if (picture && "glyph" in picture) holder.add(drawGlyph(scene, picture.glyph, 0, U.glyphY, U.glyph, tone, 1, 5));
-      else if (picture) holder.add(drawIcon(scene, picture.nav, 0, U.glyphY, tone).setScale(1.7));
+      else if (picture) holder.add(drawIcon(scene, picture.nav, 0, U.glyphY, tone, 1.7));
       else if (unlock.kind === "frame") holder.add(new ProfileAvatar(scene, 0, U.glyphY, { size: U.avatar, frameId: unlock.frameId, portraitAssetId: options.portraitAssetId, fallback: options.fallback }));
       const name = unlock.kind === "content" ? t(contentNameKey(unlock.id)) : unlock.name;
       holder.add(squeezeTextToWidth(scene.add.text(0, U.nameY, name, textStyle({ role: "emphasis", size: U.nameSize, color: unlock.kind === "content" ? COLOR.sortieText : COLOR.accentText })).setOrigin(0.5), U.width - 24));

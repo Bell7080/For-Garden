@@ -51,7 +51,7 @@ export function openDuelOpponentPopup(scene: Phaser.Scene, popups: PopupLayer, s
     let busy = false;
     let rows: Phaser.GameObjects.Container[] = [];
     let refreshButton: Button | undefined;
-    let refreshIcon: Phaser.GameObjects.Graphics | undefined;
+    let refreshIcon: Phaser.GameObjects.Image | undefined;
     let spin: Phaser.Tweens.Tween | undefined;
 
     const paintRows = (next: DuelStatusResponse): void => {

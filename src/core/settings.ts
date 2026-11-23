@@ -107,7 +107,12 @@ export function presentationPolicy(quality: GraphicsQuality) {
 }
 
 /** 기기가 말해 주는 성능 단서. 브라우저마다 둘 다 비어 있을 수 있다. */
-export interface DeviceProfile { deviceMemory?: number; hardwareConcurrency?: number }
+export interface DeviceProfile {
+  deviceMemory?: number;
+  hardwareConcurrency?: number;
+  /** iPhone·iPad(웹·앱 셸 모두). 렌더러의 MSAA를 끄는 데만 쓴다(`rendererAntialias`). */
+  appleMobile?: boolean;
+}
 
 /**
  * 저장이 없는 첫 실행(과 설정 초기화)에서 고를 그래픽 품질이다.

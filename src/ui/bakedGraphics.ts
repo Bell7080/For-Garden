@@ -35,6 +35,27 @@ export function bakedGraphicsImage(
   return scene.add.image(left, top, key).setOrigin(0, 0);
 }
 
+/**
+ * 가운데가 국소 (0, 0)인 도형을 한 변 `2 × half` 정사각으로 굽고, 원점이 가운데인 이미지로 세운다. 아이콘처럼 그 자리에서
+ * 커지고 줄고 도는 것은 가운데를 축으로 삼아야 Graphics였을 때와 같은 자리에서 움직인다.
+ */
+export function bakedCenteredImage(
+  scene: Phaser.Scene,
+  key: string,
+  half: number,
+  draw: (g: Phaser.GameObjects.Graphics) => void,
+): Phaser.GameObjects.Image {
+  const side = Math.max(2, Math.ceil(half) * 2);
+  if (!scene.textures.exists(key)) {
+    const g = scene.make.graphics({ x: 0, y: 0 }, false);
+    g.translateCanvas(side / 2, side / 2);
+    draw(g);
+    g.generateTexture(key, side, side);
+    g.destroy();
+  }
+  return scene.add.image(0, 0, key).setOrigin(0.5, 0.5);
+}
+
 /** 모양·색·옵션을 짧은 텍스처 키로 접는다. 같은 입력은 늘 같은 키다(FNV-1a). */
 export function bakeKey(prefix: string, parts: readonly (number | string)[]): string {
   let hash = 0x811c9dc5;

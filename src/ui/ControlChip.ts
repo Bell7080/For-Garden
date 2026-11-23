@@ -29,8 +29,8 @@ export class ControlChip extends Phaser.GameObjects.Container {
   private readonly face: Phaser.GameObjects.Graphics;
   private readonly tint: Phaser.GameObjects.Graphics;
   private readonly ring: Phaser.GameObjects.Graphics;
-  private readonly iconIdle: Phaser.GameObjects.Graphics;
-  private readonly iconActive: Phaser.GameObjects.Graphics;
+  private readonly iconIdle: Phaser.GameObjects.Image;
+  private readonly iconActive: Phaser.GameObjects.Image;
   private readonly label: Phaser.GameObjects.Text;
   private readonly labelRoom: number;
   private spin?: Phaser.Tweens.Tween;

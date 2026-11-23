@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { bakeKey, bakedCenteredImage } from "./bakedGraphics";
 import { t } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { drawGlassFade, drawHairline, HOLO } from "./holo";
@@ -44,8 +45,17 @@ const NAV_LABEL_GUTTER = 18;
  * 아이콘은 아직 그림이 없어 선으로 그린다. 채운 덩어리 대신 얇은 선을 쓰는 이유는, 하단 바에
  * 판때기가 없어서 굵은 실루엣이 배경 원화 위에 얼룩처럼 보이기 때문이다.
  */
-export function drawIcon(scene: Phaser.Scene, key: NavKey, x: number, y: number, color: number): Phaser.GameObjects.Graphics {
-  const g = scene.add.graphics({ x, y });
+export function drawIcon(scene: Phaser.Scene, key: NavKey, x: number, y: number, color: number, scale = 1): Phaser.GameObjects.Image {
+  // 정지한 하단 막대에서도 원·호를 매 프레임 삼각형으로 다시 올리던 몫(렐릭 탭 하나가 66KB)을 한 장으로 굽는다.
+  // 크게 세울 자리는 `scale`로 그 크기에서 굽는다 — 1배로 구워 키우면 선이 흐려진다.
+  const half = Math.ceil(26 * scale);
+  return bakedCenteredImage(scene, bakeKey("nav-icon", [key, color, scale]), half, (g) => {
+    g.scaleCanvas(scale, scale);
+    paintNavIcon(g, key, color);
+  }).setPosition(x, y);
+}
+
+function paintNavIcon(g: Phaser.GameObjects.Graphics, key: NavKey, color: number): void {
   g.lineStyle(3, color, 1);
   switch (key) {
     case "archaeology":
@@ -90,7 +100,6 @@ export function drawIcon(scene: Phaser.Scene, key: NavKey, x: number, y: number,
       g.strokePath();
       break;
   }
-  return g;
 }
 
 /**

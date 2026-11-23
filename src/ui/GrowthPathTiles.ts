@@ -32,9 +32,9 @@ function pathLabel(path: GrowthPath): string {
   }
 }
 
-function drawPathIcon(scene: Phaser.Scene, path: GrowthPath, x: number, y: number, size: number, color: number): Phaser.GameObjects.Graphics {
+function drawPathIcon(scene: Phaser.Scene, path: GrowthPath, x: number, y: number, size: number, color: number): Phaser.GameObjects.Image {
   // 하단 탭 아이콘은 탭 크기로 그려져 칸 안에서 작게 보이므로 칸에 맞춰 키운다.
-  const nav = (key: "relics" | "lab" | "archaeology"): Phaser.GameObjects.Graphics => drawIcon(scene, key, x, y, color).setScale(GROWTH_TILES.iconScale);
+  const nav = (key: "relics" | "lab" | "archaeology"): Phaser.GameObjects.Image => drawIcon(scene, key, x, y, color, GROWTH_TILES.iconScale);
   switch (path.id) {
     case "relicEnhance": return nav("relics");
     case "lab": return nav("lab");

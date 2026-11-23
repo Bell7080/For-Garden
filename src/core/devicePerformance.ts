@@ -24,11 +24,24 @@ export function effectiveFrameRateLimit(presentation: { frameRateLimit: 30 | 60 
 }
 
 /**
- * 렌더러의 안티앨리어싱(MSAA). 낮음 품질에서만 끈다 — 고해상도 화면에서 MSAA는 그리는 픽셀마다 몫을 더 쓰고,
- * 저사양 기기는 그 차이를 열로 낸다. WebGL 컨텍스트를 만들 때 정해지므로 품질을 바꾸면 다음 실행부터 든다.
+ * 렌더러의 안티앨리어싱(MSAA). 낮음 품질과 **iPhone·iPad**에서 끈다 — 고해상도 화면에서 MSAA는 그리는 픽셀마다 몫을 더
+ * 쓰고, 저사양 기기는 그 차이를 열로 낸다. iOS는 메모리 단서를 주지 않아 늘 높음 품질로 잡히는데, 시험 측정에서 MSAA를
+ * 끄면 프레임 부담이 약 14% 가벼웠고(2026-11-23 응태 승인) 레티나 밀도에서는 가장자리 차이가 거의 보이지 않는다.
+ * WebGL 컨텍스트를 만들 때 정해지므로 품질을 바꾸면 다음 실행부터 든다.
  */
-export function rendererAntialias(quality: GraphicsQuality): boolean {
+export function rendererAntialias(quality: GraphicsQuality, device: DeviceProfile = {}): boolean {
+  if (device.appleMobile === true) return false;
   return quality !== "low";
+}
+
+/**
+ * iPhone·iPad인가. iPadOS는 데스크톱 Safari처럼 `Macintosh`라 말하므로 터치 지점 수로 가르고, 앱 셸(Capacitor)은
+ * 플랫폼을 직접 묻는다. 순수 함수라 시험이 표기를 넘겨 확인한다.
+ */
+export function isAppleMobile(userAgent: string, maxTouchPoints: number, capacitorPlatform?: string): boolean {
+  if (capacitorPlatform === "ios") return true;
+  if (/iPhone|iPad|iPod/.test(userAgent)) return true;
+  return /Macintosh/.test(userAgent) && maxTouchPoints > 1;
 }
 
 /** 쓰지 않게 된 원화를 GPU에 몇 장까지 남겨 둘지. 메모리가 적은 기기일수록 덜 붙잡는다. */
@@ -60,7 +73,14 @@ export function savedGraphicsQuality(raw: string | null | undefined, fallback: G
 export function navigatorDeviceProfile(): DeviceProfile {
   if (typeof navigator === "undefined") return {};
   const nav = navigator as Navigator & { deviceMemory?: number };
-  return { deviceMemory: nav.deviceMemory, hardwareConcurrency: nav.hardwareConcurrency };
+  const capacitor = (globalThis as { Capacitor?: { getPlatform?: () => string } }).Capacitor;
+  let platform: string | undefined;
+  try { platform = capacitor?.getPlatform?.(); } catch { platform = undefined; }
+  return {
+    deviceMemory: nav.deviceMemory,
+    hardwareConcurrency: nav.hardwareConcurrency,
+    appleMobile: isAppleMobile(nav.userAgent ?? "", nav.maxTouchPoints ?? 0, platform),
+  };
 }
 
 let cachedIdleKeep: IdleKeep | undefined;

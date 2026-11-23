@@ -34,7 +34,7 @@ export interface PartyPresetStripOptions {
  */
 export class PartyPresetStrip extends Phaser.GameObjects.Container {
   private readonly nameText: Phaser.GameObjects.Text;
-  private readonly pencil: Phaser.GameObjects.Graphics;
+  private readonly pencil: Phaser.GameObjects.Image;
   private readonly dots: Phaser.GameObjects.Graphics;
   private readonly nameWidth: number;
   private enabled = true;

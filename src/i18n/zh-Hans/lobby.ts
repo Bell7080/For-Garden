@@ -38,7 +38,6 @@ export const LOBBY_ZH_HANS = {
   "lobby.pass.level": "Lv.{level} / {max}",
   "lobby.pass.tab.mission": "任务",
   "lobby.pass.tab.reward": "奖励",
-  "lobby.pass.tabCount": "{name} · {count}",
   "lobby.pass.column.free": "免费",
   "lobby.pass.column.level": "等级",
   "lobby.pass.column.paid": "通行证",

@@ -76,13 +76,19 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
   private autoChip?: ControlChip;
   private logOverlay?: Phaser.GameObjects.Container;
   private hideCatcher?: Phaser.GameObjects.Rectangle;
+  /**
+   * 대사 도중 설정을 여는 길. 무대를 가리지 않도록 화면 위에 새 버튼을 세우지 않고 판 위 도구 줄의 넷째 칩으로 선다 —
+   * 판을 숨기면 함께 숨고, 로그·선택지·확인 창이 덮는 동안에는 그 아래라 눌리지 않는다.
+   */
+  private readonly onSettings?: () => void;
 
   constructor(
     scene: Phaser.Scene,
     private readonly onAdvance: (choice?: DialogueChoice) => void,
-    options: { backdrop?: DialogueBackdrop } = {},
+    options: { backdrop?: DialogueBackdrop; onSettings?: () => void } = {},
   ) {
     super(scene, 0, 0);
+    this.onSettings = options.onSettings;
     this.ownerScene = scene;
     this.stage = new DialogueStage(scene, options.backdrop);
     // 대사판도 테두리를 두르지 않는다. 아래로 짙어지는 유리면과 윗선 한 줄로만 자리를 잡는다.
@@ -254,6 +260,15 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     const logChip = new ControlChip(this.ownerScene, centerX(1), y, { icon: "scroll", label: t("dialogue.log"), width, height, onClick: () => this.openLog() });
     const hideChip = new ControlChip(this.ownerScene, centerX(2), y, { icon: "caret-down", label: t("dialogue.hide"), width, height, onClick: () => this.hidePanel() });
     this.add([this.autoChip, logChip, hideChip]);
+    if (this.onSettings) {
+      const open = this.onSettings;
+      // 로그가 열려 있거나 선택지를 고르는 중에는 열지 않는다 — 돌아왔을 때 무엇을 하던 중인지 흐려진다.
+      const settingsChip = new ControlChip(this.ownerScene, centerX(3), y, {
+        icon: "settings", label: t("dialogue.settings"), width, height,
+        onClick: () => { if (!this.logOverlay && !this.hideCatcher) open(); },
+      });
+      this.add(settingsChip);
+    }
   }
 
   /** 판을 숨기고 배경·스탠딩만 보여 준다. 화면 아무 곳이나 누르면 돌아온다. */

@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { notificationCorner } from "./notificationDotStyle";
+import { addClaimHalo } from "./claimHalo";
 import { t, type TextKey } from "../i18n";
 import type { ClaimNewbieGrowthResponse, GameApi, NewbieGrowthGoalDto, NewbieGrowthMilestoneDto, NewbieGrowthResponse } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
@@ -245,7 +247,7 @@ export class NewbieGrowthPopup {
     holder.add(this.rewardFrame(milestone.reward, size, state, onClick, final ? SR_TONE : undefined));
     if (milestone.state === "claimed") holder.add(this.checkMark(size * 0.32));
     if (claimable) {
-      new NotificationDot(this.scene, holder, { x: size / 2 - 8, y: -size / 2 + 8 });
+      new NotificationDot(this.scene, holder, notificationCorner("frame", size, size));
       if (motionPolicy(session.settings).nonEssentialDistanceFactor > 0) this.scene.tweens.add({ targets: holder, scale: { from: 1, to: 1.08 }, duration: 620, yoyo: true, repeat: -1, ease: "Sine.InOut" });
     }
   }
@@ -293,10 +295,7 @@ export class NewbieGrowthPopup {
   }
 
   private addHalo(holder: Phaser.GameObjects.Container, size: number): void {
-    const halo = this.scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
-    halo.fillStyle(COLOR.missionClaim, 0.4).fillPoints(toPoints(chipPoints(size + 24, size + 24, { bevel: { topLeft: size * 0.28, topRight: 0, bottomRight: size * 0.28, bottomLeft: 0 } })), true);
-    holder.add(halo);
-    this.scene.tweens.add({ targets: halo, alpha: { from: 0.3, to: 1 }, duration: 700, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+    holder.add(addClaimHalo(this.scene, { size }).image);
   }
 
   /** 날짜 칩 일곱 — 고른 날은 위로 솟고 금빛 윗선, 다 받은 날은 체크, 아직 안 열린 날은 자물쇠와 열리는 시각. */

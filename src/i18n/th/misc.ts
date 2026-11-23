@@ -353,6 +353,7 @@ export const MISC_TH = {
   "dialogue.auto": "อัตโนมัติ",
   "dialogue.log": "บันทึก",
   "dialogue.hide": "ซ่อน",
+  "dialogue.settings": "ตั้งค่า",
   "intro.title": "คำแนะนำ",
   "intro.confirm": "เข้าใจแล้ว",
   "tutorial.tour.next": "แตะหน้าจอเพื่อไปต่อ · {step}/{total}",

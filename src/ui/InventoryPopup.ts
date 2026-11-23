@@ -102,6 +102,8 @@ export class InventoryPopup {
   private maskedContent?: Phaser.GameObjects.Container;
   /** 이번 그리기가 칸을 차례로 깔아 들이는가(`render`의 `deal`). */
   private dealing = false;
+  /** 지금 목록에 선 룬의 순서(정렬·필터·검색을 지난 그대로). 룬 쪽지·세공 판이 이 줄로 좌우를 넘긴다. */
+  private visibleRuneIds: string[] = [];
   private geometryMask?: Phaser.Display.Masks.GeometryMask;
   /** 중첩 상세 팝업 유무와 무관하게 가방 자체를 닫는 전용 콜백이다. */
   private closePopup?: () => void;
@@ -208,6 +210,7 @@ export class InventoryPopup {
     const keep = runeTab ? new Set(visibleRuneList(this.runeList).map((rune) => rune.instanceId)) : undefined;
     const visible = keep ? all.filter((item) => item.kind === "rune" && keep.has(item.rune.instanceId)) : all;
     this.runeControls?.setCount(visible.length, all.length);
+    this.visibleRuneIds = visible.flatMap((item) => item.kind === "rune" ? [item.rune.instanceId] : []);
     // 첫 카드의 윗변을 마스크 윗변에 맞춰 아이콘/액자가 절반 잘리지 않게 한다.
     const contentStartY = viewport.y - viewport.height / 2 + INVENTORY_LAYOUT.cellHeight / 2;
     const content = this.scene.add.container(0, contentStartY);
@@ -344,7 +347,7 @@ export class InventoryPopup {
   private select(item: InventoryDisplayItem): void {
     // 룬 쪽지는 누른 칸에 붙지 않고 화면 가운데에 선다 — 옵션 다섯 줄을 담을 만큼 커진 판이라
     // 가장자리 칸에 붙이면 판 밖 우하단 뒤로가기와 겹친다.
-    if (item.kind === "rune") { openRuneInfoPopup(this.scene, this.popups, { runeInstanceId: item.rune.instanceId, api: this.api, traitResearch: true }); return; }
+    if (item.kind === "rune") { openRuneInfoPopup(this.scene, this.popups, { runeInstanceId: item.rune.instanceId, api: this.api, traitResearch: true, browse: { order: [...this.visibleRuneIds] } }); return; }
     // 재화 카드는 상단 칩과 같은 안내 프리팹을 스택 위에 쌓아 가방 자체를 보존한다.
     if (item.category === "currency" && item.definition.icon.kind === "currency") { new CurrencyGuidePopup(this.scene, this.popups, guideNavigatorParts({ scene: this.scene, popups: this.popups, onLobbyPanel: this.onLobbyPanel })).open(item.definition.icon.key); return; }
     new ItemGuidePopup(this.scene, this.popups, guideNavigatorParts({ scene: this.scene, popups: this.popups, onLobbyPanel: this.onLobbyPanel })).open({

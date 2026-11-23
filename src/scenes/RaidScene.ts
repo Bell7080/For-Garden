@@ -1,5 +1,6 @@
 import { onAccountSwitch } from "../core/accountScope";
 import { bindNotificationDot } from "../ui/NotificationDot";
+import { notificationCorner } from "../ui/notificationDotStyle";
 import { openSettingsOver } from "./settingsOverlay";
 import { notificationManager } from "../managers/NotificationManager";
 import Phaser from "phaser";
@@ -266,7 +267,8 @@ export class RaidScene extends Phaser.Scene {
           if (this.layers) slideTabPage(this, [this.layers], from, index);
         },
       });
-      if (tab === "completed") bindNotificationDot(this, button, { x: tabs.width / 2 - 16, y: -tabs.height / 2 + 12 }, listener => notificationManager.subscribe("raidReward", listener));
+      // 완료 탭을 보고 있으면 정산 덮개가 말하므로 점을 세우지 않는다.
+      if (tab === "completed" && this.tab !== "completed") bindNotificationDot(this, button, notificationCorner("tab", tabs.width, tabs.height), listener => notificationManager.subscribe("raidReward", listener));
     });
   }
 

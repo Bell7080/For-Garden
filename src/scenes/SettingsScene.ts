@@ -32,7 +32,8 @@ import { openDebugToolsMenu } from "../ui/DebugToolsMenu";
 import { SETTINGS_HEAD, SETTINGS_PLATE, SETTINGS_ROW, SETTINGS_SECTION, SETTINGS_SUPPORT, SETTINGS_TEXT, settingsSectionHeight, settingsTabSlot } from "../ui/settingsLayout";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
-import { validateSettingsOverlay, validateSettingsReturn, type SettingsEntryData, type SettingsOverlayHost, type SettingsReturnScene } from "./settingsNavigation";
+import { EffectOverlayScene } from "./EffectOverlayScene";
+import { settingsLeaveStopKeys, validateSettingsOverlay, validateSettingsReturn, type SettingsEntryData, type SettingsOverlayHost, type SettingsReturnScene } from "./settingsNavigation";
 import { isIosApp, openCouponPage, openPolicyDocument, type PolicyPath } from "./policyNavigation";
 import { loginProviderReady, type LoginProvider } from "../core/accountProviders";
 import { openFeedbackPopup } from "../ui/FeedbackPopup";
@@ -198,6 +199,11 @@ export class SettingsScene extends Phaser.Scene {
   /** 저장·계정이 바뀌어 부트로 되돌아갈 때는 겹쳐 연 씬도 함께 걷는다 — 잠든 채 남으면 옛 저장으로 깨어난다. */
   private leaveToBoot(): void {
     if (this.overlayOf) this.scene.stop(this.overlayOf);
+    // 겹친 씬 아래에 또 잠든 씬이 있을 수 있다 — 애착 스토리(`launchStoryOverlay`)는 정보창 씬을 재운 채 서고, 그
+    // 위에 설정이 겹친다. 그 씬이 남으면 새 계정의 부트 뒤에 옛 계정의 판으로 깨어날 수 있으므로 함께 걷는다.
+    for (const key of settingsLeaveStopKeys(this.scene.manager.getScenes(false).map((scene) => ({ key: scene.scene.key, status: scene.sys.settings.status })), this.scene.key, EffectOverlayScene.KEY)) {
+      this.scene.stop(key);
+    }
     startScene(this, "boot");
   }
 

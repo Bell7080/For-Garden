@@ -351,6 +351,7 @@ export const MISC_ZH_HANS = {
   "dialogue.auto": "自动",
   "dialogue.log": "记录",
   "dialogue.hide": "隐藏",
+  "dialogue.settings": "设置",
   "intro.title": "指引",
   "intro.confirm": "知道了",
   "tutorial.tour.next": "点击屏幕继续 · {step}/{total}",

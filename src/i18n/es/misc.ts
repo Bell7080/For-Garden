@@ -351,6 +351,7 @@ export const MISC_ES = {
   "dialogue.auto": "Auto",
   "dialogue.log": "Registro",
   "dialogue.hide": "Ocultar",
+  "dialogue.settings": "Ajustes",
   "intro.title": "Guía",
   "intro.confirm": "Entendido",
   "tutorial.tour.next": "Toca la pantalla para seguir · {step}/{total}",

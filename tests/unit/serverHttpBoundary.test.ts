@@ -89,7 +89,8 @@ describe("인증·속도 제한·개발 진입점 HTTP 경계", () => {
     );
     expect(out.code).toBe(429);
     expect(out.headers["retry-after"]).toBe("31");
-    expect(f).toHaveBeenCalledTimes(2);
+    // 인증 · 속도 제한 · 기기 확인(표식이 없어도 묻는다 — 표식 없는 호출이 관문을 비껴가지 않게).
+    expect(f).toHaveBeenCalledTimes(3);
   });
   it("친구 조회의 주체는 요청 본문이 아닌 검증된 JWT의 계정이다", async () => {
     configured();

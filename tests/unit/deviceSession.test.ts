@@ -106,11 +106,13 @@ describe("서버 저장소의 기기 확인", () => {
     expect(await storeWith("b".repeat(32)).store.deviceSessionAllowed("p", mine)).toBe(false);
   });
 
-  it("세운 기기가 없거나, 표식이 없거나, 마이그레이션 전이면 막지 않는다", async () => {
+  it("세운 기기가 있는 계정은 표식 없는 호출도 막는다", async () => {
+    expect(await storeWith("b".repeat(32)).store.deviceSessionAllowed("p", null)).toBe(false);
+  });
+
+  it("세운 기기가 없거나 마이그레이션 전이면 막지 않는다", async () => {
     expect(await storeWith(null).store.deviceSessionAllowed("p", mine)).toBe(true);
-    const noDevice = storeWith("b".repeat(32));
-    expect(await noDevice.store.deviceSessionAllowed("p", null)).toBe(true);
-    expect(noDevice.calls).toEqual([]);
+    expect(await storeWith(null).store.deviceSessionAllowed("p", null)).toBe(true);
     expect(await storeWith(null, true).store.deviceSessionAllowed("p", mine)).toBe(true);
     expect(await storeWith(null, true).store.claimDeviceSession("p", mine)).toBe(true);
   });

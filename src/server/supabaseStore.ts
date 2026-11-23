@@ -172,9 +172,11 @@ export function createSupabaseStore(env: Env) {
       await rpc("server_claim_device_session", { p_player: playerId, p_session: device }).catch(() => undefined);
       return true;
     },
-    /** 표식이 지금 기기와 같은가. 표식이 없거나, 세운 기기가 없거나, 함수가 없으면 지난다. */
+    /**
+     * 표식이 지금 기기와 같은가. 세운 기기가 없거나 함수가 없으면 지난다. **세운 기기가 있는 계정은 표식 없는 호출도
+     * 막는다** — 표식을 빼고 부르면 한 기기 규칙을 통째로 비껴가던 길이다(토큰을 빼낸 스크립트가 게임과 나란히 돈다).
+     */
     async deviceSessionAllowed(playerId: string, device: string | null): Promise<boolean> {
-      if (!device) return true;
       const active = await rpc("server_device_session", { p_player: playerId }).catch(() => null);
       return typeof active !== "string" || active.length === 0 || active === device;
     },

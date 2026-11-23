@@ -176,7 +176,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       /^(getExpeditionWeeklyBest|getExpeditionLeaderboard)$/.test(req.method) && deps.store.expeditionContext ? deps.store.expeditionContext(playerId, now) : undefined,
       req.method === "getAncientRanking" && deps.store.ancientRanking ? deps.store.ancientRanking(playerId) : undefined,
       req.method === "getRegularEvent" && deps.store.regularEvent ? deps.store.regularEvent().catch(() => null) : undefined,
-      req.method === "updatePlayerCard" && deps.store.bannedWords ? deps.store.bannedWords().catch(() => []) : undefined,
+      (req.method === "updatePlayerCard" || req.method === "renameRune") && deps.store.bannedWords ? deps.store.bannedWords().catch(() => []) : undefined,
       deps.store.liveSchedule ? deps.store.liveSchedule().catch(() => undefined) : undefined,
       deps.store.launchAt ? deps.store.launchAt().catch(() => undefined) : undefined,
       wantsGift ? deps.store.giftContext!(playerId, giftRecipientId, now) : undefined,

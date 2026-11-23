@@ -1,0 +1,184 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000}canvas{display:block}</style></head><body>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as L from './lib.js';
+const {THREE,renderer,add,S,C,toon,ease,easeIO,clamp01,rnd}=L;
+const font=new FontFace('NK','url(./nk.woff2)');await font.load();document.fonts.add(font);
+const name=new URLSearchParams(location.search).get('s');
+const mk=o=>{const r=L.makeScene(o);window.__scene=r.scene;window.__cam=r.cam;return r;};
+const lerp=(a,b,k)=>a+(b-a)*k;
+const pop=(t,t0,d=.18)=>{if(t<t0)return 0;const k=clamp01((t-t0)/d);return k<1?k*1.2:1+Math.sin((t-t0-d)*14)*Math.exp(-(t-t0-d)*6)*.12;};
+const label=(scene,txt,o={})=>{const s=L.textSprite(txt,o);scene.add(s);return s;};
+const setSprite=(s,h,k)=>{s.scale.set(h*s.userData.aspect*k,h*k,1);s.material.opacity=clamp01(k*3);};
+
+const SC={};
+// 2. 섬 전경 — 인도양의 작은 섬, 모리셔스
+SC.island=()=>{const {scene,cam}=mk({sky:['#3f78c9','#9fd3f0','#e8f6ff'],sunPos:[-8,12,6],hemi:1.4});
+ L.sea(scene,0x2f8fc4);const upd=L.waves(scene,{n:70,r:[9,50]});
+ const isl=L.island(scene,{r:7,grassR:5.2});
+ [[-3,-3,1.2],[2,-4.2,1],[-5,-1,1.1],[4,-1.5,.9],[0,-5.5,1.3]].forEach(([x,z,s],i)=>L.palm(scene,x,z,s,i));
+ // 산
+ add(scene,new THREE.ConeGeometry(3,4,7),toon(0x4f9d4a),[-1.5,1.7,-3]);add(scene,new THREE.ConeGeometry(2.2,3,7),toon(0x5aa84f),[1.6,1.2,-3.6]);
+ const d=L.makeDodo(scene,{scale:.35});d.g.position.set(1.8,0,2.2);
+ const lb=label(scene,'모리셔스',{size:200,fill:'#ffffff'});lb.position.set(0,6.4,0);
+ const gulls=[];for(let i=0;i<4;i++){const g=new THREE.Group();scene.add(g);add(g,S(.25,10,8),toon(0xffffff),[0,0,0],[1.6,.4,.5]);gulls.push(g);}
+ return t=>{const k=easeIO(t/2.75);const a=.6+t*.12,dist=lerp(46,24,k),h=lerp(30,11,k);cam.position.set(Math.sin(a)*dist,h,Math.cos(a)*dist);cam.lookAt(0,1.2,0);
+  upd(t);d.idle(t);gulls.forEach((g,i)=>{const p=t*.8+i*1.6;g.position.set(Math.cos(p)*9,7+Math.sin(p*2)*.4,Math.sin(p)*9);g.rotation.y=-p;g.children[0].rotation.z=Math.sin(t*10+i)*.3;});
+  setSprite(lb,1.8,ease((t-.35)/.4)*(t>.35?1:0)+(t>.35?(pop(t,.35)-1)*.6:0));};};
+// 3. 숲속 도도새들 — 천적이 없어서 날 필요도 없었다
+SC.forest=()=>{const {scene,cam}=mk({sky:['#57a6d9','#bfe6f5','#f2fbe8'],sunPos:[-5,10,6]});
+ add(scene,C(30,30,.4,48),toon(0x77c25e),[0,-.2,0],null,null,false).receiveShadow=true;
+ const r=rnd(7);for(let i=0;i<16;i++){const a=r()*6.28,dd=8+r()*10;L.tree(scene,Math.cos(a)*dd,Math.sin(a)*dd-4,.9+r()*.6);}
+ for(let i=0;i<10;i++){const a=r()*6.28,dd=4+r()*6;L.bush(scene,Math.cos(a)*dd,Math.sin(a)*dd-2,.6+r()*.5);}
+ const fruit=[];for(let i=0;i<8;i++)fruit.push(add(scene,S(.18,12,8),toon(0xe85a4a),[r()*8-4,.18,r()*4-1]));
+ const ds=[[-2.4,-.5,.7,.6],[2.6,-1.2,.75,2.1],[-.4,-3,.6,3.3],[3.2,1.6,.55,4]].map(([x,z,s,ph])=>{const d=L.makeDodo(scene,{scale:s});d.g.position.set(x,0,z);d.g.rotation.y=ph;return [d,ph];});
+ const hero=L.makeDodo(scene,{scale:.95});hero.g.position.set(0,0,1.5);
+ return t=>{const a=-.15+t*.05;cam.position.set(Math.sin(a)*14,4.6,Math.cos(a)*14+1.5);cam.lookAt(0,1.8,.5);
+  ds.forEach(([d,ph],i)=>{d.idle(t,ph);if(i%2){d.walk(t,.5,ph);d.g.position.x+=Math.sin(d.g.rotation.y)*.008;d.g.position.z+=Math.cos(d.g.rotation.y)*.008;}else{d.head.rotation.x=.5+Math.sin(t*6+ph)*.25;}});
+  hero.idle(t);
+  // 1.6초부터 퍼덕여 보지만 겨우 콩 뛰고 털썩
+  const ft=t-1.5;if(ft>0&&ft<1.2){hero.flap(t,1);hero.g.position.y=Math.max(0,Math.sin(Math.min(1,ft/1.0)*Math.PI)*.55);}else{hero.flap(0,0);hero.g.position.y=0;}
+  if(ft>1.2){const s=ft-1.2;hero.rig.scale.y=1-.18*Math.exp(-s*6)*Math.cos(s*18);hero.head.rotation.z=Math.min(.3,s*.8);}
+  fruit.forEach((f,i)=>f.rotation.y=t+i);};};
+// 4. 범선 — 1598년
+SC.ship=()=>{const {scene,cam}=mk({sky:['#3a6db8','#8fc6ea','#ffe7b8'],sunPos:[-8,10,4]});
+ L.sea(scene,0x2d82b8);const upd=L.waves(scene,{n:90,r:[3,45],seed:9});
+ const sh=L.makeShip(scene,1);const isl=L.island(scene,{r:5,grassR:3.5,pos:[-14,0,-26]});L.palm(scene,-14,-27,1.3,2);L.palm(scene,-11,-25,1,4);
+ const lb=label(scene,'1598',{size:230,fill:'#ffe066'});
+ const foam=[];for(let i=0;i<10;i++)foam.push(add(scene,S(.3,8,6),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true}),[0,0,0],[1,.3,1],null,false));
+ return t=>{upd(t);const z=8-t*2.2;sh.g.position.set(0,Math.sin(t*2)*.12,z);sh.g.rotation.z=Math.sin(t*1.6)*.05;sh.g.rotation.x=Math.sin(t*2)*.02;
+  sh.sails.forEach((s,i)=>s.scale.z=.45+Math.sin(t*3+i)*.05);sh.flag.rotation.y=Math.sin(t*8)*.3;
+  foam.forEach((f,i)=>{const p=(t*1.5+i*.35)%3.5;f.position.set((i%2?1:-1)*(1.4+p*.5),.05,z-3.6+p*1.6);f.material.opacity=1-p/3.5;});
+  const k=easeIO(t/3.4);cam.position.set(lerp(14,11,k),lerp(4,5,k),z+lerp(26,21,k));cam.lookAt(0,4.5,z-1);
+  lb.position.set(0,11.5,z-1);setSprite(lb,3.2,pop(t,.5,.22));};};
+// 5. 상륙 — 사람들이 배를 타고 왔어요
+SC.landing=()=>{const {scene,cam}=mk({sky:['#4f86c6','#a7d6ef','#fff0c8'],sunPos:[-6,10,8]});
+ L.sea(scene,0x2f8fc4);const upd=L.waves(scene,{n:60,r:[4,40],seed:11});
+ L.island(scene,{r:14,grassR:9,pos:[0,0,-9]});L.palm(scene,-5,-9,1.4,1);L.palm(scene,4,-11,1.2,3);L.bush(scene,1,-6,1);
+ const boat=L.makeBoat(scene);const sail=[L.makeSailor(scene,{coat:0x2f5e9e}),L.makeSailor(scene,{coat:0xb2463e,hat:0x2a2a3a}),L.makeSailor(scene,{coat:0x3f7a4a})];
+ const ship=L.makeShip(scene,.8);ship.g.position.set(10,0,-2);ship.g.rotation.y=.4;
+ const oar=add(boat,C(.06,.06,2.6,6),toon(0x6a4024),[1,.7,0],null,[0,0,1.1]);
+ return t=>{upd(t);const bz=lerp(9,4.4,easeIO(t/1.2));boat.position.set(0,Math.sin(t*3)*.06,bz);boat.rotation.y=Math.PI/2*0;oar.rotation.x=Math.sin(t*5)*.5;
+  sail.forEach((s,i)=>{const jt=1.2+i*.22;if(t<jt){s.g.position.set((i-1)*.6,.55+boat.position.y,bz+(i-1)*.9);s.g.rotation.y=Math.PI;s.walk(0,0);}
+   else{const w=t-jt;const air=w<.35;s.g.position.set((i-1)*1.1,air?.55+Math.sin(w/.35*Math.PI)*1.0:0,lerp(bz,1.2-i*.3,clamp01(w/.35))-Math.max(0,w-.35)*1.3);s.g.rotation.y=Math.PI;if(!air)s.walk(w,1.1);}});
+  ship.g.position.y=Math.sin(t*1.5)*.1;cam.position.set(9,6.5,17-t*.5);cam.lookAt(0,1,2.5);};};
+// 6. 도망칠 줄 몰랐다 — 선원 앞에서 고개 갸웃
+SC.tilt=()=>{const {scene,cam}=mk({sky:['#5b8fd0','#b4dcf0','#fff3d0'],sunPos:[-6,9,7]});
+ add(scene,C(30,30,.4,48),toon(0x77c25e),[0,-.2,0],null,null,false).receiveShadow=true;L.tree(scene,-5,-6,1.3);L.tree(scene,4,-7,1.1);L.bush(scene,-3,-2,.9);L.bush(scene,3.5,-2.5,.8);
+ const d=L.makeDodo(scene,{scale:1});d.g.position.set(-1.2,0,0);d.g.rotation.y=.9;
+ const s=L.makeSailor(scene,{scale:1.25});s.g.position.set(3.6,0,-1.5);s.g.rotation.y=-1.2;
+ const net=add(s.arms[1],new THREE.TorusGeometry(.55,.05,6,20),toon(0x6a4a2a),[0,-1.3,.3],null,[Math.PI/2.2,0,0]);
+ const qc=label(scene,'?',{size:220,w:256,h:256});qc.position.set(-1.0,4.4,.3);
+ const hearts=label(scene,'♪',{size:180,w:256,h:256,fill:'#ff9ab0'});hearts.position.set(-2.4,3.6,0);
+ return t=>{d.idle(t);s.walk(Math.min(t,1.5),t<1.5?.6:0);if(t<1.5)s.g.position.x=3.6-t*.5;
+  s.arms[1].rotation.x=t>1.6?-lerp(0,1.6,ease((t-1.6)/.6)):0;
+  d.head.rotation.z=t<.9?0:Math.sin(Math.min(1,(t-.9)/.3)*Math.PI/2)*.42+Math.sin(t*2)*.04;d.g.rotation.y=.9+Math.sin(t*1.2)*.05;
+  if(t>2.2){d.walk(t,.6);d.g.position.x=-1.2+(t-2.2)*.5;}
+  setSprite(qc,1.0,t>1.0?pop(t,1.0):0);qc.position.y=4.4+Math.sin(t*3)*.08;setSprite(hearts,.7,t>2.3?pop(t,2.3):0);
+  cam.position.set(1.4+t*.1,3.4,15-t*.5);cam.lookAt(1.0,2.0,0);};};
+// 7. 진범 공개 — 나무 상자 속 빛나는 눈
+SC.crate=()=>{const {scene,cam}=mk({sky:['#1d2350','#3a3f7a','#5a4f7a'],hemi:.9,sunI:1.0,sunPos:[-4,8,6]});
+ add(scene,C(30,30,.4,48),toon(0x3a4a5a),[0,-.2,0],null,null,false).receiveShadow=true;
+ const crate=new THREE.Group();scene.add(crate);const bx=add(crate,new THREE.BoxGeometry(2.6,2,2),toon(0x8a5a32),[0,1,0]);
+ for(const y of[.3,1.7])add(crate,new THREE.BoxGeometry(2.7,.22,2.1),toon(0x6a4024),[0,y,0],null,null,false);
+ const lid=add(crate,new THREE.BoxGeometry(2.8,.2,2.2),toon(0x6a4024),[0,2.1,0]);
+ const spot=new THREE.SpotLight(0xffe2a0,40,20,.5,.6);spot.position.set(0,9,3);spot.target=crate;scene.add(spot);
+ const eyes=[];const em=new THREE.MeshBasicMaterial({color:0xfff06a});[[-.6,.8],[ -.3,.8],[.45,1.25],[.75,1.25],[-.05,.45],[.25,.45]].forEach(([x,y])=>eyes.push(add(crate,S(.09,10,8),em,[x,y,1.02],[1,.6,.3],null,false)));
+ const lb=label(scene,'진짜 범인?',{size:170,fill:'#ff6a5a'});lb.position.set(0,4.2,0);
+ return t=>{const shake=t>.6?Math.sin(t*40)*.04*(1-clamp01((t-1.8)/.6)):0;crate.position.x=shake;crate.rotation.z=shake*.5;
+  lid.position.y=2.1+(t>.9?Math.abs(Math.sin(t*22))*.12:0);
+  eyes.forEach((e,i)=>{const on=t>.8+i*.12;const blink=((t*1.3+i)%1.7)<.08?.1:1;e.scale.set(on?1:0,on?.6*blink:0,.3);});
+  setSprite(lb,1.3,t>1.2?pop(t,1.2):0);
+  cam.position.set(0,2.8,lerp(14,10,ease(t/2.5)));cam.lookAt(0,1.8,0);};};
+// 8. 쥐·돼지·원숭이 튀어나옴
+SC.pop=()=>{const {scene,cam}=mk({sky:['#3b4f9a','#d99a8c','#ffd7a0'],hemi:1.1,sunPos:[-5,9,7]});
+ add(scene,C(30,30,.4,48),toon(0x6aa858),[0,-.2,0],null,null,false).receiveShadow=true;L.bush(scene,-4,-3,1);L.bush(scene,4,-3,1);L.tree(scene,-6,-7,1.2);L.tree(scene,6,-7,1.2);
+ const crate=new THREE.Group();scene.add(crate);add(crate,new THREE.BoxGeometry(2.6,1.6,2),toon(0x8a5a32),[0,.8,-1.5]);
+ const lid=add(crate,new THREE.BoxGeometry(2.8,.2,2.2),toon(0x6a4024),[0,1.7,-1.5]);
+ const rat=L.makeRat(scene,1.2),pig=L.makePig(scene,.8),mon=L.makeMonkey(scene,.9);
+ const labs=[label(scene,'쥐',{size:180,w:512}),label(scene,'돼지',{size:180,w:512}),label(scene,'원숭이',{size:170,w:768})];
+ const tgt=[[-1.7,0,1.6],[0,0,2.2],[1.7,0,1.4]],t0=[1.08,1.42,1.95];const an=[{g:rat},pig,mon];
+ return t=>{lid.rotation.x=t>1.0?-Math.min(1.9,(t-1.0)*9):0;lid.position.z=-1.5-(t>1?.6:0);
+  an.forEach((a,i)=>{const k=clamp01((t-t0[i])/.4);if(t<t0[i]){a.g.visible=false;labs[i].visible=false;return;}labs[i].visible=true;a.g.visible=true;
+   a.g.position.set(lerp(0,tgt[i][0],k),Math.sin(k*Math.PI)*2.2+(k>=1?Math.abs(Math.sin((t-t0[i])*9))*.15:0),lerp(-1.5,tgt[i][2],k));a.g.rotation.y=Math.sin(t*3+i)*.3;
+   const sq=k>=1?1+Math.exp(-(t-t0[i]-.4)*8)*.25:1;a.g.scale.y*=1;
+   labs[i].position.set(tgt[i][0],[1.8,2.8,3.2][i],tgt[i][2]);setSprite(labs[i],.6,pop(t,t0[i]+.25));});
+  if(mon.arms){mon.arms[0].rotation.z=Math.sin(t*8)*.6+.6;mon.arms[1].rotation.z=-Math.sin(t*8)*.6-.6;}
+  cam.position.set(0,3.6,lerp(15,13.5,t/2.7));cam.lookAt(0,1.5,0);};};
+// 9. 둥지 — 땅바닥 알을 먹어 버림
+SC.nest=()=>{const {scene,cam}=mk({sky:['#3b4f9a','#e0957f','#ffcf98'],hemi:1.1,sunPos:[-6,8,6]});
+ add(scene,C(30,30,.4,48),toon(0x6aa858),[0,-.2,0],null,null,false).receiveShadow=true;L.bush(scene,-3.5,-2.5,1.1);L.bush(scene,3.2,-3,1);
+ const n=L.makeNest(scene,[0,0,0],1.2);const eggs=[makeEgg([-.35,.55,.1]),makeEgg([.35,.55,0]),makeEgg([0,.6,-.35])];
+ function makeEgg(p){return L.makeEgg(n,p,1);}
+ const mon=L.makeMonkey(scene,.85);mon.g.position.set(-2.1,0,.6);mon.g.rotation.y=1.1;
+ const rat=L.makeRat(scene,.9);rat.position.set(2.4,0,.8);rat.rotation.y=-1.2;
+ const pig=L.makePig(scene,.6);pig.g.position.set(1.5,0,-2.2);pig.g.rotation.y=-.6;
+ const shell=[];for(let i=0;i<10;i++)shell.push(add(scene,new THREE.TetrahedronGeometry(.12),toon(0xfbf3e2),[0,-5,0]));
+ const mom=L.makeDodo(scene,{scale:.7});mom.g.position.set(-2.2,0,-3.6);mom.g.rotation.y=.6;
+ const q=label(scene,'!',{size:220,w:256,h:256,fill:'#ff6a5a'});q.position.set(-2.2,2.9,-3.6);
+ return t=>{mom.idle(t);pig.walk(t,.6);
+  // 원숭이가 알을 낚아채 들어 올림
+  const g=clamp01((t-.5)/.5);mon.g.position.x=lerp(-2.1,-1.25,g);mon.arms[1].rotation.x=-g*1.6;
+  if(t>1){const e=eggs[0];const k=clamp01((t-1)/.5);e.position.set(lerp(-.35,-1.1,k),lerp(.55,2.0,k),lerp(.1,.4,k));}
+  // 쥐가 다가와 알 하나 깨뜨림
+  rat.position.x=lerp(2.4,1.0,clamp01((t-.6)/.8));
+  if(t>1.6){eggs[1].scale.y=Math.max(.01,.8-(t-1.6)*3);shell.forEach((s,i)=>{const k=t-1.6;const a=i*.63;s.position.set(.35+Math.cos(a)*k*1.6,.6+k*3-k*k*6,Math.sin(a)*k*1.6);s.rotation.set(k*9,k*7,0);});}
+  if(t>2.2){eggs[2].scale.y=Math.max(.01,.8-(t-2.2)*3);}
+  setSprite(q,.8,t>1.9?pop(t,1.9):0);mom.head.rotation.z=t>1.9?.3:0;
+  cam.position.set(1.5,4.6,10.5-t*.3);cam.lookAt(-.4,1.0,0);};};
+// 10. 마지막 한 마리 — 1662
+SC.last=()=>{const {scene,cam}=mk({sky:['#26285e','#a05f7a','#f0a070'],hemi:.8,sunC:0xff9a6a,sunI:1.8,sunPos:[-8,4,-4]});
+ L.sea(scene,0x2b4f7a);const upd=L.waves(scene,{n:40,r:[6,40],color:0xffc8a0});L.island(scene,{r:5,grassR:3.5,sandC:0xd8b27a,grassC:0x4f8a4a});
+ const stump=add(scene,C(.9,1.1,1,16),toon(0x7a5236),[0,.4,0]);L.palm(scene,-2.5,-1.8,1.2,2);
+ const d=L.makeDodo(scene,{scale:.9});d.g.position.set(0,.9,0);d.g.rotation.y=-.5;
+ const sun=add(scene,S(6,24,16),new THREE.MeshBasicMaterial({color:0xffb070,fog:false}),[-40,4,-90],null,null,false);
+ const lb=label(scene,'1662',{size:230,fill:'#ffe066'});lb.position.set(0,5.2,0);
+ return t=>{upd(t);d.idle(t*.6);d.head.rotation.x=.25+Math.sin(t*.8)*.05;d.head.rotation.y=-.3+Math.sin(t*.5)*.25;
+  const a=.9-t*.08;cam.position.set(Math.sin(a)*14,3.8+t*.15,Math.cos(a)*14);cam.lookAt(0,2.6,0);
+  setSprite(lb,1.9,t>.3?pop(t,.3,.25):0);lb.material.opacity*=t>2.8?clamp01(1-(t-2.8)/.6):1;};};
+// 11. 사라짐 — 입자로 흩어짐
+SC.dissolve=()=>{const {scene,cam}=mk({sky:['#1c1d48','#5a3f6a','#a0607a'],hemi:.8,sunC:0xff9a6a,sunI:1.4,sunPos:[-8,4,-4]});
+ L.sea(scene,0x22406a);L.island(scene,{r:5,grassR:3.5,sandC:0xc8a270,grassC:0x456f48});add(scene,C(.9,1.1,1,16),toon(0x7a5236),[0,.4,0]);
+ const d=L.makeDodo(scene,{scale:.9});d.g.position.set(0,.9,0);d.g.rotation.y=-.5;
+ const mats=[];d.g.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.transparent=true;mats.push(o.material);}});
+ const N=500,pp=new Float32Array(N*3),sd=[];const r=rnd(13);for(let i=0;i<N;i++){const y=1+r()*3.2;sd.push([(r()-.5)*1.8,y,(r()-.5)*1.6,r()*6.28,r()]);}
+ const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pp,3));
+ const pts=new THREE.Points(geo,new THREE.PointsMaterial({color:0xffd9a8,size:.09,transparent:true}));scene.add(pts);
+ const stars=L.dust(scene,{n:120,color:0xffffff,box:[40,20,10],y0:6,size:.12});
+ return t=>{stars(t*.2);const k=clamp01((t-.6)/2.2);mats.forEach(m=>m.opacity=1-k);d.g.position.y=.9+k*.3;
+  for(let i=0;i<N;i++){const s=sd[i];const go=clamp01(k*1.4-s[4]*.4);pp[i*3]=s[0]+Math.sin(t+s[3])*go*1.5+go*2.5;pp[i*3+1]=s[1]+go*4.5;pp[i*3+2]=s[2]+Math.cos(t+s[3])*go;}
+  geo.attributes.position.needsUpdate=true;pts.material.opacity=k>0?Math.min(1,k*4)*(1-clamp01((t-2.9)/.6)):0;
+  cam.position.set(7,3.6+t*.3,11+t*.4);cam.lookAt(0,2.6+t*.25,0);};};
+// 12. 박물관 골격
+SC.museum=()=>{const {scene,cam}=mk({sky:['#2a2530','#3a3240','#4a3f48'],hemi:.7,sunI:.8,sunPos:[2,9,6]});
+ add(scene,new THREE.BoxGeometry(40,.2,40),toon(0x6a4a3a),[0,-.1,0],null,null,false).receiveShadow=true;
+ add(scene,new THREE.BoxGeometry(40,20,.4),toon(0x7a6a5a),[0,10,-6],null,null,false);
+ const ped=add(scene,new THREE.BoxGeometry(3.4,1.2,2.4),toon(0x3a2a24),[0,.6,0]);
+ const glass=new THREE.Mesh(new THREE.BoxGeometry(3.2,3.8,2.2),new THREE.MeshPhongMaterial({color:0xbfe8ff,transparent:true,opacity:.15,shininess:120}));glass.position.set(0,3.1,0);scene.add(glass);
+ const ge=new THREE.LineSegments(new THREE.EdgesGeometry(glass.geometry),new THREE.LineBasicMaterial({color:0xdff6ff}));glass.add(ge);
+ const bone=toon(0xf1e8d2);const sk=new THREE.Group();sk.position.set(0,1.2,0);scene.add(sk);
+ for(let i=0;i<8;i++){const a=-.4+i*.11;add(sk,new THREE.TorusGeometry(.6-i*.02,.05,6,16,Math.PI*1.2),bone,[0,1.3,-.5+i*.14],null,[0,0,Math.PI*1.4]);}
+ add(sk,C(.06,.06,1.6,6),bone,[0,1.9,0],null,[Math.PI/2.4,0,0]);
+ for(let i=0;i<6;i++)add(sk,S(.11,8,6),bone,[0,2.0+i*.15,.5+i*.06]);
+ const skull=add(sk,S(.38,16,12),bone,[0,2.95,.85],[.9,.85,1]);add(sk,S(.22,16,12),bone,[0,2.85,1.35],[.7,.7,1.7]);add(sk,S(.13,12,8),bone,[0,2.72,1.7]);
+ add(sk,S(.09,8,6),new THREE.MeshBasicMaterial({color:0x1a1410}),[.22,3.0,1.0],null,null,false);
+ for(const x of[-.35,.35]){add(sk,C(.05,.05,.9,6),bone,[x,.55,.1]);add(sk,C(.04,.04,.4,6),bone,[x,.08,.3],null,[Math.PI/2,0,0]);}
+ const plate=label(scene,'Raphus cucullatus',{size:90,fill:'#f2e2b8',stroke:'#2a1d18'});plate.position.set(0,.6,1.45);
+ const spot=new THREE.SpotLight(0xfff0d0,60,20,.35,.5);spot.position.set(0,9,2);spot.target=sk;scene.add(spot);
+ const motes=L.dust(scene,{n:60,color:0xfff0c0,box:[4,6,3],y0:1,size:.05});
+ return t=>{motes(t);plate.visible=false;const a=.75+t*.1;cam.position.set(Math.sin(a)*9,3.8,Math.cos(a)*9);cam.lookAt(0,2.6,0);};};
+// 13. 옛 그림 — 액자
+SC.painting=()=>{const {scene,cam}=mk({sky:['#2a2530','#3a3240','#4a3f48'],hemi:.8,sunI:.9,sunPos:[2,8,8]});
+ add(scene,new THREE.BoxGeometry(40,20,.4),toon(0x6a3a3a),[0,8,-.5],null,null,false);
+ const fr=new THREE.Group();scene.add(fr);fr.position.set(0,4,0);
+ add(fr,new THREE.BoxGeometry(4.6,5.8,.35),toon(0xc99a3a),[0,0,0]);add(fr,new THREE.BoxGeometry(4.0,5.2,.4),toon(0x8a6420),[0,0,.02],null,null,false);
+ const tl=new THREE.TextureLoader();const tex=tl.load(new URLSearchParams(location.search).get('img')||'paint.png',()=>{window.ready=true;},undefined,()=>{window.ready=true;});tex.colorSpace=THREE.SRGBColorSpace;
+ const canvas=new THREE.Mesh(new THREE.PlaneGeometry(3.7,4.9),new THREE.MeshBasicMaterial({map:tex}));canvas.position.z=.23;fr.add(canvas);
+ const spot=new THREE.SpotLight(0xfff0d0,50,20,.4,.5);spot.position.set(0,10,5);spot.target=fr;scene.add(spot);
+ const motes=L.dust(scene,{n:50,color:0xfff0c0,box:[6,6,3],y0:1,size:.05});
+ window.__noReady=true;
+ return t=>{motes(t);const k=easeIO(t/3.5);cam.position.set(lerp(-2.5,0,k),lerp(3.4,4,k),lerp(12,8.6,k));cam.lookAt(0,4,0);};};
+
+const upd=SC[name]();if(!window.__noReady)window.ready=true;
+window.renderFrame=f=>{const t=f/30;upd(t);renderer.render(window.__scene,window.__cam);return renderer.domElement.toDataURL('image/jpeg',.92);};
+</script></body></html>

@@ -172,6 +172,7 @@ export const MISC_PT_BR = {
   "mail.tab.patch": "Notas da atualização",
   "mail.claim": "Resgatar",
   "mail.rewardTitle": "Recompensas do Correio",
+  "mail.claimFailed": "Não foi possível receber o correio. A lista foi atualizada.",
   "mail.attachments": "Anexos {count}",
   "mail.readAll": "Marcar tudo como lido",
   "mail.delete.title": "Excluir correio resgatado",

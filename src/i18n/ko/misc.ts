@@ -187,6 +187,7 @@ export const MISC_KO = {
   "mail.tab.patch": "패치노트",
   "mail.claim": "받기",
   "mail.rewardTitle": "우편 보상",
+  "mail.claimFailed": "우편을 받지 못했습니다. 목록을 새로 불러왔습니다.",
   "mail.attachments": "첨부 {count}",
   "mail.readAll": "모두 읽음",
   "mail.delete.title": "받은 우편 삭제",

@@ -172,6 +172,7 @@ export const MISC_ZH_HANT = {
   "mail.tab.patch": "更新說明",
   "mail.claim": "領取",
   "mail.rewardTitle": "郵件獎勵",
+  "mail.claimFailed": "未能領取郵件。已重新載入列表。",
   "mail.attachments": "附件 {count}",
   "mail.readAll": "全部已讀",
   "mail.delete.title": "刪除已領取郵件",

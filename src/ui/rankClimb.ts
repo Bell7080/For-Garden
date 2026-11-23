@@ -17,12 +17,15 @@ export function playRankClimb(scene: Phaser.Scene, text: Phaser.GameObjects.Text
   text.setText(format(frames[0]));
   if (frames.length <= 1 || motionPolicy(session.settings).nonEssentialDistanceFactor <= 0) { text.setText(format(frames[frames.length - 1])); return; }
   const step = RANK_CLIMB_MS / frames.length;
+  text.once(Phaser.GameObjects.Events.DESTROY, () => scene.tweens.killTweensOf(text));
   frames.forEach((rank, index) => {
     if (index === 0) return;
     const last = index === frames.length - 1;
     scene.tweens.add({
       targets: text, scale: { from: last ? 1.5 : 1.25, to: 1 }, delay: startDelay + index * step, duration: Math.max(120, step * 0.9), ease: "Back.easeOut",
       onStart: () => {
+        // 결과판이 먼저 닫히면 남은 트윈이 부서진 글자를 건드린다(client_errors #50).
+        if (!text.scene) return;
         text.setText(format(rank));
         // 한 칸 넘을 때마다 톡, 내 자리에 닿는 마지막 칸은 확정음으로 맺는다.
         audioManager?.playUi(last ? "ui.confirm" : "roulette.tick");

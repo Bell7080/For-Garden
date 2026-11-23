@@ -172,6 +172,7 @@ export const MISC_TH = {
   "mail.tab.patch": "บันทึกแพตช์",
   "mail.claim": "รับ",
   "mail.rewardTitle": "รางวัลจดหมาย",
+  "mail.claimFailed": "รับจดหมายไม่สำเร็จ รีเฟรชรายการแล้ว",
   "mail.attachments": "สิ่งที่แนบ {count}",
   "mail.readAll": "อ่านทั้งหมด",
   "mail.delete.title": "ลบจดหมายที่รับแล้ว",

@@ -32,6 +32,8 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { managerEvents } from "../managers/ManagerEvents";
 import { isMailExpired, MAIL_DETAIL_LAYOUT, mailDetailRail, MAIL_POPUP_LAYOUT, mailListRows, mailRemaining, mailRewardSlots, mailRewardX, sortMailRewards, mailTabOf, mailTabX, sortMails, type MailTab } from "./mailPopupLayout";
 import { withBusy } from "./BusyOverlay";
+import { showContentToast } from "./ContentToast";
+import { logError } from "../managers/ErrorReporter";
 
 const TABS: readonly MailTab[] = ["reward", "notice", "patch"];
 
@@ -392,7 +394,16 @@ export class MailPopup {
   /** 받은 것은 임무·발굴과 같은 영수증으로 알린다 — 지갑 숫자만 슬쩍 바뀌면 무엇이 들어왔는지 모른다. */
   private async claim(ids: string[]): Promise<void> {
     if (!ids.length) return;
-    const result = await withBusy(this.scene, this.manager.claim(ids));
+    let result: Awaited<ReturnType<MailManager["claim"]>>;
+    try {
+      result = await withBusy(this.scene, this.manager.claim(ids));
+    } catch (error) {
+      // 이미 받았거나 기한이 지나 사라진 우편을 누른 경우다(client_errors #44). 삼키지 않고 알린 뒤 목록을 서버 기준으로 다시 세운다.
+      logError("mail.claim", "[mail] claim failed", error, { count: ids.length });
+      if (this.scene.sys.isActive()) showContentToast(this.scene, t("mail.claimFailed"), "refused");
+      void this.manager.list().catch((reloadError: unknown) => logError("mail.reload", "[mail] reload failed", reloadError));
+      return;
+    }
     const items = result.granted.map((reward) => ({ icon: mailRewardTexture(reward), amount: reward.amount, ...(reward.kind === "item" && reward.expiresInDays !== undefined ? { expiresInDays: reward.expiresInDays } : {}) })).filter(({ icon, amount }) => icon && amount > 0);
     if (items.length) openRewardPopup(this.scene, this.popups, { title: t("mail.rewardTitle"), items });
   }

@@ -173,6 +173,7 @@ export const MISC_EN = {
   "mail.tab.patch": "Patch Notes",
   "mail.claim": "Claim",
   "mail.rewardTitle": "Mail Rewards",
+  "mail.claimFailed": "Couldn't claim the mail. The list has been refreshed.",
   "mail.attachments": "Attachments {count}",
   "mail.readAll": "Mark All Read",
   "mail.delete.title": "Delete Claimed Mail",

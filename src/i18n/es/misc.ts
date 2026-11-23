@@ -172,6 +172,7 @@ export const MISC_ES = {
   "mail.tab.patch": "Notas del parche",
   "mail.claim": "Reclamar",
   "mail.rewardTitle": "Recompensas de Correo",
+  "mail.claimFailed": "No se pudo recibir el correo. Se actualizó la lista.",
   "mail.attachments": "Adjuntos {count}",
   "mail.readAll": "Marcar todo como leído",
   "mail.delete.title": "Eliminar correo reclamado",

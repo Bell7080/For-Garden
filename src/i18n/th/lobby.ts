@@ -38,7 +38,6 @@ export const LOBBY_TH = {
   "lobby.pass.level": "Lv.{level} / {max}",
   "lobby.pass.tab.mission": "ภารกิจ",
   "lobby.pass.tab.reward": "รางวัล",
-  "lobby.pass.tabCount": "{name} · {count}",
   "lobby.pass.column.free": "ฟรี",
   "lobby.pass.column.level": "เลเวล",
   "lobby.pass.column.paid": "พาส",

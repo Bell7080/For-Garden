@@ -219,16 +219,6 @@
 "Belohnungen",
 "Награды"
 ],
-"lobby.pass.tabCount": [
-"{name} · {count}",
-"{name} · {count}",
-"{name} · {count}",
-"{name} · {count}",
-"{name} · {count}",
-"{name} · {count}",
-"{name} · {count}",
-"{name} · {count}"
-],
 "lobby.pass.column.free": [
 "免费",
 "ฟรี",

@@ -48,7 +48,6 @@ export const LOBBY_KO = {
   "lobby.pass.level": "Lv.{level} / {max}",
   "lobby.pass.tab.mission": "미션",
   "lobby.pass.tab.reward": "보상",
-  "lobby.pass.tabCount": "{name} · {count}",
   "lobby.pass.column.free": "무료",
   "lobby.pass.column.level": "레벨",
   "lobby.pass.column.paid": "패스",

@@ -6,7 +6,7 @@ import { formatRuneOptionValue, runeDisplayName, runeOptionValue, runePartLabel,
 import { KeywordManager } from "../managers/KeywordManager";
 import { session } from "../state/session";
 import { addResearchActionRow, type ResearchActionRowSpec } from "./ResearchActionRow";
-import { chipPoints, drawHairline, drawLayer, drawShapeEdge, HOLO, slantedRect } from "./holo";
+import { chipPoints, drawHairline, drawLayer } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import {
   RESEARCH_BENCH, RESEARCH_TRAIT, researchActionY, researchBenchTop, researchEmptyActionY,
@@ -16,6 +16,8 @@ import { addRuneFrame, RUNE_ACCENT } from "./runeIcons";
 import { runeStatLabel } from "./RunePopup";
 import { runeTraitView } from "./runeTraitPresentation";
 import { addSectionTitle } from "./SectionTitle";
+import { addResearchPlate } from "./researchPlate";
+import { addRuneSocket } from "./RuneSocket";
 import { addFormationRemoveChip } from "./formationSlotChrome";
 import { COLOR, textStyle } from "./theme";
 import { mountRunePickerGrid } from "./runePickerGrid";
@@ -75,27 +77,6 @@ function openRunePicker(options: { scene: Phaser.Scene; popups: PopupLayer; onPi
   popups.open({ width, height, title: t("archaeology.bench.pick"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
     mountRunePickerGrid(scene, body, { popups, runes, isCovered: () => popups.isOpen, isActive: () => popups.isTop(body), onPick: (rune) => { close(); options.onPick(rune); } });
   });
-}
-
-/**
- * 연구대·특성이 함께 쓰는 판 한 장.
- *
- * 유리면 한 겹에 **윗변 강조선과 밑변 그림자**만 둔다 — 사방을 두르면 액자가 되어 안의 룬
- * 칸과 두 겹으로 보인다. 깎임은 배치표 하나가 정해 두 판이 같은 실루엣으로 선다.
- */
-function addResearchPlate(
-  scene: Phaser.Scene,
-  parent: Phaser.GameObjects.Container,
-  bounds: { left: number; right: number; top: number; bottom: number },
-): void {
-  const width = bounds.right - bounds.left;
-  const height = bounds.bottom - bounds.top;
-  const shape = chipPoints(width, height, { bevel: researchPlateBevel(width) });
-  const x = (bounds.left + bounds.right) / 2;
-  const y = (bounds.top + bounds.bottom) / 2;
-  parent.add(drawLayer(scene, x, y, shape, { fill: 0x111b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.5 }));
-  // 밑변 안쪽으로 한 줄. 깎인 모서리를 그대로 돌아 판이 바닥에서 떠 있는 것으로 읽힌다.
-  parent.add(drawShapeEdge(scene, x, y, shape, "bottom", { color: COLOR.accent, alpha: 0.2, inset: 10 }));
 }
 
 /** 옵션 줄 앞의 작은 마름모. 구분선·로딩 칸과 같은 네 꼭짓점 표식을 눌러 쓴다. */
@@ -206,11 +187,15 @@ export function addResearchBench(options: ResearchBenchOptions): void {
   } else {
     // 빈 칸은 자리를 지키고, **무엇을 하면 되는지 한 줄이 그 아래에 선다** — 칸 하나만 덩그러니
     // 있으면 이 화면이 눌러 보기 전까지 아무 말도 하지 않는다.
-    holder.add(drawLayer(scene, 0, 0, slantedRect(RESEARCH_BENCH.slot, RESEARCH_BENCH.slot, 26), {
-      fill: 0x0a1017, alpha: 0.72, edge: COLOR.accent, edgeAlpha: 0.28,
-    }));
-    holder.add(scene.add.text(0, RESEARCH_BENCH.slot / 2 + 44, t("archaeology.bench.empty"),
-      textStyle({ role: "emphasis", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
+    holder.add(addRuneSocket(scene, 0, 0, RESEARCH_BENCH.slot, COLOR.accent));
+    // 안내는 맨 글자가 아니라 이름표 한 장이다 — 판 위에 흐린 글자만 떠 있으면 칸과 떨어져 읽혔다.
+    const hint = scene.add.text(0, 0, t("archaeology.bench.empty"), textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0.5);
+    const hintW = hint.width + 64;
+    const hintH = 50;
+    const hintY = RESEARCH_BENCH.slot / 2 + 46;
+    holder.add(drawLayer(scene, 0, hintY, chipPoints(hintW, hintH, { bevel: { topLeft: hintH * 0.36, bottomRight: hintH * 0.36 } }),
+      { fill: 0x0a1017, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.7 }));
+    holder.add(hint.setY(hintY));
   }
   const hit = scene.add.rectangle(0, 0, RESEARCH_BENCH.slot, RESEARCH_BENCH.slot, 0xffffff, 0)
     .setInteractive({ useHandCursor: true });

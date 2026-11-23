@@ -79,10 +79,8 @@ export const RESEARCH_ACTION = {
   padX: 30,
   /** 액자와 글 사이. */
   gap: 24,
-  /** 강조 줄(팝업을 여는 주 조작)이 깎인 빗변을 피해 더 들이는 몫. */
-  emphasisInset: 26,
-  /** 강조 줄 오른쪽 끝 꺾쇠(›)의 폭. */
-  chevronSize: 30,
+  /** 강조 줄(팝업을 여는 주 조작) 오른쪽 끝에 박히는 강조색 탭(›)의 폭. */
+  tabWidth: 92,
   labelSize: 32,
   /** 액자 아래에 붙는 아이템 이름. 무엇을 태우는지는 그림만으로는 갈리지 않는다. */
   itemNameSize: 20,

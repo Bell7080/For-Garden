@@ -6,7 +6,7 @@ import { isRuneSynthesisMaterial, RUNE_SYNTHESIS_INPUTS, RUNE_SYNTHESIS_RULES, r
 import { RUNE_TRAIT_GRADES } from "../core/runeTraits";
 import { session } from "../state/session";
 import { Button } from "./Button";
-import { chipPoints, drawLayer, drawShapeEdge, HOLO, HoloBar, slantedRect } from "./holo";
+import { chipPoints, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { pressIn, pressOut } from "./pressFeedback";
@@ -16,6 +16,8 @@ import { researchPlateBevel } from "./researchBenchLayout";
 import { addRuneFrame, RUNE_ACCENT } from "./runeIcons";
 import { RUNE_SYNTHESIS, RUNE_SYNTHESIS_INFO, runeSynthesisInfoBounds, runeSynthesisButtonCenter, runeSynthesisCenter, runeSynthesisOddsBounds, runeSynthesisPlateBounds, runeSynthesisVertices } from "./runeSynthesisLayout";
 import { addSectionTitle } from "./SectionTitle";
+import { addResearchPlate } from "./researchPlate";
+import { addRuneSocket } from "./RuneSocket";
 import { runeStatLabel } from "./RunePopup";
 import { runeTraitName } from "./runeTraitPresentation";
 import { squeezeTextToWidth } from "./textFit";
@@ -121,17 +123,6 @@ function openSynthesisPicker(options: { scene: Phaser.Scene; popups: PopupLayer;
   });
 }
 
-/** 판 한 장 — 특성 연구대와 같은 유리면·깎임·밑변 한 줄. */
-function addPlate(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, bounds: { left: number; right: number; top: number; bottom: number }): void {
-  const width = bounds.right - bounds.left;
-  const height = bounds.bottom - bounds.top;
-  const shape = chipPoints(width, height, { bevel: researchPlateBevel(width) });
-  const x = (bounds.left + bounds.right) / 2;
-  const y = (bounds.top + bounds.bottom) / 2;
-  parent.add(drawLayer(scene, x, y, shape, { fill: 0x111b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.5 }));
-  parent.add(drawShapeEdge(scene, x, y, shape, "bottom", { color: COLOR.accent, alpha: 0.2, inset: 10 }));
-}
-
 /** 가운데 빛 — 모일 자리. 넣은 수만큼 밝아지고, 셋이 차면 천천히 숨 쉰다. */
 function addCore(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, filled: number, color: number): Phaser.GameObjects.Container {
   const core = scene.add.container(x, y);
@@ -149,7 +140,7 @@ function addCore(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: n
 /** 확률 판 — 결과 등급 게이지와 특성 게이지 두 줄. 재료가 비면 무엇을 넣는지만 말한다. */
 function paintOdds(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, slots: readonly (RuneInstance | undefined)[]): Phaser.GameObjects.Container {
   const bounds = runeSynthesisOddsBounds(BASE_WIDTH);
-  addPlate(scene, parent, bounds);
+  addResearchPlate(scene, parent, bounds);
   const odds = scene.add.container(0, 0);
   parent.add(odds);
   const width = bounds.right - bounds.left;
@@ -265,7 +256,7 @@ function addOddsGauge(
 export function addRuneSynthesisBench(options: RuneSynthesisBenchOptions): RuneSynthesisBenchHandles {
   const { scene, parent, slots } = options;
   const plate = runeSynthesisPlateBounds(BASE_WIDTH);
-  addPlate(scene, parent, plate);
+  addResearchPlate(scene, parent, plate);
   const center = runeSynthesisCenter(BASE_WIDTH);
   const vertices = runeSynthesisVertices(BASE_WIDTH);
   const placed = slots.filter((rune): rune is RuneInstance => rune !== undefined);
@@ -289,10 +280,8 @@ export function addRuneSynthesisBench(options: RuneSynthesisBenchOptions): RuneS
     if (rune) {
       holder.add(addRuneFrame(scene, 0, 0, RUNE_SYNTHESIS.slot, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved: true }));
     } else {
-      holder.add(drawLayer(scene, 0, 0, slantedRect(RUNE_SYNTHESIS.slot, RUNE_SYNTHESIS.slot, 22), { fill: 0x0a1017, alpha: 0.72, edge: tone, edgeAlpha: 0.32 }));
-      // 빈 칸의 더하기 표식 — 누르면 무엇이 일어나는지 한 획이 말한다.
-      holder.add(scene.add.rectangle(0, 0, 56, 8, tone, 0.55));
-      holder.add(scene.add.rectangle(0, 0, 8, 56, tone, 0.55));
+      // 빈 칸은 연구대와 같은 빈 액자다 — 넣은 등급이 있으면 그 등급색으로 물들어 무엇을 넣을지 말한다.
+      holder.add(addRuneSocket(scene, 0, 0, RUNE_SYNTHESIS.slot, tone));
     }
     const hit = scene.add.rectangle(0, 0, RUNE_SYNTHESIS.slot, RUNE_SYNTHESIS.slot, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => { if (!options.busy) pressIn(holder); });

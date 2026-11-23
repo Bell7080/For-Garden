@@ -5,6 +5,7 @@ import { Button } from "./Button";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { addItemPriceTag } from "./priceTag";
 import { RESEARCH_ACTION, RESEARCH_BENCH } from "./researchBenchLayout";
+import { drawLayer, drawShapeEdge, drawShapeInnerGlow, drawShapeOutline, slantedRect } from "./holo";
 import { COLOR, textStyle } from "./theme";
 
 /**
@@ -33,8 +34,8 @@ export interface ResearchActionRowSpec {
   /** 재화를 치르는 조작. 액자 없이 그림과 수를 바짝 붙인다. */
   cost?: { icon: CurrencyIconKey; amount: number };
   /**
-   * 팝업을 여는 주 조작인지(특성 일괄 부여). 정보 줄과 같은 유리면이면 「누르는 것」이 아니라 안내판으로 읽혀,
-   * 강조 판(`variant: "primary"`)에 오른쪽 끝 꺾쇠(›)를 세워 눌러서 여는 버튼임을 판 자체가 말한다.
+   * 팝업을 여는 주 조작인지(특성 일괄 부여). 정보 줄과 같은 유리면만으로는 안내판으로 읽혀, 강조색 테두리·안쪽 빛과
+   * 오른쪽 끝의 강조색 탭(›)을 달아 눌러서 여는 버튼임을 판 자체가 말한다.
    */
   emphasis?: boolean;
   onPress: () => void;
@@ -55,19 +56,24 @@ export function addResearchActionRow(
     height,
     // 글자는 이 줄이 직접 세운다. 버튼이 가운데에 세우는 라벨과 겹치지 않도록 비워 둔다.
     label: "",
-    ...(spec.emphasis ? { variant: "primary" as const } : {}),
     onClick: () => { if (spec.enabled) spec.onPress(); },
   });
 
-  // 강조 판은 왼쪽 위·오른쪽 아래가 크게 깎여(높이의 52%) 액자·수가 빗변에 닿지 않도록 안쪽으로 한 뼘 더 들인다.
-  const inset = spec.emphasis ? RESEARCH_ACTION.emphasisInset : 0;
-  const left = -width / 2 + RESEARCH_ACTION.padX + inset;
-  const chevron = spec.emphasis ? RESEARCH_ACTION.chevronSize : 0;
-  const right = width / 2 - RESEARCH_ACTION.padX - inset - (chevron > 0 ? chevron + RESEARCH_ACTION.gap / 2 : 0);
-  if (chevron > 0) {
-    row.add(scene.add.text(width / 2 - RESEARCH_ACTION.padX - inset, 0, "›",
-      textStyle({ role: "display", size: chevron * 1.6, color: COLOR.accentText })).setOrigin(1, 0.56));
+  // **강조 줄은 판을 바꾸지 않고 「여는 탭」을 단다.** 금빛 강조 판으로 세웠더니 위의 유리 판·액자와 결이 갈려 혼자
+  // 다른 화면의 버튼처럼 보였다. 판은 다른 줄과 같은 유리면 그대로이고, 안쪽 가장자리에 강조색 빛이 돌며 오른쪽
+  // 끝에 같은 기울기의 강조색 탭(›)이 박혀 — 누르면 다음 창이 열린다는 것을 판 자체가 말한다.
+  const tab = spec.emphasis ? RESEARCH_ACTION.tabWidth : 0;
+  if (spec.emphasis) {
+    const shape = slantedRect(width, height);
+    row.add(drawShapeInnerGlow(scene, 0, 0, shape, { color: COLOR.accent, strength: 0.34, depth: 0.12 }));
+    row.add(drawShapeOutline(scene, 0, 0, shape, { color: COLOR.accent, alpha: 0.75, width: 2 }));
+    const tabX = width / 2 - tab / 2;
+    row.add(drawLayer(scene, tabX, 0, slantedRect(tab, height), { fill: COLOR.accent, alpha: spec.enabled ? 1 : 0.5 }));
+    row.add(drawShapeEdge(scene, tabX, 0, slantedRect(tab, height), "top", { color: 0xffffff, alpha: 0.6, width: 3 }));
+    row.add(scene.add.text(tabX, -2, "›", textStyle({ role: "display", size: 64, color: "#0b1016" })).setOrigin(0.5));
   }
+  const left = -width / 2 + RESEARCH_ACTION.padX;
+  const right = width / 2 - RESEARCH_ACTION.padX - (tab > 0 ? tab : 0);
   // 글이 시작하는 x는 **액자가 있든 없든 같다.** 줄마다 달라지면 넷이 한 줄씩 어긋나 보인다.
   const textLeft = left + RESEARCH_ACTION.frame + RESEARCH_ACTION.gap;
 

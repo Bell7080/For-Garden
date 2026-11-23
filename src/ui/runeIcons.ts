@@ -100,6 +100,22 @@ function addFittedRuneIcon(scene: Phaser.Scene, frameSize: number, rarity: Heart
 const MYSTERY_HEART = { left: 0.1875, right: 0.8281, top: 0.2070, bottom: 0.8203 } as const;
 
 /**
+ * 세 조각을 합친 하트 실루엣 한 장 — 아직 아무 룬도 들지 않은 칸(연구대·합성대의 빈 자리)이 「여기에 룬이
+ * 들어간다」를 그림으로 말한다. 색 한 겹(`tint`)만 칠하므로 칸의 결(강조색·등급색)을 그대로 따른다.
+ */
+export function addRuneHeartSilhouette(scene: Phaser.Scene, frameSize: number, tint: number, alpha: number): Phaser.GameObjects.Container {
+  const box = MYSTERY_HEART;
+  const size = (frameSize * RUNE_FRAME_FILL) / Math.max(box.right - box.left, box.bottom - box.top);
+  const x = -((box.left + box.right) / 2 - 0.5) * size;
+  const y = -((box.top + box.bottom) / 2 - RUNE_CENTER_Y) * size;
+  const icon = scene.add.container(0, 0);
+  for (const index of [0, 1, 2]) {
+    icon.add(scene.add.image(x, y, runeTexture(undefined, index)).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(size, size).setTintFill(tint).setAlpha(alpha));
+  }
+  return icon;
+}
+
+/**
  * 랜덤 룬 액자의 그림 — 어느 등급의 어느 자리 조각이 나올지 모르므로 **세 조각을 합친 하트**를
  * 검고 반투명한 실루엣으로 세우고, 가운데에 물음표를 박는다.
  */

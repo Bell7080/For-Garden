@@ -23,7 +23,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { addRuneCard, addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeAccentCss, runeHeartSpot, runeSeatTexture, runeTexture } from "./runeIcons";
 import { createRuneListState, RuneListControls, visibleRuneList } from "./RuneListControls";
 import { openRuneInfoPopup, runeStatLabel } from "./RunePopup";
-import { RUNE_WORKBENCH, runeWorkbenchCell, runeWorkbenchFooterWidth, runeWorkbenchFooterX, runeWorkbenchMinScroll, runeWorkbenchRows, runeWorkbenchSideSpan, RUNE_WORKBENCH_BACK_CLEARANCE } from "./runeWorkbenchLayout";
+import { RUNE_WORKBENCH, runeWorkbenchCell, runeWorkbenchFooter3Width, runeWorkbenchFooter3X, runeWorkbenchFooterWidth, runeWorkbenchFooterX, runeWorkbenchMinScroll, runeWorkbenchRows, runeWorkbenchSideSpan, RUNE_WORKBENCH_BACK_CLEARANCE } from "./runeWorkbenchLayout";
 import { addScrollHint } from "./ScrollHint";
 import { isTap } from "./tapGuard";
 import { squeezeTextToWidth } from "./textFit";
@@ -51,9 +51,11 @@ export interface RuneWorkbenchOptions {
  * 룬 정비 — 정보창의 세 칸을 한 판에서 골라 보고, 비교하고, 한 번에 적용한다.
  *
  * 위의 세 칸 중 하나를 고르면 아래 목록이 그 조각의 룬만 세운다. 카드를 **누르면 그 칸의 임시 후보**가 되어
- * 비교 판에 지금 → 후보의 옵션 차(▲▼)와 전투력 차가 선다. 같은 카드를 다시 누르면 되돌린다. **꾹 누르면** 룬
- * 쪽지(세공·잠금·판매)가 열린다. 자동·추천 장착도 임시 구성만 채우고, 저장은 「적용」이 `setRuneLoadout` 한
- * 번으로 한다(`core/runeDraft.ts`). 적용하지 않고 닫으면 공용 확인 창이 한 번 묻는다.
+ * **교체 비교 판에만** 올라간다 — 지금 → 후보의 옵션 차(▲▼)와 전투력 차가 서고, 하트와 옆 글 판은 「적용」 전까지
+ * 지금 낀 룬 그대로다(누르기만 해도 바꿔 낀 것처럼 보였다 — 응태 2026-11-23). 바뀔 칸에는 「변경」 꼬리표만 붙는다.
+ * 같은 카드를 다시 누르면 되돌린다. **꾹 누르면** 룬 쪽지(세공·잠금·판매)가 열린다. 추천은 「남은 룬 끼기」·
+ * 「옮겨 끼기」 두 버튼으로 갈리고, 누르면 그 추천 룬을 먼저 보여 준 뒤 교체 비교에 올린다. 저장은 「적용」이
+ * `setRuneLoadout` 한 번으로 한다(`core/runeDraft.ts`). 적용하지 않고 닫으면 공용 확인 창이 한 번 묻는다.
  */
 export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, options: RuneWorkbenchOptions): void {
   const def = getRelic(options.relicId);
@@ -136,7 +138,7 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
     // ── 전투력(제목표 오른쪽) ─────────────────────────────────────────────
     const right = W.width / 2 - W.padX;
     const powerLabel = scene.add.text(right, top + W.power.y - W.power.value / 2 - W.power.gap, t("info.rune.workbench.power"), textStyle({ role: "body", size: W.power.label, color: COLOR.inkDim })).setOrigin(1, 1);
-    const powerValue = scene.add.text(right, top + W.power.y, "", textStyle({ role: "display", size: W.power.value, color: COLOR.ink })).setOrigin(1, 0.5).setStroke("#05070a", 5);
+    const powerValue = scene.add.text(right, top + W.power.y, "", textStyle({ role: "display", size: W.power.value, color: COLOR.ink })).setOrigin(1, 0.5).setStroke("#05070a", 7);
     body.add([powerLabel, powerValue]);
 
     // ── 세 칸 ────────────────────────────────────────────────────────────
@@ -162,38 +164,39 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
 
     // ── 아래 조작 ────────────────────────────────────────────────────────
     const footerY = top + rows.footerY;
-    const footerCommon = { width: runeWorkbenchFooterWidth(), height: W.footer.height, fontSize: W.footer.fontSize };
     const takeDraft = (slots: RuneLoadoutSlots): void => {
       draft = slots;
       showContentToast(scene, t("info.rune.workbench.drafted"), "info");
       repaint?.(false);
     };
-    const recommendInto = (): void => {
+    /**
+     * 추천 — 「남은 룬 끼기」는 아무도 끼지 않은 룬만, 「옮겨 끼기」는 다른 렐릭이 낀 룬까지 본다. 누르면 곧바로
+     * 채우지 않고 그 추천 룬을 먼저 보여 주고(`openRecommendPreviewPopup`), 고르면 교체 비교에 올린다.
+     */
+    const recommendInto = (mode: "auto" | "recommend"): void => {
       const holders = runeHolders(session.relicProgress);
-      const plan = recommendIntoDraft(relic(), draft, session.runeInventory, holders, "recommend");
+      const plan = recommendIntoDraft(relic(), draft, session.runeInventory, holders, mode);
       if (!plan.changed) { showContentToast(scene, t("info.rune.loadout.none"), "refused"); return; }
-      // 추천이 다른 렐릭의 룬을 새로 빼 오면, 옮겨 낄지 남은 룬만 쓸지 고르게 한다 — 남의 편성을 말없이 허물지 않는다.
-      const takers = runeDraftMovedFrom(plan.slots, holders, def.id).filter((id, p): id is string => id !== null && plan.slots[p] !== draft[p]);
-      if (takers.length === 0) { takeDraft(plan.slots); return; }
-      const free = recommendIntoDraft(relic(), draft, session.runeInventory, holders, "auto");
-      openRecommendMovePopup(scene, popups, {
-        relic: relic(), current: draft, moved: plan.slots, free: free.changed ? free.slots : draft,
+      openRecommendPreviewPopup(scene, popups, {
+        mode, relic: relic(), current: draft, saved: base, next: plan.slots,
         takes: RUNE_DRAFT_PARTS.flatMap((p) => {
           const id = plan.slots[p];
           const from = id !== null && plan.slots[p] !== draft[p] ? holders.get(id) : undefined;
           return id !== null && from !== undefined && from !== def.id ? [{ part: p, runeId: id, from }] : [];
         }),
-        onMove: () => takeDraft(plan.slots),
-        onFree: () => {
-          if (free.changed) takeDraft(free.slots);
-          else showContentToast(scene, t("info.rune.loadout.none"), "refused");
+        onTake: () => {
+          // 바뀐 칸 가운데 첫 칸을 골라 비교 판이 곧바로 그 칸을 말하게 한다.
+          const first = RUNE_DRAFT_PARTS.find((p) => plan.slots[p] !== draft[p]);
+          if (first !== undefined) part = first;
+          takeDraft(plan.slots);
         },
       });
     };
-    // 「남은 룬만」이 곧 예전의 자동 장착이라 버튼을 따로 두지 않는다 — 추천 장착이 옮겨 낄지를 묻는다.
-    const recommendButton = new Button(scene, runeWorkbenchFooterX(0), footerY, { ...footerCommon, label: t("info.rune.loadout.recommend"), onClick: () => recommendInto() });
-    const applyButton = new Button(scene, runeWorkbenchFooterX(1), footerY, { ...footerCommon, label: t("info.rune.workbench.applyNone"), variant: "primary", onClick: () => apply() });
-    body.add([recommendButton, applyButton]);
+    const footer3 = { width: runeWorkbenchFooter3Width(), height: W.footer.height, fontSize: W.footer.fontSize };
+    const freeButton = new Button(scene, runeWorkbenchFooter3X(0), footerY, { ...footer3, label: t("info.rune.workbench.moveFree"), onClick: () => recommendInto("auto") });
+    const moveButton = new Button(scene, runeWorkbenchFooter3X(1), footerY, { ...footer3, label: t("info.rune.workbench.moveAccept"), onClick: () => recommendInto("recommend") });
+    const applyButton = new Button(scene, runeWorkbenchFooter3X(2), footerY, { ...footer3, label: t("info.rune.workbench.applyNone"), variant: "primary", onClick: () => apply() });
+    body.add([freeButton, moveButton, applyButton]);
 
     // ── 목록 ─────────────────────────────────────────────────────────────
     const g = W.grid;
@@ -289,7 +292,7 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
       const diff = after - before;
       powerValue.setText(diff === 0 ? before.toLocaleString() : `${before.toLocaleString()} → ${after.toLocaleString()}  ${diff > 0 ? "▲" : "▼"}${Math.abs(diff).toLocaleString()}`)
         .setColor(diff === 0 ? COLOR.ink : diff > 0 ? UP_TEXT : DOWN_TEXT);
-      squeezeTextToWidth(powerValue, W.width / 2 - W.padX - 120);
+      squeezeTextToWidth(powerValue, W.power.room);
     };
 
     const paintSlots = (): void => {
@@ -307,9 +310,10 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
       };
 
       // 조각 셋 — 고른 조각만 강조색 테를 두르고 바깥으로 튀어나오며, 나머지는 한 톤 가라앉는다.
+      // 하트와 글 판은 **저장된** 룬을 그린다 — 후보는 교체 비교 판에만 서고 「적용」해야 여기로 들어온다.
       RUNE_DRAFT_PARTS.forEach((p) => {
         const selected = p === part;
-        const rune = runeById(draft[p]);
+        const rune = runeById(base[p]);
         const spot = runeHeartSpot(H.size, p);
         const reach = Math.hypot(spot.x, spot.y) || 1;
         const push = selected ? H.pop : rune ? 0 : H.pop * 0.4;
@@ -343,7 +347,7 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
       // 글 판 셋 — 1번 왼쪽 · 2번 오른쪽 · 3번 아래.
       RUNE_DRAFT_PARTS.forEach((p) => {
         const selected = p === part;
-        const rune = runeById(draft[p]);
+        const rune = runeById(base[p]);
         const bottom = p === 2;
         const span = bottom ? { left: -H.bottom.width / 2, right: H.bottom.width / 2 } : runeWorkbenchSideSpan(p === 0 ? "left" : "right");
         const width = span.right - span.left;
@@ -491,7 +495,8 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
       clearButton.setEnabled(draft[part] !== null);
       clearAllButton.setEnabled(draft.some((id) => id !== null));
       applyButton.setLabel(count > 0 ? t("info.rune.workbench.apply", { count: String(count) }) : t("info.rune.workbench.applyNone")).setEnabled(count > 0 && !busy);
-      recommendButton.setEnabled(!busy);
+      freeButton.setEnabled(!busy);
+      moveButton.setEnabled(!busy);
     };
     repaint(true);
   });
@@ -508,53 +513,61 @@ function addTag(scene: Phaser.Scene, x: number, y: number, label: string, fill: 
   return tag;
 }
 
-/** 추천 장착의 옮겨 끼기 확인 창 자리. */
-const MOVE_POPUP = {
-  width: 900,
+/** 추천 미리보기 창 자리. */
+const PREVIEW_POPUP = {
+  width: 920,
   /** 제목표 아래에서 안내 줄 가운데까지. */
-  leadY: 70,
+  leadY: 72,
   lead: 22,
   /** 안내 줄 아래에서 첫 줄 판 윗변까지. */
-  rowsTop: 112,
-  row: 150,
-  face: 92,
+  rowsTop: 116,
+  row: 156,
   rune: 92,
-  name: 22,
-  drop: 28,
-  arrow: 30,
-  /** 마지막 줄 아래 · 전투력 요약 두 줄. */
-  summaryGap: 26,
-  summaryMain: 36,
-  summarySub: 24,
-  summaryLine: 48,
-  button: { gap: 40, height: 84, width: 380, fontSize: 26, bottom: 40 },
-  padX: 44,
+  slot: 20,
+  name: 24,
+  stat: 20,
+  face: 64,
+  holder: 18,
+  drop: 22,
+  arrow: 28,
+  /** 마지막 줄 아래 · 전투력 요약 한 줄. */
+  summaryGap: 24,
+  summary: 40,
+  summaryLine: 60,
+  button: { gap: 30, height: 84, width: 460, fontSize: 26, bottom: 40 },
+  padX: 40,
 } as const;
 
-interface RecommendMoveOptions {
+interface RecommendPreviewOptions {
+  /** `auto` 남은 룬 끼기 · `recommend` 옮겨 끼기. */
+  readonly mode: "auto" | "recommend";
   readonly relic: RuneLoadoutRelic;
+  /** 지금 교체 비교에 올라 있는 구성 — 추천이 여기서 출발한다. */
   readonly current: RuneLoadoutSlots;
-  readonly moved: RuneLoadoutSlots;
-  readonly free: RuneLoadoutSlots;
+  /** 저장된 구성 — 전투력 차를 잰다. */
+  readonly saved: RuneLoadoutSlots;
+  /** 추천 구성. */
+  readonly next: RuneLoadoutSlots;
   /** 다른 렐릭에게서 새로 빼 오는 룬 — 칸 · 룬 · 지금 끼고 있는 렐릭. */
   readonly takes: readonly { part: RunePart; runeId: string; from: string }[];
-  readonly onMove: () => void;
-  readonly onFree: () => void;
+  /** 「교체 비교에 올리기」 — 아직 아무것도 저장하지 않는다. */
+  readonly onTake: () => void;
 }
 
 /**
- * 추천 장착이 다른 렐릭의 룬을 빼 오려 할 때 여는 창.
+ * 추천 미리보기 — 「남은 룬 끼기」·「옮겨 끼기」를 누르면 곧바로 채우지 않고 **그 추천 룬을 먼저** 보여 준다.
  *
- * 글 한 줄로 이름만 늘어놓으면 **누구에게서 무엇이 빠지는지**가 읽히지 않는다 — 줄마다 그 렐릭의 얼굴 → 빠지는 룬 →
- * 이 렐릭의 얼굴을 세우고, 빼앗기는 쪽의 전투력 감소를 붉게 적는다. 이 렐릭이 얻는 몫(옮겨 끼기 · 남은 룬만)은
- * 우하단에 크게 선다. 고르는 길은 둘이다: 옮겨 끼기(강조) · 남은 룬만.
+ * 바뀌는 칸마다 한 줄: 칸 번호 → 지금 룬 ▶ 추천 룬(이름 · 주 옵션)이고, 다른 렐릭에게서 빼 오는 룬이면 그 줄
+ * 오른쪽에 그 렐릭의 얼굴과 전투력 감소가 붉게 선다 — 남의 편성을 말없이 허물지 않는다. 아래에 이 렐릭의 전투력
+ * 차가 크게 서고, 버튼 하나(「교체 비교에 올리기」)가 비교 판으로 넘긴다. 저장은 정비 창의 「적용」이 한다.
  */
-function openRecommendMovePopup(scene: Phaser.Scene, popups: PopupLayer, options: RecommendMoveOptions): void {
-  const M = MOVE_POPUP;
-  const rows = options.takes.length;
-  const summaryTop = M.rowsTop + rows * M.row + M.summaryGap;
-  const buttonY = summaryTop + M.summaryLine * 2 + M.button.gap + M.button.height / 2;
+function openRecommendPreviewPopup(scene: Phaser.Scene, popups: PopupLayer, options: RecommendPreviewOptions): void {
+  const M = PREVIEW_POPUP;
+  const parts = RUNE_DRAFT_PARTS.filter((p) => options.next[p] !== options.current[p]);
+  const summaryTop = M.rowsTop + parts.length * M.row + M.summaryGap;
+  const buttonY = summaryTop + M.summaryLine + M.button.gap + M.button.height / 2;
   const height = buttonY + M.button.height / 2 + M.button.bottom;
+  const find = (id: string | null): RuneInstance | undefined => (id === null ? undefined : session.runeInventory.find(({ instanceId }) => instanceId === id));
   const holderRelic = (id: string): RuneLoadoutRelic => {
     const holder = getRelic(id);
     return { relicId: id, base: holder.stats, rarity: holder.rarity, progress: relicProgression.getProgress(id) };
@@ -568,59 +581,75 @@ function openRecommendMovePopup(scene: Phaser.Scene, popups: PopupLayer, options
     const after = slots.map((id) => (id !== null && taken.has(id) ? null : id)) as unknown as RuneLoadoutSlots;
     dropOf.set(from, runeLoadoutPower(holder, after, session.runeInventory) - runeLoadoutPower(holder, slots, session.runeInventory));
   }
+  const nameOf = (rune: RuneInstance | undefined): string => (rune ? (rune.customName ?? t("info.rune.named", { rarity: runeRarityLabel(rune.rarity) })) : t("info.rune.empty"));
+  const title = t(options.mode === "auto" ? "info.rune.workbench.moveFree" : "info.rune.workbench.moveAccept");
 
-  popups.open({ width: M.width, height, title: t("info.rune.loadout.recommend"), dim: true, backButton: true }, (body, close) => {
+  popups.open({ width: M.width, height, title, dim: true, backButton: true }, (body, close) => {
     const top = -height / 2;
     const left = -M.width / 2 + M.padX;
     const right = M.width / 2 - M.padX;
-    body.add(scene.add.text(0, top + M.leadY, t("info.rune.workbench.moveLead"), textStyle({ role: "body", size: M.lead, color: COLOR.inkDim, align: "center", wrap: M.width - M.padX * 2 })).setOrigin(0.5));
+    const lead = options.takes.length > 0 ? t("info.rune.workbench.moveLead") : t("info.rune.workbench.freeLead");
+    body.add(scene.add.text(0, top + M.leadY, lead, textStyle({ role: "body", size: M.lead, color: COLOR.inkDim, align: "center", wrap: M.width - M.padX * 2 })).setOrigin(0.5));
 
     const shown = new Set<string>();
-    options.takes.forEach(({ part: p, runeId, from }, index) => {
+    parts.forEach((p, index) => {
       const y = top + M.rowsTop + index * M.row + M.row / 2;
-      const rune = session.runeInventory.find(({ instanceId }) => instanceId === runeId);
-      body.add(drawLayer(scene, 0, y, chipPoints(right - left, M.row - 14, { bevel: { topLeft: 22, topRight: 0, bottomRight: 22, bottomLeft: 0 } }), { fill: 0x0d1219, alpha: 0.82, edge: COLOR.danger, edgeAlpha: 0.5, shadow: false }));
-      // 빼앗기는 렐릭 — 얼굴 · 이름 · 전투력 감소.
-      const fromX = left + 24 + M.face / 2;
-      body.add(new FaceFrame(scene, fromX, y, { portraitAssetId: getRelic(from).portraitAssetId, size: M.face, color: COLOR.danger }));
-      const textX = fromX + M.face / 2 + 16;
-      const name = scene.add.text(textX, y - 18, getRelic(from).name, textStyle({ role: "emphasis", size: M.name, color: COLOR.ink })).setOrigin(0, 0.5);
-      squeezeTextToWidth(name, 190);
+      const was = find(options.current[p]);
+      const rune = find(options.next[p]);
+      const take = options.takes.find((entry) => entry.part === p);
+      body.add(drawLayer(scene, 0, y, chipPoints(right - left, M.row - 14, { bevel: { topLeft: 22, topRight: 0, bottomRight: 22, bottomLeft: 0 } }),
+        { fill: 0x0d1219, alpha: 0.82, edge: take ? COLOR.danger : COLOR.accent, edgeAlpha: 0.5, shadow: false }));
+      // 칸 번호 · 지금 룬 ▶ 추천 룬.
+      const slotText = scene.add.text(left + 20, y - M.row / 2 + 20, t("info.rune.workbench.moveSlot", { slot: String(p + 1) }), textStyle({ role: "emphasis", size: M.slot, color: COLOR.inkDim })).setOrigin(0, 0);
+      body.add(slotText);
+      const wasX = left + 24 + M.rune / 2;
+      const runeY = y + 12;
+      body.add(addRuneFrame(scene, wasX, runeY, M.rune * 0.8, was?.rarity, p, { mainStats: was?.mainStats, engraved: (was?.engravings.length ?? 0) > 0 }).setAlpha(was ? 0.8 : 0.4));
+      const arrowX = wasX + M.rune / 2 + 22;
+      body.add(scene.add.text(arrowX, runeY, "▶", textStyle({ role: "display", size: M.arrow, color: COLOR.accentText })).setOrigin(0.5));
+      const runeX = arrowX + 22 + M.rune / 2;
+      body.add(addRuneFrame(scene, runeX, runeY, M.rune, rune?.rarity, p, { mainStats: rune?.mainStats, engraved: (rune?.engravings.length ?? 0) > 0 }));
+      // 이름 · 주 옵션.
+      const textX = runeX + M.rune / 2 + 18;
+      const textRoom = (take ? right - 200 : right - 16) - textX;
+      const name = scene.add.text(textX, y - 26, nameOf(rune), textStyle({ role: "display", size: M.name, color: rune ? runeAccentCss(rune.rarity) : COLOR.inkDim })).setOrigin(0, 0.5).setStroke("#05070a", 4);
+      squeezeTextToWidth(name, textRoom);
       body.add(name);
-      const drop = dropOf.get(from) ?? 0;
-      if (!shown.has(from) && drop !== 0) {
-        body.add(scene.add.text(textX, y + 20, (drop > 0 ? "▲" : "▼") + Math.abs(drop).toLocaleString(), textStyle({ role: "display", size: M.drop, color: drop > 0 ? UP_TEXT : DOWN_TEXT })).setOrigin(0, 0.5).setStroke("#05070a", 4));
+      (rune?.mainStats ?? []).forEach(({ key }, i) => {
+        const line = scene.add.text(textX, y + 6 + i * (M.stat + 8), runeStatLabel(key) + " " + formatRuneOptionValue(key, runeOptionValue(rune!, key)), textStyle({ role: "emphasis", size: M.stat, color: COLOR.ink })).setOrigin(0, 0.5);
+        squeezeTextToWidth(line, textRoom);
+        body.add(line);
+      });
+      // 빼 오는 룬 — 지금 끼고 있는 렐릭의 얼굴 · 이름 · 전투력 감소.
+      if (take) {
+        const faceX = right - 170 + M.face / 2;
+        body.add(new FaceFrame(scene, faceX, y - 12, { portraitAssetId: getRelic(take.from).portraitAssetId, size: M.face, color: COLOR.danger }));
+        const holderX = faceX + M.face / 2 + 10;
+        const from = scene.add.text(faceX - M.face / 2, y + M.face / 2 + 6, t("info.rune.workbench.movedFrom", { name: getRelic(take.from).name }), textStyle({ role: "emphasis", size: M.holder, color: COLOR.dangerText })).setOrigin(0, 0.5);
+        squeezeTextToWidth(from, right - 12 - (faceX - M.face / 2));
+        body.add(from);
+        const drop = dropOf.get(take.from) ?? 0;
+        if (!shown.has(take.from) && drop !== 0) {
+          const dropText = scene.add.text(holderX, y - 12, (drop > 0 ? "▲" : "▼") + Math.abs(drop).toLocaleString(), textStyle({ role: "display", size: M.drop, color: drop > 0 ? UP_TEXT : DOWN_TEXT })).setOrigin(0, 0.5).setStroke("#05070a", 4);
+          squeezeTextToWidth(dropText, right - 12 - holderX);
+          body.add(dropText);
+        }
+        shown.add(take.from);
       }
-      shown.add(from);
-      // 빠지는 룬 — 가방과 같은 액자 + 칸 번호.
-      const arrowA = textX + 210;
-      body.add(scene.add.text(arrowA, y, "▶", textStyle({ role: "display", size: M.arrow, color: COLOR.dangerText })).setOrigin(0.5));
-      const runeX = arrowA + 30 + M.rune / 2;
-      body.add(addRuneFrame(scene, runeX, y - 8, M.rune, rune?.rarity, p, { mainStats: rune?.mainStats, engraved: (rune?.engravings.length ?? 0) > 0 }));
-      body.add(scene.add.text(runeX, y + M.rune / 2 + 2, t("info.rune.workbench.moveSlot", { slot: String(p + 1) }), textStyle({ role: "emphasis", size: 18, color: rune ? runeAccentCss(rune.rarity) : COLOR.inkDim })).setOrigin(0.5, 0.5).setStroke("#05070a", 4));
-      // 받는 쪽 — 이 렐릭.
-      const arrowB = runeX + M.rune / 2 + 30;
-      body.add(scene.add.text(arrowB, y, "▶", textStyle({ role: "display", size: M.arrow, color: COLOR.accentText })).setOrigin(0.5));
-      body.add(new FaceFrame(scene, arrowB + 30 + M.face / 2, y, { portraitAssetId: getRelic(options.relic.relicId).portraitAssetId, size: M.face }));
     });
 
-    // 이 렐릭이 얻는 몫 — 우하단에 크게. 옮겨 끼기가 주인공이고 남은 룬만은 한 뼘 작다.
-    const base = runeLoadoutPower(options.relic, options.current, session.runeInventory);
-    const summaryLine = (y: number, labelKey: "info.rune.workbench.moveAccept" | "info.rune.workbench.moveFree", slots: RuneLoadoutSlots, size: number, main: boolean): void => {
-      const power = runeLoadoutPower(options.relic, slots, session.runeInventory);
-      const diff = power - base;
-      const value = scene.add.text(right, y, `${power.toLocaleString()}  ${diff === 0 ? "" : (diff > 0 ? "▲" : "▼") + Math.abs(diff).toLocaleString()}`.trimEnd(),
-        textStyle({ role: "display", size, color: diff > 0 ? UP_TEXT : diff < 0 ? DOWN_TEXT : COLOR.ink })).setOrigin(1, 0.5).setStroke("#05070a", 5).setAlpha(main ? 1 : 0.85);
-      const label = scene.add.text(right - value.width - 18, y, t(labelKey), textStyle({ role: "emphasis", size: Math.round(size * 0.62), color: main ? COLOR.ink : COLOR.inkDim })).setOrigin(1, 0.5);
-      body.add([label, value]);
-    };
-    summaryLine(top + summaryTop + M.summaryLine / 2, "info.rune.workbench.moveAccept", options.moved, M.summaryMain, true);
-    summaryLine(top + summaryTop + M.summaryLine * 1.5, "info.rune.workbench.moveFree", options.free, M.summarySub, false);
-    body.add(scene.add.text(left, top + summaryTop + M.summaryLine / 2, t("info.rune.workbench.power"), textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    // 이 렐릭이 얻는 몫 — 저장된 구성에서 추천 구성까지.
+    const before = runeLoadoutPower(options.relic, options.saved, session.runeInventory);
+    const after = runeLoadoutPower(options.relic, options.next, session.runeInventory);
+    const diff = after - before;
+    const sy = top + summaryTop + M.summaryLine / 2;
+    const value = scene.add.text(right, sy, `${before.toLocaleString()} → ${after.toLocaleString()}  ${diff === 0 ? "" : (diff > 0 ? "▲" : "▼") + Math.abs(diff).toLocaleString()}`.trimEnd(),
+      textStyle({ role: "display", size: M.summary, color: diff > 0 ? UP_TEXT : diff < 0 ? DOWN_TEXT : COLOR.ink })).setOrigin(1, 0.5).setStroke("#05070a", 6);
+    squeezeTextToWidth(value, right - left - 160);
+    body.add(value);
+    body.add(scene.add.text(left, sy, t("info.rune.workbench.power"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
 
-    const half = (M.button.width + M.button.gap) / 2;
-    const common = { width: M.button.width, height: M.button.height, fontSize: M.button.fontSize };
-    body.add(new Button(scene, -half, top + buttonY, { ...common, label: t("info.rune.workbench.moveFree"), onClick: () => { close(); options.onFree(); } }));
-    body.add(new Button(scene, half, top + buttonY, { ...common, label: t("info.rune.workbench.moveAccept"), variant: "primary", onClick: () => { close(); options.onMove(); } }));
+    body.add(new Button(scene, 0, top + buttonY, { width: M.button.width, height: M.button.height, fontSize: M.button.fontSize, label: t("info.rune.workbench.toCompare"), variant: "primary",
+      onClick: () => { close(); options.onTake(); } }));
   });
 }

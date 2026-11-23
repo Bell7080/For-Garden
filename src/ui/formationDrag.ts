@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { presetSwipeDirection } from "../core/partyPresets";
 import { audioManager } from "../managers/AudioManager";
-import { LONG_PRESS, longPressProgress } from "./longPressGauge";
+import { LONG_PRESS, longPressRingProgress } from "./longPressGauge";
 import { LONG_PRESS_RING_DEPTH, LongPressRing } from "./longPressRing";
 import { FORMATION_GESTURE, classifyFormationGesture, formationDropSlot, type FormationGestureCancelReason } from "./formationGestureRules";
 
@@ -76,14 +76,15 @@ export function bindFormationDrag(
   const startGauge = (pointer: Phaser.Input.Pointer): void => {
     stopGauge();
     const { x, y } = pointer;
-    const ring = new LongPressRing(scene, x, y, LONG_PRESS_RING_DEPTH);
-    gauge = ring;
+    // 유예(`LONG_PRESS.graceMs`)를 넘긴 뒤에야 게이지가 선다 — 톡 친 손에 고리가 번쩍이지 않게.
     const begin = scene.time.now;
     gaugeTicker = () => {
       const now = scene.input.activePointer;
       if (!now.isDown || Phaser.Math.Distance.Between(x, y, now.x, now.y) > LONG_PRESS.moveSlop) { stopGauge(); return; }
-      const ratio = longPressProgress(scene.time.now - begin, FORMATION_GESTURE.longPressMs);
-      ring.draw(ratio);
+      const ratio = longPressRingProgress(scene.time.now - begin, FORMATION_GESTURE.longPressMs);
+      if (ratio === null) return;
+      gauge ??= new LongPressRing(scene, x, y, LONG_PRESS_RING_DEPTH);
+      gauge.draw(ratio);
       // 다 찬 순간 한 번 부풀며 걷힌다 — 손을 떼면 열린다.
       if (ratio >= 1) stopGauge(true);
     };

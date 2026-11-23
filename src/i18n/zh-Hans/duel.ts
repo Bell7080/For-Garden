@@ -19,7 +19,6 @@ export const DUEL_ZH_HANS = {
   "duel.error.opponentGone": "对手列表已更新。请重新选择。",
   "duel.error.noGems": "宝石不足。",
   "duel.error.attemptLimit": "今天无法再购买挑战券。",
-  "duel.ok": "确认",
   "duel.tier.bronze": "青铜",
   "duel.tier.silver": "白银",
   "duel.tier.gold": "金币",

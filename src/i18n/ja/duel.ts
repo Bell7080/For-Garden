@@ -19,7 +19,6 @@ export const DUEL_JA = {
   "duel.error.opponentGone": "対戦相手の一覧が更新されました。選び直してください。",
   "duel.error.noGems": "ジェムが足りません。",
   "duel.error.attemptLimit": "本日はこれ以上挑戦券を購入できません。",
-  "duel.ok": "確認",
   "duel.tier.bronze": "ブロンズ",
   "duel.tier.silver": "シルバー",
   "duel.tier.gold": "ゴールド",

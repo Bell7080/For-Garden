@@ -19,7 +19,6 @@ export const DUEL_TH = {
   "duel.error.opponentGone": "รายชื่อคู่ต่อสู้มีการเปลี่ยนแปลง โปรดเลือกใหม่อีกครั้ง",
   "duel.error.noGems": "เจมไม่พอ",
   "duel.error.attemptLimit": "วันนี้ซื้อตั๋วท้าดวลเพิ่มไม่ได้แล้ว",
-  "duel.ok": "ตกลง",
   "duel.tier.bronze": "บรอนซ์",
   "duel.tier.silver": "ซิลเวอร์",
   "duel.tier.gold": "ทอง",

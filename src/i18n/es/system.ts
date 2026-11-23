@@ -49,6 +49,7 @@ export const SYSTEM_ES = {
   "ops.notice.title": "Aviso del equipo",
   "ops.notice.gain": "Se han otorgado {amount} de {name}.",
   "ops.notice.loss": "Se han retirado {amount} de {name}.",
+  "ops.notice.lossHead": "Se retiró lo siguiente por una medida de operación.",
   "ops.notice.mail": "Han llegado {count} correos nuevos.",
   "ops.notice.reason": "Motivo: {reason}",
   "ops.notice.nicknameReset": "Tu apodo se ha restablecido según la política del servicio. Elige uno nuevo.",

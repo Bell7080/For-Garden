@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
-import { drawLayer, slantedRect } from "./holo";
+import { chipPoints, drawLayer, slantedRect } from "./holo";
+import { drawGlyph, type GlyphName } from "./glyphs";
 import { pressIn, pressOut } from "./pressFeedback";
 import { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
@@ -36,23 +37,49 @@ export function addSubscriptionNoticeChip(scene: Phaser.Scene, parent: Phaser.Ga
   return chip;
 }
 
-/** 결제 주기·갱신·해지·환불을 항목별로 읽는 안내창. 높이는 글이 차지하는 만큼에서 거꾸로 구한다. */
+/** 항목마다의 머리 그림 — 결제 · 갱신 · 해지 · 환불. */
+const SECTION_GLYPH: Record<(typeof SECTIONS)[number], GlyphName> = { billing: "receipt", renew: "refresh", cancel: "remove", refund: "exchange" };
+
+/**
+ * 결제 주기·갱신·해지·환불을 항목별로 읽는 안내창. 맨 위 판에 **값과 주기**가 크게 서고(무엇에 동의하는지가 먼저 읽힌다),
+ * 그 아래 항목마다 유리 판 한 장에 그림 · 제목 · 풀이가 선다. 높이는 글이 차지하는 만큼에서 거꾸로 구한다.
+ */
 export function openSubscriptionNoticePopup(scene: Phaser.Scene, popups: PopupLayer, input: SubscriptionNoticeInput): void {
   const L = SUBSCRIPTION_NOTICE.detail;
+  const textWidth = L.width - L.pad * 2 - L.cardPad * 2;
   const bodies = SECTIONS.map((key) => t(`shop.renewal.${key}.body`, { price: input.price, days: input.days }));
   const heights = bodies.map((text) => {
-    const probe = scene.add.text(0, 0, text, textStyle({ role: "body", size: L.bodySize, wrap: L.width - L.pad * 2 })).setVisible(false);
+    const probe = scene.add.text(0, 0, text, textStyle({ role: "body", size: L.bodySize, wrap: textWidth })).setVisible(false);
     const height = probe.height; probe.destroy(); return height;
   });
-  const total = SECTIONS.length * (L.headSize + L.headGap + L.sectionGap) + heights.reduce((sum, h) => sum + h, 0);
+  const cardHeights = heights.map((h) => L.cardPad * 2 + L.headSize + L.headGap + h);
+  const total = L.summary.height + L.summary.gap + cardHeights.reduce((sum, h) => sum + h, 0) + (SECTIONS.length - 1) * L.sectionGap;
   const height = Math.ceil(total + L.top + L.bottom);
   popups.open({ width: L.width, height, title: t("shop.renewal.title"), dim: true, dimAlpha: 0.34, closeOnBackdrop: true }, (body) => {
+    const cardWidth = L.width - L.pad * 2;
     let y = -height / 2 + L.top;
+    // 값 판 — 스토어 가격과 주기(`30D`)가 한 줄에 크게 선다. 갱신 그림이 「다시 결제된다」를 말한다.
+    const sy = y + L.summary.height / 2;
+    body.add(drawLayer(scene, 0, sy, chipPoints(cardWidth, L.summary.height, { bevel: { topLeft: 22, bottomRight: 22 } }), { fill: 0x1a1608, alpha: 0.9, edge: COLOR.accent, edgeWidth: 4, glow: { color: COLOR.accent, strength: 0.25 } }));
+    const price = scene.add.text(0, sy, input.price, textStyle({ role: "display", size: L.summary.priceSize, color: COLOR.accentText })).setOrigin(0.5).setStroke("#0a0e14", 8);
+    const cycle = scene.add.text(0, sy + 4, `/ ${input.days}D`, textStyle({ role: "display", size: 34, color: COLOR.ink })).setOrigin(0.5);
+    const iconSize = 44, gap = 16;
+    const rowWidth = iconSize + gap + price.width + 12 + cycle.width;
+    const startX = -rowWidth / 2;
+    body.add(drawGlyph(scene, "refresh", startX + iconSize / 2, sy, iconSize, COLOR.accent));
+    price.setX(startX + iconSize + gap + price.width / 2);
+    cycle.setX(price.x + price.width / 2 + 12 + cycle.width / 2);
+    body.add([price, cycle]);
+    y += L.summary.height + L.summary.gap;
     SECTIONS.forEach((key, index) => {
-      body.add(scene.add.text(-L.width / 2 + L.pad, y, t(`shop.renewal.${key}.title`), textStyle({ role: "display", size: L.headSize, color: COLOR.accentText })).setOrigin(0, 0));
-      y += L.headSize + L.headGap;
-      body.add(scene.add.text(-L.width / 2 + L.pad, y, bodies[index], textStyle({ role: "body", size: L.bodySize, color: COLOR.ink, wrap: L.width - L.pad * 2 })).setOrigin(0, 0));
-      y += heights[index] + L.sectionGap;
+      const cardHeight = cardHeights[index];
+      body.add(drawLayer(scene, 0, y + cardHeight / 2, chipPoints(cardWidth, cardHeight, { bevel: { topLeft: 18, bottomRight: 18 } }), { fill: 0x0f141b, alpha: 0.78, shadow: false, edge: COLOR.accent, edgeAlpha: 0.4 }));
+      const left = -cardWidth / 2 + L.cardPad;
+      const headY = y + L.cardPad + L.headSize / 2;
+      body.add(drawGlyph(scene, SECTION_GLYPH[key], left + L.icon / 2, headY, L.icon, COLOR.accent));
+      body.add(scene.add.text(left + L.icon + 14, headY, t(`shop.renewal.${key}.title`), textStyle({ role: "display", size: L.headSize, color: COLOR.accentText })).setOrigin(0, 0.5));
+      body.add(scene.add.text(left, y + L.cardPad + L.headSize + L.headGap, bodies[index], textStyle({ role: "body", size: L.bodySize, color: COLOR.ink, wrap: textWidth })).setOrigin(0, 0));
+      y += cardHeight + L.sectionGap;
     });
   });
 }

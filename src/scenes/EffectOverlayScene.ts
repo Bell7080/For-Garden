@@ -104,12 +104,17 @@ export class EffectOverlayScene extends Phaser.Scene {
         if (next.items.length === 0) { done(); return; }
         openRewardPopup(this, popups, { title: t("ops.notice.title"), items: next.items, ...(next.reason ? { footnote: next.reason } : {}), onConfirm: done });
       };
-      if (next.losses.length === 0) showGains();
-      else popups.confirm({ title: t("ops.notice.title"), message: [...next.losses, next.reason].filter(Boolean).join("\n"), confirmLabel: t("settings.action.confirm"), cancelLabel: false }, showGains);
+      if (next.losses.length === 0 && next.lossFrames.length === 0) showGains();
+      else popups.confirm({
+        title: t("ops.notice.title"),
+        message: [next.lossFrames.length > 0 ? t("ops.notice.lossHead") : "", ...next.losses, next.reason].filter(Boolean).join("\n"),
+        ...(next.lossFrames.length > 0 ? { costs: next.lossFrames } : {}),
+        confirmLabel: t("settings.action.confirm"), cancelLabel: false,
+      }, showGains);
     };
     const offNotice = managerEvents.subscribe("opsNotice", ({ notices }) => {
       const receipt = opsNoticeReceipt(notices);
-      if (receipt.items.length > 0 || receipt.losses.length > 0) queued.push(receipt);
+      if (receipt.items.length > 0 || receipt.losses.length > 0 || receipt.lossFrames.length > 0) queued.push(receipt);
       queued.push(...opsNoticeMessages(notices));
       flush();
     });

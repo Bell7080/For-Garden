@@ -19,7 +19,6 @@ export const DUEL_ES = {
   "duel.error.opponentGone": "La lista de rivales ha cambiado. Elige de nuevo.",
   "duel.error.noGems": "No tienes suficientes gemas.",
   "duel.error.attemptLimit": "Hoy no puedes comprar más tickets de desafío.",
-  "duel.ok": "Aceptar",
   "duel.tier.bronze": "Bronce",
   "duel.tier.silver": "Plata",
   "duel.tier.gold": "Oro",

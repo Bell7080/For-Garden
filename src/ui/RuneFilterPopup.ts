@@ -36,7 +36,7 @@ export function openRuneFilterPopup(
   const at = options.parts ? { rarity: 0, part: 1, main: 2 } : { rarity: 0, part: -1, main: 1 };
   const hasCondition = runeListFilterCount(current()) > 0;
   const layout = relicFilterPopupLayout(sections, hasCondition);
-  popups.open({ width: RELIC_FILTER_POPUP.width, height: layout.height, title: t("relics.filter"), anchor, closeOnBackdrop: true, hideCloseButton: true }, (body, close) => {
+  popups.open({ width: RELIC_FILTER_POPUP.width, height: layout.height, title: t("relics.filter"), anchor, closeOnBackdrop: true, backButton: true }, (body, close) => {
     const left = -RELIC_FILTER_POPUP.width / 2 + RELIC_FILTER_POPUP.padding;
     const label = (y: number, text: string): void => {
       body.add(scene.add.text(left, y, text, textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(0, 0.5));

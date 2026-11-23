@@ -19,7 +19,6 @@ export const DUEL_RU = {
   "duel.error.opponentGone": "Список соперников изменился. Выберите снова.",
   "duel.error.noGems": "Недостаточно самоцветов.",
   "duel.error.attemptLimit": "Сегодня больше нельзя купить билеты вызова.",
-  "duel.ok": "ОК",
   "duel.tier.bronze": "Бронза",
   "duel.tier.silver": "Серебро",
   "duel.tier.gold": "Золото",

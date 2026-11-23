@@ -19,7 +19,6 @@ export const DUEL_KO = {
   "duel.error.opponentGone": "상대 목록이 바뀌었습니다. 다시 골라 주세요.",
   "duel.error.noGems": "젬이 부족합니다.",
   "duel.error.attemptLimit": "오늘은 도전권을 더 살 수 없습니다.",
-  "duel.ok": "확인",
   "duel.tier.bronze": "브론즈",
   "duel.tier.silver": "실버",
   "duel.tier.gold": "골드",

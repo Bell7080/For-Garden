@@ -59,6 +59,7 @@ import {
   GUILD_MENU_POPUP, guildGuardTraitBarX, guildGuardTraitCellX, guildRankingRows,
 } from "../ui/guildLayout";
 import { guildWarSlotLabel } from "../ui/guildWarLabels";
+import { addSectionTitle } from "../ui/SectionTitle";
 import { chipPoints, drawFrameVignette, drawLayer, drawShapeOutline, HoloBar, HOLO } from "../ui/holo";
 import { openRankPoolRewards } from "../ui/CompetitiveRewardPopup";
 import { addBackButton } from "../ui/IconButton";
@@ -77,6 +78,7 @@ import { ProfileAvatar } from "../ui/ProfileAvatar";
 import { GUILD_COIN_ICON } from "../ui/priceTag";
 import { RailButton } from "../ui/RailButton";
 import { openRewardPopup, type RewardPopupItem } from "../ui/RewardPopup";
+import { guildGuardRewardHeader, guildLevelUpHeader, guildWarResultHeader } from "../ui/GuildResultHeaders";
 import { playSceneEntrance, slideTabPage, startScene } from "../ui/screenTransition";
 import { addScrollHint } from "../ui/ScrollHint";
 import { addSideShopButton } from "../ui/sideShop";
@@ -649,8 +651,13 @@ export class GuildScene extends Phaser.Scene {
     const height = 820 + nameRoom;
     this.popups.open({ width: 900, height, title: t("guild.settings.title"), dim: true, backButton: true }, (body, close) => {
       const top = -height / 2;
+      // 칸마다 유리 판 한 장을 깔고 제목표가 그 윗변에 걸터앉는다(환경설정과 같은 문법) — 맨 글자 제목은 어느 칸의 것인지 흐렸다.
+      const section = (y: number, plateHeight: number, title: string): void => {
+        body.add(drawLayer(this, 0, y + plateHeight / 2, chipPoints(840, plateHeight, { bevel: { topLeft: 22, bottomRight: 22 } }), { fill: 0x0f141b, alpha: 0.72, shadow: false }));
+        addSectionTitle(this, -410, y, title, { size: 28, parent: body });
+      };
       if (canRename) {
-        this.label(body, -400, top + 110, t("guild.settings.name"), { role: "emphasis", size: 28, color: COLOR.accentText });
+        section(top + 100, 180, t("guild.settings.name"));
         const nameInput = new TextInputField(this, -130, top + 200, { width: 540, height: 96, value: guild.name, maxGlyphs: GUILD_NAME_MAX, ariaLabel: t("guild.settings.nameAria"), fontSize: 32 });
         body.add(nameInput);
         body.add(new Button(this, 280, top + 200, {
@@ -670,10 +677,10 @@ export class GuildScene extends Phaser.Scene {
         }));
       }
       const y0 = top + 110 + nameRoom;
-      this.label(body, -400, y0, t("guild.settings.notice"), { role: "emphasis", size: 28, color: COLOR.accentText });
+      section(y0 - 10, 270, t("guild.settings.notice"));
       const input = new TextInputField(this, 0, y0 + 130, { width: 800, height: 200, value: guild.notice, maxGlyphs: GUILD_NOTICE_MAX, ariaLabel: t("guild.settings.noticeAria"), fontSize: 28, multiline: true });
       body.add(input);
-      this.label(body, -400, y0 + 280, t("guild.settings.joinMode"), { role: "emphasis", size: 28, color: COLOR.accentText });
+      section(y0 + 290, 150, t("guild.settings.joinMode"));
       const chips: Phaser.GameObjects.Container[] = [];
       const paintChips = (): void => {
         chips.splice(0).forEach((chip) => chip.destroy());
@@ -760,13 +767,12 @@ export class GuildScene extends Phaser.Scene {
     if (!last || this.popups.isOpen) return false;
     if (settingsManager.get().game.guildSeen.warResult === last.day) return false;
     settingsManager.rememberGuildSeen("warResult", last.day);
-    const delta = last.delta > 0 ? `+${last.delta}` : `${last.delta}`;
-    this.popups.confirm({
+    const guild = this.state?.guild;
+    // 결과는 머리 블록(도장 · 점수 대치 · 점수 증감)이, 받은 길드 코인은 영수증 액자가 말한다.
+    openRewardPopup(this, this.popups, {
       title: t("guild.war.notice.title"),
-      message: `${t(`guild.war.notice.${last.outcome}`, { name: last.opponentName ?? "" })}\n${t("guild.war.notice.detail", {
-        mine: last.myPoints.toLocaleString(), theirs: last.theirPoints.toLocaleString(), delta, coin: last.coin.toLocaleString(),
-      })}`,
-      confirmLabel: t("guild.guard.notice.ok"), cancelLabel: false,
+      header: guildWarResultHeader(this, { name: guild?.name ?? "", badge: guild?.badge ?? DEFAULT_GUILD_BADGE }, last),
+      items: [{ icon: GUILD_COIN_ICON, amount: last.coin }],
     });
     return true;
   }
@@ -776,10 +782,10 @@ export class GuildScene extends Phaser.Scene {
     if (!reward || this.popups.isOpen) return false;
     if (settingsManager.get().game.guildSeen.guardReward === reward.day) return false;
     settingsManager.rememberGuildSeen("guardReward", reward.day);
-    this.popups.confirm({
+    openRewardPopup(this, this.popups, {
       title: t("guild.guard.notice.title"),
-      message: t("guild.guard.notice.message", { rank: reward.rank.toLocaleString(), coin: reward.coin.toLocaleString() }),
-      confirmLabel: t("guild.guard.notice.ok"), cancelLabel: false,
+      header: guildGuardRewardHeader(this, reward.rank),
+      items: [{ icon: GUILD_COIN_ICON, amount: reward.coin }],
     });
     return true;
   }
@@ -805,10 +811,10 @@ export class GuildScene extends Phaser.Scene {
     if (notice.from === null) return false;
     const before = new Set(guildPerkLines(notice.from));
     const gained = guildPerkLines(guild.level).filter((line) => !before.has(line));
-    this.popups.confirm({
+    openRewardPopup(this, this.popups, {
       title: t("guild.levelUp.title"),
-      message: [t("guild.levelUp.message", { level: guild.level }), ...gained].join("\n"),
-      confirmLabel: t("guild.levelUp.ok"), cancelLabel: false,
+      header: guildLevelUpHeader(this, notice.from, guild.level, gained),
+      items: [],
     });
     return true;
   }
@@ -843,7 +849,7 @@ export class GuildScene extends Phaser.Scene {
         void this.reload(true);
       });
     };
-    this.popups.open({ width: A.width, height: A.height, title: t("guild.attendance.title"), hideCloseButton: true, dim: true, onClose: () => { this.busy = false; closed = true; showReceipt(); } }, (body, close) => {
+    this.popups.open({ width: A.width, height: A.height, title: t("guild.attendance.title"), backButton: true, closeOnBackdrop: true, dim: true, onClose: () => { this.busy = false; closed = true; showReceipt(); } }, (body, close) => {
       const cells: { x: number; y: number }[] = [];
       GUILD_ATTENDANCE_CYCLE.forEach((day, index) => {
         const slot = guildStampSlot(index);

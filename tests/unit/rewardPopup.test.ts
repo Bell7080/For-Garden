@@ -42,7 +42,7 @@ describe("공용 보상 팝업 표시 모델", () => {
       { icon: "currency-cheesecake", amount: 200 },
       { icon: "item-ancient-core", amount: 3 },
       { icon: "rune-rare-1", amount: 1, label: "희귀 룬" },
-      { icon: { kind: "glyph", key: "costume" }, amount: 1, label: "연구원 명찰" },
+      { icon: { kind: "glyph", key: "costume" }, amount: 1, label: "연구원 명찰", frameId: "badge" },
     ]);
   });
 });

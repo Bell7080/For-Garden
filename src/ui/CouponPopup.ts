@@ -21,6 +21,8 @@ import { TextInputField } from "./TextInputField";
 import { startPuppetHop } from "./puppetHop";
 import { textStyle } from "./theme";
 import { logError, reportCatch } from "../managers/ErrorReporter";
+import { openRewardPopup } from "./RewardPopup";
+import { currencyRecordToRewardItems } from "./rewardPopupModel";
 
 const COUPON_GUIDE = "torika";
 const COUPON_MAX_GLYPHS = 40;
@@ -156,7 +158,12 @@ export function openCouponPopup(scene: Phaser.Scene, layer: PopupLayer): void {
           if (disposed) return;
           if (!result.ok) { error.setText(t(couponErrorKey(result.error))); submit!.setEnabled(true); return; }
           close();
-          layer.confirm({ title: t("coupon.done.title"), message: t("coupon.done.body", { name: result.value.name }), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
+          // 받은 것은 글이 아니라 영수증 액자로 선다 — 우편함으로 간다는 말만 판 밖 한 줄이 맡는다.
+          const record: Record<string, number> = {};
+          for (const reward of result.value.rewards) record[reward.asset] = (record[reward.asset] ?? 0) + reward.amount;
+          const items = currencyRecordToRewardItems(record);
+          if (items.length > 0) openRewardPopup(scene, layer, { title: t("coupon.done.title"), items, footnote: t("coupon.notice"), sound: "mission.claim" });
+          else layer.confirm({ title: t("coupon.done.title"), message: t("coupon.done.body", { name: result.value.name }), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
           void notificationManager.refresh().catch(() => undefined);
         }).catch(() => {
           pending = false;

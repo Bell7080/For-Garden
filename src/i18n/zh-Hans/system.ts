@@ -49,6 +49,7 @@ export const SYSTEM_ZH_HANS = {
   "ops.notice.title": "运营通知",
   "ops.notice.gain": "已发放{name}{amount}个。",
   "ops.notice.loss": "已回收{name}{amount}个。",
+  "ops.notice.lossHead": "运营措施已回收以下物品。",
   "ops.notice.mail": "收到{count}封新邮件。",
   "ops.notice.reason": "原因:{reason}",
   "ops.notice.nicknameReset": "根据运营政策，你的昵称已被重置。请设置新的昵称。",

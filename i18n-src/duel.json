@@ -14,7 +14,6 @@
 "duel.error.opponentGone": ["对手列表已更新。请重新选择。", "รายชื่อคู่ต่อสู้มีการเปลี่ยนแปลง โปรดเลือกใหม่อีกครั้ง", "Danh sách đối thủ đã thay đổi. Hãy chọn lại.", "Daftar lawan telah berubah. Silakan pilih lagi.", "La lista de rivales ha cambiado. Elige de nuevo.", "A lista de oponentes mudou. Escolha novamente.", "Die Gegnerliste hat sich geändert. Bitte wähle erneut.", "Список соперников изменился. Выберите снова."],
 "duel.error.noGems": ["宝石不足。", "เจมไม่พอ", "Không đủ Ngọc.", "Permata tidak cukup.", "No tienes suficientes gemas.", "Gemas insuficientes.", "Nicht genug Juwelen.", "Недостаточно самоцветов."],
 "duel.error.attemptLimit": ["今天无法再购买挑战券。", "วันนี้ซื้อตั๋วท้าดวลเพิ่มไม่ได้แล้ว", "Hôm nay bạn không thể mua thêm vé khiêu chiến.", "Hari ini kamu tidak bisa membeli tiket tantangan lagi.", "Hoy no puedes comprar más tickets de desafío.", "Hoje você não pode comprar mais tíquetes de desafio.", "Heute kannst du keine weiteren Herausforderungstickets kaufen.", "Сегодня больше нельзя купить билеты вызова."],
-"duel.ok": ["确认", "ตกลง", "OK", "OK", "Aceptar", "OK", "OK", "ОК"],
 "duel.tier.bronze": ["青铜", "บรอนซ์", "Đồng", "Perunggu", "Bronce", "Bronze", "Bronze", "Бронза"],
 "duel.tier.silver": ["白银", "ซิลเวอร์", "Bạc", "Perak", "Plata", "Prata", "Silber", "Серебро"],
 "duel.tier.gold": ["金币", "ทอง", "Vàng", "Emas", "Oro", "Ouro", "Gold", "Золото"],

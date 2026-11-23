@@ -98,6 +98,10 @@ describe("운영 아이템 조정·안내 영수증", () => {
     const receipt = opsNoticeReceipt([{ kind: "asset", asset: "gems", delta: 10, note: "테스트", at: "" }, { kind: "item", itemId: "sweep-ticket", delta: 2, note: "테스트", at: "" }]);
     expect(receipt.items).toHaveLength(2);
     expect(receipt.reason).toContain("테스트");
+    // 회수는 그림이 있으면 액자(확인 창 costs)로, 없으면 글줄로 남는다.
+    const loss = opsNoticeReceipt([{ kind: "asset", asset: "gems", delta: -5, note: "", at: "" }]);
+    expect(loss.lossFrames).toEqual([{ iconKey: "currency-gems", amount: 5 }]);
+    expect(loss.losses).toEqual([]);
   });
 
   it("우편의 아이템 첨부는 아이템 보상으로 옮긴다", () => {

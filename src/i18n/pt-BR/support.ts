@@ -73,7 +73,6 @@ export const SUPPORT_PT_BR = {
   "feedback.later": "Fica pra depois",
   "feedback.sent.title": "Obrigado!",
   "feedback.sent.body": "Anotei tudo no diário. Vou passar ao desenvolvedor sem falta!",
-  "feedback.sent.rewarded": "Anotei tudo no diário. Vou passar ao desenvolvedor sem falta!\nDeixei {amount} gemas na sua caixa de correio como agradecimento!",
   "homepage.title": "Pré-registro",
   "homepage.greeting": "Capitão, eu garanto a notícia do lançamento antes de todo mundo! É só fazer o pré-registro no site.",
   "homepage.body": "Receba antes de todos as notícias do lançamento e as recompensas do pré-registro!",

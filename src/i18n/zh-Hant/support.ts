@@ -73,7 +73,6 @@ export const SUPPORT_ZH_HANT = {
   "feedback.later": "下次再說",
   "feedback.sent.title": "謝謝！",
   "feedback.sent.body": "已經仔細記進日誌了。一定會轉告開發者的！",
-  "feedback.sent.rewarded": "已經仔細記進日誌了。一定會轉告開發者的！\n作為謝禮，{amount}顆寶石已經透過郵件寄給你啦！",
   "homepage.title": "預約登記說明",
   "homepage.greeting": "隊長，正式出發的訊息我會第一個幫你留意！只要在官網預約登記就好。",
   "homepage.body": "搶先獲取正式上線訊息和預約獎勵！",

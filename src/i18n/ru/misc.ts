@@ -292,6 +292,8 @@ export const MISC_RU = {
   "battle.profile.down": "Выбыл",
   "battle.profile.ferocity": "Ярость {value} / {max}",
   "reward.title": "Полученные награды",
+  "reward.note.frame": "Рамка профиля",
+  "reward.note.item": "Предмет",
   "reward.tapHint": "Коснитесь экрана, чтобы подтвердить",
   "enemyPreview.title": "Построение врага",
   "enemyPreview.totalPower": "Общая боевая мощь {power}",

@@ -681,6 +681,8 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
             popups.confirm({
               title: t("tutorial.rune.done.title"),
               message: t("tutorial.rune.done.body"),
+              // 무엇을 해냈는지는 글이 아니라 막 완성한 그 룬이 말한다 — 각인의 금빛까지 두른 액자로 선다.
+              costs: [{ iconKey: "", amount: 1, rune: { rarity: rune!.rarity, part: rune!.part, mainStats: rune!.mainStats, engraved: rune!.engravings.length > 0 } }],
               confirmLabel: guideId ? t("tutorial.rune.done.go", { name: getRelic(guideId).name }) : t("settings.action.confirm"),
               cancelLabel: false,
             }, () => { if (guideId && scene.scene.isActive()) startScene(scene, "relics", { openRelicId: guideId, runeEquipHint: true }); });

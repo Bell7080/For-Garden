@@ -49,6 +49,7 @@ export const SYSTEM_EN = {
   "ops.notice.title": "Operations Notice",
   "ops.notice.gain": "{amount} {name} has been granted.",
   "ops.notice.loss": "{amount} {name} has been withdrawn.",
+  "ops.notice.lossHead": "The following were withdrawn by an operator action.",
   "ops.notice.mail": "{count} new mail(s) arrived.",
   "ops.notice.reason": "Reason: {reason}",
   "ops.notice.nicknameReset": "Your nickname was reset under our operating policy. Please choose a new one.",

@@ -292,6 +292,8 @@ export const MISC_DE = {
   "battle.profile.down": "Besiegt",
   "battle.profile.ferocity": "Wildheit {value} / {max}",
   "reward.title": "Erhaltene Belohnungen",
+  "reward.note.frame": "Profilrahmen",
+  "reward.note.item": "Gegenstand",
   "reward.tapHint": "Zum Bestätigen auf den Bildschirm tippen",
   "enemyPreview.title": "Gegnerische Formation",
   "enemyPreview.totalPower": "Gesamte Kampfkraft {power}",

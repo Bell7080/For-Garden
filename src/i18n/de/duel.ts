@@ -19,7 +19,6 @@ export const DUEL_DE = {
   "duel.error.opponentGone": "Die Gegnerliste hat sich geändert. Bitte wähle erneut.",
   "duel.error.noGems": "Nicht genug Juwelen.",
   "duel.error.attemptLimit": "Heute kannst du keine weiteren Herausforderungstickets kaufen.",
-  "duel.ok": "OK",
   "duel.tier.bronze": "Bronze",
   "duel.tier.silver": "Silber",
   "duel.tier.gold": "Gold",

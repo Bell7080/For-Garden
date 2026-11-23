@@ -292,6 +292,8 @@ export const MISC_ZH_HANS = {
   "battle.profile.down": "倒下",
   "battle.profile.ferocity": "野性 {value} / {max}",
   "reward.title": "获得奖励",
+  "reward.note.frame": "头像框",
+  "reward.note.item": "道具",
   "reward.tapHint": "点击画面确认",
   "enemyPreview.title": "敌方编队",
   "enemyPreview.totalPower": "总战斗力 {power}",

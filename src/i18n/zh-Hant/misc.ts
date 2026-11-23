@@ -292,6 +292,8 @@ export const MISC_ZH_HANT = {
   "battle.profile.down": "倒下",
   "battle.profile.ferocity": "野性 {value} / {max}",
   "reward.title": "獲得獎勵",
+  "reward.note.frame": "頭像框",
+  "reward.note.item": "道具",
   "reward.tapHint": "點選畫面確認",
   "enemyPreview.title": "敵方編隊",
   "enemyPreview.totalPower": "總戰鬥力 {power}",

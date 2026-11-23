@@ -6417,8 +6417,6 @@ var GUILD_KO = {
   "guild.info.perkNone": "\uD61C\uD0DD\uC740 \uB808\uBCA8 3\uBD80\uD130 \uC5F4\uB9BD\uB2C8\uB2E4",
   "guild.info.perkShop": "\uAE38\uB4DC \uC0C1\uC810 \uB808\uBCA8 \uCE78 \uAC1C\uBC29",
   "guild.levelUp.title": "\uAE38\uB4DC \uB808\uBCA8 \uC5C5",
-  "guild.levelUp.message": "\uAE38\uB4DC\uAC00 Lv.{level:\uC774} \uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
-  "guild.levelUp.ok": "\uD655\uC778",
   "guild.info.noticeEmpty": "\uACF5\uC9C0\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4",
   "guild.info.settings": "\uAE38\uB4DC \uC124\uC815",
   "guild.info.leave": "\uD0C8\uD1F4",
@@ -6514,8 +6512,6 @@ var GUILD_KO = {
   "guild.guard.reward": "\uC77C\uC77C \uBCF4\uC0C1",
   "guild.guard.rules": "\uB9E4\uC77C 00:00(UTC)\uC5D0 \uADF8\uB0A0 \uAE38\uB4DC\uC6D0 \uCD5C\uACE0 \uC810\uC218\uC758 \uD569\uC73C\uB85C \uAE38\uB4DC \uC21C\uC704\uAC00 \uC815\uD574\uC9D1\uB2C8\uB2E4. \uADF8\uB0A0 \uC218\uD638\uC804\uC744 \uD55C \uAE38\uB4DC\uC6D0 \uBAA8\uB450\uAC00 \uAE38\uB4DC \uCF54\uC778\uC744 \uBC1B\uC2B5\uB2C8\uB2E4.",
   "guild.guard.notice.title": "\uC218\uD638\uC804 \uC21C\uC704 \uBCF4\uC0C1",
-  "guild.guard.notice.message": "\uC5B4\uC81C \uC218\uD638\uC804\uC5D0\uC11C \uAE38\uB4DC\uAC00 {rank}\uC704\uC5D0 \uC62C\uB790\uC2B5\uB2C8\uB2E4.\n\uAE38\uB4DC \uCF54\uC778 {coin}\uAC1C\uB97C \uBC1B\uC558\uC2B5\uB2C8\uB2E4.",
-  "guild.guard.notice.ok": "\uD655\uC778",
   "guild.attendance.raceRank": "{rank}\uC704",
   "guild.attendance.raceLabel": "\uC774\uBC88 \uC8FC \uAE30\uC5EC",
   "guild.attendance.overtake": "\uC5ED\uC804!",
@@ -6625,12 +6621,16 @@ var GUILD_KO = {
   "guild.war.front.closedElite": "\uC77C\uBC18 \uCE78 \uC808\uBC18\uC774 \uBB34\uB108\uC9C0\uBA74 \uC5F4\uB9BD\uB2C8\uB2E4",
   "guild.war.front.closedBoss": "\uC815\uC608 \uB458\uC774 \uBB34\uB108\uC9C0\uBA74 \uC5F4\uB9BD\uB2C8\uB2E4",
   "guild.war.front.attack": "\uACF5\uACA9",
-  "guild.war.notice.title": "\uAE38\uB4DC\uC804 \uACB0\uACFC",
-  "guild.war.notice.win": "{name}\uC5D0\uAC8C \uC2B9\uB9AC\uD588\uC2B5\uB2C8\uB2E4",
-  "guild.war.notice.loss": "{name}\uC5D0\uAC8C \uD328\uBC30\uD588\uC2B5\uB2C8\uB2E4",
-  "guild.war.notice.bye": "\uB9DE\uBD99\uC744 \uC0C1\uB300\uAC00 \uC5C6\uC5B4 \uBD80\uC804\uC2B9\uC785\uB2C8\uB2E4",
-  "guild.war.notice.forfeit": "\uACF5\uACA9\uD558\uC9C0 \uC54A\uC544 \uAE30\uAD8C \uCC98\uB9AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4",
-  "guild.war.notice.detail": "\uC810\uC218 {mine} : {theirs} \xB7 \uAE38\uB4DC\uC804 \uC810\uC218 {delta} \xB7 \uAE38\uB4DC \uCF54\uC778 {coin}\uAC1C"
+  "guild.war.result.win": "\uC2B9\uB9AC",
+  "guild.war.result.loss": "\uD328\uBC30",
+  "guild.war.result.bye": "\uBD80\uC804\uC2B9",
+  "guild.war.result.forfeit": "\uAE30\uAD8C",
+  "guild.war.result.noOpponent": "\uC0C1\uB300 \uC5C6\uC74C",
+  "guild.war.result.delta": "\uAE38\uB4DC\uC804 \uC810\uC218 {delta}",
+  "guild.guard.result.label": "\uC5B4\uC81C \uC218\uD638\uC804 \uC21C\uC704",
+  "guild.guard.result.rank": "{rank}\uC704",
+  "guild.levelUp.gained": "\uC0C8\uB85C \uC5F4\uB9B0 \uD61C\uD0DD",
+  "guild.war.notice.title": "\uAE38\uB4DC\uC804 \uACB0\uACFC"
 };
 
 // src/i18n/ko/rune.ts
@@ -6852,11 +6852,11 @@ init_define_import_meta_env();
 var SAVE_CONFLICT_KO = {
   "saveConflict.title": "\uC800\uC7A5 \uB370\uC774\uD130 \uCDA9\uB3CC",
   "saveConflict.notice": "\uC790\uB3D9\uC73C\uB85C \uB36E\uC5B4\uC4F0\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uC0AC\uC6A9\uD560 \uC9C4\uD589\uC744 \uBE44\uAD50\uD574 \uC120\uD0DD\uD574 \uC8FC\uC138\uC694.",
-  "saveConflict.summary": "\uD50C\uB808\uC774\uC5B4 \uB808\uBCA8  {level}\n\uC82C  {gems}  \xB7  \uACE8\uB4DC  {gold}\n\uCD5C\uADFC \uD50C\uB808\uC774  {lastPlayed}",
+  "saveConflict.lastPlayed": "\uCD5C\uADFC \uD50C\uB808\uC774",
+  "saveConflict.latest": "\uCD5C\uC2E0",
   "saveConflict.local": "\uC774 \uAE30\uAE30",
   "saveConflict.remote": "\uC11C\uBC84",
   "saveConflict.useLocal": "\uC774 \uAE30\uAE30 \uC0AC\uC6A9",
-  "saveConflict.cancel": "\uC120\uD0DD \uCDE8\uC18C",
   "saveConflict.useRemote": "\uC11C\uBC84 \uC0AC\uC6A9"
 };
 
@@ -7460,6 +7460,8 @@ var MISC_KO = {
   "battle.profile.down": "\uC804\uD22C \uBD88\uB2A5",
   "battle.profile.ferocity": "\uC57C\uC131 {value} / {max}",
   "reward.title": "\uD68D\uB4DD \uBCF4\uC0C1",
+  "reward.note.frame": "\uD504\uB85C\uD544 \uD14C\uB450\uB9AC",
+  "reward.note.item": "\uC544\uC774\uD15C",
   "reward.tapHint": "\uD654\uBA74\uC744 \uB20C\uB7EC \uD655\uC778",
   // 적 미리보기·룬 확률
   "enemyPreview.title": "\uC801 \uD3B8\uC131",
@@ -8395,6 +8397,7 @@ var SYSTEM_KO = {
   "ops.notice.title": "\uC6B4\uC601\uD300 \uC548\uB0B4",
   "ops.notice.gain": "{name} {amount}\uAC1C\uAC00 \uC9C0\uAE09\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
   "ops.notice.loss": "{name} {amount}\uAC1C\uAC00 \uD68C\uC218\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+  "ops.notice.lossHead": "\uC6B4\uC601 \uC870\uCE58\uB85C \uC544\uB798 \uC7AC\uD654\uAC00 \uD68C\uC218\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
   "ops.notice.mail": "\uC0C8 \uC6B0\uD3B8 {count}\uD1B5\uC774 \uB3C4\uCC29\uD588\uC2B5\uB2C8\uB2E4.",
   "ops.notice.reason": "\uC0AC\uC720: {reason}",
   "ops.notice.nicknameReset": "\uC6B4\uC601 \uC815\uCC45\uC5D0 \uB530\uB77C \uB2C9\uB124\uC784\uC774 \uCD08\uAE30\uD654\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uC0C8 \uB2C9\uB124\uC784\uC744 \uC815\uD574 \uC8FC\uC138\uC694.",
@@ -8628,7 +8631,6 @@ var DUEL_KO = {
   "duel.error.opponentGone": "\uC0C1\uB300 \uBAA9\uB85D\uC774 \uBC14\uB00C\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uACE8\uB77C \uC8FC\uC138\uC694.",
   "duel.error.noGems": "\uC82C\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.",
   "duel.error.attemptLimit": "\uC624\uB298\uC740 \uB3C4\uC804\uAD8C\uC744 \uB354 \uC0B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
-  "duel.ok": "\uD655\uC778",
   "duel.tier.bronze": "\uBE0C\uB860\uC988",
   "duel.tier.silver": "\uC2E4\uBC84",
   "duel.tier.gold": "\uACE8\uB4DC",
@@ -9162,7 +9164,6 @@ var SUPPORT_KO = {
   "feedback.later": "\uB2E4\uC74C\uC5D0 \uD560\uAC8C\uC694",
   "feedback.sent.title": "\uACE0\uB9C8\uC6CC\uC694!",
   "feedback.sent.body": "\uC77C\uC9C0\uC5D0 \uAF3C\uAF3C\uD788 \uC62E\uACA8 \uC801\uC5C8\uC5B4\uC694. \uAC1C\uBC1C\uC790\uB2D8\uAED8 \uAF2D \uC804\uD574 \uB4DC\uB9B4\uAC8C\uC694!",
-  "feedback.sent.rewarded": "\uC77C\uC9C0\uC5D0 \uAF3C\uAF3C\uD788 \uC62E\uACA8 \uC801\uC5C8\uC5B4\uC694. \uAC1C\uBC1C\uC790\uB2D8\uAED8 \uAF2D \uC804\uD574 \uB4DC\uB9B4\uAC8C\uC694!\n\uAC10\uC0AC \uC120\uBB3C\uB85C \uC82C {amount}\uAC1C\uB97C \uC6B0\uD3B8\uD568\uC5D0 \uB123\uC5B4 \uB480\uC5B4\uC694!",
   "homepage.title": "\uC0AC\uC804\uC608\uC57D \uC548\uB0B4",
   "homepage.greeting": "\uB300\uC7A5\uB2D8, \uC815\uC2DD \uCD9C\uBC1C \uC18C\uC2DD\uC740 \uC81C\uAC00 \uC81C\uC77C \uBA3C\uC800 \uCC59\uACA8 \uB458\uAC8C\uC694! \uD648\uD398\uC774\uC9C0\uC5D0\uC11C \uC0AC\uC804\uC608\uC57D\uB9CC \uD574 \uB450\uC2DC\uBA74 \uB3FC\uC694.",
   "homepage.body": "\uC815\uC2DD \uCD9C\uC2DC \uC18C\uC2DD\uACFC \uC0AC\uC804\uC608\uC57D \uBCF4\uC0C1\uC744 \uAC00\uC7A5 \uBA3C\uC800 \uBC1B\uC544 \uBCF4\uC138\uC694!",
@@ -47327,7 +47328,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.533.0",
+  version: "0.534.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {

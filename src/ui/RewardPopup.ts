@@ -3,7 +3,11 @@ import { audioManager } from "../managers/AudioManager";
 import { t } from "../i18n";
 import { formatCurrency } from "../core/formatCurrency";
 import { setDebugRewardPopup } from "../debug";
-import { drawHairline } from "./holo";
+import { chipPoints, drawHairline, drawLayer } from "./holo";
+import { ProfileAvatar } from "./ProfileAvatar";
+import { findProfileFrame } from "../data/profileFrames";
+import { playerProfileDisplay, profileAvatarContent } from "../state/playerProfile";
+import { squeezeTextToWidth } from "./textFit";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -62,11 +66,25 @@ export interface RewardPopupOptions {
    * 액자들이 그 수만큼(최대 다섯) 쾅쾅 맥동하며 수가 나눠 오른다.
    */
   greatSuccessCount?: number;
+  /**
+   * 판 **머리**에 서는 결과 블록(길드전 대치·순위 메달·레벨 판 등). 영수증 줄 위에 `height`만큼 자리를 내주고,
+   * `draw`는 그 블록의 가운데 y를 받아 판 안에 그린다. 받을 것이 없는 결과(레벨 업)는 `items`를 비워 블록만 세운다.
+   */
+  header?: RewardPopupHeader;
   onConfirm?: () => void;
+}
+
+/** 영수증 머리 블록 — 결과 자체를 그림으로 말하는 자리. */
+export interface RewardPopupHeader {
+  height: number;
+  draw: (body: Phaser.GameObjects.Container, centerY: number, reduced: boolean) => void;
 }
 
 /** 한 줄 4칸을 담는 판 폭과 액자 크기. 줄 수에서 높이를 구하는 일은 `rewardGridLayout`이 맡는다. */
 const REWARD_POPUP = { width: REWARD_POPUP_GRID.width, frame: REWARD_POPUP_GRID.frame, expGap: 40 } as const;
+
+/** 머리 블록만 서는 판(받을 것이 없는 결과)의 밑동 여백. */
+const REWARD_HEADER_ONLY_PAD = 96;
 
 const RUNE_ICON_PATTERN = /^rune-(uncommon|rare|epic|legendary)-[012]$/;
 
@@ -82,7 +100,7 @@ const RUNE_ICON_PATTERN = /^rune-(uncommon|rare|epic|legendary)-[012]$/;
  */
 export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options: RewardPopupOptions): void {
   const items = sortRewardItems(options.items.filter((item) => item.amount > 0));
-  if (items.length === 0) {
+  if (items.length === 0 && !options.header) {
     options.onConfirm?.();
     return;
   }
@@ -90,9 +108,12 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
   // 안내창을 아직 잇지 않은 화면에서도 영수증의 액자는 같은 창을 연다.
   if (!hasGuideOpeners(scene)) bindCurrencyGuide({ scene, popups });
 
-  const layout = rewardGridLayout(items.length);
-  // 경험치 블록이 서면 판이 그만큼 위로 자라고, 영수증 줄은 판 아래쪽에 그대로 남는다.
-  const expRoom = options.playerExp ? PLAYER_EXP_ROW.height + REWARD_POPUP.expGap : 0;
+  const grid = rewardGridLayout(Math.max(1, items.length));
+  // 받을 것이 없는 머리 블록 판은 영수증 줄 자리를 비운다(밑동 여백만 남긴다).
+  const layout = items.length > 0 ? grid : { ...grid, height: REWARD_HEADER_ONLY_PAD, growHalf: 0, cells: [] };
+  // 경험치 블록·머리 블록이 서면 판이 그만큼 위로 자라고, 영수증 줄은 판 아래쪽에 그대로 남는다.
+  const headerRoom = options.header ? options.header.height + REWARD_POPUP.expGap : 0;
+  const expRoom = (options.playerExp ? PLAYER_EXP_ROW.height + REWARD_POPUP.expGap : 0) + headerRoom;
   const height = layout.height + expRoom;
   const shift = expRoom / 2;
   // 확인 입력점은 마지막 줄 **아래**다 — 액자 위를 누르면 그 액자의 안내창이 열린다.
@@ -128,6 +149,11 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
       addPlayerExpGainRow(scene, body, blockY, options.playerExp);
     }
     const reduced = motionPolicy(settingsManager.get()).nonEssentialRepeatFactor === 0;
+    if (options.header) {
+      // 머리 블록은 경험치 블록 아래, 영수증 줄 위에 선다.
+      const top = -height / 2 + 56 + (options.playerExp ? PLAYER_EXP_ROW.height + REWARD_POPUP.expGap : 0);
+      options.header.draw(body, top + options.header.height / 2, reduced);
+    }
     const strip = scene.add.container(0, shift);
     const great: GreatSuccessFrame[] = [];
     const greatCount = Math.max(0, Math.floor(options.greatSuccessCount ?? 0));
@@ -157,7 +183,7 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
       playGreatSuccess(scene, strip, great, greatSuccessPulses(greatCount), { x: 0, y: (layout.cells[0]?.y ?? 0) - REWARD_POPUP.frame / 2 });
     }
 
-    body.add(drawHairline(scene, 0, 108 + shift + layout.growHalf, 700, { color: COLOR.accent, alpha: 0.3 }));
+    if (items.length > 0) body.add(drawHairline(scene, 0, 108 + shift + layout.growHalf, 700, { color: COLOR.accent, alpha: 0.3 }));
     if (options.footnote) {
       body.add(scene.add.text(0, height / 2 + 54, options.footnote, textStyle({ role: "display", size: 38, color: COLOR.sortieText }))
         .setOrigin(0.5)
@@ -202,7 +228,10 @@ function addRewardCell(scene: Phaser.Scene, popups: PopupLayer, holder: Phaser.G
   addRewardExpiryTag(scene, framed, size, item);
   // 계정 장식처럼 전용 텍스처가 없는 결과만 기존 홀로그램 글리프 체계로 대신하고, 이름 쪽지를 연다.
   if (typeof item.icon !== "string") {
-    framed.addAt(drawGlyph(scene, item.icon.key, 0, 0, size * 0.56, COLOR.accent), 1);
+    const frame = item.frameId ? findProfileFrame(item.frameId) : undefined;
+    // 테두리는 상징 그림이 아니라 **내 얼굴에 그 테두리를 씌운 모습**으로 선다 — 무엇을 받았는지가 곧 보인다.
+    if (frame) framed.addAt(selfAvatar(scene, frame.id, size * 0.62), 1);
+    else framed.addAt(drawGlyph(scene, item.icon.key, 0, 0, size * 0.56, COLOR.accent), 1);
     addPressOpen(scene, holder, size, () => openPlainNote(scene, popups, item));
   }
   return framed;
@@ -216,9 +245,46 @@ function addPressOpen(scene: Phaser.Scene, holder: Phaser.GameObjects.Container,
   holder.add(hit);
 }
 
-/** 전용 안내창이 없는 보상(장식 등)은 이름과 수량만 읽히는 작은 쪽지를 연다. */
+/** 내 얼굴에 그 테두리를 씌운 한 장 — 상단 줄·프로필 카드와 같은 `ProfileAvatar`. */
+function selfAvatar(scene: Phaser.Scene, frameId: string, size: number): ProfileAvatar {
+  const profile = playerProfileDisplay(session);
+  return new ProfileAvatar(scene, 0, 0, { size: Math.round(size), frameId, portraitAssetId: profile.avatar?.portraitAssetId, fallback: profileAvatarContent(profile, () => false).fallback });
+}
+
+const PLAIN_NOTE = { width: 640, height: 500, stageY: -46, stage: 250, avatar: 200, nameY: 134, kindY: 180 } as const;
+
+/**
+ * 전용 안내창이 없는 보상(프로필 테두리·그림 없는 아이템)의 쪽지.
+ *
+ * 수량 한 줄만 크게 띄우던 때는 무엇을 받았는지 쪽지가 말하지 못했다. 테두리는 그 색으로 물든 무대 위에
+ * 내 얼굴에 씌운 모습으로, 그 밖의 것은 영수증과 같은 액자를 크게 세우고 이름·갈래를 아래에 적는다.
+ */
 function openPlainNote(scene: Phaser.Scene, popups: PopupLayer, item: RewardPopupItem): void {
-  popups.open({ width: 620, height: 300, title: item.label ?? t("reward.title"), closeOnBackdrop: true }, (body) => {
-    body.add(scene.add.text(0, 10, `×${formatCurrency(item.amount)}`, textStyle({ role: "display", size: 56, color: COLOR.accentText })).setOrigin(0.5));
+  const N = PLAIN_NOTE;
+  const frame = item.frameId ? findProfileFrame(item.frameId) : undefined;
+  const tone = frame?.color ?? COLOR.accent;
+  popups.open({ width: N.width, height: N.height, title: t("reward.title"), closeOnBackdrop: true }, (body) => {
+    body.add(drawLayer(scene, 0, N.stageY, chipPoints(N.stage + 120, N.stage, { bevel: { topLeft: 34, bottomRight: 34 } }), {
+      fill: frame?.wash ?? 0x141b24, alpha: 0.9, edge: tone, edgeWidth: 3, glow: { color: tone, strength: 0.4 },
+    }));
+    if (frame) {
+      const avatar = selfAvatar(scene, frame.id, N.avatar);
+      avatar.setPosition(0, N.stageY);
+      body.add(avatar);
+    } else if (typeof item.icon !== "string") {
+      const holder = scene.add.container(0, N.stageY);
+      const framed = addFramedIcon(scene, holder, 0, 0, N.avatar * 0.9, "", { amount: formatCurrency(item.amount) });
+      framed.addAt(drawGlyph(scene, item.icon.key, 0, 0, N.avatar * 0.5, COLOR.accent), 1);
+      body.add(holder);
+    }
+    const name = scene.add.text(0, N.nameY, item.label ?? t("reward.title"), textStyle({ role: "display", size: 40, color: frame ? hexColor(tone) : COLOR.ink }))
+      .setOrigin(0.5).setStroke("#05070a", 6);
+    squeezeTextToWidth(name, N.width - 100);
+    body.add(name);
+    body.add(scene.add.text(0, N.kindY, t(frame ? "reward.note.frame" : "reward.note.item"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
   });
+}
+
+function hexColor(color: number): string {
+  return `#${color.toString(16).padStart(6, "0")}`;
 }

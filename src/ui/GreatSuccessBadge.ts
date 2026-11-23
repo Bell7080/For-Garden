@@ -6,6 +6,7 @@ import { chipPoints, drawLayer } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { pressIn, pressOut } from "./pressFeedback";
 import { drawSparkle } from "./rouletteWheel";
+import { drawGlyph } from "./glyphs";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 
@@ -22,7 +23,7 @@ export const GREAT_SUCCESS_BADGE = {
   fill: 0xffd75e, ink: GREAT_SUCCESS_FX.stamp.stroke, fontSize: 24,
   /** 딱지가 톡톡 숨 쉬는 박자 — 움직임 줄이기에서는 서 있기만 한다. */
   bob: { scale: 1.07, ms: 620, holdMs: 1700 },
-  popup: { width: 700, padX: 52, stampSize: 54, gap: 22, bodySize: 34, top: 70, bottom: 54 },
+  popup: { width: 700, padX: 52, stampSize: 64, gap: 26, bodySize: 30, top: 78, bottom: 54, tile: { width: 270, height: 132, gap: 24, value: 64, icon: 44 } },
 } as const;
 
 /** 확률(%)과 배율 — 딱지와 쪽지가 같은 값을 쓴다. */
@@ -64,19 +65,39 @@ export function addGreatSuccessBadge(scene: Phaser.Scene, x: number, y: number, 
   return badge;
 }
 
-/** 대성공이 무엇인지 말하는 쪽지. */
+/**
+ * 대성공이 무엇인지 말하는 쪽지 — 금빛 도장 아래 **확률 · 배율** 두 칸이 크게 서고, 풀이는 그 아래 한 문단이다.
+ * 수를 문장 속에만 두면 「몇 %에 몇 배」가 글을 다 읽어야 나온다.
+ */
 export function openGreatSuccessInfo(scene: Phaser.Scene, popups: PopupLayer, anchor?: { x: number; y: number }): void {
   const P = GREAT_SUCCESS_BADGE.popup;
+  const T = P.tile;
   const labels = greatSuccessLabels();
-  const body = scene.add.text(0, 0, t("greatSuccess.info.body", labels), textStyle({ role: "body", size: P.bodySize, color: COLOR.ink, align: "center", lineSpacing: 10, wrap: P.width - P.padX * 2 })).setOrigin(0.5, 0);
-  const height = P.top + P.stampSize + P.gap + body.height + P.bottom;
+  const body = scene.add.text(0, 0, t("greatSuccess.info.body", labels), textStyle({ role: "body", size: P.bodySize, color: COLOR.inkDim, align: "center", lineSpacing: 10, wrap: P.width - P.padX * 2 })).setOrigin(0.5, 0);
+  const height = P.top + P.stampSize + P.gap + T.height + P.gap + body.height + P.bottom;
   popups.open({ width: P.width, height, title: t("greatSuccess.info.title"), anchor }, (panel) => {
     const S = GREAT_SUCCESS_FX.stamp;
     const stampY = -height / 2 + P.top + P.stampSize / 2;
-    const stamp = scene.add.text(0, stampY, t("greatSuccess.badge", labels), textStyle({ role: "display", size: P.stampSize, color: S.color }))
-      .setOrigin(0.5).setAngle(S.angle * 0.6).setStroke(S.stroke, 9).setShadow(2, 5, "#000000", 4, false, true);
+    const stamp = scene.add.text(0, stampY, t("greatSuccess.stamp"), textStyle({ role: "display", size: P.stampSize, color: S.color }))
+      .setOrigin(0.5).setAngle(S.angle * 0.6).setStroke(S.stroke, 10).setShadow(2, 5, "#000000", 4, false, true);
     squeezeTextToWidth(stamp, P.width - P.padX * 2);
-    panel.add(stamp);
-    panel.add(body.setPosition(0, stampY + P.stampSize / 2 + P.gap));
+    const sparkle = scene.add.graphics();
+    drawSparkle(sparkle, -stamp.displayWidth / 2 - 26, stampY - 10, 14, 0xfff4c2, 1);
+    drawSparkle(sparkle, stamp.displayWidth / 2 + 24, stampY + 12, 10, 0xffffff, 0.9);
+    panel.add([sparkle, stamp]);
+    // 두 칸 — 왼쪽은 나올 확률, 오른쪽은 나왔을 때 곱해지는 보상. 딱지와 같은 금빛 윗선으로 한 벌임을 말한다.
+    const tileY = stampY + P.stampSize / 2 + P.gap + T.height / 2;
+    const tiles: { x: number; value: string; glyph: "trophy" | "rank-reward" }[] = [
+      { x: -(T.width + T.gap) / 2, value: `${labels.chance}%`, glyph: "trophy" },
+      { x: (T.width + T.gap) / 2, value: `×${labels.multiplier}`, glyph: "rank-reward" },
+    ];
+    for (const tile of tiles) {
+      panel.add(drawLayer(scene, tile.x, tileY, chipPoints(T.width, T.height, { bevel: { topLeft: 18, bottomRight: 18 } }), { fill: 0x1a1608, alpha: 0.9, edge: GREAT_SUCCESS_BADGE.fill, edgeWidth: 4, glow: { color: GREAT_SUCCESS_BADGE.fill, strength: 0.25 } }));
+      const value = scene.add.text(0, tileY, tile.value, textStyle({ role: "display", size: T.value, color: S.color })).setOrigin(0.5).setStroke(S.stroke, 8);
+      const total = T.icon + 14 + value.width;
+      value.setX(tile.x - total / 2 + T.icon + 14 + value.width / 2);
+      panel.add([drawGlyph(scene, tile.glyph, tile.x - total / 2 + T.icon / 2, tileY, T.icon, GREAT_SUCCESS_BADGE.fill), value]);
+    }
+    panel.add(body.setPosition(0, tileY + T.height / 2 + P.gap));
   });
 }

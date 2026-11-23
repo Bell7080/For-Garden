@@ -73,7 +73,6 @@ export const SUPPORT_ID = {
   "feedback.later": "Lain kali saja",
   "feedback.sent.title": "Terima kasih!",
   "feedback.sent.body": "Sudah kucatat rapi di jurnal. Pasti kusampaikan ke pengembang!",
-  "feedback.sent.rewarded": "Sudah kucatat rapi di jurnal. Pasti kusampaikan ke pengembang!\nSebagai hadiah terima kasih, {amount} permata sudah kutaruh di kotak surat!",
   "homepage.title": "Pra-registrasi",
   "homepage.greeting": "Kapten, kabar peluncuran resminya akan kuamankan paling dulu! Cukup pra-registrasi di situs resmi saja.",
   "homepage.body": "Dapatkan kabar peluncuran dan hadiah pra-registrasi paling awal!",

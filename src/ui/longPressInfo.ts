@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { LONG_PRESS, longPressProgress } from "./longPressGauge";
+import { LONG_PRESS, longPressProgress, longPressRingProgress } from "./longPressGauge";
 import { LONG_PRESS_RING_DEPTH, LongPressRing } from "./longPressRing";
 
 /**
@@ -67,8 +67,7 @@ export function bindLongPress(
     downAt = pointer.downTime;
     stop();
     const { x, y } = pointer;
-    gauge = new LongPressRing(scene, x, y, options.depth ?? LONG_PRESS_RING_DEPTH);
-    draw(x, y, 0);
+    // 게이지는 유예(`LONG_PRESS.graceMs`)를 넘긴 뒤에야 선다 — 톡 친 손에 고리가 번쩍이지 않게.
     ticker = () => {
       // 끌기로 넘어간 손가락은 스크롤이지 꾹 누름이 아니다. 활성 포인터를 직접 보므로
       // 화면마다 pointermove 배선을 다시 깔지 않는다.
@@ -77,8 +76,13 @@ export function bindLongPress(
       // 사이에 한 바퀴를 돌아, 톡 친 손이 꾹 누름으로 열려 버린다.
       if (!now.isDown) { cancel(); return; }
       if (Phaser.Math.Distance.Between(x, y, now.x, now.y) > LONG_PRESS.moveSlop) { cancel(); return; }
-      const ratio = longPressProgress(Date.now() - startedAt);
-      draw(x, y, ratio);
+      const elapsed = Date.now() - startedAt;
+      const shown = longPressRingProgress(elapsed);
+      if (shown !== null) {
+        gauge ??= new LongPressRing(scene, x, y, options.depth ?? LONG_PRESS_RING_DEPTH);
+        draw(x, y, shown);
+      }
+      const ratio = longPressProgress(elapsed);
       if (ratio < 1 || fired) return;
       fired = true;
       stop(true);

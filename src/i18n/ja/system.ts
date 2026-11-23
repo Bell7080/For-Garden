@@ -55,6 +55,7 @@ export const SYSTEM_JA = {
   "ops.notice.title": "運営からのお知らせ",
   "ops.notice.gain": "{name}を{amount}個付与しました。",
   "ops.notice.loss": "{name}を{amount}個回収しました。",
+  "ops.notice.lossHead": "運営措置により、以下を回収しました。",
   "ops.notice.mail": "新しいメールが{count}件届きました。",
   "ops.notice.reason": "理由: {reason}",
   "ops.notice.nicknameReset": "運営ポリシーによりニックネームがリセットされました。新しいニックネームを決めてください。",

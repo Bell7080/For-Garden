@@ -19,7 +19,6 @@ export const DUEL_ID = {
   "duel.error.opponentGone": "Daftar lawan telah berubah. Silakan pilih lagi.",
   "duel.error.noGems": "Permata tidak cukup.",
   "duel.error.attemptLimit": "Hari ini kamu tidak bisa membeli tiket tantangan lagi.",
-  "duel.ok": "OK",
   "duel.tier.bronze": "Perunggu",
   "duel.tier.silver": "Perak",
   "duel.tier.gold": "Emas",

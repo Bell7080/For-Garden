@@ -49,6 +49,7 @@ export const SYSTEM_ZH_HANT = {
   "ops.notice.title": "運營通知",
   "ops.notice.gain": "已發放{name}{amount}個。",
   "ops.notice.loss": "已回收{name}{amount}個。",
+  "ops.notice.lossHead": "營運措施已回收以下物品。",
   "ops.notice.mail": "收到{count}封新郵件。",
   "ops.notice.reason": "原因:{reason}",
   "ops.notice.nicknameReset": "根據運營政策，你的暱稱已被重置。請設定新的暱稱。",

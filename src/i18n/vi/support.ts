@@ -73,7 +73,6 @@ export const SUPPORT_VI = {
   "feedback.later": "Để lần sau",
   "feedback.sent.title": "Cảm ơn nhé!",
   "feedback.sent.body": "Em đã ghi cẩn thận vào nhật ký rồi. Nhất định sẽ chuyển cho nhà phát triển!",
-  "feedback.sent.rewarded": "Em đã ghi cẩn thận vào nhật ký rồi. Nhất định sẽ chuyển cho nhà phát triển!\nEm đã để {amount} ngọc vào hộp thư làm quà cảm ơn!",
   "homepage.title": "Đăng ký trước",
   "homepage.greeting": "Đội trưởng, tin ra mắt chính thức em sẽ giữ cho đầu tiên! Chỉ cần đăng ký trước trên trang chủ thôi.",
   "homepage.body": "Nhận tin ra mắt và quà đăng ký trước sớm nhất!",

@@ -35,6 +35,8 @@ export interface RewardPopupItem {
   runeInstanceId?: string;
   /** 그 개체의 파편. 있으면 액자가 얼굴 액자(유리 조각)로 선다. */
   relicId?: string;
+  /** 프로필 테두리. 있으면 액자 안에 내 얼굴에 그 테두리를 씌운 모습이 선다. */
+  frameId?: string;
   /** 지급 영수증에 정확한 만료 시각이 있으면 우선 사용한다. */
   expiresAt?: string;
   /** 지급처별 기한. 없으면 아이템 정의의 기본 기한을 표시한다. */
@@ -109,7 +111,7 @@ export function productGrantsToRewardItems(grants: readonly ProductGrant[], gran
     // 주간 SSR 파편은 서버가 구매 순간의 개체로 풀어 내려 준다. 풀리지 않은 자리표시는 그리지 않는다.
     if (grant.kind === "weekly_ssr_fragment" || grant.kind === "rotating_fragment") return [];
     if (grant.kind === "relic_fragment") return [{ icon: "", amount: grant.amount, relicId: grant.relicId }];
-    if (grant.kind === "profile_decoration") return [{ icon: { kind: "glyph", key: "costume" }, amount: 1, label: grant.name }];
+    if (grant.kind === "profile_decoration") return [{ icon: { kind: "glyph", key: "costume" }, amount: 1, label: grant.name, frameId: grant.decorationId }];
     if (grant.kind === "rune") return [{ icon: `rune-${grant.rarity}-${grant.part}`, amount: grant.amount, label: grant.name }];
     const definition = findItem(grant.itemId);
     // 가방 아이템은 재화와 같은 양식으로 액자와 수량만 세운다 — 에너지 드링크만 이름이 붙어 보상 칸 양식이 갈렸다.

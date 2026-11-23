@@ -49,6 +49,7 @@ export const SYSTEM_RU = {
   "ops.notice.title": "Сообщение от команды",
   "ops.notice.gain": "Начислено: {name} — {amount}.",
   "ops.notice.loss": "Списано: {name} — {amount}.",
+  "ops.notice.lossHead": "По решению администрации списано следующее.",
   "ops.notice.mail": "Почта: новых писем — {count}.",
   "ops.notice.reason": "Причина: {reason}",
   "ops.notice.nicknameReset": "Ваш никнейм сброшен согласно правилам сервиса. Выберите новый.",

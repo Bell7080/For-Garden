@@ -19,7 +19,6 @@ export const DUEL_EN = {
   "duel.error.opponentGone": "The opponent list has changed. Please choose again.",
   "duel.error.noGems": "Not enough Gems.",
   "duel.error.attemptLimit": "You can't buy any more challenge tickets today.",
-  "duel.ok": "OK",
   "duel.tier.bronze": "Bronze",
   "duel.tier.silver": "Silver",
   "duel.tier.gold": "Gold",

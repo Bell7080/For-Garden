@@ -291,6 +291,8 @@ export const MISC_PT_BR = {
   "battle.profile.down": "Caído",
   "battle.profile.ferocity": "Ferocidade {value} / {max}",
   "reward.title": "Recompensas obtidas",
+  "reward.note.frame": "Moldura de perfil",
+  "reward.note.item": "Item",
   "reward.tapHint": "Toque na tela para confirmar",
   "enemyPreview.title": "Formação inimiga",
   "enemyPreview.totalPower": "Poder de Combate total {power}",

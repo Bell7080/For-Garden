@@ -49,6 +49,7 @@ export const SYSTEM_TH = {
   "ops.notice.title": "ประกาศจากทีมปฏิบัติการ",
   "ops.notice.gain": "มอบ{name} {amount} ชิ้นแล้ว",
   "ops.notice.loss": "เรียกคืน{name} {amount} ชิ้นแล้ว",
+  "ops.notice.lossHead": "ได้เรียกคืนรายการต่อไปนี้ตามมาตรการของผู้ดูแล",
   "ops.notice.mail": "มีจดหมายใหม่ {count} ฉบับ",
   "ops.notice.reason": "เหตุผล: {reason}",
   "ops.notice.nicknameReset": "ชื่อเล่นของคุณถูกรีเซ็ตตามนโยบายการให้บริการ กรุณาตั้งชื่อเล่นใหม่",

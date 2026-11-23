@@ -85,7 +85,7 @@ export function openRelicFilterPopup(
       height: layout.height,
       title: t("relics.filter"),
       ...where,
-      closeOnBackdrop: true, hideCloseButton: true,
+      closeOnBackdrop: true, backButton: true,
     },
     (body, close) => {
       const left = -RELIC_FILTER_POPUP.width / 2 + RELIC_FILTER_POPUP.padding;

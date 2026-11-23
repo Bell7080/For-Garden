@@ -320,6 +320,8 @@ export const MISC_KO = {
   "battle.profile.down": "전투 불능",
   "battle.profile.ferocity": "야성 {value} / {max}",
   "reward.title": "획득 보상",
+  "reward.note.frame": "프로필 테두리",
+  "reward.note.item": "아이템",
   "reward.tapHint": "화면을 눌러 확인",
 
   // 적 미리보기·룬 확률

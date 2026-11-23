@@ -49,6 +49,7 @@ export const SYSTEM_ID = {
   "ops.notice.title": "Pemberitahuan Operasional",
   "ops.notice.gain": "{amount} {name} telah diberikan.",
   "ops.notice.loss": "{amount} {name} telah ditarik.",
+  "ops.notice.lossHead": "Item berikut telah ditarik oleh tindakan operator.",
   "ops.notice.mail": "{count} surat baru telah tiba.",
   "ops.notice.reason": "Alasan: {reason}",
   "ops.notice.nicknameReset": "Nama panggilanmu telah direset sesuai kebijakan layanan. Silakan pilih nama baru.",

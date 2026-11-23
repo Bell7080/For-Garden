@@ -19,7 +19,6 @@ export const DUEL_VI = {
   "duel.error.opponentGone": "Danh sách đối thủ đã thay đổi. Hãy chọn lại.",
   "duel.error.noGems": "Không đủ Ngọc.",
   "duel.error.attemptLimit": "Hôm nay bạn không thể mua thêm vé khiêu chiến.",
-  "duel.ok": "OK",
   "duel.tier.bronze": "Đồng",
   "duel.tier.silver": "Bạc",
   "duel.tier.gold": "Vàng",

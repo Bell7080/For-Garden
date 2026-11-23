@@ -30,7 +30,7 @@ export function opsNoticeLines(notices: readonly OpsNotice[]): string[] {
  * 운영팀 조정 안내를 영수증으로 나눈다. 받은 몫(재화·아이템)은 보상 팝업의 액자와 수량으로 세우고,
  * 회수된 몫은 글줄로 적는다. 사유는 같은 것끼리 합쳐 한 줄로 아래에 선다.
  */
-export function opsNoticeReceipt(notices: readonly OpsNotice[]): { items: RewardPopupItem[]; losses: string[]; reason: string } {
+export function opsNoticeReceipt(notices: readonly OpsNotice[]): { items: RewardPopupItem[]; lossFrames: { iconKey: string; amount: number }[]; losses: string[]; reason: string } {
   const gains: Record<string, number> = {};
   const itemGains = new Map<string, number>();
   const net = new Map<string, number>();
@@ -42,17 +42,23 @@ export function opsNoticeReceipt(notices: readonly OpsNotice[]): { items: Reward
     if (notice.note && !reasons.includes(notice.note)) reasons.push(notice.note);
   }
   const losses: string[] = [];
+  // 회수된 재화는 그림이 있으면 액자로 선다(확인 창의 `costs`) — 그림이 없는 것만 글줄로 남는다.
+  const lossFrames: { iconKey: string; amount: number }[] = [];
   for (const [key, delta] of net) {
     if (delta > 0) {
       if (key.startsWith("item:")) itemGains.set(key.slice(5), delta);
       else gains[key] = delta;
     } else if (delta < 0) {
+      const frame = key.startsWith("item:")
+        ? productGrantsToRewardItems([{ kind: "item" as const, itemId: key.slice(5), name: key.slice(5), amount: 1 }])[0]
+        : currencyRecordToRewardItems({ [key]: 1 })[0];
+      if (frame && typeof frame.icon === "string" && frame.icon) { lossFrames.push({ iconKey: frame.icon, amount: Math.abs(delta) }); continue; }
       const name = key.startsWith("item:") ? (findItem(key.slice(5))?.name ?? key) : t(`currency.${key}` as TextKey);
       losses.push(t("ops.notice.loss", { name, amount: Math.abs(delta).toLocaleString("en-US") }));
     }
   }
   const items = [...currencyRecordToRewardItems(gains), ...productGrantsToRewardItems([...itemGains].map(([itemId, amount]) => ({ kind: "item" as const, itemId, name: itemId, amount })))];
-  return { items, losses, reason: reasons.length ? t("ops.notice.reason", { reason: reasons.join(" / ").slice(0, 40) }) : "" };
+  return { items, lossFrames, losses, reason: reasons.length ? t("ops.notice.reason", { reason: reasons.join(" / ").slice(0, 40) }) : "" };
 }
 
 /**

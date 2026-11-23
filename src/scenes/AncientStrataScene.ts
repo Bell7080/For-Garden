@@ -39,6 +39,8 @@ import { FaceFrame } from "../ui/FaceFrame";
 import { drawGlyph } from "../ui/glyphs";
 import { encounterRoleIcon } from "../ui/encounterRolePresentation";
 import { chipPoints, drawLayer, drawVignette } from "../ui/holo";
+import { squeezeTextToWidth } from "../ui/textFit";
+import { addPlayerProfileTap } from "../ui/PlayerProfileLink";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { stageChapterNavigationLayout } from "../ui/stageChapterLayout";
 import { COLOR, textStyle } from "../ui/theme";
@@ -396,14 +398,21 @@ export class AncientStrataScene extends Phaser.Scene {
 
   /** 한 층에 선 사람들을 이름·레벨과 함께 늘어놓는 작은 쪽지. */
   private openPeerList(floor: number, group: readonly AncientPeer[]): void {
-    const rowHeight = 92;
-    const height = 140 + group.length * rowHeight;
-    this.popups.open({ width: 620, height, title: t("ancient.social.here", { floor: `B${floor}` }), dim: true, closeOnBackdrop: true }, (body) => {
+    // 줄마다 유리 판 한 장 — 얼굴 · 이름 · 연구원 레벨, 누르면 그 사람의 카드가 열린다(순위·목록 줄과 같은 한 문).
+    const row = { width: 600, height: 96, gap: 12 };
+    const height = 150 + group.length * (row.height + row.gap);
+    this.popups.open({ width: 680, height, title: t("ancient.social.here", { floor: `B${floor}` }), dim: true, closeOnBackdrop: true }, (body) => {
       group.forEach((peer, index) => {
-        const y = -height / 2 + 110 + index * rowHeight;
-        body.add(new FaceFrame(this, -230, y, { portraitAssetId: RELICS.find((relic) => relic.id === peer.relicId)!.portraitAssetId, size: 72 }));
-        body.add(this.add.text(-170, y, peer.name, textStyle({ role: "emphasis", size: 30, color: COLOR.ink })).setOrigin(0, 0.5));
-        body.add(this.add.text(250, y, `LV.${peer.level}`, textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(1, 0.5));
+        const y = -height / 2 + 116 + row.height / 2 + index * (row.height + row.gap);
+        const line = this.add.container(0, y);
+        line.add(drawLayer(this, 0, 0, chipPoints(row.width, row.height, { bevel: { topLeft: 16, bottomRight: 16 } }), { fill: 0x0f141b, alpha: 0.78, shadow: false, edge: COLOR.accent, edgeAlpha: 0.4 }));
+        line.add(new FaceFrame(this, -row.width / 2 + 56, 0, { portraitAssetId: RELICS.find((relic) => relic.id === peer.relicId)!.portraitAssetId, size: 76 }));
+        const name = this.add.text(-row.width / 2 + 112, 0, peer.name, textStyle({ role: "emphasis", size: 30, color: COLOR.ink })).setOrigin(0, 0.5);
+        squeezeTextToWidth(name, 300);
+        line.add(name);
+        line.add(this.add.text(row.width / 2 - 28, 0, `LV.${peer.level}`, textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(1, 0.5));
+        addPlayerProfileTap(this, line, row.width, row.height, this.popups, { playerId: peer.id });
+        body.add(line);
       });
     });
   }

@@ -19,7 +19,6 @@ export const DUEL_ZH_HANT = {
   "duel.error.opponentGone": "對手列表已更新。請重新選擇。",
   "duel.error.noGems": "寶石不足。",
   "duel.error.attemptLimit": "今天無法再購買挑戰券。",
-  "duel.ok": "確認",
   "duel.tier.bronze": "青銅",
   "duel.tier.silver": "白銀",
   "duel.tier.gold": "金幣",

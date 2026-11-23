@@ -19,7 +19,6 @@ export const DUEL_PT_BR = {
   "duel.error.opponentGone": "A lista de oponentes mudou. Escolha novamente.",
   "duel.error.noGems": "Gemas insuficientes.",
   "duel.error.attemptLimit": "Hoje você não pode comprar mais tíquetes de desafio.",
-  "duel.ok": "OK",
   "duel.tier.bronze": "Bronze",
   "duel.tier.silver": "Prata",
   "duel.tier.gold": "Ouro",

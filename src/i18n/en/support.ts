@@ -73,7 +73,6 @@ export const SUPPORT_EN = {
   "feedback.later": "Maybe later",
   "feedback.sent.title": "Thank you!",
   "feedback.sent.body": "I wrote it all down in the log. I'll be sure to pass it on to the developer!",
-  "feedback.sent.rewarded": "I wrote it all down in the log. I'll be sure to pass it on to the developer!\nI put {amount} gems in your mailbox as a thank-you!",
   "homepage.title": "Pre-registration",
   "homepage.greeting": "Captain, I'll be the first to grab the launch news for you! Just pre-register on the website.",
   "homepage.body": "Be the first to get launch news and pre-registration rewards!",

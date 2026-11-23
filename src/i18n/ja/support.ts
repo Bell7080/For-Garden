@@ -73,7 +73,6 @@ export const SUPPORT_JA = {
   "feedback.later": "また今度にします",
   "feedback.sent.title": "ありがとう！",
   "feedback.sent.body": "日誌にしっかり書き写しました。開発者さんに必ず届けますね！",
-  "feedback.sent.rewarded": "日誌にしっかり書き写しました。開発者さんに必ず届けますね！\nお礼にジェム{amount}個をメールボックスに入れておきました！",
   "homepage.title": "事前登録のご案内",
   "homepage.greeting": "隊長、正式スタートの知らせは私がいちばんに押さえておきますね！公式サイトで事前登録だけしておいてください。",
   "homepage.body": "正式リリースの知らせと事前登録特典をいち早く受け取りましょう！",

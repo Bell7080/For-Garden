@@ -3,6 +3,9 @@ import { t } from "../i18n";
 import { chipPoints, drawLayer, drawShapeEdge } from "./holo";
 import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
 import { addFramedIcon } from "./itemFrame";
+import { addRuneFrame, type RuneFrameOptions } from "./runeIcons";
+import type { RunePart } from "../core/runes";
+import type { HeartGemRarity } from "../data/heartGems";
 import { CONFIRM_DIALOG, confirmButtonXs, confirmDialogHeight, confirmPlateHeight } from "./confirmDialogLayout";
 import { IconButton } from "./IconButton";
 import { UI_ICON } from "./icons";
@@ -30,7 +33,11 @@ export interface ConfirmOptions {
   onCancel?: () => void;
   /** 취소 버튼도 조작이고 그것이 되돌릴 수 없을 때(「적용하지 않기」) 그 버튼을 붉은 파괴적 판으로 세운다. */
   cancelDestructive?: boolean;
-  costs?: readonly { iconKey: string; amount: number; short?: boolean }[];
+  /**
+   * 판 안에 액자로 서는 것. 대개 치를 것이지만, `rune`을 주면 그 칸은 재화 액자 대신 **룬 액자**(등급색·주 옵션 뒷배경)로
+   * 서고 수량을 적지 않는다 — 막 완성한 룬처럼 「이것」을 보여 주는 알림이 쓴다.
+   */
+  costs?: readonly { iconKey: string; amount: number; short?: boolean; rune?: { rarity: HeartGemRarity; part: RunePart } & RuneFrameOptions }[];
   balance?: { iconKey: string; before: number; after: number };
 }
 
@@ -272,7 +279,10 @@ export class PopupLayer {
         const total = costs.length * L.costIcon + (costs.length - 1) * L.costSpacing;
         costs.forEach((cost, index) => {
           const x = -total / 2 + L.costIcon / 2 + index * (L.costIcon + L.costSpacing);
-          const frame = addFramedIcon(this.scene, body, x, y + L.costIcon / 2, L.costIcon, cost.iconKey, { amount: `×${cost.amount.toLocaleString()}` });
+          const frame = cost.rune
+            ? addRuneFrame(this.scene, x, y + L.costIcon / 2, L.costIcon, cost.rune.rarity, cost.rune.part, cost.rune)
+            : addFramedIcon(this.scene, body, x, y + L.costIcon / 2, L.costIcon, cost.iconKey, { amount: `×${cost.amount.toLocaleString()}` });
+          if (cost.rune) body.add(frame);
           if (cost.short) frame.setAlpha(0.55);
         });
         y += L.costIcon;

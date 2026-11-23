@@ -79,7 +79,8 @@ import { isStageUnlocked, session } from "../state/session";
 import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
 import { battlefieldWashBands, HOSTILE_AREA_COLOR, statusAreaColor } from "../ui/groundAreas";
 import { Button, DESTRUCTIVE_BUTTON_STYLE } from "../ui/Button";
-import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, HoloBar } from "../ui/holo";
+import { drawGlyph, type GlyphName } from "../ui/glyphs";
 import { PortraitCard } from "../ui/PortraitCard";
 import { UnitHealthBar } from "../ui/UnitHealthBar";
 import { skillArtTint } from "../ui/skillArt";
@@ -1200,24 +1201,33 @@ export class BattleScene extends Phaser.Scene {
     const popups = this.pausePopups ??= new PopupLayer(this, 2400);
     if (popups.isOpen) return;
     const actions = battlePauseActions(this.battleInput.mode, this.openingBattle());
-    const rows: { label: string; primary?: boolean; destructive?: boolean; onPress: (close: () => void) => void }[] = [
-      { label: t(this.openingBattle() ? "battle.pause.continue" : "battle.pause.resume"), primary: true, onPress: (close) => close() },
+    const rows: { label: string; icon: GlyphName; primary?: boolean; destructive?: boolean; onPress: (close: () => void) => void }[] = [
+      { label: t(this.openingBattle() ? "battle.pause.continue" : "battle.pause.resume"), icon: "page-next", primary: true, onPress: (close) => close() },
     ];
-    if (actions.settings) rows.push({ label: t("battle.pause.settings"), onPress: (close) => { close(); this.openSettingsOverlay(); } });
-    if (actions.retry) rows.push({ label: t("battle.pause.retry"), onPress: () => popups.confirm({ title: t("battle.pause.retry"), message: t("battle.pause.retryConfirm"), confirmLabel: t("battle.pause.retry") }, () => this.retryBattle()) });
-    if (actions.exit === "leave") rows.push({ label: t("battle.pause.exit"), destructive: true, onPress: () => popups.confirm({ title: t("battle.pause.exit"), message: t("battle.pause.exitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => this.leaveBattle()) });
-    if (actions.exit === "title") rows.push({ label: t("battle.pause.toTitle"), destructive: true, onPress: () => popups.confirm({ title: t("battle.pause.toTitle"), message: t("battle.pause.toTitleConfirm"), confirmLabel: t("battle.pause.toTitle"), destructive: true }, () => startScene(this, "title")) });
-    if (actions.exit === "forfeit") rows.push({ label: t("battle.pause.exit"), destructive: true, onPress: (close) => popups.confirm({ title: t("battle.pause.exit"), message: this.battleInput.mode === "duel" ? t("duel.pause.forfeitConfirm") : t("battle.pause.forfeitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => { close(); this.finishBattle("defeat"); }) });
-    const button = { width: 420, height: 86, gap: 20, top: 120, bottom: 70 };
+    if (actions.settings) rows.push({ label: t("battle.pause.settings"), icon: "settings", onPress: (close) => { close(); this.openSettingsOverlay(); } });
+    if (actions.retry) rows.push({ label: t("battle.pause.retry"), icon: "refresh", onPress: () => popups.confirm({ title: t("battle.pause.retry"), message: t("battle.pause.retryConfirm"), confirmLabel: t("battle.pause.retry") }, () => this.retryBattle()) });
+    if (actions.exit === "leave") rows.push({ label: t("battle.pause.exit"), icon: "page-prev", destructive: true, onPress: () => popups.confirm({ title: t("battle.pause.exit"), message: t("battle.pause.exitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => this.leaveBattle()) });
+    if (actions.exit === "title") rows.push({ label: t("battle.pause.toTitle"), icon: "page-prev", destructive: true, onPress: () => popups.confirm({ title: t("battle.pause.toTitle"), message: t("battle.pause.toTitleConfirm"), confirmLabel: t("battle.pause.toTitle"), destructive: true }, () => startScene(this, "title")) });
+    if (actions.exit === "forfeit") rows.push({ label: t("battle.pause.exit"), icon: "page-prev", destructive: true, onPress: (close) => popups.confirm({ title: t("battle.pause.exit"), message: this.battleInput.mode === "duel" ? t("duel.pause.forfeitConfirm") : t("battle.pause.forfeitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => { close(); this.finishBattle("defeat"); }) });
+    // 머리 판 — 멈춘 순간의 전투 시계가 크게 선다. 무엇이 멈췄는지(시간)를 글이 아니라 그 시계가 말한다.
+    const button = { width: 420, height: 86, gap: 20, top: 246, bottom: 70 };
+    const plate = { y: 150, width: 420, height: 96 };
     const height = button.top + rows.length * button.height + (rows.length - 1) * button.gap + button.bottom;
     popups.open({ width: 560, height, title: t("battle.pause.title"), dim: true, closeOnBackdrop: true }, (body, close) => {
+      const plateY = -height / 2 + plate.y;
+      body.add(drawLayer(this, 0, plateY, chipPoints(plate.width, plate.height, { bevel: { topLeft: 20, bottomRight: 20 } }), { fill: 0x0a0e14, alpha: 0.72, shadow: false, edge: COLOR.accent, edgeWidth: 3 }));
+      const clock = this.add.text(0, plateY, formatBattleClock(this.state.elapsed), textStyle({ role: "display", size: 54, color: COLOR.ink })).setOrigin(0.5).setStroke("#0a0e14", 8);
+      const glyphSize = 48;
+      const total = glyphSize + 18 + clock.width;
+      clock.setX(-total / 2 + glyphSize + 18 + clock.width / 2);
+      body.add([drawGlyph(this, "pause", -total / 2 + glyphSize / 2, plateY, glyphSize, COLOR.accent), clock]);
       rows.forEach((row, index) => {
         const y = -height / 2 + button.top + button.height / 2 + index * (button.height + button.gap);
         // 나가기는 확인 창의 파괴적 확정과 같은 붉은 판이다 — 계속하기와 같은 어두운 판이면 무엇이 판을 끝내는지 글자를 읽어야 안다.
         const danger = row.destructive
           ? { variant: "primary" as const, fill: CONFIRM_DIALOG.destructiveFill, decorDots: true, accentColor: COLOR.danger, accentTextColor: COLOR.ink }
           : { variant: row.primary ? "primary" as const : undefined };
-        body.add(new Button(this, 0, y, { width: button.width, height: button.height, label: row.label, fontSize: 30, ...danger, onClick: () => row.onPress(close) }));
+        body.add(new Button(this, 0, y, { width: button.width, height: button.height, label: row.label, icon: row.icon, fontSize: 30, ...danger, onClick: () => row.onPress(close) }));
       });
     });
   }

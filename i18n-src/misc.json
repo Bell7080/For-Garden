@@ -2079,6 +2079,26 @@
 "Erhaltene Belohnungen",
 "Полученные награды"
 ],
+"reward.note.frame": [
+"头像框",
+"กรอบโปรไฟล์",
+"Khung hồ sơ",
+"Bingkai Profil",
+"Marco de perfil",
+"Moldura de perfil",
+"Profilrahmen",
+"Рамка профиля"
+],
+"reward.note.item": [
+"道具",
+"ไอเทม",
+"Vật phẩm",
+"Item",
+"Objeto",
+"Item",
+"Gegenstand",
+"Предмет"
+],
 "reward.tapHint": [
 "点击画面确认",
 "แตะหน้าจอเพื่อยืนยัน",

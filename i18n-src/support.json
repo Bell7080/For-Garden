@@ -748,16 +748,6 @@
     "Ich habe alles sorgfältig ins Logbuch übertragen. Ich gebe es ganz sicher an den Entwickler weiter!",
     "Всё аккуратно записано в журнал. Обязательно передам разработчику!"
   ],
-  "feedback.sent.rewarded": [
-    "已经仔细记进日志了。一定会转告开发者的！\n作为谢礼，{amount}颗宝石已经通过邮件寄给你啦！",
-    "จดลงสมุดบันทึกไว้ครบแล้ว จะส่งต่อให้ผู้พัฒนาแน่นอน!\nใส่เจม {amount} เม็ดไว้ในกล่องจดหมายเป็นของขวัญขอบคุณแล้วนะ!",
-    "Em đã ghi cẩn thận vào nhật ký rồi. Nhất định sẽ chuyển cho nhà phát triển!\nEm đã để {amount} ngọc vào hộp thư làm quà cảm ơn!",
-    "Sudah kucatat rapi di jurnal. Pasti kusampaikan ke pengembang!\nSebagai hadiah terima kasih, {amount} permata sudah kutaruh di kotak surat!",
-    "Lo anoté todo en el diario. ¡Se lo pasaré al desarrollador sin falta!\n¡Te mandé {amount} gemas por correo como agradecimiento!",
-    "Anotei tudo no diário. Vou passar ao desenvolvedor sem falta!\nDeixei {amount} gemas na sua caixa de correio como agradecimento!",
-    "Ich habe alles sorgfältig ins Logbuch übertragen. Ich gebe es ganz sicher an den Entwickler weiter!\nAls Dankeschön liegen {amount} Juwelen in deinem Postfach!",
-    "Всё аккуратно записано в журнал. Обязательно передам разработчику!\nВ благодарность {amount} самоцветов уже лежат в почтовом ящике!"
-  ],
   "homepage.title": [
     "预约登记说明",
     "ลงทะเบียนล่วงหน้า",

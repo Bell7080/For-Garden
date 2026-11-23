@@ -7,7 +7,7 @@ import { addCategoryTab } from "./CategoryTab";
 import { Button } from "./Button";
 import { confirmCancelGift } from "./GiftPopups";
 import { drawGlyph } from "./glyphs";
-import { drawHairline } from "./holo";
+import { chipPoints, drawLayer } from "./holo";
 import { addFramedIcon } from "./itemFrame";
 import type { PopupLayer } from "./PopupLayer";
 import { grantTiles } from "./premiumModel";
@@ -32,6 +32,7 @@ const HISTORY_HEIGHT = HISTORY.top + HISTORY.rowsPerPage * HISTORY.rowHeight + H
 export type PurchaseHistoryTab = "purchase" | "gift" | "mail";
 const HISTORY_TABS: readonly PurchaseHistoryTab[] = ["purchase", "gift", "mail"];
 const TAB_LABEL = { purchase: "settings.history.tab.purchase", gift: "settings.history.tab.gift", mail: "settings.history.tab.mail" } as const;
+const TAB_GLYPH = { purchase: "receipt", gift: "heart", mail: "mail" } as const;
 const TAB_EMPTY = { purchase: "settings.history.empty", gift: "settings.history.giftEmpty", mail: "settings.history.mailEmpty" } as const;
 const GIFT_STATUS = {
   pending: "settings.history.gift.pending", accepted: "settings.history.gift.accepted",
@@ -112,11 +113,16 @@ export function openPurchaseHistoryPopup(
       const shown = rows.slice(current * HISTORY.rowsPerPage, (current + 1) * HISTORY.rowsPerPage);
       const container = scene.add.container(0, 0);
       if (shown.length === 0) {
-        container.add(scene.add.text(0, top + HISTORY.rowHeight / 2 - 20, t(TAB_EMPTY[tab]), textStyle({ role: "body", size: 28, color: COLOR.inkDim, align: "center" })).setOrigin(0.5));
+        // 빈 탭은 목록 자리 한가운데에 그 탭의 그림과 한 줄이 선다 — 맨 위 한 줄만 남기면 판 전체가 덜 그려진 칸으로 읽힌다.
+        const midY = top + (HISTORY.rowsPerPage * HISTORY.rowHeight) / 2 - 40;
+        container.add(drawGlyph(scene, TAB_GLYPH[tab], 0, midY - 70, 120, COLOR.inkDimHex, 0.45, 4));
+        container.add(scene.add.text(0, midY + 40, t(TAB_EMPTY[tab]), textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim, align: "center", wrap: HISTORY.width - 160 })).setOrigin(0.5));
         return container;
       }
       shown.forEach((row, index) => {
         const y = top + index * HISTORY.rowHeight;
+        // 줄마다 유리 판 한 장 — 구분선만으로는 어느 액자가 어느 줄의 것인지 흐리다.
+        container.add(drawLayer(scene, 0, y + (HISTORY.rowHeight - 24) / 2, chipPoints(HISTORY.width - 64, HISTORY.rowHeight - 24, { bevel: { topLeft: 18, bottomRight: 18 } }), { fill: 0x0f141b, alpha: 0.7, shadow: false, edge: COLOR.accent, edgeAlpha: 0.35 }));
         const name = scene.add.text(left, y + 22, row.name, textStyle({ role: "emphasis", size: 30, color: COLOR.ink })).setOrigin(0, 0.5);
         shrinkTextToWidth(name, 470);
         const meta = scene.add.text(left, y + 64, row.meta, textStyle({ role: "body", size: 23, color: COLOR.inkDim })).setOrigin(0, 0.5);
@@ -138,7 +144,6 @@ export function openPurchaseHistoryPopup(
             onClick: () => confirmCancelGift(scene, popups, { orderId, recipientName: gift.recipientName }, () => lists.onGiftCancelled?.()),
           }));
         }
-        if (index < shown.length - 1) container.add(drawHairline(scene, 0, y + HISTORY.rowHeight - 24, HISTORY.width - 100, { alpha: 0.14 }));
       });
       if (pages <= 1) return container;
       container.add(scene.add.text(0, footY, `${current + 1} / ${pages}`, textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim })).setOrigin(0.5));

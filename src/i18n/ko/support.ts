@@ -73,7 +73,6 @@ export const SUPPORT_KO = {
   "feedback.later": "다음에 할게요",
   "feedback.sent.title": "고마워요!",
   "feedback.sent.body": "일지에 꼼꼼히 옮겨 적었어요. 개발자님께 꼭 전해 드릴게요!",
-  "feedback.sent.rewarded": "일지에 꼼꼼히 옮겨 적었어요. 개발자님께 꼭 전해 드릴게요!\n감사 선물로 젬 {amount}개를 우편함에 넣어 뒀어요!",
   "homepage.title": "사전예약 안내",
   "homepage.greeting": "대장님, 정식 출발 소식은 제가 제일 먼저 챙겨 둘게요! 홈페이지에서 사전예약만 해 두시면 돼요.",
   "homepage.body": "정식 출시 소식과 사전예약 보상을 가장 먼저 받아 보세요!",

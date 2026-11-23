@@ -49,6 +49,7 @@ export const SYSTEM_DE = {
   "ops.notice.title": "Mitteilung des Betriebsteams",
   "ops.notice.gain": "{amount} {name} wurden gutgeschrieben.",
   "ops.notice.loss": "{amount} {name} wurden abgezogen.",
+  "ops.notice.lossHead": "Folgendes wurde durch eine Betreibermaßnahme abgezogen.",
   "ops.notice.mail": "Neue Post eingetroffen ({count}).",
   "ops.notice.reason": "Grund: {reason}",
   "ops.notice.nicknameReset": "Dein Spitzname wurde gemäß unseren Richtlinien zurückgesetzt. Bitte wähle einen neuen.",

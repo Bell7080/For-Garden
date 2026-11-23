@@ -291,6 +291,8 @@ export const MISC_VI = {
   "battle.profile.down": "Gục ngã",
   "battle.profile.ferocity": "Dã tính {value} / {max}",
   "reward.title": "Phần thưởng nhận được",
+  "reward.note.frame": "Khung hồ sơ",
+  "reward.note.item": "Vật phẩm",
   "reward.tapHint": "Chạm màn hình để xác nhận",
   "enemyPreview.title": "Đội hình địch",
   "enemyPreview.totalPower": "Tổng Lực chiến {power}",

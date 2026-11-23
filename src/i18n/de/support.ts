@@ -73,7 +73,6 @@ export const SUPPORT_DE = {
   "feedback.later": "Vielleicht später",
   "feedback.sent.title": "Danke!",
   "feedback.sent.body": "Ich habe alles sorgfältig ins Logbuch übertragen. Ich gebe es ganz sicher an den Entwickler weiter!",
-  "feedback.sent.rewarded": "Ich habe alles sorgfältig ins Logbuch übertragen. Ich gebe es ganz sicher an den Entwickler weiter!\nAls Dankeschön liegen {amount} Juwelen in deinem Postfach!",
   "homepage.title": "Vorregistrierung",
   "homepage.greeting": "Captain, die Neuigkeiten zum Start sichere ich dir als Erstes! Registrier dich einfach vorab auf der Website.",
   "homepage.body": "Erhalte als Erstes Startnews und Vorregistrierungsbelohnungen!",

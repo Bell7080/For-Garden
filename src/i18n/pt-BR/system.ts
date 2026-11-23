@@ -49,6 +49,7 @@ export const SYSTEM_PT_BR = {
   "ops.notice.title": "Aviso da equipe",
   "ops.notice.gain": "Foram concedidos {amount} de {name}.",
   "ops.notice.loss": "Foram retirados {amount} de {name}.",
+  "ops.notice.lossHead": "Os itens a seguir foram retirados por uma ação da operação.",
   "ops.notice.mail": "Chegaram {count} correios novos.",
   "ops.notice.reason": "Motivo: {reason}",
   "ops.notice.nicknameReset": "Seu apelido foi redefinido conforme a política do serviço. Escolha um novo.",

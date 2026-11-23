@@ -17,6 +17,7 @@ import { TextInputField } from "./TextInputField";
 import { pressIn, pressOut } from "./pressFeedback";
 import { shrinkTextToWidth } from "./textFit";
 import { textStyle } from "./theme";
+import { openRewardPopup } from "./RewardPopup";
 
 const FEEDBACK_GUIDE = "dodo";
 /** 맨 위의 굵은 제목 글자. 어느 언어에서나 같은 표식이라 번역하지 않는다. */
@@ -96,11 +97,9 @@ export function openFeedbackPopup(scene: Phaser.Scene, layer: PopupLayer, option
           if (!result.ok) { error.setText(t(feedbackErrorKey(result.error))); submit!.setEnabled(true); return; }
           sent = true;
           close();
-          layer.confirm({
-            title: t("feedback.sent.title"),
-            message: t(result.value.rewarded ? "feedback.sent.rewarded" : "feedback.sent.body", { amount: FEEDBACK_REWARD_GEMS.toLocaleString() }),
-            confirmLabel: t("settings.action.confirm"), cancelLabel: false, onCancel: closed,
-          }, closed);
+          // 감사 선물이 붙으면 그 젬을 영수증 액자로 세운다 — 글로 「젬 N개」를 적으면 받은 것이 문장 속에 묻힌다.
+          if (result.value.rewarded) openRewardPopup(scene, layer, { title: t("feedback.sent.title"), items: [{ icon: "currency-gems", amount: FEEDBACK_REWARD_GEMS }], footnote: t("coupon.notice"), sound: "mission.claim", onConfirm: closed });
+          else layer.confirm({ title: t("feedback.sent.title"), message: t("feedback.sent.body"), confirmLabel: t("settings.action.confirm"), cancelLabel: false, onCancel: closed }, closed);
           if (result.value.rewarded) void notificationManager.refresh().catch(reportCatch("feedback.notify"));
         }).catch(() => {
           pending = false;

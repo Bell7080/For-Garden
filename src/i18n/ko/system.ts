@@ -68,6 +68,7 @@ export const SYSTEM_KO = {
   "ops.notice.title": "운영팀 안내",
   "ops.notice.gain": "{name} {amount}개가 지급되었습니다.",
   "ops.notice.loss": "{name} {amount}개가 회수되었습니다.",
+  "ops.notice.lossHead": "운영 조치로 아래 재화가 회수되었습니다.",
   "ops.notice.mail": "새 우편 {count}통이 도착했습니다.",
   "ops.notice.reason": "사유: {reason}",
   "ops.notice.nicknameReset": "운영 정책에 따라 닉네임이 초기화되었습니다. 새 닉네임을 정해 주세요.",

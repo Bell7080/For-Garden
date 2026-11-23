@@ -73,7 +73,6 @@ export const SUPPORT_ZH_HANS = {
   "feedback.later": "下次再说",
   "feedback.sent.title": "谢谢！",
   "feedback.sent.body": "已经仔细记进日志了。一定会转告开发者的！",
-  "feedback.sent.rewarded": "已经仔细记进日志了。一定会转告开发者的！\n作为谢礼，{amount}颗宝石已经通过邮件寄给你啦！",
   "homepage.title": "预约登记说明",
   "homepage.greeting": "队长，正式出发的消息我会第一个帮你留意！只要在官网预约登记就好。",
   "homepage.body": "抢先获取正式上线消息和预约奖励！",

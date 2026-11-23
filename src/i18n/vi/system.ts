@@ -49,6 +49,7 @@ export const SYSTEM_VI = {
   "ops.notice.title": "Thông báo từ đội vận hành",
   "ops.notice.gain": "Đã cấp {amount} {name}.",
   "ops.notice.loss": "Đã thu hồi {amount} {name}.",
+  "ops.notice.lossHead": "Các mục sau đã bị thu hồi theo biện pháp vận hành.",
   "ops.notice.mail": "Có {count} thư mới.",
   "ops.notice.reason": "Lý do: {reason}",
   "ops.notice.nicknameReset": "Biệt danh của bạn đã được đặt lại theo chính sách vận hành. Hãy chọn biệt danh mới.",

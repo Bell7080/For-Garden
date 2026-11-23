@@ -32,7 +32,7 @@ export default async function handler(req:Req,res:Res):Promise<void>{
   };
   if(!await takeBudget(ipKey))return;
   if(body.action==='sign-in'){
-   if(!await takeBudget(`login-id:${body.id.toLowerCase().trim()}`))return;
+   if(!await takeBudget(`login-id:${body.id.toLowerCase().trim()}:${ipKey}`))return;
    const found=await call('/rest/v1/rpc/server_id_account',{method:'POST',body:JSON.stringify({p_email:email})});
    if(!found.ok){reply(503,'service_unavailable');return;}
    const account=await found.json() as {id?:string;email?:string}|null;
@@ -55,7 +55,7 @@ export default async function handler(req:Req,res:Res):Promise<void>{
    res.status(200).json(value);return;
   }
   if(body.action==='confirm-existing'){
-   if(!await takeBudget(`login-id:${body.id.toLowerCase().trim()}`))return;
+   if(!await takeBudget(`login-id:${body.id.toLowerCase().trim()}:${ipKey}`))return;
    // GoTrue는 비밀번호를 검증한 다음 email_not_confirmed를 반환한다. 이 응답만 소유권 증명으로 쓴다.
    const proof=await call('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password:body.password})});
    const result=await proof.json().catch(()=>({})) as {error_code?:string;code?:string};

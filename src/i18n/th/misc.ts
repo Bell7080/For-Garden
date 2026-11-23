@@ -336,6 +336,7 @@ export const MISC_TH = {
   "trade.tag.monthly": "ดีลรายเดือน",
   "trade.tag.none": "มีขายตลอด",
   "trade.soldOut": "ขายหมด",
+  "trade.rotatesIn": "เปลี่ยนในอีก {time}",
   "trade.disconnected": "สัญญาณขาดหาย",
   "trade.reconnect": "เชื่อมต่อใหม่",
   "trade.title": "การค้า",

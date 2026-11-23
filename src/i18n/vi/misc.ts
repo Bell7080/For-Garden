@@ -336,6 +336,7 @@ export const MISC_VI = {
   "trade.tag.monthly": "Ưu đãi tháng",
   "trade.tag.none": "Luôn có sẵn",
   "trade.soldOut": "HẾT HÀNG",
+  "trade.rotatesIn": "Đổi sau {time}",
   "trade.disconnected": "Mất tín hiệu",
   "trade.reconnect": "Kết nối lại",
   "trade.title": "Giao thương",

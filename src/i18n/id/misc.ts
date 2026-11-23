@@ -336,6 +336,7 @@ export const MISC_ID = {
   "trade.tag.monthly": "Penawaran Bulanan",
   "trade.tag.none": "Selalu Tersedia",
   "trade.soldOut": "HABIS",
+  "trade.rotatesIn": "Berganti dalam {time}",
   "trade.disconnected": "Sinyal Hilang",
   "trade.reconnect": "Sambung Ulang",
   "trade.title": "Perdagangan",

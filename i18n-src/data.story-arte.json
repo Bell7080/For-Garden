@@ -569,16 +569,7 @@
   "Flecken muss man ausklopfen, bevor sie trocknen. Getrocknet ist es doppelt so mühsam.",
   "Пятно нужно стряхнуть, пока не высохло. Высохнет — вдвое больше мороки."
  ],
- "story.arte.line.2.1": [
-  "羽毛掸子不是用我的羽毛做的。是公司发的。因为常常有人问。",
-  "ไม้ปัดขนนกไม่ได้ทำจากขนของฉันนะคะ เป็นของบริษัทแจก ถูกถามบ่อยเลยบอกไว้ค่ะ",
-  "Cây phất trần lông vũ không làm từ lông của em đâu. Là đồ công ty cấp. Vì hay bị hỏi nên em nói trước.",
-  "Kemoceng bulu itu bukan dari bulu saya. Itu barang dari kantor. Soalnya sering ditanya.",
-  "El plumero no está hecho con mis plumas. Es material de la empresa. Me lo preguntan a menudo.",
-  "O espanador não é feito das minhas penas. É material da empresa. Me perguntam muito.",
-  "Der Federwedel ist nicht aus meinen Federn. Firmeneigentum. Das werde ich oft gefragt.",
-  "Метёлка не из моих перьев. Это служебный инвентарь. Просто меня часто спрашивают."
- ],
+ "story.arte.line.2.1": ["这个掸子吗？不是我的羽毛。大家都这么问……是公司配发的。","ไม้ปัดฝุ่นนี่เหรอคะ ไม่ใช่ขนของฉันนะคะ ใครๆ ก็ถามแบบนั้น… เป็นของที่บริษัทแจกค่ะ","Cái chổi lông này ạ? Không phải lông của tôi đâu. Ai cũng hỏi vậy… Là đồ công ty cấp.","Kemoceng ini? Bukan buluku. Semua orang menanyakan itu… Ini barang dari perusahaan.","¿Este plumero? No es de mis plumas. Todos me lo preguntan… Es material de la empresa.","Este espanador? Não é das minhas penas. Todo mundo pergunta isso… É fornecido pela empresa.","Dieser Staubwedel? Das sind nicht meine Federn. Das fragen alle… Der ist von der Firma.","Эта метёлка? Не из моих перьев. Все об этом спрашивают… Это казённая."],
  "story.arte.line.2.2": [
   "休息室的杯印是我擦掉的。是谁留下的我就不问了。",
   "รอยแก้วในห้องพัก ฉันเช็ดออกแล้วค่ะ ใครทิ้งไว้จะไม่ถามนะคะ",
@@ -729,16 +720,7 @@
   "Mein freier Tag rückt näher. Was machen Sie an freien Tagen, Forscher? Zur Orientierung.",
   "Скоро выходной. А что вы делаете в выходные, исследователь? Хочу взять на заметку."
  ],
- "story.arte.line.7.2": [
-  "整理羽毛是我的习惯。介意的话请告诉我。我会试着停下。",
-  "การไซ้ขนเป็นนิสัยค่ะ ถ้ารำคาญบอกได้นะคะ จะลองหยุดดู",
-  "Chải lông vũ là thói quen của em. Nếu thấy khó chịu thì cứ nói ạ. Em sẽ thử dừng.",
-  "Merapikan bulu itu kebiasaan saya. Kalau mengganggu, bilang saja. Akan saya coba hentikan.",
-  "Arreglarme las plumas es una manía. Si le molesta, dígamelo. Intentaré parar.",
-  "Ajeitar as penas é mania minha. Se incomodar, me diga. Vou tentar parar.",
-  "Das Federnordnen ist eine Angewohnheit. Wenn es Sie stört, sagen Sie es. Ich versuche aufzuhören.",
-  "Перебирать перья — моя привычка. Если мешает, скажите. Попробую перестать."
- ],
+ "story.arte.line.7.2": ["啊，又在摸羽毛了。介意的话请告诉我。我试着停下来。","อ๊ะ จับขนอีกแล้ว ถ้ารบกวนก็บอกนะคะ จะลองหยุดดู","À, lại đang sờ lông rồi. Nếu thấy phiền thì cứ nói ạ. Tôi sẽ thử dừng lại.","Ah, aku memegang buluku lagi. Kalau mengganggu, tolong bilang. Akan kucoba berhenti.","Ay, ya estaba tocándome las plumas otra vez. Si te molesta, dímelo. Intentaré parar.","Ah, eu estava mexendo nas penas de novo. Se incomodar, me fala. Vou tentar parar.","Oh, ich hab schon wieder an meinen Federn herumgezupft. Wenn's dich stört, sag Bescheid. Ich versuch aufzuhören.","Ой, опять трогаю перья. Если мешает, скажите. Попробую перестать."],
  "story.arte.line.8.0": [
   "那天坐在沙发上，是我第一次的休假记录。我觉得休息得还挺好。",
   "วันนั้นที่นั่งอยู่บนโซฟา เป็นบันทึกวันหยุดครั้งแรกของฉันค่ะ คิดว่าพักได้ดีทีเดียว",
@@ -1429,16 +1411,7 @@
   "Arte",
   "Арте"
  ],
- "dialogue.bond.arte.8.n6b.body": [
-  "什么都不做？那才是最难的。……啊，你是说这些羽毛？听说我的化石连一根羽毛的痕迹都留了下来。",
-  "ไม่ต้องทำอะไรเลยเหรอคะ? นั่นยากที่สุดเลย …อ๊ะ หมายถึงขนพวกนี้เหรอ? เขาว่าฟอสซิลของฉันมีรอยขนเหลืออยู่ครบทุกเส้น",
-  "Không làm gì cả ạ? Đó là điều khó nhất. …À, ý là lông vũ này ạ? Người ta bảo hóa thạch của em còn lưu lại đủ từng sợi lông.",
-  "Tidak melakukan apa-apa? Itu yang paling sulit. …Oh, maksudnya bulu ini? Katanya fosil saya menyimpan jejak bulu sampai helai terakhir.",
-  "¿Nada de nada? Eso es lo más difícil. …Ah, ¿lo dice por las plumas? Dicen que en mi fósil se conservó la marca de cada una.",
-  "Nada mesmo? Isso é o mais difícil. …Ah, você fala destas penas? Dizem que meu fóssil guardou a marca de cada uma.",
-  "Gar nichts? Das ist das Schwerste. … Ach, Sie meinen die Federn? In meinem Fossil sollen die Abdrücke jeder einzelnen erhalten gewesen sein.",
-  "Совсем ничего? Это труднее всего. …А, вы про эти перья? Говорят, в моей окаменелости сохранился отпечаток каждого."
- ],
+ "dialogue.bond.arte.8.n6b.body": ["什么都不做？那才是最难的……你看，手又在摸羽毛了。听说这些羽毛一丝不差地印在石头上。所以我才是现在这个样子。","ไม่ทำอะไรเลยเหรอคะ นั่นยากที่สุดเลยนะ… ดูสิคะ มือจับขนอีกแล้ว ได้ยินว่าขนพวกนี้ประทับอยู่ในหินทุกเส้น ฉันถึงออกมาเป็นแบบนี้ไงคะ","Không làm gì cả ạ? Đó mới là khó nhất… Nhìn này, tay tôi lại đang sờ lông. Nghe nói những sợi lông này in trên đá đến từng sợi. Thế nên tôi mới ra thế này.","Tidak melakukan apa-apa? Justru itu yang paling sulit… Lihat, tanganku memegang bulu lagi. Katanya bulu-bulu ini tercetak di batu sampai tiap helainya. Makanya aku jadi seperti ini.","¿Nada de nada? Eso es lo más difícil… Mira, mi mano vuelve a tocarme las plumas. Dicen que estas plumas quedaron grabadas en la piedra hasta la última hebra. Por eso salí así.","Nada mesmo? Isso é o mais difícil… Olha, minha mão está mexendo nas penas de novo. Dizem que essas penas ficaram gravadas na pedra até o último fio. Por isso eu saí assim.","Gar nichts? Das ist doch das Schwerste… Schau, meine Hand zupft schon wieder an den Federn. Diese Federn sollen bis zur letzten Faser im Stein abgedrückt gewesen sein. Deshalb bin ich so geworden.","Совсем ничего? Это же самое трудное… Смотрите, рука опять трогает перья. Говорят, эти перья отпечатались в камне до последней ворсинки. Поэтому я такой и получилась."],
  "dialogue.bond.arte.8.n7.speaker": [
   "阿尔缇",
   "อาร์เต",

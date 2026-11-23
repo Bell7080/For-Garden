@@ -124,7 +124,7 @@ import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, 
 import { runeBatchEnhancementGoldCost, runeBulkCraftGoldCost, runeEnhancementGoldCost, runeSellValue } from "../data/runes";
 import { isRuneBulkCraftCandidate, runeBulkEngraveStat } from "../core/runeBulkCraft";
 import { isRuneTraitBulkCandidate, RUNE_TRAIT_BULK_MAX } from "../core/runeTraitBulk";
-import { rotationOffer, rotationRunePart } from "../core/shopRotation";
+import { rotationOffer, rotationPeriodEnd, rotationRunePart } from "../core/shopRotation";
 import { rollRandomRuneRarity, rollRuneSynthesisPart, rollRuneSynthesisRarity, rollRuneSynthesisTraitGrade, runeSynthesisRefusal, RUNE_SYNTHESIS_RULES } from "../core/runeSynthesis";
 import { rotationSlot } from "../data/runeRotation";
 import { canGrantRuneTraitAtLeast, canUpgradeRuneTraitGrade, pickRuneTraitId, grantRuneTrait as rollRuneTrait, rerollRuneTrait as rollRuneTraitReroll, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, type RuneTrait } from "../core/runeTraits";
@@ -4393,7 +4393,7 @@ export class FakeServer implements GameApi {
       const remaining = this.remaining(product, now);
       const paymentUnavailable = this.paymentUnavailable(product);
       return {
-        ...product, visibleUntil: product.situational ? activeSituationalOffer(this.state.situationalOffers, product.id, now)?.expiresAt : this.productWindow(product, now).endsAt, remaining, purchasable: remaining > 0 && !paymentUnavailable, disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : undefined,
+        ...product, visibleUntil: product.situational ? activeSituationalOffer(this.state.situationalOffers, product.id, now)?.expiresAt : this.visibleUntil(product, now), remaining, purchasable: remaining > 0 && !paymentUnavailable, disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : undefined,
         ...(this.runePartOf(product, now) !== undefined ? { runePart: this.runePartOf(product, now) } : {}),
         ...(product.firstPurchaseBonus ? { firstBonusAvailable: this.firstBonusAvailable(product) } : {}),
         ...this.subscriptionInfo(product, now),
@@ -4968,6 +4968,15 @@ export class FakeServer implements GameApi {
     const startsAt = later(own.startsAt, linked.startsAt);
     const endsAt = earlier(own.endsAt, linked.endsAt);
     return { ...(startsAt !== undefined ? { startsAt } : {}), ...(endsAt !== undefined ? { endsAt } : {}), enabled: own.enabled && linked.enabled };
+  }
+
+  /** 노출이 끝나는 시각. 로테이션 칸의 상품은 그 기간이 끝나는 순간(다음 상품으로 바뀌는 때)까지만 선다. */
+  private visibleUntil(product: ProductDefinition, now: Date): string | undefined {
+    const endsAt = this.productWindow(product, now).endsAt;
+    const slot = product.rotationSlot ? rotationSlot(product.rotationSlot) : undefined;
+    if (!slot) return endsAt;
+    const periodEnd = rotationPeriodEnd(slot.period, this.productPeriodKey(product, now));
+    return endsAt === undefined || Date.parse(periodEnd) < Date.parse(endsAt) ? periodEnd : endsAt;
   }
 
   private isVisible(product: ProductDefinition, now: Date): boolean {

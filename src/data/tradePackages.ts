@@ -103,56 +103,67 @@ export function isTradePackage(product: { storefront: ProductStorefront }): bool
   return product.storefront === "trade";
 }
 
+/** 기간 문자열 두 개 — 계정당 한정과 로테이션 상품이 같은 노출 창을 쓴다. 언제 서는지는 로테이션 칸이 정한다. */
+const ALWAYS = { visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" } as const;
+
+/** 젬으로 사고 한 번에 하나씩 사는 무역 패키지 한 줄. 표를 짧게 두려는 도우미일 뿐 규칙은 없다. */
+function pack(
+  id: string, category: ProductDefinition["category"], iconKey: ProductDefinition["iconKey"], name: string, description: string,
+  gems: number, grants: ProductGrant[], purchaseLimit: number, refresh: ProductRefresh, rotationSlot?: string,
+): ProductDefinition {
+  return {
+    id, storefront: "trade", category, iconKey, name, description,
+    acquisition: { kind: "currency", currency: "gems", amount: gems },
+    grants, defaultQuantity: 1, purchaseLimit, refresh, ...ALWAYS,
+    ...(rotationSlot ? { rotationSlot } : {}),
+  };
+}
+const cur = (currency: ProductCurrency, amount: number): ProductGrant => ({ kind: "currency", currency, amount });
+
 /**
- * 초기 3종.
+ * 무역 전시대 — **계정당 한정은 늘 서 있고, 나머지는 그때그때 사라졌다 나온다**(응태 요청 2026-11-23).
  *
- * 셋이 서로 다른 운영 주기를 맡는다 — **주간 3회**(꾸준히 쓰는 성장 재료), **주간 1회**(골드와
- * DNA를 한 번에), **계정당 1회**(연구 재화, 가장 좋은 값). 계정당 1회가 가장 후한 이유는 다시
- * 오지 않기 때문이고, 반복 구매가 가능한 쪽이 가장 낮다.
+ * 로테이션은 상점 룬과 같은 칸(`shopRotation` · 칸 정의 `runeRotation.ts`의 `trade-*`)을 쓴다. 칸마다 후보가 있고
+ * 기간 키(주간은 그 주 월요일, 일간은 그 날 — UTC 00:00 = 오전 9시)에서 시드해 하나를 고른다. 서버와 화면이
+ * 같은 순수 함수를 읽으므로 기기 시계·난수로 갈리지 않는다. 돌아가는 상품은 노출이 끝나는 시각(`visibleUntil`)을
+ * 그 기간의 끝으로 내려받아 카드에 「교체까지」가 선다.
  *
- * 검수 장부(시세표 기준 환산):
- * - `trade-cheesecake-supply`: 젬 150 → 치즈케이크 600 = 젬 300 → **200%**
- * - `trade-research-grant`: 젬 200 → 골드 140,000(젬 280) + DNA 14(젬 70) = 젬 350 → **175%**
- * - `trade-excavation-crate`: 젬 700 → 화석 4(젬 1,200) + 호박석 2(젬 600) = 젬 1,800 → **257%**
- * - `trade-daily-bundle`: 젬 50 → 골드 40,000(젬 80) + 치즈케이크 60(젬 30) = 젬 110 → **220%**
+ * 검수 장부(시세표 기준 환산 · 응태 승인 2026-11-23):
  *
- * **전시 순서는 한 번뿐인 것 → 주간 → 매일이다.** 가장 후한 것이 맨 위에 서야 화면을 연 순간
- * 무엇이 특가인지가 읽힌다. 매일 하나는 작지만 매일 들어올 이유가 된다.
+ * | 칸 | 상품 | 값 → 받는 것 | 가치 | 횟수 |
+ * |---|---|---|---|---|
+ * | 계정당 | 발굴 장비 보급함 | 젬 700 → 화석 4 + 호박석 2 (1,800) | 257% | 1 |
+ * | 계정당 | 개척 보급함 | 젬 300 → 골드 20만(400) + 치즈케이크 800(400) | 267% | 1 |
+ * | 계정당 | 연구 착수 지원 | 젬 750 → 화석 3 + 호박석 3 (1,800) | 240% | 1 |
+ * | A 주간 | 치즈케이크 보급 / 대보급 | 젬 150 → 600 (200%, 주 3) / 젬 400 → 1,600 + 골드 5만 (225%, 주 1) | | |
+ * | B 주간 | 연구 보조금 / 골드 금고 | 젬 200 → 골드 17.5만 (175%, 주 1) / 젬 100 → 골드 9만 (180%, 주 2) | | |
+ * | C 주간 35%·4주 보정 | 화석 상자 / 호박석 상자 | 젬 750 → 3개 (900) | 120% | 주 1 |
+ * | D 일간 | 오늘의 특가 / 골드 / 치즈케이크 꾸러미 | 젬 50 → 골드 4만 + 60 / 골드 5.5만 / 220 | 220% | 1 |
+ *
+ * 주간 기대 공급(다 산다고 칠 때): 치즈케이크 2,220 → 약 2,350(+6%), 골드 45.5만 → 약 42.4만(−7%),
+ * 화석·호박석 0 → 평균 약 1.2개(새 반복 수급처 — 할인 폭은 주 평균 젬 60 남짓).
+ *
+ * **계정당 한정이 늘 가장 후하다**(반복 상품의 최고 225%보다 위). 다시 오지 않는 것이 가장 좋은 값을 가져야 한 번뿐인 값이 선다.
+ * 전시 순서는 계정당 → 주간 → 일간이다.
  */
 export const TRADE_PACKAGES: readonly ProductDefinition[] = [
-  {
-    id: "trade-excavation-crate", storefront: "trade", category: "special", iconKey: "shop-product-supplies",
-    name: "발굴 장비 보급함", description: "화석 4개와 호박석 2개",
-    acquisition: { kind: "currency", currency: "gems", amount: 700 },
-    grants: [{ kind: "currency", currency: "fossil", amount: 4 }, { kind: "currency", currency: "amber", amount: 2 }],
-    defaultQuantity: 1, purchaseLimit: 1, refresh: "once",
-    visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z",
-  },
-  {
-    id: "trade-cheesecake-supply", storefront: "trade", category: "weekly", iconKey: "shop-product-supplies",
-    name: "치즈케이크 보급", description: "치즈케이크 600개",
-    acquisition: { kind: "currency", currency: "gems", amount: 150 },
-    grants: [{ kind: "currency", currency: "cheesecake", amount: 600 }],
-    defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly",
-    visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z",
-  },
-  {
-    id: "trade-research-grant", storefront: "trade", category: "weekly", iconKey: "shop-product-enhancement",
-    name: "연구 보조금", description: "골드 175,000개",
-    acquisition: { kind: "currency", currency: "gems", amount: 200 },
-    grants: [{ kind: "currency", currency: "gold", amount: 175_000 }],
-    defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly",
-    visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z",
-  },
-  {
-    id: "trade-daily-bundle", storefront: "trade", category: "daily", iconKey: "shop-product-supplies",
-    name: "오늘의 특가 꾸러미", description: "골드 40,000과 치즈케이크 60개",
-    acquisition: { kind: "currency", currency: "gems", amount: 50 },
-    grants: [{ kind: "currency", currency: "gold", amount: 40_000 }, { kind: "currency", currency: "cheesecake", amount: 60 }],
-    defaultQuantity: 1, purchaseLimit: 1, refresh: "daily",
-    visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z",
-  },
+  pack("trade-excavation-crate", "special", "shop-product-supplies", "발굴 장비 보급함", "화석 4개와 호박석 2개", 700, [cur("fossil", 4), cur("amber", 2)], 1, "once"),
+  pack("trade-pioneer-crate", "special", "shop-product-supplies", "개척 보급함", "골드 200,000과 치즈케이크 800개", 300, [cur("gold", 200_000), cur("cheesecake", 800)], 1, "once"),
+  pack("trade-research-kickoff", "special", "shop-product-supplies", "연구 착수 지원", "화석 3개와 호박석 3개", 750, [cur("fossil", 3), cur("amber", 3)], 1, "once"),
+  pack("trade-cheesecake-supply", "weekly", "shop-product-supplies", "치즈케이크 보급", "치즈케이크 600개", 150, [cur("cheesecake", 600)], 3, "weekly", "trade-weekly-supply"),
+  pack("trade-cheesecake-bulk", "weekly", "shop-product-supplies", "치즈케이크 대보급", "치즈케이크 1,600개와 골드 50,000", 400, [cur("cheesecake", 1_600), cur("gold", 50_000)], 1, "weekly", "trade-weekly-supply"),
+  pack("trade-research-grant", "weekly", "shop-product-enhancement", "연구 보조금", "골드 175,000개", 200, [cur("gold", 175_000)], 1, "weekly", "trade-weekly-funds"),
+  pack("trade-gold-vault", "weekly", "shop-product-enhancement", "골드 금고", "골드 90,000개", 100, [cur("gold", 90_000)], 2, "weekly", "trade-weekly-funds"),
+  pack("trade-fossil-case", "weekly", "shop-product-supplies", "화석 상자", "화석 3개", 750, [cur("fossil", 3)], 1, "weekly", "trade-weekly-research"),
+  pack("trade-amber-case", "weekly", "shop-product-supplies", "호박석 상자", "호박석 3개", 750, [cur("amber", 3)], 1, "weekly", "trade-weekly-research"),
+  pack("trade-daily-bundle", "daily", "shop-product-supplies", "오늘의 특가 꾸러미", "골드 40,000과 치즈케이크 60개", 50, [cur("gold", 40_000), cur("cheesecake", 60)], 1, "daily", "trade-daily"),
+  pack("trade-gold-bundle", "daily", "shop-product-enhancement", "골드 꾸러미", "골드 55,000", 50, [cur("gold", 55_000)], 1, "daily", "trade-daily"),
+  pack("trade-cheesecake-bundle", "daily", "shop-product-supplies", "치즈케이크 꾸러미", "치즈케이크 220개", 50, [cur("cheesecake", 220)], 1, "daily", "trade-daily"),
 ];
+
+/** 한 번에 전시대에 설 수 있는 최대 장수 — 계정당 한정 전부 + 로테이션 칸마다 하나. 창 규격이 이 값으로 정해진다. */
+export const TRADE_DISPLAY_MAX = TRADE_PACKAGES.filter(({ rotationSlot }) => !rotationSlot).length
+  + new Set(TRADE_PACKAGES.flatMap(({ rotationSlot }) => rotationSlot ? [rotationSlot] : [])).size;
 
 /** 무역 묶음의 이름과 설명을 언어별로 덮어쓸 수 있게 등록한다. */
 for (const pkg of TRADE_PACKAGES) {

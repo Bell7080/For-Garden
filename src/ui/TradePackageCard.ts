@@ -11,6 +11,7 @@ import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
 import { t } from "../i18n";
 import { onTap } from "./tapGuard";
+import { remainingDetail } from "./itemExpiry";
 
 /**
  * 카드 안쪽 값. 겉모습(그림자·몸판·빛줄기·비네트·빗금·꼬리표)은 프리미엄과 같은 한 벌
@@ -29,6 +30,8 @@ const HOT = 0xe0603a;
 export interface TradePackageCardOptions {
   metrics: TradePackageCardMetrics;
   view: TradePackageView;
+  /** 서버 시각. 「교체까지」 남은 시간이 기기 시계가 아니라 이 값으로 센다. */
+  now: () => Date;
   /** 탭으로 끝난 손만 부른다. 누른 자리를 함께 넘겨 화면이 보이는 창 밖의 손을 거를 수 있게 한다. */
   onClick: (pointer: Phaser.Input.Pointer) => void;
 }
@@ -46,7 +49,10 @@ export class TradePackageCard extends Phaser.GameObjects.Container {
     const { metrics, view } = options;
     const { width, height } = metrics;
     const accent = view.soldOut ? COLOR.inkDimHex : SHOWCASE_TIER_TONE[view.refresh];
-    paintShowcaseCard(scene, this, { width, height, accent, dim: view.soldOut, railX: metrics.left, tag: view.tag });
+    const tag = paintShowcaseCard(scene, this, { width, height, accent, dim: view.soldOut, railX: metrics.left, tag: view.tag });
+    // 돌아가는 상품은 꼬리표 바로 옆에 다음 상품으로 바뀔 때까지 남은 시간이 붉게 선다(프리미엄 한정과 같은 색).
+    // 매진이어도 센다 — 다시 살 수 있게 되는 때가 곧 그 시각이다.
+    if (tag && view.rotatesAt) this.addRotationClock(tag.tagRight + 18, tag.tagY, view.rotatesAt, options.now);
 
     // 이름은 카드에서 가장 먼저 읽히는 이름표다.
     this.add(scene.add.text(metrics.left, metrics.nameY, view.name, textStyle({ role: "display", size: 34, color: view.soldOut ? COLOR.inkDim : COLOR.ink }))
@@ -124,5 +130,16 @@ export class TradePackageCard extends Phaser.GameObjects.Container {
       onTap(hit, (pointer) => { pressOut(this); options.onClick(pointer); }, this);
     }
     scene.add.existing(this);
+  }
+
+  /** 꼬리표 옆 「교체까지」 시계. 초마다 다시 적고, 카드가 죽으면 함께 멈춘다. */
+  private addRotationClock(x: number, y: number, until: string, now: () => Date): void {
+    const read = (): string => t("trade.rotatesIn", { time: remainingDetail(until, now()) });
+    const clock = this.scene.add.text(x, y + 1, read(), textStyle({ role: "emphasis", size: 24, color: COLOR.dangerText }))
+      .setOrigin(0, 0.5)
+      .setStroke("#05070a", 4);
+    this.add(clock);
+    const timer = this.scene.time.addEvent({ delay: 1000, loop: true, callback: () => { if (clock.active) clock.setText(read()); } });
+    this.once(Phaser.GameObjects.Events.DESTROY, () => timer.remove(false));
   }
 }

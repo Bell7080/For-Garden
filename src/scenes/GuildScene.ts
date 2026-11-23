@@ -1,3 +1,4 @@
+import { NotificationDot } from "../ui/NotificationDot";
 import Phaser from "phaser";
 import { openSettingsOver } from "./settingsOverlay";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
@@ -109,7 +110,6 @@ const BADGE_CHOICES = [
 const ASSIGNABLE_ROLES = ["vice", "officer", "member"] as const;
 /** 길드원 관리판의 자리 — 판 높이는 조작 수에서 거꾸로 구한다. */
 const MEMBER_MANAGE = { width: 760, top: 110, header: 190, avatar: 112, badge: 92, kickGap: 30, bottom: 70, button: { width: 640, height: 96, gap: 18 } } as const;
-const RED_DOT = 0xe5484d;
 const ONLINE_COLOR = COLOR.hpFill;
 const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
 /** 방어진 지도의 칸 결 — 우두머리 금빛, 정예 보랏빛. 일반 칸은 판 결 그대로다. */
@@ -387,7 +387,7 @@ export class GuildScene extends Phaser.Scene {
         },
       });
       if (key !== "info" && this.page !== key && guildPageHasNews(key, seen[key], this.now)) {
-        this.tabRow.add(this.add.circle(x + S.pages.width / 2 - 24, S.pages.y - S.pages.height / 2 - 4, 11, RED_DOT));
+        new NotificationDot(this, this.tabRow, { x: x + S.pages.width / 2 - 24, y: S.pages.y - S.pages.height / 2 + 8 });
       }
     });
   }
@@ -422,7 +422,7 @@ export class GuildScene extends Phaser.Scene {
       });
     });
     const pending = this.state?.pendingRequests ?? 0;
-    if (pending > 0) this.tabRow.add(this.add.circle(guildTabX(1) + S.tabs.width / 2 - 22, S.tabs.y - S.tabs.height / 2 + 2, 9, RED_DOT));
+    if (pending > 0) new NotificationDot(this, this.tabRow, { x: guildTabX(1) + S.tabs.width / 2 - 16, y: S.tabs.y - S.tabs.height / 2 + 8 });
   }
 
   /**

@@ -862,11 +862,12 @@ export class InteractionCityPopup {
       this.gridDragMoved = Math.max(this.gridDragMoved, Math.abs(pointer.y - pointer.downY));
       scrollTo(originY + pointer.y);
     };
-    const onUp = (_pointer: Phaser.Input.Pointer, objects: Phaser.GameObjects.GameObject[]): void => {
+    const onUp = (_pointer: Phaser.Input.Pointer, objects?: Phaser.GameObjects.GameObject[]): void => {
       dragging = false;
       // 칸·카드 밖에서 뗀 손은 고른 자리를 푼다. 표시가 계속 떠 있으면 다 고른 뒤에도 할 일이
       // 남은 것처럼 보인다.
-      if (objects.length > 0 || this.selectedSlot === undefined) return;
+      // `pointerupoutside`(터치 취소 포함)는 물체 목록 없이 온다(client_errors #48) — 밖에서 뗀 손으로 센다.
+      if ((objects?.length ?? 0) > 0 || this.selectedSlot === undefined) return;
       this.selectedSlot = undefined;
       this.render();
     };

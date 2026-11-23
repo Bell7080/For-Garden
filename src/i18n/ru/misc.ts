@@ -172,6 +172,7 @@ export const MISC_RU = {
   "mail.tab.patch": "Список изменений",
   "mail.claim": "Забрать",
   "mail.rewardTitle": "Награды почты",
+  "mail.claimFailed": "Не удалось получить почту. Список обновлён.",
   "mail.attachments": "Вложения {count}",
   "mail.readAll": "Прочитать всё",
   "mail.delete.title": "Удалить полученную почту",

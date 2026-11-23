@@ -172,6 +172,7 @@ export const MISC_ID = {
   "mail.tab.patch": "Catatan Patch",
   "mail.claim": "Klaim",
   "mail.rewardTitle": "Hadiah Surat",
+  "mail.claimFailed": "Gagal mengambil surat. Daftar telah dimuat ulang.",
   "mail.attachments": "Lampiran {count}",
   "mail.readAll": "Tandai Semua Dibaca",
   "mail.delete.title": "Hapus Surat yang Sudah Diambil",

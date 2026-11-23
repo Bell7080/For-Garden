@@ -172,6 +172,7 @@ export const MISC_VI = {
   "mail.tab.patch": "Ghi chú bản cập nhật",
   "mail.claim": "Nhận",
   "mail.rewardTitle": "Thưởng Thư",
+  "mail.claimFailed": "Không thể nhận thư. Đã tải lại danh sách.",
   "mail.attachments": "Đính kèm {count}",
   "mail.readAll": "Đánh dấu đã đọc",
   "mail.delete.title": "Xóa thư đã nhận",

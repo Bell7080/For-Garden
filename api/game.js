@@ -7331,6 +7331,7 @@ var MISC_KO = {
   "mail.tab.patch": "\uD328\uCE58\uB178\uD2B8",
   "mail.claim": "\uBC1B\uAE30",
   "mail.rewardTitle": "\uC6B0\uD3B8 \uBCF4\uC0C1",
+  "mail.claimFailed": "\uC6B0\uD3B8\uC744 \uBC1B\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uBAA9\uB85D\uC744 \uC0C8\uB85C \uBD88\uB7EC\uC654\uC2B5\uB2C8\uB2E4.",
   "mail.attachments": "\uCCA8\uBD80 {count}",
   "mail.readAll": "\uBAA8\uB450 \uC77D\uC74C",
   "mail.delete.title": "\uBC1B\uC740 \uC6B0\uD3B8 \uC0AD\uC81C",
@@ -47855,7 +47856,7 @@ var ReportThrottle = class {
   }
 };
 function isNoise(message) {
-  return /ResizeObserver loop|Script error\.?$|AbortError|The play\(\) request was interrupted|NotAllowedError.*play|Load failed$|Failed to fetch$|NetworkError|network request failed/i.test(message);
+  return /ResizeObserver loop|Script error\.?$|AbortError|The play\(\) request was interrupted|NotAllowedError.*play|Load failed$|Failed to fetch$|NetworkError|network request failed|window\.ethereum|ethereum\.selectedAddress/i.test(message);
 }
 
 // src/managers/ErrorReporter.ts

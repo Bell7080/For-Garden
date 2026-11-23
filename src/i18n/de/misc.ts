@@ -172,6 +172,7 @@ export const MISC_DE = {
   "mail.tab.patch": "Patchnotes",
   "mail.claim": "Abholen",
   "mail.rewardTitle": "Post-Belohnungen",
+  "mail.claimFailed": "Die Post konnte nicht abgeholt werden. Die Liste wurde aktualisiert.",
   "mail.attachments": "Anhänge {count}",
   "mail.readAll": "Alle als gelesen markieren",
   "mail.delete.title": "Abgeholte Post löschen",

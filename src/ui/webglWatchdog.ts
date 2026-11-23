@@ -10,7 +10,14 @@ import { noteBreadcrumb, reportError } from "../managers/ErrorReporter";
  */
 const RELOAD_HISTORY_KEY = "forgarden.webglReloads";
 
-export function installWebglWatchdog(canvas: HTMLCanvasElement, gl: WebGLRenderingContext | null): void {
+/** 복구 사건 뒤 렌더러가 다시 섰는지 볼 때까지 기다리는 시간. */
+const RESTORE_CHECK_MS = 300;
+
+/**
+ * `renderer`는 Phaser 렌더러 — 복구 사건이 와도 Phaser가 자원을 되살리다 던지면(갤럭시 S24 Xclipse 940의
+ * `Framebuffer Unsupported`, client_errors #51·#52) `contextLost`가 true로 남아 화면이 까맣게 굳는다. 그때도 새로 띄운다.
+ */
+export function installWebglWatchdog(canvas: HTMLCanvasElement, gl: WebGLRenderingContext | null, renderer?: { readonly contextLost?: boolean }): void {
   const gpu = describeGpu(gl);
   let lostAt: number | null = null;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -22,16 +29,20 @@ export function installWebglWatchdog(canvas: HTMLCanvasElement, gl: WebGLRenderi
     timer = setTimeout(giveUp, WEBGL_RECOVERY.restoreWaitMs);
   };
 
-  const giveUp = (): void => {
-    timer = undefined;
-    if (lostAt === null) return;
+  const reloadIfAllowed = (kind: string, message: string, since: number): void => {
     const history = readHistory();
     const now = Date.now();
     const reload = mayReloadAfterContextLoss(history, now);
-    reportError("webgl.restoreTimeout", new Error("WebGL context not restored"), { ...gpu, waitedMs: now - lostAt, reload });
+    reportError(kind, new Error(message), { ...gpu, waitedMs: now - since, reload });
     if (!reload) return;
     writeHistory(nextReloadHistory(history, now));
     setTimeout(() => window.location.reload(), WEBGL_RECOVERY.reportGraceMs);
+  };
+
+  const giveUp = (): void => {
+    timer = undefined;
+    if (lostAt === null) return;
+    reloadIfAllowed("webgl.restoreTimeout", "WebGL context not restored", lostAt);
   };
 
   canvas.addEventListener("webglcontextlost", () => {
@@ -41,9 +52,15 @@ export function installWebglWatchdog(canvas: HTMLCanvasElement, gl: WebGLRenderi
     arm();
   });
   canvas.addEventListener("webglcontextrestored", () => {
-    noteBreadcrumb(`webgl:restored+${lostAt === null ? 0 : Date.now() - lostAt}ms`);
+    const since = lostAt ?? Date.now();
+    noteBreadcrumb(`webgl:restored+${Date.now() - since}ms`);
     lostAt = null;
     clear();
+    if (!renderer) return;
+    // Phaser의 복구 처리기가 먼저 돈다. 그 안에서 던졌으면 렌더러는 아직 잃은 상태로 남는다.
+    setTimeout(() => {
+      if (lostAt === null && renderer.contextLost === true) reloadIfAllowed("webgl.restoreFailed", "WebGL renderer failed to restore", since);
+    }, RESTORE_CHECK_MS);
   });
   document.addEventListener("visibilitychange", arm);
 }

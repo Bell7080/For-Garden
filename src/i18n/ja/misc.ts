@@ -179,6 +179,7 @@ export const MISC_JA = {
   "mail.tab.patch": "パッチノート",
   "mail.claim": "受取",
   "mail.rewardTitle": "メール報酬",
+  "mail.claimFailed": "メールを受け取れませんでした。一覧を更新しました。",
   "mail.attachments": "添付 {count}",
   "mail.readAll": "すべて既読",
   "mail.delete.title": "受取済みメールを削除",

@@ -40,6 +40,8 @@ describe("오류 보고 정리", () => {
   });
   it("무해한 브라우저 잡음은 거른다", () => {
     expect(isNoise("ResizeObserver loop limit exceeded")).toBe(true);
+    // 지갑 확장이 페이지에 심는 스크립트의 오류(client_errors #45) — 게임 코드가 아니다.
+    expect(isNoise("undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')")).toBe(true);
     expect(isNoise("Cannot read properties of null (reading 'x')")).toBe(false);
   });
 });

@@ -172,6 +172,7 @@ export const MISC_ZH_HANS = {
   "mail.tab.patch": "更新说明",
   "mail.claim": "领取",
   "mail.rewardTitle": "邮件奖励",
+  "mail.claimFailed": "未能领取邮件。已重新加载列表。",
   "mail.attachments": "附件 {count}",
   "mail.readAll": "全部已读",
   "mail.delete.title": "删除已领取邮件",

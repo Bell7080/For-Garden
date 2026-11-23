@@ -99,5 +99,5 @@ export class ReportThrottle {
 
 /** 브라우저가 던지는 무해한 잡음 — 고칠 수 있는 오류가 아니라서 보내지 않는다. */
 export function isNoise(message: string): boolean {
-  return /ResizeObserver loop|Script error\.?$|AbortError|The play\(\) request was interrupted|NotAllowedError.*play|Load failed$|Failed to fetch$|NetworkError|network request failed/i.test(message);
+  return /ResizeObserver loop|Script error\.?$|AbortError|The play\(\) request was interrupted|NotAllowedError.*play|Load failed$|Failed to fetch$|NetworkError|network request failed|window\.ethereum|ethereum\.selectedAddress/i.test(message);
 }

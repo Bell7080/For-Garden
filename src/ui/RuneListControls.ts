@@ -89,7 +89,8 @@ export class RuneListControls {
       const world = parent.getWorldTransformMatrix().transformPoint(left + filterWidth / 2, y + rowHeight / 2 + 26);
       openRuneFilterPopup(scene, popups, { x: world.x, y: world.y }, () => state.filter, (next) => {
         state.filter = next;
-        this.filterButton.setCount(runeListFilterCount(next));
+        // 목록이 다시 그려져 이 줄이 이미 걷혔으면 표식은 새 줄이 세운다(client_errors #47).
+        if (this.count.scene) this.filterButton.setCount(runeListFilterCount(next));
         options.onChange();
       }, { parts: options.parts });
     });
@@ -137,6 +138,7 @@ export class RuneListControls {
 
   /** 거른 수 / 고를 수 있는 수. */
   setCount(shown: number, total: number): void {
+    if (!this.count.scene) return;
     this.count.setText(t("rune.list.count", { shown: shown.toLocaleString(), total: total.toLocaleString() }));
   }
 }

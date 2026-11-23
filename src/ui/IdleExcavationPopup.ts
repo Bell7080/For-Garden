@@ -432,6 +432,8 @@ export class IdleExcavationPopup {
     const reveal = { v: extActive && this.storageUnfold ? 0 : 1 };
     let storageTotal = 0;
     const paintGauges = (): void => {
+      // 판이 닫힌 뒤 남은 시계·트윈이 한 번 더 부르면 부서진 글자에 쓰게 된다(client_errors #49).
+      if (!content.scene) return;
       storageGauge.setFill(storageTotal, reveal.v);
       const speedRemaining = response.excavation.activeProductionMultiplier > 1 ? Math.max(0, Date.parse(response.excavation.productionMultiplierExpiresAt ?? "") - Date.now()) / 1000 : 0;
       storageGauge.setEta(excavationStorageEtaSeconds({ fill: storageTotal, limitRatio, baseStorageSeconds: response.excavation.baseStorageSeconds, producing, speed: { multiplier: response.excavation.activeProductionMultiplier, remainingSeconds: speedRemaining } }));
@@ -455,6 +457,7 @@ export class IdleExcavationPopup {
     // 광고 버튼은 초마다 남은 시간을 갈아 끼우므로 시계보다 먼저 선다.
     const adOffers = this.addAdOffers(content, response);
     const refreshEstimate = (): void => {
+      if (!content.scene) return;
       // 서버 응답 이후의 로컬 경과분만 더하는 표시용 예상치이며 정산 기준 시각은 절대 갱신하지 않는다.
       const elapsedHours = Math.max(0, Date.now() - baseServerMs) / 3_600_000;
       const liveAmounts = emptyExcavationAmounts();

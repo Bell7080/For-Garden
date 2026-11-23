@@ -291,6 +291,9 @@ export class SettingsScene extends Phaser.Scene {
       const qualityKeys = { high: "settings.play.quality.high", balanced: "settings.play.quality.balanced", low: "settings.play.quality.low" } as const;
       this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.graphicsQuality"),s.presentation.graphicsQuality,['high','balanced','low'] as const,v=>settingsManager.update({presentation:{graphicsQuality:v}}),v=>t(qualityKeys[v]))); y+=SETTINGS_ROW.step; divider();
       this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.frameRateLimit"),s.presentation.frameRateLimit,[30,60,120] as const,v=>settingsManager.update({presentation:{frameRateLimit:v}}),v=>`${v} FPS`)); y+=SETTINGS_ROW.step; divider();
+      // 안티에일리어싱은 WebGL 컨텍스트를 만들 때 정해지는 값이라 바로 바뀌지 않음을 안내 판이 함께 말한다.
+      toggle(t("settings.play.antialias"),'presentation','antialias');
+      y = this.addNote(y, t("settings.play.antialiasNote"));
       // 기존 선택 행의 크기 반응과 강조색을 재사용하고 저장값만 안정적인 영문 ID로 유지한다.
       const motionKeys = { default: "settings.play.motion.default", reduced: "settings.play.motion.reduced", off: "settings.play.motion.off" } as const;
       this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.battleUiMotion"),s.presentation.battleUiMotion,['default','reduced','off'] as const,v=>settingsManager.update({presentation:{battleUiMotion:v}}),v=>t(motionKeys[v]))); y+=SETTINGS_ROW.step; divider();

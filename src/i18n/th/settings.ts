@@ -45,6 +45,8 @@ export const SETTINGS_TH = {
   "settings.play.powerSaving": "โหมดประหยัดพลังงาน",
   "settings.play.lobbyAtmosphere": "เอฟเฟกต์แสงในล็อบบี้",
   "settings.play.graphicsQuality": "คุณภาพกราฟิก",
+  "settings.play.antialias": "แอนติเอเลียสซิ่ง",
+  "settings.play.antialiasNote": "ปิดแล้วจะเบาเครื่องขึ้น แต่ขอบภาพจะหยาบลง มีผลตั้งแต่การเปิดเกมครั้งถัดไป",
   "settings.play.quality.high": "สูง",
   "settings.play.quality.balanced": "สมดุล",
   "settings.play.quality.low": "ต่ำ",

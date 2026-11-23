@@ -58,6 +58,8 @@ export const SETTINGS_KO = {
   "settings.play.powerSaving": "절전 모드",
   "settings.play.lobbyAtmosphere": "로비 빛 효과",
   "settings.play.graphicsQuality": "그래픽 품질",
+  "settings.play.antialias": "안티에일리어싱",
+  "settings.play.antialiasNote": "끄면 가벼워지지만 가장자리가 거칠어집니다. 다음 실행부터 적용됩니다.",
   "settings.play.quality.high": "높음",
   "settings.play.quality.balanced": "균형",
   "settings.play.quality.low": "낮음",

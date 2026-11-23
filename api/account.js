@@ -133,7 +133,7 @@ async function handler(req, res) {
     };
     if (!await takeBudget(ipKey)) return;
     if (body.action === "sign-in") {
-      if (!await takeBudget(`login-id:${body.id.toLowerCase().trim()}`)) return;
+      if (!await takeBudget(`login-id:${body.id.toLowerCase().trim()}:${ipKey}`)) return;
       const found = await call("/rest/v1/rpc/server_id_account", { method: "POST", body: JSON.stringify({ p_email: email }) });
       if (!found.ok) {
         reply(503, "service_unavailable");
@@ -182,7 +182,7 @@ async function handler(req, res) {
       return;
     }
     if (body.action === "confirm-existing") {
-      if (!await takeBudget(`login-id:${body.id.toLowerCase().trim()}`)) return;
+      if (!await takeBudget(`login-id:${body.id.toLowerCase().trim()}:${ipKey}`)) return;
       const proof = await call("/auth/v1/token?grant_type=password", { method: "POST", body: JSON.stringify({ email, password: body.password }) });
       const result = await proof.json().catch(() => ({}));
       if (proof.status === 429) {

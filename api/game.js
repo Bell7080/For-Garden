@@ -308,8 +308,8 @@ function __spreadArrays() {
       r[k] = a[j];
   return r;
 }
-function __spreadArray(to, from, pack) {
-  if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+function __spreadArray(to, from, pack2) {
+  if (pack2 || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
     if (ar || !(i in from)) {
       if (!ar) ar = Array.prototype.slice.call(from, 0, i);
       ar[i] = from[i];
@@ -7507,6 +7507,7 @@ var MISC_KO = {
   "trade.tag.monthly": "\uC6D4\uAC04 \uD2B9\uAC00",
   "trade.tag.none": "\uC0C1\uC2DC \uD310\uB9E4",
   "trade.soldOut": "\uB9E4\uC9C4",
+  "trade.rotatesIn": "\uAD50\uCCB4\uAE4C\uC9C0 {time}",
   "trade.disconnected": "\uAD50\uC2E0 \uB450\uC808",
   "trade.reconnect": "\uC7AC\uC811\uC18D",
   "trade.title": "\uBB34\uC5ED",
@@ -28912,6 +28913,7 @@ function clamp(value, min, max) {
 
 // src/core/duelState.ts
 var DUEL_HISTORY_LIMIT = 10;
+var DUEL_FORFEIT_AFTER_MS = 60 * 60 * 1e3;
 function cloneDuelState(state) {
   return {
     ...state,
@@ -40164,16 +40166,41 @@ function combatKey(input) {
   const b = input.input;
   return b.mode === "stage" ? `stage:${input.stageId}` : b.mode === "expedition" ? `expedition:${b.runId}:${b.nodeId}` : b.mode === "duel" ? `duel:${b.requestId}` : b.mode === "cake" || b.mode === "bounty" ? `${b.mode}:${b.requestId}` : fail("bad_mode");
 }
+function seedKey(input) {
+  const b = input.input;
+  return b.mode === "bounty" ? `${combatKey(input)}#${b.round}` : combatKey(input);
+}
+function seedFor(journal, input, fresh) {
+  const seeds = journal.seeds ??= {};
+  return seeds[seedKey(input)] ??= fresh;
+}
+function pruneRecords(state, journal, now) {
+  const runId = state.expedition.run?.runId;
+  const staleRun = (key) => key.startsWith("expedition:") && key.split(":")[1] !== runId;
+  journal.records = Object.fromEntries(Object.entries(journal.records).filter(([, r]) => {
+    const key = combatKey(r.input), mode = r.input.input.mode;
+    if (staleRun(key)) return false;
+    if (r.verdict && (mode === "expedition" || mode === "duel" && journal.tickets[key])) return true;
+    return Date.parse(r.lease.expiresAt) > now.getTime();
+  }));
+  if (journal.seeds) {
+    for (const key of Object.keys(journal.seeds)) if (staleRun(key)) delete journal.seeds[key];
+  }
+}
+function standing(record3, now) {
+  const mode = record3.input.input.mode;
+  return Date.parse(record3.lease.expiresAt) > now.getTime() || !!record3.verdict && (mode === "expedition" || mode === "duel");
+}
 function prepareCombat(state, request, now, id) {
   if (request?.input?.mode === "duel") {
     const key2 = combatKey(request), records2 = combatJournal(state), ticket2 = records2.tickets[key2];
     if (!ticket2?.duel || ticket2.kind !== "duel") return fail("no_duel_ticket");
-    const active4 = Object.values(records2.records).find((row) => combatKey(row.input) === key2 && Date.parse(row.lease.expiresAt) > now.getTime());
+    const active4 = Object.values(records2.records).find((row) => combatKey(row.input) === key2 && standing(row, now));
     if (active4) return structuredClone(active4.lease);
     const setup2 = structuredClone(ticket2.duel.setup);
     if (request.automaticUltimates !== true && setup2.options) delete setup2.options.automaticUltimates;
-    const lease2 = { id, seed: id, setup: setup2, expiresAt: new Date(now.getTime() + 36e5).toISOString() };
-    records2.records = Object.fromEntries(Object.entries(records2.records).filter(([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()));
+    const lease2 = { id, seed: seedFor(records2, request, id), setup: setup2, expiresAt: new Date(now.getTime() + 36e5).toISOString() };
+    pruneRecords(state, records2, now);
     if (Object.keys(records2.records).length >= 8) return fail("too_many_leases");
     records2.records[id] = { lease: lease2, input: structuredClone(request), issuedAt: now.toISOString() };
     return structuredClone(lease2);
@@ -40182,7 +40209,7 @@ function prepareCombat(state, request, now, id) {
     return fail("bad_input");
   const records = combatJournal(state), input = structuredClone(request), key = combatKey(input), mode = input.input.mode;
   const active3 = Object.values(records.records).find(
-    (row) => combatKey(row.input) === key && (row.input.input.mode !== "bounty" || input.input.mode !== "bounty" || row.input.input.round === input.input.round) && Date.parse(row.lease.expiresAt) > now.getTime()
+    (row) => combatKey(row.input) === key && (row.input.input.mode !== "bounty" || input.input.mode !== "bounty" || row.input.input.round === input.input.round) && standing(row, now)
   );
   if (active3) return structuredClone(active3.lease);
   let b = input.input;
@@ -40278,16 +40305,12 @@ function prepareCombat(state, request, now, id) {
   const lease = JSON.parse(
     JSON.stringify({
       id,
-      seed: id,
+      seed: seedFor(records, input, id),
       setup,
       expiresAt: new Date(now.getTime() + 36e5).toISOString()
     })
   );
-  records.records = Object.fromEntries(
-    Object.entries(records.records).filter(
-      ([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()
-    )
-  );
+  pruneRecords(state, records, now);
   if (Object.keys(records.records).length >= 8) return fail("too_many_leases");
   records.records[id] = {
     lease: structuredClone(lease),
@@ -40301,8 +40324,8 @@ function finishCombat(state, proof, now) {
     return fail("proof_shape");
   const record3 = combatJournal(state).records[proof.id];
   if (!record3) return fail("no_record");
-  if (Date.parse(record3.lease.expiresAt) < now.getTime()) return fail("lease_expired");
   if (record3.verdict) return structuredClone(record3.verdict);
+  if (Date.parse(record3.lease.expiresAt) < now.getTime()) return fail("lease_expired");
   if (record3.lease.setup.options?.automaticUltimates && proof.actions.length) return fail("auto_ultimate_actions");
   if (proof.ticks * COMBAT_STEP_MS > Math.max(0, now.getTime() - Date.parse(record3.issuedAt)) * 3 + 2e3)
     return fail("too_fast");
@@ -40355,6 +40378,12 @@ function consumeCombat(state, key) {
   delete journal.tickets[key];
   for (const [id, record3] of Object.entries(journal.records))
     if (combatKey(record3.input) === key) delete journal.records[id];
+  if (journal.seeds) {
+    for (const seed of Object.keys(journal.seeds)) if (seed === key || seed.startsWith(`${key}#`)) delete journal.seeds[seed];
+  }
+}
+function combatVerdictFor(state, key) {
+  return Object.values(combatJournal(state).records).find((record3) => record3.verdict && combatKey(record3.input) === key)?.verdict;
 }
 
 // src/api/storyAuthority.ts
@@ -43823,68 +43852,40 @@ var REFRESH_LABEL = {
   none: "\uC0C1\uC2DC",
   season: "\uC2DC\uC98C"
 };
+var ALWAYS = { visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" };
+function pack(id, category, iconKey, name, description, gems4, grants2, purchaseLimit, refresh, rotationSlot2) {
+  return {
+    id,
+    storefront: "trade",
+    category,
+    iconKey,
+    name,
+    description,
+    acquisition: { kind: "currency", currency: "gems", amount: gems4 },
+    grants: grants2,
+    defaultQuantity: 1,
+    purchaseLimit,
+    refresh,
+    ...ALWAYS,
+    ...rotationSlot2 ? { rotationSlot: rotationSlot2 } : {}
+  };
+}
+var cur = (currency3, amount) => ({ kind: "currency", currency: currency3, amount });
 var TRADE_PACKAGES = [
-  {
-    id: "trade-excavation-crate",
-    storefront: "trade",
-    category: "special",
-    iconKey: "shop-product-supplies",
-    name: "\uBC1C\uAD74 \uC7A5\uBE44 \uBCF4\uAE09\uD568",
-    description: "\uD654\uC11D 4\uAC1C\uC640 \uD638\uBC15\uC11D 2\uAC1C",
-    acquisition: { kind: "currency", currency: "gems", amount: 700 },
-    grants: [{ kind: "currency", currency: "fossil", amount: 4 }, { kind: "currency", currency: "amber", amount: 2 }],
-    defaultQuantity: 1,
-    purchaseLimit: 1,
-    refresh: "once",
-    visibleFrom: "2026-01-01T00:00:00Z",
-    visibleUntil: "2030-01-01T00:00:00Z"
-  },
-  {
-    id: "trade-cheesecake-supply",
-    storefront: "trade",
-    category: "weekly",
-    iconKey: "shop-product-supplies",
-    name: "\uCE58\uC988\uCF00\uC774\uD06C \uBCF4\uAE09",
-    description: "\uCE58\uC988\uCF00\uC774\uD06C 600\uAC1C",
-    acquisition: { kind: "currency", currency: "gems", amount: 150 },
-    grants: [{ kind: "currency", currency: "cheesecake", amount: 600 }],
-    defaultQuantity: 1,
-    purchaseLimit: 3,
-    refresh: "weekly",
-    visibleFrom: "2026-01-01T00:00:00Z",
-    visibleUntil: "2030-01-01T00:00:00Z"
-  },
-  {
-    id: "trade-research-grant",
-    storefront: "trade",
-    category: "weekly",
-    iconKey: "shop-product-enhancement",
-    name: "\uC5F0\uAD6C \uBCF4\uC870\uAE08",
-    description: "\uACE8\uB4DC 175,000\uAC1C",
-    acquisition: { kind: "currency", currency: "gems", amount: 200 },
-    grants: [{ kind: "currency", currency: "gold", amount: 175e3 }],
-    defaultQuantity: 1,
-    purchaseLimit: 1,
-    refresh: "weekly",
-    visibleFrom: "2026-01-01T00:00:00Z",
-    visibleUntil: "2030-01-01T00:00:00Z"
-  },
-  {
-    id: "trade-daily-bundle",
-    storefront: "trade",
-    category: "daily",
-    iconKey: "shop-product-supplies",
-    name: "\uC624\uB298\uC758 \uD2B9\uAC00 \uAFB8\uB7EC\uBBF8",
-    description: "\uACE8\uB4DC 40,000\uACFC \uCE58\uC988\uCF00\uC774\uD06C 60\uAC1C",
-    acquisition: { kind: "currency", currency: "gems", amount: 50 },
-    grants: [{ kind: "currency", currency: "gold", amount: 4e4 }, { kind: "currency", currency: "cheesecake", amount: 60 }],
-    defaultQuantity: 1,
-    purchaseLimit: 1,
-    refresh: "daily",
-    visibleFrom: "2026-01-01T00:00:00Z",
-    visibleUntil: "2030-01-01T00:00:00Z"
-  }
+  pack("trade-excavation-crate", "special", "shop-product-supplies", "\uBC1C\uAD74 \uC7A5\uBE44 \uBCF4\uAE09\uD568", "\uD654\uC11D 4\uAC1C\uC640 \uD638\uBC15\uC11D 2\uAC1C", 700, [cur("fossil", 4), cur("amber", 2)], 1, "once"),
+  pack("trade-pioneer-crate", "special", "shop-product-supplies", "\uAC1C\uCC99 \uBCF4\uAE09\uD568", "\uACE8\uB4DC 200,000\uACFC \uCE58\uC988\uCF00\uC774\uD06C 800\uAC1C", 300, [cur("gold", 2e5), cur("cheesecake", 800)], 1, "once"),
+  pack("trade-research-kickoff", "special", "shop-product-supplies", "\uC5F0\uAD6C \uCC29\uC218 \uC9C0\uC6D0", "\uD654\uC11D 3\uAC1C\uC640 \uD638\uBC15\uC11D 3\uAC1C", 750, [cur("fossil", 3), cur("amber", 3)], 1, "once"),
+  pack("trade-cheesecake-supply", "weekly", "shop-product-supplies", "\uCE58\uC988\uCF00\uC774\uD06C \uBCF4\uAE09", "\uCE58\uC988\uCF00\uC774\uD06C 600\uAC1C", 150, [cur("cheesecake", 600)], 3, "weekly", "trade-weekly-supply"),
+  pack("trade-cheesecake-bulk", "weekly", "shop-product-supplies", "\uCE58\uC988\uCF00\uC774\uD06C \uB300\uBCF4\uAE09", "\uCE58\uC988\uCF00\uC774\uD06C 1,600\uAC1C\uC640 \uACE8\uB4DC 50,000", 400, [cur("cheesecake", 1600), cur("gold", 5e4)], 1, "weekly", "trade-weekly-supply"),
+  pack("trade-research-grant", "weekly", "shop-product-enhancement", "\uC5F0\uAD6C \uBCF4\uC870\uAE08", "\uACE8\uB4DC 175,000\uAC1C", 200, [cur("gold", 175e3)], 1, "weekly", "trade-weekly-funds"),
+  pack("trade-gold-vault", "weekly", "shop-product-enhancement", "\uACE8\uB4DC \uAE08\uACE0", "\uACE8\uB4DC 90,000\uAC1C", 100, [cur("gold", 9e4)], 2, "weekly", "trade-weekly-funds"),
+  pack("trade-fossil-case", "weekly", "shop-product-supplies", "\uD654\uC11D \uC0C1\uC790", "\uD654\uC11D 3\uAC1C", 750, [cur("fossil", 3)], 1, "weekly", "trade-weekly-research"),
+  pack("trade-amber-case", "weekly", "shop-product-supplies", "\uD638\uBC15\uC11D \uC0C1\uC790", "\uD638\uBC15\uC11D 3\uAC1C", 750, [cur("amber", 3)], 1, "weekly", "trade-weekly-research"),
+  pack("trade-daily-bundle", "daily", "shop-product-supplies", "\uC624\uB298\uC758 \uD2B9\uAC00 \uAFB8\uB7EC\uBBF8", "\uACE8\uB4DC 40,000\uACFC \uCE58\uC988\uCF00\uC774\uD06C 60\uAC1C", 50, [cur("gold", 4e4), cur("cheesecake", 60)], 1, "daily", "trade-daily"),
+  pack("trade-gold-bundle", "daily", "shop-product-enhancement", "\uACE8\uB4DC \uAFB8\uB7EC\uBBF8", "\uACE8\uB4DC 55,000", 50, [cur("gold", 55e3)], 1, "daily", "trade-daily"),
+  pack("trade-cheesecake-bundle", "daily", "shop-product-supplies", "\uCE58\uC988\uCF00\uC774\uD06C \uAFB8\uB7EC\uBBF8", "\uCE58\uC988\uCF00\uC774\uD06C 220\uAC1C", 50, [cur("cheesecake", 220)], 1, "daily", "trade-daily")
 ];
+var TRADE_DISPLAY_MAX = TRADE_PACKAGES.filter(({ rotationSlot: rotationSlot2 }) => !rotationSlot2).length + new Set(TRADE_PACKAGES.flatMap(({ rotationSlot: rotationSlot2 }) => rotationSlot2 ? [rotationSlot2] : [])).size;
 for (const pkg of TRADE_PACKAGES) {
   registerDataText(pkg, "name", `trade.${pkg.id}.name`);
   registerDataText(pkg, "description", `trade.${pkg.id}.description`);
@@ -45446,14 +45447,14 @@ var FakeGuildServer = class _FakeGuildServer {
     });
   }
   // ── 길드 주간 순위 ─────────────────────────────────────────────────────────
-  rankingEntry(guild, standing, mine) {
-    return { ...this.summary(guild), rank: standing?.rank ?? null, weekScore: standing?.score ?? 0, isMine: guild.id === mine };
+  rankingEntry(guild, standing2, mine) {
+    return { ...this.summary(guild), rank: standing2?.rank ?? null, weekScore: standing2?.score ?? 0, isMine: guild.id === mine };
   }
   async getRanking(actor) {
     const mine = this.myGuild(actor);
     const week = guildWeekKey(this.now());
     const standings = this.weekStandings(week);
-    const guilds = standings.filter(({ guildId }) => this.guilds.has(guildId)).slice(0, 50).map((standing) => this.rankingEntry(this.guilds.get(standing.guildId), standing, mine?.id));
+    const guilds = standings.filter(({ guildId }) => this.guilds.has(guildId)).slice(0, 50).map((standing2) => this.rankingEntry(this.guilds.get(standing2.guildId), standing2, mine?.id));
     const mineEntry = mine ? this.rankingEntry(mine, standings.find(({ guildId }) => guildId === mine.id), mine.id) : null;
     return { week, guilds, mine: mineEntry, total: standings.length, serverTime: this.now() };
   }
@@ -46562,6 +46563,11 @@ function rotationOffer(slot, periodKey) {
 function rotationRunePart(slot, periodKey) {
   return Math.min(2, Math.floor(rotationRoll(`${slot.id}:part:${periodKey}`) * 3));
 }
+function rotationPeriodEnd(period, periodKey) {
+  const date = /* @__PURE__ */ new Date(`${periodKey}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + (period === "weekly" ? 7 : 1));
+  return date.toISOString();
+}
 
 // src/core/runeSynthesis.ts
 init_define_import_meta_env();
@@ -46651,7 +46657,13 @@ var ROTATION_SLOTS = [
   { id: "arch-weekly-b", period: "weekly", chancePercent: 20, pityAfterMisses: 4, candidates: ["arch-rune-pick-epic"] },
   { id: "shop-weekly", period: "weekly", chancePercent: 25, candidates: ["shop-rune-weekly"] },
   { id: "raid-weekly", period: "weekly", chancePercent: 30, candidates: ["raid-rune-weekly"] },
-  { id: "loot-weekly", period: "weekly", chancePercent: 30, candidates: ["loot-rune-weekly"] }
+  { id: "loot-weekly", period: "weekly", chancePercent: 30, candidates: ["loot-rune-weekly"] },
+  // 무역 전시대 — 룬이 아니라 재화 묶음이 돈다(`tradePackages.ts`). 셋은 늘 열리고 후보만 바뀌며,
+  // 연구 칸(화석·호박석)만 가끔 열리되 4주 연속 닫히면 다음 주는 확정이다(응태 승인 2026-11-23).
+  { id: "trade-weekly-supply", period: "weekly", chancePercent: 100, candidates: ["trade-cheesecake-supply", "trade-cheesecake-bulk"] },
+  { id: "trade-weekly-funds", period: "weekly", chancePercent: 100, candidates: ["trade-research-grant", "trade-gold-vault"] },
+  { id: "trade-weekly-research", period: "weekly", chancePercent: 35, pityAfterMisses: 4, candidates: ["trade-fossil-case", "trade-amber-case"] },
+  { id: "trade-daily", period: "daily", chancePercent: 100, candidates: ["trade-daily-bundle", "trade-gold-bundle", "trade-cheesecake-bundle"] }
 ];
 function rotationSlot(id) {
   return ROTATION_SLOTS.find((slot) => slot.id === id);
@@ -47313,7 +47325,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.527.0",
+  version: "0.529.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -51499,7 +51511,7 @@ var FakeServer = class {
     return new RelicProgressionManager(this.state).getCombatPower(relicId, { pvp: true });
   }
   duelStatusDto(duel2, now) {
-    const standing = duelStanding(duel2.score);
+    const standing2 = duelStanding(duel2.score);
     const blindCount = duelBlindCount(duel2.score);
     const pool = this.duelPool(now);
     const opponents = duel2.candidateIds.flatMap((id) => {
@@ -51528,8 +51540,8 @@ var FakeServer = class {
       seasonId: duel2.seasonId,
       seasonEndsAt: duelSeasonEndsAt(now).toISOString(),
       score: duel2.score,
-      tierId: standing.tier.id,
-      division: standing.division,
+      tierId: standing2.tier.id,
+      division: standing2.division,
       rank: this.duelMyRank(duel2),
       wins: duel2.wins,
       losses: duel2.losses,
@@ -51572,6 +51584,7 @@ var FakeServer = class {
     await this.delay();
     if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const now = this.now();
+    this.forfeitOpenDuels(now, true);
     const duel2 = this.duelNow(now);
     const price = duelRefreshPrice(duel2.refreshesUsed);
     if (this.state.wallet.gems < price) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uC82C\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
@@ -51587,6 +51600,7 @@ var FakeServer = class {
     await this.delay();
     if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const now = this.now();
+    this.forfeitOpenDuels(now, true);
     const duel2 = this.duelNow(now);
     const price = duelExtraAttemptPrice(duel2.attemptsPurchased);
     if (price === void 0) throw new GameApiError("DUEL_ATTEMPT_LIMIT", "\uC624\uB298\uC740 \uB3C4\uC804\uAD8C\uC744 \uB354 \uC0B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
@@ -51608,6 +51622,7 @@ var FakeServer = class {
     await this.delay();
     const now = this.now();
     this.assertDuelTeam(request.relicIds);
+    this.forfeitOpenDuels(now, true);
     const blindChoice = [...new Set(request.blindChoice)].filter((id) => request.relicIds.includes(id)).slice(0, DUEL_MAX_BLIND);
     const next = { ...this.duelNow(now), defense: [...request.relicIds], defenseCustomized: true, blindChoice };
     this.persist({ ...this.state, duel: next });
@@ -51621,8 +51636,9 @@ var FakeServer = class {
     if (cached) return structuredClone(cached);
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "\uC785\uC7A5 \uC694\uCCAD ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const now = this.now();
-    const duel2 = this.duelNow(now);
     this.assertDuelTeam(request.relicIds);
+    this.forfeitOpenDuels(now, false);
+    const duel2 = this.duelNow(now);
     const npc = duel2.candidateIds.includes(request.opponentId) ? this.duelPool(now).find((p) => p.id === request.opponentId) : void 0;
     if (!npc) throw new GameApiError("DUEL_OPPONENT_NOT_FOUND", "\uC9C0\uAE08 \uC138\uC6CC \uB454 \uC0C1\uB300\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
     if (duel2.foughtIds.includes(npc.id)) throw new GameApiError("DUEL_OPPONENT_FOUGHT", "\uC774\uBBF8 \uC2F8\uC6B4 \uC0C1\uB300\uC785\uB2C8\uB2E4.");
@@ -51643,8 +51659,7 @@ var FakeServer = class {
     if (this.duelContext) {
       const row = this.duelContext.records.find((row2) => row2.id === npc.id);
       const journal = combatJournal(this.state);
-      for (const [key, ticket] of Object.entries(journal.tickets)) if (ticket.kind === "duel") consumeCombat(this.state, key);
-      journal.tickets[`duel:${request.requestId}`] = { kind: "duel", target: npc.id, requestId: request.requestId, duel: { opponent: structuredClone(npc), setup: duelCombatSetup(this.state, duelParticipant(row, now).state, request.relicIds) } };
+      journal.tickets[`duel:${request.requestId}`] = { kind: "duel", target: npc.id, requestId: request.requestId, enteredAt: now.toISOString(), duel: { opponent: structuredClone(npc), setup: duelCombatSetup(this.state, duelParticipant(row, now).state, request.relicIds) } };
     }
     this.duelAdmissionResults.set(request.requestId, structuredClone(response));
     return response;
@@ -51656,10 +51671,15 @@ var FakeServer = class {
     if (cached) return structuredClone(cached);
     const pending2 = this.pendingDuels.get(request.requestId);
     if (!pending2) throw new GameApiError("DUEL_ADMISSION_NOT_FOUND", "\uC785\uC7A5\uD558\uC9C0 \uC54A\uC740 \uACB0\uD22C\uC785\uB2C8\uB2E4.");
-    const now = this.now();
+    return this.settleDuel(request, pending2, this.now());
+  }
+  /** 결투 한 판의 정산. 결과 확정(`resolveDuel`)과 끝내지 않고 버린 판의 몰수(`forfeitOpenDuels`)가 같은 길을 지난다. */
+  settleDuel(request, pending2, now) {
     if (this.duelContext) {
       const ticket = combatJournal(this.state).tickets[`duel:${request.requestId}`];
-      recordPlayerDefense(this.duelContext, pending2.opponentId, this.state, ticket.duel.setup.players.map((p) => p.id), request.won, now);
+      if (ticket?.duel && this.duelContext.records.some((row) => row.id === pending2.opponentId)) {
+        recordPlayerDefense(this.duelContext, pending2.opponentId, this.state, ticket.duel.setup.players.map((p) => p.id), request.won, now);
+      }
     }
     const duel2 = this.duelNow(now);
     const scoreBefore = duel2.score;
@@ -51719,6 +51739,22 @@ var FakeServer = class {
     this.duelResolveResults.set(request.requestId, structuredClone(response));
     return response;
   }
+  /**
+   * 끝내지 않고 버린 결투는 진 판이다. 입장만 하고 결과를 확정하지 않으면 점수·연승이 그대로 남아
+   * 질 것 같은 판을 끊고 나오는 것이 늘 이득이었다. 서버가 이미 판정한 판은 그 판정대로(이긴 판은 이긴 대로),
+   * 판정이 없는 판은 패배로 정산한다. `staleOnly`면 입장한 지 `DUEL_FORFEIT_AFTER_MS`가 지난 판만 본다.
+   */
+  forfeitOpenDuels(now, staleOnly) {
+    if (!this.duelContext) return;
+    const journal = combatJournal(this.state);
+    for (const [key, ticket] of Object.entries(journal.tickets)) {
+      if (ticket.kind !== "duel") continue;
+      if (staleOnly && !(ticket.enteredAt && now.getTime() - Date.parse(ticket.enteredAt) >= DUEL_FORFEIT_AFTER_MS)) continue;
+      const pending2 = this.pendingDuels.get(ticket.requestId);
+      if (pending2) this.settleDuel({ requestId: ticket.requestId, won: combatVerdictFor(this.state, key)?.victory ?? false }, pending2, now);
+      consumeCombat(this.state, key);
+    }
+  }
   async getDuelRanking() {
     await this.delay();
     if (this.duelContext) {
@@ -51760,6 +51796,7 @@ var FakeServer = class {
   async claimDuelSeasonReward() {
     await this.delay();
     if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
+    this.forfeitOpenDuels(this.now(), true);
     const duel2 = this.duelNow(this.now());
     const pending2 = duel2.pendingSeasonReward;
     const tier = pending2 ? getDuelTier(pending2.tierId) : void 0;
@@ -52293,7 +52330,7 @@ var FakeServer = class {
       const paymentUnavailable = this.paymentUnavailable(product);
       return {
         ...product,
-        visibleUntil: product.situational ? activeSituationalOffer(this.state.situationalOffers, product.id, now)?.expiresAt : this.productWindow(product, now).endsAt,
+        visibleUntil: product.situational ? activeSituationalOffer(this.state.situationalOffers, product.id, now)?.expiresAt : this.visibleUntil(product, now),
         remaining,
         purchasable: remaining > 0 && !paymentUnavailable,
         disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : void 0,
@@ -52811,6 +52848,14 @@ var FakeServer = class {
     const startsAt = later(own.startsAt, linked.startsAt);
     const endsAt = earlier(own.endsAt, linked.endsAt);
     return { ...startsAt !== void 0 ? { startsAt } : {}, ...endsAt !== void 0 ? { endsAt } : {}, enabled: own.enabled && linked.enabled };
+  }
+  /** 노출이 끝나는 시각. 로테이션 칸의 상품은 그 기간이 끝나는 순간(다음 상품으로 바뀌는 때)까지만 선다. */
+  visibleUntil(product, now) {
+    const endsAt = this.productWindow(product, now).endsAt;
+    const slot = product.rotationSlot ? rotationSlot(product.rotationSlot) : void 0;
+    if (!slot) return endsAt;
+    const periodEnd = rotationPeriodEnd(slot.period, this.productPeriodKey(product, now));
+    return endsAt === void 0 || Date.parse(periodEnd) < Date.parse(endsAt) ? periodEnd : endsAt;
   }
   isVisible(product, now) {
     if (product.situational) return activeSituationalOffer(this.state.situationalOffers, product.id, now) !== void 0;
@@ -53795,8 +53840,8 @@ async function handleArenaCall(rpc, player, method, args, requestId) {
     }
   }
   if (room?.phase === "done" || kind === "status") {
-    const standing = await rpc("server_arena_standing", { p_player: player });
-    context = { ...context, ...standing };
+    const standing2 = await rpc("server_arena_standing", { p_player: player });
+    context = { ...context, ...standing2 };
   }
   delete context.receiptFingerprint;
   context = { ...context, room: room ? publicArenaRoom(room, player) : null, records: [] };
@@ -54247,9 +54292,20 @@ function clientResponseState(response, knownRevision) {
 }
 function withoutReceipts(state) {
   if (!state || typeof state !== "object") return state;
-  const journal = state.serverJournal;
-  if (!journal || typeof journal !== "object") return state;
-  return { ...state, serverJournal: { ...journal, receipts: {} } };
+  const source = state;
+  let next = source;
+  if (source.serverJournal && typeof source.serverJournal === "object") next = { ...next, serverJournal: { receipts: {}, raidAdmissions: {} } };
+  const archaeology = source.archaeology;
+  const tiles = archaeology?.board?.tiles;
+  if (archaeology && archaeology.board && Array.isArray(tiles)) {
+    const hidden = tiles.map((tile) => {
+      if (!tile || typeof tile !== "object" || tile.revealed === true) return tile;
+      const { index, zone } = tile;
+      return { index, zone, kind: "empty", amount: 0, revealed: false };
+    });
+    next = { ...next, archaeology: { ...archaeology, board: { ...archaeology.board, tiles: hidden } } };
+  }
+  return next;
 }
 
 // src/server/supabaseStore.ts
@@ -54433,9 +54489,11 @@ function createSupabaseStore(env) {
       await rpc("server_claim_device_session", { p_player: playerId, p_session: device }).catch(() => void 0);
       return true;
     },
-    /** 표식이 지금 기기와 같은가. 표식이 없거나, 세운 기기가 없거나, 함수가 없으면 지난다. */
+    /**
+     * 표식이 지금 기기와 같은가. 세운 기기가 없거나 함수가 없으면 지난다. **세운 기기가 있는 계정은 표식 없는 호출도
+     * 막는다** — 표식을 빼고 부르면 한 기기 규칙을 통째로 비껴가던 길이다(토큰을 빼낸 스크립트가 게임과 나란히 돈다).
+     */
     async deviceSessionAllowed(playerId, device) {
-      if (!device) return true;
       const active3 = await rpc("server_device_session", { p_player: playerId }).catch(() => null);
       return typeof active3 !== "string" || active3.length === 0 || active3 === device;
     },

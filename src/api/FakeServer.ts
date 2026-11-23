@@ -13,7 +13,7 @@ import {
 import { isRegularEventActive } from "../core/regularEventRotation";
 import { CHEST_FORGE, chestBox, chestCard, chestForgePlayable, chestForgeStatus, chestRunBox, normalizeChestForgeState, rollChestCard, rollChestForgeWeek, rollChestOffer, type ChestBoxId, type ChestForgeState } from "../core/chestForge";
 import { duelParticipant, duelCombatSetup, recordPlayerDefense, type PlayerDuelContext } from "../server/playerDuels";
-import { combatJournal, consumeCombat } from "../server/combatAuthority";
+import { combatJournal, combatVerdictFor, consumeCombat } from "../server/combatAuthority";
 import { BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "../core/bond";
 import { assertStoryUnlocked, resolveStoryChoice, assertStoryChoiceReachable, redeemDeferredStoryBond } from "./storyAuthority";
 import type { SharedRaidContext } from "../server/sharedRaids";
@@ -81,7 +81,7 @@ import type { ProductListResponse, PurchaseProductRequest, PurchaseProductRespon
 import { totalGrantAmount } from "../core/purchase";
 import { getRelicSkin } from "../data/relicSkins";
 import { applyDuelScore, DUEL_BATTLE_REWARD, DUEL_MAX_BLIND, DUEL_OPPONENT_COUNT, duelStreakBonus, duelBlindCount, duelBlindOrder, duelExtraAttemptPrice, duelHiddenRelicIds, duelNewlyReachedTiers, duelAllOpponentsFought, duelFreeRefreshesLeft, duelRefreshPrice, duelScoreDelta, duelSeasonId, duelTierRose, duelSeasonEndsAt, duelStanding, duelTier, getDuelTier, pickDuelOpponents } from "../core/duelArena";
-import { DUEL_HISTORY_LIMIT, normalizeDuelState, duelAttemptsLeft, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
+import { DUEL_FORFEIT_AFTER_MS, DUEL_HISTORY_LIMIT, normalizeDuelState, duelAttemptsLeft, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
 import { duelNpcPool } from "../core/duelNpcPool";
 import { simulateDuelDefenses } from "../core/duelDefense";
 import { ancientHighestCleared, rollAncientSeason } from "../core/ancientStrata";
@@ -124,7 +124,7 @@ import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, 
 import { runeBatchEnhancementGoldCost, runeBulkCraftGoldCost, runeEnhancementGoldCost, runeSellValue } from "../data/runes";
 import { isRuneBulkCraftCandidate, runeBulkEngraveStat } from "../core/runeBulkCraft";
 import { isRuneTraitBulkCandidate, RUNE_TRAIT_BULK_MAX } from "../core/runeTraitBulk";
-import { rotationOffer, rotationRunePart } from "../core/shopRotation";
+import { rotationOffer, rotationPeriodEnd, rotationRunePart } from "../core/shopRotation";
 import { rollRandomRuneRarity, rollRuneSynthesisPart, rollRuneSynthesisRarity, rollRuneSynthesisTraitGrade, runeSynthesisRefusal, RUNE_SYNTHESIS_RULES } from "../core/runeSynthesis";
 import { rotationSlot } from "../data/runeRotation";
 import { canGrantRuneTraitAtLeast, canUpgradeRuneTraitGrade, pickRuneTraitId, grantRuneTrait as rollRuneTrait, rerollRuneTrait as rollRuneTraitReroll, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, type RuneTrait } from "../core/runeTraits";
@@ -3673,6 +3673,7 @@ export class FakeServer implements GameApi {
     await this.delay();
     if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const now = this.now();
+    this.forfeitOpenDuels(now, true);
     const duel = this.duelNow(now);
     const price = duelRefreshPrice(duel.refreshesUsed);
     if (this.state.wallet.gems < price) throw new GameApiError("INSUFFICIENT_CURRENCY", "젬이 부족합니다.");
@@ -3688,6 +3689,7 @@ export class FakeServer implements GameApi {
     await this.delay();
     if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const now = this.now();
+    this.forfeitOpenDuels(now, true);
     const duel = this.duelNow(now);
     const price = duelExtraAttemptPrice(duel.attemptsPurchased);
     if (price === undefined) throw new GameApiError("DUEL_ATTEMPT_LIMIT", "오늘은 도전권을 더 살 수 없습니다.");
@@ -3710,6 +3712,7 @@ export class FakeServer implements GameApi {
     await this.delay();
     const now = this.now();
     this.assertDuelTeam(request.relicIds);
+    this.forfeitOpenDuels(now, true);
     const blindChoice = [...new Set(request.blindChoice)].filter((id) => request.relicIds.includes(id)).slice(0, DUEL_MAX_BLIND);
     const next: DuelState = { ...this.duelNow(now), defense: [...request.relicIds], defenseCustomized: true, blindChoice };
     this.persist({ ...this.state, duel: next });
@@ -3724,8 +3727,10 @@ export class FakeServer implements GameApi {
     if (cached) return structuredClone(cached);
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "입장 요청 ID가 필요합니다.");
     const now = this.now();
-    const duel = this.duelNow(now);
     this.assertDuelTeam(request.relicIds);
+    // 앞 판을 끝내지 않고 새 판에 들어오면 앞 판부터 정산한다(버린 판은 패배).
+    this.forfeitOpenDuels(now, false);
+    const duel = this.duelNow(now);
     const npc = duel.candidateIds.includes(request.opponentId) ? this.duelPool(now).find(p => p.id === request.opponentId) : undefined;
     if (!npc) throw new GameApiError("DUEL_OPPONENT_NOT_FOUND", "지금 세워 둔 상대가 아닙니다.");
     if (duel.foughtIds.includes(npc.id)) throw new GameApiError("DUEL_OPPONENT_FOUGHT", "이미 싸운 상대입니다.");
@@ -3744,8 +3749,7 @@ export class FakeServer implements GameApi {
     if (this.duelContext) {
       const row = this.duelContext.records.find(row => row.id === npc.id)!;
       const journal = combatJournal(this.state);
-      for (const [key, ticket] of Object.entries(journal.tickets)) if (ticket.kind === "duel") consumeCombat(this.state, key);
-      journal.tickets[`duel:${request.requestId}`] = { kind: "duel", target: npc.id, requestId: request.requestId, duel: { opponent: structuredClone(npc), setup: duelCombatSetup(this.state, duelParticipant(row, now).state, request.relicIds) } };
+      journal.tickets[`duel:${request.requestId}`] = { kind: "duel", target: npc.id, requestId: request.requestId, enteredAt: now.toISOString(), duel: { opponent: structuredClone(npc), setup: duelCombatSetup(this.state, duelParticipant(row, now).state, request.relicIds) } };
     }
     this.duelAdmissionResults.set(request.requestId, structuredClone(response));
     return response;
@@ -3758,10 +3762,17 @@ export class FakeServer implements GameApi {
     if (cached) return structuredClone(cached);
     const pending = this.pendingDuels.get(request.requestId);
     if (!pending) throw new GameApiError("DUEL_ADMISSION_NOT_FOUND", "입장하지 않은 결투입니다.");
-    const now = this.now();
+    return this.settleDuel(request, pending, this.now());
+  }
+
+  /** 결투 한 판의 정산. 결과 확정(`resolveDuel`)과 끝내지 않고 버린 판의 몰수(`forfeitOpenDuels`)가 같은 길을 지난다. */
+  private settleDuel(request: ResolveDuelRequest, pending: { opponentId: string; opponentName: string; opponentScore: number; favoriteRelicId: string; units: DuelHistoryUnit[] }, now: Date): ResolveDuelResponse {
     if (this.duelContext) {
       const ticket = combatJournal(this.state).tickets[`duel:${request.requestId}`];
-      recordPlayerDefense(this.duelContext, pending.opponentId, this.state, ticket.duel!.setup.players.map(p => p.id), request.won, now);
+      // 상대가 그새 명단에서 빠졌으면 방어 기록만 건너뛴다 — 내 판의 정산까지 막지 않는다.
+      if (ticket?.duel && this.duelContext.records.some(row => row.id === pending.opponentId)) {
+        recordPlayerDefense(this.duelContext, pending.opponentId, this.state, ticket.duel.setup.players.map(p => p.id), request.won, now);
+      }
     }
     // 판이 도는 사이에 시즌이 넘어가도 이 판은 새 시즌 점수에 반영한다(넘김이 먼저다).
     const duel = this.duelNow(now);
@@ -3803,6 +3814,23 @@ export class FakeServer implements GameApi {
     };
     this.duelResolveResults.set(request.requestId, structuredClone(response));
     return response;
+  }
+
+  /**
+   * 끝내지 않고 버린 결투는 진 판이다. 입장만 하고 결과를 확정하지 않으면 점수·연승이 그대로 남아
+   * 질 것 같은 판을 끊고 나오는 것이 늘 이득이었다. 서버가 이미 판정한 판은 그 판정대로(이긴 판은 이긴 대로),
+   * 판정이 없는 판은 패배로 정산한다. `staleOnly`면 입장한 지 `DUEL_FORFEIT_AFTER_MS`가 지난 판만 본다.
+   */
+  private forfeitOpenDuels(now: Date, staleOnly: boolean): void {
+    if (!this.duelContext) return;
+    const journal = combatJournal(this.state);
+    for (const [key, ticket] of Object.entries(journal.tickets)) {
+      if (ticket.kind !== "duel") continue;
+      if (staleOnly && !(ticket.enteredAt && now.getTime() - Date.parse(ticket.enteredAt) >= DUEL_FORFEIT_AFTER_MS)) continue;
+      const pending = this.pendingDuels.get(ticket.requestId);
+      if (pending) this.settleDuel({ requestId: ticket.requestId, won: combatVerdictFor(this.state, key)?.victory ?? false }, pending, now);
+      consumeCombat(this.state, key);
+    }
   }
 
   async getDuelRanking(): Promise<DuelRankingResponse> {
@@ -3848,6 +3876,7 @@ export class FakeServer implements GameApi {
   async claimDuelSeasonReward(): Promise<ClaimDuelSeasonRewardResponse> {
     await this.delay();
     if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
+    this.forfeitOpenDuels(this.now(), true);
     const duel = this.duelNow(this.now());
     const pending = duel.pendingSeasonReward;
     const tier = pending ? getDuelTier(pending.tierId) : undefined;
@@ -4393,7 +4422,7 @@ export class FakeServer implements GameApi {
       const remaining = this.remaining(product, now);
       const paymentUnavailable = this.paymentUnavailable(product);
       return {
-        ...product, visibleUntil: product.situational ? activeSituationalOffer(this.state.situationalOffers, product.id, now)?.expiresAt : this.productWindow(product, now).endsAt, remaining, purchasable: remaining > 0 && !paymentUnavailable, disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : undefined,
+        ...product, visibleUntil: product.situational ? activeSituationalOffer(this.state.situationalOffers, product.id, now)?.expiresAt : this.visibleUntil(product, now), remaining, purchasable: remaining > 0 && !paymentUnavailable, disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : undefined,
         ...(this.runePartOf(product, now) !== undefined ? { runePart: this.runePartOf(product, now) } : {}),
         ...(product.firstPurchaseBonus ? { firstBonusAvailable: this.firstBonusAvailable(product) } : {}),
         ...this.subscriptionInfo(product, now),
@@ -4968,6 +4997,15 @@ export class FakeServer implements GameApi {
     const startsAt = later(own.startsAt, linked.startsAt);
     const endsAt = earlier(own.endsAt, linked.endsAt);
     return { ...(startsAt !== undefined ? { startsAt } : {}), ...(endsAt !== undefined ? { endsAt } : {}), enabled: own.enabled && linked.enabled };
+  }
+
+  /** 노출이 끝나는 시각. 로테이션 칸의 상품은 그 기간이 끝나는 순간(다음 상품으로 바뀌는 때)까지만 선다. */
+  private visibleUntil(product: ProductDefinition, now: Date): string | undefined {
+    const endsAt = this.productWindow(product, now).endsAt;
+    const slot = product.rotationSlot ? rotationSlot(product.rotationSlot) : undefined;
+    if (!slot) return endsAt;
+    const periodEnd = rotationPeriodEnd(slot.period, this.productPeriodKey(product, now));
+    return endsAt === undefined || Date.parse(periodEnd) < Date.parse(endsAt) ? periodEnd : endsAt;
   }
 
   private isVisible(product: ProductDefinition, now: Date): boolean {

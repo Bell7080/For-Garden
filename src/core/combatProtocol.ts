@@ -53,6 +53,8 @@ export interface CombatTicket {
   duel?: { opponent: import("./duelNpcPool").DuelNpc; setup: CombatSetup };
   target: string;
   requestId: string;
+  /** 결투 입장 시각. 끝내지 않고 버린 판을 패배로 정산하는 기한을 잰다(없는 옛 입장권은 다음 입장에서 정산). */
+  enteredAt?: string;
 }
 export interface CombatRecord {
   lease: CombatLease;
@@ -64,6 +66,11 @@ export interface CombatJournal {
   bossIssuedAt?: Record<string, string>;
   tickets: Record<string, CombatTicket>;
   records: Record<string, CombatRecord>;
+  /**
+   * 판(입장권·원정 노드)마다 굳힌 전투 시드. 임대가 만료돼 다시 발급해도 같은 시드를 쓴다 — 기다렸다가
+   * 새 시드로 결과를 다시 굴리는 길을 막는다(보안 점검 H3). 판이 정산되면 `consumeCombat`이 함께 지운다.
+   */
+  seeds?: Record<string, string>;
 }
 export const emptyCombatJournal = (): CombatJournal => ({
   tickets: {},

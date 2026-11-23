@@ -3,8 +3,8 @@ import { ArenaRoomScene } from "./scenes/ArenaRoomScene";
 import { ArenaNoticeScene } from "./scenes/ArenaNoticeScene";
 import Phaser from "phaser";
 import { QA_TOOLS_ENABLED } from "./core/buildFlavor";
-import { navigatorDeviceProfile, rendererAntialias, savedGraphicsQuality } from "./core/devicePerformance";
-import { deviceGraphicsQuality, type GraphicsQuality } from "./core/settings";
+import { navigatorDeviceProfile, savedAntialias } from "./core/devicePerformance";
+import { deviceGraphicsQuality } from "./core/settings";
 import { LOCAL_SAVE_FLAVOR, LOCAL_SAVE_STORAGE_KEYS } from "./core/saveStorage";
 import "./style.css";
 import { BASE_WIDTH, BASE_HEIGHT } from "./config/gameConfig";
@@ -55,10 +55,10 @@ installTapSlopGuard();
 installScreenShakeGate();
 installStaleBuildReload();
 
-/** 게임을 만들기 전에 저장의 그래픽 품질만 읽는다. 저장이 없으면 첫 실행과 같이 기기 단서로 고른다. */
-function startupGraphicsQuality(): GraphicsQuality {
+/** 설정의 안티에일리어싱 선택. 컨텍스트를 만들기 전에 저장에서 읽고, 값이 없으면 품질에서 고른다. */
+function startupAntialias(): boolean {
   const fallback = deviceGraphicsQuality(navigatorDeviceProfile());
-  try { return savedGraphicsQuality(globalThis.localStorage?.getItem(LOCAL_SAVE_STORAGE_KEYS[LOCAL_SAVE_FLAVOR]), fallback); } catch { return fallback; }
+  try { return savedAntialias(globalThis.localStorage?.getItem(LOCAL_SAVE_STORAGE_KEYS[LOCAL_SAVE_FLAVOR]), fallback); } catch { return fallback !== "low"; }
 }
 
 const game = new Phaser.Game({
@@ -84,8 +84,8 @@ const game = new Phaser.Game({
   },
   render: {
     // 고해상도 모바일에서 Mesh 가장자리 품질은 유지하되 픽셀 반올림 진동은 막는다.
-    // 낮음 품질과 iPhone·iPad에서 MSAA를 끈다(발열). 컨텍스트를 만들 때 정해지므로 품질 변경은 다음 실행부터 든다.
-    antialias: rendererAntialias(startupGraphicsQuality(), navigatorDeviceProfile()),
+    // 설정의 안티에일리어싱 선택을 따른다(값이 없으면 낮음 품질만 끔). 컨텍스트를 만들 때 정해지므로 바꾸면 다음 실행부터 든다.
+    antialias: startupAntialias(),
     roundPixels: false,
     powerPreference: "high-performance",
   },

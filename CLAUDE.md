@@ -921,9 +921,9 @@
 - **스킬 일러스트·출격 칸 원화는 타이틀이 캐시에만 받는다**(`prefetchCachedFiles`). 스킬 일러스트는 액자·쪽지가 설 때 `skillArtLoader.ensureSkillArt`가 올리고(전투는 `ensureSkillArtFor`로 미리), 출격 칸 원화는 배경과 같은 거주 규칙(`CONTENT_ENTRY_ART`)이다. 새로 그리는 자리도 `textures.exists`로 가르지 말고 그 길을 지난다.
 - **배경 원화는 올리기 전에 미리 풀어 둔다**(`backgrounds.ts`의 `decodeAhead` — 그림 요소의 `decode()`). `createImageBitmap`으로 올리지 않는다 — v0.514.0에 그 길을 탔더니 갤럭시 노트20에서 스토리 지도 진입이 까만 화면으로 굳었다(v0.519.3에서 걷었다). 한 변이 4,096px를 넘는 원화를 두지 않는다. 로더 길은 `decode`가 없을 때의 되돌이다.
 - **WebGL 컨텍스트를 잃고 4초(보이는 동안) 안에 돌아오지 않으면 보고하고 새로 띄운다**(`ui/webglWatchdog.ts` · 규칙 `core/webglRecovery.ts` — 10분에 두 번까지). 잃은 순간도 `webgl.contextLost`로 GPU 이름과 함께 남는다.
-- **iPhone·iPad는 렌더러 MSAA를 끈다**(`rendererAntialias(quality, device)` · `isAppleMobile` — 2026-11-23 응태 승인, 약 14% 가벼움). 낮음 품질도 끈다.
+- **렌더러 MSAA는 설정의 「안티에일리어싱」 한 줄이 정한다**(`presentation.antialias` · `savedAntialias` — 2026-11-23 응태, 모든 기기). 첫 실행·값 없던 저장은 낮음 품질만 끔(`defaultAntialias`), 아이폰도 켬이다 — v0.523.0의 아이폰 늘 끔은 가장자리가 깨져 보여 걷었다. 컨텍스트를 만들 때 정해져 다음 실행부터 들고, 설정 줄 아래 안내 판이 그렇게 말한다. 수직동기화는 브라우저가 늘 켜 두어 끌 수 없으므로 설정에 두지 않는다(프레임 제한이 그 몫이다).
 - **Pre FX는 꺼 두었다**(`main.ts`의 `disablePreFX: true` — 부팅 때 미리 잡던 렌더 타깃 약 180MB). 게임 객체의 `.preFX`(glow·blur)를 쓰지 않는다 — 필요하면 굽거나 겹쳐 그린다.
-- **저사양·절전의 렌더 부담은 `core/devicePerformance.ts` 한 곳이 정한다** — **기본 프레임 제한은 30fps다**(2026-11-23 응태 결정 — 60·120은 설정에서 직접 고를 때만 · 기존 저장은 `frameRate30Applied` 표식으로 한 번만 30으로 내리고 그 뒤 선택은 지킨다) · 절전은 적용만 30fps · 낮음 품질 MSAA 끔(다음 실행부터) · 저메모리 기기의 유휴 원화 보관 축소. 프레임 제한을 TimeStep에 걸 때는 저장값이 아니라 `effectiveFrameRateLimit`을 지난다.
+- **저사양·절전의 렌더 부담은 `core/devicePerformance.ts` 한 곳이 정한다** — **기본 프레임 제한은 30fps다**(2026-11-23 응태 결정 — 60·120은 설정에서 직접 고를 때만 · 기존 저장은 `frameRate30Applied` 표식으로 한 번만 30으로 내리고 그 뒤 선택은 지킨다) · 절전은 적용만 30fps · MSAA 기본값(낮음 품질만 끔 · 다음 실행부터) · 저메모리 기기의 유휴 원화 보관 축소. 프레임 제한을 TimeStep에 걸 때는 저장값이 아니라 `effectiveFrameRateLimit`을 지난다.
 - **앱이 뒤로 가면 게임 루프가 잠든다**(`ui/backgroundSleep.ts` — rAF 정지, `AudioManager`가 AudioContext도 멈춘다). Phaser 기본 숨김 처리는 그리기를 멈추지 않으므로 이 연결을 걷지 않는다.
 - **프레임 콜백은 `guardFrame`으로 감싸져 있다**(`core/frameGuard.ts`). Phaser는 콜백 뒤에 다음 프레임을 예약하므로 예외 하나가 루프를 죽인다. 이 보호를 걷거나 우회하지 않는다.
 

@@ -50,6 +50,8 @@ export const SETTINGS_JA = {
   "settings.play.powerSaving": "省電力モード",
   "settings.play.lobbyAtmosphere": "ロビーの光演出",
   "settings.play.graphicsQuality": "グラフィック品質",
+  "settings.play.antialias": "アンチエイリアス",
+  "settings.play.antialiasNote": "オフにすると軽くなりますが、輪郭が粗くなります。次回起動時から適用されます。",
   "settings.play.quality.high": "高",
   "settings.play.quality.balanced": "バランス",
   "settings.play.quality.low": "低",

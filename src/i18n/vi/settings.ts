@@ -45,6 +45,8 @@ export const SETTINGS_VI = {
   "settings.play.powerSaving": "Tiết kiệm pin",
   "settings.play.lobbyAtmosphere": "Hiệu ứng ánh sáng sảnh",
   "settings.play.graphicsQuality": "Chất lượng đồ họa",
+  "settings.play.antialias": "Khử răng cưa",
+  "settings.play.antialiasNote": "Tắt đi sẽ nhẹ máy hơn nhưng viền hình sẽ thô hơn. Áp dụng từ lần khởi động tiếp theo.",
   "settings.play.quality.high": "Cao",
   "settings.play.quality.balanced": "Cân bằng",
   "settings.play.quality.low": "Thấp",

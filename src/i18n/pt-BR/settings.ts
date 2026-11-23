@@ -45,6 +45,8 @@ export const SETTINGS_PT_BR = {
   "settings.play.powerSaving": "Economia de energia",
   "settings.play.lobbyAtmosphere": "Iluminação do saguão",
   "settings.play.graphicsQuality": "Qualidade gráfica",
+  "settings.play.antialias": "Antisserrilhado",
+  "settings.play.antialiasNote": "Desativar deixa o jogo mais leve, mas as bordas ficam mais ásperas. Vale a partir da próxima inicialização.",
   "settings.play.quality.high": "Alta",
   "settings.play.quality.balanced": "Equilibrada",
   "settings.play.quality.low": "Baixa",

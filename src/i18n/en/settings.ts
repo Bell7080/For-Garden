@@ -45,6 +45,8 @@ export const SETTINGS_EN = {
   "settings.play.powerSaving": "Power Saving",
   "settings.play.lobbyAtmosphere": "Lobby Lighting",
   "settings.play.graphicsQuality": "Graphics Quality",
+  "settings.play.antialias": "Anti-aliasing",
+  "settings.play.antialiasNote": "Turning it off lightens the load but makes edges rougher. Applies from the next launch.",
   "settings.play.quality.high": "High",
   "settings.play.quality.balanced": "Balanced",
   "settings.play.quality.low": "Low",

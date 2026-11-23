@@ -74,6 +74,11 @@ describe("settings", () => {
   it("기본 30fps 일괄 전환은 표식 없는 저장을 한 번만 30으로 내리고 그 뒤의 선택은 지킨다", () => {
     expect(normalizeSettings({ presentation: { frameRateLimit: 120 } }).presentation).toMatchObject({ frameRateLimit: 30, frameRate30Applied: true });
     expect(normalizeSettings({ presentation: { frameRateLimit: 60, frameRate30Applied: true } }).presentation.frameRateLimit).toBe(60);
+    // 안티에일리어싱 값이 없던 저장은 품질에서 고르고(낮음만 끔 — 아이폰은 켬으로 돌아온다), 고른 값은 지킨다.
+    expect(normalizeSettings({ presentation: { frameRate30Applied: true } }).presentation.antialias).toBe(true);
+    expect(normalizeSettings({ presentation: { graphicsQuality: "low" } }).presentation.antialias).toBe(false);
+    expect(normalizeSettings({ presentation: { graphicsQuality: "low", antialias: true } }).presentation.antialias).toBe(true);
+    expect(normalizeSettings({ presentation: { antialias: false } }).presentation.antialias).toBe(false);
     const migrated = normalizeSettings({ presentation: { frameRateLimit: 60 } });
     expect(normalizeSettings(JSON.parse(JSON.stringify({ ...migrated, presentation: { ...migrated.presentation, frameRateLimit: 120 } }))).presentation.frameRateLimit).toBe(120);
   });

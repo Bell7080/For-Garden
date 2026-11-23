@@ -45,6 +45,8 @@ export const SETTINGS_ZH_HANS = {
   "settings.play.powerSaving": "省电模式",
   "settings.play.lobbyAtmosphere": "大厅光效",
   "settings.play.graphicsQuality": "画质",
+  "settings.play.antialias": "抗锯齿",
+  "settings.play.antialiasNote": "关闭后运行更流畅，但边缘会变得粗糙。下次启动时生效。",
   "settings.play.quality.high": "高",
   "settings.play.quality.balanced": "均衡",
   "settings.play.quality.low": "低",

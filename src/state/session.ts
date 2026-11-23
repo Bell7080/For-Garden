@@ -64,6 +64,11 @@ export interface GameSettings {
      * 표식이 없는 저장은 한 번 30으로 내리고 표식을 세운다. 그 뒤에 고른 60·120은 그대로 둔다.
      */
     frameRate30Applied: boolean;
+    /**
+     * 렌더러의 안티에일리어싱(MSAA). 모든 기기에서 고르고(2026-11-23 응태), 첫 실행은 품질이 낮음이 아니면 켬이다.
+     * 끄면 가벼워지지만 가장자리가 거칠어진다. 다음 실행부터 든다(`savedAntialias`).
+     */
+    antialias: boolean;
   };
   /** `reduceFlashes`와 `colorAssist`는 공용 효과·의미 표식 경계에서 소비한다. 필수 대사는 숨기지 않는다. */
   accessibility: { textScale: 1 | 1.15 | 1.3; reduceMotion: boolean; reduceFlashes: boolean; colorAssist: boolean };

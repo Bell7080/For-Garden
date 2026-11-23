@@ -84,3 +84,14 @@ export function rotationOffer(slot: RotationSlot, periodKey: string): string | n
 export function rotationRunePart(slot: Pick<RotationSlot, "id">, periodKey: string): 0 | 1 | 2 {
   return Math.min(2, Math.floor(rotationRoll(`${slot.id}:part:${periodKey}`) * 3)) as 0 | 1 | 2;
 }
+
+/**
+ * 이 기간이 끝나는(칸이 다음 상품으로 바뀌는) 시각, ISO 문자열.
+ *
+ * 일간은 다음 날 00:00 UTC, 주간은 다음 월요일 00:00 UTC다. 카드의 「교체까지」가 이 값을 읽는다.
+ */
+export function rotationPeriodEnd(period: RotationPeriod, periodKey: string): string {
+  const date = new Date(`${periodKey}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + (period === "weekly" ? 7 : 1));
+  return date.toISOString();
+}

@@ -1,3 +1,4 @@
+import { NotificationDot } from "./NotificationDot";
 import { onAccountSwitch } from "../core/accountScope";
 import { hasRemoteState } from "../api/resultState";
 import { setDebugMissionsPeriod } from "../debug";
@@ -41,11 +42,6 @@ import { clipInteractiveTree, containerClip } from "./clippedHit";
 import { withBusy } from "./BusyOverlay";
 
 const PERIODS: readonly MissionPeriod[] = ["daily", "weekly"];
-
-/** 탭 라벨의 알림 점. 동그라미를 쓰지 않는다(화면 전체의 규칙). */
-function diamond(size: number): Phaser.Geom.Point[] {
-  return toPoints([0, -size, size, 0, 0, size, -size, 0]);
-}
 
 /**
  * 일일·주간 임무판.
@@ -363,13 +359,8 @@ export class MissionsPopup {
     PERIODS.forEach((period, index) => {
       const pending = this.claimableCount(period);
       const tab = addCategoryTab(this.scene, footer, { x: missionsTabX(index), y: layout.tabY, width: layout.tab.width, height: layout.tab.height, label: t(period === "daily" ? "missions.tab.daily" : "missions.tab.weekly"), selected: period === this.period, onSelect: () => this.select(period) });
-      // 다른 기간에 받을 것이 남아 있으면 라벨 오른쪽 위에 호박빛 점이 선다.
-      if (pending > 0) {
-        const dot = this.scene.add.graphics({ x: layout.tab.width / 2 - 16, y: -layout.tab.height / 2 + 8 });
-        dot.fillStyle(0x05070a, 0.9).fillPoints(diamond(11), true);
-        dot.fillStyle(COLOR.missionClaim, 1).fillPoints(diamond(8), true);
-        tab.add(dot);
-      }
+      // 다른 기간에 받을 것이 남아 있으면 라벨 오른쪽 위에 공용 붉은 점이 선다(로비·업적·패스 탭과 같은 한 장).
+      if (pending > 0) new NotificationDot(this.scene, tab, { x: layout.tab.width / 2 - 16, y: -layout.tab.height / 2 + 8 });
     });
     const claimable = this.claimableCount(this.period);
     const claim = new Button(this.scene, layout.claim.x, layout.claim.y, { width: layout.claim.width, height: layout.claim.height, label: t("missions.claimAll"), ...CLAIM_ALL_BUTTON_STYLE, onClick: () => void this.claimAll() });

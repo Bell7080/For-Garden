@@ -337,6 +337,7 @@ export const MISC_ZH_HANS = {
   "trade.tag.monthly": "每月特惠",
   "trade.tag.none": "常驻销售",
   "trade.soldOut": "售罄",
+  "trade.rotatesIn": "距离更换 {time}",
   "trade.disconnected": "信号中断",
   "trade.reconnect": "重新连接",
   "trade.title": "贸易",

@@ -45,6 +45,8 @@ export const SETTINGS_DE = {
   "settings.play.powerSaving": "Energiesparen",
   "settings.play.lobbyAtmosphere": "Lobby-Beleuchtung",
   "settings.play.graphicsQuality": "Grafikqualität",
+  "settings.play.antialias": "Kantenglättung",
+  "settings.play.antialiasNote": "Ausschalten entlastet das Gerät, macht Kanten aber rauer. Gilt ab dem nächsten Start.",
   "settings.play.quality.high": "Hoch",
   "settings.play.quality.balanced": "Ausgewogen",
   "settings.play.quality.low": "Niedrig",

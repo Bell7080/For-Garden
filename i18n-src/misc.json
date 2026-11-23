@@ -2539,6 +2539,7 @@
 "AUSVERKAUFT",
 "РАСПРОДАНО"
 ],
+"trade.rotatesIn": ["距离更换 {time}", "เปลี่ยนในอีก {time}", "Đổi sau {time}", "Berganti dalam {time}", "Cambia en {time}", "Troca em {time}", "Wechsel in {time}", "Смена через {time}"],
 "trade.disconnected": [
 "信号中断",
 "สัญญาณขาดหาย",

@@ -42,7 +42,8 @@ describe("상점 로테이션 칸", () => {
         expect(product, id).toBeTruthy();
         expect(product!.rotationSlot, id).toBe(slot.id);
         expect(product!.refresh, id).toBe(slot.period);
-        expect(product!.grants.some((grant) => grant.kind === "rune"), id).toBe(true);
+        // 무역 칸(`trade-*`)은 룬이 아니라 재화 묶음이 돈다. 나머지 칸은 모두 룬 칸이다.
+        if (!slot.id.startsWith("trade-")) expect(product!.grants.some((grant) => grant.kind === "rune"), id).toBe(true);
       }
     }
     for (const product of PRODUCTS.filter((candidate) => candidate.rotationSlot)) {

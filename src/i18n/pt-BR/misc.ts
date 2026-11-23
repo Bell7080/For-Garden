@@ -337,6 +337,7 @@ export const MISC_PT_BR = {
   "trade.tag.monthly": "Oferta mensal",
   "trade.tag.none": "Sempre disponível",
   "trade.soldOut": "ESGOTADO",
+  "trade.rotatesIn": "Troca em {time}",
   "trade.disconnected": "Sinal perdido",
   "trade.reconnect": "Reconectar",
   "trade.title": "Comércio",

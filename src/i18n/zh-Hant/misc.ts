@@ -337,6 +337,7 @@ export const MISC_ZH_HANT = {
   "trade.tag.monthly": "每月特惠",
   "trade.tag.none": "常駐銷售",
   "trade.soldOut": "售罄",
+  "trade.rotatesIn": "距離更換 {time}",
   "trade.disconnected": "訊號中斷",
   "trade.reconnect": "重新連線",
   "trade.title": "貿易",

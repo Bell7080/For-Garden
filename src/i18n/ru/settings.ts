@@ -45,6 +45,8 @@ export const SETTINGS_RU = {
   "settings.play.powerSaving": "Энергосбережение",
   "settings.play.lobbyAtmosphere": "Освещение лобби",
   "settings.play.graphicsQuality": "Качество графики",
+  "settings.play.antialias": "Сглаживание",
+  "settings.play.antialiasNote": "Если отключить, нагрузка снизится, но края станут грубее. Применяется со следующего запуска.",
   "settings.play.quality.high": "Высокое",
   "settings.play.quality.balanced": "Сбалансированное",
   "settings.play.quality.low": "Низкое",

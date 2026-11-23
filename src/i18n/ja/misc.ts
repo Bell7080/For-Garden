@@ -355,6 +355,7 @@ export const MISC_JA = {
   "trade.tag.monthly": "月間特価",
   "trade.tag.none": "常時販売",
   "trade.soldOut": "完売",
+  "trade.rotatesIn": "入れ替えまで {time}",
   "trade.disconnected": "通信途絶",
   "trade.reconnect": "再接続",
   "trade.title": "商取引",

@@ -45,6 +45,8 @@ export const SETTINGS_ID = {
   "settings.play.powerSaving": "Hemat Daya",
   "settings.play.lobbyAtmosphere": "Efek Cahaya Lobi",
   "settings.play.graphicsQuality": "Kualitas Grafis",
+  "settings.play.antialias": "Anti-aliasing",
+  "settings.play.antialiasNote": "Jika dimatikan, beban lebih ringan tetapi tepian menjadi lebih kasar. Berlaku mulai peluncuran berikutnya.",
   "settings.play.quality.high": "Tinggi",
   "settings.play.quality.balanced": "Seimbang",
   "settings.play.quality.low": "Rendah",

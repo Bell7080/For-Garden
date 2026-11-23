@@ -1,3 +1,4 @@
+import { NotificationDot } from "./NotificationDot";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import type { GameApi, MailDto, MailListResponse, MailRewardDto } from "../api/contracts";
@@ -14,7 +15,7 @@ import { attachDragScroll } from "./dragScroll";
 import { addScrollHint } from "./ScrollHint";
 import { addClippedHit } from "./clippedHit";
 import type { ClipRect } from "./clipRect";
-import { chipPoints, drawLayer, drawShapeEdge, HOLO, slantedRect, toPoints } from "./holo";
+import { chipPoints, drawLayer, drawShapeEdge, HOLO, slantedRect } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { addFramedIcon, addItemFrame } from "./itemFrame";
 import type { PopupLayer } from "./PopupLayer";
@@ -142,10 +143,7 @@ export class MailPopup {
     parent.add(addItemFrame(this.scene, iconX, iconY, card.icon, { color: dim ? 0x68717d : COLOR.accent, outlineAlpha: dim ? 0.4 : 0.85 }));
     parent.add(drawGlyph(this.scene, glyph, iconX, iconY, card.icon * 0.5, dim ? COLOR.inkDimHex : COLOR.accent, dim ? 0.5 : 1));
     if (!mail.read && !dim) {
-      const dot = this.scene.add.graphics({ x: iconX + card.icon / 2 - 4, y: iconY - card.icon / 2 + 4 });
-      dot.fillStyle(0x05070a, 0.9).fillPoints(toPoints([0, -12, 12, 0, 0, 12, -12, 0]), true);
-      dot.fillStyle(COLOR.missionClaim, 1).fillPoints(toPoints([0, -9, 9, 0, 0, 9, -9, 0]), true);
-      parent.add(dot);
+      new NotificationDot(this.scene, parent, { x: iconX + card.icon / 2 - 4, y: iconY - card.icon / 2 + 4 });
     }
   }
 
@@ -346,13 +344,8 @@ export class MailPopup {
     TABS.forEach((tab, index) => {
       const pending = this.result!.mails.filter((mail) => mailTabOf(mail) === tab && !isMailExpired(mail, nowMs) && (tab === "reward" ? !mail.claimed : !mail.read)).length;
       const label = addCategoryTab(this.scene, footer, { x: mailTabX(index), y: layout.tabY, width: layout.tab.width, height: layout.tab.height, label: t(`mail.tab.${tab}`), selected: tab === this.tab, onSelect: () => this.select(tab) });
-      if (pending > 0) {
-        const badge = this.scene.add.text(layout.tab.width / 2 - 14, -layout.tab.height / 2 + 4, `${pending}`, textStyle({ role: "display", size: 20, color: "#1a1206" })).setOrigin(0.5);
-        const plate = this.scene.add.graphics({ x: badge.x, y: badge.y });
-        const half = Math.max(16, badge.width / 2 + 9);
-        plate.fillStyle(COLOR.missionClaim, 1).fillPoints(toPoints(slantedRect(half * 2, 30, 8)), true);
-        label.add([plate, badge]);
-      }
+      // 받을 것·읽을 것이 남은 탭은 공용 붉은 점 한 장이 말한다 — 숫자 판을 따로 세우던 때는 이 창만 다른 양식이었다.
+      if (pending > 0) new NotificationDot(this.scene, label, { x: layout.tab.width / 2 - 16, y: -layout.tab.height / 2 + 8 });
     });
     const claimable = this.manager.claimableIds(this.result);
     const unreadNotices = this.result.mails.filter((mail) => mailTabOf(mail) === this.tab && !mail.read).map(({ id }) => id);

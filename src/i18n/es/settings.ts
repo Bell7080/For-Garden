@@ -45,6 +45,8 @@ export const SETTINGS_ES = {
   "settings.play.powerSaving": "Ahorro de energía",
   "settings.play.lobbyAtmosphere": "Iluminación del vestíbulo",
   "settings.play.graphicsQuality": "Calidad gráfica",
+  "settings.play.antialias": "Antialiasing",
+  "settings.play.antialiasNote": "Desactivarlo aligera la carga, pero los bordes se ven más ásperos. Se aplica desde el próximo inicio.",
   "settings.play.quality.high": "Alta",
   "settings.play.quality.balanced": "Equilibrada",
   "settings.play.quality.low": "Baja",

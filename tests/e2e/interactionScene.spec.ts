@@ -17,8 +17,7 @@ const CLAIM = INTERACTION_CITY_POPUP_SPOTS.primary(false);
 /** 로비부터 교류 층·파견·재접속 복원·완료 수령까지 실제 사용자 경로로 검증한다. */
 test("층을 눌러 파견을 보내고 재접속 뒤 완료 보상까지 받는다", async ({ page }) => {
   await startAfterOpening(page);
-  await tap(page, CENTER.x, CENTER.y);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapUntil(page, CENTER.x, CENTER.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "lobby");
   await tapUntil(page, 250, 1340, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "interaction");
 
   // 층 → 도시 쪽지 → 칸을 눌러 배치 → 자동 배치 → 파견 순으로 실제 손이 가는 길을 따른다.
@@ -39,8 +38,7 @@ test("층을 눌러 파견을 보내고 재접속 뒤 완료 보상까지 받는
   }, SAVE_STORAGE_KEY);
   await page.reload();
   await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);
-  await tap(page, CENTER.x, CENTER.y);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapUntil(page, CENTER.x, CENTER.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "lobby");
   await tapUntil(page, 250, 1340, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "interaction");
 
   await tapUntil(page, FIRST_LAYER.x, FIRST_LAYER.y, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).some((title) => title.includes("교류부")));
@@ -49,13 +47,27 @@ test("층을 눌러 파견을 보내고 재접속 뒤 완료 보상까지 받는
   await expect
     .poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).interaction.slots[0]?.claimed, SAVE_STORAGE_KEY))
     .toBe(true);
+  const sent = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).interaction.slots[0].party as string[], SAVE_STORAGE_KEY);
+  if (process.env.CAPTURE_DIR) await page.screenshot({ path: `${process.env.CAPTURE_DIR}/1-reward.png` });
+
+  // 영수증을 닫으면 같은 도시 판이 다시 서고, 다녀온 이들이 제자리에 그대로 서 있다 — 보내기 한 번이면 다시 간다.
+  // 액자를 누르면 재화 안내가 열리므로 영수증 밑동의 빈 자리를 누른다.
+  await tap(page, CENTER.x, 1820);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).toEqual(expect.arrayContaining([expect.stringContaining("교류부")]));
+  await page.waitForTimeout(900);
+  if (process.env.CAPTURE_DIR) await page.screenshot({ path: `${process.env.CAPTURE_DIR}/2-reopened.png` });
+  await tap(page, CLAIM.x, CLAIM.y);
+  await expect
+    .poll(() => page.evaluate((key) => (JSON.parse(localStorage.getItem(key)!).interaction.slots as { claimed: boolean; party: string[] }[]).find((slot) => slot && !slot.claimed)?.party ?? null, SAVE_STORAGE_KEY))
+    .toEqual(sent);
+  await page.waitForTimeout(900);
+  if (process.env.CAPTURE_DIR) await page.screenshot({ path: `${process.env.CAPTURE_DIR}/3-resent.png` });
 });
 
 /** 층은 창 안에서만 흐르고 우하단 뒤로가기 자리를 침범하지 않는다. */
 test("잠긴 층도 목록에 남아 다음에 열릴 곳을 보여 준다", async ({ page }) => {
   await startAfterOpening(page);
-  await tap(page, CENTER.x, CENTER.y);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapUntil(page, CENTER.x, CENTER.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "lobby");
   await tapUntil(page, 250, 1340, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "interaction");
   // 서버 refresh 뒤 카드 렌더가 완료된 관찰값을 기다려 씬 이름만 먼저 바뀐 프레임을 읽지 않는다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.interactionLayers?.cards.length ?? 0)).toBeGreaterThan(0);

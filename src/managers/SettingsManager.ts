@@ -4,6 +4,7 @@ import { createDefaultSettings, deviceGraphicsQuality, normalizeSettings, type D
 import { sameContentSeen, type ContentSeenState } from "../core/contentFresh";
 import { normalizeRosterView, rosterViewFor, sameRosterView, type RosterViewScreen } from "../core/rosterViewMemory";
 import type { RosterView } from "../core/rosterView";
+import { interactionPartyToRemember } from "../core/interactionPartyMemory";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type GameSettings, type Session } from "../state/session";
 import { platformFeedback, type HapticPattern, type PlatformFeedback, type ScheduledNotification } from "../api/PlatformFeedback";
@@ -62,6 +63,19 @@ export class SettingsManager extends EventTarget {
     const current = this.get().game.dungeonTiers;
     if (current[dungeon] === tierId) return;
     this.update({ game: { dungeonTiers: { ...current, [dungeon]: tierId } } });
+  }
+
+  /** 그 교류 도시에 마지막으로 보낸 파견대의 자리(`core/interactionPartyMemory.ts`). 기억이 없으면 `undefined`다. */
+  interactionParty(cityId: string): readonly (string | null)[] | undefined {
+    return this.get().game.interactionParties[cityId];
+  }
+
+  /** 교류 도시에 보낸 파견대를 자리째 기억한다. 같은 값이면 저장하지 않는다. */
+  rememberInteractionParty(cityId: string, party: readonly (string | null)[]): void {
+    const current = this.get().game.interactionParties;
+    const next = interactionPartyToRemember(party);
+    if (!next || JSON.stringify(current[cityId] ?? null) === JSON.stringify(next)) return;
+    this.update({ game: { interactionParties: { ...current, [cityId]: next } } });
   }
 
   /** 렐릭 목록 화면이 지금 세울 필터·정렬(`core/rosterViewMemory.ts`). 기억이 없거나 쓸 수 없는 값이면 기본값이다. */

@@ -67,6 +67,7 @@ import { sceneInfoManager, type InfoManager } from "./info";
 import { pressIn, pressOut } from "./pressFeedback";
 import { isTap } from "./tapGuard";
 import { addScrollHint } from "./ScrollHint";
+import { restoreInteractionParty } from "../core/interactionPartyMemory";
 
 /**
  * 도시 한 곳의 쪽지 — **발굴 배치와 같은 구조**다.
@@ -176,7 +177,9 @@ export class InteractionCityPopup {
     this.onChanged = hooks.onChanged;
     this.onOpenJournal = hooks.onOpenJournal;
     this.now = hooks.now ?? (() => Date.now());
-    this.party = toFormationSlots(view.state === "idle" ? [] : (view.dispatch?.party ?? []), 3);
+    // 비어 있는 도시는 **마지막으로 보낸 자리 그대로** 선다 — 받고 나서도 배치가 빠지지 않아 보내기
+    // 한 번이면 같은 구성으로 다시 간다. 잃었거나 다른 도시에 나가 있는 이만 그 칸이 빈다.
+    this.party = view.state === "idle" ? this.rememberedParty(view) : toFormationSlots(view.dispatch?.party ?? [], 3);
     this.selectedSlot = undefined;
     this.editing = false;
     this.gridScrollY = 0;
@@ -433,6 +436,14 @@ export class InteractionCityPopup {
     this.editing = false;
     this.selectedSlot = undefined;
     this.render();
+  }
+
+  /** 그 도시에 마지막으로 보낸 편성 중 지금 세울 수 있는 이. 서버 규칙은 보낼 때 그대로 다시 본다. */
+  private rememberedParty(view: InteractionLayerView): (string | null)[] {
+    const dispatches = session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null);
+    const away = relicsAwayOnInteraction(dispatches);
+    const available = new Set([...session.owned].filter((id) => !away.has(id)));
+    return restoreInteractionParty(settingsManager.interactionParty(view.city.id), available, view.city.partySize.max);
   }
 
   /** 지금 세운 편성의 특성. 예상 보상과 보내기 버튼의 배율이 같은 값을 읽는다. */
@@ -914,6 +925,8 @@ export class InteractionCityPopup {
       // 보내는 순간에만 한 번 뛴다 — 서버가 답하는 동안 배웅이 지나가므로 기다림이 늘지 않는다.
       const farewell = this.hopFarewell();
       await Promise.all([this.manager.start(view.city.id, party), farewell]);
+      // 자리째 기억한다 — 받은 뒤 이 판이 다시 열리면 같은 칸에 같은 이가 선다.
+      settingsManager.rememberInteractionParty(view.city.id, this.party);
       // **판을 닫지 않는다.** 보낸 뒤 목록으로 튕겨 나가면 방금 보낸 파견이 어떻게 되었는지
       // 확인하려고 그 층을 다시 눌러야 한다. 같은 판이 그 자리에서 「나가 있음」으로 바뀌고,
       // 뒤의 목록만 조용히 맞춘다.
@@ -923,6 +936,14 @@ export class InteractionCityPopup {
     } catch {
       if (this.body) this.popups.confirm({ title: view.city.displayName, message: t("lab.networkError"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
     } finally { this.busy = false; this.render(); }
+  }
+
+  /** 받은 뒤 같은 도시 판을 다시 연다. 그 사이 화면을 떠났거나 도시가 비어 있지 않으면 열지 않는다. */
+  private reopenIdle(cityId: string, hooks: { onChanged?: () => void; onOpenJournal?: (cityId: string) => void; now: () => number }): void {
+    if (!this.scene.sys.isActive()) return;
+    const dispatches = session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null);
+    const next = interactionLayerViews(session.playerResearch.level, dispatches, hooks.now()).find((view) => view.city.id === cityId);
+    if (next?.state === "idle") this.open(next, hooks);
   }
 
   /** 서 있는 SD가 한 번씩 폴짝 뛴다. 칸마다 박자가 달라 셋이 한 몸으로 흔들리지 않는다. */
@@ -951,9 +972,15 @@ export class InteractionCityPopup {
       this.popups.closeAll();
       this.onChanged?.();
       // 영수증은 공용 표기 한 장이 그린다 — 재화 키를 아이콘으로 바꾸는 표도 그쪽이 갖는다.
+      // 영수증을 닫으면 **같은 도시 판이 비어 있는 채로 다시 선다** — 방금 다녀온 이들이 제 자리에
+      // 그대로 서 있어 보내기 한 번이면 곧바로 다시 간다(`rememberedParty`). 목록으로 나가려면 판 밖을 누른다.
+      const hooks = { onChanged: this.onChanged, onOpenJournal: this.onOpenJournal, now: this.now };
+      const cityId = dispatch.cityId;
       openRewardPopup(this.scene, this.popups, {
         title: t("interaction.rewardTitle"),
         items: currencyRecordToRewardItems(Object.fromEntries(response.granted.map(({ currency, amount }) => [currency, amount]))),
+        // 영수증이 닫히는 처리 안에서 판을 다시 열면 같은 층이 닫힘과 열림을 겹쳐 받는다 — 한 박자 뒤로 민다.
+        onConfirm: () => { this.scene.time.delayedCall(0, () => this.reopenIdle(cityId, hooks)); },
       });
     } finally {
       // 실패해도 버튼이 「수령 중…」에 갇히지 않게 다시 그린다. 성공 뒤에는 판이 닫혀 render가 아무것도 하지 않는다.

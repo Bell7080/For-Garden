@@ -7,6 +7,7 @@ import { DEFAULT_LANGUAGE, normalizeLanguage } from "./language";
 import { BATTLE_SPEEDS, ULTIMATE_PRESENTATION_MODES } from "./battleControls";
 import { RUNE_TRAIT_VIEWS } from "./runeListFilter";
 import { normalizeRosterViews } from "./rosterViewMemory";
+import { normalizeInteractionParties } from "./interactionPartyMemory";
 
 /** Phaser나 저장소 없이도 서버·테스트가 함께 쓸 수 있는 설정 허용값이다. */
 // 실제 전투 조작의 배속 순환과 저장 허용값을 같은 표로 맞춘다 — 표는 `battleControls.ts` 하나가 갖는다.
@@ -195,7 +196,7 @@ export function createDefaultSettings(): GameSettings {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, rhythmOffsetMs: 0, feedbackAsked: false, adRewardDot: false, ultimatePresentation: "full", textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null, arenaSeen: null, rosterViews: {} },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, rhythmOffsetMs: 0, feedbackAsked: false, adRewardDot: false, ultimatePresentation: "full", textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null, arenaSeen: null, rosterViews: {}, interactionParties: {} },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" },
@@ -272,7 +273,9 @@ export function normalizeSettings(value: unknown): GameSettings {
       // 필드가 없던 저장은 기록 없음 — 처음 들어온 입구가 지금 전적으로 시작한다.
       arenaSeen: normalizeArenaSeen(g.arenaSeen),
       // 필드가 없던 저장은 기억 없음 — 모든 목록이 기본 필터·정렬로 선다. 없어진 옵션은 기본값으로 떨어진다.
-      rosterViews: normalizeRosterViews(g.rosterViews) },
+      rosterViews: normalizeRosterViews(g.rosterViews),
+      // 필드가 없던 저장은 기억 없음 — 교류 판이 빈 칸으로 선다.
+      interactionParties: normalizeInteractionParties(g.interactionParties) },
     // 인증 토큰은 이 모델에 애초에 자리를 만들지 않아 로컬 저장으로 새는 경로를 차단한다.
     account: { provider: allowed(a.provider, ["guest", "google", "apple"] as const, d.account.provider), displayId: typeof a.displayId === "string" && a.displayId.length <= 80 ? a.displayId : d.account.displayId },
   };

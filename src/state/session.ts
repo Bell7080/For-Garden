@@ -110,7 +110,9 @@ export interface GameSettings {
     /** 마지막으로 본 아레나 전적(`core/arenaNotice.ts`). 결과판 없이 끝난 판을 입구가 한 번 알린다 — 기기 기록이다. */
     arenaSeen: import("../core/arenaNotice").ArenaSeenRecord | null;
     /** 렐릭 목록 화면마다 마지막으로 걸어 둔 필터·정렬(`core/rosterViewMemory.ts`). 비었으면 기본값이다 — 기기 선호다. */
-    rosterViews: import("../core/rosterViewMemory").StoredRosterViews };
+    rosterViews: import("../core/rosterViewMemory").StoredRosterViews;
+    /** 교류 도시마다 마지막으로 보낸 파견대(`core/interactionPartyMemory.ts`). 받은 뒤에도 그 자리에 다시 선다 — 기기 선호다. */
+    interactionParties: import("../core/interactionPartyMemory").StoredInteractionParties };
   account: { provider: "guest" | "google" | "apple"; displayId: string };
 }
 

@@ -40,6 +40,11 @@ export interface TradePackageView {
   /** 남은 횟수가 없거나 서버가 막은 상품. 카드는 눌리지 않고 눌러 둔 채로 남는다. */
   soldOut: boolean;
   disabledReason?: string;
+  /**
+   * 로테이션 칸의 상품이 다음 상품으로 바뀌는 시각. 카드는 꼬리표 옆에 「교체까지」 남은 시간을 붉게 센다.
+   * 계정당 한정처럼 돌지 않는 상품은 비운다 — 기한 없이 그 자리에 남는다.
+   */
+  rotatesAt?: string;
 }
 
 /** 서버 상품을 카드가 그대로 그릴 수 있는 표시 계약으로 바꾼다. */
@@ -60,6 +65,8 @@ export function tradePackageViews(products: readonly ProductDto[]): TradePackage
       originalCost: product.acquisition.kind === "currency" && product.acquisition.currency === "gems" && percent !== undefined ? Math.round(tradeGemValue(product.grants)) : undefined,
       soldOut: !product.purchasable || product.remaining <= 0,
       disabledReason: product.disabledReason,
+      // 돌지 않는 상품의 노출 끝(먼 미래)은 남은 시간으로 세우지 않는다.
+      rotatesAt: product.refresh === "daily" || product.refresh === "weekly" ? product.visibleUntil : undefined,
     };
   });
 }

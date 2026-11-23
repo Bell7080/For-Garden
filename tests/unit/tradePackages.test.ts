@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { PRODUCTS } from "../../src/data/shopCatalog";
-import { isTradePackage, TRADE_GEM_RATE, TRADE_PACKAGES, tradeGemValue, tradePackageLimitLabel, tradePackageValuePercent } from "../../src/data/tradePackages";
+import { rotationOffer, rotationPeriodEnd } from "../../src/core/shopRotation";
+import { ROTATION_SLOTS, rotationSlot } from "../../src/data/runeRotation";
+import { isTradePackage, TRADE_DISPLAY_MAX, TRADE_GEM_RATE, TRADE_PACKAGES, tradeGemValue, tradePackageLimitLabel, tradePackageValuePercent } from "../../src/data/tradePackages";
 import { tradePackageCardMetrics, tradePackageCenters, tradePackageLayout, tradePackageScroll } from "../../src/ui/tradePackageLayout";
 import { insidePopupBody } from "../../src/ui/staminaPopupLayout";
 import { tradePackageViews } from "../../src/ui/tradePopupModel";
 
 describe("무역 패키지 운영 데이터", () => {
-  it("은 네 종을 젬으로만 받고 값보다 많이 준다", () => {
-    expect(TRADE_PACKAGES).toHaveLength(4);
+  it("은 열두 종을 젬으로만 받고 값보다 많이 준다", () => {
+    expect(TRADE_PACKAGES).toHaveLength(12);
     for (const pack of TRADE_PACKAGES) {
       expect(pack.storefront).toBe("trade");
       // 무역은 프리미엄이 아니다 — 플랫폼 결제는 이 전시장에 오지 않는다.
@@ -19,7 +21,7 @@ describe("무역 패키지 운영 데이터", () => {
       expect(pack.defaultQuantity).toBe(1);
     }
     // 검수 장부의 환산값이 시세표와 어긋나면 화면의 가치 %가 거짓이 된다.
-    expect(TRADE_PACKAGES.map((pack) => tradePackageValuePercent(pack.acquisition, pack.grants))).toEqual([257, 200, 175, 220]);
+    expect(TRADE_PACKAGES.map((pack) => tradePackageValuePercent(pack.acquisition, pack.grants))).toEqual([257, 267, 240, 200, 225, 175, 180, 120, 120, 220, 220, 220]);
   });
 
   it("은 계정당 1~3회 제한과 갱신 주기로만 운영된다", () => {
@@ -29,9 +31,9 @@ describe("무역 패키지 운영 데이터", () => {
       expect(["once", "daily", "weekly"]).toContain(pack.refresh);
     }
     // 다시 오지 않는 계정당 1회가 가장 후해야 한 번뿐인 값이 선다.
-    const once = TRADE_PACKAGES.find(({ refresh }) => refresh === "once")!;
+    const onces = TRADE_PACKAGES.filter(({ refresh }) => refresh === "once");
     const repeatable = TRADE_PACKAGES.filter(({ refresh }) => refresh !== "once");
-    for (const pack of repeatable) {
+    for (const once of onces) for (const pack of repeatable) {
       expect(tradePackageValuePercent(once.acquisition, once.grants)!).toBeGreaterThan(tradePackageValuePercent(pack.acquisition, pack.grants)!);
     }
   });
@@ -63,6 +65,47 @@ describe("무역 패키지 운영 데이터", () => {
   });
 });
 
+describe("무역 로테이션", () => {
+  const weekKey = (offset: number) => { const d = new Date("2026-11-23T00:00:00Z"); d.setUTCDate(d.getUTCDate() + offset * 7); return d.toISOString().slice(0, 10); };
+
+  it("은 계정당 한정만 늘 서고 나머지는 모두 로테이션 칸에 묶인다", () => {
+    for (const pack of TRADE_PACKAGES) {
+      if (pack.refresh === "once") { expect(pack.rotationSlot).toBeUndefined(); continue; }
+      const slot = rotationSlot(pack.rotationSlot!);
+      expect(slot, pack.id).toBeDefined();
+      // 칸의 기간과 상품의 갱신 주기가 같아야 서버가 같은 기간 키로 노출·구매 횟수를 센다.
+      expect(slot!.period).toBe(pack.refresh);
+      expect(slot!.candidates).toContain(pack.id);
+    }
+    // 칸의 후보는 모두 실제 무역 상품이다.
+    for (const slot of ROTATION_SLOTS.filter(({ id }) => id.startsWith("trade-"))) {
+      for (const id of slot.candidates) expect(TRADE_PACKAGES.some((pack) => pack.id === id && pack.rotationSlot === slot.id), id).toBe(true);
+    }
+    // 창 규격은 한 번에 설 수 있는 최대 장수(계정당 3 + 칸 4)다.
+    expect(TRADE_DISPLAY_MAX).toBe(7);
+  });
+
+  it("은 주마다 후보가 바뀌고, 연구 칸은 가끔 열리되 4주 넘게 닫히지 않는다", () => {
+    const supply = rotationSlot("trade-weekly-supply")!;
+    const picks = new Set(Array.from({ length: 26 }, (_, i) => rotationOffer(supply, weekKey(i))));
+    expect(picks.has(null)).toBe(false);
+    expect(picks.size).toBe(2);
+    const research = rotationSlot("trade-weekly-research")!;
+    let closed = 0; let opened = 0;
+    for (let i = 0; i < 52; i += 1) {
+      if (rotationOffer(research, weekKey(i)) === null) { closed += 1; expect(closed).toBeLessThanOrEqual(4); } else { closed = 0; opened += 1; }
+    }
+    // 35% + 4주 보정 — 한 해에 대략 열에서 스물다섯 주.
+    expect(opened).toBeGreaterThanOrEqual(10);
+    expect(opened).toBeLessThanOrEqual(26);
+  });
+
+  it("은 기간이 끝나는 시각을 다음 날·다음 월요일 00:00 UTC로 준다", () => {
+    expect(rotationPeriodEnd("daily", "2026-11-23")).toBe("2026-11-24T00:00:00.000Z");
+    expect(rotationPeriodEnd("weekly", "2026-11-23")).toBe("2026-11-30T00:00:00.000Z");
+  });
+});
+
 describe("무역 전시장 표시 계약", () => {
   const dto = (overrides: Partial<ReturnType<typeof baseDto>> = {}) => ({ ...baseDto(), ...overrides });
   function baseDto() {
@@ -77,6 +120,10 @@ describe("무역 전시장 표시 계약", () => {
       // 원가는 받는 것을 따로 샀을 때의 젬 값이다 — 값 줄 옆에 그어 지운 채 선다.
       refresh: "weekly", tag: "주간 특가", originalCost: 300,
     });
+    // 노출 끝이 곧 교체 시각이다 — 돌아가는 상품만 그 시각을 넘긴다.
+    expect(tradePackageViews([dto({ visibleUntil: "2026-11-30T00:00:00.000Z" })])[0].rotatesAt).toBe("2026-11-30T00:00:00.000Z");
+    const once = { ...TRADE_PACKAGES[0], remaining: 1, purchasable: true };
+    expect(tradePackageViews([once])[0].rotatesAt).toBeUndefined();
     expect(view.grants).toEqual([{ currency: "cheesecake", amount: 600 }]);
   });
 

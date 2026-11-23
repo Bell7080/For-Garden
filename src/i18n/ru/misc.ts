@@ -335,6 +335,7 @@ export const MISC_RU = {
   "trade.tag.monthly": "Предложение месяца",
   "trade.tag.none": "Всегда в продаже",
   "trade.soldOut": "РАСПРОДАНО",
+  "trade.rotatesIn": "Смена через {time}",
   "trade.disconnected": "Сигнал потерян",
   "trade.reconnect": "Переподключить",
   "trade.title": "Торговля",

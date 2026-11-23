@@ -372,6 +372,7 @@ export const MISC_KO = {
   "trade.tag.monthly": "월간 특가",
   "trade.tag.none": "상시 판매",
   "trade.soldOut": "매진",
+  "trade.rotatesIn": "교체까지 {time}",
   "trade.disconnected": "교신 두절",
   "trade.reconnect": "재접속",
   "trade.title": "무역",

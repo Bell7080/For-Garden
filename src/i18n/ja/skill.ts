@@ -25,6 +25,8 @@ export const SKILL_JA = {
   "skill.keywordKind.state": "状態",
   "skill.keywordKind.rule": "ルール",
   "skill.keywordKind.summon": "召喚獣",
+  "skill.keywordKind.odds": "確率",
+  "skill.keywordKind.runeTrait": "ルーン特性",
 
   "skill.target.single": "敵1体",
   "skill.target.nearbyEnemies": "自分の周囲のすべての敵",

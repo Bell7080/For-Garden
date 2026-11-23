@@ -20,6 +20,8 @@ export const SKILL_EN = {
   "skill.keywordKind.state": "State",
   "skill.keywordKind.rule": "Rule",
   "skill.keywordKind.summon": "Summon",
+  "skill.keywordKind.odds": "Odds",
+  "skill.keywordKind.runeTrait": "Rune Trait",
   "skill.target.single": "one enemy",
   "skill.target.nearbyEnemies": "every enemy around itself",
   "skill.target.splitShot": "the target and enemies around it",

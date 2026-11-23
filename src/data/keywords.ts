@@ -12,7 +12,7 @@ import { registerDataText } from "../i18n";
  * 설명문에서는 `[[keyword-id]]` 또는 `[[keyword-id|보여 줄 말]]`로 표시한다.
  */
 /** 쪽지 머리에 뜨는 분류. 값은 표기가 아니라 문구 표가 읽는 ID다. */
-export type KeywordKind = "debuff" | "buff" | "state" | "rule" | "summon";
+export type KeywordKind = "debuff" | "buff" | "state" | "rule" | "summon" | "odds" | "runeTrait";
 
 /**
  * 쪽지 본문 아래에 이어지는 한 칸. 머리(분류 + 이름)와 본문이 짝을 이룬다.

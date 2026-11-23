@@ -33,6 +33,8 @@ export const SKILL_KO = {
   "skill.keywordKind.state": "상태",
   "skill.keywordKind.rule": "규칙",
   "skill.keywordKind.summon": "소환수",
+  "skill.keywordKind.odds": "확률",
+  "skill.keywordKind.runeTrait": "룬 특성",
 
   // ── 요약줄의 대상 ────────────────────────────────────────────────────────
   "skill.target.single": "적 한 명",

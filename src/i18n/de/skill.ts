@@ -19,6 +19,8 @@ export const SKILL_DE = {
   "skill.keywordKind.state": "Zustand",
   "skill.keywordKind.rule": "Regel",
   "skill.keywordKind.summon": "Beschwörung",
+  "skill.keywordKind.odds": "Chance",
+  "skill.keywordKind.runeTrait": "Runenmerkmal",
   "skill.target.single": "ein Gegner",
   "skill.target.nearbyEnemies": "alle Gegner in der Nähe",
   "skill.target.splitShot": "das Ziel und Gegner darum",

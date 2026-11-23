@@ -19,6 +19,8 @@ export const SKILL_PT_BR = {
   "skill.keywordKind.state": "Estado",
   "skill.keywordKind.rule": "Regra",
   "skill.keywordKind.summon": "Invocação",
+  "skill.keywordKind.odds": "Chance",
+  "skill.keywordKind.runeTrait": "Traço de runa",
   "skill.target.single": "um inimigo",
   "skill.target.nearbyEnemies": "todos os inimigos ao redor",
   "skill.target.splitShot": "o alvo e os inimigos próximos",

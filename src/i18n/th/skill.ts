@@ -19,6 +19,8 @@ export const SKILL_TH = {
   "skill.keywordKind.state": "สถานะ",
   "skill.keywordKind.rule": "กฎ",
   "skill.keywordKind.summon": "สัตว์อัญเชิญ",
+  "skill.keywordKind.odds": "โอกาส",
+  "skill.keywordKind.runeTrait": "คุณลักษณะรูน",
   "skill.target.single": "ศัตรู 1 ตัว",
   "skill.target.nearbyEnemies": "ศัตรูทั้งหมดรอบตัว",
   "skill.target.splitShot": "เป้าหมายและศัตรูรอบ ๆ",

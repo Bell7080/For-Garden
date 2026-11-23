@@ -19,6 +19,8 @@ export const SKILL_VI = {
   "skill.keywordKind.state": "Trạng thái",
   "skill.keywordKind.rule": "Quy tắc",
   "skill.keywordKind.summon": "Triệu hồi",
+  "skill.keywordKind.odds": "Xác suất",
+  "skill.keywordKind.runeTrait": "Đặc tính Rune",
   "skill.target.single": "một kẻ địch",
   "skill.target.nearbyEnemies": "mọi kẻ địch quanh bản thân",
   "skill.target.splitShot": "mục tiêu và kẻ địch xung quanh",

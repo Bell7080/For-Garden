@@ -18,6 +18,8 @@
 "skill.keywordKind.state": ["状态", "สถานะ", "Trạng thái", "Status", "Estado", "Estado", "Zustand", "Состояние"],
 "skill.keywordKind.rule": ["规则", "กฎ", "Quy tắc", "Aturan", "Regla", "Regra", "Regel", "Правило"],
 "skill.keywordKind.summon": ["召唤物", "สัตว์อัญเชิญ", "Triệu hồi", "Panggilan", "Invocación", "Invocação", "Beschwörung", "Призыв"],
+"skill.keywordKind.odds": ["概率", "โอกาส", "Xác suất", "Peluang", "Probabilidad", "Chance", "Chance", "Шанс"],
+"skill.keywordKind.runeTrait": ["符文特性", "คุณลักษณะรูน", "Đặc tính Rune", "Sifat Rune", "Rasgo de runa", "Traço de runa", "Runenmerkmal", "Черта руны"],
 "skill.target.single": ["单个敌人", "ศัตรู 1 ตัว", "một kẻ địch", "satu musuh", "un enemigo", "um inimigo", "ein Gegner", "один враг"],
 "skill.target.nearbyEnemies": ["自身周围的所有敌人", "ศัตรูทั้งหมดรอบตัว", "mọi kẻ địch quanh bản thân", "semua musuh di sekitarnya", "todos los enemigos a su alrededor", "todos os inimigos ao redor", "alle Gegner in der Nähe", "все враги вокруг"],
 "skill.target.splitShot": ["目标及其周围的敌人", "เป้าหมายและศัตรูรอบ ๆ", "mục tiêu và kẻ địch xung quanh", "target dan musuh di sekitarnya", "el objetivo y los enemigos cercanos", "o alvo e os inimigos próximos", "das Ziel und Gegner darum", "цель и враги рядом"],

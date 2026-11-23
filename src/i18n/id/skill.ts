@@ -19,6 +19,8 @@ export const SKILL_ID = {
   "skill.keywordKind.state": "Status",
   "skill.keywordKind.rule": "Aturan",
   "skill.keywordKind.summon": "Panggilan",
+  "skill.keywordKind.odds": "Peluang",
+  "skill.keywordKind.runeTrait": "Sifat Rune",
   "skill.target.single": "satu musuh",
   "skill.target.nearbyEnemies": "semua musuh di sekitarnya",
   "skill.target.splitShot": "target dan musuh di sekitarnya",

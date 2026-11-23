@@ -19,6 +19,8 @@ export const SKILL_RU = {
   "skill.keywordKind.state": "Состояние",
   "skill.keywordKind.rule": "Правило",
   "skill.keywordKind.summon": "Призыв",
+  "skill.keywordKind.odds": "Шанс",
+  "skill.keywordKind.runeTrait": "Черта руны",
   "skill.target.single": "один враг",
   "skill.target.nearbyEnemies": "все враги вокруг",
   "skill.target.splitShot": "цель и враги рядом",

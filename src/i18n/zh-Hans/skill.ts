@@ -19,6 +19,8 @@ export const SKILL_ZH_HANS = {
   "skill.keywordKind.state": "状态",
   "skill.keywordKind.rule": "规则",
   "skill.keywordKind.summon": "召唤物",
+  "skill.keywordKind.odds": "概率",
+  "skill.keywordKind.runeTrait": "符文特性",
   "skill.target.single": "单个敌人",
   "skill.target.nearbyEnemies": "自身周围的所有敌人",
   "skill.target.splitShot": "目标及其周围的敌人",

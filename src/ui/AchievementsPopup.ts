@@ -27,7 +27,7 @@ import { metricShortcut } from "../data/objectiveShortcuts";
 import { shapeClipMask } from "./popupArt";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { RewardFrame } from "./RewardFrame";
-import { openRewardPopup } from "./RewardPopup";
+import { cosmeticRewardItems, openRewardPopup } from "./RewardPopup";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, PROFILE_MODIFIER_RARITY_COLOR, textStyle } from "./theme";
 import { ACHIEVEMENT_CATEGORY_TONE, ACHIEVEMENTS_POPUP_LAYOUT, achievementListContentHeight, achievementRowY, achievementsTabStrip, orderAchievements, type AchievementTab } from "./achievementsPopupLayout";
@@ -377,11 +377,12 @@ export class AchievementsPopup {
       this.data = await this.api.getAchievements().catch(() => this.data);
       this.render();
       await notificationManager.refresh().catch(() => undefined);
-      const items = result.granted.filter(({ amount }) => amount > 0).map(({ currency, amount }) => ({ icon: CURRENCY_ICON_BY_WALLET[currency], amount }));
-      const names = result.newModifierIds.map((id) => PROFILE_MODIFIERS.find((modifier) => modifier.id === id)?.displayName).filter((name): name is string => Boolean(name));
-      // 열린 수식어는 판 밖 아래 한 줄로 알린다 — 재화가 아니라 이름이라 액자로 세우지 않는다.
-      const footnote = names.length > 0 ? names.map((name) => t("achievement.modifierEarned", { name })).join("\n") : undefined;
-      if (items.length) openRewardPopup(this.scene, this.popups, { title: t("achievement.rewardTitle"), items, footnote });
+      // 열린 수식어·테두리도 재화와 같은 칸으로 선다 — 판 밖 글 한 줄로 알리면 받은 물건으로 읽히지 않는다.
+      const items = [
+        ...result.granted.filter(({ amount }) => amount > 0).map(({ currency, amount }) => ({ icon: CURRENCY_ICON_BY_WALLET[currency], amount })),
+        ...cosmeticRewardItems({ modifierIds: result.newModifierIds, frameIds: result.newFrameIds }),
+      ];
+      if (items.length) openRewardPopup(this.scene, this.popups, { title: t("achievement.rewardTitle"), items });
     } finally {
       this.claiming = false;
       this.render();

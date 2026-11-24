@@ -294,6 +294,8 @@ export const MISC_EN = {
   "battle.profile.ferocity": "Ferocity {value} / {max}",
   "reward.title": "Rewards Gained",
   "reward.note.frame": "Profile Frame",
+  "reward.note.modifier": "Profile Title",
+  "reward.cosmetic.owned": "Owned",
   "reward.note.item": "Item",
   "reward.tapHint": "Tap the screen to confirm",
   "enemyPreview.title": "Enemy Formation",

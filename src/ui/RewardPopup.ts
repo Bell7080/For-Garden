@@ -6,16 +6,18 @@ import { setDebugRewardPopup } from "../debug";
 import { chipPoints, drawHairline, drawLayer } from "./holo";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { findProfileFrame } from "../data/profileFrames";
+import { findProfileModifier } from "../data/profileModifiers";
+import { addModifierNameTag, addOwnedCosmeticBand } from "./cosmeticRewardIcon";
 import { playerProfileDisplay, profileAvatarContent } from "../state/playerProfile";
 import { squeezeTextToWidth } from "./textFit";
 import type { PopupLayer } from "./PopupLayer";
-import { COLOR, textStyle } from "./theme";
+import { COLOR, PROFILE_MODIFIER_RARITY_COLOR, textStyle } from "./theme";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { drawGlyph } from "./glyphs";
 import { FaceFrame } from "./FaceFrame";
 import { RARITY_TONE } from "./rarityMark";
 import { getRelic } from "../data/relics";
-import type { RewardPopupItem } from "./rewardPopupModel";
+import { isCosmeticRewardItem, type RewardPopupItem } from "./rewardPopupModel";
 import { sortRewardItems } from "./rewardOrder";
 import { addFramedIcon, hasGuideOpeners } from "./itemFrame";
 import { bindCurrencyGuide } from "./currencyGuideEntry";
@@ -36,7 +38,7 @@ import { greatSuccessPulses } from "../core/greatSuccess";
 import { GREAT_SUCCESS_FX, greatSuccessReduced, playGreatSuccess, type GreatSuccessFrame } from "./greatSuccessFx";
 
 // 기존 호출부는 UI 진입점 하나만 알면 되도록 순수 표시 변환도 함께 다시 내보낸다.
-export { currencyRecordToRewardItems, dungeonRewardItems, productGrantsToRewardItems, type RewardPopupItem } from "./rewardPopupModel";
+export { cosmeticRewardItems, currencyRecordToRewardItems, dungeonRewardItems, productGrantsToRewardItems, type RewardPopupItem } from "./rewardPopupModel";
 
 /** 상자 개봉·임무 수령·발굴 수확이 공유할 수 있는 한 개의 확정 보상 표기다. */
 export interface RewardPopupOptions {
@@ -163,7 +165,14 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
       strip.add(holder);
       const framed = addRewardCell(scene, popups, holder, item);
       if (greatCount > 0 && framed && (item.greatBonus ?? 0) > 0) great.push({ holder: framed, size: REWARD_POPUP.frame, amount: item.amount, bonus: item.greatBonus ?? 0 });
-      if (item.label) strip.add(scene.add.text(cell.x, cell.labelY, item.label, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
+      if (item.label) {
+        // 꾸미기 이름은 그 칸이 무엇인지 말하는 유일한 글이라 한 단계 굵고, 칸 폭을 넘지 않게 누른다.
+        const cosmetic = isCosmeticRewardItem(item);
+        const style = cosmetic ? textStyle({ role: "emphasis", size: 22, color: rewardLabelColor(item) }) : textStyle({ role: "body", size: 18, color: rewardLabelColor(item) });
+        const label = scene.add.text(cell.x, cell.labelY, item.label, style).setOrigin(0.5);
+        if (cosmetic) label.setStroke("#05070a", 4);
+        strip.add(squeezeTextToWidth(label, Math.min(layout.gap - 12, REWARD_POPUP.frame + 30), 0.6));
+      }
       if (reduced) return;
       // 위에서 아래로, 줄 순서대로 떨어지듯 쌓인다. 첫 박자는 트윈의 `delay`가 기다린다(씬 시계가 아니다).
       const delay = index * REWARD_POPUP_GRID.staggerMs;
@@ -183,7 +192,9 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
       playGreatSuccess(scene, strip, great, greatSuccessPulses(greatCount), { x: 0, y: (layout.cells[0]?.y ?? 0) - REWARD_POPUP.frame / 2 });
     }
 
-    if (items.length > 0) body.add(drawHairline(scene, 0, 108 + shift + layout.growHalf, 700, { color: COLOR.accent, alpha: 0.3 }));
+    // 이름 줄이 선 판은 구분선을 그 아래로 내린다 — 같은 높이면 선이 이름 글자를 가로지른다.
+    const hairlineY = items.some((item) => item.label) ? 128 : 108;
+    if (items.length > 0) body.add(drawHairline(scene, 0, hairlineY + shift + layout.growHalf, 700, { color: COLOR.accent, alpha: 0.3 }));
     if (options.footnote) {
       body.add(scene.add.text(0, height / 2 + 54, options.footnote, textStyle({ role: "display", size: 38, color: COLOR.sortieText }))
         .setOrigin(0.5)
@@ -222,19 +233,41 @@ function addRewardCell(scene: Phaser.Scene, popups: PopupLayer, holder: Phaser.G
     if (rune) addPressOpen(scene, holder, size, () => openRuneInfoPopup(scene, popups, { runeInstanceId: rune.instanceId }));
     return undefined;
   }
+  // 꾸미기(테두리·수식어)는 하나뿐이라 수량을 세지 않는다 — 「1」이 서면 재화처럼 읽힌다.
+  const cosmetic = isCosmeticRewardItem(item);
   // 액자·그림·그늘·수량은 어디서나 같은 공용 프리팹 한 장이 그린다. 증가량인 것은 창 제목이
   // 이미 말하므로 `+`를 붙이지 않는다. 재화·아이템 그림은 이 프리팹이 안내창까지 잇는다.
-  const framed = addFramedIcon(scene, holder, 0, 0, size, texture, { amount: formatCurrency(item.amount) });
+  const framed = addFramedIcon(scene, holder, 0, 0, size, texture, cosmetic ? {} : { amount: formatCurrency(item.amount) });
   addRewardExpiryTag(scene, framed, size, item);
   // 계정 장식처럼 전용 텍스처가 없는 결과만 기존 홀로그램 글리프 체계로 대신하고, 이름 쪽지를 연다.
   if (typeof item.icon !== "string") {
-    const frame = item.frameId ? findProfileFrame(item.frameId) : undefined;
-    // 테두리는 상징 그림이 아니라 **내 얼굴에 그 테두리를 씌운 모습**으로 선다 — 무엇을 받았는지가 곧 보인다.
-    if (frame) framed.addAt(selfAvatar(scene, frame.id, size * 0.62), 1);
-    else framed.addAt(drawGlyph(scene, item.icon.key, 0, 0, size * 0.56, COLOR.accent), 1);
+    framed.addAt(cosmeticArt(scene, item, size) ?? drawGlyph(scene, item.icon.key, 0, 0, size * 0.56, COLOR.accent), 1);
+    // 이미 가진 꾸미기가 다시 들어오면 액자 밑동이 「보유 중」을 말한다 — 새로 연 것과 갈려 읽힌다.
+    if (item.owned) framed.add(addOwnedCosmeticBand(scene, size));
     addPressOpen(scene, holder, size, () => openPlainNote(scene, popups, item));
   }
   return framed;
+}
+
+/**
+ * 꾸미기 칸의 그림 — 테두리는 **내 얼굴에 그 테두리를 씌운 모습**, 수식어는 그 등급 색의 이름표다.
+ * 무엇을 받았는지가 상징 그림이 아니라 그 꾸미기 자체로 보인다. 꾸미기가 아니면 `undefined`.
+ */
+function cosmeticArt(scene: Phaser.Scene, item: RewardPopupItem, size: number): Phaser.GameObjects.GameObject | undefined {
+  const frame = item.frameId ? findProfileFrame(item.frameId) : undefined;
+  if (frame) return selfAvatar(scene, frame.id, size * 0.62);
+  const modifier = item.modifierId ? findProfileModifier(item.modifierId) : undefined;
+  if (modifier) return addModifierNameTag(scene, size, PROFILE_MODIFIER_RARITY_COLOR[modifier.rarity]);
+  return undefined;
+}
+
+/** 꾸미기 칸 아래 이름 줄의 색 — 테두리는 그 테두리 색, 수식어는 등급 색. 나머지는 흐린 글자. */
+function rewardLabelColor(item: RewardPopupItem): string {
+  const frame = item.frameId ? findProfileFrame(item.frameId) : undefined;
+  if (frame) return hexColor(frame.color);
+  const modifier = item.modifierId ? findProfileModifier(item.modifierId) : undefined;
+  if (modifier) return hexColor(PROFILE_MODIFIER_RARITY_COLOR[modifier.rarity]);
+  return COLOR.inkDim;
 }
 
 function addPressOpen(scene: Phaser.Scene, holder: Phaser.GameObjects.Container, size: number, open: () => void): void {
@@ -262,7 +295,8 @@ const PLAIN_NOTE = { width: 640, height: 500, stageY: -46, stage: 250, avatar: 2
 function openPlainNote(scene: Phaser.Scene, popups: PopupLayer, item: RewardPopupItem): void {
   const N = PLAIN_NOTE;
   const frame = item.frameId ? findProfileFrame(item.frameId) : undefined;
-  const tone = frame?.color ?? COLOR.accent;
+  const modifier = item.modifierId ? findProfileModifier(item.modifierId) : undefined;
+  const tone = frame?.color ?? (modifier ? PROFILE_MODIFIER_RARITY_COLOR[modifier.rarity] : COLOR.accent);
   popups.open({ width: N.width, height: N.height, title: t("reward.title"), closeOnBackdrop: true }, (body) => {
     body.add(drawLayer(scene, 0, N.stageY, chipPoints(N.stage + 120, N.stage, { bevel: { topLeft: 34, bottomRight: 34 } }), {
       fill: frame?.wash ?? 0x141b24, alpha: 0.9, edge: tone, edgeWidth: 3, glow: { color: tone, strength: 0.4 },
@@ -271,17 +305,21 @@ function openPlainNote(scene: Phaser.Scene, popups: PopupLayer, item: RewardPopu
       const avatar = selfAvatar(scene, frame.id, N.avatar);
       avatar.setPosition(0, N.stageY);
       body.add(avatar);
+    } else if (modifier) {
+      const tag = addModifierNameTag(scene, N.avatar * 1.3, tone);
+      tag.setPosition(0, N.stageY);
+      body.add(tag);
     } else if (typeof item.icon !== "string") {
       const holder = scene.add.container(0, N.stageY);
       const framed = addFramedIcon(scene, holder, 0, 0, N.avatar * 0.9, "", { amount: formatCurrency(item.amount) });
       framed.addAt(drawGlyph(scene, item.icon.key, 0, 0, N.avatar * 0.5, COLOR.accent), 1);
       body.add(holder);
     }
-    const name = scene.add.text(0, N.nameY, item.label ?? t("reward.title"), textStyle({ role: "display", size: 40, color: frame ? hexColor(tone) : COLOR.ink }))
+    const name = scene.add.text(0, N.nameY, item.label ?? t("reward.title"), textStyle({ role: "display", size: 40, color: frame || modifier ? hexColor(tone) : COLOR.ink }))
       .setOrigin(0.5).setStroke("#05070a", 6);
     squeezeTextToWidth(name, N.width - 100);
     body.add(name);
-    body.add(scene.add.text(0, N.kindY, t(frame ? "reward.note.frame" : "reward.note.item"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
+    body.add(scene.add.text(0, N.kindY, t(frame ? "reward.note.frame" : modifier ? "reward.note.modifier" : "reward.note.item"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
   });
 }
 

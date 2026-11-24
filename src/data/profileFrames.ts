@@ -66,4 +66,9 @@ export function isProfileFrameUnlocked(frame: ProfileFrameDefinition, playerLeve
   return playerLevel >= frame.unlockLevel && (!frame.unlockAchievement || (claimed[frame.unlockAchievement.id] ?? 0) >= frame.unlockAchievement.tiers);
 }
 
+/** 업적 단계를 받기 전(`before`)과 뒤(`after`) 사이에 새로 열린 업적 테두리 ID. */
+export function achievementFramesOpened(before: Readonly<Record<string, number>>, after: Readonly<Record<string, number>>, playerLevel: number): string[] {
+  return PROFILE_FRAMES.filter((frame) => frame.unlockAchievement && !isProfileFrameUnlocked(frame, playerLevel, before) && isProfileFrameUnlocked(frame, playerLevel, after)).map(({ id }) => id);
+}
+
 for (const frame of [...PROFILE_FRAMES, ...(GIFTING_ENABLED ? [] : [GIFT_GIVER_FRAME])]) registerDataText(frame, "displayName", `profileFrame.${frame.id}.name`);

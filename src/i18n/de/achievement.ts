@@ -31,7 +31,6 @@ export const ACHIEVEMENT_DE = {
   "achievement.state.hidden": "Verborgener Erfolg",
   "achievement.objective.hidden": "???",
   "achievement.tier": "Stufe {current}/{total}",
-  "achievement.modifierEarned": "Titelzusatz „{name}“ erhalten!",
   "achievement.series.wealth": "Wachsender Reichtum",
   "achievement.series.collector": "Exemplarsammlung",
   "achievement.series.nurture": "Wachstumsbericht",

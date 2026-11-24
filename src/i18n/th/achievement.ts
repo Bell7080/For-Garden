@@ -31,7 +31,6 @@ export const ACHIEVEMENT_TH = {
   "achievement.state.hidden": "สถิติที่ซ่อน",
   "achievement.objective.hidden": "???",
   "achievement.tier": "ขั้น {current}/{total}",
-  "achievement.modifierEarned": "ได้รับคำขยาย “{name}” แล้ว!",
   "achievement.series.wealth": "สะสมความมั่งคั่ง",
   "achievement.series.collector": "สะสมตัวอย่าง",
   "achievement.series.nurture": "บันทึกการเติบโต",

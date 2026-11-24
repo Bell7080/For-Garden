@@ -31,7 +31,6 @@ export const ACHIEVEMENT_KO = {
   "achievement.state.hidden": "숨은 기록",
   "achievement.objective.hidden": "???",
   "achievement.tier": "{current}/{total}단계",
-  "achievement.modifierEarned": "수식어 「{name}」 획득!",
   "achievement.series.wealth": "부의 축적",
   "achievement.series.collector": "표본 수집",
   "achievement.series.nurture": "성장의 기록",

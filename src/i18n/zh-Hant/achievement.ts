@@ -31,7 +31,6 @@ export const ACHIEVEMENT_ZH_HANT = {
   "achievement.state.hidden": "隱藏記錄",
   "achievement.objective.hidden": "???",
   "achievement.tier": "第{current}/{total}階段",
-  "achievement.modifierEarned": "獲得稱號詞“{name}”！",
   "achievement.series.wealth": "財富積累",
   "achievement.series.collector": "標本收集",
   "achievement.series.nurture": "成長記錄",

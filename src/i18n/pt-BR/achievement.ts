@@ -31,7 +31,6 @@ export const ACHIEVEMENT_PT_BR = {
   "achievement.state.hidden": "Feito oculto",
   "achievement.objective.hidden": "???",
   "achievement.tier": "Etapa {current}/{total}",
-  "achievement.modifierEarned": "Epíteto “{name}” obtido!",
   "achievement.series.wealth": "Riqueza crescente",
   "achievement.series.collector": "Coleção de espécimes",
   "achievement.series.nurture": "Registro de crescimento",

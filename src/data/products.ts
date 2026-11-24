@@ -86,7 +86,7 @@ export type ProductGrant =
    * 고른 값은 구매 요청(`runeChoice`)으로 오고 서버가 다시 검증한다 — 화면의 선택을 믿지 않는다.
    */
   | { kind: "rune"; name: string; amount: number; rarity: "uncommon" | "rare" | "epic" | "legendary"; part?: 0 | 1 | 2; choose?: "main"; randomRarity?: true }
-  | { kind: "profile_decoration"; decorationId: string; name: string }
+  | { kind: "profile_decoration"; decorationId: string; name: string; /** 영수증 전용 — 받기 전부터 가진 테두리였다. */ alreadyOwned?: boolean }
   /** 한 개체의 파편. 정의에는 `relicId`가 없고 서버가 `weeklySsrFragment`를 그 주의 개체로 풀어 내려 준다. */
   | { kind: "relic_fragment"; relicId: string; amount: number }
   /** 마일리지 상점의 「이번 주 SSR 파편」 자리표시. 구매 순간의 주 개체(`mileageWeeklyClerkId`)로 확정된다. */

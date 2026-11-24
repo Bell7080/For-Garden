@@ -31,7 +31,6 @@ export const ACHIEVEMENT_EN = {
   "achievement.state.hidden": "Hidden feat",
   "achievement.objective.hidden": "???",
   "achievement.tier": "Tier {current}/{total}",
-  "achievement.modifierEarned": "Modifier “{name}” earned!",
   "achievement.series.wealth": "Growing Wealth",
   "achievement.series.collector": "Specimen Collection",
   "achievement.series.nurture": "A Record of Growth",

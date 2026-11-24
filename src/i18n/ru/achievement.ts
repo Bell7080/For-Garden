@@ -31,7 +31,6 @@ export const ACHIEVEMENT_RU = {
   "achievement.state.hidden": "Скрытое достижение",
   "achievement.objective.hidden": "???",
   "achievement.tier": "Этап {current}/{total}",
-  "achievement.modifierEarned": "Получен эпитет «{name}»!",
   "achievement.series.wealth": "Накопление богатства",
   "achievement.series.collector": "Коллекция экземпляров",
   "achievement.series.nurture": "Хроника роста",

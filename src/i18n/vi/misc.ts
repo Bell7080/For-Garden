@@ -293,6 +293,8 @@ export const MISC_VI = {
   "battle.profile.ferocity": "Dã tính {value} / {max}",
   "reward.title": "Phần thưởng nhận được",
   "reward.note.frame": "Khung hồ sơ",
+  "reward.note.modifier": "Danh hiệu hồ sơ",
+  "reward.cosmetic.owned": "Đã sở hữu",
   "reward.note.item": "Vật phẩm",
   "reward.tapHint": "Chạm màn hình để xác nhận",
   "enemyPreview.title": "Đội hình địch",

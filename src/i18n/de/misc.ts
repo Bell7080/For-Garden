@@ -293,6 +293,8 @@ export const MISC_DE = {
   "battle.profile.ferocity": "Wildheit {value} / {max}",
   "reward.title": "Erhaltene Belohnungen",
   "reward.note.frame": "Profilrahmen",
+  "reward.note.modifier": "Profiltitel",
+  "reward.cosmetic.owned": "Im Besitz",
   "reward.note.item": "Gegenstand",
   "reward.tapHint": "Zum Bestätigen auf den Bildschirm tippen",
   "enemyPreview.title": "Gegnerische Formation",

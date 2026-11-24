@@ -31,7 +31,6 @@ export const ACHIEVEMENT_ES = {
   "achievement.state.hidden": "Hazaña oculta",
   "achievement.objective.hidden": "???",
   "achievement.tier": "Etapa {current}/{total}",
-  "achievement.modifierEarned": "¡Epíteto «{name}» obtenido!",
   "achievement.series.wealth": "Riqueza creciente",
   "achievement.series.collector": "Colección de especímenes",
   "achievement.series.nurture": "Registro de crecimiento",

@@ -31,7 +31,6 @@ export const ACHIEVEMENT_VI = {
   "achievement.state.hidden": "Thành tích ẩn",
   "achievement.objective.hidden": "???",
   "achievement.tier": "Bậc {current}/{total}",
-  "achievement.modifierEarned": "Nhận danh xưng “{name}”!",
   "achievement.series.wealth": "Tích lũy tài sản",
   "achievement.series.collector": "Sưu tập mẫu vật",
   "achievement.series.nurture": "Dấu ấn trưởng thành",

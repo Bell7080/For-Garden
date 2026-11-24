@@ -293,6 +293,8 @@ export const MISC_TH = {
   "battle.profile.ferocity": "ความดุร้าย {value} / {max}",
   "reward.title": "ได้รับรางวัล",
   "reward.note.frame": "กรอบโปรไฟล์",
+  "reward.note.modifier": "ฉายาโปรไฟล์",
+  "reward.cosmetic.owned": "มีแล้ว",
   "reward.note.item": "ไอเทม",
   "reward.tapHint": "แตะหน้าจอเพื่อยืนยัน",
   "enemyPreview.title": "การจัดทีมศัตรู",

@@ -6,6 +6,8 @@ import type { CurrencyIconKey } from "./currencyIcons";
 import type { GlyphName } from "./glyphs";
 import { sortRewardItems } from "./rewardOrder";
 import { activeRegularEventId } from "../core/regularEventRotation";
+import { findProfileFrame } from "../data/profileFrames";
+import { findProfileModifier } from "../data/profileModifiers";
 
 /** 교대 정규 이벤트마다 제 코인 그림. 코인은 모두 이번 주에 쓴 스테미나다. */
 export const REGULAR_EVENT_COIN_ICON: Readonly<Record<string, string>> = {
@@ -37,12 +39,44 @@ export interface RewardPopupItem {
   relicId?: string;
   /** 프로필 테두리. 있으면 액자 안에 내 얼굴에 그 테두리를 씌운 모습이 선다. */
   frameId?: string;
+  /** 프로필 수식어. 있으면 액자 안에 그 등급 색의 이름표가 서고 아래에 수식어 이름이 선다. */
+  modifierId?: string;
+  /** 이미 가진 꾸미기가 다시 들어온 칸 — 액자 밑동에 「보유 중」이 서고 판이 한 톤 가라앉는다. */
+  owned?: boolean;
   /** 지급 영수증에 정확한 만료 시각이 있으면 우선 사용한다. */
   expiresAt?: string;
   /** 지급처별 기한. 없으면 아이템 정의의 기본 기한을 표시한다. */
   expiresInDays?: number;
   /** `amount` 안에서 대성공이 얹은 몫. 있으면 액자가 기본 몫에서 이만큼 수가 올라가며 맥동한다. */
   greatBonus?: number;
+}
+
+/**
+ * 꾸미기 보상 한 칸 — 테두리. 재화처럼 액자 한 장으로 서고 아래에 그 테두리의 이름이 선다.
+ * 수량은 세지 않는다(테두리는 하나다). 정의에 없는 ID는 그리지 않는다 — 이름을 추측하지 않는다.
+ */
+export function profileFrameRewardItem(frameId: string, options: { name?: string; owned?: boolean } = {}): RewardPopupItem {
+  const label = options.name ?? findProfileFrame(frameId)?.displayName ?? frameId;
+  return { icon: { kind: "glyph", key: "costume" }, amount: 1, label, frameId, ...(options.owned ? { owned: true } : {}) };
+}
+
+/** 꾸미기 보상 한 칸 — 수식어. 칸 안에는 등급 색 이름표, 아래에는 수식어 이름이 선다. */
+export function profileModifierRewardItem(modifierId: string, options: { owned?: boolean } = {}): RewardPopupItem | undefined {
+  const definition = findProfileModifier(modifierId);
+  if (!definition) return undefined;
+  return { icon: { kind: "glyph", key: "costume" }, amount: 1, label: definition.displayName, modifierId, ...(options.owned ? { owned: true } : {}) };
+}
+
+/** 받은 수식어·테두리 ID 목록을 영수증 칸으로 — 알 수 없는 ID는 조용히 빠진다. */
+export function cosmeticRewardItems(ids: { modifierIds?: readonly string[]; frameIds?: readonly string[] }): RewardPopupItem[] {
+  const frames = (ids.frameIds ?? []).filter((id) => findProfileFrame(id)).map((id) => profileFrameRewardItem(id));
+  const modifiers = (ids.modifierIds ?? []).flatMap((id) => { const item = profileModifierRewardItem(id); return item ? [item] : []; });
+  return [...frames, ...modifiers];
+}
+
+/** 꾸미기(테두리·수식어) 칸인가 — 수량을 세지 않는 칸이다. */
+export function isCosmeticRewardItem(item: Pick<RewardPopupItem, "frameId" | "modifierId">): boolean {
+  return item.frameId !== undefined || item.modifierId !== undefined;
 }
 
 /** 기존 소지품의 만료일과 섞지 않고 이번 보상의 기한만 읽는다. */
@@ -111,7 +145,7 @@ export function productGrantsToRewardItems(grants: readonly ProductGrant[], gran
     // 주간 SSR 파편은 서버가 구매 순간의 개체로 풀어 내려 준다. 풀리지 않은 자리표시는 그리지 않는다.
     if (grant.kind === "weekly_ssr_fragment" || grant.kind === "rotating_fragment") return [];
     if (grant.kind === "relic_fragment") return [{ icon: "", amount: grant.amount, relicId: grant.relicId }];
-    if (grant.kind === "profile_decoration") return [{ icon: { kind: "glyph", key: "costume" }, amount: 1, label: grant.name, frameId: grant.decorationId }];
+    if (grant.kind === "profile_decoration") return [profileFrameRewardItem(grant.decorationId, { name: grant.name, owned: grant.alreadyOwned })];
     if (grant.kind === "rune") return [{ icon: `rune-${grant.rarity}-${grant.part}`, amount: grant.amount, label: grant.name }];
     const definition = findItem(grant.itemId);
     // 가방 아이템은 재화와 같은 양식으로 액자와 수량만 세운다 — 에너지 드링크만 이름이 붙어 보상 칸 양식이 갈렸다.

@@ -31,7 +31,6 @@ export const ACHIEVEMENT_JA = {
   "achievement.state.hidden": "隠し記録",
   "achievement.objective.hidden": "???",
   "achievement.tier": "{current}/{total}段階",
-  "achievement.modifierEarned": "修飾語「{name}」獲得！",
   "achievement.series.wealth": "富の蓄積",
   "achievement.series.collector": "標本収集",
   "achievement.series.nurture": "成長の記録",

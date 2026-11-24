@@ -293,6 +293,8 @@ export const MISC_ZH_HANT = {
   "battle.profile.ferocity": "野性 {value} / {max}",
   "reward.title": "獲得獎勵",
   "reward.note.frame": "頭像框",
+  "reward.note.modifier": "稱號",
+  "reward.cosmetic.owned": "已擁有",
   "reward.note.item": "道具",
   "reward.tapHint": "點選畫面確認",
   "enemyPreview.title": "敵方編隊",

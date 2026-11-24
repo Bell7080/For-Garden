@@ -322,6 +322,8 @@ export const MISC_KO = {
   "battle.profile.ferocity": "야성 {value} / {max}",
   "reward.title": "획득 보상",
   "reward.note.frame": "프로필 테두리",
+  "reward.note.modifier": "프로필 수식어",
+  "reward.cosmetic.owned": "보유 중",
   "reward.note.item": "아이템",
   "reward.tapHint": "화면을 눌러 확인",
 

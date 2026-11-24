@@ -31,7 +31,6 @@ export const ACHIEVEMENT_ID = {
   "achievement.state.hidden": "Prestasi tersembunyi",
   "achievement.objective.hidden": "???",
   "achievement.tier": "Tahap {current}/{total}",
-  "achievement.modifierEarned": "Julukan “{name}” diperoleh!",
   "achievement.series.wealth": "Menumpuk Kekayaan",
   "achievement.series.collector": "Koleksi Spesimen",
   "achievement.series.nurture": "Catatan Pertumbuhan",

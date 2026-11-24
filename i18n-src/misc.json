@@ -2099,6 +2099,26 @@
 "Profilrahmen",
 "Рамка профиля"
 ],
+"reward.note.modifier": [
+"称号",
+"ฉายาโปรไฟล์",
+"Danh hiệu hồ sơ",
+"Gelar Profil",
+"Título de perfil",
+"Título de perfil",
+"Profiltitel",
+"Титул профиля"
+],
+"reward.cosmetic.owned": [
+"已拥有",
+"มีแล้ว",
+"Đã sở hữu",
+"Dimiliki",
+"Obtenido",
+"Obtido",
+"Im Besitz",
+"Уже есть"
+],
 "reward.note.item": [
 "道具",
 "ไอเทม",

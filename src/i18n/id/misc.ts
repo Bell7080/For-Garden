@@ -293,6 +293,8 @@ export const MISC_ID = {
   "battle.profile.ferocity": "Keganasan {value} / {max}",
   "reward.title": "Hadiah Didapat",
   "reward.note.frame": "Bingkai Profil",
+  "reward.note.modifier": "Gelar Profil",
+  "reward.cosmetic.owned": "Dimiliki",
   "reward.note.item": "Item",
   "reward.tapHint": "Ketuk layar untuk konfirmasi",
   "enemyPreview.title": "Formasi Musuh",

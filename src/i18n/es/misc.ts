@@ -293,6 +293,8 @@ export const MISC_ES = {
   "battle.profile.ferocity": "Ferocidad {value} / {max}",
   "reward.title": "Recompensas obtenidas",
   "reward.note.frame": "Marco de perfil",
+  "reward.note.modifier": "Título de perfil",
+  "reward.cosmetic.owned": "Obtenido",
   "reward.note.item": "Objeto",
   "reward.tapHint": "Toca la pantalla para confirmar",
   "enemyPreview.title": "Formación enemiga",

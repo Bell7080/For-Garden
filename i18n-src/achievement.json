@@ -169,16 +169,6 @@
     "Stufe {current}/{total}",
     "Этап {current}/{total}"
   ],
-  "achievement.modifierEarned": [
-    "获得称号词“{name}”！",
-    "ได้รับคำขยาย “{name}” แล้ว!",
-    "Nhận danh xưng “{name}”!",
-    "Julukan “{name}” diperoleh!",
-    "¡Epíteto «{name}» obtenido!",
-    "Epíteto “{name}” obtido!",
-    "Titelzusatz „{name}“ erhalten!",
-    "Получен эпитет «{name}»!"
-  ],
   "achievement.series.wealth": [
     "财富积累",
     "สะสมความมั่งคั่ง",

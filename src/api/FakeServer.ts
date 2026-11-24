@@ -40,7 +40,7 @@ import { createObservationStory, observationDiscovery } from "../data/observatio
 import { findInteractionJournal, journalsForCity } from "../data/interactionJournals";
 import { resolveJournalDiscovery, type JournalDiscoveryResolution } from "../core/interactionJournals";
 import { cleanBio, cleanNickname, createPlayerUid, nicknameLockedUntil, nicknameProblem } from "../core/playerCard";
-import { findProfileFrame, isProfileFrameUnlocked } from "../data/profileFrames";
+import { findProfileFrame, isProfileFrameUnlocked, achievementFramesOpened } from "../data/profileFrames";
 import { PROFILE_MODIFIERS, findProfileModifier } from "../data/profileModifiers";
 import { PATRON_DAILY_FUND, PATRON_TIERS, addPatronFund, fundForPriceKrw, normalizePatronState, patronDailyAvailable, patronFund, patronHasClaimable, patronRewardStatus, patronTierOf, type PatronState } from "../core/patronStrata";
 import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward, type AdRewardSlot } from "../data/adRewards";
@@ -4113,9 +4113,11 @@ export class FakeServer implements GameApi {
     const rolledPasses = rollSeasonPassState(this.state.progressPasses ?? createEmptyProgressPassState(), this.now());
     const nextPasses = { ...rolledPasses, season: addSeasonPoints(rolledPasses.season, Object.values(researchPointsForClaim(uniqueIds)).reduce((sum, points) => sum + points, 0), this.now()) };
     const nextState = ProfileModifierManager.applyRewardReceipt({ ...this.state, missions: nextMissions, wallet: nextWallet, progressPasses: nextPasses }, { claimedIds: uniqueIds, claimedResearchStageIds });
+    const modifiersBefore = new Set(this.state.earnedProfileModifierIds);
     this.persist(nextState);
     this.state.missions = nextMissions; this.state.wallet = nextWallet; this.state.earnedProfileModifierIds = nextState.earnedProfileModifierIds; this.state.progressPasses = nextPasses;
-    return { ...this.snapshot(), claimedIds: uniqueIds, claimedResearchStageIds, rewards: { mission, research }, granted: mergeMissionRewards([...mission, ...research]) };
+    const newModifierIds = nextState.earnedProfileModifierIds.filter((id) => !modifiersBefore.has(id));
+    return { ...this.snapshot(), claimedIds: uniqueIds, claimedResearchStageIds, rewards: { mission, research }, granted: mergeMissionRewards([...mission, ...research]), newModifierIds };
   }
 
   /** 업적 목록 — 지금 값과 받은 단계·받을 단계를 서버가 판정한다. */
@@ -4149,6 +4151,8 @@ export class FakeServer implements GameApi {
       claimedTiers: claim.claimedTiers,
       completedSeriesIds: claim.completedSeriesIds,
       newModifierIds: nextState.earnedProfileModifierIds.filter((id) => !before.has(id)),
+      // 업적 단계가 연 테두리 — 받기 전에는 닫혀 있었고 받은 뒤 열린 것만 싣는다(레벨 조건은 그대로 본다).
+      newFrameIds: achievementFramesOpened(current.claimed, claim.state.claimed, this.state.playerResearch.level),
       granted,
     };
   }
@@ -4367,7 +4371,8 @@ export class FakeServer implements GameApi {
     this.persist(nextState);
     this.state.wallet = nextWallet; this.state.itemInventory = applied.items; this.state.progressPasses = nextPasses;
     if (achievements) this.state.achievements = achievements;
-    const granted = [...applied.granted, ...decorations.map((grant) => ({ kind: "profile_decoration" as const, decorationId: grant.decorationId, name: grant.name }))];
+    const ownedFrames = new Set(this.state.achievements?.giftFrames ?? []);
+    const granted = [...applied.granted, ...decorations.map((grant) => ({ kind: "profile_decoration" as const, decorationId: grant.decorationId, name: grant.name, ...(ownedFrames.has(grant.decorationId) ? { alreadyOwned: true } : {}) }))];
     const response: ClaimProgressPassResponse = {
       ...this.snapshot(), passId: pass.id, claimedThresholds: thresholds, claimedFreeThresholds: freeThresholds, granted, passes: this.progressPassDtos(this.state),
     };

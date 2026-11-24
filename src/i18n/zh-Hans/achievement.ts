@@ -31,7 +31,6 @@ export const ACHIEVEMENT_ZH_HANS = {
   "achievement.state.hidden": "隐藏记录",
   "achievement.objective.hidden": "???",
   "achievement.tier": "第{current}/{total}阶段",
-  "achievement.modifierEarned": "获得称号词“{name}”！",
   "achievement.series.wealth": "财富积累",
   "achievement.series.collector": "标本收集",
   "achievement.series.nurture": "成长记录",

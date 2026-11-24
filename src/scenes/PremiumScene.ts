@@ -32,7 +32,7 @@ import { AD_CARD_BEVEL, addAdCountLabel, addAdRewardCard } from "../ui/AdRewardC
 import { addSoldOutStamp, addStatusSticker, forgetSoldOutStamp, forgetStatusStickers } from "../ui/soldOutStamp";
 import { premiumStatusOf, type PremiumStatus } from "../ui/premiumStatus";
 import { remainingDetail } from "../ui/itemExpiry";
-import { openRewardPopup, productGrantsToRewardItems } from "../ui/RewardPopup";
+import { cosmeticRewardItems, openRewardPopup, productGrantsToRewardItems } from "../ui/RewardPopup";
 import { motionPolicy } from "../core/settings";
 import { adSlotStatus, watchAdSlot } from "./adSlotFlow";
 import { COLOR, textStyle } from "../ui/theme";
@@ -659,7 +659,7 @@ export class PremiumScene extends Phaser.Scene {
       const result = await withBusy(this, gameApi.claimFirstPaymentGift({ requestId: globalThis.crypto?.randomUUID?.() ?? `first-gift-${Date.now()}` }));
       session.wallet = { ...result.wallet };
       this.topBar?.refresh();
-      openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
+      openRewardPopup(this, this.popups, { items: [...productGrantsToRewardItems(result.granted), ...cosmeticRewardItems({ frameIds: [result.frameId] })] });
       // 영수증은 이미 떴다 — 목록 맞추기는 뒤에서 조용히 한다(그 위에 대기 막을 다시 덮지 않는다).
       void this.refresh({ quiet: true });
       void notificationManager.refresh().catch(() => undefined);
@@ -725,7 +725,7 @@ export class PremiumScene extends Phaser.Scene {
       this.patronStatus = result.patron;
       this.drawPatronChip(result.patron);
       this.popups.closeAll();
-      openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted), onConfirm: () => { if (!this.closed) this.openPatron(); } });
+      openRewardPopup(this, this.popups, { items: [...productGrantsToRewardItems(result.granted), ...cosmeticRewardItems({ frameIds: result.frameId ? [result.frameId] : [], modifierIds: result.modifierId ? [result.modifierId] : [] })], onConfirm: () => { if (!this.closed) this.openPatron(); } });
       if (result.promotedTo) this.notice(t("patron.promoted", { name: patronTierName(result.promotedTo) }));
       void notificationManager.refresh().catch(() => undefined);
     } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claiming = false; }

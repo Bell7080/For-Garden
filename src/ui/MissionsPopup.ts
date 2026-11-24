@@ -27,7 +27,7 @@ import type { GuideNavigator } from "./guideNavigation";
 import { missionShortcut } from "../data/objectiveShortcuts";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { RewardFrame } from "./RewardFrame";
-import { openRewardPopup } from "./RewardPopup";
+import { cosmeticRewardItems, openRewardPopup } from "./RewardPopup";
 import { COLOR, textStyle } from "./theme";
 import { MissionClaimController, missionDisplayModel, stableOrderMissions, missionResetRemainingMs, formatResetRemaining, type MissionOrderMemory } from "./missionsPopupModel";
 import { MISSIONS_POPUP_LAYOUT, missionListContentHeight, missionRowY, missionsTabX, researchTrackLayout } from "./missionsPopupLayout";
@@ -440,7 +440,10 @@ export class MissionsPopup {
     const latest = this.api.getMissions();
     // 같은 계정 조회를 겹치지 않게 목록이 온 뒤에 알림을 다시 읽는다(겹치면 서버 잠금을 기다린다).
     void latest.then(() => notificationManager.refresh()).catch((error: unknown) => logError("missions.notice", "임무 알림 갱신 실패", error));
-    const items = result.granted.filter(({ amount }) => amount > 0).map(({ currency, amount }) => ({ icon: CURRENCY_ICON_BY_WALLET[currency], amount }));
+    const items = [
+      ...result.granted.filter(({ amount }) => amount > 0).map(({ currency, amount }) => ({ icon: CURRENCY_ICON_BY_WALLET[currency], amount })),
+      ...cosmeticRewardItems({ modifierIds: result.newModifierIds }),
+    ];
     const closed = new Promise<void>((resolve) => {
       if (items.length) openRewardPopup(this.scene, this.popups, { title: t("missions.rewardTitle"), sound: "mission.claim", items, onConfirm: resolve });
       else resolve();

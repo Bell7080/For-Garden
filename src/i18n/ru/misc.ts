@@ -293,6 +293,8 @@ export const MISC_RU = {
   "battle.profile.ferocity": "Ярость {value} / {max}",
   "reward.title": "Полученные награды",
   "reward.note.frame": "Рамка профиля",
+  "reward.note.modifier": "Титул профиля",
+  "reward.cosmetic.owned": "Уже есть",
   "reward.note.item": "Предмет",
   "reward.tapHint": "Коснитесь экрана, чтобы подтвердить",
   "enemyPreview.title": "Построение врага",

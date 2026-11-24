@@ -26,7 +26,7 @@ import {
 import {
   DEFAULT_GUILD_BADGE, GUILD_BADGE_COLORS, GUILD_BADGE_COLOR_IDS, GUILD_BADGE_ICONS, GUILD_BADGE_SHAPES, isGuildBadge, type GuildBadge,
 } from "../core/guildBadge";
-import { guildGuardElement, guildGuardEndsAt, guildPageEventKey, guildPageHasNews, guildWarNow, type GuildPage } from "../core/guildPages";
+import { guildGuardElement, guildGuardEndsAt, guildPageEventKey, guildPageHasNews, guildResultNoticeDue, guildWarNow, type GuildPage } from "../core/guildPages";
 import { GUILD_WAR_ATTACKS_PER_MEMBER, GUILD_WAR_MIN_MEMBERS, type GuildWarBranch } from "../core/guildWar";
 import { GUILD_WAR_BRANCHES } from "../core/guildWarMap";
 import { drawGlyph, type GlyphName } from "../ui/glyphs";
@@ -760,12 +760,11 @@ export class GuildScene extends Phaser.Scene {
     });
   }
 
-  /** 어제 수호전 길드 순위로 받은 코인을 한 번 알린다 — 본 날짜는 기기 설정에만 남긴다. 띄웠으면 true. */
-  /** 끝난 길드전 회차의 결과를 한 번 알린다 — 길드전 쪽에 들어왔을 때만, 본 날짜와 다를 때만. */
+  /** 끝난 길드전 회차의 결과를 한 번 알린다 — 길드전 쪽에 들어왔을 때만, 본 날짜와 다를 때만. 띄웠으면 true. */
   private announceWarResult(): boolean {
-    const last = this.page === "war" ? this.warFront?.last : undefined;
+    const last = this.warFront?.last;
     if (!last || this.popups.isOpen) return false;
-    if (settingsManager.get().game.guildSeen.warResult === last.day) return false;
+    if (!guildResultNoticeDue("warResult", this.page, last.day, settingsManager.get().game.guildSeen.warResult)) return false;
     settingsManager.rememberGuildSeen("warResult", last.day);
     const guild = this.state?.guild;
     // 결과는 머리 블록(도장 · 점수 대치 · 점수 증감)이, 받은 길드 코인은 영수증 액자가 말한다.
@@ -777,10 +776,11 @@ export class GuildScene extends Phaser.Scene {
     return true;
   }
 
+  /** 어제 수호전 길드 순위로 받은 코인을 한 번 알린다 — 수호전 쪽에 들어왔을 때만, 본 날짜와 다를 때만. 띄웠으면 true. */
   private announceGuardReward(): boolean {
     const reward = this.state?.me?.guardReward;
     if (!reward || this.popups.isOpen) return false;
-    if (settingsManager.get().game.guildSeen.guardReward === reward.day) return false;
+    if (!guildResultNoticeDue("guardReward", this.page, reward.day, settingsManager.get().game.guildSeen.guardReward)) return false;
     settingsManager.rememberGuildSeen("guardReward", reward.day);
     openRewardPopup(this, this.popups, {
       title: t("guild.guard.notice.title"),

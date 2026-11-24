@@ -31,3 +31,13 @@ export const guildGuardEndsAt = (now: number): number => guildWarPhaseEndsAt(now
 export function guildWarNow(now: number): { phase: GuildWarPhase; endsAt: number } {
   return { phase: guildWarPhase(guildWarDayNumber(now)), endsAt: guildWarPhaseEndsAt(now) };
 }
+
+/**
+ * 결과 알림은 **그 결과를 낸 탭에서만** 한 번 뜬다 — 수호전 순위 보상은 수호전 탭, 길드전 결과는 길드전 탭. 예전에는 수호전
+ * 보상이 탭을 가리지 않아, 길드전으로 바로 들어와도 수호전 보상 창이 먼저 떴다. 보상은 이미 지급된 영수증이라 그 탭에 들어올
+ * 때까지 미뤄도 받는 몫이 바뀌지 않고, 본 날짜(`settings.game.guildSeen`)가 같으면 다시 뜨지 않는다.
+ */
+export const GUILD_RESULT_NOTICE_PAGE = { guardReward: "guard", warResult: "war" } as const satisfies Record<string, GuildEventPage>;
+export function guildResultNoticeDue(kind: keyof typeof GUILD_RESULT_NOTICE_PAGE, page: GuildPage, day: number | undefined, seenDay: number): boolean {
+  return day !== undefined && page === GUILD_RESULT_NOTICE_PAGE[kind] && day !== seenDay;
+}

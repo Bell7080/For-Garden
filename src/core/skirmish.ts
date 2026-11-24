@@ -4141,7 +4141,7 @@ function tickShareShield(fighter: Fighter, dt: number, state: SkirmishState, eve
   fighter.bt.shareShieldIn = -1;
   const plan = openedBreakthrough(fighter, "ultimate", (effects) => effects.ultimate);
   if (plan?.kind !== "shareShield" || !isFighterAlive(fighter) || fighter.shield.amount <= 0) return;
-  const allies = state.fighters.filter((other) => other.side === fighter.side && other.id !== fighter.id && isFighterAlive(other) && other.summonOwnerId === undefined);
+  const allies = state.fighters.filter((other) => other.side === fighter.side && other.id !== fighter.id && isFighterAlive(other) && other.summonOwnerId === null);
   if (allies.length === 0) return;
   const each = fighter.shield.amount * plan.sharePercent / 100 / allies.length;
   for (const ally of allies) grantShield(state, ally, fighter.id, each, events);

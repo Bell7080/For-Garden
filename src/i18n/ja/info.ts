@@ -106,7 +106,6 @@ export const INFO_JA = {
   "info.rune.workbench.equipped": "装着",
   "info.rune.workbench.movedFrom": "{name}から付け替え",
   "info.rune.workbench.unequip": "外す",
-  "info.rune.workbench.apply": "適用（{count}枠）",
   "info.rune.workbench.applyNone": "適用",
   "info.rune.workbench.drafted": "交換比較に追加しました · 適用で装着",
   "info.rune.workbench.unsavedTitle": "変更の適用",
@@ -120,6 +119,7 @@ export const INFO_JA = {
   "info.rune.workbench.moveSlot": "{slot}番枠",
   "info.rune.workbench.moveAccept": "付け替える",
   "info.rune.workbench.moveFree": "空きルーンを装着",
+  "info.rune.workbench.recommend": "おすすめルーン",
 
   "info.journal.title": "観察日誌",
   "info.journal.id": "個体番号",

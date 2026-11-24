@@ -5,7 +5,7 @@ import type { LanguageId } from "../../src/core/language";
 import { startAfterOpening } from "./openingSave";
 import { canvasBox, gamePoint, tapUntil } from "./canvasInput";
 import { BACK_BUTTON_SIZE, BACK_SLOT } from "../../src/ui/popupGeometry";
-import { RUNE_WORKBENCH_BACK_CLEARANCE, runeWorkbenchFooter3X, runeWorkbenchRows } from "../../src/ui/runeWorkbenchLayout";
+import { RUNE_WORKBENCH_BACK_CLEARANCE, runeWorkbenchFooterX, runeWorkbenchRows } from "../../src/ui/runeWorkbenchLayout";
 
 /**
  * 정보창 룬 칸 — 끼운 조각이 이음매 없이 맞물리고, 빈 칸이 번호를 달고 튀어나오며, 돋보기가 여는
@@ -72,12 +72,19 @@ test("추천 미리보기(옮겨 끼기)와 나가기 확인 (ko)", async ({ pag
   const rows = runeWorkbenchRows();
   const centerY = BACK_SLOT.y - BACK_BUTTON_SIZE / 2 - RUNE_WORKBENCH_BACK_CLEARANCE - rows.height / 2;
   const footerY = centerY - rows.height / 2 + rows.footerY;
-  // 가운데 버튼이 「옮겨 끼기」 — 누르면 추천 룬을 먼저 보여 주는 창이 선다.
-  await tapUntil(page, BASE_WIDTH / 2 + runeWorkbenchFooter3X(1), footerY, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).length > 1);
-  await page.waitForTimeout(500);
+  // 왼쪽 버튼이 「추천 룬」 — 누르면 두 갈래 탭을 가진 추천 창이 먼저 선다.
+  await tapUntil(page, BASE_WIDTH / 2 + runeWorkbenchFooterX(0), footerY, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).length > 1);
+  await page.waitForTimeout(900);
   await page.screenshot({ path: "test-results/info-rune-move-ko.png" });
-  // 「교체 비교에 올리기」 — 줄 하나짜리 창 높이 510, 버튼 가운데는 윗변에서 428.
-  await clickGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 - 510 / 2 + 428);
+  // 줄 하나짜리 추천 창 높이 574 — 탭 줄 가운데는 윗변에서 74, 「교체 비교에 올리기」는 492.
+  const previewTop = BASE_HEIGHT / 2 - 574 / 2;
+  const tabX = (330 + 16) / 2;
+  await clickGame(page, BASE_WIDTH / 2 - tabX, previewTop + 74);
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: "test-results/info-rune-free-ko.png" });
+  await clickGame(page, BASE_WIDTH / 2 + tabX, previewTop + 74);
+  await page.waitForTimeout(700);
+  await clickGame(page, BASE_WIDTH / 2, previewTop + 492);
   await page.waitForTimeout(1800);
   await page.screenshot({ path: "test-results/info-rune-compare-ko.png" });
   await clickGame(page, BACK_SLOT.x, BACK_SLOT.y);

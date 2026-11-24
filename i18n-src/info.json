@@ -595,16 +595,6 @@
 "Ablegen",
 "Снять"
 ],
-"info.rune.workbench.apply": [
-"应用（{count}格）",
-"ใช้ ({count} ช่อง)",
-"Áp dụng ({count})",
-"Terapkan ({count})",
-"Aplicar ({count})",
-"Aplicar ({count})",
-"Übernehmen ({count})",
-"Применить ({count})"
-],
 "info.rune.workbench.applyNone": [
 "应用",
 "ใช้",
@@ -636,6 +626,7 @@
 "info.rune.workbench.moveSlot": ["{slot}号格", "ช่อง {slot}", "Ô {slot}", "Slot {slot}", "Casilla {slot}", "Espaço {slot}", "Platz {slot}", "Ячейка {slot}"],
 "info.rune.workbench.moveAccept": ["移过来", "ย้ายมา", "Chuyển sang", "Pindahkan", "Tomar Runas", "Tirar", "Runen holen", "Забрать"],
 "info.rune.workbench.moveFree": ["装备空闲符文", "สวมรูนว่าง", "Trang bị Rune trống", "Pasang Rune bebas", "Equipar Runas libres", "Equipar Runas livres", "Freie Runen anlegen", "Надеть свободные руны"],
+"info.rune.workbench.recommend": ["推荐符文", "รูนแนะนำ", "Rune đề xuất", "Rune rekomendasi", "Runas recomendadas", "Runas recomendadas", "Empfohlene Runen", "Рекомендуемые руны"],
 "info.journal.title": [
 "观察日志",
 "บันทึกการสังเกต",

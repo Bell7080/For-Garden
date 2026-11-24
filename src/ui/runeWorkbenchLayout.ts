@@ -53,19 +53,6 @@ export function runeWorkbenchFooterX(index: 0 | 1): number {
   return index === 0 ? -half : half;
 }
 
-/**
- * 맨 아래 조작 셋(남은 룬 끼기 · 옮겨 끼기 · 적용)이 판 안쪽 폭을 셋으로 나눠 갖는 폭. 추천 둘을 한 버튼에 묶어 두던
- * 때는 늘 옮겨 끼기 쪽만 물었다(응태 2026-11-23) — 어느 룬으로 채울지를 버튼이 먼저 가른다.
- */
-export function runeWorkbenchFooter3Width(): number {
-  return (W.width - W.padX * 2 - W.slots.gap * 2) / 3;
-}
-
-/** 아래 조작 셋의 가로 중심(0 왼쪽 · 1 가운데 · 2 오른쪽). */
-export function runeWorkbenchFooter3X(index: 0 | 1 | 2): number {
-  return (index - 1) * (runeWorkbenchFooter3Width() + W.slots.gap);
-}
-
 export interface RuneWorkbenchRows {
   /** 하트 기준점(조각 셋이 함께 서는 점)의 세로 자리. */
   heartY: number;

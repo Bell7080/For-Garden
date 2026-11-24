@@ -110,7 +110,6 @@ export const INFO_KO = {
   "info.rune.workbench.equipped": "장착",
   "info.rune.workbench.movedFrom": "{name}에게서 옮겨 낌",
   "info.rune.workbench.unequip": "해제",
-  "info.rune.workbench.apply": "적용 ({count}칸)",
   "info.rune.workbench.applyNone": "적용",
   "info.rune.workbench.drafted": "교체 비교에 올렸습니다 · 적용을 눌러 장착",
   "info.rune.workbench.unsavedTitle": "변경 적용",
@@ -124,6 +123,7 @@ export const INFO_KO = {
   "info.rune.workbench.moveSlot": "{slot}번 칸",
   "info.rune.workbench.moveAccept": "옮겨 끼기",
   "info.rune.workbench.moveFree": "남은 룬 끼기",
+  "info.rune.workbench.recommend": "추천 룬",
 
   "info.journal.title": "관찰 일지",
   "info.journal.fossilRecord": "발굴 기록",

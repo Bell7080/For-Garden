@@ -35,6 +35,16 @@ export function clearRuneDraftSlot(draft: RuneLoadoutSlots, part: RunePart): Run
 }
 
 /**
+ * 칸을 떠난다 — 적용하지 않은 채 다른 칸으로 옮기면 떠나는 칸의 후보는 저장된 룬으로 되돌아간다
+ * (응태 2026-11-24 — 한 칸씩 보며 지금 칸에 누른 것만 적용한다). 다만 추천·모두 해제처럼 **여러 칸을 한꺼번에**
+ * 올린 몫(`kept`)은 칸을 옮겨 가며 확인하라고 올린 것이라 남긴다.
+ */
+export function leaveRuneDraftSlot(base: RuneLoadoutSlots, draft: RuneLoadoutSlots, part: RunePart, kept: ReadonlySet<RunePart>): RuneLoadoutSlots {
+  if (kept.has(part)) return draft;
+  return withSlot(draft, part, base[part]);
+}
+
+/**
  * 칸마다 다른 렐릭에게서 빼 오는 룬이면 그 렐릭 ID. `holders`는 저장 기준(룬 ID → 낀 렐릭)이다.
  */
 export function runeDraftMovedFrom(draft: RuneLoadoutSlots, holders: ReadonlyMap<string, string>, relicId: string): (string | null)[] {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getRelic } from "../../src/data/relics";
-import { changedRuneParts, clearRuneDraftSlot, recommendIntoDraft, runeCandidatePowerDelta, runeCompareLines, runeDraftMovedFrom, tapRuneDraft } from "../../src/core/runeDraft";
+import { changedRuneParts, clearRuneDraftSlot, leaveRuneDraftSlot, recommendIntoDraft, runeCandidatePowerDelta, runeCompareLines, runeDraftMovedFrom, tapRuneDraft } from "../../src/core/runeDraft";
 import { runeHolders, type RuneLoadoutRelic, type RuneLoadoutSlots } from "../../src/core/runeLoadout";
 import { createRuneInstance, runeOptionValue, type RuneMainStatKey, type RunePart, type RuneRarity, type RuneStatKey } from "../../src/core/runes";
 import type { RelicProgress } from "../../src/core/types";
@@ -31,6 +31,17 @@ describe("룬 정비 임시 구성", () => {
     // 저장된 룬을 누르면 그대로다.
     expect(tapRuneDraft(base, base, 0, "a0")).toEqual(base);
     expect(changedRuneParts(base, clearRuneDraftSlot(picked, 2))).toEqual([0, 2]);
+  });
+
+  it("적용하지 않고 칸을 옮기면 손으로 올린 후보만 빠진다", () => {
+    const base = ["a0", "a1", null] as const;
+    const picked = tapRuneDraft([...base], [...base], 0, "b0");
+    // 손으로 고른 1번 칸 후보는 칸을 떠나면 저장된 룬으로 돌아간다.
+    expect(leaveRuneDraftSlot([...base], picked, 0, new Set())).toEqual([...base]);
+    // 추천처럼 한꺼번에 올린 칸은 남는다.
+    expect(leaveRuneDraftSlot([...base], ["b0", "b1", "b2"], 0, new Set([0, 1, 2]))).toEqual(["b0", "b1", "b2"]);
+    // 떠나는 칸만 되돌리고 다른 칸은 건드리지 않는다.
+    expect(leaveRuneDraftSlot([...base], ["b0", "b1", null], 1, new Set([0]))).toEqual(["b0", "a1", null]);
   });
 
   it("다른 렐릭이 낀 룬만 옮겨 끼는 렐릭으로 알린다", () => {

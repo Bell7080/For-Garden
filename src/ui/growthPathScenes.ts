@@ -8,6 +8,7 @@ import { EFFECT_TEXTURE, ensureEffectTextures } from "./effectTextures";
 import { drawGlyph } from "./glyphs";
 import { UI_ICON } from "./icons";
 import { runeTexture } from "./runeIcons";
+import { RUNE_PIECE_ORIGIN_Y, runePartOfTexture, runePieceFit } from "./runePieceContent";
 import { addSdFootShadow } from "./SdFootShadow";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
 
@@ -28,6 +29,8 @@ export const GROWTH_SCENE = {
   loopMs: 2400,
   /** 타일마다 시작 박자를 미는 몫(ms). */
   stagger: 380,
+  /** 소품(화석·치즈케이크·룬) 한 변. 재화 그림은 캔버스 여백이 있어 보이는 크기는 SD 키의 2/3쯤이라 작은 타일에서도 무엇인지 한눈에 읽힌다. */
+  propSize: 92,
 } as const;
 
 /** 장면 하나가 붙잡는 것 — 판이 닫힐 때 한꺼번에 놓는다. */
@@ -111,6 +114,26 @@ function shard(ctx: Ctx, x: number, y: number, color: number, scale: number): Ph
   return image;
 }
 
+/**
+ * 소품 한 장 — 같은 그림을 검게 한 겹 비껴 깔아 밝은 판 위에서도 실루엣이 떠오르게 한다(재화 액자와 같은 결).
+ * 룬 조각은 캔버스가 아니라 보이는 그림을 가운데에 맞춘다(`runePieceFit`). 트윈은 이 컨테이너에 건다.
+ */
+function prop(ctx: Ctx, x: number, y: number, key: string, size: number): Phaser.GameObjects.Container {
+  const { scene } = ctx;
+  const holder = scene.add.container(x, y);
+  const part = runePartOfTexture(key);
+  const place = (image: Phaser.GameObjects.Image): Phaser.GameObjects.Image => {
+    if (part === undefined) return image.setDisplaySize(size, size);
+    const fit = runePieceFit(part, size, 1);
+    return image.setOrigin(0.5, RUNE_PIECE_ORIGIN_Y).setDisplaySize(fit.size, fit.size).setPosition(fit.x + image.x, fit.y + image.y);
+  };
+  const offset = size * 0.05;
+  holder.add(place(scene.add.image(offset, offset * 1.3, key)).setTint(0x05070a).setAlpha(0.5));
+  holder.add(place(scene.add.image(0, 0, key)));
+  ctx.host.layer.add(holder);
+  return holder;
+}
+
 /** 네 갈래 반짝임 — 마름모 둘을 십자로 겹친다. 한 바퀴에 한 번 톡 켜졌다 꺼진다. */
 function twinkle(ctx: Ctx, x: number, y: number, color: number, delay: number, size = 0.42): void {
   const a = shard(ctx, x, y, color, size);
@@ -163,17 +186,16 @@ function archaeologyScene(ctx: Ctx, relicId: string | undefined): void {
     new Phaser.Geom.Point(moundX + 30, spot.ground + 2), new Phaser.Geom.Point(moundX, spot.ground + 6),
   ], true);
   ctx.host.layer.add(mound);
-  const fossilRest = spot.ground - 4;
-  const fossilUp = spot.ground - 48;
-  const fossil = scene.add.image(moundX + 6, ctx.loop ? fossilRest : fossilUp, "currency-fossil").setDisplaySize(40, 40).setAlpha(ctx.loop ? 0 : 1);
-  ctx.host.layer.add(fossil);
+  const fossilRest = spot.ground - 8;
+  const fossilUp = spot.ground - 62;
+  const fossil = prop(ctx, moundX + 6, ctx.loop ? fossilRest : fossilUp, "currency-fossil", GROWTH_SCENE.propSize).setAlpha(ctx.loop ? 0 : 1);
   // 내려찍을 때마다 SD가 한 뼘 숙였다 튄다 — 곡괭이를 든 몸이 함께 움직여야 「찍는다」로 읽힌다.
   standSd(ctx, relicId, sdX, (sd) => {
     const baseY = sd.y;
     tween(ctx, { targets: sd, y: baseY + 5, duration: 120, yoyo: true, ease: "Quad.In", delay: phase(ctx) + 360, repeat: -1, repeatDelay: GROWTH_SCENE.loopMs - 240 });
   });
   // 곡괭이는 손잡이 끝(SD의 손 자리)을 축으로 돈다 — 머리 위로 들었다가 날이 흙더미 꼭대기를 친다.
-  const pick = scene.add.image(sdX + 32, spot.ground - 48, UI_ICON.pickaxe).setOrigin(0.18, 0.82).setDisplaySize(64, 64).setAngle(ctx.loop ? -40 : 62);
+  const pick = scene.add.image(sdX + 32, spot.ground - 48, UI_ICON.pickaxe).setOrigin(0.18, 0.82).setDisplaySize(76, 76).setAngle(ctx.loop ? -40 : 62);
   ctx.host.layer.add(pick);
   chain(ctx, pick, phase(ctx), [
     { angle: -58, duration: 360, ease: "Sine.Out" },
@@ -194,7 +216,7 @@ function archaeologyScene(ctx: Ctx, relicId: string | undefined): void {
     targets: fossil, y: { from: fossilRest, to: fossilUp }, alpha: { from: 0, to: 1 }, angle: { from: -20, to: 8 },
     duration: 380, ease: "Back.Out", hold, yoyo: true, delay: phase(ctx) + 500, repeat: -1, repeatDelay: GROWTH_SCENE.loopMs - hold - 760,
   });
-  twinkle(ctx, moundX + 28, spot.ground - 66, 0xffe7a3, 860);
+  twinkle(ctx, moundX + 40, spot.ground - 96, 0xffe7a3, 860);
 }
 
 /** 연구소 — 받침 위 화석을 돋보기가 맴돌며 살피고, 다 보면 화석이 반짝인다. */
@@ -210,44 +232,42 @@ function labScene(ctx: Ctx, relicId: string | undefined): void {
   ], true);
   bench.fillStyle(0x9fd8ff, 0.55).fillRect(benchX - 34, spot.ground - 14, 76, 3);
   ctx.host.layer.add(bench);
-  const glow = scene.add.image(benchX, spot.ground - 38, EFFECT_TEXTURE.glow).setTint(0xffc65a).setDisplaySize(96, 70).setAlpha(0.18).setBlendMode(Phaser.BlendModes.ADD);
+  const glow = scene.add.image(benchX, spot.ground - 46, EFFECT_TEXTURE.glow).setTint(0xffc65a).setDisplaySize(130, 100).setAlpha(0.18).setBlendMode(Phaser.BlendModes.ADD);
   ctx.host.layer.add(glow);
-  const fossil = scene.add.image(benchX, spot.ground - 36, "currency-fossil").setDisplaySize(50, 50);
-  ctx.host.layer.add(fossil);
+  const fossil = prop(ctx, benchX, spot.ground - 50, "currency-fossil", GROWTH_SCENE.propSize);
   standSd(ctx, relicId, sdX);
-  tween(ctx, { targets: fossil, y: spot.ground - 42, angle: { from: -4, to: 4 }, duration: GROWTH_SCENE.loopMs / 2, yoyo: true, repeat: -1, ease: "Sine.InOut", delay: phase(ctx) });
+  tween(ctx, { targets: fossil, y: spot.ground - 58, angle: { from: -4, to: 4 }, duration: GROWTH_SCENE.loopMs / 2, yoyo: true, repeat: -1, ease: "Sine.InOut", delay: phase(ctx) });
   tween(ctx, { targets: glow, alpha: { from: 0.12, to: 0.38 }, duration: GROWTH_SCENE.loopMs / 2, yoyo: true, repeat: -1, ease: "Sine.InOut", delay: phase(ctx) });
   // 돋보기는 화석 둘레를 작은 마름모 길로 돈다.
-  const lens = drawGlyph(scene, "magnifier", benchX + 22, spot.ground - 60, 34, 0xdff4ff);
+  const lens = drawGlyph(scene, "magnifier", benchX + 30, spot.ground - 82, 40, 0xdff4ff);
   ctx.host.layer.add(lens);
-  const ox = benchX + 22;
-  const oy = spot.ground - 60;
+  const ox = benchX + 30;
+  const oy = spot.ground - 82;
   chain(ctx, lens, phase(ctx), [
       { x: ox - 30, y: oy + 8, duration: GROWTH_SCENE.loopMs / 4, ease: "Sine.InOut" },
       { x: ox - 18, y: oy + 22, duration: GROWTH_SCENE.loopMs / 4, ease: "Sine.InOut" },
       { x: ox + 6, y: oy + 14, duration: GROWTH_SCENE.loopMs / 4, ease: "Sine.InOut" },
       { x: ox, y: oy, duration: GROWTH_SCENE.loopMs / 4, ease: "Sine.InOut" },
       ]);
-  twinkle(ctx, benchX - 22, spot.ground - 66, 0xffe7a3, 900);
-  twinkle(ctx, benchX + 26, spot.ground - 30, 0xbfe9ff, 1500, 0.3);
+  twinkle(ctx, benchX - 36, spot.ground - 86, 0xffe7a3, 900);
+  twinkle(ctx, benchX + 40, spot.ground - 30, 0xbfe9ff, 1500, 0.3);
 }
 
 /** 렐릭 강화 — 치즈케이크가 포물선으로 날아들 때마다 SD가 통 뛰고 위로 화살표가 솟는다. */
 function feedScene(ctx: Ctx, relicId: string | undefined): void {
   const { scene, spot } = ctx;
   const sdX = spot.x + 20;
-  const fromX = spot.x - 92;
+  const fromX = spot.x - 82;
   standSd(ctx, relicId, sdX, (sd) => {
     const baseY = sd.y;
     tween(ctx, { targets: sd, y: baseY - 14, duration: 150, yoyo: true, ease: "Quad.Out", delay: phase(ctx) + 560, repeat: -1, repeatDelay: GROWTH_SCENE.loopMs - 300 });
   });
-  const cake = scene.add.image(fromX, spot.ground - 20, "currency-cheesecake").setDisplaySize(40, 40).setAlpha(ctx.loop ? 0 : 1);
-  ctx.host.layer.add(cake);
+  const cake = prop(ctx, fromX, spot.ground - 30, "currency-cheesecake", GROWTH_SCENE.propSize).setAlpha(ctx.loop ? 0 : 1);
   const targetY = spot.ground - GROWTH_SCENE.sdHeight * 0.55;
   tween(ctx, {
     targets: cake, x: { from: fromX, to: sdX - 6 }, alpha: { from: 1, to: 0.2 }, scale: { from: cake.scale, to: cake.scale * 0.55 },
     duration: 560, ease: "Sine.In", delay: phase(ctx), repeat: -1, repeatDelay: GROWTH_SCENE.loopMs - 560,
-    onUpdate: (tw) => { cake.y = (spot.ground - 20) + (targetY - (spot.ground - 20)) * tw.progress - Math.sin(tw.progress * Math.PI) * 44; },
+    onUpdate: (tw) => { cake.y = (spot.ground - 30) + (targetY - (spot.ground - 30)) * tw.progress - Math.sin(tw.progress * Math.PI) * 44; },
   });
   const up = drawGlyph(scene, "speed", sdX + 40, spot.ground - GROWTH_SCENE.sdHeight + 6, 26, 0x9cf27a).setAngle(-90).setAlpha(ctx.loop ? 0 : 1);
   ctx.host.layer.add(up);
@@ -261,16 +281,15 @@ function feedScene(ctx: Ctx, relicId: string | undefined): void {
 function runeScene(ctx: Ctx, relicId: string | undefined): void {
   const { scene, spot } = ctx;
   const sdX = spot.x - 48;
-  const runeX = spot.x + 56;
-  const runeY = spot.ground - 50;
+  const runeX = spot.x + 58;
+  const runeY = spot.ground - 56;
   standSd(ctx, relicId, sdX);
-  const glow = scene.add.image(runeX, runeY, EFFECT_TEXTURE.glow).setTint(0xff7fd0).setDisplaySize(90, 90).setAlpha(0.2).setBlendMode(Phaser.BlendModes.ADD);
+  const glow = scene.add.image(runeX, runeY, EFFECT_TEXTURE.glow).setTint(0xff7fd0).setDisplaySize(130, 130).setAlpha(0.2).setBlendMode(Phaser.BlendModes.ADD);
   ctx.host.layer.add(glow);
-  const rune = scene.add.image(runeX, runeY, runeTexture("epic", 0)).setDisplaySize(58, 58);
-  ctx.host.layer.add(rune);
+  const rune = prop(ctx, runeX, runeY, runeTexture("epic", 0), GROWTH_SCENE.propSize - 12);
   tween(ctx, { targets: rune, y: runeY - 8, duration: GROWTH_SCENE.loopMs / 2, yoyo: true, repeat: -1, ease: "Sine.InOut", delay: phase(ctx) });
   tween(ctx, { targets: glow, alpha: { from: 0.12, to: 0.36 }, duration: GROWTH_SCENE.loopMs / 2, yoyo: true, repeat: -1, ease: "Sine.InOut", delay: phase(ctx) });
-  twinkle(ctx, runeX - 28, runeY - 22, 0xffe7a3, 300, 0.34);
-  twinkle(ctx, runeX + 26, runeY - 6, 0xbfe9ff, 900, 0.3);
-  twinkle(ctx, runeX - 4, runeY + 26, 0xffd0f0, 1500, 0.28);
+  twinkle(ctx, runeX - 42, runeY - 34, 0xffe7a3, 300, 0.34);
+  twinkle(ctx, runeX + 42, runeY - 8, 0xbfe9ff, 900, 0.3);
+  twinkle(ctx, runeX - 4, runeY + 40, 0xffd0f0, 1500, 0.28);
 }

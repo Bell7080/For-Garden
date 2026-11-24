@@ -4,7 +4,7 @@ import { attachRoll } from "./RollingValue";
 import { defenseGainKeywords, defenseGainSummary } from "./statGainKeywords";
 import { buildSummonKeywords } from "./summonKeywords";
 import { ferocityMaxOf } from "../core/ferocity";
-import { Button } from "./Button";
+import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
 import Phaser from "phaser";
 import type { PuppetAsset, PuppetCreature } from "../puppets/assets";
 import { powerSavingPolicy } from "../core/settings";
@@ -1435,7 +1435,7 @@ export class InfoManager {
     const ready = canResonate(def.rarity, progress, BREAKTHROUGH_STEPS.length, held, universal);
     body.add(new Button(this.scene, 0, top + BREAK_CONFIRM.actionY, {
       width: BREAK_CONFIRM.action.width, height: BREAK_CONFIRM.action.height, label: t("info.resonance.do"), fontSize: 34,
-      variant: "primary", fill: 0x2d2440, decorDots: true, accentColor: BREAK_EDGE, accentTextColor: COLOR.ink,
+      ...DESTRUCTIVE_BUTTON_STYLE,
       onClick: () => { close(); void this.breakThrough(); },
     }).setEnabled(ready));
   }

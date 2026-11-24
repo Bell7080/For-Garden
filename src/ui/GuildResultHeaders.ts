@@ -28,7 +28,7 @@ const OUTCOME_TONE: Record<GuildWarResultView["outcome"], { fill: number; text: 
 /** 상대 길드의 문장은 결과에 실려 오지 않으므로 같은 자리에 회색 방패 실루엣을 세운다. */
 const UNKNOWN_BADGE: GuildBadge = { shape: "shield", shapeColor: "ink", icon: "sword", iconColor: "silver" };
 
-const WAR = { height: 400, badge: 128, sideX: 300, rowY: 46, nameY: 140, nameWidth: 230, stampY: -128 } as const;
+const WAR = { height: 400, badge: 128, sideX: 300, rowY: 46, nameY: 140, nameWidth: 230, stampY: -128, score: { big: 84, small: 52, width: 176 } } as const;
 
 /** 도장 한 장 — 결과 낱말이 비스듬한 판 위에 크게 박힌다. 쾅 내려앉는 연출은 움직임 줄이기에서 생략한다. */
 function addOutcomeStamp(scene: Phaser.Scene, body: Phaser.GameObjects.Container, y: number, label: string, tone: { fill: number; text: string }, reduced: boolean): void {
@@ -64,12 +64,18 @@ export function guildWarResultHeader(scene: Phaser.Scene, mine: { name: string; 
       const won = result.outcome === "win" || result.outcome === "bye";
       addSide(scene, body, -WAR.sideX, rowY, mine.badge, mine.name, false);
       addSide(scene, body, WAR.sideX, rowY, UNKNOWN_BADGE, result.opponentName ?? t("guild.war.result.noOpponent"), true);
-      // 점수 대치 — 우리 쪽 수는 결과 색, 상대 쪽은 흐린 흰색이다. 가운데 쌍점은 강조색 한 점.
-      const mineText = scene.add.text(-20, rowY - 10, result.myPoints.toLocaleString(), textStyle({ role: "display", size: 64, color: won ? tone.text : COLOR.ink })).setOrigin(1, 0.5).setStroke("#0a0e14", 8);
+      // 점수 대치 — 이긴 쪽의 수가 크게 선다. 우리가 이기면 우리 수가 초록, 상대가 이기면 상대 수가 붉다. 진 쪽은 작고 흐리다.
+      const mineWins = result.outcome === "win";
+      const theirsWin = result.outcome === "loss";
+      const big = WAR.score.big;
+      const small = WAR.score.small;
+      const mineText = scene.add.text(-20, rowY - 10, result.myPoints.toLocaleString(), textStyle({ role: "display", size: mineWins ? big : small, color: mineWins ? COLOR.hpText : won ? tone.text : COLOR.inkDim })).setOrigin(1, 0.5).setStroke("#0a0e14", 8);
       const colon = scene.add.text(0, rowY - 14, ":", textStyle({ role: "display", size: 56, color: COLOR.accentText })).setOrigin(0.5);
-      const theirsText = scene.add.text(20, rowY - 10, result.theirPoints.toLocaleString(), textStyle({ role: "display", size: 64, color: COLOR.inkDim })).setOrigin(0, 0.5).setStroke("#0a0e14", 8);
-      squeezeTextToWidth(mineText, 150);
-      squeezeTextToWidth(theirsText, 150);
+      const theirsText = scene.add.text(20, rowY - 10, result.theirPoints.toLocaleString(), textStyle({ role: "display", size: theirsWin ? big : small, color: theirsWin ? COLOR.dangerText : COLOR.inkDim })).setOrigin(0, 0.5).setStroke("#0a0e14", 8);
+      if (mineWins) mineText.setShadow(0, 0, COLOR.hpText, 14, true, true);
+      if (theirsWin) theirsText.setShadow(0, 0, COLOR.dangerText, 14, true, true);
+      squeezeTextToWidth(mineText, WAR.score.width);
+      squeezeTextToWidth(theirsText, WAR.score.width);
       body.add([mineText, colon, theirsText]);
       // 길드전 점수 증감은 지갑에 들어오는 재화가 아니므로 액자가 아니라 칩 한 장이다.
       const up = result.delta >= 0;

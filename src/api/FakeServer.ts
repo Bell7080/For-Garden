@@ -201,6 +201,8 @@ const QA_ANCIENT_RANKING: readonly { playerId: string; displayName: string; floo
 /** FakeServer의 지연과 난수원을 테스트에서 결정적으로 바꾸기 위한 선택 설정이다. */
 export interface FakeServerOptions {
   latencyMs?: number;
+  /** 운영 출석 여부·길드 혜택은 공용 규칙을 실행하기 전에 읽는다. */
+  guildRead?: { level: number; attendanceReady: boolean };
   /** QA 디버그 명령을 받을지. 기본은 빌드 스위치(`QA_TOOLS_ENABLED`)이고, 서버 번들은 환경 변수로 따로 켠다. */
   developmentTools?: boolean;
   /** 실제 DB의 공유 체력·참가자 스냅샷. 서버 호출 단위에서만 주입한다. */
@@ -329,6 +331,7 @@ export class FakeServer implements GameApi {
   private readonly ancientRanking?: AncientRankingResponse;
   private readonly regularEvent: RegularEventDto | null;
   private readonly bannedWords: readonly string[];
+  private readonly guildRead?: FakeServerOptions["guildRead"];
 
   constructor(
     private readonly state: Session = session,
@@ -342,6 +345,7 @@ export class FakeServer implements GameApi {
     this.ancientRanking = options.ancientRanking;
     this.regularEvent = options.regularEvent ?? null;
     this.bannedWords = options.bannedWords ?? [];
+    this.guildRead = options.guildRead;
     this.developmentTools = options.developmentTools ?? QA_TOOLS_ENABLED;
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? (QA_TOOLS_ENABLED ? qaRandom : Math.random);
@@ -413,6 +417,7 @@ export class FakeServer implements GameApi {
 
   /** 길드 레벨 혜택. 길드가 없거나 길드 저장소에 닿지 않으면 혜택 없이 진행한다 — 혜택이 막혔다고 발굴·교류까지 막지 않는다. */
   private async currentGuildPerks(): Promise<GuildPerks> {
+    if (this.guildRead) return guildPerks(this.guildRead.level);
     try { const { guild } = await this.guildBackend.getGuild(this.guildActor()); return guildPerks(guild?.level ?? 0); } catch { return guildPerks(0); }
   }
 
@@ -3974,7 +3979,8 @@ export class FakeServer implements GameApi {
     // 시즌 보상은 결투 서버가 붙었을 때만 생긴다(`claimDuelSeasonReward`와 같은 문). 조회라 상태를 저장하지 않는다.
     const duelSeasonRewardReady = (QA_TOOLS_ENABLED || this.duelContext !== undefined) && rollDuelPeriods(normalizeDuelState(this.state.duel, [...this.state.owned]), now).pendingSeasonReward != null;
     const claimableSubscriptionBonusCount = PRODUCTS.filter((product) => product.passBenefit && this.subscriptionInfo(product, now).subscription?.dailyBonusClaimed === false).length;
-    const guildAttendanceReady = await this.guildAttendanceReady();
+    const guildAttendanceReady = isContentUnlocked("guild", this.state.playerResearch.level)
+      && (this.guildRead?.attendanceReady ?? await this.guildAttendanceReady());
     const patronClaimable = patronHasClaimable(this.patronState(), now);
     return { patronClaimable, guildAttendanceReady, freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
   }

@@ -78,11 +78,17 @@ describe("player profile display", () => {
     const stale = { id: "p-old", competitiveStats: { ancientFloor: 5, arenaScore: 1300 } };
     const fresh = { id: "p-new", competitiveStats: { highestStage: { stageId: "2-1", displayValue: "2-1" } } };
     const load = vi.fn(async (id: string) => id === "p-old" ? { data: saved } : null);
-    const result = { friends: [stale, fresh], incoming: [{ profile: { id: "p-missing", competitiveStats: {} } }] };
+    const empty = { id: "p-empty", competitiveStats: { highestStage: null } };
+    const previousFormat = { id: "p-previous", competitiveStats: { storyClears: [] } };
+    const result = { friends: [stale, fresh, empty, previousFormat], incoming: [{ profile: { id: "p-missing", competitiveStats: {} } }, { profile: { ...stale } }] };
     await refreshStaleProfileRecords(result, load, now);
     expect(stale.competitiveStats).toMatchObject({ highestStage: { stageId: "1-3" }, expeditionScore: 900, ancientFloor: 5, arenaScore: 1300 });
     // 이미 새 값을 실은 프로필은 저장을 읽지 않는다.
     expect(load).not.toHaveBeenCalledWith("p-new");
+    expect(load).not.toHaveBeenCalledWith("p-empty");
+    expect(load).not.toHaveBeenCalledWith("p-previous");
+    await refreshStaleProfileRecords({ friends: [{ id: "p-old", competitiveStats: {} }] }, load, now);
+    expect(load.mock.calls.filter(([id]) => id === "p-old")).toHaveLength(1);
     expect(result.incoming[0].profile.competitiveStats).toEqual({});
   });
 

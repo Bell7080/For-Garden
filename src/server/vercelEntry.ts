@@ -1,4 +1,5 @@
 import { applyApiOriginPolicy, qaToolsAllowed } from "./httpSecurity";
+import { waitUntil } from "@vercel/functions";
 import { handleArenaCall } from "./liveArena";
 /** 인증된 본인의 게임·친구 상태만 조작하는 HTTP 경계. */
 import { GameCallError, handleGameCall } from "./gameHandler";
@@ -35,6 +36,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
   let callMethod = "invalid_request";
   // 느린 호출이 어느 구간에서 멈췄는지 — 인증 · 관문(속도 제한·기기) · 규칙과 저장.
   const phases: Record<string, number> = {};
+  const gameTimings: Record<string, number> = {};
   let phaseAt = startedAt;
   const mark = (name: string) => { const now = Date.now(); phases[name] = now - phaseAt; phaseAt = now; };
   try {
@@ -60,7 +62,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     })();
     if (!user?.id) throw new GameCallError(401,"not_authenticated");
     mark("auth");
-    const store = createSupabaseStore({ url, serviceKey, signal: deadline });
+    const store = createSupabaseStore({ url, serviceKey, signal: deadline, waitUntil });
     // 나중에 접속한 기기가 이긴다(`deviceSession.ts`). 기기 확인은 속도 제한과 함께 나가 왕복을 늘리지 않는다.
     const device = deviceSessionOf(body);
     const [rate, deviceOk] = await Promise.all([
@@ -92,13 +94,13 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     } else if (body.method.startsWith("social.")) {
       const method=body.method.slice(7);
       if (!isSocialMethod(method)) throw new GameCallError(400,"unknown_method");
-      if (method === "getProfile") { res.status(200).json(await publicProfileOf(store, user.id, body.args?.[0])); return; }
+      if (method === "getProfile") { res.status(200).json(await publicProfileOf(store, user.id, body.args?.[0], url)); return; }
       const response = await store.socialCall(user.id,method,body.args??[],body.requestId) as { result?: unknown } | null;
       // 목록 조회만 — 예전 공개 프로필에 빠진 스토리·원정 기록을 그 친구의 저장에서 채운다.
-      if (["getFriends","getRequests","searchUsers","getRecommendations"].includes(method)) await refreshStaleProfileRecords(response?.result, (id) => store.load(id), new Date());
+      if (["getFriends","getRequests","searchUsers","getRecommendations"].includes(method)) await refreshStaleProfileRecords(response?.result, (id) => store.load(id), new Date(), url);
       res.status(200).json(response);
     } else {
-      const response = await handleGameCall(user.id,body,{store,strict:true,guild,signal:deadline,onDequeue:()=>mark("queue"),developmentTools:qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS) });
+      const response = await handleGameCall(user.id,body,{store,strict:true,guild,signal:deadline,onDequeue:()=>mark("queue"),onTiming:(phase,ms)=>{gameTimings[phase]=(gameTimings[phase]??0)+ms;},developmentTools:qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS) });
       mark("game");
       res.status(200).json(clientResponseState(response, isReadMethod(body.method) ? (body as { knownRevision?: unknown }).knownRevision : undefined));
     }
@@ -109,7 +111,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
   } finally {
     const elapsedMs = Date.now() - startedAt;
     // 사용자·토큰·본문은 남기지 않고 병목이 난 게임 메서드만 식별한다.
-    if (elapsedMs >= 2000) console.warn(JSON.stringify({event:"slow_game_request",method:callMethod,elapsedMs,phases}));
+    if (elapsedMs >= 2000) console.warn(JSON.stringify({event:"slow_game_request",method:callMethod,elapsedMs,phases,gameTimings}));
   }
 }
 
@@ -121,7 +123,7 @@ type SocialStore = { load(id: string): Promise<{ data: unknown } | null>; social
  * 지난다 — 그 사람의 저장에서 UID만 읽고, 그 UID로 찾기를 불러 공개 프로필·관계를 받는다. 그래서 정지·탈퇴 계정은 찾기에서
  * 빠지는 그대로 「찾을 수 없음」이 되고, 응답에는 찾기가 이미 공개하는 값 말고는 아무것도 실리지 않는다.
  */
-async function publicProfileOf(store: SocialStore, self: string, target: unknown): Promise<unknown> {
+async function publicProfileOf(store: SocialStore, self: string, target: unknown, project: string): Promise<unknown> {
   if (typeof target !== "string" || !PLAYER_ID.test(target)) throw new GameCallError(400, "invalid_args");
   if (target.toLowerCase() === self.toLowerCase()) throw new GameCallError(422, "SELF_REQUEST");
   const stored = await store.load(target).catch(() => null);
@@ -130,6 +132,6 @@ async function publicProfileOf(store: SocialStore, self: string, target: unknown
   const response = await store.socialCall(self, "searchUsers", [{ query: uid }]) as { result?: { users?: { profile?: { id?: unknown } }[]; serverTime?: number }; incomingCount?: number } | null;
   const found = response?.result?.users?.find((entry) => typeof entry.profile?.id === "string" && entry.profile.id.toLowerCase() === target.toLowerCase());
   if (!found) throw new GameCallError(422, "USER_NOT_FOUND");
-  await refreshStaleProfileRecords({ users: [found] }, (id) => store.load(id), new Date());
+  await refreshStaleProfileRecords({ users: [found] }, (id) => store.load(id), new Date(), project);
   return { ok: true, result: { ...found, serverTime: response?.result?.serverTime ?? Date.now() }, incomingCount: response?.incomingCount };
 }

@@ -9,6 +9,7 @@ await build({
   entryPoints: ["src/server/vercelEntry.ts"],
   outfile: "api/game.js",
   bundle: true,
+  external: ["@vercel/functions"],
   platform: "node",
   format: "esm",
   target: "node20",

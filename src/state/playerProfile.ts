@@ -208,7 +208,7 @@ export function friendProfileDisplay(friend: {
   displayName: string; level: number; uid: string; frameId: string; status: string; lastActive: string; avatarRelicId?: string | null;
   equippedModifiers: readonly PublicProfileModifier[];
   favoriteRelic: { relicId: string; equippedSkinId?: string | null; level: number; breakthroughGrade: number; stats: Parameters<typeof combatPower>[0] };
-  competitiveStats: { highestStage?: { stageId: string; displayValue: string }; storyClears?: readonly { difficulty: string; open?: boolean; stageId?: string }[]; arenaScore?: number; expeditionScore?: number; ancientFloor?: number; duelScore?: number };
+  competitiveStats: { highestStage?: { stageId: string; displayValue: string } | null; storyClears?: readonly { difficulty: string; open?: boolean; stageId?: string }[]; arenaScore?: number; expeditionScore?: number; ancientFloor?: number; duelScore?: number };
 }): PlayerProfileDisplay {
   const relic = RELICS.find(({ id }) => id === friend.favoriteRelic.relicId);
   const favorite: FavoriteRelicShowcase | null = relic ? {

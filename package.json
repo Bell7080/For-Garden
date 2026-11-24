@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@supabase/realtime-js": "2.118.0",
+    "@vercel/functions": "3.11.3",
     "phaser": "^3.90.0",
     "puppetforge": "github:Bell7080/WebGLE#31ab0fc7df52ddc5a386bcff9557895f08d150e5"
   },

@@ -37,6 +37,7 @@ export interface StateStore {
   load(playerId: string): Promise<StoredState | null>;
   identity?(playerId: string): Promise<{ uid: string; createdAt: string }>;
   pendingRequests?(playerId: string): Promise<number>;
+  guildReadContext?(playerId: string): Promise<{ level: number; attendanceReady: boolean }>;
   raidContext?(playerId: string, now: Date): Promise<SharedRaidContext>;
   expeditionContext?(playerId: string, now: Date): Promise<{ rank: number | null; entries: ExpeditionLeaderboardResponse["entries"] }>;
   /** 고대 지층 상시 순위(100등까지 + 내 줄). 초기화하지 않으므로 기간 키가 없다. */
@@ -116,22 +117,49 @@ export interface GameHandlerDeps {
   guild?: GuildBackend;
   /** 줄 서기가 끝나 이 호출이 실제로 돌기 시작하는 순간 — 느린 호출 기록이 대기 시간을 따로 잰다. */
   onDequeue?: () => void;
+  /** DB 대기와 공용 규칙 계산·대기를 나누어 측정한다. 재시도한 구간은 호출자가 합산한다. */
+  onTiming?: (phase: "dbRead" | "rulesAndQueue" | "dbCommit", elapsedMs: number) => void;
 }
 
-// 한 프로세스 안에서는 계정별로 호출을 줄 세운다. FakeServer가 모듈 단위 싱글턴을 일부 읽으므로
-// 서로 다른 계정이 한꺼번에 돌지도 않게 전역 한 줄로 직렬화한다(서버리스 인스턴스당 동시 1건).
+// 같은 계정은 조회부터 저장까지 순서를 지킨다. 다른 계정의 DB 대기는 서로 막지 않는다.
+// FakeServer가 읽는 공용 정의는 규칙 실행 구간에서만 별도로 보호한다.
 const unavailableGuild = createUnavailableGuildBackend();
-let chain: Promise<unknown> = Promise.resolve();
+const playerChains = new Map<string, Promise<unknown>>();
+let rulesChain: Promise<unknown> = Promise.resolve();
 export const MAX_PENDING_GAME_CALLS = 32;
+/** DB가 작은 환경에서도 대기 중인 32건이 한꺼번에 조회를 쏟지 않도록 한다. */
+export const MAX_CONCURRENT_GAME_CALLS = 4;
 let pendingCalls = 0;
-function serialize<T>(task: () => Promise<T>): Promise<T> {
+let activeCalls = 0;
+const slotWaiters: (() => void)[] = [];
+async function withGameSlot<T>(task: () => Promise<T>): Promise<T> {
+  if (activeCalls >= MAX_CONCURRENT_GAME_CALLS) await new Promise<void>(resolve => { slotWaiters.push(resolve); });
+  else activeCalls++;
+  try { return await task(); }
+  finally {
+    const next = slotWaiters.shift();
+    if (next) next();
+    else activeCalls--;
+  }
+}
+function serializePlayer<T>(playerId: string, task: () => Promise<T>): Promise<T> {
   if (pendingCalls >= MAX_PENDING_GAME_CALLS) throw new GameCallError(503, "server_busy");
   pendingCalls++;
-  const next = chain.then(task, task).finally(() => { pendingCalls--; });
-  chain = next.catch(() => undefined);
+  const previous = playerChains.get(playerId) ?? Promise.resolve();
+  const next = previous.then(() => withGameSlot(task)).finally(() => {
+    pendingCalls--;
+    if (playerChains.get(playerId) === tail) playerChains.delete(playerId);
+  });
+  const tail = next.catch(() => undefined);
+  playerChains.set(playerId, tail);
   return next;
 }
 
+function serializeRules<T>(task: () => Promise<T>): Promise<T> {
+  const next = rulesChain.then(task);
+  rulesChain = next.catch(() => undefined);
+  return next;
+}
 
 
 /** 운영 우편·재화 조정을 읽어 반영하는 호출 — 우편·알림·가방처럼 지금 값을 보여 주는 조회와 수령이다. */
@@ -145,11 +173,16 @@ export function handleGameCall(playerId: string, req: GameCallRequest, deps: Gam
   if (req.args && req.args.length > 4) throw new GameCallError(400, "invalid_args");
   if (req.requestId !== undefined && !REQUEST_ID.test(req.requestId)) throw new GameCallError(400, "invalid_request_id");
   const call = isReadMethod(req.method) ? { ...req, requestId: undefined } : req;
-  return serialize(() => { deps.onDequeue?.(); return run(playerId, call, deps); });
+  return serializePlayer(playerId, () => { deps.onDequeue?.(); return run(playerId, call, deps); });
 }
 
 async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps): Promise<GameCallResponse> {
   const checkDeadline = () => { if (deps.signal?.aborted) throw new GameCallError(503, "request_timeout"); };
+  const measure = async <T>(phase: "dbRead" | "rulesAndQueue" | "dbCommit", task: () => Promise<T>): Promise<T> => {
+    const startedAt = Date.now();
+    try { return await task(); }
+    finally { deps.onTiming?.(phase, Date.now() - startedAt); }
+  };
   checkDeadline();
   const attempts = deps.maxAttempts ?? 3;
   const legacyFingerprint = JSON.stringify([req.method, req.args ?? []]);
@@ -166,7 +199,9 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
     const giftRecipient = /^(getGiftOptions|prepareGift)$/.test(req.method) ? String((req.args?.[0] as { recipientId?: unknown } | undefined)?.recipientId ?? "") || null : null;
     // 받는 사람 id는 DB에서 uuid로 읽는다 — 모양이 아니면 받는 사람 없이 묻는다(상품 목록만 필요한 선물 탭).
     const giftRecipientId = giftRecipient && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(giftRecipient) ? giftRecipient : null;
-    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords, schedule, launchAt, gifts] = await Promise.all([
+    const isNotificationRead = req.method === "getNotificationSignals";
+    const wantsGuildRead = isNotificationRead || /^(getInteractionCities|startInteractionDispatch|harvestExcavation)$/.test(req.method);
+    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords, schedule, launchAt, gifts, pendingRequests, guildRead] = await measure("dbRead", () => Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : undefined,
       deps.store.load(playerId),
       deps.store.identity ? deps.store.identity(playerId) : undefined,
@@ -180,12 +215,10 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       deps.store.liveSchedule ? deps.store.liveSchedule().catch(() => undefined) : undefined,
       deps.store.launchAt ? deps.store.launchAt().catch(() => undefined) : undefined,
       wantsGift ? deps.store.giftContext!(playerId, giftRecipientId, now) : undefined,
-    ]);
+      isNotificationRead && deps.store.pendingRequests ? deps.store.pendingRequests(playerId) : undefined,
+      wantsGuildRead && deps.store.guildReadContext ? deps.store.guildReadContext(playerId).catch(() => ({ level: 0, attendanceReady: false })) : undefined,
+    ]));
     checkDeadline();
-    // 서버가 받아 주는 배너·상품·이벤트 기간은 클라이언트가 본 것과 같은 운영 일정을 따른다. 못 읽었으면 지난 값을 그대로 쓴다.
-    if (schedule !== undefined) setLiveSchedule(schedule);
-    // 시즌 번호·이벤트 교대·출시 전 유예도 클라이언트와 같은 출시 시각으로 센다(`launchAnchor.ts`).
-    if (launchAt !== undefined) setLaunchAt(launchAt);
     if (cached !== undefined) {
       const receipt = cached as GameCallResponse & { _requestFingerprint?: string };
       if (receipt._requestFingerprint !== fingerprint && receipt._requestFingerprint !== legacyFingerprint) throw new GameCallError(409, "request_id_conflict");
@@ -194,76 +227,79 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       if (stored && Number(stored.revision) >= Number(response.revision)) return { ...response, state: stored.data, revision: stored.revision };
       throw new GameCallError(409, "receipt_state_unavailable");
     }
-    let state: Session;
-    try {
-      state = stored ? saveManager.parse(stored.data) : createDefaultSession();
-    } catch {
-      throw new GameCallError(500, "corrupt_state");
-    }
-    const before = JSON.stringify(saveManager.exportData(state));
-    if (identity) {
-      state.playerCard.uid = identity.uid;
-      state.playerCard.createdAt = identity.createdAt;
-    }
-    if (wantsDuel && !isContentUnlocked("duel", state.playerResearch.level)) throw new GameCallError(422, "content_locked");
-    if (isContentUnlocked("duel", state.playerResearch.level)) state.duel = rollDuelPeriods(normalizeDuelState(state.duel, [...state.owned]), now);
-    if (context) state.raid.instances = context.records.map(row => structuredClone(row.instance));
-    const server = new FakeServer(state, {
-      latencyMs: 0,
-      random: deps.random ?? secureRandom,
-      ...(deps.now ? { now: deps.now } : {}),
-      persistSession: () => undefined,
-      raidContext: context,
-      duelContext: duels,
-      ...(gifts ? { giftContext: gifts } : {}),
-      expeditionRank: expedition?.rank,
-      ancientRanking: ancient,
-      ...(regular !== undefined ? { regularEvent: regular } : {}),
-      ...(bannedWords ? { bannedWords } : {}),
-      guild: deps.guild ?? unavailableGuild,
-      playerId,
-      developmentTools: deps.developmentTools === true,
-    });
-    // 재전송이 같은 길드 변경을 두 번 반영하지 않도록 길드 백엔드의 멱등 키를 요청 id로 고정한다.
-    if (req.requestId) server.useGuildRequestId(req.requestId);
-    const claimedBefore = new Set(state.claimedMailIds ?? []);
-    let applied: OpsAppliedAdjustment[] = [];
-    let profileActions: string[] = [];
-    if (ops) {
-      applied = applyOpsAdjustments(state, ops.adjustments, now);
-      profileActions = applyOpsProfileActions(state, ops.profileActions ?? [], now);
-      noticeOpsBanners(state, ops.banners ?? [], now);
-      server.attachOpsMails(ops.mails, ops.patchNotes ?? []);
-    }
-    let result: unknown;
-    try {
-      const timingState = deps.strict && (req.method === "submitRaidDamage" || req.method === "submitExpeditionBossScore") ? structuredClone(state) : state;
-      const args = deps.strict ? authoritativeArgs(state, req.method, req.args ?? []) : req.args ?? [];
-      if (req.method === "prepareCombat") result = prepareCombat(state, args[0] as CombatPrepare, now, globalThis.crypto.randomUUID());
-      else if (req.method === "finishCombat") result = finishCombat(state, args[0] as CombatProof, now);
-      else {
-        result = await (server as unknown as Record<string, (...a: unknown[]) => Promise<unknown>>)[req.method](...args);
-        if (req.method === "getExpeditionLeaderboard" && expedition) result = { ...(result as object), entries: expedition.entries.slice(0, Math.max(0, Math.min(100, Number(args[0] ?? 100)))) };
-        if (req.method === "getNotificationSignals" && deps.store.pendingRequests) result = { ...(result as object), pendingFriendRequestCount: await deps.store.pendingRequests(playerId) };
-        if (req.method === "getNotificationSignals") { const opsNotices = drainOpsNotices(state); if (opsNotices.length) result = { ...(result as object), opsNotices }; }
-        if (deps.strict) { verifyBossWallTime(timingState, req.method, args, result, now); recordBoundaryResult(state, req.method, args, now); }
-      }
-    } catch (error) {
-      // **시간 초과·중단은 규칙의 거절이 아니다** — 저장소 조회가 마감 신호로 끊긴 것을 422 「거절」로 돌려주면
-      // 클라이언트가 끝난 일로 보고 재시도 키를 버리며, 오류 보고에도 「규칙 거절」로 남았다(2026-11-18 지연 사고).
-      // 그대로 던져 진입점이 503(다시 시도해도 되는 서버 사정)으로 답하게 한다.
-      if (error instanceof GameCallError || isInfrastructureAbort(error)) throw error;
-      // 규칙이 거절한 호출은 상태를 바꾸지 않았으므로 저장하지 않고 거절 사유만 돌려준다.
-      throw new GameCallError(422, "rejected", error instanceof Error ? error.message : String(error), error instanceof GameApiError ? error.code : undefined, error instanceof CombatRejected ? error.reason : undefined);
-    }
-    const data = saveManager.exportData(state);
-    const changed = JSON.stringify(data) !== before;
-    const fresh = stored === null;
-    const response: GameCallResponse = { ok: true, result: result ?? null, state: data, revision: stored?.revision ?? "0" };
-    if (!changed && !fresh && !req.requestId) return response;
-    try {
+    const prepared = await measure("rulesAndQueue", () => serializeRules(async () => {
       checkDeadline();
-      const committed = await deps.store.commit({
+      // 공용 정의를 바꾸는 순간부터 규칙·응답 계산이 끝날 때까지만 직렬화한다.
+      if (schedule !== undefined) setLiveSchedule(schedule);
+      if (launchAt !== undefined) setLaunchAt(launchAt);
+      let state: Session;
+      try {
+        state = stored ? saveManager.parse(stored.data) : createDefaultSession();
+      } catch {
+        throw new GameCallError(500, "corrupt_state");
+      }
+      const before = JSON.stringify(saveManager.exportData(state));
+      if (identity) {
+        state.playerCard.uid = identity.uid;
+        state.playerCard.createdAt = identity.createdAt;
+      }
+      if (wantsDuel && !isContentUnlocked("duel", state.playerResearch.level)) throw new GameCallError(422, "content_locked");
+      if (isContentUnlocked("duel", state.playerResearch.level)) state.duel = rollDuelPeriods(normalizeDuelState(state.duel, [...state.owned]), now);
+      if (context) state.raid.instances = context.records.map(row => structuredClone(row.instance));
+      const server = new FakeServer(state, {
+        latencyMs: 0,
+        random: deps.random ?? secureRandom,
+        ...(deps.now ? { now: deps.now } : {}),
+        persistSession: () => undefined,
+        raidContext: context,
+        duelContext: duels,
+        ...(gifts ? { giftContext: gifts } : {}),
+        expeditionRank: expedition?.rank,
+        ancientRanking: ancient,
+        ...(regular !== undefined ? { regularEvent: regular } : {}),
+        ...(bannedWords ? { bannedWords } : {}),
+        guild: deps.guild ?? unavailableGuild,
+        guildRead,
+        playerId,
+        developmentTools: deps.developmentTools === true,
+      });
+      // 재전송이 같은 길드 변경을 두 번 반영하지 않도록 길드 백엔드의 멱등 키를 요청 id로 고정한다.
+      if (req.requestId) server.useGuildRequestId(req.requestId);
+      const claimedBefore = new Set(state.claimedMailIds ?? []);
+      let applied: OpsAppliedAdjustment[] = [];
+      let profileActions: string[] = [];
+      if (ops) {
+        applied = applyOpsAdjustments(state, ops.adjustments, now);
+        profileActions = applyOpsProfileActions(state, ops.profileActions ?? [], now);
+        noticeOpsBanners(state, ops.banners ?? [], now);
+        server.attachOpsMails(ops.mails, ops.patchNotes ?? []);
+      }
+      let result: unknown;
+      try {
+        const timingState = deps.strict && (req.method === "submitRaidDamage" || req.method === "submitExpeditionBossScore") ? structuredClone(state) : state;
+        const args = deps.strict ? authoritativeArgs(state, req.method, req.args ?? []) : req.args ?? [];
+        if (req.method === "prepareCombat") result = prepareCombat(state, args[0] as CombatPrepare, now, globalThis.crypto.randomUUID());
+        else if (req.method === "finishCombat") result = finishCombat(state, args[0] as CombatProof, now);
+        else {
+          result = await (server as unknown as Record<string, (...a: unknown[]) => Promise<unknown>>)[req.method](...args);
+          if (req.method === "getExpeditionLeaderboard" && expedition) result = { ...(result as object), entries: expedition.entries.slice(0, Math.max(0, Math.min(100, Number(args[0] ?? 100)))) };
+          if (pendingRequests !== undefined) result = { ...(result as object), pendingFriendRequestCount: pendingRequests };
+          if (req.method === "getNotificationSignals") { const opsNotices = drainOpsNotices(state); if (opsNotices.length) result = { ...(result as object), opsNotices }; }
+          if (deps.strict) { verifyBossWallTime(timingState, req.method, args, result, now); recordBoundaryResult(state, req.method, args, now); }
+        }
+      } catch (error) {
+        // **시간 초과·중단은 규칙의 거절이 아니다** — 저장소 조회가 마감 신호로 끊긴 것을 422 「거절」로 돌려주면
+        // 클라이언트가 끝난 일로 보고 재시도 키를 버리며, 오류 보고에도 「규칙 거절」로 남았다(2026-11-18 지연 사고).
+        // 그대로 던져 진입점이 503(다시 시도해도 되는 서버 사정)으로 답하게 한다.
+        if (error instanceof GameCallError || isInfrastructureAbort(error)) throw error;
+        // 규칙이 거절한 호출은 상태를 바꾸지 않았으므로 저장하지 않고 거절 사유만 돌려준다.
+        throw new GameCallError(422, "rejected", error instanceof Error ? error.message : String(error), error instanceof GameApiError ? error.code : undefined, error instanceof CombatRejected ? error.reason : undefined);
+      }
+      const data = saveManager.exportData(state);
+      const changed = JSON.stringify(data) !== before;
+      const fresh = stored === null;
+      const response: GameCallResponse = { ok: true, result: result ?? null, state: data, revision: stored?.revision ?? "0" };
+      const commitInput: Parameters<StateStore["commit"]>[0] | undefined = !changed && !fresh && !req.requestId ? undefined : {
         playerId,
         expectedRevision: stored?.revision ?? null,
         data,
@@ -274,8 +310,15 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
         raids: context ? raidChanges(context, state) : undefined,
         duels: duels?.changes,
         gifts: gifts?.changes.length ? gifts.changes : undefined,
-      });
+      };
       const claimedMails = (state.claimedMailIds ?? []).filter((id) => isOpsMailId(id) && !claimedBefore.has(id)).map(opsMailUuid);
+      return { response, commitInput, applied, claimedMails, profileActions };
+    }));
+    const { response, commitInput, applied, claimedMails, profileActions } = prepared;
+    if (!commitInput) return response;
+    try {
+      checkDeadline();
+      const committed = await measure("dbCommit", () => deps.store.commit(commitInput));
       if ((applied.length > 0 || claimedMails.length > 0) && deps.store.opsAck) await deps.store.opsAck(playerId, applied, claimedMails).catch(() => undefined);
       if (profileActions.length > 0 && deps.store.opsProfileAck) await deps.store.opsProfileAck(playerId, profileActions).catch(() => undefined);
       return { ...response, revision: committed.revision };

@@ -3236,7 +3236,7 @@ var require_RealtimePostgresFilterBuilder = __commonJS({
       return needsQuoting(serialized) ? quote(serialized) : serialized;
     };
     var serializeIsValue = (value) => value === null ? "null" : String(value);
-    var serialize2 = (operator, value) => {
+    var serialize = (operator, value) => {
       if (operator === "in") {
         const values = Array.isArray(value) ? value : [value];
         if (values.length === 0) {
@@ -3256,7 +3256,7 @@ var require_RealtimePostgresFilterBuilder = __commonJS({
       }
       add(column, operator, value, negate = false) {
         const prefix = negate ? "not." : "";
-        this.filters.push(`${column}=${prefix}${serialize2(operator, value)}`);
+        this.filters.push(`${column}=${prefix}${serialize(operator, value)}`);
         return this;
       }
       /** Match rows where `column` equals `value` (`column=eq.value`). */
@@ -5006,6 +5006,9 @@ function qaToolsAllowed(url, enabled2) {
     return false;
   }
 }
+
+// src/server/vercelEntry.ts
+import { waitUntil } from "@vercel/functions";
 
 // src/server/liveArena.ts
 init_define_import_meta_env();
@@ -13513,8 +13516,8 @@ function overflowPrickle(fighter, state, events) {
   const overflow = plan?.overflow;
   if (!plan || !overflow || !isFighterAlive(fighter) || (fighter.prickle?.stacks ?? 0) < plan.maxStacks) return;
   fighter.prickle = null;
-  const chain2 = fighter.ferocityFever ? openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity) : void 0;
-  if (chain2?.kind === "heatChain") fighter.prickle = { stacks: chain2.keepStacks, remaining: plan.seconds, total: plan.seconds };
+  const chain = fighter.ferocityFever ? openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity) : void 0;
+  if (chain?.kind === "heatChain") fighter.prickle = { stacks: chain.keepStacks, remaining: plan.seconds, total: plan.seconds };
   tauntOnBattleHeat(fighter, { taunt: { kind: "taunt", seconds: overflow.tauntSeconds }, tauntRadius: overflow.tauntRadius }, state, events);
   grantShield(state, fighter, fighter.id, Math.max(1, Math.round(fighter.maxHp * overflow.shieldMaxHpPercent / 100)), events, 1.2);
   fighter.regeneration = { remaining: overflow.regenSeconds, tickIn: EMERGENCY_RECOVERY.tickSeconds, percentPerTick: overflow.regenMaxHpPercentPerSecond };
@@ -15423,14 +15426,14 @@ function tickDashBack(fighter, dt, rng, state, events) {
   fighter.bt.dashBack = null;
 }
 function resolveChainCollision(flyer, state, events) {
-  const chain2 = flyer.knockback?.chain;
-  if (!chain2 || !isFighterAlive(flyer)) return;
-  const source = findFighter(state, chain2.sourceId);
+  const chain = flyer.knockback?.chain;
+  if (!chain || !isFighterAlive(flyer)) return;
+  const source = findFighter(state, chain.sourceId);
   const concussion = source?.def.basic.statusEffects?.find((effect) => effect.kind === "concussion");
   if (!source || concussion?.kind !== "concussion") return;
-  const struck = state.fighters.find((other) => other.side === flyer.side && other.id !== flyer.id && isFighterAlive(other) && other.knockback === null && !chain2.hit.includes(other.id) && distance(flyer, other) <= chain2.radius);
+  const struck = state.fighters.find((other) => other.side === flyer.side && other.id !== flyer.id && isFighterAlive(other) && other.knockback === null && !chain.hit.includes(other.id) && distance(flyer, other) <= chain.radius);
   if (!struck) return;
-  chain2.hit.push(struck.id);
+  chain.hit.push(struck.id);
   applyConcussion(struck, concussion, false, events, state, source.id, true);
 }
 function tickAfterglow(fighter, state, events) {
@@ -16876,14 +16879,14 @@ function burstShallowPool(fighter, pool, power, state, events, ultimate = false)
 }
 function staccatoChainSkill(attacker, target, skill, useUltimate) {
   if (useUltimate) return skill;
-  const chain2 = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
-  if (chain2?.kind !== "staccatoChain") return skill;
+  const chain = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  if (chain?.kind !== "staccatoChain") return skill;
   const streak = attacker.bt.staccatoStreak?.targetId === target.id ? attacker.bt.staccatoStreak.count + 1 : 1;
   attacker.bt.staccatoStreak = { targetId: target.id, count: streak };
-  const stacks = Math.min(chain2.maxStacks, streak);
+  const stacks = Math.min(chain.maxStacks, streak);
   return { ...skill, statusEffects: skill.statusEffects?.map((effect) => {
     if (effect.kind !== "stagger") return effect;
-    const seconds = effect.seconds + (stacks - 1) * chain2.secondsPerStack;
+    const seconds = effect.seconds + (stacks - 1) * chain.secondsPerStack;
     return seconds > STAGGER_SECONDS + 1e-9 ? { kind: "stun", seconds } : effect;
   }) };
 }
@@ -47395,6 +47398,7 @@ var package_default = {
   },
   dependencies: {
     "@supabase/realtime-js": "2.118.0",
+    "@vercel/functions": "3.11.3",
     phaser: "^3.90.0",
     puppetforge: "github:Bell7080/WebGLE#31ab0fc7df52ddc5a386bcff9557895f08d150e5"
   },
@@ -48168,6 +48172,7 @@ var FakeServer = class {
     this.ancientRanking = options.ancientRanking;
     this.regularEvent = options.regularEvent ?? null;
     this.bannedWords = options.bannedWords ?? [];
+    this.guildRead = options.guildRead;
     this.developmentTools = options.developmentTools ?? QA_TOOLS_ENABLED;
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? (QA_TOOLS_ENABLED ? qaRandom : Math.random);
@@ -48309,6 +48314,7 @@ var FakeServer = class {
   ancientRanking;
   regularEvent;
   bannedWords;
+  guildRead;
   /** 저장에 남은 수령 기록을 우편 목록에 옮긴다. 세션이 통째로 바뀐 뒤(부트)에도 첫 조회 전에 다시 지난다. */
   applySavedMailClaims() {
     const claimed = new Set(this.state.claimedMailIds ?? []);
@@ -48332,6 +48338,7 @@ var FakeServer = class {
   }
   /** 길드 레벨 혜택. 길드가 없거나 길드 저장소에 닿지 않으면 혜택 없이 진행한다 — 혜택이 막혔다고 발굴·교류까지 막지 않는다. */
   async currentGuildPerks() {
+    if (this.guildRead) return guildPerks(this.guildRead.level);
     try {
       const { guild } = await this.guildBackend.getGuild(this.guildActor());
       return guildPerks(guild?.level ?? 0);
@@ -51916,7 +51923,7 @@ var FakeServer = class {
     const claimableInteractionCount = this.state.interaction.slots.filter((slot) => slot !== null && !slot.claimed && isInteractionDispatchComplete(slot.completesAt, now.getTime())).length;
     const duelSeasonRewardReady = (QA_TOOLS_ENABLED || this.duelContext !== void 0) && rollDuelPeriods(normalizeDuelState(this.state.duel, [...this.state.owned]), now).pendingSeasonReward != null;
     const claimableSubscriptionBonusCount = PRODUCTS.filter((product) => product.passBenefit && this.subscriptionInfo(product, now).subscription?.dailyBonusClaimed === false).length;
-    const guildAttendanceReady = await this.guildAttendanceReady();
+    const guildAttendanceReady = isContentUnlocked("guild", this.state.playerResearch.level) && (this.guildRead?.attendanceReady ?? await this.guildAttendanceReady());
     const patronClaimable = patronHasClaimable(this.patronState(), now);
     return { patronClaimable, guildAttendanceReady, freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
   }
@@ -54061,9 +54068,9 @@ function publicProfile(state, playerId, now) {
       stats: new RelicProgressionManager(state).getFinalStats(relic.id),
       skillIds: [relic.basic.id, relic.passive.id, relic.ultimate.id]
     },
-    // 친구 카드의 기록 칸과 고대 지층 지도(친구를 그 층 노드 옆에 세운다)가 읽는다. 없는 기록은 키를 생략한다.
+    // 관문을 아직 못 깬 프로필은 null로 표시해 필드가 없는 예전 프로필과 가른다.
     competitiveStats: {
-      ...stage ? { highestStage: { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } } : {},
+      highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
       // 난이도마다 어디까지 깼는지 — 5~7장이 늘어도 줄 수는 난이도 셋이다. 열리지 않은 난이도는 `open: false`로 말한다.
       storyClears: storyClearRecords(storyStages, state.cleared),
       ...state.expedition.allTimeBestScore > 0 ? { expeditionScore: Math.floor(state.expedition.allTimeBestScore) } : {},
@@ -54157,16 +54164,41 @@ var GameCallError = class extends Error {
   detail;
 };
 var unavailableGuild = createUnavailableGuildBackend();
-var chain = Promise.resolve();
+var playerChains = /* @__PURE__ */ new Map();
+var rulesChain = Promise.resolve();
 var MAX_PENDING_GAME_CALLS = 32;
+var MAX_CONCURRENT_GAME_CALLS = 4;
 var pendingCalls = 0;
-function serialize(task) {
+var activeCalls = 0;
+var slotWaiters = [];
+async function withGameSlot(task) {
+  if (activeCalls >= MAX_CONCURRENT_GAME_CALLS) await new Promise((resolve) => {
+    slotWaiters.push(resolve);
+  });
+  else activeCalls++;
+  try {
+    return await task();
+  } finally {
+    const next = slotWaiters.shift();
+    if (next) next();
+    else activeCalls--;
+  }
+}
+function serializePlayer(playerId, task) {
   if (pendingCalls >= MAX_PENDING_GAME_CALLS) throw new GameCallError(503, "server_busy");
   pendingCalls++;
-  const next = chain.then(task, task).finally(() => {
+  const previous = playerChains.get(playerId) ?? Promise.resolve();
+  const next = previous.then(() => withGameSlot(task)).finally(() => {
     pendingCalls--;
+    if (playerChains.get(playerId) === tail2) playerChains.delete(playerId);
   });
-  chain = next.catch(() => void 0);
+  const tail2 = next.catch(() => void 0);
+  playerChains.set(playerId, tail2);
+  return next;
+}
+function serializeRules(task) {
+  const next = rulesChain.then(task);
+  rulesChain = next.catch(() => void 0);
   return next;
 }
 var OPS_SYNC_METHODS = /* @__PURE__ */ new Set(["getNotificationSignals", "getMails", "markMailsRead", "deleteMails", "claimMailRewards", "getInventory", "getPlayerState"]);
@@ -54178,7 +54210,7 @@ function handleGameCall(playerId, req, deps) {
   if (req.args && req.args.length > 4) throw new GameCallError(400, "invalid_args");
   if (req.requestId !== void 0 && !REQUEST_ID.test(req.requestId)) throw new GameCallError(400, "invalid_request_id");
   const call = isReadMethod(req.method) ? { ...req, requestId: void 0 } : req;
-  return serialize(() => {
+  return serializePlayer(playerId, () => {
     deps.onDequeue?.();
     return run(playerId, call, deps);
   });
@@ -54186,6 +54218,14 @@ function handleGameCall(playerId, req, deps) {
 async function run(playerId, req, deps) {
   const checkDeadline = () => {
     if (deps.signal?.aborted) throw new GameCallError(503, "request_timeout");
+  };
+  const measure = async (phase, task) => {
+    const startedAt = Date.now();
+    try {
+      return await task();
+    } finally {
+      deps.onTiming?.(phase, Date.now() - startedAt);
+    }
   };
   checkDeadline();
   const attempts = deps.maxAttempts ?? 3;
@@ -54201,7 +54241,9 @@ async function run(playerId, req, deps) {
     const wantsGift = GIFTING_ENABLED && /^(getGiftOptions|prepareGift|sendGift|cancelGift|getIncomingGifts|acceptGift|declineGift|getPurchaseHistory|getAchievements|claimAchievementRewards)$/.test(req.method) && deps.store.giftContext;
     const giftRecipient = /^(getGiftOptions|prepareGift)$/.test(req.method) ? String(req.args?.[0]?.recipientId ?? "") || null : null;
     const giftRecipientId = giftRecipient && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(giftRecipient) ? giftRecipient : null;
-    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords, schedule, launchAt, gifts] = await Promise.all([
+    const isNotificationRead = req.method === "getNotificationSignals";
+    const wantsGuildRead = isNotificationRead || /^(getInteractionCities|startInteractionDispatch|harvestExcavation)$/.test(req.method);
+    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords, schedule, launchAt, gifts, pendingRequests, guildRead] = await measure("dbRead", () => Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : void 0,
       deps.store.load(playerId),
       deps.store.identity ? deps.store.identity(playerId) : void 0,
@@ -54214,11 +54256,11 @@ async function run(playerId, req, deps) {
       (req.method === "updatePlayerCard" || req.method === "renameRune") && deps.store.bannedWords ? deps.store.bannedWords().catch(() => []) : void 0,
       deps.store.liveSchedule ? deps.store.liveSchedule().catch(() => void 0) : void 0,
       deps.store.launchAt ? deps.store.launchAt().catch(() => void 0) : void 0,
-      wantsGift ? deps.store.giftContext(playerId, giftRecipientId, now) : void 0
-    ]);
+      wantsGift ? deps.store.giftContext(playerId, giftRecipientId, now) : void 0,
+      isNotificationRead && deps.store.pendingRequests ? deps.store.pendingRequests(playerId) : void 0,
+      wantsGuildRead && deps.store.guildReadContext ? deps.store.guildReadContext(playerId).catch(() => ({ level: 0, attendanceReady: false })) : void 0
+    ]));
     checkDeadline();
-    if (schedule !== void 0) setLiveSchedule(schedule);
-    if (launchAt !== void 0) setLaunchAt(launchAt);
     if (cached !== void 0) {
       const receipt = cached;
       if (receipt._requestFingerprint !== fingerprint && receipt._requestFingerprint !== legacyFingerprint) throw new GameCallError(409, "request_id_conflict");
@@ -54226,89 +54268,98 @@ async function run(playerId, req, deps) {
       if (stored && Number(stored.revision) >= Number(response2.revision)) return { ...response2, state: stored.data, revision: stored.revision };
       throw new GameCallError(409, "receipt_state_unavailable");
     }
-    let state;
-    try {
-      state = stored ? saveManager.parse(stored.data) : createDefaultSession();
-    } catch {
-      throw new GameCallError(500, "corrupt_state");
-    }
-    const before = JSON.stringify(saveManager.exportData(state));
-    if (identity) {
-      state.playerCard.uid = identity.uid;
-      state.playerCard.createdAt = identity.createdAt;
-    }
-    if (wantsDuel && !isContentUnlocked("duel", state.playerResearch.level)) throw new GameCallError(422, "content_locked");
-    if (isContentUnlocked("duel", state.playerResearch.level)) state.duel = rollDuelPeriods(normalizeDuelState(state.duel, [...state.owned]), now);
-    if (context) state.raid.instances = context.records.map((row) => structuredClone(row.instance));
-    const server = new FakeServer(state, {
-      latencyMs: 0,
-      random: deps.random ?? secureRandom,
-      ...deps.now ? { now: deps.now } : {},
-      persistSession: () => void 0,
-      raidContext: context,
-      duelContext: duels,
-      ...gifts ? { giftContext: gifts } : {},
-      expeditionRank: expedition?.rank,
-      ancientRanking: ancient,
-      ...regular !== void 0 ? { regularEvent: regular } : {},
-      ...bannedWords ? { bannedWords } : {},
-      guild: deps.guild ?? unavailableGuild,
-      playerId,
-      developmentTools: deps.developmentTools === true
-    });
-    if (req.requestId) server.useGuildRequestId(req.requestId);
-    const claimedBefore = new Set(state.claimedMailIds ?? []);
-    let applied = [];
-    let profileActions = [];
-    if (ops) {
-      applied = applyOpsAdjustments(state, ops.adjustments, now);
-      profileActions = applyOpsProfileActions(state, ops.profileActions ?? [], now);
-      noticeOpsBanners(state, ops.banners ?? [], now);
-      server.attachOpsMails(ops.mails, ops.patchNotes ?? []);
-    }
-    let result;
-    try {
-      const timingState = deps.strict && (req.method === "submitRaidDamage" || req.method === "submitExpeditionBossScore") ? structuredClone(state) : state;
-      const args = deps.strict ? authoritativeArgs(state, req.method, req.args ?? []) : req.args ?? [];
-      if (req.method === "prepareCombat") result = prepareCombat(state, args[0], now, globalThis.crypto.randomUUID());
-      else if (req.method === "finishCombat") result = finishCombat(state, args[0], now);
-      else {
-        result = await server[req.method](...args);
-        if (req.method === "getExpeditionLeaderboard" && expedition) result = { ...result, entries: expedition.entries.slice(0, Math.max(0, Math.min(100, Number(args[0] ?? 100)))) };
-        if (req.method === "getNotificationSignals" && deps.store.pendingRequests) result = { ...result, pendingFriendRequestCount: await deps.store.pendingRequests(playerId) };
-        if (req.method === "getNotificationSignals") {
-          const opsNotices = drainOpsNotices(state);
-          if (opsNotices.length) result = { ...result, opsNotices };
-        }
-        if (deps.strict) {
-          verifyBossWallTime(timingState, req.method, args, result, now);
-          recordBoundaryResult(state, req.method, args, now);
-        }
-      }
-    } catch (error) {
-      if (error instanceof GameCallError || isInfrastructureAbort(error)) throw error;
-      throw new GameCallError(422, "rejected", error instanceof Error ? error.message : String(error), error instanceof GameApiError ? error.code : void 0, error instanceof CombatRejected ? error.reason : void 0);
-    }
-    const data = saveManager.exportData(state);
-    const changed = JSON.stringify(data) !== before;
-    const fresh = stored === null;
-    const response = { ok: true, result: result ?? null, state: data, revision: stored?.revision ?? "0" };
-    if (!changed && !fresh && !req.requestId) return response;
-    try {
+    const prepared = await measure("rulesAndQueue", () => serializeRules(async () => {
       checkDeadline();
-      const committed = await deps.store.commit({
+      if (schedule !== void 0) setLiveSchedule(schedule);
+      if (launchAt !== void 0) setLaunchAt(launchAt);
+      let state;
+      try {
+        state = stored ? saveManager.parse(stored.data) : createDefaultSession();
+      } catch {
+        throw new GameCallError(500, "corrupt_state");
+      }
+      const before = JSON.stringify(saveManager.exportData(state));
+      if (identity) {
+        state.playerCard.uid = identity.uid;
+        state.playerCard.createdAt = identity.createdAt;
+      }
+      if (wantsDuel && !isContentUnlocked("duel", state.playerResearch.level)) throw new GameCallError(422, "content_locked");
+      if (isContentUnlocked("duel", state.playerResearch.level)) state.duel = rollDuelPeriods(normalizeDuelState(state.duel, [...state.owned]), now);
+      if (context) state.raid.instances = context.records.map((row) => structuredClone(row.instance));
+      const server = new FakeServer(state, {
+        latencyMs: 0,
+        random: deps.random ?? secureRandom,
+        ...deps.now ? { now: deps.now } : {},
+        persistSession: () => void 0,
+        raidContext: context,
+        duelContext: duels,
+        ...gifts ? { giftContext: gifts } : {},
+        expeditionRank: expedition?.rank,
+        ancientRanking: ancient,
+        ...regular !== void 0 ? { regularEvent: regular } : {},
+        ...bannedWords ? { bannedWords } : {},
+        guild: deps.guild ?? unavailableGuild,
+        guildRead,
+        playerId,
+        developmentTools: deps.developmentTools === true
+      });
+      if (req.requestId) server.useGuildRequestId(req.requestId);
+      const claimedBefore = new Set(state.claimedMailIds ?? []);
+      let applied2 = [];
+      let profileActions2 = [];
+      if (ops) {
+        applied2 = applyOpsAdjustments(state, ops.adjustments, now);
+        profileActions2 = applyOpsProfileActions(state, ops.profileActions ?? [], now);
+        noticeOpsBanners(state, ops.banners ?? [], now);
+        server.attachOpsMails(ops.mails, ops.patchNotes ?? []);
+      }
+      let result;
+      try {
+        const timingState = deps.strict && (req.method === "submitRaidDamage" || req.method === "submitExpeditionBossScore") ? structuredClone(state) : state;
+        const args = deps.strict ? authoritativeArgs(state, req.method, req.args ?? []) : req.args ?? [];
+        if (req.method === "prepareCombat") result = prepareCombat(state, args[0], now, globalThis.crypto.randomUUID());
+        else if (req.method === "finishCombat") result = finishCombat(state, args[0], now);
+        else {
+          result = await server[req.method](...args);
+          if (req.method === "getExpeditionLeaderboard" && expedition) result = { ...result, entries: expedition.entries.slice(0, Math.max(0, Math.min(100, Number(args[0] ?? 100)))) };
+          if (pendingRequests !== void 0) result = { ...result, pendingFriendRequestCount: pendingRequests };
+          if (req.method === "getNotificationSignals") {
+            const opsNotices = drainOpsNotices(state);
+            if (opsNotices.length) result = { ...result, opsNotices };
+          }
+          if (deps.strict) {
+            verifyBossWallTime(timingState, req.method, args, result, now);
+            recordBoundaryResult(state, req.method, args, now);
+          }
+        }
+      } catch (error) {
+        if (error instanceof GameCallError || isInfrastructureAbort(error)) throw error;
+        throw new GameCallError(422, "rejected", error instanceof Error ? error.message : String(error), error instanceof GameApiError ? error.code : void 0, error instanceof CombatRejected ? error.reason : void 0);
+      }
+      const data = saveManager.exportData(state);
+      const changed = JSON.stringify(data) !== before;
+      const fresh = stored === null;
+      const response2 = { ok: true, result: result ?? null, state: data, revision: stored?.revision ?? "0" };
+      const commitInput2 = !changed && !fresh && !req.requestId ? void 0 : {
         playerId,
         expectedRevision: stored?.revision ?? null,
         data,
         method: req.method,
         requestId: req.requestId ?? null,
-        response: { ok: true, result: response.result, revision: void 0, _requestFingerprint: fingerprint },
+        response: { ok: true, result: response2.result, revision: void 0, _requestFingerprint: fingerprint },
         publicProfile: publicProfile(state, playerId, now),
         raids: context ? raidChanges(context, state) : void 0,
         duels: duels?.changes,
         gifts: gifts?.changes.length ? gifts.changes : void 0
-      });
-      const claimedMails = (state.claimedMailIds ?? []).filter((id) => isOpsMailId(id) && !claimedBefore.has(id)).map(opsMailUuid);
+      };
+      const claimedMails2 = (state.claimedMailIds ?? []).filter((id) => isOpsMailId(id) && !claimedBefore.has(id)).map(opsMailUuid);
+      return { response: response2, commitInput: commitInput2, applied: applied2, claimedMails: claimedMails2, profileActions: profileActions2 };
+    }));
+    const { response, commitInput, applied, claimedMails, profileActions } = prepared;
+    if (!commitInput) return response;
+    try {
+      checkDeadline();
+      const committed = await measure("dbCommit", () => deps.store.commit(commitInput));
       if ((applied.length > 0 || claimedMails.length > 0) && deps.store.opsAck) await deps.store.opsAck(playerId, applied, claimedMails).catch(() => void 0);
       if (profileActions.length > 0 && deps.store.opsProfileAck) await deps.store.opsProfileAck(playerId, profileActions).catch(() => void 0);
       return { ...response, revision: committed.revision };
@@ -54382,11 +54433,45 @@ function refreshWindow(intervalMs, capacity = 1024) {
   };
 }
 
+// src/server/sharedReadCache.ts
+init_define_import_meta_env();
+function sharedReadCache(ttlMs, capacity = 8) {
+  const entries = /* @__PURE__ */ new Map();
+  return {
+    peek(key) {
+      return entries.get(key)?.value;
+    },
+    read(key, load) {
+      const previous = entries.get(key);
+      if (previous?.pending) return previous.pending;
+      if (previous && Date.now() < previous.until) return Promise.resolve(previous.value);
+      if (!previous && entries.size >= capacity) {
+        for (const [id, entry2] of entries) {
+          if (!entry2.pending) {
+            entries.delete(id);
+            break;
+          }
+        }
+      }
+      const entry = previous ?? { until: 0 };
+      entry.pending = Promise.resolve().then(load).then((value) => {
+        entry.value = value;
+        entry.until = Date.now() + ttlMs;
+        return value;
+      }).finally(() => {
+        entry.pending = void 0;
+      });
+      if (previous || entries.size < capacity) entries.set(key, entry);
+      return entry.pending;
+    }
+  };
+}
+
 // src/server/supabaseStore.ts
 var LEGACY_EXPEDITION_RANK_SALVAGE = [400, 320, 250, 180, 130, 80];
-var bannedWordsCache;
-var scheduleCache;
-var launchAtCache;
+var bannedWordsCache = sharedReadCache(3e5);
+var scheduleCache = sharedReadCache(6e4);
+var launchAtCache = sharedReadCache(6e4);
 var refreshRankRewards = refreshWindow(6e4);
 async function sha256Hex(text) {
   const bytes = new TextEncoder().encode(text);
@@ -54406,14 +54491,14 @@ function createSupabaseStore(env) {
       signal: env.signal ? AbortSignal.any([env.signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs)
     });
   }
-  async function rpc(name, body) {
+  async function rpc(name, body, background = false) {
     const payload = JSON.stringify(body);
-    const timeoutMs = name === "server_commit_state" ? 15e3 : 8e3;
+    const timeoutMs = background ? 3500 : name === "server_commit_state" ? 15e3 : 8e3;
     let res;
     try {
       res = await send(name, payload, timeoutMs);
     } catch (error) {
-      if (!isStalledConnection(error) || env.signal?.aborted) throw error;
+      if (background || !isStalledConnection(error) || env.signal?.aborted) throw error;
       res = await send(name, payload, timeoutMs);
     }
     if (res.status === 409 && name === "server_commit_state") throw new StateConflictError();
@@ -54427,8 +54512,16 @@ function createSupabaseStore(env) {
   }
   const store = {
     async pendingRequests(playerId) {
-      const response = await rpc("server_social_call", { p_player: playerId, p_method: "getRequests", p_args: [], p_request: null });
-      return response.incomingCount;
+      try {
+        return await rpc("server_pending_friend_count", { p_player: playerId });
+      } catch (error) {
+        if (!(error instanceof Error) || error.message !== "rpc_server_pending_friend_count_404") throw error;
+        const legacy = await rpc("server_social_call", { p_player: playerId, p_method: "getRequests", p_args: [], p_request: null });
+        return legacy.incomingCount;
+      }
+    },
+    async guildReadContext(playerId) {
+      return await rpc("server_guild_read_context", { p_player: playerId });
     },
     async expeditionContext(playerId, now) {
       return await rpc("server_expedition_ranking", { p_player: playerId, p_week: expeditionWeekKey(now), p_limit: 100 });
@@ -54454,15 +54547,31 @@ function createSupabaseStore(env) {
       return await rpc("server_raid_context", { p_player: playerId, p_worlds: worldRaidDefinitions(now) });
     },
     async opsInbox(playerId) {
-      await refreshRankRewards(`${env.url}:${playerId}`, async () => {
-        await rpc("server_competitive_rewards_v2", { p_player: playerId, p_rules: { duel: WEEKLY_RANK_GEMS, expedition: EXPEDITION_WEEKLY_RANK_POOL } }).catch(() => rpc("server_competitive_rewards", { p_player: playerId, p_rules: WEEKLY_RANK_GEMS.map((row, index) => ({ ...row, salvageRecord: LEGACY_EXPEDITION_RANK_SALVAGE[index] ?? 0 })) }));
-        await rpc("server_arena_weekly_rewards", { p_player: playerId, p_rules: {
-          tiers: ARENA_TIERS.map((tier) => ({ floor: tier.floor, ...tier.weeklyReward })),
-          ranks: ARENA_WEEKLY_RANK_GEMS.map((row) => ({ upTo: row.upTo, gems: row.gems }))
-        } });
-        await rpc("server_ancient_monthly_rewards", { p_player: playerId, p_rules: ANCIENT_MONTHLY_RANK_REWARDS });
-        await rpc("server_guild_weekly_rewards", { p_player: playerId, p_rules: GUILD_WEEKLY_RANK_REWARDS }).catch(() => void 0);
-      });
+      env.waitUntil?.(refreshRankRewards(`${env.url}:${playerId}`, async () => {
+        const jobs = [
+          ["server_competitive_rewards_v2", { duel: WEEKLY_RANK_GEMS, expedition: EXPEDITION_WEEKLY_RANK_POOL }],
+          ["server_arena_weekly_rewards", {
+            tiers: ARENA_TIERS.map((tier) => ({ floor: tier.floor, ...tier.weeklyReward })),
+            ranks: ARENA_WEEKLY_RANK_GEMS.map((row) => ({ upTo: row.upTo, gems: row.gems }))
+          }],
+          ["server_ancient_monthly_rewards", ANCIENT_MONTHLY_RANK_REWARDS],
+          ["server_guild_weekly_rewards", GUILD_WEEKLY_RANK_REWARDS]
+        ];
+        for (const [name, rules] of jobs) {
+          if (env.signal?.aborted) break;
+          try {
+            await rpc(name, { p_player: playerId, p_rules: rules }, true).catch((error) => {
+              if (name !== "server_competitive_rewards_v2" || !(error instanceof Error) || error.message !== "rpc_server_competitive_rewards_v2_404") throw error;
+              return rpc("server_competitive_rewards", {
+                p_player: playerId,
+                p_rules: WEEKLY_RANK_GEMS.map((row, index) => ({ ...row, salvageRecord: LEGACY_EXPEDITION_RANK_SALVAGE[index] ?? 0 }))
+              }, true);
+            });
+          } catch (error) {
+            console.warn(JSON.stringify({ event: "rank_rewards_refresh_failed", rpc: name, name: error instanceof Error ? error.name : "Error" }));
+          }
+        }
+      }));
       return await rpc("server_ops_inbox", { p_player: playerId });
     },
     async opsAck(playerId, applied, claimedMails) {
@@ -54472,22 +54581,19 @@ function createSupabaseStore(env) {
       await rpc("server_profile_actions_ack", { p_player: playerId, p_ids: ids });
     },
     async bannedWords() {
-      if (bannedWordsCache && Date.now() - bannedWordsCache.at < 3e5) return bannedWordsCache.words;
-      const words = await rpc("server_banned_words", {}).then((value) => Array.isArray(value) ? value.filter((w) => typeof w === "string") : [], () => []);
-      bannedWordsCache = { at: Date.now(), words };
-      return words;
+      return bannedWordsCache.read(env.url, async () => {
+        const value = await rpc("server_banned_words", {});
+        return Array.isArray(value) ? value.filter((w) => typeof w === "string") : [];
+      }).catch(() => bannedWordsCache.peek(env.url) ?? []);
     },
     async liveSchedule() {
-      if (scheduleCache && Date.now() - scheduleCache.at < 6e4) return scheduleCache.rows;
-      const rows = await rpc("server_live_schedule", {}).then((value) => value ?? [], () => scheduleCache?.rows ?? []);
-      scheduleCache = { at: Date.now(), rows };
-      return rows;
+      return scheduleCache.read(env.url, async () => await rpc("server_live_schedule", {}) ?? []).catch(() => scheduleCache.peek(env.url) ?? []);
     },
     async launchAt() {
-      if (launchAtCache && Date.now() - launchAtCache.at < 6e4) return launchAtCache.value;
-      const value = await rpc("server_launch_at", {}).then((raw) => typeof raw === "string" && raw.length > 0 ? raw : null, () => launchAtCache?.value);
-      launchAtCache = { at: Date.now(), value };
-      return value;
+      return launchAtCache.read(env.url, async () => {
+        const raw = await rpc("server_launch_at", {});
+        return typeof raw === "string" && raw.length > 0 ? raw : null;
+      }).catch(() => launchAtCache.peek(env.url));
     },
     async load(playerId) {
       const r = await rpc("server_load_state", { p_player: playerId });
@@ -54640,15 +54746,29 @@ async function verifyAccessToken(url, token, options = {}) {
 
 // src/server/friendProfileFallback.ts
 init_define_import_meta_env();
-async function refreshStaleProfileRecords(result, loadSave, now) {
-  const profiles = collectProfiles(result).filter((profile) => typeof profile.id === "string" && !profile.competitiveStats?.highestStage);
-  await Promise.all(profiles.map(async (profile) => {
-    try {
-      const stored = await loadSave(profile.id);
-      if (!stored) return;
-      const fresh = publicProfile(saveManager.parse(stored.data), profile.id, now).competitiveStats;
-      profile.competitiveStats = { ...profile.competitiveStats ?? {}, ...fresh };
-    } catch {
+var legacyRecords = sharedReadCache(6e4, 256);
+var LEGACY_READ_CONCURRENCY = 4;
+async function refreshStaleProfileRecords(result, loadSave, now, project = "") {
+  const byPlayer = /* @__PURE__ */ new Map();
+  for (const profile of collectProfiles(result)) {
+    if (typeof profile.id !== "string" || profile.competitiveStats?.highestStage !== void 0 || Array.isArray(profile.competitiveStats?.storyClears)) continue;
+    const group = byPlayer.get(profile.id);
+    if (group) group.push(profile);
+    else byPlayer.set(profile.id, [profile]);
+  }
+  const pending2 = byPlayer.entries();
+  await Promise.all(Array.from({ length: Math.min(LEGACY_READ_CONCURRENCY, byPlayer.size) }, async () => {
+    for (const [id, profiles] of pending2) {
+      try {
+        const fresh = await legacyRecords.read(JSON.stringify([project, id]), async () => {
+          const stored = await loadSave(id);
+          return stored ? publicProfile(saveManager.parse(stored.data), id, now).competitiveStats : null;
+        });
+        if (fresh) for (const profile of profiles) {
+          profile.competitiveStats = { ...profile.competitiveStats ?? {}, ...fresh };
+        }
+      } catch {
+      }
     }
   }));
 }
@@ -54798,6 +54918,7 @@ async function handler(req, res) {
   const deadline = AbortSignal.timeout(25e3);
   let callMethod = "invalid_request";
   const phases = {};
+  const gameTimings = {};
   let phaseAt = startedAt;
   const mark = (name) => {
     const now = Date.now();
@@ -54830,7 +54951,7 @@ async function handler(req, res) {
     })();
     if (!user?.id) throw new GameCallError(401, "not_authenticated");
     mark("auth");
-    const store = createSupabaseStore({ url, serviceKey, signal: deadline });
+    const store = createSupabaseStore({ url, serviceKey, signal: deadline, waitUntil });
     const device = deviceSessionOf(body);
     const [rate, deviceOk] = await Promise.all([
       store.takeRate(user.id, body.method),
@@ -54871,14 +54992,16 @@ async function handler(req, res) {
       const method = body.method.slice(7);
       if (!isSocialMethod(method)) throw new GameCallError(400, "unknown_method");
       if (method === "getProfile") {
-        res.status(200).json(await publicProfileOf(store, user.id, body.args?.[0]));
+        res.status(200).json(await publicProfileOf(store, user.id, body.args?.[0], url));
         return;
       }
       const response = await store.socialCall(user.id, method, body.args ?? [], body.requestId);
-      if (["getFriends", "getRequests", "searchUsers", "getRecommendations"].includes(method)) await refreshStaleProfileRecords(response?.result, (id) => store.load(id), /* @__PURE__ */ new Date());
+      if (["getFriends", "getRequests", "searchUsers", "getRecommendations"].includes(method)) await refreshStaleProfileRecords(response?.result, (id) => store.load(id), /* @__PURE__ */ new Date(), url);
       res.status(200).json(response);
     } else {
-      const response = await handleGameCall(user.id, body, { store, strict: true, guild, signal: deadline, onDequeue: () => mark("queue"), developmentTools: qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS) });
+      const response = await handleGameCall(user.id, body, { store, strict: true, guild, signal: deadline, onDequeue: () => mark("queue"), onTiming: (phase, ms2) => {
+        gameTimings[phase] = (gameTimings[phase] ?? 0) + ms2;
+      }, developmentTools: qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS) });
       mark("game");
       res.status(200).json(clientResponseState(response, isReadMethod(body.method) ? body.knownRevision : void 0));
     }
@@ -54891,11 +55014,11 @@ async function handler(req, res) {
     res.status(503).json({ ok: false, code: "service_unavailable" });
   } finally {
     const elapsedMs = Date.now() - startedAt;
-    if (elapsedMs >= 2e3) console.warn(JSON.stringify({ event: "slow_game_request", method: callMethod, elapsedMs, phases }));
+    if (elapsedMs >= 2e3) console.warn(JSON.stringify({ event: "slow_game_request", method: callMethod, elapsedMs, phases, gameTimings }));
   }
 }
 var PLAYER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-async function publicProfileOf(store, self2, target) {
+async function publicProfileOf(store, self2, target, project) {
   if (typeof target !== "string" || !PLAYER_ID.test(target)) throw new GameCallError(400, "invalid_args");
   if (target.toLowerCase() === self2.toLowerCase()) throw new GameCallError(422, "SELF_REQUEST");
   const stored = await store.load(target).catch(() => null);
@@ -54904,7 +55027,7 @@ async function publicProfileOf(store, self2, target) {
   const response = await store.socialCall(self2, "searchUsers", [{ query: uid }]);
   const found = response?.result?.users?.find((entry) => typeof entry.profile?.id === "string" && entry.profile.id.toLowerCase() === target.toLowerCase());
   if (!found) throw new GameCallError(422, "USER_NOT_FOUND");
-  await refreshStaleProfileRecords({ users: [found] }, (id) => store.load(id), /* @__PURE__ */ new Date());
+  await refreshStaleProfileRecords({ users: [found] }, (id) => store.load(id), /* @__PURE__ */ new Date(), project);
   return { ok: true, result: { ...found, serverTime: response?.result?.serverTime ?? Date.now() }, incomingCount: response?.incomingCount };
 }
 export {

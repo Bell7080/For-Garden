@@ -9,20 +9,27 @@ import type { GiftContext } from "./playerGifts";
 import type { OpsInbox } from "../core/opsInbox";
 import { requestBudget } from "./requestPolicy";
 import { refreshWindow } from "./refreshWindow";
+import { sharedReadCache } from "./sharedReadCache";
 import { worldRaidDefinitions, type SharedRaidContext } from "./sharedRaids";
 import { GameCallError, StateConflictError, type StateStore } from "./gameHandler";
 
 /** v2 함수가 없는 운영 DB에 넘기는 예전 원정 인양 기록 표(`WEEKLY_RANK_GEMS`와 같은 줄). 마이그레이션이 적용되면 지운다. */
 const LEGACY_EXPEDITION_RANK_SALVAGE = [400, 320, 250, 180, 130, 80] as const;
 /** 금칙어는 자주 바뀌지 않는다 — 함수 인스턴스 안에서 5분 동안 같은 목록을 쓴다. */
-let bannedWordsCache: { at: number; words: string[] } | undefined;
+const bannedWordsCache = sharedReadCache<string[]>(300_000);
 /** 운영 일정은 1분 동안 같은 값을 쓴다 — 어드민에서 바꾼 기간이 늦어도 1분 안에 서버에 닿는다. */
-let scheduleCache: { at: number; rows: unknown } | undefined;
-let launchAtCache: { at: number; value: string | null | undefined } | undefined;
+const scheduleCache = sharedReadCache<unknown>(60_000);
+const launchAtCache = sharedReadCache<string | null>(60_000);
 // 알림·가방을 읽을 때 순위 보상 정산까지 반복하지 않는다. 우편함 자체는 항상 최신을 읽는다.
 const refreshRankRewards = refreshWindow(60_000);
 
-interface Env { url: string; serviceKey: string; fetchImpl?: typeof fetch; signal?: AbortSignal }
+interface Env {
+  url: string;
+  serviceKey: string;
+  fetchImpl?: typeof fetch;
+  signal?: AbortSignal;
+  waitUntil?: (task: Promise<unknown>) => void;
+}
 
 async function sha256Hex(text: string): Promise<string> {
   const bytes = new TextEncoder().encode(text);
@@ -49,17 +56,17 @@ export function createSupabaseStore(env: Env) {
       signal: env.signal ? AbortSignal.any([env.signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs),
     });
   }
-  async function rpc(name: string, body: Record<string, unknown>): Promise<unknown> {
+  async function rpc(name: string, body: Record<string, unknown>, background = false): Promise<unknown> {
     const payload = JSON.stringify(body);
     // 저장은 느려도 기다린다. 나머지는 한 번에 8초까지만 기다리고 **연결이 멎은 것**(응답 전 끊김·시간 초과)이면
     // 한 번 더 보낸다 — 2026-11-22 새 연결 하나가 10초 동안 서지 못해 결과 확정이 통째로 503이 되었다.
     // 저장이 실제로 들어간 뒤 답만 잃었어도 다시 보낸 저장은 revision 검사(409)에 걸리고, 처리기가 영수증을 되찾는다.
-    const timeoutMs = name === "server_commit_state" ? 15000 : 8000;
+    const timeoutMs = background ? 3500 : name === "server_commit_state" ? 15000 : 8000;
     let res: Response;
     try {
       res = await send(name, payload, timeoutMs);
     } catch (error) {
-      if (!isStalledConnection(error) || env.signal?.aborted) throw error;
+      if (background || !isStalledConnection(error) || env.signal?.aborted) throw error;
       res = await send(name, payload, timeoutMs);
     }
     if (res.status === 409 && name === "server_commit_state") throw new StateConflictError();
@@ -73,8 +80,16 @@ export function createSupabaseStore(env: Env) {
   }
   const store: StateStore = {
     async pendingRequests(playerId) {
-      const response = await rpc("server_social_call", { p_player: playerId, p_method: "getRequests", p_args: [], p_request: null }) as { incomingCount: number };
-      return response.incomingCount;
+      try {
+        return await rpc("server_pending_friend_count", { p_player: playerId }) as number;
+      } catch (error) {
+        if (!(error instanceof Error) || error.message !== "rpc_server_pending_friend_count_404") throw error;
+        const legacy = await rpc("server_social_call", { p_player: playerId, p_method: "getRequests", p_args: [], p_request: null }) as { incomingCount: number };
+        return legacy.incomingCount;
+      }
+    },
+    async guildReadContext(playerId) {
+      return await rpc("server_guild_read_context", { p_player: playerId }) as { level: number; attendanceReady: boolean };
     },
     async expeditionContext(playerId, now) { return await rpc("server_expedition_ranking", { p_player: playerId, p_week: expeditionWeekKey(now), p_limit: 100 }) as { rank: number | null; entries: import("../api/contracts").ExpeditionLeaderboardEntry[] }; },
     async ancientRanking(playerId) { return await rpc("server_ancient_ranking", { p_player: playerId, p_limit: 100 }) as import("../api/contracts").AncientRankingResponse; },
@@ -90,45 +105,55 @@ export function createSupabaseStore(env: Env) {
     async identity(playerId) { return await rpc("server_player_identity", { p_player: playerId }) as { uid: string; createdAt: string }; },
     async raidContext(playerId, now) { return await rpc("server_raid_context", { p_player: playerId, p_worlds: worldRaidDefinitions(now) }) as SharedRaidContext; },
     async opsInbox(playerId) {
-      await refreshRankRewards(`${env.url}:${playerId}`, async () => {
-      // 원정은 표준 보상 풀(1,000위 밖 백분율 구간 + 여러 재화)이다 — v2 함수가 받는다. 운영 DB에 v2가 아직 없으면
-      // 예전 함수에 예전 표(젬 + 인양 기록, 101위 밖 한 줄)를 넘긴다: 마이그레이션 전후 어느 쪽이든 우편이 끊기지 않는다.
-      await rpc("server_competitive_rewards_v2", { p_player: playerId, p_rules: { duel: WEEKLY_RANK_GEMS, expedition: EXPEDITION_WEEKLY_RANK_POOL } })
-        .catch(() => rpc("server_competitive_rewards", { p_player: playerId, p_rules: WEEKLY_RANK_GEMS.map((row, index) => ({ ...row, salvageRecord: LEGACY_EXPEDITION_RANK_SALVAGE[index] ?? 0 })) }));
-      // 아레나는 판마다 주지 않고 닫힌 주의 티어·순위로 한 통을 보낸다. 표는 arenaStanding.ts 한 곳에서 넘긴다.
-      await rpc("server_arena_weekly_rewards", { p_player: playerId, p_rules: {
-        tiers: ARENA_TIERS.map((tier) => ({ floor: tier.floor, ...tier.weeklyReward })),
-        ranks: ARENA_WEEKLY_RANK_GEMS.map((row) => ({ upTo: row.upTo, gems: row.gems })),
-      } });
-      // 고대 지층은 매달 마감한다 — 1,000위 밖은 백분율 구간이다(competitiveRewards.ts의 표준 모양).
-      await rpc("server_ancient_monthly_rewards", { p_player: playerId, p_rules: ANCIENT_MONTHLY_RANK_REWARDS });
-      // 길드 주간 순위(그 주 기여도 합) — 마이그레이션(20261112) 전의 DB에는 함수가 없으므로 실패해도 우편함은 연다.
-      await rpc("server_guild_weekly_rewards", { p_player: playerId, p_rules: GUILD_WEEKLY_RANK_REWARDS }).catch(() => undefined);
-      });
+      env.waitUntil?.(refreshRankRewards(`${env.url}:${playerId}`, async () => {
+        const jobs = [
+          ["server_competitive_rewards_v2", { duel: WEEKLY_RANK_GEMS, expedition: EXPEDITION_WEEKLY_RANK_POOL }],
+          ["server_arena_weekly_rewards", {
+            tiers: ARENA_TIERS.map((tier) => ({ floor: tier.floor, ...tier.weeklyReward })),
+            ranks: ARENA_WEEKLY_RANK_GEMS.map((row) => ({ upTo: row.upTo, gems: row.gems })),
+          }],
+          ["server_ancient_monthly_rewards", ANCIENT_MONTHLY_RANK_REWARDS],
+          ["server_guild_weekly_rewards", GUILD_WEEKLY_RANK_REWARDS],
+        ] as const;
+        // 한 정산의 실패가 다른 정산과 우편 조회를 막지 않는다. 다음 갱신까지 재시도를 쉰다.
+        for (const [name, rules] of jobs) {
+          if (env.signal?.aborted) break;
+          try {
+            await rpc(name, { p_player: playerId, p_rules: rules }, true).catch(error => {
+              if (name !== "server_competitive_rewards_v2" || !(error instanceof Error)
+                || error.message !== "rpc_server_competitive_rewards_v2_404") throw error;
+              return rpc("server_competitive_rewards", {
+                p_player: playerId,
+                p_rules: WEEKLY_RANK_GEMS.map((row, index) => ({ ...row, salvageRecord: LEGACY_EXPEDITION_RANK_SALVAGE[index] ?? 0 })),
+              }, true);
+            });
+          } catch (error) {
+            console.warn(JSON.stringify({ event: "rank_rewards_refresh_failed", rpc: name, name: error instanceof Error ? error.name : "Error" }));
+          }
+        }
+      }));
       return await rpc("server_ops_inbox", { p_player: playerId }) as OpsInbox;
     },
     async opsAck(playerId, applied, claimedMails) { await rpc("server_ops_ack", { p_player: playerId, p_applied: applied, p_claimed_mails: claimedMails }); },
     async opsProfileAck(playerId, ids) { await rpc("server_profile_actions_ack", { p_player: playerId, p_ids: ids }); },
     async bannedWords() {
       // 닉네임을 바꿀 때만 읽는다. 5분 동안은 같은 목록을 쓰고, 마이그레이션 전 DB에는 함수가 없으므로 빈 목록이다.
-      if (bannedWordsCache && Date.now() - bannedWordsCache.at < 300_000) return bannedWordsCache.words;
-      const words = await rpc("server_banned_words", {}).then((value) => Array.isArray(value) ? value.filter((w): w is string => typeof w === "string") : [], () => [] as string[]);
-      bannedWordsCache = { at: Date.now(), words };
-      return words;
+      return bannedWordsCache.read(env.url, async () => {
+        const value = await rpc("server_banned_words", {});
+        return Array.isArray(value) ? value.filter((w): w is string => typeof w === "string") : [];
+      }).catch(() => bannedWordsCache.peek(env.url) ?? []);
     },
     async liveSchedule() {
-      if (scheduleCache && Date.now() - scheduleCache.at < 60_000) return scheduleCache.rows;
       // 실패하면(마이그레이션 전 포함) 지난 값, 없으면 빈 일정 — 정의 기간 그대로다.
-      const rows = await rpc("server_live_schedule", {}).then((value) => value ?? [], () => scheduleCache?.rows ?? []);
-      scheduleCache = { at: Date.now(), rows };
-      return rows;
+      return scheduleCache.read(env.url, async () => await rpc("server_live_schedule", {}) ?? [])
+        .catch(() => scheduleCache.peek(env.url) ?? []);
     },
     async launchAt() {
-      if (launchAtCache && Date.now() - launchAtCache.at < 60_000) return launchAtCache.value;
       // 마이그레이션(20261124000000) 전 DB에는 함수가 없다 — 그때는 지난 값, 없으면 모른다(`undefined`)로 둔다.
-      const value = await rpc("server_launch_at", {}).then((raw) => typeof raw === "string" && raw.length > 0 ? raw : null, () => launchAtCache?.value);
-      launchAtCache = { at: Date.now(), value };
-      return value;
+      return launchAtCache.read(env.url, async () => {
+        const raw = await rpc("server_launch_at", {});
+        return typeof raw === "string" && raw.length > 0 ? raw : null;
+      }).catch(() => launchAtCache.peek(env.url));
     },
     async load(playerId) {
       const r = (await rpc("server_load_state", { p_player: playerId })) as { revision: string; data: unknown } | null;

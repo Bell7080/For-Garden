@@ -46,9 +46,9 @@ export function publicProfile(
       stats: new RelicProgressionManager(state).getFinalStats(relic.id),
       skillIds: [relic.basic.id, relic.passive.id, relic.ultimate.id],
     },
-    // 친구 카드의 기록 칸과 고대 지층 지도(친구를 그 층 노드 옆에 세운다)가 읽는다. 없는 기록은 키를 생략한다.
+    // 관문을 아직 못 깬 프로필은 null로 표시해 필드가 없는 예전 프로필과 가른다.
     competitiveStats: {
-      ...(stage ? { highestStage: { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } } : {}),
+      highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
       // 난이도마다 어디까지 깼는지 — 5~7장이 늘어도 줄 수는 난이도 셋이다. 열리지 않은 난이도는 `open: false`로 말한다.
       storyClears: storyClearRecords(storyStages, state.cleared),
       ...(state.expedition.allTimeBestScore > 0 ? { expeditionScore: Math.floor(state.expedition.allTimeBestScore) } : {}),

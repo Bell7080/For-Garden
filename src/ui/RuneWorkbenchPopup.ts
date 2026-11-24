@@ -23,6 +23,8 @@ import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { shapeClipMask } from "./popupArt";
 import { pressIn, pressOut } from "./pressFeedback";
 import { addRuneCard, addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeAccentCss, runeHeartSpot, runeSeatTexture, runeTexture } from "./runeIcons";
+import { playRunePick, playRuneSeatEffect, playRuneSeatPlate } from "./runeSeatEffect";
+import { RUNE_SEAT_FX, runeSeatChange, type RuneSeatChange } from "./runeSeatEffectStyle";
 import { createRuneListState, RuneListControls, visibleRuneList } from "./RuneListControls";
 import { openRuneInfoPopup, runeStatLabel } from "./RunePopup";
 import { RUNE_WORKBENCH, runeWorkbenchCell, runeWorkbenchFooterWidth, runeWorkbenchFooterX, runeWorkbenchMinScroll, runeWorkbenchRows, runeWorkbenchSideSpan, RUNE_WORKBENCH_BACK_CLEARANCE } from "./runeWorkbenchLayout";
@@ -76,6 +78,9 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
   let kept = new Set<RunePart>();
   let busy = false;
   let forceClose = false;
+  /** 다음 한 번의 칠하기가 돌릴 연출 — 적용이 끝난 칸의 끼움·교체·빼기, 방금 고른 후보의 톡. 칠하며 비운다. */
+  let pendingSeat: { readonly before: RuneLoadoutSlots; readonly changes: ReadonlyMap<RunePart, RuneSeatChange> } | undefined;
+  let pendingPick = false;
   let askedAt = -Infinity;
 
   /** 룬 쪽지 — 목록 카드 꾹 누르기 · 비교 판 그림 누르기 · 하트 조각 꾹 누르기가 같은 쪽지를 연다. */
@@ -99,14 +104,19 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
     const before = runeLoadoutPower(relic(), base, session.runeInventory);
     const target = draft;
     const moving = movedFrom().some((id) => id !== null);
+    const savedBefore = base;
     void relicProgression.setRuneLoadout(def.id, target, undefined, { moveFromOther: moving }).then(() => {
       base = slotsOf();
+      // 저장이 끝난 순간 바뀐 칸에만 끼움·교체·빼기 연출이 돈다 — 하트는 저장된 룬만 그리므로 이때가 「끼운」 순간이다.
+      const changes = new Map<RunePart, RuneSeatChange>();
+      RUNE_DRAFT_PARTS.forEach((p) => { const kind = runeSeatChange(savedBefore[p], base[p]); if (kind) changes.set(p, kind); });
+      if (changes.size > 0) pendingSeat = { before: savedBefore, changes };
       draft = base;
       kept = new Set();
       options.onChanged();
       const powerAfter = runeLoadoutPower(relic(), base, session.runeInventory);
       showContentToast(scene, t("info.rune.loadout.done", { before: before.toLocaleString(), after: powerAfter.toLocaleString() }), "info");
-      repaint?.(false);
+      // 다시 칠하기는 `finally` 한 번뿐이다 — 여기서도 칠하면 끼움 연출이 돌던 조각을 곧바로 새 조각이 덮는다.
       after?.();
     }, (error: unknown) => {
       logError("info.runeWorkbench", "룬 정비 적용 실패", error);
@@ -284,6 +294,8 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
             pressOut(cell);
             draft = tapRuneDraft(base, draft, part, rune.instanceId);
             kept.delete(part);
+            // 후보로 올렸을 때만 톡 — 되돌릴 때는 비교 판이 비워질 뿐이다.
+            pendingPick = draft[part] === rune.instanceId && draft[part] !== base[part];
             repaint?.(false);
           },
           allowTap: () => !dragged,
@@ -316,6 +328,8 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
 
     const paintSlots = (): void => {
       slotLayer.removeAll(true);
+      const seat = pendingSeat;
+      pendingSeat = undefined;
       const changed = new Set(changedRuneParts(base, draft));
       const H = W.heart;
       const cy = top + rows.heartY;
@@ -342,14 +356,17 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
         const y = cy + (spot.y / reach) * push;
         const texture = rune ? runeSeatTexture(rune.rarity, p) : runeTexture(undefined, p);
         const scale = rune ? 1 : 0.955;
+        // 이 칸의 조각을 이루는 그림 — 끼움 연출이 한 덩어리로 바깥에서 끌어온다.
+        const pieces: Phaser.GameObjects.Image[] = [];
+        const keep = <T extends Phaser.GameObjects.Image>(image: T): T => { pieces.push(image); return image; };
         // 고른 조각은 강조색 테, 빈 조각은 옅은 테 — 검은 구멍이 아니라 「끼울 자리」로 읽힌다.
         if (selected || !rune) {
-          slotLayer.add(scene.add.image(x, y, texture).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(H.size * scale * 1.08, H.size * scale * 1.08).setTintFill(COLOR.accent).setAlpha(selected ? 0.95 : 0.4));
+          slotLayer.add(keep(scene.add.image(x, y, texture).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(H.size * scale * 1.08, H.size * scale * 1.08).setTintFill(COLOR.accent).setAlpha(selected ? 0.95 : 0.4)));
         }
         if (rune) {
-          slotLayer.add(scene.add.image(x, y, texture).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(H.size * 1.18, H.size * 1.18).setTint(RUNE_ACCENT[rune.rarity]).setBlendMode(Phaser.BlendModes.ADD).setAlpha(selected ? 0.45 : 0.22));
+          slotLayer.add(keep(scene.add.image(x, y, texture).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(H.size * 1.18, H.size * 1.18).setTint(RUNE_ACCENT[rune.rarity]).setBlendMode(Phaser.BlendModes.ADD).setAlpha(selected ? 0.45 : 0.22)));
         }
-        slotLayer.add(scene.add.image(x, y, texture).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(H.size * scale, H.size * scale).setAlpha(selected ? 1 : rune ? 0.78 : 0.6));
+        slotLayer.add(keep(scene.add.image(x, y, texture).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(H.size * scale, H.size * scale).setAlpha(selected ? 1 : rune ? 0.78 : 0.6)));
         if (!rune) {
           slotLayer.add(scene.add.image(x, y, texture).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(H.size * scale, H.size * scale).setTintFill(COLOR.accent).setAlpha(selected ? 0.28 : 0.14));
         }
@@ -357,6 +374,19 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
         // 조각의 무게중심은 `runeHeartSpot`보다 안쪽이라(손이 닿을 넓은 자리) 번호는 그 반쯤에 앉힌다.
         slotLayer.add(scene.add.text(x + spot.x * 0.6, y + spot.y * 0.6, String(p + 1), textStyle({ role: "display", size: H.number, color: selected ? COLOR.accentText : COLOR.ink }))
           .setOrigin(0.5).setStroke("#05070a", 7).setAlpha(selected ? 1 : 0.8));
+        const change = seat?.changes.get(p);
+        if (change) {
+          const old = runeById(seat!.before[p]);
+          playRuneSeatEffect(scene, {
+            kind: change, layer: slotLayer, x, y, outward: { x: spot.x / reach, y: spot.y / reach },
+            size: H.size, originY: RUNE_CENTER_Y,
+            oldTexture: old ? runeSeatTexture(old.rarity, p) : undefined,
+            // 빼기면 빈 자리 테는 그대로 두고 옛 조각만 튕겨 나간다.
+            pieces: rune ? pieces : undefined,
+            newTexture: rune ? texture : undefined,
+            color: rune ? RUNE_ACCENT[rune.rarity] : COLOR.accent,
+          });
+        }
         const pieceHit = addClippedHit(scene, slotLayer, x + spot.x * 0.6, y + spot.y * 0.6, H.size * 0.32, H.size * 0.32, OPEN_CLIP);
         bindLongPress(scene, pieceHit, {
           onTap: () => selectPart(p),
@@ -422,6 +452,8 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
           enabled: () => popups.isTop(body), depth: popups.baseDepth + 400,
         });
         slotLayer.add(block);
+        const plateChange = seat?.changes.get(p);
+        if (plateChange) playRuneSeatPlate(scene, block, plateChange === "swap" ? RUNE_SEAT_FX.insert.swapDelay : 0);
       });
     };
 
@@ -444,11 +476,13 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
       const nameY = iconY - C.icon / 2;
       const linesTop = nameY + C.name + 10;
       const linesRoom = cTop + C.height - C.pad - linesTop;
+      let lastHeadIcon: Phaser.GameObjects.Container | undefined;
       const nameOf = (rune: RuneInstance | undefined): string => (rune ? (rune.customName ?? t("info.rune.named", { rarity: runeRarityLabel(rune.rarity) })) : t("info.rune.empty"));
       // 룬 그림 + 이름. 그림은 가방 카드와 같은 액자라 아래 목록에서 고른 카드와 같은 얼굴로 읽힌다. 돌려주는 값은 글이 서는 x.
       const addHead = (x: number, rune: RuneInstance | undefined, room: number): number => {
         const icon = addRuneFrame(scene, x + C.icon / 2, iconY, C.icon, rune?.rarity, part, { mainStats: rune?.mainStats, engraved: (rune?.engravings.length ?? 0) > 0 }).setAlpha(rune ? 1 : 0.5);
         compareLayer.add(icon);
+        lastHeadIcon = icon;
         // 그림을 누르면 그 룬의 쪽지 — 「룬 정보」 버튼을 따로 두지 않는다.
         if (rune) {
           const iconHit = addClippedHit(scene, icon, 0, 0, C.icon, C.icon, OPEN_CLIP);
@@ -483,6 +517,8 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
         return;
       }
       const pickedX = addHead(rightX, after, rightEdge - rightX);
+      if (pendingPick && lastHeadIcon) playRunePick(scene, lastHeadIcon);
+      pendingPick = false;
       let y = linesTop;
       const mover = movedFrom()[part];
       if (mover) {

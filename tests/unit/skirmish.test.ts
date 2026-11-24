@@ -1792,9 +1792,19 @@ describe("자리 정리", () => {
     for (let i = 0; i < alive.length; i += 1) {
       for (let j = i + 1; j < alive.length; j += 1) {
         const gap = Math.hypot(alive[j].x - alive[i].x, alive[j].y - alive[i].y);
-        expect(gap).toBeGreaterThan(SKIRMISH.spacing * 0.9);
+        expect(gap).toBeGreaterThan(pairSpacing(alive[i], alive[j]) * 0.9);
       }
     }
+  });
+
+  it("는 같은 편끼리 절반쯤 겹쳐 서게 두고 적과는 예전 간격을 지킨다", () => {
+    const state = createSkirmish([getRelic("torika"), getRelic("rex")], [getRelic("amo"), getRelic("ripa")], ARENA);
+    const [torika, rex, amo, ripa] = state.fighters;
+    expect(pairSpacing(torika, amo)).toBe(SKIRMISH.spacing);
+    expect(pairSpacing(torika, rex)).toBe(SKIRMISH.spacing * SKIRMISH.allySpacingRatio);
+    expect(pairSpacing(amo, ripa)).toBe(SKIRMISH.spacing * SKIRMISH.allySpacingRatio);
+    // 다섯을 넘게 몰려오는 무리는 예전 간격 그대로 선다.
+    expect(pairSpacing(amo, ripa, true)).toBe(SKIRMISH.spacing);
   });
 
   it("는 앞을 막은 아군에게 밀려도 걸음을 통째로 잃지 않는다", () => {

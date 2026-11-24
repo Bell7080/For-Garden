@@ -1,4 +1,4 @@
-﻿<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000}canvas{display:block}</style></head><body>
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000}canvas{display:block}</style></head><body>
 <script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
 <script type="module">
 import * as L from './lib.js';
@@ -25,11 +25,11 @@ SC.hook=()=>{const {scene,cam}=mk({sky:['#3f7ec9','#f2c98a','#ffe2a8'],sunPos:[-
 SC.intro=()=>{const {scene,cam}=mk({sky:['#7f9cc4','#c9dcef','#eef5ff'],sunPos:[-6,9,6],hemi:1.5,fog:[0xdfeaf6,18,70]});
  ground(scene,0xf4f8ff);const sn=M.snow(scene,{n:500});
  const r=rnd(4);for(let i=0;i<10;i++){const a=r()*6.28,d=12+r()*20;add(scene,S(1.5+r(),12,8),toon(0xffffff),[Math.cos(a)*d,0,Math.sin(a)*d-8],[1.6,.5,1],null,false);}
- const m=M.makeMammoth(scene,{scale:1});const d=L.makeSailor(scene,{coat:0x9a7650,hat:0x6a4a30,skin:0xe9b98f,scale:1});d.idle=()=>{};{const hm=new THREE.Box3().setFromObject(m.g).max.y,hh=new THREE.Box3().setFromObject(d.g).max.y;d.g.scale.setScalar(hm*1.7/3/hh);}d.g.position.set(-3.1,0,.8);d.g.rotation.y=.5;const dl=label(scene,'사람 1.7m',{size:150,w:768,fill:'#ffffff'});
+ const m=M.makeMammoth(scene,{scale:1});const d=L.makeSailor(scene,{scale:.78,coat:0x4a7ab0,hat:0x3a2a22});d.g.position.set(2.5,0,1.2);d.g.rotation.y=-.9;const lp=label(scene,'사람 1.7m',{size:130,w:900,fill:'#ffffff'});
  const l1=label(scene,'키 3m',{size:200,fill:'#ffffff'}),l2=label(scene,'6톤!',{size:220,fill:'#ffe066'}),l3=label(scene,'털 1m',{size:190,fill:'#ffffff'});
- return t=>{sn(t);m.walk(t,.7);m.idle(t);const z=lerp(-6,0,clamp01(t/2.4));m.g.position.set(0,0,z);d.head.rotation.x=-.35;dl.position.set(d.g.position.x,d.g.position.y+ (new THREE.Box3().setFromObject(d.g).max.y)+.7,d.g.position.z);setSprite(dl,.8,t>3.2?pop(t,3.2):0);
+ return t=>{sn(t);m.walk(t,.7);m.idle(t);const z=lerp(-6,0,clamp01(t/2.4));m.g.position.set(0,0,z);d.head.rotation.x=-.35;d.rig.position.y=Math.abs(Math.sin(t*2))*.03;lp.position.set(2.4,3.0,1.2);setSprite(lp,.55,t>5.2?pop(t,5.2):0);
   if(t>2.4){m.walk(0,0);}
-  cam.position.set(4.5+t*.15,3.6,22-t*.3);cam.lookAt(-.7,3.0,z*.3);
+  cam.position.set(7.5+t*.15,3.4,19-t*.3);cam.lookAt(.6,3.0,z*.3);
   l1.position.set(-1.6,6.4,z);setSprite(l1,1.2,t>3.2?pop(t,3.2):0);l2.position.set(2.0,5.2,z+1.5);setSprite(l2,1.3,t>4.2?pop(t,4.2):0);l3.position.set(-.6,7.6,z);setSprite(l3,1.1,t>6.4?pop(t,6.4):0);};};
 
 // 3. 빙하기 끝 — 눈이 녹고 풀밭이 숲으로
@@ -100,8 +100,3 @@ const upd=SC[name]();if(!window.__noReady)window.ready=true;
 window.renderFrame=f=>{const t=f/30;upd(t);renderer.render(window.__scene,window.__cam);return renderer.domElement.toDataURL('image/jpeg',.92);};
 const renderer=L.renderer;
 </script></body></html>
-
-
-
-
-

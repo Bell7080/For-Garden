@@ -172,7 +172,11 @@ export const RUNE_VI = {
   "rune.research.itemOwned": "{name} · Có {owned}",
   "rune.traitBulk.button": "Ban {count}",
   "rune.traitBulk.confirm": "Dùng mỗi rune 1 Lõi cổ đại chưa rõ cho {count} rune đã chọn để ban đặc tính ngẫu nhiên.",
-  "rune.traitBulk.done": "Đã ban {count} đặc tính · {summary}",
+  "rune.traitBulk.result.title": "Kết quả ban",
+  "rune.traitBulk.result.headline": "Đã ban đặc tính cho {count} rune",
+  "rune.traitBulk.result.gradeCount": "{grade} {count}",
+  "rune.traitBulk.result.sortGrade": "Theo cấp",
+  "rune.traitBulk.result.sortHolder": "Theo người trang bị",
   "rune.traitBulk.failed": "Ban đặc tính hàng loạt thất bại.",
   "rune.traitBulk.lacking": "Không đủ Lõi cổ đại chưa rõ.",
 } as const;

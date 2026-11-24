@@ -177,7 +177,11 @@ export const RUNE_JA = {
   "rune.research.itemOwned": "{name} · 所持 {owned}",
   "rune.traitBulk.button": "{count}個付与",
   "rune.traitBulk.confirm": "選んだルーン{count}個に未知の古代核を1個ずつ使い、ランダムな特性を付与します。",
-  "rune.traitBulk.done": "特性{count}個付与 · {summary}",
+  "rune.traitBulk.result.title": "付与結果",
+  "rune.traitBulk.result.headline": "ルーン{count}個に特性付与",
+  "rune.traitBulk.result.gradeCount": "{grade} {count}",
+  "rune.traitBulk.result.sortGrade": "等級順",
+  "rune.traitBulk.result.sortHolder": "装備者順",
   "rune.traitBulk.failed": "特性一括付与に失敗しました。",
   "rune.traitBulk.lacking": "未知の古代核が足りません。",
 } as const;

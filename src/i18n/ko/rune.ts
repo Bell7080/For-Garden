@@ -176,7 +176,11 @@ export const RUNE_KO = {
   "rune.research.itemOwned": "{name} · 보유 {owned}",
   "rune.traitBulk.button": "{count}개 부여",
   "rune.traitBulk.confirm": "고른 룬 {count}개에 미지의 고대 핵을 하나씩 써서 무작위 특성을 부여합니다.",
-  "rune.traitBulk.done": "특성 {count}개 부여 · {summary}",
+  "rune.traitBulk.result.title": "부여 결과",
+  "rune.traitBulk.result.headline": "룬 {count}개에 특성 부여",
+  "rune.traitBulk.result.gradeCount": "{grade} {count}",
+  "rune.traitBulk.result.sortGrade": "등급순",
+  "rune.traitBulk.result.sortHolder": "장착자순",
   "rune.traitBulk.failed": "특성 일괄 부여에 실패했습니다.",
   "rune.traitBulk.lacking": "미지의 고대 핵이 모자랍니다.",
 } as const;

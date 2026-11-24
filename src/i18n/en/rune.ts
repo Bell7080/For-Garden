@@ -175,7 +175,11 @@ export const RUNE_EN = {
   "rune.research.itemOwned": "{name} · Owned {owned}",
   "rune.traitBulk.button": "Grant {count}",
   "rune.traitBulk.confirm": "Use one Unknown Ancient Core on each of the {count} selected runes to grant a random trait.",
-  "rune.traitBulk.done": "Granted {count} traits · {summary}",
+  "rune.traitBulk.result.title": "Grant Results",
+  "rune.traitBulk.result.headline": "Traits granted to {count} runes",
+  "rune.traitBulk.result.gradeCount": "{grade} {count}",
+  "rune.traitBulk.result.sortGrade": "By Grade",
+  "rune.traitBulk.result.sortHolder": "By Wearer",
   "rune.traitBulk.failed": "Bulk trait grant failed.",
   "rune.traitBulk.lacking": "Not enough Unknown Ancient Cores.",
 } as const;

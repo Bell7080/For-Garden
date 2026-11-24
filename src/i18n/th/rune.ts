@@ -172,7 +172,11 @@ export const RUNE_TH = {
   "rune.research.itemOwned": "{name} · มี {owned}",
   "rune.traitBulk.button": "มอบ {count} ชิ้น",
   "rune.traitBulk.confirm": "ใช้แกนโบราณไร้ชื่อชิ้นละ 1 กับรูนที่เลือก {count} ชิ้น เพื่อมอบคุณลักษณะแบบสุ่ม",
-  "rune.traitBulk.done": "มอบคุณลักษณะ {count} รายการ · {summary}",
+  "rune.traitBulk.result.title": "ผลการมอบ",
+  "rune.traitBulk.result.headline": "มอบคุณลักษณะให้รูน {count} ชิ้น",
+  "rune.traitBulk.result.gradeCount": "{grade} {count}",
+  "rune.traitBulk.result.sortGrade": "ตามระดับ",
+  "rune.traitBulk.result.sortHolder": "ตามผู้สวมใส่",
   "rune.traitBulk.failed": "มอบคุณลักษณะแบบรวมล้มเหลว",
   "rune.traitBulk.lacking": "แกนโบราณไร้ชื่อไม่พอ",
 } as const;

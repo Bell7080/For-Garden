@@ -172,7 +172,11 @@ export const RUNE_ID = {
   "rune.research.itemOwned": "{name} · Dimiliki {owned}",
   "rune.traitBulk.button": "Beri {count}",
   "rune.traitBulk.confirm": "Gunakan 1 Inti Purba Tak Dikenal untuk masing-masing {count} rune terpilih guna memberi sifat acak.",
-  "rune.traitBulk.done": "{count} sifat diberikan · {summary}",
+  "rune.traitBulk.result.title": "Hasil Pemberian",
+  "rune.traitBulk.result.headline": "Sifat diberikan ke {count} rune",
+  "rune.traitBulk.result.gradeCount": "{grade} {count}",
+  "rune.traitBulk.result.sortGrade": "Per Tingkat",
+  "rune.traitBulk.result.sortHolder": "Per Pemakai",
   "rune.traitBulk.failed": "Pemberian sifat massal gagal.",
   "rune.traitBulk.lacking": "Inti Purba Tak Dikenal tidak cukup.",
 } as const;

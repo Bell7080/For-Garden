@@ -172,7 +172,11 @@ export const RUNE_RU = {
   "rune.research.itemOwned": "{name} · В наличии {owned}",
   "rune.traitBulk.button": "Выдать {count}",
   "rune.traitBulk.confirm": "На каждую из {count} выбранных рун уйдёт по одному Неизвестному древнему ядру — они получат случайную черту.",
-  "rune.traitBulk.done": "Выдано черт: {count} · {summary}",
+  "rune.traitBulk.result.title": "Результат",
+  "rune.traitBulk.result.headline": "Черты выданы рунам: {count}",
+  "rune.traitBulk.result.gradeCount": "{grade} {count}",
+  "rune.traitBulk.result.sortGrade": "По рангу",
+  "rune.traitBulk.result.sortHolder": "По владельцу",
   "rune.traitBulk.failed": "Не удалось выдать черты.",
   "rune.traitBulk.lacking": "Не хватает Неизвестных древних ядер.",
 } as const;

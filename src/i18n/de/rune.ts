@@ -172,7 +172,11 @@ export const RUNE_DE = {
   "rune.research.itemOwned": "{name} · Besitz {owned}",
   "rune.traitBulk.button": "{count} verleihen",
   "rune.traitBulk.confirm": "Für jede der {count} gewählten Runen wird ein Unbekannter uralter Kern verbraucht, um ein zufälliges Merkmal zu verleihen.",
-  "rune.traitBulk.done": "{count} Merkmale verliehen · {summary}",
+  "rune.traitBulk.result.title": "Ergebnis",
+  "rune.traitBulk.result.headline": "Merkmale für {count} Runen verliehen",
+  "rune.traitBulk.result.gradeCount": "{grade} {count}",
+  "rune.traitBulk.result.sortGrade": "Nach Rang",
+  "rune.traitBulk.result.sortHolder": "Nach Träger",
   "rune.traitBulk.failed": "Massenverleihung fehlgeschlagen.",
   "rune.traitBulk.lacking": "Nicht genug Unbekannte uralte Kerne.",
 } as const;

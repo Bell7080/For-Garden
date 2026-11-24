@@ -172,7 +172,11 @@ export const RUNE_ZH_HANT = {
   "rune.research.itemOwned": "{name} · 持有 {owned}",
   "rune.traitBulk.button": "賦予 {count} 個",
   "rune.traitBulk.confirm": "對所選的 {count} 個符文各使用 1 個未知的古代核心，賦予隨機特性。",
-  "rune.traitBulk.done": "已賦予 {count} 個特性 · {summary}",
+  "rune.traitBulk.result.title": "賦予結果",
+  "rune.traitBulk.result.headline": "已為 {count} 個符文賦予特性",
+  "rune.traitBulk.result.gradeCount": "{grade} {count}",
+  "rune.traitBulk.result.sortGrade": "按等級",
+  "rune.traitBulk.result.sortHolder": "按裝備者",
   "rune.traitBulk.failed": "批次賦予特性失敗。",
   "rune.traitBulk.lacking": "未知的古代核心不足。",
 } as const;

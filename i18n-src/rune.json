@@ -1719,15 +1719,55 @@
 "Für jede der {count} gewählten Runen wird ein Unbekannter uralter Kern verbraucht, um ein zufälliges Merkmal zu verleihen.",
 "На каждую из {count} выбранных рун уйдёт по одному Неизвестному древнему ядру — они получат случайную черту."
 ],
-"rune.traitBulk.done": [
-"已赋予 {count} 个特性 · {summary}",
-"มอบคุณลักษณะ {count} รายการ · {summary}",
-"Đã ban {count} đặc tính · {summary}",
-"{count} sifat diberikan · {summary}",
-"{count} rasgos otorgados · {summary}",
-"{count} traços concedidos · {summary}",
-"{count} Merkmale verliehen · {summary}",
-"Выдано черт: {count} · {summary}"
+"rune.traitBulk.result.title": [
+"赋予结果",
+"ผลการมอบ",
+"Kết quả ban",
+"Hasil Pemberian",
+"Resultados",
+"Resultados",
+"Ergebnis",
+"Результат"
+],
+"rune.traitBulk.result.headline": [
+"已为 {count} 个符文赋予特性",
+"มอบคุณลักษณะให้รูน {count} ชิ้น",
+"Đã ban đặc tính cho {count} rune",
+"Sifat diberikan ke {count} rune",
+"Rasgos otorgados a {count} runas",
+"Traços concedidos a {count} runas",
+"Merkmale für {count} Runen verliehen",
+"Черты выданы рунам: {count}"
+],
+"rune.traitBulk.result.gradeCount": [
+"{grade} {count}",
+"{grade} {count}",
+"{grade} {count}",
+"{grade} {count}",
+"{grade} {count}",
+"{grade} {count}",
+"{grade} {count}",
+"{grade} {count}"
+],
+"rune.traitBulk.result.sortGrade": [
+"按等级",
+"ตามระดับ",
+"Theo cấp",
+"Per Tingkat",
+"Por rango",
+"Por grau",
+"Nach Rang",
+"По рангу"
+],
+"rune.traitBulk.result.sortHolder": [
+"按装备者",
+"ตามผู้สวมใส่",
+"Theo người trang bị",
+"Per Pemakai",
+"Por portador",
+"Por portador",
+"Nach Träger",
+"По владельцу"
 ],
 "rune.traitBulk.failed": [
 "批量赋予特性失败。",

@@ -172,7 +172,11 @@ export const RUNE_ES = {
   "rune.research.itemOwned": "{name} · Tienes {owned}",
   "rune.traitBulk.button": "Otorgar {count}",
   "rune.traitBulk.confirm": "Se usará un Núcleo antiguo desconocido en cada una de las {count} runas elegidas para otorgar un rasgo aleatorio.",
-  "rune.traitBulk.done": "{count} rasgos otorgados · {summary}",
+  "rune.traitBulk.result.title": "Resultados",
+  "rune.traitBulk.result.headline": "Rasgos otorgados a {count} runas",
+  "rune.traitBulk.result.gradeCount": "{grade} {count}",
+  "rune.traitBulk.result.sortGrade": "Por rango",
+  "rune.traitBulk.result.sortHolder": "Por portador",
   "rune.traitBulk.failed": "Falló la asignación masiva de rasgos.",
   "rune.traitBulk.lacking": "No hay suficientes Núcleos antiguos desconocidos.",
 } as const;

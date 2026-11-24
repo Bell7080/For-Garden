@@ -172,7 +172,11 @@ export const RUNE_PT_BR = {
   "rune.research.itemOwned": "{name} · Possui {owned}",
   "rune.traitBulk.button": "Conceder {count}",
   "rune.traitBulk.confirm": "Será usado um Núcleo antigo desconhecido em cada uma das {count} runas selecionadas para conceder um traço aleatório.",
-  "rune.traitBulk.done": "{count} traços concedidos · {summary}",
+  "rune.traitBulk.result.title": "Resultados",
+  "rune.traitBulk.result.headline": "Traços concedidos a {count} runas",
+  "rune.traitBulk.result.gradeCount": "{grade} {count}",
+  "rune.traitBulk.result.sortGrade": "Por grau",
+  "rune.traitBulk.result.sortHolder": "Por portador",
   "rune.traitBulk.failed": "Falha ao conceder traços em massa.",
   "rune.traitBulk.lacking": "Núcleos antigos desconhecidos insuficientes.",
 } as const;

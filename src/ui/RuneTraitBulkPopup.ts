@@ -2,8 +2,6 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import type { GameApi } from "../api/contracts";
 import { isRuneTraitBulkCandidate, runeTraitBulkSelectable } from "../core/runeTraitBulk";
-import { RUNE_TRAIT_GRADES } from "../core/runeTraits";
-import { runeRarityLabel } from "../core/runes";
 import { RUNE_TRAIT_ITEMS } from "../data/runeTraits";
 import { findItem } from "../data/items";
 import { audioManager } from "../managers/AudioManager";
@@ -13,6 +11,7 @@ import { withBusy } from "./BusyOverlay";
 import { Button } from "./Button";
 import { showContentToast } from "./ContentToast";
 import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
+import { openRuneTraitBulkResultPopup } from "./RuneTraitBulkResultPopup";
 import { mountRunePickerGrid } from "./runePickerGrid";
 import { RUNE_PICK_GRID, runePickerListTop, runePickerSize } from "./runePickerLayout";
 import { chipPoints, drawLayer } from "./holo";
@@ -180,13 +179,8 @@ export function openRuneTraitBulkPopup(scene: Phaser.Scene, popups: PopupLayer, 
         void withBusy(scene, api.grantRuneTraitsBulk({ runeInstanceIds: ids, requestId: `trait-bulk-${Date.now()}` })).then((response) => {
           granted = true;
           audioManager?.playUi("rune.success");
-          // 등급별로 몇 개 붙었는지 한 줄로 알린다 — 높은 등급부터.
-          const summary = [...RUNE_TRAIT_GRADES].reverse()
-            .map((grade) => ({ grade, count: response.runes.filter((rune) => rune.trait?.grade === grade).length }))
-            .filter(({ count }) => count > 0)
-            .map(({ grade, count }) => `${runeRarityLabel(grade)} ${count}`)
-            .join(" · ");
-          showContentToast(scene, t("rune.traitBulk.done", { count: response.runes.length.toLocaleString(), summary }), "info");
+          // 무엇이 어떻게 붙었고 누가 끼고 있는지는 결과 창이 한 번에 말한다 — 일괄 부여 판 위에 겹쳐 뜬다.
+          openRuneTraitBulkResultPopup(scene, popups, response.runes);
           selected.length = 0;
           if (countText.active) { grid.repaint(); paint(); }
         }).catch((error: unknown) => {

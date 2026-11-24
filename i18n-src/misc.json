@@ -3019,7 +3019,6 @@
 "dialogue.auto": ["自动", "อัตโนมัติ", "Tự động", "Otomatis", "Auto", "Auto", "Auto", "Авто"],
 "dialogue.log": ["记录", "บันทึก", "Nhật ký", "Log", "Registro", "Registro", "Verlauf", "Лог"],
 "dialogue.hide": ["隐藏", "ซ่อน", "Ẩn", "Sembunyi", "Ocultar", "Ocultar", "Ausblenden", "Скрыть"],
-"dialogue.settings": ["设置", "ตั้งค่า", "Cài đặt", "Pengaturan", "Ajustes", "Configurações", "Einstellungen", "Настройки"],
 "intro.title": ["指引", "คำแนะนำ", "Hướng dẫn", "Panduan", "Guía", "Guia", "Hinweis", "Подсказка"],
 "intro.confirm": ["知道了", "เข้าใจแล้ว", "Đã hiểu", "Mengerti", "Entendido", "Entendi", "Verstanden", "Понятно"],
 "tutorial.tour.next": ["点击屏幕继续 · {step}/{total}", "แตะหน้าจอเพื่อไปต่อ · {step}/{total}", "Chạm màn hình để tiếp tục · {step}/{total}", "Ketuk layar untuk lanjut · {step}/{total}", "Toca la pantalla para seguir · {step}/{total}", "Toque na tela para continuar · {step}/{total}", "Tippe zum Fortfahren · {step}/{total}", "Нажмите, чтобы продолжить · {step}/{total}"],

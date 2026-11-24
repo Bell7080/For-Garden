@@ -6,6 +6,7 @@ import { DialoguePlaybackClock } from "../core/dialoguePlayback";
 import { settingsManager } from "../managers/SettingsManager";
 import { Button } from "./Button";
 import { ControlChip } from "./ControlChip";
+import { addSettingsGear, settingsGearY, type SettingsGear } from "./SettingsGear";
 import { t } from "../i18n";
 import { anyPopupOpen } from "./PopupLayer";
 import { DIALOGUE_BUBBLE } from "./dialogueBubbleLayout";
@@ -81,6 +82,7 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
    * 판을 숨기면 함께 숨고, 로그·선택지·확인 창이 덮는 동안에는 그 아래라 눌리지 않는다.
    */
   private readonly onSettings?: () => void;
+  private settingsGear?: SettingsGear;
 
   constructor(
     scene: Phaser.Scene,
@@ -262,24 +264,30 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     this.add([this.autoChip, logChip, hideChip]);
     if (this.onSettings) {
       const open = this.onSettings;
-      // 로그가 열려 있거나 선택지를 고르는 중에는 열지 않는다 — 돌아왔을 때 무엇을 하던 중인지 흐려진다.
-      const settingsChip = new ControlChip(this.ownerScene, centerX(3), y, {
-        icon: "settings", label: t("dialogue.settings"), width, height,
-        onClick: () => { if (!this.logOverlay && !this.hideCatcher) open(); },
-      });
-      this.add(settingsChip);
+      // 설정은 다른 화면과 같은 우상단 톱니다 — 대사판 칩으로 두면 같은 "설정"이 이 화면에서만 다른 자리에 선다.
+      // 로그가 열려 있거나 판을 숨긴 동안에는 열지 않는다 — 돌아왔을 때 무엇을 하던 중인지 흐려진다.
+      this.settingsGear = addSettingsGear(this.ownerScene, settingsGearY(), () => { if (!this.logOverlay && !this.hideCatcher) open(); });
+      this.settingsGear.icon.setDepth(650);
+      this.settingsGear.hit.setDepth(651);
     }
+  }
+
+  private setGearVisible(visible: boolean): void {
+    this.settingsGear?.icon.setVisible(visible);
+    this.settingsGear?.hit.setVisible(visible);
   }
 
   /** 판을 숨기고 배경·스탠딩만 보여 준다. 화면 아무 곳이나 누르면 돌아온다. */
   private hidePanel(): void {
     if (this.hideCatcher || this.choiceObjects.length > 0) return;
     this.setVisible(false);
+    this.setGearVisible(false);
     this.hideCatcher = this.ownerScene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0xffffff, 0).setDepth(605).setInteractive();
     this.hideCatcher.once("pointerup", () => {
       this.hideCatcher?.destroy();
       this.hideCatcher = undefined;
       this.setVisible(true);
+      this.setGearVisible(true);
       if (autoAdvance && !this.isTyping) this.scheduleAutoAdvance();
     });
   }

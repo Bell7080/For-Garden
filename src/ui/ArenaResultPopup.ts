@@ -18,6 +18,8 @@ import type { PopupLayer } from "./PopupLayer";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
+import { addStageCompleteBackdrop } from "./stageCompleteBackdrop";
+import { ARENA_RESULT_BACKDROP } from "./stageCompleteTheme";
 
 export type ArenaResultOutcome = "win" | "loss" | "draw";
 
@@ -68,6 +70,8 @@ export function openArenaResultPopup(scene: Phaser.Scene, popups: PopupLayer, op
     closeOnBackdrop: true, hideCloseButton: true,
     onClose: () => { hint?.destroy(); if (!chosen) options.onClose(); },
   }, (body, close) => {
+    // 다른 전투 결과판과 같은 뒷배경 한 겹 — 아레나가 서는 결투 전장 원화가 판 실루엣대로 옅게 비친다.
+    addStageCompleteBackdrop(scene, body, ARENA_RESULT_BACKDROP, L.width, L.height);
     const closeCatcher = scene.add.rectangle(0, 0, L.width, L.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     closeCatcher.on("pointerup", close);
     body.add(closeCatcher);

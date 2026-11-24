@@ -14,6 +14,8 @@ import { playRankClimb } from "./rankClimb";
 import { RAID_DIFFICULTY_TONE } from "./raidLayout";
 import { RAID_SETTLEMENT_POPUP as L, raidSettlementHeight, raidSettlementSummary, raidSettlementY } from "./raidSettlementLayout";
 import { addSectionTitle } from "./SectionTitle";
+import { addStageCompleteBackdrop } from "./stageCompleteBackdrop";
+import { raidResultTheme } from "./stageCompleteTheme";
 import { shrinkTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 
@@ -40,12 +42,17 @@ export function openRaidSettlementPopup(scene: Phaser.Scene, popups: PopupLayer,
   const half = L.width / 2;
   let hint: Phaser.GameObjects.Text | undefined;
   setDebugRewardPopup(true, options.granted.length, { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 + y(L.score.valueY) });
+  // 판 결과판과 같은 색 한 벌·같은 뒷배경이다 — 보스마다 그 속성의 색, 뒤에는 레이드 전장이 옅게 비친다.
+  const theme = raidResultTheme(raid.bossRelicId);
   popups.open({
     width: L.width, height, title: t("raid.settle.title"),
+    ...(theme.accent !== undefined ? { accent: theme.accent } : {}),
+    ...(theme.fill !== undefined ? { fill: theme.fill } : {}),
     dim: true, dimAlpha: 0.66, closeOnBackdrop: true, hideCloseButton: true,
     onClose: () => { hint?.destroy(); setDebugRewardPopup(false); options.onClose?.(); },
   }, (body, close) => {
     body.parentContainer?.setDepth(4000);
+    addStageCompleteBackdrop(scene, body, theme, L.width, height);
     // 닫는 판은 맨 아래 — 위에 덮으면 보상 액자가 제 안내창을 열지 못한다.
     const hit = scene.add.rectangle(0, 0, L.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerup", () => close());

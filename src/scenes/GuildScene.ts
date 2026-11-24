@@ -88,6 +88,7 @@ import { TopBar } from "../ui/TopBar";
 import { GUILD_COIN_TEXT } from "../ui/topBarSlots";
 import { addPlayerProfileTap, fetchFriendRelation, profileFriendButton } from "../ui/PlayerProfileLink";
 import { COLOR, textStyle } from "../ui/theme";
+import { GUILD_GUARD_RESULT_THEME, GUILD_WAR_RESULT_THEME } from "../ui/stageCompleteTheme";
 
 type GuildTab = "info" | "members";
 /** 수호전 순위 줄 안의 자리 — 줄 가운데가 0이다. 등수가 맨 왼쪽, 그 오른쪽에 얼굴·뱃지가 선다. */
@@ -772,6 +773,7 @@ export class GuildScene extends Phaser.Scene {
       title: t("guild.war.notice.title"),
       header: guildWarResultHeader(this, { name: guild?.name ?? "", badge: guild?.badge ?? DEFAULT_GUILD_BADGE }, last),
       items: [{ icon: GUILD_COIN_ICON, amount: last.coin }],
+      theme: GUILD_WAR_RESULT_THEME,
     });
     return true;
   }
@@ -786,6 +788,7 @@ export class GuildScene extends Phaser.Scene {
       title: t("guild.guard.notice.title"),
       header: guildGuardRewardHeader(this, reward.rank),
       items: [{ icon: GUILD_COIN_ICON, amount: reward.coin }],
+      theme: GUILD_GUARD_RESULT_THEME,
     });
     return true;
   }

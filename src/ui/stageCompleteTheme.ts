@@ -89,6 +89,26 @@ export function raidResultTheme(bossRelicId: string | undefined): StageCompleteT
 }
 
 /**
+ * 길드 수호전 — 수호전 전장(달빛 아래 성벽)과 같은 **남빛**이다. 길드 화면의 수호전 판과 같은 원화가 뒤에 옅게 비친다.
+ * 공용 금빛 판으로 서던 때는 스토리 결과와 구별되지 않았다.
+ */
+export const GUILD_GUARD_RESULT_THEME: StageCompleteTheme = {
+  accent: 0x8fa2ff, accentText: "#bcc8ff", deepText: "#0f1533", fill: 0x0b0e1c,
+  backdropKey: BACKGROUND.guildGuardField, ...BACKDROP,
+};
+
+/** 길드전 — 길드전 전장(붉은 달의 성채)과 같은 **진홍**이다. 레이드 타보아의 불빛과 갈리도록 한 톤 자줏빛으로 둔다. */
+export const GUILD_WAR_RESULT_THEME: StageCompleteTheme = {
+  accent: 0xd9465e, accentText: "#ff9aaa", deepText: "#2e0812", fill: 0x160910,
+  backdropKey: BACKGROUND.guildWarField, ...BACKDROP,
+};
+
+/**
+ * 아레나 — 판의 색은 아레나 표(`ARENA_TONE`)가 그대로 갖고, 뒤에는 결투 전장 원화만 깐다(아레나 전투가 그 전장에 선다).
+ */
+export const ARENA_RESULT_BACKDROP: StageCompleteTheme = { backdropKey: BACKGROUND.duelField, ...BACKDROP };
+
+/**
  * 점수·순위 블록의 자리(판 가운데가 0, 판 높이 1360).
  *
  * 순위는 기여도 버튼(50) 아래 경험치 블록 자리(172 언저리)에, 점수는 보상 줄(320, 액자 132) 아래에,

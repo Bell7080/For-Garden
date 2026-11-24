@@ -169,7 +169,7 @@ import { growthPaths, type GrowthPath } from "../core/growthPaths";
 import { contentOpen } from "../ui/contentLock";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { expeditionScoreDetailModel } from "../ui/expeditionScoreDetailModel";
-import { ANCIENT_RESULT_THEME, BOUNTY_RESULT_THEME, CAKE_RESULT_THEME, EXPEDITION_RESULT_THEME, duelResultTheme, raidResultTheme, storyResultTheme, type StageCompleteTheme } from "../ui/stageCompleteTheme";
+import { ANCIENT_RESULT_THEME, BOUNTY_RESULT_THEME, CAKE_RESULT_THEME, EXPEDITION_RESULT_THEME, GUILD_GUARD_RESULT_THEME, GUILD_WAR_RESULT_THEME, duelResultTheme, raidResultTheme, storyResultTheme, type StageCompleteTheme } from "../ui/stageCompleteTheme";
 import { duelStanding } from "../core/duelArena";
 import { beginBossSettlementAttempt, bossSettlementRecoveryRoute, completeBossSettlementAttempt, createBossSettlementFailureState, failBossSettlementAttempt } from "../core/bossSettlementFailure";
 import { hasMergedBattleHit, isPlayerUltimateReadyTransition } from "../core/hapticPolicy";
@@ -3774,6 +3774,8 @@ export class BattleScene extends Phaser.Scene {
     if (input.mode === "raid") return raidResultTheme(input.bossRelicId);
     if (input.mode === "cake") return CAKE_RESULT_THEME;
     if (input.mode === "bounty") return BOUNTY_RESULT_THEME;
+    if (input.mode === "guildGuard") return GUILD_GUARD_RESULT_THEME;
+    if (input.mode === "guildWar") return GUILD_WAR_RESULT_THEME;
     if (input.mode !== "stage") return undefined;
     const stageId = session.selectedStageId ?? undefined;
     if (ancientStageFloor(stageId) !== undefined) return ANCIENT_RESULT_THEME;
@@ -3872,6 +3874,7 @@ export class BattleScene extends Phaser.Scene {
         settlement: true,
       },
       guardReport: buildGuardReport({ outcome, best: result.best, before, after }),
+      theme: GUILD_GUARD_RESULT_THEME,
       fighters: this.stageCompleteFighters(),
       onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
       onConfirm: leave,
@@ -3904,12 +3907,13 @@ export class BattleScene extends Phaser.Scene {
       const footnote = result.captured && slot
         ? t("guild.war.result.captured", { points: GUILD_WAR_SLOT_SCORE[slot.kind], total: result.front.myPoints.toLocaleString() })
         : t("guild.war.result.alreadyDown", { total: result.front.myPoints.toLocaleString() });
-      new StageCompletePopup(this, popups).open({ reward: { kind: "loot", items: [], footnote }, fighters, onOpenContribution: openContribution, onConfirm });
+      new StageCompletePopup(this, popups).open({ reward: { kind: "loot", items: [], footnote }, theme: GUILD_WAR_RESULT_THEME, fighters, onOpenContribution: openContribution, onConfirm });
       return;
     }
     new StageCompletePopup(this, popups).open({
       reward: { kind: "defeat", actions: [{ label: t("guild.war.result.toWar"), onPress: () => { chosen = true; leave(); } }] },
       growth: this.defeatGrowth(() => { chosen = true; }),
+      theme: GUILD_WAR_RESULT_THEME,
       fighters, onOpenContribution: openContribution, onConfirm,
     });
   }

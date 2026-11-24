@@ -36,6 +36,8 @@ import { guardInputAfterClose } from "./closeInputGuard";
 import { addRewardExpiryTag } from "./rewardExpiry";
 import { greatSuccessPulses } from "../core/greatSuccess";
 import { GREAT_SUCCESS_FX, greatSuccessReduced, playGreatSuccess, type GreatSuccessFrame } from "./greatSuccessFx";
+import { addStageCompleteBackdrop } from "./stageCompleteBackdrop";
+import type { StageCompleteTheme } from "./stageCompleteTheme";
 
 // 기존 호출부는 UI 진입점 하나만 알면 되도록 순수 표시 변환도 함께 다시 내보낸다.
 export { cosmeticRewardItems, currencyRecordToRewardItems, dungeonRewardItems, productGrantsToRewardItems, type RewardPopupItem } from "./rewardPopupModel";
@@ -73,6 +75,11 @@ export interface RewardPopupOptions {
    * `draw`는 그 블록의 가운데 y를 받아 판 안에 그린다. 받을 것이 없는 결과(레벨 업)는 `items`를 비워 블록만 세운다.
    */
   header?: RewardPopupHeader;
+  /**
+   * 전투 결과를 알리는 영수증(길드전·수호전 정산)의 색 한 벌과 뒷배경. 주면 결과판(`StageCompletePopup`)과 같은
+   * 전장 원화가 판 실루엣대로 옅게 깔리고 몸판 강조색·면이 그 콘텐츠의 색이 된다. 일반 영수증은 비운다.
+   */
+  theme?: StageCompleteTheme;
   onConfirm?: () => void;
 }
 
@@ -127,6 +134,8 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     height,
     title: options.title ?? t("reward.title"),
     titleSize: options.titleSize,
+    ...(options.theme?.accent !== undefined ? { accent: options.theme.accent } : {}),
+    ...(options.theme?.fill !== undefined ? { fill: options.theme.fill } : {}),
     // 영수증은 원래 화면의 맥락을 남기되, 아래 작업판보다 높은 층에서 불필요한 돌아가기를 가린다.
     dim: true,
     dimAlpha: options.dimAlpha ?? 0.46,
@@ -145,6 +154,7 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
   }, (body) => {
     // 로비가 별도로 만든 우하단 뒤로가기(depth 2100)도 보상 확인 중에는 보이거나 눌리지 않는다.
     body.parentContainer?.setDepth(4000);
+    if (options.theme) addStageCompleteBackdrop(scene, body, options.theme, REWARD_POPUP.width, height);
     if (options.playerExp) {
       // 블록의 레벨 판 위끝이 판 윗변(제목표) 아래로 한 뼘 내려서게 둔다.
       const blockY = -height / 2 + 64 + (PLAYER_EXP_ROW.badge.height / 2 - PLAYER_EXP_ROW.badge.y);

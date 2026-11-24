@@ -26,6 +26,8 @@ import { runeTraitBulkCandidateCount } from "../core/runeTraitBulk";
 import { addSceneBackground, BACKGROUND, useBackgroundTexture } from "../ui/backgrounds";
 import { BottomNav } from "../ui/BottomNav";
 import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
+import { SideDrawer } from "../ui/SideDrawer";
+import { sideDrawerHandleX, sideDrawerItemX, sideDrawerOffsetX, SIDE_DRAWER } from "../ui/sideDrawerLayout";
 import { addRatesButton, RATES_SPOT } from "../ui/RatesButton";
 import { RailButton } from "../ui/RailButton";
 import { Button, DESTRUCTIVE_BUTTON_STYLE } from "../ui/Button";
@@ -277,6 +279,9 @@ export class ArchaeologyScene extends Phaser.Scene {
   private readonly grantedRunes: Array<{ rarity: RuneRarity; part: RunePart; instanceId: string }> = [];
   /** 판 뒤를 눌러 주는 어둠. 판이 없을 때는 투명하다. */
   private boardDim!: Phaser.GameObjects.Rectangle;
+  /** 지도·연구·합성에서 왼쪽 중상단에 서는 상점 칩. 판이 서면 숨고 `shopDrawer`가 대신한다. */
+  private shopLink: RailButton | null = null;
+  private shopDrawer: SideDrawer | null = null;
   /** 안개 두 겹과 훑는 빛띠. 판을 다시 그릴 때마다 새로 세운다. */
   private fogImages: Phaser.GameObjects.Image[] = [];
   private fogTextures: Phaser.Textures.CanvasTexture[] = [];
@@ -346,10 +351,15 @@ export class ArchaeologyScene extends Phaser.Scene {
      * 바꿔 다시 쓴다(새 씬을 만들면 선반·격자·값줄 규칙이 두 곳이 된다).
      */
     const shopSlot = SIDE_SHOP.screen;
-    addSideShopButton(this, shopSlot.x, shopSlot.y, shopSlot.size, t("archaeology.shop"),
-      () => startScene(this, "shop", { storefront: "archaeology", returnScene: "archaeology" }));
-    // 자동화도 런타임과 같은 고정 버튼을 누르도록 최소 입력 중심만 공개한다.
-    setDebugStorefrontControls({ archaeology: { shop: { x: shopSlot.x, y: shopSlot.y } } });
+    const openShop = (): void => startScene(this, "shop", { storefront: "archaeology", returnScene: "archaeology" });
+    this.shopLink = addSideShopButton(this, shopSlot.x, shopSlot.y, shopSlot.size, t("archaeology.shop"), openShop);
+    /*
+     * **발굴판이 서 있는 동안 상점 칩은 왼쪽 가장자리 서랍으로 들어간다**(응태 2026-11-24). 판이 화면 폭을 다 써서
+     * 칩이 판의 왼쪽 위 칸·무대와 겹쳤고, 파고 난 칸은 입력면이 없어 그 아래 칩이 손을 받아 상점으로 튕겨 나갔다.
+     * 서랍은 손잡이를 눌러야 밀려 나오고, 판과 같은 자리를 나눠 쓰지 않는다(`SIDE_DRAWER`).
+     */
+    this.shopDrawer = new SideDrawer(this, [addSideShopButton(this, 0, 0, SIDE_DRAWER.item, t("archaeology.shop"), openShop)], "shop").setDepth(2);
+    this.shopDrawer.setVisible(false);
     // **누른 자리에 붙이지 않는다** — 표 두 장이 든 큰 판이라 위로 붙이면 제목·횟수 줄을 덮는다.
     // 한동안 머무는 판은 화면 가운데에 서고 우하단 뒤로가기로 닫는다.
     // 확률 글줄은 그 표가 속한 탭에서만 선다 — 합성 탭은 합성 확률, 특성 연구 탭은 특성 확률이다.
@@ -527,6 +537,15 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.view.removeAll(true);
     this.chargeValueText = null; this.chargeNoteText = null; this.mapView = null;
     setDebugArchaeologyMap(undefined);
+    // 판이 서 있으면 상점 칩은 서랍으로 들어간다. 판 밖(지도·연구·합성)에서는 제자리에 선다.
+    const boardShown = this.tab === "strata" && this.board !== null;
+    this.shopLink?.setVisible(!boardShown);
+    this.shopDrawer?.setVisible(boardShown);
+    // 자동화도 런타임과 같은 버튼을 누르도록 지금 보이는 입구의 입력 중심만 공개한다.
+    // 판이 서 있으면 상점 자리는 서랍이 열렸을 때의 칩 자리이고, 먼저 닫힌 손잡이를 눌러야 한다.
+    setDebugStorefrontControls({ archaeology: boardShown
+      ? { shop: { x: sideDrawerItemX(0), y: SIDE_DRAWER.y }, drawerHandle: { x: sideDrawerHandleX(1) + sideDrawerOffsetX(1, false), y: SIDE_DRAWER.y } }
+      : { shop: { x: SIDE_SHOP.screen.x, y: SIDE_SHOP.screen.y } } });
     this.traitOddsLink?.setVisible(this.tab === "research");
     this.synthOddsLink?.setVisible(this.tab === "synth");
     this.synthBagLink?.setVisible(this.tab === "synth");
@@ -800,6 +819,12 @@ export class ArchaeologyScene extends Phaser.Scene {
     const width = spot.right - spot.left; const height = spot.bottom - spot.top;
     const stage = this.add.container((spot.left + spot.right) / 2, (spot.top + spot.bottom) / 2);
     this.view.add(stage);
+    /*
+     * **무대 전체가 손을 삼킨다.** 판 칸의 입력면은 파고 나면 사라지고 굴착 연출이 도는 동안은 모두 꺼지므로, 그 자리를
+     * 누른 손이 무대 아래의 다른 입력(곁 상점 칩)에 닿아 화면이 상점으로 넘어갔다(응태 2026-11-24). 칸·범례·게이지는
+     * 이 면보다 위에 서므로 그대로 손을 받는다.
+     */
+    stage.add(this.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive());
     // 윗변 강조선을 긋지 않는다 — 굴착 게이지 판·판 테두리의 선과 나란히 달려 장식이 겹쳐 보였다. 표식이 무대의 유일한 장식이다.
     const shape = chipPoints(width, height, { bevel: { topLeft: 46, bottomRight: 46 } });
     stage.add(drawLayer(this, 0, 0, shape, { fill: 0x04070a, alpha: 0.78 }));
@@ -1176,6 +1201,8 @@ export class ArchaeologyScene extends Phaser.Scene {
   private async dig(index: number): Promise<void> {
     if (this.digging) return;
     this.digging = true;
+    // 파기 시작하면 열어 둔 서랍은 들어간다 — 판 위에서 손이 바쁜 동안 곁 버튼이 떠 있을 이유가 없다.
+    this.shopDrawer?.setOpen(false);
     // 투명 입력면까지 모두 꺼야 빠른 멀티 터치가 다른 칸의 pointerup으로 확정되지 않는다.
     this.strataHits.forEach((hit) => { if (hit.input) hit.disableInteractive(); });
     const board = this.board;

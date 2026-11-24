@@ -190,7 +190,7 @@ export interface DebugState {
     /** 무역 팝업. 실패 상태에서는 상품 대신 재시도 입력이 생기고 공용 뒤로가기는 계속 남는다. */
     trade?: { products: DebugPoint[]; retry?: DebugPoint; back: DebugPoint };
     /** 고고학 화면에서 상점으로 넘어가는 유일한 고정 입력 중심이다. */
-    archaeology?: { shop: DebugPoint };
+    archaeology?: { shop: DebugPoint; drawerHandle?: DebugPoint };
     /** 레이드 화면의 판 밖 상점 입구. 출격판의 것과 같은 자리를 쓴다. */
     raid?: { shop: DebugPoint };
     shop?: { back: DebugPoint; tabs: Record<"general" | "enhancement" | "rune", DebugPoint>; cards: DebugPoint[]; drag: { from: DebugPoint; to: DebugPoint } };

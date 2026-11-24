@@ -5727,7 +5727,6 @@ var INFO_KO = {
   "info.rune.workbench.equipped": "\uC7A5\uCC29",
   "info.rune.workbench.movedFrom": "{name}\uC5D0\uAC8C\uC11C \uC62E\uACA8 \uB08C",
   "info.rune.workbench.unequip": "\uD574\uC81C",
-  "info.rune.workbench.apply": "\uC801\uC6A9 ({count}\uCE78)",
   "info.rune.workbench.applyNone": "\uC801\uC6A9",
   "info.rune.workbench.drafted": "\uAD50\uCCB4 \uBE44\uAD50\uC5D0 \uC62C\uB838\uC2B5\uB2C8\uB2E4 \xB7 \uC801\uC6A9\uC744 \uB20C\uB7EC \uC7A5\uCC29",
   "info.rune.workbench.unsavedTitle": "\uBCC0\uACBD \uC801\uC6A9",
@@ -5741,6 +5740,7 @@ var INFO_KO = {
   "info.rune.workbench.moveSlot": "{slot}\uBC88 \uCE78",
   "info.rune.workbench.moveAccept": "\uC62E\uACA8 \uB07C\uAE30",
   "info.rune.workbench.moveFree": "\uB0A8\uC740 \uB8EC \uB07C\uAE30",
+  "info.rune.workbench.recommend": "\uCD94\uCC9C \uB8EC",
   "info.journal.title": "\uAD00\uCC30 \uC77C\uC9C0",
   "info.journal.fossilRecord": "\uBC1C\uAD74 \uAE30\uB85D",
   "info.journal.diaryTitle": "\uAD00\uCC30 \uC77C\uAE30",
@@ -6599,7 +6599,15 @@ var GUILD_KO = {
   "guild.guard.preview.level": "LV.{level}",
   "guild.guard.preview.wave": "{wave}\uC6E8\uC774\uBE0C",
   "guild.guard.battle.line": "\uC6E8\uC774\uBE0C {wave} \xB7 \uD544\uB4DC {field}/{cap}",
-  "guild.guard.result.footnote": "{score}\uC810 \xB7 \uC6E8\uC774\uBE0C {wave} \xB7 \uCC98\uCE58 {kills}",
+  "guild.guard.report.score": "\uC810\uC218",
+  "guild.guard.report.wave": "\uC6E8\uC774\uBE0C",
+  "guild.guard.report.kills": "\uCC98\uCE58",
+  "guild.guard.report.newBest": "\uC624\uB298 \uCD5C\uACE0 \uAE30\uB85D!",
+  "guild.guard.report.todayBest": "\uC624\uB298 \uCD5C\uACE0 {score}",
+  "guild.guard.report.waveLevel": "\uC801 LV.{level}",
+  "guild.guard.report.killRate": "\uCC98\uCE58\uC728 {percent}%",
+  "guild.guard.report.ranking": "\uC624\uB298 \uAE38\uB4DC\uC6D0 \uC21C\uC704",
+  "guild.guard.report.guildRank": "\uAE38\uB4DC \uC21C\uC704 {rank}\uC704",
   "guild.error.GUARD_LIMIT": "\uC624\uB298 \uC218\uD638\uC804 \uB3C4\uC804\uC744 \uBAA8\uB450 \uC37C\uC2B5\uB2C8\uB2E4",
   "guild.error.GUARD_NOT_ENTERED": "\uC218\uD638\uC804 \uC785\uC7A5 \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4",
   "guild.error.WAR_NO_OPPONENT": "\uC624\uB298\uC740 \uB9DE\uBD99\uC744 \uC0C1\uB300 \uAE38\uB4DC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4",
@@ -6703,6 +6711,8 @@ var RUNE_KO = {
   "rune.engraveConfirm": "\uAC01\uC778 \uD655\uC815",
   "rune.trait.title": "\uD2B9\uC131",
   "rune.trait.none": "\uD2B9\uC131 \uC5C6\uC74C",
+  "rune.pick.select": "\uC120\uD0DD",
+  "rune.pick.hint": "\uC544\uB798 \uBAA9\uB85D\uC5D0\uC11C \uB8EC\uC744 \uACE0\uB974\uC138\uC694.",
   "rune.trait.odds": "\uD655\uB960 \uC815\uBCF4",
   "rune.trait.odds.upgradeTitle": "\uB4F1\uAE09 \uC0C1\uC2B9",
   "rune.trait.odds.listTitle": "\uD2B9\uC131 \uBAA9\uB85D",
@@ -6797,9 +6807,12 @@ var RUNE_KO = {
   "rune.bulkCraft.engrave.top": "\uC704 \uC8FC \uC635\uC158",
   "rune.bulkCraft.engrave.bottom": "\uC544\uB798 \uC8FC \uC635\uC158",
   "rune.bulkCraft.button": "{count}\uAC1C \uC138\uACF5",
+  "rune.bulkCraft.engraveButton": "{count}\uAC1C \uAC01\uC778",
   "rune.bulkCraft.confirm": "\uB8EC {count}\uAC1C\uC758 \uB0A8\uC740 \uC138\uACF5 {attempts}\uD68C\uB97C \uC9C4\uD589\uD569\uB2C8\uB2E4.",
   "rune.bulkCraft.confirmEngrave": "\uB8EC {count}\uAC1C\uC758 \uB0A8\uC740 \uC138\uACF5 {attempts}\uD68C\uB97C \uC9C4\uD589\uD558\uACE0, {engravings}\uAC1C\uB97C {target}\uC5D0 \uAC01\uC778\uD569\uB2C8\uB2E4. \uAC01\uC778\uC740 \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "rune.bulkCraft.confirmEngraveOnly": "\uB8EC {count}\uAC1C\uC758 {target}\uC5D0 \uAC01\uC778\uD569\uB2C8\uB2E4. \uAC01\uC778\uC740 \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "rune.bulkCraft.done": "\uC138\uACF5 {attempts}\uD68C \uC911 {successes}\uD68C \uC131\uACF5 \xB7 \uAC01\uC778 {engraved}\uAC1C",
+  "rune.bulkCraft.doneEngrave": "\uAC01\uC778 {engraved}\uAC1C \uC644\uB8CC",
   "rune.bulkCraft.failed": "\uC77C\uAD04 \uC138\uACF5\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.",
   "rune.traitBulk.title": "\uD2B9\uC131 \uC77C\uAD04 \uBD80\uC5EC",
   "rune.traitBulk.selected": "\uC120\uD0DD {count} / {total}",
@@ -6808,7 +6821,11 @@ var RUNE_KO = {
   "rune.research.itemOwned": "{name} \xB7 \uBCF4\uC720 {owned}",
   "rune.traitBulk.button": "{count}\uAC1C \uBD80\uC5EC",
   "rune.traitBulk.confirm": "\uACE0\uB978 \uB8EC {count}\uAC1C\uC5D0 \uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575\uC744 \uD558\uB098\uC529 \uC368\uC11C \uBB34\uC791\uC704 \uD2B9\uC131\uC744 \uBD80\uC5EC\uD569\uB2C8\uB2E4.",
-  "rune.traitBulk.done": "\uD2B9\uC131 {count}\uAC1C \uBD80\uC5EC \xB7 {summary}",
+  "rune.traitBulk.result.title": "\uBD80\uC5EC \uACB0\uACFC",
+  "rune.traitBulk.result.headline": "\uB8EC {count}\uAC1C\uC5D0 \uD2B9\uC131 \uBD80\uC5EC",
+  "rune.traitBulk.result.gradeCount": "{grade} {count}",
+  "rune.traitBulk.result.sortGrade": "\uB4F1\uAE09\uC21C",
+  "rune.traitBulk.result.sortHolder": "\uC7A5\uCC29\uC790\uC21C",
   "rune.traitBulk.failed": "\uD2B9\uC131 \uC77C\uAD04 \uBD80\uC5EC\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.",
   "rune.traitBulk.lacking": "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575\uC774 \uBAA8\uC790\uB78D\uB2C8\uB2E4."
 };
@@ -7047,6 +7064,7 @@ var MISSIONS_KO = {
 // src/i18n/ko/inventory.ts
 init_define_import_meta_env();
 var INVENTORY_KO = {
+  "inventory.rune.hint": "\uB8EC\uC744 \uB204\uB974\uBA74 \uC5EC\uAE30\uC5D0 \uC815\uBCF4\uAC00 \uB739\uB2C8\uB2E4. \uD55C \uBC88 \uB354 \uB204\uB974\uBA74 \uC790\uC138\uD788 \uBD05\uB2C8\uB2E4.",
   "inventory.title": "\uAC00\uBC29",
   "inventory.tab.rune": "\uB8EC",
   "inventory.tab.currency": "\uC7AC\uD654",
@@ -7461,6 +7479,8 @@ var MISC_KO = {
   "battle.profile.ferocity": "\uC57C\uC131 {value} / {max}",
   "reward.title": "\uD68D\uB4DD \uBCF4\uC0C1",
   "reward.note.frame": "\uD504\uB85C\uD544 \uD14C\uB450\uB9AC",
+  "reward.note.modifier": "\uD504\uB85C\uD544 \uC218\uC2DD\uC5B4",
+  "reward.cosmetic.owned": "\uBCF4\uC720 \uC911",
   "reward.note.item": "\uC544\uC774\uD15C",
   "reward.tapHint": "\uD654\uBA74\uC744 \uB20C\uB7EC \uD655\uC778",
   // 적 미리보기·룬 확률
@@ -7592,7 +7612,6 @@ var MISC_KO = {
   "dialogue.auto": "\uC790\uB3D9",
   "dialogue.log": "\uB85C\uADF8",
   "dialogue.hide": "\uC228\uAE30\uAE30",
-  "dialogue.settings": "\uC124\uC815",
   "intro.title": "\uC548\uB0B4",
   "intro.confirm": "\uC54C\uACA0\uC5B4\uC694",
   "tutorial.tour.next": "\uD654\uBA74\uC744 \uB20C\uB7EC \uACC4\uC18D \xB7 {step}/{total}",
@@ -8979,7 +8998,6 @@ var ACHIEVEMENT_KO = {
   "achievement.state.hidden": "\uC228\uC740 \uAE30\uB85D",
   "achievement.objective.hidden": "???",
   "achievement.tier": "{current}/{total}\uB2E8\uACC4",
-  "achievement.modifierEarned": "\uC218\uC2DD\uC5B4 \u300C{name}\u300D \uD68D\uB4DD!",
   "achievement.series.wealth": "\uBD80\uC758 \uCD95\uC801",
   "achievement.series.collector": "\uD45C\uBCF8 \uC218\uC9D1",
   "achievement.series.nurture": "\uC131\uC7A5\uC758 \uAE30\uB85D",
@@ -11051,6 +11069,14 @@ var SKIRMISH = {
   reach: 172,
   /** 서로 밀어내 겹치지 않게 유지하는 간격. 여섯이 한 덩어리로 뭉쳐 보이지 않게 한다. */
   spacing: 132,
+  /**
+   * 같은 편끼리 밀어내는 간격의 몫(`spacing` 대비).
+   *
+   * 같은 편도 적과 같은 간격으로 밀어내던 때는 앞에 선 아군 하나가 길을 막아 사거리 짧은 개체가
+   * 뒤에서 겉돌며 때리지 못했다. 같은 편끼리는 몸이 절반쯤 겹쳐도 되게 하고, 적과 아군 사이는
+   * 예전 간격 그대로 둔다(응태 결정 2026-11-23).
+   */
+  allySpacingRatio: 0.5,
   /**
    * 겹친 만큼을 1초에 몇 배로 풀지. 한 프레임에 전부 밀어내면 걸어 들어가는 힘과 부딪쳐
    * 몸이 낀 것처럼 떤다. 천천히 풀면 서로 비집고 자리를 잡는 것처럼 보인다.
@@ -17649,9 +17675,11 @@ function sidestep(push, heading, wander, allowBack) {
     y: -heading.y * allowBack + unitY * sideAmount
   };
 }
-function pairSpacing(a, b) {
-  return SKIRMISH.spacing * (a.bodyScale + b.bodyScale) / 2;
+function pairSpacing(a, b, crowd = false) {
+  const base = SKIRMISH.spacing * (a.bodyScale + b.bodyScale) / 2;
+  return a.side === b.side && !crowd ? base * SKIRMISH.allySpacingRatio : base;
 }
+var SKIRMISH_CROWD_THRESHOLD = 5;
 function separate(state, dt) {
   const alive = state.fighters.filter((fighter) => isFighterAlive(fighter) && fighter.def.passive.phasesThroughFighters !== true);
   const bypassesCollision = (fighter) => !fighter.engaged && fighter.targetId !== null && state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other)).length > 1 && fighter.blockedFor >= SKIRMISH.collisionBypassSeconds;
@@ -17665,6 +17693,7 @@ function separate(state, dt) {
     if (length <= 1e-3) return null;
     return { heading: { x: dx / length, y: dy / length } };
   };
+  const crowded = { player: false, enemy: state.horde !== void 0 || alive.filter(({ side }) => side === "enemy").length > SKIRMISH_CROWD_THRESHOLD };
   for (let i = 0; i < alive.length; i += 1) {
     for (let j = i + 1; j < alive.length; j += 1) {
       const a = alive[i];
@@ -17673,7 +17702,7 @@ function separate(state, dt) {
       const dx = b.x - a.x;
       const dy = b.y - a.y;
       const gap = dHypot(dx, dy);
-      const spacing = pairSpacing(a, b);
+      const spacing = pairSpacing(a, b, a.side === b.side && crowded[a.side]);
       if (gap >= spacing) continue;
       const angle = gap > 1e-3 ? dAtan2(dy, dx) : a.wander;
       const canMove = (fighter) => !fighter.engaged && fighter.targetId !== null && fighter.stunnedFor <= 0 && fighter.staggeredFor <= 0 && !fighter.frozen;
@@ -28933,14 +28962,15 @@ function cloneDuelState(state) {
 var isCount = (value) => Number.isSafeInteger(value) && value >= 0;
 var stringList = (value, limit) => Array.isArray(value) ? [...new Set(value.filter((item3) => typeof item3 === "string" && item3.length > 0))].slice(0, limit) : [];
 function normalizeHistoryEntry(entry) {
-  const { opponentTierId, opponentFavoriteRelicId, opponentUnits, side, ...base } = entry;
+  const { opponentTierId, opponentFavoriteRelicId, opponentUnits, side, opponentId, ...base } = entry;
   const units = Array.isArray(opponentUnits) ? opponentUnits.filter((unit) => !!unit && typeof unit.relicId === "string" && isCount(unit.level)).slice(0, 3).map(({ relicId, level }) => ({ relicId, level })) : [];
   return {
     ...base,
     ...typeof opponentTierId === "string" && getDuelTier(opponentTierId) ? { opponentTierId } : {},
     ...typeof opponentFavoriteRelicId === "string" ? { opponentFavoriteRelicId } : {},
     ...units.length > 0 ? { opponentUnits: units } : {},
-    ...side === "defense" ? { side } : {}
+    ...side === "defense" ? { side } : {},
+    ...typeof opponentId === "string" && opponentId.length > 0 && opponentId.length <= 64 ? { opponentId } : {}
   };
 }
 function normalizeDuelState(value, ownedRelicIds) {
@@ -29537,6 +29567,9 @@ function profileFrameOrDefault(id) {
 function isProfileFrameUnlocked(frame, playerLevel, claimed = {}, giftFrames = []) {
   if (frame.unlockGift) return giftFrames.includes(frame.id);
   return playerLevel >= frame.unlockLevel && (!frame.unlockAchievement || (claimed[frame.unlockAchievement.id] ?? 0) >= frame.unlockAchievement.tiers);
+}
+function achievementFramesOpened(before, after, playerLevel) {
+  return PROFILE_FRAMES.filter((frame) => frame.unlockAchievement && !isProfileFrameUnlocked(frame, playerLevel, before) && isProfileFrameUnlocked(frame, playerLevel, after)).map(({ id }) => id);
 }
 for (const frame of [...PROFILE_FRAMES, ...GIFTING_ENABLED ? [] : [GIFT_GIVER_FRAME]]) registerDataText(frame, "displayName", `profileFrame.${frame.id}.name`);
 
@@ -40020,7 +40053,7 @@ function recordPlayerDefense(context, opponentId, attacker, attack, attackerWon,
   duel2.seasonBestScore = Math.max(duel2.seasonBestScore, duel2.score);
   duel2.wins += won ? 1 : 0;
   duel2.losses += won ? 0 : 1;
-  duel2.history = [{ at: now.toISOString(), opponentName: attacker.playerCard.nickname || t("profile.defaultName"), opponentScore: attacker.duel.score, won, delta: duel2.score - before, opponentTierId: duelStanding(attacker.duel.score).tier.id, opponentFavoriteRelicId: attacker.favorite, opponentUnits: attack.map((relicId) => ({ relicId, level: attacker.relicProgress[relicId]?.level ?? 1 })), side: "defense" }, ...duel2.history].slice(0, DUEL_HISTORY_LIMIT);
+  duel2.history = [{ at: now.toISOString(), opponentName: attacker.playerCard.nickname || t("profile.defaultName"), opponentScore: attacker.duel.score, won, delta: duel2.score - before, opponentTierId: duelStanding(attacker.duel.score).tier.id, opponentFavoriteRelicId: attacker.favorite, opponentUnits: attack.map((relicId) => ({ relicId, level: attacker.relicProgress[relicId]?.level ?? 1 })), side: "defense", opponentId: context.playerId }, ...duel2.history].slice(0, DUEL_HISTORY_LIMIT);
   context.changes.push({ playerId: row.id, expectedRevision: row.revision, duel: duel2, gems: reached.reduce((n, t2) => n + t2.firstReachGems, 0) });
 }
 
@@ -46579,8 +46612,8 @@ var RUNE_SYNTHESIS_INPUTS = 3;
 var RUNE_SYNTHESIS_RULES = {
   /** 합성 한 번의 골드(응태 결정 — 골드 과잉 해소). 2026-11-18 전체를 낮추고 고급은 절반으로: 20만/40만/60만/100만 → 10만/30만/50만/80만. */
   goldCost: { uncommon: 1e5, rare: 3e5, epic: 5e5, legendary: 8e5 },
-  /** 한 등급 위가 나올 확률(%). 2026-10-25 응태 확정으로 35/25/12 → 50/40/25 상향. 전설은 위가 없어 새 전설로 옵션·특성만 다시 굴린다. */
-  upgradePercent: { uncommon: 50, rare: 40, epic: 25, legendary: 0 },
+  /** 한 등급 위가 나올 확률(%). 2026-11-24 합성 등급 상승 확률 상향: 50/40/25 → 70/65/60. 전설은 위가 없어 새 전설로 옵션·특성만 다시 굴린다. */
+  upgradePercent: { uncommon: 70, rare: 65, epic: 60, legendary: 0 },
   /**
    * 결과 특성 확률(%) — 넣은 룬 중 **가장 높은 특성 등급**이 줄을 고른다. 칸 순서는 없음 → 고급 → 희귀 → 영웅 → 전설.
    */
@@ -47328,7 +47361,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.534.0",
+  version: "0.547.1",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -51703,7 +51736,8 @@ var FakeServer = class {
       delta: scoreAfter - scoreBefore,
       opponentTierId: duelStanding(pending2.opponentScore).tier.id,
       opponentFavoriteRelicId: pending2.favoriteRelicId,
-      opponentUnits: pending2.units.map((unit) => ({ ...unit }))
+      opponentUnits: pending2.units.map((unit) => ({ ...unit })),
+      opponentId: pending2.opponentId
     };
     const next = {
       ...duel2,
@@ -52004,12 +52038,14 @@ var FakeServer = class {
     const rolledPasses = rollSeasonPassState(this.state.progressPasses ?? createEmptyProgressPassState(), this.now());
     const nextPasses = { ...rolledPasses, season: addSeasonPoints(rolledPasses.season, Object.values(researchPointsForClaim(uniqueIds2)).reduce((sum, points) => sum + points, 0), this.now()) };
     const nextState = ProfileModifierManager.applyRewardReceipt({ ...this.state, missions: nextMissions, wallet: nextWallet, progressPasses: nextPasses }, { claimedIds: uniqueIds2, claimedResearchStageIds });
+    const modifiersBefore = new Set(this.state.earnedProfileModifierIds);
     this.persist(nextState);
     this.state.missions = nextMissions;
     this.state.wallet = nextWallet;
     this.state.earnedProfileModifierIds = nextState.earnedProfileModifierIds;
     this.state.progressPasses = nextPasses;
-    return { ...this.snapshot(), claimedIds: uniqueIds2, claimedResearchStageIds, rewards: { mission, research }, granted: mergeMissionRewards([...mission, ...research]) };
+    const newModifierIds = nextState.earnedProfileModifierIds.filter((id) => !modifiersBefore.has(id));
+    return { ...this.snapshot(), claimedIds: uniqueIds2, claimedResearchStageIds, rewards: { mission, research }, granted: mergeMissionRewards([...mission, ...research]), newModifierIds };
   }
   /** 업적 목록 — 지금 값과 받은 단계·받을 단계를 서버가 판정한다. */
   async getAchievements() {
@@ -52043,6 +52079,8 @@ var FakeServer = class {
       claimedTiers: claim.claimedTiers,
       completedSeriesIds: claim.completedSeriesIds,
       newModifierIds: nextState.earnedProfileModifierIds.filter((id) => !before.has(id)),
+      // 업적 단계가 연 테두리 — 받기 전에는 닫혀 있었고 받은 뒤 열린 것만 싣는다(레벨 조건은 그대로 본다).
+      newFrameIds: achievementFramesOpened(current2.claimed, claim.state.claimed, this.state.playerResearch.level),
       granted
     };
   }
@@ -52269,7 +52307,8 @@ var FakeServer = class {
     this.state.itemInventory = applied.items;
     this.state.progressPasses = nextPasses;
     if (achievements) this.state.achievements = achievements;
-    const granted = [...applied.granted, ...decorations.map((grant) => ({ kind: "profile_decoration", decorationId: grant.decorationId, name: grant.name }))];
+    const ownedFrames = new Set(this.state.achievements?.giftFrames ?? []);
+    const granted = [...applied.granted, ...decorations.map((grant) => ({ kind: "profile_decoration", decorationId: grant.decorationId, name: grant.name, ...ownedFrames.has(grant.decorationId) ? { alreadyOwned: true } : {} }))];
     const response = {
       ...this.snapshot(),
       passId: pass.id,

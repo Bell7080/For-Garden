@@ -8,6 +8,16 @@ const trait = (grade: RuneTraitGrade): RuneTrait => ({ id: "x", grade, upgradeMi
 const sum = (values: readonly number[]): number => values.reduce((total, value) => total + value, 0);
 
 describe("룬 합성 규칙", () => {
+  it.each([
+    ["uncommon", "rare", 70],
+    ["rare", "epic", 65],
+    ["epic", "legendary", 60],
+  ] as const)("%s 합성은 %s 등급으로 %i%% 확률로 상승한다", (rarity, next, up) => {
+    expect(runeSynthesisRarityOdds(rarity)).toEqual({ same: 100 - up, up, next });
+    expect(rollRuneSynthesisRarity(rarity, (up - 0.001) / 100)).toBe(next);
+    expect(rollRuneSynthesisRarity(rarity, up / 100)).toBe(rarity);
+  });
+
   it("골드는 등급마다 오르고, 결과 등급은 같거나 한 단계 위일 뿐 내려가지 않는다", () => {
     expect(RUNE_SYNTHESIS_RULES.goldCost).toEqual({ uncommon: 100_000, rare: 300_000, epic: 500_000, legendary: 800_000 });
     for (const rarity of RARITIES) {

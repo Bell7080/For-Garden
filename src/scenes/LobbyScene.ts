@@ -216,6 +216,11 @@ const LOBBY_FILE_PREFETCH_DELAY_MS = 6000;
 /** 교류 목록이 처음 열릴 때 화면에 드는 도시 수. */
 const INTERACTION_PREFETCH_CITIES = 3;
 
+/** 이번 실행에서 로비에 마지막으로 세운 애착 원화. 같은 원화로 돌아오면 짧게 밝아지기만 한다. */
+let lastFavoriteUrl: string | undefined;
+/** 돌아온 로비에서 애착 렐릭이 밝아지는 시간 — 원화를 GPU에 올리는 한 프레임을 덮을 만큼만. */
+const LOBBY_FAVORITE_RETURN_FADE_MS = 140;
+
 export class LobbyScene extends Phaser.Scene {
   private favorite?: PuppetCreature;
   /** 비동기 외형 로딩이 역순으로 끝나도 마지막 요청 하나만 남기는 세대 번호다. */
@@ -1250,7 +1255,10 @@ export class LobbyScene extends Phaser.Scene {
     this.favorite?.destroy();
     this.favorite = nextFavorite;
     this.atmosphere?.setRelic(def.element, def.role);
-    this.fadeInFavorite(nextFavorite);
+    // 같은 원화로 로비에 돌아온 것이면 떠오르는 연출을 다시 돌리지 않는다 — 탭을 오갈 때마다 인물이 늦게 서는 것으로 읽혔다.
+    const returning = lastFavoriteUrl === asset.url;
+    lastFavoriteUrl = asset.url;
+    this.fadeInFavorite(nextFavorite, returning);
     // 누르면 대사 화면의 몸짓(뽀용·띠용…)으로 반응한다. 동작 「hit」은 몸짓이 idle을 멈추는 동안 굳으므로 쓰지 않는다.
     nextFavorite.setInteractive({ useHandCursor: true });
     nextFavorite.on("pointerup", () => {
@@ -1266,8 +1274,8 @@ export class LobbyScene extends Phaser.Scene {
    * 애착 렐릭이 한 뼘 아래에서 스르륵 떠오르며 밝아진다. 지나온 자리에 옅은 투영 잔상이 남았다가 몸으로 모인다
    * (`lobbyFavoriteGhosts`). 잔상은 들어서는 동안만 그리고, 움직임 줄이기에서는 떠오르지도 잔상을 남기지도 않고 밝아지기만 한다.
    */
-  private fadeInFavorite(creature: PuppetCreature): void {
-    const factor = motionPolicy(session.settings).nonEssentialDistanceFactor;
+  private fadeInFavorite(creature: PuppetCreature, returning = false): void {
+    const factor = returning ? 0 : motionPolicy(session.settings).nonEssentialDistanceFactor;
     const restY = creature.y;
     const { durationMs, rise } = LOBBY_FAVORITE_ENTRANCE;
     const progress = { value: 0 };
@@ -1283,7 +1291,7 @@ export class LobbyScene extends Phaser.Scene {
     this.favoriteEntrance = this.tweens.add({
       targets: progress,
       value: 1,
-      duration: Math.round(durationMs * (factor > 0 ? 1 : 0.5)),
+      duration: returning ? LOBBY_FAVORITE_RETURN_FADE_MS : Math.round(durationMs * (factor > 0 ? 1 : 0.5)),
       ease: "Sine.easeOut",
       onUpdate: paint,
       onComplete: () => {

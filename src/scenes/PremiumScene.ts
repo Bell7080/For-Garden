@@ -124,6 +124,8 @@ export class PremiumScene extends Phaser.Scene {
   private refreshSeq = 0;
   /** 상품 목록을 한 번이라도 받았는가. 못 받은 채 라벨을 누르면 다시 묻는다. */
   private productsLoaded = false;
+  /** 지금 들고 있는 상품 목록이 누구의 것인가. */
+  private productsOwner = "";
   private closed = false;
   /** 후원 지층 — 받기 전에는 칩을 세우지 않는다(조회 중 문구를 띄우지 않는다). */
   private patronStatus?: PatronStatusDto;
@@ -166,8 +168,11 @@ export class PremiumScene extends Phaser.Scene {
     this.closed = false;
     this.productsLoaded = false;
     // 지난번에 받은 목록이 있으면 먼저 세운다 — 조회가 늦어도 빈 판으로 기다리지 않고, 답이 오면 그 자리에서 갈아 끼운다.
+    // 다른 계정의 목록이 남아 있으면 비운다(씬 인스턴스는 계정 전환 뒤에도 재사용된다).
+    if (this.productsOwner !== (session.playerCard.uid ?? "")) this.products = [];
     if (this.products.length > 0) this.renderProducts();
-    void this.refresh();
+    // 이미 그린 목록이 있으면 기다림 막을 세우지 않고 조용히 맞춘다.
+    void this.refresh({ quiet: this.products.length > 0 });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.closed = true;
       this.removeScrollInput();
@@ -228,6 +233,7 @@ export class PremiumScene extends Phaser.Scene {
     // storefront 판정은 검증된 모델 하나가 소유한다. 여기서 filter를 다시 쓰면 같은 규칙이
     // 두 곳에 살아, 한쪽만 고쳐도 화면은 조용히 예전 규칙으로 남는다.
     this.products = premiumModel(response.products);
+    this.productsOwner = session.playerCard.uid ?? "";
     this.productsLoaded = true;
     this.firstPaymentGift = response.firstPaymentGift?.available ? response.firstPaymentGift : undefined;
     this.serverOffsetMs = Date.parse(response.serverTime) - Date.now();

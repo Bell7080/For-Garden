@@ -4,8 +4,11 @@ import { notificationManager } from "../managers/NotificationManager";
 import type { GameApi, ProgressPassDto } from "../api/contracts";
 import { t } from "../i18n";
 import { chipPoints, drawLayer, drawShapeEdge, HOLO, HoloBar, toPoints } from "./holo";
+import { addFramedIcon, itemFrameShape } from "./itemFrame";
+import { grantTiles } from "./premiumModel";
+import { formatCurrency } from "../core/formatCurrency";
 import { LOBBY_PASS_CARD } from "./passPopupLayout";
-import { passLevelOf, passReadyCount, passToOpen } from "./passPopupModel";
+import { passCardReward, passLevelOf, passReadyCount, passToOpen } from "./passPopupModel";
 import { PROGRESS_PASS_TONE, progressPassProgressLabel } from "./PassPopup";
 import { pressIn, pressOut } from "./pressFeedback";
 import { COLOR, textStyle } from "./theme";
@@ -31,9 +34,10 @@ function passName(pass: ProgressPassDto): string {
 
 /**
  * 로비 왼쪽 위의 **패스 카드** — 스토리·레벨·레이드 패스가 한 장씩 서고, 일정 간격으로 다음 패스가 오른쪽에서
- * 쓱 밀려 들어온다. 아래 점 줄이 지금 몇 번째 패스인지 말한다.
+ * 쓱 밀려 들어온다. 판 안 밑줄의 짧은 대시가 지금 몇 번째 패스인지 말한다.
  *
- * 한 장 안에 패스 이름 · 레벨 · 레벨 단위로 끊긴 게이지 · 받을 보상 수(없으면 진행도)가 그 패스의 색으로 선다 —
+ * 한 장 안에 보상 액자(받을 것, 없으면 다음 보상) · 패스 이름 · 레벨 · 레벨 단위로 끊긴 게이지 · 받을 보상 수(없으면
+ * 진행도)가 그 패스의 색으로 선다 —
  * 세 패스가 같은 칸을 번갈아 쓰므로 색과 이름이 먼저 갈려야 지금 무엇을 보는지 읽힌다. 받을 것이 있는 패스부터
  * 보여 주고, 누르면 지금 서 있는 패스로 패스 창이 열린다.
  */
@@ -141,12 +145,13 @@ export class LobbyPassCard {
     return chipPoints(C.width, C.height, { bevel: { topLeft: bevel, topRight: 0, bottomRight: bevel, bottomLeft: 0 } });
   }
 
-  /** 패스 한 장 — 왼쪽 띠와 번지는 색, 이름·레벨, 게이지, 받을 보상(또는 진행도). */
+  /** 패스 한 장 — 왼쪽 띠와 번지는 색, 보상 액자, 이름·레벨, 게이지, 받을 보상(또는 진행도). */
   private paintSlide(index: number): Phaser.GameObjects.Container {
     const C = LOBBY_PASS_CARD;
     const scene = this.scene;
     const pass = this.passes[index]!;
     const tone = PROGRESS_PASS_TONE[pass.id];
+    const toneText = `#${tone.toString(16).padStart(6, "0")}`;
     const slide = scene.add.container(0, 0);
     this.slides.add(slide);
     const fg = scene.add.container(0, 0);
@@ -163,7 +168,7 @@ export class LobbyPassCard {
       const from = left + (C.width * i) / strips;
       const piece = clipToColumn(body, from, from + C.width / strips + 0.5);
       if (piece.length < 6) continue;
-      wash.fillStyle(tone, 0.3 * Math.pow(1 - i / strips, 1.6)).fillPoints(toPoints(piece), true);
+      wash.fillStyle(tone, 0.34 * Math.pow(1 - i / strips, 1.4)).fillPoints(toPoints(piece), true);
     }
     slide.add(wash);
     const stripe = scene.add.graphics();
@@ -172,14 +177,33 @@ export class LobbyPassCard {
     slide.add(stripe);
     slide.add(drawShapeEdge(scene, 0, 0, this.shape(), "top", { color: tone, alpha: 0.9, width: 3 }));
 
-    const contentLeft = left + C.pad;
-    const contentRight = C.width / 2 - C.pad + 6;
+    // 보상 액자 — 지금 받을 것, 없으면 다음 마디의 보상. 무엇을 주는 패스인지를 그림 한 칸이 먼저 말한다.
+    const reward = passCardReward(pass);
+    const tile = reward ? grantTiles(reward.grants)[0] : undefined;
+    const frameX = left + C.frame.left + C.frame.size / 2;
+    if (reward?.state === "ready") {
+      // 받을 것이 있으면 액자 실루엣 그대로 패스 색 빛이 숨 쉰다(덮개는 그 레이어의 모양을 쓴다).
+      const glow = drawLayer(scene, frameX, C.frame.y, itemFrameShape(C.frame.size, C.frame.glow), { fill: tone, alpha: 0.55 });
+      slide.add(glow);
+      const breath = scene.tweens.add({ targets: glow, alpha: { from: 0.85, to: 0.25 }, duration: 760, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+      slide.once(Phaser.GameObjects.Events.DESTROY, () => breath.remove());
+    }
+    const frame = addFramedIcon(scene, fg, frameX, C.frame.y, C.frame.size, tile?.icon ?? "", {
+      plain: true,
+      color: reward?.state === "ready" ? tone : undefined,
+      iconAlpha: reward?.state === "done" ? 0.45 : 1,
+      ...(tile ? { amount: formatCurrency(tile.amount) } : {}),
+    });
+    if (reward?.state === "done") frame.setAlpha(0.7);
+
+    const contentLeft = C.contentLeft;
+    const contentRight = C.contentRight;
     const level = passLevelOf(pass);
-    const levelText = scene.add.text(contentRight, C.nameY + 2, t("lobby.pass.level", { level: level.level, max: level.max }), textStyle({ role: "emphasis", size: C.levelSize, color: `#${tone.toString(16).padStart(6, "0")}` }))
+    const levelText = scene.add.text(contentRight, C.nameY + 2, t("lobby.pass.level", { level: level.level, max: level.max }), textStyle({ role: "emphasis", size: C.levelSize, color: toneText }))
       .setOrigin(1, 0.5).setStroke("#05070a", 4);
     const name = scene.add.text(contentLeft, C.nameY, passName(pass), textStyle({ role: "display", size: C.nameSize, color: COLOR.ink }))
       .setOrigin(0, 0.5).setStroke("#05070a", 5);
-    squeezeTextToWidth(name, contentRight - levelText.width - 16 - contentLeft, 0.7);
+    squeezeTextToWidth(name, contentRight - levelText.width - 12 - contentLeft, 0.7);
     fg.add([name, levelText]);
 
     const barWidth = contentRight - contentLeft;
@@ -190,7 +214,7 @@ export class LobbyPassCard {
     const ready = passReadyCount(pass);
     const note = scene.add.text(contentLeft, C.noteY, ready > 0 ? t("lobby.pass.ready", { count: ready }) : progressPassProgressLabel(pass),
       textStyle({ role: "emphasis", size: C.noteSize, color: ready > 0 ? "#ffcf7a" : COLOR.inkDim })).setOrigin(0, 0.5).setStroke("#05070a", 4);
-    fg.add(squeezeTextToWidth(note, barWidth, 0.7));
+    fg.add(squeezeTextToWidth(note, barWidth - this.pagerWidth() - 12, 0.7));
     slide.add(fg);
     if (ready > 0) {
       const breath = this.scene.tweens.add({ targets: note, alpha: { from: 1, to: 0.55 }, duration: 700, yoyo: true, repeat: -1, ease: "Sine.InOut" });
@@ -199,21 +223,29 @@ export class LobbyPassCard {
     return slide;
   }
 
-  /** 카드 아래 점 줄 — 지금 패스만 그 색으로 길게 선다. */
-  private paintDots(): void {
-    const D = LOBBY_PASS_CARD.dots;
+  /** 넘김 표식의 폭 — 패스가 하나뿐이면 서지 않는다. */
+  private pagerWidth(): number {
+    const P = LOBBY_PASS_CARD.pager;
     const count = this.passes.length;
+    return count < 2 ? 0 : P.active + (count - 1) * P.dash + (count - 1) * P.gap;
+  }
+
+  /** 판 안 밑줄 오른쪽 끝의 넘김 표식 — 지금 패스만 길게, 그 색으로 선다. 판 밖 배경 위에 따로 뜨지 않는다. */
+  private paintDots(): void {
+    const C = LOBBY_PASS_CARD;
+    const P = C.pager;
     this.dots.clear();
-    if (count < 2) return;
-    const start = -((count - 1) * D.gap) / 2;
+    if (this.passes.length < 2) return;
+    let x = C.contentRight - this.pagerWidth();
+    const lean = P.height * 0.5;
     this.passes.forEach((pass, index) => {
-      const cx = start + index * D.gap;
       const active = index === this.index;
-      const w = active ? D.size * 1.5 : D.size * 0.8;
-      const h = active ? D.size : D.size * 0.8;
-      this.dots.fillStyle(0x05070a, 0.7).fillPoints(toPoints([cx, D.y - h - 3, cx + w + 3, D.y, cx, D.y + h + 3, cx - w - 3, D.y]), true);
-      this.dots.fillStyle(active ? PROGRESS_PASS_TONE[pass.id] : 0xffffff, active ? 1 : 0.7)
-        .fillPoints(toPoints([cx, D.y - h, cx + w, D.y, cx, D.y + h, cx - w, D.y]), true);
+      const w = active ? P.active : P.dash;
+      const top = P.y - P.height / 2;
+      const bottom = P.y + P.height / 2;
+      this.dots.fillStyle(active ? PROGRESS_PASS_TONE[pass.id] : 0xffffff, active ? 1 : 0.32)
+        .fillPoints(toPoints([x + lean, top, x + w, top, x + w - lean, bottom, x, bottom]), true);
+      x += w + P.gap;
     });
   }
 }

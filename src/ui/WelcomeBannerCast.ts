@@ -54,7 +54,12 @@ export class WelcomeBannerCast {
     // 뒷줄부터 세워 앞줄 SD가 그 위에 겹친다.
     const members = relicIds.slice(0, WELCOME_CAST.spots.length).map((relicId, index) => ({ relicId, index }));
     members.sort((a, b) => WELCOME_CAST.spots[a.index].groundY - WELCOME_CAST.spots[b.index].groundY);
-    for (const { relicId, index } of members) this.addMember(relicId, index);
+    // 원화를 다 기다린 뒤 함께 들어온다 — 도착하는 대로 세우면 넷이 내려받은 순서대로 쏙, 쏙 선다.
+    const entrances = members.map(({ relicId, index }) => this.addMember(relicId, index));
+    void Promise.all(entrances.map((entry) => entry.ready)).then(() => {
+      if (!this.alive) return;
+      for (const entry of entrances) entry.enter();
+    });
   }
 
   destroy(): void {
@@ -64,7 +69,7 @@ export class WelcomeBannerCast {
     for (const layer of [this.sparklesBack, this.root, this.names, this.sparklesFront]) layer.destroy(true);
   }
 
-  private addMember(relicId: string, index: number): void {
+  private addMember(relicId: string, index: number): { ready: Promise<unknown>; enter: () => void } {
     const { scene } = this;
     const spot = WELCOME_CAST.spots[index];
     const member = scene.add.container(0, 0);
@@ -81,7 +86,8 @@ export class WelcomeBannerCast {
     const outward = spot.x < scene.scale.width / 2 ? -1 : 1;
     const echo = WELCOME_CAST.echo.map((step) => ({ dx: step.dx * outward, dy: step.dy, alpha: step.alpha }));
     const delay = index * WELCOME_CAST.enterStagger;
-    void spawnPuppet(scene, relicAppearanceManager.sdAssetFor(relicId), {
+    let arrived: Awaited<ReturnType<typeof spawnPuppet>> | undefined;
+    const ready = spawnPuppet(scene, relicAppearanceManager.sdAssetFor(relicId), {
       x: spot.x, groundY: spot.groundY, height: spot.height, flipX: spot.flipX, depth: WELCOME_CAST.depth,
     }).then((puppet) => {
       if (!this.alive || !member.active) { puppet.destroy(); return; }
@@ -90,17 +96,31 @@ export class WelcomeBannerCast {
       this.puppets.set(index, puppet);
       member.addAt(puppet, 1);
       enableHitOnClick(scene, puppet);
-      if (!this.animate) return;
-      // 차례로 톡 떨어져 선다 — 넷이 한꺼번에 서면 단체 사진처럼 굳어 보인다.
-      const y = puppet.y;
-      puppet.setAlpha(0).setY(y - 48);
-      scene.tweens.add({ targets: puppet, y, alpha: 1, duration: 360, delay, ease: "Back.Out" });
+      // 나머지를 기다리는 동안 숨겨 둔다.
+      puppet.setAlpha(0);
+      arrived = puppet;
     }).catch(() => undefined);
 
     const name = this.addName(relicId, index);
-    if (!this.animate) return;
-    name.setAlpha(0).setY(name.y + 14);
-    scene.tweens.add({ targets: name, y: name.y - 14, alpha: 1, duration: 300, delay: delay + 220, ease: "Cubic.Out" });
+    name.setAlpha(0);
+    const enter = (): void => {
+      if (!member.active) return;
+      if (!this.animate) {
+        arrived?.setAlpha(1);
+        name.setAlpha(1);
+        return;
+      }
+      // 차례로 톡 떨어져 선다 — 넷이 한꺼번에 서면 단체 사진처럼 굳어 보인다.
+      if (arrived) {
+        const y = arrived.y;
+        arrived.setY(y - 48);
+        scene.tweens.add({ targets: arrived, y, alpha: 1, duration: 360, delay, ease: "Back.Out" });
+      }
+      const nameY = name.y;
+      name.setY(nameY + 14);
+      scene.tweens.add({ targets: name, y: nameY, alpha: 1, duration: 300, delay: delay + 220, ease: "Cubic.Out" });
+    };
+    return { ready, enter };
   }
 
   /** 누르면 그 개체가 톡 뛰고 정보창이 열린다. 뛰는 것을 기다리지 않는다. */

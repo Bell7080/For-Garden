@@ -188,6 +188,9 @@ function haulToRewardItems(haul: readonly StrataHaulEntry[], granted: ReadonlyAr
 /** 탐사 횟수 칸의 그림 — 가방의 탐사권과 같은 키라 누르면 그 안내창이 열린다. */
 const STRATA_TICKET_ICON = "item-strata-ticket";
 
+/** 마지막으로 받은 고고학 상태 — 계정마다 하나. 화면을 다시 열 때 빈 판으로 기다리지 않고 이것으로 먼저 그린다. */
+let rememberedArchaeology: { owner: string; state: ArchaeologyStateResponse; receivedAt: number } | undefined;
+
 export class ArchaeologyScene extends Phaser.Scene {
   private popups!: PopupLayer;
   private keywords!: KeywordManager;
@@ -376,6 +379,7 @@ export class ArchaeologyScene extends Phaser.Scene {
       this.strataTiles.clear(); this.strataHits.clear(); this.strataGrid = null; this.strataHaul = null; this.strataDigsText = null; this.strataDigsBar = null; this.digging = false;
       setDebugArchaeologyDig(undefined);
     });
+    this.paintRemembered();
     void this.refresh();
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
@@ -442,14 +446,33 @@ export class ArchaeologyScene extends Phaser.Scene {
 
   /** 서버에서 지금 상태를 받아 다시 그린다. 씬이 횟수나 판을 스스로 계산하지 않는다. */
   private async refresh(): Promise<void> {
-    const state = await withBusy(this, gameApi.archaeologyState());
+    // 지난번 답이 있으면 기다림 막을 세우지 않는다 — 화면은 이미 그 답으로 서 있다.
+    const owner = session.playerCard.uid ?? "";
+    const quiet = rememberedArchaeology?.owner === owner;
+    const state = await (quiet ? gameApi.archaeologyState() : withBusy(this, gameApi.archaeologyState()));
+    if (!this.sys.isActive()) { rememberedArchaeology = { owner, state, receivedAt: Date.now() }; return; }
     this.applyArchaeologyState(state);
     this.paintView();
   }
 
+  /**
+   * 지난번에 받은 고고학 상태로 곧바로 그린다 — 하단 탭으로 들어올 때마다 지도·판이 빈 채로 서버 답을 기다리던 것을
+   * 막는다. 남은 시간은 받은 순간에서 흐른 만큼 서버 시계를 옮겨 맞추고, 새 답이 오면 그 자리에서 다시 그린다.
+   */
+  private paintRemembered(): boolean {
+    const cached = rememberedArchaeology;
+    if (!cached || cached.owner !== (session.playerCard.uid ?? "")) return false;
+    const elapsed = Math.max(0, Date.now() - cached.receivedAt);
+    const serverTime = Date.parse(cached.state.serverTime);
+    this.applyArchaeologyState(Number.isFinite(serverTime) ? { ...cached.state, serverTime: new Date(serverTime + elapsed).toISOString() } : cached.state, false);
+    this.paintView();
+    return true;
+  }
+
   /** 모든 고고학 응답의 충전·판·서버 시각을 한 원자적 경로로 반영한다. */
-  private applyArchaeologyState(state: ArchaeologyStateResponse): void {
+  private applyArchaeologyState(state: ArchaeologyStateResponse, remember = true): void {
     const receivedAt = Date.now();
+    if (remember) rememberedArchaeology = { owner: session.playerCard.uid ?? "", state, receivedAt };
     const serverTime = Date.parse(state.serverTime);
     const nextChargeAt = state.nextChargeAt === null ? Number.NaN : Date.parse(state.nextChargeAt);
     this.charges = state.charges;

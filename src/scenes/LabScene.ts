@@ -246,6 +246,9 @@ export class LabScene extends Phaser.Scene {
       this.popupLayer?.closeAll(); this.popupLayer = undefined;
     });
     this.showcaseRelic();
+    // 알림 신호가 이미 아는 무료 연구 여부로 첫 화면을 세운다 — 조회를 기다린 뒤에야 버튼이 「오늘 무료!」로 바뀌며 늦게
+    // 뜨던 것을 막는다. 조회가 오면 서버의 답으로 다시 맞춘다(신호가 틀렸으면 그 자리에서 닫힌다).
+    notificationManager.subscribe("freeResearch", (visible) => { this.freeResearchReady = visible; })();
     this.refresh();
     void this.loadFreeResearch();
     // SSR 전조 무대를 손이 노는 동안 미리 세운다 — 첫 SSR이 뜨는 순간 셰이더 컴파일이 몰려
@@ -515,7 +518,7 @@ export class LabScene extends Phaser.Scene {
     return status >= Phaser.Scenes.RUNNING && status <= Phaser.Scenes.SLEEPING;
   }
 
-  /** 오늘의 무료 연구가 남았는가 — 서버가 답한 값만 믿고, 답이 오기 전에는 닫힌 쪽이다. */
+  /** 오늘의 무료 연구가 남았는가 — 들어설 때는 알림 신호(서버가 준 값)로 세우고, 무료 연구 조회의 답으로 확정한다. */
   private freeResearchReady = false;
   /** 배너 넘김 꺾쇠 둘(왼쪽·오른쪽) — 무료 연구 배너 쪽 꺾쇠에 붉은 점을 단다. */
   private bannerArrows: Phaser.GameObjects.Container[] = [];

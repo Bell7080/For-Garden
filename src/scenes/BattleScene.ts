@@ -59,6 +59,8 @@ import { createGuildWarSkirmish } from "../core/guildWarBattle";
 import { GUILD_WAR_SLOT_SCORE } from "../core/guildWar";
 import { parseGuildWarSlotId } from "../core/guildWarMap";
 import { guildGuardRoster } from "../data/guildGuard";
+import { guildApi } from "../api/guildApi";
+import { buildGuardReport, type GuardReportBoard } from "../core/guildGuardReport";
 import { shownBreakthroughForLevel } from "../core/levelDesign";
 import { GUILD_COIN_ICON } from "../ui/priceTag";
 import type { GuildGuardBattleInputDto, GuildWarBattleInputDto } from "../core/expeditionBattle";
@@ -422,6 +424,8 @@ export class BattleScene extends Phaser.Scene {
   private guardLineLabel?: Phaser.GameObjects.Text;
   private guardScoreShown = 0;
   private guardWave = 0;
+  /** 입장 직후의 오늘 길드원 순위 — 결과판이 이번 판 전 최고 기록과 오른 등수를 잰다. 못 읽으면 null. */
+  private guardBoardBefore?: Promise<GuardReportBoard | null>;
   private scoreRankHud?: ScoreRankingHud;
   /** 랭킹 띠가 내 점수에 더하는 이전 판의 몫(레이드는 지난 도전의 피해, 원정은 없음). */
   private scoreRankBase = 0;
@@ -3812,6 +3816,7 @@ export class BattleScene extends Phaser.Scene {
     const L = GUILD_GUARD_BATTLE_HUD;
     this.guardWave = 0;
     this.guardScoreShown = 0;
+    this.guardBoardBefore = readGuardReportBoard();
     this.guardScoreLabel = this.add.text(BASE_WIDTH / 2, L.scoreY, "0", textStyle({ role: "display", size: L.scoreSize, color: COLOR.sortieText }))
       .setOrigin(0.5, 0).setDepth(90).setStroke("#000000", 6).setShadow(0, 3, "#000000", 4, false, true);
     this.guardLineLabel = this.add.text(BASE_WIDTH / 2, L.lineY, "", textStyle({ role: "emphasis", size: L.lineSize, color: COLOR.ink }))
@@ -3855,15 +3860,18 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     if (!this.scene.isActive() || generation !== this.combatGeneration) return;
+    // 순위는 확정 뒤 한 번 더 읽는다. 순위를 못 읽어도 막대는 서야 하므로 오래 붙잡지 않는다(`readGuardReportBoard`).
+    const [before, after] = await withBusy(this, Promise.all([this.guardBoardBefore ?? Promise.resolve(null), readGuardReportBoard()]));
+    if (!this.scene.isActive() || generation !== this.combatGeneration) return;
     const popups = new PopupLayer(this, 2200);
     const { outcome } = result;
     new StageCompletePopup(this, popups).open({
       reward: {
         kind: "loot",
         items: [{ icon: GUILD_COIN_ICON, amount: result.coin }],
-        footnote: t("guild.guard.result.footnote", { score: outcome.score.toLocaleString(), wave: outcome.waves, kills: outcome.kills }),
         settlement: true,
       },
+      guardReport: buildGuardReport({ outcome, best: result.best, before, after }),
       fighters: this.stageCompleteFighters(),
       onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
       onConfirm: leave,
@@ -4045,3 +4053,17 @@ export class BattleScene extends Phaser.Scene {
 
 /** 눌림 해제 때 준비 카드의 기본 확대를 일관되게 복구한다. */
 function profileScale(ready: boolean): number { return ready ? 1.08 : 1; }
+
+/** 순위 판을 기다리는 상한. 넘기면 순위 줄 없이 결과판을 연다. */
+const GUARD_BOARD_WAIT_MS = 2_500;
+
+/** 오늘 길드원 순위를 결과판이 읽는 모양으로. 실패하거나 늦으면 null — 결과판은 순위 없이 선다. */
+function readGuardReportBoard(): Promise<GuardReportBoard | null> {
+  const board = guildApi.getGuard()
+    .then((value): GuardReportBoard => ({
+      members: value.members.map(({ rank, name, score, isMe }) => ({ rank, name, score, isMe })),
+      guildRank: value.mine?.rank ?? null,
+    }))
+    .catch(() => null);
+  return Promise.race([board, new Promise<null>((resolve) => setTimeout(() => resolve(null), GUARD_BOARD_WAIT_MS))]);
+}

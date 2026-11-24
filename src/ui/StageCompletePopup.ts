@@ -38,6 +38,9 @@ import { addStageCompleteBackdrop } from "./stageCompleteBackdrop";
 import { playRankClimb } from "./rankClimb";
 import { RESULT_SCORE_BLOCK, type StageCompleteTheme } from "./stageCompleteTheme";
 import { addAutoRepeatBanner, type AutoRepeatBannerOptions } from "./AutoRepeatBanner";
+import { addGuardResultReport } from "./GuardResultReport";
+import { GUARD_REPORT_LAYOUT } from "./guardResultReportLayout";
+import type { GuardReport } from "../core/guildGuardReport";
 
 /** 결과 화면이 넘기는 편성원 한 명. MVP 여부만 알면 카드 크기·발광은 이 프리팹이 정한다. */
 export interface StageCompleteFighter {
@@ -172,6 +175,11 @@ export interface StageCompletePopupOptions {
    * 팝업 층 위에 판을 한 겹 더 연다. 판을 닫는 길은 여전히 화면 아무 곳이나 누르는 것 하나다.
    */
   extras?: readonly { label: string; onPress: () => void }[];
+  /**
+   * 수호전 성적 블록(`addGuardResultReport`). 있으면 보상 줄 아래에 점수 · 웨이브 · 처치 막대와 오늘 길드원 순위가 서고
+   * `footnote`를 대신한다.
+   */
+  guardReport?: GuardReport;
 }
 
 /** 결투 티어 블록이 경험치 블록 자리를 쓸 때 그 아래 내용이 내려서는 만큼. */
@@ -257,7 +265,8 @@ export class StageCompletePopup {
     const settlement = options.reward.kind === "loot" && options.reward.settlement === true;
     if (settlement) audioManager?.playUi("ui.reward");
     else audioManager?.playSfx(defeated ? "battle.defeat" : "battle.victory");
-    this.shiftY = options.standing ? STANDING_SHIFT : 0;
+    // 수호전은 경험치 블록이 서지 않아 그 띠만큼 보상 줄을 올리고 아래를 성적 블록에 내준다.
+    this.shiftY = options.standing ? STANDING_SHIFT : options.guardReport ? GUARD_REPORT_LAYOUT.lootShift : 0;
     // 이 판의 입장이 올린 경험치. 진 판도 스테미나를 썼으므로 함께 선다. 한 번 꺼내면 비워진다.
     const expReceipt = takePlayerExp();
     // 쓴 스테미나만큼 함께 쌓인 정규 이벤트 코인(1:1) — 진 판은 스테미나를 쓰지 않으므로 영수증도 코인도 없다.
@@ -324,7 +333,7 @@ export class StageCompletePopup {
       if (options.standing) addDuelStandingRow(this.scene, body, STANDING_Y, options.standing);
       else if (expReceipt) addPlayerExpGainRow(this.scene, body, EXP_ROW_Y, expReceipt);
       else if (options.score?.rank) this.buildRank(body, options.score.rank);
-      else body.add(drawHairline(this.scene, 0, EXP_ROW_Y, WIDTH - 140, { color: defeated ? COLOR.danger : this.accent(), alpha: 0.3 }));
+      else if (!options.guardReport) body.add(drawHairline(this.scene, 0, EXP_ROW_Y, WIDTH - 140, { color: defeated ? COLOR.danger : this.accent(), alpha: 0.3 }));
       if (options.reward.kind === "storyClear") {
         if (clearRewards.length > 0) this.buildFirstClearRewards(body, clearRewards, coins);
         else this.buildClearReward(body, Math.floor(options.reward.cheesecakeEarned), options.reward.firstClear, coins);
@@ -355,8 +364,9 @@ export class StageCompletePopup {
         if ((options.staminaRefunded ?? 0) > 0) refundToast = this.showStaminaRefundToast(options.staminaRefunded ?? 0, (body.parentContainer?.depth ?? 0) + 1);
       }
       else {
-        this.buildLoot(body, loot, options.score ? undefined : options.reward.footnote, options.greatSuccess === true);
+        this.buildLoot(body, loot, options.score || options.guardReport ? undefined : options.reward.footnote, options.greatSuccess === true);
         if (options.score) this.buildScore(body, options.score);
+        if (options.guardReport) addGuardResultReport(this.scene, body, options.guardReport);
         if (options.extras && options.extras.length > 0) this.buildExtras(body, options.extras);
         else if (options.clearActions) this.buildClearActions(body, close, options.clearActions);
         else if (options.replay) this.buildReplay(body, close, options.replay);

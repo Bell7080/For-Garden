@@ -1069,6 +1069,14 @@ export const SKIRMISH = {
   /** 서로 밀어내 겹치지 않게 유지하는 간격. 여섯이 한 덩어리로 뭉쳐 보이지 않게 한다. */
   spacing: 132,
   /**
+   * 같은 편끼리 밀어내는 간격의 몫(`spacing` 대비).
+   *
+   * 같은 편도 적과 같은 간격으로 밀어내던 때는 앞에 선 아군 하나가 길을 막아 사거리 짧은 개체가
+   * 뒤에서 겉돌며 때리지 못했다. 같은 편끼리는 몸이 절반쯤 겹쳐도 되게 하고, 적과 아군 사이는
+   * 예전 간격 그대로 둔다(응태 결정 2026-11-23).
+   */
+  allySpacingRatio: 0.5,
+  /**
    * 겹친 만큼을 1초에 몇 배로 풀지. 한 프레임에 전부 밀어내면 걸어 들어가는 힘과 부딪쳐
    * 몸이 낀 것처럼 떤다. 천천히 풀면 서로 비집고 자리를 잡는 것처럼 보인다.
    */
@@ -10053,10 +10061,22 @@ export function sidestep(
  * 그래서 앞을 가로막은 상대에게 밀릴 때만 뒤로 가는 몫에 상한을 두고 넘치는 만큼을 옆으로
  * 돌린다(`sidestep`) — 겹침은 그대로 풀리면서 걸음은 반드시 남는다.
  */
-/** 두 몸이 서로 밀어내는 간격. 몸집(`bodyScale`)의 평균에 비례한다. */
-export function pairSpacing(a: Pick<Fighter, "bodyScale">, b: Pick<Fighter, "bodyScale">): number {
-  return SKIRMISH.spacing * (a.bodyScale + b.bodyScale) / 2;
+/**
+ * 두 몸이 서로 밀어내는 간격. 몸집(`bodyScale`)의 평균에 비례하고, 같은 편끼리는
+ * `allySpacingRatio`만큼만 밀어내 절반쯤 겹쳐 설 수 있다.
+ */
+export function pairSpacing(
+  a: Pick<Fighter, "bodyScale" | "side">,
+  b: Pick<Fighter, "bodyScale" | "side">,
+  /** 그 편이 몰려오는 무리(다섯을 넘는 수)인가. 무리끼리는 예전 간격 그대로 선다. */
+  crowd = false,
+): number {
+  const base = SKIRMISH.spacing * (a.bodyScale + b.bodyScale) / 2;
+  return a.side === b.side && !crowd ? base * SKIRMISH.allySpacingRatio : base;
 }
+
+/** 적이 이 수를 넘게 서 있으면 「몰려오는 무리」로 보고 적끼리는 예전 간격으로 밀어낸다. */
+const SKIRMISH_CROWD_THRESHOLD = 5;
 
 function separate(state: SkirmishState, dt: number): void {
   /*
@@ -10082,6 +10102,13 @@ function separate(state: SkirmishState, dt: number): void {
     if (length <= 0.001) return null;
     return { heading: { x: dx / length, y: dy / length } };
   };
+  /*
+   * 같은 편은 절반쯤 겹쳐 서도 되지만(`allySpacingRatio`), **다섯을 넘게 몰려오는 적 무리**(대작전·수호전의 웨이브)는
+   * 예전 간격 그대로 둔다 — 열다섯이 절반씩 겹치면 한 덩어리로 뭉쳐 한꺼번에 덮쳐, 같은 단계가 훨씬 무거워진다.
+   */
+  // 아군은 여섯까지 서는 수호전에서도 절반 겹침을 그대로 쓴다 — 무리로 몰려오는 것은 적 쪽뿐이다.
+  // 웨이브로 몰려오는 판(수호전)은 한 번에 선 수와 무관하게 늘 무리다.
+  const crowded = { player: false, enemy: state.horde !== undefined || alive.filter(({ side }) => side === "enemy").length > SKIRMISH_CROWD_THRESHOLD };
   for (let i = 0; i < alive.length; i += 1) {
     for (let j = i + 1; j < alive.length; j += 1) {
       const a = alive[i];
@@ -10093,7 +10120,7 @@ function separate(state: SkirmishState, dt: number): void {
       const gap = dHypot(dx, dy);
       // 몸집만큼 자리를 차지한다 — 늑대처럼 작게 선 몸이 사람만 한 간격을 밀어내면 한 칸에 셋이
       // 서는 지휘자가 전장을 통째로 흐트러뜨린다. 보통 몸(1)끼리는 예전 간격 그대로다.
-      const spacing = pairSpacing(a, b);
+      const spacing = pairSpacing(a, b, a.side === b.side && crowded[a.side]);
       if (gap >= spacing) continue;
       // 정확히 겹쳤을 때도 방향이 필요하므로 고유 위상으로 갈라 세운다.
       const angle = gap > 0.001 ? dAtan2(dy, dx) : a.wander;

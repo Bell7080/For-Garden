@@ -84,8 +84,7 @@ test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, test
     session.wallet.gold = 500_000;
     session.wallet.rawStone = 5_000;
   });
-  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
-  await expect.poll(() => scene(page)).toBe("lobby");
+  await tapUntil(page, BASE_WIDTH / 2, BASE_HEIGHT / 2, "lobby");
 
   // 하단 탭 첫 슬롯이 고고학이다.
   await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");
@@ -164,8 +163,7 @@ test("고고학 상점을 다녀와도 로비 상점은 제 자리로 열린다"
   // **Phaser는 데이터 없이 시작한 씬의 지난 데이터를 그대로 남긴다.** 고고학 상점을 한 번 열면
   // 로비의 `scene.start("shop")`이 그 자리를 물려받아 일반 상점 자리에 고고학 상점이 떴다.
   await startAfterOpening(page, (session) => { session.cleared.add("1-10"); session.archaeology.lastSelectedSiteId = "garden-gate"; session.wallet.fossil = 10_000; });
-  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
-  await expect.poll(() => scene(page)).toBe("lobby");
+  await tapUntil(page, BASE_WIDTH / 2, BASE_HEIGHT / 2, "lobby");
 
   // 먼저 고고학 상점을 열어 **지난 자리를 남긴다.** 입구는 제목 줄 오른쪽의 버튼이다.
   await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");
@@ -188,8 +186,7 @@ test("고고학 상점을 다녀와도 로비 상점은 제 자리로 열린다"
 test("지층 한 칸은 타격까지 입력을 잠그고 선택한 결과만 공개한다", async ({ page }, testInfo) => {
   test.setTimeout(300_000);
   await startAfterOpening(page, (session) => { session.cleared.add("1-10"); session.archaeology.lastSelectedSiteId = "garden-gate"; session.wallet.fossil = 10_000; });
-  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
-  await expect.poll(() => scene(page)).toBe("lobby");
+  await tapUntil(page, BASE_WIDTH / 2, BASE_HEIGHT / 2, "lobby");
   await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");
 
   // 새 판의 입력면이 실제로 게시될 때까지 기다린 뒤 시작 버튼을 누른다.
@@ -229,8 +226,7 @@ test("유적 지도 이동 → 잠긴 유적 확인 → 열린 유적 미리보�
     session.cleared.add("1-10"); session.archaeology.lastSelectedSiteId = "garden-gate";
     session.playerResearch = { level: 1, experience: 0, experienceToNext: 30 };
   });
-  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
-  await expect.poll(() => scene(page)).toBe("lobby");
+  await tapUntil(page, BASE_WIDTH / 2, BASE_HEIGHT / 2, "lobby");
   await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-map.png`);
 
@@ -271,8 +267,7 @@ test("합성 탭의 룬 가방과 일괄 세공 판", async ({ page }, testInfo)
       session.runeInventory.push(generateRune({ instanceId: `bulk-${index}`, baseName: "rune", rarity: rarities[index % 4], part: (index % 3) as 0 | 1 | 2, random }));
     }
   });
-  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
-  await expect.poll(() => scene(page)).toBe("lobby");
+  await tapUntil(page, BASE_WIDTH / 2, BASE_HEIGHT / 2, "lobby");
   await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");
   await page.waitForTimeout(600);
   // 셋째 라벨이 합성이다(`ArchaeologyScene.paintTabs` — 왼쪽 60부터 폭 280 · 사이 16).

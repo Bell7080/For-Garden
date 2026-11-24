@@ -45,7 +45,17 @@ function addOutcomeStamp(scene: Phaser.Scene, body: Phaser.GameObjects.Container
 }
 
 /** 길드 한 편 — 문장과 이름. 이름은 칸 폭을 넘으면 가로로만 누른다. */
-function addSide(scene: Phaser.Scene, body: Phaser.GameObjects.Container, x: number, y: number, badge: GuildBadge, name: string, dim: boolean): void {
+function addSide(scene: Phaser.Scene, body: Phaser.GameObjects.Container, x: number, y: number, badge: GuildBadge, name: string, dim: boolean, lit?: number): void {
+  // 이긴 쪽 문장 뒤에 그 판의 색으로 은은한 빛무리가 번진다 — 문장이 「불이 켜진」 쪽으로 읽힌다.
+  if (lit !== undefined) {
+    const glow = scene.add.graphics();
+    for (let i = 0; i < 4; i += 1) {
+      const r = WAR.badge * (0.92 - i * 0.14);
+      glow.fillStyle(lit, 0.1 + i * 0.04);
+      glow.fillPoints([new Phaser.Geom.Point(x, y - r), new Phaser.Geom.Point(x + r * 0.9, y), new Phaser.Geom.Point(x, y + r), new Phaser.Geom.Point(x - r * 0.9, y)], true);
+    }
+    body.add(glow);
+  }
   const view = addGuildBadge(scene, body, x, y, badge, WAR.badge);
   if (dim) view.setAlpha(0.55);
   const label = scene.add.text(x, y + WAR.nameY - WAR.rowY, name, textStyle({ role: "emphasis", size: 28, color: dim ? COLOR.inkDim : COLOR.ink })).setOrigin(0.5).setShadow(0, 3, "#000000", 4, false, true);
@@ -62,8 +72,10 @@ export function guildWarResultHeader(scene: Phaser.Scene, mine: { name: string; 
       addOutcomeStamp(scene, body, cy + WAR.stampY, t(`guild.war.result.${result.outcome}`), tone, reduced);
       const rowY = cy + WAR.rowY;
       const won = result.outcome === "win" || result.outcome === "bye";
-      addSide(scene, body, -WAR.sideX, rowY, mine.badge, mine.name, false);
-      addSide(scene, body, WAR.sideX, rowY, UNKNOWN_BADGE, result.opponentName ?? t("guild.war.result.noOpponent"), true);
+      // 이긴 쪽의 문장에 불이 켜지고 진 쪽이 가라앉는다 — 상대가 이긴 판에서 우리 문장만 밝으면 결과와 어긋난다.
+      const theirsLit = result.outcome === "loss";
+      addSide(scene, body, -WAR.sideX, rowY, mine.badge, mine.name, theirsLit, result.outcome === "win" ? COLOR.hpFill : undefined);
+      addSide(scene, body, WAR.sideX, rowY, UNKNOWN_BADGE, result.opponentName ?? t("guild.war.result.noOpponent"), !theirsLit, theirsLit ? 0xe05a4a : undefined);
       // 점수 대치 — 이긴 쪽의 수가 크게 선다. 우리가 이기면 우리 수가 초록, 상대가 이기면 상대 수가 붉다. 진 쪽은 작고 흐리다.
       const mineWins = result.outcome === "win";
       const theirsWin = result.outcome === "loss";

@@ -151,6 +151,11 @@ export interface ResearchCinematicAgain {
   tone: string;
   toneDark: string;
   cost: readonly { iconKey: string; amount: number; short?: boolean }[];
+  /**
+   * 오늘의 무료 연구가 남았으면 값 줄 자리에 서는 말(「오늘 무료!」) — 연구소의 1회 버튼과 같다. 누르면 씬이 같은
+   * `requestPull(1)`로 부르고, 그 길이 무료 여부를 다시 읽어 무료로 돌린다(버튼이 무료를 정하지 않는다).
+   */
+  free?: string;
   /** 처음 한 번은 화살표와 한 줄 안내가 버튼을 가리킨다. 화면을 덮는 막은 깔지 않는다. */
   teach?: { hint: string };
 }
@@ -582,7 +587,14 @@ export class ResearchCinematic {
       label.style.setProperty("--rc-again-fit", String(againLabelFit(again.label, family)));
       const cost = document.createElement("span");
       cost.className = "rc-again-cost";
-      for (const part of again.cost) {
+      if (again.free) {
+        button.classList.add("rc-free");
+        const free = document.createElement("span");
+        free.className = "rc-again-free";
+        free.textContent = again.free;
+        cost.appendChild(free);
+      }
+      for (const part of again.free ? [] : again.cost) {
         const piece = document.createElement("span");
         piece.className = "rc-again-part";
         const url = bakeCinematicIcon(scene, part.iconKey, FACE_BAKE);

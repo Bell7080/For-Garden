@@ -577,6 +577,8 @@ export class LabScene extends Phaser.Scene {
     } catch (error) {
       const message = error instanceof GameApiError ? error.message : t("lab.networkError");
       if (this.alive) this.showNotice(message);
+      // 무료라 믿고 보냈는데 서버가 거절했으면(다른 기기에서 이미 썼다) 무료 상태를 서버 답으로 다시 맞춘다.
+      if (free && this.alive) { this.freeResearchReady = false; void this.loadFreeResearch(); }
     } finally {
       this.pullPending = false;
       if (this.alive) this.refresh();
@@ -783,10 +785,13 @@ export class LabScene extends Phaser.Scene {
     const buttons: ResearchCinematicAgain[] = [];
     for (const [next, tone, labelKey] of [[1, LAB_CHROME.pull.oneTone, "lab.pull.one"], [10, LAB_CHROME.pull.tenTone, "lab.pull.ten"]] as const) {
       if (!bannerAcceptsCount(banner, next, pity)) continue;
+      // 오늘의 무료 연구가 남았으면 1회는 무료로 이어 간다 — 연구소의 1회 버튼과 같은 판정(`freePullOpen`)을 읽는다.
+      const free = next === 1 && this.freePullOpen(banner);
       buttons.push({
         count: next,
         label: t(labelKey),
-        enabled: canPull(session.wallet, banner, next, pity),
+        enabled: free || canPull(session.wallet, banner, next, pity),
+        free: free ? t("lab.pull.freeToday") : undefined,
         tone: css(tone),
         toneDark: css(Phaser.Display.Color.ValueToColor(tone).darken(28).color),
         cost: pullCostParts(banner, next, pity),

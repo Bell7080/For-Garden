@@ -1,5 +1,6 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_PT_BR = {
+  "inventory.rune.hint": "Toque uma runa para vê-la aqui. Toque de novo para ver os detalhes.",
   "inventory.title": "Bolsa",
   "inventory.tab.rune": "Runa",
   "inventory.tab.currency": "Moeda",

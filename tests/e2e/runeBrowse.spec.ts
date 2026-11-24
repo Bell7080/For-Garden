@@ -4,12 +4,12 @@ import { startAfterOpening } from "./openingSave";
 import { captureGame, tap, tapUntil, waitForCanvasInputFrame } from "./canvasInput";
 import { LOBBY_RAIL_BOUNDS } from "../../src/ui/lobbyLayout";
 import { INVENTORY_LAYOUT, inventoryGridPosition } from "../../src/managers/InventoryManager";
-import { RUNE_LIST_CONTROLS } from "../../src/ui/runeListControlsLayout";
+import { INVENTORY_RUNE } from "../../src/ui/inventoryRuneLayout";
 
 const W = 1080;
 const H = 1920;
-/** 가방 룬 탭의 첫 칸 — `InventoryPopup`의 목록 윗변(조작 두 줄 아래)에서 한 칸 반 아래다. */
-const RUNE_LIST_TOP = -622 - RUNE_LIST_CONTROLS.rowHeight / 2 + RUNE_LIST_CONTROLS.height + 18;
+/** 가방 룬 탭의 첫 칸 — `InventoryPopup`의 목록 윗변(정보 판·조작 두 줄 아래)에서 반 칸 아래다. */
+const RUNE_LIST_TOP = INVENTORY_RUNE.listTop;
 
 function cardCenter(index: number): { x: number; y: number } {
   const { x, y } = inventoryGridPosition(index);
@@ -29,7 +29,13 @@ test("가방에서 연 룬 쪽지·세공 판은 가방 순서대로 좌우로 �
   await tapUntil(page, W / 2, H / 2, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "lobby");
   await tapUntil(page, LOBBY_RAIL_BOUNDS.utility.inventory.x, LOBBY_RAIL_BOUNDS.utility.inventory.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)) === "rune");
   await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${testInfo.project.name}-rune-browse-empty.png`);
   const first = cardCenter(0);
+  // 한 번 누르면 위 정보 판에 서고, 한 번 더 누르면 쪽지가 열린다.
+  await tap(page, first.x, first.y);
+  await page.waitForTimeout(400);
+  expect(await titles(page)).toEqual(["가방"]);
+  await captureGame(page, `test-results/${testInfo.project.name}-rune-browse-picked.png`);
   await tap(page, first.x, first.y);
   await expect.poll(() => titles(page)).toContain("룬");
   await captureGame(page, `test-results/${testInfo.project.name}-rune-browse-note.png`);

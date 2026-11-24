@@ -1,5 +1,6 @@
 /** 가방·스테미나 창·출격 미리보기의 문구. */
 export const INVENTORY_KO = {
+  "inventory.rune.hint": "룬을 누르면 여기에 정보가 뜹니다. 한 번 더 누르면 자세히 봅니다.",
   "inventory.title": "가방",
   "inventory.tab.rune": "룬",
   "inventory.tab.currency": "재화",

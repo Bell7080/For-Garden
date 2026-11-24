@@ -29,8 +29,8 @@ test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크�
       createRuneInstance({ instanceId: "bag-legendary-2", baseName: "붉은 조각", rarity: "legendary", part: 2, statValues: values, random: () => 0 }),
     ];
   });
-  await tap(page, WIDTH / 2, HEIGHT / 2);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  // 타이틀 로딩이 늦으면 첫 누름이 먹지 않는다 — 로비가 설 때까지 누른다.
+  await tapUntil(page, WIDTH / 2, HEIGHT / 2, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "lobby");
   // 레일 버튼은 로비가 원화를 마저 읽은 뒤에 입력면을 갖는다 — 열릴 때까지 다시 누른다.
   await tapUntil(page, LOBBY_RAIL_BOUNDS.utility.inventory.x, LOBBY_RAIL_BOUNDS.utility.inventory.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)) !== undefined);
   // 팝업이 화면을 바꾸지 않는 것이 발굴·무역과 같은 로비 오버레이 계약이다.
@@ -68,8 +68,8 @@ test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크�
 test("상단과 가방 재화는 같은 안내를 열고 가방 위 안내만 닫아도 스택을 보존한다", async ({ page }) => {
   // 빈 재화는 목록에서 생략된다. 확인할 화석 카드를 명시적으로 준비한다.
   await startAfterOpening(page, (state) => { state.wallet.fossil = 1; });
-  await tap(page, WIDTH / 2, HEIGHT / 2);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  // 타이틀 로딩이 늦으면 첫 누름이 먹지 않는다 — 로비가 설 때까지 누른다.
+  await tapUntil(page, WIDTH / 2, HEIGHT / 2, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "lobby");
   // 기본 상단의 첫 칩(젬)을 눌러 공용 안내 제목이 스택에 기록되는지 확인한다.
   // 안내를 여는 조작은 다시 누르면 배경을 눌러 닫아 버린다 — 상단 줄이 그려질 틈만 두고 한 번 누른다.
   await waitForDebugState(page, () => window.__PF_DEBUG?.storefrontControls?.lobby !== undefined, true);
@@ -108,8 +108,8 @@ test("기한이 있는 병은 가방 칸 왼쪽 위에 붉은 표식(7D · 24H �
       { itemId: "stamina-tonic-large", quantity: 1, lots: [{ quantity: 1, expiresAt: at(50 * 60_000) }] },
     ];
   });
-  await tap(page, WIDTH / 2, HEIGHT / 2);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  // 타이틀 로딩이 늦으면 첫 누름이 먹지 않는다 — 로비가 설 때까지 누른다.
+  await tapUntil(page, WIDTH / 2, HEIGHT / 2, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "lobby");
   await tapUntil(page, LOBBY_RAIL_BOUNDS.utility.inventory.x, LOBBY_RAIL_BOUNDS.utility.inventory.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)) !== undefined);
   const position = inventoryCategoryTabPosition(2);
   await tap(page, WIDTH / 2 + position.x, HEIGHT / 2 + position.y);
@@ -127,8 +127,8 @@ test("창 밖으로 잘려 안 보이는 룬 카드는 손을 받지 않는다 �
       instanceId: `bag-clip-${index}`, baseName: "초록 조각", rarity: "uncommon", part: (index % 3) as 0 | 1 | 2, statValues: values, random: () => 0,
     }));
   });
-  await tap(page, WIDTH / 2, HEIGHT / 2);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  // 타이틀 로딩이 늦으면 첫 누름이 먹지 않는다 — 로비가 설 때까지 누른다.
+  await tapUntil(page, WIDTH / 2, HEIGHT / 2, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "lobby");
   await tapUntil(page, LOBBY_RAIL_BOUNDS.utility.inventory.x, LOBBY_RAIL_BOUNDS.utility.inventory.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)) !== undefined);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)).toBe("rune");
   await waitForDebugState(page, () => window.__PF_DEBUG?.popupTitles, ["가방"]);
@@ -141,6 +141,9 @@ test("창 밖으로 잘려 안 보이는 룬 카드는 손을 받지 않는다 �
     expect(await page.evaluate(() => window.__PF_DEBUG?.popupTitles), `창 아래변 +${gap}px`).toEqual(["가방"]);
   }
   // 같은 열의 창 안쪽(아래변 위 한 뼘)은 그대로 눌려 룬 쪽지가 열린다 — 입력을 통째로 막은 것이 아니다.
+  await tap(page, columnX, HEIGHT / 2 + INVENTORY_LIST_BOTTOM - 40);
+  await page.waitForTimeout(250);
+  // 첫 누름은 위 정보 판에 세우기만 하고, 같은 카드를 한 번 더 눌러야 쪽지가 열린다.
   await tap(page, columnX, HEIGHT / 2 + INVENTORY_LIST_BOTTOM - 40);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles?.length ?? 0)).toBeGreaterThan(1);
 });
@@ -157,8 +160,8 @@ test("룬 일괄 판매는 조건에 맞는 룬만 확인 뒤 판다", async ({ 
       make("keep-legendary", "legendary", 0),
     ];
   });
-  await tap(page, WIDTH / 2, HEIGHT / 2);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  // 타이틀 로딩이 늦으면 첫 누름이 먹지 않는다 — 로비가 설 때까지 누른다.
+  await tapUntil(page, WIDTH / 2, HEIGHT / 2, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "lobby");
   await tapUntil(page, LOBBY_RAIL_BOUNDS.utility.inventory.x, LOBBY_RAIL_BOUNDS.utility.inventory.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)) !== undefined);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.inventoryTextureKeys?.length)).toBe(4);
   await page.setViewportSize({ width: WIDTH, height: HEIGHT });

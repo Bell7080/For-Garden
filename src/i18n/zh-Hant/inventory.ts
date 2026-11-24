@@ -1,5 +1,6 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_ZH_HANT = {
+  "inventory.rune.hint": "點選符文即可在此查看資訊。再點一次可查看詳情。",
   "inventory.title": "背包",
   "inventory.tab.rune": "符文",
   "inventory.tab.currency": "貨幣",

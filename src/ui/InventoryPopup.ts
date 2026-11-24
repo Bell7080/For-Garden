@@ -22,8 +22,9 @@ import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
 import { equippedRuneSlot, openRuneInfoPopup, openRunePopup } from "./RunePopup";
 import { offerFreeRuneCraft } from "./freeRuneCraftTutorial";
 import { createRuneListState, RuneListControls, visibleRuneList, type RuneListState } from "./RuneListControls";
-import { RUNE_LIST_CONTROLS } from "./runeListControlsLayout";
-import { addRuneCard, runeTexture } from "./runeIcons";
+import { addRuneCard, addRuneCardSelection, runeTexture } from "./runeIcons";
+import { paintRuneInfoPanel } from "./RuneInfoPanel";
+import { INVENTORY_RUNE } from "./inventoryRuneLayout";
 import { Button } from "./Button";
 import { openRuneBulkSellPopup } from "./RuneBulkSellPopup";
 import { RUNE_BULK_SELL } from "./runeBulkSellLayout";
@@ -59,11 +60,11 @@ const CATEGORIES: readonly { id: ItemCategory; labelKey: TextKey }[] = [
 // 900px 작업판에서 좌우 48px만 안전 여백으로 남기고 본문이 나머지를 모두 사용한다.
 const POPUP_WIDTH = 900; const POPUP_HEIGHT = 1510; const BODY_SAFE_X = 48; const LIST_TOP = -550; const TAB_CLEARANCE = INVENTORY_TAB_CLEARANCE;
 /**
- * 룬 탭의 조작 두 줄(필터·검색·정렬 / 토글) — 첫 줄 가운데가 제목표 띠 바로 아래에 선다.
- * 두 줄이 서는 만큼 룬 탭만 목록 윗변이 내려간다(`RUNE_LIST_TOP`).
+ * 룬 탭은 위에서부터 고른 룬의 정보 판 → 조작 두 줄(필터·검색·정렬 / 토글) → 목록이다(`INVENTORY_RUNE`).
+ * 둘이 서는 만큼 룬 탭만 목록 윗변이 내려간다(`RUNE_LIST_TOP`).
  */
-const RUNE_CONTROLS_Y = -622;
-const RUNE_LIST_TOP = RUNE_CONTROLS_Y - RUNE_LIST_CONTROLS.rowHeight / 2 + RUNE_LIST_CONTROLS.height + 18;
+const RUNE_CONTROLS_Y = INVENTORY_RUNE.controlsY;
+const RUNE_LIST_TOP = INVENTORY_RUNE.listTop;
 const TAB_TOP = INVENTORY_TAB_LAYOUT.centerY - INVENTORY_TAB_LAYOUT.height * INVENTORY_TAB_LAYOUT.selectedScale / 2;
 /** 목록이 보이는 사각형(판 가운데 기준). 윗변만 탭에 따라 다르다. */
 function listViewport(top: number): { x: number; y: number; width: number; height: number } {
@@ -104,6 +105,15 @@ export class InventoryPopup {
   private dealing = false;
   /** 지금 목록에 선 룬의 순서(정렬·필터·검색을 지난 그대로). 룬 쪽지·세공 판이 이 줄로 좌우를 넘긴다. */
   private visibleRuneIds: string[] = [];
+  /**
+   * 룬 탭에서 고른 룬 — 카드를 누르면 위 정보 판에 서고, 같은 카드를 한 번 더 누르거나 정보 판의 액자를
+   * 누르면 룬 쪽지가 열린다. 고르기 판(특성 연구·합성)과 같은 「눌러 보고」 손이다.
+   */
+  private pendingRune: string | null = null;
+  private runeInfoLayer?: Phaser.GameObjects.Container;
+  /** 지금 목록에 선 룬 카드 — 고름이 바뀌면 카드를 다시 세우지 않고 고른 테만 갈아 끼운다. */
+  private runeCards = new Map<string, Phaser.GameObjects.Container>();
+  private selectionParts: Phaser.GameObjects.GameObject[] = [];
   private geometryMask?: Phaser.Display.Masks.GeometryMask;
   /** 중첩 상세 팝업 유무와 무관하게 가방 자체를 닫는 전용 콜백이다. */
   private closePopup?: () => void;
@@ -163,6 +173,7 @@ export class InventoryPopup {
     this.destroyMask();
     body.removeAll(true);
     this.runeControls = undefined;
+    this.runeInfoLayer = undefined;
     // Canvas DOM만 보는 E2E에는 비동기 조회 완료와 실제 선택 탭을 최소 디버그 상태로 알린다.
     setDebugInventoryCategory(this.category);
     const layer = this.scene.add.container(0, 0);
@@ -172,6 +183,8 @@ export class InventoryPopup {
     CATEGORIES.forEach((tab, index) => this.addCategoryTab(body, tab, index));
     if (this.category === "rune") {
       const right = POPUP_WIDTH / 2 - BODY_SAFE_X;
+      this.runeInfoLayer = this.scene.add.container(0, 0);
+      body.add(this.runeInfoLayer);
       this.runeControls = new RuneListControls({
         scene: this.scene, parent: body, popups: this.popups, left: -right, right, y: RUNE_CONTROLS_Y,
         state: this.runeList, parts: true, onChange: () => this.renderList(body, false),
@@ -211,6 +224,8 @@ export class InventoryPopup {
     const visible = keep ? all.filter((item) => item.kind === "rune" && keep.has(item.rune.instanceId)) : all;
     this.runeControls?.setCount(visible.length, all.length);
     this.visibleRuneIds = visible.flatMap((item) => item.kind === "rune" ? [item.rune.instanceId] : []);
+    this.runeCards.clear();
+    this.selectionParts = [];
     // 첫 카드의 윗변을 마스크 윗변에 맞춰 아이콘/액자가 절반 잘리지 않게 한다.
     const contentStartY = viewport.y - viewport.height / 2 + INVENTORY_LAYOUT.cellHeight / 2;
     const content = this.scene.add.container(0, contentStartY);
@@ -230,6 +245,7 @@ export class InventoryPopup {
       return { left, right, top, bottom };
     };
     visible.forEach((item, index) => this.addCard(content, item, index, textureKeys, clip));
+    if (runeTab) this.paintRuneSelection();
     setDebugInventoryTextureKeys(textureKeys);
     const metrics = inventoryScrollMetrics(visible.length, runeTab ? { ...INVENTORY_LAYOUT, viewportHeight: viewport.height } : INVENTORY_LAYOUT); let offset = 0;
     const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, metrics.minY, 0); content.y = contentStartY + offset; };
@@ -293,6 +309,7 @@ export class InventoryPopup {
         holder: slot && session.settings.game.runeBag.showHolder ? { relicId: slot.relicId } : undefined,
       });
       textureKeys.push(runeTexture(item.rune.rarity, item.rune.part));
+      this.runeCards.set(item.rune.instanceId, card);
       this.addCardInput(content, card, item, cardWidth, cardHeight, clip);
       return;
     }
@@ -347,12 +364,45 @@ export class InventoryPopup {
   private select(item: InventoryDisplayItem): void {
     // 룬 쪽지는 누른 칸에 붙지 않고 화면 가운데에 선다 — 옵션 다섯 줄을 담을 만큼 커진 판이라
     // 가장자리 칸에 붙이면 판 밖 우하단 뒤로가기와 겹친다.
-    if (item.kind === "rune") { openRuneInfoPopup(this.scene, this.popups, { runeInstanceId: item.rune.instanceId, api: this.api, traitResearch: true, browse: { order: [...this.visibleRuneIds] } }); return; }
+    // 룬은 누르면 위 정보 판에 서기만 한다 — 고른 룬을 한 번 더 누르면 쪽지가 열린다.
+    if (item.kind === "rune") {
+      if (this.pendingRune === item.rune.instanceId) { this.openRuneNote(item.rune.instanceId); return; }
+      this.pendingRune = item.rune.instanceId;
+      this.paintRuneSelection();
+      return;
+    }
     // 재화 카드는 상단 칩과 같은 안내 프리팹을 스택 위에 쌓아 가방 자체를 보존한다.
     if (item.category === "currency" && item.definition.icon.kind === "currency") { new CurrencyGuidePopup(this.scene, this.popups, guideNavigatorParts({ scene: this.scene, popups: this.popups, onLobbyPanel: this.onLobbyPanel })).open(item.definition.icon.key); return; }
     new ItemGuidePopup(this.scene, this.popups, guideNavigatorParts({ scene: this.scene, popups: this.popups, onLobbyPanel: this.onLobbyPanel })).open({
       definition: item.definition, quantity: item.quantity, expiry: item.kind === "stack" && item.lot ? { count: item.lot.quantity, expiresAt: item.lot.expiresAt } : soonestItemExpiry(item.definition.id),
       onUse: item.category === "consumable" ? () => this.useConsumable(item.definition, item.kind === "stack" ? item.lot?.expiresAt : undefined) : undefined,
+    });
+  }
+
+  private openRuneNote(runeInstanceId: string): void {
+    openRuneInfoPopup(this.scene, this.popups, {
+      runeInstanceId, api: this.api, traitResearch: true, browse: { order: [...this.visibleRuneIds] },
+      // 쪽지에서 세공·잠금·판매로 바뀐 값을 정보 판이 곧바로 따라간다(목록은 가방 확정 신호가 다시 그린다).
+      onChanged: () => { this.paintRuneSelection(); },
+      onClose: () => { this.paintRuneSelection(); },
+    });
+  }
+
+  /** 정보 판과 카드의 고른 테를 지금 고른 룬에 맞춘다. 사라진 룬(팔림·거름)은 고름을 푼다. */
+  private paintRuneSelection(): void {
+    const layer = this.runeInfoLayer;
+    if (!layer?.active) return;
+    const rune = this.pendingRune === null ? undefined : session.runeInventory.find(({ instanceId }) => instanceId === this.pendingRune);
+    if (!rune || !this.visibleRuneIds.includes(rune.instanceId)) this.pendingRune = null;
+    const picked = this.pendingRune === null ? undefined : rune;
+    this.selectionParts.forEach((part) => part.destroy());
+    this.selectionParts = [];
+    const card = picked ? this.runeCards.get(picked.instanceId) : undefined;
+    if (card?.active) this.selectionParts = addRuneCardSelection(this.scene, card, INVENTORY_LAYOUT.cardWidth, INVENTORY_LAYOUT.cardHeight);
+    paintRuneInfoPanel(this.scene, layer, {
+      width: POPUP_WIDTH - BODY_SAFE_X * 2, top: INVENTORY_RUNE.infoTop, rune: picked, hint: t("inventory.rune.hint"),
+      canOpen: () => this.body !== undefined && this.popups.isTop(this.body),
+      openNote: (id) => this.openRuneNote(id),
     });
   }
 

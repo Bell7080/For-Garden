@@ -1,5 +1,6 @@
 /** 가방·스테미나 창·출격 미리보기의 일본어 표. */
 export const INVENTORY_JA = {
+  "inventory.rune.hint": "ルーンを押すとここに情報が出ます。もう一度押すと詳細を見られます。",
   "inventory.title": "バッグ",
   "inventory.tab.rune": "ルーン",
   "inventory.tab.currency": "通貨",

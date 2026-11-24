@@ -1,5 +1,6 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_TH = {
+  "inventory.rune.hint": "แตะรูนเพื่อดูข้อมูลที่นี่ แตะอีกครั้งเพื่อดูรายละเอียด",
   "inventory.title": "กระเป๋า",
   "inventory.tab.rune": "รูน",
   "inventory.tab.currency": "สกุลเงิน",

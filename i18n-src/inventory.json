@@ -944,5 +944,6 @@
 "Reinterpretação de traços de Runa",
 "Runen-Merkmal neu deuten",
 "Переосмысление свойств руны"
-]
+],
+"inventory.rune.hint": ["点击符文即可在此查看信息。再点一次可查看详情。", "แตะรูนเพื่อดูข้อมูลที่นี่ แตะอีกครั้งเพื่อดูรายละเอียด", "Chạm vào rune để xem thông tin tại đây. Chạm lần nữa để xem chi tiết.", "Ketuk rune untuk melihat infonya di sini. Ketuk lagi untuk detail.", "Toca una runa para verla aquí. Tócala otra vez para ver los detalles.", "Toque uma runa para vê-la aqui. Toque de novo para ver os detalhes.", "Tippe auf eine Rune, um sie hier zu sehen. Tippe erneut für Details.", "Нажмите на руну, чтобы увидеть её здесь. Нажмите ещё раз для подробностей."]
 }

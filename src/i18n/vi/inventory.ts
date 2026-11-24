@@ -1,5 +1,6 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_VI = {
+  "inventory.rune.hint": "Chạm vào rune để xem thông tin tại đây. Chạm lần nữa để xem chi tiết.",
   "inventory.title": "Túi đồ",
   "inventory.tab.rune": "Rune",
   "inventory.tab.currency": "Tiền tệ",

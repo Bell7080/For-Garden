@@ -1,5 +1,6 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_RU = {
+  "inventory.rune.hint": "Нажмите на руну, чтобы увидеть её здесь. Нажмите ещё раз для подробностей.",
   "inventory.title": "Сумка",
   "inventory.tab.rune": "Руны",
   "inventory.tab.currency": "Валюта",

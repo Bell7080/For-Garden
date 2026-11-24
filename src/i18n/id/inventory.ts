@@ -1,5 +1,6 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_ID = {
+  "inventory.rune.hint": "Ketuk rune untuk melihat infonya di sini. Ketuk lagi untuk detail.",
   "inventory.title": "Tas",
   "inventory.tab.rune": "Rune",
   "inventory.tab.currency": "Mata Uang",

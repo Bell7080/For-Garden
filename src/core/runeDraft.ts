@@ -45,6 +45,24 @@ export function leaveRuneDraftSlot(base: RuneLoadoutSlots, draft: RuneLoadoutSlo
 }
 
 /**
+ * 적용이 저장을 마쳤다 — 새 임시 구성을 정한다. 저장이 도는 동안 손이 칸을 옮겨 **다른 칸에 새로 올린 후보**는 보낸 구성
+ * (`sent`)과 다르므로 남기고, 보낸 그대로인 칸은 저장된 값(`saved`)으로 맞춘다. 통째로 저장값으로 덮으면 느린 저장 사이에
+ * 2번 칸에 올린 후보가 저장이 끝나는 순간 말없이 빠진다(2026-11-24 점검). 남긴 후보의 룬이 사라졌으면 저장값으로 돌린다.
+ */
+export function rebaseRuneDraftAfterApply(
+  sent: RuneLoadoutSlots,
+  saved: RuneLoadoutSlots,
+  draft: RuneLoadoutSlots,
+  exists: (id: string) => boolean,
+): RuneLoadoutSlots {
+  return RUNE_DRAFT_PARTS.map((p) => {
+    const id = draft[p];
+    if (id === sent[p]) return saved[p];
+    return id === null || exists(id) ? id : saved[p];
+  }) as unknown as RuneLoadoutSlots;
+}
+
+/**
  * 칸마다 다른 렐릭에게서 빼 오는 룬이면 그 렐릭 ID. `holders`는 저장 기준(룬 ID → 낀 렐릭)이다.
  */
 export function runeDraftMovedFrom(draft: RuneLoadoutSlots, holders: ReadonlyMap<string, string>, relicId: string): (string | null)[] {

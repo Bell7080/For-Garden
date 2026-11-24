@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import { addCategoryTab } from "./CategoryTab";
 import { slideTabPage } from "./screenTransition";
-import { changedRuneParts, clearRuneDraftSlot, leaveRuneDraftSlot, recommendIntoDraft, runeCandidatePowerDelta, runeCompareLines, runeDraftMovedFrom, RUNE_DRAFT_PARTS, tapRuneDraft } from "../core/runeDraft";
+import { changedRuneParts, clearRuneDraftSlot, leaveRuneDraftSlot, rebaseRuneDraftAfterApply, recommendIntoDraft, runeCandidatePowerDelta, runeCompareLines, runeDraftMovedFrom, RUNE_DRAFT_PARTS, tapRuneDraft } from "../core/runeDraft";
 import { runeHolders, runeLoadoutPower, type RuneLoadoutRelic, type RuneLoadoutSlots } from "../core/runeLoadout";
 import { formatRuneOptionValue, runeOptionValue, runeRarityLabel, type RuneInstance, type RunePart } from "../core/runes";
 import { getRelic } from "../data/relics";
@@ -77,6 +77,9 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
   /** 추천·모두 해제처럼 여러 칸을 한꺼번에 올린 칸 — 칸을 옮겨도 후보가 남는다(`leaveRuneDraftSlot`). */
   let kept = new Set<RunePart>();
   let busy = false;
+  /** 저장 중인 구성 — 도는 동안 칸 이동·되누르기는 이것을 「저장된 룬」으로 본다(보낸 후보가 떠나는 칸에서 되돌려지지 않게). */
+  let inflight: RuneLoadoutSlots | undefined;
+  const settled = (): RuneLoadoutSlots => inflight ?? base;
   let forceClose = false;
   /** 다음 한 번의 칠하기가 돌릴 연출 — 적용이 끝난 칸의 끼움·교체·빼기, 방금 고른 후보의 톡. 칠하며 비운다. */
   let pendingSeat: { readonly before: RuneLoadoutSlots; readonly changes: ReadonlyMap<RunePart, RuneSeatChange> } | undefined;
@@ -105,14 +108,16 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
     const target = draft;
     const moving = movedFrom().some((id) => id !== null);
     const savedBefore = base;
+    inflight = target;
     void relicProgression.setRuneLoadout(def.id, target, undefined, { moveFromOther: moving }).then(() => {
       base = slotsOf();
       // 저장이 끝난 순간 바뀐 칸에만 끼움·교체·빼기 연출이 돈다 — 하트는 저장된 룬만 그리므로 이때가 「끼운」 순간이다.
       const changes = new Map<RunePart, RuneSeatChange>();
       RUNE_DRAFT_PARTS.forEach((p) => { const kind = runeSeatChange(savedBefore[p], base[p]); if (kind) changes.set(p, kind); });
       if (changes.size > 0) pendingSeat = { before: savedBefore, changes };
-      draft = base;
-      kept = new Set();
+      // 저장이 도는 사이 다른 칸에 올린 후보는 남긴다 — 통째로 덮으면 그 후보가 저장이 끝나는 순간 빠진다.
+      draft = rebaseRuneDraftAfterApply(target, base, draft, (id) => runeById(id) !== undefined);
+      kept = new Set([...kept].filter((p) => draft[p] !== base[p]));
       options.onChanged();
       const powerAfter = runeLoadoutPower(relic(), base, session.runeInventory);
       showContentToast(scene, t("info.rune.loadout.done", { before: before.toLocaleString(), after: powerAfter.toLocaleString() }), "info");
@@ -121,7 +126,7 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
     }, (error: unknown) => {
       logError("info.runeWorkbench", "룬 정비 적용 실패", error);
       showContentToast(scene, t("info.rune.loadout.failed"), "refused");
-    }).finally(() => { busy = false; repaint?.(false); });
+    }).finally(() => { busy = false; inflight = undefined; repaint?.(false); });
   };
 
   let repaint: ((resetScroll: boolean) => void) | undefined;
@@ -292,10 +297,10 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
         bindLongPress(scene, hit, {
           onTap: () => {
             pressOut(cell);
-            draft = tapRuneDraft(base, draft, part, rune.instanceId);
+            draft = tapRuneDraft(settled(), draft, part, rune.instanceId);
             kept.delete(part);
             // 후보로 올렸을 때만 톡 — 되돌릴 때는 비교 판이 비워질 뿐이다.
-            pendingPick = draft[part] === rune.instanceId && draft[part] !== base[part];
+            pendingPick = draft[part] === rune.instanceId && draft[part] !== settled()[part];
             repaint?.(false);
           },
           allowTap: () => !dragged,
@@ -339,7 +344,7 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
       const selectPart = (p: RunePart): void => {
         if (p === part) return;
         // 적용하지 않고 칸을 옮기면 떠나는 칸에 손으로 올린 후보는 빠진다 — 한 칸씩 보며 고른 것만 적용한다.
-        draft = leaveRuneDraftSlot(base, draft, part, kept);
+        draft = leaveRuneDraftSlot(settled(), draft, part, kept);
         part = p;
         repaint?.(true);
       };

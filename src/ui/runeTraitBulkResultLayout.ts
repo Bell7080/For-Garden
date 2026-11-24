@@ -2,7 +2,7 @@
  * 특성 일괄 부여 결과 창(`RuneTraitBulkResultPopup`)의 자리와 줄 순서 — Phaser 없이 읽히도록 따로 둔다
  * (단위 테스트가 같은 값을 읽는다).
  *
- * 창은 위에서부터 **머리줄(몇 개에 붙었나) → 등급 칩 줄 → 흐르는 룬 줄 → 정렬 탭**이다. 줄 하나가 룬 하나이고
+ * 창은 위에서부터 **머리줄(몇 개에 붙었나 · 오른쪽에 정렬 칩) → 등급 칩 줄 → 흐르는 룬 줄**이다. 줄 하나가 룬 하나이고
  * 왼쪽부터 룬 액자 · 붙은 특성(등급 + 이름) · 그 룬을 낀 렐릭이 선다. 창 높이는 줄 수에서 거꾸로 구하고,
  * `maxRows`를 넘으면 창은 그대로 두고 목록만 흐른다.
  */
@@ -23,8 +23,10 @@ export const TRAIT_BULK_RESULT = {
   row: { height: 108, gap: 10, frame: 84, face: 66, band: 8, gradeSize: 26, nameSize: 30, subSize: 22, holderSize: 24, holderWidth: 250 },
   /** 처음부터 보이는 줄 수의 상한 — 넘으면 목록이 흐른다. */
   maxRows: 8,
-  /** 목록 창 밑변에서 탭 줄까지, 탭 줄의 크기, 탭 줄에서 창 밑변까지. */
-  tabs: { gap: 20, width: 220, height: 64, spacing: 12, bottom: 34 },
+  /** 머리줄 오른쪽 끝의 정렬 칩(기준 + 방향) — 도감·룬 가방과 같은 `SortControl` 한 장. */
+  sort: { width: 220, dirWidth: 62, height: 54, gap: 10, size: 24 },
+  /** 목록 창 밑변에서 창 밑변까지. */
+  bottom: 40,
 } as const;
 
 export type TraitBulkResultSort = "grade" | "holder";
@@ -52,7 +54,7 @@ const RARITY_ORDER: readonly RuneRarity[] = ["uncommon", "rare", "epic", "legend
  *
  * 마지막 기준은 받은 순서(서버가 돌려준 순서)라 같은 결과는 늘 같은 줄로 선다.
  */
-export function sortTraitBulkResult<T extends TraitBulkResultEntry>(entries: readonly T[], mode: TraitBulkResultSort, holderOrder: ReadonlyMap<string, number>): T[] {
+export function sortTraitBulkResult<T extends TraitBulkResultEntry>(entries: readonly T[], mode: TraitBulkResultSort, holderOrder: ReadonlyMap<string, number>, descending = true): T[] {
   const indexed = entries.map((entry, index) => ({ entry, index }));
   const byGrade = (a: TraitBulkResultEntry, b: TraitBulkResultEntry): number =>
     gradeRank(b.traitGrade) - gradeRank(a.traitGrade) || RARITY_ORDER.indexOf(b.rarity) - RARITY_ORDER.indexOf(a.rarity);
@@ -66,7 +68,9 @@ export function sortTraitBulkResult<T extends TraitBulkResultEntry>(entries: rea
     }
     return byGrade(a.entry, b.entry) || a.index - b.index;
   });
-  return indexed.map(({ entry }) => entry);
+  const sorted = indexed.map(({ entry }) => entry);
+  // 방향 칩을 뒤집으면 줄 전체가 거꾸로 선다 — 등급순은 낮은 등급부터, 장착자순은 안 낀 룬부터.
+  return descending ? sorted : sorted.reverse();
 }
 
 /** 붙은 특성 등급마다 몇 개인지 — 높은 등급부터, 0개인 등급은 빠진다. */
@@ -86,15 +90,14 @@ export function traitBulkResultRowY(index: number): number {
 }
 
 /** 줄 수에서 목록 창 높이와 창 높이를 구한다. */
-export function traitBulkResultSize(rowCount: number): { viewHeight: number; contentHeight: number; height: number; tabsY: number } {
+export function traitBulkResultSize(rowCount: number): { viewHeight: number; contentHeight: number; height: number } {
   const L = TRAIT_BULK_RESULT;
   const step = traitBulkResultRowStep();
   const shown = Math.max(1, Math.min(rowCount, L.maxRows));
   const viewHeight = shown * step - L.row.gap;
   const contentHeight = Math.max(0, rowCount * step - L.row.gap);
-  const tabsY = L.viewportTop + viewHeight + L.tabs.gap + L.tabs.height / 2;
-  const height = L.viewportTop + viewHeight + L.tabs.gap + L.tabs.height + L.tabs.bottom;
-  return { viewHeight, contentHeight, height, tabsY };
+  const height = L.viewportTop + viewHeight + L.bottom;
+  return { viewHeight, contentHeight, height };
 }
 
 /** 목록 창 안의 y(창 윗변 기준, 스크롤 반영 전)에서 몇 번째 줄인지. 줄 사이 틈이면 없다. */

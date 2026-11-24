@@ -1,11 +1,11 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import type { RuneInstance } from "../core/runes";
 import { runeDisplayName, runeRarityLabel } from "../core/runes";
 import { runeHolders } from "../core/runeLoadout";
 import { RELICS } from "../data/relics";
 import { session } from "../state/session";
-import { addCategoryTab } from "./CategoryTab";
 import { addClippedHit } from "./clippedHit";
 import type { ClipRect } from "./clipRect";
 import { FaceFrame } from "./FaceFrame";
@@ -16,6 +16,7 @@ import { addRuneFrame, RUNE_ACCENT, runeAccentCss } from "./runeIcons";
 import { runeTraitName } from "./runeTraitPresentation";
 import { openRuneInfoPopup } from "./RunePopup";
 import { addScrollHint } from "./ScrollHint";
+import { SortControl } from "./SortControl";
 import { shrinkTextToWidth, squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 import {
@@ -27,7 +28,12 @@ const RELIC_BY_ID = new Map(RELICS.map((relic) => [relic.id, relic]));
 const RELIC_RANK = new Map(RELICS.map((relic, index) => [relic.id, index]));
 
 /** 손이 이만큼 넘게 움직였으면 누른 것이 아니라 끈 것이다. */
-const TAP_SLOP = 14;
+/**
+ * 누른 것으로 볼 흔들림. 휴대폰 손끝은 떼는 사이에도 몇 픽셀씩 밀리므로 14로 두면 줄을 눌러도 쪽지가
+ * 열리지 않았다(응태 2026-11-24). 목록이 흐르지 않는 창에서는 끌어도 움직일 것이 없으니 더 넉넉히 받는다.
+ */
+const TAP_SLOP = TAP_DRAG_SLOP;
+const TAP_SLOP_STILL = 64;
 
 type ResultRow = TraitBulkResultEntry & { rune: RuneInstance };
 
@@ -37,7 +43,7 @@ type ResultRow = TraitBulkResultEntry & { rune: RuneInstance };
  * 머리줄이 몇 개에 붙었는지, 그 아래 칩 줄이 등급마다 몇 개인지를 말하고, 목록이 룬 하나에 한 줄씩
  * **룬 액자 · 붙은 특성(등급 색 + 이름) · 그 룬을 낀 렐릭**을 세운다(응태 2026-11-24 — 무엇이 어떻게 붙었고
  * 누가 끼고 있는지 한 번에). 줄을 누르면 그 룬의 쪽지가 열리고, 쪽지를 닫으면 장착이 바뀌었을 수 있으니 목록을
- * 다시 그린다. 정렬은 목록 아래 탭 둘(등급순 · 장착자순)이다. 닫는 길은 판 밖 우하단 돌아가기와 판 밖 누르기뿐이다.
+ * 다시 그린다. 정렬은 머리줄 오른쪽의 정렬 칩(등급순 · 장착자순 + 방향)이다 — 도감·룬 가방과 같은 한 장. 닫는 길은 판 밖 우하단 돌아가기와 판 밖 누르기뿐이다.
  *
  * 값은 서버가 돌려준 룬(`granted`)이고, 장착자와 최신 룬은 그릴 때마다 `session`에서 다시 읽는다.
  */
@@ -51,6 +57,7 @@ export function openRuneTraitBulkResultPopup(scene: Phaser.Scene, popups: PopupL
   const inner = width - L.padding * 2;
   const left = -width / 2 + L.padding;
   let sort: TraitBulkResultSort = "grade";
+  let descending = true;
 
   const readRows = (): ResultRow[] => {
     const holders = runeHolders(session.relicProgress);
@@ -63,8 +70,9 @@ export function openRuneTraitBulkResultPopup(scene: Phaser.Scene, popups: PopupL
 
   popups.open({ width, height, title: t("rune.traitBulk.result.title"), dim: true, closeOnBackdrop: true, onClose }, (body) => {
     // 머리줄 — 「룬 12개에 특성 부여」.
-    body.add(scene.add.text(left, -half + L.headlineY, t("rune.traitBulk.result.headline", { count: granted.length.toLocaleString() }),
-      textStyle({ role: "display", size: L.headlineSize, color: COLOR.ink })).setOrigin(0, 0.5));
+    const headline = scene.add.text(left, -half + L.headlineY, t("rune.traitBulk.result.headline", { count: granted.length.toLocaleString() }),
+      textStyle({ role: "display", size: L.headlineSize, color: COLOR.ink })).setOrigin(0, 0.5);
+    body.add(shrinkTextToWidth(headline, inner - L.sort.width - L.sort.gap - L.sort.dirWidth - 24));
 
     // 등급 칩 줄 — 높은 등급부터, 등급 색 글자 + 같은 색으로 물든 깎인 칩.
     let chipX = left;
@@ -105,7 +113,7 @@ export function openRuneTraitBulkResultPopup(scene: Phaser.Scene, popups: PopupL
 
     const paintRows = (): void => {
       if (!content.active) return;
-      rows = sortTraitBulkResult(readRows(), sort, RELIC_RANK);
+      rows = sortTraitBulkResult(readRows(), sort, RELIC_RANK, descending);
       // 새 줄을 먼저 세우고 옛 줄을 걷는다 — 얼굴 원화는 세운 객체가 사는 동안만 붙잡힌다.
       const fresh = rows.map((row, index) => {
         const node = addResultRow(scene, inner, row);
@@ -143,7 +151,8 @@ export function openRuneTraitBulkResultPopup(scene: Phaser.Scene, popups: PopupL
     hit.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => apply(scroll - dy * 0.65));
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       if (!popups.isTop(body)) return;
-      if (Math.max(moved, Math.hypot(pointer.x - downX, pointer.y - downY)) > TAP_SLOP) return;
+      const slop = size.contentHeight > size.viewHeight ? TAP_SLOP : TAP_SLOP_STILL;
+      if (Math.max(moved, Math.hypot(pointer.x - downX, pointer.y - downY)) > slop) return;
       const matrix = frame.getWorldTransformMatrix();
       const scale = matrix.scaleY || 1;
       const index = traitBulkResultRowAt((pointer.y - matrix.ty) / scale - scroll, rows.length);
@@ -155,30 +164,20 @@ export function openRuneTraitBulkResultPopup(scene: Phaser.Scene, popups: PopupL
       addScrollHint(scene, frame, { x: 0, y: size.viewHeight / 2, width: clipHalf * 2, height: size.viewHeight, owner: content, read: () => ({ offset: scroll, min: minScroll }) });
     }
 
-    // 정렬 탭 — 목록 아래 왼쪽. 오른쪽 아래 구석은 판 밖 돌아가기의 자리라 비운다.
-    const tabs = scene.add.container(0, -half + size.tabsY);
-    body.add(tabs);
-    const paintTabs = (): void => {
-      tabs.removeAll(true);
-      const options: { mode: TraitBulkResultSort; label: string }[] = [
-        { mode: "grade", label: t("rune.traitBulk.result.sortGrade") },
-        { mode: "holder", label: t("rune.traitBulk.result.sortHolder") },
-      ];
-      options.forEach(({ mode, label }, index) => {
-        addCategoryTab(scene, tabs, {
-          x: left + L.tabs.width / 2 + index * (L.tabs.width + L.tabs.spacing), y: 0, width: L.tabs.width, height: L.tabs.height,
-          label, selected: sort === mode,
-          onSelect: () => {
-            if (sort === mode) return;
-            sort = mode;
-            scroll = 0;
-            paintTabs();
-            paintRows();
-          },
-        });
-      });
-    };
-    paintTabs();
+    // 정렬 칩 — 머리줄 오른쪽 끝. 펼친 목록이 흐르는 줄 위에 앉도록 목록보다 나중에 세운다.
+    const S = L.sort;
+    const right = width / 2 - L.padding;
+    new SortControl<TraitBulkResultSort>(scene, {
+      x: right - S.dirWidth - S.gap - S.width / 2, y: -half + L.headlineY, height: S.height,
+      sortWidth: S.width, dirWidth: S.dirWidth, gap: S.gap, fontSize: S.size, parent: body,
+      sortOptions: [
+        { id: "grade", label: t("rune.traitBulk.result.sortGrade") },
+        { id: "holder", label: t("rune.traitBulk.result.sortHolder") },
+      ],
+      sortMode: sort, descending,
+      onSort: (mode) => { if (sort === mode) return; sort = mode; scroll = 0; paintRows(); },
+      onDirection: (value) => { descending = value; scroll = 0; paintRows(); },
+    });
   });
 }
 

@@ -1589,6 +1589,16 @@
 "Gravur",
 "Гравировка"
 ],
+"rune.bulkCraft.engrave.none": [
+"不刻印",
+"ไม่สลัก",
+"Không",
+"Tidak",
+"No",
+"Não",
+"Keine",
+"Нет"
+],
 "rune.bulkCraft.engrave.top": [
 "上方主属性",
 "หลักบน",
@@ -1619,6 +1629,16 @@
 "{count} veredeln",
 "Огранить {count}"
 ],
+"rune.bulkCraft.engraveButton": [
+"刻印 {count} 个",
+"สลัก {count} ชิ้น",
+"Khắc ấn {count}",
+"Ukir {count}",
+"Grabar {count}",
+"Gravar {count}",
+"{count} gravieren",
+"Гравировать {count}"
+],
 "rune.bulkCraft.confirm": [
 "对 {count} 个符文进行剩余的 {attempts} 次打磨。",
 "เจียระไนที่เหลือ {attempts} ครั้งให้รูน {count} ชิ้น",
@@ -1629,35 +1649,15 @@
 "Die restlichen {attempts} Veredelungen an {count} Runen ausführen.",
 "Выполнить оставшиеся {attempts} огранок для {count} рун."
 ],
-"rune.bulkCraft.failed": [
-"批量打磨失败。",
-"เจียระไนแบบรวมล้มเหลว",
-"Mài hàng loạt thất bại.",
-"Asah massal gagal.",
-"Falló el tallado masivo.",
-"Falha na lapidação em massa.",
-"Massen-Veredelung fehlgeschlagen.",
-"Массовая огранка не удалась."
-],
-"rune.bulkCraft.mode.craft": [
-"打磨",
-"เจียระไน",
-"Mài",
-"Asah",
-"Tallar",
-"Lapidar",
-"Veredeln",
-"Огранка"
-],
-"rune.bulkCraft.engraveButton": [
-"刻印于{target}",
-"สลักที่{target}",
-"Khắc ấn {target}",
-"Ukir {target}",
-"Grabar {target}",
-"Gravar {target}",
-"{target} gravieren",
-"Гравировать: {target}"
+"rune.bulkCraft.confirmEngrave": [
+"对 {count} 个符文进行剩余的 {attempts} 次打磨，并将 {engravings} 个刻印于{target}。刻印无法撤销。",
+"เจียระไนที่เหลือ {attempts} ครั้งให้รูน {count} ชิ้น และสลัก {engravings} ชิ้นที่{target} การสลักย้อนกลับไม่ได้",
+"Thực hiện {attempts} lần mài còn lại cho {count} Rune và khắc ấn {engravings} cái vào {target}. Không thể hoàn tác khắc ấn.",
+"Jalankan {attempts} asah tersisa pada {count} Rune dan ukir {engravings} pada {target}. Ukiran tidak bisa dibatalkan.",
+"Se harán los {attempts} tallados restantes de {count} runas y se grabarán {engravings} en {target}. El grabado no se puede deshacer.",
+"Fazer as {attempts} lapidações restantes em {count} runas e gravar {engravings} em {target}. A gravação não pode ser desfeita.",
+"Die restlichen {attempts} Veredelungen an {count} Runen ausführen und {engravings} auf {target} gravieren. Gravuren sind endgültig.",
+"Выполнить {attempts} оставшихся огранок для {count} рун и выгравировать {engravings} на {target}. Гравировку нельзя отменить."
 ],
 "rune.bulkCraft.confirmEngraveOnly": [
 "将 {count} 个符文刻印于{target}。刻印无法撤销。",
@@ -1669,25 +1669,35 @@
 "{count} Runen auf {target} gravieren. Gravuren sind endgültig.",
 "Выгравировать {count} рун на {target}. Гравировку нельзя отменить."
 ],
-"rune.bulkCraft.doneCraft": [
-"打磨 {attempts} 次中成功 {successes} 次",
-"เจียระไนสำเร็จ {successes}/{attempts} ครั้ง",
-"Mài thành công {successes}/{attempts} lần",
-"Asah berhasil {successes}/{attempts}",
-"{successes} de {attempts} tallados con éxito",
-"{successes} de {attempts} lapidações com sucesso",
-"{successes} von {attempts} Veredelungen erfolgreich",
-"Огранка: успешно {successes} из {attempts}"
+"rune.bulkCraft.done": [
+"打磨 {attempts} 次中成功 {successes} 次 · 刻印 {engraved} 个",
+"เจียระไนสำเร็จ {successes}/{attempts} ครั้ง · สลัก {engraved} ชิ้น",
+"Mài thành công {successes}/{attempts} lần · Khắc ấn {engraved}",
+"Asah berhasil {successes}/{attempts} · Diukir {engraved}",
+"{successes} de {attempts} tallados con éxito · {engraved} grabadas",
+"{successes} de {attempts} lapidações com sucesso · {engraved} gravadas",
+"{successes} von {attempts} Veredelungen erfolgreich · {engraved} graviert",
+"Огранка: успешно {successes} из {attempts} · гравировок {engraved}"
 ],
 "rune.bulkCraft.doneEngrave": [
-"已刻印 {engraved} 个",
-"สลักแล้ว {engraved} ชิ้น",
+"刻印 {engraved} 个完成",
+"สลัก {engraved} ชิ้นเสร็จแล้ว",
 "Đã khắc ấn {engraved}",
 "Diukir {engraved}",
 "{engraved} grabadas",
 "{engraved} gravadas",
 "{engraved} graviert",
 "Выгравировано: {engraved}"
+],
+"rune.bulkCraft.failed": [
+"批量打磨失败。",
+"เจียระไนแบบรวมล้มเหลว",
+"Mài hàng loạt thất bại.",
+"Asah massal gagal.",
+"Falló el tallado masivo.",
+"Falha na lapidação em massa.",
+"Massen-Veredelung fehlgeschlagen.",
+"Массовая огранка не удалась."
 ],
 "rune.traitBulk.title": [
 "批量赋予特性",

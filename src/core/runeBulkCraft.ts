@@ -1,4 +1,4 @@
-import { canEngraveRune, runeBatchEnhancementTargets, type RuneInstance, type RuneStatKey } from "./runes";
+import { runeBatchEnhancementTargets, type RuneInstance, type RuneStatKey } from "./runes";
 
 /**
  * 룬 일괄 세공 — 고른 룬 여럿의 남은 세공을 한 번에 돌리고, 원하면 각인까지 새긴다.
@@ -7,19 +7,8 @@ import { canEngraveRune, runeBatchEnhancementTargets, type RuneInstance, type Ru
  * 마지막 선택이라 **어느 주 옵션에 새길지를 사람이 한 번 고른다**(위 주 옵션 · 아래 주 옵션). 룬마다 주 옵션이 달라도
  * 「위 / 아래」라는 자리는 모든 룬에 같으므로 한 번의 선택으로 여럿을 묶을 수 있다. 각인을 고르지 않으면 세공만 한다.
  *
- * 화면은 세공과 각인을 **따로** 한다(`RuneBulkMode` · 응태 2026-11-24) — 세공 판은 각인 없이 남은 세공만 돌리고, 각인 판은
- * 세공을 다 마친 각인 전 룬만 받아 고른 자리에 새기기만 한다. 서버 계약(`engrave`)은 그대로라 두 판 모두 같은 경계를 지난다.
- *
  * 화면(무엇을 몇 회 돌리나·얼마 드나)과 서버(실제 판정)가 이 모듈 하나를 읽는다.
  */
-
-/** 일괄 판이 지금 하는 일 — 세공만, 또는 각인만. */
-export type RuneBulkMode = "craft" | "engrave";
-
-/** 이 판에 넣을 수 있는 룬인가. 세공 판은 세공이 남은 룬, 각인 판은 세공을 마친 각인 전 룬. */
-export function isRuneBulkModeCandidate(rune: RuneInstance, mode: RuneBulkMode): boolean {
-  return mode === "craft" ? runeBatchEnhancementTargets(rune).length > 0 : canEngraveRune(rune);
-}
 
 /** 각인할 주 옵션의 자리. `null`이면 각인하지 않는다. */
 export type RuneBulkEngrave = 0 | 1 | null;
@@ -62,4 +51,12 @@ export function runeBulkCraftTotals(runes: readonly RuneInstance[], engrave: Run
     if (work.engrave) engravings += 1;
   }
   return { runes: count, enhancements, engravings };
+}
+
+/**
+ * 고른 룬이 모두 세공을 마쳐 각인만 남았는가 — 그때 버튼·확인 창·안내가 「세공」이 아니라 「각인」을 말한다
+ * (응태 2026-11-24). 세공이 다 끝나야 각인이 되므로 따로 고르는 판을 두지 않고 같은 판에서 이름만 바뀐다.
+ */
+export function isRuneBulkEngraveOnly(totals: { runes: number; enhancements: number; engravings: number }): boolean {
+  return totals.runes > 0 && totals.enhancements === 0 && totals.engravings > 0;
 }

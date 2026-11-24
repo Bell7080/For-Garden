@@ -47,7 +47,7 @@ import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { openElementPopup, openRolePopup } from "./affinityPopups";
 import { breakthroughEffectText, breakthroughEffectKeywords } from "./skillPresentation";
 import { formatBreakthroughDescription } from "./skillExplanation";
-import { addBreakthroughGradeMark, addGrowthGradeMark, addResonanceGradeMark, RARITY_TONE } from "./rarityMark";
+import { addBreakthroughGradeMark, addGrowthGradeMark, addResonanceGradeMark, RARITY_TONE, RESONANCE_MARK_TONE } from "./rarityMark";
 import { RESONANCE_CAP, RESONANCE_STAT_PERCENT, canResonate, resonanceFragmentCost, resonanceFragmentSpend, resonanceOf } from "../core/relicResonance";
 import { addFramedIcon } from "./itemFrame";
 import { FaceFrame } from "./FaceFrame";
@@ -70,6 +70,7 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { AppearanceStrip } from "./AppearanceStrip";
 import { addBreakthroughBurst, BREAKTHROUGH_BURST } from "./breakthroughBurst";
+import { addBreakthroughBackdrop } from "./breakthroughBackdrop";
 import { appearanceEntries } from "./appearanceModel";
 import { APPEARANCE_PANEL } from "./appearancePanelLayout";
 import { COLOR, textStyle } from "./theme";
@@ -1297,6 +1298,9 @@ export class InfoManager {
         return;
       }
       const top = -height / 2;
+      const breathe = motionPolicy(session.settings).nonEssentialRepeatFactor !== 0;
+      // 판 자체가 「한계를 뚫는」 장면이다 — 등급 줄을 가로지르는 한계선이 가운데에서 깨지고 빛이 위로 뚫고 나간다(응태 2026-11-24).
+      body.add(addBreakthroughBackdrop(this.scene, { width: cardLayout.width, height, limitY: top + BREAK_CONFIRM.gradeY, color: BREAK_EDGE, breathe }));
       // **올라가는 것은 별 개수가 아니라 등급이다.** 카드 오른쪽 위에 박히는 로마자와 같은
       // 표식을 그대로 크게 세우고, 그 사이에 화살표만 둔다 — "1 → 2"라고 적으면 화면 어디에도
       // 없는 숫자를 새로 배우게 된다.
@@ -1324,7 +1328,6 @@ export class InfoManager {
       body.add(capLine);
 
       // 이번 단계 카드 — 아직 뚫지 않은 단계라 자물쇠와 「다음 단계」 이름표가 함께 서고, 테두리가 숨 쉰다.
-      const breathe = motionPolicy(session.settings).nonEssentialRepeatFactor !== 0;
       addBreakthroughStepCard(this.scene, body, def, progress.breakthrough, step, progress.breakthrough + 1, {
         y: top + cardLayout.cardY, height: cardLayout.cardHeight, width: stepsLayout.rowWidth, line: stepLine, breathe,
       });
@@ -1380,6 +1383,8 @@ export class InfoManager {
   private paintResonanceConfirm(body: Phaser.GameObjects.Container, close: () => void, def: RelicDef, progress: RelicProgress, height: number): void {
     const top = -height / 2;
     const resonance = resonanceOf(progress);
+    const breathe = motionPolicy(session.settings).nonEssentialRepeatFactor !== 0;
+    body.add(addBreakthroughBackdrop(this.scene, { width: BREAK_CONFIRM.width, height, limitY: top + BREAK_CONFIRM.gradeY, color: RESONANCE_MARK_TONE.frame, breathe }));
     // 공명 단계는 「공명 n」 글자가 아니라 붉은 로마자 표식으로 선다 — 정보창의 표식과 같은 한 장이다.
     // **첫 공명의 왼쪽은 「—」가 아니라 돌파 IV다**(응태 2026-11-13). 공명은 돌파 IV 다음 칸이라 `IV ▶ I`로 읽혀야 하고,
     // 「— ▶ I」는 공명이 없던 개체가 공명으로 「바뀌는」 것처럼 읽혔다. 호박 IV와 붉은 I가 색으로 축이 이어짐을 말한다.

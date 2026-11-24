@@ -1,0 +1,102 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000}canvas{display:block}</style></head><body>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as L from './lib.js';
+import * as M from './mlib.js';
+const {THREE,add,S,C,toon,ease,easeIO,clamp01,rnd}=L;
+const font=new FontFace('NK','url(./nk.woff2)');await font.load();document.fonts.add(font);
+const name=new URLSearchParams(location.search).get('s');
+const mk=o=>{const r=L.makeScene(o);window.__scene=r.scene;window.__cam=r.cam;return r;};
+const lerp=(a,b,k)=>a+(b-a)*k;
+const pop=(t,t0,d=.18)=>{if(t<t0)return 0;const k=clamp01((t-t0)/d);return k<1?k*1.2:1+Math.sin((t-t0-d)*14)*Math.exp(-(t-t0-d)*6)*.12;};
+const label=(scene,txt,o={})=>{const s=L.textSprite(txt,o);scene.add(s);return s;};
+const setSprite=(s,h,k)=>{s.scale.set(h*s.userData.aspect*k,h*k,1);s.material.opacity=clamp01(k*3);};
+const ground=(scene,c,r=60)=>{const g=add(scene,C(r,r,.4,64),toon(c),[0,-.2,0],null,null,false);g.receiveShadow=true;return g;};
+const SC={};
+
+// 1. 훅 — 사막의 피라미드 앞에 매머드가? 「같은 시대?」
+SC.hook=()=>{const {scene,cam}=mk({sky:['#3f7ec9','#f2c98a','#ffe2a8'],sunPos:[-8,10,6],hemi:1.3});
+ ground(scene,0xe8c27a);M.smoothPyramid(scene,[-5,0,-14],1.3);M.smoothPyramid(scene,[7,0,-24],1);M.smoothPyramid(scene,[14,0,-34],.7);
+ const m=M.makeMammoth(scene,{scale:.55});m.g.position.set(1.5,0,1);m.g.rotation.y=-.5;
+ const q=label(scene,'같은 시대?',{size:190,fill:'#ffe066'});q.position.set(0,6.8,0);
+ return t=>{m.idle(t);m.head.rotation.y=Math.sin(t*1.5)*.15;const k=easeIO(t/3);cam.position.set(lerp(4,2,k),lerp(3.2,4,k),lerp(13,15.5,k));cam.lookAt(-.5,3,-2);
+  setSprite(q,1.5,t>.9?pop(t,.9):0);q.position.y=6.8+Math.sin(t*3)*.08;};};
+// 2. 눈보라 속 매머드 + 키 비교(도디)
+SC.intro=()=>{const {scene,cam}=mk({sky:['#7f9cc4','#c9dcef','#eef5ff'],sunPos:[-6,9,6],hemi:1.5,fog:[0xdfeaf6,18,70]});
+ ground(scene,0xf4f8ff);const sn=M.snow(scene,{n:500});
+ const r=rnd(4);for(let i=0;i<10;i++){const a=r()*6.28,d=12+r()*20;add(scene,S(1.5+r(),12,8),toon(0xffffff),[Math.cos(a)*d,0,Math.sin(a)*d-8],[1.6,.5,1],null,false);}
+ const m=M.makeMammoth(scene,{scale:1});const d=L.makeDodo(scene,{scale:.45});d.g.position.set(3.2,0,3.2);d.g.rotation.y=-.6;
+ const l1=label(scene,'키 3m',{size:200,fill:'#ffffff'}),l2=label(scene,'6톤!',{size:220,fill:'#ffe066'}),l3=label(scene,'털 1m',{size:190,fill:'#ffffff'});
+ return t=>{sn(t);m.walk(t,.7);m.idle(t);const z=lerp(-6,0,clamp01(t/2.4));m.g.position.set(0,0,z);d.idle(t);d.head.rotation.x=-.5;
+  if(t>2.4){m.walk(0,0);}
+  cam.position.set(7+t*.2,3.4,16-t*.4);cam.lookAt(0,3.2,z*.3);
+  l1.position.set(-1.6,6.4,z);setSprite(l1,1.2,t>3.2?pop(t,3.2):0);l2.position.set(2.0,5.2,z+1.5);setSprite(l2,1.3,t>4.2?pop(t,4.2):0);l3.position.set(-.6,7.6,z);setSprite(l3,1.1,t>6.4?pop(t,6.4):0);};};
+
+// 3. 빙하기 끝 — 눈이 녹고 풀밭이 숲으로
+SC.melt=()=>{const {scene,cam,sky}=mk({sky:['#6fa6d9','#cfe6f5','#f4fbff'],sunPos:[-6,10,6],hemi:1.4});
+ const gm=toon(0xf4f8ff);const g=add(scene,C(60,60,.4,64),gm,[0,-.2,0],null,null,false);g.receiveShadow=true;
+ const snowC=new THREE.Color(0xf4f8ff),grassC=new THREE.Color(0x8cc45e),forestC=new THREE.Color(0x4f9a4a);
+ const r=rnd(8);const trees=[];for(let i=0;i<22;i++){const x=(r()-.5)*24,z=-5-r()*14;const tr=L.tree(scene,x,z,.9+r()*.5);tr.userData.t0=1.4+r()*1.6;tr.scale.setScalar(0);trees.push(tr);}
+ const ms=[[-1.4,1.5,.55,0],[1.6,0,.5,2]].map(([x,z,s,ph])=>{const m=M.makeMammoth(scene,{scale:s});m.g.position.set(x,0,z);m.g.rotation.y=.4+ph*.3;return [m,ph];});
+ const sun=add(scene,S(3,20,14),new THREE.MeshBasicMaterial({color:0xfff0a0}),[-14,22,-40],null,null,false);
+ const lb=label(scene,'만 년 전',{size:200,fill:'#ffffff'});lb.position.set(0,7.6,0);
+ return t=>{const k=clamp01((t-.6)/2.2);const c=k<.5?snowC.clone().lerp(grassC,k*2):grassC.clone().lerp(forestC,(k-.5)*2);gm.color.copy(c);
+  trees.forEach(tr=>{const s=clamp01((t-tr.userData.t0)/.4);tr.scale.setScalar(tr.userData.s0??(tr.userData.s0=1.1)*0+ (s<1?ease(s)*1.15:1+Math.sin((t-tr.userData.t0)*10)*Math.exp(-(t-tr.userData.t0-.4)*6)*.06));});
+  ms.forEach(([m,ph])=>{m.idle(t,ph);m.head.rotation.y=Math.sin(t*1.2+ph)*.3;});
+  sun.position.y=22+t*.6;cam.position.set(Math.sin(.15+t*.04)*17,5.5,Math.cos(.15+t*.04)*17);cam.lookAt(0,2.6,-3);
+  setSprite(lb,1.4,t>.2?pop(t,.2):0);lb.material.opacity*=t>2.6?clamp01(1-(t-2.6)/.4):1;};};
+// 4. 사냥 — 창 든 사람들, 매머드가 달아남(잔인한 장면 없음)
+SC.hunt=()=>{const {scene,cam}=mk({sky:['#6a8fc9','#c9d8e8','#f0f2f4'],sunPos:[-6,9,6],hemi:1.4});
+ ground(scene,0xc9d6a0);const r=rnd(12);for(let i=0;i<14;i++){const a=r()*6.28,d=10+r()*12;add(scene,S(1.2+r(),12,8),toon(0xe9f0f6),[Math.cos(a)*d,0,Math.sin(a)*d-6],[1.6,.4,1],null,false);}
+ const hs=[0,1,2].map(i=>{const h=M.makeHunter(scene,{coat:[0x7a5a3a,0x6a4a34,0x8a6a44][i]});h.g.scale.setScalar(.9);return h;});
+ const ms=[[0,0,.75],[-2.6,-2.2,.6],[2.4,-2.6,.55]].map(([x,z,s])=>{const m=M.makeMammoth(scene,{scale:s});m.g.position.set(x,0,z);return {m,x,z};});
+ const lb=label(scene,'사냥',{size:200,fill:'#ff8a6a'});lb.position.set(-3,6.2,2);
+ return t=>{hs.forEach((h,i)=>{const run=t>.4;h.walk(t,run?1.3:0);h.g.position.set(-5.2+i*.9+Math.max(0,t-.4)*1.6,0,3.2-i*1.2);h.g.rotation.y=Math.PI/2;h.arms[1].rotation.x=-.9+Math.sin(t*6+i)*.15;});
+  ms.forEach(({m,x,z},i)=>{const go=t>1.0;m.idle(t,i);if(go){m.walk(t,1.4,i);m.g.position.x=x+(t-1.0)*2.2;m.g.rotation.y=lerp(m.g.rotation.y,Math.PI/2,.08);m.raise(clamp01((t-1)*2));}else{m.g.rotation.y=-.3;}});
+  cam.position.set(.5+t*.9,5,19);cam.lookAt(t*.9,2.2,0);setSprite(lb,1.2,t>.6?pop(t,.6):0);};};
+// 5. 북극의 작은 섬 — 브랑겔섬
+SC.island=()=>{const {scene,cam}=mk({sky:['#4a6fa8','#a9c6e2','#e6f0fa'],sunPos:[-8,8,6],hemi:1.5,fog:[0xcfe0f0,40,140]});
+ L.sea(scene,0x3a6f9e);const upd=L.waves(scene,{n:60,r:[8,50],color:0xe8f6ff});
+ L.island(scene,{r:7,grassR:5,sandC:0xb8b0a0,grassC:0x9ab07a});add(scene,S(3,16,10),toon(0xf4f8ff),[-2,0,-3],[1.4,.5,1],null,false);
+ [[-12,0,-8,1.2,1],[14,0,-4,1,2],[9,0,-18,1.6,3],[-18,0,-22,1.8,4],[3,0,12,.8,5]].forEach(([x,y,z,s,sd])=>M.makeIceberg(scene,[x,y,z],s,sd));
+ const ms=[[0,1,.32,0],[1.8,-.6,.26,1],[-1.6,-.4,.24,2],[.6,-2.2,.22,3]].map(([x,z,s,ph])=>{const m=M.makeMammoth(scene,{scale:s});m.g.position.set(x,0,z);m.g.rotation.y=ph;return [m,ph];});
+ const lb=label(scene,'브랑겔섬',{size:200,fill:'#ffffff'});lb.position.set(0,6,0);const sn=M.snow(scene,{n:200,box:[40,20,30],size:.1,wind:.4});
+ return t=>{upd(t);sn(t,.7);ms.forEach(([m,ph])=>{m.idle(t,ph);m.walk(t,.4,ph);m.g.position.x+=Math.sin(m.g.rotation.y)*.004;m.g.position.z+=Math.cos(m.g.rotation.y)*.004;});
+  const k=easeIO(t/3.2);const a=-.5+t*.1,dist=lerp(48,22,k),h=lerp(30,10,k);cam.position.set(Math.sin(a)*dist,h,Math.cos(a)*dist);cam.lookAt(0,1,0);
+  setSprite(lb,1.7,t>.5?pop(t,.5):0);};};
+// 6. 피라미드가 쌓이는 동안에도 — 연대 비교
+SC.pyramid=()=>{const {scene,cam}=mk({sky:['#4a7fc4','#f0c890','#ffe6b0'],sunPos:[-6,10,8],hemi:1.3});
+ const sand=add(scene,new THREE.BoxGeometry(14,.4,40),toon(0xe8c27a),[-7,-.2,0],null,null,false);sand.receiveShadow=true;
+ const snowG=add(scene,new THREE.BoxGeometry(14,.4,40),toon(0xeef4fa),[7,-.2,0],null,null,false);snowG.receiveShadow=true;
+ add(scene,new THREE.BoxGeometry(.12,.05,40),new THREE.MeshBasicMaterial({color:0x2a1d2e}),[0,.02,0],null,null,false);
+ const py=M.makePyramid(scene,{pos:[-2.7,0,-2],s:.55,levels:8});py.steps.forEach(s=>s.visible=false);
+ const m=M.makeMammoth(scene,{scale:.75});m.g.position.set(2.8,0,-1);m.g.rotation.y=-.5;m.g.scale.setScalar(.5);const sn=M.snow(scene,{n:120,box:[12,16,20],size:.1,wind:.2});
+ const la=label(scene,'피라미드 완성',{size:150,fill:'#ffe066'}),lb=label(scene,'매머드 아직 생존!',{size:150,fill:'#ffffff'});
+ const yr=label(scene,'약 4천 년 전',{size:190,fill:'#ffffff'});yr.position.set(0,9.6,-1.5);
+ return t=>{py.steps.forEach((s,i)=>{const t0=.6+i*.22;s.visible=t>t0;s.position.y=.45+i*.9+(t>t0?Math.max(0,(1-(t-t0)/.2))*2:0);});
+  m.idle(t);m.head.rotation.y=Math.sin(t*1.2)*.25;if(t>3.1)m.raise(clamp01((t-3.1)*2));
+  sn(t);cam.position.set(0,5.2,25-t*.4);cam.lookAt(0,3.2,-1.5);
+  la.position.set(-2.4,6.6,-1);setSprite(la,1.3,t>2.5?pop(t,2.5):0);lb.position.set(2.2,4.9,0);setSprite(lb,1.3,t>3.1?pop(t,3.1):0);setSprite(yr,1.25,t>.3?pop(t,.3):0);};};
+// 7. 오로라 아래 마지막 한 마리 — 이유는 아직 몰라요
+SC.last=()=>{const {scene,cam}=mk({sky:['#0e1236','#24306a','#3a4a7a'],hemi:.7,sunC:0x9fb8ff,sunI:1.2,sunPos:[-6,8,4]});
+ ground(scene,0xcfd9ea);const au=M.aurora(scene);const stars=L.dust(scene,{n:160,color:0xffffff,box:[90,40,10],y0:14,size:.18});
+ const m=M.makeMammoth(scene,{scale:.8});m.g.rotation.y=-.6;
+ const q=label(scene,'?',{size:240,w:256,h:256,fill:'#ffe066'});q.position.set(0,6.6,0);const sn=M.snow(scene,{n:150,box:[30,18,20],size:.09,wind:.2});
+ return t=>{au(t);stars(t*.1);sn(t,.6);m.idle(t*.6);m.head.rotation.x=.18;m.head.rotation.y=Math.sin(t*.6)*.35;
+  const a=.7-t*.06;cam.position.set(Math.sin(a)*19,3.6+t*.2,Math.cos(a)*19);cam.lookAt(0,2.3,0);
+  setSprite(q,1.6,t>4.9?pop(t,4.9,.22):0);q.position.y=6.6+Math.sin(t*2.5)*.1;};};
+// 8. 시베리아 얼음 속 아기 매머드
+SC.ice=()=>{const {scene,cam}=mk({sky:['#2a3a5e','#5a7aa0','#9ab8d4'],hemi:1.1,sunPos:[-4,9,7]});
+ ground(scene,0xdfe8f2);const baby=M.makeMammoth(scene,{scale:.42,baby:true,fur:0x9a6a44});baby.g.position.set(.2,1.1,0);baby.g.rotation.set(0,-.9,1.35);baby.legs.forEach((l,i)=>l.rotation.x=i<2?-.35:.35);
+ baby.eyes.forEach(e=>e.scale.y=.12);
+ const ice=new THREE.Mesh(new THREE.BoxGeometry(4.2,3.2,3.4),new THREE.MeshPhongMaterial({color:0x9fdcff,transparent:true,opacity:.5,shininess:160,specular:0xffffff}));ice.position.set(0,1.6,0);scene.add(ice);
+ ice.add(new THREE.LineSegments(new THREE.EdgesGeometry(ice.geometry),new THREE.LineBasicMaterial({color:0xe8faff})));
+ const zs=[];for(let i=0;i<14;i++)zs.push(label(scene,'z',{size:150,w:256,h:256,fill:'#dff6ff'}));
+ const lb=label(scene,'4만 년 전 아기 매머드',{size:130,w:1400,fill:'#ffffff'});lb.position.set(0,4.0,0);const motes=L.dust(scene,{n:80,color:0xe8f8ff,box:[10,8,6],y0:0,size:.07});
+ return t=>{motes(t);const br=1+Math.sin(t*1.5)*.0;zs.forEach((z,i)=>{const p=((t*.5+i/zs.length*3)%3);z.position.set(.9+p*.5,2.6+p*.7,1);setSprite(z,.45+p*.15,i<3&&p<2.4?1-p/2.4:0);});
+  const a=-.3+t*.1;cam.position.set(Math.sin(a)*11,2.6,Math.cos(a)*11);cam.lookAt(0,.9,0);setSprite(lb,1.0,t>.6?pop(t,.6):0);};};
+
+const upd=SC[name]();if(!window.__noReady)window.ready=true;
+window.renderFrame=f=>{const t=f/30;upd(t);renderer.render(window.__scene,window.__cam);return renderer.domElement.toDataURL('image/jpeg',.92);};
+const renderer=L.renderer;
+</script></body></html>

@@ -67,6 +67,8 @@ export const RUNE_RU = {
   "rune.engraveConfirm": "Подтвердить гравировку",
   "rune.trait.title": "Черта",
   "rune.trait.none": "Нет черты",
+  "rune.pick.select": "Выбрать",
+  "rune.pick.hint": "Выберите руну из списка ниже.",
   "rune.trait.odds": "Шансы",
   "rune.trait.odds.upgradeTitle": "Повышение ранга",
   "rune.trait.odds.listTitle": "Черты",

@@ -70,6 +70,8 @@ export const RUNE_JA = {
 
   "rune.trait.title": "特性",
   "rune.trait.none": "特性なし",
+  "rune.pick.select": "選択",
+  "rune.pick.hint": "下のリストからルーンを選んでください。",
   "rune.trait.odds": "確率情報",
   "rune.trait.odds.upgradeTitle": "等級上昇",
   "rune.trait.odds.listTitle": "特性一覧",

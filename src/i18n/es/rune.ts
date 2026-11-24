@@ -67,6 +67,8 @@ export const RUNE_ES = {
   "rune.engraveConfirm": "Confirmar grabado",
   "rune.trait.title": "Rasgo",
   "rune.trait.none": "Sin rasgo",
+  "rune.pick.select": "Seleccionar",
+  "rune.pick.hint": "Elige una runa de la lista de abajo.",
   "rune.trait.odds": "Probabilidades",
   "rune.trait.odds.upgradeTitle": "Subida de grado",
   "rune.trait.odds.listTitle": "Rasgos",

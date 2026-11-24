@@ -1,5 +1,4 @@
 import Phaser from "phaser";
-import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { formatRuneOptionValue, runeDisplayName, runeOptionValue, runePartLabel, runeRarityLabel, type RuneInstance, type RuneStatKey } from "../core/runes";
@@ -20,8 +19,7 @@ import { addResearchPlate } from "./researchPlate";
 import { addRuneSocket } from "./RuneSocket";
 import { addFormationRemoveChip } from "./formationSlotChrome";
 import { COLOR, textStyle } from "./theme";
-import { mountRunePickerGrid } from "./runePickerGrid";
-import { runePickerSize } from "./runePickerLayout";
+import { openRuneSelectPopup } from "./RuneSelectPopup";
 
 /**
  * 특성 연구대.
@@ -68,14 +66,16 @@ export interface ResearchBenchOptions {
  * **자리(part)로 거르지 않는다** — 연구대는 어느 칸의 룬이든 다루는 자리라, 장착용 가방처럼
  * 한 자리만 보여 주면 나머지 룬은 여기서 영영 손댈 수 없다.
  */
-function openRunePicker(options: { scene: Phaser.Scene; popups: PopupLayer; onPick: (rune: RuneInstance) => void }): void {
-  const { scene, popups } = options;
-  // 특성이 있는 룬이 먼저 선다 — 연구 중인 것이 곧 지금 찾는 것이다.
-  const runes = [...session.runeInventory].sort((a, b) =>
-    Number(b.trait !== undefined) - Number(a.trait !== undefined) || (a.sequence ?? 0) - (b.sequence ?? 0));
-  const { width, height } = runePickerSize(runes.length);
-  popups.open({ width, height, title: t("archaeology.bench.pick"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
-    mountRunePickerGrid(scene, body, { popups, runes, isCovered: () => popups.isOpen, isActive: () => popups.isTop(body), onPick: (rune) => { close(); options.onPick(rune); } });
+function openRunePicker(options: { scene: Phaser.Scene; popups: PopupLayer; current?: RuneInstance; onPick: (rune: RuneInstance) => void }): void {
+  // 특성이 있는 룬이 먼저 선다 — 연구 중인 것이 곧 지금 찾는 것이다. 지금 끼운 룬은 다시 고를 까닭이 없어 뺀다.
+  const candidates = (): readonly RuneInstance[] => [...session.runeInventory]
+    .filter(({ instanceId }) => instanceId !== options.current?.instanceId)
+    .sort((a, b) => Number(b.trait !== undefined) - Number(a.trait !== undefined) || (a.sequence ?? 0) - (b.sequence ?? 0));
+  // 누르면 위 정보 판에 그 룬이 서고, 「선택」을 눌러야 연구대에 꽂힌다(`openRuneSelectPopup`).
+  openRuneSelectPopup({
+    scene: options.scene, popups: options.popups, title: t("archaeology.bench.pick"),
+    candidates, emptyText: t("rune.bulkSell.empty"),
+    onSelect: (rune) => { options.onPick(rune); return false; },
   });
 }
 
@@ -199,7 +199,7 @@ export function addResearchBench(options: ResearchBenchOptions): void {
   }
   const hit = scene.add.rectangle(0, 0, RESEARCH_BENCH.slot, RESEARCH_BENCH.slot, 0xffffff, 0)
     .setInteractive({ useHandCursor: true });
-  hit.on("pointerup", () => openRunePicker({ scene, popups: options.popups, onPick: options.onPick }));
+  hit.on("pointerup", () => openRunePicker({ scene, popups: options.popups, current: rune, onPick: options.onPick }));
   holder.add(hit);
 
   if (rune) {

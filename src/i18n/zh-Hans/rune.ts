@@ -67,6 +67,8 @@ export const RUNE_ZH_HANS = {
   "rune.engraveConfirm": "确认刻印",
   "rune.trait.title": "特性",
   "rune.trait.none": "无特性",
+  "rune.pick.select": "选择",
+  "rune.pick.hint": "从下方列表中选择符文。",
   "rune.trait.odds": "概率",
   "rune.trait.odds.upgradeTitle": "等级提升",
   "rune.trait.odds.listTitle": "特性",

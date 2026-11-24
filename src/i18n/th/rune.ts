@@ -67,6 +67,8 @@ export const RUNE_TH = {
   "rune.engraveConfirm": "ยืนยันการสลัก",
   "rune.trait.title": "คุณลักษณะ",
   "rune.trait.none": "ไม่มีคุณลักษณะ",
+  "rune.pick.select": "เลือก",
+  "rune.pick.hint": "เลือกรูนจากรายการด้านล่าง",
   "rune.trait.odds": "อัตรา",
   "rune.trait.odds.upgradeTitle": "เพิ่มระดับ",
   "rune.trait.odds.listTitle": "คุณลักษณะ",

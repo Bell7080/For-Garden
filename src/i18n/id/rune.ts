@@ -67,6 +67,8 @@ export const RUNE_ID = {
   "rune.engraveConfirm": "Konfirmasi Ukiran",
   "rune.trait.title": "Sifat",
   "rune.trait.none": "Tanpa sifat",
+  "rune.pick.select": "Pilih",
+  "rune.pick.hint": "Pilih Rune dari daftar di bawah.",
   "rune.trait.odds": "Peluang",
   "rune.trait.odds.upgradeTitle": "Naik Tingkat",
   "rune.trait.odds.listTitle": "Sifat",

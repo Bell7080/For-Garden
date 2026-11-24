@@ -67,6 +67,8 @@ export const RUNE_DE = {
   "rune.engraveConfirm": "Gravur bestätigen",
   "rune.trait.title": "Merkmal",
   "rune.trait.none": "Kein Merkmal",
+  "rune.pick.select": "Auswählen",
+  "rune.pick.hint": "Wähle eine Rune aus der Liste unten.",
   "rune.trait.odds": "Chancen",
   "rune.trait.odds.upgradeTitle": "Stufenaufstieg",
   "rune.trait.odds.listTitle": "Merkmale",

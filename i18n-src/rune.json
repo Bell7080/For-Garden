@@ -669,6 +669,26 @@
 "Kein Merkmal",
 "Нет черты"
 ],
+"rune.pick.select": [
+"选择",
+"เลือก",
+"Chọn",
+"Pilih",
+"Seleccionar",
+"Selecionar",
+"Auswählen",
+"Выбрать"
+],
+"rune.pick.hint": [
+"从下方列表中选择符文。",
+"เลือกรูนจากรายการด้านล่าง",
+"Chọn một Rune từ danh sách bên dưới.",
+"Pilih Rune dari daftar di bawah.",
+"Elige una runa de la lista de abajo.",
+"Escolha uma runa da lista abaixo.",
+"Wähle eine Rune aus der Liste unten.",
+"Выберите руну из списка ниже."
+],
 "rune.trait.odds": [
 "概率",
 "อัตรา",

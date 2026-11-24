@@ -368,7 +368,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     const rates = RATES_SPOT.screen;
     this.traitOddsLink = addRatesButton(this, rates.x, rates.y, t("rune.trait.odds"), () => openRuneTraitOdds({ scene: this, popups: this.popups }));
     this.synthOddsLink = addRatesButton(this, rates.x, rates.y, t("archaeology.synth.oddsTitle"), () => openRuneSynthesisOdds({ scene: this, popups: this.popups }));
-    // 합성 탭에서만 확률 버튼 바로 아래(연구소의 연구 기록 자리)에 룬 가방이 선다 — 로비와 같은 가방 판 한 장을 연다.
+    // 특성 연구·합성 탭에서 확률 버튼 바로 아래(연구소의 연구 기록 자리)에 룬 가방이 선다 — 로비와 같은 가방 판 한 장을 연다.
     const bag = RATES_SPOT.bagChip;
     this.synthBagLink = new RailButton(this, bag.x, bag.y, { icon: "bag", label: t("archaeology.synth.bag"), size: bag.size, onClick: () => this.openRuneBag() });
     // 판(합성 판·특성 표)이 왼쪽 열까지 넓게 서므로 버튼은 판 위에 올린다 — 아래에 깔리면 글자가 판에 잘린다.
@@ -522,7 +522,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     if (this.inventoryPopup || this.popups.isOpen) return;
     this.inventoryPopup = new InventoryPopup(this, this.popups, gameApi, () => {
       this.inventoryPopup = undefined; this.inventoryBackButton?.destroy(); this.inventoryBackButton = undefined;
-      if (this.tab === "synth") this.paintView();
+      if (this.tab !== "strata") this.paintView();
     });
     this.inventoryPopup.open();
     this.inventoryBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.popups.backOr(() => this.inventoryPopup?.close()) }).setDepth(2700);
@@ -548,7 +548,8 @@ export class ArchaeologyScene extends Phaser.Scene {
       : { shop: { x: SIDE_SHOP.screen.x, y: SIDE_SHOP.screen.y } } });
     this.traitOddsLink?.setVisible(this.tab === "research");
     this.synthOddsLink?.setVisible(this.tab === "synth");
-    this.synthBagLink?.setVisible(this.tab === "synth");
+    // 룬 가방은 룬을 만지는 두 탭(특성 연구 · 합성)에서 같은 자리에 선다.
+    this.synthBagLink?.setVisible(this.tab !== "strata");
     // 판을 파는 동안에는 판과 범례가 주인공이라 지도 안내를 걷는다.
     if (this.tab === "strata") this.paintStrata();
     else if (this.tab === "research") this.paintResearch();

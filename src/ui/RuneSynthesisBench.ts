@@ -1,17 +1,17 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { BASE_WIDTH } from "../config/gameConfig";
-import { formatRuneOptionValue, runeOptionValue, runeRarityLabel, type RuneInstance, type RuneRarity, type RuneStatKey } from "../core/runes";
+import { formatRuneOptionValue, runeOptionValue, runeRarityLabel, type RuneInstance, type RuneStatKey } from "../core/runes";
 import { isRuneSynthesisMaterial, RUNE_SYNTHESIS_INPUTS, RUNE_SYNTHESIS_RULES, runeSynthesisRarityOdds, runeSynthesisTraitOdds } from "../core/runeSynthesis";
 import { RUNE_TRAIT_GRADES } from "../core/runeTraits";
 import { session } from "../state/session";
 import { Button } from "./Button";
 import { chipPoints, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
-import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { pressIn, pressOut } from "./pressFeedback";
-import { mountRunePickerGrid } from "./runePickerGrid";
-import { runePickerSize } from "./runePickerLayout";
+import { openRuneSelectPopup } from "./RuneSelectPopup";
+import { nextEmptySlot } from "./runeSelectLayout";
+import { addFormationRemoveChip } from "./formationSlotChrome";
 import { researchPlateBevel } from "./researchBenchLayout";
 import { addRuneFrame, RUNE_ACCENT } from "./runeIcons";
 import { RUNE_SYNTHESIS, RUNE_SYNTHESIS_INFO, runeSynthesisInfoBounds, runeSynthesisButtonCenter, runeSynthesisCenter, runeSynthesisOddsBounds, runeSynthesisPlateBounds, runeSynthesisVertices } from "./runeSynthesisLayout";
@@ -97,29 +97,40 @@ function addRuneDetail(scene: Phaser.Scene, parent: Phaser.GameObjects.Container
   parent.add(traitText);
 }
 
-const PICKER_EMPTY_HEIGHT = 420;
-
 /**
  * 넣을 룬을 고르는 가방.
  *
  * **넣을 수 있는 룬만 보여 준다** — 각인까지 마쳤고, 잠기지 않았고(끼고 있는 룬도 넣을 수 있다),
- * 이미 넣은 룬이 있으면 그 등급인 것. 못 쓰는 룬을 흐리게 늘어놓으면 왜 못 쓰는지 하나하나
- * 눌러 봐야 한다.
+ * 다른 칸에 넣지 않았고, 다른 칸에 넣은 룬이 있으면 그 등급인 것. 못 쓰는 룬을 흐리게 늘어놓으면 왜 못 쓰는지
+ * 하나하나 눌러 봐야 한다.
+ *
+ * 누르면 위 정보 판에 그 룬이 서고 「선택」을 눌러야 칸에 들어간다. 넣고 나면 판을 닫지 않고 **다음 빈 칸**으로
+ * 이어지며, 세 칸이 다 차면 닫힌다(`openRuneSelectPopup`). 판이 들고 있는 칸 상태는 이 판의 사본이다 —
+ * 넣을 때마다 화면이 합성대를 다시 그리므로 처음 받은 `slots`는 곧 낡는다.
  */
-function openSynthesisPicker(options: { scene: Phaser.Scene; popups: PopupLayer; rarity: RuneRarity | undefined; taken: ReadonlySet<string>; onPick: (rune: RuneInstance) => void }): void {
-  const { scene, popups } = options;
-  const runes = session.runeInventory
-    .filter((rune) => isRuneSynthesisMaterial(rune) && !options.taken.has(rune.instanceId) && (options.rarity === undefined || rune.rarity === options.rarity))
-    .sort((a, b) => RUNE_TRAIT_GRADES.indexOf(b.rarity) - RUNE_TRAIT_GRADES.indexOf(a.rarity) || (a.sequence ?? 0) - (b.sequence ?? 0));
-  const size = runePickerSize(runes.length);
-  const width = size.width;
-  const height = runes.length === 0 ? PICKER_EMPTY_HEIGHT : size.height;
-  popups.open({ width, height, title: t("archaeology.synth.pick"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
-    if (runes.length === 0) {
-      body.add(scene.add.text(0, 10, t("archaeology.synth.pickEmpty"), textStyle({ role: "body", size: 28, color: COLOR.inkDim, align: "center", wrap: width - 140 })).setOrigin(0.5));
-      return;
-    }
-    mountRunePickerGrid(scene, body, { popups, runes, isCovered: () => popups.isOpen, isActive: () => popups.isTop(body), onPick: (rune) => { close(); options.onPick(rune); } });
+function openSynthesisPicker(options: { scene: Phaser.Scene; popups: PopupLayer; slots: readonly (RuneInstance | undefined)[]; start: number; onPick: (index: number, rune: RuneInstance) => void }): void {
+  const live = [...options.slots];
+  let target = options.start;
+  const candidates = (): readonly RuneInstance[] => {
+    const others = live.filter((rune, index): rune is RuneInstance => rune !== undefined && index !== target);
+    const rarity = others[0]?.rarity;
+    const taken = new Set(live.flatMap((rune) => (rune ? [rune.instanceId] : [])));
+    return session.runeInventory
+      .filter((rune) => isRuneSynthesisMaterial(rune) && !taken.has(rune.instanceId) && (rarity === undefined || rune.rarity === rarity))
+      .sort((a, b) => RUNE_TRAIT_GRADES.indexOf(b.rarity) - RUNE_TRAIT_GRADES.indexOf(a.rarity) || (a.sequence ?? 0) - (b.sequence ?? 0));
+  };
+  openRuneSelectPopup({
+    scene: options.scene, popups: options.popups, title: t("archaeology.synth.pick"),
+    candidates, emptyText: t("archaeology.synth.pickEmpty"),
+    slots: { filled: () => live, target: () => target },
+    onSelect: (rune) => {
+      live[target] = rune;
+      options.onPick(target, rune);
+      const next = nextEmptySlot(live.map((slot) => slot !== undefined), target);
+      if (next < 0) return false;
+      target = next;
+      return true;
+    },
   });
 }
 
@@ -272,7 +283,6 @@ export function addRuneSynthesisBench(options: RuneSynthesisBenchOptions): RuneS
   });
 
   const core = addCore(scene, parent, center.x, center.y, placed.length, tone);
-  const taken = new Set(placed.map(({ instanceId }) => instanceId));
   const frames = vertices.map((vertex, index) => {
     const rune = slots[index];
     const holder = scene.add.container(vertex.x, vertex.y);
@@ -289,11 +299,11 @@ export function addRuneSynthesisBench(options: RuneSynthesisBenchOptions): RuneS
     hit.on("pointerup", () => {
       pressOut(holder);
       if (options.busy) return;
-      // 넣은 칸을 다시 누르면 뺀다 — 고르기 창을 다시 열어 바꾸는 것보다 손이 한 번 덜 든다.
-      if (rune) { options.onClear(index); return; }
-      openSynthesisPicker({ scene, popups: options.popups, rarity, taken, onPick: (picked) => options.onPick(index, picked) });
+      // 넣은 칸을 다시 누르면 그 칸을 갈아 끼우는 가방이 열린다 — 빼기는 칸 모서리의 붉은 칩이 맡는다(연구대와 같은 손).
+      openSynthesisPicker({ scene, popups: options.popups, slots, start: index, onPick: options.onPick });
     });
     holder.add(hit);
+    if (rune && !options.busy) addFormationRemoveChip(scene, holder, { x: 0, y: 0, width: RUNE_SYNTHESIS.slot, height: RUNE_SYNTHESIS.slot }, () => options.onClear(index));
     return rune ? holder : undefined;
   });
 

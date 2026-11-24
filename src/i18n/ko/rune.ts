@@ -70,6 +70,8 @@ export const RUNE_KO = {
 
   "rune.trait.title": "특성",
   "rune.trait.none": "특성 없음",
+  "rune.pick.select": "선택",
+  "rune.pick.hint": "아래 목록에서 룬을 고르세요.",
   "rune.trait.odds": "확률 정보",
   "rune.trait.odds.upgradeTitle": "등급 상승",
   "rune.trait.odds.listTitle": "특성 목록",

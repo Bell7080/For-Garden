@@ -283,6 +283,7 @@ export class StageCompletePopup {
     let puppetLayer: Phaser.GameObjects.Container | undefined;
     const puppets = new Set<PuppetCreature>();
     let attackButton: Button | undefined;
+    let stopGrowthScenes: (() => void) | undefined;
     let disposed = false;
     setDebugRewardPopup(true, shownRewards, { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 });
     this.popups.open({
@@ -295,6 +296,7 @@ export class StageCompletePopup {
       closeOnBackdrop: true, hideCloseButton: true,
       onClose: () => {
         disposed = true;
+        stopGrowthScenes?.();
         hint?.destroy();
         autoBanner?.destroy();
         if (refundToast) { this.scene.tweens.killTweensOf(refundToast); refundToast.destroy(); }
@@ -355,7 +357,12 @@ export class StageCompletePopup {
           const tilesTop = carried.length > 0
             ? DEFEAT_ACTIONS.belowLoot - 43 + (footnote !== undefined ? DEFEAT_ACTIONS.footnoteShift : 0) + this.shiftY
             : bandTop + Math.max(0, (DEFEAT_BAND.bottom - bandTop - groupHeight) / 2);
-          addGrowthPathTiles(this.scene, body, tilesTop, growth.paths, (path) => { growth.onPick(path); close(); });
+          const layer = puppetLayer;
+          stopGrowthScenes = addGrowthPathTiles(this.scene, body, tilesTop, growth.paths, (path) => { growth.onPick(path); close(); }, layer ? {
+            host: { layer, puppets, isDisposed: () => disposed },
+            origin: { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 },
+            party: options.fighters.map((fighter) => fighter.relicId),
+          } : undefined);
           const rowWidth = growth.paths.length * GROWTH_TILES.width + (growth.paths.length - 1) * GROWTH_TILES.gap;
           this.buildDefeatRow(body, close, actions, tilesTop + GROWTH_TILES.height + DEFEAT_ROW.tilesGap + DEFEAT_ROW.height / 2, rowWidth);
         } else {

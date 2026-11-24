@@ -440,10 +440,15 @@ export class InteractionCityPopup {
 
   /** 그 도시에 마지막으로 보낸 편성 중 지금 세울 수 있는 이. 서버 규칙은 보낼 때 그대로 다시 본다. */
   private rememberedParty(view: InteractionLayerView): (string | null)[] {
-    const dispatches = session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null);
+    return this.restoreParty(view, settingsManager.interactionParty(view.city.id));
+  }
+
+  /** 자리 목록을 지금 세울 수 있는 이로만 되살린다. `released`는 방금 받아 더는 나가 있지 않은 파견이다. */
+  private restoreParty(view: InteractionLayerView, preferred: readonly (string | null)[] | undefined, released?: string): (string | null)[] {
+    const dispatches = session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null && slot.dispatchId !== released);
     const away = relicsAwayOnInteraction(dispatches);
     const available = new Set([...session.owned].filter((id) => !away.has(id)));
-    return restoreInteractionParty(settingsManager.interactionParty(view.city.id), available, view.city.partySize.max);
+    return restoreInteractionParty(preferred, available, view.city.partySize.max);
   }
 
   /** 지금 세운 편성의 특성. 예상 보상과 보내기 버튼의 배율이 같은 값을 읽는다. */
@@ -939,14 +944,6 @@ export class InteractionCityPopup {
     } finally { this.busy = false; this.render(); }
   }
 
-  /** 받은 뒤 같은 도시 판을 다시 연다. 그 사이 화면을 떠났거나 도시가 비어 있지 않으면 열지 않는다. */
-  private reopenIdle(cityId: string, hooks: { onChanged?: () => void; onOpenJournal?: (cityId: string) => void; now: () => number }): void {
-    if (!this.scene.sys.isActive()) return;
-    const dispatches = session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null);
-    const next = interactionLayerViews(session.playerResearch.level, dispatches, hooks.now()).find((view) => view.city.id === cityId);
-    if (next?.state === "idle") this.open(next, hooks);
-  }
-
   /** 서 있는 SD가 한 번씩 폴짝 뛴다. 칸마다 박자가 달라 셋이 한 몸으로 흔들리지 않는다. */
   private async hopFarewell(): Promise<void> {
     const jumps = [...this.puppets].map(([relicId, puppet]) => new Promise<void>((resolve) => {
@@ -964,28 +961,51 @@ export class InteractionCityPopup {
   }
 
   private async claim(dispatch: InteractionDispatchSnapshot | undefined): Promise<void> {
-    if (!dispatch || this.busy) return;
+    const view = this.view;
+    if (!dispatch || !view || this.busy) return;
     this.busy = true; this.render();
     try {
       const response = await this.manager.claim(dispatch.dispatchId, crypto.randomUUID());
       // 로비 교류 입구의 귀환 점이 곧바로 꺼진다.
       void notificationManager.refresh().catch(() => undefined);
-      this.popups.closeAll();
+      // **판을 닫지 않는다**(응태 2026-11-24). 받은 그 자리에서 같은 판이 「비어 있음」으로 바뀌고,
+      // 방금 다녀온 이들이 제 칸에 그대로 서 있어 「파견 보내기」 한 번이면 곧바로 다시 간다.
+      // 예전에는 판을 닫고 영수증을 띄운 뒤 영수증이 닫힐 때 다시 열었는데, 원격 저장이 아직
+      // 받기 전 상태를 들고 있거나 기억이 없던 파견(그 기능 전에 보낸 것)이면 판이 열리지 않거나
+      // 빈 칸으로 섰다. 이제는 세션을 다시 읽지 않고 **방금 받은 파견**에서 곧바로 판을 세운다.
+      this.adoptClaimed(view, dispatch);
       this.onChanged?.();
-      // 영수증은 공용 표기 한 장이 그린다 — 재화 키를 아이콘으로 바꾸는 표도 그쪽이 갖는다.
-      // 영수증을 닫으면 **같은 도시 판이 비어 있는 채로 다시 선다** — 방금 다녀온 이들이 제 자리에
-      // 그대로 서 있어 보내기 한 번이면 곧바로 다시 간다(`rememberedParty`). 목록으로 나가려면 판 밖을 누른다.
-      const hooks = { onChanged: this.onChanged, onOpenJournal: this.onOpenJournal, now: this.now };
-      const cityId = dispatch.cityId;
+      // 영수증은 판 위에 겹쳐 선다 — 닫으면 그 아래에 이미 보낼 준비가 된 판이 있다.
       openRewardPopup(this.scene, this.popups, {
         title: t("interaction.rewardTitle"),
         items: currencyRecordToRewardItems(Object.fromEntries(response.granted.map(({ currency, amount }) => [currency, amount]))),
-        // 영수증이 닫히는 처리 안에서 판을 다시 열면 같은 층이 닫힘과 열림을 겹쳐 받는다 — 한 박자 뒤로 민다.
-        onConfirm: () => { this.scene.time.delayedCall(0, () => this.reopenIdle(cityId, hooks)); },
+        // 아래에 판이 그대로 서 있으므로 평소보다 짙게 눌러 영수증이 판의 칸·글과 섞이지 않게 한다.
+        dimAlpha: 0.8,
       });
+    } catch {
+      if (this.body) this.popups.confirm({ title: view.city.displayName, message: t("lab.networkError"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
     } finally {
-      // 실패해도 버튼이 「수령 중…」에 갇히지 않게 다시 그린다. 성공 뒤에는 판이 닫혀 render가 아무것도 하지 않는다.
+      // 실패해도 버튼이 「수령 중…」에 갇히지 않게 다시 그린다.
       this.busy = false; this.render();
     }
   }
+
+  /**
+   * 받은 파견의 판을 그 자리에서 「비어 있음」으로 갈아 끼운다. 칸에는 방금 다녀온 이들이 선다 —
+   * 기억한 자리가 같은 구성이면 그 자리 그대로, 아니면(기억이 없던 파견) 다녀온 순서대로.
+   * 받은 파견은 이제 나가 있지 않으므로, 원격 상태가 아직 따라오지 않았어도 그 셋은 빼지 않는다.
+   */
+  private adoptClaimed(view: InteractionLayerView, claimed: InteractionDispatchSnapshot): void {
+    const remembered = settingsManager.interactionParty(view.city.id);
+    const sameCrew = !!remembered
+      && remembered.filter((id): id is string => id !== null).sort().join("|") === [...claimed.party].sort().join("|");
+    const preferred = sameCrew ? remembered : toFormationSlots(claimed.party, 3);
+    this.view = { city: view.city, state: "idle" };
+    this.party = this.restoreParty(view, preferred, claimed.dispatchId);
+    settingsManager.rememberInteractionParty(view.city.id, this.party);
+    this.editing = false;
+    this.selectedSlot = undefined;
+    this.render();
+  }
+
 }

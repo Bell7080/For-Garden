@@ -23,7 +23,10 @@ test("층을 눌러 파견을 보내고 재접속 뒤 완료 보상까지 받는
   // 층 → 도시 쪽지 → 칸을 눌러 배치 → 자동 배치 → 파견 순으로 실제 손이 가는 길을 따른다.
   // 위 칸의 세 자리는 늘 서 있고 아래 칸만 안내와 목록으로 교대한다.
   await tapUntil(page, FIRST_LAYER.x, FIRST_LAYER.y, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).some((title) => title.includes("교류부")));
+  // 판이 떠오르는 동안의 누름은 받지 않으므로 다 선 뒤에 누른다.
+  await page.waitForTimeout(800);
   await tap(page, FIRST_SLOT.x, FIRST_SLOT.y);
+  await page.waitForTimeout(400);
   await tap(page, AUTO_ASSIGN.x, AUTO_ASSIGN.y);
   await tap(page, SEND.x, SEND.y);
   await expect
@@ -34,6 +37,8 @@ test("층을 눌러 파견을 보내고 재접속 뒤 완료 보상까지 받는
   await page.evaluate((key) => {
     const data = JSON.parse(localStorage.getItem(key)!);
     data.interaction.slots[0].completesAt = new Date(Date.now() - 1000).toISOString();
+    // 편성 기억이 없던 파견(그 기능 전에 보냈거나 다른 기기에서 보낸 것)도 받은 뒤 다녀온 이들이 그대로 선다.
+    if (data.settings?.game) data.settings.game.interactionParties = {};
     localStorage.setItem(key, JSON.stringify(data));
   }, SAVE_STORAGE_KEY);
   await page.reload();
@@ -42,25 +47,32 @@ test("층을 눌러 파견을 보내고 재접속 뒤 완료 보상까지 받는
   await tapUntil(page, 250, 1340, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "interaction");
 
   await tapUntil(page, FIRST_LAYER.x, FIRST_LAYER.y, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).some((title) => title.includes("교류부")));
+  await page.waitForTimeout(800);
   await tap(page, CLAIM.x, CLAIM.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("교류 보상");
+  // 받아도 도시 판은 닫히지 않는다 — 영수증이 그 위에 겹쳐 선다.
+  expect((await page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).some((title) => title.includes("교류부"))).toBe(true);
   await expect
     .poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).interaction.slots[0]?.claimed, SAVE_STORAGE_KEY))
     .toBe(true);
   const sent = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).interaction.slots[0].party as string[], SAVE_STORAGE_KEY);
   if (process.env.CAPTURE_DIR) await page.screenshot({ path: `${process.env.CAPTURE_DIR}/1-reward.png` });
 
-  // 영수증을 닫으면 같은 도시 판이 다시 서고, 다녀온 이들이 제자리에 그대로 서 있다 — 보내기 한 번이면 다시 간다.
+  // 영수증을 닫으면 아래에 남아 있던 같은 도시 판이 보이고, 다녀온 이들이 제자리에 그대로 서 있다 — 보내기 한 번이면 다시 간다.
   // 액자를 누르면 재화 안내가 열리므로 영수증 밑동의 빈 자리를 누른다.
   await tap(page, CENTER.x, 1820);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).toEqual(expect.arrayContaining([expect.stringContaining("교류부")]));
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).not.toContain("교류 보상");
+  expect((await page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).some((title) => title.includes("교류부"))).toBe(true);
   await page.waitForTimeout(900);
   if (process.env.CAPTURE_DIR) await page.screenshot({ path: `${process.env.CAPTURE_DIR}/2-reopened.png` });
+  // 연타해도 한 번만 간다 — 보내는 동안 버튼이 잠긴다.
+  await tap(page, CLAIM.x, CLAIM.y);
   await tap(page, CLAIM.x, CLAIM.y);
   await expect
     .poll(() => page.evaluate((key) => (JSON.parse(localStorage.getItem(key)!).interaction.slots as { claimed: boolean; party: string[] }[]).find((slot) => slot && !slot.claimed)?.party ?? null, SAVE_STORAGE_KEY))
     .toEqual(sent);
   await page.waitForTimeout(900);
+  expect(await page.evaluate((key) => (JSON.parse(localStorage.getItem(key)!).interaction.slots as ({ claimed: boolean } | null)[]).filter((slot) => slot && !slot.claimed).length, SAVE_STORAGE_KEY)).toBe(1);
   if (process.env.CAPTURE_DIR) await page.screenshot({ path: `${process.env.CAPTURE_DIR}/3-resent.png` });
 });
 

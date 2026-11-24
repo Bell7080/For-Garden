@@ -356,7 +356,6 @@ export const MISC_EN = {
   "dialogue.auto": "Auto",
   "dialogue.log": "Log",
   "dialogue.hide": "Hide",
-  "dialogue.settings": "Settings",
   "intro.title": "Guide",
   "intro.confirm": "Got it",
   "tutorial.tour.next": "Tap to continue · {step}/{total}",

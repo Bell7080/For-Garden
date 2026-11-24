@@ -354,7 +354,6 @@ export const MISC_RU = {
   "dialogue.auto": "Авто",
   "dialogue.log": "Лог",
   "dialogue.hide": "Скрыть",
-  "dialogue.settings": "Настройки",
   "intro.title": "Подсказка",
   "intro.confirm": "Понятно",
   "tutorial.tour.next": "Нажмите, чтобы продолжить · {step}/{total}",

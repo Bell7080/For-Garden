@@ -38,12 +38,13 @@ test("대사 도중 설정을 열고 닫아도 이야기가 그 자리에서 잇
   // 자동 진행을 켠다(제목표가 걷히는 동안은 막이 손을 받으므로 켜질 때까지 누른다).
   await tapUntil(page, toolX(0), TOOL_Y, () => autoOn(page), { gapMs: 1_500 });
   await page.waitForTimeout(400);
-  if (SHOTS) await captureGame(page, `${SHOTS}/1-story-chip.png`);
+  if (SHOTS) await captureGame(page, `${SHOTS}/1-story.png`);
   const before = (await debug(page)).node;
   expect(before).toBeTruthy();
 
   // 설정 칩 → 설정이 겹쳐 열린다.
-  await tap(page, toolX(3), TOOL_Y);
+  // 우상단 설정 톱니 — 상단 줄과 같은 자리(`SettingsGear`).
+  await tap(page, BASE_WIDTH - 58, 86);
   await expect.poll(async () => (await debug(page)).scene, { timeout: 10_000 }).toBe("settings");
   await page.waitForTimeout(600);
   if (SHOTS) await captureGame(page, `${SHOTS}/2-settings-over-story.png`);

@@ -1,9 +1,8 @@
 import Phaser from "phaser";
-import { registerSettingsAccess } from "./settingsAccess";
+import { addSettingsGear, settingsGearY } from "./SettingsGear";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugProgress } from "../debug";
 import { session } from "../state/session";
-import { drawGlyph } from "./glyphs";
 import { formatCurrency } from "../core/formatCurrency";
 import { drawGlassFade, drawHairline, HoloBar } from "./holo";
 import { ProfileAvatar } from "./ProfileAvatar";
@@ -105,18 +104,11 @@ export class TopBar {
 
     // 설정 — 오른쪽 끝. 어느 화면에서나 눌린다(편성·지도처럼 돌아올 자리를 다시 세울 수 없는 화면은
     // `openSettingsOver`로 겹쳐 연다). 서 있는데 눌리지 않는 아이콘을 다시 만들지 않는다.
-    const settings = scene.add.container(BASE_WIDTH - 58, y + 46);
-    settings.add(drawGlyph(scene, "settings", 0, 0, 42, 0xc9ccd2));
-    const hit = scene.add.rectangle(BASE_WIDTH - 58, y + 46, 84, 84, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => pressIn(settings));
-    hit.on("pointerout", () => pressOut(settings, "normal", { pop: false }));
-    hit.on("pointerup", () => { pressOut(settings); options.onSettings(); });
+    addSettingsGear(scene, settingsGearY(y), () => options.onSettings());
 
     if (before && options.depth !== undefined) {
       for (const child of scene.children.list) if (!before.has(child)) (child as unknown as Phaser.GameObjects.Components.Depth).setDepth?.(options.depth);
     }
-    // 튜토리얼 막이 화면을 덮어도 설정만은 열리게 막 위로 올라갈 수 있게 적어 둔다(`settingsAccess`).
-    registerSettingsAccess(scene, [settings], hit);
     this.refresh();
     // 회복 카운트다운은 표시만 갱신하며 확정 스테미나는 다음 서버 응답만 반영한다.
     scene.time.addEvent({ delay: 1_000, loop: true, callback: () => this.refresh() });

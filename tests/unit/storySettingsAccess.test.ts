@@ -13,7 +13,7 @@ describe("이야기 도중 설정", () => {
     expect(new DialogueFlow(OPENING_TRAIN).current.id).toBe(OPENING_TRAIN.startNodeId);
   });
 
-  it("두 이야기 화면이 대사판 도구 줄에 설정 칩을 세우고 겹쳐 연다", () => {
+  it("두 이야기 화면이 다른 화면과 같은 우상단 톱니로 설정을 겹쳐 연다", () => {
     for (const [file, host] of [["src/scenes/OpeningScene.ts", "opening"], ["src/scenes/StageStoryScene.ts", "stageStory"]] as const) {
       const text = source(file);
       expect(text).toContain("onSettings:");
@@ -22,11 +22,16 @@ describe("이야기 도중 설정", () => {
       expect(text).toContain("resumeNodeId: this.flow.current.id");
       expect(text).toMatch(/titleCard && !this\.resuming/);
     }
-    expect(source("src/ui/DialogueLayer.ts")).toContain('t("dialogue.settings")');
+    const layer = source("src/ui/DialogueLayer.ts");
+    expect(layer).toContain("addSettingsGear(this.ownerScene, settingsGearY()");
+    expect(layer).not.toContain('icon: "settings"');
+    // QA 건너뛰기는 우상단을 톱니에 내주고 좌상단에 선다.
+    expect(source("src/scenes/OpeningScene.ts")).toContain("new Button(this, 150, 72,");
   });
 
   it("튜토리얼 막이 서도 설정을 여는 조각은 막 위로 올라간다", () => {
-    expect(source("src/ui/TopBar.ts")).toContain("registerSettingsAccess(scene, [settings], hit)");
+    expect(source("src/ui/TopBar.ts")).toContain("addSettingsGear(scene, settingsGearY(y)");
+    expect(source("src/ui/SettingsGear.ts")).toContain("registerSettingsAccess(scene, [icon], hit)");
     expect(source("src/ui/TutorialSpotlight.ts")).toContain("raiseSettingsAccess(scene, depth)");
     expect(source("src/ui/tutorialTarget.ts")).toContain("raiseSettingsAccess(scene, 6000)");
     const battle = source("src/scenes/BattleScene.ts");

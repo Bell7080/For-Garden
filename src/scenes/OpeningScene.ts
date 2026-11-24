@@ -95,9 +95,9 @@ export class OpeningScene extends Phaser.Scene {
     }).setDepth(700);
   }
 
-  /** 개발자용 임시 건너뛰기 — 제목표·대사판보다 위에 선다. */
+  /** 개발자용 임시 건너뛰기 — 제목표·대사판보다 위에 선다. 우상단은 설정 톱니 자리라 좌상단에 선다. */
   private addDevSkip(): void {
-    new Button(this, BASE_WIDTH - 150, 72, {
+    new Button(this, 150, 72, {
       width: 240,
       height: 64,
       label: t("opening.devSkip"),

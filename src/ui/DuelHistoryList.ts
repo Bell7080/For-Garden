@@ -13,6 +13,9 @@ import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 import { attachDragScroll } from "./dragScroll";
 import { addScrollHint } from "./ScrollHint";
+import { addPlayerProfileTap } from "./PlayerProfileLink";
+import type { PopupLayer } from "./PopupLayer";
+import type { ClipRect } from "./clipRect";
 
 const H = DUEL_SCREEN.history;
 const ROW_WIDTH = DUEL_SCREEN.width;
@@ -30,32 +33,36 @@ const AGE_KEY: Record<Exclude<ReturnType<typeof duelHistoryAge>["unit"], "now">,
  * 줄이 창보다 길면 판 안에서만 흐른다(목록을 담은 컨테이너만 움직이고 마스크는 화면 좌표에 고정).
  * 기록이 없으면 제목표만 서고 칸을 비운다 — "아직 기록이 없다"는 지금 할 일을 바꾸지 않는다.
  */
-export function paintDuelHistory(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, history: readonly DuelHistoryEntry[], nowMs: number): void {
+export function paintDuelHistory(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, history: readonly DuelHistoryEntry[], nowMs: number, popups: PopupLayer): void {
   addSectionTitle(scene, DUEL_SCREEN.side, H.titleY, t("duel.history.title"), { parent });
   if (history.length === 0) return;
 
   const list = scene.add.container(BASE_WIDTH / 2, H.top);
   parent.add(list);
-  history.forEach((entry, index) => paintRow(scene, list, entry, duelHistoryRowY(index), nowMs));
+  const viewport = H.bottom - H.top;
+  // 줄 얼굴의 카드 입구는 목록 창 안의 누름만 받는다 — 흘러 창 밖으로 나간 줄이 눌리지 않게.
+  const clip = { left: BASE_WIDTH / 2 - ROW_WIDTH / 2, right: BASE_WIDTH / 2 + ROW_WIDTH / 2, top: H.top, bottom: H.bottom };
+  history.forEach((entry, index) => paintRow(scene, list, entry, duelHistoryRowY(index), nowMs, popups, clip));
 
   const minY = duelHistoryMinScroll(history.length);
   if (minY === 0) return;
-  const viewport = H.bottom - H.top;
   const maskShape = scene.add.rectangle(BASE_WIDTH / 2, H.top + viewport / 2, BASE_WIDTH, viewport, 0xffffff).setVisible(false);
   list.setMask(maskShape.createGeometryMask());
   // 마스크는 그것이 자르는 목록과 같은 목숨을 산다.
   list.once(Phaser.GameObjects.Events.DESTROY, () => { list.clearMask(true); maskShape.destroy(); });
-  const clip = { left: BASE_WIDTH / 2 - ROW_WIDTH / 2, right: BASE_WIDTH / 2 + ROW_WIDTH / 2, top: H.top, bottom: H.bottom };
   // 입력면을 꺼 두면 안 된다 — 끌기 판정(`attachDragScroll`의 root)은 누른 자리의 맨 위 개체가 이 화면 안인지를 보는데,
   // 줄에는 손을 받는 개체가 없어 판정이 비고, 그러면 스크롤이 막혀 목록이 내려가지 않았다.
   const hit = addClippedHit(scene, parent, BASE_WIDTH / 2, H.top + viewport / 2, ROW_WIDTH, viewport, () => clip, { useHandCursor: false });
+  // 끄는 면은 목록 **아래**에 깐다 — 위에 두면 줄 얼굴의 카드 입구를 덮는다.
+  parent.remove(hit);
+  parent.addAt(hit, parent.getIndex(list));
   let offset = 0;
   const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, minY, 0); list.y = H.top + offset; };
   attachDragScroll(scene, { owner: hit, root: parent, bounds: () => new Phaser.Geom.Rectangle(clip.left, clip.top, clip.right - clip.left, clip.bottom - clip.top), onDelta: move });
   addScrollHint(scene, parent, { x: BASE_WIDTH / 2, y: H.top + viewport / 2, width: ROW_WIDTH, height: viewport, owner: hit, read: () => ({ offset, min: minY }) });
 }
 
-function paintRow(scene: Phaser.Scene, list: Phaser.GameObjects.Container, entry: DuelHistoryEntry, y: number, nowMs: number): void {
+function paintRow(scene: Phaser.Scene, list: Phaser.GameObjects.Container, entry: DuelHistoryEntry, y: number, nowMs: number, popups: PopupLayer, clip: ClipRect): void {
   const color = entry.won ? COLOR.accent : COLOR.danger;
   const tone = entry.opponentTierId ? DUEL_TIER_COLOR[entry.opponentTierId] : undefined;
   list.add(drawLayer(scene, 0, y, chipPoints(ROW_WIDTH, H.rowHeight), { fill: entry.won ? 0x1d2630 : 0x241a1f, alpha: HOLO.glass, edge: color, edgeAlpha: 0.6 }));
@@ -68,8 +75,12 @@ function paintRow(scene: Phaser.Scene, list: Phaser.GameObjects.Container, entry
   const age = duelHistoryAge(entry.at, nowMs);
   list.add(scene.add.text(ROW.resultX, y + 40, age.unit === "now" ? t("duel.history.ago.now") : t(AGE_KEY[age.unit], { value: age.value }), textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
 
+  // 얼굴을 누르면 그 사람의 플레이어 카드가 뜬다 — 싸운 뒤의 기록이라 덱이 드러나 있어 가릴 것이 없다.
+  const face = list.scene.add.container(ROW.faceX, y);
+  list.add(face);
+  addPlayerProfileTap(scene, face, H.faceSize + 24, H.faceSize + 24, popups, { playerId: entry.opponentId }, clip);
   if (entry.opponentFavoriteRelicId) {
-    list.add(new FaceFrame(scene, ROW.faceX, y, { portraitAssetId: getRelic(entry.opponentFavoriteRelicId).portraitAssetId, size: H.faceSize, color: tone?.fill ?? COLOR.panelEdge }));
+    face.add(new FaceFrame(scene, 0, 0, { portraitAssetId: getRelic(entry.opponentFavoriteRelicId).portraitAssetId, size: H.faceSize, color: tone?.fill ?? COLOR.panelEdge }));
   }
   list.add(squeezeTextToWidth(scene.add.text(ROW.nameX, y - 40, entry.opponentName, textStyle({ role: "display", size: 30, color: COLOR.ink })).setOrigin(0, 0.5), ROW.nameRoom));
   if (entry.opponentTierId && tone) {

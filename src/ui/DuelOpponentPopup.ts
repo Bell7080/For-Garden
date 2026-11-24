@@ -13,6 +13,7 @@ import { DUEL_OPPONENT_POPUP as P, DUEL_TIER_COLOR, duelOpponentPopupHeight, due
 import { drawGlyph } from "./glyphs";
 import { FaceFrame } from "./FaceFrame";
 import { addRankingFace } from "./rankingFace";
+import { addPlayerProfileTap, duelOpponentProfileTarget } from "./PlayerProfileLink";
 import { chipPoints, drawLayer, HOLO } from "./holo";
 import { addItemFrame } from "./itemFrame";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
@@ -58,7 +59,7 @@ export function openDuelOpponentPopup(scene: Phaser.Scene, popups: PopupLayer, s
       rows = next.opponents.map((opponent, index) => {
         const row = scene.add.container(0, 0);
         body.add(row);
-        paintRow(scene, row, next, opponent, duelOpponentRowY(index, count), () => { close(); handlers.onChallenge(opponent); });
+        paintRow(scene, popups, row, next, opponent, duelOpponentRowY(index, count), () => { close(); handlers.onChallenge(opponent); });
         return row;
       });
       stackIn(scene, rows, motion);
@@ -158,14 +159,18 @@ function stackOut(scene: Phaser.Scene, rows: readonly Phaser.GameObjects.Contain
   });
 }
 
-function paintRow(scene: Phaser.Scene, popupBody: Phaser.GameObjects.Container, status: DuelStatusResponse, opponent: DuelOpponentDto, y: number, onChallenge: () => void): void {
+function paintRow(scene: Phaser.Scene, popups: PopupLayer, popupBody: Phaser.GameObjects.Container, status: DuelStatusResponse, opponent: DuelOpponentDto, y: number, onChallenge: () => void): void {
   // 줄 하나를 한 덩어리로 담아, 싸운 상대는 덩어리째 가라앉힌다.
   const body = scene.add.container(0, 0);
   popupBody.add(body);
   const tone = DUEL_TIER_COLOR[opponent.tierId];
   body.add(drawLayer(scene, 0, y, chipPoints(P.rowWidth, P.rowHeight), { fill: 0x171d25, alpha: HOLO.glass, edge: tone.fill, edgeAlpha: 0.55 }));
   // 얼굴 — 그 사람의 프로필(사진 + 테두리). 사진이 가린 방어 칸이면 서버가 비워 드러난 렐릭 얼굴로 선다.
-  addRankingFace(scene, body, opponent, opponent.displayName, { x: P.faceX, y, size: P.avatarSize });
+  // 얼굴을 누르면 그 사람의 플레이어 카드가 이 창 위에 겹쳐 뜬다 — 가려진 칸은 카드에서도 드러나지 않는다.
+  const face = scene.add.container(P.faceX, y);
+  body.add(face);
+  addPlayerProfileTap(scene, face, P.avatarSize + 36, P.avatarSize + 36, popups, duelOpponentProfileTarget(opponent));
+  addRankingFace(scene, face, opponent, opponent.displayName, { x: 0, y: 0, size: P.avatarSize });
 
   body.add(squeezeTextToWidth(scene.add.text(P.textX, y - 62, opponent.displayName, textStyle({ role: "display", size: 32, color: COLOR.ink })).setOrigin(0, 0.5), P.textRoom));
   addDuelTierEmblem(scene, body, P.textX + 20, y - 8, 40, opponent.tierId);

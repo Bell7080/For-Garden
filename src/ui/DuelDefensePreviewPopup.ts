@@ -9,6 +9,7 @@ import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
 import { addDuelTierEmblem } from "./DuelTierEmblem";
 import { DUEL_TIER_COLOR } from "./duelLayout";
 import { addRankingFace } from "./rankingFace";
+import { addPlayerProfileTap, duelOpponentProfileTarget } from "./PlayerProfileLink";
 import { chipPoints, drawLayer } from "./holo";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { addSdFootShadow } from "./SdFootShadow";
@@ -59,7 +60,7 @@ export function openDuelDefensePreview(scene: Phaser.Scene, popups: PopupLayer, 
     width: L.width, height: layout.height, title: friendly ? t("arena.friend.previewTitle") : t("duel.defense.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.78, backButton: true,
     onClose: () => { if (!sortied) handlers.onBack(); },
   }, (body, close) => {
-    paintHead(scene, body, layout.headY, opponent, friendly);
+    paintHead(scene, popups, body, layout.headY, opponent, friendly);
     paintStage(scene, body, layout.stageY, opponent, tone.fill);
     const hidden = opponent.units.filter((unit) => !unit.relicId).length;
     if (hidden > 0) body.add(scene.add.text(0, layout.blindY, t("duel.defense.blind", { count: hidden }), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
@@ -71,11 +72,15 @@ export function openDuelDefensePreview(scene: Phaser.Scene, popups: PopupLayer, 
 }
 
 /** 누구의 방어팀인가 — 얼굴 · 이름 · 티어와 점수, 오른쪽에 총 전투력. */
-function paintHead(scene: Phaser.Scene, body: Phaser.GameObjects.Container, y: number, opponent: DuelOpponentDto, friendly?: DuelPreviewFriendly): void {
+function paintHead(scene: Phaser.Scene, popups: PopupLayer, body: Phaser.GameObjects.Container, y: number, opponent: DuelOpponentDto, friendly?: DuelPreviewFriendly): void {
   const H = DUEL_DEFENSE_PREVIEW.head;
   const tone = DUEL_TIER_COLOR[opponent.tierId];
   body.add(drawLayer(scene, 0, y, chipPoints(DUEL_DEFENSE_PREVIEW.stage.width, H.height, { bevel: { topLeft: 30, bottomRight: 30 } }), { fill: friendly ? ARENA_TONE.panel : 0x141a22, alpha: 0.94, edge: friendly ? ARENA_TONE.accent : tone.fill, edgeAlpha: 0.7 }));
-  addRankingFace(scene, body, opponent, opponent.displayName, { x: H.faceX, y, size: H.avatar });
+  // 얼굴을 누르면 그 사람의 플레이어 카드가 겹쳐 뜬다. 닫으면 이 미리보기로 돌아온다.
+  const face = scene.add.container(H.faceX, y);
+  body.add(face);
+  addPlayerProfileTap(scene, face, H.avatar + 36, H.avatar + 36, popups, duelOpponentProfileTarget(opponent));
+  addRankingFace(scene, face, opponent, opponent.displayName, { x: 0, y: 0, size: H.avatar });
   body.add(squeezeTextToWidth(scene.add.text(H.textX, y - 32, opponent.displayName, textStyle({ role: "display", size: 38, color: COLOR.ink })).setOrigin(0, 0.5), 400));
   if (friendly) {
     // 친선전에는 티어·점수가 걸리지 않는다 — 그 자리에 연구원 레벨과 「친선전」 한 마디만 선다.

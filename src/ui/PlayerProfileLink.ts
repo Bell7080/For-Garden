@@ -4,7 +4,7 @@ import { lastActiveAge, profileFriendAction, type FriendRelation, type ProfileFr
 import { t, type TextKey } from "../i18n";
 import { loadPlayerProfileDisplay } from "../managers/PlayerProfileManager";
 import { profileModifierManager } from "../managers/ProfileModifierManager";
-import { friendProfileDisplay, playerProfileDisplay } from "../state/playerProfile";
+import { concealProfileRelics, duelOpponentRevealedRelics, friendProfileDisplay, playerProfileDisplay } from "../state/playerProfile";
 import { session } from "../state/session";
 import { pointInClip, type ClipRect } from "./clipRect";
 import { showContentToast } from "./ContentToast";
@@ -26,6 +26,20 @@ export interface PlayerProfileTarget {
   /** 서버 계정 id. 없거나 표본·NPC라 카드가 없으면 줄이 눌리지 않는다. */
   playerId?: string;
   isMe?: boolean;
+  /**
+   * 있으면 카드에 이 렐릭들만 애착 렐릭·프로필 사진으로 선다(`concealProfileRelics`). 방어덱 일부가 가려진 결투 상대처럼
+   * 카드 한 장이 숨긴 칸을 드러내면 안 되는 자리가 넘긴다.
+   */
+  revealRelicIds?: readonly string[];
+}
+
+/**
+ * 결투 상대의 카드 입구. 가려진 방어 칸이 있으면 서버가 이미 공개한 렐릭(드러난 칸 · 서버가 골라 준 대표 얼굴·사진)만
+ * 카드에 세운다 — 상대 창·방어팀 미리보기가 같은 값을 읽는다. 싸운 뒤의 전적은 덱이 드러나 있어 이것을 쓰지 않는다.
+ */
+export function duelOpponentProfileTarget(opponent: Parameters<typeof duelOpponentRevealedRelics>[0] & { id: string }): PlayerProfileTarget {
+  const revealRelicIds = duelOpponentRevealedRelics(opponent);
+  return revealRelicIds ? { playerId: opponent.id, revealRelicIds } : { playerId: opponent.id };
 }
 
 /** 이 줄을 눌러 카드를 열 수 있는가. */
@@ -96,7 +110,9 @@ function showOtherCard(
     key: `player-profile-${popups.baseDepth}`, context: "friend",
     baseDepth: popups.baseDepth + 200, portraitDepth: popups.baseDepth + 201,
   });
-  const popup = new PlayerProfilePopup(scene, popups, friendProfileDisplay({ ...profile, lastActive: lastActiveText(profile.lastActiveAt, nowMs) }), () => undefined, undefined, {
+  const shown = friendProfileDisplay({ ...profile, lastActive: lastActiveText(profile.lastActiveAt, nowMs) });
+  const display = target.revealRelicIds ? concealProfileRelics(shown, target.revealRelicIds) : shown;
+  const popup = new PlayerProfilePopup(scene, popups, display, () => undefined, undefined, {
     title: t(relation === "friend" ? "friends.profile" : "profile.title"),
     onFavorite: () => info.showFriend(profile.favoriteRelic),
     actions: [action],

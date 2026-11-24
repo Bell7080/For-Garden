@@ -28,6 +28,8 @@ export interface DuelHistoryEntry {
   opponentUnits?: DuelHistoryUnit[];
   /** 표본 상대가 내 방어덱을 친 판(`won`은 내가 막아 냈는가)이면 `"defense"`. 없으면 내가 건 공격 판이다. */
   side?: "defense";
+  /** 상대의 서버 계정 id — 전적 줄의 얼굴이 그 사람의 카드를 연다. 이 칸이 생기기 전 기록과 표본 상대에는 없다. */
+  opponentId?: string;
 }
 
 export interface DuelHistoryUnit { relicId: string; level: number; }
@@ -120,7 +122,7 @@ const stringList = (value: unknown, limit: number): string[] =>
  */
 /** 전적 한 줄의 덧붙은 칸(티어·얼굴·덱)은 읽을 수 있을 때만 남긴다 — 옛 기록은 그 칸 없이 선다. */
 function normalizeHistoryEntry(entry: DuelHistoryEntry): DuelHistoryEntry {
-  const { opponentTierId, opponentFavoriteRelicId, opponentUnits, side, ...base } = entry;
+  const { opponentTierId, opponentFavoriteRelicId, opponentUnits, side, opponentId, ...base } = entry;
   const units = Array.isArray(opponentUnits)
     ? opponentUnits.filter((unit): unit is DuelHistoryUnit => !!unit && typeof unit.relicId === "string" && isCount(unit.level)).slice(0, 3).map(({ relicId, level }) => ({ relicId, level }))
     : [];
@@ -130,6 +132,7 @@ function normalizeHistoryEntry(entry: DuelHistoryEntry): DuelHistoryEntry {
     ...(typeof opponentFavoriteRelicId === "string" ? { opponentFavoriteRelicId } : {}),
     ...(units.length > 0 ? { opponentUnits: units } : {}),
     ...(side === "defense" ? { side } : {}),
+    ...(typeof opponentId === "string" && opponentId.length > 0 && opponentId.length <= 64 ? { opponentId } : {}),
   };
 }
 

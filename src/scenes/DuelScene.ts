@@ -125,7 +125,7 @@ export class DuelScene extends Phaser.Scene {
     setDebugScene("duel", `${status.tierId}:${status.score}:${this.tab}`);
     this.view.removeAll(true);
     if (this.tab === "battle") this.paintBattle(status);
-    else paintDuelHistory(this, this.view, status.history, Date.parse(status.serverTime));
+    else paintDuelHistory(this, this.view, status.history, Date.parse(status.serverTime), this.popups);
   }
 
   /** 좌하단 라벨 두 장. 다시 그리기 전에 옛 라벨을 지운다(남기면 누를 때마다 한 겹씩 쌓인다). */

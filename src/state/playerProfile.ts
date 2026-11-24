@@ -79,6 +79,8 @@ export interface FavoriteRelicShowcase {
 
 export interface PlayerCompetitiveStats {
   favoriteRelic: FavoriteRelicShowcase | null;
+  /** 애착 렐릭을 가렸다(`concealProfileRelics`) — 무대에 「미지정」이 아니라 `???`가 선다. */
+  favoriteConcealed?: boolean;
   /** 아레나 RP. 한 판도 하지 않았거나 공개하지 않았으면 비어 있다(그 칸이 「미배치」로 선다). 티어는 화면이 `arenaStanding`으로 읽는다. */
   arena?: ArenaPublicStanding;
   highestStage: { stageId: string; displayValue: string } | null;
@@ -242,6 +244,45 @@ export function friendProfileDisplay(friend: {
     equippedModifiers: friend.equippedModifiers.map((modifier) => ({ ...modifier })),
   };
 }
+
+/**
+ * **보여도 되는 렐릭만 남긴 카드** — 결투 상대처럼 방어덱 일부가 가려진 사람의 카드를 열 때 쓴다.
+ *
+ * 그 사람의 애착 렐릭·프로필 사진이 가려진 방어 칸이면 카드 한 장이 그 칸을 드러낸다. 화면은 어느 칸이 가려졌는지
+ * 모르므로, 서버가 이미 공개한 렐릭(드러난 방어 칸 · 서버가 골라 준 대표 얼굴)에 든 것만 그대로 두고 나머지는 가린다.
+ * 애착 렐릭은 `???`로, 사진은 머리글자로 선다. 공개한 것만 남기므로 가렸다는 사실이 새 정보를 주지 않는다.
+ */
+export function concealProfileRelics(display: PlayerProfileDisplay, revealed: readonly string[]): PlayerProfileDisplay {
+  const allowed = new Set(revealed);
+  const favorite = display.competitiveStats.favoriteRelic;
+  const hideFavorite = !!favorite && !allowed.has(favorite.relicId);
+  const hideAvatar = !!display.avatar && !allowed.has(display.avatar.relicId);
+  if (!hideFavorite && !hideAvatar) return display;
+  return {
+    ...display,
+    ...(hideAvatar ? { avatar: null, avatarAssetKey: undefined } : {}),
+    ...(hideFavorite ? { representativeRelic: CONCEALED_RELIC } : {}),
+    competitiveStats: { ...display.competitiveStats, ...(hideFavorite ? { favoriteRelic: null, favoriteConcealed: true } : {}) },
+  };
+}
+
+/**
+ * 결투 상대의 카드에 세워도 되는 렐릭 — 드러난 방어 칸과 서버가 골라 준 대표 얼굴·사진. 가려진 칸이 없으면 `undefined`
+ * (가릴 것이 없다). 서버는 가려진 칸이면 대표 얼굴을 드러난 칸으로 바꾸고 사진을 비워 보내므로 그 둘은 늘 공개 값이다.
+ */
+export function duelOpponentRevealedRelics(opponent: {
+  favoriteRelicId: string; avatarRelicId?: string | null; units: readonly { relicId: string | null }[];
+}): string[] | undefined {
+  if (opponent.units.every(({ relicId }) => relicId)) return undefined;
+  return [
+    ...opponent.units.flatMap(({ relicId }) => relicId ? [relicId] : []),
+    opponent.favoriteRelicId,
+    ...(opponent.avatarRelicId ? [opponent.avatarRelicId] : []),
+  ];
+}
+
+/** 가린 렐릭 자리의 표기 — 가려진 방어 칸과 같은 글자라 어느 언어에서나 같다. */
+export const CONCEALED_RELIC = "???";
 
 /**
  * 길드원 카드 — 친구 카드와 같은 한 장이다. 공개 값은 길드원이 마지막으로 길드에 들렀을 때 서버가 적어 둔 카드

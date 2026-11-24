@@ -6,7 +6,7 @@ import { DUEL_TIER_COLOR } from "./duelLayout";
 import Phaser from "phaser";
 import { portraitCardZoom } from "./portraitPlacement";
 import { t, type TextKey } from "../i18n";
-import { profileAvatarContent, type PlayerProfileDisplay, type PublicProfileModifier } from "../state/playerProfile";
+import { CONCEALED_RELIC, profileAvatarContent, type PlayerProfileDisplay, type PublicProfileModifier } from "../state/playerProfile";
 import { profileFrameOrDefault, type ProfileFrameDefinition } from "../data/profileFrames";
 import { getRelic } from "../data/relics";
 import { HoloBar, chipPoints, drawLayer, drawShapeOutline, HOLO, slantedRect } from "./holo";
@@ -311,7 +311,8 @@ export class PlayerProfilePopup {
     addSectionTitle(this.scene, -showcase.width / 2, showcase.titleY + 18, t("profile.section.favorite"), { parent: body, size: 26 });
 
     if (!favorite) {
-      body.add(this.scene.add.text(0, centerY, t("profile.unset"), textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim })).setOrigin(0.5));
+      const label = this.profile.competitiveStats.favoriteConcealed ? CONCEALED_RELIC : t("profile.unset");
+      body.add(this.scene.add.text(0, centerY, label, textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim })).setOrigin(0.5));
       return;
     }
 

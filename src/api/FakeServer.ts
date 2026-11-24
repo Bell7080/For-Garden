@@ -3791,6 +3791,7 @@ export class FakeServer implements GameApi {
     const entry: DuelHistoryEntry = {
       at: now.toISOString(), opponentName: pending.opponentName, opponentScore: pending.opponentScore, won: request.won, delta: scoreAfter - scoreBefore,
       opponentTierId: duelStanding(pending.opponentScore).tier.id, opponentFavoriteRelicId: pending.favoriteRelicId, opponentUnits: pending.units.map((unit) => ({ ...unit })),
+      opponentId: pending.opponentId,
     };
     const next: DuelState = {
       ...duel, score: scoreAfter, wins: duel.wins + (request.won ? 1 : 0), losses: duel.losses + (request.won ? 0 : 1),

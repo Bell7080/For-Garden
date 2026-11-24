@@ -64,6 +64,6 @@ export function recordPlayerDefense(context: PlayerDuelContext, opponentId: stri
   duel.seasonBestScore = Math.max(duel.seasonBestScore, duel.score);
   // 승/패 합계는 시즌 참가 여부도 결정한다. 방어 승리는 공격 연승/도전권을 바꾸지 않는다.
   duel.wins += won ? 1 : 0; duel.losses += won ? 0 : 1;
-  duel.history = [{ at: now.toISOString(), opponentName: attacker.playerCard.nickname || t('profile.defaultName'), opponentScore: attacker.duel!.score, won, delta: duel.score - before, opponentTierId: duelStanding(attacker.duel!.score).tier.id, opponentFavoriteRelicId: attacker.favorite, opponentUnits: attack.map(relicId => ({ relicId, level: attacker.relicProgress[relicId]?.level ?? 1 })), side: 'defense' as const }, ...duel.history].slice(0, DUEL_HISTORY_LIMIT);
+  duel.history = [{ at: now.toISOString(), opponentName: attacker.playerCard.nickname || t('profile.defaultName'), opponentScore: attacker.duel!.score, won, delta: duel.score - before, opponentTierId: duelStanding(attacker.duel!.score).tier.id, opponentFavoriteRelicId: attacker.favorite, opponentUnits: attack.map(relicId => ({ relicId, level: attacker.relicProgress[relicId]?.level ?? 1 })), side: 'defense' as const, opponentId: context.playerId }, ...duel.history].slice(0, DUEL_HISTORY_LIMIT);
   context.changes.push({ playerId: row.id, expectedRevision: row.revision, duel, gems: reached.reduce((n, t) => n + t.firstReachGems, 0) });
 }

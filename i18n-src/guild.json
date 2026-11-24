@@ -2139,15 +2139,95 @@
     "Welle {wave} · Feld {field}/{cap}",
     "Волна {wave} · Поле {field}/{cap}"
   ],
-  "guild.guard.result.footnote": [
-    "{score}分 · 第{wave}波 · 击败 {kills}",
-    "{score} คะแนน · คลื่น {wave} · กำจัด {kills}",
-    "{score} điểm · Đợt {wave} · Hạ {kills}",
-    "{score} poin · Gelombang {wave} · {kills} dikalahkan",
-    "{score} pts · Oleada {wave} · {kills} derrotados",
-    "{score} pts · Onda {wave} · {kills} derrotados",
-    "{score} Pkt. · Welle {wave} · {kills} besiegt",
-    "{score} очк. · Волна {wave} · Побеждено {kills}"
+  "guild.guard.report.score": [
+    "分数",
+    "คะแนน",
+    "Điểm",
+    "Skor",
+    "Puntos",
+    "Pontos",
+    "Punkte",
+    "Очки"
+  ],
+  "guild.guard.report.wave": [
+    "波次",
+    "คลื่น",
+    "Đợt",
+    "Gelombang",
+    "Oleada",
+    "Onda",
+    "Welle",
+    "Волна"
+  ],
+  "guild.guard.report.kills": [
+    "击败",
+    "กำจัด",
+    "Hạ gục",
+    "Dikalahkan",
+    "Derrotados",
+    "Derrotados",
+    "Besiegt",
+    "Побеждено"
+  ],
+  "guild.guard.report.newBest": [
+    "今日最高纪录！",
+    "สถิติสูงสุดวันนี้!",
+    "Kỷ lục hôm nay!",
+    "Rekor terbaik hari ini!",
+    "¡Mejor marca de hoy!",
+    "Melhor marca de hoje!",
+    "Neue Tagesbestleistung!",
+    "Рекорд дня!"
+  ],
+  "guild.guard.report.todayBest": [
+    "今日最高 {score}",
+    "สูงสุดวันนี้ {score}",
+    "Cao nhất hôm nay {score}",
+    "Terbaik hari ini {score}",
+    "Mejor de hoy {score}",
+    "Melhor de hoje {score}",
+    "Heute bestes {score}",
+    "Лучшее за день {score}"
+  ],
+  "guild.guard.report.waveLevel": [
+    "敌人 LV.{level}",
+    "ศัตรู LV.{level}",
+    "Địch LV.{level}",
+    "Musuh LV.{level}",
+    "Enemigo LV.{level}",
+    "Inimigo LV.{level}",
+    "Gegner LV.{level}",
+    "Враг LV.{level}"
+  ],
+  "guild.guard.report.killRate": [
+    "击败率 {percent}%",
+    "อัตรากำจัด {percent}%",
+    "Tỉ lệ hạ {percent}%",
+    "{percent}% dikalahkan",
+    "{percent}% derrotados",
+    "{percent}% derrotados",
+    "{percent}% besiegt",
+    "Побеждено {percent}%"
+  ],
+  "guild.guard.report.ranking": [
+    "今日公会成员排名",
+    "อันดับสมาชิกกิลด์วันนี้",
+    "Xếp hạng thành viên Bang hội hôm nay",
+    "Peringkat anggota guild hari ini",
+    "Clasificación del gremio de hoy",
+    "Ranking da guilda de hoje",
+    "Gildenrangliste heute",
+    "Рейтинг гильдии за день"
+  ],
+  "guild.guard.report.guildRank": [
+    "公会排名 第{rank}名",
+    "อันดับกิลด์ {rank}",
+    "Hạng Bang hội {rank}",
+    "Peringkat guild #{rank}",
+    "Gremio n.º {rank}",
+    "Guilda nº {rank}",
+    "Gildenrang {rank}",
+    "Гильдия: {rank}-е место"
   ],
   "guild.error.GUARD_LIMIT": [
     "今日的守护战挑战已用完",

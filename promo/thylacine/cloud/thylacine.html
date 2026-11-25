@@ -1,0 +1,101 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000}canvas{display:block}</style></head><body>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as L from './lib.js';
+import * as M from './mlib.js';
+import * as T from './tlib.js';
+const {THREE,add,S,C,toon,ease,easeIO,clamp01,rnd}=L;
+const font=new FontFace('NK','url(./nk.woff2)');await font.load();document.fonts.add(font);
+const name=new URLSearchParams(location.search).get('s');
+const mk=o=>{const r=L.makeScene(o);window.__scene=r.scene;window.__cam=r.cam;return r;};
+const lerp=(a,b,k)=>a+(b-a)*k;
+const pop=(t,t0,d=.18)=>{if(t<t0)return 0;const k=clamp01((t-t0)/d);return k<1?k*1.2:1+Math.sin((t-t0-d)*14)*Math.exp(-(t-t0-d)*6)*.12;};
+const label=(scene,txt,o={})=>{const s=L.textSprite(txt,o);scene.add(s);return s;};
+const setSprite=(s,h,k)=>{s.scale.set(h*s.userData.aspect*k,h*k,1);s.material.opacity=clamp01(k*3);};
+
+const ground=(scene,c,r=60)=>{const g=add(scene,C(r,r,.4,64),toon(c),[0,-.2,0],null,null,false);g.receiveShadow=true;return g;};
+function shieldSprite(){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');
+ const path=()=>{x.beginPath();x.moveTo(128,14);x.lineTo(226,50);x.quadraticCurveTo(226,180,128,244);x.quadraticCurveTo(30,180,30,50);x.closePath();};
+ x.lineJoin='round';path();x.lineWidth=22;x.strokeStyle='#2a1d2e';x.stroke();x.fillStyle='#4a9ae0';x.fill();
+ x.beginPath();x.moveTo(84,128);x.lineTo(118,164);x.lineTo(176,92);x.lineWidth=26;x.lineCap='round';x.strokeStyle='#ffffff';x.stroke();
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true}));sp.userData.aspect=1;return sp;}
+const SC={};
+// 1. 훅 — 노을 들판, 걸어가다 안개 속으로 사라지는 주머니늑대 + 「59일」
+SC.hook=()=>{const {scene,cam}=mk({sky:['#3a3f86','#e98a6a','#ffc48a'],sunPos:[-6,7,6],hemi:1.2,fog:[0xe8a07a,12,34]});
+ ground(scene,0xb8a060);const r=rnd(3);for(let i=0;i<30;i++){const a=r()*6.28,d=4+r()*16;add(scene,new THREE.ConeGeometry(.12,.7+r()*.6,5),toon(0x9a8a4a),[Math.cos(a)*d,.3,Math.sin(a)*d-4],null,null,false);}
+ for(let i=0;i<6;i++)L.tree(scene,-12+i*5+r()*2,-12-r()*6,1+r()*.5,0x5a7a40);
+ const th=T.makeThylacine(scene,{scale:1});th.g.rotation.y=Math.PI/2;
+ const shd=shieldSprite();scene.add(shd);shd.scale.setScalar(.001);
+ const big=label(scene,'59일',{size:230,fill:'#ffe066'});const sub=label(scene,'만에 사라진 주머니늑대',{size:110,w:1400,fill:'#ffffff'});
+ return t=>{th.idle(t);const go=t>5.6;th.walk(t,go?1:.7);th.g.position.set(-1.6+t*.3+(go?(t-5.6)*.9:0),0,go?-(t-5.6)*2.4:0);if(go)th.g.rotation.y=lerp(Math.PI/2,Math.PI*.95,clamp01((t-5.6)*1.5));
+  th.head.rotation.y=t<3?Math.sin(t*1.2)*.2:-.5;cam.position.set(1.4,3.0,11.5-t*.2);cam.lookAt(.5,.7,0);
+  big.position.set(.4,3.2,0);setSprite(big,1.4,t>.5?pop(t,.5,.2):0);big.position.y=3.2+Math.sin(t*2.6)*.05;shd.position.set(2.15,3.35,0);shd.scale.setScalar(t>3.8?pop(t,3.8,.2)*1.0:.001);shd.material.rotation=Math.sin(t*3)*.08;sub.position.set(.4,2.35,0);setSprite(sub,.72,t>1.3?pop(t,1.3):0);
+  const f=t>6.6?clamp01(1-(t-6.6)/.6):1;big.material.opacity*=f;shd.material.opacity=f;sub.material.opacity*=f;};};
+// 2. 생김새 — 늑대 얼굴, 줄무늬, 주머니 속 새끼, 80도 입
+SC.intro=()=>{const {scene,cam}=mk({sky:['#4f8fd6','#bfe1f5','#eef8e8'],sunPos:[-6,9,7],hemi:1.4,fog:[0xdfeee0,20,70]});
+ ground(scene,0x8cbf5e);const r=rnd(5);for(let i=0;i<10;i++)L.bush(scene,(r()-.5)*24,-6-r()*12,1+r()*.6,0x4f9a4a);for(let i=0;i<7;i++)L.tree(scene,(r()-.5)*30,-12-r()*10,1.1+r()*.5);
+ const th=T.makeThylacine(scene,{joey:true});th.g.rotation.y=.95;
+ const l1=label(scene,'늑대 얼굴',{size:150,fill:'#ffffff'}),l2=label(scene,'호랑이 줄무늬',{size:150,w:1200,fill:'#ffe066'}),l3=label(scene,'주머니 속 아기!',{size:150,w:1200,fill:'#ffffff'}),l4=label(scene,'80°',{size:230,fill:'#ff8a6a'});
+ const V=[[[3.4,1.9,5.6],[.4,.75,.8]],[[3.6,4.2,-4.4],[0,.55,-.4]],[[-3.9,1.0,-3.0],[-.7,.3,-.5]],[[4.6,2.0,5.4],[.3,1.15,1.0]]];const T0=[0,1.4,3.5,8];
+ return t=>{th.idle(t);const jt=t-8.2;th.open(jt>0?(jt<.35?ease(jt/.35):jt<2.6?1:clamp01(1-(jt-2.6)/.3)):0);th.joey.scale.setScalar(t>3.6?pop(t,3.6)*1.9:.001);
+  let i=0;while(i<3&&t>=T0[i+1])i++;const k=i?easeIO((t-T0[i])/.7):1;const A=V[Math.max(0,i-1)],B=V[i];
+  cam.position.set(...A[0].map((v,j)=>lerp(v,B[0][j],k)+(i==3&&j==1?Math.sin(k*Math.PI)*6:0)));cam.lookAt(...A[1].map((v,j)=>lerp(v,B[1][j],k)));
+  const show=(s,a,b,h,pos)=>{s.position.set(...pos);setSprite(s,h,t>a&&t<b?pop(t,a):0);};
+  show(l1,.2,1.45,.42,[.6,2.2,1.1]);show(l2,1.8,3.55,.5,[0,2.15,-.4]);show(l3,4.0,8.0,.3,[-1.5,1.22,-1.2]);show(l4,8.6,11.9,.5,[.6,2.15,1.3]);};};
+// 3. 양 앞의 주머니늑대 → 현상금 포스터와 사냥꾼, 2,184
+SC.bounty=()=>{const {scene,cam}=mk({sky:['#5c8ac8','#c9dcea','#f2f0e4'],sunPos:[-6,9,6],hemi:1.4});
+ ground(scene,0xa8c070);const r=rnd(7);for(let i=0;i<8;i++)L.bush(scene,(r()-.5)*26,-8-r()*10,1+r()*.6,0x5a9a4a);
+ const sh=T.makeSheep(scene,1);sh.g.position.set(1.4,0,0);sh.g.rotation.y=-1.3;const th=T.makeThylacine(scene,{scale:.85});th.g.position.set(-1.6,0,.4);th.g.rotation.y=1.4;
+ const q=label(scene,'양을 노린다고?',{size:140,w:1200,fill:'#ffffff'});
+ const p=T.poster();p.position.set(0,2.6,-3.5);scene.add(p);p.scale.setScalar(.001);
+ const hs=[0,1,2].map(i=>{const h=M.makeHunter(scene,{coat:[0x7a5a3a,0x5a6a44,0x6a4a34][i]});h.g.scale.setScalar(.85);h.g.visible=false;return h;});
+ const cnt=T.counterSprite({size:210,fill:'#ffe066'});scene.add(cnt);
+ return t=>{th.idle(t);sh.head.rotation.x=Math.sin(t*3)*.15;
+  if(t<5){th.walk(t,.35);th.g.position.x=-1.6+Math.min(t,4)*.12;cam.position.set(0,2.8,9.5-t*.2);cam.lookAt(0,.5,0);q.position.set(0,2.9,0);setSprite(q,.48,t>1.6?pop(t,1.6):0);}
+  else{q.material.opacity=0;const k=easeIO((t-5)/.6);cam.position.set(0,lerp(2.8,3.4,k),lerp(8.5,12.5,k));cam.lookAt(0,lerp(.5,1.4,k),-2);
+   p.scale.setScalar(pop(t,5.1,.22));p.rotation.z=Math.sin(t*2)*.03;
+   th.g.position.set(-1.1+(t-5)*2.4,0,.4);th.g.rotation.y=Math.PI/2;th.walk(t,1.8);sh.g.visible=false;
+   hs.forEach((h,i)=>{h.g.visible=true;h.walk(t,1.2);h.g.position.set(-4.6-i*1.1+(t-5)*1.9,0,1.4-i*.6);h.g.rotation.y=Math.PI/2;h.arms[1].rotation.x=-.9;});
+   cnt.position.set(0,4.9,-2.6);const kc=clamp01((t-7)/1.9);cnt.set(Math.round(2184*ease(kc)).toLocaleString('en-US')+'마리');setSprite(cnt,.8,t>7?pop(t,7):0);}};};
+// 4. 1936년 7월 10일 보호종 → 달력이 59일을 센다
+SC.protect=()=>{const {scene,cam}=mk({sky:['#2f5ea8','#a9c9e8','#eaf2f8'],sunPos:[-5,9,7],hemi:1.4});
+ ground(scene,0x9cbf72);
+ const board=add(scene,new THREE.BoxGeometry(4.6,3.2,.3),toon(0xf6efe0),[0,3.4,-1],null,null,true);add(scene,new THREE.BoxGeometry(4.6,.75,.32),toon(0xc84a42),[0,4.62,-1],null,null,false);
+ add(scene,C(.08,.08,1.9,8),toon(0x7a5a3a),[-1.8,.9,-1.1],null,null,false);add(scene,C(.08,.08,1.9,8),toon(0x7a5a3a),[1.8,.9,-1.1],null,null,false);
+ const yr=label(scene,'1936',{size:170,fill:'#ffffff'});const day=T.counterSprite({size:220,fill:'#2a1d2e',stroke:'#f6efe0'});scene.add(day);
+ const st=label(scene,'보호종 지정!',{size:170,w:1200,fill:'#ffe066'});const plus=T.counterSprite({size:200,fill:'#ff8a6a'});scene.add(plus);
+ const th=T.makeThylacine(scene,{scale:.6});th.g.visible=false;
+ return t=>{th.idle(t);cam.position.set(0,3.0,12.8-t*.12);cam.lookAt(0,2.4,0);yr.position.set(0,4.62,-.75);setSprite(yr,.5,1);
+  const d0=new Date(Date.UTC(1936,6,10));const n=t<5.4?0:Math.min(59,Math.floor(59*ease((t-5.4)/1.9)));const d=new Date(d0.getTime()+n*864e5);
+  day.position.set(0,3.5,-.7);day.set(`${d.getUTCMonth()+1}월 ${d.getUTCDate()}일`);setSprite(day,.8,pop(t,.15));
+  st.position.set(0,5.3,-.4);setSprite(st,.62,t>2.5&&t<5.3?pop(t,2.5):0);st.material.rotation=-.08;
+  plus.position.set(0,2.55,-.7);plus.set(`+${n}일`);setSprite(plus,.6,t>5.4?pop(t,5.4):0);
+  board.rotation.z=t>5.4&&t<7.4?Math.sin((t-5.4)*30)*.004:0;};};
+// 5. 밤의 동물원 — 홀로 남은 마지막 한 마리
+SC.zoo=()=>{const {scene,cam}=mk({sky:['#0c1030','#202a5a','#36406a'],hemi:.6,sunC:0x9fb8ff,sunI:1.1,sunPos:[-5,8,4]});
+ ground(scene,0x5a5a48);const stars=L.dust(scene,{n:140,color:0xffffff,box:[80,30,10],y0:14,size:.16});
+ add(scene,S(1.6,24,16),new THREE.MeshBasicMaterial({color:0xfff2c0}),[-9,15,-40],null,null,false);
+ const bm=toon(0x5a5e6a);for(let i=0;i<13;i++){const x=-3+i*.5;add(scene,C(.05,.05,3.2,8),bm,[x,1.6,1.6],null,null,false);}
+ add(scene,new THREE.BoxGeometry(6.4,.12,.12),bm,[0,3.2,1.6],null,null,false);add(scene,new THREE.BoxGeometry(6.4,.12,.12),bm,[0,.3,1.6],null,null,false);
+ add(scene,new THREE.BoxGeometry(6.4,3.2,.2),toon(0x4a3e36),[0,1.6,-2.4],null,null,false);
+ const th=T.makeThylacine(scene,{scale:.8});th.g.position.set(-.35,0,-.4);th.g.rotation.y=.7;th.legs.forEach(l=>l.rotation.x=0);
+ const dt=label(scene,'1936. 9. 7',{size:170,fill:'#ffffff'});
+ return t=>{stars(t*.1);th.idle(t*.5);th.head.rotation.x=.3+t*.03;th.neck.position.y=1.38-Math.min(t,4)*.04;
+  const k=easeIO(t/6);cam.position.set(lerp(2.4,1.4,k),lerp(2.4,2.0,k),lerp(10,7.6,k));cam.lookAt(0,.35,0);
+  dt.position.set(0,2.25,2.1);setSprite(dt,.42,t>3.9?pop(t,3.9):0);};};
+// 6. 지금도 봤다는 사람들 — 덤불 속 반짝이는 눈
+SC.sight=()=>{const {scene,cam}=mk({sky:['#0e1a2e','#1f3a4a','#2e4a50'],hemi:.7,sunC:0x9fd8c0,sunI:1.0,sunPos:[-4,8,5],fog:[0x1f3a40,10,34]});
+ ground(scene,0x2e4a32);const r=rnd(11);for(let i=0;i<9;i++)L.tree(scene,(r()-.5)*20,-3-r()*14,1.2+r()*.6,0x2f6a44);
+ const bushes=[];for(const [x,z,s] of[[0,0,1.5],[-2.4,.6,1.2],[2.5,.4,1.3],[-1,-1.8,1.4],[1.3,-2,1.2]])bushes.push(L.bush(scene,x,z,s,0x2f6a3e));
+ const em=new THREE.MeshBasicMaterial({color:0xfff27a,transparent:true});const eyes=[];for(const s of[-1,1])eyes.push(add(scene,S(.1,12,8),em,[s*.24,.85,1.22],[1,.55,1],null,false));
+ const fl=L.dust(scene,{n:50,color:0xd8ff9a,box:[10,4,6],y0:.3,size:.1});
+ const q=label(scene,'?',{size:240,w:256,h:256,fill:'#ffe066'});const th=T.makeThylacine(scene,{scale:.7});th.g.position.set(3.2,0,-1.2);th.g.rotation.y=Math.PI*.6;th.g.visible=false;
+ return t=>{fl(t);const bl=((t%2.4)<.12)?.1:1;eyes.forEach(e=>e.scale.y=.55*bl);em.opacity=clamp01((t-.4)/.4);
+  bushes[0].rotation.z=t>4.7&&t<5.5?Math.sin(t*40)*.03:0;
+  th.g.visible=t>6.2;if(th.g.visible){th.walk(t,.8);th.g.position.x=3.2+(t-6.2)*1.2;}
+  cam.position.set(Math.sin(t*.08)*1.2,2.4,10.5-t*.25);cam.lookAt(0,.4,0);q.position.set(0,2.75,0);setSprite(q,.9,t>4.7?pop(t,4.7,.22):0);q.position.y=2.75+Math.sin(t*2.5)*.06;};};
+
+const upd=SC[name]();if(!window.__noReady)window.ready=true;
+window.renderFrame=f=>{const t=f/30;upd(t);renderer.render(window.__scene,window.__cam);return renderer.domElement.toDataURL('image/jpeg',.92);};
+const renderer=L.renderer;
+</script></body></html>

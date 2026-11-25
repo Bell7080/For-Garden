@@ -1,12 +1,12 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_RU = {
-  "skill.ferocity.extendedService": "В бешенстве пропускает Приветствие и чередует Подачу и Закрытие. Скорость атаки повышается на {percent}%.",
+  "skill.ferocity.extendedService": "В состоянии Неистовства пропускает Приветствие и чередует Подачу и Закрытие. Скорость атаки повышается на {percent}%.",
   "skill.passive.reservedGuest": "Помечает противника с наибольшим запасом ОЗ как [[reserved-guest|постоянного гостя]] и атакует его в первую очередь, пока тот не падёт. Прямые удары остальных врагов дают по {points} защиты и сопротивления от них до конца боя.",
   "skill.sentence.closingService": "Применяет к постоянному гостю один [[special-fee|особый сбор]].",
   "skill.sentence.closingServiceUltimate": "При попадании по постоянному гостю применяет [[special-fee|особый сбор]] {hits} раза. Следующая обычная атака становится Закрытием.",
   "skill.breakthrough.guestHaste": "Каждая обычная атака по постоянному гостю повышает скорость атаки на {percent}%. Максимум {max} зарядов, которые сбрасываются при смене гостя.",
   "skill.breakthrough.serviceBarrier": "На {seconds} сек. даёт [[shield|щит]] на {percent}% ОЗ, фактически отнятых ультимативным умением и сборами. До {max}% собственных максимальных ОЗ. Не суммируется.",
-  "skill.breakthrough.guestDebuff": "В бешенстве защита, сопротивление и получаемое лечение постоянного гостя снижаются на {percent}% каждое.",
+  "skill.breakthrough.guestDebuff": "В состоянии Неистовства защита, сопротивление и получаемое лечение постоянного гостя снижаются на {percent}% каждое.",
   "skill.breakthrough.guestShieldBreak": "При попадании по постоянному гостю Закрытие разрушает [[shield|щит]] до нанесения урона Закрытия и особого сбора.",
   "skill.fact.whenActive": "При активном эффекте",
   "skill.keyword.statGain": "Прибавка к {stat}: +{amount}\nОснова {base} × {percent}% ≈ +{amount}\nТолько этот эффект: {total}. Другие эффекты могут изменить итоговое значение.",

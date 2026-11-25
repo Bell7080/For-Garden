@@ -5,7 +5,7 @@ export const SKILL_ZH_HANS = {
   "skill.sentence.closingService": "命中常客时追加1次[[special-fee|特别收费]]。",
   "skill.sentence.closingServiceUltimate": "命中常客时追加{hits}次[[special-fee|特别收费]]。下一次普通攻击变为打烊。",
   "skill.breakthrough.guestHaste": "普通攻击每次命中常客，攻击速度提高{percent}%。最多叠加{max}层，常客更换时重置。",
-  "skill.breakthrough.serviceBarrier": "获得持续{seconds}秒的[[shield|护盾]]，数值为终结技及特别收费实际削减生命值的{percent}%。上限为自身最大生命值的{max}%，不可叠加。",
+  "skill.breakthrough.serviceBarrier": "获得持续{seconds}秒的[[shield|护盾]]，数值为必杀技及特别收费实际削减生命值的{percent}%。上限为自身最大生命值的{max}%，不可叠加。",
   "skill.breakthrough.guestDebuff": "暴走期间，常客的防御力、抗性和受到的治疗量各降低{percent}%。",
   "skill.breakthrough.guestShieldBreak": "打烊命中常客时，先破坏其[[shield|护盾]]，再结算打烊和特别收费的伤害。",
   "skill.fact.whenActive": "效果生效时",

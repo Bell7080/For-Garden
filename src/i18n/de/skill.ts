@@ -1,12 +1,12 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_DE = {
-  "skill.ferocity.extendedService": "Im Rausch entfällt die Begrüßung. Servieren und Abschluss wechseln sich ab. Angriffstempo +{percent}%.",
+  "skill.ferocity.extendedService": "Während der Raserei entfällt die Begrüßung. Servieren und Abschluss wechseln sich ab. Angriffstempo +{percent}%.",
   "skill.passive.reservedGuest": "Markiert den Gegner mit den höchsten maximalen LP als [[reserved-guest|Stammgast]] und greift ihn bevorzugt an, bis er fällt. Direkte Treffer anderer Gegner erhöhen Verteidigung und Resistenz gegen diese Gegner bis Kampfende um je {points}.",
   "skill.sentence.closingService": "Der Stammgast erhält einmal den [[special-fee|Sonderzuschlag]].",
   "skill.sentence.closingServiceUltimate": "Bei einem Treffer auf den Stammgast wird der [[special-fee|Sonderzuschlag]] {hits}-mal angewendet. Der nächste Standardangriff wird zum Abschluss.",
   "skill.breakthrough.guestHaste": "Jeder Standardangriff auf den Stammgast erhöht das Angriffstempo um {percent}%. Bis zu {max} Stapel, die beim Wechsel des Stammgasts verfallen.",
   "skill.breakthrough.serviceBarrier": "Erzeugt für {seconds} Sek. einen [[shield|Schild]] in Höhe von {percent}% der durch das Ultimative und seine Zuschläge tatsächlich abgezogenen LP. Maximal {max}% der eigenen max. LP, nicht stapelbar.",
-  "skill.breakthrough.guestDebuff": "Im Rausch sinken Verteidigung, Resistenz und erhaltene Heilung des Stammgasts um je {percent}%.",
+  "skill.breakthrough.guestDebuff": "Während der Raserei sinken Verteidigung, Resistenz und erhaltene Heilung des Stammgasts um je {percent}%.",
   "skill.breakthrough.guestShieldBreak": "Der Abschluss zerstört beim Treffer den [[shield|Schild]] des Stammgasts, bevor Abschluss und Sonderzuschlag Schaden verursachen.",
   "skill.fact.whenActive": "Bei aktivem Effekt",
   "skill.keyword.statGain": "{stat}-Zuwachs: +{amount}\nBasis {base} × {percent}% ≈ +{amount}\nNur dieser Effekt: {total}. Andere Effekte können den Endwert ändern.",

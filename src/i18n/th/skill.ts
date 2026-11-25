@@ -1,5 +1,13 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_TH = {
+  "skill.ferocity.extendedService": "ขณะคลุ้มคลั่ง ข้ามการต้อนรับและสลับระหว่างเสิร์ฟกับปิดร้าน ความเร็วโจมตีเพิ่มขึ้น {percent}%",
+  "skill.passive.reservedGuest": "กำหนดศัตรูที่มี HP สูงสุดมากที่สุดเป็น [[reserved-guest|ลูกค้าประจำ]] และเล็งเป้าหมายนี้จนล้ม การโจมตีโดยตรงจากศัตรูอื่นเพิ่มพลังป้องกันและต้านทานต่อศัตรูอื่นอย่างละ {points} จนจบการต่อสู้",
+  "skill.sentence.closingService": "เก็บ [[special-fee|ค่าบริการพิเศษ]] จากลูกค้าประจำ 1 ครั้ง",
+  "skill.sentence.closingServiceUltimate": "เมื่อโจมตีลูกค้าประจำโดน จะเก็บ [[special-fee|ค่าบริการพิเศษ]] {hits} ครั้ง การโจมตีปกติครั้งถัดไปจะเป็นปิดร้าน",
+  "skill.breakthrough.guestHaste": "ทุกครั้งที่โจมตีปกติโดนลูกค้าประจำ ความเร็วโจมตีเพิ่ม {percent}% สะสมได้สูงสุด {max} ขั้นและรีเซ็ตเมื่อเปลี่ยนลูกค้าประจำ",
+  "skill.breakthrough.serviceBarrier": "ได้รับ [[shield|โล่]] {seconds} วินาที เท่ากับ {percent}% ของ HP ที่ท่าไม้ตายและค่าบริการพิเศษลดได้จริง สูงสุด {max}% ของ HP สูงสุดตนเองและไม่สะสม",
+  "skill.breakthrough.guestDebuff": "ขณะคลุ้มคลั่ง ลูกค้าประจำมีพลังป้องกัน พลังต้านทาน และการฟื้นฟูที่ได้รับลดลงอย่างละ {percent}%",
+  "skill.breakthrough.guestShieldBreak": "เมื่อท่าปิดร้านโดนลูกค้าประจำ จะทำลาย [[shield|โล่]] ก่อนสร้างความเสียหายจากปิดร้านและค่าบริการพิเศษ",
   "skill.fact.whenActive": "ขณะเอฟเฟกต์ทำงาน",
   "skill.keyword.statGain": "{stat} เพิ่ม: +{amount}\nค่าพื้นฐาน {base} × {percent}% ≈ +{amount}\nเมื่อใช้เอฟเฟกต์นี้อย่างเดียว: {total} เอฟเฟกต์อื่นอาจเปลี่ยนค่าสุดท้าย",
   "skill.keyword.value.damage": "ค่าความเสียหายที่คำนวณจาก {percent}% ของ{stat}\n(อิงจาก{stat} {base})",

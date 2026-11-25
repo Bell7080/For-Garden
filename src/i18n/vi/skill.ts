@@ -1,5 +1,13 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_VI = {
+  "skill.ferocity.extendedService": "Khi Cuồng Nộ, bỏ qua Chào Hỏi và luân phiên Phục Vụ với Đóng Cửa. Tốc đánh tăng {percent}%.",
+  "skill.passive.reservedGuest": "Đánh dấu kẻ địch có HP tối đa cao nhất làm [[reserved-guest|khách quen]] và ưu tiên tấn công cho đến khi mục tiêu gục. Mỗi đòn trực tiếp từ kẻ địch khác tăng {points} phòng thủ và kháng lực trước các kẻ địch khác đến hết trận.",
+  "skill.sentence.closingService": "Áp dụng một [[special-fee|phụ phí đặc biệt]] lên khách quen.",
+  "skill.sentence.closingServiceUltimate": "Khi đánh trúng khách quen, áp dụng [[special-fee|phụ phí đặc biệt]] {hits} lần. Đòn đánh thường tiếp theo sẽ là Đóng Cửa.",
+  "skill.breakthrough.guestHaste": "Mỗi đòn đánh thường trúng khách quen tăng {percent}% tốc đánh. Tối đa {max} cộng dồn, đặt lại khi khách quen thay đổi.",
+  "skill.breakthrough.serviceBarrier": "Nhận [[shield|lá chắn]] trong {seconds} giây bằng {percent}% HP thực sự lấy đi bằng chiêu cuối và phụ phí. Giới hạn {max}% HP tối đa bản thân, không cộng dồn.",
+  "skill.breakthrough.guestDebuff": "Khi Cuồng Nộ, phòng thủ, kháng lực và lượng hồi phục nhận được của khách quen đều giảm {percent}%.",
+  "skill.breakthrough.guestShieldBreak": "Khi trúng khách quen, Đóng Cửa phá [[shield|lá chắn]] trước khi gây sát thương của Đóng Cửa và phụ phí đặc biệt.",
   "skill.fact.whenActive": "Khi hiệu ứng có tác dụng",
   "skill.keyword.statGain": "{stat} tăng: +{amount}\nCơ bản {base} × {percent}% ≈ +{amount}\nChỉ hiệu ứng này: {total}. Hiệu ứng khác có thể thay đổi giá trị cuối.",
   "skill.keyword.value.damage": "Sát thương tính bằng {percent}% {stat}.\n(Dựa trên {stat} {base})",

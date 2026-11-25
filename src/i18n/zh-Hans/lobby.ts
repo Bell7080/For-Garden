@@ -1,5 +1,7 @@
 /** The lobby: the screen for looking at your Relic. */
 export const LOBBY_ZH_HANS = {
+  "event.afterHours.title": "打烊后的一勺",
+  "event.afterHours.subtitle": "希斯限时精选招募",
   "lobby.duel": "决斗",
   "lobby.sortie": "出 击",
   "lobby.interaction": "交流",

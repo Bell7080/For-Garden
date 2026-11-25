@@ -1,5 +1,6 @@
 /** The Research Lab: fossil research and its results. */
 export const LAB_ES = {
+  "lab.banner.afterHours.subtitle": "Una cucharada después del cierre",
   "lab.rates": "Detalles de probabilidad",
   "lab.pickupInfo": "Info del personaje",
   "lab.rates.basis": "{banner} · Probabilidad por Investigación",

@@ -33,6 +33,10 @@ type Category =
 
 const CATEGORY: Record<EffectKind, Category> = {
   none: "none",
+  guestHaste: "damage",
+  serviceBarrier: "survival",
+  guestDebuff: "support",
+  guestShieldBreak: "damage",
   // 플레샤 — 유성
   starfallChance: "damage",
   meteorEncore: "survival",

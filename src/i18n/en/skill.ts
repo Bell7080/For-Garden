@@ -1,5 +1,13 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_EN = {
+  "skill.ferocity.extendedService": "During Frenzy, skip Greeting and alternate between Serving and Closing. Attack speed increases by {percent}%.",
+  "skill.passive.reservedGuest": "Mark the enemy with the highest maximum HP as a [[reserved-guest|Regular]] and prioritize them until they fall. Direct hits from other enemies grant {points} defense and resistance against other enemies for the rest of the battle.",
+  "skill.sentence.closingService": "Apply one [[special-fee|Special Charge]] to the Regular.",
+  "skill.sentence.closingServiceUltimate": "Apply {hits} [[special-fee|Special Charges]] on hitting the Regular. The next basic attack becomes Closing.",
+  "skill.breakthrough.guestHaste": "Each basic attack that hits the Regular grants {percent}% attack speed, up to {max} stacks. Resets when the Regular changes.",
+  "skill.breakthrough.serviceBarrier": "Gain a {seconds}-second [[shield|shield]] equal to {percent}% of HP removed by the ultimate and its Special Charges, up to {max}% of your maximum HP. Does not stack.",
+  "skill.breakthrough.guestDebuff": "During Frenzy, reduce the Regular's defense, resistance, and healing received by {percent}% each.",
+  "skill.breakthrough.guestShieldBreak": "Closing destroys the Regular's [[shield|shield]] on hit before dealing Closing and Special Charge damage.",
   "skill.fact.whenActive": "While active",
   "skill.keyword.statGain": "{stat} increase: +{amount}\nBase {base} × {percent}% ≈ +{amount}\nWith this effect alone: {total}. Other effects may change the final value.",
   "skill.keyword.value.damage": "Damage calculated as {percent}% of {stat}.\n(Based on {stat} {base})",

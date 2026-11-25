@@ -29,6 +29,8 @@ const STATUS_DAMAGE: Readonly<Partial<Record<string, DamageKind>>> = {
 
 /** 상태가 아니라 제 이름의 필드로 피해를 내는 계약. */
 const FIELD_DAMAGE: Readonly<Partial<Record<string, DamageKind>>> = {
+  closingService: "fixed",
+  closingServiceFees: "fixed",
   prickle: "magical", // 까칠 반격 — 주문력 마법 피해
   batSwarm: "magical", // 박쥐 떼 — 주문력 마법 피해
   observationVolley: "fixed", // 관측 발동 — 방어·저항을 지난다

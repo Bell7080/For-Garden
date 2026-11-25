@@ -14,7 +14,7 @@ import { BACKGROUND } from "../ui/backgroundAssets";
  *
  * 간판(렉시아·스피나)은 여기에 넣지 않는다 — 놓친 사람이 게임의 얼굴을 영영 갖지 못한다.
  */
-export const LIMITED_RELIC_IDS: ReadonlySet<string> = new Set(["dian", "plesha"]);
+export const LIMITED_RELIC_IDS: ReadonlySet<string> = new Set(["dian", "plesha", "his"]);
 
 /** 정적 렐릭 희귀도를 기준으로 구성해 등급 결정 후 다른 등급이 섞이지 않게 한다. 한정 개체는 뺀다. */
 export const STANDARD_POOLS = Object.fromEntries(
@@ -37,6 +37,7 @@ function pickupPools(pickups: Partial<Record<RelicRarity, string[]>>): Record<Re
 const AMBER_PICKUP = { SSR: ["dian"] } as const satisfies Partial<Record<RelicRarity, string[]>>;
 /** 디안 다음 한정 픽업 — 물 SSR 지원가 플레샤(「밤하늘의 피크닉」). */
 const MOONLIT_PICKUP = { SSR: ["plesha"] } as const satisfies Partial<Record<RelicRarity, string[]>>;
+const AFTER_HOURS_PICKUP = { SSR: ["his"] } as const satisfies Partial<Record<RelicRarity, string[]>>;
 
 /**
  * **모든 연구가 같은 확률·같은 회색 보상을 쓴다.** 화석과 호박석의 한 번이 같은 값(젬 300)이려면
@@ -152,6 +153,13 @@ export const BANNERS: Banner[] = [
     slotRates: STANDARD_SLOT_RATES,
     grayRewards: STANDARD_GRAY_REWARDS,
     relicPools: pickupPools(MOONLIT_PICKUP), pickupRelicIds: { SSR: [...MOONLIT_PICKUP.SSR] }, pickupRate: 0.5,
+    highestRarityGuarantee: 120,
+  },
+  {
+    id: "after-hours", pityGroupId: PITY_GROUP.LIMITED_PICKUP, name: "호박석 연구", featuredRelicId: "his",
+    artKey: BACKGROUND.recruitHis, currency: "amber", costOne: 1, costTen: 10,
+    slotRates: STANDARD_SLOT_RATES, grayRewards: STANDARD_GRAY_REWARDS,
+    relicPools: pickupPools(AFTER_HOURS_PICKUP), pickupRelicIds: { SSR: [...AFTER_HOURS_PICKUP.SSR] }, pickupRate: 0.5,
     highestRarityGuarantee: 120,
   },
 ];

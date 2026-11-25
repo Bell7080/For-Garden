@@ -29,6 +29,7 @@ import { MORPHE_STORY } from "./morphe";
 import { IRNA_STORY } from "./irna";
 import { TEKU_STORY } from "./teku";
 import { PLESHA_STORY } from "./plesha";
+import { HIS_STORY } from "./his";
 import { ARTE_STORY } from "./arte";
 import { BRIKA_STORY } from "./brika";
 import { BELZ_STORY } from "./belz";
@@ -70,6 +71,7 @@ export const RELIC_STORIES: Readonly<Record<string, RelicStoryProfile>> = {
   irna: IRNA_STORY,
   teku: TEKU_STORY,
   plesha: PLESHA_STORY,
+  his: HIS_STORY,
   arte: ARTE_STORY,
   brika: BRIKA_STORY,
   belz: BELZ_STORY,

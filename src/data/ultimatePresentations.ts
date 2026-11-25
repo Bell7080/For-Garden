@@ -101,6 +101,7 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // 다섯 발을 연달아 쏘는 궁극기라 한 방의 무게보다 연사의 리듬이 읽히도록 흔들림을 낮게 둔다.
   teku: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.98, cutInHoldMs: 140, zoomScale: 1.12, zoomMs: 110, cameraShakeIntensity: 0.006 },
   plesha: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1, cutInHoldMs: 160, zoomScale: 1.1, zoomMs: 120, cameraShakeIntensity: 0.007 },
+  his: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1, cutInHoldMs: 140, zoomScale: 1.13, zoomMs: 120, cameraShakeIntensity: 0.007 },
   arte: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1, cutInHoldMs: 160, zoomScale: 1.1, zoomMs: 120, cameraShakeIntensity: 0.007 },
   // 큰 몸이 천천히 그늘을 펼치는 기술이라 한 박자 오래 머물고 흔들림은 낮다.
   // 사슬이 아군 모두에게 감기는 기술이라 한 박자 머물고 흔들림은 낮다.

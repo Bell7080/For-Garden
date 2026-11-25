@@ -1,5 +1,13 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_ID = {
+  "skill.ferocity.extendedService": "Saat Frenzy, lewati Sambutan dan gunakan Sajian serta Penutupan secara bergantian. Kecepatan serangan naik {percent}%.",
+  "skill.passive.reservedGuest": "Tandai musuh dengan HP maksimum tertinggi sebagai [[reserved-guest|Pelanggan Tetap]] dan prioritaskan hingga ia tumbang. Serangan langsung dari musuh lain menambah {points} pertahanan dan resistansi terhadap musuh lain hingga pertempuran berakhir.",
+  "skill.sentence.closingService": "Kenakan satu [[special-fee|Biaya Khusus]] pada Pelanggan Tetap.",
+  "skill.sentence.closingServiceUltimate": "Jika mengenai Pelanggan Tetap, kenakan [[special-fee|Biaya Khusus]] sebanyak {hits} kali. Serangan dasar berikutnya menjadi Penutupan.",
+  "skill.breakthrough.guestHaste": "Tiap serangan dasar yang mengenai Pelanggan Tetap menambah kecepatan serangan {percent}%. Maksimal {max} tumpukan dan direset saat Pelanggan Tetap berganti.",
+  "skill.breakthrough.serviceBarrier": "Dapatkan [[shield|perisai]] selama {seconds} detik sebesar {percent}% dari HP yang dikurangi ultimate dan Biaya Khususnya. Maksimal {max}% HP maksimum sendiri dan tidak bertumpuk.",
+  "skill.breakthrough.guestDebuff": "Saat Frenzy, pertahanan, resistansi, dan pemulihan HP yang diterima Pelanggan Tetap masing-masing berkurang {percent}%.",
+  "skill.breakthrough.guestShieldBreak": "Saat mengenai Pelanggan Tetap, Penutupan menghancurkan [[shield|perisai]] sebelum memberikan kerusakan Penutupan dan Biaya Khusus.",
   "skill.fact.whenActive": "Saat efek aktif",
   "skill.keyword.statGain": "Peningkatan {stat}: +{amount}\nDasar {base} × {percent}% ≈ +{amount}\nHanya efek ini: {total}. Efek lain dapat mengubah nilai akhir.",
   "skill.keyword.value.damage": "Kerusakan dihitung dari {percent}% {stat}.\n(Berdasarkan {stat} {base})",

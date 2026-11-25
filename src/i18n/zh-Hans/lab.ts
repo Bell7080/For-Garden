@@ -1,5 +1,6 @@
 /** The Research Lab: fossil research and its results. */
 export const LAB_ZH_HANS = {
+  "lab.banner.afterHours.subtitle": "打烊后的一勺",
   "lab.rates": "概率详情",
   "lab.pickupInfo": "角色信息",
   "lab.rates.basis": "{banner} · 每次研究概率",

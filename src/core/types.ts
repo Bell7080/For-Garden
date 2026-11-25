@@ -52,7 +52,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno" | "plesha" | "arte" | "brika" | "belz" | "ar";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno" | "plesha" | "arte" | "brika" | "belz" | "ar" | "his";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -743,6 +743,7 @@ export type BasicAttackStep = {
 
 /** 기본 공격만 가질 수 있는 추가 타격 계약이다. 일반 단타는 불필요한 확률 필드를 갖지 않는다. */
 export type BasicAttack = AttackSkill & {
+  closingService?: { stepIndex: number; feeHpPercent: number; feeLifeStealPercent: number };
   /**
    * 기본 공격이 부르는 [[meteor|유성]](플레샤). 실제로 나간 기본 공격 `every`번째마다 그 표적이 서 있던 자리에
    * 유성을 예약하고 `delaySeconds` 뒤 반경 `radius` 안에 떨어뜨린다. 유성 한 발의 피해·회복은 패시브(`Passive.starfall`)가 갖는다.
@@ -1202,6 +1203,7 @@ export type CombatStatusEffect =
 
 /** 궁극기의 대상 선택은 ID나 설명문 대신 코어가 검증할 수 있는 정적 계약으로 선언한다. */
 export type Ultimate = Skill & {
+  closingServiceFees?: number;
   /** 사용 시 소비하는 궁극기 게이지. 저장 상한과 독립된 스킬별 값이다. */
   cost: number;
   /** 정의한 경우 현재 HP가 이 비율 이하가 된 뒤에만 기본 공격으로 게이지를 얻는다. */
@@ -1358,6 +1360,7 @@ export type Ultimate = Skill & {
 
 /** 패시브는 종류별로 전투 엔진이 직접 해석한다. 새 패시브는 여기에 종류를 늘려 추가한다. */
 export type PassiveKind =
+  | "reservedGuest"
   /** 이르나 전용: 치명타 확률을 더하고, 흡혈한 몫의 일부를 회복 대신 보호막으로 두른다. */
   | "tideSight"
   /** 체력이 절반 이하가 되면 전투당 한 번 지속 회복 */
@@ -1512,6 +1515,7 @@ export type PassiveKind =
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
+  | "extendedService"
   /** 파루아 전용: 폭주 중 모든 일반 공격이 갈래화살이 되고 사거리가 늘어난다. */
   | "splitVolley"
   | "damageReduction"
@@ -1604,6 +1608,7 @@ export type FerocityTrait = {
   /** 뱃지에 찍히는 짧은 이름. 두세 글자를 넘기지 않는다. */
   name: string;
 } & (
+  | { effectId: "extendedService"; attackSpeedPercent: number }
   | {
       /**
        * 폭주 중 **순환을 기다리지 않고** 매 공격을 갈래화살로 낸다.
@@ -2160,6 +2165,7 @@ export interface ReagentReaction {
 }
 
 export interface Passive {
+  reservedGuest?: { guardPointsPerAction: number };
   id: string;
   name: string;
   /** 패시브도 일반 스킬과 같은 정보창 표현 계약을 따른다. */
@@ -2932,6 +2938,10 @@ export interface BreakthroughNone {
  * (`BasicAttack.statusEffectEvery`)을 그대로 타고 세 번에 한 번만 일어난다.
  */
 export type BasicBreakthrough = {
+  kind: "guestHaste";
+  percentPerHit: number;
+  maxStacks: number;
+} | {
   /** 일반 공격 적중이 패시브 주기를 평소(`passiveCooldownReductionSeconds`) 대신 이만큼 당긴다(벨즈의 「조여드는 족쇄」). 폭주 중 값이 더 크면 폭주 값이 앞선다. */
   kind: "tongueTug";
   seconds: number;
@@ -3211,6 +3221,11 @@ export type BasicBreakthrough = {
  * 궁극기가 세 번이 된다(채널링 궁극기와 같은 규칙이다).
  */
 export type UltimateBreakthrough = {
+  kind: "serviceBarrier";
+  damagePercent: number;
+  maxHpPercent: number;
+  seconds: number;
+} | {
   /** 「꿀꺽」이 끝나는 순간 숨겨 둔 아군을 뱉어 내며 그 아군의 최대 체력 이 비율만큼 보호막을 두른다(벨즈의 「퉤!」). */
   kind: "spitOut";
   shieldMaxHpPercent: number;
@@ -3484,6 +3499,9 @@ export type UltimateBreakthrough = {
  * 세져 그 시간만 부풀고, 끝나고 가장 약해지는 자리를 메우지 못한다.
  */
 export type FerocityBreakthrough = {
+  kind: "guestDebuff";
+  reductionPercent: number;
+} | {
   /** 폭주에 들어서는 순간 패시브 「혀 낚아채기」가 주기와 상관없이 곧바로 한 번 나가고, 그 막은 `shieldMultiplier`배다(벨즈의 「덥석」). 다친 아군이 없으면 나가지 않는다. */
   kind: "tongueSnap";
   shieldMultiplier: number;
@@ -3732,6 +3750,8 @@ export type FerocityBreakthrough = {
  * 패시브의 조건(체력 절반 등)을 그대로 타므로 새 발동 조건을 만들지 않는다.
  */
 export type PassiveBreakthrough = {
+  kind: "guestShieldBreak";
+} | {
   /** 아군의 체력이 `belowHpPercent`% 아래로 떨어지면 혀 주기가 남아 있어도 곧바로 끌어온다. 이 즉시 발동은 `lockoutSeconds`초에 한 번(벨즈의 「아직 계약 기간」). */
   kind: "stillUnderContract";
   belowHpPercent: number;

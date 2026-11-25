@@ -1,5 +1,13 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_ZH_HANS = {
+  "skill.ferocity.extendedService": "暴走时跳过接待，交替进行上菜和打烊。攻击速度提高{percent}%。",
+  "skill.passive.reservedGuest": "将最大生命值最高的敌人指定为[[reserved-guest|常客]]，优先攻击直至其倒下。受到其他敌人的直接攻击时，对其他敌人的防御力和抗性各提高{points}点，持续至战斗结束。",
+  "skill.sentence.closingService": "命中常客时追加1次[[special-fee|特别收费]]。",
+  "skill.sentence.closingServiceUltimate": "命中常客时追加{hits}次[[special-fee|特别收费]]。下一次普通攻击变为打烊。",
+  "skill.breakthrough.guestHaste": "普通攻击每次命中常客，攻击速度提高{percent}%。最多叠加{max}层，常客更换时重置。",
+  "skill.breakthrough.serviceBarrier": "获得持续{seconds}秒的[[shield|护盾]]，数值为终结技及特别收费实际削减生命值的{percent}%。上限为自身最大生命值的{max}%，不可叠加。",
+  "skill.breakthrough.guestDebuff": "暴走期间，常客的防御力、抗性和受到的治疗量各降低{percent}%。",
+  "skill.breakthrough.guestShieldBreak": "打烊命中常客时，先破坏其[[shield|护盾]]，再结算打烊和特别收费的伤害。",
   "skill.fact.whenActive": "效果生效时",
   "skill.keyword.statGain": "{stat}增加：+{amount}\n基础 {base} × {percent}% ≈ +{amount}\n仅此效果生效时为{total}，其他效果可能改变最终数值。",
   "skill.keyword.value.damage": "按{stat}的{percent}%计算的伤害数值。\n（以{stat}{base}为准）",

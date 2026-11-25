@@ -16,7 +16,7 @@ import { bannerGuaranteePending, bannerPullsRemaining, pullCost, type Banner, ty
 import type { TextKey } from "../i18n";
 import { QA_PICKUP_BANNER_PREFIX } from "../data/banners";
 
-export type BannerTone = "welcome" | "standard" | "limited" | "moonlit";
+export type BannerTone = "welcome" | "standard" | "limited" | "moonlit" | "after-hours";
 
 export interface BannerToneStyle {
   /** 제목 글자에 위 → 가운데 → 아래로 흐르는 색. */
@@ -41,6 +41,7 @@ export const BANNER_TONE: Record<BannerTone, BannerToneStyle> = {
   standard: { gradient: ["#fffaf0", "#f1dcae", "#b98a4a"], accent: 0xe8c68a, tagFill: 0x8a6331 },
   limited: { gradient: ["#fff6cc", "#ffc247", "#e2582c"], accent: 0xffc247, tagFill: 0xc8452f },
   moonlit: { gradient: ["#fffbea", "#c9d3ff", "#8a6fe8"], accent: 0xffe08a, tagFill: 0x5a46b4 },
+  "after-hours": { gradient: ["#f4ffe8", "#cae7a4", "#76b36f"], accent: 0xc9ef97, tagFill: 0x466750 },
 };
 
 /**
@@ -74,6 +75,10 @@ export const BANNER_PRESENTATION: Record<string, BannerPresentation> = {
   },
   moonlit: {
     tone: "moonlit", eyebrowKey: "lab.banner.moonlit.eyebrow", title: { kind: "pickup" }, subtitleKey: "lab.banner.moonlit.subtitle",
+    titleSize: 104, sparkles: true,
+  },
+  "after-hours": {
+    tone: "after-hours", eyebrowKey: "lab.banner.moonlit.eyebrow", title: { kind: "pickup" }, subtitleKey: "lab.banner.afterHours.subtitle",
     titleSize: 104, sparkles: true,
   },
 };

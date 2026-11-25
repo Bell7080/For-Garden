@@ -1,5 +1,6 @@
 /** The Research Lab: fossil research and its results. */
 export const LAB_ID = {
+  "lab.banner.afterHours.subtitle": "Sesendok Setelah Tutup",
   "lab.rates": "Detail Peluang",
   "lab.pickupInfo": "Info Karakter",
   "lab.rates.basis": "{banner} · Peluang per 1 Riset",

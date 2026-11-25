@@ -1,5 +1,7 @@
 /** 로비 화면의 일본어 표. */
 export const LOBBY_JA = {
+  "event.afterHours.title": "閉店後のひとさじ",
+  "event.afterHours.subtitle": "ヒスの期間限定ピックアップ",
   "lobby.duel": "決闘",
   "lobby.sortie": "出  撃",
   "lobby.interaction": "交流",

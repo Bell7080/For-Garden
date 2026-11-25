@@ -5,6 +5,20 @@
  * data already has (`relic.torika.name`).
  */
 export default {
+  "squad.rogue.title.3": "Guest",
+  "relic.his.name": "His",
+  "relic.his.researcherTitle": "Guest",
+  "relic.his.passive.name": "Reserved Seating",
+  "relic.his.basic.name": "Three Courtesies",
+  "relic.his.basic.step.0": "Greeting",
+  "relic.his.basic.step.1": "Serving",
+  "relic.his.basic.step.2": "Closing",
+  "relic.his.ultimate.name": "Closing Bell",
+  "relic.his.ferocity.name": "Extended Service",
+  "keyword.reserved-guest.term": "Regular",
+  "keyword.reserved-guest.description": "His marks the enemy with the highest maximum HP. When that enemy falls, His marks the surviving enemy with the highest maximum HP.",
+  "keyword.special-fee.term": "Special Charge",
+  "keyword.special-fee.description": "Deals 4% of the Regular's maximum HP as [[fixed-damage|fixed damage]] and heals His for 50% of the HP actually removed. Uses the same percentage-HP damage resistance as Bleeding. Raids use the boss's scaled HP as the basis.",
   "modifier.ancient-pathfinder.name": "Ancient Pathfinder",
   "modifier.seasoned-pioneer.name": "Seasoned Vanguard",
   "modifier.unyielding-pioneer.name": "Unyielding Vanguard",

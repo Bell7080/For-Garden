@@ -300,6 +300,7 @@ describe("운영 배너 데이터", () => {
       welcome: { relicRPlus: [0.249, 0.251], gold: [3_499, 3_501], cheesecake: [26.24, 26.26] },
       amber: { relicRPlus: [0.249, 0.251], gold: [3_499, 3_501], cheesecake: [26.24, 26.26] },
       moonlit: { relicRPlus: [0.249, 0.251], gold: [3_499, 3_501], cheesecake: [26.24, 26.26] },
+      "after-hours": { relicRPlus: [0.249, 0.251], gold: [3_499, 3_501], cheesecake: [26.24, 26.26] },
     } as const;
 
     for (const candidate of BANNERS) {

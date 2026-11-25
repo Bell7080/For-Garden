@@ -202,6 +202,14 @@ export const KEYWORDS: readonly KeywordDef[] = [
     description: "마가사가 찍은 적이다. 재료를 때릴 때마다 공격 속도·이동 속도가 5씩 오르고(최대 10겹), 다른 적을 때리면 모두 풀린다.",
   },
   {
+    id: "reserved-guest", term: "단골", kind: "rule",
+    description: "최대 체력이 가장 높은 적에게 붙는 히스의 표식입니다. 단골이 쓰러지면 남은 적 중 최대 체력이 가장 높은 적을 새로 지정합니다.",
+  },
+  {
+    id: "special-fee", term: "특별 요금", kind: "rule",
+    description: "단골에게 최대 체력의 4%만큼 [[fixed-damage|고정 피해]]를 주고, 실제로 깎은 체력의 50%를 회복합니다. 출혈과 같은 비례 피해 저항이 적용되며 레이드에서는 보스 성장 체력을 기준으로 계산합니다.",
+  },
+  {
     id: "resonance", term: "공명", kind: "buff",
     description: "5초 동안 공격 속도가 30% 오르는 아군 강화다. 순풍·오더와 같은 칸을 쓰므로 남은 시간이 더 긴 쪽만 남는다.",
   },

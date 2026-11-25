@@ -70,6 +70,8 @@ import {
   TEKU_SD_METADATA,
   PLESHA_PORTRAIT_METADATA,
   PLESHA_SD_METADATA,
+  HIS_PORTRAIT_METADATA,
+  HIS_SD_METADATA,
   ARTE_PORTRAIT_METADATA,
   ARTE_SD_METADATA,
   BRIKA_PORTRAIT_METADATA,
@@ -451,6 +453,8 @@ export const PLESHA_ASSET: PuppetAsset = {
   ...PLESHA_PORTRAIT_METADATA,
 };
 
+const HIS_ASSET: PuppetAsset = { url: `${base}puppets/char_036.zip`, ...HIS_PORTRAIT_METADATA };
+
 /** 31번 전신 일러스트: 아르테(아르카이옵테릭스). A-CLEAN 명찰을 단 청소 용역 신입 원화다. */
 export const ARTE_ASSET: PuppetAsset = {
   url: `${base}puppets/char_031.zip`,
@@ -647,6 +651,7 @@ const PORTRAIT_ASSETS = {
   yuti: YUTI_ASSET,
   teku: TEKU_ASSET,
   plesha: PLESHA_ASSET,
+  his: HIS_ASSET,
   arte: ARTE_ASSET,
   brika: BRIKA_ASSET,
   belz: BELZ_ASSET,
@@ -889,6 +894,8 @@ export const PLESHA_SD_ASSET: PuppetAsset = {
   ...PLESHA_SD_METADATA,
 };
 
+const HIS_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_036.zip`, ...HIS_SD_METADATA };
+
 /** 31번 SD: 아르테. */
 export const ARTE_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_031.zip`,
@@ -989,6 +996,7 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   yuti: YUTI_SD_ASSET,
   teku: TEKU_SD_ASSET,
   plesha: PLESHA_SD_ASSET,
+  his: HIS_SD_ASSET,
   arte: ARTE_SD_ASSET,
   brika: BRIKA_SD_ASSET,
   belz: BELZ_SD_ASSET,

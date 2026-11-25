@@ -1,5 +1,13 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_PT_BR = {
+  "skill.ferocity.extendedService": "Durante o Frenesi, pula a Recepção e alterna entre Serviço e Fechamento. A velocidade de ataque aumenta em {percent}%.",
+  "skill.passive.reservedGuest": "Marca como [[reserved-guest|cliente habitual]] o inimigo com mais PV máximos e o prioriza até ele cair. Ataques diretos de outros inimigos concedem {points} de defesa e resistência contra outros inimigos até o fim da luta.",
+  "skill.sentence.closingService": "Aplica uma [[special-fee|taxa especial]] ao cliente habitual.",
+  "skill.sentence.closingServiceUltimate": "Ao acertar o cliente habitual, aplica a [[special-fee|taxa especial]] {hits} vezes. O próximo ataque básico se torna Fechamento.",
+  "skill.breakthrough.guestHaste": "Cada ataque básico que acerta o cliente habitual aumenta a velocidade de ataque em {percent}%. Até {max} acúmulos, reiniciados quando o cliente muda.",
+  "skill.breakthrough.serviceBarrier": "Ganha um [[shield|escudo]] de {seconds} s igual a {percent}% dos PV removidos pela suprema e pelas taxas especiais. Limite de {max}% dos PV máximos próprios, sem acúmulo.",
+  "skill.breakthrough.guestDebuff": "Durante o Frenesi, a defesa, a resistência e a cura recebida pelo cliente habitual diminuem {percent}% cada.",
+  "skill.breakthrough.guestShieldBreak": "Ao acertar o cliente habitual, Fechamento destrói seu [[shield|escudo]] antes de causar o dano de Fechamento e da taxa especial.",
   "skill.fact.whenActive": "Enquanto estiver ativo",
   "skill.keyword.statGain": "Aumento de {stat}: +{amount}\nBase {base} × {percent}% ≈ +{amount}\nSomente este efeito: {total}. Outros efeitos podem alterar o valor final.",
   "skill.keyword.value.damage": "Dano calculado como {percent}% de {stat}.\n(Com {stat} {base})",

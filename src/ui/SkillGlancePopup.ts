@@ -42,7 +42,7 @@ function glanceEntries(ally: SkillGlanceAlly): GlanceEntry[] {
   const { def, breakthrough } = ally;
   const effect = (slot: SkillArtSlot): string | undefined => (breakthroughEnhances(def, breakthrough, slot) ? breakthroughEffectText(def, slot, def.stats) : undefined);
   const skills: [SkillArtSlot, Skill | Passive, number | undefined][] = [
-    ["passive", { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined],
+    ["passive", def.passive, undefined],
     ["basic", def.basic, undefined],
     ["ultimate", def.ultimate, def.ultimate.cost],
   ];
@@ -193,7 +193,7 @@ function buildCards(scene: Phaser.Scene, keywords: KeywordManager, ally: SkillGl
     const cardTop = -height / 2;
     const frame = addSkillIconFrame(scene, {
       size: C.icon, slot: entry.slot, relicId: ally.def.id, element: ally.def.element, role: ally.def.role,
-      label: skillSlotLabel(entry.slot), enhanced: entry.enhanced,
+      label: skillSlotLabel(entry.slot), enhanced: entry.enhanced, fallbackIcon: entry.view.iconAssetId,
       ...(ferocity ? { fallbackGlyph: "ferocity" as const, tone: FEROCITY_BADGE_TONE } : {}),
     });
     frame.setPosition(left + C.pad + C.icon / 2, cardTop + C.pad + C.icon / 2);

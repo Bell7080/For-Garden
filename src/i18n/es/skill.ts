@@ -1,5 +1,13 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_ES = {
+  "skill.ferocity.extendedService": "Durante el Frenesí, omite el Saludo y alterna Servicio y Cierre. Aumenta un {percent}% la velocidad de ataque.",
+  "skill.passive.reservedGuest": "Marca como [[reserved-guest|cliente habitual]] al enemigo con más PS máximos y lo prioriza hasta que caiga. Cada ataque directo de otro enemigo otorga {points} de defensa y resistencia contra otros enemigos hasta el fin del combate.",
+  "skill.sentence.closingService": "Aplica un [[special-fee|recargo especial]] al cliente habitual.",
+  "skill.sentence.closingServiceUltimate": "Si alcanza al cliente habitual, aplica el [[special-fee|recargo especial]] {hits} veces. El siguiente ataque básico será Cierre.",
+  "skill.breakthrough.guestHaste": "Cada ataque básico que alcanza al cliente habitual aumenta un {percent}% la velocidad de ataque. Hasta {max} acumulaciones, que se reinician al cambiar de cliente.",
+  "skill.breakthrough.serviceBarrier": "Obtiene durante {seconds} s un [[shield|escudo]] igual al {percent}% de los PS restados por la definitiva y los recargos. Límite del {max}% de los PS propios máximos. No se acumula.",
+  "skill.breakthrough.guestDebuff": "Durante el Frenesí, reduce un {percent}% la defensa, la resistencia y la curación recibida por el cliente habitual.",
+  "skill.breakthrough.guestShieldBreak": "Al acertar al cliente habitual, Cierre destruye su [[shield|escudo]] antes de aplicar el daño de Cierre y del recargo especial.",
   "skill.fact.whenActive": "Mientras esté activo",
   "skill.keyword.statGain": "Aumento de {stat}: +{amount}\nBase {base} × {percent}% ≈ +{amount}\nSolo este efecto: {total}. Otros efectos pueden cambiar el valor final.",
   "skill.keyword.value.damage": "Daño calculado como el {percent}% de {stat}.\n(Con {stat} {base})",

@@ -1,5 +1,7 @@
 /** The lobby: the screen for looking at your Relic. */
 export const LOBBY_TH = {
+  "event.afterHours.title": "หนึ่งคำหลังปิดร้าน",
+  "event.afterHours.subtitle": "เพิ่มโอกาสรับฮิสแบบจำกัดเวลา",
   "lobby.duel": "ดวล",
   "lobby.sortie": "ออ ก รบ",
   "lobby.interaction": "แลกเปลี่ยน",

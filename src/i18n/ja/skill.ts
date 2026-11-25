@@ -4,6 +4,14 @@
  * 韓国語表と同じキーを使い、値は文を丸ごと持つ。`{名前}` の位置だけがコードから届く。
  */
 export const SKILL_JA = {
+  "skill.ferocity.extendedService": "暴走中は受付を飛ばし、配膳と閉店を交互に行います。攻撃速度が{percent}%上がります。",
+  "skill.passive.reservedGuest": "最大HPが最も高い敵を[[reserved-guest|常連客]]に指定し、倒れるまで優先して攻撃します。ほかの敵の直接攻撃を受けるたび、戦闘終了まで常連客以外に対する防御力と抵抗力がそれぞれ{points}上がります。",
+  "skill.sentence.closingService": "常連客には[[special-fee|特別料金]]を1回適用します。",
+  "skill.sentence.closingServiceUltimate": "常連客に命中すると[[special-fee|特別料金]]を{hits}回適用します。次の通常攻撃が閉店になります。",
+  "skill.breakthrough.guestHaste": "常連客に通常攻撃が命中するたび、攻撃速度が{percent}%上がります。最大{max}スタックで、常連客が変わるとリセットされます。",
+  "skill.breakthrough.serviceBarrier": "必殺技と特別料金で実際に減らしたHPの{percent}%分の[[shield|シールド]]を{seconds}秒間得ます。自身の最大HPの{max}%が上限で、重複しません。",
+  "skill.breakthrough.guestDebuff": "暴走中、常連客の防御力、抵抗力、被回復量がそれぞれ{percent}%下がります。",
+  "skill.breakthrough.guestShieldBreak": "閉店が常連客に命中すると、[[shield|シールド]]を破壊してから閉店と特別料金のダメージを与えます。",
   "skill.fact.whenActive": "効果発動中",
   "skill.keyword.statGain": "{stat}の増加量：+{amount}\n基準 {base} × {percent}% ≈ +{amount}\nこの効果のみ適用：{total}。他の効果により最終値は変わります。",
   "skill.keyword.value.damage": "{stat}の{percent}%で計算したダメージ値。\n({stat}{base}基準)",

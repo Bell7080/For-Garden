@@ -61,6 +61,7 @@ export const LAB_EN = {
   "lab.banner.amber.subtitle": "The Clumsy Part-Timer of the Wolf Café",
   "lab.banner.moonlit.eyebrow": "LIMITED PICK UP",
   "lab.banner.moonlit.subtitle": "The Star-Gathering Junior of the Moonlit Picnic",
+  "lab.banner.afterHours.subtitle": "One Spoonful After Closing",
   "lab.tag.standard": "Standard Research",
   "lab.tag.limited": "Limited Time",
   "lab.tag.once": "Once per Account",

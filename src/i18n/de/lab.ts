@@ -1,5 +1,6 @@
 /** The Research Lab: fossil research and its results. */
 export const LAB_DE = {
+  "lab.banner.afterHours.subtitle": "Ein Löffel nach Feierabend",
   "lab.rates": "Wahrscheinlichkeiten",
   "lab.pickupInfo": "Charakterinfo",
   "lab.rates.basis": "{banner} · Chance pro Forschung",

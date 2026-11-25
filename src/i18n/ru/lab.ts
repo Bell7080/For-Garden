@@ -1,5 +1,6 @@
 /** The Research Lab: fossil research and its results. */
 export const LAB_RU = {
+  "lab.banner.afterHours.subtitle": "Ложечка после закрытия",
   "lab.rates": "Шансы",
   "lab.pickupInfo": "О персонаже",
   "lab.rates.basis": "{banner} · Шанс за одно Исследование",

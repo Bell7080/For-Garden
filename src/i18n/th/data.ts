@@ -5,6 +5,7 @@
  * data already has (`relic.torika.name`).
  */
 export default {
+  "squad.rogue.title.3": "คุณลูกค้า",
   "modifier.ancient-pathfinder.name": "ผู้บุกเบิกยุคโบราณ",
   "modifier.seasoned-pioneer.name": "แนวหน้าผู้ชำนาญ",
   "modifier.unyielding-pioneer.name": "แนวหน้าผู้ไม่ย่อท้อ",

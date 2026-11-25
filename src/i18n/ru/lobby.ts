@@ -1,5 +1,7 @@
 /** The lobby: the screen for looking at your Relic. */
 export const LOBBY_RU = {
+  "event.afterHours.title": "Ложечка после закрытия",
+  "event.afterHours.subtitle": "Хис в подборке ограниченное время",
   "lobby.duel": "Дуэль",
   "lobby.sortie": "В  Б О Й",
   "lobby.interaction": "Обмен",

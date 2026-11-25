@@ -1,5 +1,7 @@
 /** The lobby: the screen for looking at your Relic. */
 export const LOBBY_VI = {
+  "event.afterHours.title": "Một thìa sau giờ đóng cửa",
+  "event.afterHours.subtitle": "Tăng tỉ lệ chiêu mộ His trong thời gian giới hạn",
   "lobby.duel": "Đấu tay đôi",
   "lobby.sortie": "X U Ấ T  K Í C H",
   "lobby.interaction": "Giao lưu",

@@ -1,5 +1,7 @@
 /** The lobby: the screen for looking at your Relic. */
 export const LOBBY_DE = {
+  "event.afterHours.title": "Ein Löffel nach Feierabend",
+  "event.afterHours.subtitle": "Zeitlich begrenzter Pick-up für His",
   "lobby.duel": "Duell",
   "lobby.sortie": "A U F B R U C H",
   "lobby.interaction": "Austausch",

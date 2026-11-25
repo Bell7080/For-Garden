@@ -91,6 +91,12 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     endsAt: "2026-12-31T23:59:59+09:00",
   },
   {
+    id: "after-hours", titleKey: "event.afterHours.title", subtitleKey: "event.afterHours.subtitle",
+    backdropKey: BACKGROUND.recruitHis, backdropFrame: { zoom: 1.15, offsetX: 80, offsetY: 330 },
+    sd: { relicId: "his", side: "right" }, destination: { kind: "lab", bannerId: "after-hours" },
+    startsAt: "2026-12-04T09:00:00+09:00", endsAt: OPEN_END,
+  },
+  {
     id: "research-roulette",
     titleKey: "event.roulette.title",
     subtitleKey: "event.roulette.subtitle",

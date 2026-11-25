@@ -20,7 +20,7 @@ export const LAB_AURORA = {
 } as const;
 
 /** 배너의 결과 같은 이름 — 색과 세기를 고른다. */
-export type LabAuroraTone = "welcome" | "standard" | "limited" | "moonlit";
+export type LabAuroraTone = "welcome" | "standard" | "limited" | "moonlit" | "after-hours";
 
 export interface LabAuroraPalette {
   /** 오로라 띠의 세 색 — 아래 뿌리(a) → 가운데(b) → 끝(c). 0~1 RGB. */
@@ -42,6 +42,7 @@ export const LAB_AURORA_PALETTE: Record<LabAuroraTone, LabAuroraPalette> = {
   welcome: { colors: [rgb(0xff9fb8), rgb(0xff7ad0), rgb(0xb07cff)], intensity: 0.65, sparkle: 0.35 },
   limited: { colors: [rgb(0xffc94a), rgb(0xff7a4a), rgb(0xff4fa0)], intensity: 0.75, sparkle: 0.7 },
   moonlit: { colors: [rgb(0x4fe3ff), rgb(0x7c8cff), rgb(0xd27cff)], intensity: 0.75, sparkle: 0.7 },
+  "after-hours": { colors: [rgb(0x4ead79), rgb(0x96d77b), rgb(0xd9edab)], intensity: 0.7, sparkle: 0.65 },
 };
 
 export interface LabAuroraPlan {

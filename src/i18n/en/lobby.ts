@@ -32,6 +32,8 @@ export const LOBBY_EN = {
   "event.wolfCafe.subtitle": "Limited-time Dian Pick-Up Event!",
   "event.moonPicnic.title": "Picnic Under the Night Sky",
   "event.moonPicnic.subtitle": "Limited-time Plesha Pick-Up Event!",
+  "event.afterHours.title": "One Spoonful After Closing",
+  "event.afterHours.subtitle": "Limited-time His Pick-Up",
   "event.attendance.newcomer.title": "New Researcher 7-Day Check-in",
   "event.attendance.noDeadline": "No deadline!",
   "event.attendance.regular.title": "Daily Check-in",

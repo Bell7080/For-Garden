@@ -20,13 +20,15 @@ describe("배너 기간과 천장", () => {
     expect(BANNERS.filter((b) => b.carryoverTo !== undefined).map((b) => b.id)).toEqual(["welcome"]);
   });
 
-  it("한정 픽업은 한 번에 하나만 선다: 지금은 플레샤, 3주 뒤 디안, 다시 3주 뒤 플레샤", () => {
+  it("한정 픽업은 한 번에 하나만 선다: 플레샤에서 히스, 디안 순으로 교대한다", () => {
     const at = (iso: string) => new Date(iso);
     const open = (iso: string) => BANNERS.filter((b) => Object.keys(b.pickupRelicIds).length > 0 && bannerActive(b, at(iso), [])).map((b) => b.id);
     expect(open("2026-11-14T00:00:00Z")).toEqual(["moonlit"]);
     expect(open("2026-12-03T23:59:59Z")).toEqual(["moonlit"]);
-    expect(open("2026-12-04T00:00:00Z")).toEqual(["amber"]);
-    expect(open("2026-12-25T00:00:00Z")).toEqual(["moonlit"]);
+    expect(open("2026-12-04T00:00:00Z")).toEqual(["after-hours"]);
+    expect(open("2026-12-24T23:59:59Z")).toEqual(["after-hours"]);
+    expect(open("2026-12-25T00:00:00Z")).toEqual(["amber"]);
+    expect(open("2027-01-15T00:00:00Z")).toEqual(["moonlit"]);
     expect(currentPickupWindow(Date.parse("2026-11-20T00:00:00Z"))).toEqual({ startsAt: "2026-11-13T00:00:00.000Z", endsAt: "2026-12-04T00:00:00.000Z" });
     expect(currentPickupBannerId(Date.parse("2026-11-12T00:00:00Z"))).toBe("amber");
     // 교대에 들지 않은 배너(화석 연구)는 막지 않는다.

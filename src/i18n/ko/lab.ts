@@ -58,6 +58,7 @@ export const LAB_KO = {
   "lab.banner.amber.subtitle": "우당탕탕 늑대 카페 알바생",
   "lab.banner.moonlit.eyebrow": "LIMITED PICK UP",
   "lab.banner.moonlit.subtitle": "달빛 피크닉의 별 줍는 후배",
+  "lab.banner.afterHours.subtitle": "마감 후 한 스푼",
   "lab.tag.standard": "상시 연구",
   "lab.tag.limited": "기간 한정",
   "lab.tag.once": "계정당 1회",

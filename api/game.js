@@ -5392,6 +5392,8 @@ var LOBBY_KO = {
   "event.wolfCafe.subtitle": "\uB514\uC548 \uD55C\uC815 \uD53D\uC5C5 \uC774\uBCA4\uD2B8!",
   "event.moonPicnic.title": "\uBC24\uD558\uB298\uC758 \uD53C\uD06C\uB2C9",
   "event.moonPicnic.subtitle": "\uD50C\uB808\uC0E4 \uD55C\uC815 \uD53D\uC5C5 \uC774\uBCA4\uD2B8!",
+  "event.afterHours.title": "\uB9C8\uAC10 \uD6C4 \uD55C \uC2A4\uD47C",
+  "event.afterHours.subtitle": "\uD788\uC2A4 \uD55C\uC815 \uD53D\uC5C5",
   "event.attendance.newcomer.title": "\uC2E0\uADDC \uC5F0\uAD6C\uC6D0 7\uC77C \uCD9C\uC11D",
   "event.attendance.noDeadline": "\uAE30\uD55C \uC5C6\uC74C!",
   "event.attendance.regular.title": "\uC815\uADDC \uCD9C\uC11D",
@@ -5945,6 +5947,7 @@ var LAB_KO = {
   "lab.banner.amber.subtitle": "\uC6B0\uB2F9\uD0D5\uD0D5 \uB291\uB300 \uCE74\uD398 \uC54C\uBC14\uC0DD",
   "lab.banner.moonlit.eyebrow": "LIMITED PICK UP",
   "lab.banner.moonlit.subtitle": "\uB2EC\uBE5B \uD53C\uD06C\uB2C9\uC758 \uBCC4 \uC90D\uB294 \uD6C4\uBC30",
+  "lab.banner.afterHours.subtitle": "\uB9C8\uAC10 \uD6C4 \uD55C \uC2A4\uD47C",
   "lab.tag.standard": "\uC0C1\uC2DC \uC5F0\uAD6C",
   "lab.tag.limited": "\uAE30\uAC04 \uD55C\uC815",
   "lab.tag.once": "\uACC4\uC815\uB2F9 1\uD68C",
@@ -7760,6 +7763,14 @@ var MISC_KO = {
 // src/i18n/ko/skill.ts
 init_define_import_meta_env();
 var SKILL_KO = {
+  "skill.ferocity.extendedService": "\uD3ED\uC8FC \uC911\uC5D0\uB294 \uC811\uC218\uB97C \uAC74\uB108\uB6F0\uC5B4 \uC11C\uBE59\uACFC \uB9C8\uAC10\uC744 \uBC88\uAC08\uC544 \uC0AC\uC6A9\uD569\uB2C8\uB2E4. \uACF5\uACA9 \uC18D\uB3C4\uAC00 {percent}% \uC99D\uAC00\uD569\uB2C8\uB2E4.",
+  "skill.passive.reservedGuest": "\uCD5C\uB300 \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB192\uC740 \uC801\uC744 [[reserved-guest|\uB2E8\uACE8]]\uB85C \uC9C0\uC815\uD574 \uC4F0\uB7EC\uC9C8 \uB54C\uAE4C\uC9C0 \uC6B0\uC120 \uACF5\uACA9\uD569\uB2C8\uB2E4. \uB2E4\uB978 \uC801\uC758 \uC9C1\uC811 \uACF5\uACA9\uC5D0 \uB9DE\uC744 \uB54C\uB9C8\uB2E4 \uBC29\uC5B4\uB825\uACFC \uC800\uD56D\uB825\uC774 \uAC01\uAC01 {points}\uC529 \uC313\uC785\uB2C8\uB2E4. \uB204\uC801\uCE58\uB294 \uC804\uD22C\uAC00 \uB05D\uB0A0 \uB54C\uAE4C\uC9C0 \uB2E8\uACE8 \uC678\uC758 \uC801\uC758 \uACF5\uACA9\uC5D0 \uC801\uC6A9\uB429\uB2C8\uB2E4.",
+  "skill.sentence.closingService": "\uB2E8\uACE8\uC5D0\uAC8C\uB294 [[special-fee|\uD2B9\uBCC4 \uC694\uAE08]]\uC744 1\uD68C \uC801\uC6A9\uD569\uB2C8\uB2E4.",
+  "skill.sentence.closingServiceUltimate": "\uB2E8\uACE8\uC5D0\uAC8C \uC801\uC911\uD558\uBA74 [[special-fee|\uD2B9\uBCC4 \uC694\uAE08]]\uC744 {hits}\uD68C \uC801\uC6A9\uD569\uB2C8\uB2E4. \uB2E4\uC74C \uC77C\uBC18 \uACF5\uACA9\uC744 \uB9C8\uAC10\uC73C\uB85C \uBC14\uAFC9\uB2C8\uB2E4.",
+  "skill.breakthrough.guestHaste": "\uB2E8\uACE8\uC5D0\uAC8C \uAE30\uBCF8 \uACF5\uACA9\uC774 \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {percent}% \uC99D\uAC00\uD569\uB2C8\uB2E4. \uCD5C\uB300 {max}\uC911\uCCA9\uC774\uBA70 \uB2E8\uACE8\uC774 \uBC14\uB00C\uBA74 \uCD08\uAE30\uD654\uB429\uB2C8\uB2E4.",
+  "skill.breakthrough.serviceBarrier": "\uD2B9\uBCC4 \uC694\uAE08\uC744 \uD3EC\uD568\uD574 \uAD81\uADF9\uAE30\uB85C \uAE4E\uC740 \uCCB4\uB825\uC758 {percent}%\uB9CC\uD07C {seconds}\uCD08 \uB3D9\uC548 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uC2B5\uB2C8\uB2E4. \uB0B4 \uCD5C\uB300 \uCCB4\uB825\uC758 {max}%\uAE4C\uC9C0\uC774\uBA70 \uC911\uCCA9\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+  "skill.breakthrough.guestDebuff": "\uD3ED\uC8FC \uC911 \uB2E8\uACE8\uC758 \uBC29\uC5B4\uB825, \uC800\uD56D\uB825, \uBC1B\uB294 \uCCB4\uB825 \uD68C\uBCF5\uB7C9\uC774 \uAC01\uAC01 {percent}% \uAC10\uC18C\uD569\uB2C8\uB2E4.",
+  "skill.breakthrough.guestShieldBreak": "\uB2E8\uACE8\uC5D0\uAC8C \uB9C8\uAC10\uC774 \uC801\uC911\uD558\uBA74 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uD30C\uAD34\uD55C \uB4A4 \uB9C8\uAC10\uACFC \uD2B9\uBCC4 \uC694\uAE08\uC758 \uD53C\uD574\uB97C \uC801\uC6A9\uD569\uB2C8\uB2E4.",
   "skill.fact.whenActive": "\uD6A8\uACFC \uBC1C\uB3D9 \uC2DC",
   "skill.keyword.statGain": "{stat} \uC99D\uAC00\uB7C9: +{amount}\n\uAE30\uC900 {base} \xD7 {percent}% \u2248 +{amount}\n\uC774 \uD6A8\uACFC\uB9CC \uC801\uC6A9 \uC2DC {total}. \uB2E4\uB978 \uD6A8\uACFC\uAC00 \uB354\uD574\uC9C0\uBA74 \uCD5C\uC885 \uC218\uCE58\uB294 \uB2EC\uB77C\uC9C8 \uC218 \uC788\uB2E4.",
   "skill.keyword.value.damage": "{stat}\uC758 {percent}%\uB85C \uACC4\uC0B0\uD55C \uD53C\uD574 \uC218\uCE58\uB2E4.\n({stat} {base} \uAE30\uC900)",
@@ -11517,6 +11528,7 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     echo: null,
     aim: null,
     ingredientId: null,
+    ...def.passive.reservedGuest ? { reservedGuest: { targetId: null, hasteStacks: 0, guardPoints: 0 } } : {},
     ingredientStacks: 0,
     ingredientKillsPending: 0,
     ingredientHaste: 0,
@@ -11657,6 +11669,7 @@ function createSkirmish(playerDefs, enemyDefs, arena, playerBondLevels = {}, pla
     ...options.timeLimitSeconds !== void 0 ? { timeLimitSeconds: options.timeLimitSeconds, timeLimitReached: false } : {},
     automaticUltimates: options.automaticUltimates,
     fighters,
+    reservedGuestOwners: fighters.filter((fighter) => fighter.reservedGuest !== void 0),
     // 늑대가 낸 피해는 성장 주체인 지휘자 앞으로 쌓이므로 장부에 제 줄을 만들지 않는다.
     contributions: createBattleContributions(party.map(({ id }) => id)),
     arena,
@@ -11673,6 +11686,7 @@ function createSkirmish(playerDefs, enemyDefs, arena, playerBondLevels = {}, pla
   refreshPackGuard(state);
   linkDuos(state);
   state.initialEvents = initializeSkirmishAugments(state);
+  for (const owner2 of state.reservedGuestOwners ?? []) selectReservedGuest(state, owner2);
   state.initialEvents.push(...state.fighters.filter((wolf) => wolf.summonOwnerId !== null && isFighterAlive(wolf)).map((wolf) => ({
     kind: "packSummon",
     fighterId: wolf.id,
@@ -12577,6 +12591,7 @@ function breakShield(target, events) {
   target.shield.amount = 0;
   target.shield.providerId = null;
   target.shieldFade = null;
+  target.serviceBarrier = void 0;
   events.push({ kind: "shieldDepleted", fighterId: target.id, effect: { tag: "shieldBreak", intensity: 1 } });
 }
 function tickShieldFade(fighter, dt, events) {
@@ -12584,11 +12599,22 @@ function tickShieldFade(fighter, dt, events) {
   if (!fade) return;
   const elapsed = Math.min(dt, fade.remaining);
   const before = fighter.shield.amount;
-  fighter.shield.amount = Math.max(0, before - fade.perSecond * elapsed);
+  fighter.shield.amount = Math.max(fighter.serviceBarrier?.amount ?? 0, before - fade.perSecond * elapsed);
   fade.remaining -= elapsed;
   if (fighter.shield.amount < 1e-6) fighter.shield.amount = 0;
   if (before > 0 && fighter.shield.amount <= 0) events.push({ kind: "shieldDepleted", fighterId: fighter.id, effect: { tag: "shieldBreak", intensity: 0.6 } });
   if (fade.remaining <= EMERGENCY_RECOVERY.epsilon) fighter.shieldFade = null;
+}
+function expireServiceBarrier(fighter, elapsed, events) {
+  const barrier = fighter.serviceBarrier;
+  if (!barrier || elapsed < barrier.expiresAt) return;
+  fighter.serviceBarrier = void 0;
+  const before = fighter.shield.amount;
+  fighter.shield.amount = Math.max(0, before - barrier.amount);
+  if (before > 0 && fighter.shield.amount === 0) {
+    fighter.shield.providerId = null;
+    events.push({ kind: "shieldDepleted", fighterId: fighter.id, effect: { tag: "shieldBreak", intensity: 1 } });
+  }
 }
 function tickOverclockAura(fighter, dt, state, events) {
   const trait = fighter.def.ferocityTrait;
@@ -12952,7 +12978,7 @@ function currentBasic(attacker) {
   const basic = attacker.def.basic;
   const cycle = basic.cycle;
   if (!cycle || cycle.length === 0) return basic;
-  const step2 = cycle[attacker.basicCycleStep % cycle.length];
+  const step2 = cycle[basicCycleIndex(attacker, cycle.length)];
   const aim = step2.targeting === "splitShot" ? { targeting: "splitShot", maxTargets: step2.maxTargets ?? 1 } : step2.targeting === "nearbyEnemies" ? { targeting: "nearbyEnemies", radius: step2.radius ?? 0 } : { targeting: "single" };
   return {
     ...basic,
@@ -14255,11 +14281,92 @@ function tidyUpAfterBasic(fighter, state, events) {
 function currentBasicStep(attacker) {
   const cycle = attacker.def.basic.cycle;
   if (!cycle || cycle.length === 0) return void 0;
-  return cycle[attacker.basicCycleStep % cycle.length];
+  return cycle[basicCycleIndex(attacker, cycle.length)];
 }
-function advanceBasicCycle(attacker) {
+function basicCycleIndex(attacker, length) {
+  const index = attacker.basicCycleStep % length;
+  return index === 0 && attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "extendedService" ? 1 : index;
+}
+function advanceBasicCycle(attacker, stepIndex) {
   const cycle = attacker.def.basic.cycle;
-  if (cycle && cycle.length > 0) attacker.basicCycleStep = (attacker.basicCycleStep + 1) % cycle.length;
+  if (cycle && cycle.length > 0) attacker.basicCycleStep = ((stepIndex ?? basicCycleIndex(attacker, cycle.length)) + 1) % cycle.length;
+}
+function selectReservedGuest(state, owner2) {
+  const reservation = owner2.reservedGuest;
+  if (!reservation) return void 0;
+  const current2 = reservation.targetId ? findFighter(state, reservation.targetId) : void 0;
+  if (current2 && isFighterAlive(current2)) return current2;
+  let selected;
+  for (const target of state.fighters) {
+    if (target.side === owner2.side || !isFighterAlive(target) || target.hordeEntering) continue;
+    if (!selected || target.maxHp > selected.maxHp) selected = target;
+  }
+  reservation.targetId = selected?.id ?? null;
+  reservation.hasteStacks = 0;
+  return selected;
+}
+function reservedGuestHastePercent(owner2) {
+  if (!owner2.reservedGuest?.hasteStacks) return 0;
+  const plan = openedBreakthrough(owner2, "basic", (effects) => effects.basic);
+  return plan?.kind === "guestHaste" ? owner2.reservedGuest.hasteStacks * plan.percentPerHit : 0;
+}
+function reservedGuestDebuff(state, target) {
+  let reduction = 0;
+  for (const owner2 of state.reservedGuestOwners ?? []) {
+    if (!owner2.ferocityFever || owner2.reservedGuest?.targetId !== target.id || !isFighterAlive(owner2)) continue;
+    const plan = openedBreakthrough(owner2, "ferocity", (effects) => effects.ferocity);
+    if (plan?.kind === "guestDebuff") reduction = Math.max(reduction, plan.reductionPercent);
+  }
+  return reduction;
+}
+function countGuestGuardHit(target, source) {
+  const reservation = target.reservedGuest;
+  const plan = target.def.passive.reservedGuest;
+  if (!plan || !reservation || target.side === source.side || reservation.targetId === source.id) return;
+  const last = reservation.lastGuardHit;
+  if (last?.sourceId === source.id && last.action === source.augmentActionSerial) return;
+  reservation.guardPoints += plan.guardPointsPerAction;
+  reservation.lastGuardHit = { sourceId: source.id, action: source.augmentActionSerial };
+}
+function applyClosingService(attacker, target, state, events, useUltimate, finisher, guest, dealt, landed) {
+  const plan = attacker.def.basic.closingService;
+  if (!plan) return;
+  if (useUltimate) attacker.basicCycleStep = plan.stepIndex;
+  if (!landed || !isFighterAlive(attacker)) return;
+  const haste = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  if (!useUltimate && guest && haste?.kind === "guestHaste" && attacker.reservedGuest) {
+    attacker.reservedGuest.hasteStacks = Math.min(haste.maxStacks, attacker.reservedGuest.hasteStacks + 1);
+  }
+  const fees = guest ? useUltimate ? attacker.def.ultimate.closingServiceFees ?? 0 : Number(finisher) : 0;
+  let feeDamage = 0;
+  for (let index = 0; index < fees && isFighterAlive(target); index += 1) {
+    const amount2 = receivedDamage(target, percentHpDamage(target, plan.feeHpPercent));
+    const lost = applyDamage(target, amount2, events, state);
+    feeDamage += lost;
+    scoreBossFixedDamage(state, target, lost);
+    drainFromDamage(state, attacker, lost, plan.feeLifeStealPercent, events);
+    addContribution(state.contributions, attacker.id, "attack", lost, "attackPower");
+    events.push({
+      kind: "attack",
+      attackerId: attacker.id,
+      targetId: target.id,
+      skill: "transfer",
+      amount: amount2,
+      contributionAmount: 0,
+      critical: false,
+      animate: false,
+      damageType: "true"
+    });
+  }
+  const barrier = useUltimate ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : void 0;
+  if (barrier?.kind !== "serviceBarrier") return;
+  const requested = Math.min(attacker.maxHp * barrier.maxHpPercent, (dealt + feeDamage) * barrier.damagePercent) / 100;
+  const old = attacker.serviceBarrier?.amount ?? 0;
+  const survival = survivalMultiplier(state) * hordeRestoreMultiplier(state, attacker.side);
+  if (requested * survival <= old) return;
+  attacker.shield.amount -= old;
+  const amount = grantShield(state, attacker, attacker.id, requested, events);
+  attacker.serviceBarrier = { amount, expiresAt: state.elapsed + barrier.seconds };
 }
 function withoutPoison(skill) {
   return { ...skill, statusEffects: (skill.statusEffects ?? []).filter((effect) => effect.kind !== "poison") };
@@ -14468,8 +14575,8 @@ function afterUltimateBreakthrough(attacker, state, events) {
     }
   }
 }
-function strikeSecondary(attacker, secondary, input, percent, critical, state, events) {
-  const defensive = defensiveDefinition(secondary, state);
+function strikeSecondary(attacker, secondary, input, percent, critical, state, events, direct = true) {
+  const defensive = defensiveDefinition(secondary, state, direct ? attacker : void 0);
   const base = computeDamage(attacker, defensive, input) * percent / 100;
   const contribution = Math.max(0, computeDamageContribution(attacker, input) * percent / 100);
   const resolution = resolveReceivedDamage(secondary, base);
@@ -14477,6 +14584,7 @@ function strikeSecondary(attacker, secondary, input, percent, critical, state, e
   const shieldBefore = secondary.shield.amount;
   const shieldProviderId = secondary.shield.providerId;
   applyDamage(secondary, resolution.applied, events, state);
+  if (direct && !resolution.ignored) countGuestGuardHit(secondary, attacker);
   const credited = recordDamageContribution(state, packCreditId(attacker), secondary, input.damageType, input.scalingStat, contribution, resolution, hpBefore, shieldBefore, shieldProviderId);
   tryTriggerEmergencyRecovery(secondary, state);
   tryTriggerLowHpVanish(secondary, state);
@@ -14539,7 +14647,7 @@ function tickBossBreakthroughs(fighter, dt, state, events) {
   const far = aliveFighters(state, fighter.side === "player" ? "enemy" : "player").reduce((chosen, other) => chosen === void 0 || distance(fighter, other) > distance(fighter, chosen) ? other : chosen, void 0);
   if (!far) return;
   const input = { power: plan.powerPercent, damageType: "magical", scalingStat: "ap", isCritical: false, kind: "basic" };
-  strikeSecondary(fighter, far, input, 100, false, state, events);
+  strikeSecondary(fighter, far, input, 100, false, state, events, false);
 }
 function refreshBleed(target, seconds, percent, events, sourceId, healingReceivedReductionPercent = 0) {
   const remaining = Math.max(target.bleed?.remaining ?? 0, seconds);
@@ -14913,7 +15021,7 @@ function attackSpeedParts(fighter, state) {
   const traitHastePercent = (fighter.traitHaste?.attackSpeedPercent ?? 0) + (state === void 0 ? 0 : warmUpAttackSpeedPercent(effectsFor(state, fighter), fighter.def.id, state.elapsed));
   const killHastePercent = fighter.killHaste?.attackSpeedPercent ?? 0;
   const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
-  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100);
+  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100) * (1 + reservedGuestHastePercent(fighter) / 100) * (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "extendedService" ? 1 + fighter.def.ferocityTrait.attackSpeedPercent / 100 : 1);
   return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed + ingredientHastePoints(fighter), boost: boostFactor, slow: slowFactor };
 }
 function currentAttackSpeed(fighter, state) {
@@ -14974,7 +15082,7 @@ function huddlePercent(state, fighter) {
   const near = state.fighters.filter((ally) => ally.id !== fighter.id && ally.side === fighter.side && isFighterAlive(ally) && ally.def.summonOnly !== true && distance(fighter, ally) <= plan.radius).length;
   return Math.min(plan.maxAllies, near) * plan.defenseResistancePercentPerAlly;
 }
-function defensiveDefinition(target, state) {
+function defensiveDefinition(target, state, source) {
   const bonus = strongestLivingAura(state, target.side, "teamDefenseResistancePercent");
   const shred = 1 - curseResistanceShred(target) / 100;
   const feverTrait = target.def.ferocityTrait;
@@ -14988,13 +15096,14 @@ function defensiveDefinition(target, state) {
   const huddle = huddlePercent(state, target) + lockGuardPercent(target);
   const fang = target.bt.fangShave ? Math.max(0, 1 - target.bt.fangShave.stacks * target.bt.fangShave.percentPerStack / 100) : 1;
   const feared = target.fear !== null ? 1 - FEAR_DEFENSE_REDUCTION_PERCENT / 100 : 1;
-  const scrubbed = 1 + (target.scrub?.defenseResistancePercent ?? 0) / 100;
-  if (scrubbed === 1 && fang === 1 && feared === 1 && bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && mural <= 0 && bulwark <= 0 && huddle <= 0 && torika === void 0 && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
+  const guestGuard = source && source.side !== target.side && target.reservedGuest?.targetId !== source.id ? target.reservedGuest?.guardPoints ?? 0 : 0;
+  const scrubbed = (1 + (target.scrub?.defenseResistancePercent ?? 0) / 100) * (1 - reservedGuestDebuff(state, target) / 100);
+  if (guestGuard === 0 && scrubbed === 1 && fang === 1 && feared === 1 && bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && mural <= 0 && bulwark <= 0 && huddle <= 0 && torika === void 0 && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
   return { ...target, def: { ...target.def, stats: {
     ...target.def.stats,
-    def: target.def.stats.def * scrubbed * fang * feared * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + huddle / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
+    def: (target.def.stats.def + guestGuard) * scrubbed * fang * feared * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + huddle / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
     // 시약 반응은 정적 정의가 아닌 런타임 실제 감소량이며, 여러 제공자가 있어도 유효 저항은 0 아래로 내리지 않는다.
-    res: Math.max(0, target.def.stats.res * scrubbed * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + huddle / 100) * (1 + target.augmentResistancePercent / 100) * shred * feared - reagentReduction + (torika?.resistanceBonus ?? 0))
+    res: Math.max(0, (target.def.stats.res + guestGuard) * scrubbed * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + huddle / 100) * (1 + target.augmentResistancePercent / 100) * shred * feared - reagentReduction + (torika?.resistanceBonus ?? 0))
   } } };
 }
 function applyTraitHaste(target, payload, maxStacks) {
@@ -15216,7 +15325,8 @@ function applyHealing(state, target, requested, casterId = target.id) {
     target.bleed?.healingReceivedReductionPercent ?? 0,
     encounterHealingReductionPercent(state, target.side),
     target.bt.healCut?.percent ?? 0,
-    saltedIngredientPercent(state, target)
+    saltedIngredientPercent(state, target),
+    reservedGuestDebuff(state, target)
   );
   const before = target.hp;
   target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100) * survivalMultiplier(state) * hordeRestoreMultiplier(state, target.side));
@@ -15282,6 +15392,7 @@ function distanceToSegment(point, from, to) {
 function resolveTarget(state, fighter, reconsider = false) {
   const frenzied = fighter.frenzy !== null;
   const wanted = frenzied ? fighter.side : fighter.side === "player" ? "enemy" : "player";
+  const reserved = !frenzied ? selectReservedGuest(state, fighter) : void 0;
   if (fighter.taunted) {
     const tauntSource = findFighter(state, fighter.taunted.sourceId);
     if (tauntSource && tauntSource.side === wanted && isFighterAlive(tauntSource) && tauntSource.stealthFor <= 0) {
@@ -15291,6 +15402,11 @@ function resolveTarget(state, fighter, reconsider = false) {
       }
       return tauntSource;
     }
+  }
+  if (reserved) {
+    if (fighter.targetId !== reserved.id) fighter.engaged = false;
+    fighter.targetId = reserved.id;
+    return reserved;
   }
   const current2 = fighter.targetId ? findFighter(state, fighter.targetId) : void 0;
   const keepable = current2 !== void 0 && current2.side === wanted && current2.id !== fighter.id && isFighterAlive(current2) && current2.stealthFor <= 0 && !current2.hordeEntering;
@@ -16294,6 +16410,10 @@ function applyDamage(target, amount, events, state) {
   if (target.shield.amount > 0) {
     const absorbed = Math.min(target.shield.amount, amount);
     target.shield.amount -= absorbed;
+    if (target.serviceBarrier) {
+      target.serviceBarrier.amount = Math.max(0, target.serviceBarrier.amount - absorbed);
+      if (target.serviceBarrier.amount === 0) target.serviceBarrier = void 0;
+    }
     events.push({ kind: "shieldAbsorbed", fighterId: target.id, amount: absorbed, remaining: target.shield.amount, effect: { tag: "shieldHit", intensity: 1 } });
     reflectWall(target, absorbed, state, events);
     if (target.shield.amount <= 0) {
@@ -16973,6 +17093,11 @@ function strikeOrCastSupport(attacker, target, rng, state, events, useUltimate) 
 function strike(attacker, target, rng, state, events, useUltimate, comboHit, targetPoint) {
   if (comboHit === void 0) attacker.augmentActionSerial += 1;
   const skill = irnaBreakthroughSkill(attacker, target, staccatoChainSkill(attacker, target, breakthroughSkill(attacker, useUltimate), useUltimate), useUltimate);
+  const cycle = attacker.def.basic.cycle;
+  const basicStep = !useUltimate && cycle?.length ? basicCycleIndex(attacker, cycle.length) : void 0;
+  const closing = attacker.def.basic.closingService;
+  const finisher = closing !== void 0 && !useUltimate && basicStep === closing.stepIndex;
+  const guest = attacker.reservedGuest?.targetId === target.id;
   if (!("damageType" in skill) || skill.damageType === void 0 || skill.power === void 0) return;
   const combo = !useUltimate ? attacker.def.basic.combo : void 0;
   const volley = !useUltimate && attacker.volley ? attacker.volley : void 0;
@@ -17056,7 +17181,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   const offense = offensiveDefinition(attacker);
   const markBonus = critical ? huntMarkCriticalDamage(attacker, target, state) : 0;
   const damageAttacker = { ...attacker, def: markBonus > 0 ? { ...offense, stats: { ...offense.stats, critDamage: offense.stats.critDamage + markBonus } } : offense };
-  const damageTarget = defensiveDefinition(target, state);
+  const damageTarget = defensiveDefinition(target, state, attacker);
   const splashTrait = attacker.def.ferocityTrait;
   const defenseBonus = attackingInFever && !useUltimate && splashTrait.effectId === "splashDamage" && splashTrait.defenseDamagePercent !== void 0 ? computeDamage(attacker, damageTarget, {
     ...damageInput,
@@ -17084,6 +17209,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   const amount = resolution.applied;
   const targetHpBefore = target.hp;
   if (empowered && "selfSetup" in attacker.def.ultimate && attacker.def.ultimate.selfSetup?.empowerNextBasic.breaksShield === true) breakShield(target, events);
+  if (!resolution.ignored && finisher && guest && openedBreakthrough(attacker, "passive", (effects) => effects.passive)?.kind === "guestShieldBreak") breakShield(target, events);
   const shieldBefore = target.shield.amount;
   const shieldProviderId = target.shield.providerId;
   const dealt = applyDamage(target, amount, events, state);
@@ -17094,6 +17220,8 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   const creditedTo = attacker.frenzy?.sourceId ?? packCreditId(attacker);
   drainFrenzyDamage(state, attacker, dealt, events);
   const credited = recordDamageContribution(state, creditedTo, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, targetHpBefore, shieldBefore, shieldProviderId);
+  if (!resolution.ignored) countGuestGuardHit(target, attacker);
+  applyClosingService(attacker, target, state, events, useUltimate, finisher, guest, dealt, !resolution.ignored);
   tryTriggerEmergencyRecovery(target, state);
   tryTriggerLowHpVanish(target, state);
   triggerCombatAugments(state, target, "onLowHp", events);
@@ -17249,7 +17377,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     mitigated: resolution.reduced < resolution.raw,
     // 연격 둘째 타부터는 같은 행동의 뒤이은 타격이다(자원을 주지 않는 타격이 곧 그 표식이다).
     ...comboHit && !comboHit.grantActionResources ? { followUp: true } : {},
-    ...useUltimate || !attacker.def.basic.cycle ? {} : { basicStep: attacker.basicCycleStep % attacker.def.basic.cycle.length }
+    ...basicStep === void 0 ? {} : { basicStep }
   });
   if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
   if (empowered && !useUltimate && !resolution.ignored) {
@@ -17342,7 +17470,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     if (splashTrait.statusEffect && isFighterAlive(target)) applyCombatStatusEffect(target, splashTrait.statusEffect, events, state);
     for (const secondary of state.fighters) {
       if (secondary.side === attacker.side || secondary.id === target.id || !isFighterAlive(secondary) || distance(target, secondary) > splashTrait.radius) continue;
-      const defensiveSecondary = defensiveDefinition(secondary, state);
+      const defensiveSecondary = defensiveDefinition(secondary, state, attacker);
       const secondaryDefenseBonus = splashTrait.defenseDamagePercent === void 0 ? 0 : computeDamage(attacker, defensiveSecondary, {
         ...damageInput,
         power: splashTrait.defenseDamagePercent,
@@ -17357,6 +17485,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
       const secondaryShieldBefore = secondary.shield.amount;
       const secondaryShieldProviderId = secondary.shield.providerId;
       applyDamage(secondary, splashAmount, events, state);
+      if (!splashResolution.ignored) countGuestGuardHit(secondary, attacker);
       const splashCredited = recordDamageContribution(state, packCreditId(attacker), secondary, damageInput.damageType, damageInput.scalingStat, splashContribution, splashResolution, secondaryHpBefore, secondaryShieldBefore, secondaryShieldProviderId);
       tryTriggerEmergencyRecovery(secondary, state);
       tryTriggerLowHpVanish(secondary, state);
@@ -17407,7 +17536,10 @@ function replayLoggedBossAction(state, relicId, kind, rng = NO_CRIT) {
     return fired;
   }
   const events = [];
+  const cycle = attacker.def.basic.closingService && attacker.def.basic.cycle;
+  const stepIndex = cycle?.length ? basicCycleIndex(attacker, cycle.length) : void 0;
   strike(attacker, target, rng, state, events, false);
+  if (stepIndex !== void 0) advanceBasicCycle(attacker, stepIndex);
   if (!events.some((event) => event.kind === "attack" && event.attackerId === attacker.id)) gainEnergy(attacker, state);
   if (state.boss && state.boss.seasonHp === void 0) state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id && event.targetId === target.id ? event.contributionAmount : 0), 0);
   return events;
@@ -17553,7 +17685,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
       ignoresDefense: false,
       defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + basicDefenseIgnorePercent(attacker, attackingInFever, useUltimate))
     };
-    const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput) * traitDamageMultiplier(state, attacker, target) * (traitSplashBasic ? nthBasicBonusMultiplier(effectsFor(state, attacker), attacker.def.id, attacker.traitBasicCount) : 1)));
+    const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state, attacker), damageInput) * traitDamageMultiplier(state, attacker, target) * (traitSplashBasic ? nthBasicBonusMultiplier(effectsFor(state, attacker), attacker.def.id, attacker.traitBasicCount) : 1)));
     const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput));
     const resolution = resolveReceivedDamage(target, rawAmount);
     const amount = resolution.applied;
@@ -17562,6 +17694,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
     const shieldBefore = target.shield.amount;
     const shieldProviderId = target.shield.providerId;
     const hpLost = applyDamage(target, amount, events, state);
+    if (!resolution.ignored) countGuestGuardHit(target, attacker);
     const credited = recordDamageContribution(state, packCreditId(attacker), target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
     tryTriggerEmergencyRecovery(target, state);
     tryTriggerLowHpVanish(target, state);
@@ -18306,6 +18439,7 @@ function advance(state, dt, rng, events) {
     tickDroneLink(fighter, dt, state, events);
     tickOverclockAura(fighter, dt, state, events);
     tickShieldFade(fighter, dt, events);
+    expireServiceBarrier(fighter, state.elapsed, events);
     tickArtChannel(fighter, dt, state, events);
     tickTaunt(fighter, dt, state);
     if (fighter.volley) {
@@ -18426,9 +18560,11 @@ function advance(state, dt, rng, events) {
     }
     if (fighter.attackCooldown <= 0 && !feverKeepsRunning) {
       const firedUltimate = (!state.automaticUltimates && fighter.side === "enemy" || fighter.summonOwnerId !== null) && canFireUltimate(state, fighter);
+      const cycle = fighter.def.basic.closingService && fighter.def.basic.cycle;
+      const stepIndex = cycle?.length ? basicCycleIndex(fighter, cycle.length) : void 0;
       strikeOrCastSupport(fighter, target, rng, state, events, firedUltimate);
       if (!firedUltimate) {
-        advanceBasicCycle(fighter);
+        advanceBasicCycle(fighter, stepIndex);
         tidyUpAfterBasic(fighter, state, events);
         placeShallowPool(fighter, state);
         const shallowPlan = fighter.def.basic.shallows;
@@ -19824,6 +19960,70 @@ var FROST_PLUME = {
 };
 var PLESHA_METEOR_POWER = 150;
 var RELICS = [
+  {
+    id: "his",
+    squad: "rogue",
+    name: "\uD788\uC2A4",
+    specimenNumber: "036",
+    projectName: "AFTER HOURS",
+    excavationSite: "\uB274\uC9C8\uB79C\uB4DC \uB0A8\uC12C\uC758 \uC11D\uD68C\uC554 \uB3D9\uAD74",
+    fossilRecord: "\uB3D9\uAD74 \uC548\uCABD\uC758 \uB9C8\uB978 \uD1F4\uC801\uCE35\uC5D0\uC11C \uAD7D\uC740 \uBC1C\uD1B1\uACFC \uBC1C\uBAA9\uBF08\uB97C \uD568\uAED8 \uC218\uC2B5\uD588\uB2E4. \uAC19\uC740 \uCE35\uC5D0\uC11C \uD070 \uC0C8\uC758 \uBF08\uAC00 \uB098\uC654\uC9C0\uB9CC \uC11C\uB85C \uBD99\uC5B4 \uC788\uC9C0\uB294 \uC54A\uC558\uB2E4. \uBCF5\uC6D0\uC5D0\uC11C\uB294 \uBC1C\uAC00\uB77D\uB9C8\uB2E4 \uB0A8\uC740 \uB9C8\uBAA8\uB97C \uC77D\uC5B4 \uC6C0\uCF1C\uC950\uB294 \uD798\uACFC \uB193\uB294 \uB3D9\uC791\uC744 \uB530\uB85C \uB9DE\uCDC4\uB2E4.",
+    observationProfile: { originYear: "\uD6C4\uAE30 \uD640\uB85C\uC138", restorationYear: "E.C. 19\uB144", lifeStage: "\uC131\uCCB4", height: "1.67 m", weight: "55 kg" },
+    catalogSummary: "\uAC00\uC2DC\uCC98\uB7FC \uBED7\uC740 \uACE0\uB9AC\uC640 \uBC1D\uC740 \uB0A0\uAC1C\uAE43\uC774 \uAD00\uCC30\uB418\uB294, \uD558\uC2A4\uD2B8\uC218\uB9AC \uD654\uC11D \uAE30\uBC18 \uBCF5\uC6D0 \uD45C\uBCF8.",
+    unlockRecord: { status: "recorded", text: "\uCE74\uD398 \uB9C8\uAC10\uC870. \uC758\uC790\uB97C \uC804\uBD80 \uC62C\uB9B0 \uB4A4\uC5D0\uB3C4 \uCC3D\uAC00 \uD55C \uC790\uB9AC\uC5D0\uB294 \uB0C5\uD0A8\uC744 \uAE54\uC544 \uB454\uB2E4. \uC790\uC8FC \uB4E4\uB974\uB294 \uC190\uB2D8\uC774 \uC624\uBA74 \uC8FC\uBC29 \uD0C0\uC774\uBA38\uB97C \uB044\uACE0, \uC2DD\uC5B4 \uBC84\uB9B0 \uCC28\uB97C \uC0C8\uB85C \uB0B8\uB2E4. \uB2E4\uC74C \uB0A0 \uC608\uC57D\uD45C\uC5D0\uB294 \uB298 \uC5F0\uD544 \uAE00\uC528\uB9CC \uB0A8\uB294\uB2E4." },
+    squadNote: "\uC058\uB760 \uB85C\uADF8\uC758 \uC57C\uAC04 \uC811\uAC1D \uB2F4\uB2F9. \uB2A6\uAC8C \uB3CC\uC544\uC624\uB294 \uB300\uC6D0\uC744 \uCE74\uD398 \uB4B7\uBB38\uC5D0\uC11C \uB9DE\uB294\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 \u2018\uC190\uB2D8\u2019\uC774\uB77C \uBD80\uB974\uBA70, \uB458\uB9CC \uB0A8\uC73C\uBA74 \u2018\uB2E8\uACE8\uC190\uB2D8\u2019\uC774\uB77C \uBD80\uB978\uB2E4.",
+    researcherTitle: "\uC190\uB2D8",
+    rarity: "SSR",
+    ferocityMax: 100,
+    portraitAssetId: "his",
+    origin: "\uD558\uC2A4\uD2B8\uC218\uB9AC",
+    element: "grass",
+    role: "warrior",
+    reachTier: "melee",
+    strike: "slash",
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.1, efficiencyMultiplier: 1.12 },
+    stats: { hp: 1290, def: 84, res: 71, atk: 148, ap: 42, attackSpeed: 92, moveSpeed: 89, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 12 },
+    breakthroughEffects: {
+      basic: { kind: "guestHaste", percentPerHit: 5, maxStacks: 5 },
+      ultimate: { kind: "serviceBarrier", damagePercent: 50, maxHpPercent: 25, seconds: 4 },
+      ferocity: { kind: "guestDebuff", reductionPercent: 40 },
+      passive: { kind: "guestShieldBreak" }
+    },
+    ferocityTrait: { name: "\uB9C8\uAC10 \uD6C4 \uC5F0\uC7A5 \uC601\uC5C5", effectId: "extendedService", attackSpeedPercent: 15 },
+    passive: {
+      id: "his-passive",
+      name: "\uB2E8\uACE8\uC11D \uC548\uB0B4",
+      kind: "reservedGuest",
+      value: 0,
+      durationSeconds: 0,
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      reservedGuest: { guardPointsPerAction: 3 },
+      desc: "\uCD5C\uB300 \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB192\uC740 \uC801\uC744 [[reserved-guest|\uB2E8\uACE8]]\uB85C \uC9C0\uC815\uD574 \uC4F0\uB7EC\uC9C8 \uB54C\uAE4C\uC9C0 \uC6B0\uC120 \uACF5\uACA9\uD569\uB2C8\uB2E4. \uB2E8\uACE8 \uC678\uC758 \uC801\uC758 \uC9C1\uC811 \uACF5\uACA9\uC5D0 \uB9DE\uC744 \uB54C\uB9C8\uB2E4 \uBC29\uC5B4\uB825\uACFC \uC800\uD56D\uB825\uC774 \uAC01\uAC01 3\uC529 \uC313\uC785\uB2C8\uB2E4. \uB204\uC801\uCE58\uB294 \uC804\uD22C\uAC00 \uB05D\uB0A0 \uB54C\uAE4C\uC9C0 \uB2E8\uACE8 \uC678\uC758 \uC801\uC758 \uACF5\uACA9\uC5D0 \uC801\uC6A9\uB429\uB2C8\uB2E4."
+    },
+    basic: {
+      id: "his-basic",
+      name: "\uC138 \uBC88\uC758 \uC778\uC0AC",
+      power: 95,
+      targeting: "single",
+      damageType: "physical",
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      cycle: [{ name: "\uC811\uC218", power: 95 }, { name: "\uC11C\uBE59", power: 110 }, { name: "\uB9C8\uAC10", power: 180, damageHealingPercent: 25 }],
+      closingService: { stepIndex: 2, feeHpPercent: 4, feeLifeStealPercent: 50 }
+    },
+    ultimate: {
+      id: "his-ult",
+      name: "\uB9C8\uAC10\uC885",
+      power: 290,
+      cost: 120,
+      targeting: "single",
+      damageType: "physical",
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      closingServiceFees: 2
+    }
+  },
   {
     id: "rex",
     squad: "fang",
@@ -29124,6 +29324,7 @@ var BACKGROUND = {
   recruitDian: "background-recruit-dian",
   /** 다음 픽업 예정 — 플레시오사우루스 모티브의 해저 달빛 피크닉. */
   recruitMoonPicnic: "background-recruit-moon-picnic",
+  recruitHis: "background-recruit-his",
   /** 첫 복원 연구 — 비워 둔 방에 확정 SSR 넷의 SD가 선다(`WelcomeBannerCast`). */
   recruitWelcome: "background-recruit-welcome",
   /**
@@ -29308,6 +29509,7 @@ var BACKGROUND_ASSETS = [
   [BACKGROUND.recruitFossil, "sprites/background/background_017.webp"],
   [BACKGROUND.recruitDian, "sprites/background/recruit_dian.webp"],
   [BACKGROUND.recruitMoonPicnic, "sprites/background/recruit_moon_picnic.webp"],
+  [BACKGROUND.recruitHis, "sprites/background/recruit_his.webp"],
   [BACKGROUND.recruitWelcome, "sprites/background/recruit_welcome.webp"],
   [BACKGROUND.strataBase, "sprites/background/strata_base.webp"],
   // 겉장은 한 번 탐사할 때마다 그중 한 장이 뽑힌다. 키 이름은 `strataLayerTextureKey`가 짓는다.
@@ -29383,7 +29585,7 @@ var BATTLE_FIELD_BACKGROUND = {
 };
 
 // src/data/banners.ts
-var LIMITED_RELIC_IDS = /* @__PURE__ */ new Set(["dian", "plesha"]);
+var LIMITED_RELIC_IDS = /* @__PURE__ */ new Set(["dian", "plesha", "his"]);
 var STANDARD_POOLS = Object.fromEntries(
   ["R", "SR", "SSR"].map((rarity) => [
     rarity,
@@ -29400,6 +29602,7 @@ function pickupPools(pickups) {
 }
 var AMBER_PICKUP = { SSR: ["dian"] };
 var MOONLIT_PICKUP = { SSR: ["plesha"] };
+var AFTER_HOURS_PICKUP = { SSR: ["his"] };
 var STANDARD_SLOT_RATES = { R: 0.2, SR: 0.04, SSR: 0.01, GRAY: 0.75 };
 var STANDARD_GRAY_REWARDS = [
   { kind: "gold", min: 4e3, max: 1e4, weight: 2 },
@@ -29510,6 +29713,22 @@ var BANNERS = [
     grayRewards: STANDARD_GRAY_REWARDS,
     relicPools: pickupPools(MOONLIT_PICKUP),
     pickupRelicIds: { SSR: [...MOONLIT_PICKUP.SSR] },
+    pickupRate: 0.5,
+    highestRarityGuarantee: 120
+  },
+  {
+    id: "after-hours",
+    pityGroupId: PITY_GROUP.LIMITED_PICKUP,
+    name: "\uD638\uBC15\uC11D \uC5F0\uAD6C",
+    featuredRelicId: "his",
+    artKey: BACKGROUND.recruitHis,
+    currency: "amber",
+    costOne: 1,
+    costTen: 10,
+    slotRates: STANDARD_SLOT_RATES,
+    grayRewards: STANDARD_GRAY_REWARDS,
+    relicPools: pickupPools(AFTER_HOURS_PICKUP),
+    pickupRelicIds: { SSR: [...AFTER_HOURS_PICKUP.SSR] },
     pickupRate: 0.5,
     highestRarityGuarantee: 120
   }
@@ -37669,6 +37888,128 @@ var PLESHA_STORY = {
   ]
 };
 
+// src/data/relicStories/his.ts
+init_define_import_meta_env();
+var firstSeat = {
+  id: "bond.his.4",
+  backdrop: "lounge",
+  startNodeId: "n1",
+  titleCard: { title: "\uC758\uC790\uAC00 \uD558\uB098 \uB0A8\uC558\uB2E4", subtitle: "\uD788\uC2A4 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 1" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uB9C8\uAC10 \uC885\uC774 \uC6B8\uB838\uB2E4. \uD788\uC2A4\uAC00 \uC758\uC790\uB97C \uD55C \uC9DD\uC529 \uC2DD\uD0C1 \uC704\uC5D0 \uC62C\uB838\uB2E4. \uCC3D\uAC00\uC758 \uB450 \uBC88\uC9F8 \uC758\uC790\uB9CC \uBC14\uB2E5\uC5D0 \uB0A8\uC558\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "\uD788\uC2A4", body: "\uC5B4\uC11C \uC624\uC138\uC694, \uC190\uB2D8. \uBC29\uAE08 \uB4E4\uC740 \uAC74 \uB9C8\uAC10 \uC885\uC774\uC5D0\uC694. \uC190\uB2D8\uD55C\uD14C \uCE5C \uAC74 \uC544\uB2C8\uACE0\uC694.", nextId: "n3" },
+    { id: "n3", speaker: "", body: "\uCC3D\uAC00\uC758 \uB0C5\uD0A8\uC740 \uC544\uC9C1 \uBC18\uB4EF\uD588\uB2E4. \uC794 \uBC11\uC5D0 \uB20C\uB9B0 \uC124\uD0D5 \uBD09\uC9C0\uB9CC \uBAA8\uC11C\uB9AC\uAC00 \uAD6C\uACA8\uC838 \uC788\uC5C8\uB2E4.", nextId: "n4" },
+    { id: "n4", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uCC3B\uC794\uC5D0\uC11C \uB9C9 \uAE40\uC774 \uC624\uB978\uB2E4.)", choices: [
+      { id: "empty", label: "\uBE48\uC790\uB9AC\uC758 \uC8FC\uC778\uC774 \uC788\uB294\uC9C0 \uBB3B\uB294\uB2E4", nextId: "n5a" },
+      { id: "fresh", label: "\uCC28\uB97C \uC5B8\uC81C \uB0B4\uB838\uB294\uC9C0 \uBB3B\uB294\uB2E4", nextId: "n5b" }
+    ] },
+    { id: "n5a", speaker: "\uD788\uC2A4", body: "\uC544\uC9C1 \uC5C6\uC5B4\uC694. \uC549\uC73C\uC2DC\uBA74 \uC0DD\uAE30\uACE0\uC694. \uC624\uB298\uC740 \uADF8\uB807\uAC8C \uD574\uB3C4 \uB418\uC8E0?", nextId: "n6" },
+    { id: "n5b", speaker: "\uD788\uC2A4", body: "\uBC29\uAE08\uC774\uC694. \uC55E\uC758 \uB450 \uC794\uC740 \uC2DD\uC5B4\uC11C \uBC84\uB838\uC5B4\uC694. \uC800\uB3C4 \uB450 \uBC88\uC9F8\uBD80\uD134 \uBB3C\uC744 \uC870\uAE08\uB9CC \uC62C\uB838\uACE0\uC694.", nextId: "n6" },
+    { id: "n6", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC774 \uC790\uB9AC\uC5D0 \uC549\uC790 \uD788\uC2A4\uB294 \uADF8\uC81C\uC57C \uC55E\uCE58\uB9C8 \uC8FC\uBA38\uB2C8\uC5D0\uC11C \uC8FC\uBB38\uC9C0\uB97C \uAEBC\uB0C8\uB2E4. \uC774\uBBF8 \uC801\uD78C \uC2DC\uAC04 \uC606\uC5D0 \uC5F0\uD544\uB85C \uC791\uC740 \uBCC4\uC744 \uADF8\uB838\uB2E4.", nextId: "n6a" },
+    { id: "n6a", speaker: "\uD788\uC2A4", body: "\uC124\uD0D5\uC740 \uD55C \uBD09\uC9C0\uB9CC \uB0B4\uC654\uC5B4\uC694. \uB450 \uBC88\uC9F8\uAC00 \uD544\uC694\uD558\uC2DC\uBA74 \uC5EC\uAE30 \uC788\uB294 \uC885\uC744 \uB20C\uB7EC \uC8FC\uC138\uC694.", nextId: "n6b" },
+    { id: "n6b", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC774 \uC885 \uC704\uC5D0 \uC190\uAC00\uB77D\uC744 \uC5B9\uC790 \uD788\uC2A4\uAC00 \uB208\uC744 \uB4E4\uC5C8\uB2E4. \uC885\uC740 \uC544\uC9C1 \uC18C\uB9AC\uB97C \uB0B4\uC9C0 \uC54A\uC558\uB2E4.", nextId: "n7" },
+    { id: "n7", speaker: "\uD788\uC2A4", body: "\uC624\uB298 \uB0A0\uC9DC\uB85C \uB04A\uC5B4 \uB4DC\uB9B4\uAC8C\uC694. \uB0B4\uC77C \uAC83\uB3C4 \uC801\uC73C\uB824\uB2E4\uAC00 \uCC38\uC558\uC5B4\uC694. \uADF8\uAC74 \uB0B4\uC77C \uC624\uC2DC\uBA74 \uBB3C\uC5B4\uBCF4\uB824\uACE0\uC694." }
+  ]
+};
+var lateOrder = {
+  id: "bond.his.6",
+  backdrop: "lounge",
+  startNodeId: "n1",
+  titleCard: { title: "\uBB38\uC774 \uC5F4\uB9AC\uB294 \uC18C\uB9AC", subtitle: "\uD788\uC2A4 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 2" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uBE44\uAC00 \uC720\uB9AC\uCC3D\uC744 \uB54C\uB838\uB2E4. \uBC14\uB78C\uC5D0 \uB4B7\uBB38\uC774 \uB35C\uCEF9\uAC70\uB9B4 \uB54C\uB9C8\uB2E4 \uBD80\uC5CC\uC5D0\uC11C \uC811\uC2DC \uB2E6\uB294 \uC18C\uB9AC\uAC00 \uBA4E\uC5C8\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "\uD788\uC2A4", body: "\uC654\uC5B4\uC694? \u2026\uC190\uB2D8\uC774\uC5C8\uB124\uC694. \uC190\uB2D8\uC744 \uAE30\uB2E4\uB838\uB294\uB370, \uB9C9\uC0C1 \uBCF4\uB2C8\uAE4C \uBA3C\uC800 \uD560 \uB9D0\uC774 \uC5C6\uC5B4\uC84C\uC5B4\uC694.", nextId: "n3" },
+    { id: "n3", speaker: "", body: "\uD788\uC2A4\uAC00 \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C \uB9C8\uB978 \uC218\uAC74\uC744 \uAC74\uB138\uB2E4. \uC7C1\uBC18 \uD55C \uD3B8\uC5D0\uB294 \uC18C\uC2A4\uB97C \uB07C\uC5B9\uC9C0 \uC54A\uC740 \uD30C\uB974\uD398\uAC00 \uB193\uC5EC \uC788\uC5C8\uB2E4.", nextId: "n4" },
+    { id: "n4", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uBE48 \uC720\uB9AC\uC794 \uB450 \uAC1C\uAC00 \uBB3C\uAE30 \uC5C6\uC774 \uC5CE\uC5B4\uC838 \uC788\uB2E4.)", choices: [
+      { id: "why", label: "\uC65C \uD30C\uB974\uD398\uB97C \uB2E4 \uB9CC\uB4E4\uC9C0 \uC54A\uC558\uB294\uC9C0 \uBB3B\uB294\uB2E4", nextId: "n5a" },
+      { id: "split", label: "\uC21F\uAC00\uB77D\uC744 \uD558\uB098 \uB354 \uB2EC\uB77C\uACE0 \uD55C\uB2E4", nextId: "n5b" }
+    ] },
+    { id: "n5a", speaker: "\uD788\uC2A4", body: "\uC5B4\uB5A4 \uB9DB\uC744 \uB4DC\uC2E4\uC9C0\uB294 \uC544\uC9C1 \uBAA8\uB974\uC796\uC544\uC694. \uADF8\uAC70 \uD558\uB098\uB294 \uC81C\uAC00 \uBBF8\uB9AC \uC815\uD558\uACE0 \uC2F6\uC9C0 \uC54A\uC558\uC5B4\uC694.", nextId: "n6" },
+    { id: "n5b", speaker: "\uD788\uC2A4", body: "\uD558\uB098\uB294 \uC774\uBBF8 \uB2E6\uC544 \uB480\uB294\uB370\uC694. \uADF8\uAC8C \uC81C \uBAAB\uC774\uBA74, \uC9C0\uAE08 \uAEBC\uB0B4\uB3C4 \uB3FC\uC694?", nextId: "n6" },
+    { id: "n6", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC774 \uB538\uAE30 \uC18C\uC2A4\uB97C \uACE8\uB790\uB2E4. \uD788\uC2A4\uAC00 \uB450 \uC21F\uAC00\uB77D\uC744 \uB098\uB780\uD788 \uB193\uC558\uB2E4. \uBB38\uC774 \uB610 \uB35C\uCEF9\uAC70\uB838\uC9C0\uB9CC \uC774\uBC88\uC5D0\uB294 \uB3CC\uC544\uBCF4\uC9C0 \uC54A\uC558\uB2E4.", nextId: "n6a" },
+    { id: "n6a", speaker: "\uD788\uC2A4", body: "\uC624\uB298\uC740 \uC885\uC744 \uC8FC\uBC29\uC5D0 \uB193\uACE0 \uC654\uC5B4\uC694. \uB4DC\uC2DC\uB2E4 \uD544\uC694\uD55C \uAC8C \uC788\uC73C\uBA74 \uADF8\uB0E5 \uC800\uB97C \uBD80\uB974\uC138\uC694.", nextId: "n6b" },
+    { id: "n6b", speaker: "", body: "\uD788\uC2A4\uB294 \uD0C1\uC790 \uC704\uB85C \uC9D1\uC5B4 \uB4E4\uB358 \uC7C1\uBC18\uC744 \uB3C4\uB85C \uB0B4\uB824\uB193\uC558\uB2E4. \uB9DE\uC740\uD3B8 \uC758\uC790\uAE4C\uC9C0\uB294 \uB450 \uAC78\uC74C\uC774\uBA74 \uB2FF\uC558\uB2E4.", nextId: "n7" },
+    { id: "n7", speaker: "\uD788\uC2A4", body: "\uBE44 \uADF8\uCE60 \uB54C\uAE4C\uC9C0\uB9CC \uACC4\uC154\uB3C4 \uB3FC\uC694. \uADF8 \uB4A4\uC5D0 \uC870\uAE08 \uB354 \uACC4\uC2DC\uBA74\u2026 \uADF8\uAC74 \uC81C\uAC00 \uC88B\uC544\uD560 \uC77C\uC774\uACE0\uC694." }
+  ]
+};
+var erasedTime = {
+  id: "bond.his.8",
+  backdrop: "canal",
+  startNodeId: "n1",
+  titleCard: { title: "\uC5F0\uD544 \uC790\uAD6D", subtitle: "\uD788\uC2A4 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 3" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uC218\uB85C \uC606 \uB09C\uAC04\uC5D0 \uBE48 \uC608\uC57D\uD45C \uD55C \uC7A5\uC774 \uD3BC\uCCD0\uC838 \uC788\uC5C8\uB2E4. \uC5F0\uD544\uC744 \uC9C0\uC6B4 \uC790\uB9AC\uB9C8\uB2E4 \uC885\uC774\uAC00 \uC870\uAE08\uC529 \uC587\uC544\uC838 \uC788\uC5C8\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "\uD788\uC2A4", body: "\uCC98\uC74C\uC5D4 \uC190\uB2D8\uC774 \uBA87 \uC2DC\uC5D0 \uC624\uC168\uB294\uC9C0\uB9CC \uC801\uC5C8\uC5B4\uC694. \uADF8\uB2E4\uC74C\uC740 \uBA87 \uC2DC\uC5D0 \uAC00\uC168\uB294\uC9C0. \uADF8 \uB4A4\uC5D4 \uC548 \uC624\uC2E0 \uB0A0\uB3C4 \uC801\uB354\uB77C\uACE0\uC694.", nextId: "n3" },
+    { id: "n3", speaker: "\uD788\uC2A4", body: "\uC2DC\uAC04\uD45C\uCC98\uB7FC \uBCF4\uC774\uB2C8\uAE4C \uC81C\uAC00 \uD560 \uC218 \uC788\uB294 \uC77C\uC774 \uC0DD\uAE34 \uAE30\uBD84\uC774\uC5C8\uC5B4\uC694. \uC794\uC744 \uB370\uC6B0\uAC70\uB098, \uC790\uB9AC\uB97C \uB2E6\uAC70\uB098. \uC190\uB2D8 \uC0DD\uAC01\uC740 \uADF8\uAC78\uB85C \uC54C \uC218 \uC5C6\uB294\uB370\uC694.", nextId: "n4" },
+    { id: "n4", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uC9C0\uC6B0\uAC1C \uAC00\uB8E8\uAC00 \uBC14\uB78C\uC5D0 \uBC00\uB824\uAC04\uB2E4.)", choices: [
+      { id: "tell", label: "\uBABB \uC624\uB294 \uB0A0\uC5D4 \uBA3C\uC800 \uB9D0\uD558\uACA0\uB2E4\uACE0 \uD55C\uB2E4", nextId: "n5a" },
+      { id: "ask", label: "\uC2DC\uAC04\uC744 \uAC19\uC774 \uC815\uD574 \uBCF4\uC790\uACE0 \uD55C\uB2E4", nextId: "n5b" }
+    ] },
+    { id: "n5a", speaker: "\uD788\uC2A4", body: "\uADF8\uB7FC \uAE30\uB2E4\uB824\uB3C4 \uB418\uB294 \uB0A0\uC744 \uAD6C\uBD84\uD560 \uC218 \uC788\uACA0\uB124\uC694. \u2026\uC800\uB3C4 \uC26C\uB294 \uB0A0\uC740 \uBA3C\uC800 \uB9D0\uC500\uB4DC\uB9B4\uAC8C\uC694.", nextId: "n6" },
+    { id: "n5b", speaker: "\uD788\uC2A4", body: "\uC81C\uAC00 \uACE0\uB978 \uC2DC\uAC04\uC744 \uC190\uB2D8\uC774 \uBC14\uAFD4\uB3C4 \uAD1C\uCC2E\uC544\uC694. \uC815\uD558\uB294 \uB370 \uB450 \uC0AC\uB78C\uC774 \uD544\uC694\uD558\uB2C8\uAE4C\uC694.", nextId: "n6" },
+    { id: "n6", speaker: "", body: "\uD788\uC2A4\uB294 \uC608\uC57D\uD45C\uB97C \uB4A4\uC9D1\uC5B4 \uB2E4\uC74C \uC8FC \uB0A0\uC9DC\uB97C \uC37C\uB2E4. \uC2DC\uAC04 \uCE78\uC740 \uBE44\uC6CC \uB454 \uCC44 \uC5F0\uD544\uC744 \uC5F0\uAD6C\uC6D0 \uCABD\uC73C\uB85C \uBC00\uC5C8\uB2E4.", nextId: "n6a" },
+    { id: "n6a", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC774 \uC2DC\uAC04\uC744 \uC801\uC5C8\uB2E4. \uC5F0\uD544 \uB05D\uC774 \uC911\uAC04\uC5D0 \uBD80\uB7EC\uC838 \uC22B\uC790 \uD558\uB098\uAC00 \uB2E4\uB978 \uC22B\uC790\uBCF4\uB2E4 \uBB49\uD22D\uD574\uC84C\uB2E4.", nextId: "n6b" },
+    { id: "n6b", speaker: "\uD788\uC2A4", body: "\uC774\uB300\uB85C \uC8FC\uC138\uC694. \uC774 \uC2DC\uAC04\uC5D0 \uC815\uB9D0 \uC624\uC2E4\uC9C0 \uAD81\uAE08\uD558\uBA74 \uADF8\uB54C \uBB3C\uC5B4\uBCF4\uBA74 \uB418\uB2C8\uAE4C\uC694.", nextId: "n7" },
+    { id: "n7", speaker: "\uD788\uC2A4", body: "\uD55C \uC904\uB9CC \uAC19\uC774 \uC368\uC694. \uB098\uBA38\uC9C0\uB294 \uC81C\uAC00 \uCD94\uCE21\uD574\uC11C \uC548 \uCC44\uC6B8\uAC8C\uC694. \uADF8\uAC74 \uC57D\uC18D\uD560 \uC218 \uC788\uC5B4\uC694." }
+  ]
+};
+var afterHours = {
+  id: "bond.his.10",
+  backdrop: "lounge",
+  startNodeId: "n1",
+  titleCard: { title: "\uB9C8\uAC10 \uD6C4 \uD55C \uC2A4\uD47C", subtitle: "\uD788\uC2A4 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 4" },
+  nodes: [
+    { id: "n1", speaker: "", body: "\uB9C8\uAC10 \uC885\uC744 \uCE5C \uD788\uC2A4\uAC00 \uBB38\uD328\uB97C \uB3CC\uB838\uB2E4. \uCC3D\uAC00\uC5D0 \uC608\uC57D\uD45C\uB294 \uC5C6\uC5C8\uB2E4. \uC790\uB9AC\uC5D0 \uB193\uC778 \uC794 \uB450 \uAC1C\uC758 \uC190\uC7A1\uC774\uAC00 \uC11C\uB85C\uB97C \uBCF4\uACE0 \uC788\uC5C8\uB2E4.", nextId: "n2" },
+    { id: "n2", speaker: "\uD788\uC2A4", body: "\uC624\uB298\uC740 \uC81C\uAC00 \uBA3C\uC800 \uC26C\uAE30\uB85C \uD588\uC5B4\uC694. \uC55E\uCE58\uB9C8\uB3C4 \uBC97\uC5C8\uACE0\uC694. \uADF8\uB798\uB3C4 \uB2E8\uACE8\uC190\uB2D8\uC774\uB77C\uACE0 \uBD88\uB7EC\uB3C4 \uB3FC\uC694?", nextId: "n3" },
+    { id: "n3", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uD788\uC2A4\uAC00 \uC7C1\uBC18\uC744 \uB4E4\uC9C0 \uC54A\uACE0 \uB9DE\uC740\uD3B8 \uC758\uC790\uC5D0 \uC549\uC558\uB2E4.)", choices: [
+      { id: "call", label: "\uADF8\uB7EC\uBA74 \uB098\uB294 \uD788\uC2A4\uB77C\uACE0 \uBD80\uB974\uACA0\uB2E4\uACE0 \uD55C\uB2E4", nextId: "n4a" },
+      { id: "serve", label: "\uC624\uB298\uC740 \uB0B4\uAC00 \uCC28\uB97C \uB530\uB77C \uC8FC\uACA0\uB2E4\uACE0 \uD55C\uB2E4", nextId: "n4b" }
+    ] },
+    { id: "n4a", speaker: "\uD788\uC2A4", body: "\uC88B\uC544\uC694. \uBD80\uB974\uB294 \uAC83\uB9CC\uC73C\uB85C \uC81C\uAC00 \uBB58 \uB0B4\uC640\uC57C \uD560 \uD544\uC694\uB294 \uC5C6\uC8E0? \u2026\uADF8\uB7FC \uD55C \uBC88 \uB354 \uBD88\uB7EC \uC8FC\uC138\uC694.", nextId: "n5" },
+    { id: "n4b", speaker: "\uD788\uC2A4", body: "\uB728\uAC70\uC6B0\uB2C8\uAE4C \uCC9C\uCC9C\uD788\uC694. \uC544, \uC9C1\uC5C5\uBCD1\uC774\uB124\uC694. \uC774\uBC88\uC5D4 \uC81C\uAC00 \uC81C\uB300\uB85C \uBC1B\uC544 \uBCFC\uAC8C\uC694.", nextId: "n5" },
+    { id: "n5", speaker: "", body: "\uB514\uC800\uD2B8 \uC794 \uBC14\uB2E5\uC5D0 \uB538\uAE30 \uD558\uB098\uAC00 \uB0A8\uC558\uB2E4. \uD788\uC2A4\uAC00 \uC21F\uAC00\uB77D\uC744 \uB0B4\uBC00\uB2E4\uAC00 \uBA48\uCDC4\uB2E4. \uAE30\uB2E4\uB9AC\uC790 \uB9DE\uC740\uD3B8\uC758 \uC21F\uAC00\uB77D\uC774 \uC640\uC11C \uACFC\uC721\uC744 \uBC18\uC73C\uB85C \uAC08\uB790\uB2E4.", nextId: "n6" },
+    { id: "n6", speaker: "\uD788\uC2A4", body: "\uB2E8\uACE8\uC190\uB2D8\uC740 \uAF2D \uD070 \uCABD\uC744 \uAC74\uB124\uC694. \uCC98\uC74C\uC5D0 \uC124\uD0D5 \uBC18 \uBD09\uC9C0\uB9CC \uB123\uC73C\uC2E4 \uB54C\uB294 \uC774\uB7F0 \uBD84\uC778 \uC904 \uBAB0\uB790\uB294\uB370\uC694.", nextId: "n7" },
+    { id: "n7", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC774 \uC6C3\uC5C8\uB2E4. \uD788\uC2A4\uB3C4 \uC870\uAE08 \uB2A6\uAC8C \uC6C3\uC5C8\uB2E4. \uD14C\uC774\uBE14 \uC544\uB798\uC5D0\uC11C \uC2DD\uC5B4 \uAC00\uB358 \uC885\uC740 \uD55C \uBC88\uB3C4 \uB2E4\uC2DC \uC6B8\uB9AC\uC9C0 \uC54A\uC558\uB2E4.", nextId: "n8" },
+    { id: "n8", speaker: "", body: "\uD788\uC2A4\uB294 \uBE48 \uC7C1\uBC18\uC744 \uAC00\uC838\uC624\uC9C0 \uC54A\uC558\uB2E4. \uC794 \uB450 \uAC1C\uB97C \uC2F1\uD06C\uB300\uC5D0 \uB098\uB780\uD788 \uB193\uC558\uB2E4.", nextId: "n9" },
+    { id: "n9", speaker: "\uD788\uC2A4", body: "\uB2E4\uC74C \uB9C8\uAC10\uC5D0\uB3C4 \uAC19\uC774 \uBA39\uC5B4\uC694. \uBABB \uC624\uC2DC\uBA74 \uB538\uAE30\uB294 \uC81C\uAC00 \uB2E4 \uBA39\uC744 \uAC70\uC608\uC694." }
+  ]
+};
+var his = getRelic("his");
+var HIS_STORY = {
+  relicId: his.id,
+  fossilRecord: his.fossilRecord ?? "",
+  diary: his.unlockRecord.status === "recorded" ? his.unlockRecord.text : "",
+  closingLine: "\uB2E8\uACE8\uC190\uB2D8, \uC624\uB298\uC740 \uCC9C\uCC9C\uD788 \uB4DC\uC138\uC694. \uC124\uAC70\uC9C0\uB294 \uC774\uBBF8 \uB05D\uB0C8\uC5B4\uC694. \uC800\uB3C4 \uC549\uC73C\uB824\uACE0\uC694.",
+  questions: [
+    { id: "window-seat", prompt: "\uB9C8\uAC10\uD558\uACE0\uB3C4 \uCC3D\uAC00 \uC758\uC790\uB97C \uD558\uB098 \uB0A8\uACA8 \uB450\uB294 \uC774\uC720\uB294?", choices: [
+      { id: "guest", label: "\uB9C8\uC9C0\uB9C9 \uC190\uB2D8\uC744 \uAE30\uB2E4\uB9AC\uB294\uC9C0 \uBB3B\uB294\uB2E4", reply: "\uAE30\uB2E4\uB824\uB3C4 \uB418\uB294 \uB0A0\uB9CC\uC694. \uC624\uB298\uC740 \uC624\uC2E0\uB2E4\uACE0 \uD558\uC168\uC796\uC544\uC694.", note: "\uB9C8\uAC10 \uB4A4\uC5D0\uB3C4 \uC57D\uC18D\uD55C \uC190\uB2D8\uC774 \uC624\uB294 \uB0A0\uC5D0\uB294 \uCC3D\uAC00\uB97C \uBE44\uC6CC \uB454\uB2E4." },
+      { id: "view", label: "\uCC3D\uBC16\uC5D0 \uBB50\uAC00 \uBCF4\uC774\uB294\uC9C0 \uBB3B\uB294\uB2E4", reply: "\uBD88 \uAEBC\uC9C4 \uC815\uB958\uC7A5\uC774\uC694. \uBC14\uAE65\uC5D0\uC120 \uC774 \uC790\uB9AC \uBD88\uBE5B\uC774 \uC798 \uBCF4\uC778\uB300\uC694.", note: "\uCC3D\uAC00 \uBD88\uBE5B\uC774 \uC815\uB958\uC7A5\uC5D0\uC11C \uBCF4\uC778\uB2E4\uACE0 \uD55C\uB2E4." }
+    ] },
+    { id: "tray", prompt: "\uC7C1\uBC18\uC744 \uB193\uC744 \uB54C\uB294 \uC65C \uB298 \uC18C\uB9AC\uAC00 \uC791\uC744\uAE4C?", choices: [
+      { id: "practice", label: "\uB530\uB85C \uC5F0\uC2B5\uD588\uB294\uC9C0 \uBB3B\uB294\uB2E4", reply: "\uBB3C\uC794\uC744 \uAC00\uB4DD \uCC44\uC6B0\uACE0 \uC5F0\uC2B5\uD588\uC5B4\uC694. \uBB3C\uACB0\uC774 \uD14C\uB450\uB9AC\uC5D0 \uB2FF\uC73C\uBA74 \uCC98\uC74C\uBD80\uD130\uC608\uC694.", note: "\uBB3C\uC794\uC744 \uAC00\uB4DD \uCC44\uC6CC \uC7C1\uBC18 \uB0B4\uB824\uB193\uAE30\uB97C \uC5F0\uC2B5\uD588\uB2E4\uACE0 \uD55C\uB2E4." },
+      { id: "sound", label: "\uD070 \uC18C\uB9AC\uB97C \uC2EB\uC5B4\uD558\uB294\uC9C0 \uBB3B\uB294\uB2E4", reply: "\uC81C\uAC00 \uB0B8 \uD070 \uC18C\uB9AC\uB294 \uAD1C\uCC2E\uC544\uC694. \uC190\uB2D8\uC774 \uB180\uB77C\uC11C \uB4DC\uC2DC\uB358 \uAC78 \uBA48\uCD94\uB294 \uAC8C \uC2EB\uC5B4\uC694.", note: "\uC190\uB2D8\uC744 \uB180\uB77C\uAC8C \uD558\uC9C0 \uC54A\uC73C\uB824 \uC7C1\uBC18\uC744 \uC870\uC6A9\uD788 \uB0B4\uB824\uB193\uB294\uB2E4." }
+    ] },
+    { id: "receipt", prompt: "\uC601\uC218\uC99D \uB4B7\uBA74\uC758 \uC791\uC740 \uBCC4\uC740 \uBB34\uC2A8 \uB73B\uC77C\uAE4C?", choices: [
+      { id: "check", label: "\uC8FC\uBB38\uC744 \uD655\uC778\uD55C \uD45C\uC2DC\uC778\uC9C0 \uBB3B\uB294\uB2E4", reply: "\uB2E4 \uB4DC\uC2E0 \uB0A0 \uD45C\uC2DC\uC608\uC694. \uC811\uC2DC\uB3C4 \uAE68\uB057\uD558\uACE0, \uB098\uAC00\uC2DC\uB294 \uC190\uC774 \uAC00\uBCCD\uACE0\uC694.", note: "\uC601\uC218\uC99D\uC758 \uBCC4\uC740 \uC811\uC2DC\uAC00 \uAE68\uB057\uD558\uAC8C \uB3CC\uC544\uC628 \uB0A0\uC758 \uD45C\uC2DC\uB2E4." },
+      { id: "draw", label: "\uC624\uB298\uC740 \uB0B4\uAC00 \uADF8\uB824\uB3C4 \uB418\uB294\uC9C0 \uBB3B\uB294\uB2E4", reply: "\uADF8\uB824 \uC8FC\uC138\uC694. \uC190\uB2D8\uC774 \uB4DC\uC2E0 \uB0A0\uC774\uB2C8 \uC190\uB2D8 \uAE00\uC528\uAC00 \uB354 \uB9DE\uC8E0.", note: "\uC624\uB298 \uC601\uC218\uC99D\uC5D0\uB294 \uC5F0\uAD6C\uC6D0\uC774 \uC791\uC740 \uBCC4\uC744 \uADF8\uB838\uB2E4." }
+    ] }
+  ],
+  bondStories: { 4: firstSeat, 6: lateOrder, 8: erasedTime, 10: afterHours },
+  bondLines: [
+    ["\uC5B4\uC11C \uC624\uC138\uC694, \uC190\uB2D8. \uCC3D\uAC00\uC640 \uC548\uCABD \uC911\uC5D0 \uC5B4\uB290 \uCABD\uC774 \uD3B8\uD558\uC138\uC694?", "\uD788\uC2A4\uB77C\uACE0 \uD574\uC694. \uC624\uB298 \uB9C8\uAC10\uC740 \uC81C\uAC00 \uB9E1\uC558\uC5B4\uC694.", "\uC900\uBE44\uB418\uC2DC\uBA74 \uC885\uC744 \uD55C \uBC88 \uB20C\uB7EC \uC8FC\uC138\uC694. \uB4E3\uACE0 \uAC08\uAC8C\uC694."],
+    ["\uC124\uD0D5\uC740 \uB530\uB85C \uB4DC\uB9B4\uAC8C\uC694. \uC800\uBC88\uC5D0 \uBC18 \uBD09\uC9C0\uB9CC \uB123\uC73C\uC168\uC8E0?", "\uC885\uC774 \uB450 \uBC88 \uC6B8\uB9AC\uBA74 \uB9C8\uAC10\uC774\uC5D0\uC694. \uC81C\uAC00 \uB4E4\uACE0 \uD754\uB4E4\uBA74 \uD55C \uBC88\uC73C\uB85C\uB3C4 \uCDA9\uBD84\uD558\uACE0\uC694.", "\uBA54\uB274\uD310 \uB9E8 \uB4A4\uC5D0\uB3C4 \uD55C \uC904 \uC788\uC5B4\uC694. \uC624\uB798 \uC549\uC544 \uACC4\uC154\uB3C4 \uB41C\uB2E4\uACE0\uC694."],
+    ["\uC7A5\uAC11 \uB05D\uC5D0 \uBC00\uAC00\uB8E8\uAC00 \uBB3B\uC5C8\uC5B4\uC694? \uC190\uB4F1 \uCABD\uC774\uC8E0. \uC544\uCE68\uBD80\uD130 \uBC18\uC8FD\uD588\uAC70\uB4E0\uC694.", "\uC190\uB2D8\uC774 \uC624\uC2DC\uBA74 \uC7C1\uBC18\uBD80\uD130 \uAEBC\uB0B4\uC694. \uBA54\uB274\uB294 \uB098\uC911\uC5D0 \uB4E4\uC5B4\uB3C4 \uB3FC\uC694.", "\uC811\uC2DC \uBC11\uC5D0 \uBD99\uC740 \uCABD\uC9C0\uB294 \uADF8\uB0E5 \uB450\uC138\uC694. \uC81C\uAC00 \uC54C\uC544\uBCFC \uC218 \uC788\uAC8C \uADF8\uB824 \uB454 \uAC70\uC608\uC694."],
+    ["\uB9C8\uAC10 \uC9C1\uC804\uC758 \uCC3D\uAC00\uB294 \uCDA5\uAC70\uB4E0\uC694. \uB2F4\uC694\uB294 \uC758\uC790 \uB4A4\uC5D0 \uAC78\uC5B4 \uB480\uC5B4\uC694.", "\uC624\uB298 \uB538\uAE30\uB294 \uC870\uAE08 \uC2DC\uC5B4\uC694. \uCCAB \uC21F\uAC00\uB77D\uC740 \uC791\uAC8C \uB4DC\uC138\uC694.", "\uBC16\uC5D0\uC11C \uC885\uC774 \uB4E4\uB9AC\uBA74 \uC544\uC9C1 \uBD88\uC774 \uCF1C\uC838 \uC788\uC744 \uAC70\uC608\uC694."],
+    ["\uB2E8\uACE8\uC190\uB2D8\uC774\uB77C\uACE0 \uD55C \uBC88\uB9CC \uBD88\uB7EC\uB3C4 \uB3FC\uC694? \uC8FC\uBB38\uC9C0\uB97C \uC4F8 \uB54C\uB294 \uADF8\uB0E5 \uC190\uB2D8\uC774\uB77C\uACE0 \uC801\uC744\uAC8C\uC694.", "\uC790\uB9AC\uB9CC \uB0A8\uACA8 \uB480\uC5B4\uC694. \uCC28\uB294 \uC624\uC2E0 \uB4A4\uC5D0 \uB530\uB97C\uAC8C\uC694.", "\uADF8\uB0A0 \uADF8\uB9B0 \uBCC4, \uC601\uC218\uC99D \uB4B7\uBA74\uC5D0 \uB0A8\uC544 \uC788\uC5B4\uC694."],
+    ["\uC800\uB3C4 \uC21F\uAC00\uB77D\uC744 \uD558\uB098 \uB450\uBA74 \uC548 \uB3FC\uC694? \uB9DB\uC744 \uD655\uC778\uD558\uB824\uACE0\uC694. \u2026\uD55C \uC785\uC774\uBA74 \uB3FC\uC694.", "\uC624\uB298\uC740 \uB9C8\uAC10\uD45C\uC5D0 \uC81C\uAC00 \uC274 \uC2DC\uAC01\uB3C4 \uC801\uC5C8\uC5B4\uC694.", "\uB9C8\uAC10 \uC885\uC744 \uBE68\uB9AC \uCCE4\uC5B4\uC694. \uC624\uB298\uC740 \uC81C\uAC00 \uCC3D\uAC00\uC5D0 \uC549\uC544 \uBCF4\uACE0 \uC2F6\uC5B4\uC11C\uC694."],
+    ["\uBE44 \uC624\uBA74 \uC218\uAC74 \uB450 \uC7A5 \uC900\uBE44\uD574\uC694. \uD55C \uC7A5\uC740 \uC190\uB2D8, \uD55C \uC7A5\uC740 \uCC3D\uD2C0 \uBAAB\uC774\uC5D0\uC694.", "\uCC3E\uC544\uC628 \uC190\uB2D8\uC774 \uC5C6\uC73C\uBA74 \uD30C\uB974\uD398\uC5D0 \uC18C\uC2A4\uB97C \uB098\uC911\uC5D0 \uBD80\uC5B4\uC694. \uAE30\uB2E4\uB9AC\uB294 \uB3D9\uC548 \uBB3D\uC5B4\uC9C0\uBA74 \uC544\uAE5D\uC796\uC544\uC694.", "\uB4B7\uBB38 \uC190\uC7A1\uC774\uB97C \uACE0\uCCE4\uC5B4\uC694. \uC774\uC81C \uBC14\uB78C\uC774 \uBD88\uC5B4\uB3C4 \uB204\uAC00 \uC624\uB294 \uC904 \uC54C\uC9C0 \uC54A\uC544\uB3C4 \uB3FC\uC694."],
+    ["\uC811\uC2DC\uB97C \uB2E4 \uB2E6\uACE0 \uB098\uBA74 \uBC16\uC758 \uC18C\uB9AC\uAC00 \uC798 \uB4E4\uB824\uC694. \uC624\uB298\uC740 \uC870\uC6A9\uD574\uC11C \uC88B\uB124\uC694.", "\uC624\uC2E4 \uC2DC\uAC04\uC774 \uBC14\uB00C\uBA74 \uC54C\uB824 \uC8FC\uC138\uC694. \uC800\uB294 \uBA3C\uC800 \uC9D1\uC5D0 \uAC00\uC11C \uBC1C\uC744 \uC880 \uB9D0\uB9B4\uAC8C\uC694.", "\uB2E4\uC74C\uC5D0\uB294 \uC190\uB2D8\uC774 \uBA39\uACE0 \uC2F6\uC740 \uAC04\uC2DD\uC744 \uAC00\uC838\uC624\uC138\uC694. \uC800\uB3C4 \uB9DB\uC744 \uB9DE\uD600 \uBCFC\uAC8C\uC694."],
+    ["\uC608\uC57D \uC2DC\uAC04\uC740 \uC190\uB2D8 \uAE00\uC528\uAC00 \uB354 \uC798 \uBCF4\uC5EC\uC694. \uC81C \uAE00\uC528\uB294 \uBA87 \uBC88\uC529 \uC9C0\uC6B0\uB290\uB77C \uD750\uB824\uC84C\uAC70\uB4E0\uC694.", "\uBABB \uC624\uC2DC\uB294 \uB0A0\uB3C4 \uC54C\uC544\uC694. \uB355\uBD84\uC5D0 \uC800\uB3C4 \uB2A6\uC7A0\uC744 \uC790\uC694.", "\uBB49\uD22D\uD55C \uC22B\uC790 \uC788\uB294 \uC608\uC57D\uD45C\uC694? \uC811\uC5B4\uC11C \uC55E\uCE58\uB9C8 \uC548\uCABD\uC5D0 \uB123\uC5B4 \uB480\uC5B4\uC694."],
+    ["\uB2E8\uACE8\uC190\uB2D8, \uC694\uC998\uC740 \uC885 \uCE58\uAE30 \uC804\uC5D0 \uC81C\uAC00 \uBA3C\uC800 \uC606\uC5D0 \uC549\uC544\uC694.", "\uCC28 \uB530\uB77C \uC8FC\uC2E4\uB798\uC694? \uAC00\uB9CC\uD788 \uC788\uC5B4\uB3C4 \uB418\uB294 \uC5F0\uC2B5 \uC911\uC774\uC5D0\uC694.", "\uBE48 \uC794 \uBCF4\uC778\uB2E4\uACE0 \uB2E4 \uCC44\uC6B8 \uD544\uC694\uB294 \uC5C6\uB354\uB77C\uACE0\uC694. \uC598\uAE30\uD558\uB294 \uB370 \uB450 \uC190\uC774\uBA74 \uCDA9\uBD84\uD574\uC694."],
+    ["\uB2E8\uACE8\uC190\uB2D8, \uC624\uB298 \uB538\uAE30\uB294 \uD558\uB098 \uB0A8\uACBC\uC5B4\uC694. \uBC18\uC740 \uC81C\uAC00 \uBA39\uC744 \uAC70\uC608\uC694.", "\uD788\uC2A4\uB77C\uACE0 \uBD88\uB7EC \uC8FC\uC138\uC694. \uB9C8\uAC10\uD558\uACE0 \uB098\uBA74 \uADF8\uAC8C \uC81C\uC77C \uB4E3\uAE30 \uC88B\uC544\uC694.", "\uCC3D\uAC00\uC5D0 \uC794 \uB450 \uAC1C\uB9CC \uAEBC\uB0C8\uC5B4\uC694. \uC5B4\uB290 \uCABD\uC774 \uC81C \uAC74\uC9C0\uB294 \uBA3C\uC800 \uC549\uB294 \uC0AC\uB78C\uC774 \uC815\uD574\uC694."]
+  ]
+};
+
 // src/data/relicStories/arte.ts
 init_define_import_meta_env();
 var CHAPTER_431 = {
@@ -38541,6 +38882,7 @@ var RELIC_STORIES = {
   irna: IRNA_STORY,
   teku: TEKU_STORY,
   plesha: PLESHA_STORY,
+  his: HIS_STORY,
   arte: ARTE_STORY,
   brika: BRIKA_STORY,
   belz: BELZ_STORY,
@@ -42472,7 +42814,7 @@ var DAY_MS4 = 864e5;
 var PICKUP_ROTATION = {
   anchor: Date.parse("2026-11-13T00:00:00Z"),
   periodDays: 21,
-  bannerIds: ["moonlit", "amber"]
+  bannerIds: ["moonlit", "after-hours", "amber"]
 };
 function inPickupRotation(bannerId, rotation = PICKUP_ROTATION) {
   return rotation.bannerIds.includes(bannerId);
@@ -47381,7 +47723,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.549.0",
+  version: "0.550.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {

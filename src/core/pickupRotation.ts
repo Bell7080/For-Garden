@@ -1,8 +1,7 @@
 /**
  * 한정 픽업 교대 — 호박석 픽업 배너는 **한 번에 하나만** 선다(응태 결정, 2026-11-14).
  *
- * 디안 픽업(`amber`)과 플레샤 픽업(`moonlit`)이 나란히 서 있던 것을 걷고, 정해 둔 길이마다 차례로 갈아 끼운다 —
- * 지금은 플레샤, 그 기간이 지나면 다시 디안이다. 정의의 끝 날짜(`endsAt`)로 내리지 않는 이유는 출시 전 유예
+ * 플레샤(`moonlit`) → 히스(`after-hours`) → 디안(`amber`)의 순서로 교대한다. 정의의 끝 날짜(`endsAt`)로 내리지 않는 이유는 출시 전 유예
  * (`launchAnchor.ts`)가 끝 날짜를 걷기 때문이다 — 교대는 그 유예와 상관없이 돈다.
  *
  * **천장은 교대해도 이어진다**(같은 날 결정) — 두 배너가 같은 천장 그룹(`PITY_GROUP.LIMITED_PICKUP`)을 쓰므로 한 픽업에서
@@ -22,11 +21,11 @@ export interface PickupRotation {
   readonly bannerIds: readonly string[];
 }
 
-/** 2026-11-13 09:00(KST)부터 플레샤 3주 → 디안 3주 → … (디안 임시 운영이 3주를 넘겨 플레샤로 넘어간다). */
+/** 2026-11-13 09:00(KST)부터 플레샤, 2026-12-04 09:00부터 히스, 2026-12-25 09:00부터 디안. */
 export const PICKUP_ROTATION: PickupRotation = {
   anchor: Date.parse("2026-11-13T00:00:00Z"),
   periodDays: 21,
-  bannerIds: ["moonlit", "amber"],
+  bannerIds: ["moonlit", "after-hours", "amber"],
 };
 
 export function inPickupRotation(bannerId: string, rotation: PickupRotation = PICKUP_ROTATION): boolean {

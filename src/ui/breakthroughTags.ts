@@ -35,6 +35,9 @@ const lifesteal = (percent: number): SkillTag => ({ tone: "heal", glyph: "contri
 const bulwark = (): SkillTag => ({ tone: "buff", glyph: "tag-buff", text: t("skill.tag.bulwark") });
 
 const BREAKTHROUGH_TAGS: { readonly [K in Kind]?: (effect: Of<K>) => readonly (SkillTag | undefined)[] } = {
+  serviceBarrier: () => [shield()],
+  guestDebuff: () => [healingCutTag()],
+  guestShieldBreak: () => [shield()],
   // 제어
   startledLeap: (effect) => [stun(effect.stunSeconds)],
   chainSwing: (effect) => [damageKindTag("physical"), stun(effect.stunSeconds)],

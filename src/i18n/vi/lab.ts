@@ -1,5 +1,6 @@
 /** The Research Lab: fossil research and its results. */
 export const LAB_VI = {
+  "lab.banner.afterHours.subtitle": "Một thìa sau giờ đóng cửa",
   "lab.rates": "Chi tiết tỉ lệ",
   "lab.pickupInfo": "Thông tin nhân vật",
   "lab.rates.basis": "{banner} · Tỉ lệ mỗi lần Nghiên cứu",

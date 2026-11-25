@@ -10,6 +10,14 @@
  * 더하고 여기에 그 절의 문구를 더한다.
  */
 export const SKILL_KO = {
+  "skill.ferocity.extendedService": "폭주 중에는 접수를 건너뛰어 서빙과 마감을 번갈아 사용합니다. 공격 속도가 {percent}% 증가합니다.",
+  "skill.passive.reservedGuest": "최대 체력이 가장 높은 적을 [[reserved-guest|단골]]로 지정해 쓰러질 때까지 우선 공격합니다. 다른 적의 직접 공격에 맞을 때마다 방어력과 저항력이 각각 {points}씩 쌓입니다. 누적치는 전투가 끝날 때까지 단골 외의 적의 공격에 적용됩니다.",
+  "skill.sentence.closingService": "단골에게는 [[special-fee|특별 요금]]을 1회 적용합니다.",
+  "skill.sentence.closingServiceUltimate": "단골에게 적중하면 [[special-fee|특별 요금]]을 {hits}회 적용합니다. 다음 일반 공격을 마감으로 바꿉니다.",
+  "skill.breakthrough.guestHaste": "단골에게 기본 공격이 적중할 때마다 공격 속도가 {percent}% 증가합니다. 최대 {max}중첩이며 단골이 바뀌면 초기화됩니다.",
+  "skill.breakthrough.serviceBarrier": "특별 요금을 포함해 궁극기로 깎은 체력의 {percent}%만큼 {seconds}초 동안 [[shield|보호막]]을 얻습니다. 내 최대 체력의 {max}%까지이며 중첩되지 않습니다.",
+  "skill.breakthrough.guestDebuff": "폭주 중 단골의 방어력, 저항력, 받는 체력 회복량이 각각 {percent}% 감소합니다.",
+  "skill.breakthrough.guestShieldBreak": "단골에게 마감이 적중하면 [[shield|보호막]]을 파괴한 뒤 마감과 특별 요금의 피해를 적용합니다.",
   "skill.fact.whenActive": "효과 발동 시",
   "skill.keyword.statGain": "{stat} 증가량: +{amount}\n기준 {base} × {percent}% ≈ +{amount}\n이 효과만 적용 시 {total}. 다른 효과가 더해지면 최종 수치는 달라질 수 있다.",
   "skill.keyword.value.damage": "{stat}의 {percent}%로 계산한 피해 수치다.\n({stat} {base} 기준)",

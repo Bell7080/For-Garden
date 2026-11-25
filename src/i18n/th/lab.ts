@@ -1,5 +1,6 @@
 /** The Research Lab: fossil research and its results. */
 export const LAB_TH = {
+  "lab.banner.afterHours.subtitle": "หนึ่งคำหลังปิดร้าน",
   "lab.rates": "รายละเอียดอัตรา",
   "lab.pickupInfo": "ข้อมูลตัวละคร",
   "lab.rates.basis": "{banner} · อัตราต่อการวิจัย 1 ครั้ง",

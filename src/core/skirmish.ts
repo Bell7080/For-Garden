@@ -734,6 +734,13 @@ export interface Fighter extends Combatant {
   aim: { targetId: string; stacks: number } | null;
   /** 「오늘의 재료」(마가사)가 표식을 건 적. 그 적이 쓰러질 때까지 바뀌지 않는다. */
   ingredientId: string | null;
+  reservedGuest?: {
+    targetId: string | null;
+    hasteStacks: number;
+    guardPoints: number;
+    lastGuardHit?: { sourceId: string; action: number };
+  };
+  serviceBarrier?: { amount: number; expiresAt: number };
   /** 재료를 쓰러뜨려 쌓은 공격력 겹. 전투 내내 남는다. */
   ingredientStacks: number;
   /** 재료를 쓰러뜨린 뒤 다음 시계에서 치를 보상 수. 처치 훅에는 회복할 판이 없어 미뤄 둔다. */
@@ -766,6 +773,7 @@ export interface Fighter extends Combatant {
 export type SkirmishPhase = "fight" | "victory" | "defeat";
 
 export interface SkirmishState {
+  reservedGuestOwners?: readonly Fighter[];
   /** 콘텐츠가 정한 전투 제한. 미지정 콘텐츠의 진행은 그대로 유지한다. */
   timeLimitSeconds?: number;
   timeLimitReached?: boolean;
@@ -1578,6 +1586,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     echo: null,
     aim: null,
     ingredientId: null,
+    ...(def.passive.reservedGuest ? { reservedGuest: { targetId: null, hasteStacks: 0, guardPoints: 0 } } : {}),
     ingredientStacks: 0,
     ingredientKillsPending: 0,
     ingredientHaste: 0,
@@ -1808,6 +1817,7 @@ export function createSkirmish(
     ...(options.timeLimitSeconds !== undefined ? { timeLimitSeconds: options.timeLimitSeconds, timeLimitReached: false } : {}),
     automaticUltimates: options.automaticUltimates,
     fighters,
+    reservedGuestOwners: fighters.filter((fighter) => fighter.reservedGuest !== undefined),
     // 늑대가 낸 피해는 성장 주체인 지휘자 앞으로 쌓이므로 장부에 제 줄을 만들지 않는다.
     contributions: createBattleContributions(party.map(({ id }) => id)),
     arena,
@@ -1827,6 +1837,7 @@ export function createSkirmish(
   linkDuos(state);
   // 시작 효과는 별도의 순수 단계에서 정확히 한 번 적용하고 사건은 첫 렌더 step까지 보존한다.
   state.initialEvents = initializeSkirmishAugments(state);
+  for (const owner of state.reservedGuestOwners ?? []) selectReservedGuest(state, owner);
   // 최초 소환도 재소환과 같은 사건을 쓴다. 씬은 어느 쪽인지 구별하지 않아도 된다.
   state.initialEvents.push(...state.fighters.filter((wolf) => wolf.summonOwnerId !== null && isFighterAlive(wolf)).map((wolf): SkirmishEvent => ({
     kind: "packSummon", fighterId: wolf.id, ownerFighterId: wolf.summonOwnerId ?? "", x: wolf.x, y: wolf.y,
@@ -3166,6 +3177,7 @@ function breakShield(target: Fighter, events: SkirmishEvent[]): void {
   target.shield.amount = 0;
   target.shield.providerId = null;
   target.shieldFade = null;
+  target.serviceBarrier = undefined;
   events.push({ kind: "shieldDepleted", fighterId: target.id, effect: { tag: "shieldBreak", intensity: 1 } });
 }
 
@@ -3175,12 +3187,24 @@ function tickShieldFade(fighter: Fighter, dt: number, events: SkirmishEvent[]): 
   if (!fade) return;
   const elapsed = Math.min(dt, fade.remaining);
   const before = fighter.shield.amount;
-  fighter.shield.amount = Math.max(0, before - fade.perSecond * elapsed);
+  fighter.shield.amount = Math.max(fighter.serviceBarrier?.amount ?? 0, before - fade.perSecond * elapsed);
   fade.remaining -= elapsed;
   // 부동소수점 잔여(1e-13)가 막 한 조각으로 남아 머리 위 바에 칸을 세우지 않게 한다.
   if (fighter.shield.amount < 1e-6) fighter.shield.amount = 0;
   if (before > 0 && fighter.shield.amount <= 0) events.push({ kind: "shieldDepleted", fighterId: fighter.id, effect: { tag: "shieldBreak", intensity: 0.6 } });
   if (fade.remaining <= EMERGENCY_RECOVERY.epsilon) fighter.shieldFade = null;
+}
+
+function expireServiceBarrier(fighter: Fighter, elapsed: number, events: SkirmishEvent[]): void {
+  const barrier = fighter.serviceBarrier;
+  if (!barrier || elapsed < barrier.expiresAt) return;
+  fighter.serviceBarrier = undefined;
+  const before = fighter.shield.amount;
+  fighter.shield.amount = Math.max(0, before - barrier.amount);
+  if (before > 0 && fighter.shield.amount === 0) {
+    fighter.shield.providerId = null;
+    events.push({ kind: "shieldDepleted", fighterId: fighter.id, effect: { tag: "shieldBreak", intensity: 1 } });
+  }
 }
 
 /**
@@ -3634,7 +3658,7 @@ function currentBasic(attacker: Fighter): BasicAttack {
   const basic = attacker.def.basic;
   const cycle = basic.cycle;
   if (!cycle || cycle.length === 0) return basic;
-  const step = cycle[attacker.basicCycleStep % cycle.length];
+  const step = cycle[basicCycleIndex(attacker, cycle.length)];
   // 선언하지 않은 필드는 비운다. 기본 공격 쪽 값이 새어 들어오면 어느 걸음이 무엇을 하는지
   // 데이터만 보고 알 수 없다.
   // 대상 계약은 판별 union이라 통째로 갈아 끼운다 — `targeting`만 바꾸고 `radius`를 남기면
@@ -5145,13 +5169,94 @@ function tidyUpAfterBasic(fighter: Fighter, state: SkirmishState, events: Skirmi
 function currentBasicStep(attacker: Fighter): BasicAttackStep | undefined {
   const cycle = attacker.def.basic.cycle;
   if (!cycle || cycle.length === 0) return undefined;
-  return cycle[attacker.basicCycleStep % cycle.length];
+  return cycle[basicCycleIndex(attacker, cycle.length)];
+}
+
+function basicCycleIndex(attacker: Fighter, length: number): number {
+  const index = attacker.basicCycleStep % length;
+  return index === 0 && attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "extendedService" ? 1 : index;
 }
 
 /** 한 공격 행동이 끝난 자리에서 다음 걸음으로 넘긴다. 연격의 개별 적중은 넘기지 않는다. */
-function advanceBasicCycle(attacker: Fighter): void {
+function advanceBasicCycle(attacker: Fighter, stepIndex?: number): void {
   const cycle = attacker.def.basic.cycle;
-  if (cycle && cycle.length > 0) attacker.basicCycleStep = (attacker.basicCycleStep + 1) % cycle.length;
+  if (cycle && cycle.length > 0) attacker.basicCycleStep = ((stepIndex ?? basicCycleIndex(attacker, cycle.length)) + 1) % cycle.length;
+}
+
+function selectReservedGuest(state: SkirmishState, owner: Fighter): Fighter | undefined {
+  const reservation = owner.reservedGuest;
+  if (!reservation) return undefined;
+  const current = reservation.targetId ? findFighter(state, reservation.targetId) : undefined;
+  if (current && isFighterAlive(current)) return current;
+  let selected: Fighter | undefined;
+  for (const target of state.fighters) {
+    if (target.side === owner.side || !isFighterAlive(target) || target.hordeEntering) continue;
+    if (!selected || target.maxHp > selected.maxHp) selected = target;
+  }
+  reservation.targetId = selected?.id ?? null;
+  reservation.hasteStacks = 0;
+  return selected;
+}
+
+function reservedGuestHastePercent(owner: Fighter): number {
+  if (!owner.reservedGuest?.hasteStacks) return 0;
+  const plan = openedBreakthrough(owner, "basic", (effects) => effects.basic);
+  return plan?.kind === "guestHaste" ? owner.reservedGuest.hasteStacks * plan.percentPerHit : 0;
+}
+
+function reservedGuestDebuff(state: SkirmishState, target: Fighter): number {
+  let reduction = 0;
+  for (const owner of state.reservedGuestOwners ?? []) {
+    if (!owner.ferocityFever || owner.reservedGuest?.targetId !== target.id || !isFighterAlive(owner)) continue;
+    const plan = openedBreakthrough(owner, "ferocity", (effects) => effects.ferocity);
+    if (plan?.kind === "guestDebuff") reduction = Math.max(reduction, plan.reductionPercent);
+  }
+  return reduction;
+}
+
+function countGuestGuardHit(target: Fighter, source: Fighter): void {
+  const reservation = target.reservedGuest;
+  const plan = target.def.passive.reservedGuest;
+  if (!plan || !reservation || target.side === source.side || reservation.targetId === source.id) return;
+  const last = reservation.lastGuardHit;
+  if (last?.sourceId === source.id && last.action === source.augmentActionSerial) return;
+  reservation.guardPoints += plan.guardPointsPerAction;
+  reservation.lastGuardHit = { sourceId: source.id, action: source.augmentActionSerial };
+}
+
+function applyClosingService(
+  attacker: Fighter, target: Fighter, state: SkirmishState, events: SkirmishEvent[],
+  useUltimate: boolean, finisher: boolean, guest: boolean, dealt: number, landed: boolean,
+): void {
+  const plan = attacker.def.basic.closingService;
+  if (!plan) return;
+  if (useUltimate) attacker.basicCycleStep = plan.stepIndex;
+  if (!landed || !isFighterAlive(attacker)) return;
+  const haste = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  if (!useUltimate && guest && haste?.kind === "guestHaste" && attacker.reservedGuest) {
+    attacker.reservedGuest.hasteStacks = Math.min(haste.maxStacks, attacker.reservedGuest.hasteStacks + 1);
+  }
+  const fees = guest ? useUltimate ? attacker.def.ultimate.closingServiceFees ?? 0 : Number(finisher) : 0;
+  let feeDamage = 0;
+  for (let index = 0; index < fees && isFighterAlive(target); index += 1) {
+    const amount = receivedDamage(target, percentHpDamage(target, plan.feeHpPercent));
+    const lost = applyDamage(target, amount, events, state);
+    feeDamage += lost;
+    scoreBossFixedDamage(state, target, lost);
+    drainFromDamage(state, attacker, lost, plan.feeLifeStealPercent, events);
+    addContribution(state.contributions, attacker.id, "attack", lost, "attackPower");
+    events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: "transfer", amount,
+      contributionAmount: 0, critical: false, animate: false, damageType: "true" });
+  }
+  const barrier = useUltimate ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : undefined;
+  if (barrier?.kind !== "serviceBarrier") return;
+  const requested = Math.min(attacker.maxHp * barrier.maxHpPercent, (dealt + feeDamage) * barrier.damagePercent) / 100;
+  const old = attacker.serviceBarrier?.amount ?? 0;
+  const survival = survivalMultiplier(state) * hordeRestoreMultiplier(state, attacker.side);
+  if (requested * survival <= old) return;
+  attacker.shield.amount -= old;
+  const amount = grantShield(state, attacker, attacker.id, requested, events);
+  attacker.serviceBarrier = { amount, expiresAt: state.elapsed + barrier.seconds };
 }
 
 /** 청산하는 타격이 쓰는 사본. 같은 타격이 독을 바르면서 동시에 터뜨리지 않게 한다. */
@@ -5400,14 +5505,15 @@ function afterUltimateBreakthrough(attacker: Fighter, state: SkirmishState, even
 
 /** 한 타격의 일부(`percent`)를 다른 적에게 따로 넣는다. 에너지·야성·연속 공격을 더 얻지 않는 부가 피해다. */
 function strikeSecondary(attacker: Fighter, secondary: Fighter, input: Parameters<typeof computeDamage>[2] & { scalingStat?: "hp" | "atk" | "ap" | "def" }, percent: number, critical: boolean,
-  state: SkirmishState, events: SkirmishEvent[]): void {
-  const defensive = defensiveDefinition(secondary, state);
+  state: SkirmishState, events: SkirmishEvent[], direct = true): void {
+  const defensive = defensiveDefinition(secondary, state, direct ? attacker : undefined);
   const base = computeDamage(attacker, defensive, input) * percent / 100;
   const contribution = Math.max(0, computeDamageContribution(attacker, input) * percent / 100);
   const resolution = resolveReceivedDamage(secondary, base);
   const hpBefore = secondary.hp;
   const shieldBefore = secondary.shield.amount; const shieldProviderId = secondary.shield.providerId;
   applyDamage(secondary, resolution.applied, events, state);
+  if (direct && !resolution.ignored) countGuestGuardHit(secondary, attacker);
   const credited = recordDamageContribution(state, packCreditId(attacker), secondary, input.damageType, input.scalingStat, contribution, resolution, hpBefore, shieldBefore, shieldProviderId);
   tryTriggerEmergencyRecovery(secondary, state); tryTriggerLowHpVanish(secondary, state);
   events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: "basic", amount: resolution.applied, contributionAmount: credited, critical,
@@ -5463,7 +5569,7 @@ function tickBossBreakthroughs(fighter: Fighter, dt: number, state: SkirmishStat
     .reduce<Fighter | undefined>((chosen, other) => chosen === undefined || distance(fighter, other) > distance(fighter, chosen) ? other : chosen, undefined);
   if (!far) return;
   const input = { power: plan.powerPercent, damageType: "magical" as const, scalingStat: "ap" as const, isCritical: false, kind: "basic" as const };
-  strikeSecondary(fighter, far, input, 100, false, state, events);
+  strikeSecondary(fighter, far, input, 100, false, state, events, false);
 }
 
 /** 모든 출혈 진입점이 공유하는 단일 슬롯 갱신 규칙이다. 약한 재적용은 강도와 틱 시계를 덮지 않는다. */
@@ -5943,6 +6049,14 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
   if (!fighter || !isFighterAlive(fighter)) return [];
 
   const buffs = activePackHuntBuffs(state, fighterId);
+  for (const owner of state.reservedGuestOwners ?? []) {
+    if (owner.reservedGuest?.targetId !== fighterId || !isFighterAlive(owner)) continue;
+    buffs.push({
+      id: `reserved-guest:${owner.id}`, sourceFighterId: owner.id, targetFighterId: fighterId,
+      skillId: owner.def.passive.id, name: "단골", description: `${owner.def.name}가 우선 공격하는 대상입니다.`,
+      timing: { kind: "conditional" },
+    });
+  }
   // **스타카토는 아군 전체에 선다.** 추가타를 울리는 것은 아군의 기본 공격이므로 표식이
   // 메테 혼자에게만 붙으면 "누가 이 강화를 받고 있나"를 화면이 말하지 않는다 — 실제로
   // 연주를 부르는 손은 옆에 선 아군의 손이다.
@@ -6276,7 +6390,9 @@ function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: numb
   const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100)
     * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
-    * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100);
+    * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100)
+    * (1 + reservedGuestHastePercent(fighter) / 100)
+    * (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "extendedService" ? 1 + fighter.def.ferocityTrait.attackSpeedPercent / 100 : 1);
   return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed + ingredientHastePoints(fighter), boost: boostFactor, slow: slowFactor };
 }
 
@@ -6402,7 +6518,7 @@ export function huddlePercent(state: SkirmishState, fighter: Fighter): number {
 }
 
 /** 피해 공식에만 생존 오라의 방어력·저항력 배율을 투영하고 원본 정적 정의는 변경하지 않는다. */
-export function defensiveDefinition(target: Fighter, state: SkirmishState): Fighter {
+export function defensiveDefinition(target: Fighter, state: SkirmishState, source?: Fighter): Fighter {
   const bonus = strongestLivingAura(state, target.side, "teamDefenseResistancePercent");
   // 저주는 저항만 깎는다. 오라와 같은 자리에서 곱해야 "올려 주는 것"과 "깎는 것"이 한 번씩만 든다.
   const shred = 1 - curseResistanceShred(target) / 100;
@@ -6427,12 +6543,13 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   // 공포에 빠진 몸은 달아나는 동안 방어력·저항력이 함께 깎인다(`FEAR_DEFENSE_REDUCTION_PERCENT`).
   const feared = target.fear !== null ? 1 - FEAR_DEFENSE_REDUCTION_PERCENT / 100 : 1;
   // 「대청소」(아르테) — 그 시간 동안 방어력·저항력이 함께 오른다. 오라와 같은 자리에서 곱한다.
-  const scrubbed = 1 + (target.scrub?.defenseResistancePercent ?? 0) / 100;
-  if (scrubbed === 1 && fang === 1 && feared === 1 && bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && mural <= 0 && bulwark <= 0 && huddle <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
+  const guestGuard = source && source.side !== target.side && target.reservedGuest?.targetId !== source.id ? target.reservedGuest?.guardPoints ?? 0 : 0;
+  const scrubbed = (1 + (target.scrub?.defenseResistancePercent ?? 0) / 100) * (1 - reservedGuestDebuff(state, target) / 100);
+  if (guestGuard === 0 && scrubbed === 1 && fang === 1 && feared === 1 && bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && mural <= 0 && bulwark <= 0 && huddle <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
-    def: target.def.stats.def * scrubbed * fang * feared * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + huddle / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
+    def: (target.def.stats.def + guestGuard) * scrubbed * fang * feared * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + huddle / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
     // 시약 반응은 정적 정의가 아닌 런타임 실제 감소량이며, 여러 제공자가 있어도 유효 저항은 0 아래로 내리지 않는다.
-    res: Math.max(0, target.def.stats.res * scrubbed * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + huddle / 100) * (1 + target.augmentResistancePercent / 100) * shred * feared - reagentReduction + (torika?.resistanceBonus ?? 0)),
+    res: Math.max(0, (target.def.stats.res + guestGuard) * scrubbed * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + huddle / 100) * (1 + target.augmentResistancePercent / 100) * shred * feared - reagentReduction + (torika?.resistanceBonus ?? 0)),
   } } };
 }
 
@@ -6684,7 +6801,7 @@ function applyHealing(state: SkirmishState, target: Fighter, requested: number, 
   if (isHealingCancelledByPontus(state, target)) return 0;
   const reduction = Math.max(strongestLivingAura(state, target.side, "enemyHealingReceivedReductionPercent"),
     target.bleed?.healingReceivedReductionPercent ?? 0, encounterHealingReductionPercent(state, target.side),
-    target.bt.healCut?.percent ?? 0, saltedIngredientPercent(state, target));
+    target.bt.healCut?.percent ?? 0, saltedIngredientPercent(state, target), reservedGuestDebuff(state, target));
   const before = target.hp;
   // 데스 카운트의 감쇠는 보호막과 **같은 배율**을 쓴다. 한쪽만 깎으면 남은 쪽으로 버티는
   // 편성이 그대로 살아남아, 끝나지 않는 판을 끝내려던 시계가 제 일을 하지 못한다.
@@ -6830,6 +6947,7 @@ function resolveTarget(state: SkirmishState, fighter: Fighter, reconsider = fals
   // 그대로 두면 뒤집히기 전의 상대를 계속 때리고, 풀린 뒤에는 아군을 계속 때린다.
   const frenzied = fighter.frenzy !== null;
   const wanted = frenzied ? fighter.side : (fighter.side === "player" ? "enemy" : "player");
+  const reserved = !frenzied ? selectReservedGuest(state, fighter) : undefined;
   // 도발은 거리·혼잡도보다 먼저다 — 강제로 그쪽을 보게 만드는 것이 이 상태의 전부다.
   // 다만 광란으로 편이 뒤집힌 동안에는 듣지 않는다. 그때 노려야 하는 편이 아예 반대이므로,
   // 도발을 그대로 따르면 지금 때릴 수 없는 상대를 바라보며 멈춰 선다.
@@ -6853,6 +6971,11 @@ function resolveTarget(state: SkirmishState, fighter: Fighter, reconsider = fals
       }
       return tauntSource;
     }
+  }
+  if (reserved) {
+    if (fighter.targetId !== reserved.id) fighter.engaged = false;
+    fighter.targetId = reserved.id;
+    return reserved;
   }
   const current = fighter.targetId ? findFighter(state, fighter.targetId) : undefined;
   const keepable = current !== undefined && current.side === wanted && current.id !== fighter.id
@@ -8184,6 +8307,10 @@ function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[], s
   if (target.shield.amount > 0) {
     const absorbed = Math.min(target.shield.amount, amount);
     target.shield.amount -= absorbed;
+    if (target.serviceBarrier) {
+      target.serviceBarrier.amount = Math.max(0, target.serviceBarrier.amount - absorbed);
+      if (target.serviceBarrier.amount === 0) target.serviceBarrier = undefined;
+    }
     events.push({ kind: "shieldAbsorbed", fighterId: target.id, amount: absorbed, remaining: target.shield.amount, effect: { tag: "shieldHit", intensity: 1 } });
     reflectWall(target, absorbed, state, events);
     if (target.shield.amount <= 0) {
@@ -9057,6 +9184,11 @@ function strike(
 ): void {
   if (comboHit === undefined) attacker.augmentActionSerial += 1;
   const skill = irnaBreakthroughSkill(attacker, target, staccatoChainSkill(attacker, target, breakthroughSkill(attacker, useUltimate), useUltimate), useUltimate);
+  const cycle = attacker.def.basic.cycle;
+  const basicStep = !useUltimate && cycle?.length ? basicCycleIndex(attacker, cycle.length) : undefined;
+  const closing = attacker.def.basic.closingService;
+  const finisher = closing !== undefined && !useUltimate && basicStep === closing.stepIndex;
+  const guest = attacker.reservedGuest?.targetId === target.id;
   // 순수 회복 궁극기는 fireUltimate의 비공격 분기에서만 실행한다.
   if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) return;
   const combo = !useUltimate ? attacker.def.basic.combo : undefined;
@@ -9191,7 +9323,7 @@ function strike(
   const markBonus = critical ? huntMarkCriticalDamage(attacker, target, state) : 0;
   const damageAttacker = { ...attacker, def: markBonus > 0
     ? { ...offense, stats: { ...offense.stats, critDamage: offense.stats.critDamage + markBonus } } : offense };
-  const damageTarget = defensiveDefinition(target, state);
+  const damageTarget = defensiveDefinition(target, state, attacker);
   const splashTrait = attacker.def.ferocityTrait;
   // 토리카의 방어력 추가 피해도 일반 물리 피해 공식(속성·대상 방어력·치명타)을 거친다.
   const defenseBonus = attackingInFever && !useUltimate && splashTrait.effectId === "splashDamage"
@@ -9238,6 +9370,7 @@ function strike(
   const targetHpBefore = target.hp;
   // 강화 평타가 막을 깨는 계약(노아)은 궁극기 정의가 갖는다 — 코마의 `breaksShield`와 같이 피해가 박히기 전에 깬다.
   if (empowered && "selfSetup" in attacker.def.ultimate && attacker.def.ultimate.selfSetup?.empowerNextBasic.breaksShield === true) breakShield(target, events);
+  if (!resolution.ignored && finisher && guest && openedBreakthrough(attacker, "passive", (effects) => effects.passive)?.kind === "guestShieldBreak") breakShield(target, events);
   const shieldBefore = target.shield.amount;
   const shieldProviderId = target.shield.providerId;
   const dealt = applyDamage(target, amount, events, state);
@@ -9252,6 +9385,8 @@ function strike(
   // 읽으므로, 기여도에 잡히는 몫과 빨아들이는 몫이 갈리지 않는다.
   drainFrenzyDamage(state, attacker, dealt, events);
   const credited = recordDamageContribution(state, creditedTo, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, targetHpBefore, shieldBefore, shieldProviderId);
+  if (!resolution.ignored) countGuestGuardHit(target, attacker);
+  applyClosingService(attacker, target, state, events, useUltimate, finisher, guest, dealt, !resolution.ignored);
   tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
   triggerCombatAugments(state, target, "onLowHp", events);
   if (isFighterAlive(target) && dealt > 0) triggerCombatAugments(state, target, "onDamaged", events);
@@ -9431,7 +9566,7 @@ function strike(
     mitigated: resolution.reduced < resolution.raw,
     // 연격 둘째 타부터는 같은 행동의 뒤이은 타격이다(자원을 주지 않는 타격이 곧 그 표식이다).
     ...(comboHit && !comboHit.grantActionResources ? { followUp: true } : {}),
-    ...(useUltimate || !attacker.def.basic.cycle ? {} : { basicStep: attacker.basicCycleStep % attacker.def.basic.cycle.length }),
+    ...(basicStep === undefined ? {} : { basicStep }),
   });
   if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
   // 궁극기 돌파(`extraCard`) — 강화된 한 방 직후 같은 카드가 줄어든 위력으로 한 장 더 나간다.
@@ -9554,7 +9689,7 @@ function strike(
       if (secondary.side === attacker.side || secondary.id === target.id || !isFighterAlive(secondary)
         || distance(target, secondary) > splashTrait.radius) continue;
       // 광역도 같은 공격의 일부이므로 주 대상과 동일한 원정 공격력 배율을 거친다.
-      const defensiveSecondary = defensiveDefinition(secondary, state);
+      const defensiveSecondary = defensiveDefinition(secondary, state, attacker);
       const secondaryDefenseBonus = splashTrait.defenseDamagePercent === undefined ? 0 : computeDamage(attacker, defensiveSecondary, {
         ...damageInput,
         power: splashTrait.defenseDamagePercent,
@@ -9569,6 +9704,7 @@ function strike(
       const secondaryHpBefore = secondary.hp;
       const secondaryShieldBefore = secondary.shield.amount; const secondaryShieldProviderId = secondary.shield.providerId;
       applyDamage(secondary, splashAmount, events, state);
+      if (!splashResolution.ignored) countGuestGuardHit(secondary, attacker);
       const splashCredited = recordDamageContribution(state, packCreditId(attacker), secondary, damageInput.damageType, damageInput.scalingStat, splashContribution, splashResolution, secondaryHpBefore, secondaryShieldBefore, secondaryShieldProviderId);
       tryTriggerEmergencyRecovery(secondary, state); tryTriggerLowHpVanish(secondary, state);
       // 광역 피해도 공격자가 실제로 입힌 HP 피해이므로 같은 흡혈 규칙에 포함한다.
@@ -9623,7 +9759,10 @@ export function replayLoggedBossAction(state: SkirmishState, relicId: string, ki
     return fired;
   }
   const events: SkirmishEvent[] = [];
+  const cycle = attacker.def.basic.closingService && attacker.def.basic.cycle;
+  const stepIndex = cycle?.length ? basicCycleIndex(attacker, cycle.length) : undefined;
   strike(attacker, target, rng, state, events, false);
+  if (stepIndex !== undefined) advanceBasicCycle(attacker, stepIndex);
   // 제 둘레를 치는 평타는 재현 속 자리가 실제 판과 어긋나면 **아무도 맞히지 못한다.** 피해는
   // 없는 채로 두되(점수를 깎을 뿐이다) 쳤다는 사실이 채우는 게이지는 남긴다 — 그러지 않으면
   // 그 게이지로 쓴 다음 궁극기가 "게이지가 모자란다"로 거절된다.
@@ -9861,7 +10000,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     const damageInput = { ...scaled, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const,
       ignoresDefense: false,
       defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + basicDefenseIgnorePercent(attacker, attackingInFever, useUltimate)) };
-    const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput)
+    const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state, attacker), damageInput)
       * traitDamageMultiplier(state, attacker, target)
       * (traitSplashBasic ? nthBasicBonusMultiplier(effectsFor(state, attacker), attacker.def.id, attacker.traitBasicCount) : 1)));
     const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput));
@@ -9871,6 +10010,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     if (skill.breaksShield === true) breakShield(target, events);
     const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
     const hpLost = applyDamage(target, amount, events, state);
+    if (!resolution.ignored) countGuestGuardHit(target, attacker);
     const credited = recordDamageContribution(state, packCreditId(attacker), target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
     tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
     triggerCombatAugments(state, target, "onLowHp", events);
@@ -10870,6 +11010,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickDroneLink(fighter, dt, state, events);
     tickOverclockAura(fighter, dt, state, events);
     tickShieldFade(fighter, dt, events);
+    expireServiceBarrier(fighter, state.elapsed, events);
     // 궁극기 채널링은 기절·행동불가와 무관하게 흐른다 — 이미 뿌려 둔 낙서라 손이 멈춰도 마른다.
     tickArtChannel(fighter, dt, state, events);
     tickTaunt(fighter, dt, state);
@@ -11063,13 +11204,15 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
        * 이야기라 늑대의 행동을 끄지 않는다. 적 자동 궁극기와 같은 생존·기절·게이지 규칙을 지난다.
        */
       const firedUltimate = ((!state.automaticUltimates && fighter.side === "enemy") || fighter.summonOwnerId !== null) && canFireUltimate(state, fighter);
+      const cycle = fighter.def.basic.closingService && fighter.def.basic.cycle;
+      const stepIndex = cycle?.length ? basicCycleIndex(fighter, cycle.length) : undefined;
       strikeOrCastSupport(fighter, target, rng, state, events, firedUltimate);
       // 순환 걸음은 **행동 하나마다** 넘긴다. strike 안에서 넘기면 연격의 개별 적중과 광역
       // 처리기가 각자 한 걸음씩 삼켜, 한 번 휘두른 것이 두세 걸음을 지나간다.
       // 금강불괴의 남은 횟수도 같은 자리에서 하나 쓴다 — 세는 것이 적중이 아니라 행동이라
       // 빗나가거나 광역으로 여럿을 맞혀도 한 번은 한 번이다.
       if (!firedUltimate) {
-        advanceBasicCycle(fighter);
+        advanceBasicCycle(fighter, stepIndex);
         tidyUpAfterBasic(fighter, state, events);
         /*
          * 물은 **적 주위에** 고인다. 공격 뒤에 깔므로 첫 한 방은 마른 땅에서 나간다.

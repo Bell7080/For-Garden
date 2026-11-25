@@ -1,5 +1,7 @@
 /** The lobby: the screen for looking at your Relic. */
 export const LOBBY_ID = {
+  "event.afterHours.title": "Sesendok Setelah Tutup",
+  "event.afterHours.subtitle": "Pick-Up His Waktu Terbatas",
   "lobby.duel": "Duel",
   "lobby.sortie": "B E R A N G K A T",
   "lobby.interaction": "Pertukaran",

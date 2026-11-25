@@ -885,6 +885,18 @@ export const PLESHA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   joints: { center: [653, 650], head: [617, 460], eyes: null, feet: [[507, 1216], [685, 1200]] },
 };
 
+export const HIS_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086, imageHeight: 1448,
+  content: { left: 12, top: 28, right: 1060, bottom: 1406 },
+  joints: { center: [626, 617], head: [724, 529], eyes: [[654, 511], [771, 475]], feet: [[467, 1438], [550, 1340]] },
+};
+
+export const HIS_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 59, top: 12, right: 1179, bottom: 1234 },
+  joints: { center: [705, 642], head: [770, 498], eyes: null, feet: [[549, 1249], [606, 1247]] },
+};
+
 /**
  * 아르테 전신(char_031): 중심1·머리1·눈1·눈2·발1·발2를 프로젝트에서 읽었다. alpha > 16 경계는 (44,22)–(1045,1417)이다.
  * 발 관절은 그림 밖에 있어 바닥선은 관절이 아니라 alpha 경계로 잡는다.

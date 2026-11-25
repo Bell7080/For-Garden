@@ -155,6 +155,7 @@ export function skillKeywordLayoutOptions(
 
 /** 폭주 설명의 모든 수치를 실제 전투 계약에서 만들어 밸런스 조정 후 문구가 남지 않게 한다. */
 export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack: number; defense: number; maxHp?: number; abilityPower?: number; resistance?: number }): string {
+  if (trait.effectId === "extendedService") return t("skill.ferocity.extendedService", { percent: trait.attackSpeedPercent });
   // 캐릭터 ID가 아니라 도핑 계약의 구조화 수치만 읽어 어떤 정의에도 같은 문장 조립을 제공한다.
   if (trait.effectId === "reagentDoping") return t("skill.ferocity.reagentDoping", { stacks: trait.stacksOnEntry, percent: trait.attackSpeedPercent });
   if (trait.effectId === "damageReduction") return t("skill.ferocity.damageReduction", { percent: trait.reductionPercent });
@@ -613,6 +614,7 @@ function passiveCriticalClause(passive: Passive): string {
 }
 
 function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; resistance: number }, own?: { ap: number; maxHp: number }): string {
+  if (passive.reservedGuest) return t("skill.passive.reservedGuest", { points: passive.reservedGuest.guardPointsPerAction });
   const maxHp = own?.maxHp;
   if (passive.kind === "emergencyRecovery" && passive.durationSeconds !== undefined) {
     return t("skill.passive.emergencyRecovery", { seconds: passive.durationSeconds, heal: scaled("heal", "hp", passive.value, maxHp) });
@@ -1144,7 +1146,9 @@ export function skillDescription(
         selfStealthSeconds: step.selfStealthSeconds,
         pull: step.pull,
       } as DescribedSkill;
-      return t("skill.sentence.cycleStep", { name: step.name, body: skillDescription(stepSkill, { ...stats, damage: stats.cycleDamage?.[index] }) });
+      const body = skillDescription(stepSkill, { ...stats, damage: stats.cycleDamage?.[index] });
+      const service = "closingService" in skill && skill.closingService?.stepIndex === index ? skill.closingService : undefined;
+      return t("skill.sentence.cycleStep", { name: step.name, body: service ? `${body} ${t("skill.sentence.closingService")}` : body });
     });
     // **걸음마다 줄을 나눈다.** 한 줄로 쭉 이으면 세 문장이 한 덩어리로 뭉쳐 어디서 걸음이
     // 바뀌는지 읽으려면 「」를 눈으로 찾아야 한다.
@@ -1182,6 +1186,9 @@ export function skillDescription(
     : t(repeatParts ? "skill.sentence.repeatAnd" : joined.joinWithComma ? "skill.sentence.damageAndComma" : "skill.sentence.damageAnd",
       { ...(repeatParts ?? parts), effect: joined.text }));
   for (const clause of clauses) if (clause !== joined) sentences.push(t("skill.sentence.clause", { text: clause.text }));
+  if ("closingServiceFees" in skill && skill.closingServiceFees) {
+    sentences.push(t("skill.sentence.closingServiceUltimate", { hits: skill.closingServiceFees }));
+  }
   return sentences.join(" ");
 }
 
@@ -1620,6 +1627,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
   if (effects[slot]?.kind === "none") return t("skill.breakthrough.effect.none");
   if (slot === "basic" && effects.basic) {
     const effect = effects.basic;
+    if (effect.kind === "guestHaste") return t("skill.breakthrough.guestHaste", { percent: effect.percentPerHit, max: effect.maxStacks });
     if (effect.kind === "none") return undefined;
     if (effect.kind === "pressStagger") return t("skill.breakthrough.effect.basic.pressStagger", { seconds: trim(effect.seconds) });
     if (effect.kind === "tongueTug") return t("skill.breakthrough.effect.basic.tongueTug", { name: def.passive.name, seconds: trim(effect.seconds) });
@@ -1690,6 +1698,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
   }
   if (slot === "ultimate" && effects.ultimate) {
     const effect = effects.ultimate;
+    if (effect.kind === "serviceBarrier") return t("skill.breakthrough.serviceBarrier", { percent: effect.damagePercent, max: effect.maxHpPercent, seconds: effect.seconds });
     if (effect.kind === "none") return undefined;
     // 범위·감속은 정의에서 읽은 기준값으로 환산해 말한다 — 반경(px)은 플레이어가 읽는 수가 아니다.
     if (effect.kind === "widenArea") return t("skill.breakthrough.effect.ultimate.widenArea", { percent: trim(widerPercent("radius" in def.ultimate ? def.ultimate.radius : undefined, effect.radius)) });
@@ -1745,6 +1754,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
   }
   if (slot === "ferocity" && effects.ferocity) {
     const effect = effects.ferocity;
+    if (effect.kind === "guestDebuff") return t("skill.breakthrough.guestDebuff", { percent: effect.reductionPercent });
     if (effect.kind === "none") return undefined;
     if (effect.kind === "doubleMag") return t("skill.breakthrough.effect.ferocity.doubleMag");
     if (effect.kind === "tongueSnap") return t("skill.breakthrough.effect.ferocity.tongueSnap", { name: def.passive.name, multiplier: trim(effect.shieldMultiplier) });
@@ -1799,6 +1809,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     });
   }
   if (slot === "passive" && effects.passive) {
+    if (effects.passive.kind === "guestShieldBreak") return t("skill.breakthrough.guestShieldBreak");
     if (effects.passive.kind === "none") return undefined;
     if (effects.passive.kind === "reloadSip") return t("skill.breakthrough.effect.passive.reloadSip", { percent: sv("shield", "hp", effects.passive.shieldMaxHpPercent), cap: sv("shield", "hp", effects.passive.capMaxHpPercent) });
     if (effects.passive.kind === "pressureCrack") return t("skill.breakthrough.effect.passive.pressureCrack", { seconds: trim(effects.passive.intervalSeconds), percent: sv("damage", "ap", effects.passive.powerPercent) });

@@ -1,5 +1,6 @@
 /** 연구소 화면의 일본어 표. */
 export const LAB_JA = {
+  "lab.banner.afterHours.subtitle": "閉店後のひとさじ",
   "lab.rates": "確率情報",
   "lab.pickupInfo": "キャラクター情報",
   "lab.rates.basis": "{banner} · 研究1回あたり",

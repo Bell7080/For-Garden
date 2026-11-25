@@ -63,7 +63,7 @@ export const SQUADS: Readonly<Record<SquadId, SquadDef>> = {
     id: "rogue", name: "쁘띠 로그", latin: "Petit Rogue",
     duty: "자율 탐험 및 보급 회수",
     allegiance: "ally", hasEmblem: true,
-    researcherTitles: ["대장님", "선생님", "연구원님"],
+    researcherTitles: ["대장님", "선생님", "연구원님", "손님"],
   },
   annihilation: {
     id: "annihilation", name: "공멸", latin: "Annihilation",

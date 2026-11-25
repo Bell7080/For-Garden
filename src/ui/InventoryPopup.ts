@@ -94,7 +94,7 @@ export class InventoryPopup {
   /** 정렬 선택은 팝업 생명주기 동안 유지하며 변경 렌더는 스크롤을 항상 원점으로 만든다. */
   private sort: InventorySort = { ...DEFAULT_INVENTORY_SORT };
   /** 룬 탭의 검색·필터·정렬. 토글은 설정(`settings.game.runeBag`)에 남는다. */
-  private readonly runeList: RuneListState = createRuneListState();
+  private readonly runeList: RuneListState = createRuneListState(undefined, "bag");
   /** 목록만 담는 층. 조건이 바뀌면 이 층만 다시 그린다 — 조작 줄까지 다시 세우면 검색 칸의 초점이 끊긴다. */
   private listLayer?: Phaser.GameObjects.Container;
   private runeControls?: RuneListControls;

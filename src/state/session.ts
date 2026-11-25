@@ -116,6 +116,14 @@ export interface GameSettings {
     arenaSeen: import("../core/arenaNotice").ArenaSeenRecord | null;
     /** 렐릭 목록 화면마다 마지막으로 걸어 둔 필터·정렬(`core/rosterViewMemory.ts`). 비었으면 기본값이다 — 기기 선호다. */
     rosterViews: import("../core/rosterViewMemory").StoredRosterViews;
+    /** 룬 목록 화면마다 마지막으로 걸어 둔 필터·정렬(`core/listViewMemory.ts`). 비었으면 그 화면의 기본값이다 — 기기 선호다. */
+    runeViews: import("../core/listViewMemory").StoredRuneViews;
+    /** 친구 목록의 필터·정렬. 기기 선호다. */
+    friendView: import("../core/listViewMemory").FriendListView;
+    /** 특성 일괄 부여 결과판의 정렬. 기기 선호다. */
+    traitBulkResultView: import("../core/listViewMemory").TraitBulkResultView;
+    /** 합성처럼 칸이 여럿인 룬 고르기 판의 「한 번에 선택」 — 켜면 여러 장을 고른 뒤 「선택」 한 번으로 넣는다. 기기 선호다. */
+    runeMultiPick: boolean;
     /** 교류 도시마다 마지막으로 보낸 파견대(`core/interactionPartyMemory.ts`). 받은 뒤에도 그 자리에 다시 선다 — 기기 선호다. */
     interactionParties: import("../core/interactionPartyMemory").StoredInteractionParties };
   account: { provider: "guest" | "google" | "apple"; displayId: string };

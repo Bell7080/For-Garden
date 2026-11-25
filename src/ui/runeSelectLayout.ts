@@ -24,6 +24,11 @@ export const RUNE_SELECT = {
   button: { width: 380, height: 96, fontSize: 36 },
   /** 합성처럼 칸이 여럿이면 「선택」 왼쪽에 칸 줄이 선다. */
   slot: { size: 76, gap: 18 },
+  /**
+   * 칸이 여럿인 판의 「한 번에 선택」 토글 — 「선택」 바로 위 오른쪽 끝에 작게 선다(응태 2026-11-25).
+   * 목록과 「선택」 사이 여백에 앉히고 「선택」을 그만큼 아래로 내린다 — 판은 조금만 길어진다.
+   */
+  toggle: { width: 240, height: 56, listGap: 18, buttonGap: 14, footerBottom: 46 },
 } as const;
 
 export interface RuneSelectRows {
@@ -36,18 +41,25 @@ export interface RuneSelectRows {
   /** 목록 아랫변. */
   listBottom: number;
   footerY: number;
+  /** 「한 번에 선택」 토글의 가운데 y. 칸이 하나인 판에는 서지 않는다. */
+  toggleY?: number;
 }
 
-/** `total`은 판 크기를 정할 룬 수(거르기 전의 최대) — 조건이 바뀌어도 판이 줄었다 늘지 않는다. */
-export function runeSelectRows(total: number): RuneSelectRows {
+/**
+ * `total`은 판 크기를 정할 룬 수(거르기 전의 최대) — 조건이 바뀌어도 판이 줄었다 늘지 않는다.
+ * `multi`는 칸이 여럿인 판(합성) — 「선택」 위에 「한 번에 선택」 토글 자리가 생긴다.
+ */
+export function runeSelectRows(total: number, multi = false): RuneSelectRows {
   const S = RUNE_SELECT;
   const grid = runePickerSize(total, S.maxRows);
   const infoBottom = S.infoTop + S.infoHeight;
   // 격자의 조작 첫 줄은 격자 윗변에서 `controlsY`에 가운데가 선다 — 그 윗변이 정보 판 아래 `controlsGap`에 오도록 거꾸로 구한다.
   const gridTopFromTop = infoBottom + S.controlsGap - (RUNE_PICK_GRID.controlsY - RUNE_LIST_CONTROLS.rowHeight / 2);
   const listBottomFromTop = gridTopFromTop + runePickerListTop() + grid.viewHeight;
-  const footerFromTop = listBottomFromTop + S.footerGap;
-  const height = footerFromTop + S.button.height / 2 + S.footerBottom;
+  const T = S.toggle;
+  const toggleFromTop = listBottomFromTop + T.listGap + T.height / 2;
+  const footerFromTop = multi ? toggleFromTop + T.height / 2 + T.buttonGap + S.button.height / 2 : listBottomFromTop + S.footerGap;
+  const height = footerFromTop + S.button.height / 2 + (multi ? T.footerBottom : S.footerBottom);
   const top = -height / 2;
   return {
     width: grid.width, height,
@@ -55,6 +67,7 @@ export function runeSelectRows(total: number): RuneSelectRows {
     gridTop: top + gridTopFromTop,
     listBottom: top + listBottomFromTop,
     footerY: top + footerFromTop,
+    ...(multi ? { toggleY: top + toggleFromTop } : {}),
   };
 }
 
@@ -75,4 +88,20 @@ export function nextEmptySlot(filled: readonly boolean[], from: number): number 
     if (!filled[index]) return index;
   }
   return -1;
+}
+
+/**
+ * 「한 번에 선택」으로 고른 룬이 들어갈 칸의 차례 — 지금 칸(비었으면)부터 다음 빈 칸으로 이어진다.
+ * 하나씩 넣을 때 `nextEmptySlot`이 밟는 차례와 같다. 빈 칸이 없으면 빈 목록이다.
+ */
+export function emptySlotOrder(filled: readonly boolean[], from: number): number[] {
+  const order: number[] = [];
+  let index = from >= 0 && from < filled.length && !filled[from] ? from : nextEmptySlot(filled, from);
+  const taken = [...filled];
+  while (index >= 0 && !order.includes(index)) {
+    order.push(index);
+    taken[index] = true;
+    index = nextEmptySlot(taken, index);
+  }
+  return order;
 }

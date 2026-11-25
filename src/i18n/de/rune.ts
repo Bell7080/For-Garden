@@ -68,6 +68,7 @@ export const RUNE_DE = {
   "rune.trait.title": "Merkmal",
   "rune.trait.none": "Kein Merkmal",
   "rune.pick.select": "Auswählen",
+  "rune.pick.multi": "Mehrfachwahl",
   "rune.pick.hint": "Wähle eine Rune aus der Liste unten.",
   "rune.trait.odds": "Chancen",
   "rune.trait.odds.upgradeTitle": "Stufenaufstieg",

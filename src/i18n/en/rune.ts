@@ -69,6 +69,7 @@ export const RUNE_EN = {
   "rune.trait.title": "Trait",
   "rune.trait.none": "No trait",
   "rune.pick.select": "Select",
+  "rune.pick.multi": "Multi-select",
   "rune.pick.hint": "Choose a rune from the list below.",
   "rune.trait.odds": "Odds",
   "rune.trait.odds.upgradeTitle": "Grade Up",

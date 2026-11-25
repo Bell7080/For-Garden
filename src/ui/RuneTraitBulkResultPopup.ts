@@ -17,6 +17,7 @@ import { runeTraitName } from "./runeTraitPresentation";
 import { openRuneInfoPopup } from "./RunePopup";
 import { addScrollHint } from "./ScrollHint";
 import { SortControl } from "./SortControl";
+import { settingsManager } from "../managers/SettingsManager";
 import { shrinkTextToWidth, squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 import {
@@ -56,8 +57,11 @@ export function openRuneTraitBulkResultPopup(scene: Phaser.Scene, popups: PopupL
   const half = height / 2;
   const inner = width - L.padding * 2;
   const left = -width / 2 + L.padding;
-  let sort: TraitBulkResultSort = "grade";
-  let descending = true;
+  // 정렬은 지난번 값으로 선다(`settings.game.traitBulkResultView`).
+  const remembered = settingsManager.get().game.traitBulkResultView;
+  let sort: TraitBulkResultSort = remembered.sort;
+  let descending = remembered.descending;
+  const remember = (): void => settingsManager.rememberTraitBulkResultView({ sort, descending });
 
   const readRows = (): ResultRow[] => {
     const holders = runeHolders(session.relicProgress);
@@ -175,8 +179,8 @@ export function openRuneTraitBulkResultPopup(scene: Phaser.Scene, popups: PopupL
         { id: "holder", label: t("rune.traitBulk.result.sortHolder") },
       ],
       sortMode: sort, descending,
-      onSort: (mode) => { if (sort === mode) return; sort = mode; scroll = 0; paintRows(); },
-      onDirection: (value) => { descending = value; scroll = 0; paintRows(); },
+      onSort: (mode) => { if (sort === mode) return; sort = mode; remember(); scroll = 0; paintRows(); },
+      onDirection: (value) => { descending = value; remember(); scroll = 0; paintRows(); },
     });
   });
 }

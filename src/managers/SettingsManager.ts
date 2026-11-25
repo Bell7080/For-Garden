@@ -4,6 +4,7 @@ import { createDefaultSettings, deviceGraphicsQuality, normalizeSettings, type D
 import { sameContentSeen, type ContentSeenState } from "../core/contentFresh";
 import { normalizeRosterView, rosterViewFor, sameRosterView, type RosterViewScreen } from "../core/rosterViewMemory";
 import type { RosterView } from "../core/rosterView";
+import { normalizeFriendListView, normalizeRuneListView, normalizeTraitBulkResultView, runeViewFor, sameListView, type FriendListView, type RuneListView, type RuneViewScreen, type TraitBulkResultView } from "../core/listViewMemory";
 import { interactionPartyToRemember } from "../core/interactionPartyMemory";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type GameSettings, type Session } from "../state/session";
@@ -89,6 +90,33 @@ export class SettingsManager extends EventTarget {
     const next = normalizeRosterView(view, screen);
     if (current[screen] && sameRosterView(current[screen], next, screen)) return;
     this.update({ game: { rosterViews: { ...current, [screen]: next } } });
+  }
+
+  /** 룬 목록 화면이 지금 세울 필터·정렬(`core/listViewMemory.ts`). 기억이 없거나 쓸 수 없는 값이면 그 화면의 기본값이다. */
+  runeView(screen: RuneViewScreen): RuneListView {
+    return runeViewFor(this.get().game.runeViews, screen);
+  }
+
+  /** 룬 목록 화면에서 바꾼 필터·정렬을 기억한다. 검색 글은 남기지 않고, 같은 값이면 저장하지 않는다. */
+  rememberRuneView(screen: RuneViewScreen, view: RuneListView): void {
+    const current = this.get().game.runeViews;
+    const next = normalizeRuneListView(view, screen);
+    if (sameListView(runeViewFor(current, screen), next) && current[screen]) return;
+    this.update({ game: { runeViews: { ...current, [screen]: next } } });
+  }
+
+  /** 친구 목록의 필터·정렬을 기억한다. 같은 값이면 저장하지 않는다. */
+  rememberFriendView(view: FriendListView): void {
+    const next = normalizeFriendListView(view);
+    if (sameListView(this.get().game.friendView, next)) return;
+    this.update({ game: { friendView: next } });
+  }
+
+  /** 특성 일괄 부여 결과판의 정렬을 기억한다. 같은 값이면 저장하지 않는다. */
+  rememberTraitBulkResultView(view: TraitBulkResultView): void {
+    const next = normalizeTraitBulkResultView(view);
+    if (sameListView(this.get().game.traitBulkResultView, next)) return;
+    this.update({ game: { traitBulkResultView: next } });
   }
 
   /** 길드전·수호전 탭에서 지금 판을 봤다고 적는다 — 붉은 점이 꺼진다. `guardReward`는 알린 수호전 순위 보상의, `warResult`는 알린 길드전 결과의 날짜다. */

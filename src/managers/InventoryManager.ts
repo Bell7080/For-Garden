@@ -6,6 +6,7 @@ import { isValidLotStack } from "../core/itemLots";
 import type { Wallet } from "../core/gacha";
 import type { ClaimAdRewardRequest, ClaimAdRewardResponse, EngraveRuneResponse, EnhanceRuneAllResponse, EnhanceRuneResponse, GameApi, InventoryItemDto, RechargeStaminaResponse, RenameRuneResponse, SellRunesResponse, SynthesizeRunesResponse, CraftRunesResponse, UseConsumableResponse } from "../api/contracts";
 import type { RuneInstance, RuneStatKey } from "../core/runes";
+import type { RuneListSortKey } from "../core/listViewMemory";
 import { RELICS } from "../data/relics";
 import { findItem, ITEMS, type ItemCategory, type ItemDefinition, type WalletItemKey } from "../data/items";
 import type { Session } from "../state/session";
@@ -27,7 +28,8 @@ export const INVENTORY_LAYOUT = {
 
 
 /** 가방 정렬 선택은 UI 상태로 보관하고 Manager만 비교 규칙을 소유한다. */
-export type InventorySortKey = "acquired" | "rarity" | "part" | "enhancement" | "equipped" | "relic" | "trait";
+/** 룬 정렬 기준 목록은 `core/listViewMemory.ts`가 갖는다 — 기억한 정렬을 저장에서 되돌릴 때 같은 목록을 읽는다. */
+export type InventorySortKey = RuneListSortKey;
 export interface InventorySort { key: InventorySortKey; direction: "asc" | "desc"; }
 /** 렐릭 순 정렬에서 아무도 안 낀 룬이 서는 자리 — 도감의 어느 렐릭보다 뒤. */
 const UNEQUIPPED_RELIC_RANK = 1_000_000;

@@ -4,6 +4,8 @@ import { EMPTY_RUNE_LIST_FILTER, runeListFilterCount, runeListMatches, type Rune
 import { runeDisplayName, runePartLabel, runeRarityLabel, type RuneInstance } from "../core/runes";
 import { DEFAULT_INVENTORY_SORT, InventoryManager, type InventorySort } from "../managers/InventoryManager";
 import { session } from "../state/session";
+import type { RuneViewScreen } from "../core/listViewMemory";
+import { settingsManager } from "../managers/SettingsManager";
 import { addFilterButton, type FilterButton } from "./FilterButton";
 import { PopupLayer } from "./PopupLayer";
 import { addRuneBagToggles, RUNE_BAG_TOGGLE_ROW_WIDTH } from "./runeHolderCycle";
@@ -18,15 +20,28 @@ import { RUNE_LIST_CONTROLS } from "./runeListControlsLayout";
 export { RUNE_LIST_CONTROLS };
 
 
-/** 목록 하나가 들고 다니는 조건. 판이 사는 동안만 기억한다(토글은 설정에 남는다). */
+/**
+ * 목록 하나가 들고 다니는 조건. 토글은 설정(`runeBag`)에 남고, `memory`가 있으면 필터·정렬도 그 화면 몫으로
+ * 설정(`runeViews`)에 남아 다음에 열 때 그대로 선다. 검색 글은 판이 사는 동안만 둔다.
+ */
 export interface RuneListState {
   query: string;
   filter: RuneListFilter;
   sort: InventorySort;
+  readonly memory?: RuneViewScreen;
 }
 
-export function createRuneListState(sort: InventorySort = DEFAULT_INVENTORY_SORT): RuneListState {
+export function createRuneListState(sort: InventorySort = DEFAULT_INVENTORY_SORT, memory?: RuneViewScreen): RuneListState {
+  if (memory) {
+    const view = settingsManager.runeView(memory);
+    return { query: "", filter: view.filter, sort: { ...view.sort }, memory };
+  }
   return { query: "", filter: EMPTY_RUNE_LIST_FILTER, sort: { ...sort } };
+}
+
+/** 화면 몫으로 기억하는 목록이면 지금 필터·정렬을 남긴다. */
+function rememberRuneList(state: RuneListState): void {
+  if (state.memory) settingsManager.rememberRuneView(state.memory, { filter: state.filter, sort: state.sort });
 }
 
 /** 검색이 읽는 글 — 이름 · 부위 · 등급 · 옵션 · 특성 이름. 「공격력」을 치면 그 옵션이 붙은 룬이 남는다. */
@@ -89,6 +104,7 @@ export class RuneListControls {
       const world = parent.getWorldTransformMatrix().transformPoint(left + filterWidth / 2, y + rowHeight / 2 + 26);
       openRuneFilterPopup(scene, popups, { x: world.x, y: world.y }, () => state.filter, (next) => {
         state.filter = next;
+        rememberRuneList(state);
         // 목록이 다시 그려져 이 줄이 이미 걷혔으면 표식은 새 줄이 세운다(client_errors #47).
         if (this.count.scene) this.filterButton.setCount(runeListFilterCount(next));
         options.onChange();
@@ -114,8 +130,8 @@ export class RuneListControls {
         ["trait", "inventory.sort.trait"], ["enhancement", "inventory.sort.craft"], ["equipped", "inventory.sort.equipped"],
       ] as const).filter(([id]) => options.parts || id !== "part").map(([id, key]) => ({ id, label: t(key) })),
       sortMode: state.sort.key, descending: state.sort.direction === "desc",
-      onSort: (key) => { state.sort = { ...state.sort, key }; options.onChange(); },
-      onDirection: (descending) => { state.sort = { ...state.sort, direction: descending ? "desc" : "asc" }; options.onChange(); },
+      onSort: (key) => { state.sort = { ...state.sort, key }; rememberRuneList(state); options.onChange(); },
+      onDirection: (descending) => { state.sort = { ...state.sort, direction: descending ? "desc" : "asc" }; rememberRuneList(state); options.onChange(); },
     });
 
     const toggleY = y + rowHeight + rowGap;

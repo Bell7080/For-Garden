@@ -68,6 +68,7 @@ export const RUNE_TH = {
   "rune.trait.title": "คุณลักษณะ",
   "rune.trait.none": "ไม่มีคุณลักษณะ",
   "rune.pick.select": "เลือก",
+  "rune.pick.multi": "เลือกหลายอัน",
   "rune.pick.hint": "เลือกรูนจากรายการด้านล่าง",
   "rune.trait.odds": "อัตรา",
   "rune.trait.odds.upgradeTitle": "เพิ่มระดับ",

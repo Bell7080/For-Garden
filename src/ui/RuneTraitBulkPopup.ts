@@ -79,7 +79,7 @@ export function openRuneTraitBulkPopup(scene: Phaser.Scene, popups: PopupLayer, 
   }, (body) => {
     const grid = mountRunePickerGrid(scene, body, {
       popups, runes: candidates, sizeFor, maxRows: L.maxRows, top: -half,
-      initialSort: { key: "enhancement", direction: "desc" },
+      memory: "traitBulk",
       isCovered: () => popups.isOpen && !popups.isTop(body), isActive: () => popups.isTop(body),
       isSelected: (rune) => selected.includes(rune.instanceId),
       onPick: (rune) => {

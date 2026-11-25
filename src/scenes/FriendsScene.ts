@@ -41,6 +41,7 @@ import { ProfileAvatar } from "../ui/ProfileAvatar";
 import { playSceneEntrance, slideTabPage, startScene } from "../ui/screenTransition";
 import { addScrollHint } from "../ui/ScrollHint";
 import { SortControl } from "../ui/SortControl";
+import { settingsManager } from "../managers/SettingsManager";
 import { squeezeTextToWidth } from "../ui/textFit";
 import { TextInputField } from "../ui/TextInputField";
 import { COLOR, PROFILE_MODIFIER_RARITY_COLOR, textStyle } from "../ui/theme";
@@ -135,7 +136,9 @@ export class FriendsScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("friends");
-    this.tab = "friends"; this.filter = "all"; this.sort = "lastActive"; this.descending = true;
+    // 필터·정렬은 지난번 값으로 선다(`settings.game.friendView`).
+    const view = settingsManager.get().game.friendView;
+    this.tab = "friends"; this.filter = view.filter; this.sort = view.sort; this.descending = view.descending;
     this.requestView = "incoming"; this.searchQuery = ""; this.searchResults = undefined;
     this.friendData = undefined; this.requestData = undefined; this.recommendations = [];
     this.list = undefined; this.sortControl = undefined; this.scrollOffset = 0; this.minScroll = 0; this.busy = false;
@@ -255,6 +258,7 @@ export class FriendsScene extends Phaser.Scene {
       addFriendChip(this, this.controls, friendsChipX(index, C.filter), y, C.filter.width, C.filter.height, t(`friends.filter.${filter}`), this.filter === filter, () => {
         if (this.filter === filter) return;
         this.filter = filter;
+        this.rememberView();
         this.paintControls(); this.paintList();
       });
     });
@@ -265,10 +269,15 @@ export class FriendsScene extends Phaser.Scene {
       onSort: (mode) => {
         this.sort = mode; this.descending = defaultFriendSortDirection(mode);
         this.sortControl?.setDirection(this.descending);
+        this.rememberView();
         this.paintList();
       },
-      onDirection: (descending) => { this.descending = descending; this.paintList(); },
+      onDirection: (descending) => { this.descending = descending; this.rememberView(); this.paintList(); },
     });
+  }
+
+  private rememberView(): void {
+    settingsManager.rememberFriendView({ filter: this.filter, sort: this.sort, descending: this.descending });
   }
 
   private paintRequestControls(y: number): void {

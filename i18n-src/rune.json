@@ -679,6 +679,16 @@
 "Auswählen",
 "Выбрать"
 ],
+"rune.pick.multi": [
+"批量选择",
+"เลือกหลายอัน",
+"Chọn nhiều",
+"Pilih banyak",
+"Multiselección",
+"Multisseleção",
+"Mehrfachwahl",
+"Мультивыбор"
+],
 "rune.pick.hint": [
 "从下方列表中选择符文。",
 "เลือกรูนจากรายการด้านล่าง",

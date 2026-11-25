@@ -121,8 +121,9 @@ function openSynthesisPicker(options: { scene: Phaser.Scene; popups: PopupLayer;
   };
   openRuneSelectPopup({
     scene: options.scene, popups: options.popups, title: t("archaeology.synth.pick"),
-    candidates, emptyText: t("archaeology.synth.pickEmpty"),
-    slots: { filled: () => live, target: () => target },
+    candidates, emptyText: t("archaeology.synth.pickEmpty"), memory: "synthesis",
+    // 「한 번에 선택」으로 함께 고르는 룬도 같은 등급이어야 한다 — 하나씩 넣을 때 다음 칸이 좁혀지는 규칙과 같다.
+    slots: { filled: () => live, target: () => target, accepts: (chosen, rune) => chosen.every(({ rarity }) => rarity === rune.rarity) },
     onSelect: (rune) => {
       live[target] = rune;
       options.onPick(target, rune);

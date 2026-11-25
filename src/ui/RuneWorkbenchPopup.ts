@@ -233,7 +233,7 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
 
     // ── 목록 ─────────────────────────────────────────────────────────────
     const g = W.grid;
-    const state = createRuneListState();
+    const state = createRuneListState(undefined, "workbench");
     const frame = scene.add.container(0, top + rows.listTop);
     body.add(frame);
     const half = (g.columns * g.cell) / 2;

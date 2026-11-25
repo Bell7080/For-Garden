@@ -68,6 +68,7 @@ export const RUNE_PT_BR = {
   "rune.trait.title": "Traço",
   "rune.trait.none": "Sem traço",
   "rune.pick.select": "Selecionar",
+  "rune.pick.multi": "Multisseleção",
   "rune.pick.hint": "Escolha uma runa da lista abaixo.",
   "rune.trait.odds": "Chances",
   "rune.trait.odds.upgradeTitle": "Aumento de grau",

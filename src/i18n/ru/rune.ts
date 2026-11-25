@@ -68,6 +68,7 @@ export const RUNE_RU = {
   "rune.trait.title": "Черта",
   "rune.trait.none": "Нет черты",
   "rune.pick.select": "Выбрать",
+  "rune.pick.multi": "Мультивыбор",
   "rune.pick.hint": "Выберите руну из списка ниже.",
   "rune.trait.odds": "Шансы",
   "rune.trait.odds.upgradeTitle": "Повышение ранга",

@@ -68,6 +68,7 @@ export const RUNE_ID = {
   "rune.trait.title": "Sifat",
   "rune.trait.none": "Tanpa sifat",
   "rune.pick.select": "Pilih",
+  "rune.pick.multi": "Pilih banyak",
   "rune.pick.hint": "Pilih Rune dari daftar di bawah.",
   "rune.trait.odds": "Peluang",
   "rune.trait.odds.upgradeTitle": "Naik Tingkat",

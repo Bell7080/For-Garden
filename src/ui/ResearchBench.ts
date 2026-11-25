@@ -74,7 +74,7 @@ function openRunePicker(options: { scene: Phaser.Scene; popups: PopupLayer; curr
   // 누르면 위 정보 판에 그 룬이 서고, 「선택」을 눌러야 연구대에 꽂힌다(`openRuneSelectPopup`).
   openRuneSelectPopup({
     scene: options.scene, popups: options.popups, title: t("archaeology.bench.pick"),
-    candidates, emptyText: t("rune.bulkSell.empty"),
+    candidates, emptyText: t("rune.bulkSell.empty"), memory: "research",
     onSelect: (rune) => { options.onPick(rune); return false; },
   });
 }

@@ -68,6 +68,7 @@ export const RUNE_VI = {
   "rune.trait.title": "Đặc tính",
   "rune.trait.none": "Không có đặc tính",
   "rune.pick.select": "Chọn",
+  "rune.pick.multi": "Chọn nhiều",
   "rune.pick.hint": "Chọn một Rune từ danh sách bên dưới.",
   "rune.trait.odds": "Tỉ lệ",
   "rune.trait.odds.upgradeTitle": "Nâng cấp bậc",

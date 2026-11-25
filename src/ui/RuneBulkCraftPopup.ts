@@ -47,7 +47,7 @@ export function openRuneBulkCraftPopup(scene: Phaser.Scene, popups: PopupLayer, 
 
   popups.open({ width: layout.width, height: layout.height, title: t("rune.bulkCraft.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: true }, (body) => {
     const grid = mountRunePickerGrid(scene, body, {
-      popups, runes: candidates, sizeFor, maxRows: L.maxRows, top: layout.top,
+      popups, runes: candidates, sizeFor, maxRows: L.maxRows, top: layout.top, memory: "bulkCraft",
       isCovered: () => popups.isOpen && !popups.isTop(body), isActive: () => popups.isTop(body),
       isSelected: (rune) => selected.has(rune.instanceId),
       onPick: (rune) => {

@@ -1,0 +1,131 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000}canvas{display:block}</style></head><body>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as L from './lib.js';
+import * as M from './mlib.js';
+import * as T from './tlib.js';
+const {THREE,add,S,C,toon,ease,easeIO,clamp01,rnd}=L;
+const font=new FontFace('NK','url(./nk.woff2)');await font.load();document.fonts.add(font);
+const q=new URLSearchParams(location.search);const name=q.get('s');const D=+(q.get('d')||4);
+const FOV={hook:1,end:1.1,night:1.15};
+const mk=o=>{const r=L.makeScene(o);r.cam.fov*=(FOV[name]||1.32);r.cam.updateProjectionMatrix();window.__scene=r.scene;window.__cam=r.cam;return r;};
+const lerp=(a,b,k)=>a+(b-a)*k;
+const pop=(t,t0,d=.18)=>{if(t<t0)return 0;const k=clamp01((t-t0)/d);return k<1?k*1.2:1+Math.sin((t-t0-d)*14)*Math.exp(-(t-t0-d)*6)*.12;};
+const label=(scene,txt,o={})=>{const s=L.textSprite(txt,o);scene.add(s);return s;};
+const setSprite=(s,h,k)=>{s.scale.set(h*s.userData.aspect*k,h*k,1);s.material.opacity=clamp01(k*3);};
+const ground=(scene,c,r=40)=>{const g=add(scene,C(r,r,.4,48),toon(c),[0,-.2,0],null,null,false);g.receiveShadow=true;return g;};
+const euca=(scene,seed=3,n=14,spread=[36,26],z0=-4)=>{const r=rnd(seed);for(let i=0;i<n;i++){const x=r()*spread[0]-spread[0]/2;if(Math.abs(x)<3)continue;L.tree(scene,x,z0-r()*spread[1],.9+r()*.7,[0x6f9a7c,0x7fa58a,0x5e8a6e][i%3]);}};
+const fern=(scene,x,z,s=1)=>{const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(s);scene.add(g);for(let i=0;i<6;i++)add(g,S(.5,10,8),toon(0x4f8a52),[0,.35,0],[.3,.25,1.4],[0,i*Math.PI/3,.5],false).position.set(Math.sin(i)*.3,.35,Math.cos(i)*.3);return g;};
+// calendar page with month/day
+const calendar=(scene,{w=3,h=3.6}={})=>{const draw=(md,top,col)=>(x,W,H)=>{x.fillStyle='#fffaf0';x.fillRect(0,0,W,H);x.fillStyle=col||'#d9483b';x.fillRect(0,0,W,H*.26);
+  x.fillStyle='#fff';x.font=`900 ${H*.15}px NK`;x.textAlign='center';x.textBaseline='middle';x.fillText(top,W/2,H*.13);
+  x.fillStyle='#2a1d2e';x.font=`900 ${H*.38}px NK`;x.fillText(md,W/2,H*.62);x.strokeStyle='#2a1d2e';x.lineWidth=10;x.strokeRect(5,5,W-10,H-10);};
+ const m=T.canvasPlane(w,h,draw('7.10','1936'),{px:600});scene.add(m);m.userData.show=(md,top,col)=>m.userData.redraw(draw(md,top,col));return m;};
+const shield=(scene)=>{const g=new THREE.Group();scene.add(g);const sh=new THREE.Shape();sh.moveTo(0,1);sh.bezierCurveTo(.6,1,1,.9,1,.6);sh.lineTo(1,0);sh.bezierCurveTo(1,-.6,.4,-1,0,-1.25);sh.bezierCurveTo(-.4,-1,-1,-.6,-1,0);sh.lineTo(-1,.6);sh.bezierCurveTo(-1,.9,-.6,1,0,1);
+ add(g,new THREE.ExtrudeGeometry(sh,{depth:.25,bevelEnabled:true,bevelSize:.06,bevelThickness:.06}),toon(0x4aa3e0),[0,0,0]);
+ const ck=new THREE.Shape();ck.moveTo(-.5,0);ck.lineTo(-.15,-.4);ck.lineTo(.55,.4);ck.lineTo(.4,.52);ck.lineTo(-.15,-.12);ck.lineTo(-.35,.12);add(g,new THREE.ExtrudeGeometry(ck,{depth:.1,bevelEnabled:false}),new THREE.MeshBasicMaterial({color:0xffffff}),[0,0,.36],null,null,false);return g;};
+
+const SC={};
+// 1. hook - big 59, thylacine in spotlight on a dark stage
+SC.hook=()=>{const {scene,cam}=mk({sky:['#1c1838','#3a2f5e','#5a4a7a'],sunPos:[2,10,6],hemi:.9,sunI:2.8});
+ const st=add(scene,C(4,4,.3,48),toon(0x4a3f6a),[0,-.15,0],null,null,false);st.receiveShadow=true;
+ const th=T.makeThylacine(scene,{joey:false});th.g.rotation.y=.35;
+ const n59=label(scene,'59일',{size:230,w:1024,h:300,fill:'#ffe066'});n59.position.set(0,6.4,0);
+ const sub=label(scene,'만에 사라진',{size:150,w:1024,fill:'#ffffff'});sub.position.set(0,4.95,0);
+ const nm=label(scene,'주머니늑대',{size:170,w:1024,fill:'#ffffff'});nm.position.set(0,.5,1.5);
+ return t=>{th.idle(t);const punch=1-Math.exp(-t*7);cam.position.set(.4,lerp(5,3.4,punch),lerp(22,13,punch)-t*.4);cam.lookAt(0,3.2,0);
+  setSprite(n59,2.3,pop(t,.15,.2));setSprite(sub,1.05,pop(t,.55));setSprite(nm,1.4,pop(t,.9));n59.position.y=6.4+Math.sin(t*3)*.08;};};
+// 2. protected for 59 days - shield above thylacine, D+ counter rises to 59
+SC.protect=()=>{const {scene,cam}=mk({sky:['#4a6fc0','#a9c6e8','#e8eef6'],sunPos:[-5,9,7],hemi:1.3});
+ ground(scene,0x8cbf6a);euca(scene,5,10);const th=T.makeThylacine(scene);th.g.rotation.y=.5;
+ const sd=shield(scene);sd.position.set(0,5.4,0);
+ const cnt=label(scene,'D+1',{size:200,w:1024,fill:'#ffe066'});cnt.position.set(0,7.6,0);
+ return t=>{th.idle(t);cam.position.set(2,3.4,11-t*.3);cam.lookAt(0,3.3,0);const k=pop(t,.2,.25);sd.scale.setScalar(k);sd.rotation.y=Math.sin(t*1.5)*.4;
+  const n=Math.max(1,Math.min(59,Math.round(lerp(1,59,clamp01((t-.6)/(D*.6))))));if(cnt.userData.n!==n){cnt.userData.n=n;const s2=L.textSprite('D+'+n,{size:200,w:1024,fill:n===59?'#ff6b6b':'#ffe066'});cnt.material.map=s2.material.map;}
+  setSprite(cnt,1.5,pop(t,.5));};};
+// 3. intro - walking through eucalyptus forest, stripes + pouch with joey
+SC.intro=()=>{const {scene,cam}=mk({sky:['#5a8fd0','#bfe0d0','#f2f0d0'],sunPos:[-6,10,6],hemi:1.4,fog:[0xcfe6d8,20,70]});
+ ground(scene,0x86b866);euca(scene,7,22);for(let i=0;i<8;i++)fern(scene,(i%2?1:-1)*(3+i*.7),-2-i*1.5,1+i*.05);
+ const th=T.makeThylacine(scene,{joey:true});
+ const a=label(scene,'호랑이 줄무늬',{size:140,w:1024,fill:'#ffffff'}),b=label(scene,'주머니',{size:140,w:768,fill:'#ffe066'});
+ return t=>{th.idle(t);th.walk(t,.7);const k=easeIO(t/D);th.g.position.set(lerp(-3,1.5,k),0,lerp(-1,1,k));th.g.rotation.y=1.2;
+  cam.position.set(th.g.position.x+lerp(1,-1,k),lerp(3,2.2,k),lerp(10,7.5,k));cam.lookAt(th.g.position.x,1.6,th.g.position.z);
+  a.position.set(th.g.position.x,3.9,th.g.position.z);b.position.set(th.g.position.x+.2,-.1,th.g.position.z+1.2);
+  setSprite(a,.8,pop(t,.3));setSprite(b,.8,pop(t,D*.45));};};
+// 4. marsupial - next to kangaroo, not a wolf
+SC.relative=()=>{const {scene,cam}=mk({sky:['#4f86d0','#ffd6a0','#ffe9c0'],sunPos:[-4,9,8],hemi:1.4});
+ ground(scene,0xd9b26a);const th=T.makeThylacine(scene);th.g.position.x=-1.8;th.g.rotation.y=.6;const k=T.makeKangaroo(scene,{scale:1.05});k.g.position.x=1.9;k.g.rotation.y=-.5;
+ for(let i=0;i<5;i++)L.bush(scene,-8+i*4,-6-(i%2)*2,1,0x9aa86a);
+ const wolf=label(scene,'늑대? ✕',{size:150,w:1024,fill:'#ff8a8a'}),fam=label(scene,'유대류 친척',{size:150,w:1024,fill:'#ffe066'});wolf.position.set(-1.8,4.6,0);fam.position.set(0,6.2,0);
+ const heart=label(scene,'♥',{size:200,w:256,h:256,fill:'#ff7aa8'});heart.position.set(0,3.6,.5);
+ return t=>{th.idle(t);k.idle(t);cam.position.set(0,3.6,13-t*.4);cam.lookAt(0,2.6,0);setSprite(wolf,.9,t<D*.45?pop(t,.2):Math.max(0,1-(t-D*.45)*4));
+  setSprite(fam,1.05,pop(t,D*.5));setSprite(heart,.8,pop(t,D*.6));heart.position.y=3.6+Math.sin(t*4)*.1;};};
+// 5. rumor - sheep flock, villagers whispering
+SC.rumor=()=>{const {scene,cam}=mk({sky:['#6a8fd0','#e8d8b8','#f6ead0'],sunPos:[-5,9,8],hemi:1.4});
+ ground(scene,0x9cc46a);const sh=[];const r=rnd(11);for(let i=0;i<6;i++){const s=T.makeSheep(scene,{scale:.8});s.g.position.set(-4+i*1.7,0,-2-r()*3);s.g.rotation.y=.3-r()*.6;sh.push(s);}
+ const fx=[];for(let i=0;i<10;i++)fx.push(add(scene,new THREE.BoxGeometry(.15,1.2,.15),toon(0x9a7650),[-8+i*1.8,.6,-6.5]));add(scene,new THREE.BoxGeometry(18,.12,.12),toon(0x9a7650),[0,1,-6.5]);
+ const p1=L.makeSailor(scene,{coat:0x7a5a3a,hat:0x3a2a22});p1.g.position.set(3.2,0,2.5);p1.g.rotation.y=-.9;const p2=L.makeSailor(scene,{coat:0x5a6a3a,hat:0x2a1d22});p2.g.position.set(1.4,0,3);p2.g.rotation.y=.9;
+ const bub=label(scene,'양을 잡아먹는대!',{size:120,w:1024,fill:'#ffffff'});bub.position.set(.9,4.3,2.8);
+ const qm=label(scene,'?!',{size:200,w:256,h:256,fill:'#ffe066'});
+ return t=>{sh.forEach((s,i)=>s.idle(t,i));cam.position.set(1,3.6,12-t*.3);cam.lookAt(0,1.8,0);setSprite(bub,.75,pop(t,.4));qm.position.set(sh[2].g.position.x,3.2,sh[2].g.position.z);setSprite(qm,.7,pop(t,D*.55));
+  p1.head.rotation.z=Math.sin(t*6)*.08;p2.head.rotation.z=Math.sin(t*6+1)*.08;};};
+// 6. bounty - wanted poster + hunters, counter to 2,184
+SC.bounty=()=>{const {scene,cam}=mk({sky:['#3a4f8a','#d89a78','#f2c89a'],sunPos:[-5,8,8],hemi:1.2});
+ ground(scene,0x8aa45a);euca(scene,13,10);
+ const post=add(scene,C(.12,.12,4.4,8),toon(0x7a5236),[0,2.2,-.15]);
+ const poster=T.canvasPlane(2.6,3.4,(x,W,H)=>{x.fillStyle='#f4e2b8';x.fillRect(0,0,W,H);x.strokeStyle='#5a3a20';x.lineWidth=14;x.strokeRect(10,10,W-20,H-20);x.fillStyle='#5a2a1a';x.textAlign='center';x.textBaseline='middle';
+  x.font=`900 ${W*.17}px NK`;x.fillText('현상금',W/2,H*.13);x.font=`900 ${W*.09}px NK`;x.fillText('WANTED',W/2,H*.24);
+  x.fillStyle='#d2a56c';x.beginPath();x.ellipse(W/2,H*.5,W*.3,H*.13,0,0,6.3);x.fill();x.fillStyle='#4a3024';for(let i=0;i<5;i++)x.fillRect(W*.42+i*W*.05,H*.39,W*.022,H*.13);
+  x.fillStyle='#5a2a1a';x.font=`900 ${W*.2}px NK`;x.fillText('£1',W/2,H*.8);},{px:520});poster.position.set(0,3.3,0);scene.add(poster);
+ const hs=[];for(let i=0;i<3;i++){const h=M.makeHunter(scene,{scale:.9});h.g.position.set(-3.5+i*3.5+(i===1?0:0),0,2.5+(i===1?1:0));h.g.rotation.y=i===0?.5:i===2?-.5:0;hs.push(h);}
+ const cnt=label(scene,'0마리',{size:200,w:1024,fill:'#ff6b6b'});cnt.position.set(0,6.6,0);
+ return t=>{cam.position.set(0,3.8,12.5-t*.5);cam.lookAt(0,3.2,0);hs.forEach((h,i)=>{h.head.rotation.y=Math.sin(t*2+i)*.15;});
+  const n=Math.round(2184*ease(clamp01((t-.4)/(D*.7))));const s=n.toLocaleString('en-US')+'마리';if(cnt.userData.s!==s){cnt.userData.s=s;cnt.material.map=L.textSprite(s,{size:200,w:1024,fill:'#ff6b6b'}).material.map;}
+  setSprite(cnt,1.45,pop(t,.3));poster.rotation.z=Math.sin(t*2)*.02;};};
+// 7. weak jaw - thylacine gapes at a big sheep, can't, sweat
+SC.jaw=()=>{const {scene,cam}=mk({sky:['#5a8fd0','#cfe6c8','#f2f0c8'],sunPos:[-6,9,8],hemi:1.4});
+ ground(scene,0x9cc46a);const th=T.makeThylacine(scene);th.g.position.set(-2,0,0);th.g.rotation.y=1.35;const s=T.makeSheep(scene,{scale:1.45});s.g.position.set(2.4,0,-.3);s.g.rotation.y=-1.2;
+ const lb=label(scene,'턱이 약해요',{size:160,w:1024,fill:'#ffe066'});lb.position.set(0,5.6,0);const sw=label(scene,'💦',{size:180,w:256,h:256,fill:'#7ad8ff'});
+ const study=label(scene,'2011년 연구',{size:110,w:768,fill:'#ffffff'});study.position.set(0,6.7,0);
+ return t=>{th.idle(t);s.idle(t);cam.position.set(0,3.2,10.5-t*.2);cam.lookAt(.2,2,0);th.gape(clamp01(Math.sin(t*3.2)*.5+.5)*.9);
+  th.g.position.x=-2+Math.max(0,Math.sin(t*3.2))*.25;sw.position.set(th.g.position.x+.3,3.9,1);setSprite(sw,.6,pop(t,D*.4));setSprite(lb,1.1,pop(t,D*.3));setSprite(study,.7,pop(t,.2));};};
+// 8. July 10 1936 - calendar + shield
+SC.law=()=>{const {scene,cam}=mk({sky:['#4a6fc0','#a9c6e8','#e8eef6'],sunPos:[-4,9,8],hemi:1.3});
+ ground(scene,0x8cbf6a);euca(scene,17,8);const cal=calendar(scene,{w:2.4,h:2.9});cal.position.set(-1.05,3.2,0);
+ const sd=shield(scene);sd.position.set(1.3,3.2,.3);const lb=label(scene,'보호종 지정!',{size:150,w:1024,fill:'#ffffff'});lb.position.set(0,6,0);
+ return t=>{cam.position.set(0,3.2,9-t*.2);cam.lookAt(0,3.2,0);cal.scale.setScalar(pop(t,.1,.22));sd.scale.setScalar(pop(t,.6,.22)*.9);sd.rotation.y=Math.sin(t*1.6)*.35;setSprite(lb,1,pop(t,.9));};};
+// 9. Sept 7 night zoo - last one alone in a cage
+SC.night=()=>{const {scene,cam}=mk({sky:['#0c1030','#1e2550','#2e3562'],sunC:0x9fb4ff,sunI:1.3,sunPos:[4,10,4],hemi:.55});
+ ground(scene,0x3a4a5a);const cage=T.makeCage(scene);const th=T.makeThylacine(scene,{scale:.85});th.g.position.set(.8,.25,0);th.g.rotation.y=-.9;
+ const moon=add(scene,S(1.4,24,16),new THREE.MeshBasicMaterial({color:0xfff2c8}),[-7,11,-20],null,null,false);
+ const stars=new THREE.Points(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(Array.from({length:240},(_,i)=>{const r=rnd(5+i);return [r()*80-40,8+r()*30,-30-r()*20];}).flat(),3)),new THREE.PointsMaterial({color:0xffffff,size:.15}));scene.add(stars);
+ const cal=calendar(scene,{w:1.8,h:2.2});cal.userData.show('9.7','1936','#3a4f8a');cal.position.set(-.3,4.9,3);
+ const breath=[];for(let i=0;i<3;i++){const b=add(scene,S(.12,10,8),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.5}),[0,0,0],null,null,false);breath.push(b);}
+ return t=>{th.idle(t,0);th.head.rotation.x=.35;th.head.rotation.y=Math.sin(t*.6)*.15;cam.position.set(lerp(5,3.4,easeIO(t/D)),3.2,lerp(10,7.5,easeIO(t/D)));cam.lookAt(0,1.6,0);
+  cal.scale.setScalar(pop(t,.3,.25));const hp=new THREE.Vector3();th.head.getWorldPosition(hp);
+  breath.forEach((b,i)=>{const p=((t*.6+i/3)%1);b.position.set(hp.x-.5-p*.4,hp.y-.1+p*.5,hp.z+.4+p*.2);b.scale.setScalar(.5+p*1.5);b.material.opacity=.45*(1-p);});};};
+// 10. 59 days too late - calendar pages fly, counter to 59
+SC.late=()=>{const {scene,cam}=mk({sky:['#2a2048','#5a3a5e','#8a5a6a'],sunPos:[-4,9,8],hemi:1});
+ const cal=calendar(scene,{w:3.2,h:3.8});cal.position.set(0,3.4,0);const pages=[];
+ for(let i=0;i<8;i++){const p=T.canvasPlane(3.2,3.8,(x,W,H)=>{x.fillStyle='#fffaf0';x.fillRect(0,0,W,H);x.fillStyle='#d9483b';x.fillRect(0,0,W,H*.26);},{px:128});p.position.set(0,3.4,.05);scene.add(p);pages.push(p);}
+ const big=label(scene,'59일',{size:240,w:1024,h:300,fill:'#ff6b6b'});big.position.set(0,6.1,.5);const late=label(scene,'늦었어요',{size:160,w:1024,fill:'#ffffff'});late.position.set(0,-.2,.5);
+ return t=>{cam.position.set(0,3.4,10-t*.3);cam.lookAt(0,3.2,0);const k=clamp01((t-.2)/(D*.55));const day=Math.round(lerp(0,59,ease(k)));
+  const d=new Date(Date.UTC(1936,6,10+day));const md=`${d.getUTCMonth()+1}.${d.getUTCDate()}`;if(cal.userData.md!==md){cal.userData.md=md;cal.userData.show(md,'1936',day===59?'#3a4f8a':'#d9483b');}
+  pages.forEach((p,i)=>{const ph=((t*3+i/8)%1);const on=k<1;p.visible=on;p.position.set(ph*4*(i%2?1:-1),3.4+ph*3,.1+ph);p.rotation.z=ph*2*(i%2?1:-1);p.material.opacity=1-ph;});
+  setSprite(big,2.1,pop(t,D*.62));setSprite(late,1.1,pop(t,D*.75));};};
+// 11. old film - b&w thylacine pacing (grain added in compose)
+SC.film=()=>{const {scene,cam}=mk({sky:['#9a9a9a','#c8c8c8','#dcdcdc'],sunPos:[-4,9,8],hemi:1.3});
+ ground(scene,0x8a8a8a);const fence=[];for(let i=0;i<14;i++)fence.push(add(scene,C(.05,.05,3.2,6),toon(0x5a5a5a),[-6+i*.92,1.6,-1.8]));
+ const th=T.makeThylacine(scene,{bw:true});const yr=label(scene,'1933',{size:200,w:768,fill:'#ffffff'});yr.position.set(-1,5,0);
+ return t=>{th.idle(t);th.walk(t,.8);const p=(t*.25)%2;const dir=p<1?1:-1;th.g.position.x=p<1?lerp(-3,3,p):lerp(3,-3,p-1);th.g.rotation.y=dir*Math.PI/2;
+  if(Math.floor(t*1.3)%4===2)th.gape(.6);else th.gape(0);cam.position.set(0,2.8,9);cam.lookAt(0,1.8,0);setSprite(yr,1.1,pop(t,.3));};};
+// 12. ending - mother with joey walks into misty forest at dawn
+SC.end=()=>{const {scene,cam}=mk({sky:['#4a5a9e','#f6b49a','#ffd8a8'],sunPos:[6,6,-10],sunC:0xffc890,hemi:1.2,fog:[0xf2d6c0,12,55]});
+ ground(scene,0x6f9a5a);euca(scene,23,26,[40,30],-2);const th=T.makeThylacine(scene,{joey:true});
+ const lb=label(scene,'늦기 전에',{size:180,w:1024,fill:'#ffe066'});lb.position.set(0,6.3,-2);
+ return t=>{th.idle(t);th.walk(t,.6);const k=easeIO(t/D);th.g.position.set(0,0,lerp(2,-9,k));th.g.rotation.y=Math.PI;th.head.rotation.y=t>D*.35&&t<D*.6?Math.sin((t-D*.35)/(D*.25)*Math.PI)*.9:0;
+  cam.position.set(1.2,3,lerp(9,5,k));cam.lookAt(0,1.8,th.g.position.z);setSprite(lb,1.2,pop(t,D*.5));};};
+
+const upd=SC[name]();window.ready=true;
+window.renderFrame=f=>{const t=f/30;upd(t);L.renderer.render(window.__scene,window.__cam);return L.renderer.domElement.toDataURL('image/jpeg',.92);};
+</script></body></html>

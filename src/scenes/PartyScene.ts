@@ -1,3 +1,4 @@
+import { battleStageStaminaCost } from "../data/contentCosts";
 import { ancientStageFloor } from "../data/ancientStrataDifficulty";
 import { openSettingsOver } from "./settingsOverlay";
 import { playFormationTapSound } from "../ui/formationSound";
@@ -377,8 +378,10 @@ export class PartyScene extends Phaser.Scene {
     // **전투에 설 SD를 지금부터 읽는다.** 편성을 고르는 동안이 그대로 로딩 시간이 되므로,
     // 출격을 누르는 순간에는 대부분 캐시에서 나온다. 기다리지 않으므로 이 화면은 막히지 않는다.
     this.prefetchBattleSds();
-    // 스테미나를 쓰는 편성(스토리·레이드·현상수배·대작전)만 오른쪽 위에 남은 양을 세운다. 결투는 도전권이라 세우지 않는다.
-    const staminaContent = this.content.content !== "duel" && this.content.content !== "friendly" && this.content.content !== "guildWar" && !this.defenseOnly && !this.guard;
+    // 스테미나를 쓰는 편성(스토리·레이드·현상수배·대작전)만 오른쪽 위에 남은 양을 세운다. 결투는 도전권이라,
+    // 고대 지층은 스테미나를 쓰지 않아(`battleStageStaminaCost` 0) 세우지 않는다.
+    const staminaContent = this.content.content !== "duel" && this.content.content !== "friendly" && this.content.content !== "guildWar" && !this.defenseOnly && !this.guard
+      && !(this.content.content === "stage" && battleStageStaminaCost(stage) === 0);
     const titleText = this.add.text(cx, 70, this.title(stage), textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
     if (staminaContent) {
       // 가운데 제목이 오른쪽 스테미나 칸(왼쪽 끝 826px)을 넘지 않게 폭을 지킨다.

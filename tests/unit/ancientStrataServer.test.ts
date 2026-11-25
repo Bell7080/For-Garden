@@ -86,17 +86,17 @@ describe("고대 지층 서버 입장·첫 보상·재전송",()=>{
     expect(ancientStageFloor("ancient:200")).toBe(200);
   });
 
-  it("서버 재현 첫 승리만 1층 골드를 원자 저장하고 스테미나 10을 쓰며, 같은 요청/재클리어로 추가 지급하지 않는다",async()=>{
+  it("서버 재현 첫 승리만 1층 골드를 원자 저장하고 스테미나는 쓰지 않으며, 같은 요청/재클리어로 추가 지급하지 않는다",async()=>{
     const s=service();await verifiedWin(s);
     const first=await s.call("completeStage",["ancient:1",false],"ancient-first-claim");
-    expect(first.result).toMatchObject({firstClear:true,staminaSpent:10,firstClearRewards:[{kind:"currency",currency:"gold",amount:5000}]});
+    expect(first.result).toMatchObject({firstClear:true,staminaSpent:0,firstClearRewards:[{kind:"currency",currency:"gold",amount:5000}]});
     const saved=s.snapshot();expect(saved.wallet.gold).toBe(5000);expect(saved.wallet.gems).toBe(1234);expect(saved.cleared.has("ancient:1")).toBe(true);
     expect(saved.selectedStageId).toBe("ancient:1");
     await s.call("completeStage",["ancient:1",false],"ancient-first-claim");
     expect(s.snapshot().wallet.gold).toBe(5000);
     await expect(s.call("completeStage",["ancient:1",true])).rejects.toThrow("COMBAT_NOT_VERIFIED");
     await verifiedWin(s);
-    expect((await s.call("completeStage",["ancient:1",true])).result).toMatchObject({firstClear:false,firstClearRewards:[],cheesecakeEarned:0,staminaSpent:10});
+    expect((await s.call("completeStage",["ancient:1",true])).result).toMatchObject({firstClear:false,firstClearRewards:[],cheesecakeEarned:0,staminaSpent:0});
     const replay=s.snapshot();expect(replay.wallet.gold).toBe(5000);
     expect(replay.relicProgress.rex.bondXp).toBe(saved.relicProgress.rex.bondXp);
     await expect(s.call("enterStage",[{stageId:"ancient:2",requestId:"entry-next-floor"}])).resolves.toBeDefined();

@@ -18,7 +18,7 @@ import { resolveServerApi, type ExpeditionApi } from "./serverApi";
 /** UI가 소비하는 원정 요약이며 변경 가능한 Session 참조는 노출하지 않는다. */
 export interface ExpeditionStatus {
   weekKey: string;
-  /** 오늘 떠난 판 수. 원정은 하루 한 번이다(`EXPEDITION_DAILY_POLICY`). 소탕도 같은 한 번을 쓴다. */
+  /** 오늘 보상을 받은 판 수. 보상은 하루 한 판이다(`EXPEDITION_DAILY_POLICY`). 소탕도 같은 한 번을 쓴다. */
   playsToday: number;
   /** 이번 주 한 판 최고 점수. */
   bestScore: number;
@@ -26,8 +26,11 @@ export interface ExpeditionStatus {
   allTimeBestScore: number;
   active: { relicIds: [string, string, string]; score: number } | null;
   run: ExpeditionRunState | null;
-  /** 오늘 원정을 더 시작할 수 있는지다. 소탕도 같은 횟수를 소비한다. */
-  canStartRun: boolean;
+  /**
+   * 오늘의 보상 기회가 남았는지다 — 다음 출발이 보상 런이 되고 소탕도 누를 수 있다.
+   * 기회가 없어도 출발은 언제나 된다. 그 판은 보상 없는 점수 런이다.
+   */
+  rewardChanceLeft: boolean;
 }
 
 export type StartExpeditionFailure = "exactlyThree" | "duplicate" | "notOwned" | "alreadyActive" | "dailyLimitReached";
@@ -69,25 +72,37 @@ export class ExpeditionManager {
     const run = this.state.expedition.run;
     const copy = run ? structuredClone(run) : null;
     const { weekKey, playsToday, bestScore, allTimeBestScore } = this.state.expedition;
-    return { weekKey, playsToday, bestScore, allTimeBestScore, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId) as [string, string, string], score: copy.runScore } : null, canStartRun: playsToday < EXPEDITION_DAILY_POLICY.maxPlaysPerDay };
+    return { weekKey, playsToday, bestScore, allTimeBestScore, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId) as [string, string, string], score: copy.runScore } : null, rewardChanceLeft: playsToday < EXPEDITION_DAILY_POLICY.maxPlaysPerDay };
   }
 
   /** 정확히 세 보유 렐릭을 검증하고 서버 주간 키가 포함된 결정적 맵을 생성한다. */
   start(relicIds: readonly string[]): StartExpeditionResult {
     this.normalizeWeek();
     if (this.state.expedition.run) return { ok: false, reason: "alreadyActive" };
-    if (this.state.expedition.playsToday >= EXPEDITION_DAILY_POLICY.maxPlaysPerDay) return { ok: false, reason: "dailyLimitReached" };
     if (relicIds.length !== 3) return { ok: false, reason: "exactlyThree" };
     if (new Set(relicIds).size !== 3) return { ok: false, reason: "duplicate" };
     if (relicIds.some((id) => !this.state.owned.has(id))) return { ok: false, reason: "notOwned" };
     const weekKey = expeditionWeekKey(this.serverNow());
-    // 하루 한 판이라 지도는 그날의 날짜로 굳는다 — 같은 날 다시 떠날 일이 없다.
+    // 지도는 그날의 날짜로 굳는다 — 다시 떠나도(포기 뒤 · 점수 런) 같은 지도라 순위가 지도 운에 갈리지 않는다.
     const mapSeed = `${expeditionDayKey(this.serverNow())}:1`;
     const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
-    const run: ExpeditionRunState = { runId: `run:${mapSeed}`, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true, snapshot: this.capture(relicId) })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, normalNodeScoreTotal: 0, bossDamageScore: 0, runScore: 0, bestScore: 0, settled: false, settlementId: null, bossSubmissionId: null, bossSettlementId: null };
+    // 보상 기회를 다 쓴 날의 출발은 보상 없는 점수 런이다(서버가 노드 전리품·인양 기록·정산을 비운다).
+    const scoreOnly = this.state.expedition.playsToday >= EXPEDITION_DAILY_POLICY.maxPlaysPerDay;
+    const { runId, startsToday } = this.nextRunId(mapSeed);
+    const run: ExpeditionRunState = { runId, ...(scoreOnly ? { scoreOnly: true } : {}), weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true, snapshot: this.capture(relicId) })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, normalNodeScoreTotal: 0, bossDamageScore: 0, runScore: 0, bestScore: 0, settled: false, settlementId: null, bossSubmissionId: null, bossSettlementId: null };
     // 출발 검증의 단일 경계에서 런과 마지막 원정 편성을 같은 저장으로 확정한다.
-    this.commit({ ...this.state.expedition, lastParty: [...relicIds], run });
+    this.commit({ ...this.state.expedition, startsToday, lastParty: [...relicIds], run });
     return { ok: true, run: structuredClone(run) };
+  }
+
+  /**
+   * 오늘 몇 번째 출발인지 세어 런 ID를 짓는다. 첫 출발은 예전과 같은 `run:<지도 시드>`이고, 같은 날 다시
+   * 떠나면 차례가 붙는다 — 포기 정산(`<런 ID>:abandon`)·보스 제출 영수증이 런 ID에 묶여 있어 같은 ID를 다시
+   * 쓰면 두 번째 판의 정산이 첫 판의 영수증을 그대로 돌려받는다.
+   */
+  private nextRunId(mapSeed: string): { runId: string; startsToday: number } {
+    const startsToday = Math.max(0, this.state.expedition.startsToday ?? 0) + 1;
+    return { runId: startsToday <= 1 ? `run:${mapSeed}` : `run:${mapSeed}#${startsToday}`, startsToday };
   }
 
   /**
@@ -103,8 +118,10 @@ export class ExpeditionManager {
     if (relicIds.some((id) => !this.state.owned.has(id))) return { ok: false, reason: "notOwned" };
 
     const weekKey = expeditionWeekKey(this.serverNow());
-    const mapSeed = `${expeditionDayKey(this.serverNow())}:${this.state.expedition.playsToday + 1}:dev-boss`;
+    const mapSeed = `${expeditionDayKey(this.serverNow())}:${(this.state.expedition.startsToday ?? 0) + 1}:dev-boss`;
     const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
+    const scoreOnly = this.state.expedition.playsToday >= EXPEDITION_DAILY_POLICY.maxPlaysPerDay;
+    const startsToday = (this.state.expedition.startsToday ?? 0) + 1;
     const boss = map.nodes.find(({ type, floor }) => type === "boss" && floor === 20)!;
     // 보스에서 역으로 한 갈래만 골라 방문 순서를 만들면 지도 전체의 연결은 보존하면서 19층 도달 상태가 된다.
     const route = [boss];
@@ -116,7 +133,7 @@ export class ExpeditionManager {
     const reached = route.at(-2)!;
     const runId = `run:${mapSeed}`;
     const run: ExpeditionRunState = {
-      runId, weekKey, mapSeed, nodes: map.nodes, currentNodeId: reached.id,
+      runId, ...(scoreOnly ? { scoreOnly: true } : {}), weekKey, mapSeed, nodes: map.nodes, currentNodeId: reached.id,
       visitedNodeIds: route.slice(0, -1).map(({ id }) => id),
       relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true, snapshot: this.capture(relicId) })) as ExpeditionRunState["relics"],
       selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null,
@@ -127,7 +144,7 @@ export class ExpeditionManager {
     };
     // 런·편성·도달점·멱등 ID는 한 번의 저장으로 함께 확정해 중간 상태를 복원할 수 없게 한다.
     // 개발 바로가기도 성공한 출발이므로 실제 시작과 같은 마지막 편성 계약을 따른다.
-    this.commit({ ...this.state.expedition, lastParty: [...relicIds], run });
+    this.commit({ ...this.state.expedition, startsToday, lastParty: [...relicIds], run });
     return { ok: true, run: structuredClone(run) };
   }
 

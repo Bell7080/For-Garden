@@ -1273,15 +1273,21 @@ describe("FakeServer 원정 정산", () => {
     state.expedition.run!.pendingRewards = { gold: 50, fossil: 7 };
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
     const runId = state.expedition.run!.runId;
+    // 전멸한 판은 오늘의 보상 기회를 쓰고 그때까지 모은 전리품을 받는다.
+    state.expedition.run!.relics.forEach((relic) => { relic.currentHp = 0; relic.alive = false; });
     const request = { runId, settlementId: "settlement-1", outcome: "abandoned" as const };
     const first = await server.settleExpeditionRun(request);
     expect(first.granted).toEqual({ gold: 1, fossil: 1 }); expect(state.expedition.run).toBeNull();
     const walletAfterFirst = { ...state.wallet };
     expect(await server.settleExpeditionRun(request)).toEqual(first);
     expect(state.wallet).toEqual(walletAfterFirst);
-    // 활성 run은 비었지만 정산한 판이 오늘의 한 번이므로, 같은 날에는 새로 떠나지 못한다.
+    expect(state.expedition.playsToday).toBe(1);
+    // 활성 run은 비었고 보상 기회는 썼다 — 같은 날 다시 떠나면 보상 없는 점수 런이다.
     expect(manager.status().active).toBeNull();
-    expect(manager.start(["torika", "rex", "dodo"])).toEqual({ ok: false, reason: "dailyLimitReached" });
+    expect(manager.start(["torika", "rex", "dodo"]).ok).toBe(true);
+    expect(state.expedition.run!.scoreOnly).toBe(true);
+    expect(state.expedition.run!.runId).not.toBe(runId);
+    state.expedition.run = null;
     await expect(server.settleExpeditionRun({ runId: first.runId, settlementId: "settlement-2", outcome: "completed" })).rejects.toMatchObject({ code: "EXPEDITION_RUN_NOT_FOUND" });
     expect(state.wallet).toMatchObject({ gold: 999_999_999, fossil: 1001 });
   });

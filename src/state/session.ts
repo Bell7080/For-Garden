@@ -398,6 +398,12 @@ export interface ExpeditionRunState {
   bossReplayVersion?: 2;
   bossSubmissionId: string | null;
   bossSettlementId: string | null;
+  /**
+   * 보상 없는 점수 런이다 — 오늘의 보상 기회(`playsToday`)를 다 쓴 뒤 최고 점수를 다시 노리러 떠난 판.
+   * 노드 전리품·폰토스 인양 기록이 쌓이지 않고 정산도 아무것도 주지 않으며 기회를 세지 않는다.
+   * 점수는 보상 런과 똑같이 주간·역대 최고 기록에 든다. 없으면 보상 런(옛 저장)이다.
+   */
+  scoreOnly?: boolean;
 }
 
 /** 주간 교체와 이어하기를 한 경계에서 판정하기 위한 공개 원정 상태다. */
@@ -405,7 +411,10 @@ export interface ExpeditionState {
   weekKey: string;
   /** 하루 한 판을 세는 UTC 날짜. 날이 바뀌면 `playsToday`가 0으로 돌아간다. */
   dayKey: string;
+  /** 오늘 **보상을 받은** 판 수 — 끝까지 가거나 전멸한 보상 런만 센다. 스스로 그만둔 판은 세지 않는다. */
   playsToday: number;
+  /** 오늘 떠난 판의 차례(보상·점수 런 모두). 판마다 런 ID를 새로 짓는 데만 쓴다 — 같은 ID면 정산 영수증이 겹친다. */
+  startsToday?: number;
   /** 이번 주 **한 판** 최고 점수. 판의 점수를 합치지 않는다. */
   bestScore: number;
   /** 그 최고 점수를 처음 달성한 시각 — 순위 동점을 가른다. */

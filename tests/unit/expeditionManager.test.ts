@@ -63,22 +63,33 @@ describe("ExpeditionManager", () => {
     expect(manager.start(["torika", "rex", "spino"]).ok).toBe(true);
   });
 
-  it("원정은 하루 한 번이고 날이 바뀌면 다시 열린다", () => {
+  it("보상 기회는 하루 한 번이고, 다 쓴 뒤에는 보상 없는 점수 런으로 떠나며 날이 바뀌면 다시 열린다", () => {
     const state = createDefaultSession();
     let now = new Date("2026-08-25T12:00:00Z");
     const manager = new ExpeditionManager(state, { save: vi.fn() }, () => now);
-    expect(manager.status().canStartRun).toBe(true);
-    expect(manager.start(["torika", "rex", "spino"]).ok).toBe(true);
+    expect(manager.status().rewardChanceLeft).toBe(true);
+    const first = manager.start(["torika", "rex", "spino"]);
+    expect(first.ok && first.run.scoreOnly).toBeFalsy();
+    const firstRunId = state.expedition.run!.runId;
 
-    // 활성 런을 비워 다음 시도가 alreadyActive가 아니라 하루 한도로 막히는지 본다.
+    // 기회를 쓴 날의 출발은 막히지 않고 점수 런이 된다 — 런 ID는 판마다 새로 짓는다(정산 영수증이 겹치지 않게).
     state.expedition.run = null;
     state.expedition.playsToday = 1;
-    expect(manager.status().canStartRun).toBe(false);
-    expect(manager.start(["torika", "rex", "spino"])).toEqual({ ok: false, reason: "dailyLimitReached" });
+    expect(manager.status().rewardChanceLeft).toBe(false);
+    const second = manager.start(["torika", "rex", "spino"]);
+    expect(second.ok).toBe(true);
+    expect(state.expedition.run!.scoreOnly).toBe(true);
+    expect(state.expedition.run!.runId).not.toBe(firstRunId);
+    // 지도는 그날의 지도 그대로다.
+    expect(state.expedition.run!.mapSeed).toBe("2026-08-25:1");
 
+    state.expedition.run = null;
     now = new Date("2026-08-26T00:10:00Z");
-    expect(manager.status().canStartRun).toBe(true);
+    expect(manager.status().rewardChanceLeft).toBe(true);
     expect(manager.status().playsToday).toBe(0);
+    expect(manager.start(["torika", "rex", "spino"]).ok).toBe(true);
+    expect(state.expedition.run!.scoreOnly).toBeFalsy();
+    expect(state.expedition.run!.runId).toBe("run:2026-08-26:1");
   });
 
   it("revives the relic the player picked at a rest node and rejects anyone else", () => {

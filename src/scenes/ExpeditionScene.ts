@@ -282,7 +282,11 @@ export class ExpeditionScene extends Phaser.Scene {
     }
 
     this.add.text(54, 34, t("expedition.weekly.title"), textStyle({ role: "display", size: 48 })).setOrigin(0, 0);
-    this.add.text(54, 94, t("expedition.weekly.summary", { plays: status.playsToday, max: EXPEDITION_DAILY_POLICY.maxPlaysPerDay, best: status.bestScore.toLocaleString() }), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0);
+    // 점수 런 중에는 이 줄이 「보상이 없는 판」임을 말한다 — 전리품 판이 비어 있는 이유가 거기서 읽힌다.
+    const summary = status.run?.scoreOnly
+      ? t("expedition.scoreRun.summary")
+      : t("expedition.weekly.summary", { plays: status.playsToday, max: EXPEDITION_DAILY_POLICY.maxPlaysPerDay, best: status.bestScore.toLocaleString() });
+    this.add.text(54, 94, summary, textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0);
     drawHairline(this, BASE_WIDTH / 2, 224, BASE_WIDTH - 108, { color: COLOR.accent, alpha: 0.34 });
 
     if (status.active) this.buildActive(status.active.score, status.run?.selectedAugments ?? []);
@@ -689,19 +693,24 @@ export class ExpeditionScene extends Phaser.Scene {
     return marker;
   }
 
-  /** 임시 보상과 포기 결과를 먼저 보여 준 뒤 서버 원자 정산만 호출한다. */
+  /**
+   * 포기는 오늘의 보상 기회를 쓰지 않는다 — 대신 그 판에 모은 전리품도 받지 않는다(서버 `settleExpeditionRun`).
+   * 확인 창은 잃는 전리품을 액자로 보여 주고, 정산 뒤에는 받은 것이 있을 때만(이미 전멸한 판) 영수증을 연다.
+   */
   private confirmAbandon(): void {
     const run = expeditionManager.status().run; if (!run) return;
     const rewards = currencyRecordToRewardItems(run.pendingRewards);
     this.popups.confirm({
-      title: t("expedition.abandon.title"), message: t("expedition.abandon.body"),
+      title: t("expedition.abandon.title"), message: t(run.scoreOnly ? "expedition.abandon.bodyScore" : "expedition.abandon.body"),
       // 확인창의 공용 재화 액자는 소비·획득 모두 수량을 그대로 표시한다. 종류가 다른 재화는 합치지 않는다.
       costs: rewards.flatMap((item) => typeof item.icon === "string" ? [{ iconKey: item.icon, amount: item.amount }] : []),
       confirmLabel: t("expedition.abandon.confirm"), destructive: true,
     }, async () => {
       const settlement = await withBusy(this, gameApi.settleExpeditionRun({ runId: run.runId, settlementId: `${run.runId}:abandon`, outcome: "abandoned" }));
-      // 지갑 상한 적용 뒤 실제 들어온 양만 영수증에 표시하고 확인 후 로비로 돌아간다.
-      openRewardPopup(this, this.popups, { title: t("expedition.abandon.settle"), items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => startScene(this, "expedition") });
+      const items = currencyRecordToRewardItems(settlement.granted).filter((item) => item.amount > 0);
+      if (items.length === 0) { startScene(this, "expedition"); return; }
+      // 지갑 상한 적용 뒤 실제 들어온 양만 영수증에 표시하고 확인 후 기록 화면으로 돌아간다.
+      openRewardPopup(this, this.popups, { title: t("expedition.abandon.settle"), items, onConfirm: () => startScene(this, "expedition") });
     });
   }
 
@@ -737,14 +746,17 @@ export class ExpeditionScene extends Phaser.Scene {
     const sweepX = BASE_WIDTH / 2 + actionsTotal / 2 - actions.sweepWidth / 2;
     new Button(this, sortieX, actions.y, {
       width: actions.sortieWidth, height: actions.height, label: t("expedition.sortie"),
-      sub: t("expedition.weekly.plays", { plays: status.playsToday, max: EXPEDITION_DAILY_POLICY.maxPlaysPerDay }), fontSize: 40,
+      // 보상 기회가 남았으면 그 횟수를, 다 썼으면 이번 출발이 보상 없는 점수 런임을 적는다 — 출격은 늘 열려 있다.
+      sub: status.rewardChanceLeft
+        ? t("expedition.weekly.plays", { plays: status.playsToday, max: EXPEDITION_DAILY_POLICY.maxPlaysPerDay })
+        : t("expedition.scoreRun"), fontSize: 40,
       variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText,
       onClick: () => restartScene(this, { stage: "preparation" }),
-    }).setEnabled(status.canStartRun).setDepth(12);
+    }).setDepth(12);
     // 소탕은 원정 기회를 그대로 소비하므로 남은 횟수와 참조할 역대 최고점이 모두 있어야 누를 수 있다.
     this.sweepButton = new Button(this, sweepX, actions.y, { width: actions.sweepWidth, height: actions.height, label: t("expedition.sweep"), fontSize: 32, onClick: () => this.confirmSweep() }).setDepth(12);
     // 이번 주 최고 점수가 0이거나 75% 몫을 받을 만큼이 아니면 소탕은 꺼진다(서버도 같은 함수로 거절한다).
-    const sweepReady = status.canStartRun && expeditionSweepScoreReady(status.bestScore);
+    const sweepReady = status.rewardChanceLeft && expeditionSweepScoreReady(status.bestScore);
     this.sweepButton.setEnabled(sweepReady);
     setDebugExpeditionSweepEnabled(sweepReady);
   }

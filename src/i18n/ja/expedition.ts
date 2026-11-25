@@ -10,6 +10,8 @@ export const EXPEDITION_JA = {
   "expedition.weekly.rolled": "週が変わりました。入り直してください。",
   "expedition.weekly.loadFailed": "記録を読み込めませんでした",
   "expedition.weekly.plays": "本日 {plays} / {max}回",
+  "expedition.scoreRun": "スコア挑戦",
+  "expedition.scoreRun.summary": "スコア挑戦 · 報酬なし",
 
   "expedition.sortie": "出  撃",
   "expedition.sweep": "掃  討",
@@ -19,7 +21,8 @@ export const EXPEDITION_JA = {
 
   "expedition.abandon": "撤退する",
   "expedition.abandon.title": "遠征を撤退",
-  "expedition.abandon.body": "遠征を終了し、ここまでの報酬を受け取ります。\n今回の遠征スコアは週間記録に反映されません。\n所持上限により表示報酬が減る場合があります。",
+  "expedition.abandon.body": "遠征を終了します。\n今回集めた戦利品は受け取れず、本日の報酬機会はそのまま残ります。\n今回の遠征スコアは週間記録に反映されません。",
+  "expedition.abandon.bodyScore": "スコア挑戦を終了します。\n今回の遠征スコアは週間記録に反映されません。",
   "expedition.abandon.confirm": "撤退を確定",
   "expedition.abandon.settle": "遠征終了報酬",
 

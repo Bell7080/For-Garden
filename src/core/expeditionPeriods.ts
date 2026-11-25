@@ -4,7 +4,8 @@ import type { ExpeditionState } from "../state/session";
 /**
  * 원정의 두 주기 — **하루 한 판**과 **한 주의 최고 기록**.
  *
- * 원정은 하루에 한 번 떠날 수 있고(`EXPEDITION_DAILY_POLICY`), 점수는 합치지 않고 **그 주의 한 판
+ * 원정의 **보상**은 하루에 한 판이고(`EXPEDITION_DAILY_POLICY`) — 끝까지 가거나 전멸한 판만 그 기회를 쓰고
+ * 스스로 그만둔 판은 쓰지 않는다 — 기회를 다 쓴 뒤에는 보상 없는 점수 런을 몇 번이든 떠날 수 있다. 점수는 합치지 않고 **그 주의 한 판
  * 최고 점수**만 남긴다 — 두세 판의 합은 얼마나 잘 싸웠는지가 아니라 몇 번 들어왔는지를 말했다.
  * 한 주가 끝나면 그 주의 최고 기록이 **순위 보상 대기**(`pendingRankReward`)로 옮겨 가고, 서버가
  * 순위를 매겨 우편으로 보낸다.
@@ -23,6 +24,7 @@ export function normalizeExpeditionState(expedition: Partial<ExpeditionState> & 
     weekKey: expedition.weekKey ?? "",
     dayKey: expedition.dayKey ?? "",
     playsToday: Math.max(0, Math.floor(expedition.playsToday ?? 0)),
+    startsToday: Math.max(0, Math.floor(expedition.startsToday ?? 0)),
     bestScore: Math.max(0, Math.floor(expedition.bestScore ?? 0)),
     bestAchievedAt: expedition.bestAchievedAt ?? "",
     allTimeBestScore: Math.max(0, Math.floor(expedition.allTimeBestScore ?? expedition.bestScore ?? 0)),
@@ -44,7 +46,7 @@ export function rollExpeditionPeriods(expedition: ExpeditionState, now: Date): E
   const weekKey = expeditionWeekKey(now);
   const dayKey = expeditionDayKey(now);
   let next = expedition;
-  if (next.dayKey !== dayKey) next = { ...next, dayKey, playsToday: 0 };
+  if (next.dayKey !== dayKey) next = { ...next, dayKey, playsToday: 0, startsToday: 0 };
   if (next.weekKey !== weekKey) {
     const queue = expeditionRankRewardQueue(next);
     if (next.weekKey && next.bestScore > 0 && !queue.some((reward) => reward.weekKey === next.weekKey)) queue.push({ weekKey: next.weekKey, score: next.bestScore, achievedAt: next.bestAchievedAt });

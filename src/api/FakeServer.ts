@@ -825,7 +825,8 @@ export class FakeServer implements GameApi {
     const weekly = rollExpeditionPeriods(normalizeExpeditionState(this.state.expedition), now);
     const improved = runScore.runScore > weekly.bestScore;
     // 폰토스에게 넣은 피해는 점수뿐 아니라 손에 남는 인양 기록으로도 돌아온다. 정산에서 함께 지급한다.
-    const bossSalvage = run ? expeditionBossSalvage(runScore.bossDamageScore) : 0;
+    // 점수 런은 인양 기록도 남기지 않는다 — 점수만 주간·역대 기록에 든다.
+    const bossSalvage = run && !run.scoreOnly ? expeditionBossSalvage(runScore.bossDamageScore) : 0;
     // 공유 run을 건드리지 않는 완전한 후보 상태에 피해·런 점수·역대 최고점을 모두 먼저 확정한다.
     const nextState = structuredClone(this.state);
     if (nextState.expedition.run) {
@@ -1318,8 +1319,14 @@ export class FakeServer implements GameApi {
       && (!boss || !run.bossSubmissionId || !this.readReceipt("expeditionBoss", run.bossSubmissionId, JSON.stringify([run.runId, boss.id]))))) {
       throw new GameApiError("EXPEDITION_SCORE_REJECTED", "보스 결과가 확정되지 않은 원정입니다.");
     }
+    // **보상은 판이 아니라 오늘의 기회에 묶인다.** 끝까지 간 판과, 서버가 기록한 노드 결과로 전멸이 확인된
+    // 판(중도 패배)만 그 기회를 쓰고 모은 전리품을 받는다. 스스로 그만둔 판은 아무것도 주지 않고 기회도
+    // 세지 않는다 — 같은 날 다시 떠나면 그 판이 다시 보상 런이다. 점수 런은 처음부터 전리품이 비어 있고
+    // 기회도 세지 않는다.
+    const defeated = request.outcome === "abandoned" && run.relics.length > 0 && run.relics.every((relic) => !relic.alive);
+    const consumesChance = !run.scoreOnly && (request.outcome === "completed" || defeated);
     const wallet = { ...this.state.wallet }; const granted: Record<string, number> = {};
-    const pendingRewards = normalizeExpeditionPendingRewards(run.pendingRewards, run.bossDamageScore);
+    const pendingRewards = consumesChance ? normalizeExpeditionPendingRewards(run.pendingRewards, run.bossDamageScore) : {};
     // 임시 보상은 계정 지갑 상한까지의 정수만 이전하고 초과분은 지급하지 않는다.
     for (const [currency, raw] of Object.entries(pendingRewards)) {
       if (!(currency in WALLET_CAPS)) continue;
@@ -1328,16 +1335,15 @@ export class FakeServer implements GameApi {
     }
     // 완료 런은 활성 슬롯에서 즉시 제거한다. 멱등 재응답은 아래 정산 결과 캐시가 소유하므로
     // settled 표식을 활성 run에 남겨 다음 진입을 가로막지 않는다.
-    // 최고점은 한 판 점수로 갱신한다(합치지 않는다). 오늘의 한 판도 여기서 센다.
+    // 최고점은 한 판 점수로 갱신한다(합치지 않는다). 오늘의 보상 기회도 여기서 센다(`consumesChance`).
     // 정상 완료한 판과, 서버가 기록한 노드 결과로 전멸이 확인된 판(중도 패배)이 주간 기록에 든다 —
-    // 스스로 그만둔 판은 들지 않는다. 소탕 자격(allTimeBestScore)은 보스 제출만 연다.
+    // 보상 런이든 점수 런이든 같다. 스스로 그만둔 판은 들지 않는다. 소탕 자격(allTimeBestScore)은 보스 제출만 연다.
     const weekly = rollExpeditionPeriods(normalizeExpeditionState(this.state.expedition), this.now());
     const finalScore = calculateExpeditionRunScore(run).runScore;
-    const defeated = request.outcome === "abandoned" && run.relics.length > 0 && run.relics.every((relic) => !relic.alive);
     const improved = (request.outcome === "completed" || defeated) && finalScore > weekly.bestScore;
     const expedition = {
       ...weekly,
-      playsToday: weekly.playsToday + 1,
+      playsToday: weekly.playsToday + (consumesChance ? 1 : 0),
       bestScore: improved ? finalScore : weekly.bestScore,
       bestAchievedAt: improved ? this.now().toISOString() : weekly.bestAchievedAt,
       run: null,
@@ -1365,7 +1371,8 @@ export class FakeServer implements GameApi {
       || request.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0 || hp > 100)) throw new GameApiError("EXPEDITION_RUN_NOT_FOUND", "완료할 수 없는 원정 노드입니다.");
     // 전멸은 노드 종료만 기록하고 승리 재화는 생성하지 않는다.
     const normalizedPendingRewards = normalizeExpeditionPendingRewards(run.pendingRewards, run.bossDamageScore);
-    const rewards = request.relicHp.every((hp) => hp === 0) ? {} : calculateExpeditionNodeRewards({ nodeType: node.type, accumulated: normalizedPendingRewards, random: this.random });
+    // 점수 런은 전리품을 쌓지 않는다 — 보상은 하루 한 판의 보상 런만 갖는다.
+    const rewards = run.scoreOnly || request.relicHp.every((hp) => hp === 0) ? {} : calculateExpeditionNodeRewards({ nodeType: node.type, accumulated: normalizedPendingRewards, random: this.random });
     // 전리품 수량은 점수가 아니다. 서버가 검증한 층과 종료 HP로 일반 노드 점수를 별도 확정한다.
     const scoreBearingNode = node.type === "normal" || node.type === "elite" || node.type === "horde";
     const cleared = scoreBearingNode && request.relicHp.some((hp) => hp > 0);

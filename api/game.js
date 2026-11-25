@@ -5980,6 +5980,8 @@ var EXPEDITION_KO = {
   "expedition.weekly.rolled": "\uC8FC\uCC28\uAC00 \uBC14\uB00C\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uB4E4\uC5B4\uC640 \uC8FC\uC138\uC694.",
   "expedition.weekly.loadFailed": "\uAE30\uB85D\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4",
   "expedition.weekly.plays": "\uC624\uB298 {plays} / {max}\uD68C",
+  "expedition.scoreRun": "\uC810\uC218 \uB3C4\uC804",
+  "expedition.scoreRun.summary": "\uC810\uC218 \uB3C4\uC804 \xB7 \uBCF4\uC0C1 \uC5C6\uC74C",
   "expedition.sortie": "\uCD9C  \uACA9",
   "expedition.sweep": "\uC18C  \uD0D5",
   "expedition.ranking": "\uB7AD\uD0B9",
@@ -5987,7 +5989,8 @@ var EXPEDITION_KO = {
   "expedition.syncing": "\uAE30\uB85D \uB3D9\uAE30\uD654 \uC911",
   "expedition.abandon": "\uD3EC\uAE30\uD558\uAE30",
   "expedition.abandon.title": "\uC6D0\uC815 \uD3EC\uAE30",
-  "expedition.abandon.body": "\uC6D0\uC815\uC744 \uC885\uB8CC\uD558\uACE0 \uC9C0\uAE08\uAE4C\uC9C0 \uBAA8\uC740 \uBCF4\uC0C1\uC744 \uBC1B\uC2B5\uB2C8\uB2E4.\n\uC774\uBC88 \uC6D0\uC815 \uC810\uC218\uB294 \uC8FC\uAC04 \uAE30\uB85D\uC5D0 \uBC18\uC601\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.\n\uD45C\uC2DC\uB41C \uBCF4\uC0C1\uC740 \uBCF4\uC720 \uD55C\uB3C4\uC5D0 \uB530\uB77C \uC904\uC5B4\uB4E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "expedition.abandon.body": "\uC6D0\uC815\uC744 \uC885\uB8CC\uD569\uB2C8\uB2E4.\n\uC774\uBC88 \uD310\uC5D0 \uBAA8\uC740 \uC804\uB9AC\uD488\uC740 \uBC1B\uC9C0 \uC54A\uACE0, \uC624\uB298\uC758 \uBCF4\uC0C1 \uAE30\uD68C\uB294 \uADF8\uB300\uB85C \uB0A8\uC2B5\uB2C8\uB2E4.\n\uC774\uBC88 \uC6D0\uC815 \uC810\uC218\uB294 \uC8FC\uAC04 \uAE30\uB85D\uC5D0 \uBC18\uC601\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+  "expedition.abandon.bodyScore": "\uC810\uC218 \uB3C4\uC804\uC744 \uC885\uB8CC\uD569\uB2C8\uB2E4.\n\uC774\uBC88 \uC6D0\uC815 \uC810\uC218\uB294 \uC8FC\uAC04 \uAE30\uB85D\uC5D0 \uBC18\uC601\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
   "expedition.abandon.confirm": "\uD3EC\uAE30 \uD655\uC815",
   "expedition.abandon.settle": "\uC6D0\uC815 \uC885\uB8CC \uBCF4\uC0C1",
   "expedition.loot": "\uD68D\uB4DD \uC804\uB9AC\uD488",
@@ -13352,7 +13355,7 @@ function tickShareShield(fighter, dt, state, events) {
   fighter.bt.shareShieldIn = -1;
   const plan = openedBreakthrough(fighter, "ultimate", (effects) => effects.ultimate);
   if (plan?.kind !== "shareShield" || !isFighterAlive(fighter) || fighter.shield.amount <= 0) return;
-  const allies = state.fighters.filter((other) => other.side === fighter.side && other.id !== fighter.id && isFighterAlive(other) && other.summonOwnerId === void 0);
+  const allies = state.fighters.filter((other) => other.side === fighter.side && other.id !== fighter.id && isFighterAlive(other) && other.summonOwnerId === null);
   if (allies.length === 0) return;
   const each = fighter.shield.amount * plan.sharePercent / 100 / allies.length;
   for (const ally of allies) grantShield(state, ally, fighter.id, each, events);
@@ -30665,6 +30668,7 @@ function normalizeExpeditionState(expedition) {
     weekKey: expedition.weekKey ?? "",
     dayKey: expedition.dayKey ?? "",
     playsToday: Math.max(0, Math.floor(expedition.playsToday ?? 0)),
+    startsToday: Math.max(0, Math.floor(expedition.startsToday ?? 0)),
     bestScore: Math.max(0, Math.floor(expedition.bestScore ?? 0)),
     bestAchievedAt: expedition.bestAchievedAt ?? "",
     allTimeBestScore: Math.max(0, Math.floor(expedition.allTimeBestScore ?? expedition.bestScore ?? 0)),
@@ -30679,7 +30683,7 @@ function rollExpeditionPeriods(expedition, now) {
   const weekKey = expeditionWeekKey(now);
   const dayKey2 = expeditionDayKey(now);
   let next = expedition;
-  if (next.dayKey !== dayKey2) next = { ...next, dayKey: dayKey2, playsToday: 0 };
+  if (next.dayKey !== dayKey2) next = { ...next, dayKey: dayKey2, playsToday: 0, startsToday: 0 };
   if (next.weekKey !== weekKey) {
     const queue = expeditionRankRewardQueue(next);
     if (next.weekKey && next.bestScore > 0 && !queue.some((reward) => reward.weekKey === next.weekKey)) queue.push({ weekKey: next.weekKey, score: next.bestScore, achievedAt: next.bestAchievedAt });
@@ -39213,7 +39217,7 @@ function normalizeExpeditionRun(value, ownedIds) {
   const nodeIds = Array.isArray(run2.nodes) ? run2.nodes.map(({ id }) => id) : [];
   const rewardsValid = run2.pendingRewards && Object.entries(run2.pendingRewards).every(([id, amount]) => EXPEDITION_REWARD_IDS.includes(id) && Number.isFinite(amount) && amount >= 0);
   const relicIds = Array.isArray(run2.relics) ? run2.relics.map(({ relicId }) => relicId) : [];
-  const valid = typeof run2.runId === "string" && run2.runId.length > 0 && typeof run2.weekKey === "string" && typeof run2.mapSeed === "string" && run2.mapSeed.length > 0 && Array.isArray(run2.nodes) && validateExpeditionMap({ seed: run2.mapSeed, nodes: run2.nodes }).length === 0 && (run2.currentNodeId === null || nodeIds.includes(run2.currentNodeId)) && Array.isArray(run2.visitedNodeIds) && run2.visitedNodeIds.every((id) => nodeIds.includes(id)) && new Set(run2.visitedNodeIds).size === run2.visitedNodeIds.length && relicIds.length === 3 && new Set(relicIds).size === 3 && relicIds.every((id) => ownedIds.includes(id)) && run2.relics.every(({ currentHp, alive }) => Number.isFinite(currentHp) && currentHp >= 0 && typeof alive === "boolean" && alive === currentHp > 0) && Array.isArray(run2.selectedAugmentIds) && run2.selectedAugmentIds.every((id) => EXPEDITION_AUGMENT_IDS.includes(id)) && Array.isArray(run2.selectedAugments) && run2.selectedAugments.every(({ augmentId, targetRelicId }) => EXPEDITION_AUGMENT_IDS.includes(augmentId) && (targetRelicId === void 0 || relicIds.includes(targetRelicId))) && (run2.pendingAugmentReward === null || typeof run2.pendingAugmentReward.seed === "string" && nodeIds.includes(run2.pendingAugmentReward.nodeId) && Number.isInteger(run2.pendingAugmentReward.round) && run2.pendingAugmentReward.round > 0 && Number.isInteger(run2.pendingAugmentReward.totalRounds) && run2.pendingAugmentReward.totalRounds >= run2.pendingAugmentReward.round && Array.isArray(run2.pendingAugmentReward.offers)) && rewardsValid && Number.isFinite(run2.bossDamage) && run2.bossDamage >= 0 && Number.isFinite(run2.normalNodeScoreTotal) && run2.normalNodeScoreTotal >= 0 && Number.isFinite(run2.bossDamageScore) && run2.bossDamageScore >= 0 && Number.isFinite(run2.runScore) && run2.runScore >= 0 && Number.isFinite(run2.bestScore) && run2.bestScore >= 0 && typeof run2.settled === "boolean" && (run2.settlementId === null || typeof run2.settlementId === "string") && (run2.bossReplayVersion === void 0 || run2.bossReplayVersion === 2) && (run2.bossSubmissionId === null || typeof run2.bossSubmissionId === "string") && (run2.bossSettlementId === null || typeof run2.bossSettlementId === "string");
+  const valid = typeof run2.runId === "string" && run2.runId.length > 0 && typeof run2.weekKey === "string" && typeof run2.mapSeed === "string" && run2.mapSeed.length > 0 && Array.isArray(run2.nodes) && validateExpeditionMap({ seed: run2.mapSeed, nodes: run2.nodes }).length === 0 && (run2.currentNodeId === null || nodeIds.includes(run2.currentNodeId)) && Array.isArray(run2.visitedNodeIds) && run2.visitedNodeIds.every((id) => nodeIds.includes(id)) && new Set(run2.visitedNodeIds).size === run2.visitedNodeIds.length && relicIds.length === 3 && new Set(relicIds).size === 3 && relicIds.every((id) => ownedIds.includes(id)) && run2.relics.every(({ currentHp, alive }) => Number.isFinite(currentHp) && currentHp >= 0 && typeof alive === "boolean" && alive === currentHp > 0) && Array.isArray(run2.selectedAugmentIds) && run2.selectedAugmentIds.every((id) => EXPEDITION_AUGMENT_IDS.includes(id)) && Array.isArray(run2.selectedAugments) && run2.selectedAugments.every(({ augmentId, targetRelicId }) => EXPEDITION_AUGMENT_IDS.includes(augmentId) && (targetRelicId === void 0 || relicIds.includes(targetRelicId))) && (run2.pendingAugmentReward === null || typeof run2.pendingAugmentReward.seed === "string" && nodeIds.includes(run2.pendingAugmentReward.nodeId) && Number.isInteger(run2.pendingAugmentReward.round) && run2.pendingAugmentReward.round > 0 && Number.isInteger(run2.pendingAugmentReward.totalRounds) && run2.pendingAugmentReward.totalRounds >= run2.pendingAugmentReward.round && Array.isArray(run2.pendingAugmentReward.offers)) && rewardsValid && Number.isFinite(run2.bossDamage) && run2.bossDamage >= 0 && Number.isFinite(run2.normalNodeScoreTotal) && run2.normalNodeScoreTotal >= 0 && Number.isFinite(run2.bossDamageScore) && run2.bossDamageScore >= 0 && Number.isFinite(run2.runScore) && run2.runScore >= 0 && Number.isFinite(run2.bestScore) && run2.bestScore >= 0 && typeof run2.settled === "boolean" && (run2.settlementId === null || typeof run2.settlementId === "string") && (run2.bossReplayVersion === void 0 || run2.bossReplayVersion === 2) && (run2.scoreOnly === void 0 || typeof run2.scoreOnly === "boolean") && (run2.bossSubmissionId === null || typeof run2.bossSubmissionId === "string") && (run2.bossSettlementId === null || typeof run2.bossSettlementId === "string");
   return valid ? cloneExpeditionRun(run2) : null;
 }
 var INTERACTION_SLOT_LIMIT = 32;
@@ -39576,7 +39580,7 @@ var SaveManager = class {
     if (!data.productPurchases || typeof data.productPurchases !== "object" || Object.values(data.productPurchases).some((value) => typeof value.periodKey !== "string" || !Number.isInteger(value.count) || value.count < 0)) fail3("\uC0C1\uD488 \uAD6C\uB9E4 \uC81C\uD55C \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     const adLimits = { ...Object.fromEntries(AD_REWARD_SLOTS.map(({ id, dailyLimitUtc }) => [id, dailyLimitUtc])), [ROULETTE.counter]: ROULETTE.limit };
     if (!data.dailyAdRewards || typeof data.dailyAdRewards.date !== "string" || !data.dailyAdRewards.claimsBySlot || Object.entries(data.dailyAdRewards.claimsBySlot).some(([id, count3]) => !(id in adLimits) || !Number.isInteger(count3) || count3 < 0 || count3 > adLimits[id]) || !Array.isArray(data.dailyAdRewards.requestIds) || data.dailyAdRewards.requestIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.dailyAdRewards.requestIds).size !== data.dailyAdRewards.requestIds.length) fail3("\uC77C\uC77C \uAD11\uACE0 \uC218\uB839 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.expedition || typeof data.expedition.weekKey !== "string" || typeof data.expedition.dayKey !== "string" || !Number.isInteger(data.expedition.playsToday) || data.expedition.playsToday < 0 || !Array.isArray(data.expedition.claimedRewardStageIds) || typeof data.expedition.bestAchievedAt !== "string" || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || !Array.isArray(data.expedition.lastParty) || data.expedition.lastParty.length > 3 || new Set(data.expedition.lastParty).size !== data.expedition.lastParty.length || data.expedition.lastParty.some((id) => !data.ownedRelicIds.includes(id)) || data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null) fail3("\uC6D0\uC815 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.expedition || typeof data.expedition.weekKey !== "string" || typeof data.expedition.dayKey !== "string" || !Number.isInteger(data.expedition.playsToday) || data.expedition.playsToday < 0 || data.expedition.startsToday !== void 0 && (!Number.isInteger(data.expedition.startsToday) || data.expedition.startsToday < 0) || !Array.isArray(data.expedition.claimedRewardStageIds) || typeof data.expedition.bestAchievedAt !== "string" || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || !Array.isArray(data.expedition.lastParty) || data.expedition.lastParty.length > 3 || new Set(data.expedition.lastParty).size !== data.expedition.lastParty.length || data.expedition.lastParty.some((id) => !data.ownedRelicIds.includes(id)) || data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null) fail3("\uC6D0\uC815 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.raid || !Array.isArray(data.raid.instances) || !data.raid.instances.every(isRaidInstance) || new Set(data.raid.instances.map(({ id }) => id)).size !== data.raid.instances.length) fail3("\uB808\uC774\uB4DC \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.cakeOperation || !Number.isInteger(data.cakeOperation.clearedIndex) || data.cakeOperation.clearedIndex < -1 || data.cakeOperation.clearedIndex >= CAKE_OPERATION_TIERS.length) fail3("\uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     this.validateRelicStory(data);
@@ -43312,7 +43316,7 @@ function stageFirstClearRewards(stage) {
 
 // src/data/contentCosts.ts
 init_define_import_meta_env();
-var CONTENT_STAMINA_COSTS = { normalStage: 10, ancientFloor: 10, dailyGrowth: 10, normalExpeditionStart: 12 };
+var CONTENT_STAMINA_COSTS = { normalStage: 10, ancientFloor: 0, dailyGrowth: 10, normalExpeditionStart: 12 };
 function battleStageStaminaCost(stage) {
   return stage.ancientFloor !== void 0 ? CONTENT_STAMINA_COSTS.ancientFloor : CONTENT_STAMINA_COSTS.normalStage;
 }
@@ -43562,22 +43566,32 @@ var ExpeditionManager = class {
     const run2 = this.state.expedition.run;
     const copy = run2 ? structuredClone(run2) : null;
     const { weekKey, playsToday, bestScore, allTimeBestScore } = this.state.expedition;
-    return { weekKey, playsToday, bestScore, allTimeBestScore, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId), score: copy.runScore } : null, canStartRun: playsToday < EXPEDITION_DAILY_POLICY.maxPlaysPerDay };
+    return { weekKey, playsToday, bestScore, allTimeBestScore, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId), score: copy.runScore } : null, rewardChanceLeft: playsToday < EXPEDITION_DAILY_POLICY.maxPlaysPerDay };
   }
   /** 정확히 세 보유 렐릭을 검증하고 서버 주간 키가 포함된 결정적 맵을 생성한다. */
   start(relicIds) {
     this.normalizeWeek();
     if (this.state.expedition.run) return { ok: false, reason: "alreadyActive" };
-    if (this.state.expedition.playsToday >= EXPEDITION_DAILY_POLICY.maxPlaysPerDay) return { ok: false, reason: "dailyLimitReached" };
     if (relicIds.length !== 3) return { ok: false, reason: "exactlyThree" };
     if (new Set(relicIds).size !== 3) return { ok: false, reason: "duplicate" };
     if (relicIds.some((id) => !this.state.owned.has(id))) return { ok: false, reason: "notOwned" };
     const weekKey = expeditionWeekKey2(this.serverNow());
     const mapSeed = `${expeditionDayKey(this.serverNow())}:1`;
     const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
-    const run2 = { runId: `run:${mapSeed}`, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true, snapshot: this.capture(relicId) })), selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, normalNodeScoreTotal: 0, bossDamageScore: 0, runScore: 0, bestScore: 0, settled: false, settlementId: null, bossSubmissionId: null, bossSettlementId: null };
-    this.commit({ ...this.state.expedition, lastParty: [...relicIds], run: run2 });
+    const scoreOnly = this.state.expedition.playsToday >= EXPEDITION_DAILY_POLICY.maxPlaysPerDay;
+    const { runId, startsToday } = this.nextRunId(mapSeed);
+    const run2 = { runId, ...scoreOnly ? { scoreOnly: true } : {}, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true, snapshot: this.capture(relicId) })), selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, normalNodeScoreTotal: 0, bossDamageScore: 0, runScore: 0, bestScore: 0, settled: false, settlementId: null, bossSubmissionId: null, bossSettlementId: null };
+    this.commit({ ...this.state.expedition, startsToday, lastParty: [...relicIds], run: run2 });
     return { ok: true, run: structuredClone(run2) };
+  }
+  /**
+   * 오늘 몇 번째 출발인지 세어 런 ID를 짓는다. 첫 출발은 예전과 같은 `run:<지도 시드>`이고, 같은 날 다시
+   * 떠나면 차례가 붙는다 — 포기 정산(`<런 ID>:abandon`)·보스 제출 영수증이 런 ID에 묶여 있어 같은 ID를 다시
+   * 쓰면 두 번째 판의 정산이 첫 판의 영수증을 그대로 돌려받는다.
+   */
+  nextRunId(mapSeed) {
+    const startsToday = Math.max(0, this.state.expedition.startsToday ?? 0) + 1;
+    return { runId: startsToday <= 1 ? `run:${mapSeed}` : `run:${mapSeed}#${startsToday}`, startsToday };
   }
   /**
    * 임시 개발 도구: 정식 노드 완료·점수 제출을 흉내 내지 않고 20층 보스 직전의 저장 스냅샷만 원자적으로 만든다.
@@ -43591,8 +43605,10 @@ var ExpeditionManager = class {
     if (new Set(relicIds).size !== 3) return { ok: false, reason: "duplicate" };
     if (relicIds.some((id) => !this.state.owned.has(id))) return { ok: false, reason: "notOwned" };
     const weekKey = expeditionWeekKey2(this.serverNow());
-    const mapSeed = `${expeditionDayKey(this.serverNow())}:${this.state.expedition.playsToday + 1}:dev-boss`;
+    const mapSeed = `${expeditionDayKey(this.serverNow())}:${(this.state.expedition.startsToday ?? 0) + 1}:dev-boss`;
     const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
+    const scoreOnly = this.state.expedition.playsToday >= EXPEDITION_DAILY_POLICY.maxPlaysPerDay;
+    const startsToday = (this.state.expedition.startsToday ?? 0) + 1;
     const boss = map.nodes.find(({ type, floor }) => type === "boss" && floor === 20);
     const route = [boss];
     while (route[0].floor > 1) {
@@ -43604,6 +43620,7 @@ var ExpeditionManager = class {
     const runId = `run:${mapSeed}`;
     const run2 = {
       runId,
+      ...scoreOnly ? { scoreOnly: true } : {},
       weekKey,
       mapSeed,
       nodes: map.nodes,
@@ -43625,7 +43642,7 @@ var ExpeditionManager = class {
       bossSubmissionId: `${runId}:${boss.id}:boss-score`,
       bossSettlementId: `${runId}:boss-completed`
     };
-    this.commit({ ...this.state.expedition, lastParty: [...relicIds], run: run2 });
+    this.commit({ ...this.state.expedition, startsToday, lastParty: [...relicIds], run: run2 });
     return { ok: true, run: structuredClone(run2) };
   }
   /** 도달한 노드의 결과만 반영하며 씬이 HP·보상·점수를 직접 쓸 필요가 없게 한다. */
@@ -47364,7 +47381,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.547.1",
+  version: "0.549.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -48765,7 +48782,7 @@ var FakeServer = class {
     }
     const weekly = rollExpeditionPeriods(normalizeExpeditionState(this.state.expedition), now);
     const improved = runScore.runScore > weekly.bestScore;
-    const bossSalvage = run2 ? expeditionBossSalvage(runScore.bossDamageScore) : 0;
+    const bossSalvage = run2 && !run2.scoreOnly ? expeditionBossSalvage(runScore.bossDamageScore) : 0;
     const nextState = structuredClone(this.state);
     if (nextState.expedition.run) {
       nextState.expedition.run.bossSubmissionId = request.requestId;
@@ -49257,9 +49274,11 @@ var FakeServer = class {
     if (request.outcome !== "completed" && request.outcome !== "abandoned" || request.outcome === "completed" && (!boss || !run2.bossSubmissionId || !this.readReceipt("expeditionBoss", run2.bossSubmissionId, JSON.stringify([run2.runId, boss.id])))) {
       throw new GameApiError("EXPEDITION_SCORE_REJECTED", "\uBCF4\uC2A4 \uACB0\uACFC\uAC00 \uD655\uC815\uB418\uC9C0 \uC54A\uC740 \uC6D0\uC815\uC785\uB2C8\uB2E4.");
     }
+    const defeated = request.outcome === "abandoned" && run2.relics.length > 0 && run2.relics.every((relic) => !relic.alive);
+    const consumesChance = !run2.scoreOnly && (request.outcome === "completed" || defeated);
     const wallet = { ...this.state.wallet };
     const granted = {};
-    const pendingRewards = normalizeExpeditionPendingRewards(run2.pendingRewards, run2.bossDamageScore);
+    const pendingRewards = consumesChance ? normalizeExpeditionPendingRewards(run2.pendingRewards, run2.bossDamageScore) : {};
     for (const [currency3, raw] of Object.entries(pendingRewards)) {
       if (!(currency3 in WALLET_CAPS)) continue;
       const key = currency3;
@@ -49270,11 +49289,10 @@ var FakeServer = class {
     }
     const weekly = rollExpeditionPeriods(normalizeExpeditionState(this.state.expedition), this.now());
     const finalScore = calculateExpeditionRunScore(run2).runScore;
-    const defeated = request.outcome === "abandoned" && run2.relics.length > 0 && run2.relics.every((relic) => !relic.alive);
     const improved = (request.outcome === "completed" || defeated) && finalScore > weekly.bestScore;
     const expedition = {
       ...weekly,
-      playsToday: weekly.playsToday + 1,
+      playsToday: weekly.playsToday + (consumesChance ? 1 : 0),
       bestScore: improved ? finalScore : weekly.bestScore,
       bestAchievedAt: improved ? this.now().toISOString() : weekly.bestAchievedAt,
       run: null
@@ -49297,7 +49315,7 @@ var FakeServer = class {
     const predecessor = run2?.currentNodeId ? run2.nodes.find(({ id }) => id === run2.currentNodeId) : null;
     if (!request.requestId || !run2 || run2.runId !== request.runId || !node || run2.settled || run2.visitedNodeIds.includes(node.id) || !predecessor && node.floor !== 1 || predecessor && !predecessor.successorIds.includes(node.id) || request.relicHp.length !== 3 || request.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0 || hp > 100)) throw new GameApiError("EXPEDITION_RUN_NOT_FOUND", "\uC644\uB8CC\uD560 \uC218 \uC5C6\uB294 \uC6D0\uC815 \uB178\uB4DC\uC785\uB2C8\uB2E4.");
     const normalizedPendingRewards = normalizeExpeditionPendingRewards(run2.pendingRewards, run2.bossDamageScore);
-    const rewards = request.relicHp.every((hp) => hp === 0) ? {} : calculateExpeditionNodeRewards({ nodeType: node.type, accumulated: normalizedPendingRewards, random: this.random });
+    const rewards = run2.scoreOnly || request.relicHp.every((hp) => hp === 0) ? {} : calculateExpeditionNodeRewards({ nodeType: node.type, accumulated: normalizedPendingRewards, random: this.random });
     const scoreBearingNode = node.type === "normal" || node.type === "elite" || node.type === "horde";
     const cleared = scoreBearingNode && request.relicHp.some((hp) => hp > 0);
     const remainingHpPercent = request.relicHp.reduce((sum, hp) => sum + hp, 0) / request.relicHp.length;

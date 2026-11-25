@@ -10,6 +10,8 @@ export const EXPEDITION_KO = {
   "expedition.weekly.rolled": "주차가 바뀌었습니다. 다시 들어와 주세요.",
   "expedition.weekly.loadFailed": "기록을 불러오지 못했습니다",
   "expedition.weekly.plays": "오늘 {plays} / {max}회",
+  "expedition.scoreRun": "점수 도전",
+  "expedition.scoreRun.summary": "점수 도전 · 보상 없음",
 
   "expedition.sortie": "출  격",
   "expedition.sweep": "소  탕",
@@ -19,7 +21,8 @@ export const EXPEDITION_KO = {
 
   "expedition.abandon": "포기하기",
   "expedition.abandon.title": "원정 포기",
-  "expedition.abandon.body": "원정을 종료하고 지금까지 모은 보상을 받습니다.\n이번 원정 점수는 주간 기록에 반영되지 않습니다.\n표시된 보상은 보유 한도에 따라 줄어들 수 있습니다.",
+  "expedition.abandon.body": "원정을 종료합니다.\n이번 판에 모은 전리품은 받지 않고, 오늘의 보상 기회는 그대로 남습니다.\n이번 원정 점수는 주간 기록에 반영되지 않습니다.",
+  "expedition.abandon.bodyScore": "점수 도전을 종료합니다.\n이번 원정 점수는 주간 기록에 반영되지 않습니다.",
   "expedition.abandon.confirm": "포기 확정",
   "expedition.abandon.settle": "원정 종료 보상",
 

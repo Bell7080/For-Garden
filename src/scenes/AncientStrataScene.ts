@@ -129,7 +129,8 @@ export class AncientStrataScene extends Phaser.Scene {
     this.add.text(BASE_WIDTH / 2, 190, t("ancient.title"), textStyle({ role: "display", size: 52 })).setOrigin(0.5).setDepth(CHROME_DEPTH);
     this.range = this.add.text(BASE_WIDTH / 2, 262, "", textStyle({ role: "body", size: 30, color: COLOR.inkDim })).setOrigin(0.5).setDepth(CHROME_DEPTH);
     this.selectedFloor=undefined;
-    this.startButton=new Button(this,BASE_WIDTH/2,BASE_HEIGHT-190,{width:390,height:94,label:t("stageMap.sortie"),fontSize:32,onClick:()=>{
+    // 출전 버튼은 스토리 지도의 출전과 같은 한 벌(크기·자리·출격 강조색)이다 — 스테미나를 쓰지 않으므로 비용 표기만 없다.
+    this.startButton=new Button(this,BASE_WIDTH/2,BASE_HEIGHT-180,{width:380,height:108,variant:"primary",accentColor:COLOR.sortie,accentTextColor:COLOR.sortieText,label:t("stageMap.sortie"),fontSize:36,onClick:()=>{
       if(this.selectedFloor===undefined||!isStageUnlocked(ancientStageId(this.selectedFloor)))return;
       session.selectedStageId=ancientStageId(this.selectedFloor);
       startScene(this,"party",{content:"stage"});

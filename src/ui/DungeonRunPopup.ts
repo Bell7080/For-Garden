@@ -7,6 +7,7 @@ import { findItem } from "../data/items";
 import { sortByRewardPriority } from "../data/rewardPriority";
 import { managerEvents } from "../managers/ManagerEvents";
 import { session } from "../state/session";
+import { AD_BUTTON_STYLE } from "./adTone";
 import { Button } from "./Button";
 import { CURRENCY_ICON_BY_WALLET, type CurrencyIconKey } from "./currencyIcons";
 import { DUNGEON_RUN_POPUP, DUNGEON_RUN_TONE, dungeonRunInnerWidth, dungeonRunPopupHeight, dungeonRunRechargeCells, dungeonRunSliderSpan, runSliderRatio, runSliderValue, type DungeonRunMode } from "./dungeonRunPopupLayout";
@@ -224,7 +225,6 @@ export function openDungeonRunPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       const left = -inner / 2 + 30;
       if (ticket) parent.add(addItemDefinitionIcon(scene, ticket.icon, left + L.branch.icon / 2, y, L.branch.icon));
       parent.add(squeezeTextToWidth(scene.add.text(left + L.branch.icon + 14, y, t("dungeon.run.ticketHeld", { name: ticket?.name ?? "", count: formatCurrency(tickets.held) }), textStyle({ role: "emphasis", size: 24, color: COLOR.ink })).setOrigin(0, 0.5), inner - L.branch.adWidth - L.branch.adGap - L.branch.icon * 2 - 100));
-      const need = settleSweep(sweep.cost, count, false).ticketCost;
       const adX = inner / 2 - 20 - L.branch.adWidth / 2;
       // 광고 그림 위에 남은 횟수(`3/3`)를 겹치고, 그 옆 버튼이 얼마를 받는지 말한다.
       const adIconX = adX - L.branch.adWidth / 2 - L.branch.adGap - L.branch.icon / 2;
@@ -232,7 +232,8 @@ export function openDungeonRunPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       parent.add(scene.add.text(adIconX + L.branch.icon / 2 + 6, y + L.branch.icon / 2 + 2, t("dungeon.sweep.adUsage", { left: tickets.adRemaining, limit: tickets.adLimit }), textStyle({ role: "display", size: 20, color: tickets.adRemaining > 0 ? COLOR.ink : COLOR.inkDim })).setStroke("#000000", 5).setOrigin(1, 1));
       const ad = new Button(scene, adX, y, {
         width: L.branch.adWidth, height: L.branch.adHeight, label: t("dungeon.sweep.ad", { count: tickets.adQuantity }), fontSize: 22,
-        ...(tickets.held < need ? { variant: "primary" as const, accentColor: tone.accent, accentTextColor: tone.accentText } : {}),
+        // 광고 버튼은 어디서나 같은 와인빛 한 벌이다 — 가진 소탕권 수로 양식을 갈면 광고를 본 뒤 버튼이 딴 것으로 바뀐다.
+        ...AD_BUTTON_STYLE,
         onClick: () => {
           if (adBusy) return;
           adBusy = true;

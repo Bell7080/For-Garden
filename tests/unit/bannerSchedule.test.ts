@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BANNERS, PITY_GROUP } from "../../src/data/banners";
 import { activeLobbyEvents } from "../../src/ui/lobbyEventModel";
 import { currentPickupBannerId, currentPickupWindow } from "../../src/core/pickupRotation";
-import { bannerActive } from "../../src/core/gacha";
+import { bannerActive, bannerEndsAt } from "../../src/core/gacha";
 
 describe("배너 기간과 천장", () => {
   it("기간이 없으면 늘 열려 있고, 시작 전·종료 뒤에는 닫힌다", () => {
@@ -46,5 +46,19 @@ describe("배너 기간과 천장", () => {
     expect(ids).toContain("moon-picnic");
     expect(ids).not.toContain("wolf-cafe");
     expect(activeLobbyEvents(now, undefined, false).find(({ id }) => id === "moon-picnic")?.endsAt).toBe("2026-12-04T00:00:00.000Z");
+  });
+
+  it("연구소 픽업 시계는 로비 카드와 같은 끝 시각을 읽는다", () => {
+    const banner = (id: string) => BANNERS.find((b) => b.id === id)!;
+    const now = Date.parse("2026-11-25T15:00:00Z");
+    // 지금 차례(플레샤)는 차례가 끝나는 2026-12-04 09:00(KST)에 닫힌다 — 로비 카드의 기한과 같다.
+    expect(bannerEndsAt(banner("moonlit"), now, [])).toBe("2026-12-04T00:00:00.000Z");
+    expect(bannerEndsAt(banner("moonlit"), now, [])).toBe(activeLobbyEvents(now, undefined, false).find(({ id }) => id === "moon-picnic")?.endsAt);
+    // 차례가 아닌 픽업(QA에서만 선다)과 상시 배너는 기한이 없다.
+    expect(bannerEndsAt(banner("amber"), now, [])).toBeUndefined();
+    expect(bannerEndsAt(banner("fossil"), now, [])).toBeUndefined();
+    // 운영 일정 줄이 덮으면 그 줄의 끝이 이긴다.
+    const schedule = [{ kind: "banner" as const, id: "moonlit", startsAt: null, endsAt: "2026-11-30T00:00:00Z", enabled: true }];
+    expect(bannerEndsAt(banner("moonlit"), now, schedule)).toBe("2026-11-30T00:00:00Z");
   });
 });

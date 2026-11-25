@@ -5,8 +5,9 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugResearchBoard, setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type PullResultDto } from "../api/contracts";
-import { bannerAcceptsCount, bannerActive, bannerGuaranteePending, bannerPullsRemaining, canPull, pullCost, pullPayment, type Banner, type GachaPityState, type ResearchGrade } from "../core/gacha";
+import { bannerAcceptsCount, bannerActive, bannerEndsAt, bannerGuaranteePending, bannerPullsRemaining, canPull, pullCost, pullPayment, type Banner, type GachaPityState, type ResearchGrade } from "../core/gacha";
 import { serverNow } from "../api/serverClock";
+import { formatDayCountdown } from "../core/formatCountdown";
 import { ResearchPresentationController, highestRarity, researchSlotViews, showcaseRelicIds } from "../core/researchPresentation";
 import { consumeSceneEntry } from "./sceneEntry";
 import { LIMITED_RELIC_IDS, researchBanners } from "../data/banners";
@@ -431,16 +432,39 @@ export class LabScene extends Phaser.Scene {
     const relicId = Object.values(this.banner.pickupRelicIds).flat()[0];
     if (!relicId) return;
     const spot = LAB_CHROME.pickupInfo;
-    const button = new Button(this, spot.x, spot.y, {
+    const panel = this.add.container(spot.x, spot.y).setDepth(LAB_CHROME.depth.panels);
+    const button = new Button(this, 0, 0, {
       width: spot.width, height: spot.height, label: t("lab.pickupInfo"), fontSize: spot.fontSize, icon: "magnifier",
       onClick: () => this.inspectRelic(relicId),
     });
-    button.setDepth(LAB_CHROME.depth.panels);
-    this.pickupPanels = button;
+    panel.add(button);
+    this.addPickupClock(panel);
+    this.pickupPanels = panel;
     if (motionPolicy(session.settings).nonEssentialDistanceFactor === 0) return;
-    button.x = spot.x + spot.enterDistance;
-    button.setAlpha(0);
-    this.tweens.add({ targets: button, x: spot.x, alpha: 1, duration: 360, ease: "Cubic.Out" });
+    panel.x = spot.x + spot.enterDistance;
+    panel.setAlpha(0);
+    this.tweens.add({ targets: panel, x: spot.x, alpha: 1, duration: 360, ease: "Cubic.Out" });
+  }
+
+  /**
+   * 픽업의 남은 기간 — 로비 이벤트 카드와 같은 굵은 붉은 `D00:HH:MM:SS`(`formatDayCountdown`)가 정보 버튼 바로 위에
+   * 버튼 오른쪽 끝을 맞춰 선다. 끝 시각은 카드와 같은 규칙(`bannerEndsAt` — 운영 일정 → 픽업 교대 → 정의)에서 읽고,
+   * 기한이 없으면(출시 전 유예) 세우지 않는다. 초마다 갈아 끼우고 판과 함께 걷힌다.
+   */
+  private addPickupClock(panel: Phaser.GameObjects.Container): void {
+    const endsAt = bannerEndsAt(this.banner, serverNow().getTime());
+    if (endsAt === undefined) return;
+    const end = Date.parse(endsAt);
+    const spec = LAB_CHROME.pickupClock;
+    const clock = this.add.text(LAB_CHROME.pickupInfo.width / 2, spec.dy, "", textStyle({ role: "display", size: spec.size, color: COLOR.dangerText }))
+      .setOrigin(1, 0.5)
+      .setStroke("#04060a", 7)
+      .setShadow(2, 4, "#000000", 0, true, true);
+    panel.add(clock);
+    const tick = (): void => { clock.setText(formatDayCountdown(end - serverNow().getTime())); };
+    tick();
+    const timer = this.time.addEvent({ delay: 1000, loop: true, callback: tick });
+    panel.once(Phaser.GameObjects.Events.DESTROY, () => timer.remove());
   }
 
   /** 그 렐릭의 정보창 — 얻기 전이면 실루엣 미리보기로 열린다. */

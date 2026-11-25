@@ -1,7 +1,7 @@
 /** Phaser와 상태 변경을 모르는 결정적 가챠 규칙. 모든 난수는 호출자가 주입한다. */
 import type { RelicRarity } from "./types";
 import { liveSchedule, scheduledWindow, windowOpen, type LiveScheduleEntry } from "./liveSchedule";
-import { pickupRotationOpen } from "./pickupRotation";
+import { currentPickupBannerId, currentPickupWindow, inPickupRotation, pickupRotationOpen } from "./pickupRotation";
 
 /** 재화. 화석은 흔하고, 호박석은 귀하다. */
 export interface Wallet {
@@ -242,6 +242,18 @@ export function bannerActive(banner: Pick<Banner, "startsAt" | "endsAt"> & { rea
   // 한정 픽업은 한 번에 하나만 선다(`pickupRotation.ts`). 운영 일정 줄이 덮은 배너는 사람이 정한 기간을 따른다.
   if (banner.id !== undefined && !window.overridden && !pickupRotationOpen(banner.id, now.getTime())) return false;
   return windowOpen(window, now.getTime());
+}
+
+/**
+ * 이 배너가 닫히는 시각 — 연구소의 남은 기간 시계가 읽는다. 로비 이벤트 카드(`scheduledLobbyEvent`)와 같은 순서로 정한다:
+ * 운영 일정 줄이 덮었으면 그 끝, 교대에 든 한정 픽업이면 **지금 차례가 끝나는 시각**(`currentPickupWindow`), 아니면 정의의 끝.
+ * 출시 전 유예로 끝 날짜가 걷혔거나 차례가 아닌 픽업(QA에서만 선다)은 기한이 없다 — 시계를 세우지 않는다.
+ */
+export function bannerEndsAt(banner: Pick<Banner, "id" | "startsAt" | "endsAt">, now: number, schedule: readonly LiveScheduleEntry[] = liveSchedule()): string | undefined {
+  const window = scheduledWindow("banner", banner.id, banner, schedule);
+  if (window.overridden) return window.endsAt;
+  if (inPickupRotation(banner.id)) return currentPickupBannerId(now) === banner.id ? currentPickupWindow(now).endsAt : undefined;
+  return window.endsAt;
 }
 
 /** 횟수 제한이 있는 배너에서 남은 횟수. 제한이 없으면 무한이다. */

@@ -25,6 +25,11 @@ export const LAB_CHROME = {
    * 구석이고, 연구 버튼과는 확정 판을 사이에 두고 떨어져 있어 손이 잘못 닿지 않는다.
    */
   pickupInfo: { x: 1080 - 36 - 140, y: NAV_TOP - 440 - 42 - 20 - 38, width: 280, height: 76, fontSize: 28, enterDistance: 180 },
+  /**
+   * 픽업 남은 기간 시계 — 정보 버튼 바로 위, 버튼 오른쪽 끝에 맞춘다(`dy`는 버튼 중심 기준). 크기·색은 로비 이벤트 카드의
+   * 기간 시계(`LobbyEventCard`의 `clock`)와 같다.
+   */
+  pickupClock: { dy: -76 / 2 - 30, size: 32 },
 } as const;
 
 /**

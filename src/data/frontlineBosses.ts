@@ -2,14 +2,14 @@ import type { RelicDef } from "../core/types";
 import { COMMON_SECONDARY_STATS } from "../core/rarityScaling";
 
 export const NOKAN: RelicDef = {
-  id: "nokan", name: "노칸", enemyOnly: true, squad: "annihilation", rarity: "SSR", element: "fire", role: "warrior",
-  portraitAssetId: "nokan", specimenNumber: "229", projectName: "궁니르", origin: "기가노토사우루스",
+  id: "nokan", name: "기가노", enemyOnly: true, squad: "annihilation", rarity: "SSR", element: "fire", role: "warrior",
+  portraitAssetId: "nokan", specimenNumber: "229", projectName: "ANNIHILATION GUNGNIR 229", origin: "기가노토사우루스",
   excavationSite: "제1지부 이송 전 남부 보존 표본창",
   fossilRecord: "턱뼈의 한쪽 치조가 아문 채로 남아 있었다. 같은 상자에서 나온 갈비뼈 세 점에도 골절이 붙은 자국이 있었다. 표본창의 이송표에는 회수 날짜와 궁니르라는 이름만 적혀 있었다.",
-  observationProfile: { originYear: "백악기 후기", restorationYear: "E.C. 19년", lifeStage: "성체", height: "1.87 m", weight: "79 kg" },
+  observationProfile: { originYear: "약 9,700만 년 전", restorationYear: "E.C. 19년", lifeStage: "성체", height: "1.92 m", weight: "88 kg" },
   catalogSummary: "붉은 안감의 외투와 갈비 아래로 이어지는 흉터가 관찰되는 공멸의 기가노토사우루스 기반 표본.",
   unlockRecord: { status: "recorded", text: "흉터를 가리는 붕대는 갈아도 외투의 찢어진 곳은 꿰매지 않는다. 복도 끝에서 발소리가 들리면 사람 수부터 셌다. 첫 발소리가 멎으면 직접 나가서 누구 몫이 비었는지 확인했다." },
-  squadNote: "공멸의 대장. 궁니르라는 이름으로 선두를 이끌며, 은테가 퇴로를 정하는 동안 적의 전선을 뚫는다.", researcherTitle: "연구원",
+  squadNote: "공멸의 대장. 궁니르라는 이름으로 선두를 이끌며, 아르겐이 퇴로를 정하는 동안 적의 전선을 뚫는다.", researcherTitle: "연구원",
   reachTier: "melee", strike: "slash", ferocityMax: 110,
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
   stats: { hp: 1150, def: 66, res: 56, atk: 182, ap: 25, attackSpeed: 108, moveSpeed: 110, ...COMMON_SECONDARY_STATS },
@@ -26,14 +26,14 @@ export const NOKAN: RelicDef = {
 };
 
 export const EUNTE: RelicDef = {
-  id: "eunte", name: "은테", enemyOnly: true, squad: "annihilation", rarity: "SSR", element: "earth", role: "tank",
-  portraitAssetId: "eunte", specimenNumber: "230", projectName: "철갑", origin: "티타노사우루스",
+  id: "eunte", name: "아르겐", enemyOnly: true, squad: "annihilation", rarity: "SSR", element: "earth", role: "tank",
+  portraitAssetId: "eunte", specimenNumber: "230", projectName: "ANNIHILATION IRONCLAD 230", origin: "아르헨티노사우루스",
   excavationSite: "제1지부 이송 전 남부 보존 표본창",
-  fossilRecord: "척추뼈의 빈 공간에 흰 광물이 층층이 굳어 있었다. 긴 꼬리 쪽 표본은 눌려도 원래 간격을 유지했다. 철갑이라고 적힌 이송표 밑에는 마모된 받침대가 한 줄로 남아 있었다.",
-  observationProfile: { originYear: "백악기 후기", restorationYear: "E.C. 19년", lifeStage: "성체", height: "1.82 m", weight: "75 kg" },
-  catalogSummary: "분절형 꼬리 장갑과 무거운 정강이 보호구가 관찰되는 공멸의 티타노사우루스 기반 표본.",
+  fossilRecord: "등뼈 한 마디가 사람 키만 했다. 속은 비어 있었고, 빈 칸마다 흰 광물이 층층이 굳어 있었다. 남은 것은 등뼈 몇 마디와 정강이뼈 한 점뿐이었다. 철갑이라고 적힌 이송표 밑에는 그 무게에 눌려 닳은 받침대가 한 줄로 남아 있었다.",
+  observationProfile: { originYear: "약 9,700만 년 전", restorationYear: "E.C. 20년", lifeStage: "성체", height: "2.04 m", weight: "112 kg" },
+  catalogSummary: "분절형 꼬리 장갑과 무거운 정강이 보호구가 관찰되는 공멸의 아르헨티노사우루스 기반 표본.",
   unlockRecord: { status: "recorded", text: "설비를 멈출 때는 나사를 한쪽부터 풀지 않는다. 양쪽을 번갈아 풀어 무게가 어디에도 쏠리지 않게 했다. 누가 아직 안쪽에 있으면, 마지막 잠금쇠를 쥔 채 대답이 올 때까지 서 있었다." },
-  squadNote: "공멸의 대장. 철갑이라는 이름으로 퇴로와 전열을 붙들며, 노칸이 선봉에 설 때 마지막으로 현장을 빠져나온다.", researcherTitle: "연구원",
+  squadNote: "공멸의 대장. 철갑이라는 이름으로 퇴로와 전열을 붙들며, 기가노가 선봉에 설 때 마지막으로 현장을 빠져나온다.", researcherTitle: "연구원",
   reachTier: "melee", strike: "smash", ferocityMax: 115,
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
   stats: { hp: 1600, def: 130, res: 125, atk: 74, ap: 20, attackSpeed: 70, moveSpeed: 67, ...COMMON_SECONDARY_STATS },

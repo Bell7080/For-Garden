@@ -40,7 +40,7 @@ function setup(id: "nokan" | "eunte", offsets = [35], breakthrough = 4) {
 }
 
 describe("공멸 대장", () => {
-  it("노칸은 회복으로 기세를 얻고, 폭주로 능력치와 속도를 바꾸되 체력 비율을 보존한다", () => {
+  it("기가노는 회복으로 기세를 얻고, 폭주로 능력치와 속도를 바꾸되 체력 비율을 보존한다", () => {
     const { state, boss, targets, advance } = setup("nokan", [35, 95]);
     boss.hp = boss.maxHp / 2;
     const normalHp = boss.maxHp;
@@ -71,7 +71,7 @@ describe("공멸 대장", () => {
     expect(boss.maxHp).toBeCloseTo(normalHp);
   });
 
-  it("은테의 세 번째 타격은 실제 피해만 보호막으로 바꾸고, 충돌한 적을 다시 밀친다", () => {
+  it("아르겐의 세 번째 타격은 실제 피해만 보호막으로 바꾸고, 충돌한 적을 다시 밀친다", () => {
     const { boss, targets: [first, second, third], advance } = setup("eunte", [35, 115, 195]);
     boss.basicCycleStep = 2;
     boss.attackCooldown = 0;
@@ -88,7 +88,7 @@ describe("공멸 대장", () => {
     expect(boss.shield.amount).toBeCloseTo(shield);
   });
 
-  it("은테의 폭주는 대상별 세 번째 적중에서 5초 둔화를 새로 건다", () => {
+  it("아르겐의 폭주는 대상별 세 번째 적중에서 5초 둔화를 새로 건다", () => {
     const { state, boss, targets: [near, late], advance } = setup("eunte", [120, 350]);
     const opening: ReturnType<typeof stepSkirmish> = [];
     near.def = { ...near.def, stats: { ...near.def.stats, moveSpeed: 100 } };
@@ -108,7 +108,7 @@ describe("공멸 대장", () => {
     expect(late.frontlineSlow?.until).toBeCloseTo(7.5);
   });
 
-  it("은테의 장갑은 직접 체력 피해로 벗겨지고 마지막 한 겹 보상은 한 번만 서서히 사라진다", () => {
+  it("아르겐의 장갑은 직접 체력 피해로 벗겨지고 마지막 한 겹 보상은 한 번만 서서히 사라진다", () => {
     const { boss, targets: [attacker], advance } = setup("eunte");
     expect(resolveReceivedDamage(boss, 1000).applied).toBe(349);
     expect(unitStatusViews(boss).find((status) => status.id === "fixedArmor")?.stacks).toBe(10);
@@ -136,7 +136,7 @@ describe("공멸 대장", () => {
     expect(boss.shield.amount).toBeCloseTo(0);
   });
 
-  it("은테 궁극기는 준비 후 한 번 내리치고 장갑을 쓰지 않은 채 시간제 보호막을 준다", () => {
+  it("아르겐 궁극기는 준비 후 한 번 내리치고 장갑을 쓰지 않은 채 시간제 보호막을 준다", () => {
     const { state, boss, targets: [target], advance } = setup("eunte");
     boss.energy = 155;
     const startingHp = target.hp;
@@ -155,7 +155,7 @@ describe("공멸 대장", () => {
     expect(boss.shield.amount).toBe(0);
   });
 
-  it("은테 궁극기의 보호막이 직접 공격으로 소진되면 충격파가 한 번 터진다", () => {
+  it("아르겐 궁극기의 보호막이 직접 공격으로 소진되면 충격파가 한 번 터진다", () => {
     const { state, boss, targets: [target], advance } = setup("eunte");
     boss.energy = 155;
     fireUltimate(state, boss.id, rng);

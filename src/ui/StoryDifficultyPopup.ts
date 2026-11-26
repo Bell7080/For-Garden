@@ -18,14 +18,15 @@ import { logError } from "../managers/ErrorReporter";
 
 /**
  * 난이도마다 서는 무대 — 출격판 칸과 같은 원화 버튼(`ExpeditionEntryButton`)에 **그 난이도의 색으로 물든 원화**와
- * SD 하나를 세운다. 쉬움은 아군 토리카가 반기고, 보통은 공멸의 토비, 어려움은 1-10을 지키던 코마가 선다 —
+ * SD 하나를 세운다. 쉬움은 아군 토리카가 반기고, 보통은 공멸의 토비, 어려움은 1-10을 지키던 코마, 폭주는 3-10을 닫던 이카닉시아가 선다 —
+ * 폭주가 열리는 4-10까지 이미 만난 얼굴만 세운다(뒤쪽 장의 대장을 세우면 그 장을 읽기 전에 보스가 드러난다).
  * 오르는 사다리가 그림으로도 읽힌다. 원화는 스토리 입구와 같은 그림이고 색만 짙어진다.
  */
 export const STORY_DIFFICULTY_STAGE: Readonly<Record<StoryDifficulty, { artTint: number; sd: () => PuppetAsset; side: "left" | "right"; rank: number }>> = {
   easy: { artTint: 0xfff2d2, sd: () => sdAssetFor("torika"), side: "left", rank: 1 },
   normal: { artTint: 0xffc49a, sd: () => battleAssetFor("toby"), side: "right", rank: 2 },
   hard: { artTint: 0xff8e98, sd: () => battleAssetFor("koma"), side: "left", rank: 3 },
-  rampage: { artTint: 0xc998ff, sd: () => battleAssetFor("eunte"), side: "right", rank: 4 },
+  rampage: { artTint: 0xc998ff, sd: () => battleAssetFor("ikanixia"), side: "right", rank: 4 },
 };
 
 /** 난이도 고르기 판·개방 축하 판의 자리. 높이는 칸 수에서 거꾸로 구한다. */
@@ -66,7 +67,8 @@ function addDifficultyCard(
   if (options.selected) {
     // 지금 고른 칸 — 테두리를 한 겹 더 굵게 두르고 마름모 옆에 체크가 선다.
     owner.add(drawShapeOutline(scene, 0, y, chipPoints(P.card.width + 12, P.card.height + 12, { bevel: sortieEntryBevel(P.card.height + 12) }), { color: tone.color, alpha: 0.95, width: 5 }));
-    const checkX = pipX + (stage.side === "left" ? -62 : 62);
+    // 마름모 넷의 끝에서 한 뼘 떨어진 자리 — 62로 두면 넷째 마름모에 체크가 겹친다.
+    const checkX = pipX + (stage.side === "left" ? -82 : 82);
     owner.add(drawGlyph(scene, "check", checkX + 2, y - P.card.height / 2 + 43, 36, 0x000000, 0.7));
     owner.add(drawGlyph(scene, "check", checkX, y - P.card.height / 2 + 40, 36, tone.color));
   }

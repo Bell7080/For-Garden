@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { STORY_DIFFICULTY, type StoryDifficulty } from "../core/storyDifficulty";
+import { STORY_DIFFICULTIES, STORY_DIFFICULTY, type StoryDifficulty } from "../core/storyDifficulty";
 import { t } from "../i18n";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawLayer, drawShapeOutline } from "./holo";
@@ -10,7 +10,7 @@ import { textStyle } from "./theme";
 export const STORY_DIFFICULTY_RANK: Readonly<Record<StoryDifficulty, number>> = { easy: 1, normal: 2, hard: 3, rampage: 4 };
 
 /**
- * 난이도 아이콘 — 지도 왼쪽에 서는 한 칸. 위에 난이도만큼 마름모가 차오르고(쉬움 하나 · 어려움 셋) 아래에 이름이
+ * 난이도 아이콘 — 지도 왼쪽에 서는 한 칸. 위에 난이도만큼 마름모가 차오르고(쉬움 하나 · 폭주 넷) 아래에 이름이
  * 선다. 칸 색이 곧 지금 난이도의 색이라 지도를 훑는 눈에도 어느 사다리에 서 있는지가 남는다.
  */
 // 스토리 지도의 상단 줄은 프로필 없이 재화만 오른쪽에 서므로 왼쪽 위가 빈다 — 지도 노드와 겹치지 않는 그 자리에 앉는다.
@@ -36,12 +36,16 @@ export function addStoryDifficultyIcon(scene: Phaser.Scene, difficulty: StoryDif
   return icon;
 }
 
-/** 난이도 마름모 셋 — 차오른 수가 그 난이도의 무게다. 동그라미 대신 화면 전체의 납작한 마름모를 쓴다. */
+/**
+ * 난이도 마름모 — 난이도 수만큼 서고 차오른 수가 그 난이도의 무게다(폭주는 넷이 모두 찬다). 칸 수를 셋으로 못 박아 두면
+ * 폭주가 어려움과 같은 마름모로 읽힌다. 동그라미 대신 화면 전체의 납작한 마름모를 쓴다.
+ */
 export function addRankPips(scene: Phaser.Scene, x: number, y: number, pip: number, rank: number, color: number): Phaser.GameObjects.Graphics {
   const graphics = scene.add.graphics({ x, y });
   const step = pip * 0.92;
-  for (let index = 0; index < 3; index += 1) {
-    const cx = (index - 1) * step;
+  const count = STORY_DIFFICULTIES.length;
+  for (let index = 0; index < count; index += 1) {
+    const cx = (index - (count - 1) / 2) * step;
     const lit = index < rank;
     const half = pip / 2;
     const points = [new Phaser.Math.Vector2(cx, -half), new Phaser.Math.Vector2(cx + half * 0.78, 0), new Phaser.Math.Vector2(cx, half), new Phaser.Math.Vector2(cx - half * 0.78, 0)];

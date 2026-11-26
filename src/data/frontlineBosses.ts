@@ -27,11 +27,11 @@ export const NOKAN: RelicDef = {
 
 export const EUNTE: RelicDef = {
   id: "eunte", name: "은테", enemyOnly: true, squad: "annihilation", rarity: "SSR", element: "earth", role: "tank",
-  portraitAssetId: "eunte", specimenNumber: "230", projectName: "철갑", origin: "아르헨티노사우루스",
+  portraitAssetId: "eunte", specimenNumber: "230", projectName: "철갑", origin: "티타노사우루스",
   excavationSite: "제1지부 이송 전 남부 보존 표본창",
   fossilRecord: "척추뼈의 빈 공간에 흰 광물이 층층이 굳어 있었다. 긴 꼬리 쪽 표본은 눌려도 원래 간격을 유지했다. 철갑이라고 적힌 이송표 밑에는 마모된 받침대가 한 줄로 남아 있었다.",
   observationProfile: { originYear: "백악기 후기", restorationYear: "E.C. 19년", lifeStage: "성체", height: "1.82 m", weight: "75 kg" },
-  catalogSummary: "분절형 꼬리 장갑과 무거운 정강이 보호구가 관찰되는 공멸의 아르헨티노사우루스 기반 표본.",
+  catalogSummary: "분절형 꼬리 장갑과 무거운 정강이 보호구가 관찰되는 공멸의 티타노사우루스 기반 표본.",
   unlockRecord: { status: "recorded", text: "설비를 멈출 때는 나사를 한쪽부터 풀지 않는다. 양쪽을 번갈아 풀어 무게가 어디에도 쏠리지 않게 했다. 누가 아직 안쪽에 있으면, 마지막 잠금쇠를 쥔 채 대답이 올 때까지 서 있었다." },
   squadNote: "공멸의 대장. 철갑이라는 이름으로 퇴로와 전열을 붙들며, 노칸이 선봉에 설 때 마지막으로 현장을 빠져나온다.", researcherTitle: "연구원",
   reachTier: "melee", strike: "smash", ferocityMax: 115,

@@ -172,7 +172,7 @@ describe("공멸 대장", () => {
 
   it("도감과 회고에 등록하고 모든 난이도 9-10에 4돌 대장 둘을 보낸다", () => {
     expect(CODEX_RELICS.filter(({ id }) => id === "nokan" || id === "eunte")).toHaveLength(2);
-    expect(recollectionEntriesOf("chapter8")).toHaveLength(6);
+    expect(recollectionEntriesOf("chapter8")).toHaveLength(7);
     const finale = recollectionEntriesOf("chapter9").filter(({ stageId }) => stageId === "9-10");
     expect(finale).toHaveLength(2);
     const names = getRecollectionStory(finale[0].storyId).nodes.map(({ standing }) => standing);

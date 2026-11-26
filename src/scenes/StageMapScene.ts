@@ -44,6 +44,9 @@ import { LOBBY_RETURN } from "./lobbyEntry";
 import { showContentIntro } from "../ui/contentIntro";
 import { addScrollHint } from "../ui/ScrollHint";
 
+/** 난이도마다 지도 원화에 덮는 색 — 쉬움 크림 → 보통 살구 → 어려움 장밋빛 → 폭주 보랏빛. 고르기 판의 원화 색(`STORY_DIFFICULTY_STAGE`)과 같은 결이다. */
+const STAGE_MAP_TINT: Readonly<Record<StoryDifficulty, number>> = { easy: 0xfff4d9, normal: 0xffceb0, hard: 0xffadb8, rampage: 0xd9bcff };
+
 /** 지도가 보이는 세로 구간. 위쪽 제목과 아래쪽 버튼을 침범하지 않는다. */
 const WINDOW = { top: 500, bottom: 1560 } as const;
 /** 스테이지 하나가 차지하는 세로 간격. */
@@ -327,7 +330,7 @@ export class StageMapScene extends Phaser.Scene {
     // 지도 원화는 25MB짜리라 이 화면에 들어올 때 읽고 나갈 때 내린다. 늦게 도착해도 배율
     // 규칙을 같은 자리에서 다시 적용해야 화면마다 값이 갈리지 않는다.
     useBackgroundTexture(this, mapArt, stageMapBackground(this.currentChapter), (art) => {
-      art.setTint(this.difficulty === "easy" ? 0xfff4d9 : this.difficulty === "normal" ? 0xffceb0 : 0xffadb8);
+      art.setTint(STAGE_MAP_TINT[this.difficulty]);
       art.setScale(Math.max(BASE_WIDTH / art.width, needed / art.height));
     });
     this.map.add(mapArt);

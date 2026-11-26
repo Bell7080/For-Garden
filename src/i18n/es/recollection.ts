@@ -95,6 +95,8 @@ export const RECOLLECTION_ES = {
   "recollection.tab.chapter5": "Capítulo 5",
   "recollection.tab.chapter6": "Capítulo 6",
   "recollection.tab.chapter7": "Capítulo 7",
+  "recollection.tab.chapter8": "Capítulo 8",
+  "recollection.tab.chapter9": "Capítulo 9",
   "recollection.summary.stage-4-3-pre": "En el pasaje de inspección, el trío recuperado bloquea el paso porque se lo ordenaron.",
   "recollection.summary.stage-4-6-pre": "Pulsi reclama al investigador como su presa, y Ripa pregunta si de verdad tienen que pelear.",
   "recollection.summary.stage-4-8-post": "El ascensor se suelta y cae hacia unas profundidades que no figuran en ningún mapa.",

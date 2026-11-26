@@ -169,6 +169,8 @@ export const LOBBY_ID = {
   "storyDifficulty.easy.detail": "Perjalanan pertama bersama cerita",
   "storyDifficulty.normal.detail": "Fokus pertempuran · Hadiah mata uang +25%",
   "storyDifficulty.hard.detail": "Fokus pertempuran · Hadiah mata uang +50%",
+  "storyDifficulty.rampage": "Amukan",
+  "storyDifficulty.rampage.detail": "Fokus pertempuran · Hadiah mata uang +75%",
   "storyDifficulty.locked": "Selesaikan {difficulty} 4-10 untuk membuka",
   "storyDifficulty.unlocked.title": "Kesulitan baru terbuka!",
   "storyDifficulty.unlocked.body": "Selamat, Peneliti!\nHadapi musuh lebih kuat dan dapatkan hadiah kemenangan pertama di {difficulty}.",

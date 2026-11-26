@@ -32,6 +32,7 @@ type Category =
   | "cadence";
 
 const CATEGORY: Record<EffectKind, Category> = {
+  frontlineBasic: "damage", frontlineUltimate: "damage", frontlineFever: "damage", frontlinePassive: "survival",
   none: "none",
   guestHaste: "damage",
   serviceBarrier: "survival",

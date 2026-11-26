@@ -169,6 +169,8 @@ export const LOBBY_ES = {
   "storyDifficulty.easy.detail": "Tu primer viaje con la historia",
   "storyDifficulty.normal.detail": "Combates · Recompensas de moneda +25%",
   "storyDifficulty.hard.detail": "Combates · Recompensas de moneda +50%",
+  "storyDifficulty.rampage": "Frenesí",
+  "storyDifficulty.rampage.detail": "Combates · Recompensas de moneda +75%",
   "storyDifficulty.locked": "Completa {difficulty} 4-10 para desbloquear",
   "storyDifficulty.unlocked.title": "¡Nueva dificultad desbloqueada!",
   "storyDifficulty.unlocked.body": "¡Felicidades, investigador!\nEnfrenta enemigos más fuertes y recibe nuevas recompensas iniciales en {difficulty}.",

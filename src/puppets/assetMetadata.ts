@@ -885,6 +885,23 @@ export const PLESHA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   joints: { center: [653, 650], head: [617, 460], eyes: null, feet: [[507, 1216], [685, 1200]] },
 };
 
+export const NOKAN_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1024, imageHeight: 1536, content: { left: 12, top: 8, right: 1011, bottom: 1528 },
+  joints: { center: [657, 259], head: [694, 141], eyes: [[658, 106], [713, 142]], feet: [[962, 1573], [240, 1521]] },
+};
+export const NOKAN_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254, content: { left: 87, top: 40, right: 1041, bottom: 1230 },
+  joints: { center: [650, 579], head: [635, 426], eyes: null, feet: [[522, 1262], [801, 1264]] },
+};
+export const EUNTE_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1024, imageHeight: 1536, content: { left: 132, top: 93, right: 988, bottom: 1454 },
+  joints: { center: [508, 345], head: [460, 218], eyes: [[442, 229], [496, 197]], feet: [[181, 1473], [639, 1489]] },
+};
+export const EUNTE_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254, content: { left: 301, top: 30, right: 1069, bottom: 1237 },
+  joints: { center: [611, 590], head: [575, 379], eyes: null, feet: [[395, 1247], [723, 1240]] },
+};
+
 export const HIS_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086, imageHeight: 1448,
   content: { left: 12, top: 28, right: 1060, bottom: 1406 },

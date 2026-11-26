@@ -1,6 +1,6 @@
 import { ancientStageFloor } from "./ancientStrataDifficulty";
 import { getAncientStrataFloor, getAncientStrataStage } from "../core/ancientStrataBattle";
-import { difficultyStageRewards, storyBaseStageId, STORY_DIFFICULTY, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
+import { difficultyStageRewards, storyBaseStageId, STORY_DIFFICULTIES, STORY_DIFFICULTY, storyDifficultyRequirement, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
 import { registerDataText } from "../i18n";
 import { applyEncounterScaling, encounterRoleFor, equivalentEnemyLevel, shownBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
 import { type BattleStageDef, type ChapterDef, type RelicDef, type StageBonusReward, type StageDef, type StageEnemyDef } from "../core/types";
@@ -64,6 +64,8 @@ const STORY_RECOMMENDED_LEVELS: readonly number[] = [
   37, 37, 37, 38, 38, 38, 39, 39, 40, 40,
   41, 42, 42, 43, 43, 44, 44, 45, 45, 45,
   46, 46, 47, 47, 47, 48, 48, 49, 49, 50,
+  51, 52, 52, 53, 53, 54, 55, 55, 56, 57,
+  58, 58, 59, 59, 60, 61, 61, 62, 63, 64,
 ];
 
 /**
@@ -147,6 +149,26 @@ const LATE_CHAPTER_FORMATIONS: Readonly<Record<string, readonly (readonly [strin
   "7-8": [["raja", 0], ["atra", 1], ["magasa", 2], ["noa", 3]],
   "7-9": [["raja", 0], ["magasa", 1], ["noa", 2]],
   "7-10": [["carno", 1]],
+  "8-1": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "8-2": [["raja", 0], ["atra", 1], ["neuri", 2]],
+  "8-3": [["atra", 0], ["pulsi", 1], ["ikanixia", 2]],
+  "8-4": [["raja", 0], ["mir", 1], ["pulsi", 2], ["neuri", 3]],
+  "8-5": [["atra", 0], ["ikanixia", 2]],
+  "8-6": [["raja", 0], ["mir", 1], ["neuri", 2]],
+  "8-7": [["atra", 0], ["pulsi", 1], ["ikanixia", 2]],
+  "8-8": [["raja", 0], ["atra", 1], ["mir", 2], ["pulsi", 3]],
+  "8-9": [["atra", 0], ["ikanixia", 1], ["neuri", 2]],
+  "8-10": [["nokan", 1]],
+  "9-1": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "9-2": [["carno", 0], ["raja", 2]],
+  "9-3": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
+  "9-4": [["raja", 0], ["atra", 1], ["mir", 2], ["ikanixia", 3]],
+  "9-5": [["eunte", 1]],
+  "9-6": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "9-7": [["carno", 0], ["ikanixia", 2]],
+  "9-8": [["raja", 0], ["atra", 1], ["neuri", 2], ["pulsi", 3]],
+  "9-9": [["carno", 0], ["atra", 1], ["mir", 2]],
+  "9-10": [["eunte", 0], ["nokan", 2]],
 };
 
 /**
@@ -161,10 +183,14 @@ const STORY_BOSS_LEVELS: Readonly<Record<string, number>> = {
   "5-10": 48, // 간부 마가사 — 사다리 40
   "7-5": 54, // 간부 이카닉시아의 저지선 — 사다리 47
   "7-10": 60, // 부대장 카르 — 사다리 50
+  "8-5": 55,
+  "8-10": 76,
+  "9-5": 67,
+  "9-10": 70,
 };
 
 /** 정예 둘이 서는 관문. 하나만 서는 정예는 적 수로 가른다. */
-const ELITE_DUO_STAGE_IDS: ReadonlySet<string> = new Set(["2-7", "2-9", "4-4", "4-5", "4-10", "6-10"]);
+const ELITE_DUO_STAGE_IDS: ReadonlySet<string> = new Set(["2-7", "2-9", "4-4", "4-5", "4-10", "6-10", "8-5", "9-10"]);
 
 /**
  * 1장의 적 편성. 정예 관문만 하나가 서고 나머지는 같은 셋이 같은 자리에 선다.
@@ -214,6 +240,10 @@ const STORY_RUNE_REWARDS: Readonly<Record<string, Extract<StageBonusReward, { ki
   "6-10": { kind: "rune", rarity: "rare", part: 2, trait: true },
   "7-5": { kind: "rune", rarity: "rare", part: 0 },
   "7-10": { kind: "rune", rarity: "rare", part: 1, trait: true },
+  "8-5": { kind: "rune", rarity: "rare", part: 2 },
+  "8-10": { kind: "rune", rarity: "rare", part: 0, trait: true },
+  "9-5": { kind: "rune", rarity: "rare", part: 1 },
+  "9-10": { kind: "rune", rarity: "rare", part: 2, trait: true },
 };
 
 /**
@@ -236,6 +266,10 @@ const STORY_RAW_STONE: Readonly<Record<string, number>> = {
   "6-6": 60,
   "7-1": 60,
   "7-6": 60,
+  "8-1": 60,
+  "8-6": 60,
+  "9-1": 60,
+  "9-6": 60,
 };
 
 /**
@@ -292,6 +326,30 @@ const CHAPTER_SITUATIONS: readonly (readonly string[])[] = [
   [],
   [],
   [],
+  [
+    "카르가 오르던 철골이 천장의 구멍 너머로 이어진다.",
+    "비상 사다리 위에 회수조의 발자국이 남았다.",
+    "귀환 계수판에 돌아오지 못한 사람들이 걸려 있다.",
+    "회수조가 들것을 보내며 바깥에서 오는 길을 막는다.",
+    "잠기기 시작한 문 사이에 짐칸이 끼어 있다.",
+    "중계선이 끊어지면 승강기는 이 층으로 돌아오지 않는다.",
+    "불이 한 칸씩 살아난다. 어둠 너머에서도 같은 불을 센다.",
+    "봉인된 기록실의 이송표에 두 이름이 남아 있다.",
+    "상층 승강기 오른편에 길게 찢긴 쇠문이 걸려 있다.",
+    "노칸이 승강기 문 앞에서 돌아오지 못한 사람들을 기다린다.",
+  ],
+  [
+    "승강기 아래에서 격납실 전체를 잇는 제어축이 돌아간다.",
+    "닫힌 문 뒤로 서로를 부르는 목소리가 들린다.",
+    "돌 하나가 무거운 방출구를 받치고 있다.",
+    "중앙축을 피해서 사람을 내보낼 선을 찾아야 한다.",
+    "은테가 열 겹의 장갑을 내리고 방벽 앞에 선다.",
+    "격납실 문이 열리자 흩어졌던 공멸 대원들이 모인다.",
+    "카르가 대장의 명령을 전하고, 코마가 그 길을 건넌다.",
+    "마지막 방출구를 지나면 밖으로 걸어 나갈 수 있다.",
+    "전실 너머에서 두 사람의 발소리가 번갈아 들린다.",
+    "중앙축 앞에 노칸과 은테가 나란히 선다.",
+  ],
 ];
 
 const CHAPTER_CONTENT = [
@@ -302,6 +360,8 @@ const CHAPTER_CONTENT = [
   { title: "묻어 둔 문", subtitle: "제 5 구역 · 지하 감금동", names: ["감금동 입구", "검문 격자", "소등된 복도", "제1 감방 구역", "서열의 방", "침수 감방", "족쇄 보관실", "배식 통로", "구속 장치실", "감금동 취사장"] },
   { title: "풀려난 그림자", subtitle: "제 6 구역 · 중층 격리 회랑", names: ["격리 회랑 입구", "관측 창 복도", "무너진 순찰로", "환기 수직갱", "떨리는 그림자", "중층 격납고", "무너진 면회실", "격리 관제실", "식량 창고", "회랑 최심부"] },
   { title: "마지막 자물쇠", subtitle: "제 7 구역 · 최하층 구속실", names: ["최하층 하강로", "냉동 수용실", "침묵의 복도", "봉인 제어반", "회수조 저지선", "얼어붙은 기록실", "구속 장치 통로", "최하층 전실", "구속실 문 앞", "최하층 구속실"] },
+  { title: "붉은 귀환선", subtitle: "제 8 구역 · 상층 귀환로", names: ["뚫린 천장", "비상 사다리", "귀환 표지", "회수 검문소", "닫히는 통로", "중계선 갈림길", "검은 정비고", "폐쇄 기록실", "상층 승강장", "궁니르의 전선"] },
+  { title: "두 대장의 선", subtitle: "제 9 구역 · 중앙 제어축", names: ["승강기 종착", "퇴로의 문", "멈춘 계수판", "우회 배선실", "철갑의 방벽", "격납실 심부", "갈라진 명령", "긴급 방출구", "중앙축 전실", "공멸 최종 저지선"] },
 ] as const;
 
 /** 챕터가 콘텐츠 소유 단위이고, 각 스테이지는 명시적인 선행 ID로 챕터 경계를 잇는다. */
@@ -466,9 +526,9 @@ function difficultyEnemy(enemy: StageEnemyDef, difficulty: StoryDifficulty): Sta
   const level = equivalentEnemyLevel(enemy.level, getRelic(enemy.relicId).rarity, STORY_DIFFICULTY[difficulty].statFactor);
   return { ...enemy, level, breakthrough: shownBreakthroughForLevel(level) };
 }
-const EXTRA_STORY_STAGES: readonly BattleStageDef[] = (["normal", "hard"] as const).flatMap(difficulty => STAGES.filter((stage): stage is BattleStageDef => stage.kind === "battle").map(base => {
+const EXTRA_STORY_STAGES: readonly BattleStageDef[] = STORY_DIFFICULTIES.slice(1).flatMap(difficulty => STAGES.filter((stage): stage is BattleStageDef => stage.kind === "battle").map(base => {
   const first = base.id === "1-1";
-  const prerequisiteStageIds = first ? [storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10")] : base.prerequisiteStageIds.map(id => storyStageId(difficulty, id));
+  const prerequisiteStageIds = first ? [storyDifficultyRequirement(difficulty)!] : base.prerequisiteStageIds.map(id => storyStageId(difficulty, id));
   return { ...base, id: storyStageId(difficulty, base.id), prerequisiteStageIds,
     enemies: base.enemies.map(enemy => difficultyEnemy(enemy, difficulty)),
     rewards: difficultyStageRewards(base.rewards, difficulty), situation: undefined };

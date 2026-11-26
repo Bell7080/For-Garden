@@ -323,7 +323,7 @@ export interface PublicProfileModifierDto {
 export interface PublicCompetitiveStatsDto {
   highestStage?: { stageId: string; displayValue: string } | null;
   /** 난이도별 스토리 클리어(쉬움·보통·어려움). 관문 ID는 난이도 접두사를 뗀 값이며 미개방은 `open: false`다. */
-  storyClears?: { difficulty: "easy" | "normal" | "hard"; open: boolean; stageId?: string }[];
+  storyClears?: { difficulty: import("../core/storyDifficulty").StoryDifficulty; open: boolean; stageId?: string }[];
   /** 아레나 RP. 티어는 화면이 `arenaStanding`으로 읽는다 — 이름을 서버가 굳혀 보내면 언어를 따라오지 않는다. */
   arenaScore?: number;
   expeditionScore?: number;

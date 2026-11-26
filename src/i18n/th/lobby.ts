@@ -169,6 +169,8 @@ export const LOBBY_TH = {
   "storyDifficulty.easy.detail": "การสำรวจครั้งแรกพร้อมเรื่องราว",
   "storyDifficulty.normal.detail": "เน้นต่อสู้ · รางวัลสกุลเงินเพิ่ม 25%",
   "storyDifficulty.hard.detail": "เน้นต่อสู้ · รางวัลสกุลเงินเพิ่ม 50%",
+  "storyDifficulty.rampage": "คลั่ง",
+  "storyDifficulty.rampage.detail": "เน้นต่อสู้ · รางวัลสกุลเงินเพิ่ม 75%",
   "storyDifficulty.locked": "ผ่าน {difficulty} 4-10 เพื่อปลดล็อก",
   "storyDifficulty.unlocked.title": "ปลดล็อกระดับใหม่แล้ว!",
   "storyDifficulty.unlocked.body": "ยินดีด้วย นักวิจัย!\nพบศัตรูที่แข็งแกร่งขึ้นและรางวัลผ่านครั้งแรกใหม่ในระดับ{difficulty}",

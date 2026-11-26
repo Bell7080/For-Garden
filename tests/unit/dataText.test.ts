@@ -61,7 +61,9 @@ describe("덮어쓰기 표", () => {
     // 히스의 한국어 신작도 다음 번역 일괄 단계까지 원문을 사용한다.
     const DEFERRED_HIS_PREFIXES = ["relic.his.", "story.his.", "dialogue.bond.his.", "keyword.reserved-guest.", "keyword.special-fee."];
     const DEFERRED_HIS_KEYS = new Set(["firstMeeting.his", "banner.after-hours.name", "product.mileage-pickup-after-hours-his.name"]);
+    const pendingFinale = /^(relic\.(nokan|eunte)\.|keyword\.(fixed-armor|battle-momentum)\.|(stage|chapter)\.[89][.-]|dialogue\.stage-[89]-)/;
     const known = registeredDataTexts().map(({ key }) => key)
+      .filter((key) => !pendingFinale.test(key))
       .filter((key) => !DEFERRED_RELICS.some((id) => key.includes(id)) && !DEFERRED_HIS_PREFIXES.some((prefix) => key.startsWith(prefix)) && !DEFERRED_HIS_KEYS.has(key));
     for (const [path, overlay] of Object.entries(OVERLAYS)) {
       if (!COMPLETE.includes(languageOf(path))) continue;

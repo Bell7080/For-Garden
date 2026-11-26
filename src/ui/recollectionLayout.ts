@@ -13,7 +13,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 export const RECOLLECTION_LAYOUT = {
   popup: { width: BASE_WIDTH - 70, height: BASE_HEIGHT - 210 },
   /** 목록이 흐르는 창(팝업 몸판 좌표). 위는 제목표 아래, 아래는 탭 줄 위에서 끊는다. */
-  viewport: { top: -(BASE_HEIGHT - 210) / 2 + 128, bottom: (BASE_HEIGHT - 210) / 2 - 196 },
+  viewport: { top: -(BASE_HEIGHT - 210) / 2 + 128, bottom: (BASE_HEIGHT - 210) / 2 - 272 },
   layer: {
     width: BASE_WIDTH - 70 - 80,
     height: 196,
@@ -35,7 +35,7 @@ export const RECOLLECTION_LAYOUT = {
     /** 판 오른쪽에 은은하게 깔리는 대사 한 줄. */
     echo: { size: 34, alpha: 0.2, right: 40, y: -42, maxWidth: 520 },
   },
-  tab: { width: 190, height: 70, gap: 6, y: (BASE_HEIGHT - 210) / 2 - 110 },
+  tab: { width: 190, height: 70, gap: 6, columns: 5, rowGap: 12, y: (BASE_HEIGHT - 210) / 2 - 110 },
 } as const;
 
 /**

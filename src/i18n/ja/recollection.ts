@@ -95,6 +95,8 @@ export const RECOLLECTION_JA = {
   "recollection.tab.chapter5": "第5章",
   "recollection.tab.chapter6": "第6章",
   "recollection.tab.chapter7": "第7章",
+  "recollection.tab.chapter8": "第8章",
+  "recollection.tab.chapter9": "第9章",
   "recollection.summary.stage-4-3-pre": "点検通路で、回収された三人組が命令だからと行く手を阻む。",
   "recollection.summary.stage-4-6-pre": "パルシが研究員を自分の獲物だと言い張り、リパは本当に戦わなきゃいけないのかと問う。",
   "recollection.summary.stage-4-8-post": "ワイヤーが切れた昇降機が、地図にない下層へ落ちていく。",

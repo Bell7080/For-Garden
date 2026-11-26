@@ -169,6 +169,8 @@ export const LOBBY_ZH_HANS = {
   "storyDifficulty.easy.detail": "跟随剧情展开首次探索",
   "storyDifficulty.normal.detail": "战斗为主 · 货币奖励增加25%",
   "storyDifficulty.hard.detail": "战斗为主 · 货币奖励增加50%",
+  "storyDifficulty.rampage": "暴走",
+  "storyDifficulty.rampage.detail": "战斗为主 · 货币奖励增加75%",
   "storyDifficulty.locked": "通关{difficulty}4-10后解锁",
   "storyDifficulty.unlocked.title": "新的难度已解锁！",
   "storyDifficulty.unlocked.body": "恭喜你，研究员！\n前往{difficulty}难度，挑战更强的敌人并领取新的首通奖励。",

@@ -174,6 +174,8 @@ export const LOBBY_EN = {
   "storyDifficulty.easy.detail": "Your first journey through the story",
   "storyDifficulty.normal.detail": "Battles only · Currency rewards +25%",
   "storyDifficulty.hard.detail": "Battles only · Currency rewards +50%",
+  "storyDifficulty.rampage": "Frenzy",
+  "storyDifficulty.rampage.detail": "Battles only · Currency rewards +75%",
   "storyDifficulty.locked": "Clear {difficulty} 4-10 to unlock",
   "storyDifficulty.unlocked.title": "A new difficulty awaits!",
   "storyDifficulty.unlocked.body": "Congratulations, Researcher!\nFace stronger foes and earn new first-clear rewards on {difficulty}.",

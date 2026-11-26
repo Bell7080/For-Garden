@@ -35,10 +35,13 @@ describe("스토리 확장 난이도", () => {
     expect(isStoryDifficultyUnlocked("hard", new Set(["4-10", "normal:4-10"]))).toBe(true);
     expect(newlyUnlockedStoryDifficulty("4-10", true)).toBe("normal");
     expect(newlyUnlockedStoryDifficulty("normal:4-10", true)).toBe("hard");
+    expect(isStoryDifficultyUnlocked("rampage", new Set(["4-10", "normal:4-10"]))).toBe(false);
+    expect(isStoryDifficultyUnlocked("rampage", new Set(["4-10", "normal:4-10", "hard:4-10"]))).toBe(true);
+    expect(newlyUnlockedStoryDifficulty("hard:4-10", true)).toBe("rampage");
     expect(newlyUnlockedStoryDifficulty("4-10", false)).toBeUndefined();
   });
   it("모든 원본 전투의 개체·인원·정예·배치를 유지하며 이야기 SUB만 제외한다", () => {
-    for (const difficulty of ["normal", "hard"] as const) {
+    for (const difficulty of STORY_DIFFICULTIES.slice(1)) {
       expect(storyStages(difficulty).every(stage => stage.kind === "battle")).toBe(true);
       for (const base of STAGES.filter(stage => stage.kind === "battle")) {
         const stage = getBattleStage(storyStageId(difficulty, base.id));
@@ -62,9 +65,10 @@ describe("스토리 확장 난이도", () => {
     expect(state.cleared.has("1-1")).toBe(false);
     expect((await api.completeStage("normal:1-1", true)).firstClear).toBe(false);
     expect(nextBattleStage(storyStages("normal"), "normal:1-1", id => id === "normal:1-2")?.id).toBe("normal:1-2");
-    expect(nextBattleStage(storyStages("normal"), "normal:7-10", () => true)).toBeUndefined();
+    expect(nextBattleStage(storyStages("normal"), "normal:7-10", () => true)?.id).toBe("normal:8-1");
+    expect(nextBattleStage(storyStages("normal"), "normal:9-10", () => true)).toBeUndefined();
   });
-  it("반복·초회 재화만 25%·50% 올리고 화석과 룬 수량은 유지한다", () => {
+  it("반복·초회 재화만 25%·50%·75% 올리고 화석과 룬 수량은 유지한다", () => {
     const rewards = getBattleStage("1-10").rewards;
     for (const difficulty of STORY_DIFFICULTIES) {
       const next = difficultyStageRewards(rewards, difficulty);
@@ -96,8 +100,8 @@ describe("스토리 확장 난이도", () => {
       for (const reward of stage.rewards.firstClearBonus ?? []) {
         if (reward.kind !== "currency") continue;
         if (reward.currency === "gems") expect(reward.amount % 10).toBe(0);
-        // 7-10 보통 난이도(정예 ×2 · 보통 ×1.5)가 가장 크다 — (300 + 69 × 100) × 2 × 1.5.
-        if (reward.currency === "gold") expect(reward.amount).toBeLessThanOrEqual(21_600);
+        // 최대는 9-10 폭주·정예 초회 골드다.
+        if (reward.currency === "gold") expect(reward.amount).toBeLessThanOrEqual(32_200);
       }
     }
     const state = createDefaultSession(); state.cleared = new Set(["4-10", "normal:4-5"]);
@@ -112,7 +116,7 @@ describe("스토리 확장 난이도", () => {
   it.each(["3-5", "3-10", "4-4", "4-5", "4-6", "4-9", "4-10"])("%s 정예와 혼합 편성의 크기가 서버 발급·전투 복원·편성에 일치한다", id => {
     for (const difficulty of STORY_DIFFICULTIES) {
       const stage = getBattleStage(storyStageId(difficulty, id));
-      const state = createDefaultSession(); state.cleared = new Set(["4-10", "normal:4-10", ...stage.prerequisiteStageIds]);
+      const state = createDefaultSession(); state.cleared = new Set(["4-10", "normal:4-10", "hard:4-10", ...stage.prerequisiteStageIds]);
       combatJournal(state).tickets[`stage:${stage.id}`] = {kind:"stage", target:stage.id, requestId:"elite"};
       const lease = prepareCombat(state, {input:{mode:"stage"}, stageId:stage.id}, new Date("2026-10-23"), "elite-test");
       const saves = new SaveManager();

@@ -2,6 +2,7 @@ import { BLEED, OBSERVATION_MAX_STACKS, POISON } from "../core/skirmish";
 import { registerDataText } from "../i18n";
 import { TORIKA_STORY } from "./relicStories/torika";
 import type { BasicAttack, RelicDef, Stats } from "../core/types";
+import { NOKAN, EUNTE } from "./frontlineBosses";
 
 /**
  * 렐릭 정의. 최종 30종을 목표로 하되, 지금은 파티 편성과 전투 규칙을 검증할 만큼만 둔다.
@@ -160,6 +161,8 @@ const FROST_PLUME = {
 const PLESHA_METEOR_POWER = 150;
 
 export const RELICS: RelicDef[] = [
+  NOKAN,
+  EUNTE,
   {
     id: "his",
     squad: "rogue",
@@ -6754,6 +6757,8 @@ for (const relic of RELICS) {
   registerDataText(relic.ferocityTrait, "name", key("ferocity.name"));
   registerDataText(relic.basic, "name", key("basic.name"));
   registerDataText(relic.ultimate, "name", key("ultimate.name"));
+  registerDataText(relic.basic, "bossDescription", key("basic.description"));
+  registerDataText(relic.ultimate, "bossDescription", key("ultimate.description"));
   // 이름을 가진 주기 스택(토리카의 「세 개의 뿔」)은 머리 위 칩과 쪽지에 그대로 선다.
   registerDataText(relic.basic, "statusEffectStackName", key("basic.stackName"));
   // 일반 공격이 순환하는 걸음마다 제 이름이 있고, 스킬 쪽지가 그 이름을 그대로 세운다.

@@ -4,6 +4,22 @@
  * 韓国語表と同じキーを使い、値は文を丸ごと持つ。`{名前}` の位置だけがコードから届く。
  */
 export const SKILL_JA = {
+  "skill.frontline.armor": "固定装甲",
+  "skill.frontline.armorDetail": "被ダメージ{reduction}%減少",
+  "skill.frontline.momentum": "勢い",
+  "skill.frontline.momentumDetail": "攻撃力{attack}%増加",
+  "skill.frontline.slow": "地盤圧殺の減速",
+  "skill.frontline.slowDetail": "移動速度{percent}%低下",
+  "skill.frontline.gungnirMarch": "暴走中、攻撃速度と移動速度が{speed}%上昇し、パッシブの効果が{efficiency}%増加する。",
+  "skill.frontline.groundCrush": "暴走開始時、周囲の敵を引き寄せて{taunt}秒間挑発する。暴走中は{interval}秒ごとに周囲の敵に最大HPの{hp}%の固定ダメージを与え、0.1秒間ひるませる。",
+  "skill.frontline.gungnirBasic": "3回目の通常攻撃は対象の防御力を{percent}%無視する。",
+  "skill.frontline.ironcladBasic": "吹き飛ばされた敵が別の敵に衝突すると、その敵も吹き飛ばされ、同じ割合の脳震盪ダメージを受ける。1回の攻撃につき各敵に1回まで。",
+  "skill.frontline.gungnirUltimate": "この必殺技でシールドを破壊した敵へのダメージが{percent}%増加する。",
+  "skill.frontline.ironcladUltimate": "この必殺技によるシールドが敵の直接攻撃で尽きると、周囲の敵に防御力と抵抗力のそれぞれ{percent}%の合計に等しい物理ダメージを与える。",
+  "skill.frontline.gungnirFever": "暴走中に3回目の通常攻撃が命中すると、{seconds}秒後も同じ敵が射程内にいる場合、攻撃力の{percent}%の物理ダメージを追加で与える。",
+  "skill.frontline.ironcladFever": "同じ敵に暴走の波動が3回当たるたび、その敵の移動速度が{seconds}秒間{percent}%低下する。",
+  "skill.frontline.gungnirPassive": "戦闘中に初めて勢いが4段階に達すると、失ったHPの{percent}%を回復する。",
+  "skill.frontline.ironcladPassive": "初めて固定装甲がすべて剥がれると、最大HPの{percent}%に等しいシールドを得る。シールドは{seconds}秒かけて減少する。",
   "skill.ferocity.extendedService": "暴走中は受付を飛ばし、配膳と閉店を交互に行います。攻撃速度が{percent}%上がります。",
   "skill.passive.reservedGuest": "最大HPが最も高い敵を[[reserved-guest|常連客]]に指定し、倒れるまで優先して攻撃します。ほかの敵の直接攻撃を受けるたび、戦闘終了まで常連客以外に対する防御力と抵抗力がそれぞれ{points}上がります。",
   "skill.sentence.closingService": "常連客には[[special-fee|特別料金]]を1回適用します。",

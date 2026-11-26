@@ -45,7 +45,7 @@ describe("회고 창", () => {
 
   it("의 모든 이야기는 한 줄 줄거리를 갖는다", () => {
     for (const { storyId } of RECOLLECTION_ENTRIES) {
-      expect(KO[`recollection.summary.${storyId}` as keyof typeof KO], storyId).toBeTruthy();
+      expect(getRecollectionStory(storyId).recollectionSummary ?? KO[`recollection.summary.${storyId}` as keyof typeof KO], storyId).toBeTruthy();
     }
   });
 

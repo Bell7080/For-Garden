@@ -7,7 +7,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { textStyle } from "./theme";
 
 /** 난이도의 무게 — 아이콘·고르기 칸의 마름모가 몇 개 차오르는가. */
-export const STORY_DIFFICULTY_RANK: Readonly<Record<StoryDifficulty, number>> = { easy: 1, normal: 2, hard: 3 };
+export const STORY_DIFFICULTY_RANK: Readonly<Record<StoryDifficulty, number>> = { easy: 1, normal: 2, hard: 3, rampage: 4 };
 
 /**
  * 난이도 아이콘 — 지도 왼쪽에 서는 한 칸. 위에 난이도만큼 마름모가 차오르고(쉬움 하나 · 어려움 셋) 아래에 이름이

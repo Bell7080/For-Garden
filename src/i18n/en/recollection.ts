@@ -95,6 +95,8 @@ export const RECOLLECTION_EN = {
   "recollection.tab.chapter5": "Chapter 5",
   "recollection.tab.chapter6": "Chapter 6",
   "recollection.tab.chapter7": "Chapter 7",
+  "recollection.tab.chapter8": "Chapter 8",
+  "recollection.tab.chapter9": "Chapter 9",
   "recollection.summary.stage-4-3-pre": "In the maintenance passage, the retrieved trio blocks the way because they were ordered to.",
   "recollection.summary.stage-4-6-pre": "Pulsi calls dibs on the Researcher, and Ripa asks whether they really have to fight.",
   "recollection.summary.stage-4-8-post": "The elevator snaps loose and plunges into depths no map shows.",

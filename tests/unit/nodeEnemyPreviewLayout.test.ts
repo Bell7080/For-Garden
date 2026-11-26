@@ -64,12 +64,12 @@ describe("관문 상황 문구", () => {
 
   it("서사가 정해지지 않은 장은 비어 있어도 된다", () => {
     // 없는 줄은 화면이 그리지 않으므로 관문마다 억지로 채우지 않는다.
-    const later = CHAPTERS.filter(({ id }) => id !== 1).flatMap(({ stages }) => stages);
+    const later = CHAPTERS.filter(({ id }) => id >= 2 && id <= 7).flatMap(({ stages }) => stages);
     expect(later.every((stage) => stage.kind !== "battle" || stage.situation === undefined)).toBe(true);
   });
 
   it("한 줄은 판 폭에 담기는 길이로 끊는다", () => {
-    for (const stage of chapterOne.stages) {
+    for (const stage of CHAPTERS.flatMap(({ stages }) => stages)) {
       if (stage.kind !== "battle" || !stage.situation) continue;
       // 두 줄로 넘어가면 제목 블록이 구분선을 밀어 SD 자리를 먹는다.
       expect(stage.situation.length).toBeLessThanOrEqual(34);

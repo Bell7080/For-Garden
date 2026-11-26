@@ -1,36 +1,41 @@
 import type { BattleStageDef, StageDef } from "./types";
 
-export const STORY_DIFFICULTIES = ["easy", "normal", "hard"] as const;
+export const STORY_DIFFICULTIES = ["easy", "normal", "hard", "rampage"] as const;
 export type StoryDifficulty = typeof STORY_DIFFICULTIES[number];
 /**
- * 쉬움 대비 목표 세기 — 보통 ×1.5 · 어려움 ×2(응태 결정 2026-11-12, ×2·×4는 과했다). 오각형에 곱하지 않고, 이 배수를 넘지 않는
+ * 쉬움 대비 목표 세기 — 보통 ×1.5 · 어려움 ×2 · 폭주 ×3. 오각형에 곱하지 않고, 이 배수를 넘지 않는
  * 가장 높은 레벨로 적을 옮긴다(`equivalentEnemyLevel` — 응태 결정 2026-11-13, 100레벨 넘는 적 허용). 다음 난이도 1-1은 이전 난이도 4-10보다 튀어 오르지 않는다.
  */
 export const STORY_DIFFICULTY = {
   easy: { color: 0xe6bc57, text: "#f5d47b", fill: 0x3a3016, reward: 1, statFactor: 1 },
   normal: { color: 0xec9144, text: "#ffb76e", fill: 0x412719, reward: 1.25, statFactor: 1.5 },
   hard: { color: 0xe66168, text: "#ff9297", fill: 0x401f2a, reward: 1.5, statFactor: 2 },
+  rampage: { color: 0xb778ed, text: "#dfafff", fill: 0x392047, reward: 1.75, statFactor: 3 },
 } as const;
 /*
  * 장 배율(`STORY_CHAPTER_STAT_FACTOR`)은 걷어 냈다(응태 결정 2026-11-12 — 「레벨제로 갔으니 이제 필요 없다」).
  * 레벨이 60에서 멈추던 때 4장 이후를 조이려 둔 축이었는데, 적 레벨에 상한이 없어진 뒤로는 세기를 레벨 하나가 말한다.
- * 스토리 적 세기는 레벨 사다리 · 유형 배수뿐이고, 보통·어려움은 `statFactor`를 레벨로 옮긴 사다리에 선다.
+ * 스토리 적 세기는 레벨 사다리 · 유형 배수뿐이고, 확장 난이도는 `statFactor`를 레벨로 옮긴 사다리에 선다.
  */
 export function storyDifficultyOf(id: string | null | undefined): StoryDifficulty {
-  return id?.startsWith("normal:") ? "normal" : id?.startsWith("hard:") ? "hard" : "easy";
+  return STORY_DIFFICULTIES.find((difficulty) => difficulty !== "easy" && id?.startsWith(`${difficulty}:`)) ?? "easy";
 }
-export function storyBaseStageId(id: string): string { return id.replace(/^(normal|hard):/, ""); }
+export function storyBaseStageId(id: string): string { return id.replace(/^(normal|hard|rampage):/, ""); }
 export function storyStageId(difficulty: StoryDifficulty, base: string): string { return difficulty === "easy" ? base : `${difficulty}:${base}`; }
+export function previousStoryDifficulty(difficulty: StoryDifficulty): StoryDifficulty | undefined {
+  return STORY_DIFFICULTIES[STORY_DIFFICULTIES.indexOf(difficulty) - 1];
+}
 export function storyDifficultyRequirement(difficulty: StoryDifficulty): string | undefined {
-  return difficulty === "easy" ? undefined : storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10");
+  const previous = previousStoryDifficulty(difficulty);
+  return previous && storyStageId(previous, "4-10");
 }
 export function isStoryDifficultyUnlocked(difficulty: StoryDifficulty, cleared: ReadonlySet<string>): boolean {
-  const required = storyDifficultyRequirement(difficulty);
-  return !required || cleared.has(required) && (difficulty !== "hard" || cleared.has("4-10"));
+  return STORY_DIFFICULTIES.slice(1, STORY_DIFFICULTIES.indexOf(difficulty) + 1)
+    .every((tier) => cleared.has(storyDifficultyRequirement(tier)!));
 }
 export function newlyUnlockedStoryDifficulty(stageId: string, firstClear: boolean): StoryDifficulty | undefined {
   if (!firstClear) return;
-  return stageId === "4-10" ? "normal" : stageId === "normal:4-10" ? "hard" : undefined;
+  return STORY_DIFFICULTIES.find((difficulty) => storyDifficultyRequirement(difficulty) === stageId);
 }
 export function isStoryStageAvailable(stage: StageDef, cleared: ReadonlySet<string>): boolean {
   return isStoryDifficultyUnlocked(storyDifficultyOf(stage.id), cleared) && stage.prerequisiteStageIds.every(id => cleared.has(id));

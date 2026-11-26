@@ -95,6 +95,8 @@ export const RECOLLECTION_DE = {
   "recollection.tab.chapter5": "Kapitel 5",
   "recollection.tab.chapter6": "Kapitel 6",
   "recollection.tab.chapter7": "Kapitel 7",
+  "recollection.tab.chapter8": "Kapitel 8",
+  "recollection.tab.chapter9": "Kapitel 9",
   "recollection.summary.stage-4-3-pre": "Im Wartungsgang versperrt das zurückgeholte Trio den Weg, weil es so befohlen wurde.",
   "recollection.summary.stage-4-6-pre": "Pulsi beansprucht den Forscher als seine Beute, und Ripa fragt, ob sie wirklich kämpfen müssen.",
   "recollection.summary.stage-4-8-post": "Der Aufzug reißt ab und stürzt in Tiefen, die auf keiner Karte stehen.",

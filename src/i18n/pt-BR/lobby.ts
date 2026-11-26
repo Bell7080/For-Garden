@@ -169,6 +169,8 @@ export const LOBBY_PT_BR = {
   "storyDifficulty.easy.detail": "Sua primeira jornada com a história",
   "storyDifficulty.normal.detail": "Combates · Recompensas de moeda +25%",
   "storyDifficulty.hard.detail": "Combates · Recompensas de moeda +50%",
+  "storyDifficulty.rampage": "Frenesi",
+  "storyDifficulty.rampage.detail": "Combates · Recompensas de moeda +75%",
   "storyDifficulty.locked": "Conclua {difficulty} 4-10 para desbloquear",
   "storyDifficulty.unlocked.title": "Nova dificuldade desbloqueada!",
   "storyDifficulty.unlocked.body": "Parabéns, pesquisador!\nEnfrente inimigos mais fortes e ganhe novas recompensas de primeira vitória em {difficulty}.",

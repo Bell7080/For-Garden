@@ -164,7 +164,7 @@ describe("난이도별 스토리 클리어 기록", () => {
     const { storyClearRecords } = await import("../../src/core/storyClearRecord");
     const { storyStages } = await import("../../src/data/stages");
     expect(storyClearRecords(storyStages, new Set(["1-1", "1-3"]))).toEqual([
-      { difficulty: "easy", open: true, stageId: "1-3" }, { difficulty: "normal", open: false }, { difficulty: "hard", open: false },
+      { difficulty: "easy", open: true, stageId: "1-3" }, { difficulty: "normal", open: false }, { difficulty: "hard", open: false }, { difficulty: "rampage", open: false },
     ]);
     // 쉬움 4-10을 깨면 보통이 열린다 — 열렸어도 한 관문도 깨지 않았으면 stageId가 없다.
     const opened = storyClearRecords(storyStages, new Set(["1-1", "4-10"]));
@@ -172,6 +172,8 @@ describe("난이도별 스토리 클리어 기록", () => {
     const deep = storyClearRecords(storyStages, new Set(["4-10", "normal:1-1", "normal:1-2", "normal:4-10", "hard:1-1"]));
     expect(deep[1]).toEqual({ difficulty: "normal", open: true, stageId: "4-10" });
     expect(deep[2]).toEqual({ difficulty: "hard", open: true, stageId: "1-1" });
+    const finale = storyClearRecords(storyStages, new Set(["4-10", "normal:4-10", "hard:4-10", "rampage:9-10"]));
+    expect(finale[3]).toEqual({ difficulty: "rampage", open: true, stageId: "9-10" });
   });
 
   it("자기 카드와 친구 카드가 같은 값을 읽고, 서버가 보낸 모양은 다시 거른다", async () => {
@@ -180,7 +182,7 @@ describe("난이도별 스토리 클리어 기록", () => {
     const state = createDefaultSession();
     state.favorite = "rex"; state.cleared = new Set(["1-1", "1-2", "4-10", "normal:1-1"]);
     const own = playerProfileDisplay(state).competitiveStats.storyClears;
-    expect(own?.map(({ difficulty, stageId }) => [difficulty, stageId])).toEqual([["easy", "4-10"], ["normal", "1-1"], ["hard", undefined]]);
+    expect(own?.map(({ difficulty, stageId }) => [difficulty, stageId])).toEqual([["easy", "4-10"], ["normal", "1-1"], ["hard", undefined], ["rampage", undefined]]);
     const friend = publicProfile(state, "p1", new Date("2026-10-28T00:00:00Z"));
     expect(friend.competitiveStats.storyClears).toEqual(own);
     expect(friendProfileDisplay({ ...friend, lastActive: "방금" }).competitiveStats.storyClears).toEqual(own);

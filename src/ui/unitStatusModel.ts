@@ -9,7 +9,7 @@ import { t } from "../i18n";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "tailwind" | "order" | "resonance" | "regeneration" | "stealth" | "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation" | "echo" | "pressure" | "drowsy" | "sleep" | "groggy" | "intimidation" | "fear" | "plume" | "frostbite" | "biteMark" | "healCut" | "sunken" | "fangShave" | "quarry" | "resistShred" | "selfBuff";
+export type UnitStatusId = "tailwind" | "order" | "resonance" | "regeneration" | "stealth" | "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation" | "echo" | "pressure" | "drowsy" | "sleep" | "groggy" | "intimidation" | "fear" | "plume" | "frostbite" | "biteMark" | "healCut" | "sunken" | "fangShave" | "quarry" | "resistShred" | "selfBuff" | "fixedArmor" | "battleMomentum" | "groundCrushSlow";
 
 export interface UnitStatusView {
   /** 같은 상태를 제공자가 여럿 걸 수 있을 때도 HUD 객체를 덮어쓰지 않는 전투 내 키다. */
@@ -30,6 +30,7 @@ export interface UnitStatusView {
 
 /** 상태별 색. 피해 수치의 디버프 색과 같은 계열을 쓴다. */
 export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
+  fixedArmor: 0xb6a796, battleMomentum: 0xe1785e, groundCrushSlow: 0xae8b59,
   tailwind: 0x62c6d8, order: 0xe8c33a, resonance: 0x4fa8e4, regeneration: 0x62c6d8, stealth: 0x8f6aa4,
   /*
    * 무리 칩 둘. 검은 늑대는 이글거리는 재, 흰 늑대는 서리 푸른빛이다.
@@ -165,6 +166,22 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
       stacks: shell.stacks,
       remaining: shell.remaining, total: shell.total,
       detail: t(stackId === "scar" ? "augment.tag.detail.scar" : "augment.tag.detail.shell", { ...fighter.augmentShellGuard }) });
+  }
+  const front = fighter.def.frontlineBoss;
+  const boss = fighter.frontline;
+  if (front?.kind === "ironclad" && boss && boss.armor > 0) {
+    views.push({ id: "fixedArmor", name: t("skill.frontline.armor"), color: UNIT_STATUS_COLOR.fixedArmor, stacks: boss.armor,
+      detail: t("skill.frontline.armorDetail", { reduction: Math.round(100 * (1 - (1 - front.reductionPerLayer / 100) ** boss.armor)) }) });
+  }
+  if (front?.kind === "gungnir" && boss && boss.momentum > 0) {
+    const trait = fighter.def.ferocityTrait;
+    const multiplier = fighter.ferocityFever && trait.effectId === "gungnirMarch" ? trait.passiveMultiplier : 1;
+    views.push({ id: "battleMomentum", name: t("skill.frontline.momentum"), color: UNIT_STATUS_COLOR.battleMomentum, stacks: boss.momentum,
+      detail: t("skill.frontline.momentumDetail", { attack: boss.momentum * front.attackPercentPerStack * multiplier }) });
+  }
+  if (fighter.frontlineSlow) {
+    views.push({ id: "groundCrushSlow", name: t("skill.frontline.slow"), color: UNIT_STATUS_COLOR.groundCrushSlow,
+      detail: t("skill.frontline.slowDetail", { percent: fighter.frontlineSlow.percent }) });
   }
   if (fighter.shellGuard) {
     const shell = fighter.shellGuard;

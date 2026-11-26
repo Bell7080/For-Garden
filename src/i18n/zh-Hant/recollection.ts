@@ -95,6 +95,8 @@ export const RECOLLECTION_ZH_HANT = {
   "recollection.tab.chapter5": "第5章",
   "recollection.tab.chapter6": "第6章",
   "recollection.tab.chapter7": "第7章",
+  "recollection.tab.chapter8": "第8章",
+  "recollection.tab.chapter9": "第9章",
   "recollection.summary.stage-4-3-pre": "檢修通道里，被回收的三人組奉命擋住去路。",
   "recollection.summary.stage-4-6-pre": "帕爾希搶先把研究員認作自己的獵物，莉帕問是不是真的非打不可。",
   "recollection.summary.stage-4-8-post": "纜繩斷裂的升降機墜向地圖上沒有的深處。",

@@ -10,6 +10,7 @@ import { registerDataText } from "../../i18n";
 import { speakerStanding } from "./speakerStanding";
 
 export function registerDialogueTexts(story: DialogueStory): void {
+  registerDataText(story, "recollectionSummary", `dialogue.${story.id}.recollectionSummary`);
   if (story.titleCard) {
     registerDataText(story.titleCard, "title", `dialogue.${story.id}.title`);
     registerDataText(story.titleCard, "subtitle", `dialogue.${story.id}.subtitle`);

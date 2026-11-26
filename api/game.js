@@ -52,7 +52,7 @@ var init_define_import_meta_env = __esm({
   }
 });
 
-// node_modules/tslib/tslib.es6.mjs
+// ../../node_modules/tslib/tslib.es6.mjs
 var tslib_es6_exports = {};
 __export(tslib_es6_exports, {
   __addDisposableResource: () => __addDisposableResource,
@@ -491,7 +491,7 @@ function __rewriteRelativeImportExtension(path, preserveJsx) {
 }
 var extendStatics, __assign, __createBinding, __setModuleDefault, ownKeys, _SuppressedError, tslib_es6_default;
 var init_tslib_es6 = __esm({
-  "node_modules/tslib/tslib.es6.mjs"() {
+  "../../node_modules/tslib/tslib.es6.mjs"() {
     init_define_import_meta_env();
     extendStatics = function(d, b) {
       extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -578,9 +578,9 @@ var init_tslib_es6 = __esm({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js
+// ../../node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js
 var require_websocket_factory = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -690,9 +690,9 @@ Suggested solution: ${env.workaround}`;
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/lib/version.js
+// ../../node_modules/@supabase/realtime-js/dist/main/lib/version.js
 var require_version = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/lib/version.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/lib/version.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -701,9 +701,9 @@ var require_version = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/lib/constants.js
+// ../../node_modules/@supabase/realtime-js/dist/main/lib/constants.js
 var require_constants = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/lib/constants.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/lib/constants.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -752,9 +752,9 @@ var require_constants = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/lib/serializer.js
+// ../../node_modules/@supabase/realtime-js/dist/main/lib/serializer.js
 var require_serializer = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/lib/serializer.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/lib/serializer.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -907,9 +907,9 @@ var require_serializer = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/lib/transformers.js
+// ../../node_modules/@supabase/realtime-js/dist/main/lib/transformers.js
 var require_transformers = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/lib/transformers.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/lib/transformers.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -941,22 +941,22 @@ var require_transformers = __commonJS({
       PostgresTypes2["tsrange"] = "tsrange";
       PostgresTypes2["tstzrange"] = "tstzrange";
     })(PostgresTypes || (exports.PostgresTypes = PostgresTypes = {}));
-    var convertChangeData = (columns, record3, options = {}) => {
+    var convertChangeData = (columns, record4, options = {}) => {
       var _a;
       const skipTypes = (_a = options.skipTypes) !== null && _a !== void 0 ? _a : [];
-      if (!record3) {
+      if (!record4) {
         return {};
       }
-      return Object.keys(record3).reduce((acc, rec_key) => {
-        acc[rec_key] = (0, exports.convertColumn)(rec_key, columns, record3, skipTypes);
+      return Object.keys(record4).reduce((acc, rec_key) => {
+        acc[rec_key] = (0, exports.convertColumn)(rec_key, columns, record4, skipTypes);
         return acc;
       }, {});
     };
     exports.convertChangeData = convertChangeData;
-    var convertColumn = (columnName, columns, record3, skipTypes) => {
+    var convertColumn = (columnName, columns, record4, skipTypes) => {
       const column = columns.find((x) => x.name === columnName);
       const colType = column === null || column === void 0 ? void 0 : column.type;
-      const value = record3[columnName];
+      const value = record4[columnName];
       if (colType && !skipTypes.includes(colType)) {
         return (0, exports.convertCell)(colType, value);
       }
@@ -1087,9 +1087,9 @@ var require_transformers = __commonJS({
   }
 });
 
-// node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js
+// ../../node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js
 var require_phoenix_cjs = __commonJS({
-  "node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js"(exports, module) {
+  "../../node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js"(exports, module) {
     "use strict";
     init_define_import_meta_env();
     var __defProp2 = Object.defineProperty;
@@ -2940,9 +2940,9 @@ var require_phoenix_cjs = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js
+// ../../node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js
 var require_presenceAdapter = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3041,9 +3041,9 @@ var require_presenceAdapter = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js
+// ../../node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js
 var require_RealtimePresence = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3086,9 +3086,9 @@ var require_RealtimePresence = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js
+// ../../node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js
 var require_normalizeChannelError = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3113,9 +3113,9 @@ var require_normalizeChannelError = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js
+// ../../node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js
 var require_channelAdapter = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3221,9 +3221,9 @@ var require_channelAdapter = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js
+// ../../node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js
 var require_RealtimePostgresFilterBuilder = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3346,9 +3346,9 @@ var require_RealtimePostgresFilterBuilder = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js
+// ../../node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js
 var require_RealtimeChannel = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -4102,9 +4102,9 @@ var require_RealtimeChannel = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js
+// ../../node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js
 var require_socketAdapter = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -4224,9 +4224,9 @@ var require_socketAdapter = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+// ../../node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
 var require_RealtimeClient = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -4905,9 +4905,9 @@ var require_RealtimeClient = __commonJS({
   }
 });
 
-// node_modules/@supabase/realtime-js/dist/main/index.js
+// ../../node_modules/@supabase/realtime-js/dist/main/index.js
 var require_main = __commonJS({
-  "node_modules/@supabase/realtime-js/dist/main/index.js"(exports) {
+  "../../node_modules/@supabase/realtime-js/dist/main/index.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -5534,6 +5534,8 @@ var LOBBY_KO = {
   "storyDifficulty.easy.detail": "\uC2A4\uD1A0\uB9AC\uC640 \uD568\uAED8 \uC990\uAE30\uB294 \uCCAB \uD0D0\uC0AC",
   "storyDifficulty.normal.detail": "\uC804\uD22C \uC911\uC2EC \xB7 \uC7AC\uD654 \uBCF4\uC0C1 25% \uC99D\uAC00",
   "storyDifficulty.hard.detail": "\uC804\uD22C \uC911\uC2EC \xB7 \uC7AC\uD654 \uBCF4\uC0C1 50% \uC99D\uAC00",
+  "storyDifficulty.rampage": "\uD3ED\uC8FC",
+  "storyDifficulty.rampage.detail": "\uC804\uD22C \uC911\uC2EC \xB7 \uC7AC\uD654 \uBCF4\uC0C1 75% \uC99D\uAC00",
   "storyDifficulty.locked": "{difficulty} 4-10 \uD074\uB9AC\uC5B4 \uC2DC \uAC1C\uBC29",
   "storyDifficulty.unlocked.title": "\uC0C8\uB85C\uC6B4 \uB09C\uC774\uB3C4\uAC00 \uC5F4\uB838\uC5B4\uC694!",
   "storyDifficulty.unlocked.body": "\uCD95\uD558\uD574\uC694, \uC5F0\uAD6C\uC6D0 \uB2D8!\n{difficulty} \uB09C\uC774\uB3C4\uC5D0\uC11C \uB354 \uAC15\uD574\uC9C4 \uC801\uACFC \uC0C8\uB85C\uC6B4 \uCD08\uD68C \uBCF4\uC0C1\uC744 \uB9CC\uB098 \uBCF4\uC138\uC694.",
@@ -6721,6 +6723,7 @@ var RUNE_KO = {
   "rune.trait.title": "\uD2B9\uC131",
   "rune.trait.none": "\uD2B9\uC131 \uC5C6\uC74C",
   "rune.pick.select": "\uC120\uD0DD",
+  "rune.pick.multi": "\uD55C \uBC88\uC5D0 \uC120\uD0DD",
   "rune.pick.hint": "\uC544\uB798 \uBAA9\uB85D\uC5D0\uC11C \uB8EC\uC744 \uACE0\uB974\uC138\uC694.",
   "rune.trait.odds": "\uD655\uB960 \uC815\uBCF4",
   "rune.trait.odds.upgradeTitle": "\uB4F1\uAE09 \uC0C1\uC2B9",
@@ -7763,6 +7766,22 @@ var MISC_KO = {
 // src/i18n/ko/skill.ts
 init_define_import_meta_env();
 var SKILL_KO = {
+  "skill.frontline.armor": "\uACE0\uC815 \uC7A5\uAC11",
+  "skill.frontline.armorDetail": "\uBC1B\uB294 \uD53C\uD574 {reduction}% \uAC10\uC18C",
+  "skill.frontline.momentum": "\uAE30\uC138",
+  "skill.frontline.momentumDetail": "\uACF5\uACA9\uB825 {attack}% \uC99D\uAC00",
+  "skill.frontline.slow": "\uC9C0\uBC18 \uC555\uC0B4 \uB454\uD654",
+  "skill.frontline.slowDetail": "\uC774\uB3D9 \uC18D\uB3C4 {percent}% \uAC10\uC18C",
+  "skill.frontline.gungnirMarch": "\uD3ED\uC8FC \uC911 \uACF5\uACA9 \uC18D\uB3C4\uC640 \uC774\uB3D9 \uC18D\uB3C4\uAC00 {speed}% \uC0C1\uC2B9\uD558\uBA70 \uD328\uC2DC\uBE0C\uC758 \uD6A8\uC728\uC774 {efficiency}% \uC99D\uAC00\uD569\uB2C8\uB2E4.",
+  "skill.frontline.groundCrush": "\uD3ED\uC8FC\uB97C \uC2DC\uC791\uD558\uBA74 \uC8FC\uBCC0 \uC801\uC744 \uB04C\uC5B4\uB2F9\uACA8 {taunt}\uCD08\uAC04 \uB3C4\uBC1C\uD569\uB2C8\uB2E4. \uD3ED\uC8FC \uC911 {interval}\uCD08\uB9C8\uB2E4 \uC8FC\uBCC0 \uC801\uC5D0\uAC8C \uB300\uC0C1 \uCD5C\uB300 \uCCB4\uB825\uC758 {hp}%\uB9CC\uD07C \uACE0\uC815 \uD53C\uD574\uB97C \uC8FC\uACE0 0.1\uCD08\uAC04 \uACBD\uC9C1\uC2DC\uD0B5\uB2C8\uB2E4.",
+  "skill.frontline.gungnirBasic": "\uC138 \uBC88\uC9F8 \uAE30\uBCF8 \uACF5\uACA9\uC774 \uB300\uC0C1 \uBC29\uC5B4\uB825\uC758 {percent}%\uB97C \uBB34\uC2DC\uD569\uB2C8\uB2E4.",
+  "skill.frontline.ironcladBasic": "\uACE8\uC808\uC120\uC5D0 \uBC00\uB824\uB09C \uC801\uC774 \uB2E4\uB978 \uC801\uACFC \uBD80\uB52A\uD788\uBA74, \uBD80\uB52A\uD78C \uC801\uB3C4 \uBC00\uB824\uB098\uBA70 \uAC19\uC740 \uBE44\uC728\uC758 \uB1CC\uC9C4\uD0D5 \uD53C\uD574\uB97C \uBC1B\uC2B5\uB2C8\uB2E4. \uD55C \uACF5\uACA9\uC73C\uB85C \uAC19\uC740 \uC801\uC5D0\uAC8C \uD55C \uBC88\uB9CC \uC801\uC6A9\uB429\uB2C8\uB2E4.",
+  "skill.frontline.gungnirUltimate": "\uC774 \uAD81\uADF9\uAE30\uB85C \uBCF4\uD638\uB9C9\uC744 \uD30C\uAD34\uD55C \uC801\uC5D0\uAC8C \uD53C\uD574\uB97C {percent}% \uB354 \uC90D\uB2C8\uB2E4.",
+  "skill.frontline.ironcladUltimate": "\uC774 \uAD81\uADF9\uAE30\uAC00 \uB9CC\uB4E0 \uBCF4\uD638\uB9C9\uC774 \uC801\uC758 \uC9C1\uC811 \uACF5\uACA9\uC73C\uB85C \uC18C\uC9C4\uB418\uBA74, \uC8FC\uBCC0 \uC801\uC5D0\uAC8C \uBC29\uC5B4\uB825\uACFC \uC800\uD56D\uB825 \uAC01\uAC01\uC758 {percent}%\uB97C \uD569\uD55C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC90D\uB2C8\uB2E4.",
+  "skill.frontline.gungnirFever": "\uD3ED\uC8FC \uC911 \uC138 \uBC88\uC9F8 \uAE30\uBCF8 \uACF5\uACA9\uC774 \uC801\uC911\uD558\uBA74, {seconds}\uCD08 \uB4A4 \uAC19\uC740 \uC801\uC774 \uC0AC\uAC70\uB9AC \uC548\uC5D0 \uC788\uC744 \uB54C \uACF5\uACA9\uB825\uC758 {percent}%\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uD55C \uBC88 \uB354 \uC90D\uB2C8\uB2E4.",
+  "skill.frontline.ironcladFever": "\uAC19\uC740 \uC801\uC5D0\uAC8C \uD3ED\uC8FC \uD30C\uB3D9\uC744 3\uD68C \uC801\uC911\uC2DC\uD0AC \uB54C\uB9C8\uB2E4 \uADF8 \uC801\uC758 \uC774\uB3D9 \uC18D\uB3C4\uB97C {seconds}\uCD08\uAC04 {percent}% \uB0AE\uCDA5\uB2C8\uB2E4.",
+  "skill.frontline.gungnirPassive": "\uC804\uD22C \uC911 \uCC98\uC74C \uAE30\uC138 4\uACB9\uC5D0 \uB3C4\uB2EC\uD560 \uB54C \uC783\uC740 \uCCB4\uB825\uC758 {percent}%\uB97C \uD68C\uBCF5\uD569\uB2C8\uB2E4.",
+  "skill.frontline.ironcladPassive": "\uACE0\uC815 \uC7A5\uAC11\uC774 \uCC98\uC74C\uC73C\uB85C \uC804\uBD80 \uBC97\uACA8\uC9C0\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 \uBCF4\uD638\uB9C9\uC744 \uC5BB\uC2B5\uB2C8\uB2E4. \uBCF4\uD638\uB9C9\uC740 {seconds}\uCD08\uC5D0 \uAC78\uCCD0 \uC810\uCC28 \uAC10\uC18C\uD569\uB2C8\uB2E4.",
   "skill.ferocity.extendedService": "\uD3ED\uC8FC \uC911\uC5D0\uB294 \uC811\uC218\uB97C \uAC74\uB108\uB6F0\uC5B4 \uC11C\uBE59\uACFC \uB9C8\uAC10\uC744 \uBC88\uAC08\uC544 \uC0AC\uC6A9\uD569\uB2C8\uB2E4. \uACF5\uACA9 \uC18D\uB3C4\uAC00 {percent}% \uC99D\uAC00\uD569\uB2C8\uB2E4.",
   "skill.passive.reservedGuest": "\uCD5C\uB300 \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB192\uC740 \uC801\uC744 [[reserved-guest|\uB2E8\uACE8]]\uB85C \uC9C0\uC815\uD574 \uC4F0\uB7EC\uC9C8 \uB54C\uAE4C\uC9C0 \uC6B0\uC120 \uACF5\uACA9\uD569\uB2C8\uB2E4. \uB2E4\uB978 \uC801\uC758 \uC9C1\uC811 \uACF5\uACA9\uC5D0 \uB9DE\uC744 \uB54C\uB9C8\uB2E4 \uBC29\uC5B4\uB825\uACFC \uC800\uD56D\uB825\uC774 \uAC01\uAC01 {points}\uC529 \uC313\uC785\uB2C8\uB2E4. \uB204\uC801\uCE58\uB294 \uC804\uD22C\uAC00 \uB05D\uB0A0 \uB54C\uAE4C\uC9C0 \uB2E8\uACE8 \uC678\uC758 \uC801\uC758 \uACF5\uACA9\uC5D0 \uC801\uC6A9\uB429\uB2C8\uB2E4.",
   "skill.sentence.closingService": "\uB2E8\uACE8\uC5D0\uAC8C\uB294 [[special-fee|\uD2B9\uBCC4 \uC694\uAE08]]\uC744 1\uD68C \uC801\uC6A9\uD569\uB2C8\uB2E4.",
@@ -8847,6 +8866,8 @@ var RECOLLECTION_KO = {
   "recollection.tab.chapter5": "5\uC7A5",
   "recollection.tab.chapter6": "6\uC7A5",
   "recollection.tab.chapter7": "7\uC7A5",
+  "recollection.tab.chapter8": "8\uC7A5",
+  "recollection.tab.chapter9": "9\uC7A5",
   "recollection.summary.stage-4-3-pre": "\uC810\uAC80 \uD1B5\uB85C\uC5D0\uC11C \uD68C\uC218\uB41C \uC0BC\uC778\uC870\uAC00 \uBA85\uB839\uC774\uB77C\uC11C \uC55E\uC744 \uB9C9\uB294\uB2E4.",
   "recollection.summary.stage-4-6-pre": "\uD384\uC2DC\uAC00 \uC5F0\uAD6C\uC6D0\uC744 \uC81C \uBAAB\uC73C\uB85C \uCC1C\uD558\uACE0, \uB9AC\uD30C\uB294 \uC815\uB9D0 \uC2F8\uC6CC\uC57C \uD558\uB0D0\uACE0 \uBB3B\uB294\uB2E4.",
   "recollection.summary.stage-4-8-post": "\uB04A\uC5B4\uC9C4 \uC2B9\uAC15\uAE30\uAC00 \uC9C0\uB3C4\uC5D0 \uC5C6\uB294 \uC544\uB798\uB85C \uB5A8\uC5B4\uC9C4\uB2E4.",
@@ -9581,9 +9602,9 @@ function assertValidRuneInstance(rune) {
   const optionKeys = new Set(options.map(({ key }) => key));
   for (const [key, history] of Object.entries(rune.enhancementHistory)) {
     if (!optionKeys.has(key)) throw new Error("\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC635\uC158\uC758 \uAC15\uD654 \uC774\uB825\uC774 \uC788\uC2B5\uB2C8\uB2E4.");
-    history?.forEach((record3, index) => {
-      if (!Number.isInteger(record3.attempt) || record3.attempt < 1 || record3.attempt > RUNE_ENHANCEMENT_RULES.attemptsPerOption || record3.attempt !== index + 1 || !Number.isFinite(record3.successChance) || record3.successChance < 0 || record3.successChance > 1 || typeof record3.succeeded !== "boolean") throw new Error("\uAC15\uD654 \uC774\uB825 \uC21C\uC11C \uB610\uB294 \uD655\uB960\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-      if (!Number.isFinite(record3.valueAdded) || record3.valueAdded < 0 || !record3.succeeded && record3.valueAdded !== 0) throw new Error("\uAC15\uD654 \uC774\uB825\uC758 \uC99D\uAC00\uB7C9\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    history?.forEach((record4, index) => {
+      if (!Number.isInteger(record4.attempt) || record4.attempt < 1 || record4.attempt > RUNE_ENHANCEMENT_RULES.attemptsPerOption || record4.attempt !== index + 1 || !Number.isFinite(record4.successChance) || record4.successChance < 0 || record4.successChance > 1 || typeof record4.succeeded !== "boolean") throw new Error("\uAC15\uD654 \uC774\uB825 \uC21C\uC11C \uB610\uB294 \uD655\uB960\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+      if (!Number.isFinite(record4.valueAdded) || record4.valueAdded < 0 || !record4.succeeded && record4.valueAdded !== 0) throw new Error("\uAC15\uD654 \uC774\uB825\uC758 \uC99D\uAC00\uB7C9\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     });
     if ((history?.length ?? 0) > RUNE_ENHANCEMENT_RULES.attemptsPerOption) throw new Error("\uD55C \uC635\uC158\uC740 \uC138 \uBC88\uAE4C\uC9C0\uB9CC \uAC15\uD654\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
   }
@@ -9619,14 +9640,14 @@ function enhanceRune(rune, statKey, valueIncrease, random) {
   if (!Number.isFinite(valueIncrease) || valueIncrease < 0) throw new RangeError("\uAC15\uD654 \uC99D\uAC00\uB7C9\uC740 0 \uC774\uC0C1\uC758 \uC720\uD55C\uD55C \uAC12\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
   const succeeded = random < rune.currentSuccessChance;
   const previous = rune.enhancementHistory[statKey] ?? [];
-  const record3 = { attempt: previous.length + 1, successChance: rune.currentSuccessChance, succeeded, valueAdded: succeeded ? valueIncrease : 0 };
+  const record4 = { attempt: previous.length + 1, successChance: rune.currentSuccessChance, succeeded, valueAdded: succeeded ? valueIncrease : 0 };
   const update = (option) => option.key === statKey && succeeded ? { ...option, value: option.value + valueIncrease } : option;
   const attempts = runeEnhancementAttempts(rune) + 1;
   const next = {
     ...rune,
     mainStats: rune.mainStats.map(update),
     subStats: rune.subStats.map(update),
-    enhancementHistory: { ...rune.enhancementHistory, [statKey]: [...previous, record3] },
+    enhancementHistory: { ...rune.enhancementHistory, [statKey]: [...previous, record4] },
     currentSuccessChance: calculateRuneEnhancementSuccessChance(rune.currentSuccessChance, succeeded),
     enhancementComplete: attempts === runeTotalEnhancementAttempts(rune.rarity)
   };
@@ -9661,6 +9682,13 @@ var RARITY_LEVEL_GROWTH = {
   R: 2.2,
   SR: 2.4,
   SSR: 2.6
+};
+var COMMON_SECONDARY_STATS = {
+  critChance: 10,
+  critDamage: 150,
+  energyGain: 26,
+  lifeSteal: 0,
+  ferocityGain: 12
 };
 
 // src/core/relicResonance.ts
@@ -11018,10 +11046,10 @@ function normalizeGuildGuardFormation(slots) {
   return out;
 }
 function rankGuildGuardMembers(records) {
-  return [...records].sort((a, b) => b.score - a.score || a.at - b.at).map((record3, i) => ({ ...record3, rank: i + 1 }));
+  return [...records].sort((a, b) => b.score - a.score || a.at - b.at).map((record4, i) => ({ ...record4, rank: i + 1 }));
 }
 function guildGuardTotal(records) {
-  return records.reduce((sum, record3) => sum + Math.max(0, Math.round(record3.score)), 0);
+  return records.reduce((sum, record4) => sum + Math.max(0, Math.round(record4.score)), 0);
 }
 
 // src/core/combatEffects.ts
@@ -11301,10 +11329,12 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
   if (chorus?.kind === "lightChorus" && "cost" in battleDef.ultimate && battleDef.ultimate.cost !== void 0) {
     battleDef.ultimate = { ...battleDef.ultimate, cost: Math.max(1, battleDef.ultimate.cost - chorus.costReduction) };
   }
+  const plan = battleDef.frontlineBoss;
+  const hp = battleDef.stats.hp * (1 + (plan?.kind === "gungnir" ? plan.growthPercent : 0) / 100);
   return {
     def: battleDef,
-    hp: battleDef.stats.hp,
-    maxHp: battleDef.stats.hp,
+    hp,
+    maxHp: hp,
     // **돌파가 궁극기를 미리 채워 주지 않는다.** 마지막 등급에 `readyUltimate`가 달려 있던
     // 동안에는 다섯 등급에 닿은 개체가 종류를 가리지 않고 전투를 궁극기가 찬 채로 시작했다.
     energy: 0,
@@ -11527,6 +11557,19 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     observation: null,
     echo: null,
     aim: null,
+    ...plan ? { frontline: {
+      momentum: 0,
+      armor: plan.kind === "ironclad" ? plan.layers : 0,
+      stripAt: 0,
+      restoreAt: 0,
+      lastStandUsed: false,
+      lastStandShield: 0,
+      lastStandDecay: 0,
+      ultimateShield: 0,
+      ultimateShieldUntil: 0,
+      pulseAt: 0,
+      pulseHits: {}
+    } } : {},
     ingredientId: null,
     ...def.passive.reservedGuest ? { reservedGuest: { targetId: null, hasteStacks: 0, guardPoints: 0 } } : {},
     ingredientStacks: 0,
@@ -11986,7 +12029,8 @@ function applyConcussion(target, effect, critical, events, state, sourceId, chai
   const slam = attacker && !chained ? knockbackSlamOf(attacker) : void 0;
   const struck = critical || slam !== void 0;
   const percent = struck ? effect.criticalMaxHpPercent : effect.maxHpPercent;
-  const amount = percentHpDamage(target, percent);
+  const raw = percentHpDamage(target, percent);
+  const amount = target.def.frontlineBoss?.kind === "ironclad" ? receivedDamage(target, raw) : raw;
   const dealt = applyDamage(target, amount, events, state);
   scoreBossFixedDamage(state, target, dealt);
   events.push({ kind: "concussion", fighterId: target.id, amount: dealt, critical: struck, sourceId });
@@ -12592,6 +12636,10 @@ function breakShield(target, events) {
   target.shield.providerId = null;
   target.shieldFade = null;
   target.serviceBarrier = void 0;
+  if (target.frontline) {
+    target.frontline.ultimateShield = 0;
+    target.frontline.lastStandShield = 0;
+  }
   events.push({ kind: "shieldDepleted", fighterId: target.id, effect: { tag: "shieldBreak", intensity: 1 } });
 }
 function tickShieldFade(fighter, dt, events) {
@@ -13323,7 +13371,7 @@ function tickRaiders(fighter, dt, state) {
       const ranked = [...allies].sort((a, b) => b.def.stats.atk - a.def.stats.atk);
       const picks = ranked.slice(0, twin ? 2 : 1);
       if (picks.length === 0) picks.push(fighter);
-      for (const pick2 of picks) applyTeamBuff(pick2, { ...hum.resonance, sourceId: fighter.id });
+      for (const pick3 of picks) applyTeamBuff(pick3, { ...hum.resonance, sourceId: fighter.id });
     }
   }
   const march = fighter.def.passive.workerMarch;
@@ -13391,6 +13439,157 @@ function manyEyesPercent(state, fighter) {
   if (plan?.kind !== "manyEyes" || !isFighterAlive(fighter) || livingDrones(state, fighter).length === 0) return 0;
   const seen = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other) && other.observation !== null).length;
   return seen * plan.attackSpeedPercentPerObserved;
+}
+function frontlinePassiveMultiplier(fighter) {
+  const trait = fighter.def.ferocityTrait;
+  return fighter.ferocityFever && trait.effectId === "gungnirMarch" ? trait.passiveMultiplier : 1;
+}
+function frontlineGrowth(fighter) {
+  const plan = fighter.def.frontlineBoss;
+  return plan?.kind === "gungnir" ? plan.growthPercent * frontlinePassiveMultiplier(fighter) : 0;
+}
+function resizeGungnirHealth(fighter, previousPassiveMultiplier) {
+  const plan = fighter.def.frontlineBoss;
+  if (plan?.kind !== "gungnir") return;
+  const factor = (1 + frontlineGrowth(fighter) / 100) / (1 + plan.growthPercent * previousPassiveMultiplier / 100);
+  fighter.maxHp *= factor;
+  fighter.hp = Math.min(fighter.maxHp, fighter.hp * factor);
+}
+function gainFrontlineMomentum(fighter, state) {
+  const plan = fighter.def.frontlineBoss;
+  const boss = fighter.frontline;
+  if (plan?.kind !== "gungnir" || !boss || boss.momentum >= plan.stackLimit) return;
+  boss.momentum += 1;
+  const last = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  if (boss.momentum === plan.stackLimit && last?.kind === "frontlinePassive") {
+    applyHealing(state, fighter, (fighter.maxHp - fighter.hp) * last.percent / 100);
+  }
+}
+function ironcladThirdHit(attacker, target, dealt, critical, state, events) {
+  let concussionDealt = 0;
+  const concussion = attacker.def.basic.statusEffects?.find((effect) => effect.kind === "concussion");
+  if (concussion && isFighterAlive(target)) {
+    const hp = target.hp;
+    const combo = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+    const chain = combo?.kind === "frontlineBasic" ? { sourceId: attacker.id, hit: [target.id], radius: SKIRMISH.spacing * 0.45, propagate: true, critical } : void 0;
+    const dy = target.y - attacker.y;
+    const dx = target.x - attacker.x || (dy === 0 ? attacker.facing : 0);
+    const gap = dHypot(dx, dy);
+    if (beginKnockback(target, { remaining: 0.52, vx: dx / gap * 410, vy: dy / gap * 410, bouncesLeft: 0, chain }, events)) {
+      target.engaged = false;
+    }
+    applyConcussion(target, concussion, critical, events, state, attacker.id, true);
+    concussionDealt = hp - target.hp;
+  }
+  if (isFighterAlive(attacker)) grantShield(state, attacker, attacker.id, dealt + concussionDealt, events);
+}
+function stripFrontlineArmor(target, state, events) {
+  const plan = target.def.frontlineBoss;
+  const boss = target.frontline;
+  if (plan?.kind !== "ironclad" || !boss) return;
+  boss.restoreAt = state.elapsed + plan.restoreInterval;
+  if (boss.armor === 0 || state.elapsed < boss.stripAt) return;
+  boss.stripAt = state.elapsed + plan.stripInterval;
+  boss.armor -= 1;
+  if (boss.armor > 0 || boss.lastStandUsed) return;
+  const last = openedBreakthrough(target, "passive", (effects) => effects.passive);
+  if (last?.kind !== "frontlinePassive" || !last.seconds) return;
+  boss.lastStandUsed = true;
+  boss.lastStandShield = grantShield(state, target, target.id, target.maxHp * last.percent / 100, events);
+  boss.lastStandDecay = boss.lastStandShield / last.seconds;
+}
+function ironcladShockwave(owner2, state, events) {
+  const plan = openedBreakthrough(owner2, "ultimate", (effects) => effects.ultimate);
+  if (plan?.kind !== "frontlineUltimate") return;
+  const { def, res } = defensiveDefinition(owner2, state).def.stats;
+  const strikeOwner = { ...owner2, def: { ...owner2.def, stats: { ...owner2.def.stats, atk: def + res } } };
+  for (const enemy of state.fighters) {
+    if (enemy.side !== owner2.side && distance(owner2, enemy) <= (owner2.def.ultimate.radius ?? 0)) {
+      extraStrike(strikeOwner, enemy, plan.percent, "atk", "physical", state, events);
+    }
+  }
+}
+function enterFrontlineFever(fighter, state, events) {
+  const trait = fighter.def.ferocityTrait;
+  const boss = fighter.frontline;
+  if (!boss) return;
+  if (trait.effectId === "gungnirMarch") resizeGungnirHealth(fighter, 1);
+  if (trait.effectId !== "groundCrush") return;
+  boss.pulseAt = state.elapsed + trait.interval;
+  boss.pulseHits = {};
+  const enemies = state.fighters.filter((enemy) => enemy.side !== fighter.side && isFighterAlive(enemy) && distance(fighter, enemy) <= trait.radius);
+  pullEnemiesToward(fighter, { radius: trait.radius, distance: trait.pullDistance }, state);
+  for (const enemy of enemies) applyCombatStatusEffect(enemy, { kind: "taunt", seconds: trait.tauntSeconds }, events, state, fighter.id);
+}
+function tickFrontline(fighter, dt, rng, state, events) {
+  if (fighter.frontlineSlow && fighter.frontlineSlow.until <= state.elapsed) fighter.frontlineSlow = void 0;
+  const boss = fighter.frontline;
+  const plan = fighter.def.frontlineBoss;
+  if (!boss || !plan || !isFighterAlive(fighter)) return;
+  if (plan.kind === "gungnir") {
+    const chase = boss.chase;
+    if (!chase || chase.at > state.elapsed + 1e-8) return;
+    boss.chase = void 0;
+    const target = findFighter(state, chase.targetId);
+    if (target && distance(fighter, target) <= fighterReach(fighter)) {
+      extraStrike({ ...fighter, def: offensiveDefinition(fighter) }, target, chase.power, "atk", "physical", state, events);
+    }
+    return;
+  }
+  if (boss.armor < plan.layers && state.elapsed >= boss.restoreAt) {
+    boss.armor += 1;
+    boss.restoreAt += plan.restoreInterval;
+  }
+  const decay = Math.min(boss.lastStandShield, boss.lastStandDecay * dt);
+  const expired = state.elapsed >= boss.ultimateShieldUntil ? boss.ultimateShield : 0;
+  boss.lastStandShield -= decay;
+  boss.ultimateShield -= expired;
+  if (decay + expired > 0) {
+    fighter.shield.amount = Math.max(0, fighter.shield.amount - decay - expired);
+    if (fighter.shield.amount < 1e-6) {
+      fighter.shield.amount = 0;
+      fighter.shield.providerId = null;
+      events.push({ kind: "shieldDepleted", fighterId: fighter.id, effect: { tag: "shieldBreak", intensity: 0.6 } });
+    }
+  }
+  if (boss.ultimateAt !== void 0 && state.elapsed + 1e-8 >= boss.ultimateAt) {
+    boss.ultimateAt = void 0;
+    strikeAreaAttack(fighter, rng, state, events, true, void 0, true, true);
+    const guard = defensiveDefinition(fighter, state).def.stats;
+    const amount = (guard.def + guard.res) * plan.shieldGuardScale / 100;
+    fighter.shield.amount = Math.max(0, fighter.shield.amount - boss.ultimateShield);
+    boss.ultimateShield = grantShield(state, fighter, fighter.id, amount, events);
+    boss.ultimateShieldUntil = state.elapsed + plan.shieldSeconds;
+  }
+  const trait = fighter.def.ferocityTrait;
+  if (!fighter.ferocityFever || trait.effectId !== "groundCrush" || state.elapsed + 1e-8 < boss.pulseAt) return;
+  boss.pulseAt += trait.interval;
+  const breakthrough = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
+  for (const enemy of state.fighters) {
+    if (enemy.side === fighter.side || !isFighterAlive(enemy) || distance(fighter, enemy) > trait.radius) continue;
+    const resolution = resolveReceivedDamage(enemy, percentHpDamage(enemy, trait.hpPercent));
+    if (resolution.ignored) continue;
+    const dealt = applyDamage(enemy, resolution.applied, events, state);
+    scoreBossFixedDamage(state, enemy, dealt);
+    events.push({
+      kind: "attack",
+      attackerId: fighter.id,
+      targetId: enemy.id,
+      skill: "transfer",
+      animate: false,
+      followUp: true,
+      critical: false,
+      damageType: "true",
+      amount: resolution.applied,
+      contributionAmount: dealt
+    });
+    if (!isFighterAlive(enemy)) continue;
+    events.push(...applyStagger(enemy, 0.1, state));
+    if (breakthrough?.kind !== "frontlineFever") continue;
+    const hits = (boss.pulseHits[enemy.id] ?? 0) + 1;
+    boss.pulseHits[enemy.id] = hits;
+    if (hits % 3 === 0) enemy.frontlineSlow = { until: state.elapsed + breakthrough.seconds, percent: breakthrough.percent };
+  }
 }
 function grantShieldFromDamage(attacker, dealt, events, state) {
   const percent = currentBasicStep(attacker)?.shieldFromDamagePercent ?? 0;
@@ -13998,10 +14197,10 @@ function tickArtChannel(fighter, dt, state, events) {
     }
   }
 }
-function openedBreakthrough(fighter, slot, pick2) {
+function openedBreakthrough(fighter, slot, pick3) {
   if (!isBreakthroughSlotOpen(fighter.breakthrough, slot)) return void 0;
   const effects = fighter.def.breakthroughEffects;
-  return effects ? pick2(effects) : void 0;
+  return effects ? pick3(effects) : void 0;
 }
 function triggerBreakthroughOnKill(attacker, useUltimate, victim) {
   if (attacker.def.passive.todaysIngredient && victim && victim.id === attacker.ingredientId && isFighterAlive(attacker)) {
@@ -14583,7 +14782,7 @@ function strikeSecondary(attacker, secondary, input, percent, critical, state, e
   const hpBefore = secondary.hp;
   const shieldBefore = secondary.shield.amount;
   const shieldProviderId = secondary.shield.providerId;
-  applyDamage(secondary, resolution.applied, events, state);
+  applyDamage(secondary, resolution.applied, events, state, direct);
   if (direct && !resolution.ignored) countGuestGuardHit(secondary, attacker);
   const credited = recordDamageContribution(state, packCreditId(attacker), secondary, input.damageType, input.scalingStat, contribution, resolution, hpBefore, shieldBefore, shieldProviderId);
   tryTriggerEmergencyRecovery(secondary, state);
@@ -15021,7 +15220,7 @@ function attackSpeedParts(fighter, state) {
   const traitHastePercent = (fighter.traitHaste?.attackSpeedPercent ?? 0) + (state === void 0 ? 0 : warmUpAttackSpeedPercent(effectsFor(state, fighter), fighter.def.id, state.elapsed));
   const killHastePercent = fighter.killHaste?.attackSpeedPercent ?? 0;
   const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
-  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100) * (1 + reservedGuestHastePercent(fighter) / 100) * (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "extendedService" ? 1 + fighter.def.ferocityTrait.attackSpeedPercent / 100 : 1);
+  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100) * (1 + reservedGuestHastePercent(fighter) / 100) * (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "gungnirMarch" ? 1 + fighter.def.ferocityTrait.speedPercent / 100 : 1) * (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "extendedService" ? 1 + fighter.def.ferocityTrait.attackSpeedPercent / 100 : 1);
   return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed + ingredientHastePoints(fighter), boost: boostFactor, slow: slowFactor };
 }
 function currentAttackSpeed(fighter, state) {
@@ -15097,7 +15296,7 @@ function defensiveDefinition(target, state, source) {
   const fang = target.bt.fangShave ? Math.max(0, 1 - target.bt.fangShave.stacks * target.bt.fangShave.percentPerStack / 100) : 1;
   const feared = target.fear !== null ? 1 - FEAR_DEFENSE_REDUCTION_PERCENT / 100 : 1;
   const guestGuard = source && source.side !== target.side && target.reservedGuest?.targetId !== source.id ? target.reservedGuest?.guardPoints ?? 0 : 0;
-  const scrubbed = (1 + (target.scrub?.defenseResistancePercent ?? 0) / 100) * (1 - reservedGuestDebuff(state, target) / 100);
+  const scrubbed = (1 + frontlineGrowth(target) / 100) * (1 + (target.scrub?.defenseResistancePercent ?? 0) / 100) * (1 - reservedGuestDebuff(state, target) / 100);
   if (guestGuard === 0 && scrubbed === 1 && fang === 1 && feared === 1 && bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && mural <= 0 && bulwark <= 0 && huddle <= 0 && torika === void 0 && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
   return { ...target, def: { ...target.def, stats: {
     ...target.def.stats,
@@ -15349,13 +15548,13 @@ function lowestCurrentHpAlly(state, side, exceptId, alsoExceptId) {
 function moveSpeed(fighter, state) {
   const teamBonus = state ? Math.max(0, ...state.fighters.filter((ally) => ally.side === fighter.side && isFighterAlive(ally) && ally.ferocityFever && ally.def.ferocityTrait.effectId === "teamMoveSpeedBonus").map((ally) => ally.def.ferocityTrait.effectId === "teamMoveSpeedBonus" ? ally.def.ferocityTrait.bonusPercent : 0)) : 0;
   const trait = fighter.def.ferocityTrait;
-  const selfBonus = fighter.ferocityFever && (trait.effectId === "graffitiRun" || trait.effectId === "overclockBody") ? trait.moveSpeedPercent : 0;
+  const selfBonus = fighter.ferocityFever ? trait.effectId === "gungnirMarch" ? trait.speedPercent : trait.effectId === "graffitiRun" || trait.effectId === "overclockBody" ? trait.moveSpeedPercent : 0 : 0;
   const tailwindPercent = fighter.tailwindFor > 0 && fighter.tailwind?.kind === "tailwind" ? fighter.tailwind.moveSpeedPercent : 0;
   const chillPercent = fighter.chill ? controlMagnitude(fighter, fighter.chill.stacks * fighter.chill.speedPercentPerStack) : 0;
   const submergedPercent = controlMagnitude(fighter, fighter.submergedIn?.moveSlowPercent ?? 0);
   const hungry = feverBreakthrough(fighter);
   const hungryPercent = hungry?.kind === "hungryStride" ? hungry.moveSpeedPercent : 0;
-  return (fighter.def.stats.moveSpeed + ingredientHastePoints(fighter)) * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100) * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100) * (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100) * (1 + confinementMoveSpeedPercent(fighter) / 100);
+  return (fighter.def.stats.moveSpeed + ingredientHastePoints(fighter)) * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100) * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100) * (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100) * (1 + confinementMoveSpeedPercent(fighter) / 100) * (1 - (fighter.frontlineSlow ? controlMagnitude(fighter, fighter.frontlineSlow.percent) : 0) / 100);
 }
 function distance(a, b) {
   return dHypot(b.x - a.x, b.y - a.y);
@@ -15553,7 +15752,11 @@ function resolveChainCollision(flyer, state, events) {
   const struck = state.fighters.find((other) => other.side === flyer.side && other.id !== flyer.id && isFighterAlive(other) && other.knockback === null && !chain.hit.includes(other.id) && distance(flyer, other) <= chain.radius);
   if (!struck) return;
   chain.hit.push(struck.id);
-  applyConcussion(struck, concussion, false, events, state, source.id, true);
+  applyConcussion(struck, concussion, chain.critical ?? false, events, state, source.id, true);
+  if (chain.propagate && isFighterAlive(struck) && flyer.knockback) {
+    const { vx, vy } = flyer.knockback;
+    if (beginKnockback(struck, { remaining: 0.52, vx, vy, bouncesLeft: 0, chain }, events)) struck.engaged = false;
+  }
 }
 function tickAfterglow(fighter, state, events) {
   const stacks = fighter.bt.curseDeathStacks;
@@ -15795,6 +15998,7 @@ function gainFerocity(fighter, base, state, events) {
   fighter.ferocity = Math.min(ferocityMax, before + adjusted);
   if (before < ferocityMax && fighter.ferocity >= ferocityMax) {
     fighter.ferocityFever = true;
+    enterFrontlineFever(fighter, state, events);
     fighter.feverDamageTaken = 0;
     fighter.bt.feverHealingDone = 0;
     fighter.feverHold = 0;
@@ -16161,10 +16365,12 @@ function offensiveDefinition(attacker) {
   const converted = passive.kind === "refillMagazine" ? attacker.refillAttackRatio : 1;
   const ramped = attacker.rampFactor;
   const fed = passive.todaysIngredient ? 1 + attacker.ingredientStacks * passive.todaysIngredient.attackPercentPerStack / 100 : 1;
-  if (passive.attackPowerPercent === void 0 && passive.criticalDamagePercent === void 0 && conditional === 1 && vandalised === 1 && focused === 1 && converted === 1 && ramped === 1 && fed === 1) return attacker.def;
+  const plan = attacker.def.frontlineBoss;
+  const momentum = plan?.kind === "gungnir" ? 1 + (attacker.frontline?.momentum ?? 0) * plan.attackPercentPerStack * frontlinePassiveMultiplier(attacker) / 100 : 1;
+  if (momentum === 1 && passive.attackPowerPercent === void 0 && passive.criticalDamagePercent === void 0 && conditional === 1 && vandalised === 1 && focused === 1 && converted === 1 && ramped === 1 && fed === 1) return attacker.def;
   return { ...attacker.def, stats: {
     ...attacker.def.stats,
-    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional * vandalised * focused * converted * ramped * fed,
+    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional * vandalised * focused * converted * ramped * fed * momentum,
     ap: attacker.def.stats.ap * vandalised * ramped,
     critDamage: attacker.def.stats.critDamage + (passive.criticalDamagePercent ?? 0)
   } };
@@ -16341,7 +16547,9 @@ function resolveReceivedDamage(target, rawAmount) {
     reduction = 100 - (100 - reduction) * (1 - target.def.ferocityTrait.reductionPercent / 100);
   }
   const amplified = rawAmount * overpaintMultiplier(target) * quarryMultiplier(target) * (1 + (target.shimmer?.takenPercent ?? 0) / 100) * (1 + (target.poison?.takenPercent ?? 0) / 100) * (1 + (target.bt.biteMark ? target.bt.biteMark.stacks * target.bt.biteMark.percentPerStack : 0) / 100);
-  const softened = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
+  const armor = target.def.frontlineBoss;
+  const armorFactor = armor?.kind === "ironclad" ? dPow(1 - armor.reductionPerLayer / 100, target.frontline?.armor ?? 0) : 1;
+  const softened = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100) * armorFactor));
   const reduced = applyImpactCap(target, softened);
   const ignored = plan !== void 0 && reduced <= plan.ignoreAtOrBelow;
   return { raw: rawAmount, reduced, applied: ignored ? 0 : reduced, ignored };
@@ -16400,16 +16608,24 @@ function reflectWall(owner2, absorbed, state, events) {
     events.push({ kind: "death", fighterId: victim.id, sourceId: owner2.id });
   }
 }
-function applyDamage(target, amount, events, state) {
+function applyDamage(target, amount, events, state, direct = false) {
   if (amount <= 0) return 0;
   amount -= shareWithBulwark(target, amount, events, state);
   if (amount <= 0) return 0;
   if (target.sleep) wakeUp(target, true);
   if (target.ferocityFever) target.feverDamageTaken += amount;
   const hpBefore = target.hp;
+  let ironcladShieldBroken = false;
   if (target.shield.amount > 0) {
     const absorbed = Math.min(target.shield.amount, amount);
     target.shield.amount -= absorbed;
+    const armor = target.frontline;
+    if (armor) {
+      const ultimateAbsorbed = Math.min(armor.ultimateShield, absorbed);
+      armor.ultimateShield -= ultimateAbsorbed;
+      armor.lastStandShield = Math.max(0, armor.lastStandShield - (absorbed - ultimateAbsorbed));
+      ironcladShieldBroken = direct && ultimateAbsorbed > 0 && armor.ultimateShield === 0;
+    }
     if (target.serviceBarrier) {
       target.serviceBarrier.amount = Math.max(0, target.serviceBarrier.amount - absorbed);
       if (target.serviceBarrier.amount === 0) target.serviceBarrier = void 0;
@@ -16433,6 +16649,8 @@ function applyDamage(target, amount, events, state) {
   if (dealt > 0 && isFighterAlive(target) && target.def.passive.kind === "shellGuard") gainShellGuard(target, 1, state, events);
   if (dealt > 0 && isFighterAlive(target)) tryTriggerRescueShield(target, state, events);
   if (dealt > 0 && isFighterAlive(target)) noteFlinch(target, dealt);
+  if (direct && dealt > 0 && isFighterAlive(target)) stripFrontlineArmor(target, state, events);
+  if (ironcladShieldBroken && isFighterAlive(target)) ironcladShockwave(target, state, events);
   return dealt;
 }
 function tryTriggerRescueShield(target, state, events) {
@@ -17095,6 +17313,10 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   const skill = irnaBreakthroughSkill(attacker, target, staccatoChainSkill(attacker, target, breakthroughSkill(attacker, useUltimate), useUltimate), useUltimate);
   const cycle = attacker.def.basic.cycle;
   const basicStep = !useUltimate && cycle?.length ? basicCycleIndex(attacker, cycle.length) : void 0;
+  const actionEventStart = events.length;
+  const frontline = attacker.def.frontlineBoss;
+  const frontlineThird = basicStep === 2 && frontline !== void 0;
+  const frontlinePierce = frontlineThird && frontline.kind === "gungnir" ? openedBreakthrough(attacker, "basic", (effects) => effects.basic) : void 0;
   const closing = attacker.def.basic.closingService;
   const finisher = closing !== void 0 && !useUltimate && basicStep === closing.stepIndex;
   const guest = attacker.reservedGuest?.targetId === target.id;
@@ -17176,9 +17398,14 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     // 강화된 한 방만 방어·저항을 지나간다. 속성 상성과 대상 경감은 그대로 거친다.
     ignoresDefense: empowered,
     // 방어를 일부 지나치는 한 방. 스킬이 적은 값에 폭주 특성(「폭풍 속의 조준」)이 기본 공격에 더하는 몫을 합친다.
-    defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + basicDefenseIgnorePercent(attacker, attackingInFever, useUltimate))
+    defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + basicDefenseIgnorePercent(attacker, attackingInFever, useUltimate) + (frontlinePierce?.kind === "frontlineBasic" ? frontlinePierce.percent : 0))
   };
-  const offense = offensiveDefinition(attacker);
+  let offense = offensiveDefinition(attacker);
+  if (!useUltimate && frontline?.kind === "ironclad") {
+    const guard = defensiveDefinition(attacker, state).def.stats;
+    const bonus = (guard.def + guard.res) * frontline.basicGuardScale / damageInput.power;
+    offense = { ...offense, stats: { ...offense.stats, atk: offense.stats.atk + bonus } };
+  }
   const markBonus = critical ? huntMarkCriticalDamage(attacker, target, state) : 0;
   const damageAttacker = { ...attacker, def: markBonus > 0 ? { ...offense, stats: { ...offense.stats, critDamage: offense.stats.critDamage + markBonus } } : offense };
   const damageTarget = defensiveDefinition(target, state, attacker);
@@ -17212,7 +17439,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   if (!resolution.ignored && finisher && guest && openedBreakthrough(attacker, "passive", (effects) => effects.passive)?.kind === "guestShieldBreak") breakShield(target, events);
   const shieldBefore = target.shield.amount;
   const shieldProviderId = target.shield.providerId;
-  const dealt = applyDamage(target, amount, events, state);
+  const dealt = applyDamage(target, amount, events, state, true);
   if (bashInput && isFighterAlive(target)) {
     const concussion = attacker.def.basic.statusEffects?.find((effect) => effect.kind === "concussion");
     if (concussion?.kind === "concussion") applyConcussion(target, concussion, false, events, state, attacker.id, true);
@@ -17272,7 +17499,11 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   const healFromDamage = (dealt2) => {
     drainFromDamage(state, attacker, dealt2, damageHealingRate(attacker, skill, attackingInFever, target), events);
   };
+  const hpBeforeDrain = attacker.hp;
   healFromDamage(dealt);
+  if (frontline?.kind === "gungnir" && skill.damageHealingPercent && attacker.hp > hpBeforeDrain) {
+    gainFrontlineMomentum(attacker, state);
+  }
   if (useUltimate && attacker.def.ultimate.commandsPack === true) commandPack(attacker, target, rng, state, events);
   if (useUltimate) {
     const rush = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
@@ -17408,6 +17639,17 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     maybeFreezeAtMaxChill(attacker, target, events, state);
     if (!useUltimate) applyBasicBreakthrough(attacker, target, state, events);
   }
+  if (frontlineThird && !resolution.ignored && isFighterAlive(attacker)) {
+    if (frontline.kind === "ironclad") ironcladThirdHit(attacker, target, dealt, critical, state, events);
+    else if (attackingInFever && attacker.frontline) {
+      const chase = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
+      if (chase?.kind === "frontlineFever") attacker.frontline.chase = {
+        targetId: target.id,
+        at: state.elapsed + chase.seconds,
+        power: chase.percent
+      };
+    }
+  }
   if (!useUltimate && comboHit === void 0) triggerRally(attacker, state, events);
   if (!useUltimate && comboHit === void 0) callStarfall(attacker, target, rng);
   if (!useUltimate && !encoreLiquidation && targetWasPoisoned && isFighterAlive(target) && !resolution.ignored && openedBreakthrough(attacker, "basic", (effects) => effects.basic)?.kind === "poisonPulse") {
@@ -17484,7 +17726,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
       const secondaryHpBefore = secondary.hp;
       const secondaryShieldBefore = secondary.shield.amount;
       const secondaryShieldProviderId = secondary.shield.providerId;
-      applyDamage(secondary, splashAmount, events, state);
+      applyDamage(secondary, splashAmount, events, state, true);
       if (!splashResolution.ignored) countGuestGuardHit(secondary, attacker);
       const splashCredited = recordDamageContribution(state, packCreditId(attacker), secondary, damageInput.damageType, damageInput.scalingStat, splashContribution, splashResolution, secondaryHpBefore, secondaryShieldBefore, secondaryShieldProviderId);
       tryTriggerEmergencyRecovery(secondary, state);
@@ -17513,7 +17755,9 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   state.log.push(`${attacker.def.name} \u2192 ${target.def.name} ${amount}`);
   if (!isFighterAlive(target)) {
     clearDefeatedStatuses(target);
-    events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
+    if (!frontlineThird || frontline.kind !== "ironclad" || !hasDeathEvent(events, actionEventStart, target.id)) {
+      events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
+    }
     state.log.push(`${target.def.name} \uC804\uD22C \uBD88\uB2A5`);
   }
 }
@@ -17623,6 +17867,20 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
   const healingTargets = ultimate?.targeting === "targetedCircle" && (ultimate.allyHealingPower !== void 0 || encoreHeal > 0) ? aliveFighters(state, attacker.side).filter(inCircle) : [];
   if (ultimateProbing && useUltimate) throw new UltimateProbe(targets2.length > 0 || healingTargets.length > 0);
   if (targets2.length === 0 && healingTargets.length === 0) return;
+  const frontline = attacker.def.frontlineBoss;
+  if (useUltimate && !followUp && frontline?.kind === "ironclad" && attacker.frontline) {
+    attacker.energy -= ultimateCost(state, attacker, true);
+    attacker.frontline.ultimateAt = state.elapsed + frontline.windup;
+    attacker.attackCooldown = Math.max(attacker.attackCooldown, frontline.windup);
+    events.push({
+      kind: "areaImpact",
+      attackerId: attacker.id,
+      ultimate: true,
+      damageType: skill.damageType,
+      area: { shape: "radial", x: center.x, y: center.y, radius: skill.radius ?? 0 }
+    });
+    return;
+  }
   const supportiveOnly = targets2.length === 0 && healingTargets.length > 0;
   const impactArea = skill.targeting === "battlefieldEnemies" ? { shape: "battlefield" } : skill.targeting === "splitShot" ? {
     shape: "radial",
@@ -17662,6 +17920,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
   const passiveCritPoints = attacker.def.passive.criticalChancePercent ?? 0;
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
   let sharedShieldSource = 0;
+  let gungnirRecovery = 0;
   let ultimateMeteorDealt = 0;
   const sutured = !useUltimate && !free && consumeSutureReady(attacker);
   let suturedTotal = 0;
@@ -17676,7 +17935,8 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
     const focusCrit = !useUltimate && skill.targeting === "splitShot" && attacker.focus >= FOCUS.maxStacks && openedBreakthrough(attacker, "passive", (effects) => effects.passive)?.kind === "fullFocusCrit";
     const critical = bleedingBite || focusCrit || index === 0 && traitSplashCritical || isCriticalHit(criticalChance, rng());
     const detonated = detonation ? { ...skill, power: (skill.power ?? 0) * (target.overpaint?.stacks ?? 0) } : skill;
-    const plumePower = frostPlumeBreakthroughMultiplier(attacker, target, useUltimate) * bossDamageMultiplier(attacker, target, useUltimate);
+    const shieldBreak = useUltimate && frontline?.kind === "gungnir" && target.shield.amount > 0 ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : void 0;
+    const plumePower = frostPlumeBreakthroughMultiplier(attacker, target, useUltimate) * bossDamageMultiplier(attacker, target, useUltimate) * (shieldBreak?.kind === "frontlineUltimate" ? 1 + shieldBreak.percent / 100 : 1);
     const scaled = plumePower === 1 || detonated.power === void 0 ? detonated : { ...detonated, power: detonated.power * plumePower };
     const damageInput = {
       ...scaled,
@@ -17693,14 +17953,18 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
     if (skill.breaksShield === true) breakShield(target, events);
     const shieldBefore = target.shield.amount;
     const shieldProviderId = target.shield.providerId;
-    const hpLost = applyDamage(target, amount, events, state);
+    const hpLost = applyDamage(target, amount, events, state, true);
     if (!resolution.ignored) countGuestGuardHit(target, attacker);
     const credited = recordDamageContribution(state, packCreditId(attacker), target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
     tryTriggerEmergencyRecovery(target, state);
     tryTriggerLowHpVanish(target, state);
     triggerCombatAugments(state, target, "onLowHp", events);
     if (isFighterAlive(target) && hpLost > 0) triggerCombatAugments(state, target, "onDamaged", events);
-    drainFromDamage(state, attacker, hpBefore - target.hp, damageHealingRate(attacker, skill, attackingInFever, target), events);
+    if (useUltimate && frontline?.kind === "gungnir") {
+      gungnirRecovery += hpLost * damageHealingRate(attacker, skill, attackingInFever, target) / 100;
+    } else {
+      drainFromDamage(state, attacker, hpBefore - target.hp, damageHealingRate(attacker, skill, attackingInFever, target), events);
+    }
     if (!useUltimate) releaseShieldHit(attacker, target, state, events);
     if (!useUltimate) grantShieldFromDamage(attacker, hpBefore - target.hp, events, state);
     sharedShieldSource += hpBefore - target.hp;
@@ -17786,6 +18050,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
   if (ultimateMeteor && attacker.def.passive.starfall) healFromStarfall(attacker, ultimateMeteorDealt, attacker.def.passive.starfall, state, events, ultimateMeteor.healMultiplier);
   if (!useUltimate && !followUp && !free) callStarfall(attacker, center, rng);
   if (!attacker.bt.dashBack?.running) gainFerocity(attacker, actionFerocityGain(attacker.def.stats, useUltimate), state, events);
+  if (gungnirRecovery > 0 && applyHealing(state, attacker, gungnirRecovery) > 0) gainFrontlineMomentum(attacker, state);
 }
 function orbitStep(position, target, step2, radius, direction) {
   const dx = position.x - target.x;
@@ -18476,6 +18741,7 @@ function advance(state, dt, rng, events) {
       fighter.hop *= recovery;
       continue;
     }
+    if (fighter.frontline?.ultimateAt !== void 0) continue;
     if (fighter.fear) {
       fleeFromFear(fighter, dt, rng, state, events);
       continue;
@@ -18605,7 +18871,7 @@ function advance(state, dt, rng, events) {
 }
 function canFireUltimate(state, fighter) {
   if (state.phase !== "fight" || !isFighterAlive(fighter) || fighter.undying !== null || fighter.stunnedFor > 0 || fighter.staggeredFor > 0 || fighter.frozen !== null || fighter.energy < ultimateCost(state, fighter, false)) return false;
-  if (fighter.frenzy) return false;
+  if (fighter.frenzy || fighter.frontline?.ultimateAt !== void 0) return false;
   if (fighter.def.ultimate.targeting === "duo") {
     const duo = duoOf(fighter, state);
     return duo !== void 0 && isFighterAlive(duo);
@@ -19047,7 +19313,13 @@ function stepSkirmish(state, dt, rng = NO_CRIT) {
       if (fighter.def.passive.kind === "refillMagazine") fighter.refillAttackRatio = refillAttackRatio(fighter, state);
     }
     advance(state, step2, rng, events);
+    const beforeFrontline = events.length;
+    if (state.phase === "fight") {
+      for (const fighter of state.fighters) tickFrontline(fighter, step2, rng, state, events);
+    }
+    const frontlineChangedBattle = events.length > beforeFrontline;
     announceSilentDeaths(state, events, before);
+    if (frontlineChangedBattle) settle(state, events);
     if (state.horde && state.phase === "fight") advanceHorde(state, events);
     if (state.automaticUltimates) {
       for (const fighter of state.fighters) {
@@ -19078,7 +19350,10 @@ function stepSkirmish(state, dt, rng = NO_CRIT) {
       if (!fighter.ferocityFever) fighter.feverHold = 0;
       fighter.feverElapsed = fighter.ferocityFever ? fighter.feverElapsed + step2 : 0;
       drainFerocityFever(fighter, drainStep);
-      if (feverBefore && !fighter.ferocityFever) applyFerocityBreakthrough(fighter, state, events);
+      if (feverBefore && !fighter.ferocityFever) {
+        if (fighter.def.frontlineBoss?.kind === "gungnir") resizeGungnirHealth(fighter, fighter.def.ferocityTrait.effectId === "gungnirMarch" ? fighter.def.ferocityTrait.passiveMultiplier : 1);
+        applyFerocityBreakthrough(fighter, state, events);
+      }
     });
     state.fighters.forEach((fighter) => {
       tickUltimateBreakthrough(fighter, step2, state, events);
@@ -19789,6 +20064,155 @@ var TORIKA_STORY = {
   ]
 };
 
+// src/data/frontlineBosses.ts
+init_define_import_meta_env();
+var NOKAN = {
+  id: "nokan",
+  name: "\uB178\uCE78",
+  enemyOnly: true,
+  squad: "annihilation",
+  rarity: "SSR",
+  element: "fire",
+  role: "warrior",
+  portraitAssetId: "nokan",
+  specimenNumber: "229",
+  projectName: "\uAD81\uB2C8\uB974",
+  origin: "\uAE30\uAC00\uB178\uD1A0\uC0AC\uC6B0\uB8E8\uC2A4",
+  excavationSite: "\uC81C1\uC9C0\uBD80 \uC774\uC1A1 \uC804 \uB0A8\uBD80 \uBCF4\uC874 \uD45C\uBCF8\uCC3D",
+  fossilRecord: "\uD131\uBF08\uC758 \uD55C\uCABD \uCE58\uC870\uAC00 \uC544\uBB38 \uCC44\uB85C \uB0A8\uC544 \uC788\uC5C8\uB2E4. \uAC19\uC740 \uC0C1\uC790\uC5D0\uC11C \uB098\uC628 \uAC08\uBE44\uBF08 \uC138 \uC810\uC5D0\uB3C4 \uACE8\uC808\uC774 \uBD99\uC740 \uC790\uAD6D\uC774 \uC788\uC5C8\uB2E4. \uD45C\uBCF8\uCC3D\uC758 \uC774\uC1A1\uD45C\uC5D0\uB294 \uD68C\uC218 \uB0A0\uC9DC\uC640 \uAD81\uB2C8\uB974\uB77C\uB294 \uC774\uB984\uB9CC \uC801\uD600 \uC788\uC5C8\uB2E4.",
+  observationProfile: { originYear: "\uBC31\uC545\uAE30 \uD6C4\uAE30", restorationYear: "E.C. 19\uB144", lifeStage: "\uC131\uCCB4", height: "1.87 m", weight: "79 kg" },
+  catalogSummary: "\uBD89\uC740 \uC548\uAC10\uC758 \uC678\uD22C\uC640 \uAC08\uBE44 \uC544\uB798\uB85C \uC774\uC5B4\uC9C0\uB294 \uD749\uD130\uAC00 \uAD00\uCC30\uB418\uB294 \uACF5\uBA78\uC758 \uAE30\uAC00\uB178\uD1A0\uC0AC\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
+  unlockRecord: { status: "recorded", text: "\uD749\uD130\uB97C \uAC00\uB9AC\uB294 \uBD95\uB300\uB294 \uAC08\uC544\uB3C4 \uC678\uD22C\uC758 \uCC22\uC5B4\uC9C4 \uACF3\uC740 \uAFF0\uB9E4\uC9C0 \uC54A\uB294\uB2E4. \uBCF5\uB3C4 \uB05D\uC5D0\uC11C \uBC1C\uC18C\uB9AC\uAC00 \uB4E4\uB9AC\uBA74 \uC0AC\uB78C \uC218\uBD80\uD130 \uC14C\uB2E4. \uCCAB \uBC1C\uC18C\uB9AC\uAC00 \uBA4E\uC73C\uBA74 \uC9C1\uC811 \uB098\uAC00\uC11C \uB204\uAD6C \uBAAB\uC774 \uBE44\uC5C8\uB294\uC9C0 \uD655\uC778\uD588\uB2E4." },
+  squadNote: "\uACF5\uBA78\uC758 \uB300\uC7A5. \uAD81\uB2C8\uB974\uB77C\uB294 \uC774\uB984\uC73C\uB85C \uC120\uB450\uB97C \uC774\uB04C\uBA70, \uC740\uD14C\uAC00 \uD1F4\uB85C\uB97C \uC815\uD558\uB294 \uB3D9\uC548 \uC801\uC758 \uC804\uC120\uC744 \uB6AB\uB294\uB2E4.",
+  researcherTitle: "\uC5F0\uAD6C\uC6D0",
+  reachTier: "melee",
+  strike: "slash",
+  ferocityMax: 110,
+  excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
+  stats: { hp: 1150, def: 66, res: 56, atk: 182, ap: 25, attackSpeed: 108, moveSpeed: 110, ...COMMON_SECONDARY_STATS },
+  frontlineBoss: { kind: "gungnir", growthPercent: 40, attackPercentPerStack: 8, stackLimit: 4 },
+  passive: {
+    id: "nokan-passive",
+    name: "\uC8FD\uC74C\uC774 \uD0A4\uC6B4 \uBAB8",
+    kind: "battleMomentum",
+    value: 40,
+    durationSeconds: 0,
+    iconAssetId: "skill-icon-buff",
+    effectType: "buff",
+    desc: "\uCD5C\uB300 \uCCB4\uB825\xB7\uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825\uC774 \uAC01\uAC01 40% \uC99D\uAC00\uD569\uB2C8\uB2E4. \uC790\uC2E0\uC758 \uC2A4\uD0AC\uB85C \uCCB4\uB825\uC744 \uD68C\uBCF5\uD558\uBA74 \uD55C \uACF5\uACA9\uB2F9 [[battle-momentum|\uAE30\uC138]]\uB97C 1\uACB9 \uC5BB\uC2B5\uB2C8\uB2E4. \uACB9\uB2F9 \uACF5\uACA9\uB825 8%\uAC00 \uC99D\uAC00\uD558\uBA70 \uC804\uD22C\uAC00 \uB05D\uB0A0 \uB54C\uAE4C\uC9C0 \uCD5C\uB300 4\uACB9 \uC313\uC785\uB2C8\uB2E4."
+  },
+  basic: {
+    id: "nokan-basic",
+    name: "\uBF08\uAE01\uAE30",
+    power: 110,
+    targeting: "single",
+    damageType: "physical",
+    effectType: "physical",
+    iconAssetId: "skill-icon-physical",
+    cycle: [{ name: "\uBCA0\uAE30", power: 110 }, { name: "\uBCA0\uAE30", power: 110 }, { name: "\uBF08\uAE01\uAE30", power: 145, damageHealingPercent: 35 }]
+  },
+  ultimate: {
+    id: "nokan-ult",
+    name: "\uC804\uC120\uC744 \uCC22\uC5B4\uB77C",
+    power: 240,
+    radius: 230,
+    cost: 145,
+    targeting: "nearbyEnemies",
+    breaksShield: true,
+    damageType: "physical",
+    effectType: "physical",
+    iconAssetId: "skill-icon-physical",
+    damageHealingPercent: 30
+  },
+  ferocityTrait: { name: "\uAD81\uB2C8\uB974, \uD53C\uC758 \uD589\uAD70", effectId: "gungnirMarch", speedPercent: 30, passiveMultiplier: 2 },
+  breakthroughEffects: {
+    basic: { kind: "frontlineBasic", percent: 25 },
+    ultimate: { kind: "frontlineUltimate", percent: 35 },
+    ferocity: { kind: "frontlineFever", percent: 90, seconds: 0.5 },
+    passive: { kind: "frontlinePassive", percent: 30 }
+  }
+};
+var EUNTE = {
+  id: "eunte",
+  name: "\uC740\uD14C",
+  enemyOnly: true,
+  squad: "annihilation",
+  rarity: "SSR",
+  element: "earth",
+  role: "tank",
+  portraitAssetId: "eunte",
+  specimenNumber: "230",
+  projectName: "\uCCA0\uAC11",
+  origin: "\uC544\uB974\uD5E8\uD2F0\uB178\uC0AC\uC6B0\uB8E8\uC2A4",
+  excavationSite: "\uC81C1\uC9C0\uBD80 \uC774\uC1A1 \uC804 \uB0A8\uBD80 \uBCF4\uC874 \uD45C\uBCF8\uCC3D",
+  fossilRecord: "\uCC99\uCD94\uBF08\uC758 \uBE48 \uACF5\uAC04\uC5D0 \uD770 \uAD11\uBB3C\uC774 \uCE35\uCE35\uC774 \uAD73\uC5B4 \uC788\uC5C8\uB2E4. \uAE34 \uAF2C\uB9AC \uCABD \uD45C\uBCF8\uC740 \uB20C\uB824\uB3C4 \uC6D0\uB798 \uAC04\uACA9\uC744 \uC720\uC9C0\uD588\uB2E4. \uCCA0\uAC11\uC774\uB77C\uACE0 \uC801\uD78C \uC774\uC1A1\uD45C \uBC11\uC5D0\uB294 \uB9C8\uBAA8\uB41C \uBC1B\uCE68\uB300\uAC00 \uD55C \uC904\uB85C \uB0A8\uC544 \uC788\uC5C8\uB2E4.",
+  observationProfile: { originYear: "\uBC31\uC545\uAE30 \uD6C4\uAE30", restorationYear: "E.C. 19\uB144", lifeStage: "\uC131\uCCB4", height: "1.82 m", weight: "75 kg" },
+  catalogSummary: "\uBD84\uC808\uD615 \uAF2C\uB9AC \uC7A5\uAC11\uACFC \uBB34\uAC70\uC6B4 \uC815\uAC15\uC774 \uBCF4\uD638\uAD6C\uAC00 \uAD00\uCC30\uB418\uB294 \uACF5\uBA78\uC758 \uC544\uB974\uD5E8\uD2F0\uB178\uC0AC\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
+  unlockRecord: { status: "recorded", text: "\uC124\uBE44\uB97C \uBA48\uCD9C \uB54C\uB294 \uB098\uC0AC\uB97C \uD55C\uCABD\uBD80\uD130 \uD480\uC9C0 \uC54A\uB294\uB2E4. \uC591\uCABD\uC744 \uBC88\uAC08\uC544 \uD480\uC5B4 \uBB34\uAC8C\uAC00 \uC5B4\uB514\uC5D0\uB3C4 \uC3E0\uB9AC\uC9C0 \uC54A\uAC8C \uD588\uB2E4. \uB204\uAC00 \uC544\uC9C1 \uC548\uCABD\uC5D0 \uC788\uC73C\uBA74, \uB9C8\uC9C0\uB9C9 \uC7A0\uAE08\uC1E0\uB97C \uC954 \uCC44 \uB300\uB2F5\uC774 \uC62C \uB54C\uAE4C\uC9C0 \uC11C \uC788\uC5C8\uB2E4." },
+  squadNote: "\uACF5\uBA78\uC758 \uB300\uC7A5. \uCCA0\uAC11\uC774\uB77C\uB294 \uC774\uB984\uC73C\uB85C \uD1F4\uB85C\uC640 \uC804\uC5F4\uC744 \uBD99\uB4E4\uBA70, \uB178\uCE78\uC774 \uC120\uBD09\uC5D0 \uC124 \uB54C \uB9C8\uC9C0\uB9C9\uC73C\uB85C \uD604\uC7A5\uC744 \uBE60\uC838\uB098\uC628\uB2E4.",
+  researcherTitle: "\uC5F0\uAD6C\uC6D0",
+  reachTier: "melee",
+  strike: "smash",
+  ferocityMax: 115,
+  excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
+  stats: { hp: 1600, def: 130, res: 125, atk: 74, ap: 20, attackSpeed: 70, moveSpeed: 67, ...COMMON_SECONDARY_STATS },
+  frontlineBoss: {
+    kind: "ironclad",
+    layers: 10,
+    reductionPerLayer: 10,
+    stripInterval: 1,
+    restoreInterval: 3,
+    basicGuardScale: 50,
+    ultimateGuardScale: 220,
+    shieldGuardScale: 150,
+    shieldSeconds: 5,
+    windup: 0.8
+  },
+  passive: {
+    id: "eunte-passive",
+    name: "\uC5F4 \uACB9\uC758 \uBD09\uC1C4",
+    kind: "fixedArmor",
+    value: 10,
+    durationSeconds: 0,
+    iconAssetId: "skill-icon-buff",
+    effectType: "buff",
+    desc: "\uC804\uD22C \uC2DC\uC791 \uC2DC [[fixed-armor|\uACE0\uC815 \uC7A5\uAC11]]\uC744 10\uACB9 \uC5BB\uC2B5\uB2C8\uB2E4. \uAC01 \uACB9\uC774 \uB0A8\uC740 \uD53C\uD574\uC758 10%\uB97C \uC904\uC785\uB2C8\uB2E4. \uC9C1\uC811 \uD53C\uD574\uB97C \uBC1B\uC73C\uBA74 1\uCD08\uC5D0 \uCD5C\uB300 \uD55C \uBC88 \uC7A5\uAC11\uC774 \uBC97\uACA8\uC9C0\uACE0, \uC9C1\uC811 \uD53C\uD574\uB97C \uBC1B\uC9C0 \uC54A\uB294 \uB3D9\uC548 3\uCD08\uB9C8\uB2E4 \uD55C \uACB9\uC529 \uBCF5\uAD6C\uB429\uB2C8\uB2E4."
+  },
+  basic: {
+    id: "eunte-basic",
+    name: "\uACE8\uC808\uC120",
+    power: 85,
+    targeting: "single",
+    damageType: "physical",
+    effectType: "physical",
+    iconAssetId: "skill-icon-physical",
+    statusEffects: [{ kind: "concussion", maxHpPercent: 6, criticalMaxHpPercent: 12 }],
+    cycle: [{ name: "\uD0C0\uACA9", power: 85 }, { name: "\uD0C0\uACA9", power: 85 }, { name: "\uACE8\uC808\uC120", power: 85 }],
+    bossDescription: "\uC801 \uD55C \uBA85\uC5D0\uAC8C \uACF5\uACA9\uB825\uC758 85%\uC640 \uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825 \uAC01\uAC01\uC758 50%\uB97C \uD569\uD55C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC90D\uB2C8\uB2E4. \uC138 \uBC88\uC9F8 \uACF5\uACA9\uC740 \uC801\uC744 \uBC00\uCE58\uBA70 [[concussion|\uB1CC\uC9C4\uD0D5]]\uC744 \uC77C\uC73C\uCF1C \uB300\uC0C1 \uCD5C\uB300 \uCCB4\uB825\uC758 6%\uB9CC\uD07C \uD53C\uD574\uB97C \uC90D\uB2C8\uB2E4. \uC138 \uBC88\uC9F8 \uACF5\uACA9\uC774 \uCE58\uBA85\uD0C0\uBA74 \uB1CC\uC9C4\uD0D5 \uD53C\uD574\uB294 12%\uB85C \uC99D\uAC00\uD569\uB2C8\uB2E4. \uBCF8\uD0C0\uC640 \uB1CC\uC9C4\uD0D5\uC73C\uB85C \uC2E4\uC81C \uAE4E\uC740 \uCCB4\uB825\uC758 100%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uC2B5\uB2C8\uB2E4."
+  },
+  ultimate: {
+    id: "eunte-ult",
+    name: "\uC804\uC5F4 \uB9E4\uC7A5",
+    power: 220,
+    radius: 245,
+    cost: 155,
+    targeting: "nearbyEnemies",
+    scalingStat: "def",
+    damageType: "physical",
+    effectType: "physical",
+    iconAssetId: "skill-icon-physical",
+    statusEffects: [{ kind: "stun", seconds: 1.4 }],
+    bossDescription: "\uC790\uC2E0\uC758 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C \uC2DC\uC804 0.8\uCD08 \uB4A4 \uBC29\uC5B4\uB825\uC758 220%\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC8FC\uACE0 1.4\uCD08\uAC04 [[stun|\uAE30\uC808]]\uC2DC\uD0B5\uB2C8\uB2E4. \uADF8 \uB4A4 \uBC29\uC5B4\uB825\uACFC \uC800\uD56D\uB825 \uAC01\uAC01\uC758 150%\uB97C \uD569\uD55C \uBCF4\uD638\uB9C9\uC744 5\uCD08\uAC04 \uC5BB\uC2B5\uB2C8\uB2E4."
+  },
+  ferocityTrait: { name: "\uC9C0\uBC18 \uC555\uC0B4", effectId: "groundCrush", radius: 260, pullDistance: 145, tauntSeconds: 2, interval: 0.5, hpPercent: 1 },
+  breakthroughEffects: {
+    basic: { kind: "frontlineBasic", percent: 100 },
+    ultimate: { kind: "frontlineUltimate", percent: 100 },
+    ferocity: { kind: "frontlineFever", percent: 30, seconds: 5 },
+    passive: { kind: "frontlinePassive", percent: 100, seconds: 8 }
+  }
+};
+
 // src/data/relics.ts
 var KURO_DEF = {
   /**
@@ -19960,6 +20384,8 @@ var FROST_PLUME = {
 };
 var PLESHA_METEOR_POWER = 150;
 var RELICS = [
+  NOKAN,
+  EUNTE,
   {
     id: "his",
     squad: "rogue",
@@ -26596,6 +27022,8 @@ for (const relic of RELICS) {
   registerDataText(relic.ferocityTrait, "name", key("ferocity.name"));
   registerDataText(relic.basic, "name", key("basic.name"));
   registerDataText(relic.ultimate, "name", key("ultimate.name"));
+  registerDataText(relic.basic, "bossDescription", key("basic.description"));
+  registerDataText(relic.ultimate, "bossDescription", key("ultimate.description"));
   registerDataText(relic.basic, "statusEffectStackName", key("basic.stackName"));
   relic.basic.cycle?.forEach((step2, index) => registerDataText(step2, "name", key(`basic.step.${index}`)));
   registerDataText(relic, "projectName", key("projectName"));
@@ -26774,31 +27202,35 @@ function getAncientStrataStage(floor) {
 
 // src/core/storyDifficulty.ts
 init_define_import_meta_env();
-var STORY_DIFFICULTIES = ["easy", "normal", "hard"];
+var STORY_DIFFICULTIES = ["easy", "normal", "hard", "rampage"];
 var STORY_DIFFICULTY = {
   easy: { color: 15121495, text: "#f5d47b", fill: 3813398, reward: 1, statFactor: 1 },
   normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25, statFactor: 1.5 },
-  hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5, statFactor: 2 }
+  hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5, statFactor: 2 },
+  rampage: { color: 12024045, text: "#dfafff", fill: 3743815, reward: 1.75, statFactor: 3 }
 };
 function storyDifficultyOf(id) {
-  return id?.startsWith("normal:") ? "normal" : id?.startsWith("hard:") ? "hard" : "easy";
+  return STORY_DIFFICULTIES.find((difficulty) => difficulty !== "easy" && id?.startsWith(`${difficulty}:`)) ?? "easy";
 }
 function storyBaseStageId(id) {
-  return id.replace(/^(normal|hard):/, "");
+  return id.replace(/^(normal|hard|rampage):/, "");
 }
 function storyStageId(difficulty, base) {
   return difficulty === "easy" ? base : `${difficulty}:${base}`;
 }
+function previousStoryDifficulty(difficulty) {
+  return STORY_DIFFICULTIES[STORY_DIFFICULTIES.indexOf(difficulty) - 1];
+}
 function storyDifficultyRequirement(difficulty) {
-  return difficulty === "easy" ? void 0 : storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10");
+  const previous = previousStoryDifficulty(difficulty);
+  return previous && storyStageId(previous, "4-10");
 }
 function isStoryDifficultyUnlocked(difficulty, cleared) {
-  const required = storyDifficultyRequirement(difficulty);
-  return !required || cleared.has(required) && (difficulty !== "hard" || cleared.has("4-10"));
+  return STORY_DIFFICULTIES.slice(1, STORY_DIFFICULTIES.indexOf(difficulty) + 1).every((tier) => cleared.has(storyDifficultyRequirement(tier)));
 }
 function newlyUnlockedStoryDifficulty(stageId, firstClear) {
   if (!firstClear) return;
-  return stageId === "4-10" ? "normal" : stageId === "normal:4-10" ? "hard" : void 0;
+  return STORY_DIFFICULTIES.find((difficulty) => storyDifficultyRequirement(difficulty) === stageId);
 }
 function isStoryStageAvailable(stage, cleared) {
   return isStoryDifficultyUnlocked(storyDifficultyOf(stage.id), cleared) && stage.prerequisiteStageIds.every((id) => cleared.has(id));
@@ -26896,7 +27328,27 @@ var STORY_RECOMMENDED_LEVELS = [
   48,
   49,
   49,
-  50
+  50,
+  51,
+  52,
+  52,
+  53,
+  53,
+  54,
+  55,
+  55,
+  56,
+  57,
+  58,
+  58,
+  59,
+  59,
+  60,
+  61,
+  61,
+  62,
+  63,
+  64
 ];
 var CHAPTER_ONE_ELITES = {
   5: "toby",
@@ -26959,7 +27411,27 @@ var LATE_CHAPTER_FORMATIONS = {
   "7-7": [["atra", 0], ["raja", 1], ["noa", 2], ["pulsi", 3]],
   "7-8": [["raja", 0], ["atra", 1], ["magasa", 2], ["noa", 3]],
   "7-9": [["raja", 0], ["magasa", 1], ["noa", 2]],
-  "7-10": [["carno", 1]]
+  "7-10": [["carno", 1]],
+  "8-1": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "8-2": [["raja", 0], ["atra", 1], ["neuri", 2]],
+  "8-3": [["atra", 0], ["pulsi", 1], ["ikanixia", 2]],
+  "8-4": [["raja", 0], ["mir", 1], ["pulsi", 2], ["neuri", 3]],
+  "8-5": [["atra", 0], ["ikanixia", 2]],
+  "8-6": [["raja", 0], ["mir", 1], ["neuri", 2]],
+  "8-7": [["atra", 0], ["pulsi", 1], ["ikanixia", 2]],
+  "8-8": [["raja", 0], ["atra", 1], ["mir", 2], ["pulsi", 3]],
+  "8-9": [["atra", 0], ["ikanixia", 1], ["neuri", 2]],
+  "8-10": [["nokan", 1]],
+  "9-1": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "9-2": [["carno", 0], ["raja", 2]],
+  "9-3": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
+  "9-4": [["raja", 0], ["atra", 1], ["mir", 2], ["ikanixia", 3]],
+  "9-5": [["eunte", 1]],
+  "9-6": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "9-7": [["carno", 0], ["ikanixia", 2]],
+  "9-8": [["raja", 0], ["atra", 1], ["neuri", 2], ["pulsi", 3]],
+  "9-9": [["carno", 0], ["atra", 1], ["mir", 2]],
+  "9-10": [["eunte", 0], ["nokan", 2]]
 };
 var STORY_BOSS_LEVELS = {
   "4-10": 36,
@@ -26968,10 +27440,14 @@ var STORY_BOSS_LEVELS = {
   // 간부 마가사 — 사다리 40
   "7-5": 54,
   // 간부 이카닉시아의 저지선 — 사다리 47
-  "7-10": 60
+  "7-10": 60,
   // 부대장 카르 — 사다리 50
+  "8-5": 55,
+  "8-10": 76,
+  "9-5": 67,
+  "9-10": 70
 };
-var ELITE_DUO_STAGE_IDS = /* @__PURE__ */ new Set(["2-7", "2-9", "4-4", "4-5", "4-10", "6-10"]);
+var ELITE_DUO_STAGE_IDS = /* @__PURE__ */ new Set(["2-7", "2-9", "4-4", "4-5", "4-10", "6-10", "8-5", "9-10"]);
 var CHAPTER_ONE_ENEMIES = STORY_RECOMMENDED_LEVELS.slice(0, 10).map((recommended, index) => {
   const chapterOrder = index + 1;
   const eliteId = CHAPTER_ONE_ELITES[chapterOrder];
@@ -26992,7 +27468,11 @@ var STORY_RUNE_REWARDS = {
   "6-5": { kind: "rune", rarity: "rare", part: 1 },
   "6-10": { kind: "rune", rarity: "rare", part: 2, trait: true },
   "7-5": { kind: "rune", rarity: "rare", part: 0 },
-  "7-10": { kind: "rune", rarity: "rare", part: 1, trait: true }
+  "7-10": { kind: "rune", rarity: "rare", part: 1, trait: true },
+  "8-5": { kind: "rune", rarity: "rare", part: 2 },
+  "8-10": { kind: "rune", rarity: "rare", part: 0, trait: true },
+  "9-5": { kind: "rune", rarity: "rare", part: 1 },
+  "9-10": { kind: "rune", rarity: "rare", part: 2, trait: true }
 };
 var STORY_RAW_STONE = {
   "2-1": 30,
@@ -27006,7 +27486,11 @@ var STORY_RAW_STONE = {
   "6-1": 60,
   "6-6": 60,
   "7-1": 60,
-  "7-6": 60
+  "7-6": 60,
+  "8-1": 60,
+  "8-6": 60,
+  "9-1": 60,
+  "9-6": 60
 };
 function storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, elite) {
   const heavy = elite || chapterOrder === 10;
@@ -27039,7 +27523,31 @@ var CHAPTER_SITUATIONS = [
   [],
   [],
   [],
-  []
+  [],
+  [
+    "\uCE74\uB974\uAC00 \uC624\uB974\uB358 \uCCA0\uACE8\uC774 \uCC9C\uC7A5\uC758 \uAD6C\uBA4D \uB108\uBA38\uB85C \uC774\uC5B4\uC9C4\uB2E4.",
+    "\uBE44\uC0C1 \uC0AC\uB2E4\uB9AC \uC704\uC5D0 \uD68C\uC218\uC870\uC758 \uBC1C\uC790\uAD6D\uC774 \uB0A8\uC558\uB2E4.",
+    "\uADC0\uD658 \uACC4\uC218\uD310\uC5D0 \uB3CC\uC544\uC624\uC9C0 \uBABB\uD55C \uC0AC\uB78C\uB4E4\uC774 \uAC78\uB824 \uC788\uB2E4.",
+    "\uD68C\uC218\uC870\uAC00 \uB4E4\uAC83\uC744 \uBCF4\uB0B4\uBA70 \uBC14\uAE65\uC5D0\uC11C \uC624\uB294 \uAE38\uC744 \uB9C9\uB294\uB2E4.",
+    "\uC7A0\uAE30\uAE30 \uC2DC\uC791\uD55C \uBB38 \uC0AC\uC774\uC5D0 \uC9D0\uCE78\uC774 \uB07C\uC5B4 \uC788\uB2E4.",
+    "\uC911\uACC4\uC120\uC774 \uB04A\uC5B4\uC9C0\uBA74 \uC2B9\uAC15\uAE30\uB294 \uC774 \uCE35\uC73C\uB85C \uB3CC\uC544\uC624\uC9C0 \uC54A\uB294\uB2E4.",
+    "\uBD88\uC774 \uD55C \uCE78\uC529 \uC0B4\uC544\uB09C\uB2E4. \uC5B4\uB460 \uB108\uBA38\uC5D0\uC11C\uB3C4 \uAC19\uC740 \uBD88\uC744 \uC13C\uB2E4.",
+    "\uBD09\uC778\uB41C \uAE30\uB85D\uC2E4\uC758 \uC774\uC1A1\uD45C\uC5D0 \uB450 \uC774\uB984\uC774 \uB0A8\uC544 \uC788\uB2E4.",
+    "\uC0C1\uCE35 \uC2B9\uAC15\uAE30 \uC624\uB978\uD3B8\uC5D0 \uAE38\uAC8C \uCC22\uAE34 \uC1E0\uBB38\uC774 \uAC78\uB824 \uC788\uB2E4.",
+    "\uB178\uCE78\uC774 \uC2B9\uAC15\uAE30 \uBB38 \uC55E\uC5D0\uC11C \uB3CC\uC544\uC624\uC9C0 \uBABB\uD55C \uC0AC\uB78C\uB4E4\uC744 \uAE30\uB2E4\uB9B0\uB2E4."
+  ],
+  [
+    "\uC2B9\uAC15\uAE30 \uC544\uB798\uC5D0\uC11C \uACA9\uB0A9\uC2E4 \uC804\uCCB4\uB97C \uC787\uB294 \uC81C\uC5B4\uCD95\uC774 \uB3CC\uC544\uAC04\uB2E4.",
+    "\uB2EB\uD78C \uBB38 \uB4A4\uB85C \uC11C\uB85C\uB97C \uBD80\uB974\uB294 \uBAA9\uC18C\uB9AC\uAC00 \uB4E4\uB9B0\uB2E4.",
+    "\uB3CC \uD558\uB098\uAC00 \uBB34\uAC70\uC6B4 \uBC29\uCD9C\uAD6C\uB97C \uBC1B\uCE58\uACE0 \uC788\uB2E4.",
+    "\uC911\uC559\uCD95\uC744 \uD53C\uD574\uC11C \uC0AC\uB78C\uC744 \uB0B4\uBCF4\uB0BC \uC120\uC744 \uCC3E\uC544\uC57C \uD55C\uB2E4.",
+    "\uC740\uD14C\uAC00 \uC5F4 \uACB9\uC758 \uC7A5\uAC11\uC744 \uB0B4\uB9AC\uACE0 \uBC29\uBCBD \uC55E\uC5D0 \uC120\uB2E4.",
+    "\uACA9\uB0A9\uC2E4 \uBB38\uC774 \uC5F4\uB9AC\uC790 \uD769\uC5B4\uC84C\uB358 \uACF5\uBA78 \uB300\uC6D0\uB4E4\uC774 \uBAA8\uC778\uB2E4.",
+    "\uCE74\uB974\uAC00 \uB300\uC7A5\uC758 \uBA85\uB839\uC744 \uC804\uD558\uACE0, \uCF54\uB9C8\uAC00 \uADF8 \uAE38\uC744 \uAC74\uB10C\uB2E4.",
+    "\uB9C8\uC9C0\uB9C9 \uBC29\uCD9C\uAD6C\uB97C \uC9C0\uB098\uBA74 \uBC16\uC73C\uB85C \uAC78\uC5B4 \uB098\uAC08 \uC218 \uC788\uB2E4.",
+    "\uC804\uC2E4 \uB108\uBA38\uC5D0\uC11C \uB450 \uC0AC\uB78C\uC758 \uBC1C\uC18C\uB9AC\uAC00 \uBC88\uAC08\uC544 \uB4E4\uB9B0\uB2E4.",
+    "\uC911\uC559\uCD95 \uC55E\uC5D0 \uB178\uCE78\uACFC \uC740\uD14C\uAC00 \uB098\uB780\uD788 \uC120\uB2E4."
+  ]
 ];
 var CHAPTER_CONTENT = [
   { title: "\uC81C1\uC9C0\uBD80 \uC678\uACFD", subtitle: "\uAC80\uC5ED\uC120 \u2014 \uB3C4\uC2DC\uB85C \uB4E4\uC5B4\uAC00\uB294 \uB9C8\uC9C0\uB9C9 \uAD6C\uAC04", names: ["\uCD94\uB77D\uD558\uB294 \uBC29\uC8FC", "\uBD95\uAD34\uD55C \uC628\uC2E4", "\uCE68\uC218\uB41C \uBC30\uC591\uC2E4", "\uD45C\uBCF8 \uBCF4\uAD00\uACE0", "\uC81C1\uAD6C\uC5ED \uAD00\uC81C\uD0D1", "\uBB34\uB108\uC9C4 \uD1B5\uC2E0\uC18C", "\uD3D0\uAE30\uBB3C \uCC98\uB9AC\uC7A5", "\uC9C0\uD558 \uBC30\uC218\uB85C", "\uBD09\uC1C4\uB41C \uC815\uAC70\uC7A5", "\uAD6C\uC5ED \uACBD\uACC4\uBB38"] },
@@ -27048,7 +27556,9 @@ var CHAPTER_CONTENT = [
   { title: "\uC5C7\uAC08\uB9B0 \uC120\uB85C", subtitle: "\uC81C 4 \uAD6C\uC5ED \xB7 \uD569\uB958\uC120", names: ["\uD569\uB958 \uC2B9\uAC15\uC7A5", "\uB04A\uC5B4\uC9C4 \uD658\uC2B9\uB85C", "\uC810\uAC80 \uD1B5\uB85C", "\uBD09\uC778\uB41C \uC218\uC1A1 \uAC31\uB3C4", "\uD68C\uC218 \uB300\uAE30\uC2E4", "\uD3D0\uC1C4 \uACA9\uB0A9\uACE0", "\uC9C0\uD558 \uC815\uBE44\uB3D9", "\uB099\uD558 \uC2B9\uAC15\uAE30", "\uD569\uB958\uC120 \uC885\uC810", "\uCD94\uACA9 \uC0AC\uB839\uC2E4"] },
   { title: "\uBB3B\uC5B4 \uB454 \uBB38", subtitle: "\uC81C 5 \uAD6C\uC5ED \xB7 \uC9C0\uD558 \uAC10\uAE08\uB3D9", names: ["\uAC10\uAE08\uB3D9 \uC785\uAD6C", "\uAC80\uBB38 \uACA9\uC790", "\uC18C\uB4F1\uB41C \uBCF5\uB3C4", "\uC81C1 \uAC10\uBC29 \uAD6C\uC5ED", "\uC11C\uC5F4\uC758 \uBC29", "\uCE68\uC218 \uAC10\uBC29", "\uC871\uC1C4 \uBCF4\uAD00\uC2E4", "\uBC30\uC2DD \uD1B5\uB85C", "\uAD6C\uC18D \uC7A5\uCE58\uC2E4", "\uAC10\uAE08\uB3D9 \uCDE8\uC0AC\uC7A5"] },
   { title: "\uD480\uB824\uB09C \uADF8\uB9BC\uC790", subtitle: "\uC81C 6 \uAD6C\uC5ED \xB7 \uC911\uCE35 \uACA9\uB9AC \uD68C\uB791", names: ["\uACA9\uB9AC \uD68C\uB791 \uC785\uAD6C", "\uAD00\uCE21 \uCC3D \uBCF5\uB3C4", "\uBB34\uB108\uC9C4 \uC21C\uCC30\uB85C", "\uD658\uAE30 \uC218\uC9C1\uAC31", "\uB5A8\uB9AC\uB294 \uADF8\uB9BC\uC790", "\uC911\uCE35 \uACA9\uB0A9\uACE0", "\uBB34\uB108\uC9C4 \uBA74\uD68C\uC2E4", "\uACA9\uB9AC \uAD00\uC81C\uC2E4", "\uC2DD\uB7C9 \uCC3D\uACE0", "\uD68C\uB791 \uCD5C\uC2EC\uBD80"] },
-  { title: "\uB9C8\uC9C0\uB9C9 \uC790\uBB3C\uC1E0", subtitle: "\uC81C 7 \uAD6C\uC5ED \xB7 \uCD5C\uD558\uCE35 \uAD6C\uC18D\uC2E4", names: ["\uCD5C\uD558\uCE35 \uD558\uAC15\uB85C", "\uB0C9\uB3D9 \uC218\uC6A9\uC2E4", "\uCE68\uBB35\uC758 \uBCF5\uB3C4", "\uBD09\uC778 \uC81C\uC5B4\uBC18", "\uD68C\uC218\uC870 \uC800\uC9C0\uC120", "\uC5BC\uC5B4\uBD99\uC740 \uAE30\uB85D\uC2E4", "\uAD6C\uC18D \uC7A5\uCE58 \uD1B5\uB85C", "\uCD5C\uD558\uCE35 \uC804\uC2E4", "\uAD6C\uC18D\uC2E4 \uBB38 \uC55E", "\uCD5C\uD558\uCE35 \uAD6C\uC18D\uC2E4"] }
+  { title: "\uB9C8\uC9C0\uB9C9 \uC790\uBB3C\uC1E0", subtitle: "\uC81C 7 \uAD6C\uC5ED \xB7 \uCD5C\uD558\uCE35 \uAD6C\uC18D\uC2E4", names: ["\uCD5C\uD558\uCE35 \uD558\uAC15\uB85C", "\uB0C9\uB3D9 \uC218\uC6A9\uC2E4", "\uCE68\uBB35\uC758 \uBCF5\uB3C4", "\uBD09\uC778 \uC81C\uC5B4\uBC18", "\uD68C\uC218\uC870 \uC800\uC9C0\uC120", "\uC5BC\uC5B4\uBD99\uC740 \uAE30\uB85D\uC2E4", "\uAD6C\uC18D \uC7A5\uCE58 \uD1B5\uB85C", "\uCD5C\uD558\uCE35 \uC804\uC2E4", "\uAD6C\uC18D\uC2E4 \uBB38 \uC55E", "\uCD5C\uD558\uCE35 \uAD6C\uC18D\uC2E4"] },
+  { title: "\uBD89\uC740 \uADC0\uD658\uC120", subtitle: "\uC81C 8 \uAD6C\uC5ED \xB7 \uC0C1\uCE35 \uADC0\uD658\uB85C", names: ["\uB6AB\uB9B0 \uCC9C\uC7A5", "\uBE44\uC0C1 \uC0AC\uB2E4\uB9AC", "\uADC0\uD658 \uD45C\uC9C0", "\uD68C\uC218 \uAC80\uBB38\uC18C", "\uB2EB\uD788\uB294 \uD1B5\uB85C", "\uC911\uACC4\uC120 \uAC08\uB9BC\uAE38", "\uAC80\uC740 \uC815\uBE44\uACE0", "\uD3D0\uC1C4 \uAE30\uB85D\uC2E4", "\uC0C1\uCE35 \uC2B9\uAC15\uC7A5", "\uAD81\uB2C8\uB974\uC758 \uC804\uC120"] },
+  { title: "\uB450 \uB300\uC7A5\uC758 \uC120", subtitle: "\uC81C 9 \uAD6C\uC5ED \xB7 \uC911\uC559 \uC81C\uC5B4\uCD95", names: ["\uC2B9\uAC15\uAE30 \uC885\uCC29", "\uD1F4\uB85C\uC758 \uBB38", "\uBA48\uCD98 \uACC4\uC218\uD310", "\uC6B0\uD68C \uBC30\uC120\uC2E4", "\uCCA0\uAC11\uC758 \uBC29\uBCBD", "\uACA9\uB0A9\uC2E4 \uC2EC\uBD80", "\uAC08\uB77C\uC9C4 \uBA85\uB839", "\uAE34\uAE09 \uBC29\uCD9C\uAD6C", "\uC911\uC559\uCD95 \uC804\uC2E4", "\uACF5\uBA78 \uCD5C\uC885 \uC800\uC9C0\uC120"] }
 ];
 var CHAPTERS = CHAPTER_CONTENT.map((content, chapterIndex) => {
   const chapter = chapterIndex + 1;
@@ -27174,9 +27684,9 @@ function difficultyEnemy(enemy, difficulty) {
   const level = equivalentEnemyLevel(enemy.level, getRelic(enemy.relicId).rarity, STORY_DIFFICULTY[difficulty].statFactor);
   return { ...enemy, level, breakthrough: shownBreakthroughForLevel(level) };
 }
-var EXTRA_STORY_STAGES = ["normal", "hard"].flatMap((difficulty) => STAGES.filter((stage) => stage.kind === "battle").map((base) => {
+var EXTRA_STORY_STAGES = STORY_DIFFICULTIES.slice(1).flatMap((difficulty) => STAGES.filter((stage) => stage.kind === "battle").map((base) => {
   const first = base.id === "1-1";
-  const prerequisiteStageIds = first ? [storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10")] : base.prerequisiteStageIds.map((id) => storyStageId(difficulty, id));
+  const prerequisiteStageIds = first ? [storyDifficultyRequirement(difficulty)] : base.prerequisiteStageIds.map((id) => storyStageId(difficulty, id));
   return {
     ...base,
     id: storyStageId(difficulty, base.id),
@@ -30298,10 +30808,10 @@ var emptyServerJournal = () => ({ receipts: {}, raidAdmissions: {} });
 function isValidServerJournal(value) {
   if (!value || typeof value !== "object") return false;
   const journal = value;
-  const record3 = (v2) => !!v2 && typeof v2 === "object" && !Array.isArray(v2);
-  const json = (v2) => v2 === null || typeof v2 === "string" || typeof v2 === "boolean" || typeof v2 === "number" && Number.isFinite(v2) || (Array.isArray(v2) ? v2.every(json) : record3(v2) && Object.values(v2).every(json));
-  const mailLog = (log) => log === void 0 || Array.isArray(log) && log.length <= 200 && log.every((gift) => record3(gift) && typeof gift.title === "string" && typeof gift.sender === "string" && typeof gift.receivedAt === "string" && Number.isFinite(Date.parse(gift.receivedAt)) && Array.isArray(gift.rewards) && gift.rewards.every((reward) => record3(reward) && json(reward) && (reward.kind === "currency" || reward.kind === "item") && Number.isSafeInteger(reward.amount)));
-  return (journal.qaTenUpgrade === void 0 || typeof journal.qaTenUpgrade === "boolean") && (journal.storyChoices === void 0 || record3(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record3(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record3(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record3(journal.combat) && record3(journal.combat.tickets) && record3(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record3(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record3(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record3(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record3(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record3(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && mailLog(journal.mailLog) && mailLog(journal.giftLog) && (journal.guildGuard === void 0 || record3(journal.guildGuard) && Number.isSafeInteger(journal.guildGuard.day) && Number.isSafeInteger(journal.guildGuard.used) && journal.guildGuard.used >= 0 && Number.isSafeInteger(journal.guildGuard.best) && journal.guildGuard.best >= 0) && (journal.guildGuardAdmissions === void 0 || record3(journal.guildGuardAdmissions) && Object.entries(journal.guildGuardAdmissions).every(([id, admission]) => id.length > 0 && record3(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.element === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && Array.isArray(admission.lineup) && admission.lineup.length === 6 && admission.lineup.every((slot) => slot === null || record3(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot)))) && (journal.guildWarAdmissions === void 0 || record3(journal.guildWarAdmissions) && Object.entries(journal.guildWarAdmissions).every(([id, admission]) => id.length > 0 && record3(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.slotId === "string" && typeof admission.opponentName === "string" && typeof admission.defenderName === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && [admission.attack, admission.defense].every((side) => Array.isArray(side) && side.length === 3 && side.every((slot) => record3(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot))))) && record3(journal.receipts) && record3(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record3(receipt) && typeof receipt.identity === "string" && record3(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record3(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
+  const record4 = (v2) => !!v2 && typeof v2 === "object" && !Array.isArray(v2);
+  const json = (v2) => v2 === null || typeof v2 === "string" || typeof v2 === "boolean" || typeof v2 === "number" && Number.isFinite(v2) || (Array.isArray(v2) ? v2.every(json) : record4(v2) && Object.values(v2).every(json));
+  const mailLog = (log) => log === void 0 || Array.isArray(log) && log.length <= 200 && log.every((gift) => record4(gift) && typeof gift.title === "string" && typeof gift.sender === "string" && typeof gift.receivedAt === "string" && Number.isFinite(Date.parse(gift.receivedAt)) && Array.isArray(gift.rewards) && gift.rewards.every((reward) => record4(reward) && json(reward) && (reward.kind === "currency" || reward.kind === "item") && Number.isSafeInteger(reward.amount)));
+  return (journal.qaTenUpgrade === void 0 || typeof journal.qaTenUpgrade === "boolean") && (journal.storyChoices === void 0 || record4(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record4(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record4(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record4(journal.combat) && record4(journal.combat.tickets) && record4(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record4(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record4(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record4(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record4(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record4(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && mailLog(journal.mailLog) && mailLog(journal.giftLog) && (journal.guildGuard === void 0 || record4(journal.guildGuard) && Number.isSafeInteger(journal.guildGuard.day) && Number.isSafeInteger(journal.guildGuard.used) && journal.guildGuard.used >= 0 && Number.isSafeInteger(journal.guildGuard.best) && journal.guildGuard.best >= 0) && (journal.guildGuardAdmissions === void 0 || record4(journal.guildGuardAdmissions) && Object.entries(journal.guildGuardAdmissions).every(([id, admission]) => id.length > 0 && record4(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.element === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && Array.isArray(admission.lineup) && admission.lineup.length === 6 && admission.lineup.every((slot) => slot === null || record4(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot)))) && (journal.guildWarAdmissions === void 0 || record4(journal.guildWarAdmissions) && Object.entries(journal.guildWarAdmissions).every(([id, admission]) => id.length > 0 && record4(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.slotId === "string" && typeof admission.opponentName === "string" && typeof admission.defenderName === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && [admission.attack, admission.defense].every((side) => Array.isArray(side) && side.length === 3 && side.every((slot) => record4(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot))))) && record4(journal.receipts) && record4(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record4(receipt) && typeof receipt.identity === "string" && record4(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record4(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
 }
 
 // src/core/expeditionPeriods.ts
@@ -30341,8 +30851,8 @@ function raidWorldBossId(dayKey2) {
   return RAID_BOSS_POOL[(day % RAID_BOSS_POOL.length + RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
 }
 function rollRaidSummon(bossRoll, difficultyRoll) {
-  const pick2 = (list, roll3) => list[Math.min(list.length - 1, Math.max(0, Math.floor(roll3 * list.length)))];
-  return { bossRelicId: pick2(RAID_BOSS_POOL, bossRoll), difficulty: pick2(RAID_SUMMON_DIFFICULTIES, difficultyRoll) };
+  const pick3 = (list, roll3) => list[Math.min(list.length - 1, Math.max(0, Math.floor(roll3 * list.length)))];
+  return { bossRelicId: pick3(RAID_BOSS_POOL, bossRoll), difficulty: pick3(RAID_SUMMON_DIFFICULTIES, difficultyRoll) };
 }
 function raidSeasonProgress(dealtDamage, totalHp = RAID_SEASON_TOTAL_HP) {
   const total = Math.max(0, Math.floor(totalHp));
@@ -30407,8 +30917,8 @@ function mockSummonRaidDamage(raidId, elapsedRatio, totalHp) {
 function mockFriendRaids(dayKey2) {
   const start = Date.parse(`${dayKey2}T00:00:00.000Z`);
   return PREVIEW_FRIENDS.map((friend, index) => {
-    const pick2 = seedHash(`${dayKey2}:${friend.id}:raid`);
-    const difficulty = RAID_SUMMON_DIFFICULTIES[Math.floor(pick2 * RAID_SUMMON_DIFFICULTIES.length) % RAID_SUMMON_DIFFICULTIES.length];
+    const pick3 = seedHash(`${dayKey2}:${friend.id}:raid`);
+    const difficulty = RAID_SUMMON_DIFFICULTIES[Math.floor(pick3 * RAID_SUMMON_DIFFICULTIES.length) % RAID_SUMMON_DIFFICULTIES.length];
     const bossRelicId = RAID_BOSS_POOL[Math.floor(seedHash(`${dayKey2}:${friend.id}:boss`) * RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
     return {
       id: `friend-${friend.id}-${dayKey2}`,
@@ -30973,11 +31483,11 @@ var isContentId = (value) => typeof value === "string" && ALL_GATED_CONTENT.incl
 var uniqueIds = (values) => ALL_GATED_CONTENT.filter((id) => values.includes(id));
 function normalizeContentSeen(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const record3 = value;
-  if (typeof record3.owner !== "string" || record3.owner.length > 64 || !Array.isArray(record3.known)) return null;
-  const known = uniqueIds(record3.known.filter(isContentId));
-  const fresh = Array.isArray(record3.fresh) ? uniqueIds(record3.fresh.filter(isContentId)).filter((id) => known.includes(id)) : [];
-  return { owner: record3.owner, known, fresh };
+  const record4 = value;
+  if (typeof record4.owner !== "string" || record4.owner.length > 64 || !Array.isArray(record4.known)) return null;
+  const known = uniqueIds(record4.known.filter(isContentId));
+  const fresh = Array.isArray(record4.fresh) ? uniqueIds(record4.fresh.filter(isContentId)).filter((id) => known.includes(id)) : [];
+  return { owner: record4.owner, known, fresh };
 }
 function sameContentSeen(a, b) {
   if (!a || !b) return a === b;
@@ -31027,12 +31537,12 @@ init_define_import_meta_env();
 var AUTO_REPEAT_MAX_RUNS = 99;
 var DEFAULT_AUTO_REPEAT_OPTIONS = { runs: 10, stopOnDefeat: true, autoDrink: false };
 function normalizeAutoRepeatOptions(value) {
-  const record3 = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const record4 = value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const d = DEFAULT_AUTO_REPEAT_OPTIONS;
   return {
-    runs: Number.isInteger(record3.runs) && record3.runs >= 1 && record3.runs <= AUTO_REPEAT_MAX_RUNS ? record3.runs : d.runs,
-    stopOnDefeat: typeof record3.stopOnDefeat === "boolean" ? record3.stopOnDefeat : d.stopOnDefeat,
-    autoDrink: typeof record3.autoDrink === "boolean" ? record3.autoDrink : d.autoDrink
+    runs: Number.isInteger(record4.runs) && record4.runs >= 1 && record4.runs <= AUTO_REPEAT_MAX_RUNS ? record4.runs : d.runs,
+    stopOnDefeat: typeof record4.stopOnDefeat === "boolean" ? record4.stopOnDefeat : d.stopOnDefeat,
+    autoDrink: typeof record4.autoDrink === "boolean" ? record4.autoDrink : d.autoDrink
   };
 }
 
@@ -31043,6 +31553,7 @@ var ULTIMATE_PRESENTATION_MODES = ["full", "short", "skip"];
 
 // src/core/runeListFilter.ts
 init_define_import_meta_env();
+var EMPTY_RUNE_LIST_FILTER = { rarities: [], parts: [], mainStats: [] };
 var RUNE_TRAIT_VIEWS = ["all", "with", "without"];
 
 // src/core/rosterViewMemory.ts
@@ -31130,6 +31641,111 @@ function sameRosterView(a, b, screen) {
   return JSON.stringify(normalizeRosterView(a, screen)) === JSON.stringify(normalizeRosterView(b, screen));
 }
 
+// src/core/listViewMemory.ts
+init_define_import_meta_env();
+
+// src/core/social.ts
+init_define_import_meta_env();
+var DAILY_HELPER_LIMIT = 3;
+var FRIEND_POINTS_PER_RENTAL = 10;
+function helperRentalAvailability(usedToday) {
+  const normalized = Math.max(0, Math.floor(usedToday));
+  const remaining = Math.max(0, DAILY_HELPER_LIMIT - normalized);
+  return { allowed: remaining > 0, remaining };
+}
+var FRIEND_LIMIT = 50;
+var FRIEND_REQUEST_LIMIT = 30;
+var ONLINE_WINDOW_MS = 5 * 6e4;
+var FRIEND_SORT_MODES = ["lastActive", "name", "level"];
+var FRIEND_FILTERS = ["all", "favorite", "online"];
+function defaultFriendSortDirection(sort) {
+  return sort !== "name";
+}
+function normalizeSearchQuery(raw) {
+  return raw.trim();
+}
+function matchesUserQuery(user, query) {
+  const normalized = normalizeSearchQuery(query);
+  if (normalized.length === 0) return false;
+  if (user.displayName.toLocaleLowerCase().includes(normalized.toLocaleLowerCase())) return true;
+  const digits = normalized.replace(/\D/g, "");
+  return digits.length > 0 && user.uid === digits;
+}
+
+// src/core/listViewMemory.ts
+var RUNE_LIST_SORT_KEYS = ["acquired", "rarity", "part", "enhancement", "equipped", "relic", "trait"];
+var RUNE_VIEW_SCREENS = ["bag", "workbench", "research", "synthesis", "traitBulk", "bulkCraft"];
+var RUNE_VIEW_DEFAULT_SORT = {
+  bag: { key: "relic", direction: "asc" },
+  workbench: { key: "relic", direction: "asc" },
+  research: { key: "relic", direction: "asc" },
+  synthesis: { key: "relic", direction: "asc" },
+  traitBulk: { key: "enhancement", direction: "desc" },
+  bulkCraft: { key: "relic", direction: "asc" }
+};
+var RUNE_VIEW_SHOWS_PARTS = {
+  bag: true,
+  workbench: false,
+  research: true,
+  synthesis: true,
+  traitBulk: true,
+  bulkCraft: true
+};
+var RARITIES2 = ["uncommon", "rare", "epic", "legendary"];
+var PARTS = [0, 1, 2];
+var MAIN_STATS = ["hp", "atk", "ap", "def", "res"];
+var record2 = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
+var pick2 = (value, known) => Array.isArray(value) ? known.filter((item3) => value.includes(item3)) : [];
+function normalizeRuneListView(value, screen) {
+  const raw = record2(value);
+  const f = record2(raw.filter);
+  const parts = RUNE_VIEW_SHOWS_PARTS[screen];
+  const filter = {
+    ...EMPTY_RUNE_LIST_FILTER,
+    rarities: pick2(f.rarities, RARITIES2),
+    parts: parts ? pick2(f.parts, PARTS) : [],
+    mainStats: pick2(f.mainStats, MAIN_STATS)
+  };
+  const s = record2(raw.sort);
+  const fallback = RUNE_VIEW_DEFAULT_SORT[screen];
+  const key = RUNE_LIST_SORT_KEYS.includes(s.key) && (parts || s.key !== "part") ? s.key : void 0;
+  const sort = key ? { key, direction: s.direction === "desc" ? "desc" : s.direction === "asc" ? "asc" : fallback.direction } : { ...fallback };
+  return { filter, sort };
+}
+function normalizeRuneViews(value) {
+  const raw = record2(value);
+  const out = {};
+  for (const screen of RUNE_VIEW_SCREENS) {
+    if (screen in raw) out[screen] = normalizeRuneListView(raw[screen], screen);
+  }
+  return out;
+}
+function runeViewFor(stored, screen) {
+  return normalizeRuneListView(stored[screen] ?? {}, screen);
+}
+var DEFAULT_FRIEND_LIST_VIEW = { filter: "all", sort: "lastActive", descending: true };
+function normalizeFriendListView(value) {
+  const raw = record2(value);
+  const filter = FRIEND_FILTERS.includes(raw.filter) ? raw.filter : DEFAULT_FRIEND_LIST_VIEW.filter;
+  const known = FRIEND_SORT_MODES.includes(raw.sort);
+  const sort = known ? raw.sort : DEFAULT_FRIEND_LIST_VIEW.sort;
+  const descending = known && typeof raw.descending === "boolean" ? raw.descending : defaultFriendSortDirection(sort);
+  return { filter, sort, descending };
+}
+var TRAIT_BULK_RESULT_SORTS = ["grade", "holder"];
+var DEFAULT_TRAIT_BULK_RESULT_VIEW = { sort: "grade", descending: true };
+function normalizeTraitBulkResultView(value) {
+  const raw = record2(value);
+  const known = TRAIT_BULK_RESULT_SORTS.includes(raw.sort);
+  return {
+    sort: known ? raw.sort : DEFAULT_TRAIT_BULK_RESULT_VIEW.sort,
+    descending: typeof raw.descending === "boolean" ? raw.descending : DEFAULT_TRAIT_BULK_RESULT_VIEW.descending
+  };
+}
+function sameListView(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 // src/core/interactionPartyMemory.ts
 init_define_import_meta_env();
 var INTERACTION_PARTY_SLOTS = 3;
@@ -31180,13 +31796,13 @@ function createDefaultSettings() {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, rhythmOffsetMs: 0, feedbackAsked: false, adRewardDot: false, ultimatePresentation: "full", textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null, arenaSeen: null, rosterViews: {}, interactionParties: {} },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, rhythmOffsetMs: 0, feedbackAsked: false, adRewardDot: false, ultimatePresentation: "full", textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null, arenaSeen: null, rosterViews: {}, runeViews: {}, friendView: { ...DEFAULT_FRIEND_LIST_VIEW }, traitBulkResultView: { ...DEFAULT_TRAIT_BULK_RESULT_VIEW }, runeMultiPick: false, interactionParties: {} },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" }
   };
 }
-var record2 = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
+var record3 = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
 var bool = (value, fallback) => typeof value === "boolean" ? value : fallback;
 var volume = (value, fallback) => typeof value === "number" && Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : fallback;
 var tierId = (value) => typeof value === "string" && value.length <= 40 ? value : "";
@@ -31194,18 +31810,18 @@ var seenKey = (value) => typeof value === "number" && Number.isInteger(value) &&
 var allowed = (value, values, fallback) => values.includes(value) ? value : fallback;
 function normalizeSettings(value) {
   const d = createDefaultSettings();
-  const root = record2(value);
-  const s = record2(root.sound);
-  const v2 = record2(root.vibration);
-  const n = record2(root.notifications);
-  const p = record2(root.presentation);
-  const x = record2(root.accessibility);
-  const g = record2(root.game);
-  const a = record2(root.account);
+  const root = record3(value);
+  const s = record3(root.sound);
+  const v2 = record3(root.vibration);
+  const n = record3(root.notifications);
+  const p = record3(root.presentation);
+  const x = record3(root.accessibility);
+  const g = record3(root.game);
+  const a = record3(root.account);
   return {
     sound: { masterVolume: volume(s.masterVolume, d.sound.masterVolume), musicVolume: volume(s.musicVolume, d.sound.musicVolume), effectsVolume: volume(s.effectsVolume, d.sound.effectsVolume), voiceVolume: volume(s.voiceVolume, d.sound.voiceVolume), masterMuted: bool(s.masterMuted, d.sound.masterMuted), musicMuted: bool(s.musicMuted, d.sound.musicMuted), effectsMuted: bool(s.effectsMuted, d.sound.effectsMuted), voiceMuted: bool(s.voiceMuted, d.sound.voiceMuted) },
     vibration: { enabled: bool(v2.enabled, d.vibration.enabled), combatHit: bool(v2.combatHit, d.vibration.combatHit), ultimate: bool(v2.ultimate, d.vibration.ultimate), excavationResult: bool(v2.excavationResult, d.vibration.excavationResult), uiInput: bool(v2.uiInput, d.vibration.uiInput) },
-    notifications: { enabled: bool(n.enabled, d.notifications.enabled), staminaFull: bool(n.staminaFull, d.notifications.staminaFull), dailyMission: bool(n.dailyMission, d.notifications.dailyMission), quietHours: bool(n.quietHours, d.notifications.quietHours), quietHoursStart: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(n.quietHoursStart)) ? String(n.quietHoursStart) : d.notifications.quietHoursStart, quietHoursEnd: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(n.quietHoursEnd)) ? String(n.quietHoursEnd) : d.notifications.quietHoursEnd, lastScheduledIds: Object.fromEntries(Object.entries(record2(n.lastScheduledIds)).filter(([key, id]) => ["staminaFull", "dailyMission"].includes(key) && typeof id === "string" && id.length <= 120)) },
+    notifications: { enabled: bool(n.enabled, d.notifications.enabled), staminaFull: bool(n.staminaFull, d.notifications.staminaFull), dailyMission: bool(n.dailyMission, d.notifications.dailyMission), quietHours: bool(n.quietHours, d.notifications.quietHours), quietHoursStart: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(n.quietHoursStart)) ? String(n.quietHoursStart) : d.notifications.quietHoursStart, quietHoursEnd: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(n.quietHoursEnd)) ? String(n.quietHoursEnd) : d.notifications.quietHoursEnd, lastScheduledIds: Object.fromEntries(Object.entries(record3(n.lastScheduledIds)).filter(([key, id]) => ["staminaFull", "dailyMission"].includes(key) && typeof id === "string" && id.length <= 120)) },
     presentation: {
       screenShake: bool(p.screenShake, d.presentation.screenShake),
       damageNumbers: bool(p.damageNumbers, d.presentation.damageNumbers),
@@ -31248,8 +31864,8 @@ function normalizeSettings(value) {
       // 지원 언어 목록은 language.ts 하나가 가지므로 여기에 코드를 다시 적지 않는다.
       language: normalizeLanguage(g.language),
       // 단계가 실제로 있는지는 입구가 가린다 — 여기서는 짧은 문자열인지만 본다.
-      dungeonTiers: { bounty: tierId(record2(g.dungeonTiers).bounty), cake: tierId(record2(g.dungeonTiers).cake) },
-      guildSeen: { war: seenKey(record2(g.guildSeen).war), guard: seenKey(record2(g.guildSeen).guard), guardReward: seenKey(record2(g.guildSeen).guardReward), warResult: seenKey(record2(g.guildSeen).warResult) },
+      dungeonTiers: { bounty: tierId(record3(g.dungeonTiers).bounty), cake: tierId(record3(g.dungeonTiers).cake) },
+      guildSeen: { war: seenKey(record3(g.guildSeen).war), guard: seenKey(record3(g.guildSeen).guard), guardReward: seenKey(record3(g.guildSeen).guardReward), warResult: seenKey(record3(g.guildSeen).warResult) },
       guildLevelSeen: typeof g.guildLevelSeen === "string" && /^[\w-]{1,64}:\d{1,2}$/.test(g.guildLevelSeen) ? g.guildLevelSeen : "",
       // 보유·중복은 편성 화면이 다시 가린다 — 여기서는 여섯 칸 이하의 짧은 ID·빈 칸인지만 본다.
       partyPresets: normalizePartyPresets(g.partyPresets),
@@ -31260,11 +31876,11 @@ function normalizeSettings(value) {
       legalConsent: typeof g.legalConsent === "string" && /^[\w.:|-]{1,160}$/.test(g.legalConsent) ? g.legalConsent : "",
       // 필드가 없던 저장은 예전 모습(얼굴 없음 · 장착 룬도 보임)으로 이관한다.
       runeBag: {
-        showHolder: bool(record2(g.runeBag).showHolder, d.game.runeBag.showHolder),
-        showEquipped: bool(record2(g.runeBag).showEquipped, d.game.runeBag.showEquipped),
+        showHolder: bool(record3(g.runeBag).showHolder, d.game.runeBag.showHolder),
+        showEquipped: bool(record3(g.runeBag).showEquipped, d.game.runeBag.showEquipped),
         // 특성 유무·즐겨찾기 토글이 생기기 전의 저장은 모두 보이는 쪽(전체·끔)으로 읽는다.
-        trait: allowed(record2(g.runeBag).trait, RUNE_TRAIT_VIEWS, d.game.runeBag.trait),
-        bookmarkedOnly: bool(record2(g.runeBag).bookmarkedOnly, d.game.runeBag.bookmarkedOnly)
+        trait: allowed(record3(g.runeBag).trait, RUNE_TRAIT_VIEWS, d.game.runeBag.trait),
+        bookmarkedOnly: bool(record3(g.runeBag).bookmarkedOnly, d.game.runeBag.bookmarkedOnly)
       },
       // 필드가 없던 저장은 기본 옵션(10판 · 패배 시 중단 · 드링크 끔)으로 이관한다.
       autoRepeat: normalizeAutoRepeatOptions(g.autoRepeat),
@@ -31274,6 +31890,11 @@ function normalizeSettings(value) {
       arenaSeen: normalizeArenaSeen(g.arenaSeen),
       // 필드가 없던 저장은 기억 없음 — 모든 목록이 기본 필터·정렬로 선다. 없어진 옵션은 기본값으로 떨어진다.
       rosterViews: normalizeRosterViews(g.rosterViews),
+      // 렐릭 밖의 목록도 같다 — 필드가 없던 저장은 기억 없음, 없어진 옵션은 그 화면의 기본값이다.
+      runeViews: normalizeRuneViews(g.runeViews),
+      friendView: normalizeFriendListView(g.friendView),
+      traitBulkResultView: normalizeTraitBulkResultView(g.traitBulkResultView),
+      runeMultiPick: bool(g.runeMultiPick, d.game.runeMultiPick),
       // 필드가 없던 저장은 기억 없음 — 교류 판이 빈 칸으로 선다.
       interactionParties: normalizeInteractionParties(g.interactionParties)
     },
@@ -31742,10 +32363,10 @@ function guaranteeLegendKinds(layer, zones, tiles, random) {
       if (spare.length === 0) break;
       const plain = spare.filter((tile) => tile.kind === "gold" || tile.kind === "rawStone");
       const pool = plain.length > 0 ? plain : spare;
-      const pick2 = pool[Math.min(pool.length - 1, Math.floor(roll(random) * pool.length))];
-      pick2.kind = kind;
-      pick2.amount = rollAmountFor(layer, zone.tone, kind, random);
-      guaranteed.add(pick2);
+      const pick3 = pool[Math.min(pool.length - 1, Math.floor(roll(random) * pool.length))];
+      pick3.kind = kind;
+      pick3.amount = rollAmountFor(layer, zone.tone, kind, random);
+      guaranteed.add(pick3);
     }
   }
   return guaranteed;
@@ -31757,16 +32378,16 @@ function fitRuneTileCount(layer, tiles, guaranteed, random) {
   const stoneAmount = stone ? Math.round((stone.min + stone.max) / 2) : 0;
   const excess = Math.min(removable.length, runes.length - STRATA_RUNE_TILES.max);
   for (let n = 0; n < excess; n += 1) {
-    const pick2 = removable.splice(Math.min(removable.length - 1, Math.floor(roll(random) * removable.length)), 1)[0];
-    pick2.kind = "rawStone";
-    pick2.amount = stoneAmount;
+    const pick3 = removable.splice(Math.min(removable.length - 1, Math.floor(roll(random) * removable.length)), 1)[0];
+    pick3.kind = "rawStone";
+    pick3.amount = stoneAmount;
   }
   const count3 = tiles.filter((tile) => tile.kind === "rune").length;
   const candidates = tiles.filter((tile) => (tile.kind === "gold" || tile.kind === "rawStone") && !guaranteed.has(tile));
   for (let n = count3; n < STRATA_RUNE_TILES.min && candidates.length > 0; n += 1) {
-    const pick2 = candidates.splice(Math.min(candidates.length - 1, Math.floor(roll(random) * candidates.length)), 1)[0];
-    pick2.kind = "rune";
-    pick2.amount = 1;
+    const pick3 = candidates.splice(Math.min(candidates.length - 1, Math.floor(roll(random) * candidates.length)), 1)[0];
+    pick3.kind = "rune";
+    pick3.amount = 1;
   }
 }
 function strataBonusRuneTiles(layer) {
@@ -31792,10 +32413,10 @@ function createStrataBoard(input) {
   const goldPool = tiles.filter((tile) => tile.kind === "gold" && !guaranteed.has(tile));
   const bonusPool = goldPool.length >= strataBonusRuneTiles(layer) ? goldPool : tiles.filter((tile) => (tile.kind === "gold" || tile.kind === "rawStone") && !guaranteed.has(tile));
   for (let n = strataBonusRuneTiles(layer); n > 0 && bonusPool.length > 0; n -= 1) {
-    const pick2 = bonusPool.splice(Math.min(bonusPool.length - 1, Math.floor(roll(input.random) * bonusPool.length)), 1)[0];
-    pick2.kind = "rune";
-    pick2.amount = 1;
-    bonusRunes.add(pick2);
+    const pick3 = bonusPool.splice(Math.min(bonusPool.length - 1, Math.floor(roll(input.random) * bonusPool.length)), 1)[0];
+    pick3.kind = "rune";
+    pick3.amount = 1;
+    bonusRunes.add(pick3);
   }
   for (const [kind, before] of [["gold", goldBefore], ["rawStone", stoneBefore]]) {
     const after = plainTotal(kind);
@@ -31818,10 +32439,10 @@ function createStrataBoard(input) {
   const raidTicket = strataRaidTicketTile(input.random, input.raidOpen === true);
   const plain = tiles.filter((tile) => (tile.kind === "gold" || tile.kind === "rawStone") && !guaranteed.has(tile));
   if (raidTicket !== null && plain.length > 0) {
-    const pick2 = plain[Math.min(plain.length - 1, Math.floor(roll(input.random) * plain.length))];
-    pick2.kind = "researchItem";
-    pick2.amount = 1;
-    pick2.itemId = raidTicket;
+    const pick3 = plain[Math.min(plain.length - 1, Math.floor(roll(input.random) * plain.length))];
+    pick3.kind = "researchItem";
+    pick3.amount = 1;
+    pick3.itemId = raidTicket;
   }
   const art = 1 + Math.floor(roll(input.random) * STRATA_ART_COUNT);
   return { layerId: layer.id, ...input.siteId ? { siteId: input.siteId } : {}, art, columns: layer.columns, rows: layer.rows, tiles, zones, digsLeft: layer.digs + modifiers.digs, digsMax: layer.digs + modifiers.digs, ...crystalStage > 0 ? { crystalStage } : {} };
@@ -38818,6 +39439,7 @@ function speakerStanding(speaker) {
 
 // src/data/dialogues/registerDialogue.ts
 function registerDialogueTexts(story) {
+  registerDataText(story, "recollectionSummary", `dialogue.${story.id}.recollectionSummary`);
   if (story.titleCard) {
     registerDataText(story.titleCard, "title", `dialogue.${story.id}.title`);
     registerDataText(story.titleCard, "subtitle", `dialogue.${story.id}.subtitle`);
@@ -39462,7 +40084,7 @@ function cloneRune(rune) {
     ...rune,
     mainStats: [{ ...rune.mainStats[0] }, { ...rune.mainStats[1] }],
     subStats: rune.subStats.map((stat) => ({ ...stat })),
-    enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record3) => ({ ...record3 }))])),
+    enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record4) => ({ ...record4 }))])),
     engravings: rune.engravings.map((engraving) => ({ ...engraving }))
   };
 }
@@ -39509,9 +40131,9 @@ function migrateSavedRelicIds(input) {
   if (interaction && Array.isArray(interaction.slots)) interaction.slots.forEach((slot) => {
     if (slot && typeof slot === "object") slot.party = mapUniqueIds(slot.party);
   });
-  if (Array.isArray(data.observationRecords)) data.observationRecords.forEach((record3) => {
-    if (!record3 || typeof record3 !== "object") return;
-    const entry = record3;
+  if (Array.isArray(data.observationRecords)) data.observationRecords.forEach((record4) => {
+    if (!record4 || typeof record4 !== "object") return;
+    const entry = record4;
     entry.relicId = mapId(entry.relicId);
     entry.storyId = mapStoryId(entry.storyId);
     entry.questionId = mapObservationId(entry.questionId);
@@ -39637,7 +40259,7 @@ var SaveManager = class {
       saveVersion: CURRENT_SAVE_VERSION,
       settings: normalizeSettings(state.settings),
       completedStoryIds: [...state.completedStoryIds],
-      observationRecords: state.observationRecords.map((record3) => ({ ...record3 })),
+      observationRecords: state.observationRecords.map((record4) => ({ ...record4 })),
       selectedStageId: state.selectedStageId,
       party: [...state.party],
       clearedStageIds: [...state.cleared],
@@ -39882,7 +40504,7 @@ var SaveManager = class {
     if (!Array.isArray(data.earnedProfileModifierIds) || !Array.isArray(data.equippedProfileModifierIds) || data.earnedProfileModifierIds.some((id) => !modifierIds.has(id)) || data.equippedProfileModifierIds.some((id) => !data.earnedProfileModifierIds.includes(id)) || new Set(data.earnedProfileModifierIds).size !== data.earnedProfileModifierIds.length || new Set(data.equippedProfileModifierIds).size !== data.equippedProfileModifierIds.length || data.equippedProfileModifierIds.length > MAX_EQUIPPED_PROFILE_MODIFIERS) fail3("\uD504\uB85C\uD544 \uC218\uC2DD\uC5B4 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!sameJsonShape(data.settings, normalizeSettings(data.settings))) fail3("\uC124\uC815 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.completedStoryIds) || data.completedStoryIds.some((id) => typeof id !== "string") || new Set(data.completedStoryIds).size !== data.completedStoryIds.length) fail3("\uC644\uB8CC \uC2A4\uD1A0\uB9AC \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.observationRecords) || data.observationRecords.some((record3) => !record3 || typeof record3.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record3.date) || !relicIds.has(record3.relicId) || typeof record3.storyId !== "string" || typeof record3.questionId !== "string" || typeof record3.question !== "string" || typeof record3.choiceId !== "string" || typeof record3.answer !== "string" || typeof record3.personalityTag !== "string" || typeof record3.discoveredHabit !== "string")) fail3("\uAD00\uCC30 \uC778\uD130\uBDF0 \uAE30\uB85D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.observationRecords) || data.observationRecords.some((record4) => !record4 || typeof record4.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record4.date) || !relicIds.has(record4.relicId) || typeof record4.storyId !== "string" || typeof record4.questionId !== "string" || typeof record4.question !== "string" || typeof record4.choiceId !== "string" || typeof record4.answer !== "string" || typeof record4.personalityTag !== "string" || typeof record4.discoveredHabit !== "string")) fail3("\uAD00\uCC30 \uC778\uD130\uBDF0 \uAE30\uB85D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (new Set(data.observationRecords.map(({ date }) => date)).size !== data.observationRecords.length) fail3("\uD558\uB8E8\uC5D0 \uAD00\uCC30 \uC778\uD130\uBDF0\uB97C \uB450 \uBC88 \uAE30\uB85D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.party) || data.party.length !== 3 || new Set(data.party).size !== 3 || data.party.some((id) => !data.ownedRelicIds.includes(id))) fail3("\uD30C\uD2F0\uB294 \uC11C\uB85C \uB2E4\uB978 \uBCF4\uC720 \uB810\uB9AD 3\uBA85\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
     if (!relicIds.has(data.favorite) || !data.ownedRelicIds.includes(data.favorite)) fail3("\uC560\uCC29 \uB810\uB9AD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
@@ -39994,7 +40616,7 @@ var SaveManager = class {
       archaeology: structuredClone(data.archaeology ?? createArchaeologyState()),
       settings: normalizeSettings(data.settings),
       completedStoryIds: new Set(data.completedStoryIds),
-      observationRecords: data.observationRecords.map((record3) => ({ ...record3 })),
+      observationRecords: data.observationRecords.map((record4) => ({ ...record4 })),
       selectedStageId: data.selectedStageId,
       party: [...data.party],
       cleared: new Set(data.clearedStageIds),
@@ -40352,7 +40974,7 @@ function resolveRuneTraitStacking(traits, relicId) {
       for (const index of indices) if (index !== best) ignored.push(index);
       effects.push(...buildEffects(def, { value: def.values[traits[best].grade], value2: def.values2?.[traits[best].grade] ?? 0, count: 1 }, relicId));
     } else {
-      const sum = (pick2) => indices.reduce((total, index) => total + pick2(traits[index].grade), 0);
+      const sum = (pick3) => indices.reduce((total, index) => total + pick3(traits[index].grade), 0);
       const value = Math.min(def.sumCap ?? Number.POSITIVE_INFINITY, sum((grade) => def.values[grade]));
       const bestIndex = indices.reduce((top, index) => rank(index) > rank(top) ? index : top, indices[0]);
       const base = def.effect.kind === "periodicCrit" ? def.values[traits[bestIndex].grade] : value;
@@ -40572,9 +41194,9 @@ function pruneRecords(state, journal, now) {
     for (const key of Object.keys(journal.seeds)) if (staleRun(key)) delete journal.seeds[key];
   }
 }
-function standing(record3, now) {
-  const mode = record3.input.input.mode;
-  return Date.parse(record3.lease.expiresAt) > now.getTime() || !!record3.verdict && (mode === "expedition" || mode === "duel");
+function standing(record4, now) {
+  const mode = record4.input.input.mode;
+  return Date.parse(record4.lease.expiresAt) > now.getTime() || !!record4.verdict && (mode === "expedition" || mode === "duel");
 }
 function prepareCombat(state, request, now, id) {
   if (request?.input?.mode === "duel") {
@@ -40707,14 +41329,14 @@ function prepareCombat(state, request, now, id) {
 function finishCombat(state, proof, now) {
   if (!proof || typeof proof.id !== "string" || !Array.isArray(proof.actions) || proof.actions.length > MAX_COMBAT_ACTIONS || !Number.isInteger(proof.ticks) || proof.ticks < 0 || proof.ticks > MAX_COMBAT_TICKS || proof.abandoned !== void 0 && typeof proof.abandoned !== "boolean")
     return fail("proof_shape");
-  const record3 = combatJournal(state).records[proof.id];
-  if (!record3) return fail("no_record");
-  if (record3.verdict) return structuredClone(record3.verdict);
-  if (Date.parse(record3.lease.expiresAt) < now.getTime()) return fail("lease_expired");
-  if (record3.lease.setup.options?.automaticUltimates && proof.actions.length) return fail("auto_ultimate_actions");
-  if (proof.ticks * COMBAT_STEP_MS > Math.max(0, now.getTime() - Date.parse(record3.issuedAt)) * 3 + 2e3)
+  const record4 = combatJournal(state).records[proof.id];
+  if (!record4) return fail("no_record");
+  if (record4.verdict) return structuredClone(record4.verdict);
+  if (Date.parse(record4.lease.expiresAt) < now.getTime()) return fail("lease_expired");
+  if (record4.lease.setup.options?.automaticUltimates && proof.actions.length) return fail("auto_ultimate_actions");
+  if (proof.ticks * COMBAT_STEP_MS > Math.max(0, now.getTime() - Date.parse(record4.issuedAt)) * 3 + 2e3)
     return fail("too_fast");
-  const battle = combatState(record3.lease), rng = bossBattleRandom(record3.lease.seed);
+  const battle = combatState(record4.lease), rng = bossBattleRandom(record4.lease.seed);
   let index = 0, previous = -1;
   for (const action of proof.actions) {
     if (!action || !Number.isInteger(action.tick) || action.tick < 0 || action.tick < previous || action.tick > proof.ticks || typeof action.actorId !== "string")
@@ -40747,7 +41369,7 @@ function finishCombat(state, proof, now) {
   if (!proof.abandoned && battle.phase === "fight") return fail(`still_fighting@${proof.ticks}`);
   const victory = !proof.abandoned && battle.phase === "victory";
   const results = skirmishRelicResults(battle);
-  const party = record3.input.input.mode === "expedition" ? record3.input.input.relics.map((r) => r.relicId) : record3.lease.setup.players.map((f) => f.id);
+  const party = record4.input.input.mode === "expedition" ? record4.input.input.relics.map((r) => r.relicId) : record4.lease.setup.players.map((f) => f.id);
   const verdict = {
     victory,
     relicHp: party.map(
@@ -40755,20 +41377,20 @@ function finishCombat(state, proof, now) {
     ),
     elapsedMs: endedAt * COMBAT_STEP_MS
   };
-  record3.verdict = verdict;
+  record4.verdict = verdict;
   return structuredClone(verdict);
 }
 function consumeCombat(state, key) {
   const journal = combatJournal(state);
   delete journal.tickets[key];
-  for (const [id, record3] of Object.entries(journal.records))
-    if (combatKey(record3.input) === key) delete journal.records[id];
+  for (const [id, record4] of Object.entries(journal.records))
+    if (combatKey(record4.input) === key) delete journal.records[id];
   if (journal.seeds) {
     for (const seed of Object.keys(journal.seeds)) if (seed === key || seed.startsWith(`${key}#`)) delete journal.seeds[seed];
   }
 }
 function combatVerdictFor(state, key) {
-  return Object.values(combatJournal(state).records).find((record3) => record3.verdict && combatKey(record3.input) === key)?.verdict;
+  return Object.values(combatJournal(state).records).find((record4) => record4.verdict && combatKey(record4.input) === key)?.verdict;
 }
 
 // src/api/storyAuthority.ts
@@ -42615,6 +43237,98 @@ var CHAPTER_7_STORIES = [
   STAGE_7_10_POST
 ];
 
+// src/data/dialogues/chapter8And9.ts
+init_define_import_meta_env();
+function scene(id, backdrop, recollectionSummary, lines) {
+  return { id, backdrop, recollectionSummary, startNodeId: "n1", nodes: linear(lines.map(([speaker, body, standing2], index) => ({ id: `n${index + 1}`, speaker, body, ...standing2 ? { standing: standing2 } : {} }))) };
+}
+var CHAPTER_8_STORIES = [
+  scene("stage-8-1-pre", "thirdBranchField", "\uCE74\uB974\uAC00 \uB0A8\uAE34 \uBC1C\uC790\uAD6D\uC744 \uB530\uB77C \uC0C1\uCE35\uC73C\uB85C \uD5A5\uD55C\uB2E4.", [
+    ["", "\uAD6C\uC18D\uC2E4 \uCC9C\uC7A5\uC758 \uAD6C\uBA4D\uC740 \uC9C0\uC0C1\uAE4C\uC9C0 \uC774\uC5B4\uC9C0\uC9C0 \uC54A\uC558\uB2E4. \uCE74\uB974\uAC00 \uB51B\uACE0 \uAC04 \uC1E0\uBCF4\uAC00 \uD55C \uCE35 \uC704\uC5D0\uC11C \uC544\uC9C1 \uD754\uB4E4\uB9AC\uACE0 \uC788\uC5C8\uB2E4."],
+    ["\uCF54\uB9C8", "\u2026\uB0B4\uAC00 \uC55E\uC5D0 \uC120\uB2E4. \uC800 \uC704\uC5D0\uB294 \uC190\uBC14\uB2E5 \uD310\uC774 \uC5C6\uB2E4. \uC0AC\uB78C\uC744 \uC138\uB294 \uACC4\uC218\uAE30\uAC00 \uC788\uC9C0.", "koma"],
+    ["\uB809\uC2DC\uC544", "\uC774\uBC88\uC5D4 \uC6B0\uB9AC\uAC00 \uBA3C\uC800 \uC62C\uB77C\uAC04\uB2E4. \uB9C8\uC2A4\uD130, \uBC1C\uBC11 \uBD10.", "lexia"]
+  ]),
+  scene("stage-8-3-post", "controlRoom", "\uADC0\uD658 \uACC4\uC218\uD310\uC5D0 \uB3CC\uC544\uC624\uC9C0 \uBABB\uD55C \uC0AC\uB78C\uB4E4\uC774 \uB0A8\uC558\uB2E4.", [
+    ["", "\uACC4\uC218\uD310\uC5D0\uB294 \uB3CC\uC544\uC628 \uC0AC\uB78C\uC774 \uC5F4, \uB3CC\uC544\uC624\uC9C0 \uC54A\uC740 \uC0AC\uB78C\uC774 \uC5F4\uD55C \uBA85\uC774\uB77C\uACE0 \uB5A0 \uC788\uC5C8\uB2E4."],
+    ["\uCF54\uB9C8", "\uC218\uC6A9\uC2E4\uC774 \uBE48 \uB4A4\uC5D0\uB3C4 \uC22B\uC790\uB294 \uC548 \uBC14\uB00C\uC5B4. \uC5EC\uAE30\uC120 \uBB38\uC744 \uD1B5\uACFC\uD55C \uC0AC\uB78C\uB9CC \uB3CC\uC544\uC628 \uAC78\uB85C \uCCD0.", "koma"],
+    ["\uC774\uCE74\uB2C9\uC2DC\uC544", "\uC911\uACC4\uC120\uC744 \uB450\uACE0 \uBB3C\uB7EC\uB0A9\uB2C8\uB2E4. \uADF8\uB798\uC57C \uB610 \uC190 \uD558\uB098\uC5D0 \uC804\uBD80 \uAC78\uC9C0 \uC54A\uC744 \uD14C\uB2C8\uAE4C\uC694.", "ikanixia"]
+  ]),
+  scene("stage-8-5-pre", "thirdBranchField", "\uD68C\uC218\uC870\uB294 \uB2EB\uD788\uB294 \uBB38 \uB4A4\uC5D0 \uB0A8\uC740 \uC14B\uC744 \uAE30\uB2E4\uB9B0\uB2E4.", [
+    ["\uC544\uD2B8\uB77C", "\uAC04\uBD80\uB2D8, \uBB38\uC774 \uB2EB\uD799\uB2C8\uB2E4. \uC548\uCABD \uC14B\uC740 \uC544\uC9C1 \uC548 \uC654\uC2B5\uB2C8\uB2E4.", "atra"],
+    ["\uC774\uCE74\uB2C9\uC2DC\uC544", "\uC7A0\uAE08 \uAC78\uC1E0\uB97C \uB72F\uC5B4. \uC190\uB2D8\uC744 \uB9C9\uB294 \uAC74 \uADF8 \uB2E4\uC74C\uC774\uB2E4.", "ikanixia"],
+    ["", "\uC544\uD2B8\uB77C\uAC00 \uBE57\uC7A5\uC744 \uAC78\uCE58\uB294 \uB300\uC2E0 \uBB38 \uC0AC\uC774\uC5D0 \uC9D0\uCE78\uC744 \uBC00\uC5B4 \uB123\uC5C8\uB2E4. \uADF8 \uD2C8\uC73C\uB85C \uC5F0\uAD6C\uC6D0\uC758 \uBC1C\uCE58\uAE4C\uC9C0 \uBE44\uC0C1\uB4F1\uC774 \uAE38\uAC8C \uCF1C\uC84C\uB2E4."]
+  ]),
+  scene("stage-8-7-post", "controlRoom", "\uC5F0\uAD6C\uC6D0\uC774 \uB2E4\uAC00\uAC08\uC218\uB85D \uC591\uCABD\uC758 \uBE44\uC0C1\uB4F1\uC774 \uCF1C\uC9C4\uB2E4.", [
+    ["\uB370\uC774", "\uC774\uCABD \uC120\uB9CC \uB5A0 \uC788\uC5B4. \uC5F0\uAD6C\uC6D0\uD558\uACE0 \uAC00\uAE4C\uC6CC\uC9C0\uBA74 \uBD88\uC774 \uD558\uB098\uC529 \uCF1C\uC838.", "deina"],
+    ["\uB178\uB3C4\uB2C8\uC544", "\uADF8\uB7FC \uC800\uCABD\uC5D0\uC11C\uB3C4 \uC6B0\uB9AC\uAC00 \uC624\uB294 \uAC70 \uC54C\uC544\uBCF4\uACA0\uAD6C\uB098. \uC544\uAC00, \uB0B4\uAC00 \uC55E\uC5D0\uC11C \uBD88\uC744 \uC140\uAC8C.", "nodonia"],
+    ["", "\uBB38 \uB108\uBA38\uC5D0\uC11C \uAC19\uC740 \uC18D\uB3C4\uB85C \uC0C8 \uBD88\uC774 \uCF1C\uC84C\uB2E4. \uBA3C\uC800 \uBCF4\uB294 \uCABD\uC774 \uB204\uAD6C\uC778\uC9C0 \uC774\uC81C \uAD6C\uBD84\uD560 \uC218 \uC5C6\uC5C8\uB2E4."]
+  ]),
+  scene("stage-8-10-pre", "thirdBranchField", "\uAD81\uB2C8\uB974 \uB178\uCE78\uC774 \uC2B9\uAC15\uAE30 \uC55E\uC5D0\uC11C \uAE38\uC744 \uB9C9\uB294\uB2E4.", [
+    ["", "\uC2B9\uAC15\uAE30 \uBB38 \uC55E\uC5D0 \uC120 \uC5EC\uC790\uAC00 \uC18C\uB9E4\uC5D0 \uBB3B\uC740 \uBA3C\uC9C0\uB97C \uD138\uC5C8\uB2E4. \uD574\uC9C4 \uC637\uAE43 \uBC11\uC73C\uB85C \uC624\uB798 \uC544\uBB38 \uC790\uAD6D\uC774 \uBCF4\uC600\uB2E4."],
+    ["\uB178\uCE78", "\uADC0\uD658 \uBCF4\uACE0\uB294 \uBC1B\uC558\uC5B4. \uCE74\uB974\uB294 \uC798 \uC654\uACE0, \uC774\uC81C \uC5F0\uAD6C\uC6D0 \uCC28\uB840\uB2E4.", "nokan"],
+    ["\uB809\uC2DC\uC544", "\uC804\uD22C\uC758 \uC5EC\uC655\uC774 \uBA3C\uC800 \uC62C\uB77C\uC654\uB2E4. \uB4A4\uB294 \uBABB \uC9C0\uB098\uAC00.", "lexia"],
+    ["\uB178\uCE78", "\uADF8\uB7FC \uC5EC\uAE30\uC11C \uBD10. \uB204\uAC00 \uBA3C\uC800 \uC790\uAE30 \uB4A4\uB97C \uB3CC\uC544\uBCF4\uB294\uC9C0.", "nokan"]
+  ]),
+  scene("stage-8-10-post", "thirdBranchField", "\uB178\uCE78\uC774 \uBB3C\uB7EC\uC11C\uBA70 \uCCA0\uAC11\uC5D0\uAC8C \uC717\uAE38\uC744 \uB9E1\uAE34\uB2E4.", [
+    ["", "\uB178\uCE78\uC774 \uAC08\uB77C\uC9C4 \uC785\uC220\uC744 \uC190\uB4F1\uC73C\uB85C \uB2E6\uC558\uB2E4. \uBE44\uC0C1 \uC2B9\uAC15\uAE30\uAC00 \uD55C \uBC88 \uBC00\uB838\uB2E4\uAC00 \uB2E4\uC2DC \uC62C\uB77C\uC624\uAE30 \uC2DC\uC791\uD588\uB2E4."],
+    ["\uB178\uCE78", "\uCCA0\uAC11. \uC544\uB798\uC5D0\uC11C \uBC1B\uC558\uB2E4. \uBA48\uCD94\uC9C0 \uB9C8.", "nokan"],
+    ["\uC740\uD14C", "\uBC1B\uC558\uB2E4. \uB124 \uCABD \uBB38\uC744 \uB2EB\uC9C0. \uBD80\uB300\uC7A5\uD55C\uD14C\uB294 \uC14B\uC744 \uBA3C\uC800 \uBCF4\uB0B4\uB77C\uACE0 \uD574.", "eunte"],
+    ["\uCF54\uB9C8", "\uC800 \uB458\uC740 \uC11C\uB85C \uC790\uB9AC\uB97C \uBC14\uAFB8\uC9C0 \uC54A\uB294\uB2E4. \uD55C \uBA85\uC744 \uB118\uACA8\uB3C4 \uB05D\uC774\uB77C\uACE0 \uC5EC\uAE30\uBA74 \uC548 \uB3FC.", "koma"]
+  ])
+];
+var CHAPTER_9_STORIES = [
+  scene("stage-9-1-pre", "controlRoom", "\uC81C\uC5B4\uCD95\uC744 \uBA48\uCD94\uAE30 \uC804\uC5D0 \uACA9\uB0A9\uC2E4\uBD80\uD130 \uBE44\uC6B0\uAE30\uB85C \uD55C\uB2E4.", [
+    ["", "\uC2B9\uAC15\uAE30\uAC00 \uBA4E\uC5C8\uB2E4. \uC9C0\uC6CC\uC9C4 \uC801 \uC5C6\uB294 \uC22B\uC790 \uB450 \uAC1C\uAC00 \uCD9C\uC785 \uBA85\uBD80 \uB9E8 \uC704\uC5D0 \uB0A8\uC544 \uC788\uC5C8\uB2E4."],
+    ["\uB370\uC774", "\uC81C\uC5B4\uCD95 \uC544\uB798 \uACA9\uB0A9\uC2E4\uC774 \uC804\uBD80 \uAC19\uC740 \uC120\uC5D0 \uBB36\uC600\uC5B4. \uC5EC\uAE30 \uBB38\uC744 \uB04A\uC73C\uB824\uBA74 \uBA3C\uC800 \uC548\uC5D0 \uC788\uB294 \uC0AC\uB78C\uC744 \uBE7C\uC57C \uD574.", "deina"],
+    ["\uB809\uC2DC\uC544", "\uC88B\uC544. \uCD9C\uAD6C\uAE4C\uC9C0 \uBA3C\uC800 \uD655\uBCF4\uD55C\uB2E4. \uBB38 \uD558\uB098 \uB530\uB7EC \uC628 \uAC70\uBA74 \uAD73\uC774 \uC5EC\uAE30\uAE4C\uC9C0 \uC548 \uC654\uC9C0.", "lexia"]
+  ]),
+  scene("stage-9-3-post", "controlRoom", "\uCF54\uB9C8\uAC00 \uC624\uB798\uC804 \uCC98\uC74C \uC0AC\uB78C\uC744 \uBE7C\uB0C8\uB358 \uC21C\uC11C\uB97C \uB5A0\uC62C\uB9B0\uB2E4.", [
+    ["", "\uB204\uAD70\uAC00 \uB3CC\uB85C \uBC1B\uCCD0 \uB454 \uBC29\uCD9C\uAD6C \uC544\uB798\uB85C \uC0AC\uB78C \uD558\uB098\uAC00 \uACA8\uC6B0 \uC9C0\uB098\uAC08 \uB9CC\uD55C \uD2C8\uC774 \uBCF4\uC600\uB2E4."],
+    ["\uCF54\uB9C8", "\uC61B\uB0A0\uC5D4 \uBC88\uD638 \uBAA8\uB974\uB294 \uC0AC\uB78C\uBD80\uD130 \uBE7C\uB0C8\uC5B4. \uC774\uBC88\uC5D0\uB3C4 \uADF8 \uC21C\uC11C\uB85C \uD55C\uB2E4.", "koma"],
+    ["\uB178\uB3C4\uB2C8\uC544", "\uC544\uAC00, \uAC19\uC774 \uAC00\uC11C \uC5F4\uC790. \uC548\uC73C\uB85C \uB4E4\uC5B4\uAC00\uC9C0 \uC54A\uC544\uB3C4 \uC190\uC740 \uB2FF\uACA0\uC5B4.", "nodonia"]
+  ]),
+  scene("stage-9-5-pre", "thirdBranchField", "\uCCA0\uAC11 \uC740\uD14C\uAC00 \uD1F4\uB85C \uC55E\uC5D0 \uC5F4 \uACB9\uC758 \uC7A5\uAC11\uC744 \uB0B4\uB9B0\uB2E4.", [
+    ["", "\uAC80\uC740 \uC7A5\uAC11\uC758 \uC5EC\uC790\uAC00 \uBC1C\uB4A4\uAFC8\uCE58\uB97C \uB0B4\uB824\uB193\uC790, \uC5F4 \uAC08\uB798 \uACE0\uC815\uC1E0\uAC00 \uBC14\uB2E5\uC5D0 \uBC15\uD614\uB2E4."],
+    ["\uC740\uD14C", "\uCCA0\uAC11\uC774\uB2E4. \uB4A4\uC5D0 \uC0AC\uB78C \uC788\uB2E4. \uBC1C \uB514\uB518 \uC120\uC5D0\uC11C \uBB3C\uB7EC\uC11C.", "eunte"],
+    ["\uB178\uB3C4\uB2C8\uC544", "\uADF8 \uC0AC\uB78C\uB4E4 \uB54C\uBB38\uC5D0 \uC628 \uAC70\uC57C. \uAE38\uC744 \uD55C \uC904\uB9CC \uB0B4 \uC8FC\uB834.", "nodonia"],
+    ["\uC740\uD14C", "\uB0B4\uAC00 \uC5F4\uBA74 \uC81C\uC5B4\uCD95\uB3C4 \uC5F4\uB9B0\uB2E4. \uADF8 \uC870\uAC74\uC73C\uB85C\uB294 \uBABB \uC900\uB2E4.", "eunte"]
+  ]),
+  scene("stage-9-5-post", "thirdBranchField", "\uC740\uD14C\uAC00 \uC606 \uBB38\uC744 \uC5F4\uC5B4 \uC548\uC5D0 \uB0A8\uC740 \uC0AC\uB78C\uBD80\uD130 \uB0B4\uBCF4\uB0B8\uB2E4.", [
+    ["", "\uC5F4 \uBC88\uC9F8 \uACE0\uC815\uC1E0\uAC00 \uBE60\uC838 \uB098\uC654\uB2E4. \uC740\uD14C\uB294 \uC4F0\uB7EC\uC9C4 \uBB38\uC744 \uBAB8\uC73C\uB85C \uBC1B\uCE5C \uCC44 \uB048 \uD558\uB098\uB97C \uC7A1\uC544\uB2F9\uACBC\uB2E4."],
+    ["\uC740\uD14C", "\uC606 \uBB38\uC740 \uC5F4\uC5C8\uB2E4. \uB4E4\uC5B4\uAC04 \uC0AC\uB78C \uC788\uC73C\uBA74 \uC9C0\uAE08 \uBE7C. \uC81C\uC5B4\uCD95\uC740 \uB0B4\uAC00 \uC9C0\uD0A8\uB2E4.", "eunte"],
+    ["\uB809\uC2DC\uC544", "\uB0B4\uAC00 \uC9C0\uD0A4\uB77C\uACE0 \uD574\uC11C \uB4A4\uC5D0 \uC11C\uB294 \uAC74 \uC54C\uACA0\uB294\uB370, \uADF8\uB807\uAC8C \uC11C\uBA74 \uB05D\uAE4C\uC9C0 \uD63C\uC790 \uB0A8\uAC8C \uB418\uC796\uC544.", "lexia"],
+    ["", "\uC740\uD14C\uB294 \uB300\uB2F5\uD558\uB294 \uB300\uC2E0 \uC0AC\uB78C \uD558\uB098\uAC00 \uB354 \uC9C0\uB098\uAC08 \uB9CC\uD07C \uBB38\uC744 \uB4E4\uC5C8\uB2E4."]
+  ]),
+  scene("stage-9-7-post", "controlRoom", "\uCE74\uB974\uAC00 \uCD9C\uAD6C\uC5D0 \uC11C\uC11C \uB3CC\uC544\uC62C \uC0AC\uB78C\uC758 \uC774\uB984\uC744 \uBD80\uB978\uB2E4.", [
+    ["\uCE74\uB974", "\u2026\uB300\uC7A5\uB4E4 \uBA85\uB839\uC774\uB2E4. \uC544\uC9C1 \uC548 \uB098\uC628 \uC0AC\uB78C\uC744 \uCC3E\uB294\uB2E4.", "carno"],
+    ["\uCF54\uB9C8", "\uADF8\uAC74 \uB0B4\uAC00 \uAC04\uB2E4. \uB10C \uC800\uCABD\uC5D0\uC11C \uB098\uC624\uB294 \uC0AC\uB78C \uC774\uB984\uBD80\uD130 \uBD88\uB7EC.", "koma"],
+    ["", "\uCE74\uB974\uAC00 \uD55C\uB3D9\uC548 \uC785\uC744 \uC5F4\uC9C0 \uC54A\uC558\uB2E4. \uADF8\uB7EC\uACE0\uB294 \uBA3C\uC800 \uB3CC\uC544\uC62C \uC0AC\uB78C\uC758 \uBC88\uD638\uB97C \uBD80\uB974\uC9C0 \uC54A\uACE0, \uC774\uB984\uC744 \uBD88\uB800\uB2E4."]
+  ]),
+  scene("stage-9-9-post", "controlRoom", "\uB370\uC774\uAC00 \uBC29\uCD9C\uAD6C\uB97C \uC5F0\uACB0\uD55C\uB2E4. \uC774\uC81C \uB9C8\uC9C0\uB9C9 \uBB38\uB9CC \uB0A8\uC558\uB2E4.", [
+    ["\uB370\uC774", "\uBC29\uCD9C\uAD6C \uC5F0\uACB0 \uC644\uB8CC. \uC774\uAC78 \uB193\uC73C\uBA74 \uBC14\uAE65\uAE4C\uC9C0 \uC774\uC5B4\uC838. \uC774\uC81C \uC0AC\uB78C\uB4E4 \uB04C\uC5B4\uC62C\uB9B4 \uC218 \uC788\uC5B4.", "deina"],
+    ["\uB178\uB3C4\uB2C8\uC544", "\uADF8\uB7FC \uB9C8\uC9C0\uB9C9 \uBB38\uAE4C\uC9C0\uB294 \uC6B0\uB9AC\uAC00 \uAC08\uAC8C. \uC544\uAC00, \uC6B0\uB9AC \uB4A4\uC5D0 \uB204\uAC00 \uB0A8\uB294\uC9C0\uB3C4 \uBD10\uC57C \uD574.", "nodonia"],
+    ["", "\uC81C\uC5B4\uCD95 \uB108\uBA38\uC5D0\uC11C \uAE08\uC18D\uC774 \uB450 \uBC88 \uBC14\uB2E5\uC744 \uCCE4\uB2E4. \uB300\uB2F5\uCC98\uB7FC, \uB2E4\uB978 \uCABD\uC5D0\uC11C \uBC1C\uC18C\uB9AC\uAC00 \uD55C \uBC88 \uB3CC\uC544\uC654\uB2E4."]
+  ]),
+  scene("stage-9-10-pre", "controlRoom", "\uB450 \uB300\uC7A5\uC774 \uB098\uB780\uD788 \uC11C\uC11C \uC5F0\uAD6C\uC6D0\uC758 \uB9C8\uC9C0\uB9C9 \uAE38\uC744 \uB9C9\uB294\uB2E4.", [
+    ["", "\uC740\uD14C\uAC00 \uC911\uC559\uCD95 \uC55E\uC5D0 \uC7A5\uAC11\uC744 \uACE0\uC815\uD588\uB2E4. \uB178\uCE78\uC740 \uD55C \uAC78\uC74C \uC55E\uAE4C\uC9C0 \uB098\uAC14\uB2E4\uAC00, \uC774\uBC88\uC5D0\uB294 \uC740\uD14C\uC758 \uC5B4\uAE68\uAC00 \uB2FF\uB294 \uC790\uB9AC\uC5D0 \uC130\uB2E4."],
+    ["\uC740\uD14C", "\uBC29\uCD9C\uAD6C\uB294 \uB124\uAC00 \uC5F4\uC5C8\uC9C0, \uC5F0\uAD6C\uC6D0. \uC911\uC559\uCD95\uC744 \uC5F4\uBA74 \uB0A8\uC740 \uBC29\uAE4C\uC9C0 \uB124 \uC55E\uC73C\uB85C \uB2F9\uACA8\uC9C4\uB2E4.", "eunte"],
+    ["\uB178\uCE78", "\uCC98\uC74C\uC5D4 \uC544\uBB34\uB3C4 \uC6B0\uB9AC \uBC29\uC5D0 \uB4E4\uC5B4\uC624\uC9C0 \uC54A\uC558\uC5B4. \uC774\uC81C \uC6B0\uB9AC\uAC00 \uBA3C\uC800 \uB098\uAC00. \uB124\uAC00 \uC5EC\uAE30 \uB0A8\uC744\uC9C0\uB294 \uC6B0\uB9AC\uAC00 \uC815\uD55C\uB2E4.", "nokan"],
+    ["\uB809\uC2DC\uC544", "\uB9C8\uC2A4\uD130\uAC00 \uB0A8\uC744 \uC790\uB9AC\uB294 \uB9C8\uC2A4\uD130\uAC00 \uC815\uD574. \uB450 \uC0AC\uB78C \uB2E4 \uAE38\uC744 \uC5F4\uC5B4.", "lexia"],
+    ["\uC740\uD14C", "\uB178\uCE78. \uC624\uB978\uCABD\uC740 \uB9E1\uAE34\uB2E4.", "eunte"],
+    ["\uB178\uCE78", "\uC54C\uC544. \uC774\uBC88\uC5D4 \uBA3C\uC800 \uC548 \uAC04\uB2E4.", "nokan"]
+  ]),
+  scene("stage-9-10-post", "controlRoom", "\uB9C8\uC9C0\uB9C9 \uBC29\uC774 \uBE44\uACE0, \uC81C\uC5B4\uCD95\uC758 \uACBD\uBCF4\uB4F1\uC774 \uAEBC\uC9C4\uB2E4.", [
+    ["", "\uB9C8\uC9C0\uB9C9 \uACBD\uBCF4\uB4F1\uC774 \uAEBC\uC84C\uB2E4. \uC740\uD14C\uAC00 \uC7A1\uC544 \uB450\uB358 \uCD95\uC774 \uAE30\uC6B8\uC5C8\uACE0, \uB178\uCE78\uC774 \uC4F0\uB7EC\uC9C4 \uCABD \uC5B4\uAE68\uB97C \uBC1B\uCCE4\uB2E4."],
+    ["\uC740\uD14C", "\uB05D\uAE4C\uC9C0 \uB0A8\uC740 \uBC29\uC740?", "eunte"],
+    ["\uB370\uC774", "\uBE44\uC5C8\uC5B4. \uD56D\uBAA9\uB9C8\uB2E4 \uC0AC\uB78C \uC190\uC73C\uB85C \uD655\uC778\uD588\uC5B4.", "deina"],
+    ["\uB178\uCE78", "\uADF8\uB7FC \uB410\uB2E4. \uCCA0\uAC11, \uC774\uBC88\uC5D4 \uB124\uAC00 \uBA3C\uC800 \uAC00.", "nokan"],
+    ["\uB809\uC2DC\uC544", "\uB9C8\uC2A4\uD130. \uB4A4\uC5D0 \uC544\uBB34\uB3C4 \uC548 \uB0A8\uC558\uC5B4.", "lexia"],
+    ["", "\uC5F0\uAD6C\uC6D0\uC774 \uB4A4\uB97C \uB3CC\uC544\uBD24\uB2E4. \uC7A0\uAE08\uD310\uC740 \uAC00\uAE4C\uC774 \uAC00\uB3C4 \uB2E4\uC2DC \uBE5B\uB098\uC9C0 \uC54A\uC558\uB2E4. \uCF54\uB9C8\uAC00 \uADF8 \uC606\uC744 \uAC78\uC5B4\uC11C \uC9C0\uB098\uAC14\uB2E4."],
+    ["\uCF54\uB9C8", "\uC704\uAE4C\uC9C0 \uAC19\uC774 \uAC04\uB2E4\uACE0 \uD588\uC9C0. \u2026\uB354 \uAC00\uC57C \uD558\uBA74, \uC774\uBC88\uC5D4 \uAC70\uAE30\uAE4C\uC9C0\uB77C\uACE0 \uD574 \uB450\uC9C0.", "koma"]
+  ])
+];
+for (const story of [...CHAPTER_8_STORIES, ...CHAPTER_9_STORIES]) registerDialogueTexts(story);
+
 // src/data/stageStories.ts
 var LINKS = {
   "1-2": { post: "stage-1-2-post" },
@@ -42676,7 +43390,18 @@ var LINKS = {
   "7-7": { post: "stage-7-7-post" },
   "7-8": { post: "stage-7-8-post" },
   "7-9": { post: "stage-7-9-post" },
-  "7-10": { pre: "stage-7-10-pre", post: "stage-7-10-post" }
+  "7-10": { pre: "stage-7-10-pre", post: "stage-7-10-post" },
+  "8-1": { pre: "stage-8-1-pre" },
+  "8-3": { post: "stage-8-3-post" },
+  "8-5": { pre: "stage-8-5-pre" },
+  "8-7": { post: "stage-8-7-post" },
+  "8-10": { pre: "stage-8-10-pre", post: "stage-8-10-post" },
+  "9-1": { pre: "stage-9-1-pre" },
+  "9-3": { post: "stage-9-3-post" },
+  "9-5": { pre: "stage-9-5-pre", post: "stage-9-5-post" },
+  "9-7": { post: "stage-9-7-post" },
+  "9-9": { post: "stage-9-9-post" },
+  "9-10": { pre: "stage-9-10-pre", post: "stage-9-10-post" }
 };
 var STAGE_STORY_LINKS = LINKS;
 var MAIN_STORY_BUNDLES = [
@@ -42686,7 +43411,9 @@ var MAIN_STORY_BUNDLES = [
   ...CHAPTER_4_STORIES,
   ...CHAPTER_5_STORIES,
   ...CHAPTER_6_STORIES,
-  ...CHAPTER_7_STORIES
+  ...CHAPTER_7_STORIES,
+  ...CHAPTER_8_STORIES,
+  ...CHAPTER_9_STORIES
 ];
 
 // src/data/dialogues/recollections.ts
@@ -42973,29 +43700,6 @@ function resolveAcquisitions(ownedRelicIds, fragmentsById, results, breakthrough
 
 // src/api/FakeSocialServer.ts
 init_define_import_meta_env();
-
-// src/core/social.ts
-init_define_import_meta_env();
-var DAILY_HELPER_LIMIT = 3;
-var FRIEND_POINTS_PER_RENTAL = 10;
-function helperRentalAvailability(usedToday) {
-  const normalized = Math.max(0, Math.floor(usedToday));
-  const remaining = Math.max(0, DAILY_HELPER_LIMIT - normalized);
-  return { allowed: remaining > 0, remaining };
-}
-var FRIEND_LIMIT = 50;
-var FRIEND_REQUEST_LIMIT = 30;
-var ONLINE_WINDOW_MS = 5 * 6e4;
-function normalizeSearchQuery(raw) {
-  return raw.trim();
-}
-function matchesUserQuery(user, query) {
-  const normalized = normalizeSearchQuery(query);
-  if (normalized.length === 0) return false;
-  if (user.displayName.toLocaleLowerCase().includes(normalized.toLocaleLowerCase())) return true;
-  const digits = normalized.replace(/\D/g, "");
-  return digits.length > 0 && user.uid === digits;
-}
 
 // src/data/friendDirectory.ts
 init_define_import_meta_env();
@@ -45792,10 +46496,10 @@ var FakeGuildServer = class _FakeGuildServer {
   /** 표본 길드원의 오늘 기록 — 날짜와 id에서만 나오는 값이라 다시 읽어도 같다. */
   sampleGuard(member, day) {
     if (!member.sample || member.guardDay === day) return;
-    const record3 = sampleGuardRecord(member.userId, member.level, day);
+    const record4 = sampleGuardRecord(member.userId, member.level, day);
     member.guardDay = day;
-    member.guardBest = record3.best;
-    member.guardAt = record3.at;
+    member.guardBest = record4.best;
+    member.guardAt = record4.at;
   }
   /** 오늘의 기록만 센다 — 지난날의 최고는 0이다. */
   guardBestOf(member, day) {
@@ -45826,12 +46530,12 @@ var FakeGuildServer = class _FakeGuildServer {
     const ranked = [...this.guilds.values()].map((g) => ({ id: g.id, name: g.name, badge: { ...g.badge }, level: this.level(g), score: this.guardScoreOf(g) ?? 0, isMine: g.id === guild.id })).sort((a, b) => b.score - a.score || a.name.localeCompare(b.name)).map((entry, index) => ({ ...entry, rank: index + 1 }));
     return { day, members, guilds: ranked.slice(0, 50), mine: ranked.find((entry) => entry.isMine) ?? null, serverTime: now };
   }
-  async recordGuard(actor, record3, requestId) {
+  async recordGuard(actor, record4, requestId) {
     return this.once(actor, requestId, () => {
       const { guild, me } = this.requireGuild(actor);
-      const score = Math.max(0, Math.round(record3.score));
-      if (me.guardDay !== record3.day) {
-        me.guardDay = record3.day;
+      const score = Math.max(0, Math.round(record4.score));
+      if (me.guardDay !== record4.day) {
+        me.guardDay = record4.day;
         me.guardBest = 0;
         me.guardAt = 0;
       }
@@ -45839,7 +46543,7 @@ var FakeGuildServer = class _FakeGuildServer {
         me.guardBest = Math.max(me.guardBest, score);
         me.guardAt = this.now();
       }
-      me.coin += Math.max(0, Math.round(record3.coin));
+      me.coin += Math.max(0, Math.round(record4.coin));
       _FakeGuildServer.ledgerSlot(this.guardLedger, me.guardDay, guild.id).set(me.userId, me.guardBest);
       return { best: me.guardBest, coin: me.coin };
     });
@@ -46234,17 +46938,17 @@ var FakeGuildServer = class _FakeGuildServer {
       };
     });
   }
-  async recordWarAttack(actor, record3, requestId) {
+  async recordWarAttack(actor, record4, requestId) {
     const captured = this.once(actor, requestId, () => {
       const { guild, me } = this.requireGuild(actor);
-      const key = `${me.userId}:${record3.day}:${record3.slotId}:${record3.entry}`;
+      const key = `${me.userId}:${record4.day}:${record4.slotId}:${record4.entry}`;
       if (!this.warPending.delete(key)) return fail2("WAR_NOT_ENTERED");
-      if (!record3.won) return false;
-      const match = this.warMatches.get(record3.day)?.find((m) => m.a === guild.id || m.b === guild.id);
+      if (!record4.won) return false;
+      const match = this.warMatches.get(record4.day)?.find((m) => m.a === guild.id || m.b === guild.id);
       if (!match || match.settled) return false;
       const captures = match.captures.get(guild.id);
-      if (captures.has(record3.slotId)) return false;
-      captures.set(record3.slotId, { at: this.now(), by: me.userId });
+      if (captures.has(record4.slotId)) return false;
+      captures.set(record4.slotId, { at: this.now(), by: me.userId });
       return true;
     });
     return { captured, front: await this.getWarFront(actor) };
@@ -46688,7 +47392,7 @@ init_define_import_meta_env();
 
 // src/data/recollectionCatalog.ts
 init_define_import_meta_env();
-var RECOLLECTION_GROUPS = ["chapter1", "chapter2", "chapter3", "chapter4", "chapter5", "chapter6", "chapter7", "side"];
+var RECOLLECTION_GROUPS = ["chapter1", "chapter2", "chapter3", "chapter4", "chapter5", "chapter6", "chapter7", "chapter8", "chapter9", "side"];
 function buildRecollectionEntries() {
   const entries = [
     { storyId: OPENING_TRAIN.id, group: "chapter1", titleKey: "recollection.title.openingTrain" },
@@ -46955,8 +47659,8 @@ function rotationOffer(slot, periodKey) {
   if (slot.candidates.length === 0) return null;
   const forced = slot.period === "weekly" && slot.pityAfterMisses !== void 0 && consecutiveMisses(slot, periodKey) >= slot.pityAfterMisses;
   if (!forced && !opensNaturally(slot, periodKey)) return null;
-  const pick2 = Math.floor(rotationRoll(`${slot.id}:pick:${periodKey}`) * slot.candidates.length);
-  return slot.candidates[Math.min(slot.candidates.length - 1, pick2)] ?? null;
+  const pick3 = Math.floor(rotationRoll(`${slot.id}:pick:${periodKey}`) * slot.candidates.length);
+  return slot.candidates[Math.min(slot.candidates.length - 1, pick3)] ?? null;
 }
 function rotationRunePart(slot, periodKey) {
   return Math.min(2, Math.floor(rotationRoll(`${slot.id}:part:${periodKey}`) * 3));
@@ -47112,14 +47816,14 @@ init_define_import_meta_env();
 var FREE_RESEARCH_SOURCE_ID = "research-free-daily";
 var FREE_RESEARCH_BANNER_ID = "fossil";
 var FREE_RESEARCH_DAILY_LIMIT = 1;
-function freeResearchUsedToday(record3, now) {
-  return record3?.periodKey === staminaGemDayKey(now) ? record3.count : 0;
+function freeResearchUsedToday(record4, now) {
+  return record4?.periodKey === staminaGemDayKey(now) ? record4.count : 0;
 }
-function freeResearchAvailable(record3, now) {
-  return freeResearchUsedToday(record3, now) < FREE_RESEARCH_DAILY_LIMIT;
+function freeResearchAvailable(record4, now) {
+  return freeResearchUsedToday(record4, now) < FREE_RESEARCH_DAILY_LIMIT;
 }
-function freeResearchSpent(record3, now) {
-  return { periodKey: staminaGemDayKey(now), count: freeResearchUsedToday(record3, now) + 1 };
+function freeResearchSpent(record4, now) {
+  return { periodKey: staminaGemDayKey(now), count: freeResearchUsedToday(record4, now) + 1 };
 }
 function freeResearchResetsAt(now) {
   return nextUtcMidnight(now);
@@ -47723,7 +48427,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.550.0",
+  version: "0.552.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -48383,6 +49087,29 @@ var SettingsManager = class extends EventTarget {
     if (current2[screen] && sameRosterView(current2[screen], next, screen)) return;
     this.update({ game: { rosterViews: { ...current2, [screen]: next } } });
   }
+  /** 룬 목록 화면이 지금 세울 필터·정렬(`core/listViewMemory.ts`). 기억이 없거나 쓸 수 없는 값이면 그 화면의 기본값이다. */
+  runeView(screen) {
+    return runeViewFor(this.get().game.runeViews, screen);
+  }
+  /** 룬 목록 화면에서 바꾼 필터·정렬을 기억한다. 검색 글은 남기지 않고, 같은 값이면 저장하지 않는다. */
+  rememberRuneView(screen, view) {
+    const current2 = this.get().game.runeViews;
+    const next = normalizeRuneListView(view, screen);
+    if (sameListView(runeViewFor(current2, screen), next) && current2[screen]) return;
+    this.update({ game: { runeViews: { ...current2, [screen]: next } } });
+  }
+  /** 친구 목록의 필터·정렬을 기억한다. 같은 값이면 저장하지 않는다. */
+  rememberFriendView(view) {
+    const next = normalizeFriendListView(view);
+    if (sameListView(this.get().game.friendView, next)) return;
+    this.update({ game: { friendView: next } });
+  }
+  /** 특성 일괄 부여 결과판의 정렬을 기억한다. 같은 값이면 저장하지 않는다. */
+  rememberTraitBulkResultView(view) {
+    const next = normalizeTraitBulkResultView(view);
+    if (sameListView(this.get().game.traitBulkResultView, next)) return;
+    this.update({ game: { traitBulkResultView: next } });
+  }
   /** 길드전·수호전 탭에서 지금 판을 봤다고 적는다 — 붉은 점이 꺼진다. `guardReward`는 알린 수호전 순위 보상의, `warResult`는 알린 길드전 결과의 날짜다. */
   rememberGuildSeen(page, key) {
     const current2 = this.get().game.guildSeen;
@@ -48405,9 +49132,9 @@ var SettingsManager = class extends EventTarget {
     this.update({ game: { contentSeen: state } });
   }
   /** 지금 아레나 전적을 봤다고 적는다(`core/arenaNotice.ts`). 같은 값이면 저장하지 않는다. */
-  rememberArenaSeen(record3) {
-    if (sameArenaSeen(this.get().game.arenaSeen, record3)) return;
-    this.update({ game: { arenaSeen: record3 } });
+  rememberArenaSeen(record4) {
+    if (sameArenaSeen(this.get().game.arenaSeen, record4)) return;
+    this.update({ game: { arenaSeen: record4 } });
   }
   /** 약관·처리방침 동의를 이 기기에 기록한다(서버 기록은 `LegalConsentApi`가 따로 남긴다). */
   rememberLegalConsent(key) {
@@ -49899,28 +50626,28 @@ var FakeServer = class {
     const relic = PLAYABLE_RELICS.find(({ id }) => id === request.relicId);
     if (!relic || !this.state.owned.has(request.relicId)) throw new GameApiError("INVALID_STATE", "\uAD00\uCC30 \uB300\uC0C1\uC740 \uBCF4\uC720\uD55C \uB810\uB9AD\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
     const story = createObservationStory(request.relicId, relic.name, request.utcDate);
-    const previous = this.state.observationRecords.find((record4) => record4.storyId === story.id);
+    const previous = this.state.observationRecords.find((record5) => record5.storyId === story.id);
     if (previous) return { record: structuredClone(previous), bondXpEarned: 0, firstCompletion: false };
     if (request.utcDate !== utcDateKey(this.now())) throw new GameApiError("INVALID_STATE", "\uC624\uB298 \uB0A0\uC9DC\uC758 \uAD00\uCC30 \uC778\uD130\uBDF0\uB9CC \uC644\uB8CC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
-    if (this.state.observationRecords.some((record4) => record4.date === request.utcDate)) throw new GameApiError("DAILY_ENTRY_LIMIT", "\uC624\uB298\uC758 \uAD00\uCC30 \uC778\uD130\uBDF0\uB294 \uC774\uBBF8 \uC644\uB8CC\uD588\uC2B5\uB2C8\uB2E4.");
+    if (this.state.observationRecords.some((record5) => record5.date === request.utcDate)) throw new GameApiError("DAILY_ENTRY_LIMIT", "\uC624\uB298\uC758 \uAD00\uCC30 \uC778\uD130\uBDF0\uB294 \uC774\uBBF8 \uC644\uB8CC\uD588\uC2B5\uB2C8\uB2E4.");
     let discovery;
     try {
       discovery = observationDiscovery(request.relicId, request.utcDate, request.choiceId);
     } catch (error) {
       throw new GameApiError("INVALID_STATE", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uAD00\uCC30 \uC120\uD0DD\uC9C0\uC785\uB2C8\uB2E4.", { cause: error });
     }
-    const record3 = { date: request.utcDate, relicId: request.relicId, storyId: story.id, questionId: discovery.question.id, question: discovery.question.prompt, choiceId: discovery.choice.id, answer: discovery.choice.label, personalityTag: discovery.choice.personalityTag, discoveredHabit: discovery.habit };
+    const record4 = { date: request.utcDate, relicId: request.relicId, storyId: story.id, questionId: discovery.question.id, question: discovery.question.prompt, choiceId: discovery.choice.id, answer: discovery.choice.label, personalityTag: discovery.choice.personalityTag, discoveredHabit: discovery.habit };
     const progress = this.state.relicProgress[request.relicId];
     if (!progress) throw new GameApiError("INVALID_STATE", "\uAD00\uCC30 \uB300\uC0C1\uC758 \uC720\uB300 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const reward = grantBondXp(progress, BOND_XP_REWARD.firstObservationInterview);
     const completedStoryIds = new Set(this.state.completedStoryIds).add(story.id);
-    const observationRecords = [...this.state.observationRecords, record3];
+    const observationRecords = [...this.state.observationRecords, record4];
     const relicProgress = { ...this.state.relicProgress, [request.relicId]: reward.progress };
     this.persist({ ...this.state, completedStoryIds, observationRecords, relicProgress });
     this.state.completedStoryIds = completedStoryIds;
     this.state.observationRecords = observationRecords;
     this.state.relicProgress = relicProgress;
-    return { record: structuredClone(record3), bondXpEarned: reward.xpGained, firstCompletion: true };
+    return { record: structuredClone(record4), bondXpEarned: reward.xpGained, firstCompletion: true };
   }
   /** 고고학 지도의 마지막 선택 유적. 삭제된 카탈로그 ID가 저장되지 않게 한다. */
   async selectArchaeologySite(request) {
@@ -50156,12 +50883,12 @@ var FakeServer = class {
     await this.delay();
     const now = this.guardNow();
     const day = guildGuardDayKey(now);
-    const record3 = this.state.serverJournal?.guildGuard;
+    const record4 = this.state.serverJournal?.guildGuard;
     return {
       day,
       element: guildGuardElement(now),
-      attemptsLeft: guildGuardAttemptsLeft(record3, now),
-      best: record3?.day === day ? record3.best : 0,
+      attemptsLeft: guildGuardAttemptsLeft(record4, now),
+      best: record4?.day === day ? record4.best : 0,
       endsAt: guildGuardEndsAt(now),
       serverTime: now
     };
@@ -50188,8 +50915,8 @@ var FakeServer = class {
     if (!membership.guild) throw new GuildApiError("NOT_IN_GUILD");
     const now = this.guardNow();
     const day = guildGuardDayKey(now);
-    const record3 = this.state.serverJournal?.guildGuard;
-    if (guildGuardAttemptsLeft(record3, now) <= 0) throw new GuildApiError("GUARD_LIMIT");
+    const record4 = this.state.serverJournal?.guildGuard;
+    if (guildGuardAttemptsLeft(record4, now) <= 0) throw new GuildApiError("GUARD_LIMIT");
     const element = guildGuardElement(now);
     const lineup = formation.map((relicId) => relicId === null ? null : {
       relicId,
@@ -50197,8 +50924,8 @@ var FakeServer = class {
     });
     const seed = globalThis.crypto?.randomUUID?.() ?? `${request.requestId}:${now}`;
     const journal = structuredClone(this.state.serverJournal ?? emptyServerJournal());
-    const used = record3?.day === day ? record3.used : 0;
-    journal.guildGuard = { day, used: used + 1, best: record3?.day === day ? record3.best : 0 };
+    const used = record4?.day === day ? record4.used : 0;
+    journal.guildGuard = { day, used: used + 1, best: record4?.day === day ? record4.best : 0 };
     const admissions = Object.fromEntries(Object.entries(journal.guildGuardAdmissions ?? {}).filter(([, admission]) => Date.parse(admission.expiresAt) >= now));
     admissions[request.requestId] = { seed: seed.slice(0, 64), day, element, expiresAt: new Date(now + (GUILD_GUARD.timeLimitSeconds + 1800) * 1e3).toISOString(), lineup };
     journal.guildGuardAdmissions = admissions;
@@ -50219,8 +50946,8 @@ var FakeServer = class {
     await this.guildBackend.recordGuard(this.guildActor(), { day: admission.day, score: outcome.score, coin }, `guard:${request.requestId}`);
     const now = this.guardNow();
     const journal = structuredClone(this.state.serverJournal ?? emptyServerJournal());
-    const record3 = journal.guildGuard?.day === admission.day ? journal.guildGuard : { day: admission.day, used: 0, best: 0 };
-    journal.guildGuard = { ...record3, best: Math.max(record3.best, outcome.score) };
+    const record4 = journal.guildGuard?.day === admission.day ? journal.guildGuard : { day: admission.day, used: 0, best: 0 };
+    journal.guildGuard = { ...record4, best: Math.max(record4.best, outcome.score) };
     journal.guildGuardAdmissions = { ...journal.guildGuardAdmissions, [request.requestId]: { ...admission, settled: true } };
     const result = { outcome, coin, best: journal.guildGuard.day === guildGuardDayKey(now) ? journal.guildGuard.best : outcome.score, attemptsLeft: guildGuardAttemptsLeft(journal.guildGuard, now) };
     const next = { ...this.state, serverJournal: journal };
@@ -50435,8 +51162,8 @@ var FakeServer = class {
   }
   /** 오늘(서버 UTC) 이 수단으로 채운 횟수. 날짜 키가 바뀌었으면 0이다 — 카운터는 구매 한도와 같은 기록(`productPurchases`)을 쓴다. */
   staminaGemPurchasedToday(sourceId, now) {
-    const record3 = this.state.productPurchases[sourceId];
-    return record3?.periodKey === staminaGemDayKey(now) ? record3.count : 0;
+    const record4 = this.state.productPurchases[sourceId];
+    return record4?.periodKey === staminaGemDayKey(now) ? record4.count : 0;
   }
   staminaRechargeStatus(sourceId, now) {
     const purchasedToday = this.staminaGemPurchasedToday(sourceId, now);
@@ -50560,7 +51287,7 @@ var FakeServer = class {
     const ledger = rollChestForgeWeek(normalizeChestForgeState(this.state.chestForge), now);
     const before = chestForgeStatus(this.state.missions, ledger, now);
     const next = structuredClone(this.state);
-    let pick2;
+    let pick3;
     if (kind === "enter") {
       if (!this.allEventsOpen() && !isRegularEventActive(CHEST_FORGE.id, now)) throw new GameApiError("EVENT_NOT_ACTIVE", "\uC9C0\uAE08\uC740 \uC5F4\uB824 \uC788\uC9C0 \uC54A\uC740 \uC774\uBCA4\uD2B8\uC785\uB2C8\uB2E4.");
       if (ledger.run) throw new GameApiError("INVALID_STATE", "\uC774\uBBF8 \uC5F0 \uC0C1\uC790\uAC00 \uC788\uC2B5\uB2C8\uB2E4.");
@@ -50586,15 +51313,15 @@ var FakeServer = class {
       const round = run2.round + 1;
       const finished = round >= CHEST_FORGE.rounds;
       next.chestForge = { ...ledger, run: finished ? null : { ...run2.box ? { box: run2.box } : {}, round, offer: rollChestOffer(round, this.random), collected } };
-      pick2 = { index, cardId: card.id, success, granted, ...finished ? { total: collected } : {} };
+      pick3 = { index, cardId: card.id, success, granted, ...finished ? { total: collected } : {} };
     }
     const status = chestForgeStatus(next.missions, next.chestForge, now);
-    this.recordReceipt(next, "chestForge", requestId, kind, { status, ...pick2 ? { pick: pick2 } : {} });
+    this.recordReceipt(next, "chestForge", requestId, kind, { status, ...pick3 ? { pick: pick3 } : {} });
     this.persist(next);
     this.state.chestForge = next.chestForge;
     this.state.wallet = next.wallet;
     this.state.serverJournal = next.serverJournal;
-    return { ...this.snapshot(), status, ...pick2 ? { pick: pick2 } : {} };
+    return { ...this.snapshot(), status, ...pick3 ? { pick: pick3 } : {} };
   }
   async enterChestForge(request) {
     return this.stepChestForge("enter", request.requestId, 0, request.box);
@@ -52688,9 +53415,9 @@ var FakeServer = class {
     return response;
   }
   progressPassOwned(pass) {
-    const record3 = this.state.productPurchases[pass.productId];
-    if (pass.seasonal) return record3?.periodKey === seasonKey(this.now()) && record3.count > 0;
-    return (record3?.count ?? 0) > 0;
+    const record4 = this.state.productPurchases[pass.productId];
+    if (pass.seasonal) return record4?.periodKey === seasonKey(this.now()) && record4.count > 0;
+    return (record4?.count ?? 0) > 0;
   }
   /** 패스가 재는 진행도 — 스토리는 본편 관문 클리어 수, 레벨은 연구원 레벨, 레이드는 입장 수다. */
   progressPassProgress(pass, state) {
@@ -53303,8 +54030,8 @@ var FakeServer = class {
       const offer = activeSituationalOffer(this.state.situationalOffers, product.id, now);
       return offer && offer.purchasedAt === void 0 ? 1 : 0;
     }
-    const record3 = this.state.productPurchases[product.id];
-    const count3 = record3?.periodKey === this.productPeriodKey(product, now) ? record3.count : 0;
+    const record4 = this.state.productPurchases[product.id];
+    const count3 = record4?.periodKey === this.productPeriodKey(product, now) ? record4.count : 0;
     return Math.max(0, product.purchaseLimit - count3);
   }
   /** 활성 구독의 만료 시각과 오늘 몫 수령 여부. 구독이 아니거나 비활성이면 비어 있다. */
@@ -53723,7 +54450,7 @@ var FakeServer = class {
       ...rune,
       mainStats: [{ ...rune.mainStats[0] }, { ...rune.mainStats[1] }],
       subStats: rune.subStats.map((stat) => ({ ...stat })),
-      enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record3) => ({ ...record3 }))])),
+      enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record4) => ({ ...record4 }))])),
       engravings: rune.engravings.map((engraving) => ({ ...engraving }))
     };
   }
@@ -54150,7 +54877,7 @@ var RelicProgressionManager = class {
       ...rune,
       mainStats: [{ ...rune.mainStats[0] }, { ...rune.mainStats[1] }],
       subStats: rune.subStats.map((stat) => ({ ...stat })),
-      enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record3) => ({ ...record3 }))])),
+      enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record4) => ({ ...record4 }))])),
       engravings: rune.engravings.map((engraving) => ({ ...engraving }))
     }));
     for (const equipment of inventory.equipment) {
@@ -54301,7 +55028,7 @@ function authoritativeArgs(state, method, args) {
   }
   if (key) {
     const records = Object.values(journal.records).filter(
-      (record3) => combatKey(record3.input) === key && record3.verdict
+      (record4) => combatKey(record4.input) === key && record4.verdict
     );
     if (!records.length) return reject();
     if (method === "resolveDuel") return [{ ...request, won: records[0].verdict.victory }];
@@ -54309,9 +55036,9 @@ function authoritativeArgs(state, method, args) {
       return [args[0], records[0].verdict.victory];
     if (method === "completeBounty") {
       const rounds = new Map(
-        records.map((record3) => [
-          record3.input.input.mode === "bounty" ? record3.input.input.round : -1,
-          record3.verdict
+        records.map((record4) => [
+          record4.input.input.mode === "bounty" ? record4.input.input.round : -1,
+          record4.verdict
         ])
       );
       const wins = [0, 1, 2].filter(
@@ -55214,10 +55941,10 @@ function createSupabaseGuildBackend(call) {
     getShop: (actor) => run2(actor, "getShop"),
     getGuard: (actor) => run2(actor, "getGuard"),
     getRanking: (actor) => run2(actor, "getRanking"),
-    recordGuard: async (actor, record3, requestId) => {
+    recordGuard: async (actor, record4, requestId) => {
       const whole3 = (value, max) => Number.isSafeInteger(value) && value >= 0 && value <= max;
-      if (!whole3(record3?.day, 1e6) || !whole3(record3.score, 1e7) || !whole3(record3.coin, 100)) invalid();
-      return run2(actor, "recordGuard", [{ day: record3.day, score: record3.score, coin: record3.coin }], requestId);
+      if (!whole3(record4?.day, 1e6) || !whole3(record4.score, 1e7) || !whole3(record4.coin, 100)) invalid();
+      return run2(actor, "recordGuard", [{ day: record4.day, score: record4.score, coin: record4.coin }], requestId);
     },
     getWarMap: (actor) => run2(actor, "getWarMap"),
     clearWarSlot: (actor, slotId) => parseGuildWarSlotId(slotId) ? run2(actor, "clearWarSlot", [slotId]) : invalid(),
@@ -55233,9 +55960,9 @@ function createSupabaseGuildBackend(call) {
     autoArrangeWar: (actor) => run2(actor, "autoArrangeWar"),
     getWarFront: (actor) => run2(actor, "getWarFront"),
     beginWarAttack: (actor, slotId, requestId) => parseGuildWarSlotId(slotId) ? run2(actor, "beginWarAttack", [slotId], requestId) : invalid(),
-    recordWarAttack: (actor, record3, requestId) => {
-      if (!Number.isSafeInteger(record3?.day) || !parseGuildWarSlotId(record3.slotId) || typeof record3.won !== "boolean" || !isId(record3.entry)) invalid();
-      return run2(actor, "recordWarAttack", [{ day: record3.day, slotId: record3.slotId, won: record3.won, entry: record3.entry }], requestId);
+    recordWarAttack: (actor, record4, requestId) => {
+      if (!Number.isSafeInteger(record4?.day) || !parseGuildWarSlotId(record4.slotId) || typeof record4.won !== "boolean" || !isId(record4.entry)) invalid();
+      return run2(actor, "recordWarAttack", [{ day: record4.day, slotId: record4.slotId, won: record4.won, entry: record4.entry }], requestId);
     },
     createGuild: (actor, input, requestId) => {
       const checked = validateGuildName(String(input?.name ?? ""));

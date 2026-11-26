@@ -155,6 +155,12 @@ export function skillKeywordLayoutOptions(
 
 /** 폭주 설명의 모든 수치를 실제 전투 계약에서 만들어 밸런스 조정 후 문구가 남지 않게 한다. */
 export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack: number; defense: number; maxHp?: number; abilityPower?: number; resistance?: number }): string {
+  if (trait.effectId === "gungnirMarch") return t("skill.frontline.gungnirMarch", {
+    speed: trait.speedPercent, efficiency: (trait.passiveMultiplier - 1) * 100,
+  });
+  if (trait.effectId === "groundCrush") return t("skill.frontline.groundCrush", {
+    taunt: trait.tauntSeconds, interval: trait.interval, hp: trait.hpPercent,
+  });
   if (trait.effectId === "extendedService") return t("skill.ferocity.extendedService", { percent: trait.attackSpeedPercent });
   // 캐릭터 ID가 아니라 도핑 계약의 구조화 수치만 읽어 어떤 정의에도 같은 문장 조립을 제공한다.
   if (trait.effectId === "reagentDoping") return t("skill.ferocity.reagentDoping", { stacks: trait.stacksOnEntry, percent: trait.attackSpeedPercent });
@@ -994,6 +1000,7 @@ export function skillDescription(
   skill: DescribedSkill,
   stats: SkillDescriptionStats = {},
 ): string {
+  if ("bossDescription" in skill && skill.bossDescription) return skill.bossDescription;
   // 순수 회복기는 때리는 대상이 없어 "대상 → 피해"로 시작할 수 없다. 회복 계약에서 바로 짓는다.
   if (skill.damageType === undefined || skill.power === undefined) {
     if ("healing" in skill && skill.healing?.kind === "teamMissingHpPercent") {
@@ -1627,6 +1634,9 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
   if (effects[slot]?.kind === "none") return t("skill.breakthrough.effect.none");
   if (slot === "basic" && effects.basic) {
     const effect = effects.basic;
+    if (effect.kind === "frontlineBasic") return def.frontlineBoss?.kind === "gungnir"
+      ? t("skill.frontline.gungnirBasic", { percent: effect.percent })
+      : t("skill.frontline.ironcladBasic");
     if (effect.kind === "guestHaste") return t("skill.breakthrough.guestHaste", { percent: effect.percentPerHit, max: effect.maxStacks });
     if (effect.kind === "none") return undefined;
     if (effect.kind === "pressStagger") return t("skill.breakthrough.effect.basic.pressStagger", { seconds: trim(effect.seconds) });
@@ -1697,6 +1707,9 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     });
   }
   if (slot === "ultimate" && effects.ultimate) {
+    if (effects.ultimate.kind === "frontlineUltimate") return def.frontlineBoss?.kind === "gungnir"
+      ? t("skill.frontline.gungnirUltimate", { percent: effects.ultimate.percent })
+      : t("skill.frontline.ironcladUltimate", { percent: effects.ultimate.percent });
     const effect = effects.ultimate;
     if (effect.kind === "serviceBarrier") return t("skill.breakthrough.serviceBarrier", { percent: effect.damagePercent, max: effect.maxHpPercent, seconds: effect.seconds });
     if (effect.kind === "none") return undefined;
@@ -1753,6 +1766,9 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     });
   }
   if (slot === "ferocity" && effects.ferocity) {
+    if (effects.ferocity.kind === "frontlineFever") return def.frontlineBoss?.kind === "gungnir"
+      ? t("skill.frontline.gungnirFever", effects.ferocity)
+      : t("skill.frontline.ironcladFever", effects.ferocity);
     const effect = effects.ferocity;
     if (effect.kind === "guestDebuff") return t("skill.breakthrough.guestDebuff", { percent: effect.reductionPercent });
     if (effect.kind === "none") return undefined;
@@ -1809,6 +1825,9 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     });
   }
   if (slot === "passive" && effects.passive) {
+    if (effects.passive.kind === "frontlinePassive") return def.frontlineBoss?.kind === "gungnir"
+      ? t("skill.frontline.gungnirPassive", { percent: effects.passive.percent })
+      : t("skill.frontline.ironcladPassive", { percent: effects.passive.percent, seconds: effects.passive.seconds ?? 0 });
     if (effects.passive.kind === "guestShieldBreak") return t("skill.breakthrough.guestShieldBreak");
     if (effects.passive.kind === "none") return undefined;
     if (effects.passive.kind === "reloadSip") return t("skill.breakthrough.effect.passive.reloadSip", { percent: sv("shield", "hp", effects.passive.shieldMaxHpPercent), cap: sv("shield", "hp", effects.passive.capMaxHpPercent) });

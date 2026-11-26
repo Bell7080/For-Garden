@@ -6,9 +6,9 @@ import { CHAPTERS, SUB_STAGES } from "./stages";
 import { STAGE_STORY_LINKS } from "./stageStories";
 
 /** 회고의 탭. 본편은 장마다, 그 밖의 곁 이야기·행사 이야기는 한 탭에 모은다. */
-export type RecollectionGroup = "chapter1" | "chapter2" | "chapter3" | "chapter4" | "chapter5" | "chapter6" | "chapter7" | "side";
+export type RecollectionGroup = "chapter1" | "chapter2" | "chapter3" | "chapter4" | "chapter5" | "chapter6" | "chapter7" | "chapter8" | "chapter9" | "side";
 
-export const RECOLLECTION_GROUPS: readonly RecollectionGroup[] = ["chapter1", "chapter2", "chapter3", "chapter4", "chapter5", "chapter6", "chapter7", "side"];
+export const RECOLLECTION_GROUPS: readonly RecollectionGroup[] = ["chapter1", "chapter2", "chapter3", "chapter4", "chapter5", "chapter6", "chapter7", "chapter8", "chapter9", "side"];
 
 /** 회고에 모이는 이야기 한 편. 제목은 관문 이름에서 나오고, 관문이 없는 이야기만 제 제목 키를 갖는다. */
 export interface RecollectionEntry {

@@ -179,6 +179,8 @@ export const LOBBY_JA = {
   "storyDifficulty.easy.detail": "物語とともに楽しむ最初の探索",
   "storyDifficulty.normal.detail": "戦闘中心・通貨報酬25%増加",
   "storyDifficulty.hard.detail": "戦闘中心・通貨報酬50%増加",
+  "storyDifficulty.rampage": "暴走",
+  "storyDifficulty.rampage.detail": "戦闘中心・通貨報酬75%増加",
   "storyDifficulty.locked": "{difficulty}の4-10クリアで解放",
   "storyDifficulty.unlocked.title": "新たな難易度が解放されました！",
   "storyDifficulty.unlocked.body": "おめでとう、研究員さん！\n{difficulty}で強敵と新たな初回クリア報酬に挑みましょう。",

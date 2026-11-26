@@ -160,7 +160,7 @@ export interface Fighter extends Combatant {
    * 튕기다 멈춰 같은 기술이 화면마다 다른 무게로 읽힌다. `remaining`은 벽에 닿지 못하고
    * 맴도는 경우를 위한 안전장치일 뿐이다.
    */
-  knockback: { remaining: number; vx: number; vy: number; bouncesLeft: number; chain?: { sourceId: string; hit: string[]; radius: number } } | null;
+  knockback: { remaining: number; vx: number; vy: number; bouncesLeft: number; chain?: { sourceId: string; hit: string[]; radius: number; propagate?: boolean; critical?: boolean } } | null;
   /** `statusEffectEvery`가 있는 기본 공격이 실제로 몇 번 나갔는지. 그 주기에만 상태를 건다. */
   statusHitCount: number;
   /** 기본 공격 호령(`BasicAttack.rally`)의 주기를 세는 타수. */
@@ -733,6 +733,22 @@ export interface Fighter extends Combatant {
   /** 지금 겨누고 있는 적과 쌓은 겹(펄시). 표적이 바뀌면 처음부터 다시 센다. */
   aim: { targetId: string; stacks: number } | null;
   /** 「오늘의 재료」(마가사)가 표식을 건 적. 그 적이 쓰러질 때까지 바뀌지 않는다. */
+  frontline?: {
+    momentum: number;
+    armor: number;
+    stripAt: number;
+    restoreAt: number;
+    lastStandUsed: boolean;
+    lastStandShield: number;
+    lastStandDecay: number;
+    ultimateShield: number;
+    ultimateShieldUntil: number;
+    ultimateAt?: number;
+    chase?: { targetId: string; at: number; power: number };
+    pulseAt: number;
+    pulseHits: Partial<Record<string, number>>;
+  };
+  frontlineSlow?: { until: number; percent: number };
   ingredientId: string | null;
   reservedGuest?: {
     targetId: string | null;
@@ -1353,10 +1369,12 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
   if (chorus?.kind === "lightChorus" && "cost" in battleDef.ultimate && battleDef.ultimate.cost !== undefined) {
     battleDef.ultimate = { ...battleDef.ultimate, cost: Math.max(1, battleDef.ultimate.cost - chorus.costReduction) };
   }
+  const plan = battleDef.frontlineBoss;
+  const hp = battleDef.stats.hp * (1 + (plan?.kind === "gungnir" ? plan.growthPercent : 0) / 100);
   return {
     def: battleDef,
-    hp: battleDef.stats.hp,
-    maxHp: battleDef.stats.hp,
+    hp,
+    maxHp: hp,
     // **돌파가 궁극기를 미리 채워 주지 않는다.** 마지막 등급에 `readyUltimate`가 달려 있던
     // 동안에는 다섯 등급에 닿은 개체가 종류를 가리지 않고 전투를 궁극기가 찬 채로 시작했다.
     energy: 0,
@@ -1585,6 +1603,11 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     observation: null,
     echo: null,
     aim: null,
+    ...(plan ? { frontline: {
+      momentum: 0, armor: plan.kind === "ironclad" ? plan.layers : 0,
+      stripAt: 0, restoreAt: 0, lastStandUsed: false, lastStandShield: 0, lastStandDecay: 0,
+      ultimateShield: 0, ultimateShieldUntil: 0, pulseAt: 0, pulseHits: {},
+    } } : {}),
     ingredientId: null,
     ...(def.passive.reservedGuest ? { reservedGuest: { targetId: null, hasteStacks: 0, guardPoints: 0 } } : {}),
     ingredientStacks: 0,
@@ -2297,7 +2320,8 @@ function applyConcussion(
   // 폭주가 확정 치명타를 얹는다. 판정을 다시 굴리지 않아 날아가는 그림과 수치가 갈리지 않는다.
   const struck = critical || slam !== undefined;
   const percent = struck ? effect.criticalMaxHpPercent : effect.maxHpPercent;
-  const amount = percentHpDamage(target, percent);
+  const raw = percentHpDamage(target, percent);
+  const amount = target.def.frontlineBoss?.kind === "ironclad" ? receivedDamage(target, raw) : raw;
   const dealt = applyDamage(target, amount, events, state);
   scoreBossFixedDamage(state, target, dealt);
   events.push({ kind: "concussion", fighterId: target.id, amount: dealt, critical: struck, sourceId });
@@ -3178,6 +3202,10 @@ function breakShield(target: Fighter, events: SkirmishEvent[]): void {
   target.shield.providerId = null;
   target.shieldFade = null;
   target.serviceBarrier = undefined;
+  if (target.frontline) {
+    target.frontline.ultimateShield = 0;
+    target.frontline.lastStandShield = 0;
+  }
   events.push({ kind: "shieldDepleted", fighterId: target.id, effect: { tag: "shieldBreak", intensity: 1 } });
 }
 
@@ -4177,6 +4205,157 @@ function manyEyesPercent(state: SkirmishState, fighter: Fighter): number {
   if (plan?.kind !== "manyEyes" || !isFighterAlive(fighter) || livingDrones(state, fighter).length === 0) return 0;
   const seen = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other) && other.observation !== null).length;
   return seen * plan.attackSpeedPercentPerObserved;
+}
+
+function frontlinePassiveMultiplier(fighter: Fighter): number {
+  const trait = fighter.def.ferocityTrait;
+  return fighter.ferocityFever && trait.effectId === "gungnirMarch" ? trait.passiveMultiplier : 1;
+}
+
+function frontlineGrowth(fighter: Fighter): number {
+  const plan = fighter.def.frontlineBoss;
+  return plan?.kind === "gungnir" ? plan.growthPercent * frontlinePassiveMultiplier(fighter) : 0;
+}
+
+function resizeGungnirHealth(fighter: Fighter, previousPassiveMultiplier: number): void {
+  const plan = fighter.def.frontlineBoss;
+  if (plan?.kind !== "gungnir") return;
+  const factor = (1 + frontlineGrowth(fighter) / 100) / (1 + plan.growthPercent * previousPassiveMultiplier / 100);
+  fighter.maxHp *= factor;
+  fighter.hp = Math.min(fighter.maxHp, fighter.hp * factor);
+}
+
+function gainFrontlineMomentum(fighter: Fighter, state: SkirmishState): void {
+  const plan = fighter.def.frontlineBoss;
+  const boss = fighter.frontline;
+  if (plan?.kind !== "gungnir" || !boss || boss.momentum >= plan.stackLimit) return;
+  boss.momentum += 1;
+  const last = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  if (boss.momentum === plan.stackLimit && last?.kind === "frontlinePassive") {
+    applyHealing(state, fighter, (fighter.maxHp - fighter.hp) * last.percent / 100);
+  }
+}
+
+function ironcladThirdHit(attacker: Fighter, target: Fighter, dealt: number, critical: boolean, state: SkirmishState, events: SkirmishEvent[]): void {
+  let concussionDealt = 0;
+  const concussion = attacker.def.basic.statusEffects?.find((effect) => effect.kind === "concussion");
+  if (concussion && isFighterAlive(target)) {
+    const hp = target.hp;
+    const combo = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+    const chain = combo?.kind === "frontlineBasic"
+      ? { sourceId: attacker.id, hit: [target.id], radius: SKIRMISH.spacing * 0.45, propagate: true, critical } : undefined;
+    const dy = target.y - attacker.y;
+    const dx = target.x - attacker.x || (dy === 0 ? attacker.facing : 0);
+    const gap = dHypot(dx, dy);
+    if (beginKnockback(target, { remaining: 0.52, vx: dx / gap * 410, vy: dy / gap * 410, bouncesLeft: 0, chain }, events)) {
+      target.engaged = false;
+    }
+    applyConcussion(target, concussion, critical, events, state, attacker.id, true);
+    concussionDealt = hp - target.hp;
+  }
+  if (isFighterAlive(attacker)) grantShield(state, attacker, attacker.id, dealt + concussionDealt, events);
+}
+
+function stripFrontlineArmor(target: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = target.def.frontlineBoss;
+  const boss = target.frontline;
+  if (plan?.kind !== "ironclad" || !boss) return;
+  boss.restoreAt = state.elapsed + plan.restoreInterval;
+  if (boss.armor === 0 || state.elapsed < boss.stripAt) return;
+  boss.stripAt = state.elapsed + plan.stripInterval;
+  boss.armor -= 1;
+  if (boss.armor > 0 || boss.lastStandUsed) return;
+  const last = openedBreakthrough(target, "passive", (effects) => effects.passive);
+  if (last?.kind !== "frontlinePassive" || !last.seconds) return;
+  boss.lastStandUsed = true;
+  boss.lastStandShield = grantShield(state, target, target.id, target.maxHp * last.percent / 100, events);
+  boss.lastStandDecay = boss.lastStandShield / last.seconds;
+}
+
+function ironcladShockwave(owner: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = openedBreakthrough(owner, "ultimate", (effects) => effects.ultimate);
+  if (plan?.kind !== "frontlineUltimate") return;
+  const { def, res } = defensiveDefinition(owner, state).def.stats;
+  const strikeOwner = { ...owner, def: { ...owner.def, stats: { ...owner.def.stats, atk: def + res } } };
+  for (const enemy of state.fighters) {
+    if (enemy.side !== owner.side && distance(owner, enemy) <= (owner.def.ultimate.radius ?? 0)) {
+      extraStrike(strikeOwner, enemy, plan.percent, "atk", "physical", state, events);
+    }
+  }
+}
+
+function enterFrontlineFever(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const trait = fighter.def.ferocityTrait;
+  const boss = fighter.frontline;
+  if (!boss) return;
+  if (trait.effectId === "gungnirMarch") resizeGungnirHealth(fighter, 1);
+  if (trait.effectId !== "groundCrush") return;
+  boss.pulseAt = state.elapsed + trait.interval;
+  boss.pulseHits = {};
+  const enemies = state.fighters.filter((enemy) => enemy.side !== fighter.side && isFighterAlive(enemy) && distance(fighter, enemy) <= trait.radius);
+  pullEnemiesToward(fighter, { radius: trait.radius, distance: trait.pullDistance }, state);
+  for (const enemy of enemies) applyCombatStatusEffect(enemy, { kind: "taunt", seconds: trait.tauntSeconds }, events, state, fighter.id);
+}
+
+function tickFrontline(fighter: Fighter, dt: number, rng: () => number, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (fighter.frontlineSlow && fighter.frontlineSlow.until <= state.elapsed) fighter.frontlineSlow = undefined;
+  const boss = fighter.frontline;
+  const plan = fighter.def.frontlineBoss;
+  if (!boss || !plan || !isFighterAlive(fighter)) return;
+  if (plan.kind === "gungnir") {
+    const chase = boss.chase;
+    if (!chase || chase.at > state.elapsed + 1e-8) return;
+    boss.chase = undefined;
+    const target = findFighter(state, chase.targetId);
+    if (target && distance(fighter, target) <= fighterReach(fighter)) {
+      extraStrike({ ...fighter, def: offensiveDefinition(fighter) }, target, chase.power, "atk", "physical", state, events);
+    }
+    return;
+  }
+  if (boss.armor < plan.layers && state.elapsed >= boss.restoreAt) {
+    boss.armor += 1;
+    boss.restoreAt += plan.restoreInterval;
+  }
+  const decay = Math.min(boss.lastStandShield, boss.lastStandDecay * dt);
+  const expired = state.elapsed >= boss.ultimateShieldUntil ? boss.ultimateShield : 0;
+  boss.lastStandShield -= decay;
+  boss.ultimateShield -= expired;
+  if (decay + expired > 0) {
+    fighter.shield.amount = Math.max(0, fighter.shield.amount - decay - expired);
+    if (fighter.shield.amount < 1e-6) {
+      fighter.shield.amount = 0;
+      fighter.shield.providerId = null;
+      events.push({ kind: "shieldDepleted", fighterId: fighter.id, effect: { tag: "shieldBreak", intensity: 0.6 } });
+    }
+  }
+  if (boss.ultimateAt !== undefined && state.elapsed + 1e-8 >= boss.ultimateAt) {
+    boss.ultimateAt = undefined;
+    strikeAreaAttack(fighter, rng, state, events, true, undefined, true, true);
+    const guard = defensiveDefinition(fighter, state).def.stats;
+    const amount = (guard.def + guard.res) * plan.shieldGuardScale / 100;
+    fighter.shield.amount = Math.max(0, fighter.shield.amount - boss.ultimateShield);
+    boss.ultimateShield = grantShield(state, fighter, fighter.id, amount, events);
+    boss.ultimateShieldUntil = state.elapsed + plan.shieldSeconds;
+  }
+  const trait = fighter.def.ferocityTrait;
+  if (!fighter.ferocityFever || trait.effectId !== "groundCrush" || state.elapsed + 1e-8 < boss.pulseAt) return;
+  boss.pulseAt += trait.interval;
+  const breakthrough = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
+  for (const enemy of state.fighters) {
+    if (enemy.side === fighter.side || !isFighterAlive(enemy) || distance(fighter, enemy) > trait.radius) continue;
+    const resolution = resolveReceivedDamage(enemy, percentHpDamage(enemy, trait.hpPercent));
+    if (resolution.ignored) continue;
+    const dealt = applyDamage(enemy, resolution.applied, events, state);
+    scoreBossFixedDamage(state, enemy, dealt);
+    events.push({ kind: "attack", attackerId: fighter.id, targetId: enemy.id, skill: "transfer", animate: false, followUp: true,
+      critical: false, damageType: "true", amount: resolution.applied, contributionAmount: dealt });
+    if (!isFighterAlive(enemy)) continue;
+    events.push(...applyStagger(enemy, 0.1, state));
+    if (breakthrough?.kind !== "frontlineFever") continue;
+    const hits = (boss.pulseHits[enemy.id] ?? 0) + 1;
+    boss.pulseHits[enemy.id] = hits;
+    if (hits % 3 === 0) enemy.frontlineSlow = { until: state.elapsed + breakthrough.seconds, percent: breakthrough.percent };
+  }
 }
 
 function grantShieldFromDamage(attacker: Fighter, dealt: number, events: SkirmishEvent[], state: SkirmishState): void {
@@ -5512,7 +5691,7 @@ function strikeSecondary(attacker: Fighter, secondary: Fighter, input: Parameter
   const resolution = resolveReceivedDamage(secondary, base);
   const hpBefore = secondary.hp;
   const shieldBefore = secondary.shield.amount; const shieldProviderId = secondary.shield.providerId;
-  applyDamage(secondary, resolution.applied, events, state);
+  applyDamage(secondary, resolution.applied, events, state, direct);
   if (direct && !resolution.ignored) countGuestGuardHit(secondary, attacker);
   const credited = recordDamageContribution(state, packCreditId(attacker), secondary, input.damageType, input.scalingStat, contribution, resolution, hpBefore, shieldBefore, shieldProviderId);
   tryTriggerEmergencyRecovery(secondary, state); tryTriggerLowHpVanish(secondary, state);
@@ -6392,6 +6571,7 @@ function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: numb
     * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
     * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100)
     * (1 + reservedGuestHastePercent(fighter) / 100)
+    * (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "gungnirMarch" ? 1 + fighter.def.ferocityTrait.speedPercent / 100 : 1)
     * (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "extendedService" ? 1 + fighter.def.ferocityTrait.attackSpeedPercent / 100 : 1);
   return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed + ingredientHastePoints(fighter), boost: boostFactor, slow: slowFactor };
 }
@@ -6544,7 +6724,7 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState, sourc
   const feared = target.fear !== null ? 1 - FEAR_DEFENSE_REDUCTION_PERCENT / 100 : 1;
   // 「대청소」(아르테) — 그 시간 동안 방어력·저항력이 함께 오른다. 오라와 같은 자리에서 곱한다.
   const guestGuard = source && source.side !== target.side && target.reservedGuest?.targetId !== source.id ? target.reservedGuest?.guardPoints ?? 0 : 0;
-  const scrubbed = (1 + (target.scrub?.defenseResistancePercent ?? 0) / 100) * (1 - reservedGuestDebuff(state, target) / 100);
+  const scrubbed = (1 + frontlineGrowth(target) / 100) * (1 + (target.scrub?.defenseResistancePercent ?? 0) / 100) * (1 - reservedGuestDebuff(state, target) / 100);
   if (guestGuard === 0 && scrubbed === 1 && fang === 1 && feared === 1 && bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && mural <= 0 && bulwark <= 0 && huddle <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
     def: (target.def.stats.def + guestGuard) * scrubbed * fang * feared * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + huddle / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
@@ -6851,7 +7031,10 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
   // 팀 오라와 달리 그래피티 런은 폭주한 본인만 빨라진다.
   const trait = fighter.def.ferocityTrait;
   // 오버클럭은 걷지 않는 주인이 아니라 소환수(`overclockBody`)만 빨라진다.
-  const selfBonus = fighter.ferocityFever && (trait.effectId === "graffitiRun" || trait.effectId === "overclockBody") ? trait.moveSpeedPercent : 0;
+  const selfBonus = fighter.ferocityFever
+    ? trait.effectId === "gungnirMarch" ? trait.speedPercent
+      : trait.effectId === "graffitiRun" || trait.effectId === "overclockBody" ? trait.moveSpeedPercent : 0
+    : 0;
   // 이동 속도를 데려오는 것은 순풍뿐이다 — 오더는 한 명의 화력만 올리고 걸음은 건드리지 않는다.
   const tailwindPercent = fighter.tailwindFor > 0 && fighter.tailwind?.kind === "tailwind" ? fighter.tailwind.moveSpeedPercent : 0;
   // 둔화는 공격 속도와 같은 비율로 이동 속도도 함께 깎는다.
@@ -6865,7 +7048,8 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
     * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100)
     * (1 - frostbiteSlowPercent(fighter) / 100)
     * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100)
-    * (1 + confinementMoveSpeedPercent(fighter) / 100);
+    * (1 + confinementMoveSpeedPercent(fighter) / 100)
+    * (1 - (fighter.frontlineSlow ? controlMagnitude(fighter, fighter.frontlineSlow.percent) : 0) / 100);
 }
 
 /** 화면에 그릴 위치. 발 좌표에 돌진·피격 변위와 뛰어오른 높이를 얹은 값이다. */
@@ -7207,7 +7391,11 @@ function resolveChainCollision(flyer: Fighter, state: SkirmishState, events: Ski
     && other.knockback === null && !chain.hit.includes(other.id) && distance(flyer, other) <= chain.radius);
   if (!struck) return;
   chain.hit.push(struck.id);
-  applyConcussion(struck, concussion, false, events, state, source.id, true);
+  applyConcussion(struck, concussion, chain.critical ?? false, events, state, source.id, true);
+  if (chain.propagate && isFighterAlive(struck) && flyer.knockback) {
+    const { vx, vy } = flyer.knockback;
+    if (beginKnockback(struck, { remaining: 0.52, vx, vy, bouncesLeft: 0, chain }, events)) struck.engaged = false;
+  }
 }
 
 /** 궁극기 돌파(`afterglow`) — 저주가 걸린 채 쓰러진 적의 저주 겹이 주변 적에게 이어진다. 쓰러진 몸마다 한 번이다. */
@@ -7474,6 +7662,7 @@ export function gainFerocity(fighter: Fighter, base: number, state: SkirmishStat
   // 처음 최대치에 닿은 순간 피버 카운트다운을 켠다.
   if (before < ferocityMax && fighter.ferocity >= ferocityMax) {
     fighter.ferocityFever = true;
+    enterFrontlineFever(fighter, state, events);
     // 이번 폭주에서 받는 피해만 센다. 지난 폭주의 몫이 남아 있으면 두 번째 폭주가 첫 번째의
     // 피해로 보호막을 짓는다.
     fighter.feverDamageTaken = 0;
@@ -7931,10 +8120,13 @@ function offensiveDefinition(attacker: Fighter): RelicDef {
   const ramped = attacker.rampFactor;
   // 오늘의 재료(마가사) — 쓰러뜨린 재료마다 쌓인 공격력 겹.
   const fed = passive.todaysIngredient ? 1 + attacker.ingredientStacks * passive.todaysIngredient.attackPercentPerStack / 100 : 1;
-  if (passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined && conditional === 1 && vandalised === 1 && focused === 1 && converted === 1 && ramped === 1 && fed === 1) return attacker.def;
+  const plan = attacker.def.frontlineBoss;
+  const momentum = plan?.kind === "gungnir"
+    ? 1 + (attacker.frontline?.momentum ?? 0) * plan.attackPercentPerStack * frontlinePassiveMultiplier(attacker) / 100 : 1;
+  if (momentum === 1 && passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined && conditional === 1 && vandalised === 1 && focused === 1 && converted === 1 && ramped === 1 && fed === 1) return attacker.def;
   return { ...attacker.def, stats: {
     ...attacker.def.stats,
-    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional * vandalised * focused * converted * ramped * fed,
+    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional * vandalised * focused * converted * ramped * fed * momentum,
     ap: attacker.def.stats.ap * vandalised * ramped,
     critDamage: attacker.def.stats.critDamage + (passive.criticalDamagePercent ?? 0),
   } };
@@ -8215,7 +8407,9 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
     * (1 + (target.bt.biteMark ? target.bt.biteMark.stacks * target.bt.biteMark.percentPerStack : 0) / 100);
   // 「인」과 「절정」의 버티기는 **여기서 곱하지 않는다.** 그 둘은 최종 피해 감쇠가
   // 아니라 눈에 보이는 자원(보호막 · 대신 받기와 매초 회복)이라 이 경계를 지나지 않는다.
-  const softened = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
+  const armor = target.def.frontlineBoss;
+  const armorFactor = armor?.kind === "ironclad" ? dPow(1 - armor.reductionPerLayer / 100, target.frontline?.armor ?? 0) : 1;
+  const softened = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100) * armorFactor));
   const reduced = applyImpactCap(target, softened);
   // 일반 전투원의 최소 1 피해는 그대로 두고, 경감을 가진 자리만 최종 반올림 뒤 무효화한다.
   const ignored = plan !== undefined && reduced <= plan.ignoreAtOrBelow;
@@ -8291,7 +8485,7 @@ function reflectWall(owner: Fighter, absorbed: number, state: SkirmishState, eve
   }
 }
 
-function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[], state: SkirmishState): number {
+function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[], state: SkirmishState, direct = false): number {
   // 무효화된 0 피해는 보호막 사건조차 만들지 않아 보호막 잔량과 피격 파생 효과를 보존한다.
   if (amount <= 0) return 0;
   // 앞에 선 아군이 있으면 그 몫을 **HP에 닿기 전에** 떼어 낸다. 이 함수가 모든 피해 원천의
@@ -8304,9 +8498,17 @@ function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[], s
   // 아닌 경로로 받은 몫도 빠지지 않고, 앞에 선 아군이 대신 받은 몫은 이미 떼어져 있다.
   if (target.ferocityFever) target.feverDamageTaken += amount;
   const hpBefore = target.hp;
+  let ironcladShieldBroken = false;
   if (target.shield.amount > 0) {
     const absorbed = Math.min(target.shield.amount, amount);
     target.shield.amount -= absorbed;
+    const armor = target.frontline;
+    if (armor) {
+      const ultimateAbsorbed = Math.min(armor.ultimateShield, absorbed);
+      armor.ultimateShield -= ultimateAbsorbed;
+      armor.lastStandShield = Math.max(0, armor.lastStandShield - (absorbed - ultimateAbsorbed));
+      ironcladShieldBroken = direct && ultimateAbsorbed > 0 && armor.ultimateShield === 0;
+    }
     if (target.serviceBarrier) {
       target.serviceBarrier.amount = Math.max(0, target.serviceBarrier.amount - absorbed);
       if (target.serviceBarrier.amount === 0) target.serviceBarrier = undefined;
@@ -8337,6 +8539,8 @@ function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[], s
   if (dealt > 0 && isFighterAlive(target) && target.def.passive.kind === "shellGuard") gainShellGuard(target, 1, state, events);
   if (dealt > 0 && isFighterAlive(target)) tryTriggerRescueShield(target, state, events);
   if (dealt > 0 && isFighterAlive(target)) noteFlinch(target, dealt);
+  if (direct && dealt > 0 && isFighterAlive(target)) stripFrontlineArmor(target, state, events);
+  if (ironcladShieldBroken && isFighterAlive(target)) ironcladShockwave(target, state, events);
   return dealt;
 }
 
@@ -9186,6 +9390,11 @@ function strike(
   const skill = irnaBreakthroughSkill(attacker, target, staccatoChainSkill(attacker, target, breakthroughSkill(attacker, useUltimate), useUltimate), useUltimate);
   const cycle = attacker.def.basic.cycle;
   const basicStep = !useUltimate && cycle?.length ? basicCycleIndex(attacker, cycle.length) : undefined;
+  const actionEventStart = events.length;
+  const frontline = attacker.def.frontlineBoss;
+  const frontlineThird = basicStep === 2 && frontline !== undefined;
+  const frontlinePierce = frontlineThird && frontline.kind === "gungnir"
+    ? openedBreakthrough(attacker, "basic", (effects) => effects.basic) : undefined;
   const closing = attacker.def.basic.closingService;
   const finisher = closing !== undefined && !useUltimate && basicStep === closing.stepIndex;
   const guest = attacker.reservedGuest?.targetId === target.id;
@@ -9316,9 +9525,15 @@ function strike(
     // 강화된 한 방만 방어·저항을 지나간다. 속성 상성과 대상 경감은 그대로 거친다.
     ignoresDefense: empowered,
     // 방어를 일부 지나치는 한 방. 스킬이 적은 값에 폭주 특성(「폭풍 속의 조준」)이 기본 공격에 더하는 몫을 합친다.
-    defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + basicDefenseIgnorePercent(attacker, attackingInFever, useUltimate)),
+    defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + basicDefenseIgnorePercent(attacker, attackingInFever, useUltimate)
+      + (frontlinePierce?.kind === "frontlineBasic" ? frontlinePierce.percent : 0)),
   };
-  const offense = offensiveDefinition(attacker);
+  let offense = offensiveDefinition(attacker);
+  if (!useUltimate && frontline?.kind === "ironclad") {
+    const guard = defensiveDefinition(attacker, state).def.stats;
+    const bonus = (guard.def + guard.res) * frontline.basicGuardScale / damageInput.power;
+    offense = { ...offense, stats: { ...offense.stats, atk: offense.stats.atk + bonus } };
+  }
   // 패시브 돌파(`huntMark`) — 다른 아군이 함께 노리는 적에게는 치명타 피해가 늘어난다.
   const markBonus = critical ? huntMarkCriticalDamage(attacker, target, state) : 0;
   const damageAttacker = { ...attacker, def: markBonus > 0
@@ -9373,7 +9588,7 @@ function strike(
   if (!resolution.ignored && finisher && guest && openedBreakthrough(attacker, "passive", (effects) => effects.passive)?.kind === "guestShieldBreak") breakShield(target, events);
   const shieldBefore = target.shield.amount;
   const shieldProviderId = target.shield.providerId;
-  const dealt = applyDamage(target, amount, events, state);
+  const dealt = applyDamage(target, amount, events, state, true);
   if (bashInput && isFighterAlive(target)) {
     const concussion = attacker.def.basic.statusEffects?.find((effect) => effect.kind === "concussion");
     if (concussion?.kind === "concussion") applyConcussion(target, concussion, false, events, state, attacker.id, true);
@@ -9442,7 +9657,11 @@ function strike(
   const healFromDamage = (dealt: number) => {
     drainFromDamage(state, attacker, dealt, damageHealingRate(attacker, skill, attackingInFever, target), events);
   };
+  const hpBeforeDrain = attacker.hp;
   healFromDamage(dealt);
+  if (frontline?.kind === "gungnir" && skill.damageHealingPercent && attacker.hp > hpBeforeDrain) {
+    gainFrontlineMomentum(attacker, state);
+  }
   // 「다 같이 덮쳐!」 — 두목이 문 자리로 살아 있는 늑대가 곧바로 제 궁극기를 쓴다.
   if (useUltimate && attacker.def.ultimate.commandsPack === true) commandPack(attacker, target, rng, state, events);
   // 궁극기 돌파(`pupRush`)·평타 돌파(`pupLitter`) — 새끼 늑대를 부른다. 궁극기 게이지와 기절에는 매이지 않는다.
@@ -9604,6 +9823,15 @@ function strike(
     // 주기이므로 같은 문 안에서 함께 돈다 — 따로 세면 두 셈이 한 박자씩 어긋난다.
     if (!useUltimate) applyBasicBreakthrough(attacker, target, state, events);
   }
+  if (frontlineThird && !resolution.ignored && isFighterAlive(attacker)) {
+    if (frontline.kind === "ironclad") ironcladThirdHit(attacker, target, dealt, critical, state, events);
+    else if (attackingInFever && attacker.frontline) {
+      const chase = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
+      if (chase?.kind === "frontlineFever") attacker.frontline.chase = {
+        targetId: target.id, at: state.elapsed + chase.seconds, power: chase.percent,
+      };
+    }
+  }
   if (!useUltimate && comboHit === undefined) triggerRally(attacker, state, events);
   if (!useUltimate && comboHit === undefined) callStarfall(attacker, target, rng);
   // 기본 공격 돌파(`poisonPulse`) — 이미 독이 걸려 있던 적은 독 한 틱을 먼저 받는다. 청산하는 타격은 몰아 받으니 제외한다.
@@ -9703,7 +9931,7 @@ function strike(
       const splashAmount = splashResolution.applied;
       const secondaryHpBefore = secondary.hp;
       const secondaryShieldBefore = secondary.shield.amount; const secondaryShieldProviderId = secondary.shield.providerId;
-      applyDamage(secondary, splashAmount, events, state);
+      applyDamage(secondary, splashAmount, events, state, true);
       if (!splashResolution.ignored) countGuestGuardHit(secondary, attacker);
       const splashCredited = recordDamageContribution(state, packCreditId(attacker), secondary, damageInput.damageType, damageInput.scalingStat, splashContribution, splashResolution, secondaryHpBefore, secondaryShieldBefore, secondaryShieldProviderId);
       tryTriggerEmergencyRecovery(secondary, state); tryTriggerLowHpVanish(secondary, state);
@@ -9722,7 +9950,9 @@ function strike(
   state.log.push(`${attacker.def.name} → ${target.def.name} ${amount}`);
   if (!isFighterAlive(target)) {
     clearDefeatedStatuses(target);
-    events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
+    if (!frontlineThird || frontline.kind !== "ironclad" || !hasDeathEvent(events, actionEventStart, target.id)) {
+      events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
+    }
     state.log.push(`${target.def.name} 전투 불능`);
   }
 }
@@ -9915,6 +10145,16 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   if (ultimateProbing && useUltimate) throw new UltimateProbe(targets.length > 0 || healingTargets.length > 0);
   if (targets.length === 0 && healingTargets.length === 0) return;
 
+  const frontline = attacker.def.frontlineBoss;
+  if (useUltimate && !followUp && frontline?.kind === "ironclad" && attacker.frontline) {
+    attacker.energy -= ultimateCost(state, attacker, true);
+    attacker.frontline.ultimateAt = state.elapsed + frontline.windup;
+    attacker.attackCooldown = Math.max(attacker.attackCooldown, frontline.windup);
+    events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: true, damageType: skill.damageType,
+      area: { shape: "radial", x: center.x, y: center.y, radius: skill.radius ?? 0 } });
+    return;
+  }
+
   // 판정이 쓴 모양을 그대로 넘긴다. 돌진을 반경 하나로 줄이면 씬은 통로 대신 원을 그리게 되어
   // "닿을 줄 알았는데 안 맞았다"가 남는다. 전장 전체를 때리는 기술은 그릴 경계가 없으므로
   // 모양 대신 그 사실을 넘기고, 씬이 가장자리 워시라는 다른 문법으로 알린다.
@@ -9966,6 +10206,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
   // 「성의 재단」이 아군에게 나눠 두를 몫의 원천. 대상별이 아니라 이 기술의 총량이다.
   let sharedShieldSource = 0;
+  let gungnirRecovery = 0;
   // 궁극기 유성도 패시브 유성과 같이 준 피해로 가장 다친 아군을 회복한다(플레샤 — `Passive.starfall`).
   let ultimateMeteorDealt = 0;
   // 「가봉」 — 강화 여부는 행동 하나에 한 번 정하고, 막은 맞은 모든 적의 피해 총량으로 한 번만 꿰맨다.
@@ -9995,7 +10236,10 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 같은 배율을 쓰면 가장 많이 칠한 적의 몫이 아무도 칠하지 않은 적에게까지 간다.
     // 폭발형 궁극기의 위력은 총량이 아니라 **겹당 값**이라 그 대상의 겹 수만큼 곱한다.
     const detonated = detonation ? { ...skill, power: (skill.power ?? 0) * (target.overpaint?.stacks ?? 0) } : skill;
-    const plumePower = frostPlumeBreakthroughMultiplier(attacker, target, useUltimate) * bossDamageMultiplier(attacker, target, useUltimate);
+    const shieldBreak = useUltimate && frontline?.kind === "gungnir" && target.shield.amount > 0
+      ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : undefined;
+    const plumePower = frostPlumeBreakthroughMultiplier(attacker, target, useUltimate) * bossDamageMultiplier(attacker, target, useUltimate)
+      * (shieldBreak?.kind === "frontlineUltimate" ? 1 + shieldBreak.percent / 100 : 1);
     const scaled = plumePower === 1 || detonated.power === undefined ? detonated : { ...detonated, power: detonated.power * plumePower };
     const damageInput = { ...scaled, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const,
       ignoresDefense: false,
@@ -10009,14 +10253,18 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     const hpBefore = target.hp;
     if (skill.breaksShield === true) breakShield(target, events);
     const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
-    const hpLost = applyDamage(target, amount, events, state);
+    const hpLost = applyDamage(target, amount, events, state, true);
     if (!resolution.ignored) countGuestGuardHit(target, attacker);
     const credited = recordDamageContribution(state, packCreditId(attacker), target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
     tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
     triggerCombatAugments(state, target, "onLowHp", events);
     if (isFighterAlive(target) && hpLost > 0) triggerCombatAugments(state, target, "onDamaged", events);
     // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
-    drainFromDamage(state, attacker, hpBefore - target.hp, damageHealingRate(attacker, skill, attackingInFever, target), events);
+    if (useUltimate && frontline?.kind === "gungnir") {
+      gungnirRecovery += hpLost * damageHealingRate(attacker, skill, attackingInFever, target) / 100;
+    } else {
+      drainFromDamage(state, attacker, hpBefore - target.hp, damageHealingRate(attacker, skill, attackingInFever, target), events);
+    }
     // 보호막 전환도 같은 값을 읽는다 — 단일과 광역에서 규칙이 갈리면 같은 걸음이 대상 수에
     // 따라 다른 일을 한다.
     if (!useUltimate) releaseShieldHit(attacker, target, state, events);
@@ -10119,6 +10367,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   if (!useUltimate && !followUp && !free) callStarfall(attacker, center, rng);
   // 되돌아오는 돌진은 이미 치른 한 번의 몫이라 야성을 다시 올리지 않는다.
   if (!attacker.bt.dashBack?.running) gainFerocity(attacker, actionFerocityGain(attacker.def.stats, useUltimate), state, events);
+  if (gungnirRecovery > 0 && applyHealing(state, attacker, gungnirRecovery) > 0) gainFrontlineMomentum(attacker, state);
 }
 
 /**
@@ -11057,6 +11306,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       continue;
     }
     // 공포에 빠진 몸은 표적을 향하지 않고 건 쪽에게서 달아난다. 일반 공격은 나가지 않는다.
+    if (fighter.frontline?.ultimateAt !== undefined) continue;
     if (fighter.fear) {
       fleeFromFear(fighter, dt, rng, state, events);
       continue;
@@ -11270,7 +11520,7 @@ export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean
   // 불멸로 버티는 동안은 아무것도 하지 못한다 — 무적의 대가가 행동 정지다.
   if (state.phase !== "fight" || !isFighterAlive(fighter) || fighter.undying !== null || fighter.stunnedFor > 0 || fighter.staggeredFor > 0 || fighter.frozen !== null || fighter.energy < ultimateCost(state, fighter, false)) return false;
   // 광란 중에는 기본 공격만 나간다. 궁극기까지 아군에게 꽂히면 한 판이 그 한 번으로 갈린다.
-  if (fighter.frenzy) return false;
+  if (fighter.frenzy || fighter.frontline?.ultimateAt !== undefined) return false;
   // 듀오에게만 거는 궁극기는 걸 상대가 살아 있어야 나간다 — 듀오가 쓰러지면 게이지가 차도
   // 쓸 곳이 없다. 그것이 이 개체가 짊어지는 값이다.
   if (fighter.def.ultimate.targeting === "duo") {
@@ -11849,7 +12099,13 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
       if (fighter.def.passive.kind === "refillMagazine") fighter.refillAttackRatio = refillAttackRatio(fighter, state);
     }
     advance(state, step, rng, events);
+    const beforeFrontline = events.length;
+    if (state.phase === "fight") {
+      for (const fighter of state.fighters) tickFrontline(fighter, step, rng, state, events);
+    }
+    const frontlineChangedBattle = events.length > beforeFrontline;
     announceSilentDeaths(state, events, before);
+    if (frontlineChangedBattle) settle(state, events);
     if (state.horde && state.phase === "fight") advanceHorde(state, events);
     if (state.automaticUltimates) {
       // 화면의 배속·프레임·컷인 대기열과 무관하게 양쪽이 같은 함수/준비 조건을 쓴다.
@@ -11891,7 +12147,10 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
       if (!fighter.ferocityFever) fighter.feverHold = 0;
       fighter.feverElapsed = fighter.ferocityFever ? fighter.feverElapsed + step : 0;
       drainFerocityFever(fighter, drainStep);
-      if (feverBefore && !fighter.ferocityFever) applyFerocityBreakthrough(fighter, state, events);
+      if (feverBefore && !fighter.ferocityFever) {
+        if (fighter.def.frontlineBoss?.kind === "gungnir") resizeGungnirHealth(fighter, fighter.def.ferocityTrait.effectId === "gungnirMarch" ? fighter.def.ferocityTrait.passiveMultiplier : 1);
+        applyFerocityBreakthrough(fighter, state, events);
+      }
     });
     state.fighters.forEach((fighter) => { tickUltimateBreakthrough(fighter, step, state, events); tickTidalEchoes(fighter, step, state, events); tickStarfalls(fighter, step, state, events); tickArrowEchoes(fighter, step, state, events); tickAfterimages(fighter, step, state, events); tickTankBreakthroughs(fighter, step, state, events); tickBossBreakthroughs(fighter, step, state, events); tickAfterglow(fighter, state, events); });
     remaining -= step;

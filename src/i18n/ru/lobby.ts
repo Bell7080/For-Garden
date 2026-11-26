@@ -169,6 +169,8 @@ export const LOBBY_RU = {
   "storyDifficulty.easy.detail": "Первое путешествие с сюжетом",
   "storyDifficulty.normal.detail": "Только бои · Награды валютой +25%",
   "storyDifficulty.hard.detail": "Только бои · Награды валютой +50%",
+  "storyDifficulty.rampage": "Неистовство",
+  "storyDifficulty.rampage.detail": "Только бои · Награды валютой +75%",
   "storyDifficulty.locked": "Пройдите {difficulty} 4-10 для открытия",
   "storyDifficulty.unlocked.title": "Открыта новая сложность!",
   "storyDifficulty.unlocked.body": "Поздравляем, исследователь!\nВ режиме {difficulty} вас ждут сильные враги и новые награды за первое прохождение.",

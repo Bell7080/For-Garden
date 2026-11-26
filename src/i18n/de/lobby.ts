@@ -169,6 +169,8 @@ export const LOBBY_DE = {
   "storyDifficulty.easy.detail": "Die erste Reise mit der Geschichte",
   "storyDifficulty.normal.detail": "Nur Kämpfe · Währungsbelohnungen +25%",
   "storyDifficulty.hard.detail": "Nur Kämpfe · Währungsbelohnungen +50%",
+  "storyDifficulty.rampage": "Raserei",
+  "storyDifficulty.rampage.detail": "Nur Kämpfe · Währungsbelohnungen +75%",
   "storyDifficulty.locked": "Schließe {difficulty} 4-10 ab",
   "storyDifficulty.unlocked.title": "Neue Schwierigkeit freigeschaltet!",
   "storyDifficulty.unlocked.body": "Glückwunsch, Forschende!\nStelle dich auf {difficulty} stärkeren Gegnern und verdiene neue Erstabschlussbelohnungen.",

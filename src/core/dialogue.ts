@@ -167,6 +167,7 @@ export interface DialogueStory {
   /** 첫 노드 앞에 깔리는 배경. 없으면 그 이야기를 여는 씬의 기본 판이 선다. */
   backdrop?: DialogueBackdrop;
   titleCard?: DialogueTitleCard;
+  recollectionSummary?: string;
   nodes: readonly DialogueNode[];
 }
 

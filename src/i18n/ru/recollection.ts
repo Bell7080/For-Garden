@@ -95,6 +95,8 @@ export const RECOLLECTION_RU = {
   "recollection.tab.chapter5": "Глава 5",
   "recollection.tab.chapter6": "Глава 6",
   "recollection.tab.chapter7": "Глава 7",
+  "recollection.tab.chapter8": "Глава 8",
+  "recollection.tab.chapter9": "Глава 9",
   "recollection.summary.stage-4-3-pre": "В служебном проходе возвращённая троица преграждает путь — таков приказ.",
   "recollection.summary.stage-4-6-pre": "Пульси объявляет исследователя своей добычей, а Рипа спрашивает, правда ли нужно драться.",
   "recollection.summary.stage-4-8-post": "Оборвавшийся лифт падает туда, чего нет ни на одной карте.",

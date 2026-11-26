@@ -89,11 +89,16 @@ export class RecollectionPopup {
     this.entries.forEach((entry, index) => this.addRow(entry, index));
     const tabs = this.scene.add.container(0, 0);
     const { tab } = RECOLLECTION_LAYOUT;
-    const tabWidth = recollectionTabWidth(RECOLLECTION_GROUPS.length);
-    const startX = -((RECOLLECTION_GROUPS.length - 1) * (tabWidth + tab.gap)) / 2;
+    const rowCount = Math.ceil(RECOLLECTION_GROUPS.length / tab.columns);
+    const tabWidth = recollectionTabWidth(tab.columns);
     RECOLLECTION_GROUPS.forEach((group, index) => {
+      const row = Math.floor(index / tab.columns);
+      const column = index % tab.columns;
+      const rowSize = Math.min(tab.columns, RECOLLECTION_GROUPS.length - row * tab.columns);
+      const x = (column - (rowSize - 1) / 2) * (tabWidth + tab.gap);
+      const y = tab.y - (rowCount - row - 1) * (tab.height + tab.rowGap);
       addCategoryTab(this.scene, tabs, {
-        x: startX + index * (tabWidth + tab.gap), y: tab.y, width: tabWidth, height: tab.height,
+        x, y, width: tabWidth, height: tab.height,
         label: t(`recollection.tab.${group}`), selected: group === this.tab,
         onSelect: () => {
           if (group === this.tab) return;
@@ -251,7 +256,7 @@ export class RecollectionPopup {
     shrinkTextToWidth(title, textWidth);
     row.add(title);
     if (done) {
-      const summary = this.scene.add.text(left, eyebrow ? layer.summaryY : layer.summaryY - 8, t(recollectionSummaryKey(entry)), textStyle({ role: "body", size: 25, color: COLOR.inkDim }))
+      const summary = this.scene.add.text(left, eyebrow ? layer.summaryY : layer.summaryY - 8, story.recollectionSummary ?? t(recollectionSummaryKey(entry)), textStyle({ role: "body", size: 25, color: COLOR.inkDim }))
         .setOrigin(0, 0.5).setAlpha(0.88).setShadow(0, 2, "#05070a", 4, false, true);
       squeezeTextToWidth(summary, width - layer.textInset * 2);
       row.add(summary);

@@ -69,7 +69,7 @@ describe("스킬 일러스트 파일", () => {
   it("은 모든 아군·적·소환수의 네 칸을 모두 채운다", () => {
     const relics = new Set(SKILL_ART_ASSETS.map(([key]) => key));
     // 스킬 일러스트가 아직 도착하지 않은 개체 — 그동안은 공용 효과 아이콘이 선다. 아트가 오면 지운다.
-    const artPending = new Set(["brika", "belz", "ar", "his"]);
+    const artPending = new Set(["brika", "belz", "ar", "his", "nokan", "eunte"]);
     for (const def of RELICS) {
       if (artPending.has(def.id)) continue;
       const art = skillArtFor(def.id, "passive");
@@ -643,6 +643,12 @@ describe("스킬 설명문 양식 계약", () => {
         damage: 123, ap: 150, atk: { atk: 120, attackSpeed: 100 },
         cycleDamage: cycle?.map(() => 123),
       });
+      if ("bossDescription" in skill && skill.bossDescription) {
+        expect(text).toMatch(/^(적 한 명|자신의 주위 모든 적)에게 .*방어력.*%만큼 물리 피해를|^적 한 명에게 .*방어력.*%를 합한 물리 피해를/);
+        expect(text).toContain("보호막");
+        expect(text.endsWith(".")).toBe(true);
+        return;
+      }
       // 순환 기본 공격은 걸음마다 제 문장을 갖는다. 한 문장으로 뭉치면 세 권 중 하나만 설명한
       // 문장이 되므로, 양식은 문장 전체가 아니라 **걸음 하나하나**가 지킨다.
       // 앞 걸음이 전부 같은 순환(파루아)은 늘어놓지 않고 한 문장에 대체 절만 붙인다 —

@@ -95,6 +95,8 @@ export const RECOLLECTION_ID = {
   "recollection.tab.chapter5": "Bab 5",
   "recollection.tab.chapter6": "Bab 6",
   "recollection.tab.chapter7": "Bab 7",
+  "recollection.tab.chapter8": "Bab 8",
+  "recollection.tab.chapter9": "Bab 9",
   "recollection.summary.stage-4-3-pre": "Di lorong pemeriksaan, trio yang dipulangkan menghalangi jalan karena diperintah.",
   "recollection.summary.stage-4-6-pre": "Pulsi mengklaim sang Periset sebagai bagiannya, dan Ripa bertanya apakah mereka sungguh harus bertarung.",
   "recollection.summary.stage-4-8-post": "Lift yang talinya putus jatuh ke kedalaman yang tak ada di peta.",

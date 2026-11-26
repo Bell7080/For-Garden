@@ -95,6 +95,8 @@ export const RECOLLECTION_VI = {
   "recollection.tab.chapter5": "Chương 5",
   "recollection.tab.chapter6": "Chương 6",
   "recollection.tab.chapter7": "Chương 7",
+  "recollection.tab.chapter8": "Chương 8",
+  "recollection.tab.chapter9": "Chương 9",
   "recollection.summary.stage-4-3-pre": "Trong hành lang bảo trì, bộ ba bị thu hồi chặn đường vì đó là mệnh lệnh.",
   "recollection.summary.stage-4-6-pre": "Pulsi giành nhà nghiên cứu làm con mồi của mình, còn Ripa hỏi có thật phải đánh không.",
   "recollection.summary.stage-4-8-post": "Thang máy đứt cáp rơi xuống nơi không có trên bản đồ.",

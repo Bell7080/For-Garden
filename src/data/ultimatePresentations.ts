@@ -124,6 +124,8 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   "noa": { ...DEFAULT_ULTIMATE_PRESENTATION, zoomScale: 1.16, zoomMs: 100 },
   "raja": { ...DEFAULT_ULTIMATE_PRESENTATION, zoomScale: 1.14, cameraShakeIntensity: 0.006 },
   "carno": { ...DEFAULT_ULTIMATE_PRESENTATION, zoomScale: 1.24, cameraShakeIntensity: 0.012 },
+  nokan: { ...DEFAULT_ULTIMATE_PRESENTATION, zoomScale: 1.22, cameraShakeIntensity: 0.012 },
+  eunte: { ...DEFAULT_ULTIMATE_PRESENTATION, zoomScale: 1.16, cameraShakeIntensity: 0.011 },
   "koma": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.22, zoomMs: 105, cameraShakeIntensity: 0.008 },
   // 작고 빠른 물량 개체라 컷인이 가장 짧고 확대도 얕다 — 한 판에 여럿이 쓰는 궁극기라
   // 하나하나가 무거우면 그 던전이 연출을 기다리는 시간으로 채워진다.

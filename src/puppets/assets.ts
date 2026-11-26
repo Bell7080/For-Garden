@@ -71,6 +71,10 @@ import {
   PLESHA_PORTRAIT_METADATA,
   PLESHA_SD_METADATA,
   HIS_PORTRAIT_METADATA,
+  NOKAN_PORTRAIT_METADATA,
+  NOKAN_SD_METADATA,
+  EUNTE_PORTRAIT_METADATA,
+  EUNTE_SD_METADATA,
   HIS_SD_METADATA,
   ARTE_PORTRAIT_METADATA,
   ARTE_SD_METADATA,
@@ -637,6 +641,8 @@ const PORTRAIT_ASSETS = {
   noa: NOA_ASSET,
   raja: RAJA_ASSET,
   carno: CARNO_ASSET,
+  nokan: { url: `${base}puppets/enemy_019.zip`, ...NOKAN_PORTRAIT_METADATA },
+  eunte: { url: `${base}puppets/enemy_020.zip`, ...EUNTE_PORTRAIT_METADATA },
   quetzalcoatlus: QUETZALCOATLUS_ASSET,
   parua: PARUA_ASSET,
   dian: DIAN_ASSET,
@@ -1030,6 +1036,8 @@ export const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
   noa: NOA_SD_ASSET,
   raja: RAJA_SD_ASSET,
   carno: CARNO_SD_ASSET,
+  nokan: { url: `${base}puppets/enemySD_019.zip`, ...NOKAN_SD_METADATA },
+  eunte: { url: `${base}puppets/enemySD_020.zip`, ...EUNTE_SD_METADATA },
 };
 
 /** SD 스킨도 렐릭 ID 아래에만 등록해 다른 렐릭으로 폴백할 수 없게 한다. */

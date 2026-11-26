@@ -52,7 +52,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno" | "plesha" | "arte" | "brika" | "belz" | "ar" | "his";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno" | "plesha" | "arte" | "brika" | "belz" | "ar" | "his" | "nokan" | "eunte";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -743,6 +743,7 @@ export type BasicAttackStep = {
 
 /** 기본 공격만 가질 수 있는 추가 타격 계약이다. 일반 단타는 불필요한 확률 필드를 갖지 않는다. */
 export type BasicAttack = AttackSkill & {
+  bossDescription?: string;
   closingService?: { stepIndex: number; feeHpPercent: number; feeLifeStealPercent: number };
   /**
    * 기본 공격이 부르는 [[meteor|유성]](플레샤). 실제로 나간 기본 공격 `every`번째마다 그 표적이 서 있던 자리에
@@ -1203,6 +1204,7 @@ export type CombatStatusEffect =
 
 /** 궁극기의 대상 선택은 ID나 설명문 대신 코어가 검증할 수 있는 정적 계약으로 선언한다. */
 export type Ultimate = Skill & {
+  bossDescription?: string;
   closingServiceFees?: number;
   /** 사용 시 소비하는 궁극기 게이지. 저장 상한과 독립된 스킬별 값이다. */
   cost: number;
@@ -1360,6 +1362,7 @@ export type Ultimate = Skill & {
 
 /** 패시브는 종류별로 전투 엔진이 직접 해석한다. 새 패시브는 여기에 종류를 늘려 추가한다. */
 export type PassiveKind =
+  | "battleMomentum" | "fixedArmor"
   | "reservedGuest"
   /** 이르나 전용: 치명타 확률을 더하고, 흡혈한 몫의 일부를 회복 대신 보호막으로 두른다. */
   | "tideSight"
@@ -1515,6 +1518,7 @@ export type PassiveKind =
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
+  | "gungnirMarch" | "groundCrush"
   | "extendedService"
   /** 파루아 전용: 폭주 중 모든 일반 공격이 갈래화살이 되고 사거리가 늘어난다. */
   | "splitVolley"
@@ -1609,6 +1613,8 @@ export type FerocityTrait = {
   name: string;
 } & (
   | { effectId: "extendedService"; attackSpeedPercent: number }
+  | { effectId: "gungnirMarch"; speedPercent: number; passiveMultiplier: number }
+  | { effectId: "groundCrush"; radius: number; pullDistance: number; tauntSeconds: number; interval: number; hpPercent: number }
   | {
       /**
        * 폭주 중 **순환을 기다리지 않고** 매 공격을 갈래화살로 낸다.
@@ -2778,6 +2784,10 @@ export interface SummonDef {
 
 /** 렐릭 한 명의 불변 정의. 플레이어별 성장 값은 RelicProgress에만 둔다. */
 export interface RelicDef {
+  frontlineBoss?:
+    | { kind: "gungnir"; growthPercent: number; attackPercentPerStack: number; stackLimit: number }
+    | { kind: "ironclad"; layers: number; reductionPerLayer: number; stripInterval: number; restoreInterval: number;
+        basicGuardScale: number; ultimateGuardScale: number; shieldGuardScale: number; shieldSeconds: number; windup: number };
   id: string;
   /**
    * 같은 인물의 다른 상태를 도감과 서사에서 연결하는 원본 캐릭터 ID다.
@@ -2938,6 +2948,9 @@ export interface BreakthroughNone {
  * (`BasicAttack.statusEffectEvery`)을 그대로 타고 세 번에 한 번만 일어난다.
  */
 export type BasicBreakthrough = {
+  kind: "frontlineBasic";
+  percent: number;
+} | {
   kind: "guestHaste";
   percentPerHit: number;
   maxStacks: number;
@@ -3221,6 +3234,9 @@ export type BasicBreakthrough = {
  * 궁극기가 세 번이 된다(채널링 궁극기와 같은 규칙이다).
  */
 export type UltimateBreakthrough = {
+  kind: "frontlineUltimate";
+  percent: number;
+} | {
   kind: "serviceBarrier";
   damagePercent: number;
   maxHpPercent: number;
@@ -3499,6 +3515,10 @@ export type UltimateBreakthrough = {
  * 세져 그 시간만 부풀고, 끝나고 가장 약해지는 자리를 메우지 못한다.
  */
 export type FerocityBreakthrough = {
+  kind: "frontlineFever";
+  percent: number;
+  seconds: number;
+} | {
   kind: "guestDebuff";
   reductionPercent: number;
 } | {
@@ -3750,6 +3770,10 @@ export type FerocityBreakthrough = {
  * 패시브의 조건(체력 절반 등)을 그대로 타므로 새 발동 조건을 만들지 않는다.
  */
 export type PassiveBreakthrough = {
+  kind: "frontlinePassive";
+  percent: number;
+  seconds?: number;
+} | {
   kind: "guestShieldBreak";
 } | {
   /** 아군의 체력이 `belowHpPercent`% 아래로 떨어지면 혀 주기가 남아 있어도 곧바로 끌어온다. 이 즉시 발동은 `lockoutSeconds`초에 한 번(벨즈의 「아직 계약 기간」). */

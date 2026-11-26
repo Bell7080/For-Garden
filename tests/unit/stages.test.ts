@@ -26,7 +26,7 @@ describe("stage enemy design", () => {
   it("스토리 반복 치즈케이크는 평평하고 대작전보다 한참 적다", () => {
     const repeats = battles.map((stage) => stage.rewards.repeatClearCheesecake);
     expect(Math.min(...repeats)).toBe(10);
-    expect(Math.max(...repeats)).toBe(22);
+    expect(Math.max(...repeats)).toBe(26);
     const reachableAt = (stage: BattleStageDef) => {
       const level = Math.max(...stage.enemies.map((enemy) => enemy.level));
       return CAKE_OPERATION_TIERS.filter((tier) => tier.enemyLevel <= level).at(-1) ?? CAKE_OPERATION_TIERS[0];
@@ -55,13 +55,13 @@ describe("stage enemy design", () => {
     }
     // 원석은 고고학이 주 수급처라 스토리는 2장부터 장마다 두 번만, 한 줌씩 맛보기로 준다.
     const rawStone = stages.filter((stage) => has(stage.id, "rawStone")).map(({ id }) => id);
-    expect(rawStone).toEqual(["2-1", "2-6", "3-1", "3-6", "4-1", "4-6", "5-1", "5-6", "6-1", "6-6", "7-1", "7-6"]);
+    expect(rawStone).toEqual(["2-1", "2-6", "3-1", "3-6", "4-1", "4-6", "5-1", "5-6", "6-1", "6-6", "7-1", "7-6", "8-1", "8-6", "9-1", "9-6"]);
     for (const id of rawStone) {
       const amount = rewardsOf(id).reduce((sum, reward) => reward.kind === "currency" && reward.currency === "rawStone" ? sum + reward.amount : sum, 0);
       expect(amount, id).toBeLessThanOrEqual(60);
     }
     const runes = stages.flatMap((stage) => rewardsOf(stage.id).flatMap((reward) => reward.kind === "rune" ? [{ id: stage.id, ...reward }] : []));
-    expect(runes.map(({ id }) => id)).toEqual(["1-5", "1-10", "2-5", "2-10", "3-5", "3-10", "4-5", "4-10", "5-5", "5-10", "6-5", "6-10", "7-5", "7-10"]);
+    expect(runes.map(({ id }) => id)).toEqual(["1-5", "1-10", "2-5", "2-10", "3-5", "3-10", "4-5", "4-10", "5-5", "5-10", "6-5", "6-10", "7-5", "7-10", "8-5", "8-10", "9-5", "9-10"]);
     // 영웅·전설은 두지 않는다 — 스토리는 주 수급처가 아니다.
     expect(runes.every(({ rarity }) => rarity === "uncommon" || rarity === "rare")).toBe(true);
     // 첫 룬은 특성이 없고, 장을 닫는 관문의 룬만 특성이 확정으로 붙는다.
@@ -273,8 +273,8 @@ describe("stage enemy design", () => {
       expect(enemy.breakthrough).toBeGreaterThanOrEqual(0);
       expect(enemy.breakthrough).toBeLessThanOrEqual(BREAKTHROUGH_CAP);
       expect(enemy.level).toBeGreaterThanOrEqual(1);
-      // 잡졸 사다리의 천장은 60이다. 보스 관문만 사다리 밖에 서고(응태 결정 2026-11-12 — 7-10 카르 LV.85) 렐릭 상한 100은 넘지 않는다.
-      expect(enemy.level).toBeLessThanOrEqual(stage.elite ? 100 : 60);
+      // 9장 일반 적은 63까지 오르고, 정예도 렐릭 상한 100은 넘지 않는다.
+      expect(enemy.level).toBeLessThanOrEqual(stage.elite ? 100 : stage.chapter === 9 ? 63 : 60);
     }
   });
 
@@ -316,12 +316,12 @@ describe("stage enemy design", () => {
     }
   });
 
-  it("일곱 챕터의 본편 ID 70개를 유일한 평탄 인덱스로 제공하고 알 수 없는 ID를 거부한다", () => {
-    expect(CHAPTERS.map(({ stages }) => stages.length)).toEqual([10, 10, 10, 10, 10, 10, 10]);
-    expect(STAGES).toHaveLength(70 + SUB_STAGES.length);
+  it("아홉 챕터의 본편 ID 90개를 유일한 평탄 인덱스로 제공하고 알 수 없는 ID를 거부한다", () => {
+    expect(CHAPTERS.map(({ stages }) => stages.length)).toEqual([10, 10, 10, 10, 10, 10, 10, 10, 10]);
+    expect(STAGES).toHaveLength(90 + SUB_STAGES.length);
     expect(new Set(STAGES.map(({ id }) => id)).size).toBe(STAGES.length);
     expect(getStage("3-10").chapterOrder).toBe(10);
-    expect(() => getStage("8-1")).toThrow("알 수 없는 스테이지 id");
+    expect(() => getStage("10-1")).toThrow("알 수 없는 스테이지 id");
   });
 
   it("전투 서브는 젬뿐인 초회 보상이고 본편 진행·다음 단계에 끼지 않는다", () => {
@@ -339,7 +339,8 @@ describe("stage enemy design", () => {
     expect(nextBattleStage(STAGES, "1-8", () => true)?.id).toBe("1-9");
     expect(nextBattleStage(STAGES, sub.id, () => true)?.id).toBe("1-9");
     expect(nextBattleStage(STAGES, "4-10", () => true)?.id).toBe("5-1");
-    expect(nextBattleStage(STAGES, "7-10", () => true)).toBeUndefined();
+    expect(nextBattleStage(STAGES, "7-10", () => true)?.id).toBe("8-1");
+    expect(nextBattleStage(STAGES, "9-10", () => true)).toBeUndefined();
   });
 
   it("1-5 전에는 서브 서사를 잠그고 이후에는 1-6과 함께 독립적으로 연다", () => {

@@ -180,6 +180,8 @@ export const LOBBY_KO = {
   "storyDifficulty.easy.detail": "스토리와 함께 즐기는 첫 탐사",
   "storyDifficulty.normal.detail": "전투 중심 · 재화 보상 25% 증가",
   "storyDifficulty.hard.detail": "전투 중심 · 재화 보상 50% 증가",
+  "storyDifficulty.rampage": "폭주",
+  "storyDifficulty.rampage.detail": "전투 중심 · 재화 보상 75% 증가",
   "storyDifficulty.locked": "{difficulty} 4-10 클리어 시 개방",
   "storyDifficulty.unlocked.title": "새로운 난이도가 열렸어요!",
   "storyDifficulty.unlocked.body": "축하해요, 연구원 님!\n{difficulty} 난이도에서 더 강해진 적과 새로운 초회 보상을 만나 보세요.",

@@ -15,7 +15,7 @@ function walk(dir: string): string[] {
 
 describe("설정이 실제 경로에 닿는다", () => {
   it("카메라 흔들림은 shakeCamera·EffectManager 두 곳만 직접 부른다(설정 배율을 비껴가지 않게)", () => {
-    const offenders = walk("src").filter((file) => !file.endsWith("ui/screenShake.ts") && !file.endsWith("managers/EffectManager.ts"))
+    const offenders = walk("src").filter((file) => !file.endsWith(join("ui", "screenShake.ts")) && !file.endsWith(join("managers", "EffectManager.ts")))
       .filter((file) => /cameras?\.main\.shake\(|camera\.shake\(/.test(readFileSync(file, "utf8")));
     expect(offenders).toEqual([]);
   });

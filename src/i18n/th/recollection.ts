@@ -95,6 +95,8 @@ export const RECOLLECTION_TH = {
   "recollection.tab.chapter5": "บทที่ 5",
   "recollection.tab.chapter6": "บทที่ 6",
   "recollection.tab.chapter7": "บทที่ 7",
+  "recollection.tab.chapter8": "บทที่ 8",
+  "recollection.tab.chapter9": "บทที่ 9",
   "recollection.summary.stage-4-3-pre": "ในทางตรวจซ่อม สามคนที่ถูกกู้กลับมาขวางทางเพราะเป็นคำสั่ง",
   "recollection.summary.stage-4-6-pre": "พัลซีจองนักวิจัยไว้เป็นเหยื่อของตัวเอง ส่วนริปาถามว่าต้องสู้จริงหรือ",
   "recollection.summary.stage-4-8-post": "ลิฟต์ที่สายขาดร่วงลงสู่ที่ที่ไม่มีในแผนที่",

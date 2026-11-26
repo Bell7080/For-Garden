@@ -10,6 +10,22 @@
  * 더하고 여기에 그 절의 문구를 더한다.
  */
 export const SKILL_KO = {
+  "skill.frontline.armor": "고정 장갑",
+  "skill.frontline.armorDetail": "받는 피해 {reduction}% 감소",
+  "skill.frontline.momentum": "기세",
+  "skill.frontline.momentumDetail": "공격력 {attack}% 증가",
+  "skill.frontline.slow": "지반 압살 둔화",
+  "skill.frontline.slowDetail": "이동 속도 {percent}% 감소",
+  "skill.frontline.gungnirMarch": "폭주 중 공격 속도와 이동 속도가 {speed}% 상승하며 패시브의 효율이 {efficiency}% 증가합니다.",
+  "skill.frontline.groundCrush": "폭주를 시작하면 주변 적을 끌어당겨 {taunt}초간 도발합니다. 폭주 중 {interval}초마다 주변 적에게 대상 최대 체력의 {hp}%만큼 고정 피해를 주고 0.1초간 경직시킵니다.",
+  "skill.frontline.gungnirBasic": "세 번째 기본 공격이 대상 방어력의 {percent}%를 무시합니다.",
+  "skill.frontline.ironcladBasic": "골절선에 밀려난 적이 다른 적과 부딪히면, 부딪힌 적도 밀려나며 같은 비율의 뇌진탕 피해를 받습니다. 한 공격으로 같은 적에게 한 번만 적용됩니다.",
+  "skill.frontline.gungnirUltimate": "이 궁극기로 보호막을 파괴한 적에게 피해를 {percent}% 더 줍니다.",
+  "skill.frontline.ironcladUltimate": "이 궁극기가 만든 보호막이 적의 직접 공격으로 소진되면, 주변 적에게 방어력과 저항력 각각의 {percent}%를 합한 물리 피해를 줍니다.",
+  "skill.frontline.gungnirFever": "폭주 중 세 번째 기본 공격이 적중하면, {seconds}초 뒤 같은 적이 사거리 안에 있을 때 공격력의 {percent}%만큼 물리 피해를 한 번 더 줍니다.",
+  "skill.frontline.ironcladFever": "같은 적에게 폭주 파동을 3회 적중시킬 때마다 그 적의 이동 속도를 {seconds}초간 {percent}% 낮춥니다.",
+  "skill.frontline.gungnirPassive": "전투 중 처음 기세 4겹에 도달할 때 잃은 체력의 {percent}%를 회복합니다.",
+  "skill.frontline.ironcladPassive": "고정 장갑이 처음으로 전부 벗겨지면 최대 체력의 {percent}%에 해당하는 보호막을 얻습니다. 보호막은 {seconds}초에 걸쳐 점차 감소합니다.",
   "skill.ferocity.extendedService": "폭주 중에는 접수를 건너뛰어 서빙과 마감을 번갈아 사용합니다. 공격 속도가 {percent}% 증가합니다.",
   "skill.passive.reservedGuest": "최대 체력이 가장 높은 적을 [[reserved-guest|단골]]로 지정해 쓰러질 때까지 우선 공격합니다. 다른 적의 직접 공격에 맞을 때마다 방어력과 저항력이 각각 {points}씩 쌓입니다. 누적치는 전투가 끝날 때까지 단골 외의 적의 공격에 적용됩니다.",
   "skill.sentence.closingService": "단골에게는 [[special-fee|특별 요금]]을 1회 적용합니다.",

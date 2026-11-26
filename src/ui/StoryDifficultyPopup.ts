@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { STORY_DIFFICULTIES, STORY_DIFFICULTY, isStoryDifficultyUnlocked, type StoryDifficulty } from "../core/storyDifficulty";
+import { STORY_DIFFICULTIES, STORY_DIFFICULTY, isStoryDifficultyUnlocked, previousStoryDifficulty, type StoryDifficulty } from "../core/storyDifficulty";
 import { t } from "../i18n";
 import { battleAssetFor, sdAssetFor, spawnPuppet, type PuppetAsset } from "../puppets/assets";
 import { session } from "../state/session";
@@ -25,6 +25,7 @@ export const STORY_DIFFICULTY_STAGE: Readonly<Record<StoryDifficulty, { artTint:
   easy: { artTint: 0xfff2d2, sd: () => sdAssetFor("torika"), side: "left", rank: 1 },
   normal: { artTint: 0xffc49a, sd: () => battleAssetFor("toby"), side: "right", rank: 2 },
   hard: { artTint: 0xff8e98, sd: () => battleAssetFor("koma"), side: "left", rank: 3 },
+  rampage: { artTint: 0xc998ff, sd: () => battleAssetFor("eunte"), side: "right", rank: 4 },
 };
 
 /** 난이도 고르기 판·개방 축하 판의 자리. 높이는 칸 수에서 거꾸로 구한다. */
@@ -105,7 +106,7 @@ export function openStoryDifficultyPicker(scene: Phaser.Scene, popups: PopupLaye
     STORY_DIFFICULTIES.forEach((difficulty, index) => {
       const unlocked = isStoryDifficultyUnlocked(difficulty, session.cleared);
       const y = top + P.firstCardTop + P.card.height / 2 + index * (P.card.height + P.card.gap);
-      const locked = unlocked ? undefined : t("storyDifficulty.locked", { difficulty: t(`storyDifficulty.${difficulty === "hard" ? "normal" : "easy"}`) });
+      const locked = unlocked ? undefined : t("storyDifficulty.locked", { difficulty: t(`storyDifficulty.${previousStoryDifficulty(difficulty) ?? "easy"}`) });
       addDifficultyCard(scene, body, y, difficulty, {
         status: unlocked ? t(`storyDifficulty.${difficulty}.detail`) : "", locked, selected: selected === difficulty,
         onClick: () => { if (unlocked) { close(); onSelect(difficulty); } },

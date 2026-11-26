@@ -169,6 +169,8 @@ export const LOBBY_ZH_HANT = {
   "storyDifficulty.easy.detail": "跟隨劇情展開首次探索",
   "storyDifficulty.normal.detail": "戰鬥為主 · 貨幣獎勵增加25%",
   "storyDifficulty.hard.detail": "戰鬥為主 · 貨幣獎勵增加50%",
+  "storyDifficulty.rampage": "暴走",
+  "storyDifficulty.rampage.detail": "戰鬥為主 · 貨幣獎勵增加75%",
   "storyDifficulty.locked": "通關{difficulty}4-10後解鎖",
   "storyDifficulty.unlocked.title": "新的難度已解鎖！",
   "storyDifficulty.unlocked.body": "恭喜你，研究員！\n前往{difficulty}難度，挑戰更強的敵人並領取新的首通獎勵。",

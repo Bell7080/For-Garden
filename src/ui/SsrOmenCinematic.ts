@@ -155,12 +155,59 @@ async function buildStage(game: Phaser.Game, reducedMotion: boolean): Promise<Om
     // 픽셀 배율은 그래픽 품질의 렌더 배율을 따른다 — 무대는 연구소를 떠날 때 내려가므로 다음 입장에 새 값이 든다.
     const pixelRatio = stagePixelRatio(session.settings.presentation.graphicsQuality, OMEN_PIXEL_RATIO, window.devicePixelRatio || 1);
     built.omen = new bundle.Omen(root, { sound: true, reducedMotion, pixelRatio, onReveal: () => built.onReveal?.() });
+    shareOmenAudio(game, built.omen);
   } catch {
     observer.disconnect();
     root.remove();
     return undefined;
   }
   return built;
+}
+
+/** 무대 묶음의 소리 장치(굽는 단계가 고치지 않는 원본 그대로의 모양). */
+interface OmenSoundRig {
+  context?: AudioContext;
+  master?: GainNode;
+  volume?: number;
+  unlock(): void;
+  stop(): void;
+  dispose(): void;
+}
+
+/**
+ * **전조의 소리를 게임의 오디오 컨텍스트에 태운다.** 원본 묶음은 쾅 소리를 내려고 제 `AudioContext`를 하나 더 만들고,
+ * 무대를 내릴 때 그것을 닫는다. 모바일(특히 iOS 웹뷰)은 출력 장치를 쥔 컨텍스트가 둘이 되거나 하나가 닫히는 순간
+ * 다른 쪽을 `interrupted`로 떨어뜨리기도 해, 뽑기 도중 배경음이 끊긴 뒤 효과음까지 모두 무음이 되는 원인 후보였다.
+ * 게임의 컨텍스트를 빌려 쓰고, 내릴 때는 제 노드만 떼고 컨텍스트는 닫지 않는다. 컨텍스트가 아직 잠겨 있거나 없으면
+ * 원본 그대로 둔다(그래도 한 개뿐이다).
+ */
+function shareOmenAudio(game: Phaser.Game, omen: OmenInstance): void {
+  const rig = (omen as unknown as { sound?: OmenSoundRig }).sound;
+  const manager = game.sound as Phaser.Sound.BaseSoundManager & { context?: AudioContext; destination?: AudioNode };
+  const shared = manager?.context;
+  if (!rig || !shared || typeof rig.unlock !== "function") return;
+  let compressor: DynamicsCompressorNode | undefined;
+  rig.unlock = () => {
+    if (!rig.master) {
+      rig.context = shared;
+      rig.master = shared.createGain();
+      rig.master.gain.value = 0.52 * (rig.volume ?? 1);
+      compressor = shared.createDynamicsCompressor();
+      compressor.threshold.value = -13;
+      compressor.ratio.value = 8;
+      rig.master.connect(compressor);
+      compressor.connect(manager.destination ?? shared.destination);
+    }
+    // 멎어 있으면 함께 깨운다 — 게임 소리도 같이 돌아온다.
+    if ((shared.state as string) !== "running") void shared.resume().catch(() => undefined);
+  };
+  rig.dispose = () => {
+    try { rig.stop(); } catch { /* 이미 멈췄다. */ }
+    rig.master?.disconnect();
+    compressor?.disconnect();
+    rig.master = undefined;
+    rig.context = undefined;
+  };
 }
 
 /**

@@ -70,6 +70,8 @@ export interface ManagedSound {
   resume(): void;
   destroy(): void;
   setVolume(volume: number): this;
+  /** 재생 중이라고 알고 있는데 실제 출력이 멎었을 수 있을 때 다시 밀어 준다(흘려 재생하는 곡만 쓴다). */
+  kick?(): void;
 }
 
 /** 사운드 생성과 페이드를 AudioManager 내부에 가두기 위한 런타임 어댑터 계약이다. */
@@ -80,12 +82,19 @@ export interface AudioBackend {
   cancelFade(sound: ManagedSound): void;
   /** 디코드하지 않고 흘려 재생할 긴 곡을 키에 묶는다(배경음). 대역 백엔드는 없어도 된다. */
   registerStream?(key: string, url: string): void;
+  /** 백엔드가 건 전역 리스너를 푼다. */
+  dispose?(): void;
   /**
    * 앱이 숨는 동안 오디오 출력 장치를 놓는다. 소리를 다 멈춰도 `AudioContext`가 `running`이면 기기의 오디오
    * 스레드·출력 스트림이 계속 깨어 있어 배터리·발열이 남는다(Phaser는 창 blur에서만 내리는데, 앱 전환은
    * visibilitychange만 오는 웹뷰가 있다). 대역 백엔드는 없어도 된다.
    */
   setSuspended?(suspended: boolean): void;
+  /**
+   * 출력 장치가 우리 뜻과 달리 멎었다가(`suspended`·`interrupted`) 되살아났을 때 부른다 — 관리자는 그때 지금 곡을 다시 민다.
+   * 대역 백엔드는 없어도 된다.
+   */
+  onRevive?: () => void;
 }
 
 /** 씬이 중앙 사운드의 생성·정지를 직접 만지지 않도록 제공하는 수명 주기 핸들이다. */
@@ -222,6 +231,7 @@ export class AudioManager {
 
   constructor(private readonly backend: AudioBackend, private readonly settings: SettingsManager = settingsManager, private readonly fadeMs = MUSIC_FADE_MS, watchDocument = true) {
     this.settings.addEventListener("change", this.onSettings);
+    this.backend.onRevive = () => this.revive();
     if (watchDocument && typeof document !== "undefined") document.addEventListener("visibilitychange", this.onVisibility);
   }
 
@@ -368,10 +378,24 @@ export class AudioManager {
     this.applySettings(this.settings.get());
   }
 
+  /**
+   * 출력이 되살아난 뒤 지금 곡을 다시 민다. 오디오 장치가 끊기면(iOS의 `interrupted`, 메모리 압박, 다른 오디오
+   * 컨텍스트) 흘려 재생하던 `<audio>`도 브라우저가 멈춰 세우는데, 우리 장부에는 여전히 「재생 중」이라 아무도
+   * 다시 틀지 않았다 — 뽑기 도중 곡이 끊긴 뒤 게임을 껐다 켤 때까지 소리가 돌아오지 않던 원인이다.
+   */
+  revive(): void {
+    if (this.disposed || this.hidden || !this.music) return;
+    if (this.volume("music") * this.musicGain <= 0) return;
+    if (this.music.isPlaying) this.music.kick?.();
+    else this.music.resume();
+  }
+
   /** 전역 리스너와 모든 활성 사운드를 정리해 게임 인스턴스 교체 시 누수를 막는다. */
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.backend.onRevive = undefined;
+    this.backend.dispose?.();
     this.settings.removeEventListener("change", this.onSettings);
     if (typeof document !== "undefined") document.removeEventListener("visibilitychange", this.onVisibility);
     for (const sound of [...this.sounds.keys()]) this.remove(sound);
@@ -424,7 +448,59 @@ export class AudioManager {
 export class PhaserAudioBackend implements AudioBackend {
   private readonly fades = new Map<ManagedSound, { frame: number; timer: ReturnType<typeof setTimeout> }>();
   private readonly streams = new Map<string, string>();
-  constructor(private readonly game: Phaser.Game) {}
+  onRevive?: () => void;
+  /** 우리가 일부러 내린 동안(앱 숨김)은 되살리지 않는다. */
+  private heldDown = false;
+  private watched?: AudioContext;
+  private readonly onGesture = (): void => this.wake(true);
+  private readonly onState = (): void => this.wake(false);
+
+  constructor(private readonly game: Phaser.Game) {
+    // **출력 장치가 멎은 채로 남지 않게 한다.** 뽑기 3D 연출처럼 무거운 순간이나 iOS 오디오 세션이 끊기면
+    // `AudioContext`가 `suspended`·`interrupted`로 떨어진다. Phaser는 창 focus 때 한 번만 되살리고, 손 없이 부른
+    // `resume()`은 거절되기 일쑤라 그 뒤로 효과음·배경음이 전부 무음이었다. 손이 닿을 때마다(잡는 단계 — 판이 사건을
+    // 멈춰도 먼저 받는다) 멎어 있으면 다시 올린다. 이미 `running`이면 아무것도 하지 않아 값이 거의 없다.
+    if (typeof window !== "undefined") {
+      for (const type of GESTURE_EVENTS) window.addEventListener(type, this.onGesture, { capture: true, passive: true });
+    }
+  }
+
+  dispose(): void {
+    if (typeof window !== "undefined") {
+      for (const type of GESTURE_EVENTS) window.removeEventListener(type, this.onGesture, { capture: true });
+    }
+    this.watched?.removeEventListener("statechange", this.onState);
+    this.watched = undefined;
+  }
+
+  /** Phaser가 쓰는 오디오 컨텍스트. 잠금이 풀리지 않았으면(첫 입력 전) Phaser의 해제 경로에 맡긴다. */
+  private liveContext(): AudioContext | undefined {
+    const manager = this.game.sound as Phaser.Sound.BaseSoundManager & { context?: AudioContext; locked?: boolean };
+    const context = manager?.context;
+    if (!context || manager.locked) return undefined;
+    if (this.watched !== context) {
+      this.watched?.removeEventListener("statechange", this.onState);
+      this.watched = context;
+      context.addEventListener("statechange", this.onState);
+    }
+    return context;
+  }
+
+  /**
+   * 멎은 컨텍스트를 다시 올린다. 손이 닿은 때(`gesture`)는 늘, 상태만 바뀐 때는 화면이 보이고 창에 초점이 있을 때만
+   * 시도한다 — 창을 떠난 동안 Phaser가 일부러 내린 것을 곧바로 되돌리면 안 된다.
+   */
+  private wake(gesture: boolean): void {
+    const context = this.liveContext();
+    if (!context || this.heldDown) return;
+    if (typeof document !== "undefined" && document.hidden) return;
+    const state = context.state as string;
+    if (state === "running" || state === "closed") return;
+    if (!gesture && typeof document !== "undefined" && !document.hasFocus()) return;
+    void context.resume().then(() => {
+      if ((context.state as string) === "running") this.onRevive?.();
+    }).catch(() => undefined);
+  }
 
   /** Phaser 오디오 캐시에 실제 키가 준비됐는지 확인한다. 흘려 재생하는 곡은 묶어 둔 순간부터 있다. */
   has(key: string): boolean { return this.streams.has(key) || this.game.cache.audio.exists(key); }
@@ -445,10 +521,13 @@ export class PhaserAudioBackend implements AudioBackend {
   setSuspended(suspended: boolean): void {
     const manager = this.game.sound as Phaser.Sound.BaseSoundManager & { context?: AudioContext; locked?: boolean };
     const context = manager.context;
+    this.heldDown = suspended;
     if (!context || manager.locked) return;
     const state = context.state as string;
     if (suspended && state === "running") void context.suspend().catch(() => undefined);
-    else if (!suspended && (state === "suspended" || state === "interrupted")) void context.resume().catch(() => undefined);
+    else if (!suspended && (state === "suspended" || state === "interrupted")) {
+      void context.resume().then(() => { if ((context.state as string) === "running") this.onRevive?.(); }).catch(() => undefined);
+    }
   }
 
   /**
@@ -500,6 +579,9 @@ export class PhaserAudioBackend implements AudioBackend {
  * 소리는 `MediaElementAudioSourceNode` → 이득 노드로 Phaser 그래프에 붙인다 — iOS는 요소의 `volume`을 무시하므로
  * 페이드·음량은 이득 노드가 맡는다. 자동 재생이 막히면 첫 입력에서 다시 튼다.
  */
+/** 오류로 멎은 곡을 다시 받는 횟수 상한(한 번 흐르기 시작하면 다시 센다). */
+const STREAM_RELOAD_LIMIT = 3;
+
 class StreamedSound implements ManagedSound {
   volume = 0;
   isPlaying = false;
@@ -508,11 +590,33 @@ class StreamedSound implements ManagedSound {
   private source?: MediaElementAudioSourceNode;
   private destroyed = false;
   private retry?: () => void;
+  /** 우리가 멈춘 것인지 — 브라우저가 멈춘 것(`pause` 사건)과 가른다. */
+  private pausing = false;
+  private readonly url: string;
+  private reloads = 0;
 
   constructor(url: string, loop: boolean, context?: AudioContext, destination?: AudioNode) {
+    this.url = url;
     this.element = new Audio(url);
     this.element.loop = loop;
     this.element.preload = "auto";
+    // 브라우저가 멋대로 멈춘 곡(오디오 세션 끊김·메모리 압박)은 우리 장부에 「재생 중」으로 남는다 — 그대로 두면
+    // 영영 다시 틀지 않는다. 다시 틀어 보고, 막히면 첫 입력에서 다시 튼다.
+    this.element.addEventListener("pause", () => {
+      if (this.pausing || this.destroyed || !this.isPlaying || this.element.ended) return;
+      this.start();
+    });
+    // 내려받기가 끊겨 오류로 멈춘 곡은 주소를 다시 물려 몇 번까지만 다시 받는다.
+    this.element.addEventListener("error", () => {
+      if (this.destroyed || !this.isPlaying || this.reloads >= STREAM_RELOAD_LIMIT) return;
+      this.reloads += 1;
+      const at = this.element.currentTime;
+      this.element.src = this.url;
+      this.element.load();
+      try { this.element.currentTime = at; } catch { /* 아직 길이를 모르면 처음부터다. */ }
+      this.start();
+    });
+    this.element.addEventListener("playing", () => { this.reloads = 0; });
     if (context) {
       try {
         this.source = context.createMediaElementSource(this.element);
@@ -541,10 +645,18 @@ class StreamedSound implements ManagedSound {
   pause(): void {
     this.isPlaying = false;
     this.clearRetry();
+    this.pausing = true;
     this.element.pause();
+    this.pausing = false;
   }
 
   resume(): void { this.play(); }
+
+  /** 재생 중인데 요소가 멎어 있으면 다시 튼다. 이미 흐르고 있으면 아무것도 하지 않는다. */
+  kick(): void {
+    if (this.destroyed || !this.isPlaying || !this.element.paused) return;
+    this.start();
+  }
 
   setVolume(volume: number): this {
     this.volume = volume;
@@ -587,6 +699,9 @@ class StreamedSound implements ManagedSound {
     this.retry = undefined;
   }
 }
+
+/** 멎은 출력 장치를 되살릴 손 사건(잡는 단계로 듣는다). */
+const GESTURE_EVENTS = ["pointerdown", "touchend", "keydown"] as const;
 
 /** 앱 전체가 공유하며 main에서 Phaser 백엔드를 연결하는 오디오 진입점이다. */
 export let audioManager: AudioManager | undefined;

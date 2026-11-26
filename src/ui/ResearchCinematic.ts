@@ -466,6 +466,32 @@ export class ResearchCinematic {
     window.addEventListener("orientationchange", this.onWindowChange);
     this.syncBox();
     this.instance.start();
+    this.coverGame(true);
+  }
+
+  /** 판이 덮은 동안 그리지 않기로 한 씬들. */
+  private readonly coveredScenes = new Set<Phaser.Scene>();
+
+  /**
+   * **판이 게임 캔버스를 통째로 덮는 동안 그 아래 화면은 그리지 않는다.** 연출이 도는 내내 연구소 화면(모집 원화·
+   * 오로라·SD 등)이 보이지 않는 채로 매 프레임 다시 그려져, 3D 무대와 GPU·메인 스레드를 나눠 먹었다 — 카드를
+   * 넘길 때마다 끊기던 큰 몫이다. 씬은 멈추지 않고(시계·트윈은 돈다) 그리기만 쉰다. 소개 장면처럼 판이 걷히는
+   * 동안은 다시 그린다.
+   */
+  private coverGame(covered: boolean): void {
+    if (covered) {
+      if (this.closed) return;
+      for (const scene of this.game.scene.getScenes(true)) {
+        if (!scene.sys.settings.visible) continue;
+        scene.sys.setVisible(false);
+        this.coveredScenes.add(scene);
+      }
+      return;
+    }
+    for (const scene of this.coveredScenes) {
+      if (scene.sys.isActive() || scene.sys.isPaused()) scene.sys.setVisible(true);
+    }
+    this.coveredScenes.clear();
   }
 
   /**
@@ -833,6 +859,7 @@ export class ResearchCinematic {
       if (!this.closed) {
         this.root.style.opacity = "";
         this.root.style.pointerEvents = "";
+        this.coverGame(true);
       }
     }
   }
@@ -862,6 +889,8 @@ export class ResearchCinematic {
     // 한 프레임 동안 그 아래의 연구소 화면이 그대로 드러나, 뽑기 화면으로 한 번 튕겨 나갔다가
     // 소개가 뜨는 것처럼 보였다. 손은 곧바로 캔버스로 넘기고, 보이는 것만 한 박자 늦춘다.
     this.root.style.pointerEvents = "none";
+    // 소개 장면은 게임이 그린다 — 판을 걷기 전에 그 아래 화면을 다시 그리게 한다.
+    this.coverGame(false);
     await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
     if (!this.closed) this.game.input.enabled = true;
     try {
@@ -876,6 +905,7 @@ export class ResearchCinematic {
         if (!this.holdHidden) {
           this.root.style.opacity = "";
           this.root.style.pointerEvents = "";
+          this.coverGame(true);
         }
       }
     }
@@ -903,6 +933,7 @@ export class ResearchCinematic {
   close(): void {
     if (this.closed) return;
     this.closed = true;
+    this.coverGame(false);
     for (const timer of this.timers) window.clearTimeout(timer);
     this.timers.clear();
     // 입력은 지금 도는 사건이 지나간 **다음에** 되돌린다. 여기서 곧바로 켜면 판을 닫은 그

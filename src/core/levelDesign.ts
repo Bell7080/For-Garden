@@ -234,6 +234,11 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
     tenacity: { basePercent: 20, perControlPercent: 10, maxPercent: 80, controlIgnoreAtOrBelowSeconds: 0.05 },
     healingReduction: { basePercent: 5, maxPercent: 40, rampSeconds: 60 },
     /*
+     * **비율 피해도 보스보다 얕게 덜 받는다**(응태 요청 2026-11-27 — 기가노가 약했다). 혼자 서서 체력 ×3을 버티는 자리라
+     * 출혈·뇌진탕 같은 최대 체력 비례 피해가 그 두께를 그대로 녹였다. 보스·불사(30%)의 절반만 덜어 낸다.
+     */
+    percentHpResistance: 15,
+    /*
      * **혼자 선 정예는 전투력이 더 무겁게 읽힌다**(응태 요청, 2026-11-12 — "왜 내 전투력이 더 센데 져"가 없어야 한다).
      * 강인함과 치유 감소는 능력치에 없어 실제 능력치만 세면 정예가 가볍게 선다. 1-5 토비가 이기는 아군 선(약 6,200~6,700)을
      * 표시가 그대로 말하도록 실제 능력치 전투력에 1.6을 곱한다(`encounterUnitPower`).

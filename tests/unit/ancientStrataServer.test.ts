@@ -14,6 +14,7 @@ import { getAncientStrataFloor, setActiveAncientSeason } from "../../src/core/an
 // 서버가 시계의 달로 활성 시즌을 바꾼다 — 다음 테스트의 층 구성이 그 달을 물려받지 않게 되돌린다.
 afterEach(() => setActiveAncientSeason(""));
 import { battleArena } from "../../src/core/battleArena";
+import { ENCOUNTER_ROLE } from "../../src/core/levelDesign";
 
 function service(unlocked = true, unlockedFloor = 1) {
   const state = createDefaultSession();
@@ -120,7 +121,7 @@ describe("공용 전투 제한과 심층 비례 피해",()=>{
     expect(defs.map(e=>e.stats)).toEqual(d.enemies.map(e=>e.stats));
     for(const [i,def]of d.enemies.entries()) {
       expect(d.enemyPercentHpBases[i]).toBeLessThan(def.stats.hp);
-      expect(percentHpDamage({def,maxHp:def.stats.hp,percentHpBasis:d.enemyPercentHpBases[i]},10)).toBeCloseTo(Math.round(d.enemyPercentHpBases[i]*.1),0);
+      expect(percentHpDamage({def,maxHp:def.stats.hp,percentHpBasis:d.enemyPercentHpBases[i]},10)).toBeCloseTo(Math.round(d.enemyPercentHpBases[i]*.1*(1-(def.encounterRole?(ENCOUNTER_ROLE[def.encounterRole].percentHpResistance??0):0)/100)),0);
     }
     for(const floor of [1,60,120]) {
       const normal=getAncientStrataFloor(floor);

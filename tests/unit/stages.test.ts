@@ -112,7 +112,7 @@ describe("stage enemy design", () => {
      */
     expect(ladder).toEqual([
       // 장마다 두 벽(2026-11-27): 1~4는 막 시작한 연구원이 배치·궁극기를 틀려도 이기게 1·2·4·5, 1-5 토비가 첫 벽,
-      // 1-6에서 내려섰다 다시 올라 1-10 코마가 둘째 벽이다. 1장은 돌파 문턱(LV.21) 아래라 모두 돌파 0이다.
+      // 1-6에서 내려섰다 다시 올라 1-10 코마가 둘째 벽이다. 1장은 돌파 문턱(LV.21) 아래라 돌파 0이고, 장을 닫는 1-10 코마만 LV.23 돌파 1이다(2026-11-27 응태 — 표시 전투력이 1-9·2-1보다 높아야 벽으로 읽힌다).
       { 아모: [1, 0], 토비: [1, 0], 리파: [1, 0] },
       { 아모: [2, 0], 토비: [2, 0], 리파: [2, 0] },
       { 아모: [4, 0], 토비: [4, 0], 리파: [4, 0] },
@@ -122,7 +122,7 @@ describe("stage enemy design", () => {
       { 아모: [10, 0], 토비: [10, 0], 리파: [10, 0] },
       { 아모: [12, 0], 토비: [12, 0], 리파: [12, 0] },
       { 아모: [14, 0], 토비: [14, 0], 리파: [14, 0] },
-      { 코마: [20, 0] },
+      { 코마: [23, 1] },
     ]);
     /*
      * **레벨은 관문을 따라 내려가지 않는다.** 1-10까지 마지막 관문이 직전보다 쉬운 구간이
@@ -235,7 +235,8 @@ describe("stage enemy design", () => {
     }
     const chapterOne = battles.filter(({ id }) => id.startsWith("1-"));
     for (const stage of chapterOne) {
-      for (const enemy of stage.enemies) expect(requiredBreakthroughForLevel(enemy.level), stage.id).toBe(0);
+      // 장을 닫는 1-10 벽만 돌파 1이다(2026-11-27 응태 결정).
+      for (const enemy of stage.enemies) expect(requiredBreakthroughForLevel(enemy.level), stage.id).toBe(stage.id === "1-10" ? 1 : 0);
     }
   });
 
@@ -298,8 +299,9 @@ describe("stage enemy design", () => {
       if (stage.kind !== "battle" || stage.chapter === undefined) continue;
       for (const enemy of stage.enemies) {
         // 적 레벨이 곧 그 관문의 권장 레벨이다 — 유형이 얹는 차가 없다.
+        // 1-10 코마(LV.23)는 장을 닫는 벽이라 한 단계를 더 허락한다(2026-11-27 응태 결정).
         expect(requiredBreakthroughForLevel(enemy.level), `${stage.id} 권장 LV.${enemy.level}`)
-          .toBeLessThanOrEqual(ceiling[stage.chapter] ?? BREAKTHROUGH_CAP);
+          .toBeLessThanOrEqual((ceiling[stage.chapter] ?? BREAKTHROUGH_CAP) + (stage.id === "1-10" ? 1 : 0));
       }
     }
   });

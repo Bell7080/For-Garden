@@ -3520,14 +3520,16 @@ function triggerRally(attacker: Fighter, state: SkirmishState, events: SkirmishE
   attacker.rallyHitCount += 1;
   if (attacker.rallyHitCount < every) return;
   attacker.rallyHitCount = 0;
+  const tauntRadius = attacker.ferocityFever && trait.effectId === "rollCallRefusal"
+    ? rally.tauntRadius * (1 + trait.tauntRadiusPercent / 100) : rally.tauntRadius;
   for (const other of state.fighters) {
-    if (other.side === attacker.side || !isFighterAlive(other) || distance(attacker, other) > rally.tauntRadius) continue;
+    if (other.side === attacker.side || !isFighterAlive(other) || distance(attacker, other) > tauntRadius) continue;
     applyCombatStatusEffect(other, { kind: "taunt", seconds: rally.tauntSeconds }, events, state, attacker.id);
     if (other.taunted?.sourceId === attacker.id) { other.targetId = attacker.id; other.engaged = false; }
   }
   grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * rally.shieldMaxHpPercent / 100)), events);
   events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: false, damageType: "physical",
-    area: { shape: "radial", x: attacker.x, y: attacker.y, radius: rally.tauntRadius } });
+    area: { shape: "radial", x: attacker.x, y: attacker.y, radius: tauntRadius } });
 }
 
 /** 폭주 「유성우」가 켜져 있으면 그 값을, 아니면 패시브의 값을 쓴다. */
@@ -3972,13 +3974,6 @@ function lockGuardPercent(fighter: Fighter): number {
 function lockChargeReachFactor(fighter: Fighter): number {
   const locks = fighter.def.passive.restraintLocks;
   return locks ? 1 + effectiveLocksBroken(fighter) * locks.chargeReachPercentPerLock / 100 : 1;
-}
-
-/** 「점호 거부」(라자) 폭주 중 궁극기가 끌어당기는 반경이 넓어진다. 다른 개체의 끌어당김은 그대로다. */
-function rollCallPull<T extends { radius: number; distance: number }>(attacker: Fighter, pull: T): T {
-  const trait = attacker.def.ferocityTrait;
-  if (!attacker.ferocityFever || trait.effectId !== "rollCallRefusal") return pull;
-  return { ...pull, radius: pull.radius * (1 + trait.pullRadiusPercent / 100) };
 }
 
 /** 「움찔」(노아)이 세는 짧은 창(초). 이 안에 받은 피해의 합이 문턱을 넘으면 물러난다. */
@@ -11843,7 +11838,7 @@ function fireUltimateCore(
     }
     if (openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate)?.kind === "shareShield") attacker.bt.shareShieldIn = plan.tauntSeconds;
     if (plan.dashToFarthest !== undefined) dashToFarthestEnemy(attacker, plan.dashToFarthest.landingDistance, state, events);
-    const pull = rollCallPull(attacker, plan.pull);
+    const pull = plan.pull;
     const pulled = pull.target === "farthest" ? hookFarthestEnemy(attacker, pull, state) : pullEnemiesToward(attacker, pull, state);
     for (const other of plan.pullOnly ? [] : pulled) {
       // 데이의 짧은 도발과 **같은 경로**를 지난다. 여기서 슬롯에 직접 넣으면 원정 증강의

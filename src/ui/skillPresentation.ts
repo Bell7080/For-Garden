@@ -345,7 +345,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     return t("skill.ferocity.corneredBeast", { attack: trait.attackSpeedPercent, move: trait.moveSpeedPercent, seconds: trait.flinchCooldownSeconds });
   }
   if (trait.effectId === "rollCallRefusal") {
-    return t("skill.ferocity.rollCallRefusal", { percent: trait.pullRadiusPercent, every: trait.rallyEvery });
+    return t("skill.ferocity.rollCallRefusal", { percent: trait.tauntRadiusPercent, every: trait.rallyEvery });
   }
   if (trait.effectId === "restraintCollapse") return t("skill.ferocity.restraintCollapse");
   if (trait.effectId === "meteorShower") return t("skill.ferocity.meteorShower", { every: trait.starfallEvery, percent: trait.radiusBonusPercent });
@@ -1515,7 +1515,12 @@ function statusClausesWithoutRally(skill: DescribedSkill): SkillEffectClause[] {
       ? t("skill.status.concussionStunKnockback", { seconds: stun.seconds })
       : t("skill.status.concussionStun", { seconds: stun.seconds }));
   }
+  // 도발과 경직이 함께 걸리면 한 절로 잇는다 — 따로 세우면 「도발한다. 경직시킨다.」가 나란히 선다(아트라).
+  const taunt = effects.find((effect) => effect.kind === "taunt");
+  const tauntStagger = taunt !== undefined && taunt.kind === "taunt" && effects.some((effect) => effect.kind === "stagger");
+  if (tauntStagger) texts.push(t("skill.status.tauntStagger", { seconds: taunt.seconds }));
   for (const effect of effects) {
+    if (tauntStagger && (effect.kind === "taunt" || effect.kind === "stagger")) continue;
     if (merged && effect === knockback) continue;
     if (bleedKnock && (effect === knockback || effect === deepBleed)) continue;
     if (concussion && stun && (effect === concussion || effect === stun)) continue;

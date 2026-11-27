@@ -598,7 +598,10 @@ export class TitleScene extends Phaser.Scene {
 
     // 로딩 중 먼저 그려진 글자(부제)가 문구표보다 앞섰을 수 있으므로 한 번 더 읽는다.
     this.relocalize();
-    setDebugReady(true);
+    // 입력면은 **다음 프레임의 PRE_UPDATE**에서야 입력 목록에 들어간다(Phaser가 그때 대기열을 옮긴다). 진입 문구가
+    // 트윈 끝(프레임 한가운데)에서 서므로 곧바로 ready를 세우면 그 사이의 첫 누름이 아무것도 맞히지 못하고 사라진다 —
+    // 느린 기기의 E2E가 타이틀에 멈춘 원인이다. 입력 목록이 찬 뒤에 ready를 세운다(같은 이벤트에 먼저 걸린 입력 플러그인이 앞서 돈다).
+    this.events.once(Phaser.Scenes.Events.PRE_UPDATE, () => { if (current()) setDebugReady(true); });
   }
 
   /**

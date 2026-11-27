@@ -1890,9 +1890,9 @@ export type FerocityTrait = {
       flinchCooldownSeconds: number;
     }
   | {
-      /** 점호 거부(라자). 폭주 중 궁극기의 끌어당김 반경이 오르고, 기본 공격의 호령(`rally`)이 이 타수마다 터진다. */
+      /** 점호 거부(라자). 폭주 중 기본 공격의 호령(`rally`)이 이 타수마다 터지고 도발 반경이 넓어진다. 궁극기는 건드리지 않는다. */
       effectId: "rollCallRefusal";
-      pullRadiusPercent: number;
+      tauntRadiusPercent: number;
       rallyEvery: number;
     }
   | {

@@ -3889,7 +3889,8 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 12,
     },
-    ferocityTrait: { name: "점호 거부", effectId: "rollCallRefusal", pullRadiusPercent: 40, rallyEvery: 3 },
+    // 폭주는 궁극기를 건드리지 않는다(2026-11-27 응태 — 끌어당김 반경 +40%였다). 호령이 더 자주, 더 넓게 터져 주위를 제게로 묶는다.
+    ferocityTrait: { name: "점호 거부", effectId: "rollCallRefusal", tauntRadiusPercent: 40, rallyEvery: 3 },
     passive: {
       id: "raja-passive",
       name: "감방 서열",

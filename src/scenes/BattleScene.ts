@@ -1489,6 +1489,8 @@ export class BattleScene extends Phaser.Scene {
       // 세 화면은 같은 프리팹을 쓰며 전투 씬은 실시간 입력만 연결한다.
       const prefab = new BattleProfile(this, x, six ? GUILD_GUARD_PROFILES.centerY : 1620, {
         relic: fighter.def, level: this.frozenRelics?.get(fighter.def.id)?.level ?? relicProgression.getProgress(fighter.def.id).level, breakthroughGrade: fighter.breakthrough,
+        // 공명 표식 — 대인전(결투)은 공명이 꺼지므로 세우지 않고, 스냅샷으로 싸우는 판은 떠난 순간의 단계를 쓴다.
+        resonance: this.battleInput.mode === "duel" ? 0 : this.frozenRelics?.get(fighter.def.id)?.resonance ?? relicProgression.getResonance(fighter.def.id),
         skinId: this.frozenRelics?.get(fighter.def.id)?.skinId,
         currentHp: fighter.hp, maxHp: fighter.maxHp, ferocity: fighter.ferocity,
         active: false, readOnly: false, sub: fighter.def.ultimate.name,

@@ -52,7 +52,7 @@ var init_define_import_meta_env = __esm({
   }
 });
 
-// ../../node_modules/tslib/tslib.es6.mjs
+// node_modules/tslib/tslib.es6.mjs
 var tslib_es6_exports = {};
 __export(tslib_es6_exports, {
   __addDisposableResource: () => __addDisposableResource,
@@ -491,7 +491,7 @@ function __rewriteRelativeImportExtension(path, preserveJsx) {
 }
 var extendStatics, __assign, __createBinding, __setModuleDefault, ownKeys, _SuppressedError, tslib_es6_default;
 var init_tslib_es6 = __esm({
-  "../../node_modules/tslib/tslib.es6.mjs"() {
+  "node_modules/tslib/tslib.es6.mjs"() {
     init_define_import_meta_env();
     extendStatics = function(d, b) {
       extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
@@ -578,9 +578,9 @@ var init_tslib_es6 = __esm({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js
+// node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js
 var require_websocket_factory = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -690,9 +690,9 @@ Suggested solution: ${env.workaround}`;
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/lib/version.js
+// node_modules/@supabase/realtime-js/dist/main/lib/version.js
 var require_version = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/lib/version.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/lib/version.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -701,9 +701,9 @@ var require_version = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/lib/constants.js
+// node_modules/@supabase/realtime-js/dist/main/lib/constants.js
 var require_constants = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/lib/constants.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/lib/constants.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -752,9 +752,9 @@ var require_constants = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/lib/serializer.js
+// node_modules/@supabase/realtime-js/dist/main/lib/serializer.js
 var require_serializer = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/lib/serializer.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/lib/serializer.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -907,9 +907,9 @@ var require_serializer = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/lib/transformers.js
+// node_modules/@supabase/realtime-js/dist/main/lib/transformers.js
 var require_transformers = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/lib/transformers.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/lib/transformers.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -1087,9 +1087,9 @@ var require_transformers = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js
+// node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js
 var require_phoenix_cjs = __commonJS({
-  "../../node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js"(exports, module) {
+  "node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js"(exports, module) {
     "use strict";
     init_define_import_meta_env();
     var __defProp2 = Object.defineProperty;
@@ -2940,9 +2940,9 @@ var require_phoenix_cjs = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js
+// node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js
 var require_presenceAdapter = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3041,9 +3041,9 @@ var require_presenceAdapter = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js
+// node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js
 var require_RealtimePresence = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3086,9 +3086,9 @@ var require_RealtimePresence = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js
+// node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js
 var require_normalizeChannelError = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3113,9 +3113,9 @@ var require_normalizeChannelError = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js
+// node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js
 var require_channelAdapter = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3221,9 +3221,9 @@ var require_channelAdapter = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js
+// node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js
 var require_RealtimePostgresFilterBuilder = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3346,9 +3346,9 @@ var require_RealtimePostgresFilterBuilder = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js
+// node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js
 var require_RealtimeChannel = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -4102,9 +4102,9 @@ var require_RealtimeChannel = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js
+// node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js
 var require_socketAdapter = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -4224,9 +4224,9 @@ var require_socketAdapter = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+// node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
 var require_RealtimeClient = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -4905,9 +4905,9 @@ var require_RealtimeClient = __commonJS({
   }
 });
 
-// ../../node_modules/@supabase/realtime-js/dist/main/index.js
+// node_modules/@supabase/realtime-js/dist/main/index.js
 var require_main = __commonJS({
-  "../../node_modules/@supabase/realtime-js/dist/main/index.js"(exports) {
+  "node_modules/@supabase/realtime-js/dist/main/index.js"(exports) {
     "use strict";
     init_define_import_meta_env();
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -7771,25 +7771,25 @@ var SKILL_KO = {
   "skill.frontline.momentum": "\uAE30\uC138",
   "skill.frontline.momentumDetail": "\uACF5\uACA9\uB825 {attack}% \uC99D\uAC00",
   "skill.frontline.slow": "\uC9C0\uBC18 \uC555\uC0B4 \uB454\uD654",
-  "skill.frontline.slowDetail": "\uC774\uB3D9 \uC18D\uB3C4 {percent}% \uAC10\uC18C",
-  "skill.frontline.gungnirMarch": "\uD3ED\uC8FC \uC911 \uACF5\uACA9 \uC18D\uB3C4\uC640 \uC774\uB3D9 \uC18D\uB3C4\uAC00 {speed}% \uC0C1\uC2B9\uD558\uBA70 \uD328\uC2DC\uBE0C\uC758 \uD6A8\uC728\uC774 {efficiency}% \uC99D\uAC00\uD569\uB2C8\uB2E4.",
-  "skill.frontline.groundCrush": "\uD3ED\uC8FC\uB97C \uC2DC\uC791\uD558\uBA74 \uC8FC\uBCC0 \uC801\uC744 \uB04C\uC5B4\uB2F9\uACA8 {taunt}\uCD08\uAC04 \uB3C4\uBC1C\uD569\uB2C8\uB2E4. \uD3ED\uC8FC \uC911 {interval}\uCD08\uB9C8\uB2E4 \uC8FC\uBCC0 \uC801\uC5D0\uAC8C \uB300\uC0C1 \uCD5C\uB300 \uCCB4\uB825\uC758 {hp}%\uB9CC\uD07C \uACE0\uC815 \uD53C\uD574\uB97C \uC8FC\uACE0 0.1\uCD08\uAC04 \uACBD\uC9C1\uC2DC\uD0B5\uB2C8\uB2E4.",
-  "skill.frontline.gungnirBasic": "\uC138 \uBC88\uC9F8 \uAE30\uBCF8 \uACF5\uACA9\uC774 \uB300\uC0C1 \uBC29\uC5B4\uB825\uC758 {percent}%\uB97C \uBB34\uC2DC\uD569\uB2C8\uB2E4.",
-  "skill.frontline.ironcladBasic": "\uACE8\uC808\uC120\uC5D0 \uBC00\uB824\uB09C \uC801\uC774 \uB2E4\uB978 \uC801\uACFC \uBD80\uB52A\uD788\uBA74, \uBD80\uB52A\uD78C \uC801\uB3C4 \uBC00\uB824\uB098\uBA70 \uAC19\uC740 \uBE44\uC728\uC758 \uB1CC\uC9C4\uD0D5 \uD53C\uD574\uB97C \uBC1B\uC2B5\uB2C8\uB2E4. \uD55C \uACF5\uACA9\uC73C\uB85C \uAC19\uC740 \uC801\uC5D0\uAC8C \uD55C \uBC88\uB9CC \uC801\uC6A9\uB429\uB2C8\uB2E4.",
-  "skill.frontline.gungnirUltimate": "\uC774 \uAD81\uADF9\uAE30\uB85C \uBCF4\uD638\uB9C9\uC744 \uD30C\uAD34\uD55C \uC801\uC5D0\uAC8C \uD53C\uD574\uB97C {percent}% \uB354 \uC90D\uB2C8\uB2E4.",
-  "skill.frontline.ironcladUltimate": "\uC774 \uAD81\uADF9\uAE30\uAC00 \uB9CC\uB4E0 \uBCF4\uD638\uB9C9\uC774 \uC801\uC758 \uC9C1\uC811 \uACF5\uACA9\uC73C\uB85C \uC18C\uC9C4\uB418\uBA74, \uC8FC\uBCC0 \uC801\uC5D0\uAC8C \uBC29\uC5B4\uB825\uACFC \uC800\uD56D\uB825 \uAC01\uAC01\uC758 {percent}%\uB97C \uD569\uD55C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC90D\uB2C8\uB2E4.",
-  "skill.frontline.gungnirFever": "\uD3ED\uC8FC \uC911 \uC138 \uBC88\uC9F8 \uAE30\uBCF8 \uACF5\uACA9\uC774 \uC801\uC911\uD558\uBA74, {seconds}\uCD08 \uB4A4 \uAC19\uC740 \uC801\uC774 \uC0AC\uAC70\uB9AC \uC548\uC5D0 \uC788\uC744 \uB54C \uACF5\uACA9\uB825\uC758 {percent}%\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uD55C \uBC88 \uB354 \uC90D\uB2C8\uB2E4.",
-  "skill.frontline.ironcladFever": "\uAC19\uC740 \uC801\uC5D0\uAC8C \uD3ED\uC8FC \uD30C\uB3D9\uC744 3\uD68C \uC801\uC911\uC2DC\uD0AC \uB54C\uB9C8\uB2E4 \uADF8 \uC801\uC758 \uC774\uB3D9 \uC18D\uB3C4\uB97C {seconds}\uCD08\uAC04 {percent}% \uB0AE\uCDA5\uB2C8\uB2E4.",
-  "skill.frontline.gungnirPassive": "\uC804\uD22C \uC911 \uCC98\uC74C \uAE30\uC138 4\uACB9\uC5D0 \uB3C4\uB2EC\uD560 \uB54C \uC783\uC740 \uCCB4\uB825\uC758 {percent}%\uB97C \uD68C\uBCF5\uD569\uB2C8\uB2E4.",
-  "skill.frontline.ironcladPassive": "\uACE0\uC815 \uC7A5\uAC11\uC774 \uCC98\uC74C\uC73C\uB85C \uC804\uBD80 \uBC97\uACA8\uC9C0\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 \uBCF4\uD638\uB9C9\uC744 \uC5BB\uC2B5\uB2C8\uB2E4. \uBCF4\uD638\uB9C9\uC740 {seconds}\uCD08\uC5D0 \uAC78\uCCD0 \uC810\uCC28 \uAC10\uC18C\uD569\uB2C8\uB2E4.",
-  "skill.ferocity.extendedService": "\uD3ED\uC8FC \uC911\uC5D0\uB294 \uC811\uC218\uB97C \uAC74\uB108\uB6F0\uC5B4 \uC11C\uBE59\uACFC \uB9C8\uAC10\uC744 \uBC88\uAC08\uC544 \uC0AC\uC6A9\uD569\uB2C8\uB2E4. \uACF5\uACA9 \uC18D\uB3C4\uAC00 {percent}% \uC99D\uAC00\uD569\uB2C8\uB2E4.",
-  "skill.passive.reservedGuest": "\uCD5C\uB300 \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB192\uC740 \uC801\uC744 [[reserved-guest|\uB2E8\uACE8]]\uB85C \uC9C0\uC815\uD574 \uC4F0\uB7EC\uC9C8 \uB54C\uAE4C\uC9C0 \uC6B0\uC120 \uACF5\uACA9\uD569\uB2C8\uB2E4. \uB2E4\uB978 \uC801\uC758 \uC9C1\uC811 \uACF5\uACA9\uC5D0 \uB9DE\uC744 \uB54C\uB9C8\uB2E4 \uBC29\uC5B4\uB825\uACFC \uC800\uD56D\uB825\uC774 \uAC01\uAC01 {points}\uC529 \uC313\uC785\uB2C8\uB2E4. \uB204\uC801\uCE58\uB294 \uC804\uD22C\uAC00 \uB05D\uB0A0 \uB54C\uAE4C\uC9C0 \uB2E8\uACE8 \uC678\uC758 \uC801\uC758 \uACF5\uACA9\uC5D0 \uC801\uC6A9\uB429\uB2C8\uB2E4.",
-  "skill.sentence.closingService": "\uB2E8\uACE8\uC5D0\uAC8C\uB294 [[special-fee|\uD2B9\uBCC4 \uC694\uAE08]]\uC744 1\uD68C \uC801\uC6A9\uD569\uB2C8\uB2E4.",
-  "skill.sentence.closingServiceUltimate": "\uB2E8\uACE8\uC5D0\uAC8C \uC801\uC911\uD558\uBA74 [[special-fee|\uD2B9\uBCC4 \uC694\uAE08]]\uC744 {hits}\uD68C \uC801\uC6A9\uD569\uB2C8\uB2E4. \uB2E4\uC74C \uC77C\uBC18 \uACF5\uACA9\uC744 \uB9C8\uAC10\uC73C\uB85C \uBC14\uAFC9\uB2C8\uB2E4.",
-  "skill.breakthrough.guestHaste": "\uB2E8\uACE8\uC5D0\uAC8C \uAE30\uBCF8 \uACF5\uACA9\uC774 \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {percent}% \uC99D\uAC00\uD569\uB2C8\uB2E4. \uCD5C\uB300 {max}\uC911\uCCA9\uC774\uBA70 \uB2E8\uACE8\uC774 \uBC14\uB00C\uBA74 \uCD08\uAE30\uD654\uB429\uB2C8\uB2E4.",
-  "skill.breakthrough.serviceBarrier": "\uD2B9\uBCC4 \uC694\uAE08\uC744 \uD3EC\uD568\uD574 \uAD81\uADF9\uAE30\uB85C \uAE4E\uC740 \uCCB4\uB825\uC758 {percent}%\uB9CC\uD07C {seconds}\uCD08 \uB3D9\uC548 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uC2B5\uB2C8\uB2E4. \uB0B4 \uCD5C\uB300 \uCCB4\uB825\uC758 {max}%\uAE4C\uC9C0\uC774\uBA70 \uC911\uCCA9\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
-  "skill.breakthrough.guestDebuff": "\uD3ED\uC8FC \uC911 \uB2E8\uACE8\uC758 \uBC29\uC5B4\uB825, \uC800\uD56D\uB825, \uBC1B\uB294 \uCCB4\uB825 \uD68C\uBCF5\uB7C9\uC774 \uAC01\uAC01 {percent}% \uAC10\uC18C\uD569\uB2C8\uB2E4.",
-  "skill.breakthrough.guestShieldBreak": "\uB2E8\uACE8\uC5D0\uAC8C \uB9C8\uAC10\uC774 \uC801\uC911\uD558\uBA74 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uD30C\uAD34\uD55C \uB4A4 \uB9C8\uAC10\uACFC \uD2B9\uBCC4 \uC694\uAE08\uC758 \uD53C\uD574\uB97C \uC801\uC6A9\uD569\uB2C8\uB2E4.",
+  "skill.frontline.slowDetail": "\uACF5\uACA9 \uC18D\uB3C4 {percent}% \uAC10\uC18C",
+  "skill.frontline.gungnirMarch": "\uD3ED\uC8FC \uC911 \uACF5\uACA9 \uC18D\uB3C4\uC640 \uC774\uB3D9 \uC18D\uB3C4\uAC00 {speed}% \uC0C1\uC2B9\uD558\uBA70 \uD328\uC2DC\uBE0C\uC758 \uD6A8\uC728\uC774 {efficiency}% \uC99D\uAC00\uD55C\uB2E4.",
+  "skill.frontline.groundCrush": "\uD3ED\uC8FC\uB97C \uC2DC\uC791\uD558\uBA74 \uC8FC\uBCC0 \uC801\uC744 \uB04C\uC5B4\uB2F9\uACA8 {taunt}\uCD08\uAC04 \uB3C4\uBC1C\uD55C\uB2E4. \uD3ED\uC8FC \uC911 {interval}\uCD08\uB9C8\uB2E4 \uC8FC\uBCC0 \uC801\uC5D0\uAC8C \uB300\uC0C1 \uCD5C\uB300 \uCCB4\uB825\uC758 {hp}%\uB9CC\uD07C \uACE0\uC815 \uD53C\uD574\uB97C \uC8FC\uACE0 0.1\uCD08\uAC04 \uACBD\uC9C1\uC2DC\uD0A8\uB2E4.",
+  "skill.frontline.gungnirBasic": "\uC138 \uBC88\uC9F8 \uAE30\uBCF8 \uACF5\uACA9\uC774 \uB300\uC0C1 \uBC29\uC5B4\uB825\uC758 {percent}%\uB97C \uBB34\uC2DC\uD55C\uB2E4.",
+  "skill.frontline.ironcladBasic": "\uACE8\uC808\uC120\uC5D0 \uBC00\uB824\uB09C \uC801\uC774 \uB2E4\uB978 \uC801\uACFC \uBD80\uB52A\uD788\uBA74, \uBD80\uB52A\uD78C \uC801\uB3C4 \uBC00\uB824\uB098\uBA70 \uAC19\uC740 \uBE44\uC728\uC758 \uB1CC\uC9C4\uD0D5 \uD53C\uD574\uB97C \uBC1B\uB294\uB2E4. \uD55C \uACF5\uACA9\uC73C\uB85C \uAC19\uC740 \uC801\uC5D0\uAC8C \uD55C \uBC88\uB9CC \uC801\uC6A9\uB41C\uB2E4.",
+  "skill.frontline.gungnirUltimate": "\uC774 \uAD81\uADF9\uAE30\uB85C \uBCF4\uD638\uB9C9\uC744 \uD30C\uAD34\uD55C \uC801\uC5D0\uAC8C \uD53C\uD574\uB97C {percent}% \uB354 \uC900\uB2E4.",
+  "skill.frontline.ironcladUltimate": "\uC774 \uAD81\uADF9\uAE30\uAC00 \uB9CC\uB4E0 \uBCF4\uD638\uB9C9\uC774 \uC801\uC758 \uC9C1\uC811 \uACF5\uACA9\uC73C\uB85C \uC18C\uC9C4\uB418\uBA74, \uC8FC\uBCC0 \uC801\uC5D0\uAC8C \uBC29\uC5B4\uB825\uACFC \uC800\uD56D\uB825 \uAC01\uAC01\uC758 {percent}%\uB97C \uD569\uD55C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC900\uB2E4.",
+  "skill.frontline.gungnirFever": "\uD3ED\uC8FC \uC911 \uC138 \uBC88\uC9F8 \uAE30\uBCF8 \uACF5\uACA9\uC774 \uC801\uC911\uD558\uBA74, {seconds}\uCD08 \uB4A4 \uAC19\uC740 \uC801\uC774 \uC0AC\uAC70\uB9AC \uC548\uC5D0 \uC788\uC744 \uB54C \uACF5\uACA9\uB825\uC758 {percent}%\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uD55C \uBC88 \uB354 \uC900\uB2E4.",
+  "skill.frontline.ironcladFever": "\uAC19\uC740 \uC801\uC5D0\uAC8C \uD3ED\uC8FC \uD30C\uB3D9\uC744 3\uD68C \uC801\uC911\uC2DC\uD0AC \uB54C\uB9C8\uB2E4 \uADF8 \uC801\uC758 \uACF5\uACA9 \uC18D\uB3C4\uB97C {seconds}\uCD08\uAC04 {percent}% \uB0AE\uCD98\uB2E4.",
+  "skill.frontline.gungnirPassive": "\uC804\uD22C \uC911 \uCC98\uC74C \uAE30\uC138 4\uACB9\uC5D0 \uB3C4\uB2EC\uD560 \uB54C \uC783\uC740 \uCCB4\uB825\uC758 {percent}%\uB97C \uD68C\uBCF5\uD55C\uB2E4.",
+  "skill.frontline.ironcladPassive": "\uACE0\uC815 \uC7A5\uAC11\uC774 \uCC98\uC74C\uC73C\uB85C \uC804\uBD80 \uBC97\uACA8\uC9C0\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4. \uBCF4\uD638\uB9C9\uC740 {seconds}\uCD08\uC5D0 \uAC78\uCCD0 \uC810\uCC28 \uAC10\uC18C\uD55C\uB2E4.",
+  "skill.ferocity.extendedService": "\uD3ED\uC8FC \uC911\uC5D0\uB294 \uC811\uC218\uB97C \uAC74\uB108\uB6F0\uC5B4 \uC11C\uBE59\uACFC \uB9C8\uAC10\uC744 \uBC88\uAC08\uC544 \uC0AC\uC6A9\uD55C\uB2E4. \uACF5\uACA9 \uC18D\uB3C4\uAC00 {percent}% \uC99D\uAC00\uD55C\uB2E4.",
+  "skill.passive.reservedGuest": "\uCD5C\uB300 \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB192\uC740 \uC801\uC744 [[reserved-guest|\uB2E8\uACE8]]\uB85C \uC9C0\uC815\uD574 \uC4F0\uB7EC\uC9C8 \uB54C\uAE4C\uC9C0 \uC6B0\uC120 \uACF5\uACA9\uD55C\uB2E4. \uB2E4\uB978 \uC801\uC758 \uC9C1\uC811 \uACF5\uACA9\uC5D0 \uB9DE\uC744 \uB54C\uB9C8\uB2E4 \uBC29\uC5B4\uB825\uACFC \uC800\uD56D\uB825\uC774 \uAC01\uAC01 {points}\uC529 \uC313\uC778\uB2E4. \uB204\uC801\uCE58\uB294 \uC804\uD22C\uAC00 \uB05D\uB0A0 \uB54C\uAE4C\uC9C0 \uB2E8\uACE8 \uC678\uC758 \uC801\uC758 \uACF5\uACA9\uC5D0 \uC801\uC6A9\uB41C\uB2E4.",
+  "skill.sentence.closingService": "\uB2E8\uACE8\uC5D0\uAC8C\uB294 [[special-fee|\uD2B9\uBCC4 \uC694\uAE08]]\uC744 1\uD68C \uC801\uC6A9\uD55C\uB2E4.",
+  "skill.sentence.closingServiceUltimate": "\uB2E8\uACE8\uC5D0\uAC8C \uC801\uC911\uD558\uBA74 [[special-fee|\uD2B9\uBCC4 \uC694\uAE08]]\uC744 {hits}\uD68C \uC801\uC6A9\uD55C\uB2E4. \uB2E4\uC74C \uC77C\uBC18 \uACF5\uACA9\uC744 \uB9C8\uAC10\uC73C\uB85C \uBC14\uAFBC\uB2E4.",
+  "skill.breakthrough.guestHaste": "\uB2E8\uACE8\uC5D0\uAC8C \uAE30\uBCF8 \uACF5\uACA9\uC774 \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {percent}% \uC99D\uAC00\uD55C\uB2E4. \uCD5C\uB300 {max}\uC911\uCCA9\uC774\uBA70 \uB2E8\uACE8\uC774 \uBC14\uB00C\uBA74 \uCD08\uAE30\uD654\uB41C\uB2E4.",
+  "skill.breakthrough.serviceBarrier": "\uD2B9\uBCC4 \uC694\uAE08\uC744 \uD3EC\uD568\uD574 \uAD81\uADF9\uAE30\uB85C \uAE4E\uC740 \uCCB4\uB825\uC758 {percent}%\uB9CC\uD07C {seconds}\uCD08 \uB3D9\uC548 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4. \uB0B4 \uCD5C\uB300 \uCCB4\uB825\uC758 {max}%\uAE4C\uC9C0\uC774\uBA70 \uC911\uCCA9\uB418\uC9C0 \uC54A\uB294\uB2E4.",
+  "skill.breakthrough.guestDebuff": "\uD3ED\uC8FC \uC911 \uB2E8\uACE8\uC758 \uBC29\uC5B4\uB825, \uC800\uD56D\uB825, \uBC1B\uB294 \uCCB4\uB825 \uD68C\uBCF5\uB7C9\uC774 \uAC01\uAC01 {percent}% \uAC10\uC18C\uD55C\uB2E4.",
+  "skill.breakthrough.guestShieldBreak": "\uB2E8\uACE8\uC5D0\uAC8C \uB9C8\uAC10\uC774 \uC801\uC911\uD558\uBA74 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uD30C\uAD34\uD55C \uB4A4 \uB9C8\uAC10\uACFC \uD2B9\uBCC4 \uC694\uAE08\uC758 \uD53C\uD574\uB97C \uC801\uC6A9\uD55C\uB2E4.",
   "skill.fact.whenActive": "\uD6A8\uACFC \uBC1C\uB3D9 \uC2DC",
   "skill.keyword.statGain": "{stat} \uC99D\uAC00\uB7C9: +{amount}\n\uAE30\uC900 {base} \xD7 {percent}% \u2248 +{amount}\n\uC774 \uD6A8\uACFC\uB9CC \uC801\uC6A9 \uC2DC {total}. \uB2E4\uB978 \uD6A8\uACFC\uAC00 \uB354\uD574\uC9C0\uBA74 \uCD5C\uC885 \uC218\uCE58\uB294 \uB2EC\uB77C\uC9C8 \uC218 \uC788\uB2E4.",
   "skill.keyword.value.damage": "{stat}\uC758 {percent}%\uB85C \uACC4\uC0B0\uD55C \uD53C\uD574 \uC218\uCE58\uB2E4.\n({stat} {base} \uAE30\uC900)",
@@ -7952,8 +7952,8 @@ var SKILL_KO = {
   "skill.passive.shellGuard": "\uD53C\uD574\uB97C \uBC1B\uC744 \uB54C\uB9C8\uB2E4 [[{stack}|{stackName}]]{stackName!\uC774} \uD55C \uACB9 \uC313\uC778\uB2E4.",
   "skill.keyword.reagentReaction.description": "\uAC00\uB4DD \uCC2C \uC2DC\uC57D\uC774 \uD130\uC9C0\uB294 \uC21C\uAC04\uC774\uB2E4. \uADF8 \uC801\uC744 {poisonSeconds}\uCD08 \uB3D9\uC548 \uC911\uB3C5\uC2DC\uD0A4\uACE0 {resistanceSeconds}\uCD08 \uB3D9\uC548 \uC800\uD56D\uB825\uC744 {resistancePercent}% \uB0AE\uCD94\uBA70, \uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC544\uAD70 \uD55C \uBA85\uC774 \uCD5C\uB300 \uCCB4\uB825\uC758 {healPercent}%\uB97C \uD68C\uBCF5\uD55C\uB2E4.",
   "skill.keyword.reagent.description": "\uACF5\uACA9\uC5D0 \uB9DE\uC740 \uC801\uC5D0\uAC8C \uBB3B\uB294 \uC57D\uBB3C\uC774\uB2E4. \uCD5C\uB300 {stacks}\uACB9\uAE4C\uC9C0 \uC313\uC774\uACE0 {seconds}\uCD08 \uB3D9\uC548 \uB0A8\uC73C\uBA70, \uB2E4\uC2DC \uBB3B\uD788\uBA74 \uC720\uC9C0 \uC2DC\uAC04\uC774 \uCC98\uC74C\uBD80\uD130 \uB2E4\uC2DC \uD750\uB978\uB2E4. \uAC00\uB4DD \uCC28\uBA74 \uBAA8\uB450 \uD130\uC838 \uC2DC\uC57D \uBC18\uC751\uC744 \uC77C\uC73C\uD0A8\uB2E4.",
-  "skill.keyword.shellGuard.selfOnly": "\uD53C\uD574\uB97C \uBC1B\uC744 \uB54C\uB9C8\uB2E4 \uD55C \uACB9 \uC313\uC774\uBA70 {seconds}\uCD08 \uB3D9\uC548 \uB0A8\uB294\uB2E4. {stacks}\uACB9\uC774 \uBAA8\uC774\uBA74 \uBAA8\uB450 \uD130\uC838 \uCD5C\uB300 \uCCB4\uB825\uC758 {selfPercent}%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4. {cooldown}\uCD08\uC5D0 \uD55C \uBC88\uB9CC \uD130\uC9C4\uB2E4.",
-  "skill.keyword.shellGuard.description": "\uD53C\uD574\uB97C \uBC1B\uC744 \uB54C\uB9C8\uB2E4 \uD55C \uACB9 \uC313\uC774\uBA70 {seconds}\uCD08 \uB3D9\uC548 \uB0A8\uB294\uB2E4. {stacks}\uACB9\uC774 \uBAA8\uC774\uBA74 \uBAA8\uB450 \uD130\uC838 \uC790\uC2E0\uC740 \uCD5C\uB300 \uCCB4\uB825\uC758 {selfPercent}%, \uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uB2E4\uB978 \uC544\uAD70 \uD55C \uBA85\uC740 \uADF8 \uC544\uAD70 \uCD5C\uB300 \uCCB4\uB825\uC758 {allyPercent}%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4. {cooldown}\uCD08\uC5D0 \uD55C \uBC88\uB9CC \uD130\uC9C4\uB2E4.",
+  "skill.keyword.shellGuard.selfOnly": "\uD53C\uD574\uB97C \uBC1B\uC744 \uB54C\uB9C8\uB2E4 \uD55C \uACB9 \uC313\uC774\uBA70 {seconds}\uCD08 \uB3D9\uC548 \uB0A8\uB294\uB2E4. {stacks}\uACB9\uC774 \uBAA8\uC774\uBA74 \uBAA8\uB450 \uD130\uC838 {selfShield}\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4. {cooldown}\uCD08\uC5D0 \uD55C \uBC88\uB9CC \uD130\uC9C4\uB2E4.",
+  "skill.keyword.shellGuard.description": "\uD53C\uD574\uB97C \uBC1B\uC744 \uB54C\uB9C8\uB2E4 \uD55C \uACB9 \uC313\uC774\uBA70 {seconds}\uCD08 \uB3D9\uC548 \uB0A8\uB294\uB2E4. {stacks}\uACB9\uC774 \uBAA8\uC774\uBA74 \uBAA8\uB450 \uD130\uC838 \uC790\uC2E0\uC740 {selfShield}, \uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uB2E4\uB978 \uC544\uAD70 \uD55C \uBA85\uC740 \uADF8 \uC544\uAD70 \uCD5C\uB300 \uCCB4\uB825\uC758 {allyPercent}%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4. {cooldown}\uCD08\uC5D0 \uD55C \uBC88\uB9CC \uD130\uC9C4\uB2E4.",
   "skill.keyword.attackSpeedStack.description": "\uAE30\uBCF8 \uACF5\uACA9\uC774 \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 \uD55C \uACB9 \uC313\uC774\uACE0, \uD55C \uACB9\uB9C8\uB2E4 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {value} \uC624\uB978\uB2E4. \uCD5C\uB300 {stacks}\uACB9\uAE4C\uC9C0 \uC774\uBC88 \uC804\uD22C \uB0B4\uB0B4 \uB0A8\uB294\uB2E4.",
   "skill.keyword.rampage.term": "\uB09C\uB3D9",
   "skill.passive.huddle.guardPercent": "[[def|\uBC29\uC5B4\uB825]]\uACFC [[res|\uC800\uD56D\uB825]]\uC774 {percent}%",
@@ -8050,7 +8050,7 @@ var SKILL_KO = {
   "skill.clause.shimmerBurst": "[[shimmer|\uBC18\uC9DD!]]\uC774 \uC0AC\uB77C\uC9C8 \uB54C \uADF8 \uC790\uB9AC\uC5D0\uC11C [[tia-splash|\uCCA8\uBC99!]]\uC774 \uD130\uC9C4\uB2E4",
   "skill.clause.blinkToLowestDefense": "\uC4F0\uB294 \uC21C\uAC04 [[def|\uBC29\uC5B4\uB825]]\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC801\uC5D0\uAC8C [[teleport|\uC21C\uAC04\uC774\uB3D9]]\uD574 \uADF8 \uC801\uC5D0\uAC8C \uC4F4\uB2E4",
   "skill.clause.chargeStartsAtHp": "\uCCB4\uB825\uC774 {percent}% \uC774\uD558\uAC00 \uB418\uBA74 \uCDA9\uC804\uC744 \uC2DC\uC791\uD55C\uB2E4",
-  "skill.clause.periodicStack": "[[{id}|{term}]]\uC744 \uD55C \uACB9 \uC313\uB294\uB2E4",
+  "skill.clause.periodicStack": "[[{id}|{term}]]{term!\uC744} \uD55C \uACB9 \uC313\uB294\uB2E4",
   "skill.clause.everyNth": "\uB9E4 {every}\uBC88\uC9F8 \uACF5\uACA9\uB9C8\uB2E4 {effects}",
   // ── 상태이상 한 절 ───────────────────────────────────────────────────────
   "skill.status.concussionStunKnockback": "[[concussion|\uB1CC\uC9C4\uD0D5]]\uC744 \uC785\uD788\uACE0 {seconds}\uCD08 \uB3D9\uC548 [[stun|\uAE30\uC808]]\uC2DC\uD0A4\uBA70 [[knockback|\uB0A0\uB824\uBC84\uB9B0\uB2E4]]",
@@ -8077,6 +8077,7 @@ var SKILL_KO = {
   "skill.clause.observationVolley": "\uC801\uC911\uD55C \uC801\uC5D0\uAC8C \uC313\uC778 [[observation|\uAD00\uCE21]]\uC744 \uBC1C\uB3D9\uD55C\uB2E4. \uACB9\uB9C8\uB2E4 {damage}\uAC00 [[def|\uBC29\uC5B4\uB825]]\uC744 \uC9C0\uB098 \uC787\uB530\uB77C \uB4E4\uC5B4\uAC04\uB2E4",
   "skill.clause.observationStrike": "\uC801 \uC804\uC6D0\uC758 [[observation|\uAD00\uCE21]]\uC774 \uD55C \uACB9(\uD569\uC0B0 \uCD5C\uB300 {max}\uACB9)\uB9C8\uB2E4 {damage}\uAC00 \uB354\uD574\uC9C4\uB2E4",
   "skill.status.taunt": "{seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]\uD55C\uB2E4",
+  "skill.status.tauntStagger": "{seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]\uD558\uACE0 [[stagger|\uACBD\uC9C1]]\uC2DC\uD0A8\uB2E4",
   // ── 한계 돌파가 여는 자리 ────────────────────────────────────────────────
   "skill.breakthrough.basic": "\uAE30\uBCF8 \uACF5\uACA9 \uAC15\uD654",
   "skill.breakthrough.ultimate": "\uAD81\uADF9\uAE30 \uAC15\uD654",
@@ -8089,7 +8090,7 @@ var SKILL_KO = {
   "skill.breakthrough.effect.ferocity": "[[ferocity|\uD3ED\uC8FC]] \uC885\uB8CC \uC2DC\n\u2022 \uD3ED\uC8FC \uC911 \uBC1B\uC740 \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]] \uD68D\uB4DD\n\u2022 \uB113\uC740 \uBC94\uC704\uC758 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 \uB2E4\uC2DC [[taunt|\uB3C4\uBC1C]]",
   "skill.breakthrough.effect.passive": "\u300C{name}\u300D \uBC1C\uB3D9 \uC2DC\n\u2022 \uD68C\uBCF5\uB7C9\uC758 {percent}%\uB97C \uBAA8\uB4E0 \uC544\uAD70\uC5D0\uAC8C \uB098\uB208\uB2E4.",
   "skill.breakthrough.effect.basic.deepBleed": "\uC77C\uBC18 \uACF5\uACA9\uC758 [[bleed|\uCD9C\uD608]]\uC774 [[deep-bleed|\uAE4A\uC740 \uCD9C\uD608]]\uB85C \uAC15\uD654\uB418\uBA70, \uB2E4\uB978 \uCD9C\uD608\uBCF4\uB2E4 \uC6B0\uC120\uD55C\uB2E4.",
-  "skill.breakthrough.effect.ultimate.ultimateLifeSteal": "\uC785\uD78C \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C \uCCB4\uB825\uC744 \uD68C\uBCF5\uD55C\uB2E4",
+  "skill.breakthrough.effect.ultimate.ultimateLifeSteal": "\uC785\uD78C \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C \uCCB4\uB825\uC744 \uD68C\uBCF5\uD55C\uB2E4.",
   "skill.breakthrough.effect.ferocity.cleavingBasics": "[[ferocity|\uD3ED\uC8FC]] \uC911 \uC77C\uBC18 \uACF5\uACA9\uC774 \uC870\uAE08 \uB113\uC740 \uBC94\uC704\uC758 \uC801\uC744 \uBAA8\uB450 \uACF5\uACA9\uD55C\uB2E4.",
   "skill.breakthrough.effect.passive.battleMaidAscension": "\uCD5C\uB300 \uCCB4\uB825\xB7[[def|\uBC29\uC5B4\uB825]]\xB7[[res|\uC800\uD56D\uB825]]\uC774 {percent}% \uC99D\uAC00\uD558\uACE0, \uC801 \uCC98\uCE58 \uC2DC \uB2E4\uC74C \uD45C\uC801\uC5D0\uAC8C \uB2E4\uC2DC [[charge|\uB3CC\uC9C4]]\uD55C\uB2E4.",
   "skill.breakthrough.effect.basic.splitHealing": "\uAC00\uC7A5 \uB2E4\uCE5C \uC544\uAD70\uC5D0\uAC8C \uC8FC\uB294 \uD68C\uBCF5\uB7C9\uC758 {percent}%\uB97C \uB450 \uBC88\uC9F8\uB85C \uB2E4\uCE5C \uC544\uAD70\uC5D0\uAC8C\uB3C4 \uC804\uB2EC\uD55C\uB2E4.",
@@ -8119,7 +8120,7 @@ var SKILL_KO = {
   "skill.keyword.plume.description": "\uC801\uC5D0\uAC8C \uBC15\uD788\uB294 \uAE43\uD138\uC774\uB2E4. \uC801\uB9C8\uB2E4 \uCD5C\uB300 {max}\uACB9\uAE4C\uC9C0 \uC313\uC774\uACE0 {hold}\uCD08 \uB3D9\uC548 \uB0A8\uC73C\uBA70, \uC0C8 \uACB9\uC774 \uBC15\uD790 \uB54C\uB9C8\uB2E4 \uC2DC\uAC04\uC774 \uB2E4\uC2DC \uC138\uC5B4\uC9C4\uB2E4. {max}\uACB9\uC774 \uB418\uBA74 \uAE43\uD138\uC774 \uC0AC\uB77C\uC9C0\uACE0 [[yuti-frostbite|\uB3D9\uC0C1]]\uC744 \uAC74\uB2E4.",
   "skill.keyword.splash.description": "[[shimmer|\uBC18\uC9DD!]]\uC774 \uD130\uC9C0\uB294 \uBB3C\uBCF4\uB77C\uB2E4. \uC8FC\uC704 \uC801\uC5D0\uAC8C {percent}\uB9CC\uD07C [[magical-damage|\uB9C8\uBC95 \uD53C\uD574]]\uB97C \uC8FC\uACE0, \uC790\uC2E0\uC740 {shield}\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4({cap}\uAE4C\uC9C0 \uC313\uC778\uB2E4).",
   "skill.keyword.splash.term": "\uCCA8\uBC99!",
-  "skill.keyword.frostbite.description": "{slowSeconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uC640 \uC774\uB3D9 \uC18D\uB3C4\uAC00 {slowPercent}% \uB0AE\uC544\uC9C0\uACE0, {seconds}\uCD08\uC5D0 \uAC78\uCCD0 {percent}\uB9CC\uD07C \uBC29\uC5B4\uB825\uC73C\uB85C \uC904\uC77C \uC218 \uC5C6\uB294 \uD53C\uD574\uB97C \uC785\uB294\uB2E4. \uACB9\uCE58\uC9C0 \uC54A\uACE0 \uB2E4\uC2DC \uAC78\uB9AC\uBA74 \uAC31\uC2E0\uB41C\uB2E4.",
+  "skill.keyword.frostbite.description": "{slowSeconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uC640 \uC774\uB3D9 \uC18D\uB3C4\uAC00 {slowPercent}% \uB0AE\uC544\uC9C0\uACE0, {seconds}\uCD08\uC5D0 \uAC78\uCCD0 {percent}\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC785\uB294\uB2E4. \uACB9\uCE58\uC9C0 \uC54A\uACE0 \uB2E4\uC2DC \uAC78\uB9AC\uBA74 \uAC31\uC2E0\uB41C\uB2E4.",
   "skill.keyword.summon.description": "{owner}\uC758 {stat}{stat!\uC774} {stat}\xB7\uCCB4\uB825\xB7\uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825\uC744 \uC815\uD558\uB294 \uADFC\uAC70\uB9AC \uC18C\uD658\uC218\uB2E4. \uC2A4\uC2A4\uB85C \uD45C\uC801\uC744 \uACE0\uB974\uACE0 \uC81C \uAC8C\uC774\uC9C0\uB85C \uAD81\uADF9\uAE30\uB97C \uC4F4\uB2E4.{resummon}",
   "skill.keyword.summon.resummon": " \uC4F0\uB7EC\uC9C0\uBA74 {seconds}\uCD08 \uB4A4 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB85C \uB2E4\uC2DC \uC120\uB2E4.",
   "skill.ferocity.valueLabel": "\uC57C\uC131 \uBC1C\uD604",
@@ -8177,14 +8178,14 @@ var SKILL_KO = {
   "skill.ferocity.marchOfAnts": "\uD3ED\uC8FC \uC911 [[worker-march|\uD589\uB82C]]\uC758 \uBC18\uACBD\uC774 {radius} \uB298\uACE0 {allies}\uBA85 \uB354 \uC13C\uB2E4.",
   "skill.ferocity.appetiteFrenzy": "\uD3ED\uC8FC \uC911 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB974\uACE0, \uC790\uC2E0\uC774 \uAC74 [[bleed|\uCD9C\uD608]]\uC774 \uD53C\uD574\uB97C \uC904 \uB54C\uB9C8\uB2E4 \uADF8 \uD53C\uD574\uC758 {heal}%\uB9CC\uD07C \uD68C\uBCF5\uD55C\uB2E4.",
   "skill.ferocity.corneredBeast": "\uD3ED\uC8FC \uC911 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {attack}%, [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {move}% \uC624\uB974\uACE0 \uB4F1 \uB4A4\uB85C \uB6F0\uC5B4 \uBB3C\uB7EC\uB098\uB294 \uC7AC\uC0AC\uC6A9 \uB300\uAE30\uAC00 {seconds}\uCD08\uB85C \uC904\uC5B4\uB4E0\uB2E4.",
-  "skill.ferocity.rollCallRefusal": "\uD3ED\uC8FC \uC911 \uAD81\uADF9\uAE30\uAC00 \uB04C\uC5B4\uB2F9\uAE30\uB294 \uBC94\uC704\uAC00 {percent}% \uB113\uC5B4\uC9C0\uACE0, [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC758 \uB3C4\uBC1C\xB7\uBCF4\uD638\uB9C9\uC774 {every}\uBC88\uC9F8\uB9C8\uB2E4 \uD130\uC9C4\uB2E4.",
+  "skill.ferocity.rollCallRefusal": "\uD3ED\uC8FC \uC911 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC758 \uB3C4\uBC1C\xB7\uBCF4\uD638\uB9C9\uC774 {every}\uBC88\uC9F8\uB9C8\uB2E4 \uD130\uC9C0\uACE0, \uB3C4\uBC1C \uBC94\uC704\uAC00 {percent}% \uB113\uC5B4\uC9C4\uB2E4.",
   "skill.passive.starfall": "[[meteor|\uC720\uC131]]\uC774 \uC801\uC5D0\uAC8C \uC900 \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC544\uAD70\uC744 \uD68C\uBCF5\uD55C\uB2E4. \uB5A8\uC5B4\uB728\uB9B0 \uC790\uC2E0\uC740 \uD68C\uBCF5\uD558\uC9C0 \uC54A\uB294\uB2E4.",
   "skill.ferocity.meteorShower": "\uD3ED\uC8FC \uC911\uC5D0\uB294 [[meteor|\uC720\uC131]]\uC774 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] {every}\uBC88\uC9F8\uB9C8\uB2E4 \uB5A8\uC5B4\uC9C0\uACE0 \uBC94\uC704\uAC00 {percent}% \uB113\uC5B4\uC9C4\uB2E4.",
   "skill.ferocity.restraintCollapse": "\uD3ED\uC8FC \uC911\uC5D0\uB294 \uB0A8\uC740 \uC790\uBB3C\uC1E0\uAC00 \uBAA8\uB450 \uD480\uB9B0 \uAC83\uC73C\uB85C \uCE5C\uB2E4. \uD3ED\uC8FC\uAC00 \uB05D\uB098\uBA74 \uC6D0\uB798 \uC218\uB85C \uB3CC\uC544\uAC04\uB2E4.",
   "skill.ferocity.huntInstinct": "\uD3ED\uC8FC \uC911 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 [[intimidation|\uC704\uC555]]\uC744 {stacks}\uACB9\uC529 \uC313\uACE0, [[fear|\uACF5\uD3EC]]\uAC00 \uD480\uB9B0 \uB4A4\uC758 \uBA74\uC5ED\uC774 {seconds}\uCD08\uB85C \uC9E7\uC544\uC9C4\uB2E4.",
   "skill.breakthrough.effect.basic.scoldTaunt": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]\uD55C\uB2E4.",
   "skill.breakthrough.effect.basic.clawBleed": "\u300C{name}\u300D{name!\uC774} \uC8FC\uAE30 \uCE58\uBA85\uD0C0\uB85C \uC801\uC911\uD558\uBA74 \uB9DE\uC740 \uC801\uC5D0\uAC8C [[bleed|\uCD9C\uD608]]\uC744 \uB0A8\uAE34\uB2E4.",
-  "skill.breakthrough.effect.basic.windStep": "\u300C{name}\u300D{name!\uC774} \uB098\uB220 \uC900 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uB97C \uBC1B\uC740 \uC544\uAD70\uC740 {seconds}\uCD08 \uB3D9\uC548 [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB978\uB2E4. \uC774\uBBF8 [[tailwind|\uC21C\uD48D]]\uC774 \uAC78\uB9B0 \uC544\uAD70\uC740 \uC81C\uC678\uD55C\uB2E4.",
+  "skill.breakthrough.effect.basic.windStep": "\u300C{name}\u300D{name!\uC774} \uB098\uB220 \uC900 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uB97C \uBC1B\uC740 \uC544\uAD70\uC740 {seconds}\uCD08 \uB3D9\uC548 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB978\uB2E4. [[tailwind|\uC21C\uD48D]]\uACFC \uD568\uAED8 \uAC78\uB9B0\uB2E4.",
   "skill.breakthrough.effect.ultimate.afterimageSlash": "\u300C{name}\u300D{name!\uC774} \uC801\uC911\uD558\uACE0 {seconds}\uCD08 \uB4A4 \uC794\uC0C1\uC774 \uAC19\uC740 \uC801\uC744 \uD55C \uBC88 \uB354 \uBCA4\uB2E4. \uC704\uB825\uC740 {percent}%\uC774\uACE0 \uC801\uC774 \uC774\uBBF8 \uC4F0\uB7EC\uC84C\uC73C\uBA74 \uBCA0\uC9C0 \uC54A\uB294\uB2E4.",
   "skill.breakthrough.effect.ultimate.gustEnergy": "\u300C{name}\u300D{name!\uC744} \uC4F0\uB294 \uC21C\uAC04 \uC0B4\uC544 \uC788\uB294 \uC544\uAD70 \uBAA8\uB450\uAC00 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uB97C {energy} \uC5BB\uB294\uB2E4.",
   "skill.breakthrough.effect.ferocity.frenzyClaws": "[[ferocity|\uD3ED\uC8FC]] \uC911 \u300C{name}\u300D\uC758 \uCE58\uBA85\uD0C0 \uC8FC\uAE30\uAC00 {from}\uBC88\uC9F8 \uACF5\uACA9\uC5D0\uC11C {to}\uBC88\uC9F8 \uACF5\uACA9\uB9C8\uB2E4\uB85C \uC9E7\uC544\uC9C4\uB2E4.",
@@ -8274,7 +8275,7 @@ var SKILL_KO = {
   "skill.breakthrough.effect.ultimate.sunkenWeight": "\uAD81\uADF9\uAE30\uC5D0 \uB9DE\uC740 \uC801\uC740 [[stun|\uAE30\uC808]]\uC774 \uD480\uB9B0 \uB4A4 {seconds}\uCD08 \uB3D9\uC548 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uC640 [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {percent}% \uB290\uB824\uC9C4\uB2E4.",
   "skill.breakthrough.effect.ultimate.unhealedMark": "\uAD81\uADF9\uAE30\uC5D0 \uB9DE\uC740 \uC801\uC740 {seconds}\uCD08 \uB3D9\uC548 \uBC1B\uB294 [[healing-cut|\uD68C\uBCF5]]\uC774 {percent}% \uC904\uC5B4\uB4E0\uB2E4.",
   "skill.breakthrough.effect.ferocity.feverWidenBasic": "[[ferocity|\uD3ED\uC8FC]] \uC911 \uAE30\uBCF8 \uACF5\uACA9\uC758 \uBC94\uC704\uAC00 {percent}% \uB113\uC5B4\uC9C4\uB2E4.",
-  "skill.breakthrough.effect.ferocity.hungryStride": "[[ferocity|\uD3ED\uC8FC]] \uC911 [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB978\uB2E4.",
+  "skill.breakthrough.effect.ferocity.hungryStride": "[[ferocity|\uD3ED\uC8FC]] \uC911 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB978\uB2E4.",
   "skill.breakthrough.effect.basic.fangShave": "\u300C{name}\u300D \uC801\uC911 \uC2DC \uB300\uC0C1\uC758 [[def|\uBC29\uC5B4\uB825]]\uC774 {percent}% \uAC10\uC18C\uD55C\uB2E4. \uC9C0\uC18D {seconds}\uCD08 \xB7 \uCD5C\uB300 {max}\uC911\uCCA9.",
   "skill.breakthrough.effect.basic.pincerPair": "\u300C{name}\u300D {every}\uD68C \uC801\uC911\uB9C8\uB2E4 \uAC19\uC740 \uD53C\uD574\uB97C \uD55C \uBC88 \uB354 \uC900\uB2E4.",
   "skill.breakthrough.effect.basic.shellKnock": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801\uC774 {seconds}\uCD08 \uB3D9\uC548 [[stun|\uAE30\uC808]]\uD55C\uB2E4.",
@@ -8373,11 +8374,11 @@ var SKILL_KO = {
   "skill.clause.push": "\uC8FC\uC704\uB85C \uC870\uAE08 \uBC00\uC5B4\uB0B8\uB2E4",
   "skill.status.chillTimed": "{seconds}\uCD08 \uB3D9\uC548 [[chill|\uB454\uD654]]\uB97C \uD55C \uACB9 \uC313\uC544 \uCD5C\uB300 {stacks}\uACB9\uAE4C\uC9C0 \uACB9\uB9C8\uB2E4 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uC640 [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uB97C {percent}% \uB0AE\uCD98\uB2E4",
   "skill.ferocity.splash.tauntEntry": "\uD3ED\uC8FC\uC5D0 \uB4E4\uC5B4\uAC00\uB294 \uC21C\uAC04 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]\uD55C\uB2E4.",
-  "skill.passive.canopyShade": "\uC8FC\uC704 \uC544\uAD70\uC774 \uBC1B\uB294 \uD53C\uD574\uC758 {percent}%\uB97C \uB300\uC2E0 \uBC1B\uB294\uB2E4. \uB300\uC2E0 \uBC1B\uC740 \uD53C\uD574\uC758 {shield}%\uB294 \uC790\uC2E0\uC758 [[shield|\uBCF4\uD638\uB9C9]]\uC774 \uB418\uBA70, \uC774\uB807\uAC8C \uC313\uC774\uB294 \uBCF4\uD638\uB9C9\uC740 {cap}\uC744 \uB118\uC9C0 \uC54A\uB294\uB2E4.",
+  "skill.passive.canopyShade": "\uC8FC\uC704 \uC544\uAD70\uC774 \uBC1B\uB294 \uD53C\uD574\uC758 {percent}%\uB97C \uB300\uC2E0 \uBC1B\uB294\uB2E4. \uB300\uC2E0 \uBC1B\uC740 \uD53C\uD574\uC758 {shield}%\uB294 \uC790\uC2E0\uC758 [[shield|\uBCF4\uD638\uB9C9]]\uC774 \uB418\uBA70, \uC774\uB807\uAC8C \uC313\uC774\uB294 \uBCF4\uD638\uB9C9\uC740 {cap:\uC744} \uB118\uC9C0 \uC54A\uB294\uB2E4.",
   "skill.sentence.selfBulwarkNear": "\uC790\uC2E0\uC5D0\uAC8C {shield}\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB974\uACE0, {seconds}\uCD08 \uB3D9\uC548 \uB113\uC740 \uBC94\uC704\uC758 \uC544\uAD70\uC774 \uBC1B\uB294 \uD53C\uD574\uC758 {percent}%\uB97C \uB300\uC2E0 \uBC1B\uB294\uB2E4.",
   "skill.breakthrough.effect.basic.chainSnare": "\u300C{name}\u300D {every}\uBC88\uC9F8\uB9C8\uB2E4 \uB9DE\uC740 \uC801\uC5D0\uAC8C {seconds}\uCD08 \uB3D9\uC548 {percent}% [[chill|\uB454\uD654]]\uB97C \uAC74\uB2E4.",
   "skill.breakthrough.effect.ultimate.canopySweep": "\u300C{name}\u300D{name!\uC744} \uD3BC\uCE58\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801\uC744 \uBC14\uAE65\uC73C\uB85C \uBC00\uC5B4\uB0B8\uB2E4.",
-  "skill.breakthrough.effect.passive.shadeRetort": "\uB300\uC2E0 \uBC1B\uC740 \uD53C\uD574\uC758 {percent}%\uAC00 \uC313\uC600\uB2E4\uAC00 \uB2E4\uC74C \uC77C\uBC18 \uACF5\uACA9\uC5D0 [[fixed-damage|\uACE0\uC815 \uD53C\uD574]]\uB85C \uD55C\uAEBC\uBC88\uC5D0 \uB354\uD574\uC9C4\uB2E4. \uCD5C\uB300 {cap}\uAE4C\uC9C0 \uC313\uC778\uB2E4.",
+  "skill.breakthrough.effect.passive.shadeRetort": "\uB300\uC2E0 \uBC1B\uC740 \uD53C\uD574\uC758 {percent}%\uAC00 \uC313\uC600\uB2E4\uAC00 \uB2E4\uC74C \uC77C\uBC18 \uACF5\uACA9\uC5D0 [[fixed-damage|\uACE0\uC815 \uD53C\uD574]]\uB85C \uD55C\uAEBC\uBC88\uC5D0 \uB354\uD574\uC9C4\uB2E4. {cap}\uAE4C\uC9C0 \uC313\uC778\uB2E4.",
   "skill.passive.tonguePull": "{seconds}\uCD08\uB9C8\uB2E4 \uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uB2E4\uB978 \uC544\uAD70\uC744 \uD600\uB85C \uB04C\uC5B4\uC640 \uACC1\uC5D0 \uC138\uC6B0\uACE0, \uADF8 \uC544\uAD70\uC758 \uCD5C\uB300 \uCCB4\uB825 {shield}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978\uB2E4. \uB04C\uB824\uC628 \uC544\uAD70\uC744 \uB178\uB9AC\uB358 \uC801\uC740 \uD45C\uC801\uC744 \uBAA8\uB450 \uC783\uB294\uB2E4.",
   "skill.sentence.gulp": "\uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uB2E4\uB978 \uC544\uAD70 \uD55C \uBA85\uC744 {seconds}\uCD08 \uB3D9\uC548 [[gulp|\uAFC0\uAEBD]]\uD55C\uB2E4.",
   "skill.passive.bloodScent": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 [[ferocity|\uC57C\uC131]]\uC744 {bonus} \uB354 \uC5BB\uB294\uB2E4. [[ferocity|\uD3ED\uC8FC]] \uC911\uC5D0\uB294 \uAE30\uBCF8 \uACF5\uACA9 \uC801\uC911\uB9C8\uB2E4 {hit}\uCD08, \uC801\uC744 \uC4F0\uB7EC\uB728\uB9AC\uBA74 {kill}\uCD08 \uB3D9\uC548 \uD3ED\uC8FC\uAC00 \uB2F3\uC9C0 \uC54A\uB294\uB2E4. \uD55C \uBC88\uC758 \uD3ED\uC8FC\uC5D0 \uB298\uC5B4\uB098\uB294 \uC2DC\uAC04\uC740 \uCD5C\uB300 {cap}\uCD08\uB2E4.",
@@ -8387,10 +8388,18 @@ var SKILL_KO = {
   "skill.breakthrough.effect.basic.tongueTug": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 \u300C{name}\u300D\uC758 \uB0A8\uC740 \uC8FC\uAE30\uAC00 {seconds}\uCD08 \uC904\uC5B4\uB4E0\uB2E4.",
   "skill.breakthrough.effect.ultimate.spitOut": "\u300C{name}\u300D\uB85C \uC0BC\uCF30\uB358 \uC544\uAD70\uC744 \uBC49\uC744 \uB54C \uADF8 \uC544\uAD70\uC774 \uC790\uAE30 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4.",
   "skill.breakthrough.effect.ultimate.chargeImpact": "\u300C{name}\u300D\uC758 \uB3CC\uC9C4\uC774 \uBA48\uCD98 \uC790\uB9AC \uC8FC\uC704\uC758 \uC801 \uC804\uC6D0\uC5D0\uAC8C {percent}\uB9CC\uD07C [[physical-damage|\uBB3C\uB9AC \uD53C\uD574]]\uB97C \uC900\uB2E4.",
-  "skill.breakthrough.effect.ferocity.tongueSnap": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \u300C{name}\u300D\uC774 \uACE7\uBC14\uB85C \uB098\uAC00\uACE0, \uADF8 [[shield|\uBCF4\uD638\uB9C9]]\uC774 {multiplier}\uBC30\uAC00 \uB41C\uB2E4.",
+  "skill.breakthrough.effect.ferocity.tongueSnap": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \u300C{name}\u300D{name!\uC774} \uACE7\uBC14\uB85C \uB098\uAC00\uACE0, \uADF8 [[shield|\uBCF4\uD638\uB9C9]]\uC774 {multiplier}\uBC30\uAC00 \uB41C\uB2E4.",
   "skill.breakthrough.effect.ferocity.hotFangs": "[[ferocity|\uD3ED\uC8FC]]\uC758 \uACF5\uACA9 \uC18D\uB3C4 \uC0C1\uC2B9\uC774 {percent}%\uC5D0\uC11C \uC2DC\uC791\uD55C\uB2E4.",
-  "skill.breakthrough.effect.passive.stillUnderContract": "\uC544\uAD70\uC758 \uCCB4\uB825\uC774 {hp}% \uC544\uB798\uB85C \uB5A8\uC5B4\uC9C0\uBA74 \u300C{name}\u300D\uC774 \uACE7\uBC14\uB85C \uB098\uAC04\uB2E4. \uC774\uB807\uAC8C \uACE7\uBC14\uB85C \uB098\uAC00\uB294 \uAC83\uC740 {seconds}\uCD08\uC5D0 \uD55C \uBC88\uBFD0\uC774\uB2E4.",
-  "skill.breakthrough.effect.passive.scentLinger": "[[ferocity|\uD3ED\uC8FC]]\uAC00 \uB05D\uB098\uB3C4 \uC57C\uC131 \uAC8C\uC774\uC9C0\uAC00 {percent}% \uB0A8\uB294\uB2E4."
+  "skill.breakthrough.effect.passive.stillUnderContract": "\uC544\uAD70\uC758 \uCCB4\uB825\uC774 {hp}% \uC544\uB798\uB85C \uB5A8\uC5B4\uC9C0\uBA74 \u300C{name}\u300D{name!\uC774} \uACE7\uBC14\uB85C \uB098\uAC04\uB2E4. \uC774\uB807\uAC8C \uACE7\uBC14\uB85C \uB098\uAC00\uB294 \uAC83\uC740 {seconds}\uCD08\uC5D0 \uD55C \uBC88\uBFD0\uC774\uB2E4.",
+  "skill.breakthrough.effect.passive.scentLinger": "[[ferocity|\uD3ED\uC8FC]]\uAC00 \uB05D\uB098\uB3C4 \uC57C\uC131 \uAC8C\uC774\uC9C0\uAC00 {percent}% \uB0A8\uB294\uB2E4.",
+  "skill.keyword.caster.butcher": "{stacks}\uACB9\uC774 \uC313\uC774\uBA74 \uADF8 \uC790\uB9AC\uC5D0\uC11C \uD130\uC838 {damage}\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC900\uB2E4. \uD130\uC9C4 \uB4A4 \uACB9\uC740 0\uC73C\uB85C \uB3CC\uC544\uAC00\uBA70, \uC2DC\uAC04\uC774 \uD758\uB7EC \uC0AC\uB77C\uC9C0\uC9C0 \uC54A\uB294\uB2E4.",
+  "skill.keyword.caster.vandalism": "\uD55C \uACB9\uB9C8\uB2E4 \uADF8 \uC801\uC758 \uACF5\uACA9\uB825\uACFC \uC8FC\uBB38\uB825\uC774 {shred}% \uB0AE\uC544\uC9C0\uBA70, \uC2DC\uAC04\uC774 \uD758\uB7EC \uC0AC\uB77C\uC9C0\uC9C0 \uC54A\uB294\uB2E4. {stacks}\uACB9\uC9F8\uC5D0 \uADF8 \uC790\uB9AC\uC5D0\uC11C \uD130\uC838 {damage}\uB9CC\uD07C \uB9C8\uBC95 \uD53C\uD574\uB97C \uC900\uB2E4. \uD130\uC838\uB3C4 \uACB9\uC740 \uADF8\uB300\uB85C \uB0A8\uACE0, \uD130\uC9C4 \uB4A4 {lock}\uCD08 \uB3D9\uC548\uC740 \uB2E4\uC2DC \uD130\uC9C0\uC9C0 \uC54A\uB294\uB2E4.",
+  "skill.keyword.caster.pressure": "\uD55C \uACB9\uB9C8\uB2E4 \uADF8 \uC801\uC758 \uACF5\uACA9 \uC18D\uB3C4\uC640 \uC774\uB3D9 \uC18D\uB3C4\uAC00 {slow}% \uB0AE\uC544\uC9C0\uBA70 {seconds}\uCD08 \uB3D9\uC548 \uB0A8\uB294\uB2E4. {stacks}\uACB9\uC9F8\uC5D0 \uADF8 \uC790\uB9AC\uC5D0\uC11C \uD130\uC838 {stun}\uCD08 \uB3D9\uC548 \uAE30\uC808\uC2DC\uD0A4\uACE0 {damage}\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC8FC\uBA70, \uD130\uC9C4 \uC801\uC740 \uAE30\uC808\uC774 \uD480\uB9B0 \uB4A4 {lockout}\uCD08 \uB3D9\uC548 \uB2E4\uC2DC \uC313\uC774\uC9C0 \uC54A\uB294\uB2E4.",
+  "skill.keyword.caster.sleep": "\uD589\uB3D9\uD558\uC9C0 \uBABB\uD558\uB2E4\uAC00 \uD53C\uD574\uB97C \uBC1B\uC73C\uBA74 \uAE68\uBA70, {damage}\uB9CC\uD07C \uB9C8\uBC95 \uD53C\uD574\uB97C \uB354 \uBC1B\uB294\uB2E4. \uAE6C \uB4A4 {groggy}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {slow}% \uB0AE\uC544\uC9C4\uB2E4.",
+  "skill.keyword.caster.meteor": "\uD558\uB298\uC5D0\uC11C \uB5A8\uC5B4\uC838 \uC6D0 \uC548\uC758 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C {damage}\uB9CC\uD07C [[magical-damage|\uB9C8\uBC95 \uD53C\uD574]]\uB97C \uC900\uB2E4.",
+  "skill.keyword.caster.weakpoint": "[[duo|\uB4C0\uC624]]\uAC00 \uADF8 \uC801\uC744 \uB54C\uB9AC\uBA74 \uD130\uC838 {damage}\uB9CC\uD07C [[magical-damage|\uB9C8\uBC95 \uD53C\uD574]]\uB97C \uC8FC\uACE0, \uADF8 \uD53C\uD574\uC758 {heal}%\uB97C \uB4C0\uC624\uAC00 \uD68C\uBCF5\uD55C\uB2E4. \uC2DC\uAC04\uC774 \uC9C0\uB098\uB3C4 \uC0AC\uB77C\uC9C0\uC9C0 \uC54A\uB294\uB2E4.",
+  "skill.keyword.caster.segmentBarrier": "{segment}\uC9DC\uB9AC [[shield|\uBCF4\uD638\uB9C9]] \uB9C8\uB514 {segments}\uAC1C\uB97C \uB450\uB978\uB2E4. \uB9C9\uC774 \uBAA8\uC790\uB77C\uBA74 {restore}\uCD08\uB9C8\uB2E4 \uB9C8\uB514 \uD558\uB098\uAC00 \uB418\uC0B4\uC544\uB098\uACE0, \uB9DE\uC744 \uB54C\uB9C8\uB2E4 \uBCF5\uAD6C\uAC00 {hit}\uCD08 \uC55E\uB2F9\uACA8\uC9C4\uB2E4. \uB9C9\uC774 \uAE4E\uC774\uBA74 \uADF8\uB9CC\uD07C \uD53C\uD574\uB97C \uBC1B\uB294\uB2E4.",
+  "skill.keyword.caster.fogGuard": "\uD761\uD608\uD55C \uC591\uC758 {convert}%\uB97C \uCCB4\uB825 \uB300\uC2E0 [[shield|\uBCF4\uD638\uB9C9]]\uC73C\uB85C \uB450\uB978\uB2E4. \uB9C9\uC740 {cap}\uAE4C\uC9C0\uB9CC \uC313\uC774\uACE0, \uB118\uCE58\uB294 \uBAAB\uC740 \uCCB4\uB825\uC73C\uB85C \uB3CC\uC544\uC628\uB2E4."
 };
 
 // src/i18n/ko/system.ts
@@ -10327,27 +10336,42 @@ var ENCOUNTER_ROLE = {
      * **v0.282.9에서 ×4로 내렸다**(응태 결정). 직접 R 토비로 1-5를 떠 봤는데 이기지 못해, ×8이 R 단독 편성에는 과했다.
      *
      * **v0.308.6에서 ×3으로 내렸다**(응태 결정). 1-10 코마가 SSR 없이는 깨지지 않았다.
+     *
+     * **공격 몫 ×1.35 · 체력 몫 ×2.8**(응태 결정 2026-11-27). 같은 날 ×1.1·강인함 35/12/85로 바꿨다가 되돌렸다 — 모의로 재 보니
+     * 정예는 묶여서가 아니라(살아 있는 시간의 6~16%만 묶였다) 한 대가 후열 체력의 5~10%뿐이라 아무도 못 쓰러뜨리고 먼저 죽었다.
+     * 그래서 덜 두껍고 더 세게 때린다. 적 개체의 평타 위력도 100% 아래를 걷어 냈다.
      */
     count: 1,
     bodyScale: 1.18,
-    hpMultiplier: 3,
-    attackMultiplier: 1.2,
+    hpMultiplier: 2.8,
+    attackMultiplier: 1.35,
     ttkSeconds: [18, 32],
     remainingHp: [0.2, 0.6],
     /*
-     * **혼자 서는 정예도 보스처럼 막아서되 훨씬 얕게.** 태생 20%에 제어 한 번마다 10% — 여섯 번이면 상한(80)이라
-     * 기절 하나로 정예를 끝까지 잠그지 못하되 첫 몇 번의 잠금은 확실히 든다. 치유 감소는 5%에서 시작해
+     * **혼자 서는 정예도 보스처럼 막아서되 훨씬 얕게.** 태생 20%에 제어 한 번마다 10% — 여섯이면 상한(80)이라
+     * 기절 하나로 정예를 끝까지 잠그지 못하되 첫 몇 번의 잠금은 확실히 든다. (2026-11-27 35/12/85로 올렸다가 되돌렸다 — 묶임은 원인이 아니었다.) 치유 감소는 5%에서 시작해
      * 60초에 걸쳐 40%까지 오른다 — 길게 버티며 고치는 풀이를 시간이 닫되, 평범하게 끝나는 판은 거의 건드리지 않는다
      * (10%에서 50%까지 40초에 올렸더니 원정 정예 10층의 권장 파티 승률이 75%에서 25%로 떨어졌다).
      */
     tenacity: { basePercent: 20, perControlPercent: 10, maxPercent: 80, controlIgnoreAtOrBelowSeconds: 0.05 },
     healingReduction: { basePercent: 5, maxPercent: 40, rampSeconds: 60 },
     /*
+     * **비율 피해도 보스보다 얕게 덜 받는다**(응태 요청 2026-11-27 — 기가노가 약했다). 혼자 서서 체력 ×3을 버티는 자리라
+     * 출혈·뇌진탕 같은 최대 체력 비례 피해가 그 두께를 그대로 녹였다. 보스·불사(30%)의 절반만 덜어 낸다.
+     */
+    percentHpResistance: 15,
+    /*
      * **혼자 선 정예는 전투력이 더 무겁게 읽힌다**(응태 요청, 2026-11-12 — "왜 내 전투력이 더 센데 져"가 없어야 한다).
      * 강인함과 치유 감소는 능력치에 없어 실제 능력치만 세면 정예가 가볍게 선다. 1-5 토비가 이기는 아군 선(약 6,200~6,700)을
      * 표시가 그대로 말하도록 실제 능력치 전투력에 1.6을 곱한다(`encounterUnitPower`).
      */
-    powerWeight: 1.6
+    powerWeight: 1.6,
+    /*
+     * **혼자 선 정예는 2.0이다**(응태 결정 2026-11-27). 1.6이면 장의 벽(X-5·X-10)이 앞뒤의 셋·넷 관문이나 정예 둘 관문보다 낮게
+     * 읽혀(5-10 15,574 < 6-1 18,855 · 9-5 18,382 < 9-4 22,913) 벽으로 보이지 않았다. 실제로 이기는 레벨은 벽이 더 높다.
+     * 정예 둘 관문은 각자 체력을 나눠 가져 1.6 그대로다.
+     */
+    soloPowerWeight: 2
   },
   boss: {
     /*
@@ -11390,6 +11414,7 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     augmentResistancePercent: 0,
     traitHaste: null,
     killHaste: null,
+    windStep: null,
     traitStreakTargetId: null,
     traitStreakStacks: 0,
     traitStreakCarry: 0,
@@ -12154,7 +12179,7 @@ function applyFrostPlume(target, effect, events, state, sourceId) {
   const total = computeDamage(
     { ...attacker, def: offensiveDefinition(attacker) },
     defensiveDefinition(target, state),
-    { power: effect.burstPower, damageType: "physical", scalingStat: "atk", isCritical: false, kind: "basic", ignoresDefense: true }
+    { power: effect.burstPower, damageType: "physical", scalingStat: "atk", isCritical: false, kind: "basic" }
   );
   target.frostbite = {
     remaining: effect.burstSeconds,
@@ -12882,8 +12907,9 @@ function triggerRally(attacker, state, events) {
   attacker.rallyHitCount += 1;
   if (attacker.rallyHitCount < every) return;
   attacker.rallyHitCount = 0;
+  const tauntRadius = attacker.ferocityFever && trait.effectId === "rollCallRefusal" ? rally.tauntRadius * (1 + trait.tauntRadiusPercent / 100) : rally.tauntRadius;
   for (const other of state.fighters) {
-    if (other.side === attacker.side || !isFighterAlive(other) || distance(attacker, other) > rally.tauntRadius) continue;
+    if (other.side === attacker.side || !isFighterAlive(other) || distance(attacker, other) > tauntRadius) continue;
     applyCombatStatusEffect(other, { kind: "taunt", seconds: rally.tauntSeconds }, events, state, attacker.id);
     if (other.taunted?.sourceId === attacker.id) {
       other.targetId = attacker.id;
@@ -12896,7 +12922,7 @@ function triggerRally(attacker, state, events) {
     attackerId: attacker.id,
     ultimate: false,
     damageType: "physical",
-    area: { shape: "radial", x: attacker.x, y: attacker.y, radius: rally.tauntRadius }
+    area: { shape: "radial", x: attacker.x, y: attacker.y, radius: tauntRadius }
   });
 }
 function basicStarfall(def) {
@@ -13238,11 +13264,6 @@ function lockChargeReachFactor(fighter) {
   const locks = fighter.def.passive.restraintLocks;
   return locks ? 1 + effectiveLocksBroken(fighter) * locks.chargeReachPercentPerLock / 100 : 1;
 }
-function rollCallPull(attacker, pull2) {
-  const trait = attacker.def.ferocityTrait;
-  if (!attacker.ferocityFever || trait.effectId !== "rollCallRefusal") return pull2;
-  return { ...pull2, radius: pull2.radius * (1 + trait.pullRadiusPercent / 100) };
-}
 var FLINCH_WINDOW_SECONDS = 1;
 function noteFlinch(target, dealt) {
   const plan = target.def.passive.flinchBlink;
@@ -13464,6 +13485,26 @@ function gainFrontlineMomentum(fighter, state) {
   if (boss.momentum === plan.stackLimit && last?.kind === "frontlinePassive") {
     applyHealing(state, fighter, (fighter.maxHp - fighter.hp) * last.percent / 100);
   }
+}
+function frontlineCleave(attacker, target, power, state, events) {
+  const plan = attacker.def.frontlineBoss;
+  const cleave = plan?.cleave;
+  if (!plan || !cleave || power <= 0) return;
+  let offense = offensiveDefinition(attacker);
+  if (plan.kind === "ironclad") {
+    const guard = defensiveDefinition(attacker, state).def.stats;
+    offense = { ...offense, stats: { ...offense.stats, atk: offense.stats.atk + (guard.def + guard.res) * plan.basicGuardScale / power } };
+  }
+  const owner2 = { ...attacker, def: offense };
+  const victims = state.fighters.filter((enemy) => enemy.side !== attacker.side && enemy.id !== target.id && isFighterAlive(enemy) && distance(attacker, enemy) <= cleave.radius);
+  events.push({
+    kind: "areaImpact",
+    attackerId: attacker.id,
+    ultimate: false,
+    damageType: "physical",
+    area: { shape: "radial", x: attacker.x, y: attacker.y, radius: cleave.radius }
+  });
+  for (const enemy of victims) extraStrike(owner2, enemy, power * cleave.percent / 100, "atk", "physical", state, events);
 }
 function ironcladThirdHit(attacker, target, dealt, critical, state, events) {
   let concussionDealt = 0;
@@ -15219,8 +15260,11 @@ function attackSpeedParts(fighter, state) {
   const sunkenPercent = sunkenSlowPercent(fighter);
   const traitHastePercent = (fighter.traitHaste?.attackSpeedPercent ?? 0) + (state === void 0 ? 0 : warmUpAttackSpeedPercent(effectsFor(state, fighter), fighter.def.id, state.elapsed));
   const killHastePercent = fighter.killHaste?.attackSpeedPercent ?? 0;
-  const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
-  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100) * (1 + reservedGuestHastePercent(fighter) / 100) * (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "gungnirMarch" ? 1 + fighter.def.ferocityTrait.speedPercent / 100 : 1) * (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "extendedService" ? 1 + fighter.def.ferocityTrait.attackSpeedPercent / 100 : 1);
+  const frontlinePercent = fighter.frontlineSlow ? controlMagnitude(fighter, fighter.frontlineSlow.percent) : 0;
+  const hungry = feverBreakthrough(fighter);
+  const hungryPercent = hungry?.kind === "hungryStride" ? hungry.attackSpeedPercent : 0;
+  const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100) * (1 - frontlinePercent / 100);
+  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100) * (1 + (fighter.windStep?.attackSpeedPercent ?? 0) / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100) * (1 + reservedGuestHastePercent(fighter) / 100) * (1 + hungryPercent / 100) * (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "gungnirMarch" ? 1 + fighter.def.ferocityTrait.speedPercent / 100 : 1) * (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "extendedService" ? 1 + fighter.def.ferocityTrait.attackSpeedPercent / 100 : 1);
   return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed + ingredientHastePoints(fighter), boost: boostFactor, slow: slowFactor };
 }
 function currentAttackSpeed(fighter, state) {
@@ -15552,9 +15596,7 @@ function moveSpeed(fighter, state) {
   const tailwindPercent = fighter.tailwindFor > 0 && fighter.tailwind?.kind === "tailwind" ? fighter.tailwind.moveSpeedPercent : 0;
   const chillPercent = fighter.chill ? controlMagnitude(fighter, fighter.chill.stacks * fighter.chill.speedPercentPerStack) : 0;
   const submergedPercent = controlMagnitude(fighter, fighter.submergedIn?.moveSlowPercent ?? 0);
-  const hungry = feverBreakthrough(fighter);
-  const hungryPercent = hungry?.kind === "hungryStride" ? hungry.moveSpeedPercent : 0;
-  return (fighter.def.stats.moveSpeed + ingredientHastePoints(fighter)) * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100) * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100) * (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100) * (1 + confinementMoveSpeedPercent(fighter) / 100) * (1 - (fighter.frontlineSlow ? controlMagnitude(fighter, fighter.frontlineSlow.percent) : 0) / 100);
+  return (fighter.def.stats.moveSpeed + ingredientHastePoints(fighter)) * SKIRMISH.moveRate * (1 - sunkenSlowPercent(fighter) / 100) * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100) * (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100) * (1 + confinementMoveSpeedPercent(fighter) / 100);
 }
 function distance(a, b) {
   return dHypot(b.x - a.x, b.y - a.y);
@@ -15717,8 +15759,7 @@ function grantAllyEnergy(attacker, skill, state) {
   for (const ally of allies) giveEnergy(ally, amount);
   const step2 = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   if (step2?.kind === "windStep") {
-    const buff = { kind: "tailwind", attackSpeedPercent: 0, moveSpeedPercent: step2.moveSpeedPercent, seconds: step2.seconds, maxHpRegenPercentPerSecond: 0 };
-    for (const ally of allies) if (ally.tailwindFor <= 0) applyTeamBuff(ally, buff);
+    for (const ally of allies) ally.windStep = { remaining: step2.seconds, attackSpeedPercent: step2.attackSpeedPercent, total: step2.seconds, skillId: attacker.def.basic.id };
   }
 }
 function huntMarkCriticalDamage(attacker, target, state) {
@@ -17640,6 +17681,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     if (!useUltimate) applyBasicBreakthrough(attacker, target, state, events);
   }
   if (frontlineThird && !resolution.ignored && isFighterAlive(attacker)) {
+    frontlineCleave(attacker, target, damageInput.power, state, events);
     if (frontline.kind === "ironclad") ironcladThirdHit(attacker, target, dealt, critical, state, events);
     else if (attackingInFever && attacker.frontline) {
       const chase = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
@@ -18644,6 +18686,10 @@ function advance(state, dt, rng, events) {
       const remaining = fighter.traitRegen.remaining - dt;
       fighter.traitRegen = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.traitRegen, remaining };
     }
+    if (isFighterAlive(fighter) && fighter.windStep) {
+      const remaining = fighter.windStep.remaining - dt;
+      fighter.windStep = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.windStep, remaining };
+    }
     if (isFighterAlive(fighter) && fighter.killHaste) {
       const remaining = fighter.killHaste.remaining - dt;
       if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.killHaste = null;
@@ -19105,7 +19151,7 @@ function fireUltimateCore(state, fighterId, rng = NO_CRIT, targetPoint) {
     }
     if (openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate)?.kind === "shareShield") attacker.bt.shareShieldIn = plan.tauntSeconds;
     if (plan.dashToFarthest !== void 0) dashToFarthestEnemy(attacker, plan.dashToFarthest.landingDistance, state, events);
-    const pull2 = rollCallPull(attacker, plan.pull);
+    const pull2 = plan.pull;
     const pulled = pull2.target === "farthest" ? hookFarthestEnemy(attacker, pull2, state) : pullEnemiesToward(attacker, pull2, state);
     for (const other of plan.pullOnly ? [] : pulled) {
       applyCombatStatusEffect(other, { kind: "taunt", seconds: plan.tauntSeconds }, events, state, attacker.id);
@@ -20068,7 +20114,7 @@ var TORIKA_STORY = {
 init_define_import_meta_env();
 var NOKAN = {
   id: "gigano",
-  name: "\uB178\uCE78",
+  name: "\uAE30\uAC00\uB178",
   enemyOnly: true,
   squad: "annihilation",
   rarity: "SSR",
@@ -20076,21 +20122,22 @@ var NOKAN = {
   role: "warrior",
   portraitAssetId: "gigano",
   specimenNumber: "229",
-  projectName: "\uAD81\uB2C8\uB974",
+  projectName: "ANNIHILATION GUNGNIR 229",
   origin: "\uAE30\uAC00\uB178\uD1A0\uC0AC\uC6B0\uB8E8\uC2A4",
   excavationSite: "\uC81C1\uC9C0\uBD80 \uC774\uC1A1 \uC804 \uB0A8\uBD80 \uBCF4\uC874 \uD45C\uBCF8\uCC3D",
   fossilRecord: "\uD131\uBF08\uC758 \uD55C\uCABD \uCE58\uC870\uAC00 \uC544\uBB38 \uCC44\uB85C \uB0A8\uC544 \uC788\uC5C8\uB2E4. \uAC19\uC740 \uC0C1\uC790\uC5D0\uC11C \uB098\uC628 \uAC08\uBE44\uBF08 \uC138 \uC810\uC5D0\uB3C4 \uACE8\uC808\uC774 \uBD99\uC740 \uC790\uAD6D\uC774 \uC788\uC5C8\uB2E4. \uD45C\uBCF8\uCC3D\uC758 \uC774\uC1A1\uD45C\uC5D0\uB294 \uD68C\uC218 \uB0A0\uC9DC\uC640 \uAD81\uB2C8\uB974\uB77C\uB294 \uC774\uB984\uB9CC \uC801\uD600 \uC788\uC5C8\uB2E4.",
-  observationProfile: { originYear: "\uBC31\uC545\uAE30 \uD6C4\uAE30", restorationYear: "E.C. 19\uB144", lifeStage: "\uC131\uCCB4", height: "1.87 m", weight: "79 kg" },
+  observationProfile: { originYear: "\uC57D 9,700\uB9CC \uB144 \uC804", restorationYear: "E.C. 19\uB144", lifeStage: "\uC131\uCCB4", height: "1.92 m", weight: "88 kg" },
   catalogSummary: "\uBD89\uC740 \uC548\uAC10\uC758 \uC678\uD22C\uC640 \uAC08\uBE44 \uC544\uB798\uB85C \uC774\uC5B4\uC9C0\uB294 \uD749\uD130\uAC00 \uAD00\uCC30\uB418\uB294 \uACF5\uBA78\uC758 \uAE30\uAC00\uB178\uD1A0\uC0AC\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
   unlockRecord: { status: "recorded", text: "\uD749\uD130\uB97C \uAC00\uB9AC\uB294 \uBD95\uB300\uB294 \uAC08\uC544\uB3C4 \uC678\uD22C\uC758 \uCC22\uC5B4\uC9C4 \uACF3\uC740 \uAFF0\uB9E4\uC9C0 \uC54A\uB294\uB2E4. \uBCF5\uB3C4 \uB05D\uC5D0\uC11C \uBC1C\uC18C\uB9AC\uAC00 \uB4E4\uB9AC\uBA74 \uC0AC\uB78C \uC218\uBD80\uD130 \uC14C\uB2E4. \uCCAB \uBC1C\uC18C\uB9AC\uAC00 \uBA4E\uC73C\uBA74 \uC9C1\uC811 \uB098\uAC00\uC11C \uB204\uAD6C \uBAAB\uC774 \uBE44\uC5C8\uB294\uC9C0 \uD655\uC778\uD588\uB2E4." },
-  squadNote: "\uACF5\uBA78\uC758 \uB300\uC7A5. \uAD81\uB2C8\uB974\uB77C\uB294 \uC774\uB984\uC73C\uB85C \uC120\uB450\uB97C \uC774\uB04C\uBA70, \uC740\uD14C\uAC00 \uD1F4\uB85C\uB97C \uC815\uD558\uB294 \uB3D9\uC548 \uC801\uC758 \uC804\uC120\uC744 \uB6AB\uB294\uB2E4.",
+  squadNote: "\uACF5\uBA78\uC758 \uB300\uC7A5. \uAD81\uB2C8\uB974\uB77C\uB294 \uC774\uB984\uC73C\uB85C \uC120\uB450\uB97C \uC774\uB04C\uBA70, \uC544\uB974\uAC90\uC774 \uD1F4\uB85C\uB97C \uC815\uD558\uB294 \uB3D9\uC548 \uC801\uC758 \uC804\uC120\uC744 \uB6AB\uB294\uB2E4.",
   researcherTitle: "\uC5F0\uAD6C\uC6D0",
   reachTier: "melee",
   strike: "slash",
   ferocityMax: 110,
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
   stats: { hp: 1150, def: 66, res: 56, atk: 182, ap: 25, attackSpeed: 108, moveSpeed: 110, ...COMMON_SECONDARY_STATS },
-  frontlineBoss: { kind: "gungnir", growthPercent: 40, attackPercentPerStack: 8, stackLimit: 4 },
+  // 3대1에 특화된 세팅(응태 2026-11-27) — 세 번째 공격 「뼈긁기」가 주위 적 전부를 함께 벤다.
+  frontlineBoss: { kind: "gungnir", growthPercent: 40, attackPercentPerStack: 8, stackLimit: 4, cleave: { radius: 200, percent: 80 } },
   passive: {
     id: "gigano-passive",
     name: "\uC8FD\uC74C\uC774 \uD0A4\uC6B4 \uBAB8",
@@ -20099,7 +20146,7 @@ var NOKAN = {
     durationSeconds: 0,
     iconAssetId: "skill-icon-buff",
     effectType: "buff",
-    desc: "\uCD5C\uB300 \uCCB4\uB825\xB7\uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825\uC774 \uAC01\uAC01 40% \uC99D\uAC00\uD569\uB2C8\uB2E4. \uC790\uC2E0\uC758 \uC2A4\uD0AC\uB85C \uCCB4\uB825\uC744 \uD68C\uBCF5\uD558\uBA74 \uD55C \uACF5\uACA9\uB2F9 [[battle-momentum|\uAE30\uC138]]\uB97C 1\uACB9 \uC5BB\uC2B5\uB2C8\uB2E4. \uACB9\uB2F9 \uACF5\uACA9\uB825 8%\uAC00 \uC99D\uAC00\uD558\uBA70 \uC804\uD22C\uAC00 \uB05D\uB0A0 \uB54C\uAE4C\uC9C0 \uCD5C\uB300 4\uACB9 \uC313\uC785\uB2C8\uB2E4."
+    desc: "\uCD5C\uB300 \uCCB4\uB825\xB7\uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825\uC774 \uAC01\uAC01 40% \uC99D\uAC00\uD55C\uB2E4. \uC790\uC2E0\uC758 \uC2A4\uD0AC\uB85C \uCCB4\uB825\uC744 \uD68C\uBCF5\uD558\uBA74 \uD55C \uACF5\uACA9\uB2F9 [[battle-momentum|\uAE30\uC138]]\uB97C 1\uACB9 \uC5BB\uB294\uB2E4. \uACB9\uB2F9 \uACF5\uACA9\uB825 8%\uAC00 \uC99D\uAC00\uD558\uBA70 \uC804\uD22C\uAC00 \uB05D\uB0A0 \uB54C\uAE4C\uC9C0 \uCD5C\uB300 4\uACB9 \uC313\uC778\uB2E4."
   },
   basic: {
     id: "gigano-basic",
@@ -20109,7 +20156,8 @@ var NOKAN = {
     damageType: "physical",
     effectType: "physical",
     iconAssetId: "skill-icon-physical",
-    cycle: [{ name: "\uBCA0\uAE30", power: 110 }, { name: "\uBCA0\uAE30", power: 110 }, { name: "\uBF08\uAE01\uAE30", power: 145, damageHealingPercent: 35 }]
+    cycle: [{ name: "\uBCA0\uAE30", power: 110 }, { name: "\uBCA0\uAE30", power: 110 }, { name: "\uBF08\uAE01\uAE30", power: 145, damageHealingPercent: 35 }],
+    bossDescription: "\uC801 \uD55C \uBA85\uC5D0\uAC8C \uACF5\uACA9\uB825\uC758 110%\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC900\uB2E4. \uC138 \uBC88\uC9F8 \uACF5\uACA9 \u300C\uBF08\uAE01\uAE30\u300D\uB294 \uACF5\uACA9\uB825\uC758 145%\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC8FC\uACE0 \uC900 \uD53C\uD574\uC758 35%\uB9CC\uD07C \uCCB4\uB825\uC744 \uD68C\uBCF5\uD558\uBA70, \uC790\uC2E0\uC758 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C\uB3C4 \uADF8 \uC704\uB825\uC758 80%\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC900\uB2E4."
   },
   ultimate: {
     id: "gigano-ult",
@@ -20134,7 +20182,7 @@ var NOKAN = {
 };
 var EUNTE = {
   id: "argen",
-  name: "\uC740\uD14C",
+  name: "\uC544\uB974\uAC90",
   enemyOnly: true,
   squad: "annihilation",
   rarity: "SSR",
@@ -20142,14 +20190,14 @@ var EUNTE = {
   role: "tank",
   portraitAssetId: "argen",
   specimenNumber: "230",
-  projectName: "\uCCA0\uAC11",
+  projectName: "ANNIHILATION IRONCLAD 230",
   origin: "\uC544\uB974\uD5E8\uD2F0\uB178\uC0AC\uC6B0\uB8E8\uC2A4",
   excavationSite: "\uC81C1\uC9C0\uBD80 \uC774\uC1A1 \uC804 \uB0A8\uBD80 \uBCF4\uC874 \uD45C\uBCF8\uCC3D",
-  fossilRecord: "\uCC99\uCD94\uBF08\uC758 \uBE48 \uACF5\uAC04\uC5D0 \uD770 \uAD11\uBB3C\uC774 \uCE35\uCE35\uC774 \uAD73\uC5B4 \uC788\uC5C8\uB2E4. \uAE34 \uAF2C\uB9AC \uCABD \uD45C\uBCF8\uC740 \uB20C\uB824\uB3C4 \uC6D0\uB798 \uAC04\uACA9\uC744 \uC720\uC9C0\uD588\uB2E4. \uCCA0\uAC11\uC774\uB77C\uACE0 \uC801\uD78C \uC774\uC1A1\uD45C \uBC11\uC5D0\uB294 \uB9C8\uBAA8\uB41C \uBC1B\uCE68\uB300\uAC00 \uD55C \uC904\uB85C \uB0A8\uC544 \uC788\uC5C8\uB2E4.",
-  observationProfile: { originYear: "\uBC31\uC545\uAE30 \uD6C4\uAE30", restorationYear: "E.C. 19\uB144", lifeStage: "\uC131\uCCB4", height: "1.82 m", weight: "75 kg" },
+  fossilRecord: "\uB4F1\uBF08 \uD55C \uB9C8\uB514\uAC00 \uC0AC\uB78C \uD0A4\uB9CC \uD588\uB2E4. \uC18D\uC740 \uBE44\uC5B4 \uC788\uC5C8\uACE0, \uBE48 \uCE78\uB9C8\uB2E4 \uD770 \uAD11\uBB3C\uC774 \uCE35\uCE35\uC774 \uAD73\uC5B4 \uC788\uC5C8\uB2E4. \uB0A8\uC740 \uAC83\uC740 \uB4F1\uBF08 \uBA87 \uB9C8\uB514\uC640 \uC815\uAC15\uC774\uBF08 \uD55C \uC810\uBFD0\uC774\uC5C8\uB2E4. \uCCA0\uAC11\uC774\uB77C\uACE0 \uC801\uD78C \uC774\uC1A1\uD45C \uBC11\uC5D0\uB294 \uADF8 \uBB34\uAC8C\uC5D0 \uB20C\uB824 \uB2F3\uC740 \uBC1B\uCE68\uB300\uAC00 \uD55C \uC904\uB85C \uB0A8\uC544 \uC788\uC5C8\uB2E4.",
+  observationProfile: { originYear: "\uC57D 9,700\uB9CC \uB144 \uC804", restorationYear: "E.C. 20\uB144", lifeStage: "\uC131\uCCB4", height: "2.04 m", weight: "112 kg" },
   catalogSummary: "\uBD84\uC808\uD615 \uAF2C\uB9AC \uC7A5\uAC11\uACFC \uBB34\uAC70\uC6B4 \uC815\uAC15\uC774 \uBCF4\uD638\uAD6C\uAC00 \uAD00\uCC30\uB418\uB294 \uACF5\uBA78\uC758 \uC544\uB974\uD5E8\uD2F0\uB178\uC0AC\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
   unlockRecord: { status: "recorded", text: "\uC124\uBE44\uB97C \uBA48\uCD9C \uB54C\uB294 \uB098\uC0AC\uB97C \uD55C\uCABD\uBD80\uD130 \uD480\uC9C0 \uC54A\uB294\uB2E4. \uC591\uCABD\uC744 \uBC88\uAC08\uC544 \uD480\uC5B4 \uBB34\uAC8C\uAC00 \uC5B4\uB514\uC5D0\uB3C4 \uC3E0\uB9AC\uC9C0 \uC54A\uAC8C \uD588\uB2E4. \uB204\uAC00 \uC544\uC9C1 \uC548\uCABD\uC5D0 \uC788\uC73C\uBA74, \uB9C8\uC9C0\uB9C9 \uC7A0\uAE08\uC1E0\uB97C \uC954 \uCC44 \uB300\uB2F5\uC774 \uC62C \uB54C\uAE4C\uC9C0 \uC11C \uC788\uC5C8\uB2E4." },
-  squadNote: "\uACF5\uBA78\uC758 \uB300\uC7A5. \uCCA0\uAC11\uC774\uB77C\uB294 \uC774\uB984\uC73C\uB85C \uD1F4\uB85C\uC640 \uC804\uC5F4\uC744 \uBD99\uB4E4\uBA70, \uB178\uCE78\uC774 \uC120\uBD09\uC5D0 \uC124 \uB54C \uB9C8\uC9C0\uB9C9\uC73C\uB85C \uD604\uC7A5\uC744 \uBE60\uC838\uB098\uC628\uB2E4.",
+  squadNote: "\uACF5\uBA78\uC758 \uB300\uC7A5. \uCCA0\uAC11\uC774\uB77C\uB294 \uC774\uB984\uC73C\uB85C \uD1F4\uB85C\uC640 \uC804\uC5F4\uC744 \uBD99\uB4E4\uBA70, \uAE30\uAC00\uB178\uAC00 \uC120\uBD09\uC5D0 \uC124 \uB54C \uB9C8\uC9C0\uB9C9\uC73C\uB85C \uD604\uC7A5\uC744 \uBE60\uC838\uB098\uC628\uB2E4.",
   researcherTitle: "\uC5F0\uAD6C\uC6D0",
   reachTier: "melee",
   strike: "smash",
@@ -20162,11 +20210,13 @@ var EUNTE = {
     reductionPerLayer: 10,
     stripInterval: 1,
     restoreInterval: 3,
-    basicGuardScale: 50,
+    basicGuardScale: 80,
     ultimateGuardScale: 220,
     shieldGuardScale: 150,
     shieldSeconds: 5,
-    windup: 0.8
+    windup: 0.8,
+    // 3대1에 특화된 세팅(응태 2026-11-27) — 세 번째 공격 「골절선」이 주위 적 전부에게 같은 위력으로 들어간다.
+    cleave: { radius: 230, percent: 100 }
   },
   passive: {
     id: "argen-passive",
@@ -20176,19 +20226,19 @@ var EUNTE = {
     durationSeconds: 0,
     iconAssetId: "skill-icon-buff",
     effectType: "buff",
-    desc: "\uC804\uD22C \uC2DC\uC791 \uC2DC [[fixed-armor|\uACE0\uC815 \uC7A5\uAC11]]\uC744 10\uACB9 \uC5BB\uC2B5\uB2C8\uB2E4. \uAC01 \uACB9\uC774 \uB0A8\uC740 \uD53C\uD574\uC758 10%\uB97C \uC904\uC785\uB2C8\uB2E4. \uC9C1\uC811 \uD53C\uD574\uB97C \uBC1B\uC73C\uBA74 1\uCD08\uC5D0 \uCD5C\uB300 \uD55C \uBC88 \uC7A5\uAC11\uC774 \uBC97\uACA8\uC9C0\uACE0, \uC9C1\uC811 \uD53C\uD574\uB97C \uBC1B\uC9C0 \uC54A\uB294 \uB3D9\uC548 3\uCD08\uB9C8\uB2E4 \uD55C \uACB9\uC529 \uBCF5\uAD6C\uB429\uB2C8\uB2E4."
+    desc: "\uC804\uD22C \uC2DC\uC791 \uC2DC [[fixed-armor|\uACE0\uC815 \uC7A5\uAC11]]\uC744 10\uACB9 \uC5BB\uB294\uB2E4. \uAC01 \uACB9\uC774 \uB0A8\uC740 \uD53C\uD574\uC758 10%\uB97C \uC904\uC778\uB2E4. \uC9C1\uC811 \uD53C\uD574\uB97C \uBC1B\uC73C\uBA74 1\uCD08\uC5D0 \uCD5C\uB300 \uD55C \uBC88 \uC7A5\uAC11\uC774 \uBC97\uACA8\uC9C0\uACE0, \uC9C1\uC811 \uD53C\uD574\uB97C \uBC1B\uC9C0 \uC54A\uB294 \uB3D9\uC548 3\uCD08\uB9C8\uB2E4 \uD55C \uACB9\uC529 \uBCF5\uAD6C\uB41C\uB2E4."
   },
   basic: {
     id: "argen-basic",
     name: "\uACE8\uC808\uC120",
-    power: 85,
+    power: 100,
     targeting: "single",
     damageType: "physical",
     effectType: "physical",
     iconAssetId: "skill-icon-physical",
     statusEffects: [{ kind: "concussion", maxHpPercent: 6, criticalMaxHpPercent: 12 }],
     cycle: [{ name: "\uD0C0\uACA9", power: 85 }, { name: "\uD0C0\uACA9", power: 85 }, { name: "\uACE8\uC808\uC120", power: 85 }],
-    bossDescription: "\uC801 \uD55C \uBA85\uC5D0\uAC8C \uACF5\uACA9\uB825\uC758 85%\uC640 \uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825 \uAC01\uAC01\uC758 50%\uB97C \uD569\uD55C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC90D\uB2C8\uB2E4. \uC138 \uBC88\uC9F8 \uACF5\uACA9\uC740 \uC801\uC744 \uBC00\uCE58\uBA70 [[concussion|\uB1CC\uC9C4\uD0D5]]\uC744 \uC77C\uC73C\uCF1C \uB300\uC0C1 \uCD5C\uB300 \uCCB4\uB825\uC758 6%\uB9CC\uD07C \uD53C\uD574\uB97C \uC90D\uB2C8\uB2E4. \uC138 \uBC88\uC9F8 \uACF5\uACA9\uC774 \uCE58\uBA85\uD0C0\uBA74 \uB1CC\uC9C4\uD0D5 \uD53C\uD574\uB294 12%\uB85C \uC99D\uAC00\uD569\uB2C8\uB2E4. \uBCF8\uD0C0\uC640 \uB1CC\uC9C4\uD0D5\uC73C\uB85C \uC2E4\uC81C \uAE4E\uC740 \uCCB4\uB825\uC758 100%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uC2B5\uB2C8\uB2E4."
+    bossDescription: "\uC801 \uD55C \uBA85\uC5D0\uAC8C \uACF5\uACA9\uB825\uC758 85%\uC640 \uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825 \uAC01\uAC01\uC758 80%\uB97C \uD569\uD55C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC900\uB2E4. \uC138 \uBC88\uC9F8 \uACF5\uACA9\uC740 \uC790\uC2E0\uC758 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C\uB3C4 \uAC19\uC740 \uD53C\uD574\uB97C \uC8FC\uACE0, \uB300\uC0C1\uC744 \uBC00\uCE58\uBA70 [[concussion|\uB1CC\uC9C4\uD0D5]]\uC744 \uC77C\uC73C\uCF1C \uB300\uC0C1 \uCD5C\uB300 \uCCB4\uB825\uC758 6%\uB9CC\uD07C \uD53C\uD574\uB97C \uC900\uB2E4. \uC138 \uBC88\uC9F8 \uACF5\uACA9\uC774 \uCE58\uBA85\uD0C0\uBA74 \uB1CC\uC9C4\uD0D5 \uD53C\uD574\uB294 12%\uB85C \uC99D\uAC00\uD55C\uB2E4. \uBCF8\uD0C0\uC640 \uB1CC\uC9C4\uD0D5\uC73C\uB85C \uC2E4\uC81C \uAE4E\uC740 \uCCB4\uB825\uC758 100%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4."
   },
   ultimate: {
     id: "argen-ult",
@@ -20202,13 +20252,13 @@ var EUNTE = {
     effectType: "physical",
     iconAssetId: "skill-icon-physical",
     statusEffects: [{ kind: "stun", seconds: 1.4 }],
-    bossDescription: "\uC790\uC2E0\uC758 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C \uC2DC\uC804 0.8\uCD08 \uB4A4 \uBC29\uC5B4\uB825\uC758 220%\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC8FC\uACE0 1.4\uCD08\uAC04 [[stun|\uAE30\uC808]]\uC2DC\uD0B5\uB2C8\uB2E4. \uADF8 \uB4A4 \uBC29\uC5B4\uB825\uACFC \uC800\uD56D\uB825 \uAC01\uAC01\uC758 150%\uB97C \uD569\uD55C \uBCF4\uD638\uB9C9\uC744 5\uCD08\uAC04 \uC5BB\uC2B5\uB2C8\uB2E4."
+    bossDescription: "\uC790\uC2E0\uC758 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C \uC2DC\uC804 0.8\uCD08 \uB4A4 \uBC29\uC5B4\uB825\uC758 220%\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC8FC\uACE0 1.4\uCD08\uAC04 [[stun|\uAE30\uC808]]\uC2DC\uD0A8\uB2E4. \uADF8 \uB4A4 \uBC29\uC5B4\uB825\uACFC \uC800\uD56D\uB825 \uAC01\uAC01\uC758 150%\uB97C \uD569\uD55C \uBCF4\uD638\uB9C9\uC744 5\uCD08\uAC04 \uC5BB\uB294\uB2E4."
   },
-  ferocityTrait: { name: "\uC9C0\uBC18 \uC555\uC0B4", effectId: "groundCrush", radius: 260, pullDistance: 145, tauntSeconds: 2, interval: 0.5, hpPercent: 1 },
+  ferocityTrait: { name: "\uC9C0\uBC18 \uC555\uC0B4", effectId: "groundCrush", radius: 260, pullDistance: 145, tauntSeconds: 2, interval: 0.5, hpPercent: 2 },
   breakthroughEffects: {
     basic: { kind: "frontlineBasic", percent: 100 },
     ultimate: { kind: "frontlineUltimate", percent: 100 },
-    ferocity: { kind: "frontlineFever", percent: 30, seconds: 5 },
+    ferocity: { kind: "frontlineFever", percent: 20, seconds: 5 },
     passive: { kind: "frontlinePassive", percent: 100, seconds: 8 }
   }
 };
@@ -20715,14 +20765,14 @@ var RELICS = [
     strike: "bite",
     // 치즈케이크 생산 계약은 수중 발굴 특화이며 전투 역할을 바꿔도 기존 생산성을 보존한다.
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.4, efficiencyMultiplier: 1.1 },
-    // 낮은 HP·방어력은 렉시아보다 낮은 생존력을, 높은 공격·공속·이속은 암살자의 선공 능력을 보장한다.
-    // 저항력 46과 주문력 58은 최소 대응력만 남기고, 치명타 15/155는 빠른 공격이 과도하게 폭증하지 않게 한다.
+    // 악어의 두꺼운 가죽 — 물리에 버티는 방어형 암살자다. 기술이 모두 공격력 물리 피해라 주문력은 쓰지 않는다:
+    // 주문력 74가 전투력만 채우던 몫을 체력·방어로 옮기고 저항을 덜었다(응태 2026-11-27 — 1대1 79 → 90% 모의).
     stats: {
-      hp: 960,
-      def: 48,
-      res: 58,
-      atk: 156,
-      ap: 74,
+      hp: 1180,
+      def: 68,
+      res: 46,
+      atk: 165,
+      ap: 24,
       attackSpeed: 122,
       moveSpeed: 120,
       critChance: 10,
@@ -21240,7 +21290,7 @@ var RELICS = [
       teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 10, maxHpRegenPercentPerSecond: 2 }
     },
     breakthroughEffects: {
-      basic: { kind: "windStep", moveSpeedPercent: 20, seconds: 4 },
+      basic: { kind: "windStep", attackSpeedPercent: 15, seconds: 4 },
       ultimate: { kind: "gustEnergy", energy: 25 },
       ferocity: { kind: "feverGale", seconds: 4, speedPercent: 20 },
       passive: { kind: "windEcho", energy: 25 }
@@ -21531,8 +21581,8 @@ var RELICS = [
      */
     stats: {
       hp: 1300,
-      def: 130,
-      res: 130,
+      def: 105,
+      res: 155,
       atk: 66,
       ap: 20,
       attackSpeed: 70,
@@ -22897,7 +22947,7 @@ var RELICS = [
       selfGuard: {
         tauntSeconds: 5,
         pull: { radius: 420, distance: 150 },
-        shieldMaxHpPercent: 35
+        shieldMaxHpPercent: 45
       }
     }
   },
@@ -23253,8 +23303,8 @@ var RELICS = [
       id: "ripa-basic",
       // 삼엽충 원종의 복원 외형에 맞춘 기술명이며 성격 관찰 데이터와는 분리한다.
       name: "\uCC30\uC2F9! \uC2DC\uC57D \uBB3B\uD788\uAE30",
-      // AP 80%는 시약 1겹과 공용 중독을 함께 가진 R등급 기본기의 직접 피해 예산이다.
-      power: 80,
+      // AP 100%는(적 평타 바닥 100% — 응태 2026-11-27) 시약 1겹과 공용 중독을 함께 가진 R등급 기본기의 직접 피해 예산이다.
+      power: 100,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
@@ -23526,7 +23576,7 @@ var RELICS = [
       id: "ikanixia-basic",
       name: "\uBC15\uC950 \uB0A0\uB9AC\uAE30",
       // v0.391.1: 110 → 95(응태 요청 — 고배수 살짝 하향).
-      power: 95,
+      power: 100,
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
@@ -23803,7 +23853,7 @@ var RELICS = [
     basic: {
       id: "neuri-basic",
       name: "\uC0C1\uB0E5\uD55C \uD30C\uB3D9",
-      power: 70,
+      power: 100,
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
@@ -24140,7 +24190,8 @@ var RELICS = [
       lifeSteal: 0,
       ferocityGain: 12
     },
-    ferocityTrait: { name: "\uC810\uD638 \uAC70\uBD80", effectId: "rollCallRefusal", pullRadiusPercent: 40, rallyEvery: 3 },
+    // 폭주는 궁극기를 건드리지 않는다(2026-11-27 응태 — 끌어당김 반경 +40%였다). 호령이 더 자주, 더 넓게 터져 주위를 제게로 묶는다.
+    ferocityTrait: { name: "\uC810\uD638 \uAC70\uBD80", effectId: "rollCallRefusal", tauntRadiusPercent: 40, rallyEvery: 3 },
     passive: {
       id: "raja-passive",
       name: "\uAC10\uBC29 \uC11C\uC5F4",
@@ -24452,8 +24503,8 @@ var RELICS = [
       // 공격 속도에서 덜어 낸 몫이 여기로 왔다(1660 → 1828). 방어가 아니라 체력으로 받는
       // 이유는 "탱커 중 가장 얇은 몸"이 이 개체의 계약이기 때문이다.
       hp: 1828,
-      def: 62,
-      res: 70,
+      def: 54,
+      res: 78,
       // 노도니아(46)에 이어 로스터에서 두 번째로 낮다. 세 스킬이 전부 주문력에서 나오므로
       // 이 값은 어디에도 쓰이지 않는다.
       atk: 48,
@@ -26073,7 +26124,7 @@ var RELICS = [
     breakthroughEffects: {
       basic: { kind: "biteMark", seconds: 12, damageTakenPercent: 4, maxStacks: 3 },
       ultimate: { kind: "unhealedMark", seconds: 6, reductionPercent: 40 },
-      ferocity: { kind: "hungryStride", moveSpeedPercent: 50 },
+      ferocity: { kind: "hungryStride", attackSpeedPercent: 30 },
       passive: { kind: "scarMight", damagePercentPerStack: 5 }
     }
   },
@@ -26453,7 +26504,7 @@ var RELICS = [
       id: "viria-basic",
       name: "\uC55E\uB2C8 \uAC09\uAE30",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
-      power: 70,
+      power: 100,
       /*
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
@@ -26578,7 +26629,7 @@ var RELICS = [
       id: "guttia-basic",
       name: "\uC55E\uB2C8 \uAC09\uAE30",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
-      power: 70,
+      power: 100,
       /*
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
@@ -26703,7 +26754,7 @@ var RELICS = [
       id: "favia-basic",
       name: "\uC55E\uB2C8 \uAC09\uAE30",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
-      power: 70,
+      power: 100,
       /*
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
@@ -26830,7 +26881,7 @@ var RELICS = [
       id: "silia-basic",
       name: "\uC55E\uB2C8 \uAC09\uAE30",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
-      power: 70,
+      power: 100,
       /*
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
@@ -26955,7 +27006,7 @@ var RELICS = [
       id: "ventia-basic",
       name: "\uC55E\uB2C8 \uAC09\uAE30",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
-      power: 70,
+      power: 100,
       /*
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
@@ -27247,108 +27298,115 @@ function difficultyStageRewards(rewards, difficulty) {
 // src/data/stages.ts
 var STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"];
 var SOLO_ELITE_ENEMIES = {
-  "4-6": ["koma"],
+  "6-1": ["magasa"],
+  "6-3": ["magasa"],
+  "6-2": ["atra"],
+  "6-4": ["magasa"],
   "4-9": ["koma"]
 };
 function enemyGrowth(relicId, level, formationSlot) {
   return { relicId, level, breakthrough: shownBreakthroughForLevel(level), formationSlot };
 }
 var STORY_RECOMMENDED_LEVELS = [
-  // **적은 적이다**(응태 결정, 2026-11-12) — 적도 아군처럼 등급마다 레벨당 성장이 다르고(`ENEMY_RARITY_LEVEL_GROWTH`) 돌파
-  // 단계(LV.21·31·41·51)마다 +10%p를 받는다. 3.6% 단일 성장 시절의 세기를 그 관문 적들의 등급 곡선 위로 옮기되
-  // 그 세기를 넘지 않는 가장 높은 레벨을 골랐고(평균), 내려가지 않게 앞 관문 값 이상으로 맞췄다.
-  // 3-10부터는 신규 연구원에게 가파르다는 평에 완만하게 낮췄다(v0.487.10 — 3-10 30 → 29, 7장 끝 58 → 50, 측정은 VERSION.md).
-  // 2장 끝(22) → 3장 첫 관문이 한 번에 다섯 레벨 뛰던 턱을 펴, 3장은 23에서 29까지 한 칸씩 오른다(v0.487.12, 응태 요청).
+  1,
+  2,
   3,
-  6,
-  9,
-  11,
-  15,
-  15,
+  4,
+  19,
+  8,
+  10,
+  12,
+  14,
+  21,
+  // 1장
   16,
+  17,
   18,
   19,
-  19,
-  19,
-  19,
-  19,
-  20,
-  20,
-  20,
-  20,
   21,
+  19,
+  19,
+  19,
+  19,
+  34,
+  // 2장
   21,
-  22,
   23,
-  24,
-  25,
-  26,
   27,
   27,
-  28,
-  28,
-  29,
-  29,
-  32,
-  32,
-  32,
-  33,
-  33,
-  34,
-  34,
-  34,
-  35,
-  35,
-  37,
-  37,
-  37,
-  38,
-  38,
-  38,
-  39,
-  39,
-  40,
-  40,
-  41,
-  42,
-  42,
   43,
-  43,
-  44,
-  44,
-  45,
-  45,
-  45,
-  46,
-  46,
-  47,
-  47,
-  47,
-  48,
-  48,
-  49,
-  49,
+  30,
+  30,
+  30,
+  30,
+  31,
+  // 3장
+  31,
+  32,
+  32,
+  32,
   50,
+  30,
+  34,
+  34,
+  34,
+  43,
+  // 4장
+  36,
+  36,
+  36,
+  40,
+  63,
+  38,
+  38,
+  38,
+  40,
+  63,
+  // 5장
+  33,
+  40,
+  40,
+  40,
+  51,
+  42,
+  42,
+  44,
+  44,
+  50,
+  // 6장
+  48,
+  48,
+  48,
+  50,
+  71,
+  43,
+  46,
+  46,
+  46,
+  52,
+  // 7장
   51,
   52,
   52,
-  53,
-  53,
-  54,
-  55,
-  55,
   56,
+  72,
+  51,
+  51,
   57,
-  58,
-  58,
-  59,
-  59,
+  57,
+  67,
+  // 8장
+  55,
+  66,
+  67,
+  67,
+  72,
+  56,
   60,
-  61,
-  61,
-  62,
-  63,
-  64
+  60,
+  60,
+  60
+  // 9장
 ];
 var CHAPTER_ONE_ELITES = {
   5: "toby",
@@ -27366,7 +27424,7 @@ var LATE_CHAPTER_FORMATIONS = {
   "3-8": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
   "3-9": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
   "3-10": [["ikanixia", 1]],
-  // 4장 — 회수조와 테러조가 섞인다. 무리(4-2 넷 · 4-8 다섯) · 탱커 정예(4-4·4-5) · 코마 캐리(4-6, 코마만 정예) · 코마 캐리(4-9, 코마만 정예) · 투 캐리 마감(4-10).
+  // 4장 — 회수조와 테러조가 섞인다. 무리(4-2 넷 · 4-8 다섯) · 탱커 정예(4-4·4-5) · 코마 캐리(4-9, 코마만 정예 — 4-6의 코마는 v0.557.0에 보통 유형으로 내렸다) · 투 캐리 마감(4-10).
   "4-1": [["amo", 0], ["toby", 1], ["pulsi", 2]],
   "4-2": [["toby", 0], ["mir", 1], ["ripa", 2], ["pulsi", 3]],
   "4-3": [["amo", 0], ["mir", 1], ["pulsi", 2]],
@@ -27393,7 +27451,7 @@ var LATE_CHAPTER_FORMATIONS = {
   "6-1": [["raja", 0], ["magasa", 1], ["pulsi", 2]],
   "6-2": [["atra", 0], ["mir", 1], ["pulsi", 2], ["neuri", 3]],
   "6-3": [["raja", 0], ["mir", 1], ["magasa", 2]],
-  "6-4": [["raja", 0], ["pulsi", 1], ["neuri", 2]],
+  "6-4": [["raja", 0], ["magasa", 1], ["pulsi", 2]],
   "6-5": [["noa", 1]],
   "6-6": [["raja", 0], ["noa", 1], ["mir", 2]],
   "6-7": [["atra", 0], ["noa", 1], ["pulsi", 2]],
@@ -27412,40 +27470,31 @@ var LATE_CHAPTER_FORMATIONS = {
   "7-8": [["raja", 0], ["atra", 1], ["magasa", 2], ["noa", 3]],
   "7-9": [["raja", 0], ["magasa", 1], ["noa", 2]],
   "7-10": [["kar", 1]],
-  "8-1": [["atra", 0], ["mir", 1], ["pulsi", 2]],
-  "8-2": [["raja", 0], ["atra", 1], ["neuri", 2]],
+  // 8장 — 귀환로. 앞쪽은 회수조 짐을 나르는 삼인조와 회수조가 막고(8-1~8-3), 명부에서 지워진 노아·라자와 그들을 데리러 온 마가사,
+  // 8-5에서 문을 막아 준 아트라가 감금조와 함께 선다(8-4·8-6·8-7). 8-8은 「전원 손실」 장부를 지키는 이카닉시아에게 라자가 따라붙는다.
+  // 8-5는 문을 닫으려는 이카닉시아와 그 문을 막은 아트라(정예 둘), 8-10은 맨 뒤를 받치러 내려온 철갑 아르겐(정예)이다(응태 2026-11-27 — 아르겐이 먼저).
+  "8-1": [["amo", 0], ["mir", 1], ["ripa", 2], ["pulsi", 3]],
+  "8-2": [["toby", 0], ["atra", 1], ["mir", 2], ["neuri", 3]],
   "8-3": [["atra", 0], ["pulsi", 1], ["ikanixia", 2]],
-  "8-4": [["raja", 0], ["mir", 1], ["pulsi", 2], ["neuri", 3]],
+  "8-4": [["raja", 0], ["noa", 1], ["pulsi", 2]],
   "8-5": [["atra", 0], ["ikanixia", 2]],
-  "8-6": [["raja", 0], ["mir", 1], ["neuri", 2]],
-  "8-7": [["atra", 0], ["pulsi", 1], ["ikanixia", 2]],
-  "8-8": [["raja", 0], ["atra", 1], ["mir", 2], ["pulsi", 3]],
-  "8-9": [["atra", 0], ["ikanixia", 1], ["neuri", 2]],
-  "8-10": [["gigano", 1]],
-  "9-1": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "8-6": [["atra", 0], ["magasa", 1], ["noa", 2]],
+  "8-7": [["raja", 0], ["magasa", 1], ["noa", 2]],
+  "8-8": [["raja", 0], ["ikanixia", 1], ["mir", 2], ["pulsi", 3]],
+  "8-9": [["raja", 0], ["magasa", 1], ["noa", 2], ["pulsi", 3]],
+  "8-10": [["argen", 1]],
+  // 9장 — 중앙 제어축. 감금조·회수조·삼인조가 함께 퇴로를 받치고, 카르가 9-2·9-7·9-9에 앞장선다. 9-5 궁니르 기가노 · 9-10 두 대장(기가노가 주인).
+  // 9-7에서 제 발로 올라간 이카닉시아는 9-8 방출구에 선다.
+  "9-1": [["raja", 0], ["noa", 1], ["mir", 2]],
   "9-2": [["kar", 0], ["raja", 2]],
-  "9-3": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
+  "9-3": [["raja", 0], ["magasa", 1], ["neuri", 2]],
   "9-4": [["raja", 0], ["atra", 1], ["mir", 2], ["ikanixia", 3]],
-  "9-5": [["argen", 1]],
-  "9-6": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "9-5": [["gigano", 1]],
+  "9-6": [["amo", 0], ["noa", 1], ["mir", 2], ["ripa", 3]],
   "9-7": [["kar", 0], ["ikanixia", 2]],
-  "9-8": [["raja", 0], ["atra", 1], ["neuri", 2], ["pulsi", 3]],
-  "9-9": [["kar", 0], ["atra", 1], ["mir", 2]],
+  "9-8": [["raja", 0], ["ikanixia", 1], ["neuri", 2], ["pulsi", 3]],
+  "9-9": [["kar", 0], ["noa", 1], ["mir", 2]],
   "9-10": [["argen", 0], ["gigano", 2]]
-};
-var STORY_BOSS_LEVELS = {
-  "4-10": 36,
-  // 코마·이카닉시아 투 캐리 — 사다리 35
-  "5-10": 48,
-  // 간부 마가사 — 사다리 40
-  "7-5": 54,
-  // 간부 이카닉시아의 저지선 — 사다리 47
-  "7-10": 60,
-  // 부대장 카르 — 사다리 50
-  "8-5": 55,
-  "8-10": 76,
-  "9-5": 67,
-  "9-10": 70
 };
 var ELITE_DUO_STAGE_IDS = /* @__PURE__ */ new Set(["2-7", "2-9", "4-4", "4-5", "4-10", "6-10", "8-5", "9-10"]);
 var CHAPTER_ONE_ENEMIES = STORY_RECOMMENDED_LEVELS.slice(0, 10).map((recommended, index) => {
@@ -27492,15 +27541,18 @@ var STORY_RAW_STONE = {
   "9-1": 60,
   "9-6": 60
 };
-function storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, elite) {
-  const heavy = elite || chapterOrder === 10;
+function isStoryWall(chapterOrder) {
+  return chapterOrder === 5 || chapterOrder === 10;
+}
+function storyFirstClearBonus(id, globalOrder, chapter, chapterOrder) {
+  const heavy = isStoryWall(chapterOrder);
   const bonus = [
     { kind: "currency", currency: "gold", amount: (300 + globalOrder * 100) * (heavy ? 2 : 1) },
     { kind: "currency", currency: "gems", amount: heavy ? [150, 200, 300][chapter - 1] ?? 300 : [30, 40, 50][chapter - 1] ?? 50 }
   ];
   const rawStone = STORY_RAW_STONE[id];
   if (rawStone) bonus.push({ kind: "currency", currency: "rawStone", amount: rawStone });
-  if (elite) bonus.push({ kind: "currency", currency: "fossil", amount: 1 });
+  if (heavy) bonus.push({ kind: "currency", currency: "fossil", amount: 1 });
   const rune = STORY_RUNE_REWARDS[id];
   if (rune) bonus.push(rune);
   return bonus;
@@ -27525,28 +27577,28 @@ var CHAPTER_SITUATIONS = [
   [],
   [],
   [
-    "\uCE74\uB974\uAC00 \uC624\uB974\uB358 \uCCA0\uACE8\uC774 \uCC9C\uC7A5\uC758 \uAD6C\uBA4D \uB108\uBA38\uB85C \uC774\uC5B4\uC9C4\uB2E4.",
-    "\uBE44\uC0C1 \uC0AC\uB2E4\uB9AC \uC704\uC5D0 \uD68C\uC218\uC870\uC758 \uBC1C\uC790\uAD6D\uC774 \uB0A8\uC558\uB2E4.",
-    "\uADC0\uD658 \uACC4\uC218\uD310\uC5D0 \uB3CC\uC544\uC624\uC9C0 \uBABB\uD55C \uC0AC\uB78C\uB4E4\uC774 \uAC78\uB824 \uC788\uB2E4.",
-    "\uD68C\uC218\uC870\uAC00 \uB4E4\uAC83\uC744 \uBCF4\uB0B4\uBA70 \uBC14\uAE65\uC5D0\uC11C \uC624\uB294 \uAE38\uC744 \uB9C9\uB294\uB2E4.",
-    "\uC7A0\uAE30\uAE30 \uC2DC\uC791\uD55C \uBB38 \uC0AC\uC774\uC5D0 \uC9D0\uCE78\uC774 \uB07C\uC5B4 \uC788\uB2E4.",
-    "\uC911\uACC4\uC120\uC774 \uB04A\uC5B4\uC9C0\uBA74 \uC2B9\uAC15\uAE30\uB294 \uC774 \uCE35\uC73C\uB85C \uB3CC\uC544\uC624\uC9C0 \uC54A\uB294\uB2E4.",
-    "\uBD88\uC774 \uD55C \uCE78\uC529 \uC0B4\uC544\uB09C\uB2E4. \uC5B4\uB460 \uB108\uBA38\uC5D0\uC11C\uB3C4 \uAC19\uC740 \uBD88\uC744 \uC13C\uB2E4.",
-    "\uBD09\uC778\uB41C \uAE30\uB85D\uC2E4\uC758 \uC774\uC1A1\uD45C\uC5D0 \uB450 \uC774\uB984\uC774 \uB0A8\uC544 \uC788\uB2E4.",
-    "\uC0C1\uCE35 \uC2B9\uAC15\uAE30 \uC624\uB978\uD3B8\uC5D0 \uAE38\uAC8C \uCC22\uAE34 \uC1E0\uBB38\uC774 \uAC78\uB824 \uC788\uB2E4.",
-    "\uB178\uCE78\uC774 \uC2B9\uAC15\uAE30 \uBB38 \uC55E\uC5D0\uC11C \uB3CC\uC544\uC624\uC9C0 \uBABB\uD55C \uC0AC\uB78C\uB4E4\uC744 \uAE30\uB2E4\uB9B0\uB2E4."
+    "\uD68C\uC218\uC870 \uC9D0\uC744 \uC9C4 \uC0BC\uC778\uC870\uAC00 \uADC0\uD658\uB85C\uB85C \uBBF8\uB044\uB7EC\uC838 \uB0B4\uB824\uC628\uB2E4.",
+    "\uC0AC\uB2E4\uB9AC\uB97C \uC624\uB97C\uC218\uB85D \uBD89\uC740 \uD45C\uC9C0\uB4F1\uC774 \uD558\uB098\uC529 \uC154\uD130\uB97C \uB0B4\uB9B0\uB2E4.",
+    "\uADC0\uD658 \uBA85\uBD80\uC5D0 \uB178\uC544\uC640 \uB77C\uC790\uC758 \uCE78\uB9CC \uBE68\uAC1B\uAC8C \uAEBC\uC838 \uC788\uB2E4.",
+    "\uC9C0\uC6CC\uC9C4 \uCE78\uC744 \uB2E4\uC2DC \uCF1C\uB824\uACE0 \uB77C\uC790\uAC00 \uC5F0\uAD6C\uC6D0\uC744 \uB370\uB824\uAC00\uB824 \uD55C\uB2E4.",
+    "\uB2EB\uD788\uB294 \uBC29\uD654\uBB38 \uC544\uB798\uB85C \uC544\uD2B8\uB77C\uAC00 \uC9D0\uC218\uB808\uB97C \uBC00\uC5B4 \uB123\uB294\uB2E4.",
+    "\uBB38\uD2C8\uC73C\uB85C \uBE60\uC838\uB098\uC628 \uAC10\uAE08\uC870\uB97C \uB9C8\uAC00\uC0AC\uAC00 \uB370\uB9AC\uB7EC \uB0B4\uB824\uC628\uB2E4.",
+    "\uAC80\uC740 \uC815\uBE44\uACE0\uC758 \uACF5\uAD6C \uC0C1\uC790 \uC704\uC5D0 \uADF8\uB987 \uB2E4\uC12F \uAC1C\uAC00 \uCC28\uB824\uC838 \uC788\uB2E4.",
+    "\uD3D0\uC1C4\uB41C \uAE30\uB85D\uC2E4\uC5D0 \u300C\uC804\uC6D0 \uC190\uC2E4\u300D\uC774\uB77C \uC801\uD78C \uC7A5\uBD80\uAC00 \uB0A8\uC544 \uC788\uB2E4.",
+    "\uC2B9\uAC15\uAE30 \uC1E0\uC904\uC774 \uB290\uB9AC\uACE0 \uBB34\uAC81\uAC8C \uD480\uB9B0\uB2E4. \uB204\uAC00 \uB9E8 \uB4A4\uB85C \uC628\uB2E4.",
+    "\uCCA0\uAC11 \uC544\uB974\uAC90\uC774 \uC2B9\uAC15\uC7A5\uC5D0\uC11C \uB178\uC544\uC640 \uB77C\uC790\uB97C \uAE30\uB2E4\uB9B0\uB2E4."
   ],
   [
-    "\uC2B9\uAC15\uAE30 \uC544\uB798\uC5D0\uC11C \uACA9\uB0A9\uC2E4 \uC804\uCCB4\uB97C \uC787\uB294 \uC81C\uC5B4\uCD95\uC774 \uB3CC\uC544\uAC04\uB2E4.",
-    "\uB2EB\uD78C \uBB38 \uB4A4\uB85C \uC11C\uB85C\uB97C \uBD80\uB974\uB294 \uBAA9\uC18C\uB9AC\uAC00 \uB4E4\uB9B0\uB2E4.",
-    "\uB3CC \uD558\uB098\uAC00 \uBB34\uAC70\uC6B4 \uBC29\uCD9C\uAD6C\uB97C \uBC1B\uCE58\uACE0 \uC788\uB2E4.",
-    "\uC911\uC559\uCD95\uC744 \uD53C\uD574\uC11C \uC0AC\uB78C\uC744 \uB0B4\uBCF4\uB0BC \uC120\uC744 \uCC3E\uC544\uC57C \uD55C\uB2E4.",
-    "\uC740\uD14C\uAC00 \uC5F4 \uACB9\uC758 \uC7A5\uAC11\uC744 \uB0B4\uB9AC\uACE0 \uBC29\uBCBD \uC55E\uC5D0 \uC120\uB2E4.",
-    "\uACA9\uB0A9\uC2E4 \uBB38\uC774 \uC5F4\uB9AC\uC790 \uD769\uC5B4\uC84C\uB358 \uACF5\uBA78 \uB300\uC6D0\uB4E4\uC774 \uBAA8\uC778\uB2E4.",
-    "\uCE74\uB974\uAC00 \uB300\uC7A5\uC758 \uBA85\uB839\uC744 \uC804\uD558\uACE0, \uCF54\uB9C8\uAC00 \uADF8 \uAE38\uC744 \uAC74\uB10C\uB2E4.",
-    "\uB9C8\uC9C0\uB9C9 \uBC29\uCD9C\uAD6C\uB97C \uC9C0\uB098\uBA74 \uBC16\uC73C\uB85C \uAC78\uC5B4 \uB098\uAC08 \uC218 \uC788\uB2E4.",
-    "\uC804\uC2E4 \uB108\uBA38\uC5D0\uC11C \uB450 \uC0AC\uB78C\uC758 \uBC1C\uC18C\uB9AC\uAC00 \uBC88\uAC08\uC544 \uB4E4\uB9B0\uB2E4.",
-    "\uC911\uC559\uCD95 \uC55E\uC5D0 \uB178\uCE78\uACFC \uC740\uD14C\uAC00 \uB098\uB780\uD788 \uC120\uB2E4."
+    "\uC2B9\uAC15\uAE30\uAC00 \uBA48\uCD98 \uC6D0\uD1B5 \uBC14\uB2E5\uC5D0\uC11C \uC911\uC559 \uC81C\uC5B4\uCD95\uC774 \uC704\uB85C \uBED7\uC5B4 \uC788\uB2E4.",
+    "\uCE74\uB974\uAC00 \uD1F4\uB85C\uC758 \uBB38 \uC55E\uC5D0\uC11C \uB300\uC7A5\uB4E4\uC758 \uB9D0\uC744 \uC804\uD55C\uB2E4.",
+    "\uCE74\uB974\uAC00 072\uB97C \uB2E4\uC2DC \uC801\uC740 \uC774\uC720\uB97C \uB9D0\uD55C\uB2E4.",
+    "\uC7A0\uAE34 \uCE35\uC744 \uD53C\uD574 \uC704\uB85C \uC624\uB97C \uBC30\uC120\uC744 \uCC3E\uC544\uC57C \uD55C\uB2E4.",
+    "\uAD81\uB2C8\uB974 \uAE30\uAC00\uB178\uAC00 \uCD95\uC744 \uD0C0\uACE0 \uB0B4\uB824\uC640 \uBAA8\uC790\uB780 \uD558\uB098\uB97C \uC13C\uB2E4.",
+    "\uACA9\uB0A9\uC2E4 \uBB38\uC774 \uC5F4\uB9AC\uC790 \uD769\uC5B4\uC84C\uB358 \uACF5\uBA78 \uC870\uC6D0\uB4E4\uC774 \uC704\uB85C \uBAA8\uC778\uB2E4.",
+    "\uB300\uC7A5\uB4E4\uC774 \uC120\uB450\uC870\uB97C \uC9C0\uC6B4 \uC7A5\uBD80\uB97C \uC54C\uAC8C \uB41C\uB2E4.",
+    "\uC81C \uBC1C\uB85C \uC62C\uB77C\uC628 \uC774\uCE74\uB2C9\uC2DC\uC544\uAC00 \uBC29\uCD9C\uAD6C \uC55E\uC744 \uB9C9\uB294\uB2E4.",
+    "\uC804\uC2E4 \uB108\uBA38\uC5D0\uC11C \uC544\uC8FC \uB290\uB9B0 \uC228\uACFC \uC544\uC8FC \uAE09\uD55C \uC228\uC774 \uB4E4\uB9B0\uB2E4.",
+    "\uC81C\uC5B4\uCD95 \uAF2D\uB300\uAE30 \uC55E\uC5D0 \uAE30\uAC00\uB178\uC640 \uC544\uB974\uAC90\uC774 \uB098\uB780\uD788 \uC120\uB2E4."
   ]
 ];
 var CHAPTER_CONTENT = [
@@ -27557,8 +27609,8 @@ var CHAPTER_CONTENT = [
   { title: "\uBB3B\uC5B4 \uB454 \uBB38", subtitle: "\uC81C 5 \uAD6C\uC5ED \xB7 \uC9C0\uD558 \uAC10\uAE08\uB3D9", names: ["\uAC10\uAE08\uB3D9 \uC785\uAD6C", "\uAC80\uBB38 \uACA9\uC790", "\uC18C\uB4F1\uB41C \uBCF5\uB3C4", "\uC81C1 \uAC10\uBC29 \uAD6C\uC5ED", "\uC11C\uC5F4\uC758 \uBC29", "\uCE68\uC218 \uAC10\uBC29", "\uC871\uC1C4 \uBCF4\uAD00\uC2E4", "\uBC30\uC2DD \uD1B5\uB85C", "\uAD6C\uC18D \uC7A5\uCE58\uC2E4", "\uAC10\uAE08\uB3D9 \uCDE8\uC0AC\uC7A5"] },
   { title: "\uD480\uB824\uB09C \uADF8\uB9BC\uC790", subtitle: "\uC81C 6 \uAD6C\uC5ED \xB7 \uC911\uCE35 \uACA9\uB9AC \uD68C\uB791", names: ["\uACA9\uB9AC \uD68C\uB791 \uC785\uAD6C", "\uAD00\uCE21 \uCC3D \uBCF5\uB3C4", "\uBB34\uB108\uC9C4 \uC21C\uCC30\uB85C", "\uD658\uAE30 \uC218\uC9C1\uAC31", "\uB5A8\uB9AC\uB294 \uADF8\uB9BC\uC790", "\uC911\uCE35 \uACA9\uB0A9\uACE0", "\uBB34\uB108\uC9C4 \uBA74\uD68C\uC2E4", "\uACA9\uB9AC \uAD00\uC81C\uC2E4", "\uC2DD\uB7C9 \uCC3D\uACE0", "\uD68C\uB791 \uCD5C\uC2EC\uBD80"] },
   { title: "\uB9C8\uC9C0\uB9C9 \uC790\uBB3C\uC1E0", subtitle: "\uC81C 7 \uAD6C\uC5ED \xB7 \uCD5C\uD558\uCE35 \uAD6C\uC18D\uC2E4", names: ["\uCD5C\uD558\uCE35 \uD558\uAC15\uB85C", "\uB0C9\uB3D9 \uC218\uC6A9\uC2E4", "\uCE68\uBB35\uC758 \uBCF5\uB3C4", "\uBD09\uC778 \uC81C\uC5B4\uBC18", "\uD68C\uC218\uC870 \uC800\uC9C0\uC120", "\uC5BC\uC5B4\uBD99\uC740 \uAE30\uB85D\uC2E4", "\uAD6C\uC18D \uC7A5\uCE58 \uD1B5\uB85C", "\uCD5C\uD558\uCE35 \uC804\uC2E4", "\uAD6C\uC18D\uC2E4 \uBB38 \uC55E", "\uCD5C\uD558\uCE35 \uAD6C\uC18D\uC2E4"] },
-  { title: "\uBD89\uC740 \uADC0\uD658\uC120", subtitle: "\uC81C 8 \uAD6C\uC5ED \xB7 \uC0C1\uCE35 \uADC0\uD658\uB85C", names: ["\uB6AB\uB9B0 \uCC9C\uC7A5", "\uBE44\uC0C1 \uC0AC\uB2E4\uB9AC", "\uADC0\uD658 \uD45C\uC9C0", "\uD68C\uC218 \uAC80\uBB38\uC18C", "\uB2EB\uD788\uB294 \uD1B5\uB85C", "\uC911\uACC4\uC120 \uAC08\uB9BC\uAE38", "\uAC80\uC740 \uC815\uBE44\uACE0", "\uD3D0\uC1C4 \uAE30\uB85D\uC2E4", "\uC0C1\uCE35 \uC2B9\uAC15\uC7A5", "\uAD81\uB2C8\uB974\uC758 \uC804\uC120"] },
-  { title: "\uB450 \uB300\uC7A5\uC758 \uC120", subtitle: "\uC81C 9 \uAD6C\uC5ED \xB7 \uC911\uC559 \uC81C\uC5B4\uCD95", names: ["\uC2B9\uAC15\uAE30 \uC885\uCC29", "\uD1F4\uB85C\uC758 \uBB38", "\uBA48\uCD98 \uACC4\uC218\uD310", "\uC6B0\uD68C \uBC30\uC120\uC2E4", "\uCCA0\uAC11\uC758 \uBC29\uBCBD", "\uACA9\uB0A9\uC2E4 \uC2EC\uBD80", "\uAC08\uB77C\uC9C4 \uBA85\uB839", "\uAE34\uAE09 \uBC29\uCD9C\uAD6C", "\uC911\uC559\uCD95 \uC804\uC2E4", "\uACF5\uBA78 \uCD5C\uC885 \uC800\uC9C0\uC120"] }
+  { title: "\uBD89\uC740 \uADC0\uD658\uC120", subtitle: "\uC81C 8 \uAD6C\uC5ED \xB7 \uC0C1\uCE35 \uADC0\uD658\uB85C", names: ["\uB6AB\uB9B0 \uCC9C\uC7A5", "\uBE44\uC0C1 \uC0AC\uB2E4\uB9AC", "\uADC0\uD658 \uBA85\uBD80", "\uD68C\uC218 \uAC80\uBB38\uC18C", "\uB2EB\uD788\uB294 \uD1B5\uB85C", "\uC911\uACC4\uC120 \uAC08\uB9BC\uAE38", "\uAC80\uC740 \uC815\uBE44\uACE0", "\uD3D0\uC1C4 \uAE30\uB85D\uC2E4", "\uC0C1\uCE35 \uC2B9\uAC15\uC7A5", "\uCCA0\uAC11\uC758 \uBC29\uBCBD"] },
+  { title: "\uB450 \uB300\uC7A5\uC758 \uC120", subtitle: "\uC81C 9 \uAD6C\uC5ED \xB7 \uC911\uC559 \uC81C\uC5B4\uCD95", names: ["\uC2B9\uAC15\uAE30 \uC885\uCC29", "\uD1F4\uB85C\uC758 \uBB38", "\uBA85\uBD80\uC758 \uCE78", "\uC6B0\uD68C \uBC30\uC120\uC2E4", "\uAD81\uB2C8\uB974\uC758 \uC804\uC120", "\uACA9\uB0A9\uC2E4 \uC2EC\uBD80", "\uAC08\uB77C\uC9C4 \uBA85\uB839", "\uAE34\uAE09 \uBC29\uCD9C\uAD6C", "\uC911\uC559\uCD95 \uC804\uC2E4", "\uC911\uC559 \uC81C\uC5B4\uCD95"] }
 ];
 var CHAPTERS = CHAPTER_CONTENT.map((content, chapterIndex) => {
   const chapter = chapterIndex + 1;
@@ -27568,7 +27620,7 @@ var CHAPTERS = CHAPTER_CONTENT.map((content, chapterIndex) => {
     const globalOrder = chapterIndex * 10 + orderIndex;
     const laterChapterIds = [...STAGE_ENEMY_FORMATION];
     const lateFormation = LATE_CHAPTER_FORMATIONS[`${chapter}-${chapterOrder}`];
-    const laterChapterLevel = STORY_BOSS_LEVELS[`${chapter}-${chapterOrder}`] ?? STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
+    const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
     const laterChapterEnemies = lateFormation ? lateFormation.map(([relicId, slot]) => {
       const enemy = enemyGrowth(relicId, laterChapterLevel, slot);
       return SOLO_ELITE_ENEMIES[`${chapter}-${chapterOrder}`]?.includes(relicId) ? { ...enemy, elite: true } : enemy;
@@ -27602,7 +27654,7 @@ var CHAPTERS = CHAPTER_CONTENT.map((content, chapterIndex) => {
          * 치즈케이크의 주 수급처는 대작전이고, 스토리 반복은 관문 사이에 큰 차이가 없는 덤이다.
          */
         repeatClearCheesecake: 10 + chapterIndex * 2,
-        firstClearBonus: storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, enemies.length === 1)
+        firstClearBonus: storyFirstClearBonus(id, globalOrder, chapter, chapterOrder)
       },
       // 아직 서사가 없는 장은 이 값이 비어 있고, 화면은 그 줄을 그리지 않는다.
       situation: CHAPTER_SITUATIONS[chapterIndex]?.[orderIndex]
@@ -27640,7 +27692,7 @@ var SIDE_BATTLE_STAGE = {
   chapter: 1,
   chapterOrder: 8,
   prerequisiteStageIds: ["1-8"],
-  enemies: [enemyGrowth("amo", 17, 0), enemyGrowth("ripa", 17, 2)],
+  enemies: [enemyGrowth("amo", STORY_RECOMMENDED_LEVELS[7] - 1, 0), enemyGrowth("ripa", STORY_RECOMMENDED_LEVELS[7] - 1, 2)],
   rewards: {
     firstClearCheesecake: 0,
     repeatClearCheesecake: 0,
@@ -30512,6 +30564,7 @@ function captureExpeditionRelicSnapshot(def, progress, runeInventory, skinId) {
     // 원정은 떠난 순간 **켜져 있던** 돌파로 싸운다 — 레벨 초기화로 꺼진 단계는 굳히지 않는다.
     breakthrough: activeBreakthroughOf(progress),
     bondLevel: progress.bondLevel,
+    resonance: resonanceOf(progress),
     stats: { ...calculateFinalStats(def.stats, progress, runes, def.rarity) },
     runes,
     skinId: skinId ?? null
@@ -30521,7 +30574,7 @@ function isExpeditionRelicSnapshot(value) {
   if (!value || typeof value !== "object") return false;
   const snapshot = value;
   const whole3 = (n) => Number.isInteger(n) && n >= 0;
-  return whole3(snapshot.level) && snapshot.level >= 1 && whole3(snapshot.breakthrough) && whole3(snapshot.bondLevel) && !!snapshot.stats && typeof snapshot.stats === "object" && Object.values(snapshot.stats).every((stat) => Number.isFinite(stat)) && Array.isArray(snapshot.runes) && (snapshot.skinId === null || typeof snapshot.skinId === "string");
+  return whole3(snapshot.level) && snapshot.level >= 1 && whole3(snapshot.breakthrough) && whole3(snapshot.bondLevel) && (snapshot.resonance === void 0 || whole3(snapshot.resonance)) && !!snapshot.stats && typeof snapshot.stats === "object" && Object.values(snapshot.stats).every((stat) => Number.isFinite(stat)) && Array.isArray(snapshot.runes) && (snapshot.skinId === null || typeof snapshot.skinId === "string");
 }
 
 // src/core/opsInbox.ts
@@ -39533,7 +39586,7 @@ var BOUNTY_TIERS = [
     { relicId: "amo", level: 10 }
   ] },
   { id: "bounty-2", order: 3, name: "\uD604\uC0C1\uC218\uBC30 3\uAE09", rewardGold: 3200, rounds: [
-    { relicId: "mir", level: 15 },
+    { relicId: "mir", level: 16 },
     { relicId: "pulsi", level: 15 },
     { relicId: "koma", level: 14 }
   ] },
@@ -40057,7 +40110,7 @@ function migrateV12Rune(definitionId) {
   return cloneRune(rune);
 }
 var SAVE_STORAGE_KEY = LOCAL_SAVE_STORAGE_KEYS[LOCAL_SAVE_FLAVOR];
-var CURRENT_SAVE_VERSION = 52;
+var CURRENT_SAVE_VERSION = 53;
 function clampResearchPoints(saved) {
   const clamp2 = (period) => {
     const value = saved?.[period];
@@ -40073,6 +40126,38 @@ var LEGACY_SAVED_RELIC_ID_MAP = {
   // 새 안킬로사우루스 개체(안카)와 갈리도록 이름과 같은 ID로 옮긴다.
   anky: "torika"
 };
+var RENAMED_RELIC_IDS_V53 = {
+  "raitia-grass": "viria",
+  "raitia-water": "guttia",
+  "raitia-fire": "favia",
+  "raitia-earth": "silia",
+  "raitia-wind": "ventia",
+  quetzalcoatlus: "koatl",
+  spino: "spina",
+  dodo: "dodi",
+  carno: "kar",
+  deina: "dei",
+  nokan: "gigano",
+  eunte: "argen",
+  rex: "rexia"
+};
+var RENAMED_RELIC_TOKEN = new RegExp(`(?<![A-Za-z0-9_])(${Object.keys(RENAMED_RELIC_IDS_V53).sort((a, b) => b.length - a.length).join("|")})(?![A-Za-z0-9_])`, "g");
+var FREE_TEXT_KEYS = /* @__PURE__ */ new Set(["nickname", "bio", "intro", "introduction", "greeting", "message", "displayName", "name", "body", "text", "title", "memo"]);
+function renameRelicTokens(value) {
+  return value.replace(RENAMED_RELIC_TOKEN, (token) => RENAMED_RELIC_IDS_V53[token] ?? token);
+}
+function migrateRenamedRelicIdsV53(value) {
+  if (typeof value === "string") return renameRelicTokens(value);
+  if (Array.isArray(value)) return value.map(migrateRenamedRelicIdsV53);
+  if (!value || typeof value !== "object") return value;
+  const result = {};
+  for (const [key, entry] of Object.entries(value)) {
+    const next = renameRelicTokens(key);
+    if (Object.hasOwn(result, next)) throw new SaveDataError(`\uAD6C\uD615/\uC2E0\uADDC \uB810\uB9AD ID\uAC00 \uD568\uAED8 \uC788\uC2B5\uB2C8\uB2E4: ${next}`);
+    result[next] = FREE_TEXT_KEYS.has(key) ? entry : migrateRenamedRelicIdsV53(entry);
+  }
+  return result;
+}
 var LEGACY_OBSERVATION_PREFIX_MAP = { "anky-": "torika-" };
 var SaveDataError = class extends Error {
 };
@@ -40319,7 +40404,8 @@ var SaveManager = class {
   migrate(input) {
     if (!input || typeof input !== "object") throw new SaveDataError("\uC800\uC7A5 \uB370\uC774\uD130\uAC00 \uAC1D\uCCB4\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
     const source = input;
-    const legacy = source.saveVersion === void 0 || Number(source.saveVersion) < CURRENT_SAVE_VERSION ? migrateSavedRelicIds(source) : source;
+    const renamed = source.saveVersion === void 0 || Number(source.saveVersion) < 53 ? migrateRenamedRelicIdsV53(source) : source;
+    const legacy = renamed.saveVersion === void 0 || Number(renamed.saveVersion) < CURRENT_SAVE_VERSION ? migrateSavedRelicIds(renamed) : renamed;
     const savedRelicSkinIds = Number(legacy.saveVersion) >= 33 && Array.isArray(legacy.ownedRelicSkinIds) ? legacy.ownedRelicSkinIds : [];
     const ownedRelicSkinIds = [.../* @__PURE__ */ new Set([...savedRelicSkinIds, ...defaultUnlockedRelicSkinIds()])];
     const equippedRelicSkinIds = Number(legacy.saveVersion) >= 33 && legacy.equippedRelicSkinIds && typeof legacy.equippedRelicSkinIds === "object" ? legacy.equippedRelicSkinIds : {};
@@ -40473,7 +40559,7 @@ var SaveManager = class {
     const itemInventory = repairLegacyLotStacks((Array.isArray(legacy.itemInventory) ? legacy.itemInventory : []).filter((stack) => stack?.itemId !== "raid-sigil"));
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current2 } = legacy;
     if (legacy.saveVersion === void 0) return { ...current2, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, chestForge, delophyHunt, shuteFishing, achievements, tutorial };
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion)) throw new SaveDataError(`\uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uC800\uC7A5 \uBC84\uC804\uC785\uB2C8\uB2E4: ${String(legacy.saveVersion)}`);
     return { ...current2, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, chestForge, delophyHunt, shuteFishing, achievements, tutorial };
   }
@@ -43239,94 +43325,249 @@ var CHAPTER_7_STORIES = [
 
 // src/data/dialogues/chapter8And9.ts
 init_define_import_meta_env();
-function scene(id, backdrop, recollectionSummary, lines) {
-  return { id, backdrop, recollectionSummary, startNodeId: "n1", nodes: linear(lines.map(([speaker, body, standing2], index) => ({ id: `n${index + 1}`, speaker, body, ...standing2 ? { standing: standing2 } : {} }))) };
-}
-var CHAPTER_8_STORIES = [
-  scene("stage-8-1-pre", "thirdBranchField", "\uCE74\uB974\uAC00 \uB0A8\uAE34 \uBC1C\uC790\uAD6D\uC744 \uB530\uB77C \uC0C1\uCE35\uC73C\uB85C \uD5A5\uD55C\uB2E4.", [
-    ["", "\uAD6C\uC18D\uC2E4 \uCC9C\uC7A5\uC758 \uAD6C\uBA4D\uC740 \uC9C0\uC0C1\uAE4C\uC9C0 \uC774\uC5B4\uC9C0\uC9C0 \uC54A\uC558\uB2E4. \uCE74\uB974\uAC00 \uB51B\uACE0 \uAC04 \uC1E0\uBCF4\uAC00 \uD55C \uCE35 \uC704\uC5D0\uC11C \uC544\uC9C1 \uD754\uB4E4\uB9AC\uACE0 \uC788\uC5C8\uB2E4."],
-    ["\uCF54\uB9C8", "\u2026\uB0B4\uAC00 \uC55E\uC5D0 \uC120\uB2E4. \uC800 \uC704\uC5D0\uB294 \uC190\uBC14\uB2E5 \uD310\uC774 \uC5C6\uB2E4. \uC0AC\uB78C\uC744 \uC138\uB294 \uACC4\uC218\uAE30\uAC00 \uC788\uC9C0.", "koma"],
-    ["\uB809\uC2DC\uC544", "\uC774\uBC88\uC5D4 \uC6B0\uB9AC\uAC00 \uBA3C\uC800 \uC62C\uB77C\uAC04\uB2E4. \uB9C8\uC2A4\uD130, \uBC1C\uBC11 \uBD10.", "lexia"]
-  ]),
-  scene("stage-8-3-post", "controlRoom", "\uADC0\uD658 \uACC4\uC218\uD310\uC5D0 \uB3CC\uC544\uC624\uC9C0 \uBABB\uD55C \uC0AC\uB78C\uB4E4\uC774 \uB0A8\uC558\uB2E4.", [
-    ["", "\uACC4\uC218\uD310\uC5D0\uB294 \uB3CC\uC544\uC628 \uC0AC\uB78C\uC774 \uC5F4, \uB3CC\uC544\uC624\uC9C0 \uC54A\uC740 \uC0AC\uB78C\uC774 \uC5F4\uD55C \uBA85\uC774\uB77C\uACE0 \uB5A0 \uC788\uC5C8\uB2E4."],
-    ["\uCF54\uB9C8", "\uC218\uC6A9\uC2E4\uC774 \uBE48 \uB4A4\uC5D0\uB3C4 \uC22B\uC790\uB294 \uC548 \uBC14\uB00C\uC5B4. \uC5EC\uAE30\uC120 \uBB38\uC744 \uD1B5\uACFC\uD55C \uC0AC\uB78C\uB9CC \uB3CC\uC544\uC628 \uAC78\uB85C \uCCD0.", "koma"],
-    ["\uC774\uCE74\uB2C9\uC2DC\uC544", "\uC911\uACC4\uC120\uC744 \uB450\uACE0 \uBB3C\uB7EC\uB0A9\uB2C8\uB2E4. \uADF8\uB798\uC57C \uB610 \uC190 \uD558\uB098\uC5D0 \uC804\uBD80 \uAC78\uC9C0 \uC54A\uC744 \uD14C\uB2C8\uAE4C\uC694.", "ikanixia"]
-  ]),
-  scene("stage-8-5-pre", "thirdBranchField", "\uD68C\uC218\uC870\uB294 \uB2EB\uD788\uB294 \uBB38 \uB4A4\uC5D0 \uB0A8\uC740 \uC14B\uC744 \uAE30\uB2E4\uB9B0\uB2E4.", [
-    ["\uC544\uD2B8\uB77C", "\uAC04\uBD80\uB2D8, \uBB38\uC774 \uB2EB\uD799\uB2C8\uB2E4. \uC548\uCABD \uC14B\uC740 \uC544\uC9C1 \uC548 \uC654\uC2B5\uB2C8\uB2E4.", "atra"],
-    ["\uC774\uCE74\uB2C9\uC2DC\uC544", "\uC7A0\uAE08 \uAC78\uC1E0\uB97C \uB72F\uC5B4. \uC190\uB2D8\uC744 \uB9C9\uB294 \uAC74 \uADF8 \uB2E4\uC74C\uC774\uB2E4.", "ikanixia"],
-    ["", "\uC544\uD2B8\uB77C\uAC00 \uBE57\uC7A5\uC744 \uAC78\uCE58\uB294 \uB300\uC2E0 \uBB38 \uC0AC\uC774\uC5D0 \uC9D0\uCE78\uC744 \uBC00\uC5B4 \uB123\uC5C8\uB2E4. \uADF8 \uD2C8\uC73C\uB85C \uC5F0\uAD6C\uC6D0\uC758 \uBC1C\uCE58\uAE4C\uC9C0 \uBE44\uC0C1\uB4F1\uC774 \uAE38\uAC8C \uCF1C\uC84C\uB2E4."]
-  ]),
-  scene("stage-8-7-post", "controlRoom", "\uC5F0\uAD6C\uC6D0\uC774 \uB2E4\uAC00\uAC08\uC218\uB85D \uC591\uCABD\uC758 \uBE44\uC0C1\uB4F1\uC774 \uCF1C\uC9C4\uB2E4.", [
-    ["\uB370\uC774", "\uC774\uCABD \uC120\uB9CC \uB5A0 \uC788\uC5B4. \uC5F0\uAD6C\uC6D0\uD558\uACE0 \uAC00\uAE4C\uC6CC\uC9C0\uBA74 \uBD88\uC774 \uD558\uB098\uC529 \uCF1C\uC838.", "dei"],
-    ["\uB178\uB3C4\uB2C8\uC544", "\uADF8\uB7FC \uC800\uCABD\uC5D0\uC11C\uB3C4 \uC6B0\uB9AC\uAC00 \uC624\uB294 \uAC70 \uC54C\uC544\uBCF4\uACA0\uAD6C\uB098. \uC544\uAC00, \uB0B4\uAC00 \uC55E\uC5D0\uC11C \uBD88\uC744 \uC140\uAC8C.", "nodonia"],
-    ["", "\uBB38 \uB108\uBA38\uC5D0\uC11C \uAC19\uC740 \uC18D\uB3C4\uB85C \uC0C8 \uBD88\uC774 \uCF1C\uC84C\uB2E4. \uBA3C\uC800 \uBCF4\uB294 \uCABD\uC774 \uB204\uAD6C\uC778\uC9C0 \uC774\uC81C \uAD6C\uBD84\uD560 \uC218 \uC5C6\uC5C8\uB2E4."]
-  ]),
-  scene("stage-8-10-pre", "thirdBranchField", "\uAD81\uB2C8\uB974 \uB178\uCE78\uC774 \uC2B9\uAC15\uAE30 \uC55E\uC5D0\uC11C \uAE38\uC744 \uB9C9\uB294\uB2E4.", [
-    ["", "\uC2B9\uAC15\uAE30 \uBB38 \uC55E\uC5D0 \uC120 \uC5EC\uC790\uAC00 \uC18C\uB9E4\uC5D0 \uBB3B\uC740 \uBA3C\uC9C0\uB97C \uD138\uC5C8\uB2E4. \uD574\uC9C4 \uC637\uAE43 \uBC11\uC73C\uB85C \uC624\uB798 \uC544\uBB38 \uC790\uAD6D\uC774 \uBCF4\uC600\uB2E4."],
-    ["\uB178\uCE78", "\uADC0\uD658 \uBCF4\uACE0\uB294 \uBC1B\uC558\uC5B4. \uCE74\uB974\uB294 \uC798 \uC654\uACE0, \uC774\uC81C \uC5F0\uAD6C\uC6D0 \uCC28\uB840\uB2E4.", "gigano"],
-    ["\uB809\uC2DC\uC544", "\uC804\uD22C\uC758 \uC5EC\uC655\uC774 \uBA3C\uC800 \uC62C\uB77C\uC654\uB2E4. \uB4A4\uB294 \uBABB \uC9C0\uB098\uAC00.", "lexia"],
-    ["\uB178\uCE78", "\uADF8\uB7FC \uC5EC\uAE30\uC11C \uBD10. \uB204\uAC00 \uBA3C\uC800 \uC790\uAE30 \uB4A4\uB97C \uB3CC\uC544\uBCF4\uB294\uC9C0.", "gigano"]
-  ]),
-  scene("stage-8-10-post", "thirdBranchField", "\uB178\uCE78\uC774 \uBB3C\uB7EC\uC11C\uBA70 \uCCA0\uAC11\uC5D0\uAC8C \uC717\uAE38\uC744 \uB9E1\uAE34\uB2E4.", [
-    ["", "\uB178\uCE78\uC774 \uAC08\uB77C\uC9C4 \uC785\uC220\uC744 \uC190\uB4F1\uC73C\uB85C \uB2E6\uC558\uB2E4. \uBE44\uC0C1 \uC2B9\uAC15\uAE30\uAC00 \uD55C \uBC88 \uBC00\uB838\uB2E4\uAC00 \uB2E4\uC2DC \uC62C\uB77C\uC624\uAE30 \uC2DC\uC791\uD588\uB2E4."],
-    ["\uB178\uCE78", "\uCCA0\uAC11. \uC544\uB798\uC5D0\uC11C \uBC1B\uC558\uB2E4. \uBA48\uCD94\uC9C0 \uB9C8.", "gigano"],
-    ["\uC740\uD14C", "\uBC1B\uC558\uB2E4. \uB124 \uCABD \uBB38\uC744 \uB2EB\uC9C0. \uBD80\uB300\uC7A5\uD55C\uD14C\uB294 \uC14B\uC744 \uBA3C\uC800 \uBCF4\uB0B4\uB77C\uACE0 \uD574.", "argen"],
-    ["\uCF54\uB9C8", "\uC800 \uB458\uC740 \uC11C\uB85C \uC790\uB9AC\uB97C \uBC14\uAFB8\uC9C0 \uC54A\uB294\uB2E4. \uD55C \uBA85\uC744 \uB118\uACA8\uB3C4 \uB05D\uC774\uB77C\uACE0 \uC5EC\uAE30\uBA74 \uC548 \uB3FC.", "koma"]
+var STAGE_8_1_PRE = {
+  id: "stage-8-1-pre",
+  startNodeId: "hole",
+  backdrop: "restraint",
+  recollectionSummary: "\uCE74\uB974\uAC00 \uB6AB\uACE0 \uAC04 \uCC9C\uC7A5 \uC704\uB85C, \uACF5\uBA78\uC774 \uB3CC\uC544\uAC08 \uB54C \uD0C0\uB294 \uADC0\uD658\uB85C\uAC00 \uC5F4\uB824 \uC788\uC5C8\uB2E4.",
+  nodes: linear([
+    { id: "hole", speaker: "", body: "\uCE74\uB974\uAC00 \uB6AB\uACE0 \uAC04 \uAD6C\uBA4D \uC704\uB85C \uB179\uC2A8 \uC0AC\uB2E4\uB9AC\uAC00 \uC774\uC5B4\uC838 \uC788\uC5C8\uB2E4. \uC0AC\uB2E4\uB9AC\uAC00 \uB05D\uB098\uB294 \uACF3\uC5D0\uC11C \uBC14\uB78C \uB300\uC2E0 \uAE30\uB984 \uB0C4\uC0C8\uAC00 \uB0B4\uB824\uC654\uB2E4.", cast: [{ id: "koma", slot: "center" }] },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uADC0\uD658\uB85C\uB2E4. \uACF5\uBA78\uC774 \uC77C \uB05D\uB0B4\uACE0 \uB3CC\uC544\uAC08 \uB54C \uD0C0\uB294 \uAE38.", standing: "koma", act: "lean" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uB3CC\uC544\uAC00\uB294 \uAE38\uC774\uBA74 \uC704\uB85C \uC774\uC5B4\uC9C0\uB294 \uAC70\uB124? \uC798\uB410\uB2E4. \uB9C8\uC2A4\uD130, \uC624\uB298\uC740 \uCC98\uC74C\uC73C\uB85C \uC62C\uB77C\uAC00\uB294 \uCABD\uC774\uC5D0\uC694.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "koma", slot: "right" }], act: "hop" },
+    { id: "koma2", speaker: "\uCF54\uB9C8", body: "\u2026\uB098\uB294 \uC774 \uAE38\uC744 \uD0C0 \uBCF8 \uC801\uC774 \uC5C6\uB2E4.", standing: "koma", act: "shrink" },
+    { id: "koma3", speaker: "\uCF54\uB9C8", body: "\uD14C\uB7EC\uC870\uB294 \uB3CC\uC544\uC624\uB77C\uB294 \uB9D0\uC744 \uB4E4\uC740 \uC801\uC774 \uC5C6\uAC70\uB4E0. \uB298 \uB2E4\uC74C \uC790\uB9AC\uB85C \uB0B4\uB824\uAC00\uB77C\uB294 \uB9D0\uB9CC \uB4E4\uC5C8\uC9C0.", standing: "koma" },
+    { id: "alarm", speaker: "", body: "\uC0AC\uB2E4\uB9AC \uC704\uCABD\uC5D0\uC11C \uBD89\uC740 \uD45C\uC9C0\uB4F1\uC774 \uD558\uB098\uC529 \uCF1C\uC84C\uB2E4. \uCF1C\uC9C4 \uC790\uB9AC\uB9C8\uB2E4 \uCCA0\uD310 \uC154\uD130\uAC00 \uCC9C\uCC9C\uD788 \uB0B4\uB824\uC624\uAE30 \uC2DC\uC791\uD588\uB2E4.", cue: "alarm" },
+    { id: "pachi", speaker: "\uD30C\uCE58", body: "\uBCF4, \uBCF4\uC2A4\u2026 \uC704\uC5D0\uC11C \uC154\uD130 \uB0B4\uB824\uC624\uB294 \uC18C\uB9AC \uB098\uC694. \uC6B0\uB9AC \uC62C\uB77C\uC624\uB294 \uAC70 \uC544\uB294 \uAC70 \uC544\uB2C8\uC5D0\uC694?", standing: "pachi", cast: [{ id: "pachi", slot: "center" }], act: "tremble" },
+    { id: "crate", speaker: "", body: "\uC154\uD130 \uBC11\uC73C\uB85C \uB0AF\uC775\uC740 \uC14B\uC774 \uC9D0\uC9DD\uC744 \uD558\uB098\uC529 \uB04C\uACE0 \uBBF8\uB044\uB7EC\uC838 \uB0B4\uB824\uC654\uB2E4. \uB4F1\uC9DD\uB9C8\uB2E4 \uD68C\uC218\uC870 \uAF2C\uB9AC\uD45C\uAC00 \uD07C\uC9C1\uD558\uAC8C \uBD99\uC5B4 \uC788\uC5C8\uB2E4.", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], cue: "impact" },
+    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uCF54\uB9C8 \uB2D8. \uC9C4\uC9DC \uC0B4\uC544 \uACC4\uC168\uB124.", standing: "amo", act: "tremble" },
+    { id: "koma4", speaker: "\uCF54\uB9C8", body: "\u2026\uC544\uBAA8. \uB108\uD76C \uC544\uC9C1 \uD68C\uC218\uC870 \uC9D0 \uB098\uB974\uB0D0.", standing: "koma", cast: [{ id: "koma", slot: "left" }, { id: "amo", slot: "right" }], act: "lean" },
+    { id: "toby", speaker: "\uD1A0\uBE44", body: "\uB098\uB974\uB294 \uAC70 \uC544\uB2C8\uAC70\uB4E0\uC694! \uBD99\uB4E4\uB824\uC11C \uB098\uB974\uB294 \uAC70\uC608\uC694! \uC774\uAC70 \uB2E4 \uB0B4\uB824\uB193\uC73C\uBA74 \uC6B0\uB9AC\uAC00 \uC9D0 \uB41C\uB300\uC694!", standing: "toby", cast: [{ id: "toby", slot: "left" }, { id: "koma", slot: "right" }], act: "puff", voice: "shout" },
+    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uC73C\uD750\uD750. \uADF8\uB7EC\uB2C8\uAE4C \uCF54\uB9C8 \uB2D8, \uBBF8\uC548\uD55C\uB370 \uAE38\uC740 \uB9C9\uC744\uAC8C\uC694. \uC774\uBC88\uC5D0\uB3C4 \uC704\uC5D0\uC11C \uB2E4 \uC815\uD588\uAC70\uB4E0\uC694.", standing: "ripa", cast: [{ id: "ripa", slot: "center" }], act: "lean" }
   ])
-];
-var CHAPTER_9_STORIES = [
-  scene("stage-9-1-pre", "controlRoom", "\uC81C\uC5B4\uCD95\uC744 \uBA48\uCD94\uAE30 \uC804\uC5D0 \uACA9\uB0A9\uC2E4\uBD80\uD130 \uBE44\uC6B0\uAE30\uB85C \uD55C\uB2E4.", [
-    ["", "\uC2B9\uAC15\uAE30\uAC00 \uBA4E\uC5C8\uB2E4. \uC9C0\uC6CC\uC9C4 \uC801 \uC5C6\uB294 \uC22B\uC790 \uB450 \uAC1C\uAC00 \uCD9C\uC785 \uBA85\uBD80 \uB9E8 \uC704\uC5D0 \uB0A8\uC544 \uC788\uC5C8\uB2E4."],
-    ["\uB370\uC774", "\uC81C\uC5B4\uCD95 \uC544\uB798 \uACA9\uB0A9\uC2E4\uC774 \uC804\uBD80 \uAC19\uC740 \uC120\uC5D0 \uBB36\uC600\uC5B4. \uC5EC\uAE30 \uBB38\uC744 \uB04A\uC73C\uB824\uBA74 \uBA3C\uC800 \uC548\uC5D0 \uC788\uB294 \uC0AC\uB78C\uC744 \uBE7C\uC57C \uD574.", "dei"],
-    ["\uB809\uC2DC\uC544", "\uC88B\uC544. \uCD9C\uAD6C\uAE4C\uC9C0 \uBA3C\uC800 \uD655\uBCF4\uD55C\uB2E4. \uBB38 \uD558\uB098 \uB530\uB7EC \uC628 \uAC70\uBA74 \uAD73\uC774 \uC5EC\uAE30\uAE4C\uC9C0 \uC548 \uC654\uC9C0.", "lexia"]
-  ]),
-  scene("stage-9-3-post", "controlRoom", "\uCF54\uB9C8\uAC00 \uC624\uB798\uC804 \uCC98\uC74C \uC0AC\uB78C\uC744 \uBE7C\uB0C8\uB358 \uC21C\uC11C\uB97C \uB5A0\uC62C\uB9B0\uB2E4.", [
-    ["", "\uB204\uAD70\uAC00 \uB3CC\uB85C \uBC1B\uCCD0 \uB454 \uBC29\uCD9C\uAD6C \uC544\uB798\uB85C \uC0AC\uB78C \uD558\uB098\uAC00 \uACA8\uC6B0 \uC9C0\uB098\uAC08 \uB9CC\uD55C \uD2C8\uC774 \uBCF4\uC600\uB2E4."],
-    ["\uCF54\uB9C8", "\uC61B\uB0A0\uC5D4 \uBC88\uD638 \uBAA8\uB974\uB294 \uC0AC\uB78C\uBD80\uD130 \uBE7C\uB0C8\uC5B4. \uC774\uBC88\uC5D0\uB3C4 \uADF8 \uC21C\uC11C\uB85C \uD55C\uB2E4.", "koma"],
-    ["\uB178\uB3C4\uB2C8\uC544", "\uC544\uAC00, \uAC19\uC774 \uAC00\uC11C \uC5F4\uC790. \uC548\uC73C\uB85C \uB4E4\uC5B4\uAC00\uC9C0 \uC54A\uC544\uB3C4 \uC190\uC740 \uB2FF\uACA0\uC5B4.", "nodonia"]
-  ]),
-  scene("stage-9-5-pre", "thirdBranchField", "\uCCA0\uAC11 \uC740\uD14C\uAC00 \uD1F4\uB85C \uC55E\uC5D0 \uC5F4 \uACB9\uC758 \uC7A5\uAC11\uC744 \uB0B4\uB9B0\uB2E4.", [
-    ["", "\uAC80\uC740 \uC7A5\uAC11\uC758 \uC5EC\uC790\uAC00 \uBC1C\uB4A4\uAFC8\uCE58\uB97C \uB0B4\uB824\uB193\uC790, \uC5F4 \uAC08\uB798 \uACE0\uC815\uC1E0\uAC00 \uBC14\uB2E5\uC5D0 \uBC15\uD614\uB2E4."],
-    ["\uC740\uD14C", "\uCCA0\uAC11\uC774\uB2E4. \uB4A4\uC5D0 \uC0AC\uB78C \uC788\uB2E4. \uBC1C \uB514\uB518 \uC120\uC5D0\uC11C \uBB3C\uB7EC\uC11C.", "argen"],
-    ["\uB178\uB3C4\uB2C8\uC544", "\uADF8 \uC0AC\uB78C\uB4E4 \uB54C\uBB38\uC5D0 \uC628 \uAC70\uC57C. \uAE38\uC744 \uD55C \uC904\uB9CC \uB0B4 \uC8FC\uB834.", "nodonia"],
-    ["\uC740\uD14C", "\uB0B4\uAC00 \uC5F4\uBA74 \uC81C\uC5B4\uCD95\uB3C4 \uC5F4\uB9B0\uB2E4. \uADF8 \uC870\uAC74\uC73C\uB85C\uB294 \uBABB \uC900\uB2E4.", "argen"]
-  ]),
-  scene("stage-9-5-post", "thirdBranchField", "\uC740\uD14C\uAC00 \uC606 \uBB38\uC744 \uC5F4\uC5B4 \uC548\uC5D0 \uB0A8\uC740 \uC0AC\uB78C\uBD80\uD130 \uB0B4\uBCF4\uB0B8\uB2E4.", [
-    ["", "\uC5F4 \uBC88\uC9F8 \uACE0\uC815\uC1E0\uAC00 \uBE60\uC838 \uB098\uC654\uB2E4. \uC740\uD14C\uB294 \uC4F0\uB7EC\uC9C4 \uBB38\uC744 \uBAB8\uC73C\uB85C \uBC1B\uCE5C \uCC44 \uB048 \uD558\uB098\uB97C \uC7A1\uC544\uB2F9\uACBC\uB2E4."],
-    ["\uC740\uD14C", "\uC606 \uBB38\uC740 \uC5F4\uC5C8\uB2E4. \uB4E4\uC5B4\uAC04 \uC0AC\uB78C \uC788\uC73C\uBA74 \uC9C0\uAE08 \uBE7C. \uC81C\uC5B4\uCD95\uC740 \uB0B4\uAC00 \uC9C0\uD0A8\uB2E4.", "argen"],
-    ["\uB809\uC2DC\uC544", "\uB0B4\uAC00 \uC9C0\uD0A4\uB77C\uACE0 \uD574\uC11C \uB4A4\uC5D0 \uC11C\uB294 \uAC74 \uC54C\uACA0\uB294\uB370, \uADF8\uB807\uAC8C \uC11C\uBA74 \uB05D\uAE4C\uC9C0 \uD63C\uC790 \uB0A8\uAC8C \uB418\uC796\uC544.", "lexia"],
-    ["", "\uC740\uD14C\uB294 \uB300\uB2F5\uD558\uB294 \uB300\uC2E0 \uC0AC\uB78C \uD558\uB098\uAC00 \uB354 \uC9C0\uB098\uAC08 \uB9CC\uD07C \uBB38\uC744 \uB4E4\uC5C8\uB2E4."]
-  ]),
-  scene("stage-9-7-post", "controlRoom", "\uCE74\uB974\uAC00 \uCD9C\uAD6C\uC5D0 \uC11C\uC11C \uB3CC\uC544\uC62C \uC0AC\uB78C\uC758 \uC774\uB984\uC744 \uBD80\uB978\uB2E4.", [
-    ["\uCE74\uB974", "\u2026\uB300\uC7A5\uB4E4 \uBA85\uB839\uC774\uB2E4. \uC544\uC9C1 \uC548 \uB098\uC628 \uC0AC\uB78C\uC744 \uCC3E\uB294\uB2E4.", "kar"],
-    ["\uCF54\uB9C8", "\uADF8\uAC74 \uB0B4\uAC00 \uAC04\uB2E4. \uB10C \uC800\uCABD\uC5D0\uC11C \uB098\uC624\uB294 \uC0AC\uB78C \uC774\uB984\uBD80\uD130 \uBD88\uB7EC.", "koma"],
-    ["", "\uCE74\uB974\uAC00 \uD55C\uB3D9\uC548 \uC785\uC744 \uC5F4\uC9C0 \uC54A\uC558\uB2E4. \uADF8\uB7EC\uACE0\uB294 \uBA3C\uC800 \uB3CC\uC544\uC62C \uC0AC\uB78C\uC758 \uBC88\uD638\uB97C \uBD80\uB974\uC9C0 \uC54A\uACE0, \uC774\uB984\uC744 \uBD88\uB800\uB2E4."]
-  ]),
-  scene("stage-9-9-post", "controlRoom", "\uB370\uC774\uAC00 \uBC29\uCD9C\uAD6C\uB97C \uC5F0\uACB0\uD55C\uB2E4. \uC774\uC81C \uB9C8\uC9C0\uB9C9 \uBB38\uB9CC \uB0A8\uC558\uB2E4.", [
-    ["\uB370\uC774", "\uBC29\uCD9C\uAD6C \uC5F0\uACB0 \uC644\uB8CC. \uC774\uAC78 \uB193\uC73C\uBA74 \uBC14\uAE65\uAE4C\uC9C0 \uC774\uC5B4\uC838. \uC774\uC81C \uC0AC\uB78C\uB4E4 \uB04C\uC5B4\uC62C\uB9B4 \uC218 \uC788\uC5B4.", "dei"],
-    ["\uB178\uB3C4\uB2C8\uC544", "\uADF8\uB7FC \uB9C8\uC9C0\uB9C9 \uBB38\uAE4C\uC9C0\uB294 \uC6B0\uB9AC\uAC00 \uAC08\uAC8C. \uC544\uAC00, \uC6B0\uB9AC \uB4A4\uC5D0 \uB204\uAC00 \uB0A8\uB294\uC9C0\uB3C4 \uBD10\uC57C \uD574.", "nodonia"],
-    ["", "\uC81C\uC5B4\uCD95 \uB108\uBA38\uC5D0\uC11C \uAE08\uC18D\uC774 \uB450 \uBC88 \uBC14\uB2E5\uC744 \uCCE4\uB2E4. \uB300\uB2F5\uCC98\uB7FC, \uB2E4\uB978 \uCABD\uC5D0\uC11C \uBC1C\uC18C\uB9AC\uAC00 \uD55C \uBC88 \uB3CC\uC544\uC654\uB2E4."]
-  ]),
-  scene("stage-9-10-pre", "controlRoom", "\uB450 \uB300\uC7A5\uC774 \uB098\uB780\uD788 \uC11C\uC11C \uC5F0\uAD6C\uC6D0\uC758 \uB9C8\uC9C0\uB9C9 \uAE38\uC744 \uB9C9\uB294\uB2E4.", [
-    ["", "\uC740\uD14C\uAC00 \uC911\uC559\uCD95 \uC55E\uC5D0 \uC7A5\uAC11\uC744 \uACE0\uC815\uD588\uB2E4. \uB178\uCE78\uC740 \uD55C \uAC78\uC74C \uC55E\uAE4C\uC9C0 \uB098\uAC14\uB2E4\uAC00, \uC774\uBC88\uC5D0\uB294 \uC740\uD14C\uC758 \uC5B4\uAE68\uAC00 \uB2FF\uB294 \uC790\uB9AC\uC5D0 \uC130\uB2E4."],
-    ["\uC740\uD14C", "\uBC29\uCD9C\uAD6C\uB294 \uB124\uAC00 \uC5F4\uC5C8\uC9C0, \uC5F0\uAD6C\uC6D0. \uC911\uC559\uCD95\uC744 \uC5F4\uBA74 \uB0A8\uC740 \uBC29\uAE4C\uC9C0 \uB124 \uC55E\uC73C\uB85C \uB2F9\uACA8\uC9C4\uB2E4.", "argen"],
-    ["\uB178\uCE78", "\uCC98\uC74C\uC5D4 \uC544\uBB34\uB3C4 \uC6B0\uB9AC \uBC29\uC5D0 \uB4E4\uC5B4\uC624\uC9C0 \uC54A\uC558\uC5B4. \uC774\uC81C \uC6B0\uB9AC\uAC00 \uBA3C\uC800 \uB098\uAC00. \uB124\uAC00 \uC5EC\uAE30 \uB0A8\uC744\uC9C0\uB294 \uC6B0\uB9AC\uAC00 \uC815\uD55C\uB2E4.", "gigano"],
-    ["\uB809\uC2DC\uC544", "\uB9C8\uC2A4\uD130\uAC00 \uB0A8\uC744 \uC790\uB9AC\uB294 \uB9C8\uC2A4\uD130\uAC00 \uC815\uD574. \uB450 \uC0AC\uB78C \uB2E4 \uAE38\uC744 \uC5F4\uC5B4.", "lexia"],
-    ["\uC740\uD14C", "\uB178\uCE78. \uC624\uB978\uCABD\uC740 \uB9E1\uAE34\uB2E4.", "argen"],
-    ["\uB178\uCE78", "\uC54C\uC544. \uC774\uBC88\uC5D4 \uBA3C\uC800 \uC548 \uAC04\uB2E4.", "gigano"]
-  ]),
-  scene("stage-9-10-post", "controlRoom", "\uB9C8\uC9C0\uB9C9 \uBC29\uC774 \uBE44\uACE0, \uC81C\uC5B4\uCD95\uC758 \uACBD\uBCF4\uB4F1\uC774 \uAEBC\uC9C4\uB2E4.", [
-    ["", "\uB9C8\uC9C0\uB9C9 \uACBD\uBCF4\uB4F1\uC774 \uAEBC\uC84C\uB2E4. \uC740\uD14C\uAC00 \uC7A1\uC544 \uB450\uB358 \uCD95\uC774 \uAE30\uC6B8\uC5C8\uACE0, \uB178\uCE78\uC774 \uC4F0\uB7EC\uC9C4 \uCABD \uC5B4\uAE68\uB97C \uBC1B\uCCE4\uB2E4."],
-    ["\uC740\uD14C", "\uB05D\uAE4C\uC9C0 \uB0A8\uC740 \uBC29\uC740?", "argen"],
-    ["\uB370\uC774", "\uBE44\uC5C8\uC5B4. \uD56D\uBAA9\uB9C8\uB2E4 \uC0AC\uB78C \uC190\uC73C\uB85C \uD655\uC778\uD588\uC5B4.", "dei"],
-    ["\uB178\uCE78", "\uADF8\uB7FC \uB410\uB2E4. \uCCA0\uAC11, \uC774\uBC88\uC5D4 \uB124\uAC00 \uBA3C\uC800 \uAC00.", "gigano"],
-    ["\uB809\uC2DC\uC544", "\uB9C8\uC2A4\uD130. \uB4A4\uC5D0 \uC544\uBB34\uB3C4 \uC548 \uB0A8\uC558\uC5B4.", "lexia"],
-    ["", "\uC5F0\uAD6C\uC6D0\uC774 \uB4A4\uB97C \uB3CC\uC544\uBD24\uB2E4. \uC7A0\uAE08\uD310\uC740 \uAC00\uAE4C\uC774 \uAC00\uB3C4 \uB2E4\uC2DC \uBE5B\uB098\uC9C0 \uC54A\uC558\uB2E4. \uCF54\uB9C8\uAC00 \uADF8 \uC606\uC744 \uAC78\uC5B4\uC11C \uC9C0\uB098\uAC14\uB2E4."],
-    ["\uCF54\uB9C8", "\uC704\uAE4C\uC9C0 \uAC19\uC774 \uAC04\uB2E4\uACE0 \uD588\uC9C0. \u2026\uB354 \uAC00\uC57C \uD558\uBA74, \uC774\uBC88\uC5D4 \uAC70\uAE30\uAE4C\uC9C0\uB77C\uACE0 \uD574 \uB450\uC9C0.", "koma"]
+};
+var STAGE_8_3_POST = {
+  id: "stage-8-3-post",
+  startNodeId: "board",
+  backdrop: "detention",
+  recollectionSummary: "\uADC0\uD658 \uBA85\uBD80\uC758 \uB178\uC544\uC640 \uB77C\uC790 \uCE78\uC740 \uBE68\uAC1B\uAC8C \uC9C0\uC6CC\uC838 \uC788\uC5C8\uB2E4. \uC9C0\uC6B4 \uAC83\uC740 \uD68C\uC218\uC870\uC600\uB2E4.",
+  nodes: linear([
+    { id: "board", speaker: "", body: "\uD1B5\uB85C \uBCBD \uD55C \uBA74\uC744 \uCCA0\uD310 \uBA85\uBD80\uAC00 \uCC28\uC9C0\uD558\uACE0 \uC788\uC5C8\uB2E4. \uC774\uB984 \uCE78\uB9C8\uB2E4 \uC791\uC740 \uB4F1\uC774 \uBC15\uD600 \uC788\uC5C8\uACE0, \uB300\uBD80\uBD84\uC740 \uCD08\uB85D\uC73C\uB85C \uCF1C\uC838 \uC788\uC5C8\uB2E4.", cast: [{ id: "dodi", slot: "center" }] },
+    { id: "dodi", speaker: "\uB3C4\uB514", body: "\uB300\uC7A5\uB2D8, \uC774\uAC70 \uCD9C\uC11D\uBD80 \uAC19\uC544\uC694. \uCD08\uB85D\uC740 \uC628 \uC0AC\uB78C, \uBE68\uAC15\uC740\u2026 \uC548 \uC628 \uC0AC\uB78C\uC778\uAC00?", standing: "dodi", act: "lean" },
+    { id: "noa", speaker: "\uB178\uC544", body: "\uC624, \uC624\uC9C0 \uB9C8! \uAC70\uAE30\uC11C \uBA48\uCDB0! \uB098 \uAC04\uBD80\uC57C! \uC9C4\uC9DC\uB85C \uC138\uB2E4\uACE0!", standing: "noa", cast: [{ id: "dodi", slot: "left" }, { id: "noa", slot: "right" }], act: "fright", voice: "shout" },
+    { id: "see", speaker: "", body: "\uBA85\uBD80 \uB4A4 \uBC30\uAD00 \uD2C8\uC5D0\uC11C \uB178\uC544\uAC00 \uD280\uC5B4\uB098\uC654\uB2E4. \uADF8\uB7EC\uB2E4 \uBA85\uBD80\uB97C \uBCF4\uACE0\uB294, \uB4E4\uACE0 \uC788\uB358 \uC190\uC744 \uCC9C\uCC9C\uD788 \uB0B4\uB838\uB2E4." },
+    { id: "noa2", speaker: "\uB178\uC544", body: "\u2026\uB0B4 \uCE78\uC774 \uBE68\uAC1C. \uB77C\uC790 \uAC83\uB3C4. \uB9C8\uAC00\uC0AC\uB294 \uCD08\uB85D\uC778\uB370\u2026 \uC65C \uC6B0\uB9AC\uB9CC.", standing: "noa", act: "shrink" },
+    { id: "raja", speaker: "\uB77C\uC790", body: "\uB178\uC544 \uAC04\uBD80\uB2D8, \uB4A4\uB85C \uBB3C\uB7EC\uB098\uC2ED\uC2DC\uC624.", standing: "raja", cast: [{ id: "noa", slot: "left" }, { id: "raja", slot: "right" }], act: "nod" },
+    { id: "raja2", speaker: "\uB77C\uC790", body: "072\uAC00 \uAC00\uB974\uCCD0 \uC92C\uACA0\uC9C0\uB9CC, \uC6B0\uB9AC \uCE78\uC744 \uC9C0\uC6B4 \uAC74 \uD68C\uC218\uC870\uB2E4. \uC624\uB514\uB514\uC5D0\uC11C \uC4F0\uB7EC\uC9C4 \uC6B0\uB9AC\uB97C \uC7A5\uBD80\uC5D0 \u300C\uC190\uC2E4\u300D\uB85C \uC801\uACE0 \uAC14\uC9C0.", standing: "raja", voice: "heavy" },
+    { id: "raja3", speaker: "\uB77C\uC790", body: "\uC5F0\uAD6C\uC6D0. \uB124\uAC00 \uAC19\uC774 \uAC00 \uC8FC\uBA74 \uC774 \uCE78\uB4E4\uB3C4 \uB2E4\uC2DC \uCF1C\uC9C8 \uAC70\uB2E4. \uC2EB\uB2E4\uBA74, \uB4E4\uACE0 \uAC04\uB2E4.", standing: "raja", act: "lean" },
+    { id: "noa3", speaker: "\uB178\uC544", body: "\u2026\uD558, \uD558\uB098\uB3C4 \uC548 \uBB34\uC11C\uC6E0\uC5B4. \uC9C4\uC9DC\uC57C. \uADF8\uB0E5 \uBA85\uBD80 \uBCF4\uB290\uB77C \uADF8\uB7F0 \uAC70\uC57C.", standing: "noa", act: "puff" }
   ])
-];
+};
+var STAGE_8_5_PRE = {
+  id: "stage-8-5-pre",
+  startNodeId: "door",
+  backdrop: "thirdBranchField",
+  recollectionSummary: "\uC774\uCE74\uB2C9\uC2DC\uC544\uB294 \uB178\uC544\uC640 \uB77C\uC790\uB97C \uBB38 \uB4A4\uC5D0 \uB450\uACE0 \uBC29\uD654\uBB38\uC744 \uB2EB\uC73C\uB824 \uD588\uB2E4.",
+  nodes: linear([
+    { id: "door", speaker: "", body: "\uD1B5\uB85C \uB05D\uC5D0\uC11C \uB450\uAEBC\uC6B4 \uBC29\uD654\uBB38\uC774 \uB0B4\uB824\uC624\uACE0 \uC788\uC5C8\uB2E4. \uBB38 \uC544\uB798 \uC190\uC7A1\uC774\uB97C \uC954 \uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uCC9C\uCC9C\uD788, \uC544\uC8FC \uC815\uC911\uD558\uAC8C \uADF8\uAC83\uC744 \uB04C\uC5B4\uB0B4\uB9AC\uACE0 \uC788\uC5C8\uB2E4.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "left" }, { id: "atra", slot: "right" }], cue: "rumble" },
+    { id: "atra", speaker: "\uC544\uD2B8\uB77C", body: "\uAC00, \uAC04\uBD80\uB2D8. \uBB38\u2026 \uB4A4\uC5D0 \uC544\uC9C1 \uB178\uC544 \uAC04\uBD80\uB2D8\uC774\uB791 \uB77C\uC790 \uB2D8\uC774\u2026", standing: "atra", act: "tremble" },
+    { id: "ikanixia", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC54C\uC544\uC694, \uC544\uD2B8\uB77C. \uADF8\uB798\uC11C \uC9C0\uAE08 \uB2EB\uB294 \uAC70\uC608\uC694. \uB458\uC744 \uB370\uB9AC\uB7EC \uAC00\uBA74 \uC190\uB2D8\uAE4C\uC9C0 \uAC19\uC774 \uC62C\uB77C\uC624\uC796\uC544\uC694.", standing: "ikanixia", act: "nod" },
+    { id: "ikanixia2", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uBB38 \uD558\uB098\uC5D0 \uB458\uC744 \uB450\uACE0 \uC624\uB294 \uAC83\uCBE4\uC740 \uACC4\uC0B0\uC774 \uC11C\uC694. \uC608\uC804\uC5D0\uB3C4 \uADF8\uB7AC\uACE0\uC694.", standing: "ikanixia", voice: "heavy" },
+    { id: "atra2", speaker: "\uC544\uD2B8\uB77C", body: "\u2026\uC2DC, \uC2EB\uC5B4\uC694.", standing: "atra", act: "shake" },
+    { id: "wedge", speaker: "", body: "\uC544\uD2B8\uB77C\uAC00 \uC9D0\uC218\uB808\uB97C \uBB38 \uC544\uB798\uB85C \uBC00\uC5B4 \uB123\uC5C8\uB2E4. \uB0B4\uB824\uC624\uB358 \uCCA0\uD310\uC774 \uC218\uB808\uC5D0 \uAC78\uB824 \uBE44\uBA85\uC744 \uC9C8\uB800\uB2E4.", cue: "impact" },
+    { id: "ikanixia3", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\u2026\uC5B4\uBA38. \uC6B0\uB9AC \uC544\uD2B8\uB77C\uAC00 \uC774\uB7F0 \uAC83\uB3C4 \uD560 \uC904 \uC54C\uC558\uB124\uC694. \uADF8\uB7FC \uBB38 \uB300\uC2E0 \uC81C\uAC00 \uB9C9\uC8E0.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" }
+  ])
+};
+var STAGE_8_5_POST = {
+  id: "stage-8-5-post",
+  startNodeId: "gap",
+  backdrop: "thirdBranchField",
+  recollectionSummary: "\uC544\uD2B8\uB77C\uAC00 \uB9C9\uC740 \uBB38\uD2C8\uC73C\uB85C \uB77C\uC790\uAC00 \uB098\uC654\uB2E4. \uC774\uBC88\uC5D0\uB294 \uC544\uBB34\uB3C4 \uC9C0\uC6CC\uC9C0\uC9C0 \uC54A\uC558\uB2E4.",
+  nodes: linear([
+    { id: "gap", speaker: "", body: "\uC218\uB808\uC5D0 \uAC78\uB9B0 \uBB38\uD2C8\uC73C\uB85C \uB77C\uC790\uAC00 \uB178\uC544\uB97C \uC5C5\uACE0 \uAE30\uC5B4 \uB098\uC654\uB2E4. \uB0A0\uAC1C \uB9DD\uD1A0\uB294 \uBCBD\uC5D0 \uAE30\uB300\uC549\uC740 \uCC44 \uADF8 \uB458\uC744 \uC62C\uB824\uB2E4\uBD24\uB2E4.", cast: [{ id: "raja", slot: "left" }, { id: "ikanixia", slot: "right" }] },
+    { id: "raja", speaker: "\uB77C\uC790", body: "\u2026\uC774\uBC88\uC5D4 \uC548 \uB2EB\uC73C\uC168\uC2B5\uB2C8\uAE4C, \uAC04\uBD80\uB2D8.", standing: "raja", act: "lean" },
+    { id: "ikanixia", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uB2EB\uC73C\uB824\uACE0 \uD588\uC5B4\uC694, \uB77C\uC790 \uB2D8. \uC544\uD2B8\uB77C\uAC00 \uBABB \uD558\uAC8C \uD588\uC744 \uBFD0\uC774\uC8E0.", standing: "ikanixia", act: "nod" },
+    { id: "raja2", speaker: "\uB77C\uC790", body: "\u2026\uADF8\uB54C\uB3C4 \uB204\uAC00 \uB9C9\uC558\uC73C\uBA74 \uB410\uC744 \uD150\uB370.", standing: "raja", voice: "whisper" },
+    { id: "ikanixia2", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uD6C4\uD6D7\u2026 \uADF8\uB54C\uB294 \uB9C9\uC744 \uC0AC\uB78C\uC774 \uC5C6\uC5C8\uC5B4\uC694.", standing: "ikanixia", act: "shrink" },
+    { id: "raja3", speaker: "\uB77C\uC790", body: "\uC544\uD2B8\uB77C. \uBE5A \uD558\uB098 \uC84C\uB2E4.", standing: "raja", cast: [{ id: "raja", slot: "left" }, { id: "atra", slot: "right" }], act: "nod" },
+    { id: "atra", speaker: "\uC544\uD2B8\uB77C", body: "\uBE44, \uBE5A \uC544\uB2C8\uC5D0\uC694. \uADF8\uB0E5\u2026 \uBAA9\uB85D\uC5D0\uC11C \uC774\uB984 \uC9C0\uC6B0\uB294 \uAC70, \uC774\uC81C \uC2EB\uC5B4\uC11C\uC694.", standing: "atra", act: "shrink" }
+  ])
+};
+var STAGE_8_7_POST = {
+  id: "stage-8-7-post",
+  startNodeId: "table",
+  backdrop: "controlRoom",
+  recollectionSummary: "\uB9C8\uAC00\uC0AC\uB294 \uACF5\uAD6C \uC0C1\uC790 \uC704\uC5D0 \uADF8\uB987\uC744 \uCC28\uB838\uB2E4. \uD558\uB098 \uB0A8\uB294 \uADF8\uB987\uC740 072\uC758 \uBAAB\uC774\uC5C8\uB2E4.",
+  nodes: linear([
+    { id: "table", speaker: "", body: "\uAC80\uC740 \uC815\uBE44\uACE0 \uD55C\uAC00\uC6B4\uB370\uC5D0 \uACF5\uAD6C \uC0C1\uC790\uAC00 \uC2DD\uD0C1\uCC98\uB7FC \uB193\uC5EC \uC788\uC5C8\uB2E4. \uADF8 \uC704\uC5D0 \uCC0C\uADF8\uB7EC\uC9C4 \uADF8\uB987 \uB2E4\uC12F \uAC1C\uAC00 \uAC00\uC9C0\uB7F0\uD788 \uC904 \uC11C \uC788\uC5C8\uB2E4.", standing: "magasa", cast: [{ id: "magasa", slot: "center" }] },
+    { id: "nodonia", speaker: "\uB178\uB3C4\uB2C8\uC544", body: "\uC2F8\uC6B0\uB2E4 \uB9D0\uACE0 \uBC25\uC0C1\uC744 \uCC28\uB838\uAD6C\uB098. \u2026\uADF8\uB7F0\uB370 \uADF8\uB987\uC774 \uD558\uB098 \uB0A8\uB124? \uB178\uC544, \uB77C\uC790, \uB108, \uBD80\uB300\uC7A5\u2026 \uB137\uC774\uC796\uB2C8.", standing: "nodonia", cast: [{ id: "nodonia", slot: "left" }, { id: "magasa", slot: "right" }], act: "lean" },
+    { id: "magasa", speaker: "\uB9C8\uAC00\uC0AC", body: "072 \uB2D8 \uAC70\uC608\uC694. \uBD80\uB300\uC7A5\uB2D8\uC774 \uBA85\uBD80\uC5D0 \uB2E4\uC2DC \uC801\uC5B4 \uB450\uC168\uAC70\uB4E0\uC694. \uC801\uD78C \uC0AC\uB78C \uBAAB\uC740 \uCC28\uB824 \uB450\uB294 \uAC8C \uC800\uD76C \uADDC\uCE59\uC774\uB77C\uC11C\uC694.", standing: "magasa", act: "nod" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB098\uB294 \uADF8 \uBC25 \uC548 \uBA39\uB294\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "left" }, { id: "magasa", slot: "right" }], act: "shrink" },
+    { id: "magasa2", speaker: "\uB9C8\uAC00\uC0AC", body: "\uB124, \uC54C\uC544\uC694. \uADF8\uB798\uB3C4 \uCC28\uB824 \uB458\uAC8C\uC694. \u2026\uC544, \uADF8\uB9AC\uACE0 \uC9C4 \uAE40\uC5D0 \uD558\uB098 \uC54C\uB824 \uB4DC\uB9B4\uAC8C\uC694.", standing: "magasa", act: "lean" },
+    { id: "magasa3", speaker: "\uB9C8\uAC00\uC0AC", body: "\uCCA0\uAC11 \uB300\uC7A5\uB2D8\uC740 \uB298 \uB9E8 \uB4A4\uC5D0 \uC11C\uC138\uC694. \uC548 \uC62C\uB77C\uC628 \uC0AC\uB78C\uC774 \uC788\uC73C\uBA74\u2026 \uADF8 \uC0AC\uB78C\uC774 \uC62C \uB54C\uAE4C\uC9C0 \uC9C1\uC811 \uB0B4\uB824\uC640\uC11C \uAE30\uB2E4\uB9AC\uC138\uC694.", standing: "magasa", voice: "whisper" },
+    { id: "lift", speaker: "", body: "\uADF8 \uB9D0\uC774 \uB05D\uB098\uAE30\uB3C4 \uC804\uC5D0 \uC815\uBE44\uACE0 \uCC9C\uC7A5 \uB108\uBA38\uC5D0\uC11C \uC2B9\uAC15\uAE30 \uC1E0\uC904\uC774 \uAE38\uAC8C \uD480\uB824 \uB0B4\uB824\uC624\uB294 \uC18C\uB9AC\uAC00 \uB0AC\uB2E4. \uC544\uC8FC \uB290\uB9AC\uACE0, \uC544\uC8FC \uBB34\uAC70\uC6E0\uB2E4.", cue: "rumble" }
+  ])
+};
+var STAGE_8_10_PRE = {
+  id: "stage-8-10-pre",
+  startNodeId: "wall",
+  backdrop: "thirdBranchField",
+  recollectionSummary: "\uCCA0\uAC11 \uC544\uB974\uAC90\uC740 \uB178\uC544\uC640 \uB77C\uC790\uAC00 \uC62C\uB77C\uC62C \uB54C\uAE4C\uC9C0 \uC2B9\uAC15\uC7A5\uC744 \uBE44\uC6B0\uC9C0 \uC54A\uACA0\uB2E4\uBA70 \uB9E8 \uB4A4\uC5D0 \uC130\uB2E4.",
+  nodes: linear([
+    { id: "wall", speaker: "", body: "\uC2B9\uAC15\uAE30 \uBB38\uC774 \uC5F4\uB9AC\uC790 \uAC80\uC740 \uC7A5\uAC11\uC744 \uB450\uB978 \uC5EC\uC790\uAC00 \uCC9C\uCC9C\uD788 \uBC1C\uC744 \uB0B4\uB838\uB2E4. \uBC1C\uB4A4\uAFC8\uCE58\uAC00 \uB2FF\uC744 \uB54C\uB9C8\uB2E4 \uBC14\uB2E5\uC5D0 \uACE0\uC815\uC1E0\uAC00 \uD558\uB098\uC529 \uBC15\uD614\uB2E4. \uC5F4 \uAC1C\uC9F8\uC5D0\uC11C \uC18C\uB9AC\uAC00 \uBA4E\uC5C8\uB2E4.", standing: "argen", cast: [{ id: "argen", slot: "center" }], cue: "impact" },
+    { id: "argen", speaker: "\uC544\uB974\uAC90", body: "\uCCA0\uAC11\uC774\uB2E4. \uB178\uC544\uB791 \uB77C\uC790\uAC00 \uC544\uC9C1 \uC548 \uC62C\uB77C\uC654\uC5B4. \uAC54\uB124 \uC62C\uB77C\uC62C \uB54C\uAE4C\uC9C0 \uC774 \uC2B9\uAC15\uC7A5\uC740 \uC544\uBB34\uB3C4 \uBABB \uC9C0\uB098\uAC00.", standing: "argen", act: "nod" },
+    { id: "eunte2", speaker: "\uC544\uB974\uAC90", body: "\uC5F0\uAD6C\uC6D0. \uB108\uB294 \uAC70\uAE30 \uAC00\uB9CC\uD788 \uC788\uC5B4. \uAC54\uB124 \uB2E4 \uC62C\uB824 \uBCF4\uB0B4\uBA74, \uADF8\uB2E4\uC74C\uC5D0 \uB0B4\uAC00 \uC9C1\uC811 \uB370\uB9AC\uB7EC \uAC08 \uD14C\uB2C8\uAE4C.", standing: "argen" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uCCA0\uAC11.", standing: "koma", cast: [{ id: "koma", slot: "left" }, { id: "argen", slot: "right" }], act: "shrink" },
+    { id: "eunte3", speaker: "\uC544\uB974\uAC90", body: "\uCF54\uB9C8. \uC0B4\uC544 \uC788\uC5C8\uB124. \uCE74\uB974\uAC00 \uB124 \uCE78 \uB2E4\uC2DC \uC801\uB294 \uAC70, \uB0B4\uAC00 \uC606\uC5D0\uC11C \uBD24\uB2E4.", standing: "argen", act: "lean" },
+    { id: "nodonia", speaker: "\uB178\uB3C4\uB2C8\uC544", body: "\uB108\uB3C4 \uC544\uC774\uB4E4\uC744 \uBA3C\uC800 \uC62C\uB824 \uBCF4\uB0B4\uB294\uAD6C\uB098. \uADF8 \uB9C8\uC74C\uC740 \uC54C\uACA0\uC5B4. \uB098\uB3C4 \uB298 \uADF8\uB807\uAC8C \uC11C \uC788\uAC70\uB4E0.", standing: "nodonia", cast: [{ id: "nodonia", slot: "left" }, { id: "argen", slot: "right" }], act: "lean" },
+    { id: "eunte4", speaker: "\uC544\uB974\uAC90", body: "\uAC19\uC740 \uC77C\uC774\uB77C\uB3C4 \uC904\uC740 \uB2E4\uB974\uC9C0. \uB124 \uC904\uC5D0\uB294 \uADF8 \uC5F0\uAD6C\uC6D0\uC774 \uC788\uACE0, \uB0B4 \uC904\uC5D0\uB294 \uC5C6\uC5B4.", standing: "argen", act: "shake" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uADF8\uB7FC \uADF8 \uC904, \uC81C\uAC00 \uB118\uC744\uAC8C\uC694. \uB9C8\uC2A4\uD130 \uAE38\uC740 \uAE30\uB2E4\uB9AC\uB294 \uAE38\uC774 \uC544\uB2C8\uAC70\uB4E0\uC694.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "argen", slot: "right" }], act: "hop", voice: "shout" }
+  ])
+};
+var STAGE_8_10_POST = {
+  id: "stage-8-10-post",
+  startNodeId: "last",
+  backdrop: "thirdBranchField",
+  recollectionSummary: "\uC544\uB974\uAC90\uC740 \uB178\uC544\uC640 \uB77C\uC790\uAC00 \uC62C\uB77C\uC628 \uB4A4\uC5D0\uC57C \uBB3C\uB7EC\uB0AC\uB2E4. \uC704\uC5D0\uC11C \uAE30\uAC00\uB178\uAC00 \uC148\uC744 \uD558\uACE0 \uC788\uC5C8\uACE0, \uBA85\uBD80\uC758 072 \uCE78\uC740 \uCD08\uB85D\uC774\uC5C8\uB2E4.",
+  nodes: linear([
+    { id: "last", speaker: "", body: "\uC5F4 \uBC88\uC9F8 \uACE0\uC815\uC1E0\uAC00 \uBF51\uD600 \uB098\uAC14\uB2E4. \uC544\uB974\uAC90\uC774 \uAE30\uC6B8\uC5B4\uC9C0\uB294 \uC2B9\uAC15\uAE30 \uBB38\uC744 \uC5B4\uAE68\uB85C \uBC1B\uCE58\uB294 \uC0AC\uC774, \uADF8 \uBC11\uC73C\uB85C \uB77C\uC790\uAC00 \uB178\uC544\uB97C \uC5C5\uACE0 \uAE30\uC5B4 \uB098\uC654\uB2E4.", cast: [{ id: "noa", slot: "left" }, { id: "argen", slot: "center" }, { id: "raja", slot: "right" }], cue: "rumble" },
+    { id: "raja", speaker: "\uB77C\uC790", body: "\uBCF4\uACE0\uB4DC\uB9BD\uB2C8\uB2E4, \uB300\uC7A5\uB2D8. \uD68C\uC218\uC870 \uAC04\uBD80\uAC00 \uBB38\uC744 \uB2EB\uC73C\uB77C \uD588\uC2B5\uB2C8\uB2E4. \uC544\uD2B8\uB77C\uAC00 \uB9C9\uC558\uC2B5\uB2C8\uB2E4.", standing: "raja", act: "nod" },
+    { id: "argen", speaker: "\uC544\uB974\uAC90", body: "\u2026\uC774\uCE74\uB2C9\uC2DC\uC544\uAC00? \uB610?", standing: "argen", act: "shake", voice: "heavy" },
+    { id: "noa", speaker: "\uB178\uC544", body: "\uB300, \uB300\uC7A5\uB2D8! \uC800 \uB9C8\uC9C0\uB9C9\uC774\uC5D0\uC694! \uC800 \uB05D\uAE4C\uC9C0 \uC548 \uC6B8\uC5C8\uC5B4\uC694!", standing: "noa", act: "hopTwice" },
+    { id: "eunte2", speaker: "\uC544\uB974\uAC90", body: "\uADF8\uB798. \uC798\uD588\uB2E4.", standing: "argen", act: "nod" },
+    { id: "noa2", speaker: "", body: "\uB178\uC544\uAC00 \uADF8 \uC790\uB9AC\uC5D0 \uBA48\uCDB0 \uC130\uB2E4. \uBC29\uAE08 \uBB34\uC2A8 \uB9D0\uC744 \uB4E4\uC5C8\uB294\uC9C0 \uD55C \uBC88 \uB354 \uD655\uC778\uD558\uB824\uB294 \uC5BC\uAD74\uB85C, \uC544\uB974\uAC90\uC758 \uC7A5\uAC11 \uB05D\uB9CC \uCCD0\uB2E4\uBD24\uB2E4." },
+    { id: "far", speaker: "???", body: "\uC544\uB974\uAC90! \uB2E4 \uC654\uC73C\uBA74 \uC62C\uB77C\uC640. \uC148\uC740 \uB0B4\uAC00 \uD560\uAC8C. \uD68C\uC218\uC870 \uC7A5\uBD80\uB3C4 \uB0B4\uAC00 \uBCF8\uB2E4.", cue: "alarm" },
+    { id: "eunte3", speaker: "\uC544\uB974\uAC90", body: "\u2026\uAE30\uAC00\uB178\uB294 \uB098\uBCF4\uB2E4 \uB35C \uCC38\uC544. \uC5F0\uAD6C\uC6D0, \uC704\uC5D0\uC11C \uAC54 \uB9CC\uB098\uBA74 \uC22B\uC790\uBD80\uD130 \uC140 \uAC70\uC57C. \uAC01\uC624\uD574 \uB46C.", standing: "argen", act: "lean" },
+    { id: "leave", speaker: "", body: "\uC544\uB974\uAC90\uC774 \uB458\uC744 \uBA3C\uC800 \uC2B9\uAC15\uAE30\uC5D0 \uD0DC\uC6B0\uACE0, \uB9E8 \uB9C8\uC9C0\uB9C9\uC5D0 \uC62C\uB790\uB2E4. \uBB38\uC774 \uB2EB\uD788\uACE0 \uC1E0\uC904\uC774 \uB2E4\uC2DC \uAC10\uACBC\uB2E4.", standing: "argen", leave: "rise", cast: [] },
+    { id: "board", speaker: "", body: "\uBE48 \uC2B9\uAC15\uC7A5 \uBCBD\uC5D0 \uBA85\uBD80\uD310 \uD558\uB098\uAC00 \uAC78\uB824 \uC788\uC5C8\uB2E4. \uB9E8 \uC544\uB798 \uCE78, 072\uB77C\uACE0 \uC801\uD78C \uC790\uB9AC\uC5D0 \uCD08\uB85D \uBD88\uC774 \uB4E4\uC5B4\uC640 \uC788\uC5C8\uB2E4.", cast: [{ id: "koma", slot: "center" }], cue: "heartbeat" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB2E4\uC2DC \uC801\uC5C8\uB2E4.", standing: "koma", voice: "whisper" },
+    { id: "koma2", speaker: "\uCF54\uB9C8", body: "\uB098\uB294 \uC9C0\uC6B4 \uC801\uC774 \uC788\uB294\uB370. \uADF8\uCABD\uC740 \uD55C \uBC88\uB3C4 \uC9C0\uC6B4 \uC801\uC774 \uC5C6\uC5C8\uB358 \uAC70\uB2E4.", standing: "koma", act: "shrink" }
+  ])
+};
+var CHAPTER_8_STORIES = [STAGE_8_1_PRE, STAGE_8_3_POST, STAGE_8_5_PRE, STAGE_8_5_POST, STAGE_8_7_POST, STAGE_8_10_PRE, STAGE_8_10_POST];
+var STAGE_9_1_PRE = {
+  id: "stage-9-1-pre",
+  startNodeId: "shaft",
+  backdrop: "controlRoom",
+  recollectionSummary: "\uC2B9\uAC15\uAE30\uAC00 \uBA48\uCD98 \uACF3\uC740 \uC911\uC559 \uC81C\uC5B4\uCD95\uC774\uC5C8\uB2E4. \uADF8 \uC704\uAC00 \uBC14\uAE65\uC774\uC5C8\uB2E4.",
+  nodes: linear([
+    { id: "shaft", speaker: "", body: "\uC2B9\uAC15\uAE30\uAC00 \uBA48\uCD98 \uACF3\uC740 \uAC70\uB300\uD55C \uC6D0\uD1B5\uC758 \uBC14\uB2E5\uC774\uC5C8\uB2E4. \uD55C\uAC00\uC6B4\uB370\uB97C \uAD75\uC740 \uCD95\uC774 \uAFF0\uB6AB\uACE0 \uC62C\uB77C\uAC14\uACE0, \uBCBD\uC744 \uB530\uB77C \uBB38\uC774 \uCE35\uCE35\uC774 \uBC15\uD600 \uC788\uC5C8\uB2E4.", cast: [{ id: "koma", slot: "center" }] },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\uC911\uC559 \uC81C\uC5B4\uCD95\uC774\uB2E4. \uC774\uD130\uB110 \uC544\uB798\uCE35\uC744 \uB2E4 \uC774 \uCD95 \uD558\uB098\uB85C \uB3CC\uB9B0\uB2E4. \uC800 \uC704\uB85C \uB098\uAC00\uBA74 \uBC14\uAE65\uC774\uB2E4.", standing: "koma", act: "lean" },
+    { id: "ella", speaker: "\uC5D8\uB77C", body: "\uB4DC\uB514\uC5B4 \uC704\uB85C \uB09C \uAE38\uC774\uB124\uC694. \uC5F0\uAD6C\uC6D0, \uC870\uAE08\uB9CC \uB354 \uAC00\uC694. \uB2E4 \uC654\uC5B4\uC694.", standing: "ella", cast: [{ id: "ella", slot: "left" }, { id: "parua", slot: "right" }], act: "nod" },
+    { id: "parua", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB300\uC7A5\uB2D8. \uBB38\uB9C8\uB2E4 \uBD88\uC774 \uCF1C\uC838 \uC788\uC5B4\uC694. \uB2E4 \uC5F0\uAD6C\uC6D0\uB2D8 \uCABD\uC744 \uBCF4\uACE0 \uCF1C\uC838\uC694.", standing: "parua", act: "tremble" },
+    { id: "kar", speaker: "\uCE74\uB974", body: "\u2026\uC654\uAD70. \uB300\uC7A5\uB4E4\uC774 \uC9C1\uC811 \uBCF4\uACA0\uB2E8\uB2E4. \uB108\uB97C.", standing: "kar", cast: [{ id: "kar", slot: "center" }], act: "lean", voice: "heavy" }
+  ])
+};
+var STAGE_9_3_POST = {
+  id: "stage-9-3-post",
+  startNodeId: "kar",
+  backdrop: "controlRoom",
+  recollectionSummary: "\uCE74\uB974\uB294 072\uB97C \uB2E4\uC2DC \uC801\uC740 \uC774\uC720\uB97C \uB9D0\uD588\uB2E4. \uB300\uC7A5\uB4E4\uD55C\uD14C \uD558\uB098\uB77C\uB3C4 \uBE60\uC9C0\uBA74 \uC548 \uB41C\uB2E4\uACE0.",
+  nodes: linear([
+    { id: "kar", speaker: "\uCE74\uB974", body: "072. \uBA85\uBD80\uB294 \uBD24\uACA0\uC9C0.", standing: "kar", cast: [{ id: "koma", slot: "left" }, { id: "kar", slot: "right" }], act: "lean" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\uBD24\uB2E4. \uBD80\uD0C1\uD55C \uC801 \uC5C6\uB2E4.", standing: "koma", act: "shake" },
+    { id: "carno2", speaker: "\uCE74\uB974", body: "\uBD80\uD0C1 \uBC1B\uACE0 \uC801\uC740 \uAC70 \uC544\uB2C8\uB2E4. \uB300\uC7A5\uB4E4\uD55C\uD14C \uD558\uB098\uB77C\uB3C4 \uBE60\uC9C0\uBA74, \uB0B4\uAC00 \uBCF4\uACE0\uB97C \uB2E4\uC2DC \uC368\uC57C \uD558\uB2C8\uAE4C.", standing: "kar" },
+    { id: "koma2", speaker: "\uCF54\uB9C8", body: "\u2026\uADF8\uB798\uC11C \uB370\uB824\uAC00\uB824\uB294 \uAC74\uAC00. \uB098\uB97C, \uC544\uB2C8\uBA74 \uC800 \uC0AC\uB78C\uC744.", standing: "koma", act: "lean" },
+    { id: "carno3", speaker: "\uCE74\uB974", body: "\uB458 \uB2E4. \uC21C\uC11C\uB294 \uB300\uC7A5\uB4E4\uC774 \uC815\uD55C\uB2E4.", standing: "kar", act: "nod", voice: "heavy" },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB300\uC7A5\uB2D8\uC740 \uC548 \uB3FC\uC694! \uB370\uB824\uAC00\uB824\uBA74 \uC800\uBD80\uD130 \uB118\uC5B4\uAC00\uC57C \uD574\uC694!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "kar", slot: "right" }], act: "puff", voice: "shout" },
+    { id: "carno4", speaker: "\uCE74\uB974", body: "\u2026\uC791\uC740 \uAC8C \uC55E\uC5D0 \uC11C\uB294\uAD70. \uAE30\uC5B5\uD574 \uB450\uC9C0.", standing: "kar", act: "nod" },
+    { id: "leave", speaker: "", body: "\uCE74\uB974\uAC00 \uCD95\uC744 \uD0C0\uACE0 \uC704\uCE35\uC73C\uB85C \uB6F0\uC5B4\uC62C\uB790\uB2E4. \uADF8\uAC00 \uC9C0\uB098\uAC04 \uCE35\uB9C8\uB2E4 \uBB38\uC774 \uD558\uB098\uC529 \uC7A0\uACBC\uB2E4.", standing: "kar", leave: "rise", cast: [] }
+  ])
+};
+var STAGE_9_5_PRE = {
+  id: "stage-9-5-pre",
+  startNodeId: "drop",
+  backdrop: "thirdBranchField",
+  recollectionSummary: "\uAD81\uB2C8\uB974 \uAE30\uAC00\uB178\uB294 \uC148\uC774 \uD558\uB098 \uBAA8\uC790\uB780\uB2E4\uBA70 \uC9C1\uC811 \uCD95\uC744 \uD0C0\uACE0 \uB0B4\uB824\uC654\uB2E4.",
+  nodes: linear([
+    { id: "drop", speaker: "", body: "\uC704\uCE35 \uB09C\uAC04\uC5D0\uC11C \uBD89\uC740 \uC678\uD22C \uC790\uB77D\uC774 \uBA3C\uC800 \uB5A8\uC5B4\uC84C\uB2E4. \uD0A4 \uD070 \uC5EC\uC790\uAC00 \uCD95\uC744 \uD0C0\uACE0 \uBBF8\uB044\uB7EC\uC838 \uB0B4\uB824\uC640, \uC190\uAC00\uB77D\uC744 \uD558\uB098\uC529 \uC811\uC73C\uBA70 \uC8FC\uC704\uB97C \uB458\uB7EC\uBD24\uB2E4. \uC5BC\uAD74\uC744 \uAC00\uB85C\uC9C0\uB978 \uC624\uB798\uB41C \uD749\uD130\uAC00 \uC6C3\uC744 \uB54C\uB9C8\uB2E4 \uD568\uAED8 \uD718\uC5C8\uB2E4.", standing: "gigano", cast: [{ id: "gigano", slot: "center" }], cue: "impact" },
+    { id: "gigano", speaker: "\uAE30\uAC00\uB178", body: "\uD558\uB098, \uB458\u2026 \uB178\uC544\uB791 \uB77C\uC790\uB294 \uC544\uB974\uAC90\uC774 \uC62C\uB824 \uBCF4\uB0C8\uACE0. \uCE74\uB974, \uB9C8\uAC00\uC0AC, \uB2E4 \uC654\uACE0. \u2026\uADFC\uB370 \uD558\uB098\uAC00 \uC548 \uB9DE\uC544.", standing: "gigano", act: "nod" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uAD81\uB2C8\uB974.", standing: "koma", cast: [{ id: "koma", slot: "left" }, { id: "gigano", slot: "right" }], act: "shrink" },
+    { id: "nokan2", speaker: "\uAE30\uAC00\uB178", body: "\uCF54\uB9C8! \uC5EC\uAE30 \uC788\uC5C8\uB124. \uBC88\uD638 \uC9C0\uC6E0\uB2E4\uBA70? \uCE74\uB974 \uADF8 \uB140\uC11D, \uADF8\uAC70 \uB4E3\uACE0 \uC0AC\uD758\uC744 \uBC25\uC744 \uC548 \uBA39\uB354\uB77C.", standing: "gigano", act: "hopTwice" },
+    { id: "nokan3", speaker: "\uAE30\uAC00\uB178", body: "\uC5F0\uAD6C\uC6D0. \uC6B0\uB9AC \uC560 \uC606\uC5D0 \uC11C \uC788\uB294 \uAC70, \uADF8\uAC70 \uB124 \uC904\uC774\uC57C \uC6B0\uB9AC \uC904\uC774\uC57C?", standing: "gigano", act: "lean" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uCF54\uB9C8 \uC904\uC774\uC5D0\uC694. \uADFC\uB370 \uB9C8\uC2A4\uD130\uD55C\uD14C \uBB3B\uB294 \uC0AC\uB78C \uCE58\uACE0\uB294 \uC190\uC5D0 \uD798\uC774 \uB108\uBB34 \uB4E4\uC5B4\uAC00 \uC788\uB124\uC694.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "gigano", slot: "right" }], act: "hop" },
+    { id: "nokan4", speaker: "\uAE30\uAC00\uB178", body: "\uBB50, \uC88B\uC544. \uBE44\uD0A4\uB77C\uACE0 \uD560 \uC0DD\uAC01\uC740 \uC5C6\uC5B4. \uB9C9\uB294 \uB188\uC740 \uAC19\uC774 \uC13C\uB2E4.", standing: "gigano", act: "rage", cue: "impact", voice: "shout" }
+  ])
+};
+var STAGE_9_5_POST = {
+  id: "stage-9-5-post",
+  startNodeId: "breath",
+  backdrop: "thirdBranchField",
+  recollectionSummary: "\uAE30\uAC00\uB178\uB294 \uC148\uC744 \uBBF8\uB8E8\uACE0 \uC704\uB85C \uC62C\uB77C\uAC14\uB2E4. \uC544\uB974\uAC90\uACFC \uD568\uAED8 \uD68C\uC218\uC870 \uC7A5\uBD80\uB97C \uBCF4\uACA0\uB2E4\uACE0 \uD588\uB2E4.",
+  nodes: linear([
+    { id: "breath", speaker: "", body: "\uAE30\uAC00\uB178\uAC00 \uCD95\uC5D0 \uB4F1\uC744 \uAE30\uB300\uACE0 \uC228\uC744 \uACE8\uB790\uB2E4. \uC678\uD22C \uC548\uCABD \uBD95\uB300 \uC704\uB85C \uBD89\uC740 \uC5BC\uB8E9\uC774 \uBC88\uC838 \uC788\uC5C8\uB294\uB370, \uBCF8\uC778\uC740 \uADF8\uCABD\uC744 \uD55C \uBC88\uB3C4 \uBCF4\uC9C0 \uC54A\uC558\uB2E4.", standing: "gigano", cast: [{ id: "gigano", slot: "center" }] },
+    { id: "gigano", speaker: "\uAE30\uAC00\uB178", body: "\uD558, \uC14B\uC774\uC11C \uD558\uB098\uB97C \uC774\uB807\uAC8C \uBD99\uC7A1\uB124. \uC6B0\uB9AC \uC560\uB4E4\uC774 \uC774\uAC78 \uBABB \uB118\uC5C8\uAD6C\uB098.", standing: "gigano", act: "squash" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uC148\uC740 \uB05D\uB0AC\uB098.", standing: "koma", cast: [{ id: "koma", slot: "left" }, { id: "gigano", slot: "right" }], act: "lean" },
+    { id: "nokan2", speaker: "\uAE30\uAC00\uB178", body: "\uC544\uB2C8. \uBBF8\uB904 \uB454 \uAC70\uC57C. \uC544\uB974\uAC90\uC774 \uD68C\uC218\uC870 \uC7A5\uBD80 \uC880 \uAC19\uC774 \uBCF4\uC7AC. \uB178\uC544\uB791 \uB77C\uC790 \uCE78 \uB204\uAC00 \uAEBC \uB1A8\uB294\uC9C0.", standing: "gigano", voice: "heavy" },
+    { id: "nokan3", speaker: "\uAE30\uAC00\uB178", body: "\uC5F0\uAD6C\uC6D0. \uB108\uB294 \uC544\uC9C1 \uC6B0\uB9AC \uC148\uC5D0 \uC5C6\uC5B4. \uADF8\uB7EC\uB2C8\uAE4C \uC624\uB298\uC740 \uADF8\uB0E5 \uAC04\uB2E4. \uAF2D\uB300\uAE30\uC5D0\uC11C \uBCF4\uC790.", standing: "gigano", act: "nod" },
+    { id: "leave", speaker: "", body: "\uAE30\uAC00\uB178\uAC00 \uCD95\uC744 \uCC28\uACE0 \uB6F0\uC5B4\uC62C\uB790\uB2E4. \uBD89\uC740 \uC678\uD22C\uAC00 \uCE35\uC744 \uD558\uB098\uC529 \uC9C0\uB098\uCE60 \uB54C\uB9C8\uB2E4 \uBB38\uB4E4\uC774 \uCC28\uB840\uB85C \uC7A0\uACBC\uB2E4.", standing: "gigano", leave: "rise", cast: [] }
+  ])
+};
+var STAGE_9_7_POST = {
+  id: "stage-9-7-post",
+  startNodeId: "ledger",
+  backdrop: "controlRoom",
+  recollectionSummary: "\uB300\uC7A5\uB4E4\uC740 \uD68C\uC218\uC870\uAC00 \uC120\uB450\uC870\uB97C \u300C\uC804\uC6D0 \uC190\uC2E4\u300D\uB85C \uC801\uC740 \uC7A5\uBD80\uB97C \uBD24\uB2E4. \uC774\uBC88\uC5D0\uB294 \uC774\uCE74\uB2C9\uC2DC\uC544\uAC00 \uAC70\uB46C\uC9C8 \uCC28\uB840\uC600\uB2E4.",
+  nodes: linear([
+    { id: "ledger", speaker: "\uCE74\uB974", body: "\uB300\uC7A5\uB4E4\uC774 \uB4E4\uC5C8\uB2E4. \uC120\uB450\uC870 \uC7A5\uBD80\uC5D0 \u300C\uC804\uC6D0 \uC190\uC2E4\u300D\uC774\uB77C\uACE0 \uC801\uC740 \uAC70.", standing: "kar", cast: [{ id: "ikanixia", slot: "left" }, { id: "kar", slot: "right" }], act: "lean", voice: "heavy" },
+    { id: "ikanixia", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uD6C4\uD6D7\u2026 \uADF8\uB54C\uB294 \uADF8\uAC8C \uC81C\uC77C \uAE54\uB054\uD55C \uACC4\uC0B0\uC774\uC5C8\uC5B4\uC694, \uBD80\uB300\uC7A5\uB2D8. \uB2E4 \uB370\uB824\uC624\uBA74 \uB2E4 \uAC19\uC774 \uC7A1\uD614\uC744 \uD14C\uB2C8\uAE4C.", standing: "ikanixia", act: "shrink" },
+    { id: "carno2", speaker: "\uCE74\uB974", body: "\uACC4\uC0B0\uC740 \uB300\uC7A5\uB4E4\uC774 \uD55C\uB2E4. \uB108\uB294 \uAC70\uB450\uB294 \uC77C\uB9CC \uD574.", standing: "kar", act: "shake" },
+    { id: "ikanixia2", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\u2026\uADF8\uB7FC \uC774\uBC88\uC5D4 \uC81C\uAC00 \uAC70\uB46C\uC9C0\uB294 \uCC28\uB840\uACA0\uB124\uC694.", standing: "ikanixia", act: "faint" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uC77C\uC5B4\uB098\uB77C. \uAC70\uB46C\uC9C8 \uAC70\uBA74, \uB124 \uBC1C\uB85C \uC62C\uB77C\uAC00\uC11C \uAC70\uB46C\uC838.", standing: "koma", cast: [{ id: "koma", slot: "left" }, { id: "ikanixia", slot: "right" }], act: "lean" },
+    { id: "ikanixia3", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5B4\uBA38. \uCF54\uB9C8\uD55C\uD14C \uADF8\uB7F0 \uB9D0\uC744 \uB2E4 \uB4E3\uB124.", standing: "ikanixia", act: "nod" },
+    { id: "up", speaker: "", body: "\uC774\uCE74\uB2C9\uC2DC\uC544\uAC00 \uB0A0\uAC1C \uB9DD\uD1A0\uB97C \uD138\uACE0 \uC77C\uC5B4\uC130\uB2E4. \uB298 \uC704\uC5D0\uC11C \uB0B4\uB824\uC11C\uB358 \uADF8\uAC00, \uC774\uBC88\uC5D0\uB294 \uACC4\uB2E8\uC744 \uD55C \uCE78\uC529 \uBC1F\uC544 \uC62C\uB77C\uAC14\uB2E4.", standing: "ikanixia", leave: "rise", cast: [] }
+  ])
+};
+var STAGE_9_9_POST = {
+  id: "stage-9-9-post",
+  startNodeId: "lever",
+  backdrop: "controlRoom",
+  recollectionSummary: "\uCE74\uB974\uB294 \uBC29\uCD9C\uAD6C\uB97C \uC5F4\uACE0, \uBB38\uB4E4\uC774 \uC5F0\uAD6C\uC6D0\uC744 \uBCF4\uACE0 \uAE68\uC5B4\uB0AC\uB2E4\uACE0 \uB300\uC7A5\uB4E4\uC5D0\uAC8C \uBCF4\uACE0\uD588\uB2E4.",
+  nodes: linear([
+    { id: "lever", speaker: "", body: "\uCE74\uB974\uAC00 \uBC29\uCD9C\uAD6C \uB808\uBC84\uB97C \uB05D\uAE4C\uC9C0 \uB0B4\uB838\uB2E4. \uC544\uB798\uCE35 \uCE78\uB9C9\uC774\uB4E4\uC774 \uCC28\uB840\uB85C \uC5F4\uB9AC\uBA70 \uBE44\uC5B4 \uC788\uB294 \uC548\uCABD\uC744 \uB4DC\uB7EC\uB0C8\uB2E4.", standing: "kar", cast: [{ id: "kar", slot: "center" }], cue: "rumble" },
+    { id: "kar", speaker: "\uCE74\uB974", body: "\u2026\uC544\uB798 \uCE78\uC5D0 \uB0A8\uC740 \uAC74 \uC774\uC81C \uC5C6\uB2E4. \uC6B0\uB9AC \uCABD\uC740 \uC804\uBD80 \uC704\uB85C \uC62C\uB838\uB2E4.", standing: "kar", act: "nod" },
+    { id: "carno2", speaker: "\uCE74\uB974", body: "\uB300\uC7A5\uB4E4\uD55C\uD14C\uB294 \uC774\uB807\uAC8C \uBCF4\uACE0\uD588\uB2E4. \uC5F0\uAD6C\uC6D0\uC774 \uC9C0\uB098\uAC08 \uB54C\uB9C8\uB2E4 \uBB38\uC774 \uB2E4 \uAE68\uC5B4\uB09C\uB2E4\uACE0. \uC774\uC81C \uB300\uC7A5\uB4E4\uC774 \uC9C1\uC811 \uBCF8\uB2E4.", standing: "kar", voice: "heavy" },
+    { id: "maddy", speaker: "\uB9E4\uB514", body: "\u2026\uC0AC\uB78C\uC774 \uBB34\uC2A8 \uB0C9\uC7A5\uACE0 \uBD88\uBE5B\uC774\uC5D0\uC694? \uB2E4\uAC00\uAC00\uBA74 \uCF1C\uC9C0\uACE0 \uBA40\uC5B4\uC9C0\uBA74 \uAEBC\uC9C0\uACE0.", standing: "maddy", cast: [{ id: "maddy", slot: "left" }, { id: "kar", slot: "right" }], act: "puff" },
+    { id: "carno3", speaker: "\uCE74\uB974", body: "\u2026\uD2C0\uB9B0 \uB9D0\uC740 \uC544\uB2C8\uAD70.", standing: "kar", act: "nod" },
+    { id: "anka", speaker: "\uC548\uCE74", body: "\uC704\uC5D0\uC11C \uB450 \uC0AC\uB78C \uC228\uC18C\uB9AC\uAC00 \uB098\uC694. \uD558\uB098\uB294 \uC544\uC8FC \uB290\uB9AC\uACE0\u2026 \uD558\uB098\uB294 \uC544\uC8FC \uAE09\uD574\uC694.", standing: "anka", cast: [{ id: "anka", slot: "center" }], act: "shrink", voice: "whisper" }
+  ])
+};
+var STAGE_9_10_PRE = {
+  id: "stage-9-10-pre",
+  startNodeId: "two",
+  backdrop: "controlRoom",
+  recollectionSummary: "\uAD81\uB2C8\uB974\uC640 \uCCA0\uAC11\uC774 \uB098\uB780\uD788 \uC130\uB2E4. \uB458\uC740 \uCF54\uB9C8\uB97C \uC148\uC5D0\uC11C \uBE84 \uC0DD\uAC01\uC774 \uC5C6\uC5C8\uB2E4.",
+  nodes: linear([
+    { id: "two", speaker: "", body: "\uC81C\uC5B4\uCD95 \uAF2D\uB300\uAE30 \uC55E\uC5D0 \uB450 \uC0AC\uB78C\uC774 \uC11C \uC788\uC5C8\uB2E4. \uAE30\uAC00\uB178\uB294 \uD55C \uAC78\uC74C \uC55E\uC73C\uB85C \uB098\uC130\uB2E4\uAC00, \uC774\uBC88\uC5D0\uB294 \uC2A4\uC2A4\uB85C \uBB3C\uB7EC\uB098 \uC544\uB974\uAC90\uC758 \uC5B4\uAE68\uAC00 \uB2FF\uB294 \uC790\uB9AC\uC5D0 \uC130\uB2E4.", cast: [{ id: "gigano", slot: "left" }, { id: "argen", slot: "right" }] },
+    { id: "gigano", speaker: "\uAE30\uAC00\uB178", body: "\uB2E4 \uC14C\uC5B4. \uC6B0\uB9AC \uCABD\uC740 \uD558\uB098\uB9CC \uBE48\uB2E4.", standing: "gigano", act: "nod" },
+    { id: "argen", speaker: "\uC544\uB974\uAC90", body: "\uCF54\uB9C8.", standing: "argen", voice: "heavy" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB098\uB294 \uC148\uC5D0\uC11C \uBE7C\uB77C.", standing: "koma", cast: [{ id: "koma", slot: "left" }, { id: "gigano", slot: "right" }], act: "shrink" },
+    { id: "nokan2", speaker: "\uAE30\uAC00\uB178", body: "\uADF8\uAC74 \uB124\uAC00 \uC815\uD558\uB294 \uAC8C \uC544\uB2C8\uC57C. \uC6B0\uB9AC\uAC00 \uC138\uB294 \uAC70\uC9C0. \uCE74\uB974\uAC00 \uB2E4\uC2DC \uC801\uC5C8\uACE0, \uC544\uB974\uAC90\uC774 \uD655\uC778\uD588\uACE0, \uB098\uB294 \uC138.", standing: "gigano", act: "lean" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uCF54\uB9C8\uAC00 \uC5B4\uB514 \uC124\uC9C0\uB294 \uCF54\uB9C8\uAC00 \uC815\uD574\uC694. \uB9C8\uC2A4\uD130 \uC606\uC774\uB4E0, \uB2F9\uC2E0\uB4E4 \uC606\uC774\uB4E0.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "gigano", slot: "right" }], act: "hop", voice: "shout" },
+    { id: "eunte2", speaker: "\uC544\uB974\uAC90", body: "\uAE30\uAC00\uB178. \uC624\uB978\uCABD\uC740 \uB9E1\uAE34\uB2E4.", standing: "argen", cast: [{ id: "gigano", slot: "left" }, { id: "argen", slot: "right" }], act: "nod" },
+    { id: "nokan3", speaker: "\uAE30\uAC00\uB178", body: "\uC54C\uC544. \uC774\uBC88\uC5D4 \uBA3C\uC800 \uC548 \uAC00.", standing: "gigano", act: "nod" }
+  ])
+};
+var STAGE_9_10_POST = {
+  id: "stage-9-10-post",
+  startNodeId: "fall",
+  backdrop: "controlRoom",
+  recollectionSummary: "\uB300\uC7A5\uB4E4\uC740 \uB2E4 \uC13C \uC870\uC6D0\uB4E4\uC744 \uB370\uB9AC\uACE0 \uBB3C\uB7EC\uB0AC\uB2E4. \uB2E4\uC74C\uC5D0\uB294 \uC5F0\uAD6C\uC6D0\uB3C4 \uC148\uC5D0 \uB123\uACA0\uB2E4\uACE0 \uD588\uB2E4.",
+  nodes: linear([
+    { id: "fall", speaker: "", body: "\uC81C\uC5B4\uCD95\uC774 \uAE30\uC6B8\uC5C8\uB2E4. \uAE30\uAC00\uB178\uC640 \uC544\uB974\uAC90\uC774 \uAC70\uC758 \uB3D9\uC2DC\uC5D0 \uBB34\uB98E\uC744 \uAFC7\uC5C8\uACE0, \uB458 \uB2E4 \uC4F0\uB7EC\uC9C0\uB294 \uCABD \uC5B4\uAE68\uB97C \uC11C\uB85C\uC5D0\uAC8C \uB0B4\uC92C\uB2E4.", cast: [{ id: "gigano", slot: "left" }, { id: "argen", slot: "right" }], cue: "rumble" },
+    { id: "gigano", speaker: "\uAE30\uAC00\uB178", body: "\uD558, \uC774\uAC70 \uC138\uB2E4\uAC00 \uC22B\uC790 \uB193\uCE58\uACA0\uB124.", standing: "gigano", act: "squash" },
+    { id: "argen", speaker: "\uC544\uB974\uAC90", body: "\uC6C3\uC9C0 \uB9C8. \uAC08\uBE44 \uB610 \uBC8C\uC5B4\uC9C4\uB2E4.", standing: "argen", act: "shake" },
+    { id: "light", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC774 \uD55C \uAC78\uC74C \uB2E4\uAC00\uC11C\uC790 \uC6D0\uD1B5 \uBCBD\uC758 \uBB38\uB4E4\uC774 \uC77C\uC81C\uD788 \uBD88\uC744 \uCF30\uB2E4. \uB9E8 \uAF2D\uB300\uAE30 \uBB38\uAE4C\uC9C0, \uD558\uB098\uB3C4 \uBE60\uC9D0\uC5C6\uC774.", cue: "heartbeat" },
+    { id: "eunte2", speaker: "\uC544\uB974\uAC90", body: "\u2026\uCE74\uB974 \uB9D0\uC774 \uB9DE\uC558\uB124.", standing: "argen", act: "lean" },
+    { id: "nokan2", speaker: "\uAE30\uAC00\uB178", body: "\uC5F0\uAD6C\uC6D0. \uB108 \uB0C4\uC0C8\uAC00 \uC774\uC0C1\uD574. \uC0AC\uB78C \uB0C4\uC0C8 \uC704\uB85C\u2026 \uC6B0\uB9AC\uB791 \uAC19\uC740 \uAC8C \uC11E\uC5EC \uC788\uC5B4.", standing: "gigano", act: "lean", voice: "heavy" },
+    { id: "nokan3", speaker: "\uAE30\uAC00\uB178", body: "\uC624\uB298\uC740 \uC6B0\uB9AC \uC560\uB4E4 \uB2E4 \uC14C\uC73C\uB2C8\uAE4C \uAC04\uB2E4. \uB2E4\uC74C\uC5D4 \uB108\uB3C4 \uC148\uC5D0 \uB123\uC744 \uAC70\uC57C.", standing: "gigano", act: "nod" },
+    { id: "leave", speaker: "", body: "\uAE30\uAC00\uB178\uAC00 \uBA3C\uC800 \uCD95\uC744 \uD0C0\uACE0 \uC62C\uB77C\uAC14\uB2E4. \uC544\uB974\uAC90\uC740 \uB9E8 \uB4A4\uC5D0 \uB0A8\uC544 \uB9C8\uC9C0\uB9C9 \uBB38\uC744 \uBC1B\uCE58\uACE0 \uC788\uB2E4\uAC00, \uC544\uBB34\uB3C4 \uB0A8\uC9C0 \uC54A\uC740 \uAC83\uC744 \uBCF4\uACE0\uC11C\uC57C \uC190\uC744 \uB5D0\uB2E4.", standing: "argen", leave: "rise", cast: [] },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uBA85\uBD80\uC5D0\uC11C \uB0B4 \uCE78\uC740 \uC544\uC9C1 \uCD08\uB85D\uC774\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "left" }, { id: "lexia", slot: "right" }], act: "lean" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uC9C0\uC6B8 \uAC70\uC608\uC694?", standing: "lexia", act: "lean" },
+    { id: "koma2", speaker: "\uCF54\uB9C8", body: "\uC548 \uC9C0\uC6B4\uB2E4. \uC801\uD78C \uAC74 \uADF8\uCABD \uC0AC\uC815\uC774\uB2E4. \u2026\uAC00\uB294 \uAC74 \uB0B4\uAC00 \uC815\uD55C\uB2E4.", standing: "koma", act: "nod" },
+    { id: "wind", speaker: "", body: "\uC5F4\uB9B0 \uAF2D\uB300\uAE30 \uBB38 \uB108\uBA38\uC5D0\uC11C \uBC14\uB78C\uC774 \uB0B4\uB824\uC654\uB2E4. \uAE30\uB984 \uB0C4\uC0C8\uAC00 \uC544\uB2CC, \uCC98\uC74C \uB9E1\uB294 \uBC14\uAE65 \uACF5\uAE30\uC600\uB2E4." }
+  ])
+};
+var CHAPTER_9_STORIES = [STAGE_9_1_PRE, STAGE_9_3_POST, STAGE_9_5_PRE, STAGE_9_5_POST, STAGE_9_7_POST, STAGE_9_9_POST, STAGE_9_10_PRE, STAGE_9_10_POST];
 for (const story of [...CHAPTER_8_STORIES, ...CHAPTER_9_STORIES]) registerDialogueTexts(story);
 
 // src/data/stageStories.ts
@@ -43393,7 +43634,7 @@ var LINKS = {
   "7-10": { pre: "stage-7-10-pre", post: "stage-7-10-post" },
   "8-1": { pre: "stage-8-1-pre" },
   "8-3": { post: "stage-8-3-post" },
-  "8-5": { pre: "stage-8-5-pre" },
+  "8-5": { pre: "stage-8-5-pre", post: "stage-8-5-post" },
   "8-7": { post: "stage-8-7-post" },
   "8-10": { pre: "stage-8-10-pre", post: "stage-8-10-post" },
   "9-1": { pre: "stage-9-1-pre" },
@@ -48427,7 +48668,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.552.0",
+  version: "0.558.6",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -48463,7 +48704,7 @@ var package_default = {
     "@supabase/realtime-js": "2.118.0",
     "@vercel/functions": "3.11.3",
     phaser: "^3.90.0",
-    puppetforge: "github:Bell7080/WebGLE#31ab0fc7df52ddc5a386bcff9557895f08d150e5"
+    puppetforge: "github:Bell7080/WebGLE#fbce20f69d37c81ec9c8efc15d5b57cc94c37cc4"
   },
   devDependencies: {
     "@playwright/test": "^1.55.0",

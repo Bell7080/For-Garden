@@ -573,7 +573,7 @@ export class ExpeditionScene extends Phaser.Scene {
       // 지도는 카드·게이지·글자를 개별 축소하지 않고 전투와 같은 한 칸을 그대로 세운다.
       // 생존은 노란 발광으로 알리지 않는다 — 그 발광은 전투에서 "궁극기가 찼다"는 뜻이다.
       const profile = new BattleProfile(this, x, BATTLE_PROFILE_LAYOUT.expedition.centerY, {
-        relic: def, level: frozen.level, breakthroughGrade: frozen.breakthrough, skinId: frozen.skinId,
+        relic: def, level: frozen.level, breakthroughGrade: frozen.breakthrough, resonance: frozen.resonance ?? relicProgression.getResonance(def.id), skinId: frozen.skinId,
         currentHp, maxHp, ferocity: 0, active: false, readOnly: true, dead: !shown.alive,
       }).setScale(BATTLE_PROFILE_LAYOUT.expedition.scale);
       // 지도 HUD의 칸도 편성 그리드와 같은 꾹 누름으로 상세를 연다. 증강 대상 고르기는

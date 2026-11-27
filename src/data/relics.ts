@@ -1000,7 +1000,7 @@ export const RELICS: RelicDef[] = [
       teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 10, maxHpRegenPercentPerSecond: 2 },
     },
     breakthroughEffects: {
-      basic: { kind: "windStep", moveSpeedPercent: 20, seconds: 4 },
+      basic: { kind: "windStep", attackSpeedPercent: 15, seconds: 4 },
       ultimate: { kind: "gustEnergy", energy: 25 },
       ferocity: { kind: "feverGale", seconds: 4, speedPercent: 20 },
       passive: { kind: "windEcho", energy: 25 },
@@ -5768,7 +5768,7 @@ export const RELICS: RelicDef[] = [
     breakthroughEffects: {
       basic: { kind: "biteMark", seconds: 12, damageTakenPercent: 4, maxStacks: 3 },
       ultimate: { kind: "unhealedMark", seconds: 6, reductionPercent: 40 },
-      ferocity: { kind: "hungryStride", moveSpeedPercent: 50 },
+      ferocity: { kind: "hungryStride", attackSpeedPercent: 30 },
       passive: { kind: "scarMight", damagePercentPerStack: 5 },
     },
   },

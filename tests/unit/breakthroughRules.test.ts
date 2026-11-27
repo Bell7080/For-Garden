@@ -200,7 +200,7 @@ const CATEGORY: Record<EffectKind, Category> = {
   sunkenWeight: "control",
   unhealedMark: "control",
   feverWidenBasic: "damage",
-  hungryStride: "mobility",
+  hungryStride: "damage",
   longFeast: "control",
   sharpStorm: "crit",
   pressureCrack: "damage",

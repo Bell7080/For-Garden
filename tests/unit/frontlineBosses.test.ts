@@ -88,11 +88,11 @@ describe("공멸 대장", () => {
     expect(boss.shield.amount).toBeCloseTo(shield);
   });
 
-  it("아르겐의 폭주는 대상별 세 번째 적중에서 5초 둔화를 새로 건다", () => {
+  it("아르겐의 폭주는 대상별 세 번째 적중에서 5초 공격 속도 둔화를 새로 건다", () => {
     const { state, boss, targets: [near, late], advance } = setup("argen", [120, 350]);
     const opening: ReturnType<typeof stepSkirmish> = [];
-    near.def = { ...near.def, stats: { ...near.def.stats, moveSpeed: 100 } };
-    const baseSpeed = moveSpeed(near, state);
+    const baseSpeed = currentAttackSpeed(near, state);
+    const baseMove = moveSpeed(near, state);
     gainFerocity(boss, 200, state, opening);
     expect(near.taunted?.sourceId).toBe(boss.id);
     expect(late.taunted).toBeNull();
@@ -102,7 +102,8 @@ describe("공멸 대장", () => {
     const events = advance(0.5);
     expect(events.some((event) => event.kind === "attack" && event.damageType === "true")).toBe(true);
     expect(near.frontlineSlow?.until).toBeCloseTo(6.5);
-    expect(moveSpeed(near, state) / baseSpeed).toBeCloseTo(0.7);
+    expect(currentAttackSpeed(near, state) / baseSpeed).toBeCloseTo(0.8);
+    expect(moveSpeed(near, state)).toBeCloseTo(baseMove);
     expect(late.frontlineSlow).toBeUndefined();
     advance(1);
     expect(late.frontlineSlow?.until).toBeCloseTo(7.5);

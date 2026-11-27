@@ -2503,8 +2503,9 @@ function applyButcher(
 /**
  * 서리깃을 한 겹 박고, 상한에 닿으면 **동상으로 바꾼다.**
  *
- * 동상은 박은 쪽 공격력에서 총 피해를 한 번 계산해 틱 수로 나눠 두고, 방어력을 거치지 않는
- * 지속 피해로 입힌다(출혈과 같은 축). 이미 걸려 있으면 겹치지 않고 값과 시간을 새로 덮는다 —
+ * 동상은 박은 쪽 공격력에서 총 피해를 한 번 계산해 틱 수로 나눠 두고 지속 피해로 입힌다. 총량은
+ * 걸리는 순간 **맞는 쪽 방어력을 거친 물리 피해**다 — 방어를 무시하던 때는 혼자 남은 적에게 두 갈래가
+ * 꽂혀 금세 터지는 서리깃이 단단한 적일수록 더 크게 남아 보스·1대1에서 과했다(응태 2026-11-27). 이미 걸려 있으면 겹치지 않고 값과 시간을 새로 덮는다 —
  * 둔화도 같이 새로 시작한다. 박은 쪽을 찾지 못하면 피해를 만들 수 없어 겹만 비운다.
  */
 function applyFrostPlume(
@@ -2526,7 +2527,7 @@ function applyFrostPlume(
   const total = computeDamage(
     { ...attacker, def: offensiveDefinition(attacker) },
     defensiveDefinition(target, state),
-    { power: effect.burstPower, damageType: "physical", scalingStat: "atk", isCritical: false, kind: "basic", ignoresDefense: true },
+    { power: effect.burstPower, damageType: "physical", scalingStat: "atk", isCritical: false, kind: "basic" },
   );
   target.frostbite = {
     remaining: effect.burstSeconds, total: effect.burstSeconds, tickIn: target.frostbite?.tickIn ?? 1,

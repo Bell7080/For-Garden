@@ -332,7 +332,7 @@ export const SKILL_RU = {
   "skill.keyword.plume.description": "Перо, вонзившееся во врага. Каждый враг держит до {max} зарядов {hold} с, каждый новый заряд обновляет время. При {max} зарядах перья исчезают и накладывают [[yuti-frostbite|Обморожение]].",
   "skill.keyword.splash.description": "Брызги лопнувшего [[shimmer|Блеск!]]. Наносит ближним врагам {percent} как [[magical-damage|магический урон]] и даёт себе [[shield|щит]] в {shield} (копится до {cap}).",
   "skill.keyword.splash.term": "Плюх!",
-  "skill.keyword.frostbite.description": "На {slowSeconds} с снижает скорость атаки и движения на {slowPercent}% и за {seconds} с наносит урон в {percent}, который не снижается защитой. Не суммируется; повторное наложение обновляет его.",
+  "skill.keyword.frostbite.description": "На {slowSeconds} с снижает скорость атаки и движения на {slowPercent}% и за {seconds} с наносит {percent} физического урона. Не суммируется; повторное наложение обновляет его.",
   "skill.keyword.summon.description": "Призыв ближнего боя: {stat}, ОЗ, защита и сопротивление зависят от {stat} ({owner}). Сам выбирает цели и применяет ульту по своей шкале.{resummon}",
   "skill.keyword.summon.resummon": " Павший поднимается через {seconds} с с {percent}% макс. ОЗ.",
   "skill.ferocity.valueLabel": "Черта ярости",

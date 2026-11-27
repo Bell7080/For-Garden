@@ -331,7 +331,7 @@ export const SKILL_ZH_HANT = {
   "skill.keyword.plume.description": "插在敵人身上的羽毛。每名敵人最多疊加{max}層，持續{hold}秒，每次疊加新層都會重新計時。疊滿{max}層時羽毛消失，施加[[yuti-frostbite|凍傷]]。",
   "skill.keyword.splash.description": "[[shimmer|閃閃發亮！]]爆開的水花。對附近敵人造成{percent}的[[magical-damage|魔法傷害]]，並獲得{shield}的[[shield|護盾]]（最多疊加至{cap}）。",
   "skill.keyword.splash.term": "撲通！",
-  "skill.keyword.frostbite.description": "{slowSeconds}秒內攻擊速度與移動速度降低{slowPercent}%，並在{seconds}秒內受到{percent}的傷害，無法被防禦減免。不會疊加，重複施加會重新整理。",
+  "skill.keyword.frostbite.description": "{slowSeconds}秒內攻擊速度與移動速度降低{slowPercent}%，並在{seconds}秒內受到{percent}的物理傷害。不會疊加，重複施加會刷新。",
   "skill.keyword.summon.description": "{stat}、生命、防禦力與抗性均由{owner}的{stat}決定的近戰召喚物。自行選擇目標，並以自身能量使用必殺技。{resummon}",
   "skill.keyword.summon.resummon": "倒下後{seconds}秒以最大生命{percent}%重新站起。",
   "skill.ferocity.valueLabel": "野性特性",

@@ -353,7 +353,7 @@ export const SKILL_JA = {
   "skill.keyword.plume.description": "敵に刺さる羽根。敵ごとに最大{max}重まで重なり、{hold}秒間残る。新しい重が刺さるたびに時間が数え直される。{max}重になると羽根は消え、[[yuti-frostbite|凍傷]]を与える。",
   "skill.keyword.splash.description": "[[shimmer|きらっ!]]が弾ける水しぶき。周囲の敵に{percent}の[[magical-damage|魔法ダメージ]]を与え、自身は{shield}分の[[shield|シールド]]を得る({cap}まで蓄積)。",
   "skill.keyword.splash.term": "ばしゃっ!",
-  "skill.keyword.frostbite.description": "{slowSeconds}秒間攻撃速度と移動速度が{slowPercent}%下がり、{seconds}秒かけて{percent}分の、防御力で軽減できないダメージを受ける。重ならず、かけ直すと更新される。",
+  "skill.keyword.frostbite.description": "{slowSeconds}秒間攻撃速度と移動速度が{slowPercent}%下がり、{seconds}秒かけて{percent}分の物理ダメージを受ける。重ならず、かけ直すと更新される。",
   "skill.keyword.summon.description": "{owner}の{stat}が{stat}・体力・防御力・抵抗力を決める近距離召喚獣だ。自ら標的を選び、自分のゲージで必殺技を使う。{resummon}",
   "skill.keyword.summon.resummon": "倒れると{seconds}秒後に最大体力の{percent}%で再び立つ。",
   "skill.ferocity.valueLabel": "野性発現",

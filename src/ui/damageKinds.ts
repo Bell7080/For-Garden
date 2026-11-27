@@ -5,7 +5,7 @@ import type { Passive, RelicDef, Skill } from "../core/types";
  *
  * 스킬 칩 첫 칸(`effectType`)은 그 기술의 **얼굴**만 말한다. 그런데 피해는 그 밖에서도 난다 —
  * 켄토의 「까칠」이 되돌려 주는 마법 피해, 안카가 재운 적이 깰 때의 마법 피해, 유티의 서리깃이 터진 뒤
- * 방어를 지나는 동상, 모르페의 관측 발동처럼. 여기서는 전투가 그 피해를 계산할 때 읽는 **계약의 모양**만
+ * 남는 동상, 모르페의 관측 발동처럼. 여기서는 전투가 그 피해를 계산할 때 읽는 **계약의 모양**만
  * 보고 종류를 모은다. 개체 이름으로 가르지 않는다. 피해 공식(`skirmish.ts`)이 그 계약에 붙인 종류를
  * 그대로 옮긴 것이라, 새 계약이 피해를 내면 아래 두 표에 한 줄을 더한다.
  *
@@ -22,7 +22,7 @@ const STATUS_DAMAGE: Readonly<Partial<Record<string, DamageKind>>> = {
   drowsy: "magical", // 깨는 순간 — 재운 쪽 저항력의 마법 피해
   pressure: "physical", // 수압 폭발 — 방어·저항에서 나온 물리 피해
   butcher: "physical", // 손질 폭발 — 물리 피해
-  frostPlume: "fixed", // 동상 — 방어를 지나는 피해
+  frostPlume: "physical", // 동상 — 걸리는 순간 방어를 거친 물리 피해
   concussion: "fixed", // 뇌진탕 — 최대 체력 비례, 방어·속성을 지나 한 번에 들어간다
   bleed: "fixed", // 출혈 — 최대 체력 비례로 매초, 방어·저항을 지난다(`percentHpDamage`)
 };

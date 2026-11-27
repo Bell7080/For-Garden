@@ -66,7 +66,9 @@ describe("개체 대 개체 검수", () => {
      */
     const byWinRate = [...table].sort((first, second) => second.winRate - first.winRate);
     const byHpLeft = [...table].sort((first, second) => second.averageHpRatio - first.averageHpRatio);
-    expect([byWinRate[0].relicId, byHpLeft[0].relicId]).not.toEqual(["dian", "dian"]);
+    // 승률이 같은 줄이 있으면 세기를 독점한 것이 아니다 — 정렬이 표 순서로 동점을 가르는 것만으로 실패하지 않게 한다.
+    const soleStrongest = byWinRate[0].winRate > byWinRate[1].winRate ? byWinRate[0].relicId : undefined;
+    expect([soleStrongest, byHpLeft[0].relicId]).not.toEqual(["dian", "dian"]);
   }, 30_000);
 
   it("은 디안이 로스터 전체를 상대로 SSR이 설 만한 자리에 선다", () => {

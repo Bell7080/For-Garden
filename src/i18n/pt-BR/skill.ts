@@ -332,7 +332,7 @@ export const SKILL_PT_BR = {
   "skill.keyword.plume.description": "Uma pena cravada no inimigo. Cada inimigo acumula até {max} cargas por {hold} s, e cada carga nova reinicia o tempo. Com {max} cargas as penas somem e aplicam [[yuti-frostbite|Queimadura de gelo]].",
   "skill.keyword.splash.description": "O respingo de um [[shimmer|Brilho!]] que explode. Causa {percent} como [[magical-damage|dano mágico]] aos inimigos próximos e concede um [[shield|escudo]] de {shield} (acumula até {cap}.).",
   "skill.keyword.splash.term": "Tchibum!",
-  "skill.keyword.frostbite.description": "Reduz a velocidade de ataque e de movimento em {slowPercent}% por {slowSeconds} s e causa {percent} em {seconds} s, que a Defesa não reduz. Não acumula; aplicar de novo a renova.",
+  "skill.keyword.frostbite.description": "Reduz a velocidade de ataque e de movimento em {slowPercent}% por {slowSeconds} s e causa {percent} de dano físico em {seconds} s. Não acumula; aplicar de novo a renova.",
   "skill.keyword.summon.description": "Invocação corpo a corpo cujos {stat}, PV, Defesa e Resistência dependem de {stat} de {owner}. Escolhe os próprios alvos e usa a Suprema com o próprio medidor.{resummon}",
   "skill.keyword.summon.resummon": " Ao cair, levanta-se após {seconds} s com {percent}% do PV máx.",
   "skill.ferocity.valueLabel": "Traço de Ferocidade",

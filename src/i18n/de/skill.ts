@@ -332,7 +332,7 @@ export const SKILL_DE = {
   "skill.keyword.plume.description": "Eine in den Gegner gebohrte Feder. Jeder Gegner trägt bis zu {max} Stapel für {hold} s, jeder neue Stapel setzt die Zeit zurück. Bei {max} Stapeln verschwinden die Federn und verursachen [[yuti-frostbite|Erfrierung]].",
   "skill.keyword.splash.description": "Die Gischt eines platzenden [[shimmer|Funkeln!]]. Verursacht bei Gegnern in der Nähe {percent} als [[magical-damage|magischen Schaden]] und gewährt einen [[shield|Schild]] von {shield} (stapelt bis {cap}).",
   "skill.keyword.splash.term": "Platsch!",
-  "skill.keyword.frostbite.description": "Senkt Angriffs- und Lauftempo {slowSeconds} s lang um {slowPercent} % und verursacht in {seconds} s {percent} als Schaden, den Verteidigung nicht mindert. Stapelt sich nicht; erneutes Anwenden erneuert sie.",
+  "skill.keyword.frostbite.description": "Senkt Angriffs- und Lauftempo {slowSeconds} s lang um {slowPercent} % und verursacht in {seconds} s {percent} physischen Schaden. Stapelt sich nicht; erneutes Anwenden erneuert sie.",
   "skill.keyword.summon.description": "Eine Nahkampf-Beschwörung, deren {stat}, LP, Verteidigung und Widerstand von {stat} von {owner} abhängen. Sie wählt eigene Ziele und setzt ihre Ultimativ mit eigener Ladung ein.{resummon}",
   "skill.keyword.summon.resummon": " Fällt sie, steht sie nach {seconds} s mit {percent}% ihres max. Lebens wieder auf.",
   "skill.ferocity.valueLabel": "Wildheitsmerkmal",

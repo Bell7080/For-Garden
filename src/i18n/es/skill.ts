@@ -332,7 +332,7 @@ export const SKILL_ES = {
   "skill.keyword.plume.description": "Una pluma clavada en el enemigo. Cada enemigo acumula hasta {max} cargas durante {hold} s, y cada carga nueva reinicia el tiempo. Con {max} cargas las plumas desaparecen y aplican [[yuti-frostbite|Quemadura gélida]].",
   "skill.keyword.splash.description": "La salpicadura de un [[shimmer|¡Destello!]] que estalla. Inflige {percent} como [[magical-damage|daño mágico]] a los enemigos cercanos y otorga un [[shield|escudo]] de {shield} (se acumula hasta {cap}.).",
   "skill.keyword.splash.term": "¡Chapuzón!",
-  "skill.keyword.frostbite.description": "Reduce la velocidad de ataque y de movimiento un {slowPercent}% durante {slowSeconds} s e inflige {percent} en {seconds} s, que la Defensa no puede reducir. No se acumula; volver a aplicarla la renueva.",
+  "skill.keyword.frostbite.description": "Reduce la velocidad de ataque y de movimiento un {slowPercent}% durante {slowSeconds} s e inflige {percent} de daño físico en {seconds} s. No se acumula; volver a aplicarla la renueva.",
   "skill.keyword.summon.description": "Invocación cuerpo a cuerpo cuyos {stat}, PV, Defensa y Resistencia dependen de {stat} de {owner}. Elige sus propios objetivos y usa su Definitiva con su propio medidor.{resummon}",
   "skill.keyword.summon.resummon": " Si cae, se levanta tras {seconds} s con el {percent}% de sus PV máx.",
   "skill.ferocity.valueLabel": "Rasgo de Ferocidad",

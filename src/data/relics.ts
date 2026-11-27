@@ -474,14 +474,14 @@ export const RELICS: RelicDef[] = [
     strike: "bite",
     // 치즈케이크 생산 계약은 수중 발굴 특화이며 전투 역할을 바꿔도 기존 생산성을 보존한다.
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.4, efficiencyMultiplier: 1.10 },
-    // 낮은 HP·방어력은 렉시아보다 낮은 생존력을, 높은 공격·공속·이속은 암살자의 선공 능력을 보장한다.
-    // 저항력 46과 주문력 58은 최소 대응력만 남기고, 치명타 15/155는 빠른 공격이 과도하게 폭증하지 않게 한다.
+    // 악어의 두꺼운 가죽 — 물리에 버티는 방어형 암살자다. 기술이 모두 공격력 물리 피해라 주문력은 쓰지 않는다:
+    // 주문력 74가 전투력만 채우던 몫을 체력·방어로 옮기고 저항을 덜었다(응태 2026-11-27 — 1대1 79 → 90% 모의).
     stats: {
-      hp: 960,
-      def: 48,
-      res: 58,
-      atk: 156,
-      ap: 74,
+      hp: 1180,
+      def: 68,
+      res: 46,
+      atk: 165,
+      ap: 24,
       attackSpeed: 122,
       moveSpeed: 120,
       critChance: 10,

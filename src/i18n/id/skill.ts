@@ -332,7 +332,7 @@ export const SKILL_ID = {
   "skill.keyword.plume.description": "Bulu yang menancap pada musuh. Tiap musuh menampung maksimal {max} tumpuk selama {hold} dtk, dan setiap tumpuk baru mengatur ulang waktu. Pada {max} tumpuk, bulu lenyap dan memberikan [[yuti-frostbite|Radang Beku]].",
   "skill.keyword.splash.description": "Cipratan dari [[shimmer|Berkilau!]] yang meledak. Memberi [[magical-damage|kerusakan magis]] sebesar {percent} ke musuh terdekat dan mendapat [[shield|perisai]] senilai {shield} (menumpuk hingga {cap}).",
   "skill.keyword.splash.term": "Byur!",
-  "skill.keyword.frostbite.description": "Menurunkan Kecepatan Serang dan Kecepatan Gerak sebesar {slowPercent}% selama {slowSeconds} dtk dan memberi damage {percent} dalam {seconds} dtk yang tidak bisa dikurangi Pertahanan. Tidak menumpuk; menerapkannya lagi akan menyegarkannya.",
+  "skill.keyword.frostbite.description": "Menurunkan Kecepatan Serang dan Kecepatan Gerak sebesar {slowPercent}% selama {slowSeconds} dtk dan memberi damage fisik {percent} dalam {seconds} dtk. Tidak menumpuk; menerapkannya lagi akan menyegarkannya.",
   "skill.keyword.summon.description": "Panggilan jarak dekat yang {stat}, HP, Pertahanan, dan Resistensinya ditentukan oleh {stat} milik {owner}. Ia memilih target sendiri dan memakai Ultimate dengan gauge-nya sendiri.{resummon}",
   "skill.keyword.summon.resummon": " Saat tumbang, ia bangkit lagi setelah {seconds} dtk dengan {percent}% HP maksnya.",
   "skill.ferocity.valueLabel": "Sifat Keganasan",

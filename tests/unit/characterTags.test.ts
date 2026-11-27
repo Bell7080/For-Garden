@@ -70,8 +70,8 @@ describe("정보창 해시태그", () => {
     // 은신 뒤 방어를 지나는 한 방
     expect(damage("noa")).toEqual(["physical", "fixed"]);
     expect(damage("delopi")).toEqual(["physical", "fixed"]);
-    // 서리깃이 터진 동상은 방어를 지난다
-    expect(damage("yuti")).toEqual(["physical", "fixed"]);
+    // 서리깃이 터진 동상은 걸리는 순간 방어를 거친 물리 피해다(2026-11-27)
+    expect(damage("yuti")).toEqual(["physical"]);
     // 위력을 주문력에서도 뽑을 뿐 피해는 물리다
     expect(damage("dian")).toEqual(["physical"]);
     // 뇌진탕은 최대 체력 비례로 방어·속성을 지난다

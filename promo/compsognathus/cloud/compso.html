@@ -1,0 +1,227 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000}canvas{display:block}</style></head><body>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as L from './lib.js';
+import * as K from './clib.js';
+const {THREE,add,S,C,toon,ease,easeIO,clamp01,rnd}=L;
+const font=new FontFace('NK','url(./nk.woff2)');await font.load();document.fonts.add(font);
+const name=new URLSearchParams(location.search).get('s');
+let SKY=null;
+const mk=o=>{const r=L.makeScene(o);window.__scene=r.scene;window.__cam=r.cam;r.scene.add(r.cam);SKY=r.sky;return r;};
+const lerp=(a,b,k)=>a+(b-a)*k;
+const pop=(t,t0,d=.18)=>{if(t<t0)return 0;const k=clamp01((t-t0)/d);return k<1?k*1.2:1+Math.sin((t-t0-d)*14)*Math.exp(-(t-t0-d)*6)*.12;};
+const label=(scene,txt,o={})=>{const s=L.textSprite(txt,o);scene.add(s);return s;};
+const setSprite=(s,h,k)=>{s.scale.set(h*s.userData.aspect*k,h*k,1);s.material.opacity=clamp01(k*3);};
+// 화면에 붙는 글자(카메라 자식, z=-10). 화면 높이 ≈ 6.9
+const hud=(cam,txt,o={})=>{const s=L.textSprite(txt,o);cam.add(s);s.position.z=-10;return s;};
+const hudShow=(s,t,a,b,h,x,y)=>{s.position.x=x;s.position.y=y;setSprite(s,h,t>a&&t<b?pop(t,a):0);if(t>b-.25&&t<b)s.material.opacity*=clamp01((b-t)/.25);};
+const ground=(scene,c,r=60)=>{const g=add(scene,C(r,r,.4,64),toon(c),[0,-.2,0],null,null,false);g.receiveShadow=true;return g;};
+const skyTo=(A,B,k)=>{const u=SKY.material.uniforms;['a','b','c'].forEach((n,i)=>u[n].value.set(A[i]).lerp(new THREE.Color(B[i]),k));};
+function xSprite(){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');x.lineCap='round';
+ for(const [w,col] of[[64,'#2a1d2e'],[40,'#ff5a4a']]){x.lineWidth=w;x.strokeStyle=col;x.beginPath();x.moveTo(60,60);x.lineTo(196,196);x.moveTo(196,60);x.lineTo(60,196);x.stroke();}
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));sp.renderOrder=11;sp.userData.aspect=1;return sp;}
+function poof(scene){const g=new THREE.Group();scene.add(g);const m=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true});for(let i=0;i<7;i++){const a=i/7*6.28;add(g,S(.18,10,8),m,[Math.cos(a)*.3,.2+Math.sin(a)*.15,Math.sin(a)*.3],null,null,false);}g.visible=false;
+ return {g,at(t,t0,pos){const k=(t-t0)/.5;g.visible=k>0&&k<1;if(!g.visible)return;g.position.set(...pos);g.scale.setScalar(.6+k*1.6);m.opacity=1-k;}};}
+function cracks(scene,seed,n=14,R=7,c=0x7a5a3a){const r=rnd(seed);const list=[];const m=toon(c);for(let i=0;i<n;i++){const x=(r()-.5)*R*2,z=(r()-.5)*R*1.4-1;const len=.6+r()*1.4;
+ const b=add(scene,new THREE.BoxGeometry(len,.03,.06),m,[x,.01,z],null,[0,r()*3.14,0],false);b.scale.x=.001;list.push(b);}
+ return k=>list.forEach((b,i)=>b.scale.x=Math.max(.001,clamp01(k*1.6-i/list.length*.6)));}
+function plants(scene,seed,n=8,spread=[10,8],z0=-3){const r=rnd(seed);const out=[];for(let i=0;i<n;i++){const x=(r()-.5)*spread[0],z=z0-r()*spread[1];
+ out.push(i%3==0?K.cycad(scene,x,z,.9+r()*.5):K.fern(scene,x,z,1+r()*.6));}return out;}
+const SUNSET=['#3a3f86','#f0907a','#ffc890'],DAY=['#3f7fd0','#a8d4f2','#e9f6ee'],DUSTY=['#8a6a4a','#e0a860','#f2d29a'];
+const SC={};
+// 1. 훅 — 노을 섬, 갸웃하는 콤프소그나투스 + 물음표
+SC.hook=()=>{const {scene,cam}=mk({sky:SUNSET,sunPos:[-6,8,6]});
+ L.sea(scene);const wv=L.waves(scene,{r:[9,60]});L.island(scene,{r:7,grassR:4.6});
+ const pl=[L.palm(scene,-3.4,-3.4,1.25,1),L.palm(scene,3.8,-4.6,1.05,2)];K.cycad(scene,-1.6,-2.2,1.1);K.fern(scene,2.2,-1.6,1.3);K.fern(scene,-3.2,.4,1.1);
+ const co=K.makeCompy(scene,{scale:1.05});
+ const q=label(scene,'?',{size:220,w:256,h:256,fill:'#fff6c8'});const dust=L.dust(scene,{n:70,box:[12,7,6]});
+ return t=>{wv(t);dust(t);co.idle(t);const punch=ease(t/.4);const dist=10.5-punch*4.6-t*.18;const ang=-.25+t*.06;
+  cam.position.set(Math.sin(ang)*dist,1.9+(1-punch)*1.4,Math.cos(ang)*dist);cam.lookAt(0,1.7,0);
+  const tl=t<1.1?0:Math.sin(Math.min(1,(t-1.1)/.35)*Math.PI/2);co.tilt(tl+Math.sin(t*2)*.05);co.g.position.y=Math.abs(Math.sin(t*3))*.04;
+  q.position.set(.55,3.3+Math.sin(t*3)*.06,0);setSprite(q,.72,pop(t,1.25,.2));pl.forEach((p,i)=>p.rotation.z=Math.sin(t*1.4+i)*.04);};};
+// 2. 1억 5천만 년 전, 독일 바닷가 섬들 (위에서 내려다봄)
+SC.era=()=>{const {scene,cam}=mk({sky:DAY,sunPos:[-6,10,6],hemi:1.4});
+ L.sea(scene,0x3f9ac8);const wv=L.waves(scene,{r:[4,70],n:60});
+ const isl=[[0,0,4.2],[-9,-6,2.6],[8,-9,3.2],[-5,8,2],[11,4,2.2],[-14,3,2.8],[3,-17,3.6]];
+ isl.forEach(([x,z,r],i)=>{const g=L.island(scene,{r,grassR:r*.7,pos:[x,0,z]});if(i<4){K.cycad(g,r*.2,-r*.3,.9);K.fern(g,-r*.3,r*.1,1);}});
+ const co=K.makeCompy(scene,{scale:.8});co.g.position.set(.6,0,1.2);co.g.rotation.y=.6;
+ const yr=hud(cam,'1억 5천만 년 전',{size:150,w:1300,fill:'#ffffff'});const de=hud(cam,'지금의 독일',{size:150,w:1200,fill:'#ffe066'});
+ const pin=label(scene,'📍',{size:1,w:4,h:4});pin.visible=false;
+ return t=>{wv(t);co.idle(t);co.walk(t,.6);co.g.position.x=.6+Math.sin(t*.8)*.3;
+  const k=easeIO(t/3.9);cam.position.set(lerp(-2,1.5,k),lerp(30,14,k),lerp(16,13,k));cam.lookAt(0,0,lerp(-2,0,k));
+  hudShow(yr,t,.1,4,.75,0,2.35);hudShow(de,t,1.9,4,.7,0,1.55);};};
+// 3. 닭만 한 공룡 — 닭과 나란히
+SC.size=()=>{const {scene,cam}=mk({sky:DAY,sunPos:[-5,9,7],hemi:1.4});
+ ground(scene,0x9cc46a);plants(scene,4,9);
+ const co=K.makeCompy(scene);co.g.position.set(-1.1,0,0);co.g.rotation.y=.9;
+ const ck=K.makeChicken(scene,1.35);ck.position.set(1.3,0,0);ck.rotation.y=-.9;ck.scale.setScalar(.001);
+ const lb=hud(cam,'닭만 한 공룡!',{size:150,w:1200,fill:'#ffe066'});
+ return t=>{co.idle(t);ck.scale.setScalar(Math.max(.001,pop(t,.15,.2)*1.35));ck.rotation.z=Math.sin(t*6)*.04;
+  co.head.rotation.y=t>.5?-.45:0;co.tilt(t>.9?.6:0);
+  cam.position.set(0,2.0,8.6-t*.25);cam.lookAt(.1,1.25,0);hudShow(lb,t,.35,3,.75,0,2.3);};};
+// 4. 도마뱀 사냥 → 꿀꺽 → 배 속 투시
+SC.hunt=()=>{const {scene,cam}=mk({sky:DAY,sunPos:[-5,9,7],hemi:1.4});
+ const gr=ground(scene,0xa8c870);const env=[gr,...plants(scene,8,10,[16,8])];
+ const co=K.makeCompy(scene);co.g.rotation.y=Math.PI/2;const lz=K.makeLizard(scene,{scale:.55});lz.g.rotation.y=Math.PI/2;
+ const bones=K.makeLizardBones(co.rig,.7);bones.position.set(0,1.12,0);bones.visible=false;
+ const xr=new THREE.MeshBasicMaterial({color:0x64c8ff,transparent:true,opacity:.22,depthWrite:false});const xl=new THREE.MeshBasicMaterial({color:0x9fe4ff,transparent:true,opacity:.55,side:THREE.BackSide,depthWrite:false});
+ const orig=[];co.g.traverse(o=>{if(o.isMesh&&!bones.getObjectById(o.id))orig.push([o,o.material]);});
+ const dark=new THREE.Mesh(new THREE.PlaneGeometry(40,40),new THREE.MeshBasicMaterial({color:0x0c1830}));cam.add(dark);dark.position.z=-30;dark.visible=false;
+ const flash=new THREE.Mesh(new THREE.PlaneGeometry(20,20),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,depthTest:false}));flash.renderOrder=20;cam.add(flash);flash.position.z=-5;
+ const lb=hud(cam,'배 속에 도마뱀 화석!',{size:140,w:1400,fill:'#ffe066'});const yum=label(scene,'꿀꺽!',{size:170,w:800,fill:'#ffffff'});
+ let xon=false;
+ return t=>{co.idle(t);const XR=3.0;
+  if(t<2.4){co.walk(t,1.6);const cx=-3+t*1.9;co.g.position.x=cx;lz.run(t,1.2);lz.g.position.set(cx+1.9+Math.sin(t*5)*.15,0,Math.sin(t*3)*.3);}
+  else{co.walk(0,0);co.g.position.x=-3+2.4*1.9;co.legs.forEach(l=>l.rotation.x=0);}
+  const gt=t-2.4;co.open(gt>0&&gt<.25?ease(gt/.25):gt>=.25&&gt<.45?1-ease((gt-.25)/.2):0);
+  if(gt>0){lz.g.scale.setScalar(Math.max(.001,.55*(1-gt/.3)));lz.g.position.x=co.g.position.x+1.2;lz.g.position.y=1.6*clamp01(gt/.2);}
+  const chew=t>2.9&&t<XR?Math.sin(t*30)*.2:0;co.jaw.rotation.x+=Math.max(0,chew);
+  const cxp=co.g.position.x;cam.position.set(cxp*.6,2.2,9.5);cam.lookAt(cxp*.8,1.3,0);
+  yum.position.set(cxp+.8,3.2,0);setSprite(yum,.55,t>2.55&&t<XR?pop(t,2.55):0);
+  const on=t>=XR;if(on!==xon){xon=on;orig.forEach(([o,m])=>o.material=on?(m.side===THREE.BackSide?xl:xr):m);env.forEach(e=>e.visible=!on);dark.visible=on;bones.visible=on;}
+  if(on){cam.position.set(cxp+.4,2.1,6.2);cam.lookAt(cxp,1.25,0);co.g.rotation.y=Math.PI/2+.15;bones.rotation.z=Math.sin(t*2)*.03;}
+  flash.material.opacity=t>XR&&t<XR+.35?(1-(t-XR)/.35)*.85:0;hudShow(lb,t,XR+.1,6.3,.68,0,2.3);};};
+// 5. 사는 곳은 작은 섬들
+SC.island=()=>{const {scene,cam}=mk({sky:DAY,sunPos:[-6,10,6],hemi:1.4});
+ L.sea(scene,0x3f9ac8);const wv=L.waves(scene,{r:[3,60],n:60});
+ const g=L.island(scene,{r:2.4,grassR:1.6});K.cycad(g,-.6,-.8,.7);
+ [[-6,-5,1.4],[6,-7,1.8],[-3,-12,1.6],[9,1,1.2],[-10,1,1.5],[3,-16,2]].forEach(([x,z,r])=>{const i=L.island(scene,{r,grassR:r*.7,pos:[x,0,z]});K.fern(i,0,0,.8);});
+ const co=K.makeCompy(scene,{scale:.8});co.g.position.set(.4,0,.3);
+ const lb=hud(cam,'작은 섬들',{size:150,w:1000,fill:'#ffe066'});
+ return t=>{wv(t);co.idle(t);co.head.rotation.y=Math.sin(t*1.5)*.5;
+  const k=easeIO(t/3.4);cam.position.set(lerp(1,2,k),lerp(3,16,k),lerp(7,15,k));cam.lookAt(0,lerp(1.2,0,k),lerp(0,-3,k));hudShow(lb,t,1.0,3.6,.75,0,2.3);};};
+// 6. 덥고 메마른 섬 — 먹이가 늘 모자람
+SC.dry=()=>{const {scene,cam}=mk({sky:['#e08a3a','#f6c86a','#fff0c0'],sunPos:[-4,10,6],sunC:0xffe0a0,sunI:2.8,hemi:1.3});
+ ground(scene,0xd9bc7a);const cr=cracks(scene,3,18);const sun=add(scene,S(3,24,16),new THREE.MeshBasicMaterial({color:0xfff3a0}),[6,16,-40],null,null,false);
+ plants(scene,12,5,[14,6],-5).forEach(p=>{p.scale.multiplyScalar(.7);p.traverse(o=>{if(o.isMesh&&o.material.color&&o.material.side!==THREE.BackSide)o.material=toon(0x9a8a3a);});});
+ const co=K.makeCompy(scene);co.g.rotation.y=.3;const drop=add(scene,S(.12,12,10),new THREE.MeshBasicMaterial({color:0x8fd8ff}),[0,0,0],[.8,1.2,.8]);
+ const lb=hud(cam,'먹이가 늘 부족!',{size:140,w:1200,fill:'#ffffff'});
+ return t=>{co.idle(t);co.open(.25+Math.sin(t*9)*.15);co.head.rotation.y=Math.sin(t*2.2)*.6;cr(t/2);sun.scale.setScalar(1+Math.sin(t*4)*.04);
+  const dk=(t*1.2)%1;drop.position.set(-.35,2.35-dk*.6,1.0);drop.material.transparent=true;drop.material.opacity=1-dk;
+  cam.position.set(1.2,2.1,8.6-t*.2);cam.lookAt(.1,1.3,0);hudShow(lb,t,.8,3.6,.7,0,2.3);};};
+// 7. 바닷물 높이에 따라 섬이 줄었다 늘었다
+SC.tide=()=>{const {scene,cam}=mk({sky:DAY,sunPos:[-6,10,6],hemi:1.4});
+ const sea=L.sea(scene,0x3f9ac8);const wv=L.waves(scene,{r:[6,60],n:50});
+ const g=L.island(scene,{r:3.6,grassR:2.6});K.cycad(g,-1,-1.2,.8);K.fern(g,1.2,-.6,.9);
+ const co=K.makeCompy(scene,{scale:.75});co.g.position.set(.2,0,.4);
+ const up=hud(cam,'줄었다',{size:150,w:800,fill:'#ff8a6a'}),dn=hud(cam,'늘었다',{size:150,w:800,fill:'#7fe08a'});
+ return t=>{wv(t);co.idle(t);const s=1-.45*Math.sin(t*1.6)**2*(t>.3?1:0);g.scale.set(s,1,s);co.head.rotation.y=Math.sin(t*2)*.4;
+  const shrinking=Math.sin(t*3.2)>0;cam.position.set(0,7.5,9.5);cam.lookAt(0,.4,0);
+  hudShow(up,t,.4,4.6,.7,-1.1,2.3);up.material.opacity*=shrinking?1:.25;hudShow(dn,t,.4,4.6,.7,1.1,2.3);dn.material.opacity*=shrinking?.25:1;};};
+// 8. 새의 조상과 먹이 다툼
+SC.rival=()=>{const {scene,cam}=mk({sky:DAY,sunPos:[-5,9,7],hemi:1.4});
+ ground(scene,0xa8c870);plants(scene,21,8,[16,7]);
+ const co=K.makeCompy(scene);co.g.position.set(-1.9,0,0);co.g.rotation.y=Math.PI/2;
+ const ar=K.makeArchaeo(scene,1.1);ar.g.position.set(2.0,0,0);ar.g.rotation.y=-Math.PI/2;
+ const lz=K.makeLizard(scene,{scale:.5});lz.g.rotation.y=Math.PI/2;
+ const tag=label(scene,'새의 조상',{size:140,w:1000,fill:'#9fd0ff'});const bang=label(scene,'!',{size:220,w:256,h:256,fill:'#ff5a4a'});
+ return t=>{co.idle(t);lz.run(t,1);
+  const grab=2.1;const lx=t<grab?lerp(-.4,.3,t/grab):2.2;
+  if(t<grab){lz.g.position.set(lx,0,Math.sin(t*4)*.2);co.walk(t,1.2);co.g.position.x=lerp(-1.9,-1.2,clamp01(t/grab));ar.g.position.x=lerp(2.0,1.2,clamp01(t/grab));ar.flap(t,.6);}
+  else{const k=t-grab;ar.g.position.set(lerp(1.2,1.9,clamp01(k)),Math.sin(clamp01(k)*Math.PI)*.9,0);ar.flap(t,1);lz.g.position.set(ar.g.position.x+.4,ar.g.position.y+1.4,0);lz.g.rotation.z=1.2;
+   co.walk(0,0);co.legs.forEach(l=>l.rotation.x=0);co.rig.position.y=Math.abs(Math.sin(k*14))*.12*(k<1.2?1:0);co.open(.6);}
+  cam.position.set(.2,2.4,12.5);cam.lookAt(.2,1.4,0);tag.position.set(Math.min(ar.g.position.x,.9),3.4,0);setSprite(tag,.75,t>.3?pop(t,.3):0);
+  bang.position.set(co.g.position.x,3.3,0);setSprite(bang,.7,t>grab+.1?pop(t,grab+.1):0);};};
+// 9. 먹이가 부족해서 사라졌을까? → 먹이만의 문제는 아니었다
+SC.question=()=>{const {scene,cam}=mk({sky:DAY,sunPos:[-5,9,7],hemi:1.4});
+ ground(scene,0xa8c870);plants(scene,31,9,[14,7]);
+ const co=K.makeCompy(scene);co.g.rotation.y=.25;const lzs=[0,1,2].map(i=>{const l=K.makeLizard(scene,{scale:.4});l.g.position.set(-2.2+i*2.2,0,1.4+(i%2)*.4);l.g.rotation.y=Math.PI/2;return l;});
+ const q=label(scene,'?',{size:220,w:256,h:256,fill:'#fff6c8'});const x=xSprite();scene.add(x);x.scale.setScalar(.001);
+ const lb=hud(cam,'진짜 이유는?',{size:150,w:1400,fill:'#ffd24a'});
+ return t=>{co.idle(t);lzs.forEach((l,i)=>{l.run(t,.5);l.g.position.x=-2.2+i*2.2+Math.sin(t*1.3+i)*.4;});
+  co.tilt(t>.4&&t<3.2?Math.sin(Math.min(1,(t-.4)/.35)*Math.PI/2):0);co.head.rotation.y=t>3.4&&t<4.6?Math.sin((t-3.4)*16)*.45:co.head.rotation.y;
+  cam.position.set(.6,2.2,8.4-t*.15);cam.lookAt(0,1.4,0);
+  q.position.set(1.0,3.0+Math.sin(t*3)*.05,0);setSprite(q,.8,t>.5&&t<3.3?pop(t,.5,.2):0);
+  x.position.set(0,.8,1.6);const xs=t>3.4?pop(t,3.4,.15)*1.3:.001;x.scale.setScalar(Math.max(.001,xs));x.material.opacity=t>3.4?clamp01((5.6-t)/.4):0;
+  hudShow(lb,t,3.9,5.7,.8,0,2.3);};};
+// 10. 진짜 마지막은 쥐라기 끝의 기후 변화
+SC.climate=()=>{const {scene,cam}=mk({sky:DAY,sunPos:[-5,9,7],hemi:1.4});
+ const gr=ground(scene,0x8cc46a);const pl=plants(scene,41,10,[16,8],-2);const gc=new THREE.Color(0x8cc46a),gd=new THREE.Color(0xc8a86a);
+ const co=K.makeCompy(scene);co.g.rotation.y=.2;const cr=cracks(scene,9,16);
+ const a=hud(cam,'쥐라기 끝',{size:150,w:1000,fill:'#ffffff'}),b=hud(cam,'기후 변화',{size:170,w:1000,fill:'#ffb04a'});
+ return t=>{co.idle(t);const k=easeIO((t-1.4)/2.4);skyTo(DAY,DUSTY,k);gr.material.color.copy(gc).lerp(gd,k);pl.forEach((p,i)=>p.scale.setScalar(lerp(1,.55,clamp01(k*1.3-i*.03))));cr(k);
+  co.head.rotation.x=-.35*Math.min(1,t/1.2);co.head.rotation.y=Math.sin(t*.9)*.3;
+  const ca=-.3+t*.08;cam.position.set(Math.sin(ca)*9,2.6,Math.cos(ca)*9);cam.lookAt(0,1.4,0);
+  hudShow(a,t,.2,4.8,.7,0,2.5);hudShow(b,t,1.6,4.8,.85,0,1.65);};};
+// 11. 바닷물이 빠지며 섬들이 말라 감 (타임랩스)
+SC.retreat=()=>{const {scene,cam}=mk({sky:DAY,sunPos:[-6,10,6],hemi:1.4});
+ const bed=add(scene,C(120,120,.2,64),toon(0xd8bf86),[0,-2.3,0],null,null,false);bed.receiveShadow=true;
+ const sea=L.sea(scene,0x3f9ac8);sea.material.transparent=true;
+ const isl=[[0,0,3.6],[-9,-5,2.4],[8,-8,3],[-4,9,2],[11,4,2.2],[-13,3,2.6],[3,-15,3.2],[-7,-14,2.2]];const grs=[];
+ isl.forEach(([x,z,r],i)=>{const g=L.island(scene,{r,grassR:r*.7,pos:[x,0,z]});add(g,C(r+.9,r+2.2,2,40),toon(0xc9a66a),[0,-1.4,0],null,null,false);K.fern(g,r*.2,-r*.2,.9);
+  g.traverse(o=>{if(o.isMesh&&o.material.color&&o.material.color.getHex()===0x6fbf5a){o.material=o.material.clone();grs.push(o.material);}});});
+ const co=K.makeCompy(scene,{scale:.8});co.g.position.set(.5,0,.8);
+ const a=hud(cam,'바닷물이 빠지고',{size:140,w:1200,fill:'#ffffff'}),b=hud(cam,'섬이 말라 가요',{size:140,w:1200,fill:'#ffb04a'});
+ const gc=new THREE.Color(0x6fbf5a),gd=new THREE.Color(0xb8a060);
+ return t=>{co.idle(t);co.head.rotation.y=Math.sin(t*1.1)*.5;const k=easeIO(t/6.8);sea.position.y=lerp(-.02,-2.25,k);sea.material.opacity=lerp(1,.0,clamp01(k*1.15-.1));
+  skyTo(DAY,DUSTY,clamp01((t-3)/4));grs.forEach(m=>m.color.copy(gc).lerp(gd,clamp01((t-3.2)/3.5)));
+  const ck=easeIO(t/7.9);cam.position.set(lerp(-3,4,ck),lerp(18,13,ck),lerp(18,15,ck));cam.lookAt(0,-.5,0);
+  hudShow(a,t,.3,3.6,.7,0,2.35);hudShow(b,t,3.6,7.9,.7,0,2.35);};};
+// 12. 건기와 우기가 뚜렷해지며 메말라 감
+SC.season=()=>{const {scene,cam}=mk({sky:DAY,sunPos:[-5,9,7],hemi:1.4});
+ const gr=ground(scene,0x9cc46a);const pl=plants(scene,51,9,[14,7]);const cr=cracks(scene,17,20);
+ const co=K.makeCompy(scene);co.g.rotation.y=.3;
+ const N=160,rp=new Float32Array(N*3),rs=[];const r=rnd(7);for(let i=0;i<N;i++)rs.push([(r()-.5)*14,r()*9,(r()-.5)*8-1]);
+ const rg=new THREE.BufferGeometry();rg.setAttribute('position',new THREE.BufferAttribute(rp,3));const rain=new THREE.Points(rg,new THREE.PointsMaterial({color:0xcfe8ff,size:.09,transparent:true,opacity:0}));scene.add(rain);
+ const RAIN=['#59657a','#9aa6b6','#c8d0d8'],DRY=['#d8803a','#f4c060','#ffe8b0'];
+ const w=hud(cam,'우기',{size:160,w:700,fill:'#9fd0ff'}),d=hud(cam,'건기',{size:160,w:700,fill:'#ffb04a'});
+ const gc=new THREE.Color(0x9cc46a),gd=new THREE.Color(0xd2b273);
+ return t=>{co.idle(t);const ph=t<.8?-1:Math.sin((t-.8)*2.0);const isRain=ph<0;const m=clamp01(Math.abs(ph)*1.5);
+  skyTo(isRain?RAIN:DRY,DAY,1-m);rain.material.opacity=isRain&&t>.8?m*.9:0;for(let i=0;i<N;i++){const s=rs[i];rp[i*3]=s[0];rp[i*3+1]=(s[1]-t*12%9+9)%9;rp[i*3+2]=s[2];}rg.attributes.position.needsUpdate=true;
+  const dk=clamp01(t/6.5);gr.material.color.copy(gc).lerp(gd,dk);cr(dk);pl.forEach(p=>p.scale.setScalar(lerp(1,.5,dk)));co.head.rotation.x=-.4*(isRain?m:0);co.open(isRain?0:.3*m);
+  cam.position.set(1.1,2.3,8.8);cam.lookAt(0,1.4,0);
+  hudShow(w,t,.6,7.1,.8,-1.2,2.35);w.material.opacity*=isRain?1:.25;hudShow(d,t,.6,7.1,.8,1.2,2.35);d.material.opacity*=isRain?.25:1;};};
+// 13. 덤불도, 도마뱀도 하나둘 사라짐
+SC.lizards=()=>{const {scene,cam}=mk({sky:DUSTY,sunPos:[-5,9,7],hemi:1.3});
+ ground(scene,0xd2b273);cracks(scene,23,20)(1);
+ const bushes=[[-2.6,-1.2],[2.8,-1.6],[0,-3.4]].map(([x,z])=>L.bush(scene,x,z,1,0x8a9a4a));
+ const co=K.makeCompy(scene);co.g.rotation.y=.1;
+ const lz=[[-2.2,1.2],[2.4,.9],[-.9,2.2]].map(([x,z],i)=>{const l=K.makeLizard(scene,{scale:.45});l.g.position.set(x,0,z);l.g.rotation.y=i*1.5;return l;});
+ const pf=[0,1,2,3,4,5].map(()=>poof(scene));const T=[.6,1.6,2.6,3.4,4.0,4.6];
+ return t=>{co.idle(t);co.head.rotation.y=Math.sin(t*2.4)*.7;
+  const items=[lz[0].g,bushes[0],lz[1].g,bushes[1],lz[2].g,bushes[2]];
+  items.forEach((it,i)=>{const k=t-T[i];const s0=it===bushes[0]||it===bushes[1]||it===bushes[2]?1:.45;it.scale.setScalar(k<0?s0:Math.max(.001,s0*(1-k/.25)));pf[i].at(t,T[i],[it.position.x,.2,it.position.z]);});
+  lz.forEach(l=>l.run(t,.4));cam.position.set(0,3.4,9.2-t*.2);cam.lookAt(0,1.0,0);};};
+// 14. 작은 공룡에게는 버티기 힘든 변화 — 넓은 메마른 땅에 홀로
+SC.alone=()=>{const {scene,cam}=mk({sky:['#7a5a50','#d0905a','#f0c890'],sunPos:[-6,6,6],sunC:0xffc080,hemi:1.1});
+ ground(scene,0xc8a86a,80);cracks(scene,31,40,16)(1);
+ const co=K.makeCompy(scene);co.g.rotation.y=.4;co.blush.forEach(b=>b.visible=false);
+ const dust=L.dust(scene,{n:60,color:0xf2d8a0,box:[14,4,8],size:.08});
+ return t=>{dust(t);co.idle(t*.6);co.head.rotation.x=lerp(0,.45,clamp01(t/1.5));co.neck.rotation.x=lerp(0,.25,clamp01(t/1.5));co.rig.position.y=-lerp(0,.25,clamp01((t-.6)/1));
+  const k=easeIO(t/4.8);cam.position.set(lerp(1.4,4,k),lerp(2.0,5.5,k),lerp(6.5,16,k));cam.lookAt(0,lerp(1.3,.6,k),0);};};
+// 15. 운석보다 8천만 년 먼저 → 석회암 속 화석
+function fossilTex(){const c=document.createElement('canvas');c.width=1024;c.height=1024;const x=c.getContext('2d');
+ x.fillStyle='#e8dcc0';x.fillRect(0,0,1024,1024);const r=rnd(5);for(let i=0;i<900;i++){x.fillStyle=`rgba(${150+r()*60},${130+r()*50},${100+r()*40},${.12+r()*.15})`;x.beginPath();x.arc(r()*1024,r()*1024,2+r()*10,0,6.28);x.fill();}
+ for(let i=0;i<5;i++){x.strokeStyle='rgba(160,140,110,.35)';x.lineWidth=3;x.beginPath();x.moveTo(0,180+i*170+r()*40);x.lineTo(1024,200+i*170+r()*40);x.stroke();}
+ return c;}
+function drawFossil(x){x.strokeStyle='#5a4a3a';x.fillStyle='#5a4a3a';x.lineCap='round';x.lineJoin='round';
+ // 활처럼 젖혀진 목(죽음의 자세)·등뼈·꼬리
+ const sp=[[300,300],[250,380],[270,470],[350,520],[460,540],[570,540],[680,530],[790,500],[880,450],[940,380]];
+ x.lineWidth=16;x.beginPath();sp.forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));x.stroke();
+ sp.forEach(([a,b],i)=>{if(i>2){x.beginPath();x.arc(a,b,11,0,6.28);x.fill();}});
+ x.beginPath();x.ellipse(320,265,62,36,-.5,0,6.28);x.fill();x.fillStyle='#e8dcc0';x.beginPath();x.arc(320,255,14,0,6.28);x.fill();x.fillStyle='#5a4a3a';
+ x.lineWidth=7;for(let i=0;i<6;i++){const px=380+i*30,py=525;x.beginPath();x.moveTo(px,py);x.quadraticCurveTo(px+12,py+50,px-4,py+80);x.stroke();}
+ x.lineWidth=12;x.beginPath();x.moveTo(560,545);x.lineTo(600,650);x.lineTo(560,740);x.lineTo(620,760);x.stroke();x.beginPath();x.moveTo(600,545);x.lineTo(660,640);x.lineTo(640,730);x.lineTo(700,745);x.stroke();
+ x.lineWidth=7;x.beginPath();x.moveTo(390,530);x.lineTo(410,590);x.lineTo(440,600);x.stroke();
+ // 배 속 작은 도마뱀
+ x.lineWidth=5;x.strokeStyle='#8a6a4a';x.beginPath();x.moveTo(440,560);x.quadraticCurveTo(480,590,520,570);x.stroke();}
+SC.fossil=()=>{const {scene,cam}=mk({sky:['#2a2f5a','#a06a6a','#e0a070'],sunPos:[-5,8,6],hemi:1.2});
+ ground(scene,0x8a7a5a);
+ const meteor=K.makeMeteor(scene,.6);meteor.g.position.set(8,14,-20);meteor.g.rotation.z=-2.3;
+ const t1=hud(cam,'운석이 떨어지기',{size:130,w:1200,fill:'#ffffff'}),t2=hud(cam,'8천만 년+ 전',{size:190,w:1200,fill:'#ffe066'});
+ const base=fossilTex();const c=document.createElement('canvas');c.width=c.height=1024;const cx=c.getContext('2d');const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;
+ const fx=document.createElement('canvas');fx.width=fx.height=1024;drawFossil(fx.getContext('2d'));
+ const slab=new THREE.Group();scene.add(slab);add(slab,new THREE.BoxGeometry(5.2,.5,5.2),toon(0xcfbf9a),[0,0,0]);const face=new THREE.Mesh(new THREE.PlaneGeometry(5,5),new THREE.MeshToonMaterial({map:tex,gradientMap:L.grad}));face.rotation.x=-Math.PI/2;face.rotation.z=-Math.PI/2;face.position.y=.26;slab.add(face);
+ slab.position.set(0,-3,0);const co=K.makeCompy(scene,{scale:.7});co.g.position.set(1.1,0,1.2);co.g.rotation.y=.2;
+ let last=-1;
+ return t=>{const F=3.4;
+  if(t<F){co.g.visible=true;co.idle(t);co.head.rotation.x=-.5;slab.visible=false;const mk=clamp01(t/2.4);meteor.g.position.set(lerp(6,2.5,mk),lerp(16,9.5,mk),-22);meteor.fire.forEach((f,i)=>f.scale.y=1+Math.sin(t*20+i)*.1);
+   cam.position.set(1.5,1.6,7);cam.lookAt(.8,3.0,-4);hudShow(t1,t,.1,F,.6,0,2.4);hudShow(t2,t,.9,F,.9,0,1.55);}
+  else{const k=t-F;co.g.visible=false;meteor.g.visible=false;t1.material.opacity=0;t2.material.opacity=0;slab.visible=true;slab.position.y=lerp(-3,0,ease(k/.8));
+   const a=clamp01((k-.8)/2.2);const key=Math.round(a*40);if(key!==last){last=key;cx.drawImage(base,0,0);cx.globalAlpha=a;cx.drawImage(fx,0,0);cx.globalAlpha=1;tex.needsUpdate=true;}
+   cam.position.set(0,lerp(9.6,8.2,clamp01(k/4.4)),lerp(1.4,1.0,clamp01(k/4.4)));cam.lookAt(0,0,.2);}};};
+
+const upd=SC[name]();if(!window.__noReady)window.ready=true;
+window.renderFrame=f=>{const t=f/30;upd(t);renderer.render(window.__scene,window.__cam);return renderer.domElement.toDataURL('image/jpeg',.92);};
+const renderer=L.renderer;
+</script></body></html>

@@ -9,7 +9,7 @@
     "phase": "defeat",
     "elapsed": 85,
     "casts": {
-      "deina": [
+      "dei": [
         4.72,
         14.24,
         18.5,
@@ -524,7 +524,7 @@
           }
         ],
         "tauntOwnerSeconds": {
-          "deina": 7.48,
+          "dei": 7.48,
           "torika": 19.36,
           "ella": 36.72
         }
@@ -766,7 +766,7 @@
           }
         ],
         "tauntOwnerSeconds": {
-          "deina": 9.86,
+          "dei": 9.86,
           "torika": 17.74,
           "ella": 38.22
         }
@@ -976,7 +976,7 @@
           }
         ],
         "tauntOwnerSeconds": {
-          "deina": 8.98,
+          "dei": 8.98,
           "torika": 19.6,
           "ella": 38.22
         }

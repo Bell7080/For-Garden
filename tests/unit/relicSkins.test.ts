@@ -13,7 +13,7 @@ describe("relic skins", () => {
     expect(skinsForRelic("torika").map(({ id }) => id))
       .toEqual(["torika-skin-001"]);
     expect(RELIC_SKINS.filter(({ id }) => id === "torika-skin-001").map(({ relicId }) => relicId)).toEqual(["torika"]);
-    expect(skinsForRelic("rex")).toEqual([]);
+    expect(skinsForRelic("rexia")).toEqual([]);
   });
 
   it("출시된 추가 외형은 전신과 SD 에셋을 한 벌로 가지고, 미출시 외형은 둘 다 비운다", () => {

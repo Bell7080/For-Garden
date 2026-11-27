@@ -45,7 +45,7 @@ export const BATTLE_RU = {
   "battle.tutorial.ultimate.owner": "Ульта: {name}",
   "battle.tutorial.ultimate.tap": "Нажмите на светящуюся карту · {step}/{total}",
   "battle.tutorial.ultimate.desc.torika": "Бьёт по земле вокруг, нанося урон и ненадолго оглушая ближайших врагов.",
-  "battle.tutorial.ultimate.desc.dodo": "Наносит урон врагам в выбранной области и лечит союзников внутри неё.",
+  "battle.tutorial.ultimate.desc.dodi": "Наносит урон врагам в выбранной области и лечит союзников внутри неё.",
   "battle.tutorial.ultimate.desc.parua": "Ненадолго ускоряет атаки и выпускает по две стрелы за раз.",
   "battle.gauge.frenzy": "Неистовство {value} / {max}",
   "battle.gauge.ferocity": "Ярость {value} / {max}",

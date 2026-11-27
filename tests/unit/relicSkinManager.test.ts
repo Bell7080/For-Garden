@@ -27,7 +27,7 @@ describe("RelicSkinManager", () => {
     expect(await manager.equip("torika", "torika-skin-001")).toBe(false);
     // 기본 해금 복구 뒤에도 다른 렐릭용 외형이라는 장착 규칙은 그대로 적용된다.
     state.ownedRelicSkinIds.add("torika-skin-001");
-    expect(await manager.equip("rex", "torika-skin-001")).toBe(false);
+    expect(await manager.equip("rexia", "torika-skin-001")).toBe(false);
     expect(state.equippedRelicSkinIds).toEqual({});
     expect(saves.save).not.toHaveBeenCalled();
   });

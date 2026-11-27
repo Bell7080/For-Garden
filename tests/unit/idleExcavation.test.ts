@@ -12,13 +12,13 @@ function progress(level = 1, breakthrough = 0): RelicProgress {
 
 /** 테스트마다 같은 3인 편성과 UTC 기준점을 갖는 독립 상태를 만든다. */
 function activeState() {
-  return { ...createIdleExcavationState("2026-08-20T00:00:00.000Z"), assignedRelicIds: ["torika", "rex", "spino"] as [string, string, string] };
+  return { ...createIdleExcavationState("2026-08-20T00:00:00.000Z"), assignedRelicIds: ["torika", "rexia", "spina"] as [string, string, string] };
 }
 
-const starterProgress = { torika: progress(), rex: progress(), spino: progress() };
+const starterProgress = { torika: progress(), rexia: progress(), spina: progress() };
 
 /** 기본 편성(토리카·렉시아·스피나)의 시간당 합산. 게이지의 분모를 손으로 적지 않는다. */
-const TOTALS = excavationProductionDisplayModel(["torika", "rex", "spino"], RELICS, starterProgress).totalsPerHour;
+const TOTALS = excavationProductionDisplayModel(["torika", "rexia", "spina"], RELICS, starterProgress).totalsPerHour;
 
 const emptyWallet = { fossil: 0, gold: 0, cheesecake: 0, amber: 0, gems: 0, stamina: 0, dnaFragments: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0, duelEmblem: 0 };
 
@@ -48,17 +48,17 @@ describe("방치 발굴 순수 규칙", () => {
   });
 
   it("동일 캐릭터의 중복 배치를 차단한다", () => {
-    expect(validateExcavationFormation(["rex", "rex", null], new Set(["rex"]))).toEqual({ valid: false, reason: "duplicate" });
+    expect(validateExcavationFormation(["rexia", "rexia", null], new Set(["rexia"]))).toEqual({ valid: false, reason: "duplicate" });
   });
 
   it("미보유 캐릭터 배치를 차단한다", () => {
-    expect(validateExcavationFormation(["rex", "dodo", null], new Set(["rex"]))).toEqual({ valid: false, reason: "unowned" });
+    expect(validateExcavationFormation(["rexia", "dodi", null], new Set(["rexia"]))).toEqual({ valid: false, reason: "unowned" });
   });
 
   it("3칸이 다 차지 않은 편성도 유효하다", () => {
     // 자리를 고르는 규칙 자체는 formationSlots.test.ts가 지킨다. 여기서는 그 결과가 발굴 편성
     // 검증을 그대로 통과하는지만 본다.
-    expect(validateExcavationFormation([null, "torika", null], new Set(["rex", "torika"]))).toEqual({ valid: true });
+    expect(validateExcavationFormation([null, "torika", null], new Set(["rexia", "torika"]))).toEqual({ valid: true });
   });
 
   it("서로 다른 자원 특화를 자원별로 합산한다", () => {
@@ -68,11 +68,11 @@ describe("방치 발굴 순수 규칙", () => {
   });
 
   it("젬은 편성된 모든 렐릭이 같은 고정값으로 만들고 젬 특화는 없다", () => {
-    const model = excavationProductionDisplayModel(["torika", "spino", "rex"], RELICS, { torika: progress(), spino: progress(), rex: progress() });
+    const model = excavationProductionDisplayModel(["torika", "spina", "rexia"], RELICS, { torika: progress(), spina: progress(), rexia: progress() });
     expect(new Set(model.relics.map(({ currency }) => currency))).toEqual(new Set(["gold", "cheesecake", "rawStone"]));
     expect(RELICS.some((relic) => relic.excavationTrait.primaryCurrency === "gems")).toBe(false);
     // 레벨·돌파로 늘지 않는다 — 만렙 개체도 한 칸에 시간당 6개다.
-    expect(excavationProductionDisplayModel(["dodo", null, null], RELICS, { dodo: progress(50, 4) }).totalsPerHour.gems).toBe(EXCAVATION_GEMS_PER_RELIC_PER_HOUR);
+    expect(excavationProductionDisplayModel(["dodi", null, null], RELICS, { dodi: progress(50, 4) }).totalsPerHour.gems).toBe(EXCAVATION_GEMS_PER_RELIC_PER_HOUR);
     expect(model.totalsPerHour.gems * 8).toBe(96);
   });
 
@@ -134,15 +134,15 @@ describe("방치 발굴 순수 규칙", () => {
   });
 
   it("레벨과 한계 돌파만 생산 성장값에 반영한다", () => {
-    const model = excavationProductionDisplayModel(["rex", null, null], RELICS, { rex: progress(11, 2) });
+    const model = excavationProductionDisplayModel(["rexia", null, null], RELICS, { rexia: progress(11, 2) });
     // 돌파는 레벨과 무관하게 켜져 있다 — 11레벨에서도 돌파 두 단계 몫이 든다.
     expect(model.relics[0]).toMatchObject({ basePerHour: 7.92, levelIncreasePerHour: 1.584, breakthroughIncreasePerHour: 1.584, totalPerHour: 11.088 });
-    const grown = excavationProductionDisplayModel(["rex", null, null], RELICS, { rex: progress(30, 2) });
+    const grown = excavationProductionDisplayModel(["rexia", null, null], RELICS, { rexia: progress(30, 2) });
     expect(grown.relics[0]).toMatchObject({ basePerHour: 7.92, levelIncreasePerHour: 4.5936, breakthroughIncreasePerHour: 1.584, totalPerHour: 14.0976 });
   });
 
   it("빈 슬롯은 생산 상세와 합산에서 제외한다", () => {
-    expect(excavationProductionDisplayModel([null, "rex", null], RELICS, { rex: progress() })).toMatchObject({ relics: [{ relicId: "rex" }], totalsPerHour: { gold: 0, cheesecake: 0, rawStone: 7.92, gems: 4 } });
+    expect(excavationProductionDisplayModel([null, "rexia", null], RELICS, { rexia: progress() })).toMatchObject({ relics: [{ relicId: "rexia" }], totalsPerHour: { gold: 0, cheesecake: 0, rawStone: 7.92, gems: 4 } });
   });
 
   it("앱을 종료한 4시간 동안 세 렐릭 생산량을 누적한다", () => {
@@ -151,13 +151,13 @@ describe("방치 발굴 순수 규칙", () => {
   });
 
   it("화석 특화 렐릭의 신규 생산량을 독립적으로 정산한다", () => {
-    const state = { ...createIdleExcavationState("2026-08-20T00:00:00.000Z"), assignedRelicIds: ["rex", null, null] as [string, null, null] };
-    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { rex: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 0, rawStone: 7.92, gems: 4 });
+    const state = { ...createIdleExcavationState("2026-08-20T00:00:00.000Z"), assignedRelicIds: ["rexia", null, null] as [string, null, null] };
+    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { rexia: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 0, rawStone: 7.92, gems: 4 });
   });
 
   it("편성된 렐릭 한 명의 젬을 주 재화와 함께 독립적으로 정산한다", () => {
-    const state = { ...createIdleExcavationState("2026-08-20T00:00:00.000Z"), assignedRelicIds: ["dodo", null, null] as [string, null, null] };
-    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { dodo: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 8.8128, rawStone: 0, gems: 4 });
+    const state = { ...createIdleExcavationState("2026-08-20T00:00:00.000Z"), assignedRelicIds: ["dodi", null, null] as [string, null, null] };
+    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { dodi: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 8.8128, rawStone: 0, gems: 4 });
   });
 
   it("수확 뒤 네 재화의 소수 부분을 각각 다음 수확으로 이월한다", () => {

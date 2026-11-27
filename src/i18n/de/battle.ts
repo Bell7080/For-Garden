@@ -45,7 +45,7 @@ export const BATTLE_DE = {
   "battle.tutorial.ultimate.owner": "Ultimativ: {name}",
   "battle.tutorial.ultimate.tap": "Tippe auf die leuchtende Karte · {step}/{total}",
   "battle.tutorial.ultimate.desc.torika": "Schlägt auf den Boden ringsum, verursacht Schaden und betäubt nahe Feinde kurz.",
-  "battle.tutorial.ultimate.desc.dodo": "Fügt Feinden im gewählten Bereich Schaden zu und heilt Verbündete darin.",
+  "battle.tutorial.ultimate.desc.dodi": "Fügt Feinden im gewählten Bereich Schaden zu und heilt Verbündete darin.",
   "battle.tutorial.ultimate.desc.parua": "Greift kurz schneller an und schießt zwei Pfeile auf einmal.",
   "battle.gauge.frenzy": "Raserei {value} / {max}",
   "battle.gauge.ferocity": "Wildheit {value} / {max}",

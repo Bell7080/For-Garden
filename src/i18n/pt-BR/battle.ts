@@ -45,7 +45,7 @@ export const BATTLE_PT_BR = {
   "battle.tutorial.ultimate.owner": "Suprema de {name}",
   "battle.tutorial.ultimate.tap": "Toque no cartão brilhante para usá-la · {step}/{total}",
   "battle.tutorial.ultimate.desc.torika": "Golpeia o chão ao redor, causando dano e atordoando brevemente os inimigos próximos.",
-  "battle.tutorial.ultimate.desc.dodo": "Causa dano aos inimigos na área escolhida e cura os aliados dentro dela.",
+  "battle.tutorial.ultimate.desc.dodi": "Causa dano aos inimigos na área escolhida e cura os aliados dentro dela.",
   "battle.tutorial.ultimate.desc.parua": "Ataca mais rápido por um tempo e dispara duas flechas por vez.",
   "battle.gauge.frenzy": "Frenesi {value} / {max}",
   "battle.gauge.ferocity": "Ferocidade {value} / {max}",

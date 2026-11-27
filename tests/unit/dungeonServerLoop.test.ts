@@ -11,7 +11,7 @@ import { canFireUltimate, fireUltimate, stepSkirmish } from '../../src/core/skir
 describe('치즈케이크 원격 저장 왕복', () => {
  it.each(['cake-1','cake-8'])('%s 입장·전투·결과·재조회', async tierId => {
   const state=createDefaultSession(); state.wallet.stamina=300; state.cakeOperation.clearedIndex=7;
-  state.party=['rex','mette','torika'];
+  state.party=['rexia','mette','torika'];
   for(const id of state.party){state.owned.add(id);state.relicProgress[id]={...createInitialRelicProgress(),level:60,breakthrough:4};}
   let stored={data:JSON.parse(JSON.stringify(saveManager.exportData(state))),revision:'1'};
   const receipts=new Map<string,unknown>();let now=new Date('2026-10-21T23:59:00Z');

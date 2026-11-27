@@ -47,9 +47,9 @@ for (const mySide of [0, 1] as const) test(`아레나 동시 밴 → 공개 연�
  const {arenaPlayer}=await import('../../src/server/liveArena');
  const {startArena,applyArenaAction,arenaTurn,arenaPickable,settleArena,publicArenaRoom}=await import('../../src/core/liveArena');
  const {ARENA_ROOM_LAYOUT}=await import('../../src/ui/arenaRoomLayout');
- const own=createDefaultSession();own.owned=new Set([...own.owned,'rex','spino','mette','stella']);own.party=['rex','mette','stella'];own.favorite='rex';
+ const own=createDefaultSession();own.owned=new Set([...own.owned,'rexia','spina','mette','stella']);own.party=['rexia','mette','stella'];own.favorite='rexia';
  for(const id of own.owned)own.relicProgress[id]={...createInitialRelicProgress(),level:20,breakthrough:1};
- const opponent=createDefaultSession();opponent.owned=new Set(own.owned);opponent.party=[...own.party];opponent.favorite='rex';for(const id of opponent.owned)opponent.relicProgress[id]=createInitialRelicProgress();
+ const opponent=createDefaultSession();opponent.owned=new Set(own.owned);opponent.party=[...own.party];opponent.favorite='rexia';for(const id of opponent.owned)opponent.relicProgress[id]=createInitialRelicProgress();
  const me='browser-arena',foe='browser-enemy',foeSide=1-mySide;
  let room:import('../../src/core/liveArena').ArenaRoom|undefined;const calls:string[]=[];const errors:string[]=[];
  page.on('pageerror',e=>{errors.push(e.message);console.error(e.stack);});

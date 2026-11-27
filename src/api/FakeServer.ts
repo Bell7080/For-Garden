@@ -192,7 +192,7 @@ export const RECEIPT_KEEP = 48;
 /** QA 표본 순위 — 줄을 눌러 카드를 열어 보도록 id는 친구 표본(`PREVIEW_DIRECTORY`)의 네 관계(없음·받은 신청·보낸 신청·친구)를 가리킨다. */
 const QA_ANCIENT_RANKING: readonly { playerId: string; displayName: string; floor: number; favoriteRelicId: string }[] = [
   { playerId: "user-stars", displayName: "DeepDiver", floor: 118, favoriteRelicId: "koma" },
-  { playerId: "user-fog", displayName: "Haneul", floor: 87, favoriteRelicId: "rex" },
+  { playerId: "user-fog", displayName: "Haneul", floor: 87, favoriteRelicId: "rexia" },
   { playerId: "user-lighthouse", displayName: "StrataKeeper", floor: 64, favoriteRelicId: "mette" },
   { playerId: "friend-dawn", displayName: "MossLab", floor: 31, favoriteRelicId: "torika" },
   { playerId: "user-garden", displayName: "FossilHunter", floor: 12, favoriteRelicId: "parua" },

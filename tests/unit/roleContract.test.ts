@@ -34,11 +34,11 @@ const EXCEPTIONS: Readonly<Record<string, string>> = {
    * 사실상 한 마리의 도발이다 — 몸으로 통로를 메우는 것이 이 무리가 어그로를 끄는 방법이고,
    * 그것은 수치가 아니라 서 있는 자리가 한다.
    */
-  "raitia-grass:taunt": "떼로 서서 통로를 메우는 것이 어그로라, 자매마다 도발을 들면 앞줄 표적이 매 초 갈린다",
-  "raitia-water:taunt": "떼로 서서 통로를 메우는 것이 어그로라, 자매마다 도발을 들면 앞줄 표적이 매 초 갈린다",
-  "raitia-fire:taunt": "떼로 서서 통로를 메우는 것이 어그로라, 자매마다 도발을 들면 앞줄 표적이 매 초 갈린다",
-  "raitia-earth:taunt": "떼로 서서 통로를 메우는 것이 어그로라, 자매마다 도발을 들면 앞줄 표적이 매 초 갈린다",
-  "raitia-wind:taunt": "떼로 서서 통로를 메우는 것이 어그로라, 자매마다 도발을 들면 앞줄 표적이 매 초 갈린다",
+  "viria:taunt": "떼로 서서 통로를 메우는 것이 어그로라, 자매마다 도발을 들면 앞줄 표적이 매 초 갈린다",
+  "guttia:taunt": "떼로 서서 통로를 메우는 것이 어그로라, 자매마다 도발을 들면 앞줄 표적이 매 초 갈린다",
+  "favia:taunt": "떼로 서서 통로를 메우는 것이 어그로라, 자매마다 도발을 들면 앞줄 표적이 매 초 갈린다",
+  "silia:taunt": "떼로 서서 통로를 메우는 것이 어그로라, 자매마다 도발을 들면 앞줄 표적이 매 초 갈린다",
+  "ventia:taunt": "떼로 서서 통로를 메우는 것이 어그로라, 자매마다 도발을 들면 앞줄 표적이 매 초 갈린다",
 };
 
 const has = (id: string, requirement: string): boolean => EXCEPTIONS[`${id}:${requirement}`] !== undefined;

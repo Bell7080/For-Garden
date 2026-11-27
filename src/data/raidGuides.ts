@@ -71,7 +71,7 @@ export const RAID_GUIDES: Readonly<Record<RaidBossId, RaidGuide>> = {
     recommendedRelicId: "maddy",
     reasonPoints: ["control", "element", "survive"],
     // 켄토 — 불 탱커, 막과 도발로 턱을 받는다(R이라 구하기 쉽다). 데이 — 불 마법 탱커, 얇은 저항을 판다.
-    alternativeRelicIds: ["kento", "deina"],
+    alternativeRelicIds: ["kento", "dei"],
   },
   /*
    * 타보아 — 감은 채로 때릴수록 빨라진다. 공속을 깎는 수압·둔화가 그 오르막을 되돌리고, 후열은 몸에서
@@ -93,8 +93,8 @@ export const RAID_GUIDES: Readonly<Record<RaidBossId, RaidGuide>> = {
    * 코아틀 — 첫 순간과 한 줄. 열리자마자 급강하로 묶고, 궁극기는 통로 하나를 뚫는다. 첫 표적을 단단한
    * 앞줄이 맡고 같은 줄에 나란히 서지 않으면 절반은 비켜 간다. 방어가 셋 중 가장 얇다.
    */
-  quetzalcoatlus: {
-    bossId: "quetzalcoatlus",
+  koatl: {
+    bossId: "koatl",
     patterns: [
       { slot: "passive", values: (def) => ({ seconds: trim(def.passive.openingCharge?.stunSeconds ?? 0) }) },
       { slot: "basic", values: (def) => ({ every: def.basic.statusEffectEvery ?? 3 }) },
@@ -103,7 +103,7 @@ export const RAID_GUIDES: Readonly<Record<RaidBossId, RaidGuide>> = {
     recommendedRelicId: "pachi",
     reasonPoints: ["element", "survive", "control"],
     // 토리카 — 땅 탱커, 첫 급강하를 맡는다. 렉시아 — 불 물리, 출혈 치명타로 얇은 방어를 판다.
-    alternativeRelicIds: ["torika", "rex"],
+    alternativeRelicIds: ["torika", "rexia"],
   },
 };
 

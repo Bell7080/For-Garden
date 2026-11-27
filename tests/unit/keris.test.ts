@@ -38,7 +38,7 @@ describe("저주", () => {
 
 describe("저주 전이", () => {
   it("는 저주가 최대인 적을 때렸을 때만 옆으로 이어진다", () => {
-    const state = createSkirmish([getRelic("keris")], [getRelic("torika"), getRelic("rex")], ARENA);
+    const state = createSkirmish([getRelic("keris")], [getRelic("torika"), getRelic("rexia")], ARENA);
     const [keris, primary, neighbour] = state.fighters;
     // 전이는 **이번 타격이 얹기 전**의 겹으로 판정한다. 최대가 아니면 옆 적은 멀쩡하다.
     primary.curse = { remaining: 8, total: 8, stacks: 1, percentPerStack: 15, maxStacks: 3 };
@@ -82,7 +82,7 @@ describe("저주 전이", () => {
 
 describe("광란", () => {
   it("은 걸린 개체가 가장 가까운 자기 편을 때리게 만든다", () => {
-    const state = createSkirmish([getRelic("keris")], [getRelic("torika"), getRelic("rex")], ARENA);
+    const state = createSkirmish([getRelic("keris")], [getRelic("torika"), getRelic("rexia")], ARENA);
     const [, first, second] = state.fighters;
     first.frenzy = { remaining: 6, total: 6, sourceId: state.fighters[0].id };
     const before = second.hp;

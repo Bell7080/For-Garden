@@ -16,7 +16,7 @@ export const ATTENDANCE_TONE: Readonly<Record<AttendanceTrackId, { color: number
  * 오른쪽 위에 시계가 서므로 왼쪽), `cardSide`는 이벤트 카드의 자리다(모든 이벤트 카드는 글이 왼쪽이라 오른쪽).
  */
 export const ATTENDANCE_CAST: Readonly<Record<AttendanceTrackId, readonly { relicId: string; side: "left" | "right"; cardSide?: "left" | "right" }[]>> = {
-  newcomer: [{ relicId: "dodo", side: "right" }],
+  newcomer: [{ relicId: "dodi", side: "right" }],
   regular: [{ relicId: "torika", side: "left", cardSide: "right" }],
 };
 

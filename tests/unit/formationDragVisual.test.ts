@@ -2,22 +2,22 @@ import { describe, expect, it } from "vitest";
 import { FORMATION_DRAG_VISUAL, formationDragPreview, formationZoneStyle } from "../../src/ui/formationDragVisual";
 import { moveFormationSlot } from "../../src/core/formation";
 
-const PICKED = ["torika", "rex", "dodo"];
+const PICKED = ["torika", "rexia", "dodi"];
 
 describe("편성 드래그 미리보기", () => {
   it("든 자리는 손에 들려 있고 나머지는 제자리다", () => {
     const preview = formationDragPreview(PICKED, 0, undefined, 3);
     expect(preview[0]).toEqual({ relicId: "torika", lifted: true, moved: false });
-    expect(preview[1]).toEqual({ relicId: "rex", lifted: false, moved: false });
-    expect(preview[2]).toEqual({ relicId: "dodo", lifted: false, moved: false });
+    expect(preview[1]).toEqual({ relicId: "rexia", lifted: false, moved: false });
+    expect(preview[2]).toEqual({ relicId: "dodi", lifted: false, moved: false });
   });
 
   it("가리킨 자리의 캐릭터가 든 자리로 미리 옮겨 온다", () => {
     const preview = formationDragPreview(PICKED, 0, 2, 3);
-    expect(preview[0]).toMatchObject({ relicId: "dodo", lifted: true });
+    expect(preview[0]).toMatchObject({ relicId: "dodi", lifted: true });
     expect(preview[2]).toMatchObject({ relicId: "torika", moved: true });
     // 관련 없는 자리는 흔들리지 않는다.
-    expect(preview[1]).toEqual({ relicId: "rex", lifted: false, moved: false });
+    expect(preview[1]).toEqual({ relicId: "rexia", lifted: false, moved: false });
   });
 
   it("미리보기는 확정 규칙을 그대로 통과시킨다", () => {
@@ -35,7 +35,7 @@ describe("편성 드래그 미리보기", () => {
   });
 
   it("빈 자리와 자리를 바꾸면 든 자리가 비는 것까지 보여 준다", () => {
-    const preview = formationDragPreview(["torika", undefined, "dodo"], 0, 1, 3);
+    const preview = formationDragPreview(["torika", undefined, "dodi"], 0, 1, 3);
     expect(preview[0].relicId).toBeUndefined();
     expect(preview[1]).toMatchObject({ relicId: "torika", moved: true });
   });

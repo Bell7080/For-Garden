@@ -45,7 +45,7 @@ export const BATTLE_ZH_HANT = {
   "battle.tutorial.ultimate.owner": "{name}的必殺技",
   "battle.tutorial.ultimate.tap": "點選發光的卡片來使用 · {step}/{total}",
   "battle.tutorial.ultimate.desc.torika": "猛砸周圍的地面，對附近的敵人造成傷害並使其短暫暈眩。",
-  "battle.tutorial.ultimate.desc.dodo": "對選定區域內的敵人造成傷害，並為其中的友方恢復生命。",
+  "battle.tutorial.ultimate.desc.dodi": "對選定區域內的敵人造成傷害，並為其中的友方恢復生命。",
   "battle.tutorial.ultimate.desc.parua": "短時間內攻擊變快，每次射出兩支箭。",
   "battle.gauge.frenzy": "暴走 {value} / {max}",
   "battle.gauge.ferocity": "野性 {value} / {max}",

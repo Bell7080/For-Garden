@@ -1,5 +1,5 @@
 {
-"relic.rex.name": [
+"relic.rexia.name": [
 "蕾克希娅",
 "เร็กเซีย",
 "Rexia",
@@ -19,7 +19,7 @@
 "Torika",
 "Торика"
 ],
-"relic.spino.name": [
+"relic.spina.name": [
 "斯皮娜",
 "สปีนา",
 "Spina",
@@ -39,7 +39,7 @@
 "Luka",
 "Лука"
 ],
-"relic.dodo.name": [
+"relic.dodi.name": [
 "多蒂",
 "โดดี",
 "Dodi",
@@ -179,7 +179,7 @@
 "Mette",
 "Метте"
 ],
-"relic.deina.name": [
+"relic.dei.name": [
 "黛依",
 "เดย์",
 "Dei",
@@ -279,7 +279,7 @@
 "Pontos",
 "Понтос"
 ],
-"relic.rex.origin": [
+"relic.rexia.origin": [
 "霸王龙",
 "ไทรันโนซอรัส",
 "Tyrannosaurus",
@@ -299,7 +299,7 @@
 "Triceratops",
 "Трицератопс"
 ],
-"relic.spino.origin": [
+"relic.spina.origin": [
 "棘龙",
 "สไปโนซอรัส",
 "Spinosaurus",
@@ -319,7 +319,7 @@
 "Velociraptor",
 "Велоцираптор"
 ],
-"relic.dodo.origin": [
+"relic.dodi.origin": [
 "渡渡鸟",
 "นกโดโด",
 "Chim dodo",
@@ -459,7 +459,7 @@
 "Megatherium",
 "Мегатерий"
 ],
-"relic.deina.origin": [
+"relic.dei.origin": [
 "恐爪龙",
 "ไดโนนิคัส",
 "Deinonychus",

@@ -90,7 +90,7 @@ describe("치즈케이크 대작전 단계 표", () => {
  */
 describe("치즈케이크 대작전 표시 전투력", () => {
   const SEEDS = [1, 2, 3, 4, 5, 6];
-  const PARTIES = [["ella", "maki", "stella"], ["torika", "dodo", "parua"]];
+  const PARTIES = [["ella", "maki", "stella"], ["torika", "dodi", "parua"]];
   const grow = (ids: string[], level: number) => arrangeByRole(ids.map((id) => {
     const def = getRelic(id);
     return { ...def, stats: applyLevelGrowth(def.stats, level, def.rarity, referenceBreakthroughAt(level)) };

@@ -11,15 +11,15 @@ describe("개체 대 개체 검수", () => {
   it("은 만렙·돌파 V 토리카가 렉시아를 이기지는 못해도 즉사하지 않고 탱커다운 시간을 번다", () => {
     const seeds = Array.from({ length: 25 }, (_, index) => index + 1);
     const runs = seeds.flatMap((seed) => {
-      const forward = simulateMaxedDuel(getRelic("torika"), getRelic("rex"), seed);
-      const reverse = simulateMaxedDuel(getRelic("rex"), getRelic("torika"), seed);
+      const forward = simulateMaxedDuel(getRelic("torika"), getRelic("rexia"), seed);
+      const reverse = simulateMaxedDuel(getRelic("rexia"), getRelic("torika"), seed);
       return [forward, { ...reverse, winner: reverse.winner === "left" ? "right" as const : reverse.winner === "right" ? "left" as const : null,
         leftHpRatio: reverse.rightHpRatio, rightHpRatio: reverse.leftHpRatio }];
     });
     const average = runs.reduce((sum, run) => sum + run.durationSeconds, 0) / runs.length;
     const averageLexiaHp = runs.reduce((sum, run) => sum + run.rightHpRatio, 0) / runs.length;
     const durations = runs.map(({ durationSeconds }) => durationSeconds);
-    const oldLexia = { ...getRelic("rex"), breakthroughEffects: undefined };
+    const oldLexia = { ...getRelic("rexia"), breakthroughEffects: undefined };
     const baseline = seeds.flatMap((seed) => {
       const forward = simulateMaxedDuel(getRelic("torika"), oldLexia, seed);
       const reverse = simulateMaxedDuel(oldLexia, getRelic("torika"), seed);
@@ -34,13 +34,13 @@ describe("개체 대 개체 검수", () => {
     expect(average).toBeGreaterThan(8);
   });
   it("은 같은 seed와 같은 자리에서 늘 같은 판을 낸다", () => {
-    const first = simulateDuel(getRelic("dian"), getRelic("rex"), 7);
-    const second = simulateDuel(getRelic("dian"), getRelic("rex"), 7);
+    const first = simulateDuel(getRelic("dian"), getRelic("rexia"), 7);
+    const second = simulateDuel(getRelic("dian"), getRelic("rexia"), 7);
     expect(second).toEqual(first);
   });
 
   it("은 자리 차이를 상쇄하도록 양쪽에서 한 번씩 붙인다", () => {
-    const runs = duelPair(getRelic("dian"), getRelic("rex"), [1]);
+    const runs = duelPair(getRelic("dian"), getRelic("rexia"), [1]);
     expect(runs).toHaveLength(2);
     // 두 판 모두 **왼쪽 기준**으로 기록되므로 표를 읽는 쪽이 자리를 되짚지 않아도 된다.
     for (const run of runs) expect(["left", "right", null]).toContain(run.winner);

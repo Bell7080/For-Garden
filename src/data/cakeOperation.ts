@@ -71,7 +71,7 @@ export const CAKE_OPERATION_TIERS: readonly CakeOperationTier[] = [
  * 정해지면 다시 볼 이유가 없었다.
  */
 export const CAKE_OPERATION_ENEMY_IDS = [
-  "raitia-grass", "raitia-water", "raitia-fire", "raitia-earth", "raitia-wind",
+  "viria", "guttia", "favia", "silia", "ventia",
 ] as const;
 
 const BY_ID = new Map(CAKE_OPERATION_TIERS.map((tier) => [tier.id, tier]));

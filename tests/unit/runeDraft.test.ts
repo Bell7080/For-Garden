@@ -15,9 +15,9 @@ function rune(id: string, part: RunePart, mainKeys: readonly [RuneMainStatKey, R
 }
 
 function relic(slots: [string | null, string | null, string | null] = [null, null, null]): RuneLoadoutRelic {
-  const def = getRelic("rex");
+  const def = getRelic("rexia");
   const progress: RelicProgress = { level: 30, exp: 0, breakthrough: 1, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: slots };
-  return { relicId: "rex", base: def.stats, rarity: def.rarity, progress };
+  return { relicId: "rexia", base: def.stats, rarity: def.rarity, progress };
 }
 
 describe("룬 정비 임시 구성", () => {
@@ -70,8 +70,8 @@ describe("룬 정비 임시 구성", () => {
   });
 
   it("다른 렐릭이 낀 룬만 옮겨 끼는 렐릭으로 알린다", () => {
-    const holders = runeHolders({ rex: { heartGemSlots: ["a0", null, "a2"] }, torika: { heartGemSlots: [null, "t1", null] } });
-    expect(runeDraftMovedFrom(["a0", "t1", null], holders, "rex")).toEqual([null, "torika", null]);
+    const holders = runeHolders({ rexia: { heartGemSlots: ["a0", null, "a2"] }, torika: { heartGemSlots: [null, "t1", null] } });
+    expect(runeDraftMovedFrom(["a0", "t1", null], holders, "rexia")).toEqual([null, "torika", null]);
   });
 
   it("옵션 비교는 주 옵션부터 세우고 빠지는 옵션은 0으로 읽는다", () => {
@@ -89,7 +89,7 @@ describe("룬 정비 임시 구성", () => {
 
   it("자동·추천은 임시 구성 위에서 돌고 저장된 장착표를 바꾸지 않는다", () => {
     const runes = [rune("a0", 0, ["hp", "def"]), rune("b0", 0, ["atk", "ap"], "legendary"), rune("t1", 1, ["atk", "ap"], "legendary")];
-    const holders = runeHolders({ rex: { heartGemSlots: ["a0", null, null] }, torika: { heartGemSlots: [null, "t1", null] } });
+    const holders = runeHolders({ rexia: { heartGemSlots: ["a0", null, null] }, torika: { heartGemSlots: [null, "t1", null] } });
     const current = relic(["a0", null, null]);
     const auto = recommendIntoDraft(current, ["a0", null, null], runes, holders, "auto");
     expect(auto.slots).toEqual(["b0", null, null]);
@@ -97,7 +97,7 @@ describe("룬 정비 임시 구성", () => {
     expect(recommend.slots).toEqual(["b0", "t1", null]);
     // 임시로 비운 칸도 지금으로 본다 — 저장의 a0가 아니라 빈 칸에서 고른다.
     expect(recommendIntoDraft(current, [null, null, null], [runes[0]!], holders, "auto").slots).toEqual(["a0", null, null]);
-    expect(holders.get("a0")).toBe("rex");
+    expect(holders.get("a0")).toBe("rexia");
     expect(runeCandidatePowerDelta(current, ["a0", null, null], 0, "b0", runes)).toBeGreaterThan(0);
   });
 });

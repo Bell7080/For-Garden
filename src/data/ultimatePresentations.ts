@@ -37,11 +37,11 @@ export const DEFAULT_ULTIMATE_PRESENTATION: Readonly<UltimatePresentation> = Obj
 
 /** 현재 출시 렐릭의 개성을 조정하는 유일한 프레젠테이션 표다. */
 export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentation>> = Object.freeze({
-  rex: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.08, zoomScale: 1.3, cameraShakeIntensity: 0.013 },
+  rexia: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.08, zoomScale: 1.3, cameraShakeIntensity: 0.013 },
   torika: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.96, zoomScale: 1.26, zoomMs: 115, cameraShakeIntensity: 0.012 },
-  spino: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.04, artworkOrigin: { x: 680, y: 820 }, zoomScale: 1.28, cameraShakeIntensity: 0.012 },
+  spina: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.04, artworkOrigin: { x: 680, y: 820 }, zoomScale: 1.28, cameraShakeIntensity: 0.012 },
   luka: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkOrigin: { x: 620, y: 800 }, cutInHoldMs: 140, zoomScale: 1.18, zoomMs: 110 },
-  dodo: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, artworkOrigin: { x: 640, y: 790 }, zoomScale: 1.14, cameraShakeIntensity: 0.006 },
+  dodi: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, artworkOrigin: { x: 640, y: 790 }, zoomScale: 1.14, cameraShakeIntensity: 0.006 },
   // 작은 유체라 컷인에서 한 뼘 줄이고, 물살이 퍼지는 광역이라 흔들림은 가볍게 둔다.
   // 한 명을 골라 끝내는 궁극기라 컷인이 짧고 확대가 가장 깊다.
   maki: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.99, cutInHoldMs: 130, zoomScale: 1.26, zoomMs: 104, cameraShakeIntensity: 0.011 },
@@ -68,7 +68,7 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // 시전 순간에 다 터지지 않고 5초 동안 전장에 계속 떨어지는 궁극기라, 첫 한 방을 크게
   // 세우지 않는다 — 확대와 흔들림을 얕게 두고 컷인만 빠르게 지나간다. 여기서 크게 흔들면
   // 정작 이어지는 네 번의 틱이 그 한 번보다 작아 보인다.
-  deina: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.0, cutInHoldMs: 135, zoomScale: 1.12, zoomMs: 100, cameraShakeIntensity: 0.006 },
+  dei: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.0, cutInHoldMs: 135, zoomScale: 1.12, zoomMs: 100, cameraShakeIntensity: 0.006 },
   // 데이와 같은 이유로, 5초 동안 계속 떨어지는 냉기 궁극기라 첫 한 방을 크게 세우지 않는다.
   // 왼쪽에서 훅 불어오는 냉방이라 확대·흔들림은 얕게 둔다.
   maddy: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.0, cutInHoldMs: 150, zoomScale: 1.1, zoomMs: 105, cameraShakeIntensity: 0.006 },
@@ -123,24 +123,24 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   "magasa": { ...DEFAULT_ULTIMATE_PRESENTATION, zoomScale: 1.2, cameraShakeIntensity: 0.008 },
   "noa": { ...DEFAULT_ULTIMATE_PRESENTATION, zoomScale: 1.16, zoomMs: 100 },
   "raja": { ...DEFAULT_ULTIMATE_PRESENTATION, zoomScale: 1.14, cameraShakeIntensity: 0.006 },
-  "carno": { ...DEFAULT_ULTIMATE_PRESENTATION, zoomScale: 1.24, cameraShakeIntensity: 0.012 },
-  nokan: { ...DEFAULT_ULTIMATE_PRESENTATION, zoomScale: 1.22, cameraShakeIntensity: 0.012 },
-  eunte: { ...DEFAULT_ULTIMATE_PRESENTATION, zoomScale: 1.16, cameraShakeIntensity: 0.011 },
+  "kar": { ...DEFAULT_ULTIMATE_PRESENTATION, zoomScale: 1.24, cameraShakeIntensity: 0.012 },
+  gigano: { ...DEFAULT_ULTIMATE_PRESENTATION, zoomScale: 1.22, cameraShakeIntensity: 0.012 },
+  argen: { ...DEFAULT_ULTIMATE_PRESENTATION, zoomScale: 1.16, cameraShakeIntensity: 0.011 },
   "koma": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.22, zoomMs: 105, cameraShakeIntensity: 0.008 },
   // 작고 빠른 물량 개체라 컷인이 가장 짧고 확대도 얕다 — 한 판에 여럿이 쓰는 궁극기라
   // 하나하나가 무거우면 그 던전이 연출을 기다리는 시간으로 채워진다.
   // 다섯 자매는 같은 연출을 쓴다 — 같은 몸이 속성만 달리해 몰려오는 것이 이 던전이라,
   // 컷인까지 갈리면 한 마리가 특별한 개체로 읽힌다. 떼로 터지는 자리라 짧고 얕게 둔다.
-  "raitia-grass": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
-  "raitia-water": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
-  "raitia-fire": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
-  "raitia-earth": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
-  "raitia-wind": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
+  "viria": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
+  "guttia": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
+  "favia": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
+  "silia": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
+  "ventia": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
   // 넓은 보스 전신은 컷인에서 한 단계 줄이고, 무거운 일격은 SD 확대와 흔들림으로 전달한다.
   pontos: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.82, artworkOrigin: { x: 650, y: 800 }, zoomScale: 1.3, zoomMs: 120, cameraShakeIntensity: 0.014 },
   // 시즌 보스도 폰토스와 같은 무게로 선다 — 화면을 더 흔들지 않고 원화만 크게 당긴다.
   sukusuino: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.88, artworkOrigin: { x: 637, y: 386 }, zoomScale: 1.28, zoomMs: 120, cameraShakeIntensity: 0.014 },
-  quetzalcoatlus: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.85, artworkOrigin: { x: 574, y: 318 }, zoomScale: 1.26, zoomMs: 120, cameraShakeIntensity: 0.012 },
+  koatl: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.85, artworkOrigin: { x: 574, y: 318 }, zoomScale: 1.26, zoomMs: 120, cameraShakeIntensity: 0.012 },
   taboa: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, artworkOrigin: { x: 566, y: 269 }, zoomScale: 1.26, zoomMs: 120, cameraShakeIntensity: 0.012 },
 });
 

@@ -587,70 +587,70 @@ export const GUILD_CLERK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
  * 카드·전신 배율이 통째로 틀어진다.
  */
 
-/** 비리아(raitia-grass) 전신. */
+/** 비리아(viria) 전신. */
 export const VIRIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086, imageHeight: 1448,
   content: { left: 130, top: 41, right: 953, bottom: 1413 },
   joints: { center: [537, 499], head: [511, 405], eyes: [[472, 410], [555, 366]], feet: [[577, 1843], [54, 1496]] },
 };
 
-/** 비리아(raitia-grass) 전투 SD. */
+/** 비리아(viria) 전투 SD. */
 export const VIRIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254, imageHeight: 1254,
   content: { left: 250, top: 45, right: 992, bottom: 1232 },
   joints: { center: [634, 618], head: [618, 541], eyes: null, feet: [[729, 1211], [374, 1172]] },
 };
 
-/** 구티아(raitia-water) 전신. */
+/** 구티아(guttia) 전신. */
 export const GUTTIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086, imageHeight: 1448,
   content: { left: 67, top: 35, right: 1050, bottom: 1429 },
   joints: { center: [568, 508], head: [538, 385], eyes: [[511, 415], [595, 372]], feet: [[580, 1596], [32, 1495]] },
 };
 
-/** 구티아(raitia-water) 전투 SD. */
+/** 구티아(guttia) 전투 SD. */
 export const GUTTIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254, imageHeight: 1254,
   content: { left: 244, top: 19, right: 1103, bottom: 1229 },
   joints: { center: [649, 665], head: [611, 539], eyes: null, feet: [[721, 1207], [382, 1188]] },
 };
 
-/** 파비아(raitia-fire) 전신. */
+/** 파비아(favia) 전신. */
 export const FAVIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1023, imageHeight: 1537,
   content: { left: 161, top: 32, right: 937, bottom: 1513 },
   joints: { center: [541, 514], head: [511, 416], eyes: [[479, 409], [558, 375]], feet: [[533, 1697], [184, 1627]] },
 };
 
-/** 파비아(raitia-fire) 전투 SD. */
+/** 파비아(favia) 전투 SD. */
 export const FAVIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254, imageHeight: 1254,
   content: { left: 216, top: 29, right: 1040, bottom: 1224 },
   joints: { center: [653, 660], head: [618, 541], eyes: null, feet: [[729, 1211], [460, 1194]] },
 };
 
-/** 실리아(raitia-earth) 전신. */
+/** 실리아(silia) 전신. */
 export const SILIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086, imageHeight: 1448,
   content: { left: 26, top: 32, right: 1018, bottom: 1417 },
   joints: { center: [568, 508], head: [605, 417], eyes: [[559, 371], [635, 416]], feet: [[970, 1605], [201, 2026]] },
 };
 
-/** 실리아(raitia-earth) 전투 SD. */
+/** 실리아(silia) 전투 SD. */
 export const SILIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254, imageHeight: 1254,
   content: { left: 205, top: 59, right: 1015, bottom: 1213 },
   joints: { center: [634, 618], head: [657, 534], eyes: null, feet: [[923, 1200], [554, 1183]] },
 };
 
-/** 벤티아(raitia-wind) 전신. */
+/** 벤티아(ventia) 전신. */
 export const VENTIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086, imageHeight: 1448,
   content: { left: 178, top: 37, right: 1016, bottom: 1424 },
   joints: { center: [568, 508], head: [523, 446], eyes: [[491, 449], [579, 414]], feet: [[566, 1599], [195, 1533]] },
 };
 
-/** 벤티아(raitia-wind) 전투 SD. */
+/** 벤티아(ventia) 전투 SD. */
 export const VENTIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254, imageHeight: 1254,
   content: { left: 273, top: 29, right: 1104, bottom: 1219 },

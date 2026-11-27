@@ -2,7 +2,7 @@ import type { RelicStoryProfile } from "../../core/relicStory";
 import { ANKA_STORY } from "./anka";
 import { ARK_STORY } from "./ark";
 import { DIAN_STORY } from "./dian";
-import { DODO_STORY } from "./dodo";
+import { DODO_STORY } from "./dodi";
 import { ELLA_STORY } from "./ella";
 import { KENTO_STORY } from "./kento";
 import { MERON_STORY } from "./meron";
@@ -11,8 +11,8 @@ import { METTE_STORY } from "./mette";
 import { NODONIA_STORY } from "./nodonia";
 import { PACHI_STORY } from "./pachi";
 import { PARUA_STORY } from "./parua";
-import { REX_STORY } from "./rex";
-import { SPINO_STORY } from "./spino";
+import { REX_STORY } from "./rexia";
+import { SPINO_STORY } from "./spina";
 import { STELLA_STORY } from "./stella";
 import { TIA_STORY } from "./tia";
 import { TORIKA_STORY } from "./torika";
@@ -20,7 +20,7 @@ import { YUTI_STORY } from "./yuti";
 import { TERISA_STORY } from "./terisa";
 import { MAKI_STORY } from "./maki";
 import { DELOPI_STORY } from "./delopi";
-import { DEINA_STORY } from "./deina";
+import { DEINA_STORY } from "./dei";
 import { LUKA_STORY } from "./luka";
 import { MOSANA_STORY } from "./mosana";
 import { KERIS_STORY } from "./keris";
@@ -42,12 +42,12 @@ import { registerRelicStoryTexts } from "./registerStory";
  */
 export const RELIC_STORIES: Readonly<Record<string, RelicStoryProfile>> = {
   torika: TORIKA_STORY,
-  dodo: DODO_STORY,
+  dodi: DODO_STORY,
   parua: PARUA_STORY,
   stella: STELLA_STORY,
   kento: KENTO_STORY,
-  rex: REX_STORY,
-  spino: SPINO_STORY,
+  rexia: REX_STORY,
+  spina: SPINO_STORY,
   meron: MERON_STORY,
   mette: METTE_STORY,
   ella: ELLA_STORY,
@@ -62,7 +62,7 @@ export const RELIC_STORIES: Readonly<Record<string, RelicStoryProfile>> = {
   terisa: TERISA_STORY,
   maki: MAKI_STORY,
   delopi: DELOPI_STORY,
-  deina: DEINA_STORY,
+  dei: DEINA_STORY,
   luka: LUKA_STORY,
   mosana: MOSANA_STORY,
   keris: KERIS_STORY,

@@ -7,7 +7,7 @@ const ARENA = { left: 0, right: 600, top: 0, bottom: 1_000 };
 const ALWAYS = () => 0;
 
 function setup(breakthrough: number): SkirmishState {
-  return createSkirmish([getRelic("plesha"), getRelic("torika"), getRelic("rex")], [getRelic("amo"), getRelic("ripa")], ARENA, {}, { plesha: breakthrough });
+  return createSkirmish([getRelic("plesha"), getRelic("torika"), getRelic("rexia")], [getRelic("amo"), getRelic("ripa")], ARENA, {}, { plesha: breakthrough });
 }
 
 function plesha(state: SkirmishState) {

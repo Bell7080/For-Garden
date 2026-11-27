@@ -21,7 +21,7 @@ const QUEEN_AND_TORIKA: readonly DialogueCastMember[] = [
 
 /** 4 — 첫 시말서. 문짝을 경첩째 뽑은 여왕이 시말서 철의 첫 장을 보여 주는 장. */
 const CHAPTER_4: DialogueStory = {
-  id: "bond.rex.4",
+  id: "bond.rexia.4",
   backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "첫 시말서", subtitle: "렉시아 · 애착 이야기 1" },
@@ -44,7 +44,7 @@ const CHAPTER_4: DialogueStory = {
 
 /** 6 — 경호원 자리. 같은 자리를 두고 토리카와 충성 경쟁을 벌이는 장. */
 const CHAPTER_6: DialogueStory = {
-  id: "bond.rex.6",
+  id: "bond.rexia.6",
   backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "경호원 자리", subtitle: "렉시아 · 애착 이야기 2" },
@@ -68,7 +68,7 @@ const CHAPTER_6: DialogueStory = {
 
 /** 8 — 돌아보는 여왕. 야성이 오른 채로 앞장서던 아이가 뒤처진 동료를 돌아보러 걸음을 멈추는 장. */
 const CHAPTER_8: DialogueStory = {
-  id: "bond.rex.8",
+  id: "bond.rexia.8",
   backdrop: "battlefield",
   startNodeId: "n1",
   titleCard: { title: "돌아보는 여왕", subtitle: "렉시아 · 애착 이야기 3" },
@@ -91,7 +91,7 @@ const CHAPTER_8: DialogueStory = {
 
 /** 10 — 여왕이 앞에 서는 이유. 시말서 철의 마지막 장에 처음으로 다른 말이 적히는 장. */
 const CHAPTER_10: DialogueStory = {
-  id: "bond.rex.10",
+  id: "bond.rexia.10",
   backdrop: "rooftopDawn",
   startNodeId: "n1",
   titleCard: { title: "여왕이 앞에 서는 이유", subtitle: "렉시아 · 애착 이야기 4" },
@@ -115,7 +115,7 @@ const CHAPTER_10: DialogueStory = {
 };
 
 export const REX_STORY: RelicStoryProfile = {
-  relicId: "rex",
+  relicId: "rexia",
   fossilRecord: "제7구역의 붉은 사암 경계에서 두개골과 하악이 맞물린 채 발견됐다. 마모된 치아의 미세 흔적까지 복원 연구에 남았다.",
   diary:
     "렉시아는 먼저 앞장서고 승부를 선언하는 일이 잦다. 스스로를 여왕이라 부르는 당당한 말투 그대로, 문 앞에서도 선언부터 하고 문을 열다 경첩째 뽑아 든다. "
@@ -127,7 +127,7 @@ export const REX_STORY: RelicStoryProfile = {
   closingLine: "마스터, 오늘은 아직 아무것도 안 부쉈어요. 칭찬해 주셔도 돼요!",
   questions: [
     {
-      id: "rex-binder",
+      id: "rexia-binder",
       prompt: "렉시아가 늘 들고 다니는 두툼한 철에는 무엇이 들어 있어?",
       choices: [
         {
@@ -148,7 +148,7 @@ export const REX_STORY: RelicStoryProfile = {
       ],
     },
     {
-      id: "rex-teaware",
+      id: "rexia-teaware",
       prompt: "렉시아가 모아 두는 접시와 찻잔에 대해 물어보면?",
       choices: [
         {
@@ -169,7 +169,7 @@ export const REX_STORY: RelicStoryProfile = {
       ],
     },
     {
-      id: "rex-praise",
+      id: "rexia-praise",
       prompt: "렉시아가 칭찬을 받으면 어떻게 반응해?",
       choices: [
         {

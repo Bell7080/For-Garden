@@ -22,7 +22,7 @@ const ROGUE_THREE: readonly DialogueCastMember[] = [
 
 /** 4 — 일지 첫 장. 이름 칸을 비워 둔 채 한 장을 넘기지 못하던 아이가 처음으로 둘째 장을 연다. */
 const CHAPTER_4: DialogueStory = {
-  id: "bond.dodo.4",
+  id: "bond.dodi.4",
   backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "비워 둔 첫 장", subtitle: "도디 · 애착 이야기 1" },
@@ -44,7 +44,7 @@ const CHAPTER_4: DialogueStory = {
 
 /** 6 — 적지 못한 날. 기록이 전부인 아이가 기록할 수 없던 하루를 친구들 입으로 되찾는다. */
 const CHAPTER_6: DialogueStory = {
-  id: "bond.dodo.6",
+  id: "bond.dodi.6",
   backdrop: "battlefield",
   startNodeId: "n1",
   titleCard: { title: "적지 못한 날", subtitle: "도디 · 애착 이야기 2" },
@@ -67,7 +67,7 @@ const CHAPTER_6: DialogueStory = {
 
 /** 8 — 높은 곳에서 본 것. 시그널 아이를 흉내 내다 먼저 길을 잃고, 제 자리를 알게 되는 밤. */
 const CHAPTER_8: DialogueStory = {
-  id: "bond.dodo.8",
+  id: "bond.dodi.8",
   backdrop: "assembly",
   startNodeId: "n1",
   titleCard: { title: "높은 곳에서 본 것", subtitle: "도디 · 애착 이야기 3" },
@@ -90,7 +90,7 @@ const CHAPTER_8: DialogueStory = {
 
 /** 10 — 마지막 장. 1호 팬이 일지의 마지막 쪽을 연구원에게 내밀며, 읽는 사람에서 함께 쓰는 사람이 된다. */
 const CHAPTER_10: DialogueStory = {
-  id: "bond.dodo.10",
+  id: "bond.dodi.10",
   backdrop: "library",
   startNodeId: "n1",
   titleCard: { title: "마지막 장은 대장님이", subtitle: "도디 · 애착 이야기 4" },
@@ -112,7 +112,7 @@ const CHAPTER_10: DialogueStory = {
 };
 
 export const DODO_STORY: RelicStoryProfile = {
-  relicId: "dodo",
+  relicId: "dodi",
   fossilRecord: "석회동굴의 마른 보관층에서 골격과 난각 조각이 함께 발견됐다. 염분 손상이 적어 최초의 안정 복원 기준이 되었다.",
   diary:
     "도디는 새로운 물건만 보면 “대장님, 이것 좀 보세요!” 하고 달려오는 아이다. 반짝이는 잡동사니도 발견 기록이라며 깃펜으로 일지에 또박또박 적어 넣는데, 정작 제 밥때는 적어 두지 않아서 자꾸 놓친다. "
@@ -123,7 +123,7 @@ export const DODO_STORY: RelicStoryProfile = {
   closingLine: "대장님, 이것 좀 보세요! …아, 방금 건 일지에 적어도 되죠?",
   questions: [
     {
-      id: "dodo-journal-contents",
+      id: "dodi-journal-contents",
       prompt: "도디의 일지에는 오늘 무엇이 적혀 있을까?",
       choices: [
         {
@@ -144,7 +144,7 @@ export const DODO_STORY: RelicStoryProfile = {
       ],
     },
     {
-      id: "dodo-too-close",
+      id: "dodi-too-close",
       prompt: "도디가 반가워서 너무 가까이 다가왔을 때 말해 주면?",
       choices: [
         {
@@ -160,7 +160,7 @@ export const DODO_STORY: RelicStoryProfile = {
       ],
     },
     {
-      id: "dodo-signal-eye",
+      id: "dodi-signal-eye",
       prompt: "높은 곳에 올라 동료들을 내려다보는 이유를 물어보면?",
       choices: [
         {

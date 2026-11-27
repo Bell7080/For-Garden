@@ -45,7 +45,7 @@ export const BATTLE_VI = {
   "battle.tutorial.ultimate.owner": "Tuyệt kỹ của {name}",
   "battle.tutorial.ultimate.tap": "Chạm vào thẻ phát sáng để dùng · {step}/{total}",
   "battle.tutorial.ultimate.desc.torika": "Nện mạnh xuống đất quanh mình, gây sát thương và làm choáng kẻ địch gần đó trong chốc lát.",
-  "battle.tutorial.ultimate.desc.dodo": "Gây sát thương cho kẻ địch trong vùng đã chọn và hồi máu cho đồng đội trong đó.",
+  "battle.tutorial.ultimate.desc.dodi": "Gây sát thương cho kẻ địch trong vùng đã chọn và hồi máu cho đồng đội trong đó.",
   "battle.tutorial.ultimate.desc.parua": "Tấn công nhanh hơn trong chốc lát và bắn hai mũi tên mỗi lần.",
   "battle.gauge.frenzy": "Cuồng bạo {value} / {max}",
   "battle.gauge.ferocity": "Dã tính {value} / {max}",

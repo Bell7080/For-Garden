@@ -43,7 +43,7 @@ begin
  r:=public.server_take_rate(a,'test',60,1); if not (r->>'allowed')::boolean then raise exception 'first rate rejected'; end if;
  r:=public.server_take_rate(a,'test',60,1); if (r->>'allowed')::boolean or (r->>'retryAfter')::int<1 then raise exception 'rate limit absent'; end if;
  r:=public.server_take_rate(b,'test',60,1); if not (r->>'allowed')::boolean then raise exception 'other account rate affected'; end if;
- definition:=jsonb_build_object('id','raid-test','kind','summon','bossRelicId','rex','difficulty','normal','openedAt',now(),'endsAt',now()+interval '1 day','myDamage',0,'appliedDamage',0,'attemptsUsed',0,'settled',false,'summonedByMe',true);
+ definition:=jsonb_build_object('id','raid-test','kind','summon','bossRelicId','rexia','difficulty','normal','openedAt',now(),'endsAt',now()+interval '1 day','myDamage',0,'appliedDamage',0,'attemptsUsed',0,'settled',false,'summonedByMe',true);
  changes:=jsonb_build_array(jsonb_build_object('instance',definition,'expectedRevision',null,'damageDelta',0,'appliedDelta',0,'attemptsDelta',0,'totalHp',100));
  perform public.server_commit_state(a,null,'{}','hash',1,jsonb_build_object('_raids',changes),'summonRaid','game-call-1','{}');
  r:=public.server_raid_context(b,'[]'); if jsonb_array_length(r->'records')<>1 then raise exception 'friend cannot see raid'; end if;

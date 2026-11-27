@@ -23,9 +23,9 @@ export const STAGE_5_1_PRE: DialogueStory = {
   startNodeId: "dark",
   backdrop: "detention",
   nodes: linear([
-    { id: "dark", speaker: "", body: "계단 끝에는 불빛이 하나도 없었다. 벽마다 긁힌 자국이 숫자처럼 줄지어 나 있었다.", cast: [{ id: "deina", slot: "center" }], cue: "rumble" },
-    { id: "deina", speaker: "데이", body: "연구원님, 이 표시 우리 거 아니야! 지부 사람이 남긴 경고야. 「열지 말 것」이래.", standing: "deina", act: "lean" },
-    { id: "radio", speaker: "스피나", body: "…감금동은 도면에 없었어요. 이렇게 큰 곳이 빠져 있다는 건… 누가 일부러 지웠다는 거예요.", standing: "seira", cast: REMOTE("seira", "deina"), act: "nod" },
+    { id: "dark", speaker: "", body: "계단 끝에는 불빛이 하나도 없었다. 벽마다 긁힌 자국이 숫자처럼 줄지어 나 있었다.", cast: [{ id: "dei", slot: "center" }], cue: "rumble" },
+    { id: "dei", speaker: "데이", body: "연구원님, 이 표시 우리 거 아니야! 지부 사람이 남긴 경고야. 「열지 말 것」이래.", standing: "dei", act: "lean" },
+    { id: "radio", speaker: "스피나", body: "…감금동은 도면에 없었어요. 이렇게 큰 곳이 빠져 있다는 건… 누가 일부러 지웠다는 거예요.", standing: "seira", cast: REMOTE("seira", "dei"), act: "nod" },
     { id: "trio", speaker: "토비", body: "또 너희야?! …아니, 또 우리지. 이번엔 문 앞을 지키래.", standing: "toby", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], act: "shake" },
     { id: "amo", speaker: "아모", body: "…연구원. 여기는 오면 안 되는 데야. 우리도 들어가 본 적 없어.", standing: "amo", act: "tremble" },
   ]),
@@ -102,8 +102,8 @@ export const STAGE_5_8_POST: DialogueStory = {
   startNodeId: "trays",
   backdrop: "detention",
   nodes: linear([
-    { id: "trays", speaker: "", body: "배식구마다 빈 쟁반이 쌓여 있었다. 그런데 몇 칸에는 아직 김이 오르는 국그릇이 놓여 있었다.", cast: [{ id: "deina", slot: "left" }, { id: "maki", slot: "right" }] },
-    { id: "radio", speaker: "스피나", body: "…여기까지는 몰랐어요. 저희가 쓰던 길 바로 아래인데도… 연구원님, 보이는 건 전부 기록해 둘게요.", standing: "seira", cast: REMOTE("seira", "deina"), act: "shrink" },
+    { id: "trays", speaker: "", body: "배식구마다 빈 쟁반이 쌓여 있었다. 그런데 몇 칸에는 아직 김이 오르는 국그릇이 놓여 있었다.", cast: [{ id: "dei", slot: "left" }, { id: "maki", slot: "right" }] },
+    { id: "radio", speaker: "스피나", body: "…여기까지는 몰랐어요. 저희가 쓰던 길 바로 아래인데도… 연구원님, 보이는 건 전부 기록해 둘게요.", standing: "seira", cast: REMOTE("seira", "dei"), act: "shrink" },
     { id: "luka", speaker: "루카", body: "문 잠금 기록을 훑어봤어. 위에서 열린 게 아니야. 안에서 누가 하나씩 열고 있어.", standing: "luka", cast: REMOTE("luka", "maki"), act: "lean" },
     { id: "maki", speaker: "마키", body: "불이 아직 안 꺼졌다냥. 연구원님, 누가 근처에 있어요. 혼자 앞으로 가지 마세요.", standing: "maki", cast: [{ id: "maki", slot: "center" }], act: "nod" },
   ]),
@@ -117,8 +117,8 @@ export const STAGE_5_9_POST: DialogueStory = {
   nodes: linear([
     { id: "chains", speaker: "", body: "끊어진 족쇄가 바닥에 흩어져 있었다. 그 사이에서 작은 그림자 하나가 몸을 웅크린 채 이쪽을 보고 있었다.", cast: [{ id: "noa", slot: "center", veiled: true }], cue: "impact" },
     { id: "noa", speaker: "???", body: "오, 오지 마… 오지 말라니까…!", standing: "noa", act: "tremble" },
-    { id: "deina", speaker: "데이", body: "연구원님, 쫓으면 안 돼! 저렇게 벌벌 떠는 애가 제일 먼저 깨물어. 가만히 있어 주자.", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "noa", slot: "right", veiled: true }], act: "lean" },
-    { id: "flee", speaker: "", body: "그림자는 손톱 긁는 소리만 남기고, 눈 깜짝할 사이 취사장 쪽으로 튀어 나갔다.", cast: [{ id: "deina", slot: "left" }], leave: "dash" },
+    { id: "dei", speaker: "데이", body: "연구원님, 쫓으면 안 돼! 저렇게 벌벌 떠는 애가 제일 먼저 깨물어. 가만히 있어 주자.", standing: "dei", cast: [{ id: "dei", slot: "left" }, { id: "noa", slot: "right", veiled: true }], act: "lean" },
+    { id: "flee", speaker: "", body: "그림자는 손톱 긁는 소리만 남기고, 눈 깜짝할 사이 취사장 쪽으로 튀어 나갔다.", cast: [{ id: "dei", slot: "left" }], leave: "dash" },
   ]),
 };
 
@@ -143,7 +143,7 @@ export const STAGE_5_10_POST: DialogueStory = {
   nodes: linear([
     { id: "laugh", speaker: "마가사", body: "아하하… 손맛 좋네요, 연구원님 쪽 사람들. 졌으니까 오늘 설거지는 제가 할게요.", standing: "magasa", cast: [{ id: "magasa", slot: "center" }], act: "faint" },
     { id: "hint", speaker: "마가사", body: "아, 진 김에 하나 알려 드릴까요? 맨 아래 부대장님 자물쇠는요, 사람 손이 닿아야 열린대요. …딱 연구원님 같은 손이요.", standing: "magasa", act: "lean" },
-    { id: "deina", speaker: "데이", body: "…그래서 처음부터 아래로 몰았구나! 합동 추격도, 끊어진 승강기도 전부 한 길이었어.", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "magasa", slot: "right" }], act: "nod", cue: "heartbeat" },
+    { id: "dei", speaker: "데이", body: "…그래서 처음부터 아래로 몰았구나! 합동 추격도, 끊어진 승강기도 전부 한 길이었어.", standing: "dei", cast: [{ id: "dei", slot: "left" }, { id: "magasa", slot: "right" }], act: "nod", cue: "heartbeat" },
     { id: "koma", speaker: "코마", body: "…아래로 가지 마라.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean", voice: "whisper" },
     { id: "gone", speaker: "", body: "그 한마디만 남기고 코마는 다음 계단 아래로 가라앉듯 사라졌다. 위로 가라는 말은 끝내 하지 않았다.", cast: [], leave: "sink" },
   ]),

@@ -4,8 +4,8 @@ set local statement_timeout='20s';
 do $verify$
 declare a uuid:=gen_random_uuid(); b uuid:=gen_random_uuid(); c uuid:=gen_random_uuid(); g uuid:=gen_random_uuid(); h uuid:=gen_random_uuid();
  key1 text:=gen_random_uuid()::text; key2 text:=gen_random_uuid()::text; actor jsonb:='{}'; payload jsonb;
- deck1 jsonb:='[{"relicId":"torika","power":100},{"relicId":"ella","power":100},{"relicId":"deina","power":100}]';
- deck2 jsonb:='[{"relicId":"torika","power":200},{"relicId":"ella","power":200},{"relicId":"deina","power":200}]';
+ deck1 jsonb:='[{"relicId":"torika","power":100},{"relicId":"ella","power":100},{"relicId":"dei","power":100}]';
+ deck2 jsonb:='[{"relicId":"torika","power":200},{"relicId":"ella","power":200},{"relicId":"dei","power":200}]';
  line jsonb:='[{},{},{}]'; slots text[]; lv integer; is_prep boolean:=coalesce(current_setting('app.guild_verify_fixed_prep',true),'')='1' or public.server_guild_war_prep(now());
 begin
  insert into auth.users(id,is_anonymous) values(a,true),(b,true),(c,true);

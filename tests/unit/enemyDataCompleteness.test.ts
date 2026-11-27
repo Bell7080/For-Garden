@@ -35,7 +35,7 @@ const SHARED_ENEMY_IDS = ["toby", "amo", "ripa", "koma"] as const;
  * 정의는 들어왔지만 등장할 장(5~7장 감금동)이 아직 지어지지 않은 적.
  * 장이 들어오면 이 목록에서 지운다 — 남겨 두면 편성 누락을 다시 못 잡는다.
  */
-const AWAITING_CHAPTER_IDS = ["magasa", "noa", "raja", "carno"];
+const AWAITING_CHAPTER_IDS = ["magasa", "noa", "raja", "kar"];
 
 describe("enemy static data completeness", () => {
   it("registers every permanent enemy in some content formation", () => {

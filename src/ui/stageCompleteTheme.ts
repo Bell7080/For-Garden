@@ -80,7 +80,7 @@ export function duelResultTheme(tierId: DuelTierId): StageCompleteTheme {
 const RAID_BOSS_TONE: Readonly<Record<string, Pick<StageCompleteTheme, "accent" | "accentText" | "deepText" | "fill">>> = {
   sukusuino: { accent: 0x63c172, accentText: "#9fe0a8", deepText: "#0d2612", fill: 0x0a1510 },
   taboa: { accent: 0xef5b45, accentText: "#ff9886", deepText: "#2e0e08", fill: 0x170b0a },
-  quetzalcoatlus: { accent: 0x86dcc8, accentText: "#b8f0e3", deepText: "#0b2a24", fill: 0x09161a },
+  koatl: { accent: 0x86dcc8, accentText: "#b8f0e3", deepText: "#0b2a24", fill: 0x09161a },
 };
 
 export function raidResultTheme(bossRelicId: string | undefined): StageCompleteTheme {

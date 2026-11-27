@@ -44,7 +44,7 @@ describe("출혈 태그 계약", () => {
       const repeat = effect.deepenOnRepeat as { multiplier: number } | undefined;
       return repeat ? [{ id, multiplier: repeat.multiplier }] : [];
     });
-    expect(deep.map(({ id }) => id).sort()).toEqual(expect.arrayContaining(["rex"]));
+    expect(deep.map(({ id }) => id).sort()).toEqual(expect.arrayContaining(["rexia"]));
     for (const { id, multiplier } of deep) expect(multiplier, id).toBe(BLEED.deepMultiplier);
     const keyword = KEYWORDS.find((entry) => entry.id === "deep-bleed")!;
     expect(keyword.description).toContain(`${BLEED.percentPerSecond * BLEED.deepMultiplier}%`);

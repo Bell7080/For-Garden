@@ -147,8 +147,8 @@ describe("플레이어 카드", () => {
     expect(state.playerCard.frameId).toBe("amber");
     // 프로필 사진은 보유한 렐릭만.
     expect(await manager.setAvatar("pontos")).toEqual({ ok: false, reason: "notOwned" });
-    expect(await manager.setAvatar("rex")).toEqual({ ok: true });
-    expect(state.playerCard.avatarRelicId).toBe("rex");
+    expect(await manager.setAvatar("rexia")).toEqual({ ok: true });
+    expect(state.playerCard.avatarRelicId).toBe("rexia");
     // 거절된 요청은 저장하지 않는다 — 통과한 쓰기는 식별·닉네임·테두리·사진 네 번뿐이다.
     expect(saves.save).toHaveBeenCalledTimes(4);
   });

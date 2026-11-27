@@ -43,10 +43,10 @@ function preview(
 const SAMPLE_DIRECTORY: readonly PreviewDirectoryEntry[] = [
   { relation: "friend", profile: preview("friend-dawn", "275810396", "새벽표본", 22, "field", "아침 순찰 중", "parua", 20, 2, NOW - 3 * 60 * MINUTE) },
   { relation: "friend", favorite: true, profile: preview("friend-amber", "930274815", "호박상자", 35, "amber", "발굴 일지 정리", "stella", 32, 3, NOW - 2 * 24 * 60 * MINUTE) },
-  { relation: "friend", profile: preview("friend-wave", "514602783", "파도소리", 14, "field", "천천히 키우는 중", "dodo", 12, 1, NOW - 20_000) },
+  { relation: "friend", profile: preview("friend-wave", "514602783", "파도소리", 14, "field", "천천히 키우는 중", "dodi", 12, 1, NOW - 20_000) },
   { relation: "incoming", requestedAt: NOW - 25 * MINUTE, profile: preview("user-fog", "187305926", "안개기록", 24, "holo", "같이 해요", "luka", 21, 2, NOW - 8 * MINUTE) },
   { relation: "incoming", requestedAt: NOW - 5 * 60 * MINUTE, profile: preview("user-sand", "706418259", "모래시계", 11, "field", "처음 시작했어요", "toby", 9, 0, NOW - 2 * 60 * MINUTE) },
-  { relation: "outgoing", requestedAt: NOW - 3 * 60 * MINUTE, profile: preview("user-lighthouse", "362591048", "푸른등대", 40, "abyss", "레이드 같이 돌 분", "rex", 38, 4, NOW - 40_000) },
+  { relation: "outgoing", requestedAt: NOW - 3 * 60 * MINUTE, profile: preview("user-lighthouse", "362591048", "푸른등대", 40, "abyss", "레이드 같이 돌 분", "rexia", 38, 4, NOW - 40_000) },
   { relation: "none", profile: preview("user-stars", "849062317", "별무리", 29, "holo", "표본 수집가", "torika", 26, 3, NOW - 15 * MINUTE) },
   { relation: "none", profile: preview("user-fern", "621874503", "고사리숲", 18, "field", "조용히 플레이", "kento", 16, 1, NOW - 26 * 60 * MINUTE) },
   { relation: "none", profile: preview("user-late", "453719806", "늦은표본", 31, "amber", "밤에 접속해요", "mosana", 28, 2, NOW - 4 * 24 * 60 * MINUTE) },

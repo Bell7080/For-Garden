@@ -97,19 +97,19 @@ describe("서버 호출 처리기", () => {
     const m = memoryStore();
     const opts = { store: m.store, ...fixed };
     const call = (method: string, args: unknown[], requestId: string) => handleGameCall(P, { method, args, requestId }, opts);
-    const party = await call("setParty", [{ relicIds: ["torika", "rex", "dodo"] }], "call-party-01");
+    const party = await call("setParty", [{ relicIds: ["torika", "rexia", "dodi"] }], "call-party-01");
     expect((party.result as { ok: boolean }).ok).toBe(true);
     // 보유하지 않은 개체를 편성에 넣는 요청은 사유만 돌려주고 상태를 건드리지 않는다.
-    const rejected = await call("setParty", [{ relicIds: ["torika", "rex", "pontos"] }], "call-party-02");
+    const rejected = await call("setParty", [{ relicIds: ["torika", "rexia", "pontos"] }], "call-party-02");
     expect(rejected.result).toMatchObject({ ok: false, reason: "not-owned", relicId: "pontos" });
-    const mark = await call("setRelicBookmark", [{ relicId: "rex", bookmarked: true }], "call-mark-01");
-    const again = await call("setRelicBookmark", [{ relicId: "rex", bookmarked: true }], "call-mark-01");
+    const mark = await call("setRelicBookmark", [{ relicId: "rexia", bookmarked: true }], "call-mark-01");
+    const again = await call("setRelicBookmark", [{ relicId: "rexia", bookmarked: true }], "call-mark-01");
     expect(again.revision).toBe(mark.revision);
     const card = await call("updatePlayerCard", [{ kind: "identity" }], "call-card-01");
     expect(card.result).toMatchObject({ ok: true, card: { createdAt: "2026-10-16T00:00:00.000Z" } });
     const saved = m.saves.get(P)?.data as { party: string[]; bookmarkedRelicIds: string[]; playerCard: { uid: string } };
-    expect(saved.party).toEqual(["torika", "rex", "dodo"]);
-    expect(saved.bookmarkedRelicIds).toEqual(["rex"]);
+    expect(saved.party).toEqual(["torika", "rexia", "dodi"]);
+    expect(saved.bookmarkedRelicIds).toEqual(["rexia"]);
     expect(saved.playerCard.uid).toMatch(/^[1-9]\d{8}$/);
   });
 
@@ -136,13 +136,13 @@ describe("서버 호출 처리기", () => {
     const m = memoryStore();
     const opts = { store: m.store, ...fixed };
     const call = (method: string, args: unknown[], requestId: string) => handleGameCall(P, { method, args, requestId }, opts);
-    const bad = await call("startExpeditionRun", [{ relicIds: ["torika", "torika", "rex"] }], "call-exp-00");
+    const bad = await call("startExpeditionRun", [{ relicIds: ["torika", "torika", "rexia"] }], "call-exp-00");
     expect(bad.result).toMatchObject({ ok: false, reason: "duplicate" });
-    const start = await call("startExpeditionRun", [{ relicIds: ["torika", "rex", "dodo"] }], "call-exp-01");
+    const start = await call("startExpeditionRun", [{ relicIds: ["torika", "rexia", "dodi"] }], "call-exp-01");
     expect(start.result).toMatchObject({ ok: true });
-    const again = await call("startExpeditionRun", [{ relicIds: ["torika", "rex", "dodo"] }], "call-exp-01");
+    const again = await call("startExpeditionRun", [{ relicIds: ["torika", "rexia", "dodi"] }], "call-exp-01");
     expect(again.revision).toBe(start.revision);
-    const second = await call("startExpeditionRun", [{ relicIds: ["torika", "rex", "dodo"] }], "call-exp-02");
+    const second = await call("startExpeditionRun", [{ relicIds: ["torika", "rexia", "dodi"] }], "call-exp-02");
     expect(second.result).toMatchObject({ ok: false, reason: "alreadyActive" });
     const saved = () => m.saves.get(P)?.data as { expedition: { run: { nodes: { id: string; type: string; floor: number }[]; relics: { snapshot?: unknown }[]; pendingAugmentReward: unknown; bossSubmissionId: string | null } } };
     const run = saved().expedition.run;

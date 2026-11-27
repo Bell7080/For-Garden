@@ -12,7 +12,7 @@ import { RAID_TRIO } from "./openingTrain";
 
 /** 무전 너머의 목소리 하나를 가운데에 세우고 곁에 두 사람을 둔다. */
 const VOICE = (
-  voice: "seira" | "delopi" | "luka" | "deina",
+  voice: "seira" | "delopi" | "luka" | "dei",
   left: "torika" | "parua" | "lexia",
   right: "toby" | "dodi",
 ): readonly DialogueCastMember[] => [{ id: left, slot: "left" }, { id: voice, slot: "center", remote: true }, { id: right, slot: "right" }];
@@ -188,7 +188,7 @@ export const STAGE_2_9_POST: DialogueStory = {
     { id: "hole", speaker: "", body: "컨베이어가 끝나는 자리에는 바닥이 없었다. 폐기 표식이 붙은 상자들이 소리 없이 어둠 속으로 떨어졌다.", standing: "dodi", cast: PAIR("dodi", "lexia") },
     { id: "dodi", speaker: "도디", body: "다들 이 아래로 흘러간 거예요. 쓸 수 없음이라고 적힌 채로…", standing: "dodi", act: "shrink" },
     { id: "lexia", speaker: "렉시아", body: "아래에는 뭐가 있어?", standing: "lexia", act: "lean" },
-    { id: "dei", speaker: "데이", body: "구멍 가장자리에 낙서 같은 화살표가 있어! 내가 그린 거 아니야, 진짜야. 누가 아래로 가는 길을 표시해 놨어.", cast: VOICE("deina", "lexia", "dodi"), act: "lean" },
+    { id: "dei", speaker: "데이", body: "구멍 가장자리에 낙서 같은 화살표가 있어! 내가 그린 거 아니야, 진짜야. 누가 아래로 가는 길을 표시해 놨어.", cast: VOICE("dei", "lexia", "dodi"), act: "lean" },
     { id: "stay", speaker: "", body: "화살표가 무엇을 가리키는지 아는 이는 없었다. 연구원은 구멍 앞에 한참 서 있었다." },
     { id: "torika", speaker: "토리카", body: "…가요, 대장님. 아직은 위에서 할 일이 있어요.", standing: "torika", cast: PAIR("lexia"), act: "nod" },
   ]),
@@ -223,7 +223,7 @@ export const STAGE_2_10_POST: DialogueStory = {
       id: "choose", speaker: "토리카", body: "대장님, 뭐라고 하실 거예요?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "amo", slot: "right" }],
       choices: [
         { id: "yes", label: "따라와도 돼", nextId: "answerA", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
-        { id: "own", label: "너희가 정해도 돼", nextId: "answerB", effect: { type: "bondXp", relicId: "dodo", amount: 3 } },
+        { id: "own", label: "너희가 정해도 돼", nextId: "answerB", effect: { type: "bondXp", relicId: "dodi", amount: 3 } },
       ],
     },
     { id: "answerA", speaker: "아모", body: "…그래. 그럼 따라갈게.", standing: "amo", act: "nod", nextId: "walk" },

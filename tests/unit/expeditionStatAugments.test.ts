@@ -9,7 +9,7 @@ import { expeditionAugmentKeywords } from "../../src/ui/expeditionAugmentKeyword
 import { parseKeywordText } from "../../src/data/keywords";
 
 function setup(id?: string, nativeLifesteal = 0) {
-  const base = getRelic("dodo");
+  const base = getRelic("dodi");
   const unit = (unitId: string): RelicDef => ({ ...base, id: unitId,
     stats: { ...base.stats, hp: 10000, atk: 200, ap: 200, def: 100, res: 100, critChance: 0, critDamage: 150, lifeSteal: nativeLifesteal, energyGain: 12, ferocityGain: 0, moveSpeed: 100 },
     passive: { ...base.passive, kind: "summonDerived", value: 0 },
@@ -36,7 +36,7 @@ describe("상시 흡혈·치명·충전·이동 증강", () => {
   it("상시 흡혈은 기존 비율에 가산한다", () => {
     expect(setup("stat-lifesteal-sr", 10).fighters[0].def.stats.lifeSteal).toBe(14);
     expect(setup("stat-lifesteal-ssr", 10).fighters[0].def.stats.lifeSteal).toBe(17);
-    expect(getRelic("dodo").stats.lifeSteal).toBe(0);
+    expect(getRelic("dodi").stats.lifeSteal).toBe(0);
   });
   it("실제 HP 손실만 흡혈하며 보호막·초과 피해에서 회복량을 부풀리지 않는다", () => {
     const state = setup("stat-lifesteal-sr"); const [owner, target] = state.fighters;

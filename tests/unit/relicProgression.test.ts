@@ -36,12 +36,12 @@ function makeSession(): Session {
     archaeology: createArchaeologyState(),
     settings: createDefaultSettings(),
     completedStoryIds: new Set(), observationRecords: [],
-    selectedStageId: null, party: ["rex"], cleared: new Set(), owned: new Set(["rex"]), favorite: "rex", bookmarked: new Set<string>(),
+    selectedStageId: null, party: ["rexia"], cleared: new Set(), owned: new Set(["rexia"]), favorite: "rexia", bookmarked: new Set<string>(),
     gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
     // 보유 렐릭과 성장 레코드는 실제 저장 계약처럼 항상 한 쌍으로 구성한다.
     staminaUpdatedAt: "",
     wallet: { fossil: 0, amber: 0, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 , rawStone: 0, raidSigil: 0, salvageRecord: 0, duelEmblem: 0}, relicProgress: {
-      rex: { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] },
+      rexia: { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] },
     }, relicFragments: {}, itemInventory: [], runeInventory: [testRune("vital-seed"), testRune("fang-core")],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     bounty: { clearedTierIds: [] },
@@ -125,8 +125,8 @@ describe("렐릭 성장 규칙", () => {
 
   it("돌파 등급은 뚫은 단계 그대로이고 모든 개체가 0(표식 없음)에서 시작한다", () => {
     const manager = new RelicProgressionManager(makeSession());
-    expect(manager.getBreakthroughGrade("rex")).toBe(0);
-    expect(manager.getFragments("rex")).toBe(0);
+    expect(manager.getBreakthroughGrade("rexia")).toBe(0);
+    expect(manager.getFragments("rexia")).toBe(0);
     expect(breakthroughGrade(BREAKTHROUGH_STEPS.length)).toBe(BREAKTHROUGH_GRADE_CAP);
     for (const invalid of [-1, BREAKTHROUGH_STEPS.length + 1, 2.5]) expect(() => breakthroughGrade(invalid)).toThrow(RangeError);
   });
@@ -136,11 +136,11 @@ describe("렐릭 성장 규칙", () => {
     const manager = new RelicProgressionManager(state);
     const api = new FakeServer(state, { latencyMs: 0 });
     // 테스트 룬은 모두 0번 조각이므로 0번 칸에만 들어간다. 자리 규칙은 서버가 지킨다.
-    await expect(manager.equipRune("rex", 1, "fang-core", api)).rejects.toMatchObject({ code: "RUNE_SLOT_MISMATCH" });
-    await manager.equipRune("rex", 0, "fang-core", api);
-    expect(state.relicProgress.rex.heartGemSlots).toEqual(["fang-core", null, null]);
-    await manager.unequipRune("rex", 0, api);
-    expect(state.relicProgress.rex.heartGemSlots).toEqual([null, null, null]);
+    await expect(manager.equipRune("rexia", 1, "fang-core", api)).rejects.toMatchObject({ code: "RUNE_SLOT_MISMATCH" });
+    await manager.equipRune("rexia", 0, "fang-core", api);
+    expect(state.relicProgress.rexia.heartGemSlots).toEqual(["fang-core", null, null]);
+    await manager.unequipRune("rexia", 0, api);
+    expect(state.relicProgress.rexia.heartGemSlots).toEqual([null, null, null]);
   });
 });
 
@@ -324,7 +324,7 @@ describe("\"없음\"이라는 한계 돌파 효과", () => {
     // 현재 적 전용 개체는 보스도 잡졸도 네 칸 모두 제 효과를 갖는다.
     const { RELICS } = await import("../../src/data/relics");
     const enemyIds = RELICS.filter((relic) => relic.enemyOnly).map(({ id }) => id);
-    expect(enemyIds).toEqual(expect.arrayContaining(["sukusuino", "pontos", "toby", "koma", "amo", "ripa", "raitia-grass"]));
+    expect(enemyIds).toEqual(expect.arrayContaining(["sukusuino", "pontos", "toby", "koma", "amo", "ripa", "viria"]));
     for (const id of enemyIds) {
       const def = getRelic(id);
       for (const slot of ["basic", "ultimate", "ferocity", "passive"] as const) {

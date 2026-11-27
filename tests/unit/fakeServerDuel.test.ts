@@ -23,15 +23,15 @@ function makeSession(stamina = 100, clearedIndex = -1, gems = 10_000): Session {
     settings: createDefaultSettings(),
     completedStoryIds: new Set(), observationRecords: [],
     selectedStageId: null,
-    party: ["torika", "rex", "dodo"],
+    party: ["torika", "rexia", "dodi"],
     cleared: new Set(),
-    owned: new Set(["torika", "rex", "dodo"]),
+    owned: new Set(["torika", "rexia", "dodi"]),
     favorite: "torika",
     bookmarked: new Set<string>(),
     gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
     staminaUpdatedAt: NOW().toISOString(),
     wallet: { fossil: 0, amber: 0, gems, gold: 0, stamina, dnaFragments: 0, cheesecake: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0, duelEmblem: 0 },
-    relicFragments: {}, relicProgress: Object.fromEntries(["torika", "rex", "dodo"].map((id) => [id, { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }])),
+    relicFragments: {}, relicProgress: Object.fromEntries(["torika", "rexia", "dodi"].map((id) => [id, { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }])),
     itemInventory: [],
     runeInventory: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
@@ -48,7 +48,7 @@ function makeSession(stamina = 100, clearedIndex = -1, gems = 10_000): Session {
 
 
 const make = (state: Session) => new FakeServer(state, { latencyMs: 0, now: NOW, random: () => 0.5 });
-const TEAM = ["torika", "rex", "dodo"];
+const TEAM = ["torika", "rexia", "dodi"];
 
 describe("FakeServer 결투장", () => {
   it("처음 열면 브론즈 0점에 상대 다섯과 도전권 다섯이 선다", async () => {
@@ -104,7 +104,7 @@ describe("FakeServer 결투장", () => {
     const server = make(makeSession());
     const status = await server.getDuelStatus();
     await expect(server.enterDuel({ opponentId: "duel-npc-99999", relicIds: TEAM, requestId: "x" })).rejects.toMatchObject({ code: "DUEL_OPPONENT_NOT_FOUND" });
-    await expect(server.enterDuel({ opponentId: status.opponents[0].id, relicIds: ["torika", "torika", "rex"], requestId: "y" })).rejects.toMatchObject({ code: "DUEL_INVALID_TEAM" });
+    await expect(server.enterDuel({ opponentId: status.opponents[0].id, relicIds: ["torika", "torika", "rexia"], requestId: "y" })).rejects.toMatchObject({ code: "DUEL_INVALID_TEAM" });
   });
 
   it("도전권을 다 쓰면 막히고 젬으로 하나를 더 산다", async () => {
@@ -205,10 +205,10 @@ describe("FakeServer 결투장", () => {
 
   it("방어덱과 가릴 렐릭을 게시한다", async () => {
     const server = make(makeSession());
-    const status = await server.setDuelDefense({ relicIds: TEAM, blindChoice: ["dodo", "zz"] });
+    const status = await server.setDuelDefense({ relicIds: TEAM, blindChoice: ["dodi", "zz"] });
     expect(status.defense).toEqual(TEAM);
-    expect(status.blindChoice).toEqual(["dodo"]);
-    expect(status.defenseBlindOrder[0]).toBe("dodo");
+    expect(status.blindChoice).toEqual(["dodi"]);
+    expect(status.defenseBlindOrder[0]).toBe("dodi");
     expect(status.defenseBlindOrder).toHaveLength(2);
   });
 
@@ -247,7 +247,7 @@ describe("FakeServer 결투장", () => {
     clock = new Date("2026-10-06T12:00:00Z");
     const server = make(makeSession());
     const first = await server.getDuelStatus();
-    expect(first.defense).toEqual(["torika", "dodo"]);
+    expect(first.defense).toEqual(["torika", "dodi"]);
     expect(first.defenseIsDefault).toBe(true);
     clock = new Date("2026-10-06T20:30:00Z");
     const later = await server.getDuelStatus();

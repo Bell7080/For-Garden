@@ -22,7 +22,7 @@ export const CC_AUDIT_LIMITS = {
 export const CC_AUGMENT_FAMILIES = ["stagger", "stun", "frozen", "fear", "frenzy", "knockback", "pressure", "drowsy", "intimidate", "taunt"] as const;
 
 function neutral(id: string, attackSpeed: number): RelicDef {
-  const base = getRelic("dodo");
+  const base = getRelic("dodi");
   return { ...base, id, stats: { ...base.stats, hp: 1_000_000, atk: 1, ap: 1, def: 300, res: 300, attackSpeed,
     critChance: 0, lifeSteal: 0, energyGain: 26, ferocityGain: 12 },
     passive: { id: "cc-audit-neutral", name: "CC audit", kind: "summonDerived", value: 0, iconAssetId: "skill-icon-buff", effectType: "buff", desc: "" },
@@ -71,7 +71,7 @@ export function createCcCombatScenario(options: {
     const floor = options.floor ?? 100, definition = getAncientStrataFloor(floor);
     if (options.selections?.length) throw new Error("고대 지층에는 원정 증강을 적용하지 않습니다.");
     if (options.equipment && !["bare", "epic", "ceiling"].includes(options.equipment)) throw new Error("Invalid ancient equipment");
-    const party = ancientReferenceParty(options.party ?? ["rex", "torika", "mette"], options.equipment ?? "bare", options.level ?? 60);
+    const party = ancientReferenceParty(options.party ?? ["rexia", "torika", "mette"], options.equipment ?? "bare", options.level ?? 60);
     const id = `ancient:${floor}:${options.equipment ?? "bare"}:lv${options.level ?? 60}`;
     return { id, seed: options.seed ?? id, durationSeconds: Math.min(options.durationSeconds ?? (definition.timeLimitSeconds ?? deathClockClosesBySeconds()), definition.timeLimitSeconds ?? deathClockClosesBySeconds()),
       limits: CC_AUDIT_LIMITS.stage, metadata: { mode: "ancient", floor, equipment: options.equipment ?? "bare", level: options.level ?? 60, party: party.players.map(p => p.id) },
@@ -137,7 +137,7 @@ export function createCcMatrixScenarios(options: { durationSeconds?: number; qui
  */
 export function createCcEngagementScenarios(options: { durationSeconds?: number; quick?: boolean; seed?: string } = {}): CcAuditScenario[] {
   const cases: CcAuditScenario[] = [];
-  const parties = [["deina", "torika", "ella"], ["deina", "maddy", "anka"], ["pachi", "mosana", "maddy"]];
+  const parties = [["dei", "torika", "ella"], ["dei", "maddy", "anka"], ["pachi", "mosana", "maddy"]];
   parties.forEach(ids => ids.forEach(id => getRelic(id)));
   for (const ids of parties) for (const speed of options.quick ? [1,4] : [0.6,1,4])
   for (const movement of options.quick ? [0.5] : [0.5,1,2])

@@ -81,10 +81,10 @@ describe("한계 돌파 칩", () => {
 
   it("돌파가 얹는 것을 칩으로 말한다", () => {
     expect(texts(breakthroughTags(byId("noa"), "ultimate"))).toEqual([t("skill.tag.withSeconds", { name: "[[stun|기절]]", seconds: 0.8 })]);
-    expect(tagIds(breakthroughTags(byId("carno"), "ferocity"))).toEqual(new Set(["physical-damage", "stun"]));
+    expect(tagIds(breakthroughTags(byId("kar"), "ferocity"))).toEqual(new Set(["physical-damage", "stun"]));
     expect(tagIds(breakthroughTags(byId("pachi"), "basic"))).toEqual(new Set(["physical-damage", "concussion"]));
     expect(tagIds(breakthroughTags(byId("torika"), "basic"))).toContain("taunt");
-    expect(tagIds(breakthroughTags(byId("spino"), "passive"))).toEqual(new Set(["stealth"]));
+    expect(tagIds(breakthroughTags(byId("spina"), "passive"))).toEqual(new Set(["stealth"]));
     expect(tagIds(breakthroughTags(byId("nodonia"), "ultimate"))).toEqual(new Set(["fixed-damage"]));
     // 피해만 늘리는 돌파는 새 갈래가 없다.
     expect(breakthroughTags(byId("irna"), "basic")).toEqual([]);

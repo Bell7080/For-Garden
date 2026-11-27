@@ -593,11 +593,11 @@ export const CARNO_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_018.zi
 export const QUETZALCOATLUS_ASSET: PuppetAsset = { url: `${base}puppets/raid_003.zip`, ...QUETZALCOATLUS_PORTRAIT_METADATA };
 
 export const RAITIA_ASSETS: Readonly<Record<RaitiaAssetId, PuppetAsset>> = {
-  "raitia-grass": { url: `${base}puppets/enemy_005.zip`, ...VIRIA_PORTRAIT_METADATA },
-  "raitia-water": { url: `${base}puppets/enemy_006.zip`, ...GUTTIA_PORTRAIT_METADATA },
-  "raitia-fire": { url: `${base}puppets/enemy_007.zip`, ...FAVIA_PORTRAIT_METADATA },
-  "raitia-earth": { url: `${base}puppets/enemy_008.zip`, ...SILIA_PORTRAIT_METADATA },
-  "raitia-wind": { url: `${base}puppets/enemy_009.zip`, ...VENTIA_PORTRAIT_METADATA },
+  "viria": { url: `${base}puppets/enemy_005.zip`, ...VIRIA_PORTRAIT_METADATA },
+  "guttia": { url: `${base}puppets/enemy_006.zip`, ...GUTTIA_PORTRAIT_METADATA },
+  "favia": { url: `${base}puppets/enemy_007.zip`, ...FAVIA_PORTRAIT_METADATA },
+  "silia": { url: `${base}puppets/enemy_008.zip`, ...SILIA_PORTRAIT_METADATA },
+  "ventia": { url: `${base}puppets/enemy_009.zip`, ...VENTIA_PORTRAIT_METADATA },
 };
 
 /**
@@ -619,7 +619,7 @@ const PORTRAIT_ASSETS = {
   delopi: DELOPI_ASSET,
   nodonia: NODONIA_ASSET,
   ella: ELLA_ASSET,
-  deina: DEINA_ASSET,
+  dei: DEINA_ASSET,
   maddy: MADDY_ASSET,
   // 적도 전용 전신을 가진다. 초상 레지스트리에 함께 두면 정보창이 아군·적을 가르지 않고
   // 같은 경로로 원화를 찾는다 — 화면마다 "적이면 다른 함수"를 두면 한 곳을 고칠 때 다른
@@ -640,10 +640,10 @@ const PORTRAIT_ASSETS = {
   magasa: MAGASA_ASSET,
   noa: NOA_ASSET,
   raja: RAJA_ASSET,
-  carno: CARNO_ASSET,
-  nokan: { url: `${base}puppets/enemy_019.zip`, ...NOKAN_PORTRAIT_METADATA },
-  eunte: { url: `${base}puppets/enemy_020.zip`, ...EUNTE_PORTRAIT_METADATA },
-  quetzalcoatlus: QUETZALCOATLUS_ASSET,
+  kar: CARNO_ASSET,
+  gigano: { url: `${base}puppets/enemy_019.zip`, ...NOKAN_PORTRAIT_METADATA },
+  argen: { url: `${base}puppets/enemy_020.zip`, ...EUNTE_PORTRAIT_METADATA },
+  koatl: QUETZALCOATLUS_ASSET,
   parua: PARUA_ASSET,
   dian: DIAN_ASSET,
   shute: SHUTE_ASSET,
@@ -707,11 +707,11 @@ export const EXPLORER_SD_ASSET: PuppetAsset = {
 
 /** 레이티아 다섯 자매의 전투 SD. 전신과 같은 이유로 자매마다 제 실측값을 읽는다. */
 export const RAITIA_SD_ASSETS: Readonly<Record<RaitiaAssetId, PuppetAsset>> = {
-  "raitia-grass": { url: `${base}puppets/enemySD_005.zip`, ...VIRIA_SD_METADATA },
-  "raitia-water": { url: `${base}puppets/enemySD_006.zip`, ...GUTTIA_SD_METADATA },
-  "raitia-fire": { url: `${base}puppets/enemySD_007.zip`, ...FAVIA_SD_METADATA },
-  "raitia-earth": { url: `${base}puppets/enemySD_008.zip`, ...SILIA_SD_METADATA },
-  "raitia-wind": { url: `${base}puppets/enemySD_009.zip`, ...VENTIA_SD_METADATA },
+  "viria": { url: `${base}puppets/enemySD_005.zip`, ...VIRIA_SD_METADATA },
+  "guttia": { url: `${base}puppets/enemySD_006.zip`, ...GUTTIA_SD_METADATA },
+  "favia": { url: `${base}puppets/enemySD_007.zip`, ...FAVIA_SD_METADATA },
+  "silia": { url: `${base}puppets/enemySD_008.zip`, ...SILIA_SD_METADATA },
+  "ventia": { url: `${base}puppets/enemySD_009.zip`, ...VENTIA_SD_METADATA },
 };
 
 /** 수쿠스이노 전투 SD. 전신과 같은 레이드 번호 묶음(`raidSD_001`)이다. */
@@ -973,10 +973,10 @@ export const SUMMON_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
  */
 const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   torika: TORIKA_SD_ASSET,
-  rex: LEXIA_SD_ASSET,
-  spino: SEIRA_SD_ASSET,
+  rexia: LEXIA_SD_ASSET,
+  spina: SEIRA_SD_ASSET,
   luka: LUKA_SD_ASSET,
-  dodo: DODI_SD_ASSET,
+  dodi: DODI_SD_ASSET,
   mette: METTE_SD_ASSET,
   tia: TIA_SD_ASSET,
   stella: STELLA_SD_ASSET,
@@ -987,7 +987,7 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   delopi: DELOPI_SD_ASSET,
   nodonia: NODONIA_SD_ASSET,
   ella: ELLA_SD_ASSET,
-  deina: DEINA_SD_ASSET,
+  dei: DEINA_SD_ASSET,
   maddy: MADDY_SD_ASSET,
   parua: PARUA_SD_ASSET,
   dian: DIAN_SD_ASSET,
@@ -1035,9 +1035,9 @@ export const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
   magasa: MAGASA_SD_ASSET,
   noa: NOA_SD_ASSET,
   raja: RAJA_SD_ASSET,
-  carno: CARNO_SD_ASSET,
-  nokan: { url: `${base}puppets/enemySD_019.zip`, ...NOKAN_SD_METADATA },
-  eunte: { url: `${base}puppets/enemySD_020.zip`, ...EUNTE_SD_METADATA },
+  kar: CARNO_SD_ASSET,
+  gigano: { url: `${base}puppets/enemySD_019.zip`, ...NOKAN_SD_METADATA },
+  argen: { url: `${base}puppets/enemySD_020.zip`, ...EUNTE_SD_METADATA },
 };
 
 /** SD 스킨도 렐릭 ID 아래에만 등록해 다른 렐릭으로 폴백할 수 없게 한다. */

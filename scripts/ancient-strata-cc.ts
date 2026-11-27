@@ -8,7 +8,7 @@ if (args.length !== 0 && (args.length !== 2 || args[0] !== "--output")) throw ne
 const output = args[1] ?? "work/ancient-cc.json";
 const cases = [];
 // 실제 생존/사망을 유지한다. 조기 사망으로 관찰이 짧으면 안전으로 판정하지 않는다.
-for (const party of [["rex", "torika", "mette"], ["pachi", "ella", "mette"], ["deina", "torika", "ella"]]) {
+for (const party of [["rexia", "torika", "mette"], ["pachi", "ella", "mette"], ["dei", "torika", "ella"]]) {
   for (const floor of [1, 2, 3, 5, 7, 10, 50, 90, 100, 110, 120, 121]) {
     for (const seed of ["1729", "4099", "12289"]) {
       const scenario = createCcCombatScenario({ mode: "ancient", floor, party, equipment: "ceiling", level: 60, seed });

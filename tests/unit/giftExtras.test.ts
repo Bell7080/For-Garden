@@ -9,8 +9,8 @@ import { GIFT_RECIPIENT_PAGE_SIZE, giftRecipientPage, giftRecipientRows, type Gi
 const sources: GiftRecipientSources = {
   friends: [
     { id: "f2", displayName: "나비", level: 12, favoriteRelic: { relicId: "torika" } },
-    { id: "f1", displayName: "가람", level: 30, favoriteRelic: { relicId: "dodo" } },
-    { id: "f1", displayName: "가람", level: 30, favoriteRelic: { relicId: "dodo" } },
+    { id: "f1", displayName: "가람", level: 30, favoriteRelic: { relicId: "dodi" } },
+    { id: "f1", displayName: "가람", level: 30, favoriteRelic: { relicId: "dodi" } },
   ],
   guild: [
     { userId: "me", name: "나", level: 40, avatarRelicId: "paru", isMe: true },

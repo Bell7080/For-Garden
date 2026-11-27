@@ -33,10 +33,10 @@ describe("원정 증강 현황 팝업", () => {
 
   it("의 쪽은 전체 → 1번 → 2번 → 3번 렐릭 순이고 빈 렐릭도 쪽을 지킨다", () => {
     const pages = expeditionAugmentPages(
-      [{ augmentId: "apex-signal" }, { augmentId: "blood-edge", targetRelicId: "spino" }],
-      ["torika", "rex", "spino"],
+      [{ augmentId: "apex-signal" }, { augmentId: "blood-edge", targetRelicId: "spina" }],
+      ["torika", "rexia", "spina"],
     );
-    expect(pages.map((page) => (page.kind === "party" ? "party" : page.relicId))).toEqual(["party", "torika", "rex", "spino"]);
+    expect(pages.map((page) => (page.kind === "party" ? "party" : page.relicId))).toEqual(["party", "torika", "rexia", "spina"]);
     expect(pages[0].badges).toHaveLength(1);
     expect(pages[1].badges).toHaveLength(0);
     expect(pages[3].badges.map(({ augmentId }) => augmentId)).toEqual(["blood-edge"]);

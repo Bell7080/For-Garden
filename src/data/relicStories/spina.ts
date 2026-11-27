@@ -15,7 +15,7 @@ import type { RelicStoryProfile } from "../../core/relicStory";
 
 /** 4 — 들키지 않은 어항. 아무도 모른다고 믿는 아이의 비밀을 모른 척해 주는 장. */
 const CHAPTER_4: DialogueStory = {
-  id: "bond.spino.4",
+  id: "bond.spina.4",
   backdrop: "lounge",
   startNodeId: "n1",
   titleCard: { title: "들키지 않은 어항", subtitle: "스피나 · 애착 이야기 1" },
@@ -38,7 +38,7 @@ const CHAPTER_4: DialogueStory = {
 
 /** 6 — 반듯한 조개 한 개. 붕어빵을 건네자 조개로 갚는 장. */
 const CHAPTER_6: DialogueStory = {
-  id: "bond.spino.6",
+  id: "bond.spina.6",
   backdrop: "canal",
   startNodeId: "n1",
   titleCard: { title: "반듯한 조개 한 개", subtitle: "스피나 · 애착 이야기 2" },
@@ -67,7 +67,7 @@ const CHAPTER_6: DialogueStory = {
 
 /** 8 — 물그림자 뒤. 낯선 사람이 오자 숨은 아이를 연구원이 막아 서 주는 장. */
 const CHAPTER_8: DialogueStory = {
-  id: "bond.spino.8",
+  id: "bond.spina.8",
   backdrop: "controlRoom",
   startNodeId: "n1",
   titleCard: { title: "물그림자 뒤", subtitle: "스피나 · 애착 이야기 3" },
@@ -92,7 +92,7 @@ const CHAPTER_8: DialogueStory = {
 
 /** 10 — 처음 보여 주는 어항. 숨기던 어항을 연구원에게 열어 보이고 이름을 정하는 마지막 장. */
 const CHAPTER_10: DialogueStory = {
-  id: "bond.spino.10",
+  id: "bond.spina.10",
   backdrop: "lounge",
   startNodeId: "n1",
   titleCard: { title: "처음 보여 주는 어항", subtitle: "스피나 · 애착 이야기 4" },
@@ -114,7 +114,7 @@ const CHAPTER_10: DialogueStory = {
 };
 
 export const SPINO_STORY: RelicStoryProfile = {
-  relicId: "spino",
+  relicId: "spina",
   fossilRecord: "옛 수로의 철분 띠 안에 주둥이와 돛뼈가 흩어지지 않고 보존됐다. 골밀도 분석에서 수중 적응의 흔적을 확인했다.",
   diary:
     "스피나는 연구소 수중경비대로 근무한다. 과묵한 편이지만 맡은 일은 언제나 정확하게 수행하며, 순찰 경로와 수문 점검 기록에도 빈틈이 없다. "
@@ -124,7 +124,7 @@ export const SPINO_STORY: RelicStoryProfile = {
   closingLine: "…연구원님. 순찰 중에 냄새가 났는데요. 붕어빵… 맞죠?",
   questions: [
     {
-      id: "spino-aquarium",
+      id: "spina-aquarium",
       prompt: "스피나가 몰래 꾸미는 작은 어항에는 무엇이 들어 있어?",
       choices: [
         {
@@ -145,7 +145,7 @@ export const SPINO_STORY: RelicStoryProfile = {
       ],
     },
     {
-      id: "spino-bungeoppang",
+      id: "spina-bungeoppang",
       prompt: "스피나가 좋아하는 간식은 뭐야?",
       choices: [
         {
@@ -166,7 +166,7 @@ export const SPINO_STORY: RelicStoryProfile = {
       ],
     },
     {
-      id: "spino-hide",
+      id: "spina-hide",
       prompt: "낯선 사람 앞에서 스피나는 어떻게 해?",
       choices: [
         {

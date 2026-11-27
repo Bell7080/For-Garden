@@ -2,25 +2,25 @@ import { describe, expect, it } from "vitest";
 import { battleBuffStackSpot, expeditionAugmentChipOffsets, BATTLE_PROFILE_LAYOUT } from "../../src/ui/battleStatusLayout";
 import { expeditionAugmentBadges, expeditionAugmentRows } from "../../src/ui/expeditionAugmentBadges";
 
-const ORDER = ["torika", "rex", "spino"];
+const ORDER = ["torika", "rexia", "spina"];
 const SELECTIONS = [
-  { augmentId: "predator-instinct", targetRelicId: "rex" },
+  { augmentId: "predator-instinct", targetRelicId: "rexia" },
   { augmentId: "reinforced-core" },
   { augmentId: "blood-edge", targetRelicId: "torika" },
   { augmentId: "apex-signal" },
-  { augmentId: "relentless-hunt", targetRelicId: "rex" },
+  { augmentId: "relentless-hunt", targetRelicId: "rexia" },
 ];
 
 describe("원정 증강 표식", () => {
   it("은 전체와 개인을 갈라 담는다", () => {
     const groups = expeditionAugmentBadges(SELECTIONS);
     expect(groups.global.map(({ augmentId }) => augmentId)).toEqual(["reinforced-core", "apex-signal"]);
-    expect(groups.byRelic.rex.map(({ augmentId }) => augmentId)).toEqual(["predator-instinct", "relentless-hunt"]);
+    expect(groups.byRelic.rexia.map(({ augmentId }) => augmentId)).toEqual(["predator-instinct", "relentless-hunt"]);
     expect(groups.byRelic.torika).toHaveLength(1);
-    expect(groups.byRelic.spino).toBeUndefined();
+    expect(groups.byRelic.spina).toBeUndefined();
     // 내부 소문자 키는 플레이어에게 기존 렐릭 등급 표기와 같은 대문자로 보인다.
     expect(groups.global.map(({ meta }) => meta)).toEqual(["SR · 전체", "SSR · 전체"]);
-    expect(groups.byRelic.rex.map(({ meta }) => meta)).toEqual(["SR · 개인", "SSR · 개인"]);
+    expect(groups.byRelic.rexia.map(({ meta }) => meta)).toEqual(["SR · 개인", "SSR · 개인"]);
   });
 
   it("은 정의가 사라진 ID를 화면에 세우지 않는다", () => {
@@ -30,7 +30,7 @@ describe("원정 증강 표식", () => {
   it("의 팝업 차례는 전체가 먼저이고 그다음이 편성 순서다", () => {
     // 고른 순서로 늘어놓으면 같은 캐릭터의 증강이 목록 여기저기에 흩어진다.
     const rows = expeditionAugmentRows(SELECTIONS, ORDER);
-    expect(rows.map(({ relicId }) => relicId)).toEqual([undefined, "torika", "rex"]);
+    expect(rows.map(({ relicId }) => relicId)).toEqual([undefined, "torika", "rexia"]);
     expect(rows[0].badges).toHaveLength(2);
     expect(rows[2].badges).toHaveLength(2);
   });

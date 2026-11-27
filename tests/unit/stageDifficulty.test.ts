@@ -20,7 +20,7 @@ const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
  * 바닥으로 삼으면 못 뽑은 사람이 그대로 막힌다. 초반에 확실히 손에 드는 셋으로 세우고, 몰아줄
  * 자리는 이 중 유일한 딜러인 파루아다 — 탱커에게 몰아주는 사람은 없다.
  */
-const FLOOR_ROSTER = ["torika", "dodo", "parua"] as const;
+const FLOOR_ROSTER = ["torika", "dodi", "parua"] as const;
 
 /**
  * **두 번째 축 — 실제로 밀 만한 파티.**
@@ -33,7 +33,7 @@ const FLOOR_ROSTER = ["torika", "dodo", "parua"] as const;
  * 그래서 축을 둘로 둔다. 이쪽은 **자리마다 SSR 하나씩을 골라 세운 편성**이고, 셋을 고정하지
  * 않고 자리별 후보에서 조합을 만든다 — 한 조합만 박아 두면 그 조합에만 맞는 관문이 된다.
  */
-const BLENDED_DPS = ["rex", "spino", "maki"] as const;
+const BLENDED_DPS = ["rexia", "spina", "maki"] as const;
 const BLENDED_TANK = ["torika", "nodonia", "ella"] as const;
 const BLENDED_SUPPORT = ["stella", "luka", "mette"] as const;
 
@@ -46,9 +46,9 @@ const BLENDED_SUPPORT = ["stella", "luka", "mette"] as const;
  * 들어오거나 정예의 속성이 바뀌면 이 셋을 다시 고른다.
  */
 const BLENDED_COMBOS = [
-  ["torika", "rex", "luka"],
+  ["torika", "rexia", "luka"],
   ["ella", "maki", "stella"],
-  ["nodonia", "spino", "mette"],
+  ["nodonia", "spina", "mette"],
 ] as const;
 
 /**
@@ -211,7 +211,7 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
         // 3-10부터 곡선을 완만하게 낮추며(v0.487.10) 3장 잡졸이 LV.30 → 29가 되어 3-4는 여덟 판 중 여섯이 열린다(0.625 → 0.75). 벽은 남는다.
         // 2장 → 3장 턱을 완만하게 펴며(v0.487.12, 응태 요청) 3-4가 LV.29 → 26이 되어 이 조합도 전승한다 — 3-4 벽은 걷었다.
         const walled: Record<string, number> = {};
-        const expected = name === "torika+rex+luka" ? walled[stageId] ?? 1 : 1;
+        const expected = name === "torika+rexia+luka" ? walled[stageId] ?? 1 : 1;
         expect(report.winRate, stageId).toBe(expected);
       }
     },
@@ -319,7 +319,7 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
    * 11레벨 스피나 하나가 룬까지 끼고도 2장 전체를 뚫던 것이 이번 조정 전의 상태다.
    */
   it("하이퍼 캐리 혼자서는 2장을 끝내지 못한다", () => {
-    const solo = [grown(getRelic("spino"), 11, 3)];
+    const solo = [grown(getRelic("spina"), 11, 3)];
     const winRateAt = (stageId: string) =>
       summarizeStageDifficulty(solo, getStageEnemies(getBattleStage(stageId)), SEEDS, "auto").winRate;
     /*
@@ -408,7 +408,7 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     // 파루아 쪽으로 옮겨 갔다: 붙어서 같은 적을 계속 때리는 손이 이제 두 대마다 주위까지
     // 함께 적신다.
     expect(pairs.map((pair) => pair.map(({ id }) => id))).toEqual([
-      ["dodo", "tia"], ["dodo", "kento"], ["dodo", "anka"], ["dodo", "parua"], ["tia", "kento"],
+      ["dodi", "tia"], ["dodi", "kento"], ["dodi", "anka"], ["dodi", "parua"], ["tia", "kento"],
       ["tia", "anka"], ["tia", "parua"], ["kento", "anka"], ["kento", "parua"], ["anka", "parua"],
     ]);
     // 실제 전장 크기로 옮기자(v0.172.6) 붙어서 싸우는 거리가 짧아져 도디·티아가 최악으로 내려앉았다.
@@ -424,7 +424,7 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     // 「적은 적이다」 등급 성장(2026-11-12): 1장 적 레벨이 다시 풀리며 최악 조합이 토리카·도디·안카로 옮겨 갔다.
     // 토비·아모·리파 개편(2026-11-13): 토비의 공속 겹이 상한(8겹)을 실제로 지키고 1-1 적이 평타 효과를 얻으며 최악 조합이 토리카·켄토·안카로 옮겨 갔다.
     // 같은 편 절반 겹침(2026-11-23): 켄토가 붙어 반격을 받기 쉬워지며 최악 조합이 다시 토리카·도디·안카로 옮겨 갔다.
-    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["torika", "dodo", "anka"]);
+    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["torika", "dodi", "anka"]);
   }, 30_000);
 
   it("장 목표와 허용 조정 순서를 전용 배율 없이 공개한다", () => {

@@ -36,7 +36,7 @@ describe("이르나 — 정체성", () => {
     expect(withinRarityBand(combatPower(IRNA.stats), "SR")).toBe(true);
     expect(IRNA.stats.atk).toBeGreaterThan(IRNA.stats.hp / 10);
     expect(IRNA.stats.ap).toBeLessThan(IRNA.stats.atk / 5);
-    for (const id of ["keris", "rex", "maddy", "pachi"]) expect(IRNA.stats.attackSpeed, id).toBeLessThan(getRelic(id).stats.attackSpeed);
+    for (const id of ["keris", "rexia", "maddy", "pachi"]) expect(IRNA.stats.attackSpeed, id).toBeLessThan(getRelic(id).stats.attackSpeed);
   });
 });
 

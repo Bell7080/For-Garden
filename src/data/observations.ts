@@ -37,38 +37,38 @@ export const RELIC_OBSERVATION_QUESTIONS: Readonly<Record<string, readonly Obser
       { id: "torika-shield-protect", label: "떨리는 다리를 버티며 상대의 앞을 가로막는다", personalityTag: "보호본능", habitKey: "torikaShieldProtect" },
     ] },
   ],
-  rex: [
+  rexia: [
     // 큰 상대를 마주한 렉시아가 격식을 지키는 경쟁심과 체격 자체의 승부욕 중 어느 쪽을 보이는지 검증한다.
-    { id: "rex-size-rivalry", prompt: "자신보다 훨씬 큰 상대가 앞을 막으면 어떻게 반응해?", choices: [
-      { id: "rex-size-formal", label: "자세를 곧게 세우고 먼저 정식으로 승부를 청한다", personalityTag: "격식 있는 경쟁심", habitKey: "rexSizeFormal" },
-      { id: "rex-size-wrestle", label: "체격 차이를 지적하자 곧바로 힘겨루기를 요구한다", personalityTag: "체격 승부욕", habitKey: "rexSizeWrestle" },
+    { id: "rexia-size-rivalry", prompt: "자신보다 훨씬 큰 상대가 앞을 막으면 어떻게 반응해?", choices: [
+      { id: "rexia-size-formal", label: "자세를 곧게 세우고 먼저 정식으로 승부를 청한다", personalityTag: "격식 있는 경쟁심", habitKey: "rexSizeFormal" },
+      { id: "rexia-size-wrestle", label: "체격 차이를 지적하자 곧바로 힘겨루기를 요구한다", personalityTag: "체격 승부욕", habitKey: "rexSizeWrestle" },
     ] },
     // 압도적인 강자 앞에서 공정한 조건을 중시하는지, 강자와 즉시 겨루고 싶어 하는지 검증한다.
-    { id: "rex-strong-challenge", prompt: "압도적으로 강한 상대를 발견하면 어떻게 할 거야?", choices: [
-      { id: "rex-strong-fair", label: "상대의 장점을 살핀 뒤 같은 조건으로 겨룬다", personalityTag: "공정한 도전", habitKey: "rexStrongFair" },
-      { id: "rex-strong-eager", label: "눈을 빛내며 당장 어느 쪽이 강한지 확인하려 한다", personalityTag: "강자 선호", habitKey: "rexStrongEager" },
+    { id: "rexia-strong-challenge", prompt: "압도적으로 강한 상대를 발견하면 어떻게 할 거야?", choices: [
+      { id: "rexia-strong-fair", label: "상대의 장점을 살핀 뒤 같은 조건으로 겨룬다", personalityTag: "공정한 도전", habitKey: "rexStrongFair" },
+      { id: "rexia-strong-eager", label: "눈을 빛내며 당장 어느 쪽이 강한지 확인하려 한다", personalityTag: "강자 선호", habitKey: "rexStrongEager" },
     ] },
     // 작은 렐릭의 실수 앞에서 에티켓을 가르치면서도 약자를 위압하지 않는 배려 방식을 검증한다.
-    { id: "rex-small-etiquette", prompt: "작은 렐릭이 실수로 예절을 지키지 못하면?", choices: [
-      { id: "rex-small-guide", label: "먼저 자세를 낮추고 천천히 올바른 인사법을 알려 준다", personalityTag: "온화한 지도", habitKey: "rexSmallGuide" },
-      { id: "rex-small-example", label: "자신이 먼저 정중히 인사해 따라 할 수 있게 기다린다", personalityTag: "솔선하는 예절", habitKey: "rexSmallExample" },
+    { id: "rexia-small-etiquette", prompt: "작은 렐릭이 실수로 예절을 지키지 못하면?", choices: [
+      { id: "rexia-small-guide", label: "먼저 자세를 낮추고 천천히 올바른 인사법을 알려 준다", personalityTag: "온화한 지도", habitKey: "rexSmallGuide" },
+      { id: "rexia-small-example", label: "자신이 먼저 정중히 인사해 따라 할 수 있게 기다린다", personalityTag: "솔선하는 예절", habitKey: "rexSmallExample" },
     ] },
   ],
-  spino: [
+  spina: [
     // 동시에 울린 경보 앞에서 스피나의 임무 집중과 과묵한 현장 지휘가 각각 어떻게 드러나는지 관찰한다.
-    { id: "spino-night-alarm", prompt: "야간 순찰 중 수조 경보와 다른 구역의 구조 요청이 동시에 들어오면?", choices: [
-      { id: "spino-alarm-rescue", label: "구조 요청 위치를 짧게 보고하고 즉시 현장으로 향한다", personalityTag: "임무 우선", habitKey: "spinoAlarmRescue" },
-      { id: "spino-alarm-command", label: "가까운 경비대원에게 수조 점검을 맡기고 구조 동선을 확보한다", personalityTag: "침착한 지휘", habitKey: "spinoAlarmCommand" },
+    { id: "spina-night-alarm", prompt: "야간 순찰 중 수조 경보와 다른 구역의 구조 요청이 동시에 들어오면?", choices: [
+      { id: "spina-alarm-rescue", label: "구조 요청 위치를 짧게 보고하고 즉시 현장으로 향한다", personalityTag: "임무 우선", habitKey: "spinoAlarmRescue" },
+      { id: "spina-alarm-command", label: "가까운 경비대원에게 수조 점검을 맡기고 구조 동선을 확보한다", personalityTag: "침착한 지휘", habitKey: "spinoAlarmCommand" },
     ] },
     // 연구원만 이미 아는 어항 장식 취미를 숨기려는 시치미와 물고기를 향한 다정함으로 나누어 관찰한다.
-    { id: "spino-aquarium-decoration", prompt: "연구원이 어항 속에 새로 놓인 장식을 알아보면?", choices: [
-      { id: "spino-decoration-deny", label: "원래 있던 것이라며 시선을 피하고 장식 각도만 바로잡는다", personalityTag: "서투른 시치미", habitKey: "spinoDecorationDeny" },
-      { id: "spino-decoration-shelter", label: "물고기의 은신처가 필요했을 뿐이라고 짧게 설명한다", personalityTag: "숨겨 둔 다정함", habitKey: "spinoDecorationShelter" },
+    { id: "spina-aquarium-decoration", prompt: "연구원이 어항 속에 새로 놓인 장식을 알아보면?", choices: [
+      { id: "spina-decoration-deny", label: "원래 있던 것이라며 시선을 피하고 장식 각도만 바로잡는다", personalityTag: "서투른 시치미", habitKey: "spinoDecorationDeny" },
+      { id: "spina-decoration-shelter", label: "물고기의 은신처가 필요했을 뿐이라고 짧게 설명한다", personalityTag: "숨겨 둔 다정함", habitKey: "spinoDecorationShelter" },
     ] },
     // 함께하는 청소에서도 취미가 들키지 않았다고 믿는 스피나의 신뢰와 실무적인 배려를 행동으로 관찰한다.
-    { id: "spino-aquarium-cleaning", prompt: "익숙하지 않은 어항 청소를 연구원이 도와주겠다고 하면?", choices: [
-      { id: "spino-cleaning-gloves", label: "거절하려다 여분의 장갑을 조용히 건넨다", personalityTag: "말없는 신뢰", habitKey: "spinoCleaningGloves" },
-      { id: "spino-cleaning-roles", label: "자신이 수초를 맡겠다며 역할을 정확히 나눈다", personalityTag: "실무적인 배려", habitKey: "spinoCleaningRoles" },
+    { id: "spina-aquarium-cleaning", prompt: "익숙하지 않은 어항 청소를 연구원이 도와주겠다고 하면?", choices: [
+      { id: "spina-cleaning-gloves", label: "거절하려다 여분의 장갑을 조용히 건넨다", personalityTag: "말없는 신뢰", habitKey: "spinoCleaningGloves" },
+      { id: "spina-cleaning-roles", label: "자신이 수초를 맡겠다며 역할을 정확히 나눈다", personalityTag: "실무적인 배려", habitKey: "spinoCleaningRoles" },
     ] },
   ],
   luka: [
@@ -109,11 +109,11 @@ export const REACTIONS: Readonly<Record<string, ObservationReaction>> = {
     torikaShieldAdmit: "겁이 난다고 인정하고 한 걸음 물러서지만 보호할 대상의 앞은 비우지 않는다.", torikaShieldProtect: "다리가 떨려도 몸을 낮춰 보호할 대상의 앞을 막아선다.",
   } },
   // 경쟁심·강자 선호에는 정중한 승부 절차를, 에티켓·약자 배려에는 위압하지 않는 태도를 대응시킨다.
-  rex: { intro: "관찰이라니, 재미있는 걸 묻네.", replies: {
+  rexia: { intro: "관찰이라니, 재미있는 걸 묻네.", replies: {
     approach: "숨기 전에 내가 찾아내지.", wait: "바람이 냄새를 가져올 때까지 기다려.", share: "내 무리라면 굶기지 않아.", guard: "강한 순서가 아니라 필요한 순서로 먹어.",
-    "rex-size-formal": "훌륭한 체격이군. 이름을 밝히고 정식으로 한 판 청하겠어.", "rex-size-wrestle": "그 체격이 얼마나 대단한지, 괜찮다면 힘으로 겨뤄 보자.",
-    "rex-strong-fair": "네 강점을 충분히 본 뒤 같은 조건에서 정정당당히 도전하겠어.", "rex-strong-eager": "눈을 뗄 수 없는 강함이군. 준비가 됐다면 지금 승부를 청하지.",
-    "rex-small-guide": "놀라지 않아도 돼. 내가 몸을 낮출 테니 천천히 인사부터 해 보자.", "rex-small-example": "내가 먼저 인사할게. 편해지면 같은 방식으로 답해 줘.",
+    "rexia-size-formal": "훌륭한 체격이군. 이름을 밝히고 정식으로 한 판 청하겠어.", "rexia-size-wrestle": "그 체격이 얼마나 대단한지, 괜찮다면 힘으로 겨뤄 보자.",
+    "rexia-strong-fair": "네 강점을 충분히 본 뒤 같은 조건에서 정정당당히 도전하겠어.", "rexia-strong-eager": "눈을 뗄 수 없는 강함이군. 준비가 됐다면 지금 승부를 청하지.",
+    "rexia-small-guide": "놀라지 않아도 돼. 내가 몸을 낮출 테니 천천히 인사부터 해 보자.", "rexia-small-example": "내가 먼저 인사할게. 편해지면 같은 방식으로 답해 줘.",
   }, habits: {
     approach: "소리보다 바람에 실린 냄새를 먼저 좇는다.", wait: "사냥 전 몸을 낮추고 풍향이 바뀌기를 기다린다.", share: "무리의 먹이가 부족하면 자신의 몫을 뒤로 미룬다.", guard: "먹이 주변을 한 바퀴 돈 뒤에야 식사를 시작한다.",
     rexSizeFormal: "큰 상대가 다가오면 어깨를 펴고 발끝을 가지런히 맞춘다.", rexSizeWrestle: "체격이 큰 상대 앞에서는 중심을 낮추고 맞잡을 거리를 가늠한다.",
@@ -121,11 +121,11 @@ export const REACTIONS: Readonly<Record<string, ObservationReaction>> = {
     rexSmallGuide: "작은 렐릭과 이야기할 때 무릎을 굽혀 시선을 같은 높이에 둔다.", rexSmallExample: "작은 렐릭 앞에서는 목소리를 낮추고 먼저 천천히 고개를 숙인다.",
   } },
   // 연구원은 어항 취미를 알지만, 스피나는 임무와 물고기 관리라는 짧은 해명으로 아직 감췄다고 믿는다.
-  spino: { intro: "질문은 짧게. 순찰 시간이니까.", replies: {
+  spina: { intro: "질문은 짧게. 순찰 시간이니까.", replies: {
     approach: "발신 지점부터 확인한다. 수조 쪽은 아니겠지.", wait: "주변이 잠잠해질 때까지 대기한다. 어항을 보는 건 아니다.", share: "필요한 몫만 나눈다. 물고기 먹이도 같은 원칙이다.", guard: "물가를 먼저 확보한다. 수조 상태는 순찰 항목일 뿐이다.",
-    "spino-alarm-rescue": "구조 요청 위치 보고. 장비 확인했다. 바로 간다.", "spino-alarm-command": "가까운 경비는 수조 확인. 나는 구조 통로를 확보한다.",
-    "spino-decoration-deny": "원래 있던 거다. ...각도가 틀어졌군.", "spino-decoration-shelter": "물고기에게 은신처가 필요했을 뿐이다. 그 이상은 없어.",
-    "spino-cleaning-gloves": "혼자 해도 된다. ...여분 장갑은 거기 있다.", "spino-cleaning-roles": "나는 수초를 맡지. 당신은 유리면. 그게 효율적이다.",
+    "spina-alarm-rescue": "구조 요청 위치 보고. 장비 확인했다. 바로 간다.", "spina-alarm-command": "가까운 경비는 수조 확인. 나는 구조 통로를 확보한다.",
+    "spina-decoration-deny": "원래 있던 거다. ...각도가 틀어졌군.", "spina-decoration-shelter": "물고기에게 은신처가 필요했을 뿐이다. 그 이상은 없어.",
+    "spina-cleaning-gloves": "혼자 해도 된다. ...여분 장갑은 거기 있다.", "spina-cleaning-roles": "나는 수초를 맡지. 당신은 유리면. 그게 효율적이다.",
   }, habits: {
     approach: "발신지를 좇으면서도 연구원의 시선이 멀어지면 수조 장비 잠금을 한 번 더 확인한다.", wait: "대기 중 어항 쪽을 보지 않는 척하면서 유리에 비친 물고기의 움직임을 확인한다.", share: "배분을 마친 뒤 아무도 보지 않을 때 물고기 먹이의 크기까지 고르게 맞춘다.", guard: "순찰 점검이라고 둘러대며 연구원이 떠난 뒤 수조 가장자리의 물기를 닦는다.",
     spinoAlarmRescue: "보고를 마치기 전 이미 장비 잠금을 확인하고 구조 현장으로 몸을 돌린다.", spinoAlarmCommand: "필요한 지시만 짧게 남기고 구조 인력이 지날 통로를 비운다.",

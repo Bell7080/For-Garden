@@ -1,6 +1,6 @@
 {
-  "id": "engagement:deina+torika+ella:as4:ms0.5:bt0:near:baseline",
-  "seed": "engagement:deina+torika+ella:as4:ms0.5:bt0:near",
+  "id": "engagement:dei+torika+ella:as4:ms0.5:bt0:near:baseline",
+  "seed": "engagement:dei+torika+ella:as4:ms0.5:bt0:near",
   "stepSeconds": 0.02,
   "requestedSeconds": 30,
   "elapsedSeconds": 30,
@@ -13,11 +13,11 @@
   },
   "metadata": {
     "mode": "engagement",
-    "pairedScenario": "engagement:deina+torika+ella:as4:ms0.5:bt0:near",
+    "pairedScenario": "engagement:dei+torika+ella:as4:ms0.5:bt0:near",
     "hpEnduranceMultiplier": 100,
     "originalSkills": true,
     "party": [
-      "deina",
+      "dei",
       "torika",
       "ella"
     ],
@@ -30,7 +30,7 @@
   "combatants": [
     {
       "fighterId": "player-0",
-      "relicId": "deina",
+      "relicId": "dei",
       "side": "player",
       "attackSpeed": 268.8,
       "moveSpeed": 144.42,

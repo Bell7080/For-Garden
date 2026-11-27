@@ -9,7 +9,7 @@ import { RAID_BOSS_BALANCE, RAID_BOSS_POOL } from "../../src/data/raid";
 import { expeditionBossGrowth, getExpeditionNodeEnemies } from "../../src/data/expeditionEnemies";
 import { getRelic } from "../../src/data/relics";
 
-const parties = [["dian", "spino", "stella"], ["torika", "dodo", "parua"], ["rex", "luka", "torika"], ["rex", "mette", "torika"], ["morphe", "ella", "maddy"], ["deina", "quetzalcoatlus", "taboa"]];
+const parties = [["dian", "spina", "stella"], ["torika", "dodi", "parua"], ["rexia", "luka", "torika"], ["rexia", "mette", "torika"], ["morphe", "ella", "maddy"], ["dei", "koatl", "taboa"]];
 function fight(state: SkirmishState, identity: string, auto: boolean, speed: number) {
   const random = bossBattleRandom(identity); const actions: ExpeditionBossAction[] = [];
   let remainder = 0; let frame = 0;
@@ -61,7 +61,7 @@ describe("보스 화면과 확정 재현의 점수·시간·생존 일치", () =
   }
   for (const stopAtMs of [0, 1000, 10000, 30000]) for (const mode of ["raid", "expeditionBoss"] as const) {
     it(`${mode}: 자발적 종료 ${stopAtMs}ms는 그 틱의 피해만 저장하고 살아 있는 편성을 전멸로 바꾸지 않는다`, () => {
-      const players = ["rex", "mette", "torika"].map(getRelic), identity = "partial-fight";
+      const players = ["rexia", "mette", "torika"].map(getRelic), identity = "partial-fight";
       const base = getRelic("sukusuino"), raid = mode === "raid";
       const boss = raid ? raidBossDef(base, "easy") : getExpeditionNodeEnemies("boss", 20)[0];
       const config = raid ? createRaidSkirmishConfig(players, boss, raidBossPercentHpBasis(base, "easy"), 150000)
@@ -77,12 +77,12 @@ describe("보스 화면과 확정 재현의 점수·시간·생존 일치", () =
       expect(replay.endedAtMs).toBe(Math.round(state.elapsed * 1000));
       expect(replay.remainingHpByAlly).toEqual(Object.fromEntries(state.fighters.filter(({side})=>side==="player").map(({def,hp})=>[def.id,hp])));
       for (const bad of [-20, 1, NaN, Infinity, 9999999]) expect(() => resolveExpeditionBossBattle({...input,stopAtMs:bad},[])).toThrow();
-      expect(() => resolveExpeditionBossBattle({...input,stopAtMs:0},[{kind:"ultimate",elapsedMs:20,actorId:"rex"}])).toThrow();
+      expect(() => resolveExpeditionBossBattle({...input,stopAtMs:0},[{kind:"ultimate",elapsedMs:20,actorId:"rexia"}])).toThrow();
     });
   }
   it("추가 평타·거짓 궁극기·틱 사이 입력은 검증에서 거절한다", () => {
-    const input = { allies: [getRelic("rex")], boss: getExpeditionNodeEnemies("boss", 20)[0], arena: battleArena("expeditionBoss"), replayIdentity: "run" };
-    for (const action of [{ kind: "basic" as const, elapsedMs: 0 }, { kind: "ultimate" as const, elapsedMs: 0 }, { kind: "ultimate" as const, elapsedMs: 21 }]) expect(() => resolveExpeditionBossBattle(input, [{ ...action, actorId: "rex" }])).toThrow("INVALID_BOSS_BATTLE_INPUT");
+    const input = { allies: [getRelic("rexia")], boss: getExpeditionNodeEnemies("boss", 20)[0], arena: battleArena("expeditionBoss"), replayIdentity: "run" };
+    for (const action of [{ kind: "basic" as const, elapsedMs: 0 }, { kind: "ultimate" as const, elapsedMs: 0 }, { kind: "ultimate" as const, elapsedMs: 21 }]) expect(() => resolveExpeditionBossBattle(input, [{ ...action, actorId: "rexia" }])).toThrow("INVALID_BOSS_BATTLE_INPUT");
   });
   it("공유 진행률은 초과 개인 피해와 별개로 100%에서 멈춘다", () => {
     expect(raidSeasonProgress(200, 100)).toEqual({ totalHp: 100, dealtDamage: 100, remainingHp: 0, remainingRatio: 0, defeated: true });
@@ -90,10 +90,10 @@ describe("보스 화면과 확정 재현의 점수·시간·생존 일치", () =
   it("방어·무효화·보호막·과잉 타격은 실제 HP에 들어간 몫만 레이드 점수로 센다", () => {
     const hit = (defense: number, shield: number, hp = 10000, immune = false) => {
       const base = getRelic("sukusuino"); const boss = { ...raidBossDef(base, "easy"), stats: { ...raidBossDef(base, "easy").stats, def: defense } };
-      const config = createRaidSkirmishConfig([getRelic("rex")], boss, raidBossPercentHpBasis(base, "easy"), hp);
+      const config = createRaidSkirmishConfig([getRelic("rexia")], boss, raidBossPercentHpBasis(base, "easy"), hp);
       const state = createSkirmish(config.playerDefs, config.enemyDefs, battleArena("raid"), {}, {}, config);
       const target = state.fighters.find(({ id }) => id === "enemy-0")!; target.shield.amount = shield; target.undying = immune ? { remaining: 1, total: 1 } : null;
-      replayLoggedBossAction(state, "rex", "basic", () => 0.99);
+      replayLoggedBossAction(state, "rexia", "basic", () => 0.99);
       expect(state.boss!.score).toBe(hp - target.hp);
       return state.boss!.score;
     };

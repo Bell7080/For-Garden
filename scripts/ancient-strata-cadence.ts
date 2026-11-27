@@ -8,7 +8,7 @@ import { createDifficultyRng } from "../src/core/stageDifficulty";
 const args = process.argv.slice(2).filter(arg => arg !== "--cadence");
 if (args.length !== 0 && (args.length !== 2 || args[0] !== "--output")) throw new Error("--cadence accepts only --output path.json");
 const output = args[1] ?? "work/ancient-cadence.json", cases = [], seeds = [1729,2531,4099,8191,12289];
-for (const ids of [["rex","torika","mette"],["pachi","ella","mette"],["deina","torika","ella"]]) {
+for (const ids of [["rexia","torika","mette"],["pachi","ella","mette"],["dei","torika","ella"]]) {
   const party = ancientReferenceParty(ids,"ceiling",60,10);
   for (const floor of [94,95,106,107,110,118,119,120,123,124]) for (const inputEveryTicks of [1,3,5,10]) {
     const runs = seeds.map(seed => {

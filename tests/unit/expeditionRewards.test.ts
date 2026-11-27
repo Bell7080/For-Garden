@@ -71,11 +71,11 @@ describe("expedition augment rewards", () => {
 
   it("removes impossible personal targets and rejects a target that was not offered", () => {
     const relics = party();
-    relics[1] = { relicId: "rex", currentHp: 0, alive: false };
+    relics[1] = { relicId: "rexia", currentHp: 0, alive: false };
     const offers = generateExpeditionAugmentOffers({ rarity: "sr", relics, selections: [], random: () => 0 });
     const personal = offers.find(({ eligibleTargetRelicIds }) => eligibleTargetRelicIds.length > 0);
-    // 한 생존자가 있으므로 쓰러진 rex도 휴식에서 부활 가능한 유효 대상이다.
-    expect(personal?.eligibleTargetRelicIds).toEqual(["torika", "rex", "spino"]);
+    // 한 생존자가 있으므로 쓰러진 rexia도 휴식에서 부활 가능한 유효 대상이다.
+    expect(personal?.eligibleTargetRelicIds).toEqual(["torika", "rexia", "spina"]);
     expect(personal && validateExpeditionAugmentChoice(personal, { augmentId: personal.augmentId, targetRelicId: "unknown" }, [])).toBe(false);
     expect(generateExpeditionAugmentOffers({ rarity: "sr", relics: relics.map((relic) => ({ ...relic, currentHp: 0, alive: false })), selections: [], random: () => 0 }).every(({ eligibleTargetRelicIds }) => eligibleTargetRelicIds.length === 0)).toBe(true);
   });
@@ -137,7 +137,7 @@ describe("expedition augment rewards", () => {
   it("stores generated seed and offers so reconnecting cannot reroll candidates", () => {
     const state = createDefaultSession();
     const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["torika", "rex", "spino"]);
+    manager.start(["torika", "rexia", "spina"]);
     const node = state.expedition.run?.nodes.find(({ type }) => type === "normal");
     expect(node).toBeDefined();
     const first = manager.beginAugmentReward(node!.id, "normal");
@@ -151,7 +151,7 @@ describe("expedition augment rewards", () => {
   it("persists the first horde result before opening and completing its second consecutive choice", () => {
     const state = createDefaultSession();
     const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["torika", "rex", "spino"]);
+    manager.start(["torika", "rexia", "spina"]);
     const node = state.expedition.run?.nodes.find(({ type }) => type === "horde");
     expect(node).toBeDefined();
     const first = manager.beginAugmentReward(node!.id, "horde")!;
@@ -168,8 +168,8 @@ describe("expedition augment rewards", () => {
 function party() {
   return [
     { relicId: "torika", currentHp: 100, alive: true },
-    { relicId: "rex", currentHp: 100, alive: true },
-    { relicId: "spino", currentHp: 100, alive: true },
+    { relicId: "rexia", currentHp: 100, alive: true },
+    { relicId: "spina", currentHp: 100, alive: true },
   ];
 }
 

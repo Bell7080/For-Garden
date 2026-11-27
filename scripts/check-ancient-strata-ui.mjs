@@ -28,7 +28,7 @@ try {
   const url=path=>performance.getEntriesByType('resource').find(e=>new URL(e.name).pathname===path)?.name??path;
   const s=await import(url('/src/state/session.ts')),a=await import(url('/src/api/FakeServer.ts')),t=await import(url('/src/core/tutorial.ts'));
   for(const scene of window.ancientGame.scene.getScenes(true))if(scene.sys.settings.key!=='effect-overlay')window.ancientGame.scene.stop(scene.sys.settings.key);
-  const state=s.session;state.tutorial=t.createCompletedTutorialState();state.party=['rex','torika','mette'];
+  const state=s.session;state.tutorial=t.createCompletedTutorialState();state.party=['rexia','torika','mette'];
   for(const id of state.party){state.owned.add(id);state.relicProgress[id]={...s.createInitialRelicProgress(),level:60,breakthrough:4,bondLevel:10,bondXp:650};}
   for(let i=1;i<=10;i++)state.cleared.add(`1-${i}`);
   state.wallet.gems=1000;state.settings.accessibility.reduceMotion=true;state.settings.presentation.graphicsQuality='low';state.settings.presentation.frameRateLimit=30;state.settings.presentation.damageNumbers=false;state.settings.presentation.screenShake=false;state.settings.sound.masterMuted=true;state.settings.game.autoUltimate=true;state.settings.game.ultimatePresentation='skip';state.settings.game.battleSpeed=3;

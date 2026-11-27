@@ -6,7 +6,7 @@ const probe=process.argv.includes("--probe");
 const args = process.argv.slice(2).filter(arg => arg !== "--reprice" && arg !== "--probe");
 if (args.length !== 0 && (args.length !== 2 || args[0] !== "--output")) throw new Error("--reprice accepts only --output path.json");
 const output = args[1] ?? "work/ancient-reprice.json", seeds = [1729,2531,4099,8191,12289];
-const references = [["rex","torika","mette"],["torika","rex","mette"],["ark","pachi","stella"],["pachi","ark","stella"],["pachi","ella","mette"],["nodonia","dian","meron"],["torika","luka","stella"],["ella","morphe","mette"]];
+const references = [["rexia","torika","mette"],["torika","rexia","mette"],["ark","pachi","stella"],["pachi","ark","stella"],["pachi","ella","mette"],["nodonia","dian","meron"],["torika","luka","stella"],["ella","morphe","mette"]];
 const results = [];
 for (const ids of references) for (const equipment of ["bare","epic","ceiling"] as AncientEquipment[]) {
   const party = ancientReferenceParty(ids,equipment,60,10),floors = [];

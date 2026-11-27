@@ -26,7 +26,7 @@ export const STAGE_2_3_LOST_BADGE: DialogueStory = {
     {
       id: "choose", speaker: "", body: "코마는 수로 끝에서 걸음을 멈추고 연구원을 돌아보았다.", standing: "koma",
       choices: [
-        { id: "chase", label: "돌려받으러 쫓아간다", nextId: "plunge", effect: { type: "bondXp", relicId: "dodo", amount: 3 } },
+        { id: "chase", label: "돌려받으러 쫓아간다", nextId: "plunge", effect: { type: "bondXp", relicId: "dodi", amount: 3 } },
         { id: "wound", label: "손에 난 상처부터 묻는다", nextId: "plunge", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
       ],
     },
@@ -48,8 +48,8 @@ export const STAGE_2_6_SAME_LINE: DialogueStory = {
     {
       id: "choose", speaker: "", body: "연구원이 한 걸음 다가섰다.", standing: "koma",
       choices: [
-        { id: "return", label: "그거 돌려줘", nextId: "returnA", effect: { type: "bondXp", relicId: "rex", amount: 3 } },
-        { id: "okay", label: "괜찮아?", nextId: "okayB", effect: { type: "bondXp", relicId: "rex", amount: 3 } },
+        { id: "return", label: "그거 돌려줘", nextId: "returnA", effect: { type: "bondXp", relicId: "rexia", amount: 3 } },
+        { id: "okay", label: "괜찮아?", nextId: "okayB", effect: { type: "bondXp", relicId: "rexia", amount: 3 } },
       ],
     },
     { id: "returnA", speaker: "코마", body: "…아직이다. 확인이 끝나면 돌려준다.", standing: "koma", act: "recoil", nextId: "tail" },
@@ -175,7 +175,7 @@ export const STAGE_2_4_SIDE_POST: DialogueStory = {
     {
       id: "choose", speaker: "", body: "아무도 대답하지 않았다. 연구원이 벽 앞으로 한 걸음 다가섰다.", standing: "ripa",
       choices: [
-        { id: "write", label: "번호를 전부 적어 두자", nextId: "writeA", effect: { type: "bondXp", relicId: "dodo", amount: 3 } },
+        { id: "write", label: "번호를 전부 적어 두자", nextId: "writeA", effect: { type: "bondXp", relicId: "dodi", amount: 3 } },
         { id: "dot", label: "점이 붙은 번호도 찾아보자", nextId: "dotB", effect: { type: "bondXp", relicId: "parua", amount: 3 } },
       ],
     },
@@ -215,7 +215,7 @@ export const STAGE_3_3_SIDE_POST: DialogueStory = {
     {
       id: "choose", speaker: "", body: "젖은 점수판이 연구원의 손에 건네졌다.", standing: "mir",
       choices: [
-        { id: "return", label: "그대로 돌려준다", nextId: "returnA", effect: { type: "bondXp", relicId: "rex", amount: 3 } },
+        { id: "return", label: "그대로 돌려준다", nextId: "returnA", effect: { type: "bondXp", relicId: "rexia", amount: 3 } },
         { id: "fill", label: "점수판 첫 칸을 채워 준다", nextId: "fillB", effect: { type: "bondXp", relicId: "luka", amount: 3 } },
       ],
     },
@@ -243,7 +243,7 @@ export const STAGE_4_3_BREAK_TIME: DialogueStory = {
       id: "choose", speaker: "", body: "아모는 붕대 감긴 팔을 무릎에 올려놓은 채 대답을 기다렸다.", standing: "amo",
       choices: [
         { id: "keep", label: "그 약속은 그대로야", nextId: "keepA", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
-        { id: "next", label: "다음엔 꼭 데려갈게", nextId: "nextB", effect: { type: "bondXp", relicId: "dodo", amount: 3 } },
+        { id: "next", label: "다음엔 꼭 데려갈게", nextId: "nextB", effect: { type: "bondXp", relicId: "dodi", amount: 3 } },
       ],
     },
     { id: "keepA", speaker: "아모", body: "…그렇구나. 그럼 오늘도 끌려가는 게 아니네. 잠깐 떨어져 있는 거지.", standing: "amo", act: "nod", nextId: "steps" },
@@ -344,16 +344,16 @@ export const STAGE_5_8_YOUNGEST_SHARE: DialogueStory = {
     { id: "dont", speaker: "라자", body: "…보지 마라. 배식 시간이다.", standing: "raja", act: "shrink" },
     { id: "burn", speaker: "마키", body: "국 냄새가 좋다냥. 네가 끓였냥? 솥은 안 보이는데 어디서 가져왔냥?", standing: "maki", cast: [{ id: "maki", slot: "left" }, { id: "raja", slot: "right" }], act: "lean" },
     { id: "carry", speaker: "라자", body: "…끓인 건 마가사 간부님이다. 나는 나르기만 한다. 앞에 서는 놈이 나르는 거다.", standing: "raja", act: "nod" },
-    { id: "last", speaker: "데이", body: "그럼 마지막 그릇은 누구 거야? 그 칸만 비어 있는데!", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "raja", slot: "right" }], act: "hop" },
+    { id: "last", speaker: "데이", body: "그럼 마지막 그릇은 누구 거야? 그 칸만 비어 있는데!", standing: "dei", cast: [{ id: "dei", slot: "left" }, { id: "raja", slot: "right" }], act: "hop" },
     { id: "youngest", speaker: "라자", body: "노아 간부님 몫이다. 우리 중에 제일 어리고 겁이 많으셔서, 사람이 있으면 안 나오신다. …그래서 늘 식은 걸 드신다.", standing: "raja", act: "lean" },
     {
       id: "choose", speaker: "", body: "빈 배식구 앞에 그릇 하나가 놓였다. 아직 김이 올랐다.", standing: "raja",
       choices: [
-        { id: "step", label: "그릇만 두고 물러난다", nextId: "stepA", effect: { type: "bondXp", relicId: "deina", amount: 3 } },
+        { id: "step", label: "그릇만 두고 물러난다", nextId: "stepA", effect: { type: "bondXp", relicId: "dei", amount: 3 } },
         { id: "cover", label: "식지 않게 덮어 둔다", nextId: "coverB", effect: { type: "bondXp", relicId: "maki", amount: 3 } },
       ],
     },
-    { id: "stepA", speaker: "데이", body: "알았어, 우리 저쪽 보고 있을게! 진짜로 안 볼게, 손가락 사이로도!", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "raja", slot: "right" }], act: "nod", nextId: "rank" },
+    { id: "stepA", speaker: "데이", body: "알았어, 우리 저쪽 보고 있을게! 진짜로 안 볼게, 손가락 사이로도!", standing: "dei", cast: [{ id: "dei", slot: "left" }, { id: "raja", slot: "right" }], act: "nod", nextId: "rank" },
     { id: "coverB", speaker: "마키", body: "뚜껑을 덮어 두면 반 시간은 따뜻하다냥. 의사 말이니까 믿어라냥.", standing: "maki", cast: [{ id: "maki", slot: "left" }, { id: "raja", slot: "right" }], act: "nod", nextId: "rank" },
     { id: "rank", speaker: "라자", body: "…오늘 서열은 너희가 위다. 하루만이다.", standing: "raja", act: "nod" },
     { id: "pull", speaker: "", body: "모퉁이를 돌아 나올 때 등 뒤에서 아주 작은 손톱 소리가 났다. 빈 칸의 그릇이 안쪽으로 끌려 들어갔다.", standing: "raja", cast: [] },

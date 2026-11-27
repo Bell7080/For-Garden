@@ -11,16 +11,16 @@ const args=process.argv.slice(2);
 if(args.length!==0&&(args.length!==2||args[0]!=='--output'||!args[1]||args[1].startsWith('--')))throw new Error('Use --output report.json');
 const output=args[1]??'work/tank-cc-diagnosis.json';
 const round=(n:number)=>Math.round(n*1000000)/1000000;
-const variants=['baseline','no-deina-taunt','no-deina-channel-stun','no-torika-echo','no-torika-ultimate-stun','no-ella-taunt','no-ella-pull-and-linked-taunt','deina-cc-off','torika-cc-off','ella-cc-off','all-cc-off'];
+const variants=['baseline','no-dei-taunt','no-dei-channel-stun','no-torika-echo','no-torika-ultimate-stun','no-ella-taunt','no-ella-pull-and-linked-taunt','dei-cc-off','torika-cc-off','ella-cc-off','all-cc-off'];
 const results=[];
 for(const equipment of ['bare','epic','ceiling'] as AncientEquipment[])for(const variant of variants)for(const seed of ['1729','4099','12289']){
- const party=ancientReferenceParty(['deina','torika','ella'],equipment,60,10);
+ const party=ancientReferenceParty(['dei','torika','ella'],equipment,60,10);
  const players=structuredClone(party.players);
  for(const p of players){
   const off=(id:string)=>variant===`${id}-cc-off`||variant==='all-cc-off';
-  if(p.id==='deina'){
-   if(variant==='no-deina-taunt'||off('deina')){p.basic.statusEffects=p.basic.statusEffects?.filter(e=>e.kind!=='taunt');if(p.ferocityTrait.effectId==='graffitiRun')p.ferocityTrait.taunt.seconds=0;}
-   if(variant==='no-deina-channel-stun'||off('deina'))p.ultimate.channel!.basicStatusEffects=[];
+  if(p.id==='dei'){
+   if(variant==='no-dei-taunt'||off('dei')){p.basic.statusEffects=p.basic.statusEffects?.filter(e=>e.kind!=='taunt');if(p.ferocityTrait.effectId==='graffitiRun')p.ferocityTrait.taunt.seconds=0;}
+   if(variant==='no-dei-channel-stun'||off('dei'))p.ultimate.channel!.basicStatusEffects=[];
   }
   if(p.id==='torika'){
    if(variant==='no-torika-echo'&&p.breakthroughEffects?.ultimate?.kind==='echo')p.breakthroughEffects.ultimate.casts=0;
@@ -78,13 +78,13 @@ for(const equipment of ['bare','epic','ceiling'] as AncientEquipment[])for(const
  results.push({equipment,variant,seed,phase:report.phase,elapsed:report.elapsedSeconds,casts,torikaHits,units,...(variant==='baseline'&&equipment==='ceiling'&&seed==='1729'?{amoGapBudget:{windowStartSeconds:14.58,...Object.fromEntries(Object.entries(amoGapBudget).map(([k,v])=>[k,round(v)]))}}:{}),...(aimTrace.length?{aimTrace}:{})});
 }
 // One shared-slot contract probe: can a rejected short taunt still heal its caster?
-const p=ancientReferenceParty(['deina','torika','ella'],'bare');const s=createAncientStrataSkirmish(121,p.players,p);const d=s.fighters[0],e=s.fighters[2],target=s.fighters[3];d.hp=d.maxHp/2;const events:SkirmishEvent[]=[];
+const p=ancientReferenceParty(['dei','torika','ella'],'bare');const s=createAncientStrataSkirmish(121,p.players,p);const d=s.fighters[0],e=s.fighters[2],target=s.fighters[3];d.hp=d.maxHp/2;const events:SkirmishEvent[]=[];
 applyCombatStatusEffect(target,{kind:'taunt',seconds:5},events,s,e.id);const hpBefore=d.hp;
 applyCombatStatusEffect(target,{kind:'taunt',seconds:.75},events,s,d.id);
 const tauntProbe={hpBefore,hpAfter:d.hp,heal:d.hp-hpBefore,remaining:target.taunted?.remaining,owner:target.taunted?.sourceId,attemptedOwner:d.id,events};
 // Isolate the enemy non-attacking ultimate route without CC or incoming player attacks.
 function aiProbe(manual:boolean){
- const state=createSkirmish([getRelic('dodo')],[getRelic('amo')],battleArena('stage'));
+ const state=createSkirmish([getRelic('dodi')],[getRelic('amo')],battleArena('stage'));
  const [player,enemy]=state.fighters;player.x=500;player.y=1000;player.stunnedFor=99;enemy.x=530;enemy.y=1000;enemy.attackCooldown=0;enemy.energy=enemy.def.ultimate.cost;
  const events=manual?fireUltimate(state,enemy.id,()=>.5):stepSkirmish(state,.02,()=>.5);
  return {manual,energy:enemy.energy,shield:enemy.shield.amount,enemyCooldown:enemy.attackCooldown,playerTauntedBy:player.taunted?.sourceId??null,events};

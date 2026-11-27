@@ -122,7 +122,7 @@ async function pickParty(page: Page): Promise<void> {
    */
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.selectedCount)).toBe(3);
   for (const index of [0, 1, 2]) await clearFormationSlot(page, "party", index);
-  for (const [index, relicId] of [[0, "torika"], [1, "dodo"], [2, "parua"]] as const) {
+  for (const [index, relicId] of [[0, "torika"], [1, "dodi"], [2, "parua"]] as const) {
     await placeInFormationSlot(page, index, relicId);
   }
   // 고른 결과가 정말 세 자리인지 여기서 못 박는다 — 빗나간 탭을 다음 단계로 넘기지 않는다.
@@ -148,7 +148,7 @@ test("스토리 전투 확정 편성은 다음 스테이지 준비 저장에 유
   // 그리드 순서(도디 → 토리카 → 파루아)와 일부러 어긋나게 골라야 "저장이 그리드를 다시 읽지
   // 않고 고른 순서를 그대로 들고 있다"가 증명된다 — 그리드 순서를 기대값으로 적으면 정렬이
   // 무너져도 테스트가 통과한다.
-  expect(savedParty).toEqual(["torika", "dodo", "parua"]);
+  expect(savedParty).toEqual(["torika", "dodi", "parua"]);
 });
 
 test("원정 종료 뒤에도 다음 원정 전용 편성 저장은 스토리·발굴과 독립적으로 유지된다", async ({ page }) => {
@@ -156,12 +156,12 @@ test("원정 종료 뒤에도 다음 원정 전용 편성 저장은 스토리·�
   const snapshot = await page.evaluate((saveKey) => {
     const value = JSON.parse(localStorage.getItem(saveKey) ?? "null");
     // 실제 종료 저장과 같은 모양으로 run만 닫혀도 마지막 확정 편성이 남는 회귀 계약을 확인한다.
-    value.expedition.lastParty = ["parua", "dodo", "torika"];
+    value.expedition.lastParty = ["parua", "dodi", "torika"];
     value.expedition.run = null;
     localStorage.setItem(saveKey, JSON.stringify(value));
     return { lastParty: value.expedition.lastParty, party: value.party, excavation: value.idleExcavation.assignedRelicIds };
   }, E2E_SAVE_STORAGE_KEY);
-  expect(snapshot.lastParty).toEqual(["parua", "dodo", "torika"]);
+  expect(snapshot.lastParty).toEqual(["parua", "dodi", "torika"]);
   expect(snapshot.lastParty).not.toEqual(snapshot.party);
   expect(snapshot.lastParty).not.toEqual(snapshot.excavation);
 });

@@ -25,15 +25,15 @@ describe("전투 색은 속성이 면, 직군이 선이다", () => {
 
 describe("전용 연출은 표가 정한다", () => {
   it("개체와 순간이 맞을 때만 열린다", () => {
-    expect(signatureFor("rex", "ultimate")).toBe("rexMaw");
-    expect(signatureFor("spino", "combo")).toBe("spinoDoubleTap");
+    expect(signatureFor("rexia", "ultimate")).toBe("rexMaw");
+    expect(signatureFor("spina", "combo")).toBe("spinoDoubleTap");
     expect(signatureFor("pachi", "concussion")).toBe("pachiSlam");
     expect(signatureFor("nodonia", "damageShared")).toBe("nodoniaShare");
     expect(signatureFor("ella", "basicStep")).toBe("ellaInkStroke");
   });
 
   it("같은 개체라도 다른 순간에는 공용 파편 그대로다", () => {
-    expect(signatureFor("rex", "combo")).toBeUndefined();
+    expect(signatureFor("rexia", "combo")).toBeUndefined();
     expect(signatureFor("ella", "ultimate")).toBeUndefined();
     expect(signatureFor("meron", "ultimate")).toBeUndefined();
   });
@@ -41,7 +41,7 @@ describe("전용 연출은 표가 정한다", () => {
   it("표에 적힌 개체는 실제로 존재하고 그 순간을 가진 개체다", () => {
     // 스피나만 연격을 갖고, 파치만 뇌진탕을 갖고, 엘라만 순환 평타를 갖는다 —
     // 표가 실제 메커니즘과 갈리면 열리지 않는 연출이 조용히 남는다.
-    expect(getRelic("spino").basic.combo).toBeDefined();
+    expect(getRelic("spina").basic.combo).toBeDefined();
     expect(getRelic("ella").basic.cycle?.length).toBe(SIGNATURE_SPECS.ellaInkStroke.steps.length);
     expect(getRelic("nodonia").ultimate.selfBulwark).toBeDefined();
   });

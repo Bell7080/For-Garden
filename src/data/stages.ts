@@ -277,6 +277,11 @@ const STORY_RAW_STONE: Readonly<Record<string, number>> = {
   "9-6": 60,
 };
 
+/** 장의 두 벽 — 5번째(중간 보스)와 10번째(메인 보스) 관문. */
+export function isStoryWall(chapterOrder: number): boolean {
+  return chapterOrder === 5 || chapterOrder === 10;
+}
+
 /**
  * 치즈케이크 밖의 초회 보상.
  *
@@ -285,21 +290,21 @@ const STORY_RAW_STONE: Readonly<Record<string, number>> = {
  * - **젬**은 매 관문 조금, 무거운 자리에서 크게 — 장 하나가 연구 두어 번 몫이다.
  * - **원석**은 2장부터 장마다 두 번만 맛보기로(`STORY_RAW_STONE`). 룬 특성 연구의 재료라 1-10에서
  *   특성을 본 다음에야 뜻이 서고, 주 수급처는 고고학이다.
- * - **정예 관문은 혼자 서든 둘이 서든 같은 무거운 자리다**(`elite` — 2026-11-27 응태). 예전에는 적 수(`length === 1`)로만 갈라
- *   정예 둘이 선 4-5·8-5가 장 중간 보스 자리인데도 젬 50 · 화석 없음이었다(다른 장 X-5는 젬 300 + 화석 1).
- * - **화석은 정예 관문에만 한 개**다(`elite`). 스토리 화석은 짜게 두고, 모자란 몫은 스토리 클리어
- *   패스(무료·유료 두 줄)가 채운다 — 관문마다 화석을 주면 패스가 채울 자리가 없다.
+ * - **장마다 벽은 둘이다 — X-5 중간 보스, X-10 메인 보스**(응태 2026-11-27). 무거운 보상(골드 두 배·젬 크게·화석 한 개)은
+ *   그 두 자리만 받는다. 누가 서는가(정예 하나·정예 둘·잡졸 셋)로 가르지 않는다 — 적 수로 가르던 때는 정예 둘이 선 4-5·8-5가
+ *   중간 보스 자리인데도 젬 50 · 화석 없음이었고, 거꾸로 장 중간의 정예 둘(2-7·2-9·4-4)은 보스 몫을 받을 뻔했다.
+ * - 스토리 화석은 짜게 두고, 모자란 몫은 스토리 클리어 패스(무료·유료 두 줄)가 채운다 — 관문마다 화석을 주면 패스가 채울 자리가 없다.
  * - **룬**은 `STORY_RUNE_REWARDS`가 자리를 정한다.
  */
-function storyFirstClearBonus(id: string, globalOrder: number, chapter: number, chapterOrder: number, elite: boolean): StageBonusReward[] {
-  const heavy = elite || chapterOrder === 10;
+function storyFirstClearBonus(id: string, globalOrder: number, chapter: number, chapterOrder: number): StageBonusReward[] {
+  const heavy = isStoryWall(chapterOrder);
   const bonus: StageBonusReward[] = [
     { kind: "currency", currency: "gold", amount: (300 + globalOrder * 100) * (heavy ? 2 : 1) },
     { kind: "currency", currency: "gems", amount: heavy ? [150, 200, 300][chapter - 1] ?? 300 : [30, 40, 50][chapter - 1] ?? 50 },
   ];
   const rawStone = STORY_RAW_STONE[id];
   if (rawStone) bonus.push({ kind: "currency", currency: "rawStone", amount: rawStone });
-  if (elite) bonus.push({ kind: "currency", currency: "fossil", amount: 1 });
+  if (heavy) bonus.push({ kind: "currency", currency: "fossil", amount: 1 });
   const rune = STORY_RUNE_REWARDS[id];
   if (rune) bonus.push(rune);
   return bonus;
@@ -424,7 +429,7 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
          * 치즈케이크의 주 수급처는 대작전이고, 스토리 반복은 관문 사이에 큰 차이가 없는 덤이다.
          */
         repeatClearCheesecake: 10 + chapterIndex * 2,
-        firstClearBonus: storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, elite),
+        firstClearBonus: storyFirstClearBonus(id, globalOrder, chapter, chapterOrder),
       },
       // 아직 서사가 없는 장은 이 값이 비어 있고, 화면은 그 줄을 그리지 않는다.
       situation: CHAPTER_SITUATIONS[chapterIndex]?.[orderIndex],

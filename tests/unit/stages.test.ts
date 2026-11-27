@@ -42,8 +42,8 @@ describe("stage enemy design", () => {
     }
   });
   /*
-   * 초회 보상의 바탕은 골드·치즈케이크·젬이다. 원석은 2장부터, 화석은 정예 관문에만, 룬은 고급·희귀만
-   * 장마다 둘(1-5 특성 없음 → 1-10 특성 확정).
+   * 초회 보상의 바탕은 골드·치즈케이크·젬이다. 원석은 2장부터, 화석은 장의 두 벽(X-5·X-10)에만, 룬은 고급·희귀만
+   * 장마다 둘(1-5 특성 없음 → 1-10 특성 확정). 무거운 보상·화석은 장의 두 벽(X-5·X-10)만 받는다.
    */
   it("초회 보상은 골드·치즈케이크·젬이 바탕이고 원석·화석·룬은 제 자리에서만 붙는다", () => {
     const stages = battles.filter((stage): stage is Extract<typeof stage, { kind: "battle" }> => stage.kind === "battle");
@@ -51,7 +51,7 @@ describe("stage enemy design", () => {
     const has = (id: string, currency: string) => rewardsOf(id).some((reward) => reward.kind === "currency" && reward.currency === currency);
     for (const stage of stages) {
       for (const base of ["cheesecake", "gold", "gems"]) expect(has(stage.id, base), `${stage.id} ${base}`).toBe(true);
-      expect(has(stage.id, "fossil"), `${stage.id} fossil`).toBe(stage.elite === true);
+      expect(has(stage.id, "fossil"), `${stage.id} fossil`).toBe(stage.chapterOrder === 5 || stage.chapterOrder === 10);
     }
     // 원석은 고고학이 주 수급처라 스토리는 2장부터 장마다 두 번만, 한 줌씩 맛보기로 준다.
     const rawStone = stages.filter((stage) => has(stage.id, "rawStone")).map(({ id }) => id);

@@ -19,6 +19,8 @@ interface SharedGpuProgram {
   skinBones: number;
   skinNormal: number;
   skinPosed: number;
+  /** 스키닝 attribute 셋을 한 배열로 들고 있는다. draw마다 배열을 새로 만들지 않으려는 것이다. */
+  skinLocations: readonly number[];
   palette: WebGLUniformLocation | null;
   /** Puppet 로컬 픽셀을 카메라가 투영한 화면 픽셀로 옮기는 완전한 2D affine 행렬이다. */
   transform: WebGLUniformLocation;
@@ -29,12 +31,28 @@ interface SharedGpuProgram {
   sampler: WebGLUniformLocation;
 }
 
-/** 개체별 GPU Buffer. 위치만 매 프레임 갱신하고 UV와 index는 내보낸 원본을 그대로 쓴다. */
-interface CreatureGpuBuffers {
-  position: WebGLBuffer;
+/** 묶음의 바뀌지 않는 격자(기준 정점·UV·index). 같은 내용이면 개체끼리 한 벌을 나눠 쓴다. */
+interface MeshData {
+  rest: Float32Array;
+  uvs: Float32Array;
+  indices: Uint16Array;
+}
+
+/**
+ * 격자의 GPU 버퍼. 같은 SD가 전투에 여럿 서거나(대작전 열다섯) 같은 원화가 여러 화면에 서도
+ * 내용이 같은 격자는 한 벌만 올린다. 내용으로 묶으므로(`meshKey` + 전체 비교) 그림은 바뀌지 않는다.
+ */
+interface MeshBuffers {
+  /** 나눠 쓰는 표의 키. 같은 키인데 내용이 다른 드문 경우는 `null`(제 것)로 따로 든다. */
+  key: string | null;
+  generation: number;
+  data: MeshData;
+  rest: WebGLBuffer;
   uv: WebGLBuffer;
   index: WebGLBuffer;
+  users: number;
 }
+const meshBuffers = new Map<string, MeshBuffers>();
 
 const programs = new WeakMap<WebGLRenderingContext, SharedGpuProgram>();
 
@@ -64,7 +82,6 @@ export function setPuppetGpuSkinning(enabled: boolean): void {
  */
 interface TableBuffers {
   generation: number;
-  rest: WebGLBuffer;
   bones: WebGLBuffer;
   normal: WebGLBuffer;
   posed: WebGLBuffer;
@@ -232,14 +249,18 @@ function linkProgram(gl: WebGLRenderingContext, vertexSource: string, skinning: 
     if (location === null) throw new Error(`Puppet GPU uniform을 찾을 수 없습니다: ${name}`);
     return location;
   };
+  const skinBones = skinning ? gl.getAttribLocation(program, "aSkinBones") : -1;
+  const skinNormal = skinning ? gl.getAttribLocation(program, "aSkinNormal") : -1;
+  const skinPosed = skinning ? gl.getAttribLocation(program, "aSkinPosed") : -1;
   return {
     program,
     position: gl.getAttribLocation(program, "aPosition"),
     uv: gl.getAttribLocation(program, "aUv"),
     skinning,
-    skinBones: skinning ? gl.getAttribLocation(program, "aSkinBones") : -1,
-    skinNormal: skinning ? gl.getAttribLocation(program, "aSkinNormal") : -1,
-    skinPosed: skinning ? gl.getAttribLocation(program, "aSkinPosed") : -1,
+    skinBones,
+    skinNormal,
+    skinPosed,
+    skinLocations: skinning ? [skinBones, skinNormal, skinPosed] : [],
     palette: skinning ? uniform("uPalette[0]") : null,
     transform: uniform("uTransform"),
     viewport: uniform("uViewport"),
@@ -305,6 +326,9 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   private readonly puppet: Puppet;
   private readonly indices: Uint16Array;
   private readonly uvs: Float32Array;
+  /** 기준 정점·UV·index와 그 내용 키. GPU 격자 버퍼를 나눠 쓸 때 쓴다. */
+  private readonly meshData: MeshData;
+  private readonly meshKey: string;
   private positions: Float32Array;
   /**
    * GPU 스키닝 자세. 있으면 정점 대신 관절 행렬(palette)을 올리고 정점 셰이더가 `table`로 옮긴다.
@@ -316,9 +340,15 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   private heldTables = new Set<SkinTable>();
   /** GPU 스키닝을 못 쓰는 기기에서 행렬 자세를 정점으로 풀어 둘 자리. */
   private cpuPositions?: Float32Array;
-  private buffers?: CreatureGpuBuffers;
-  /** 지금 들고 있는 버퍼를 만든 컨텍스트 세대. 다르면 죽은 손잡이라 지우지도 쓰지도 않는다. */
-  private buffersGeneration = -1;
+  /** 붙잡은 격자 버퍼(나눠 쓰는 것). 놓을 때 쓰는 개체 수를 줄인다. */
+  private buffers?: MeshBuffers;
+  /**
+   * CPU가 옮긴 정점을 올리는 개체 전용 버퍼. **CPU 경로에서만** 만든다 — GPU 스키닝 기기에서는
+   * 한 번도 쓰지 않는 정점 크기의 버퍼를 개체마다 들고 있을 이유가 없다.
+   */
+  private positionBuffer?: WebGLBuffer;
+  /** 지금 들고 있는 위치 버퍼를 만든 컨텍스트 세대. 다르면 죽은 손잡이라 지우지도 쓰지도 않는다. */
+  private positionGeneration = -1;
   private poseVersion = 0;
   private uploadedPoseVersion = -1;
   /** 직전 갱신 때의 TimeStep 벽시계. 프레임 제한이 켜져도 실제 경과 시간을 잴 수 있게 한다. */
@@ -371,6 +401,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     if (drawable) puppet.setDrawIndices(drawable);
     this.uvs = new Float32Array(puppet.uv);
     this.positions = new Float32Array(puppet.restVertices);
+    this.meshData = { rest: new Float32Array(puppet.restVertices), uvs: this.uvs, indices: this.indices };
+    this.meshKey = meshKey(this.meshData);
     this.setOrigin(0.5);
     scene.add.existing(this);
     scene.events.on(Phaser.Scenes.Events.UPDATE, this.step, this);
@@ -512,11 +544,11 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     let held = tableBuffers.get(table);
     if (held && held.generation !== gpuGeneration) {
       // 죽은 컨텍스트의 손잡이는 지우지 않고 버린다. 쓰는 개체 수는 그대로 이어 간다.
-      held = { ...createTableBuffers(gl, table, this.puppet.restVertices), users: held.users };
+      held = { ...createTableBuffers(gl, table), users: held.users };
       tableBuffers.set(table, held);
     }
     if (!held) {
-      held = { ...createTableBuffers(gl, table, this.puppet.restVertices), users: 0 };
+      held = { ...createTableBuffers(gl, table), users: 0 };
       tableBuffers.set(table, held);
     }
     if (!this.heldTables.has(table)) {
@@ -526,27 +558,45 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     return held;
   }
 
-  /** 최초 렌더 때만 GPU Buffer를 만들며, UV와 index는 이후 다시 올리지 않는다. */
-  private ensureBuffers(gl: WebGLRenderingContext): CreatureGpuBuffers {
-    if (this.buffers && this.buffersGeneration === gpuGeneration) return this.buffers;
-    // 컨텍스트가 죽었다 살아난 뒤라면 예전 손잡이는 **다른 컨텍스트의 것**이라 새 컨텍스트에
-    // 지우라고 하면 오류가 난다. 지우지 않고 그냥 버린 뒤 다시 만든다.
-    this.buffers = undefined;
-    const position = gl.createBuffer();
-    const uv = gl.createBuffer();
-    const index = gl.createBuffer();
-    if (!position || !uv || !index) throw new Error("Puppet GPU buffer를 만들 수 없습니다.");
+  /**
+   * 최초 렌더 때만 격자 버퍼를 붙잡는다. 같은 내용의 격자를 다른 개체가 이미 올렸으면 그것을 쓰고,
+   * UV와 index는 이후 다시 올리지 않는다.
+   */
+  private ensureBuffers(gl: WebGLRenderingContext): MeshBuffers {
+    const held = this.buffers;
+    if (held && held.generation === gpuGeneration) return held;
+    if (held) {
+      // 컨텍스트가 죽었다 살아난 뒤다. 예전 손잡이는 **다른 컨텍스트의 것**이라 새 컨텍스트에
+      // 지우라고 하면 오류가 난다. 지우지 않고 그 자리에서 다시 올린다 — 같은 항목을 나눠 쓰는
+      // 다른 개체도 함께 새 손잡이를 본다. 쓰는 개체 수는 그대로 이어 간다.
+      Object.assign(held, uploadMesh(gl, held.data));
+      return held;
+    }
+    const existing = meshBuffers.get(this.meshKey);
+    if (existing && sameMesh(existing.data, this.meshData)) {
+      if (existing.generation !== gpuGeneration) Object.assign(existing, uploadMesh(gl, existing.data));
+      existing.users += 1;
+      this.buffers = existing;
+      return existing;
+    }
+    // 같은 키인데 내용이 다르면(해시 충돌) 나눠 쓰지 않고 제 것을 든다.
+    const created: MeshBuffers = { key: existing ? null : this.meshKey, data: this.meshData, users: 1, ...uploadMesh(gl, this.meshData) };
+    if (created.key) meshBuffers.set(created.key, created);
+    this.buffers = created;
+    return created;
+  }
 
+  /** CPU 경로의 위치 버퍼. 처음 쓰일 때 만들고, 컨텍스트가 바뀌었으면 다시 만든다. */
+  private ensurePositionBuffer(gl: WebGLRenderingContext): WebGLBuffer {
+    if (this.positionBuffer && this.positionGeneration === gpuGeneration) return this.positionBuffer;
+    const position = gl.createBuffer();
+    if (!position) throw new Error("Puppet GPU buffer를 만들 수 없습니다.");
     gl.bindBuffer(gl.ARRAY_BUFFER, position);
     gl.bufferData(gl.ARRAY_BUFFER, this.positions.byteLength, gl.DYNAMIC_DRAW);
     this.uploadedPoseVersion = -1;
-    gl.bindBuffer(gl.ARRAY_BUFFER, uv);
-    gl.bufferData(gl.ARRAY_BUFFER, this.uvs, gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, gl.STATIC_DRAW);
-    this.buffers = { position, uv, index };
-    this.buffersGeneration = gpuGeneration;
-    return this.buffers;
+    this.positionBuffer = position;
+    this.positionGeneration = gpuGeneration;
+    return position;
   }
 
   /** Phaser batch 사이에서 원본 indexed mesh를 한 번의 GPU draw call로 그린다. */
@@ -578,7 +628,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
         // 정점은 기준 자세 그대로 두고 관절 행렬만 올린다. 정점 계수는 묶음끼리 나눠 쓰는 정적 버퍼다.
         const table = this.holdTable(gl, skin.table);
         gl.uniform4fv(shared.palette, skin.palette);
-        bindAttribute(gl, shared.position, table.rest, 2);
+        bindAttribute(gl, shared.position, buffers.rest, 2);
         bindAttribute(gl, shared.skinBones, table.bones, SKIN_MAX_INFLUENCES);
         bindAttribute(gl, shared.skinNormal, table.normal, SKIN_MAX_INFLUENCES);
         bindAttribute(gl, shared.skinPosed, table.posed, SKIN_MAX_INFLUENCES);
@@ -590,7 +640,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
             this.positions = applySkinTable(this.puppet.restVertices, skin.table, skin.palette, this.cpuPositions ??= new Float32Array(this.positions.length));
           }
         }
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.ensurePositionBuffer(gl));
         // 같은 자세를 여러 카메라가 그리거나 정지했을 때는 GPU 전송을 반복하지 않는다.
         if (this.uploadedPoseVersion !== this.poseVersion) {
           gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.positions);
@@ -600,7 +650,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
         gl.vertexAttribPointer(shared.position, 2, gl.FLOAT, false, 0, 0);
         if (shared.skinning) {
           // 계수를 0으로 두면 같은 program이 올린 정점을 그대로 그린다.
-          for (const location of [shared.skinBones, shared.skinNormal, shared.skinPosed]) {
+          for (const location of shared.skinLocations) {
             if (location < 0) continue;
             gl.disableVertexAttribArray(location);
             gl.vertexAttrib4f(location, 0, 0, 0, 0);
@@ -658,7 +708,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
       gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);
       if (gpuSkin) {
         // Phaser의 다음 batch가 남은 attribute 배열을 제 것으로 오해하지 않게 스키닝 배열은 꺼 둔다.
-        for (const location of [shared.skinBones, shared.skinNormal, shared.skinPosed]) {
+        for (const location of shared.skinLocations) {
           if (location >= 0) gl.disableVertexAttribArray(location);
         }
       }
@@ -679,7 +729,6 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
       if (held.users > 0) continue;
       tableBuffers.delete(table);
       if (gl && held.generation === gpuGeneration) {
-        gl.deleteBuffer(held.rest);
         gl.deleteBuffer(held.bones);
         gl.deleteBuffer(held.normal);
         gl.deleteBuffer(held.posed);
@@ -688,20 +737,26 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     this.heldTables.clear();
   }
 
-  /** scene 종료 시 update listener와 개체 전용 GPU Buffer를 함께 해제한다. */
+  /** scene 종료 시 update listener와 GPU Buffer를 함께 해제한다. 나눠 쓰는 격자는 마지막 개체가 지운다. */
   private release(): void {
     this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.step, this);
     this.releaseTables();
-    if (!this.buffers) return;
-    // 컨텍스트가 바뀐 뒤라면 이 손잡이는 죽은 컨텍스트의 것이다. 새 컨텍스트에 지우라고 하면
+    const gl = (this.scene.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer | undefined)?.gl;
+    // 컨텍스트가 바뀐 뒤라면 손잡이는 죽은 컨텍스트의 것이다. 새 컨텍스트에 지우라고 하면
     // INVALID_OPERATION이므로 참조만 버린다 — 죽은 컨텍스트의 자원은 브라우저가 회수한다.
-    if (this.buffersGeneration === gpuGeneration) {
-      const gl = (this.scene.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer).gl;
-      gl.deleteBuffer(this.buffers.position);
-      gl.deleteBuffer(this.buffers.uv);
-      gl.deleteBuffer(this.buffers.index);
-    }
+    if (this.positionBuffer && gl && this.positionGeneration === gpuGeneration) gl.deleteBuffer(this.positionBuffer);
+    this.positionBuffer = undefined;
+    const held = this.buffers;
     this.buffers = undefined;
+    if (!held) return;
+    held.users -= 1;
+    if (held.users > 0) return;
+    if (held.key && meshBuffers.get(held.key) === held) meshBuffers.delete(held.key);
+    if (gl && held.generation === gpuGeneration) {
+      gl.deleteBuffer(held.rest);
+      gl.deleteBuffer(held.uv);
+      gl.deleteBuffer(held.index);
+    }
   }
 }
 
@@ -713,20 +768,54 @@ function bindAttribute(gl: WebGLRenderingContext, location: number, buffer: WebG
   gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
 }
 
-/** 계수표와 기준 정점을 정적 버퍼로 올린다. 고정 방식이 같은 동안 다시 올리지 않는다. */
-function createTableBuffers(gl: WebGLRenderingContext, table: SkinTable, rest: readonly number[]): Omit<TableBuffers, "users"> {
-  const upload = (data: Float32Array): WebGLBuffer => {
-    const buffer = gl.createBuffer();
-    if (!buffer) throw new Error("Puppet GPU buffer를 만들 수 없습니다.");
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    return buffer;
-  };
+/** 계수표를 정적 버퍼로 올린다. 고정 방식이 같은 동안 다시 올리지 않는다. */
+function createTableBuffers(gl: WebGLRenderingContext, table: SkinTable): Omit<TableBuffers, "users"> {
   return {
     generation: gpuGeneration,
-    rest: upload(new Float32Array(rest)),
-    bones: upload(table.bones),
-    normal: upload(table.normal),
-    posed: upload(table.posed),
+    bones: uploadStatic(gl, gl.ARRAY_BUFFER, table.bones),
+    normal: uploadStatic(gl, gl.ARRAY_BUFFER, table.normal),
+    posed: uploadStatic(gl, gl.ARRAY_BUFFER, table.posed),
   };
+}
+
+/** 격자(기준 정점·UV·index)를 정적 버퍼로 올린다. */
+function uploadMesh(gl: WebGLRenderingContext, data: MeshData): Pick<MeshBuffers, "generation" | "rest" | "uv" | "index"> {
+  return {
+    generation: gpuGeneration,
+    rest: uploadStatic(gl, gl.ARRAY_BUFFER, data.rest),
+    uv: uploadStatic(gl, gl.ARRAY_BUFFER, data.uvs),
+    index: uploadStatic(gl, gl.ELEMENT_ARRAY_BUFFER, data.indices),
+  };
+}
+
+function uploadStatic(gl: WebGLRenderingContext, target: number, data: ArrayBufferView): WebGLBuffer {
+  const buffer = gl.createBuffer();
+  if (!buffer) throw new Error("Puppet GPU buffer를 만들 수 없습니다.");
+  gl.bindBuffer(target, buffer);
+  gl.bufferData(target, data, gl.STATIC_DRAW);
+  return buffer;
+}
+
+/** 격자 내용의 키. 길이와 바이트 해시(FNV-1a)다 — 같은 키여도 `sameMesh`가 한 번 더 본다. */
+export function meshKey(data: MeshData): string {
+  // 바이트가 아니라 낱말(4바이트·index는 2바이트) 단위로 섞는다 — 개체를 세울 때 한 번이지만 정점이 1만 6천 개다.
+  let hash = 0x811c9dc5;
+  for (const view of [data.rest, data.uvs]) {
+    const words = new Uint32Array(view.buffer, view.byteOffset, view.length);
+    for (let i = 0; i < words.length; i++) hash = Math.imul(hash ^ words[i], 0x01000193);
+  }
+  for (let i = 0; i < data.indices.length; i++) hash = Math.imul(hash ^ data.indices[i], 0x01000193);
+  return `${data.rest.length}:${data.uvs.length}:${data.indices.length}:${(hash >>> 0).toString(36)}`;
+}
+
+/** 두 격자의 내용이 한 글자도 다르지 않은가. 나눠 쓰기 직전에 한 번만 본다. */
+export function sameMesh(a: MeshData, b: MeshData): boolean {
+  return sameArray(a.rest, b.rest) && sameArray(a.uvs, b.uvs) && sameArray(a.indices, b.indices);
+}
+
+function sameArray(a: ArrayLike<number>, b: ArrayLike<number>): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (!Object.is(a[i], b[i])) return false;
+  return true;
 }

@@ -74,14 +74,15 @@ describe("stage enemy design", () => {
     expect(gold("2-8")).toBeGreaterThan(gold("1-8"));
   });
 
-  it("챕터 1의 기본 악당은 토비·아모·리파이고 1-5·1-10만 단일 정예가 대신 선다", () => {
+  it("챕터 1의 기본 악당은 토비·아모·리파이고 1-5는 토비·아모 정예 둘, 1-10은 코마 혼자 선다", () => {
     // 정예 관문(1-5·1-10)을 뺀 나머지 여덟 관문은 언제나 같은 셋이 선다.
     const squads = battles.slice(0, 10).filter((stage) => stage.kind === "battle" && stage.elite !== true);
     expect(squads).toHaveLength(8);
     expect(squads.every((stage) => new Set(stage.enemies.map(({ relicId }) => relicId)).size === FIXED_STAGE_ENEMIES.length)).toBe(true);
     expect(FIXED_STAGE_ENEMIES.map((id) => getRelic(id).name)).toEqual(["토비", "아모", "리파"]);
     // **정예는 혼자 선다.** 여럿 대신 하나가 나오는 것이 원정 지도의 정예 노드와 같은 문법이다.
-    expect(battles[4].enemies.map(({ relicId }) => getRelic(relicId).name)).toEqual(["토비"]);
+    // 1-5는 토비·아모 정예 둘이다 — 혼자 선 토비는 LV.19여야 벽이라 1-4(LV.4) 다음 칸이 절벽이었다.
+    expect(battles[4].enemies.map(({ relicId }) => getRelic(relicId).name)).toEqual(["아모", "토비"]);
     expect(battles[9].enemies.map(({ relicId }) => getRelic(relicId).name)).toEqual(["코마"]);
     for (const index of [4, 9]) expect(battles[index].kind === "battle" && battles[index].elite, `${battles[index].id}`).toBe(true);
   });
@@ -117,20 +118,21 @@ describe("stage enemy design", () => {
       { 아모: [2, 0], 토비: [2, 0], 리파: [2, 0] },
       { 아모: [3, 0], 토비: [3, 0], 리파: [3, 0] },
       { 아모: [4, 0], 토비: [4, 0], 리파: [4, 0] },
-      { 토비: [19, 0] },
-      { 아모: [10, 0], 토비: [10, 0], 리파: [10, 0] },
-      { 아모: [12, 0], 토비: [12, 0], 리파: [12, 0] },
-      { 아모: [13, 0], 토비: [13, 0], 리파: [13, 0] },
-      { 아모: [15, 0], 토비: [15, 0], 리파: [15, 0] },
+      { 아모: [16, 0], 토비: [16, 0] },
+      { 아모: [5, 0], 토비: [5, 0], 리파: [5, 0] },
+      { 아모: [7, 0], 토비: [7, 0], 리파: [7, 0] },
+      { 아모: [9, 0], 토비: [9, 0], 리파: [9, 0] },
+      { 아모: [11, 0], 토비: [11, 0], 리파: [11, 0] },
       { 코마: [20, 0] },
     ]);
     /*
      * **레벨은 관문을 따라 내려가지 않는다.** 1-10까지 마지막 관문이 직전보다 쉬운 구간이
      * 있었고(코마만 레벨 1로 남아 있었다) 그때는 이 표만 봐서는 드러나지 않았다.
-     * 정예 관문은 다른 개체가 홀로 서는 자리라 그 개체끼리만 비교한다.
+     * 정예 관문(1-5·1-10)은 벽이라 이 줄 밖이다 — 벽 다음 칸은 한 뼘 내려선다(장마다 두 벽, `stages.test`의 사다리 검사).
      */
+    const squadRows = ladder.filter((_, index) => !(battles[index].kind === "battle" && battles[index].elite));
     for (const name of ["아모", "리파"] as const) {
-      const levels = ladder.filter((row) => name in row).map((row) => row[name][0]);
+      const levels = squadRows.filter((row) => name in row).map((row) => row[name][0]);
       for (let index = 1; index < levels.length; index += 1) {
         expect(levels[index], `${name} ${index + 1}번째 등장`).toBeGreaterThanOrEqual(levels[index - 1]);
       }
@@ -338,8 +340,8 @@ describe("stage enemy design", () => {
     expect(sub.rewards.repeatClearCheesecake).toBe(0);
     // 모든 서브(이야기·전투, 어느 장이든)의 초회 젬은 50 하나다.
     for (const gems of Object.values(SUB_STORY_GEM_REWARDS)) expect(gems).toBe(50);
-    // 아모·리파 정예 둘이 1-8(LV.13)보다 한 칸 낮은 LV.12로 선다.
-    expect(sub.enemies.map(({ relicId, level }) => [relicId, level])).toEqual([["amo", 12], ["ripa", 12]]);
+    // 아모·리파 정예 둘이 1-8(LV.9)보다 한 칸 낮은 LV.8로 선다.
+    expect(sub.enemies.map(({ relicId, level }) => [relicId, level])).toEqual([["amo", 8], ["ripa", 8]]);
     expect(sub.elite).toBe(true);
     // 선행 목록에 들지 않아 본편이 막히지 않고, 「다음 단계」는 본편의 다음이다.
     expect(STAGES.some((stage) => stage.prerequisiteStageIds.includes(sub.id))).toBe(false);

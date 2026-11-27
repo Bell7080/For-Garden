@@ -492,16 +492,16 @@
   "ru": "…Сначала низ. Перекрой путь."
  },
  "dialogue.stage-5-5-pre.room.body": {
-  "en": "Chalk lines were drawn over and over across the floor. This was where they decided, inside the cells, who stood in front of whom.",
-  "ja": "床にはチョークで引いた線が幾重にも重なっていた。監房の中で、誰が誰の前に立つかを決めていた場所だった。",
-  "zh-Hans": "地上用粉笔画的线一层叠一层。这里是在牢房里决定谁站在谁前面的地方。",
-  "th": "บนพื้นมีเส้นชอล์กขีดซ้อนกันหลายชั้น ที่นี่คือที่ที่ใช้ตัดสินในห้องขังว่าใครจะยืนอยู่หน้าใคร",
-  "vi": "Trên sàn chi chít những vạch phấn chồng lên nhau. Đây là nơi trong phòng giam người ta định xem ai đứng trước ai.",
-  "id": "Garis-garis kapur tergores berlapis-lapis di lantai. Di sinilah, di dalam sel, ditentukan siapa berdiri di depan siapa.",
-  "es": "El suelo estaba cubierto de líneas de tiza trazadas una y otra vez. Era el lugar donde, dentro de las celdas, se decidía quién se ponía delante de quién.",
-  "pt-BR": "O chão estava coberto de linhas de giz riscadas várias vezes. Era ali que, dentro das celas, se decidia quem ficava à frente de quem.",
-  "de": "Auf dem Boden lagen Kreidelinien in vielen Schichten übereinander. Hier wurde in den Zellen entschieden, wer vor wem stand.",
-  "ru": "Пол был исчерчен меловыми линиями, слой за слоем. Здесь, в камерах, решали, кто перед кем стоит."
+  "en": "Chalk lines were drawn over and over across the floor. This was where they decided, inside the cells, who stood in front of whom. At the very back of the lines, two from the Retrieval Squad who'd come down earlier stood around awkwardly.",
+  "ja": "床にはチョークの線が幾重にも引かれていた。監房の中で、誰が誰の前に立つかを決めていた場所だった。列のいちばん後ろには、先に降りてきた回収班の二人が所在なげに立っていた。",
+  "zh-Hans": "地上用粉笔画了一道又一道线。这里是在牢房里决定谁站在谁前面的地方。队列最后面，先下来的回收组两人局促地站着。",
+  "th": "พื้นมีเส้นชอล์กขีดซ้อนกันหลายชั้น ที่นี่คือที่ซึ่งในห้องขังใช้ตัดสินว่าใครยืนหน้าใคร ท้ายสุดของแถว สมาชิกหน่วยเก็บกู้สองคนที่ลงมาก่อนยืนเก้อ ๆ อยู่",
+  "vi": "Sàn nhà chằng chịt những vạch phấn kẻ chồng lên nhau. Đây là chỗ trong phòng giam người ta định xem ai đứng trước ai. Cuối hàng, hai người của Đội Thu Hồi xuống trước đứng lóng ngóng.",
+  "id": "Lantai penuh garis kapur yang ditarik berlapis-lapis. Di sinilah, di dalam sel, ditentukan siapa berdiri di depan siapa. Di ujung paling belakang barisan, dua anggota Regu Penjemput yang turun lebih dulu berdiri canggung.",
+  "es": "El suelo estaba surcado de líneas de tiza, una sobre otra. Era el lugar donde, dentro de las celdas, se decidía quién se ponía delante de quién. Al final de la fila, dos miembros del Escuadrón de Recuperación que habían bajado antes esperaban incómodas.",
+  "pt-BR": "O chão estava riscado de linhas de giz, umas sobre as outras. Era ali que, nas celas, se decidia quem ficava na frente de quem. No fim da fila, duas do Esquadrão de Recuperação que tinham descido antes estavam paradas sem jeito.",
+  "de": "Über den Boden zogen sich Kreidelinien, eine über der anderen. Hier wurde in den Zellen entschieden, wer vor wem stand. Ganz hinten in der Reihe standen zwei vom Bergungstrupp, die früher heruntergekommen waren, etwas verloren herum.",
+  "ru": "Пол был исчерчен меловыми линиями, слой за слоем. Здесь, в камерах, решали, кто перед кем стоит. В самом конце строя неловко топтались двое из отряда возврата, спустившиеся раньше."
  },
  "dialogue.stage-5-5-pre.raja.body": {
   "en": "If you're new, we settle rank first. Come at me.",
@@ -754,5 +754,41 @@
   "pt-BR": "Deixando só essas palavras, Koma sumiu escada abaixo como se afundasse. Até o fim, não disse para subirem.",
   "de": "Nur diese Worte hinterlassend, verschwand Koma die nächste Treppe hinab, als würde sie versinken. Bis zuletzt sagte sie nicht, sie sollten nach oben gehen.",
   "ru": "Оставив лишь эти слова, Кома словно погрузилась вниз по следующей лестнице и исчезла. Подняться наверх она так и не сказала."
+ },
+ "dialogue.stage-5-5-pre.back.body": {
+  "en": "Retrieval brats, get to the back. Down here, the front is my spot.",
+  "ja": "回収班のチビどもは後ろに下がれ。ここじゃ前は俺の場所だ。",
+  "zh-Hans": "回收组的小鬼们退到后面去。在这里，前面是我的位置。",
+  "th": "พวกเด็ก ๆ หน่วยเก็บกู้ไปยืนข้างหลังซะ ที่นี่ข้างหน้าเป็นที่ของข้า",
+  "vi": "Lũ nhóc Đội Thu Hồi lùi ra sau. Ở đây, chỗ đứng đầu là của tao.",
+  "id": "Bocah-bocah Regu Penjemput, mundur ke belakang. Di sini, barisan depan itu tempatku.",
+  "es": "Mocosas de Recuperación, al fondo. Aquí delante mando yo.",
+  "pt-BR": "Pirralhas da Recuperação, pra trás. Aqui, a frente é o meu lugar.",
+  "de": "Ihr Bergungsgören, nach hinten. Hier unten ist vorne mein Platz.",
+  "ru": "Мелочь из отряда возврата — назад. Здесь впереди моё место."
+ },
+ "dialogue.stage-5-5-pre.rank.body": {
+  "en": "I don't know anything about rank~ We'll just watch from the back.",
+  "ja": "序列とかよく分かんないです～。後ろで見物してますね。",
+  "zh-Hans": "我可不懂什么序列～我们就在后面看看热闹。",
+  "th": "เรื่องลำดับชั้นอะไรนั่นไม่รู้หรอกค่ะ~ ขอยืนดูอยู่ข้างหลังเฉย ๆ นะคะ",
+  "vi": "Em chẳng biết thứ bậc gì đâu~ Bọn em đứng sau xem thôi ạ.",
+  "id": "Aku sih tidak tahu soal peringkat~ Kami nonton dari belakang saja.",
+  "es": "Yo de rangos no sé nada~ Nosotras miramos desde atrás.",
+  "pt-BR": "Eu não entendo nada de hierarquia~ A gente só vai assistir lá de trás.",
+  "de": "Von Rangfolge hab ich keine Ahnung~ Wir schauen einfach von hinten zu.",
+  "ru": "Я в старшинстве ничего не понимаю~ Мы просто посмотрим сзади."
+ },
+ "dialogue.stage-5-5-post.slip.body": {
+  "en": "Oh, the front of the line changed! Then we'll go report to the Officer!",
+  "ja": "あっ、列の先頭が変わりましたね！じゃあ私たちは幹部殿に報告してきます！",
+  "zh-Hans": "啊，队伍最前面换人了！那我们去向干部报告啦！",
+  "th": "อ๊ะ หัวแถวเปลี่ยนแล้วนี่คะ! งั้นพวกเราไปรายงานท่านผู้บริหารก่อนนะคะ!",
+  "vi": "Á, người đứng đầu hàng đổi rồi kìa! Vậy bọn em đi báo cáo cán bộ đây ạ!",
+  "id": "Eh, barisan depannya berganti! Kalau begitu kami lapor ke Komandan dulu!",
+  "es": "¡Anda, ha cambiado quién va delante! ¡Pues nosotras vamos a informar a la oficial!",
+  "pt-BR": "Ah, a frente da fila mudou! Então a gente vai avisar a oficial!",
+  "de": "Oh, vorne in der Reihe hat sich was geändert! Dann gehen wir mal dem Offizier Bericht erstatten!",
+  "ru": "Ой, первый в строю сменился! Тогда мы пойдём доложить командиру!"
  }
 }

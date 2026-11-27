@@ -360,16 +360,16 @@
   "ru": "Спасибо! А где вы сами?"
  },
  "dialogue.stage-3-5-pre.block.body": {
-  "en": "Atra stood in the middle of the passage, half her face hidden behind her sleeve. She didn't look like she'd budge a single step.",
-  "ja": "通路の真ん中に、アトラが袖で顔を半分隠したまま立っていた。一歩も退くつもりはないようだった。",
-  "zh-Hans": "通道正中央，阿特拉用袖子遮着半张脸站在那里。看样子一步也不打算让开。",
-  "th": "กลางทางเดิน อาทรายืนอยู่โดยใช้แขนเสื้อปิดหน้าไว้ครึ่งหนึ่ง ดูไม่มีทีท่าว่าจะหลบให้แม้แต่ก้าวเดียว",
-  "vi": "Giữa lối đi, Atra đứng đó, dùng tay áo che nửa khuôn mặt. Trông cô chẳng có ý định nhường dù chỉ một bước.",
-  "id": "Di tengah lorong, Atra berdiri dengan separuh wajah tertutup lengan bajunya. Ia tampak sama sekali tak berniat menyingkir barang selangkah.",
-  "es": "En mitad del pasillo estaba Atra, con media cara tapada por la manga. No parecía dispuesta a apartarse ni un paso.",
-  "pt-BR": "No meio do corredor estava Atra, com metade do rosto escondida atrás da manga. Não parecia disposta a sair do caminho nem um passo.",
-  "de": "Mitten im Gang stand Atra, das halbe Gesicht hinter dem Ärmel verborgen. Sie sah nicht so aus, als würde sie auch nur einen Schritt weichen.",
-  "ru": "Посреди прохода стояла Атра, наполовину прикрыв лицо рукавом. Похоже, уступать хоть шаг она не собиралась."
+  "en": "Atra stood in the middle of the passage, half her face hidden behind her sleeve. Mir and Pulsi each stepped back a pace to flank her.",
+  "ja": "通路の真ん中に、アトラが袖で顔を半分隠して立っていた。その両脇で、ミルとパルシが一歩ずつ下がって控えた。",
+  "zh-Hans": "通道正中，阿特拉用袖子遮着半张脸站着。米尔和珀西在她两侧各退后一步站定。",
+  "th": "กลางทางเดิน อัทรายืนเอาแขนเสื้อบังหน้าไว้ครึ่งหนึ่ง มีร์กับพัลซีถอยไปคนละก้าวยืนขนาบสองข้าง",
+  "vi": "Giữa lối đi, Atra đứng lấy tay áo che nửa khuôn mặt. Mir và Pulsi mỗi người lùi một bước, đứng hai bên cô.",
+  "id": "Di tengah lorong, Atra berdiri dengan separuh wajah tertutup lengan baju. Mir dan Pulsi masing-masing mundur selangkah dan berdiri mengapitnya.",
+  "es": "Atra estaba en medio del pasillo, con media cara tapada por la manga. Mir y Pulsi retrocedieron un paso cada una y se pusieron a sus lados.",
+  "pt-BR": "Atra estava no meio do corredor, com metade do rosto escondida atrás da manga. Mir e Pulsi recuaram um passo cada e ficaram ao lado dela.",
+  "de": "Mitten im Gang stand Atra, das Gesicht halb hinter dem Ärmel verborgen. Mir und Pulsi traten je einen Schritt zurück und stellten sich zu beiden Seiten auf.",
+  "ru": "Посреди прохода стояла Атра, наполовину прикрыв лицо рукавом. Мир и Пульси отступили на шаг и встали по обе стороны от неё."
  },
  "dialogue.stage-3-5-pre.stutter.body": {
   "en": "S-so, um… if you just c-come along quietly… I won't hurt you.",
@@ -838,5 +838,41 @@
   "pt-BR": "Não houve resposta. Koma recolocou a máscara, olhou uma vez para o pesquisador e seguiu pelo corredor do lado oposto àquele por onde o Esquadrão de Recuperação tinha sumido.",
   "de": "Es kam keine Antwort. Koma setzte ihren Mundschutz wieder auf, sah sich einmal nach dem Forscher um und ging dann den Gang hinunter, der dem gegenüberlag, in dem der Bergungstrupp verschwunden war.",
   "ru": "Ответа не было. Кома снова надела маску, разок оглянулась на исследователя и ушла в проход напротив того, где исчез отряд возврата."
+ },
+ "dialogue.stage-3-5-pre.cheer.body": {
+  "en": "Lady Atra, we'll stay back! Today's your turn!",
+  "ja": "アトラ様、私たちは後ろにいますね！今日はアトラ様の番です！",
+  "zh-Hans": "阿特拉大人，我们在后面待着！今天轮到阿特拉大人了！",
+  "th": "ท่านอัทรา พวกเราจะอยู่ข้างหลังนะคะ! วันนี้ถึงตาท่านอัทราแล้วค่ะ!",
+  "vi": "Ngài Atra, bọn em đứng phía sau nhé! Hôm nay tới lượt ngài Atra ạ!",
+  "id": "Nona Atra, kami di belakang saja! Hari ini giliran Nona Atra!",
+  "es": "¡Señora Atra, nosotras nos quedamos detrás! ¡Hoy le toca a usted!",
+  "pt-BR": "Senhora Atra, a gente fica atrás! Hoje é a sua vez!",
+  "de": "Frau Atra, wir bleiben hinten! Heute sind Sie dran!",
+  "ru": "Госпожа Атра, мы постоим сзади! Сегодня ваша очередь!"
+ },
+ "dialogue.stage-3-5-pre.promise.body": {
+  "en": "Hear that, Researcher? She says it won't hurt. Can't promise the same from us, though~",
+  "ja": "聞いた、研究員さん？痛くしないってさ。こっちは保証できないけどね～",
+  "zh-Hans": "听见了吗，研究员？她说不会弄疼你。我们可就不敢保证了～",
+  "th": "ได้ยินไหม นักวิจัย? ท่านบอกว่าจะไม่ทำให้เจ็บ ส่วนพวกเราน่ะรับประกันไม่ได้นะ~",
+  "vi": "Nghe chưa, Nhà nghiên cứu? Ngài ấy bảo sẽ không làm đau đâu. Còn bọn này thì không dám hứa~",
+  "id": "Dengar, Periset? Katanya tidak akan sakit. Kalau kami sih, tidak janji~",
+  "es": "¿Lo has oído, Investigador? Dice que no te dolerá. Nosotras no prometemos nada~",
+  "pt-BR": "Ouviu, Pesquisador? Ela disse que não vai doer. Já a gente não garante nada~",
+  "de": "Gehört, Forscher? Sie sagt, es tut nicht weh. Für uns leg ich aber nicht die Hand ins Feuer~",
+  "ru": "Слышал, Исследователь? Она говорит, больно не будет. А вот за нас не ручаемся~"
+ },
+ "dialogue.stage-3-5-post.retreat.body": {
+  "en": "Uh-oh, Lady Koma's coming. Mir, let's clear out first. We'll count points later.",
+  "ja": "あ、コマ様が来る。ミル、あたしたちは先に抜けよ。点数はあとで数えればいいし。",
+  "zh-Hans": "啊，柯玛大人来了。米尔，我们先撤吧。分数回头再算。",
+  "th": "อ้าว ท่านโคมะมาแล้ว มีร์ พวกเราชิ่งก่อนเถอะ คะแนนค่อยนับทีหลัง",
+  "vi": "Ơ, chị Koma tới kìa. Mir, tụi mình chuồn trước thôi. Điểm để sau đếm.",
+  "id": "Eh, Kak Koma datang. Mir, kita kabur duluan. Poinnya dihitung nanti saja.",
+  "es": "Uy, viene la jefa Koma. Mir, larguémonos ya. Los puntos los contamos luego.",
+  "pt-BR": "Opa, a chefe Koma vem aí. Mir, vamos sair antes. Os pontos a gente conta depois.",
+  "de": "Oh, Chefin Koma kommt. Mir, wir verschwinden zuerst. Die Punkte zählen wir später.",
+  "ru": "Ой, госпожа Кома идёт. Мир, давай смоемся первыми. Очки потом посчитаем."
  }
 }

@@ -113,7 +113,7 @@ describe("스토리 확장 난이도", () => {
     expect(state.wallet.gems).toBe(60);
   });
 
-  it.each(["3-5", "3-10", "4-4", "4-5", "4-6", "4-9", "4-10"])("%s 정예와 혼합 편성의 크기가 서버 발급·전투 복원·편성에 일치한다", id => {
+  it.each(["3-5", "3-10", "4-4", "4-5", "4-9", "4-10", "5-5"])("%s 정예와 혼합 편성의 크기가 서버 발급·전투 복원·편성에 일치한다", id => {
     for (const difficulty of STORY_DIFFICULTIES) {
       const stage = getBattleStage(storyStageId(difficulty, id));
       const state = createDefaultSession(); state.cleared = new Set(["4-10", "normal:4-10", "hard:4-10", ...stage.prerequisiteStageIds]);
@@ -125,7 +125,7 @@ describe("스토리 확장 난이도", () => {
       const preview = partyPreview({content:"stage"}, stage);
       expect(fighters.map(f=>f.bodyScale)).toEqual(preview.shown.map(e=>ENCOUNTER_ROLE[e.def!.encounterRole!].bodyScale));
       expect(fighters.some(f=>f.def.encounterRole === "elite" && f.bodyScale > 1)).toBe(true);
-      if (id === "4-6" || id === "4-9") {
+      if (id === "4-9") {
         expect(fighters.filter(f=>f.bodyScale > 1).map(f=>f.def.id)).toEqual(["koma"]);
         expect(fighters.filter(f=>f.def.id !== "koma").every(f=>f.bodyScale === 1)).toBe(true);
       }

@@ -52,27 +52,30 @@ export const STAGE_3_4_POST: DialogueStory = {
   ]),
 };
 
-/** 3-5 전 — 아트라가 앞을 막는다. */
+/** 3-5 전 — 아트라가 앞을 막고, 미르와 펄시가 양옆에서 받친다. */
 export const STAGE_3_5_PRE: DialogueStory = {
   id: "stage-3-5-pre",
   startNodeId: "block",
   backdrop: "deepField",
   nodes: linear([
-    { id: "block", speaker: "", body: "통로 한복판에 아트라가 소매로 얼굴을 반쯤 가린 채 서 있었다. 한 걸음도 비킬 생각이 없어 보였다.", standing: "atra", cast: [{ id: "atra", slot: "center" }], cue: "rumble" },
+    { id: "block", speaker: "", body: "통로 한복판에 아트라가 소매로 얼굴을 반쯤 가린 채 서 있었다. 양옆에는 미르와 펄시가 한 걸음씩 물러나 섰다.", standing: "atra", cast: [{ id: "mir", slot: "left" }, { id: "atra", slot: "center" }, { id: "pulsi", slot: "right" }], cue: "rumble" },
+    { id: "cheer", speaker: "미르", body: "아트라 님, 저희는 뒤에 있을게요! 오늘은 아트라 님 차례예요!", standing: "mir", act: "hop" },
     { id: "stutter", speaker: "아트라", body: "그, 그러니까… 순순히 같이 가, 가 주시면… 아프게 안 할게요.", standing: "atra", act: "tremble" },
-    { id: "refuse", speaker: "토리카", body: "죄송해요, 지금은 갈 수 없어요!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "atra", slot: "right" }], act: "shake" },
+    { id: "promise", speaker: "펄시", body: "들었지, 연구원님? 아프게 안 하신대. 우리는 장담 못 하지만~", standing: "pulsi", act: "lean" },
+    { id: "refuse", speaker: "토리카", body: "죄송해요, 지금은 갈 수 없어요!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "atra", slot: "center" }, { id: "pulsi", slot: "right" }], act: "shake" },
     { id: "sorry", speaker: "아트라", body: "아, 아니에요… 사과 안 하셔도 돼요. 그, 그럼… 조금 아플 수도 있어요…", standing: "atra", act: "shrink" },
   ]),
 };
 
-/** 3-5 후 — 쓰러진 아트라. 코마가 데리러 온다. */
+/** 3-5 후 — 쓰러진 아트라. 미르와 펄시가 먼저 빠지고 코마가 데리러 온다. */
 export const STAGE_3_5_POST: DialogueStory = {
   id: "stage-3-5-post",
   startNodeId: "down",
   backdrop: "deepField",
   nodes: linear([
-    { id: "down", speaker: "아트라", body: "…아, 안 아파요. 이 정도는… 윽. 자, 잠깐만요. 아직 안 끝났어요…", standing: "atra", cast: [{ id: "atra", slot: "center" }], act: "faint" },
-    { id: "koma", speaker: "코마", body: "…그만 일어나라.", standing: "koma", cast: [{ id: "atra", slot: "left" }, { id: "koma", slot: "right" }], act: "lean" },
+    { id: "down", speaker: "아트라", body: "…아, 안 아파요. 이 정도는… 윽. 자, 잠깐만요. 아직 안 끝났어요…", standing: "atra", cast: [{ id: "mir", slot: "left" }, { id: "atra", slot: "center" }, { id: "pulsi", slot: "right" }], act: "faint" },
+    { id: "retreat", speaker: "펄시", body: "어, 저기 코마 님 오신다. 미르, 우린 먼저 빠지자. 점수는 다음에 세고.", standing: "pulsi", act: "lean" },
+    { id: "koma", speaker: "코마", body: "…그만 일어나라.", standing: "koma", cast: [{ id: "atra", slot: "left" }, { id: "koma", slot: "right" }], act: "lean", leave: "dash" },
     { id: "atra", speaker: "아트라", body: "선, 선배… 저 졌어요… 그, 그래도 조금은 오래 버텼죠? 선배 보시라고…", standing: "atra", act: "hop" },
     { id: "koma2", speaker: "코마", body: "…봤다. 오래 버텼다.", standing: "koma", act: "shrink" },
   ]),

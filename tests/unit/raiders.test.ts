@@ -67,7 +67,7 @@ describe("정예 둘", () => {
     expect(applyEncounterScaling(base, "R", 20, "elite", 2).hp).toBe(Math.round(applyEncounterScaling(base, "R", 20, "elite", 1).hp / 2));
   });
 
-  it("2-7·2-9는 정예 둘이고 3-5는 아트라, 3-10은 이카닉시아 혼자다", () => {
+  it("2-7·2-9는 정예 둘이고 3-5는 아트라가 이끄는 셋, 3-10은 이카닉시아 혼자다", () => {
     const stage = (id: string) => {
       const found = CHAPTERS.flatMap((chapter) => chapter.stages).find((entry) => entry.id === id);
       if (!found || found.kind !== "battle") throw new Error(id);
@@ -78,7 +78,9 @@ describe("정예 둘", () => {
       expect(stageEnemyRole(stage(id)), id).toBe("elite");
       expect(getStageEnemies(stage(id)).every((enemy) => enemy.encounterRole === "elite"), id).toBe(true);
     }
-    expect(stage("3-5").enemies.map(({ relicId }) => relicId)).toEqual(["atra"]);
+    // 장 중간 벽은 「정예가 이끄는 셋」이다(v0.557.0) — 가운데 아트라만 정예다.
+    expect(stage("3-5").enemies.map(({ relicId }) => relicId)).toEqual(["mir", "atra", "pulsi"]);
+    expect(getStageEnemies(stage("3-5")).map((enemy) => enemy.encounterRole)).toEqual(["normal", "elite", "normal"]);
     expect(stage("3-10").enemies.map(({ relicId }) => relicId)).toEqual(["ikanixia"]);
     expect(stage("3-9").enemies.map(({ relicId }) => relicId)).toEqual(["atra", "pulsi", "neuri"]);
   });

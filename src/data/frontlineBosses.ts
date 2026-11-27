@@ -54,5 +54,5 @@ export const EUNTE: RelicDef = {
     bossDescription: "자신의 주위 모든 적에게 시전 0.8초 뒤 방어력의 220%만큼 물리 피해를 주고 1.4초간 [[stun|기절]]시킨다. 그 뒤 방어력과 저항력 각각의 150%를 합한 보호막을 5초간 얻는다." },
   ferocityTrait: { name: "지반 압살", effectId: "groundCrush", radius: 260, pullDistance: 145, tauntSeconds: 2, interval: 0.5, hpPercent: 2 },
   breakthroughEffects: { basic: { kind: "frontlineBasic", percent: 100 }, ultimate: { kind: "frontlineUltimate", percent: 100 },
-    ferocity: { kind: "frontlineFever", percent: 30, seconds: 5 }, passive: { kind: "frontlinePassive", percent: 100, seconds: 8 } },
+    ferocity: { kind: "frontlineFever", percent: 20, seconds: 5 }, passive: { kind: "frontlinePassive", percent: 100, seconds: 8 } },
 };

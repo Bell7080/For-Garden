@@ -1749,7 +1749,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "farPing") return t("skill.breakthrough.effect.basic.farPing", { name: def.basic.name });
     if (effect.kind === "scoldTaunt") return t("skill.breakthrough.effect.basic.scoldTaunt", { name: def.basic.name, seconds: trim(effect.tauntSeconds) });
     if (effect.kind === "clawBleed") return t("skill.breakthrough.effect.basic.clawBleed", { name: def.basic.name });
-    if (effect.kind === "windStep") return t("skill.breakthrough.effect.basic.windStep", { name: def.basic.name, percent: trim(effect.moveSpeedPercent), seconds: trim(effect.seconds) });
+    if (effect.kind === "windStep") return t("skill.breakthrough.effect.basic.windStep", { name: def.basic.name, percent: trim(effect.attackSpeedPercent), seconds: trim(effect.seconds) });
     if (effect.kind === "preyScale") return t("skill.breakthrough.effect.basic.preyScale", { name: def.basic.name, percent: sv("shield", "hp", effect.shieldPercentPerEnemy), max: trim(effect.maxEnemies), seconds: trim(effect.cooldownSeconds) });
     if (effect.kind === "pressureConduct") return t("skill.breakthrough.effect.basic.pressureConduct", { stacks: trim(effect.stacks) });
     if (effect.kind === "thornJab") return t("skill.breakthrough.effect.basic.thornJab", { name: def.basic.name, percent: trim(effect.powerPercent) });
@@ -1853,7 +1853,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "tongueSnap") return t("skill.breakthrough.effect.ferocity.tongueSnap", { name: def.passive.name, multiplier: trim(effect.shieldMultiplier) });
     if (effect.kind === "hotFangs") return t("skill.breakthrough.effect.ferocity.hotFangs", { percent: trim(effect.startAttackSpeedPercent) });
     if (effect.kind === "feverWidenBasic") return t("skill.breakthrough.effect.ferocity.feverWidenBasic", { percent: trim(widerPercent("radius" in def.basic ? def.basic.radius : undefined, effect.radius)) });
-    if (effect.kind === "hungryStride") return t("skill.breakthrough.effect.ferocity.hungryStride", { percent: trim(effect.moveSpeedPercent) });
+    if (effect.kind === "hungryStride") return t("skill.breakthrough.effect.ferocity.hungryStride", { percent: trim(effect.attackSpeedPercent) });
     if (effect.kind === "longFeast") return t("skill.breakthrough.effect.ferocity.longFeast", { percent: trim(widerPercent(def.ferocityTrait.effectId === "selfAttackSpeedMultiplier" ? def.ferocityTrait.pullOnEntry?.radius : undefined, effect.radius)) });
     if (effect.kind === "sharpStorm") return t("skill.breakthrough.effect.ferocity.sharpStorm", { percent: trim(effect.critChancePoints) });
     if (effect.kind === "critPlume") return t("skill.breakthrough.effect.ferocity.critPlume", { count: trim(effect.extraStacks) });

@@ -3077,12 +3077,12 @@ export type BasicBreakthrough = {
   kind: "clawBleed";
 } | {
   /**
-   * 평타로 대신 **아군에게 에너지를 건넨 순간** 그 아군들에게 짧은 이동 속도 강화를 건다(스테라의 「바람을 탄 걸음」).
+   * 평타로 대신 **아군에게 에너지를 건넨 순간** 그 아군들에게 짧은 공격 속도 강화를 건다(스테라의 「바람을 탄 걸음」).
    * 이미 순풍·오더가 걸린 아군은 덮지 않는다 — 더 센 지원을 약한 강화로 갈아 끼우지 않기 위해서다.
    */
   kind: "windStep";
-  /** 이동 속도 증가(%). */
-  moveSpeedPercent: number;
+  /** 공격 속도 증가(%). */
+  attackSpeedPercent: number;
   /** 지속 시간(초). */
   seconds: number;
 } | {
@@ -3721,9 +3721,9 @@ export type FerocityBreakthrough = {
   /** 넓어진 뒤의 반경(px). */
   radius: number;
 } | {
-  /** 폭주 중 이동 속도가 오른다(수쿠스이노 「굶주린 걸음」). */
+  /** 폭주 중 공격 속도가 오른다(수쿠스이노 「굶주린 걸음」). */
   kind: "hungryStride";
-  moveSpeedPercent: number;
+  attackSpeedPercent: number;
 } | {
   /** 폭주에 들 때 끌어오는 범위가 넓어진다(타보아 「긴 식탁」). */
   kind: "longFeast";

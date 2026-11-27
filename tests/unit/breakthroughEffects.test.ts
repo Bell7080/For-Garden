@@ -1078,7 +1078,7 @@ describe("스테라 한계 돌파", () => {
     }
   }
 
-  it("은 게이지를 받은 아군에게 짧게 이동 속도를 준다(별 II)", () => {
+  it("은 게이지를 받은 아군에게 짧게 공격 속도를 준다(별 II)", () => {
     const run = (breakthrough: number) => {
       const state = stellaBattle(breakthrough);
       afterFirstBasic(state);
@@ -1086,8 +1086,8 @@ describe("스테라 한계 돌파", () => {
     };
     const rexia = run(1);
     expect(rexia.tailwindFor).toBeGreaterThan(0);
-    expect(rexia.tailwind?.kind === "tailwind" ? rexia.tailwind.moveSpeedPercent : 0).toBe(20);
-    expect(rexia.tailwind?.kind === "tailwind" ? rexia.tailwind.attackSpeedPercent : 1).toBe(0);
+    expect(rexia.tailwind?.kind === "tailwind" ? rexia.tailwind.attackSpeedPercent : 0).toBe(15);
+    expect(rexia.tailwind?.kind === "tailwind" ? rexia.tailwind.moveSpeedPercent : 1).toBe(0);
     expect(run(0).tailwindFor).toBe(0);
   });
 
@@ -1138,7 +1138,7 @@ describe("스테라 한계 돌파", () => {
 
   it("는 네 슬롯 모두 문장을 만든다", () => {
     const stella = getRelic("stella");
-    expect(breakthroughEffectText(stella, "basic")).toContain("이동 속도");
+    expect(breakthroughEffectText(stella, "basic")).toContain("공격 속도");
     expect(breakthroughEffectText(stella, "ultimate")).toContain("게이지");
     expect(breakthroughEffectText(stella, "ferocity")).toContain("순풍");
     expect(breakthroughEffectText(stella, "passive")).toContain("은신");
@@ -1794,12 +1794,14 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
     expect(ally.bt.healCut).toEqual({ remaining: 6, total: 6, percent: 40 });
   });
 
-  it("수쿠스이노 IV — 폭주 중에만 이동 속도가 오른다", () => {
+  it("수쿠스이노 IV — 폭주 중에만 공격 속도가 오른다", () => {
     const state = bossBattle("sukusuino", ["torika"], 3);
     const boss = findFighter(state, "enemy-0")!;
-    const base = moveSpeed(boss);
+    const base = currentAttackSpeed(boss);
+    const baseMove = moveSpeed(boss);
     boss.ferocityFever = true;
-    expect(moveSpeed(boss)).toBeCloseTo(base * 1.5, 5);
+    expect(currentAttackSpeed(boss) / base).toBeCloseTo(1.3, 5);
+    expect(moveSpeed(boss)).toBeCloseTo(baseMove, 5);
   });
 
   it("수쿠스이노 V — 흉터 겹마다 주는 피해가 늘어난다", () => {

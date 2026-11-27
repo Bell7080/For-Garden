@@ -6584,12 +6584,18 @@ function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: numb
   const traitHastePercent = (fighter.traitHaste?.attackSpeedPercent ?? 0)
     + (state === undefined ? 0 : warmUpAttackSpeedPercent(effectsFor(state, fighter), fighter.def.id, state.elapsed));
   const killHastePercent = fighter.killHaste?.attackSpeedPercent ?? 0;
-  const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
+  // 지반 압살(돌파)도 남이 건 감속이다.
+  const frontlinePercent = fighter.frontlineSlow ? controlMagnitude(fighter, fighter.frontlineSlow.percent) : 0;
+  // 굶주린 손(폭주 돌파)은 폭주한 본인만 빨라진다.
+  const hungry = feverBreakthrough(fighter);
+  const hungryPercent = hungry?.kind === "hungryStride" ? hungry.attackSpeedPercent : 0;
+  const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100)
+    * (1 - frontlinePercent / 100);
   const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100)
     * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
     * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100)
-    * (1 + reservedGuestHastePercent(fighter) / 100)
+    * (1 + reservedGuestHastePercent(fighter) / 100) * (1 + hungryPercent / 100)
     * (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "gungnirMarch" ? 1 + fighter.def.ferocityTrait.speedPercent / 100 : 1)
     * (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "extendedService" ? 1 + fighter.def.ferocityTrait.attackSpeedPercent / 100 : 1);
   return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed + ingredientHastePoints(fighter), boost: boostFactor, slow: slowFactor };
@@ -7060,15 +7066,12 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
   const chillPercent = fighter.chill ? controlMagnitude(fighter, fighter.chill.stacks * fighter.chill.speedPercentPerStack) : 0;
   // 여울은 상태가 아니라 지금 서 있는 자리라, 물 밖으로 나가면 같은 프레임에 풀린다.
   const submergedPercent = controlMagnitude(fighter, fighter.submergedIn?.moveSlowPercent ?? 0);
-  const hungry = feverBreakthrough(fighter);
-  const hungryPercent = hungry?.kind === "hungryStride" ? hungry.moveSpeedPercent : 0;
-  return (fighter.def.stats.moveSpeed + ingredientHastePoints(fighter)) * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100)
+  return (fighter.def.stats.moveSpeed + ingredientHastePoints(fighter)) * SKIRMISH.moveRate * (1 - sunkenSlowPercent(fighter) / 100)
     * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100)
     * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100)
     * (1 - frostbiteSlowPercent(fighter) / 100)
     * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100)
-    * (1 + confinementMoveSpeedPercent(fighter) / 100)
-    * (1 - (fighter.frontlineSlow ? controlMagnitude(fighter, fighter.frontlineSlow.percent) : 0) / 100);
+    * (1 + confinementMoveSpeedPercent(fighter) / 100);
 }
 
 /** 화면에 그릴 위치. 발 좌표에 돌진·피격 변위와 뛰어오른 높이를 얹은 값이다. */
@@ -7365,10 +7368,10 @@ function grantAllyEnergy(attacker: Fighter, skill: Skill, state: SkirmishState):
   if (amount <= 0) return;
   const allies = aliveFighters(state, attacker.side);
   for (const ally of allies) giveEnergy(ally, amount);
-  // 평타 돌파(`windStep`) — 게이지를 받은 아군에게 짧은 이동 속도 강화를 건다. 이미 순풍·오더가 걸린 아군은 덮지 않는다.
+  // 평타 돌파(`windStep`) — 게이지를 받은 아군에게 짧은 공격 속도 강화를 건다. 이미 순풍·오더가 걸린 아군은 덮지 않는다.
   const step = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   if (step?.kind === "windStep") {
-    const buff: TeamBuff = { kind: "tailwind", attackSpeedPercent: 0, moveSpeedPercent: step.moveSpeedPercent, seconds: step.seconds, maxHpRegenPercentPerSecond: 0 };
+    const buff: TeamBuff = { kind: "tailwind", attackSpeedPercent: step.attackSpeedPercent, moveSpeedPercent: 0, seconds: step.seconds, maxHpRegenPercentPerSecond: 0 };
     for (const ally of allies) if (ally.tailwindFor <= 0) applyTeamBuff(ally, buff);
   }
 }

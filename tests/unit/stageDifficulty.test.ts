@@ -170,11 +170,11 @@ const BASELINES = {
   "1-10": { win: 1, hp: [0.5, 0.7] },
   // v0.253.2: 2장을 레벨 21~30(돌파 1)으로 다시 그리며 녹화했다 — 잡졸 관문이 한 뼘 더 깎이며 지난다.
   // 적 비공격 궁극기 AI 복구 후 평균 잔여 HP 0.978. 전투가 길어지며 아군 회복도 더 돈다.
-  "2-5": { win: 1, hp: [0.72, 0.86] }, // 「적은 적이다」 등급 성장(2026-11-12): 2-5가 LV.20(돌파 전)에 서며 0.79. // v0.433.0: 적 돌파 몫(+10%)으로 판이 길어져 회복이 더 돌아 0.93. // v0.391.9: 2장 배율 ×1.05로 잔여 체력이 0.82로 내려왔다.
+  "2-5": { win: 1, hp: [0.72, 0.9] }, // 장마다 두 벽(2026-11-27): LV.21 벽으로 올라서며 0.87. // 「적은 적이다」 등급 성장(2026-11-12): 2-5가 LV.20(돌파 전)에 서며 0.79. // v0.433.0: 적 돌파 몫(+10%)으로 판이 길어져 회복이 더 돌아 0.93. // v0.391.9: 2장 배율 ×1.05로 잔여 체력이 0.82로 내려왔다.
   "2-10": { win: 1, hp: [0.74, 0.88] }, // 장 배율 제거(2026-11-12): 0.81 — 적이 약해져 아군이 더 빨리 몰려 들어가며 맞는 몫이 늘었다. // v0.433.0: 같은 이유로 0.96.
   // 3-5는 부부대장 아트라가 혼자 서는 정예, 3-10은 행동대장 이카닉시아가 혼자 서는 장 마감 정예다. 3-10은 가운데 조합이 여덟 판 중 한 판만 연다(코마의 1-10과 같다).
   // v0.308.2: 아트라는 레벨을 올려도 거의 다치지 않는다 — 상한 변경 뒤 잔여 체력이 올라 띠를 넓혔다(남은 구멍).
-  "3-5": { win: 1, hp: [0.9, 1] }, // 장 배율 제거(2026-11-12): 0.97. // v0.391.0: 3장 배율 ×1.2로 잔여 체력이 0.9 남짓 → 0.83으로 내려왔다.
+  "3-5": { win: 1, hp: [0.8, 1] }, // 장마다 두 벽(2026-11-27): LV.43 벽으로 올라서며 0.86. // 장 배율 제거(2026-11-12): 0.97. // v0.391.0: 3장 배율 ×1.2로 잔여 체력이 0.9 남짓 → 0.83으로 내려왔다.
   "3-9": { win: 1, hp: [0.86, 1] }, // v0.441.0 직군 존재감·몰림 벌점 절반: 0.80 → 0.95. // v0.433.0: 적 돌파 몫 + 연구원 레벨이 연 바닥 상한 — 0.80.
   "3-10": { win: 0, hp: [0, 0.05] },
   // 4장 — 회수조(태생 1단계 ×1.3)와 테러조가 섞인다. 4-5는 아트라·토비 정예 둘, 4-9는 코마 캐리(미르·펄시가 받친다),
@@ -197,7 +197,7 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
    * 캐릭터/적/보상을 재조정하지 않고 이 변화만 명시적으로 고정한다.
    */
   it.each(BLENDED_COMBOS.map((combo) => [combo.join("+"), combo] as const))(
-    "%s 조합의 적 지원 AI 복구 후 대표 관문 승률을 기록한다", (name, combo) => {
+    "%s 조합의 적 지원 AI 복구 후 대표 관문 승률을 기록한다", (_name, combo) => {
       for (const stageId of ["1-1", "1-9", "2-5", "2-10", "3-4", "3-9"]) {
         const entry = STORY_STAGES.find(({ stage }) => stage.id === stageId)!;
         const report = summarizeStageDifficulty(blendedParty(entry.globalOrder, combo), getStageEnemies(entry.stage), SEEDS, "auto");
@@ -210,9 +210,9 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
         // 토비·아모·리파 개편(2026-11-13 응태): 토비 공속 상한이 실제로 지켜지는 등 함께 바뀌어 3-4는 여덟 판 중 다섯이 열린다(0.25 → 0.625).
         // 3-10부터 곡선을 완만하게 낮추며(v0.487.10) 3장 잡졸이 LV.30 → 29가 되어 3-4는 여덟 판 중 여섯이 열린다(0.625 → 0.75). 벽은 남는다.
         // 2장 → 3장 턱을 완만하게 펴며(v0.487.12, 응태 요청) 3-4가 LV.29 → 26이 되어 이 조합도 전승한다 — 3-4 벽은 걷었다.
-        const walled: Record<string, number> = {};
-        const expected = name === "torika+rex+luka" ? walled[stageId] ?? 1 : 1;
-        expect(report.winRate, stageId).toBe(expected);
+        // 장마다 두 벽(2026-11-27 응태 결정): 2-5·2-10이 벽으로 올라서며 여덟 판 중 여섯 이상만 지킨다 — 한 번은 아프게 막혀도 된다.
+        if (stageId === "2-5" || stageId === "2-10") expect(report.winRate, stageId).toBeGreaterThanOrEqual(0.75);
+        else expect(report.winRate, stageId).toBe(1);
       }
     },
   );
@@ -247,7 +247,8 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
      */
     for (const stageId of ["1-1", "1-2"]) expect(winRateAt(stageId), stageId).toBeGreaterThan(0);
     // 「적은 적이다」(2026-11-12): 1장 후반 사다리가 반올림으로 겹치지 않게 한 칸씩 띄워져 바닥 파티는 1-7 언저리에서 멈춘다 — 1-9는 둘 다 닫힌다.
-    expect(winRateAt("1-9")).toBe(0);
+    // 장마다 두 벽(2026-11-27): 1-6~1-9가 벽(1-5) 뒤로 한 번 내려서며(LV.10~15) 1-9는 여덟 판 중 둘까지 흔들린다.
+    expect(winRateAt("1-9")).toBeLessThanOrEqual(0.25);
     // 장을 닫는 정예는 거의 열리지 않는다 — 바닥 파티는 여덟 판 중 한 판을 넘기 어렵다(v0.308.6: 정예 ×3).
     expect(winRateAt("1-10")).toBeLessThanOrEqual(0.25);
     // 2장은 네 판 중 한 판이 열릴까 말까 하고, 3장은 거의 닫힌다.
@@ -306,8 +307,8 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
       summarizeStageDifficulty(bare, getStageEnemies(getBattleStage(stageId)), SEEDS, "auto").winRate;
     // 첫 관문은 맨몸으로도 절반은 열린다 — 배우는 자리라 아주 닫아 두지는 않는다.
     expect(winRateAt("1-1")).toBeGreaterThanOrEqual(0.5);
-    // 1장 중반부터 네 판 중 한 판으로 줄고,
-    expect(winRateAt("1-4")).toBeLessThanOrEqual(0.75);
+    // 1~4는 배치를 틀리거나 궁극기를 놓쳐도 이기는 자리다(2026-11-27 응태 — 2관문 튜토리얼에서 지던 것을 걷었다).
+    for (const stageId of ["1-2", "1-3", "1-4"]) expect(winRateAt(stageId), stageId).toBeGreaterThanOrEqual(0.75);
     // 1장 후반부터 이미 한 판도 열리지 않는다.
     expect(winRateAt("1-7")).toBe(0);
     expect(winRateAt("2-5")).toBe(0);
@@ -334,15 +335,9 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     expect(winRateAt("3-5")).toBe(0);
   });
 
-  /** 적 레벨은 스토리 내내 뒤로 가지 않는다. 새 구역이 직전 구역보다 약해 보이면 곡선이 끊긴 것이다. */
-  it("적 레벨은 관문 순서를 따라 단조 증가한다", () => {
-    // **정예 관문은 이 줄 밖이다.** 혼자 서는 몫을 유형 배수가 내므로 레벨이 잡졸 줄과
-    // 나란히 오르지 않는다(`docs/level-design.md`).
-    const levels = BATTLE_STAGES.filter(({ stage }) => stage.elite !== true).map(({ stage }) => Math.max(...stage.enemies.map((enemy) => enemy.level)));
-    for (let index = 1; index < levels.length; index += 1) {
-      expect(levels[index], `${index}번째 잡졸 관문`).toBeGreaterThanOrEqual(levels[index - 1]);
-    }
-    // 곡선이 실제로 크게 그려지는지 — 처음과 끝이 여섯 배 넘게 벌어진다.
+  /** 곡선이 실제로 크게 그려지는지 — 처음과 끝이 여섯 배 넘게 벌어진다. 벽·내려섬 규칙은 `stages.test`가 지킨다. */
+  it("적 레벨은 스토리 처음과 끝이 크게 벌어진다", () => {
+    const levels = BATTLE_STAGES.map(({ stage }) => Math.max(...stage.enemies.map((enemy) => enemy.level)));
     expect(levels[levels.length - 1] / levels[0]).toBeGreaterThan(6);
   });
 

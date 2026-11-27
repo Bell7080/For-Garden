@@ -289,6 +289,8 @@ export interface PublicRelicProfileDto {
   level: number;
   /** 성급은 중복 획득/각성 단계와 구분되는 공개 표시 값이다. */
   breakthroughGrade: number;
+  /** 공명 단계. 원정 스냅샷처럼 내 렐릭을 읽기 전용으로 여는 자리만 채운다 — 친구·상대 프로필은 공명을 알려 주지 않는다. */
+  resonance?: number;
   /** 서버가 공개 시점에 계산한 대표 능력치라 조회자의 세션을 참조하지 않는다. */
   stats: Stats;
   /** 공개가 허용된 스킬만 id로 전달한다. */

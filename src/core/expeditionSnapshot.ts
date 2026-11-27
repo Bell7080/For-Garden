@@ -1,4 +1,5 @@
 import { calculateFinalStats, activeBreakthroughOf } from "./relicProgression";
+import { resonanceOf } from "./relicResonance";
 import type { RuneInstance } from "./runes";
 import type { RelicDef, RelicProgress, RelicSkinId, Stats } from "./types";
 
@@ -13,6 +14,8 @@ export interface ExpeditionRelicSnapshot {
   level: number;
   breakthrough: number;
   bondLevel: number;
+  /** 떠난 순간의 공명 단계(0~5). 공명 표식만 이 값을 읽는다 — 능력치는 `stats`에 이미 들어 있다. 예전 스냅샷에는 없다. */
+  resonance?: number;
   /** 레벨·돌파·룬까지 반영한 최종 능력치. */
   stats: Stats;
   /** 끼고 떠난 룬의 사본. 룬 특성도 이 목록에서 돈다. */
@@ -37,6 +40,7 @@ export function captureExpeditionRelicSnapshot(
     // 원정은 떠난 순간 **켜져 있던** 돌파로 싸운다 — 레벨 초기화로 꺼진 단계는 굳히지 않는다.
     breakthrough: activeBreakthroughOf(progress),
     bondLevel: progress.bondLevel,
+    resonance: resonanceOf(progress),
     stats: { ...calculateFinalStats(def.stats, progress, runes, def.rarity) },
     runes,
     skinId: skinId ?? null,
@@ -49,6 +53,7 @@ export function isExpeditionRelicSnapshot(value: unknown): value is ExpeditionRe
   const snapshot = value as Partial<ExpeditionRelicSnapshot>;
   const whole = (n: unknown): boolean => Number.isInteger(n) && (n as number) >= 0;
   return whole(snapshot.level) && (snapshot.level as number) >= 1 && whole(snapshot.breakthrough) && whole(snapshot.bondLevel)
+    && (snapshot.resonance === undefined || whole(snapshot.resonance))
     && !!snapshot.stats && typeof snapshot.stats === "object" && Object.values(snapshot.stats).every((stat) => Number.isFinite(stat))
     && Array.isArray(snapshot.runes)
     && (snapshot.skinId === null || typeof snapshot.skinId === "string");

@@ -2945,7 +2945,7 @@ export class InfoManager {
     this.starRow.removeAll(true);
     const stars = breakthroughGrade(this.shownBreakthrough(def));
     // 공명이 걸리면 돌파 등급 자리를 공명 등급이 대신한다. 공명은 내 렐릭에게만 있다 — 공개 프로필은 공명을 알려 주지 않는다.
-    const resonance = this.publicProfile ? 0 : resonanceOf(relicProgression.getProgress(def.id));
+    const resonance = this.publicProfile ? this.publicProfile.resonance ?? 0 : resonanceOf(relicProgression.getProgress(def.id));
     addGrowthGradeMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, stars, resonance);
   }
 

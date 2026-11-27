@@ -45,6 +45,8 @@ export interface BattleProfileOptions {
   relic: RelicDef;
   level: number;
   breakthroughGrade: number;
+  /** 공명 단계(0~5). 1 이상이면 카드의 돌파 등급 자리에 붉은 공명 등급이 선다. 대인전은 공명이 꺼지므로 넘기지 않는다. */
+  resonance?: number;
   currentHp: number;
   maxHp: number;
   ferocity: number;
@@ -100,7 +102,7 @@ export class BattleProfile extends Phaser.GameObjects.Container {
       width: L.cardWidth, height: L.cardHeight, relicId: options.relic.id,
       asset: options.skinId === undefined ? undefined : portraitAssetForSkin(options.relic.portraitAssetId, options.skinId ?? undefined),
       label: options.relic.name, level: options.level,
-      sub: options.sub, rarity: options.relic.rarity, breakthroughGrade: options.breakthroughGrade,
+      sub: options.sub, rarity: options.relic.rarity, breakthroughGrade: options.breakthroughGrade, resonance: options.resonance,
     });
     // 몸통은 닫힌 칩 기하를 쓰고 돌출 머리는 원화 알파 복제를 쓴다. 카드 전체 도형 하나를
     // 칠하면 머리 옆 투명 공간까지 검은 면이 되므로 두 표시를 카드 공개 API에서만 묶는다.

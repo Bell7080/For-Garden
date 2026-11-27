@@ -1283,8 +1283,8 @@ export const RELICS: RelicDef[] = [
      */
     stats: {
       hp: 1300,
-      def: 130,
-      res: 130,
+      def: 105,
+      res: 155,
       atk: 66,
       ap: 20,
       attackSpeed: 70,
@@ -2648,7 +2648,7 @@ export const RELICS: RelicDef[] = [
       selfGuard: {
         tauntSeconds: 5,
         pull: { radius: 420, distance: 150 },
-        shieldMaxHpPercent: 35,
+        shieldMaxHpPercent: 45,
       },
     },
   },
@@ -4172,8 +4172,8 @@ export const RELICS: RelicDef[] = [
       // 공격 속도에서 덜어 낸 몫이 여기로 왔다(1660 → 1828). 방어가 아니라 체력으로 받는
       // 이유는 "탱커 중 가장 얇은 몸"이 이 개체의 계약이기 때문이다.
       hp: 1828,
-      def: 62,
-      res: 70,
+      def: 54,
+      res: 78,
       // 노도니아(46)에 이어 로스터에서 두 번째로 낮다. 세 스킬이 전부 주문력에서 나오므로
       // 이 값은 어디에도 쓰이지 않는다.
       atk: 48,

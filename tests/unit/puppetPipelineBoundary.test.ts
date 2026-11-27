@@ -35,8 +35,16 @@ describe("Indexed Puppet WebGL pipeline 경계", () => {
 
   it("컨텍스트 세대가 바뀐 버퍼는 다시 만들고, 지우지는 않는다", () => {
     // 죽은 컨텍스트의 손잡이를 새 컨텍스트에 지우라고 하면 INVALID_OPERATION이다.
-    expect(ENSURE_BUFFERS).toMatch(/this\.buffers && this\.buffersGeneration === gpuGeneration/);
-    expect(RELEASE).toMatch(/if \(this\.buffersGeneration === gpuGeneration\)[\s\S]*deleteBuffer/);
+    expect(ENSURE_BUFFERS).toMatch(/held && held\.generation === gpuGeneration/);
+    expect(ENSURE_BUFFERS).toMatch(/this\.positionBuffer && this\.positionGeneration === gpuGeneration/);
+    expect(RELEASE).toMatch(/this\.positionGeneration === gpuGeneration\) gl\.deleteBuffer/);
+    expect(RELEASE).toMatch(/held\.generation === gpuGeneration\)[\s\S]*deleteBuffer/);
+  });
+
+  it("같은 내용의 격자 버퍼는 개체끼리 나눠 쓰고, 마지막 개체만 지운다", () => {
+    // 내용 키 + 전체 비교로만 묶어야 다른 그림이 남의 격자로 그려지지 않는다.
+    expect(ENSURE_BUFFERS).toMatch(/meshBuffers\.get\(this\.meshKey\)[\s\S]*sameMesh\(existing\.data, this\.meshData\)/);
+    expect(RELEASE).toMatch(/held\.users -= 1;\s*if \(held\.users > 0\) return;/);
   });
 
   it("씬 전환 중 이미 파괴된 Puppet의 대기 중인 UPDATE 콜백을 건너뛴다", () => {

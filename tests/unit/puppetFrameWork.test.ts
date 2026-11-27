@@ -6,12 +6,12 @@ import { puppetAffineUniform, puppetOffsetUniform } from "../../src/puppets/rend
 const skinTable = { bones: new Float32Array(12), normal: new Float32Array(12), posed: new Float32Array(12) };
 const skinFrame = { mode: "palette", table: skinTable, palette: new Float32Array(24) };
 
-function fixture(gpu = false) {
+function fixture(gpu = false, meshBuffers = new Map()) {
   const gl: any = new Proxy({ ARRAY_BUFFER: 1, ELEMENT_ARRAY_BUFFER: 2, STATIC_DRAW: 3, DYNAMIC_DRAW: 4 }, {
     get(target: any, key) { return target[key] ??= vi.fn(() => ({})); },
   });
   const calculateMatrix=vi.fn(() => ({ calc: {a:1,b:0,c:0,d:1,e:0,f:0}, camera: {a:1,b:0,c:0,d:1} }));
-  const program = gpu ? { skinning: true, position: 0, uv: 1, skinBones: 2, skinNormal: 3, skinPosed: 4, palette: {} } : {};
+  const program = gpu ? { skinning: true, position: 0, uv: 1, skinBones: 2, skinNormal: 3, skinPosed: 4, skinLocations: [2, 3, 4], palette: {} } : { skinLocations: [] };
   const Creature = sourceClass("src/puppets/IndexedPuppetCreature.ts", "IndexedPuppetCreature", {
     Phaser: { GameObjects: { Image: class {}, GetCalcMatrix: calculateMatrix } },
     gpuGeneration: 0, programs: new WeakMap([[gl, program]]), watchContextRestore: () => {},
@@ -21,13 +21,20 @@ function fixture(gpu = false) {
     gpuSkinningAvailable: gpu, gpuSkinningDisabled: false,
     SKIN_MAX_BONES: 36, SKIN_PALETTE_STRIDE: 12, SKIN_MAX_INFLUENCES: 4, tableBuffers: new Map(),
     applySkinTable: vi.fn(), bindAttribute: vi.fn(),
-    createTableBuffers: vi.fn(() => ({ generation: 0, rest: {}, bones: {}, normal: {}, posed: {} })),
+    createTableBuffers: vi.fn(() => ({ generation: 0, bones: {}, normal: {}, posed: {} })),
+    meshBuffers, sameMesh: () => true,
+    uploadMesh: (g: any, data: any) => {
+      for (const view of [data.rest, data.uvs, data.indices]) g.bufferData(0, view, 0);
+      return { generation: 0, rest: {}, uv: {}, index: {} };
+    },
   });
   const creature = Object.assign(Object.create(Creature.prototype), {
     active: true, visible: true, alpha: 1, animationFrozen: false, decorativeUpdateCredit: 0, decorativeCarryMs: 0,
     displayOriginX: 0, displayOriginY: 0, flipX: false, flipY: false,
     decorativeUpdateFactor: 1, lastLoopTime: -1, poseVersion: 0, uploadedPoseVersion: -1,
     positions: new Float32Array(6), uvs: new Float32Array(6), indices: new Uint16Array([0, 1, 2]),
+    meshData: { rest: new Float32Array(6), uvs: new Float32Array(6), indices: new Uint16Array([0, 1, 2]) }, meshKey: "6:6:3:k",
+    positionGeneration: -1,
     scene: { game: { loop: { time: 100, rawDelta: 16 } } },
     frame: { glTexture: { webGLTexture: {} } }, afterimages: [], bodyFill: { color: 0, amount: 0 },
     heldTables: new Set(), skin: null,
@@ -35,7 +42,7 @@ function fixture(gpu = false) {
   });
   const renderer = { gl, width: 1080, height: 1920, pipelines: { clear: vi.fn(), rebind: vi.fn() } };
   const camera = { addToRenderList: vi.fn(), alpha: 1 };
-  return { creature, gl, renderer, camera, calculateMatrix };
+  return { creature, gl, renderer, camera, calculateMatrix, Creature };
 }
 
 describe("캐릭터 프레임 작업 예산", () => {
@@ -65,13 +72,13 @@ describe("캐릭터 프레임 작업 예산", () => {
     const { creature: c, gl, renderer, camera } = fixture();
     const draw = () => c.renderWebGL(renderer, c, camera);
     draw(); draw(); draw();
-    expect(gl.bufferData).toHaveBeenCalledTimes(3); // position capacity + UV + indices
+    expect(gl.bufferData).toHaveBeenCalledTimes(4); // rest + UV + indices (나눠 쓰는 격자) + 위치 공간
     expect(gl.bufferSubData).toHaveBeenCalledTimes(1);
     c.scene.game.loop.time += 16; c.step(0, 16); draw();
-    expect(gl.bufferData).toHaveBeenCalledTimes(3);
+    expect(gl.bufferData).toHaveBeenCalledTimes(4);
     expect(gl.bufferSubData).toHaveBeenCalledTimes(2);
-    c.buffersGeneration = -1; draw();
-    expect(gl.bufferData).toHaveBeenCalledTimes(6);
+    c.buffers.generation = -1; c.positionGeneration = -1; draw();
+    expect(gl.bufferData).toHaveBeenCalledTimes(8);
     expect(gl.bufferSubData).toHaveBeenCalledTimes(3);
     expect(renderer.pipelines.rebind).toHaveBeenCalledTimes(5);
   });
@@ -85,5 +92,18 @@ describe("캐릭터 프레임 작업 예산", () => {
     expect(gl.uniform4fv).toHaveBeenCalledTimes(3);
     expect(gl.uniform4fv).toHaveBeenLastCalledWith(expect.anything(), skinFrame.palette);
     expect(gl.drawElements).toHaveBeenCalledTimes(3);
+  });
+  it("GPU 스키닝 기기는 개체 전용 위치 버퍼를 만들지 않고, 같은 격자는 두 번째 개체가 다시 올리지 않는다", () => {
+    const shared = new Map();
+    const first = fixture(true, shared);
+    const draw = (f: ReturnType<typeof fixture>) => { f.creature.scene.game.loop.time += 16; f.creature.step(0, 16); f.creature.renderWebGL(f.renderer, f.creature, f.camera); };
+    draw(first); draw(first);
+    expect(first.gl.bufferData).toHaveBeenCalledTimes(3); // rest + UV + indices, 위치 버퍼 없음
+    expect(first.creature.positionBuffer).toBeUndefined();
+    const second = fixture(true, shared);
+    draw(second);
+    expect(second.gl.bufferData).not.toHaveBeenCalled();
+    expect(second.creature.buffers).toBe(first.creature.buffers);
+    expect(first.creature.buffers.users).toBe(2);
   });
 });

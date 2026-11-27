@@ -7,7 +7,7 @@ import { FOCUS, VANDALISM_REBURST_SECONDS } from "../../src/core/skirmish";
 import { KEYWORDS } from "../../src/data/keywords";
 import type { BasicAttack, Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, elationKeyword, ferocityTraitDescription, passiveDescription, passiveStackKeywords, overpaintDetonationDamageKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, elationKeyword, ferocityTraitDescription, passiveDescription, passiveStackKeywords, casterRatioKeywords, overpaintDetonationDamageKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 import { ENCOUNTER_ROLE } from "../../src/core/levelDesign";
 import { ENCOUNTER_ROLE_ICON_ASSETS, encounterRoleDescription, encounterRoleIcon, encounterRoleMultipliers, encounterRoleName } from "../../src/ui/encounterRolePresentation";
@@ -299,7 +299,8 @@ describe("데이 스킬 표시 계약", () => {
       expect(Math.min(...allyTanks.map((def) => def.stats[key])), `데이 ${key}`).toBe(dei.stats[key]);
     }
     const effectiveHp = (def: typeof dei) => def.stats.hp * (1 + def.stats.def / 100);
-    expect(Math.min(...allyTanks.map(effectiveHp))).toBe(effectiveHp(dei));
+    // 안카는 저항형으로 갈라 방어를 저항에 내주었다(응태 2026-11-27) — 물리 실효 체력이 얇은 것이 그 정체성이라 여기서 뺀다.
+    expect(Math.min(...allyTanks.filter((def) => def.id !== "anka").map(effectiveHp))).toBe(effectiveHp(dei));
     // 이동 속도는 로스터 최고여야 한다 — 이 개체가 사는 방식이 그 한 값이다.
     expect(Math.max(...RELICS.map((def) => def.stats.moveSpeed))).toBe(dei.stats.moveSpeed);
   });
@@ -331,11 +332,11 @@ describe("엘라 스킬 표시 계약", () => {
 
   it("의 인·불멸·금강불괴는 구조화 계약에서 문장을 짓는다", () => {
     // 불러 놓고 그 자리에서 덮는다 — 도발과 보호막이 한 조작에 든다.
-    expect(ella.ultimate.selfGuard).toMatchObject({ tauntSeconds: 5, shieldMaxHpPercent: 35 });
+    expect(ella.ultimate.selfGuard).toMatchObject({ tauntSeconds: 5, shieldMaxHpPercent: 45 });
     expect(skillDescription(ella.ultimate, { maxHp: ella.stats.hp }))
-      .toBe("주위 모든 적을 [[pull|끌어당겨]] 5초 동안 [[taunt|도발]]하고, [[v-shield-hp-35-1500|525]]만큼 [[shield|보호막]]을 얻는다.");
+      .toBe("주위 모든 적을 [[pull|끌어당겨]] 5초 동안 [[taunt|도발]]하고, [[v-shield-hp-45-1500|675]]만큼 [[shield|보호막]]을 얻는다.");
     // 능력치를 모르는 자리(도감)에서만 비율로 되돌아간다.
-    expect(skillDescription(ella.ultimate)).toContain("최대 체력의 35%만큼 [[shield|보호막]]");
+    expect(skillDescription(ella.ultimate)).toContain("최대 체력의 45%만큼 [[shield|보호막]]");
     // 버티는 궁극기가 최종 피해 감쇠를 쓰지 않는 것은 그대로다 — 뚫을 창이 있으면 뚫려야 한다.
     expect(skillDescription(ella.ultimate)).not.toContain("받는 피해가");
 
@@ -1475,4 +1476,21 @@ describe("적 정보창 역할 칸 표시 계약", () => {
     }
     expect(KEYWORDS.find(({ id }) => id === "scar")?.term).toBe("흉터");
   });
+});
+
+describe("태그 팝업의 제 능력치 비율은 실제 수치로 선다", () => {
+  const ids = ["anka", "dei", "mosana", "maki", "plesha", "shute", "irna", "atra"];
+  for (const id of ids) {
+    it(`${id}`, () => {
+      const def = RELICS.find((relic) => relic.id === id);
+      if (!def) return;
+      const tags = casterRatioKeywords(def);
+      expect(tags.length).toBeGreaterThan(0);
+      for (const tag of tags) {
+        if (tag.id === "pressure-burst-value") continue;
+        expect(tag.description, `${id}:${tag.id}`).toMatch(/\[\[(v-|pressure-burst-value)/);
+        expect(tag.description, `${id}:${tag.id}`).not.toMatch(/\{\w+\}/);
+      }
+    });
+  }
 });

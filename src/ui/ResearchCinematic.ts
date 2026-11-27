@@ -18,6 +18,7 @@ import { audioManager } from "../managers/AudioManager";
 import { activeFontFamily, fontStyleFor } from "./fonts";
 import { bakeCinematicFace, bakeCinematicIcon, bakeCinematicPortrait, prewarmCinematicArt } from "./researchCinematicArt";
 import { canCloseResult, RESULT_TAP_LOCK_MS, type CinematicCardArt, type CinematicReward } from "./researchCinematicModel";
+import { collectCanvases, releaseWebglCanvases, supportsWebgl2 } from "./webglStage";
 import { revealSeconds, stagePixelRatio, type GraphicsQuality } from "../core/settings";
 
 const SCRIPT_URL = "cinematic/researchCinematic.js";
@@ -230,15 +231,6 @@ export function researchCinematicEnabled(): boolean {
   return import.meta.env.MODE !== "test";
 }
 
-/** WebGL2가 없는 기기에서는 묶음을 읽어도 무대가 서지 않는다. 읽기 전에 먼저 본다. */
-function supportsWebgl2(): boolean {
-  try {
-    const probe = document.createElement("canvas");
-    return Boolean(probe.getContext("webgl2"));
-  } catch {
-    return false;
-  }
-}
 
 /**
  * 뿌리 DOM.
@@ -945,7 +937,11 @@ export class ResearchCinematic {
     for (const observer of this.sideObservers) observer.disconnect();
     window.removeEventListener("resize", this.onWindowChange);
     window.removeEventListener("orientationchange", this.onWindowChange);
+    // 무대가 캔버스를 떼기 전에 받아 두었다가 컨텍스트를 직접 돌려준다(`webglStage.ts`) — 쥔 채 두면 연구를 연달아
+    // 돌릴수록 쌓여 브라우저가 가장 오래된 게임 캔버스를 거둔다.
+    const canvases = collectCanvases(this.root);
     try { this.instance.destroy(); } catch { /* 무대가 이미 죽었어도 화면은 치운다. */ }
+    releaseWebglCanvases(canvases);
     this.root.remove();
     this.settle?.();
     this.settle = undefined;

@@ -20,6 +20,7 @@
 
 import Phaser from "phaser";
 import { stagePixelRatio } from "../core/settings";
+import { collectCanvases, releaseWebglCanvases, supportsWebgl2 } from "./webglStage";
 import { session } from "../state/session";
 
 /** 묶음이 스스로 거는 픽셀 배율 상한(원본 값). */
@@ -82,11 +83,7 @@ export function preloadSsrOmen(): Promise<OmenBundle> | undefined {
 /** GPU 없는 E2E 컨테이너에서는 합성 한 프레임이 수백 ms라 세우지 않는다(연구 시네마틱과 같은 이유). */
 function ssrOmenEnabled(): boolean {
   if (import.meta.env.MODE === "test") return false;
-  try {
-    return Boolean(document.createElement("canvas").getContext("webgl2"));
-  } catch {
-    return false;
-  }
+  return supportsWebgl2();
 }
 
 export interface SsrOmenHandle {
@@ -158,6 +155,7 @@ async function buildStage(game: Phaser.Game, reducedMotion: boolean): Promise<Om
     shareOmenAudio(game, built.omen);
   } catch {
     observer.disconnect();
+    releaseWebglCanvases(collectCanvases(root));
     root.remove();
     return undefined;
   }
@@ -234,7 +232,10 @@ export function releaseSsrOmen(): void {
   const drop = (built: OmenStage): void => {
     if (built.busy) { window.setTimeout(() => drop(built), 200); return; }
     built.observer?.disconnect();
+    // 무대가 캔버스를 떼기 전에 받아 두었다가 컨텍스트를 직접 돌려준다(`webglStage.ts`).
+    const canvases = collectCanvases(built.root);
     try { built.omen.dispose(); } catch { /* 이미 죽은 무대여도 판은 치운다. */ }
+    releaseWebglCanvases(canvases);
     built.root.remove();
   };
   const pending = stagePromise;

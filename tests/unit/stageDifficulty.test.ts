@@ -134,7 +134,7 @@ const STORY_STAGES = BATTLE_STAGES.filter((entry) => !EXPEDITION_BOSS_STAGES.inc
 const ELITE_STAGE_IDS = ["1-5", "1-10"] as const;
 
 /** 같은 셋이 아닌 편성이 서는 관문 — 2장 후반의 정예 둘과 3장의 회수조. */
-const LATE_FORMATION_IDS: ReadonlySet<string> = new Set(["1-5", "2-7", "2-9", "3-2", "3-3", "3-4", "3-5", "3-6", "3-7", "3-8", "3-9", "3-10", "4-1", "4-2", "4-3", "4-4", "4-5", "4-6", "4-7", "4-8", "4-9", "4-10",
+const LATE_FORMATION_IDS: ReadonlySet<string> = new Set(["2-7", "2-9", "3-2", "3-3", "3-4", "3-5", "3-6", "3-7", "3-8", "3-9", "3-10", "4-1", "4-2", "4-3", "4-4", "4-5", "4-6", "4-7", "4-8", "4-9", "4-10",
   ...[5, 6, 7, 8, 9].flatMap((chapter) => Array.from({ length: 10 }, (_, index) => `${chapter}-${index + 1}`))]);
 
 /**
@@ -163,8 +163,7 @@ const BASELINES = {
   // 끝난 뒤 남는 체력만 0.83 → 0.79 남짓으로 내려왔다. 첫 정예가 한 번은 아프게 읽히는 쪽이 맞다.
   // v0.275.14: 정예 체력 몫 ×3.3 → ×8(응태 결정). 첫 정예가 한 번은 확실히 아프다 — 잔여 체력 0.79 → 0.56 남짓.
   // v0.308.2: 궁극기 게이지가 비용까지만 차면서 정예가 쉬워져 1-5를 15 → 17로 올렸다.
-  // v0.557.0: 토비·아모 정예 둘(LV.16)로 바꾸자 가운데 조합은 전승에 잔여 체력 0.81 — 둘이 나눠 맞아 한 명에게 몰리지 않는다.
-  "1-5": { win: 1, hp: [0.7, 0.9] },
+  "1-5": { win: 1, hp: [0.5, 0.72] },
   // 1-10은 장을 닫는 벽이다(v0.174.2, 정예 공격 몫 ×1.2) — 땅 딜러 조합은 여기서 한 번 막혀
   // 뽑기나 강화를 거쳐 다시 온다.
   // v0.275.14: 정예 체력 몫 ×8 — 가운데 조합(땅 딜러)은 한 판도 열지 못한다. 직접 키워 깨 보며 다시 조율한다.
@@ -249,8 +248,7 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     for (const stageId of ["1-1", "1-2"]) expect(winRateAt(stageId), stageId).toBeGreaterThan(0);
     // 「적은 적이다」(2026-11-12): 1장 후반 사다리가 반올림으로 겹치지 않게 한 칸씩 띄워져 바닥 파티는 1-7 언저리에서 멈춘다 — 1-9는 둘 다 닫힌다.
     // 장마다 두 벽(2026-11-27): 1-6~1-9가 벽(1-5) 뒤로 한 번 내려서며(LV.10~15) 1-9는 여덟 판 중 둘까지 흔들린다.
-    // 1장 곡선을 완만하게 하며(v0.557.0 — 1-6~1-9 LV.5·7·9·11) 바닥 파티도 1-9를 절반까지 연다. 벽(1-10)은 그대로 닫힌다.
-    expect(winRateAt("1-9")).toBeLessThanOrEqual(0.5);
+    expect(winRateAt("1-9")).toBeLessThanOrEqual(0.25);
     // 장을 닫는 정예는 거의 열리지 않는다 — 바닥 파티는 여덟 판 중 한 판을 넘기 어렵다(v0.308.6: 정예 ×3).
     expect(winRateAt("1-10")).toBeLessThanOrEqual(0.25);
     // 2장은 네 판 중 한 판이 열릴까 말까 하고, 3장은 거의 닫힌다.
@@ -286,8 +284,7 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     expect(ELITE_STAGE_IDS).toEqual(["1-5", "1-10"]);
     // **1장의 중간 정예는 길을 막지 않는다.** 토비는 R이라 같은 유형 배수를 받아도 세 조합이
     // 모두 넘는다(대표 관문 기록의 `1-5`).
-    // v0.557.0: 1-5가 토비·아모 정예 둘(LV.16) 벽이 되어 여덟 판 중 여섯 이상만 지킨다 — 한 번은 아프게 막혀도 된다.
-    for (const combo of [fireDps, earthDps, waterDps]) expect(winRateAt("1-5", combo)).toBeGreaterThanOrEqual(0.75);
+    for (const combo of [fireDps, earthDps, waterDps]) expect(winRateAt("1-5", combo)).toBe(1);
     // **장을 닫는 자리만 조합을 가린다.** v0.275.14에서 정예 체력 몫을 ×8로 올려, 풀 코마에게 땅 딜러는 한 판도 못 열고
     // 물 딜러는 여덟 판 중 네 판을 연다 — 한 번 막혀 뽑기·강화로 돌아가는 자리다.
     expect(winRateAt("1-10", fireDps)).toBe(1);
@@ -312,8 +309,8 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     expect(winRateAt("1-1")).toBeGreaterThanOrEqual(0.5);
     // 1~4는 배치를 틀리거나 궁극기를 놓쳐도 이기는 자리다(2026-11-27 응태 — 2관문 튜토리얼에서 지던 것을 걷었다).
     for (const stageId of ["1-2", "1-3", "1-4"]) expect(winRateAt(stageId), stageId).toBeGreaterThanOrEqual(0.75);
-    // 1장 끝 벽부터 이미 한 판도 열리지 않는다(v0.557.0 곡선을 완만하게 하며 1-7 → 1-10으로 옮겼다).
-    expect(winRateAt("1-10")).toBe(0);
+    // 1장 후반부터 이미 한 판도 열리지 않는다.
+    expect(winRateAt("1-7")).toBe(0);
     expect(winRateAt("2-5")).toBe(0);
     expect(winRateAt("3-9")).toBe(0);
   });

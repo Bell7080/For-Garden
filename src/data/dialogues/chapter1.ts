@@ -21,10 +21,7 @@ const VOICE = (voice: "stella" | "kento" | "obi", left: "torika" | "dodi", right
 /** 1-8 — 수문 위의 티아를 가운데에 두고 토리카와 파루아가 곁에 선다. */
 const TIA_TRIO: readonly DialogueCastMember[] = [{ id: "torika", slot: "left" }, { id: "tia", slot: "center" }, { id: "parua", slot: "right" }];
 
-/** 1-5 — 토비가 앞에 서고 아모가 곁에 붙는다. */
-const TOBY_AMO: readonly DialogueCastMember[] = [{ id: "amo", slot: "left" }, { id: "toby", slot: "right" }];
-
-const ALONE = (id: "koma" | "lexia"): readonly DialogueCastMember[] => [{ id, slot: "center" }];
+const ALONE = (id: "koma" | "toby" | "lexia"): readonly DialogueCastMember[] => [{ id, slot: "center" }];
 
 /** 1-2 후 — 유리 지붕에서 떨어진 삼인조가 코마를 입에 올린다. */
 export const STAGE_1_2_POST: DialogueStory = {
@@ -58,35 +55,32 @@ export const STAGE_1_4_PRE: DialogueStory = {
   ]),
 };
 
-/** 1-5 전 — 아모를 데리고 먼저 달려와 방벽을 건드린 토비. */
+/** 1-5 전 — 혼자 먼저 달려와 방벽을 건드린 토비. */
 export const STAGE_1_5_PRE: DialogueStory = {
   id: "stage-1-5-pre",
   startNodeId: "hi",
   backdrop: "greenhouse",
   nodes: linear([
-    { id: "hi", speaker: "토비", body: "늦었네, 연구원! 여기로 올 줄 알았지. 이번엔 못 지나가!", standing: "toby", cast: TOBY_AMO, act: "bounce" },
+    { id: "hi", speaker: "토비", body: "늦었네, 연구원! 여기로 올 줄 알았지. 이번엔 못 지나가!", standing: "toby", cast: ALONE("toby"), act: "bounce" },
     { id: "torn", speaker: "토비", body: "뒤쪽 문은 내가 막아 놨어. …좀 뜯어지긴 했는데, 어쨌든 못 지나가는 건 똑같아!", standing: "toby", act: "shrink" },
-    { id: "ripped", speaker: "아모", body: "…막은 게 아니라 뜯은 거잖아. 그럴 줄 알았어.", standing: "amo", act: "lean" },
-    { id: "guard", speaker: "토리카", body: "대장님, 제 뒤에 계세요. 이번엔 둘이서 막겠다는 거예요?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "amo", slot: "center" }, { id: "toby", slot: "right" }], act: "hop" },
-    { id: "split", speaker: "토비", body: "리파는 코마 님이 시킨 대로 딴 길로 갔어. 아모랑 둘이면 충분하다고!", standing: "toby", act: "puff" },
-    { id: "tagalong", speaker: "아모", body: "…충분하다는 건 토비 생각이고. 난 그냥 따라온 거야.", standing: "amo", act: "shrink" },
+    { id: "guard", speaker: "토리카", body: "대장님, 제 뒤에 계세요. 이번엔 혼자 와서 막겠다는 거예요?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "hop" },
+    { id: "split", speaker: "토비", body: "아모랑 리파는 코마 님이 시킨 대로 딴 길로 갔어. 나 혼자서도 충분하다고!", standing: "toby", act: "puff" },
     { id: "denial", speaker: "토비", body: "그, 그리고 이 방벽 장치는 내가 만진 게 아니야. 원래 켜져 있었어.", standing: "toby", act: "fright" },
     { id: "beep", speaker: "토리카", body: "방금 장치에서 삐— 소리 났는데요?", standing: "torika", act: "recoil" },
     { id: "fight", speaker: "토비", body: "으아, 잠깐! …아, 몰라! 너희부터 잡고 나서 끌 거야. 덤벼!", standing: "toby", act: "rage", cue: "impact" },
   ]),
 };
 
-/** 1-5 후 — 넘어뜨린 장비를 몰래 제자리에 돌려놓다 들킨다. 아모는 먼저 옆문으로 빠진다. */
+/** 1-5 후 — 넘어뜨린 장비를 몰래 제자리에 돌려놓다 들킨다. */
 export const STAGE_1_5_POST: DialogueStory = {
   id: "stage-1-5-post",
   startNodeId: "tidy",
   backdrop: "greenhouse",
   nodes: linear([
-    { id: "tidy", speaker: "", body: "넘어진 장비 너머로 토비와 아모가 뒷걸음질을 쳤다. 토비가 발에 걸린 상자 하나를 바로 세우다가 일행과 딱 눈이 마주쳤다.", standing: "toby", cast: [{ id: "torika", slot: "left" }, { id: "amo", slot: "center" }, { id: "toby", slot: "right" }] },
+    { id: "tidy", speaker: "", body: "넘어진 장비 너머로 토비가 뒷걸음질을 쳤다. 발에 걸린 상자 하나를 바로 세우다가 일행과 딱 눈이 마주쳤다.", standing: "toby", cast: [{ id: "toby", slot: "right" }, { id: "torika", slot: "left" }] },
     { id: "what", speaker: "토리카", body: "…지금 뭐 하세요?", standing: "torika", act: "lean" },
     { id: "excuse", speaker: "토비", body: "걸리적거려서 치운 거야! 쫓아오지 마, 알았지?", standing: "toby", act: "shake" },
-    { id: "habit", speaker: "아모", body: "…토비는 어지른 건 꼭 치워. 원래 그래. 난 먼저 간다.", standing: "amo", act: "nod" },
-    { id: "label", speaker: "도디", body: "그쪽은 막다른 길인데… 아, 옆문으로 갔어요!", standing: "dodi", cast: [{ id: "dodi", slot: "center" }, { id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "nod", leave: "dash" },
+    { id: "label", speaker: "도디", body: "그쪽은 막다른 길인데… 아, 옆문으로 갔어요!", standing: "dodi", cast: [{ id: "dodi", slot: "center" }, { id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "nod" },
     { id: "away", speaker: "토비", body: "보, 보지 마! 코마 님한테는 말하지 마! 다음엔 진짜 이긴다~!", standing: "toby", cast: [{ id: "dodi", slot: "center" }, { id: "torika", slot: "left" }], act: "hopTwice", leave: "blastOff", cue: "impact" },
   ]),
 };

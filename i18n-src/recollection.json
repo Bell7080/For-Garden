@@ -189,8 +189,26 @@
     "Dodi deutet die Handabdrücke im Exemplarlager.",
     "Доди изучает следы рук в хранилище экземпляров."
   ],
-  "recollection.summary.stage-1-5-pre": ["带着阿莫抢先赶来的托比碰了屏障装置。", "โทบีพาอาโมวิ่งล่วงหน้ามาแล้วแตะเครื่องกั้น", "Toby kéo Amo chạy trước rồi chạm thiết bị chắn.", "Toby berlari lebih dulu bersama Amo dan menyentuh alat penghalang.", "Toby se adelanta con Amo y toca el dispositivo de barrera.", "Toby se adianta com Amo e toca o dispositivo de barreira.", "Toby eilt mit Amo voraus und berührt das Barrieregerät.", "Тоби с Амо бегут вперёд, и Тоби задевает устройство барьера."],
-  "recollection.summary.stage-1-5-post": ["托比偷偷扶正倒下的设备时被发现，阿莫先从侧门溜走了。", "โทบีถูกจับได้ขณะแอบตั้งอุปกรณ์ที่ล้ม ส่วนอาโมชิ่งออกประตูข้างไปก่อน", "Toby bị bắt gặp lén dựng lại thiết bị đã đổ, còn Amo lẻn ra cửa hông trước.", "Toby ketahuan diam-diam menegakkan peralatan yang jatuh, sementara Amo lebih dulu menyelinap lewat pintu samping.", "Sorprenden a Toby recolocando el equipo caído, mientras Amo se escabulle antes por la puerta lateral.", "Toby é pega recolocando o equipamento derrubado, e Amo escapa antes pela porta lateral.", "Toby wird beim heimlichen Aufrichten der Geräte erwischt, während Amo schon durch die Seitentür verschwindet.", "Тоби замечают за попыткой незаметно поднять оборудование, а Амо первой ускользает через боковую дверь."],
+  "recollection.summary.stage-1-5-pre": [
+    "独自抢先赶来的托比碰了屏障装置。",
+    "โทบีวิ่งล่วงหน้ามาคนเดียวแล้วแตะเครื่องกั้น",
+    "Toby chạy trước một mình rồi chạm thiết bị chắn.",
+    "Toby berlari sendirian dan menyentuh alat penghalang.",
+    "Toby se adelanta y toca el dispositivo de barrera.",
+    "Toby se adianta sozinha e toca o dispositivo de barreira.",
+    "Toby eilt allein voraus und berührt das Barrieregerät.",
+    "Тоби бежит вперёд и задевает устройство барьера."
+  ],
+  "recollection.summary.stage-1-5-post": [
+    "托比偷偷扶正倒下的设备时被发现了。",
+    "โทบีถูกจับได้ขณะแอบตั้งอุปกรณ์ที่ล้ม",
+    "Toby bị bắt gặp lén dựng lại thiết bị đã đổ.",
+    "Toby ketahuan diam-diam menegakkan peralatan yang jatuh.",
+    "Sorprenden a Toby recolocando el equipo caído.",
+    "Toby é pega recolocando o equipamento derrubado.",
+    "Toby wird beim heimlichen Aufrichten der Geräte erwischt.",
+    "Тоби замечают за попыткой незаметно поднять оборудование."
+  ],
   "recollection.summary.stage-1-6-post": [
     "修复的天线首次传来城市的声音。",
     "เสียงเมืองส่งผ่านเสาอากาศที่ซ่อมแล้วเป็นครั้งแรก",
@@ -701,7 +719,16 @@
     "Koma öffnet die Zellen, und Raja von der Haftgruppe tritt heraus.",
     "Кома открывает камеры, и из них выходит Раджа из группы заключения."
   ],
-  "recollection.summary.stage-5-5-pre": ["在序列之间，拉贾让回收组两人退到后面，挡住去路。", "ในห้องลำดับชั้น ราจาไล่หน่วยเก็บกู้สองคนไปยืนข้างหลังแล้วขวางทาง", "Trong căn phòng thứ bậc, Raja đẩy hai người Đội Thu Hồi ra sau rồi chặn đường.", "Di Ruang Peringkat, Raja menyuruh dua anggota Regu Penjemput mundur lalu menghalangi jalan.", "En la Sala del Rango, Raja manda al fondo a dos del Escuadrón de Recuperación y bloquea el paso.", "Na Sala da Hierarquia, Raja manda duas do Esquadrão de Recuperação para trás e bloqueia o caminho.", "Im Raum der Rangfolge schickt Raja zwei vom Bergungstrupp nach hinten und stellt sich in den Weg.", "В комнате старшинства Раджа отправляет двоих из отряда возврата назад и преграждает путь."],
+  "recollection.summary.stage-5-5-pre": [
+    "在序列之间，拉贾独自挡住去路。",
+    "ในห้องลำดับชั้น ราจาขวางทางอยู่เพียงลำพัง",
+    "Trong căn phòng thứ bậc, Raja một mình chặn đường.",
+    "Di Ruang Peringkat, Raja menghalangi jalan seorang diri.",
+    "En la Sala del Rango, Raja bloquea el paso en solitario.",
+    "Na Sala da Hierarquia, Raja bloqueia o caminho sozinho.",
+    "Im Raum der Rangfolge stellt sich Raja allein in den Weg.",
+    "В комнате старшинства Раджа в одиночку преграждает путь."
+  ],
   "recollection.summary.stage-5-5-post": [
     "拉贾退下后，更深处传来哼歌声。",
     "ราจาถอยไป แล้วเสียงฮัมเพลงก็ลอยขึ้นมาจากข้างล่าง",

@@ -120,16 +120,16 @@
   "ru": "Если они дёргали каждую дверь, тревога тоже срабатывала. Капитан, идём осторожно!"
  },
  "dialogue.stage-1-5-pre.split.body": {
-  "en": "Ripa went another way, like Lady Koma told her. Me and Amo are more than enough!",
-  "ja": "リパはコマ様に言われたとおり別の道に行った。アモと二人で十分なんだから！",
-  "zh-Hans": "莉帕按柯玛大人的吩咐走别的路了。我和阿莫两个就够了！",
-  "th": "ริปาไปอีกทางตามที่ท่านโคมะสั่ง ฉันกับอาโมสองคนก็เหลือเฟือแล้ว!",
-  "vi": "Ripa đi đường khác theo lệnh chị Koma rồi. Ta với Amo hai đứa là thừa sức!",
-  "id": "Ripa lewat jalan lain sesuai perintah Kak Koma. Aku dan Amo berdua juga sudah cukup!",
-  "es": "Ripa se fue por otro camino, como mandó la jefa Koma. ¡Amo y yo nos bastamos!",
-  "pt-BR": "A Ripa foi por outro caminho, como a chefe Koma mandou. Eu e a Amo damos conta!",
-  "de": "Ripa ist einen anderen Weg gegangen, wie Chefin Koma gesagt hat. Amo und ich reichen völlig!",
-  "ru": "Рипа пошла другой дорогой, как велела госпожа Кома. Нам с Амо и вдвоём хватит!"
+  "en": "Amo and Ripa went another way, like Lady Koma told them. I'm more than enough on my own!",
+  "ja": "アモとリパはコマ様に言われたとおり別の道に行った。あたし一人で十分なんだから！",
+  "zh-Hans": "阿莫和莉帕按柯玛大人的吩咐走别的路了。我一个人就够了！",
+  "th": "อาโมกับริปาไปอีกทางตามที่ท่านโคมะสั่ง ฉันคนเดียวก็เหลือเฟือแล้ว!",
+  "vi": "Amo với Ripa đi đường khác theo lệnh chị Koma rồi. Một mình ta cũng thừa sức!",
+  "id": "Amo dan Ripa lewat jalan lain sesuai perintah Kak Koma. Aku sendirian juga sudah cukup!",
+  "es": "Amo y Ripa se fueron por otro camino, como mandó la jefa Koma. ¡Yo sola me basto!",
+  "pt-BR": "Amo e Ripa foram por outro caminho, como a chefe Koma mandou. Eu sozinha dou conta!",
+  "de": "Amo und Ripa sind einen anderen Weg gegangen, wie Chefin Koma gesagt hat. Ich allein reiche völlig!",
+  "ru": "Амо и Рипа пошли другой дорогой, как велела госпожа Кома. Мне и одной хватит!"
  },
  "dialogue.stage-1-5-pre.denial.body": {
   "en": "A-and I didn't touch that barrier device. It was already on.",
@@ -1138,41 +1138,5 @@
   "pt-BR": "Pra cidade! Com a Rexia junto, não tem nada a temer.",
   "de": "Auf in die Stadt! Mit Rexia an unserer Seite gibt es nichts zu fürchten.",
   "ru": "В город! С Рексией нам ничего не страшно."
- },
- "dialogue.stage-1-5-pre.ripped.body": {
-  "en": "…You didn't block it, you tore it off. I knew it.",
-  "ja": "……塞いだんじゃなくて、剥がしたんでしょ。そうだと思った。",
-  "zh-Hans": "……那不是堵上，是拆下来了吧。我就知道。",
-  "th": "…นั่นไม่ได้กั้น แต่พังมันออกมาต่างหาก รู้อยู่แล้วเชียว",
-  "vi": "…Đó đâu phải chặn, là giật tung ra thì có. Biết ngay mà.",
-  "id": "…Itu bukan dihalangi, tapi dijebol. Sudah kuduga.",
-  "es": "…No la bloqueaste, la arrancaste. Lo sabía.",
-  "pt-BR": "…Você não bloqueou, arrancou. Eu sabia.",
-  "de": "… Das hast du nicht versperrt, sondern rausgerissen. Wusste ich's doch.",
-  "ru": "…Ты её не заперла, а выломала. Так я и знала."
- },
- "dialogue.stage-1-5-pre.tagalong.body": {
-  "en": "…\"More than enough\" is just what Toby thinks. I only tagged along.",
-  "ja": "……十分って思ってるのはトビだけ。あたしはついてきただけ。",
-  "zh-Hans": "……觉得够了的只有托比。我只是跟着来的。",
-  "th": "…ที่ว่าเหลือเฟือน่ะ โทบีคิดไปเองคนเดียว ฉันแค่ตามมาเฉย ๆ",
-  "vi": "…Thừa sức là Toby nghĩ thế thôi. Tôi chỉ đi theo.",
-  "id": "…Yang bilang cukup itu cuma Toby. Aku cuma ikut.",
-  "es": "…Lo de «nos bastamos» lo piensa Toby. Yo solo vine detrás.",
-  "pt-BR": "…Quem acha que dá conta é a Toby. Eu só vim junto.",
-  "de": "… Dass wir reichen, denkt nur Toby. Ich bin bloß mitgekommen.",
-  "ru": "…Это Тоби так думает. Я просто увязалась следом."
- },
- "dialogue.stage-1-5-post.habit.body": {
-  "en": "…Toby always cleans up her own mess. That's just how she is. I'm heading out first.",
-  "ja": "……トビは散らかしたら必ず片付けるの。昔からそう。あたしは先に行くね。",
-  "zh-Hans": "……托比弄乱的东西一定会收拾好。一直都这样。我先走了。",
-  "th": "…โทบีทำรกเมื่อไหร่ก็ต้องเก็บทุกที เป็นแบบนี้มาตลอด ฉันไปก่อนนะ",
-  "vi": "…Toby bày bừa thì thế nào cũng dọn. Xưa nay vẫn vậy. Tôi đi trước đây.",
-  "id": "…Toby selalu membereskan yang dia berantakkan. Memang begitu dari dulu. Aku duluan.",
-  "es": "…Toby siempre recoge lo que desordena. Es así. Yo me voy yendo.",
-  "pt-BR": "…A Toby sempre arruma a bagunça que faz. Ela é assim. Eu vou na frente.",
-  "de": "… Toby räumt immer auf, was sie umwirft. So ist sie eben. Ich geh schon mal vor.",
-  "ru": "…Тоби всегда убирает за собой. Такая уж она. Я пошла."
  }
 }

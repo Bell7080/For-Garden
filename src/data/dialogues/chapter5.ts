@@ -58,29 +58,26 @@ export const STAGE_5_4_POST: DialogueStory = {
   ]),
 };
 
-/** 5-5 전 — 서열의 방. 라자가 회수조 둘을 뒤에 세우고 앞을 막는다. */
+/** 5-5 전 — 서열의 방. 라자가 혼자 앞을 막는다. */
 export const STAGE_5_5_PRE: DialogueStory = {
   id: "stage-5-5-pre",
   startNodeId: "room",
   backdrop: "detention",
   nodes: linear([
-    { id: "room", speaker: "", body: "바닥에는 분필로 그은 줄이 겹겹이 나 있었다. 감방 안에서 누가 누구 앞에 서는지 정하던 자리였다. 줄 맨 뒤에는 먼저 내려온 회수조 둘이 어정쩡하게 서 있었다.", standing: "raja", cast: [{ id: "mir", slot: "left" }, { id: "raja", slot: "center" }, { id: "pulsi", slot: "right" }], cue: "rumble" },
-    { id: "back", speaker: "라자", body: "회수조 꼬마들은 뒤로 서. 여기선 앞이 내 자리다.", standing: "raja", act: "lean" },
-    { id: "rank", speaker: "펄시", body: "전 서열 같은 거 몰라요~ 그냥 뒤에서 구경만 할게요.", standing: "pulsi", act: "hop" },
+    { id: "room", speaker: "", body: "바닥에는 분필로 그은 줄이 겹겹이 나 있었다. 감방 안에서 누가 누구 앞에 서는지 정하던 자리였다.", standing: "raja", cast: [{ id: "raja", slot: "center" }], cue: "rumble" },
     { id: "raja", speaker: "라자", body: "새로 왔으면 서열부터 정한다. 덤벼.", standing: "raja", act: "lean" },
-    { id: "mosana", speaker: "모사나", body: "당신은 뒤로 가. 저 팔은 내가 묶어 둘게.", standing: "mosana", cast: [{ id: "mosana", slot: "left" }, { id: "raja", slot: "center" }, { id: "pulsi", slot: "right" }], act: "nod" },
+    { id: "mosana", speaker: "모사나", body: "당신은 뒤로 가. 저 팔은 내가 묶어 둘게.", standing: "mosana", cast: [{ id: "mosana", slot: "left" }, { id: "raja", slot: "right" }], act: "nod" },
   ]),
 };
 
-/** 5-5 후 — 라자가 물러나고, 회수조 둘은 슬쩍 빠지며, 더 아래에서 콧노래가 들린다. */
+/** 5-5 후 — 라자가 물러나고, 더 아래에서 콧노래가 들린다. */
 export const STAGE_5_5_POST: DialogueStory = {
   id: "stage-5-5-post",
   startNodeId: "down",
   backdrop: "detention",
   nodes: linear([
-    { id: "down", speaker: "라자", body: "…서열은 너희가 위다. 오늘만.", standing: "raja", cast: [{ id: "mir", slot: "left" }, { id: "raja", slot: "center" }, { id: "pulsi", slot: "right" }], act: "faint" },
-    { id: "slip", speaker: "미르", body: "앗, 줄 맨 앞이 바뀌었네요! 그럼 저희는 간부님한테 보고하러 갈게요!", standing: "mir", act: "hopTwice" },
-    { id: "hum", speaker: "", body: "더 깊은 곳에서 콧노래가 올라왔다. 냄비 뚜껑이 달그락거리는 소리도 섞여 있었다.", cast: [{ id: "raja", slot: "center" }], leave: "dash", cue: "rumble" },
+    { id: "down", speaker: "라자", body: "…서열은 너희가 위다. 오늘만.", standing: "raja", cast: [{ id: "raja", slot: "center" }], act: "faint" },
+    { id: "hum", speaker: "", body: "더 깊은 곳에서 콧노래가 올라왔다. 냄비 뚜껑이 달그락거리는 소리도 섞여 있었다.", cue: "rumble" },
     { id: "voice", speaker: "???", body: "라자~ 밥 식는다~ 손님 오셨으면 같이 데려오고~", cast: [{ id: "raja", slot: "left" }, { id: "magasa", slot: "right", veiled: true }] },
     { id: "raja2", speaker: "라자", body: "…먼저 드십시오.", standing: "raja", act: "shrink" },
   ]),

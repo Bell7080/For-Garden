@@ -111,18 +111,18 @@ describe("stage enemy design", () => {
      * (`ENCOUNTER_ROLE.elite`)의 체력·공격 배수가 낸다.
      */
     expect(ladder).toEqual([
-      // 「적은 적이다」(2026-11-12): 적은 등급마다 다른 속도(R 2.5 · SR 2.75 · SSR 3.0%)로 자라, 예전 세기를
-      // 넘지 않는 가장 높은 레벨로 옮겼다. 1장은 돌파 문턱(LV.21) 아래라 모두 돌파 0이다.
+      // 장마다 두 벽(2026-11-27): 1~4는 막 시작한 연구원이 배치·궁극기를 틀려도 이기게 1·2·3·4, 1-5 토비가 첫 벽,
+      // 1-6에서 내려섰다 다시 올라 1-10 코마가 둘째 벽이다. 1장은 돌파 문턱(LV.21) 아래라 모두 돌파 0이다.
+      { 아모: [1, 0], 토비: [1, 0], 리파: [1, 0] },
+      { 아모: [2, 0], 토비: [2, 0], 리파: [2, 0] },
       { 아모: [3, 0], 토비: [3, 0], 리파: [3, 0] },
-      { 아모: [6, 0], 토비: [6, 0], 리파: [6, 0] },
-      { 아모: [9, 0], 토비: [9, 0], 리파: [9, 0] },
-      { 아모: [11, 0], 토비: [11, 0], 리파: [11, 0] },
-      { 토비: [15, 0] },
+      { 아모: [4, 0], 토비: [4, 0], 리파: [4, 0] },
+      { 토비: [19, 0] },
+      { 아모: [10, 0], 토비: [10, 0], 리파: [10, 0] },
+      { 아모: [12, 0], 토비: [12, 0], 리파: [12, 0] },
+      { 아모: [13, 0], 토비: [13, 0], 리파: [13, 0] },
       { 아모: [15, 0], 토비: [15, 0], 리파: [15, 0] },
-      { 아모: [16, 0], 토비: [16, 0], 리파: [16, 0] },
-      { 아모: [18, 0], 토비: [18, 0], 리파: [18, 0] },
-      { 아모: [19, 0], 토비: [19, 0], 리파: [19, 0] },
-      { 코마: [19, 0] },
+      { 코마: [20, 0] },
     ]);
     /*
      * **레벨은 관문을 따라 내려가지 않는다.** 1-10까지 마지막 관문이 직전보다 쉬운 구간이
@@ -239,21 +239,28 @@ describe("stage enemy design", () => {
     }
   });
 
-  it("적 레벨은 관문 순서를 따라 내려가지 않는다", () => {
+  it("장마다 두 벽 — 절반 안에서는 오르고, 벽은 그 절반보다 높고, 벽을 지나면 내려선다", () => {
     /*
-     * 레벨이 뒤로 가면 새 구역이 직전 구역보다 약해 곡선이 끊긴다.
-     *
-     * **정예 관문은 이 사다리 밖이다.** 혼자 서는 몫을 유형 배수가 내므로 같은 레벨이라도
-     * 훨씬 무겁다 — 그 수를 잡졸의 줄에 끼워 비교하면 다음 관문이 언제나 "약해졌다"로 읽힌다.
+     * **장마다 벽이 둘이다**(응태 결정 2026-11-27). X-1~X-4와 X-6~X-9는 그 안에서 내려가지 않고,
+     * X-5(중간 보스)·X-10(메인 보스)은 앞 절반의 어느 관문보다 낮게 서지 않는다. 벽을 지난 관문은
+     * 그 벽보다 높게 서지 않는다 — 다음 장의 1도 앞 장의 10보다 높지 않다.
      */
-    let previous = 0;
-    for (const stage of battles) {
-      for (const enemy of stage.enemies) expect(Number.isInteger(enemy.level), stage.id).toBe(true);
-      if (stage.kind === "battle" && stage.elite === true) continue;
-      // 적은 적이다 — 태생 층 없이 레벨 하나가 세기라 그대로 비교한다.
-      const level = Math.max(...stage.enemies.map((enemy) => enemy.level));
-      expect(level, stage.id).toBeGreaterThanOrEqual(previous);
-      previous = Math.max(previous, level);
+    const levelOf = (chapter: number, order: number) => {
+      const stage = battles.find((item) => item.chapter === chapter && item.chapterOrder === order && !(item.kind === "battle" && item.sub));
+      return Math.max(...(stage?.enemies ?? []).map((enemy) => enemy.level));
+    };
+    for (const stage of battles) for (const enemy of stage.enemies) expect(Number.isInteger(enemy.level), stage.id).toBe(true);
+    for (let chapter = 1; chapter <= 9; chapter += 1) {
+      for (const [from, wall] of [[1, 5], [6, 10]] as const) {
+        for (let order = from + 1; order < wall; order += 1) {
+          expect(levelOf(chapter, order), `${chapter}-${order}`).toBeGreaterThanOrEqual(levelOf(chapter, order - 1));
+        }
+        for (let order = from; order < wall; order += 1) {
+          expect(levelOf(chapter, wall), `${chapter}-${wall} ≥ ${chapter}-${order}`).toBeGreaterThanOrEqual(levelOf(chapter, order));
+        }
+      }
+      expect(levelOf(chapter, 6), `${chapter}-6`).toBeLessThanOrEqual(levelOf(chapter, 5));
+      if (chapter < 9) expect(levelOf(chapter + 1, 1), `${chapter + 1}-1`).toBeLessThanOrEqual(levelOf(chapter, 10));
     }
   });
 
@@ -273,8 +280,8 @@ describe("stage enemy design", () => {
       expect(enemy.breakthrough).toBeGreaterThanOrEqual(0);
       expect(enemy.breakthrough).toBeLessThanOrEqual(BREAKTHROUGH_CAP);
       expect(enemy.level).toBeGreaterThanOrEqual(1);
-      // 9장 일반 적은 63까지 오르고, 정예도 렐릭 상한 100은 넘지 않는다.
-      expect(enemy.level).toBeLessThanOrEqual(stage.elite ? 100 : stage.chapter === 9 ? 63 : 60);
+      // 9장 일반 적은 70까지 오르고, 정예도 렐릭 상한 100은 넘지 않는다.
+      expect(enemy.level).toBeLessThanOrEqual(stage.elite ? 100 : stage.chapter === 9 ? 70 : 60);
     }
   });
 
@@ -331,8 +338,8 @@ describe("stage enemy design", () => {
     expect(sub.rewards.repeatClearCheesecake).toBe(0);
     // 모든 서브(이야기·전투, 어느 장이든)의 초회 젬은 50 하나다.
     for (const gems of Object.values(SUB_STORY_GEM_REWARDS)) expect(gems).toBe(50);
-    // 아모·리파 정예 둘이 1-8(LV.18)보다 한 칸 낮은 LV.17로 선다.
-    expect(sub.enemies.map(({ relicId, level }) => [relicId, level])).toEqual([["amo", 17], ["ripa", 17]]);
+    // 아모·리파 정예 둘이 1-8(LV.13)보다 한 칸 낮은 LV.12로 선다.
+    expect(sub.enemies.map(({ relicId, level }) => [relicId, level])).toEqual([["amo", 12], ["ripa", 12]]);
     expect(sub.elite).toBe(true);
     // 선행 목록에 들지 않아 본편이 막히지 않고, 「다음 단계」는 본편의 다음이다.
     expect(STAGES.some((stage) => stage.prerequisiteStageIds.includes(sub.id))).toBe(false);

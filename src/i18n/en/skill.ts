@@ -383,7 +383,7 @@ export const SKILL_EN = {
   "skill.ferocity.huntInstinct": "During frenzy, [[basic-attack|Basic Attacks]] stack {stacks} [[intimidation|Intimidation]] at a time, and immunity after [[fear|Fear]] ends is shortened to {seconds}s.",
   "skill.breakthrough.effect.basic.scoldTaunt": "Enemies hit by \"{name}\" are [[taunt|Taunted]] for {seconds}s.",
   "skill.breakthrough.effect.basic.clawBleed": "When \"{name}\" lands its periodic critical hit, the target gains [[bleed|Bleed]].",
-  "skill.breakthrough.effect.basic.windStep": "Allies who receive Ultimate gauge from \"{name}\" gain {percent}% [[attack-speed|Attack Speed]] for {seconds}s. Allies already under [[tailwind|Tailwind]] are skipped.",
+  "skill.breakthrough.effect.basic.windStep": "Allies who receive Ultimate gauge from \"{name}\" gain {percent}% [[attack-speed|Attack Speed]] for {seconds}s. Stacks with [[tailwind|Tailwind]].",
   "skill.breakthrough.effect.ultimate.afterimageSlash": "{seconds}s after \"{name}\" hits, an afterimage slashes the same enemy once more at {percent}% power. It does nothing if the enemy has already fallen.",
   "skill.breakthrough.effect.ultimate.gustEnergy": "When \"{name}\" is cast, every living ally gains {energy} Ultimate gauge.",
   "skill.breakthrough.effect.ferocity.frenzyClaws": "During [[ferocity|Frenzy]], the periodic critical of \"{name}\" comes every {to} attacks instead of every {from}.",

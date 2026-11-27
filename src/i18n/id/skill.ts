@@ -381,7 +381,7 @@ export const SKILL_ID = {
   "skill.ferocity.huntInstinct": "Saat mengamuk, [[basic-attack|serangan dasar]] menumpuk {stacks} [[intimidation|Intimidasi]] sekaligus, dan kekebalan setelah [[fear|Ketakutan]] berakhir dipersingkat menjadi {seconds}d.",
   "skill.breakthrough.effect.basic.scoldTaunt": "Musuh yang terkena \"{name}\" di-[[taunt|provokasi]] selama {seconds} dtk.",
   "skill.breakthrough.effect.basic.clawBleed": "Saat 「{name}」 mengenai dengan kritikal berkala, target terkena [[bleed|Pendarahan]].",
-  "skill.breakthrough.effect.basic.windStep": "Sekutu yang menerima Energi Ultimate dari 「{name}」 mendapat {percent}% [[attack-speed|Kecepatan Serang]] selama {seconds} dtk. Sekutu yang sudah memiliki [[tailwind|Angin Buritan]] dilewati.",
+  "skill.breakthrough.effect.basic.windStep": "Sekutu yang menerima Energi Ultimate dari 「{name}」 mendapat {percent}% [[attack-speed|Kecepatan Serang]] selama {seconds} dtk. Bertumpuk dengan [[tailwind|Angin Buritan]].",
   "skill.breakthrough.effect.ultimate.afterimageSlash": "{seconds} dtk setelah 「{name}」 mengenai, bayangan menebas musuh yang sama sekali lagi dengan {percent}% kekuatan. Tidak menebas jika musuh sudah tumbang.",
   "skill.breakthrough.effect.ultimate.gustEnergy": "Saat 「{name}」 digunakan, semua sekutu hidup mendapat {energy} Energi Ultimate.",
   "skill.breakthrough.effect.ferocity.frenzyClaws": "Selama [[ferocity|Amukan]], kritikal berkala 「{name}」 muncul setiap {to} serangan, bukan setiap {from}.",

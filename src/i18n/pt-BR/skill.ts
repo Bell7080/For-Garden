@@ -381,7 +381,7 @@ export const SKILL_PT_BR = {
   "skill.ferocity.huntInstinct": "Durante o frenesi, os [[basic-attack|ataques básicos]] acumulam {stacks} cargas de [[intimidation|Intimidação]] por vez, e a imunidade após o [[fear|Medo]] cai para {seconds} s.",
   "skill.breakthrough.effect.basic.scoldTaunt": "Inimigos atingidos por \"{name}\" ficam [[taunt|provocados]] por {seconds} s.",
   "skill.breakthrough.effect.basic.clawBleed": "Quando 「{name}」 acerta com o crítico periódico, o alvo sofre [[bleed|Sangramento]].",
-  "skill.breakthrough.effect.basic.windStep": "Os aliados que recebem Energia de Suprema de 「{name}」 ganham {percent}% de [[attack-speed|Velocidade de ataque]] por {seconds} s. Aliados que já têm [[tailwind|Vento a favor]] são ignorados.",
+  "skill.breakthrough.effect.basic.windStep": "Os aliados que recebem Energia de Suprema de 「{name}」 ganham {percent}% de [[attack-speed|Velocidade de ataque]] por {seconds} s. Acumula com [[tailwind|Vento a favor]].",
   "skill.breakthrough.effect.ultimate.afterimageSlash": "{seconds} s depois de 「{name}」 acertar, uma imagem residual corta o mesmo inimigo mais uma vez com {percent}% de poder. Não corta se o inimigo já caiu.",
   "skill.breakthrough.effect.ultimate.gustEnergy": "Ao usar 「{name}」, todos os aliados vivos ganham {energy} de Energia de Suprema.",
   "skill.breakthrough.effect.ferocity.frenzyClaws": "Durante o [[ferocity|Frenesi]], o crítico periódico de 「{name}」 ocorre a cada {to} ataques em vez de a cada {from}.",

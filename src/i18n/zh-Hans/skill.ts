@@ -381,7 +381,7 @@ export const SKILL_ZH_HANS = {
   "skill.ferocity.huntInstinct": "暴走期间，[[basic-attack|普通攻击]]每次叠加{stacks}层[[intimidation|威压]]，[[fear|恐惧]]结束后的免疫缩短为{seconds}秒。",
   "skill.breakthrough.effect.basic.scoldTaunt": "被「{name}」击中的敌人会被[[taunt|嘲讽]]{seconds}秒。",
   "skill.breakthrough.effect.basic.clawBleed": "「{name}」以周期暴击命中时，使被击中的敌人[[bleed|出血]]。",
-  "skill.breakthrough.effect.basic.windStep": "获得「{name}」分给的必杀技能量的队友，{seconds}秒内[[attack-speed|攻击速度]]提升{percent}%。已有[[tailwind|顺风]]的队友不受影响。",
+  "skill.breakthrough.effect.basic.windStep": "获得「{name}」分给的必杀技能量的队友，{seconds}秒内[[attack-speed|攻击速度]]提升{percent}%。可与[[tailwind|顺风]]叠加。",
   "skill.breakthrough.effect.ultimate.afterimageSlash": "「{name}」命中{seconds}秒后，残影会再斩同一敌人一次，威力为{percent}%。敌人已倒下则不会触发。",
   "skill.breakthrough.effect.ultimate.gustEnergy": "施放「{name}」的瞬间，所有存活队友获得{energy}必杀技能量。",
   "skill.breakthrough.effect.ferocity.frenzyClaws": "[[ferocity|暴走]]期间，「{name}」的周期暴击由每{from}次攻击缩短为每{to}次攻击。",

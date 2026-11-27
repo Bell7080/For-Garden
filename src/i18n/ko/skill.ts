@@ -450,7 +450,7 @@ export const SKILL_KO = {
   "skill.ferocity.huntInstinct": "폭주 중 [[basic-attack|기본 공격]]이 [[intimidation|위압]]을 {stacks}겹씩 쌓고, [[fear|공포]]가 풀린 뒤의 면역이 {seconds}초로 짧아진다.",
   "skill.breakthrough.effect.basic.scoldTaunt": "「{name}」에 맞은 적을 {seconds}초 동안 [[taunt|도발]]한다.",
   "skill.breakthrough.effect.basic.clawBleed": "「{name}」{name!이} 주기 치명타로 적중하면 맞은 적에게 [[bleed|출혈]]을 남긴다.",
-  "skill.breakthrough.effect.basic.windStep": "「{name}」{name!이} 나눠 준 궁극기 게이지를 받은 아군은 {seconds}초 동안 [[attack-speed|공격 속도]]가 {percent}% 오른다. 이미 [[tailwind|순풍]]이 걸린 아군은 제외한다.",
+  "skill.breakthrough.effect.basic.windStep": "「{name}」{name!이} 나눠 준 궁극기 게이지를 받은 아군은 {seconds}초 동안 [[attack-speed|공격 속도]]가 {percent}% 오른다. [[tailwind|순풍]]과 함께 걸린다.",
   "skill.breakthrough.effect.ultimate.afterimageSlash": "「{name}」{name!이} 적중하고 {seconds}초 뒤 잔상이 같은 적을 한 번 더 벤다. 위력은 {percent}%이고 적이 이미 쓰러졌으면 베지 않는다.",
   "skill.breakthrough.effect.ultimate.gustEnergy": "「{name}」{name!을} 쓰는 순간 살아 있는 아군 모두가 궁극기 게이지를 {energy} 얻는다.",
   "skill.breakthrough.effect.ferocity.frenzyClaws": "[[ferocity|폭주]] 중 「{name}」의 치명타 주기가 {from}번째 공격에서 {to}번째 공격마다로 짧아진다.",

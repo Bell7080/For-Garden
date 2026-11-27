@@ -381,7 +381,7 @@ export const SKILL_TH = {
   "skill.ferocity.huntInstinct": "ระหว่างคลั่ง [[basic-attack|การโจมตีปกติ]]จะสะสม[[intimidation|ความข่มขวัญ]]ครั้งละ {stacks} ชั้น และภูมิคุ้มกันหลัง[[fear|ความหวาดกลัว]]หมดจะสั้นลงเหลือ {seconds} วินาที",
   "skill.breakthrough.effect.basic.scoldTaunt": "ศัตรูที่โดน \"{name}\" จะถูก[[taunt|ยั่วยุ]] {seconds} วินาที",
   "skill.breakthrough.effect.basic.clawBleed": "เมื่อ「{name}」โดนคริติคอลตามรอบ ศัตรูที่ถูกโจมตีจะ[[bleed|เลือดไหล]]",
-  "skill.breakthrough.effect.basic.windStep": "พันธมิตรที่ได้รับพลังงานท่าไม้ตายจาก「{name}」จะมี[[attack-speed|ความเร็วโจมตี]]เพิ่มขึ้น {percent}% เป็นเวลา {seconds} วินาที พันธมิตรที่มี[[tailwind|ลมส่ง]]อยู่แล้วจะไม่ได้รับ",
+  "skill.breakthrough.effect.basic.windStep": "พันธมิตรที่ได้รับพลังงานท่าไม้ตายจาก「{name}」จะมี[[attack-speed|ความเร็วโจมตี]]เพิ่มขึ้น {percent}% เป็นเวลา {seconds} วินาที ซ้อนกับ[[tailwind|ลมส่ง]]ได้",
   "skill.breakthrough.effect.ultimate.afterimageSlash": "หลัง「{name}」โดน {seconds} วินาที ภาพเงาจะฟันศัตรูตัวเดิมอีกครั้งด้วยพลัง {percent}% หากศัตรูล้มไปแล้วจะไม่ฟัน",
   "skill.breakthrough.effect.ultimate.gustEnergy": "ขณะใช้「{name}」 พันธมิตรที่มีชีวิตทุกตัวจะได้รับพลังงานท่าไม้ตาย {energy}",
   "skill.breakthrough.effect.ferocity.frenzyClaws": "ระหว่าง[[ferocity|คลั่ง]] คริติคอลตามรอบของ「{name}」จะเกิดทุก {to} ครั้งแทนทุก {from} ครั้ง",

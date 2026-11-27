@@ -405,7 +405,7 @@ export const SKILL_JA = {
   "skill.ferocity.huntInstinct": "暴走中、[[basic-attack|通常攻撃]]が[[intimidation|威圧]]を{stacks}重ずつ積み、[[fear|恐怖]]が解けた後の免疫が{seconds}秒に短くなる。",
   "skill.breakthrough.effect.basic.scoldTaunt": "「{name}」が当たった敵を{seconds}秒間[[taunt|挑発]]する。",
   "skill.breakthrough.effect.basic.clawBleed": "「{name}」が周期クリティカルで命中すると、当たった敵に[[bleed|出血]]を与える。",
-  "skill.breakthrough.effect.basic.windStep": "「{name}」が分け与えた必殺技ゲージを受けた味方は、{seconds}秒間[[attack-speed|攻撃速度]]が{percent}%上がる。すでに[[tailwind|追い風]]がかかっている味方は対象外。",
+  "skill.breakthrough.effect.basic.windStep": "「{name}」が分け与えた必殺技ゲージを受けた味方は、{seconds}秒間[[attack-speed|攻撃速度]]が{percent}%上がる。[[tailwind|追い風]]と重ねてかかる。",
   "skill.breakthrough.effect.ultimate.afterimageSlash": "「{name}」が命中して{seconds}秒後、残像が同じ敵をもう一度斬る。威力は{percent}%で、敵がすでに倒れていれば斬らない。",
   "skill.breakthrough.effect.ultimate.gustEnergy": "「{name}」を使う瞬間、生存している味方全員が必殺技ゲージを{energy}得る。",
   "skill.breakthrough.effect.ferocity.frenzyClaws": "[[ferocity|暴走]]中、「{name}」の周期クリティカルが{from}回目ではなく{to}回目の攻撃ごとになる。",

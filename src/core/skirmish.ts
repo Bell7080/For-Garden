@@ -198,6 +198,8 @@ export interface Fighter extends Combatant {
   traitHaste: { remaining: number; attackSpeedPercent: number; moveSpeedPercent: number; /** 칩의 시계가 읽는 한 바퀴(초). 계산에는 쓰지 않는다. */ total?: number } | null;
   /** 패시브 `killHaste`가 건 처치 가속. 룬 특성 가속(`traitHaste`)과 다른 슬롯이다. */
   killHaste: { remaining: number; attackSpeedPercent: number; moveSpeedPercent: number; total?: number } | null;
+  /** 스테라 평타 돌파(`windStep`)가 건 공격 가속. 순풍과 다른 슬롯이라 둘이 함께 곱해진다. */
+  windStep: { remaining: number; attackSpeedPercent: number; total: number; skillId: string } | null;
   /**
    * 룬 특성 「집념」이 세는 연속 타격 표적과 겹이다.
    *
@@ -1430,6 +1432,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     augmentResistancePercent: 0,
     traitHaste: null,
     killHaste: null,
+    windStep: null,
     traitStreakTargetId: null,
     traitStreakStacks: 0,
     traitStreakCarry: 0,
@@ -6453,6 +6456,10 @@ function expeditionAndKitBuffs(state: SkirmishState, fighter: Fighter): ActiveCo
     const haste = fighter.killHaste;
     push("kill-haste", "augment-kill-haste", "처치 가속", `공격 속도 +${haste.attackSpeedPercent}% · 이동 속도 +${haste.moveSpeedPercent}%`, timed(haste.remaining, haste.total));
   }
+  if (fighter.windStep) {
+    const step = fighter.windStep;
+    push("wind-step", step.skillId, "바람을 탄 걸음", `공격 속도 +${step.attackSpeedPercent}%`, timed(step.remaining, step.total));
+  }
   if (fighter.traitRegen) {
     const regen = fighter.traitRegen;
     push("trait-regen", "augment-regen", "지속 회복", `매초 체력 ${Math.round(regen.perSecond)} 회복`, timed(regen.remaining, regen.total));
@@ -6592,6 +6599,7 @@ function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: numb
   const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100)
     * (1 - frontlinePercent / 100);
   const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100)
+    * (1 + (fighter.windStep?.attackSpeedPercent ?? 0) / 100)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100)
     * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
     * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100)
@@ -7368,11 +7376,10 @@ function grantAllyEnergy(attacker: Fighter, skill: Skill, state: SkirmishState):
   if (amount <= 0) return;
   const allies = aliveFighters(state, attacker.side);
   for (const ally of allies) giveEnergy(ally, amount);
-  // 평타 돌파(`windStep`) — 게이지를 받은 아군에게 짧은 공격 속도 강화를 건다. 이미 순풍·오더가 걸린 아군은 덮지 않는다.
+  // 평타 돌파(`windStep`) — 게이지를 받은 아군에게 짧은 공격 속도 강화를 건다. 순풍과 다른 칸이라 함께 걸려 곱해지고, 다시 맞으면 시간만 새로 채운다.
   const step = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   if (step?.kind === "windStep") {
-    const buff: TeamBuff = { kind: "tailwind", attackSpeedPercent: step.attackSpeedPercent, moveSpeedPercent: 0, seconds: step.seconds, maxHpRegenPercentPerSecond: 0 };
-    for (const ally of allies) if (ally.tailwindFor <= 0) applyTeamBuff(ally, buff);
+    for (const ally of allies) ally.windStep = { remaining: step.seconds, attackSpeedPercent: step.attackSpeedPercent, total: step.seconds, skillId: attacker.def.basic.id };
   }
 }
 
@@ -11209,6 +11216,10 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       if (amount > 0) pushHeal(events, fighter, amount, "passive");
       const remaining = fighter.traitRegen.remaining - dt;
       fighter.traitRegen = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.traitRegen, remaining };
+    }
+    if (isFighterAlive(fighter) && fighter.windStep) {
+      const remaining = fighter.windStep.remaining - dt;
+      fighter.windStep = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.windStep, remaining };
     }
     // 처치 가속도 같은 공용 시계로 마른다.
     if (isFighterAlive(fighter) && fighter.killHaste) {

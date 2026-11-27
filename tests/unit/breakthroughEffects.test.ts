@@ -1085,18 +1085,21 @@ describe("스테라 한계 돌파", () => {
       return findFighter(state, "player-1")!;
     };
     const rexia = run(1);
-    expect(rexia.tailwindFor).toBeGreaterThan(0);
-    expect(rexia.tailwind?.kind === "tailwind" ? rexia.tailwind.attackSpeedPercent : 0).toBe(15);
-    expect(rexia.tailwind?.kind === "tailwind" ? rexia.tailwind.moveSpeedPercent : 1).toBe(0);
-    expect(run(0).tailwindFor).toBe(0);
+    expect(rexia.windStep?.attackSpeedPercent).toBe(15);
+    expect(rexia.windStep?.remaining).toBeCloseTo(4, 0);
+    expect(rexia.tailwindFor).toBe(0);
+    expect(run(0).windStep).toBeNull();
   });
 
-  it("은 이미 순풍이 걸린 아군을 약한 강화로 덮지 않는다(별 II)", () => {
+  it("은 순풍과 함께 걸려 공격 속도가 곱해진다(별 II)", () => {
     const state = stellaBattle(1);
     const rexia = findFighter(state, "player-1")!;
     rexia.tailwindFor = 8; rexia.tailwind = { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 10, maxHpRegenPercentPerSecond: 2 };
+    const before = currentAttackSpeed(rexia, state);
     afterFirstBasic(state);
     expect(rexia.tailwind?.kind === "tailwind" ? rexia.tailwind.attackSpeedPercent : 0).toBe(20);
+    expect(rexia.windStep?.attackSpeedPercent).toBe(15);
+    expect(currentAttackSpeed(rexia, state) / before).toBeCloseTo(1.15, 2);
   });
 
   it("은 궁극기를 쓰는 순간 아군 전원이 게이지를 25 얻는다(별 III)", () => {

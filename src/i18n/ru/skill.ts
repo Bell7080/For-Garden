@@ -381,7 +381,7 @@ export const SKILL_RU = {
   "skill.ferocity.huntInstinct": "В неистовстве [[basic-attack|обычные атаки]] накладывают по {stacks} зар. [[intimidation|Устрашения]], а иммунитет после [[fear|Страха]] сокращается до {seconds} с.",
   "skill.breakthrough.effect.basic.scoldTaunt": "Враги, пораженные «{name}», [[taunt|провоцируются]] на {seconds} с.",
   "skill.breakthrough.effect.basic.clawBleed": "Когда 「{name}」 попадает периодическим критом, цель получает [[bleed|кровотечение]].",
-  "skill.breakthrough.effect.basic.windStep": "Союзники, получившие от 「{name}」 энергию ульты, на {seconds} с получают +{percent}% [[attack-speed|скорости атаки]]. Союзники с [[tailwind|попутным ветром]] пропускаются.",
+  "skill.breakthrough.effect.basic.windStep": "Союзники, получившие от 「{name}」 энергию ульты, на {seconds} с получают +{percent}% [[attack-speed|скорости атаки]]. Суммируется с [[tailwind|попутным ветром]].",
   "skill.breakthrough.effect.ultimate.afterimageSlash": "Через {seconds} с после попадания 「{name}」 послеобраз ещё раз рубит того же врага с силой {percent}%. Если враг уже погиб, удара нет.",
   "skill.breakthrough.effect.ultimate.gustEnergy": "При использовании 「{name}」 все живые союзники получают {energy} энергии ульты.",
   "skill.breakthrough.effect.ferocity.frenzyClaws": "Во время [[ferocity|неистовства]] периодический крит 「{name}」 срабатывает каждые {to} атаки вместо каждых {from}.",

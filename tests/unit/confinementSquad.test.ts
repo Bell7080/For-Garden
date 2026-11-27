@@ -18,14 +18,14 @@ function run(state: ReturnType<typeof setup>["state"], seconds: number) {
 
 describe("감금조 정체성", () => {
   it("넷 모두 공멸이고 적 전용이다", () => {
-    for (const id of ["magasa", "noa", "raja", "carno"]) {
+    for (const id of ["magasa", "noa", "raja", "kar"]) {
       expect(getRelic(id).squad, id).toBe("annihilation");
       expect(getRelic(id).enemyOnly, id).toBe(true);
     }
     expect(getRelic("magasa").element).toBe("fire");
     expect(getRelic("noa").role).toBe("assassin");
     expect(getRelic("raja").role).toBe("tank");
-    expect(getRelic("carno").rarity).toBe("SSR");
+    expect(getRelic("kar").rarity).toBe("SSR");
   });
 });
 
@@ -166,7 +166,7 @@ describe("마가사 「다지기」 깊은 출혈", () => {
 
 describe("카르노 「구속복」", () => {
   it("체력 문턱마다 자물쇠가 풀리며 주위 적을 날려버린다", () => {
-    const { state, hero, foes } = setup("carno", ["toby"]);
+    const { state, hero, foes } = setup("kar", ["toby"]);
     foes[0].x = hero.x; foes[0].y = hero.y - 80;
     hero.hp = hero.maxHp * 0.55;
     run(state, 0.05);
@@ -175,14 +175,14 @@ describe("카르노 「구속복」", () => {
   });
 
   it("「구속 붕괴」 폭주 동안은 모든 자물쇠가 풀린 것으로 친다", () => {
-    const { hero } = setup("carno", ["toby"]);
+    const { hero } = setup("kar", ["toby"]);
     expect(effectiveLocksBroken(hero)).toBe(0);
     hero.ferocityFever = true;
     expect(effectiveLocksBroken(hero)).toBe(4);
   });
 
   it("풀린 자물쇠마다 방어력·저항력이 20%씩 오른다", () => {
-    const { state, hero } = setup("carno", ["toby"]);
+    const { state, hero } = setup("kar", ["toby"]);
     expect(hero.def.passive.restraintLocks?.defenseResistancePercentPerLock).toBe(20);
     const base = defensiveDefinition(hero, state).def.stats;
     hero.locksBroken = 2;

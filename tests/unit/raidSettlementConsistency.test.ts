@@ -17,7 +17,7 @@ import { EXPEDITION_BEST_SCORE_REWARD_STAGES } from "../../src/data/expedition";
 
 const start = Date.parse("2026-10-15T00:00:00Z");
 function setup(id = "audit-raid", time = start + 12 * 3600000) {
-  const state = createDefaultSession(); state.party = ["rex", "luka", "torika"]; state.party.forEach((id) => state.owned.add(id));
+  const state = createDefaultSession(); state.party = ["rexia", "luka", "torika"]; state.party.forEach((id) => state.owned.add(id));
   state.wallet.stamina = 60; state.staminaUpdatedAt = new Date(time).toISOString();
   state.raid.instances = [{ id, kind: "summon", difficulty: "easy", bossRelicId: "sukusuino", openedAt: new Date(start).toISOString(), endsAt: new Date(start + 86400000).toISOString(), summonedByMe: true, myDamage: 0, attemptsUsed: 0, settled: false }];
   let clock = time; let saved: string | null = null; let fail = false;
@@ -25,7 +25,7 @@ function setup(id = "audit-raid", time = start + 12 * 3600000) {
   const api = (target = state) => new FakeServer(target, { latencyMs: 0, now: () => new Date(clock), persistSession: (next) => saves.save(next) });
   return { state, api, saves, clock: (time: number) => { clock = time; }, fail: (value: boolean) => { fail = value; } };
 }
-const basics = ["rex", "luka", "torika"].map((actorId) => ({ actorId, elapsedMs: 0, kind: "basic" as const }));
+const basics = ["rexia", "luka", "torika"].map((actorId) => ({ actorId, elapsedMs: 0, kind: "basic" as const }));
 
 describe("레이드·원정 정산의 실제 지급량과 재접속", () => {
   it("지갑 상한·제출 재시도·재접속에서 점수와 순위는 유지하고 골드는 중복 지급하지 않는다", async () => {

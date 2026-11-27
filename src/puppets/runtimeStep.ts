@@ -61,7 +61,7 @@ export function puppetElapsedMs(rawDeltaMs: number, smoothedDeltaMs: number, loo
 
 /** Advance one Puppet through stable, editor-sized steps (at most PUPPET_MAX_STEPS_PER_FRAME) and return the last vertex buffer. */
 export function advancePuppet(puppet: Puppet, elapsedSeconds: number): Float32Array | null {
-  return stepPuppet(elapsedSeconds, (step) => puppet.update(step));
+  return stepPuppet(elapsedSeconds, (step, output) => puppet.update(step, { output }), () => puppet.flush());
 }
 
 /**
@@ -71,10 +71,20 @@ export function advancePuppet(puppet: Puppet, elapsedSeconds: number): Float32Ar
  * 정점은 정점 셰이더가 옮긴다. 그래서 느린 프레임에 서브스텝이 셋으로 늘어도 정점 일은 늘지 않는다.
  */
 export function advancePuppetSkin(puppet: Puppet, elapsedSeconds: number): PuppetSkinFrame | null {
-  return stepPuppet(elapsedSeconds, (step) => puppet.updateSkin(step));
+  return stepPuppet(elapsedSeconds, (step, output) => puppet.updateSkin(step, { output }), () => puppet.flushSkin());
 }
 
-function stepPuppet<T>(elapsedSeconds: number, advance: (step: number) => T | null): T | null {
+/**
+ * 서브스텝은 흔들림 적분을 위해 나누는 것이라 **결과는 마지막 걸음 것만 쓴다.** 그래서 앞 걸음은
+ * `output: false`로 최종 행렬·palette·정점 계산을 건너뛴다(PuppetForge v0.46.0). 시간·흔들림·이벤트·
+ * 블렌드는 그대로 흐르고, 마지막 걸음이 결과를 못 냈을 때(그 사이 동작이 멈췄다)만 `flush`가 건너뛴
+ * 걸음의 결과를 같은 값으로 만든다 — 예전의 `advance(step) ?? result`와 같은 프레임이 나온다.
+ */
+function stepPuppet<T>(
+  elapsedSeconds: number,
+  advance: (step: number, output: boolean) => T | null,
+  flush: () => T | null,
+): T | null {
   // Negative/non-finite deltas are not real elapsed time, so they must neither rewind nor poison the remainder.
   if (!Number.isFinite(elapsedSeconds) || elapsedSeconds <= 0) return null;
 
@@ -93,7 +103,10 @@ function stepPuppet<T>(elapsedSeconds: number, advance: (step: number) => T | nu
 
   // Substep size protects secondary integration; consuming every substep now keeps the coupled timeline truthful.
   for (let index = 0; index < stepCount; index += 1) {
-    result = advance(step) ?? result;
+    const last = index === stepCount - 1;
+    const next = advance(step, last);
+    if (next) result = next;
+    else if (last) result = flush() ?? result;
   }
   return result;
 }

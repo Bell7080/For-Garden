@@ -11,11 +11,11 @@ import type { Element } from "../core/types";
  * 몫으로만 자란다.
  */
 export const GUILD_GUARD_ROSTER_IDS: Readonly<Record<Element, readonly string[]>> = {
-  fire: ["raitia-fire", "pulsi", "toby"],
-  earth: ["raitia-earth", "mir", "amo"],
-  water: ["raitia-water", "neuri", "ripa"],
-  grass: ["raitia-grass", "koma", "atra"],
-  wind: ["raitia-wind", "ikanixia"],
+  fire: ["favia", "pulsi", "toby"],
+  earth: ["silia", "mir", "amo"],
+  water: ["guttia", "neuri", "ripa"],
+  grass: ["viria", "koma", "atra"],
+  wind: ["ventia", "ikanixia"],
 };
 
 export function guildGuardRoster(element: Element): GuildGuardRoster {

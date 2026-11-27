@@ -9,7 +9,7 @@ import { passiveDescription } from "../../src/ui/skillPresentation";
 const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 
 describe("코아틀 — 셋째 레이드 보스", () => {
-  const boss = getRelic("quetzalcoatlus");
+  const boss = getRelic("koatl");
 
   it("바람 속성의 전사이고 공멸의 적이다", () => {
     expect(boss.element).toBe("wind");
@@ -20,7 +20,7 @@ describe("코아틀 — 셋째 레이드 보스", () => {
   });
 
   it("레이드 보스 풀에 서고 전신·SD 원화가 모두 연결된다", () => {
-    expect(RAID_BOSS_POOL).toContain("quetzalcoatlus");
+    expect(RAID_BOSS_POOL).toContain("koatl");
     expect(portraitAssetFor(boss.portraitAssetId).url).toContain("raid_003.zip");
     expect(ENEMY_SD_ASSETS_BY_ID[boss.id].url).toContain("raidSD_003.zip");
   });
@@ -77,7 +77,7 @@ describe("코아틀 — 셋째 레이드 보스", () => {
   it("레이드 보스 자리에 세우면 강인함을 가진 보스로 서고, 30초 전투가 끝까지 돈다", () => {
     const def = raidBossDef(boss);
     expect(def.encounterRole).toBe("boss");
-    const state = createSkirmish([getRelic("torika"), getRelic("amo"), getRelic("rex")], [def], ARENA);
+    const state = createSkirmish([getRelic("torika"), getRelic("amo"), getRelic("rexia")], [def], ARENA);
     for (let frame = 0; frame < 60 * 30 && state.phase === "fight"; frame += 1) stepSkirmish(state, 1 / 60);
     expect(state.fighters.every((fighter) => Number.isFinite(fighter.hp))).toBe(true);
   });

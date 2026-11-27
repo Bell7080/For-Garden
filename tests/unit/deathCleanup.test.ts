@@ -21,11 +21,11 @@ const deaths = (events: SkirmishEvent[], id: string): number => events.filter((e
  */
 describe("사망 정리", () => {
   it("노도니아가 아군 몫을 대신 받다 쓰러져도 사망 사건이 나온다", () => {
-    const state = createSkirmish([getRelic("nodonia"), getRelic("rex")], [getRelic("raitia-grass")], ARENA);
-    const [nodonia, rex] = state.fighters.filter(({ side }) => side === "player");
+    const state = createSkirmish([getRelic("nodonia"), getRelic("rexia")], [getRelic("viria")], ARENA);
+    const [nodonia, rexia] = state.fighters.filter(({ side }) => side === "player");
     nodonia.bulwark = { remaining: 5, total: 5, percent: 100, regenPercentPerSecond: 0, passiveHealBonusPercent: 0, tickIn: 1, skillId: "test", name: "test", radius: null };
     nodonia.hp = 1;
-    rex.maxHp = rex.hp = 1_000_000_000;
+    rexia.maxHp = rexia.hp = 1_000_000_000;
     const events: SkirmishEvent[] = [];
     for (let i = 0; i < 400 && nodonia.hp > 0; i += 1) events.push(...stepSkirmish(state, 0.05, () => 0.5));
     for (let i = 0; i < 4; i += 1) events.push(...stepSkirmish(state, 0.05, () => 0.5));
@@ -34,7 +34,7 @@ describe("사망 정리", () => {
   });
 
   it("어느 길로 쓰러졌든 다음 조각에서 한 번만 알리고, 이미 알린 몸은 다시 알리지 않는다", () => {
-    const state = createSkirmish([getRelic("rex")], [getRelic("raitia-grass"), getRelic("raitia-grass")], ARENA);
+    const state = createSkirmish([getRelic("rexia")], [getRelic("viria"), getRelic("viria")], ARENA);
     const enemy = state.fighters.find(({ side }) => side === "enemy")!;
     stepSkirmish(state, 0.05);
     enemy.hp = 0;
@@ -45,7 +45,7 @@ describe("사망 정리", () => {
   });
 
   it("수호전은 점수를 거둔 시체를 판에서 걷어 낸다 — 살아 있는 몸만 남고 점수는 그대로 쌓인다", () => {
-    const state = createGuildGuardSkirmish(lineup(["nodonia", "rex", "ark", "terisa", "stella", "mette"], 60), getRelic, guildGuardRoster("fire"));
+    const state = createGuildGuardSkirmish(lineup(["nodonia", "rexia", "ark", "terisa", "stella", "mette"], 60), getRelic, guildGuardRoster("fire"));
     let kills = 0;
     for (let i = 0; i < 20 * 120 && state.phase === "fight"; i += 1) stepSkirmish(state, 0.05, () => 0.5);
     kills = state.horde!.kills;
@@ -57,7 +57,7 @@ describe("사망 정리", () => {
   });
 
   it("같은 시드의 수호전은 늘 같은 점수다", () => {
-    const ids = ["nodonia", "rex", "ark", "terisa", "stella", "mette"];
+    const ids = ["nodonia", "rexia", "ark", "terisa", "stella", "mette"];
     expect(replayGuildGuard(lineup(ids, 40), getRelic, guildGuardRoster("water"), "seed-c"))
       .toEqual(replayGuildGuard(lineup(ids, 40), getRelic, guildGuardRoster("water"), "seed-c"));
   }, 60_000);

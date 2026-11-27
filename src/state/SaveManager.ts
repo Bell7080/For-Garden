@@ -64,7 +64,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 일반·QA·자동화는 같은 origin에서도 서로 다른 로컬 기록을 사용한다. */
 export const SAVE_STORAGE_KEY = LOCAL_SAVE_STORAGE_KEYS[LOCAL_SAVE_FLAVOR];
-export const CURRENT_SAVE_VERSION = 52;
+export const CURRENT_SAVE_VERSION = 53;
 
 /**
  * 연구도는 기간마다 상한이 다르다(일일 100 · 주간 500). 상한이 120 하나이던 때의 저장은 일일
@@ -91,6 +91,36 @@ const LEGACY_SAVED_RELIC_ID_MAP: Readonly<Record<string, string>> = {
   // 새 안킬로사우루스 개체(안카)와 갈리도록 이름과 같은 ID로 옮긴다.
   anky: "torika",
 };
+
+/**
+ * v53: 표시 이름과 갈려 있던 렐릭 ID를 이름에 맞춘다(응태 결정 2026-11-27 — 렉시아 `rex` → `rexia` 등).
+ * ID는 보유·성장·편성뿐 아니라 이야기·관찰 문답·스킬·배너 ID의 한 마디로도 박혀 있어, 필드를 하나씩
+ * 고르면 새 필드가 생길 때마다 빠뜨린다. 그래서 저장 전체의 **키와 문자열**에서 앞뒤가 영숫자가 아닌
+ * 낱말로 선 옛 ID만 바꾼다 — 코드가 같은 규칙으로 바뀌었으므로 둘이 갈리지 않는다. 사람이 적은 글
+ * (닉네임·한 줄 소개 등)은 건드리지 않는다. 운영 DB는 같은 표를 `20261203000000_relic_id_rename.sql`이 옮긴다.
+ */
+export const RENAMED_RELIC_IDS_V53: Readonly<Record<string, string>> = {
+  "raitia-grass": "viria", "raitia-water": "guttia", "raitia-fire": "favia", "raitia-earth": "silia", "raitia-wind": "ventia",
+  quetzalcoatlus: "koatl", spino: "spina", dodo: "dodi", carno: "kar", deina: "dei", nokan: "gigano", eunte: "argen", rex: "rexia",
+};
+const RENAMED_RELIC_TOKEN = new RegExp(`(?<![A-Za-z0-9_])(${Object.keys(RENAMED_RELIC_IDS_V53).sort((a, b) => b.length - a.length).join("|")})(?![A-Za-z0-9_])`, "g");
+/** 사람이 적은 글이 드는 키 — 그 아래는 낱말이 옛 ID와 같아도 바꾸지 않는다. */
+const FREE_TEXT_KEYS = new Set(["nickname", "bio", "intro", "introduction", "greeting", "message", "displayName", "name", "body", "text", "title", "memo"]);
+export function renameRelicTokens(value: string): string {
+  return value.replace(RENAMED_RELIC_TOKEN, (token) => RENAMED_RELIC_IDS_V53[token] ?? token);
+}
+function migrateRenamedRelicIdsV53(value: unknown): unknown {
+  if (typeof value === "string") return renameRelicTokens(value);
+  if (Array.isArray(value)) return value.map(migrateRenamedRelicIdsV53);
+  if (!value || typeof value !== "object") return value;
+  const result: Record<string, unknown> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    const next = renameRelicTokens(key);
+    if (Object.hasOwn(result, next)) throw new SaveDataError(`구형/신규 렐릭 ID가 함께 있습니다: ${next}`);
+    result[next] = FREE_TEXT_KEYS.has(key) ? entry : migrateRenamedRelicIdsV53(entry);
+  }
+  return result;
+}
 
 /** 렐릭 ID가 박혀 있는 관찰 문답 ID(`anky-meal-eager`)의 머리말 치환표다. */
 const LEGACY_OBSERVATION_PREFIX_MAP: Readonly<Record<string, string>> = { "anky-": "torika-" };
@@ -387,9 +417,12 @@ export class SaveManager {
     if (!input || typeof input !== "object") throw new SaveDataError("저장 데이터가 객체가 아닙니다.");
     const source = input as Record<string, unknown>;
     // ID 치환은 현재 계약 검증보다 먼저 실행하되, v32 데이터에는 런타임 별칭처럼 적용하지 않는다.
-    const legacy = source.saveVersion === undefined || Number(source.saveVersion) < CURRENT_SAVE_VERSION
-      ? migrateSavedRelicIds(source)
+    const renamed = source.saveVersion === undefined || Number(source.saveVersion) < 53
+      ? migrateRenamedRelicIdsV53(source) as Record<string, unknown>
       : source;
+    const legacy = renamed.saveVersion === undefined || Number(renamed.saveVersion) < CURRENT_SAVE_VERSION
+      ? migrateSavedRelicIds(renamed)
+      : renamed;
     // v34에서 기본 해금 정책을 도입했다. 모든 버전의 기존 목록과 정적 기본값을 합쳐 기존
     // 플레이어 및 기본값이 빠진 현행 로드도 같은 정규형으로 만들며 Set으로 순서를 보존해 중복을 없앤다.
     const savedRelicSkinIds = Number(legacy.saveVersion) >= 33 && Array.isArray(legacy.ownedRelicSkinIds) ? legacy.ownedRelicSkinIds : [];
@@ -637,7 +670,7 @@ export class SaveManager {
       .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil"));
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel, claimedMailIds, attendance, raidTicketDrops, chestForge, delophyHunt, shuteFishing, achievements, tutorial } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel, claimedMailIds, attendance, raidTicketDrops, chestForge, delophyHunt, shuteFishing, achievements, tutorial } as unknown as SaveData;
   }

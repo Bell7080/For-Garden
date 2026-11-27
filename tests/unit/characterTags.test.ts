@@ -34,18 +34,18 @@ describe("정보창 해시태그", () => {
 
   it("데이터가 말하는 특징을 그대로 읽는다", () => {
     expect(characterTraits(byId("dian"))).toContain("summon");
-    expect(characterTraits(byId("dodo"))).toContain("heal");
+    expect(characterTraits(byId("dodi"))).toContain("heal");
     expect(characterTraits(byId("kento")).slice(0, 2)).toEqual(["taunt", "shield"]);
     expect(characterTraits(byId("stella"))).toContain("teamBuff");
     expect(characterTraits(byId("noa"))).toContain("stealth");
-    expect(characterTraits(byId("rex"))).toContain("dot");
+    expect(characterTraits(byId("rexia"))).toContain("dot");
     expect(characterTags(byId("irna")).map((tag) => tag.kind).slice(0, 4)).toEqual(["ranged", "dealer", "physical", "single"]);
   });
 
   it("맨 위 계약이 아닌 곳에서 나오는 범위·막·은신·회복도 읽는다(전투 대조로 찾은 누락)", () => {
     const scope = (id: string) => characterTags(byId(id)).find((tag) => tag.kind === "area" || tag.kind === "single")?.kind;
     // 순환 걸음의 휘두르기·갈래화살, 여울 도약, 나눠 꽂는 연발
-    for (const id of ["ella", "parua", "spino", "teku"]) expect(scope(id), id).toBe("area");
+    for (const id of ["ella", "parua", "spina", "teku"]) expect(scope(id), id).toBe("area");
     // 자신에게만 거는 궁극기의 충격파·포효는 공격이 아니다
     for (const id of ["kento", "ark", "anka"]) expect(scope(id), id).toBe("single");
     expect(characterTraits(byId("pachi"))).toContain("shield");
@@ -61,8 +61,8 @@ describe("정보창 해시태그", () => {
   it("피해 종류는 전투가 그 피해를 계산하는 계약에서 읽는다", () => {
     const damage = (id: string) => characterTags(byId(id)).map((tag) => tag.kind).filter((kind) => ["physical", "magical", "mixed", "fixed"].includes(kind));
     // 출혈은 최대 체력 비례로 매초 방어·저항을 지난다
-    expect(damage("rex")).toEqual(["physical", "fixed"]);
-    expect(damage("dodo")).toEqual(["magical"]);
+    expect(damage("rexia")).toEqual(["physical", "fixed"]);
+    expect(damage("dodi")).toEqual(["magical"]);
     // 평타 물리 + 궁극기 마법, 빙결이 풀리는 순간의 최대 체력 비례 피해는 방어·속성을 지난다
     expect(damage("maddy")).toEqual(["mixed", "fixed"]);
     // 물리 평타 + 「까칠」의 마법 반격
@@ -70,8 +70,8 @@ describe("정보창 해시태그", () => {
     // 은신 뒤 방어를 지나는 한 방
     expect(damage("noa")).toEqual(["physical", "fixed"]);
     expect(damage("delopi")).toEqual(["physical", "fixed"]);
-    // 서리깃이 터진 동상은 방어를 지난다
-    expect(damage("yuti")).toEqual(["physical", "fixed"]);
+    // 서리깃이 터진 동상은 걸리는 순간 방어를 거친 물리 피해다(2026-11-27)
+    expect(damage("yuti")).toEqual(["physical"]);
     // 위력을 주문력에서도 뽑을 뿐 피해는 물리다
     expect(damage("dian")).toEqual(["physical"]);
     // 뇌진탕은 최대 체력 비례로 방어·속성을 지난다

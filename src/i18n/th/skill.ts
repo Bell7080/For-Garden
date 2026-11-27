@@ -332,7 +332,7 @@ export const SKILL_TH = {
   "skill.keyword.plume.description": "ขนนกที่ปักบนศัตรู ศัตรูแต่ละตัวสะสมได้สูงสุด {max} ชั้น อยู่ได้ {hold} วินาที และทุกครั้งที่ปักชั้นใหม่จะนับเวลาใหม่ เมื่อครบ {max} ชั้น ขนนกจะหายไปและติด[[yuti-frostbite|หิมะกัด]]",
   "skill.keyword.splash.description": "ละอองน้ำจาก[[shimmer|วิบวับ!]]ที่ระเบิด สร้าง[[magical-damage|ความเสียหายเวท]] {percent}ให้ศัตรูใกล้ ๆ และได้รับ[[shield|โล่]]เท่ากับ {shield} (สะสมได้สูงสุด {cap})",
   "skill.keyword.splash.term": "จ๋อม!",
-  "skill.keyword.frostbite.description": "ลดความเร็วโจมตีและความเร็วเคลื่อนที่ {slowPercent}% เป็นเวลา {slowSeconds} วินาที และรับความเสียหาย {percent}ภายใน {seconds} วินาที ซึ่งพลังป้องกันลดไม่ได้ ไม่ซ้อนกัน ใส่ซ้ำจะรีเฟรช",
+  "skill.keyword.frostbite.description": "ลดความเร็วโจมตีและความเร็วเคลื่อนที่ {slowPercent}% เป็นเวลา {slowSeconds} วินาที และรับความเสียหายกายภาพ {percent} ภายใน {seconds} วินาที ไม่ซ้อนกัน ใส่ซ้ำจะรีเฟรช",
   "skill.keyword.summon.description": "สัตว์อัญเชิญระยะประชิดที่{stat} HP พลังป้องกัน และต้านทานกำหนดจาก{stat}ของ{owner} เลือกเป้าหมายเองและใช้ท่าไม้ตายด้วยเกจของตัวเอง{resummon}",
   "skill.keyword.summon.resummon": " เมื่อล้มจะลุกขึ้นใหม่หลัง {seconds} วินาทีด้วย HP {percent}% ของสูงสุด",
   "skill.ferocity.valueLabel": "คุณลักษณะความดุร้าย",

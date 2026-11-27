@@ -214,7 +214,9 @@ function addIconChip(
   paint();
 
   const hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-  hit.on("pointerup", () => { toggle(); paint(); });
+  // toggle이 칩 줄을 통째로 다시 세우면(일괄 세공의 각인 칩) 이 칩은 이미 부서져 있다 — 부서진 글자에 색을
+  // 칠하면 Phaser가 빈 텍스처를 읽다 터진다(client_errors glTexture null). 살아 있을 때만 다시 칠한다.
+  hit.on("pointerup", () => { toggle(); if (text.active) paint(); });
   chip.add(hit);
   body.add(chip);
 }
@@ -254,7 +256,9 @@ export function addTextChip(
   paint();
 
   const hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-  hit.on("pointerup", () => { toggle(); paint(); });
+  // toggle이 칩 줄을 통째로 다시 세우면(일괄 세공의 각인 칩) 이 칩은 이미 부서져 있다 — 부서진 글자에 색을
+  // 칠하면 Phaser가 빈 텍스처를 읽다 터진다(client_errors glTexture null). 살아 있을 때만 다시 칠한다.
+  hit.on("pointerup", () => { toggle(); if (text.active) paint(); });
   chip.add(hit);
   body.add(chip);
 }

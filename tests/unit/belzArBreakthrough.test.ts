@@ -14,7 +14,7 @@ const ARENA: Arena = { left: 0, right: 2_000, top: 0, bottom: 2_000 };
 const MAX = BREAKTHROUGH_STEPS.length;
 
 function belzSetup(breakthrough: number): SkirmishState {
-  const state = createSkirmish([getRelic("belz"), getRelic("torika"), getRelic("rex")], [getRelic("maki")], ARENA, {}, { belz: breakthrough });
+  const state = createSkirmish([getRelic("belz"), getRelic("torika"), getRelic("rexia")], [getRelic("maki")], ARENA, {}, { belz: breakthrough });
   for (const fighter of state.fighters) { fighter.attackCooldown = 99; fighter.stealthFor = 0; }
   const [belz, tank, dealer, foe] = state.fighters;
   belz.x = 1_000; belz.y = 1_700;

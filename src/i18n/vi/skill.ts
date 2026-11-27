@@ -332,7 +332,7 @@ export const SKILL_VI = {
   "skill.keyword.plume.description": "Chiếc lông cắm vào kẻ địch. Mỗi kẻ địch chịu tối đa {max} tầng trong {hold} giây, mỗi tầng mới đặt lại thời gian. Đủ {max} tầng, lông biến mất và gây [[yuti-frostbite|Tê cóng]].",
   "skill.keyword.splash.description": "Bọt nước khi [[shimmer|Lấp lánh!]] nổ. Gây [[magical-damage|sát thương phép]] bằng {percent} lên kẻ địch gần đó và nhận [[shield|khiên]] bằng {shield} (cộng dồn tối đa {cap}).",
   "skill.keyword.splash.term": "Tõm!",
-  "skill.keyword.frostbite.description": "Giảm Tốc đánh và Tốc chạy {slowPercent}% trong {slowSeconds} giây và nhận sát thương bằng {percent} trong {seconds} giây, không thể giảm bằng Giáp. Không cộng dồn, gắn lại sẽ làm mới.",
+  "skill.keyword.frostbite.description": "Giảm Tốc đánh và Tốc chạy {slowPercent}% trong {slowSeconds} giây và nhận sát thương vật lý bằng {percent} trong {seconds} giây. Không cộng dồn, gắn lại sẽ làm mới.",
   "skill.keyword.summon.description": "Triệu hồi cận chiến có {stat}, HP, Thủ và Kháng dựa trên {stat} của {owner}. Tự chọn mục tiêu và dùng Tuyệt kỹ bằng thanh của riêng nó.{resummon}",
   "skill.keyword.summon.resummon": " Khi gục, nó đứng dậy sau {seconds} giây với {percent}% HP tối đa.",
   "skill.ferocity.valueLabel": "Đặc tính Dã tính",

@@ -69,7 +69,7 @@ describe("스킬 일러스트 파일", () => {
   it("은 모든 아군·적·소환수의 네 칸을 모두 채운다", () => {
     const relics = new Set(SKILL_ART_ASSETS.map(([key]) => key));
     // 스킬 일러스트가 아직 도착하지 않은 개체 — 그동안은 공용 효과 아이콘이 선다. 아트가 오면 지운다.
-    const artPending = new Set(["brika", "belz", "ar", "his", "nokan", "eunte"]);
+    const artPending = new Set(["brika", "belz", "ar", "his", "gigano", "argen"]);
     for (const def of RELICS) {
       if (artPending.has(def.id)) continue;
       const art = skillArtFor(def.id, "passive");
@@ -79,10 +79,10 @@ describe("스킬 일러스트 파일", () => {
   });
 
   it("은 스쿠스이노·타보아와 레이티아 다섯 자매도 전용 일러스트를 갖고, 자매는 한 벌을 나눠 쓴다", () => {
-    for (const relicId of ["sukusuino", "taboa", "raitia-grass", "raitia-water", "raitia-fire", "raitia-earth", "raitia-wind"]) {
+    for (const relicId of ["sukusuino", "taboa", "viria", "guttia", "favia", "silia", "ventia"]) {
       for (const slot of SKILL_ART_SLOTS) expect(skillArtFor(relicId, slot), `${relicId} ${slot}`).toBeDefined();
     }
-    expect(skillArtFor("raitia-grass", "basic")).toBe(skillArtFor("raitia-wind", "basic"));
+    expect(skillArtFor("viria", "basic")).toBe(skillArtFor("ventia", "basic"));
     expect(SKILL_ART_ASSETS.filter(([key]) => key.startsWith("skill-art-raitia")).length).toBe(SKILL_ART_SLOTS.length);
   });
 });
@@ -205,15 +205,15 @@ describe("노도니아 스킬 표시 계약", () => {
     // **데이는 이 비교 밖이다.** 이 규칙이 지키려는 것은 "노도니아에게 방어를 얹지 마라"이고,
     // 그 비교 상대는 방어로 버티는 탱커(토리카·엘라)다. 데이는 방어에도 체력에도 버티는 값을
     // 두지 않는 기동형이라 노도니아보다 얇은 것이 정상이며, 그쪽에는 아래 제 규칙을 따로 둔다.
-    for (const tank of allyTanks.filter((def) => def.id !== "nodonia" && def.id !== "deina")) {
+    for (const tank of allyTanks.filter((def) => def.id !== "nodonia" && def.id !== "dei")) {
       expect(nodonia.stats.def, `${tank.name}보다 낮아야 한다`).toBeLessThan(tank.stats.def);
       expect(nodonia.stats.res, `${tank.name}보다 낮아야 한다`).toBeLessThan(tank.stats.res);
     }
     // 데이의 몫은 「데이 스킬 표시 계약」이 갖는다 — 방어·저항 최저와 실효 체력 최저다.
     // **체력 최저가 아닌 것이 중요하다**: 도발이 들어간 피해마다 걸려 어그로 시간이 길어진
     // 개체라, 방어를 올리는 대신 한 번 더 달릴 몸을 체력으로 준다.
-    const deina = RELICS.find((def) => def.id === "deina")!;
-    expect(deina.stats.hp).toBeGreaterThan(Math.min(...allyTanks.map((def) => def.stats.hp)));
+    const dei = RELICS.find((def) => def.id === "dei")!;
+    expect(dei.stats.hp).toBeGreaterThan(Math.min(...allyTanks.map((def) => def.stats.hp)));
   });
 
   it("의 전장의 열기는 들어설 때의 도발, 지속 피해, 희열 회복 증가를 차례로 말한다", () => {
@@ -227,13 +227,13 @@ describe("노도니아 스킬 표시 계약", () => {
 });
 
 describe("데이 스킬 표시 계약", () => {
-  const deina = RELICS.find((def) => def.id === "deina")!;
+  const dei = RELICS.find((def) => def.id === "dei")!;
 
   it("의 밴덜리즘은 태그가 수치를 갖고 본문은 한 겹만 말한다", () => {
     // 쓰는 개체가 하나뿐인 규칙어라 태그가 수치를 가진다(덧칠·손질과 같은 자리). 둘째 개체가
     // 이 규칙어를 갖게 되면 출혈처럼 시간·비율을 본문으로 옮긴다.
     const keyword = KEYWORDS.find((entry) => entry.id === "vandalism")!;
-    const effect = deina.basic.statusEffects!.find((e) => e.kind === "vandalism")!;
+    const effect = dei.basic.statusEffects!.find((e) => e.kind === "vandalism")!;
     expect(effect).toMatchObject({ offenseShredPercent: 3, maxStacks: 5, burstPower: 125 });
     // 시간으로 사라지지 않는다는 것이 이 규칙어의 전부라, 태그가 그 사실을 직접 말한다.
     expect(effect).not.toHaveProperty("seconds");
@@ -249,24 +249,24 @@ describe("데이 스킬 표시 계약", () => {
   });
 
   it("의 일반 공격은 낙서와 짧은 도발을 함께 말한다", () => {
-    expect(deina.basic.desc).toBeUndefined();
+    expect(dei.basic.desc).toBeUndefined();
     // 도발은 붙잡아 두는 시간이 곧 스킬마다 다른 값이라 본문이 초를 적는다.
-    expect(skillDescription(deina.basic, { damage: 25 }))
+    expect(skillDescription(dei.basic, { damage: 25 }))
       .toBe("적 한 명에게 [[damage-value|25]]의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓는다. 0.75초 동안 [[taunt|도발]]한다.");
   });
 
   it("의 궁극기는 총량이 아니라 매초의 몫으로 읽힌다", () => {
     // `channel`이 있으면 power는 한 틱의 값이다. "전장 전체에 얼마"로 적으면 한 번에 다
     // 들어가는 것처럼 읽히고, 총량으로 환산하면 도중에 쓰러진 적이 받은 몫과 갈린다.
-    expect(deina.ultimate.channel).toMatchObject({ seconds: 5 });
-    expect(deina.ultimate.desc).toBeUndefined();
-    expect(skillDescription(deina.ultimate, { damage: 17 }))
+    expect(dei.ultimate.channel).toMatchObject({ seconds: 5 });
+    expect(dei.ultimate.desc).toBeUndefined();
+    expect(skillDescription(dei.ultimate, { damage: 17 }))
       .toBe("전장의 모든 적에게 5초 동안 매초 [[damage-value|17]]의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓는다."
         + " 그동안 [[basic-attack|기본 공격]]에 맞은 적을 1초 동안 [[stun|기절]]시킨다.");
   });
 
   it("의 패시브와 폭주는 구조화 필드에서 문장을 짓는다", () => {
-    expect(passiveDescription(deina.passive)).toBe(
+    expect(passiveDescription(dei.passive)).toBe(
       // "모두 때렸다면 처음부터 다시 돈다"는 걷어 냈다 — 앞 절이 이미 말하는 당연한 귀결이라
       // 한 줄을 더 읽게 할 뿐이다. 유체화와 멈추지 않는 움직임은 한 문장으로 합쳤다.
       "[[basic-attack|기본 공격]]을 낼 때마다 아직 때리지 않은 적으로 표적을 바꾼다."
@@ -278,7 +278,7 @@ describe("데이 스킬 표시 계약", () => {
     );
     // 폭주의 첫 절이 "때리지 않는다"인 이유는 화면에서 확인할 첫 변화가 그것이기 때문이다.
     // 도발이 그 뒤에 붙는 것이 이 폭주의 핵심이다 — 손을 놓아도 어그로는 꺼지지 않는다.
-    expect(ferocityTraitDescription(deina.ferocityTrait, { attack: deina.stats.atk, defense: deina.stats.def, abilityPower: deina.stats.ap })).toBe(
+    expect(ferocityTraitDescription(dei.ferocityTrait, { attack: dei.stats.atk, defense: dei.stats.def, abilityPower: dei.stats.ap })).toBe(
       "[[move-speed|이동 속도]]가 100% 증가하고 [[basic-attack|기본 공격]]을 하지 않는다."
       + " 매초 자신의 주위 모든 적에게 [[v-damage-ap-25-70|18]]의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓으며 0.75초 동안 [[taunt|도발]]한다.",
     );
@@ -289,19 +289,19 @@ describe("데이 스킬 표시 계약", () => {
     // 주문력이 적 수만큼 곱해지는 개체라 단일 대상 기준으로 적으면 실제로는 그 몇 배가 된다.
     // 초안이 주문력 152·평타 70%였고 표준 5인 파티 재현에서 적 체력의 30%를 혼자 깎아
     // 렉시아(22%)·스피나(28%)를 넘었다. 지금은 16%로 마키(17%) 자리다. 되돌리면 여기서 걸린다.
-    expect(deina.stats.ap).toBeLessThan(RELICS.find((def) => def.id === "keris")!.stats.ap);
-    expect(deina.basic.power).toBeLessThanOrEqual(80);  // v0.451.2 응태 결정: 35 → 80.
+    expect(dei.stats.ap).toBeLessThan(RELICS.find((def) => def.id === "keris")!.stats.ap);
+    expect(dei.basic.power).toBeLessThanOrEqual(80);  // v0.451.2 응태 결정: 35 → 80.
     // **방어·저항은 로스터 탱커 최저다.** 체력은 노도니아 다음으로 높지만 방어를 곱한 실효
     // 체력은 여전히 넷 중 가장 얇다 — 맞아도 되는 몸이 아니라 한 번 더 달릴 수 있는 몸이다.
     // 아군 탱커끼리만 견준다. 이름을 손으로 적어 두면 적 탱커가 늘 때마다 그 목록이 낡는다.
     const allyTanks = RELICS.filter((def) => def.role === "tank" && def.enemyOnly !== true);
     for (const key of ["def", "res"] as const) {
-      expect(Math.min(...allyTanks.map((def) => def.stats[key])), `데이 ${key}`).toBe(deina.stats[key]);
+      expect(Math.min(...allyTanks.map((def) => def.stats[key])), `데이 ${key}`).toBe(dei.stats[key]);
     }
-    const effectiveHp = (def: typeof deina) => def.stats.hp * (1 + def.stats.def / 100);
-    expect(Math.min(...allyTanks.map(effectiveHp))).toBe(effectiveHp(deina));
+    const effectiveHp = (def: typeof dei) => def.stats.hp * (1 + def.stats.def / 100);
+    expect(Math.min(...allyTanks.map(effectiveHp))).toBe(effectiveHp(dei));
     // 이동 속도는 로스터 최고여야 한다 — 이 개체가 사는 방식이 그 한 값이다.
-    expect(Math.max(...RELICS.map((def) => def.stats.moveSpeed))).toBe(deina.stats.moveSpeed);
+    expect(Math.max(...RELICS.map((def) => def.stats.moveSpeed))).toBe(dei.stats.moveSpeed);
   });
 });
 
@@ -364,19 +364,19 @@ describe("폰토스 스킬 표시 계약", () => {
 
 describe("렉시아 스킬 표시 계약", () => {
   it("은 폭주·패시브·출혈·궁극기 회복을 현재 데이터에서 문장화한다", () => {
-    const rex = RELICS.find((def) => def.id === "rex")!;
-    expect(ferocityTraitDescription(rex.ferocityTrait)).toBe("[[bleed|출혈]] 중인 적을 공격하면 치명타가 확정되고, 모든 피해 흡혈이 25% 증가한다.");
+    const rexia = RELICS.find((def) => def.id === "rexia")!;
+    expect(ferocityTraitDescription(rexia.ferocityTrait)).toBe("[[bleed|출혈]] 중인 적을 공격하면 치명타가 확정되고, 모든 피해 흡혈이 25% 증가한다.");
     // 다섯이 모두 같은 값으로 오르므로 한 줄에 함께 선다 — 흡혈만 따로 세우면 같은 값이 두
     // 번 나뉘어 읽혀 서로 다른 몫처럼 보인다. 여는 돌진은 **거리**가 조건이라 그 절이 따로 선다.
-    expect(passiveDescription(rex.passive)).toBe(
+    expect(passiveDescription(rexia.passive)).toBe(
       "전투 시작 시, [[attack-speed|공격 속도]]·[[atk|공격력]]·치명타 확률·치명타 피해·흡혈이 모두 25% 오른다."
       + " 전투당 한 번, 표적에게 중거리까지 다가서면 그 자리로 [[charge|돌진]]해 1초 동안 [[stun|기절]]시킨다.",
     );
     // 표준 출혈의 시간·비율은 태그가 말하므로 요약줄은 이름만 세운다.
-    expect(statusEffectLabel(rex.basic.statusEffects?.[0])).toBe("[[bleed|출혈]]");
+    expect(statusEffectLabel(rexia.basic.statusEffects?.[0])).toBe("[[bleed|출혈]]");
     expect(statusEffectLabel({ kind: "bleed", seconds: 4, maxHpPercentPerSecond: 1 })).toBe("[[bleed|출혈]] 4초 · 매초 최대 체력 1%");
-    expect(targetingLabel(rex.ultimate.targeting)).toBe("적 한 명");
-    expect(damageHealingLabel(rex.ultimate.damageHealingPercent)).toBeUndefined();
+    expect(targetingLabel(rexia.ultimate.targeting)).toBe("적 한 명");
+    expect(damageHealingLabel(rexia.ultimate.damageHealingPercent)).toBeUndefined();
   });
 });
 
@@ -419,37 +419,37 @@ describe("메테 스킬 표시 계약", () => {
 
 describe("도디 스킬 표시 계약", () => {
   it("은 궁극기의 아군 회복 %를 실제 주문력 수치로 환산한 태그로 만든다", () => {
-    const dodo = RELICS.find((def) => def.id === "dodo")!;
-    expect(skillDescription(dodo.ultimate, { ap: 150, damage: 400 })).toBe(
+    const dodi = RELICS.find((def) => def.id === "dodi")!;
+    expect(skillDescription(dodi.ultimate, { ap: 150, damage: 400 })).toBe(
       "지정한 원 안의 모든 적에게 [[damage-value|400]]의 [[magical-damage|마법 피해]]를 주고, "
       + "모든 생존 아군의 체력을 [[v-heal-ap-100-150|150]]만큼 회복한다.",
     );
   });
 
   it("의 야성 발현은 배속 환산 괄호 없이 상승률만 말한다", () => {
-    const dodo = RELICS.find((def) => def.id === "dodo")!;
-    expect(ferocityTraitDescription(dodo.ferocityTrait)).toBe("[[attack-speed|공격 속도]]가 50% 증가하고, 회복시킨 양의 40%만큼 그 아군에게 [[shield|보호막]]을 덧씌운다.");
+    const dodi = RELICS.find((def) => def.id === "dodi")!;
+    expect(ferocityTraitDescription(dodi.ferocityTrait)).toBe("[[attack-speed|공격 속도]]가 50% 증가하고, 회복시킨 양의 40%만큼 그 아군에게 [[shield|보호막]]을 덧씌운다.");
   });
 
   it("의 일반 공격은 묘사 대신 대상·피해·회복 비율을 말한다", () => {
-    const dodo = RELICS.find((def) => def.id === "dodo")!;
+    const dodi = RELICS.find((def) => def.id === "dodi")!;
     // 부리로 쪼는 묘사는 전투 결과를 바꾸지 않으므로 화면에 남기지 않는다.
-    expect(skillDescription(dodo.basic)).not.toContain("부리");
-    expect(skillDescription(dodo.basic, { damage: 120 })).toBe(
+    expect(skillDescription(dodi.basic)).not.toContain("부리");
+    expect(skillDescription(dodi.basic, { damage: 120 })).toBe(
       "적 한 명에게 [[damage-value|120]]의 [[magical-damage|마법 피해]]를 주고, 입힌 피해의 "
-      + `${dodo.basic.lowestHpAllyHealingFromDamagePercent}%만큼 현재 체력이 가장 낮은 생존 아군을 회복한다.`,
+      + `${dodi.basic.lowestHpAllyHealingFromDamagePercent}%만큼 현재 체력이 가장 낮은 생존 아군을 회복한다.`,
     );
     // 능력치를 모르면(도감만 보는 경우) 위력 %로 되돌아가되, 어느 능력치에서 나오는 배율인지
     // 함께 말한다 — 마법 피해는 주문력에서 나온다.
-    expect(skillDescription(dodo.basic)).toContain(`주문력의 ${dodo.basic.power}%`);
+    expect(skillDescription(dodi.basic)).toContain(`주문력의 ${dodi.basic.power}%`);
   });
 });
 
 describe("렉시아 스킬 표시 계약", () => {
   it("의 궁극기는 포효 묘사 대신 대상·피해·회복 비율을 말한다", () => {
-    const rex = RELICS.find((def) => def.id === "rex")!;
-    expect(skillDescription(rex.ultimate)).not.toContain("포효");
-    expect(skillDescription(rex.ultimate, { damage: 400 })).toBe(
+    const rexia = RELICS.find((def) => def.id === "rexia")!;
+    expect(skillDescription(rexia.ultimate)).not.toContain("포효");
+    expect(skillDescription(rexia.ultimate, { damage: 400 })).toBe(
       "적 한 명에게 [[damage-value|400]]의 [[physical-damage|물리 피해]]를 준다.",
     );
   });
@@ -793,22 +793,22 @@ describe("사용자 노출 퍼센트 표시 계약", () => {
 
 describe("스피나 스킬 표시 계약", () => {
   it("은 네 슬롯의 이름·요약·구조화 수치를 정적 정의와 함께 유지한다", () => {
-    const spino = RELICS.find((def) => def.id === "spino")!;
-    expect(spino.ferocityTrait).toMatchObject({ name: "잠행", durationSeconds: 3, leapTarget: "lowestHpEnemy", landingDistance: 172 });
+    const spina = RELICS.find((def) => def.id === "spina")!;
+    expect(spina.ferocityTrait).toMatchObject({ name: "잠행", durationSeconds: 3, leapTarget: "lowestHpEnemy", landingDistance: 172 });
     // 잠행의 내부 도약 ID와 별개로 플레이어 설명은 실제 규칙인 순간이동 키워드를 제공한다.
-    expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("[[teleport|순간이동]]");
+    expect(ferocityTraitDescription(spina.ferocityTrait)).toContain("[[teleport|순간이동]]");
     // 잠행은 도약과 여울이 한 동작이다 — 내려선 자리가 곧 사냥터라 문장을 끊지 않는다.
-    expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("3초 동안 [[stealth|은신]]하고");
-    expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("그 적 주위에 [[shallows|여울]]이 고인다");
-    expect(spino.passive).toMatchObject({ name: "전투의 환희", kind: "basicHitAttackSpeedStack", value: 3 });
-    expect(passiveDescription(spino.passive)).toContain("[[attack-speed|공격 속도]]가 3 증가");
+    expect(ferocityTraitDescription(spina.ferocityTrait)).toContain("3초 동안 [[stealth|은신]]하고");
+    expect(ferocityTraitDescription(spina.ferocityTrait)).toContain("그 적 주위에 [[shallows|여울]]이 고인다");
+    expect(spina.passive).toMatchObject({ name: "전투의 환희", kind: "basicHitAttackSpeedStack", value: 3 });
+    expect(passiveDescription(spina.passive)).toContain("[[attack-speed|공격 속도]]가 3 증가");
     // 태생 치명타는 전 개체 공통이라, 암살자의 치명타형 정체성을 패시브가 문장으로 말한다.
-    expect(passiveDescription(spino.passive)).toContain(`치명타 확률이 ${spino.passive.criticalChancePercent}% 오른다`);
+    expect(passiveDescription(spina.passive)).toContain(`치명타 확률이 ${spina.passive.criticalChancePercent}% 오른다`);
     // 연격에 달려 있던 회복은 걷어 냈다 — 암살자는 보장된 자가 수급을 갖지 않는다는 직군
     // 계약 때문이고, 그 몫은 여울에 잠긴 적에게 주는 피해로 옮겼다.
-    expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 90, combo: { chancePercent: 40, hitCount: 2 } });
-    expect(spino.basic.combo).not.toHaveProperty("missingHpHealingPercentPerHit");
-    expect(skillDescription(spino.basic, { damage: 100 })).toBe(
+    expect(spina.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 90, combo: { chancePercent: 40, hitCount: 2 } });
+    expect(spina.basic.combo).not.toHaveProperty("missingHpHealingPercentPerHit");
+    expect(skillDescription(spina.basic, { damage: 100 })).toBe(
       // 회복 절이 사라지면서 쉼표도 함께 빠진다 — 쉼표는 절이 길 때만 둔다는 문장 규칙 그대로다.
       "적 한 명에게 [[damage-value|100]]의 [[physical-damage|물리 피해]]를 주고 40% 확률로 [[combo|연격]]하여 총 2회 적중한다."
       /*
@@ -819,35 +819,35 @@ describe("스피나 스킬 표시 계약", () => {
        */
       + " 적 주위에 [[shallows|여울]]이 고이고, [[basic-attack|기본 공격]] 4회마다 [[dive|강하]]해 공격력의 140% [[physical-damage|물리 피해]]를 준다.",
     );
-    expect(spino.basic.shallows).toMatchObject({
+    expect(spina.basic.shallows).toMatchObject({
       radius: 240, seconds: 6, moveSlowPercent: 35,
       behindDistance: 120, minSpacing: 300, leapEveryHits: 4, leapPower: 140, submergedLeapBonusPercent: 40,
     });
     // 궁극기는 깔아 둔 물을 회수한다 — 평타로 판을 까는 일과 같은 축에 선다.
-    expect(spino.ultimate.detonateShallows).toMatchObject({ power: 165 });
+    expect(spina.ultimate.detonateShallows).toMatchObject({ power: 165 });
     // 터지는 판의 피해도 본문이 적는다 — 능력치에서 환산해야 나오는 수라 태그가 가질 수 없다.
-    expect(skillDescription(spino.ultimate)).toContain("깔린 [[shallows|여울]]이 모두 터져 판마다 공격력의 165% [[physical-damage|물리 피해]]를 준다");
+    expect(skillDescription(spina.ultimate)).toContain("깔린 [[shallows|여울]]이 모두 터져 판마다 공격력의 165% [[physical-damage|물리 피해]]를 준다");
     // 능력치를 알면 두 둘째 피해도 주 피해와 같은 실제 수치 태그로 선다.
-    const withStats = { damage: 430, atk: { atk: spino.stats.atk, attackSpeed: spino.stats.attackSpeed } };
-    expect(skillDescription(spino.basic, withStats)).toContain(`[[dive|강하]]해 [[v-damage-atk-140-${spino.stats.atk}|${Math.round(spino.stats.atk * 140 / 100)}]]`);
-    expect(skillDescription(spino.ultimate, withStats)).toContain(`판마다 [[v-damage-atk-165-${spino.stats.atk}|${Math.round(spino.stats.atk * 165 / 100)}]]`);
-    expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, statusEffects: [{ kind: "stun", seconds: 3 }] });
+    const withStats = { damage: 430, atk: { atk: spina.stats.atk, attackSpeed: spina.stats.attackSpeed } };
+    expect(skillDescription(spina.basic, withStats)).toContain(`[[dive|강하]]해 [[v-damage-atk-140-${spina.stats.atk}|${Math.round(spina.stats.atk * 140 / 100)}]]`);
+    expect(skillDescription(spina.ultimate, withStats)).toContain(`판마다 [[v-damage-atk-165-${spina.stats.atk}|${Math.round(spina.stats.atk * 165 / 100)}]]`);
+    expect(spina.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, statusEffects: [{ kind: "stun", seconds: 3 }] });
     // 능력치를 모르면(대상 없이 도감만 보는 경우) 옛 %-표기로 되돌아간다.
-    expect(skillDescription(spino.ultimate)).toContain("현재 [[attack-speed|공격 속도]]의 150%");
+    expect(skillDescription(spina.ultimate)).toContain("현재 [[attack-speed|공격 속도]]의 150%");
     // "준다"에 "고"를 그대로 붙이면 인용형 어미("~라고")로 읽히는 어색한 문장이 된다.
     // 어간에 연결어미를 붙인 "주고 기절시킨다"여야 자연스럽다.
     // 대상과 기절 지속 시간도 본문이 함께 말한다 — 기절 키워드는 기절이 무엇인지만 말하고
     // 몇 초인지는 스킬마다 다르다.
-    expect(skillDescription(spino.ultimate)).toContain("적 한 명에게");
-    expect(skillDescription(spino.ultimate)).toContain("주고 3초 동안 [[stun|기절]]시킨다");
-    expect(skillDescription(spino.ultimate)).not.toContain("준다고");
+    expect(skillDescription(spina.ultimate)).toContain("적 한 명에게");
+    expect(skillDescription(spina.ultimate)).toContain("주고 3초 동안 [[stun|기절]]시킨다");
+    expect(skillDescription(spina.ultimate)).not.toContain("준다고");
     // 능력치가 있으면 위력·공격 속도 두 축을 하나의 실제 수치 태그로 합쳐 보여 준다 —
     // 다른 스킬들과 같은 "%를 실제 값으로 환산" 규칙을 따른다.
-    const composite = skillDescription(spino.ultimate, { atk: { atk: spino.stats.atk, attackSpeed: spino.stats.attackSpeed } });
+    const composite = skillDescription(spina.ultimate, { atk: { atk: spina.stats.atk, attackSpeed: spina.stats.attackSpeed } });
     expect(composite).toMatch(/적 한 명에게 \[\[damage-value\|\d+\]\]의 \[\[physical-damage\|물리 피해\]\]를 주고 3초 동안 \[\[stun\|기절\]\]시킨다\./);
     expect(composite).not.toContain("%");
     const expectedAmount = Math.round(
-      (spino.stats.atk * (spino.ultimate.power! + (spino.stats.attackSpeed * spino.ultimate.attackSpeedPower!) / spino.stats.atk)) / 100,
+      (spina.stats.atk * (spina.ultimate.power! + (spina.stats.attackSpeed * spina.ultimate.attackSpeedPower!) / spina.stats.atk)) / 100,
     );
     expect(composite).toContain(`[[damage-value|${expectedAmount}]]`);
   });
@@ -909,8 +909,8 @@ describe("메론 스킬 표시 계약", () => {
     expect(skillDescription(def.ultimate)).toContain("주문력의 50%");
     // 다섯 겹을 다 칠해야 렉시아의 단일 대상 궁극기와 같은 300%다 — 전장 전체를 때리는
     // 지원가가 최상위 딜러의 한 방을 넘지 않게 하는 상한이라 함께 고정한다.
-    const rex = RELICS.find((relic) => relic.id === "rex")!;
-    expect(def.ultimate.power! * 5).toBeLessThanOrEqual(rex.ultimate.power!);
+    const rexia = RELICS.find((relic) => relic.id === "rexia")!;
+    expect(def.ultimate.power! * 5).toBeLessThanOrEqual(rexia.ultimate.power!);
   });
 
   it("의 패시브와 폭주는 회복 대상과 덧칠의 주인을 분명히 말한다", () => {

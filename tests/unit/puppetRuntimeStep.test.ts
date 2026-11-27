@@ -15,10 +15,27 @@ const MAX_STEP_SECONDS = PUPPET_STEP_SECONDS * (1 + PUPPET_STEP_TOLERANCE);
 /** Runtime 전체를 만들지 않고 적분 간격과 마지막 vertex 전달만 검증하는 최소 Puppet 대역이다. */
 function puppetStub(): { puppet: Puppet; update: ReturnType<typeof vi.fn> } {
   const update = vi.fn((step: number) => new Float32Array([step]));
-  return { puppet: { update } as unknown as Puppet, update };
+  return { puppet: { update, flush: vi.fn(() => null) } as unknown as Puppet, update };
 }
 
 describe("Puppet runtime stepping", () => {
+  it("마지막 서브스텝만 결과를 계산하고, 마지막이 비면 건너뛴 걸음의 결과를 받는다", () => {
+    const skipped = new Float32Array([7]);
+    const update = vi.fn((_step: number, options?: { output?: boolean }) => (options?.output === false ? null : new Float32Array([1])));
+    const flush = vi.fn(() => skipped);
+    const puppet = { update, flush } as unknown as Puppet;
+
+    const vertices = advancePuppet(puppet, 0.05);
+    expect(update.mock.calls.map(([, options]) => options?.output)).toEqual([false, false, true]);
+    expect(flush).not.toHaveBeenCalled();
+    expect(vertices).toBe(update.mock.results.at(-1)?.value);
+
+    // 그 사이 동작이 멈춰 마지막 걸음이 null이면 예전처럼 앞 걸음의 결과를 쓴다.
+    update.mockImplementation(() => null);
+    expect(advancePuppet(puppet, 0.05)).toBe(skipped);
+    expect(flush).toHaveBeenCalledTimes(1);
+  });
+
   it("긴 렌더 프레임을 편집기와 같은 60 fps 이하 간격으로 나눈다", () => {
     const { puppet, update } = puppetStub();
     const vertices = advancePuppet(puppet, 0.05);

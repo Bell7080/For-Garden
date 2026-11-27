@@ -47,7 +47,7 @@ export const BATTLE_JA = {
   "battle.tutorial.ultimate.owner": "{name}の必殺技",
   "battle.tutorial.ultimate.tap": "光っているカードをタップして使おう · {step}/{total}",
   "battle.tutorial.ultimate.desc.torika": "周りの敵を地面ごと叩きつけてダメージを与え、少しの間気絶させるよ。",
-  "battle.tutorial.ultimate.desc.dodo": "選んだ場所の敵にダメージを与え、その中の味方を回復するよ。",
+  "battle.tutorial.ultimate.desc.dodi": "選んだ場所の敵にダメージを与え、その中の味方を回復するよ。",
   "battle.tutorial.ultimate.desc.parua": "少しの間攻撃が速くなり、矢を2本ずつ放つよ。",
 
   "battle.gauge.frenzy": "暴走 {value} / {max}",

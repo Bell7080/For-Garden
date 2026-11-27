@@ -50,9 +50,9 @@ export type RelicRarity = "R" | "SR" | "SSR";
  * 다섯이 한 표로 묶여 있어야 원화가 오는 날 **빠진 자매 없이** 갈아 끼운다 — 하나씩 적어
  * 두면 넷만 바꾸고 한 마리가 남의 몸으로 서 있어도 아무도 모른다.
  */
-export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
+export type RaitiaAssetId = "viria" | "guttia" | "favia" | "silia" | "ventia";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno" | "plesha" | "arte" | "brika" | "belz" | "ar" | "his" | "nokan" | "eunte";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "dei" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "viria" | "guttia" | "favia" | "silia" | "ventia" | "pontos" | "sukusuino" | "taboa" | "koatl" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "kar" | "plesha" | "arte" | "brika" | "belz" | "ar" | "his" | "gigano" | "argen";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.

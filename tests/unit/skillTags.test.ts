@@ -50,10 +50,11 @@ describe("스킬 요약 칩 규격", () => {
     const head = (id: string, slot: "passive" | "basic" | "ultimate") => skillTagsFromDef(def(id)[slot], slot).map((tag) => tag.text).slice(0, 2);
     expect(head("kento", "passive")).toEqual(["강화", "마법 피해"]);
     expect(head("anka", "passive")).toEqual(["강화", "마법 피해"]);
-    expect(head("yuti", "basic")).toEqual(["물리 피해", "고정 피해"]);
+    // 서리깃의 동상은 얼굴과 같은 물리 피해라 종류 칩이 덧붙지 않는다
+    expect(head("yuti", "basic")).toEqual(["물리 피해", "다중"]);
     expect(head("noa", "ultimate")[0]).toBe("고정 피해");
     // 출혈(최대 체력 비례, 방어·저항을 지난다)과 빙결 해제 피해도 고정이다
-    expect(head("rex", "basic")).toEqual(["물리 피해", "고정 피해"]);
+    expect(head("rexia", "basic")).toEqual(["물리 피해", "고정 피해"]);
     expect(head("maddy", "passive")).toEqual(["강화", "고정 피해"]);
     expect(head("irna", "basic")).toEqual(["물리 피해", "단일"]);
   });

@@ -13,7 +13,7 @@ import type { RelicStoryProfile } from "../../core/relicStory";
 
 /** 4 — 하룻밤 사이의 표식. 시치미와 들통의 장. */
 const CHAPTER_4: DialogueStory = {
-  id: "bond.deina.4",
+  id: "bond.dei.4",
   backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "하룻밤 사이의 표식", subtitle: "데이 · 애착 이야기 1" },
@@ -37,7 +37,7 @@ const CHAPTER_4: DialogueStory = {
 
 /** 6 — 얼굴에 남긴 것. 혼나고 눈물짓고 또 하는 장. */
 const CHAPTER_6: DialogueStory = {
-  id: "bond.deina.6",
+  id: "bond.dei.6",
   backdrop: "controlRoom",
   startNodeId: "n1",
   titleCard: { title: "얼굴에 남긴 것", subtitle: "데이 · 애착 이야기 2" },
@@ -61,7 +61,7 @@ const CHAPTER_6: DialogueStory = {
 
 /** 8 — 비어 있는 면. 왜 흰 벽 앞에서 손이 멈추지 않는지가 드러나는 장. */
 const CHAPTER_8: DialogueStory = {
-  id: "bond.deina.8",
+  id: "bond.dei.8",
   backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "비어 있는 면", subtitle: "데이 · 애착 이야기 3" },
@@ -85,7 +85,7 @@ const CHAPTER_8: DialogueStory = {
 
 /** 10 — 허락받은 벽. 처음으로 시치미 없이 이름을 새기는 장. */
 const CHAPTER_10: DialogueStory = {
-  id: "bond.deina.10",
+  id: "bond.dei.10",
   backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "허락받은 벽", subtitle: "데이 · 애착 이야기 4" },
@@ -108,7 +108,7 @@ const CHAPTER_10: DialogueStory = {
 };
 
 export const DEINA_STORY: RelicStoryProfile = {
-  relicId: "deina",
+  relicId: "dei",
   fossilRecord: "복원 목록에 마지막으로 올라온 표본이다. 무너진 이암 단면에서 낫발톱과 꼬리 힘줄뼈가 달리던 자세 그대로 굳어 나왔다.",
   diary:
     "복원 후 데이는 비어 있는 면을 그냥 지나치지 못한다. 케어실 셔터와 창고 벽에 하룻밤 사이 이름 모를 표식이 늘어나는데, 정작 본인은 아침마다 시치미를 뗀다. "
@@ -117,7 +117,7 @@ export const DEINA_STORY: RelicStoryProfile = {
   closingLine: "연구원님! 오늘은 아무것도 안 했어. 아직! 벽이 비어 있으면 말해 줄게.",
   questions: [
     {
-      id: "deina-can",
+      id: "dei-can",
       prompt: "데이가 늘 흔드는 캔은 뭐야?",
       choices: [
         {
@@ -138,7 +138,7 @@ export const DEINA_STORY: RelicStoryProfile = {
       ],
     },
     {
-      id: "deina-denial",
+      id: "dei-denial",
       prompt: "왜 매번 시치미를 떼?",
       choices: [
         {
@@ -154,7 +154,7 @@ export const DEINA_STORY: RelicStoryProfile = {
       ],
     },
     {
-      id: "deina-wall",
+      id: "dei-wall",
       prompt: "데이는 비어 있는 벽을 보면 어떤 기분이야?",
       choices: [
         {

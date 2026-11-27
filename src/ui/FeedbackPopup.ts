@@ -19,7 +19,7 @@ import { shrinkTextToWidth } from "./textFit";
 import { textStyle } from "./theme";
 import { openRewardPopup } from "./RewardPopup";
 
-const FEEDBACK_GUIDE = "dodo";
+const FEEDBACK_GUIDE = "dodi";
 /** 맨 위의 굵은 제목 글자. 어느 언어에서나 같은 표식이라 번역하지 않는다. */
 const FEEDBACK_WORDMARK = "FEEDBACK";
 /** 첫 피드백 감사 선물 — 지급은 서버(`submit_feedback`)가 대상 우편으로 한다. 이 값은 보여 주기만 한다. */

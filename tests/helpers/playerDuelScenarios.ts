@@ -30,7 +30,7 @@ export async function run(sql: (s: string) => string) {
  sql(`update public.players set status='banned' where id='${ids[4]}';`);
  const status:any=(await call(ids[0],'getDuelStatus')).result;
  assert.equal(status.opponents.length,2);assert.deepEqual(new Set(status.opponents.map((r:any)=>r.id)),new Set(ids.slice(1,3)));
- assert(status.opponents.every((r:any)=>r.score===0));assert(status.opponents.every((r:any)=>r.units.map((u:any)=>u.relicId).join(',')==='parua,torika,dodo'));
+ assert(status.opponents.every((r:any)=>r.score===0));assert(status.opponents.every((r:any)=>r.units.map((u:any)=>u.relicId).join(',')==='parua,torika,dodi'));
  assert(!JSON.stringify(status).includes('runeInventory'));assert(!JSON.stringify(status).includes('wallet'));
  const ranking:any=(await call(ids[0],'getDuelRanking')).result;assert.equal(ranking.entries.length,3);assert.equal(ranking.me.rank,1);
  await assert.rejects(call(ids[3],'getDuelStatus'),(e:any)=>e.code==='content_locked');
@@ -40,18 +40,18 @@ export async function run(sql: (s: string) => string) {
  const bought:any=(await call(ids[0],'buyDuelAttempt',[],'buy-ticket-once')).result;
  assert.equal(bought.attemptsLeft,ticketStatus.attemptsLeft+1);assert.equal(saveManager.parse((await store.load(ids[0]))!.data).wallet.gems,beforeTicket-50);
  await call(ids[0],'buyDuelAttempt',[],'buy-ticket-once');assert.equal(saveManager.parse((await store.load(ids[0]))!.data).wallet.gems,beforeTicket-50);
- await call(ids[1],'setDuelDefense',[{relicIds:['dodo','parua','torika'],blindChoice:['dodo']}]);
- const next:any=(await call(ids[0],'getDuelStatus')).result;assert.deepEqual(next.opponents.find((r:any)=>r.id===ids[1]).units.map((u:any)=>u.relicId),['dodo','parua','torika']);
- await assert.rejects(call(ids[0],'enterDuel',[{requestId:'self-admission',opponentId:ids[0],relicIds:['parua','torika','dodo']}]),/./);
+ await call(ids[1],'setDuelDefense',[{relicIds:['dodi','parua','torika'],blindChoice:['dodi']}]);
+ const next:any=(await call(ids[0],'getDuelStatus')).result;assert.deepEqual(next.opponents.find((r:any)=>r.id===ids[1]).units.map((u:any)=>u.relicId),['dodi','parua','torika']);
+ await assert.rejects(call(ids[0],'enterDuel',[{requestId:'self-admission',opponentId:ids[0],relicIds:['parua','torika','dodi']}]),/./);
  const entryId='actual-duel-admission';
- const admitted:any=(await call(ids[0],'enterDuel',[{requestId:entryId,opponentId:ids[1],relicIds:['parua','torika','dodo']}],'duel-entry-once')).result;
- const retried:any=(await call(ids[0],'enterDuel',[{requestId:entryId,opponentId:ids[1],relicIds:['parua','torika','dodo']}],'duel-entry-once')).result;
+ const admitted:any=(await call(ids[0],'enterDuel',[{requestId:entryId,opponentId:ids[1],relicIds:['parua','torika','dodi']}],'duel-entry-once')).result;
+ const retried:any=(await call(ids[0],'enterDuel',[{requestId:entryId,opponentId:ids[1],relicIds:['parua','torika','dodi']}],'duel-entry-once')).result;
  assert.deepEqual(admitted,retried);
  await assert.rejects(call(ids[0],'resolveDuel',[{requestId:entryId,won:true}]),/COMBAT_NOT_VERIFIED/);
- const input={mode:'duel',requestId:entryId,attack:['rex'],opponentName:'forged',opponentScore:9999,units:[]};
+ const input={mode:'duel',requestId:entryId,attack:['rexia'],opponentName:'forged',opponentScore:9999,units:[]};
  const lease:any=(await call(ids[0],'prepareCombat',[{input,automaticUltimates:true}])).result;
  assert.equal(lease.setup.options.automaticUltimates,true);
- assert.deepEqual(lease.setup.players.map((r:any)=>r.id),['parua','torika','dodo']);assert.equal(lease.setup.enemies.length,3);
+ assert.deepEqual(lease.setup.players.map((r:any)=>r.id),['parua','torika','dodi']);assert.equal(lease.setup.enemies.length,3);
  const battle=combatState(lease),random=bossBattleRandom(lease.seed),actions:any[]=[];let ticks=0;
  while(battle.phase==='fight'&&ticks<18000){stepSkirmish(battle,.02,random);ticks++;if(!battle.automaticUltimates)for(const f of battle.fighters.filter(f=>f.side==='player'&&f.summonOwnerId===null))if(canFireUltimate(battle,f)){fireUltimate(battle,f.id,random);actions.push({tick:ticks,actorId:f.id});}}
  now=new Date(now.getTime()+ticks*20);

@@ -14,7 +14,7 @@ const DAY = 86_400_000;
 const BADGE = { shape: "shield", shapeColor: "blue", icon: "sword", iconColor: "silver" } as const;
 const actor = (userId: string): GuildActor => ({ userId, name: userId, level: 20, avatarRelicId: "torika", frameId: "holo" });
 const code = async (run: () => Promise<unknown>) => { try { await run(); } catch (e) { return (e as GuildApiError).code; } return "ok"; };
-const RELICS = ["torika", "dodo", "parua"];
+const RELICS = ["torika", "dodi", "parua"];
 const unit = (relicId: string) => ({ relicId, snapshot: captureExpeditionRelicSnapshot(getRelic(relicId), { ...createInitialRelicProgress(), level: 10 }, [], null) });
 const deck = (slotId: string): GuildWarDefenseInput => ({
   slotId,

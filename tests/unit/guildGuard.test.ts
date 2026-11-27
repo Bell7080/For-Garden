@@ -52,7 +52,7 @@ describe("수호전 웨이브", () => {
   it("적은 스토리 적 전용 개체뿐이다 — 아군 캐릭터가 적으로 서지 않는다", () => {
     for (const element of GUILD_GUARD_ELEMENTS) {
       const roster = guildGuardRoster(element);
-      expect(roster.units.some((def) => def.id.startsWith("raitia-")), element).toBe(true);
+      expect(roster.units.some((def) => def.identityFamilyId === "raitia"), element).toBe(true);
       for (const def of roster.units) expect(def.enemyOnly, def.id).toBe(true);
     }
   });
@@ -142,7 +142,7 @@ describe("수호전 규칙", () => {
 describe("수호전 재현", () => {
   it("같은 편성·시드면 같은 점수가 나오고, 키운 편성이 더 멀리 간다", () => {
     const roster = guildGuardRoster("earth");
-    const ids = ["deina", "rex", "ark", "terisa", "stella", "mette"];
+    const ids = ["dei", "rexia", "ark", "terisa", "stella", "mette"];
     const weak = replayGuildGuard(lineup(ids, 20), getRelic, roster, "seed-a");
     const again = replayGuildGuard(lineup(ids, 20), getRelic, roster, "seed-a");
     expect(again).toEqual(weak);
@@ -153,7 +153,7 @@ describe("수호전 재현", () => {
   }, 60_000);
 
   it("수호전은 데스 카운트가 없다 — 60초가 지나도 데스 카운트 틱이 돌지 않는다", () => {
-    const state = createGuildGuardSkirmish(lineup(["deina", "stella", null, null, null, null], 1), getRelic, guildGuardRoster("fire"));
+    const state = createGuildGuardSkirmish(lineup(["dei", "stella", null, null, null, null], 1), getRelic, guildGuardRoster("fire"));
     const rng = () => 0.5;
     const ally = state.fighters.find((f) => f.side === "player")!;
     ally.maxHp = ally.hp = 1_000_000_000;
@@ -165,23 +165,23 @@ describe("수호전 재현", () => {
   });
 
   it("빈 칸이 있는 편성도 그 자리를 비운 채 선다", () => {
-    const outcome = replayGuildGuard(lineup(["deina", null, null, null, "stella", null], 60), getRelic, guildGuardRoster("fire"), "seed-b");
+    const outcome = replayGuildGuard(lineup(["dei", null, null, null, "stella", null], 60), getRelic, guildGuardRoster("fire"), "seed-b");
     expect(outcome.kills).toBeGreaterThan(0);
   }, 60_000);
 });
 
 describe("수호전 자동 배치", () => {
   it("앞줄에 탱커·전사를 먼저 세우고 모자란 칸은 비운다", () => {
-    const tank = { ...getRelic("deina"), id: "t", role: "tank" as const };
-    const support = { ...getRelic("deina"), id: "s", role: "support" as const };
-    const warrior = { ...getRelic("deina"), id: "w", role: "warrior" as const };
+    const tank = { ...getRelic("dei"), id: "t", role: "tank" as const };
+    const support = { ...getRelic("dei"), id: "s", role: "support" as const };
+    const warrior = { ...getRelic("dei"), id: "w", role: "warrior" as const };
     expect(arrangeGuardFormation([support, tank, warrior])).toEqual(["t", "w", "s", null, null, null]);
   });
 });
 
 describe("수호전 필드 카운팅과 제약", () => {
   it("아군 여섯도 수호전 몸집으로 작게 선다 — 다른 판의 아군은 그대로다", () => {
-    const state = createGuildGuardSkirmish(lineup(["torika", "deina", null, null, null, null], 20), getRelic, guildGuardRoster("fire"));
+    const state = createGuildGuardSkirmish(lineup(["torika", "dei", null, null, null, null], 20), getRelic, guildGuardRoster("fire"));
     for (const ally of state.fighters.filter((f) => f.side === "player")) expect(ally.bodyScale).toBeCloseTo(GUILD_GUARD.bodyScale);
   });
 

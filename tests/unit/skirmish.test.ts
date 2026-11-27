@@ -405,7 +405,7 @@ describe("원정 증강 전투 훅", () => {
       const effects: ExpeditionAugmentEffect[] = percent === 0 ? [] : [
         { kind: "attackPowerPercent", percent, scope: { kind: "all" } },
       ];
-      const state = createSkirmish([getRelic("rex")], [getRelic("amo")], ARENA, {}, {}, { augmentEffects: effects });
+      const state = createSkirmish([getRelic("rexia")], [getRelic("amo")], ARENA, {}, {}, { augmentEffects: effects });
       const [ally, foe] = state.fighters;
       // 이동과 적의 반격을 제거해 4초 동안의 공격 결과만 비교한다.
       ally.x = foe.x = 400; ally.y = foe.y = 900; ally.attackCooldown = 0; foe.attackCooldown = 99;
@@ -420,7 +420,7 @@ describe("원정 증강 전투 훅", () => {
   });
 
   /** 개별 훅 테스트가 같은 위치·쿨다운 준비를 공유해 프레임 이동 변수를 제거한다. */
-  function augmented(effect: ExpeditionAugmentEffect, attackerId = "rex") {
+  function augmented(effect: ExpeditionAugmentEffect, attackerId = "rexia") {
     const state = createSkirmish([getRelic(attackerId)], [getRelic("amo")], ARENA, {}, {}, { augmentEffects: [effect] });
     const [ally, foe] = state.fighters; ally.x = foe.x = 400; ally.y = foe.y = 900; ally.attackCooldown = 0; foe.attackCooldown = 99;
     return { state, ally, foe };
@@ -436,7 +436,7 @@ describe("원정 증강 전투 훅", () => {
 
   it("은 다단 히트도 내부 쿨타임 동안 치명 출혈을 한 번만 발동한다", () => {
     const effect: ExpeditionAugmentEffect = { kind: "triggered", trigger: "onCritical", payload: { kind: "status", status: { kind: "bleed", seconds: 2, maxHpPercentPerSecond: 1 } }, limits: { maxTriggers: 9, cooldownSeconds: 1, maxStacks: 1, target: "hitTarget" }, scope: { kind: "all" } };
-    const { state, ally } = augmented(effect, "spino");
+    const { state, ally } = augmented(effect, "spina");
     // 스피나 연격을 확정하고 치명타 난수도 확정해 같은 프레임의 두 적중을 만든다.
     stepSkirmish(state, 1 / 60, () => 0); expect(ally.augmentRuntime["0"].triggers).toBe(1);
   });
@@ -464,88 +464,88 @@ describe("원정 증강 전투 훅", () => {
 describe("스피나 전투 계약", () => {
   /** 스피나와 대상을 즉시 교전시키고 다른 행동을 멈추는 공용 준비다. */
   function readySpino(enemies = ["amo"]) {
-    const state = newSkirmish(["spino"], enemies);
-    const [spino, target] = state.fighters;
-    spino.x = 400; spino.y = 900; target.x = 450; target.y = 900;
-    spino.attackCooldown = 0;
+    const state = newSkirmish(["spina"], enemies);
+    const [spina, target] = state.fighters;
+    spina.x = 400; spina.y = 900; target.x = 450; target.y = 900;
+    spina.attackCooldown = 0;
     for (const enemy of state.fighters.slice(1)) enemy.attackCooldown = 99;
-    return { state, spino, target };
+    return { state, spina, target };
   }
 
   it("은 40% 연격의 두 적중을 독립 사건으로 만들고 공속만 쌓으며 회복은 돌리지 않는다", () => {
-    const { state, spino } = readySpino();
-    spino.hp = spino.maxHp / 2;
+    const { state, spina } = readySpino();
+    spina.hp = spina.maxHp / 2;
     // 연격(0.39), 첫/둘째 치명타 실패 순으로 소비한다.
     const rolls = [0.39, 0.99, 0.99];
     const events = stepSkirmish(state, 1 / 60, () => rolls.shift() ?? 0.99);
     expect(events.filter((event) => event.kind === "attack")).toHaveLength(2);
-    expect(spino.bonusAttackSpeed).toBe(6);
+    expect(spina.bonusAttackSpeed).toBe(6);
     // **연격은 더 이상 회복하지 않는다.** 암살자는 보장된 자가 수급을 갖지 않는다는 직군
     // 계약 때문이고, 그 몫은 여울에 잠긴 적에게 주는 피해로 옮겼다. 한 점도 차오르지
     // 않아야 하므로 "적게 찬다"가 아니라 **그대로**임을 고정한다.
-    expect(spino.hp).toBe(spino.maxHp / 2);
+    expect(spina.hp).toBe(spina.maxHp / 2);
     expect(events.some((event) => event.kind === "heal")).toBe(false);
   });
 
   it("은 적 주위에 여울을 깔고, 마르면 판이 사라진다", () => {
-    const { state, spino, target } = readySpino();
+    const { state, spina, target } = readySpino();
     // 물은 **적 주위에** 고인다 — 첫 한 방은 마른 땅에서 나간다.
-    expect(spino.shallowPools).toHaveLength(0);
+    expect(spina.shallowPools).toHaveLength(0);
     stepSkirmish(state, 1 / 60, () => 0.99);
-    expect(spino.shallowPools).toHaveLength(1);
+    expect(spina.shallowPools).toHaveLength(1);
     // 스피나 발밑이 아니라 **적 너머**다. 붙어 싸우는 동안 판이 같은 자리에 겹치지 않게 하는 값이다.
-    const pool = spino.shallowPools[0];
-    expect(Math.hypot(pool.x - target.x, pool.y - target.y)).toBeCloseTo(spino.def.basic.shallows!.behindDistance, 0);
-    expect(Math.hypot(pool.x - spino.x, pool.y - spino.y)).toBeGreaterThan(Math.hypot(target.x - spino.x, target.y - spino.y));
+    const pool = spina.shallowPools[0];
+    expect(Math.hypot(pool.x - target.x, pool.y - target.y)).toBeCloseTo(spina.def.basic.shallows!.behindDistance, 0);
+    expect(Math.hypot(pool.x - spina.x, pool.y - spina.y)).toBeGreaterThan(Math.hypot(target.x - spina.x, target.y - spina.y));
     // 판은 개체를 따라다니지 않는다. 자리를 옮겨도 고인 곳에 그대로 남는다.
     const pooled = { x: pool.x, y: pool.y };
-    spino.x += 300; spino.attackCooldown = 99;
+    spina.x += 300; spina.attackCooldown = 99;
     stepSkirmish(state, 1 / 60, () => 0.99);
-    expect(spino.shallowPools[0]).toMatchObject(pooled);
+    expect(spina.shallowPools[0]).toMatchObject(pooled);
     for (let frame = 0; frame < 60 * 8; frame += 1) stepSkirmish(state, 1 / 60, () => 0.99);
-    expect(spino.shallowPools).toHaveLength(0);
+    expect(spina.shallowPools).toHaveLength(0);
   });
 
   /** 판이 벌어지는 규칙 — 같은 자리에 두 번 고이지 않고, 아무도 안 붙은 적이 먼저 젖는다. */
   it("은 가까운 자리에는 새 판을 만들지 않고 아무도 붙지 않은 적을 먼저 적신다", () => {
-    const state = newSkirmish(["spino"], ["amo", "toby"]);
-    const [spino, near, far] = state.fighters;
-    spino.x = 400; spino.y = 900;
+    const state = newSkirmish(["spina"], ["amo", "toby"]);
+    const [spina, near, far] = state.fighters;
+    spina.x = 400; spina.y = 900;
     near.x = 460; near.y = 900;
     far.x = 400; far.y = 1300;
-    spino.targetId = near.id;
+    spina.targetId = near.id;
     for (const enemy of [near, far]) enemy.attackCooldown = 99;
 
-    spino.attackCooldown = 0;
+    spina.attackCooldown = 0;
     stepSkirmish(state, 1 / 60, () => 0.99);
-    expect(spino.shallowPools).toHaveLength(1);
+    expect(spina.shallowPools).toHaveLength(1);
     // 스피나가 붙어 있는 쪽이 아니라 **아무도 안 붙은** 쪽이 먼저 젖는다.
-    const first = spino.shallowPools[0];
+    const first = spina.shallowPools[0];
     expect(Math.hypot(first.x - far.x, first.y - far.y)).toBeLessThan(Math.hypot(first.x - near.x, first.y - near.y));
 
     // 두 번째 판은 남은 적 주위에 선다 — 이미 젖은 적은 뒤로 밀리기 때문이다.
-    spino.attackCooldown = 0;
+    spina.attackCooldown = 0;
     stepSkirmish(state, 1 / 60, () => 0.99);
-    expect(spino.shallowPools).toHaveLength(2);
+    expect(spina.shallowPools).toHaveLength(2);
     // 셋째 판은 둘 중 어느 쪽에도 `minSpacing`만큼 떨어지지 못해 새로 서지 않는다.
-    spino.attackCooldown = 0;
+    spina.attackCooldown = 0;
     stepSkirmish(state, 1 / 60, () => 0.99);
-    expect(spino.shallowPools).toHaveLength(2);
+    expect(spina.shallowPools).toHaveLength(2);
   });
 
   it("은 여울에 잠긴 적의 이동만 늦추고, 물 밖으로 나가면 그 프레임에 풀린다", () => {
-    const { state, spino, target } = readySpino();
+    const { state, spina, target } = readySpino();
     const walked = moveSpeed(target);
     // 잠김 판정은 모든 여울의 시계가 흐른 뒤 한 번에 돌므로, 물이 고인 다음 프레임부터 잠긴다.
     stepSkirmish(state, 1 / 60, () => 0.99);
-    target.x = spino.shallowPools[0].x; target.y = spino.shallowPools[0].y;
+    target.x = spina.shallowPools[0].x; target.y = spina.shallowPools[0].y;
     stepSkirmish(state, 1 / 60, () => 0.99);
-    expect(target.submergedIn).toMatchObject({ ownerId: spino.id, moveSlowPercent: 35 });
+    expect(target.submergedIn).toMatchObject({ ownerId: spina.id, moveSlowPercent: 35 });
     expect(moveSpeed(target)).toBeCloseTo(walked * 0.65);
     // 공격 속도는 건드리지 않는다 — 이 판이 말하는 것은 "빠져나가지 못한다"이지 "덜 아프다"가 아니다.
-    expect(attackInterval(target)).toBe(attackInterval(newSkirmish(["amo"], ["spino"]).fighters[0]));
+    expect(attackInterval(target)).toBe(attackInterval(newSkirmish(["amo"], ["spina"]).fighters[0]));
     // 상태가 아니라 서 있는 자리라, 물 밖으로 한 걸음 나가면 같은 프레임에 풀린다.
-    target.x = spino.shallowPools[0].x + 400;
+    target.x = spina.shallowPools[0].x + 400;
     stepSkirmish(state, 1 / 60, () => 0.99);
     expect(target.submergedIn).toBeNull();
     expect(moveSpeed(target)).toBeCloseTo(walked);
@@ -553,86 +553,86 @@ describe("스피나 전투 계약", () => {
 
   /** 여울의 값은 평타가 아니라 **뛰어드는 순간**에 있다. */
   it("은 기본 공격 네 번마다 적이 잠긴 여울로 뛰어들어 그 자리를 터뜨린다", () => {
-    const state = newSkirmish(["spino"], ["amo", "toby"]);
-    const [spino, near, far] = state.fighters;
-    spino.x = 400; spino.y = 900;
+    const state = newSkirmish(["spina"], ["amo", "toby"]);
+    const [spina, near, far] = state.fighters;
+    spina.x = 400; spina.y = 900;
     near.x = 460; near.y = 900;
     for (const enemy of [near, far]) enemy.attackCooldown = 99;
     // 멀리 선 적을 판 안에 세워 둔다 — 뛰어들 자리가 실제로 누군가를 붙잡고 있어야 한다.
     const pool = { x: 400, y: 1300, remaining: 6, total: 6 };
     far.x = pool.x; far.y = pool.y;
-    spino.shallowPools = [pool];
+    spina.shallowPools = [pool];
     // 다음 한 대가 곧 네 번째다.
-    spino.shallowLeapCount = spino.def.basic.shallows!.leapEveryHits - 1;
-    spino.targetId = near.id;
-    spino.attackCooldown = 0;
+    spina.shallowLeapCount = spina.def.basic.shallows!.leapEveryHits - 1;
+    spina.targetId = near.id;
+    spina.attackCooldown = 0;
 
     const farHp = far.hp;
     const events = stepSkirmish(state, 1 / 60, () => 0.99);
     // 판 자리로 건너가 그 자리를 터뜨린다.
-    expect(Math.hypot(spino.x - pool.x, spino.y - pool.y)).toBeLessThan(1);
+    expect(Math.hypot(spina.x - pool.x, spina.y - pool.y)).toBeLessThan(1);
     expect(far.hp).toBeLessThan(farHp);
     expect(events.some((event) => event.kind === "areaImpact" && event.damageType === "physical")).toBe(true);
     // 내려선 판은 그 자리에서 마른다 — 회수하지 않으면 같은 판으로 계속 되뛴다.
-    expect(spino.shallowPools.some((left) => left === pool)).toBe(false);
+    expect(spina.shallowPools.some((left) => left === pool)).toBe(false);
     // 타수는 0으로 돌아가 다음 네 대를 독립적으로 센다.
-    expect(spino.shallowLeapCount).toBe(0);
+    expect(spina.shallowLeapCount).toBe(0);
   });
 
   it("은 아무도 잠기지 않은 판으로는 건너가지 않는다", () => {
-    const { state, spino, target } = readySpino();
-    const takeoff = { x: spino.x, y: spino.y };
+    const { state, spina, target } = readySpino();
+    const takeoff = { x: spina.x, y: spina.y };
     // 빈 물로 건너가면 표적에게서 멀어지기만 한다.
-    spino.shallowPools = [{ x: 900, y: 1300, remaining: 6, total: 6 }];
-    spino.shallowLeapCount = spino.def.basic.shallows!.leapEveryHits - 1;
-    spino.targetId = target.id;
-    spino.attackCooldown = 0;
+    spina.shallowPools = [{ x: 900, y: 1300, remaining: 6, total: 6 }];
+    spina.shallowLeapCount = spina.def.basic.shallows!.leapEveryHits - 1;
+    spina.targetId = target.id;
+    spina.attackCooldown = 0;
     stepSkirmish(state, 1 / 60, () => 0.99);
-    expect(Math.hypot(spino.x - 900, spino.y - 1300)).toBeGreaterThan(1);
-    expect(Math.hypot(spino.x - takeoff.x, spino.y - takeoff.y)).toBeLessThan(200);
+    expect(Math.hypot(spina.x - 900, spina.y - 1300)).toBeGreaterThan(1);
+    expect(Math.hypot(spina.x - takeoff.x, spina.y - takeoff.y)).toBeLessThan(200);
   });
 
   it("은 궁극기로 깔아 둔 여울을 전부 터뜨린다", () => {
-    const state = newSkirmish(["spino"], ["amo", "toby"]);
-    const [spino, first, second] = state.fighters;
-    spino.x = 400; spino.y = 900;
+    const state = newSkirmish(["spina"], ["amo", "toby"]);
+    const [spina, first, second] = state.fighters;
+    spina.x = 400; spina.y = 900;
     for (const enemy of [first, second]) enemy.attackCooldown = 99;
     const pools = [
       { x: 400, y: 700, remaining: 6, total: 6 },
       { x: 400, y: 1300, remaining: 6, total: 6 },
     ];
-    spino.shallowPools = pools.map((pool) => ({ ...pool }));
+    spina.shallowPools = pools.map((pool) => ({ ...pool }));
     first.x = pools[0].x; first.y = pools[0].y;
     second.x = pools[1].x; second.y = pools[1].y;
     const before = [first.hp, second.hp];
 
-    spino.energy = spino.def.ultimate.cost;
-    const events = fireUltimate(state, spino.id);
+    spina.energy = spina.def.ultimate.cost;
+    const events = fireUltimate(state, spina.id);
     // 판마다 한 번씩 터지고, 각 판 안의 적이 실제로 깎인다.
     const bursts = events.filter((event) => event.kind === "areaImpact" && event.damageType === "physical");
     expect(bursts.length).toBeGreaterThanOrEqual(pools.length);
     expect(first.hp).toBeLessThan(before[0]);
     expect(second.hp).toBeLessThan(before[1]);
     // 터진 판은 마른다.
-    expect(spino.shallowPools).toHaveLength(0);
+    expect(spina.shallowPools).toHaveLength(0);
   });
 
   it("은 확률로 터진 연격까지 물이 갉아먹지 않는다", () => {
-    const { state, spino } = readySpino();
+    const { state, spina } = readySpino();
     stepSkirmish(state, 1 / 60, () => 0.99);
-    const speed = spino.bonusAttackSpeed;
-    spino.attackCooldown = 0;
+    const speed = spina.bonusAttackSpeed;
+    spina.attackCooldown = 0;
     // 판정이 성공하면(0.39) 두 대 모두 제 힘으로 문 것이므로 예전 그대로 +6이다.
     const rolls = [0.39, 0.99, 0.99];
     stepSkirmish(state, 1 / 60, () => rolls.shift() ?? 0.99);
-    expect(spino.bonusAttackSpeed - speed).toBe(spino.def.passive.value * 2);
+    expect(spina.bonusAttackSpeed - speed).toBe(spina.def.passive.value * 2);
   });
 
   it("은 연격 첫 타로 대상이 죽으면 후속타와 두 번째 누적을 취소한다", () => {
-    const { state, spino, target } = readySpino(); target.hp = 1;
+    const { state, spina, target } = readySpino(); target.hp = 1;
     const events = stepSkirmish(state, 1 / 60, () => 0);
     expect(events.filter((event) => event.kind === "attack")).toHaveLength(1);
-    expect(spino.bonusAttackSpeed).toBe(3);
+    expect(spina.bonusAttackSpeed).toBe(3);
   });
 
   /*
@@ -643,19 +643,19 @@ describe("스피나 전투 계약", () => {
    */
   it("은 은신자를 여럿 중에서는 고르지 않지만 혼자 남으면 노린다", () => {
     // 숨은 쪽 편에 **하나가 더** 서 있어야 은신이 표적에서 빼 준다.
-    const many = newSkirmish(["spino", "torika"], ["amo"]);
+    const many = newSkirmish(["spina", "torika"], ["amo"]);
     const [hidden, , other] = many.fighters;
     hidden.stealthFor = 3;
     other.targetId = hidden.id;
     stepSkirmish(many, 0.25);
     expect(other.targetId).not.toBe(hidden.id);
 
-    const { state, spino, target: enemy } = readySpino();
-    spino.stealthFor = 3; enemy.targetId = spino.id; enemy.attackCooldown = 0;
+    const { state, spina, target: enemy } = readySpino();
+    spina.stealthFor = 3; enemy.targetId = spina.id; enemy.attackCooldown = 0;
     // 상대가 하나뿐이면 숨어 있어도 표적이 되고 실제로 맞는다.
     const events = stepSkirmish(state, 0.25).filter((event) => event.kind === "attack" && event.attackerId === enemy.id);
     expect(events.length).toBeGreaterThan(0);
-    expect(enemy.targetId).toBe(spino.id);
+    expect(enemy.targetId).toBe(spina.id);
     expect(state.elapsed).toBeCloseTo(0.25);
   });
 
@@ -672,57 +672,57 @@ describe("스피나 전투 계약", () => {
 
   it("은 여럿이 선 판에서 정확히 3초 뒤 다시 지정되며 공용 최소 공격 간격 아래로 내려가지 않는다", () => {
     // 혼자 남으면 숨어도 노려지므로, 은신이 실제로 표적에서 빼 주는 판은 **여럿이 선 자리**다.
-    const state = newSkirmish(["spino", "torika"], ["amo"]);
-    const [spino, , enemy] = state.fighters;
-    spino.stealthFor = 3; spino.attackCooldown = 99;
+    const state = newSkirmish(["spina", "torika"], ["amo"]);
+    const [spina, , enemy] = state.fighters;
+    spina.stealthFor = 3; spina.attackCooldown = 99;
     for (let i = 0; i < 11; i += 1) stepSkirmish(state, 0.25);
-    expect(enemy.targetId).not.toBe(spino.id);
+    expect(enemy.targetId).not.toBe(spina.id);
     stepSkirmish(state, 0.25);
-    spino.bonusAttackSpeed = 1_000_000;
-    expect(attackInterval(spino)).toBe(SKIRMISH.minimumAttackInterval);
+    spina.bonusAttackSpeed = 1_000_000;
+    expect(attackInterval(spina)).toBe(SKIRMISH.minimumAttackInterval);
   });
 
   it("은 궁극기에 공격력 200%와 현재 공속 150%를 합산하고 생존자에게 3초 기절을 준다", () => {
-    const { state, spino, target } = readySpino(); spino.energy = spino.def.ultimate.cost; spino.bonusAttackSpeed = 6;
-    const ultimate = spino.def.ultimate;
+    const { state, spina, target } = readySpino(); spina.energy = spina.def.ultimate.cost; spina.bonusAttackSpeed = 6;
+    const ultimate = spina.def.ultimate;
     if (!("damageType" in ultimate) || ultimate.damageType === undefined) throw new Error("스피나 공격 궁극기 계약이 필요합니다.");
-    const speed = currentAttackSpeed(spino);
+    const speed = currentAttackSpeed(spina);
     // 실제 피해는 아래 공용 함수에서 방어 적용 후 정수로 반올림하므로, 복합 원피해 산식과 구분한다.
-    const equivalentPower = 200 + speed * 150 / spino.def.stats.atk;
-    const expected = computeDamage(spino, target, { ...ultimate, power: equivalentPower, kind: "ultimate", isCritical: false });
+    const equivalentPower = 200 + speed * 150 / spina.def.stats.atk;
+    const expected = computeDamage(spina, target, { ...ultimate, power: equivalentPower, kind: "ultimate", isCritical: false });
     /*
      * **여울은 평타에도 궁극기의 주 타격에도 아무 몫을 주지 않는다.** 물을 깔아 둔 값은 판이
      * 터지는 순간에만 돌아오므로(도약·`detonateShallows`), 이 한 방은 물가 안팎에서 같다.
      *
      * 판이 하나도 깔리지 않은 자리라 터질 것도 없다 — 주 타격만 남는다.
      */
-    expect(spino.shallowPools).toHaveLength(0);
-    const hit = fireUltimate(state, spino.id).find((event) => event.kind === "attack");
+    expect(spina.shallowPools).toHaveLength(0);
+    const hit = fireUltimate(state, spina.id).find((event) => event.kind === "attack");
     expect(hit).toMatchObject({ amount: expected });
     expect(target.stunnedFor).toBe(3);
-    expect(spino.energy).toBe(0);
+    expect(spina.energy).toBe(0);
   });
 
   it("은 레벨 1 궁극기 원피해에서 평타 실제 적중마다 반올림 전 원피해를 4.5씩 높인다", () => {
-    const { state, spino, target } = readySpino();
-    const ultimate = spino.def.ultimate;
+    const { state, spina, target } = readySpino();
+    const ultimate = spina.def.ultimate;
     if (!("damageType" in ultimate) || ultimate.damageType === undefined) throw new Error("스피나 공격 궁극기 계약이 필요합니다.");
-    const rawUltimateDamage = () => spino.def.stats.atk * ultimate.power / 100
-      + currentAttackSpeed(spino) * ultimate.attackSpeedPower! / 100;
-    const actualUltimateDamage = () => computeDamage(spino, target, {
+    const rawUltimateDamage = () => spina.def.stats.atk * ultimate.power / 100
+      + currentAttackSpeed(spina) * ultimate.attackSpeedPower! / 100;
+    const actualUltimateDamage = () => computeDamage(spina, target, {
       ...ultimate,
       power: ultimate.power
-        + currentAttackSpeed(spino) * ultimate.attackSpeedPower! / spino.def.stats.atk,
+        + currentAttackSpeed(spina) * ultimate.attackSpeedPower! / spina.def.stats.atk,
       kind: "ultimate",
       isCritical: false,
     });
 
     // 공격력의 200%와 공속의 150%를 더한 방어 적용 전 값이다. 등급별 태생 조정이 있어도
     // 계약이 함께 움직이도록 수치를 손으로 베끼지 않고 데이터에서 계산한다.
-    expect(currentAttackSpeed(spino)).toBe(spino.def.stats.attackSpeed);
+    expect(currentAttackSpeed(spina)).toBe(spina.def.stats.attackSpeed);
     const rawBeforeHit = rawUltimateDamage();
     const actualBeforeHit = actualUltimateDamage();
-    expect(rawBeforeHit).toBe(spino.def.stats.atk * 2 + spino.def.stats.attackSpeed * 1.5);
+    expect(rawBeforeHit).toBe(spina.def.stats.atk * 2 + spina.def.stats.attackSpeed * 1.5);
 
     // 연격이 나지 않는 평타 한 번을 실제로 적중시켜 패시브 공속 +3을 누적한다.
     stepSkirmish(state, 1 / 60, () => 0.99);
@@ -730,9 +730,9 @@ describe("스피나 전투 계약", () => {
     const actualAfterHit = actualUltimateDamage();
     expect(rawAfterHit - rawBeforeHit).toBeCloseTo(4.5);
     // 실제 피해끼리는 방어 계산과 정수 반올림을 거친 값으로 별도 검증한다.
-    expect(actualAfterHit).toBe(computeDamage(spino, target, {
+    expect(actualAfterHit).toBe(computeDamage(spina, target, {
       ...ultimate,
-      power: 200 + (spino.def.stats.attackSpeed + 3) * 150 / spino.def.stats.atk,
+      power: 200 + (spina.def.stats.attackSpeed + 3) * 150 / spina.def.stats.atk,
       kind: "ultimate",
       isCritical: false,
     }));
@@ -740,9 +740,9 @@ describe("스피나 전투 계약", () => {
   });
 
   it("은 패시브가 올린 치명타 확률을 태생 공통값 위에 퍼센트포인트로 더한다", () => {
-    const { state, spino } = readySpino();
-    const points = spino.def.passive.criticalChancePercent!;
-    const chance = spino.def.stats.critChance + points;
+    const { state, spina } = readySpino();
+    const points = spina.def.passive.criticalChancePercent!;
+    const chance = spina.def.stats.critChance + points;
     expect(points).toBe(20);
     // 경계 바로 아래 난수는 치명타, 바로 위는 아니다 — 개체 이름이 아니라 적힌 값으로 읽는다.
     expect(stepSkirmish(state, 1 / 60, () => (chance - 1) / 100).find((event) => event.kind === "attack")).toMatchObject({ critical: true });
@@ -751,14 +751,14 @@ describe("스피나 전투 계약", () => {
   });
 
   it("은 동일 성장 렉시아보다 느리게 시작해 장기 적중 뒤 공격 빈도를 앞서고 궁극기 한 번에 동급 탱커를 처치하지 않는다", () => {
-    const rexState = newSkirmish(["rex"], ["amo"]);
-    const { state, spino, target: tank } = readySpino();
-    expect(attackInterval(spino)).toBeGreaterThan(attackInterval(rexState.fighters[0]));
+    const rexState = newSkirmish(["rexia"], ["amo"]);
+    const { state, spina, target: tank } = readySpino();
+    expect(attackInterval(spina)).toBeGreaterThan(attackInterval(rexState.fighters[0]));
     // 세 번의 확정 연격은 여섯 실제 적중이므로 +18을 얻어 140 공속이 된다.
-    for (let action = 0; action < 3; action += 1) { spino.attackCooldown = 0; stepSkirmish(state, 1 / 60, () => 0); }
-    expect(attackInterval(spino)).toBeLessThan(attackInterval(rexState.fighters[0]));
-    tank.hp = tank.maxHp; spino.energy = spino.def.ultimate.cost;
-    fireUltimate(state, spino.id);
+    for (let action = 0; action < 3; action += 1) { spina.attackCooldown = 0; stepSkirmish(state, 1 / 60, () => 0); }
+    expect(attackInterval(spina)).toBeLessThan(attackInterval(rexState.fighters[0]));
+    tank.hp = tank.maxHp; spina.energy = spina.def.ultimate.cost;
+    fireUltimate(state, spina.id);
     expect(tank.hp).toBeGreaterThan(0);
   });
 });
@@ -773,7 +773,7 @@ describe("루카 전투 계약", () => {
   }
 
   it("는 최고 전투 시작 공격력 아군의 표적을 따르고 동률이면 편성 순서를 따른다", () => {
-    const leader = { ...getRelic("rex"), stats: { ...getRelic("rex").stats, atk: 500 } };
+    const leader = { ...getRelic("rexia"), stats: { ...getRelic("rexia").stats, atk: 500 } };
     const tied = { ...getRelic("torika"), stats: { ...getRelic("torika").stats, atk: 500 } };
     const state = createSkirmish([leader, tied, getRelic("luka")], [getRelic("toby"), getRelic("amo")], { left: 0, right: 600, top: 0, bottom: 1_000 });
     expect(state.fighters[2].targetId).toBe(state.fighters[0].targetId);
@@ -783,7 +783,7 @@ describe("루카 전투 계약", () => {
   });
 
   it("는 폭주 진입 때 은신·재지정·적 추적 해제를 적용하고 도약하지 않는다", () => {
-    const state = newSkirmish(["luka", "rex"], ["amo", "ripa"]); const [luka, leader, enemy] = state.fighters;
+    const state = newSkirmish(["luka", "rexia"], ["amo", "ripa"]); const [luka, leader, enemy] = state.fighters;
     luka.ferocity = ferocityMaxOf(luka.def) - 1; leader.targetId = "enemy-1"; enemy.targetId = luka.id; luka.x = 300; luka.y = 700;
     const position = { x: luka.x, y: luka.y }; hitOnce(state);
     expect(luka.stealthFor).toBeGreaterThan(2.9); expect(luka.targetId).toBe("enemy-1");
@@ -791,7 +791,7 @@ describe("루카 전투 계약", () => {
   });
 
   it("는 폭주 중 자신과 동일 표적 생존 아군만 공속을 40% 높이고 복수 오라는 중첩하지 않는다", () => {
-    const state = newSkirmish(["luka", "luka", "rex", "torika"], ["amo", "ripa"]);
+    const state = newSkirmish(["luka", "luka", "rexia", "torika"], ["amo", "ripa"]);
     const [first, second, same, other] = state.fighters; first.ferocityFever = second.ferocityFever = true;
     first.targetId = second.targetId = same.targetId = "enemy-0"; other.targetId = "enemy-1";
     expect(currentAttackSpeed(first, state)).toBeCloseTo(first.def.stats.attackSpeed * 1.4);
@@ -801,7 +801,7 @@ describe("루카 전투 계약", () => {
   });
 
   it("는 자신과 동일 표적 아군에게만 조건부 버프를 노출하고 제공 상태가 끝나면 즉시 해제한다", () => {
-    const state = newSkirmish(["luka", "rex", "torika"], ["amo", "ripa"]);
+    const state = newSkirmish(["luka", "rexia", "torika"], ["amo", "ripa"]);
     const [luka, same, other] = state.fighters;
     luka.ferocityFever = true; luka.targetId = same.targetId = "enemy-0"; other.targetId = "enemy-1";
 
@@ -870,7 +870,7 @@ describe("전투 활성 버프 셀렉터", () => {
 describe("메테 전투 계약", () => {
   /** 메테·동료·적을 즉시 교전 가능한 한 점에 모으고 필요 없는 자동 행동은 멈춘다. */
   function metteBattle() {
-    const state = newSkirmish(["mette", "rex"], ["amo"]);
+    const state = newSkirmish(["mette", "rexia"], ["amo"]);
     const [mette, ally, foe] = state.fighters;
     mette.x = ally.x = 400; mette.y = ally.y = foe.y = 900; foe.x = 450;
     mette.attackCooldown = foe.attackCooldown = 99; ally.attackCooldown = 0;
@@ -903,7 +903,7 @@ describe("메테 전투 계약", () => {
   });
 
   it("는 편성 순서의 준비된 메테가 먼저 정화하고 기존 보호막에는 새 보호막을 합산한다", () => {
-    const state = newSkirmish(["mette", "mette", "rex"], ["amo"]);
+    const state = newSkirmish(["mette", "mette", "rexia"], ["amo"]);
     const [first, second, ally] = state.fighters;
     ally.shield = { amount: 10, providerId: ally.id };
     const firstEvents = applyStun(ally, 1, state);
@@ -1011,7 +1011,7 @@ describe("궁극기 연출 직렬 상태", () => {
 
 const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 
-function newSkirmish(player = ["torika", "rex", "dodo"], enemy = ["toby", "amo", "ripa"]): SkirmishState {
+function newSkirmish(player = ["torika", "rexia", "dodi"], enemy = ["toby", "amo", "ripa"]): SkirmishState {
   return createSkirmish(player.map(getRelic), enemy.map(getRelic), ARENA);
 }
 
@@ -1025,13 +1025,13 @@ function run(state: SkirmishState, seconds: number, rng?: () => number) {
 describe("단일 난전의 원정 보스 옵션", () => {
   /** 실제 20층 진입과 같은 정의를 사용하되 공격 재현을 위해 양쪽을 즉시 교전시킨다. */
   function dodoFinalBossBattle(): SkirmishState {
-    const dodo = getRelic("dodo");
+    const dodi = getRelic("dodi");
     const input: ExpeditionBossBattleInputDto = {
       mode: "expeditionBoss", runId: "damage-regression", nodeId: "floor-20-boss", floor: 20,
-      relics: [{ relicId: dodo.id, currentHp: 100, alive: true }], augments: [],
+      relics: [{ relicId: dodi.id, currentHp: 100, alive: true }], augments: [],
       requestId: "damage-regression-request", settlementId: "damage-regression-settlement",
     };
-    const config = createExpeditionBossSkirmishConfig(input, [dodo], getExpeditionNodeEnemies("boss", 20));
+    const config = createExpeditionBossSkirmishConfig(input, [dodi], getExpeditionNodeEnemies("boss", 20));
     const state = createSkirmish(config.playerDefs, config.enemyDefs, ARENA, {}, {}, {
       playerInitialStates: config.playerInitialStates,
       augmentEffects: config.augmentEffects,
@@ -1049,9 +1049,9 @@ describe("단일 난전의 원정 보스 옵션", () => {
     const basicEvents = stepSkirmish(basicState, 1 / 60, () => 0.99).filter((event) => event.kind === "attack");
 
     const ultimateState = dodoFinalBossBattle();
-    const dodo = ultimateState.fighters[0];
-    dodo.energy = dodo.def.ultimate.cost;
-    const ultimateEvents = fireUltimate(ultimateState, dodo.id, () => 0.99).filter((event) => event.kind === "attack");
+    const dodi = ultimateState.fighters[0];
+    dodi.energy = dodi.def.ultimate.cost;
+    const ultimateEvents = fireUltimate(ultimateState, dodi.id, () => 0.99).filter((event) => event.kind === "attack");
 
     for (const events of [basicEvents, ultimateEvents]) {
       expect(events.length).toBeGreaterThan(0);
@@ -1131,7 +1131,7 @@ describe("단일 난전의 원정 보스 옵션", () => {
   });
 
   it("표준 5인 파티는 폰토스 앞에서 오래 버티고 전멸로 끝나며 점수가 실제 감소 체력과 같다", () => {
-    const partyIds = ["torika", "rex", "spino", "dodo", "mette"];
+    const partyIds = ["torika", "rexia", "spina", "dodi", "mette"];
     // 플레이어는 통상 1돌파 전 상한인 20레벨, 최종 보스는 20층 boss 보정이 더해진 25레벨이다.
     const party = partyIds.map((id) => {
       const relic = getRelic(id);
@@ -1387,7 +1387,7 @@ describe("실시간 진행", () => {
 describe("기절 상태", () => {
   /** 두 전투원을 붙이고 다른 우연한 행동 없이 기절 정책만 관찰할 결투를 만든다. */
   function stunnedDuel(): SkirmishState {
-    const state = newSkirmish(["rex"], ["toby"]);
+    const state = newSkirmish(["rexia"], ["toby"]);
     const [ally, foe] = state.fighters;
     ally.x = 400; ally.y = 1000; ally.targetId = foe.id; ally.engaged = true;
     foe.x = 460; foe.y = 1000; foe.targetId = ally.id; foe.engaged = true;
@@ -1492,8 +1492,8 @@ describe("능력치 반영", () => {
   });
 
   it("은 이동 속도가 빠른 쪽이 같은 시간에 더 멀리 간다", () => {
-    const quick = newSkirmish(["rex"], ["toby"]);
-    const slow = newSkirmish(["rex"], ["toby"]);
+    const quick = newSkirmish(["rexia"], ["toby"]);
+    const slow = newSkirmish(["rexia"], ["toby"]);
     slow.fighters[0].def = { ...slow.fighters[0].def, stats: { ...slow.fighters[0].def.stats, moveSpeed: 40 } };
     const startY = quick.fighters[0].y;
     run(quick, 0.5);
@@ -1519,12 +1519,12 @@ describe("능력치 반영", () => {
       return stepSkirmish(state, 1 / 60).find((event) => event.kind === "attack")?.amount ?? 0;
     };
     // 렉시아의 물리 공격과 티아의 마법 공격 모두 실제 난전 이벤트를 통해 피해를 만든다.
-    expect(hit("rex", "amo")).toBeGreaterThan(0);
+    expect(hit("rexia", "amo")).toBeGreaterThan(0);
     expect(hit("tia", "amo")).toBeGreaterThan(0);
   });
 
   it("은 최종 궁극기·야성 충전 보정과 실제 HP 피해 기준 흡혈을 적용한다", () => {
-    const state = newSkirmish(["rex"], ["amo"]);
+    const state = newSkirmish(["rexia"], ["amo"]);
     const [attacker, target] = state.fighters;
     attacker.def = { ...attacker.def, stats: { ...attacker.def.stats, energyGain: 40, ferocityGain: 50, lifeSteal: 25 } };
     attacker.hp = attacker.maxHp - 100;
@@ -1564,7 +1564,7 @@ describe("능력치 반영", () => {
 describe("실시간 야성 공용 규칙", () => {
   /** 공격자와 대상을 붙여 한 번의 실제 난전 타격만 관찰한다. */
   function oneHit(ferocity: number) {
-    const state = newSkirmish(["rex"], ["amo"]);
+    const state = newSkirmish(["rexia"], ["amo"]);
     const [attacker, target] = state.fighters;
     attacker.x = 400; attacker.y = 1000; attacker.attackCooldown = 0; attacker.ferocity = ferocity;
     target.x = 460; target.y = 1000; target.attackCooldown = 99;
@@ -1574,7 +1574,7 @@ describe("실시간 야성 공용 규칙", () => {
 
   it("은 50/80/100 경계에서 공격 피해를 올리고 타격 양쪽의 게이지를 채운다", () => {
     // 구간은 최대치에 대한 비율이다 — 렉시아의 게이지(130)에서 50%·80%·100% 자리를 읽는다.
-    const max = ferocityMaxOf(getRelic("rex"));
+    const max = ferocityMaxOf(getRelic("rexia"));
     const calm = oneHit(max * 0.5 - 1);
     const first = oneHit(max * 0.5);
     const second = oneHit(max * 0.8);
@@ -1600,19 +1600,19 @@ describe("효과 ID별 야성 특성", () => {
   }
 
   it("렉시아 패시브는 공격 속도를 25퍼센트포인트 높이고 폭주 종료 뒤 간격을 그대로 유지한다", () => {
-    const state = newSkirmish(["rex"], ["amo"]);
-    const rex = state.fighters[0];
-    const before = attackInterval(rex);
+    const state = newSkirmish(["rexia"], ["amo"]);
+    const rexia = state.fighters[0];
+    const before = attackInterval(rexia);
     // 기본 112에 25퍼센트포인트를 더한 137로 나눠 곱연산(140)과 의미가 바뀌지 않게 고정한다.
     expect(before).toBeCloseTo(SKIRMISH.attackInterval * 100 / 137);
-    rex.ferocity = ferocityMaxOf(rex.def); rex.ferocityFever = true;
-    expect(attackInterval(rex)).toBe(before); // 렉시아 폭주는 공속이 아니라 치명타와 흡혈만 바꾼다.
-    rex.ferocityFever = false;
-    expect(attackInterval(rex)).toBe(before);
+    rexia.ferocity = ferocityMaxOf(rexia.def); rexia.ferocityFever = true;
+    expect(attackInterval(rexia)).toBe(before); // 렉시아 폭주는 공속이 아니라 치명타와 흡혈만 바꾼다.
+    rexia.ferocityFever = false;
+    expect(attackInterval(rexia)).toBe(before);
   });
 
   it("토리카의 폭주는 회복·실제 방어 수치·범위 도발을 제공하고 종료 뒤 원복한다", () => {
-    const state = prepareHit("torika", ["amo", "toby", "rex"]);
+    const state = prepareHit("torika", ["amo", "toby", "rexia"]);
     const [torika, first, second, outside] = state.fighters;
     first.x = torika.x + 100; first.y = torika.y;
     second.x = torika.x + 300; second.y = torika.y;
@@ -1661,39 +1661,39 @@ describe("효과 ID별 야성 특성", () => {
 
   it("stealthLeap는 최저 체력 적에게 도약하고 기존 추적을 모두 해제한다", () => {
     // 아군을 하나 더 세워야 추적 해제가 관찰된다 — 스피나가 혼자면 숨어도 곧바로 다시 노려진다.
-    const state = prepareHit("spino", ["amo", "toby"], ["torika"]);
-    const [spino, , first, lowest] = state.fighters;
+    const state = prepareHit("spina", ["amo", "toby"], ["torika"]);
+    const [spina, , first, lowest] = state.fighters;
     lowest.hp = lowest.maxHp * 0.2; lowest.x = 700; lowest.y = 900;
-    first.targetId = spino.id; lowest.targetId = spino.id; spino.ferocity = ferocityMaxOf(spino.def) - 1;
-    const takeoff = { x: spino.x, y: spino.y };
+    first.targetId = spina.id; lowest.targetId = spina.id; spina.ferocity = ferocityMaxOf(spina.def) - 1;
+    const takeoff = { x: spina.x, y: spina.y };
     // 단 한 번의 발동 프레임 호출만으로 출발점과 다른 착지점이 확정되어 중간 이동 상태가 없음을 고정한다.
     stepSkirmish(state, 1 / 60, () => 0.99);
-    expect({ x: spino.x, y: spino.y }).not.toEqual(takeoff);
-    expect(spino.stealthFor).toBe(3);
+    expect({ x: spina.x, y: spina.y }).not.toEqual(takeoff);
+    expect(spina.stealthFor).toBe(3);
     /*
      * 착지 거리는 **그 프레임 안에서** 잰다. 추적이 풀린 적들이 같은 걸음에 다시 스피나를
      * 고르고 한 발 다가서므로(혼자 남은 상대는 숨어도 노린다), 정확히 `reach`를 요구하면
      * 그 한 걸음만큼 어긋난다 — 재려는 것은 도약이 붙는 자리이지 그 뒤의 추격이 아니다.
      */
-    expect(Math.hypot(spino.x - lowest.x, spino.y - lowest.y)).toBeCloseTo(SKIRMISH.reach, -1);
+    expect(Math.hypot(spina.x - lowest.x, spina.y - lowest.y)).toBeCloseTo(SKIRMISH.reach, -1);
     // 둘 다 스피나를 놓는다. 같은 걸음에서 다시 고를 때는 숨지 않은 아군 쪽으로 옮겨 가므로
     // `null`로 남지 않는다 — 재려는 것은 "추적이 풀렸다"이지 "표적이 비었다"가 아니다.
-    expect(first.targetId).not.toBe(spino.id);
-    expect(lowest.targetId).not.toBe(spino.id);
+    expect(first.targetId).not.toBe(spina.id);
+    expect(lowest.targetId).not.toBe(spina.id);
   });
 
 });
 
 describe("도디 정적 전투 계약", () => {
   /** 한 명만 행동하게 해 같은 프레임의 부수 공격 없이 도디 규칙을 검증한다. */
-  function readyDodiBattle(allies = ["dodo", "rex", "torika"], enemies = ["amo"]) {
+  function readyDodiBattle(allies = ["dodi", "rexia", "torika"], enemies = ["amo"]) {
     const state = newSkirmish(allies, enemies);
     state.fighters.forEach((fighter) => { fighter.attackCooldown = 99; });
     return state;
   }
 
   it("기획 스킬명과 주문력 50% 일반 공격 계수를 유지한다", () => {
-    const dodi = getRelic("dodo");
+    const dodi = getRelic("dodi");
     expect([dodi.ferocityTrait?.name, dodi.passive.name, dodi.basic.name, dodi.ultimate.name]).toEqual([
       "인비저블 썸띵?",
       "연구원님, 이것 좀 보세요!",
@@ -1715,7 +1715,7 @@ describe("도디 정적 전투 계약", () => {
 
   it.each(["toby", "amo"])("생존 제공자는 %s의 물리·마법 피해를 줄이고 사망 즉시 해제한다", (enemyId) => {
     const damageWithProvider = (alive: boolean) => {
-      const state = readyDodiBattle(["rex", "dodo"], [enemyId]);
+      const state = readyDodiBattle(["rexia", "dodi"], [enemyId]);
       const [target, dodi, enemy] = state.fighters;
       dodi.hp = alive ? dodi.maxHp : 0;
       target.x = enemy.x = 500; target.y = enemy.y = 900; enemy.attackCooldown = 0;
@@ -1727,7 +1727,7 @@ describe("도디 정적 전투 계약", () => {
 
   it("적 회복 감소는 제공자 생존 중 30%만 적용되고 사망 뒤 사라진다", () => {
     const healed = (alive: boolean) => {
-      const state = readyDodiBattle(["dodo"], ["torika"]);
+      const state = readyDodiBattle(["dodi"], ["torika"]);
       const [dodi, enemy] = state.fighters; dodi.hp = alive ? dodi.maxHp : 0;
       enemy.hp = 100; enemy.regeneration = { remaining: 1, tickIn: 0, percentPerTick: 10 };
       const before = enemy.hp; stepSkirmish(state, 1 / 60); return enemy.hp - before;
@@ -1743,7 +1743,7 @@ describe("도디 정적 전투 계약", () => {
 
     // **때린 본인은 후보가 아니다.** 자기도 후보면 앞줄이 멀쩡한 동안 깎인 제 몸으로 회복이
     // 계속 돌아와, 뒤에서 거드는 개체가 저 혼자 버티는 몸이 된다.
-    const selfState = readyDodiBattle(["dodo", "rex"]); const [self, ally, foe] = selfState.fighters;
+    const selfState = readyDodiBattle(["dodi", "rexia"]); const [self, ally, foe] = selfState.fighters;
     self.hp = 1; ally.hp = ally.maxHp; self.x = foe.x = 500; self.y = foe.y = 900; self.attackCooldown = 0;
     const events = stepSkirmish(selfState, 1 / 60);
     expect(events.some((event) => event.kind === "heal" && event.fighterId === self.id)).toBe(false);
@@ -1754,16 +1754,16 @@ describe("도디 정적 전투 계약", () => {
   });
 
   it("과잉 피해가 아니라 실제 감소 HP만 일반 공격 회복량으로 사용한다", () => {
-    const state = readyDodiBattle(["dodo", "rex"]); const [dodi, ally, enemy] = state.fighters;
+    const state = readyDodiBattle(["dodi", "rexia"]); const [dodi, ally, enemy] = state.fighters;
     ally.hp = 1; enemy.hp = 3; dodi.x = enemy.x = 500; dodi.y = enemy.y = 900; dodi.attackCooldown = 0;
     const heal = stepSkirmish(state, 1 / 60)
       .find((event): event is Extract<SkirmishEvent, { kind: "heal" }> => event.kind === "heal" && event.fighterId === ally.id);
     // 회복 비율은 정의에서 읽는다. 숫자를 박아 두면 밸런스를 조정할 때마다 이 계약이 함께 깨진다.
-    expect(heal?.amount).toBeCloseTo(3 * getRelic("dodo").basic.lowestHpAllyHealingFromDamagePercent! / 100, 6);
+    expect(heal?.amount).toBeCloseTo(3 * getRelic("dodi").basic.lowestHpAllyHealingFromDamagePercent! / 100, 6);
   });
 
   it("지정 원의 경계를 포함해 광역 피해·회복을 적용하고 제 게이지를 소비한다", () => {
-    const state = readyDodiBattle(["dodo", "rex", "torika"], ["amo", "toby"]);
+    const state = readyDodiBattle(["dodi", "rexia", "torika"], ["amo", "toby"]);
     const [dodi, insideAlly, outsideAlly, boundaryEnemy, outsideEnemy] = state.fighters;
     const center = { x: 500, y: 900 }; dodi.energy = dodi.def.ultimate.cost;
     insideAlly.hp -= 300; outsideAlly.hp -= 300;
@@ -1777,7 +1777,7 @@ describe("도디 정적 전투 계약", () => {
   });
 
   it("도디의 범위 밖 지정점은 경계를 포함한 전장 사각형으로 보정한다", () => {
-    const state = readyDodiBattle(["dodo"], ["amo"]); const [dodi, enemy] = state.fighters;
+    const state = readyDodiBattle(["dodi"], ["amo"]); const [dodi, enemy] = state.fighters;
     dodi.energy = dodi.def.ultimate.cost; enemy.x = state.arena.right; enemy.y = state.arena.bottom;
     const events = fireUltimate(state, dodi.id, () => 0.99, { x: state.arena.right + 999, y: state.arena.bottom + 999 });
     expect(events).toContainEqual(expect.objectContaining({ kind: "attack", targetId: enemy.id }));
@@ -1798,10 +1798,10 @@ describe("자리 정리", () => {
   });
 
   it("는 같은 편끼리 절반쯤 겹쳐 서게 두고 적과는 예전 간격을 지킨다", () => {
-    const state = createSkirmish([getRelic("torika"), getRelic("rex")], [getRelic("amo"), getRelic("ripa")], ARENA);
-    const [torika, rex, amo, ripa] = state.fighters;
+    const state = createSkirmish([getRelic("torika"), getRelic("rexia")], [getRelic("amo"), getRelic("ripa")], ARENA);
+    const [torika, rexia, amo, ripa] = state.fighters;
     expect(pairSpacing(torika, amo)).toBe(SKIRMISH.spacing);
-    expect(pairSpacing(torika, rex)).toBe(SKIRMISH.spacing * SKIRMISH.allySpacingRatio);
+    expect(pairSpacing(torika, rexia)).toBe(SKIRMISH.spacing * SKIRMISH.allySpacingRatio);
     expect(pairSpacing(amo, ripa)).toBe(SKIRMISH.spacing * SKIRMISH.allySpacingRatio);
     // 다섯을 넘게 몰려오는 무리는 예전 간격 그대로 선다.
     expect(pairSpacing(amo, ripa, true)).toBe(SKIRMISH.spacing);
@@ -1826,7 +1826,7 @@ describe("자리 정리", () => {
     // 힘이 정면으로 맞부딪쳐 그 개체의 피해가 통째로 빈다. 실제로 12초 동안 292px 앞에서
     // 한 대도 때리지 못했다.
     const state = createSkirmish(
-      ["rex", "torika", "ella", "meron"].map(getRelic),
+      ["rexia", "torika", "ella", "meron"].map(getRelic),
       [getRelic("amo"), getRelic("toby")],
       ARENA,
     );
@@ -1851,7 +1851,7 @@ describe("자리 정리", () => {
     // 한 쌍만 옆으로 비키는 방식은 두세 명이 겹친 벽에서 다음 몸에 즉시 다시 밀렸다. 막힘이
     // 확정된 뒤에는 표적에게 붙을 때까지 충돌을 건너뛰어, 통과하는 쪽도 벽도 밀리지 않게 한다.
     const state = createSkirmish(
-      [getRelic("rex"), getRelic("torika"), getRelic("ella")],
+      [getRelic("rexia"), getRelic("torika"), getRelic("ella")],
       [getRelic("amo"), getRelic("toby")],
       ARENA,
     );
@@ -1877,7 +1877,7 @@ describe("자리 정리", () => {
   it("는 닿는데 못 때리는 자리에 갇히지 않는다", () => {
     // 붙는 기준은 사거리보다 안쪽이라 그 사이가 빈 띠로 남는다. 거기서 앞으로 나아가지
     // 못한 지 오래라면 자리를 더 좁히는 대신 그 자리에서 때린다.
-    const state = createSkirmish([getRelic("rex")], [getRelic("amo")], ARENA);
+    const state = createSkirmish([getRelic("rexia")], [getRelic("amo")], ARENA);
     const [me, foe] = state.fighters;
     const reach = fighterReach(me);
     foe.x = 540; foe.y = 1100;
@@ -1906,7 +1906,7 @@ describe("타격 연출", () => {
    * 둘을 사거리 안에 직접 세우고 적의 공격만 늦춰, 누가 누구를 때렸는지가 분명하게 만든다.
    */
   function oneHit() {
-    const state = newSkirmish(["rex"], ["amo"]);
+    const state = newSkirmish(["rexia"], ["amo"]);
     const [ally, foe] = state.fighters;
     ally.x = 400;
     ally.y = 1000;
@@ -1943,7 +1943,7 @@ describe("타격 연출", () => {
   });
 
   it("은 달리는 동안에만 통통 튀어 오른다", () => {
-    const state = newSkirmish(["rex"], ["amo"]);
+    const state = newSkirmish(["rexia"], ["amo"]);
     let peak = 0;
     for (let t = 0; t < 2; t += 1 / 60) {
       stepSkirmish(state, 1 / 60);
@@ -1971,7 +1971,7 @@ describe("타격 연출", () => {
 describe("궁극기", () => {
   /** 게이지를 가득 채운 아군 하나와 적 하나를 붙여 세운다. */
   function charged() {
-    const state = newSkirmish(["rex"], ["amo"]);
+    const state = newSkirmish(["rexia"], ["amo"]);
     const [ally, foe] = state.fighters;
     ally.x = 400;
     ally.y = 1000;
@@ -2156,7 +2156,7 @@ describe("궁극기", () => {
 
 describe("자리 잡기", () => {
   it("은 붙는 거리와 떨어지는 거리를 다르게 둬 경계에서 떨지 않는다", () => {
-    const state = newSkirmish(["rex"], ["amo"]);
+    const state = newSkirmish(["rexia"], ["amo"]);
     const [ally, foe] = state.fighters;
     ally.x = 400;
     ally.y = 1000;
@@ -2173,7 +2173,7 @@ describe("자리 잡기", () => {
   });
 
   it("은 세로로 겹쳐 있을 때 좌우가 깜빡이지 않는다", () => {
-    const state = newSkirmish(["rex"], ["amo"]);
+    const state = newSkirmish(["rexia"], ["amo"]);
     const [ally, foe] = state.fighters;
     ally.x = 400;
     ally.y = 1000;
@@ -2193,7 +2193,7 @@ describe("자리 잡기", () => {
 describe("출혈", () => {
   /** 렉시아와 상대만 세워 연속 공격을 관찰한다. */
   function duel(): SkirmishState {
-    const state = createSkirmish([getRelic("rex")], [getRelic("amo")], ARENA);
+    const state = createSkirmish([getRelic("rexia")], [getRelic("amo")], ARENA);
     const [ally, foe] = state.fighters;
     ally.x = 500; ally.y = 1000; foe.x = 560; foe.y = 1000;
     return state;
@@ -2223,7 +2223,7 @@ describe("출혈", () => {
   });
 
   it("은 대상별 일반 공격 경로로 적용되어 연속 공격 카운트를 사용하지 않는다", () => {
-    const state = createSkirmish([getRelic("rex")], [getRelic("amo"), getRelic("ripa")], ARENA);
+    const state = createSkirmish([getRelic("rexia")], [getRelic("amo"), getRelic("ripa")], ARENA);
     const ally = state.fighters[0];
     ally.streakTargetId = "enemy-0"; ally.streakCount = 4;
     ally.x = state.fighters[2].x; ally.y = state.fighters[2].y - 60;
@@ -2238,45 +2238,45 @@ describe("출혈", () => {
 describe("렉시아 전투 계약", () => {
   /** 양쪽을 즉시 교전시키고 적 행동을 멈춰 렉시아의 한 타격만 관찰한다. */
   function readyRex() {
-    const state = newSkirmish(["rex"], ["amo"]);
-    const [rex, foe] = state.fighters;
-    rex.x = 500; rex.y = 1000; foe.x = 560; foe.y = 1000;
-    rex.attackCooldown = 0; foe.attackCooldown = 99;
-    return { state, rex, foe };
+    const state = newSkirmish(["rexia"], ["amo"]);
+    const [rexia, foe] = state.fighters;
+    rexia.x = 500; rexia.y = 1000; foe.x = 560; foe.y = 1000;
+    rexia.attackCooldown = 0; foe.attackCooldown = 99;
+    return { state, rexia, foe };
   }
 
   it("은 공격력 25%와 치명 확률·치명 피해 25퍼센트포인트를 정해진 순서로 적용한다", () => {
-    const { state, rex, foe } = readyRex();
+    const { state, rexia, foe } = readyRex();
     const hit = stepSkirmish(state, 1 / 60, () => 0.30).find((event) => event.kind === "attack")!;
-    const boosted = { ...rex, def: { ...rex.def, stats: { ...rex.def.stats, atk: rex.def.stats.atk * 1.25, critDamage: rex.def.stats.critDamage + 25 } } };
+    const boosted = { ...rexia, def: { ...rexia.def, stats: { ...rexia.def.stats, atk: rexia.def.stats.atk * 1.25, critDamage: rexia.def.stats.critDamage + 25 } } };
     // 위력은 이 테스트의 주제가 아니라 밸런스 값이라 적어 두지 않는다 — 아래 기대값이 데이터의
-    // `rex.def.basic`을 그대로 통과시키므로 조정해도 순서 검증은 그대로 성립한다.
+    // `rexia.def.basic`을 그대로 통과시키므로 조정해도 순서 검증은 그대로 성립한다.
     // 태생 치명타는 전 개체 공통 10%이고 렉시아의 치명타형 정체성은 패시브가 만든다 —
     // 10% + 패시브 25퍼센트포인트 = 35%이며, 치명 피해도 150% + 25퍼센트포인트 = 175%다.
-    expect(hit).toMatchObject({ critical: true, amount: computeDamage(boosted, foe, { ...rex.def.basic, kind: "basic", isCritical: true }) });
+    expect(hit).toMatchObject({ critical: true, amount: computeDamage(boosted, foe, { ...rexia.def.basic, kind: "basic", isCritical: true }) });
   });
 
   it("은 폭주 중 출혈 중인 적을 물면 확정 치명타가 되고 패시브·폭주를 더해 50% 흡혈한다", () => {
-    const { state, rex, foe } = readyRex();
-    rex.hp = rex.maxHp / 2; rex.ferocity = ferocityMaxOf(rex.def); rex.ferocityFever = true;
+    const { state, rexia, foe } = readyRex();
+    rexia.hp = rexia.maxHp / 2; rexia.ferocity = ferocityMaxOf(rexia.def); rexia.ferocityFever = true;
     // 이미 물어뜯어 피가 흐르는 자리를 다시 무는 상황이다. 확률이 아니라 이 상태가 조건이므로
     // 태생 10% + 패시브 25퍼센트포인트로는 절대 터지지 않을 난수에서도 치명타가 나와야 한다.
-    foe.bleed = { remaining: 3, total: 3, tickIn: 1, percent: 2, sourceId: rex.id };
-    const before = rex.hp;
+    foe.bleed = { remaining: 3, total: 3, tickIn: 1, percent: 2, sourceId: rexia.id };
+    const before = rexia.hp;
     const hit = stepSkirmish(state, 1 / 60, () => 0.99).find((event) => event.kind === "attack")!;
     expect(hit).toMatchObject({ critical: true });
     // 패시브 25퍼센트포인트 + 폭주 25퍼센트포인트다. 흡혈은 전 개체 공통 0이라 곱이 아니라
     // 덧셈으로만 이 축을 끌어다 쓸 수 있다.
-    expect(rex.hp - before).toBeCloseTo(hit.amount * 0.5);
-    rex.ferocityFever = false; rex.attackCooldown = 0; const hp = rex.hp;
+    expect(rexia.hp - before).toBeCloseTo(hit.amount * 0.5);
+    rexia.ferocityFever = false; rexia.attackCooldown = 0; const hp = rexia.hp;
     stepSkirmish(state, 1 / 60, () => 0.49);
     // 폭주가 꺼져도 패시브의 몫은 남으므로 무는 만큼 계속 돌아온다.
-    expect(rex.hp).toBeGreaterThan(hp);
+    expect(rexia.hp).toBeGreaterThan(hp);
   });
 
   it("은 폭주 중이어도 출혈이 없는 적에게는 확정 치명타를 주지 않는다", () => {
-    const { state, rex, foe } = readyRex();
-    rex.ferocity = ferocityMaxOf(rex.def); rex.ferocityFever = true;
+    const { state, rexia, foe } = readyRex();
+    rexia.ferocity = ferocityMaxOf(rexia.def); rexia.ferocityFever = true;
     foe.bleed = null;
     // 폭주가 확률 자체를 올리지 않으므로 태생 10% + 패시브 25퍼센트포인트(=35%)를 넘는
     // 난수에서는 평타로 남는다. 예전 계약(확률 +25퍼센트포인트)이라면 여기서 치명타였다.
@@ -2285,47 +2285,47 @@ describe("렉시아 전투 계약", () => {
   });
 
   it("은 치명타 보너스를 모두 합산한 뒤 판정 직전에 100%로 제한한다", () => {
-    const { state, rex } = readyRex();
+    const { state, rexia } = readyRex();
     // 기본 90% + 패시브 25퍼센트포인트 = 115%를 마지막에 100%로 제한한다.
-    rex.def = { ...rex.def, stats: { ...rex.def.stats, critChance: 90 } };
-    rex.ferocity = ferocityMaxOf(rex.def); rex.ferocityFever = true;
+    rexia.def = { ...rexia.def, stats: { ...rexia.def.stats, critChance: 90 } };
+    rexia.ferocity = ferocityMaxOf(rexia.def); rexia.ferocityFever = true;
     const hit = stepSkirmish(state, 1 / 60, () => 0.999).find((event) => event.kind === "attack")!;
     expect(hit).toMatchObject({ critical: true });
   });
 
   it("은 기본 궁극기에 추가 흡혈 없이 패시브 흡혈만 적용하고 실제 피해와 최대 체력으로 제한한다", () => {
-    const { state, rex, foe } = readyRex();
-    expect(rex.def.ultimate).toMatchObject({ power: 300, targeting: "single" });
-    expect(rex.def.ultimate.damageHealingPercent).toBeUndefined();
-    rex.energy = rex.def.ultimate.cost; rex.hp = rex.maxHp - 10; foe.hp = 5;
-    const events = fireUltimate(state, rex.id, () => 0.99);
+    const { state, rexia, foe } = readyRex();
+    expect(rexia.def.ultimate).toMatchObject({ power: 300, targeting: "single" });
+    expect(rexia.def.ultimate.damageHealingPercent).toBeUndefined();
+    rexia.energy = rexia.def.ultimate.cost; rexia.hp = rexia.maxHp - 10; foe.hp = 5;
+    const events = fireUltimate(state, rexia.id, () => 0.99);
     const hit = events.find((event) => event.kind === "attack")!;
     expect(hit.amount).toBeGreaterThan(foe.hp); // 사건의 계산 피해는 남은 HP보다 커도 회복은 실제 5만 본다.
     // 기본 궁극기는 패시브의 25%만 회복하며, 실제로 깎인 5만 본다.
-    expect(rex.hp).toBe(rex.maxHp - 8.75);
-    expect(rex.energy).toBe(0);
+    expect(rexia.hp).toBe(rexia.maxHp - 8.75);
+    expect(rexia.energy).toBe(0);
 
     const capped = readyRex();
-    capped.rex.def = { ...capped.rex.def, stats: { ...capped.rex.def.stats, lifeSteal: 10 } };
-    capped.rex.ferocity = ferocityMaxOf(capped.rex.def); capped.rex.ferocityFever = true; capped.rex.energy = capped.rex.def.ultimate.cost;
-    capped.rex.hp = capped.rex.maxHp - 1;
-    fireUltimate(capped.state, capped.rex.id, () => 0.99);
+    capped.rexia.def = { ...capped.rexia.def, stats: { ...capped.rexia.def.stats, lifeSteal: 10 } };
+    capped.rexia.ferocity = ferocityMaxOf(capped.rexia.def); capped.rexia.ferocityFever = true; capped.rexia.energy = capped.rexia.def.ultimate.cost;
+    capped.rexia.hp = capped.rexia.maxHp - 1;
+    fireUltimate(capped.state, capped.rexia.id, () => 0.99);
     // 기본 10 + 패시브 25 + 폭주 25퍼센트포인트를 합산해도 최대 체력을 넘지 않는다.
-    expect(capped.rex.hp).toBe(capped.rex.maxHp);
+    expect(capped.rexia.hp).toBe(capped.rexia.maxHp);
   });
 
   it("은 궁극기 피해에 패시브 공격력과 세 흡혈 원천을 합산하고 피해 반올림 뒤 회복한다", () => {
-    const { state, rex, foe } = readyRex();
+    const { state, rexia, foe } = readyRex();
     // 158 × 1.25 × 3 × 1.35 = 799.875를 피해 800으로 반올림한 뒤 60%를 회복한다.
-    rex.def = { ...rex.def, stats: { ...rex.def.stats, lifeSteal: 10 } };
+    rexia.def = { ...rexia.def, stats: { ...rexia.def.stats, lifeSteal: 10 } };
     // 대상의 전방 경감 패시브도 제거해 문서의 방어력 0·동일 속성 산술만 분리한다.
-    foe.def = { ...foe.def, element: "fire", passive: rex.def.passive, stats: { ...foe.def.stats, def: 0 } };
+    foe.def = { ...foe.def, element: "fire", passive: rexia.def.passive, stats: { ...foe.def.stats, def: 0 } };
     foe.hp = foe.maxHp = 2_000;
-    rex.hp = 100; rex.ferocity = ferocityMaxOf(rex.def); rex.ferocityFever = true; rex.energy = rex.def.ultimate.cost;
-    const hit = fireUltimate(state, rex.id, () => 0.99).find((event) => event.kind === "attack")!;
+    rexia.hp = 100; rexia.ferocity = ferocityMaxOf(rexia.def); rexia.ferocityFever = true; rexia.energy = rexia.def.ultimate.cost;
+    const hit = fireUltimate(state, rexia.id, () => 0.99).find((event) => event.kind === "attack")!;
     expect(hit).toMatchObject({ critical: false, amount: 800 });
     // 기본 10 + 패시브 25 + 폭주 25퍼센트포인트 = 60%이며 회복량 자체는 재반올림하지 않는다.
-    expect(rex.hp).toBeCloseTo(100 + 800 * 0.6);
+    expect(rexia.hp).toBeCloseTo(100 + 800 * 0.6);
   });
 });
 
@@ -2334,8 +2334,8 @@ describe("한계 돌파", () => {
     // 마지막 등급에 `readyUltimate`가 달려 있던 동안에는 다섯 등급에 닿은 개체가 **종류를
     // 가리지 않고** 전투를 궁극기가 찬 채로 시작했다(토리카가 그랬다) — 개체 전용 효과가
     // 말하려던 "이 캐릭터를 끝까지 키우면 무엇이 달라지는가"를 그 공짜 한 방이 덮었다.
-    const maxed = createSkirmish([getRelic("rex")], [getRelic("amo")], ARENA, {}, { rex: 5 });
-    const plain = createSkirmish([getRelic("rex")], [getRelic("amo")], ARENA);
+    const maxed = createSkirmish([getRelic("rexia")], [getRelic("amo")], ARENA, {}, { rexia: 5 });
+    const plain = createSkirmish([getRelic("rexia")], [getRelic("amo")], ARENA);
     expect(maxed.fighters[0].energy).toBe(0);
     expect(plain.fighters[0].energy).toBe(0);
   });
@@ -2352,8 +2352,8 @@ describe("원정 난전 확장", () => {
   });
 
   it("은 저장 HP와 사망 상태를 시작값으로 주입하고 전멸을 즉시 판정한다", () => {
-    const state = createSkirmish([getRelic("rex"), getRelic("torika"), getRelic("dodo")], [getRelic("amo")], ARENA, {}, {}, {
-      playerInitialStates: [{ relicId: "rex", currentHp: 17, alive: true }, { relicId: "torika", currentHp: 0, alive: false }, { relicId: "dodo", currentHp: 0, alive: false }],
+    const state = createSkirmish([getRelic("rexia"), getRelic("torika"), getRelic("dodi")], [getRelic("amo")], ARENA, {}, {}, {
+      playerInitialStates: [{ relicId: "rexia", currentHp: 17, alive: true }, { relicId: "torika", currentHp: 0, alive: false }, { relicId: "dodi", currentHp: 0, alive: false }],
     });
     expect(state.fighters.slice(0, 3).map(({ hp, maxHp }) => hp / maxHp)).toEqual([expect.closeTo(0.17, 5), 0, 0]);
     state.fighters[0].hp = 0;
@@ -2364,19 +2364,19 @@ describe("원정 난전 확장", () => {
   it("은 전체/지정 공격 증강의 대상 범위를 구분한다", () => {
     const effects: ExpeditionAugmentEffect[] = [
       { kind: "attackPowerPercent", percent: 10, scope: { kind: "all" } },
-      { kind: "attackPowerPercent", percent: 20, scope: { kind: "relic", relicId: "rex" } },
+      { kind: "attackPowerPercent", percent: 20, scope: { kind: "relic", relicId: "rexia" } },
     ];
-    const state = createSkirmish([getRelic("rex"), getRelic("torika")], [getRelic("amo")], ARENA, {}, {}, { augmentEffects: effects });
+    const state = createSkirmish([getRelic("rexia"), getRelic("torika")], [getRelic("amo")], ARENA, {}, {}, { augmentEffects: effects });
     // 정적 정의를 서로 바꿔 끼우지 않고 전투 스냅샷의 공격력을 직접 비교해 일회 적용을 확인한다.
-    const [rex, torika, foe] = state.fighters;
-    expect(rex.def.stats.atk / getRelic("rex").stats.atk).toBeCloseTo(1.3);
+    const [rexia, torika, foe] = state.fighters;
+    expect(rexia.def.stats.atk / getRelic("rexia").stats.atk).toBeCloseTo(1.3);
     expect(torika.def.stats.atk / getRelic("torika").stats.atk).toBeCloseTo(1.1);
     expect(foe.def.stats.atk).toBe(getRelic("amo").stats.atk);
   });
 
   it("은 공격 출혈을 단일 슬롯에 중첩하고 약한 재적용이 비율과 출처를 낮추지 않는다", () => {
     const effect: ExpeditionAugmentEffect = { kind: "bleedOnAttack", strength: "minor", everyNAttacks: 1, reapplication: "refresh", scope: { kind: "all" } };
-    const state = createSkirmish([getRelic("rex")], [getRelic("amo")], ARENA, {}, {}, { augmentEffects: [effect] });
+    const state = createSkirmish([getRelic("rexia")], [getRelic("amo")], ARENA, {}, {}, { augmentEffects: [effect] });
     const [ally, foe] = state.fighters;
     ally.x = 400; ally.y = 1000; foe.x = 450; foe.y = 1000; ally.attackCooldown = 0; foe.attackCooldown = 99;
     foe.bleed = { remaining: 5, total: 5, tickIn: 0.5, percent: 6, sourceId: "strong-source" };
@@ -2408,7 +2408,7 @@ describe("원정 난전 확장", () => {
   });
 
   it("은 휴식 시 생존자를 회복하고 한 기만 부활시키되 전멸 뒤에는 부활시키지 않는다", () => {
-    const party = [{ relicId: "rex", currentHp: 40, alive: true }, { relicId: "torika", currentHp: 0, alive: false }, { relicId: "dodo", currentHp: 0, alive: false }];
+    const party = [{ relicId: "rexia", currentHp: 40, alive: true }, { relicId: "torika", currentHp: 0, alive: false }, { relicId: "dodi", currentHp: 0, alive: false }];
     expect(applyExpeditionRest(party).map(({ currentHp }) => currentHp)).toEqual([70, 25, 0]);
     expect(applyExpeditionRest(party.map((relic) => ({ ...relic, currentHp: 0, alive: false }))).every(({ alive }) => !alive)).toBe(true);
   });
@@ -2417,7 +2417,7 @@ describe("원정 난전 확장", () => {
 describe("폰토스 실전 스킬과 심해 압력", () => {
   /** 공격 행동만 관찰하도록 전투원을 같은 위치에 고정한 폰토스 보스전을 만든다. */
   function pontosBattle() {
-    const state = newSkirmish(["torika", "rex", "dodo"], ["pontos"]);
+    const state = newSkirmish(["torika", "rexia", "dodi"], ["pontos"]);
     const pontos = state.fighters[3];
     // 경감·강인함은 원정 20층이라는 불사 자리가 갖는다. 실전과 같은 자리를 새긴다.
     pontos.def = { ...pontos.def, encounterRole: "endless" };
@@ -2595,31 +2595,31 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
   });
 
   it("는 폭주 중 궁극기·지속 회복·흡혈을 공용 경계에서 막고 종료 즉시 회복을 복구한다", () => {
-    const state = newSkirmish(["dodo", "rex"], ["pontos", "amo"]);
-    const [dodo, rex, pontos, victim] = state.fighters;
+    const state = newSkirmish(["dodi", "rexia"], ["pontos", "amo"]);
+    const [dodi, rexia, pontos, victim] = state.fighters;
     for (const fighter of state.fighters) { fighter.attackCooldown = 999; fighter.x = 400; fighter.y = 900; }
     pontos.ferocity = ferocityMaxOf(pontos.def); pontos.ferocityFever = true;
-    dodo.hp = dodo.maxHp / 2; dodo.energy = dodo.def.ultimate.cost;
-    expect(fireUltimate(state, dodo.id).filter((event) => event.kind === "heal")).toEqual([]);
-    expect(dodo.hp).toBe(dodo.maxHp / 2);
+    dodi.hp = dodi.maxHp / 2; dodi.energy = dodi.def.ultimate.cost;
+    expect(fireUltimate(state, dodi.id).filter((event) => event.kind === "heal")).toEqual([]);
+    expect(dodi.hp).toBe(dodi.maxHp / 2);
 
     // 패시브 지속 회복도 같은 applyHealing 경계를 지나므로 틱 자체가 0 회복이 된다.
-    rex.hp = rex.maxHp / 2;
-    rex.regeneration = { remaining: 2, tickIn: 0, percentPerTick: 10 };
-    expect(tickRegeneration(rex, 0.01, state)).toEqual([]);
-    expect(rex.hp).toBe(rex.maxHp / 2);
+    rexia.hp = rexia.maxHp / 2;
+    rexia.regeneration = { remaining: 2, tickIn: 0, percentPerTick: 10 };
+    expect(tickRegeneration(rexia, 0.01, state)).toEqual([]);
+    expect(rexia.hp).toBe(rexia.maxHp / 2);
 
     // 실제 피해 흡혈 경로를 실행해 요청량이 생겨도 현재 상대 폭주가 이를 취소하는지 확인한다.
-    rex.def = { ...rex.def, stats: { ...rex.def.stats, lifeSteal: 100 } };
-    rex.targetId = victim.id; rex.attackCooldown = 0; victim.attackCooldown = 999;
+    rexia.def = { ...rexia.def, stats: { ...rexia.def.stats, lifeSteal: 100 } };
+    rexia.targetId = victim.id; rexia.attackCooldown = 0; victim.attackCooldown = 999;
     stepSkirmish(state, 1 / 60);
-    expect(rex.hp).toBe(rex.maxHp / 2);
+    expect(rexia.hp).toBe(rexia.maxHp / 2);
 
     // 영구 디버프를 남기지 않으므로 현재 fever만 끄면 다음 회복 요청부터 즉시 허용된다.
     pontos.ferocityFever = false;
-    rex.regeneration = { remaining: 2, tickIn: 0, percentPerTick: 10 };
-    expect(tickRegeneration(rex, 0.01, state)).toContainEqual(expect.objectContaining({ kind: "heal", fighterId: rex.id }));
-    expect(rex.hp).toBeGreaterThan(rex.maxHp / 2);
+    rexia.regeneration = { remaining: 2, tickIn: 0, percentPerTick: 10 };
+    expect(tickRegeneration(rexia, 0.01, state)).toContainEqual(expect.objectContaining({ kind: "heal", fighterId: rexia.id }));
+    expect(rexia.hp).toBeGreaterThan(rexia.maxHp / 2);
   });
 
   it("는 판정 없는 안전 원 없이 단계 전환·예고·제한 시간 도달을 시간 경계에서 고정한다", () => {
@@ -2700,7 +2700,7 @@ describe("티아 정적 전투 계약", () => {
   });
 
   it("의 폭주는 매초 잃은 체력의 몫을 되찾고 손만 빨라진다", () => {
-    const state = newSkirmish(["tia", "rex"], ["amo"]);
+    const state = newSkirmish(["tia", "rexia"], ["amo"]);
     const [tia, ally, foe] = state.fighters;
     for (const fighter of state.fighters) { fighter.attackCooldown = 99; fighter.openingChargeReady = false; }
     tia.hp = tia.maxHp / 2;
@@ -2735,7 +2735,7 @@ describe("티아 정적 전투 계약", () => {
 
 describe("스테라 정적 전투 계약", () => {
   /** 스테라와 아군 하나를 세우고 적 행동을 멈춰 지원 효과만 관찰한다. */
-  function stellaBattle(allies = ["stella", "rex"]) {
+  function stellaBattle(allies = ["stella", "rexia"]) {
     const state = newSkirmish(allies, ["amo"]);
     const [stella, ...rest] = state.fighters;
     stella.x = 400; stella.y = 1000; stella.attackCooldown = 0;
@@ -2872,7 +2872,7 @@ describe("스테라 정적 전투 계약", () => {
 
 describe("메론 정적 전투 계약", () => {
   /** 메론과 아군 하나를 세우고 적을 굳혀 덧칠만 관찰한다. */
-  function meronBattle(allies = ["meron", "rex"]) {
+  function meronBattle(allies = ["meron", "rexia"]) {
     const state = newSkirmish(allies, ["amo"]);
     const [meron, ...rest] = state.fighters;
     meron.x = 400; meron.y = 1000; meron.attackCooldown = 0;
@@ -3890,7 +3890,7 @@ describe("노도니아의 프로젝트 REVERIE", () => {
   });
 
   it("타보아의 「대식가의 식탁」는 폭주에 드는 순간 반경 안의 적을 몸 앞으로 끌어온다", () => {
-    const state = createSkirmish([getRelic("torika"), getRelic("rex"), getRelic("nodonia")], [getRelic("taboa")], ARENA);
+    const state = createSkirmish([getRelic("torika"), getRelic("rexia"), getRelic("nodonia")], [getRelic("taboa")], ARENA);
     const [hitter, near, far, taboa] = state.fighters;
     const trait = getRelic("taboa").ferocityTrait;
     expect(trait).toMatchObject({ effectId: "selfAttackSpeedMultiplier", bonusPercent: 25, pullOnEntry: { radius: 480, distance: 150 } });
@@ -3977,60 +3977,60 @@ describe("데이", () => {
   const arena: Arena = { left: 0, right: 900, top: 0, bottom: 1_400 };
   const seeded = (start: number) => { let n = start; return () => (n = (n * 1103515245 + 12345) % 2147483648) / 2147483648; };
 
-  function fight(seconds: number, seed = 4242): { state: SkirmishState; deina: Fighter; events: SkirmishEvent[] } {
-    const state = createSkirmish([getRelic("deina")], ["toby", "amo", "ripa"].map(getRelic), arena);
+  function fight(seconds: number, seed = 4242): { state: SkirmishState; dei: Fighter; events: SkirmishEvent[] } {
+    const state = createSkirmish([getRelic("dei")], ["toby", "amo", "ripa"].map(getRelic), arena);
     const rng = seeded(seed);
     const events: SkirmishEvent[] = [];
     for (let t = 0; t < seconds && state.phase === "fight"; t += 0.05) events.push(...stepSkirmish(state, 0.05, rng));
-    return { state, deina: state.fighters[0], events };
+    return { state, dei: state.fighters[0], events };
   }
 
   it("의 태그 앤 런은 한 바퀴를 다 돌고 나서야 같은 적으로 돌아온다", () => {
-    const { state, deina } = fight(12);
+    const { state, dei } = fight(12);
     // 세 적 모두 적어도 한 번은 태그당해야 한다. 가장 가까운 적만 계속 때리면 낙서가 한 명에게
     // 몰려, 전장 전체를 터뜨리는 궁극기가 밑그림 없이 나간다.
     const painted = aliveFighters(state, "enemy").filter((enemy) => enemy.vandalism !== null || enemy.hp < enemy.maxHp);
     expect(painted.length).toBeGreaterThanOrEqual(2);
     // 기억한 자리는 살아 있는 적 수를 넘지 않는다 — 넘으면 한 바퀴가 끝나도 비워지지 않은 것이다.
-    expect(deina.taggedIds.length).toBeLessThanOrEqual(3);
+    expect(dei.taggedIds.length).toBeLessThanOrEqual(3);
   });
 
   it("는 다음 표적까지 오래 달려도 방금 때린 적에게 되돌아가지 않는다", () => {
     // 태그 직후의 런타임 상태를 고정한다. 다음 벽이 2초보다 멀면 예전 공용 재평가가 중간에
     // 끼어들어, 코앞에 남은 첫 적을 다시 골라 같은 적을 연속으로 칠했다.
-    const state = createSkirmish([getRelic("deina")], [getRelic("toby"), getRelic("amo")], arena);
-    const [deina, tagged, next] = state.fighters;
-    deina.x = 100; deina.y = 700;
+    const state = createSkirmish([getRelic("dei")], [getRelic("toby"), getRelic("amo")], arena);
+    const [dei, tagged, next] = state.fighters;
+    dei.x = 100; dei.y = 700;
     tagged.x = 120; tagged.y = 700;
     next.x = 880; next.y = 1_300;
-    deina.taggedIds = [tagged.id];
-    deina.targetId = next.id;
-    deina.retargetIn = 0;
-    deina.attackCooldown = 10;
+    dei.taggedIds = [tagged.id];
+    dei.targetId = next.id;
+    dei.retargetIn = 0;
+    dei.attackCooldown = 10;
 
     // 재평가 시계가 지난 뒤에도 패시브가 예약한 미방문 표적을 계속 쫓아야 한다.
     stepSkirmish(state, 0.05, seeded(31));
-    expect(deina.targetId).toBe(next.id);
+    expect(dei.targetId).toBe(next.id);
   });
 
   it("는 쫓던 적이 쓰러져도 방문 장부에서 다음 미방문 적을 찾는다", () => {
     // 이미 첫 적을 칠하고 두 번째를 쫓던 중 두 번째가 다른 피해로 쓰러진 상황이다. 거리만
     // 다시 재면 가까운 첫 적에게 돌아가지만, 패시브의 성향대로 아직 안 칠한 셋째가 답이다.
-    const state = createSkirmish([getRelic("deina")], [getRelic("toby"), getRelic("amo"), getRelic("ripa")], arena);
-    const [deina, tagged, defeated, fresh] = state.fighters;
-    deina.x = 100; deina.y = 700;
+    const state = createSkirmish([getRelic("dei")], [getRelic("toby"), getRelic("amo"), getRelic("ripa")], arena);
+    const [dei, tagged, defeated, fresh] = state.fighters;
+    dei.x = 100; dei.y = 700;
     tagged.x = 120; tagged.y = 700;
     fresh.x = 850; fresh.y = 1_250;
-    deina.taggedIds = [tagged.id];
-    deina.targetId = defeated.id;
+    dei.taggedIds = [tagged.id];
+    dei.targetId = defeated.id;
     defeated.hp = 0;
 
     stepSkirmish(state, 0.05, seeded(32));
-    expect(deina.targetId).toBe(fresh.id);
+    expect(dei.targetId).toBe(fresh.id);
   });
 
   it("의 밴덜리즘은 공격력·주문력을 함께 깎고 상한에서 터진다", () => {
-    const effect = getRelic("deina").basic.statusEffects!.find((e) => e.kind === "vandalism")!;
+    const effect = getRelic("dei").basic.statusEffects!.find((e) => e.kind === "vandalism")!;
     expect(effect).toMatchObject({ kind: "vandalism", offenseShredPercent: 3, maxStacks: 5 });
     // **시계를 달지 않는다.** 표적을 매 타격마다 갈아타는 개체라 시간을 두면 한 바퀴를 돌고
     // 돌아왔을 때 이미 말라, 몇 겹을 칠하든 영영 1~2겹에 머문다(유지 시간 8초로 두고 재현했을
@@ -4038,9 +4038,9 @@ describe("데이", () => {
     expect(effect).not.toHaveProperty("seconds");
 
     // 적이 하나면 표적을 옮길 곳이 없어 같은 상대에게 겹이 그대로 쌓인다.
-    const state = createSkirmish([getRelic("deina")], [getRelic("amo")], arena);
-    const [deina, enemy] = state.fighters;
-    deina.x = 400; deina.y = 700; enemy.x = 480; enemy.y = 700;
+    const state = createSkirmish([getRelic("dei")], [getRelic("amo")], arena);
+    const [dei, enemy] = state.fighters;
+    dei.x = 400; dei.y = 700; enemy.x = 480; enemy.y = 700;
     const rng = seeded(9);
     const events: SkirmishEvent[] = [];
     let peak = 0; let shredAtPeak = 0;
@@ -4062,9 +4062,9 @@ describe("데이", () => {
   it("의 밴덜리즘은 터진 뒤 4초 동안 다시 터지지 않는다", () => {
     expect(VANDALISM_REBURST_SECONDS).toBe(4);
     // 아모의 폭주 정화가 겹을 지우지 않게 게이지를 멀리 둔다 — 여기서 보는 것은 다시 터지는 간격뿐이다.
-    const state = createSkirmish([getRelic("deina")], [{ ...getRelic("amo"), ferocityMax: 10_000 }], arena);
-    const [deina, enemy] = state.fighters;
-    deina.x = 400; deina.y = 700; enemy.x = 480; enemy.y = 700;
+    const state = createSkirmish([getRelic("dei")], [{ ...getRelic("amo"), ferocityMax: 10_000 }], arena);
+    const [dei, enemy] = state.fighters;
+    dei.x = 400; dei.y = 700; enemy.x = 480; enemy.y = 700;
     enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
     const rng = seeded(9);
     const bursts: number[] = [];
@@ -4081,9 +4081,9 @@ describe("데이", () => {
   it("의 밴덜리즘은 시간이 흘러도 지워지지 않는다", () => {
     // 손질과 같은 축이다 — 지우는 것은 시간이 아니라 터지는 것뿐이다. 시계를 달면 표적을
     // 갈아타는 이 개체에서만 규칙이 성립하지 않아, 몇 겹을 칠하든 영영 1~2겹에 머문다.
-    const state = createSkirmish([getRelic("deina")], [getRelic("amo")], arena);
-    const [deina, enemy] = state.fighters;
-    deina.x = 400; deina.y = 700; enemy.x = 480; enemy.y = 700;
+    const state = createSkirmish([getRelic("dei")], [getRelic("amo")], arena);
+    const [dei, enemy] = state.fighters;
+    dei.x = 400; dei.y = 700; enemy.x = 480; enemy.y = 700;
     const rng = seeded(21);
     for (let t = 0; t < 2 && state.phase === "fight"; t += 0.05) stepSkirmish(state, 0.05, rng);
     const painted = enemy.vandalism?.stacks ?? 0;
@@ -4091,68 +4091,68 @@ describe("데이", () => {
 
     // 데이의 손을 묶고 한참 둔다 — 새로 칠하지 못하는 채로, 시계가 있었다면 이 사이에 말라
     // 사라졌을 시간이다(예전 유지 시간은 8초였다).
-    deina.stunnedFor = 30;
+    dei.stunnedFor = 30;
     for (let t = 0; t < 12 && state.phase === "fight"; t += 0.05) stepSkirmish(state, 0.05, rng);
     expect(enemy.vandalism?.stacks).toBe(painted);
     expect(vandalismOffenseShred(enemy)).toBeCloseTo(painted * 0.03, 5);
   });
 
   it("의 짧은 도발은 때린 적만 자기 쪽으로 돌린다", () => {
-    const { state, deina } = fight(6);
-    const taunt = getRelic("deina").basic.statusEffects!.find((e) => e.kind === "taunt")!;
+    const { state, dei } = fight(6);
+    const taunt = getRelic("dei").basic.statusEffects!.find((e) => e.kind === "taunt")!;
     // 일반 공격도 폭주와 같은 상향된 지속시간을 써 한쪽만 이전 값으로 남지 않게 고정한다.
     expect(taunt).toMatchObject({ kind: "taunt", seconds: 0.75 });
-    expect(getRelic("deina").ferocityTrait).toMatchObject({ taunt: { kind: "taunt", seconds: 0.75 } });
+    expect(getRelic("dei").ferocityTrait).toMatchObject({ taunt: { kind: "taunt", seconds: 0.75 } });
     // 걸린 도발은 반드시 데이를 가리킨다. 다른 아군을 가리키면 어그로가 엉뚱한 곳으로 간다.
     for (const enemy of aliveFighters(state, "enemy")) {
-      if (enemy.taunted) expect(enemy.taunted.sourceId).toBe(deina.id);
+      if (enemy.taunted) expect(enemy.taunted.sourceId).toBe(dei.id);
     }
   });
 
   it("는 때리는 순간을 빼고 멈추지 않고, 달리는 동안 게이지가 더 찬다", () => {
     // 사거리 안에 세워 두고 쿨다운만 남긴다. 보통 개체는 여기서 발을 붙이고 기다린다.
-    const state = createSkirmish([getRelic("deina")], [getRelic("toby")], arena);
-    const [deina, enemy] = state.fighters;
-    deina.x = 400; deina.y = 700; enemy.x = 450; enemy.y = 700;
-    deina.attackCooldown = 1;
-    const before = { x: deina.x, y: deina.y, energy: deina.energy };
+    const state = createSkirmish([getRelic("dei")], [getRelic("toby")], arena);
+    const [dei, enemy] = state.fighters;
+    dei.x = 400; dei.y = 700; enemy.x = 450; enemy.y = 700;
+    dei.attackCooldown = 1;
+    const before = { x: dei.x, y: dei.y, energy: dei.energy };
     stepSkirmish(state, 0.05, seeded(7));
-    expect(Math.hypot(deina.x - before.x, deina.y - before.y)).toBeGreaterThan(0);
+    expect(Math.hypot(dei.x - before.x, dei.y - before.y)).toBeGreaterThan(0);
     // 달린 만큼만 찬다. 서서 때리는 프레임에는 오르지 않아, 얼마나 돌아다녔는지가 곧 게이지다.
-    expect(deina.energy).toBeGreaterThan(before.energy);
+    expect(dei.energy).toBeGreaterThan(before.energy);
   });
 
   it("의 폭주는 때리기를 놓고 매초 주위에 낙서를 흩뿌린다", () => {
-    const state = createSkirmish([getRelic("deina")], [getRelic("toby")], arena);
-    const [deina, enemy] = state.fighters;
-    deina.x = 400; deina.y = 700; enemy.x = 450; enemy.y = 700;
-    deina.ferocity = ferocityMaxOf(deina.def); deina.ferocityFever = true;
+    const state = createSkirmish([getRelic("dei")], [getRelic("toby")], arena);
+    const [dei, enemy] = state.fighters;
+    dei.x = 400; dei.y = 700; enemy.x = 450; enemy.y = 700;
+    dei.ferocity = ferocityMaxOf(dei.def); dei.ferocityFever = true;
     const rng = seeded(11);
     const events: SkirmishEvent[] = [];
     for (let t = 0; t < 1.2; t += 0.05) events.push(...stepSkirmish(state, 0.05, rng));
     // 매초 도는 아우라는 시전 모션 없이 들어온다(`animate: false`). 평타는 한 번도 나가지 않는다.
-    const hits = events.filter((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.attackerId === deina.id);
+    const hits = events.filter((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.attackerId === dei.id);
     expect(hits.length).toBeGreaterThan(0);
     expect(hits.every((hit) => hit.animate === false)).toBe(true);
     // **때리지 않아도 도발은 그대로 걸린다.** 도발이 "때린다"가 아니라 "피해가 들어간다"에
     // 붙어 있어야, 달리는 것 자체가 어그로인 개체의 탱킹이 폭주 중에 꺼지지 않는다.
-    expect(enemy.taunted?.sourceId).toBe(deina.id);
+    expect(enemy.taunted?.sourceId).toBe(dei.id);
     // 두 배로 달린다.
-    expect(moveSpeed(deina, state)).toBeCloseTo(getRelic("deina").stats.moveSpeed * SKIRMISH.moveRate * 2, 5);
+    expect(moveSpeed(dei, state)).toBeCloseTo(getRelic("dei").stats.moveSpeed * SKIRMISH.moveRate * 2, 5);
   });
 
   it("의 짧은 도발은 아군과 붙어 싸우던 적의 표적을 실제로 갈아 끼운다", () => {
     // **회귀 테스트다.** 예전에는 `resolveTarget`이 도발한 상대를 돌려주기만 하고 `targetId`는
     // 그대로 뒀다. 그래서 도발은 그 상대가 **이미 사거리 안에 있을 때만** 얻어걸리고 걸어오지는
     // 않았다 — 아군과 붙어 싸우던 적을 톡 쳐도 표적은 내내 그 아군이었다.
-    const state = createSkirmish([getRelic("torika"), getRelic("deina")], [getRelic("amo")], arena);
-    const [torika, deina, foe] = state.fighters;
-    torika.x = 500; torika.y = 800; foe.x = 560; foe.y = 800; deina.x = 380; deina.y = 800;
+    const state = createSkirmish([getRelic("torika"), getRelic("dei")], [getRelic("amo")], arena);
+    const [torika, dei, foe] = state.fighters;
+    torika.x = 500; torika.y = 800; foe.x = 560; foe.y = 800; dei.x = 380; dei.y = 800;
     const rng = seeded(99);
     let switched = false;
     for (let t = 0; t < 4 && state.phase === "fight"; t += 0.05) {
       stepSkirmish(state, 0.05, rng);
-      if (foe.targetId === deina.id) switched = true;
+      if (foe.targetId === dei.id) switched = true;
     }
     expect(switched).toBe(true);
   });
@@ -4160,12 +4160,12 @@ describe("데이", () => {
   it("의 도발이 풀리면 그 표적도 함께 비워져 원래 규칙으로 돌아간다", () => {
     // 남겨 두면 0.5초짜리 도발이 다음 재탐색(2초)까지 조용히 이어져, 짧게 시선만 끄는 상태가
     // 사실상 2초짜리가 된다. 광란이 풀릴 때와 같은 처리다.
-    const state = createSkirmish([getRelic("deina"), getRelic("torika")], [getRelic("amo")], arena);
-    const [deina, torika, foe] = state.fighters;
+    const state = createSkirmish([getRelic("dei"), getRelic("torika")], [getRelic("amo")], arena);
+    const [dei, torika, foe] = state.fighters;
     // 도발이 없었다면 코앞의 토리카를 골랐을 자리에 세운다.
-    foe.x = 500; foe.y = 800; torika.x = 560; torika.y = 800; deina.x = 100; deina.y = 200;
-    foe.taunted = { remaining: 0.04, total: 0.5, sourceId: deina.id };
-    foe.targetId = deina.id;
+    foe.x = 500; foe.y = 800; torika.x = 560; torika.y = 800; dei.x = 100; dei.y = 200;
+    foe.taunted = { remaining: 0.04, total: 0.5, sourceId: dei.id };
+    foe.targetId = dei.id;
     stepSkirmish(state, 0.05, seeded(5));
     expect(foe.taunted).toBeNull();
     // 비워진 자리를 거리·혼잡도 규칙이 다시 채운다 — 멀리 있는 데이를 계속 쫓지 않는다.
@@ -4173,7 +4173,7 @@ describe("데이", () => {
   });
 
   it("는 유체화해 다른 전투원을 밀지 않고 그대로 지나간다", () => {
-    expect(getRelic("deina").passive.phasesThroughFighters).toBe(true);
+    expect(getRelic("dei").passive.phasesThroughFighters).toBe(true);
     // 토리카의 편성 자리를 고정해 제 걸음(swirl)이 두 판에서 똑같게 만들고, 겹쳐 세운 개체만
     // 바꿔 **겹침 때문에** 밀린 거리만 남긴다.
     const walk = (subjectId: string, overlap: boolean): { x: number; y: number } => {
@@ -4185,69 +4185,69 @@ describe("데이", () => {
       for (let t = 0; t < 1 && state.phase === "fight"; t += 0.05) stepSkirmish(state, 0.05, rng);
       return { x: torika.x, y: torika.y };
     };
-    const alone = walk("rex", false);
+    const alone = walk("rexia", false);
     const shovedBy = (subjectId: string): number => {
       const pushed = walk(subjectId, true);
       return Math.hypot(pushed.x - alone.x, pushed.y - alone.y);
     };
     // 보통 개체가 겹치면 밀어낸다. 데이가 겹치면 아무 일도 일어나지 않는다.
-    expect(shovedBy("rex")).toBeGreaterThan(10);
+    expect(shovedBy("rexia")).toBeGreaterThan(10);
     // 정확히 0은 아니다 — 처리 순서가 달라지며 남는 부동소수점 잔차뿐이라 1px에도 못 미친다.
-    expect(shovedBy("deina")).toBeLessThan(1);
+    expect(shovedBy("dei")).toBeLessThan(1);
   });
 
   it("는 적이 하나뿐이면 비비지 않고 표적 둘레를 돈다", () => {
     // 표적을 갈아탈 적이 없으면 예전에는 사거리 경계에서 다가섰다 물러서기를 되풀이했다.
-    const state = createSkirmish([getRelic("deina")], [getRelic("amo")], arena);
-    const [deina, foe] = state.fighters;
-    deina.x = 400; deina.y = 800; foe.x = 560; foe.y = 800;
+    const state = createSkirmish([getRelic("dei")], [getRelic("amo")], arena);
+    const [dei, foe] = state.fighters;
+    dei.x = 400; dei.y = 800; foe.x = 560; foe.y = 800;
     // 적은 발을 묶어 데이의 걸음만 남긴다.
     foe.stunnedFor = 999;
     const rng = seeded(7);
     let arc = 0;
-    let previous = Math.atan2(deina.y - foe.y, deina.x - foe.x);
+    let previous = Math.atan2(dei.y - foe.y, dei.x - foe.x);
     let closest = Infinity; let farthest = 0;
     for (let t = 0; t < 4; t += 0.05) {
       stepSkirmish(state, 0.05, rng);
-      const angle = Math.atan2(deina.y - foe.y, deina.x - foe.x);
+      const angle = Math.atan2(dei.y - foe.y, dei.x - foe.x);
       let delta = angle - previous;
       while (delta > Math.PI) delta -= 2 * Math.PI;
       while (delta < -Math.PI) delta += 2 * Math.PI;
       arc += Math.abs(delta);
       previous = angle;
-      const gap = Math.hypot(deina.x - foe.x, deina.y - foe.y);
+      const gap = Math.hypot(dei.x - foe.x, dei.y - foe.y);
       closest = Math.min(closest, gap); farthest = Math.max(farthest, gap);
     }
     // 4초면 한 바퀴를 넘게 돈다.
     expect(arc).toBeGreaterThan(Math.PI * 2);
     // 도는 내내 사거리 안에 머문다 — 벗어나면 도는 동안 때리지 못해 공백이 생긴다.
-    expect(farthest).toBeLessThan(fighterReach(deina));
-    expect(closest).toBeGreaterThan(fighterReach(deina) / 2);
+    expect(farthest).toBeLessThan(fighterReach(dei));
+    expect(closest).toBeGreaterThan(fighterReach(dei) / 2);
   });
 
   it("의 궁극기는 5초 동안 매초 전장 전체를 친다", () => {
-    const state = createSkirmish([getRelic("deina")], ["toby", "amo", "ripa"].map(getRelic), arena);
-    const deina = state.fighters[0];
-    deina.energy = getRelic("deina").ultimate.cost;
+    const state = createSkirmish([getRelic("dei")], ["toby", "amo", "ripa"].map(getRelic), arena);
+    const dei = state.fighters[0];
+    dei.energy = getRelic("dei").ultimate.cost;
     const rng = seeded(13);
-    fireUltimate(state, deina.id, rng);
+    fireUltimate(state, dei.id, rng);
     // 시전 순간이 곧 첫 틱이라 남은 시간만 시계에 얹는다 — 전체를 넣으면 같은 초에 두 번 터진다.
-    expect(deina.artChannel).toMatchObject({ total: 5 });
-    expect(deina.artChannel!.remaining).toBeCloseTo(4, 5);
+    expect(dei.artChannel).toMatchObject({ total: 5 });
+    expect(dei.artChannel!.remaining).toBeCloseTo(4, 5);
 
     // 게이지는 시전한 그 한 번의 몫만 쓴다. 남은 틱이 다시 소비하면 5초짜리가 궁극기 다섯 번이 된다.
-    const energyAfterCast = deina.energy;
+    const energyAfterCast = dei.energy;
     let ticks = 0;
     for (let t = 0; t < 5; t += 0.05) {
       for (const event of stepSkirmish(state, 0.05, rng)) {
-        if (event.kind === "attack" && event.attackerId === deina.id && event.skill === "ultimate") ticks += 1;
+        if (event.kind === "attack" && event.attackerId === dei.id && event.skill === "ultimate") ticks += 1;
       }
     }
     // 남은 네 틱이 각각 살아 있는 적 전부를 친다.
     expect(ticks).toBeGreaterThanOrEqual(4);
-    expect(deina.energy).toBeGreaterThanOrEqual(energyAfterCast);
+    expect(dei.energy).toBeGreaterThanOrEqual(energyAfterCast);
     // 5초가 지나면 시계가 사라진다 — 시전자가 쓰러지지 않아도 스스로 끝난다.
-    expect(deina.artChannel).toBeNull();
+    expect(dei.artChannel).toBeNull();
   });
 });
 
@@ -4291,9 +4291,9 @@ describe("도발 계약", () => {
   it("은 짧은 도발이 더 긴 도발을 덮어쓰지 않는다", () => {
     // 게이지를 다 쓴 엘라의 5초 도발이 스치는 평타 하나에 0.5초로 지워지고 있었다.
     // 보호막·순풍과 같은 규칙으로 **남은 시간이 더 긴 쪽**이 남는다.
-    const state = createSkirmish([getRelic("ella"), getRelic("deina")], [getRelic("amo")], arena);
-    const [ella, deina, foe] = state.fighters;
-    ella.x = 500; ella.y = 800; foe.x = 540; foe.y = 800; deina.x = 470; deina.y = 800;
+    const state = createSkirmish([getRelic("ella"), getRelic("dei")], [getRelic("amo")], arena);
+    const [ella, dei, foe] = state.fighters;
+    ella.x = 500; ella.y = 800; foe.x = 540; foe.y = 800; dei.x = 470; dei.y = 800;
     ella.energy = getRelic("ella").ultimate.cost;
     fireUltimate(state, ella.id, seeded(1));
     expect(foe.taunted).toMatchObject({ sourceId: ella.id });
@@ -4309,23 +4309,23 @@ describe("도발 계약", () => {
 
   it("은 같은 상대가 다시 걸면 시간을 되돌린다", () => {
     // "더 긴 쪽이 남는다"가 제 도발의 갱신까지 막으면, 계속 때리는데도 도발이 끊긴다.
-    const state = createSkirmish([getRelic("deina")], [getRelic("amo")], arena);
-    const [deina, foe] = state.fighters;
+    const state = createSkirmish([getRelic("dei")], [getRelic("amo")], arena);
+    const [dei, foe] = state.fighters;
     // 이미 같은 데이가 건 상태도 현재 스킬의 0.75초 계약으로 완전히 갱신되어야 한다.
-    foe.taunted = { remaining: 0.1, total: 0.75, sourceId: deina.id };
-    const taunt = getRelic("deina").basic.statusEffects!.find((e) => e.kind === "taunt")!;
-    applyCombatStatusEffect(foe, taunt, [], state, deina.id);
+    foe.taunted = { remaining: 0.1, total: 0.75, sourceId: dei.id };
+    const taunt = getRelic("dei").basic.statusEffects!.find((e) => e.kind === "taunt")!;
+    applyCombatStatusEffect(foe, taunt, [], state, dei.id);
     expect(foe.taunted!.remaining).toBeCloseTo(0.75, 5);
   });
 
   it("은 도발한 쪽이 쓰러지면 그 자리에서 정리된다", () => {
     // 표적 규칙은 죽은 도발자를 알아서 비껴가지만, 머리 위 칩은 "도발한 상대만 표적으로
     // 삼는다"를 죽은 상대에 대고 계속 말한다.
-    const state = createSkirmish([getRelic("deina")], [getRelic("amo")], arena);
-    const [deina, foe] = state.fighters;
-    foe.taunted = { remaining: 5, total: 5, sourceId: deina.id };
-    foe.targetId = deina.id;
-    deina.hp = 0;
+    const state = createSkirmish([getRelic("dei")], [getRelic("amo")], arena);
+    const [dei, foe] = state.fighters;
+    foe.taunted = { remaining: 5, total: 5, sourceId: dei.id };
+    foe.targetId = dei.id;
+    dei.hp = 0;
     stepSkirmish(state, 0.05, seeded(3));
     expect(foe.taunted).toBeNull();
     expect(unitStatusViews(foe).some((view) => view.id === "taunt")).toBe(false);
@@ -4334,11 +4334,11 @@ describe("도발 계약", () => {
   it("은 은신한 상대를 표적으로 만들지 않는다", () => {
     // "은신자는 단일 대상 추적의 중심이 될 수 없다"는 전역 규칙이다. 도발 하나가 그것을
     // 통째로 지나가면, 숨은 상대를 오히려 정확히 찾아간다.
-    const state = createSkirmish([getRelic("deina"), getRelic("torika")], [getRelic("amo")], arena);
-    const [deina, torika, foe] = state.fighters;
-    foe.x = 500; foe.y = 800; torika.x = 540; torika.y = 800; deina.x = 480; deina.y = 800;
-    foe.taunted = { remaining: 5, total: 5, sourceId: deina.id };
-    deina.stealthFor = 3;
+    const state = createSkirmish([getRelic("dei"), getRelic("torika")], [getRelic("amo")], arena);
+    const [dei, torika, foe] = state.fighters;
+    foe.x = 500; foe.y = 800; torika.x = 540; torika.y = 800; dei.x = 480; dei.y = 800;
+    foe.taunted = { remaining: 5, total: 5, sourceId: dei.id };
+    dei.stealthFor = 3;
     stepSkirmish(state, 0.05, seeded(4));
     expect(foe.targetId).toBe(torika.id);
   });
@@ -4358,13 +4358,13 @@ describe("도발 계약", () => {
 
   it("은 도발이 도는 동안 표적을 그 상대로 붙잡아 둔다", () => {
     // 표적을 실제로 갈아 끼우지 않으면 도발은 상대가 이미 사거리 안에 있을 때만 얻어걸린다.
-    const state = createSkirmish([getRelic("torika"), getRelic("deina")], [getRelic("amo")], arena);
-    const [torika, deina, foe] = state.fighters;
-    torika.x = 500; torika.y = 800; foe.x = 540; foe.y = 800; deina.x = 200; deina.y = 800;
-    foe.taunted = { remaining: 3, total: 3, sourceId: deina.id };
+    const state = createSkirmish([getRelic("torika"), getRelic("dei")], [getRelic("amo")], arena);
+    const [torika, dei, foe] = state.fighters;
+    torika.x = 500; torika.y = 800; foe.x = 540; foe.y = 800; dei.x = 200; dei.y = 800;
+    foe.taunted = { remaining: 3, total: 3, sourceId: dei.id };
     foe.targetId = torika.id;
     stepSkirmish(state, 0.05, seeded(6));
-    expect(foe.targetId).toBe(deina.id);
+    expect(foe.targetId).toBe(dei.id);
     // 표적이 바뀌는 순간에만 붙은 상태를 푼다 — 매 프레임 풀면 영영 붙지 못한다.
     expect(foe.engaged).toBe(false);
   });
@@ -4465,7 +4465,7 @@ describe("아모 조가비 전투 계약", () => {
   }
 
   it("실제 피해마다 6초를 갱신하고 3겹을 소비해 자신과 최저 HP 비율 아군을 보호한다", () => {
-    const state = createSkirmish([getRelic("amo"), getRelic("torika"), getRelic("dodo")], [getRelic("rex")], ARENA);
+    const state = createSkirmish([getRelic("amo"), getRelic("torika"), getRelic("dodi")], [getRelic("rexia")], ARENA);
     const [amo, first, second] = state.fighters;
     first.hp = first.maxHp / 2; second.hp = second.maxHp / 2;
     hitAmo(state);
@@ -4484,7 +4484,7 @@ describe("아모 조가비 전투 계약", () => {
   });
 
   it("혼자 남으면 자기 보호막만 주고 궁극기는 도발·35% 보호막 뒤 내부 쿨다운을 초기화한다", () => {
-    const state = createSkirmish([getRelic("amo")], [getRelic("rex")], ARENA);
+    const state = createSkirmish([getRelic("amo")], [getRelic("rexia")], ARENA);
     const [amo, enemy] = state.fighters;
     amo.shellGuard = { stacks: 2, remaining: 6, total: 6 };
     const shellEvents = hitAmo(state).filter((event) => event.kind === "shieldGranted");
@@ -4500,7 +4500,7 @@ describe("아모 조가비 전투 계약", () => {
   });
 
   it("폭주 진입은 정화한 뒤 조가비 3겹을 즉시 소비하고 3초 쿨다운을 건다", () => {
-    const state = createSkirmish([getRelic("amo")], [getRelic("rex")], ARENA);
+    const state = createSkirmish([getRelic("amo")], [getRelic("rexia")], ARENA);
     const [amo] = state.fighters;
     amo.stunnedFor = 5; amo.poison = { remaining: 5, total: 5, tickIn: 1, amountPerSecond: 1 };
     amo.ferocity = ferocityMaxOf(amo.def) - FEROCITY_RULES.hitGain;
@@ -4601,7 +4601,7 @@ describe("파루아 — 쏘면서 자라는 사거리", () => {
 
 describe("리파 — 제공자별 시약 반응", () => {
   /** 이동·반격을 제거해 한 번의 공용 적중 훅만 관찰하는 결정적 전투를 만든다. */
-  function reagentFight(players = ["ripa"], enemies = ["amo", "toby", "rex"]) {
+  function reagentFight(players = ["ripa"], enemies = ["amo", "toby", "rexia"]) {
     const state = createSkirmish(players.map(getRelic), enemies.map(getRelic), ARENA);
     const providers = state.fighters.filter((fighter) => fighter.side === "player");
     const targets = state.fighters.filter((fighter) => fighter.side === "enemy");
@@ -4632,10 +4632,10 @@ describe("리파 — 제공자별 시약 반응", () => {
   }
 
   it("는 1→2→3겹에서만 소비·공용 중독·저항 감소·회복을 일으키고 초과 겹을 남기지 않는다", () => {
-    const { state, providers: [ripa], targets: [target] } = reagentFight(["ripa", "rex"], ["amo"]);
+    const { state, providers: [ripa], targets: [target] } = reagentFight(["ripa", "rexia"], ["amo"]);
     withoutBasicHeal(ripa);
     const reaction = reagentReactionOf(ripa);
-    const ally = state.fighters.find((fighter) => fighter.def.id === "rex")!;
+    const ally = state.fighters.find((fighter) => fighter.def.id === "rexia")!;
     ally.hp = ally.maxHp * 0.5;
     const originalResistance = target.def.stats.res;
 
@@ -4687,7 +4687,7 @@ describe("리파 — 제공자별 시약 반응", () => {
   });
 
   it("는 폭주 진입 때 생존 적 전체에 살포하고 리파 자신의 공격 속도만 40% 높인다", () => {
-    const { state, providers: [ripa, ally], targets } = reagentFight(["ripa", "rex"]);
+    const { state, providers: [ripa, ally], targets } = reagentFight(["ripa", "rexia"]);
     targets[2].hp = 0;
     const ownBefore = currentAttackSpeed(ripa, state);
     const allyBefore = currentAttackSpeed(ally, state);
@@ -4702,7 +4702,7 @@ describe("리파 — 제공자별 시약 반응", () => {
   });
 
   it("는 최저 HP 비율 동률이면 편성 앞 아군을 고르고 회복은 최대 HP를 넘지 않는다", () => {
-    const { state, providers: [ripa, first, second], targets: [target] } = reagentFight(["ripa", "rex", "dodo"], ["amo"]);
+    const { state, providers: [ripa, first, second], targets: [target] } = reagentFight(["ripa", "rexia", "dodi"], ["amo"]);
     withoutBasicHeal(ripa);
     const reaction = reagentReactionOf(ripa);
     first.hp = first.maxHp * 0.5;
@@ -4750,7 +4750,7 @@ describe("슈테 전투 계약 — 듀오 랭크", () => {
    * 고르지 않으므로 능력치를 바꿔도 짝은 그대로여야 한다.
    */
   function duoBattle(): { state: SkirmishState; shute: Fighter; duo: Fighter; foe: Fighter } {
-    const state = newSkirmish(["rex", "shute", "dodo"], ["amo"]);
+    const state = newSkirmish(["rexia", "shute", "dodi"], ["amo"]);
     const [duo, shute] = state.fighters;
     const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
     return { state, shute, duo, foe };
@@ -4759,14 +4759,14 @@ describe("슈테 전투 계약 — 듀오 랭크", () => {
   it("은 바로 왼쪽에 선 아군과 짝을 짓는다", () => {
     const { shute, duo } = duoBattle();
     expect(shute.def.id).toBe("shute");
-    expect(duo.def.id).toBe("rex");
+    expect(duo.def.id).toBe("rexia");
     expect(shute.duoId).toBe(duo.id);
   });
 
   it("은 왼쪽이 비어 있으면 오른쪽 아군과 짝을 짓는다", () => {
     // 맨 앞 칸에 서도 짝이 생기므로 이 개체는 자리 제약을 갖지 않는다. 칸이 넷·여섯으로
     // 늘어나도 같은 규칙이 그대로 선다.
-    const state = newSkirmish(["shute", "rex", "dodo"], ["amo"]);
+    const state = newSkirmish(["shute", "rexia", "dodi"], ["amo"]);
     const [shute, right] = state.fighters;
     expect(shute.duoId).toBe(right.id);
   });
@@ -4870,7 +4870,7 @@ describe("슈테 전투 계약 — 듀오 랭크", () => {
   });
 
   it("의 폭주는 듀오를 체력이 가장 낮은 적으로 돌진시키고 통로의 적을 날려버린다", () => {
-    const state = newSkirmish(["shute", "rex", "dodo"], ["amo", "toby"]);
+    const state = newSkirmish(["shute", "rexia", "dodi"], ["amo", "toby"]);
     const [shute, duo] = state.fighters;
     const [weak, strong] = state.fighters.filter((fighter) => fighter.side === "enemy");
     // 돌진에 맞고도 살아남을 만큼은 남겨 둔다 — 쓰러지면 그 프레임에 표적이 다시 정해져

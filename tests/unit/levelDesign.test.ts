@@ -65,7 +65,7 @@ describe("레벨 디자인 키트", () => {
     // 21에서 돌파 1단계가 열려 +10%p가 얹힌다.
     expect(enemyLevelMultiplier(21, "SR") - enemyLevelMultiplier(20, "SR")).toBeCloseTo((ENEMY_RARITY_LEVEL_GROWTH.SR + 10) / 100, 10);
     for (const rarity of ["R", "SR", "SSR"] as const) {
-      const id = { R: "dodo", SR: "torika", SSR: "ella" }[rarity];
+      const id = { R: "dodi", SR: "torika", SSR: "ella" }[rarity];
       const player = applyLevelGrowth(getRelic(id).stats, 60, rarity, 4).hp / getRelic(id).stats.hp;
       expect(enemyLevelMultiplier(60, rarity), rarity).toBeGreaterThan(player);
     }

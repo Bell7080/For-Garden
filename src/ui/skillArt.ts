@@ -20,10 +20,10 @@ export const SKILL_ART_SLOTS: readonly SkillArtSlot[] = ["passive", "basic", "ul
  * id를 더하고 같은 이름의 폴더만 채우면 된다 — 화면 코드는 손대지 않는다.
  */
 const ART_FOLDERS: readonly string[] = [
-  "torika", "rex", "spino", "luka", "dodo", "mette", "stella", "tia", "meron", "pachi", "maki", "keris", "delopi", "nodonia", "ella", "deina",
+  "torika", "rexia", "spina", "luka", "dodi", "mette", "stella", "tia", "meron", "pachi", "maki", "keris", "delopi", "nodonia", "ella", "dei",
   "toby", "amo", "ripa", "pontos", "koma", "parua", "sukusuino", "taboa", "raitia",
-  "kento", "mosana", "anka", "irna", "ark", "yuti", "teku", "plesha", "ikanixia", "atra", "pulsi", "neuri", "mir", "magasa", "noa", "raja", "carno",
-  "maddy", "terisa", "shute", "morphe", "dimo", "dian", "kuro", "shiro", "quetzalcoatlus", "arte",
+  "kento", "mosana", "anka", "irna", "ark", "yuti", "teku", "plesha", "ikanixia", "atra", "pulsi", "neuri", "mir", "magasa", "noa", "raja", "kar",
+  "maddy", "terisa", "shute", "morphe", "dimo", "dian", "kuro", "shiro", "koatl", "arte",
   "brika", "belz", "ar",
 ];
 
@@ -33,11 +33,11 @@ const ART_FOLDERS: readonly string[] = [
  * 그림이 같아도 자매끼리 색은 갈린다.
  */
 const SHARED_ART_FOLDER: Readonly<Record<string, string>> = {
-  "raitia-grass": "raitia",
-  "raitia-water": "raitia",
-  "raitia-fire": "raitia",
-  "raitia-earth": "raitia",
-  "raitia-wind": "raitia",
+  "viria": "raitia",
+  "guttia": "raitia",
+  "favia": "raitia",
+  "silia": "raitia",
+  "ventia": "raitia",
 };
 
 /** Phaser 텍스처 키. 파일 경로가 아니라 이 함수가 만든 키로만 그림을 찾는다. */

@@ -125,7 +125,7 @@ export function addArenaMascots(scene: Phaser.Scene, owner: Phaser.GameObjects.C
   owner.once('destroy', cleanup);
   scene.events.once('shutdown', cleanup);
   scene.events.on('update', sync);
-  ['rex', 'spino'].forEach((id, i) => void spawnPuppet(scene, sdAssetFor(id), { x: 0, groundY: 0, height, depth, flipX: i === 1, startPaused: true }).then((body) => {
+  ['rexia', 'spina'].forEach((id, i) => void spawnPuppet(scene, sdAssetFor(id), { x: 0, groundY: 0, height, depth, flipX: i === 1, startPaused: true }).then((body) => {
     if (!alive || !owner.active) { body.destroy(); return; }
     bodies[i] = body;
     body.setName(`arena-mascot-${id}`);

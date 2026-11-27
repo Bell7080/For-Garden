@@ -77,7 +77,7 @@ export const PITY_GROUP = { WELCOME: "welcome", STANDARD: "standard-fossil", LIM
  * **넷의 속성이 모두 다르다**(불·물·바람·풀). 탱커를 엘라(풀)로 두던 때는 메테와 속성이 겹쳐,
  * 누가 나오든 상성 선택지가 하나 비었다. 같은 탱커인 노도니아(바람)가 그 자리에 선다.
  */
-export const WELCOME_SSR_POOL = ["rex", "spino", "nodonia", "mette"] as const;
+export const WELCOME_SSR_POOL = ["rexia", "spina", "nodonia", "mette"] as const;
 
 /** 연구소의 화석 연구 운영값. 천장(120회)은 개별 배너가 아니라 pityGroupId별로 누적된다. */
 export const BANNERS: Banner[] = [
@@ -92,7 +92,7 @@ export const BANNERS: Banner[] = [
      * 남은 횟수와 상관없이 목록에서 사라진다(`closeOnHighestRarity`). 기획은
      * `docs/live-ops-bm.md` §2. 모집 원화는 비워 둔 방이고, 그 바닥에 SSR 풀 넷의 SD가 선다.
      */
-    id: "welcome", pityGroupId: PITY_GROUP.WELCOME, name: "첫 복원 연구", featuredRelicId: "rex",
+    id: "welcome", pityGroupId: PITY_GROUP.WELCOME, name: "첫 복원 연구", featuredRelicId: "rexia",
     artKey: BACKGROUND.recruitWelcome,
     castRelicIds: WELCOME_SSR_POOL,
     currency: "fossil", costOne: 1, costTen: 8, tenOnly: true, pullLimit: 50, closeOnHighestRarity: true, carryoverTo: PITY_GROUP.STANDARD,

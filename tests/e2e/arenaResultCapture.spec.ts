@@ -20,7 +20,7 @@ test('아레나 결과 팝업 · 친선전 흐름 캡처', async ({ page }, info
     if (!String(body.method).startsWith('arena.')) { await route.continue(); return; }
     const kind = body.args[0].kind;
     if (kind === 'practicePreview') {
-      const units = [{ relicId: 'torika', level: 24, breakthrough: 1, power: 4120 }, { relicId: 'dodo', level: 22, breakthrough: 1, power: 3870 }, { relicId: 'parua', level: 25, breakthrough: 2, power: 4410 }];
+      const units = [{ relicId: 'torika', level: 24, breakthrough: 1, power: 4120 }, { relicId: 'dodi', level: 22, breakthrough: 1, power: 3870 }, { relicId: 'parua', level: 25, breakthrough: 2, power: 4410 }];
       await route.fulfill({ json: { ok: true, result: { units, totalPower: units.reduce((s, u) => s + u.power, 0) } } }); return;
     }
     if (kind === 'ranking') { await route.fulfill({ json: { ok: true, result: { entries: [], me: null, ...standing } } }); return; }
@@ -65,10 +65,10 @@ test('아레나 결과 팝업 · 친선전 흐름 캡처', async ({ page }, info
     await page.evaluate(() => (window as any).__resultPopups.closeAll?.());
     await page.waitForTimeout(800);
   };
-  const foe = { name: '라이벌', picks: ['spino', 'mette', 'stella'] };
-  await open('03-ranked-win.png', JSON.stringify({ outcome: 'win', ranked: true, reason: 'combat', me: ['torika', 'dodo', 'parua'], foe, mvpRelicId: 'dodo', standing: { before: 1080, after: 1112, streakBonus: 4, winStreak: 3 } }));
-  await open('04-ranked-loss-forfeit.png', JSON.stringify({ outcome: 'loss', ranked: true, reason: 'timeout', me: ['torika', 'dodo', 'parua'], foe, standing: { before: 1112, after: 1090, streakBonus: 0, winStreak: 0 } }));
-  await open('05-friendly-win.png', JSON.stringify({ outcome: 'win', ranked: false, reason: 'combat', me: ['torika', 'dodo', 'parua'], foe, mvpRelicId: 'parua', onRematch: true }));
+  const foe = { name: '라이벌', picks: ['spina', 'mette', 'stella'] };
+  await open('03-ranked-win.png', JSON.stringify({ outcome: 'win', ranked: true, reason: 'combat', me: ['torika', 'dodi', 'parua'], foe, mvpRelicId: 'dodi', standing: { before: 1080, after: 1112, streakBonus: 4, winStreak: 3 } }));
+  await open('04-ranked-loss-forfeit.png', JSON.stringify({ outcome: 'loss', ranked: true, reason: 'timeout', me: ['torika', 'dodi', 'parua'], foe, standing: { before: 1112, after: 1090, streakBonus: 0, winStreak: 0 } }));
+  await open('05-friendly-win.png', JSON.stringify({ outcome: 'win', ranked: false, reason: 'combat', me: ['torika', 'dodi', 'parua'], foe, mvpRelicId: 'parua', onRematch: true }));
 
   // 로비의 지난 판 알림 — 기기에 남은 전적보다 패가 하나 늘었다.
   await page.evaluate(async (s) => {

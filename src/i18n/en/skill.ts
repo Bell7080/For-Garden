@@ -333,7 +333,7 @@ export const SKILL_EN = {
   "skill.keyword.plume.description": "A feather lodged in an enemy. Each enemy holds up to {max} stacks for {hold}s, and every new stack restarts the timer. At {max} stacks the feathers vanish and inflict [[yuti-frostbite|Frostbite]].",
   "skill.keyword.splash.description": "The spray of a bursting [[shimmer|Sparkle!]]. Deals {percent} as [[magical-damage|magical damage]] to nearby enemies and grants a [[shield|shield]] worth {shield} (stacks up to {cap}).",
   "skill.keyword.splash.term": "Splash!",
-  "skill.keyword.frostbite.description": "Lowers Attack Speed and Move Speed by {slowPercent}% for {slowSeconds}s and deals {percent} over {seconds}s; Defense cannot reduce it. Does not stack; reapplying it refreshes it.",
+  "skill.keyword.frostbite.description": "Lowers Attack Speed and Move Speed by {slowPercent}% for {slowSeconds}s and deals {percent} physical damage over {seconds}s. Does not stack; reapplying it refreshes it.",
   "skill.keyword.summon.description": "A melee summon whose {stat}, HP, Defense and Resistance are set by {owner}'s {stat}. It picks its own targets and uses its Ultimate on its own gauge.{resummon}",
   "skill.keyword.summon.resummon": " When it falls, it stands back up after {seconds}s with {percent}% of its max HP.",
   "skill.ferocity.valueLabel": "Ferocity Trait",

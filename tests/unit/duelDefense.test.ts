@@ -7,7 +7,7 @@ import { createEmptyDuelState, isValidDuelState, normalizeDuelState } from "../.
 const NOW = new Date("2026-10-07T12:00:00Z");
 const HOUR = 3_600_000;
 const POOL = duelNpcPool(duelSeasonId(NOW));
-const STARTERS = ["parua", "torika", "dodo", "rex"];
+const STARTERS = ["parua", "torika", "dodi", "rexia"];
 
 describe("기본 방어덱", () => {
   it("비어 있으면 파루아·토리카·도디로 채우고 직접 세우지 않은 것으로 둔다", () => {
@@ -18,9 +18,9 @@ describe("기본 방어덱", () => {
   });
 
   it("v49 전에 덱을 세워 둔 저장은 직접 세운 것으로 옮긴다", () => {
-    const legacy = { ...createEmptyDuelState(), defense: ["rex", "torika", "dodo"] } as Record<string, unknown>;
+    const legacy = { ...createEmptyDuelState(), defense: ["rexia", "torika", "dodi"] } as Record<string, unknown>;
     delete legacy.defenseCustomized;
-    expect(normalizeDuelState(legacy, STARTERS)).toMatchObject({ defense: ["rex", "torika", "dodo"], defenseCustomized: true });
+    expect(normalizeDuelState(legacy, STARTERS)).toMatchObject({ defense: ["rexia", "torika", "dodi"], defenseCustomized: true });
   });
 
   it("빈 덱은 저장 검증을 지나지 못해 마이그레이션이 채운다", () => {

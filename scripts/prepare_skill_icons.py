@@ -25,10 +25,10 @@ SOURCE = Path(ARGS[0]) if ARGS else PUBLIC
 # 원본 이름 머리말과 렐릭 id. Puppet 묶음(char_00N.zip · enemy_00N.zip)과 같은 번호를 쓴다.
 RELICS = {
     "char001": "torika",
-    "char002": "rex",
-    "char003": "spino",
+    "char002": "rexia",
+    "char003": "spina",
     "char004": "luka",
-    "char005": "dodo",
+    "char005": "dodi",
     "char006": "mette",
     "char007": "stella",
     "char008": "tia",
@@ -39,7 +39,7 @@ RELICS = {
     "char013": "delopi",
     "char014": "nodonia",
     "char015": "ella",
-    "char016": "deina",
+    "char016": "dei",
     # 적도 같은 파이프라인을 쓴다. 원본 이름의 머리말만 다르고(enemy00N) 나머지 규칙은 같다.
     "enemy001": "toby",
     "enemy002": "amo",
@@ -62,8 +62,8 @@ RELICS = {
 #     kento/passive.png · kento/basic.png · kento/ultimate.png · kento/ferocity.png
 RELICS.update({relic: relic for relic in (
     "kento", "mosana", "anka", "irna", "ark", "yuti", "teku", "plesha",
-    "ikanixia", "atra", "pulsi", "neuri", "mir", "magasa", "noa", "raja", "carno",
-    "maddy", "terisa", "shute", "morphe", "dimo", "dian", "kuro", "shiro", "quetzalcoatlus", "arte",
+    "ikanixia", "atra", "pulsi", "neuri", "mir", "magasa", "noa", "raja", "kar",
+    "maddy", "terisa", "shute", "morphe", "dimo", "dian", "kuro", "shiro", "koatl", "arte",
     "brika", "belz", "ar",
 )})
 

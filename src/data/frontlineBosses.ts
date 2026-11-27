@@ -2,8 +2,8 @@ import type { RelicDef } from "../core/types";
 import { COMMON_SECONDARY_STATS } from "../core/rarityScaling";
 
 export const NOKAN: RelicDef = {
-  id: "nokan", name: "기가노", enemyOnly: true, squad: "annihilation", rarity: "SSR", element: "fire", role: "warrior",
-  portraitAssetId: "nokan", specimenNumber: "229", projectName: "ANNIHILATION GUNGNIR 229", origin: "기가노토사우루스",
+  id: "gigano", name: "기가노", enemyOnly: true, squad: "annihilation", rarity: "SSR", element: "fire", role: "warrior",
+  portraitAssetId: "gigano", specimenNumber: "229", projectName: "ANNIHILATION GUNGNIR 229", origin: "기가노토사우루스",
   excavationSite: "제1지부 이송 전 남부 보존 표본창",
   fossilRecord: "턱뼈의 한쪽 치조가 아문 채로 남아 있었다. 같은 상자에서 나온 갈비뼈 세 점에도 골절이 붙은 자국이 있었다. 표본창의 이송표에는 회수 날짜와 궁니르라는 이름만 적혀 있었다.",
   observationProfile: { originYear: "약 9,700만 년 전", restorationYear: "E.C. 19년", lifeStage: "성체", height: "1.92 m", weight: "88 kg" },
@@ -15,12 +15,12 @@ export const NOKAN: RelicDef = {
   stats: { hp: 1150, def: 66, res: 56, atk: 182, ap: 25, attackSpeed: 108, moveSpeed: 110, ...COMMON_SECONDARY_STATS },
   // 3대1에 특화된 세팅(응태 2026-11-27) — 세 번째 공격 「뼈긁기」가 주위 적 전부를 함께 벤다.
   frontlineBoss: { kind: "gungnir", growthPercent: 40, attackPercentPerStack: 8, stackLimit: 4, cleave: { radius: 200, percent: 80 } },
-  passive: { id: "nokan-passive", name: "죽음이 키운 몸", kind: "battleMomentum", value: 40, durationSeconds: 0, iconAssetId: "skill-icon-buff", effectType: "buff",
+  passive: { id: "gigano-passive", name: "죽음이 키운 몸", kind: "battleMomentum", value: 40, durationSeconds: 0, iconAssetId: "skill-icon-buff", effectType: "buff",
     desc: "최대 체력·방어력·저항력이 각각 40% 증가합니다. 자신의 스킬로 체력을 회복하면 한 공격당 [[battle-momentum|기세]]를 1겹 얻습니다. 겹당 공격력 8%가 증가하며 전투가 끝날 때까지 최대 4겹 쌓입니다." },
-  basic: { id: "nokan-basic", name: "뼈긁기", power: 110, targeting: "single", damageType: "physical", effectType: "physical", iconAssetId: "skill-icon-physical",
+  basic: { id: "gigano-basic", name: "뼈긁기", power: 110, targeting: "single", damageType: "physical", effectType: "physical", iconAssetId: "skill-icon-physical",
     cycle: [{ name: "베기", power: 110 }, { name: "베기", power: 110 }, { name: "뼈긁기", power: 145, damageHealingPercent: 35 }],
     bossDescription: "적 한 명에게 공격력의 110%만큼 물리 피해를 줍니다. 세 번째 공격 「뼈긁기」는 공격력의 145%만큼 물리 피해를 주고 준 피해의 35%만큼 체력을 회복하며, 자신의 주위 모든 적에게도 그 위력의 80%만큼 물리 피해를 줍니다." },
-  ultimate: { id: "nokan-ult", name: "전선을 찢어라", power: 240, radius: 230, cost: 145, targeting: "nearbyEnemies", breaksShield: true,
+  ultimate: { id: "gigano-ult", name: "전선을 찢어라", power: 240, radius: 230, cost: 145, targeting: "nearbyEnemies", breaksShield: true,
     damageType: "physical", effectType: "physical", iconAssetId: "skill-icon-physical", damageHealingPercent: 30 },
   ferocityTrait: { name: "궁니르, 피의 행군", effectId: "gungnirMarch", speedPercent: 30, passiveMultiplier: 2 },
   breakthroughEffects: { basic: { kind: "frontlineBasic", percent: 25 }, ultimate: { kind: "frontlineUltimate", percent: 35 },
@@ -28,8 +28,8 @@ export const NOKAN: RelicDef = {
 };
 
 export const EUNTE: RelicDef = {
-  id: "eunte", name: "아르겐", enemyOnly: true, squad: "annihilation", rarity: "SSR", element: "earth", role: "tank",
-  portraitAssetId: "eunte", specimenNumber: "230", projectName: "ANNIHILATION IRONCLAD 230", origin: "아르헨티노사우루스",
+  id: "argen", name: "아르겐", enemyOnly: true, squad: "annihilation", rarity: "SSR", element: "earth", role: "tank",
+  portraitAssetId: "argen", specimenNumber: "230", projectName: "ANNIHILATION IRONCLAD 230", origin: "아르헨티노사우루스",
   excavationSite: "제1지부 이송 전 남부 보존 표본창",
   fossilRecord: "등뼈 한 마디가 사람 키만 했다. 속은 비어 있었고, 빈 칸마다 흰 광물이 층층이 굳어 있었다. 남은 것은 등뼈 몇 마디와 정강이뼈 한 점뿐이었다. 철갑이라고 적힌 이송표 밑에는 그 무게에 눌려 닳은 받침대가 한 줄로 남아 있었다.",
   observationProfile: { originYear: "약 9,700만 년 전", restorationYear: "E.C. 20년", lifeStage: "성체", height: "2.04 m", weight: "112 kg" },
@@ -43,13 +43,13 @@ export const EUNTE: RelicDef = {
     basicGuardScale: 80, ultimateGuardScale: 220, shieldGuardScale: 150, shieldSeconds: 5, windup: 0.8,
     // 3대1에 특화된 세팅(응태 2026-11-27) — 세 번째 공격 「골절선」이 주위 적 전부에게 같은 위력으로 들어간다.
     cleave: { radius: 230, percent: 100 } },
-  passive: { id: "eunte-passive", name: "열 겹의 봉쇄", kind: "fixedArmor", value: 10, durationSeconds: 0, iconAssetId: "skill-icon-buff", effectType: "buff",
+  passive: { id: "argen-passive", name: "열 겹의 봉쇄", kind: "fixedArmor", value: 10, durationSeconds: 0, iconAssetId: "skill-icon-buff", effectType: "buff",
     desc: "전투 시작 시 [[fixed-armor|고정 장갑]]을 10겹 얻습니다. 각 겹이 남은 피해의 10%를 줄입니다. 직접 피해를 받으면 1초에 최대 한 번 장갑이 벗겨지고, 직접 피해를 받지 않는 동안 3초마다 한 겹씩 복구됩니다." },
-  basic: { id: "eunte-basic", name: "골절선", power: 85, targeting: "single", damageType: "physical", effectType: "physical", iconAssetId: "skill-icon-physical",
+  basic: { id: "argen-basic", name: "골절선", power: 85, targeting: "single", damageType: "physical", effectType: "physical", iconAssetId: "skill-icon-physical",
     statusEffects: [{ kind: "concussion", maxHpPercent: 6, criticalMaxHpPercent: 12 }],
     cycle: [{ name: "타격", power: 85 }, { name: "타격", power: 85 }, { name: "골절선", power: 85 }],
     bossDescription: "적 한 명에게 공격력의 85%와 방어력·저항력 각각의 80%를 합한 물리 피해를 줍니다. 세 번째 공격은 자신의 주위 모든 적에게도 같은 피해를 주고, 대상을 밀치며 [[concussion|뇌진탕]]을 일으켜 대상 최대 체력의 6%만큼 피해를 줍니다. 세 번째 공격이 치명타면 뇌진탕 피해는 12%로 증가합니다. 본타와 뇌진탕으로 실제 깎은 체력의 100%만큼 보호막을 얻습니다." },
-  ultimate: { id: "eunte-ult", name: "전열 매장", power: 220, radius: 245, cost: 155, targeting: "nearbyEnemies", scalingStat: "def",
+  ultimate: { id: "argen-ult", name: "전열 매장", power: 220, radius: 245, cost: 155, targeting: "nearbyEnemies", scalingStat: "def",
     damageType: "physical", effectType: "physical", iconAssetId: "skill-icon-physical", statusEffects: [{ kind: "stun", seconds: 1.4 }],
     bossDescription: "자신의 주위 모든 적에게 시전 0.8초 뒤 방어력의 220%만큼 물리 피해를 주고 1.4초간 [[stun|기절]]시킵니다. 그 뒤 방어력과 저항력 각각의 150%를 합한 보호막을 5초간 얻습니다." },
   ferocityTrait: { name: "지반 압살", effectId: "groundCrush", radius: 260, pullDistance: 145, tauntSeconds: 2, interval: 0.5, hpPercent: 2 },

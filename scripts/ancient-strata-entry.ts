@@ -16,7 +16,7 @@ for (let index = 0; index < args.length; index++) {
 if (values.has("--help")) {
   console.log("audit:ancient --cohorts [--output report.json] : requested regular-party growth cohorts; optional --group sr50|sr40|ssr30|mixed20");
   console.log("audit:ancient --reprice | --cc | --cadence [--output report.json]");
-  console.log("audit:ancient [--quick] [--party rex,torika,mette] [--equipment bare|epic|ceiling] [--seeds 1729,2531] [--control auto|manualUltimate] [--floor 100] [--step 0.02] [--bond 10] [--level 60] [--output report.json]");
+  console.log("audit:ancient [--quick] [--party rexia,torika,mette] [--equipment bare|epic|ceiling] [--seeds 1729,2531] [--control auto|manualUltimate] [--floor 100] [--step 0.02] [--bond 10] [--level 60] [--output report.json]");
 } else {
   const quick = values.has("--quick");
   const seeds = values.has("--seeds") ? values.get("--seeds")!.split(",").map(Number) : quick ? [1729] : [1729, 2531, 4099, 8191, 12289];

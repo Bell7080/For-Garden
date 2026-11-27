@@ -8,7 +8,7 @@ const actor = (userId: string): GuildActor => ({ userId, name: userId, level: 20
 const code = async (run: () => Promise<unknown>) => { try { await run(); } catch (e) { return (e as GuildApiError).code; } return "ok"; };
 const deck = (slotId: string): GuildWarDefenseInput => ({
   slotId,
-  deck: ["torika", "dodo", "farua"].map((relicId) => ({ relicId, level: 10, breakthrough: 0, power: 100 })),
+  deck: ["torika", "dodi", "farua"].map((relicId) => ({ relicId, level: 10, breakthrough: 0, power: 100 })),
   lineup: [],
 });
 

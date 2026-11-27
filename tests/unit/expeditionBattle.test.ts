@@ -8,7 +8,7 @@ import { getExpeditionNodeEnemies } from "../../src/data/expeditionEnemies";
 
 // 실제 씬과 같은 안전 영역으로 5기 배치의 비겹침까지 순수 규칙에서 검증한다.
 const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
-const players = ["torika", "rex", "dodo"].map(getRelic);
+const players = ["torika", "rexia", "dodi"].map(getRelic);
 const enemies = ["toby", "amo", "ripa"].map(getRelic);
 
 function input(nodeType: "normal" | "elite" | "horde"): ExpeditionBattleInputDto {
@@ -16,8 +16,8 @@ function input(nodeType: "normal" | "elite" | "horde"): ExpeditionBattleInputDto
     mode: "expedition", runId: "run-1", nodeId: `node-${nodeType}`, nodeType, floor: 1,
     relics: [
       { relicId: "torika", currentHp: 40, alive: true },
-      { relicId: "rex", currentHp: 0, alive: false },
-      { relicId: "dodo", currentHp: 75, alive: true },
+      { relicId: "rexia", currentHp: 0, alive: false },
+      { relicId: "dodi", currentHp: 75, alive: true },
     ],
     augments: [{ augmentId: "predator-instinct", targetRelicId: "torika" }, { augmentId: "reinforced-core" }],
   };
@@ -35,7 +35,7 @@ describe("원정 난전 입력 모델", () => {
   it("사망 아군을 제외하고 HP와 대상·파티 증강을 난전에 계승한다", () => {
     const config = createExpeditionSkirmishConfig(input("normal"), players, enemies);
     const state = createSkirmish(config.playerDefs, config.enemyDefs, ARENA, {}, {}, config);
-    expect(state.fighters.filter(({ side }) => side === "player").map(({ def }) => def.id)).toEqual(["torika", "dodo"]);
+    expect(state.fighters.filter(({ side }) => side === "player").map(({ def }) => def.id)).toEqual(["torika", "dodi"]);
     expect(state.fighters.find(({ def }) => def.id === "torika")?.hp).toBeCloseTo(players[0].stats.hp * 0.4);
     expect(config.augmentEffects).toEqual(expect.arrayContaining([
       expect.objectContaining({ kind: "attackPowerPercent", percent: 18, scope: { kind: "relic", relicId: "torika" } }),
@@ -48,8 +48,8 @@ describe("원정 난전 입력 모델", () => {
     const state = createSkirmish(config.playerDefs, config.enemyDefs, ARENA, {}, {}, config);
     expect(expeditionBattleResults(input("horde"), skirmishRelicResults(state))).toEqual([
       expect.objectContaining({ relicId: "torika", currentHp: 40, alive: true }),
-      { relicId: "rex", currentHp: 0, alive: false },
-      expect.objectContaining({ relicId: "dodo", currentHp: 75, alive: true }),
+      { relicId: "rexia", currentHp: 0, alive: false },
+      expect.objectContaining({ relicId: "dodi", currentHp: 75, alive: true }),
     ]);
   });
 

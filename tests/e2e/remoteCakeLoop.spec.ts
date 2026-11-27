@@ -18,8 +18,8 @@ test('디안 없는 치즈케이크 원격 전투·결과 저장·복귀와 설�
   const file=join(dir,'fixture.mjs');await build({entryPoints:['tests/helpers/remoteBattleFixture.ts'],outfile:file,bundle:true,platform:'node',format:'esm',define:{'import.meta.env':'{}','import.meta.env.MODE':'"production"','import.meta.env.DEV':'false','import.meta.env.PROD':'true'}});
   const fixture=(await import(pathToFileURL(file).href)).createFixture('stage',(state:any)=>{
    state.expedition.weekKey=expeditionWeekKey(new Date());state.expedition.bestScore=28000;
-   state.party=['dodo','maddy','stella'];
-   for(const id of state.party){state.owned.add(id);state.relicProgress[id]={...state.relicProgress.rex,heartGemSlots:[...state.relicProgress.rex.heartGemSlots]};}
+   state.party=['dodi','maddy','stella'];
+   for(const id of state.party){state.owned.add(id);state.relicProgress[id]={...state.relicProgress.rexia,heartGemSlots:[...state.relicProgress.rexia.heartGemSlots]};}
   });
   fixture.loseNextReply('completeCakeOperation');
   await page.exposeFunction('__CAKE_CALL',fixture.call);await installGameHandleProbe(page);await startAfterOpening(page);

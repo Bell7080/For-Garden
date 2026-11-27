@@ -129,7 +129,7 @@ try {
   const instance = {
     id: "world-concurrent",
     kind: "world",
-    bossRelicId: "rex",
+    bossRelicId: "rexia",
     difficulty: "rampage",
     openedAt: new Date().toISOString(),
     endsAt: new Date(Date.now() + 86400000).toISOString(),

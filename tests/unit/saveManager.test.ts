@@ -29,6 +29,27 @@ function validData(): SaveData {
 }
 
 describe("SaveManager", () => {
+  it("v52 저장의 옛 렐릭 ID를 표시 이름과 같은 새 ID로 옮기고 자유 글은 건드리지 않는다", () => {
+    const storage = new MemoryStorage();
+    const fresh = validData();
+    // 새 ID로 만든 저장을 옛 ID로 되돌려 v52 저장을 흉내 낸다.
+    const legacyJson = JSON.stringify({ ...fresh, saveVersion: 52 }).replace(/(?<![A-Za-z0-9_])dodi(?![A-Za-z0-9_])/g, "dodo");
+    const legacy = JSON.parse(legacyJson) as SaveData;
+    legacy.playerCard.nickname = "dodo";
+    legacy.playerCard.bio = "rex spino";
+    legacy.favorite = "dodo";
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+
+    const loaded = new SaveManager(storage).load();
+    expect(loaded?.owned.has("dodi")).toBe(true);
+    expect(loaded?.owned.has("dodo")).toBe(false);
+    expect(loaded?.favorite).toBe("dodi");
+    expect(JSON.stringify([...(loaded?.owned ?? [])])).not.toContain("dodo");
+    // 플레이어가 적은 글은 ID가 아니라 이름이다.
+    expect(loaded?.playerCard.nickname).toBe("dodo");
+    expect(loaded?.playerCard.bio).toBe("rex spino");
+  });
+
   it("v38 저장의 재료 칸 토벌 증표를 지갑으로 옮기고 가방에서 걷어 낸다", () => {
     const storage = new MemoryStorage();
     const legacy = { ...validData(), saveVersion: 38 } as Partial<SaveData>;
@@ -145,7 +166,7 @@ describe("SaveManager", () => {
     unknown.ownedRelicSkinIds = ["missing-skin" as never];
     expect(() => manager.validate(unknown)).toThrow("스킨 소유");
     const wrongRelic = validData();
-    wrongRelic.equippedRelicSkinIds = { rex: "torika-skin-001" };
+    wrongRelic.equippedRelicSkinIds = { rexia: "torika-skin-001" };
     expect(() => manager.validate(wrongRelic)).toThrow("스킨 장착");
   });
 
@@ -154,12 +175,12 @@ describe("SaveManager", () => {
     const source = createDefaultSession();
     // 옛 저장은 세 자리가 모두 허스크로 바뀌던 시절의 편성이다 — 기본 편성이 바뀌어도 이 검사의
     // 전제가 흔들리지 않도록 편성을 직접 적는다.
-    source.party = ["torika", "rex", "spino"];
+    source.party = ["torika", "rexia", "spina"];
     // 실제 원정 런을 먼저 만들어 맵처럼 이번 변경과 무관한 계약은 그대로 유효하게 유지한다.
-    new ExpeditionManager(source, new SaveManager(storage), () => new Date("2026-08-25T12:00:00Z")).start(["torika", "rex", "spino"]);
+    new ExpeditionManager(source, new SaveManager(storage), () => new Date("2026-08-25T12:00:00Z")).start(["torika", "rexia", "spina"]);
     const legacy = JSON.parse(storage.getItem(SAVE_STORAGE_KEY)!) as unknown as Record<string, any>;
     legacy.saveVersion = 31;
-    const replacements = [["torika", "husk-shell"], ["rex", "husk-raptor"], ["spino", "husk-wing"]] as const;
+    const replacements = [["torika", "husk-shell"], ["rexia", "husk-raptor"], ["spina", "husk-wing"]] as const;
     // 구형 저장에서 캐릭터 참조가 존재했던 모든 플레이어 진행 경로를 재현한다.
     for (const [currentId, oldId] of replacements) {
       legacy.ownedRelicIds = legacy.ownedRelicIds.map((id: string) => id === currentId ? oldId : id);
@@ -270,16 +291,16 @@ describe("SaveManager", () => {
   it("v22 원정 준비 저장은 완전한 런을 꾸며내지 않고 빈 런으로 마이그레이션한다", () => {
     const legacy = validData() as unknown as Record<string, unknown>;
     legacy.saveVersion = 22;
-    legacy.expedition = { weekKey: "2026-08-24", playsThisWeek: 2, bestScore: 400, active: { relicIds: ["torika", "rex", "spino"], startedAt: "2026-08-25T00:00:00Z", score: 30 } };
+    legacy.expedition = { weekKey: "2026-08-24", playsThisWeek: 2, bestScore: 400, active: { relicIds: ["torika", "rexia", "spina"], startedAt: "2026-08-25T00:00:00Z", score: 30 } };
     // 소탕 도입 전 저장은 그때까지의 주간 최고점을 역대 최고점 초기값으로 이어받는다.
     expect(new SaveManager(new MemoryStorage()).migrate(legacy).expedition).toEqual({ weekKey: "2026-08-24", dayKey: "", playsToday: 0, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: null, pendingRankRewards: [], bestScore: 400, allTimeBestScore: 400, lastParty: [], run: null, startsToday: 0 });
   });
 
   it("마지막 원정 편성을 왕복하고 구버전·미보유 항목을 안전하게 정규화한다", () => {
     const storage = new MemoryStorage(); const source = createDefaultSession();
-    source.expedition.lastParty = ["spino", "torika", "rex"];
+    source.expedition.lastParty = ["spina", "torika", "rexia"];
     const manager = new SaveManager(storage); manager.save(source);
-    expect(manager.load()?.expedition.lastParty).toEqual(["spino", "torika", "rex"]);
+    expect(manager.load()?.expedition.lastParty).toEqual(["spina", "torika", "rexia"]);
 
     const legacy = validData() as unknown as Record<string, any>;
     legacy.saveVersion = 26;
@@ -291,20 +312,20 @@ describe("SaveManager", () => {
   it("진행 중 원정의 맵·생존·증강·보상·점수를 독립 객체로 왕복한다", () => {
     const storage = new MemoryStorage(); const source = createDefaultSession();
     const manager = new ExpeditionManager(source, new SaveManager(storage), () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["torika", "rex", "spino"]);
+    manager.start(["torika", "rexia", "spina"]);
     const firstNode = source.expedition.run!.nodes.find(({ floor }) => floor === 1)!;
     // 매니저 저장 왕복은 전투 상태만 다루며 재화는 서버 완료 API만 쓸 수 있다.
     expect(manager.completeNode(firstNode.id, { relicHp: [90, 0, 75], augmentId: "field-repair", bossDamage: 3 })).toBe(true);
     const loaded = new SaveManager(storage).load()!;
     expect(loaded.expedition.run).toEqual(source.expedition.run);
     expect(loaded.expedition.run).not.toBe(source.expedition.run);
-    expect(loaded.expedition.run?.relics[1]).toMatchObject({ relicId: "rex", currentHp: 0, alive: false });
+    expect(loaded.expedition.run?.relics[1]).toMatchObject({ relicId: "rexia", currentHp: 0, alive: false });
   });
 
   it("원정 증강 등급은 저장하지 않고 구버전 런도 증강 ID만으로 마이그레이션한다", () => {
     const storage = new MemoryStorage(); const source = createDefaultSession();
     const manager = new ExpeditionManager(source, new SaveManager(storage), () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["torika", "rex", "spino"]);
+    manager.start(["torika", "rexia", "spina"]);
     const normal = source.expedition.run!.nodes.find(({ type }) => type === "normal")!;
     manager.beginAugmentReward(normal.id, normal.type);
 
@@ -328,7 +349,7 @@ describe("SaveManager", () => {
     ["없는 증강", (run: any) => { run.selectedAugmentIds = ["missing-augment"]; }],
   ])("손상된 원정(%s)은 주간 기록만 남기고 런을 복구하지 않는다", (_label, corrupt) => {
     const storage = new MemoryStorage(); const source = createDefaultSession();
-    new ExpeditionManager(source, new SaveManager(storage), () => new Date("2026-08-25T12:00:00Z")).start(["torika", "rex", "spino"]);
+    new ExpeditionManager(source, new SaveManager(storage), () => new Date("2026-08-25T12:00:00Z")).start(["torika", "rexia", "spina"]);
     const data = JSON.parse(storage.getItem(SAVE_STORAGE_KEY)!) as SaveData;
     corrupt(data.expedition.run);
     storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(data));
@@ -361,9 +382,9 @@ describe("SaveManager", () => {
 
   it("발굴 편성과 미수확 소수 생산량을 저장 왕복한다", () => {
     const storage = new MemoryStorage(); const source = createDefaultSession();
-    source.idleExcavation.assignedRelicIds = ["torika", null, "rex"]; source.idleExcavation.unclaimed.gold = 0.75;
+    source.idleExcavation.assignedRelicIds = ["torika", null, "rexia"]; source.idleExcavation.unclaimed.gold = 0.75;
     new SaveManager(storage).save(source);
-    expect(new SaveManager(storage).load()?.idleExcavation).toMatchObject({ assignedRelicIds: ["torika", null, "rex"], unclaimed: { gold: 0.75 } });
+    expect(new SaveManager(storage).load()?.idleExcavation).toMatchObject({ assignedRelicIds: ["torika", null, "rexia"], unclaimed: { gold: 0.75 } });
   });
   it("v14 진행을 유지하면서 누락 설정만 기본값으로 마이그레이션한다", () => {
     const legacy = validData() as unknown as Record<string, unknown>; legacy.saveVersion = 14; delete legacy.settings;
@@ -413,9 +434,9 @@ describe("SaveManager", () => {
     const storage = new MemoryStorage();
     const manager = new SaveManager(storage);
     const source = createDefaultSession();
-    source.bookmarked.add("rex");
+    source.bookmarked.add("rexia");
     manager.save(source);
-    expect(manager.load()?.bookmarked).toEqual(new Set(["rex"]));
+    expect(manager.load()?.bookmarked).toEqual(new Set(["rexia"]));
 
     const legacy = validData() as unknown as Record<string, unknown>;
     legacy.saveVersion = 4;
@@ -445,14 +466,14 @@ describe("SaveManager", () => {
     const storage = new MemoryStorage();
     const manager = new SaveManager(storage);
     const source = createDefaultSession();
-    source.owned.add("dodo");
-    source.relicProgress.dodo = { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    source.owned.add("dodi");
+    source.relicProgress.dodi = { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     source.wallet.dnaFragments = 3;
 
     manager.save(source);
     const loaded = manager.load()!;
-    expect(loaded.owned.has("dodo")).toBe(true);
-    expect(loaded.relicProgress.dodo).toMatchObject({ level: 1, breakthrough: 0 });
+    expect(loaded.owned.has("dodi")).toBe(true);
+    expect(loaded.relicProgress.dodi).toMatchObject({ level: 1, breakthrough: 0 });
     expect(loaded.wallet.dnaFragments).toBe(3);
   });
 
@@ -550,7 +571,7 @@ describe("SaveManager", () => {
 
   it("중복 파티원을 거부한다", () => {
     const data = validData();
-    data.party = ["torika", "torika", "rex"];
+    data.party = ["torika", "torika", "rexia"];
     expect(() => new SaveManager(new MemoryStorage()).validate(data)).toThrow("서로 다른 보유 렐릭");
   });
 

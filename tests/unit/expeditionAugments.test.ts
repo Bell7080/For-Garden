@@ -33,11 +33,11 @@ describe("원정 증강 능력치", () => {
   it("능력치별 전체/개인 효과만 더한 뒤 독립된 배율을 반환한다", () => {
     const effects: ExpeditionAugmentEffect[] = [
       { kind: "maxHpPercent", percent: 10, scope: { kind: "all" } },
-      { kind: "maxHpPercent", percent: 20, scope: { kind: "relic", relicId: "rex" } },
+      { kind: "maxHpPercent", percent: 20, scope: { kind: "relic", relicId: "rexia" } },
       { kind: "defensePercent", percent: 15, scope: { kind: "all" } },
       { kind: "spellPowerPercent", percent: 25, scope: { kind: "relic", relicId: "torika" } },
     ];
-    expect(expeditionAugmentStatMultipliers(effects, "rex")).toMatchObject({ maxHpPercent: 1.3, defensePercent: 1.15, spellPowerPercent: 1 });
+    expect(expeditionAugmentStatMultipliers(effects, "rexia")).toMatchObject({ maxHpPercent: 1.3, defensePercent: 1.15, spellPowerPercent: 1 });
     expect(expeditionAugmentStatMultipliers(effects, "torika")).toMatchObject({ maxHpPercent: 1.1, defensePercent: 1.15, spellPowerPercent: 1.25 });
   });
 
@@ -48,11 +48,11 @@ describe("원정 증강 능력치", () => {
       { kind: "attackPowerPercent", percent: 8, scope: { kind: "all" }, stackKey: "proc", stacking: { mode: "strongest" } },
       { kind: "attackPowerPercent", percent: 18, scope: { kind: "all" }, stackKey: "proc", stacking: { mode: "strongest" } },
     ];
-    expect(expeditionAugmentStatMultipliers(effects, "rex")).toMatchObject({ initialShieldPercent: 1.3, attackPowerPercent: 1.18 });
+    expect(expeditionAugmentStatMultipliers(effects, "rexia")).toMatchObject({ initialShieldPercent: 1.3, attackPowerPercent: 1.18 });
   });
 
   it("전투 스냅샷에 모든 능력치와 시작 보호막을 한 번만 적용하고 HP 비율을 보존한다", () => {
-    const original = getRelic("rex");
+    const original = getRelic("rexia");
     const base = { ...original.stats };
     const effects: ExpeditionAugmentEffect[] = [
       ...(["maxHpPercent", "defensePercent", "resistancePercent", "attackPowerPercent", "spellPowerPercent", "attackSpeedPercent"] as const)
@@ -77,7 +77,7 @@ describe("원정 증강 능력치", () => {
     // 시전자는 **제 출혈이 없는 개체**여야 한다. 렉시아의 기본 공격은 3초짜리 출혈을 함께
     // 걸고, 그 3초에도 같은 위력이 곱해져(3.75초) 증강의 2.5초를 덮어 버린다 — 그러면 이
     // 검사가 재는 것이 증강의 지속시간인지 스킬의 지속시간인지 알 수 없다.
-    const state = createSkirmish([getRelic("rex")], [getRelic("amo")], { left: 0, right: 600, top: 0, bottom: 1000 }, {}, {}, { augmentEffects: [
+    const state = createSkirmish([getRelic("rexia")], [getRelic("amo")], { left: 0, right: 600, top: 0, bottom: 1000 }, {}, {}, { augmentEffects: [
       { kind: "statusPotencyPercent", percent: 25, scope: { kind: "all" } },
       { kind: "bleedOnAttack", strength: "minor", everyNAttacks: 1, reapplication: "refresh", scope: { kind: "all" } },
     ] });
@@ -94,6 +94,6 @@ describe("원정 증강 능력치", () => {
       { kind: "bleedOnAttack", strength: "standard", everyNAttacks: 3, reapplication: "refresh", scope: { kind: "all" } },
     ];
     // 작은 출혈이 더 자주 발동해도 단일 슬롯 우선권은 표준화된 강도가 먼저 갖는다.
-    expect(bleedOnAttackEffect(effects, "rex")?.strength).toBe("standard");
+    expect(bleedOnAttackEffect(effects, "rexia")?.strength).toBe("standard");
   });
 });

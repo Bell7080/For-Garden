@@ -20,6 +20,8 @@ const RESTORE_CHECK_MS = 300;
 export function installWebglWatchdog(canvas: HTMLCanvasElement, gl: WebGLRenderingContext | null, renderer?: { readonly contextLost?: boolean }): void {
   const gpu = describeGpu(gl);
   let lostAt: number | null = null;
+  /** 보이는 동안 잃었나 — 앱을 뒤로 보냈다 돌아온 복구와, 쓰는 도중 브라우저가 거둔 것을 가른다. */
+  let lostWhileVisible = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   const clear = (): void => { if (timer !== undefined) clearTimeout(timer); timer = undefined; };
@@ -47,6 +49,7 @@ export function installWebglWatchdog(canvas: HTMLCanvasElement, gl: WebGLRenderi
 
   canvas.addEventListener("webglcontextlost", () => {
     lostAt = Date.now();
+    lostWhileVisible = document.visibilityState !== "hidden";
     noteBreadcrumb("webgl:lost");
     reportError("webgl.contextLost", new Error("WebGL context lost"), { ...gpu, hidden: document.visibilityState === "hidden" });
     arm();
@@ -56,10 +59,18 @@ export function installWebglWatchdog(canvas: HTMLCanvasElement, gl: WebGLRenderi
     noteBreadcrumb(`webgl:restored+${Date.now() - since}ms`);
     lostAt = null;
     clear();
-    if (!renderer) return;
+    const visibleLoss = lostWhileVisible;
+    lostWhileVisible = false;
     // Phaser의 복구 처리기가 먼저 돈다. 그 안에서 던졌으면 렌더러는 아직 잃은 상태로 남는다.
     setTimeout(() => {
-      if (lostAt === null && renderer.contextLost === true) reloadIfAllowed("webgl.restoreFailed", "WebGL renderer failed to restore", since);
+      if (lostAt !== null) return;
+      if (renderer?.contextLost === true) { reloadIfAllowed("webgl.restoreFailed", "WebGL renderer failed to restore", since); return; }
+      // **쓰는 도중에 잃었다 돌아온 컨텍스트는 믿지 않는다.** 브라우저가 컨텍스트를 거두는 것은 GPU 메모리가
+      // 모자랄 때라, 돌아온 뒤에도 원화·일꾼이 디코드해 넘긴 그림이 비어 연구소 배너·도감 칸이 까맣게 남았다
+      // (2026-11-27 제보 — 넘길 때마다 까맣다). 예전에는 복구가 오면 아무것도 남기지 않아 그 뒤를 알 길도 없었다.
+      // 뒤로 보냈다 돌아온 복구는 정상 흐름이라 기록만 남긴다.
+      if (visibleLoss) reloadIfAllowed("webgl.restoredAfterVisibleLoss", "WebGL context restored after a visible loss", since);
+      else reportError("webgl.restored", new Error("WebGL context restored"), { ...gpu, waitedMs: Date.now() - since });
     }, RESTORE_CHECK_MS);
   });
   document.addEventListener("visibilitychange", arm);

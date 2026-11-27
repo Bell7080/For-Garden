@@ -21,7 +21,7 @@ const dummy = (id: string): RelicDef => ({
   stats: { ...toby.stats, hp: 20_000, def: 0, res: 0, atk: 500, critChance: 0, moveSpeed: 0 },
 });
 
-function setup(id: "nokan" | "eunte", offsets = [35], breakthrough = 4) {
+function setup(id: "gigano" | "argen", offsets = [35], breakthrough = 4) {
   const state = createSkirmish([getRelic(id)], offsets.map((_, i) => dummy(`dummy-${i}`)),
     arena, {}, { [id]: breakthrough }, {
       playerPositions: [{ x: 200, y: 300 }],
@@ -41,7 +41,7 @@ function setup(id: "nokan" | "eunte", offsets = [35], breakthrough = 4) {
 
 describe("공멸 대장", () => {
   it("기가노는 회복으로 기세를 얻고, 폭주로 능력치와 속도를 바꾸되 체력 비율을 보존한다", () => {
-    const { state, boss, targets, advance } = setup("nokan", [35, 95]);
+    const { state, boss, targets, advance } = setup("gigano", [35, 95]);
     boss.hp = boss.maxHp / 2;
     const normalHp = boss.maxHp;
     const normalSpeed = currentAttackSpeed(boss, state);
@@ -72,7 +72,7 @@ describe("공멸 대장", () => {
   });
 
   it("아르겐의 세 번째 타격은 실제 피해만 보호막으로 바꾸고, 충돌한 적을 다시 밀친다", () => {
-    const { boss, targets: [first, second, third], advance } = setup("eunte", [35, 115, 195]);
+    const { boss, targets: [first, second, third], advance } = setup("argen", [35, 115, 195]);
     boss.basicCycleStep = 2;
     boss.attackCooldown = 0;
     const firstHp = first.hp;
@@ -89,7 +89,7 @@ describe("공멸 대장", () => {
   });
 
   it("아르겐의 폭주는 대상별 세 번째 적중에서 5초 둔화를 새로 건다", () => {
-    const { state, boss, targets: [near, late], advance } = setup("eunte", [120, 350]);
+    const { state, boss, targets: [near, late], advance } = setup("argen", [120, 350]);
     const opening: ReturnType<typeof stepSkirmish> = [];
     near.def = { ...near.def, stats: { ...near.def.stats, moveSpeed: 100 } };
     const baseSpeed = moveSpeed(near, state);
@@ -109,7 +109,7 @@ describe("공멸 대장", () => {
   });
 
   it("아르겐의 장갑은 직접 체력 피해로 벗겨지고 마지막 한 겹 보상은 한 번만 서서히 사라진다", () => {
-    const { boss, targets: [attacker], advance } = setup("eunte");
+    const { boss, targets: [attacker], advance } = setup("argen");
     expect(resolveReceivedDamage(boss, 1000).applied).toBe(349);
     expect(unitStatusViews(boss).find((status) => status.id === "fixedArmor")?.stacks).toBe(10);
     const cycle = () => {
@@ -137,7 +137,7 @@ describe("공멸 대장", () => {
   });
 
   it("아르겐 궁극기는 준비 후 한 번 내리치고 장갑을 쓰지 않은 채 시간제 보호막을 준다", () => {
-    const { state, boss, targets: [target], advance } = setup("eunte");
+    const { state, boss, targets: [target], advance } = setup("argen");
     boss.energy = 155;
     const startingHp = target.hp;
     expect(fireUltimate(state, boss.id, rng).some((event) => event.kind === "attack")).toBe(false);
@@ -156,7 +156,7 @@ describe("공멸 대장", () => {
   });
 
   it("아르겐 궁극기의 보호막이 직접 공격으로 소진되면 충격파가 한 번 터진다", () => {
-    const { state, boss, targets: [target], advance } = setup("eunte");
+    const { state, boss, targets: [target], advance } = setup("argen");
     boss.energy = 155;
     fireUltimate(state, boss.id, rng);
     advance(0.8);
@@ -171,17 +171,17 @@ describe("공멸 대장", () => {
   });
 
   it("도감과 회고에 등록하고 모든 난이도 9-10에 4돌 대장 둘을 보낸다", () => {
-    expect(CODEX_RELICS.filter(({ id }) => id === "nokan" || id === "eunte")).toHaveLength(2);
+    expect(CODEX_RELICS.filter(({ id }) => id === "gigano" || id === "argen")).toHaveLength(2);
     expect(recollectionEntriesOf("chapter8")).toHaveLength(7);
     const finale = recollectionEntriesOf("chapter9").filter(({ stageId }) => stageId === "9-10");
     expect(finale).toHaveLength(2);
     const names = getRecollectionStory(finale[0].storyId).nodes.map(({ standing }) => standing);
-    expect(names).toContain("nokan");
-    expect(names).toContain("eunte");
+    expect(names).toContain("gigano");
+    expect(names).toContain("argen");
     const easy = getBattleStage("9-10");
     const rampage = getBattleStage("rampage:9-10");
     expect(getStageEnemies(rampage).map(({ id, encounterRole }) => [id, encounterRole])).toEqual([
-      ["eunte", "elite"], ["nokan", "elite"],
+      ["argen", "elite"], ["gigano", "elite"],
     ]);
     for (const [index, enemy] of rampage.enemies.entries()) {
       const base = easy.enemies[index];
@@ -189,6 +189,6 @@ describe("공멸 대장", () => {
       expect(enemy.breakthrough).toBe(4);
       expect(enemyLevelMultiplier(enemy.level, rarity) / enemyLevelMultiplier(base.level, rarity)).toBeCloseTo(3, 1);
     }
-    expect(breakthroughEffectText(getRelic("eunte"), "ferocity")).toContain("5초간");
+    expect(breakthroughEffectText(getRelic("argen"), "ferocity")).toContain("5초간");
   });
 });

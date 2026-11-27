@@ -382,7 +382,7 @@ export const SKILL_KO = {
   "skill.keyword.plume.description": "적에게 박히는 깃털이다. 적마다 최대 {max}겹까지 쌓이고 {hold}초 동안 남으며, 새 겹이 박힐 때마다 시간이 다시 세어진다. {max}겹이 되면 깃털이 사라지고 [[yuti-frostbite|동상]]을 건다.",
   "skill.keyword.splash.description": "[[shimmer|반짝!]]이 터지는 물보라다. 주위 적에게 {percent}만큼 [[magical-damage|마법 피해]]를 주고, 자신은 {shield}만큼 [[shield|보호막]]을 얻는다({cap}까지 쌓인다).",
   "skill.keyword.splash.term": "첨벙!",
-  "skill.keyword.frostbite.description": "{slowSeconds}초 동안 공격 속도와 이동 속도가 {slowPercent}% 낮아지고, {seconds}초에 걸쳐 {percent}만큼 방어력으로 줄일 수 없는 피해를 입는다. 겹치지 않고 다시 걸리면 갱신된다.",
+  "skill.keyword.frostbite.description": "{slowSeconds}초 동안 공격 속도와 이동 속도가 {slowPercent}% 낮아지고, {seconds}초에 걸쳐 {percent}만큼 물리 피해를 입는다. 겹치지 않고 다시 걸리면 갱신된다.",
   "skill.keyword.summon.description": "{owner}의 {stat}{stat!이} {stat}·체력·방어력·저항력을 정하는 근거리 소환수다. 스스로 표적을 고르고 제 게이지로 궁극기를 쓴다.{resummon}",
   "skill.keyword.summon.resummon": " 쓰러지면 {seconds}초 뒤 최대 체력의 {percent}%로 다시 선다.",
   "skill.ferocity.valueLabel": "야성 발현",

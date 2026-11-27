@@ -89,7 +89,7 @@ export const DUEL_BATTLE_REWARD = { win: 20, loss: 0 } as const;
  * 처음부터 세워 두는 방어덱 — 신규 계정의 기본 편성과 같은 셋(파루아·토리카·도디). 방어덱을 비워 두면
  * 아무도 나를 칠 수 없어 「안 세우면 안 맞는다」는 길이 생기므로, 비면 늘 이 셋으로 채운다.
  */
-export const DUEL_DEFAULT_DEFENSE: readonly string[] = ["parua", "torika", "dodo"];
+export const DUEL_DEFAULT_DEFENSE: readonly string[] = ["parua", "torika", "dodi"];
 
 /**
  * 방어전 — 표본 상대가 내 방어덱을 치는 판. 실제 서버가 생기기 전까지 서버가 시간에 맞춰 대신 굴린다.

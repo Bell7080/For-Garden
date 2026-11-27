@@ -22,7 +22,7 @@ function relic(id: string, slots: [string | null, string | null, string | null] 
 describe("룬 장착 추천", () => {
   it("칸마다 제 자리의 룬 중 전투력을 가장 올리는 것을 고른다", () => {
     const runes = [rune("a0", 0, ["hp", "def"]), rune("b0", 0, ["atk", "ap"], "legendary"), rune("a1", 1, ["atk", "res"]), rune("a2", 2, ["hp", "res"])];
-    const plan = recommendRuneLoadout(relic("rex"), runes, new Map());
+    const plan = recommendRuneLoadout(relic("rexia"), runes, new Map());
     // 전설은 보조 옵션이 셋이라 같은 주 옵션 값이어도 더 올린다.
     expect(plan.slots).toEqual(["b0", "a1", "a2"]);
     expect(plan.powerAfter).toBeGreaterThan(plan.powerBefore);
@@ -32,19 +32,19 @@ describe("룬 장착 추천", () => {
   it("다른 렐릭이 낀 룬은 허락할 때만 후보이고, 빼 오는 렐릭을 알린다", () => {
     const runes = [rune("a0", 0, ["atk", "ap"], "legendary")];
     const holders = runeHolders({ torika: { heartGemSlots: ["a0", null, null] } });
-    expect(recommendRuneLoadout(relic("rex"), runes, holders).slots).toEqual([null, null, null]);
-    const moved = recommendRuneLoadout(relic("rex"), runes, holders, { includeOthers: true });
+    expect(recommendRuneLoadout(relic("rexia"), runes, holders).slots).toEqual([null, null, null]);
+    const moved = recommendRuneLoadout(relic("rexia"), runes, holders, { includeOthers: true });
     expect(moved.slots[0]).toBe("a0");
     expect(moved.movedFrom).toEqual(["torika", null, null]);
   });
 
   it("빈 칸만 채우기는 이미 낀 칸을 건드리지 않고, 더 나은 것이 없으면 바꾸지 않는다", () => {
     const runes = [rune("weak", 0, ["hp", "def"]), rune("strong", 0, ["atk", "ap"], "legendary"), rune("a1", 1, ["atk", "res"])];
-    const current = relic("rex", ["weak", null, null]);
-    const holders = runeHolders({ rex: current.progress });
+    const current = relic("rexia", ["weak", null, null]);
+    const holders = runeHolders({ rexia: current.progress });
     expect(recommendRuneLoadout(current, runes, holders, { emptyOnly: true }).slots).toEqual(["weak", "a1", null]);
-    const settled = relic("rex", ["strong", "a1", null]);
-    const again = recommendRuneLoadout(settled, runes, runeHolders({ rex: settled.progress }));
+    const settled = relic("rexia", ["strong", "a1", null]);
+    const again = recommendRuneLoadout(settled, runes, runeHolders({ rexia: settled.progress }));
     expect(again.changed).toBe(false);
     expect(again.powerAfter).toBe(again.powerBefore);
   });

@@ -41,7 +41,7 @@ export function openNicknamePopup(scene: Phaser.Scene, layer: PopupLayer, onDone
     const depth = (body.parentContainer?.depth ?? 0) + 1;
     body.add(scene.add.text(0, L.questionY, t("profile.nickname.create.question"),
       textStyle({ role: "body", size: 32, color: COLOR.ink, align: "center", wrap: 740 })).setOrigin(.5));
-    ["dodo", "parua"].forEach((id, index) => {
+    ["dodi", "parua"].forEach((id, index) => {
       body.add(scene.add.text(L.sd.xs[index], L.sd.labelY, getRelic(id).name,
         textStyle({ role: "body", size: 22, color: COLOR.accentText })).setOrigin(.5));
       void spawnPuppet(scene, sdAssetFor(id), {

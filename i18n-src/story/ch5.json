@@ -347,7 +347,7 @@
   "de": "Am Ende der Treppe brannte kein einziges Licht. An jeder Wand reihten sich Kratzspuren wie Zahlen.",
   "ru": "Внизу лестницы не было ни одного огонька. На каждой стене царапины тянулись рядами, словно цифры."
  },
- "dialogue.stage-5-1-pre.deina.body": {
+ "dialogue.stage-5-1-pre.dei.body": {
   "en": "Researcher, these marks aren't ours! They're a warning the branch people left. It says \"Do not open.\"",
   "ja": "研究員さん、この印、私たちのじゃないよ！支部の人が残した警告だよ。「開けるな」だって。",
   "zh-Hans": "研究员，这些记号不是我们的！是支部的人留下的警告。上面写着「不准打开」。",
@@ -647,7 +647,7 @@
   "de": "K-komm nicht näher … Ich hab gesagt, komm nicht näher …!",
   "ru": "Н-не подходи… Я же сказал, не подходи…!"
  },
- "dialogue.stage-5-9-post.deina.body": {
+ "dialogue.stage-5-9-post.dei.body": {
   "en": "Researcher, you can't chase them! The ones shaking like that are the first to bite. Let's just stay still.",
   "ja": "研究員さん、追っちゃだめ！あんなに震えてる子がいちばん先に噛みつくんだよ。じっとしててあげよう。",
   "zh-Hans": "研究员，不能追！抖成那样的孩子最先咬人。我们别动吧。",
@@ -719,7 +719,7 @@
   "de": "Ach, wo ich schon verloren habe – soll ich Ihnen etwas verraten? Das Schloss des Vizekapitäns ganz unten öffnet sich angeblich nur, wenn eine Menschenhand es berührt. … Genau so eine Hand wie Ihre, Forscher.",
   "ru": "Ах, раз уж проигрыш за мной, рассказать вам кое-что? Замок заместителя командира в самом низу, говорят, открывается только от прикосновения человеческой руки. …Точно такой, как ваша, исследователь."
  },
- "dialogue.stage-5-10-post.deina.body": {
+ "dialogue.stage-5-10-post.dei.body": {
   "en": "…So that's why they herded us downward from the start! The joint pursuit, the snapped elevator — it was all one path.",
   "ja": "…だから最初から下へ追い込んでたんだ！合同追跡も、切れたエレベーターも、全部ひとつの道だったんだよ。",
   "zh-Hans": "……所以他们从一开始就往下赶我们！联合追击也好，断掉的电梯也好，全都是同一条路。",

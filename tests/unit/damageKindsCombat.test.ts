@@ -27,6 +27,12 @@ function fixedSourceIsMe(state: ReturnType<typeof createSkirmish>, targetId: str
   return source === meId;
 }
 
+/** 출혈 없이 동상만 걸린 적이 받은 지속 피해 — 동상은 걸릴 때 방어를 거친 물리 피해라 고정이 아니다. */
+function frostbiteOnly(state: ReturnType<typeof createSkirmish>, targetId: string): boolean {
+  const target = state.fighters.find((fighter) => fighter.id === targetId)!;
+  return target.frostbite !== null && target.bleed === null;
+}
+
 function observedKinds(defId: string): Set<DamageKind> {
   const def = RELICS.find((relic) => relic.id === defId)!;
   const dummy = RELICS.find((relic) => relic.id === "torika")!;
@@ -43,7 +49,7 @@ function observedKinds(defId: string): Set<DamageKind> {
       // 지속·즉발 고정 피해(뇌진탕·빙결 해제·출혈·동상)는 사건에 때린 쪽을 싣지 않는다 — 적이 받은 그 피해 중
       // 이 개체(소환수는 빼고)가 건 것만 센다. 중독은 걸 때 저항을 거친 마법 피해라 고정이 아니다.
       if ((event.kind === "concussion" || event.kind === "bleed") && enemyIds.has(event.fighterId)
-        && !("started" in event && event.started) && event.amount > 0 && fixedSourceIsMe(state, event.fighterId, me.id)) kinds.add("fixed");
+        && !("started" in event && event.started) && event.amount > 0 && fixedSourceIsMe(state, event.fighterId, me.id)) kinds.add(frostbiteOnly(state, event.fighterId) ? "physical" : "fixed");
       if (event.kind !== "attack" || event.attackerId !== me.id) continue;
       kinds.add(event.damageType === "true" ? "fixed" : event.damageType === "magical" ? "magical" : "physical");
     }

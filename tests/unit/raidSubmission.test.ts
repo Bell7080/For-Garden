@@ -74,11 +74,11 @@ function fightAndVerify(party: readonly string[], bossId: string, difficulty: Ra
 
 describe("레이드 피해 제출 왕복", () => {
   const parties = [
-    ["dian", "spino", "stella"], ["parua", "dian", "luka"], ["mette", "terisa", "dian"],
-    ["ella", "maddy", "morphe"], ["torika", "dodo", "pachi"], ["pachi", "delopi", "deina"],
-    ["torika", "dodo", "parua"],
+    ["dian", "spina", "stella"], ["parua", "dian", "luka"], ["mette", "terisa", "dian"],
+    ["ella", "maddy", "morphe"], ["torika", "dodi", "pachi"], ["pachi", "delopi", "dei"],
+    ["torika", "dodi", "parua"],
     // 피해 없는 궁극기 — 슈테의 오더(듀오 공속), 스테라의 순풍 — 와 듀오 충전.
-    ["maddy", "shute", "torika"], ["stella", "maki", "ella"], ["ella", "shute", "rex"], ["nodonia", "deina", "shute"],
+    ["maddy", "shute", "torika"], ["stella", "maki", "ella"], ["ella", "shute", "rexia"], ["nodonia", "dei", "shute"],
   ];
   for (const bossId of RAID_BOSS_POOL) {
     for (const difficulty of ["easy", "rampage"] as const) {
@@ -93,7 +93,7 @@ describe("레이드 피해 제출 왕복", () => {
   }
 
   it("게이지가 차지 않은 궁극기와 대기를 건너뛴 평타는 여전히 거절한다", () => {
-    const party = ["torika", "dodo", "parua"].map((id) => RELICS.find((relic) => relic.id === id)!);
+    const party = ["torika", "dodi", "parua"].map((id) => RELICS.find((relic) => relic.id === id)!);
     const base = RELICS.find(({ id }) => id === "sukusuino")!;
     const boss = raidBossDef(base, "easy");
     const input = { allies: party, boss, balance: RAID_BOSS_BALANCE, percentHpBasis: raidBossPercentHpBasis(base, "easy"), arena: battleArena("raid") };
@@ -120,7 +120,7 @@ describe("레이드 피해 제출 왕복", () => {
 
   it("남은 공유 게이지를 다 깎으면 그 자리에서 이기고, 서버 재현도 그 끝을 받는다", () => {
     // 남은 게이지를 작게 두어 한 판 안에 다 깎는다 — 규칙은 게이지의 크기와 무관하다.
-    const party = ["torika", "dodo", "parua"].map((id) => RELICS.find((relic) => relic.id === id)!);
+    const party = ["torika", "dodi", "parua"].map((id) => RELICS.find((relic) => relic.id === id)!);
     const base = RELICS.find(({ id }) => id === "sukusuino")!;
     const boss = raidBossDef(base, "easy");
     const basis = raidBossPercentHpBasis(base, "easy");

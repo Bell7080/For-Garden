@@ -3004,8 +3004,8 @@ export const RELICS: RelicDef[] = [
       id: "ripa-basic",
       // 삼엽충 원종의 복원 외형에 맞춘 기술명이며 성격 관찰 데이터와는 분리한다.
       name: "찰싹! 시약 묻히기",
-      // AP 80%는 시약 1겹과 공용 중독을 함께 가진 R등급 기본기의 직접 피해 예산이다.
-      power: 80,
+      // AP 100%는(적 평타 바닥 100% — 응태 2026-11-27) 시약 1겹과 공용 중독을 함께 가진 R등급 기본기의 직접 피해 예산이다.
+      power: 100,
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
       damageType: "magical",
@@ -3277,7 +3277,7 @@ export const RELICS: RelicDef[] = [
       id: "ikanixia-basic",
       name: "박쥐 날리기",
       // v0.391.1: 110 → 95(응태 요청 — 고배수 살짝 하향).
-      power: 95,
+      power: 100,
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
@@ -3554,7 +3554,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "neuri-basic",
       name: "상냥한 파동",
-      power: 70,
+      power: 100,
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
@@ -6148,7 +6148,7 @@ export const RELICS: RelicDef[] = [
       id: "viria-basic",
       name: "앞니 갉기",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
-      power: 70,
+      power: 100,
       /*
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
@@ -6273,7 +6273,7 @@ export const RELICS: RelicDef[] = [
       id: "guttia-basic",
       name: "앞니 갉기",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
-      power: 70,
+      power: 100,
       /*
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
@@ -6398,7 +6398,7 @@ export const RELICS: RelicDef[] = [
       id: "favia-basic",
       name: "앞니 갉기",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
-      power: 70,
+      power: 100,
       /*
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
@@ -6525,7 +6525,7 @@ export const RELICS: RelicDef[] = [
       id: "silia-basic",
       name: "앞니 갉기",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
-      power: 70,
+      power: 100,
       /*
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
@@ -6650,7 +6650,7 @@ export const RELICS: RelicDef[] = [
       id: "ventia-basic",
       name: "앞니 갉기",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
-      power: 70,
+      power: 100,
       /*
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.

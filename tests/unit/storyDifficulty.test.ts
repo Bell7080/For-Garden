@@ -86,10 +86,10 @@ describe("스토리 확장 난이도", () => {
   });
   it("난이도 전환은 이전 4-10에서 다음 1-1로 넘어갈 때 표시 전투력이 튀어 오르지 않는다", () => {
     const power = (id: string) => getStageEnemies(getBattleStage(id)).reduce((sum, enemy) => sum + combatPower(enemy.stats), 0);
-    // 보통 ×1.5 · 어려움 ×2(응태 결정 2026-11-12 — 4배는 과하다)와 4-10 보스 레벨(LV.41)로 다음 1-1은 이전 4-10보다 15~25% 가볍게 시작한다.
+    // 보통 ×1.5 · 어려움 ×2(응태 결정 2026-11-12 — 4배는 과하다)와 4-10 보스 레벨(LV.41)로 다음 1-1은 이전 4-10보다 15~25% 가볍게 시작한다. 정예 공격 ×1.35(2026-11-27) 뒤로 4-10이 무거워져 하한을 0.65로 낮췄다(0.67).
     for (const [end, start] of [["4-10", "normal:1-1"], ["normal:4-10", "hard:1-1"]]) {
       expect(power(start) / power(end)).toBeLessThan(1.21);
-      expect(power(start) / power(end)).toBeGreaterThan(0.7);
+      expect(power(start) / power(end)).toBeGreaterThan(0.65);
     }
     expect(power("hard:4-10")).toBeGreaterThan(power("normal:4-10"));
   });

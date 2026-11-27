@@ -80,7 +80,7 @@ export const BOUNTY_TIERS: readonly BountyTierDef[] = [
     { relicId: "ripa", level: 10 }, { relicId: "toby", level: 10 }, { relicId: "amo", level: 10 },
   ] },
   { id: "bounty-2", order: 3, name: "현상수배 3급", rewardGold: 3_200, rounds: [
-    { relicId: "mir", level: 15 }, { relicId: "pulsi", level: 15 }, { relicId: "koma", level: 14 },
+    { relicId: "mir", level: 16 }, { relicId: "pulsi", level: 15 }, { relicId: "koma", level: 14 },
   ] },
   // 4급부터 적이 돌파 1단계(LV.21) 언저리에 선다.
   { id: "bounty-7", order: 4, name: "현상수배 4급", rewardGold: 4_400, rounds: [

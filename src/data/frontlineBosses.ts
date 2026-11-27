@@ -45,7 +45,7 @@ export const EUNTE: RelicDef = {
     cleave: { radius: 230, percent: 100 } },
   passive: { id: "argen-passive", name: "열 겹의 봉쇄", kind: "fixedArmor", value: 10, durationSeconds: 0, iconAssetId: "skill-icon-buff", effectType: "buff",
     desc: "전투 시작 시 [[fixed-armor|고정 장갑]]을 10겹 얻는다. 각 겹이 남은 피해의 10%를 줄인다. 직접 피해를 받으면 1초에 최대 한 번 장갑이 벗겨지고, 직접 피해를 받지 않는 동안 3초마다 한 겹씩 복구된다." },
-  basic: { id: "argen-basic", name: "골절선", power: 85, targeting: "single", damageType: "physical", effectType: "physical", iconAssetId: "skill-icon-physical",
+  basic: { id: "argen-basic", name: "골절선", power: 100, targeting: "single", damageType: "physical", effectType: "physical", iconAssetId: "skill-icon-physical",
     statusEffects: [{ kind: "concussion", maxHpPercent: 6, criticalMaxHpPercent: 12 }],
     cycle: [{ name: "타격", power: 85 }, { name: "타격", power: 85 }, { name: "골절선", power: 85 }],
     bossDescription: "적 한 명에게 공격력의 85%와 방어력·저항력 각각의 80%를 합한 물리 피해를 준다. 세 번째 공격은 자신의 주위 모든 적에게도 같은 피해를 주고, 대상을 밀치며 [[concussion|뇌진탕]]을 일으켜 대상 최대 체력의 6%만큼 피해를 준다. 세 번째 공격이 치명타면 뇌진탕 피해는 12%로 증가한다. 본타와 뇌진탕으로 실제 깎은 체력의 100%만큼 보호막을 얻는다." },

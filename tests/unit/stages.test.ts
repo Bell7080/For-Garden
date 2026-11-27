@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { requiredBreakthroughForLevel } from "../../src/core/levelDesign";
+import { encounterGroupPower, requiredBreakthroughForLevel } from "../../src/core/levelDesign";
 import type { BattleStageDef } from "../../src/core/types";
 
 import { getRelic } from "../../src/data/relics";
@@ -372,5 +372,22 @@ describe("stage enemy design", () => {
     expect(layout.previous.x + layout.previous.width / 2).toBeLessThan(370);
     expect(layout.next.x - layout.next.width / 2).toBeGreaterThan(710);
     expect(layout.next.y + layout.next.height / 2).toBeLessThan(1700);
+  });
+});
+
+describe("story walls read as walls", () => {
+  const power = (id: string) => encounterGroupPower(getStageEnemies(getBattleStage(id)).map((enemy) => ({ stats: enemy.stats, encounterRole: enemy.encounterRole, base: getRelic(enemy.id).stats })));
+  /** 6-5는 6-1~6-4(셋·넷 편성, 응태가 유지)가 표시로 더 무겁다 — 편성을 다시 정하기 전까지 예외. */
+  const KNOWN = new Set(["6-5"]);
+  it("X-5·X-10의 표시 전투력이 그 절반과 바로 다음 관문보다 높다 (응태 2026-11-27)", () => {
+    for (let chapter = 1; chapter <= 9; chapter += 1) {
+      for (const wall of [5, 10]) {
+        const id = `${chapter}-${wall}`;
+        if (KNOWN.has(id)) continue;
+        const half = (wall === 5 ? [1, 2, 3, 4] : [6, 7, 8, 9]).map((order) => `${chapter}-${order}`);
+        const next = wall === 5 ? `${chapter}-6` : chapter < 9 ? `${chapter + 1}-1` : undefined;
+        for (const other of next ? [...half, next] : half) expect(power(id), `${id} > ${other}`).toBeGreaterThan(power(other));
+      }
+    }
   });
 });

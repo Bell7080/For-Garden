@@ -157,6 +157,11 @@ export interface EncounterRoleSpec {
    * 표시 전용이며 전투에는 들지 않는다(`encounterUnitPower`). 없으면 1이다.
    */
   powerWeight?: number;
+  /**
+   * **혼자 선 자리의 표시 몫**(있으면 그 무리에 이 개체 하나만 설 때 — 잡졸을 거느린 정예는 아니다 — `powerWeight` 대신 쓴다). 정예 하나가 셋 몫을 버티는 벽은
+   * 셋·넷이 서는 이웃 관문보다 실제로 어려운데, 머릿수를 더하는 표시에서는 더 가볍게 읽혔다(응태 2026-11-27).
+   */
+  soloPowerWeight?: number;
 }
 
 /**
@@ -221,17 +226,20 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * **v0.282.9에서 ×4로 내렸다**(응태 결정). 직접 R 토비로 1-5를 떠 봤는데 이기지 못해, ×8이 R 단독 편성에는 과했다.
      *
      * **v0.308.6에서 ×3으로 내렸다**(응태 결정). 1-10 코마가 SSR 없이는 깨지지 않았다.
+     *
+     * **공격 몫 ×1.2 → ×1.1**(응태 결정 2026-11-27 — 「잘 때리질 못하는데 한 번 치면 너무 세다」). 강인함을 함께 올려 덜 묶이고
+     * 더 자주 때리되 한 방은 가볍다. 1-10 기준 파티의 판이 29.8 → 41.4초로 길어졌다.
      */
     count: 1, bodyScale: 1.18,
-    hpMultiplier: 3, attackMultiplier: 1.2,
+    hpMultiplier: 3, attackMultiplier: 1.1,
     ttkSeconds: [18, 32], remainingHp: [0.20, 0.60],
     /*
-     * **혼자 서는 정예도 보스처럼 막아서되 훨씬 얕게.** 태생 20%에 제어 한 번마다 10% — 여섯 번이면 상한(80)이라
-     * 기절 하나로 정예를 끝까지 잠그지 못하되 첫 몇 번의 잠금은 확실히 든다. 치유 감소는 5%에서 시작해
+     * **혼자 서는 정예도 보스처럼 막아서되 훨씬 얕게.** 태생 35%에 제어 한 번마다 12% — 넷이면 상한(85)이라
+     * 기절 하나로 정예를 끝까지 잠그지 못하되 첫 몇 번의 잠금은 확실히 든다. 2026-11-27 35/12/85로 올렸다(응태 — 묶여서 잘 못 때렸다). 치유 감소는 5%에서 시작해
      * 60초에 걸쳐 40%까지 오른다 — 길게 버티며 고치는 풀이를 시간이 닫되, 평범하게 끝나는 판은 거의 건드리지 않는다
      * (10%에서 50%까지 40초에 올렸더니 원정 정예 10층의 권장 파티 승률이 75%에서 25%로 떨어졌다).
      */
-    tenacity: { basePercent: 20, perControlPercent: 10, maxPercent: 80, controlIgnoreAtOrBelowSeconds: 0.05 },
+    tenacity: { basePercent: 35, perControlPercent: 12, maxPercent: 85, controlIgnoreAtOrBelowSeconds: 0.05 },
     healingReduction: { basePercent: 5, maxPercent: 40, rampSeconds: 60 },
     /*
      * **비율 피해도 보스보다 얕게 덜 받는다**(응태 요청 2026-11-27 — 기가노가 약했다). 혼자 서서 체력 ×3을 버티는 자리라
@@ -244,6 +252,12 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * 표시가 그대로 말하도록 실제 능력치 전투력에 1.6을 곱한다(`encounterUnitPower`).
      */
     powerWeight: 1.6,
+    /*
+     * **혼자 선 정예는 2.0이다**(응태 결정 2026-11-27). 1.6이면 장의 벽(X-5·X-10)이 앞뒤의 셋·넷 관문이나 정예 둘 관문보다 낮게
+     * 읽혀(5-10 15,574 < 6-1 18,855 · 9-5 18,382 < 9-4 22,913) 벽으로 보이지 않았다. 실제로 이기는 레벨은 벽이 더 높다.
+     * 정예 둘 관문은 각자 체력을 나눠 가져 1.6 그대로다.
+     */
+    soloPowerWeight: 2,
   },
   boss: {
     /*
@@ -378,7 +392,7 @@ export function encounterHpShare(role: EncounterRole, countOnField: number): num
  */
 export function encounterUnitPowers(units: readonly { stats: Stats; encounterRole?: EncounterRole; base?: Stats }[]): number[] {
   const elites = encounterEliteCount(units);
-  return units.map(({ stats, encounterRole, base }) => encounterUnitPower(stats, encounterRole, elites, base));
+  return units.map(({ stats, encounterRole, base }) => encounterUnitPower(stats, encounterRole, elites, base, units.length));
 }
 
 /** 한 무리에 선 정예의 수 — 개체 하나만 그릴 때도 몫을 같은 값으로 나누도록 따로 둔다. */
@@ -386,10 +400,12 @@ export function encounterEliteCount(units: readonly { encounterRole?: EncounterR
   return units.filter((unit) => unit.encounterRole === "elite").length;
 }
 
-/** 개체 하나의 자리를 아는 전투력(`encounterUnitPowers`의 한 칸). `elites`는 그 무리에 선 정예 수다. */
-export function encounterUnitPower(stats: Stats, encounterRole: EncounterRole | undefined, elites: number, base?: Stats): number {
+/** 개체 하나의 자리를 아는 전투력(`encounterUnitPowers`의 한 칸). `elites`는 그 무리에 선 정예 수, `fieldCount`는 그 무리의 머릿수다(1이면 혼자 선 몫 `soloPowerWeight`). */
+export function encounterUnitPower(stats: Stats, encounterRole: EncounterRole | undefined, elites: number, base?: Stats, fieldCount = 0): number {
   void elites;
-  return Math.round(combatPower(stats, base) * ((encounterRole && ENCOUNTER_ROLE[encounterRole].powerWeight) ?? 1));
+  const spec = encounterRole ? ENCOUNTER_ROLE[encounterRole] : undefined;
+  const weight = (fieldCount === 1 ? spec?.soloPowerWeight : undefined) ?? spec?.powerWeight ?? 1;
+  return Math.round(combatPower(stats, base) * weight);
 }
 
 /**

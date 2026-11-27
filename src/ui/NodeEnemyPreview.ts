@@ -382,7 +382,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       this.add(new AffinityBadge(this.scene, badgeX, badgeTop + badge * 0.94, ROLE_ICON[enemy.role], badge * 0.74, 0.62));
       addBreakthroughGradeMark(this.scene, this, x + half - badge * 0.38, badgeTop - 4, badge * 0.8, growth.breakthrough);
       addUnitNameplate(this.scene, this, x, nameY, growth.level, enemy.name, row.nameSize, row.nameWidth);
-      this.overlay.add(addUnitPower(this.scene, undefined, x, nameY - 4, encounterUnitPower(enemy.stats, enemy.encounterRole, encounterEliteCount(this.options.enemies), baseStatsOf(enemy.id)), row.powerSize, COLOR.dangerText));
+      this.overlay.add(addUnitPower(this.scene, undefined, x, nameY - 4, encounterUnitPower(enemy.stats, enemy.encounterRole, encounterEliteCount(this.options.enemies), baseStatsOf(enemy.id), this.options.enemies.length), row.powerSize, COLOR.dangerText));
       const hit = this.scene.add.rectangle(x, ground - 70, slotWidth, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });
       // 누른 칸의 성장 상태를 함께 넘긴다 — 화면이 배열 index로 다시 찾으면 순서가 바뀌는 날 어긋난다.
       hit.on("pointerup", () => this.options.onEnemyClick(enemy, growth)); this.add(hit);

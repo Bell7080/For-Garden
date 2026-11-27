@@ -783,7 +783,7 @@ export class PartyScene extends Phaser.Scene {
     // 현상수배는 1대1이라 혼자 서는 적의 배수를 쓴다(`soloEnemyPower`) — 입구 화면과 같은 수가 선다.
     const unitPower = this.content.content === "bounty"
       ? soloEnemyPower(def.stats, baseStatsOf(def.id))
-      : encounterUnitPower(def.stats, def.encounterRole, encounterEliteCount(this.enemies), baseStatsOf(def.id));
+      : encounterUnitPower(def.stats, def.encounterRole, encounterEliteCount(this.enemies), baseStatsOf(def.id), this.enemies.length);
     addUnitPower(this, undefined, x, ENEMY_ROW + 22, unitPower, crowded ? 20 : 24, COLOR.dangerText).setDepth(3);
     // **적을 누르면 상세가 열린다.** 옆에 물음표를 하나 더 세우면 SD와 표식 사이에 눌러야 할
     // 것이 둘이 되고, 정작 크게 서 있는 SD는 눌러도 아무 일이 없다.

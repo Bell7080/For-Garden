@@ -85,7 +85,7 @@ import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, bre
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, periodicStackKeyword, plumeKeyword, frostbiteKeyword, skillDescription, passiveStackKeywords } from "./skillPresentation";
+import { attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, periodicStackKeyword, plumeKeyword, frostbiteKeyword, skillDescription, passiveStackKeywords, casterRatioKeywords } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { SummonInfoPopup } from "./SummonInfoPopup";
 import { openRelicFeedMaxPopup, openRelicResetPopup } from "./RelicResetPopup";
@@ -3835,7 +3835,9 @@ export function buildFerocityViewModel(
   const guardPercent = "defenseResistancePercent" in def.ferocityTrait ? def.ferocityTrait.defenseResistancePercent : undefined;
   if (guardPercent !== undefined) contextualKeywords.push(...defenseGainKeywords(def.stats, guardPercent));
   // 폭주 본문이 조가비·시약 같은 패시브 겹을 가리키면 그 태그를 이 쪽지에서도 눌러 읽게 한다.
-  contextualKeywords.push(...passiveStackKeywords(def.passive));
+  contextualKeywords.push(...passiveStackKeywords(def.passive, def.stats.hp));
+  // 손질·수압·유성처럼 이 개체 능력치에서 나오는 규칙어는 실제 수치로 세운다.
+  contextualKeywords.push(...casterRatioKeywords(def));
   // 폭주도 패시브와 같은 정형 상세창을 사용한다. 별도 제목 레이어 없이 아이콘 옆에서
   // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
   return {
@@ -3956,7 +3958,9 @@ export function buildSkillViewModel(options: {
       refillKeyword(finalDef),
       lastDropKeyword(finalDef),
       // 조가비·흉터·시약·난동처럼 패시브가 쌓는 이름 있는 겹은 평타·궁극기·패시브 어느 본문이 가리켜도 같은 태그로 연다.
-      ...passiveStackKeywords(finalDef.passive),
+      ...passiveStackKeywords(finalDef.passive, finalDef.stats.hp),
+      // 손질·밴덜리즘·수압·수면·유성처럼 이 개체 능력치에서 나오는 규칙어는 실제 수치 태그로 세운다(누르면 비율이 열린다).
+      ...casterRatioKeywords(finalDef),
       // 웅크린 무리(아모)가 실제로 올리는 방어·저항 값을 눌러 산출 근거를 읽는다.
       ...("kind" in skill && (skill as Passive).huddle !== undefined
         ? defenseGainKeywords(finalDef.stats, (skill as Passive).huddle!.defenseResistancePercentPerAlly) : []),

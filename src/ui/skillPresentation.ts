@@ -7,7 +7,7 @@ import type { BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, P
 import type { ScalingStatId } from "../core/damage";
 import { t } from "../i18n";
 import { PUP } from "../core/pup";
-import { BLEED } from "../core/skirmish";
+import { BLEED, VANDALISM_REBURST_SECONDS } from "../core/skirmish";
 import { valueTag, type ValueTagKind, type ValueTagStat } from "../data/valueTags";
 
 /** 능력치 이름은 스킬 본문·태그·돌파 줄이 모두 같은 표에서 고른다. */
@@ -469,12 +469,12 @@ function attackSpeedStackTagName(_tag: NonNullable<Passive["stackTag"]>): string
  * 공통 설명이 있지만 이 문맥 태그가 앞선다. 태그 팝업 안에서는 다른 태그를 열 수 없으므로 문장에
  * 규칙어 표기를 넣지 않는다.
  */
-export function passiveStackKeywords(passive: Passive): KeywordDef[] {
+export function passiveStackKeywords(passive: Passive, maxHp?: number): KeywordDef[] {
   const tags: KeywordDef[] = [];
   const shell = passive.kind === "shellGuard" ? passive.shellGuard : undefined;
   if (shell !== undefined) {
     const id = shell.stackId ?? "shell";
-    const common = { seconds: shell.durationSeconds, stacks: shell.maxStacks, selfPercent: shell.selfShieldMaxHpPercent, cooldown: shell.cooldownSeconds };
+    const common = { seconds: shell.durationSeconds, stacks: shell.maxStacks, selfShield: scaled("shield", "hp", shell.selfShieldMaxHpPercent, maxHp), cooldown: shell.cooldownSeconds };
     tags.push({
       id, term: findKeyword(id)?.term ?? id, kind: "buff",
       description: shell.lowestHpAllyShieldMaxHpPercent > 0
@@ -501,6 +501,78 @@ export function passiveStackKeywords(passive: Passive): KeywordDef[] {
       description: t("skill.keyword.attackSpeedStack.description", { value: passive.value, stacks: passive.maxStacks }),
     });
   }
+  return tags;
+}
+
+/** 개체의 평타·궁극기가 거는 상태 하나를 종류로 찾는다. */
+function ownStatusEffect<K extends CombatStatusEffect["kind"]>(def: RelicDef, kind: K): Extract<CombatStatusEffect, { kind: K }> | undefined {
+  const sources: (readonly CombatStatusEffect[] | undefined)[] = [def.basic.statusEffects, (def.ultimate as Skill).statusEffects];
+  for (const list of sources) {
+    const found = list?.find((effect) => effect.kind === kind);
+    if (found) return found as Extract<CombatStatusEffect, { kind: K }>;
+  }
+  return undefined;
+}
+
+function rule(id: string, kind: KeywordDef["kind"], description: string): KeywordDef {
+  return { id, term: findKeyword(id)?.term ?? id, kind, description };
+}
+
+/**
+ * **이 개체의 능력치에서 나오는 규칙어**의 문맥 태그 — 손질·밴덜리즘·수압·수면·유성·약점 포착·마디 방벽·해무 방벽.
+ *
+ * 전역 사전의 같은 ID는 「주문력의 125%」처럼 비율로만 말한다. 그 규칙어를 거는 개체의 쪽지에서는 같은 ID의
+ * 문맥 태그가 앞서므로, 여기서 실제 수치 태그(`valueTag`)로 바꿔 「240만큼 마법 피해」로 세우고 누르면 원래의
+ * 비율 설명(주문력의 125%, 주문력 192 기준)이 열린다(응태 2026-11-27). 대상 쪽 값(최대 체력·잃은 체력)에서
+ * 나오는 비율은 대상마다 달라 그대로 %로 남는다. 수치는 모두 전투가 읽는 계약에서 읽는다.
+ */
+export function casterRatioKeywords(def: RelicDef, stats: Stats = def.stats): KeywordDef[] {
+  const tags: KeywordDef[] = [];
+  const butcher = ownStatusEffect(def, "butcher");
+  if (butcher) tags.push(rule("butcher", "debuff", t("skill.keyword.caster.butcher", {
+    stacks: butcher.maxStacks, damage: scaled("damage", "atk", butcher.burstPower, stats.atk),
+  })));
+  const vandalism = ownStatusEffect(def, "vandalism");
+  if (vandalism) tags.push(rule("vandalism", "debuff", t("skill.keyword.caster.vandalism", {
+    shred: vandalism.offenseShredPercent, stacks: vandalism.maxStacks,
+    damage: scaled("damage", "ap", vandalism.burstPower, stats.ap), lock: VANDALISM_REBURST_SECONDS,
+  })));
+  const pressure = ownStatusEffect(def, "pressure");
+  if (pressure) {
+    const amount = Math.round(Math.round(stats.def) * pressure.defensePower / 100)
+      + Math.round(Math.round(stats.res) * pressure.resistancePower / 100);
+    tags.push(rule("pressure", "debuff", t("skill.keyword.caster.pressure", {
+      slow: pressure.speedPercentPerStack, seconds: pressure.seconds, stacks: pressure.maxStacks, stun: pressure.stunSeconds,
+      damage: `[[pressure-burst-value|${amount}]]`, lockout: pressure.lockoutSeconds,
+    })), {
+      id: "pressure-burst-value", term: String(amount), kind: "rule",
+      description: t("skill.keyword.damage.dual", {
+        stat: statName("def"), percent: pressure.defensePower, secondStat: statName("res"), secondPercent: pressure.resistancePower,
+      }),
+    });
+  }
+  const drowsy = def.passive.whiteNoise?.drowsy;
+  if (drowsy) tags.push(rule("sleep", "debuff", t("skill.keyword.caster.sleep", {
+    damage: scaled("damage", "res", drowsy.wakeResistancePower, stats.res),
+    groggy: drowsy.groggySeconds, slow: drowsy.groggyAttackSpeedPercent,
+  })));
+  const starfall = def.passive.starfall;
+  if (starfall) tags.push(rule("meteor", "rule", t("skill.keyword.caster.meteor", {
+    damage: scaled("damage", "ap", starfall.power, stats.ap),
+  })));
+  const weakpoint = ownStatusEffect(def, "weakpoint");
+  if (weakpoint) tags.push(rule("weakpoint", "debuff", t("skill.keyword.caster.weakpoint", {
+    damage: scaled("damage", "ap", weakpoint.burstPower, stats.ap), heal: weakpoint.duoHealPercent,
+  })));
+  const barrier = def.passive.segmentBarrier;
+  if (barrier) tags.push(rule("segment-barrier", "buff", t("skill.keyword.caster.segmentBarrier", {
+    segment: scaled("shield", "hp", barrier.segmentMaxHpPercent, stats.hp), segments: barrier.segments,
+    restore: barrier.restoreSeconds, hit: barrier.hitRestoreSeconds,
+  })));
+  const fog = def.passive.lifeStealShield;
+  if (fog) tags.push(rule("fog-guard", "buff", t("skill.keyword.caster.fogGuard", {
+    convert: fog.convertPercent, cap: scaled("shield", "hp", fog.capMaxHpPercent, stats.hp),
+  })));
   return tags;
 }
 
@@ -1937,7 +2009,7 @@ export function breakthroughEffectKeywords(def: RelicDef, slot: BreakthroughSlot
     if (prickle) own.push(prickle);
     const elation = elationKeyword(def.passive, stats?.hp);
     if (elation) own.push(elation);
-    own.push(...passiveStackKeywords(def.passive));
+    own.push(...passiveStackKeywords(def.passive, stats?.hp));
   }
   if (stats && slot === "passive" && effectOfSlot) {
     if (effectOfSlot.kind === "undyingBulwark") own.push(...defenseGainKeywords(stats, effectOfSlot.defenseResistancePercent));

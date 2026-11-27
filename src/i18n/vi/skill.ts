@@ -381,7 +381,7 @@ export const SKILL_VI = {
   "skill.ferocity.huntInstinct": "Khi Cuồng bạo, [[basic-attack|đòn đánh thường]] cộng {stacks} tầng [[intimidation|Uy hiếp]] mỗi lần, và thời gian miễn nhiễm sau khi [[fear|Hoảng sợ]] kết thúc rút còn {seconds}s.",
   "skill.breakthrough.effect.basic.scoldTaunt": "Kẻ địch trúng \"{name}\" bị [[taunt|Khiêu khích]] trong {seconds} giây.",
   "skill.breakthrough.effect.basic.clawBleed": "Khi 「{name}」 trúng chí mạng theo chu kỳ, mục tiêu bị [[bleed|Chảy máu]].",
-  "skill.breakthrough.effect.basic.windStep": "Đồng minh nhận năng lượng Tuyệt kỹ từ 「{name}」 được tăng {percent}% [[attack-speed|Tốc đánh]] trong {seconds} giây. Đồng minh đã có [[tailwind|Gió thuận]] sẽ bị bỏ qua.",
+  "skill.breakthrough.effect.basic.windStep": "Đồng minh nhận năng lượng Tuyệt kỹ từ 「{name}」 được tăng {percent}% [[attack-speed|Tốc đánh]] trong {seconds} giây. Cộng dồn với [[tailwind|Gió thuận]].",
   "skill.breakthrough.effect.ultimate.afterimageSlash": "{seconds} giây sau khi 「{name}」 trúng, tàn ảnh chém kẻ địch đó thêm một lần với {percent}% sức mạnh. Không chém nếu kẻ địch đã gục.",
   "skill.breakthrough.effect.ultimate.gustEnergy": "Khi thi triển 「{name}」, mọi đồng minh còn sống nhận {energy} năng lượng Tuyệt kỹ.",
   "skill.breakthrough.effect.ferocity.frenzyClaws": "Trong [[ferocity|Cuồng bạo]], chí mạng theo chu kỳ của 「{name}」 xuất hiện mỗi {to} đòn thay vì mỗi {from} đòn.",

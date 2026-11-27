@@ -381,7 +381,7 @@ export const SKILL_DE = {
   "skill.ferocity.huntInstinct": "In der Raserei bauen [[basic-attack|Standardangriffe]] jeweils {stacks} Stapel [[intimidation|Einschüchterung]] auf, und die Immunität nach der [[fear|Furcht]] verkürzt sich auf {seconds} s.",
   "skill.breakthrough.effect.basic.scoldTaunt": "Von „{name}“ getroffene Gegner werden {seconds} s lang [[taunt|verspottet]].",
   "skill.breakthrough.effect.basic.clawBleed": "Trifft 「{name}」 mit dem periodischen kritischen Treffer, erleidet das Ziel [[bleed|Blutung]].",
-  "skill.breakthrough.effect.basic.windStep": "Verbündete, die von 「{name}」 Ultimativ-Energie erhalten, bekommen {seconds} s lang {percent}% mehr [[attack-speed|Angriffstempo]]. Verbündete mit [[tailwind|Rückenwind]] werden übersprungen.",
+  "skill.breakthrough.effect.basic.windStep": "Verbündete, die von 「{name}」 Ultimativ-Energie erhalten, bekommen {seconds} s lang {percent}% mehr [[attack-speed|Angriffstempo]]. Wirkt zusätzlich zu [[tailwind|Rückenwind]].",
   "skill.breakthrough.effect.ultimate.afterimageSlash": "{seconds} s nachdem 「{name}」 getroffen hat, schlägt ein Nachbild den Gegner noch einmal mit {percent}% Kraft. Es schlägt nicht zu, wenn der Gegner bereits gefallen ist.",
   "skill.breakthrough.effect.ultimate.gustEnergy": "Beim Einsatz von 「{name}」 erhalten alle lebenden Verbündeten {energy} Ultimativ-Energie.",
   "skill.breakthrough.effect.ferocity.frenzyClaws": "Während der [[ferocity|Raserei]] tritt der periodische kritische Treffer von 「{name}」 alle {to} statt alle {from} Angriffe ein.",

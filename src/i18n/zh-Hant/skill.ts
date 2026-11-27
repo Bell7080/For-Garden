@@ -380,7 +380,7 @@ export const SKILL_ZH_HANT = {
   "skill.ferocity.huntInstinct": "暴走期間，[[basic-attack|普通攻擊]]每次疊加{stacks}層[[intimidation|威壓]]，[[fear|恐懼]]結束後的免疫縮短為{seconds}秒。",
   "skill.breakthrough.effect.basic.scoldTaunt": "被「{name}」擊中的敵人會被[[taunt|嘲諷]]{seconds}秒。",
   "skill.breakthrough.effect.basic.clawBleed": "「{name}」以週期暴擊命中時，使被擊中的敵人[[bleed|出血]]。",
-  "skill.breakthrough.effect.basic.windStep": "獲得「{name}」分給的必殺技能量的隊友，{seconds}秒內[[attack-speed|攻擊速度]]提升{percent}%。已有[[tailwind|順風]]的隊友不受影響。",
+  "skill.breakthrough.effect.basic.windStep": "獲得「{name}」分給的必殺技能量的隊友，{seconds}秒內[[attack-speed|攻擊速度]]提升{percent}%。可與[[tailwind|順風]]疊加。",
   "skill.breakthrough.effect.ultimate.afterimageSlash": "「{name}」命中{seconds}秒後，殘影會再斬同一敵人一次，威力為{percent}%。敵人已倒下則不會觸發。",
   "skill.breakthrough.effect.ultimate.gustEnergy": "施放「{name}」的瞬間，所有存活隊友獲得{energy}必殺技能量。",
   "skill.breakthrough.effect.ferocity.frenzyClaws": "[[ferocity|暴走]]期間，「{name}」的週期暴擊由每{from}次攻擊縮短為每{to}次攻擊。",

@@ -31,7 +31,7 @@ function fixture(gpu = false) {
     scene: { game: { loop: { time: 100, rawDelta: 16 } } },
     frame: { glTexture: { webGLTexture: {} } }, afterimages: [], bodyFill: { color: 0, amount: 0 },
     heldTables: new Set(), skin: null,
-    puppet: { update: vi.fn(() => new Float32Array(6)), updateSkin: vi.fn(() => skinFrame), restVertices: [0, 0, 1, 0, 0, 1] },
+    puppet: { update: vi.fn(() => new Float32Array(6)), updateSkin: vi.fn(() => skinFrame), flush: vi.fn(() => null), flushSkin: vi.fn(() => null), restVertices: [0, 0, 1, 0, 0, 1] },
   });
   const renderer = { gl, width: 1080, height: 1920, pipelines: { clear: vi.fn(), rebind: vi.fn() } };
   const camera = { addToRenderList: vi.fn(), alpha: 1 };
@@ -59,7 +59,7 @@ describe("캐릭터 프레임 작업 예산", () => {
     c.visible = true; c.setAnimationFrozen(true); c.scene.game.loop.time += 16; c.step(0, 16);
     expect(c.puppet.update).not.toHaveBeenCalled();
     c.setAnimationFrozen(false); c.scene.game.loop.time += 16; c.step(0, 16);
-    expect(c.puppet.update).toHaveBeenCalledExactlyOnceWith(.016);
+    expect(c.puppet.update).toHaveBeenCalledExactlyOnceWith(.016, { output: true });
   });
   it("버퍼 공간은 한 번 확보하고 새 자세만 전송하며 복구 시 정지 자세도 다시 올린다", () => {
     const { creature: c, gl, renderer, camera } = fixture();

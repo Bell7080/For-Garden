@@ -1,7 +1,7 @@
 {
   "name": "for-garden",
   "private": true,
-  "version": "0.554.0",
+  "version": "0.555.0",
   "type": "module",
   "description": "For - Garden — 이터널 시티. 멸종 동물 복원 연구 도시를 무대로 한 세로형 모바일 수집형 RPG.",
   "scripts": {
@@ -37,7 +37,7 @@
     "@supabase/realtime-js": "2.118.0",
     "@vercel/functions": "3.11.3",
     "phaser": "^3.90.0",
-    "puppetforge": "github:Bell7080/WebGLE#31ab0fc7df52ddc5a386bcff9557895f08d150e5"
+    "puppetforge": "github:Bell7080/WebGLE#fbce20f69d37c81ec9c8efc15d5b57cc94c37cc4"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

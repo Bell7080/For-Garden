@@ -2920,7 +2920,7 @@
 - `puppetforge`는 GitHub 저장소(`github:Bell7080/WebGLE#<커밋 SHA>`)에서 직접 받는다. 반드시
   `Bell7080/WebGLE`의 `main`에 실제로 남아 있는 전체 SHA로 고정한다. 병합 후 삭제된 작업
   브랜치의 커밋을 가리키면 그 커밋이 사라져 `npm install` 자체가 실패한다.
-- 현재 고정 커밋은 `31ab0fc`(v0.45.0)이며 `pinnedSoft` 반경 감쇠와 GPU 스키닝 출력(`updateSkin`)이 게임 Runtime에 들어 있다.
+- 현재 고정 커밋은 `fbce20f`(v0.46.0)이며 `pinnedSoft` 반경 감쇠와 GPU 스키닝 출력(`updateSkin`), 기준 자세 캐시와 서브스텝 결과 건너뛰기(`update(dt, { output })` · `flush`)가 게임 Runtime에 들어 있다. 한 프레임의 마지막 서브스텝에만 `output: true`를 넘기고 결과가 없으면 `flush()`로 받는다(`runtimeStep.ts`).
   범위 없는 GitHub 의존성으로 되돌리면 lockfile이 예전 Runtime을 계속 가리켜 발 고정 영역이
   통째로 딱딱하게 붙고 외곽 정점이 찌그러질 수 있으므로, 버전을 바꿀 때 ZIP과 Runtime을 함께
   회귀 검증한다.

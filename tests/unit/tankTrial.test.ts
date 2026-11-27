@@ -10,7 +10,7 @@ import type { RelicDef } from "../../src/core/types";
 const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 const PARTIES: readonly (readonly string[])[] = [
   ["mosana", "kento", "anka"], ["mosana", "nodonia", "anka"], ["kento", "nodonia", "anka"],
-  ["torika", "dodo", "parua"], ["ella", "maki", "stella"],
+  ["torika", "dodi", "parua"], ["ella", "maki", "stella"],
 ];
 const party = (ids: readonly string[], level: number): RelicDef[] => ids.map((id) => {
   const def = getRelic(id); return { ...def, stats: applyLevelGrowth(def.stats, level, def.rarity, 0) };

@@ -42,7 +42,7 @@ export const REVIEWED_STORY_BODIES: Readonly<Record<string, readonly string[]>> 
   "stage-7-5-pre": ["anka"],
   "stage-7-7-post": ["dodi"],
   "stage-7-8-post": ["ella"],
-  "stage-7-10-post": ["carno"],
+  "stage-7-10-post": ["kar"],
   "stage-1-5-greenhouse-echo": ["calm", "wet", "fine"],
   "stage-3-8-apology": ["ark", "yuti", "pachi2"],
   "stage-1-8-side-post": ["sniff"],

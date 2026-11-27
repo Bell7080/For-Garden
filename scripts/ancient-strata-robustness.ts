@@ -6,7 +6,7 @@ import { auditCcDensity } from "../src/core/ccDensityAudit";
 const args = process.argv.slice(2).filter(arg => arg !== "--robustness");
 if (args.length !== 0 && (args.length !== 2 || args[0] !== "--output")) throw new Error("--robustness accepts only --output path.json");
 const output = args[1] ?? "work/ancient-strata-robustness.json";
-const parties = [["rex", "torika", "mette"], ["ark", "pachi", "stella"], ["pachi", "ella", "mette"], ["deina", "pachi", "stella"], ["pachi", "mosana", "stella"]];
+const parties = [["rexia", "torika", "mette"], ["ark", "pachi", "stella"], ["pachi", "ella", "mette"], ["dei", "pachi", "stella"], ["pachi", "mosana", "stella"]];
 const sensitivity = [], cc = [];
 for (const ids of parties) {
   const party = ancientReferenceParty(ids, "ceiling");

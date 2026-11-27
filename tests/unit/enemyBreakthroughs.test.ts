@@ -22,8 +22,8 @@ function run(state: SkirmishState, seconds: number): SkirmishEvent[] {
 
 describe("적 전용 한계 돌파", () => {
   it("레이티아 II — 앞니에 갉인 적의 방어력이 겹마다 깎인다", () => {
-    const open = duel("raitia-grass", 1);
-    const closed = duel("raitia-grass", 0);
+    const open = duel("viria", 1);
+    const closed = duel("viria", 0);
     run(open, 6); run(closed, 6);
     const base = getRelic("torika").stats.def;
     const shaved = defensiveDefinition(findFighter(open, "player-0")!, open).def.stats.def;
@@ -99,7 +99,7 @@ describe("적 전용 한계 돌파", () => {
   });
 
   it("레이티아 V — 겨울잠이 첫 회복이 끝난 뒤 한 번 더 발동한다", () => {
-    const state = duel("raitia-grass", 4);
+    const state = duel("viria", 4);
     const rat = findFighter(state, "enemy-0")!;
     rat.hp = rat.maxHp * 0.4;
     expect(tryTriggerEmergencyRecovery(rat, state)).toBe(true);
@@ -108,7 +108,7 @@ describe("적 전용 한계 돌파", () => {
     expect(tryTriggerEmergencyRecovery(rat, state)).toBe(true);
     rat.regeneration = null; rat.hp = rat.maxHp * 0.4;
     expect(tryTriggerEmergencyRecovery(rat, state)).toBe(false);
-    const closed = duel("raitia-grass", 0);
+    const closed = duel("viria", 0);
     const r0 = findFighter(closed, "enemy-0")!;
     r0.hp = r0.maxHp * 0.4; tryTriggerEmergencyRecovery(r0, closed);
     r0.regeneration = null; r0.hp = r0.maxHp * 0.4;
@@ -128,7 +128,7 @@ describe("적 전용 한계 돌파", () => {
   });
 
   it("모든 적 돌파 문구가 번역 키 그대로 노출되지 않는다", () => {
-    for (const id of ["raitia-grass", "raitia-water", "raitia-fire", "raitia-earth", "raitia-wind", "toby", "amo", "ripa", "koma"]) {
+    for (const id of ["viria", "guttia", "favia", "silia", "ventia", "toby", "amo", "ripa", "koma"]) {
       for (const slot of ["basic", "ultimate", "ferocity", "passive"] as const) {
         const text = breakthroughEffectText(getRelic(id), slot);
         expect(text, `${id} ${slot}`).toBeTruthy();
@@ -138,7 +138,7 @@ describe("적 전용 한계 돌파", () => {
   });
 
   it("레이티아 다섯 종은 같은 한계 돌파를 가진다", () => {
-    const sets = ["raitia-grass", "raitia-water", "raitia-fire", "raitia-earth", "raitia-wind"].map((id) => JSON.stringify(getRelic(id).breakthroughEffects));
+    const sets = ["viria", "guttia", "favia", "silia", "ventia"].map((id) => JSON.stringify(getRelic(id).breakthroughEffects));
     expect(new Set(sets).size).toBe(1);
   });
 });

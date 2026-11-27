@@ -10,21 +10,21 @@ import { createDifficultyRng, type DifficultyControl } from "./stageDifficulty";
 import { isFighterAlive, type SkirmishEvent } from "./skirmish";
 
 export const ANCIENT_REFERENCE_PARTIES = [
-  { id: "requested", relics: ["rex", "torika", "mette"] },
-  { id: "requested-tank-first", relics: ["torika", "rex", "mette"] },
+  { id: "requested", relics: ["rexia", "torika", "mette"] },
+  { id: "requested-tank-first", relics: ["torika", "rexia", "mette"] },
   { id: "starter", relics: ["torika", "luka", "meron"] },
-  { id: "physical", relics: ["torika", "rex", "meron"] },
+  { id: "physical", relics: ["torika", "rexia", "meron"] },
   { id: "magic", relics: ["ella", "morphe", "mette"] },
   { id: "combo", relics: ["ella", "irna", "terisa"] },
   { id: "summon", relics: ["nodonia", "dian", "meron"] },
   { id: "cc", relics: ["pachi", "mosana", "anka"] },
-  { id: "taunt", relics: ["deina", "rex", "mette"] },
+  { id: "taunt", relics: ["dei", "rexia", "mette"] },
   { id: "double-support", relics: ["torika", "meron", "mette"] },
-  { id: "rush", relics: ["rex", "luka", "spino"] },
-  { id: "queen-support", relics: ["deina", "dian", "mette"] },
+  { id: "rush", relics: ["rexia", "luka", "spina"] },
+  { id: "queen-support", relics: ["dei", "dian", "mette"] },
   { id: "sniper", relics: ["torika", "maddy", "mette"] },
-  { id: "bleed", relics: ["torika", "rex", "spino"] },
-  { id: "r-party", relics: ["dodo", "mosana", "anka"] },
+  { id: "bleed", relics: ["torika", "rexia", "spina"] },
+  { id: "r-party", relics: ["dodi", "mosana", "anka"] },
 ] as const;
 export type AncientEquipment = "bare" | "epic" | "ceiling";
 

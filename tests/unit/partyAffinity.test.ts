@@ -14,42 +14,42 @@ describe("파티 속성 미리보기", () => {
   });
 
   it("아군과 적의 모든 교차 조합을 유리·불리·중립으로 센다", () => {
-    const allies = [getRelic("rex"), getRelic("spino")];
+    const allies = [getRelic("rexia"), getRelic("spina")];
     const enemies = [getRelic("toby"), getRelic("amo")];
     expect(partyAffinitySummary(allies, enemies)).toEqual({ advantage: 2, disadvantage: 1, neutral: 1 });
   });
 
   it("자동 배치는 실제 세기(전투력 × 상성)가 높은 셋을 안정적으로 고르고 직군으로 자리를 정한다", () => {
-    const roster = [getRelic("rex"), getRelic("torika"), getRelic("spino"), getRelic("dodo"), getRelic("tia")];
+    const roster = [getRelic("rexia"), getRelic("torika"), getRelic("spina"), getRelic("dodi"), getRelic("tia")];
     const enemies = [getRelic("toby"), getRelic("amo"), getRelic("ripa")];
     // 고르는 것은 세기(태생 전투력 × 상성 — 스피나·티아·토리카), 자리는 직군이다 — 탱커가 가운데, 암살자가 왼쪽.
-    expect(autoPickParty(roster, enemies)).toEqual(["spino", "torika", "tia"]);
+    expect(autoPickParty(roster, enemies)).toEqual(["spina", "torika", "tia"]);
   });
 
   it("가운데에는 탱커가, 없으면 전사가 서고 양옆에 암살자·지원가가 선다", () => {
     const ids = (members: readonly { id: string }[]): string[] => members.map(({ id }) => id);
     // 오프닝의 쁘띠 로그 셋: 암살자 파루아 · 탱커 토리카 · 지원가 도디.
-    expect(ids(arrangeByRole([getRelic("torika"), getRelic("dodo"), getRelic("parua")]))).toEqual(["parua", "torika", "dodo"]);
+    expect(ids(arrangeByRole([getRelic("torika"), getRelic("dodi"), getRelic("parua")]))).toEqual(["parua", "torika", "dodi"]);
     // 탱커가 없으면 전사가 가운데를 맡는다.
-    expect(ids(arrangeByRole([getRelic("dodo"), getRelic("tia"), getRelic("spino")]))).toEqual(["spino", "tia", "dodo"]);
+    expect(ids(arrangeByRole([getRelic("dodi"), getRelic("tia"), getRelic("spina")]))).toEqual(["spina", "tia", "dodi"]);
     // 같은 직군끼리는 들어온 순서를 지키고, 셋이 아니면 순서를 건드리지 않는다.
-    expect(ids(arrangeByRole([getRelic("torika"), getRelic("dodo")]))).toEqual(["torika", "dodo"]);
+    expect(ids(arrangeByRole([getRelic("torika"), getRelic("dodi")]))).toEqual(["torika", "dodi"]);
   });
 
   it("선택 렐릭이 적 다수에게 유리하면 위 방향이다", () => {
-    expect(relicAffinityDirection(getRelic("rex"), [getRelic("dodo"), getRelic("luka")])).toBe("up");
+    expect(relicAffinityDirection(getRelic("rexia"), [getRelic("dodi"), getRelic("luka")])).toBe("up");
   });
 
   it("선택 렐릭이 적 다수에게 불리하면 아래 방향이다", () => {
-    expect(relicAffinityDirection(getRelic("rex"), [getRelic("spino"), getRelic("amo")])).toBe("down");
+    expect(relicAffinityDirection(getRelic("rexia"), [getRelic("spina"), getRelic("amo")])).toBe("down");
   });
 
   it("유리와 불리가 상쇄되면 중립이다", () => {
-    expect(relicAffinityDirection(getRelic("rex"), [getRelic("dodo"), getRelic("spino")])).toBe("neutral");
+    expect(relicAffinityDirection(getRelic("rexia"), [getRelic("dodi"), getRelic("spina")])).toBe("neutral");
   });
 
   it("적 목록이 비었으면 중립이다", () => {
-    expect(relicAffinityDirection(getRelic("rex"), [])).toBe("neutral");
+    expect(relicAffinityDirection(getRelic("rexia"), [])).toBe("neutral");
   });
 });
 
@@ -68,18 +68,18 @@ describe("편성 칸의 추천 직군", () => {
 
 describe("자동 배치는 전투력까지 잰다", () => {
   it("상성이 유리해도 전투력이 한참 낮으면 밀린다", () => {
-    const roster = [getRelic("rex"), getRelic("torika"), getRelic("spino"), getRelic("dodo"), getRelic("tia")];
+    const roster = [getRelic("rexia"), getRelic("torika"), getRelic("spina"), getRelic("dodi"), getRelic("tia")];
     const enemies = [getRelic("toby"), getRelic("amo"), getRelic("ripa")];
     // 상성으로는 스피나가 뽑히지만 전투력이 1이면 빠지고, 렉스가 들어온다.
-    const power = (relic: { id: string }): number => (relic.id === "spino" ? 1 : 1000);
+    const power = (relic: { id: string }): number => (relic.id === "spina" ? 1 : 1000);
     const picked = autoPickParty(roster, enemies, 3, power);
-    expect(picked).not.toContain("spino");
+    expect(picked).not.toContain("spina");
     expect(picked).toHaveLength(3);
   });
 
   it("세기가 같으면 상성이 가른다 — 유리는 주는 피해와 받는 피해에 모두 든다", () => {
     const enemy = getRelic("toby");
-    const ally = getRelic("rex");
+    const ally = getRelic("rexia");
     const direction = relicAffinityDirection(ally, [enemy]);
     const score = relicMatchupScore(ally, [enemy], 100);
     if (direction === "up") expect(score).toBeCloseTo(100 * 1.25 * 1.25);
@@ -88,7 +88,7 @@ describe("자동 배치는 전투력까지 잰다", () => {
   });
 
   it("현상수배 레인은 자리마다 그 자리의 적과 가장 센 짝을 잇는다", () => {
-    const roster = [getRelic("rex"), getRelic("torika"), getRelic("spino")];
+    const roster = [getRelic("rexia"), getRelic("torika"), getRelic("spina")];
     const lanes = [getRelic("toby"), getRelic("amo"), getRelic("ripa")];
     const slots = autoPickLanes(roster, lanes, () => 100);
     expect(new Set(slots).size).toBe(3);

@@ -50,25 +50,25 @@ describe('아레나 RP 게이지', () => {
 describe('친선전 편성', () => {
   const state = () => {
     const s = createDefaultSession();
-    s.owned = new Set([...s.owned, 'rex', 'mette', 'stella']);
-    s.party = ['rex', 'mette', 'stella'];
+    s.owned = new Set([...s.owned, 'rexia', 'mette', 'stella']);
+    s.party = ['rexia', 'mette', 'stella'];
     return s as unknown as Parameters<typeof practiceDefenseIds>[0];
   };
   it('친구의 편은 방어덱, 없으면 지금 편성에서 보유한 셋까지다', () => {
     const s = state();
-    expect(practiceDefenseIds(s)).toEqual(['rex', 'mette', 'stella']);
+    expect(practiceDefenseIds(s)).toEqual(['rexia', 'mette', 'stella']);
     (s as { duel?: { defense: string[] } }).duel = { ...(s as { duel?: object }).duel, defense: ['stella', 'nonowned'] } as never;
     expect(practiceDefenseIds(s)).toEqual(['stella']);
   });
   it('내 편은 보낸 편성을 다시 가리고, 쓸 수 없으면 지금 편성이다', () => {
     const s = state();
     expect(practicePartyIds(s, ['mette'])).toEqual(['mette']);
-    expect(practicePartyIds(s, ['mette', 'mette'])).toEqual(['rex', 'mette', 'stella']);
-    expect(practicePartyIds(s, ['nonowned'])).toEqual(['rex', 'mette', 'stella']);
+    expect(practicePartyIds(s, ['mette', 'mette'])).toEqual(['rexia', 'mette', 'stella']);
+    expect(practicePartyIds(s, ['nonowned'])).toEqual(['rexia', 'mette', 'stella']);
   });
   it('편성 화면은 친구의 방어팀(1~3)을 위에 세우고, 가려진 칸은 받지 않는다', () => {
-    const friend = { id: 'f1', name: '친구', frameId: 'basic', favoriteRelicId: 'rex', level: 7 };
-    const units = [{ relicId: 'rex', level: 10, breakthrough: 0, power: 900 }, { relicId: 'mette', level: 12, breakthrough: 1, power: 1100 }];
+    const friend = { id: 'f1', name: '친구', frameId: 'basic', favoriteRelicId: 'rexia', level: 7 };
+    const units = [{ relicId: 'rexia', level: 10, breakthrough: 0, power: 900 }, { relicId: 'mette', level: 12, breakthrough: 1, power: 1100 }];
     const content = normalizePartyContent({ content: 'friendly', opponent: { id: 'f1', displayName: '친구', score: 0, totalPower: 2000, units }, friend });
     expect(content.content).toBe('friendly');
     const preview = partyPreview(content, getBattleStage('1-1'));

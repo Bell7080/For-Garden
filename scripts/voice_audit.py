@@ -3,7 +3,7 @@
 캐릭터 대사 목소리 점검 — 기계로 잡히는 신호만 모아 사람이 읽을 보고서로 낸다.
 
     python3 scripts/voice_audit.py              # 전 개체
-    python3 scripts/voice_audit.py yuti rex     # 개체 지정
+    python3 scripts/voice_audit.py yuti rexia     # 개체 지정
     python3 scripts/voice_audit.py --json       # 기계가 읽는 출력
 
 기준과 절차는 `docs/character-voice.md`가 갖는다. 이 스크립트는 그 문서의 점검표 중

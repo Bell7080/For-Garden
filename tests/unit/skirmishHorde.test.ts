@@ -16,10 +16,10 @@ function runToEnd(state: SkirmishState, seconds = 240): void {
  */
 describe("난전 물량", () => {
   it("적은 다섯을 넘어 한 번에 설 수 있고 아군은 여전히 다섯이 상한이다", () => {
-    const sister = getRelic("raitia-grass");
-    const state = createSkirmish([getRelic("rex")], Array.from({ length: 15 }, () => sister), ARENA);
+    const sister = getRelic("viria");
+    const state = createSkirmish([getRelic("rexia")], Array.from({ length: 15 }, () => sister), ARENA);
     expect(state.fighters.filter(({ side }) => side === "enemy")).toHaveLength(15);
-    expect(() => createSkirmish([getRelic("rex")], Array.from({ length: MAX_ENEMY_COUNT + 1 }, () => sister), ARENA)).toThrow(RangeError);
+    expect(() => createSkirmish([getRelic("rexia")], Array.from({ length: MAX_ENEMY_COUNT + 1 }, () => sister), ARENA)).toThrow(RangeError);
     expect(() => spawnSpots(ARENA, "player", 6)).toThrow(RangeError);
   });
 
@@ -50,7 +50,7 @@ describe("난전 물량", () => {
 
   it("몰려온 적을 모두 쓰러뜨려야 승리하고 승리는 한 번만 선다", () => {
     const tier = CAKE_OPERATION_TIERS[0];
-    const players = ["rex", "spino", "torika"].map((id) => getRelic(id));
+    const players = ["rexia", "spina", "torika"].map((id) => getRelic(id));
     const state = createSkirmish(players, cakeOperationEnemies(tier), battleArena("cake"));
     runToEnd(state);
     if (state.phase === "victory") expect(state.fighters.filter(({ side, hp }) => side === "enemy" && hp > 0)).toHaveLength(0);
@@ -78,7 +78,7 @@ describe("모드별 전장", () => {
 describe("최대 체력 비례 피해의 기준", () => {
   it("공유 체력 보스만 제 기준 체력을 갖는다", () => {
     const boss = { ...getRelic("sukusuino"), stats: { ...getRelic("sukusuino").stats, hp: 100_000 } };
-    const state = createSkirmish([getRelic("rex")], [boss], ARENA, {}, {}, {
+    const state = createSkirmish([getRelic("rexia")], [boss], ARENA, {}, {}, {
       boss: { phases: [{ startsAt: 0, damagePerSecond: 0, label: "" }], limitSeconds: 90, percentHpBasis: 5_000 },
     });
     const bossFighter = state.fighters.find(({ id }) => id === "enemy-0")!;

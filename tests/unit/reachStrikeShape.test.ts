@@ -94,7 +94,7 @@ describe("근접 평타의 결", () => {
     for (const relic of RELICS) {
       if (relic.strike !== undefined) expect(relic.reachTier, relic.id).toBe("melee");
     }
-    expect(getRelic("rex").strike).toBe("bite");
+    expect(getRelic("rexia").strike).toBe("bite");
     expect(getRelic("luka").strike).toBe("claw");
     expect(getRelic("torika").strike).toBeUndefined();
   });

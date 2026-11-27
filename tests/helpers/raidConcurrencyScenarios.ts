@@ -55,7 +55,7 @@ export async function runRaidScenarios(sql: (query: string) => string) {
   const seed=(suffix:string,prepare?: (state:Session)=>void)=>{
     const id=`00000000-0000-0000-0000-0000000000${suffix}`;
     sql(`insert into auth.users(id) values('${id}');insert into public.players(id) values('${id}') on conflict do nothing;`);
-    const state=createDefaultSession();state.party=['rex','mette','torika'];state.wallet.stamina=1000;state.playerResearch=normalizePlayerLevel({level:PLAYER_LEVEL_CAP});
+    const state=createDefaultSession();state.party=['rexia','mette','torika'];state.wallet.stamina=1000;state.playerResearch=normalizePlayerLevel({level:PLAYER_LEVEL_CAP});
     for(const relic of state.party){state.owned.add(relic);state.relicProgress[relic]={...createInitialRelicProgress(),level:30,breakthrough:2};}
     prepare?.(state);
     const data=saveManager.exportData(state);

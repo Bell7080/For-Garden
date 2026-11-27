@@ -8,7 +8,7 @@ import type { RelicDef } from "../../src/core/types";
 
 const rows: object[] = [];
 function unit(id: string, attackSpeed: number): RelicDef {
-  const base = getRelic("dodo");
+  const base = getRelic("dodi");
   return { ...base, id, stats: { ...base.stats, hp: 1_000_000, atk: 200, ap: 200, def: 300, res: 300, attackSpeed, critChance: 0, energyGain: 0, ferocityGain: 0, lifeSteal: 0 },
     passive: { id: "test-passive", name: "test", iconAssetId: "skill-icon-buff", effectType: "buff", kind: "summonDerived", value: 0, desc: "" },
     basic: { id: "test-basic", name: "test", iconAssetId: "skill-icon-physical", effectType: "physical", targeting: "single", damageType: "physical", power: 100 },

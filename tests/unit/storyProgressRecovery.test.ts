@@ -18,7 +18,7 @@ function unlocked() {
   return state;
 }
 async function deferredRex() {
-  const state = unlocked(); state.owned.delete("rex"); delete state.relicProgress.rex;
+  const state = unlocked(); state.owned.delete("rexia"); delete state.relicProgress.rexia;
   const api = apiFor(state);
   expect(await api.applyStoryEffect({ storyId: "stage-2-6-same-line", nodeId: "choose", choiceId: "return" })).toEqual({ xpGained: 0, xpDeferred: 3 });
   await api.completeStory({ storyId: "stage-2-6-same-line" });
@@ -103,13 +103,13 @@ describe("스토리 검증과 선택 보상 복구", () => {
 
   it("미보유 유대 적립은 JSON 저장을 지나 실제 뽑기 최초 획득 때 한 번만 지급한다", async () => {
     const state = await deferredRex(); state.wallet.fossil = 100;
-    expect(state.serverJournal?.pendingStoryBondXp?.rex).toBe(3);
+    expect(state.serverJournal?.pendingStoryBondXp?.rexia).toBe(3);
     const api = apiFor(state);
     await api.pullRelics({ bannerId: "fossil", count: 10 });
-    expect(state.owned.has("rex")).toBe(true); expect(state.relicProgress.rex.bondXp).toBe(23);
-    expect(state.serverJournal?.pendingStoryBondXp?.rex).toBeUndefined();
+    expect(state.owned.has("rexia")).toBe(true); expect(state.relicProgress.rexia.bondXp).toBe(23);
+    expect(state.serverJournal?.pendingStoryBondXp?.rexia).toBeUndefined();
     await api.pullRelics({ bannerId: "fossil", count: 10 });
-    expect(state.relicProgress.rex.bondXp).toBe(23);
+    expect(state.relicProgress.rexia.bondXp).toBe(23);
   });
 
   it("파편 상점으로 처음 획득해도 같은 저장에서 적립분을 지급·제거한다", async () => {
@@ -126,8 +126,8 @@ describe("스토리 검증과 선택 보상 복구", () => {
     let fail = true;
     const api = new FakeServer(state, { latencyMs: 0, now: () => now, random: () => 0, persistSession: () => { if (fail) throw Error("disk full"); } });
     await expect(api.pullRelics({ bannerId: "fossil", count: 10 })).rejects.toMatchObject({ code: "PERSISTENCE_FAILED" });
-    expect(state.wallet.fossil).toBe(100); expect(state.owned.has("rex")).toBe(false); expect(state.serverJournal?.pendingStoryBondXp?.rex).toBe(3);
+    expect(state.wallet.fossil).toBe(100); expect(state.owned.has("rexia")).toBe(false); expect(state.serverJournal?.pendingStoryBondXp?.rexia).toBe(3);
     fail = false; await api.pullRelics({ bannerId: "fossil", count: 10 });
-    expect(state.relicProgress.rex.bondXp).toBe(23); expect(state.serverJournal?.pendingStoryBondXp?.rex).toBeUndefined();
+    expect(state.relicProgress.rexia.bondXp).toBe(23); expect(state.serverJournal?.pendingStoryBondXp?.rexia).toBeUndefined();
   });
 });

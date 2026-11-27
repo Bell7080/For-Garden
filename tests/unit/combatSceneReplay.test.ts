@@ -48,7 +48,7 @@ describe("실제 전투 씬 기록 → 서버 재현", () => {
     for (const automatic of [true,false]) for (const speed of [1,2,3]) for (const seed of [1,7,42]) {
         it(`PvP 양쪽 코어 자동 궁극기 지원=${automatic} ${speed}x seed${seed}`,()=>{
             const state=createDefaultSession(),defender=createDefaultSession();
-            state.party=['rex','mette','stella'];
+            state.party=['rexia','mette','stella'];
             for(const session of [state,defender]) for(const id of state.party){session.owned.add(id);session.relicProgress[id]={...createInitialRelicProgress(),level:30,breakthrough:2};}
             defender.duel=normalizeDuelState(undefined,[...defender.owned]);defender.duel.defense=[...state.party];
             const requestId='duel-regression',setup=duelCombatSetup(state,defender,state.party);
@@ -63,7 +63,7 @@ describe("실제 전투 씬 기록 → 서버 재현", () => {
             expect(finishCombat(restored,proof,new Date(now.getTime()+600000)).victory).toBe(scene.state.phase==='victory');
         });
     }
-    for (const party of [["dodo", "maddy", "stella"], ["ella", "maki", "stella"], ["rex", "mette", "torika"]])
+    for (const party of [["dodi", "maddy", "stella"], ["ella", "maki", "stella"], ["rexia", "mette", "torika"]])
         for (const tier of [1, 2, 3, 4, 5, 6, 7, 8])
             for (const speed of [1, 2, 3]) {
                 it(`cake-${tier} ${party.join("/")} ${speed}x`, () => {
@@ -160,7 +160,7 @@ describe("실제 전투 씬 기록 → 서버 재현", () => {
         expect(skirmish.canFireUltimate(fresh, torika)).toBe(true);
         expect(skirmish.fireUltimate(fresh, torika.id, bossBattleRandom("x")).length).toBeGreaterThan(0);
     });
-    for (const party of [["rex", "mette", "torika"], ["rex", "torika", "mette"]])
+    for (const party of [["rexia", "mette", "torika"], ["rexia", "torika", "mette"]])
         for (const speed of [1, 2, 3])
             for (const seed of [1, 7, 42])
                 for (const breakthrough of [0, 1, 2, 3, 4]) {

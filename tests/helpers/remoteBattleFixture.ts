@@ -14,7 +14,7 @@ export function createFixture(mode: "stage" | "duel" | "raid" | "expedition" = "
     // 일반 전투 검사는 이름을 등록한 계정이다. 첫 이름 등록 검사는 prepare에서 명시적으로 비운다.
     state.playerCard.nickname = "테스트연구원";
     state.completedStoryIds.add(OPENING_TRAIN.id);
-    state.party = ['rex', 'mette', 'torika'];
+    state.party = ['rexia', 'mette', 'torika'];
     state.selectedStageId = '3-10';
     state.wallet.stamina = 500;
     state.tutorial = createCompletedTutorialState();

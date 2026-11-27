@@ -45,7 +45,7 @@ export const BATTLE_EN = {
   "battle.tutorial.ultimate.owner": "{name}'s Ultimate",
   "battle.tutorial.ultimate.tap": "Tap the glowing card to use it · {step}/{total}",
   "battle.tutorial.ultimate.desc.torika": "Slams the ground around them, dealing damage and briefly stunning nearby enemies.",
-  "battle.tutorial.ultimate.desc.dodo": "Deals damage to enemies in the chosen area and heals allies inside it.",
+  "battle.tutorial.ultimate.desc.dodi": "Deals damage to enemies in the chosen area and heals allies inside it.",
   "battle.tutorial.ultimate.desc.parua": "Attacks faster for a short time and fires two arrows at once.",
   "battle.gauge.frenzy": "Frenzy {value} / {max}",
   "battle.gauge.ferocity": "Ferocity {value} / {max}",

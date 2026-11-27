@@ -52,7 +52,7 @@ describe("보스·불사는 평타와 궁극기 둘 다 제 연출을 갖는다"
   });
 
   it("평타 순간은 보스 밖의 개체에게 열리지 않는다 — 난전이 연출로 덮이지 않는다", () => {
-    for (const relicId of ["rex", "spino", "pachi", "ella", "torika", "koma"]) {
+    for (const relicId of ["rexia", "spina", "pachi", "ella", "torika", "koma"]) {
       expect(signatureFor(relicId, "basic"), relicId).toBeUndefined();
     }
   });

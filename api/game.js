@@ -6086,7 +6086,7 @@ var BATTLE_KO = {
   "battle.tutorial.ultimate.owner": "{name}\uC758 \uAD81\uADF9\uAE30",
   "battle.tutorial.ultimate.tap": "\uBE5B\uB098\uB294 \uCE74\uB4DC\uB97C \uB20C\uB7EC \uC368 \uBCF4\uC138\uC694 \xB7 {step}/{total}",
   "battle.tutorial.ultimate.desc.torika": "\uC8FC\uC704\uC758 \uC801\uC744 \uB545\uC9F8 \uB0B4\uB9AC\uCC0D\uC5B4 \uD53C\uD574\uB97C \uC8FC\uACE0 \uC7A0\uAE50 \uAE30\uC808\uC2DC\uCF1C\uC694.",
-  "battle.tutorial.ultimate.desc.dodo": "\uACE0\uB978 \uC790\uB9AC\uC758 \uC801\uC5D0\uAC8C \uD53C\uD574\uB97C \uC8FC\uACE0, \uADF8 \uC548\uC758 \uC544\uAD70\uC744 \uD68C\uBCF5\uC2DC\uCF1C\uC694.",
+  "battle.tutorial.ultimate.desc.dodi": "\uACE0\uB978 \uC790\uB9AC\uC758 \uC801\uC5D0\uAC8C \uD53C\uD574\uB97C \uC8FC\uACE0, \uADF8 \uC548\uC758 \uC544\uAD70\uC744 \uD68C\uBCF5\uC2DC\uCF1C\uC694.",
   "battle.tutorial.ultimate.desc.parua": "\uC7A0\uAE50 \uACF5\uACA9\uC774 \uBE68\uB77C\uC9C0\uACE0 \uD654\uC0B4\uC744 \uB450 \uBC1C\uC529 \uC3D8\uC544\uC694.",
   "battle.gauge.frenzy": "\uD3ED\uC8FC {value} / {max}",
   "battle.gauge.ferocity": "\uC57C\uC131 {value} / {max}",
@@ -6993,14 +6993,14 @@ var SHOP_KO = {
   "shop.mileage.unowned": "\uC218\uC9D1 \uC804 \uD45C\uBCF8",
   "shop.mileage.fragments": "\uD30C\uD3B8 {count}",
   // 점원의 상태 대사. 형식적인 표본 보고가 아니라 그 개체가 지금 어떤지를 제 말투로 말한다. 키는 `mileage.clerk.<개체>.<번호>`로 조립해 부른다.
-  "mileage.clerk.rex.1": "\uB9C8\uC2A4\uD130, \uBC29\uAE08 \uBB38 \uACBD\uCCA9\uC774 \uB610 \uB098\uAC14\uC5B4\uC694. \uC2DC\uB9D0\uC11C \uCCA0\uC740 \uBC8C\uC368 \uB450 \uAD8C\uC9F8\uACE0\uC694. \u2026\uC77C\uB2E8 \uACE0\uB974\uC138\uC694, \uAE30\uB2E4\uB9B4\uAC8C\uC694.",
-  "mileage.clerk.rex.2": "\uD22C\uC601 \uC911\uC774\uB77C \uCC3B\uC794\uC744 \uBABB \uC950\uACA0\uC5B4\uC694. \uAE68\uB728\uB9B4 \uC77C\uC774 \uC5C6\uC5B4\uC11C \uC88B\uAE34 \uD55C\uB370, \uC190\uC774 \uD5C8\uC804\uD558\uB124\uC694.",
-  "mileage.clerk.rex.3": "\uAF2C\uB9AC\uAC00 \uBA3C\uC800 \uC6C0\uC9C1\uC774\uB294 \uAC74 \uCE6D\uCC2C \uB54C\uBB38\uC774 \uC544\uB2C8\uB77C \uADF8\uB0E5 \uBC14\uB78C \uD0D3\uC774\uC5D0\uC694. \uC9C4\uC9DC\uC608\uC694, \uB9C8\uC2A4\uD130.",
-  "mileage.clerk.rex.4": "\uB9C8\uC77C\uB9AC\uC9C0 \uC7A5\uBD80\uC5D0 \uC81C \uC774\uB984\uC774 \uC62C\uB77C \uC788\uB2E4\uB2C8, \uC5EC\uC655\uCE58\uACE0\uB294 \uC18C\uBC15\uD55C \uCE78\uC774\uB124\uC694. \uB9C8\uC74C\uC5D0 \uB4E4\uC5B4\uC694.",
-  "mileage.clerk.spino.1": "\u2026\uC218\uBB38 \uC810\uAC80\uC740 \uB05D\uB0AC\uC5B4\uC694, \uC5F0\uAD6C\uC6D0\uB2D8. \uC624\uB298\uC740 \uBB3C\uC774 \uC880 \uCC28\uAC11\uB354\uB77C\uACE0\uC694. \uADF8\uBFD0\uC774\uC5D0\uC694.",
-  "mileage.clerk.spino.2": "\uC5B4\uD56D \uCCAD\uC18C\uB294 \uADFC\uBB34\uAC00 \uB05D\uB09C \uB4A4\uC5D0 \uD574\uC694. \uC9C0\uAE08\uC740 \uD22C\uC601 \uADFC\uBB34\uB77C \uBB3C\uC790\uAD6D\uC774 \uC548 \uB0A8\uC544\uC11C \uD3B8\uD558\uACE0\uC694.",
-  "mileage.clerk.spino.3": "\uBC30\uACE0\uD508 \uAC74 \uC544\uB2C8\uC5D0\uC694\u2026 \uB2E4\uB9CC \uBD95\uC5B4\uBE75 \uB0C4\uC0C8\uAC00 \uB098\uBA74, \uC598\uAE30\uAC00 \uB2EC\uB77C\uC838\uC694.",
-  "mileage.clerk.spino.4": "\uC870\uAC1C\uB294 \uCC45\uC0C1\uC5D0 \uC62C\uB824 \uB480\uC5B4\uC694\u2026 \uBCF4\uC168\uC73C\uBA74, \uC544\uBB34 \uB9D0\uB3C4 \uD558\uC9C0 \uB9C8\uC138\uC694.",
+  "mileage.clerk.rexia.1": "\uB9C8\uC2A4\uD130, \uBC29\uAE08 \uBB38 \uACBD\uCCA9\uC774 \uB610 \uB098\uAC14\uC5B4\uC694. \uC2DC\uB9D0\uC11C \uCCA0\uC740 \uBC8C\uC368 \uB450 \uAD8C\uC9F8\uACE0\uC694. \u2026\uC77C\uB2E8 \uACE0\uB974\uC138\uC694, \uAE30\uB2E4\uB9B4\uAC8C\uC694.",
+  "mileage.clerk.rexia.2": "\uD22C\uC601 \uC911\uC774\uB77C \uCC3B\uC794\uC744 \uBABB \uC950\uACA0\uC5B4\uC694. \uAE68\uB728\uB9B4 \uC77C\uC774 \uC5C6\uC5B4\uC11C \uC88B\uAE34 \uD55C\uB370, \uC190\uC774 \uD5C8\uC804\uD558\uB124\uC694.",
+  "mileage.clerk.rexia.3": "\uAF2C\uB9AC\uAC00 \uBA3C\uC800 \uC6C0\uC9C1\uC774\uB294 \uAC74 \uCE6D\uCC2C \uB54C\uBB38\uC774 \uC544\uB2C8\uB77C \uADF8\uB0E5 \uBC14\uB78C \uD0D3\uC774\uC5D0\uC694. \uC9C4\uC9DC\uC608\uC694, \uB9C8\uC2A4\uD130.",
+  "mileage.clerk.rexia.4": "\uB9C8\uC77C\uB9AC\uC9C0 \uC7A5\uBD80\uC5D0 \uC81C \uC774\uB984\uC774 \uC62C\uB77C \uC788\uB2E4\uB2C8, \uC5EC\uC655\uCE58\uACE0\uB294 \uC18C\uBC15\uD55C \uCE78\uC774\uB124\uC694. \uB9C8\uC74C\uC5D0 \uB4E4\uC5B4\uC694.",
+  "mileage.clerk.spina.1": "\u2026\uC218\uBB38 \uC810\uAC80\uC740 \uB05D\uB0AC\uC5B4\uC694, \uC5F0\uAD6C\uC6D0\uB2D8. \uC624\uB298\uC740 \uBB3C\uC774 \uC880 \uCC28\uAC11\uB354\uB77C\uACE0\uC694. \uADF8\uBFD0\uC774\uC5D0\uC694.",
+  "mileage.clerk.spina.2": "\uC5B4\uD56D \uCCAD\uC18C\uB294 \uADFC\uBB34\uAC00 \uB05D\uB09C \uB4A4\uC5D0 \uD574\uC694. \uC9C0\uAE08\uC740 \uD22C\uC601 \uADFC\uBB34\uB77C \uBB3C\uC790\uAD6D\uC774 \uC548 \uB0A8\uC544\uC11C \uD3B8\uD558\uACE0\uC694.",
+  "mileage.clerk.spina.3": "\uBC30\uACE0\uD508 \uAC74 \uC544\uB2C8\uC5D0\uC694\u2026 \uB2E4\uB9CC \uBD95\uC5B4\uBE75 \uB0C4\uC0C8\uAC00 \uB098\uBA74, \uC598\uAE30\uAC00 \uB2EC\uB77C\uC838\uC694.",
+  "mileage.clerk.spina.4": "\uC870\uAC1C\uB294 \uCC45\uC0C1\uC5D0 \uC62C\uB824 \uB480\uC5B4\uC694\u2026 \uBCF4\uC168\uC73C\uBA74, \uC544\uBB34 \uB9D0\uB3C4 \uD558\uC9C0 \uB9C8\uC138\uC694.",
   "mileage.clerk.ark.1": "\uBBC0\uD558\uD558\u2026 \uD6C4\uB4DC \uC18D\uC774\uB77C \uC544\uBB34\uB3C4 \uBABB \uBCF4\uACA0\uC9C0\uB9CC, \uBC29\uAE08 \uC785\uAF2C\uB9AC\uAC00 \uC62C\uB77C\uAC14\uC5B4\uC694, \uB9C8\uC2A4\uD130.",
   "mileage.clerk.ark.2": "\uD22C\uC601\uC774 \uD754\uB4E4\uB9AC\uBA74 \uD6C4\uB4DC\uB3C4 \uAC19\uC774 \uD754\uB4E4\uB824\uC694. \uADF8\uAC74 \uACE4\uB780\uD574\uC694. \uBB34\uC11C\uC6CC \uBCF4\uC5EC\uC57C \uD558\uB294\uB370.",
   "mileage.clerk.ark.3": "\uBCF5\uB3C4 \uD55C\uAC00\uC6B4\uB370\uB85C \uAC77\uACE0 \uC2F6\uC740\uB370 \uC774 \uD310 \uC704\uC5D0\uC11C\uB294 \uD55C \uAC78\uC74C\uB3C4 \uBABB \uAC00\uC694. \uB2F5\uB2F5\uD558\uB124\uC694.",
@@ -7029,10 +7029,10 @@ var SHOP_KO = {
   "mileage.clerk.mette.2": "\uADC0\uCC2E\uB2E4\uB294 \uB9D0\uC774 \uC785\uC5D0 \uBD99\uC5C8\uB294\uB370, \uD22C\uC601\uC73C\uB85C \uC11C \uC788\uB294 \uAC74 \uC758\uC678\uB85C \uC548 \uADC0\uCC2E\uB124\uC694. \uB204\uC6CC \uC788\uB294 \uAC70\uB791 \uBE44\uC2B7\uD574\uC11C.",
   "mileage.clerk.mette.3": "\uB204\uAC00 \uC544\uD30C\uC11C \uC2E4\uB824 \uC624\uBA74 \uB9D0\uC5C6\uC774 \uC77C\uC5B4\uB0A0 \uAC70\uC608\uC694. \uADF8\uB54C\uAE4C\uC9C0\uB9CC \uC26C\uAC8C \uD574 \uC918\uC694, \uC120\uC0DD.",
   "mileage.clerk.mette.4": "\uC120\uC0DD\uC744 \uC704\uD55C \uBB34\uB300\uB294 \uC544\uC9C1 \uC900\uBE44 \uC911\uC774\uC5D0\uC694. \uBC15\uC790\uAC00 \uB9DE\uC73C\uBA74 \uC81C\uC77C \uBA3C\uC800 \uB4E4\uB824 \uB4DC\uB9B4\uAC8C\uC694.",
-  "mileage.clerk.deina.1": "\uC5F0\uAD6C\uC6D0\uB2D8, \uC774 \uD310 \uC0C8\uD558\uC580 \uAC74 \uC54C\uC9C0? \u2026\uC544\uB2C8, \uC544\uBB34\uAC83\uB3C4 \uC548 \uD588\uC5B4! \uC190\uC740 \uADF8\uB0E5 \uCE94\uC744 \uD754\uB4E4\uACE0 \uC788\uC744 \uBFD0\uC774\uC57C.",
-  "mileage.clerk.deina.2": "\uBE44\uC5B4 \uC788\uB294 \uBA74\uB9CC \uBCF4\uBA74 \uC190\uC774 \uADFC\uC9C8\uAC70\uB824. \uD22C\uC601\uC774\uB77C \uBC88\uC9C0\uC9C0\uB294 \uC54A\uC73C\uB2C8\uAE4C, \uAD1C\uCC2E\uC9C0?",
-  "mileage.clerk.deina.3": "\uC5B4\uC82F\uBC24 \uC154\uD130\uB294 \uB0B4\uAC00 \uC548 \uD588\uC5B4. \u2026\uBC18\uCBE4\uC740 \uC548 \uD588\uC5B4!",
-  "mileage.clerk.deina.4": "\uD63C\uB098\uB294 \uAC74 \uC2EB\uC740\uB370, \uB2E4\uC2DC\uB294 \uC548 \uD55C\uB2E4\uB294 \uB9D0\uC740 \uC624\uB298 \uBC24\uAE4C\uC9C0\uB9CC \uC720\uD6A8\uD574!",
+  "mileage.clerk.dei.1": "\uC5F0\uAD6C\uC6D0\uB2D8, \uC774 \uD310 \uC0C8\uD558\uC580 \uAC74 \uC54C\uC9C0? \u2026\uC544\uB2C8, \uC544\uBB34\uAC83\uB3C4 \uC548 \uD588\uC5B4! \uC190\uC740 \uADF8\uB0E5 \uCE94\uC744 \uD754\uB4E4\uACE0 \uC788\uC744 \uBFD0\uC774\uC57C.",
+  "mileage.clerk.dei.2": "\uBE44\uC5B4 \uC788\uB294 \uBA74\uB9CC \uBCF4\uBA74 \uC190\uC774 \uADFC\uC9C8\uAC70\uB824. \uD22C\uC601\uC774\uB77C \uBC88\uC9C0\uC9C0\uB294 \uC54A\uC73C\uB2C8\uAE4C, \uAD1C\uCC2E\uC9C0?",
+  "mileage.clerk.dei.3": "\uC5B4\uC82F\uBC24 \uC154\uD130\uB294 \uB0B4\uAC00 \uC548 \uD588\uC5B4. \u2026\uBC18\uCBE4\uC740 \uC548 \uD588\uC5B4!",
+  "mileage.clerk.dei.4": "\uD63C\uB098\uB294 \uAC74 \uC2EB\uC740\uB370, \uB2E4\uC2DC\uB294 \uC548 \uD55C\uB2E4\uB294 \uB9D0\uC740 \uC624\uB298 \uBC24\uAE4C\uC9C0\uB9CC \uC720\uD6A8\uD574!",
   "mileage.clerk.shute.1": "\u2026\uC624\uB354. \uD654\uBA74 \uC5EC\uB35F \uC7A5 \uC911 \uD55C \uC7A5\uC774 \uB110 \uBCF4\uACE0 \uC788\uC5B4. \uD551 \uD55C \uBC15\uC790 \uB2A6\uC5C8\uB124.",
   "mileage.clerk.shute.2": "\uC800 \uC560, \uC544\uAE4C \uADF8\uCABD \uB9D0\uACE0 \uC774\uCABD\uC774\uB77C\uB2C8\uAE4C! \uC544, \uC624\uB354\uD55C\uD14C \uD55C \uB9D0 \uC544\uB2C8\uC57C.",
   "mileage.clerk.shute.3": "\uD22C\uC601\uC774\uB77C \uC2DC\uC57C\uAC00 \uC881\uC544\uC11C \uC804\uD669 \uC77D\uAE30 \uD798\uB4E4\uC5B4. \uADF8\uB7EC\uB2C8\uAE4C \uC624\uB298\uC740 \uC9E7\uAC8C \uB9D0\uD560\uAC8C. \uD551 \uB192\uAC70\uB4E0.",
@@ -8574,7 +8574,7 @@ var RAID_KO = {
   "raid.guide.sukusuino.reason.element": "\uD328\uC2DC\uBE0C\uAC00 \uC0C1\uC131\uC744 \uC5BC\uC74C\uC73C\uB85C \uBC14\uAFD4 \uD480 \uC18D\uC131 \uBCF4\uC2A4\uC5D0\uAC8C \uB354 \uC544\uD504\uAC8C \uB4E4\uC5B4\uAC04\uB2E4.",
   "raid.guide.sukusuino.reason.survive": "\uD3ED\uC8FC\uD558\uBA74 \uC0C1\uD0DC\uC774\uC0C1\uC744 \uC53B\uACE0 \uBCF4\uD638\uB9C9\uACFC \uBC29\uC5B4\xB7\uC800\uD56D\uC744 \uB458\uB7EC, \uD68C\uBCF5\uC774 \uAE4E\uC5EC\uB3C4 \uB9C9\uC73C\uB85C \uBC84\uD2F4\uB2E4.",
   "raid.guide.sukusuino.alt.kento": "\uBD88 \uC18D\uC131 \uD0F1\uCEE4. \uAD81\uADF9\uAE30\uC758 \uB3C4\uBC1C\uACFC \uBCF4\uD638\uB9C9\uC774 \uBB34\uAC70\uC6B4 \uD131\uC744 \uB300\uC2E0 \uBC1B\uACE0, \uB05D\uC5D0 \uAE30\uC808\uB85C \uBC1B\uC544\uCE5C\uB2E4. \uAD6C\uD558\uAE30 \uC27D\uB2E4.",
-  "raid.guide.sukusuino.alt.deina": "\uBD88 \uC18D\uC131 \uB9C8\uBC95 \uD0F1\uCEE4. \uC587\uC740 \uC800\uD56D\uC744 \uB9C8\uBC95 \uD53C\uD574\uB85C \uD30C\uACE0\uB4E4\uACE0, \uAD81\uADF9\uAE30 \uB3D9\uC548 \uAE30\uBCF8 \uACF5\uACA9\uC774 \uAE30\uC808\uC744 \uAC74\uB2E4.",
+  "raid.guide.sukusuino.alt.dei": "\uBD88 \uC18D\uC131 \uB9C8\uBC95 \uD0F1\uCEE4. \uC587\uC740 \uC800\uD56D\uC744 \uB9C8\uBC95 \uD53C\uD574\uB85C \uD30C\uACE0\uB4E4\uACE0, \uAD81\uADF9\uAE30 \uB3D9\uC548 \uAE30\uBCF8 \uACF5\uACA9\uC774 \uAE30\uC808\uC744 \uAC74\uB2E4.",
   "raid.guide.taboa.headline": "\uAC10\uC73C\uBA74 \uB193\uC9C0 \uC54A\uB294 \uBAB8",
   "raid.guide.taboa.summary": "\uCC98\uC74C\uC5D4 \uAC00\uBCCD\uC9C0\uB9CC \uAC10\uC740 \uCC44 \uB04C\uC218\uB85D \uBE68\uB77C\uC9C4\uB2E4. \uACF5\uACA9 \uC18D\uB3C4\uB97C \uAE4E\uC544 \uC624\uB974\uB9C9\uC744 \uB418\uB3CC\uB9AC\uACE0, \uD6C4\uC5F4\uC740 \uBAB8\uC5D0\uC11C \uB5A8\uC5B4\uC838 \uC11C\uC790.",
   "raid.guide.taboa.weakness": "\uBC29\uC5B4\uAC00 \uC800\uD56D\uBCF4\uB2E4 \uC587\uB2E4 \xB7 \uBB3C\uB9AC \uD53C\uD574",
@@ -8586,17 +8586,17 @@ var RAID_KO = {
   "raid.guide.taboa.reason.survive": "\uBC29\uC5B4\xB7\uC800\uD56D\uC774 \uACE0\uB974\uAC8C \uB450\uAEBC\uC6CC \uAC10\uAE34 \uCC44\uB85C\uB3C4 \uC624\uB798 \uBC84\uD2F4\uB2E4.",
   "raid.guide.taboa.alt.ark": "\uB545 \uC18D\uC131 \uD0F1\uCEE4. \uACF5\uD3EC\uC5D0 \uBE60\uC9C4 \uBCF4\uC2A4\uB294 \uAE30\uBCF8 \uACF5\uACA9\uC744 \uBABB \uD574 \uACF5\uACA9 \uC18D\uB3C4\uAC00 \uC313\uC774\uC9C0 \uC54A\uB294\uB2E4.",
   "raid.guide.taboa.alt.irna": "\uBB3C \uC18D\uC131 \uBB3C\uB9AC \uC804\uC0AC. \uBC29\uC5B4\uB97C \uC9C0\uB098\uCE58\uB294 \uC800\uACA9\uACFC \uD761\uD608 \uBC29\uBCBD\uC73C\uB85C \uB5A8\uC5B4\uC9C4 \uCC44 \uAFB8\uC900\uD788 \uAE4E\uB294\uB2E4.",
-  "raid.guide.quetzalcoatlus.headline": "\uD558\uB298\uC5D0\uC11C \uAF42\uD788\uB294 \uBD80\uB9AC",
-  "raid.guide.quetzalcoatlus.summary": "\uCCAB \uC21C\uAC04\uACFC \uD55C \uC904\uC744 \uC870\uC2EC\uD558\uC790. \uCCAB \uD45C\uC801\uC740 \uB2E8\uB2E8\uD55C \uC55E\uC904\uC774 \uB9E1\uACE0, \uD769\uC5B4\uC838 \uC11C\uBA74 \uC808\uBC18\uC740 \uBE44\uCF1C \uAC04\uB2E4.",
-  "raid.guide.quetzalcoatlus.weakness": "\uBC29\uC5B4\uAC00 \uC14B \uC911 \uAC00\uC7A5 \uC587\uB2E4 \xB7 \uBB3C\uB9AC \uD53C\uD574",
-  "raid.guide.quetzalcoatlus.pattern.passive": "\uC804\uD22C\uAC00 \uC5F4\uB9AC\uBA74 \uD45C\uC801\uC5D0\uAC8C \uAE09\uAC15\uD558\uD574 {seconds}\uCD08 \uAE30\uC808\uC2DC\uD0A4\uACE0, \uCE58\uBA85\uD0C0\uAC00 \uC7A6\uB2E4. \uCCAB \uD45C\uC801\uC774 \uB2E8\uB2E8\uD574\uC57C \uD310\uC774 \uD754\uB4E4\uB9AC\uC9C0 \uC54A\uB294\uB2E4.",
-  "raid.guide.quetzalcoatlus.pattern.basic": "{every}\uBC88\uC9F8 \uBD80\uB9AC\uC9C8\uB9C8\uB2E4 \uACBD\uC9C1\uC2DC\uD0A8\uB2E4. \uD55C \uBC88\uC5D0 \uBAB0\uC544\uCE58\uB294 \uAD81\uADF9\uAE30\uB294 \uADF8 \uBC15\uC790\uB97C \uD53C\uD574 \uC4F0\uC790.",
-  "raid.guide.quetzalcoatlus.pattern.ultimate": "\uC804\uC7A5\uC744 \uD55C \uC904\uB85C \uB6AB\uACE0 \uC9C0\uB098\uAC00\uBA70 {seconds}\uCD08 \uAE30\uC808\uC2DC\uD0A8\uB2E4. \uAC19\uC740 \uC904\uC5D0 \uB098\uB780\uD788 \uC11C\uC9C0 \uB9D0\uC790.",
-  "raid.guide.quetzalcoatlus.reason.element": "\uB545 \uC18D\uC131 \uBB3C\uB9AC \uC804\uC0AC\uB77C \uBC14\uB78C \uC18D\uC131 \uBCF4\uC2A4\uB97C \uC774\uAE30\uACE0 \uC587\uC740 \uBC29\uC5B4\uB97C \uADF8\uB300\uB85C \uB6AB\uB294\uB2E4.",
-  "raid.guide.quetzalcoatlus.reason.survive": "\uD328\uC2DC\uBE0C\uAC00 \uD55C \uBC88\uC5D0 \uBC1B\uB294 \uD53C\uD574\uB97C \uCD5C\uB300 \uCCB4\uB825\uC758 \uC77C\uBD80\uB85C \uBB36\uC5B4 \uAE09\uAC15\uD558\uC640 \uCE58\uBA85\uD0C0\uB97C \uBC1B\uC544 \uB0B8\uB2E4.",
-  "raid.guide.quetzalcoatlus.reason.control": "\uD718\uB450\uB97C \uB54C\uB9C8\uB2E4 \uAE30\uC808\uACFC \uB1CC\uC9C4\uD0D5\uC744 \uAC78\uACE0, \uB1CC\uC9C4\uD0D5 \uD53C\uD574\uB294 \uBCF4\uD638\uB9C9\uC73C\uB85C \uB3CC\uC544\uC628\uB2E4.",
-  "raid.guide.quetzalcoatlus.alt.torika": "\uB545 \uC18D\uC131 \uD0F1\uCEE4. \uCCAB \uAE09\uAC15\uD558\uB97C \uB300\uC2E0 \uB9E1\uACE0, \uCCB4\uB825\uC774 \uC808\uBC18 \uC544\uB798\uBA74 \uD68C\uBCF5\uACFC \uD3ED\uC8FC\uC758 \uBC29\uC5B4\xB7\uC800\uD56D\uC73C\uB85C \uBC84\uD2F4\uB2E4.",
-  "raid.guide.quetzalcoatlus.alt.rex": "\uBD88 \uC18D\uC131 \uBB3C\uB9AC \uC804\uC0AC. \uCD9C\uD608 \uC911\uC778 \uC801\uC5D0\uAC8C \uCE58\uBA85\uD0C0\uAC00 \uD655\uC815\uB3FC \uC587\uC740 \uBC29\uC5B4 \uC704\uB85C \uD070 \uD53C\uD574\uB97C \uC3DF\uB294\uB2E4.",
+  "raid.guide.koatl.headline": "\uD558\uB298\uC5D0\uC11C \uAF42\uD788\uB294 \uBD80\uB9AC",
+  "raid.guide.koatl.summary": "\uCCAB \uC21C\uAC04\uACFC \uD55C \uC904\uC744 \uC870\uC2EC\uD558\uC790. \uCCAB \uD45C\uC801\uC740 \uB2E8\uB2E8\uD55C \uC55E\uC904\uC774 \uB9E1\uACE0, \uD769\uC5B4\uC838 \uC11C\uBA74 \uC808\uBC18\uC740 \uBE44\uCF1C \uAC04\uB2E4.",
+  "raid.guide.koatl.weakness": "\uBC29\uC5B4\uAC00 \uC14B \uC911 \uAC00\uC7A5 \uC587\uB2E4 \xB7 \uBB3C\uB9AC \uD53C\uD574",
+  "raid.guide.koatl.pattern.passive": "\uC804\uD22C\uAC00 \uC5F4\uB9AC\uBA74 \uD45C\uC801\uC5D0\uAC8C \uAE09\uAC15\uD558\uD574 {seconds}\uCD08 \uAE30\uC808\uC2DC\uD0A4\uACE0, \uCE58\uBA85\uD0C0\uAC00 \uC7A6\uB2E4. \uCCAB \uD45C\uC801\uC774 \uB2E8\uB2E8\uD574\uC57C \uD310\uC774 \uD754\uB4E4\uB9AC\uC9C0 \uC54A\uB294\uB2E4.",
+  "raid.guide.koatl.pattern.basic": "{every}\uBC88\uC9F8 \uBD80\uB9AC\uC9C8\uB9C8\uB2E4 \uACBD\uC9C1\uC2DC\uD0A8\uB2E4. \uD55C \uBC88\uC5D0 \uBAB0\uC544\uCE58\uB294 \uAD81\uADF9\uAE30\uB294 \uADF8 \uBC15\uC790\uB97C \uD53C\uD574 \uC4F0\uC790.",
+  "raid.guide.koatl.pattern.ultimate": "\uC804\uC7A5\uC744 \uD55C \uC904\uB85C \uB6AB\uACE0 \uC9C0\uB098\uAC00\uBA70 {seconds}\uCD08 \uAE30\uC808\uC2DC\uD0A8\uB2E4. \uAC19\uC740 \uC904\uC5D0 \uB098\uB780\uD788 \uC11C\uC9C0 \uB9D0\uC790.",
+  "raid.guide.koatl.reason.element": "\uB545 \uC18D\uC131 \uBB3C\uB9AC \uC804\uC0AC\uB77C \uBC14\uB78C \uC18D\uC131 \uBCF4\uC2A4\uB97C \uC774\uAE30\uACE0 \uC587\uC740 \uBC29\uC5B4\uB97C \uADF8\uB300\uB85C \uB6AB\uB294\uB2E4.",
+  "raid.guide.koatl.reason.survive": "\uD328\uC2DC\uBE0C\uAC00 \uD55C \uBC88\uC5D0 \uBC1B\uB294 \uD53C\uD574\uB97C \uCD5C\uB300 \uCCB4\uB825\uC758 \uC77C\uBD80\uB85C \uBB36\uC5B4 \uAE09\uAC15\uD558\uC640 \uCE58\uBA85\uD0C0\uB97C \uBC1B\uC544 \uB0B8\uB2E4.",
+  "raid.guide.koatl.reason.control": "\uD718\uB450\uB97C \uB54C\uB9C8\uB2E4 \uAE30\uC808\uACFC \uB1CC\uC9C4\uD0D5\uC744 \uAC78\uACE0, \uB1CC\uC9C4\uD0D5 \uD53C\uD574\uB294 \uBCF4\uD638\uB9C9\uC73C\uB85C \uB3CC\uC544\uC628\uB2E4.",
+  "raid.guide.koatl.alt.torika": "\uB545 \uC18D\uC131 \uD0F1\uCEE4. \uCCAB \uAE09\uAC15\uD558\uB97C \uB300\uC2E0 \uB9E1\uACE0, \uCCB4\uB825\uC774 \uC808\uBC18 \uC544\uB798\uBA74 \uD68C\uBCF5\uACFC \uD3ED\uC8FC\uC758 \uBC29\uC5B4\xB7\uC800\uD56D\uC73C\uB85C \uBC84\uD2F4\uB2E4.",
+  "raid.guide.koatl.alt.rexia": "\uBD88 \uC18D\uC131 \uBB3C\uB9AC \uC804\uC0AC. \uCD9C\uD608 \uC911\uC778 \uC801\uC5D0\uAC8C \uCE58\uBA85\uD0C0\uAC00 \uD655\uC815\uB3FC \uC587\uC740 \uBC29\uC5B4 \uC704\uB85C \uD070 \uD53C\uD574\uB97C \uC3DF\uB294\uB2E4.",
   "shop.loot.title": "\uC804\uB9AC\uD488 \uC0C1\uC810"
 };
 
@@ -20067,14 +20067,14 @@ var TORIKA_STORY = {
 // src/data/frontlineBosses.ts
 init_define_import_meta_env();
 var NOKAN = {
-  id: "nokan",
+  id: "gigano",
   name: "\uB178\uCE78",
   enemyOnly: true,
   squad: "annihilation",
   rarity: "SSR",
   element: "fire",
   role: "warrior",
-  portraitAssetId: "nokan",
+  portraitAssetId: "gigano",
   specimenNumber: "229",
   projectName: "\uAD81\uB2C8\uB974",
   origin: "\uAE30\uAC00\uB178\uD1A0\uC0AC\uC6B0\uB8E8\uC2A4",
@@ -20092,7 +20092,7 @@ var NOKAN = {
   stats: { hp: 1150, def: 66, res: 56, atk: 182, ap: 25, attackSpeed: 108, moveSpeed: 110, ...COMMON_SECONDARY_STATS },
   frontlineBoss: { kind: "gungnir", growthPercent: 40, attackPercentPerStack: 8, stackLimit: 4 },
   passive: {
-    id: "nokan-passive",
+    id: "gigano-passive",
     name: "\uC8FD\uC74C\uC774 \uD0A4\uC6B4 \uBAB8",
     kind: "battleMomentum",
     value: 40,
@@ -20102,7 +20102,7 @@ var NOKAN = {
     desc: "\uCD5C\uB300 \uCCB4\uB825\xB7\uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825\uC774 \uAC01\uAC01 40% \uC99D\uAC00\uD569\uB2C8\uB2E4. \uC790\uC2E0\uC758 \uC2A4\uD0AC\uB85C \uCCB4\uB825\uC744 \uD68C\uBCF5\uD558\uBA74 \uD55C \uACF5\uACA9\uB2F9 [[battle-momentum|\uAE30\uC138]]\uB97C 1\uACB9 \uC5BB\uC2B5\uB2C8\uB2E4. \uACB9\uB2F9 \uACF5\uACA9\uB825 8%\uAC00 \uC99D\uAC00\uD558\uBA70 \uC804\uD22C\uAC00 \uB05D\uB0A0 \uB54C\uAE4C\uC9C0 \uCD5C\uB300 4\uACB9 \uC313\uC785\uB2C8\uB2E4."
   },
   basic: {
-    id: "nokan-basic",
+    id: "gigano-basic",
     name: "\uBF08\uAE01\uAE30",
     power: 110,
     targeting: "single",
@@ -20112,7 +20112,7 @@ var NOKAN = {
     cycle: [{ name: "\uBCA0\uAE30", power: 110 }, { name: "\uBCA0\uAE30", power: 110 }, { name: "\uBF08\uAE01\uAE30", power: 145, damageHealingPercent: 35 }]
   },
   ultimate: {
-    id: "nokan-ult",
+    id: "gigano-ult",
     name: "\uC804\uC120\uC744 \uCC22\uC5B4\uB77C",
     power: 240,
     radius: 230,
@@ -20133,14 +20133,14 @@ var NOKAN = {
   }
 };
 var EUNTE = {
-  id: "eunte",
+  id: "argen",
   name: "\uC740\uD14C",
   enemyOnly: true,
   squad: "annihilation",
   rarity: "SSR",
   element: "earth",
   role: "tank",
-  portraitAssetId: "eunte",
+  portraitAssetId: "argen",
   specimenNumber: "230",
   projectName: "\uCCA0\uAC11",
   origin: "\uC544\uB974\uD5E8\uD2F0\uB178\uC0AC\uC6B0\uB8E8\uC2A4",
@@ -20169,7 +20169,7 @@ var EUNTE = {
     windup: 0.8
   },
   passive: {
-    id: "eunte-passive",
+    id: "argen-passive",
     name: "\uC5F4 \uACB9\uC758 \uBD09\uC1C4",
     kind: "fixedArmor",
     value: 10,
@@ -20179,7 +20179,7 @@ var EUNTE = {
     desc: "\uC804\uD22C \uC2DC\uC791 \uC2DC [[fixed-armor|\uACE0\uC815 \uC7A5\uAC11]]\uC744 10\uACB9 \uC5BB\uC2B5\uB2C8\uB2E4. \uAC01 \uACB9\uC774 \uB0A8\uC740 \uD53C\uD574\uC758 10%\uB97C \uC904\uC785\uB2C8\uB2E4. \uC9C1\uC811 \uD53C\uD574\uB97C \uBC1B\uC73C\uBA74 1\uCD08\uC5D0 \uCD5C\uB300 \uD55C \uBC88 \uC7A5\uAC11\uC774 \uBC97\uACA8\uC9C0\uACE0, \uC9C1\uC811 \uD53C\uD574\uB97C \uBC1B\uC9C0 \uC54A\uB294 \uB3D9\uC548 3\uCD08\uB9C8\uB2E4 \uD55C \uACB9\uC529 \uBCF5\uAD6C\uB429\uB2C8\uB2E4."
   },
   basic: {
-    id: "eunte-basic",
+    id: "argen-basic",
     name: "\uACE8\uC808\uC120",
     power: 85,
     targeting: "single",
@@ -20191,7 +20191,7 @@ var EUNTE = {
     bossDescription: "\uC801 \uD55C \uBA85\uC5D0\uAC8C \uACF5\uACA9\uB825\uC758 85%\uC640 \uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825 \uAC01\uAC01\uC758 50%\uB97C \uD569\uD55C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC90D\uB2C8\uB2E4. \uC138 \uBC88\uC9F8 \uACF5\uACA9\uC740 \uC801\uC744 \uBC00\uCE58\uBA70 [[concussion|\uB1CC\uC9C4\uD0D5]]\uC744 \uC77C\uC73C\uCF1C \uB300\uC0C1 \uCD5C\uB300 \uCCB4\uB825\uC758 6%\uB9CC\uD07C \uD53C\uD574\uB97C \uC90D\uB2C8\uB2E4. \uC138 \uBC88\uC9F8 \uACF5\uACA9\uC774 \uCE58\uBA85\uD0C0\uBA74 \uB1CC\uC9C4\uD0D5 \uD53C\uD574\uB294 12%\uB85C \uC99D\uAC00\uD569\uB2C8\uB2E4. \uBCF8\uD0C0\uC640 \uB1CC\uC9C4\uD0D5\uC73C\uB85C \uC2E4\uC81C \uAE4E\uC740 \uCCB4\uB825\uC758 100%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uC2B5\uB2C8\uB2E4."
   },
   ultimate: {
-    id: "eunte-ult",
+    id: "argen-ult",
     name: "\uC804\uC5F4 \uB9E4\uC7A5",
     power: 220,
     radius: 245,
@@ -20451,7 +20451,7 @@ var RELICS = [
     }
   },
   {
-    id: "rex",
+    id: "rexia",
     squad: "fang",
     name: "\uB809\uC2DC\uC544",
     specimenNumber: "072",
@@ -20505,7 +20505,7 @@ var RELICS = [
       passive: { kind: "battleMaidAscension", durabilityPercent: 25, rechargeOnKill: true }
     },
     passive: {
-      id: "rex-passive",
+      id: "rexia-passive",
       name: "\uC804\uD22C\uB294 \uBA54\uC774\uB4DC\uC758 \uC18C\uC591\uC774\uAE30\uC5D0.",
       kind: "battleMaidMastery",
       iconAssetId: "skill-icon-buff",
@@ -20527,7 +20527,7 @@ var RELICS = [
       desc: "\uC804\uD22C \uC2DC\uC791 \uC2DC \uACF5\uACA9 \uC18D\uB3C4\xB7\uACF5\uACA9\uB825\xB7\uCE58\uBA85\uD0C0 \uD655\uB960\xB7\uCE58\uBA85\uD0C0 \uD53C\uD574\xB7\uD761\uD608\uC774 \uBAA8\uB450 25% \uC624\uB974\uACE0, \uD45C\uC801\uC5D0\uAC8C \uC911\uAC70\uB9AC\uAE4C\uC9C0 \uB2E4\uAC00\uC11C\uBA74 \uB3CC\uC9C4\uD574 1\uCD08 \uB3D9\uC548 \uAE30\uC808\uC2DC\uD0A8\uB2E4."
     },
     basic: {
-      id: "rex-basic",
+      id: "rexia-basic",
       name: "\uCD9C\uD608 \uC1A1\uACF3\uB2C8",
       power: 120,
       iconAssetId: "skill-icon-physical",
@@ -20538,7 +20538,7 @@ var RELICS = [
       statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 }]
     },
     ultimate: {
-      id: "rex-ult",
+      id: "rexia-ult",
       name: "\uC808\uBA78\uC758 \uD3EC\uD6A8",
       power: 300,
       iconAssetId: "skill-icon-physical",
@@ -20682,7 +20682,7 @@ var RELICS = [
     }
   },
   {
-    id: "spino",
+    id: "spina",
     squad: "gear",
     // 저장 데이터와 에셋 키는 유지하고 플레이어에게 표시하는 이름만 스피나로 통일한다.
     name: "\uC2A4\uD53C\uB098",
@@ -20747,7 +20747,7 @@ var RELICS = [
       passive: { kind: "leapVeil", stealthSeconds: 1, cooldownSeconds: 3 }
     },
     passive: {
-      id: "spino-passive",
+      id: "spina-passive",
       name: "\uC804\uD22C\uC758 \uD658\uD76C",
       kind: "basicHitAttackSpeedStack",
       iconAssetId: "skill-icon-buff",
@@ -20760,7 +20760,7 @@ var RELICS = [
     },
     // 스피나의 기본 공격 데이터는 중복 키 없이 BasicAttack 계약을 직접 검증한다.
     basic: {
-      id: "spino-basic",
+      id: "spina-basic",
       name: "\uC545\uC5B4\uD131 \uBB3C\uC5B4\uB72F\uAE30",
       power: 90,
       iconAssetId: "skill-icon-physical",
@@ -20808,7 +20808,7 @@ var RELICS = [
       }
     },
     ultimate: {
-      id: "spino-ult",
+      id: "spina-ult",
       name: "\uBC94\uB78C\uC758 \uD3EC\uC2DD\uC790",
       power: 200,
       iconAssetId: "skill-icon-physical",
@@ -20932,12 +20932,12 @@ var RELICS = [
     }
   },
   {
-    id: "dodo",
+    id: "dodi",
     squad: "rogue",
     // 스쿼드 메모는 쁘띠 로그의 역할과 주인공을 향한 팬심만 남겨, 복원 후 관찰 기록과 서사를 중복하지 않는다.
     squadNote: "\uC058\uB760 \uB85C\uADF8\uC758 \uB9C9\uB0B4 \uAE30\uB85D\uBCD1. \uB300\uC7A5\uB2D8\uC758 1\uD638 \uD32C\uC744 \uC790\uCC98\uD574 \uC77C\uC9C0 \uCCAB \uC7A5\uC5D0\uB3C4 \uADF8 \uC774\uB984\uC744 \uC801\uC5B4 \uB450\uC5C8\uB2E4.",
     researcherTitle: "\uB300\uC7A5\uB2D8",
-    // 저장·에셋 호환 ID는 dodo로 두고 플레이어에게 보이는 이름만 확정 명칭으로 바꾼다.
+    // 저장·에셋 호환 ID는 dodi로 두고 플레이어에게 보이는 이름만 확정 명칭으로 바꾼다.
     name: "\uB3C4\uB514",
     specimenNumber: "001",
     projectName: "ECHO NEST",
@@ -21004,7 +21004,7 @@ var RELICS = [
       passive: { kind: "rescueShield", belowHpPercent: 25, apPercent: 150 }
     },
     passive: {
-      id: "dodo-passive",
+      id: "dodi-passive",
       name: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC774\uAC83 \uC880 \uBCF4\uC138\uC694!",
       kind: "guardianNestAura",
       iconAssetId: "skill-icon-buff",
@@ -21015,7 +21015,7 @@ var RELICS = [
       desc: "\uC0DD\uC874 \uC911 \uC544\uAD70 \uC804\uCCB4\uC758 \uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825\uC744 15% \uB192\uC774\uACE0 \uC801 \uC804\uCCB4\uAC00 \uBC1B\uB294 \uD68C\uBCF5\uB7C9\uC744 30% \uB0AE\uCD98\uB2E4."
     },
     basic: {
-      id: "dodo-basic",
+      id: "dodi-basic",
       name: "\uAE43\uD39C \uD1A1\uD1A1",
       power: 50,
       iconAssetId: "skill-icon-magical",
@@ -21027,7 +21027,7 @@ var RELICS = [
       // lowestHpAllyHealingFromDamagePercent가 있는 스킬은 skillDescription()이 대상·피해·회복을
     },
     ultimate: {
-      id: "dodo-ult",
+      id: "dodi-ult",
       name: "\uC138\uAE30\uC758 \uB300\uBC1C\uACAC... \uB9DE\uC8E0?!",
       power: 150,
       iconAssetId: "skill-icon-magical",
@@ -24186,7 +24186,7 @@ var RELICS = [
     }
   },
   {
-    id: "carno",
+    id: "kar",
     enemyOnly: true,
     squad: "annihilation",
     name: "\uCE74\uB974",
@@ -24207,7 +24207,7 @@ var RELICS = [
     squadNote: '\uACF5\uBA78\uC758 \uBD80\uB300\uC7A5\uC73C\uB85C, \uC9C0\uD558 \uAC10\uAE08\uB3D9 \uCD5C\uD558\uCE35\uC5D0 \uBB36\uC5EC \uC788\uB358 \uAC00\uC7A5 \uC704\uD5D8\uD55C \uC218\uAC10\uC790\uB85C \uD655\uC778\uB41C\uB2E4. \uB450 \uB300\uC7A5 \uB2E4\uC74C \uC790\uB9AC\uC5D0\uC11C \uAC04\uBD80\uB4E4\uC744 \uBD80\uB9AC\uACE0, \uBB38\uC774 \uC5F4\uB9B0 \uB4A4 \uBB34\uB9AC\uC758 \uB9E8 \uC55E\uC744 \uB2EC\uB9AC\uBA70, \uBB36\uC778 \uBAB8 \uADF8\uB300\uB85C \uAE38\uC744 \uB6AB\uB294\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB978\uB2E4.',
     researcherTitle: "\uC5F0\uAD6C\uC6D0",
     rarity: "SSR",
-    portraitAssetId: "carno",
+    portraitAssetId: "kar",
     origin: "\uCE74\uB974\uB178\uD0C0\uC6B0\uB8E8\uC2A4",
     element: "wind",
     role: "warrior",
@@ -24230,7 +24230,7 @@ var RELICS = [
     },
     ferocityTrait: { name: "\uAD6C\uC18D \uBD95\uAD34", effectId: "restraintCollapse" },
     passive: {
-      id: "carno-passive",
+      id: "kar-passive",
       name: "\uAD6C\uC18D\uBCF5",
       kind: "restraintLocks",
       iconAssetId: "skill-icon-buff",
@@ -24251,7 +24251,7 @@ var RELICS = [
       desc: "\uCCB4\uB825\uC774 \uAE4E\uC77C \uB54C\uB9C8\uB2E4 \uC790\uBB3C\uC1E0\uAC00 \uD480\uB9AC\uBA70 \uBE68\uB77C\uC9C0\uACE0, \uBAA8\uB450 \uD480\uB9AC\uBA74 \uAE30\uBCF8 \uACF5\uACA9\uC774 \uC8FC\uC704\uB97C \uD729\uC4F4\uB2E4."
     },
     basic: {
-      id: "carno-basic",
+      id: "kar-basic",
       name: "\uC30D\uBFD4 \uCE58\uAE30",
       power: 110,
       // 네 번째 들이받기가 표적을 뒤로 날린다. 매 타격이면 붙을 틈이 없어 주기로 둔다.
@@ -24265,7 +24265,7 @@ var RELICS = [
       targeting: "single"
     },
     ultimate: {
-      id: "carno-ult",
+      id: "kar-ult",
       name: "\uAD11\uB780\uC758 \uC9C8\uC8FC",
       power: 220,
       iconAssetId: "skill-icon-physical",
@@ -24393,9 +24393,9 @@ var RELICS = [
     }
   },
   {
-    // 저장 데이터와 에셋 키(`deina`·`char_016`)는 유지하고 플레이어에게 표시하는 이름만
+    // 저장 데이터와 에셋 키(`dei`·`char_016`)는 유지하고 플레이어에게 표시하는 이름만
     // 데이로 둔다 — 스피나와 같은 규칙이다.
-    id: "deina",
+    id: "dei",
     squad: "gear",
     name: "\uB370\uC774",
     specimenNumber: "059",
@@ -24420,7 +24420,7 @@ var RELICS = [
     researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
     rarity: "SSR",
     ferocityMax: 110,
-    portraitAssetId: "deina",
+    portraitAssetId: "dei",
     origin: "\uB370\uC774\uB178\uB2C8\uCFE0\uC2A4",
     element: "fire",
     // 붙잡아 두는 것이 값이라 태그는 tank지만, 버티는 방식은 체력도 보호막도 아닌 발이다.
@@ -24504,7 +24504,7 @@ var RELICS = [
     passive: {
       // kind가 tagAndRun인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
-      id: "deina-passive",
+      id: "dei-passive",
       name: "\uD0DC\uADF8 \uC564 \uB7F0",
       kind: "tagAndRun",
       iconAssetId: "skill-icon-buff",
@@ -24537,7 +24537,7 @@ var RELICS = [
       desc: "\uAE30\uBCF8 \uACF5\uACA9\uC744 \uB0BC \uB54C\uB9C8\uB2E4 \uC544\uC9C1 \uB54C\uB9AC\uC9C0 \uC54A\uC740 \uC801\uC73C\uB85C \uD45C\uC801\uC744 \uBC14\uAFB8\uACE0, \uB2E4\uB978 \uC804\uD22C\uC6D0\uC744 \uADF8\uB300\uB85C \uC9C0\uB098\uAC04\uB2E4. \uC801\uC744 \uB3C4\uBC1C\uD560 \uB54C\uB9C8\uB2E4 \uC783\uC740 \uCCB4\uB825\uC758 5%\uB97C \uD68C\uBCF5\uD55C\uB2E4."
     },
     basic: {
-      id: "deina-basic",
+      id: "dei-basic",
       name: "\uCE58\uC775, \uCE59!",
       /*
        * 「톡 톡 치고 다닌다」가 그대로 수치다. 표적을 매 타격마다 바꾸므로 같은 위력이 적
@@ -24569,7 +24569,7 @@ var RELICS = [
       ]
     },
     ultimate: {
-      id: "deina-ult",
+      id: "dei-ult",
       name: "\uD391\uD06C \uC544\uD2B8 180",
       /*
        * `channel`이 있으므로 이 위력은 총량이 아니라 **한 틱**의 몫이다.
@@ -26236,7 +26236,7 @@ var RELICS = [
      *
      * 바람 속성의 전사이고, 세 보스가 속성을 겹치지 않아(풀·불·바람) 속성 상성이 고른 편성을 갈라 준다.
      */
-    id: "quetzalcoatlus",
+    id: "koatl",
     enemyOnly: true,
     squad: "annihilation",
     name: "\uCF54\uC544\uD2C0",
@@ -26256,7 +26256,7 @@ var RELICS = [
     unlockRecord: { status: "recorded", text: "\uC7AC\uC559 \uAE30\uB85D 006. \uAC15\uBCC0 \uC0C1\uACF5\uC5D0 \uCD9C\uD604\uD588\uB2E4. \uB0A0\uAC1C\uCC98\uB7FC \uD3BC\uCE5C \uAC80\uC740 \uB9DD\uD1A0\uC640 \uBFB0\uC871\uD55C \uCC59 \uBAA8\uC790\uB97C \uC37C\uACE0, \uB05D\uC774 \uD654\uC0B4\uCD09 \uBAA8\uC591\uC778 \uC7A5\uC2DD\uC774 \uC0AC\uC2AC\uC5D0 \uB2EC\uB824 \uD754\uB4E4\uB838\uB2E4. \uD55C\uCC38\uC744 \uB192\uC740 \uACF3\uC5D0\uC11C \uB0B4\uB824\uB2E4\uBCF4\uB2E4 \uD55C \uBC88\uC5D0 \uB0B4\uB9AC\uAF42\uC558\uC73C\uBA70, \uB0A0\uAC2F\uC9D3 \uD55C \uBC88\uC5D0 \uADFC\uCC98 \uC7A5\uBE44\uAC00 \uC4F8\uB824 \uB098\uAC14\uB2E4. \uC5B4\uB514\uC11C \uB098\uD0C0\uB0AC\uB294\uC9C0, \uBB34\uC5C7\uC744 \uB178\uB838\uB294\uC9C0\uB294 \uD655\uC778\uB418\uC9C0 \uC54A\uC558\uB2E4." },
     // 레이드 보스는 연구원이 아는 만큼만 재앙 기록일지로 적는다. 정체·목적·내부 사정은 쓰지 않으며 squadNote·researcherTitle은 넣지 않는다.
     rarity: "SSR",
-    portraitAssetId: "quetzalcoatlus",
+    portraitAssetId: "koatl",
     origin: "\uCF00\uCC30\uCF54\uC544\uD2C0\uB8E8\uC2A4",
     element: "wind",
     role: "warrior",
@@ -26302,7 +26302,7 @@ var RELICS = [
      * 회복은 주지 않는다 — 시즌 게이지를 되돌리지 않는다(다른 보스와 같은 이유).
      */
     passive: {
-      id: "quetzalcoatlus-passive",
+      id: "koatl-passive",
       name: "\uAE09\uAC15\uD558 \uC0AC\uB0E5",
       kind: "openingDive",
       iconAssetId: "skill-icon-buff",
@@ -26315,7 +26315,7 @@ var RELICS = [
       desc: "\uC804\uD22C\uAC00 \uC5F4\uB9AC\uBA74 \uD45C\uC801\uC5D0\uAC8C \uAE09\uAC15\uD558\uD574 \uAE30\uC808\uC2DC\uD0A4\uACE0, \uCE58\uBA85\uD0C0 \uD655\uB960\uC774 \uC624\uB978\uB2E4."
     },
     basic: {
-      id: "quetzalcoatlus-basic",
+      id: "koatl-basic",
       name: "\uCC3D\uB0A0 \uBD80\uB9AC",
       power: 125,
       iconAssetId: "skill-icon-physical",
@@ -26331,7 +26331,7 @@ var RELICS = [
       statusEffects: [{ kind: "stun", seconds: 1 }]
     },
     ultimate: {
-      id: "quetzalcoatlus-ult",
+      id: "koatl-ult",
       name: "\uD3ED\uD48D \uAC15\uD558",
       power: 270,
       iconAssetId: "skill-icon-physical",
@@ -26375,7 +26375,7 @@ var RELICS = [
      * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
      * 무거워지는 몫은 개체 정의가 아니라 그 관문의 레벨과 유형 배수가 갖는다.
      */
-    id: "raitia-grass",
+    id: "viria",
     enemyOnly: true,
     // 다섯 자매를 도감과 서사에서 한 갈래로 묶는다. 전투 능력치를 물려받는 값이 아니다.
     identityFamilyId: "raitia",
@@ -26399,7 +26399,7 @@ var RELICS = [
     squadNote: "\uACF5\uBA78\uC758 \uC18C\uBAA8 \uBB3C\uB7C9. \uC9C0\uC2DC\uBC1B\uC740 \uBC29\uD5A5\uC73C\uB85C \uD55C\uAEBC\uBC88\uC5D0 \uD758\uB7EC\uAC00 \uD1B5\uB85C\uB97C \uBA54\uC6B0\uACE0, \uC55E\uC758 \uAC1C\uCCB4\uAC00 \uC4F0\uB7EC\uC9C4 \uC790\uB9AC\uB97C \uB4A4\uC758 \uAC1C\uCCB4\uAC00 \uADF8\uB300\uB85C \uBC1F\uACE0 \uB118\uC5B4\uAC04\uB2E4.",
     researcherTitle: "\uC5F0\uAD6C\uC6D0",
     rarity: "R",
-    portraitAssetId: "raitia-grass",
+    portraitAssetId: "viria",
     origin: "\uACA8\uC6B8\uC7A0\uC950",
     element: "grass",
     // 앞니로 갉으며 앞줄을 메우는 몸이라 방어형이다. 다섯이 모두 같은 역할을 맡는다.
@@ -26434,7 +26434,7 @@ var RELICS = [
       bonusPercent: 60
     },
     passive: {
-      id: "raitia-grass-passive",
+      id: "viria-passive",
       name: "\uACA8\uC6B8\uC7A0",
       /*
        * 겨울잠쥐가 버티는 방법은 숨은 배율이 아니라 **눈에 보이는 회복**이다 — 위험해지면
@@ -26450,7 +26450,7 @@ var RELICS = [
       desc: "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uCCB4\uB825\uC774 \uC808\uBC18 \uC774\uD558\uAC00 \uB418\uBA74 5\uCD08 \uB3D9\uC548 \uB9E4\uCD08 \uCD5C\uB300 \uCCB4\uB825\uC758 3%\uB97C \uD68C\uBCF5\uD55C\uB2E4."
     },
     basic: {
-      id: "raitia-grass-basic",
+      id: "viria-basic",
       name: "\uC55E\uB2C8 \uAC09\uAE30",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
@@ -26465,7 +26465,7 @@ var RELICS = [
       targeting: "single"
     },
     ultimate: {
-      id: "raitia-grass-ult",
+      id: "viria-ult",
       name: "\uBCFC\uC8FC\uBA38\uB2C8 \uC3DF\uAE30",
       power: 150,
       iconAssetId: "skill-icon-physical",
@@ -26500,7 +26500,7 @@ var RELICS = [
      * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
      * 무거워지는 몫은 개체 정의가 아니라 그 관문의 레벨과 유형 배수가 갖는다.
      */
-    id: "raitia-water",
+    id: "guttia",
     enemyOnly: true,
     // 다섯 자매를 도감과 서사에서 한 갈래로 묶는다. 전투 능력치를 물려받는 값이 아니다.
     identityFamilyId: "raitia",
@@ -26524,7 +26524,7 @@ var RELICS = [
     squadNote: "\uACF5\uBA78\uC758 \uC18C\uBAA8 \uBB3C\uB7C9. \uC9C0\uC2DC\uBC1B\uC740 \uBC29\uD5A5\uC73C\uB85C \uD55C\uAEBC\uBC88\uC5D0 \uD758\uB7EC\uAC00 \uD1B5\uB85C\uB97C \uBA54\uC6B0\uACE0, \uC55E\uC758 \uAC1C\uCCB4\uAC00 \uC4F0\uB7EC\uC9C4 \uC790\uB9AC\uB97C \uB4A4\uC758 \uAC1C\uCCB4\uAC00 \uADF8\uB300\uB85C \uBC1F\uACE0 \uB118\uC5B4\uAC04\uB2E4.",
     researcherTitle: "\uC5F0\uAD6C\uC6D0",
     rarity: "R",
-    portraitAssetId: "raitia-water",
+    portraitAssetId: "guttia",
     origin: "\uACA8\uC6B8\uC7A0\uC950",
     element: "water",
     // 앞니로 갉으며 앞줄을 메우는 몸이라 방어형이다. 다섯이 모두 같은 역할을 맡는다.
@@ -26559,7 +26559,7 @@ var RELICS = [
       bonusPercent: 60
     },
     passive: {
-      id: "raitia-water-passive",
+      id: "guttia-passive",
       name: "\uACA8\uC6B8\uC7A0",
       /*
        * 겨울잠쥐가 버티는 방법은 숨은 배율이 아니라 **눈에 보이는 회복**이다 — 위험해지면
@@ -26575,7 +26575,7 @@ var RELICS = [
       desc: "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uCCB4\uB825\uC774 \uC808\uBC18 \uC774\uD558\uAC00 \uB418\uBA74 5\uCD08 \uB3D9\uC548 \uB9E4\uCD08 \uCD5C\uB300 \uCCB4\uB825\uC758 3%\uB97C \uD68C\uBCF5\uD55C\uB2E4."
     },
     basic: {
-      id: "raitia-water-basic",
+      id: "guttia-basic",
       name: "\uC55E\uB2C8 \uAC09\uAE30",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
@@ -26590,7 +26590,7 @@ var RELICS = [
       targeting: "single"
     },
     ultimate: {
-      id: "raitia-water-ult",
+      id: "guttia-ult",
       name: "\uBCFC\uC8FC\uBA38\uB2C8 \uC3DF\uAE30",
       power: 150,
       iconAssetId: "skill-icon-physical",
@@ -26625,7 +26625,7 @@ var RELICS = [
      * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
      * 무거워지는 몫은 개체 정의가 아니라 그 관문의 레벨과 유형 배수가 갖는다.
      */
-    id: "raitia-fire",
+    id: "favia",
     enemyOnly: true,
     // 다섯 자매를 도감과 서사에서 한 갈래로 묶는다. 전투 능력치를 물려받는 값이 아니다.
     identityFamilyId: "raitia",
@@ -26649,7 +26649,7 @@ var RELICS = [
     squadNote: "\uACF5\uBA78\uC758 \uC18C\uBAA8 \uBB3C\uB7C9. \uC9C0\uC2DC\uBC1B\uC740 \uBC29\uD5A5\uC73C\uB85C \uD55C\uAEBC\uBC88\uC5D0 \uD758\uB7EC\uAC00 \uD1B5\uB85C\uB97C \uBA54\uC6B0\uACE0, \uC55E\uC758 \uAC1C\uCCB4\uAC00 \uC4F0\uB7EC\uC9C4 \uC790\uB9AC\uB97C \uB4A4\uC758 \uAC1C\uCCB4\uAC00 \uADF8\uB300\uB85C \uBC1F\uACE0 \uB118\uC5B4\uAC04\uB2E4.",
     researcherTitle: "\uC5F0\uAD6C\uC6D0",
     rarity: "R",
-    portraitAssetId: "raitia-fire",
+    portraitAssetId: "favia",
     origin: "\uACA8\uC6B8\uC7A0\uC950",
     element: "fire",
     // 앞니로 갉으며 앞줄을 메우는 몸이라 방어형이다. 다섯이 모두 같은 역할을 맡는다.
@@ -26684,7 +26684,7 @@ var RELICS = [
       bonusPercent: 60
     },
     passive: {
-      id: "raitia-fire-passive",
+      id: "favia-passive",
       name: "\uACA8\uC6B8\uC7A0",
       /*
        * 겨울잠쥐가 버티는 방법은 숨은 배율이 아니라 **눈에 보이는 회복**이다 — 위험해지면
@@ -26700,7 +26700,7 @@ var RELICS = [
       desc: "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uCCB4\uB825\uC774 \uC808\uBC18 \uC774\uD558\uAC00 \uB418\uBA74 5\uCD08 \uB3D9\uC548 \uB9E4\uCD08 \uCD5C\uB300 \uCCB4\uB825\uC758 3%\uB97C \uD68C\uBCF5\uD55C\uB2E4."
     },
     basic: {
-      id: "raitia-fire-basic",
+      id: "favia-basic",
       name: "\uC55E\uB2C8 \uAC09\uAE30",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
@@ -26715,7 +26715,7 @@ var RELICS = [
       targeting: "single"
     },
     ultimate: {
-      id: "raitia-fire-ult",
+      id: "favia-ult",
       name: "\uBCFC\uC8FC\uBA38\uB2C8 \uC3DF\uAE30",
       power: 150,
       iconAssetId: "skill-icon-physical",
@@ -26750,7 +26750,7 @@ var RELICS = [
      * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
      * 무거워지는 몫은 개체 정의가 아니라 그 관문의 레벨과 유형 배수가 갖는다.
      */
-    id: "raitia-earth",
+    id: "silia",
     enemyOnly: true,
     // 다섯 자매를 도감과 서사에서 한 갈래로 묶는다. 전투 능력치를 물려받는 값이 아니다.
     identityFamilyId: "raitia",
@@ -26776,7 +26776,7 @@ var RELICS = [
     rarity: "R",
     // 폭주가 다른 적보다 늦게 와(첫 폭주 중앙값 14초 남짓) 기본 130에서 내렸다(2026-11-16 폭주 게이지 정리).
     ferocityMax: 120,
-    portraitAssetId: "raitia-earth",
+    portraitAssetId: "silia",
     origin: "\uACA8\uC6B8\uC7A0\uC950",
     element: "earth",
     // 앞니로 갉으며 앞줄을 메우는 몸이라 방어형이다. 다섯이 모두 같은 역할을 맡는다.
@@ -26811,7 +26811,7 @@ var RELICS = [
       bonusPercent: 60
     },
     passive: {
-      id: "raitia-earth-passive",
+      id: "silia-passive",
       name: "\uACA8\uC6B8\uC7A0",
       /*
        * 겨울잠쥐가 버티는 방법은 숨은 배율이 아니라 **눈에 보이는 회복**이다 — 위험해지면
@@ -26827,7 +26827,7 @@ var RELICS = [
       desc: "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uCCB4\uB825\uC774 \uC808\uBC18 \uC774\uD558\uAC00 \uB418\uBA74 5\uCD08 \uB3D9\uC548 \uB9E4\uCD08 \uCD5C\uB300 \uCCB4\uB825\uC758 3%\uB97C \uD68C\uBCF5\uD55C\uB2E4."
     },
     basic: {
-      id: "raitia-earth-basic",
+      id: "silia-basic",
       name: "\uC55E\uB2C8 \uAC09\uAE30",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
@@ -26842,7 +26842,7 @@ var RELICS = [
       targeting: "single"
     },
     ultimate: {
-      id: "raitia-earth-ult",
+      id: "silia-ult",
       name: "\uBCFC\uC8FC\uBA38\uB2C8 \uC3DF\uAE30",
       power: 150,
       iconAssetId: "skill-icon-physical",
@@ -26877,7 +26877,7 @@ var RELICS = [
      * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
      * 무거워지는 몫은 개체 정의가 아니라 그 관문의 레벨과 유형 배수가 갖는다.
      */
-    id: "raitia-wind",
+    id: "ventia",
     enemyOnly: true,
     // 다섯 자매를 도감과 서사에서 한 갈래로 묶는다. 전투 능력치를 물려받는 값이 아니다.
     identityFamilyId: "raitia",
@@ -26901,7 +26901,7 @@ var RELICS = [
     squadNote: "\uACF5\uBA78\uC758 \uC18C\uBAA8 \uBB3C\uB7C9. \uC9C0\uC2DC\uBC1B\uC740 \uBC29\uD5A5\uC73C\uB85C \uD55C\uAEBC\uBC88\uC5D0 \uD758\uB7EC\uAC00 \uD1B5\uB85C\uB97C \uBA54\uC6B0\uACE0, \uC55E\uC758 \uAC1C\uCCB4\uAC00 \uC4F0\uB7EC\uC9C4 \uC790\uB9AC\uB97C \uB4A4\uC758 \uAC1C\uCCB4\uAC00 \uADF8\uB300\uB85C \uBC1F\uACE0 \uB118\uC5B4\uAC04\uB2E4.",
     researcherTitle: "\uC5F0\uAD6C\uC6D0",
     rarity: "R",
-    portraitAssetId: "raitia-wind",
+    portraitAssetId: "ventia",
     origin: "\uACA8\uC6B8\uC7A0\uC950",
     element: "wind",
     // 앞니로 갉으며 앞줄을 메우는 몸이라 방어형이다. 다섯이 모두 같은 역할을 맡는다.
@@ -26936,7 +26936,7 @@ var RELICS = [
       bonusPercent: 60
     },
     passive: {
-      id: "raitia-wind-passive",
+      id: "ventia-passive",
       name: "\uACA8\uC6B8\uC7A0",
       /*
        * 겨울잠쥐가 버티는 방법은 숨은 배율이 아니라 **눈에 보이는 회복**이다 — 위험해지면
@@ -26952,7 +26952,7 @@ var RELICS = [
       desc: "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uCCB4\uB825\uC774 \uC808\uBC18 \uC774\uD558\uAC00 \uB418\uBA74 5\uCD08 \uB3D9\uC548 \uB9E4\uCD08 \uCD5C\uB300 \uCCB4\uB825\uC758 3%\uB97C \uD68C\uBCF5\uD55C\uB2E4."
     },
     basic: {
-      id: "raitia-wind-basic",
+      id: "ventia-basic",
       name: "\uC55E\uB2C8 \uAC09\uAE30",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
@@ -26967,7 +26967,7 @@ var RELICS = [
       targeting: "single"
     },
     ultimate: {
-      id: "raitia-wind-ult",
+      id: "ventia-ult",
       name: "\uBCFC\uC8FC\uBA38\uB2C8 \uC3DF\uAE30",
       power: 150,
       iconAssetId: "skill-icon-physical",
@@ -27411,7 +27411,7 @@ var LATE_CHAPTER_FORMATIONS = {
   "7-7": [["atra", 0], ["raja", 1], ["noa", 2], ["pulsi", 3]],
   "7-8": [["raja", 0], ["atra", 1], ["magasa", 2], ["noa", 3]],
   "7-9": [["raja", 0], ["magasa", 1], ["noa", 2]],
-  "7-10": [["carno", 1]],
+  "7-10": [["kar", 1]],
   "8-1": [["atra", 0], ["mir", 1], ["pulsi", 2]],
   "8-2": [["raja", 0], ["atra", 1], ["neuri", 2]],
   "8-3": [["atra", 0], ["pulsi", 1], ["ikanixia", 2]],
@@ -27421,17 +27421,17 @@ var LATE_CHAPTER_FORMATIONS = {
   "8-7": [["atra", 0], ["pulsi", 1], ["ikanixia", 2]],
   "8-8": [["raja", 0], ["atra", 1], ["mir", 2], ["pulsi", 3]],
   "8-9": [["atra", 0], ["ikanixia", 1], ["neuri", 2]],
-  "8-10": [["nokan", 1]],
+  "8-10": [["gigano", 1]],
   "9-1": [["atra", 0], ["mir", 1], ["pulsi", 2]],
-  "9-2": [["carno", 0], ["raja", 2]],
+  "9-2": [["kar", 0], ["raja", 2]],
   "9-3": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
   "9-4": [["raja", 0], ["atra", 1], ["mir", 2], ["ikanixia", 3]],
-  "9-5": [["eunte", 1]],
+  "9-5": [["argen", 1]],
   "9-6": [["atra", 0], ["mir", 1], ["pulsi", 2]],
-  "9-7": [["carno", 0], ["ikanixia", 2]],
+  "9-7": [["kar", 0], ["ikanixia", 2]],
   "9-8": [["raja", 0], ["atra", 1], ["neuri", 2], ["pulsi", 3]],
-  "9-9": [["carno", 0], ["atra", 1], ["mir", 2]],
-  "9-10": [["eunte", 0], ["nokan", 2]]
+  "9-9": [["kar", 0], ["atra", 1], ["mir", 2]],
+  "9-10": [["argen", 0], ["gigano", 2]]
 };
 var STORY_BOSS_LEVELS = {
   "4-10": 36,
@@ -29010,7 +29010,7 @@ function isRaidDifficulty(value) {
   return typeof value === "string" && Object.prototype.hasOwnProperty.call(RAID_DIFFICULTY, value);
 }
 var RAID_SUMMON_DIFFICULTIES = ["easy", "normal", "hard"];
-var RAID_BOSS_POOL = ["sukusuino", "taboa", "quetzalcoatlus"];
+var RAID_BOSS_POOL = ["sukusuino", "taboa", "koatl"];
 var RAID_TICKET_ITEM = "raid-ticket";
 var RAID_SELECT_TICKET_ITEM = "raid-select-ticket";
 var RAID_SUMMON_TICKET_COST = 1;
@@ -29026,11 +29026,11 @@ function raidRunStamina(_difficulty) {
 }
 var RAID_COMPLETED_KEEP_HOURS = 48;
 var RAID_MOCK_PARTICIPANTS = [
-  { id: "raider-haneul", displayName: "\uD558\uB298\uC815\uC6D0", favoriteRelicId: "rex", pace: 1.32 },
+  { id: "raider-haneul", displayName: "\uD558\uB298\uC815\uC6D0", favoriteRelicId: "rexia", pace: 1.32 },
   { id: "raider-moss", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", favoriteRelicId: "torika", pace: 0.71 },
-  { id: "raider-viola", displayName: "\uBE44\uC62C\uB77C", favoriteRelicId: "spino", pace: 1.18 },
+  { id: "raider-viola", displayName: "\uBE44\uC62C\uB77C", favoriteRelicId: "spina", pace: 1.18 },
   { id: "raider-kettle", displayName: "\uC8FC\uC804\uC790", favoriteRelicId: "luka", pace: 0.94 },
-  { id: "raider-noon", displayName: "\uC815\uC624\uC758\uD45C\uBCF8", favoriteRelicId: "dodo", pace: 1.07 },
+  { id: "raider-noon", displayName: "\uC815\uC624\uC758\uD45C\uBCF8", favoriteRelicId: "dodi", pace: 1.07 },
   { id: "raider-dust", displayName: "\uBA3C\uC9C0\uB5A8\uC774", favoriteRelicId: "tia", pace: 0.62 },
   { id: "raider-ember", displayName: "\uC794\uBD88", favoriteRelicId: "stella", pace: 1.24 },
   { id: "raider-quartz", displayName: "\uC11D\uC601", favoriteRelicId: "meron", pace: 0.88 },
@@ -29041,15 +29041,15 @@ var RAID_MOCK_PARTICIPANTS = [
   { id: "raider-halo", displayName: "\uB2EC\uBB34\uB9AC", favoriteRelicId: "nodonia", pace: 1.29 },
   { id: "raider-pebble", displayName: "\uC870\uC57D\uB3CC", favoriteRelicId: "ella", pace: 0.84 },
   { id: "raider-signal", displayName: "\uC2E0\uD638\uD0D1", favoriteRelicId: "mette", pace: 1.11 },
-  { id: "raider-lantern", displayName: "\uB4F1\uBD88", favoriteRelicId: "deina", pace: 0.75 },
+  { id: "raider-lantern", displayName: "\uB4F1\uBD88", favoriteRelicId: "dei", pace: 0.75 },
   { id: "raider-marrow", displayName: "\uACE8\uC218\uC5F0\uAD6C", favoriteRelicId: "maddy", pace: 0.97 },
   { id: "raider-willow", displayName: "\uBC84\uB4DC\uB098\uBB34", favoriteRelicId: "terisa", pace: 1.21 },
   { id: "raider-gale", displayName: "\uB3CC\uD48D", favoriteRelicId: "parua", pace: 0.66 },
   { id: "raider-amberly", displayName: "\uD638\uBC15\uBE5B", favoriteRelicId: "shute", pace: 1.06 },
   { id: "raider-slate", displayName: "\uC810\uD310\uC554", favoriteRelicId: "dian", pace: 0.81 },
-  { id: "raider-vellum", displayName: "\uC591\uD53C\uC9C0", favoriteRelicId: "rex", pace: 1.13 },
+  { id: "raider-vellum", displayName: "\uC591\uD53C\uC9C0", favoriteRelicId: "rexia", pace: 1.13 },
   { id: "raider-drift", displayName: "\uD45C\uB958", favoriteRelicId: "torika", pace: 0.73 },
-  { id: "raider-kiln", displayName: "\uAC00\uB9C8", favoriteRelicId: "spino", pace: 1.27 }
+  { id: "raider-kiln", displayName: "\uAC00\uB9C8", favoriteRelicId: "spina", pace: 1.27 }
 ];
 RAID_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `raid.phase.${index}`));
 
@@ -29538,7 +29538,7 @@ function duelStreakBonus(streak) {
   return Math.min(DUEL_STREAK_BONUS.max, (Math.floor(streak) - DUEL_STREAK_BONUS.from + 1) * DUEL_STREAK_BONUS.perStep);
 }
 var DUEL_BATTLE_REWARD = { win: 20, loss: 0 };
-var DUEL_DEFAULT_DEFENSE = ["parua", "torika", "dodo"];
+var DUEL_DEFAULT_DEFENSE = ["parua", "torika", "dodi"];
 var DUEL_DEFENSE_SIM = { intervalHours: 4, catchUpLimit: 3, win: 5, loss: 3, minWinChance: 0.25, maxWinChance: 0.85 };
 function duelDefenseWinChance(mine, theirs) {
   const total = Math.max(0, mine) + Math.max(0, theirs);
@@ -30119,7 +30119,7 @@ var STANDARD_GRAY_REWARDS = [
   { kind: "cheesecake", min: 60, max: 150, weight: 1 }
 ];
 var PITY_GROUP = { WELCOME: "welcome", STANDARD: "standard-fossil", LIMITED_PICKUP: "limited-pickup" };
-var WELCOME_SSR_POOL = ["rex", "spino", "nodonia", "mette"];
+var WELCOME_SSR_POOL = ["rexia", "spina", "nodonia", "mette"];
 var BANNERS = [
   {
     /*
@@ -30135,7 +30135,7 @@ var BANNERS = [
     id: "welcome",
     pityGroupId: PITY_GROUP.WELCOME,
     name: "\uCCAB \uBCF5\uC6D0 \uC5F0\uAD6C",
-    featuredRelicId: "rex",
+    featuredRelicId: "rexia",
     artKey: BACKGROUND.recruitWelcome,
     castRelicIds: WELCOME_SSR_POOL,
     currency: "fossil",
@@ -30828,7 +30828,7 @@ init_define_import_meta_env();
 var NOW = Date.now();
 var SAMPLE_FRIENDS = [
   // 샘플도 공개 화이트리스트만 명시해 실제 응답에 계정 키·재화·편성이 섞이는 일을 조기에 드러낸다.
-  { id: "friend-haneul", uid: "418207735", frameId: "holo", displayName: "\uD558\uB298\uC815\uC6D0", level: 27, status: "\uC0C8 \uD45C\uBCF8\uC758 \uD754\uC801\uC744 \uCC3E\uB294 \uC911", lastActiveAt: NOW - 3e4, equippedModifiers: [{ id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare" }], favoriteRelic: { relicId: "rex", level: 24, breakthroughGrade: 4, stats: { hp: 820, def: 42, res: 36, atk: 132, ap: 76, attackSpeed: 112, moveSpeed: 108, critChance: 20, critDamage: 160, energyGain: 28, lifeSteal: 0, ferocityGain: 12 }, skillIds: ["rex-basic", "rex-passive", "rex-ultimate"] }, competitiveStats: { highestStage: { stageId: "stage-2-5", displayValue: "2-5 \uBD89\uC740 \uD611\uACE1" }, arenaScore: 1350, expeditionScore: 18420, ancientFloor: 23 } },
+  { id: "friend-haneul", uid: "418207735", frameId: "holo", displayName: "\uD558\uB298\uC815\uC6D0", level: 27, status: "\uC0C8 \uD45C\uBCF8\uC758 \uD754\uC801\uC744 \uCC3E\uB294 \uC911", lastActiveAt: NOW - 3e4, equippedModifiers: [{ id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare" }], favoriteRelic: { relicId: "rexia", level: 24, breakthroughGrade: 4, stats: { hp: 820, def: 42, res: 36, atk: 132, ap: 76, attackSpeed: 112, moveSpeed: 108, critChance: 20, critDamage: 160, energyGain: 28, lifeSteal: 0, ferocityGain: 12 }, skillIds: ["rexia-basic", "rexia-passive", "rexia-ultimate"] }, competitiveStats: { highestStage: { stageId: "stage-2-5", displayValue: "2-5 \uBD89\uC740 \uD611\uACE1" }, arenaScore: 1350, expeditionScore: 18420, ancientFloor: 23 } },
   // 두 번째 샘플은 선택 기록과 수식어가 없는 정상 응답을 검수하며 빈 상태 문구 대신 렌더링 생략을 확인한다.
   { id: "friend-moss", uid: "602913548", frameId: "field", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", level: 19, status: "\uC624\uB298\uB3C4 \uCC9C\uCC9C\uD788 \uBCF5\uC6D0", lastActiveAt: NOW - 12 * 6e4, equippedModifiers: [], favoriteRelic: { relicId: "torika", level: 18, breakthroughGrade: 3, stats: { hp: 1420, def: 128, res: 92, atk: 74, ap: 52, attackSpeed: 78, moveSpeed: 72, critChance: 5, critDamage: 140, energyGain: 20, lifeSteal: 0, ferocityGain: 12 }, skillIds: ["torika-basic", "torika-passive", "torika-ultimate"] }, competitiveStats: { ancientFloor: 7 } }
 ];
@@ -32626,8 +32626,8 @@ function runeSellValue(rune) {
 }
 
 // src/state/session.ts
-var STARTER_RELICS = QA_TOOLS_ENABLED ? ["torika", "rex", "spino", "luka", "dodo", "mette", "parua"] : ["torika", "dodo", "parua"];
-var STARTER_PARTY = ["parua", "torika", "dodo"];
+var STARTER_RELICS = QA_TOOLS_ENABLED ? ["torika", "rexia", "spina", "luka", "dodi", "mette", "parua"] : ["torika", "dodi", "parua"];
+var STARTER_PARTY = ["parua", "torika", "dodi"];
 function createInitialPlayerResearchProgress() {
   return { level: 1, experience: 0, experienceToNext: playerExpToNext(1) };
 }
@@ -32862,11 +32862,11 @@ var CAKE_OPERATION_TIERS = [
   { id: "cake-8", name: "8\uB2E8\uACC4", enemyLevel: 57, enemyCount: 13, rewardCheesecake: 150 }
 ];
 var CAKE_OPERATION_ENEMY_IDS = [
-  "raitia-grass",
-  "raitia-water",
-  "raitia-fire",
-  "raitia-earth",
-  "raitia-wind"
+  "viria",
+  "guttia",
+  "favia",
+  "silia",
+  "ventia"
 ];
 var BY_ID2 = new Map(CAKE_OPERATION_TIERS.map((tier) => [tier.id, tier]));
 function getCakeOperationTier(id) {
@@ -33510,7 +33510,7 @@ var DIAN_STORY = {
   ]
 };
 
-// src/data/relicStories/dodo.ts
+// src/data/relicStories/dodi.ts
 init_define_import_meta_env();
 var ROGUE_THREE = [
   { id: "dodi", slot: "left" },
@@ -33518,7 +33518,7 @@ var ROGUE_THREE = [
   { id: "parua", slot: "right" }
 ];
 var CHAPTER_45 = {
-  id: "bond.dodo.4",
+  id: "bond.dodi.4",
   backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "\uBE44\uC6CC \uB454 \uCCAB \uC7A5", subtitle: "\uB3C4\uB514 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 1" },
@@ -33538,7 +33538,7 @@ var CHAPTER_45 = {
   ]
 };
 var CHAPTER_65 = {
-  id: "bond.dodo.6",
+  id: "bond.dodi.6",
   backdrop: "battlefield",
   startNodeId: "n1",
   titleCard: { title: "\uC801\uC9C0 \uBABB\uD55C \uB0A0", subtitle: "\uB3C4\uB514 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 2" },
@@ -33559,7 +33559,7 @@ var CHAPTER_65 = {
   ]
 };
 var CHAPTER_85 = {
-  id: "bond.dodo.8",
+  id: "bond.dodi.8",
   backdrop: "assembly",
   startNodeId: "n1",
   titleCard: { title: "\uB192\uC740 \uACF3\uC5D0\uC11C \uBCF8 \uAC83", subtitle: "\uB3C4\uB514 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 3" },
@@ -33580,7 +33580,7 @@ var CHAPTER_85 = {
   ]
 };
 var CHAPTER_105 = {
-  id: "bond.dodo.10",
+  id: "bond.dodi.10",
   backdrop: "library",
   startNodeId: "n1",
   titleCard: { title: "\uB9C8\uC9C0\uB9C9 \uC7A5\uC740 \uB300\uC7A5\uB2D8\uC774", subtitle: "\uB3C4\uB514 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 4" },
@@ -33601,14 +33601,14 @@ var CHAPTER_105 = {
   ]
 };
 var DODO_STORY = {
-  relicId: "dodo",
+  relicId: "dodi",
   fossilRecord: "\uC11D\uD68C\uB3D9\uAD74\uC758 \uB9C8\uB978 \uBCF4\uAD00\uCE35\uC5D0\uC11C \uACE8\uACA9\uACFC \uB09C\uAC01 \uC870\uAC01\uC774 \uD568\uAED8 \uBC1C\uACAC\uB410\uB2E4. \uC5FC\uBD84 \uC190\uC0C1\uC774 \uC801\uC5B4 \uCD5C\uCD08\uC758 \uC548\uC815 \uBCF5\uC6D0 \uAE30\uC900\uC774 \uB418\uC5C8\uB2E4.",
   diary: "\uB3C4\uB514\uB294 \uC0C8\uB85C\uC6B4 \uBB3C\uAC74\uB9CC \uBCF4\uBA74 \u201C\uB300\uC7A5\uB2D8, \uC774\uAC83 \uC880 \uBCF4\uC138\uC694!\u201D \uD558\uACE0 \uB2EC\uB824\uC624\uB294 \uC544\uC774\uB2E4. \uBC18\uC9DD\uC774\uB294 \uC7A1\uB3D9\uC0AC\uB2C8\uB3C4 \uBC1C\uACAC \uAE30\uB85D\uC774\uB77C\uBA70 \uAE43\uD39C\uC73C\uB85C \uC77C\uC9C0\uC5D0 \uB610\uBC15\uB610\uBC15 \uC801\uC5B4 \uB123\uB294\uB370, \uC815\uC791 \uC81C \uBC25\uB54C\uB294 \uC801\uC5B4 \uB450\uC9C0 \uC54A\uC544\uC11C \uC790\uAFB8 \uB193\uCE5C\uB2E4. \uB3D9\uB8CC\uC758 \uC0AC\uC18C\uD55C \uBC84\uB987\uACFC \uB0AF\uC120 \uC0C1\uB300\uC758 \uBC18\uC751\uAE4C\uC9C0 \uBC1B\uC544 \uC801\uB2E4 \uBCF4\uB2C8 \uC190\uAC00\uB77D\uC5D0\uB294 \uB298 \uC789\uD06C\uAC00 \uBB3B\uC5B4 \uC788\uB2E4. \uB108\uBB34 \uBC18\uAC00\uC6B4 \uB098\uBA38\uC9C0 \uD55C \uAC78\uC74C \uB354 \uB2E4\uAC00\uC11C\uB2E4\uAC00 \uC0C1\uB300\uB97C \uB180\uB77C\uAC8C \uD558\uACE0 \uC800\uB3C4 \uB180\uB77C \uBB3C\uB7EC\uC11C\uB294 \uC77C\uB3C4 \uC7A6\uB2E4. \uC694\uC998\uC740 \uAD00\uC81C\uD0D1\uC758 \uC2DC\uADF8\uB110 \uC544\uC774\uAC00 \uC5EC\uB7EC \uC2E0\uD638\uB97C \uD55C\uAEBC\uBC88\uC5D0 \uC0B4\uD53C\uACE0 \uD310\uB2E8\uD558\uB294 \uBAA8\uC2B5\uC744 \uC624\uB798 \uC62C\uB824\uB2E4\uBCF4\uB354\uB2C8, \uB192\uC740 \uACF3\uC5D0 \uC62C\uB77C \uB3D9\uB8CC\uB4E4\uC758 \uC6C0\uC9C1\uC784\uC744 \uC77C\uC77C\uC774 \uD655\uC778\uD558\uACE0 \uBA3C\uC800 \uAC08 \uAE38\uC744 \uC815\uD558\uB824 \uD55C\uB2E4. \uC544\uC9C1\uC740 \uAE38\uBCF4\uB2E4 \uB3C4\uB514\uAC00 \uBA3C\uC800 \uAE38\uC744 \uC783\uB294\uB2E4. \uC77C\uC9C0 \uCCAB \uC7A5 \uB9E8 \uC704\uC5D0\uB294 \uB098\uB97C \uBD80\uB974\uB294 \uB9D0\uC778 '\uB300\uC7A5\uB2D8'\uC774 \uD06C\uAC8C \uC801\uD600 \uC788\uACE0, \uC774\uB984 \uC4F8 \uCE78\uC740 \uBE44\uC5B4 \uC788\uB2E4. 1\uD638 \uD32C\uC774\uB77C\uB294 \uB9D0\uC740 \uBCF8\uC778\uC774 \uBD99\uC600\uB2E4.",
   /** 일지 맨 끝에 회색으로 서는, 도디가 연구원에게 건네는 한마디. 뽑기 대사와 다른 일상의 목소리다. */
   closingLine: "\uB300\uC7A5\uB2D8, \uC774\uAC83 \uC880 \uBCF4\uC138\uC694! \u2026\uC544, \uBC29\uAE08 \uAC74 \uC77C\uC9C0\uC5D0 \uC801\uC5B4\uB3C4 \uB418\uC8E0?",
   questions: [
     {
-      id: "dodo-journal-contents",
+      id: "dodi-journal-contents",
       prompt: "\uB3C4\uB514\uC758 \uC77C\uC9C0\uC5D0\uB294 \uC624\uB298 \uBB34\uC5C7\uC774 \uC801\uD600 \uC788\uC744\uAE4C?",
       choices: [
         {
@@ -33632,7 +33632,7 @@ var DODO_STORY = {
       ]
     },
     {
-      id: "dodo-too-close",
+      id: "dodi-too-close",
       prompt: "\uB3C4\uB514\uAC00 \uBC18\uAC00\uC6CC\uC11C \uB108\uBB34 \uAC00\uAE4C\uC774 \uB2E4\uAC00\uC654\uC744 \uB54C \uB9D0\uD574 \uC8FC\uBA74?",
       choices: [
         {
@@ -33650,7 +33650,7 @@ var DODO_STORY = {
       ]
     },
     {
-      id: "dodo-signal-eye",
+      id: "dodi-signal-eye",
       prompt: "\uB192\uC740 \uACF3\uC5D0 \uC62C\uB77C \uB3D9\uB8CC\uB4E4\uC744 \uB0B4\uB824\uB2E4\uBCF4\uB294 \uC774\uC720\uB97C \uBB3C\uC5B4\uBCF4\uBA74?",
       choices: [
         {
@@ -35233,14 +35233,14 @@ var PARUA_STORY = {
   ]
 };
 
-// src/data/relicStories/rex.ts
+// src/data/relicStories/rexia.ts
 init_define_import_meta_env();
 var QUEEN_AND_TORIKA = [
   { id: "lexia", slot: "left" },
   { id: "torika", slot: "right" }
 ];
 var CHAPTER_414 = {
-  id: "bond.rex.4",
+  id: "bond.rexia.4",
   backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "\uCCAB \uC2DC\uB9D0\uC11C", subtitle: "\uB809\uC2DC\uC544 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 1" },
@@ -35261,7 +35261,7 @@ var CHAPTER_414 = {
   ]
 };
 var CHAPTER_614 = {
-  id: "bond.rex.6",
+  id: "bond.rexia.6",
   backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "\uACBD\uD638\uC6D0 \uC790\uB9AC", subtitle: "\uB809\uC2DC\uC544 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 2" },
@@ -35283,7 +35283,7 @@ var CHAPTER_614 = {
   ]
 };
 var CHAPTER_814 = {
-  id: "bond.rex.8",
+  id: "bond.rexia.8",
   backdrop: "battlefield",
   startNodeId: "n1",
   titleCard: { title: "\uB3CC\uC544\uBCF4\uB294 \uC5EC\uC655", subtitle: "\uB809\uC2DC\uC544 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 3" },
@@ -35304,7 +35304,7 @@ var CHAPTER_814 = {
   ]
 };
 var CHAPTER_1014 = {
-  id: "bond.rex.10",
+  id: "bond.rexia.10",
   backdrop: "rooftopDawn",
   startNodeId: "n1",
   titleCard: { title: "\uC5EC\uC655\uC774 \uC55E\uC5D0 \uC11C\uB294 \uC774\uC720", subtitle: "\uB809\uC2DC\uC544 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 4" },
@@ -35327,14 +35327,14 @@ var CHAPTER_1014 = {
   ]
 };
 var REX_STORY = {
-  relicId: "rex",
+  relicId: "rexia",
   fossilRecord: "\uC81C7\uAD6C\uC5ED\uC758 \uBD89\uC740 \uC0AC\uC554 \uACBD\uACC4\uC5D0\uC11C \uB450\uAC1C\uACE8\uACFC \uD558\uC545\uC774 \uB9DE\uBB3C\uB9B0 \uCC44 \uBC1C\uACAC\uB410\uB2E4. \uB9C8\uBAA8\uB41C \uCE58\uC544\uC758 \uBBF8\uC138 \uD754\uC801\uAE4C\uC9C0 \uBCF5\uC6D0 \uC5F0\uAD6C\uC5D0 \uB0A8\uC558\uB2E4.",
   diary: "\uB809\uC2DC\uC544\uB294 \uBA3C\uC800 \uC55E\uC7A5\uC11C\uACE0 \uC2B9\uBD80\uB97C \uC120\uC5B8\uD558\uB294 \uC77C\uC774 \uC7A6\uB2E4. \uC2A4\uC2A4\uB85C\uB97C \uC5EC\uC655\uC774\uB77C \uBD80\uB974\uB294 \uB2F9\uB2F9\uD55C \uB9D0\uD22C \uADF8\uB300\uB85C, \uBB38 \uC55E\uC5D0\uC11C\uB3C4 \uC120\uC5B8\uBD80\uD130 \uD558\uACE0 \uBB38\uC744 \uC5F4\uB2E4 \uACBD\uCCA9\uC9F8 \uBF51\uC544 \uB4E0\uB2E4. \uADF8\uB7EC\uACE0\uB294 \uB208\uCE58\uB97C \uBCF4\uBA70 \uC2DC\uB9D0\uC11C \uCCA0\uC744 \uAEBC\uB0B4 \uC624\uB294\uB370, \uCCA0\uC740 \uBC8C\uC368 \uB450 \uAD8C\uC9F8\uB2E4. \uB9E8 \uC55E \uC7A5\uC5D0\uB294 \uC790\uB791\uC2A4\uB7EC\uC6B4 \uCCAB \uC2DC\uB9D0\uC11C\uAC00 \uBD99\uC5B4 \uC788\uB2E4. \uBB38\uC740 \uBD80\uC218\uBA74\uC11C\uB3C4 \uADC0\uC5EC\uC6B4 \uC811\uC2DC\uC640 \uCC3B\uC794\uB9CC\uC740 \uC190\uAC00\uB77D \uB450 \uAC1C\uB85C \uC870\uC2EC\uC870\uC2EC \uB2E4\uB8EC\uB2E4. \uC608\uC804\uC5D0 \uB0B4\uAC00 \uBE14\uB80C\uB529A\uC758 \uD64D\uCC28\uAC00 \uB9DB\uC788\uB2E4\uACE0 \uD55C\uB9C8\uB514 \uD588\uB354\uB2C8 \uADF8 \uBE0C\uB79C\uB4DC\uC758 \uD55C\uC815\uD310\uC744 \uC904 \uC11C\uC11C \uAD6C\uD574 \uC640 \uD55C \uBC88\uB3C4 \uC5F4\uC9C0 \uC54A\uC740 \uCC44 \uC544\uB07C\uACE0 \uC788\uB2E4. \uC9C0\uAE08\uAE4C\uC9C0 \uAE68\uC9C4 \uCC3B\uC794\uC740 \uD558\uB098\uB3C4 \uC5C6\uB2E4. \uB3D9\uB8CC\uC758 \uC2E0\uD638\uAC00 \uB4E4\uB9AC\uBA74 \uACE7\uBC14\uB85C \uBCF4\uD3ED\uC744 \uB9DE\uCD94\uACE0, \uC804\uD22C\uAC00 \uAE38\uC5B4\uC9C8\uC218\uB85D \uC57C\uC131\uC744 \uC990\uAE30\uBA74\uC11C\uB3C4 \uB4A4\uCC98\uC9C4 \uB3D9\uB8CC\uB97C \uBA87 \uBC88\uC774\uACE0 \uB3CC\uC544\uBCF8\uB2E4. \uCE6D\uCC2C \uD55C\uB9C8\uB514\uC5D0\uB294 \uC785\uAF2C\uB9AC\uB97C \uB204\uB974\uB290\uB77C \uAF2C\uB9AC \uB05D\uC774 \uBA3C\uC800 \uC0B4\uB791\uAC70\uB9B0\uB2E4.",
   /** 일지 맨 끝에 회색으로 서는, 렉시아가 연구원에게 건네는 한마디. 뽑기 대사와 다른 일상의 목소리다. */
   closingLine: "\uB9C8\uC2A4\uD130, \uC624\uB298\uC740 \uC544\uC9C1 \uC544\uBB34\uAC83\uB3C4 \uC548 \uBD80\uC248\uC5B4\uC694. \uCE6D\uCC2C\uD574 \uC8FC\uC154\uB3C4 \uB3FC\uC694!",
   questions: [
     {
-      id: "rex-binder",
+      id: "rexia-binder",
       prompt: "\uB809\uC2DC\uC544\uAC00 \uB298 \uB4E4\uACE0 \uB2E4\uB2C8\uB294 \uB450\uD23C\uD55C \uCCA0\uC5D0\uB294 \uBB34\uC5C7\uC774 \uB4E4\uC5B4 \uC788\uC5B4?",
       choices: [
         {
@@ -35358,7 +35358,7 @@ var REX_STORY = {
       ]
     },
     {
-      id: "rex-teaware",
+      id: "rexia-teaware",
       prompt: "\uB809\uC2DC\uC544\uAC00 \uBAA8\uC544 \uB450\uB294 \uC811\uC2DC\uC640 \uCC3B\uC794\uC5D0 \uB300\uD574 \uBB3C\uC5B4\uBCF4\uBA74?",
       choices: [
         {
@@ -35382,7 +35382,7 @@ var REX_STORY = {
       ]
     },
     {
-      id: "rex-praise",
+      id: "rexia-praise",
       prompt: "\uB809\uC2DC\uC544\uAC00 \uCE6D\uCC2C\uC744 \uBC1B\uC73C\uBA74 \uC5B4\uB5BB\uAC8C \uBC18\uC751\uD574?",
       choices: [
         {
@@ -35433,10 +35433,10 @@ var REX_STORY = {
   ]
 };
 
-// src/data/relicStories/spino.ts
+// src/data/relicStories/spina.ts
 init_define_import_meta_env();
 var CHAPTER_415 = {
-  id: "bond.spino.4",
+  id: "bond.spina.4",
   backdrop: "lounge",
   startNodeId: "n1",
   titleCard: { title: "\uB4E4\uD0A4\uC9C0 \uC54A\uC740 \uC5B4\uD56D", subtitle: "\uC2A4\uD53C\uB098 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 1" },
@@ -35457,7 +35457,7 @@ var CHAPTER_415 = {
   ]
 };
 var CHAPTER_615 = {
-  id: "bond.spino.6",
+  id: "bond.spina.6",
   backdrop: "canal",
   startNodeId: "n1",
   titleCard: { title: "\uBC18\uB4EF\uD55C \uC870\uAC1C \uD55C \uAC1C", subtitle: "\uC2A4\uD53C\uB098 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 2" },
@@ -35484,7 +35484,7 @@ var CHAPTER_615 = {
   ]
 };
 var CHAPTER_815 = {
-  id: "bond.spino.8",
+  id: "bond.spina.8",
   backdrop: "controlRoom",
   startNodeId: "n1",
   titleCard: { title: "\uBB3C\uADF8\uB9BC\uC790 \uB4A4", subtitle: "\uC2A4\uD53C\uB098 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 3" },
@@ -35507,7 +35507,7 @@ var CHAPTER_815 = {
   ]
 };
 var CHAPTER_1015 = {
-  id: "bond.spino.10",
+  id: "bond.spina.10",
   backdrop: "lounge",
   startNodeId: "n1",
   titleCard: { title: "\uCC98\uC74C \uBCF4\uC5EC \uC8FC\uB294 \uC5B4\uD56D", subtitle: "\uC2A4\uD53C\uB098 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 4" },
@@ -35528,14 +35528,14 @@ var CHAPTER_1015 = {
   ]
 };
 var SPINO_STORY = {
-  relicId: "spino",
+  relicId: "spina",
   fossilRecord: "\uC61B \uC218\uB85C\uC758 \uCCA0\uBD84 \uB760 \uC548\uC5D0 \uC8FC\uB465\uC774\uC640 \uB3DB\uBF08\uAC00 \uD769\uC5B4\uC9C0\uC9C0 \uC54A\uACE0 \uBCF4\uC874\uB410\uB2E4. \uACE8\uBC00\uB3C4 \uBD84\uC11D\uC5D0\uC11C \uC218\uC911 \uC801\uC751\uC758 \uD754\uC801\uC744 \uD655\uC778\uD588\uB2E4.",
   diary: "\uC2A4\uD53C\uB098\uB294 \uC5F0\uAD6C\uC18C \uC218\uC911\uACBD\uBE44\uB300\uB85C \uADFC\uBB34\uD55C\uB2E4. \uACFC\uBB35\uD55C \uD3B8\uC774\uC9C0\uB9CC \uB9E1\uC740 \uC77C\uC740 \uC5B8\uC81C\uB098 \uC815\uD655\uD558\uAC8C \uC218\uD589\uD558\uBA70, \uC21C\uCC30 \uACBD\uB85C\uC640 \uC218\uBB38 \uC810\uAC80 \uAE30\uB85D\uC5D0\uB3C4 \uBE48\uD2C8\uC774 \uC5C6\uB2E4. \uB098\uB294 \uC2A4\uD53C\uB098\uAC00 \uC544\uBB34\uB3C4 \uBAA8\uB978\uB2E4\uACE0 \uC0DD\uAC01\uD558\uB294 \uB4EF \uADFC\uBB34\uAC00 \uB05D\uB09C \uB4A4 \uC791\uC740 \uC5B4\uD56D\uC744 \uC624\uB798 \uAFB8\uBBF8\uB294 \uBAA8\uC2B5\uC744 \uC9C0\uCF1C\uBCF4\uC558\uB2E4. \uC544\uB294 \uCCB4\uD558\uC9C0 \uC54A\uC740 \uCC44 \uC8FC\uBCC0\uC758 \uBB3C\uC790\uAD6D\uACFC \uBAA8\uB798\uB97C \uC870\uC6A9\uD788 \uCCAD\uC18C\uD574 \uB450\uC5C8\uB354\uB2C8, \uC5EC\uC804\uD788 \uB4E4\uD0A4\uC9C0 \uC54A\uC558\uB2E4\uACE0 \uC5EC\uAE34 \uBAA8\uC591\uC774\uB2E4. \uB2E4\uC74C \uB0A0 \uB0B4 \uCC45\uC0C1\uC5D0\uB294 \uAC00\uC7A5 \uBC18\uB4EF\uD55C \uC870\uAC1C \uD558\uB098\uAC00 \uB193\uC5EC \uC788\uC5C8\uB2E4. \uAC04\uC2DD\uC740 \uBD95\uC5B4\uBE75\uC744 \uC88B\uC544\uD558\uB294\uB370, \uD325\uC774\uB098 \uC288\uD06C\uB9BC\uC740 \uC0AC\uC591\uD558\uACE0 \uD53C\uC790 \uBD95\uC5B4\uBE75\uB9CC \uBC1B\uB294\uB2E4. \uBC1B\uC790\uB9C8\uC790 \uBA38\uB9AC\uBD80\uD130 \uD55C \uC785 \uBB34\uB294 \uBAA8\uC2B5\uC774 \uC601\uB77D\uC5C6\uB294 \uAC15\uAC00\uC758 \uC0AC\uB0E5\uAFBC\uC774\uB2E4.",
   /** 일지 맨 끝에 회색으로 서는, 스피나가 연구원에게 건네는 한마디. 뽑기 대사와 다른 일상의 목소리다. */
   closingLine: "\u2026\uC5F0\uAD6C\uC6D0\uB2D8. \uC21C\uCC30 \uC911\uC5D0 \uB0C4\uC0C8\uAC00 \uB0AC\uB294\uB370\uC694. \uBD95\uC5B4\uBE75\u2026 \uB9DE\uC8E0?",
   questions: [
     {
-      id: "spino-aquarium",
+      id: "spina-aquarium",
       prompt: "\uC2A4\uD53C\uB098\uAC00 \uBAB0\uB798 \uAFB8\uBBF8\uB294 \uC791\uC740 \uC5B4\uD56D\uC5D0\uB294 \uBB34\uC5C7\uC774 \uB4E4\uC5B4 \uC788\uC5B4?",
       choices: [
         {
@@ -35559,7 +35559,7 @@ var SPINO_STORY = {
       ]
     },
     {
-      id: "spino-bungeoppang",
+      id: "spina-bungeoppang",
       prompt: "\uC2A4\uD53C\uB098\uAC00 \uC88B\uC544\uD558\uB294 \uAC04\uC2DD\uC740 \uBB50\uC57C?",
       choices: [
         {
@@ -35583,7 +35583,7 @@ var SPINO_STORY = {
       ]
     },
     {
-      id: "spino-hide",
+      id: "spina-hide",
       prompt: "\uB0AF\uC120 \uC0AC\uB78C \uC55E\uC5D0\uC11C \uC2A4\uD53C\uB098\uB294 \uC5B4\uB5BB\uAC8C \uD574?",
       choices: [
         {
@@ -36778,10 +36778,10 @@ var DELOPI_STORY = {
   ]
 };
 
-// src/data/relicStories/deina.ts
+// src/data/relicStories/dei.ts
 init_define_import_meta_env();
 var CHAPTER_422 = {
-  id: "bond.deina.4",
+  id: "bond.dei.4",
   backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "\uD558\uB8FB\uBC24 \uC0AC\uC774\uC758 \uD45C\uC2DD", subtitle: "\uB370\uC774 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 1" },
@@ -36803,7 +36803,7 @@ var CHAPTER_422 = {
   ]
 };
 var CHAPTER_622 = {
-  id: "bond.deina.6",
+  id: "bond.dei.6",
   backdrop: "controlRoom",
   startNodeId: "n1",
   titleCard: { title: "\uC5BC\uAD74\uC5D0 \uB0A8\uAE34 \uAC83", subtitle: "\uB370\uC774 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 2" },
@@ -36825,7 +36825,7 @@ var CHAPTER_622 = {
   ]
 };
 var CHAPTER_822 = {
-  id: "bond.deina.8",
+  id: "bond.dei.8",
   backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "\uBE44\uC5B4 \uC788\uB294 \uBA74", subtitle: "\uB370\uC774 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 3" },
@@ -36847,7 +36847,7 @@ var CHAPTER_822 = {
   ]
 };
 var CHAPTER_1022 = {
-  id: "bond.deina.10",
+  id: "bond.dei.10",
   backdrop: "quarters",
   startNodeId: "n1",
   titleCard: { title: "\uD5C8\uB77D\uBC1B\uC740 \uBCBD", subtitle: "\uB370\uC774 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 4" },
@@ -36869,14 +36869,14 @@ var CHAPTER_1022 = {
   ]
 };
 var DEINA_STORY = {
-  relicId: "deina",
+  relicId: "dei",
   fossilRecord: "\uBCF5\uC6D0 \uBAA9\uB85D\uC5D0 \uB9C8\uC9C0\uB9C9\uC73C\uB85C \uC62C\uB77C\uC628 \uD45C\uBCF8\uC774\uB2E4. \uBB34\uB108\uC9C4 \uC774\uC554 \uB2E8\uBA74\uC5D0\uC11C \uB0AB\uBC1C\uD1B1\uACFC \uAF2C\uB9AC \uD798\uC904\uBF08\uAC00 \uB2EC\uB9AC\uB358 \uC790\uC138 \uADF8\uB300\uB85C \uAD73\uC5B4 \uB098\uC654\uB2E4.",
   diary: "\uBCF5\uC6D0 \uD6C4 \uB370\uC774\uB294 \uBE44\uC5B4 \uC788\uB294 \uBA74\uC744 \uADF8\uB0E5 \uC9C0\uB098\uCE58\uC9C0 \uBABB\uD55C\uB2E4. \uCF00\uC5B4\uC2E4 \uC154\uD130\uC640 \uCC3D\uACE0 \uBCBD\uC5D0 \uD558\uB8FB\uBC24 \uC0AC\uC774 \uC774\uB984 \uBAA8\uB97C \uD45C\uC2DD\uC774 \uB298\uC5B4\uB098\uB294\uB370, \uC815\uC791 \uBCF8\uC778\uC740 \uC544\uCE68\uB9C8\uB2E4 \uC2DC\uCE58\uBBF8\uB97C \uB5C0\uB2E4. \uC5F0\uAD6C\uC6D0\uC774 \uCC45\uC0C1\uC5D0 \uC5CE\uB4DC\uB824 \uC7A0\uB4E0 \uB0A0\uC5D0\uB294 \uC5B4\uAE40\uC5C6\uC774 \uC5BC\uAD74\uC5D0 \uBB34\uC5B8\uAC00\uB97C \uB0A8\uAE30\uACE0, \uB4E4\uCF1C\uC11C \uD63C\uC774 \uB098\uBA74 \uB208\uC774 \uADF8\uB801\uADF8\uB801\uD574\uC838 \uB2E4\uC2DC\uB294 \uC548 \uD558\uACA0\uB2E4\uACE0 \uB9D0\uD55C \uB4A4 \uADF8\uB0A0 \uBC24\uC5D0 \uB610 \uD55C\uB2E4. \uC57C\uB2E8\uB9DE\uB294 \uB3D9\uC548\uC5D0\uB3C4 \uC190\uB05D\uC740 \uCE94\uC744 \uD754\uB4E4\uACE0 \uC788\uB2E4.",
   /** 일지 맨 끝에 회색으로 서는, 데이가 연구원에게 건네는 한마디. 뽑기 대사와 다른 일상의 목소리다. */
   closingLine: "\uC5F0\uAD6C\uC6D0\uB2D8! \uC624\uB298\uC740 \uC544\uBB34\uAC83\uB3C4 \uC548 \uD588\uC5B4. \uC544\uC9C1! \uBCBD\uC774 \uBE44\uC5B4 \uC788\uC73C\uBA74 \uB9D0\uD574 \uC904\uAC8C.",
   questions: [
     {
-      id: "deina-can",
+      id: "dei-can",
       prompt: "\uB370\uC774\uAC00 \uB298 \uD754\uB4DC\uB294 \uCE94\uC740 \uBB50\uC57C?",
       choices: [
         {
@@ -36900,7 +36900,7 @@ var DEINA_STORY = {
       ]
     },
     {
-      id: "deina-denial",
+      id: "dei-denial",
       prompt: "\uC65C \uB9E4\uBC88 \uC2DC\uCE58\uBBF8\uB97C \uB5BC?",
       choices: [
         {
@@ -36918,7 +36918,7 @@ var DEINA_STORY = {
       ]
     },
     {
-      id: "deina-wall",
+      id: "dei-wall",
       prompt: "\uB370\uC774\uB294 \uBE44\uC5B4 \uC788\uB294 \uBCBD\uC744 \uBCF4\uBA74 \uC5B4\uB5A4 \uAE30\uBD84\uC774\uC57C?",
       choices: [
         {
@@ -39475,12 +39475,12 @@ function registerRelicStoryTexts(story) {
 // src/data/relicStories/index.ts
 var RELIC_STORIES = {
   torika: TORIKA_STORY,
-  dodo: DODO_STORY,
+  dodi: DODO_STORY,
   parua: PARUA_STORY,
   stella: STELLA_STORY,
   kento: KENTO_STORY,
-  rex: REX_STORY,
-  spino: SPINO_STORY,
+  rexia: REX_STORY,
+  spina: SPINO_STORY,
   meron: MERON_STORY,
   mette: METTE_STORY,
   ella: ELLA_STORY,
@@ -39495,7 +39495,7 @@ var RELIC_STORIES = {
   terisa: TERISA_STORY,
   maki: MAKI_STORY,
   delopi: DELOPI_STORY,
-  deina: DEINA_STORY,
+  dei: DEINA_STORY,
   luka: LUKA_STORY,
   mosana: MOSANA_STORY,
   keris: KERIS_STORY,
@@ -39575,7 +39575,7 @@ var BOUNTY_TIERS = [
   { id: "bounty-5", order: 10, name: "\uD604\uC0C1\uC218\uBC30 10\uAE09", rewardGold: 28e3, rounds: [
     { relicId: "noa", level: 50 },
     { relicId: "koma", level: 55 },
-    { relicId: "carno", level: 53 }
+    { relicId: "kar", level: 53 }
   ] }
 ];
 var BOUNTY_TIER_BY_ID = new Map(BOUNTY_TIERS.map((tier) => [tier.id, tier]));
@@ -41439,7 +41439,7 @@ var REVIEWED_STORY_BODIES = {
   "stage-7-5-pre": ["anka"],
   "stage-7-7-post": ["dodi"],
   "stage-7-8-post": ["ella"],
-  "stage-7-10-post": ["carno"],
+  "stage-7-10-post": ["kar"],
   "stage-1-5-greenhouse-echo": ["calm", "wet", "fine"],
   "stage-3-8-apology": ["ark", "yuti", "pachi2"],
   "stage-1-8-side-post": ["sniff"],
@@ -41745,7 +41745,7 @@ var STAGE_2_3_LOST_BADGE = {
       body: "\uCF54\uB9C8\uB294 \uC218\uB85C \uB05D\uC5D0\uC11C \uAC78\uC74C\uC744 \uBA48\uCD94\uACE0 \uC5F0\uAD6C\uC6D0\uC744 \uB3CC\uC544\uBCF4\uC558\uB2E4.",
       standing: "koma",
       choices: [
-        { id: "chase", label: "\uB3CC\uB824\uBC1B\uC73C\uB7EC \uCAD3\uC544\uAC04\uB2E4", nextId: "plunge", effect: { type: "bondXp", relicId: "dodo", amount: 3 } },
+        { id: "chase", label: "\uB3CC\uB824\uBC1B\uC73C\uB7EC \uCAD3\uC544\uAC04\uB2E4", nextId: "plunge", effect: { type: "bondXp", relicId: "dodi", amount: 3 } },
         { id: "wound", label: "\uC190\uC5D0 \uB09C \uC0C1\uCC98\uBD80\uD130 \uBB3B\uB294\uB2E4", nextId: "plunge", effect: { type: "bondXp", relicId: "torika", amount: 3 } }
       ]
     },
@@ -41768,8 +41768,8 @@ var STAGE_2_6_SAME_LINE = {
       body: "\uC5F0\uAD6C\uC6D0\uC774 \uD55C \uAC78\uC74C \uB2E4\uAC00\uC130\uB2E4.",
       standing: "koma",
       choices: [
-        { id: "return", label: "\uADF8\uAC70 \uB3CC\uB824\uC918", nextId: "returnA", effect: { type: "bondXp", relicId: "rex", amount: 3 } },
-        { id: "okay", label: "\uAD1C\uCC2E\uC544?", nextId: "okayB", effect: { type: "bondXp", relicId: "rex", amount: 3 } }
+        { id: "return", label: "\uADF8\uAC70 \uB3CC\uB824\uC918", nextId: "returnA", effect: { type: "bondXp", relicId: "rexia", amount: 3 } },
+        { id: "okay", label: "\uAD1C\uCC2E\uC544?", nextId: "okayB", effect: { type: "bondXp", relicId: "rexia", amount: 3 } }
       ]
     },
     { id: "returnA", speaker: "\uCF54\uB9C8", body: "\u2026\uC544\uC9C1\uC774\uB2E4. \uD655\uC778\uC774 \uB05D\uB098\uBA74 \uB3CC\uB824\uC900\uB2E4.", standing: "koma", act: "recoil", nextId: "tail" },
@@ -41878,7 +41878,7 @@ var STAGE_2_4_SIDE_POST = {
       body: "\uC544\uBB34\uB3C4 \uB300\uB2F5\uD558\uC9C0 \uC54A\uC558\uB2E4. \uC5F0\uAD6C\uC6D0\uC774 \uBCBD \uC55E\uC73C\uB85C \uD55C \uAC78\uC74C \uB2E4\uAC00\uC130\uB2E4.",
       standing: "ripa",
       choices: [
-        { id: "write", label: "\uBC88\uD638\uB97C \uC804\uBD80 \uC801\uC5B4 \uB450\uC790", nextId: "writeA", effect: { type: "bondXp", relicId: "dodo", amount: 3 } },
+        { id: "write", label: "\uBC88\uD638\uB97C \uC804\uBD80 \uC801\uC5B4 \uB450\uC790", nextId: "writeA", effect: { type: "bondXp", relicId: "dodi", amount: 3 } },
         { id: "dot", label: "\uC810\uC774 \uBD99\uC740 \uBC88\uD638\uB3C4 \uCC3E\uC544\uBCF4\uC790", nextId: "dotB", effect: { type: "bondXp", relicId: "parua", amount: 3 } }
       ]
     },
@@ -41917,7 +41917,7 @@ var STAGE_3_3_SIDE_POST = {
       body: "\uC816\uC740 \uC810\uC218\uD310\uC774 \uC5F0\uAD6C\uC6D0\uC758 \uC190\uC5D0 \uAC74\uB124\uC84C\uB2E4.",
       standing: "mir",
       choices: [
-        { id: "return", label: "\uADF8\uB300\uB85C \uB3CC\uB824\uC900\uB2E4", nextId: "returnA", effect: { type: "bondXp", relicId: "rex", amount: 3 } },
+        { id: "return", label: "\uADF8\uB300\uB85C \uB3CC\uB824\uC900\uB2E4", nextId: "returnA", effect: { type: "bondXp", relicId: "rexia", amount: 3 } },
         { id: "fill", label: "\uC810\uC218\uD310 \uCCAB \uCE78\uC744 \uCC44\uC6CC \uC900\uB2E4", nextId: "fillB", effect: { type: "bondXp", relicId: "luka", amount: 3 } }
       ]
     },
@@ -41946,7 +41946,7 @@ var STAGE_4_3_BREAK_TIME = {
       standing: "amo",
       choices: [
         { id: "keep", label: "\uADF8 \uC57D\uC18D\uC740 \uADF8\uB300\uB85C\uC57C", nextId: "keepA", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
-        { id: "next", label: "\uB2E4\uC74C\uC5D4 \uAF2D \uB370\uB824\uAC08\uAC8C", nextId: "nextB", effect: { type: "bondXp", relicId: "dodo", amount: 3 } }
+        { id: "next", label: "\uB2E4\uC74C\uC5D4 \uAF2D \uB370\uB824\uAC08\uAC8C", nextId: "nextB", effect: { type: "bondXp", relicId: "dodi", amount: 3 } }
       ]
     },
     { id: "keepA", speaker: "\uC544\uBAA8", body: "\u2026\uADF8\uB807\uAD6C\uB098. \uADF8\uB7FC \uC624\uB298\uB3C4 \uB04C\uB824\uAC00\uB294 \uAC8C \uC544\uB2C8\uB124. \uC7A0\uAE50 \uB5A8\uC5B4\uC838 \uC788\uB294 \uAC70\uC9C0.", standing: "amo", act: "nod", nextId: "steps" },
@@ -42043,7 +42043,7 @@ var STAGE_5_8_YOUNGEST_SHARE = {
     { id: "dont", speaker: "\uB77C\uC790", body: "\u2026\uBCF4\uC9C0 \uB9C8\uB77C. \uBC30\uC2DD \uC2DC\uAC04\uC774\uB2E4.", standing: "raja", act: "shrink" },
     { id: "burn", speaker: "\uB9C8\uD0A4", body: "\uAD6D \uB0C4\uC0C8\uAC00 \uC88B\uB2E4\uB0E5. \uB124\uAC00 \uB053\uC600\uB0E5? \uC1A5\uC740 \uC548 \uBCF4\uC774\uB294\uB370 \uC5B4\uB514\uC11C \uAC00\uC838\uC654\uB0E5?", standing: "maki", cast: [{ id: "maki", slot: "left" }, { id: "raja", slot: "right" }], act: "lean" },
     { id: "carry", speaker: "\uB77C\uC790", body: "\u2026\uB053\uC778 \uAC74 \uB9C8\uAC00\uC0AC \uAC04\uBD80\uB2D8\uC774\uB2E4. \uB098\uB294 \uB098\uB974\uAE30\uB9CC \uD55C\uB2E4. \uC55E\uC5D0 \uC11C\uB294 \uB188\uC774 \uB098\uB974\uB294 \uAC70\uB2E4.", standing: "raja", act: "nod" },
-    { id: "last", speaker: "\uB370\uC774", body: "\uADF8\uB7FC \uB9C8\uC9C0\uB9C9 \uADF8\uB987\uC740 \uB204\uAD6C \uAC70\uC57C? \uADF8 \uCE78\uB9CC \uBE44\uC5B4 \uC788\uB294\uB370!", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "raja", slot: "right" }], act: "hop" },
+    { id: "last", speaker: "\uB370\uC774", body: "\uADF8\uB7FC \uB9C8\uC9C0\uB9C9 \uADF8\uB987\uC740 \uB204\uAD6C \uAC70\uC57C? \uADF8 \uCE78\uB9CC \uBE44\uC5B4 \uC788\uB294\uB370!", standing: "dei", cast: [{ id: "dei", slot: "left" }, { id: "raja", slot: "right" }], act: "hop" },
     { id: "youngest", speaker: "\uB77C\uC790", body: "\uB178\uC544 \uAC04\uBD80\uB2D8 \uBAAB\uC774\uB2E4. \uC6B0\uB9AC \uC911\uC5D0 \uC81C\uC77C \uC5B4\uB9AC\uACE0 \uAC81\uC774 \uB9CE\uC73C\uC154\uC11C, \uC0AC\uB78C\uC774 \uC788\uC73C\uBA74 \uC548 \uB098\uC624\uC2E0\uB2E4. \u2026\uADF8\uB798\uC11C \uB298 \uC2DD\uC740 \uAC78 \uB4DC\uC2E0\uB2E4.", standing: "raja", act: "lean" },
     {
       id: "choose",
@@ -42051,11 +42051,11 @@ var STAGE_5_8_YOUNGEST_SHARE = {
       body: "\uBE48 \uBC30\uC2DD\uAD6C \uC55E\uC5D0 \uADF8\uB987 \uD558\uB098\uAC00 \uB193\uC600\uB2E4. \uC544\uC9C1 \uAE40\uC774 \uC62C\uB790\uB2E4.",
       standing: "raja",
       choices: [
-        { id: "step", label: "\uADF8\uB987\uB9CC \uB450\uACE0 \uBB3C\uB7EC\uB09C\uB2E4", nextId: "stepA", effect: { type: "bondXp", relicId: "deina", amount: 3 } },
+        { id: "step", label: "\uADF8\uB987\uB9CC \uB450\uACE0 \uBB3C\uB7EC\uB09C\uB2E4", nextId: "stepA", effect: { type: "bondXp", relicId: "dei", amount: 3 } },
         { id: "cover", label: "\uC2DD\uC9C0 \uC54A\uAC8C \uB36E\uC5B4 \uB454\uB2E4", nextId: "coverB", effect: { type: "bondXp", relicId: "maki", amount: 3 } }
       ]
     },
-    { id: "stepA", speaker: "\uB370\uC774", body: "\uC54C\uC558\uC5B4, \uC6B0\uB9AC \uC800\uCABD \uBCF4\uACE0 \uC788\uC744\uAC8C! \uC9C4\uC9DC\uB85C \uC548 \uBCFC\uAC8C, \uC190\uAC00\uB77D \uC0AC\uC774\uB85C\uB3C4!", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "raja", slot: "right" }], act: "nod", nextId: "rank" },
+    { id: "stepA", speaker: "\uB370\uC774", body: "\uC54C\uC558\uC5B4, \uC6B0\uB9AC \uC800\uCABD \uBCF4\uACE0 \uC788\uC744\uAC8C! \uC9C4\uC9DC\uB85C \uC548 \uBCFC\uAC8C, \uC190\uAC00\uB77D \uC0AC\uC774\uB85C\uB3C4!", standing: "dei", cast: [{ id: "dei", slot: "left" }, { id: "raja", slot: "right" }], act: "nod", nextId: "rank" },
     { id: "coverB", speaker: "\uB9C8\uD0A4", body: "\uB69C\uAED1\uC744 \uB36E\uC5B4 \uB450\uBA74 \uBC18 \uC2DC\uAC04\uC740 \uB530\uB73B\uD558\uB2E4\uB0E5. \uC758\uC0AC \uB9D0\uC774\uB2C8\uAE4C \uBBFF\uC5B4\uB77C\uB0E5.", standing: "maki", cast: [{ id: "maki", slot: "left" }, { id: "raja", slot: "right" }], act: "nod", nextId: "rank" },
     { id: "rank", speaker: "\uB77C\uC790", body: "\u2026\uC624\uB298 \uC11C\uC5F4\uC740 \uB108\uD76C\uAC00 \uC704\uB2E4. \uD558\uB8E8\uB9CC\uC774\uB2E4.", standing: "raja", act: "nod" },
     { id: "pull", speaker: "", body: "\uBAA8\uD241\uC774\uB97C \uB3CC\uC544 \uB098\uC62C \uB54C \uB4F1 \uB4A4\uC5D0\uC11C \uC544\uC8FC \uC791\uC740 \uC190\uD1B1 \uC18C\uB9AC\uAC00 \uB0AC\uB2E4. \uBE48 \uCE78\uC758 \uADF8\uB987\uC774 \uC548\uCABD\uC73C\uB85C \uB04C\uB824 \uB4E4\uC5B4\uAC14\uB2E4.", standing: "raja", cast: [] }
@@ -42575,7 +42575,7 @@ var STAGE_2_9_POST = {
     { id: "hole", speaker: "", body: "\uCEE8\uBCA0\uC774\uC5B4\uAC00 \uB05D\uB098\uB294 \uC790\uB9AC\uC5D0\uB294 \uBC14\uB2E5\uC774 \uC5C6\uC5C8\uB2E4. \uD3D0\uAE30 \uD45C\uC2DD\uC774 \uBD99\uC740 \uC0C1\uC790\uB4E4\uC774 \uC18C\uB9AC \uC5C6\uC774 \uC5B4\uB460 \uC18D\uC73C\uB85C \uB5A8\uC5B4\uC84C\uB2E4.", standing: "dodi", cast: PAIR("dodi", "lexia") },
     { id: "dodi", speaker: "\uB3C4\uB514", body: "\uB2E4\uB4E4 \uC774 \uC544\uB798\uB85C \uD758\uB7EC\uAC04 \uAC70\uC608\uC694. \uC4F8 \uC218 \uC5C6\uC74C\uC774\uB77C\uACE0 \uC801\uD78C \uCC44\uB85C\u2026", standing: "dodi", act: "shrink" },
     { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uC544\uB798\uC5D0\uB294 \uBB50\uAC00 \uC788\uC5B4?", standing: "lexia", act: "lean" },
-    { id: "dei", speaker: "\uB370\uC774", body: "\uAD6C\uBA4D \uAC00\uC7A5\uC790\uB9AC\uC5D0 \uB099\uC11C \uAC19\uC740 \uD654\uC0B4\uD45C\uAC00 \uC788\uC5B4! \uB0B4\uAC00 \uADF8\uB9B0 \uAC70 \uC544\uB2C8\uC57C, \uC9C4\uC9DC\uC57C. \uB204\uAC00 \uC544\uB798\uB85C \uAC00\uB294 \uAE38\uC744 \uD45C\uC2DC\uD574 \uB1A8\uC5B4.", cast: VOICE2("deina", "lexia", "dodi"), act: "lean" },
+    { id: "dei", speaker: "\uB370\uC774", body: "\uAD6C\uBA4D \uAC00\uC7A5\uC790\uB9AC\uC5D0 \uB099\uC11C \uAC19\uC740 \uD654\uC0B4\uD45C\uAC00 \uC788\uC5B4! \uB0B4\uAC00 \uADF8\uB9B0 \uAC70 \uC544\uB2C8\uC57C, \uC9C4\uC9DC\uC57C. \uB204\uAC00 \uC544\uB798\uB85C \uAC00\uB294 \uAE38\uC744 \uD45C\uC2DC\uD574 \uB1A8\uC5B4.", cast: VOICE2("dei", "lexia", "dodi"), act: "lean" },
     { id: "stay", speaker: "", body: "\uD654\uC0B4\uD45C\uAC00 \uBB34\uC5C7\uC744 \uAC00\uB9AC\uD0A4\uB294\uC9C0 \uC544\uB294 \uC774\uB294 \uC5C6\uC5C8\uB2E4. \uC5F0\uAD6C\uC6D0\uC740 \uAD6C\uBA4D \uC55E\uC5D0 \uD55C\uCC38 \uC11C \uC788\uC5C8\uB2E4." },
     { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\u2026\uAC00\uC694, \uB300\uC7A5\uB2D8. \uC544\uC9C1\uC740 \uC704\uC5D0\uC11C \uD560 \uC77C\uC774 \uC788\uC5B4\uC694.", standing: "torika", cast: PAIR("lexia"), act: "nod" }
   ])
@@ -42610,7 +42610,7 @@ var STAGE_2_10_POST = {
       cast: [{ id: "torika", slot: "left" }, { id: "amo", slot: "right" }],
       choices: [
         { id: "yes", label: "\uB530\uB77C\uC640\uB3C4 \uB3FC", nextId: "answerA", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
-        { id: "own", label: "\uB108\uD76C\uAC00 \uC815\uD574\uB3C4 \uB3FC", nextId: "answerB", effect: { type: "bondXp", relicId: "dodo", amount: 3 } }
+        { id: "own", label: "\uB108\uD76C\uAC00 \uC815\uD574\uB3C4 \uB3FC", nextId: "answerB", effect: { type: "bondXp", relicId: "dodi", amount: 3 } }
       ]
     },
     { id: "answerA", speaker: "\uC544\uBAA8", body: "\u2026\uADF8\uB798. \uADF8\uB7FC \uB530\uB77C\uAC08\uAC8C.", standing: "amo", act: "nod", nextId: "walk" },
@@ -42868,9 +42868,9 @@ var STAGE_5_1_PRE = {
   startNodeId: "dark",
   backdrop: "detention",
   nodes: linear([
-    { id: "dark", speaker: "", body: "\uACC4\uB2E8 \uB05D\uC5D0\uB294 \uBD88\uBE5B\uC774 \uD558\uB098\uB3C4 \uC5C6\uC5C8\uB2E4. \uBCBD\uB9C8\uB2E4 \uAE01\uD78C \uC790\uAD6D\uC774 \uC22B\uC790\uCC98\uB7FC \uC904\uC9C0\uC5B4 \uB098 \uC788\uC5C8\uB2E4.", cast: [{ id: "deina", slot: "center" }], cue: "rumble" },
-    { id: "deina", speaker: "\uB370\uC774", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC774 \uD45C\uC2DC \uC6B0\uB9AC \uAC70 \uC544\uB2C8\uC57C! \uC9C0\uBD80 \uC0AC\uB78C\uC774 \uB0A8\uAE34 \uACBD\uACE0\uC57C. \u300C\uC5F4\uC9C0 \uB9D0 \uAC83\u300D\uC774\uB798.", standing: "deina", act: "lean" },
-    { id: "radio", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uAC10\uAE08\uB3D9\uC740 \uB3C4\uBA74\uC5D0 \uC5C6\uC5C8\uC5B4\uC694. \uC774\uB807\uAC8C \uD070 \uACF3\uC774 \uBE60\uC838 \uC788\uB2E4\uB294 \uAC74\u2026 \uB204\uAC00 \uC77C\uBD80\uB7EC \uC9C0\uC6E0\uB2E4\uB294 \uAC70\uC608\uC694.", standing: "seira", cast: REMOTE("seira", "deina"), act: "nod" },
+    { id: "dark", speaker: "", body: "\uACC4\uB2E8 \uB05D\uC5D0\uB294 \uBD88\uBE5B\uC774 \uD558\uB098\uB3C4 \uC5C6\uC5C8\uB2E4. \uBCBD\uB9C8\uB2E4 \uAE01\uD78C \uC790\uAD6D\uC774 \uC22B\uC790\uCC98\uB7FC \uC904\uC9C0\uC5B4 \uB098 \uC788\uC5C8\uB2E4.", cast: [{ id: "dei", slot: "center" }], cue: "rumble" },
+    { id: "dei", speaker: "\uB370\uC774", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC774 \uD45C\uC2DC \uC6B0\uB9AC \uAC70 \uC544\uB2C8\uC57C! \uC9C0\uBD80 \uC0AC\uB78C\uC774 \uB0A8\uAE34 \uACBD\uACE0\uC57C. \u300C\uC5F4\uC9C0 \uB9D0 \uAC83\u300D\uC774\uB798.", standing: "dei", act: "lean" },
+    { id: "radio", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uAC10\uAE08\uB3D9\uC740 \uB3C4\uBA74\uC5D0 \uC5C6\uC5C8\uC5B4\uC694. \uC774\uB807\uAC8C \uD070 \uACF3\uC774 \uBE60\uC838 \uC788\uB2E4\uB294 \uAC74\u2026 \uB204\uAC00 \uC77C\uBD80\uB7EC \uC9C0\uC6E0\uB2E4\uB294 \uAC70\uC608\uC694.", standing: "seira", cast: REMOTE("seira", "dei"), act: "nod" },
     { id: "trio", speaker: "\uD1A0\uBE44", body: "\uB610 \uB108\uD76C\uC57C?! \u2026\uC544\uB2C8, \uB610 \uC6B0\uB9AC\uC9C0. \uC774\uBC88\uC5D4 \uBB38 \uC55E\uC744 \uC9C0\uD0A4\uB798.", standing: "toby", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], act: "shake" },
     { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uC5F0\uAD6C\uC6D0. \uC5EC\uAE30\uB294 \uC624\uBA74 \uC548 \uB418\uB294 \uB370\uC57C. \uC6B0\uB9AC\uB3C4 \uB4E4\uC5B4\uAC00 \uBCF8 \uC801 \uC5C6\uC5B4.", standing: "amo", act: "tremble" }
   ])
@@ -42935,8 +42935,8 @@ var STAGE_5_8_POST = {
   startNodeId: "trays",
   backdrop: "detention",
   nodes: linear([
-    { id: "trays", speaker: "", body: "\uBC30\uC2DD\uAD6C\uB9C8\uB2E4 \uBE48 \uC7C1\uBC18\uC774 \uC313\uC5EC \uC788\uC5C8\uB2E4. \uADF8\uB7F0\uB370 \uBA87 \uCE78\uC5D0\uB294 \uC544\uC9C1 \uAE40\uC774 \uC624\uB974\uB294 \uAD6D\uADF8\uB987\uC774 \uB193\uC5EC \uC788\uC5C8\uB2E4.", cast: [{ id: "deina", slot: "left" }, { id: "maki", slot: "right" }] },
-    { id: "radio", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uC5EC\uAE30\uAE4C\uC9C0\uB294 \uBAB0\uB790\uC5B4\uC694. \uC800\uD76C\uAC00 \uC4F0\uB358 \uAE38 \uBC14\uB85C \uC544\uB798\uC778\uB370\uB3C4\u2026 \uC5F0\uAD6C\uC6D0\uB2D8, \uBCF4\uC774\uB294 \uAC74 \uC804\uBD80 \uAE30\uB85D\uD574 \uB458\uAC8C\uC694.", standing: "seira", cast: REMOTE("seira", "deina"), act: "shrink" },
+    { id: "trays", speaker: "", body: "\uBC30\uC2DD\uAD6C\uB9C8\uB2E4 \uBE48 \uC7C1\uBC18\uC774 \uC313\uC5EC \uC788\uC5C8\uB2E4. \uADF8\uB7F0\uB370 \uBA87 \uCE78\uC5D0\uB294 \uC544\uC9C1 \uAE40\uC774 \uC624\uB974\uB294 \uAD6D\uADF8\uB987\uC774 \uB193\uC5EC \uC788\uC5C8\uB2E4.", cast: [{ id: "dei", slot: "left" }, { id: "maki", slot: "right" }] },
+    { id: "radio", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uC5EC\uAE30\uAE4C\uC9C0\uB294 \uBAB0\uB790\uC5B4\uC694. \uC800\uD76C\uAC00 \uC4F0\uB358 \uAE38 \uBC14\uB85C \uC544\uB798\uC778\uB370\uB3C4\u2026 \uC5F0\uAD6C\uC6D0\uB2D8, \uBCF4\uC774\uB294 \uAC74 \uC804\uBD80 \uAE30\uB85D\uD574 \uB458\uAC8C\uC694.", standing: "seira", cast: REMOTE("seira", "dei"), act: "shrink" },
     { id: "luka", speaker: "\uB8E8\uCE74", body: "\uBB38 \uC7A0\uAE08 \uAE30\uB85D\uC744 \uD6D1\uC5B4\uBD24\uC5B4. \uC704\uC5D0\uC11C \uC5F4\uB9B0 \uAC8C \uC544\uB2C8\uC57C. \uC548\uC5D0\uC11C \uB204\uAC00 \uD558\uB098\uC529 \uC5F4\uACE0 \uC788\uC5B4.", standing: "luka", cast: REMOTE("luka", "maki"), act: "lean" },
     { id: "maki", speaker: "\uB9C8\uD0A4", body: "\uBD88\uC774 \uC544\uC9C1 \uC548 \uAEBC\uC84C\uB2E4\uB0E5. \uC5F0\uAD6C\uC6D0\uB2D8, \uB204\uAC00 \uADFC\uCC98\uC5D0 \uC788\uC5B4\uC694. \uD63C\uC790 \uC55E\uC73C\uB85C \uAC00\uC9C0 \uB9C8\uC138\uC694.", standing: "maki", cast: [{ id: "maki", slot: "center" }], act: "nod" }
   ])
@@ -42948,8 +42948,8 @@ var STAGE_5_9_POST = {
   nodes: linear([
     { id: "chains", speaker: "", body: "\uB04A\uC5B4\uC9C4 \uC871\uC1C4\uAC00 \uBC14\uB2E5\uC5D0 \uD769\uC5B4\uC838 \uC788\uC5C8\uB2E4. \uADF8 \uC0AC\uC774\uC5D0\uC11C \uC791\uC740 \uADF8\uB9BC\uC790 \uD558\uB098\uAC00 \uBAB8\uC744 \uC6C5\uD06C\uB9B0 \uCC44 \uC774\uCABD\uC744 \uBCF4\uACE0 \uC788\uC5C8\uB2E4.", cast: [{ id: "noa", slot: "center", veiled: true }], cue: "impact" },
     { id: "noa", speaker: "???", body: "\uC624, \uC624\uC9C0 \uB9C8\u2026 \uC624\uC9C0 \uB9D0\uB77C\uB2C8\uAE4C\u2026!", standing: "noa", act: "tremble" },
-    { id: "deina", speaker: "\uB370\uC774", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uCAD3\uC73C\uBA74 \uC548 \uB3FC! \uC800\uB807\uAC8C \uBC8C\uBC8C \uB5A0\uB294 \uC560\uAC00 \uC81C\uC77C \uBA3C\uC800 \uAE68\uBB3C\uC5B4. \uAC00\uB9CC\uD788 \uC788\uC5B4 \uC8FC\uC790.", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "noa", slot: "right", veiled: true }], act: "lean" },
-    { id: "flee", speaker: "", body: "\uADF8\uB9BC\uC790\uB294 \uC190\uD1B1 \uAE01\uB294 \uC18C\uB9AC\uB9CC \uB0A8\uAE30\uACE0, \uB208 \uAE5C\uC9DD\uD560 \uC0AC\uC774 \uCDE8\uC0AC\uC7A5 \uCABD\uC73C\uB85C \uD280\uC5B4 \uB098\uAC14\uB2E4.", cast: [{ id: "deina", slot: "left" }], leave: "dash" }
+    { id: "dei", speaker: "\uB370\uC774", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uCAD3\uC73C\uBA74 \uC548 \uB3FC! \uC800\uB807\uAC8C \uBC8C\uBC8C \uB5A0\uB294 \uC560\uAC00 \uC81C\uC77C \uBA3C\uC800 \uAE68\uBB3C\uC5B4. \uAC00\uB9CC\uD788 \uC788\uC5B4 \uC8FC\uC790.", standing: "dei", cast: [{ id: "dei", slot: "left" }, { id: "noa", slot: "right", veiled: true }], act: "lean" },
+    { id: "flee", speaker: "", body: "\uADF8\uB9BC\uC790\uB294 \uC190\uD1B1 \uAE01\uB294 \uC18C\uB9AC\uB9CC \uB0A8\uAE30\uACE0, \uB208 \uAE5C\uC9DD\uD560 \uC0AC\uC774 \uCDE8\uC0AC\uC7A5 \uCABD\uC73C\uB85C \uD280\uC5B4 \uB098\uAC14\uB2E4.", cast: [{ id: "dei", slot: "left" }], leave: "dash" }
   ])
 };
 var STAGE_5_10_PRE = {
@@ -42970,7 +42970,7 @@ var STAGE_5_10_POST = {
   nodes: linear([
     { id: "laugh", speaker: "\uB9C8\uAC00\uC0AC", body: "\uC544\uD558\uD558\u2026 \uC190\uB9DB \uC88B\uB124\uC694, \uC5F0\uAD6C\uC6D0\uB2D8 \uCABD \uC0AC\uB78C\uB4E4. \uC84C\uC73C\uB2C8\uAE4C \uC624\uB298 \uC124\uAC70\uC9C0\uB294 \uC81C\uAC00 \uD560\uAC8C\uC694.", standing: "magasa", cast: [{ id: "magasa", slot: "center" }], act: "faint" },
     { id: "hint", speaker: "\uB9C8\uAC00\uC0AC", body: "\uC544, \uC9C4 \uAE40\uC5D0 \uD558\uB098 \uC54C\uB824 \uB4DC\uB9B4\uAE4C\uC694? \uB9E8 \uC544\uB798 \uBD80\uB300\uC7A5\uB2D8 \uC790\uBB3C\uC1E0\uB294\uC694, \uC0AC\uB78C \uC190\uC774 \uB2FF\uC544\uC57C \uC5F4\uB9B0\uB300\uC694. \u2026\uB531 \uC5F0\uAD6C\uC6D0\uB2D8 \uAC19\uC740 \uC190\uC774\uC694.", standing: "magasa", act: "lean" },
-    { id: "deina", speaker: "\uB370\uC774", body: "\u2026\uADF8\uB798\uC11C \uCC98\uC74C\uBD80\uD130 \uC544\uB798\uB85C \uBAB0\uC558\uAD6C\uB098! \uD569\uB3D9 \uCD94\uACA9\uB3C4, \uB04A\uC5B4\uC9C4 \uC2B9\uAC15\uAE30\uB3C4 \uC804\uBD80 \uD55C \uAE38\uC774\uC5C8\uC5B4.", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "magasa", slot: "right" }], act: "nod", cue: "heartbeat" },
+    { id: "dei", speaker: "\uB370\uC774", body: "\u2026\uADF8\uB798\uC11C \uCC98\uC74C\uBD80\uD130 \uC544\uB798\uB85C \uBAB0\uC558\uAD6C\uB098! \uD569\uB3D9 \uCD94\uACA9\uB3C4, \uB04A\uC5B4\uC9C4 \uC2B9\uAC15\uAE30\uB3C4 \uC804\uBD80 \uD55C \uAE38\uC774\uC5C8\uC5B4.", standing: "dei", cast: [{ id: "dei", slot: "left" }, { id: "magasa", slot: "right" }], act: "nod", cue: "heartbeat" },
     { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uC544\uB798\uB85C \uAC00\uC9C0 \uB9C8\uB77C.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean", voice: "whisper" },
     { id: "gone", speaker: "", body: "\uADF8 \uD55C\uB9C8\uB514\uB9CC \uB0A8\uAE30\uACE0 \uCF54\uB9C8\uB294 \uB2E4\uC74C \uACC4\uB2E8 \uC544\uB798\uB85C \uAC00\uB77C\uC549\uB4EF \uC0AC\uB77C\uC84C\uB2E4. \uC704\uB85C \uAC00\uB77C\uB294 \uB9D0\uC740 \uB05D\uB0B4 \uD558\uC9C0 \uC54A\uC558\uB2E4.", cast: [], leave: "sink" }
   ])
@@ -43087,7 +43087,7 @@ var STAGE_6_10_POST = {
     { id: "noa", speaker: "\uB178\uC544", body: "\u2026\uC751. \uADFC\uB370 \uBC14\uB2E5\uC774, \uBC14\uB2E5\uC774 \uC774\uC0C1\uD574.", standing: "noa", act: "fright" },
     { id: "crack", speaker: "", body: "\uD68C\uB791 \uBC14\uB2E5\uC774 \uD55C\uAC00\uC6B4\uB370\uBD80\uD130 \uAEBC\uC838 \uB0B4\uB838\uB2E4. \uC704\uB85C \uAC00\uB294 \uACC4\uB2E8\uC774 \uBA40\uC5B4\uC9C0\uACE0, \uBAB8\uC774 \uC5B4\uB460 \uC18D\uC73C\uB85C \uB5A8\uC5B4\uC84C\uB2E4.", cast: [], cue: "explosion" },
     { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uC190 \uC7A1\uC544\uB77C. \uB5A8\uC5B4\uC9C0\uBA74, \uADF8 \uBB38\uC740 \uB2F9\uC2E0 \uC190\uC73C\uB85C \uC5F4\uAC8C \uB41C\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
-    { id: "voice", speaker: "???", body: "\u2026\uB2A6\uC5C8\uC5B4.", cast: [{ id: "koma", slot: "left" }, { id: "carno", slot: "right", veiled: true }], cue: "heartbeat", voice: "heavy" }
+    { id: "voice", speaker: "???", body: "\u2026\uB2A6\uC5C8\uC5B4.", cast: [{ id: "koma", slot: "left" }, { id: "kar", slot: "right", veiled: true }], cue: "heartbeat", voice: "heavy" }
   ])
 };
 var CHAPTER_6_STORIES = [
@@ -43184,15 +43184,15 @@ var STAGE_7_9_POST = {
   startNodeId: "room",
   backdrop: "restraint",
   nodes: linear([
-    { id: "room", speaker: "", body: "\uBC29 \uD55C\uAC00\uC6B4\uB370\uC5D0 \uAD6C\uC18D\uBCF5\uC9F8 \uBB36\uC778 \uAC70\uAD6C\uAC00 \uC549\uC544 \uC788\uC5C8\uB2E4. \uBAB8 \uACF3\uACF3\uC5D0 \uB9E4\uB2EC\uB9B0 \uC790\uBB3C\uC1E0\uAC00 \uC228 \uC274 \uB54C\uB9C8\uB2E4 \uC11C\uB85C \uBD80\uB52A\uCCE4\uB2E4.", standing: "carno", cast: [{ id: "carno", slot: "center" }], cue: "rumble" },
+    { id: "room", speaker: "", body: "\uBC29 \uD55C\uAC00\uC6B4\uB370\uC5D0 \uAD6C\uC18D\uBCF5\uC9F8 \uBB36\uC778 \uAC70\uAD6C\uAC00 \uC549\uC544 \uC788\uC5C8\uB2E4. \uBAB8 \uACF3\uACF3\uC5D0 \uB9E4\uB2EC\uB9B0 \uC790\uBB3C\uC1E0\uAC00 \uC228 \uC274 \uB54C\uB9C8\uB2E4 \uC11C\uB85C \uBD80\uB52A\uCCE4\uB2E4.", standing: "kar", cast: [{ id: "kar", slot: "center" }], cue: "rumble" },
     { id: "rattle", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC774 \uBB38\uD131\uC744 \uB118\uC5B4\uC11C\uC790 \uC790\uBB3C\uC1E0\uB4E4\uC774 \uC77C\uC81C\uD788 \uB35C\uCEF9\uAC70\uB838\uB2E4. \uAC70\uAD6C\uB294 \uAFC8\uCA4D\uB3C4 \uD558\uC9C0 \uC54A\uC558\uB294\uB370, \uC1E0\uBD99\uC774\uB9CC\uC774 \uBB34\uC5B8\uAC00\uC5D0 \uB04C\uB9AC\uB4EF \uC774\uCABD\uC73C\uB85C \uBAB8\uC744 \uD2C0\uC5C8\uB2E4.", cue: "heartbeat" },
     { id: "kneel", speaker: "", body: "\uB9C8\uAC00\uC0AC\uC640 \uB178\uC544, \uB77C\uC790\uAC00 \uADF8 \uC55E\uC5D0 \uB098\uB780\uD788 \uBB34\uB98E\uC744 \uAFC7\uC5C8\uB2E4. \uB9C8\uAC00\uC0AC\uAC00 \uBA3C\uC800 \uACE0\uAC1C\uB97C \uB4E4\uC5C8\uB2E4.", cast: [{ id: "raja", slot: "left" }, { id: "magasa", slot: "center" }, { id: "noa", slot: "right" }] },
     { id: "magasa", speaker: "\uB9C8\uAC00\uC0AC", body: "\uBD80\uB300\uC7A5\uB2D8, \uB2E4\uB140\uC654\uC5B4\uC694. \uBC25\uC740 \uC704\uC5D0 \uAC00\uC11C \uB530\uB73B\uD558\uAC8C \uCC28\uB824 \uB4DC\uB9B4\uAC8C\uC694.", standing: "magasa", act: "nod" },
-    { id: "carno", speaker: "\uCE74\uB974", body: "\u2026072. \uB2A6\uC5C8\uC5B4.", standing: "carno", cast: [{ id: "koma", slot: "left" }, { id: "carno", slot: "right" }], act: "lean" },
-    { id: "order", speaker: "\uCE74\uB974", body: "\uC0AC\uB78C\uC744 \uB370\uB824\uC640. \uADF8 \uC190\uC744 \uC790\uBB3C\uC1E0\uC5D0 \uC5B9\uAC8C \uD574.", standing: "carno", act: "nod" },
+    { id: "kar", speaker: "\uCE74\uB974", body: "\u2026072. \uB2A6\uC5C8\uC5B4.", standing: "kar", cast: [{ id: "koma", slot: "left" }, { id: "kar", slot: "right" }], act: "lean" },
+    { id: "order", speaker: "\uCE74\uB974", body: "\uC0AC\uB78C\uC744 \uB370\uB824\uC640. \uADF8 \uC190\uC744 \uC790\uBB3C\uC1E0\uC5D0 \uC5B9\uAC8C \uD574.", standing: "kar", act: "nod" },
     { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uC2EB\uB2E4.", standing: "koma", act: "lean" },
     { id: "koma2", speaker: "\uCF54\uB9C8", body: "\uB0B4 \uBC88\uD638\uB294 \uC9C0\uC6E0\uB2E4. \uBA85\uB839\uB3C4 \uAC19\uC774 \uC9C0\uC6E0\uB2E4.", standing: "koma", act: "shrink" },
-    { id: "carno2", speaker: "\uCE74\uB974", body: "\u2026\uADF8\uB7FC \uB0B4\uAC00 \uC9C1\uC811 \uD55C\uB2E4.", standing: "carno", act: "rage", cue: "impact", voice: "heavy" }
+    { id: "carno2", speaker: "\uCE74\uB974", body: "\u2026\uADF8\uB7FC \uB0B4\uAC00 \uC9C1\uC811 \uD55C\uB2E4.", standing: "kar", act: "rage", cue: "impact", voice: "heavy" }
   ])
 };
 var STAGE_7_10_PRE = {
@@ -43200,9 +43200,9 @@ var STAGE_7_10_PRE = {
   startNodeId: "shove",
   backdrop: "restraint",
   nodes: linear([
-    { id: "shove", speaker: "", body: "\uBB36\uC778 \uC5B4\uAE68 \uD558\uB098\uAC00 \uCF54\uB9C8\uB97C \uBCBD\uAE4C\uC9C0 \uBC00\uCCD0 \uB0C8\uB2E4. \uC790\uBB3C\uC1E0 \uD558\uB098\uAC00 \uD130\uC838 \uBC14\uB2E5\uC744 \uAD74\uB800\uB2E4.", standing: "carno", cast: [{ id: "koma", slot: "left" }, { id: "carno", slot: "right" }], cue: "explosion" },
-    { id: "carno", speaker: "\uCE74\uB974", body: "\u2026\uC5F0\uAD6C\uC6D0. \uB3C4\uB9DD\uCE60 \uAC70 \uC5C6\uC5B4. \uB0B4\uAC00 \uD544\uC694\uD55C \uAC74 \uB124 \uC190 \uD558\uB098\uC57C.", standing: "carno", act: "lean" },
-    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uB9C8\uC2A4\uD130 \uC190\uC5D0\uB294 \uC544\uBB34\uB3C4 \uBABB \uB300! \uB2E4\uB4E4, \uC804\uC5F4 \uC815\uB82C!", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "carno", slot: "right" }], act: "hop", voice: "shout" },
+    { id: "shove", speaker: "", body: "\uBB36\uC778 \uC5B4\uAE68 \uD558\uB098\uAC00 \uCF54\uB9C8\uB97C \uBCBD\uAE4C\uC9C0 \uBC00\uCCD0 \uB0C8\uB2E4. \uC790\uBB3C\uC1E0 \uD558\uB098\uAC00 \uD130\uC838 \uBC14\uB2E5\uC744 \uAD74\uB800\uB2E4.", standing: "kar", cast: [{ id: "koma", slot: "left" }, { id: "kar", slot: "right" }], cue: "explosion" },
+    { id: "kar", speaker: "\uCE74\uB974", body: "\u2026\uC5F0\uAD6C\uC6D0. \uB3C4\uB9DD\uCE60 \uAC70 \uC5C6\uC5B4. \uB0B4\uAC00 \uD544\uC694\uD55C \uAC74 \uB124 \uC190 \uD558\uB098\uC57C.", standing: "kar", act: "lean" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uB9C8\uC2A4\uD130 \uC190\uC5D0\uB294 \uC544\uBB34\uB3C4 \uBABB \uB300! \uB2E4\uB4E4, \uC804\uC5F4 \uC815\uB82C!", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "kar", slot: "right" }], act: "hop", voice: "shout" },
     { id: "nodonia", speaker: "\uB178\uB3C4\uB2C8\uC544", body: "\uC544\uAC00\uB294 \uB0B4 \uB4A4\uC5D0 \uC788\uC5B4. \uC800 \uC790\uBB3C\uC1E0\uAC00 \uB2E4 \uD480\uB9AC\uAE30 \uC804\uC5D0 \uB05D\uB0B4\uC790.", standing: "nodonia", cast: [{ id: "nodonia", slot: "center" }], act: "nod" }
   ])
 };
@@ -43211,14 +43211,14 @@ var STAGE_7_10_POST = {
   startNodeId: "last",
   backdrop: "restraint",
   nodes: linear([
-    { id: "last", speaker: "", body: "\uB9C8\uC9C0\uB9C9 \uC790\uBB3C\uC1E0\uAC00 \uC800\uC808\uB85C \uD130\uC84C\uB2E4. \uC190\uBC14\uB2E5 \uD310\uC5D0\uB294 \uB05D\uB0B4 \uC544\uBB34\uB3C4 \uC190\uC744 \uB300\uC9C0 \uC54A\uC558\uB2E4.", standing: "carno", cast: [{ id: "carno", slot: "center" }], cue: "explosion" },
-    { id: "notice", speaker: "\uB178\uB3C4\uB2C8\uC544", body: "\u2026\uC544\uAC00, \uBD24\uC5B4? \uC190\uC744 \uB304 \uAC8C \uC544\uB2C8\uC57C. \uC544\uAC00\uAC00 \uD55C \uAC78\uC74C \uB2E4\uAC00\uC124 \uB54C\uB9C8\uB2E4 \uC800\uAC83\uB4E4\uC774 \uB4E4\uC369\uC600\uC5B4.", standing: "nodonia", cast: [{ id: "nodonia", slot: "left" }, { id: "carno", slot: "right" }], act: "lean" },
-    { id: "carno", speaker: "\uCE74\uB974", body: "\u2026\uD480\uB838\uAD70. \uADF8\uB807\uAC8C \uC624\uB798 \uBD99\uC7A1\uC544 \uB450\uB354\uB2C8, \uACE0\uC791 \uC774\uAC70\uC600\uB098.", standing: "carno", act: "nod" },
-    { id: "hand", speaker: "\uCE74\uB974", body: "\u2026\uC190\uC774 \uC544\uB2C8\uC5C8\uAD70. \uC790\uBB3C\uC1E0\uAC00 \uAE30\uB2E4\uB9B0 \uAC74 \uC190\uC774 \uC544\uB2C8\uB77C, \uB108\uC600\uB2E4.", standing: "carno", act: "lean", voice: "heavy", cue: "heartbeat" },
-    { id: "magasa", speaker: "\uB9C8\uAC00\uC0AC", body: "\uBD80\uB300\uC7A5\uB2D8, \uC704\uB85C \uAC00\uC694. \uB178\uC544\uB3C4 \uB77C\uC790\uB3C4 \uB2E4 \uB370\uB824\uAC08\uAC8C\uC694.", standing: "magasa", cast: [{ id: "magasa", slot: "left" }, { id: "carno", slot: "right" }], act: "lean" },
-    { id: "carno2", speaker: "\uCE74\uB974", body: "\uB300\uC7A5\uB4E4\uC774 \uAE30\uB2E4\uB9B0\uB2E4. \uC5F0\uAD6C\uC6D0\uC740 \uB2E4\uC74C\uC5D0 \uB370\uB824\uAC04\uB2E4.", standing: "carno", act: "lean" },
-    { id: "carno3", speaker: "\uCE74\uB974", body: "072. \uC9C0\uC6B4 \uBC88\uD638\uB294 \uB0B4\uAC00 \uB2E4\uC2DC \uC801\uB294\uB2E4.", standing: "carno", cast: [{ id: "koma", slot: "left" }, { id: "carno", slot: "right" }], act: "nod" },
-    { id: "leave", speaker: "", body: "\uCE74\uB974\uAC00 \uCC9C\uC7A5\uC744 \uB6AB\uACE0 \uC704\uB85C \uC19F\uAD6C\uCCE4\uB2E4. \uAC10\uAE08\uC870\uAC00 \uD558\uB098\uC529 \uADF8 \uAD6C\uBA4D\uC744 \uB530\uB77C \uC62C\uB77C\uAC14\uB2E4.", standing: "carno", leave: "rise", cast: [] },
+    { id: "last", speaker: "", body: "\uB9C8\uC9C0\uB9C9 \uC790\uBB3C\uC1E0\uAC00 \uC800\uC808\uB85C \uD130\uC84C\uB2E4. \uC190\uBC14\uB2E5 \uD310\uC5D0\uB294 \uB05D\uB0B4 \uC544\uBB34\uB3C4 \uC190\uC744 \uB300\uC9C0 \uC54A\uC558\uB2E4.", standing: "kar", cast: [{ id: "kar", slot: "center" }], cue: "explosion" },
+    { id: "notice", speaker: "\uB178\uB3C4\uB2C8\uC544", body: "\u2026\uC544\uAC00, \uBD24\uC5B4? \uC190\uC744 \uB304 \uAC8C \uC544\uB2C8\uC57C. \uC544\uAC00\uAC00 \uD55C \uAC78\uC74C \uB2E4\uAC00\uC124 \uB54C\uB9C8\uB2E4 \uC800\uAC83\uB4E4\uC774 \uB4E4\uC369\uC600\uC5B4.", standing: "nodonia", cast: [{ id: "nodonia", slot: "left" }, { id: "kar", slot: "right" }], act: "lean" },
+    { id: "kar", speaker: "\uCE74\uB974", body: "\u2026\uD480\uB838\uAD70. \uADF8\uB807\uAC8C \uC624\uB798 \uBD99\uC7A1\uC544 \uB450\uB354\uB2C8, \uACE0\uC791 \uC774\uAC70\uC600\uB098.", standing: "kar", act: "nod" },
+    { id: "hand", speaker: "\uCE74\uB974", body: "\u2026\uC190\uC774 \uC544\uB2C8\uC5C8\uAD70. \uC790\uBB3C\uC1E0\uAC00 \uAE30\uB2E4\uB9B0 \uAC74 \uC190\uC774 \uC544\uB2C8\uB77C, \uB108\uC600\uB2E4.", standing: "kar", act: "lean", voice: "heavy", cue: "heartbeat" },
+    { id: "magasa", speaker: "\uB9C8\uAC00\uC0AC", body: "\uBD80\uB300\uC7A5\uB2D8, \uC704\uB85C \uAC00\uC694. \uB178\uC544\uB3C4 \uB77C\uC790\uB3C4 \uB2E4 \uB370\uB824\uAC08\uAC8C\uC694.", standing: "magasa", cast: [{ id: "magasa", slot: "left" }, { id: "kar", slot: "right" }], act: "lean" },
+    { id: "carno2", speaker: "\uCE74\uB974", body: "\uB300\uC7A5\uB4E4\uC774 \uAE30\uB2E4\uB9B0\uB2E4. \uC5F0\uAD6C\uC6D0\uC740 \uB2E4\uC74C\uC5D0 \uB370\uB824\uAC04\uB2E4.", standing: "kar", act: "lean" },
+    { id: "carno3", speaker: "\uCE74\uB974", body: "072. \uC9C0\uC6B4 \uBC88\uD638\uB294 \uB0B4\uAC00 \uB2E4\uC2DC \uC801\uB294\uB2E4.", standing: "kar", cast: [{ id: "koma", slot: "left" }, { id: "kar", slot: "right" }], act: "nod" },
+    { id: "leave", speaker: "", body: "\uCE74\uB974\uAC00 \uCC9C\uC7A5\uC744 \uB6AB\uACE0 \uC704\uB85C \uC19F\uAD6C\uCCE4\uB2E4. \uAC10\uAE08\uC870\uAC00 \uD558\uB098\uC529 \uADF8 \uAD6C\uBA4D\uC744 \uB530\uB77C \uC62C\uB77C\uAC14\uB2E4.", standing: "kar", leave: "rise", cast: [] },
     { id: "far", speaker: "???", body: "\u2026\uAD81\uB2C8\uB974, \uCCA0\uAC11. \uBD80\uB300\uC7A5 \uADC0\uD658 \uD655\uC778.", cast: [{ id: "koma", slot: "center" }], cue: "alarm" },
     { id: "whisper", speaker: "\uCF54\uB9C8", body: "\u2026\uADF8\uB798\uC11C \uB370\uB824\uC624\uB77C\uACE0 \uD55C \uAC70\uB2E4. \uCC98\uC74C\uBD80\uD130, \uC190\uC774 \uC544\uB2C8\uB77C \uB2F9\uC2E0\uC744.", standing: "koma", act: "lean", voice: "whisper" },
     { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uC704\uAE4C\uC9C0\uB294 \uAC19\uC774 \uAC04\uB2E4. \uADF8 \uB2E4\uC74C\uC740 \uBAA8\uB978\uB2E4.", standing: "koma", act: "shrink" }
@@ -43259,27 +43259,27 @@ var CHAPTER_8_STORIES = [
     ["", "\uC544\uD2B8\uB77C\uAC00 \uBE57\uC7A5\uC744 \uAC78\uCE58\uB294 \uB300\uC2E0 \uBB38 \uC0AC\uC774\uC5D0 \uC9D0\uCE78\uC744 \uBC00\uC5B4 \uB123\uC5C8\uB2E4. \uADF8 \uD2C8\uC73C\uB85C \uC5F0\uAD6C\uC6D0\uC758 \uBC1C\uCE58\uAE4C\uC9C0 \uBE44\uC0C1\uB4F1\uC774 \uAE38\uAC8C \uCF1C\uC84C\uB2E4."]
   ]),
   scene("stage-8-7-post", "controlRoom", "\uC5F0\uAD6C\uC6D0\uC774 \uB2E4\uAC00\uAC08\uC218\uB85D \uC591\uCABD\uC758 \uBE44\uC0C1\uB4F1\uC774 \uCF1C\uC9C4\uB2E4.", [
-    ["\uB370\uC774", "\uC774\uCABD \uC120\uB9CC \uB5A0 \uC788\uC5B4. \uC5F0\uAD6C\uC6D0\uD558\uACE0 \uAC00\uAE4C\uC6CC\uC9C0\uBA74 \uBD88\uC774 \uD558\uB098\uC529 \uCF1C\uC838.", "deina"],
+    ["\uB370\uC774", "\uC774\uCABD \uC120\uB9CC \uB5A0 \uC788\uC5B4. \uC5F0\uAD6C\uC6D0\uD558\uACE0 \uAC00\uAE4C\uC6CC\uC9C0\uBA74 \uBD88\uC774 \uD558\uB098\uC529 \uCF1C\uC838.", "dei"],
     ["\uB178\uB3C4\uB2C8\uC544", "\uADF8\uB7FC \uC800\uCABD\uC5D0\uC11C\uB3C4 \uC6B0\uB9AC\uAC00 \uC624\uB294 \uAC70 \uC54C\uC544\uBCF4\uACA0\uAD6C\uB098. \uC544\uAC00, \uB0B4\uAC00 \uC55E\uC5D0\uC11C \uBD88\uC744 \uC140\uAC8C.", "nodonia"],
     ["", "\uBB38 \uB108\uBA38\uC5D0\uC11C \uAC19\uC740 \uC18D\uB3C4\uB85C \uC0C8 \uBD88\uC774 \uCF1C\uC84C\uB2E4. \uBA3C\uC800 \uBCF4\uB294 \uCABD\uC774 \uB204\uAD6C\uC778\uC9C0 \uC774\uC81C \uAD6C\uBD84\uD560 \uC218 \uC5C6\uC5C8\uB2E4."]
   ]),
   scene("stage-8-10-pre", "thirdBranchField", "\uAD81\uB2C8\uB974 \uB178\uCE78\uC774 \uC2B9\uAC15\uAE30 \uC55E\uC5D0\uC11C \uAE38\uC744 \uB9C9\uB294\uB2E4.", [
     ["", "\uC2B9\uAC15\uAE30 \uBB38 \uC55E\uC5D0 \uC120 \uC5EC\uC790\uAC00 \uC18C\uB9E4\uC5D0 \uBB3B\uC740 \uBA3C\uC9C0\uB97C \uD138\uC5C8\uB2E4. \uD574\uC9C4 \uC637\uAE43 \uBC11\uC73C\uB85C \uC624\uB798 \uC544\uBB38 \uC790\uAD6D\uC774 \uBCF4\uC600\uB2E4."],
-    ["\uB178\uCE78", "\uADC0\uD658 \uBCF4\uACE0\uB294 \uBC1B\uC558\uC5B4. \uCE74\uB974\uB294 \uC798 \uC654\uACE0, \uC774\uC81C \uC5F0\uAD6C\uC6D0 \uCC28\uB840\uB2E4.", "nokan"],
+    ["\uB178\uCE78", "\uADC0\uD658 \uBCF4\uACE0\uB294 \uBC1B\uC558\uC5B4. \uCE74\uB974\uB294 \uC798 \uC654\uACE0, \uC774\uC81C \uC5F0\uAD6C\uC6D0 \uCC28\uB840\uB2E4.", "gigano"],
     ["\uB809\uC2DC\uC544", "\uC804\uD22C\uC758 \uC5EC\uC655\uC774 \uBA3C\uC800 \uC62C\uB77C\uC654\uB2E4. \uB4A4\uB294 \uBABB \uC9C0\uB098\uAC00.", "lexia"],
-    ["\uB178\uCE78", "\uADF8\uB7FC \uC5EC\uAE30\uC11C \uBD10. \uB204\uAC00 \uBA3C\uC800 \uC790\uAE30 \uB4A4\uB97C \uB3CC\uC544\uBCF4\uB294\uC9C0.", "nokan"]
+    ["\uB178\uCE78", "\uADF8\uB7FC \uC5EC\uAE30\uC11C \uBD10. \uB204\uAC00 \uBA3C\uC800 \uC790\uAE30 \uB4A4\uB97C \uB3CC\uC544\uBCF4\uB294\uC9C0.", "gigano"]
   ]),
   scene("stage-8-10-post", "thirdBranchField", "\uB178\uCE78\uC774 \uBB3C\uB7EC\uC11C\uBA70 \uCCA0\uAC11\uC5D0\uAC8C \uC717\uAE38\uC744 \uB9E1\uAE34\uB2E4.", [
     ["", "\uB178\uCE78\uC774 \uAC08\uB77C\uC9C4 \uC785\uC220\uC744 \uC190\uB4F1\uC73C\uB85C \uB2E6\uC558\uB2E4. \uBE44\uC0C1 \uC2B9\uAC15\uAE30\uAC00 \uD55C \uBC88 \uBC00\uB838\uB2E4\uAC00 \uB2E4\uC2DC \uC62C\uB77C\uC624\uAE30 \uC2DC\uC791\uD588\uB2E4."],
-    ["\uB178\uCE78", "\uCCA0\uAC11. \uC544\uB798\uC5D0\uC11C \uBC1B\uC558\uB2E4. \uBA48\uCD94\uC9C0 \uB9C8.", "nokan"],
-    ["\uC740\uD14C", "\uBC1B\uC558\uB2E4. \uB124 \uCABD \uBB38\uC744 \uB2EB\uC9C0. \uBD80\uB300\uC7A5\uD55C\uD14C\uB294 \uC14B\uC744 \uBA3C\uC800 \uBCF4\uB0B4\uB77C\uACE0 \uD574.", "eunte"],
+    ["\uB178\uCE78", "\uCCA0\uAC11. \uC544\uB798\uC5D0\uC11C \uBC1B\uC558\uB2E4. \uBA48\uCD94\uC9C0 \uB9C8.", "gigano"],
+    ["\uC740\uD14C", "\uBC1B\uC558\uB2E4. \uB124 \uCABD \uBB38\uC744 \uB2EB\uC9C0. \uBD80\uB300\uC7A5\uD55C\uD14C\uB294 \uC14B\uC744 \uBA3C\uC800 \uBCF4\uB0B4\uB77C\uACE0 \uD574.", "argen"],
     ["\uCF54\uB9C8", "\uC800 \uB458\uC740 \uC11C\uB85C \uC790\uB9AC\uB97C \uBC14\uAFB8\uC9C0 \uC54A\uB294\uB2E4. \uD55C \uBA85\uC744 \uB118\uACA8\uB3C4 \uB05D\uC774\uB77C\uACE0 \uC5EC\uAE30\uBA74 \uC548 \uB3FC.", "koma"]
   ])
 ];
 var CHAPTER_9_STORIES = [
   scene("stage-9-1-pre", "controlRoom", "\uC81C\uC5B4\uCD95\uC744 \uBA48\uCD94\uAE30 \uC804\uC5D0 \uACA9\uB0A9\uC2E4\uBD80\uD130 \uBE44\uC6B0\uAE30\uB85C \uD55C\uB2E4.", [
     ["", "\uC2B9\uAC15\uAE30\uAC00 \uBA4E\uC5C8\uB2E4. \uC9C0\uC6CC\uC9C4 \uC801 \uC5C6\uB294 \uC22B\uC790 \uB450 \uAC1C\uAC00 \uCD9C\uC785 \uBA85\uBD80 \uB9E8 \uC704\uC5D0 \uB0A8\uC544 \uC788\uC5C8\uB2E4."],
-    ["\uB370\uC774", "\uC81C\uC5B4\uCD95 \uC544\uB798 \uACA9\uB0A9\uC2E4\uC774 \uC804\uBD80 \uAC19\uC740 \uC120\uC5D0 \uBB36\uC600\uC5B4. \uC5EC\uAE30 \uBB38\uC744 \uB04A\uC73C\uB824\uBA74 \uBA3C\uC800 \uC548\uC5D0 \uC788\uB294 \uC0AC\uB78C\uC744 \uBE7C\uC57C \uD574.", "deina"],
+    ["\uB370\uC774", "\uC81C\uC5B4\uCD95 \uC544\uB798 \uACA9\uB0A9\uC2E4\uC774 \uC804\uBD80 \uAC19\uC740 \uC120\uC5D0 \uBB36\uC600\uC5B4. \uC5EC\uAE30 \uBB38\uC744 \uB04A\uC73C\uB824\uBA74 \uBA3C\uC800 \uC548\uC5D0 \uC788\uB294 \uC0AC\uB78C\uC744 \uBE7C\uC57C \uD574.", "dei"],
     ["\uB809\uC2DC\uC544", "\uC88B\uC544. \uCD9C\uAD6C\uAE4C\uC9C0 \uBA3C\uC800 \uD655\uBCF4\uD55C\uB2E4. \uBB38 \uD558\uB098 \uB530\uB7EC \uC628 \uAC70\uBA74 \uAD73\uC774 \uC5EC\uAE30\uAE4C\uC9C0 \uC548 \uC654\uC9C0.", "lexia"]
   ]),
   scene("stage-9-3-post", "controlRoom", "\uCF54\uB9C8\uAC00 \uC624\uB798\uC804 \uCC98\uC74C \uC0AC\uB78C\uC744 \uBE7C\uB0C8\uB358 \uC21C\uC11C\uB97C \uB5A0\uC62C\uB9B0\uB2E4.", [
@@ -43289,39 +43289,39 @@ var CHAPTER_9_STORIES = [
   ]),
   scene("stage-9-5-pre", "thirdBranchField", "\uCCA0\uAC11 \uC740\uD14C\uAC00 \uD1F4\uB85C \uC55E\uC5D0 \uC5F4 \uACB9\uC758 \uC7A5\uAC11\uC744 \uB0B4\uB9B0\uB2E4.", [
     ["", "\uAC80\uC740 \uC7A5\uAC11\uC758 \uC5EC\uC790\uAC00 \uBC1C\uB4A4\uAFC8\uCE58\uB97C \uB0B4\uB824\uB193\uC790, \uC5F4 \uAC08\uB798 \uACE0\uC815\uC1E0\uAC00 \uBC14\uB2E5\uC5D0 \uBC15\uD614\uB2E4."],
-    ["\uC740\uD14C", "\uCCA0\uAC11\uC774\uB2E4. \uB4A4\uC5D0 \uC0AC\uB78C \uC788\uB2E4. \uBC1C \uB514\uB518 \uC120\uC5D0\uC11C \uBB3C\uB7EC\uC11C.", "eunte"],
+    ["\uC740\uD14C", "\uCCA0\uAC11\uC774\uB2E4. \uB4A4\uC5D0 \uC0AC\uB78C \uC788\uB2E4. \uBC1C \uB514\uB518 \uC120\uC5D0\uC11C \uBB3C\uB7EC\uC11C.", "argen"],
     ["\uB178\uB3C4\uB2C8\uC544", "\uADF8 \uC0AC\uB78C\uB4E4 \uB54C\uBB38\uC5D0 \uC628 \uAC70\uC57C. \uAE38\uC744 \uD55C \uC904\uB9CC \uB0B4 \uC8FC\uB834.", "nodonia"],
-    ["\uC740\uD14C", "\uB0B4\uAC00 \uC5F4\uBA74 \uC81C\uC5B4\uCD95\uB3C4 \uC5F4\uB9B0\uB2E4. \uADF8 \uC870\uAC74\uC73C\uB85C\uB294 \uBABB \uC900\uB2E4.", "eunte"]
+    ["\uC740\uD14C", "\uB0B4\uAC00 \uC5F4\uBA74 \uC81C\uC5B4\uCD95\uB3C4 \uC5F4\uB9B0\uB2E4. \uADF8 \uC870\uAC74\uC73C\uB85C\uB294 \uBABB \uC900\uB2E4.", "argen"]
   ]),
   scene("stage-9-5-post", "thirdBranchField", "\uC740\uD14C\uAC00 \uC606 \uBB38\uC744 \uC5F4\uC5B4 \uC548\uC5D0 \uB0A8\uC740 \uC0AC\uB78C\uBD80\uD130 \uB0B4\uBCF4\uB0B8\uB2E4.", [
     ["", "\uC5F4 \uBC88\uC9F8 \uACE0\uC815\uC1E0\uAC00 \uBE60\uC838 \uB098\uC654\uB2E4. \uC740\uD14C\uB294 \uC4F0\uB7EC\uC9C4 \uBB38\uC744 \uBAB8\uC73C\uB85C \uBC1B\uCE5C \uCC44 \uB048 \uD558\uB098\uB97C \uC7A1\uC544\uB2F9\uACBC\uB2E4."],
-    ["\uC740\uD14C", "\uC606 \uBB38\uC740 \uC5F4\uC5C8\uB2E4. \uB4E4\uC5B4\uAC04 \uC0AC\uB78C \uC788\uC73C\uBA74 \uC9C0\uAE08 \uBE7C. \uC81C\uC5B4\uCD95\uC740 \uB0B4\uAC00 \uC9C0\uD0A8\uB2E4.", "eunte"],
+    ["\uC740\uD14C", "\uC606 \uBB38\uC740 \uC5F4\uC5C8\uB2E4. \uB4E4\uC5B4\uAC04 \uC0AC\uB78C \uC788\uC73C\uBA74 \uC9C0\uAE08 \uBE7C. \uC81C\uC5B4\uCD95\uC740 \uB0B4\uAC00 \uC9C0\uD0A8\uB2E4.", "argen"],
     ["\uB809\uC2DC\uC544", "\uB0B4\uAC00 \uC9C0\uD0A4\uB77C\uACE0 \uD574\uC11C \uB4A4\uC5D0 \uC11C\uB294 \uAC74 \uC54C\uACA0\uB294\uB370, \uADF8\uB807\uAC8C \uC11C\uBA74 \uB05D\uAE4C\uC9C0 \uD63C\uC790 \uB0A8\uAC8C \uB418\uC796\uC544.", "lexia"],
     ["", "\uC740\uD14C\uB294 \uB300\uB2F5\uD558\uB294 \uB300\uC2E0 \uC0AC\uB78C \uD558\uB098\uAC00 \uB354 \uC9C0\uB098\uAC08 \uB9CC\uD07C \uBB38\uC744 \uB4E4\uC5C8\uB2E4."]
   ]),
   scene("stage-9-7-post", "controlRoom", "\uCE74\uB974\uAC00 \uCD9C\uAD6C\uC5D0 \uC11C\uC11C \uB3CC\uC544\uC62C \uC0AC\uB78C\uC758 \uC774\uB984\uC744 \uBD80\uB978\uB2E4.", [
-    ["\uCE74\uB974", "\u2026\uB300\uC7A5\uB4E4 \uBA85\uB839\uC774\uB2E4. \uC544\uC9C1 \uC548 \uB098\uC628 \uC0AC\uB78C\uC744 \uCC3E\uB294\uB2E4.", "carno"],
+    ["\uCE74\uB974", "\u2026\uB300\uC7A5\uB4E4 \uBA85\uB839\uC774\uB2E4. \uC544\uC9C1 \uC548 \uB098\uC628 \uC0AC\uB78C\uC744 \uCC3E\uB294\uB2E4.", "kar"],
     ["\uCF54\uB9C8", "\uADF8\uAC74 \uB0B4\uAC00 \uAC04\uB2E4. \uB10C \uC800\uCABD\uC5D0\uC11C \uB098\uC624\uB294 \uC0AC\uB78C \uC774\uB984\uBD80\uD130 \uBD88\uB7EC.", "koma"],
     ["", "\uCE74\uB974\uAC00 \uD55C\uB3D9\uC548 \uC785\uC744 \uC5F4\uC9C0 \uC54A\uC558\uB2E4. \uADF8\uB7EC\uACE0\uB294 \uBA3C\uC800 \uB3CC\uC544\uC62C \uC0AC\uB78C\uC758 \uBC88\uD638\uB97C \uBD80\uB974\uC9C0 \uC54A\uACE0, \uC774\uB984\uC744 \uBD88\uB800\uB2E4."]
   ]),
   scene("stage-9-9-post", "controlRoom", "\uB370\uC774\uAC00 \uBC29\uCD9C\uAD6C\uB97C \uC5F0\uACB0\uD55C\uB2E4. \uC774\uC81C \uB9C8\uC9C0\uB9C9 \uBB38\uB9CC \uB0A8\uC558\uB2E4.", [
-    ["\uB370\uC774", "\uBC29\uCD9C\uAD6C \uC5F0\uACB0 \uC644\uB8CC. \uC774\uAC78 \uB193\uC73C\uBA74 \uBC14\uAE65\uAE4C\uC9C0 \uC774\uC5B4\uC838. \uC774\uC81C \uC0AC\uB78C\uB4E4 \uB04C\uC5B4\uC62C\uB9B4 \uC218 \uC788\uC5B4.", "deina"],
+    ["\uB370\uC774", "\uBC29\uCD9C\uAD6C \uC5F0\uACB0 \uC644\uB8CC. \uC774\uAC78 \uB193\uC73C\uBA74 \uBC14\uAE65\uAE4C\uC9C0 \uC774\uC5B4\uC838. \uC774\uC81C \uC0AC\uB78C\uB4E4 \uB04C\uC5B4\uC62C\uB9B4 \uC218 \uC788\uC5B4.", "dei"],
     ["\uB178\uB3C4\uB2C8\uC544", "\uADF8\uB7FC \uB9C8\uC9C0\uB9C9 \uBB38\uAE4C\uC9C0\uB294 \uC6B0\uB9AC\uAC00 \uAC08\uAC8C. \uC544\uAC00, \uC6B0\uB9AC \uB4A4\uC5D0 \uB204\uAC00 \uB0A8\uB294\uC9C0\uB3C4 \uBD10\uC57C \uD574.", "nodonia"],
     ["", "\uC81C\uC5B4\uCD95 \uB108\uBA38\uC5D0\uC11C \uAE08\uC18D\uC774 \uB450 \uBC88 \uBC14\uB2E5\uC744 \uCCE4\uB2E4. \uB300\uB2F5\uCC98\uB7FC, \uB2E4\uB978 \uCABD\uC5D0\uC11C \uBC1C\uC18C\uB9AC\uAC00 \uD55C \uBC88 \uB3CC\uC544\uC654\uB2E4."]
   ]),
   scene("stage-9-10-pre", "controlRoom", "\uB450 \uB300\uC7A5\uC774 \uB098\uB780\uD788 \uC11C\uC11C \uC5F0\uAD6C\uC6D0\uC758 \uB9C8\uC9C0\uB9C9 \uAE38\uC744 \uB9C9\uB294\uB2E4.", [
     ["", "\uC740\uD14C\uAC00 \uC911\uC559\uCD95 \uC55E\uC5D0 \uC7A5\uAC11\uC744 \uACE0\uC815\uD588\uB2E4. \uB178\uCE78\uC740 \uD55C \uAC78\uC74C \uC55E\uAE4C\uC9C0 \uB098\uAC14\uB2E4\uAC00, \uC774\uBC88\uC5D0\uB294 \uC740\uD14C\uC758 \uC5B4\uAE68\uAC00 \uB2FF\uB294 \uC790\uB9AC\uC5D0 \uC130\uB2E4."],
-    ["\uC740\uD14C", "\uBC29\uCD9C\uAD6C\uB294 \uB124\uAC00 \uC5F4\uC5C8\uC9C0, \uC5F0\uAD6C\uC6D0. \uC911\uC559\uCD95\uC744 \uC5F4\uBA74 \uB0A8\uC740 \uBC29\uAE4C\uC9C0 \uB124 \uC55E\uC73C\uB85C \uB2F9\uACA8\uC9C4\uB2E4.", "eunte"],
-    ["\uB178\uCE78", "\uCC98\uC74C\uC5D4 \uC544\uBB34\uB3C4 \uC6B0\uB9AC \uBC29\uC5D0 \uB4E4\uC5B4\uC624\uC9C0 \uC54A\uC558\uC5B4. \uC774\uC81C \uC6B0\uB9AC\uAC00 \uBA3C\uC800 \uB098\uAC00. \uB124\uAC00 \uC5EC\uAE30 \uB0A8\uC744\uC9C0\uB294 \uC6B0\uB9AC\uAC00 \uC815\uD55C\uB2E4.", "nokan"],
+    ["\uC740\uD14C", "\uBC29\uCD9C\uAD6C\uB294 \uB124\uAC00 \uC5F4\uC5C8\uC9C0, \uC5F0\uAD6C\uC6D0. \uC911\uC559\uCD95\uC744 \uC5F4\uBA74 \uB0A8\uC740 \uBC29\uAE4C\uC9C0 \uB124 \uC55E\uC73C\uB85C \uB2F9\uACA8\uC9C4\uB2E4.", "argen"],
+    ["\uB178\uCE78", "\uCC98\uC74C\uC5D4 \uC544\uBB34\uB3C4 \uC6B0\uB9AC \uBC29\uC5D0 \uB4E4\uC5B4\uC624\uC9C0 \uC54A\uC558\uC5B4. \uC774\uC81C \uC6B0\uB9AC\uAC00 \uBA3C\uC800 \uB098\uAC00. \uB124\uAC00 \uC5EC\uAE30 \uB0A8\uC744\uC9C0\uB294 \uC6B0\uB9AC\uAC00 \uC815\uD55C\uB2E4.", "gigano"],
     ["\uB809\uC2DC\uC544", "\uB9C8\uC2A4\uD130\uAC00 \uB0A8\uC744 \uC790\uB9AC\uB294 \uB9C8\uC2A4\uD130\uAC00 \uC815\uD574. \uB450 \uC0AC\uB78C \uB2E4 \uAE38\uC744 \uC5F4\uC5B4.", "lexia"],
-    ["\uC740\uD14C", "\uB178\uCE78. \uC624\uB978\uCABD\uC740 \uB9E1\uAE34\uB2E4.", "eunte"],
-    ["\uB178\uCE78", "\uC54C\uC544. \uC774\uBC88\uC5D4 \uBA3C\uC800 \uC548 \uAC04\uB2E4.", "nokan"]
+    ["\uC740\uD14C", "\uB178\uCE78. \uC624\uB978\uCABD\uC740 \uB9E1\uAE34\uB2E4.", "argen"],
+    ["\uB178\uCE78", "\uC54C\uC544. \uC774\uBC88\uC5D4 \uBA3C\uC800 \uC548 \uAC04\uB2E4.", "gigano"]
   ]),
   scene("stage-9-10-post", "controlRoom", "\uB9C8\uC9C0\uB9C9 \uBC29\uC774 \uBE44\uACE0, \uC81C\uC5B4\uCD95\uC758 \uACBD\uBCF4\uB4F1\uC774 \uAEBC\uC9C4\uB2E4.", [
     ["", "\uB9C8\uC9C0\uB9C9 \uACBD\uBCF4\uB4F1\uC774 \uAEBC\uC84C\uB2E4. \uC740\uD14C\uAC00 \uC7A1\uC544 \uB450\uB358 \uCD95\uC774 \uAE30\uC6B8\uC5C8\uACE0, \uB178\uCE78\uC774 \uC4F0\uB7EC\uC9C4 \uCABD \uC5B4\uAE68\uB97C \uBC1B\uCCE4\uB2E4."],
-    ["\uC740\uD14C", "\uB05D\uAE4C\uC9C0 \uB0A8\uC740 \uBC29\uC740?", "eunte"],
-    ["\uB370\uC774", "\uBE44\uC5C8\uC5B4. \uD56D\uBAA9\uB9C8\uB2E4 \uC0AC\uB78C \uC190\uC73C\uB85C \uD655\uC778\uD588\uC5B4.", "deina"],
-    ["\uB178\uCE78", "\uADF8\uB7FC \uB410\uB2E4. \uCCA0\uAC11, \uC774\uBC88\uC5D4 \uB124\uAC00 \uBA3C\uC800 \uAC00.", "nokan"],
+    ["\uC740\uD14C", "\uB05D\uAE4C\uC9C0 \uB0A8\uC740 \uBC29\uC740?", "argen"],
+    ["\uB370\uC774", "\uBE44\uC5C8\uC5B4. \uD56D\uBAA9\uB9C8\uB2E4 \uC0AC\uB78C \uC190\uC73C\uB85C \uD655\uC778\uD588\uC5B4.", "dei"],
+    ["\uB178\uCE78", "\uADF8\uB7FC \uB410\uB2E4. \uCCA0\uAC11, \uC774\uBC88\uC5D4 \uB124\uAC00 \uBA3C\uC800 \uAC00.", "gigano"],
     ["\uB809\uC2DC\uC544", "\uB9C8\uC2A4\uD130. \uB4A4\uC5D0 \uC544\uBB34\uB3C4 \uC548 \uB0A8\uC558\uC5B4.", "lexia"],
     ["", "\uC5F0\uAD6C\uC6D0\uC774 \uB4A4\uB97C \uB3CC\uC544\uBD24\uB2E4. \uC7A0\uAE08\uD310\uC740 \uAC00\uAE4C\uC774 \uAC00\uB3C4 \uB2E4\uC2DC \uBE5B\uB098\uC9C0 \uC54A\uC558\uB2E4. \uCF54\uB9C8\uAC00 \uADF8 \uC606\uC744 \uAC78\uC5B4\uC11C \uC9C0\uB098\uAC14\uB2E4."],
     ["\uCF54\uB9C8", "\uC704\uAE4C\uC9C0 \uAC19\uC774 \uAC04\uB2E4\uACE0 \uD588\uC9C0. \u2026\uB354 \uAC00\uC57C \uD558\uBA74, \uC774\uBC88\uC5D4 \uAC70\uAE30\uAE4C\uC9C0\uB77C\uACE0 \uD574 \uB450\uC9C0.", "koma"]
@@ -43729,10 +43729,10 @@ function preview(id, uid, displayName, level, frameId, status, relicId, relicLev
 var SAMPLE_DIRECTORY = [
   { relation: "friend", profile: preview("friend-dawn", "275810396", "\uC0C8\uBCBD\uD45C\uBCF8", 22, "field", "\uC544\uCE68 \uC21C\uCC30 \uC911", "parua", 20, 2, NOW2 - 3 * 60 * MINUTE) },
   { relation: "friend", favorite: true, profile: preview("friend-amber", "930274815", "\uD638\uBC15\uC0C1\uC790", 35, "amber", "\uBC1C\uAD74 \uC77C\uC9C0 \uC815\uB9AC", "stella", 32, 3, NOW2 - 2 * 24 * 60 * MINUTE) },
-  { relation: "friend", profile: preview("friend-wave", "514602783", "\uD30C\uB3C4\uC18C\uB9AC", 14, "field", "\uCC9C\uCC9C\uD788 \uD0A4\uC6B0\uB294 \uC911", "dodo", 12, 1, NOW2 - 2e4) },
+  { relation: "friend", profile: preview("friend-wave", "514602783", "\uD30C\uB3C4\uC18C\uB9AC", 14, "field", "\uCC9C\uCC9C\uD788 \uD0A4\uC6B0\uB294 \uC911", "dodi", 12, 1, NOW2 - 2e4) },
   { relation: "incoming", requestedAt: NOW2 - 25 * MINUTE, profile: preview("user-fog", "187305926", "\uC548\uAC1C\uAE30\uB85D", 24, "holo", "\uAC19\uC774 \uD574\uC694", "luka", 21, 2, NOW2 - 8 * MINUTE) },
   { relation: "incoming", requestedAt: NOW2 - 5 * 60 * MINUTE, profile: preview("user-sand", "706418259", "\uBAA8\uB798\uC2DC\uACC4", 11, "field", "\uCC98\uC74C \uC2DC\uC791\uD588\uC5B4\uC694", "toby", 9, 0, NOW2 - 2 * 60 * MINUTE) },
-  { relation: "outgoing", requestedAt: NOW2 - 3 * 60 * MINUTE, profile: preview("user-lighthouse", "362591048", "\uD478\uB978\uB4F1\uB300", 40, "abyss", "\uB808\uC774\uB4DC \uAC19\uC774 \uB3CC \uBD84", "rex", 38, 4, NOW2 - 4e4) },
+  { relation: "outgoing", requestedAt: NOW2 - 3 * 60 * MINUTE, profile: preview("user-lighthouse", "362591048", "\uD478\uB978\uB4F1\uB300", 40, "abyss", "\uB808\uC774\uB4DC \uAC19\uC774 \uB3CC \uBD84", "rexia", 38, 4, NOW2 - 4e4) },
   { relation: "none", profile: preview("user-stars", "849062317", "\uBCC4\uBB34\uB9AC", 29, "holo", "\uD45C\uBCF8 \uC218\uC9D1\uAC00", "torika", 26, 3, NOW2 - 15 * MINUTE) },
   { relation: "none", profile: preview("user-fern", "621874503", "\uACE0\uC0AC\uB9AC\uC232", 18, "field", "\uC870\uC6A9\uD788 \uD50C\uB808\uC774", "kento", 16, 1, NOW2 - 26 * 60 * MINUTE) },
   { relation: "none", profile: preview("user-late", "453719806", "\uB2A6\uC740\uD45C\uBCF8", 31, "amber", "\uBC24\uC5D0 \uC811\uC18D\uD574\uC694", "mosana", 28, 2, NOW2 - 4 * 24 * 60 * MINUTE) },
@@ -43980,38 +43980,38 @@ var RELIC_OBSERVATION_QUESTIONS = {
       { id: "torika-shield-protect", label: "\uB5A8\uB9AC\uB294 \uB2E4\uB9AC\uB97C \uBC84\uD2F0\uBA70 \uC0C1\uB300\uC758 \uC55E\uC744 \uAC00\uB85C\uB9C9\uB294\uB2E4", personalityTag: "\uBCF4\uD638\uBCF8\uB2A5", habitKey: "torikaShieldProtect" }
     ] }
   ],
-  rex: [
+  rexia: [
     // 큰 상대를 마주한 렉시아가 격식을 지키는 경쟁심과 체격 자체의 승부욕 중 어느 쪽을 보이는지 검증한다.
-    { id: "rex-size-rivalry", prompt: "\uC790\uC2E0\uBCF4\uB2E4 \uD6E8\uC52C \uD070 \uC0C1\uB300\uAC00 \uC55E\uC744 \uB9C9\uC73C\uBA74 \uC5B4\uB5BB\uAC8C \uBC18\uC751\uD574?", choices: [
-      { id: "rex-size-formal", label: "\uC790\uC138\uB97C \uACE7\uAC8C \uC138\uC6B0\uACE0 \uBA3C\uC800 \uC815\uC2DD\uC73C\uB85C \uC2B9\uBD80\uB97C \uCCAD\uD55C\uB2E4", personalityTag: "\uACA9\uC2DD \uC788\uB294 \uACBD\uC7C1\uC2EC", habitKey: "rexSizeFormal" },
-      { id: "rex-size-wrestle", label: "\uCCB4\uACA9 \uCC28\uC774\uB97C \uC9C0\uC801\uD558\uC790 \uACE7\uBC14\uB85C \uD798\uACA8\uB8E8\uAE30\uB97C \uC694\uAD6C\uD55C\uB2E4", personalityTag: "\uCCB4\uACA9 \uC2B9\uBD80\uC695", habitKey: "rexSizeWrestle" }
+    { id: "rexia-size-rivalry", prompt: "\uC790\uC2E0\uBCF4\uB2E4 \uD6E8\uC52C \uD070 \uC0C1\uB300\uAC00 \uC55E\uC744 \uB9C9\uC73C\uBA74 \uC5B4\uB5BB\uAC8C \uBC18\uC751\uD574?", choices: [
+      { id: "rexia-size-formal", label: "\uC790\uC138\uB97C \uACE7\uAC8C \uC138\uC6B0\uACE0 \uBA3C\uC800 \uC815\uC2DD\uC73C\uB85C \uC2B9\uBD80\uB97C \uCCAD\uD55C\uB2E4", personalityTag: "\uACA9\uC2DD \uC788\uB294 \uACBD\uC7C1\uC2EC", habitKey: "rexSizeFormal" },
+      { id: "rexia-size-wrestle", label: "\uCCB4\uACA9 \uCC28\uC774\uB97C \uC9C0\uC801\uD558\uC790 \uACE7\uBC14\uB85C \uD798\uACA8\uB8E8\uAE30\uB97C \uC694\uAD6C\uD55C\uB2E4", personalityTag: "\uCCB4\uACA9 \uC2B9\uBD80\uC695", habitKey: "rexSizeWrestle" }
     ] },
     // 압도적인 강자 앞에서 공정한 조건을 중시하는지, 강자와 즉시 겨루고 싶어 하는지 검증한다.
-    { id: "rex-strong-challenge", prompt: "\uC555\uB3C4\uC801\uC73C\uB85C \uAC15\uD55C \uC0C1\uB300\uB97C \uBC1C\uACAC\uD558\uBA74 \uC5B4\uB5BB\uAC8C \uD560 \uAC70\uC57C?", choices: [
-      { id: "rex-strong-fair", label: "\uC0C1\uB300\uC758 \uC7A5\uC810\uC744 \uC0B4\uD540 \uB4A4 \uAC19\uC740 \uC870\uAC74\uC73C\uB85C \uACA8\uB8EC\uB2E4", personalityTag: "\uACF5\uC815\uD55C \uB3C4\uC804", habitKey: "rexStrongFair" },
-      { id: "rex-strong-eager", label: "\uB208\uC744 \uBE5B\uB0B4\uBA70 \uB2F9\uC7A5 \uC5B4\uB290 \uCABD\uC774 \uAC15\uD55C\uC9C0 \uD655\uC778\uD558\uB824 \uD55C\uB2E4", personalityTag: "\uAC15\uC790 \uC120\uD638", habitKey: "rexStrongEager" }
+    { id: "rexia-strong-challenge", prompt: "\uC555\uB3C4\uC801\uC73C\uB85C \uAC15\uD55C \uC0C1\uB300\uB97C \uBC1C\uACAC\uD558\uBA74 \uC5B4\uB5BB\uAC8C \uD560 \uAC70\uC57C?", choices: [
+      { id: "rexia-strong-fair", label: "\uC0C1\uB300\uC758 \uC7A5\uC810\uC744 \uC0B4\uD540 \uB4A4 \uAC19\uC740 \uC870\uAC74\uC73C\uB85C \uACA8\uB8EC\uB2E4", personalityTag: "\uACF5\uC815\uD55C \uB3C4\uC804", habitKey: "rexStrongFair" },
+      { id: "rexia-strong-eager", label: "\uB208\uC744 \uBE5B\uB0B4\uBA70 \uB2F9\uC7A5 \uC5B4\uB290 \uCABD\uC774 \uAC15\uD55C\uC9C0 \uD655\uC778\uD558\uB824 \uD55C\uB2E4", personalityTag: "\uAC15\uC790 \uC120\uD638", habitKey: "rexStrongEager" }
     ] },
     // 작은 렐릭의 실수 앞에서 에티켓을 가르치면서도 약자를 위압하지 않는 배려 방식을 검증한다.
-    { id: "rex-small-etiquette", prompt: "\uC791\uC740 \uB810\uB9AD\uC774 \uC2E4\uC218\uB85C \uC608\uC808\uC744 \uC9C0\uD0A4\uC9C0 \uBABB\uD558\uBA74?", choices: [
-      { id: "rex-small-guide", label: "\uBA3C\uC800 \uC790\uC138\uB97C \uB0AE\uCD94\uACE0 \uCC9C\uCC9C\uD788 \uC62C\uBC14\uB978 \uC778\uC0AC\uBC95\uC744 \uC54C\uB824 \uC900\uB2E4", personalityTag: "\uC628\uD654\uD55C \uC9C0\uB3C4", habitKey: "rexSmallGuide" },
-      { id: "rex-small-example", label: "\uC790\uC2E0\uC774 \uBA3C\uC800 \uC815\uC911\uD788 \uC778\uC0AC\uD574 \uB530\uB77C \uD560 \uC218 \uC788\uAC8C \uAE30\uB2E4\uB9B0\uB2E4", personalityTag: "\uC194\uC120\uD558\uB294 \uC608\uC808", habitKey: "rexSmallExample" }
+    { id: "rexia-small-etiquette", prompt: "\uC791\uC740 \uB810\uB9AD\uC774 \uC2E4\uC218\uB85C \uC608\uC808\uC744 \uC9C0\uD0A4\uC9C0 \uBABB\uD558\uBA74?", choices: [
+      { id: "rexia-small-guide", label: "\uBA3C\uC800 \uC790\uC138\uB97C \uB0AE\uCD94\uACE0 \uCC9C\uCC9C\uD788 \uC62C\uBC14\uB978 \uC778\uC0AC\uBC95\uC744 \uC54C\uB824 \uC900\uB2E4", personalityTag: "\uC628\uD654\uD55C \uC9C0\uB3C4", habitKey: "rexSmallGuide" },
+      { id: "rexia-small-example", label: "\uC790\uC2E0\uC774 \uBA3C\uC800 \uC815\uC911\uD788 \uC778\uC0AC\uD574 \uB530\uB77C \uD560 \uC218 \uC788\uAC8C \uAE30\uB2E4\uB9B0\uB2E4", personalityTag: "\uC194\uC120\uD558\uB294 \uC608\uC808", habitKey: "rexSmallExample" }
     ] }
   ],
-  spino: [
+  spina: [
     // 동시에 울린 경보 앞에서 스피나의 임무 집중과 과묵한 현장 지휘가 각각 어떻게 드러나는지 관찰한다.
-    { id: "spino-night-alarm", prompt: "\uC57C\uAC04 \uC21C\uCC30 \uC911 \uC218\uC870 \uACBD\uBCF4\uC640 \uB2E4\uB978 \uAD6C\uC5ED\uC758 \uAD6C\uC870 \uC694\uCCAD\uC774 \uB3D9\uC2DC\uC5D0 \uB4E4\uC5B4\uC624\uBA74?", choices: [
-      { id: "spino-alarm-rescue", label: "\uAD6C\uC870 \uC694\uCCAD \uC704\uCE58\uB97C \uC9E7\uAC8C \uBCF4\uACE0\uD558\uACE0 \uC989\uC2DC \uD604\uC7A5\uC73C\uB85C \uD5A5\uD55C\uB2E4", personalityTag: "\uC784\uBB34 \uC6B0\uC120", habitKey: "spinoAlarmRescue" },
-      { id: "spino-alarm-command", label: "\uAC00\uAE4C\uC6B4 \uACBD\uBE44\uB300\uC6D0\uC5D0\uAC8C \uC218\uC870 \uC810\uAC80\uC744 \uB9E1\uAE30\uACE0 \uAD6C\uC870 \uB3D9\uC120\uC744 \uD655\uBCF4\uD55C\uB2E4", personalityTag: "\uCE68\uCC29\uD55C \uC9C0\uD718", habitKey: "spinoAlarmCommand" }
+    { id: "spina-night-alarm", prompt: "\uC57C\uAC04 \uC21C\uCC30 \uC911 \uC218\uC870 \uACBD\uBCF4\uC640 \uB2E4\uB978 \uAD6C\uC5ED\uC758 \uAD6C\uC870 \uC694\uCCAD\uC774 \uB3D9\uC2DC\uC5D0 \uB4E4\uC5B4\uC624\uBA74?", choices: [
+      { id: "spina-alarm-rescue", label: "\uAD6C\uC870 \uC694\uCCAD \uC704\uCE58\uB97C \uC9E7\uAC8C \uBCF4\uACE0\uD558\uACE0 \uC989\uC2DC \uD604\uC7A5\uC73C\uB85C \uD5A5\uD55C\uB2E4", personalityTag: "\uC784\uBB34 \uC6B0\uC120", habitKey: "spinoAlarmRescue" },
+      { id: "spina-alarm-command", label: "\uAC00\uAE4C\uC6B4 \uACBD\uBE44\uB300\uC6D0\uC5D0\uAC8C \uC218\uC870 \uC810\uAC80\uC744 \uB9E1\uAE30\uACE0 \uAD6C\uC870 \uB3D9\uC120\uC744 \uD655\uBCF4\uD55C\uB2E4", personalityTag: "\uCE68\uCC29\uD55C \uC9C0\uD718", habitKey: "spinoAlarmCommand" }
     ] },
     // 연구원만 이미 아는 어항 장식 취미를 숨기려는 시치미와 물고기를 향한 다정함으로 나누어 관찰한다.
-    { id: "spino-aquarium-decoration", prompt: "\uC5F0\uAD6C\uC6D0\uC774 \uC5B4\uD56D \uC18D\uC5D0 \uC0C8\uB85C \uB193\uC778 \uC7A5\uC2DD\uC744 \uC54C\uC544\uBCF4\uBA74?", choices: [
-      { id: "spino-decoration-deny", label: "\uC6D0\uB798 \uC788\uB358 \uAC83\uC774\uB77C\uBA70 \uC2DC\uC120\uC744 \uD53C\uD558\uACE0 \uC7A5\uC2DD \uAC01\uB3C4\uB9CC \uBC14\uB85C\uC7A1\uB294\uB2E4", personalityTag: "\uC11C\uD22C\uB978 \uC2DC\uCE58\uBBF8", habitKey: "spinoDecorationDeny" },
-      { id: "spino-decoration-shelter", label: "\uBB3C\uACE0\uAE30\uC758 \uC740\uC2E0\uCC98\uAC00 \uD544\uC694\uD588\uC744 \uBFD0\uC774\uB77C\uACE0 \uC9E7\uAC8C \uC124\uBA85\uD55C\uB2E4", personalityTag: "\uC228\uACA8 \uB454 \uB2E4\uC815\uD568", habitKey: "spinoDecorationShelter" }
+    { id: "spina-aquarium-decoration", prompt: "\uC5F0\uAD6C\uC6D0\uC774 \uC5B4\uD56D \uC18D\uC5D0 \uC0C8\uB85C \uB193\uC778 \uC7A5\uC2DD\uC744 \uC54C\uC544\uBCF4\uBA74?", choices: [
+      { id: "spina-decoration-deny", label: "\uC6D0\uB798 \uC788\uB358 \uAC83\uC774\uB77C\uBA70 \uC2DC\uC120\uC744 \uD53C\uD558\uACE0 \uC7A5\uC2DD \uAC01\uB3C4\uB9CC \uBC14\uB85C\uC7A1\uB294\uB2E4", personalityTag: "\uC11C\uD22C\uB978 \uC2DC\uCE58\uBBF8", habitKey: "spinoDecorationDeny" },
+      { id: "spina-decoration-shelter", label: "\uBB3C\uACE0\uAE30\uC758 \uC740\uC2E0\uCC98\uAC00 \uD544\uC694\uD588\uC744 \uBFD0\uC774\uB77C\uACE0 \uC9E7\uAC8C \uC124\uBA85\uD55C\uB2E4", personalityTag: "\uC228\uACA8 \uB454 \uB2E4\uC815\uD568", habitKey: "spinoDecorationShelter" }
     ] },
     // 함께하는 청소에서도 취미가 들키지 않았다고 믿는 스피나의 신뢰와 실무적인 배려를 행동으로 관찰한다.
-    { id: "spino-aquarium-cleaning", prompt: "\uC775\uC219\uD558\uC9C0 \uC54A\uC740 \uC5B4\uD56D \uCCAD\uC18C\uB97C \uC5F0\uAD6C\uC6D0\uC774 \uB3C4\uC640\uC8FC\uACA0\uB2E4\uACE0 \uD558\uBA74?", choices: [
-      { id: "spino-cleaning-gloves", label: "\uAC70\uC808\uD558\uB824\uB2E4 \uC5EC\uBD84\uC758 \uC7A5\uAC11\uC744 \uC870\uC6A9\uD788 \uAC74\uB128\uB2E4", personalityTag: "\uB9D0\uC5C6\uB294 \uC2E0\uB8B0", habitKey: "spinoCleaningGloves" },
-      { id: "spino-cleaning-roles", label: "\uC790\uC2E0\uC774 \uC218\uCD08\uB97C \uB9E1\uACA0\uB2E4\uBA70 \uC5ED\uD560\uC744 \uC815\uD655\uD788 \uB098\uB208\uB2E4", personalityTag: "\uC2E4\uBB34\uC801\uC778 \uBC30\uB824", habitKey: "spinoCleaningRoles" }
+    { id: "spina-aquarium-cleaning", prompt: "\uC775\uC219\uD558\uC9C0 \uC54A\uC740 \uC5B4\uD56D \uCCAD\uC18C\uB97C \uC5F0\uAD6C\uC6D0\uC774 \uB3C4\uC640\uC8FC\uACA0\uB2E4\uACE0 \uD558\uBA74?", choices: [
+      { id: "spina-cleaning-gloves", label: "\uAC70\uC808\uD558\uB824\uB2E4 \uC5EC\uBD84\uC758 \uC7A5\uAC11\uC744 \uC870\uC6A9\uD788 \uAC74\uB128\uB2E4", personalityTag: "\uB9D0\uC5C6\uB294 \uC2E0\uB8B0", habitKey: "spinoCleaningGloves" },
+      { id: "spina-cleaning-roles", label: "\uC790\uC2E0\uC774 \uC218\uCD08\uB97C \uB9E1\uACA0\uB2E4\uBA70 \uC5ED\uD560\uC744 \uC815\uD655\uD788 \uB098\uB208\uB2E4", personalityTag: "\uC2E4\uBB34\uC801\uC778 \uBC30\uB824", habitKey: "spinoCleaningRoles" }
     ] }
   ],
   luka: [
@@ -44060,17 +44060,17 @@ var REACTIONS = {
     torikaShieldProtect: "\uB2E4\uB9AC\uAC00 \uB5A8\uB824\uB3C4 \uBAB8\uC744 \uB0AE\uCDB0 \uBCF4\uD638\uD560 \uB300\uC0C1\uC758 \uC55E\uC744 \uB9C9\uC544\uC120\uB2E4."
   } },
   // 경쟁심·강자 선호에는 정중한 승부 절차를, 에티켓·약자 배려에는 위압하지 않는 태도를 대응시킨다.
-  rex: { intro: "\uAD00\uCC30\uC774\uB77C\uB2C8, \uC7AC\uBBF8\uC788\uB294 \uAC78 \uBB3B\uB124.", replies: {
+  rexia: { intro: "\uAD00\uCC30\uC774\uB77C\uB2C8, \uC7AC\uBBF8\uC788\uB294 \uAC78 \uBB3B\uB124.", replies: {
     approach: "\uC228\uAE30 \uC804\uC5D0 \uB0B4\uAC00 \uCC3E\uC544\uB0B4\uC9C0.",
     wait: "\uBC14\uB78C\uC774 \uB0C4\uC0C8\uB97C \uAC00\uC838\uC62C \uB54C\uAE4C\uC9C0 \uAE30\uB2E4\uB824.",
     share: "\uB0B4 \uBB34\uB9AC\uB77C\uBA74 \uAD76\uAE30\uC9C0 \uC54A\uC544.",
     guard: "\uAC15\uD55C \uC21C\uC11C\uAC00 \uC544\uB2C8\uB77C \uD544\uC694\uD55C \uC21C\uC11C\uB85C \uBA39\uC5B4.",
-    "rex-size-formal": "\uD6CC\uB96D\uD55C \uCCB4\uACA9\uC774\uAD70. \uC774\uB984\uC744 \uBC1D\uD788\uACE0 \uC815\uC2DD\uC73C\uB85C \uD55C \uD310 \uCCAD\uD558\uACA0\uC5B4.",
-    "rex-size-wrestle": "\uADF8 \uCCB4\uACA9\uC774 \uC5BC\uB9C8\uB098 \uB300\uB2E8\uD55C\uC9C0, \uAD1C\uCC2E\uB2E4\uBA74 \uD798\uC73C\uB85C \uACA8\uB904 \uBCF4\uC790.",
-    "rex-strong-fair": "\uB124 \uAC15\uC810\uC744 \uCDA9\uBD84\uD788 \uBCF8 \uB4A4 \uAC19\uC740 \uC870\uAC74\uC5D0\uC11C \uC815\uC815\uB2F9\uB2F9\uD788 \uB3C4\uC804\uD558\uACA0\uC5B4.",
-    "rex-strong-eager": "\uB208\uC744 \uB5C4 \uC218 \uC5C6\uB294 \uAC15\uD568\uC774\uAD70. \uC900\uBE44\uAC00 \uB410\uB2E4\uBA74 \uC9C0\uAE08 \uC2B9\uBD80\uB97C \uCCAD\uD558\uC9C0.",
-    "rex-small-guide": "\uB180\uB77C\uC9C0 \uC54A\uC544\uB3C4 \uB3FC. \uB0B4\uAC00 \uBAB8\uC744 \uB0AE\uCD9C \uD14C\uB2C8 \uCC9C\uCC9C\uD788 \uC778\uC0AC\uBD80\uD130 \uD574 \uBCF4\uC790.",
-    "rex-small-example": "\uB0B4\uAC00 \uBA3C\uC800 \uC778\uC0AC\uD560\uAC8C. \uD3B8\uD574\uC9C0\uBA74 \uAC19\uC740 \uBC29\uC2DD\uC73C\uB85C \uB2F5\uD574 \uC918."
+    "rexia-size-formal": "\uD6CC\uB96D\uD55C \uCCB4\uACA9\uC774\uAD70. \uC774\uB984\uC744 \uBC1D\uD788\uACE0 \uC815\uC2DD\uC73C\uB85C \uD55C \uD310 \uCCAD\uD558\uACA0\uC5B4.",
+    "rexia-size-wrestle": "\uADF8 \uCCB4\uACA9\uC774 \uC5BC\uB9C8\uB098 \uB300\uB2E8\uD55C\uC9C0, \uAD1C\uCC2E\uB2E4\uBA74 \uD798\uC73C\uB85C \uACA8\uB904 \uBCF4\uC790.",
+    "rexia-strong-fair": "\uB124 \uAC15\uC810\uC744 \uCDA9\uBD84\uD788 \uBCF8 \uB4A4 \uAC19\uC740 \uC870\uAC74\uC5D0\uC11C \uC815\uC815\uB2F9\uB2F9\uD788 \uB3C4\uC804\uD558\uACA0\uC5B4.",
+    "rexia-strong-eager": "\uB208\uC744 \uB5C4 \uC218 \uC5C6\uB294 \uAC15\uD568\uC774\uAD70. \uC900\uBE44\uAC00 \uB410\uB2E4\uBA74 \uC9C0\uAE08 \uC2B9\uBD80\uB97C \uCCAD\uD558\uC9C0.",
+    "rexia-small-guide": "\uB180\uB77C\uC9C0 \uC54A\uC544\uB3C4 \uB3FC. \uB0B4\uAC00 \uBAB8\uC744 \uB0AE\uCD9C \uD14C\uB2C8 \uCC9C\uCC9C\uD788 \uC778\uC0AC\uBD80\uD130 \uD574 \uBCF4\uC790.",
+    "rexia-small-example": "\uB0B4\uAC00 \uBA3C\uC800 \uC778\uC0AC\uD560\uAC8C. \uD3B8\uD574\uC9C0\uBA74 \uAC19\uC740 \uBC29\uC2DD\uC73C\uB85C \uB2F5\uD574 \uC918."
   }, habits: {
     approach: "\uC18C\uB9AC\uBCF4\uB2E4 \uBC14\uB78C\uC5D0 \uC2E4\uB9B0 \uB0C4\uC0C8\uB97C \uBA3C\uC800 \uC887\uB294\uB2E4.",
     wait: "\uC0AC\uB0E5 \uC804 \uBAB8\uC744 \uB0AE\uCD94\uACE0 \uD48D\uD5A5\uC774 \uBC14\uB00C\uAE30\uB97C \uAE30\uB2E4\uB9B0\uB2E4.",
@@ -44084,17 +44084,17 @@ var REACTIONS = {
     rexSmallExample: "\uC791\uC740 \uB810\uB9AD \uC55E\uC5D0\uC11C\uB294 \uBAA9\uC18C\uB9AC\uB97C \uB0AE\uCD94\uACE0 \uBA3C\uC800 \uCC9C\uCC9C\uD788 \uACE0\uAC1C\uB97C \uC219\uC778\uB2E4."
   } },
   // 연구원은 어항 취미를 알지만, 스피나는 임무와 물고기 관리라는 짧은 해명으로 아직 감췄다고 믿는다.
-  spino: { intro: "\uC9C8\uBB38\uC740 \uC9E7\uAC8C. \uC21C\uCC30 \uC2DC\uAC04\uC774\uB2C8\uAE4C.", replies: {
+  spina: { intro: "\uC9C8\uBB38\uC740 \uC9E7\uAC8C. \uC21C\uCC30 \uC2DC\uAC04\uC774\uB2C8\uAE4C.", replies: {
     approach: "\uBC1C\uC2E0 \uC9C0\uC810\uBD80\uD130 \uD655\uC778\uD55C\uB2E4. \uC218\uC870 \uCABD\uC740 \uC544\uB2C8\uACA0\uC9C0.",
     wait: "\uC8FC\uBCC0\uC774 \uC7A0\uC7A0\uD574\uC9C8 \uB54C\uAE4C\uC9C0 \uB300\uAE30\uD55C\uB2E4. \uC5B4\uD56D\uC744 \uBCF4\uB294 \uAC74 \uC544\uB2C8\uB2E4.",
     share: "\uD544\uC694\uD55C \uBAAB\uB9CC \uB098\uB208\uB2E4. \uBB3C\uACE0\uAE30 \uBA39\uC774\uB3C4 \uAC19\uC740 \uC6D0\uCE59\uC774\uB2E4.",
     guard: "\uBB3C\uAC00\uB97C \uBA3C\uC800 \uD655\uBCF4\uD55C\uB2E4. \uC218\uC870 \uC0C1\uD0DC\uB294 \uC21C\uCC30 \uD56D\uBAA9\uC77C \uBFD0\uC774\uB2E4.",
-    "spino-alarm-rescue": "\uAD6C\uC870 \uC694\uCCAD \uC704\uCE58 \uBCF4\uACE0. \uC7A5\uBE44 \uD655\uC778\uD588\uB2E4. \uBC14\uB85C \uAC04\uB2E4.",
-    "spino-alarm-command": "\uAC00\uAE4C\uC6B4 \uACBD\uBE44\uB294 \uC218\uC870 \uD655\uC778. \uB098\uB294 \uAD6C\uC870 \uD1B5\uB85C\uB97C \uD655\uBCF4\uD55C\uB2E4.",
-    "spino-decoration-deny": "\uC6D0\uB798 \uC788\uB358 \uAC70\uB2E4. ...\uAC01\uB3C4\uAC00 \uD2C0\uC5B4\uC84C\uAD70.",
-    "spino-decoration-shelter": "\uBB3C\uACE0\uAE30\uC5D0\uAC8C \uC740\uC2E0\uCC98\uAC00 \uD544\uC694\uD588\uC744 \uBFD0\uC774\uB2E4. \uADF8 \uC774\uC0C1\uC740 \uC5C6\uC5B4.",
-    "spino-cleaning-gloves": "\uD63C\uC790 \uD574\uB3C4 \uB41C\uB2E4. ...\uC5EC\uBD84 \uC7A5\uAC11\uC740 \uAC70\uAE30 \uC788\uB2E4.",
-    "spino-cleaning-roles": "\uB098\uB294 \uC218\uCD08\uB97C \uB9E1\uC9C0. \uB2F9\uC2E0\uC740 \uC720\uB9AC\uBA74. \uADF8\uAC8C \uD6A8\uC728\uC801\uC774\uB2E4."
+    "spina-alarm-rescue": "\uAD6C\uC870 \uC694\uCCAD \uC704\uCE58 \uBCF4\uACE0. \uC7A5\uBE44 \uD655\uC778\uD588\uB2E4. \uBC14\uB85C \uAC04\uB2E4.",
+    "spina-alarm-command": "\uAC00\uAE4C\uC6B4 \uACBD\uBE44\uB294 \uC218\uC870 \uD655\uC778. \uB098\uB294 \uAD6C\uC870 \uD1B5\uB85C\uB97C \uD655\uBCF4\uD55C\uB2E4.",
+    "spina-decoration-deny": "\uC6D0\uB798 \uC788\uB358 \uAC70\uB2E4. ...\uAC01\uB3C4\uAC00 \uD2C0\uC5B4\uC84C\uAD70.",
+    "spina-decoration-shelter": "\uBB3C\uACE0\uAE30\uC5D0\uAC8C \uC740\uC2E0\uCC98\uAC00 \uD544\uC694\uD588\uC744 \uBFD0\uC774\uB2E4. \uADF8 \uC774\uC0C1\uC740 \uC5C6\uC5B4.",
+    "spina-cleaning-gloves": "\uD63C\uC790 \uD574\uB3C4 \uB41C\uB2E4. ...\uC5EC\uBD84 \uC7A5\uAC11\uC740 \uAC70\uAE30 \uC788\uB2E4.",
+    "spina-cleaning-roles": "\uB098\uB294 \uC218\uCD08\uB97C \uB9E1\uC9C0. \uB2F9\uC2E0\uC740 \uC720\uB9AC\uBA74. \uADF8\uAC8C \uD6A8\uC728\uC801\uC774\uB2E4."
   }, habits: {
     approach: "\uBC1C\uC2E0\uC9C0\uB97C \uC887\uC73C\uBA74\uC11C\uB3C4 \uC5F0\uAD6C\uC6D0\uC758 \uC2DC\uC120\uC774 \uBA40\uC5B4\uC9C0\uBA74 \uC218\uC870 \uC7A5\uBE44 \uC7A0\uAE08\uC744 \uD55C \uBC88 \uB354 \uD655\uC778\uD55C\uB2E4.",
     wait: "\uB300\uAE30 \uC911 \uC5B4\uD56D \uCABD\uC744 \uBCF4\uC9C0 \uC54A\uB294 \uCC99\uD558\uBA74\uC11C \uC720\uB9AC\uC5D0 \uBE44\uCE5C \uBB3C\uACE0\uAE30\uC758 \uC6C0\uC9C1\uC784\uC744 \uD655\uC778\uD55C\uB2E4.",
@@ -47211,11 +47211,11 @@ function replayGuildWar(attack, defense, defs, seed) {
 // src/data/guildGuard.ts
 init_define_import_meta_env();
 var GUILD_GUARD_ROSTER_IDS = {
-  fire: ["raitia-fire", "pulsi", "toby"],
-  earth: ["raitia-earth", "mir", "amo"],
-  water: ["raitia-water", "neuri", "ripa"],
-  grass: ["raitia-grass", "koma", "atra"],
-  wind: ["raitia-wind", "ikanixia"]
+  fire: ["favia", "pulsi", "toby"],
+  earth: ["silia", "mir", "amo"],
+  water: ["guttia", "neuri", "ripa"],
+  grass: ["viria", "koma", "atra"],
+  wind: ["ventia", "ikanixia"]
 };
 function guildGuardRoster(element) {
   const pool = GUILD_GUARD_ROSTER_IDS[element].map((id) => getRelic(id));
@@ -49242,7 +49242,7 @@ var STRATA_TICKET_ITEM2 = "strata-ticket";
 var RECEIPT_KEEP = 48;
 var QA_ANCIENT_RANKING = [
   { playerId: "user-stars", displayName: "DeepDiver", floor: 118, favoriteRelicId: "koma" },
-  { playerId: "user-fog", displayName: "Haneul", floor: 87, favoriteRelicId: "rex" },
+  { playerId: "user-fog", displayName: "Haneul", floor: 87, favoriteRelicId: "rexia" },
   { playerId: "user-lighthouse", displayName: "StrataKeeper", floor: 64, favoriteRelicId: "mette" },
   { playerId: "friend-dawn", displayName: "MossLab", floor: 31, favoriteRelicId: "torika" },
   { playerId: "user-garden", displayName: "FossilHunter", floor: 12, favoriteRelicId: "parua" }

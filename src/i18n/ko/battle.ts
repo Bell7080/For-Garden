@@ -47,7 +47,7 @@ export const BATTLE_KO = {
   "battle.tutorial.ultimate.owner": "{name}의 궁극기",
   "battle.tutorial.ultimate.tap": "빛나는 카드를 눌러 써 보세요 · {step}/{total}",
   "battle.tutorial.ultimate.desc.torika": "주위의 적을 땅째 내리찍어 피해를 주고 잠깐 기절시켜요.",
-  "battle.tutorial.ultimate.desc.dodo": "고른 자리의 적에게 피해를 주고, 그 안의 아군을 회복시켜요.",
+  "battle.tutorial.ultimate.desc.dodi": "고른 자리의 적에게 피해를 주고, 그 안의 아군을 회복시켜요.",
   "battle.tutorial.ultimate.desc.parua": "잠깐 공격이 빨라지고 화살을 두 발씩 쏘아요.",
 
   "battle.gauge.frenzy": "폭주 {value} / {max}",

@@ -129,7 +129,7 @@ export const RAID_SUMMON_DIFFICULTIES = ["easy", "normal", "hard"] as const sati
  * 레이드에 서는 보스 풀. **토벌권은 보스와 난이도를 모두 서버가 굴리고**, 선택 토벌권은 둘 다
  * 사람이 고른다. 월드 폭주도 이 풀을 하루씩 돌아가며 세운다(`raidWorldBossId`).
  */
-export const RAID_BOSS_POOL = ["sukusuino", "taboa", "quetzalcoatlus"] as const;
+export const RAID_BOSS_POOL = ["sukusuino", "taboa", "koatl"] as const;
 
 /** 두 가지 토벌권. 가방의 재료 아이템이다(`src/data/items.ts`). */
 export const RAID_TICKET_ITEM = "raid-ticket";
@@ -180,11 +180,11 @@ export const RAID_COMPLETED_KEEP_HOURS = 48;
  * 굳지 않는다.
  */
 export const RAID_MOCK_PARTICIPANTS = [
-  { id: "raider-haneul", displayName: "하늘정원", favoriteRelicId: "rex", pace: 1.32 },
+  { id: "raider-haneul", displayName: "하늘정원", favoriteRelicId: "rexia", pace: 1.32 },
   { id: "raider-moss", displayName: "이끼연구소", favoriteRelicId: "torika", pace: 0.71 },
-  { id: "raider-viola", displayName: "비올라", favoriteRelicId: "spino", pace: 1.18 },
+  { id: "raider-viola", displayName: "비올라", favoriteRelicId: "spina", pace: 1.18 },
   { id: "raider-kettle", displayName: "주전자", favoriteRelicId: "luka", pace: 0.94 },
-  { id: "raider-noon", displayName: "정오의표본", favoriteRelicId: "dodo", pace: 1.07 },
+  { id: "raider-noon", displayName: "정오의표본", favoriteRelicId: "dodi", pace: 1.07 },
   { id: "raider-dust", displayName: "먼지떨이", favoriteRelicId: "tia", pace: 0.62 },
   { id: "raider-ember", displayName: "잔불", favoriteRelicId: "stella", pace: 1.24 },
   { id: "raider-quartz", displayName: "석영", favoriteRelicId: "meron", pace: 0.88 },
@@ -195,15 +195,15 @@ export const RAID_MOCK_PARTICIPANTS = [
   { id: "raider-halo", displayName: "달무리", favoriteRelicId: "nodonia", pace: 1.29 },
   { id: "raider-pebble", displayName: "조약돌", favoriteRelicId: "ella", pace: 0.84 },
   { id: "raider-signal", displayName: "신호탑", favoriteRelicId: "mette", pace: 1.11 },
-  { id: "raider-lantern", displayName: "등불", favoriteRelicId: "deina", pace: 0.75 },
+  { id: "raider-lantern", displayName: "등불", favoriteRelicId: "dei", pace: 0.75 },
   { id: "raider-marrow", displayName: "골수연구", favoriteRelicId: "maddy", pace: 0.97 },
   { id: "raider-willow", displayName: "버드나무", favoriteRelicId: "terisa", pace: 1.21 },
   { id: "raider-gale", displayName: "돌풍", favoriteRelicId: "parua", pace: 0.66 },
   { id: "raider-amberly", displayName: "호박빛", favoriteRelicId: "shute", pace: 1.06 },
   { id: "raider-slate", displayName: "점판암", favoriteRelicId: "dian", pace: 0.81 },
-  { id: "raider-vellum", displayName: "양피지", favoriteRelicId: "rex", pace: 1.13 },
+  { id: "raider-vellum", displayName: "양피지", favoriteRelicId: "rexia", pace: 1.13 },
   { id: "raider-drift", displayName: "표류", favoriteRelicId: "torika", pace: 0.73 },
-  { id: "raider-kiln", displayName: "가마", favoriteRelicId: "spino", pace: 1.27 },
+  { id: "raider-kiln", displayName: "가마", favoriteRelicId: "spina", pace: 1.27 },
 ] as const;
 
 // 단계 이름은 화면에 서는 정적 콘텐츠라 다른 언어만 개체 ID로 덮어쓴다.

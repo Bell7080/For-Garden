@@ -23,7 +23,7 @@ describe("고대 지층 200층 난이도 계약", () => {
     expect(definition.enemyBreakthroughs).toEqual([0,0,0]);
     expect(definition.level).toBe(17);
     expect(definition.multipliers).toEqual({ hp: 1, attack: 1, defense: 1 });
-    const party = ancientReferenceParty(["rex", "torika", "mette"], "bare");
+    const party = ancientReferenceParty(["rexia", "torika", "mette"], "bare");
     expect(createAncientStrataSkirmish(1, party.players, party).boss).toBeUndefined();
   });
 
@@ -72,7 +72,7 @@ describe("고대 지층 200층 난이도 계약", () => {
     expect(duo.enemies).toHaveLength(2);
     expect(duo.enemies.every(e=>e.encounterRole==="elite")).toBe(true);
     expect(duo.enemies.reduce((sum,e)=>sum+e.stats.hp,0) / (referenceHp()*duo.multipliers.hp)).toBeCloseTo(1,2);
-    const party=ancientReferenceParty(["rex","torika","mette"],"bare");
+    const party=ancientReferenceParty(["rexia","torika","mette"],"bare");
     const shield=createAncientStrataSkirmish(5,party.players,party);
     for(const f of shield.fighters.filter(f=>f.side==="enemy")) expect(f.shield.amount / f.maxHp).toBeCloseTo(.3,2);
     const charge=createAncientStrataSkirmish(6,party.players,party);
@@ -100,18 +100,18 @@ describe("고대 지층 200층 난이도 계약", () => {
 describe("실제 전투 기반 고대 지층 검수", () => {
   it("룬 표본은 실제 획득/세공/특성 규칙을 통과하고 60레벨에는 4돌파를 넘기고 100레벨까지 받는다", () => {
     for (const equipment of ["bare", "epic", "ceiling"] as const) {
-      const party = ancientReferenceParty(["rex", "torika", "mette"], equipment);
+      const party = ancientReferenceParty(["rexia", "torika", "mette"], equipment);
       expect(Object.values(party.breakthroughs)).toEqual([4, 4, 4]);
       for (const { runes } of party.equipped) for (const rune of runes) {
         expect(() => assertValidRuneInstance(rune)).not.toThrow();
         expect(rune.enhancementComplete).toBe(true);
       }
     }
-    expect(ancientReferenceRunes("rex", "ceiling")[0].engravings).toHaveLength(1);
-    expect(() => ancientReferenceParty(["rex", "rex", "mette"], "bare")).toThrow();
-    expect(() => ancientReferenceParty(["dimo", "rex", "mette"], "bare")).toThrow();
-    expect(Object.values(ancientReferenceParty(["rex", "torika", "mette"], "bare", 100).breakthroughs)).toEqual([4, 4, 4]);
-    expect(() => ancientReferenceParty(["rex", "torika", "mette"], "bare", 101)).toThrow();
+    expect(ancientReferenceRunes("rexia", "ceiling")[0].engravings).toHaveLength(1);
+    expect(() => ancientReferenceParty(["rexia", "rexia", "mette"], "bare")).toThrow();
+    expect(() => ancientReferenceParty(["dimo", "rexia", "mette"], "bare")).toThrow();
+    expect(Object.values(ancientReferenceParty(["rexia", "torika", "mette"], "bare", 100).breakthroughs)).toEqual([4, 4, 4]);
+    expect(() => ancientReferenceParty(["rexia", "torika", "mette"], "bare", 101)).toThrow();
   });
 
   it("동일 seed는 재현되고 소환수를 원래 파티 생존자/체력 분모에 더하지 않는다", () => {
@@ -130,6 +130,6 @@ describe("실제 전투 기반 고대 지층 검수", () => {
     expect(state.fighters.filter(f => f.side === "enemy").map(f => f.def.stats)).toEqual(getAncientStrataFloor(100).enemies.map(e => e.stats));
     expect(state.fighters.find(f => f.side === "player")?.breakthrough).toBe(4);
     expect(scenario.durationSeconds).toBe(getAncientStrataFloor(100).timeLimitSeconds ?? deathClockClosesBySeconds());
-    expect(() => createCcCombatScenario({ mode: "ancient", selections: [{ augmentId: "tag-stun-basic", targetRelicId: "rex" }] })).toThrow();
+    expect(() => createCcCombatScenario({ mode: "ancient", selections: [{ augmentId: "tag-stun-basic", targetRelicId: "rexia" }] })).toThrow();
   });
 });

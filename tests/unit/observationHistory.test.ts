@@ -3,7 +3,7 @@ import { clampObservationPage, sortedObservationHistory } from "../../src/ui/obs
 import type { ObservationRecord } from "../../src/state/session";
 
 function record(date: string): ObservationRecord {
-  return { date, relicId: "dodo", storyId: `s-${date}`, questionId: "q", question: "?", choiceId: "c", answer: "a", personalityTag: "tag", discoveredHabit: "habit" };
+  return { date, relicId: "dodi", storyId: `s-${date}`, questionId: "q", question: "?", choiceId: "c", answer: "a", personalityTag: "tag", discoveredHabit: "habit" };
 }
 
 describe("관찰 기록 레이어 — 최신 순 정렬", () => {

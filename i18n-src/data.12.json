@@ -1,5 +1,5 @@
 {
-"relic.raitia-grass.name": [
+"relic.viria.name": [
 "维莉娅",
 "วิเรีย",
 "Viria",
@@ -9,7 +9,7 @@
 "Viria",
 "Вирия"
 ],
-"relic.raitia-grass.origin": [
+"relic.viria.origin": [
 "睡鼠",
 "หนูดอร์เมาส์",
 "Chuột sóc",
@@ -19,7 +19,7 @@
 "Bilch",
 "Соня"
 ],
-"relic.raitia-grass.excavationSite": [
+"relic.viria.excavationSite": [
 "斯洛文尼亚 喀斯特洞穴沉积层",
 "ตะกอนถ้ำคาสต์ สโลวีเนีย",
 "Trầm tích hang karst, Slovenia",
@@ -29,7 +29,7 @@
 "Karsthöhlensediment, Slowenien",
 "Отложения карстовой пещеры, Словения"
 ],
-"relic.raitia-grass.fossilRecord": [
+"relic.viria.fossilRecord": [
 "从洞穴沉积物的同一层中回收了数十个同种头骨。其中五个在大小与齿列上高度一致，被归为同一窝。",
 "จากตะกอนถ้ำชั้นเดียวกันได้กะโหลกชนิดเดียวกันหลายสิบชิ้น ห้าชิ้นในนั้นมีขนาดและแนวฟันตรงกันมากจนจัดเป็นครอกเดียวกัน",
 "Hàng chục hộp sọ cùng loài được thu từ một lớp trầm tích hang duy nhất. Năm chiếc trong số đó khớp nhau về kích thước và hàm răng đến mức được xếp vào cùng một lứa.",
@@ -39,7 +39,7 @@
 "Aus einer einzigen Schicht Höhlensediment wurden Dutzende Schädel derselben Art geborgen. Fünf davon stimmen in Größe und Gebiss so genau überein, dass sie als ein Wurf eingestuft wurden.",
 "Из одного слоя пещерных отложений извлекли десятки черепов одного вида. Пять из них так совпадают по размеру и зубам, что их отнесли к одному помёту."
 ],
-"relic.raitia-grass.catalogSummary": [
+"relic.viria.catalogSummary": [
 "以睡鼠为基础，复原出过大门齿与颊囊的个体。",
 "ตัวอย่างที่ฟื้นคืนจากหนูดอร์เมาส์ มีฟันหน้าและกระพุ้งแก้มขนาดใหญ่เกินปกติ",
 "Mẫu vật dựa trên chuột sóc, được phục hồi với răng cửa và túi má quá khổ.",
@@ -49,7 +49,7 @@
 "Ein Exemplar auf Bilchbasis, restauriert mit übergroßen Schneidezähnen und Backentaschen.",
 "Образец на основе сони с увеличенными резцами и защёчными мешками."
 ],
-"relic.raitia-grass.squadNote": [
+"relic.viria.squadNote": [
 "歼灭的消耗性兵力。她们朝指向的方向一齐涌去填满走廊，后面的直接踏过前面倒下的地方。",
 "กำลังพลใช้แล้วทิ้งของหน่วยทำลายล้าง พวกเธอหลั่งไหลพร้อมกันไปทางที่ถูกชี้จนเต็มทางเดิน ตัวข้างหลังก้าวข้ามจุดที่ตัวข้างหน้าล้มไปทันที",
 "Lực lượng tiêu hao của Hủy Diệt. Chúng đồng loạt tràn về hướng được chỉ và lấp kín hành lang, những kẻ phía sau bước thẳng qua chỗ kẻ phía trước ngã xuống.",
@@ -59,7 +59,7 @@
 "Die entbehrliche Masse der Vernichtung. Sie strömen alle zugleich in die gewiesene Richtung und füllen den Gang; die hinteren treten geradewegs über die Stelle, an der die vorderen fielen.",
 "Расходная масса Истребления. Они разом текут туда, куда укажут, заполняя коридор, и задние шагают прямо через место, где пали передние."
 ],
-"relic.raitia-grass.researcherTitle": [
+"relic.viria.researcherTitle": [
 "研究员",
 "นักวิจัย",
 "Nhà nghiên cứu",
@@ -69,7 +69,7 @@
 "Forscher",
 "Исследователь"
 ],
-"relic.raitia-grass.observation.originYear": [
+"relic.viria.observation.originYear": [
 "约200万年前",
 "ประมาณ 2 ล้านปีก่อน",
 "Khoảng 2 triệu năm trước",
@@ -79,7 +79,7 @@
 "Vor etwa 2 Millionen Jahren",
 "Около 2 млн лет назад"
 ],
-"relic.raitia-grass.observation.restorationYear": [
+"relic.viria.observation.restorationYear": [
 "E.C. 2",
 "E.C. 2",
 "E.C. 2",
@@ -89,7 +89,7 @@
 "E.C. 2",
 "E.C. 2"
 ],
-"relic.raitia-grass.observation.lifeStage": [
+"relic.viria.observation.lifeStage": [
 "幼年",
 "วัยเยาว์",
 "Nhỏ tuổi",
@@ -99,7 +99,7 @@
 "Jungtier",
 "Юная"
 ],
-"relic.raitia-grass.observation.height": [
+"relic.viria.observation.height": [
 "0.94 m",
 "0.94 m",
 "0,94 m",
@@ -109,7 +109,7 @@
 "0,94 m",
 "0,94 м"
 ],
-"relic.raitia-grass.observation.weight": [
+"relic.viria.observation.weight": [
 "21 kg",
 "21 kg",
 "21 kg",
@@ -119,7 +119,7 @@
 "21 kg",
 "21 кг"
 ],
-"relic.raitia-grass.passive.name": [
+"relic.viria.passive.name": [
 "冬眠",
 "จำศีล",
 "Ngủ đông",
@@ -129,7 +129,7 @@
 "Winterschlaf",
 "Спячка"
 ],
-"relic.raitia-grass.passive.desc": [
+"relic.viria.passive.desc": [
 "每场战斗一次，生命降至一半以下时，5秒内每秒恢复最大生命的3%。",
 "หนึ่งครั้งต่อการต่อสู้ เมื่อ HP ลดเหลือครึ่งหนึ่งหรือต่ำกว่า จะฟื้นฟู 3% ของ HP สูงสุดทุกวินาทีเป็นเวลา 5 วินาที",
 "Mỗi trận một lần, khi HP còn một nửa trở xuống, hồi 3% HP tối đa mỗi giây trong 5 giây.",
@@ -139,7 +139,7 @@
 "Einmal pro Kampf stellt sie, wenn ihre LP auf die Hälfte oder darunter fallen, 5 Sekunden lang jede Sekunde 3 % der max. LP wieder her.",
 "Раз за бой, когда ОЗ падают до половины или ниже, 5 секунд восстанавливает по 3% макс. ОЗ в секунду."
 ],
-"relic.raitia-grass.ferocity.name": [
+"relic.viria.ferocity.name": [
 "暴食",
 "ตะกละ",
 "Ăn ngấu nghiến",
@@ -149,7 +149,7 @@
 "Völlerei",
 "Обжорство"
 ],
-"relic.raitia-grass.basic.name": [
+"relic.viria.basic.name": [
 "门齿啃咬",
 "แทะด้วยฟันหน้า",
 "Gặm răng cửa",
@@ -159,7 +159,7 @@
 "Schneidezahnnagen",
 "Грызь резцами"
 ],
-"relic.raitia-grass.ultimate.name": [
+"relic.viria.ultimate.name": [
 "颊囊倾倒",
 "เทกระพุ้งแก้ม",
 "Dốc túi má",
@@ -169,7 +169,7 @@
 "Backentaschen-Ausschüttung",
 "Опустошение защёчных мешков"
 ],
-"relic.raitia-grass.projectName": [
+"relic.viria.projectName": [
 "ANNIHILATION SWARM — 过食个体群",
 "ANNIHILATION SWARM — ประชากรกินเกิน",
 "ANNIHILATION SWARM — Quần thể ăn quá mức",
@@ -179,8 +179,8 @@
 "ANNIHILATION SWARM — Überfütterte Population",
 "ANNIHILATION SWARM — Перекормленная популяция"
 ],
-"relic.raitia-grass.unlockRecord": ["识别记录207。已确认隶属于歼灭。在五个穿着带鼠耳兜帽睡衣的个体中，这只系着绿色绳结，奶酪形小包、带牙齿的拖鞋以及末端系着缎带的条纹尾巴格外显眼。找到食物时，它不是用叫声而是用门齿的声音传讯，听到的姐妹们一齐涌向同一处。它啃过的地方散落着新芽，走过的路上每个脚印都长出种子的嫩芽，留下一条绿色的道路。到了该冬眠的时候仍不停止进食的原因，尚未确认。", "บันทึกการระบุตัว 207 ยืนยันว่าสังกัดทำลายล้าง เป็นตัวที่ผูกเงื่อนสีเขียวในบรรดาห้าตัวที่สวมชุดนอนมีฮู้ดติดหูหนู โดดเด่นด้วยกระเป๋ารูปชีส รองเท้าแตะมีฟัน และหางลายขวางที่ปลายผูกริบบิ้น เมื่อเจออาหาร มันส่งสัญญาณด้วยเสียงฟันหน้าแทนเสียงร้อง และพี่น้องที่ได้ยินก็กรูไปที่จุดเดียวกันพร้อมกัน ตรงที่มันแทะมียอดอ่อนร่วงอยู่ และตามทางที่ผ่านไป ทุกรอยเท้ามีเมล็ดงอกจนเหลือเป็นทางสีเขียว ยังไม่ยืนยันว่าเหตุใดมันจึงไม่หยุดกินแม้ถึงฤดูจำศีล", "Hồ sơ nhận dạng 207. Được xác nhận thuộc Hủy Diệt. Trong năm cá thể mặc đồ ngủ có mũ trùm gắn tai chuột, đây là cá thể quấn nút thắt xanh lá; túi hình miếng phô mai, đôi dép có răng và chiếc đuôi sọc buộc ruy băng ở đầu rất nổi bật. Khi tìm thấy thức ăn, nó báo hiệu không bằng tiếng kêu mà bằng tiếng răng cửa, và các chị em nghe thấy liền cùng lúc ùa tới một chỗ. Chỗ nó gặm có chồi non rơi vãi, và dọc đường nó đi, mỗi dấu chân đều nảy mầm từ hạt, để lại một lối xanh. Lý do nó không ngừng ăn dù đã đến mùa ngủ đông vẫn chưa được xác nhận.", "Catatan Identifikasi 207. Terkonfirmasi tergabung dalam Pemusnahan. Dari lima sosok berpiama berkerudung bertelinga tikus, yang ini mengenakan simpul hijau; kantong berbentuk keju, sandal bergigi, dan ekor belang berpita di ujungnya menonjol. Saat menemukan makanan, ia memberi sinyal bukan dengan cicitan melainkan bunyi gigi serinya, dan saudari-saudari yang mendengar berkerumun ke tempat yang sama sekaligus. Di bekas gigitannya tercecer tunas segar, dan di setiap jejak kaki sepanjang jalannya biji bertunas hingga meninggalkan jalur hijau. Mengapa ia tak berhenti makan bahkan saat musim hibernasi tiba belum terkonfirmasi.", "Registro de identificación 207. Confirmado como perteneciente a Aniquilación. De las cinco con pijama de capucha y orejas de ratón, esta lleva un nudo verde; destacan la bolsita con forma de queso, las zapatillas con dientes y la cola rayada con un lazo en la punta. Cuando encontró comida avisó no con un chillido sino con el sonido de sus incisivos, y las hermanas que lo oyeron acudieron en masa a ese mismo lugar. Donde roía quedaban brotes tiernos desparramados, y en cada huella de su camino germinaron semillas, dejando un sendero verde. No se ha confirmado por qué no deja de comer ni siquiera cuando llega la temporada de hibernar.", "Registro de identificação 207. Confirmado como pertencente à Aniquilação. Entre as cinco de pijama com capuz e orelhas de rato, esta usa um laço verde; chamam atenção a bolsinha em forma de queijo, os chinelos com dentes e a cauda listrada com uma fita na ponta. Ao achar comida, avisou não com um guincho, mas com o som dos incisivos, e as irmãs que ouviram correram em bando para o mesmo lugar ao mesmo tempo. Onde roía ficavam brotos novos espalhados, e em cada pegada do caminho brotaram sementes, deixando uma trilha verde. Não foi confirmado por que ela não para de comer nem quando chega a estação de hibernar.", "Identifikationsprotokoll 207. Als zugehörig zur Vernichtung bestätigt. Unter den fünf in Kapuzenpyjamas mit Mäuseohren trägt dieses Exemplar einen grünen Knoten; auffallend sind die käseförmige Tasche, die bezahnten Pantoffeln und der gestreifte Schwanz mit einer Schleife an der Spitze. Fand es Futter, meldete es das nicht mit einem Laut, sondern mit dem Geräusch seiner Schneidezähne, und die Schwestern, die es hörten, schwärmten sofort an dieselbe Stelle. Wo es nagte, lagen frische Triebe verstreut, und in jedem Fußabdruck seines Weges keimten Samen, sodass ein grüner Pfad zurückblieb. Warum es selbst zur Zeit des Winterschlafs nicht aufhört zu fressen, wurde nicht bestätigt.", "Запись об идентификации 207. Подтверждена принадлежность к Истреблению. Из пяти в капюшонных пижамах с мышиными ушками это — с зелёным узлом; бросаются в глаза сумочка в форме сыра, тапочки с зубами и полосатый хвост с лентой на конце. Найдя еду, оно подавало знак не писком, а звуком резцов, и услышавшие сёстры разом сбегались в одно место. Там, где оно грызло, оставались рассыпанные свежие ростки, а в каждом следе на его пути прорастали семена, и за ним тянулась зелёная тропа. Почему оно не перестаёт есть даже в пору спячки, не подтверждено."],
-"relic.raitia-water.name": [
+"relic.viria.unlockRecord": ["识别记录207。已确认隶属于歼灭。在五个穿着带鼠耳兜帽睡衣的个体中，这只系着绿色绳结，奶酪形小包、带牙齿的拖鞋以及末端系着缎带的条纹尾巴格外显眼。找到食物时，它不是用叫声而是用门齿的声音传讯，听到的姐妹们一齐涌向同一处。它啃过的地方散落着新芽，走过的路上每个脚印都长出种子的嫩芽，留下一条绿色的道路。到了该冬眠的时候仍不停止进食的原因，尚未确认。", "บันทึกการระบุตัว 207 ยืนยันว่าสังกัดทำลายล้าง เป็นตัวที่ผูกเงื่อนสีเขียวในบรรดาห้าตัวที่สวมชุดนอนมีฮู้ดติดหูหนู โดดเด่นด้วยกระเป๋ารูปชีส รองเท้าแตะมีฟัน และหางลายขวางที่ปลายผูกริบบิ้น เมื่อเจออาหาร มันส่งสัญญาณด้วยเสียงฟันหน้าแทนเสียงร้อง และพี่น้องที่ได้ยินก็กรูไปที่จุดเดียวกันพร้อมกัน ตรงที่มันแทะมียอดอ่อนร่วงอยู่ และตามทางที่ผ่านไป ทุกรอยเท้ามีเมล็ดงอกจนเหลือเป็นทางสีเขียว ยังไม่ยืนยันว่าเหตุใดมันจึงไม่หยุดกินแม้ถึงฤดูจำศีล", "Hồ sơ nhận dạng 207. Được xác nhận thuộc Hủy Diệt. Trong năm cá thể mặc đồ ngủ có mũ trùm gắn tai chuột, đây là cá thể quấn nút thắt xanh lá; túi hình miếng phô mai, đôi dép có răng và chiếc đuôi sọc buộc ruy băng ở đầu rất nổi bật. Khi tìm thấy thức ăn, nó báo hiệu không bằng tiếng kêu mà bằng tiếng răng cửa, và các chị em nghe thấy liền cùng lúc ùa tới một chỗ. Chỗ nó gặm có chồi non rơi vãi, và dọc đường nó đi, mỗi dấu chân đều nảy mầm từ hạt, để lại một lối xanh. Lý do nó không ngừng ăn dù đã đến mùa ngủ đông vẫn chưa được xác nhận.", "Catatan Identifikasi 207. Terkonfirmasi tergabung dalam Pemusnahan. Dari lima sosok berpiama berkerudung bertelinga tikus, yang ini mengenakan simpul hijau; kantong berbentuk keju, sandal bergigi, dan ekor belang berpita di ujungnya menonjol. Saat menemukan makanan, ia memberi sinyal bukan dengan cicitan melainkan bunyi gigi serinya, dan saudari-saudari yang mendengar berkerumun ke tempat yang sama sekaligus. Di bekas gigitannya tercecer tunas segar, dan di setiap jejak kaki sepanjang jalannya biji bertunas hingga meninggalkan jalur hijau. Mengapa ia tak berhenti makan bahkan saat musim hibernasi tiba belum terkonfirmasi.", "Registro de identificación 207. Confirmado como perteneciente a Aniquilación. De las cinco con pijama de capucha y orejas de ratón, esta lleva un nudo verde; destacan la bolsita con forma de queso, las zapatillas con dientes y la cola rayada con un lazo en la punta. Cuando encontró comida avisó no con un chillido sino con el sonido de sus incisivos, y las hermanas que lo oyeron acudieron en masa a ese mismo lugar. Donde roía quedaban brotes tiernos desparramados, y en cada huella de su camino germinaron semillas, dejando un sendero verde. No se ha confirmado por qué no deja de comer ni siquiera cuando llega la temporada de hibernar.", "Registro de identificação 207. Confirmado como pertencente à Aniquilação. Entre as cinco de pijama com capuz e orelhas de rato, esta usa um laço verde; chamam atenção a bolsinha em forma de queijo, os chinelos com dentes e a cauda listrada com uma fita na ponta. Ao achar comida, avisou não com um guincho, mas com o som dos incisivos, e as irmãs que ouviram correram em bando para o mesmo lugar ao mesmo tempo. Onde roía ficavam brotos novos espalhados, e em cada pegada do caminho brotaram sementes, deixando uma trilha verde. Não foi confirmado por que ela não para de comer nem quando chega a estação de hibernar.", "Identifikationsprotokoll 207. Als zugehörig zur Vernichtung bestätigt. Unter den fünf in Kapuzenpyjamas mit Mäuseohren trägt dieses Exemplar einen grünen Knoten; auffallend sind die käseförmige Tasche, die bezahnten Pantoffeln und der gestreifte Schwanz mit einer Schleife an der Spitze. Fand es Futter, meldete es das nicht mit einem Laut, sondern mit dem Geräusch seiner Schneidezähne, und die Schwestern, die es hörten, schwärmten sofort an dieselbe Stelle. Wo es nagte, lagen frische Triebe verstreut, und in jedem Fußabdruck seines Weges keimten Samen, sodass ein grüner Pfad zurückblieb. Warum es selbst zur Zeit des Winterschlafs nicht aufhört zu fressen, wurde nicht bestätigt.", "Запись об идентификации 207. Подтверждена принадлежность к Истреблению. Из пяти в капюшонных пижамах с мышиными ушками это — с зелёным узлом; бросаются в глаза сумочка в форме сыра, тапочки с зубами и полосатый хвост с лентой на конце. Найдя еду, оно подавало знак не писком, а звуком резцов, и услышавшие сёстры разом сбегались в одно место. Там, где оно грызло, оставались рассыпанные свежие ростки, а в каждом следе на его пути прорастали семена, и за ним тянулась зелёная тропа. Почему оно не перестаёт есть даже в пору спячки, не подтверждено."],
+"relic.guttia.name": [
 "古缇娅",
 "กุตเทีย",
 "Guttia",
@@ -190,7 +190,7 @@
 "Guttia",
 "Гуттия"
 ],
-"relic.raitia-water.origin": [
+"relic.guttia.origin": [
 "睡鼠",
 "หนูดอร์เมาส์",
 "Chuột sóc",
@@ -200,7 +200,7 @@
 "Bilch",
 "Соня"
 ],
-"relic.raitia-water.excavationSite": [
+"relic.guttia.excavationSite": [
 "斯洛文尼亚 喀斯特洞穴沉积层",
 "ตะกอนถ้ำคาสต์ สโลวีเนีย",
 "Trầm tích hang karst, Slovenia",
@@ -210,7 +210,7 @@
 "Karsthöhlensediment, Slowenien",
 "Отложения карстовой пещеры, Словения"
 ],
-"relic.raitia-water.fossilRecord": [
+"relic.guttia.fossilRecord": [
 "从洞穴沉积物的同一层中回收了数十个同种头骨。其中五个在大小与齿列上高度一致，被归为同一窝。",
 "จากตะกอนถ้ำชั้นเดียวกันได้กะโหลกชนิดเดียวกันหลายสิบชิ้น ห้าชิ้นในนั้นมีขนาดและแนวฟันตรงกันมากจนจัดเป็นครอกเดียวกัน",
 "Hàng chục hộp sọ cùng loài được thu từ một lớp trầm tích hang duy nhất. Năm chiếc trong số đó khớp nhau về kích thước và hàm răng đến mức được xếp vào cùng một lứa.",
@@ -220,7 +220,7 @@
 "Aus einer einzigen Schicht Höhlensediment wurden Dutzende Schädel derselben Art geborgen. Fünf davon stimmen in Größe und Gebiss so genau überein, dass sie als ein Wurf eingestuft wurden.",
 "Из одного слоя пещерных отложений извлекли десятки черепов одного вида. Пять из них так совпадают по размеру и зубам, что их отнесли к одному помёту."
 ],
-"relic.raitia-water.catalogSummary": [
+"relic.guttia.catalogSummary": [
 "以睡鼠为基础，复原出过大门齿与颊囊的个体。",
 "ตัวอย่างที่ฟื้นคืนจากหนูดอร์เมาส์ มีฟันหน้าและกระพุ้งแก้มขนาดใหญ่เกินปกติ",
 "Mẫu vật dựa trên chuột sóc, được phục hồi với răng cửa và túi má quá khổ.",
@@ -230,7 +230,7 @@
 "Ein Exemplar auf Bilchbasis, restauriert mit übergroßen Schneidezähnen und Backentaschen.",
 "Образец на основе сони с увеличенными резцами и защёчными мешками."
 ],
-"relic.raitia-water.squadNote": [
+"relic.guttia.squadNote": [
 "歼灭的消耗性兵力。她们朝指向的方向一齐涌去填满走廊，后面的直接踏过前面倒下的地方。",
 "กำลังพลใช้แล้วทิ้งของหน่วยทำลายล้าง พวกเธอหลั่งไหลพร้อมกันไปทางที่ถูกชี้จนเต็มทางเดิน ตัวข้างหลังก้าวข้ามจุดที่ตัวข้างหน้าล้มไปทันที",
 "Lực lượng tiêu hao của Hủy Diệt. Chúng đồng loạt tràn về hướng được chỉ và lấp kín hành lang, những kẻ phía sau bước thẳng qua chỗ kẻ phía trước ngã xuống.",
@@ -240,7 +240,7 @@
 "Die entbehrliche Masse der Vernichtung. Sie strömen alle zugleich in die gewiesene Richtung und füllen den Gang; die hinteren treten geradewegs über die Stelle, an der die vorderen fielen.",
 "Расходная масса Истребления. Они разом текут туда, куда укажут, заполняя коридор, и задние шагают прямо через место, где пали передние."
 ],
-"relic.raitia-water.researcherTitle": [
+"relic.guttia.researcherTitle": [
 "研究员",
 "นักวิจัย",
 "Nhà nghiên cứu",
@@ -250,7 +250,7 @@
 "Forscher",
 "Исследователь"
 ],
-"relic.raitia-water.observation.originYear": [
+"relic.guttia.observation.originYear": [
 "约200万年前",
 "ประมาณ 2 ล้านปีก่อน",
 "Khoảng 2 triệu năm trước",
@@ -260,7 +260,7 @@
 "Vor etwa 2 Millionen Jahren",
 "Около 2 млн лет назад"
 ],
-"relic.raitia-water.observation.restorationYear": [
+"relic.guttia.observation.restorationYear": [
 "E.C. 2",
 "E.C. 2",
 "E.C. 2",
@@ -270,7 +270,7 @@
 "E.C. 2",
 "E.C. 2"
 ],
-"relic.raitia-water.observation.lifeStage": [
+"relic.guttia.observation.lifeStage": [
 "幼年",
 "วัยเยาว์",
 "Nhỏ tuổi",
@@ -280,7 +280,7 @@
 "Jungtier",
 "Юная"
 ],
-"relic.raitia-water.observation.height": [
+"relic.guttia.observation.height": [
 "0.94 m",
 "0.94 m",
 "0,94 m",
@@ -290,7 +290,7 @@
 "0,94 m",
 "0,94 м"
 ],
-"relic.raitia-water.observation.weight": [
+"relic.guttia.observation.weight": [
 "21 kg",
 "21 kg",
 "21 kg",
@@ -300,7 +300,7 @@
 "21 kg",
 "21 кг"
 ],
-"relic.raitia-water.passive.name": [
+"relic.guttia.passive.name": [
 "冬眠",
 "จำศีล",
 "Ngủ đông",
@@ -310,7 +310,7 @@
 "Winterschlaf",
 "Спячка"
 ],
-"relic.raitia-water.passive.desc": [
+"relic.guttia.passive.desc": [
 "每场战斗一次，生命降至一半以下时，5秒内每秒恢复最大生命的3%。",
 "หนึ่งครั้งต่อการต่อสู้ เมื่อ HP ลดเหลือครึ่งหนึ่งหรือต่ำกว่า จะฟื้นฟู 3% ของ HP สูงสุดทุกวินาทีเป็นเวลา 5 วินาที",
 "Mỗi trận một lần, khi HP còn một nửa trở xuống, hồi 3% HP tối đa mỗi giây trong 5 giây.",
@@ -320,7 +320,7 @@
 "Einmal pro Kampf stellt sie, wenn ihre LP auf die Hälfte oder darunter fallen, 5 Sekunden lang jede Sekunde 3 % der max. LP wieder her.",
 "Раз за бой, когда ОЗ падают до половины или ниже, 5 секунд восстанавливает по 3% макс. ОЗ в секунду."
 ],
-"relic.raitia-water.ferocity.name": [
+"relic.guttia.ferocity.name": [
 "暴食",
 "ตะกละ",
 "Ăn ngấu nghiến",
@@ -330,7 +330,7 @@
 "Völlerei",
 "Обжорство"
 ],
-"relic.raitia-water.basic.name": [
+"relic.guttia.basic.name": [
 "门齿啃咬",
 "แทะด้วยฟันหน้า",
 "Gặm răng cửa",
@@ -340,7 +340,7 @@
 "Schneidezahnnagen",
 "Грызь резцами"
 ],
-"relic.raitia-water.ultimate.name": [
+"relic.guttia.ultimate.name": [
 "颊囊倾倒",
 "เทกระพุ้งแก้ม",
 "Dốc túi má",
@@ -350,7 +350,7 @@
 "Backentaschen-Ausschüttung",
 "Опустошение защёчных мешков"
 ],
-"relic.raitia-water.projectName": [
+"relic.guttia.projectName": [
 "ANNIHILATION SWARM — 过食个体群",
 "ANNIHILATION SWARM — ประชากรกินเกิน",
 "ANNIHILATION SWARM — Quần thể ăn quá mức",
@@ -360,8 +360,8 @@
 "ANNIHILATION SWARM — Überfütterte Population",
 "ANNIHILATION SWARM — Перекормленная популяция"
 ],
-"relic.raitia-water.unlockRecord": ["识别记录208。已确认隶属于歼灭。在同样的带兜帽睡衣中，这只的蓝色条纹尾巴末端系着棉球，一只手叉腰，另一只手的手指抵在嘴边微笑。听到姐妹的门齿声时，它笑着第一个冲出来，靠近后先用门齿啃手边够得着的装备。群体走过的地方留下了长长的湿脚印。是什么打湿了那些脚印，尚未确认。", "บันทึกการระบุตัว 208 ยืนยันว่าสังกัดทำลายล้าง เป็นตัวที่ปลายหางลายขวางสีน้ำเงินติดปุยสำลีในบรรดาตัวที่สวมชุดนอนมีฮู้ดแบบเดียวกัน ยิ้มโดยมือหนึ่งเท้าเอวและอีกมือแตะนิ้วที่มุมปาก เมื่อได้ยินเสียงฟันหน้าของพี่น้อง มันยิ้มพลางวิ่งออกมาก่อนใคร พอเข้าใกล้ก็แทะอุปกรณ์ที่อยู่ใกล้มือด้วยฟันหน้าก่อน บริเวณที่ฝูงผ่านไปมีรอยเท้าเปียกทอดยาว ยังไม่ยืนยันว่าอะไรทำให้รอยเท้านั้นเปียก", "Hồ sơ nhận dạng 208. Được xác nhận thuộc Hủy Diệt. Trong số những cá thể mặc cùng kiểu đồ ngủ có mũ trùm, đây là cá thể có chiếc đuôi sọc xanh dương gắn cục bông ở đầu, cười với một tay chống hông, tay kia đặt ngón lên khóe miệng. Khi nghe tiếng răng cửa của chị em, nó cười và lao ra đầu tiên, tới gần thì gặm bằng răng cửa món trang bị nào nằm trong tầm tay trước. Nơi bầy đi qua, những dấu chân ướt kéo dài thành hàng. Thứ làm ướt những dấu chân ấy vẫn chưa được xác nhận.", "Catatan Identifikasi 208. Terkonfirmasi tergabung dalam Pemusnahan. Di antara sosok berpiama berkerudung yang sama, yang ini berekor belang biru dengan bola kapas di ujungnya, tersenyum dengan satu tangan di pinggang dan jari tangan lainnya di sudut bibir. Saat mendengar bunyi gigi seri saudarinya, ia tersenyum dan lari keluar paling dulu, dan begitu dekat ia menggerogoti perlengkapan apa pun yang terjangkau tangan dengan gigi serinya. Jejak kaki basah memanjang di tempat kawanan itu lewat. Apa yang membasahi jejak itu belum terkonfirmasi.", "Registro de identificación 208. Confirmado como perteneciente a Aniquilación. De las del mismo pijama de capucha, esta tiene la cola de rayas azules con una bola de algodón en la punta, y sonríe con una mano en la cadera y los dedos de la otra junto a la comisura de la boca. Al oír el sonido de los incisivos de una hermana salió corriendo la primera, sonriendo, y al acercarse royó con los incisivos el equipo que tenía más a mano. Tras el paso de la manada quedó una larga hilera de huellas mojadas. No se ha confirmado qué moja esas huellas.", "Registro de identificação 208. Confirmado como pertencente à Aniquilação. Entre as do mesmo pijama com capuz, esta tem a cauda listrada de azul com um tufo de algodão na ponta, e sorri com uma mão na cintura e os dedos da outra no canto da boca. Ao ouvir o som dos incisivos de uma irmã, saiu correndo primeiro, sorrindo, e ao se aproximar roeu com os incisivos o equipamento que estava ao alcance da mão. Onde o bando passou, ficou uma longa fileira de pegadas molhadas. Não foi confirmado o que molha essas pegadas.", "Identifikationsprotokoll 208. Als zugehörig zur Vernichtung bestätigt. Unter denen im gleichen Kapuzenpyjama hat dieses Exemplar einen blau gestreiften Schwanz mit einem Wattebausch an der Spitze und lächelt, eine Hand in die Hüfte gestemmt, die Finger der anderen am Mundwinkel. Hörte es das Geräusch der Schneidezähne einer Schwester, lief es lächelnd als Erstes los, und nahe angekommen nagte es zuerst an der Ausrüstung, die in Reichweite lag. Wo das Rudel vorbeigezogen war, zog sich eine lange Spur nasser Fußabdrücke. Was diese Abdrücke befeuchtet, wurde nicht bestätigt.", "Запись об идентификации 208. Подтверждена принадлежность к Истреблению. Среди таких же капюшонных пижам это — с голубым полосатым хвостом и ватным комком на конце; улыбается, одна рука на поясе, пальцы другой у уголка рта. Услышав стук резцов сестры, она с улыбкой выбегала первой, а приблизившись, прежде всего грызла резцами то снаряжение, что оказывалось под рукой. Там, где прошла стая, тянулась длинная цепочка мокрых следов. Что смачивает эти следы, не подтверждено."],
-"relic.raitia-fire.name": [
+"relic.guttia.unlockRecord": ["识别记录208。已确认隶属于歼灭。在同样的带兜帽睡衣中，这只的蓝色条纹尾巴末端系着棉球，一只手叉腰，另一只手的手指抵在嘴边微笑。听到姐妹的门齿声时，它笑着第一个冲出来，靠近后先用门齿啃手边够得着的装备。群体走过的地方留下了长长的湿脚印。是什么打湿了那些脚印，尚未确认。", "บันทึกการระบุตัว 208 ยืนยันว่าสังกัดทำลายล้าง เป็นตัวที่ปลายหางลายขวางสีน้ำเงินติดปุยสำลีในบรรดาตัวที่สวมชุดนอนมีฮู้ดแบบเดียวกัน ยิ้มโดยมือหนึ่งเท้าเอวและอีกมือแตะนิ้วที่มุมปาก เมื่อได้ยินเสียงฟันหน้าของพี่น้อง มันยิ้มพลางวิ่งออกมาก่อนใคร พอเข้าใกล้ก็แทะอุปกรณ์ที่อยู่ใกล้มือด้วยฟันหน้าก่อน บริเวณที่ฝูงผ่านไปมีรอยเท้าเปียกทอดยาว ยังไม่ยืนยันว่าอะไรทำให้รอยเท้านั้นเปียก", "Hồ sơ nhận dạng 208. Được xác nhận thuộc Hủy Diệt. Trong số những cá thể mặc cùng kiểu đồ ngủ có mũ trùm, đây là cá thể có chiếc đuôi sọc xanh dương gắn cục bông ở đầu, cười với một tay chống hông, tay kia đặt ngón lên khóe miệng. Khi nghe tiếng răng cửa của chị em, nó cười và lao ra đầu tiên, tới gần thì gặm bằng răng cửa món trang bị nào nằm trong tầm tay trước. Nơi bầy đi qua, những dấu chân ướt kéo dài thành hàng. Thứ làm ướt những dấu chân ấy vẫn chưa được xác nhận.", "Catatan Identifikasi 208. Terkonfirmasi tergabung dalam Pemusnahan. Di antara sosok berpiama berkerudung yang sama, yang ini berekor belang biru dengan bola kapas di ujungnya, tersenyum dengan satu tangan di pinggang dan jari tangan lainnya di sudut bibir. Saat mendengar bunyi gigi seri saudarinya, ia tersenyum dan lari keluar paling dulu, dan begitu dekat ia menggerogoti perlengkapan apa pun yang terjangkau tangan dengan gigi serinya. Jejak kaki basah memanjang di tempat kawanan itu lewat. Apa yang membasahi jejak itu belum terkonfirmasi.", "Registro de identificación 208. Confirmado como perteneciente a Aniquilación. De las del mismo pijama de capucha, esta tiene la cola de rayas azules con una bola de algodón en la punta, y sonríe con una mano en la cadera y los dedos de la otra junto a la comisura de la boca. Al oír el sonido de los incisivos de una hermana salió corriendo la primera, sonriendo, y al acercarse royó con los incisivos el equipo que tenía más a mano. Tras el paso de la manada quedó una larga hilera de huellas mojadas. No se ha confirmado qué moja esas huellas.", "Registro de identificação 208. Confirmado como pertencente à Aniquilação. Entre as do mesmo pijama com capuz, esta tem a cauda listrada de azul com um tufo de algodão na ponta, e sorri com uma mão na cintura e os dedos da outra no canto da boca. Ao ouvir o som dos incisivos de uma irmã, saiu correndo primeiro, sorrindo, e ao se aproximar roeu com os incisivos o equipamento que estava ao alcance da mão. Onde o bando passou, ficou uma longa fileira de pegadas molhadas. Não foi confirmado o que molha essas pegadas.", "Identifikationsprotokoll 208. Als zugehörig zur Vernichtung bestätigt. Unter denen im gleichen Kapuzenpyjama hat dieses Exemplar einen blau gestreiften Schwanz mit einem Wattebausch an der Spitze und lächelt, eine Hand in die Hüfte gestemmt, die Finger der anderen am Mundwinkel. Hörte es das Geräusch der Schneidezähne einer Schwester, lief es lächelnd als Erstes los, und nahe angekommen nagte es zuerst an der Ausrüstung, die in Reichweite lag. Wo das Rudel vorbeigezogen war, zog sich eine lange Spur nasser Fußabdrücke. Was diese Abdrücke befeuchtet, wurde nicht bestätigt.", "Запись об идентификации 208. Подтверждена принадлежность к Истреблению. Среди таких же капюшонных пижам это — с голубым полосатым хвостом и ватным комком на конце; улыбается, одна рука на поясе, пальцы другой у уголка рта. Услышав стук резцов сестры, она с улыбкой выбегала первой, а приблизившись, прежде всего грызла резцами то снаряжение, что оказывалось под рукой. Там, где прошла стая, тянулась длинная цепочка мокрых следов. Что смачивает эти следы, не подтверждено."],
+"relic.favia.name": [
 "法薇娅",
 "ฟาเวีย",
 "Favia",
@@ -371,7 +371,7 @@
 "Favia",
 "Фавия"
 ],
-"relic.raitia-fire.origin": [
+"relic.favia.origin": [
 "睡鼠",
 "หนูดอร์เมาส์",
 "Chuột sóc",
@@ -381,7 +381,7 @@
 "Bilch",
 "Соня"
 ],
-"relic.raitia-fire.excavationSite": [
+"relic.favia.excavationSite": [
 "斯洛文尼亚 喀斯特洞穴沉积层",
 "ตะกอนถ้ำคาสต์ สโลวีเนีย",
 "Trầm tích hang karst, Slovenia",
@@ -391,7 +391,7 @@
 "Karsthöhlensediment, Slowenien",
 "Отложения карстовой пещеры, Словения"
 ],
-"relic.raitia-fire.fossilRecord": [
+"relic.favia.fossilRecord": [
 "从洞穴沉积物的同一层中回收了数十个同种头骨。其中五个在大小与齿列上高度一致，被归为同一窝。",
 "จากตะกอนถ้ำชั้นเดียวกันได้กะโหลกชนิดเดียวกันหลายสิบชิ้น ห้าชิ้นในนั้นมีขนาดและแนวฟันตรงกันมากจนจัดเป็นครอกเดียวกัน",
 "Hàng chục hộp sọ cùng loài được thu từ một lớp trầm tích hang duy nhất. Năm chiếc trong số đó khớp nhau về kích thước và hàm răng đến mức được xếp vào cùng một lứa.",
@@ -401,7 +401,7 @@
 "Aus einer einzigen Schicht Höhlensediment wurden Dutzende Schädel derselben Art geborgen. Fünf davon stimmen in Größe und Gebiss so genau überein, dass sie als ein Wurf eingestuft wurden.",
 "Из одного слоя пещерных отложений извлекли десятки черепов одного вида. Пять из них так совпадают по размеру и зубам, что их отнесли к одному помёту."
 ],
-"relic.raitia-fire.catalogSummary": [
+"relic.favia.catalogSummary": [
 "以睡鼠为基础，复原出过大门齿与颊囊的个体。",
 "ตัวอย่างที่ฟื้นคืนจากหนูดอร์เมาส์ มีฟันหน้าและกระพุ้งแก้มขนาดใหญ่เกินปกติ",
 "Mẫu vật dựa trên chuột sóc, được phục hồi với răng cửa và túi má quá khổ.",
@@ -411,7 +411,7 @@
 "Ein Exemplar auf Bilchbasis, restauriert mit übergroßen Schneidezähnen und Backentaschen.",
 "Образец на основе сони с увеличенными резцами и защёчными мешками."
 ],
-"relic.raitia-fire.squadNote": [
+"relic.favia.squadNote": [
 "歼灭的消耗性兵力。她们朝指向的方向一齐涌去填满走廊，后面的直接踏过前面倒下的地方。",
 "กำลังพลใช้แล้วทิ้งของหน่วยทำลายล้าง พวกเธอหลั่งไหลพร้อมกันไปทางที่ถูกชี้จนเต็มทางเดิน ตัวข้างหลังก้าวข้ามจุดที่ตัวข้างหน้าล้มไปทันที",
 "Lực lượng tiêu hao của Hủy Diệt. Chúng đồng loạt tràn về hướng được chỉ và lấp kín hành lang, những kẻ phía sau bước thẳng qua chỗ kẻ phía trước ngã xuống.",
@@ -421,7 +421,7 @@
 "Die entbehrliche Masse der Vernichtung. Sie strömen alle zugleich in die gewiesene Richtung und füllen den Gang; die hinteren treten geradewegs über die Stelle, an der die vorderen fielen.",
 "Расходная масса Истребления. Они разом текут туда, куда укажут, заполняя коридор, и задние шагают прямо через место, где пали передние."
 ],
-"relic.raitia-fire.researcherTitle": [
+"relic.favia.researcherTitle": [
 "研究员",
 "นักวิจัย",
 "Nhà nghiên cứu",
@@ -431,7 +431,7 @@
 "Forscher",
 "Исследователь"
 ],
-"relic.raitia-fire.observation.originYear": [
+"relic.favia.observation.originYear": [
 "约200万年前",
 "ประมาณ 2 ล้านปีก่อน",
 "Khoảng 2 triệu năm trước",
@@ -441,7 +441,7 @@
 "Vor etwa 2 Millionen Jahren",
 "Около 2 млн лет назад"
 ],
-"relic.raitia-fire.observation.restorationYear": [
+"relic.favia.observation.restorationYear": [
 "E.C. 2",
 "E.C. 2",
 "E.C. 2",
@@ -451,7 +451,7 @@
 "E.C. 2",
 "E.C. 2"
 ],
-"relic.raitia-fire.observation.lifeStage": [
+"relic.favia.observation.lifeStage": [
 "幼年",
 "วัยเยาว์",
 "Nhỏ tuổi",
@@ -461,7 +461,7 @@
 "Jungtier",
 "Юная"
 ],
-"relic.raitia-fire.observation.height": [
+"relic.favia.observation.height": [
 "0.94 m",
 "0.94 m",
 "0,94 m",
@@ -471,7 +471,7 @@
 "0,94 m",
 "0,94 м"
 ],
-"relic.raitia-fire.observation.weight": [
+"relic.favia.observation.weight": [
 "21 kg",
 "21 kg",
 "21 kg",
@@ -481,7 +481,7 @@
 "21 kg",
 "21 кг"
 ],
-"relic.raitia-fire.passive.name": [
+"relic.favia.passive.name": [
 "冬眠",
 "จำศีล",
 "Ngủ đông",
@@ -491,7 +491,7 @@
 "Winterschlaf",
 "Спячка"
 ],
-"relic.raitia-fire.passive.desc": [
+"relic.favia.passive.desc": [
 "每场战斗一次，生命降至一半以下时，5秒内每秒恢复最大生命的3%。",
 "หนึ่งครั้งต่อการต่อสู้ เมื่อ HP ลดเหลือครึ่งหนึ่งหรือต่ำกว่า จะฟื้นฟู 3% ของ HP สูงสุดทุกวินาทีเป็นเวลา 5 วินาที",
 "Mỗi trận một lần, khi HP còn một nửa trở xuống, hồi 3% HP tối đa mỗi giây trong 5 giây.",
@@ -501,7 +501,7 @@
 "Einmal pro Kampf stellt sie, wenn ihre LP auf die Hälfte oder darunter fallen, 5 Sekunden lang jede Sekunde 3 % der max. LP wieder her.",
 "Раз за бой, когда ОЗ падают до половины или ниже, 5 секунд восстанавливает по 3% макс. ОЗ в секунду."
 ],
-"relic.raitia-fire.ferocity.name": [
+"relic.favia.ferocity.name": [
 "暴食",
 "ตะกละ",
 "Ăn ngấu nghiến",
@@ -511,7 +511,7 @@
 "Völlerei",
 "Обжорство"
 ],
-"relic.raitia-fire.basic.name": [
+"relic.favia.basic.name": [
 "门齿啃咬",
 "แทะด้วยฟันหน้า",
 "Gặm răng cửa",
@@ -521,7 +521,7 @@
 "Schneidezahnnagen",
 "Грызь резцами"
 ],
-"relic.raitia-fire.ultimate.name": [
+"relic.favia.ultimate.name": [
 "颊囊倾倒",
 "เทกระพุ้งแก้ม",
 "Dốc túi má",
@@ -531,7 +531,7 @@
 "Backentaschen-Ausschüttung",
 "Опустошение защёчных мешков"
 ],
-"relic.raitia-fire.projectName": [
+"relic.favia.projectName": [
 "ANNIHILATION SWARM — 过食个体群",
 "ANNIHILATION SWARM — ประชากรกินเกิน",
 "ANNIHILATION SWARM — Quần thể ăn quá mức",
@@ -541,8 +541,8 @@
 "ANNIHILATION SWARM — Überfütterte Population",
 "ANNIHILATION SWARM — Перекормленная популяция"
 ],
-"relic.raitia-fire.unlockRecord": ["识别记录209。已确认隶属于歼灭。在同样的带兜帽睡衣中，这只戴着粉色格纹缎带，带着没睡醒的脸站着，一只手揉眼睛，另一只手叉腰。尽管一脸困意，它也没有停止进食，颊囊塞满之后仍用门齿啃个不停。姐妹们涌过去时，它揉着眼睛跟在后面。这份困倦是装的还是真的，尚未确认。", "บันทึกการระบุตัว 209 ยืนยันว่าสังกัดทำลายล้าง เป็นตัวที่ผูกริบบิ้นลายตารางสีชมพูในบรรดาตัวที่สวมชุดนอนมีฮู้ดแบบเดียวกัน ยืนด้วยสีหน้าตื่นไม่เต็มตา มือหนึ่งขยี้ตา อีกมือเท้าเอว ทั้งที่ดูง่วง มันก็ไม่หยุดกิน และแทะด้วยฟันหน้าต่อไปแม้กระพุ้งแก้มเต็มแล้ว เมื่อพี่น้องกรูกันไป มันก็ขยี้ตาเดินตามหลังไป ยังไม่ยืนยันว่าความง่วงเป็นการแกล้งทำหรือของจริง", "Hồ sơ nhận dạng 209. Được xác nhận thuộc Hủy Diệt. Trong số những cá thể mặc cùng kiểu đồ ngủ có mũ trùm, đây là cá thể thắt ruy băng caro hồng, đứng với gương mặt chưa tỉnh hẳn, một tay dụi mắt, tay kia chống hông. Dù trông buồn ngủ, nó không ngừng ăn và vẫn gặm bằng răng cửa dù túi má đã đầy. Khi các chị em ùa đi, nó vừa dụi mắt vừa đi theo sau. Cơn buồn ngủ ấy là giả vờ hay thật vẫn chưa được xác nhận.", "Catatan Identifikasi 209. Terkonfirmasi tergabung dalam Pemusnahan. Di antara sosok berpiama berkerudung yang sama, yang ini berpita kotak-kotak merah muda, berdiri dengan wajah setengah sadar, satu tangan mengucek mata dan tangan lainnya di pinggang. Meski tampak mengantuk, ia tak berhenti makan, dan terus menggerogoti dengan gigi serinya bahkan setelah kantong pipinya penuh. Saat saudari-saudarinya berhamburan, ia mengikuti di belakang sambil mengucek mata. Apakah kantuknya pura-pura atau sungguhan belum terkonfirmasi.", "Registro de identificación 209. Confirmado como perteneciente a Aniquilación. De las del mismo pijama de capucha, esta lleva un lazo de cuadros rosa y está de pie con cara de medio dormida, una mano frotándose los ojos y la otra en la cadera. Aunque parecía soñolienta, no dejó de comer y siguió royendo con los incisivos incluso con los abazones llenos. Cuando sus hermanas acudieron en masa, las siguió por detrás, frotándose los ojos. No se ha confirmado si el sueño es fingido o real.", "Registro de identificação 209. Confirmado como pertencente à Aniquilação. Entre as do mesmo pijama com capuz, esta usa uma fita xadrez rosa e fica de pé com cara de quem não acordou direito, uma mão esfregando os olhos e a outra na cintura. Embora parecesse sonolenta, não parou de comer e continuou roendo com os incisivos mesmo com as bochechas cheias. Quando as irmãs correram em bando, seguiu atrás, esfregando os olhos. Não foi confirmado se o sono é fingido ou real.", "Identifikationsprotokoll 209. Als zugehörig zur Vernichtung bestätigt. Unter denen im gleichen Kapuzenpyjama trägt dieses Exemplar eine rosa karierte Schleife und steht mit halb wachem Gesicht da, eine Hand reibt sich die Augen, die andere ist in die Hüfte gestemmt. Obwohl es schläfrig wirkte, hörte es nicht auf zu fressen und nagte mit den Schneidezähnen weiter, auch als die Backentaschen voll waren. Stürmten die Schwestern los, folgte es ihnen und rieb sich dabei die Augen. Ob die Schläfrigkeit gespielt oder echt ist, wurde nicht bestätigt.", "Запись об идентификации 209. Подтверждена принадлежность к Истреблению. Среди таких же капюшонных пижам это — с розовым клетчатым бантом; стоит с не до конца проснувшимся лицом, одной рукой трёт глаза, другая на поясе. Несмотря на сонный вид, оно не переставало есть и продолжало грызть резцами, даже когда защёчные мешки были полны. Когда сёстры бросались вперёд, оно шло следом, протирая глаза. Сонливость это притворство или настоящая, не подтверждено."],
-"relic.raitia-earth.name": [
+"relic.favia.unlockRecord": ["识别记录209。已确认隶属于歼灭。在同样的带兜帽睡衣中，这只戴着粉色格纹缎带，带着没睡醒的脸站着，一只手揉眼睛，另一只手叉腰。尽管一脸困意，它也没有停止进食，颊囊塞满之后仍用门齿啃个不停。姐妹们涌过去时，它揉着眼睛跟在后面。这份困倦是装的还是真的，尚未确认。", "บันทึกการระบุตัว 209 ยืนยันว่าสังกัดทำลายล้าง เป็นตัวที่ผูกริบบิ้นลายตารางสีชมพูในบรรดาตัวที่สวมชุดนอนมีฮู้ดแบบเดียวกัน ยืนด้วยสีหน้าตื่นไม่เต็มตา มือหนึ่งขยี้ตา อีกมือเท้าเอว ทั้งที่ดูง่วง มันก็ไม่หยุดกิน และแทะด้วยฟันหน้าต่อไปแม้กระพุ้งแก้มเต็มแล้ว เมื่อพี่น้องกรูกันไป มันก็ขยี้ตาเดินตามหลังไป ยังไม่ยืนยันว่าความง่วงเป็นการแกล้งทำหรือของจริง", "Hồ sơ nhận dạng 209. Được xác nhận thuộc Hủy Diệt. Trong số những cá thể mặc cùng kiểu đồ ngủ có mũ trùm, đây là cá thể thắt ruy băng caro hồng, đứng với gương mặt chưa tỉnh hẳn, một tay dụi mắt, tay kia chống hông. Dù trông buồn ngủ, nó không ngừng ăn và vẫn gặm bằng răng cửa dù túi má đã đầy. Khi các chị em ùa đi, nó vừa dụi mắt vừa đi theo sau. Cơn buồn ngủ ấy là giả vờ hay thật vẫn chưa được xác nhận.", "Catatan Identifikasi 209. Terkonfirmasi tergabung dalam Pemusnahan. Di antara sosok berpiama berkerudung yang sama, yang ini berpita kotak-kotak merah muda, berdiri dengan wajah setengah sadar, satu tangan mengucek mata dan tangan lainnya di pinggang. Meski tampak mengantuk, ia tak berhenti makan, dan terus menggerogoti dengan gigi serinya bahkan setelah kantong pipinya penuh. Saat saudari-saudarinya berhamburan, ia mengikuti di belakang sambil mengucek mata. Apakah kantuknya pura-pura atau sungguhan belum terkonfirmasi.", "Registro de identificación 209. Confirmado como perteneciente a Aniquilación. De las del mismo pijama de capucha, esta lleva un lazo de cuadros rosa y está de pie con cara de medio dormida, una mano frotándose los ojos y la otra en la cadera. Aunque parecía soñolienta, no dejó de comer y siguió royendo con los incisivos incluso con los abazones llenos. Cuando sus hermanas acudieron en masa, las siguió por detrás, frotándose los ojos. No se ha confirmado si el sueño es fingido o real.", "Registro de identificação 209. Confirmado como pertencente à Aniquilação. Entre as do mesmo pijama com capuz, esta usa uma fita xadrez rosa e fica de pé com cara de quem não acordou direito, uma mão esfregando os olhos e a outra na cintura. Embora parecesse sonolenta, não parou de comer e continuou roendo com os incisivos mesmo com as bochechas cheias. Quando as irmãs correram em bando, seguiu atrás, esfregando os olhos. Não foi confirmado se o sono é fingido ou real.", "Identifikationsprotokoll 209. Als zugehörig zur Vernichtung bestätigt. Unter denen im gleichen Kapuzenpyjama trägt dieses Exemplar eine rosa karierte Schleife und steht mit halb wachem Gesicht da, eine Hand reibt sich die Augen, die andere ist in die Hüfte gestemmt. Obwohl es schläfrig wirkte, hörte es nicht auf zu fressen und nagte mit den Schneidezähnen weiter, auch als die Backentaschen voll waren. Stürmten die Schwestern los, folgte es ihnen und rieb sich dabei die Augen. Ob die Schläfrigkeit gespielt oder echt ist, wurde nicht bestätigt.", "Запись об идентификации 209. Подтверждена принадлежность к Истреблению. Среди таких же капюшонных пижам это — с розовым клетчатым бантом; стоит с не до конца проснувшимся лицом, одной рукой трёт глаза, другая на поясе. Несмотря на сонный вид, оно не переставало есть и продолжало грызть резцами, даже когда защёчные мешки были полны. Когда сёстры бросались вперёд, оно шло следом, протирая глаза. Сонливость это притворство или настоящая, не подтверждено."],
+"relic.silia.name": [
 "希莉娅",
 "ซิเลีย",
 "Silia",
@@ -552,7 +552,7 @@
 "Silia",
 "Силия"
 ],
-"relic.raitia-earth.origin": [
+"relic.silia.origin": [
 "睡鼠",
 "หนูดอร์เมาส์",
 "Chuột sóc",
@@ -562,7 +562,7 @@
 "Bilch",
 "Соня"
 ],
-"relic.raitia-earth.excavationSite": [
+"relic.silia.excavationSite": [
 "斯洛文尼亚 喀斯特洞穴沉积层",
 "ตะกอนถ้ำคาสต์ สโลวีเนีย",
 "Trầm tích hang karst, Slovenia",
@@ -572,7 +572,7 @@
 "Karsthöhlensediment, Slowenien",
 "Отложения карстовой пещеры, Словения"
 ],
-"relic.raitia-earth.fossilRecord": [
+"relic.silia.fossilRecord": [
 "从洞穴沉积物的同一层中回收了数十个同种头骨。其中五个在大小与齿列上高度一致，被归为同一窝。",
 "จากตะกอนถ้ำชั้นเดียวกันได้กะโหลกชนิดเดียวกันหลายสิบชิ้น ห้าชิ้นในนั้นมีขนาดและแนวฟันตรงกันมากจนจัดเป็นครอกเดียวกัน",
 "Hàng chục hộp sọ cùng loài được thu từ một lớp trầm tích hang duy nhất. Năm chiếc trong số đó khớp nhau về kích thước và hàm răng đến mức được xếp vào cùng một lứa.",
@@ -582,7 +582,7 @@
 "Aus einer einzigen Schicht Höhlensediment wurden Dutzende Schädel derselben Art geborgen. Fünf davon stimmen in Größe und Gebiss so genau überein, dass sie als ein Wurf eingestuft wurden.",
 "Из одного слоя пещерных отложений извлекли десятки черепов одного вида. Пять из них так совпадают по размеру и зубам, что их отнесли к одному помёту."
 ],
-"relic.raitia-earth.catalogSummary": [
+"relic.silia.catalogSummary": [
 "以睡鼠为基础，复原出过大门齿与颊囊的个体。",
 "ตัวอย่างที่ฟื้นคืนจากหนูดอร์เมาส์ มีฟันหน้าและกระพุ้งแก้มขนาดใหญ่เกินปกติ",
 "Mẫu vật dựa trên chuột sóc, được phục hồi với răng cửa và túi má quá khổ.",
@@ -592,7 +592,7 @@
 "Ein Exemplar auf Bilchbasis, restauriert mit übergroßen Schneidezähnen und Backentaschen.",
 "Образец на основе сони с увеличенными резцами и защёчными мешками."
 ],
-"relic.raitia-earth.squadNote": [
+"relic.silia.squadNote": [
 "歼灭的消耗性兵力。她们朝指向的方向一齐涌去填满走廊，后面的直接踏过前面倒下的地方。",
 "กำลังพลใช้แล้วทิ้งของหน่วยทำลายล้าง พวกเธอหลั่งไหลพร้อมกันไปทางที่ถูกชี้จนเต็มทางเดิน ตัวข้างหลังก้าวข้ามจุดที่ตัวข้างหน้าล้มไปทันที",
 "Lực lượng tiêu hao của Hủy Diệt. Chúng đồng loạt tràn về hướng được chỉ và lấp kín hành lang, những kẻ phía sau bước thẳng qua chỗ kẻ phía trước ngã xuống.",
@@ -602,7 +602,7 @@
 "Die entbehrliche Masse der Vernichtung. Sie strömen alle zugleich in die gewiesene Richtung und füllen den Gang; die hinteren treten geradewegs über die Stelle, an der die vorderen fielen.",
 "Расходная масса Истребления. Они разом текут туда, куда укажут, заполняя коридор, и задние шагают прямо через место, где пали передние."
 ],
-"relic.raitia-earth.researcherTitle": [
+"relic.silia.researcherTitle": [
 "研究员",
 "นักวิจัย",
 "Nhà nghiên cứu",
@@ -612,7 +612,7 @@
 "Forscher",
 "Исследователь"
 ],
-"relic.raitia-earth.observation.originYear": [
+"relic.silia.observation.originYear": [
 "约200万年前",
 "ประมาณ 2 ล้านปีก่อน",
 "Khoảng 2 triệu năm trước",
@@ -622,7 +622,7 @@
 "Vor etwa 2 Millionen Jahren",
 "Около 2 млн лет назад"
 ],
-"relic.raitia-earth.observation.restorationYear": [
+"relic.silia.observation.restorationYear": [
 "E.C. 2",
 "E.C. 2",
 "E.C. 2",
@@ -632,7 +632,7 @@
 "E.C. 2",
 "E.C. 2"
 ],
-"relic.raitia-earth.observation.lifeStage": [
+"relic.silia.observation.lifeStage": [
 "幼年",
 "วัยเยาว์",
 "Nhỏ tuổi",
@@ -642,7 +642,7 @@
 "Jungtier",
 "Юная"
 ],
-"relic.raitia-earth.observation.height": [
+"relic.silia.observation.height": [
 "0.94 m",
 "0.94 m",
 "0,94 m",
@@ -652,7 +652,7 @@
 "0,94 m",
 "0,94 м"
 ],
-"relic.raitia-earth.observation.weight": [
+"relic.silia.observation.weight": [
 "21 kg",
 "21 kg",
 "21 kg",
@@ -662,7 +662,7 @@
 "21 kg",
 "21 кг"
 ],
-"relic.raitia-earth.passive.name": [
+"relic.silia.passive.name": [
 "冬眠",
 "จำศีล",
 "Ngủ đông",
@@ -672,7 +672,7 @@
 "Winterschlaf",
 "Спячка"
 ],
-"relic.raitia-earth.passive.desc": [
+"relic.silia.passive.desc": [
 "每场战斗一次，生命降至一半以下时，5秒内每秒恢复最大生命的3%。",
 "หนึ่งครั้งต่อการต่อสู้ เมื่อ HP ลดเหลือครึ่งหนึ่งหรือต่ำกว่า จะฟื้นฟู 3% ของ HP สูงสุดทุกวินาทีเป็นเวลา 5 วินาที",
 "Mỗi trận một lần, khi HP còn một nửa trở xuống, hồi 3% HP tối đa mỗi giây trong 5 giây.",
@@ -682,7 +682,7 @@
 "Einmal pro Kampf stellt sie, wenn ihre LP auf die Hälfte oder darunter fallen, 5 Sekunden lang jede Sekunde 3 % der max. LP wieder her.",
 "Раз за бой, когда ОЗ падают до половины или ниже, 5 секунд восстанавливает по 3% макс. ОЗ в секунду."
 ],
-"relic.raitia-earth.ferocity.name": [
+"relic.silia.ferocity.name": [
 "暴食",
 "ตะกละ",
 "Ăn ngấu nghiến",
@@ -692,7 +692,7 @@
 "Völlerei",
 "Обжорство"
 ],
-"relic.raitia-earth.basic.name": [
+"relic.silia.basic.name": [
 "门齿啃咬",
 "แทะด้วยฟันหน้า",
 "Gặm răng cửa",
@@ -702,7 +702,7 @@
 "Schneidezahnnagen",
 "Грызь резцами"
 ],
-"relic.raitia-earth.ultimate.name": [
+"relic.silia.ultimate.name": [
 "颊囊倾倒",
 "เทกระพุ้งแก้ม",
 "Dốc túi má",
@@ -712,7 +712,7 @@
 "Backentaschen-Ausschüttung",
 "Опустошение защёчных мешков"
 ],
-"relic.raitia-earth.projectName": [
+"relic.silia.projectName": [
 "ANNIHILATION SWARM — 过食个体群",
 "ANNIHILATION SWARM — ประชากรกินเกิน",
 "ANNIHILATION SWARM — Quần thể ăn quá mức",
@@ -722,8 +722,8 @@
 "ANNIHILATION SWARM — Überfütterte Population",
 "ANNIHILATION SWARM — Перекормленная популяция"
 ],
-"relic.raitia-earth.unlockRecord": ["识别记录210。已确认隶属于歼灭。在同样的带兜帽睡衣中，这只以棕色底色、黄色绳结和麻花辫最为显眼，尾巴末端挂着一大团毛球。它向前伸出手站立时，姐妹们会一齐朝着它指尖的方向涌去，前面的个体倒下的地方，后面的个体直接踩过去。是谁决定了它指尖所指的方向，尚未确认。", "บันทึกการระบุตัว 210 ยืนยันว่าสังกัดทำลายล้าง เป็นตัวที่โดดเด่นด้วยพื้นสีน้ำตาล เงื่อนสีเหลือง และผมเปียในบรรดาตัวที่สวมชุดนอนมีฮู้ดแบบเดียวกัน ปลายหางติดก้อนขนใหญ่ เมื่อยืนเหยียดมือไปข้างหน้า พี่น้องทั้งหมดจะไหลไปตามทิศปลายนิ้วของมันพร้อมกัน และตรงที่ตัวหน้าล้มลง ตัวหลังก็เหยียบข้ามไปตรง ๆ ยังไม่ยืนยันว่าใครเป็นผู้กำหนดทิศที่ปลายนิ้วชี้", "Hồ sơ nhận dạng 210. Được xác nhận thuộc Hủy Diệt. Trong số những cá thể mặc cùng kiểu đồ ngủ có mũ trùm, đây là cá thể nổi bật với nền nâu, nút thắt vàng và tóc tết, đầu đuôi mang một cục lông lớn. Khi nó đứng dang tay về phía trước, các chị em đồng loạt đổ theo hướng đầu ngón tay, và chỗ con đi đầu ngã xuống thì con phía sau cứ thế dẫm qua. Ai quyết định hướng mà đầu ngón tay ấy chỉ vẫn chưa được xác nhận.", "Catatan Identifikasi 210. Terkonfirmasi tergabung dalam Pemusnahan. Di antara sosok berpiama berkerudung yang sama, yang ini menonjol dengan dasar cokelat, simpul kuning, dan rambut kepang, serta membawa gumpalan bulu besar di ujung ekornya. Saat ia berdiri dengan tangan terulur ke depan, para saudarinya mengalir serentak ke arah ujung jarinya, dan di tempat sosok terdepan jatuh, sosok di belakang langsung menginjak melewatinya. Siapa yang menentukan arah ujung jarinya belum terkonfirmasi.", "Registro de identificación 210. Confirmado como perteneciente a Aniquilación. De las del mismo pijama de capucha, esta destaca por su base marrón, su nudo amarillo y su trenza, y lleva una gran bola de pelo en la punta de la cola. Cuando se plantó con las manos extendidas hacia delante, las hermanas fluyeron todas a la vez hacia donde apuntaban sus dedos, y en el lugar donde cayó la de delante, la de atrás pasó por encima sin más. No se ha confirmado quién decide hacia dónde apuntan sus dedos.", "Registro de identificação 210. Confirmado como pertencente à Aniquilação. Entre as do mesmo pijama com capuz, esta se destaca pela base marrom, o laço amarelo e a trança, e leva um grande tufo de pelos na ponta da cauda. Quando ficou de pé com as mãos estendidas à frente, as irmãs fluíram todas ao mesmo tempo na direção das pontas dos dedos, e onde a da frente caiu, a de trás passou por cima sem parar. Não foi confirmado quem decide a direção para onde apontam seus dedos.", "Identifikationsprotokoll 210. Als zugehörig zur Vernichtung bestätigt. Unter denen im gleichen Kapuzenpyjama fällt dieses Exemplar durch braunen Grund, gelben Knoten und geflochtenes Haar auf und trägt einen großen Fellbüschel an der Schwanzspitze. Stand es mit nach vorn ausgestreckten Händen da, strömten die Schwestern alle gleichzeitig in Richtung seiner Fingerspitzen, und wo die vordere gefallen war, stieg die hintere einfach darüber hinweg. Wer die Richtung seiner Fingerspitzen bestimmt, wurde nicht bestätigt.", "Запись об идентификации 210. Подтверждена принадлежность к Истреблению. Среди таких же капюшонных пижам это бросается в глаза коричневой основой, жёлтым узлом и заплетённой косой; на кончике хвоста — большой пушистый ком. Когда оно стояло, вытянув руки вперёд, сёстры разом текли в сторону его кончиков пальцев, а там, где падала передняя, задняя просто перешагивала через неё. Кто определяет, куда указывают его пальцы, не подтверждено."],
-"relic.raitia-wind.name": [
+"relic.silia.unlockRecord": ["识别记录210。已确认隶属于歼灭。在同样的带兜帽睡衣中，这只以棕色底色、黄色绳结和麻花辫最为显眼，尾巴末端挂着一大团毛球。它向前伸出手站立时，姐妹们会一齐朝着它指尖的方向涌去，前面的个体倒下的地方，后面的个体直接踩过去。是谁决定了它指尖所指的方向，尚未确认。", "บันทึกการระบุตัว 210 ยืนยันว่าสังกัดทำลายล้าง เป็นตัวที่โดดเด่นด้วยพื้นสีน้ำตาล เงื่อนสีเหลือง และผมเปียในบรรดาตัวที่สวมชุดนอนมีฮู้ดแบบเดียวกัน ปลายหางติดก้อนขนใหญ่ เมื่อยืนเหยียดมือไปข้างหน้า พี่น้องทั้งหมดจะไหลไปตามทิศปลายนิ้วของมันพร้อมกัน และตรงที่ตัวหน้าล้มลง ตัวหลังก็เหยียบข้ามไปตรง ๆ ยังไม่ยืนยันว่าใครเป็นผู้กำหนดทิศที่ปลายนิ้วชี้", "Hồ sơ nhận dạng 210. Được xác nhận thuộc Hủy Diệt. Trong số những cá thể mặc cùng kiểu đồ ngủ có mũ trùm, đây là cá thể nổi bật với nền nâu, nút thắt vàng và tóc tết, đầu đuôi mang một cục lông lớn. Khi nó đứng dang tay về phía trước, các chị em đồng loạt đổ theo hướng đầu ngón tay, và chỗ con đi đầu ngã xuống thì con phía sau cứ thế dẫm qua. Ai quyết định hướng mà đầu ngón tay ấy chỉ vẫn chưa được xác nhận.", "Catatan Identifikasi 210. Terkonfirmasi tergabung dalam Pemusnahan. Di antara sosok berpiama berkerudung yang sama, yang ini menonjol dengan dasar cokelat, simpul kuning, dan rambut kepang, serta membawa gumpalan bulu besar di ujung ekornya. Saat ia berdiri dengan tangan terulur ke depan, para saudarinya mengalir serentak ke arah ujung jarinya, dan di tempat sosok terdepan jatuh, sosok di belakang langsung menginjak melewatinya. Siapa yang menentukan arah ujung jarinya belum terkonfirmasi.", "Registro de identificación 210. Confirmado como perteneciente a Aniquilación. De las del mismo pijama de capucha, esta destaca por su base marrón, su nudo amarillo y su trenza, y lleva una gran bola de pelo en la punta de la cola. Cuando se plantó con las manos extendidas hacia delante, las hermanas fluyeron todas a la vez hacia donde apuntaban sus dedos, y en el lugar donde cayó la de delante, la de atrás pasó por encima sin más. No se ha confirmado quién decide hacia dónde apuntan sus dedos.", "Registro de identificação 210. Confirmado como pertencente à Aniquilação. Entre as do mesmo pijama com capuz, esta se destaca pela base marrom, o laço amarelo e a trança, e leva um grande tufo de pelos na ponta da cauda. Quando ficou de pé com as mãos estendidas à frente, as irmãs fluíram todas ao mesmo tempo na direção das pontas dos dedos, e onde a da frente caiu, a de trás passou por cima sem parar. Não foi confirmado quem decide a direção para onde apontam seus dedos.", "Identifikationsprotokoll 210. Als zugehörig zur Vernichtung bestätigt. Unter denen im gleichen Kapuzenpyjama fällt dieses Exemplar durch braunen Grund, gelben Knoten und geflochtenes Haar auf und trägt einen großen Fellbüschel an der Schwanzspitze. Stand es mit nach vorn ausgestreckten Händen da, strömten die Schwestern alle gleichzeitig in Richtung seiner Fingerspitzen, und wo die vordere gefallen war, stieg die hintere einfach darüber hinweg. Wer die Richtung seiner Fingerspitzen bestimmt, wurde nicht bestätigt.", "Запись об идентификации 210. Подтверждена принадлежность к Истреблению. Среди таких же капюшонных пижам это бросается в глаза коричневой основой, жёлтым узлом и заплетённой косой; на кончике хвоста — большой пушистый ком. Когда оно стояло, вытянув руки вперёд, сёстры разом текли в сторону его кончиков пальцев, а там, где падала передняя, задняя просто перешагивала через неё. Кто определяет, куда указывают его пальцы, не подтверждено."],
+"relic.ventia.name": [
 "梵缇娅",
 "เวนเทีย",
 "Ventia",
@@ -733,7 +733,7 @@
 "Ventia",
 "Вентия"
 ],
-"relic.raitia-wind.origin": [
+"relic.ventia.origin": [
 "睡鼠",
 "หนูดอร์เมาส์",
 "Chuột sóc",
@@ -743,7 +743,7 @@
 "Bilch",
 "Соня"
 ],
-"relic.raitia-wind.excavationSite": [
+"relic.ventia.excavationSite": [
 "斯洛文尼亚 喀斯特洞穴沉积层",
 "ตะกอนถ้ำคาสต์ สโลวีเนีย",
 "Trầm tích hang karst, Slovenia",
@@ -753,7 +753,7 @@
 "Karsthöhlensediment, Slowenien",
 "Отложения карстовой пещеры, Словения"
 ],
-"relic.raitia-wind.fossilRecord": [
+"relic.ventia.fossilRecord": [
 "从洞穴沉积物的同一层中回收了数十个同种头骨。其中五个在大小与齿列上高度一致，被归为同一窝。",
 "จากตะกอนถ้ำชั้นเดียวกันได้กะโหลกชนิดเดียวกันหลายสิบชิ้น ห้าชิ้นในนั้นมีขนาดและแนวฟันตรงกันมากจนจัดเป็นครอกเดียวกัน",
 "Hàng chục hộp sọ cùng loài được thu từ một lớp trầm tích hang duy nhất. Năm chiếc trong số đó khớp nhau về kích thước và hàm răng đến mức được xếp vào cùng một lứa.",
@@ -763,7 +763,7 @@
 "Aus einer einzigen Schicht Höhlensediment wurden Dutzende Schädel derselben Art geborgen. Fünf davon stimmen in Größe und Gebiss so genau überein, dass sie als ein Wurf eingestuft wurden.",
 "Из одного слоя пещерных отложений извлекли десятки черепов одного вида. Пять из них так совпадают по размеру и зубам, что их отнесли к одному помёту."
 ],
-"relic.raitia-wind.catalogSummary": [
+"relic.ventia.catalogSummary": [
 "以睡鼠为基础，复原出过大门齿与颊囊的个体。",
 "ตัวอย่างที่ฟื้นคืนจากหนูดอร์เมาส์ มีฟันหน้าและกระพุ้งแก้มขนาดใหญ่เกินปกติ",
 "Mẫu vật dựa trên chuột sóc, được phục hồi với răng cửa và túi má quá khổ.",
@@ -773,7 +773,7 @@
 "Ein Exemplar auf Bilchbasis, restauriert mit übergroßen Schneidezähnen und Backentaschen.",
 "Образец на основе сони с увеличенными резцами и защёчными мешками."
 ],
-"relic.raitia-wind.squadNote": [
+"relic.ventia.squadNote": [
 "歼灭的消耗性兵力。她们朝指向的方向一齐涌去填满走廊，后面的直接踏过前面倒下的地方。",
 "กำลังพลใช้แล้วทิ้งของหน่วยทำลายล้าง พวกเธอหลั่งไหลพร้อมกันไปทางที่ถูกชี้จนเต็มทางเดิน ตัวข้างหลังก้าวข้ามจุดที่ตัวข้างหน้าล้มไปทันที",
 "Lực lượng tiêu hao của Hủy Diệt. Chúng đồng loạt tràn về hướng được chỉ và lấp kín hành lang, những kẻ phía sau bước thẳng qua chỗ kẻ phía trước ngã xuống.",
@@ -783,7 +783,7 @@
 "Die entbehrliche Masse der Vernichtung. Sie strömen alle zugleich in die gewiesene Richtung und füllen den Gang; die hinteren treten geradewegs über die Stelle, an der die vorderen fielen.",
 "Расходная масса Истребления. Они разом текут туда, куда укажут, заполняя коридор, и задние шагают прямо через место, где пали передние."
 ],
-"relic.raitia-wind.researcherTitle": [
+"relic.ventia.researcherTitle": [
 "研究员",
 "นักวิจัย",
 "Nhà nghiên cứu",
@@ -793,7 +793,7 @@
 "Forscher",
 "Исследователь"
 ],
-"relic.raitia-wind.observation.originYear": [
+"relic.ventia.observation.originYear": [
 "约200万年前",
 "ประมาณ 2 ล้านปีก่อน",
 "Khoảng 2 triệu năm trước",
@@ -803,7 +803,7 @@
 "Vor etwa 2 Millionen Jahren",
 "Около 2 млн лет назад"
 ],
-"relic.raitia-wind.observation.restorationYear": [
+"relic.ventia.observation.restorationYear": [
 "E.C. 2",
 "E.C. 2",
 "E.C. 2",
@@ -813,7 +813,7 @@
 "E.C. 2",
 "E.C. 2"
 ],
-"relic.raitia-wind.observation.lifeStage": [
+"relic.ventia.observation.lifeStage": [
 "幼年",
 "วัยเยาว์",
 "Nhỏ tuổi",
@@ -823,7 +823,7 @@
 "Jungtier",
 "Юная"
 ],
-"relic.raitia-wind.observation.height": [
+"relic.ventia.observation.height": [
 "0.94 m",
 "0.94 m",
 "0,94 m",
@@ -833,7 +833,7 @@
 "0,94 m",
 "0,94 м"
 ],
-"relic.raitia-wind.observation.weight": [
+"relic.ventia.observation.weight": [
 "21 kg",
 "21 kg",
 "21 kg",
@@ -843,7 +843,7 @@
 "21 kg",
 "21 кг"
 ],
-"relic.raitia-wind.passive.name": [
+"relic.ventia.passive.name": [
 "冬眠",
 "จำศีล",
 "Ngủ đông",
@@ -853,7 +853,7 @@
 "Winterschlaf",
 "Спячка"
 ],
-"relic.raitia-wind.passive.desc": [
+"relic.ventia.passive.desc": [
 "每场战斗一次，生命降至一半以下时，5秒内每秒恢复最大生命的3%。",
 "หนึ่งครั้งต่อการต่อสู้ เมื่อ HP ลดเหลือครึ่งหนึ่งหรือต่ำกว่า จะฟื้นฟู 3% ของ HP สูงสุดทุกวินาทีเป็นเวลา 5 วินาที",
 "Mỗi trận một lần, khi HP còn một nửa trở xuống, hồi 3% HP tối đa mỗi giây trong 5 giây.",
@@ -863,7 +863,7 @@
 "Einmal pro Kampf stellt sie, wenn ihre LP auf die Hälfte oder darunter fallen, 5 Sekunden lang jede Sekunde 3 % der max. LP wieder her.",
 "Раз за бой, когда ОЗ падают до половины или ниже, 5 секунд восстанавливает по 3% макс. ОЗ в секунду."
 ],
-"relic.raitia-wind.ferocity.name": [
+"relic.ventia.ferocity.name": [
 "暴食",
 "ตะกละ",
 "Ăn ngấu nghiến",
@@ -873,7 +873,7 @@
 "Völlerei",
 "Обжорство"
 ],
-"relic.raitia-wind.basic.name": [
+"relic.ventia.basic.name": [
 "门齿啃咬",
 "แทะด้วยฟันหน้า",
 "Gặm răng cửa",
@@ -883,7 +883,7 @@
 "Schneidezahnnagen",
 "Грызь резцами"
 ],
-"relic.raitia-wind.ultimate.name": [
+"relic.ventia.ultimate.name": [
 "颊囊倾倒",
 "เทกระพุ้งแก้ม",
 "Dốc túi má",
@@ -893,7 +893,7 @@
 "Backentaschen-Ausschüttung",
 "Опустошение защёчных мешков"
 ],
-"relic.raitia-wind.projectName": [
+"relic.ventia.projectName": [
 "ANNIHILATION SWARM — 过食个体群",
 "ANNIHILATION SWARM — ประชากรกินเกิน",
 "ANNIHILATION SWARM — Quần thể ăn quá mức",
@@ -903,5 +903,5 @@
 "ANNIHILATION SWARM — Überfütterte Population",
 "ANNIHILATION SWARM — Перекормленная популяция"
 ],
-"relic.raitia-wind.unlockRecord": ["识别记录211。确认隶属于歼灭。是同样穿着连帽睡衣的姐妹中系着薄荷色丝带的个体，抱着胳膊、紧闭着嘴站着。直到姐妹们涌向食物之后，它才勉强跟了过去，到了之后却是啃动门齿最久的一个。从未观察到它用门齿的声音传达过任何信息。", "บันทึกการระบุตัว 211 ยืนยันว่าสังกัดทำลายล้าง เป็นตัวที่ผูกริบบิ้นสีมินต์ท่ามกลางชุดนอนมีฮู้ดแบบเดียวกัน ยืนกอดอกและปิดปากเงียบสนิท ตามไปอย่างไม่เต็มใจหลังจากพี่น้องแห่กันไปหาอาหารแล้วเท่านั้น แต่พอไปถึงกลับเป็นตัวที่ขยับฟันหน้านานที่สุด ไม่เคยพบว่ามันใช้เสียงฟันหน้าเพื่อส่งสัญญาณอะไรเลยสักครั้ง", "Hồ sơ nhận dạng 211. Xác nhận thuộc Hủy Diệt. Đây là cá thể thắt nơ màu bạc hà giữa những chị em mặc cùng kiểu đồ ngủ có mũ trùm; đứng khoanh tay, miệng mím chặt. Cô chỉ miễn cưỡng đi theo sau khi các chị em đã ùa về phía thức ăn, vậy mà đến nơi lại là người gặm bằng răng cửa lâu nhất. Chưa từng thấy cô dùng tiếng răng cửa để báo hiệu điều gì.", "Catatan identifikasi 211. Dipastikan berafiliasi dengan Pemusnahan. Ia individu berpita warna mint di antara saudari-saudarinya yang mengenakan piama berkerudung yang sama, berdiri dengan tangan bersedekap dan mulut terkatup rapat. Ia baru mengikuti dengan setengah hati setelah saudari-saudarinya berduyun-duyun menuju makanan, tetapi begitu tiba, dialah yang paling lama menggerakkan gigi serinya. Tak pernah sekali pun teramati ia memberi tanda dengan bunyi gigi serinya.", "Registro de identificación 211. Confirmada como perteneciente a Aniquilación. Es la que lleva un lazo color menta entre las hermanas con el mismo pijama de capucha; está de pie con los brazos cruzados y la boca bien cerrada. Solo siguió a regañadientes cuando sus hermanas ya habían corrido hacia la comida, y al llegar fue la que más tiempo movió los incisivos. Nunca se la ha visto avisar de nada con el sonido de los incisivos.", "Registro de identificação 211. Confirmada como pertencente à Aniquilação. É a que usa um laço cor de menta entre as irmãs com o mesmo pijama de capuz; fica de braços cruzados e boca bem fechada. Só seguiu, a contragosto, depois que as irmãs já tinham corrido até a comida, e ao chegar foi a que mais tempo mexeu os incisivos. Nunca foi observada avisando algo com o som dos incisivos.", "Identifikationsprotokoll 211. Als der Vernichtung zugehörig bestätigt. Es ist das Exemplar mit der mintfarbenen Schleife unter den Schwestern im gleichen Kapuzenschlafanzug; sie steht mit verschränkten Armen und fest geschlossenem Mund da. Sie folgte erst widerwillig, nachdem ihre Schwestern zum Futter gestürmt waren, nagte dort aber am längsten mit den Schneidezähnen. Dass sie mit dem Geräusch der Schneidezähne je etwas mitgeteilt hätte, wurde kein einziges Mal festgestellt.", "Запись опознания 211. Подтверждена принадлежность к «Истреблению». Это особь с мятным бантом среди сестёр в одинаковых пижамах с капюшоном; стоит, скрестив руки и плотно сжав губы. Она нехотя пошла следом лишь после того, как сёстры бросились к еде, но, добравшись, дольше всех работала резцами. Ни разу не удалось зафиксировать, чтобы она подавала резцами какой-либо сигнал."]
+"relic.ventia.unlockRecord": ["识别记录211。确认隶属于歼灭。是同样穿着连帽睡衣的姐妹中系着薄荷色丝带的个体，抱着胳膊、紧闭着嘴站着。直到姐妹们涌向食物之后，它才勉强跟了过去，到了之后却是啃动门齿最久的一个。从未观察到它用门齿的声音传达过任何信息。", "บันทึกการระบุตัว 211 ยืนยันว่าสังกัดทำลายล้าง เป็นตัวที่ผูกริบบิ้นสีมินต์ท่ามกลางชุดนอนมีฮู้ดแบบเดียวกัน ยืนกอดอกและปิดปากเงียบสนิท ตามไปอย่างไม่เต็มใจหลังจากพี่น้องแห่กันไปหาอาหารแล้วเท่านั้น แต่พอไปถึงกลับเป็นตัวที่ขยับฟันหน้านานที่สุด ไม่เคยพบว่ามันใช้เสียงฟันหน้าเพื่อส่งสัญญาณอะไรเลยสักครั้ง", "Hồ sơ nhận dạng 211. Xác nhận thuộc Hủy Diệt. Đây là cá thể thắt nơ màu bạc hà giữa những chị em mặc cùng kiểu đồ ngủ có mũ trùm; đứng khoanh tay, miệng mím chặt. Cô chỉ miễn cưỡng đi theo sau khi các chị em đã ùa về phía thức ăn, vậy mà đến nơi lại là người gặm bằng răng cửa lâu nhất. Chưa từng thấy cô dùng tiếng răng cửa để báo hiệu điều gì.", "Catatan identifikasi 211. Dipastikan berafiliasi dengan Pemusnahan. Ia individu berpita warna mint di antara saudari-saudarinya yang mengenakan piama berkerudung yang sama, berdiri dengan tangan bersedekap dan mulut terkatup rapat. Ia baru mengikuti dengan setengah hati setelah saudari-saudarinya berduyun-duyun menuju makanan, tetapi begitu tiba, dialah yang paling lama menggerakkan gigi serinya. Tak pernah sekali pun teramati ia memberi tanda dengan bunyi gigi serinya.", "Registro de identificación 211. Confirmada como perteneciente a Aniquilación. Es la que lleva un lazo color menta entre las hermanas con el mismo pijama de capucha; está de pie con los brazos cruzados y la boca bien cerrada. Solo siguió a regañadientes cuando sus hermanas ya habían corrido hacia la comida, y al llegar fue la que más tiempo movió los incisivos. Nunca se la ha visto avisar de nada con el sonido de los incisivos.", "Registro de identificação 211. Confirmada como pertencente à Aniquilação. É a que usa um laço cor de menta entre as irmãs com o mesmo pijama de capuz; fica de braços cruzados e boca bem fechada. Só seguiu, a contragosto, depois que as irmãs já tinham corrido até a comida, e ao chegar foi a que mais tempo mexeu os incisivos. Nunca foi observada avisando algo com o som dos incisivos.", "Identifikationsprotokoll 211. Als der Vernichtung zugehörig bestätigt. Es ist das Exemplar mit der mintfarbenen Schleife unter den Schwestern im gleichen Kapuzenschlafanzug; sie steht mit verschränkten Armen und fest geschlossenem Mund da. Sie folgte erst widerwillig, nachdem ihre Schwestern zum Futter gestürmt waren, nagte dort aber am längsten mit den Schneidezähnen. Dass sie mit dem Geräusch der Schneidezähne je etwas mitgeteilt hätte, wurde kein einziges Mal festgestellt.", "Запись опознания 211. Подтверждена принадлежность к «Истреблению». Это особь с мятным бантом среди сестёр в одинаковых пижамах с капюшоном; стоит, скрестив руки и плотно сжав губы. Она нехотя пошла следом лишь после того, как сёстры бросились к еде, но, добравшись, дольше всех работала резцами. Ни разу не удалось зафиксировать, чтобы она подавала резцами какой-либо сигнал."]
 }

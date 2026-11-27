@@ -44,7 +44,7 @@ describe("교류 층 모델", () => {
   });
 
   it("나가 있는 렐릭은 다시 보낼 수 없다 — 수령한 파견은 풀려난다", () => {
-    const away = relicsAwayOnInteraction([dispatch("doppel-parlor"), dispatch("doppel-lab", { party: ["rex", "spino"], claimed: true })]);
+    const away = relicsAwayOnInteraction([dispatch("doppel-parlor"), dispatch("doppel-lab", { party: ["rexia", "spina"], claimed: true })]);
     expect([...away]).toEqual(["torika"]);
   });
 

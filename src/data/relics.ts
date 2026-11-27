@@ -210,7 +210,7 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
-    id: "rex",
+    id: "rexia",
     squad: "fang",
     name: "렉시아",
     specimenNumber: "072",
@@ -264,7 +264,7 @@ export const RELICS: RelicDef[] = [
       passive: { kind: "battleMaidAscension", durabilityPercent: 25, rechargeOnKill: true },
     },
     passive: {
-      id: "rex-passive",
+      id: "rexia-passive",
       name: "전투는 메이드의 소양이기에.",
       kind: "battleMaidMastery",
       iconAssetId: "skill-icon-buff",
@@ -286,7 +286,7 @@ export const RELICS: RelicDef[] = [
       desc: "전투 시작 시 공격 속도·공격력·치명타 확률·치명타 피해·흡혈이 모두 25% 오르고, 표적에게 중거리까지 다가서면 돌진해 1초 동안 기절시킨다.",
     },
     basic: {
-      id: "rex-basic",
+      id: "rexia-basic",
       name: "출혈 송곳니",
       power: 120,
       iconAssetId: "skill-icon-physical",
@@ -297,7 +297,7 @@ export const RELICS: RelicDef[] = [
       statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 }],
     },
     ultimate: {
-      id: "rex-ult",
+      id: "rexia-ult",
       name: "절멸의 포효",
       power: 300,
       iconAssetId: "skill-icon-physical",
@@ -441,7 +441,7 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
-    id: "spino",
+    id: "spina",
     squad: "gear",
     // 저장 데이터와 에셋 키는 유지하고 플레이어에게 표시하는 이름만 스피나로 통일한다.
     name: "스피나",
@@ -506,7 +506,7 @@ export const RELICS: RelicDef[] = [
       passive: { kind: "leapVeil", stealthSeconds: 1, cooldownSeconds: 3 },
     },
     passive: {
-      id: "spino-passive",
+      id: "spina-passive",
       name: "전투의 환희",
       kind: "basicHitAttackSpeedStack",
       iconAssetId: "skill-icon-buff",
@@ -519,7 +519,7 @@ export const RELICS: RelicDef[] = [
     },
     // 스피나의 기본 공격 데이터는 중복 키 없이 BasicAttack 계약을 직접 검증한다.
     basic: {
-      id: "spino-basic",
+      id: "spina-basic",
       name: "악어턱 물어뜯기",
       power: 90,
       iconAssetId: "skill-icon-physical",
@@ -567,7 +567,7 @@ export const RELICS: RelicDef[] = [
       },
     } satisfies BasicAttack,
     ultimate: {
-      id: "spino-ult",
+      id: "spina-ult",
       name: "범람의 포식자",
       power: 200,
       iconAssetId: "skill-icon-physical",
@@ -691,12 +691,12 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
-    id: "dodo",
+    id: "dodi",
     squad: "rogue",
     // 스쿼드 메모는 쁘띠 로그의 역할과 주인공을 향한 팬심만 남겨, 복원 후 관찰 기록과 서사를 중복하지 않는다.
     squadNote: "쁘띠 로그의 막내 기록병. 대장님의 1호 팬을 자처해 일지 첫 장에도 그 이름을 적어 두었다.",
     researcherTitle: "대장님",
-    // 저장·에셋 호환 ID는 dodo로 두고 플레이어에게 보이는 이름만 확정 명칭으로 바꾼다.
+    // 저장·에셋 호환 ID는 dodi로 두고 플레이어에게 보이는 이름만 확정 명칭으로 바꾼다.
     name: "도디",
     specimenNumber: "001",
     projectName: "ECHO NEST",
@@ -763,7 +763,7 @@ export const RELICS: RelicDef[] = [
       passive: { kind: "rescueShield", belowHpPercent: 25, apPercent: 150 },
     },
     passive: {
-      id: "dodo-passive",
+      id: "dodi-passive",
       name: "연구원님, 이것 좀 보세요!",
       kind: "guardianNestAura",
       iconAssetId: "skill-icon-buff",
@@ -774,7 +774,7 @@ export const RELICS: RelicDef[] = [
       desc: "생존 중 아군 전체의 방어력·저항력을 15% 높이고 적 전체가 받는 회복량을 30% 낮춘다.",
     },
     basic: {
-      id: "dodo-basic",
+      id: "dodi-basic",
       name: "깃펜 톡톡",
       power: 50,
       iconAssetId: "skill-icon-magical",
@@ -786,7 +786,7 @@ export const RELICS: RelicDef[] = [
       // lowestHpAllyHealingFromDamagePercent가 있는 스킬은 skillDescription()이 대상·피해·회복을
     },
     ultimate: {
-      id: "dodo-ult",
+      id: "dodi-ult",
       name: "세기의 대발견... 맞죠?!",
       power: 150,
       iconAssetId: "skill-icon-magical",
@@ -3933,7 +3933,7 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
-    id: "carno",
+    id: "kar",
     enemyOnly: true,
     squad: "annihilation",
     name: "카르",
@@ -3954,7 +3954,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "공멸의 부대장으로, 지하 감금동 최하층에 묶여 있던 가장 위험한 수감자로 확인된다. 두 대장 다음 자리에서 간부들을 부리고, 문이 열린 뒤 무리의 맨 앞을 달리며, 묶인 몸 그대로 길을 뚫는다. 연구원을 \"연구원\"이라 부른다.",
     researcherTitle: "연구원",
     rarity: "SSR",
-    portraitAssetId: "carno",
+    portraitAssetId: "kar",
     origin: "카르노타우루스",
     element: "wind",
     role: "warrior",
@@ -3977,7 +3977,7 @@ export const RELICS: RelicDef[] = [
     },
     ferocityTrait: { name: "구속 붕괴", effectId: "restraintCollapse" },
     passive: {
-      id: "carno-passive",
+      id: "kar-passive",
       name: "구속복",
       kind: "restraintLocks",
       iconAssetId: "skill-icon-buff",
@@ -3998,7 +3998,7 @@ export const RELICS: RelicDef[] = [
       desc: "체력이 깎일 때마다 자물쇠가 풀리며 빨라지고, 모두 풀리면 기본 공격이 주위를 휩쓴다.",
     },
     basic: {
-      id: "carno-basic",
+      id: "kar-basic",
       name: "쌍뿔 치기",
       power: 110,
       // 네 번째 들이받기가 표적을 뒤로 날린다. 매 타격이면 붙을 틈이 없어 주기로 둔다.
@@ -4012,7 +4012,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
     },
     ultimate: {
-      id: "carno-ult",
+      id: "kar-ult",
       name: "광란의 질주",
       power: 220,
       iconAssetId: "skill-icon-physical",
@@ -4113,9 +4113,9 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
-    // 저장 데이터와 에셋 키(`deina`·`char_016`)는 유지하고 플레이어에게 표시하는 이름만
+    // 저장 데이터와 에셋 키(`dei`·`char_016`)는 유지하고 플레이어에게 표시하는 이름만
     // 데이로 둔다 — 스피나와 같은 규칙이다.
-    id: "deina",
+    id: "dei",
     squad: "gear",
     name: "데이",
     specimenNumber: "059",
@@ -4140,7 +4140,7 @@ export const RELICS: RelicDef[] = [
     researcherTitle: "연구원님",
     rarity: "SSR",
     ferocityMax: 110,
-    portraitAssetId: "deina",
+    portraitAssetId: "dei",
     origin: "데이노니쿠스",
     element: "fire",
     // 붙잡아 두는 것이 값이라 태그는 tank지만, 버티는 방식은 체력도 보호막도 아닌 발이다.
@@ -4224,7 +4224,7 @@ export const RELICS: RelicDef[] = [
     passive: {
       // kind가 tagAndRun인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
-      id: "deina-passive",
+      id: "dei-passive",
       name: "태그 앤 런",
       kind: "tagAndRun",
       iconAssetId: "skill-icon-buff",
@@ -4257,7 +4257,7 @@ export const RELICS: RelicDef[] = [
       desc: "기본 공격을 낼 때마다 아직 때리지 않은 적으로 표적을 바꾸고, 다른 전투원을 그대로 지나간다. 적을 도발할 때마다 잃은 체력의 5%를 회복한다.",
     },
     basic: {
-      id: "deina-basic",
+      id: "dei-basic",
       name: "치익, 칙!",
       /*
        * 「톡 톡 치고 다닌다」가 그대로 수치다. 표적을 매 타격마다 바꾸므로 같은 위력이 적
@@ -4289,7 +4289,7 @@ export const RELICS: RelicDef[] = [
       ],
     },
     ultimate: {
-      id: "deina-ult",
+      id: "dei-ult",
       name: "펑크 아트 180",
       /*
        * `channel`이 있으므로 이 위력은 총량이 아니라 **한 틱**의 몫이다.
@@ -5930,7 +5930,7 @@ export const RELICS: RelicDef[] = [
      *
      * 바람 속성의 전사이고, 세 보스가 속성을 겹치지 않아(풀·불·바람) 속성 상성이 고른 편성을 갈라 준다.
      */
-    id: "quetzalcoatlus",
+    id: "koatl",
     enemyOnly: true,
     squad: "annihilation",
     name: "코아틀",
@@ -5950,7 +5950,7 @@ export const RELICS: RelicDef[] = [
     unlockRecord: { status: "recorded", text: "재앙 기록 006. 강변 상공에 출현했다. 날개처럼 펼친 검은 망토와 뾰족한 챙 모자를 썼고, 끝이 화살촉 모양인 장식이 사슬에 달려 흔들렸다. 한참을 높은 곳에서 내려다보다 한 번에 내리꽂았으며, 날갯짓 한 번에 근처 장비가 쓸려 나갔다. 어디서 나타났는지, 무엇을 노렸는지는 확인되지 않았다." },
     // 레이드 보스는 연구원이 아는 만큼만 재앙 기록일지로 적는다. 정체·목적·내부 사정은 쓰지 않으며 squadNote·researcherTitle은 넣지 않는다.
     rarity: "SSR",
-    portraitAssetId: "quetzalcoatlus",
+    portraitAssetId: "koatl",
     origin: "케찰코아틀루스",
     element: "wind",
     role: "warrior",
@@ -5996,7 +5996,7 @@ export const RELICS: RelicDef[] = [
      * 회복은 주지 않는다 — 시즌 게이지를 되돌리지 않는다(다른 보스와 같은 이유).
      */
     passive: {
-      id: "quetzalcoatlus-passive",
+      id: "koatl-passive",
       name: "급강하 사냥",
       kind: "openingDive",
       iconAssetId: "skill-icon-buff",
@@ -6009,7 +6009,7 @@ export const RELICS: RelicDef[] = [
       desc: "전투가 열리면 표적에게 급강하해 기절시키고, 치명타 확률이 오른다.",
     },
     basic: {
-      id: "quetzalcoatlus-basic",
+      id: "koatl-basic",
       name: "창날 부리",
       power: 125,
       iconAssetId: "skill-icon-physical",
@@ -6025,7 +6025,7 @@ export const RELICS: RelicDef[] = [
       statusEffects: [{ kind: "stun", seconds: 1 }],
     },
     ultimate: {
-      id: "quetzalcoatlus-ult",
+      id: "koatl-ult",
       name: "폭풍 강하",
       power: 270,
       iconAssetId: "skill-icon-physical",
@@ -6069,7 +6069,7 @@ export const RELICS: RelicDef[] = [
      * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
      * 무거워지는 몫은 개체 정의가 아니라 그 관문의 레벨과 유형 배수가 갖는다.
      */
-    id: "raitia-grass",
+    id: "viria",
     enemyOnly: true,
     // 다섯 자매를 도감과 서사에서 한 갈래로 묶는다. 전투 능력치를 물려받는 값이 아니다.
     identityFamilyId: "raitia",
@@ -6093,7 +6093,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
     researcherTitle: "연구원",
     rarity: "R",
-    portraitAssetId: "raitia-grass",
+    portraitAssetId: "viria",
     origin: "겨울잠쥐",
     element: "grass",
     // 앞니로 갉으며 앞줄을 메우는 몸이라 방어형이다. 다섯이 모두 같은 역할을 맡는다.
@@ -6128,7 +6128,7 @@ export const RELICS: RelicDef[] = [
       bonusPercent: 60,
     },
     passive: {
-      id: "raitia-grass-passive",
+      id: "viria-passive",
       name: "겨울잠",
       /*
        * 겨울잠쥐가 버티는 방법은 숨은 배율이 아니라 **눈에 보이는 회복**이다 — 위험해지면
@@ -6144,7 +6144,7 @@ export const RELICS: RelicDef[] = [
       desc: "전투당 한 번, 체력이 절반 이하가 되면 5초 동안 매초 최대 체력의 3%를 회복한다.",
     },
     basic: {
-      id: "raitia-grass-basic",
+      id: "viria-basic",
       name: "앞니 갉기",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
@@ -6159,7 +6159,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
     },
     ultimate: {
-      id: "raitia-grass-ult",
+      id: "viria-ult",
       name: "볼주머니 쏟기",
       power: 150,
       iconAssetId: "skill-icon-physical",
@@ -6194,7 +6194,7 @@ export const RELICS: RelicDef[] = [
      * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
      * 무거워지는 몫은 개체 정의가 아니라 그 관문의 레벨과 유형 배수가 갖는다.
      */
-    id: "raitia-water",
+    id: "guttia",
     enemyOnly: true,
     // 다섯 자매를 도감과 서사에서 한 갈래로 묶는다. 전투 능력치를 물려받는 값이 아니다.
     identityFamilyId: "raitia",
@@ -6218,7 +6218,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
     researcherTitle: "연구원",
     rarity: "R",
-    portraitAssetId: "raitia-water",
+    portraitAssetId: "guttia",
     origin: "겨울잠쥐",
     element: "water",
     // 앞니로 갉으며 앞줄을 메우는 몸이라 방어형이다. 다섯이 모두 같은 역할을 맡는다.
@@ -6253,7 +6253,7 @@ export const RELICS: RelicDef[] = [
       bonusPercent: 60,
     },
     passive: {
-      id: "raitia-water-passive",
+      id: "guttia-passive",
       name: "겨울잠",
       /*
        * 겨울잠쥐가 버티는 방법은 숨은 배율이 아니라 **눈에 보이는 회복**이다 — 위험해지면
@@ -6269,7 +6269,7 @@ export const RELICS: RelicDef[] = [
       desc: "전투당 한 번, 체력이 절반 이하가 되면 5초 동안 매초 최대 체력의 3%를 회복한다.",
     },
     basic: {
-      id: "raitia-water-basic",
+      id: "guttia-basic",
       name: "앞니 갉기",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
@@ -6284,7 +6284,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
     },
     ultimate: {
-      id: "raitia-water-ult",
+      id: "guttia-ult",
       name: "볼주머니 쏟기",
       power: 150,
       iconAssetId: "skill-icon-physical",
@@ -6319,7 +6319,7 @@ export const RELICS: RelicDef[] = [
      * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
      * 무거워지는 몫은 개체 정의가 아니라 그 관문의 레벨과 유형 배수가 갖는다.
      */
-    id: "raitia-fire",
+    id: "favia",
     enemyOnly: true,
     // 다섯 자매를 도감과 서사에서 한 갈래로 묶는다. 전투 능력치를 물려받는 값이 아니다.
     identityFamilyId: "raitia",
@@ -6343,7 +6343,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
     researcherTitle: "연구원",
     rarity: "R",
-    portraitAssetId: "raitia-fire",
+    portraitAssetId: "favia",
     origin: "겨울잠쥐",
     element: "fire",
     // 앞니로 갉으며 앞줄을 메우는 몸이라 방어형이다. 다섯이 모두 같은 역할을 맡는다.
@@ -6378,7 +6378,7 @@ export const RELICS: RelicDef[] = [
       bonusPercent: 60,
     },
     passive: {
-      id: "raitia-fire-passive",
+      id: "favia-passive",
       name: "겨울잠",
       /*
        * 겨울잠쥐가 버티는 방법은 숨은 배율이 아니라 **눈에 보이는 회복**이다 — 위험해지면
@@ -6394,7 +6394,7 @@ export const RELICS: RelicDef[] = [
       desc: "전투당 한 번, 체력이 절반 이하가 되면 5초 동안 매초 최대 체력의 3%를 회복한다.",
     },
     basic: {
-      id: "raitia-fire-basic",
+      id: "favia-basic",
       name: "앞니 갉기",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
@@ -6409,7 +6409,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
     },
     ultimate: {
-      id: "raitia-fire-ult",
+      id: "favia-ult",
       name: "볼주머니 쏟기",
       power: 150,
       iconAssetId: "skill-icon-physical",
@@ -6444,7 +6444,7 @@ export const RELICS: RelicDef[] = [
      * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
      * 무거워지는 몫은 개체 정의가 아니라 그 관문의 레벨과 유형 배수가 갖는다.
      */
-    id: "raitia-earth",
+    id: "silia",
     enemyOnly: true,
     // 다섯 자매를 도감과 서사에서 한 갈래로 묶는다. 전투 능력치를 물려받는 값이 아니다.
     identityFamilyId: "raitia",
@@ -6470,7 +6470,7 @@ export const RELICS: RelicDef[] = [
     rarity: "R",
     // 폭주가 다른 적보다 늦게 와(첫 폭주 중앙값 14초 남짓) 기본 130에서 내렸다(2026-11-16 폭주 게이지 정리).
     ferocityMax: 120,
-    portraitAssetId: "raitia-earth",
+    portraitAssetId: "silia",
     origin: "겨울잠쥐",
     element: "earth",
     // 앞니로 갉으며 앞줄을 메우는 몸이라 방어형이다. 다섯이 모두 같은 역할을 맡는다.
@@ -6505,7 +6505,7 @@ export const RELICS: RelicDef[] = [
       bonusPercent: 60,
     },
     passive: {
-      id: "raitia-earth-passive",
+      id: "silia-passive",
       name: "겨울잠",
       /*
        * 겨울잠쥐가 버티는 방법은 숨은 배율이 아니라 **눈에 보이는 회복**이다 — 위험해지면
@@ -6521,7 +6521,7 @@ export const RELICS: RelicDef[] = [
       desc: "전투당 한 번, 체력이 절반 이하가 되면 5초 동안 매초 최대 체력의 3%를 회복한다.",
     },
     basic: {
-      id: "raitia-earth-basic",
+      id: "silia-basic",
       name: "앞니 갉기",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
@@ -6536,7 +6536,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
     },
     ultimate: {
-      id: "raitia-earth-ult",
+      id: "silia-ult",
       name: "볼주머니 쏟기",
       power: 150,
       iconAssetId: "skill-icon-physical",
@@ -6571,7 +6571,7 @@ export const RELICS: RelicDef[] = [
      * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
      * 무거워지는 몫은 개체 정의가 아니라 그 관문의 레벨과 유형 배수가 갖는다.
      */
-    id: "raitia-wind",
+    id: "ventia",
     enemyOnly: true,
     // 다섯 자매를 도감과 서사에서 한 갈래로 묶는다. 전투 능력치를 물려받는 값이 아니다.
     identityFamilyId: "raitia",
@@ -6595,7 +6595,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
     researcherTitle: "연구원",
     rarity: "R",
-    portraitAssetId: "raitia-wind",
+    portraitAssetId: "ventia",
     origin: "겨울잠쥐",
     element: "wind",
     // 앞니로 갉으며 앞줄을 메우는 몸이라 방어형이다. 다섯이 모두 같은 역할을 맡는다.
@@ -6630,7 +6630,7 @@ export const RELICS: RelicDef[] = [
       bonusPercent: 60,
     },
     passive: {
-      id: "raitia-wind-passive",
+      id: "ventia-passive",
       name: "겨울잠",
       /*
        * 겨울잠쥐가 버티는 방법은 숨은 배율이 아니라 **눈에 보이는 회복**이다 — 위험해지면
@@ -6646,7 +6646,7 @@ export const RELICS: RelicDef[] = [
       desc: "전투당 한 번, 체력이 절반 이하가 되면 5초 동안 매초 최대 체력의 3%를 회복한다.",
     },
     basic: {
-      id: "raitia-wind-basic",
+      id: "ventia-basic",
       name: "앞니 갉기",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
@@ -6661,7 +6661,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
     },
     ultimate: {
-      id: "raitia-wind-ult",
+      id: "ventia-ult",
       name: "볼주머니 쏟기",
       power: 150,
       iconAssetId: "skill-icon-physical",

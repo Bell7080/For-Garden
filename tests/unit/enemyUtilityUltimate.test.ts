@@ -4,7 +4,7 @@ import { battleArena } from "../../src/core/battleArena";
 import { applyCombatStatusEffect, applyStun, createSkirmish, stepSkirmish, type SkirmishEvent } from "../../src/core/skirmish";
 
 function readyEnemy(id = "amo", allies: string[] = []) {
-  const state = createSkirmish([getRelic("dodo")], [id, ...allies].map(getRelic), battleArena("stage"));
+  const state = createSkirmish([getRelic("dodi")], [id, ...allies].map(getRelic), battleArena("stage"));
   const [player, enemy, ...team] = state.fighters;
   player.x = 500; player.y = 1000; player.stunnedFor = 99;
   enemy.x = 530; enemy.y = 1000; enemy.attackCooldown = 0; enemy.energy = enemy.def.ultimate.cost;
@@ -96,7 +96,7 @@ describe("적 AI의 비공격 궁극기", () => {
   });
 
   it("공격형 궁극기는 기존 적 공격 경로로 한 번만 사용한다", () => {
-    const { state, enemy } = readyEnemy("rex");
+    const { state, enemy } = readyEnemy("rexia");
     const events = advance(state, 1);
     expect(enemy.energy).toBe(0);
     expect(events.filter(e => e.kind === "attack" && e.attackerId === enemy.id && e.skill === "ultimate")).toHaveLength(1);

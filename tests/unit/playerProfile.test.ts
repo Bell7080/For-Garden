@@ -11,7 +11,7 @@ import { loadPlayerProfileDisplay } from "../../src/managers/PlayerProfileManage
 
 describe("player profile display", () => {
   it("공개 설정과 대표 렐릭만 표시 모델로 모은다", () => {
-    const state = createDefaultSession(); state.settings.account.displayId = "PUBLIC-072"; state.favorite = "rex";
+    const state = createDefaultSession(); state.settings.account.displayId = "PUBLIC-072"; state.favorite = "rexia";
     // 프로필은 임시 상수가 아니라 서버 경계를 통해 세션에 확정된 연구 진행을 읽는다.
     state.playerResearch = { level: 7, experience: 45, experienceToNext: 180 };
     expect(playerProfileDisplay(state)).toMatchObject({ displayName: "연구원", level: 7, experience: 45, experienceToNext: 180, displayId: "PUBLIC-072", representativeRelic: "렉시아" });
@@ -30,9 +30,9 @@ describe("player profile display", () => {
 
   it("애착 초상과 역대 원정 기록을 공개하고 아레나 기록이 없으면 항목을 숨긴다", async () => {
     const state = createDefaultSession();
-    state.favorite = "rex"; state.cleared = new Set(["1-3", "1-1"]); state.expedition.allTimeBestScore = 4321; state.expedition.bestScore = 9999;
+    state.favorite = "rexia"; state.cleared = new Set(["1-3", "1-1"]); state.expedition.allTimeBestScore = 4321; state.expedition.bestScore = 9999;
     const hidden = await loadPlayerProfileDisplay(state, { arenaScore: async () => null });
-    expect(hidden.competitiveStats).toMatchObject({ favoriteRelic: { relicId: "rex", displayName: "렉시아", portraitAssetId: "lexia" }, highestStage: { stageId: "1-3" }, expedition: { label: "역대 최고", score: 4321 } });
+    expect(hidden.competitiveStats).toMatchObject({ favoriteRelic: { relicId: "rexia", displayName: "렉시아", portraitAssetId: "lexia" }, highestStage: { stageId: "1-3" }, expedition: { label: "역대 최고", score: 4321 } });
     // 애착 무대는 레벨·돌파·유대·전투력을 함께 싣고, 스토리 진행은 깬 수와 전체 수를 함께 싣는다.
     expect(hidden.competitiveStats.favoriteRelic).toMatchObject({ level: 1, breakthroughGrade: 0, rarity: "SSR" });
     expect(hidden.competitiveStats.favoriteRelic!.power).toBeGreaterThan(0);
@@ -53,7 +53,7 @@ describe("player profile display", () => {
     const { createEmptyDuelState } = await import("../../src/core/duelState");
     const now = new Date("2026-10-27T12:00:00Z");
     const state = createDefaultSession();
-    state.favorite = "rex"; state.cleared = new Set(["1-1", "1-3", "ancient:1", "ancient:12"]); state.expedition.allTimeBestScore = 4321;
+    state.favorite = "rexia"; state.cleared = new Set(["1-1", "1-3", "ancient:1", "ancient:12"]); state.expedition.allTimeBestScore = 4321;
     // 결투장을 연 적이 없으면 「미배치」 — 점수를 싣지 않는다.
     expect(playerProfileDisplay(state, [], undefined, now).competitiveStats).toMatchObject({ ancientFloor: 12 });
     expect(playerProfileDisplay(state, [], undefined, now).competitiveStats.duelScore).toBeUndefined();
@@ -180,7 +180,7 @@ describe("난이도별 스토리 클리어 기록", () => {
     const { publicProfile } = await import("../../src/server/publicProfile");
     const { friendProfileDisplay } = await import("../../src/state/playerProfile");
     const state = createDefaultSession();
-    state.favorite = "rex"; state.cleared = new Set(["1-1", "1-2", "4-10", "normal:1-1"]);
+    state.favorite = "rexia"; state.cleared = new Set(["1-1", "1-2", "4-10", "normal:1-1"]);
     const own = playerProfileDisplay(state).competitiveStats.storyClears;
     expect(own?.map(({ difficulty, stageId }) => [difficulty, stageId])).toEqual([["easy", "4-10"], ["normal", "1-1"], ["hard", undefined], ["rampage", undefined]]);
     const friend = publicProfile(state, "p1", new Date("2026-10-28T00:00:00Z"));

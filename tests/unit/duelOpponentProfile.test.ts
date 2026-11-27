@@ -13,12 +13,12 @@ function card(favorite: string, avatar: string | null) {
 
 describe("결투 상대 카드 — 가린 방어 칸을 드러내지 않는다", () => {
   it("가린 칸이 없으면 가릴 것도 없다", () => {
-    expect(duelOpponentRevealedRelics({ favoriteRelicId: "torika", units: [{ relicId: "torika" }, { relicId: "dodo" }, { relicId: "parua" }] })).toBeUndefined();
+    expect(duelOpponentRevealedRelics({ favoriteRelicId: "torika", units: [{ relicId: "torika" }, { relicId: "dodi" }, { relicId: "parua" }] })).toBeUndefined();
   });
 
   it("애착 렐릭이 가려진 칸이면 카드에 서지 않는다 — 서버가 대표 얼굴을 드러난 칸으로 바꿔 보낸다", () => {
     // 진짜 애착은 숨은 칸의 'parua'. 서버는 대표 얼굴을 드러난 'torika'로, 사진은 비워 보낸다.
-    const revealed = duelOpponentRevealedRelics({ favoriteRelicId: "torika", avatarRelicId: null, units: [{ relicId: "torika" }, { relicId: "dodo" }, { relicId: null }] })!;
+    const revealed = duelOpponentRevealedRelics({ favoriteRelicId: "torika", avatarRelicId: null, units: [{ relicId: "torika" }, { relicId: "dodi" }, { relicId: null }] })!;
     const shown = concealProfileRelics(card("parua", "parua"), revealed);
     expect(shown.competitiveStats.favoriteRelic).toBeNull();
     expect(shown.competitiveStats.favoriteConcealed).toBe(true);
@@ -27,10 +27,10 @@ describe("결투 상대 카드 — 가린 방어 칸을 드러내지 않는다",
   });
 
   it("애착·사진이 공개 값이면 그대로 선다", () => {
-    const revealed = duelOpponentRevealedRelics({ favoriteRelicId: "parua", avatarRelicId: "dodo", units: [{ relicId: "torika" }, { relicId: null }, { relicId: null }] })!;
-    const shown = concealProfileRelics(card("parua", "dodo"), revealed);
+    const revealed = duelOpponentRevealedRelics({ favoriteRelicId: "parua", avatarRelicId: "dodi", units: [{ relicId: "torika" }, { relicId: null }, { relicId: null }] })!;
+    const shown = concealProfileRelics(card("parua", "dodi"), revealed);
     expect(shown.competitiveStats.favoriteRelic?.relicId).toBe("parua");
-    expect(shown.avatar?.relicId).toBe("dodo");
+    expect(shown.avatar?.relicId).toBe("dodi");
     expect(shown.competitiveStats.favoriteConcealed).toBeUndefined();
   });
 

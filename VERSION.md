@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.553.4**
+현재 버전: **v0.554.0**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,20 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.554.0 — 렐릭 ID를 표시 이름에 맞춘다
+
+- **왜**(응태 2026-11-27): 이름과 코드 ID가 다른 개체가 많아 데이터·대사·문서를 오갈 때 헷갈렸다. 검색·일괄 변환으로 한 번에 맞췄다.
+- **바뀐 ID**(영어 표시 이름 기준): rex → rexia · spino → spina · dodo → dodi · carno → kar · deina → dei · quetzalcoatlus → koatl ·
+  nokan → gigano · eunte → argen · raitia-grass/water/fire/earth/wind → viria · guttia · favia · silia · ventia.
+  **폰토스(pontos)는 그대로다**(응태 결정 — 「예외 느낌으로 진짜 신처럼」). stella·maddy·shute는 이미 영어 이름과 같아 두었다.
+- **범위**: 정의·데이터·대사·이야기 묶음 파일명·스킬 아이콘 폴더(`public/sprites/skills/<id>`)·열한 언어 문구 **키**(값은 문장이라 건드리지 않았다)·테스트·문서.
+  `rexBattleQueen`·`SPINO_STORY`처럼 단어 일부로 붙은 식별자는 코드 안 이름이라 그대로다. 공용 스킬 폴더 `raitia`와 원화 키 `lexia`·`seira`도 그대로다.
+- **저장 v53**: `migrateRenamedRelicIdsV53`이 옛 저장의 키·문자열에서 옛 ID 토큰을 새 ID로 바꾼다(닉네임·소개 같은 자유 글은 건드리지 않는다, 옛·새 키가 함께 있으면 거절).
+  서버도 저장을 읽을 때 같은 길을 지나므로 따로 옮기지 않아도 다음 저장부터 새 ID다.
+- **서버 SQL**: `20261203000000_relic_id_rename.sql`이 저장을 거치지 않고 jsonb를 직접 읽는 표(결투 풀·공개 프로필·길드 얼굴·길드전 덱·아레나·레이드 정의·영수증)를 같은 규칙으로 옮긴다.
+  되돌리기는 `supabase/ops/relic_id_rename_down.sql`(클라이언트·서버를 먼저 되돌린 뒤에만). **운영 DB 적용은 응태 확인 뒤.**
+- **테스트**: 수호전 명단의 라이티아 판정을 ID 머리말이 아니라 `identityFamilyId`로 읽는다. v52 → v53 저장 왕복 테스트를 더했다.
 
 ## v0.553.4 — 스피나는 몸으로, 유티의 동상은 방어를 거친다
 

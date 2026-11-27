@@ -54,7 +54,7 @@ describe("스킬 요약 칩 규격", () => {
     expect(head("yuti", "basic")).toEqual(["물리 피해", "다중"]);
     expect(head("noa", "ultimate")[0]).toBe("고정 피해");
     // 출혈(최대 체력 비례, 방어·저항을 지난다)과 빙결 해제 피해도 고정이다
-    expect(head("rex", "basic")).toEqual(["물리 피해", "고정 피해"]);
+    expect(head("rexia", "basic")).toEqual(["물리 피해", "고정 피해"]);
     expect(head("maddy", "passive")).toEqual(["강화", "고정 피해"]);
     expect(head("irna", "basic")).toEqual(["물리 피해", "단일"]);
   });

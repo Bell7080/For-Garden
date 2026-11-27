@@ -126,7 +126,7 @@ export const STAGE_6_10_POST: DialogueStory = {
     { id: "noa", speaker: "노아", body: "…응. 근데 바닥이, 바닥이 이상해.", standing: "noa", act: "fright" },
     { id: "crack", speaker: "", body: "회랑 바닥이 한가운데부터 꺼져 내렸다. 위로 가는 계단이 멀어지고, 몸이 어둠 속으로 떨어졌다.", cast: [], cue: "explosion" },
     { id: "koma", speaker: "코마", body: "…손 잡아라. 떨어지면, 그 문은 당신 손으로 열게 된다.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
-    { id: "voice", speaker: "???", body: "…늦었어.", cast: [{ id: "koma", slot: "left" }, { id: "carno", slot: "right", veiled: true }], cue: "heartbeat", voice: "heavy" },
+    { id: "voice", speaker: "???", body: "…늦었어.", cast: [{ id: "koma", slot: "left" }, { id: "kar", slot: "right", veiled: true }], cue: "heartbeat", voice: "heavy" },
   ]),
 };
 

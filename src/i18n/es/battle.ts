@@ -45,7 +45,7 @@ export const BATTLE_ES = {
   "battle.tutorial.ultimate.owner": "Definitiva de {name}",
   "battle.tutorial.ultimate.tap": "Toca la tarjeta brillante para usarla · {step}/{total}",
   "battle.tutorial.ultimate.desc.torika": "Golpea el suelo a su alrededor, inflige daño y aturde brevemente a los enemigos cercanos.",
-  "battle.tutorial.ultimate.desc.dodo": "Inflige daño a los enemigos de la zona elegida y cura a los aliados que estén dentro.",
+  "battle.tutorial.ultimate.desc.dodi": "Inflige daño a los enemigos de la zona elegida y cura a los aliados que estén dentro.",
   "battle.tutorial.ultimate.desc.parua": "Ataca más rápido durante un momento y dispara dos flechas a la vez.",
   "battle.gauge.frenzy": "Frenesí {value} / {max}",
   "battle.gauge.ferocity": "Ferocidad {value} / {max}",

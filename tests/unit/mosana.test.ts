@@ -159,7 +159,7 @@ describe("모사나 — 인양 성공", () => {
 
 describe("모사나 — 심해 인양", () => {
   it("은 가장 먼 적 하나만 끌어와 도발하고 막을 두른다", () => {
-    const { state, mosana, enemies } = setup(["amo", "dodo", "tia"]);
+    const { state, mosana, enemies } = setup(["amo", "dodi", "tia"]);
     enemies[0].x = 520; enemies[0].y = 850;
     enemies[1].x = 300; enemies[1].y = 500;
     enemies[2].x = 800; enemies[2].y = 100;
@@ -174,7 +174,7 @@ describe("모사나 — 심해 인양", () => {
   });
 
   it("은 숨은 적보다 보이는 적을 먼저 고른다", () => {
-    const { state, mosana, enemies } = setup(["amo", "dodo"]);
+    const { state, mosana, enemies } = setup(["amo", "dodi"]);
     enemies[0].x = 600; enemies[0].y = 700;
     enemies[1].x = 100; enemies[1].y = 100; enemies[1].stealthFor = 5;
     mosana.energy = 1_000;
@@ -186,7 +186,7 @@ describe("모사나 — 심해 인양", () => {
 
 describe("모사나 — 심해 와류", () => {
   it("는 폭주 중 공격 속도를 올리고 평타가 주위 모든 적에게 수압을 쌓는다", () => {
-    const { state, mosana, enemies } = setup(["amo", "dodo", "tia"]);
+    const { state, mosana, enemies } = setup(["amo", "dodi", "tia"]);
     const calm = attackInterval(mosana, state);
     mosana.ferocityFever = true;
     expect(attackInterval(mosana, state)).toBeLessThan(calm);

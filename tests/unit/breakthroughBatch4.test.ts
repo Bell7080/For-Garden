@@ -167,7 +167,7 @@ describe("메론 한계 돌파", () => {
 });
 
 describe("테리사 한계 돌파", () => {
-  const terisaBattle = (breakthrough: number) => setup(["terisa", "torika", "dodo"], ["amo"], breakthrough);
+  const terisaBattle = (breakthrough: number) => setup(["terisa", "torika", "dodi"], ["amo"], breakthrough);
   const shields = (events: SkirmishEvent[], fighterId: string) => events.flatMap((event) => event.kind === "shieldGranted" && event.fighterId === fighterId ? [event.amount] : []);
 
   it("는 가봉이 아군에게 옮기는 비율이 75%에서 90%로 오른다(별 II)", () => {

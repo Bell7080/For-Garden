@@ -74,12 +74,12 @@ describe("편성 화면의 콘텐츠", () => {
     const opponent = { id: "duel-npc-1", displayName: "x", score: 1500, totalPower: 9_999, units: [
       { relicId: "torika", level: 30, breakthrough: 1, power: 3000 },
       { relicId: null, level: 30, breakthrough: 1, power: 3300 },
-      { relicId: "dodo", level: 30, breakthrough: 1, power: 3699 },
+      { relicId: "dodi", level: 30, breakthrough: 1, power: 3699 },
     ] };
-    const content = normalizePartyContent({ content: "duel", opponent, attack: ["rex", 3] });
-    expect(content).toMatchObject({ content: "duel", attack: ["rex"] });
+    const content = normalizePartyContent({ content: "duel", opponent, attack: ["rexia", 3] });
+    expect(content).toMatchObject({ content: "duel", attack: ["rexia"] });
     const preview = partyPreview(content, STAGE);
-    expect(preview.shown.map(({ def }) => def?.id ?? null)).toEqual(["torika", null, "dodo"]);
+    expect(preview.shown.map(({ def }) => def?.id ?? null)).toEqual(["torika", null, "dodi"]);
     expect(preview.all).toHaveLength(2);
     expect(preview.totalPower).toBe(9_999);
     // 상대가 셋이 아니면 어느 판인지 모른다 — 스토리로 수렴한다.

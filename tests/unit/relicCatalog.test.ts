@@ -70,15 +70,15 @@ describe("relic catalog", () => {
   });
 
   it("렉시아의 신체 수치와 원종 화석 단계는 프로필과 도감에만 공개한다", () => {
-    const rex = PLAYABLE_RELICS.find((relic) => relic.id === "rex")!;
+    const rexia = PLAYABLE_RELICS.find((relic) => relic.id === "rexia")!;
     // 성체 초기라는 말이 인간 나이가 아니라 티라노사우루스 화석의 단계로 서술되는지도 함께 고정한다.
-    expect(rex.observationProfile).toMatchObject({ height: "1.63 m", weight: "54 kg", lifeStage: "성체 초기" });
-    expect(rex.catalogSummary).toContain("체중 54kg");
-    expect(rex.unlockRecord.status === "recorded" && rex.unlockRecord.text).not.toContain("54kg");
-    expect(rex.unlockRecord.status === "recorded" && rex.unlockRecord.text).not.toContain("화석");
+    expect(rexia.observationProfile).toMatchObject({ height: "1.63 m", weight: "54 kg", lifeStage: "성체 초기" });
+    expect(rexia.catalogSummary).toContain("체중 54kg");
+    expect(rexia.unlockRecord.status === "recorded" && rexia.unlockRecord.text).not.toContain("54kg");
+    expect(rexia.unlockRecord.status === "recorded" && rexia.unlockRecord.text).not.toContain("화석");
   });
   it("스피나는 표시 정보와 관찰 신체 수치를 단일 값으로 공개한다", () => {
-    const spina = PLAYABLE_RELICS.find((relic) => relic.id === "spino");
+    const spina = PLAYABLE_RELICS.find((relic) => relic.id === "spina");
     // 저장 호환 ID로 찾은 하나의 정의가 도감의 이름·등급·속성·역할·관찰값을 모두 공급하도록 고정한다.
     expect(spina).toMatchObject({
       name: "스피나",
@@ -90,7 +90,7 @@ describe("relic catalog", () => {
   });
 
   it("스피나 관찰 기록은 별도 연구원 없이 주인공의 직접 관찰로 서술한다", () => {
-    const spina = PLAYABLE_RELICS.find((relic) => relic.id === "spino")!;
+    const spina = PLAYABLE_RELICS.find((relic) => relic.id === "spina")!;
     // 유일한 연구원인 주인공의 1인칭 관찰과 답례가 제3의 인물로 되돌아가지 않도록 핵심 문구를 고정한다.
     expect(spina.unlockRecord.status).toBe("recorded");
     if (spina.unlockRecord.status !== "recorded") return;

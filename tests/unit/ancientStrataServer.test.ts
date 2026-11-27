@@ -20,7 +20,7 @@ function service(unlocked = true, unlockedFloor = 1) {
   const state = createDefaultSession();
   state.serverJournal=emptyServerJournal();
   state.wallet.gems=1234;state.wallet.gold=0;state.wallet.stamina=100;state.staminaUpdatedAt="2026-10-26T00:00:00Z";
-  state.party=["rex","torika","mette"];
+  state.party=["rexia","torika","mette"];
   for(const id of state.party) {
     state.owned.add(id);
     state.relicProgress[id]={...createInitialRelicProgress(),level:60,breakthrough:4};
@@ -99,14 +99,14 @@ describe("고대 지층 서버 입장·첫 보상·재전송",()=>{
     await verifiedWin(s);
     expect((await s.call("completeStage",["ancient:1",true])).result).toMatchObject({firstClear:false,firstClearRewards:[],cheesecakeEarned:0,staminaSpent:0});
     const replay=s.snapshot();expect(replay.wallet.gold).toBe(5000);
-    expect(replay.relicProgress.rex.bondXp).toBe(saved.relicProgress.rex.bondXp);
+    expect(replay.relicProgress.rexia.bondXp).toBe(saved.relicProgress.rexia.bondXp);
     await expect(s.call("enterStage",[{stageId:"ancient:2",requestId:"entry-next-floor"}])).resolves.toBeDefined();
   },15000);
 });
 
 describe("공용 전투 제한과 심층 비례 피해",()=>{
   it("제한이 없는 기존 전투를 바꾸지 않고 제한을 넘는 틱은 마지막 시각에서 패배한다",()=>{
-    const base=getRelic("dodo"),unit={...base,stats:{...base.stats,hp:1e12,atk:1,ap:1,def:1e8,res:1e8}};
+    const base=getRelic("dodi"),unit={...base,stats:{...base.stats,hp:1e12,atk:1,ap:1,def:1e8,res:1e8}};
     const limited=createSkirmish([unit],[unit],battleArena("ancient"),{}, {},{timeLimitSeconds:.06});
     const events=stepSkirmish(limited,.2,()=>.5);
     expect(limited.elapsed).toBeCloseTo(.06,8);expect(limited.phase).toBe("defeat");expect(limited.timeLimitReached).toBe(true);

@@ -23,7 +23,7 @@ const ANNIHILATION_TITLE: Readonly<Record<string, TextKey>> = {
   magasa: "dialogue.title.confinementOfficer",
   noa: "dialogue.title.confinementOfficer",
   raja: "dialogue.title.confinementSubOfficer",
-  carno: "dialogue.title.viceCaptain",
+  kar: "dialogue.title.viceCaptain",
 };
 
 /** 렐릭이 아닌 화자(상점 점원 등)의 수식어. */

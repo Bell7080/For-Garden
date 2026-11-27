@@ -26,7 +26,7 @@ export async function run(sql: (query: string) => string) {
     sql(`insert into auth.users(id) values('${player}');insert into public.players(id) values('${player}') on conflict do nothing;`);
     const state = createDefaultSession();
     state.completedStoryIds.add(OPENING_TRAIN.id);
-    state.party = ['rex', 'mette', 'torika'];
+    state.party = ['rexia', 'mette', 'torika'];
     state.wallet.stamina = 1000;
     state.playerResearch = normalizePlayerLevel({ level: PLAYER_LEVEL_CAP });
     for (const id of state.party) {

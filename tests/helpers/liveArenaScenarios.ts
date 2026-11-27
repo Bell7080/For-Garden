@@ -13,7 +13,7 @@ export async function run(sql:(s:string)=>string):Promise<void> {
  }});
  let n=0;
  const call=(id:string,kind='status',input:Record<string,unknown>={},request=`arena-db-${++n}`)=>handleArenaCall(store.arenaRpc,id,kind==='status'?'get':'act',[{kind,...input}],kind==='status'?undefined:request) as Promise<any>;
- for(const id of ids){sql(`insert into auth.users(id,is_anonymous) values('${id}',true);`);const s=createDefaultSession();s.owned=new Set([...s.owned,'rex','spino','mette','stella']);s.party=['rex','mette','stella'];s.favorite='rex';for(const relic of s.owned)s.relicProgress[relic]=createInitialRelicProgress();await store.commit({playerId:id,expectedRevision:null,data:saveManager.exportData(s),method:'fixture',requestId:null,response:{}});}
+ for(const id of ids){sql(`insert into auth.users(id,is_anonymous) values('${id}',true);`);const s=createDefaultSession();s.owned=new Set([...s.owned,'rexia','spina','mette','stella']);s.party=['rexia','mette','stella'];s.favorite='rexia';for(const relic of s.owned)s.relicProgress[relic]=createInitialRelicProgress();await store.commit({playerId:id,expectedRevision:null,data:saveManager.exportData(s),method:'fixture',requestId:null,response:{}});}
  sql(`insert into public.server_friend_edges(a,b,requester,status) values('${ids[0]}','${ids[1]}','${ids[0]}','friend');`);
  const baseline=sql(`select jsonb_agg(data order by player_id)::text from public.player_saves;`);
  await call(ids[0],'queue');let b=await call(ids[1],'queue');let a=await call(ids[0]);assert.equal(a.room.id,b.room.id);assert.equal(a.room.phase,'ban');
@@ -21,7 +21,7 @@ export async function run(sql:(s:string)=>string):Promise<void> {
  assert.equal(sql(`select count(*) from public.arena_seats;`),'2');
  await assert.rejects(call(ids[2],'status',{roomId}),/ARENA_FORBIDDEN/);
  let room=a.room;
- while(room.phase==='ban') {const side=arenaTurn(room);const id=room.players[side].id;room=(await call(id,'action',{roomId,action:{kind:'ban',relicId:'spino'}})).room;}
+ while(room.phase==='ban') {const side=arenaTurn(room);const id=room.players[side].id;room=(await call(id,'action',{roomId,action:{kind:'ban',relicId:'spina'}})).room;}
  let retryInput:any;
  for(let i=0;i<6;i++){
   const side=arenaTurn(room),id=room.players[side].id,index=room.picks[side].length;
@@ -38,7 +38,7 @@ export async function run(sql:(s:string)=>string):Promise<void> {
  assert.equal(invite.room.phase,'invited');let incoming=await call(ids[1]);assert.equal(incoming.incoming.length,1);
  const invitedId=invite.room.id;
  let accepted=await call(ids[1],'accept',{roomId:invitedId});assert.equal(accepted.room.first,1);assert.equal(accepted.room.phase,'place');
- const picked=await call(ids[0],'action',{roomId:invitedId,action:{kind:'place',relicId:'rex',slot:1}});assert.equal(picked.room.picks[0].length,1);
+ const picked=await call(ids[0],'action',{roomId:invitedId,action:{kind:'place',relicId:'rexia',slot:1}});assert.equal(picked.room.picks[0].length,1);
  const hidden=await call(ids[1],'status',{roomId:invitedId});assert.equal(hidden.room.picks[0].length,0);assert.equal(hidden.records.length,0);
  await call(ids[0],'action',{roomId:invitedId,action:{kind:'forfeit'}});assert.equal(sql(`select sum(wins+losses) from public.arena_ratings;`),'2');
  const practice=await call(ids[0],'practice',{target:ids[1]});assert.equal(practice.room.phase,'battle');assert.equal(practice.room.ranked,false);assert.equal(practice.room.lease.setup.enemies.length,3);

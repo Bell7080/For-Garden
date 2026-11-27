@@ -26,7 +26,7 @@ test("수호전 결과판 성적 블록 캡처", async ({ page }, info) => {
     new S.StageCompletePopup(scene, popups).open({
       reward: { kind: "loot", items: [{ icon: I.GUILD_COIN_ICON, amount: o.coin }], settlement: true },
       guardReport: R.buildGuardReport(o.input),
-      fighters: [{ relicId: "torika", isMvp: false }, { relicId: "dodo", isMvp: true }, { relicId: "parua", isMvp: false }],
+      fighters: [{ relicId: "torika", isMvp: false }, { relicId: "dodi", isMvp: true }, { relicId: "parua", isMvp: false }],
       onOpenContribution: (done: () => void) => done(),
     });
   }, sample).then(async () => { await page.waitForTimeout(3500); await page.screenshot({ path: info.outputPath(name), scale: "device" }); });

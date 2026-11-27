@@ -23,7 +23,7 @@ npm run audit:cc -- --mode raid --boss koma --targets all --output /tmp/cc-raid.
 npm run audit:cc -- --mode endless --boss pontos --targets all --output /tmp/cc-boss.json
 
 # 특정 파티·레벨·가상 증강 비교
-npm run audit:cc -- --mode stage --stage 1-10 --party deina,torika,ella --level 30 --augments tag-taunt-basic@deina --seed example --output /tmp/cc-custom.json
+npm run audit:cc -- --mode stage --stage 1-10 --party dei,torika,ella --level 30 --augments tag-taunt-basic@dei --seed example --output /tmp/cc-custom.json
 ```
 
 `--targets enemy|player|all`, `--duration`, `--seed`, `--party`, `--level`을 지원한다. 증강을 일반 스테이지에 넣는 옵션은 QA 가정이며 실제 플레이 획득 경로를 변경하지 않는다. `--fail-on-risk`를 주면 기준 초과 또는 관측 부족에 종료 코드 1을 반환한다. 도구 실행에 외부 서비스는 필요 없다.

@@ -20,7 +20,7 @@ export const ULTIMATE_TUTORIAL_PANEL = { width: 940, height: 340, icon: 210, pad
 /** 오프닝 편성의 한 줄 효과. 이 표에 없는 렐릭은 효과 줄 없이 이름만 선다. */
 const ULTIMATE_TUTORIAL_DESC: Readonly<Record<string, TextKey>> = {
   torika: "battle.tutorial.ultimate.desc.torika",
-  dodo: "battle.tutorial.ultimate.desc.dodo",
+  dodi: "battle.tutorial.ultimate.desc.dodi",
   parua: "battle.tutorial.ultimate.desc.parua",
 };
 

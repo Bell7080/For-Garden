@@ -92,8 +92,8 @@ export type SignatureId =
  * 무게로 터지면 어느 것이 그 개체의 기술인지 읽히지 않는다.
  */
 const SIGNATURE_TABLE: Readonly<Record<string, Partial<Record<SignatureMoment, SignatureId>>>> = {
-  rex: { ultimate: "rexMaw" },
-  spino: { combo: "spinoDoubleTap" },
+  rexia: { ultimate: "rexMaw" },
+  spina: { combo: "spinoDoubleTap" },
   pachi: { concussion: "pachiSlam" },
   nodonia: { damageShared: "nodoniaShare" },
   ella: { basicStep: "ellaInkStroke" },
@@ -101,11 +101,11 @@ const SIGNATURE_TABLE: Readonly<Record<string, Partial<Record<SignatureMoment, S
   pontos: { basic: "pontosShockwave", ultimate: "pontosTidalCrash" },
   sukusuino: { basic: "sukuDeathRoll", ultimate: "sukuDrowningMaw" },
   taboa: { basic: "taboaConstrict", ultimate: "taboaEmbrace" },
-  quetzalcoatlus: { basic: "coatlBeakLance", ultimate: "coatlStormDive" },
+  koatl: { basic: "coatlBeakLance", ultimate: "coatlStormDive" },
 };
 
 /** 평타와 궁극기 모두 전용 연출을 갖는 개체 — 보스·불사 자리에 서는 개체다. */
-export const SIGNATURE_BOSS_IDS = ["pontos", "sukusuino", "taboa", "quetzalcoatlus"] as const;
+export const SIGNATURE_BOSS_IDS = ["pontos", "sukusuino", "taboa", "koatl"] as const;
 
 export function signatureFor(relicId: string, moment: SignatureMoment): SignatureId | undefined {
   return SIGNATURE_TABLE[relicId]?.[moment];

@@ -45,7 +45,7 @@ export const BATTLE_ID = {
   "battle.tutorial.ultimate.owner": "Ultimate {name}",
   "battle.tutorial.ultimate.tap": "Ketuk kartu yang bersinar untuk memakainya · {step}/{total}",
   "battle.tutorial.ultimate.desc.torika": "Menghantam tanah di sekitarnya, memberi damage dan membuat musuh terdekat pingsan sebentar.",
-  "battle.tutorial.ultimate.desc.dodo": "Memberi damage ke musuh di area pilihan dan memulihkan sekutu di dalamnya.",
+  "battle.tutorial.ultimate.desc.dodi": "Memberi damage ke musuh di area pilihan dan memulihkan sekutu di dalamnya.",
   "battle.tutorial.ultimate.desc.parua": "Menyerang lebih cepat sebentar dan menembakkan dua anak panah sekaligus.",
   "battle.gauge.frenzy": "Amukan {value} / {max}",
   "battle.gauge.ferocity": "Keganasan {value} / {max}",

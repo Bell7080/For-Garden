@@ -45,7 +45,7 @@ export const BATTLE_ZH_HANS = {
   "battle.tutorial.ultimate.owner": "{name}的必杀技",
   "battle.tutorial.ultimate.tap": "点击发光的卡片来使用 · {step}/{total}",
   "battle.tutorial.ultimate.desc.torika": "猛砸周围的地面，对附近的敌人造成伤害并使其短暂晕眩。",
-  "battle.tutorial.ultimate.desc.dodo": "对选定区域内的敌人造成伤害，并为其中的友方恢复生命。",
+  "battle.tutorial.ultimate.desc.dodi": "对选定区域内的敌人造成伤害，并为其中的友方恢复生命。",
   "battle.tutorial.ultimate.desc.parua": "短时间内攻击变快，每次射出两支箭。",
   "battle.gauge.frenzy": "暴走 {value} / {max}",
   "battle.gauge.ferocity": "野性 {value} / {max}",

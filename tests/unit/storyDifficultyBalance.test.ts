@@ -33,7 +33,7 @@ function battle(ids: readonly string[], level: number, stageId: string, seed: nu
 describe("스토리 난이도 실전 곡선", () => {
   it("같은 파티·장비에서 보통과 어려움의 체력이탈·전투 시간이 쉬움과 구별된다", () => {
     const results: { party: string; stage: string; wins: number; seconds: number; hp: number }[] = [];
-    for (const ids of [["torika", "rex", "luka"], ["ella", "maki", "stella"], ["nodonia", "spino", "mette"], ["torika", "dian", "luka"], ["ella", "dian", "stella"]]) {
+    for (const ids of [["torika", "rexia", "luka"], ["ella", "maki", "stella"], ["nodonia", "spina", "mette"], ["torika", "dian", "luka"], ["ella", "dian", "stella"]]) {
       for (const stage of ["1-10", "normal:1-10", "normal:4-10", "hard:1-10", "hard:4-10"]) {
         const runs = [1, 2, 3].map(seed => battle(ids, 60, stage, seed));
         results.push({ party: ids.join("/"), stage, wins: runs.filter(r => r.win).length, seconds: Math.round(runs.reduce((sum, r) => sum + r.seconds, 0) / runs.length * 10) / 10, hp: Math.round(runs.reduce((sum, r) => sum + r.hp, 0) / runs.length * 100) / 100 });
@@ -45,7 +45,7 @@ describe("스토리 난이도 실전 곡선", () => {
     // 어려움(종족값 ×4)은 챌린지 영역이라 최종 관문을 완주하지 못해도 된다(응태 결정).
     expect(hardFinal.reduce((sum, row) => sum + row.wins, 0)).toBeLessThanOrEqual(normalFinal.reduce((sum, row) => sum + row.wins, 0));
     expect(hardFinal.reduce((sum, row) => sum + row.hp, 0)).toBeLessThanOrEqual(normalFinal.reduce((sum, row) => sum + row.hp, 0));
-    for (const ids of [["torika", "rex", "luka"], ["ella", "maki", "stella"], ["nodonia", "spino", "mette"], ["torika", "dian", "luka"], ["ella", "dian", "stella"]]) {
+    for (const ids of [["torika", "rexia", "luka"], ["ella", "maki", "stella"], ["nodonia", "spina", "mette"], ["torika", "dian", "luka"], ["ella", "dian", "stella"]]) {
       const rows = results.filter(row => row.party === ids.join("/"));
       expect(rows[1].seconds > rows[0].seconds || rows[1].hp < rows[0].hp || rows[1].wins < rows[0].wins).toBe(true);
 

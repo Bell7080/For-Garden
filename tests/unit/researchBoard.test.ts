@@ -74,7 +74,7 @@ describe("연구 결과판 배치", () => {
 });
 
 describe("연구 결과판이 칸마다 보여 주는 것", () => {
-  const rarityOf = (relicId: string): RelicRarity => (relicId === "rex" ? "SSR" : "R");
+  const rarityOf = (relicId: string): RelicRarity => (relicId === "rexia" ? "SSR" : "R");
   const slot = (relicId: string, kind: "new" | "fragment" | "overflow"): PullResultDto => ({
     type: "relic", relicId, kind,
     fragments: kind === "fragment" ? 1 : 0,
@@ -83,8 +83,8 @@ describe("연구 결과판이 칸마다 보여 주는 것", () => {
 
   it("신규만 카드이고 중복·재화는 액자 한 장으로 접힌다", () => {
     const views = researchSlotViews([
-      slot("rex", "new"),
-      slot("rex", "fragment"),
+      slot("rexia", "new"),
+      slot("rexia", "fragment"),
       slot("torika", "overflow"),
       { type: "currency", currency: "gold", amount: 120, grade: "GRAY" },
     ], rarityOf);
@@ -98,11 +98,11 @@ describe("연구 결과판이 칸마다 보여 주는 것", () => {
 
   it("액자에 적히는 수는 그 칸이 실제로 늘린 양이다", () => {
     const [fragment, dna, currency] = researchSlotViews([
-      slot("rex", "fragment"),
+      slot("rexia", "fragment"),
       slot("torika", "overflow"),
       { type: "currency", currency: "cheesecake", amount: 40, grade: "GRAY" },
     ], rarityOf);
-    expect(fragment).toMatchObject({ kind: "fragment", amount: 1, relicId: "rex" });
+    expect(fragment).toMatchObject({ kind: "fragment", amount: 1, relicId: "rexia" });
     expect(dna).toMatchObject({ kind: "dna", amount: 1 });
     expect(currency).toMatchObject({ kind: "currency", amount: 40, currency: "cheesecake" });
   });

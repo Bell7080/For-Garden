@@ -11,7 +11,7 @@ import { unitStatusViews } from "../../src/ui/unitStatusModel";
 import type { RelicDef } from "../../src/core/types";
 
 function neutral(id: string): RelicDef {
-  const base = getRelic("dodo");
+  const base = getRelic("dodi");
   return { ...base, id, stats: { ...base.stats, hp: 1_000_000, atk: 200, ap: 200, def: 100, res: 100, critChance: 0, lifeSteal: 0, energyGain: 0, ferocityGain: 0 },
     passive: { ...base.passive, kind: "emergencyRecovery", value: 0 },
     basic: { ...base.basic, targeting: "single", damageType: "physical", power: 100, statusEffects: undefined, cycle: undefined },
@@ -58,7 +58,7 @@ describe("범용 원정 태그 증강", () => {
       expect(def.maxStacks).toBe(1);
       if (def.effect.trigger === "onBasicHit") expect(def.effect.everyN).toBeGreaterThanOrEqual(3);
     }
-    const offers = generateExpeditionAugmentOffers({ rarity: "sr", relics: [{ relicId: "dodo", alive: true, currentHp: 100 }], selections: [], random: () => 0.5, candidateCount: 1000 });
+    const offers = generateExpeditionAugmentOffers({ rarity: "sr", relics: [{ relicId: "dodi", alive: true, currentHp: 100 }], selections: [], random: () => 0.5, candidateCount: 1000 });
     expect(offers.some(offer => RETIRED_EXPEDITION_AUGMENTS.has(offer.augmentId))).toBe(false);
   });
 
@@ -311,7 +311,7 @@ describe("범용 원정 태그 증강", () => {
     const state = setup("tag-scar-basic");
     for (let i = 0; i < 4; i++) attack(state, 1);
     expect(unitStatusViews(state.fighters[0]).some(view => view.id === "scar")).toBe(true);
-    const offers = generateExpeditionAugmentOffers({ rarity: "sr", relics: [{ relicId: "dodo", currentHp: 100, alive: true }], selections: [{ augmentId: "tag-scar-basic", targetRelicId: "dodo" }], random: () => 0.5, candidateCount: 1000 });
+    const offers = generateExpeditionAugmentOffers({ rarity: "sr", relics: [{ relicId: "dodi", currentHp: 100, alive: true }], selections: [{ augmentId: "tag-scar-basic", targetRelicId: "dodi" }], random: () => 0.5, candidateCount: 1000 });
     expect(offers.some(offer => offer.augmentId.startsWith("tag-shell-"))).toBe(false);
   });
 

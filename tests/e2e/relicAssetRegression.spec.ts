@@ -35,7 +35,7 @@ test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋�
   await tapUntil(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
 
   // 카드 자리는 도감이 내놓는 값을 읽는다 — 기본 보유와 격자 칸 수가 바뀔 때마다 고정 좌표가 어긋났다.
-  const dodi = await gridCardPoint(page, "relics", "dodo");
+  const dodi = await gridCardPoint(page, "relics", "dodi");
   await tapUntil(page, dodi.x, dodi.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
   await captureGame(page, `test-results/${testInfo.project.name}-asset-dodi-catalog-fullbody.png`);
   await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
@@ -51,7 +51,7 @@ test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋�
   // 준비 화면은 직전 편성을 복원해 세 명이 이미 서 있다 — 먼저 내려야 원하는 셋을 순서대로 세울 수 있다.
   // 칸은 한 번 누르면 고르고 한 번 더 누르면 빠진다. 세울 때는 칸을 고른 뒤 목록 카드를 누른다.
   for (const index of [0, 1, 2]) await clearFormationSlot(page, "party", index);
-  for (const [index, relicId] of [[0, "dodo"], [1, "mette"], [2, "luka"]] as const) await placeInFormationSlot(page, index, relicId);
+  for (const [index, relicId] of [[0, "dodi"], [1, "mette"], [2, "luka"]] as const) await placeInFormationSlot(page, index, relicId);
   // 비동기 조립 결과로 PartyScene에 세 SD 컨테이너가 실제 생길 때까지 기다린다.
   await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.party ?? 0) >= 3, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-asset-dodi-mette-luka-party-sd.png`);

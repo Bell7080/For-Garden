@@ -46,7 +46,7 @@ test("1-1 뒤 닉네임 생성 · SD 안내 · 정책 도움말 · 저장 실패
     });
     await sourceScene(page, "window.__NICK_GAME=this.game;this.game.scene.stop('title');this.game.scene.start('lobby');");
     await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("반가워요, 연구원 님!");
-    await expect.poll(() => page.evaluate(() => ["dodo", "parua"].every(id =>
+    await expect.poll(() => page.evaluate(() => ["dodi", "parua"].every(id =>
       (window as any).__NICK_GAME.scene.getScene("lobby").children.getByName(`nickname-guide-${id}`)?.visible)), { timeout: 60000 }).toBe(true);
     await captureGame(page, info.outputPath("nickname-create.png"));
     // 생성창은 배경을 눌러도 닫히지 않는다.

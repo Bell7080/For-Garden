@@ -3,9 +3,9 @@ set local lock_timeout='5s';
 set local statement_timeout='20s';
 do $verify$
 declare a uuid:=gen_random_uuid(); b uuid:=gen_random_uuid(); c uuid:=gen_random_uuid(); g uuid:=gen_random_uuid();
- line jsonb:='[{},{},{}]'; deck_a jsonb:='[{"relicId":"torika","power":10},{"relicId":"ella","power":10},{"relicId":"deina","power":10}]';
- deck_b jsonb:='[{"relicId":"torika","power":30},{"relicId":"ella","power":30},{"relicId":"deina","power":30}]';
- deck_c jsonb:='[{"relicId":"torika","power":20},{"relicId":"ella","power":20},{"relicId":"deina","power":20}]';
+ line jsonb:='[{},{},{}]'; deck_a jsonb:='[{"relicId":"torika","power":10},{"relicId":"ella","power":10},{"relicId":"dei","power":10}]';
+ deck_b jsonb:='[{"relicId":"torika","power":30},{"relicId":"ella","power":30},{"relicId":"dei","power":30}]';
+ deck_c jsonb:='[{"relicId":"torika","power":20},{"relicId":"ella","power":20},{"relicId":"dei","power":20}]';
  payload jsonb; tm timestamptz:=now(); slot_b text;
 begin
  insert into auth.users(id,is_anonymous) values(a,true),(b,true),(c,true);

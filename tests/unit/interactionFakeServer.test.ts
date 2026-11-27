@@ -28,9 +28,9 @@ describe("FakeServer interaction API", () => {
     state.playerResearch = { ...state.playerResearch, level: 9 };
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => now });
     await server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["torika"] });
-    const both = await server.startInteractionDispatch({ cityId: "doppel-lab", party: ["rex"] });
+    const both = await server.startInteractionDispatch({ cityId: "doppel-lab", party: ["rexia"] });
     expect(both.dispatches).toHaveLength(2);
-    await expect(server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["spino"] })).rejects.toThrow();
+    await expect(server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["spina"] })).rejects.toThrow();
     await expect(server.startInteractionDispatch({ cityId: "rust-works", party: ["torika"] })).rejects.toThrow();
   });
 
@@ -39,7 +39,7 @@ describe("FakeServer interaction API", () => {
     state.playerResearch = { ...state.playerResearch, level: 5 };
     // 가장 높은 쪽으로 굴린다 — 「0~n」인 귀한 줄도 비지 않는다.
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0.999, now: () => now });
-    const [dispatch] = (await server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["torika", "rex", "spino"] })).dispatches;
+    const [dispatch] = (await server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["torika", "rexia", "spina"] })).dispatches;
     expect(dispatch.rewards.map(({ currency }) => currency)).toEqual(["gold", "cheesecake", "rawStone"]);
     // 그 도시의 교류 파견 임무도 함께 센다.
     expect(state.missions.progress["weekly-dispatch"]).toBe(1);

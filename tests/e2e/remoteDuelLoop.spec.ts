@@ -42,7 +42,7 @@ test('실제 게스트 방어덱 PvP → 서버 검증 → 양쪽 기록 → 결
             await api.getPlayerState();
             const status = await api.getDuelStatus();
             if (status.opponents.length !== 1 || status.opponents[0].score !== 0) throw new Error("real zero-score opponent missing");
-            const relicIds = ['rex', 'mette', 'torika'];
+            const relicIds = ['rexia', 'mette', 'torika'];
             const entry = await api.enterDuel({ requestId: 'browser-real-duel', opponentId: status.opponents[0].id, relicIds });
             (window as any).__PF_DUEL_INPUT = { mode: 'duel', requestId: entry.requestId, attack: relicIds, opponentName: entry.opponentName, opponentScore: entry.opponentScore, units: entry.units };
         });

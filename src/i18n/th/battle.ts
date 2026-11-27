@@ -45,7 +45,7 @@ export const BATTLE_TH = {
   "battle.tutorial.ultimate.owner": "ท่าไม้ตายของ {name}",
   "battle.tutorial.ultimate.tap": "แตะการ์ดที่เรืองแสงเพื่อใช้ · {step}/{total}",
   "battle.tutorial.ultimate.desc.torika": "กระแทกพื้นรอบตัว สร้างความเสียหายและทำให้ศัตรูใกล้ ๆ มึนงงชั่วครู่",
-  "battle.tutorial.ultimate.desc.dodo": "สร้างความเสียหายให้ศัตรูในพื้นที่ที่เลือก และฟื้นฟูพวกพ้องในพื้นที่นั้น",
+  "battle.tutorial.ultimate.desc.dodi": "สร้างความเสียหายให้ศัตรูในพื้นที่ที่เลือก และฟื้นฟูพวกพ้องในพื้นที่นั้น",
   "battle.tutorial.ultimate.desc.parua": "โจมตีเร็วขึ้นชั่วครู่ และยิงลูกธนูทีละสองดอก",
   "battle.gauge.frenzy": "คลั่ง {value} / {max}",
   "battle.gauge.ferocity": "ความดุร้าย {value} / {max}",

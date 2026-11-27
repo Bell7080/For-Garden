@@ -4236,6 +4236,29 @@ function gainFrontlineMomentum(fighter: Fighter, state: SkirmishState): void {
   }
 }
 
+/**
+ * 전선 보스의 세 번째 일반 공격이 주위 다른 적에게 함께 들어간다(`frontlineBoss.cleave`).
+ *
+ * 본타와 같은 공식으로 잰다 — 철갑이면 방어·저항 몫이 그대로 얹힌다. 본타의 대상은 빼고(이미 맞았다), 반경은
+ * 밀치기 전에 선 자리가 아니라 **자신**을 기준으로 잰다. 회복·보호막·상태는 본타만 갖는다.
+ */
+function frontlineCleave(attacker: Fighter, target: Fighter, power: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = attacker.def.frontlineBoss;
+  const cleave = plan?.cleave;
+  if (!plan || !cleave || power <= 0) return;
+  let offense = offensiveDefinition(attacker);
+  if (plan.kind === "ironclad") {
+    const guard = defensiveDefinition(attacker, state).def.stats;
+    offense = { ...offense, stats: { ...offense.stats, atk: offense.stats.atk + (guard.def + guard.res) * plan.basicGuardScale / power } };
+  }
+  const owner = { ...attacker, def: offense };
+  const victims = state.fighters.filter((enemy) => enemy.side !== attacker.side && enemy.id !== target.id
+    && isFighterAlive(enemy) && distance(attacker, enemy) <= cleave.radius);
+  events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: false, damageType: "physical",
+    area: { shape: "radial", x: attacker.x, y: attacker.y, radius: cleave.radius } });
+  for (const enemy of victims) extraStrike(owner, enemy, power * cleave.percent / 100, "atk", "physical", state, events);
+}
+
 function ironcladThirdHit(attacker: Fighter, target: Fighter, dealt: number, critical: boolean, state: SkirmishState, events: SkirmishEvent[]): void {
   let concussionDealt = 0;
   const concussion = attacker.def.basic.statusEffects?.find((effect) => effect.kind === "concussion");
@@ -9824,6 +9847,7 @@ function strike(
     if (!useUltimate) applyBasicBreakthrough(attacker, target, state, events);
   }
   if (frontlineThird && !resolution.ignored && isFighterAlive(attacker)) {
+    frontlineCleave(attacker, target, damageInput.power, state, events);
     if (frontline.kind === "ironclad") ironcladThirdHit(attacker, target, dealt, critical, state, events);
     else if (attackingInFever && attacker.frontline) {
       const chase = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);

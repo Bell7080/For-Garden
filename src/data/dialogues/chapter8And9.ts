@@ -8,10 +8,11 @@ import { registerDialogueTexts } from "./registerDialogue";
  * 카르를 따라 올라간 감금조의 뒤를 연구원 일행이 밟는다. 공멸이 일을 끝내고 돌아갈 때 타는 길이고, 그 길목마다 **귀환 명부**가
  * 걸려 있다 — 이름 칸이 초록이면 문이 열리고 빨강이면 닫힌다. 노아와 라자의 칸은 빨갛다. 오디디에서 무력화된 선두조(지금의 감금조)를
  * 회수조가 「전원 손실」로 지우고 갔기 때문이다. 8-5에서 이카닉시아는 같은 계산으로 문을 닫으려 하고, 아트라가 처음으로 그 손을 막는다.
- * 8-10은 **궁니르 기가노**가 직접 내려와 모자란 둘을 센다. 카르가 다시 적어 둔 코마(072)의 칸은 초록이다.
+ * 8-10은 **철갑 아르겐**이 승강장에 내려와 노아·라자가 올라올 때까지 맨 뒤를 받친다. 카르가 다시 적어 둔 코마(072)의 칸은 초록이다.
+ * 대장 둘 중 아르겐이 먼저 서고, 셈을 하는 **궁니르 기가노**는 8-10 끝에 목소리로만 내려온다 — 기가노가 이 줄기의 주인이다(응태 2026-11-27).
  *
- * **9장 — 중앙 제어축 (9-1 ~ 9-10).** 위로 난 마지막 길. 문들이 연구원을 보고 깨어나고, 9-5는 맨 뒤에서 문을 받치는 **철갑 아르겐**,
- * 9-10은 두 대장이 나란히 막는다. 대장들은 아무도 지우지 않는다 — 그래서 코마를 「셈」에 넣고, 끝에 연구원도 셈에 넣겠다고 한다.
+ * **9장 — 중앙 제어축 (9-1 ~ 9-10).** 위로 난 마지막 길. 문들이 연구원을 보고 깨어나고, 9-5는 직접 내려와 모자란 하나(코마)를 세는
+ * **궁니르 기가노**, 9-10은 두 대장이 나란히 막는다. 대장들은 아무도 지우지 않는다 — 그래서 코마를 「셈」에 넣고, 끝에 연구원도 셈에 넣겠다고 한다.
  * 코마는 명부에 적힌 자기 이름을 지우지 않되, 어디로 갈지는 자기가 정한다고 말한다.
  *
  * 호칭: 공멸 말단·감금조는 대장을 「대장님」, 간부를 「간부님」이라 부르고, 두 대장은 서로를 이름으로, 코마는 「코마」로 부른다(카르만 072).
@@ -31,6 +32,11 @@ const STAGE_8_1_PRE: DialogueStory = {
     { id: "koma3", speaker: "코마", body: "테러조는 돌아오라는 말을 들은 적이 없거든. 늘 다음 자리로 내려가라는 말만 들었지.", standing: "koma" },
     { id: "alarm", speaker: "", body: "사다리 위쪽에서 붉은 표지등이 하나씩 켜졌다. 켜진 자리마다 철판 셔터가 천천히 내려오기 시작했다.", cue: "alarm" },
     { id: "pachi", speaker: "파치", body: "보, 보스… 위에서 셔터 내려오는 소리 나요. 우리 올라오는 거 아는 거 아니에요?", standing: "pachi", cast: [{ id: "pachi", slot: "center" }], act: "tremble" },
+    { id: "crate", speaker: "", body: "셔터 밑으로 낯익은 셋이 짐짝을 하나씩 끌고 미끄러져 내려왔다. 등짝마다 회수조 꼬리표가 큼직하게 붙어 있었다.", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], cue: "impact" },
+    { id: "amo", speaker: "아모", body: "…코마 님. 진짜 살아 계셨네.", standing: "amo", act: "tremble" },
+    { id: "koma4", speaker: "코마", body: "…아모. 너희 아직 회수조 짐 나르냐.", standing: "koma", cast: [{ id: "koma", slot: "left" }, { id: "amo", slot: "right" }], act: "lean" },
+    { id: "toby", speaker: "토비", body: "나르는 거 아니거든요! 붙들려서 나르는 거예요! 이거 다 내려놓으면 우리가 짐 된대요!", standing: "toby", cast: [{ id: "toby", slot: "left" }, { id: "koma", slot: "right" }], act: "puff", voice: "shout" },
+    { id: "ripa", speaker: "리파", body: "으흐흐. 그러니까 코마 님, 미안한데 길은 막을게요. 이번에도 위에서 다 정했거든요.", standing: "ripa", cast: [{ id: "ripa", slot: "center" }], act: "lean" },
   ]),
 };
 
@@ -99,42 +105,45 @@ const STAGE_8_7_POST: DialogueStory = {
     { id: "magasa", speaker: "마가사", body: "072 님 거예요. 부대장님이 명부에 다시 적어 두셨거든요. 적힌 사람 몫은 차려 두는 게 저희 규칙이라서요.", standing: "magasa", act: "nod" },
     { id: "koma", speaker: "코마", body: "…나는 그 밥 안 먹는다.", standing: "koma", cast: [{ id: "koma", slot: "left" }, { id: "magasa", slot: "right" }], act: "shrink" },
     { id: "magasa2", speaker: "마가사", body: "네, 알아요. 그래도 차려 둘게요. …아, 그리고 진 김에 하나 알려 드릴게요.", standing: "magasa", act: "lean" },
-    { id: "magasa3", speaker: "마가사", body: "궁니르 대장님은 돌아온 사람을 꼭 직접 세세요. 숫자가 모자라면… 직접 내려오세요.", standing: "magasa", voice: "whisper" },
-    { id: "lift", speaker: "", body: "그 말이 끝나기도 전에 정비고 천장 너머에서 승강기 쇠줄이 길게 풀려 내려오는 소리가 났다.", cue: "rumble" },
+    { id: "magasa3", speaker: "마가사", body: "철갑 대장님은 늘 맨 뒤에 서세요. 안 올라온 사람이 있으면… 그 사람이 올 때까지 직접 내려와서 기다리세요.", standing: "magasa", voice: "whisper" },
+    { id: "lift", speaker: "", body: "그 말이 끝나기도 전에 정비고 천장 너머에서 승강기 쇠줄이 길게 풀려 내려오는 소리가 났다. 아주 느리고, 아주 무거웠다.", cue: "rumble" },
   ]),
 };
 
-/** 8-10 전 — 궁니르 기가노가 승강장에 내려와 모자란 둘을 센다. */
+/** 8-10 전 — 철갑 아르겐이 승강장에 내려와 노아·라자가 올라올 때까지 맨 뒤를 받친다. */
 const STAGE_8_10_PRE: DialogueStory = {
   id: "stage-8-10-pre",
-  startNodeId: "lift",
+  startNodeId: "wall",
   backdrop: "thirdBranchField",
-  recollectionSummary: "궁니르 기가노는 모자란 두 사람을 찾아 직접 승강장까지 내려왔다.",
+  recollectionSummary: "철갑 아르겐은 노아와 라자가 올라올 때까지 승강장을 비우지 않겠다며 맨 뒤에 섰다.",
   nodes: linear([
-    { id: "lift", speaker: "", body: "승강기 문이 열리자 붉은 외투 자락이 먼저 나왔다. 키 큰 여자가 손가락을 하나씩 접으며 승강장을 둘러봤다. 얼굴을 가로지른 오래된 흉터가 웃을 때마다 함께 휘었다.", standing: "nokan", cast: [{ id: "nokan", slot: "center" }] },
-    { id: "nokan", speaker: "기가노", body: "하나, 둘… 그쪽은 됐다. 우리 쪽이 둘 빈다. 노아랑 라자.", standing: "nokan", act: "nod" },
-    { id: "nokan2", speaker: "기가노", body: "연구원. 우리 애들 못 봤어? 키 작은 애 하나, 인상 더러운 애 하나.", standing: "nokan", act: "lean" },
-    { id: "lexia", speaker: "렉시아", body: "봤어요. 근데 마스터한테 길 묻는 사람 치고는 손에 힘이 너무 들어가 있네요.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "nokan", slot: "right" }], act: "hop" },
-    { id: "koma", speaker: "코마", body: "…궁니르.", standing: "koma", cast: [{ id: "koma", slot: "left" }, { id: "nokan", slot: "right" }], act: "shrink" },
-    { id: "nokan3", speaker: "기가노", body: "코마! 살아 있었네. 번호 지웠다며? 카르 그 녀석, 그거 듣고 사흘을 밥을 안 먹더라.", standing: "nokan", act: "hopTwice" },
-    { id: "nokan4", speaker: "기가노", body: "뭐, 좋아. 비키라고 할 생각은 없어. 막는 놈은 같이 센다.", standing: "nokan", act: "rage", cue: "impact", voice: "shout" },
+    { id: "wall", speaker: "", body: "승강기 문이 열리자 검은 장갑을 두른 여자가 천천히 발을 내렸다. 발뒤꿈치가 닿을 때마다 바닥에 고정쇠가 하나씩 박혔다. 열 개째에서 소리가 멎었다.", standing: "eunte", cast: [{ id: "eunte", slot: "center" }], cue: "impact" },
+    { id: "eunte", speaker: "아르겐", body: "철갑이다. 노아랑 라자가 아직 안 올라왔어. 걔네 올라올 때까지 이 승강장은 아무도 못 지나가.", standing: "eunte", act: "nod" },
+    { id: "eunte2", speaker: "아르겐", body: "연구원. 너는 거기 가만히 있어. 걔네 다 올려 보내면, 그다음에 내가 직접 데리러 갈 테니까.", standing: "eunte" },
+    { id: "koma", speaker: "코마", body: "…철갑.", standing: "koma", cast: [{ id: "koma", slot: "left" }, { id: "eunte", slot: "right" }], act: "shrink" },
+    { id: "eunte3", speaker: "아르겐", body: "코마. 살아 있었네. 카르가 네 칸 다시 적는 거, 내가 옆에서 봤다.", standing: "eunte", act: "lean" },
+    { id: "nodonia", speaker: "노도니아", body: "너도 아이들을 먼저 올려 보내는구나. 그 마음은 알겠어. 나도 늘 그렇게 서 있거든.", standing: "nodonia", cast: [{ id: "nodonia", slot: "left" }, { id: "eunte", slot: "right" }], act: "lean" },
+    { id: "eunte4", speaker: "아르겐", body: "같은 일이라도 줄은 다르지. 네 줄에는 그 연구원이 있고, 내 줄에는 없어.", standing: "eunte", act: "shake" },
+    { id: "lexia", speaker: "렉시아", body: "그럼 그 줄, 제가 넘을게요. 마스터 길은 기다리는 길이 아니거든요.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "eunte", slot: "right" }], act: "hop", voice: "shout" },
   ]),
 };
 
-/** 8-10 후 — 다 센 기가노가 물러나고, 명부의 072 칸이 초록으로 켜진다. */
+/** 8-10 후 — 노아·라자가 맨 마지막으로 올라오고, 위에서 기가노의 목소리가 내려온다. 명부의 072 칸이 초록으로 켜진다. */
 const STAGE_8_10_POST: DialogueStory = {
   id: "stage-8-10-post",
-  startNodeId: "arrive",
+  startNodeId: "last",
   backdrop: "thirdBranchField",
-  recollectionSummary: "기가노는 노아와 라자까지 다 센 뒤 물러났다. 명부의 072 칸은 초록이었다.",
+  recollectionSummary: "아르겐은 노아와 라자가 올라온 뒤에야 물러났다. 위에서 기가노가 셈을 하고 있었고, 명부의 072 칸은 초록이었다.",
   nodes: linear([
-    { id: "arrive", speaker: "", body: "숨을 고르는 기가노의 외투 자락을 누군가 뒤에서 움켜쥐었다. 노아였다. 그 뒤로 라자가 절뚝이며 따라왔다.", standing: "nokan", cast: [{ id: "noa", slot: "left" }, { id: "nokan", slot: "center" }, { id: "raja", slot: "right" }] },
-    { id: "nokan", speaker: "기가노", body: "하나, 둘. …됐다. 다 셌다.", standing: "nokan", act: "nod" },
+    { id: "last", speaker: "", body: "열 번째 고정쇠가 뽑혀 나갔다. 아르겐이 기울어지는 승강기 문을 어깨로 받치는 사이, 그 밑으로 라자가 노아를 업고 기어 나왔다.", cast: [{ id: "noa", slot: "left" }, { id: "eunte", slot: "center" }, { id: "raja", slot: "right" }], cue: "rumble" },
     { id: "raja", speaker: "라자", body: "보고드립니다, 대장님. 회수조 간부가 문을 닫으라 했습니다. 아트라가 막았습니다.", standing: "raja", act: "nod" },
-    { id: "nokan2", speaker: "기가노", body: "…이카닉시아가? 또?", standing: "nokan", act: "shake", voice: "heavy" },
-    { id: "far", speaker: "???", body: "기가노. 올라와. 회수조 장부는 내가 본다.", cue: "alarm" },
-    { id: "nokan3", speaker: "기가노", body: "연구원. 너는 아직 우리 셈에 없어. 그러니까 오늘은 그냥 간다.", standing: "nokan", act: "lean" },
-    { id: "leave", speaker: "", body: "기가노가 둘을 한 팔에 하나씩 끼고 승강기에 올랐다. 문이 닫히고 쇠줄이 다시 감겼다.", standing: "nokan", leave: "rise", cast: [] },
+    { id: "eunte", speaker: "아르겐", body: "…이카닉시아가? 또?", standing: "eunte", act: "shake", voice: "heavy" },
+    { id: "noa", speaker: "노아", body: "대, 대장님! 저 마지막이에요! 저 끝까지 안 울었어요!", standing: "noa", act: "hopTwice" },
+    { id: "eunte2", speaker: "아르겐", body: "그래. 잘했다.", standing: "eunte", act: "nod" },
+    { id: "noa2", speaker: "", body: "노아가 그 자리에 멈춰 섰다. 방금 무슨 말을 들었는지 한 번 더 확인하려는 얼굴로, 아르겐의 장갑 끝만 쳐다봤다." },
+    { id: "far", speaker: "???", body: "아르겐! 다 왔으면 올라와. 셈은 내가 할게. 회수조 장부도 내가 본다.", cue: "alarm" },
+    { id: "eunte3", speaker: "아르겐", body: "…기가노는 나보다 덜 참아. 연구원, 위에서 걔 만나면 숫자부터 셀 거야. 각오해 둬.", standing: "eunte", act: "lean" },
+    { id: "leave", speaker: "", body: "아르겐이 둘을 먼저 승강기에 태우고, 맨 마지막에 올랐다. 문이 닫히고 쇠줄이 다시 감겼다.", standing: "eunte", leave: "rise", cast: [] },
     { id: "board", speaker: "", body: "빈 승강장 벽에 명부판 하나가 걸려 있었다. 맨 아래 칸, 072라고 적힌 자리에 초록 불이 들어와 있었다.", cast: [{ id: "koma", slot: "center" }], cue: "heartbeat" },
     { id: "koma", speaker: "코마", body: "…다시 적었다.", standing: "koma", voice: "whisper" },
     { id: "koma2", speaker: "코마", body: "나는 지운 적이 있는데. 그쪽은 한 번도 지운 적이 없었던 거다.", standing: "koma", act: "shrink" },
@@ -176,36 +185,36 @@ const STAGE_9_3_POST: DialogueStory = {
   ]),
 };
 
-/** 9-5 전 — 철갑 아르겐이 맨 뒤에서 퇴로를 받친다. */
+/** 9-5 전 — 궁니르 기가노가 축을 타고 내려와 모자란 하나를 센다. */
 const STAGE_9_5_PRE: DialogueStory = {
   id: "stage-9-5-pre",
-  startNodeId: "wall",
+  startNodeId: "drop",
   backdrop: "thirdBranchField",
-  recollectionSummary: "철갑 아르겐은 조원들이 다 올라갈 때까지 퇴로 앞을 막았다.",
+  recollectionSummary: "궁니르 기가노는 셈이 하나 모자란다며 직접 축을 타고 내려왔다.",
   nodes: linear([
-    { id: "wall", speaker: "", body: "검은 장갑을 두른 여자가 퇴로의 문 앞에 발을 내렸다. 발뒤꿈치가 닿을 때마다 바닥에 고정쇠가 하나씩 박혔다. 열 개째에서 소리가 멎었다.", standing: "eunte", cast: [{ id: "eunte", slot: "center" }], cue: "impact" },
-    { id: "eunte", speaker: "아르겐", body: "철갑이다. 뒤로 우리 애들이 올라가는 중이야. 다 올라갈 때까지 이 선은 아무도 못 넘어.", standing: "eunte", act: "nod" },
-    { id: "eunte2", speaker: "아르겐", body: "연구원. 너 가까이 가면 문이 반응한다며. 그럼 거기 가만히 있어. 다 끝나면 내가 직접 데리러 갈 테니까.", standing: "eunte" },
-    { id: "nodonia", speaker: "노도니아", body: "너도 아이들을 먼저 올려 보내는구나. 그 마음은 알겠어. 나도 그렇게 서 있거든.", standing: "nodonia", cast: [{ id: "nodonia", slot: "left" }, { id: "eunte", slot: "right" }], act: "lean" },
-    { id: "eunte3", speaker: "아르겐", body: "같은 일이라도 줄은 다르지. 네 줄에는 그 연구원이 있고, 내 줄에는 없어.", standing: "eunte", act: "shake" },
-    { id: "lexia", speaker: "렉시아", body: "그럼 그 선, 제가 넘을게요. 마스터 길은 기다리는 길이 아니거든요.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "eunte", slot: "right" }], act: "hop" },
+    { id: "drop", speaker: "", body: "위층 난간에서 붉은 외투 자락이 먼저 떨어졌다. 키 큰 여자가 축을 타고 미끄러져 내려와, 손가락을 하나씩 접으며 주위를 둘러봤다. 얼굴을 가로지른 오래된 흉터가 웃을 때마다 함께 휘었다.", standing: "nokan", cast: [{ id: "nokan", slot: "center" }], cue: "impact" },
+    { id: "nokan", speaker: "기가노", body: "하나, 둘… 노아랑 라자는 아르겐이 올려 보냈고. 카르, 마가사, 다 왔고. …근데 하나가 안 맞아.", standing: "nokan", act: "nod" },
+    { id: "koma", speaker: "코마", body: "…궁니르.", standing: "koma", cast: [{ id: "koma", slot: "left" }, { id: "nokan", slot: "right" }], act: "shrink" },
+    { id: "nokan2", speaker: "기가노", body: "코마! 여기 있었네. 번호 지웠다며? 카르 그 녀석, 그거 듣고 사흘을 밥을 안 먹더라.", standing: "nokan", act: "hopTwice" },
+    { id: "nokan3", speaker: "기가노", body: "연구원. 우리 애 옆에 서 있는 거, 그거 네 줄이야 우리 줄이야?", standing: "nokan", act: "lean" },
+    { id: "lexia", speaker: "렉시아", body: "코마 줄이에요. 근데 마스터한테 묻는 사람 치고는 손에 힘이 너무 들어가 있네요.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "nokan", slot: "right" }], act: "hop" },
+    { id: "nokan4", speaker: "기가노", body: "뭐, 좋아. 비키라고 할 생각은 없어. 막는 놈은 같이 센다.", standing: "nokan", act: "rage", cue: "impact", voice: "shout" },
   ]),
 };
 
-/** 9-5 후 — 미르가 마지막으로 빠져나오고, 아르겐이 길을 연다. */
+/** 9-5 후 — 기가노가 셈을 미루고 물러난다. 대장들이 회수조 장부를 들여다보기 시작한다. */
 const STAGE_9_5_POST: DialogueStory = {
   id: "stage-9-5-post",
-  startNodeId: "last",
+  startNodeId: "breath",
   backdrop: "thirdBranchField",
-  recollectionSummary: "아르겐은 미르가 마지막으로 빠져나온 뒤에야 문에서 손을 뗐다.",
+  recollectionSummary: "기가노는 셈을 미루고 위로 올라갔다. 아르겐과 함께 회수조 장부를 보겠다고 했다.",
   nodes: linear([
-    { id: "last", speaker: "", body: "열 번째 고정쇠가 뽑혀 나갔다. 아르겐이 기울어지는 문을 어깨로 받치는 사이, 그 밑으로 작은 그림자 하나가 굴러 나왔다.", cast: [{ id: "mir", slot: "left" }, { id: "eunte", slot: "right" }], cue: "rumble" },
-    { id: "mir", speaker: "미르", body: "대, 대장님! 마지막이에요! 저 마지막으로 나왔어요!", standing: "mir", act: "hopTwice" },
-    { id: "eunte", speaker: "아르겐", body: "그래. 잘했다.", standing: "eunte", act: "nod" },
-    { id: "mir2", speaker: "", body: "미르가 그 자리에 멈춰 섰다. 무슨 말을 들었는지 한 번 더 확인하려는 얼굴로, 아르겐의 장갑 끝만 쳐다봤다." },
-    { id: "lexia", speaker: "렉시아", body: "…맨날 그렇게 맨 뒤에 서요? 그러다 끝까지 혼자 남아요.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "eunte", slot: "right" }], act: "lean" },
-    { id: "eunte2", speaker: "아르겐", body: "맨 뒤가 비면 누가 남았는지 모르니까.", standing: "eunte" },
-    { id: "eunte3", speaker: "아르겐", body: "길은 열어 줄게. 위에 기가노가 있어. 걔는 나보다 덜 참아.", standing: "eunte", act: "shake" },
+    { id: "breath", speaker: "", body: "기가노가 축에 등을 기대고 숨을 골랐다. 외투 안쪽 붕대 위로 붉은 얼룩이 번져 있었는데, 본인은 그쪽을 한 번도 보지 않았다.", standing: "nokan", cast: [{ id: "nokan", slot: "center" }] },
+    { id: "nokan", speaker: "기가노", body: "하, 셋이서 하나를 이렇게 붙잡네. 우리 애들이 이걸 못 넘었구나.", standing: "nokan", act: "squash" },
+    { id: "koma", speaker: "코마", body: "…셈은 끝났나.", standing: "koma", cast: [{ id: "koma", slot: "left" }, { id: "nokan", slot: "right" }], act: "lean" },
+    { id: "nokan2", speaker: "기가노", body: "아니. 미뤄 둔 거야. 아르겐이 회수조 장부 좀 같이 보재. 노아랑 라자 칸 누가 꺼 놨는지.", standing: "nokan", voice: "heavy" },
+    { id: "nokan3", speaker: "기가노", body: "연구원. 너는 아직 우리 셈에 없어. 그러니까 오늘은 그냥 간다. 꼭대기에서 보자.", standing: "nokan", act: "nod" },
+    { id: "leave", speaker: "", body: "기가노가 축을 차고 뛰어올랐다. 붉은 외투가 층을 하나씩 지나칠 때마다 문들이 차례로 잠겼다.", standing: "nokan", leave: "rise", cast: [] },
   ]),
 };
 

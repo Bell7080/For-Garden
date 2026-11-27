@@ -2782,12 +2782,23 @@ export interface SummonDef {
   };
 }
 
+/** 전선 보스의 세 번째 일반 공격이 주위 다른 적에게 함께 주는 몫이다. */
+export interface FrontlineCleave { radius: number; percent: number }
+
 /** 렐릭 한 명의 불변 정의. 플레이어별 성장 값은 RelicProgress에만 둔다. */
 export interface RelicDef {
+  /**
+   * 전선 보스(기가노·아르겐)의 고유 계약이다.
+   *
+   * `cleave`는 **혼자서 셋을 상대하는 몸**의 몫이다(응태 2026-11-27 — 3대1에 특화된 세팅). 세 번째 일반 공격이
+   * 대상만이 아니라 자신의 주위 반경 `radius` 안의 다른 적에게도 그 한 방 위력의 `percent`%를 준다. 같은 공식
+   * (철갑은 방어·저항 몫까지)으로 재므로 화면의 피해 수치와 어긋나지 않는다.
+   */
   frontlineBoss?:
-    | { kind: "gungnir"; growthPercent: number; attackPercentPerStack: number; stackLimit: number }
+    | { kind: "gungnir"; growthPercent: number; attackPercentPerStack: number; stackLimit: number; cleave?: FrontlineCleave }
     | { kind: "ironclad"; layers: number; reductionPerLayer: number; stripInterval: number; restoreInterval: number;
-        basicGuardScale: number; ultimateGuardScale: number; shieldGuardScale: number; shieldSeconds: number; windup: number };
+        basicGuardScale: number; ultimateGuardScale: number; shieldGuardScale: number; shieldSeconds: number; windup: number;
+        cleave?: FrontlineCleave };
   id: string;
   /**
    * 같은 인물의 다른 상태를 도감과 서사에서 연결하는 원본 캐릭터 ID다.

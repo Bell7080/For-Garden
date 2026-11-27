@@ -644,8 +644,9 @@ describe("스킬 설명문 양식 계약", () => {
         cycleDamage: cycle?.map(() => 123),
       });
       if ("bossDescription" in skill && skill.bossDescription) {
-        expect(text).toMatch(/^(적 한 명|자신의 주위 모든 적)에게 .*방어력.*%만큼 물리 피해를|^적 한 명에게 .*방어력.*%를 합한 물리 피해를/);
-        expect(text).toContain("보호막");
+        // 보스 설명문도 대상 → 피해로 시작한다. 방어력에서 나오는 피해(철갑)는 그 몫을 막으로 돌려받는다는 말까지 한다.
+        expect(text).toMatch(/^(적 한 명|자신의 주위 모든 적)에게 .*%만큼 물리 피해를|^적 한 명에게 .*방어력.*%를 합한 물리 피해를/);
+        if (text.includes("방어력")) expect(text).toContain("보호막");
         expect(text.endsWith(".")).toBe(true);
         return;
       }

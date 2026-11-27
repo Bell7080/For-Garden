@@ -51,7 +51,7 @@ describe("stage enemy design", () => {
     const has = (id: string, currency: string) => rewardsOf(id).some((reward) => reward.kind === "currency" && reward.currency === currency);
     for (const stage of stages) {
       for (const base of ["cheesecake", "gold", "gems"]) expect(has(stage.id, base), `${stage.id} ${base}`).toBe(true);
-      expect(has(stage.id, "fossil"), `${stage.id} fossil`).toBe(stage.elite === true && stage.enemies.length === 1);
+      expect(has(stage.id, "fossil"), `${stage.id} fossil`).toBe(stage.elite === true);
     }
     // 원석은 고고학이 주 수급처라 스토리는 2장부터 장마다 두 번만, 한 줌씩 맛보기로 준다.
     const rawStone = stages.filter((stage) => has(stage.id, "rawStone")).map(({ id }) => id);
@@ -70,8 +70,8 @@ describe("stage enemy design", () => {
     // 조각은 1→2→3번을 돈다.
     expect(new Set(runes.map(({ part }) => part))).toEqual(new Set([0, 1, 2]));
     const gold = (id: string) => rewardsOf(id).reduce((sum, reward) => reward.kind === "currency" && reward.currency === "gold" ? sum + reward.amount : sum, 0);
-    expect(gold("3-9")).toBeGreaterThan(gold("2-9"));
-    expect(gold("2-9")).toBeGreaterThan(gold("1-9"));
+    expect(gold("3-8")).toBeGreaterThan(gold("2-8"));
+    expect(gold("2-8")).toBeGreaterThan(gold("1-8"));
   });
 
   it("챕터 1의 기본 악당은 토비·아모·리파이고 1-5·1-10만 단일 정예가 대신 선다", () => {

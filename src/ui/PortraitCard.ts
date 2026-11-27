@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { reportError } from "../managers/ErrorReporter";
 import { portraitCardZoom } from "./portraitPlacement";
 import type { Element, PortraitAssetId, RelicRarity, Role } from "../core/types";
 import { headCardFrame, loadPortraitTexture, portraitAssetFor, type PuppetAsset } from "../puppets/assets";
@@ -551,7 +552,9 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     const holder = this.scene.make.container({}, false);
     this.portraitHolder = holder;
     const { width } = this.options;
-    void this.loadPortrait(holder, run).catch(() => {
+    void this.loadPortrait(holder, run).catch((error: unknown) => {
+      // 원화가 서지 않은 카드는 빈 얼굴로 남는다 — 예전에는 기록이 없어 「도감이 까맣다」 제보를 되짚을 길이 없었다.
+      reportError("puppet.portraitFailed", error, { relicId: this.options.relicId, asset: this.options.asset?.url ?? this.options.portraitAssetId });
       if (this.disposed || run !== this.portraitRun) return;
       // Puppet 텍스처 실패가 전체 결과 그리드를 깨지 않도록 카드 안에 읽을 수 있는 폴백을 둔다.
       const fallback = textStyle({ role: "display", size: Math.min(34, width / 8), color: COLOR.inkDim, align: "center", wrap: width - 32 });

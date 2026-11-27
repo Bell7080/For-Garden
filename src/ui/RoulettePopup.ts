@@ -2,6 +2,7 @@ import { audioManager } from "../managers/AudioManager";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
+import { GameApiError } from "../api/contracts";
 import { ROULETTE, ROULETTE_REWARDS } from "../core/roulette";
 import { completedAdToken } from "../data/adRewards";
 import { presentRewardedAd, releaseAdWait } from "../platform/rewardedAds";
@@ -160,7 +161,8 @@ export async function openRoulettePopup(scene: Phaser.Scene, popups: PopupLayer,
     };
     const publish = (): void => { managerEvents.publish("wallet", { wallet: session.wallet }); void notificationManager.refresh().catch(() => undefined); };
     const fail = (error: unknown): void => {
-      logError("roulette.request", "돌림판 요청 실패", error);
+      // 서버가 규칙으로 거절한 것(남은 회전 없음 등)은 오류가 아니다 — 저장 실패만 남긴다(client_errors #60).
+      if (!(error instanceof GameApiError) || error.code === "PERSISTENCE_FAILED") logError("roulette.request", "돌림판 요청 실패", error);
       if (alive) { busy = false; refresh(); note.setText(t("roulette.error")); scheduleIdle(); }
     };
     /** 메론이 바퀴를 민다 — 바퀴 쪽(왼쪽)으로 기울며 한 발 다가섰다 돌아온다. `times`번 되풀이한다. */

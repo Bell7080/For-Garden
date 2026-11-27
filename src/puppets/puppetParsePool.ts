@@ -9,6 +9,7 @@
  * 메인 스레드 경로로 되돌아가게 한다.
  */
 import type { PuppetProject } from "puppetforge";
+import { reportError } from "../managers/ErrorReporter";
 import type { PuppetParseRequest, PuppetParseResponse } from "./puppetParseWorker";
 
 /** 해석이 끝난 묶음. 원화는 이미 디코드되어 GPU에 바로 올릴 수 있다. */
@@ -65,7 +66,9 @@ function spawnWorker(): Worker {
   };
   // 일꾼 자체가 죽으면 그 일감은 영영 돌아오지 않는다. 기다리던 쪽을 풀어 메인 스레드 경로로 보내고,
   // 죽은 일꾼은 무리에 되돌리지 않고 내려서 새 일꾼으로 갈아 끼운다 — 되돌리면 다음 일감도 같이 죽는다.
-  worker.onerror = () => {
+  worker.onerror = (event: ErrorEvent) => {
+    // 일꾼이 죽으면 그 묶음은 메인 스레드로 되돌아가 느려진다 — 저사양 기기의 메모리 부족이 여기서 먼저 드러난다.
+    reportError("puppet.workerError", new Error(event?.message || "puppet parse worker crashed"), { busy: running.size });
     const job = running.get(worker);
     running.delete(worker);
     worker.terminate();

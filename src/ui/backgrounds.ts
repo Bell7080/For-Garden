@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { reportError } from "../managers/ErrorReporter";
 import { currentIdleKeep } from "../core/devicePerformance";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { BACKGROUND_ASSETS } from "./backgroundAssets";
@@ -37,7 +38,12 @@ export async function ensureBackgroundTexture(scene: Phaser.Scene, key: string):
     if (!BACKGROUND_PATHS[key] || scene.sys.settings.status >= Phaser.Scenes.SHUTDOWN) return false;
     await new Promise((resolve) => setTimeout(resolve, BACKGROUND_RETRY_DELAY_MS * (round + 1)));
   }
-  return scene.textures.exists(key);
+  const ok = scene.textures.exists(key);
+  // 끝내 못 올린 원화는 그 자리를 알파 0으로 남긴다 — 화면이 까맣게 보이는데 예전에는 아무 기록도 없었다.
+  if (!ok && scene.sys.settings.status < Phaser.Scenes.SHUTDOWN) {
+    reportError("background.loadFailed", new Error("background texture not loaded"), { key, path: BACKGROUND_PATHS[key] });
+  }
+  return ok;
 }
 
 /** 실패한 배경 원화를 다시 받는 횟수와 첫 대기. */

@@ -1965,7 +1965,8 @@ export class BattleScene extends Phaser.Scene {
     if (this.stallReported || now - this.pausedSince < PAUSE_REPORT_MS) return;
     this.stallReported = true;
     // 사람이 일부러 세운 일시 정지·설정 창은 멈춘 것이 정상이다 — 갇힌 판만 보고한다(client_errors #53).
-    if (this.pausePopups?.isOpen || this.scene.isSleeping()) return;
+    // 궁극기 안내·기능 소개도 읽는 동안 일부러 세운 멈춤이다(client_errors #56·#58·#65).
+    if (this.pausePopups?.isOpen || this.scene.isSleeping() || this.ultimateTutorial.active || (this.featureSpotlight?.active ?? false)) return;
     reportError("battle.pausedLong", new Error("battle simulation paused for long"), {
       mode: this.battleInput.mode,
       popup: anyPopupOpen(), popupTitles: blockingPopupTitles().join(","),

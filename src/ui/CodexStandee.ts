@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { reportCatch } from "../managers/ErrorReporter";
 import type { RelicDef } from "../core/types";
 import { SQUADS } from "../data/factions";
 import { portraitAssetFor, withPuppetTexture } from "../puppets/assets";
@@ -109,7 +110,7 @@ export class CodexStandee extends Phaser.GameObjects.Container {
     const key = await withPuppetTexture(this.scene, asset, ({ key: source, anchors }) => {
       if (this.disposed) return undefined;
       return bakeStandeeTexture(this.scene, source, this.cacheKey(), this.size, this.shape, standeeCrop(asset, anchors.head, this.size));
-    }).catch(() => undefined);
+    }).catch(reportCatch("codex.standeeFailed", { asset: this.def.portraitAssetId }));
     if (!key) return;
     BAKED.set(this.cacheKey(), key);
     if (!this.disposed) this.placeArt(key);

@@ -66,7 +66,7 @@ begin
   get diagnostics n = row_count; counts := counts || jsonb_build_object('server_raids', n);
   update public.arena_rooms set data = private.relic_id_rename_jsonb(data, p_reverse) where data::text ~ pattern;
   get diagnostics n = row_count; counts := counts || jsonb_build_object('arena_rooms', n);
-  update public.arena_receipts set fingerprint = private.relic_id_rename_text(fingerprint::text, p_reverse) where fingerprint::text ~ pattern;
+  update public.arena_receipts set fingerprint = private.relic_id_rename_jsonb(fingerprint, p_reverse) where fingerprint::text ~ pattern;
   get diagnostics n = row_count; counts := counts || jsonb_build_object('arena_receipts', n);
   update public.guild_members set avatar_relic_id = private.relic_id_rename_text(avatar_relic_id, p_reverse) where avatar_relic_id ~ pattern;
   get diagnostics n = row_count; counts := counts || jsonb_build_object('guild_members.avatar', n);

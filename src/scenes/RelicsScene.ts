@@ -266,8 +266,8 @@ export class RelicsScene extends Phaser.Scene {
   }
 
   /**
-   * 튜토리얼 강화 두 칸: 토리카 정보창에서 일반 강화와 1레벨 즉시 강화를 차례로 가리킨다. 각 조작이 확정되거나
-   * 건너뛰기를 누르면 칸을 마친다. 정보창을 닫아 버리면 안내도 함께 걷는다(다시 오면 이어진다).
+   * 튜토리얼 강화 두 칸: 토리카 정보창에서 일반 강화와 1레벨 즉시 강화를 차례로 가리킨다. 각 조작이 확정되면
+   * 칸을 마친다(건너뛰기는 없다). 정보창을 닫아 버리면 안내도 함께 걷는다(다시 오면 이어진다).
    */
   private startFeedTutorial(nav: BottomNav): void {
     const next = tutorialManager.lobbyStep();
@@ -290,12 +290,19 @@ export class RelicsScene extends Phaser.Scene {
     };
     followTutorialTarget(this, {
       enabled: () => !stopped && (returnToLobby || this.info.isOpen),
-      passive: true,
+      // 1레벨 쪽지가 열리면 화면을 덮고 그 버튼만 남긴다 — 바깥을 눌러 쪽지를 닫고 넘어가지 못하게 하고
+      // 「여기를 누른다」를 둘레의 숨 쉬는 테두리로 한 번 더 짚는다. 튜토리얼은 끝까지 진행한다(응태 2026-11-28).
+      passive: () => !this.feedLevelLocked(returnToLobby),
+      pulse: () => this.feedLevelLocked(returnToLobby),
       rect: () => returnToLobby ? nav.tabRect("lobby") : this.info.feedBulkTutorialBounds() ?? this.info.feedButtonBounds(),
       text: () => returnToLobby ? t("tutorial.relics.return") : tutorialManager.next() === "feed" ? t("tutorial.relics.feed") : this.info.feedBulkTutorialBounds() ? t("tutorial.relics.one") : t("tutorial.relics.bulk"),
-      onSkip: () => { if (returnToLobby) { stopped = true; return; } void complete(); },
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { stopped = true; this.info.onFed = undefined; });
+  }
+
+  /** 강화 튜토리얼의 1레벨 칸 — 쪽지가 열려 그 버튼을 가리키는 동안은 화면을 잠근다. */
+  private feedLevelLocked(returnToLobby: boolean): boolean {
+    return !returnToLobby && tutorialManager.next() === "feedLevel" && this.info.feedBulkTutorialBounds() !== undefined;
   }
 
   /** 모바일 관성은 프레임 시간으로 감쇠하며, 이동한 프레임마다 카드 내부 마스크도 동기화한다. */

@@ -60,7 +60,6 @@ export const BATTLE_RU = {
   "tutorial.battle.presentation": "Настройки вставок открыты! Нажмите, чтобы сократить анимацию ультимейта",
   "tutorial.battle.presentation.again": "Нажмите ещё раз, чтобы пропускать её полностью!",
   "tutorial.battle.contribution": "Вклад открыт! Нажмите, чтобы увидеть, кто отличился",
-  "tutorial.skip": "Пропустить",
   "tutorial.lobby.relics": "Займёмся развитием реликтов? Нажмите на Архив",
   "tutorial.relics.feed": "Накормите реликта чизкейком, чтобы он вырос!",
   "tutorial.gift.title": "Подарок для восстановления",

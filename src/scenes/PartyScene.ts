@@ -502,7 +502,6 @@ export class PartyScene extends Phaser.Scene {
       text: () => this.partyTutorialPhase === "move" ? t("tutorial.party.move")
         : this.partyTutorialPhase === "auto" ? t("tutorial.party.auto", { name: getRelic("torika").name })
         : t("tutorial.party.start"),
-      onSkip: () => { this.partyTutorialPhase = this.partyTutorialPhase === "move" ? "auto" : this.partyTutorialPhase === "auto" ? "start" : undefined; },
     });
   }
 

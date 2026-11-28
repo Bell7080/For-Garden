@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { t } from "../i18n";
 import { TutorialSpotlight, type TutorialSpotlightOptions } from "./TutorialSpotlight";
 import { raiseSettingsAccess } from "./settingsAccess";
 
@@ -8,11 +7,13 @@ type Rect = { x: number; y: number; width: number; height: number };
 /** 실제 입력 대상의 수명을 따라간다. 다른 창이 가리면 걷고 돌아오면 다시 가리킨다. */
 export function followTutorialTarget(scene: Phaser.Scene, options: {
   enabled: () => boolean; rect: () => Rect | undefined; text: () => string;
-  blocked?: () => boolean; onSkip?: () => void;
+  blocked?: () => boolean;
   /** 끌어 옮길 길이 있는 칸은 휘어진 화살표로 그 길을 긋는다. */
   guide?: () => TutorialSpotlightOptions["guide"];
   /** 화면을 막지 않고 가리키기만 한다(`TutorialSpotlight.passive`). 기다리는 동안에도 화면을 잠그지 않는다. */
-  passive?: boolean;
+  passive?: boolean | (() => boolean);
+  /** 구멍 둘레가 숨 쉬듯 번진다(`TutorialSpotlight.pulse`) — 꼭 눌러야 할 자리를 한 번 더 짚는다. */
+  pulse?: () => boolean;
   /** 안내 글이 설 쪽. 없으면 대상이 화면 위쪽이면 아래, 아니면 위다. */
   side?: () => "above" | "below" | undefined;
   /** 누를 대상이 없는 알림 칸 — 화면 아무 곳이나 누르면 불린다(`TutorialSpotlight.onAdvance`). */
@@ -32,10 +33,11 @@ export function followTutorialTarget(scene: Phaser.Scene, options: {
     if (stopped || !scene.scene.isActive()) return;
     if (!options.enabled()) { stop(); return; }
     const modal = options.blocked?.() === true;
+    const passive = typeof options.passive === "function" ? options.passive() : options.passive === true;
     const rect = modal ? undefined : options.rect();
     if (!rect) {
       clear();
-      if (options.passive) return;
+      if (passive) return;
       // 대기 중에도 원래 화면은 잠근다. 열린 팝업은 이 막 위에서 정상 입력을 받는다.
       waiting ??= scene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0, 0).setInteractive();
       waiting.setDepth(modal ? 999 : 6000);
@@ -47,10 +49,11 @@ export function followTutorialTarget(scene: Phaser.Scene, options: {
       const text = options.text();
       const guide = options.guide?.();
       const hint = options.hint?.();
-      const next = JSON.stringify([rect.x, rect.y, rect.width, rect.height, text, guide, options.side?.(), hint]);
+      const pulse = options.pulse?.() === true;
+      const next = JSON.stringify([rect.x, rect.y, rect.width, rect.height, text, guide, options.side?.(), hint, passive, pulse]);
       if (next !== signature) {
         clear(); signature = next;
-        spotlight = new TutorialSpotlight(scene, { rect, text, guide, hint, side: options.side?.() ?? (rect.y < 700 ? "below" : "above"), onSkip: options.onSkip, onAdvance: options.onAdvance, skipLabel: t("tutorial.skip"), passive: options.passive });
+        spotlight = new TutorialSpotlight(scene, { rect, text, guide, hint, side: options.side?.() ?? (rect.y < 700 ? "below" : "above"), onAdvance: options.onAdvance, passive, pulse });
       }
     }
   };

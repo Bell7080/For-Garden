@@ -7,7 +7,7 @@ import type { DebugCommand } from "../core/debugCommand";
 import type { Wallet } from "../core/gacha";
 import { PLAYER_LEVEL_CAP } from "../core/playerLevel";
 import { BREAKTHROUGH_GRADE_ROMAN, RELIC_MAX_LEVEL, BREAKTHROUGH_CAP } from "../core/relicProgression";
-import { BOND_LEVEL_CAP } from "../core/bond";
+import { BOND_AWAKENING_LADDER } from "../core/bond";
 import { CHAPTERS } from "../data/stages";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { t, type TextKey } from "../i18n";
@@ -89,7 +89,7 @@ const MENU: readonly { id: string; labelKey: TextKey; open: (host: Host) => void
   { id: "grantRelic", labelKey: "settings.debug.menu.grantRelic", open: (host) => pickRelic(host, "new", ALL_RELICS, (id) => void run(host, { kind: "grantRelics", relicIds: id === ALL_RELICS ? "all" : [id] }, "relics")) },
   { id: "relicLevel", labelKey: "settings.debug.menu.relicLevel", open: (host) => pickRelic(host, "owned", ALL_OWNED, (id) => pickFrom(host, t("settings.debug.pick.level"), levelChoices(RELIC_MAX_LEVEL), (level) => void run(host, { kind: "relicLevel", relicId: id, level: Number(level) }))) },
   { id: "relicBreakthrough", labelKey: "settings.debug.menu.relicBreakthrough", open: (host) => pickRelic(host, "owned", ALL_OWNED, (id) => pickFrom(host, t("settings.debug.pick.grade"), Array.from({ length: BREAKTHROUGH_CAP + 1 }, (_, grade) => ({ id: String(grade), label: t("settings.debug.grade", { grade: BREAKTHROUGH_GRADE_ROMAN[grade - 1] ?? "0" }) })), (grade) => void run(host, { kind: "relicBreakthrough", relicId: id, breakthrough: Number(grade) }))) },
-  { id: "relicBond", labelKey: "settings.debug.menu.relicBond", open: (host) => pickRelic(host, "owned", ALL_OWNED, (id) => pickFrom(host, t("settings.debug.pick.bond"), Array.from({ length: BOND_LEVEL_CAP + 1 }, (_, level) => ({ id: String(level), label: t("settings.debug.bond", { level }) })), (level) => void run(host, { kind: "relicBond", relicId: id, level: Number(level) }))) },
+  { id: "relicBond", labelKey: "settings.debug.menu.relicBond", open: (host) => pickRelic(host, "owned", ALL_OWNED, (id) => pickFrom(host, t("settings.debug.pick.bond"), Array.from({ length: BOND_AWAKENING_LADDER.stride * 3 + 1 }, (_, level) => ({ id: String(level), label: t("settings.debug.bond", { level }) })), (level) => void run(host, { kind: "relicBond", relicId: id, level: Number(level) }))) },
   { id: "relicFragments", labelKey: "settings.debug.menu.relicFragments", open: (host) => pickRelic(host, "owned", null, (id) => pickFrom(host, t("settings.debug.pick.amount"), [1, 5, 10, 50, 100, 500].map((amount) => ({ id: String(amount), label: `+${amount}` })), (amount) => void run(host, { kind: "relicFragments", relicId: id, amount: Number(amount) }))) },
   { id: "breakthroughSet", labelKey: "settings.debug.menu.breakthroughSet", open: (host) => pickRelic(host, "owned", null, (id) => void run(host, { kind: "breakthroughSet", relicId: id })) },
   { id: "universalFragments", labelKey: "settings.debug.menu.universalFragments", open: (host) => pickFrom(host, t("settings.debug.pick.amount"), [1, 5, 10, 50].map((amount) => ({ id: String(amount), label: `+${amount}` })), (amount) => void run(host, { kind: "universalFragments", amount: Number(amount) })) },

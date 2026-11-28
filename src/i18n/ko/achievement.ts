@@ -78,7 +78,7 @@ export const ACHIEVEMENT_KO = {
   "achievement.objective.relicsOwned": "렐릭 {value}종 보유",
   "achievement.objective.maxRelicLevel": "렐릭 한 명을 레벨 {value}까지 성장",
   "achievement.objective.relicsMaxBreakthrough": "렐릭 {value}명의 한계 돌파 완료",
-  "achievement.objective.relicsMaxBond": "렐릭 {value}명과 유대 최대",
+  "achievement.objective.relicsMaxBond": "렐릭 {value}명과 유대 10 달성",
   "achievement.objective.playerLevel": "연구원 레벨 {value} 달성",
   "achievement.objective.victories": "전투 승리 {value}회",
   "achievement.objective.storyStagesCleared": "스토리 관문 {value}개 클리어",

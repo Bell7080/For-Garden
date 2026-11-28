@@ -1,4 +1,4 @@
-import { BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "./bond";
+import { BOND_XP_MAX } from "./bond";
 import type { CombatJournal } from "./combatProtocol";
 import type { ExpeditionRelicSnapshot } from "./expeditionSnapshot";
 import { isExpeditionRelicSnapshot } from "./expeditionSnapshot";
@@ -69,7 +69,7 @@ export function isValidServerJournal(value: unknown): value is ServerJournal {
       && Array.isArray(gift.rewards) && gift.rewards.every((reward) => record(reward) && json(reward) && (reward.kind === "currency" || reward.kind === "item") && Number.isSafeInteger(reward.amount)));
   return (journal.qaTenUpgrade === undefined || typeof journal.qaTenUpgrade === "boolean")
     && (journal.storyChoices === undefined || record(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0)))
-    && (journal.pendingStoryBondXp === undefined || record(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP]))
+    && (journal.pendingStoryBondXp === undefined || record(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_XP_MAX))
     && (journal.ops === undefined || isValidOpsJournal(journal.ops))
     && (journal.combat === undefined || record(journal.combat) && record(journal.combat.tickets) && record(journal.combat.records) && json(journal.combat))
     && (journal.subscriptionEntitlements === undefined || record(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record(entry)

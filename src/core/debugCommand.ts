@@ -1,4 +1,4 @@
-import { BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL } from "./bond";
+import { BOND_AWAKENING_LADDER, BOND_LEVEL_MAX, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_MAX, isValidBondAwakening } from "./bond";
 import type { Wallet } from "./gacha";
 import { normalizePlayerLevel, PLAYER_LEVEL_CAP } from "./playerLevel";
 import { BREAKTHROUGH_CAP, RELIC_MAX_LEVEL, remainingBreakthroughFragments, UNIVERSAL_FRAGMENT_ITEM } from "./relicProgression";
@@ -103,7 +103,7 @@ export function applyDebugCommand(target: DebugTarget, command: DebugCommand, ru
         if (target.owned.has(id)) continue;
         target.owned.add(id);
         const base = rules.initialProgress();
-        target.relicProgress[id] ??= { ...base, bondXp: Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], base.bondXp + rules.bondXpFirstAcquisition) };
+        target.relicProgress[id] ??= { ...base, bondXp: Math.min(BOND_XP_MAX, base.bondXp + rules.bondXpFirstAcquisition) };
         changed += 1;
       }
       return changed;
@@ -133,12 +133,13 @@ export function applyDebugCommand(target: DebugTarget, command: DebugCommand, ru
       return changed;
     }
     case "relicBond": {
-      const level = integer(command.level, 0, BOND_LEVEL_CAP);
+      const level = integer(command.level, 0, BOND_LEVEL_MAX);
       let changed = 0;
       for (const id of targets(target, command.relicId)) {
         const p = target.relicProgress[id];
         if (p.bondLevel === level && p.bondXp === BOND_TOTAL_XP_BY_LEVEL[level]) continue;
-        target.relicProgress[id] = { ...p, bondLevel: level, bondXp: BOND_TOTAL_XP_BY_LEVEL[level] };
+        // 레벨을 내리면 받은 각성보다 많이 쓴 몫이 남을 수 있다 — 그때는 각성을 비운다(무료 초기화와 같다).
+        target.relicProgress[id] = { ...p, bondLevel: level, bondXp: BOND_TOTAL_XP_BY_LEVEL[level], ...(isValidBondAwakening(p.bondAwakening, level) ? {} : { bondAwakening: undefined }) };
         changed += 1;
       }
       return changed;
@@ -169,8 +170,8 @@ export function applyDebugCommand(target: DebugTarget, command: DebugCommand, ru
       let changed = 0;
       for (const id of target.owned) {
         const p = target.relicProgress[id];
-        if (!p || p.bondLevel >= BOND_LEVEL_CAP) continue;
-        target.relicProgress[id] = { ...p, bondLevel: BOND_LEVEL_CAP, bondXp: BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP] };
+        if (!p || p.bondLevel >= BOND_AWAKENING_LADDER.everyLevelTo) continue;
+        target.relicProgress[id] = { ...p, bondLevel: BOND_AWAKENING_LADDER.everyLevelTo, bondXp: BOND_TOTAL_XP_BY_LEVEL[BOND_AWAKENING_LADDER.everyLevelTo] };
         changed += 1;
       }
       // 처음 만난 날을 지우면 관찰 질문이 모두 열린 상태(기록 도입 전 개체와 같다)가 된다.

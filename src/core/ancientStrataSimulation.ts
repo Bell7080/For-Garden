@@ -1,6 +1,6 @@
 import { COMBAT_STEP_MS } from "./combatProtocol";
 import { deathClockClosesBySeconds } from "./battleClock";
-import { BOND_LEVEL_CAP } from "./bond";
+import { BOND_STAT_LEVEL_CAP } from "./bond";
 import { getRelic } from "../data/relics";
 import { applyHeartGems, applyLevelGrowth, referenceBreakthroughAt, RELIC_MAX_LEVEL } from "./relicProgression";
 import { generateRune, enhanceRune, engraveRune, runeEnhancementIncrease, runeOptionValue, type RuneInstance, type RuneMainStatKey, type RuneSubStatKey } from "./runes";
@@ -51,10 +51,10 @@ export function ancientReferenceRunes(relicId: string, equipment: AncientEquipme
   });
 }
 
-export function ancientReferenceParty(ids: readonly string[], equipment: AncientEquipment, level = 60, bondLevel = BOND_LEVEL_CAP) {
+export function ancientReferenceParty(ids: readonly string[], equipment: AncientEquipment, level = 60, bondLevel = BOND_STAT_LEVEL_CAP) {
   if (ids.length !== 3 || new Set(ids).size !== 3) throw new RangeError("서로 다른 렐릭 세 명이 필요합니다.");
   if (!Number.isInteger(level) || level < 1 || level > RELIC_MAX_LEVEL) throw new RangeError(`플레이어 레벨은 1~${RELIC_MAX_LEVEL}입니다.`);
-  if (!Number.isInteger(bondLevel) || bondLevel < 0 || bondLevel > BOND_LEVEL_CAP) throw new RangeError("유대 레벨은 0~10입니다.");
+  if (!Number.isInteger(bondLevel) || bondLevel < 0 || bondLevel > BOND_STAT_LEVEL_CAP) throw new RangeError("유대 레벨은 0~10입니다.");
   const equipped = ids.map(relicId => {
     if (getRelic(relicId).enemyOnly || getRelic(relicId).summonOnly) throw new RangeError(`플레이 불가 렐릭: ${relicId}`);
     return { relicId, runes: ancientReferenceRunes(relicId, equipment) };

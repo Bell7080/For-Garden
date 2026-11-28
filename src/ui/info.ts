@@ -20,8 +20,7 @@ import { formatCurrency } from "../core/formatCurrency";
 import { baseStatsOf, PLAYABLE_RELICS, RELICS } from "../data/relics";
 import { KeywordManager } from "../managers/KeywordManager";
 import { relicStories } from "../managers/RelicStoryManager";
-import { BOND_STORY_GEM_REWARD, type BondStoryLevel } from "../core/relicStory";
-import { relicStoryFor } from "../data/relicStories";
+import type { BondStoryLevel } from "../core/relicStory";
 import { playFadeIn, playFadeOut } from "./screenTransition";
 import { launchStoryOverlay } from "../scenes/storyOverlay";
 import { currencyRecordToRewardItems, openRewardPopup } from "./RewardPopup";
@@ -54,7 +53,6 @@ import { FaceFrame } from "./FaceFrame";
 import { session } from "../state/session";
 import { addPageChevrons, type PageChevronPair } from "./PageChevrons";
 import { motionPolicy } from "../core/settings";
-import { RewardFrame } from "./RewardFrame";
 import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { addMarkChip } from "./MarkChip";
 import { addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeAccentCss, runeHeartSpot, runeSeatTexture, runeTexture } from "./runeIcons";
@@ -82,7 +80,8 @@ import { fitTextToBox, squeezeTextToWidth } from "./textFit";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmCardLayout, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
 import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, breakthroughFragmentSpend, type BreakthroughStep, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as simulateFeed, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade, breakthroughGrowthPercent, RELIC_MAX_LEVEL } from "../core/relicProgression";
-import { bondStatPercent, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
+import { bondStatPercent, BOND_LEVEL_MAX, BOND_TOTAL_XP_BY_LEVEL, bondXpToNext } from "../core/bond";
+import { bondAwakeningLeft, openBondAwakening, openBondDetail as openBondDetailPopup } from "./BondPopups";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
 import { attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, periodicStackKeyword, plumeKeyword, frostbiteKeyword, skillDescription, passiveStackKeywords, casterRatioKeywords } from "./skillPresentation";
@@ -313,25 +312,6 @@ function feedCostRow(
   attachRoll(text, { memoryKey: rollKey, onChange: layout });
   return { container, text, layout };
 }
-/**
- * 유대로 하나씩 열리는 이야기 네 편.
- *
- * 아직 대사 데이터가 없어 제목과 조건만 둔다. 원문이 생기면 `src/data/dialogues`에 넣고
- * 여기서는 그 id만 가리키게 바꾼다 — 대사를 화면에 적어 두지 않기 위해서다.
- */
-const BOND_STORY_STEPS: readonly { level: number; title: () => string }[] = [
-  // 제목을 값으로 두면 모듈을 읽는 순간 굳는다. 그릴 때 고르도록 부르는 자리를 남긴다.
-  { level: 2, title: () => t("info.story.1") },
-  { level: 4, title: () => t("info.story.2") },
-  { level: 7, title: () => t("info.story.3") },
-  { level: 10, title: () => t("info.story.4") },
-];
-
-/**
- * 유대 상세 판의 크기. 애착 스토리 네 장(2×2)의 아랫줄이 900 높이의 판 밑변 밖으로 삐져나와
- * 칸 아래에 뒷배경이 없었다 — 판을 내용에 맞춰 키우고, 키운 만큼 내용 전체를 위로 올린다.
- */
-const BOND_DETAIL = { width: 820, height: 976, shift: -38 } as const;
 
 /** 돌파 버튼과 팝업이 함께 쓰는 색. 레벨(초록)과 갈라 놓아 다른 종류의 성장임을 알린다. */
 const BREAK_EDGE = 0xa88cf0;
@@ -343,6 +323,10 @@ const BREAK_EDGE = 0xa88cf0;
  * 누르는 일이 아니므로 급여 버튼보다 한참 작고 어둡게 물러난다. 기울기는 판이 함께 준다.
  */
 const RESET_CHIP = { offsetX: 82, y: 330, width: 128, height: 50, icon: 22, size: 22 } as const;
+
+/** 유대 칸의 「각성」 칩 — 돋보기 바로 아래, 칸 오른쪽 아래 구석. 글줄은 그 왼쪽까지만 쓴다. */
+const BOND_LABEL_ROOM = { withChip: 200, full: 300 } as const;
+const BOND_AWAKEN_CHIP = { offsetX: 62, y: 744, width: 100, height: 40, icon: 20, size: 20, tone: 0xffb36b } as const;
 
 /**
  * 한계 돌파 버튼의 규격.
@@ -590,6 +574,8 @@ export class InfoManager {
   private readonly bondValue: Phaser.GameObjects.Text;
   private readonly bondBar: Gauge;
   private readonly bondLabel: Phaser.GameObjects.Text;
+  /** 유대 칸 오른쪽 아래 「각성」 칩 — 남은 각성이 있으면 붉은 점과 함께 숨 쉰다. */
+  private bondAwakenChip?: { container: Phaser.GameObjects.Container; dot: Phaser.GameObjects.Arc; tween?: Phaser.Tweens.Tween };
 
   /** 능력치 칸 제목 아래에 서는 사거리 한 줄. */
   private reachLabel!: Phaser.GameObjects.Text;
@@ -934,6 +920,8 @@ export class InfoManager {
     attach(bondPanel, bondHeart, ...this.bondBar.objects, this.bondLabel);
     this.addSectionTitle(t("info.section.bond"), 706 - 72).setVisible(this.capabilities.showBond);
     this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 686, (from) => this.openBondDetail(from), bondPanel);
+    // 돋보기 바로 아래 「각성」 칩 — 유대 각성 판을 곧바로 연다(응태 2026-11-28).
+    if (this.capabilities.showBond && this.capabilities.mutateProgress) this.bondAwakenChip = this.addBondAwakenChip(COLUMN.x + COLUMN.width / 2 - BOND_AWAKEN_CHIP.offsetX, BOND_AWAKEN_CHIP.y, bondPanel);
 
     // 능력치.
     this.addSectionTitle(t("info.section.stats"), 1024 - 198);
@@ -1144,6 +1132,50 @@ export class InfoManager {
   }
 
   /** 레벨 초기화 칩. 누르면 회수량·젬 값을 보여 주는 확인 창이 먼저 열린다. */
+  /** 유대 각성 칩. 칸을 누르는 면보다 위에 서서 그 칸의 상세 대신 각성 판을 연다. */
+  private addBondAwakenChip(x: number, y: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; dot: Phaser.GameObjects.Arc } {
+    const spec = BOND_AWAKEN_CHIP;
+    const container = this.scene.add.container(x, y);
+    const shape = slantedRect(spec.width, spec.height, 8);
+    container.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x2a1620, alpha: 0.92, edge: spec.tone, edgeAlpha: 0.75 }));
+    const label = this.scene.add.text(0, 0, t("info.bond.awakenShort"), textStyle({ role: "emphasis", size: spec.size, color: "#ffd2a6" })).setOrigin(0, 0.5);
+    const icon = drawGlyph(this.scene, "promote", 0, 0, spec.icon, spec.tone, 1, 3);
+    squeezeTextToWidth(label, spec.width - 24 - spec.icon - 6);
+    const total = spec.icon + 6 + label.displayWidth;
+    icon.setX(-total / 2 + spec.icon / 2);
+    label.setX(-total / 2 + spec.icon + 6);
+    const dot = this.scene.add.circle(spec.width / 2 - 6, -spec.height / 2 + 4, 8, COLOR.danger, 1).setStrokeStyle(2, 0x05070a).setVisible(false);
+    container.add([icon, label, dot]);
+    const hit = this.scene.add.rectangle(0, 0, spec.width + 12, spec.height + 16, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => pressIn(container));
+    hit.on("pointerout", () => pressOut(container, "normal", { pop: false }));
+    hit.on("pointerup", () => {
+      const def = this.currentDef;
+      if (!def || !this.ownedNow || this.popups.isOpen) { pressOut(container, "normal", { pop: false }); return; }
+      openBondAwakening(this.bondContext(def.id, { x: panel.x, y: panel.y, onClose: () => pressOut(container) }));
+    });
+    container.add(hit);
+    attach(panel, container);
+    return { container, dot };
+  }
+
+  /** 남은 각성이 있으면 붉은 점을 세우고 칩이 살짝 숨 쉰다. */
+  private paintBondAwakenChip(relicId: string): void {
+    const chip = this.bondAwakenChip;
+    if (!chip) return;
+    chip.container.setVisible(this.ownedNow);
+    const left = this.ownedNow ? bondAwakeningLeft(relicId) : 0;
+    chip.dot.setVisible(left > 0);
+    const breathing = left > 0 && motionPolicy(session.settings).nonEssentialDistanceFactor > 0;
+    if (breathing && !chip.tween) {
+      chip.tween = this.scene.tweens.add({ targets: chip.container, scale: { from: 1, to: 1.06 }, duration: 760, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+    } else if (!breathing && chip.tween) {
+      chip.tween.remove();
+      chip.tween = undefined;
+      chip.container.setScale(1);
+    }
+  }
+
   private addResetChip(x: number, y: number, panel: Phaser.GameObjects.Container): Phaser.GameObjects.Container {
     const container = this.scene.add.container(x, y);
     const shape = slantedRect(RESET_CHIP.width, RESET_CHIP.height, 8);
@@ -2308,102 +2340,39 @@ export class InfoManager {
     this.figure?.setVisible(this.portraitWanted && this.root.visible);
   }
 
+  /** 유대 판들이 정보창에서 받아 가는 것 — 하트 그림 · 스토리 읽기 · 다시 칠하기. */
+  private bondContext(relicId: string, from?: PopupSource) {
+    return {
+      scene: this.scene,
+      popups: this.popups,
+      relicId,
+      paintHeart: (size: number) => paintBondHeart(this.scene, size),
+      mutable: this.capabilities.mutateProgress && this.ownedNow,
+      readChapter: (level: BondStoryLevel, storyId: string) => this.readBondChapter(relicId, level, storyId, from),
+      onChanged: () => this.refreshGrowth(),
+      onClose: from?.onClose,
+    };
+  }
+
   /**
-   * 유대가 지금 무엇을 얼마나 바꾸고 있는지.
-   *
-   * 게이지 옆의 "+5%" 한 줄로는 무엇이 5% 오르는지 알 수 없다. 지금 레벨의 효과와 다음
-   * 레벨의 효과를 나란히 두고, 아래에 지금까지 열린 이야기를 함께 건다.
+   * 유대 상세(`BondPopups`). 위는 지금 레벨 · 경험치 · 얻는 능력치, 아래는 애착 스토리 네 장이다(응태 2026-11-28).
+   * 얻는 길은 「획득 방법!」, 레벨마다 받는 것은 레벨 옆 돋보기가 따로 연다.
    */
-  private openBondDetail(from: PopupSource): void {
+  private openBondDetail(from?: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
-    const progress = relicProgression.getProgress(def.id);
-    const level = progress.bondLevel;
-    const next = Math.min(BOND_LEVEL_CAP, level + 1);
-    this.popups.open({ width: BOND_DETAIL.width, height: BOND_DETAIL.height, title: t("info.bond.level", { level: `${level} / ${BOND_LEVEL_CAP}` }), tilt: -1.2, ...anchorOf(from) }, (frame) => {
-      // 판을 키운 만큼 내용 전체를 위로 올린다 — 칸을 하나씩 옮기면 맨 아래 줄만 따로 논다.
-      const body = this.scene.add.container(0, BOND_DETAIL.shift);
-      frame.add(body);
-      const rows: [string, string, string][] = [
-        [t("info.bond.statGain"), "+" + bondStatPercent(level) + "%", "+" + bondStatPercent(next) + "%"],
-        [t("info.bond.lobbyInteraction"), t("info.bond.oncePerDay", { amount: `${BOND_XP_REWARD.firstLobbyInteraction} EXP` }), t("info.bond.same")],
-        [t("info.bond.battleWin"), t("info.bond.partyAll", { amount: `${BOND_XP_REWARD.partyVictory} EXP` }), t("info.bond.same")],
-      ];
-      body.add(this.scene.add.text(-350, -368, t("info.bond.now"), textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0, 0.5));
-      body.add(this.scene.add.text(348, -368, t("info.bond.nextStep"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
-      rows.forEach(([label, now, later], index) => {
-        const y = -300 + index * 84;
-        body.add(this.scene.add.text(-350, y - 18, label, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0));
-        body.add(this.scene.add.text(-350, y + 14, now, textStyle({ role: "display", size: 28 })).setOrigin(0, 0));
-        body.add(this.scene.add.text(348, y + 14, later, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(1, 0));
-        body.add(drawHairline(this.scene, 0, y + 56, 700, { color: COLOR.accent, alpha: 0.14 }));
-      });
-      body.add(this.scene.add.text(-350, -20, t("info.bond.story"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
-      // 이야기는 유대 레벨로 하나씩 열린다. 아직 잠긴 것도 자리를 보여 줘 다음 목표가 된다.
-      // 이야기 묶음이 있는 개체는 4·6·8·10 네 장이 열리고 장마다 해금 젬이 걸린다. 눌러서 읽는다.
-      const chapters = relicStories.chapterViews(def.id);
-      if (chapters.length > 0) {
-        // 4·6·8·10 네 장은 2×2 레이어로 선다 — 출격판의 던전 칸처럼 칸마다 제목과 해금 젬 액자를 갖는다.
-        const cellW = 340, cellH = 200, gap = 20;
-        chapters.forEach((chapter, index) => {
-          const cx = (index % 2 === 0 ? -1 : 1) * (cellW + gap) / 2;
-          const cy = 150 + Math.floor(index / 2) * (cellH + gap);
-          const open = chapter.unlocked;
-          const title = relicStoryFor(def.id)!.bondStories[chapter.level].titleCard?.title ?? chapter.storyId;
-          const cell = this.scene.add.container(cx, cy);
-          cell.add(drawLayer(this.scene, 0, 0, chipPoints(cellW, cellH, { bevel: { topLeft: 34, bottomRight: 34 } }), {
-            fill: open ? 0x1a2130 : 0x0d1219, alpha: open ? 0.95 : 0.7, edge: COLOR.accent, edgeAlpha: open ? 0.6 : 0.16,
-          }));
-          cell.add(this.scene.add.text(-cellW / 2 + 40, -cellH / 2 + 22, "BOND " + chapter.level, textStyle({ role: "emphasis", size: 22, color: open ? COLOR.accentText : COLOR.inkDim })).setOrigin(0, 0));
-          cell.add(this.scene.add.text(-cellW / 2 + 40, -cellH / 2 + 56, title, textStyle({ role: "display", size: 26, color: open ? COLOR.ink : COLOR.inkDim, wrap: cellW - 80 })).setOrigin(0, 0));
-          const gems = BOND_STORY_GEM_REWARD[chapter.level];
-          const claimable = open && !chapter.claimed;
-          const frame = new RewardFrame(this.scene, cellW / 2 - 70, cellH / 2 - 52, { icon: "currency-gems", amount: gems, size: 80, state: claimable ? "claimable" : chapter.claimed ? "claimed" : "normal" });
-          cell.add(frame);
-          if (!open) cell.add(this.scene.add.text(-cellW / 2 + 40, cellH / 2 - 40, t("info.bond.required", { level: chapter.level }), textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5));
-          if (claimable && motionPolicy(session.settings).nonEssentialDistanceFactor > 0) {
-            const tween = this.scene.tweens.add({ targets: frame, scale: { from: 1, to: 1.08 }, duration: 620, yoyo: true, repeat: -1, ease: "Sine.InOut" });
-            frame.once(Phaser.GameObjects.Events.DESTROY, () => tween.remove());
-          }
-          if (open) {
-            const hit = this.scene.add.rectangle(0, 0, cellW, cellH, 0xffffff, 0).setInteractive({ useHandCursor: true });
-            hit.on("pointerup", () => this.readBondChapter(def.id, chapter.level, chapter.storyId, from));
-            cell.add(hit);
-          }
-          body.add(cell);
-        });
-        return;
-      }
-      const steps = BOND_STORY_STEPS.map((step) => ({ level: step.level, title: step.title() }));
-      steps.forEach((step, index) => {
-        const y = 46 + index * 92;
-        const open = level >= step.level;
-        body.add(drawLayer(this.scene, 0, y + 30, slantedRect(700, 76, 14), {
-          fill: open ? 0x1a2130 : 0x0d1219,
-          alpha: open ? 0.95 : 0.7,
-          edge: COLOR.accent,
-          edgeAlpha: open ? 0.6 : 0.16,
-        }));
-        body.add(this.scene.add.text(-318, y + 12, step.title, textStyle({ role: "display", size: 26, color: open ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
-        const status = !open ? t("info.bond.required", { level: step.level }) : t("info.bond.opened");
-        body.add(
-          this.scene.add
-            .text(318, y + 18, status, textStyle({ role: "body", size: 21, color: open ? COLOR.accentText : COLOR.inkDim }))
-            .setOrigin(1, 0),
-        );
-      });
-    });
+    openBondDetailPopup(this.bondContext(def.id, from));
   }
 
   /**
    * 애착 스토리 한 장을 **이 화면 위에 겹쳐** 읽는다. 끝나거나 건너뛰면 정보창과 유대 판이 연 그대로 돌아오고,
    * 아직 받지 않은 장이면 그 위에 젬 보상 창이 뜬다 — 로비로 튕겨 판을 다시 찾아 열지 않게 한다.
    */
-  private readBondChapter(relicId: string, level: BondStoryLevel, storyId: string, from: PopupSource): void {
+  private readBondChapter(relicId: string, level: BondStoryLevel, storyId: string, from?: PopupSource): void {
     launchStoryOverlay(this.scene, storyId, () => void this.claimBondChapter(relicId, level, from));
   }
 
-  private async claimBondChapter(relicId: string, level: BondStoryLevel, from: PopupSource): Promise<void> {
+  private async claimBondChapter(relicId: string, level: BondStoryLevel, from?: PopupSource): Promise<void> {
     const chapter = relicStories.chapterViews(relicId).find((view) => view.level === level);
     if (!chapter?.unlocked || chapter.claimed) return;
     const gems = await relicStories.claimChapter(relicId, level).catch(reportCatch("relicStory.claimChapter", { relicId: String(relicId) }));
@@ -3108,14 +3077,18 @@ export class InfoManager {
     // 되돌릴 레벨이 없으면 칩이 가라앉는다. 지금 먹이는 중인 누름이 남아 있을 때도 같다.
     this.resetChip?.setAlpha(this.ownedNow && canResetRelic(progress) ? 1 : 0.35);
 
-    const bondMaxed = progress.bondLevel >= BOND_LEVEL_CAP;
-    const bondBase = BOND_TOTAL_XP_BY_LEVEL[progress.bondLevel];
-    const bondNext = bondMaxed ? bondBase : BOND_TOTAL_XP_BY_LEVEL[progress.bondLevel + 1];
+    const bondMaxed = progress.bondLevel >= BOND_LEVEL_MAX;
+    const bondBase = BOND_TOTAL_XP_BY_LEVEL[progress.bondLevel] ?? 0;
+    const bondNext = bondMaxed ? bondBase : bondBase + bondXpToNext(progress.bondLevel);
     this.bondValue.setText(String(progress.bondLevel));
     this.bondBar.setValue(bondMaxed ? 1 : (progress.bondXp - bondBase) / (bondNext - bondBase));
-    // 유대는 레벨마다 오각형 다섯을 1%씩 올린다(`bondStatPercent`) — 위 오각형의 수치에 이미 든 몫이다.
+    // 유대는 10레벨까지 레벨마다 오각형 다섯을 1%씩 올린다(`bondStatPercent`) — 위 오각형의 수치에 이미 든 몫이다.
     const boost = bondStatPercent(progress.bondLevel);
-    this.bondLabel.setText(`${bondMaxed ? "MAX" : `${progress.bondXp} / ${bondNext} EXP`}   ·   ${t("info.bond.statGain")} +${boost}%`);
+    this.bondLabel.setScale(1).setText(`${bondMaxed ? "MAX" : `${progress.bondXp} / ${bondNext} EXP`}  ·  ${t("info.bond.statGain")} +${boost}%`);
+    // 각성 칩이 서면 글줄은 그 왼쪽까지만 쓴다.
+    const chipShown = this.bondAwakenChip !== undefined && this.ownedNow;
+    squeezeTextToWidth(this.bondLabel, chipShown ? BOND_LABEL_ROOM.withChip : BOND_LABEL_ROOM.full);
+    this.paintBondAwakenChip(def.id);
 
     this.statRadar?.draw(finalStats, STAT_RADAR_RADIUS, baseStatsOf(def.id));
 

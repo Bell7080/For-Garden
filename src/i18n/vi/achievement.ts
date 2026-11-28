@@ -78,7 +78,7 @@ export const ACHIEVEMENT_VI = {
   "achievement.objective.relicsOwned": "Sở hữu {value} loại Di vật",
   "achievement.objective.maxRelicLevel": "Nâng một Di vật lên cấp {value}",
   "achievement.objective.relicsMaxBreakthrough": "Hoàn tất Đột phá cho {value} Di vật",
-  "achievement.objective.relicsMaxBond": "Đạt Gắn kết tối đa với {value} Di vật",
+  "achievement.objective.relicsMaxBond": "Đạt Gắn kết cấp 10 với {value} Di vật",
   "achievement.objective.playerLevel": "Đạt cấp Nhà nghiên cứu {value}",
   "achievement.objective.victories": "Thắng {value} trận",
   "achievement.objective.storyStagesCleared": "Vượt {value} màn cốt truyện",

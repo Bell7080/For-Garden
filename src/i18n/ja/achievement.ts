@@ -78,7 +78,7 @@ export const ACHIEVEMENT_JA = {
   "achievement.objective.relicsOwned": "レリックを{value}種所持",
   "achievement.objective.maxRelicLevel": "レリック1人をレベル{value}まで育成",
   "achievement.objective.relicsMaxBreakthrough": "レリック{value}人の限界突破を完了",
-  "achievement.objective.relicsMaxBond": "レリック{value}人との絆を最大にする",
+  "achievement.objective.relicsMaxBond": "レリック{value}人と絆10を達成",
   "achievement.objective.playerLevel": "研究員レベル{value}に到達",
   "achievement.objective.victories": "戦闘に{value}回勝利",
   "achievement.objective.storyStagesCleared": "ストーリー関門を{value}個クリア",

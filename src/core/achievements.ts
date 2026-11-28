@@ -1,5 +1,5 @@
 import { ACHIEVEMENT_SERIES, type AchievementMetric, type AchievementSeries } from "../data/achievements";
-import { BOND_LEVEL_CAP } from "./bond";
+import { BOND_STAT_LEVEL_CAP } from "./bond";
 import { BREAKTHROUGH_STEPS, RELIC_MAX_LEVEL } from "./relicProgression";
 import { DUEL_TIERS } from "./duelArena";
 import { BOUNTY_TIERS } from "../data/bounty";
@@ -59,7 +59,7 @@ export function achievementFacts(state: Session, external: AchievementExternalFa
     relicsOwned: playable.length,
     maxRelicLevel: progress.reduce((best, entry) => Math.max(best, entry.level), 0),
     relicsMaxBreakthrough: progress.filter((entry) => entry.breakthrough >= maxBreakthrough).length,
-    relicsMaxBond: progress.filter((entry) => entry.bondLevel >= BOND_LEVEL_CAP).length,
+    relicsMaxBond: progress.filter((entry) => entry.bondLevel >= BOND_STAT_LEVEL_CAP).length,
     playerLevel: state.playerResearch.level,
     victories: lifetime.battle_completed ?? 0,
     storyStagesCleared: storyStageIds.filter((id) => state.cleared.has(id)).length,
@@ -91,7 +91,7 @@ export function achievementFacts(state: Session, external: AchievementExternalFa
     codexComplete: PLAYABLE_RELICS.length > 0 && playable.length === PLAYABLE_RELICS.length ? 1 : 0,
     elementsOwned: new Set(ownedDefs.map(({ element }) => element)).size,
     squadsOwned: new Set(ownedDefs.map(({ squad }) => squad)).size,
-    perfectRelics: progress.filter((entry) => entry.level >= levelCap && entry.breakthrough >= maxBreakthrough && entry.bondLevel >= BOND_LEVEL_CAP).length,
+    perfectRelics: progress.filter((entry) => entry.level >= levelCap && entry.breakthrough >= maxBreakthrough && entry.bondLevel >= BOND_STAT_LEVEL_CAP).length,
     fullyRunedRelics: progress.filter((entry) => entry.heartGemSlots.length > 0 && entry.heartGemSlots.every((slot) => slot !== null)).length,
     // 편성 장난은 지금 세워 둔 편성에서 읽는다 — 세 칸이 다 찼을 때만 센다.
     partySameElement: partyFull && new Set(partyDefs.map(({ element }) => element)).size === 1 ? 1 : 0,

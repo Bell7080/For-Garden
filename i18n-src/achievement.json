@@ -620,14 +620,14 @@
     "Завершить прорыв {value} реликтов"
   ],
   "achievement.objective.relicsMaxBond": [
-    "与{value}名遗物的羁绊达到最大",
-    "เพิ่มสายสัมพันธ์เรลิก {value} ตัวจนสูงสุด",
-    "Đạt Gắn kết tối đa với {value} Di vật",
-    "Maksimalkan Ikatan dengan {value} Relik",
-    "Maximizar el vínculo con {value} reliquias",
-    "Maximizar o vínculo com {value} relíquias",
-    "Bindung zu {value} Relikten maximieren",
-    "Достичь максимальной связи с {value} реликтами"
+    "与{value}名遗物的羁绊达到10级",
+    "สายสัมพันธ์เรลิก {value} ตัวถึงเลเวล 10",
+    "Đạt Gắn kết cấp 10 với {value} Di vật",
+    "Capai Ikatan 10 dengan {value} Relik",
+    "Alcanzar Vínculo 10 con {value} reliquias",
+    "Alcançar Vínculo 10 com {value} relíquias",
+    "Bindung 10 mit {value} Relikten erreichen",
+    "Достичь Связи 10 с {value} реликтами"
   ],
   "achievement.objective.playerLevel": [
     "研究员等级达到{value}",

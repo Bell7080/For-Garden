@@ -3,7 +3,7 @@ import { BOND_STORY_LEVELS, DIARY_QUESTION_COUNT } from "../../src/core/relicSto
 import { DialogueFlow } from "../../src/core/dialogue";
 import { RELIC_STORIES } from "../../src/data/relicStories";
 import { getRelic } from "../../src/data/relics";
-import { BOND_LEVEL_CAP } from "../../src/core/bond";
+import { BOND_STAT_LEVEL_CAP } from "../../src/core/bond";
 
 /** 이야기 묶음이 갖춰진 개체는 모양을 전부 채워야 한다 — 하나씩 다져 가므로 개체마다 같은 틀을 지킨다. */
 describe.each(Object.entries(RELIC_STORIES))("%s 이야기 묶음", (relicId, story) => {
@@ -30,7 +30,7 @@ describe.each(Object.entries(RELIC_STORIES))("%s 이야기 묶음", (relicId, st
   });
 
   it("은 유대 0~10마다 대사를 여럿 갖는다", () => {
-    expect(story.bondLines).toHaveLength(BOND_LEVEL_CAP + 1);
+    expect(story.bondLines).toHaveLength(BOND_STAT_LEVEL_CAP + 1);
     for (const lines of story.bondLines) {
       expect(lines.length).toBeGreaterThanOrEqual(3);
       for (const line of lines) expect(line.trim()).not.toBe("");

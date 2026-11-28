@@ -78,7 +78,7 @@ export const ACHIEVEMENT_ES = {
   "achievement.objective.relicsOwned": "Tener {value} tipos de reliquia",
   "achievement.objective.maxRelicLevel": "Subir una reliquia al nivel {value}",
   "achievement.objective.relicsMaxBreakthrough": "Completar la ruptura de {value} reliquias",
-  "achievement.objective.relicsMaxBond": "Maximizar el vínculo con {value} reliquias",
+  "achievement.objective.relicsMaxBond": "Alcanzar Vínculo 10 con {value} reliquias",
   "achievement.objective.playerLevel": "Alcanzar nivel de investigador {value}",
   "achievement.objective.victories": "Ganar {value} combates",
   "achievement.objective.storyStagesCleared": "Superar {value} fases de historia",

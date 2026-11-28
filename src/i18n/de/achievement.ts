@@ -78,7 +78,7 @@ export const ACHIEVEMENT_DE = {
   "achievement.objective.relicsOwned": "{value} Reliktarten besitzen",
   "achievement.objective.maxRelicLevel": "Ein Relikt auf Stufe {value} bringen",
   "achievement.objective.relicsMaxBreakthrough": "Durchbruch bei {value} Relikten abschließen",
-  "achievement.objective.relicsMaxBond": "Bindung zu {value} Relikten maximieren",
+  "achievement.objective.relicsMaxBond": "Bindung 10 mit {value} Relikten erreichen",
   "achievement.objective.playerLevel": "Forscherstufe {value} erreichen",
   "achievement.objective.victories": "{value} Kämpfe gewinnen",
   "achievement.objective.storyStagesCleared": "{value} Story-Stufen abschließen",

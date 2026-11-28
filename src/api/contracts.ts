@@ -974,6 +974,8 @@ export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPE
 export interface FeedRelicResponse extends PlayerStateDto { relicId: string; feeds: number; cheesecakeSpent: number; levelsGained: number; }
 /** 캐릭터 초기화 결과. 레벨은 1로 돌아가고 돌파·공명·유대·룬은 그대로다. */
 export interface ResetRelicResponse extends PlayerStateDto { relicId: string; /** 초기화 전 레벨. */ previousLevel: number; /** 실제로 지갑에 들어간 치즈케이크(보유 한도에서 깎일 수 있다). */ cheesecakeRefunded: number; }
+/** 유대 각성 배분 결과. 빈 배분은 무료 초기화다. */
+export interface SetBondAwakeningResponse extends PlayerStateDto { relicId: string; /** 저장된 배분(0인 축은 걷어 낸다). */ awakening: Partial<Record<"hp" | "def" | "res" | "atk" | "ap", number>>; }
 /** 돌파 결과. 열린 상한을 함께 돌려줘 화면이 표를 다시 뒤지지 않게 한다. */
 export interface BreakThroughResponse extends PlayerStateDto { relicId: string; breakthrough: number; levelCap: number; /** 돌파 뒤의 돌파 등급(1~4). */ breakthroughGrade: number; /** 남은 그 개체의 파편. */ fragments: number; /** 모자란 몫을 채우느라 함께 쓴 만능 파편 수(0이면 쓰지 않았다). */ universalFragmentsUsed: number; /** 돌파 IV 뒤에는 같은 조작이 공명을 올린다 — 올린 뒤의 공명 단계. */ resonance?: number; }
 /**
@@ -1490,6 +1492,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   breakThroughRelic(relicId: string): Promise<BreakThroughResponse>;
   /** 레벨을 1로 되돌리고 급여한 치즈케이크를 돌려준다. 22레벨로 가는 몫부터는 90%만 돌려준다(`core/relicReset.ts`). */
   resetRelic(relicId: string): Promise<ResetRelicResponse>;
+  /** 유대 각성 배분을 통째로 정한다. 받은 횟수 안이어야 하고, 빈 배분이면 무료 초기화다. */
+  setBondAwakening(relicId: string, awakening: Partial<Record<"hp" | "def" | "res" | "atk" | "ap", number>>): Promise<SetBondAwakeningResponse>;
   /** 패배도 서버에 명시해 승리 전용 보상이 새지 않도록 한다. */
   /** `victory`는 선택이 아니다 — 기본값을 두면 인자를 빠뜨린 호출이 조용히 승리로 기록된다. */
   completeStage(stageId: string, victory: boolean): Promise<CompleteStageResponse>;

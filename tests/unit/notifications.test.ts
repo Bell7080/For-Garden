@@ -16,11 +16,11 @@ describe("notifications", () => {
   });
 
   it("maps only positive or explicit conditions to each stable key", () => {
-    expect(NOTIFICATION_KEYS).toEqual(["raidReward", "expeditionReward", "sortieReward", "missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "premiumOffer", "passReward", "premiumNotice", "achievementReward", "codexReward", "shopFree", "freeResearch", "interactionReturned", "duelSeasonReward", "premiumSubscription", "guildAttendance", "patronDaily"]);
+    expect(NOTIFICATION_KEYS).toEqual(["raidReward", "expeditionReward", "sortieReward", "missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "premiumOffer", "passReward", "premiumNotice", "achievementReward", "codexReward", "shopFree", "freeResearch", "interactionReturned", "duelSeasonReward", "duelDefense", "duel", "premiumSubscription", "guildAttendance", "patronDaily"]);
     expect(deriveNotificationState({ claimableMissionCount: 2, excavationHarvestReady: true, pendingFriendRequestCount: 1, unseenEventCount: 3, unreadMailCount: 4 }))
-      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: true, excavationHarvestReady: true, friendRequest: true, newEvent: true, mail: true, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, premiumOffer: false, passReward: false, premiumNotice: false, achievementReward: false, codexReward: false, shopFree: false, freeResearch: false, interactionReturned: false, duelSeasonReward: false, premiumSubscription: false, guildAttendance: false, patronDaily: false });
+      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: true, excavationHarvestReady: true, friendRequest: true, newEvent: true, mail: true, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, premiumOffer: false, passReward: false, premiumNotice: false, achievementReward: false, codexReward: false, shopFree: false, freeResearch: false, interactionReturned: false, duelSeasonReward: false, duelDefense: false, duel: false, premiumSubscription: false, guildAttendance: false, patronDaily: false });
     expect(deriveNotificationState({ claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 }))
-      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: false, excavationHarvestReady: false, friendRequest: false, newEvent: false, mail: false, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, premiumOffer: false, passReward: false, premiumNotice: false, achievementReward: false, codexReward: false, shopFree: false, freeResearch: false, interactionReturned: false, duelSeasonReward: false, premiumSubscription: false, guildAttendance: false, patronDaily: false });
+      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: false, excavationHarvestReady: false, friendRequest: false, newEvent: false, mail: false, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, premiumOffer: false, passReward: false, premiumNotice: false, achievementReward: false, codexReward: false, shopFree: false, freeResearch: false, interactionReturned: false, duelSeasonReward: false, duelDefense: false, duel: false, premiumSubscription: false, guildAttendance: false, patronDaily: false });
     expect(deriveNotificationState({ claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0, freeSupplyCategories: ["weekly"] }))
       .toMatchObject({ premiumFree: true, premiumFreeDaily: false, premiumFreeWeekly: true, premiumFreeMonthly: false, passReward: false, premiumNotice: true });
   });
@@ -185,5 +185,21 @@ describe("notifications", () => {
     const restoredManager = new NotificationManager(api, new ManagerEvents()); const restored: boolean[] = [];
     restoredManager.subscribe("excavationHarvestReady", (value) => restored.push(value)); await restoredManager.refresh();
     expect(first).toEqual([false, true]); expect(restored).toEqual([false, true]); expect(getIdleExcavation).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe("결투 방어덱 점", () => {
+  const base = { claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 };
+  it("알릴 것이 있고 아직 열어 보지 않았을 때만 선다 — 로비 결투 입구도 함께 켠다", () => {
+    const unseen = deriveNotificationState({ ...base, duelDefenseNotice: "luka" });
+    expect(unseen.duelDefense).toBe(true);
+    expect(unseen.duel).toBe(true);
+    const seen = deriveNotificationState({ ...base, duelDefenseNotice: "luka", duelDefenseSeen: "luka" });
+    expect(seen.duelDefense).toBe(false);
+    expect(seen.duel).toBe(false);
+    // 새로 약해진 렐릭이 생기면 서명이 바뀌어 다시 선다.
+    expect(deriveNotificationState({ ...base, duelDefenseNotice: "luka,torika", duelDefenseSeen: "luka" }).duel).toBe(true);
+    expect(deriveNotificationState({ ...base, duelDefenseNotice: "" }).duel).toBe(false);
+    expect(deriveNotificationState({ ...base, duelSeasonRewardReady: true }).duel).toBe(true);
   });
 });

@@ -81,7 +81,7 @@ import { getBountyTier } from "../data/bounty";
 import { getCakeOperationTier } from "../data/cakeOperation";
 import { addSdFootShadow } from "../ui/SdFootShadow";
 import { duelBlindCount, duelBlindOrder, toggleDuelBlind } from "../core/duelArena";
-import { addDuelBlindMark, addDuelBlindToggle, DUEL_BLIND_STYLE } from "../ui/DuelBlindToggle";
+import { addDuelBlindMark, addDuelBlindToggle, addDuelWeakenedMark, DUEL_BLIND_STYLE, DUEL_WEAKENED_STYLE } from "../ui/DuelBlindToggle";
 import { withBusy } from "../ui/BusyOverlay";
 import { showContentIntro } from "../ui/contentIntro";
 import { arrangeGuardFormation, GUILD_GUARD, GUILD_GUARD_SLOT_ROLES, guardRosterPreview } from "../core/guildGuard";
@@ -1290,6 +1290,7 @@ export class PartyScene extends Phaser.Scene {
     this.enemyPowerText?.setText(t("party.enemyPower", { power: enemyPower.toLocaleString() }));
     this.firstBlindChip = undefined;
     if (this.content.content === "duelDefense" && chrome) this.paintBlindChips(chrome, marks);
+    if (this.content.content === "duelDefense" && chrome) this.paintWeakenedMarks(chrome);
     const allyPower = members.reduce((sum, id) => sum + relicProgression.getCombatPower(id, { pvp: this.pvp }), 0).toLocaleString();
     // 마주 선 편이 없으면 「N 아군」처럼 VS 오른쪽에 붙던 꼴이 아니라 전투력 한 줄로 선다.
     this.allyPowerText?.setText(this.defenseOnly || this.guard ? t("duel.power", { power: allyPower }) : t("party.allyPower", { power: allyPower }));
@@ -1504,6 +1505,18 @@ export class PartyScene extends Phaser.Scene {
       if (isHidden && marks) addDuelBlindMark(this, marks, x, row - PREVIEW_HEIGHT * 0.46);
     });
     this.applyBlindVeil();
+  }
+
+  /** 저장한 뒤로 약해진 렐릭이 선 칸에 붉은 「약해짐」 칩을 세운다 — 로비의 빨간 점이 짚지 못한 「누가」를 여기서 말한다. */
+  private paintWeakenedMarks(chrome: Phaser.GameObjects.Container): void {
+    if (this.content.content !== "duelDefense") return;
+    const weakened = this.content.weakened ?? [];
+    if (weakened.length === 0) return;
+    const { rise, shift } = DUEL_WEAKENED_STYLE;
+    const reduceMotion = settingsManager.get().accessibility.reduceMotion;
+    this.picked.forEach((id, slot) => {
+      if (id && weakened.includes(id)) addDuelWeakenedMark(this, chrome, this.slotX(slot) + shift, this.slotRow(slot) - rise, reduceMotion);
+    });
   }
 
   /** 숨긴 칸의 SD를 실루엣으로 가라앉힌다. SD가 늦게 도착해도 같은 값을 다시 덮는다. */

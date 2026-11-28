@@ -71,6 +71,7 @@ export const DUEL_JA = {
   "duel.ticketPopup.failed": "チャージに失敗しました。しばらくしてからもう一度お試しください。",
   "duel.defense.label": "防衛",
   "duel.defense.weakened": "防衛デッキのレリックが保存時より弱くなっています。防衛デッキを確認してください。",
+  "duel.defense.weakenedMark": "弱体化",
   "duel.opponents.title": "対戦相手の選択",
   "duel.profile.title": "戦闘プロフィール",
   "duel.profile.current": "現在のティア",

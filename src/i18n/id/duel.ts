@@ -71,6 +71,7 @@ export const DUEL_ID = {
   "duel.ticketPopup.failed": "Pengisian gagal. Silakan coba lagi sebentar lagi.",
   "duel.defense.label": "Pertahanan",
   "duel.defense.weakened": "Relik di dek pertahananmu lebih lemah daripada saat disimpan. Periksa dek pertahananmu.",
+  "duel.defense.weakenedMark": "Melemah",
   "duel.opponents.title": "Pilih Lawan",
   "duel.profile.title": "Profil Tempur",
   "duel.profile.current": "Tingkat Saat Ini",

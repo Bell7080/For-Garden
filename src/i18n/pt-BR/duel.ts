@@ -71,6 +71,7 @@ export const DUEL_PT_BR = {
   "duel.ticketPopup.failed": "Falha na recarga. Tente novamente em instantes.",
   "duel.defense.label": "Defesa",
   "duel.defense.weakened": "Uma relíquia do seu deck de defesa está mais fraca do que quando foi salva. Confira seu deck de defesa.",
+  "duel.defense.weakenedMark": "Mais fraca",
   "duel.opponents.title": "Escolher oponente",
   "duel.profile.title": "Perfil de batalha",
   "duel.profile.current": "Divisão atual",

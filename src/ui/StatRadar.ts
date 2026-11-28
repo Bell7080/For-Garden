@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { Stats } from "../core/types";
-import { STAT_RADAR_MAX } from "../config/statRadar";
+import { statRadarRatios } from "../config/statRadar";
 import { combatPower } from "../core/combatPower";
 import { COLOR, textStyle } from "./theme";
 import { t, type TextKey } from "../i18n";
@@ -211,7 +211,8 @@ export class StatRadar extends Phaser.GameObjects.Container {
       this.graph.lineStyle(2, COLOR.panelEdge, 0.65).strokePoints(ring, true);
     }
     AXES.forEach((_, index) => this.graph.lineBetween(0, 0, point(index, 1).x, point(index, 1).y));
-    const ratios = AXES.map(([key]) => Math.min(1, Math.max(0, stats[key] / STAT_RADAR_MAX[key])));
+    const shape = statRadarRatios(stats, base);
+    const ratios = AXES.map(([key]) => shape[key]);
     const values = ratios.map((ratio, index) => point(index, ratio));
     this.graph.fillStyle(COLOR.accent, 0.24).fillPoints(values, true);
     this.graph.lineStyle(3, COLOR.accent, 0.95).strokePoints(values, true);
@@ -251,7 +252,9 @@ export class StatRadar extends Phaser.GameObjects.Container {
     g.lineStyle(1.5, HOLO_GRID, 0.22 * breathe);
     AXES.forEach((_, index) => g.lineBetween(0, 0, point(index, 1).x, point(index, 1).y));
 
-    const ratios = AXES.map(([key]) => Math.min(1, Math.max(0, stats[key] / STAT_RADAR_MAX[key])));
+    // 유대 몫을 붉게 보이는 판은 유대를 뺀 값(`gainFrom`)으로 성장 배율을 잰다 — 그래야 그 몫이 배율에 묻히지 않는다.
+    const shape = statRadarRatios(stats, this.base, this.gainFrom ?? stats);
+    const ratios = AXES.map(([key]) => shape[key]);
     const values = ratios.map((ratio, index) => point(index, Math.max(0.04, ratio * this.grow) * (still ? 1 : holoWobble(index, timeMs))));
     const flat = values.flatMap(({ x, y }) => [x, y]);
     g.fillStyle(COLOR.accent, 0.2 * breathe).fillPoints(values, true);
@@ -277,7 +280,8 @@ export class StatRadar extends Phaser.GameObjects.Container {
     if (this.gainFrom) {
       // 기준 오각형 — 일렁임은 지금 면과 같이 따라가고, 선은 옅게만 남긴다.
       const from = this.gainFrom;
-      const baseValues = AXES.map(([key], index) => point(index, Math.max(0.04, Math.min(1, Math.max(0, from[key] / STAT_RADAR_MAX[key])) * this.grow) * (still ? 1 : holoWobble(index, timeMs))));
+      const fromShape = statRadarRatios(from, this.base);
+      const baseValues = AXES.map(([key], index) => point(index, Math.max(0.04, fromShape[key] * this.grow) * (still ? 1 : holoWobble(index, timeMs))));
       // 오른 몫 — 변마다 기준선과 지금 선 사이의 띠를 붉게 채운다(지금 값이 기준보다 늘 크거나 같다).
       g.fillStyle(GAIN_RED, 0.42 * breathe);
       for (let index = 0; index < AXES.length; index += 1) {

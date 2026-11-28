@@ -116,8 +116,8 @@ export const BATTLE_FEATURE_TAP_AGAIN: Readonly<Record<BattleTutorialFeature, bo
 
 /** 칸을 마칠 때 서버가 한 번만 주는 것. 지금은 뽑기 재료 한 가지뿐이다. */
 export const TUTORIAL_REWARDS: Readonly<Partial<Record<TutorialStepId, { fossil: number }>>> = {
-  // 첫 복원 연구(배너 `welcome`)는 10연 전용이고 화석 8개가 든다 — 정확히 한 번 돌릴 몫이다.
-  gift: { fossil: 8 },
+  // 첫 복원 연구(배너 `welcome`)는 10연 전용이고 화석 8개가 든다 — 한 번 돌리고 둘이 남는다(응태 2026-11-28 — 연구소 개방 지원품 10개).
+  gift: { fossil: 10 },
 };
 
 export function createEmptyTutorialState(): TutorialState { return { completedStepIds: [] }; }

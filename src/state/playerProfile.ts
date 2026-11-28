@@ -7,6 +7,7 @@ import { STAGES, storyStages } from "../data/stages";
 import { sanitizeStoryClears, storyClearRecords, type StoryClearRecord } from "../core/storyClearRecord";
 import { highestClearedStage } from "../core/stageProgress";
 import { activeBreakthroughOf, breakthroughGrade, calculateFinalStats } from "../core/relicProgression";
+import { displayCombatStats } from "../core/combatStats";
 import { resonanceOf } from "../core/relicResonance";
 import { combatPower } from "../core/combatPower";
 import { nextContentUnlock, nextStageUnlock, type ContentId } from "../core/contentUnlock";
@@ -130,7 +131,7 @@ function favoriteShowcase(state: Session): FavoriteRelicShowcase | null {
   return {
     relicId: relic.id, displayName: relic.name, portraitAssetId: relic.portraitAssetId,
     level: progress?.level ?? 1, breakthroughGrade: breakthroughGrade(activeBreakthroughOf(progress)), resonance: resonanceOf(progress), bondLevel: progress?.bondLevel ?? 0,
-    rarity: relic.rarity, element: relic.element, role: relic.role, power: combatPower(stats, relic.stats),
+    rarity: relic.rarity, element: relic.element, role: relic.role, power: combatPower(progress ? displayCombatStats(relic, stats, activeBreakthroughOf(progress), gems) : stats, relic.stats),
   };
 }
 

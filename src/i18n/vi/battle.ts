@@ -60,7 +60,6 @@ export const BATTLE_VI = {
   "tutorial.battle.presentation": "Đã mở tùy chọn cắt cảnh! Chạm để rút ngắn cảnh tuyệt kỹ",
   "tutorial.battle.presentation.again": "Chạm thêm lần nữa để bỏ qua hẳn!",
   "tutorial.battle.contribution": "Đã mở đóng góp! Chạm vào để xem ai nổi bật nhất",
-  "tutorial.skip": "Bỏ qua",
   "tutorial.lobby.relics": "Cùng nuôi Di vật nhé? Hãy chạm vào Lưu trữ",
   "tutorial.relics.feed": "Hãy cho Di vật ăn Bánh phô mai để lớn lên!",
   "tutorial.gift.title": "Quà vật liệu phục hồi",

@@ -10,7 +10,7 @@ import { COLOR, textStyle } from "./theme";
 /**
  * 1-5에서 받은 체험 룬이 아직 남아 있는 동안 가방 버튼에 붉은 점과 작은 말풍선을 단다. 누르게 하지는 않는다 —
  * 가방을 열든 렐릭의 룬 가방을 열든, 들어가는 순간 체험을 권하는 것은 그 화면들(`offerFreeRuneCraft`)이다.
- * 체험이 끝나면(각인·건너뛰기) 인벤토리 신호에 맞춰 둘 다 걷힌다.
+ * 체험이 끝나면(각인) 인벤토리 신호에 맞춰 둘 다 걷힌다.
  */
 export function bindFreeRuneBagHint(scene: Phaser.Scene, button: Phaser.GameObjects.Container, size: number): void {
   let bubble: Phaser.GameObjects.Container | undefined;

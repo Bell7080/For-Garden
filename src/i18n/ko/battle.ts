@@ -63,7 +63,6 @@ export const BATTLE_KO = {
   "tutorial.battle.presentation": "연출 설정이 열렸어요! 누르면 궁극기 연출이 짧아져요",
   "tutorial.battle.presentation.again": "한 번 더 누르면 연출을 아예 건너뛰어요! 다시 눌러 보세요",
   "tutorial.battle.contribution": "기여도가 열렸어요! 눌러서 누가 활약했는지 확인해 보세요",
-  "tutorial.skip": "건너뛰기",
   "tutorial.lobby.relics": "렐릭을 키워 볼까요? 도감을 눌러 주세요",
   "tutorial.relics.feed": "치즈케이크를 먹여서 렐릭을 키워 보세요!",
   "tutorial.gift.title": "복원 재료 선물",

@@ -7,6 +7,8 @@ import { battleArena } from './battleArena';
 import type { RelicDef } from './types';
 import type { ExpeditionAugmentEffect } from './expeditionAugments';
 import { combatPower } from './combatPower';
+import { applyBattleStatBonuses } from './combatStats';
+import { getRelic } from '../data/relics';
 
 /**
  * `unique`는 교차 공개 배치에서 **상대가 이미 고른 렐릭을 고르지 못하게** 한다(기본 켜짐 — 저장된 옛 방은 키가 없어 켜진 것으로 읽는다).
@@ -141,9 +143,13 @@ export function applyArenaAction(source: ArenaRoom, actor: string, action: Arena
  * 가장 센 것을 빈 칸 앞 번호부터 세운다 — 전투력(`combatPower`)만 보는 결정적 규칙이라 두 화면과 재시도가 같은 답을 낸다.
  * 교차 배치는 차례인 쪽이 한 칸만, 비공개 배치는 확정하지 않은 쪽이 남은 칸을 모두 채우고 확정한다.
  */
+/** 화면의 전투력과 같은 값 — 태생 능력치(공속 몫)와 돌파·룬 특성의 상시 몫을 함께 잰다. */
+function unitPower(unit: ArenaUnit): number {
+  return combatPower(applyBattleStatBonuses(unit.def, unit.def.stats, unit.breakthrough, unit.traits), getRelic(unit.def.id).stats);
+}
 export function arenaAutoResolve(r: ArenaRoom, now: number): void {
   const strongest = (units: readonly ArenaUnit[]): ArenaUnit | undefined =>
-    [...units].sort((a, b) => combatPower(b.def.stats) - combatPower(a.def.stats) || a.def.id.localeCompare(b.def.id))[0];
+    [...units].sort((a, b) => unitPower(b) - unitPower(a) || a.def.id.localeCompare(b.def.id))[0];
   if (r.phase === 'ban') {
     r.bans.forEach((ban, side) => { if (ban === null) r.bans[side] = strongest(r.players[1 - side].roster)?.def.id ?? ARENA_HIDDEN_BAN; });
     r.phase = 'place'; r.deadline = now + 45000;

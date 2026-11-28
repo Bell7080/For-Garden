@@ -43,7 +43,7 @@ export function publicProfile(
       // 공개 값은 표식에 서는 등급(I~V)이다 — 돌파 단계(0~4)를 그대로 실으면 친구 카드가 한 등급 낮게 선다.
       // 꺼진 돌파(레벨 초기화 뒤 요구 레벨 미달)는 남에게 보이는 등급에 들지 않는다 — 능력치와 같은 값을 말한다.
       breakthroughGrade: breakthroughGrade(activeBreakthroughOf(progress)),
-      stats: new RelicProgressionManager(state).getFinalStats(relic.id),
+      stats: new RelicProgressionManager(state).getCombatStats(relic.id),
       skillIds: [relic.basic.id, relic.passive.id, relic.ultimate.id],
     },
     // 관문을 아직 못 깬 프로필은 null로 표시해 필드가 없는 예전 프로필과 가른다.

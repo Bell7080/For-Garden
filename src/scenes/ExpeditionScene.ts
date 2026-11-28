@@ -430,7 +430,7 @@ export class ExpeditionScene extends Phaser.Scene {
       const finalBoss = node.type === "boss" && node.floor === 20;
       const growth = enemies.map(() => ({ level, breakthrough: finalBoss ? expeditionBossGrowth().breakthrough : requiredBreakthroughForLevel(level) }));
       // 원정에는 편성 화면이 없어 노드 판이 곧 대치선이다. 아군 전투력은 **떠날 때 굳힌 모습**이고, 쓰러진 렐릭은 싸우지 않으니 뺀다.
-      const allyPower = run.relics.filter(({ alive }) => alive).reduce((sum, { relicId }) => sum + combatPower(expeditionManager.snapshotFor(relicId).stats, getRelic(relicId).stats), 0);
+      const allyPower = run.relics.filter(({ alive }) => alive).reduce((sum, { relicId }) => sum + combatPower(expeditionManager.combatStatsFor(relicId), getRelic(relicId).stats), 0);
       this.enemyPreview?.showAt(nodeY, { title: t("expedition.node.title", { floor: node.floor, type: names[node.type] }), growth, enemies, allyPower, onEnemyClick: (enemy, slot) => this.enemyInfo?.show({ def: enemy, level: slot.level, breakthrough: slot.breakthrough }) });
       return;
     }

@@ -36,7 +36,7 @@ import { LOCK_DIM } from "./lockStyle";
 import { slideTabPage, startNavScene, startScene } from "./screenTransition";
 import { NAV_TABS, navTabDirection } from "../core/navTabs";
 import { tutorialManager } from "../managers/TutorialManager";
-import { logError, reportCatch } from "../managers/ErrorReporter";
+import { logError } from "../managers/ErrorReporter";
 import { showContentToast } from "./ContentToast";
 import { guideFreeRuneCraft, unionRects } from "./freeRuneCraftTutorial";
 import { openRuneNamePopup } from "./RuneNamePopup";
@@ -967,10 +967,6 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
           firstRow: () => bounds(rowHits.find(({ main }) => main)?.hit ?? rowHits[0]?.hit),
           allRows: () => unionRects(rowHits.map(({ hit }) => bounds(hit)!)),
           craftButton: () => bounds(action),
-          onSkip: () => {
-            if (pending) return;
-            void tutorialManager.dismissFreeRune().then(() => { if (!closed) render(); }, reportCatch("rune.dismissFreeRune"));
-          },
         });
       });
     }

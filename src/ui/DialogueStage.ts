@@ -280,7 +280,8 @@ export class DialogueStage {
     member.speaking = member.id === this.focusedSpeaker;
     Object.assign(member, this.poseOf(member));
     creature.setScale(member.restScale).setPosition(member.baseX, member.baseY);
-    if (!member.speaking) creature.setAnimationFrozen(true);
+    // 들어오는 사람은 아직 한 프레임도 굴지 않아 원화 기본 자세 그대로다 — 곧바로 쉬게 둔다.
+    if (!member.speaking) creature.setAnimationRested(true, 0);
     this.members.set(entry.id, member);
     creature.setMask(this.mask);
     if (member.veiled) creature.setTint(DIALOGUE_FOCUS.veilTint);
@@ -535,8 +536,9 @@ export class DialogueStage {
   }
 
   /**
-   * 화자 여부와 자리를 몸에 입힌다. 듣는 사람은 idle이 멈추고, 다시 말하면 그 자리에서 이어진다
-   * (`setAnimationFrozen` — 처음부터 다시 틀지 않는다). 바뀐 것이 없으면 아무것도 건드리지 않는다.
+   * 화자 여부와 자리를 몸에 입힌다. 듣는 사람은 idle이 원화 기본 자세로 가라앉은 뒤 멈추고
+   * (`setAnimationRested` — 눈을 감다 만 프레임에 굳지 않는다), 다시 말하면 멈춘 시각에서 움직임이 다시
+   * 차오른다(처음부터 다시 틀지 않는다). 바뀐 것이 없으면 아무것도 건드리지 않는다.
    */
   private applyPose(member: StageMember, speaking: boolean, duration: number, remote = member.remote): void {
     const { creature } = member;
@@ -548,9 +550,7 @@ export class DialogueStage {
       || Math.abs(pose.restScale - creature.scaleX) >= 1e-4;
     Object.assign(member, pose);
     if (moved || turned) this.stopAct(member);
-    // 몸짓을 끊으면 idle이 풀리므로 듣는 사람은 그 뒤에 다시 멈춘다.
-    if (!speaking) creature.setAnimationFrozen(true);
-    else if (!member.act) creature.setAnimationFrozen(false);
+    creature.setAnimationRested(!speaking, DIALOGUE_FOCUS.poseMs);
     if (!moved) return;
     this.scene.tweens.killTweensOf(creature);
     const instant = this.distanceFactor() <= 0;
@@ -615,12 +615,13 @@ export class DialogueStage {
     member.act = handle;
   }
 
-  /** 도는 몸짓을 끊는다. 눌린 배율·덮인 색도 함께 되돌리고 idle은 화자일 때만 다시 튼다. */
+  /**
+   * 도는 몸짓을 끊는다. 눌린 배율·덮인 색도 함께 되돌린다. 몸짓이 풀어 준 idle은 듣는 사람이면
+   * `setAnimationRested`가 기본 자세에 붙잡아 두므로 다시 흐르지 않는다.
+   */
   private stopAct(member: StageMember): void {
     member.act?.stop();
     member.act = undefined;
-    // 듣는 사람은 몸짓이 끝나도 idle을 다시 틀지 않는다 — 말하지 않는 동안은 멈춰 서 있다.
-    if (member.creature.active) member.creature.setAnimationFrozen(!member.speaking);
   }
 
   // ── 무전 너머의 목소리 ─────────────────────────────────────────────

@@ -678,9 +678,12 @@ describe("FakeServer", () => {
 
   it("승리만 편성 렐릭 유대를 올리고 패배에는 전투 보상을 지급하지 않는다", async () => {
     const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0 });
-    await server.completeStage("1-1", false);
+    const lost = await server.completeStage("1-1", false);
     expect([state.wallet.cheesecake, state.relicProgress.torika.bondXp]).toEqual([0, 0]);
-    await server.completeStage("1-1", true);
+    expect(lost.bondGains).toBeUndefined();
+    const won = await server.completeStage("1-1", true);
+    // 결과판의 유대 줄이 읽는 영수증 — 오른 몫만, 판 전·후 누적값으로 싣는다.
+    expect(won.bondGains).toEqual(["torika", "rexia", "dodi"].map((relicId) => ({ relicId, beforeXp: 0, afterXp: 12 })));
     expect(state.relicProgress.torika.bondXp).toBe(12);
     expect(state.relicProgress.rexia.bondXp).toBe(12);
     expect(state.relicProgress.dodi.bondXp).toBe(12);

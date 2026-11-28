@@ -715,7 +715,7 @@ export interface Fighter extends Combatant {
    * 기절 슬롯과 합치면 다른 원천의 기절이 겹칠 때 이 값이 뒤섞이거나, 기절만 걸린 적에게도
    * 폭발 피해가 나가게 된다.
    */
-  frozen: { remaining: number; total: number; maxHpPercentOnExpire: number } | null;
+  frozen: { remaining: number; total: number; maxHpPercentOnExpire: number; sourceId?: string } | null;
   /**
    * 지금 걸린 관측. **피해가 없는 표식**이라 겹이 스스로 아무것도 깎지 않는다 — 모르페의 일반
    * 공격이 적중할 때 이 겹 수만큼의 틱으로 켜진다(`fireObservationVolley`).
@@ -1779,6 +1779,25 @@ function packCreditId(fighter: Fighter): string {
   return contributionOwnerId(fighter.id, fighter.summonOwnerId ?? undefined);
 }
 
+/**
+ * 기여도 장부에 한 몫을 적는 유일한 길이다. 소환수(늑대·드론) ID로 온 몫은 지휘자 줄로 접는다 —
+ * 장부에는 편성원 줄만 있어, 소환수가 건 출혈·중독처럼 `sourceId`가 소환수인 몫은 예전에 조용히 버려졌다.
+ */
+function creditContribution(
+  state: SkirmishState,
+  fighterId: string,
+  category: Parameters<typeof addContribution>[2],
+  amount: number,
+  detail?: Parameters<typeof addContribution>[4],
+): void {
+  addContribution(state.contributions, contributionCreditIdOf(state, fighterId), category, amount, detail);
+}
+
+function contributionCreditIdOf(state: SkirmishState, fighterId: string): string {
+  const fighter = state.fighters.find(({ id }) => id === fighterId);
+  return fighter ? packCreditId(fighter) : fighterId;
+}
+
 /** 편성으로 선 전투원만. 승패·정산·프로필 줄은 귀속 소환수를 세지 않는다. */
 export function isPartyFighter(fighter: Fighter): boolean {
   return fighter.summonOwnerId === null;
@@ -1951,7 +1970,7 @@ function strikeTraitOnBasic(state: SkirmishState, attacker: Fighter, target: Fig
   const raw = Math.max(1, Math.round(Math.min(byHp, attacker.def.stats.atk * capPercent / 100)));
   const hpBefore = target.hp;
   const applied = applyDamage(target, resolveReceivedDamage(target, raw).applied, events, state);
-  addContribution(state.contributions, attacker.id, "attack", hpBefore - target.hp, "attackPower");
+  creditContribution(state, attacker.id, "attack", hpBefore - target.hp, "attackPower");
   scoreBossFixedDamage(state, target, hpBefore - target.hp);
   events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: "transfer", amount: applied, contributionAmount: hpBefore - target.hp, critical: false, animate: false, damageType: "true", mitigated: false });
   if (!isFighterAlive(target)) { clearDefeatedStatuses(target); events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id }); }
@@ -2183,14 +2202,14 @@ function chillIsMaxed(target: Fighter): boolean {
  * 기절 슬롯을 함께 쓰지 않는 이유는 **풀리는 순간의 고정 피해**(`maxHpPercentOnExpire`) 때문이다.
  * 합치면 다른 원천의 기절이 이 시간을 늘리거나 줄일 때 폭발 피해의 기준이 함께 흔들린다.
  */
-function applyFrozen(target: Fighter, seconds: number, maxHpPercentOnExpire: number, events: SkirmishEvent[], state: SkirmishState): void {
+function applyFrozen(target: Fighter, seconds: number, maxHpPercentOnExpire: number, events: SkirmishEvent[], state: SkirmishState, sourceId?: string): void {
   if (!isFighterAlive(target) || seconds <= 0) return;
   // 막 풀린 적은 잠깐 다시 얼지 않는다 — 둔화 겹은 소모하지 않고 그대로 남는다.
   if (target.frozen === null && target.frozenImmuneFor > EMERGENCY_RECOVERY.epsilon) return;
   seconds = controlDuration(target, seconds);
   if (seconds <= 0) return;
   const wasFrozen = target.frozen !== null;
-  target.frozen = { remaining: seconds, total: seconds, maxHpPercentOnExpire };
+  target.frozen = { remaining: seconds, total: seconds, maxHpPercentOnExpire, ...(sourceId ? { sourceId } : {}) };
   // 빙결로 바뀌는 순간 소모되는 자원이라 둔화 겹은 비운다.
   target.chill = null;
   if (!wasFrozen) {
@@ -2207,7 +2226,7 @@ function applyFrozen(target: Fighter, seconds: number, maxHpPercentOnExpire: num
  */
 function maybeFreezeAtMaxChill(attacker: Fighter, target: Fighter, events: SkirmishEvent[], state: SkirmishState): void {
   if (attacker.def.passive.freezeAtMaxChill !== true || !isFighterAlive(target) || !chillIsMaxed(target)) return;
-  applyFrozen(target, FROZEN.seconds, FROZEN.maxHpPercentOnExpire, events, state);
+  applyFrozen(target, FROZEN.seconds, FROZEN.maxHpPercentOnExpire, events, state, attacker.id);
 }
 
 /**
@@ -2326,6 +2345,8 @@ function applyConcussion(
   const amount = target.def.frontlineBoss?.kind === "ironclad" ? receivedDamage(target, raw) : raw;
   const dealt = applyDamage(target, amount, events, state);
   scoreBossFixedDamage(state, target, dealt);
+  // 뇌진탕은 공격 사건이 아니라 제 사건을 쓰므로 기여도도 여기서 직접 적는다 — 예전에는 빠져 파치의 딜이 덜 셌다.
+  if (sourceId) creditContribution(state, sourceId, "attack", dealt, "attackPower");
   events.push({ kind: "concussion", fighterId: target.id, amount: dealt, critical: struck, sourceId });
   // 울린 만큼을 때린 쪽이 되받아 두른다. 개체 이름이 아니라 패시브의 필드 하나만 읽으므로
   // 다른 개체가 같은 패시브를 갖게 되어도 분기가 늘지 않는다.
@@ -2483,6 +2504,7 @@ function applyButcher(
   const hpBefore = target.hp;
   applyDamage(target, resolution.applied, events, state);
   const dealt = hpBefore - target.hp;
+  creditContribution(state, attacker.id, "attack", dealt, "attackPower");
   events.push({ kind: "butcherBurst", attackerId: attacker.id, fighterId: target.id, amount: resolution.applied });
   if (isFighterAlive(target) && openedBreakthrough(attacker, "basic", (effects) => effects.basic)?.kind === "bleedSettle") {
     settleBleed(target, attacker, state, events);
@@ -2601,7 +2623,7 @@ function applyVandalism(
   const resolution = resolveReceivedDamage(target, raw);
   const hpBefore = target.hp;
   applyDamage(target, resolution.applied, events, state);
-  addContribution(state.contributions, attacker.id, "attack", hpBefore - target.hp, "abilityPower");
+  creditContribution(state, attacker.id, "attack", hpBefore - target.hp, "abilityPower");
   events.push({ kind: "vandalismBurst", attackerId: attacker.id, fighterId: target.id, amount: resolution.applied });
   if (!isFighterAlive(target)) {
     clearDefeatedStatuses(target);
@@ -2659,7 +2681,7 @@ function burstPressure(
     const resolution = resolveReceivedDamage(target, raw);
     const hpBefore = target.hp;
     applyDamage(target, resolution.applied, events, state);
-    addContribution(state.contributions, attacker.id, "attack", hpBefore - target.hp, "attackPower");
+    creditContribution(state, attacker.id, "attack", hpBefore - target.hp, "attackPower");
     events.push({ kind: "pressureBurst", attackerId: attacker.id, fighterId: target.id, amount: resolution.applied });
     if (!isFighterAlive(target)) {
       clearDefeatedStatuses(target);
@@ -2798,7 +2820,7 @@ function resolvePendingWake(target: Fighter, state: SkirmishState, events: Skirm
   const resolution = resolveReceivedDamage(target, raw);
   const hpBefore = target.hp;
   applyDamage(target, resolution.applied, events, state);
-  addContribution(state.contributions, sleeper.id, "attack", hpBefore - target.hp, "abilityPower");
+  creditContribution(state, sleeper.id, "attack", hpBefore - target.hp, "abilityPower");
   events.push({ kind: "sleepWake", attackerId: sleeper.id, fighterId: target.id, amount: resolution.applied });
   if (!isFighterAlive(target)) {
     clearDefeatedStatuses(target);
@@ -3776,6 +3798,8 @@ function grantShield(
   if (!(amount > 0)) return 0;
   target.shield.amount += amount;
   target.shield.providerId = providerId;
+  // 두른 막은 그 순간 두른 쪽의 회복 기여다(막이 막은 몫을 방어에 다시 세지 않는다 — `accumulateDamageContribution`).
+  creditContribution(state, providerId, "healing", amount, "shield");
   events?.push({ kind: "shieldGranted", fighterId: target.id, providerId, amount, remaining: target.shield.amount,
     effect: { tag: "shieldGain", intensity: restoreCueIntensity(amount, target.maxHp, weight) } });
   return amount;
@@ -4179,7 +4203,7 @@ function releaseShieldHit(attacker: Fighter, target: Fighter, state: SkirmishSta
   const resolution = resolveReceivedDamage(target, raw);
   const hpBefore = target.hp;
   applyDamage(target, resolution.applied, events, state);
-  addContribution(state.contributions, attacker.id, "attack", hpBefore - target.hp, "attackPower");
+  creditContribution(state, attacker.id, "attack", hpBefore - target.hp, "attackPower");
   if (!isFighterAlive(target)) { clearDefeatedStatuses(target); events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id }); }
 }
 
@@ -4368,6 +4392,7 @@ function tickFrontline(fighter: Fighter, dt: number, rng: () => number, state: S
     if (resolution.ignored) continue;
     const dealt = applyDamage(enemy, resolution.applied, events, state);
     scoreBossFixedDamage(state, enemy, dealt);
+    creditContribution(state, fighter.id, "attack", dealt, "attackPower");
     events.push({ kind: "attack", attackerId: fighter.id, targetId: enemy.id, skill: "transfer", animate: false, followUp: true,
       critical: false, damageType: "true", amount: resolution.applied, contributionAmount: dealt });
     if (!isFighterAlive(enemy)) continue;
@@ -4809,7 +4834,7 @@ function releaseHeatBurst(guardian: Fighter, state: SkirmishState, events: Skirm
       if (other.side === guardian.side || !isFighterAlive(other) || distance(guardian, other) > plan.radius) continue;
       const hpBefore = other.hp;
       applyDamage(other, amount, events, state);
-      addContribution(state.contributions, guardian.id, "attack", hpBefore - other.hp, "attackPower");
+      creditContribution(state, guardian.id, "attack", hpBefore - other.hp, "attackPower");
       events.push({ kind: "attack", attackerId: guardian.id, targetId: other.id, skill: "ultimate", amount,
         contributionAmount: amount, critical: false, animate: false, damageType: "true" });
       if (!isFighterAlive(other)) {
@@ -4881,7 +4906,7 @@ function tickBattleHeatAura(fighter: Fighter, dt: number, state: SkirmishState, 
     if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > trait.radius) continue;
     const hpBefore = other.hp;
     applyDamage(other, amount, events, state);
-    addContribution(state.contributions, fighter.id, "attack", hpBefore - other.hp, "attackPower");
+    creditContribution(state, fighter.id, "attack", hpBefore - other.hp, "attackPower");
     // 휘두르지 않고 서 있기만 하므로 시전 모션을 틀지 않는다(`animate: false`).
     events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "basic", amount,
       contributionAmount: amount, critical: false, animate: false, damageType: "true" });
@@ -5444,7 +5469,7 @@ function applyClosingService(
     feeDamage += lost;
     scoreBossFixedDamage(state, target, lost);
     drainFromDamage(state, attacker, lost, plan.feeLifeStealPercent, events);
-    addContribution(state.contributions, attacker.id, "attack", lost, "attackPower");
+    creditContribution(state, attacker.id, "attack", lost, "attackPower");
     events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: "transfer", amount,
       contributionAmount: 0, critical: false, animate: false, damageType: "true" });
   }
@@ -5931,7 +5956,7 @@ function tickPoison(fighter: Fighter, dt: number, state: SkirmishState, events: 
     const amount = receivedDamage(fighter, poison.amountPerSecond);
     const hpBefore = fighter.hp;
     applyDamage(fighter, amount, events, state);
-    if (poison.sourceId) addContribution(state.contributions, poison.sourceId, "attack", hpBefore - fighter.hp, "abilityPower");
+    if (poison.sourceId) creditContribution(state, poison.sourceId, "attack", hpBefore - fighter.hp, "abilityPower");
     events.push({ kind: "poison", fighterId: fighter.id, amount, started: false });
     tryTriggerEmergencyRecovery(fighter, state); tryTriggerLowHpVanish(fighter, state);
     state.log.push(`${fighter.def.name} 중독 ${amount}`);
@@ -5961,7 +5986,7 @@ function liquidatePoison(target: Fighter, state: SkirmishState, events: Skirmish
   const amount = receivedDamage(target, poison.amountPerSecond * pendingTicks);
   const hpBefore = target.hp;
   applyDamage(target, amount, events, state);
-  if (poison.sourceId) addContribution(state.contributions, poison.sourceId, "attack", hpBefore - target.hp, "abilityPower");
+  if (poison.sourceId) creditContribution(state, poison.sourceId, "attack", hpBefore - target.hp, "abilityPower");
   events.push({ kind: "poisonLiquidated", fighterId: target.id, amount, ticks: pendingTicks });
   tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
   state.log.push(`${target.def.name} 중독 청산 ${amount}`);
@@ -5982,7 +6007,7 @@ function pulsePoison(target: Fighter, state: SkirmishState, events: SkirmishEven
   const amount = receivedDamage(target, poison.amountPerSecond);
   const hpBefore = target.hp;
   applyDamage(target, amount, events, state);
-  if (poison.sourceId) addContribution(state.contributions, poison.sourceId, "attack", hpBefore - target.hp, "abilityPower");
+  if (poison.sourceId) creditContribution(state, poison.sourceId, "attack", hpBefore - target.hp, "abilityPower");
   events.push({ kind: "poison", fighterId: target.id, amount, started: false });
   tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
   if (!isFighterAlive(target)) {
@@ -6007,7 +6032,7 @@ function settleBleed(target: Fighter, attacker: Fighter, state: SkirmishState, e
   const hpBefore = target.hp;
   applyDamage(target, amount, events, state);
   scoreBossFixedDamage(state, target, amount);
-  addContribution(state.contributions, attacker.id, "attack", hpBefore - target.hp, "attackPower");
+  creditContribution(state, attacker.id, "attack", hpBefore - target.hp, "attackPower");
   events.push({ kind: "bleed", fighterId: target.id, amount, started: false });
   tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
   if (!isFighterAlive(target)) {
@@ -6122,7 +6147,7 @@ function spreadCurseTransfer(
     const resolution = resolveReceivedDamage(secondary, requested);
     const hpBefore = secondary.hp;
     const applied = applyDamage(secondary, resolution.applied, events, state);
-    addContribution(state.contributions, attacker.id, "attack", hpBefore - secondary.hp, "attackPower");
+    creditContribution(state, attacker.id, "attack", hpBefore - secondary.hp, "attackPower");
     // 전이는 확정된 피해를 그대로 옮기므로 방어·저항·상성을 다시 거치지 않는 고정 피해다.
     events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: "transfer", amount: applied,
       contributionAmount: hpBefore - secondary.hp, critical: false, animate: false,
@@ -6876,7 +6901,7 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
       const percent = Math.min(payload.maxHpPercentOnExpire, Math.max(0, 10 - hitTarget.augmentFixedDamagePercent));
       if (percent <= 0) continue;
       hitTarget.augmentFixedDamagePercent += percent;
-      applyFrozen(hitTarget, Math.min(EXPEDITION_CC_POLICY.maxSeconds, payload.seconds * owner.statusPotencyMultiplier), percent * (hitTarget.immortal ? 0.25 : 1), events, state);
+      applyFrozen(hitTarget, Math.min(EXPEDITION_CC_POLICY.maxSeconds, payload.seconds * owner.statusPotencyMultiplier), percent * (hitTarget.immortal ? 0.25 : 1), events, state, owner.id);
       reserveAugmentRecovery(state, hitTarget, true);
       continue;
     }
@@ -6929,7 +6954,7 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
       const skill: Skill = { ...owner.def.basic, damageType: payload.damageType, power: payload.percent };
       const raw = Math.max(1, Math.round(computeDamage({ ...owner, def: offensiveDefinition(owner) }, defensiveDefinition(target, state), { ...skill, kind: "basic", isCritical: false })));
       const resolution = resolveReceivedDamage(target, raw); const hpBefore = target.hp; const applied = applyDamage(target, resolution.applied, events, state);
-      addContribution(state.contributions, owner.id, "attack", hpBefore - target.hp, payload.damageType === "magical" ? "abilityPower" : "attackPower");
+      creditContribution(state, owner.id, "attack", hpBefore - target.hp, payload.damageType === "magical" ? "abilityPower" : "attackPower");
       events.push({ kind: "attack", attackerId: owner.id, targetId: target.id, skill: "transfer", amount: applied, contributionAmount: hpBefore - target.hp, critical: false, animate: false, damageType: payload.damageType, mitigated: resolution.reduced < resolution.raw });
       if (!isFighterAlive(target)) { clearDefeatedStatuses(target); events.push({ kind: "death", fighterId: target.id, sourceId: owner.id }); }
     } else if (payload.kind === "status") {
@@ -7021,7 +7046,7 @@ function applyHealing(state: SkirmishState, target: Fighter, requested: number, 
     * hordeRestoreMultiplier(state, target.side));
   const actual = target.hp - before;
   // 취소·과잉 회복은 actual이 0이므로 누적되지 않으며, 흡혈·자가 재생은 기본 casterId가 자신이다.
-  addContribution(state.contributions, casterId, "healing", actual);
+  creditContribution(state, casterId, "healing", actual);
   return actual;
 }
 
@@ -8505,7 +8530,7 @@ function reflectWall(owner: Fighter, absorbed: number, state: SkirmishState, eve
   const hpBefore = victim.hp;
   const applied = applyDamage(victim, resolution.applied, events, state);
   owner.bt.reflectBusy = false;
-  addContribution(state.contributions, owner.id, "attack", hpBefore - victim.hp, "abilityPower");
+  creditContribution(state, owner.id, "attack", hpBefore - victim.hp, "abilityPower");
   events.push({ kind: "attack", attackerId: owner.id, targetId: victim.id, skill: "transfer", amount: applied,
     contributionAmount: hpBefore - victim.hp, critical: false, animate: false, damageType: "magical", mitigated: resolution.reduced < resolution.raw });
   if (!isFighterAlive(victim)) {
@@ -8654,7 +8679,7 @@ function releaseShadeRetort(owner: Fighter, victim: Fighter, state: SkirmishStat
   const resolution = resolveReceivedDamage(victim, stored);
   const hpBefore = victim.hp;
   applyDamage(victim, resolution.applied, events, state);
-  addContribution(state.contributions, owner.id, "attack", hpBefore - victim.hp, "attackPower");
+  creditContribution(state, owner.id, "attack", hpBefore - victim.hp, "attackPower");
   events.push({ kind: "attack", attackerId: owner.id, targetId: victim.id, skill: "basic", amount: resolution.applied,
     contributionAmount: hpBefore - victim.hp, critical: false, animate: false, damageType: "true", mitigated: resolution.reduced < resolution.raw });
   if (!isFighterAlive(victim)) {
@@ -8724,6 +8749,8 @@ function shareWithBulwark(target: Fighter, amount: number, events: SkirmishEvent
   if (share < 1) return 0;
   const resolution = resolveReceivedDamage(guardian, share);
   const dealt = applyDamage(guardian, resolution.applied, events, state);
+  // 대신 받은 몫은 맞은 아군의 체력에서 빠져나간 피해다 — 보호막처럼 막아 준 것이라 그 칸에 센다.
+  creditContribution(state, guardian.id, "defense", Math.min(share, Math.max(0, target.hp + target.shield.amount)), "shield");
   events.push({ kind: "damageShared", fighterId: guardian.id, fromFighterId: target.id, amount: dealt });
   guardian.bt.bulwarkTaken += share;
   storeShadeRetort(guardian, share);
@@ -8888,9 +8915,10 @@ function recordDamageContribution(
   const attackDetail = scalingStat === "ap" || (scalingStat === undefined && damageType === "magical") ? "abilityPower" : "attackPower";
   const shieldAbsorbed = Math.max(0, shieldBefore - target.shield.amount);
   accumulateDamageContribution(state.contributions, {
-    attackerId, targetId: target.id, attackDetail,
+    attackerId: contributionCreditIdOf(state, attackerId), targetId: contributionCreditIdOf(state, target.id), attackDetail,
     defenseDetail: damageType === "physical" ? "armor" : "resistance",
-    preMitigation, postMitigation: resolution.applied, hpBefore, shieldBefore, hpDamage, shieldAbsorbed, shieldProviderId,
+    preMitigation, postMitigation: resolution.applied, hpBefore, shieldBefore, hpDamage, shieldAbsorbed,
+    shieldProviderId: shieldProviderId ? contributionCreditIdOf(state, shieldProviderId) : shieldProviderId,
   });
   /*
    * **돌려주는 것은 경감 전 기여값이다.**
@@ -8932,7 +8960,7 @@ function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: S
     applyDamage(fighter, amount, events, state);
     scoreBossFixedDamage(state, fighter, amount);
     // 출혈은 건 공격자가 명확할 때만 고정 피해의 실제 HP 손실을 공격 기여도로 인정한다.
-    if (bleed.sourceId) addContribution(state.contributions, bleed.sourceId, "attack", hpBefore - fighter.hp, "attackPower");
+    if (bleed.sourceId) creditContribution(state, bleed.sourceId, "attack", hpBefore - fighter.hp, "attackPower");
     events.push({ kind: "bleed", fighterId: fighter.id, amount, started: false });
     appetiteBleedHeal(state, bleed.sourceId, hpBefore - fighter.hp, events);
     // 출혈도 직접 공격과 동일한 HP 변경 경계를 통과해야 패시브 발동 시점이 일관된다.
@@ -8970,7 +8998,7 @@ function tickFrostbite(fighter: Fighter, dt: number, state: SkirmishState, event
     const hpBefore = fighter.hp;
     applyDamage(fighter, amount, events, state);
     scoreBossFixedDamage(state, fighter, amount);
-    if (bite.sourceId) addContribution(state.contributions, bite.sourceId, "attack", hpBefore - fighter.hp, "attackPower");
+    if (bite.sourceId) creditContribution(state, bite.sourceId, "attack", hpBefore - fighter.hp, "attackPower");
     events.push({ kind: "bleed", fighterId: fighter.id, amount, started: false });
     tryTriggerEmergencyRecovery(fighter, state); tryTriggerLowHpVanish(fighter, state);
     state.log.push(`${fighter.def.name} 동상 ${amount}`);
@@ -9665,7 +9693,7 @@ function strike(
       const transferResolution = resolveReceivedDamage(secondary, requested);
       const secondaryHpBefore = secondary.hp;
       const transferApplied = applyDamage(secondary, transferResolution.applied, events, state);
-      addContribution(state.contributions, attacker.id, "attack", secondaryHpBefore - secondary.hp, "attackPower");
+      creditContribution(state, attacker.id, "attack", secondaryHpBefore - secondary.hp, "attackPower");
       // 전이는 확정된 피해량을 그대로 옮기므로 방어·저항·상성을 다시 거치지 않는 고정 피해다.
       events.push({ kind: "attack", attackerId: attacker.id, targetId: secondary.id, skill: "transfer", amount: transferApplied,
         contributionAmount: secondaryHpBefore - secondary.hp, critical: false, animate: false,
@@ -11052,7 +11080,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
         const hpBefore = target.hp;
         const dealt = applyDamage(target, amount, events, state);
         // 폰토스 폭주는 시전자 귀속이 명확한 고정 피해이므로 실제 HP 손실만 공격 기여도에 포함한다.
-        addContribution(state.contributions, pontus.id, "attack", hpBefore - target.hp, "abilityPower");
+        creditContribution(state, pontus.id, "attack", hpBefore - target.hp, "abilityPower");
         state.log.push(`${pontus.def.name} 폭주 → ${target.def.name} ${dealt}`);
         if (!isFighterAlive(target)) {
           clearDefeatedStatuses(target);
@@ -11144,9 +11172,11 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       const remaining = fighter.frozen.remaining - dt;
       if (remaining <= EMERGENCY_RECOVERY.epsilon) {
         const amount = percentHpDamage(fighter, fighter.frozen.maxHpPercentOnExpire);
+        const frozenBy = fighter.frozen.sourceId;
         fighter.frozen = null;
         fighter.frozenImmuneFor = FROZEN.immunitySeconds;
         const dealt = applyDamage(fighter, amount, events, state);
+        if (frozenBy) creditContribution(state, frozenBy, "attack", dealt, "abilityPower");
         events.push({ kind: "concussion", fighterId: fighter.id, amount: dealt, critical: false });
         if (!isFighterAlive(fighter)) { clearDefeatedStatuses(fighter); events.push({ kind: "death", fighterId: fighter.id }); }
         shatterIce(fighter, state, events);

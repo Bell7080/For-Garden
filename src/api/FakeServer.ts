@@ -53,7 +53,7 @@ import { bountyRunCost, isBountyTierCleared, isBountyTierUnlocked, markBountyTie
 import { BOUNTY, getBountyTier, type BountyTierDef } from "../data/bounty";
 import { BREAKTHROUGH_CAP, breakthroughFragmentSpend, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade, activeBreakthroughOf } from "../core/relicProgression";
 import { canResetRelic, relicResetRefund, resetRelicProgress } from "../core/relicReset";
-import { BOND_XP_REWARD, compactBondAwakening, grantBondXp, grantDailyLobbyBondXp, isValidBondAwakening, storyVictoryBondXp, type BondAwakening } from "../core/bond";
+import { BOND_XP_REWARD, compactBondAwakening, grantBondXp, grantDailyLobbyBondXp, isValidBondAwakening, storyVictoryBondXp, type BondAwakening, type BondGainReceipt } from "../core/bond";
 import { MISSIONS, RESEARCH_REWARD_STAGES, maxResearchPoints, mergeMissionRewards, type MissionReward, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, LIFETIME_COUNT_CAP, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
 import { CHAPTERS, DAILY_RESTORATION, getStage, getStageEnemies, STAGES, SUB_STORY_GEM_REWARDS } from "../data/stages";
 import { PROGRESS_PASSES, findProgressPass, type ProgressPassDefinition } from "../data/progressPasses";
@@ -3294,6 +3294,11 @@ export class FakeServer implements GameApi {
     const stageBondXp = !owningEvent && stage.ancientFloor === undefined ? storyVictoryBondXp(stage.chapter ?? 1) : BOND_XP_REWARD.partyVictory;
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id,
       victory && (stage.ancientFloor === undefined || firstClear) && this.state.party.includes(id) ? grantBondXp(progress, stageBondXp).progress : progress]));
+    // 결과판이 SD 아래에서 유대 줄을 차오르게 그리도록 실제로 오른 몫만 영수증으로 돌려준다.
+    const bondGains: BondGainReceipt[] = this.state.party.flatMap((relicId) => {
+      const beforeXp = this.state.relicProgress[relicId]?.bondXp; const afterXp = nextProgress[relicId]?.bondXp;
+      return beforeXp !== undefined && afterXp !== undefined && afterXp > beforeXp ? [{ relicId, beforeXp, afterXp }] : [];
+    });
     const nextMissions = stage.ancientFloor !== undefined && !firstClear ? base.missions : applyMissionEvent(base.missions, { type: "battle_completed", victory }, this.now());
     // 튜토리얼은 지정 관문 승리와 같은 저장에서만 진행한다. 멈춘 기록은 재클리어로 복구한다.
     const currentTutorial = normalizeTutorialState(this.state.tutorial);
@@ -3314,6 +3319,7 @@ export class FakeServer implements GameApi {
       ...this.snapshot(), stageId, firstClear, cheesecakeEarned: cheesecakeGranted, firstClearRewards,
       unlockedStoryDifficulty: newlyUnlockedStoryDifficulty(stageId, firstClear),
       staminaSpent, staminaRefunded: cost - staminaSpent, ...(spent ? { playerExp: spent.playerExp } : {}),
+      ...(bondGains.length > 0 ? { bondGains } : {}),
     };
   }
 

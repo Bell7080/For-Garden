@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  accumulateDamageContribution, addContribution, battleContributionMvp, contributionSnapshot, contributionValue, createBattleContributionResult, createBattleContributions,
+  accumulateDamageContribution, addContribution, battleContributionMvp, battleContributionMvpWeights, contributionSnapshot, contributionValue, createBattleContributionResult, createBattleContributions,
 } from "../../src/core/battleContribution";
 
 /** 서버 재생 입력과 같은 작은 피해 사건을 만들어 정책별 기대값만 드러낸다. */
@@ -33,12 +33,24 @@ describe("전투 기여도 순수 누적 정책", () => {
     expect(values["enemy-0"].defense).toEqual({ armor: 30, resistance: 9, shield: 0 });
   });
 
-  it("보호막 흡수는 피해 대상이 아니라 제공자에게, 자가 보호막은 본인에게 귀속한다", () => {
+  it("보호막이 막은 몫은 방어에 다시 세지 않는다 — 막은 두른 순간 회복 분류가 셌다", () => {
     const values = createBattleContributions(["player-0", "enemy-0", "enemy-1"]);
     accumulateDamageContribution(values, damage({ shieldBefore: 30, hpDamage: 40, shieldAbsorbed: 30, shieldProviderId: "enemy-1" }));
-    accumulateDamageContribution(values, damage({ shieldBefore: 10, hpDamage: 60, shieldAbsorbed: 10, shieldProviderId: "enemy-0" }));
-    expect(values["enemy-1"].defense.shield).toBe(30);
-    expect(values["enemy-0"].defense.shield).toBe(10);
+    expect(values["enemy-1"].defense.shield).toBe(0);
+    expect(values["enemy-1"].shieldGranted).toBe(0);
+  });
+
+  it("두른 보호막은 회복 분류에 함께 들고 회복과 따로 적힌다", () => {
+    const values = createBattleContributions(["player-0", "player-1"]);
+    addContribution(values, "player-0", "healing", 40);
+    addContribution(values, "player-0", "healing", 60, "shield");
+    addContribution(values, "player-1", "healing", 30, "shield");
+    expect(values["player-0"]).toMatchObject({ healing: 40, shieldGranted: 60 });
+    const rows = contributionSnapshot(values, [
+      { id: "player-0", formationOrder: 0, name: "A", portraitId: "torika" },
+      { id: "player-1", formationOrder: 1, name: "B", portraitId: "dodi" },
+    ], "healing");
+    expect(rows.map((row) => row.total)).toEqual([100, 30]);
   });
 
   it("자가·아군 회복은 실제 증가량만 시전자에게 기록하고 과잉·차단 0은 제외한다", () => {
@@ -87,19 +99,33 @@ describe("전투 기여도 순수 누적 정책", () => {
     expect(result.rows.healing[0].total).toBe(300);
   });
 
-  it("MVP는 원시 수치가 아니라 분류별 몫의 합으로 고른다 — 회복만 도맡아도 딜러와 경쟁한다", () => {
+  it("MVP의 회복·방어 몫은 그 분류의 크기만큼만 무겁다 — 흡혈 50이 피해 1만과 동률이 되지 않는다", () => {
     const values = createBattleContributions(["dealer", "healer", "idle"]);
-    // 딜러는 공격을 전부 몰아 받아 규모가 훨씬 크지만, 힐러는 회복을 전부 도맡는다.
-    addContribution(values, "dealer", "attack", 10_000, "attackPower");
     addContribution(values, "healer", "healing", 50);
+    addContribution(values, "dealer", "attack", 10_000, "attackPower");
     const fighters = [
-      { id: "dealer", formationOrder: 0, name: "딜러", portraitId: "dealer" },
-      { id: "healer", formationOrder: 1, name: "힐러", portraitId: "healer" },
+      { id: "healer", formationOrder: 0, name: "힐러", portraitId: "healer" },
+      { id: "dealer", formationOrder: 1, name: "딜러", portraitId: "dealer" },
       { id: "idle", formationOrder: 2, name: "대기", portraitId: "idle" },
     ];
     const result = createBattleContributionResult(values, fighters, "player");
-    // 공격·회복 몫이 각각 1.0으로 동률이라 더 앞선 편성 순서(딜러)가 이긴다.
+    expect(battleContributionMvpWeights(result).healing).toBeCloseTo(50 / 1_500);
     expect(battleContributionMvp(result)).toBe("dealer");
+  });
+
+  it("회복이 팀 피해의 15%에 닿으면 회복을 도맡은 힐러가 피해를 나눠 낸 딜러들을 이긴다", () => {
+    const values = createBattleContributions(["a", "b", "healer"]);
+    addContribution(values, "a", "attack", 6_000, "attackPower");
+    addContribution(values, "b", "attack", 4_000, "attackPower");
+    addContribution(values, "healer", "healing", 3_000);
+    const fighters = [
+      { id: "a", formationOrder: 0, name: "A", portraitId: "a" },
+      { id: "b", formationOrder: 1, name: "B", portraitId: "b" },
+      { id: "healer", formationOrder: 2, name: "힐러", portraitId: "h" },
+    ];
+    const result = createBattleContributionResult(values, fighters, "player");
+    expect(battleContributionMvpWeights(result)).toEqual({ attack: 1, defense: 0, healing: 1 });
+    expect(battleContributionMvp(result)).toBe("healer");
   });
 
   it("MVP 동률에서는 편성 순서가 앞선 쪽을 고른다", () => {

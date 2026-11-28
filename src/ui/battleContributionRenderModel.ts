@@ -31,8 +31,16 @@ export function contributionCategoryColor(category: ContributionCategory): numbe
   return category === "attack" ? COLOR.sortie : category === "defense" ? COLOR.contributionDefense : COLOR.hpFill;
 }
 
-/** Phaser 객체와 무관한 한 행의 표시값이라 두 UI가 막대 산식과 축약 수치를 복제하지 않는다. */
-export interface ContributionRenderRow { source: BattleContributionRow; value: string; fill: number }
+/**
+ * Phaser 객체와 무관한 한 행의 표시값이라 두 UI가 막대 산식과 축약 수치를 복제하지 않는다.
+ *
+ * `fill`은 막대 전체 길이, `split`은 그중 앞(분류 색) 몫이 끝나는 자리다. 회복 분류만 둘이 갈린다 —
+ * 초록 회복 뒤 `split`~`fill` 구간이 두른 보호막(`COLOR.shieldFill`)이다. 다른 분류는 `split === fill`.
+ */
+export interface ContributionRenderRow { source: BattleContributionRow; value: string; fill: number; split: number }
+
+/** 회복 막대 뒤에 이어 붙는 보호막 칸의 색 — 머리 위 바의 막 칸과 같은 푸른빛이다. */
+export const CONTRIBUTION_SHIELD_COLOR = COLOR.shieldFill;
 
 /** 분류별 색과 최고 행 100% 규칙을 한 경계에서 계산한다. */
 export function contributionRenderModel(category: ContributionCategory, rows: readonly BattleContributionRow[]): {
@@ -40,5 +48,13 @@ export function contributionRenderModel(category: ContributionCategory, rows: re
 } {
   const max = Math.max(0, ...rows.map((row) => row.total));
   const color = contributionCategoryColor(category);
-  return { color, rows: rows.map((source) => ({ source, value: formatCurrency(source.total), fill: max > 0 ? source.total / max : 0 })) };
+  return {
+    color,
+    rows: rows.map((source) => {
+      const fill = max > 0 ? source.total / max : 0;
+      const shield = category === "healing" ? (source.shieldGranted ?? 0) : 0;
+      const split = max > 0 ? Math.max(0, source.total - shield) / max : 0;
+      return { source, value: formatCurrency(source.total), fill, split };
+    }),
+  };
 }

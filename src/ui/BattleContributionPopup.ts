@@ -3,7 +3,7 @@ import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
 import type { BattleContributionResult, ContributionCategory } from "../core/battleContribution";
 import { getRelic } from "../data/relics";
-import { contributionCategoryColor, contributionCategoryLabel, contributionRenderModel, CONTRIBUTION_CATEGORIES, CONTRIBUTION_ICON, CONTRIBUTION_TEXT } from "./battleContributionRenderModel";
+import { contributionCategoryColor, contributionCategoryLabel, contributionRenderModel, CONTRIBUTION_CATEGORIES, CONTRIBUTION_ICON, CONTRIBUTION_TEXT, CONTRIBUTION_SHIELD_COLOR } from "./battleContributionRenderModel";
 import { addCategoryTab } from "./CategoryTab";
 import { addBackButton } from "./IconButton";
 import { FaceFrame } from "./FaceFrame";
@@ -108,7 +108,12 @@ export class BattleContributionPopup {
           content.add(this.scene.add.text(CONTRIBUTION_ROW.nameX, y, name, textStyle({ role: "body", size: 28, color: COLOR.ink })).setOrigin(0, 0.5).setFixedSize(440, 48));
           content.add(this.scene.add.text(360, y, row.value, textStyle({ role: "display", size: 28, color: COLOR.inkDim })).setOrigin(1, 0.5));
           const bar = new HoloBar(this.scene, CONTRIBUTION_ROW.barX, y + CONTRIBUTION_ROW.barY, CONTRIBUTION_ROW.barWidth, CONTRIBUTION_ROW.barHeight, { color: rows.color, trackAlpha: 0.48 });
-          bar.setValue(row.fill, rows.color); bar.addTo(content);
+          bar.setValue(row.split, rows.color); bar.addTo(content);
+          // 회복 분류는 초록 회복 뒤에 두른 보호막이 푸른 칸으로 이어 붙는다(`split`~`fill`).
+          if (row.fill > row.split) {
+            const shield = new HoloBar(this.scene, CONTRIBUTION_ROW.barX, y + CONTRIBUTION_ROW.barY, CONTRIBUTION_ROW.barWidth, CONTRIBUTION_ROW.barHeight, { color: CONTRIBUTION_SHIELD_COLOR, trackAlpha: 0 });
+            shield.setRange(row.split, row.fill); shield.addTo(content);
+          }
         });
       };
       paintTabs();

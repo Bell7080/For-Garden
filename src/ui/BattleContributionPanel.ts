@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { BattleContributionRow, ContributionCategory } from "../core/battleContribution";
-import { CONTRIBUTION_CATEGORIES, CONTRIBUTION_ICON, CONTRIBUTION_TEXT, contributionCategoryColor, contributionRenderModel } from "./battleContributionRenderModel";
+import { CONTRIBUTION_CATEGORIES, CONTRIBUTION_ICON, CONTRIBUTION_TEXT, contributionCategoryColor, contributionRenderModel, CONTRIBUTION_SHIELD_COLOR } from "./battleContributionRenderModel";
 import { addCategoryTab } from "./CategoryTab";
 import { BATTLE_CONTRIBUTION_LAYOUT as L, battleContributionBounds, contributionCellX, contributionCellY, CONTRIBUTION_TOGGLE } from "./battleContributionLayout";
 import { chipPoints, drawLayer, HoloBar } from "./holo";
@@ -30,6 +30,8 @@ interface RowView {
   name: Phaser.GameObjects.Text;
   value: Phaser.GameObjects.Text;
   bar: HoloBar;
+  /** 회복 분류에서만 차는 보호막 칸. 홈 없이 회복 막대 끝에 이어 붙는다. */
+  shieldBar: HoloBar;
   lastValue: number;
   /** 지금 이 줄이 앉아 있는 순위 칸. 같은 칸이면 tween을 다시 걸지 않는다. */
   slot: number;
@@ -85,9 +87,11 @@ export class BattleContributionPanel {
       const name = this.scene.add.text(L.text.x, L.text.nameY, "", textStyle({ role: "body", size: 21, color: COLOR.ink })).setOrigin(0, 0.5);
       const value = this.scene.add.text(L.text.x, L.text.valueY, "0", textStyle({ role: "display", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5);
       const bar = new HoloBar(this.scene, L.rows.width / 2, L.bar.y, L.bar.width, L.bar.height, { color: COLOR.sortie, trackAlpha: 0.48 }).addTo(container);
+      const shieldBar = new HoloBar(this.scene, L.rows.width / 2, L.bar.y, L.bar.width, L.bar.height, { color: CONTRIBUTION_SHIELD_COLOR, trackAlpha: 0 }).addTo(container);
+      shieldBar.setRange(0, 0);
       container.add([name, value]);
       this.panel.add(container);
-      this.rows.push({ container, name, value, bar, lastValue: Number.NaN, slot: index });
+      this.rows.push({ container, name, value, bar, shieldBar, lastValue: Number.NaN, slot: index });
     }
   }
 
@@ -140,7 +144,8 @@ export class BattleContributionPanel {
       this.moveRow(view, slot);
       this.paintFace(view, row.portraitId);
       if (view.lastValue === row.total) continue;
-      view.lastValue = row.total; view.name.setText(row.name); view.value.setText(rendered.value); view.bar.setValue(rendered.fill, model.color);
+      view.lastValue = row.total; view.name.setText(row.name); view.value.setText(rendered.value); view.bar.setValue(rendered.split, model.color);
+      view.shieldBar.setRange(rendered.split, rendered.fill);
     }
     // 남은 줄은 비운다. 전투원 표식까지 지워야 다음 갱신에서 옛 주인을 다시 붙잡지 않는다.
     for (const view of this.rows) {

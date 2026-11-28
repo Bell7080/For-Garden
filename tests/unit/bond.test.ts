@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOND_LEVEL_MAX, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_MAX, bondAwakeningPoints, bondStatBonus, bondStatPercent, bondLevelForXp, bondXpToNext, grantBondXp, grantDailyLobbyBondXp, isValidBondAwakening, storyVictoryBondXp } from "../../src/core/bond";
+import { BOND_LEVEL_MAX, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_MAX, bondAwakeningPoints, bondStatBonus, bondStatPercent, bondLevelForXp, bondXpToNext, grantBondXp, grantDailyLobbyBondXp, isValidBondAwakening, storyVictoryBondXp, bondGaugeSegments } from "../../src/core/bond";
 import { createInitialRelicProgress } from "../../src/state/session";
 import { calculateFinalStats } from "../../src/core/relicProgression";
 
@@ -21,6 +21,16 @@ describe("bond rules", () => {
   it("큰 보상도 기록 끝을 넘지 않는다", () => {
     const result = grantBondXp(createInitialRelicProgress(), Number.MAX_SAFE_INTEGER);
     expect(result.progress).toMatchObject({ bondLevel: BOND_LEVEL_MAX, bondXp: BOND_XP_MAX });
+  });
+  it("결과판 유대 줄은 레벨이 오르면 끝까지 찼다가 다음 레벨의 빈 줄에서 다시 찬다", () => {
+    // 0 → 12: 1레벨 줄(20)의 0.6까지.
+    expect(bondGaugeSegments(0, 12)).toEqual([{ level: 0, from: 0, to: 0.6 }]);
+    // 15 → 27: 0레벨 줄이 가득 차고(20), 1레벨 줄(30)의 7/30까지.
+    const up = bondGaugeSegments(15, 27);
+    expect(up.map(({ level }) => level)).toEqual([0, 1]);
+    expect(up[0]).toMatchObject({ from: 0.75, to: 1 });
+    expect(up[1].from).toBe(0);
+    expect(up[1].to).toBeCloseTo(7 / 30);
   });
   it("스토리 승리 유대는 장마다 1씩 더 준다", () => {
     expect(storyVictoryBondXp(1)).toBe(12);

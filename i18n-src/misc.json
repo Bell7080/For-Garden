@@ -3445,5 +3445,225 @@
   "title.login.soon": ["准备中", "เร็วๆ นี้", "Sắp ra mắt", "Segera hadir", "Próximamente", "Em breve", "Bald verfügbar", "Скоро"],
   "title.login.soonTitle": ["正在准备中！", "กำลังเตรียมอยู่นะ!", "Đang chuẩn bị nha!", "Masih disiapkan!", "¡Muy pronto!", "Em breve!", "Kommt bald!", "Скоро будет!"],
   "title.login.soonBody": ["{provider}登录还在准备中！\n现在请以访客身份开始，或创建无需验证的ID账号。", "การเข้าสู่ระบบด้วย {provider} ยังไม่พร้อมนะ!\nตอนนี้เริ่มแบบผู้เยี่ยมชม หรือสร้างบัญชี ID ที่ไม่ต้องยืนยันตัวตนก่อนนะ", "Đăng nhập bằng {provider} vẫn đang chuẩn bị!\nBây giờ hãy bắt đầu với tư cách khách hoặc tạo tài khoản ID không cần xác thực nhé.", "Masuk dengan {provider} belum siap!\nUntuk sekarang, mulai sebagai tamu atau buat akun ID tanpa verifikasi ya.", "¡El inicio de sesión con {provider} aún no está listo!\nPor ahora, empieza como invitado o crea una cuenta de ID sin verificación.", "O login com {provider} ainda não está pronto!\nPor enquanto, comece como visitante ou crie uma conta de ID sem verificação.", "Die Anmeldung mit {provider} ist noch nicht fertig!\nStarte vorerst als Gast oder erstelle ein ID-Konto ohne Verifizierung.", "Вход через {provider} ещё готовится!\nПока что начните как гость или создайте ID-аккаунт без подтверждения."],
-  "title.login.provider.email": ["邮箱", "อีเมล", "Email", "Email", "Correo", "E-mail", "E-Mail", "Почта"]
+  "title.login.provider.email": ["邮箱", "อีเมล", "Email", "Email", "Correo", "E-mail", "E-Mail", "Почта"],
+"mail.kind.duelTier": [
+"决斗场段位奖励",
+"รางวัลระดับสนามดวล",
+"Thưởng bậc Đấu trường",
+"Hadiah Tier Arena Duel",
+"Recompensa de liga de la Arena de duelos",
+"Recompensa de liga da Arena de Duelos",
+"Duellarena-Ligabelohnung",
+"Награда за лигу арены дуэлей"
+],
+"mail.kind.duelRank": [
+"决斗场排名奖励",
+"รางวัลอันดับสนามดวล",
+"Thưởng xếp hạng Đấu trường",
+"Hadiah Peringkat Arena Duel",
+"Recompensa de clasificación de la Arena de duelos",
+"Recompensa de ranking da Arena de Duelos",
+"Duellarena-Ranglistenbelohnung",
+"Награда за место на арене дуэлей"
+],
+"mail.kind.arenaTier": [
+"竞技场段位奖励",
+"รางวัลระดับอารีนา",
+"Thưởng bậc Arena",
+"Hadiah Tier Arena",
+"Recompensa de liga de la Arena",
+"Recompensa de liga da Arena",
+"Arena-Ligabelohnung",
+"Награда за лигу арены"
+],
+"mail.kind.arenaRank": [
+"竞技场排名奖励",
+"รางวัลอันดับอารีนา",
+"Thưởng xếp hạng Arena",
+"Hadiah Peringkat Arena",
+"Recompensa de clasificación de la Arena",
+"Recompensa de ranking da Arena",
+"Arena-Ranglistenbelohnung",
+"Награда за место на арене"
+],
+"mail.kind.expeditionRank": [
+"远征排名奖励",
+"รางวัลอันดับออกสำรวจ",
+"Thưởng xếp hạng Viễn chinh",
+"Hadiah Peringkat Ekspedisi",
+"Recompensa de clasificación de Expedición",
+"Recompensa de ranking da Expedição",
+"Expeditions-Ranglistenbelohnung",
+"Награда за место в экспедиции"
+],
+"mail.kind.ancientRank": [
+"远古地层排名奖励",
+"รางวัลอันดับชั้นดินโบราณ",
+"Thưởng xếp hạng Địa tầng cổ đại",
+"Hadiah Peringkat Strata Kuno",
+"Recompensa de clasificación de Estratos antiguos",
+"Recompensa de ranking dos Estratos antigos",
+"Ranglistenbelohnung der Uralten Schichten",
+"Награда за место в древних пластах"
+],
+"mail.kind.guildRank": [
+"公会排名奖励",
+"รางวัลอันดับกิลด์",
+"Thưởng xếp hạng Bang hội",
+"Hadiah Peringkat Guild",
+"Recompensa de clasificación del Gremio",
+"Recompensa de ranking da Guilda",
+"Gilden-Ranglistenbelohnung",
+"Награда за место гильдии"
+],
+"mail.kindBody.duelTier": [
+"这是本周结算时所在决斗场段位的奖励。\n段位会在每月赛季结束时重置。",
+"นี่คือรางวัลตามระดับสนามดวลที่คุณอยู่ตอนปิดรอบสัปดาห์นี้\nระดับจะรีเซ็ตเมื่อจบซีซันประจำเดือน",
+"Đây là phần thưởng cho bậc Đấu trường bạn giữ lúc chốt tuần này.\nBậc sẽ được đặt lại khi mùa hằng tháng kết thúc.",
+"Ini hadiah untuk tier Arena Duel yang kamu pegang saat penutupan minggu ini.\nTier direset saat musim bulanan berakhir.",
+"Es la recompensa por la liga de la Arena de duelos que tenías al cierre de esta semana.\nLas ligas se reinician al terminar la temporada mensual.",
+"É a recompensa pela liga da Arena de Duelos em que você estava no fechamento desta semana.\nAs ligas são reiniciadas no fim da temporada mensal.",
+"Deine Belohnung für die Duellarena-Liga zum Wochenabschluss.\nDie Ligen werden zum Ende der Monatssaison zurückgesetzt.",
+"Награда за лигу арены дуэлей на момент закрытия этой недели.\nЛиги сбрасываются в конце ежемесячного сезона."
+],
+"mail.kindBody.duelRank": [
+"这是根据决斗场排名结算结果发放的奖励。",
+"นี่คือรางวัลตามผลอันดับสนามดวลตอนปิดรอบ",
+"Đây là phần thưởng theo kết quả xếp hạng Đấu trường lúc chốt.",
+"Ini hadiah berdasarkan hasil akhir peringkat Arena Duel.",
+"Es la recompensa según tu clasificación final en la Arena de duelos.",
+"É a recompensa de acordo com seu ranking final na Arena de Duelos.",
+"Deine Belohnung für deinen Endrang in der Duellarena.",
+"Награда по итогам рейтинга арены дуэлей."
+],
+"mail.kindBody.arenaTier": [
+"这是本周结算时所在竞技场段位的奖励。\n段位会在每月赛季结束时重置。",
+"นี่คือรางวัลตามระดับอารีนาที่คุณอยู่ตอนปิดรอบสัปดาห์นี้\nระดับจะรีเซ็ตเมื่อจบซีซันประจำเดือน",
+"Đây là phần thưởng cho bậc Arena bạn giữ lúc chốt tuần này.\nBậc sẽ được đặt lại khi mùa hằng tháng kết thúc.",
+"Ini hadiah untuk tier Arena yang kamu pegang saat penutupan minggu ini.\nTier direset saat musim bulanan berakhir.",
+"Es la recompensa por la liga de la Arena que tenías al cierre de esta semana.\nLas ligas se reinician al terminar la temporada mensual.",
+"É a recompensa pela liga da Arena em que você estava no fechamento desta semana.\nAs ligas são reiniciadas no fim da temporada mensal.",
+"Deine Belohnung für die Arena-Liga zum Wochenabschluss.\nDie Ligen werden zum Ende der Monatssaison zurückgesetzt.",
+"Награда за лигу арены на момент закрытия этой недели.\nЛиги сбрасываются в конце ежемесячного сезона."
+],
+"mail.kindBody.arenaRank": [
+"这是根据竞技场排名结算结果发放的奖励。",
+"นี่คือรางวัลตามผลอันดับอารีนาตอนปิดรอบ",
+"Đây là phần thưởng theo kết quả xếp hạng Arena lúc chốt.",
+"Ini hadiah berdasarkan hasil akhir peringkat Arena.",
+"Es la recompensa según tu clasificación final en la Arena.",
+"É a recompensa de acordo com seu ranking final na Arena.",
+"Deine Belohnung für deinen Endrang in der Arena.",
+"Награда по итогам рейтинга арены."
+],
+"mail.kindBody.expeditionRank": [
+"这是根据上周远征最高分排名发放的奖励。",
+"นี่คือรางวัลตามอันดับคะแนนสูงสุดของการออกสำรวจสัปดาห์ที่แล้ว",
+"Đây là phần thưởng theo thứ hạng điểm cao nhất Viễn chinh tuần trước.",
+"Ini hadiah berdasarkan peringkat skor terbaik Ekspedisi minggu lalu.",
+"Es la recompensa según tu clasificación de mejor puntuación en Expedición la semana pasada.",
+"É a recompensa de acordo com seu ranking de melhor pontuação na Expedição na semana passada.",
+"Deine Belohnung für deinen Bestwert-Rang in der Expedition letzte Woche.",
+"Награда за место по лучшему счёту в экспедиции на прошлой неделе."
+],
+"mail.kindBody.ancientRank": [
+"这是根据上月远古地层最高层排名发放的最终奖励。\n地层会在新的一个月从第1层重新开始。",
+"นี่คือรางวัลสุดท้ายตามอันดับชั้นสูงสุดของชั้นดินโบราณเดือนที่แล้ว\nชั้นดินจะเริ่มใหม่จากชั้น 1 เมื่อขึ้นเดือนใหม่",
+"Đây là phần thưởng cuối cho thứ hạng tầng cao nhất Địa tầng cổ đại tháng trước.\nĐịa tầng sẽ bắt đầu lại từ tầng 1 khi sang tháng mới.",
+"Ini hadiah akhir berdasarkan peringkat lantai tertinggi Strata Kuno bulan lalu.\nStrata kembali dari lantai 1 saat bulan berganti.",
+"Es la recompensa final según tu clasificación de piso más alto en Estratos antiguos el mes pasado.\nLos estratos vuelven al piso 1 con el nuevo mes.",
+"É a recompensa final de acordo com seu ranking de andar mais alto nos Estratos antigos no mês passado.\nOs estratos voltam ao andar 1 com o novo mês.",
+"Deine Endbelohnung für den Rang nach höchster Ebene in den Uralten Schichten im letzten Monat.\nMit dem neuen Monat beginnen die Schichten wieder bei Ebene 1.",
+"Итоговая награда за место по самому высокому этажу в древних пластах в прошлом месяце.\nС новым месяцем пласты начинаются снова с 1-го этажа."
+],
+"mail.kindBody.guildRank": [
+"这是根据上周公会排名发放的奖励。",
+"นี่คือรางวัลตามอันดับกิลด์สัปดาห์ที่แล้ว",
+"Đây là phần thưởng theo thứ hạng Bang hội tuần trước.",
+"Ini hadiah berdasarkan peringkat Guild minggu lalu.",
+"Es la recompensa según la clasificación del Gremio la semana pasada.",
+"É a recompensa de acordo com o ranking da Guilda na semana passada.",
+"Deine Belohnung für den Gildenrang der letzten Woche.",
+"Награда за место гильдии на прошлой неделе."
+],
+"mail.special.rank": [
+"第{rank}名",
+"อันดับ {rank}",
+"Hạng {rank}",
+"#{rank}",
+"#{rank}",
+"#{rank}",
+"Platz {rank}",
+"{rank}-е место"
+],
+"mail.special.weekly": [
+"{period} 周",
+"สัปดาห์ {period}",
+"Tuần {period}",
+"Minggu {period}",
+"Semana del {period}",
+"Semana de {period}",
+"Woche ab {period}",
+"Неделя {period}"
+],
+"mail.special.monthly": [
+"{period} 赛季",
+"ซีซัน {period}",
+"Mùa {period}",
+"Musim {period}",
+"Temporada {period}",
+"Temporada {period}",
+"Saison {period}",
+"Сезон {period}"
+],
+"duel.season.rules.monthly": [
+"每月1日 00:00 UTC 赛季结束 · 分数保留60%，按100分向下取整\n段位奖励会在每周一结算时通过邮件发放。",
+"ซีซันจบทุกวันที่ 1 ของเดือน เวลา 00:00 UTC · คะแนนเหลือ 60% ปัดลงทีละ 100\nรางวัลระดับจะส่งทางจดหมายทุกครั้งที่ปิดรอบวันจันทร์",
+"Mùa kết thúc ngày 1 hằng tháng lúc 00:00 UTC · điểm giữ 60%, làm tròn xuống theo 100\nThưởng bậc gửi qua thư mỗi lần chốt thứ Hai.",
+"Musim berakhir tiap tanggal 1 pukul 00:00 UTC · skor jadi 60%, dibulatkan ke bawah per 100\nHadiah tier dikirim lewat surat setiap penutupan hari Senin.",
+"La temporada termina el día 1 de cada mes a las 00:00 UTC · la puntuación baja al 60 %, redondeada a la centena inferior\nLas recompensas de liga llegan por correo en cada cierre del lunes.",
+"A temporada termina no dia 1 de cada mês às 00:00 UTC · a pontuação cai para 60%, arredondada para baixo em centenas\nAs recompensas de liga chegam por correio a cada fechamento de segunda-feira.",
+"Die Saison endet am 1. jedes Monats um 00:00 UTC · Punkte fallen auf 60 %, auf volle 100 abgerundet\nLigabelohnungen kommen bei jedem Montagsabschluss per Post.",
+"Сезон заканчивается 1-го числа каждого месяца в 00:00 UTC · очки снижаются до 60 % с округлением вниз до 100\nНаграды за лигу приходят почтой при каждом закрытии в понедельник."
+],
+"rewardTable.rules.duelMonthly": [
+"每月1日 00:00 UTC 结算 · 邮件发放\n当月需有决斗场对战记录。1,000名以外也按前百分比区间领取。",
+"ปิดรอบทุกวันที่ 1 ของเดือน เวลา 00:00 UTC · ส่งทางจดหมาย\nต้องมีบันทึกการดวลในเดือนนั้น อันดับเกิน 1,000 ก็ได้รับตามช่วงเปอร์เซ็นต์บนสุด",
+"Chốt ngày 1 hằng tháng lúc 00:00 UTC · gửi qua thư\nCần có trận Đấu trường trong tháng đó. Ngoài top 1.000 vẫn nhận theo mốc % đứng đầu.",
+"Ditutup tiap tanggal 1 pukul 00:00 UTC · dikirim lewat surat\nPerlu catatan pertandingan Arena Duel bulan itu. Di luar peringkat 1.000 tetap dapat lewat rentang % teratas.",
+"Cierra el día 1 de cada mes a las 00:00 UTC · se envía por correo\nRequiere un combate en la Arena de duelos ese mes. Más allá del puesto 1000 se recompensa por tramos de % superior.",
+"Fecha no dia 1 de cada mês às 00:00 UTC · enviado por correio\nExige uma batalha na Arena de Duelos no mês. Além do 1.000º lugar, recompensa por faixas de % superior.",
+"Abschluss am 1. jedes Monats um 00:00 UTC · per Post\nSetzt einen Duellarena-Kampf in diesem Monat voraus. Jenseits von Platz 1.000 gibt es Belohnungen nach Top-%-Stufen.",
+"Закрытие 1-го числа каждого месяца в 00:00 UTC · отправка почтой\nНужен бой на арене дуэлей в этом месяце. За пределами 1000-го места награда по верхним %-диапазонам."
+],
+"rewardTable.rules.arenaMonthly": [
+"每月1日 00:00 UTC 结算 · 邮件发放\n当月需有排位赛记录。1,000名以外也按前百分比区间领取。",
+"ปิดรอบทุกวันที่ 1 ของเดือน เวลา 00:00 UTC · ส่งทางจดหมาย\nต้องมีบันทึกการแข่งจัดอันดับในเดือนนั้น อันดับเกิน 1,000 ก็ได้รับตามช่วงเปอร์เซ็นต์บนสุด",
+"Chốt ngày 1 hằng tháng lúc 00:00 UTC · gửi qua thư\nCần có trận xếp hạng trong tháng đó. Ngoài top 1.000 vẫn nhận theo mốc % đứng đầu.",
+"Ditutup tiap tanggal 1 pukul 00:00 UTC · dikirim lewat surat\nPerlu catatan pertandingan peringkat bulan itu. Di luar peringkat 1.000 tetap dapat lewat rentang % teratas.",
+"Cierra el día 1 de cada mes a las 00:00 UTC · se envía por correo\nRequiere una partida clasificatoria ese mes. Más allá del puesto 1000 se recompensa por tramos de % superior.",
+"Fecha no dia 1 de cada mês às 00:00 UTC · enviado por correio\nExige uma partida ranqueada no mês. Além do 1.000º lugar, recompensa por faixas de % superior.",
+"Abschluss am 1. jedes Monats um 00:00 UTC · per Post\nSetzt ein Ranglistenmatch in diesem Monat voraus. Jenseits von Platz 1.000 gibt es Belohnungen nach Top-%-Stufen.",
+"Закрытие 1-го числа каждого месяца в 00:00 UTC · отправка почтой\nНужен рейтинговый бой в этом месяце. За пределами 1000-го места награда по верхним %-диапазонам."
+],
+"rewardTable.rules.arenaTier": [
+"每周一 00:00 UTC 结算 · 邮件发放\n当周需有排位赛记录。段位在每月1日重置。",
+"ปิดรอบทุกวันจันทร์ เวลา 00:00 UTC · ส่งทางจดหมาย\nต้องมีบันทึกการแข่งจัดอันดับในสัปดาห์นั้น ระดับจะรีเซ็ตทุกวันที่ 1 ของเดือน",
+"Chốt mỗi thứ Hai lúc 00:00 UTC · gửi qua thư\nCần có trận xếp hạng trong tuần đó. Bậc được đặt lại vào ngày 1 hằng tháng.",
+"Ditutup setiap Senin pukul 00:00 UTC · dikirim lewat surat\nPerlu catatan pertandingan peringkat minggu itu. Tier direset tiap tanggal 1.",
+"Cierra cada lunes a las 00:00 UTC · se envía por correo\nRequiere una partida clasificatoria esa semana. Las ligas se reinician el día 1 de cada mes.",
+"Fecha toda segunda-feira às 00:00 UTC · enviado por correio\nExige uma partida ranqueada na semana. As ligas são reiniciadas no dia 1 de cada mês.",
+"Abschluss jeden Montag um 00:00 UTC · per Post\nSetzt ein Ranglistenmatch in dieser Woche voraus. Ligen werden am 1. jedes Monats zurückgesetzt.",
+"Закрытие каждый понедельник в 00:00 UTC · отправка почтой\nНужен рейтинговый бой на этой неделе. Лиги сбрасываются 1-го числа каждого месяца."
+],
+"arena.monthly.title": [
+"竞技场月度排名奖励",
+"รางวัลอันดับรายเดือนอารีนา",
+"Thưởng xếp hạng tháng Arena",
+"Hadiah Peringkat Bulanan Arena",
+"Recompensa mensual de clasificación de la Arena",
+"Recompensa mensal de ranking da Arena",
+"Monatliche Arena-Ranglistenbelohnung",
+"Ежемесячная награда за место на арене"
+]
 }

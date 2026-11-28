@@ -16,7 +16,8 @@ import { relicProgression } from "../managers/RelicProgressionManager";
 import { session } from "../state/session";
 import { Button } from "./Button";
 import { drawGlyph } from "./glyphs";
-import { drawHairline, drawLayer, slantedRect, toPoints } from "./holo";
+import { chipPoints, drawHairline, drawLayer, slantedRect, toPoints } from "./holo";
+import { openCuteGuide } from "./CuteGuidePopup";
 import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
 import { RUNE_CRAFT_MARKS, RUNE_CRAFT_PANEL, RUNE_NOTE_PANEL, runeCraftLayout, runeNoteLayout } from "./runeCraftLayout";
 import { BATCH_LAND_STEP_MS, planRuneCraftTap, RUNE_CRAFT_IMPACT, RUNE_CRAFT_STRIKE, RUNE_MARK, type RuneCraftImpactKind } from "./runeCraftMotion";
@@ -678,14 +679,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
             if (closed) return;
             // 마지막은 실제로 끼우는 것까지다 — 토리카 정보창으로 데려가 그 룬의 칸 → 룬 정비 창의 카드 → 「적용」을 차례로 가리킨다.
             const guideId = relicCollection.owns(RUNE_EQUIP_GUIDE_RELIC) ? RUNE_EQUIP_GUIDE_RELIC : undefined;
-            popups.confirm({
-              title: t("tutorial.rune.done.title"),
-              message: t("tutorial.rune.done.body"),
-              // 무엇을 해냈는지는 글이 아니라 막 완성한 그 룬이 말한다 — 각인의 금빛까지 두른 액자로 선다.
-              costs: [{ iconKey: "", amount: 1, rune: { rarity: rune!.rarity, part: rune!.part, mainStats: rune!.mainStats, engraved: rune!.engravings.length > 0 } }],
-              confirmLabel: guideId ? t("tutorial.rune.done.go", { name: getRelic(guideId).name }) : t("settings.action.confirm"),
-              cancelLabel: false,
-            }, () => { if (guideId && scene.scene.isActive()) startScene(scene, "relics", { openRelicId: guideId, runeEquipHint: rune!.part }); });
+            openRuneDoneGuide(scene, popups, rune!, guideId, () => { if (guideId && scene.scene.isActive()) startScene(scene, "relics", { openRelicId: guideId, runeEquipHint: rune!.part }); });
           });
         }
       } catch (error) {
@@ -970,5 +964,28 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         });
       });
     }
+  });
+}
+
+/**
+ * 체험 세공을 마친 순간의 안내 — 무엇을 해냈는지는 글이 아니라 막 완성한 그 룬이 말한다(각인의 금빛까지 두른 액자가
+ * 덤 칸에 선다). 끼울 렐릭이 있으면 그 아이가 무대에 서고, 버튼이 그 정보창으로 데려간다.
+ */
+export function openRuneDoneGuide(scene: Phaser.Scene, popups: PopupLayer, done: RuneInstance, guideId: string | undefined, onConfirm: () => void): void {
+  openCuteGuide(scene, popups, {
+    title: t("intro.title"),
+    tone: "mint",
+    required: true,
+    ...(guideId ? { guide: guideId } : {}),
+    confirmLabel: guideId ? t("tutorial.rune.done.go", { name: getRelic(guideId).name }) : t("settings.action.confirm"),
+    pages: [{ heading: t("tutorial.rune.done.title"), body: t("tutorial.rune.done.body") }],
+    extra: {
+      height: 170,
+      paint: (_scene, slot, width, tone) => {
+        slot.add(drawLayer(scene, 0, 0, chipPoints(width, 170, { bevel: { topLeft: 32, bottomRight: 32 } }), { fill: tone.deep, alpha: 0.72, shadow: false }));
+        slot.add(addRuneFrame(scene, 0, 0, 136, done.rarity, done.part, { mainStats: done.mainStats, engraved: done.engravings.length > 0 }));
+      },
+    },
+    onConfirm,
   });
 }

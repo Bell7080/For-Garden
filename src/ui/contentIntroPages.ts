@@ -3,6 +3,7 @@ import type { TextKey } from "../i18n";
 import { ROLE_ICON } from "./affinityIcons";
 import { BACKGROUND } from "./backgrounds";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
+import type { CuteGuideToneId } from "./cuteGuideLayout";
 import type { IconIntroPage } from "./IconIntroPopup";
 
 /**
@@ -13,26 +14,27 @@ import type { IconIntroPage } from "./IconIntroPopup";
  */
 const W = CURRENCY_ICON_BY_WALLET;
 
-function pages(id: IconIntroId, icons: readonly string[]): readonly IconIntroPage[] {
+function pages(id: IconIntroId, icons: readonly string[], tone?: CuteGuideToneId): readonly IconIntroPage[] {
   return icons.map((icon, index) => ({
     icon,
+    ...(tone ? { tone } : {}),
     headingKey: `intro.${id}.${index + 1}.heading` as TextKey,
     bodyKey: `intro.${id}.${index + 1}.body` as TextKey,
   }));
 }
 
 export const CONTENT_INTRO_PAGES: Readonly<Record<IconIntroId, readonly IconIntroPage[]>> = {
-  stageMap: pages("stageMap", [ROLE_ICON.warrior, W.gems]),
-  party: pages("party", [ROLE_ICON.tank, ROLE_ICON.assassin]),
-  shop: pages("shop", [W.cheesecake, W.gold]),
-  cakeOperation: pages("cakeOperation", [W.cheesecake, "item-sweep-ticket"]),
-  bounty: pages("bounty", [ROLE_ICON.assassin, W.gold]),
-  interaction: pages("interaction", [ROLE_ICON.support, W.gold]),
-  duel: pages("duel", [ROLE_ICON.tank, "item-duel-ticket"]),
-  friends: pages("friends", [ROLE_ICON.support, "item-raid-ticket"]),
-  raid: pages("raid", [W.raidSigil, "item-raid-ticket"]),
-  expedition: pages("expedition", [W.salvageRecord, ROLE_ICON.warrior, W.gems]),
-  premium: pages("premium", [W.gems, "item-stamina-tonic"]),
+  stageMap: pages("stageMap", [ROLE_ICON.warrior, W.gems], "pink"),
+  party: pages("party", [ROLE_ICON.tank, ROLE_ICON.assassin], "mint"),
+  shop: pages("shop", [W.cheesecake, W.gold], "amber"),
+  cakeOperation: pages("cakeOperation", [W.cheesecake, "item-sweep-ticket"], "amber"),
+  bounty: pages("bounty", [ROLE_ICON.assassin, W.gold], "sky"),
+  interaction: pages("interaction", [ROLE_ICON.support, W.gold], "sky"),
+  duel: pages("duel", [ROLE_ICON.tank, "item-duel-ticket"], "pink"),
+  friends: pages("friends", [ROLE_ICON.support, "item-raid-ticket"], "lilac"),
+  raid: pages("raid", [W.raidSigil, "item-raid-ticket"], "lilac"),
+  expedition: pages("expedition", [W.salvageRecord, ROLE_ICON.warrior, W.gems], "sky"),
+  premium: pages("premium", [W.gems, "item-stamina-tonic"], "amber"),
   // 5·6장 지도는 위에서 아래로 내려간다. 시스템 문장이 아니라 그 길로 몰고 있는 코마가 새침하게 짚어 준다 —
   // 「아래에서 기다린다」는 몰이의 복선이다(story-brain/threads.md).
   descendingMap: pages("descendingMap", ["", ""]).map((page) => ({ ...page, speaker: "koma", backdrop: BACKGROUND.stageMapPrisonApproach })),

@@ -1,3 +1,4 @@
+import { COMPETITIVE_MONTHLY_ENABLED } from "../core/competitiveSeason";
 /** 주간 랭킹은 월요일 00:00 UTC에 마감하고 실제 대전/원정 기록이 있는 계정에 우편으로 지급한다. */
 export const WEEKLY_RANK_GEMS = [
   { upTo: 1, gems: 3000 }, { upTo: 3, gems: 2500 }, { upTo: 10, gems: 2000 },
@@ -28,6 +29,23 @@ export const ANCIENT_MONTHLY_RANK_REWARDS: RankRewardTable = {
   participation: 200,
 };
 
+/**
+ * 월간 시즌의 고대 지층 표(`COMPETITIVE_MONTHLY_ENABLED` — 2026-11-28 응태 「하위권도 맛있게 평탄화」). 위는 그대로 두고
+ * 1,000위 밖 백분율·참여 몫만 한 단계씩 올렸다(참여 200 → 250). 공급량 표는 VERSION.md v0.566.0.
+ */
+export const ANCIENT_MONTHLY_RANK_REWARDS_V2: RankRewardTable = {
+  ranks: [
+    { upTo: 1, gems: 3000 }, { upTo: 2, gems: 2500 }, { upTo: 3, gems: 2000 }, { upTo: 10, gems: 1500 },
+    { upTo: 50, gems: 1000 }, { upTo: 100, gems: 900 }, { upTo: 300, gems: 750 }, { upTo: 1000, gems: 650 },
+  ],
+  percents: [{ upToPercent: 10, gems: 550 }, { upToPercent: 30, gems: 450 }, { upToPercent: 50, gems: 350 }],
+  participation: 250,
+};
+
+/** 지금 쓰는 고대 지층 표 — 월간 스위치가 켜지면 평탄화한 표다. */
+export const ancientMonthlyRankRewards = (monthly: boolean = COMPETITIVE_MONTHLY_ENABLED): RankRewardTable =>
+  monthly ? ANCIENT_MONTHLY_RANK_REWARDS_V2 : ANCIENT_MONTHLY_RANK_REWARDS;
+
 /** 표에서 그 자리의 젬. 서버(`server_ancient_monthly_rewards`)가 같은 규칙으로 고른다. */
 export function rankRewardGems(table: RankRewardTable, rank: number, total: number): number {
   const byRank = table.ranks.find((row) => rank <= row.upTo);
@@ -37,7 +55,7 @@ export function rankRewardGems(table: RankRewardTable, rank: number, total: numb
 }
 
 /** 순위 보상 한 묶음 — 우편에 함께 드는 재화(지갑 키)와 수량. */
-export type RankRewardBundle = Partial<Record<"gems" | "salvageRecord" | "gold" | "cheesecake", number>>;
+export type RankRewardBundle = Partial<Record<"gems" | "duelEmblem" | "salvageRecord" | "gold" | "cheesecake", number>>;
 
 /**
  * 여러 재화를 함께 주는 순위 보상 풀 — 모양은 `RankRewardTable`과 같다(순위 구간 → 1,000위 밖 백분율 구간 → 참여).
@@ -91,4 +109,44 @@ export const GUILD_GUARD_DAILY_RANK_COINS: RankRewardTable = {
   ],
   percents: [{ upToPercent: 10, gems: 8 }, { upToPercent: 30, gems: 6 }, { upToPercent: 50, gems: 5 }],
   participation: 4,
+};
+
+/**
+ * 결투장 월간 순위(`COMPETITIVE_MONTHLY_ENABLED` — 2026-11-28 응태 요청). 한 달이 닫히면 그 달 마지막 점수의 순위로 우편을 보낸다
+ * (`server_competitive_rewards_v3`, 보드 `duel_month`). 티어 몫은 매주 따로 온다(`DuelTierDef.weeklyReward`).
+ *
+ * **위를 덜고 아래를 올렸다** — 예전(주간 순위 4주 + 21일 시즌 티어)에는 1위가 한 달 젬 약 16,700, 101위 밖 골드가 약 3,300이었고,
+ * 지금은 1위 약 12,000(주간 티어 포함) · 아래 절반 골드 약 3,100 · 위 절반 3,600~4,100이다. 단위는 500(젬)·50(휘장)으로 끊는다.
+ */
+export const DUEL_MONTHLY_RANK_REWARDS: RankRewardPool = {
+  ranks: [
+    { upTo: 1, rewards: { gems: 8000, duelEmblem: 600 } },
+    { upTo: 2, rewards: { gems: 7000, duelEmblem: 550 } },
+    { upTo: 3, rewards: { gems: 6000, duelEmblem: 500 } },
+    { upTo: 10, rewards: { gems: 5000, duelEmblem: 450 } },
+    { upTo: 50, rewards: { gems: 4500, duelEmblem: 400 } },
+    { upTo: 100, rewards: { gems: 4000, duelEmblem: 350 } },
+    { upTo: 300, rewards: { gems: 3500, duelEmblem: 300 } },
+    { upTo: 1000, rewards: { gems: 3000, duelEmblem: 250 } },
+  ],
+  percents: [
+    { upToPercent: 10, rewards: { gems: 3000, duelEmblem: 200 } },
+    { upToPercent: 30, rewards: { gems: 2500, duelEmblem: 150 } },
+    { upToPercent: 50, rewards: { gems: 2000, duelEmblem: 150 } },
+  ],
+  participation: { gems: 1500, duelEmblem: 100 },
+};
+
+/**
+ * 아레나 월간 순위(같은 구조). 티어 몫은 지금처럼 매주(`ArenaTierDef.weeklyReward`)이고, 예전 주간 순위 젬(100위 밖 0)을 걷어 내고
+ * 이 표가 한 달에 한 번 순위 몫을 준다 — 100위 밖도 참여 몫을 받는다.
+ */
+export const ARENA_MONTHLY_RANK_REWARDS: RankRewardPool = {
+  ranks: [
+    { upTo: 1, rewards: { gems: 7000 } }, { upTo: 2, rewards: { gems: 6000 } }, { upTo: 3, rewards: { gems: 5000 } },
+    { upTo: 10, rewards: { gems: 4000 } }, { upTo: 50, rewards: { gems: 3000 } }, { upTo: 100, rewards: { gems: 2000 } },
+    { upTo: 300, rewards: { gems: 800 } }, { upTo: 1000, rewards: { gems: 600 } },
+  ],
+  percents: [{ upToPercent: 10, rewards: { gems: 500 } }, { upToPercent: 30, rewards: { gems: 400 } }, { upToPercent: 50, rewards: { gems: 350 } }],
+  participation: { gems: 300 },
 };

@@ -1,7 +1,8 @@
 import type Phaser from "phaser";
 import { t } from "../i18n";
-import { WEEKLY_RANK_GEMS, type RankRewardBundle, type RankRewardPool } from "../data/competitiveRewards";
-import { EXPEDITION_WEEKLY_RANK_POOL } from "../data/expedition";
+import { DUEL_MONTHLY_RANK_REWARDS, WEEKLY_RANK_GEMS, type RankRewardBundle, type RankRewardPool } from "../data/competitiveRewards";
+import { expeditionWeeklyRankPool } from "../data/expedition";
+import { COMPETITIVE_MONTHLY_ENABLED } from "../core/competitiveSeason";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import type { PopupLayer } from "./PopupLayer";
 import { openRewardTable, type RewardTableRow } from "./RewardTable";
@@ -26,7 +27,12 @@ const inBand = (rank: number | null | undefined, band: { from: number; upTo: num
  */
 export function openCompetitiveRewards(scene: Phaser.Scene, popups: PopupLayer, board: "duel" | "expedition", myRank?: number | null): void {
   if (board === "expedition") {
-    openRankPoolRewards(scene, popups, { pool: EXPEDITION_WEEKLY_RANK_POOL, period: "weekly", rules: t("rewardTable.rules.expedition"), myRank });
+    openRankPoolRewards(scene, popups, { pool: expeditionWeeklyRankPool(), period: "weekly", rules: t("rewardTable.rules.expedition"), myRank });
+    return;
+  }
+  // 월간 시즌이 켜지면 결투장 순위는 시즌 마감 한 번의 표준 보상 풀이다(티어 몫은 매주 따로 우편으로 온다).
+  if (COMPETITIVE_MONTHLY_ENABLED) {
+    openRankPoolRewards(scene, popups, { pool: DUEL_MONTHLY_RANK_REWARDS, period: "monthly", rules: t("rewardTable.rules.duelMonthly"), myRank });
     return;
   }
   const rows: RewardTableRow[] = rankBands(WEEKLY_RANK_GEMS).map((band) => ({
@@ -39,7 +45,7 @@ export function openCompetitiveRewards(scene: Phaser.Scene, popups: PopupLayer, 
 }
 
 /** 보상 액자의 차례 — 무거운 것부터 오른쪽 끝에 선다. */
-const BUNDLE_ORDER = ["gems", "salvageRecord", "gold", "cheesecake"] as const;
+const BUNDLE_ORDER = ["gems", "duelEmblem", "salvageRecord", "gold", "cheesecake"] as const;
 
 /**
  * 표준 순위 보상 풀(`RankRewardPool`) 한 장 — 원정 주간·고대 지층 월간이 같은 창을 쓴다.

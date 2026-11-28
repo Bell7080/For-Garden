@@ -1,3 +1,4 @@
+import { COMPETITIVE_MONTHLY_ENABLED } from "../core/competitiveSeason";
 import { openCompetitiveRewards } from "./CompetitiveRewardPopup";
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -64,6 +65,7 @@ export class DuelRankingPopup {
     this.source = source ?? {
       title: t("duel.link.ranking"),
       load: () => api.getDuelRanking(),
+      ...(COMPETITIVE_MONTHLY_ENABLED ? { rewardPeriod: "monthly" as const } : {}),
       openRewards: (me) => openCompetitiveRewards(scene, popups, "duel", me?.rank),
       openTiers: () => openDuelTierGuide(scene, popups, currentTier),
     };

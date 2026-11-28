@@ -33,7 +33,7 @@ import { addCategoryTab } from "../ui/CategoryTab";
 import { DuelRankingPopup } from "../ui/DuelRankingPopup";
 import { addRankChip } from "../ui/RankingChips";
 import { openRankPoolRewards } from "../ui/CompetitiveRewardPopup";
-import { ANCIENT_MONTHLY_RANK_REWARDS, rankTableAsPool } from "../data/competitiveRewards";
+import { ancientMonthlyRankRewards, rankTableAsPool } from "../data/competitiveRewards";
 import { FaceFrame } from "../ui/FaceFrame";
 import { drawGlyph } from "../ui/glyphs";
 import { encounterRoleIcon } from "../ui/encounterRolePresentation";
@@ -309,7 +309,7 @@ export class AncientStrataScene extends Phaser.Scene {
       formatScore: (floor: number) => `B${floor}`,
       // 매달 마감하는 순위라 보상 칩은 「월간 보상」이다. 1,000위 밖의 내 구간은 참가자 수를 몰라 표가 「현재」를 달지 않는다.
       rewardPeriod: "monthly" as const,
-      openRewards: (me: { rank: number } | null) => openRankPoolRewards(this, this.popups, { pool: rankTableAsPool(ANCIENT_MONTHLY_RANK_REWARDS), period: "monthly", rules: t("rewardTable.rules.ancient"), myRank: me?.rank ?? null }),
+      openRewards: (me: { rank: number } | null) => openRankPoolRewards(this, this.popups, { pool: rankTableAsPool(ancientMonthlyRankRewards()), period: "monthly", rules: t("rewardTable.rules.ancient"), myRank: me?.rank ?? null }),
     };
     const chip = addRankChip(this, null, rankChip.x, rankChip.y, {
       size: rankChip.size,

@@ -1,11 +1,19 @@
 import { activeBreakthroughOf } from "../core/relicProgression";
 import { t } from "../i18n";
+import { COMPETITIVE_MONTHLY_ENABLED } from '../core/competitiveSeason';
 import { arenaRules, RANKED_ARENA_RULES, startArena, applyArenaAction, settleArena, publicArenaRoom, type ArenaRoom, type ArenaAction, type ArenaPlayer } from '../core/liveArena';
 import { arenaSetup, ARENA_SLOTS } from '../core/liveArena';
 import { saveManager } from '../state/SaveManager';
 import { RelicProgressionManager } from '../managers/RelicProgressionManager';
 import { getRelic } from '../data/relics';
 import { partyRuneTraitEffects } from '../core/runeTraitEffects';
+/**
+ * 아레나 RPC 이름 — 월간 시즌(`COMPETITIVE_MONTHLY_ENABLED`)은 마이그레이션 20261204000000의 v2를 부른다. 모양은 같고
+ * 순위·자리가 그 달 판을 읽으며(`weekEndsAt`은 달 마감, `lastWeek`는 지난달), 판정 전에 달을 넘긴다(RP 절반 남김).
+ */
+const ARENA_RPC = COMPETITIVE_MONTHLY_ENABLED
+  ? { standing: 'server_arena_standing_v2', ranking: 'server_arena_ranking_v2', commit: 'server_arena_commit_v2' }
+  : { standing: 'server_arena_standing', ranking: 'server_arena_ranking', commit: 'server_arena_commit' };
 /** `server_arena_standing` — 화면이 읽는 내 자리. */
 export interface ArenaStanding { score:number; wins:number; losses:number; winStreak:number; bestStreak:number; bestScore:number; nextStreakBonus:number; rank:number|null; weekEndsAt:string; serverTime:string; lastWeek:{score:number;rank:number|null}|null }
 export interface ArenaContext { playerId:string; score:number; wins:number; losses:number; queuedAt?:string; room:ArenaRoom|null; incoming:ArenaRoom[]; receiptFingerprint?:unknown; records:{id:string;data:unknown}[] }
@@ -46,8 +54,8 @@ export async function arenaPracticePreview(rpc:ArenaRpc,player:string,target:unk
 export async function handleArenaCall(rpc:ArenaRpc, player:string, method:string, args:unknown[], requestId?:string):Promise<unknown> {
   const input=(args[0]??{}) as {kind?:string;roomId?:string;target?:string;rules?:unknown;action?:ArenaAction;party?:unknown};
   // 읽기만 하는 두 갈래(내 자리·주간 순위)는 방 잠금·정리를 거치지 않는다 — 로비 프로필도 이 값을 읽는다.
-  if(method==='get' && input.kind==='standing') return await rpc('server_arena_standing',{p_player:player});
-  if(method==='get' && input.kind==='ranking') return await rpc('server_arena_ranking',{p_player:player,p_limit:100});
+  if(method==='get' && input.kind==='standing') return await rpc(ARENA_RPC.standing,{p_player:player});
+  if(method==='get' && input.kind==='ranking') return await rpc(ARENA_RPC.ranking,{p_player:player,p_limit:100});
   if(method==='get' && input.kind==='practicePreview') return await arenaPracticePreview(rpc,player,input.target);
   const kind=method==='get'?'status':input.kind;
   if(!['status','queue','cancel','invite','accept','decline','practice','action','finish'].includes(kind??'')) throw Error('ARENA_ACTION');
@@ -78,7 +86,7 @@ export async function handleArenaCall(rpc:ArenaRpc, player:string, method:string
       next=applyArenaAction(next,player,kind==='action'?input.action!:{kind:'tick'},Date.now());
       if(kind==='finish' || (next.phase==='battle' && Date.now()>=next.deadline)) next=settleArena(next);
       if(JSON.stringify(next)===JSON.stringify(room)) break;
-      const out=await rpc('server_arena_commit',{p_player:player,p_room:room.id,p_version:room.version,p_data:next,p_request:(kind==='action'||kind==='finish')?requestId??null:null,p_fingerprint:fingerprint}) as {conflict?:boolean;room:ArenaRoom};
+      const out=await rpc(ARENA_RPC.commit,{p_player:player,p_room:room.id,p_version:room.version,p_data:next,p_request:(kind==='action'||kind==='finish')?requestId??null:null,p_fingerprint:fingerprint}) as {conflict?:boolean;room:ArenaRoom};
       room=out.room;
       if(!out.conflict) break;
       if(retry===2) throw Error('ARENA_CONFLICT');
@@ -87,7 +95,7 @@ export async function handleArenaCall(rpc:ArenaRpc, player:string, method:string
   // Privacy is enforced before the HTTP boundary, even for cached/finished reads.
   // 끝난 판은 정산 뒤의 RP·연승을, 입구 조회는 연승·주간 순위까지 함께 돌려준다.
   if(room?.phase==='done' || kind==='status') {
-    const standing=await rpc('server_arena_standing',{p_player:player}) as ArenaStanding;
+    const standing=await rpc(ARENA_RPC.standing,{p_player:player}) as ArenaStanding;
     context={...context,...standing};
   }
   delete context.receiptFingerprint;

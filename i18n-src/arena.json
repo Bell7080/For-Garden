@@ -889,6 +889,7 @@
     "Wochenabschluss in {days} T. {hours} Std.",
     "До итогов недели: {days} д. {hours} ч."
   ],
+  "arena.monthly.endsIn": ["月度结算还剩{days}天{hours}小时", "สรุปผลรายเดือนในอีก {days} วัน {hours} ชม.", "Tổng kết tháng sau {days} ngày {hours} giờ", "Hasil bulanan dalam {days} h {hours} j", "Resultados mensuales en {days} d {hours} h", "Resultados mensais em {days} d {hours} h", "Monatsabrechnung in {days} T. {hours} Std.", "Итоги месяца через {days} д. {hours} ч."],
   "ranking.reward.weekly": [
     "每周奖励",
     "รายสัปดาห์",
@@ -939,6 +940,7 @@
     "Letzte Woche",
     "Прошлая неделя"
   ],
+  "arena.profile.lastMonth": ["上月", "เดือนที่แล้ว", "Tháng trước", "Bulan lalu", "Mes pasado", "Mês passado", "Letzter Monat", "Прошлый месяц"],
   "arena.profile.streakBonus": [
     "连胜加成 +{bonus} RP",
     "โบนัสชนะติด +{bonus} RP",

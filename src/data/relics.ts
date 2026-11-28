@@ -560,8 +560,7 @@ export const RELICS: RelicDef[] = [
          * 「전투의 환희」가 아무리 쌓여도 뛰는 횟수가 그대로라 성장과 맞물리지 않는다.
          */
         leapEveryHits: 4,
-        // 140 → 120(응태 2026-11-28 — 평타·궁극기·폭주 딜 조사에서 스피나가 단일·다수 모두 1위라 여울 몫을 덜었다).
-        leapPower: 120,
+        leapPower: 140,
         // 물에 잠긴 채로 맞으면 더 아프다. 평타에는 아무 몫도 주지 않으므로, 적을 물가에
         // 가둬 두는 값이 **도약이 꽂히는 순간**에만 돌아온다.
         submergedLeapBonusPercent: 40,
@@ -592,8 +591,7 @@ export const RELICS: RelicDef[] = [
        * 몫만큼만 세다 — 여기를 크게 올리면 판을 까는 이유가 "궁극기 한 방을 키우려고"가 되어,
        * 뛰어다니며 터뜨리는 평상시 리듬이 궁극기를 기다리는 시간이 된다.
        */
-      // 165 → 120(응태 2026-11-28 — 겹친 여울이 한 적을 여러 번 치는 몫이 다수 판 딜 1위의 뿌리였다).
-      detonateShallows: { power: 120 },
+      detonateShallows: { power: 165 },
       // attackSpeedPower가 있는 궁극기는 skillDescription()이 구조화 필드로 다시 문장을 만들므로
     },
   },

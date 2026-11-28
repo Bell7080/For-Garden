@@ -35,6 +35,15 @@ import { isMailExpired, MAIL_DETAIL_LAYOUT, mailDetailRail, MAIL_POPUP_LAYOUT, m
 import { withBusy } from "./BusyOverlay";
 import { showContentToast } from "./ContentToast";
 import { logError } from "../managers/ErrorReporter";
+import type { MailSpecial } from "../core/mailCategory";
+import { MAIL_SPECIAL_FADE, mailSpecialBadge, mailSpecialTone } from "./mailSpecialStyle";
+import { useBackgroundTexture } from "./backgrounds";
+import { coverCrop } from "./coverCrop";
+import { addDuelTierEmblem } from "./DuelTierEmblem";
+import { DUEL_TIERS, type DuelTierId } from "../core/duelArena";
+import { RANKING_MEDALS } from "./expeditionRankingLayout";
+import { squeezeTextToWidth } from "./textFit";
+import type { TextKey } from "../i18n";
 
 const TABS: readonly MailTab[] = ["reward", "notice", "patch"];
 
@@ -150,13 +159,84 @@ export class MailPopup {
     }
   }
 
+  /**
+   * 콘텐츠 보상 우편의 카드 — 그 콘텐츠의 원화가 오른쪽에 깔리고 글이 서는 왼쪽은 어둠이 누른다. 윗변 선과 아이콘
+   * 액자가 콘텐츠 색이고, 아이콘 자리에는 티어 휘장 또는 순위 메달이 선다(`mailSpecialStyle.ts`).
+   */
+  private addSpecialChrome(parent: Phaser.GameObjects.Container, mail: MailDto, special: MailSpecial, y: number, height: number, dim: boolean): void {
+    const { card } = MAIL_POPUP_LAYOUT;
+    const tone = mailSpecialTone(special);
+    const shape = chipPoints(card.width, height, { bevel: { topLeft: 30, topRight: 0, bottomRight: 30, bottomLeft: 0 } });
+    parent.add(drawLayer(this.scene, 0, y, shape, { fill: 0x0a0d12, alpha: 0.94 }));
+    const layer = this.scene.add.container(0, y);
+    parent.add(layer);
+    const art = this.scene.add.image(0, 0, "__DEFAULT").setAlpha(0);
+    layer.add(art);
+    const artAlpha = dim ? 0.32 : 1;
+    const alreadyLoaded = this.scene.textures.exists(tone.art);
+    useBackgroundTexture(this.scene, art, tone.art, (loaded) => {
+      const crop = coverCrop(loaded.width, loaded.height, card.width, height);
+      loaded.setScale(crop.scale).setCrop(crop.cropX, crop.cropY, crop.cropWidth, crop.cropHeight);
+      if (alreadyLoaded) loaded.setAlpha(artAlpha);
+      else this.scene.tweens.add({ targets: loaded, alpha: artAlpha, duration: 160 });
+    });
+    const fade = this.scene.add.graphics();
+    const F = MAIL_SPECIAL_FADE;
+    const split = -card.width / 2 + card.width * F.split;
+    fade.fillGradientStyle(0x05070a, 0x05070a, 0x05070a, 0x05070a, F.left, F.mid, F.left, F.mid);
+    fade.fillRect(-card.width / 2, -height / 2, split + card.width / 2, height);
+    fade.fillGradientStyle(0x05070a, 0x05070a, 0x05070a, 0x05070a, F.mid, F.right, F.mid, F.right);
+    fade.fillRect(split, -height / 2, card.width / 2 - split, height);
+    // 콘텐츠 색을 아주 옅게 한 겹 — 원화가 늦게 와도 카드가 먼저 제 색으로 선다.
+    fade.fillStyle(tone.color, dim ? 0.04 : F.wash).fillRect(-card.width / 2, -height / 2, card.width, height);
+    layer.add(fade);
+    layer.setMask(shapeClipMask(this.scene, layer, shape));
+    parent.add(drawShapeEdge(this.scene, 0, y, shape, "top", { color: dim ? 0x68717d : tone.color, alpha: dim ? 0.5 : 0.95, width: mail.read ? 3 : 4 }));
+    const iconX = -card.width / 2 + 34 + card.icon / 2;
+    const iconY = y - height / 2 + 26 + card.icon / 2;
+    const badge = mailSpecialBadge(special);
+    if (badge.kind === "tier" && (DUEL_TIERS as readonly { id: string }[]).some(({ id }) => id === badge.tier)) {
+      const emblem = addDuelTierEmblem(this.scene, parent, iconX, iconY, card.icon * 0.96, badge.tier as DuelTierId);
+      if (dim) emblem.setAlpha(0.5);
+    } else if (badge.kind === "rank") {
+      const medal = RANKING_MEDALS.find(({ rank }) => rank === badge.rank);
+      parent.add(addItemFrame(this.scene, iconX, iconY, card.icon, { color: dim ? 0x68717d : medal?.edge ?? tone.color, outlineAlpha: dim ? 0.4 : 0.95 }));
+      const label = this.scene.add.text(iconX, iconY, t("mail.special.rank", { rank: badge.rank.toLocaleString() }),
+        textStyle({ role: "display", size: badge.rank < 100 ? 36 : 28, color: dim ? COLOR.inkDim : medal?.text ?? tone.text })).setOrigin(0.5).setStroke("#05070a", 6);
+      squeezeTextToWidth(label, card.icon - 14);
+      parent.add(label);
+    } else {
+      parent.add(addItemFrame(this.scene, iconX, iconY, card.icon, { color: dim ? 0x68717d : tone.color, outlineAlpha: dim ? 0.4 : 0.85 }));
+      parent.add(drawGlyph(this.scene, "mail", iconX, iconY, card.icon * 0.5, dim ? COLOR.inkDimHex : tone.color, dim ? 0.5 : 1));
+    }
+    if (!mail.read && !dim) new NotificationDot(this.scene, parent, { x: iconX + card.icon / 2 - 4, y: iconY - card.icon / 2 + 4 });
+  }
+
+  /** 특수 우편의 이름은 콘텐츠 갈래가 말한다 — 서버가 적은 한국어 제목 대신 그 언어의 문구로 선다. */
+  private mailTitle(mail: MailDto): string { return mail.special ? t(`mail.kind.${mail.special.kind}` as TextKey) : mail.title; }
+
+  /** 특수 우편의 둘째 줄 — 정산 기간 · 티어(또는 순위). 알 수 없으면 보낸 이를 그대로 적는다. */
+  private mailSubline(mail: MailDto): string {
+    const special = mail.special; if (!special) return mail.sender;
+    const parts: string[] = [];
+    if (special.period) parts.push(t(special.period.length === 7 ? "mail.special.monthly" : "mail.special.weekly", { period: special.period }));
+    if (special.tier && (DUEL_TIERS as readonly { id: string }[]).some(({ id }) => id === special.tier)) parts.push(t(`duel.tier.${special.tier}` as TextKey));
+    else if (special.rank) parts.push(t("mail.special.rank", { rank: special.rank.toLocaleString() }));
+    return parts.length > 0 ? parts.join(" · ") : mail.sender;
+  }
+
   /** 제목·보낸 이 한 덩어리와 오른쪽 위의 남은 기한. */
   private addHeadline(parent: Phaser.GameObjects.Container, mail: MailDto, y: number, height: number, dim: boolean, nowMs: number, expiryInset = 0): void {
     const { card } = MAIL_POPUP_LAYOUT;
     const textX = -card.width / 2 + 34 + card.icon + 24;
     const top = y - height / 2 + 26;
-    parent.add(this.scene.add.text(textX, top + 8, mail.title, textStyle({ role: "emphasis", size: 30, color: dim ? COLOR.inkDim : COLOR.ink })).setOrigin(0, 0));
-    parent.add(this.scene.add.text(textX, top + 54, mail.sender, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0));
+    const tone = mail.special ? mailSpecialTone(mail.special) : undefined;
+    const title = this.scene.add.text(textX, top + 8, this.mailTitle(mail), (tone ? textStyle({ role: "display", size: 30, color: dim ? COLOR.inkDim : COLOR.ink }) : textStyle({ role: "emphasis", size: 30, color: dim ? COLOR.inkDim : COLOR.ink }))).setOrigin(0, 0);
+    if (tone) title.setStroke("#05070a", 5);
+    parent.add(title);
+    const sub = this.scene.add.text(textX, top + 54, this.mailSubline(mail), (tone ? textStyle({ role: "emphasis", size: 22, color: dim ? COLOR.inkDim : tone.text }) : textStyle({ role: "body", size: 22, color: COLOR.inkDim }))).setOrigin(0, 0);
+    if (tone) sub.setStroke("#05070a", 4);
+    parent.add(sub);
     const expiry = this.expiryLabel(mail, nowMs);
     const soon = !!mail.expiresAt && !isMailExpired(mail, nowMs) && Date.parse(mail.expiresAt) - nowMs < 3 * 86_400_000;
     parent.add(this.scene.add.text(card.width / 2 - 34 - expiryInset, top + 12, expiry, textStyle({ role: "emphasis", size: 22, color: soon && !dim ? COLOR.dangerText : COLOR.inkDim })).setOrigin(1, 0));
@@ -168,7 +248,8 @@ export class MailPopup {
     const height = card.rewardHeight;
     const expired = isMailExpired(mail, nowMs);
     const dim = expired || mail.claimed;
-    this.addCardChrome(parent, mail, y, height, dim, "mail");
+    if (mail.special) this.addSpecialChrome(parent, mail, mail.special, y, height, dim);
+    else this.addCardChrome(parent, mail, y, height, dim, "mail");
     this.addHeadline(parent, mail, y, height, dim, nowMs, MAIL_POPUP_LAYOUT.card.deleteChip.hit);
     const stripY = y + height / 2 - 30 - rewards.size / 2;
     // 첨부 줄 뒤에 얕은 홈을 깔아 "이 봉투에 든 것"이 한 줄로 묶여 읽히게 한다.
@@ -258,11 +339,12 @@ export class MailPopup {
     let close: (() => void) | undefined;
     this.popups.open({ width: L.width, height: L.height, title: t(`mail.tab.${mailTabOf(mail)}`), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.6, closeOnBackdrop: true }, (body, closePopup) => {
       close = closePopup;
-      body.add(this.scene.add.text(left, L.titleY, mail.title, textStyle({ role: "display", size: 36, color: COLOR.ink, wrap: textWidth })).setOrigin(0, 0.5));
-      body.add(this.scene.add.text(left, L.metaY, `${mail.sender}  ·  ${mail.sentAt.slice(0, 10)}  ·  ${this.expiryLabel(mail, nowMs)}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
-      const rule = this.scene.add.graphics(); rule.lineStyle(2, COLOR.accent, 0.5).lineBetween(left, L.ruleY, -left, L.ruleY); body.add(rule);
+      const tone = mail.special ? mailSpecialTone(mail.special) : undefined;
+      body.add(this.scene.add.text(left, L.titleY, this.mailTitle(mail), textStyle({ role: "display", size: 36, color: COLOR.ink, wrap: textWidth })).setOrigin(0, 0.5));
+      body.add(this.scene.add.text(left, L.metaY, `${this.mailSubline(mail)}  ·  ${mail.sentAt.slice(0, 10)}  ·  ${this.expiryLabel(mail, nowMs)}`, (tone ? textStyle({ role: "emphasis", size: 22, color: tone.text }) : textStyle({ role: "body", size: 22, color: COLOR.inkDim }))).setOrigin(0, 0.5));
+      const rule = this.scene.add.graphics(); rule.lineStyle(tone ? 3 : 2, tone?.color ?? COLOR.accent, tone ? 0.8 : 0.5).lineBetween(left, L.ruleY, -left, L.ruleY); body.add(rule);
       const bodyBottom = hasRewards ? L.body.bottom : L.height / 2 - 70;
-      const text = this.scene.add.text(left, L.body.top, mail.body, textStyle({ role: "body", size: 27, color: COLOR.ink, wrap: textWidth, lineSpacing: 10 })).setOrigin(0, 0);
+      const text = this.scene.add.text(left, L.body.top, mail.special ? t(`mail.kindBody.${mail.special.kind}` as TextKey) : mail.body, textStyle({ role: "body", size: 27, color: COLOR.ink, wrap: textWidth, lineSpacing: 10 })).setOrigin(0, 0);
       fitTextToBox(text, { width: textWidth, height: bodyBottom - L.body.top });
       body.add(text);
       if (!hasRewards) return;

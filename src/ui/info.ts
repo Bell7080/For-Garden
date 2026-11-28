@@ -38,7 +38,7 @@ import {
 } from "../puppets/assets";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
 import { addBackButton, IconButton } from "./IconButton";
-import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawShapeInnerGlow, drawShapeOutline, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawShapeInnerGlow, drawShapeOutline, drawVignette, HOLO, HoloBar, perspectiveRect, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
 import { addObservationJournalButton, openObservationJournal } from "./ObservationJournal";
@@ -81,8 +81,8 @@ import { fitTextToBox, squeezeTextToWidth } from "./textFit";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmCardLayout, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
 import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, breakthroughFragmentSpend, type BreakthroughStep, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as simulateFeed, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade, breakthroughGrowthPercent, RELIC_MAX_LEVEL } from "../core/relicProgression";
-import { bondStatPercent, BOND_LEVEL_MAX, BOND_TOTAL_XP_BY_LEVEL, bondXpToNext } from "../core/bond";
-import { bondAwakeningLeft, openBondAwakening, openBondDetail as openBondDetailPopup } from "./BondPopups";
+import { BOND_LEVEL_MAX, BOND_TOTAL_XP_BY_LEVEL, bondXpToNext } from "../core/bond";
+import { bondAwakeningLeft, openBondDetail as openBondDetailPopup } from "./BondPopups";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
 import { attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, periodicStackKeyword, plumeKeyword, frostbiteKeyword, skillDescription, passiveStackKeywords, casterRatioKeywords } from "./skillPresentation";
@@ -327,9 +327,17 @@ const BREAK_EDGE = 0xa88cf0;
  */
 const RESET_CHIP = { offsetX: 82, y: 330, width: 128, height: 50, icon: 22, size: 22 } as const;
 
-/** 유대 칸의 「각성」 칩 — 돋보기 바로 아래, 칸 오른쪽 아래 구석. 글줄은 그 왼쪽까지만 쓴다. */
-const BOND_LABEL_ROOM = { withChip: 200, full: 300 } as const;
-const BOND_AWAKEN_CHIP = { offsetX: 62, y: 744, width: 100, height: 40, icon: 20, size: 20, tone: 0xffb36b } as const;
+/**
+ * 유대 칸의 자리(응태 2026-11-28) — 하트·게이지·경험치를 왼쪽으로 붙인다. 아래 글줄은 경험치 하나만 적는다(능력치는
+ * 상세 판이 말한다). 각성 버튼은 따로 세우지 않는다 — 남은 각성이 있으면 유대 돋보기에 붉은 점이 서고, 돋보기가 여는
+ * 상세 판에서 각성으로 들어간다.
+ * x는 칸 왼쪽 끝 · 오른쪽 끝에서 잰 거리다.
+ */
+const BOND_ROW = {
+  heart: { left: 74, y: 706 },
+  gauge: { left: 132, right: 66, y: 698, height: 22, ticks: 9 },
+  label: { left: 132, y: 724, size: 24 },
+} as const;
 
 /**
  * 한계 돌파 버튼의 규격.
@@ -575,10 +583,11 @@ export class InfoManager {
   private readonly feedLabel: Phaser.GameObjects.Text;
 
   private readonly bondValue: Phaser.GameObjects.Text;
-  private readonly bondBar: Gauge;
+  private readonly bondBar: HoloBar;
   private readonly bondLabel: Phaser.GameObjects.Text;
   /** 유대 칸 오른쪽 아래 「각성」 칩 — 남은 각성이 있으면 붉은 점과 함께 숨 쉰다. */
-  private bondAwakenChip?: { container: Phaser.GameObjects.Container; dot: Phaser.GameObjects.Container; tween?: Phaser.Tweens.Tween };
+  /** 남은 각성이 있을 때 유대 돋보기에 서는 붉은 점. 키울 수 있는 창에만 있다. */
+  private bondAwakenDot?: NotificationDot;
 
   /** 능력치 칸 제목 아래에 서는 사거리 한 줄. */
   private reachLabel!: Phaser.GameObjects.Text;
@@ -944,7 +953,9 @@ export class InfoManager {
     }
 
     // 유대.
-    const bondHeart = scene.add.container(COLUMN.x - COLUMN.width / 2 + 92, 710);
+    const bondLeft = COLUMN.x - COLUMN.width / 2;
+    const bondRight = COLUMN.x + COLUMN.width / 2;
+    const bondHeart = scene.add.container(bondLeft + BOND_ROW.heart.left, BOND_ROW.heart.y);
     // 하트도 별과 같은 방식이다 — 그림자·빛무리·몸통을 겹으로 쌓고 어두운 선으로 마무리한다.
     bondHeart.add(paintBondHeart(scene, BOND_HEART_SIZE));
     // 수치는 하트 위로 떠오른다 — 검은 획에 하트 빛을 둘러 투영된 하트와 한 덩어리로 읽힌다.
@@ -953,13 +964,21 @@ export class InfoManager {
       .setPadding(HOLO_SHIMMER.textGlow.padding)
       .setShadow(0, 0, holoGlowColor("#ff7d96"), HOLO_SHIMMER.textGlow.blur, true, true);
     bondHeart.add(this.bondValue);
-    this.bondBar = new Gauge(scene, COLUMN.x + 40, 718, COLUMN.width - 184, 14, BOND_HEART);
-    this.bondLabel = scene.add.text(COLUMN.x - COLUMN.width / 2 + 152, 738, "", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0);
+    // 게이지는 홀로그램 결 — 흰 테와 눈금, 채움 아래 옅은 빛무리, 채움 안을 일렁이는 안개와 가끔 훑는 빛띠.
+    const G = BOND_ROW.gauge;
+    const gaugeWidth = bondRight - G.right - (bondLeft + G.left);
+    this.bondBar = new HoloBar(scene, bondLeft + G.left + gaugeWidth / 2, G.y, gaugeWidth, G.height, {
+      color: BOND_HEART, trackAlpha: 0.7, outline: true, ticks: G.ticks,
+      shadow: { offsetX: 2, offsetY: 5, alpha: 0.6 }, glow: { spread: 8, alpha: 0.22 },
+      shimmer: { still: motionPolicy(session.settings).nonEssentialDistanceFactor <= 0, phase: 0.4 },
+    });
+    this.bondLabel = scene.add.text(bondLeft + BOND_ROW.label.left, BOND_ROW.label.y, "", textStyle({ role: "emphasis", size: BOND_ROW.label.size, color: "#ffc2cf" })).setOrigin(0, 0).setStroke("#2a0812", 4);
     attach(bondPanel, bondHeart, ...this.bondBar.objects, this.bondLabel);
     this.addSectionTitle(t("info.section.bond"), 706 - 72).setVisible(this.capabilities.showBond);
-    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 686, (from) => this.openBondDetail(from), bondPanel);
-    // 돋보기 바로 아래 「각성」 칩 — 유대 각성 판을 곧바로 연다(응태 2026-11-28).
-    if (this.capabilities.showBond && this.capabilities.mutateProgress) this.bondAwakenChip = this.addBondAwakenChip(COLUMN.x + COLUMN.width / 2 - BOND_AWAKEN_CHIP.offsetX, BOND_AWAKEN_CHIP.y, bondPanel);
+    const bondMagnifier = this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 686, (from) => this.openBondDetail(from), bondPanel);
+    if (this.capabilities.showBond && this.capabilities.mutateProgress) {
+      this.bondAwakenDot = new NotificationDot(scene, bondMagnifier, { x: INFO_MAGNIFIER.size / 2 - 4, y: -INFO_MAGNIFIER.size / 2 + 4 }).setVisible(false);
+    }
 
     // 능력치.
     this.addSectionTitle(t("info.section.stats"), 1024 - 198);
@@ -1052,8 +1071,8 @@ export class InfoManager {
     attach(panel, hit);
   }
 
-  private addMagnifier(x: number, y: number, onClick: (from: PopupSource) => void, panel?: Phaser.GameObjects.Container): void {
-    addInfoMagnifier(this.scene, this.popups, panel ?? this.chrome, x, y, onClick, panel !== undefined);
+  private addMagnifier(x: number, y: number, onClick: (from: PopupSource) => void, panel?: Phaser.GameObjects.Container): Phaser.GameObjects.Container {
+    return addInfoMagnifier(this.scene, this.popups, panel ?? this.chrome, x, y, onClick, panel !== undefined);
   }
 
   /**
@@ -1171,49 +1190,9 @@ export class InfoManager {
   }
 
   /** 레벨 초기화 칩. 누르면 회수량·젬 값을 보여 주는 확인 창이 먼저 열린다. */
-  /** 유대 각성 칩. 칸을 누르는 면보다 위에 서서 그 칸의 상세 대신 각성 판을 연다. */
-  private addBondAwakenChip(x: number, y: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; dot: Phaser.GameObjects.Container } {
-    const spec = BOND_AWAKEN_CHIP;
-    const container = this.scene.add.container(x, y);
-    const shape = slantedRect(spec.width, spec.height, 8);
-    container.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x2a1620, alpha: 0.92, edge: spec.tone, edgeAlpha: 0.75 }));
-    const label = this.scene.add.text(0, 0, t("info.bond.awakenShort"), textStyle({ role: "emphasis", size: spec.size, color: "#ffd2a6" })).setOrigin(0, 0.5);
-    const icon = drawGlyph(this.scene, "promote", 0, 0, spec.icon, spec.tone, 1, 3);
-    squeezeTextToWidth(label, spec.width - 24 - spec.icon - 6);
-    const total = spec.icon + 6 + label.displayWidth;
-    icon.setX(-total / 2 + spec.icon / 2);
-    label.setX(-total / 2 + spec.icon + 6);
-    container.add([icon, label]);
-    // 알림점은 화면 어디서나 같은 공용 점이다(로비·레일과 같은 크기·외곽선·그림자).
-    const dot = new NotificationDot(this.scene, container, { x: spec.width / 2 - 4, y: -spec.height / 2 + 2 }).setVisible(false);
-    const hit = this.scene.add.rectangle(0, 0, spec.width + 12, spec.height + 16, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => pressIn(container));
-    hit.on("pointerout", () => pressOut(container, "normal", { pop: false }));
-    hit.on("pointerup", () => {
-      const def = this.currentDef;
-      if (!def || !this.ownedNow || this.popups.isOpen) { pressOut(container, "normal", { pop: false }); return; }
-      openBondAwakening(this.bondContext(def.id, { x: panel.x, y: panel.y, onClose: () => pressOut(container) }));
-    });
-    container.add(hit);
-    attach(panel, container);
-    return { container, dot };
-  }
-
-  /** 남은 각성이 있으면 붉은 점을 세우고 칩이 살짝 숨 쉰다. */
-  private paintBondAwakenChip(relicId: string): void {
-    const chip = this.bondAwakenChip;
-    if (!chip) return;
-    chip.container.setVisible(this.ownedNow);
-    const left = this.ownedNow ? bondAwakeningLeft(relicId) : 0;
-    chip.dot.setVisible(left > 0);
-    const breathing = left > 0 && motionPolicy(session.settings).nonEssentialDistanceFactor > 0;
-    if (breathing && !chip.tween) {
-      chip.tween = this.scene.tweens.add({ targets: chip.container, scale: { from: 1, to: 1.06 }, duration: 760, yoyo: true, repeat: -1, ease: "Sine.InOut" });
-    } else if (!breathing && chip.tween) {
-      chip.tween.remove();
-      chip.tween = undefined;
-      chip.container.setScale(1);
-    }
+  /** 남은 각성이 있으면 유대 돋보기에 붉은 점이 선다. */
+  private paintBondAwakenDot(relicId: string): void {
+    this.bondAwakenDot?.setVisible(this.ownedNow && bondAwakeningLeft(relicId) > 0);
   }
 
   private addResetChip(x: number, y: number, panel: Phaser.GameObjects.Container): Phaser.GameObjects.Container {
@@ -1240,15 +1219,48 @@ export class InfoManager {
 
   /** 회수·레벨 확정은 서버가 한 처리로 맡는다. 화면은 결과만 다시 그린다. */
   private async resetRelic(relicId: string): Promise<void> {
+    const before = relicProgression.getProgress(relicId).level;
+    let done = false;
     try {
       const response = await withBusy(this.scene, gameApi.resetRelic(relicId));
       this.onWalletChange?.();
       if (this.celebratedLevel?.id === relicId) this.celebratedLevel = undefined;
       showContentToast(this.scene, t("info.reset.done", { count: response.cheesecakeRefunded.toLocaleString() }), "info");
+      done = true;
     } catch (error) {
       logError("relic.reset", "레벨 초기화 실패", error);
     }
     this.refreshGrowth();
+    if (done && this.currentDef?.id === relicId) this.rollLevelDown(before, relicProgression.getProgress(relicId).level);
+  }
+
+  /**
+   * 레벨 초기화 뒤 — 레벨 수가 예전 값에서 붉게 굴러 내려와 1에 닿는 순간 톡 튄다(응태 2026-11-28).
+   * 경험치 줄·버튼은 이미 새 값이고, 굴러가는 것은 큰 레벨 수 하나다. 움직임 줄이기에서는 곧바로 새 값에 선다.
+   */
+  private rollLevelDown(from: number, to: number): void {
+    if (from <= to || motionPolicy(session.settings).nonEssentialRepeatFactor <= 0) return;
+    const text = this.levelValue;
+    const baseColor = String(text.style.color ?? "#ffffff");
+    const counter = { value: from };
+    const paint = (value: number): void => {
+      text.setText(String(value));
+      this.levelCap.setX(text.x + text.width + 14);
+    };
+    text.setColor("#ff8a96");
+    paint(from);
+    this.scene.tweens.killTweensOf(counter);
+    this.scene.tweens.add({
+      targets: counter, value: to, duration: Math.min(1100, 420 + (from - to) * 9), ease: "Cubic.easeOut",
+      onUpdate: () => { if (text.active) paint(Math.round(counter.value)); },
+      onComplete: () => {
+        if (!text.active) return;
+        paint(to);
+        text.setColor(baseColor);
+        const sx = text.scaleX, sy = text.scaleY;
+        this.scene.tweens.add({ targets: text, scaleX: sx * 1.22, scaleY: sy * 1.22, duration: 130, yoyo: true, ease: "Sine.easeOut", onComplete: () => text.setScale(sx, sy) });
+      },
+    });
   }
 
   /** 돌파할 수 있는 상태인지 알린다. 재료가 모자라도 눌러 무엇이 필요한지 볼 수 있다. */
@@ -3108,13 +3120,11 @@ export class InfoManager {
     const bondNext = bondMaxed ? bondBase : bondBase + bondXpToNext(progress.bondLevel);
     this.bondValue.setText(String(progress.bondLevel));
     this.bondBar.setValue(bondMaxed ? 1 : (progress.bondXp - bondBase) / (bondNext - bondBase));
-    // 유대는 10레벨까지 레벨마다 오각형 다섯을 1%씩 올린다(`bondStatPercent`) — 위 오각형의 수치에 이미 든 몫이다.
-    const boost = bondStatPercent(progress.bondLevel);
-    this.bondLabel.setScale(1).setText(`${bondMaxed ? "MAX" : `${progress.bondXp} / ${bondNext} EXP`}  ·  ${t("info.bond.statGain")} +${boost}%`);
-    // 각성 칩이 서면 글줄은 그 왼쪽까지만 쓴다.
-    const chipShown = this.bondAwakenChip !== undefined && this.ownedNow;
-    squeezeTextToWidth(this.bondLabel, chipShown ? BOND_LABEL_ROOM.withChip : BOND_LABEL_ROOM.full);
-    this.paintBondAwakenChip(def.id);
+    // 아래 글줄은 경험치 하나만 — 능력치는 상세 판의 오각형이 말한다(응태 2026-11-28).
+    this.bondLabel.setScale(1).setText(bondMaxed ? "MAX" : `${progress.bondXp.toLocaleString()} / ${bondNext.toLocaleString()} EXP`);
+    // 각성 버튼이 서면 글줄은 그 왼쪽까지만 쓴다.
+    squeezeTextToWidth(this.bondLabel, COLUMN.width - BOND_ROW.label.left - 40);
+    this.paintBondAwakenDot(def.id);
 
     this.statRadar?.draw(finalStats, STAT_RADAR_RADIUS, baseStatsOf(def.id));
 
@@ -3387,7 +3397,7 @@ export function addInfoMagnifier(
   onClick: (from: PopupSource) => void,
   /** 기울어진 칸 안에 넣을 때는 칸의 국소 좌표로 옮겨 함께 기울게 한다. */
   intoPanel = false,
-): void {
+): Phaser.GameObjects.Container {
   // 자리는 늘 판의 오른쪽 끝 안쪽이다. 끝에 붙어야 "이 칸에 딸린 것"으로 읽히고, 안쪽으로
   // 조금 들여야 기울어진 변에 걸치지 않는다.
   const container = scene.add.container(x, y);
@@ -3408,6 +3418,7 @@ export function addInfoMagnifier(
   });
   if (intoPanel) attach(parent, container, hit);
   else parent.add([container, hit]);
+  return container;
 }
 
 

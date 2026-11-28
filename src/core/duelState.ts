@@ -1,3 +1,4 @@
+import { COMPETITIVE_MONTHLY_ENABLED, isLegacyDuelSeasonId } from "./competitiveSeason";
 import {
   DUEL_DAILY_ATTEMPTS, DUEL_DEFAULT_DEFENSE, DUEL_OPPONENT_COUNT, DUEL_START_SCORE, DUEL_TIERS, duelDayKey, duelSeasonId, duelSeasonResetScore, duelTier, getDuelTier, type DuelTierId,
 } from "./duelArena";
@@ -230,12 +231,15 @@ export function isValidDuelState(value: unknown, ownedRelicIds: readonly string[
  * 시즌이 바뀌면 끝난 시즌의 티어를 정산 대기로 옮기고, 점수를 내린 뒤 그 점수까지의 티어는 이미
  * 닿은 것으로 둔다 — 리셋된 자리를 다시 지나며 첫 도달 젬을 받지 않게 한다.
  */
-export function rollDuelPeriods(state: DuelState, now: Date): DuelState {
+export function rollDuelPeriods(state: DuelState, now: Date, monthly: boolean = COMPETITIVE_MONTHLY_ENABLED): DuelState {
   const next = cloneDuelState(state);
-  const seasonId = duelSeasonId(now);
+  const seasonId = duelSeasonId(now, monthly);
+  // 월간으로 넘어가는 순간의 21일 시즌은 초기화 없이 이번 달로 이어진다 — 바꾼 날 모두의 점수가 깎이지 않게.
+  if (monthly && isLegacyDuelSeasonId(next.seasonId)) next.seasonId = seasonId;
   if (next.seasonId !== seasonId) {
     const played = next.seasonId !== "" && next.wins + next.losses > 0;
-    if (played) next.pendingSeasonReward = { seasonId: next.seasonId, tierId: duelTier(next.score).id };
+    // 월간 시즌의 티어 보상은 매주 우편으로 온다(`server_competitive_rewards_v3`) — 탭에서 받을 몫을 쌓지 않는다.
+    if (played && !monthly) next.pendingSeasonReward = { seasonId: next.seasonId, tierId: duelTier(next.score).id };
     // 처음 여는 계정(빈 시즌)은 지난 시즌이 없다. 판을 치르지 않고 넘어간 시즌도 남기지 않는다.
     if (next.seasonId !== "") {
       next.lastSeasonTierId = played ? duelTier(next.score).id : null;

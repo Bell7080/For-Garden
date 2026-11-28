@@ -1302,15 +1302,45 @@
 "Tippe einen Wert an, um ihn zu Erwachen: je +{percent}%",
 "Нажмите параметр для Пробуждения: +{percent}% за раз"
 ],
-"info.bond.awakenResetConfirm": [
-"返还所有已分配的觉醒，不消耗任何资源。",
-"คืนปลุกพลังที่ใช้ไปทั้งหมด ไม่มีค่าใช้จ่าย",
-"Hoàn lại toàn bộ lượt Thức tỉnh đã dùng. Không tốn phí.",
-"Semua Bangkit yang dipakai dikembalikan. Gratis.",
-"Recuperas todos los Despertares asignados. No cuesta nada.",
-"Todos os Despertares usados voltam para você. Não custa nada.",
-"Alle vergebenen Erwachen werden zurückgegeben. Es kostet nichts.",
-"Все распределённые Пробуждения вернутся. Это бесплатно."
+"info.bond.awakenReset.title": [
+"重置羁绊觉醒",
+"รีเซ็ตปลุกพลังสายสัมพันธ์",
+"Đặt lại Thức tỉnh Gắn kết",
+"Reset Bangkit Ikatan",
+"Reiniciar Despertar del Vínculo",
+"Redefinir Despertar do Vínculo",
+"Bindungs-Erwachen zurücksetzen",
+"Сброс Пробуждения Связи"
+],
+"info.bond.awakenReset.plea": [
+"没关系！\n要不要用在别的地方？",
+"ไม่เป็นไรนะ!\nลองเอาไปใช้ที่อื่นดูไหม?",
+"Không sao đâu!\nThử dùng vào chỗ khác nhé?",
+"Tidak apa-apa!\nMau dipakai di tempat lain?",
+"¡No pasa nada!\n¿Lo usamos en otro sitio?",
+"Tudo bem!\nVamos usar em outro lugar?",
+"Kein Problem!\nWollen wir sie woanders einsetzen?",
+"Ничего страшного!\nПотратим их на что-то другое?"
+],
+"info.bond.awakenReset.wallet": [
+"剩余觉醒变化",
+"ปลุกพลังคงเหลือที่เปลี่ยนไป",
+"Thay đổi lượt Thức tỉnh còn lại",
+"Perubahan sisa Bangkit",
+"Cambio de Despertares restantes",
+"Mudança nos Despertares restantes",
+"Übrige Erwachen",
+"Изменение оставшихся пробуждений"
+],
+"info.bond.awakenReset.note": [
+"羁绊等级和故事会保持不变。",
+"เลเวลสายสัมพันธ์และเนื้อเรื่องยังอยู่เหมือนเดิม",
+"Cấp Gắn kết và câu chuyện vẫn được giữ nguyên.",
+"Level Ikatan dan cerita tetap seperti semula.",
+"El nivel de Vínculo y las historias se mantienen.",
+"O nível de Vínculo e as histórias continuam iguais.",
+"Bindungsstufe und Geschichten bleiben erhalten.",
+"Уровень Связи и истории сохраняются."
 ],
 "info.bond.awakenResetDone": [
 "已重置觉醒",
@@ -1321,16 +1351,6 @@
 "Despertares redefinidos",
 "Erwachen zurückgesetzt",
 "Пробуждения сброшены"
-],
-"info.bond.awakenRecord": [
-"分配记录",
-"การจัดสรร",
-"Đã phân bổ",
-"Alokasi",
-"Asignación",
-"Distribuição",
-"Verteilung",
-"Распределение"
 ],
 "info.bond.awakenTimes": [
 "{count}次",

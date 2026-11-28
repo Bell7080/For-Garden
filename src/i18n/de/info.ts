@@ -155,7 +155,6 @@ export const INFO_DE = {
   "info.bond.awakenReset.wallet": "Übrige Erwachen",
   "info.bond.awakenReset.note": "Bindungsstufe und Geschichten bleiben erhalten.",
   "info.bond.awakenResetDone": "Erwachen zurückgesetzt",
-  "info.bond.awakenRecord": "Verteilung",
   "info.bond.awakenTimes": "×{count}",
   "info.bond.howTo": "So erhältst du es!",
   "info.bond.howToTitle": "So erhältst du Bindung",

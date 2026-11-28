@@ -160,7 +160,6 @@ export const INFO_JA = {
   "info.bond.awakenReset.wallet": "残り覚醒の変化",
   "info.bond.awakenReset.note": "絆レベルとストーリーはそのまま残ります。",
   "info.bond.awakenResetDone": "覚醒をリセットしました",
-  "info.bond.awakenRecord": "振り分け内訳",
   "info.bond.awakenTimes": "{count}回",
   "info.bond.howTo": "入手方法！",
   "info.bond.howToTitle": "絆の入手方法",

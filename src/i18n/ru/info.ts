@@ -155,7 +155,6 @@ export const INFO_RU = {
   "info.bond.awakenReset.wallet": "Изменение оставшихся пробуждений",
   "info.bond.awakenReset.note": "Уровень Связи и истории сохраняются.",
   "info.bond.awakenResetDone": "Пробуждения сброшены",
-  "info.bond.awakenRecord": "Распределение",
   "info.bond.awakenTimes": "×{count}",
   "info.bond.howTo": "Как получить!",
   "info.bond.howToTitle": "Как получить Связь",

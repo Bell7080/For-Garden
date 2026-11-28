@@ -38,7 +38,7 @@ import {
 } from "../puppets/assets";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
 import { addBackButton, IconButton } from "./IconButton";
-import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawShapeInnerGlow, drawShapeOutline, drawVignette, fillShapeGradient, HOLO, HoloBar, perspectiveRect, slantedRect, toPoints } from "./holo";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawShapeInnerGlow, drawShapeOutline, drawVignette, HOLO, HoloBar, perspectiveRect, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
 import { addObservationJournalButton, openObservationJournal } from "./ObservationJournal";
@@ -82,7 +82,7 @@ import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmCardLayout, breakConfirmHeight,
 import { gameApi } from "../api/FakeServer";
 import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, breakthroughFragmentSpend, type BreakthroughStep, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as simulateFeed, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade, breakthroughGrowthPercent, RELIC_MAX_LEVEL } from "../core/relicProgression";
 import { BOND_LEVEL_MAX, BOND_TOTAL_XP_BY_LEVEL, bondXpToNext } from "../core/bond";
-import { bondAwakeningLeft, openBondAwakening, openBondDetail as openBondDetailPopup } from "./BondPopups";
+import { bondAwakeningLeft, openBondDetail as openBondDetailPopup } from "./BondPopups";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
 import { attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, periodicStackKeyword, plumeKeyword, frostbiteKeyword, skillDescription, passiveStackKeywords, casterRatioKeywords } from "./skillPresentation";
@@ -327,8 +327,9 @@ const BREAK_EDGE = 0xa88cf0;
 const RESET_CHIP = { offsetX: 82, y: 330, width: 128, height: 50, icon: 22, size: 22 } as const;
 
 /**
- * 유대 칸의 자리(응태 2026-11-28) — 하트·게이지·경험치를 왼쪽으로 붙이고, 오른쪽 아래 모서리에 **크게** 「각성」 버튼이
- * 칸 밖으로 한 뼘 걸터앉는다. 아래 글줄은 경험치 하나만 적는다(능력치는 상세 판이 말한다).
+ * 유대 칸의 자리(응태 2026-11-28) — 하트·게이지·경험치를 왼쪽으로 붙인다. 아래 글줄은 경험치 하나만 적는다(능력치는
+ * 상세 판이 말한다). 각성 버튼은 따로 세우지 않는다 — 남은 각성이 있으면 유대 돋보기에 붉은 점이 서고, 돋보기가 여는
+ * 상세 판에서 각성으로 들어간다.
  * x는 칸 왼쪽 끝 · 오른쪽 끝에서 잰 거리다.
  */
 const BOND_ROW = {
@@ -336,7 +337,6 @@ const BOND_ROW = {
   gauge: { left: 132, right: 66, y: 698, height: 22, ticks: 9 },
   label: { left: 132, y: 724, size: 24 },
 } as const;
-const BOND_AWAKEN_CHIP = { right: 54, y: 762, width: 164, height: 74, icon: 30, size: 32, tone: 0xff6f91, plate: 0xc93a62 } as const;
 
 /**
  * 한계 돌파 버튼의 규격.
@@ -585,7 +585,8 @@ export class InfoManager {
   private readonly bondBar: HoloBar;
   private readonly bondLabel: Phaser.GameObjects.Text;
   /** 유대 칸 오른쪽 아래 「각성」 칩 — 남은 각성이 있으면 붉은 점과 함께 숨 쉰다. */
-  private bondAwakenChip?: { container: Phaser.GameObjects.Container; dot: Phaser.GameObjects.Container; halo: Phaser.GameObjects.Graphics; tween?: Phaser.Tweens.Tween };
+  /** 남은 각성이 있을 때 유대 돋보기에 서는 붉은 점. 키울 수 있는 창에만 있다. */
+  private bondAwakenDot?: NotificationDot;
 
   /** 능력치 칸 제목 아래에 서는 사거리 한 줄. */
   private reachLabel!: Phaser.GameObjects.Text;
@@ -938,9 +939,10 @@ export class InfoManager {
     this.bondLabel = scene.add.text(bondLeft + BOND_ROW.label.left, BOND_ROW.label.y, "", textStyle({ role: "emphasis", size: BOND_ROW.label.size, color: "#ffc2cf" })).setOrigin(0, 0).setStroke("#2a0812", 4);
     attach(bondPanel, bondHeart, ...this.bondBar.objects, this.bondLabel);
     this.addSectionTitle(t("info.section.bond"), 706 - 72).setVisible(this.capabilities.showBond);
-    this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 686, (from) => this.openBondDetail(from), bondPanel);
-    // 돋보기 바로 아래 「각성」 칩 — 유대 각성 판을 곧바로 연다(응태 2026-11-28).
-    if (this.capabilities.showBond && this.capabilities.mutateProgress) this.bondAwakenChip = this.addBondAwakenChip(bondRight - BOND_AWAKEN_CHIP.right, BOND_AWAKEN_CHIP.y, bondPanel);
+    const bondMagnifier = this.addMagnifier(COLUMN.x + COLUMN.width / 2 - 30, 686, (from) => this.openBondDetail(from), bondPanel);
+    if (this.capabilities.showBond && this.capabilities.mutateProgress) {
+      this.bondAwakenDot = new NotificationDot(scene, bondMagnifier, { x: INFO_MAGNIFIER.size / 2 - 4, y: -INFO_MAGNIFIER.size / 2 + 4 }).setVisible(false);
+    }
 
     // 능력치.
     this.addSectionTitle(t("info.section.stats"), 1024 - 198);
@@ -1033,8 +1035,8 @@ export class InfoManager {
     attach(panel, hit);
   }
 
-  private addMagnifier(x: number, y: number, onClick: (from: PopupSource) => void, panel?: Phaser.GameObjects.Container): void {
-    addInfoMagnifier(this.scene, this.popups, panel ?? this.chrome, x, y, onClick, panel !== undefined);
+  private addMagnifier(x: number, y: number, onClick: (from: PopupSource) => void, panel?: Phaser.GameObjects.Container): Phaser.GameObjects.Container {
+    return addInfoMagnifier(this.scene, this.popups, panel ?? this.chrome, x, y, onClick, panel !== undefined);
   }
 
   /**
@@ -1151,62 +1153,9 @@ export class InfoManager {
   }
 
   /** 레벨 초기화 칩. 누르면 회수량·젬 값을 보여 주는 확인 창이 먼저 열린다. */
-  /** 유대 각성 칩. 칸을 누르는 면보다 위에 서서 그 칸의 상세 대신 각성 판을 연다. */
-  private addBondAwakenChip(x: number, y: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; dot: Phaser.GameObjects.Container; halo: Phaser.GameObjects.Graphics } {
-    const spec = BOND_AWAKEN_CHIP;
-    const container = this.scene.add.container(x, y);
-    const shape = chipPoints(spec.width, spec.height, { bevel: { topLeft: 18, bottomRight: 18 } });
-    // 숨 쉬는 빛 — 같은 실루엣을 키워 겹쳐 깎인 모서리까지 따라 번진다. 남은 각성이 있을 때만 켜진다.
-    const halo = this.scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD).setAlpha(0);
-    for (let ring = 5; ring >= 1; ring -= 1) {
-      const grow = ring * 4;
-      halo.fillStyle(spec.tone, 0.07).fillPoints(toPoints(chipPoints(spec.width + grow * 2, spec.height + grow * 2, { bevel: { topLeft: 18 + grow * 0.41, bottomRight: 18 + grow * 0.41 } })), true);
-    }
-    container.add(halo);
-    container.add(drawLayer(this.scene, 0, 0, shape, { fill: spec.plate, alpha: 0.97, edge: 0xffd2dc, edgeAlpha: 0.95, shadow: { x: 5, y: 9 } }));
-    // 위쪽 절반에 옅은 광택 띠 — 판 실루엣대로 잘라 모서리 밖으로 새지 않는다.
-    const sheen = this.scene.add.graphics();
-    fillShapeGradient(sheen, shape, { from: -spec.height / 2, to: 4, color: 0xffffff, alphaFrom: 0.22 });
-    container.add(sheen);
-    const label = this.scene.add.text(0, 0, t("info.bond.awakenShort"), textStyle({ role: "display", size: spec.size, color: "#ffffff" })).setOrigin(0, 0.5).setStroke("#5a0f24", 6);
-    const icon = drawGlyph(this.scene, "promote", 0, 0, spec.icon, 0xffffff, 1, 3);
-    squeezeTextToWidth(label, spec.width - 34 - spec.icon - 8);
-    const total = spec.icon + 8 + label.displayWidth;
-    icon.setX(-total / 2 + spec.icon / 2);
-    label.setX(-total / 2 + spec.icon + 8);
-    container.add([icon, label]);
-    // 알림점은 화면 어디서나 같은 공용 점이다(로비·레일과 같은 크기·외곽선·그림자).
-    const dot = new NotificationDot(this.scene, container, { x: spec.width / 2 - 8, y: -spec.height / 2 + 4 }).setVisible(false);
-    const hit = this.scene.add.rectangle(0, 0, spec.width + 12, spec.height + 16, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => pressIn(container));
-    hit.on("pointerout", () => pressOut(container, "normal", { pop: false }));
-    hit.on("pointerup", () => {
-      const def = this.currentDef;
-      if (!def || !this.ownedNow || this.popups.isOpen) { pressOut(container, "normal", { pop: false }); return; }
-      openBondAwakening(this.bondContext(def.id, { x: panel.x, y: panel.y, onClose: () => pressOut(container) }));
-    });
-    container.add(hit);
-    attach(panel, container);
-    return { container, dot, halo };
-  }
-
-  /** 남은 각성이 있으면 붉은 점을 세우고 칩이 살짝 숨 쉰다. */
-  private paintBondAwakenChip(relicId: string): void {
-    const chip = this.bondAwakenChip;
-    if (!chip) return;
-    chip.container.setVisible(this.ownedNow);
-    const left = this.ownedNow ? bondAwakeningLeft(relicId) : 0;
-    chip.dot.setVisible(left > 0);
-    const breathing = left > 0 && motionPolicy(session.settings).nonEssentialDistanceFactor > 0;
-    if (breathing && !chip.tween) {
-      chip.tween = this.scene.tweens.add({ targets: chip.container, scale: { from: 1, to: 1.06 }, duration: 760, yoyo: true, repeat: -1, ease: "Sine.InOut",
-        onUpdate: (tween) => chip.halo.setAlpha(0.45 + 0.55 * (tween.getValue() ?? 0)) });
-    } else if (!breathing && chip.tween) {
-      chip.tween.remove();
-      chip.tween = undefined;
-      chip.container.setScale(1);
-    }
-    chip.halo.setAlpha(left > 0 ? Math.max(chip.halo.alpha, 0.6) : 0);
+  /** 남은 각성이 있으면 유대 돋보기에 붉은 점이 선다. */
+  private paintBondAwakenDot(relicId: string): void {
+    this.bondAwakenDot?.setVisible(this.ownedNow && bondAwakeningLeft(relicId) > 0);
   }
 
   private addResetChip(x: number, y: number, panel: Phaser.GameObjects.Container): Phaser.GameObjects.Container {
@@ -3137,9 +3086,8 @@ export class InfoManager {
     // 아래 글줄은 경험치 하나만 — 능력치는 상세 판의 오각형이 말한다(응태 2026-11-28).
     this.bondLabel.setScale(1).setText(bondMaxed ? "MAX" : `${progress.bondXp.toLocaleString()} / ${bondNext.toLocaleString()} EXP`);
     // 각성 버튼이 서면 글줄은 그 왼쪽까지만 쓴다.
-    const chipShown = this.bondAwakenChip !== undefined && this.ownedNow;
-    squeezeTextToWidth(this.bondLabel, COLUMN.width - BOND_ROW.label.left - (chipShown ? BOND_AWAKEN_CHIP.right + BOND_AWAKEN_CHIP.width / 2 + 14 : 40));
-    this.paintBondAwakenChip(def.id);
+    squeezeTextToWidth(this.bondLabel, COLUMN.width - BOND_ROW.label.left - 40);
+    this.paintBondAwakenDot(def.id);
 
     this.statRadar?.draw(finalStats, STAT_RADAR_RADIUS, baseStatsOf(def.id));
 
@@ -3412,7 +3360,7 @@ export function addInfoMagnifier(
   onClick: (from: PopupSource) => void,
   /** 기울어진 칸 안에 넣을 때는 칸의 국소 좌표로 옮겨 함께 기울게 한다. */
   intoPanel = false,
-): void {
+): Phaser.GameObjects.Container {
   // 자리는 늘 판의 오른쪽 끝 안쪽이다. 끝에 붙어야 "이 칸에 딸린 것"으로 읽히고, 안쪽으로
   // 조금 들여야 기울어진 변에 걸치지 않는다.
   const container = scene.add.container(x, y);
@@ -3433,6 +3381,7 @@ export function addInfoMagnifier(
   });
   if (intoPanel) attach(parent, container, hit);
   else parent.add([container, hit]);
+  return container;
 }
 
 

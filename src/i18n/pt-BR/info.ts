@@ -155,7 +155,6 @@ export const INFO_PT_BR = {
   "info.bond.awakenReset.wallet": "Mudança nos Despertares restantes",
   "info.bond.awakenReset.note": "O nível de Vínculo e as histórias continuam iguais.",
   "info.bond.awakenResetDone": "Despertares redefinidos",
-  "info.bond.awakenRecord": "Distribuição",
   "info.bond.awakenTimes": "×{count}",
   "info.bond.howTo": "Como obter!",
   "info.bond.howToTitle": "Como obter Vínculo",

@@ -39,6 +39,11 @@ export interface StatRadarLabelStyle {
    * 정보창처럼 그래프가 주인공인 자리만 켠다. 곁들이로 놓이는 팝업은 조용한 기본 결을 쓴다.
    */
   holo?: boolean;
+  /**
+   * 축 이름·수치를 레이더가 세우지 않는다 — 각 축에 제 판(레이어)을 따로 세우는 자리(유대 각성)만 끈다.
+   * 끄면 `valueAnchor`는 `undefined`다.
+   */
+  axisLabels?: boolean;
 }
 
 /** 홀로그램 결의 색. 면은 강조색(금빛), 격자와 주사선은 투영 장비의 옅은 청록이다. */
@@ -102,7 +107,7 @@ export class StatRadar extends Phaser.GameObjects.Container {
     }
 
     // 축 라벨은 그래프 밖으로 일정하게 밀어 최대 자릿수 숫자와 겹치지 않게 한다.
-    AXES.forEach(([key, nameKey], index) => {
+    if (label.axisLabels !== false) AXES.forEach(([key, nameKey], index) => {
       const angle = -Math.PI / 2 + index * Math.PI * 2 / AXES.length;
       const color = label.colors?.[key];
       const size = label.size ?? 17;

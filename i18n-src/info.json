@@ -1352,16 +1352,6 @@
 "Erwachen zurückgesetzt",
 "Пробуждения сброшены"
 ],
-"info.bond.awakenRecord": [
-"分配记录",
-"การจัดสรร",
-"Đã phân bổ",
-"Alokasi",
-"Asignación",
-"Distribuição",
-"Verteilung",
-"Распределение"
-],
 "info.bond.awakenTimes": [
 "{count}次",
 "{count} ครั้ง",

@@ -120,7 +120,7 @@ export function createSupabaseStore(env: Env) {
           }],
           ["server_arena_rewards_v2", {
             since: COMPETITIVE_MONTHLY_SINCE,
-            tiers: ARENA_TIERS.map((tier) => ({ tier: tier.id, floor: tier.floor, ...tier.weeklyReward })), month: ARENA_MONTHLY_RANK_REWARDS,
+            tiers: ARENA_TIERS.map((tier) => ({ tier: tier.id, floor: tier.floor, ...tier.monthlyWeeklyReward })), month: ARENA_MONTHLY_RANK_REWARDS,
             legacy: {
               tiers: ARENA_TIERS.map((tier) => ({ floor: tier.floor, ...tier.weeklyReward })),
               ranks: ARENA_WEEKLY_RANK_GEMS.map((row) => ({ upTo: row.upTo, gems: row.gems })),

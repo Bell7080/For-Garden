@@ -45,6 +45,10 @@ describe('반복 보상 인플레이션 승인선',()=>{
   expect(ARENA_WEEKLY_RANK_GEMS.map(r=>r.gems),approvalMessage).toEqual([2500,2000,1500,1000,500,0]);
   expect(ARENA_TIERS.map(t=>t.weeklyReward.gems),approvalMessage).toEqual([200,300,500,600,800,1000]);
   expect(DUEL_TIERS.map(t=>t.seasonReward.gems),approvalMessage).toEqual([300,500,1000,1500,2000,2500,3000,3500]);
+  // 월간 전환 뒤의 매주 티어 몫(응태 승인 2026-11-28 — 칸마다 차이를 벌렸다)
+  expect(DUEL_TIERS.map(t=>t.weeklyReward.gems),approvalMessage).toEqual([250,350,500,700,1000,1300,1700,2500]);
+  expect(ARENA_TIERS.map(t=>t.monthlyWeeklyReward.gems),approvalMessage).toEqual([200,300,500,800,1200,1800]);
+  expect(ARENA_TIERS.every(t=>t.monthlyWeeklyReward.duelEmblem===t.weeklyReward.duelEmblem)).toBe(true);
   // 한 주에 한 사람이 받는 경쟁 젬의 끝(결투장 1위 + 원정 1위 + 아레나 마스터·1위)
   expect(WEEKLY_RANK_GEMS[0].gems*2+ARENA_TIERS.at(-1)!.weeklyReward.gems+ARENA_WEEKLY_RANK_GEMS[0].gems,approvalMessage).toBeLessThanOrEqual(9500);
  });

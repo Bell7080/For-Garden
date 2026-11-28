@@ -20,18 +20,20 @@ export interface ArenaTierDef {
   floor: number;
   /** 주간 마감 때 이 티어에 서 있으면 받는 보상. */
   weeklyReward: { duelEmblem: number; gems: number };
+  /** 월간 전환(`competitiveMonthlyOn`) 뒤의 매주 티어 몫 — 예전 주간 순위 젬을 걷어 낸 만큼 젬을 올렸다(응태 승인 2026-11-28). */
+  monthlyWeeklyReward: { duelEmblem: number; gems: number };
 }
 
 /** 새 계정의 RP. 브론즈 한가운데서 시작한다. */
 export const ARENA_START_SCORE = 1000;
 
 export const ARENA_TIERS: readonly ArenaTierDef[] = [
-  { id: "bronze", floor: 0, weeklyReward: { duelEmblem: 100, gems: 200 } },
-  { id: "silver", floor: 1100, weeklyReward: { duelEmblem: 150, gems: 300 } },
-  { id: "gold", floor: 1300, weeklyReward: { duelEmblem: 200, gems: 500 } },
-  { id: "platinum", floor: 1500, weeklyReward: { duelEmblem: 300, gems: 600 } },
-  { id: "diamond", floor: 1800, weeklyReward: { duelEmblem: 400, gems: 800 } },
-  { id: "master", floor: 2100, weeklyReward: { duelEmblem: 500, gems: 1000 } },
+  { id: "bronze", floor: 0, weeklyReward: { duelEmblem: 100, gems: 200 }, monthlyWeeklyReward: { duelEmblem: 100, gems: 200 } },
+  { id: "silver", floor: 1100, weeklyReward: { duelEmblem: 150, gems: 300 }, monthlyWeeklyReward: { duelEmblem: 150, gems: 300 } },
+  { id: "gold", floor: 1300, weeklyReward: { duelEmblem: 200, gems: 500 }, monthlyWeeklyReward: { duelEmblem: 200, gems: 500 } },
+  { id: "platinum", floor: 1500, weeklyReward: { duelEmblem: 300, gems: 600 }, monthlyWeeklyReward: { duelEmblem: 300, gems: 800 } },
+  { id: "diamond", floor: 1800, weeklyReward: { duelEmblem: 400, gems: 800 }, monthlyWeeklyReward: { duelEmblem: 400, gems: 1200 } },
+  { id: "master", floor: 2100, weeklyReward: { duelEmblem: 500, gems: 1000 }, monthlyWeeklyReward: { duelEmblem: 500, gems: 1800 } },
 ];
 
 /** 주간 순위 보너스(젬). 그 주 랭크전을 한 판이라도 한 계정끼리 RP로 줄을 세운다. 마지막 줄(`upTo: null`)은 0이다. */

@@ -47,12 +47,12 @@ export const DUEL_DIVISION_SPAN = 100;
 export const DUEL_TIERS: readonly DuelTierDef[] = [
   { id: "bronze", floor: 0, divisions: 4, blind: 0, seasonReward: { duelEmblem: 150, gems: 300 }, firstReachGems: 0, weeklyReward: { duelEmblem: 40, gems: 250 } },
   { id: "silver", floor: 400, divisions: 4, blind: 0, seasonReward: { duelEmblem: 250, gems: 500 }, firstReachGems: 100, weeklyReward: { duelEmblem: 60, gems: 350 } },
-  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 1_000 }, firstReachGems: 150, weeklyReward: { duelEmblem: 100, gems: 450 } },
-  { id: "platinum", floor: 1_200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 1_500 }, firstReachGems: 200, weeklyReward: { duelEmblem: 150, gems: 550 } },
-  { id: "diamond", floor: 1_600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 2_000 }, firstReachGems: 300, weeklyReward: { duelEmblem: 200, gems: 650 } },
-  { id: "master", floor: 2_000, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 2_500 }, firstReachGems: 400, weeklyReward: { duelEmblem: 250, gems: 750 } },
-  { id: "grandmaster", floor: 2_400, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_100, gems: 3_000 }, firstReachGems: 500, weeklyReward: { duelEmblem: 300, gems: 850 } },
-  { id: "challenger", floor: 2_800, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_400, gems: 3_500 }, firstReachGems: 700, weeklyReward: { duelEmblem: 350, gems: 1_000 } },
+  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 1_000 }, firstReachGems: 150, weeklyReward: { duelEmblem: 100, gems: 500 } },
+  { id: "platinum", floor: 1_200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 1_500 }, firstReachGems: 200, weeklyReward: { duelEmblem: 150, gems: 700 } },
+  { id: "diamond", floor: 1_600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 2_000 }, firstReachGems: 300, weeklyReward: { duelEmblem: 200, gems: 1000 } },
+  { id: "master", floor: 2_000, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 2_500 }, firstReachGems: 400, weeklyReward: { duelEmblem: 250, gems: 1_300 } },
+  { id: "grandmaster", floor: 2_400, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_100, gems: 3_000 }, firstReachGems: 500, weeklyReward: { duelEmblem: 300, gems: 1_700 } },
+  { id: "challenger", floor: 2_800, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_400, gems: 3_500 }, firstReachGems: 700, weeklyReward: { duelEmblem: 350, gems: 2_500 } },
 ];
 
 /** 가려지는 칸의 상한. 셋 중 하나는 늘 보여야 고를 근거가 남는다. */

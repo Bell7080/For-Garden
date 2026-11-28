@@ -16,21 +16,25 @@ import { openRewardTable } from "./RewardTable";
  */
 export function openArenaTierRewards(scene: Phaser.Scene, popups: PopupLayer, score: number | null): void {
   const myTier = score === null ? null : arenaTierId(score);
+  const monthly = competitiveMonthlyOn();
   openRewardTable(scene, popups, {
     title: t("arena.weekly.tierSection"),
-    rules: t(competitiveMonthlyOn() ? "rewardTable.rules.arenaTier" : "rewardTable.rules.arena"),
+    rules: t(monthly ? "rewardTable.rules.arenaTier" : "rewardTable.rules.arena"),
     compact: true,
     sections: [{
-      rows: [...ARENA_TIERS].reverse().map((tier) => ({
+      rows: [...ARENA_TIERS].reverse().map((tier) => {
+        const reward = monthly ? tier.monthlyWeeklyReward : tier.weeklyReward;
+        return {
         badge: { kind: "tier", tier: tier.id },
         title: t(`duel.tier.${tier.id}`),
         sub: t("arena.weekly.floor", { score: tier.floor.toLocaleString() }),
         rewards: [
-          { texture: CURRENCY_ICON_BY_WALLET.duelEmblem, amount: tier.weeklyReward.duelEmblem },
-          { texture: CURRENCY_ICON_BY_WALLET.gems, amount: tier.weeklyReward.gems },
+          { texture: CURRENCY_ICON_BY_WALLET.duelEmblem, amount: reward.duelEmblem },
+          { texture: CURRENCY_ICON_BY_WALLET.gems, amount: reward.gems },
         ],
         current: tier.id === myTier,
-      })),
+      };
+      }),
     }],
   });
 }

@@ -1,3 +1,4 @@
+import { clipShapeBand } from "./shapeBands";
 import Phaser from "phaser";
 import { COLOR } from "./theme";
 import { bakeKey, bakedGraphicsImage } from "./bakedGraphics";
@@ -835,4 +836,27 @@ export function drawCornerShroud(
   g.lineBetween(edge, 0, 0, edge);
   g.lineBetween(width - edge, height, width, height - edge);
   return g.setDepth(options.depth ?? -22);
+}
+
+/**
+ * 판 실루엣 그대로 세로로 번지는 빛. `from`에서 `alphaFrom`으로 시작해 `to`에서 `alphaTo`로 잦아든다.
+ * 네모 그라데이션과 달리 깎인 모서리를 따라 잘리므로 빛이 판 밖으로 새지 않는다(`clipShapeBand`).
+ */
+export function fillShapeGradient(
+  graphics: Phaser.GameObjects.Graphics,
+  shape: number[],
+  options: { from: number; to: number; color: number; alphaFrom: number; alphaTo?: number; bands?: number },
+): Phaser.GameObjects.Graphics {
+  const bands = options.bands ?? 18;
+  const alphaTo = options.alphaTo ?? 0;
+  const step = (options.to - options.from) / bands;
+  for (let i = 0; i < bands; i += 1) {
+    const a = options.from + step * i;
+    const b = a + step;
+    const band = clipShapeBand(shape, Math.min(a, b), Math.max(a, b));
+    if (band.length < 6) continue;
+    const alpha = options.alphaFrom + (alphaTo - options.alphaFrom) * ((i + 0.5) / bands);
+    graphics.fillStyle(options.color, alpha).fillPoints(toPoints(band), true);
+  }
+  return graphics;
 }

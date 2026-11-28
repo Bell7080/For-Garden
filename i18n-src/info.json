@@ -1332,16 +1332,6 @@
 "Verteilung",
 "Распределение"
 ],
-"info.bond.awakenGain": [
-"羁绊提升",
-"ส่วนที่เพิ่มจากสายสัมพันธ์",
-"Phần tăng nhờ gắn kết",
-"Bonus ikatan",
-"Aumento por vínculo",
-"Bônus de vínculo",
-"Bonus durch Bindung",
-"Бонус от связи"
-],
 "info.bond.awakenTimes": [
 "{count}次",
 "{count} ครั้ง",

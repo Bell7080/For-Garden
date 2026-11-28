@@ -170,7 +170,6 @@ export const INFO_KO = {
   "info.bond.awakenResetConfirm": "투자한 각성을 모두 돌려받습니다. 비용은 들지 않습니다.",
   "info.bond.awakenResetDone": "각성을 초기화했습니다",
   "info.bond.awakenRecord": "투자 내역",
-  "info.bond.awakenGain": "유대로 오른 몫",
   "info.bond.awakenTimes": "{count}회",
   "info.bond.howTo": "획득 방법!",
   "info.bond.howToTitle": "유대 획득 방법",

@@ -6,6 +6,7 @@ import { buildSummonKeywords } from "./summonKeywords";
 import { ferocityMaxOf } from "../core/ferocity";
 import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
 import Phaser from "phaser";
+import { NotificationDot } from "./NotificationDot";
 import type { PuppetAsset, PuppetCreature } from "../puppets/assets";
 import { powerSavingPolicy } from "../core/settings";
 import { PuppetPoker } from "./puppetAct";
@@ -576,7 +577,7 @@ export class InfoManager {
   private readonly bondBar: Gauge;
   private readonly bondLabel: Phaser.GameObjects.Text;
   /** 유대 칸 오른쪽 아래 「각성」 칩 — 남은 각성이 있으면 붉은 점과 함께 숨 쉰다. */
-  private bondAwakenChip?: { container: Phaser.GameObjects.Container; dot: Phaser.GameObjects.Arc; tween?: Phaser.Tweens.Tween };
+  private bondAwakenChip?: { container: Phaser.GameObjects.Container; dot: Phaser.GameObjects.Container; tween?: Phaser.Tweens.Tween };
 
   /** 능력치 칸 제목 아래에 서는 사거리 한 줄. */
   private reachLabel!: Phaser.GameObjects.Text;
@@ -1134,7 +1135,7 @@ export class InfoManager {
 
   /** 레벨 초기화 칩. 누르면 회수량·젬 값을 보여 주는 확인 창이 먼저 열린다. */
   /** 유대 각성 칩. 칸을 누르는 면보다 위에 서서 그 칸의 상세 대신 각성 판을 연다. */
-  private addBondAwakenChip(x: number, y: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; dot: Phaser.GameObjects.Arc } {
+  private addBondAwakenChip(x: number, y: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; dot: Phaser.GameObjects.Container } {
     const spec = BOND_AWAKEN_CHIP;
     const container = this.scene.add.container(x, y);
     const shape = slantedRect(spec.width, spec.height, 8);
@@ -1145,8 +1146,9 @@ export class InfoManager {
     const total = spec.icon + 6 + label.displayWidth;
     icon.setX(-total / 2 + spec.icon / 2);
     label.setX(-total / 2 + spec.icon + 6);
-    const dot = this.scene.add.circle(spec.width / 2 - 6, -spec.height / 2 + 4, 8, COLOR.danger, 1).setStrokeStyle(2, 0x05070a).setVisible(false);
-    container.add([icon, label, dot]);
+    container.add([icon, label]);
+    // 알림점은 화면 어디서나 같은 공용 점이다(로비·레일과 같은 크기·외곽선·그림자).
+    const dot = new NotificationDot(this.scene, container, { x: spec.width / 2 - 4, y: -spec.height / 2 + 2 }).setVisible(false);
     const hit = this.scene.add.rectangle(0, 0, spec.width + 12, spec.height + 16, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => pressIn(container));
     hit.on("pointerout", () => pressOut(container, "normal", { pop: false }));

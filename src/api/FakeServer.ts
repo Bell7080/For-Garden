@@ -81,7 +81,7 @@ import type { ProductListResponse, PurchaseProductRequest, PurchaseProductRespon
 import { totalGrantAmount } from "../core/purchase";
 import { getRelicSkin } from "../data/relicSkins";
 import { applyDuelScore, DUEL_BATTLE_REWARD, DUEL_MAX_BLIND, DUEL_OPPONENT_COUNT, duelStreakBonus, duelBlindCount, duelBlindOrder, duelExtraAttemptPrice, duelHiddenRelicIds, duelNewlyReachedTiers, duelAllOpponentsFought, duelFreeRefreshesLeft, duelRefreshPrice, duelScoreDelta, duelSeasonId, duelTierRose, duelSeasonEndsAt, duelStanding, duelTier, getDuelTier, pickDuelOpponents } from "../core/duelArena";
-import { DUEL_FORFEIT_AFTER_MS, DUEL_HISTORY_LIMIT, normalizeDuelState, duelAttemptsLeft, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
+import { DUEL_FORFEIT_AFTER_MS, DUEL_HISTORY_LIMIT, normalizeDuelState, weakenedDefenseRelics, duelAttemptsLeft, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
 import { duelNpcPool } from "../core/duelNpcPool";
 import { simulateDuelDefenses } from "../core/duelDefense";
 import { ancientHighestCleared, rollAncientSeason } from "../core/ancientStrata";
@@ -3683,6 +3683,7 @@ export class FakeServer implements GameApi {
       nextRefreshPrice: duelRefreshPrice(duel.refreshesUsed), freeRefreshesLeft: duelFreeRefreshesLeft(duel.refreshesUsed),
       blindCount, opponents,
       attack: [...duel.attack], defense: [...duel.defense], defenseIsDefault: !duel.defenseCustomized, blindChoice: [...duel.blindChoice],
+      defenseWeakened: weakenedDefenseRelics(duel, (relicId) => this.duelRelicPower(relicId)),
       defenseBlindOrder: duelBlindOrder(duel.defense.map((relicId) => ({ relicId, power: this.duelRelicPower(relicId) })), duel.blindChoice),
       pendingSeasonReward: (QA_TOOLS_ENABLED || !!this.duelContext) && reward && rewardTier ? { ...reward, duelEmblem: rewardTier.seasonReward.duelEmblem, gems: rewardTier.seasonReward.gems } : null,
       history: (QA_TOOLS_ENABLED || this.duelContext ? duel.history : []).map((entry) => ({ ...entry, ...(entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {}) })),
@@ -3748,7 +3749,8 @@ export class FakeServer implements GameApi {
     this.assertDuelTeam(request.relicIds);
     this.forfeitOpenDuels(now, true);
     const blindChoice = [...new Set(request.blindChoice)].filter((id) => request.relicIds.includes(id)).slice(0, DUEL_MAX_BLIND);
-    const next: DuelState = { ...this.duelNow(now), defense: [...request.relicIds], defenseCustomized: true, blindChoice };
+    const defensePower = Object.fromEntries(request.relicIds.map((relicId) => [relicId, this.duelRelicPower(relicId)]));
+    const next: DuelState = { ...this.duelNow(now), defense: [...request.relicIds], defenseCustomized: true, blindChoice, defensePower };
     this.persist({ ...this.state, duel: next });
     this.state.duel = next;
     return this.duelStatusDto(next, now);

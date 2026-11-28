@@ -214,6 +214,8 @@ export class PartyScene extends Phaser.Scene {
   private partyTutorialPhase?: "move" | "auto" | "start";
   /** 자동 배치 버튼 — 편성 안내의 둘째 칸이 이 자리를 가리킨다. */
   private autoPlaceButton?: Button;
+  /** 방어덱 안내가 「자동 배치를 눌러 보기」를 기다리는 동안 누른 적이 있나. */
+  private autoTapped = false;
   private hint!: Phaser.GameObjects.Text;
   /** 자동 배치와 자리별 방향 표식이 함께 참조하는 이번 스테이지의 적 정의다. */
   private enemies: RelicDef[] = [];
@@ -425,6 +427,7 @@ export class PartyScene extends Phaser.Scene {
       fontSize: 26,
       onClick: () => {
         this.picked = this.autoFormation();
+        this.autoTapped = true;
         if (this.partyTutorialPhase === "auto") this.partyTutorialPhase = "start";
         this.prefetchBattleSds();
         this.selectedSlot = undefined;
@@ -1425,6 +1428,18 @@ export class PartyScene extends Phaser.Scene {
       return { x: left, y: top, width: right - left, height: bottom - top };
     };
     const steps: GuidedTourStep[] = [{ rect: boxes, text: () => t("duel.tour.slots"), side: "below" }];
+    if (this.autoPlaceButton) {
+      this.autoTapped = false;
+      steps.push({
+        rect: () => {
+          const b = this.autoPlaceButton?.getBounds();
+          return b ? { x: b.x, y: b.y, width: b.width, height: b.height } : undefined;
+        },
+        text: () => t("duel.tour.auto"),
+        side: "above",
+        done: () => this.autoTapped,
+      });
+    }
     if (this.blindSlots() > 0) {
       steps.push({
         rect: () => {

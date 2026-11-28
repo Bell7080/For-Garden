@@ -5778,14 +5778,36 @@ var INFO_KO = {
   "info.bond.statGain": "\uBAA8\uB4E0 \uB2A5\uB825\uCE58",
   "info.bond.lobbyInteraction": "\uB85C\uBE44 \uC0C1\uD638\uC791\uC6A9",
   "info.bond.oncePerDay": "\uD558\uB8E8 \uD55C \uBC88 {amount}",
-  "info.bond.same": "\uAC19\uC74C",
-  "info.bond.battleWin": "\uC804\uD22C \uC2B9\uB9AC",
   "info.bond.partyAll": "\uD3B8\uC131 \uB810\uB9AD \uC804\uC6D0 {amount}",
-  "info.bond.now": "\uC9C0\uAE08",
-  "info.bond.nextStep": "\uB2E4\uC74C \uB2E8\uACC4",
   "info.bond.story": "\uC720\uB300 \uC774\uC57C\uAE30",
   "info.bond.opened": "\uC5F4\uB9BC",
   "info.bond.required": "\uC720\uB300 {level} \uD544\uC694",
+  "info.bond.xpNext": "\uB2E4\uC74C \uB808\uBCA8\uAE4C\uC9C0 {xp} EXP",
+  "info.bond.awaken": "\uC720\uB300 \uAC01\uC131",
+  "info.bond.awakenShort": "\uAC01\uC131",
+  "info.bond.awakenPoints": "\uB0A8\uC740 \uAC01\uC131 {left} / {total}",
+  "info.bond.awakenNone": "\uAC01\uC131 \uC5C6\uC74C",
+  "info.bond.awakenLocked": "\uC720\uB300 {level}\uBD80\uD130 \uAC01\uC131\uC744 \uC5BB\uC2B5\uB2C8\uB2E4",
+  "info.bond.awakenHint": "\uB2A5\uB825\uCE58 \uD558\uB098\uB97C \uB20C\uB7EC \uAC01\uC131\uD558\uBA74 {percent}%\uC529 \uC624\uB985\uB2C8\uB2E4",
+  "info.bond.awakenReset": "\uBB34\uB8CC \uCD08\uAE30\uD654",
+  "info.bond.awakenResetConfirm": "\uD22C\uC790\uD55C \uAC01\uC131\uC744 \uBAA8\uB450 \uB3CC\uB824\uBC1B\uC2B5\uB2C8\uB2E4. \uBE44\uC6A9\uC740 \uB4E4\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+  "info.bond.awakenResetDone": "\uAC01\uC131\uC744 \uCD08\uAE30\uD654\uD588\uC2B5\uB2C8\uB2E4",
+  "info.bond.awakenRecord": "\uD22C\uC790 \uB0B4\uC5ED",
+  "info.bond.awakenTimes": "{count}\uD68C",
+  "info.bond.howTo": "\uD68D\uB4DD \uBC29\uBC95!",
+  "info.bond.howToTitle": "\uC720\uB300 \uD68D\uB4DD \uBC29\uBC95",
+  "info.bond.recommend": "\uCD94\uCC9C",
+  "info.bond.recommendLine": "\uC2A4\uD1A0\uB9AC \uBC18\uBCF5 \uC804\uD22C\uAC00 \uAC00\uC7A5 \uAFB8\uC900\uD55C \uAE38\uC785\uB2C8\uB2E4.\n\uB192\uC740 \uC7A5\uC77C\uC218\uB85D \uC720\uB300\uAC00 \uC870\uAE08 \uB354 \uC624\uB985\uB2C8\uB2E4.",
+  "info.bond.storyBattle": "\uC2A4\uD1A0\uB9AC \uC804\uD22C \uC2B9\uB9AC",
+  "info.bond.storyBattleAmount": "\uD55C \uD310\uC5D0 {from}~{to} EXP (\uC7A5\uB9C8\uB2E4 +1)",
+  "info.bond.interview": "\uAD00\uCC30 \uC778\uD130\uBDF0",
+  "info.bond.firstMeet": "\uCCAB \uB9CC\uB0A8",
+  "info.bond.once": "\uD55C \uBC88 {amount}",
+  "info.bond.ladder": "\uC720\uB300 \uB808\uBCA8 \uBCF4\uC0C1",
+  "info.bond.ladderStat": "\uB808\uBCA8\uB9C8\uB2E4 \uBAA8\uB4E0 \uB2A5\uB825\uCE58 +{percent}% (\uCD5C\uB300 +{max}%)",
+  "info.bond.ladderAwaken": "\uC720\uB300 \uAC01\uC131 +1",
+  "info.bond.ladderLater": "\uADF8 \uB4A4\uB85C\uB3C4 {stride}\uB808\uBCA8\uB9C8\uB2E4 \uC720\uB300 \uAC01\uC131 +1",
+  "info.bond.totalXp": "\uB204\uC801 {xp} EXP",
   "info.stats.detail": "\uB2A5\uB825\uCE58 \uC0C1\uC138",
   "info.stats.extra": "\uC138\uBD80 \uB2A5\uB825\uCE58",
   "info.stats.power": "\uC804\uD22C\uB825",
@@ -8693,6 +8715,7 @@ var DUEL_KO = {
   "duel.tour.defense": "\uB3C4\uC804\uD574 \uC624\uB294 \uC0C1\uB300\uC640\uB294 \uBC29\uC5B4\uB371\uC774 \uC2F8\uC6CC\uC694. \uACB0\uD22C\uB97C \uC2DC\uC791\uD558\uAE30 \uC804\uC5D0 \uBA3C\uC800 \uC138\uC6CC \uB450\uC138\uC694.",
   "duel.tour.defenseTap": "\u300C\uBC29\uC5B4\u300D\uB97C \uB20C\uB7EC \uBC29\uC5B4\uB371\uC744 \uC138\uC6CC \uBCF4\uC138\uC694!",
   "duel.tour.slots": "\uC774 \uC138 \uCE78\uC774 \uB0B4 \uBC29\uC5B4\uB371\uC774\uC5D0\uC694. \uC544\uB798 \uBAA9\uB85D\uC5D0\uC11C \uB810\uB9AD\uC744 \uB20C\uB7EC \uBC14\uAFC0 \uC218 \uC788\uC5B4\uC694.",
+  "duel.tour.auto": "\u300C\uC790\uB3D9 \uBC30\uCE58\u300D\uB97C \uB204\uB974\uBA74 \uAC00\uC7A5 \uAC15\uD55C \uC14B\uC774 \uACE7\uBC14\uB85C \uC12D\uB2C8\uB2E4. \uB20C\uB7EC \uBCF4\uC138\uC694!",
   "duel.tour.blind": "\uBCF4\uB78F\uBE5B \uC228\uAE40 \uCE78\uC740 \uC0C1\uB300\uC5D0\uAC8C ???\uB85C \uBCF4\uC5EC\uC694. \uC9C0\uAE08 \uD2F0\uC5B4\uC5D0\uC11C\uB294 {count}\uCE78\uC744 \uC228\uAE38 \uC218 \uC788\uACE0, \uB2E4\uB978 \uCE78\uC758 \uB208\uC744 \uB204\uB974\uBA74 \uC228\uAE40\uC774 \uADF8 \uCE78\uC73C\uB85C \uC62E\uACA8 \uAC00\uC694.",
   "duel.tour.blindLocked": "\uD50C\uB798\uD2F0\uB118 \uD2F0\uC5B4\uBD80\uD130 \uBC29\uC5B4\uB371 \uD55C \uCE78\uC744, \uB9C8\uC2A4\uD130\uBD80\uD130 \uB450 \uCE78\uC744 \uC0C1\uB300\uC5D0\uAC8C \uC228\uAE38 \uC218 \uC788\uC5B4\uC694.",
   "duel.tour.save": "\u300C\uBC29\uC5B4\uB371 \uC800\uC7A5\u300D\uC744 \uB20C\uB7EC \uD655\uC815\uD558\uC138\uC694!",
@@ -8746,6 +8769,7 @@ var DUEL_KO = {
   "duel.ticketPopup.adName": "\uAD11\uACE0 \uBCF4\uC0C1",
   "duel.ticketPopup.failed": "\uCDA9\uC804\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "duel.defense.label": "\uBC29\uC5B4",
+  "duel.defense.weakened": "\uBC29\uC5B4\uB371\uC758 \uB810\uB9AD\uC774 \uC800\uC7A5\uD560 \uB54C\uBCF4\uB2E4 \uC57D\uD574\uC84C\uC2B5\uB2C8\uB2E4. \uBC29\uC5B4\uB371\uC744 \uD655\uC778\uD574 \uC8FC\uC138\uC694.",
   "duel.opponents.title": "\uC0C1\uB300 \uC120\uD0DD",
   "duel.profile.title": "\uC804\uD22C \uD504\uB85C\uD544",
   "duel.profile.current": "\uD604\uC7AC \uD2F0\uC5B4",
@@ -9101,7 +9125,7 @@ var ACHIEVEMENT_KO = {
   "achievement.objective.relicsOwned": "\uB810\uB9AD {value}\uC885 \uBCF4\uC720",
   "achievement.objective.maxRelicLevel": "\uB810\uB9AD \uD55C \uBA85\uC744 \uB808\uBCA8 {value}\uAE4C\uC9C0 \uC131\uC7A5",
   "achievement.objective.relicsMaxBreakthrough": "\uB810\uB9AD {value}\uBA85\uC758 \uD55C\uACC4 \uB3CC\uD30C \uC644\uB8CC",
-  "achievement.objective.relicsMaxBond": "\uB810\uB9AD {value}\uBA85\uACFC \uC720\uB300 \uCD5C\uB300",
+  "achievement.objective.relicsMaxBond": "\uB810\uB9AD {value}\uBA85\uACFC \uC720\uB300 10 \uB2EC\uC131",
   "achievement.objective.playerLevel": "\uC5F0\uAD6C\uC6D0 \uB808\uBCA8 {value} \uB2EC\uC131",
   "achievement.objective.victories": "\uC804\uD22C \uC2B9\uB9AC {value}\uD68C",
   "achievement.objective.storyStagesCleared": "\uC2A4\uD1A0\uB9AC \uAD00\uBB38 {value}\uAC1C \uD074\uB9AC\uC5B4",
@@ -9744,9 +9768,9 @@ function canResonate(rarity, progress, breakthroughCap, fragments, universal) {
   return resonanceFragmentSpend(rarity, resonance, fragments, universal).enough;
 }
 var GROWTH_KEYS = ["hp", "def", "res", "atk", "ap"];
-function resonanceStatEffect(resonance, extraPercent = 0) {
-  const percent = Math.max(0, Math.min(RESONANCE_CAP, resonance)) * RESONANCE_STAT_PERCENT + extraPercent;
-  return Object.fromEntries(GROWTH_KEYS.map((key) => [key, percent]));
+function resonanceStatEffect(resonance, extra = 0) {
+  const percent = Math.max(0, Math.min(RESONANCE_CAP, resonance)) * RESONANCE_STAT_PERCENT;
+  return Object.fromEntries(GROWTH_KEYS.map((key) => [key, percent + (typeof extra === "number" ? extra : extra[key] ?? 0)]));
 }
 function relicFragmentRoom(rarity, progress, held, breakthroughCap) {
   if (!progress || progress.breakthrough < breakthroughCap) return Number.POSITIVE_INFINITY;
@@ -9755,23 +9779,69 @@ function relicFragmentRoom(rarity, progress, held, breakthroughCap) {
 
 // src/core/bond.ts
 init_define_import_meta_env();
-var BOND_LEVEL_CAP = 10;
-var BOND_TOTAL_XP_BY_LEVEL = [0, 20, 50, 90, 140, 200, 270, 350, 440, 540, 650];
+var BOND_STAT_LEVEL_CAP = 10;
+var BOND_LEVEL_MAX = 100;
+var EARLY_STEPS = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110];
+var BOND_LATE_STEP = { base: 140, growth: 1.2 };
+function bondXpToNext(level) {
+  if (level < EARLY_STEPS.length) return EARLY_STEPS[Math.max(0, level)];
+  return Math.round(BOND_LATE_STEP.base * BOND_LATE_STEP.growth ** (level - EARLY_STEPS.length) / 5) * 5;
+}
+var BOND_TOTAL_XP_BY_LEVEL = (() => {
+  const totals = [0];
+  for (let level = 0; level < BOND_LEVEL_MAX; level += 1) totals.push(totals[level] + bondXpToNext(level));
+  return totals;
+})();
+var BOND_XP_MAX = BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_MAX];
 var BOND_XP_REWARD = { firstAcquisition: 20, partyVictory: 12, firstLobbyInteraction: 5, firstObservationInterview: 5 };
+function storyVictoryBondXp(chapter) {
+  const safe = Number.isInteger(chapter) && chapter > 0 ? chapter : 1;
+  return BOND_XP_REWARD.partyVictory + (safe - 1);
+}
 var BOND_STAT_PERCENT_PER_LEVEL = 1;
 function bondStatPercent(bondLevel) {
   if (!Number.isFinite(bondLevel) || bondLevel <= 0) return 0;
-  return Math.min(BOND_LEVEL_CAP, Math.floor(bondLevel)) * BOND_STAT_PERCENT_PER_LEVEL;
+  return Math.min(BOND_STAT_LEVEL_CAP, Math.floor(bondLevel)) * BOND_STAT_PERCENT_PER_LEVEL;
+}
+var BOND_AWAKENING_KEYS = ["hp", "def", "res", "atk", "ap"];
+var BOND_AWAKENING_PERCENT = 2;
+var BOND_AWAKENING_LADDER = { everyLevelFrom: 11, everyLevelTo: 20, stride: 10 };
+function bondAwakeningPoints(bondLevel) {
+  const level = Math.max(0, Math.min(BOND_LEVEL_MAX, Math.floor(Number.isFinite(bondLevel) ? bondLevel : 0)));
+  const { everyLevelFrom, everyLevelTo, stride } = BOND_AWAKENING_LADDER;
+  const early = Math.max(0, Math.min(level, everyLevelTo) - everyLevelFrom + 1);
+  const late = level > everyLevelTo ? Math.floor(level / stride) - Math.floor(everyLevelTo / stride) : 0;
+  return early + late;
+}
+function bondAwakeningSpent(awakening) {
+  if (!awakening) return 0;
+  return BOND_AWAKENING_KEYS.reduce((sum, key) => sum + (awakening[key] ?? 0), 0);
+}
+function isValidBondAwakening(awakening, bondLevel) {
+  if (awakening === void 0) return true;
+  if (!awakening || typeof awakening !== "object" || Array.isArray(awakening)) return false;
+  const entries = Object.entries(awakening);
+  if (!entries.every(([key, value]) => BOND_AWAKENING_KEYS.includes(key) && Number.isInteger(value) && value >= 0)) return false;
+  return bondAwakeningSpent(awakening) <= bondAwakeningPoints(bondLevel);
+}
+function compactBondAwakening(awakening) {
+  if (!awakening) return void 0;
+  const entries = BOND_AWAKENING_KEYS.filter((key) => (awakening[key] ?? 0) > 0).map((key) => [key, awakening[key]]);
+  return entries.length > 0 ? Object.fromEntries(entries) : void 0;
+}
+function bondStatBonus(progress) {
+  const base = bondStatPercent(progress.bondLevel);
+  return Object.fromEntries(BOND_AWAKENING_KEYS.map((key) => [key, base + (progress.bondAwakening?.[key] ?? 0) * BOND_AWAKENING_PERCENT]));
 }
 function bondLevelForXp(xp) {
   if (!Number.isInteger(xp) || xp < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58\uB294 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
   let level = 0;
-  while (level < BOND_LEVEL_CAP && xp >= BOND_TOTAL_XP_BY_LEVEL[level + 1]) level += 1;
+  while (level < BOND_LEVEL_MAX && xp >= BOND_TOTAL_XP_BY_LEVEL[level + 1]) level += 1;
   return level;
 }
 function grantBondXp(progress, amount) {
   if (!Number.isInteger(amount) || amount < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58 \uBCF4\uC0C1\uC740 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  const bondXp = Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], progress.bondXp + amount);
+  const bondXp = Math.min(BOND_XP_MAX, progress.bondXp + amount);
   const bondLevel = bondLevelForXp(bondXp);
   return { progress: { ...progress, bondXp, bondLevel, heartGemSlots: [...progress.heartGemSlots] }, xpGained: bondXp - progress.bondXp, levelsGained: bondLevel - progress.bondLevel };
 }
@@ -9942,8 +10012,8 @@ function calculateFinalStats(base, progress, gems4, rarity, options = {}) {
   const breakthrough = activeBreakthroughOf(progress);
   const grown = applyLevelGrowth(base, progress.level, rarity, breakthrough);
   const resonance = options.resonance === false || breakthrough < BREAKTHROUGH_CAP ? 0 : resonanceOf(progress);
-  const bond = bondStatPercent(progress.bondLevel);
-  const resonated = resonance > 0 || bond > 0 ? applyStatPercent(grown, resonanceStatEffect(resonance, bond)) : grown;
+  const bond = bondStatBonus(progress);
+  const resonated = resonance > 0 || Object.values(bond).some((value) => value > 0) ? applyStatPercent(grown, resonanceStatEffect(resonance, bond)) : grown;
   return applyHeartGems(applyBreakthrough(resonated, breakthrough), gems4);
 }
 
@@ -29736,9 +29806,26 @@ function cloneDuelState(state) {
     attack: [...state.attack],
     defense: [...state.defense],
     blindChoice: [...state.blindChoice],
+    defensePower: { ...state.defensePower },
     pendingSeasonReward: state.pendingSeasonReward ? { ...state.pendingSeasonReward } : null,
     history: state.history.map((entry) => ({ ...entry, ...entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {} }))
   };
+}
+function normalizeDefensePower(value, defense) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const source = value;
+  const out = {};
+  for (const id of defense) {
+    const power = source[id];
+    if (typeof power === "number" && Number.isFinite(power) && power >= 0) out[id] = power;
+  }
+  return out;
+}
+function weakenedDefenseRelics(state, powerOf) {
+  return state.defense.filter((id) => {
+    const saved = state.defensePower[id];
+    return saved !== void 0 && powerOf(id) < saved - 1;
+  });
 }
 var isCount = (value) => Number.isSafeInteger(value) && value >= 0;
 var stringList = (value, limit) => Array.isArray(value) ? [...new Set(value.filter((item3) => typeof item3 === "string" && item3.length > 0))].slice(0, limit) : [];
@@ -29785,6 +29872,7 @@ function normalizeDuelState(value, ownedRelicIds) {
     defenseCustomized,
     defenseSimAt,
     blindChoice: stringList(source.blindChoice, 2).filter((id) => defense.includes(id)),
+    defensePower: normalizeDefensePower(source.defensePower, defense),
     pendingSeasonReward: reward && typeof reward.seasonId === "string" && reward.tierId && getDuelTier(reward.tierId) ? { seasonId: reward.seasonId, tierId: reward.tierId } : null,
     history,
     winStreak: isCount(source.winStreak) ? source.winStreak : 0,
@@ -30877,7 +30965,7 @@ function isValidServerJournal(value) {
   const record4 = (v2) => !!v2 && typeof v2 === "object" && !Array.isArray(v2);
   const json = (v2) => v2 === null || typeof v2 === "string" || typeof v2 === "boolean" || typeof v2 === "number" && Number.isFinite(v2) || (Array.isArray(v2) ? v2.every(json) : record4(v2) && Object.values(v2).every(json));
   const mailLog = (log) => log === void 0 || Array.isArray(log) && log.length <= 200 && log.every((gift) => record4(gift) && typeof gift.title === "string" && typeof gift.sender === "string" && typeof gift.receivedAt === "string" && Number.isFinite(Date.parse(gift.receivedAt)) && Array.isArray(gift.rewards) && gift.rewards.every((reward) => record4(reward) && json(reward) && (reward.kind === "currency" || reward.kind === "item") && Number.isSafeInteger(reward.amount)));
-  return (journal.qaTenUpgrade === void 0 || typeof journal.qaTenUpgrade === "boolean") && (journal.storyChoices === void 0 || record4(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record4(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record4(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record4(journal.combat) && record4(journal.combat.tickets) && record4(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record4(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record4(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record4(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record4(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record4(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && mailLog(journal.mailLog) && mailLog(journal.giftLog) && (journal.guildGuard === void 0 || record4(journal.guildGuard) && Number.isSafeInteger(journal.guildGuard.day) && Number.isSafeInteger(journal.guildGuard.used) && journal.guildGuard.used >= 0 && Number.isSafeInteger(journal.guildGuard.best) && journal.guildGuard.best >= 0) && (journal.guildGuardAdmissions === void 0 || record4(journal.guildGuardAdmissions) && Object.entries(journal.guildGuardAdmissions).every(([id, admission]) => id.length > 0 && record4(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.element === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && Array.isArray(admission.lineup) && admission.lineup.length === 6 && admission.lineup.every((slot) => slot === null || record4(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot)))) && (journal.guildWarAdmissions === void 0 || record4(journal.guildWarAdmissions) && Object.entries(journal.guildWarAdmissions).every(([id, admission]) => id.length > 0 && record4(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.slotId === "string" && typeof admission.opponentName === "string" && typeof admission.defenderName === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && [admission.attack, admission.defense].every((side) => Array.isArray(side) && side.length === 3 && side.every((slot) => record4(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot))))) && record4(journal.receipts) && record4(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record4(receipt) && typeof receipt.identity === "string" && record4(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record4(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
+  return (journal.qaTenUpgrade === void 0 || typeof journal.qaTenUpgrade === "boolean") && (journal.storyChoices === void 0 || record4(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record4(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record4(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_XP_MAX)) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record4(journal.combat) && record4(journal.combat.tickets) && record4(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record4(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record4(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record4(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record4(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record4(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && mailLog(journal.mailLog) && mailLog(journal.giftLog) && (journal.guildGuard === void 0 || record4(journal.guildGuard) && Number.isSafeInteger(journal.guildGuard.day) && Number.isSafeInteger(journal.guildGuard.used) && journal.guildGuard.used >= 0 && Number.isSafeInteger(journal.guildGuard.best) && journal.guildGuard.best >= 0) && (journal.guildGuardAdmissions === void 0 || record4(journal.guildGuardAdmissions) && Object.entries(journal.guildGuardAdmissions).every(([id, admission]) => id.length > 0 && record4(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.element === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && Array.isArray(admission.lineup) && admission.lineup.length === 6 && admission.lineup.every((slot) => slot === null || record4(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot)))) && (journal.guildWarAdmissions === void 0 || record4(journal.guildWarAdmissions) && Object.entries(journal.guildWarAdmissions).every(([id, admission]) => id.length > 0 && record4(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.slotId === "string" && typeof admission.opponentName === "string" && typeof admission.defenderName === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && [admission.attack, admission.defense].every((side) => Array.isArray(side) && side.length === 3 && side.every((slot) => record4(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot))))) && record4(journal.receipts) && record4(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record4(receipt) && typeof receipt.identity === "string" && record4(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record4(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
 }
 
 // src/core/expeditionPeriods.ts
@@ -31648,8 +31736,8 @@ var SORT_DEFAULT_DESCENDING = {
 init_define_import_meta_env();
 var DEFAULT_ROSTER_VIEW = {
   filter: EMPTY_RELIC_FILTER,
-  sortMode: "number",
-  descending: SORT_DEFAULT_DESCENDING.number
+  sortMode: "power",
+  descending: SORT_DEFAULT_DESCENDING.power
 };
 
 // src/core/rosterViewMemory.ts
@@ -40616,7 +40704,7 @@ var SaveManager = class {
     if (!data.relicProgress || typeof data.relicProgress !== "object") fail3("\uC131\uC7A5 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     if (data.ownedRelicIds.some((id) => !data.relicProgress[id]) || Object.keys(data.relicProgress).some((id) => !data.ownedRelicIds.includes(id))) fail3("\uBCF4\uC720 \uB810\uB9AD\uACFC \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     for (const [id, progress] of Object.entries(data.relicProgress)) {
-      if (!relicIds.has(id) || !Number.isInteger(progress.breakthrough) || progress.breakthrough < 0 || progress.breakthrough > BREAKTHROUGH_CAP || progress.resonance !== void 0 && (!Number.isInteger(progress.resonance) || progress.resonance < 0 || progress.resonance > RESONANCE_CAP || progress.breakthrough < BREAKTHROUGH_CAP) || !Number.isInteger(progress.exp) || progress.exp < 0 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > 10 || !Number.isInteger(progress.bondXp) || progress.bondXp < 0 || progress.bondXp > 650 || typeof progress.lastLobbyInteractionDate !== "string" || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail3("\uB810\uB9AD \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+      if (!relicIds.has(id) || !Number.isInteger(progress.breakthrough) || progress.breakthrough < 0 || progress.breakthrough > BREAKTHROUGH_CAP || progress.resonance !== void 0 && (!Number.isInteger(progress.resonance) || progress.resonance < 0 || progress.resonance > RESONANCE_CAP || progress.breakthrough < BREAKTHROUGH_CAP) || !Number.isInteger(progress.exp) || progress.exp < 0 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > BOND_LEVEL_MAX || !Number.isInteger(progress.bondXp) || progress.bondXp < 0 || progress.bondXp > BOND_XP_MAX || !isValidBondAwakening(progress.bondAwakening, progress.bondLevel) || typeof progress.lastLobbyInteractionDate !== "string" || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail3("\uB810\uB9AD \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     }
     if (!data.relicFragments || typeof data.relicFragments !== "object" || Object.entries(data.relicFragments).some(([id, count3]) => !data.ownedRelicIds.includes(id) || !Number.isInteger(count3) || count3 < 0)) fail3("\uB810\uB9AD \uD30C\uD3B8 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.runeInventory)) fail3("\uB8EC \uC778\uBCA4\uD1A0\uB9AC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
@@ -43754,7 +43842,7 @@ function redeemDeferredStoryBond(next, acquired) {
   for (const id of new Set(acquired)) {
     const amount = journal.pendingStoryBondXp?.[id] ?? 0;
     if (!amount || !next.owned.has(id) || !next.relicProgress[id]) continue;
-    next.relicProgress[id] = grantBondXp(next.relicProgress[id], Math.min(amount, BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])).progress;
+    next.relicProgress[id] = grantBondXp(next.relicProgress[id], Math.min(amount, BOND_XP_MAX)).progress;
     delete journal.pendingStoryBondXp[id];
   }
   next.serverJournal = journal;
@@ -45820,7 +45908,7 @@ function applyDebugCommand(target, command, rules) {
         if (target.owned.has(id)) continue;
         target.owned.add(id);
         const base = rules.initialProgress();
-        target.relicProgress[id] ??= { ...base, bondXp: Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], base.bondXp + rules.bondXpFirstAcquisition) };
+        target.relicProgress[id] ??= { ...base, bondXp: Math.min(BOND_XP_MAX, base.bondXp + rules.bondXpFirstAcquisition) };
         changed += 1;
       }
       return changed;
@@ -45848,12 +45936,12 @@ function applyDebugCommand(target, command, rules) {
       return changed;
     }
     case "relicBond": {
-      const level = integer(command.level, 0, BOND_LEVEL_CAP);
+      const level = integer(command.level, 0, BOND_LEVEL_MAX);
       let changed = 0;
       for (const id of targets(target, command.relicId)) {
         const p = target.relicProgress[id];
         if (p.bondLevel === level && p.bondXp === BOND_TOTAL_XP_BY_LEVEL[level]) continue;
-        target.relicProgress[id] = { ...p, bondLevel: level, bondXp: BOND_TOTAL_XP_BY_LEVEL[level] };
+        target.relicProgress[id] = { ...p, bondLevel: level, bondXp: BOND_TOTAL_XP_BY_LEVEL[level], ...isValidBondAwakening(p.bondAwakening, level) ? {} : { bondAwakening: void 0 } };
         changed += 1;
       }
       return changed;
@@ -45884,8 +45972,8 @@ function applyDebugCommand(target, command, rules) {
       let changed = 0;
       for (const id of target.owned) {
         const p = target.relicProgress[id];
-        if (!p || p.bondLevel >= BOND_LEVEL_CAP) continue;
-        target.relicProgress[id] = { ...p, bondLevel: BOND_LEVEL_CAP, bondXp: BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP] };
+        if (!p || p.bondLevel >= BOND_AWAKENING_LADDER.everyLevelTo) continue;
+        target.relicProgress[id] = { ...p, bondLevel: BOND_AWAKENING_LADDER.everyLevelTo, bondXp: BOND_TOTAL_XP_BY_LEVEL[BOND_AWAKENING_LADDER.everyLevelTo] };
         changed += 1;
       }
       target.relicStory = { ...target.relicStory, metAt: {} };
@@ -47701,7 +47789,7 @@ function achievementFacts(state, external = {}) {
     relicsOwned: playable.length,
     maxRelicLevel: progress.reduce((best, entry) => Math.max(best, entry.level), 0),
     relicsMaxBreakthrough: progress.filter((entry) => entry.breakthrough >= maxBreakthrough).length,
-    relicsMaxBond: progress.filter((entry) => entry.bondLevel >= BOND_LEVEL_CAP).length,
+    relicsMaxBond: progress.filter((entry) => entry.bondLevel >= BOND_STAT_LEVEL_CAP).length,
     playerLevel: state.playerResearch.level,
     victories: lifetime.battle_completed ?? 0,
     storyStagesCleared: storyStageIds.filter((id) => state.cleared.has(id)).length,
@@ -47733,7 +47821,7 @@ function achievementFacts(state, external = {}) {
     codexComplete: PLAYABLE_RELICS.length > 0 && playable.length === PLAYABLE_RELICS.length ? 1 : 0,
     elementsOwned: new Set(ownedDefs.map(({ element }) => element)).size,
     squadsOwned: new Set(ownedDefs.map(({ squad }) => squad)).size,
-    perfectRelics: progress.filter((entry) => entry.level >= levelCap && entry.breakthrough >= maxBreakthrough && entry.bondLevel >= BOND_LEVEL_CAP).length,
+    perfectRelics: progress.filter((entry) => entry.level >= levelCap && entry.breakthrough >= maxBreakthrough && entry.bondLevel >= BOND_STAT_LEVEL_CAP).length,
     fullyRunedRelics: progress.filter((entry) => entry.heartGemSlots.length > 0 && entry.heartGemSlots.every((slot) => slot !== null)).length,
     // 편성 장난은 지금 세워 둔 편성에서 읽는다 — 세 칸이 다 찼을 때만 센다.
     partySameElement: partyFull && new Set(partyDefs.map(({ element }) => element)).size === 1 ? 1 : 0,
@@ -48681,7 +48769,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.560.0",
+  version: "0.562.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -48998,6 +49086,7 @@ var SERVER_GAME_METHODS = [
   "resolveDuel",
   "resolveRuneTraitReroll",
   "resetRelic",
+  "setBondAwakening",
   "saveExcavationFormation",
   "selectArchaeologySite",
   "sellRunes",
@@ -50860,7 +50949,7 @@ var FakeServer = class {
         xpGained = result.xpGained;
       } else {
         const previous = journal.pendingStoryBondXp?.[effect.relicId] ?? 0;
-        const pending2 = Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], previous + effect.amount);
+        const pending2 = Math.min(BOND_XP_MAX, previous + effect.amount);
         if (pending2 > 0) journal.pendingStoryBondXp = { ...journal.pendingStoryBondXp, [effect.relicId]: pending2 };
         xpDeferred = pending2 - previous;
       }
@@ -52366,6 +52455,25 @@ var FakeServer = class {
     return { ...this.snapshot(), relicId, previousLevel: current2.level, cheesecakeRefunded };
   }
   /**
+   * 유대 각성 배분.
+   *
+   * 배분 전체를 받아 받은 횟수 안인지 서버가 다시 검사하고 통째로 갈아 끼운다. 비우면 무료 초기화다 — 각성은
+   * 쓰는 재화가 없어 되돌려 줄 것도 없다. 유대 레벨·경험치는 건드리지 않는다.
+   */
+  async setBondAwakening(relicId, awakening) {
+    await this.delay();
+    const current2 = this.state.relicProgress[relicId];
+    if (!this.state.owned.has(relicId) || !current2) throw new GameApiError("RELIC_NOT_FOUND", "\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
+    if (!isValidBondAwakening(awakening, current2.bondLevel)) throw new GameApiError("INVALID_STATE", "\uC720\uB300 \uAC01\uC131 \uD69F\uC218\uAC00 \uB9DE\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    const compact = compactBondAwakening(awakening);
+    const { bondAwakening: _dropped, ...rest } = current2;
+    const nextRelic = compact ? { ...rest, bondAwakening: compact } : rest;
+    const nextProgress = { ...this.state.relicProgress, [relicId]: nextRelic };
+    this.persist({ ...this.state, relicProgress: nextProgress });
+    this.state.relicProgress = nextProgress;
+    return { ...this.snapshot(), relicId, awakening: compact ?? {} };
+  }
+  /**
    * 돌파.
    *
    * 파편 검사와 차감, 단계 확정을 한 처리 단위로 끝낸다. 레벨·치즈케이크는 들지 않는다(응태 결정 2026-11-15). 화면은 결과만 받아 다시 그린다.
@@ -52502,9 +52610,10 @@ var FakeServer = class {
       cheesecakeGranted = Math.max(0, Math.min(stage.rewards.repeatClearCheesecake, WALLET_CAPS.cheesecake - nextWallet.cheesecake));
       nextWallet.cheesecake += cheesecakeGranted;
     }
+    const stageBondXp = !owningEvent && stage.ancientFloor === void 0 ? storyVictoryBondXp(stage.chapter ?? 1) : BOND_XP_REWARD.partyVictory;
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [
       id,
-      victory && (stage.ancientFloor === void 0 || firstClear) && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress
+      victory && (stage.ancientFloor === void 0 || firstClear) && this.state.party.includes(id) ? grantBondXp(progress, stageBondXp).progress : progress
     ]));
     const nextMissions = stage.ancientFloor !== void 0 && !firstClear ? base.missions : applyMissionEvent(base.missions, { type: "battle_completed", victory }, this.now());
     const currentTutorial = normalizeTutorialState(this.state.tutorial);
@@ -52947,6 +53056,7 @@ var FakeServer = class {
       defense: [...duel2.defense],
       defenseIsDefault: !duel2.defenseCustomized,
       blindChoice: [...duel2.blindChoice],
+      defenseWeakened: weakenedDefenseRelics(duel2, (relicId) => this.duelRelicPower(relicId)),
       defenseBlindOrder: duelBlindOrder(duel2.defense.map((relicId) => ({ relicId, power: this.duelRelicPower(relicId) })), duel2.blindChoice),
       pendingSeasonReward: (QA_TOOLS_ENABLED || !!this.duelContext) && reward && rewardTier ? { ...reward, duelEmblem: rewardTier.seasonReward.duelEmblem, gems: rewardTier.seasonReward.gems } : null,
       history: (QA_TOOLS_ENABLED || this.duelContext ? duel2.history : []).map((entry) => ({ ...entry, ...entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {} })),
@@ -53008,7 +53118,8 @@ var FakeServer = class {
     this.assertDuelTeam(request.relicIds);
     this.forfeitOpenDuels(now, true);
     const blindChoice = [...new Set(request.blindChoice)].filter((id) => request.relicIds.includes(id)).slice(0, DUEL_MAX_BLIND);
-    const next = { ...this.duelNow(now), defense: [...request.relicIds], defenseCustomized: true, blindChoice };
+    const defensePower = Object.fromEntries(request.relicIds.map((relicId) => [relicId, this.duelRelicPower(relicId)]));
+    const next = { ...this.duelNow(now), defense: [...request.relicIds], defenseCustomized: true, blindChoice, defensePower };
     this.persist({ ...this.state, duel: next });
     this.state.duel = next;
     return this.duelStatusDto(next, now);

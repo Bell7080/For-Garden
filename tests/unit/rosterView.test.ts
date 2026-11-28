@@ -6,11 +6,11 @@ import { applyRosterView, DEFAULT_ROSTER_VIEW, deployedFirst, rosterFilterCount,
 const power = (relic: { specimenNumber: string }): number => Number(relic.specimenNumber.replace(/\D/g, "")) || 0;
 
 describe("편성 목록 보기", () => {
-  it("기본은 도감처럼 개체번호 오름차순이고 아무것도 거르지 않는다", () => {
+  it("기본은 강한 순(전투력 내림차순)이고 아무것도 거르지 않는다", () => {
     const shown = applyRosterView(PLAYABLE_RELICS, DEFAULT_ROSTER_VIEW, power);
     expect(shown).toHaveLength(PLAYABLE_RELICS.length);
-    const numbers = shown.map((relic) => relic.specimenNumber);
-    expect(numbers).toEqual([...numbers].sort((a, b) => a.localeCompare(b)));
+    const powers = shown.map((relic) => power(relic));
+    expect(powers).toEqual([...powers].sort((a, b) => b - a));
   });
 
   it("도감과 같은 필터 규칙으로 좁힌다", () => {

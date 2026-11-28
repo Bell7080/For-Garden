@@ -88,6 +88,7 @@ export class DuelScene extends Phaser.Scene {
   create(): void {
     setDebugScene("duel");
     this.busy = false;
+    this.weakenedNoticeShown = false;
     this.tab = "battle";
     this.status = undefined;
     addSceneBackground(this, BACKGROUND.sortieDuel);
@@ -134,6 +135,8 @@ export class DuelScene extends Phaser.Scene {
 
   /** 안내 중에 [방어]를 누르면 편성 화면이 안내를 이어 간다. */
   private defenseTourActive = false;
+  /** 약해진 방어덱 안내를 이번 방문에 이미 띄웠는가 — 화면을 다시 칠할 때마다 띄우지 않는다. */
+  private weakenedNoticeShown = false;
 
   private async fetchStatus(): Promise<void> {
     try {
@@ -316,7 +319,13 @@ export class DuelScene extends Phaser.Scene {
     button.fitLabel(defense.labelRoom);
     this.view.add(button);
     // 방어덱이 아직 기본 셋 그대로면 빨간 점 하나만 단다 — 라벨을 붉히면 푸른 판이 붉게 읽혀 [도전]과 색이 섞인다.
-    if (status.defenseIsDefault) new NotificationDot(this, button, { x: defense.width / 2 - 16, y: -height / 2 + 14 });
+    // 저장한 뒤로 약해진 렐릭이 있어도 같은 점이 서고, 한 번은 말로도 알린다 — 방어전은 늘 지금 상태로 싸운다.
+    const weakened = status.defenseWeakened.length > 0;
+    if (status.defenseIsDefault || weakened) new NotificationDot(this, button, { x: defense.width / 2 - 16, y: -height / 2 + 14 });
+    if (weakened && !this.weakenedNoticeShown && !this.tourRunning) {
+      this.weakenedNoticeShown = true;
+      showContentToast(this, t("duel.defense.weakened"), "info");
+    }
   }
 
   /**

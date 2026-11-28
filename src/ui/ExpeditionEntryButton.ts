@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { useBackgroundTexture } from "./backgrounds";
 import { t } from "../i18n";
+import { outlineInScene } from "./outlineInScene";
 import { chipPoints, drawFrameVignette, drawLayer, drawShapeOutline, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { shapeClipMask } from "./popupArt";
@@ -145,12 +146,18 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
   /** 칩 실루엣 마스크. 칸 안에 그림을 더 세우는 입구(아레나의 맞부딪힘)가 같은 실루엣에 가둔다. */
   readonly clipMask: Phaser.Display.Masks.GeometryMask;
 
+  private readonly outline: number[];
+
+  /** 칸 실루엣을 씬 좌표로 — 튜토리얼 강조가 깎인 모서리를 그대로 따른다. */
+  outlineInScene(): { x: number; y: number }[] { return outlineInScene(this, this.outline); }
+
   constructor(scene: Phaser.Scene, x: number, y: number, options: IllustratedSortieButtonOptions) {
     super(scene, x, y);
     scene.add.existing(this);
 
     const bevel = sortieEntryBevel(options.height, options.split);
     const shape = chipPoints(options.width, options.height, { bevel });
+    this.outline = [...shape];
     // 버튼은 배경 원화와 달리 액자 예외에 해당하므로 닫힌 윤곽과 내부 비네트를 함께 사용한다.
     const accent = options.accentColor ?? COLOR.sortie;
     const accentText = options.accentTextColor ?? COLOR.sortieText;

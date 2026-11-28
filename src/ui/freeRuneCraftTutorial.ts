@@ -65,6 +65,12 @@ export function guideFreeRuneCraft(scene: Phaser.Scene, targets: FreeRuneCraftTa
         default: return undefined;
       }
     },
+    // 세공·각인 버튼을 가리키는 동안에도 옵션 줄은 밝게 둔다 — 무엇이 오르는지 보며 눌러야 한다.
+    reveal: () => {
+      const stage = targets.stage();
+      const rows = stage === "craft" || stage === "engrave" ? targets.allRows() : undefined;
+      return rows ? [rows] : undefined;
+    },
     text: () => {
       switch (targets.stage()) {
         case "pick": return t("tutorial.rune.pick");

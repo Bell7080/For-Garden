@@ -73,8 +73,10 @@ export const BATTLE_ZH_HANS = {
   "tutorial.rune.done.title": "符文完成！",
   "tutorial.rune.done.body": "打磨和刻印都完成了。之后打磨需要消耗金币。",
   "tutorial.rune.done.go": "去给{name}装备",
-  "tutorial.rune.equip": "符文可以在这里装备！",
   "tutorial.rune.done.bodyReward": "打磨和刻印都完成了！作为完成奖励，随机英雄符文箱已放入背包。",
   "tutorial.rune.done.made": "完成的符文",
   "tutorial.rune.done.reward": "完成奖励",
+  "tutorial.rune.equip": "点击符文栏，装备刚完成的符文吧！",
+  "tutorial.rune.equipPick": "点击要装备的符文，放入替换对比吧。",
+  "tutorial.rune.equipApply": "点击「应用」即可装备符文！",
 } as const;

@@ -20,6 +20,12 @@ export function followTutorialTarget(scene: Phaser.Scene, options: {
   onAdvance?: () => void;
   /** 안내 글 곁의 작은 한 줄(「화면을 눌러 확인」 등). */
   hint?: () => string;
+  /** 가리킬 것의 실루엣(씬 좌표) — 주면 강조가 네모가 아니라 그 모양을 따른다(`TutorialSpotlight.shape`). */
+  shape?: () => ReadonlyArray<{ x: number; y: number }> | undefined;
+  /** 구멍에서 안내 글까지의 거리(`TutorialSpotlight.textGap`) — 글이 가리킬 것 곁의 다른 칸을 덮지 않게 비켜 세운다. */
+  textGap?: () => number | undefined;
+  /** 어둠만 걷고 손은 받지 않는 곁 자리(`TutorialSpotlight.reveal`). */
+  reveal?: () => ReadonlyArray<Rect> | undefined;
 }): () => void {
   let stopped = false, spotlight: TutorialSpotlight | undefined, signature = "";
   let waiting: Phaser.GameObjects.Rectangle | undefined;
@@ -50,10 +56,15 @@ export function followTutorialTarget(scene: Phaser.Scene, options: {
       const guide = options.guide?.();
       const hint = options.hint?.();
       const pulse = options.pulse?.() === true;
-      const next = JSON.stringify([rect.x, rect.y, rect.width, rect.height, text, guide, options.side?.(), hint, passive, pulse]);
+      const shape = options.shape?.();
+      const textGap = options.textGap?.();
+      const reveal = options.reveal?.();
+      const next = JSON.stringify([rect.x, rect.y, rect.width, rect.height, text, guide, options.side?.(), hint, passive, pulse, textGap, reveal, shape?.map((p) => [Math.round(p.x), Math.round(p.y)])]);
       if (next !== signature) {
+        // 처음 서는 안내만 번져 들어온다 — 자리만 옮겨 다시 세우는 안내까지 번지면 깜빡인다.
+        const enter = !spotlight;
         clear(); signature = next;
-        spotlight = new TutorialSpotlight(scene, { rect, text, guide, hint, side: options.side?.() ?? (rect.y < 700 ? "below" : "above"), onAdvance: options.onAdvance, passive, pulse });
+        spotlight = new TutorialSpotlight(scene, { rect, text, guide, hint, side: options.side?.() ?? (rect.y < 700 ? "below" : "above"), onAdvance: options.onAdvance, passive, pulse, shape, textGap, reveal, enter });
       }
     }
   };

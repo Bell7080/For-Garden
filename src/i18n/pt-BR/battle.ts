@@ -73,8 +73,10 @@ export const BATTLE_PT_BR = {
   "tutorial.rune.done.title": "Runa completa!",
   "tutorial.rune.done.body": "Lapidação e gravação concluídas. A partir de agora, lapidar custa Ouro.",
   "tutorial.rune.done.go": "Equipar em {name}",
-  "tutorial.rune.equip": "Você pode equipar Runas aqui!",
   "tutorial.rune.done.bodyReward": "Lapidação e gravação concluídas! Como recompensa, há uma Caixa de runa épica aleatória na Bolsa.",
   "tutorial.rune.done.made": "Sua runa",
   "tutorial.rune.done.reward": "Recompensa",
+  "tutorial.rune.equip": "Toque no espaço de Runa para equipar a Runa que você acabou de concluir!",
+  "tutorial.rune.equipPick": "Toque em uma Runa para colocá-la na comparação.",
+  "tutorial.rune.equipApply": "Toque em 「Aplicar」 para equipar a Runa!",
 } as const;

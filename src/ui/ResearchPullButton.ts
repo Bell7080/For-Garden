@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { outlineInScene } from "./outlineInScene";
 import { audioManager } from "../managers/AudioManager";
 import { settingsManager } from "../managers/SettingsManager";
 import { NotificationDot } from "./NotificationDot";
@@ -93,6 +94,18 @@ export class ResearchPullButton extends Phaser.GameObjects.Container {
     });
     this.add(hit);
     scene.add.existing(this);
+  }
+
+  /** 알약 면의 실루엣(씬 좌표) — 튜토리얼 강조가 네모가 아니라 둥근 알약을 두른다. */
+  outlineInScene(): { x: number; y: number }[] {
+    const { width, height } = this.options;
+    const r = height / 2, flat: number[] = [];
+    const arc = (cx: number, from: number) => {
+      for (let i = 0; i <= 10; i += 1) { const a = from + (Math.PI * i) / 10; flat.push(cx + Math.cos(a) * r, Math.sin(a) * r); }
+    };
+    arc(width / 2 - r, -Math.PI / 2);
+    arc(-width / 2 + r, Math.PI / 2);
+    return outlineInScene(this, flat);
   }
 
   /**

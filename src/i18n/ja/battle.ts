@@ -79,5 +79,7 @@ export const BATTLE_JA = {
   "tutorial.rune.done.bodyReward": "研磨と刻印をすべて終えました！完了報酬として、ランダム英雄ルーンボックスをバッグに入れておきました。",
   "tutorial.rune.done.made": "完成したルーン",
   "tutorial.rune.done.reward": "完了報酬",
-  "tutorial.rune.equip": "ルーンはここで装着できます！",
+  "tutorial.rune.equip": "ルーン枠をタップして、完成したルーンを装着してみましょう！",
+  "tutorial.rune.equipPick": "はめるルーンをタップして、入れ替え比較に乗せてみましょう。",
+  "tutorial.rune.equipApply": "「適用」を押すとルーンが装着されます！",
 } as const;

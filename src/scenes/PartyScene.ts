@@ -497,6 +497,7 @@ export class PartyScene extends Phaser.Scene {
         return { x, y, width: Math.max(...boxes.map(b => b.right)) - x, height: Math.max(...boxes.map(b => b.bottom)) - y };
       },
       // 자동 배치 안내는 버튼 아래(목록 쪽)에 선다 — 위에 서면 방금 옮긴 SD를 덮어 무엇을 되돌리는지 보이지 않는다.
+      shape: () => this.partyTutorialPhase === "start" ? this.startButton.outlineInScene() : this.partyTutorialPhase === "auto" ? this.autoPlaceButton?.outlineInScene() : undefined,
       side: () => this.partyTutorialPhase === "auto" ? "below" : undefined,
       guide: () => this.partyTutorialPhase === "move" ? this.moveTutorialGuide() : undefined,
       text: () => this.partyTutorialPhase === "move" ? t("tutorial.party.move")

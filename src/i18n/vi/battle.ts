@@ -73,8 +73,10 @@ export const BATTLE_VI = {
   "tutorial.rune.done.title": "Rune hoàn thiện!",
   "tutorial.rune.done.body": "Đã Mài và Khắc xong. Từ giờ Mài sẽ tốn Vàng.",
   "tutorial.rune.done.go": "Trang bị cho {name}",
-  "tutorial.rune.equip": "Bạn có thể trang bị Rune ở đây!",
   "tutorial.rune.done.bodyReward": "Đã Mài và Khắc xong! Phần thưởng là Hộp Rune Sử thi ngẫu nhiên, đã cho vào Túi đồ.",
   "tutorial.rune.done.made": "Rune đã hoàn thành",
   "tutorial.rune.done.reward": "Phần thưởng",
+  "tutorial.rune.equip": "Chạm vào ô Rune để trang bị Rune vừa hoàn thành!",
+  "tutorial.rune.equipPick": "Chạm vào Rune muốn lắp để đưa vào so sánh.",
+  "tutorial.rune.equipApply": "Nhấn 「Áp dụng」 để trang bị Rune!",
 } as const;

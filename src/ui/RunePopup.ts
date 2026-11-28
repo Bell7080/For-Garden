@@ -681,9 +681,9 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         if (engraving && wasFree) {
           scene.time.delayedCall(700, () => {
             if (closed) return;
-            // 마지막 한 칸은 끼우는 자리를 짚어 주는 것까지다 — 토리카 정보창으로 데려가 룬 칸을 비추고, 장착은 시키지 않는다.
+            // 마지막은 실제로 끼우는 것까지다 — 토리카 정보창으로 데려가 그 룬의 칸 → 룬 정비 창의 카드 → 「적용」을 차례로 가리킨다.
             const guideId = relicCollection.owns(RUNE_EQUIP_GUIDE_RELIC) ? RUNE_EQUIP_GUIDE_RELIC : undefined;
-            openRuneDoneGuide(scene, popups, rune!, guideId, () => { if (guideId && scene.scene.isActive()) startScene(scene, "relics", { openRelicId: guideId, runeEquipHint: true }); }, tutorialReward);
+            openRuneDoneGuide(scene, popups, rune!, guideId, () => { if (guideId && scene.scene.isActive()) startScene(scene, "relics", { openRelicId: guideId, runeEquipHint: rune!.part }); }, tutorialReward);
           });
         }
       } catch (error) {

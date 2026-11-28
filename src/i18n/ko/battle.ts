@@ -79,5 +79,7 @@ export const BATTLE_KO = {
   "tutorial.rune.done.bodyReward": "세공과 각인을 모두 마쳤어요! 완료 보상으로 무작위 영웅 룬 상자를 가방에 넣어 두었어요.",
   "tutorial.rune.done.made": "완성한 룬",
   "tutorial.rune.done.reward": "완료 보상",
-  "tutorial.rune.equip": "룬은 여기서 장착할 수 있어요!",
+  "tutorial.rune.equip": "룬 칸을 눌러 방금 완성한 룬을 장착해 보세요!",
+  "tutorial.rune.equipPick": "끼울 룬을 눌러 교체 비교에 올려 보세요.",
+  "tutorial.rune.equipApply": "「적용」을 누르면 룬이 장착돼요!",
 } as const;

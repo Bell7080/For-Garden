@@ -35,6 +35,44 @@ export interface TutorialSpotlightOptions {
    * 된다 — 꼭 막아야 할 조작은 그 화면이 직접 잠근다. 글은 판 위에 서서 밝은 원화 위에서도 읽힌다.
    */
   passive?: boolean;
+  /**
+   * 가리킬 것의 실루엣(씬 좌표 점 목록 — `Button.outlineInScene`). 주면 강조선과 밝은 구멍이 네모가 아니라 그 모양을
+   * 따른다 — 깎인 칩·원근 판을 네모로 두르면 강조가 버튼과 따로 논다. 없으면 이 게임의 기본 깎임(왼쪽 위·오른쪽 아래)이다.
+   */
+  shape?: ReadonlyArray<{ x: number; y: number }>;
+  /**
+   * 처음 서는 안내인가(기본 켜짐). 처음 서는 안내는 어둠·강조·글이 잠깐 번져 들어오고, 그동안(`SPOTLIGHT_SETTLE_MS`) 구멍도
+   * 눌리지 않는다 — 앞 칸을 누른 손이 그대로 다음 칸까지 눌러 읽기도 전에 넘어가던 것을 막는다. 자리만 옮겨 다시 서는
+   * 안내(`followTutorialTarget`)는 끈다.
+   */
+  enter?: boolean;
+  /**
+   * 어둠만 걷고 손은 받지 않는 곁 자리(씬 좌표 상자). 누를 것은 아니지만 함께 읽어야 할 것(세공 버튼을 가리키는 동안의
+   * 옵션 줄)이 어둠에 묻히지 않게 한다. 강조선은 두르지 않는다 — 누를 자리는 여전히 구멍 하나다.
+   */
+  reveal?: ReadonlyArray<{ x: number; y: number; width: number; height: number }>;
+}
+
+/** 새 안내가 번져 들어오는 시간과, 그동안 구멍이 손을 받지 않는 시간. */
+export const SPOTLIGHT_ENTER_MS = 220;
+export const SPOTLIGHT_SETTLE_MS = 380;
+
+/** 실루엣을 바깥으로 `pad`만큼 넓힌다 — 상자 가운데를 기준으로 가로·세로를 따로 늘린다. */
+export function padOutline(points: ReadonlyArray<{ x: number; y: number }>, pad: number): { x: number; y: number }[] {
+  const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+  const sx = (maxX - minX + pad * 2) / Math.max(1, maxX - minX), sy = (maxY - minY + pad * 2) / Math.max(1, maxY - minY);
+  return points.map((p) => ({ x: cx + (p.x - cx) * sx, y: cy + (p.y - cy) * sy }));
+}
+
+/** 실루엣이 없을 때의 구멍 — 상자에 이 게임의 판·칩과 같은 깎임(왼쪽 위·오른쪽 아래)을 준다. */
+export function chipOutline(left: number, top: number, right: number, bottom: number): { x: number; y: number }[] {
+  const cut = Math.min(28, (bottom - top) * 0.28, (right - left) * 0.2);
+  return [
+    { x: left + cut, y: top }, { x: right, y: top }, { x: right, y: bottom - cut },
+    { x: right - cut, y: bottom }, { x: left, y: bottom }, { x: left, y: top + cut },
+  ];
 }
 
 const HOLE_PAD = 14;
@@ -58,32 +96,46 @@ export class TutorialSpotlight {
     const top = Math.max(0, options.rect.y - HOLE_PAD);
     const right = Math.min(BASE_WIDTH, options.rect.x + options.rect.width + HOLE_PAD);
     const bottom = Math.min(BASE_HEIGHT, options.rect.y + options.rect.height + HOLE_PAD);
-    const dim = (x: number, y: number, width: number, height: number): void => {
+    const outline = options.shape && options.shape.length >= 3 ? padOutline(options.shape, HOLE_PAD) : chipOutline(left, top, right, bottom);
+    const toVectors = (points: ReadonlyArray<{ x: number; y: number }>, dx = 0, dy = 0) => points.map((p) => new Phaser.Math.Vector2(p.x - dx, p.y - dy));
+    // 입력은 구멍 상자 밖 네 장이 삼킨다(보이지 않는다). 어둠은 실루엣 모양으로 뚫린 한 장이 그린다 — 네모 막 넷을 칠하면
+    // 버튼이 깎였든 원근이 졌든 늘 네모 구멍이 뚫려, 강조가 그 버튼과 따로 논다.
+    const block = (x: number, y: number, width: number, height: number): void => {
       if (width <= 0 || height <= 0) return;
-      this.objects.push(scene.add.rectangle(x + width / 2, y + height / 2, width, height, 0x000000, DIM_ALPHA).setDepth(depth).setInteractive());
+      this.objects.push(scene.add.rectangle(x + width / 2, y + height / 2, width, height, 0x000000, 0).setDepth(depth).setInteractive());
     };
     if (!options.passive) {
       // 막이 덮는 동안에도 설정은 열린다 — 막 위로 올렸다가 막이 걷힐 때 내린다.
       this.releaseSettings = raiseSettingsAccess(scene, depth);
-      dim(0, 0, BASE_WIDTH, top);
-      dim(0, bottom, BASE_WIDTH, BASE_HEIGHT - bottom);
-      dim(0, top, left, bottom - top);
-      dim(right, top, BASE_WIDTH - right, bottom - top);
+      block(0, 0, BASE_WIDTH, top);
+      block(0, bottom, BASE_WIDTH, BASE_HEIGHT - bottom);
+      block(0, top, left, bottom - top);
+      block(right, top, BASE_WIDTH - right, bottom - top);
+      // 화면 밖까지 넉넉히 덮는다 — 화면 흔들림(카메라)에도 가장자리가 비지 않게.
+      const shade = scene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH + 400, BASE_HEIGHT + 400, 0x000000, DIM_ALPHA).setDepth(depth);
+      const holeShape = scene.make.graphics({}, false);
+      holeShape.fillStyle(0xffffff, 1).fillPoints(toVectors(outline), true);
+      for (const area of options.reveal ?? []) holeShape.fillPoints(toVectors(chipOutline(area.x - 6, area.y - 6, area.x + area.width + 6, area.y + area.height + 6)), true);
+      const mask = holeShape.createGeometryMask();
+      mask.setInvertAlpha(true);
+      shade.setMask(mask);
+      shade.once(Phaser.GameObjects.Events.DESTROY, () => mask.destroy());
+      this.objects.push(shade, holeShape);
     }
 
-    // 구멍 둘레의 얇은 강조선 — 어디까지가 눌러야 할 자리인지 말한다.
+    // 구멍 둘레의 얇은 강조선 — 어디까지가 눌러야 할 자리인지 말한다. 먹선 위에 강조색을 얹어 밝은 원화 위에서도 선다.
     const frame = scene.add.graphics().setDepth(depth + 1);
-    frame.lineStyle(4, COLOR.accent, 0.95);
-    frame.strokeRect(left, top, right - left, bottom - top);
+    frame.lineStyle(9, 0x05070a, 0.55).strokePoints(toVectors(outline), true, true);
+    frame.lineStyle(4, COLOR.accent, 0.95).strokePoints(toVectors(outline), true, true);
     this.objects.push(frame);
     const reduceMotion = settingsManager.get().accessibility.reduceMotion;
     if (options.pulse || options.passive) {
       // 구멍에서 바깥으로 번지는 테두리 — 다른 칸보다 한 번 더 눈을 끌어 "마지막은 여기"를 말한다.
-      const glow = scene.add.graphics({ x: (left + right) / 2, y: (top + bottom) / 2 }).setDepth(depth + 1);
-      const w = right - left, h = bottom - top;
-      glow.lineStyle(6, COLOR.accent, 1).strokeRect(-w / 2, -h / 2, w, h);
+      const gx = (left + right) / 2, gy = (top + bottom) / 2;
+      const glow = scene.add.graphics({ x: gx, y: gy }).setDepth(depth + 1);
+      glow.lineStyle(6, COLOR.accent, 1).strokePoints(toVectors(outline, gx, gy), true, true);
       this.objects.push(glow);
-      if (!reduceMotion) scene.tweens.add({ targets: glow, scale: 1.35, alpha: 0, duration: 900, repeat: -1, ease: "Quad.Out" });
+      if (!reduceMotion) scene.tweens.add({ targets: glow, scale: 1.2, alpha: 0, duration: 900, repeat: -1, ease: "Quad.Out" });
       else glow.setAlpha(0.6);
     }
     if (options.onAdvance) {
@@ -123,6 +175,7 @@ export class TutorialSpotlight {
     }
     // 화살표가 길을 긋는 칸에서는 위아래로 까딱이는 ▼가 같은 말을 두 번 한다.
     if (options.guide) arrow.setVisible(false);
+    if (options.enter !== false) this.enter(scene, depth, { left, top, right, bottom }, options, reduceMotion, [label, arrow, frame]);
     if (!reduceMotion) {
       scene.tweens.add({ targets: arrow, y: arrow.y + (side === "above" ? 16 : -16), duration: 520, yoyo: true, repeat: -1, ease: "Sine.InOut" });
     }
@@ -182,6 +235,25 @@ export class TutorialSpotlight {
   }
 
   private chain?: Phaser.Tweens.TweenChain;
+
+  /** 처음 서는 순간 — 어둠·강조·글을 번져 들이고, 막는 칸이면 잠깐 구멍도 덮는다. */
+  private enter(scene: Phaser.Scene, depth: number, hole: { left: number; top: number; right: number; bottom: number }, options: TutorialSpotlightOptions, reduceMotion: boolean, fade: Phaser.GameObjects.GameObject[]): void {
+    if (!options.passive && !options.onAdvance) {
+      const guard = scene.add.rectangle((hole.left + hole.right) / 2, (hole.top + hole.bottom) / 2, hole.right - hole.left, hole.bottom - hole.top, 0, 0)
+        .setDepth(depth).setInteractive();
+      this.objects.push(guard);
+      // 씬 시계가 아니라 실제 시간 — 바쁜 프레임에서 씬 타이머가 밀리면 구멍이 한참 막힌다.
+      setTimeout(() => { if (guard.scene) guard.destroy(); }, SPOTLIGHT_SETTLE_MS);
+    }
+    if (reduceMotion) return;
+    const shade = this.objects.find((object) => object instanceof Phaser.GameObjects.Rectangle && object.fillAlpha === DIM_ALPHA);
+    for (const object of shade ? [...fade, shade] : fade) {
+      const target = object as Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Alpha;
+      const alpha = target.alpha;
+      target.setAlpha(0);
+      scene.tweens.add({ targets: target, alpha, duration: SPOTLIGHT_ENTER_MS, ease: "Quad.Out" });
+    }
+  }
 
   get active(): boolean { return !this.destroyed; }
 

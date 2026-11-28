@@ -73,8 +73,10 @@ export const BATTLE_ES = {
   "tutorial.rune.done.title": "¡Runa completa!",
   "tutorial.rune.done.body": "Tallado y grabado terminados. A partir de ahora, tallar cuesta Oro.",
   "tutorial.rune.done.go": "Equipar a {name}",
-  "tutorial.rune.equip": "¡Aquí puedes equipar Runas!",
   "tutorial.rune.done.bodyReward": "¡Tallado y grabado terminados! Como recompensa, tienes una Caja de runa épica aleatoria en la Bolsa.",
   "tutorial.rune.done.made": "Tu runa",
   "tutorial.rune.done.reward": "Recompensa",
+  "tutorial.rune.equip": "¡Toca la ranura de Runa para equipar la Runa que acabas de terminar!",
+  "tutorial.rune.equipPick": "Toca una Runa para añadirla a la comparación.",
+  "tutorial.rune.equipApply": "¡Toca 「Aplicar」 para equipar la Runa!",
 } as const;

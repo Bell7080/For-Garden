@@ -373,6 +373,9 @@ interface ProfileView {
 }
 
 /** SD 여섯이 실시간으로 뒤엉켜 싸우는 자동 전투 화면이다. */
+/** 조작 안내가 싸움이 시작된 뒤 기다리는 실제 시간. 배속을 곱하지 않는다. */
+const FEATURE_TUTORIAL_LEAD_MS = 1800;
+
 export class BattleScene extends Phaser.Scene {
   /** init 입력은 씬 한 생명주기 동안 고정되며 원정 진행 상태는 매니저만 저장한다. */
   private cakeCompletion?: { requestId: string; result: Awaited<ReturnType<typeof gameApi.completeCakeOperation>> };
@@ -2064,7 +2067,8 @@ export class BattleScene extends Phaser.Scene {
    */
   private maybeStartFeatureTutorial(): void {
     const feature = this.teachFeature;
-    if (!feature || this.featureTaught || this.featureSpotlight || this.finished || this.ultimateSequenceActive || performance.now() < this.fightStartsAt) return;
+    // 싸움이 붙는 걸 잠깐 본 뒤에 멈춘다(`FEATURE_TUTORIAL_LEAD_MS`) — 시작하자마자 멈추면 판을 한 번도 못 보고 칩부터 누르게 되어 급하다.
+    if (!feature || this.featureTaught || this.featureSpotlight || this.finished || this.ultimateSequenceActive || performance.now() < this.fightStartsAt + FEATURE_TUTORIAL_LEAD_MS) return;
     if (this.pausePopups?.isOpen) return;
     if (tutorialManager.isDone(BATTLE_FEATURE_STEP[feature])) return;
     const chip = { speed: this.speedChip, auto: this.autoChip, presentation: this.presentationChip, contribution: this.contributionChip }[feature];
@@ -2074,7 +2078,7 @@ export class BattleScene extends Phaser.Scene {
     this.featureSpotlight = new TutorialSpotlight(this, {
       rect: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
       text: again ? t(`tutorial.battle.${feature as "speed" | "presentation"}.again`) : t(`tutorial.battle.${feature}`),
-      side: "above",
+      side: "above", shape: chip.outlineInScene(),
     });
   }
 
@@ -2096,7 +2100,7 @@ export class BattleScene extends Phaser.Scene {
       this.featureSpotlight = new TutorialSpotlight(this, {
         rect: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
         text: t(`tutorial.battle.${feature as "speed" | "presentation"}.again`),
-        side: "above",
+        side: "above", shape: chip.outlineInScene(),
       });
       return;
     }

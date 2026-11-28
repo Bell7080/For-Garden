@@ -295,6 +295,8 @@ export class PopupLayer {
       const buttonY = plateTop + plateHeight + L.buttonRoom;
       const xs = confirmButtonXs(single ? 1 : 2);
       const common = { width: L.button.width, height: L.button.height, fontSize: L.button.fontSize };
+      // 혼자 서는 확정 버튼은 라벨이 길면(「토리카에게 장착하러 가기」) 글자를 누르지 않고 판을 늘린다 — 안쪽 판 폭까지.
+      const confirmWidth = single ? soloConfirmWidth(this.scene, options.confirmLabel, plateWidth) : L.button.width;
       if (!single) {
         // 물러나는 버튼은 화면 어디서나 붉다(나가기와 같은 `DESTRUCTIVE_BUTTON_STYLE` · 응태 2026-11-22). 다만 확정이
         // 파괴적 조작이라 이미 붉으면 두 버튼이 같은 색이 되므로, 그때만 취소는 옅은 유리로 남는다.
@@ -303,6 +305,7 @@ export class PopupLayer {
       }
       body.add(new Button(this.scene, xs[xs.length - 1], buttonY, {
         ...common,
+        width: confirmWidth,
         label: options.confirmLabel,
         variant: "primary",
         // 확정 판만 제 색으로 물들이고 양 끝에 점을 흩는다 — 두 버튼이 같은 어두운 판이면 어느 쪽이
@@ -598,4 +601,13 @@ export class PopupLayer {
     onClose?.();
     this.publishDebugTitles();
   }
+}
+
+/** 혼자 서는 확정 버튼의 폭 — 라벨을 재서 깎인 모서리 몫을 더하고, 기본 폭과 안쪽 판 폭 사이로 묶는다. */
+function soloConfirmWidth(scene: Phaser.Scene, label: string, plateWidth: number): number {
+  const L = CONFIRM_DIALOG;
+  const probe = scene.add.text(0, 0, label, textStyle({ role: "display", size: L.button.fontSize })).setVisible(false);
+  const need = probe.width + L.button.height * 1.04 + 48;
+  probe.destroy();
+  return Math.round(Math.min(plateWidth, Math.max(L.button.width, need)));
 }

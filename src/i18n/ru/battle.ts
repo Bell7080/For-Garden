@@ -73,8 +73,10 @@ export const BATTLE_RU = {
   "tutorial.rune.done.title": "Руна готова!",
   "tutorial.rune.done.body": "Огранка и гравировка завершены. Дальше огранка стоит золота.",
   "tutorial.rune.done.go": "Надеть руну: {name}",
-  "tutorial.rune.equip": "Здесь можно надеть руны!",
   "tutorial.rune.done.bodyReward": "Огранка и гравировка завершены! В награду в сумке ждёт случайный ящик эпической руны.",
   "tutorial.rune.done.made": "Готовая руна",
   "tutorial.rune.done.reward": "Награда",
+  "tutorial.rune.equip": "Нажмите на ячейку руны, чтобы надеть только что готовую руну!",
+  "tutorial.rune.equipPick": "Нажмите на руну, чтобы добавить её в сравнение.",
+  "tutorial.rune.equipApply": "Нажмите «Применить», чтобы надеть руну!",
 } as const;

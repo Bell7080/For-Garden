@@ -153,6 +153,7 @@ export const INFO_RU = {
   "info.bond.awakenResetConfirm": "Все распределённые Пробуждения вернутся. Это бесплатно.",
   "info.bond.awakenResetDone": "Пробуждения сброшены",
   "info.bond.awakenRecord": "Распределение",
+  "info.bond.awakenGain": "Бонус от связи",
   "info.bond.awakenTimes": "×{count}",
   "info.bond.howTo": "Как получить!",
   "info.bond.howToTitle": "Как получить Связь",

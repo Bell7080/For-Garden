@@ -153,6 +153,7 @@ export const INFO_PT_BR = {
   "info.bond.awakenResetConfirm": "Todos os Despertares usados voltam para você. Não custa nada.",
   "info.bond.awakenResetDone": "Despertares redefinidos",
   "info.bond.awakenRecord": "Distribuição",
+  "info.bond.awakenGain": "Bônus de vínculo",
   "info.bond.awakenTimes": "×{count}",
   "info.bond.howTo": "Como obter!",
   "info.bond.howToTitle": "Como obter Vínculo",

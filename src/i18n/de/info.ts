@@ -153,6 +153,7 @@ export const INFO_DE = {
   "info.bond.awakenResetConfirm": "Alle vergebenen Erwachen werden zurückgegeben. Es kostet nichts.",
   "info.bond.awakenResetDone": "Erwachen zurückgesetzt",
   "info.bond.awakenRecord": "Verteilung",
+  "info.bond.awakenGain": "Bonus durch Bindung",
   "info.bond.awakenTimes": "×{count}",
   "info.bond.howTo": "So erhältst du es!",
   "info.bond.howToTitle": "So erhältst du Bindung",

@@ -153,6 +153,7 @@ export const INFO_TH = {
   "info.bond.awakenResetConfirm": "คืนปลุกพลังที่ใช้ไปทั้งหมด ไม่มีค่าใช้จ่าย",
   "info.bond.awakenResetDone": "รีเซ็ตปลุกพลังแล้ว",
   "info.bond.awakenRecord": "การจัดสรร",
+  "info.bond.awakenGain": "ส่วนที่เพิ่มจากสายสัมพันธ์",
   "info.bond.awakenTimes": "{count} ครั้ง",
   "info.bond.howTo": "วิธีรับ!",
   "info.bond.howToTitle": "วิธีรับสายสัมพันธ์",

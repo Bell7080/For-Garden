@@ -153,6 +153,7 @@ export const INFO_ID = {
   "info.bond.awakenResetConfirm": "Semua Bangkit yang dipakai dikembalikan. Gratis.",
   "info.bond.awakenResetDone": "Bangkit telah direset",
   "info.bond.awakenRecord": "Alokasi",
+  "info.bond.awakenGain": "Bonus ikatan",
   "info.bond.awakenTimes": "{count}x",
   "info.bond.howTo": "Cara dapat!",
   "info.bond.howToTitle": "Cara dapat Ikatan",

@@ -153,6 +153,7 @@ export const INFO_VI = {
   "info.bond.awakenResetConfirm": "Hoàn lại toàn bộ lượt Thức tỉnh đã dùng. Không tốn phí.",
   "info.bond.awakenResetDone": "Đã đặt lại Thức tỉnh",
   "info.bond.awakenRecord": "Đã phân bổ",
+  "info.bond.awakenGain": "Phần tăng nhờ gắn kết",
   "info.bond.awakenTimes": "{count} lần",
   "info.bond.howTo": "Cách nhận!",
   "info.bond.howToTitle": "Cách nhận Gắn kết",

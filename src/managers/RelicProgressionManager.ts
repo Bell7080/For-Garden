@@ -177,8 +177,10 @@ export class RelicProgressionManager {
   }
 
   /** UI와 전투가 공유할 최종 능력치를 순수 코어 계산기로 구한다. */
-  getFinalStats(relicId: string, options: { pvp?: boolean } = {}): Stats {
-    const progress = this.getProgress(relicId);
+  /** `withoutBond`는 유대 몫(레벨 % + 각성)을 뺀 값 — 유대 각성 판의 오각형이 오른 몫만 붉게 가른다. */
+  getFinalStats(relicId: string, options: { pvp?: boolean; withoutBond?: boolean } = {}): Stats {
+    const current = this.getProgress(relicId);
+    const progress = options.withoutBond ? { ...current, bondLevel: 0, bondAwakening: undefined } : current;
     // 인스턴스 전체를 넘겨 성공 이력과 각인을 코어의 단일 계산기가 해석하게 한다.
     const gems = progress.heartGemSlots.flatMap((id) => {
       const rune = id === null ? undefined : this.state.runeInventory.find((candidate) => candidate.instanceId === id);

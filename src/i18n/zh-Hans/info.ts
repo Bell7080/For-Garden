@@ -153,6 +153,7 @@ export const INFO_ZH_HANS = {
   "info.bond.awakenResetConfirm": "返还所有已分配的觉醒，不消耗任何资源。",
   "info.bond.awakenResetDone": "已重置觉醒",
   "info.bond.awakenRecord": "分配记录",
+  "info.bond.awakenGain": "羁绊提升",
   "info.bond.awakenTimes": "{count}次",
   "info.bond.howTo": "获取方式！",
   "info.bond.howToTitle": "羁绊获取方式",

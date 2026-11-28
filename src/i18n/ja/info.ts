@@ -158,6 +158,7 @@ export const INFO_JA = {
   "info.bond.awakenResetConfirm": "振り分けた覚醒をすべて戻します。費用はかかりません。",
   "info.bond.awakenResetDone": "覚醒をリセットしました",
   "info.bond.awakenRecord": "振り分け内訳",
+  "info.bond.awakenGain": "絆で上がった分",
   "info.bond.awakenTimes": "{count}回",
   "info.bond.howTo": "入手方法！",
   "info.bond.howToTitle": "絆の入手方法",

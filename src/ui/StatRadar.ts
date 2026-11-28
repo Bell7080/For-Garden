@@ -44,6 +44,9 @@ export interface StatRadarLabelStyle {
 /** 홀로그램 결의 색. 면은 강조색(금빛), 격자와 주사선은 투영 장비의 옅은 청록이다. */
 const HOLO_GRID = 0x8fe8ff;
 const HOLO_EDGE = 0xfff0c8;
+/** 덧붙은 몫(`setGain`)의 붉은 띠와 그 바깥선. */
+const GAIN_RED = 0xff3b4e;
+const GAIN_RED_EDGE = 0xff8a96;
 
 /** 정규화된 오각형 능력치 레이더 그래프 Phaser prefab이다. */
 export class StatRadar extends Phaser.GameObjects.Container {
@@ -56,6 +59,8 @@ export class StatRadar extends Phaser.GameObjects.Container {
   private readonly holo: boolean;
   private readonly axisColors: number[] = [];
   private base?: Stats;
+  /** 덧붙은 몫을 가를 기준 오각형 — 주면 기준선은 옅게, 그 위로 오른 몫은 붉게 칠한다(`setGain`). */
+  private gainFrom?: Stats;
   private stats: Stats = { hp: 0, def: 0, res: 0, atk: 0, ap: 0 } as Stats;
   private radius: number;
   /** 0이면 면이 가운데 한 점, 1이면 제 크기다. 처음 펼쳐질 때만 0에서 오른다. */
@@ -217,6 +222,16 @@ export class StatRadar extends Phaser.GameObjects.Container {
     this.powerText?.setText(combatPower(stats, base).toLocaleString()).setScale(0.8 + fill * 0.34);
   }
 
+  /**
+   * 기준 능력치(`from`)를 깐다 — 기준 오각형의 선은 반투명하게 죽이고, 지금 면이 그 위로 넘친 몫만 붉게 칠한다.
+   * 유대 각성처럼 「무엇이 얼마나 올렸나」를 말하는 판에서만 쓴다. `undefined`면 걷는다.
+   */
+  setGain(from: Stats | undefined): this {
+    this.gainFrom = from;
+    if (this.holo) this.paint(this.scene.time.now);
+    return this;
+  }
+
   /** 홀로그램 결 한 장. `timeMs`가 주사선·빛띠·일렁임의 박자를 정한다. */
   private paint(timeMs: number): void {
     const radius = this.radius;
@@ -259,9 +274,24 @@ export class StatRadar extends Phaser.GameObjects.Container {
         for (const [a, b] of polygonSpans(flat, y)) g.lineBetween(a, y, b, y);
       }
     }
-    // 테두리 — 넓게 번지는 빛 한 겹 위에 또렷한 선.
-    g.lineStyle(10, COLOR.accent, 0.16 * breathe).strokePoints(values, true);
-    g.lineStyle(3, HOLO_EDGE, 0.95).strokePoints(values, true);
+    if (this.gainFrom) {
+      // 기준 오각형 — 일렁임은 지금 면과 같이 따라가고, 선은 옅게만 남긴다.
+      const from = this.gainFrom;
+      const baseValues = AXES.map(([key], index) => point(index, Math.max(0.04, Math.min(1, Math.max(0, from[key] / STAT_RADAR_MAX[key])) * this.grow) * (still ? 1 : holoWobble(index, timeMs))));
+      // 오른 몫 — 변마다 기준선과 지금 선 사이의 띠를 붉게 채운다(지금 값이 기준보다 늘 크거나 같다).
+      g.fillStyle(GAIN_RED, 0.42 * breathe);
+      for (let index = 0; index < AXES.length; index += 1) {
+        const next = (index + 1) % AXES.length;
+        g.fillPoints([baseValues[index], baseValues[next], values[next], values[index]], true);
+      }
+      g.lineStyle(10, GAIN_RED, 0.2 * breathe).strokePoints(values, true);
+      g.lineStyle(3, GAIN_RED_EDGE, 0.95).strokePoints(values, true);
+      g.lineStyle(2, HOLO_EDGE, 0.32).strokePoints(baseValues, true);
+    } else {
+      // 테두리 — 넓게 번지는 빛 한 겹 위에 또렷한 선.
+      g.lineStyle(10, COLOR.accent, 0.16 * breathe).strokePoints(values, true);
+      g.lineStyle(3, HOLO_EDGE, 0.95).strokePoints(values, true);
+    }
     // 꼭짓점은 동그라미가 아니라 축 색의 작은 마름모다.
     values.forEach(({ x, y }, index) => {
       const size = 7;

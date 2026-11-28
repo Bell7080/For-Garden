@@ -1,4 +1,4 @@
-import { COMPETITIVE_MONTHLY_ENABLED } from "../core/competitiveSeason";
+import { competitiveMonthlyOn } from "../core/competitiveSeason";
 import { rankRewardBundle, type RankRewardPool } from "./competitiveRewards";
 /** 원정 맵에서 보스 외 노드를 뽑을 때 사용하는 정적 밸런스 한 벌이다. */
 export const EXPEDITION_MAP_BALANCE = {
@@ -223,30 +223,30 @@ export const EXPEDITION_WEEKLY_RANK_POOL: RankRewardPool = {
 };
 
 /**
- * 월간 시즌과 함께 켜지는 원정 주간 표(`COMPETITIVE_MONTHLY_ENABLED` — 2026-11-28 응태 「원정은 주간인 대신 적당량」).
- * 결투장·아레나가 월간 큰 몫으로 옮겨 가는 동안 원정은 매주 오므로 젬·인양 기록을 절반 아래로 덜었다(1위 젬 3,000 → 1,500,
- * 참여 500 → 150). 골드·치즈케이크는 그대로다.
+ * 월간 시즌과 함께 켜지는 원정 주간 표(`competitiveMonthlyOn` — 2026-11-28 응태 「원정은 주간인 대신 적당량」).
+ * 1위(젬 3,000)와 참여(젬 500)는 예전 표 그대로 두고, 그 사이가 한 칸마다 젬 100 이상씩 오르게 다시 끊었다(응태 2026-11-28
+ * 「500에서 점차 높아지게, 칸마다 100개씩이라도 차이」 — 예전에는 101위부터 끝까지 모두 500이었다). 골드·치즈케이크는 그대로다.
  */
 export const EXPEDITION_WEEKLY_RANK_POOL_V2: RankRewardPool = {
   ranks: [
-    { upTo: 1, rewards: { gems: 1500, salvageRecord: 200, gold: 5000, cheesecake: 150 } },
-    { upTo: 3, rewards: { gems: 1200, salvageRecord: 170, gold: 4500, cheesecake: 130 } },
-    { upTo: 10, rewards: { gems: 1000, salvageRecord: 150, gold: 4000, cheesecake: 110 } },
-    { upTo: 50, rewards: { gems: 800, salvageRecord: 120, gold: 3500, cheesecake: 90 } },
-    { upTo: 100, rewards: { gems: 600, salvageRecord: 100, gold: 3000, cheesecake: 70 } },
-    { upTo: 300, rewards: { gems: 400, salvageRecord: 80, gold: 2500, cheesecake: 60 } },
-    { upTo: 1000, rewards: { gems: 350, salvageRecord: 70, gold: 2000, cheesecake: 50 } },
+    { upTo: 1, rewards: { gems: 3000, salvageRecord: 400, gold: 5000, cheesecake: 150 } },
+    { upTo: 3, rewards: { gems: 2500, salvageRecord: 350, gold: 4500, cheesecake: 130 } },
+    { upTo: 10, rewards: { gems: 2000, salvageRecord: 300, gold: 4000, cheesecake: 110 } },
+    { upTo: 50, rewards: { gems: 1500, salvageRecord: 250, gold: 3500, cheesecake: 90 } },
+    { upTo: 100, rewards: { gems: 1200, salvageRecord: 200, gold: 3000, cheesecake: 70 } },
+    { upTo: 300, rewards: { gems: 1000, salvageRecord: 180, gold: 2500, cheesecake: 60 } },
+    { upTo: 1000, rewards: { gems: 900, salvageRecord: 160, gold: 2000, cheesecake: 50 } },
   ],
   percents: [
-    { upToPercent: 10, rewards: { gems: 300, salvageRecord: 60, gold: 1500, cheesecake: 40 } },
-    { upToPercent: 30, rewards: { gems: 250, salvageRecord: 50, gold: 1200, cheesecake: 30 } },
-    { upToPercent: 50, rewards: { gems: 200, salvageRecord: 40, gold: 1000, cheesecake: 20 } },
+    { upToPercent: 10, rewards: { gems: 800, salvageRecord: 140, gold: 1500, cheesecake: 40 } },
+    { upToPercent: 30, rewards: { gems: 700, salvageRecord: 120, gold: 1200, cheesecake: 30 } },
+    { upToPercent: 50, rewards: { gems: 600, salvageRecord: 100, gold: 1000, cheesecake: 20 } },
   ],
-  participation: { gems: 150, salvageRecord: 30, gold: 800, cheesecake: 10 },
+  participation: { gems: 500, salvageRecord: 80, gold: 800, cheesecake: 10 },
 };
 
 /** 지금 쓰는 원정 주간 표. */
-export const expeditionWeeklyRankPool = (monthly: boolean = COMPETITIVE_MONTHLY_ENABLED): RankRewardPool =>
+export const expeditionWeeklyRankPool = (monthly: boolean = competitiveMonthlyOn()): RankRewardPool =>
   monthly ? EXPEDITION_WEEKLY_RANK_POOL_V2 : EXPEDITION_WEEKLY_RANK_POOL;
 
 /** 그 순위의 보상. 참가자 수(`total`)를 모르면 1,000위 밖은 참여 몫이다. */

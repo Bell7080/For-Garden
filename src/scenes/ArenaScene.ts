@@ -25,7 +25,7 @@ import { squeezeTextToWidth } from '../ui/textFit';
 import { addRankChip } from "../ui/RankingChips";
 import { DuelRankingPopup, type RankingSource } from '../ui/DuelRankingPopup';
 import { openArenaTierRewards, openArenaWeeklyRewards } from '../ui/ArenaRewardPopup';
-import { COMPETITIVE_MONTHLY_ENABLED } from '../core/competitiveSeason';
+import { competitiveMonthlyOn } from '../core/competitiveSeason';
 import { arenaResultFromRoom, arenaResultMe, arenaSeenFor, openArenaResultPopup } from '../ui/ArenaResultPopup';
 import { arenaUnseenResult } from '../core/arenaNotice';
 import { arenaStreakBonus } from '../core/arenaStanding';
@@ -107,7 +107,7 @@ export class ArenaScene extends Phaser.Scene {
     private paintWeekClock(s: ArenaStatus): void {
         if (!s.weekEndsAt || !s.serverTime) return;
         const days = Math.max(0, (Date.parse(s.weekEndsAt) - Date.parse(s.serverTime)) / 86_400_000);
-        this.view.add(this.add.text(S.side, S.season.y, t(COMPETITIVE_MONTHLY_ENABLED ? "arena.monthly.endsIn" : "arena.weekly.endsIn", { days: Math.floor(days), hours: Math.floor((days % 1) * 24) }), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, .5));
+        this.view.add(this.add.text(S.side, S.season.y, t(competitiveMonthlyOn() ? "arena.monthly.endsIn" : "arena.weekly.endsIn", { days: Math.floor(days), hours: Math.floor((days % 1) * 24) }), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, .5));
     }
     /** 왼쪽 순위 칩(오른쪽에 내 등수). 주간 보상·티어 표는 순위표 창 안의 칩·버튼이 연다 — 로비에 같은 칩을 또 세우지 않는다. */
     private paintSideChips(s: ArenaStatus, tierId: ArenaTierId): void {
@@ -126,7 +126,7 @@ export class ArenaScene extends Phaser.Scene {
                     : null);
                 return { entries, me: mine };
             },
-            ...(COMPETITIVE_MONTHLY_ENABLED ? { rewardPeriod: 'monthly' as const } : {}),
+            ...(competitiveMonthlyOn() ? { rewardPeriod: 'monthly' as const } : {}),
             openRewards: (me) => openArenaWeeklyRewards(this, this.popups, me?.rank ?? s.rank ?? null),
             openTiers: () => openArenaTierRewards(this, this.popups, played ? s.score : null),
         };
@@ -168,7 +168,7 @@ export class ArenaScene extends Phaser.Scene {
         const best = Math.max(s.bestScore ?? s.score, s.score);
         this.paintTierRow(panel, 1, t("arena.profile.best"), played ? arenaTierId(best) : null, played ? rp(best) : undefined);
         const last = s.lastWeek ?? null;
-        this.paintTierRow(panel, 2, t(COMPETITIVE_MONTHLY_ENABLED ? "arena.profile.lastMonth" : "arena.profile.lastWeek"), last ? arenaTierId(last.score) : null,
+        this.paintTierRow(panel, 2, t(competitiveMonthlyOn() ? "arena.profile.lastMonth" : "arena.profile.lastWeek"), last ? arenaTierId(last.score) : null,
             last ? (last.rank !== null ? t("duel.rank.value", { rank: last.rank.toLocaleString() }) : rp(last.score)) : undefined);
 
         const y = duelProfileRowY(3);

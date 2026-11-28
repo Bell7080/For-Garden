@@ -1,5 +1,5 @@
 import { cycleAnchor } from "./launchAnchor";
-import { COMPETITIVE_MONTHLY_ENABLED, monthPeriodEndsAt, monthPeriodId } from "./competitiveSeason";
+import { competitiveMonthlyOn, monthPeriodEndsAt, monthPeriodId } from "./competitiveSeason";
 import { applyLevelGrowth, RELIC_MAX_LEVEL } from "./relicProgression";
 import type { RelicDef, Stats } from "./types";
 
@@ -35,7 +35,7 @@ export interface DuelTierDef {
   /** 처음 닿았을 때 한 번 받는 젬. 브론즈는 시작 티어라 없다. */
   firstReachGems: number;
   /**
-   * 월간 시즌의 **주간 티어 우편**(`COMPETITIVE_MONTHLY_ENABLED`) — 한 주가 닫힐 때 그 주 마지막 점수의 티어로 온다.
+   * 월간 시즌의 **주간 티어 우편**(`competitiveMonthlyOn`) — 한 주가 닫힐 때 그 주 마지막 점수의 티어로 온다.
    * 그 주에 한 판이라도 친 계정만 받는다. 순위는 따로 월간 순위 우편(`DUEL_MONTHLY_RANK_REWARDS`)이 맡는다.
    */
   weeklyReward: { duelEmblem: number; gems: number };
@@ -46,11 +46,11 @@ export const DUEL_DIVISION_SPAN = 100;
 
 export const DUEL_TIERS: readonly DuelTierDef[] = [
   { id: "bronze", floor: 0, divisions: 4, blind: 0, seasonReward: { duelEmblem: 150, gems: 300 }, firstReachGems: 0, weeklyReward: { duelEmblem: 40, gems: 250 } },
-  { id: "silver", floor: 400, divisions: 4, blind: 0, seasonReward: { duelEmblem: 250, gems: 500 }, firstReachGems: 100, weeklyReward: { duelEmblem: 60, gems: 300 } },
-  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 1_000 }, firstReachGems: 150, weeklyReward: { duelEmblem: 100, gems: 400 } },
-  { id: "platinum", floor: 1_200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 1_500 }, firstReachGems: 200, weeklyReward: { duelEmblem: 150, gems: 500 } },
-  { id: "diamond", floor: 1_600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 2_000 }, firstReachGems: 300, weeklyReward: { duelEmblem: 200, gems: 600 } },
-  { id: "master", floor: 2_000, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 2_500 }, firstReachGems: 400, weeklyReward: { duelEmblem: 250, gems: 700 } },
+  { id: "silver", floor: 400, divisions: 4, blind: 0, seasonReward: { duelEmblem: 250, gems: 500 }, firstReachGems: 100, weeklyReward: { duelEmblem: 60, gems: 350 } },
+  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 1_000 }, firstReachGems: 150, weeklyReward: { duelEmblem: 100, gems: 450 } },
+  { id: "platinum", floor: 1_200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 1_500 }, firstReachGems: 200, weeklyReward: { duelEmblem: 150, gems: 550 } },
+  { id: "diamond", floor: 1_600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 2_000 }, firstReachGems: 300, weeklyReward: { duelEmblem: 200, gems: 650 } },
+  { id: "master", floor: 2_000, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 2_500 }, firstReachGems: 400, weeklyReward: { duelEmblem: 250, gems: 750 } },
   { id: "grandmaster", floor: 2_400, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_100, gems: 3_000 }, firstReachGems: 500, weeklyReward: { duelEmblem: 300, gems: 850 } },
   { id: "challenger", floor: 2_800, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_400, gems: 3_500 }, firstReachGems: 700, weeklyReward: { duelEmblem: 350, gems: 1_000 } },
 ];
@@ -279,13 +279,13 @@ export function duelSeasonNumber(now: Date): number {
   return Math.max(1, Math.floor((now.getTime() - duelSeasonEpoch()) / (DUEL_SEASON_DAYS * DAY_MS)) + 1);
 }
 
-/** 시즌 ID. 월간이 켜지면(`COMPETITIVE_MONTHLY_ENABLED`) 달력의 달(`2026-11`)이고, 꺼져 있으면 21일 시즌(`S12`)이다. */
-export function duelSeasonId(now: Date, monthly: boolean = COMPETITIVE_MONTHLY_ENABLED): string {
+/** 시즌 ID. 월간이 켜지면(`competitiveMonthlyOn`) 달력의 달(`2026-11`)이고, 꺼져 있으면 21일 시즌(`S12`)이다. */
+export function duelSeasonId(now: Date, monthly: boolean = competitiveMonthlyOn(now)): string {
   return monthly ? monthPeriodId(now) : `S${duelSeasonNumber(now)}`;
 }
 
 /** 이 시즌이 끝나는 시각. */
-export function duelSeasonEndsAt(now: Date, monthly: boolean = COMPETITIVE_MONTHLY_ENABLED): Date {
+export function duelSeasonEndsAt(now: Date, monthly: boolean = competitiveMonthlyOn(now)): Date {
   return monthly ? monthPeriodEndsAt(now) : new Date(duelSeasonEpoch() + duelSeasonNumber(now) * DUEL_SEASON_DAYS * DAY_MS);
 }
 

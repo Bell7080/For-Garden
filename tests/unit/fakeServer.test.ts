@@ -583,11 +583,11 @@ describe("FakeServer", () => {
     // 1-2 뒤에는 일반 강화와 1레벨 강화가 먼저다. 연구 지원은 아직 받을 수 없다.
     await expect(server.completeTutorialStep({ stepId: "gift" })).rejects.toMatchObject({ code: "INVALID_STATE" });
     await server.completeTutorialStep({ stepId: "feed" });
-    // 강화 체험을 끝까지 마치면 치즈케이크 1,000을 한 번만 준다(응태 2026-11-28).
+    // 강화 체험을 끝까지 마치면 치즈케이크 500을 한 번만 준다(응태 2026-11-28).
     const cheesecakeBefore = state.wallet.cheesecake;
-    expect((await server.completeTutorialStep({ stepId: "feedLevel" })).granted).toEqual({ cheesecake: 1000 });
+    expect((await server.completeTutorialStep({ stepId: "feedLevel" })).granted).toEqual({ cheesecake: 500 });
     expect((await server.completeTutorialStep({ stepId: "feedLevel" })).granted).toBeUndefined();
-    expect(state.wallet.cheesecake).toBe(cheesecakeBefore + 1000);
+    expect(state.wallet.cheesecake).toBe(cheesecakeBefore + 500);
     await server.completeStage("1-3", true);
     expect(state.tutorial?.completedStepIds).toEqual(["ultimate", "auto", "feed", "feedLevel", "presentation"]);
   });

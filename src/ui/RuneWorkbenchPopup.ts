@@ -32,6 +32,7 @@ import { addScrollHint } from "./ScrollHint";
 import { isTap } from "./tapGuard";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
+import { followTutorialTarget } from "./tutorialTarget";
 
 /** 오르는 수·내리는 수의 색. 비교 판과 카드의 전투력 차가 같은 두 색을 쓴다. */
 const UP_TEXT = COLOR.hpText;
@@ -49,6 +50,11 @@ export interface RuneWorkbenchOptions {
   readonly part: RunePart;
   /** 장착이 바뀌었다(적용·쪽지에서의 판매 등) — 정보창이 성장 칸을 다시 칠한다. */
   readonly onChanged: () => void;
+  /**
+   * 무료 각인 체험 뒤의 장착 안내 — 목록의 룬 카드 → 「적용」을 차례로 가리키고(건너뛸 수 없다), 이 칸에 룬이 실제로
+   * 끼워지면 `onDone`을 부른다. 어느 룬이든 끼우면 끝이다.
+   */
+  readonly tutorial?: { readonly onDone: () => void };
 }
 
 /**
@@ -259,8 +265,12 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
     addScrollHint(scene, frame, { x: 0, y: viewHeight / 2, width: half * 2, height: viewHeight, owner: frame, read: () => ({ offset: scroll, min: minScroll }) });
 
     let controls: RuneListControls | undefined;
+    /** 장착 안내가 가리킬 카드 — 지금 칸에 저장된 룬이 아닌 첫 카드. 목록을 다시 그릴 때마다 다시 고른다. */
+    let tutorialCard: Phaser.GameObjects.Container | undefined;
+    let shownCount = 0;
     const paintList = (resetScroll: boolean): void => {
       content.removeAll(true);
+      tutorialCard = undefined;
       const allowed = new Set(session.runeInventory.filter((rune) => rune.part === part).map((rune) => rune.instanceId));
       const shown = visibleRuneList(state, allowed);
       controls?.setCount(shown.length, allowed.size);
@@ -312,7 +322,9 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
           depth: popups.baseDepth + 400,
         });
         content.add(cell);
+        if (tutorialCard === undefined && base[part] !== rune.instanceId) tutorialCard = cell;
       });
+      shownCount = shown.length;
       minScroll = runeWorkbenchMinScroll(shown.length, viewHeight);
       applyScroll(resetScroll ? 0 : scroll);
     };
@@ -560,6 +572,34 @@ export function openRuneWorkbench(scene: Phaser.Scene, popups: PopupLayer, optio
       recommendButton.setEnabled(!busy);
     };
     repaint(true);
+
+    const tutorial = options.tutorial;
+    if (tutorial) {
+      const startSlot = base[part];
+      let done = false;
+      const finish = (): void => { if (done) return; done = true; tutorial.onDone(); };
+      // 끼울 룬이 없으면(이 칸의 룬을 이미 다 끼웠다) 가리킬 것이 없으므로 안내를 마친다 — 막만 남아 갇히지 않게.
+      if (shownCount === 0 || tutorialCard === undefined) finish();
+      followTutorialTarget(scene, {
+        enabled: () => {
+          if (done || !body.active) return false;
+          if (base[part] !== null && base[part] !== startSlot) { finish(); return false; }
+          return true;
+        },
+        blocked: () => !popups.isTop(body),
+        rect: () => {
+          if (draft[part] !== base[part]) return applyButton.getBounds();
+          if (!tutorialCard?.active) return undefined;
+          // getBounds는 잘린 목록 안의 숨은 자식까지 품어 엉뚱하게 커진다 — 칸 자리와 크기로 잰다.
+          const m = tutorialCard.getWorldTransformMatrix();
+          const size = W.grid.card * m.scaleX;
+          return new Phaser.Geom.Rectangle(m.tx - size / 2, m.ty - size / 2, size, size);
+        },
+        shape: () => (draft[part] !== base[part] ? applyButton.outlineInScene() : undefined),
+        text: () => t(draft[part] !== base[part] ? "tutorial.rune.equipApply" : "tutorial.rune.equipPick"),
+        side: () => "above",
+      });
+    }
   });
 }
 

@@ -24,6 +24,8 @@ const LEGACY = [
   "src/ui/EnemyInfoPopup.ts",
   "src/ui/ExpeditionEntryButton.ts",
   "src/ui/ExpeditionMapView.ts",
+  // 마스크는 화면을 누르는 어둠에만 건다 — 입력을 막는 사각형은 마스크 밖에 따로 선다.
+  "src/ui/TutorialSpotlight.ts",
   "src/ui/IdleExcavationPopup.ts",
   "src/ui/InteractionCityPopup.ts",
   "src/ui/MailPopup.ts",

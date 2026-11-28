@@ -1,5 +1,6 @@
 import { settingsManager } from "../managers/SettingsManager";
 import Phaser from "phaser";
+import type { RunePart } from "../core/runes";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { t } from "../i18n";
 import { BASE_WIDTH } from "../config/gameConfig";
@@ -11,6 +12,8 @@ import { relicCollection } from "../managers/RelicCollectionManager";
 import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { followTutorialTarget } from "../ui/tutorialTarget";
+import { outlineBounds } from "../ui/outlineInScene";
+import { FEED_BULK_PANEL } from "../ui/feedBulkStyle";
 import { tutorialManager } from "../managers/TutorialManager";
 import { ScissorContainer } from "../ui/ScissorContainer";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
@@ -133,7 +136,7 @@ export class RelicsScene extends Phaser.Scene {
   /** 결과판의 강해지는 길이 곧장 정보창을 열어 달라고 넘긴 렐릭. 한 번 열고 비운다. */
   private pendingOpenRelicId?: string;
   /** 무료 각인 체험을 마치고 넘어왔다 — 연 정보창의 룬 칸을 한 번 짚어 준다(장착은 시키지 않는다). */
-  private pendingRuneEquipHint = false;
+  private pendingRuneEquipHint?: number;
   /** 바로가기(관찰 질문)로 들어오면 정보창을 연 뒤 관찰 일지를 이 쪽으로 곧장 연다. */
   private pendingJournalPage?: number;
 
@@ -141,10 +144,10 @@ export class RelicsScene extends Phaser.Scene {
     super("relics");
   }
 
-  init(data?: { openRelicId?: string; runeEquipHint?: boolean; openJournalPage?: number }): void {
+  init(data?: { openRelicId?: string; runeEquipHint?: boolean | number; openJournalPage?: number }): void {
     this.pendingOpenRelicId = typeof data?.openRelicId === "string" ? data.openRelicId : undefined;
     this.pendingJournalPage = typeof data?.openJournalPage === "number" ? data.openJournalPage : undefined;
-    this.pendingRuneEquipHint = data?.runeEquipHint === true;
+    this.pendingRuneEquipHint = data?.runeEquipHint === true ? 0 : typeof data?.runeEquipHint === "number" ? data.runeEquipHint : undefined;
     consumeSceneEntry(this);
   }
 
@@ -239,31 +242,33 @@ export class RelicsScene extends Phaser.Scene {
     const openId = this.pendingOpenRelicId;
     this.pendingOpenRelicId = undefined;
     const runeHint = this.pendingRuneEquipHint;
-    this.pendingRuneEquipHint = false;
+    this.pendingRuneEquipHint = undefined;
     const journalPage = this.pendingJournalPage;
     this.pendingJournalPage = undefined;
     if (openId && relicCollection.owns(openId)) {
       this.info.showRelic(getRelic(openId), true);
-      if (runeHint) this.showRuneEquipHint(openId);
+      if (runeHint !== undefined) this.showRuneEquipHint(openId, runeHint as RunePart);
       if (journalPage !== undefined) this.info.openJournalPage(journalPage);
     } else this.startFeedTutorial(nav);
   }
 
   /**
-   * 무료 각인 체험의 마지막 한 칸: 정보창의 룬 칸을 비추며 「여기서 장착할 수 있어요」만 말한다. 장착은 시키지 않으므로
-   * 화면 아무 곳이나 누르면 걷히고 아무것도 저장하지 않는다(체험은 각인에서 이미 끝났다). 창이 닫히거나 다른 렐릭으로
-   * 넘어가거나 다른 판이 덮이면 함께 걷는다.
+   * 무료 각인 체험의 마지막 칸: 정보창의 룬 칸(방금 각인한 룬이 들어갈 칸)을 비추고, 누르면 열리는 룬 정비 창이 이어서
+   * 룬 카드 → 「적용」을 가리킨다. 어느 룬이든 그 칸에 실제로 끼워야 끝난다(건너뛰기는 없다). 다른 렐릭으로 넘어가거나
+   * 창이 닫히면 함께 걷는다.
    */
-  private showRuneEquipHint(relicId: string): void {
+  private showRuneEquipHint(relicId: string, part: RunePart): void {
     let stopped = false;
     const stop = followTutorialTarget(this, {
-      enabled: () => !stopped && this.info.currentRelicId() === relicId && this.info.runeSlotsBounds() !== undefined,
-      rect: () => this.info.runeSlotsBounds(),
+      enabled: () => !stopped && this.info.currentRelicId() === relicId,
+      // 룬 정비 창이 떠 있는 동안은 그 창의 안내가 이어받는다 — 여기서는 물러나 그 창을 덮지 않는다.
+      blocked: () => this.info.hasOpenPopup(),
+      rect: () => this.info.runeSlotBounds(part),
       text: () => t("tutorial.rune.equip"),
-      hint: () => t("reward.tapHint"),
-      onAdvance: () => { stopped = true; stop(); },
       side: () => "above",
     });
+    this.info.armRuneEquipTutorial({ onDone: () => { stopped = true; stop(); this.info.armRuneEquipTutorial(undefined); } });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.info.armRuneEquipTutorial(undefined));
   }
 
   /**
@@ -303,7 +308,15 @@ export class RelicsScene extends Phaser.Scene {
       // 진행한다(응태 2026-11-28). 1레벨 쪽지가 열리면 그 버튼 둘레가 숨 쉬듯 번져 한 번 더 짚는다.
       pulse: () => this.feedLevelLocked(returnToLobby),
       blocked: () => rewardOpen,
-      rect: () => returnToLobby ? nav.tabRect("lobby") : this.info.feedBulkTutorialBounds() ?? this.info.feedButtonBounds(),
+      rect: () => {
+        if (returnToLobby) return nav.tabRect("lobby");
+        const outline = this.info.feedTutorialOutline();
+        return outline ? outlineBounds(outline) : this.info.feedBulkTutorialBounds() ?? this.info.feedButtonBounds();
+      },
+      shape: () => returnToLobby ? undefined : this.info.feedTutorialOutline(),
+      // 1레벨 칸을 가리킬 때는 글을 쪽지 밑으로 내린다 — 바로 아래에 두면 10레벨·MAX 칸을 덮는다.
+      side: () => this.feedLevelLocked(returnToLobby) ? "below" : undefined,
+      textGap: () => this.feedLevelLocked(returnToLobby) ? FEED_BULK_PANEL.height - FEED_BULK_PANEL.button.height - 78 + 60 : undefined, // 판 윗여백 64 + 구멍 여백 14를 빼면 판 밑변, 그 아래 한 뼘
       text: () => returnToLobby ? t("tutorial.relics.return") : tutorialManager.next() === "feed" ? t("tutorial.relics.feed") : this.info.feedBulkTutorialBounds() ? t("tutorial.relics.one") : t("tutorial.relics.bulk"),
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { stopped = true; this.info.onFed = undefined; });

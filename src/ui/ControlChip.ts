@@ -4,6 +4,7 @@ import { session } from "../state/session";
 import { CONTROL_CHIP_ACTIVE, perimeterPoint, type ControlChipTierLevel } from "./controlChipStyle";
 import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawLayer, HOLO } from "./holo";
+import { outlineInScene } from "./outlineInScene";
 import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
 import { squeezeTextToWidth } from "./textFit";
@@ -126,6 +127,9 @@ export class ControlChip extends Phaser.GameObjects.Container {
     this.spin?.remove();
     this.spin = undefined;
   }
+
+  /** 칩 실루엣을 씬 좌표로 — 튜토리얼 강조가 깎인 모서리를 그대로 따른다. */
+  outlineInScene(): { x: number; y: number }[] { return outlineInScene(this, this.shape); }
 
   private toPoints(): Phaser.Math.Vector2[] {
     const points: Phaser.Math.Vector2[] = [];

@@ -264,7 +264,9 @@ export class LabScene extends Phaser.Scene {
       const b = this.tenButton.getBounds();
       this.pullSpotlight = new TutorialSpotlight(this, {
         rect: { x: b.x, y: b.y, width: b.width, height: b.height }, text: t("tutorial.lab.pull"), side: "above",
-        passive: true,
+        passive: true, shape: this.tenButton.outlineInScene(),
+        // 글을 확정 판(`LAB_CHROME.pity`) 위로 올린다 — 버튼 바로 위에 두면 「SSR 확정까지」를 덮는다.
+        textGap: LAB_CHROME.pull.y - LAB_CHROME.pull.size.height / 2 - (LAB_CHROME.pity.y - LAB_CHROME.pity.height / 2) + 80,
       });
       this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.clearPullSpotlight());
     }

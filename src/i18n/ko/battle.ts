@@ -76,5 +76,7 @@ export const BATTLE_KO = {
   "tutorial.rune.done.title": "룬 완성!",
   "tutorial.rune.done.body": "세공과 각인을 모두 마쳤어요. 다음부터는 세공에 골드가 들어요.",
   "tutorial.rune.done.go": "{name}에게 장착하러 가기",
-  "tutorial.rune.equip": "룬은 여기서 장착할 수 있어요!",
+  "tutorial.rune.equip": "룬 칸을 눌러 방금 완성한 룬을 장착해 보세요!",
+  "tutorial.rune.equipPick": "끼울 룬을 눌러 교체 비교에 올려 보세요.",
+  "tutorial.rune.equipApply": "「적용」을 누르면 룬이 장착돼요!",
 } as const;

@@ -73,5 +73,7 @@ export const BATTLE_TH = {
   "tutorial.rune.done.title": "รูนสมบูรณ์!",
   "tutorial.rune.done.body": "เจียระไนและสลักเสร็จหมดแล้ว ต่อไปการเจียระไนจะใช้ทอง",
   "tutorial.rune.done.go": "ไปสวมให้ {name}",
-  "tutorial.rune.equip": "สวมใส่รูนได้ที่นี่!",
+  "tutorial.rune.equip": "แตะช่องรูนเพื่อสวมรูนที่เพิ่งทำเสร็จ!",
+  "tutorial.rune.equipPick": "แตะรูนที่จะสวมเพื่อนำไปเปรียบเทียบ",
+  "tutorial.rune.equipApply": "แตะ「ใช้」เพื่อสวมรูน!",
 } as const;

@@ -97,6 +97,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { FeedTapEffect } from "./feedTapEffect";
 import { FeedLevelUpEffect } from "./feedLevelUpEffect";
 import { drawFeedPlate, drawFeedWindow, FEED_BUTTON } from "./feedButtonSkin";
+import { outlineInScene } from "./outlineInScene";
 import { FEED_BULK_PANEL, FEED_BULK_TONES, feedBulkNoteCenter, feedBulkSparkles, feedBulkSpots } from "./feedBulkStyle";
 import { FEED_LEVEL_UP } from "./feedLevelUpStyle";
 import { createSweepBudget } from "./sweepBudget";
@@ -585,6 +586,8 @@ export class InfoManager {
   /** 능력치 칸의 오각형. 숫자는 돋보기로 연 상세가 맡는다. */
   private statRadar?: StatRadar;
   private readonly gemSlots: GemSlot[] = [];
+  /** 룬 장착 안내가 걸려 있으면 다음 룬 정비 창에 넘긴다(`armRuneEquipTutorial`). */
+  private runeEquipTutorial?: { onDone: () => void };
   private readonly skillIcons: Phaser.GameObjects.Container[] = [];
   /** 처음 여는 판에서 SD가 녹아들며 서야 하는가. */
   private figureReveal = false;
@@ -685,12 +688,45 @@ export class InfoManager {
   feedBulkTutorialBounds(): Phaser.Geom.Rectangle | undefined {
     return this.feedPopupOpen ? this.feedOneTutorialHit?.getBounds() : undefined;
   }
+
+  /**
+   * 튜토리얼 강조가 따를 실루엣(씬 좌표) — 한 번에 급여 쪽지가 열려 있으면 그 1레벨 칸, 아니면 급여 버튼의 기울인 판이다.
+   * `getBounds`는 버튼에 딸린 연타 수·조각 자리까지 품어 강조 상자가 레벨 줄까지 덮는다.
+   */
+  feedTutorialOutline(): { x: number; y: number }[] | undefined {
+    if (this.feedPopupOpen) {
+      const hit = this.feedOneTutorialHit;
+      return hit?.active ? outlineInScene(hit, slantedRect(FEED_BULK_PANEL.button.width, FEED_BULK_PANEL.button.height, 14)) : undefined;
+    }
+    if (!this.feedButton.active || !this.isOpen || !this.feedButton.visible) return undefined;
+    return outlineInScene(this.feedButton, slantedRect(this.feedButtonSize.width, this.feedButtonSize.height, FEED_BUTTON.slant));
+  }
+  private feedButtonSize = { width: 0, height: 0 };
   private feedOneTutorialHit?: Phaser.GameObjects.Rectangle;
 
   /** 룬 칸 셋을 품는 자리(씬 좌표). 창이 닫혀 있거나 다른 판이 덮었거나 룬을 다룰 수 없는 창이면 `undefined`. */
   runeSlotsBounds(): Phaser.Geom.Rectangle | undefined {
     if (!this.isOpen || this.popups.isOpen || !this.capabilities.mutateProgress || !this.ownedNow || this.gemSlots.length === 0) return undefined;
     return this.gemSlots.map((slot) => slot.bounds()).reduce((union, rect) => Phaser.Geom.Rectangle.Union(union, rect));
+  }
+
+  /** 룬 칸 하나의 자리(씬 좌표). 장착 안내가 체험 룬이 들어갈 칸을 가리킬 때 읽는다. */
+  runeSlotBounds(part: RunePart): Phaser.Geom.Rectangle | undefined {
+    if (!this.isOpen || this.popups.isOpen || !this.capabilities.mutateProgress || !this.ownedNow) return undefined;
+    return this.gemSlots[part]?.bounds();
+  }
+
+  /** 정보창 위에 다른 판(룬 정비 등)이 떠 있나. 안내가 그 판을 가리지 않도록 물러날 때 읽는다. */
+  hasOpenPopup(): boolean {
+    return this.popups.isOpen;
+  }
+
+  /**
+   * 룬 장착 안내를 건다 — 다음에 여는 룬 정비 창이 카드 → 「적용」을 차례로 가리키고, 실제로 룬이 끼워지면 `onDone`을
+   * 부른다. `undefined`면 푼다.
+   */
+  armRuneEquipTutorial(tutorial: { onDone: () => void } | undefined): void {
+    this.runeEquipTutorial = tutorial;
   }
 
   /** 지금 정보창이 서 있는 렐릭. 창이 닫혀 있으면 `undefined`. */
@@ -1032,6 +1068,7 @@ export class InfoManager {
    */
   private addFeedButton(x: number, y: number, width: number, height: number, panel: Phaser.GameObjects.Container): { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text } {
     const container = this.scene.add.container(x, y);
+    this.feedButtonSize = { width, height };
     // 켜진 판과 꺼진 판을 두 장으로 나눠 둔다. 켜진 쪽만 크림빛 치즈케이크 조각으로 서서,
     // 지금 누를 수 있는지가 글자를 읽기 전에 보인다(`feedButtonSkin.ts`).
     const { on, off } = drawFeedPlate(this.scene, width, height);
@@ -2133,7 +2170,7 @@ export class InfoManager {
   private openRuneWorkbench(part: RunePart): void {
     const def = this.currentDef;
     if (!def || !this.capabilities.mutateProgress || !this.ownedNow) return;
-    openRuneWorkbench(this.scene, this.popups, { relicId: def.id, part, onChanged: () => this.refreshGrowth() });
+    openRuneWorkbench(this.scene, this.popups, { relicId: def.id, part, onChanged: () => this.refreshGrowth(), tutorial: this.runeEquipTutorial });
     // 룬을 고르는 자리라, 체험 룬이 남아 있으면 같은 무료 세공 체험을 권한다.
     offerFreeRuneCraft(this.scene, this.popups, (runeInstanceId) => openRunePopup(this.scene, this.popups, { runeInstanceId, onChanged: () => this.refreshGrowth() }));
   }

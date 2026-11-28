@@ -4,6 +4,7 @@ import { formatCurrency } from "../core/formatCurrency";
 import { drawGlyph, type GlyphName } from "./glyphs";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { chipPoints, drawLayer, HOLO, perspectiveRect, slantedRect } from "./holo";
+import { outlineInScene } from "./outlineInScene";
 import { squeezeTextToWidth } from "./textFit";
 import { CONFIRM_DIALOG } from "./confirmDialogLayout";
 import { COLOR, textStyle } from "./theme";
@@ -289,6 +290,8 @@ export class Button extends Phaser.GameObjects.Container {
   private readonly subText?: Phaser.GameObjects.Text;
   private readonly labelText: Phaser.GameObjects.Text;
   private readonly plate: Phaser.GameObjects.Container;
+  /** 판 실루엣(판 국소 좌표, 평평한 x·y 배열). 튜토리얼 강조가 네모가 아니라 이 모양을 따라 선다. */
+  private readonly plateShape: number[];
   private readonly labelSize: number;
   private enabledState = true;
   private updateCost?: (cost?: { amount: number; affordable?: boolean }) => void;
@@ -378,6 +381,7 @@ export class Button extends Phaser.GameObjects.Container {
     if (!opts.icon && !opts.art && !opts.cost && opts.tag === undefined) squeezeTextToWidth(label, width - height * (primary ? 1.04 : 0.6));
     this.labelText = label;
     this.plate = plate;
+    this.plateShape = [...shape];
     this.labelSize = fontSize;
     if (opts.icon) {
       // 아이콘은 글자 왼쪽에 붙고, 둘을 합친 폭이 판 가운데에 오도록 함께 민다.
@@ -544,6 +548,9 @@ export class Button extends Phaser.GameObjects.Container {
     this.subText?.setText(text);
     return this;
   }
+
+  /** 판 실루엣을 씬 좌표로 — 튜토리얼 강조(`TutorialSpotlight.shape`)가 버튼의 깎임·원근을 그대로 따른다. */
+  outlineInScene(): { x: number; y: number }[] { return outlineInScene(this.plate, this.plateShape); }
 
   setEnabled(enabled: boolean): this {
     this.enabledState = enabled;

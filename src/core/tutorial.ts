@@ -120,7 +120,7 @@ export interface TutorialReward { fossil?: number; cheesecake?: number }
 /** 칸을 마칠 때 서버가 한 번만 주는 것. */
 export const TUTORIAL_REWARDS: Readonly<Partial<Record<TutorialStepId, TutorialReward>>> = {
   // 강화 체험을 끝까지 마친 몫 — 연구소 선물처럼 마무리 보상을 준다(응태 2026-11-28).
-  feedLevel: { cheesecake: 1000 },
+  feedLevel: { cheesecake: 500 },
   // 첫 복원 연구(배너 `welcome`)는 10연 전용이고 화석 8개가 든다 — 정확히 한 번 돌릴 몫이다.
   gift: { fossil: 8 },
 };

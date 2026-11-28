@@ -73,5 +73,7 @@ export const BATTLE_ZH_HANT = {
   "tutorial.rune.done.title": "符文完成！",
   "tutorial.rune.done.body": "打磨和刻印都完成了。之後打磨需要消耗金幣。",
   "tutorial.rune.done.go": "去給{name}裝備",
-  "tutorial.rune.equip": "符文可以在這裡裝備！",
+  "tutorial.rune.equip": "點選符文欄，裝備剛完成的符文吧！",
+  "tutorial.rune.equipPick": "點選要裝備的符文，放入替換比較吧。",
+  "tutorial.rune.equipApply": "點選「套用」即可裝備符文！",
 } as const;

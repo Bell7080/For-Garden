@@ -76,5 +76,7 @@ export const BATTLE_JA = {
   "tutorial.rune.done.title": "ルーン完成！",
   "tutorial.rune.done.body": "研磨と刻印をすべて終えました。次からは研磨にゴールドがかかります。",
   "tutorial.rune.done.go": "{name}に装着しに行く",
-  "tutorial.rune.equip": "ルーンはここで装着できます！",
+  "tutorial.rune.equip": "ルーン枠をタップして、完成したルーンを装着してみましょう！",
+  "tutorial.rune.equipPick": "はめるルーンをタップして、入れ替え比較に乗せてみましょう。",
+  "tutorial.rune.equipApply": "「適用」を押すとルーンが装着されます！",
 } as const;

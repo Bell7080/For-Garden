@@ -247,3 +247,28 @@ export function storyPreviewRewardColumns(count: number, width = NODE_ENEMY_PREV
   const step = Math.min(gap, (width - 120 - frame) / Math.max(1, count - 1));
   return Array.from({ length: count }, (_, index) => (index - (count - 1) / 2) * step);
 }
+
+/**
+ * 서브 이야기 판 — 전투 관문 판(`storyPreviewLayout`)에서 적 칸만 뺀 같은 짜임이다.
+ * 제목 → 구분선 → 「줄거리」 머리줄 → 글 → 구분선 → 초회 보상 이름표 → 액자 줄. 판 높이는 글 높이에서 거꾸로 구한다.
+ * 같은 `STORY_PREVIEW` 값을 읽어 두 판의 제목·머리줄·보상 줄이 같은 자리·같은 크기로 선다.
+ */
+export function subStoryPreviewLayout(input: { storyTextHeight: number; rewardCount: number }): Omit<StoryPreviewLayout, "enemyHeaderY" | "enemyBodyTop" | "repeatLabelY" | "repeatRowY"> {
+  const spec = STORY_PREVIEW;
+  const dividers: number[] = [spec.titleDivider];
+  let cursor = spec.titleDivider;
+  const storyHeaderY = cursor + spec.storyHeader / 2;
+  cursor += spec.storyHeader;
+  const storyTextY = cursor + spec.storyText.padTop;
+  cursor += spec.storyText.padTop + input.storyTextHeight + spec.storyText.padBottom;
+  let rewardLabelY: number | undefined;
+  let rewardRowY: number | undefined;
+  if (input.rewardCount > 0) {
+    dividers.push(cursor);
+    rewardLabelY = cursor + spec.reward.labelGap;
+    rewardRowY = rewardLabelY + spec.reward.tag.height + spec.reward.rowGap + spec.reward.frame / 2;
+    cursor = rewardRowY + spec.reward.frame / 2;
+  }
+  cursor += spec.reward.padBottom;
+  return { height: cursor, titleY: spec.padTop, dividers, storyHeaderY, storyTextY, rewardLabelY, rewardRowY };
+}

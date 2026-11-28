@@ -6,7 +6,8 @@ import { drawGlyph } from "./glyphs";
 import { chipPoints, drawLayer } from "./holo";
 import { ITEM_FRAME, addFramedIcon } from "./itemFrame";
 import { addRuneFrame } from "./runeIcons";
-import { COLOR } from "./theme";
+import { COLOR, textStyle } from "./theme";
+import { STORY_PREVIEW } from "./nodeEnemyPreviewLayout";
 
 /**
  * 받은 보상 위의 덮개 — **검은 막 한 겹 + 노란 체크 하나**.
@@ -51,4 +52,30 @@ export function addStageRewardFrame(
     holder.add(drawGlyph(scene, "check", 0, 0, size * STAGE_REWARD_CLAIMED.check, COLOR.accent));
   }
   return holder;
+}
+
+/**
+ * 보상 줄의 이름표 칩 — 왼쪽 위·오른쪽 아래만 깎인 판(화면 전체의 실루엣)에 글자를 얹는다. 초회는 강조색으로
+ * 채워 판 맨 아래에서도 먼저 읽히고, 반복은 어두운 유리에 흐린 강조선만 둘러 한 단계 가볍다.
+ * 전투 관문 판과 서브 이야기 판이 같은 한 장을 쓴다 — 두 판의 보상 줄이 같은 양식으로 읽혀야 한다.
+ */
+export function addStageRewardTag(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, left: number, centerY: number, label: string, kind: "first" | "repeat"): void {
+  const first = kind === "first";
+  const spec = STORY_PREVIEW;
+  const height = spec.reward.tag.height;
+  const style = first
+    ? textStyle({ role: "display", size: spec.reward.labelSize, color: "#1a1205" })
+    : textStyle({ role: "emphasis", size: spec.reward.labelSize, color: COLOR.ink });
+  const text = scene.add.text(0, centerY, label, style).setOrigin(0, 0.5);
+  const width = text.width + spec.reward.tag.padX * 2 + (first ? 18 : 0);
+  const bevel = spec.reward.tag.bevel;
+  parent.add(drawLayer(scene, left + width / 2, centerY, chipPoints(width, height, { bevel: { topLeft: bevel, bottomRight: bevel } }), first
+    ? { fill: COLOR.accent, alpha: 0.96, shadow: { x: 3, y: 4 } }
+    : { fill: 0x1a222c, alpha: 0.95, edge: COLOR.accent, edgeAlpha: 0.4, shadow: { x: 3, y: 4 } }));
+  if (first) {
+    // 제목표와 같은 빗금이 이름표 왼쪽에 서서 「보상」이라는 한 덩어리를 판에 묶는다.
+    parent.add(scene.add.text(left + spec.reward.tag.padX - 2, centerY, "/", textStyle({ role: "display", size: spec.reward.labelSize + 4, color: "#5a3e0c" })).setOrigin(0, 0.5));
+  }
+  text.setX(left + spec.reward.tag.padX + (first ? 18 : 0));
+  parent.add(text);
 }

@@ -43,6 +43,11 @@ import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { showContentIntro } from "../ui/contentIntro";
 import { addScrollHint } from "../ui/ScrollHint";
+import { STAGE_MAP_NODE, stageNodeState, subNodeOffset, type StageNodeState } from "../ui/stageMapNodeStyle";
+import { drawGlyph } from "../ui/glyphs";
+import { addNewBadge } from "../ui/NewContentBadge";
+import { motionPolicy } from "../core/settings";
+import { SUB_STORY_GEM_REWARDS } from "../data/stages";
 
 /** 난이도마다 지도 원화에 덮는 색 — 쉬움 크림 → 보통 살구 → 어려움 장밋빛 → 폭주 보랏빛. 고르기 판의 원화 색(`STORY_DIFFICULTY_STAGE`)과 같은 결이다. */
 const STAGE_MAP_TINT: Readonly<Record<StoryDifficulty, number>> = { easy: 0xfff4d9, normal: 0xffceb0, hard: 0xffadb8, rampage: 0xd9bcff };
@@ -95,7 +100,7 @@ export class StageMapScene extends Phaser.Scene {
   private enemyPopups!: PopupLayer;
   /** 스크롤되는 지도 본체. 노드와 경로선이 전부 이 안에 있다. */
   private map!: Phaser.GameObjects.Container;
-  private nodes = new Map<string, { ring: Phaser.GameObjects.Arc; label: Phaser.GameObjects.Text }>();
+  private nodes = new Map<string, { ring: Phaser.GameObjects.Arc; label: Phaser.GameObjects.Text; state: StageNodeState }>();
   private selected!: string;
   private sortieButton!: Button;
   /** 다시 그릴 때도 현재 보고 있는 구역을 잃지 않는 명시적 챕터 번호다. */
@@ -297,14 +302,25 @@ export class StageMapScene extends Phaser.Scene {
    */
   private nodeX(stage: StageDef, index: number): number {
     const cx = BASE_WIDTH / 2;
-    const mainOffset = (row: number): number => (row % 2 === 0 ? -110 : 110);
-    if (!isSubNode(stage)) return cx + mainOffset(index);
-    return cx + (mainOffset((stage.chapterOrder ?? 1) - 1) < 0 ? 360 : -360);
+    if (!isSubNode(stage)) return cx + (index % 2 === 0 ? -STAGE_MAP_NODE.mainOffset : STAGE_MAP_NODE.mainOffset);
+    return cx + subNodeOffset((stage.chapterOrder ?? 1) - 1);
   }
 
   /** 서브 노드가 열려 있는가·읽었는가. 전투 관문은 클리어 기록이 말한다. */
   private isCompleted(stage: StageDef): boolean {
     return stage.kind === "story" ? session.completedStoryIds.has(stage.storyId) : session.cleared.has(stage.id);
+  }
+
+  /** 지금 차례 관문 — 아직 깨지 않은 본편 중 가장 앞. 다 깼으면 없다. 서브는 차례가 되지 않는다. */
+  private currentStageId(): string | undefined {
+    const latest = latestUnlockedStage(storyStages(this.difficulty), session.cleared);
+    return latest && !isSubNode(latest) && !session.cleared.has(latest.id) ? latest.id : undefined;
+  }
+
+  /** 상태별 번호 글자색 — 깬 곳은 난이도 글자색, 열린 곳·차례는 흰색, 잠긴 곳은 흐리게. */
+  private nodeLabelColor(state: StageNodeState): string {
+    if (state === "cleared") return STORY_DIFFICULTY[this.difficulty].text;
+    return state === "locked" ? COLOR.inkDim : COLOR.ink;
   }
 
   /** 장별 원화 진행 방향으로 노드를 놓고 창 밖은 잘라 낸다. */
@@ -336,37 +352,90 @@ export class StageMapScene extends Phaser.Scene {
     this.map.add(mapArt);
     // 어두운 투명막도 지도에 묶어 원화의 이동감을 보존하면서 노드와 글자의 대비를 일정하게 한다.
     this.map.add(this.add.rectangle(cx, -height / 2, BASE_WIDTH, height + BASE_HEIGHT, COLOR.void, 0.22));
-    this.map.add(this.add.line(0, 0, cx, 0, cx, -height, COLOR.panelEdge).setOrigin(0).setLineWidth(6));
+    this.map.add(this.add.line(0, 0, cx, 0, cx, -height, COLOR.panelEdge).setOrigin(0).setLineWidth(STAGE_MAP_NODE.axis.width));
+
+    // **지나온 길은 난이도 색으로 차 있다** — 기록 보상 길과 같은 문법이다. 1번 관문에서 지금 차례 관문까지(다 깼으면 끝까지).
+    const current = this.currentStageId();
+    const mainCount = chapter.stages.length;
+    const progressEnd = chapter.stages.findIndex(({ id }) => id === current);
+    const reached = progressEnd >= 0 ? progressEnd : chapter.stages.every(({ id }) => session.cleared.has(id)) ? mainCount - 1 : 0;
+    if (reached > 0) {
+      const axis = STAGE_MAP_NODE.axis;
+      const fromY = -stageMapRow(this.currentChapter, 0, mainCount) * NODE_GAP;
+      const toY = -stageMapRow(this.currentChapter, reached, mainCount) * NODE_GAP;
+      this.map.add(this.add.line(0, 0, cx, fromY, cx, toY, tone.color, axis.progressAlpha).setOrigin(0).setLineWidth(axis.progressWidth));
+    }
 
     chapterStages.forEach((stage, index) => {
       const mainIndex = this.rowOf(stage, index);
       const y = -mainIndex * NODE_GAP;
       // 서브 칩은 갈라진 본편 관문의 반대편으로 뻗고 본편은 기존 세로축의 교차 배치를 유지한다.
       const x = this.nodeX(stage, index);
+      const sub = isSubNode(stage);
       const unlocked = isStageUnlocked(stage.id);
-      const cleared = this.isCompleted(stage);
+      const state = stageNodeState({ unlocked, completed: this.isCompleted(stage), current: stage.id === current });
+      const spec = STAGE_MAP_NODE;
+      const size = sub ? spec.subSize : spec.size;
 
-      // 가지도 기록 보상 길 규칙처럼 얇은 실선만 써 본편 장축보다 가볍게 보인다.
-      this.map.add(this.add.line(0, 0, cx, y, x, y, COLOR.panelEdge).setOrigin(0).setLineWidth(isSubNode(stage) ? 2 : 4));
-      // 노드도 카드와 같은 칩 언어를 쓴다. 원형 테두리 대신 깎인 조각으로 둔다.
-      this.map.add(drawLayer(this, x, y, chipPoints(96, 96, {
-        bevel: { topLeft: 30, topRight: 0, bottomRight: 30, bottomLeft: 0 },
-      }), {
-        fill: cleared ? tone.fill : 0x141920,
-        alpha: unlocked ? 0.94 : 0.6,
+      // 가지도 기록 보상 길 규칙처럼 얇은 실선만 써 본편 장축보다 가볍게 보인다. 깬 곳·열린 서브의 가지는 난이도 색이다.
+      const branchColor = state === "cleared" || state === "current" || (sub && state === "open") ? tone.color : COLOR.panelEdge;
+      const branchAlpha = sub && state === "open" ? spec.branch.subOpenAlpha : 1;
+      this.map.add(this.add.line(0, 0, cx, y, x, y, branchColor, branchAlpha).setOrigin(0).setLineWidth(sub ? spec.branch.sub : spec.branch.main));
+
+      const node = this.add.container(x, y);
+      const bevel = size * spec.bevelRatio;
+      const shape = chipPoints(size, size, { bevel: { topLeft: bevel, topRight: 0, bottomRight: bevel, bottomLeft: 0 } });
+      if (state === "current") {
+        // 둘레의 빛은 같은 실루엣을 키운 것 — 원이나 네모로 두르면 깎인 모서리에 뿔이 선다.
+        const glow = drawLayer(this, 0, 0, chipPoints(size * spec.glow.grow, size * spec.glow.grow, { bevel: { topLeft: bevel * spec.glow.grow, bottomRight: bevel * spec.glow.grow } }), { fill: tone.color, alpha: 1 });
+        glow.setAlpha(spec.glow.alphaFrom);
+        node.add(glow);
+        if (motionPolicy(session.settings).nonEssentialDistanceFactor > 0) {
+          this.tweens.add({ targets: glow, alpha: spec.glow.alphaTo, scale: spec.glow.scaleTo, duration: spec.glow.ms, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+        } else glow.setAlpha(spec.glow.alphaTo);
+      }
+      const plate = spec.plate[state];
+      node.add(drawLayer(this, 0, 0, shape, {
+        fill: state === "cleared" ? tone.fill : state === "locked" ? 0x0b0e12 : 0x141920,
+        alpha: plate.alpha,
         edge: tone.color,
-        edgeAlpha: unlocked ? 0.8 : 0.25,
+        edgeAlpha: plate.edgeAlpha,
       }));
+      const label = this.add
+        .text(0, 0, storyStageNumberLabel(stage), textStyle({ role: "emphasis", size: sub ? 26 : 30, color: this.nodeLabelColor(state) }))
+        .setOrigin(0.5);
+      node.add(label);
+      // 상태 딱지 — 깬 곳은 난이도 색 칩 위 체크, 잠긴 곳은 판 없는 흐린 자물쇠. 깎이지 않은 오른쪽 위 모서리에 걸터앉는다.
+      const cornerX = size * spec.corner.offsetRatio, cornerY = -size * spec.corner.offsetRatio;
+      if (state === "cleared") {
+        const c = spec.corner.size;
+        node.add(drawLayer(this, cornerX, cornerY, chipPoints(c, c, { bevel: { topLeft: c * 0.28, bottomRight: c * 0.28 } }), { fill: tone.color, alpha: 1, shadow: { x: 2, y: 3 } }));
+        node.add(drawGlyph(this, "check", cornerX, cornerY, c * spec.corner.glyphRatio, 0x141008, 1, 4));
+      } else if (state === "locked") {
+        node.add(drawGlyph(this, "lock", cornerX, cornerY, spec.corner.size * 0.78, 0x8a929c, 0.85));
+      }
+      if (state === "current") node.setScale(spec.currentScale);
+      this.map.add(node);
+      if (state === "current") {
+        // 머리 위 꺾쇠가 통통 떠서 "여기"를 짚는다.
+        const markerY = y - (size * spec.currentScale) / 2 - spec.marker.gap;
+        const marker = drawGlyph(this, "caret-down", x, markerY, spec.marker.size, tone.color, 1, 5);
+        this.map.add(marker);
+        if (motionPolicy(session.settings).nonEssentialDistanceFactor > 0) {
+          this.tweens.add({ targets: marker, y: markerY - spec.marker.bob, duration: spec.marker.ms, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+        }
+      }
+      if (sub && state === "open") {
+        // 아직 열어 보지 않은 서브는 「NEW」를 단다 — 서브가 있는 줄 모르는 사람이 있었다.
+        this.map.add(addNewBadge(this, x + size * spec.subNew.dx, y + size * spec.subNew.dy, { scale: spec.subNew.scale, tone: tone.color }));
+      }
       // 입력과 선택 표시는 투명한 원이 계속 맡는다. 손가락이 모서리에서 빠지지 않게 한다.
       const ring = this.add.circle(x, y, 48, 0xffffff, 0);
-      const label = this.add
-        .text(x, y, storyStageNumberLabel(stage), textStyle({ role: "emphasis", size: 30, color: cleared ? "#1a1d21" : unlocked ? COLOR.ink : COLOR.inkDim }))
-        .setOrigin(0.5);
       const name = this.add
-        .text(x, y + 66, stage.name, textStyle({ role: "display", size: 28, color: unlocked ? COLOR.ink : COLOR.inkDim }))
+        .text(x, y + size / 2 + 18 + (state === "current" ? 6 : 0), stage.name, textStyle({ role: "display", size: sub ? 26 : 28, color: state === "locked" ? COLOR.inkDim : COLOR.ink }))
         .setOrigin(0.5, 0);
-      this.map.add([ring, label, name]);
-      this.nodes.set(stage.id, { ring, label });
+      this.map.add([ring, name]);
+      this.nodes.set(stage.id, { ring, label, state });
 
       if (!unlocked) {
         name.setAlpha(0.5);
@@ -455,9 +524,7 @@ export class StageMapScene extends Phaser.Scene {
       const chosen = id === stage.id;
       // 선택은 외곽선 추가가 아니라 기존 홀로그램 규칙의 확대와 글자색으로만 알린다.
       node.label.setScale(chosen ? 1.25 : 1);
-      const nodeStage = ALL_STORY_STAGES.find((candidate) => candidate.id === id);
-      const completed = nodeStage ? this.isCompleted(nodeStage) : false;
-      node.label.setColor(chosen ? STORY_DIFFICULTY[this.difficulty].text : completed ? COLOR.ink : COLOR.inkDim);
+      node.label.setColor(chosen ? (node.state === "cleared" ? "#ffffff" : STORY_DIFFICULTY[this.difficulty].text) : this.nodeLabelColor(node.state));
     }
     const visualIndex = this.rowOf(stage, index);
     // **전투 관문은 창 아래쪽에 세운다.** 스토리 판은 적 칸·줄거리·초회 보상까지 서서 원정 판보다
@@ -478,6 +545,8 @@ export class StageMapScene extends Phaser.Scene {
         title: `${t("stageMap.sub")}  ${stage.name}`,
         summary: t(`recollection.summary.${stage.storyId}` as TextKey),
         read: storyManager.isCompleted(stage.storyId),
+        // 글만 있는 서브도 처음 읽으면 받는 보상을 판 아래에 세운다 — 서버(`completeStory`)가 주는 같은 값이다.
+        rewards: (SUB_STORY_GEM_REWARDS[stage.storyId] ?? 0) > 0 ? [{ kind: "currency", currency: "gems", amount: SUB_STORY_GEM_REWARDS[stage.storyId] }] : [],
         // 이야기도 그 장의 전장에서 벌어진다 — 전투 판과 같은 원화가 옅게 비친다.
         art: battleFieldBackground("stage", stage.id),
       });

@@ -71,6 +71,8 @@ export const HELP_ZH_HANS = {
   "help.tutorial.premium": "高级",
   "help.tutorial.descendingMap": "向下的地图",
   "help.tutorial.archaeology.sub": "再次讲解遗迹地图和地层盘",
+  "help.tutorial.duelDefense": "决斗场防守队",
+  "help.tutorial.duelDefense.sub": "再次讲解防守队编组和隐藏位",
   "help.group.collect": "收集·研究",
   "help.group.growth": "成长",
   "help.group.rune": "符文",

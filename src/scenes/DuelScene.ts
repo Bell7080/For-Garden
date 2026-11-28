@@ -40,6 +40,7 @@ import { TopBar } from "../ui/TopBar";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { withBusy } from "../ui/BusyOverlay";
 import { showContentIntro } from "../ui/contentIntro";
+import { runGuidedTour } from "../ui/guidedTour";
 
 /** 두 갈래. 씬 하나 안에서 판만 갈아 끼운다(가방·고고학과 같은 좌하단 라벨). */
 type DuelTab = "battle" | "history";
@@ -68,13 +69,19 @@ export class DuelScene extends Phaser.Scene {
 
   /** 진 결투의 「편성 바꾸기」로 들어왔으면 상태를 받자마자 상대 고르기 창을 연다. */
   private openOpponentsOnEntry = false;
+  /** 방어덱 첫 안내 — 상태가 도착하기 전에 차례가 오면 그린 뒤에 시작한다. */
+  private tourPending = false;
+  private tourRunning = false;
+  /** 도움말의 다시 보기로 들어왔다. */
+  private replayTour = false;
 
   constructor() {
     super("duel");
   }
 
-  init(data?: { openOpponents?: boolean }): void {
+  init(data?: { openOpponents?: boolean; replayTour?: boolean }): void {
     this.openOpponentsOnEntry = data?.openOpponents === true;
+    this.replayTour = data?.replayTour === true;
     consumeSceneEntry(this);
   }
 
@@ -101,7 +108,32 @@ export class DuelScene extends Phaser.Scene {
     void this.fetchStatus();
     playSceneEntrance(this);
     showContentIntro(this, "duel");
+    // 처음 들어오면 결투 쪽지 뒤에 방어덱을 세우는 길을 짚는다 — 쪽지가 떠 있는 동안은 차례를 기다린다.
+    if (this.replayTour) this.startDefenseTour();
+    else showContentIntro(this, "duelDefense", () => this.startDefenseTour());
   }
+
+  /**
+   * 방어덱 첫 안내(버튼 안내) — [방어] 버튼을 짚고, 직접 눌러 보게 한다. 누르면 편성 화면이 이어서 칸·숨김·저장을
+   * 짚는다(`PartyScene`의 `tour`). 상태가 아직 없으면 그린 뒤에 시작한다.
+   */
+  private startDefenseTour(): void {
+    if (this.tourRunning) return;
+    if (!this.status || this.tab !== "battle") { this.tourPending = true; return; }
+    this.tourPending = false;
+    this.tourRunning = true;
+    const { y, height, defense } = S.actions;
+    const rect = (): { x: number; y: number; width: number; height: number } | undefined =>
+      this.tab === "battle" ? { x: defense.x, y: y - height / 2, width: defense.width, height } : undefined;
+    this.defenseTourActive = true;
+    runGuidedTour(this, [
+      { rect, text: () => t("duel.tour.defense"), side: "above" },
+      { rect, text: () => t("duel.tour.defenseTap"), side: "above", done: () => !this.defenseTourActive },
+    ], () => { this.tourRunning = false; this.defenseTourActive = false; });
+  }
+
+  /** 안내 중에 [방어]를 누르면 편성 화면이 안내를 이어 간다. */
+  private defenseTourActive = false;
 
   private async fetchStatus(): Promise<void> {
     try {
@@ -126,6 +158,7 @@ export class DuelScene extends Phaser.Scene {
     this.view.removeAll(true);
     if (this.tab === "battle") this.paintBattle(status);
     else paintDuelHistory(this, this.view, status.history, Date.parse(status.serverTime), this.popups);
+    if (this.tourPending) this.startDefenseTour();
   }
 
   /** 좌하단 라벨 두 장. 다시 그리기 전에 옛 라벨을 지운다(남기면 누를 때마다 한 겹씩 쌓인다). */
@@ -275,7 +308,9 @@ export class DuelScene extends Phaser.Scene {
       width: defense.width, height, label: t("duel.defense.label"), fontSize: 46, ...DEFENSE_BUTTON_STYLE,
       onClick: () => {
         if (this.busy) return;
-        startScene(this, "party", { content: "duelDefense", defense: status.defense, blindChoice: status.blindChoice });
+        const tour = this.defenseTourActive;
+        this.defenseTourActive = false;
+        startScene(this, "party", { content: "duelDefense", defense: status.defense, blindChoice: status.blindChoice, score: status.score, ...(tour ? { tour: true } : {}) });
       },
     });
     button.fitLabel(defense.labelRoom);

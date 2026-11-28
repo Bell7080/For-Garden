@@ -72,6 +72,8 @@ export type GlyphName =
   | "id-card"
   | "receipt"
   | "restore"
+  | "eye"
+  | "eye-off"
   | "refresh"
   | "tag-buff"
   | "tag-target"
@@ -150,6 +152,15 @@ function paintGlyph(g: Phaser.GameObjects.Graphics, name: GlyphName, size: numbe
   const r = size / 2;
   g.lineStyle(stroke, color, alpha);
   switch (name) {
+    case "eye":
+    case "eye-off":
+      // 각진 눈 — 위아래로 꺾인 아몬드 윤곽 + 마름모 눈동자. 결투 방어덱의 공개/숨김 칸이 쓴다. 숨김은 그 위로
+      // 빗금 하나가 긋는다(같은 눈이 지워진 것으로 읽혀야 두 상태가 한 쌍으로 읽힌다).
+      g.strokePoints(points(-r, 0, -r * 0.42, -r * 0.56, r * 0.42, -r * 0.56, r, 0, r * 0.42, r * 0.56, -r * 0.42, r * 0.56), true);
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(0, -r * 0.3, r * 0.3, 0, 0, r * 0.3, -r * 0.3, 0), true);
+      if (name === "eye-off") g.lineBetween(-r * 0.86, r * 0.86, r * 0.86, -r * 0.86);
+      break;
     case "globe":
       // 각진 팔각 윤곽 + 세로 자오선 마름모 + 적도선. 둥근 선을 쓰지 않는 아이콘 결을 따른다.
       g.strokePoints(points(-r * 0.4, -r, r * 0.4, -r, r, -r * 0.4, r, r * 0.4, r * 0.4, r, -r * 0.4, r, -r, r * 0.4, -r, -r * 0.4), true);

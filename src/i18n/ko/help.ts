@@ -71,6 +71,8 @@ export const HELP_KO = {
   "help.tutorial.premium": "프리미엄",
   "help.tutorial.descendingMap": "내려가는 지도",
   "help.tutorial.archaeology.sub": "유적 지도와 지층 판을 다시 짚어 줘요",
+  "help.tutorial.duelDefense": "결투장 방어덱",
+  "help.tutorial.duelDefense.sub": "방어덱 세우기와 숨김 칸을 다시 짚어 줘요",
   "help.group.collect": "수집·연구",
   "help.group.growth": "성장",
   "help.group.rune": "룬",

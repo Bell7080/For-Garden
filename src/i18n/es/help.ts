@@ -71,6 +71,8 @@ export const HELP_ES = {
   "help.tutorial.premium": "Prémium",
   "help.tutorial.descendingMap": "Mapa descendente",
   "help.tutorial.archaeology.sub": "Vuelve a guiarte por el mapa de ruinas y el tablero de estratos",
+  "help.tutorial.duelDefense": "Defensa de duelos",
+  "help.tutorial.duelDefense.sub": "Vuelve a guiarte por la defensa y las casillas ocultas",
   "help.group.collect": "Colección e Investigación",
   "help.group.growth": "Crecimiento",
   "help.group.rune": "Runas",

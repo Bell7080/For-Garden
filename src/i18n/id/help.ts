@@ -71,6 +71,8 @@ export const HELP_ID = {
   "help.tutorial.premium": "Premium",
   "help.tutorial.descendingMap": "Peta Menurun",
   "help.tutorial.archaeology.sub": "Memandu lagi peta reruntuhan dan papan lapisan",
+  "help.tutorial.duelDefense": "Tim Pertahanan Duel",
+  "help.tutorial.duelDefense.sub": "Memandu lagi cara menyiapkan tim pertahanan dan slot tersembunyi",
   "help.group.collect": "Koleksi & Riset",
   "help.group.growth": "Pertumbuhan",
   "help.group.rune": "Rune",

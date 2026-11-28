@@ -5,6 +5,8 @@ import { playFormationTapSound } from "../ui/formationSound";
 import { storyDifficultyOf } from "../core/storyDifficulty";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { followTutorialTarget } from "../ui/tutorialTarget";
+import { runGuidedTour, type GuidedTourStep } from "../ui/guidedTour";
+import { anyPopupOpen } from "../ui/PopupLayer";
 import { TUTORIAL_SPOTLIGHT_DEPTH } from "../ui/TutorialSpotlight";
 import { tutorialManager } from "../managers/TutorialManager";
 import Phaser from "phaser";
@@ -78,7 +80,8 @@ import { consumeSceneEntry } from "./sceneEntry";
 import { getBountyTier } from "../data/bounty";
 import { getCakeOperationTier } from "../data/cakeOperation";
 import { addSdFootShadow } from "../ui/SdFootShadow";
-import { duelBlindOrder } from "../core/duelArena";
+import { duelBlindCount, duelBlindOrder, toggleDuelBlind } from "../core/duelArena";
+import { addDuelBlindMark, addDuelBlindToggle, DUEL_BLIND_STYLE } from "../ui/DuelBlindToggle";
 import { withBusy } from "../ui/BusyOverlay";
 import { showContentIntro } from "../ui/contentIntro";
 import { arrangeGuardFormation, GUILD_GUARD, GUILD_GUARD_SLOT_ROLES, guardRosterPreview } from "../core/guildGuard";
@@ -216,6 +219,8 @@ export class PartyScene extends Phaser.Scene {
   private enemies: RelicDef[] = [];
   /** 방어덱 편성에서 고른 가림 순서. 비우면 전투력 순으로 저절로 가린다. */
   private blindChoice: string[] = [];
+  /** 첫 칸의 숨김 칩 — 방어덱 첫 안내가 짚는다. */
+  private firstBlindChip?: Phaser.GameObjects.Container;
   /**
    * 지금 편성과 이번 스테이지의 적 SD를 미리 읽는다.
    *
@@ -475,6 +480,7 @@ export class PartyScene extends Phaser.Scene {
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
     showContentIntro(this, "party");
+    if (this.content.content === "duelDefense" && this.content.tour) this.queueDefenseDeckTour();
     followTutorialTarget(this, {
       enabled: () => this.partyTutorialPhase !== undefined,
       blocked: () => this.info.isOpen,
@@ -871,7 +877,7 @@ export class PartyScene extends Phaser.Scene {
   /** 전투 시작이 부르는 입장 — 결과판의 「다시 하기」와 같은 길이다(`enterContentBattle`). */
   private async enterBattle(): Promise<void> {
     if (this.content.content === "duelDefense") {
-      await withBusy(this, gameApi.setDuelDefense({ relicIds: formationMembers(this.picked), blindChoice: this.blindChoice.filter((id) => this.picked.includes(id)) }));
+      await withBusy(this, gameApi.setDuelDefense({ relicIds: formationMembers(this.picked), blindChoice: this.hiddenRelics() }));
       startScene(this, "duel");
       return;
     }
@@ -988,6 +994,7 @@ export class PartyScene extends Phaser.Scene {
       return;
     }
     slot.creature = creature;
+    this.applyBlindVeil();
   }
 
   /**
@@ -1278,7 +1285,8 @@ export class PartyScene extends Phaser.Scene {
     const enemyPower = this.preview.totalPower ?? encounterGroupPower(withBaseStats(this.enemies), { horde: this.preview.hordeCount !== undefined });
     // 방어덱 편성에는 적 전투력 줄 자체가 없다(`buildPreview`의 `allyOnly`).
     this.enemyPowerText?.setText(t("party.enemyPower", { power: enemyPower.toLocaleString() }));
-    if (this.content.content === "duelDefense" && chrome) this.paintBlindChips(chrome, members);
+    this.firstBlindChip = undefined;
+    if (this.content.content === "duelDefense" && chrome) this.paintBlindChips(chrome, marks);
     const allyPower = members.reduce((sum, id) => sum + relicProgression.getCombatPower(id, { pvp: this.pvp }), 0).toLocaleString();
     // 마주 선 편이 없으면 「N 아군」처럼 VS 오른쪽에 붙던 꼴이 아니라 전투력 한 줄로 선다.
     this.allyPowerText?.setText(this.defenseOnly || this.guard ? t("duel.power", { power: allyPower }) : t("party.allyPower", { power: allyPower }));
@@ -1395,26 +1403,101 @@ export class PartyScene extends Phaser.Scene {
     settingsManager.update({ game: { partyPresets: next, partyPresetIndex: this.presetIndex } });
   }
 
+  /** 결투장 첫 안내의 뒷부분 — 편성 쪽지가 떠 있으면 닫힐 때까지 기다렸다가 시작한다(실제 시간으로 잰다). */
+  private queueDefenseDeckTour(): void {
+    let stopped = false, timer: number | undefined;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { stopped = true; window.clearTimeout(timer); });
+    const attempt = (): void => {
+      if (stopped || !this.scene.isActive()) return;
+      if (anyPopupOpen()) { timer = window.setTimeout(attempt, 600); return; }
+      this.startDefenseDeckTour();
+    };
+    timer = window.setTimeout(attempt, 900);
+  }
+
+  /** 칸(누가 서는가) → 숨김(티어가 열었을 때만, 아니면 언제 열리는지) → 저장을 직접 눌러 보기. */
+  private startDefenseDeckTour(): void {
+    const boxes = (): { x: number; y: number; width: number; height: number } => {
+      const all = this.allySlots.map((_slot, index) => this.slotBox(index));
+      const left = Math.min(...all.map((b) => b.x - b.width / 2)), right = Math.max(...all.map((b) => b.x + b.width / 2));
+      const top = Math.min(...all.map((b) => b.y - b.height / 2)) - (this.blindSlots() > 0 ? BLIND_CHIP_RISE - PREVIEW_HEIGHT + 40 : 0);
+      const bottom = Math.max(...all.map((b) => b.y + b.height / 2));
+      return { x: left, y: top, width: right - left, height: bottom - top };
+    };
+    const steps: GuidedTourStep[] = [{ rect: boxes, text: () => t("duel.tour.slots"), side: "below" }];
+    if (this.blindSlots() > 0) {
+      steps.push({
+        rect: () => {
+          const chip = this.firstBlindChip;
+          if (!chip) return undefined;
+          const { width, height } = DUEL_BLIND_STYLE.chip;
+          return { x: chip.x - width / 2 - 12, y: chip.y - height / 2 - 12, width: width + 24, height: height + 24 };
+        },
+        text: () => t("duel.tour.blind", { count: this.blindSlots() }),
+        side: "below",
+      });
+    } else {
+      steps.push({ rect: boxes, text: () => t("duel.tour.blindLocked"), side: "below" });
+    }
+    steps.push({
+      rect: () => {
+        const b = this.startButton.getBounds();
+        return { x: b.x, y: b.y, width: b.width, height: b.height };
+      },
+      text: () => t("duel.tour.save"),
+      side: "above",
+      done: () => this.isEnteringBattle,
+    });
+    runGuidedTour(this, steps);
+  }
+
   /**
-   * 방어덱의 가림 표식. 상대 점수가 높을수록 앞에서부터 하나, 둘이 `?`로 가려진다 — 고르지 않은
-   * 자리는 전투력 순으로 저절로 채워지고(흐린 글자), 누르면 그 자리를 직접 고른다(강조색).
+   * 방어덱에서 이 판 내 티어가 여는 숨김 칸 수 — 플래티넘부터 한 칸, 마스터부터 두 칸(`DUEL_TIERS.blind`).
+   * 그보다 낮으면 숨김 칩 자체가 서지 않는다.
    */
-  private paintBlindChips(chrome: Phaser.GameObjects.Container, members: readonly string[]): void {
-    const powered = members.map((relicId) => ({ relicId, power: relicProgression.getCombatPower(relicId, { pvp: this.pvp }) }));
-    const order = duelBlindOrder(powered, this.blindChoice);
+  private blindSlots(): number {
+    return this.content.content === "duelDefense" ? duelBlindCount(this.content.score) : 0;
+  }
+
+  /** 지금 숨겨지는 렐릭 — 고른 것이 먼저, 모자라면 맨 왼쪽 자리부터(`duelBlindOrder`). */
+  private hiddenRelics(): string[] {
+    const count = this.blindSlots();
+    if (count === 0) return [];
+    const members = formationMembers(this.picked).map((relicId) => ({ relicId, power: 0 }));
+    return duelBlindOrder(members, this.blindChoice).slice(0, count);
+  }
+
+  /**
+   * 방어덱의 숨김 칩. 티어가 연 칸 수만큼 늘 숨겨져 있고(기본은 맨 왼쪽 1번), 드러난 칸의 칩을 누르면 그 칸으로
+   * 숨김이 옮겨 간다. 숨긴 칸은 SD가 보랏빛 실루엣으로 가라앉고 가운데에 큰 `?`가 선다(`DuelBlindToggle`).
+   */
+  private paintBlindChips(chrome: Phaser.GameObjects.Container, marks: Phaser.GameObjects.Container | undefined): void {
+    const count = this.blindSlots();
+    if (count === 0) return;
+    const hidden = this.hiddenRelics();
+    this.blindChoice = hidden;
     this.picked.forEach((id, slot) => {
       if (!id) return;
-      const at = order.indexOf(id);
-      const chosen = this.blindChoice.includes(id);
-      const label = at >= 0 ? t("duel.blind.slot", { index: at + 1 }) : t("duel.blind.open");
-      chrome.add(new Button(this, PREVIEW_COLUMNS[slot], this.allyRow - BLIND_CHIP_RISE, {
-        width: 170, height: 52, label, fontSize: 22, variant: chosen ? "primary" : undefined,
-        onClick: () => {
-          this.blindChoice = chosen ? this.blindChoice.filter((other) => other !== id)
-            : this.blindChoice.length < 2 ? [...this.blindChoice, id] : [this.blindChoice[1], id];
-          this.refresh();
-        },
-      }).setAlpha(at >= 0 ? 1 : 0.7));
+      const isHidden = hidden.includes(id);
+      const x = this.slotX(slot), row = this.slotRow(slot);
+      const chip = addDuelBlindToggle(this, chrome, x, row - BLIND_CHIP_RISE, isHidden, () => {
+        if (isHidden) return;
+        this.blindChoice = toggleDuelBlind(this.hiddenRelics(), id, count);
+        this.refresh();
+      });
+      if (slot === 0) this.firstBlindChip = chip;
+      if (isHidden && marks) addDuelBlindMark(this, marks, x, row - PREVIEW_HEIGHT * 0.46);
+    });
+    this.applyBlindVeil();
+  }
+
+  /** 숨긴 칸의 SD를 실루엣으로 가라앉힌다. SD가 늦게 도착해도 같은 값을 다시 덮는다. */
+  private applyBlindVeil(): void {
+    if (this.content.content !== "duelDefense") return;
+    const hidden = this.hiddenRelics();
+    const { veil } = DUEL_BLIND_STYLE;
+    this.allySlots.forEach((slot) => {
+      slot.creature?.setBodyFill(veil.color, slot.currentId && hidden.includes(slot.currentId) ? veil.amount : 0);
     });
   }
 

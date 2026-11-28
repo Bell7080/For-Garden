@@ -48,7 +48,7 @@ export function helpBasicsPages(): readonly IconIntroPage[] {
 export type HelpTutorialEntry =
   | { kind: "basics"; id: "basics" }
   | { kind: "intro"; id: IconIntroId }
-  | { kind: "guided"; id: "archaeology"; intro: ContentIntroId };
+  | { kind: "guided"; id: "archaeology" | "duelDefense"; intro: ContentIntroId };
 
 /**
  * 다시 보기 차례 — 첫 플레이 → 지도·편성(누구나 가장 먼저 지나는 곳) → 고고학 → 나머지는 콘텐츠가 열리는 대략의 순서.
@@ -64,6 +64,7 @@ const TUTORIAL_ORDER: readonly HelpTutorialEntry[] = [
   { kind: "intro", id: "bounty" },
   { kind: "intro", id: "interaction" },
   { kind: "intro", id: "duel" },
+  { kind: "guided", id: "duelDefense", intro: "duelDefense" },
   { kind: "intro", id: "friends" },
   { kind: "intro", id: "raid" },
   { kind: "intro", id: "expedition" },
@@ -71,7 +72,7 @@ const TUTORIAL_ORDER: readonly HelpTutorialEntry[] = [
 ];
 
 export function helpTutorialEntries(): readonly HelpTutorialEntry[] {
-  const listed = new Set<string>(TUTORIAL_ORDER.flatMap((entry) => (entry.kind === "guided" ? [entry.intro, "archaeologyBoard"] : [entry.id])));
+  const listed = new Set<string>(TUTORIAL_ORDER.flatMap((entry) => (entry.kind === "guided" ? (entry.id === "archaeology" ? [entry.intro, "archaeologyBoard"] : [entry.intro]) : [entry.id])));
   const rest = CONTENT_INTRO_IDS.filter((id) => !listed.has(id))
     .map((id): HelpTutorialEntry => ({ kind: "intro", id: id as IconIntroId }));
   return [...TUTORIAL_ORDER, ...rest];
@@ -97,6 +98,7 @@ const TUTORIAL_BACKDROP: Readonly<Record<string, string>> = {
   bounty: BACKGROUND.sortieBounty,
   interaction: BACKGROUND.interactionDoppelParlor,
   duel: BACKGROUND.sortieDuel,
+  duelDefense: BACKGROUND.sortieDuel,
   friends: BACKGROUND.lobby,
   raid: BACKGROUND.sortieRaid,
   expedition: BACKGROUND.expeditionRanking,
@@ -111,13 +113,15 @@ export function helpTutorialBackdrop(entry: HelpTutorialEntry): string {
 /** 줄 아래 한 줄 — 그 안내의 첫 쪽 제목이다(안내형은 제 한 줄). */
 function entrySubtitleKey(entry: HelpTutorialEntry): TextKey {
   if (entry.kind === "basics") return "help.basics.1.heading";
-  if (entry.kind === "guided") return "help.tutorial.archaeology.sub";
+  if (entry.kind === "guided") return entry.id === "archaeology" ? "help.tutorial.archaeology.sub" : "help.tutorial.duelDefense.sub";
   return `intro.${entry.id}.1.heading` as TextKey;
 }
 
 export interface HelpPopupOptions {
   /** 고고학 안내를 다시 돌 수 있도록 그 화면으로 간다. 넘기지 않으면 고고학 줄은 서지 않는다. */
   onReplayArchaeology?: () => void;
+  /** 결투장 방어덱 안내를 다시 돌도록 결투장으로 간다. 넘기지 않으면 그 줄은 서지 않는다. */
+  onReplayDuelDefense?: () => void;
 }
 
 /**
@@ -162,7 +166,11 @@ export class HelpPopup {
   }
 
   private tutorials(): readonly HelpTutorialEntry[] {
-    return helpTutorialEntries().filter((entry) => entry.kind !== "guided" || this.options.onReplayArchaeology !== undefined);
+    return helpTutorialEntries().filter((entry) => entry.kind !== "guided" || this.guidedReplay(entry) !== undefined);
+  }
+
+  private guidedReplay(entry: Extract<HelpTutorialEntry, { kind: "guided" }>): (() => void) | undefined {
+    return entry.id === "archaeology" ? this.options.onReplayArchaeology : this.options.onReplayDuelDefense;
   }
 
   private render(keepScroll = false): void {
@@ -410,8 +418,9 @@ export class HelpPopup {
 
   private replay(entry: HelpTutorialEntry): void {
     if (entry.kind === "guided") {
+      const go = this.guidedReplay(entry);
       this.close?.();
-      this.options.onReplayArchaeology?.();
+      go?.();
       return;
     }
     const pages = entry.kind === "basics" ? helpBasicsPages() : CONTENT_INTRO_PAGES[entry.id];

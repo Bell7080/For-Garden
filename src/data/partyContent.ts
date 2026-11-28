@@ -102,7 +102,8 @@ export function normalizePartyContent(input: unknown): PartyContent {
   if (data.content === "duelDefense") {
     const defense = stringIds(data.defense, 3);
     const score = typeof data.score === "number" && Number.isFinite(data.score) ? Math.max(0, data.score) : 0;
-    return { content: "duelDefense", defense, blindChoice: stringIds(data.blindChoice, 3).filter((id) => defense.includes(id)).slice(0, 2), score, ...(data.tour === true ? { tour: true } : {}), weakened: stringIds(data.weakened, 3).filter((id) => defense.includes(id)) };
+    const weakened = stringIds(data.weakened, 3).filter((id) => defense.includes(id));
+    return { content: "duelDefense", defense, blindChoice: stringIds(data.blindChoice, 3).filter((id) => defense.includes(id)).slice(0, 2), score, ...(data.tour === true ? { tour: true } : {}), ...(weakened.length > 0 ? { weakened } : {}) };
   }
   if (data.content === "guildWarDefense" && (data.slotId === null || data.slotId === undefined || parseGuildWarSlotId(data.slotId))) {
     return { content: "guildWarDefense", slotId: data.slotId ?? null, deck: stringIds(data.deck, 3) };

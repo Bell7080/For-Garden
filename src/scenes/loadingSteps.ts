@@ -64,7 +64,7 @@ function retryableOf(file: Phaser.Loader.File): RetryableFile | undefined {
 
 /**
  * 단계 안의 재시도로도 끝내 받지 못한 파일. **입장을 막지 않고** 게임에 들어간 뒤 뒤에서 다시 받는다
- * (`startBackgroundDownloads`). 텍스처·소리 캐시는 게임 전체가 함께 쓰므로 받는 순간 다음 화면부터 선다.
+ * (`retryUnresolvedLater`). 텍스처·소리 캐시는 게임 전체가 함께 쓰므로 받는 순간 다음 화면부터 선다.
  */
 const unresolvedFiles = new Map<string, RetryableFile>();
 
@@ -141,14 +141,16 @@ const SVG_BAKE = { skill: 256, uiScale: 2 } as const;
 const CONTENT_ART_ASSETS = [...CHEST_ART_ASSETS] as const;
 
 /**
- * **입장 문구가 서기 전에 반드시 끝내는 것만 둔다** — 글꼴·문구 표, 소리, 첫 화면 배경, 아이콘. 없으면 화면 자체가
- * 서지 않는 것들이다. Puppet 묶음·뽑기 연출·캐시 받기는 `BACKGROUND_DOWNLOADS`로 옮겨 입장 뒤에 뒤에서 받는다
- * (첫 실행의 느린 망에서 그 하나가 타이틀 전체를 붙잡았다). 여기서도 끝내 못 받은 파일은 입장을 막지 않고 입장 뒤에
- * 다시 받는다.
+ * **입장 문구가 서기 전에 타이틀이 다 받는다** — 들어간 뒤에 받으면 로비·전투에서 원화가 늦게 서거나 그 순간 끊긴다.
+ * 대신 **순서를 가른다**: 타이틀 자신의 원화·로고·영상이 먼저 망을 쓰고(`TitleScene.create`), 글꼴 단계 뒤의 무거운
+ * 단계는 제목이 열린 뒤(영상이 흐르기 시작하거나 대체 시한이 지난 뒤 — `runLoadingSteps`의 `holdHeavy`)에 시작한다.
+ * 예전에는 첫 단계부터 스킬 일러스트 214장까지 한꺼번에 망을 나눠 먹어 첫 실행의 영상이 서지 않았다.
+ * 단계마다 시한(`LOADING_STEP_DEADLINE_MS`)이 있어 하나가 멎어도 입장은 막지 않고, 끝내 못 받은 파일은 입장 뒤에
+ * 살아 있는 겹의 로더로 다시 받는다(`retryUnresolvedLater`).
  *
  * **출시 전에 채울 자리** — Puppet 미리 읽기 목록(`PUPPET_PRELOAD_GROUPS`)은 일부러 좁다. 전신 25종 중 여섯과 아군 SD
  * 19종 중 다섯만 들어 있고 나머지는 정보창·전투에 들어가는 순간 처음 읽는다. 넓히려면 **전부 읽으면 안 된다** — 디코드된
- * 그림이 첫 스폰까지 남으므로(한 장 6.5MB) 보유 렐릭·현재 편성만 골라 로비 유휴 중에 읽는다.
+ * 그림이 첫 스폰까지 남으므로(한 장 6.5MB) 보유 렐릭·현재 편성만 골라 이 단계에 넣는다.
  */
 export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
   {
@@ -207,48 +209,37 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
         // 발굴 특화는 카드 보조 정보 크기의 단색 SVG라 UI 아이콘과 같은 배율로 미리 굽는다.
         EXCAVATION_TRAIT_ICON_ASSETS.forEach(([key, path]) => scene.load.svg(key, path, { width: 64, height: 64 }));
         // 전용 스킬 일러스트(흰 실루엣 WebP)는 **캐시에만** 받는다 — 214장을 다 올리면 56MB인데 한 번에 보는 것은
-        // 렐릭 몇 명 몫이다. 그 액자가 설 때 올린다(`skillArtLoader.ts`). 그 캐시 받기는 입장 뒤의 몫이다(아래).
+        // 렐릭 몇 명 몫이다. 그 액자가 설 때 올린다(`skillArtLoader.ts`). 캐시 받기는 아래 단계가 한다.
       }),
   },
+  { label: "렐릭 스탠딩", run: () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[0]) },
+  { label: "SD·적 묶음", run: () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[1]) },
+  {
+    label: "뽑기 연출",
+    // 뽑기의 3D 시네마틱과 SSR 전조 무대는 합쳐 1MB 남짓한 스크립트라, 첫 뽑기에서 받으면 그 자리에서 화면이 멎는다.
+    // 새로 만난 렐릭의 소개 원화(35MB 남짓)는 여기서 받지 않는다 — 연구소에 들어갈 때 건다(`prefetchGachaPuppetFiles`).
+    run: () => Promise.all([preloadResearchCinematic(), preloadSsrOmen()?.then(() => undefined, () => undefined)]).then(() => undefined),
+  },
+  {
+    label: "출격 원화·스킬 일러스트",
+    // 캐시에만 받는다(올리는 것은 그 그림이 설 때 — 거주 규칙).
+    run: () => prefetchCachedFiles([...CONTENT_ENTRY_ART_PATHS, ...SKILL_ART_ASSETS.map(([, path]) => path)]),
+  },
 ];
-/**
- * **입장한 뒤 뒤에서** 받는 것들 — 타이틀이 기다리지 않는다.
- *
- * 예전에는 Puppet 묶음·뽑기 연출·캐시 받기(스킬 일러스트 214장 등)까지 타이틀이 다 받아야 입장 문구가 섰다.
- * 첫 실행의 느린 망에서는 그 하나가 끝나지 않아 30초 시한을 몇 번씩 기다렸고, 그동안 타이틀 영상과 망을 나눠 먹어
- * 영상이 서지 않았다. 여기 것들은 모두 **없어도 화면이 선다** — Puppet은 세우는 순간 같은 캐시로 읽고(`loadPuppet`이
- * 진행 중인 받기를 함께 기다린다), 캐시 받기는 그 그림이 설 때 다시 받는다. 그래서 필수 단계가 끝나는 즉시 뒤에서
- * 걸어 두고 입장은 막지 않는다. 순서는 곧 쓰일 차례다(로비 전신 → 전투 SD → 뽑기 → 캐시).
- */
-const BACKGROUND_DOWNLOADS: ReadonlyArray<() => Promise<unknown>> = [
-  () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[0]),
-  () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[1]),
-  // 뽑기의 3D 시네마틱과 SSR 전조 무대는 합쳐 1MB 남짓한 스크립트라, 첫 뽑기에서 받으면 그 자리에서 화면이 멎는다.
-  // 새로 만난 렐릭의 소개 원화(35MB 남짓)는 여기서도 받지 않는다 — 연구소에 들어갈 때 건다(`prefetchGachaPuppetFiles`).
-  () => Promise.all([preloadResearchCinematic(), preloadSsrOmen()?.then(() => undefined, () => undefined)]),
-  () => prefetchCachedFiles(CONTENT_ENTRY_ART_PATHS),
-  () => prefetchCachedFiles(SKILL_ART_ASSETS.map(([, path]) => path)),
-];
-
 /** 끝내 못 받은 필수 파일을 다시 받아 보는 시각(입장 뒤 ms). 망이 돌아오는 순간을 몇 번에 걸쳐 노린다. */
 export const UNRESOLVED_RETRY_DELAYS_MS = [4000, 15000, 45000] as const;
 
-let backgroundStarted = false;
+let retryScheduled = false;
 
 /**
- * 뒤에서 받을 것들을 건다. 한 실행에 한 번만 걸리고, 하나가 실패해도 다음으로 넘어간다.
+ * 타이틀에서 끝내 못 받은 파일을 입장 뒤에 다시 받아 보도록 건다. 한 실행에 한 번만 걸린다.
  *
- * `loaderScene`은 못 받은 필수 파일을 다시 받을 로더를 빌려 줄 씬이다 — 화면이 바뀌어도 살아 있는 겹
- * (`effect-overlay`)을 준다. 타이틀의 로더를 쓰면 입장과 함께 타이틀이 닫히며 받던 것이 끊긴다.
+ * `loaderScene`은 로더를 빌려 줄 씬이다 — 화면이 바뀌어도 살아 있는 겹(`effect-overlay`)을 준다. 타이틀의 로더를 쓰면
+ * 입장과 함께 타이틀이 닫히며 받던 것이 끊긴다.
  */
-export function startBackgroundDownloads(loaderScene: () => Phaser.Scene | undefined): void {
-  if (backgroundStarted) return;
-  backgroundStarted = true;
-  void (async () => {
-    for (const run of BACKGROUND_DOWNLOADS) {
-      try { await run(); } catch { /* 그 묶음은 쓰는 순간 다시 받는다. */ }
-    }
-  })();
+export function retryUnresolvedLater(loaderScene: () => Phaser.Scene | undefined): void {
+  if (retryScheduled) return;
+  retryScheduled = true;
   UNRESOLVED_RETRY_DELAYS_MS.forEach((delay, index) => setTimeout(() => retryUnresolved(loaderScene(), LOAD_RETRY_ROUNDS + index + 1), delay));
 }
 
@@ -302,6 +293,8 @@ export function prefetchGachaPuppetFiles(): void {
  * 같이 넘기고(위 catch와 같은 규칙), 늦게 도착한 파일은 그대로 쓰인다.
  */
 export const LOADING_STEP_DEADLINE_MS = 30000;
+/** 무거운 단계가 제목이 열리기를 기다리는 상한. 타이틀의 대체 시한(2.6초)보다 넉넉하다. */
+export const HEAVY_HOLD_LIMIT_MS = 5000;
 function withStepDeadline(run: Promise<unknown> | undefined): Promise<unknown> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const deadline = new Promise<void>((resolve) => { timer = setTimeout(resolve, LOADING_STEP_DEADLINE_MS); });
@@ -319,8 +312,19 @@ export async function runLoadingSteps(
    * 알려 주지 않는 단계는 끝나는 순간에만 오른다 — 없는 진행을 지어내지 않는다.
    */
   onProgress?: (ratio: number) => void,
+  /**
+   * 첫 단계(글꼴) 뒤의 무거운 단계를 붙잡는 문. 타이틀은 제목이 열릴 때(영상이 흐르거나 대체 시한) 연다 — 그동안
+   * 망은 타이틀 자신의 영상이 쓴다. 문이 끝내 열리지 않아도 `HEAVY_HOLD_LIMIT_MS` 뒤에는 넘어간다.
+   */
+  holdHeavy?: Promise<void>,
 ): Promise<void> {
   for (let i = 0; i < steps.length; i++) {
+    if (i === 1 && holdHeavy) {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      await Promise.race([holdHeavy, new Promise<void>((resolve) => { timer = setTimeout(resolve, HEAVY_HOLD_LIMIT_MS); })]);
+      if (timer) clearTimeout(timer);
+      if (!scene.scene.isActive()) return;
+    }
     // 상수 대신 문자열을 쓰는 것은 이 모듈이 Phaser를 값으로 들이지 않기 때문이다
     // (`Phaser.Loader.Events.PROGRESS`와 같은 값이다).
     const onLoaderProgress = (value: number): void => onProgress?.((i + value) / steps.length);

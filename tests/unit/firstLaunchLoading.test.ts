@@ -4,23 +4,27 @@ import { ATTENDANCE_PREFETCH_FRESH_MS, AttendanceManager } from "../../src/manag
 import type { AttendanceStatusResponse, GameApi } from "../../src/api/contracts";
 import { session } from "../../src/state/session";
 
-describe("첫 실행 — 안전하게 들어간 뒤 받기", () => {
+describe("첫 실행 — 타이틀이 먼저 서고, 나머지는 타이틀에서 다 받는다", () => {
   const steps = readFileSync("src/scenes/loadingSteps.ts", "utf8");
-  const essential = steps.slice(steps.indexOf("export const LOADING_STEPS"), steps.indexOf("const BACKGROUND_DOWNLOADS"));
+  const essential = steps.slice(steps.indexOf("export const LOADING_STEPS"), steps.indexOf("/** 끝내 못 받은 필수 파일"));
+  const title = readFileSync("src/scenes/TitleScene.ts", "utf8");
 
-  it("타이틀은 화면에 꼭 필요한 것만 기다린다(Puppet·뽑기 연출·캐시 받기는 입장 뒤)", () => {
-    expect(essential).not.toContain("preloadPuppetAssets");
-    expect(essential).not.toContain("prefetchCachedFiles");
-    expect(essential).not.toContain("preloadResearchCinematic");
-    const background = steps.slice(steps.indexOf("const BACKGROUND_DOWNLOADS"));
-    expect(background).toContain("preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[0])");
-    expect(background).toContain("prefetchCachedFiles(SKILL_ART_ASSETS");
+  it("Puppet·뽑기 연출·캐시 받기는 입장 전 단계에 남는다(인게임에서 늦게 서지 않게)", () => {
+    expect(essential).toContain("preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[0])");
+    expect(essential).toContain("preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[1])");
+    expect(essential).toContain("preloadResearchCinematic");
+    expect(essential).toContain("SKILL_ART_ASSETS.map");
+  });
+
+  it("무거운 단계는 제목이 열린 뒤(영상 재생·대체 시한)에 시작한다", () => {
+    expect(steps).toContain("if (i === 1 && holdHeavy)");
+    expect(title).toContain("this.releaseHeavy?.();");
+    expect(title).toContain("new Promise<void>((resolve) => { this.releaseHeavy = resolve; })");
   });
 
   it("끝내 못 받은 필수 파일은 입장 뒤 살아 있는 겹의 로더로 다시 받는다", () => {
     expect(steps).toContain("failed.forEach((file) => unresolvedFiles.set(file.key, file));");
-    const title = readFileSync("src/scenes/TitleScene.ts", "utf8");
-    expect(title).toContain('startBackgroundDownloads(() => game.scene.getScene("effect-overlay")');
+    expect(title).toContain('retryUnresolvedLater(() => game.scene.getScene("effect-overlay")');
   });
 
   it("타이틀 영상은 실패하면 다시 걸고, 형식이 문제면 다른 한 벌로 바꾼다", () => {

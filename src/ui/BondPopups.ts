@@ -20,7 +20,10 @@ import { DIALOGUE_BACKDROP } from "./dialogueStageLayout";
 import { spawnPuppet, type PuppetAsset } from "../puppets/assets";
 import { startPuppetHop } from "./puppetHop";
 import { addSdFootShadow } from "./SdFootShadow";
-import { chipPoints, drawLayer, HoloBar } from "./holo";
+import { chipPoints, drawLayer, fillShapeGradient, HoloBar, toPoints } from "./holo";
+import { scaleShape } from "./shapeBands";
+import { NotificationDot } from "./NotificationDot";
+import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
 import { drawGlyph } from "./glyphs";
 import { addSectionTitle } from "./SectionTitle";
 import { paintStoryRowArt } from "./bondStoryRowArt";
@@ -119,8 +122,7 @@ export function openBondDetail(ctx: BondPopupContext): void {
   popups.open({ width: L.width, height: L.height, title: t("info.section.bond"), dim: true, dimAlpha: 0.62, onClose: ctx.onClose }, (body) => {
     // 판 전체에 아주 옅은 분홍 빛 — 사랑스러움은 색과 하트가 말하고 장식을 늘어놓지 않는다.
     const glow = scene.add.graphics();
-    glow.fillGradientStyle(BOND_PINK, BOND_PINK, BOND_PINK, BOND_PINK, 0.16, 0.16, 0, 0);
-    glow.fillRect(-L.width / 2 + 20, -L.height / 2 + 40, L.width - 40, 420);
+    fillShapeGradient(glow, popupInnerShape(L.width, L.height), { from: -L.height / 2 + 40, to: -L.height / 2 + 460, color: BOND_PINK, alphaFrom: 0.16 });
     body.add(glow);
 
     // 하트 + 레벨 수.
@@ -281,23 +283,42 @@ export function openBondGuide(ctx: BondPopupContext): void {
   const loops = motionPolicy(session.settings).nonEssentialDistanceFactor > 0;
   popups.open({ width, height, title: t("info.bond.howToTitle"), dim: true, dimAlpha: 0.4 }, (body) => {
     const top = -height / 2;
+    const B = L.bubble;
+    const B_STAGE_TOP = B.top + B.height + B.tail + 4;
     const listX = width / 2 - L.pad - L.list.width / 2;
     const listTop = top + L.list.top;
     const sdGround = listTop + listHeight - 10;
 
     // 판 색 — 위는 분홍빛이 옅게 깔리고, SD가 서는 왼쪽 아래에는 따뜻한 무대 빛이 고인다.
     const wash = scene.add.graphics();
-    wash.fillGradientStyle(BOND_PINK, BOND_PINK, 0x2a1630, 0x2a1630, 0.2, 0.2, 0, 0);
-    wash.fillRect(-width / 2 + 24, top + 30, width - 48, height * 0.55);
-    for (let ring = 4; ring >= 1; ring -= 1) wash.fillStyle(BOND_PINK_SOFT, 0.035 * (5 - ring)).fillEllipse(L.sd.x, sdGround - 10, 130 * ring, 34 * ring);
+    fillShapeGradient(wash, popupInnerShape(width, height), { from: top + 20, to: top + height * 0.6, color: BOND_PINK, alphaFrom: 0.2 });
     body.add(wash);
 
+    // 뒷판 — 말풍선 아래 SD와 목록을 함께 품는 분홍 투영 무대(유대 각성 상태창과 같은 결).
+    const stageTop = top + B_STAGE_TOP;
+    const stageBottom = listTop + listHeight + 28;
+    paintBondStatusScreen(scene, body, 0, (stageTop + stageBottom) / 2, width - 56, stageBottom - stageTop, { ticks: false, glowY: 0.22, glowX: (L.sd.x) / (width - 56) });
+    // SD 발밑에 고이는 무대 빛 — 판 안에 머문다.
+    const footLight = scene.add.graphics();
+    body.add(footLight);
+    for (let ring = 3; ring >= 1; ring -= 1) footLight.fillStyle(BOND_PINK_SOFT, 0.04 * (4 - ring)).fillEllipse(L.sd.x, sdGround - 10, 110 * ring, 30 * ring);
+
     // 말풍선 — 판 폭을 거의 다 쓰는 밝은 판, 꼬리는 왼쪽 아래의 SD를 가리킨다.
-    const B = L.bubble;
     const bubbleWidth = width - L.pad * 2;
     const bubble = scene.add.container(0, top + B.top + B.height / 2);
     const bevel = B.height * 0.22;
     const bubbleShape = chipPoints(bubbleWidth, B.height, { bevel: { topLeft: bevel, bottomRight: bevel } });
+    // 말풍선 뒤 발광 — 같은 실루엣을 조금씩 키워 겹쳐, 깎인 모서리까지 그대로 따라 번진다.
+    const halo = scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
+    for (let ring = 6; ring >= 1; ring -= 1) {
+      const grow = ring * 3.5;
+      halo.fillStyle(BOND_PINK, 0.05).fillPoints(toPoints(chipPoints(bubbleWidth + grow * 2, B.height + grow * 2, { bevel: { topLeft: bevel + grow * 0.41, bottomRight: bevel + grow * 0.41 } })), true);
+    }
+    bubble.add(halo);
+    if (loops) {
+      const pulse = scene.tweens.add({ targets: halo, alpha: { from: 0.65, to: 1 }, duration: 1400, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+      halo.once(Phaser.GameObjects.Events.DESTROY, () => pulse.remove());
+    }
     bubble.add(drawLayer(scene, 0, 0, bubbleShape, { fill: 0xfff3f6, alpha: 0.98, shadow: { x: 6, y: 10 } }));
     // 윗변 분홍 띠 한 줄 — 쪽지가 그 렐릭의 것임을 색이 말한다.
     bubble.add(scene.add.rectangle(0, -B.height / 2 + 6, bubbleWidth - bevel * 2.2, 6, BOND_PINK, 0.55));
@@ -441,25 +462,24 @@ export function openBondAwakening(ctx: BondPopupContext): void {
 
     // 판 색 — 머리 쪽에 분홍빛이 옅게 고인다.
     const wash = scene.add.graphics();
-    wash.fillGradientStyle(BOND_PINK, BOND_PINK, 0x1a1020, 0x1a1020, 0.18, 0.18, 0, 0);
-    wash.fillRect(-width / 2 + 24, top + 30, width - 48, 260);
+    fillShapeGradient(wash, popupInnerShape(width, height), { from: top + 20, to: top + 300, color: BOND_PINK, alphaFrom: 0.18 });
     body.add(wash);
 
-    // 머리 — 남은 각성(작게) 옆에 각성 레벨 칩. 오른쪽 끝은 레벨 초기화와 같은 「초기화」 칩.
+    // 머리 — 왼쪽에 각성 레벨 칩, 그 오른쪽에 남은 각성 수. 오른쪽 끝은 레벨 초기화와 같은 「초기화」 칩.
     const headY = top + L.headY;
     const head = scene.add.container(-width / 2 + 56, headY);
-    head.add(drawGlyph(scene, "heart", 18, 0, 34, BOND_PINK, 1, 3));
-    const pointsText = scene.add.text(46, 0, t("info.bond.awakenPoints", { left, total }), textStyle({ role: "display", size: 28, color: left > 0 ? "#ffd2dc" : COLOR.ink })).setOrigin(0, 0.5).setStroke("#2a0812", 5);
-    squeezeTextToWidth(pointsText, 300);
-    head.add(pointsText);
-    const levelX = 46 + pointsText.displayWidth + 22;
-    const levelLabel = scene.add.text(0, 0, `${t("info.bond.awakenShort")} Lv.${spent}`, textStyle({ role: "display", size: 24, color: "#3a0712" })).setOrigin(0.5);
-    squeezeTextToWidth(levelLabel, 170);
-    const chipW = levelLabel.displayWidth + 34;
-    const levelChip = scene.add.container(levelX + chipW / 2, 0);
-    levelChip.add(drawLayer(scene, 0, 0, chipPoints(chipW, 44, { bevel: { topLeft: 12, bottomRight: 12 } }), { fill: BOND_PINK_SOFT, alpha: 0.96, shadow: { x: 0, y: 5 } }));
+    const levelLabel = scene.add.text(0, 0, `${t("info.bond.awakenShort")} Lv.${spent}`, textStyle({ role: "display", size: 26, color: "#3a0712" })).setOrigin(0.5);
+    squeezeTextToWidth(levelLabel, 180);
+    const chipW = levelLabel.displayWidth + 36;
+    const levelChip = scene.add.container(chipW / 2, 0);
+    levelChip.add(drawLayer(scene, 0, 0, chipPoints(chipW, 48, { bevel: { topLeft: 13, bottomRight: 13 } }), { fill: BOND_PINK_SOFT, alpha: 0.96, shadow: { x: 0, y: 5 } }));
     levelChip.add(levelLabel);
     head.add(levelChip);
+    const pointsX = chipW + 24;
+    head.add(drawGlyph(scene, "heart", pointsX + 14, 0, 28, BOND_PINK, 1, 3));
+    const pointsText = scene.add.text(pointsX + 38, 0, t("info.bond.awakenPoints", { left, total }), textStyle({ role: "display", size: 26, color: left > 0 ? "#ffd2dc" : COLOR.ink })).setOrigin(0, 0.5).setStroke("#2a0812", 5);
+    squeezeTextToWidth(pointsText, width - 112 - 160 - pointsX - 38 - 20);
+    head.add(pointsText);
     body.add(head);
     if (canSpend) breathe(scene, levelChip, 1.06);
     if (showReset) {
@@ -497,13 +517,6 @@ export function openBondAwakening(ctx: BondPopupContext): void {
     radar.draw(relicProgression.getFinalStats(relicId), R.radius, getRelic(relicId).stats);
     radar.setGain(relicProgression.getFinalStats(relicId, { withoutBond: true }));
     body.add(radar);
-    // 범례 — 붉은 띠가 무엇인지 한 줄로.
-    const legendY = screenY + L.screen.height / 2 - 70;
-    const legend = scene.add.container(width / 2 - 96, legendY);
-    const legendText = scene.add.text(0, 0, t("info.bond.awakenGain"), textStyle({ role: "emphasis", size: 20, color: "#ff8a96" })).setOrigin(1, 0.5).setStroke("#05070a", 4);
-    legend.add(legendText);
-    legend.add(scene.add.rectangle(-legendText.displayWidth - 22, 0, 26, 12, 0xff3b4e, 0.85));
-    body.add(legend);
 
     const spend = async (key: BondAwakeningKey): Promise<void> => {
       if (busy || !canSpend) return;
@@ -595,21 +608,31 @@ const RADAR_AXES: readonly BondAwakeningKey[] = ["hp", "def", "res", "atk", "ap"
  * 유대 각성의 홀로그램 상태창 — 분홍빛 유리판, 가운데에 고이는 투영 빛, 가는 주사선, 바닥 격자,
  * 네 모서리 꺾쇠, 위에서 아래로 훑는 빛띠. 훑는 빛은 움직임 줄이기에서 서 있기만 한다.
  */
-function paintBondStatusScreen(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, width: number, height: number): void {
+function paintBondStatusScreen(
+  scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, width: number, height: number,
+  options: { ticks?: boolean; glowX?: number; glowY?: number } = {},
+): void {
   const screen = scene.add.container(x, y);
   parent.add(screen);
   const shape = chipPoints(width, height, { bevel: { topLeft: 36, bottomRight: 36 } });
   screen.add(drawLayer(scene, 0, 0, shape, { fill: 0x170b14, alpha: 0.9, edge: BOND_PINK, edgeAlpha: 0.6, shadow: { x: 0, y: 10 } }));
   const art = scene.add.graphics();
   // 위아래로 분홍이 스며드는 띠 — 판 가장자리가 빛을 머금은 유리처럼 읽힌다.
-  art.fillGradientStyle(BOND_PINK, BOND_PINK, BOND_PINK, BOND_PINK, 0.16, 0.16, 0, 0).fillRect(-width / 2 + 30, -height / 2 + 4, width - 60, 90);
-  art.fillGradientStyle(BOND_PINK, BOND_PINK, BOND_PINK, BOND_PINK, 0, 0, 0.14, 0.14).fillRect(-width / 2 + 30, height / 2 - 94, width - 60, 90);
-  // 가운데 투영 빛 — 오각형 뒤에 둥글게 고인다.
-  for (let ring = 6; ring >= 1; ring -= 1) art.fillStyle(BOND_PINK, 0.025).fillEllipse(0, 26, 90 * ring, 80 * ring);
+  // 띠는 판 실루엣대로 잘라 깎인 모서리 밖으로 새지 않는다.
+  const inner = scaleShape(shape, (width - 8) / width, (height - 8) / height);
+  fillShapeGradient(art, inner, { from: -height / 2 + 4, to: -height / 2 + 100, color: BOND_PINK, alphaFrom: 0.16 });
+  fillShapeGradient(art, inner, { from: height / 2 - 4, to: height / 2 - 100, color: BOND_PINK, alphaFrom: 0.14 });
+  // 가운데 투영 빛 — 같은 실루엣을 줄여 겹쳐 안쪽에 고인다(모서리가 판과 같은 각으로 깎인다).
+  const glowX = (options.glowX ?? 0) * width;
+  const glowY = (options.glowY ?? 0.05) * height;
+  for (let ring = 6; ring >= 1; ring -= 1) {
+    const factor = 0.14 * ring;
+    art.fillStyle(BOND_PINK, 0.03).fillPoints(toPoints(scaleShape(shape, factor, factor).map((v, i) => v + (i % 2 === 0 ? glowX * (1 - factor) : glowY * (1 - factor)))), true);
+  }
   // 주사선.
   for (let ly = -height / 2 + 10; ly < height / 2 - 6; ly += 6) art.lineStyle(1, BOND_PINK_SOFT, 0.045).lineBetween(-width / 2 + 24, ly, width / 2 - 24, ly);
   // 양옆 세로 눈금 — 계기판 결.
-  for (const side of [-1, 1] as const) {
+  if (options.ticks !== false) for (const side of [-1, 1] as const) {
     const gx = side * (width / 2 - 34);
     for (let index = 0; index < 13; index += 1) {
       const gy = -height / 2 + 80 + index * ((height - 160) / 12);
@@ -635,6 +658,12 @@ function paintBondStatusScreen(scene: Phaser.Scene, parent: Phaser.GameObjects.C
   sweep.once(Phaser.GameObjects.Events.DESTROY, () => tween.remove());
 }
 
+/** 팝업 몸판과 같은 실루엣을 안쪽으로 한 뼘 줄인 것 — 판 위에 까는 빛이 이 모양을 따른다. */
+function popupInnerShape(width: number, height: number, inset = 10): number[] {
+  const unit = Math.min(width, height) * POPUP_BODY_BEVEL_RATIO;
+  return chipPoints(width - inset * 2, height - inset * 2, { bevel: { topLeft: unit - inset * 0.41, bottomRight: unit - inset * 0.41 } });
+}
+
 /** 분홍 결의 알약 버튼 한 장(아이콘 + 글). 판 안의 작은 조작에만 쓴다. */
 function addPillButton(
   scene: Phaser.Scene,
@@ -652,7 +681,8 @@ function addPillButton(
   button.add(drawGlyph(scene, options.glyph, -groupWidth / 2 + icon / 2, 0, icon, options.tone, 1, 3));
   label.setX(-groupWidth / 2 + icon + 12);
   button.add(label);
-  if (options.dot) button.add(scene.add.circle(width / 2 - 12, -height / 2 + 10, 9, COLOR.danger, 1).setStrokeStyle(2, 0x05070a));
+  // 알림점은 화면 어디서나 같은 공용 점이다(색·크기·그림자를 여기서 다시 정하지 않는다).
+  if (options.dot) new NotificationDot(scene, button, { x: width / 2 - 10, y: -height / 2 + 8 });
   parent.add(button);
   const hit = scene.add.rectangle(x, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
   hit.on("pointerdown", () => pressIn(button));

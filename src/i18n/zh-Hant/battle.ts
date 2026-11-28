@@ -60,7 +60,6 @@ export const BATTLE_ZH_HANT = {
   "tutorial.battle.presentation": "特寫設定已開放！點選後必殺技演出會變短",
   "tutorial.battle.presentation.again": "再點一次就能完全跳過演出！",
   "tutorial.battle.contribution": "貢獻度已開放！點選來檢視誰的表現最好",
-  "tutorial.skip": "跳過",
   "tutorial.lobby.relics": "來培養遺物吧？請點選圖鑑",
   "tutorial.relics.feed": "餵食起司蛋糕來培養遺物吧！",
   "tutorial.gift.title": "復原材料禮物",

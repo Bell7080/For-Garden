@@ -117,7 +117,7 @@ const STAGE_8_10_PRE: DialogueStory = {
   backdrop: "thirdBranchField",
   recollectionSummary: "철갑 아르겐은 노아와 라자가 올라올 때까지 승강장을 비우지 않겠다며 맨 뒤에 섰다.",
   nodes: linear([
-    { id: "wall", speaker: "", body: "승강기 문이 열리자 검은 장갑을 두른 여자가 천천히 발을 내렸다. 발뒤꿈치가 닿을 때마다 바닥에 고정쇠가 하나씩 박혔다. 열 개째에서 소리가 멎었다.", standing: "argen", cast: [{ id: "argen", slot: "center" }], cue: "impact" },
+    { id: "wall", speaker: "", body: "승강기 문이 열리자 검은 장갑을 두른 여자가 천천히 발을 내렸다. 발뒤꿈치가 닿을 때마다 바닥에 고정쇠가 하나씩 박혔다. 다섯 개째에서 소리가 멎었다.", standing: "argen", cast: [{ id: "argen", slot: "center" }], cue: "impact" },
     { id: "argen", speaker: "아르겐", body: "철갑이다. 노아랑 라자가 아직 안 올라왔어. 걔네 올라올 때까지 이 승강장은 아무도 못 지나가.", standing: "argen", act: "nod" },
     { id: "eunte2", speaker: "아르겐", body: "연구원. 너는 거기 가만히 있어. 걔네 다 올려 보내면, 그다음에 내가 직접 데리러 갈 테니까.", standing: "argen" },
     { id: "koma", speaker: "코마", body: "…철갑.", standing: "koma", cast: [{ id: "koma", slot: "left" }, { id: "argen", slot: "right" }], act: "shrink" },
@@ -135,7 +135,7 @@ const STAGE_8_10_POST: DialogueStory = {
   backdrop: "thirdBranchField",
   recollectionSummary: "아르겐은 노아와 라자가 올라온 뒤에야 물러났다. 위에서 기가노가 셈을 하고 있었고, 명부의 072 칸은 초록이었다.",
   nodes: linear([
-    { id: "last", speaker: "", body: "열 번째 고정쇠가 뽑혀 나갔다. 아르겐이 기울어지는 승강기 문을 어깨로 받치는 사이, 그 밑으로 라자가 노아를 업고 기어 나왔다.", cast: [{ id: "noa", slot: "left" }, { id: "argen", slot: "center" }, { id: "raja", slot: "right" }], cue: "rumble" },
+    { id: "last", speaker: "", body: "다섯 번째 고정쇠가 뽑혀 나갔다. 아르겐이 기울어지는 승강기 문을 어깨로 받치는 사이, 그 밑으로 라자가 노아를 업고 기어 나왔다.", cast: [{ id: "noa", slot: "left" }, { id: "argen", slot: "center" }, { id: "raja", slot: "right" }], cue: "rumble" },
     { id: "raja", speaker: "라자", body: "보고드립니다, 대장님. 회수조 간부가 문을 닫으라 했습니다. 아트라가 막았습니다.", standing: "raja", act: "nod" },
     { id: "argen", speaker: "아르겐", body: "…이카닉시아가? 또?", standing: "argen", act: "shake", voice: "heavy" },
     { id: "noa", speaker: "노아", body: "대, 대장님! 저 마지막이에요! 저 끝까지 안 울었어요!", standing: "noa", act: "hopTwice" },

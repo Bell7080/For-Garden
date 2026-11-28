@@ -49,7 +49,7 @@ export interface KeywordDef {
 
 export const KEYWORDS: readonly KeywordDef[] = [
   { id: "battle-momentum", term: "기세", kind: "buff", description: "기가노가 자신의 스킬로 실제 체력을 회복할 때마다 한 공격당 한 겹씩 쌓인다. 겹당 공격력이 8% 오르며 최대 4겹까지 유지된다." },
-  { id: "fixed-armor", term: "고정 장갑", kind: "buff", description: "아르겐에게 받는 피해를 겹마다 곱연산으로 10% 줄여 주는 장갑이다. 열 겹을 모두 두르면 약 65% 줄어든다." },
+  { id: "fixed-armor", term: "고정 장갑", kind: "buff", description: "아르겐에게 받는 피해를 겹마다 곱연산으로 10% 줄여 주는 장갑이다. 다섯 겹을 모두 두르면 약 41% 줄어든다." },
   {
     id: "burn",
     term: "화상",

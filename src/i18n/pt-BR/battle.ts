@@ -60,7 +60,6 @@ export const BATTLE_PT_BR = {
   "tutorial.battle.presentation": "Opções de cinemática liberadas! Toque para encurtar a animação da suprema",
   "tutorial.battle.presentation.again": "Toque mais uma vez para pular de vez!",
   "tutorial.battle.contribution": "Contribuição liberada! Toque para ver quem se destacou mais",
-  "tutorial.skip": "Pular",
   "tutorial.lobby.relics": "Vamos criar relíquias? Toque no Arquivo",
   "tutorial.relics.feed": "Alimente sua relíquia com Cheesecake para fazê-la crescer!",
   "tutorial.gift.title": "Presente de restauração",

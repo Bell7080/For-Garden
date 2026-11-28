@@ -14,7 +14,7 @@ function fixture(gpu = false, meshBuffers = new Map()) {
   const program = gpu ? { skinning: true, position: 0, uv: 1, skinBones: 2, skinNormal: 3, skinPosed: 4, skinLocations: [2, 3, 4], palette: {} } : { skinLocations: [] };
   const Creature = sourceClass("src/puppets/IndexedPuppetCreature.ts", "IndexedPuppetCreature", {
     Phaser: { GameObjects: { Image: class {}, GetCalcMatrix: calculateMatrix } },
-    gpuGeneration: 0, programs: new WeakMap([[gl, program]]), watchContextRestore: () => {},
+    gpuGeneration: 0, REST_SETTLE_MS: 40, programs: new WeakMap([[gl, program]]), watchContextRestore: () => {},
     puppetAffineUniform, puppetOffsetUniform, puppetShaderAlpha: (a: number, b: number) => a * b,
     advancePuppet, advancePuppetSkin, puppetElapsedMs, debugPerfEnabled: false,
     // 기본은 CPU 정점 경로의 예산을 본다. 정점이 같은지는 gpuSkinParity가 실제 묶음으로 본다.
@@ -38,7 +38,8 @@ function fixture(gpu = false, meshBuffers = new Map()) {
     scene: { game: { loop: { time: 100, rawDelta: 16 } } },
     frame: { glTexture: { webGLTexture: {} } }, afterimages: [], bodyFill: { color: 0, amount: 0 },
     heldTables: new Set(), skin: null,
-    puppet: { update: vi.fn(() => new Float32Array(6)), updateSkin: vi.fn(() => skinFrame), flush: vi.fn(() => null), flushSkin: vi.fn(() => null), restVertices: [0, 0, 1, 0, 0, 1] },
+    restLevel: 1, restTarget: 1, restMs: 0, restHoldMs: 0, restSettled: false, playStrength: 1,
+    puppet: { setStrength: vi.fn(), update: vi.fn(() => new Float32Array(6)), updateSkin: vi.fn(() => skinFrame), flush: vi.fn(() => null), flushSkin: vi.fn(() => null), restVertices: [0, 0, 1, 0, 0, 1] },
   });
   const renderer = { gl, width: 1080, height: 1920, pipelines: { clear: vi.fn(), rebind: vi.fn() } };
   const camera = { addToRenderList: vi.fn(), alpha: 1 };
@@ -67,6 +68,24 @@ describe("캐릭터 프레임 작업 예산", () => {
     expect(c.puppet.update).not.toHaveBeenCalled();
     c.setAnimationFrozen(false); c.scene.game.loop.time += 16; c.step(0, 16);
     expect(c.puppet.update).toHaveBeenCalledExactlyOnceWith(.016, { output: true });
+  });
+  it("쉬게 한 개체는 움직임 크기를 0까지 줄인 뒤 멈추고, 풀면 멈춘 시각에서 다시 차오른다", () => {
+    const { creature: c } = fixture();
+    const tick = () => { c.scene.game.loop.time += 16; c.step(0, 16); };
+    c.setAnimationRested(true, 32);
+    tick(); tick();
+    expect(c.puppet.setStrength).toHaveBeenLastCalledWith(0);
+    // 기본 자세에 닿은 뒤에도 흔들림이 가라앉을 만큼(40ms) 더 굴린 뒤 멈춘다.
+    for (let frame = 0; frame < 3; frame++) tick();
+    const updates = c.puppet.update.mock.calls.length;
+    for (let frame = 0; frame < 5; frame++) tick();
+    expect(c.puppet.update.mock.calls.length).toBe(updates);
+    c.setAnimationRested(false, 32);
+    tick();
+    expect(c.puppet.update.mock.calls.length).toBe(updates + 1);
+    expect(c.puppet.setStrength).toHaveBeenLastCalledWith(0.5);
+    tick();
+    expect(c.puppet.setStrength).toHaveBeenLastCalledWith(1);
   });
   it("버퍼 공간은 한 번 확보하고 새 자세만 전송하며 복구 시 정지 자세도 다시 올린다", () => {
     const { creature: c, gl, renderer, camera } = fixture();

@@ -11,7 +11,7 @@ import { followTutorialTarget } from "./tutorialTarget";
  * 확정까지 그 화면 하나에서 이어지고, 가방에서 그 룬을 직접 눌러 세공으로 들어와도 같은 안내가 선다.
  *
  * 저절로 여는 것은 앱을 켜 둔 동안 한 번뿐이다. 중간에 닫으면 체험은 남아 가방의 점이 그대로 서고, 다음에 앱을
- * 켜 가방을 열면 다시 이어진다. 영영 끝내는 길은 세공 화면의 「건너뛰기」와 각인 확정 둘뿐이다.
+ * 켜 가방을 열면 다시 이어진다. 영영 끝내는 길은 각인 확정 하나뿐이다(건너뛰기는 없다).
  */
 let offeredThisRun = false;
 onAccountSwitch(() => { offeredThisRun = false; });
@@ -41,7 +41,6 @@ export interface FreeRuneCraftTargets {
   firstRow: () => Rect | undefined;
   allRows: () => Rect | undefined;
   craftButton: () => Rect | undefined;
-  onSkip: () => void;
 }
 
 export function unionRects(rects: readonly Rect[]): Rect | undefined {
@@ -53,12 +52,11 @@ export function unionRects(rects: readonly Rect[]): Rect | undefined {
   return { x: left, y: top, width: right - left, height: bottom - top };
 }
 
-/** 세공 화면 위에 한 칸씩 가리키는 안내를 건다. 체험이 끝나면(각인·건너뛰기) 저절로 걷힌다. */
+/** 세공 화면 위에 한 칸씩 가리키는 안내를 건다. 체험이 끝나면(각인) 저절로 걷힌다. */
 export function guideFreeRuneCraft(scene: Phaser.Scene, targets: FreeRuneCraftTargets): () => void {
   return followTutorialTarget(scene, {
     enabled: targets.active,
     blocked: targets.covered,
-    onSkip: targets.onSkip,
     rect: () => {
       switch (targets.stage()) {
         case "pick": return targets.firstRow();

@@ -60,7 +60,6 @@ export const BATTLE_TH = {
   "tutorial.battle.presentation": "ปลดล็อกการตั้งค่าคัตอินแล้ว! แตะเพื่อย่อฉากท่าไม้ตาย",
   "tutorial.battle.presentation.again": "แตะอีกครั้งเพื่อข้ามฉากไปเลย!",
   "tutorial.battle.contribution": "ปลดล็อกผลงานแล้ว! แตะเพื่อดูว่าใครทำได้ดีที่สุด",
-  "tutorial.skip": "ข้าม",
   "tutorial.lobby.relics": "มาเลี้ยงเรลิกกันไหม? แตะที่สมุดภาพ",
   "tutorial.relics.feed": "ป้อนชีสเค้กเพื่อเลี้ยงเรลิกของคุณ!",
   "tutorial.gift.title": "ของขวัญวัสดุฟื้นคืน",

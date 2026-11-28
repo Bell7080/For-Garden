@@ -60,7 +60,6 @@ export const BATTLE_DE = {
   "tutorial.battle.presentation": "Einblendungs-Optionen freigeschaltet! Tippe darauf, um die Ultimativ-Animation zu kürzen",
   "tutorial.battle.presentation.again": "Tippe noch einmal, um sie ganz zu überspringen!",
   "tutorial.battle.contribution": "Beitrag freigeschaltet! Tippe darauf, um zu sehen, wer am meisten geleistet hat",
-  "tutorial.skip": "Überspringen",
   "tutorial.lobby.relics": "Relikte aufziehen? Tippe auf das Archiv",
   "tutorial.relics.feed": "Füttere dein Relikt mit Käsekuchen, damit es wächst!",
   "tutorial.gift.title": "Restaurationsgeschenk",

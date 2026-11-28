@@ -60,7 +60,6 @@ export const BATTLE_ID = {
   "tutorial.battle.presentation": "Opsi cut-in terbuka! Ketuk untuk mempersingkat animasi ultimate",
   "tutorial.battle.presentation.again": "Ketuk sekali lagi untuk melewatinya sepenuhnya!",
   "tutorial.battle.contribution": "Kontribusi terbuka! Ketuk untuk melihat siapa yang paling berperan",
-  "tutorial.skip": "Lewati",
   "tutorial.lobby.relics": "Yuk latih Relik! Ketuk Arsip",
   "tutorial.relics.feed": "Beri Cheesecake untuk melatih Relik-mu!",
   "tutorial.gift.title": "Hadiah bahan restorasi",

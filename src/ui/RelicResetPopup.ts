@@ -18,6 +18,7 @@ import { spawnPuppet, type PuppetAsset, type PuppetCreature } from "../puppets/a
 import { session } from "../state/session";
 import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
+import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawLayer } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { popupArtShape, shapeClipMask } from "./popupArt";
@@ -57,8 +58,12 @@ interface AskSpec {
   to: number;
   /** 도착 레벨의 색 — 되돌리면 붉고 키우면 강조색이다. */
   toColor: string;
-  rows: { icon: string; before: number; after: number }[];
+  rows: WalletRow[];
   note: string;
+  /** 레벨 수 앞의 꼬리표(기본 `LV`) — 각성 초기화는 「각성」이다. */
+  mark?: string;
+  /** 재화 판 머리글(기본 「보유 재화 변화」). */
+  walletHeader?: string;
   /** 잃는 치즈케이크 — 있으면 재화 판 아래 붉은 경고 띠가 「90%만 환급」과 그 수를 크게 말한다. */
   loss?: number;
   /** 무대의 그 아이 — 떨며 땀을 흘리거나, 신이 나서 통통 뛴다. */
@@ -70,6 +75,17 @@ interface AskSpec {
   panel?: { fill: number; accent: number };
   /** 확정 버튼의 면 색(강조 버튼일 때만). */
   confirmFill?: number;
+}
+
+/** 재화 판 한 줄 — 재화 그림(`icon`)이나 공용 글리프(`glyph`, 유대 하트처럼 재화가 아닌 수)를 세운다. */
+interface WalletRow { icon?: string; glyph?: { name: GlyphName; color: number }; before: number; after: number }
+
+export interface BondAwakenResetPopupOptions {
+  asset?: PuppetAsset;
+  /** 지금 각성 레벨(쓴 각성 수). */
+  level: number;
+  /** 남은 각성 수 — 초기화하면 쓴 만큼 돌아온다. */
+  left: number;
 }
 
 const BUBBLE_INK = "#20242b";
@@ -118,6 +134,31 @@ export function openRelicFeedMaxPopup(scene: Phaser.Scene, popups: PopupLayer, o
   }, onConfirm);
 }
 
+/**
+ * 유대 각성 초기화 창 — 레벨 초기화와 같은 한 장이지만 그 아이는 시무룩하지 않다(응태 2026-11-28 — 다른 능력치를 올리면
+ * 그만이니까). 분홍빛 무대에서 통통 뛰며 「다른 곳에 다시 써 볼까요?」를 묻고, 재화 판 자리에는 돌아오는 각성 하트가 선다.
+ * 비용이 없으므로 확정 버튼은 강조색이고 「무료!」 딱지가 붙는다.
+ */
+export function openBondAwakenResetPopup(scene: Phaser.Scene, popups: PopupLayer, options: BondAwakenResetPopupOptions, onConfirm: () => void): void {
+  openRelicAskPopup(scene, popups, {
+    asset: options.asset,
+    title: t("info.bond.awakenReset.title"),
+    plea: t("info.bond.awakenReset.plea"),
+    from: options.level,
+    to: 0,
+    toColor: "#ffc2cf",
+    mark: t("info.bond.awakenShort"),
+    walletHeader: t("info.bond.awakenReset.wallet"),
+    rows: [{ glyph: { name: "heart", color: COLOR.bond }, before: options.left, after: options.left + options.level }],
+    note: t("info.bond.awakenReset.note"),
+    mood: "cheerful",
+    edge: COLOR.bond,
+    confirm: { label: t("info.reset.confirm"), destructive: false, ribbon: t("info.reset.free") },
+    panel: { fill: 0x2a0f1e, accent: COLOR.bond },
+    confirmFill: 0xff6f91,
+  }, onConfirm);
+}
+
 function openRelicAskPopup(scene: Phaser.Scene, popups: PopupLayer, spec: AskSpec, onConfirm: () => void): void {
   const L = RELIC_RESET_POPUP;
   const spots = relicResetPopupSpots(spec.rows.length, spec.loss !== undefined);
@@ -149,9 +190,9 @@ function openRelicAskPopup(scene: Phaser.Scene, popups: PopupLayer, spec: AskSpe
 
     // `LV 30 → LV 1` — 프로필 레벨 칩처럼 `LV`는 작고 흐리게, 수는 크게. 지금 레벨은 흰색, 도착하는 자리는 창마다 제 색이다.
     const level = scene.add.container(B.x, S.levelY);
-    const from = levelMark(scene, spec.from, S.levelSize, COLOR.ink);
+    const from = levelMark(scene, spec.from, S.levelSize, COLOR.ink, spec.mark);
     const arrow = scene.add.text(0, 0, "→", textStyle({ role: "display", size: S.levelSize * 0.7, color: COLOR.inkDim })).setOrigin(0, 0.5).setStroke("#05070a", 6);
-    const to = levelMark(scene, spec.to, S.levelTargetSize, spec.toColor);
+    const to = levelMark(scene, spec.to, S.levelTargetSize, spec.toColor, spec.mark);
     const gap = 22;
     const span = from.width + arrow.width + to.width + gap * 2;
     let lx = -span / 2;
@@ -188,7 +229,7 @@ function openRelicAskPopup(scene: Phaser.Scene, popups: PopupLayer, spec: AskSpe
       if (spec.mood === "afraid") addSweat(scene, stage, S.sd.x + S.sweat.dx, S.sd.ground - S.sweat.rise, S.sweat.size, loops);
     }
 
-    paintWallet(scene, body, spots.walletTop, spots.walletHeight, spec.rows, spec.edge, RELIC_RESET_POPUP.backdrop[spec.mood].panel);
+    paintWallet(scene, body, spots.walletTop, spots.walletHeight, spec.rows, spec.edge, RELIC_RESET_POPUP.backdrop[spec.mood].panel, spec.walletHeader);
 
     if (spec.loss !== undefined && spots.warningY !== undefined) paintLossWarning(scene, body, spots.warningY, spec.loss, loops);
 
@@ -209,9 +250,9 @@ function openRelicAskPopup(scene: Phaser.Scene, popups: PopupLayer, spec: AskSpe
  * `LV` 꼬리표 + 큰 수 한 덩어리 — 프로필 카드의 레벨 칩과 같은 문법이다. 둘의 밑선을 맞춰 꼬리표가 수 아래쪽에 붙는다.
  * 돌려주는 컨테이너의 `width`는 덩어리 전체 폭이고, 자식은 가운데(0)를 기준으로 선다 — 부풀리는 연출이 제자리에서 커진다.
  */
-function levelMark(scene: Phaser.Scene, value: number, size: number, color: string): Phaser.GameObjects.Container {
+function levelMark(scene: Phaser.Scene, value: number, size: number, color: string, markLabel = "LV"): Phaser.GameObjects.Container {
   const tagSize = Math.round(size * RELIC_RESET_POPUP.stage.levelTagRatio);
-  const tag = scene.add.text(0, 0, "LV", textStyle({ role: "display", size: tagSize, color: COLOR.inkDim })).setOrigin(0, 1).setStroke("#05070a", 5);
+  const tag = scene.add.text(0, 0, markLabel, textStyle({ role: "display", size: tagSize, color: COLOR.inkDim })).setOrigin(0, 1).setStroke("#05070a", 5);
   const number = scene.add.text(0, 0, String(value), textStyle({ role: "display", size, color })).setOrigin(0, 1).setStroke("#05070a", Math.round(size / 9));
   const tagGap = Math.round(size * 0.08);
   const width = tag.width + tagGap + number.width;
@@ -259,17 +300,22 @@ function dropPoints(size: number, dx: number, dy: number): Phaser.Math.Vector2[]
 }
 
 /** 보유 재화 변화 — 재화마다 `그림 · 지금 → 뒤 · 증감` 한 줄. */
-function paintWallet(scene: Phaser.Scene, body: Phaser.GameObjects.Container, top: number, height: number, rows: readonly { icon: string; before: number; after: number }[], edge: number, fill: number): void {
+function paintWallet(scene: Phaser.Scene, body: Phaser.GameObjects.Container, top: number, height: number, rows: readonly WalletRow[], edge: number, fill: number, header = t("info.reset.wallet")): void {
   const W = RELIC_RESET_POPUP.wallet;
   const width = RELIC_RESET_POPUP.width - W.inset * 2;
   const unit = Math.min(width, height) * POPUP_BODY_BEVEL_RATIO;
   body.add(drawLayer(scene, 0, top + height / 2, chipPoints(width, height, { bevel: { topLeft: unit, bottomRight: unit } }), { fill, alpha: 0.9, edge, edgeAlpha: 0.8, shadow: { x: 8, y: 12 } }));
-  body.add(scene.add.text(-width / 2 + 36, top + W.padY + W.headerHeight / 2, t("info.reset.wallet"), textStyle({ role: "emphasis", size: W.headerSize, color: COLOR.inkDim })).setOrigin(0, 0.5));
+  body.add(scene.add.text(-width / 2 + 36, top + W.padY + W.headerHeight / 2, header, textStyle({ role: "emphasis", size: W.headerSize, color: COLOR.inkDim })).setOrigin(0, 0.5));
   const C = W.columns;
   rows.forEach((row, index) => {
     const y = top + W.padY + W.headerHeight + W.rowHeight * (index + 0.5);
-    body.add(scene.add.image(C.icon + 3, y + 4, row.icon).setDisplaySize(W.icon, W.icon).setTint(0x05070a).setAlpha(0.55));
-    body.add(scene.add.image(C.icon, y, row.icon).setDisplaySize(W.icon, W.icon));
+    if (row.icon) {
+      body.add(scene.add.image(C.icon + 3, y + 4, row.icon).setDisplaySize(W.icon, W.icon).setTint(0x05070a).setAlpha(0.55));
+      body.add(scene.add.image(C.icon, y, row.icon).setDisplaySize(W.icon, W.icon));
+    } else if (row.glyph) {
+      body.add(drawGlyph(scene, row.glyph.name, C.icon + 3, y + 4, W.icon * 0.86, 0x05070a, 0.55, 3));
+      body.add(drawGlyph(scene, row.glyph.name, C.icon, y, W.icon * 0.86, row.glyph.color, 1, 3));
+    }
     const rising = row.after >= row.before;
     const tone = rising ? COLOR.accentText : COLOR.dangerText;
     body.add(scene.add.text(C.before, y, row.before.toLocaleString(), textStyle({ role: "display", size: W.valueSize, color: COLOR.ink })).setOrigin(1, 0.5));
@@ -380,7 +426,7 @@ function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, 
   rays.setMask(stageMask);
   body.add(rays);
   if (loops) {
-    const spin = scene.tweens.add({ targets: rays, angle: mood === "excited" ? 360 : -360, duration: D.spinMs[mood], repeat: -1 });
+    const spin = scene.tweens.add({ targets: rays, angle: mood === "afraid" ? -360 : 360, duration: D.spinMs[mood], repeat: -1 });
     rays.once(Phaser.GameObjects.Events.DESTROY, () => spin.remove());
   }
 
@@ -468,7 +514,7 @@ function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, 
     body.add(spark);
     if (!loops) { spark.setAlpha(0.5); continue; }
     spark.setAlpha(0).setScale(0.4);
-    const rise = mood === "excited" ? 30 : 16;
+    const rise = mood === "afraid" ? 16 : 30;
     const twinkle = scene.tweens.add({
       targets: spark, alpha: { from: 0, to: 0.7 }, scale: { from: 0.4, to: 1 }, y: { from: y, to: y - rise },
       duration: 1600 + (i % 4) * 300, yoyo: true, repeat: -1, delay: (i * 370) % 1800, ease: "Sine.InOut",

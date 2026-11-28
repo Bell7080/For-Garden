@@ -16,10 +16,35 @@ import { InventoryManager } from "./InventoryManager";
  * 화면은 칸을 눌렀다는 것만 넘기고 지갑·가방을 직접 더하지 않는다 — 서버가 확정한 스냅샷만 세션에 옮기고
  * 로비 입구의 빨간 점은 받은 뒤 곧바로 다시 읽는다.
  */
+/** 미리 물어 둔 출석 상태를 그대로 믿는 시간. 넘기면(닉네임 정하기 등으로 오래 머물면) 다시 묻는다. */
+export const ATTENDANCE_PREFETCH_FRESH_MS = 15000;
+
 export class AttendanceManager {
   constructor(private readonly api: GameApi, private readonly state: Session, private readonly events: ManagerEvents = managerEvents) {}
 
   status(): Promise<AttendanceStatusResponse> { return this.api.getAttendance(); }
+
+  /** 로비가 서기 전에 미리 물어 둔 출석 상태와 그 시각. 한 번 쓰면 비운다. */
+  private prefetched?: { at: number; promise: Promise<AttendanceStatusResponse> };
+
+  /**
+   * 로비가 서는 동안 출석 상태를 미리 묻는다(타이틀 입장·로비 진입). 로비가 다 선 뒤에야 묻던 때는 왕복만큼
+   * 판이 늦게 떠 「들어왔는데 출석이 한참 뒤에 뜬다」로 읽혔다. 이미 따끈한 답이 있으면 다시 묻지 않는다.
+   */
+  prefetch(now: number = Date.now()): void {
+    if (this.prefetched && now - this.prefetched.at <= ATTENDANCE_PREFETCH_FRESH_MS) return;
+    const entry = { at: now, promise: this.api.getAttendance() };
+    entry.promise.catch(() => { if (this.prefetched === entry) this.prefetched = undefined; });
+    this.prefetched = entry;
+  }
+
+  /** 미리 물어 둔 답이 따끈하면 그것을, 아니면(또는 실패했으면) 새로 묻는다. */
+  takeStatus(now: number = Date.now()): Promise<AttendanceStatusResponse> {
+    const entry = this.prefetched;
+    this.prefetched = undefined;
+    if (!entry || now - entry.at > ATTENDANCE_PREFETCH_FRESH_MS) return this.status();
+    return entry.promise.catch(() => this.status());
+  }
 
   /** 로비가 오늘 저절로 열었다는 것을 서버에 남긴다. 실패해도 판은 이미 열렸으므로 삼킨다. */
   markAutoShown(): Promise<void> { return this.api.markAttendanceAutoShown().catch(() => undefined); }

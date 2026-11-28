@@ -17,7 +17,8 @@ import {
   TITLE_MOVIE_KEY,
   TITLE_MOVIE_SOURCES,
 } from "../ui/titleMovie";
-import { LOADING_STEPS, refreshTextTextures, runLoadingSteps } from "./loadingSteps";
+import { attendanceManager } from "../managers/AttendanceManager";
+import { LOADING_STEPS, refreshTextTextures, runLoadingSteps, startBackgroundDownloads } from "./loadingSteps";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { drawCornerShroud, drawVignette } from "../ui/holo";
 import packageInfo from "../../package.json" with { type: "json" };
@@ -270,6 +271,10 @@ export class TitleScene extends Phaser.Scene {
       (ratio) => percent.setRatio(ratio),
     ).then(async () => {
       if (!this.scene.isActive()) return;
+      // Puppet·뽑기 연출·캐시 받기와 못 받은 파일 다시 받기는 지금부터 뒤에서 돈다 — 입장을 기다리게 하지 않는다.
+      // 로더는 화면이 바뀌어도 살아 있는 겹의 것을 빌린다(타이틀은 입장과 함께 닫힌다).
+      const game = this.game;
+      startBackgroundDownloads(() => game.scene.getScene("effect-overlay") ?? undefined);
       // 따라가기를 건너뛰고 정확히 100.00%에 멈춘 뒤 그 자리를 진입 문구에 넘긴다.
       percent.complete();
       percent.handOver();
@@ -540,7 +545,10 @@ export class TitleScene extends Phaser.Scene {
             if (!current()) return;
             if (connected.ok) {
               if (connected.mode === "server") startLiveOps();
-              leaveTitle(this, openingPending(storyManager.isCompleted(OPENING_TRAIN.id), session.cleared) ? "opening" : "lobby");
+              const next = openingPending(storyManager.isCompleted(OPENING_TRAIN.id), session.cleared) ? "opening" : "lobby";
+              // 로비가 서는 동안 출석을 미리 묻는다 — 로비가 선 뒤에야 묻던 때는 왕복 두 번만큼 판이 늦게 떴다.
+              if (next === "lobby") attendanceManager.prefetch();
+              leaveTitle(this, next);
               return;
             }
             console.warn("[forgarden] connect failed", connected.code, connected.detail ?? "-");

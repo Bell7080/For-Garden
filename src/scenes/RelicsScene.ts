@@ -28,6 +28,7 @@ import { relicSkinManager } from "../managers/RelicSkinManager";
 import { RelicControlBar } from "../ui/RelicControlBar";
 import { openRelicFilterPopup } from "../ui/RelicFilterPopup";
 import { PopupLayer } from "../ui/PopupLayer";
+import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { bindCurrencyGuide } from "../ui/currencyGuideEntry";
 import {
   RELIC_GRID,
@@ -267,14 +268,14 @@ export class RelicsScene extends Phaser.Scene {
 
   /**
    * 튜토리얼 강화 두 칸: 토리카 정보창에서 일반 강화와 1레벨 즉시 강화를 차례로 가리킨다. 각 조작이 확정되면
-   * 칸을 마친다(건너뛰기는 없다). 정보창을 닫아 버리면 안내도 함께 걷는다(다시 오면 이어진다).
+   * 칸을 마친다(건너뛰기는 없다). 화면을 덮어 정보창을 닫을 수 없고, 마치면 치즈케이크 영수증이 뜬다.
    */
   private startFeedTutorial(nav: BottomNav): void {
     const next = tutorialManager.lobbyStep();
     if (next !== "feed" && next !== "feedLevel") return;
     if (!relicCollection.owns("torika")) return;
     this.info.showRelic(getRelic("torika"), true);
-    let stopped = false, completing = false, returnToLobby = false;
+    let stopped = false, completing = false, returnToLobby = false, rewardOpen = false;
     const complete = async (): Promise<void> => {
       if (stopped || completing) return;
       const step = tutorialManager.next();
@@ -283,17 +284,25 @@ export class RelicsScene extends Phaser.Scene {
       const result = await tutorialManager.complete(step);
       completing = false;
       if (!result || stopped) return;
-      if (step === "feedLevel") { returnToLobby = true; this.info.hide(); if (this.info.isOpen) this.info.hide(); }
+      if (step === "feedLevel") {
+        returnToLobby = true; this.info.hide(); if (this.info.isOpen) this.info.hide();
+        // 강화 체험을 끝까지 마친 몫(`TUTORIAL_REWARDS.feedLevel`) — 영수증을 닫아야 로비 탭 안내가 선다.
+        const cheesecake = result.granted?.cheesecake ?? 0;
+        if (cheesecake > 0) {
+          rewardOpen = true;
+          openRewardPopup(this, this.popups, { items: currencyRecordToRewardItems({ cheesecake }), onConfirm: () => { rewardOpen = false; } });
+        }
+      }
     };
     this.info.onFed = mode => {
       if (tutorialManager.next() === (mode === "normal" ? "feed" : "feedLevel")) void complete();
     };
     followTutorialTarget(this, {
       enabled: () => !stopped && (returnToLobby || this.info.isOpen),
-      // 1레벨 쪽지가 열리면 화면을 덮고 그 버튼만 남긴다 — 바깥을 눌러 쪽지를 닫고 넘어가지 못하게 하고
-      // 「여기를 누른다」를 둘레의 숨 쉬는 테두리로 한 번 더 짚는다. 튜토리얼은 끝까지 진행한다(응태 2026-11-28).
-      passive: () => !this.feedLevelLocked(returnToLobby),
+      // 화면을 덮고 누를 자리만 남긴다 — 정보창을 닫거나 쪽지 바깥을 눌러 빠져나가지 못한다. 튜토리얼은 끝까지
+      // 진행한다(응태 2026-11-28). 1레벨 쪽지가 열리면 그 버튼 둘레가 숨 쉬듯 번져 한 번 더 짚는다.
       pulse: () => this.feedLevelLocked(returnToLobby),
+      blocked: () => rewardOpen,
       rect: () => returnToLobby ? nav.tabRect("lobby") : this.info.feedBulkTutorialBounds() ?? this.info.feedButtonBounds(),
       text: () => returnToLobby ? t("tutorial.relics.return") : tutorialManager.next() === "feed" ? t("tutorial.relics.feed") : this.info.feedBulkTutorialBounds() ? t("tutorial.relics.one") : t("tutorial.relics.bulk"),
     });

@@ -61,6 +61,8 @@ export class StatRadar extends Phaser.GameObjects.Container {
   private base?: Stats;
   /** 덧붙은 몫을 가를 기준 오각형 — 주면 기준선은 옅게, 그 위로 오른 몫은 붉게 칠한다(`setGain`). */
   private gainFrom?: Stats;
+  /** 각성으로 실제로 오른 축 — 꼭짓점 표식과 수치 색이 같은 판정을 읽는다. */
+  private readonly raisedAxes = new Set<number>();
   private stats: Stats = { hp: 0, def: 0, res: 0, atk: 0, ap: 0 } as Stats;
   private radius: number;
   /** 0이면 면이 가운데 한 점, 1이면 제 크기다. 처음 펼쳐질 때만 0에서 오른다. */
@@ -124,6 +126,7 @@ export class StatRadar extends Phaser.GameObjects.Container {
         // 수치가 판에서 튀어나와야 한다 — 크고 두껍게, 검은 획 위에 제 색 빛을 두른다.
         value.setFontSize(Math.round(size * 1.12)).setStroke("#05070a", 7).setPadding(HOLO_SHIMMER.textGlow.padding).setShadow(0, 0, holoGlowColor(color ?? COLOR.ink), HOLO_SHIMMER.textGlow.blur, true, true);
       }
+      value.setData("baseColor", value.style.color);
       this.valueTexts.push(value);
     });
     if (this.holo) {
@@ -282,15 +285,22 @@ export class StatRadar extends Phaser.GameObjects.Container {
       const from = this.gainFrom;
       const fromShape = statRadarRatios(from, this.base);
       const baseValues = AXES.map(([key], index) => point(index, Math.max(0.04, fromShape[key] * this.grow) * (still ? 1 : holoWobble(index, timeMs))));
-      // 오른 몫 — 변마다 기준선과 지금 선 사이의 띠를 붉게 채운다(지금 값이 기준보다 늘 크거나 같다).
-      g.fillStyle(GAIN_RED, 0.42 * breathe);
+      // 기준 면은 평소 오각형과 같은 결로 또렷하게 — 올리지 않은 축은 여기서 그대로 끝난다.
+      g.lineStyle(3, HOLO_EDGE, 0.85).strokePoints(baseValues, true);
+      // 오른 축 — 그 꼭짓점이 실제로 밀려난 축만 붉은 꽃잎(이웃 기준점 두 개 → 지금 꼭짓점)을 세운다.
+      // 변마다 띠를 채우던 때는 올리지 않은 축 옆까지 붉게 물들어 「약간 오른 것」처럼 보였다.
+      const raised = AXES.map(([key]) => stats[key] - from[key] > 0.5);
       for (let index = 0; index < AXES.length; index += 1) {
+        if (!raised[index]) continue;
+        const prev = (index + AXES.length - 1) % AXES.length;
         const next = (index + 1) % AXES.length;
-        g.fillPoints([baseValues[index], baseValues[next], values[next], values[index]], true);
+        const petal = [baseValues[prev], baseValues[index], baseValues[next], values[index]];
+        g.fillStyle(GAIN_RED, 0.5 * breathe).fillPoints([baseValues[index], values[index], baseValues[next]], true);
+        g.fillStyle(GAIN_RED, 0.5 * breathe).fillPoints([baseValues[prev], values[index], baseValues[index]], true);
+        g.lineStyle(10, GAIN_RED, 0.22 * breathe).strokePoints([petal[0], petal[3], petal[2]], false);
+        g.lineStyle(3, GAIN_RED_EDGE, 1).strokePoints([petal[0], petal[3], petal[2]], false);
       }
-      g.lineStyle(10, GAIN_RED, 0.2 * breathe).strokePoints(values, true);
-      g.lineStyle(3, GAIN_RED_EDGE, 0.95).strokePoints(values, true);
-      g.lineStyle(2, HOLO_EDGE, 0.32).strokePoints(baseValues, true);
+      raised.forEach((up, index) => { if (up) this.raisedAxes.add(index); else this.raisedAxes.delete(index); });
     } else {
       // 테두리 — 넓게 번지는 빛 한 겹 위에 또렷한 선.
       g.lineStyle(10, COLOR.accent, 0.16 * breathe).strokePoints(values, true);
@@ -298,12 +308,22 @@ export class StatRadar extends Phaser.GameObjects.Container {
     }
     // 꼭짓점은 동그라미가 아니라 축 색의 작은 마름모다.
     values.forEach(({ x, y }, index) => {
-      const size = 7;
-      g.fillStyle(this.axisColors[index] ?? COLOR.accent, 1);
+      const up = this.gainFrom !== undefined && this.raisedAxes.has(index);
+      const size = up ? 10 : 7;
+      if (up) g.fillStyle(GAIN_RED_EDGE, 0.35 * breathe).fillCircle(x, y, 16);
+      g.fillStyle(up ? 0xffffff : (this.axisColors[index] ?? COLOR.accent), 1);
       g.fillPoints([new Phaser.Math.Vector2(x, y - size), new Phaser.Math.Vector2(x + size * 0.7, y), new Phaser.Math.Vector2(x, y + size), new Phaser.Math.Vector2(x - size * 0.7, y)], true);
     });
     g.setAlpha(1);
-    AXES.forEach(([key], index) => this.valueTexts[index]?.setText(Math.round(stats[key] * this.grow).toLocaleString()));
+    AXES.forEach(([key], index) => {
+      const text = this.valueTexts[index];
+      if (!text) return;
+      // 오른 축의 수치만 붉게 물들고 ▲를 단다 — 올리지 않은 축은 평소 색 그대로라 한눈에 갈린다.
+      const up = this.gainFrom !== undefined && this.raisedAxes.has(index);
+      text.setText(`${Math.round(stats[key] * this.grow).toLocaleString()}${up ? " ▲" : ""}`);
+      const color = up ? "#ff8a96" : (text.getData("baseColor") as string | undefined);
+      if (color && text.style.color !== color) text.setColor(color);
+    });
     this.powerText?.setText(Math.round(combatPower(stats, this.base) * this.grow).toLocaleString());
   }
 }

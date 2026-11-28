@@ -220,7 +220,7 @@ export interface ClaimRelicQuestionRewardResponse { gemsGranted: number; wallet:
 /** 튜토리얼 한 칸을 마친 것을 확정한다. 앞 칸이 비어 있으면 거절하고, 이미 마친 칸은 아무것도 다시 주지 않는다. */
 export interface CompleteTutorialStepRequest { stepId: string; }
 /** 확정된 진행과, 이번 호출이 새로 준 선물(있을 때만)과 지갑이다. */
-export interface CompleteTutorialStepResponse { tutorial: import("../core/tutorial").TutorialState; granted?: { fossil: number }; wallet: Wallet; serverTime: string; }
+export interface CompleteTutorialStepResponse { tutorial: import("../core/tutorial").TutorialState; granted?: import("../core/tutorial").TutorialReward; wallet: Wallet; serverTime: string; }
 /** 콘텐츠 첫 방문 안내를 봤다고 확정한다. 순서 없이 한 번만 기록되고 선물은 없다. */
 export interface MarkContentIntroSeenRequest { introId: string; }
 export interface MarkContentIntroSeenResponse { tutorial: import("../core/tutorial").TutorialState; serverTime: string; }

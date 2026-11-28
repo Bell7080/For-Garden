@@ -2,7 +2,7 @@ import type Phaser from "phaser";
 import { t } from "../i18n";
 import { DUEL_MONTHLY_RANK_REWARDS, WEEKLY_RANK_GEMS, type RankRewardBundle, type RankRewardPool } from "../data/competitiveRewards";
 import { expeditionWeeklyRankPool } from "../data/expedition";
-import { COMPETITIVE_MONTHLY_ENABLED } from "../core/competitiveSeason";
+import { competitiveMonthlyOn } from "../core/competitiveSeason";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import type { PopupLayer } from "./PopupLayer";
 import { openRewardTable, type RewardTableRow } from "./RewardTable";
@@ -31,7 +31,7 @@ export function openCompetitiveRewards(scene: Phaser.Scene, popups: PopupLayer, 
     return;
   }
   // 월간 시즌이 켜지면 결투장 순위는 시즌 마감 한 번의 표준 보상 풀이다(티어 몫은 매주 따로 우편으로 온다).
-  if (COMPETITIVE_MONTHLY_ENABLED) {
+  if (competitiveMonthlyOn()) {
     openRankPoolRewards(scene, popups, { pool: DUEL_MONTHLY_RANK_REWARDS, period: "monthly", rules: t("rewardTable.rules.duelMonthly"), myRank });
     return;
   }

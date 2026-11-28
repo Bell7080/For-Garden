@@ -1,7 +1,7 @@
 import type Phaser from "phaser";
 import { t } from "../i18n";
 import { DUEL_TIERS, DUEL_SEASON_DAYS, type DuelTierId } from "../core/duelArena";
-import { COMPETITIVE_MONTHLY_ENABLED } from "../core/competitiveSeason";
+import { competitiveMonthlyOn } from "../core/competitiveSeason";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import type { PopupLayer } from "./PopupLayer";
 import { openRewardTable } from "./RewardTable";
@@ -14,7 +14,7 @@ import { COLOR } from "./theme";
  */
 export function openDuelTierGuide(scene: Phaser.Scene, popups: PopupLayer, current: DuelTierId): void {
   // 월간 시즌이 켜지면 티어 보상은 매주 마감 때 우편으로 오고, 티어 자체는 달이 바뀔 때 초기화된다.
-  const monthly = COMPETITIVE_MONTHLY_ENABLED;
+  const monthly = competitiveMonthlyOn();
   openRewardTable(scene, popups, {
     title: t("duel.link.tiers"),
     rules: monthly ? t("duel.season.rules.monthly") : t("duel.season.rules", { days: DUEL_SEASON_DAYS }),

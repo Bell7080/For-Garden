@@ -1,5 +1,5 @@
 import { EXPEDITION_WEEKLY_RANK_POOL, EXPEDITION_WEEKLY_RANK_POOL_V2 } from "../data/expedition";
-import { COMPETITIVE_MONTHLY_ENABLED, COMPETITIVE_MONTHLY_SINCE } from "../core/competitiveSeason";
+import { competitiveMonthlyOn, COMPETITIVE_MONTHLY_SINCE } from "../core/competitiveSeason";
 import { DUEL_TIERS } from "../core/duelArena";
 import { ANCIENT_MONTHLY_RANK_REWARDS, ARENA_MONTHLY_RANK_REWARDS, DUEL_MONTHLY_RANK_REWARDS, GUILD_WEEKLY_RANK_REWARDS, WEEKLY_RANK_GEMS, ancientMonthlyRankRewards } from "../data/competitiveRewards";
 import { ARENA_TIERS, ARENA_WEEKLY_RANK_GEMS } from "../core/arenaStanding";
@@ -108,17 +108,23 @@ export function createSupabaseStore(env: Env) {
     async raidContext(playerId, now) { return await rpc("server_raid_context", { p_player: playerId, p_worlds: worldRaidDefinitions(now) }) as SharedRaidContext; },
     async opsInbox(playerId) {
       env.waitUntil?.(refreshRankRewards(`${env.url}:${playerId}`, async () => {
-        // 월간 시즌(`COMPETITIVE_MONTHLY_ENABLED`)은 마이그레이션 20261204000000_competitive_monthly의 두 함수를 부른다 —
+        // 월간 시즌(`competitiveMonthlyOn`)은 마이그레이션 20261204000000_competitive_monthly의 두 함수를 부른다 —
         // 결투장 주간 티어·월간 순위·원정 주간 순위(v3), 아레나 주간 티어·월간 순위(v2). 모든 우편에 종류(kind)·표식(meta)이 붙는다.
-        const jobs = COMPETITIVE_MONTHLY_ENABLED ? [
+        const jobs = competitiveMonthlyOn() ? [
           ["server_competitive_rewards_v3", {
             since: COMPETITIVE_MONTHLY_SINCE,
             duelTiers: DUEL_TIERS.map((tier) => ({ tier: tier.id, floor: tier.floor, ...tier.weeklyReward })),
             duelMonth: DUEL_MONTHLY_RANK_REWARDS, expedition: EXPEDITION_WEEKLY_RANK_POOL_V2,
+            // 켜기 전 주의 결투장 주간 순위는 예전 표로 한 번(20261205000000_competitive_monthly_transition).
+            legacyDuel: WEEKLY_RANK_GEMS,
           }],
           ["server_arena_rewards_v2", {
             since: COMPETITIVE_MONTHLY_SINCE,
             tiers: ARENA_TIERS.map((tier) => ({ tier: tier.id, floor: tier.floor, ...tier.weeklyReward })), month: ARENA_MONTHLY_RANK_REWARDS,
+            legacy: {
+              tiers: ARENA_TIERS.map((tier) => ({ floor: tier.floor, ...tier.weeklyReward })),
+              ranks: ARENA_WEEKLY_RANK_GEMS.map((row) => ({ upTo: row.upTo, gems: row.gems })),
+            },
           }],
           ["server_ancient_monthly_rewards", ancientMonthlyRankRewards(true)],
           ["server_guild_weekly_rewards", GUILD_WEEKLY_RANK_REWARDS],

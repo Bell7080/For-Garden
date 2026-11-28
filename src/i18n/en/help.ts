@@ -71,6 +71,8 @@ export const HELP_EN = {
   "help.tutorial.premium": "Premium",
   "help.tutorial.descendingMap": "Descending Map",
   "help.tutorial.archaeology.sub": "Walks you through the ruin map and the strata board again",
+  "help.tutorial.duelDefense": "Duel Defense Team",
+  "help.tutorial.duelDefense.sub": "Walks you through setting your defense team and hidden slots again",
   "help.group.collect": "Collection & Research",
   "help.group.growth": "Growth",
   "help.group.rune": "Runes",

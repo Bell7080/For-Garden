@@ -38,11 +38,11 @@ export type TutorialStepId = (typeof TUTORIAL_STEPS)[number];
  * 안내형을 한 번은 본다.
  */
 export const CONTENT_INTRO_IDS = [
-  "stageMap", "party", "shop", "cakeOperation", "bounty", "interaction", "duel", "friends", "raid", "expedition", "archaeologyTour", "archaeologyBoard", "premium", "descendingMap",
+  "stageMap", "party", "shop", "cakeOperation", "bounty", "interaction", "duel", "friends", "raid", "expedition", "archaeologyTour", "archaeologyBoard", "premium", "descendingMap", "duelDefense",
 ] as const;
 
 /** 화면을 짚는 안내형 첫 방문 안내. 나머지는 모두 아이콘 쪽지다. */
-export const GUIDED_INTRO_IDS = ["archaeologyTour", "archaeologyBoard"] as const;
+export const GUIDED_INTRO_IDS = ["archaeologyTour", "archaeologyBoard", "duelDefense"] as const;
 
 export type GuidedIntroId = (typeof GUIDED_INTRO_IDS)[number];
 

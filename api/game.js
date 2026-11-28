@@ -5775,7 +5775,7 @@ var INFO_KO = {
   "info.diary.rewardReady": "\uB20C\uB7EC\uC11C \uC82C \uBC1B\uAE30",
   "info.diary.answerChip": "\uB2F5\uBCC0 {n}",
   "info.bond.level": "\uC720\uB300 {level}",
-  "info.bond.ferocityGain": "\uC57C\uC131 \uC0C1\uC2B9",
+  "info.bond.statGain": "\uBAA8\uB4E0 \uB2A5\uB825\uCE58",
   "info.bond.lobbyInteraction": "\uB85C\uBE44 \uC0C1\uD638\uC791\uC6A9",
   "info.bond.oncePerDay": "\uD558\uB8E8 \uD55C \uBC88 {amount}",
   "info.bond.same": "\uAC19\uC74C",
@@ -6243,7 +6243,7 @@ var AUGMENT_KO = {
   "augment.tag.detail.shield": "\uC790\uC2E0\uC758 \uCD5C\uB300 \uCCB4\uB825 {maxHpPercent}%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4. \uAE30\uC874 \uBCF4\uD638\uB9C9 \uCC98\uB9AC\uC640 \uC2E4\uC81C \uD761\uC218\uB7C9\uC744 \uC0AC\uC6A9\uD55C\uB2E4.",
   "augment.tag.name.ferocity": "\uC57C\uC131",
   "augment.tag.name.cleanse": "\uC815\uD654",
-  "augment.tag.detail.ferocity": "\uAE30\uBCF8 \uC57C\uC131 {points} \uD68D\uB4DD. \uAE30\uC874 \uC720\uB300\xB7\uC57C\uC131 \uD68D\uB4DD \uBCF4\uC815\uC744 \uC801\uC6A9\uD558\uBA70 \uD3ED\uC8FC \uC911\uC5D0\uB294 \uCD94\uAC00 \uD68D\uB4DD\uD558\uC9C0 \uC54A\uB294\uB2E4.",
+  "augment.tag.detail.ferocity": "\uAE30\uBCF8 \uC57C\uC131 {points} \uD68D\uB4DD. \uAE30\uC874 \uC57C\uC131 \uD68D\uB4DD \uBCF4\uC815\uC744 \uC801\uC6A9\uD558\uBA70 \uD3ED\uC8FC \uC911\uC5D0\uB294 \uCD94\uAC00 \uD68D\uB4DD\uD558\uC9C0 \uC54A\uB294\uB2E4.",
   "augment.tag.detail.cleanse": "\uAE30\uC874 \uC815\uD654 \uADDC\uCE59\uC5D0 \uB530\uB77C \uD574\uB85C\uC6B4 \uD6A8\uACFC\uB97C \uC81C\uAC70\uD55C\uB2E4. \uC774\uB85C\uC6B4 \uAC15\uD654\uB294 \uC720\uC9C0\uD558\uBA70 \uC0C8 \uBA74\uC5ED\uC744 \uBD80\uC5EC\uD558\uC9C0 \uC54A\uB294\uB2E4.",
   "augment.tag.selfReceived": "\uC9C1\uC811 \uD53C\uD574\uB97C {every}\uD68C \uBC1B\uC744 \uB54C\uB9C8\uB2E4 \uC790\uC2E0\uC5D0\uAC8C {tag} {stacks}\uD68C \uC801\uC6A9.",
   "augment.tag.name.receivedEffect": "{tag} \uBC18\uC751",
@@ -7805,6 +7805,7 @@ var SKILL_KO = {
   "skill.stat.def": "\uBC29\uC5B4\uB825",
   "skill.stat.res": "\uC800\uD56D\uB825",
   "skill.stat.hp": "\uCD5C\uB300 \uCCB4\uB825",
+  "skill.stat.guard": "\uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825 \uD569",
   // ── 용어 쪽지의 분류 ─────────────────────────────────────────────────────
   "skill.keywordKind.debuff": "\uB514\uBC84\uD504",
   "skill.keywordKind.buff": "\uBC84\uD504",
@@ -8687,8 +8688,14 @@ var DUEL_KO = {
   "duel.party.attackTitle": "\uACB0\uD22C \xB7 {name}",
   "duel.party.defenseTitle": "\uBC29\uC5B4\uB371 \uD3B8\uC131",
   "duel.party.saveDefense": "\uBC29\uC5B4\uB371 \uC800\uC7A5",
-  "duel.blind.slot": "\uAC00\uB9BC {index}",
-  "duel.blind.open": "\uACF5\uAC1C",
+  "duel.blind.hidden": "\uC228\uAE40",
+  "duel.blind.shown": "\uACF5\uAC1C",
+  "duel.tour.defense": "\uB3C4\uC804\uD574 \uC624\uB294 \uC0C1\uB300\uC640\uB294 \uBC29\uC5B4\uB371\uC774 \uC2F8\uC6CC\uC694. \uACB0\uD22C\uB97C \uC2DC\uC791\uD558\uAE30 \uC804\uC5D0 \uBA3C\uC800 \uC138\uC6CC \uB450\uC138\uC694.",
+  "duel.tour.defenseTap": "\u300C\uBC29\uC5B4\u300D\uB97C \uB20C\uB7EC \uBC29\uC5B4\uB371\uC744 \uC138\uC6CC \uBCF4\uC138\uC694!",
+  "duel.tour.slots": "\uC774 \uC138 \uCE78\uC774 \uB0B4 \uBC29\uC5B4\uB371\uC774\uC5D0\uC694. \uC544\uB798 \uBAA9\uB85D\uC5D0\uC11C \uB810\uB9AD\uC744 \uB20C\uB7EC \uBC14\uAFC0 \uC218 \uC788\uC5B4\uC694.",
+  "duel.tour.blind": "\uBCF4\uB78F\uBE5B \uC228\uAE40 \uCE78\uC740 \uC0C1\uB300\uC5D0\uAC8C ???\uB85C \uBCF4\uC5EC\uC694. \uC9C0\uAE08 \uD2F0\uC5B4\uC5D0\uC11C\uB294 {count}\uCE78\uC744 \uC228\uAE38 \uC218 \uC788\uACE0, \uB2E4\uB978 \uCE78\uC758 \uB208\uC744 \uB204\uB974\uBA74 \uC228\uAE40\uC774 \uADF8 \uCE78\uC73C\uB85C \uC62E\uACA8 \uAC00\uC694.",
+  "duel.tour.blindLocked": "\uD50C\uB798\uD2F0\uB118 \uD2F0\uC5B4\uBD80\uD130 \uBC29\uC5B4\uB371 \uD55C \uCE78\uC744, \uB9C8\uC2A4\uD130\uBD80\uD130 \uB450 \uCE78\uC744 \uC0C1\uB300\uC5D0\uAC8C \uC228\uAE38 \uC218 \uC788\uC5B4\uC694.",
+  "duel.tour.save": "\u300C\uBC29\uC5B4\uB371 \uC800\uC7A5\u300D\uC744 \uB20C\uB7EC \uD655\uC815\uD558\uC138\uC694!",
   "duel.error.unavailable": "\uACB0\uD22C\uC7A5 \uB300\uC804\uC740 \uC544\uC9C1 \uC900\uBE44 \uC911\uC785\uB2C8\uB2E4.",
   "duel.error.noAttempts": "\uC624\uB298\uC758 \uB3C4\uC804\uAD8C\uC744 \uBAA8\uB450 \uC37C\uC2B5\uB2C8\uB2E4.",
   "duel.error.opponentFought": "\uC774\uBBF8 \uC2F8\uC6B4 \uC0C1\uB300\uC785\uB2C8\uB2E4. \uB2E4\uB978 \uC0C1\uB300\uB97C \uACE8\uB77C \uC8FC\uC138\uC694.",
@@ -8935,7 +8942,7 @@ var HELP_KO = {
   "help.term.resonance.name": "\uACF5\uBA85",
   "help.term.resonance.body": "\uB3CC\uD30C IV \uB2E4\uC74C \uB2E8\uACC4\uC608\uC694. \uD30C\uD3B8\uB9CC \uB4E4\uACE0, \uB2E8\uACC4\uB9C8\uB2E4 \uB2A5\uB825\uCE58\uAC00 5% \uC62C\uB77C\uC694. \uACB0\uD22C\uC7A5\uC5D0\uC11C\uB294 \uAEBC\uC838\uC694.",
   "help.term.bond.name": "\uC720\uB300",
-  "help.term.bond.body": "\uB810\uB9AD\uB9C8\uB2E4 \uC313\uC774\uB294 \uAD00\uACC4 \uC218\uCE58\uC608\uC694. \uD68D\uB4DD\xB7\uC2B9\uB9AC\xB7\uB9E4\uC77C\uC758 \uC0C1\uD638\uC791\uC6A9\uC73C\uB85C \uC624\uB974\uACE0, \uB192\uC744\uC218\uB85D \uC804\uD22C\uC5D0\uC11C \uC57C\uC131\uC774 \uBE68\uB9AC \uCC28\uC694.",
+  "help.term.bond.body": "\uB810\uB9AD\uB9C8\uB2E4 \uC313\uC774\uB294 \uAD00\uACC4 \uC218\uCE58\uC608\uC694. \uD68D\uB4DD\xB7\uC2B9\uB9AC\xB7\uB9E4\uC77C\uC758 \uC0C1\uD638\uC791\uC6A9\uC73C\uB85C \uC624\uB974\uACE0, \uB808\uBCA8\uB9C8\uB2E4 \uADF8 \uB810\uB9AD\uC758 \uBAA8\uB4E0 \uB2A5\uB825\uCE58\uAC00 1%\uC529 \uC62C\uB77C\uC694.",
   "help.term.favorite.name": "\uC560\uCC29",
   "help.term.favorite.body": "\uB85C\uBE44\uC5D0 \uC138\uC6B8 \uB300\uD45C \uB810\uB9AD \uD558\uB098\uC608\uC694. \uBC14\uAFD4\uB3C4 \uC720\uB300\uB294 \uADF8\uB300\uB85C\uC608\uC694.",
   "help.term.rune.name": "\uB8EC",
@@ -8985,6 +8992,8 @@ var HELP_KO = {
   "help.tutorial.premium": "\uD504\uB9AC\uBBF8\uC5C4",
   "help.tutorial.descendingMap": "\uB0B4\uB824\uAC00\uB294 \uC9C0\uB3C4",
   "help.tutorial.archaeology.sub": "\uC720\uC801 \uC9C0\uB3C4\uC640 \uC9C0\uCE35 \uD310\uC744 \uB2E4\uC2DC \uC9DA\uC5B4 \uC918\uC694",
+  "help.tutorial.duelDefense": "\uACB0\uD22C\uC7A5 \uBC29\uC5B4\uB371",
+  "help.tutorial.duelDefense.sub": "\uBC29\uC5B4\uB371 \uC138\uC6B0\uAE30\uC640 \uC228\uAE40 \uCE78\uC744 \uB2E4\uC2DC \uC9DA\uC5B4 \uC918\uC694",
   "help.group.collect": "\uC218\uC9D1\xB7\uC5F0\uAD6C",
   "help.group.growth": "\uC131\uC7A5",
   "help.group.rune": "\uB8EC",
@@ -9735,13 +9744,42 @@ function canResonate(rarity, progress, breakthroughCap, fragments, universal) {
   return resonanceFragmentSpend(rarity, resonance, fragments, universal).enough;
 }
 var GROWTH_KEYS = ["hp", "def", "res", "atk", "ap"];
-function resonanceStatEffect(resonance) {
-  const percent = Math.max(0, Math.min(RESONANCE_CAP, resonance)) * RESONANCE_STAT_PERCENT;
+function resonanceStatEffect(resonance, extraPercent = 0) {
+  const percent = Math.max(0, Math.min(RESONANCE_CAP, resonance)) * RESONANCE_STAT_PERCENT + extraPercent;
   return Object.fromEntries(GROWTH_KEYS.map((key) => [key, percent]));
 }
 function relicFragmentRoom(rarity, progress, held, breakthroughCap) {
   if (!progress || progress.breakthrough < breakthroughCap) return Number.POSITIVE_INFINITY;
   return resonanceFragmentRoom(rarity, resonanceOf(progress), held);
+}
+
+// src/core/bond.ts
+init_define_import_meta_env();
+var BOND_LEVEL_CAP = 10;
+var BOND_TOTAL_XP_BY_LEVEL = [0, 20, 50, 90, 140, 200, 270, 350, 440, 540, 650];
+var BOND_XP_REWARD = { firstAcquisition: 20, partyVictory: 12, firstLobbyInteraction: 5, firstObservationInterview: 5 };
+var BOND_STAT_PERCENT_PER_LEVEL = 1;
+function bondStatPercent(bondLevel) {
+  if (!Number.isFinite(bondLevel) || bondLevel <= 0) return 0;
+  return Math.min(BOND_LEVEL_CAP, Math.floor(bondLevel)) * BOND_STAT_PERCENT_PER_LEVEL;
+}
+function bondLevelForXp(xp) {
+  if (!Number.isInteger(xp) || xp < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58\uB294 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+  let level = 0;
+  while (level < BOND_LEVEL_CAP && xp >= BOND_TOTAL_XP_BY_LEVEL[level + 1]) level += 1;
+  return level;
+}
+function grantBondXp(progress, amount) {
+  if (!Number.isInteger(amount) || amount < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58 \uBCF4\uC0C1\uC740 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+  const bondXp = Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], progress.bondXp + amount);
+  const bondLevel = bondLevelForXp(bondXp);
+  return { progress: { ...progress, bondXp, bondLevel, heartGemSlots: [...progress.heartGemSlots] }, xpGained: bondXp - progress.bondXp, levelsGained: bondLevel - progress.bondLevel };
+}
+function grantDailyLobbyBondXp(progress, utcDate) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(utcDate)) throw new RangeError("\uB85C\uBE44 \uC0C1\uD638\uC791\uC6A9 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  if (progress.lastLobbyInteractionDate === utcDate) return { progress: { ...progress, heartGemSlots: [...progress.heartGemSlots] }, xpGained: 0, levelsGained: 0 };
+  const result = grantBondXp(progress, BOND_XP_REWARD.firstLobbyInteraction);
+  return { ...result, progress: { ...result.progress, lastLobbyInteractionDate: utcDate } };
 }
 
 // src/core/relicProgression.ts
@@ -9829,7 +9867,7 @@ function remainingBreakthroughFragments(rarity, breakthrough) {
   for (let step2 = Math.max(0, breakthrough); step2 < BREAKTHROUGH_CAP; step2 += 1) fragments += breakthroughFragmentCost(rarity, step2);
   return fragments;
 }
-var FEED_UNIT = { cheesecake: 10, exp: 20 };
+var FEED_UNIT = { cheesecake: 8, exp: 20 };
 function relicExpToNext(level) {
   if (!Number.isInteger(level) || level < 1 || level > RELIC_MAX_LEVEL) throw new RangeError("\uB808\uBCA8\uC774 \uC131\uC7A5 \uBC94\uC704\uB97C \uBC97\uC5B4\uB0AC\uC2B5\uB2C8\uB2E4.");
   return 40 + level * 20;
@@ -9904,7 +9942,8 @@ function calculateFinalStats(base, progress, gems4, rarity, options = {}) {
   const breakthrough = activeBreakthroughOf(progress);
   const grown = applyLevelGrowth(base, progress.level, rarity, breakthrough);
   const resonance = options.resonance === false || breakthrough < BREAKTHROUGH_CAP ? 0 : resonanceOf(progress);
-  const resonated = resonance > 0 ? applyStatPercent(grown, resonanceStatEffect(resonance)) : grown;
+  const bond = bondStatPercent(progress.bondLevel);
+  const resonated = resonance > 0 || bond > 0 ? applyStatPercent(grown, resonanceStatEffect(resonance, bond)) : grown;
   return applyHeartGems(applyBreakthrough(resonated, breakthrough), gems4);
 }
 
@@ -10050,35 +10089,6 @@ function expeditionControlCooldown(payload) {
   if (kind === "stun") return payload.status.kind === "stun" && payload.status.seconds <= 0.25 ? 4 : 6;
   if (kind === "fear") return 6;
   return 8;
-}
-
-// src/core/bond.ts
-init_define_import_meta_env();
-var BOND_LEVEL_CAP = 10;
-var BOND_TOTAL_XP_BY_LEVEL = [0, 20, 50, 90, 140, 200, 270, 350, 440, 540, 650];
-var BOND_XP_REWARD = { firstAcquisition: 20, partyVictory: 12, firstLobbyInteraction: 5, firstObservationInterview: 5 };
-var BOND_FEROCITY_MULTIPLIER = [1, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5];
-function bondLevelForXp(xp) {
-  if (!Number.isInteger(xp) || xp < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58\uB294 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  let level = 0;
-  while (level < BOND_LEVEL_CAP && xp >= BOND_TOTAL_XP_BY_LEVEL[level + 1]) level += 1;
-  return level;
-}
-function grantBondXp(progress, amount) {
-  if (!Number.isInteger(amount) || amount < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58 \uBCF4\uC0C1\uC740 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  const bondXp = Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], progress.bondXp + amount);
-  const bondLevel = bondLevelForXp(bondXp);
-  return { progress: { ...progress, bondXp, bondLevel, heartGemSlots: [...progress.heartGemSlots] }, xpGained: bondXp - progress.bondXp, levelsGained: bondLevel - progress.bondLevel };
-}
-function grantDailyLobbyBondXp(progress, utcDate) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(utcDate)) throw new RangeError("\uB85C\uBE44 \uC0C1\uD638\uC791\uC6A9 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-  if (progress.lastLobbyInteractionDate === utcDate) return { progress: { ...progress, heartGemSlots: [...progress.heartGemSlots] }, xpGained: 0, levelsGained: 0 };
-  const result = grantBondXp(progress, BOND_XP_REWARD.firstLobbyInteraction);
-  return { ...result, progress: { ...result.progress, lastLobbyInteractionDate: utcDate } };
-}
-function amplifyFerocityGain(amount, bondLevel) {
-  if (!Number.isFinite(amount) || amount < 0 || !Number.isInteger(bondLevel) || bondLevel < 0) throw new RangeError("\uC57C\uC131 \uC99D\uAC00\uB7C9\uACFC \uC720\uB300 \uB808\uBCA8\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-  return Math.max(0, Math.round(amount * BOND_FEROCITY_MULTIPLIER[Math.min(BOND_LEVEL_CAP, bondLevel)] * 100) / 100);
 }
 
 // src/core/battleClock.ts
@@ -16034,7 +16044,7 @@ function gainFerocity(fighter, base, state, events) {
   const before = fighter.ferocity;
   if (fighter.ferocityFever) return;
   const rallied = base + tailwindRally(state, fighter.side).ferocity;
-  const adjusted = amplifyFerocityGain(rallied, fighter.bondLevel);
+  const adjusted = Math.max(0, Math.round(rallied * 100) / 100);
   const ferocityMax = ferocityMaxOf(fighter.def);
   fighter.ferocity = Math.min(ferocityMax, before + adjusted);
   if (before < ferocityMax && fighter.ferocity >= ferocityMax) {
@@ -20135,7 +20145,7 @@ var NOKAN = {
   strike: "slash",
   ferocityMax: 110,
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
-  stats: { hp: 1150, def: 66, res: 56, atk: 182, ap: 25, attackSpeed: 108, moveSpeed: 110, ...COMMON_SECONDARY_STATS },
+  stats: { hp: 1150, def: 66, res: 56, atk: 164, ap: 43, attackSpeed: 108, moveSpeed: 110, ...COMMON_SECONDARY_STATS },
   // 3대1에 특화된 세팅(응태 2026-11-27) — 세 번째 공격 「뼈긁기」가 주위 적 전부를 함께 벤다.
   frontlineBoss: { kind: "gungnir", growthPercent: 40, attackPercentPerStack: 8, stackLimit: 4, cleave: { radius: 200, percent: 80 } },
   passive: {
@@ -20157,7 +20167,8 @@ var NOKAN = {
     effectType: "physical",
     iconAssetId: "skill-icon-physical",
     cycle: [{ name: "\uBCA0\uAE30", power: 110 }, { name: "\uBCA0\uAE30", power: 110 }, { name: "\uBF08\uAE01\uAE30", power: 145, damageHealingPercent: 35 }],
-    bossDescription: "\uC801 \uD55C \uBA85\uC5D0\uAC8C \uACF5\uACA9\uB825\uC758 110%\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC900\uB2E4. \uC138 \uBC88\uC9F8 \uACF5\uACA9 \u300C\uBF08\uAE01\uAE30\u300D\uB294 \uACF5\uACA9\uB825\uC758 145%\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC8FC\uACE0 \uC900 \uD53C\uD574\uC758 35%\uB9CC\uD07C \uCCB4\uB825\uC744 \uD68C\uBCF5\uD558\uBA70, \uC790\uC2E0\uC758 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C\uB3C4 \uADF8 \uC704\uB825\uC758 80%\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC900\uB2E4."
+    // v0.558.10 응태: 110/145/240으로 되돌림
+    bossDescription: "\uC801 \uD55C \uBA85\uC5D0\uAC8C {step:0}\uB97C \uC900\uB2E4. \uC138 \uBC88\uC9F8 \uACF5\uACA9 \u300C\uBF08\uAE01\uAE30\u300D\uB294 {step:2}\uB97C \uC8FC\uACE0 \uC900 \uD53C\uD574\uC758 35%\uB9CC\uD07C \uCCB4\uB825\uC744 \uD68C\uBCF5\uD558\uBA70, \uC790\uC2E0\uC758 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C\uB3C4 \uADF8 \uC704\uB825\uC758 80%\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC900\uB2E4."
   },
   ultimate: {
     id: "gigano-ult",
@@ -20203,7 +20214,7 @@ var EUNTE = {
   strike: "smash",
   ferocityMax: 115,
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
-  stats: { hp: 1600, def: 130, res: 125, atk: 74, ap: 20, attackSpeed: 70, moveSpeed: 67, ...COMMON_SECONDARY_STATS },
+  stats: { hp: 1440, def: 130, res: 125, atk: 74, ap: 44, attackSpeed: 70, moveSpeed: 67, ...COMMON_SECONDARY_STATS },
   frontlineBoss: {
     kind: "ironclad",
     layers: 10,
@@ -20238,7 +20249,7 @@ var EUNTE = {
     iconAssetId: "skill-icon-physical",
     statusEffects: [{ kind: "concussion", maxHpPercent: 6, criticalMaxHpPercent: 12 }],
     cycle: [{ name: "\uD0C0\uACA9", power: 85 }, { name: "\uD0C0\uACA9", power: 85 }, { name: "\uACE8\uC808\uC120", power: 85 }],
-    bossDescription: "\uC801 \uD55C \uBA85\uC5D0\uAC8C \uACF5\uACA9\uB825\uC758 85%\uC640 \uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825 \uAC01\uAC01\uC758 80%\uB97C \uD569\uD55C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC900\uB2E4. \uC138 \uBC88\uC9F8 \uACF5\uACA9\uC740 \uC790\uC2E0\uC758 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C\uB3C4 \uAC19\uC740 \uD53C\uD574\uB97C \uC8FC\uACE0, \uB300\uC0C1\uC744 \uBC00\uCE58\uBA70 [[concussion|\uB1CC\uC9C4\uD0D5]]\uC744 \uC77C\uC73C\uCF1C \uB300\uC0C1 \uCD5C\uB300 \uCCB4\uB825\uC758 6%\uB9CC\uD07C \uD53C\uD574\uB97C \uC900\uB2E4. \uC138 \uBC88\uC9F8 \uACF5\uACA9\uC774 \uCE58\uBA85\uD0C0\uBA74 \uB1CC\uC9C4\uD0D5 \uD53C\uD574\uB294 12%\uB85C \uC99D\uAC00\uD55C\uB2E4. \uBCF8\uD0C0\uC640 \uB1CC\uC9C4\uD0D5\uC73C\uB85C \uC2E4\uC81C \uAE4E\uC740 \uCCB4\uB825\uC758 100%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4."
+    bossDescription: "\uC801 \uD55C \uBA85\uC5D0\uAC8C {step:0+guard:80}\uB97C \uC900\uB2E4. \uC138 \uBC88\uC9F8 \uACF5\uACA9\uC740 \uC790\uC2E0\uC758 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C\uB3C4 \uAC19\uC740 \uD53C\uD574\uB97C \uC8FC\uACE0, \uB300\uC0C1\uC744 \uBC00\uCE58\uBA70 [[concussion|\uB1CC\uC9C4\uD0D5]]\uC744 \uC77C\uC73C\uCF1C \uB300\uC0C1 \uCD5C\uB300 \uCCB4\uB825\uC758 6%\uB9CC\uD07C \uD53C\uD574\uB97C \uC900\uB2E4. \uC138 \uBC88\uC9F8 \uACF5\uACA9\uC774 \uCE58\uBA85\uD0C0\uBA74 \uB1CC\uC9C4\uD0D5 \uD53C\uD574\uB294 12%\uB85C \uC99D\uAC00\uD55C\uB2E4. \uBCF8\uD0C0\uC640 \uB1CC\uC9C4\uD0D5\uC73C\uB85C \uC2E4\uC81C \uAE4E\uC740 \uCCB4\uB825\uC758 100%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4."
   },
   ultimate: {
     id: "argen-ult",
@@ -20252,14 +20263,14 @@ var EUNTE = {
     effectType: "physical",
     iconAssetId: "skill-icon-physical",
     statusEffects: [{ kind: "stun", seconds: 1.4 }],
-    bossDescription: "\uC790\uC2E0\uC758 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C \uC2DC\uC804 0.8\uCD08 \uB4A4 \uBC29\uC5B4\uB825\uC758 220%\uB9CC\uD07C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC8FC\uACE0 1.4\uCD08\uAC04 [[stun|\uAE30\uC808]]\uC2DC\uD0A8\uB2E4. \uADF8 \uB4A4 \uBC29\uC5B4\uB825\uACFC \uC800\uD56D\uB825 \uAC01\uAC01\uC758 150%\uB97C \uD569\uD55C \uBCF4\uD638\uB9C9\uC744 5\uCD08\uAC04 \uC5BB\uB294\uB2E4."
+    bossDescription: "\uC790\uC2E0\uC758 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C \uC2DC\uC804 0.8\uCD08 \uB4A4 {damage}\uB97C \uC8FC\uACE0 1.4\uCD08\uAC04 [[stun|\uAE30\uC808]]\uC2DC\uD0A8\uB2E4. \uADF8 \uB4A4 {guardShield:150}\uC758 [[shield|\uBCF4\uD638\uB9C9]]\uC744 5\uCD08\uAC04 \uC5BB\uB294\uB2E4."
   },
   ferocityTrait: { name: "\uC9C0\uBC18 \uC555\uC0B4", effectId: "groundCrush", radius: 260, pullDistance: 145, tauntSeconds: 2, interval: 0.5, hpPercent: 2 },
   breakthroughEffects: {
     basic: { kind: "frontlineBasic", percent: 100 },
     ultimate: { kind: "frontlineUltimate", percent: 100 },
     ferocity: { kind: "frontlineFever", percent: 20, seconds: 5 },
-    passive: { kind: "frontlinePassive", percent: 100, seconds: 8 }
+    passive: { kind: "frontlinePassive", percent: 50, seconds: 8 }
   }
 };
 
@@ -26504,7 +26515,7 @@ var RELICS = [
       id: "viria-basic",
       name: "\uC55E\uB2C8 \uAC09\uAE30",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
-      power: 100,
+      power: 70,
       /*
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
@@ -26629,7 +26640,7 @@ var RELICS = [
       id: "guttia-basic",
       name: "\uC55E\uB2C8 \uAC09\uAE30",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
-      power: 100,
+      power: 70,
       /*
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
@@ -26754,7 +26765,7 @@ var RELICS = [
       id: "favia-basic",
       name: "\uC55E\uB2C8 \uAC09\uAE30",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
-      power: 100,
+      power: 70,
       /*
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
@@ -26881,7 +26892,7 @@ var RELICS = [
       id: "silia-basic",
       name: "\uC55E\uB2C8 \uAC09\uAE30",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
-      power: 100,
+      power: 70,
       /*
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
@@ -27006,7 +27017,7 @@ var RELICS = [
       id: "ventia-basic",
       name: "\uC55E\uB2C8 \uAC09\uAE30",
       // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
-      power: 100,
+      power: 70,
       /*
        * **갉힌 쪽이 조금 굼떠진다.** 다섯 자매가 같은 한 가지다(응태 2026-11-13). 떼가 열다섯까지 몰려오므로
        * 겹의 상한을 낮게(5% × 2) 두고 3초면 마른다 — 둘러싸여도 10%를 넘지 않는다.
@@ -27394,18 +27405,18 @@ var STORY_RECOMMENDED_LEVELS = [
   51,
   57,
   57,
-  67,
+  64,
   // 8장
   55,
   66,
   67,
   67,
-  72,
+  69,
   56,
-  60,
-  60,
-  60,
-  60
+  57,
+  57,
+  57,
+  57
   // 9장
 ];
 var CHAPTER_ONE_ELITES = {
@@ -27956,7 +27967,8 @@ var CONTENT_INTRO_IDS = [
   "archaeologyTour",
   "archaeologyBoard",
   "premium",
-  "descendingMap"
+  "descendingMap",
+  "duelDefense"
 ];
 var FREE_RUNE_CRAFT_STAGE = "1-5";
 function freeRuneCraftId(state) {
@@ -29644,11 +29656,12 @@ function applyDuelScore(score, delta) {
 function duelBlindCount(score) {
   return Math.min(DUEL_MAX_BLIND, duelTier(score).blind);
 }
-function duelBlindOrder(members, chosen = []) {
+function duelBlindOrder(members, chosen = [], options = {}) {
   const ids = new Set(members.map(({ relicId }) => relicId));
   const picked = [...new Set(chosen.filter((id) => ids.has(id)))].slice(0, DUEL_MAX_BLIND);
-  const rest = [...members].filter(({ relicId }) => !picked.includes(relicId)).sort((a, b) => b.power - a.power || members.indexOf(a) - members.indexOf(b)).map(({ relicId }) => relicId);
-  return [...picked, ...rest].slice(0, DUEL_MAX_BLIND);
+  const rest = [...members].filter(({ relicId }) => !picked.includes(relicId));
+  if (options.fill === "power") rest.sort((a, b) => b.power - a.power || members.indexOf(a) - members.indexOf(b));
+  return [...picked, ...rest.map(({ relicId }) => relicId)].slice(0, DUEL_MAX_BLIND);
 }
 function duelHiddenRelicIds(blindOrder, count3) {
   return blindOrder.slice(0, Math.max(0, Math.min(DUEL_MAX_BLIND, count3)));
@@ -45681,7 +45694,7 @@ function buildNpc(index, random) {
     score,
     favoriteRelicId: units[Math.floor(random() * units.length)].relicId,
     units,
-    blindOrder: duelBlindOrder(units.map(({ relicId, power }) => ({ relicId, power })))
+    blindOrder: duelBlindOrder(units.map(({ relicId, power }) => ({ relicId, power })), [], { fill: "power" })
   };
 }
 function pickTeam(random) {
@@ -48668,7 +48681,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.558.6",
+  version: "0.560.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {

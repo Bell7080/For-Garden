@@ -88,7 +88,7 @@ describe("편성 화면의 콘텐츠", () => {
 
   it("방어덱 편성은 편성에 없는 가림을 버린다", () => {
     expect(normalizePartyContent({ content: "duelDefense", defense: ["a", "b", "c"], blindChoice: ["c", "z", "a"] }))
-      .toEqual({ content: "duelDefense", defense: ["a", "b", "c"], blindChoice: ["c", "a"] });
-    expect(partyPreview({ content: "duelDefense", defense: [], blindChoice: [] }, STAGE).shown).toEqual([]);
+      .toEqual({ content: "duelDefense", defense: ["a", "b", "c"], blindChoice: ["c", "a"], score: 0 });
+    expect(partyPreview({ content: "duelDefense", defense: [], blindChoice: [], score: 0 }, STAGE).shown).toEqual([]);
   });
 });

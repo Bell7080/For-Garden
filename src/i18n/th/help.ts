@@ -71,6 +71,8 @@ export const HELP_TH = {
   "help.tutorial.premium": "พรีเมียม",
   "help.tutorial.descendingMap": "แผนที่ขาลง",
   "help.tutorial.archaeology.sub": "แนะนำแผนที่ซากโบราณและกระดานชั้นหินอีกครั้ง",
+  "help.tutorial.duelDefense": "ทีมป้องกันสนามดวล",
+  "help.tutorial.duelDefense.sub": "แนะนำการจัดทีมป้องกันและช่องซ่อนอีกครั้ง",
   "help.group.collect": "สะสมและวิจัย",
   "help.group.growth": "การเติบโต",
   "help.group.rune": "รูน",

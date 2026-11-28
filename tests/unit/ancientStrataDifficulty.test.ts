@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getBattleStage, getStageEnemies } from "../../src/data/stages";
+import { getBattleStage, getStageEnemies, storyBattleStageAtFactor } from "../../src/data/stages";
 import { getRelic } from "../../src/data/relics";
 import { deathClockClosesBySeconds } from "../../src/core/battleClock";
 import { ANCIENT_DIFFICULTY_BANDS, ANCIENT_STRATA_MAX_FLOOR, ancientFirstClearReward } from "../../src/data/ancientStrataDifficulty";
@@ -10,7 +10,7 @@ import { assertValidRuneInstance } from "../../src/core/runes";
 import { createCcCombatScenario } from "../../src/core/ccAuditScenarios";
 
 /** 1층의 출발점 — 보통 1-5 적 전원의 체력 합. */
-const referenceHp = () => getStageEnemies(getBattleStage("normal:1-5")).reduce((sum, e) => sum + e.stats.hp, 0);
+const referenceHp = () => getStageEnemies(storyBattleStageAtFactor("1-5", 1.5)).reduce((sum, e) => sum + e.stats.hp, 0);
 
 describe("고대 지층 200층 난이도 계약", () => {
   it("1층은 보통 1-5 체력 예산에 맞춘 일반 3인으로 시작한다", () => {

@@ -64,13 +64,13 @@ function enemyGrowth(relicId: string, level: number, formationSlot: 0 | 1 | 2 | 
 const STORY_RECOMMENDED_LEVELS: readonly number[] = [
   1, 2, 3, 4, 19, 8, 10, 12, 14, 21,  // 1장
   16, 17, 18, 19, 21, 19, 19, 19, 19, 34,  // 2장
-  21, 23, 27, 27, 43, 30, 30, 30, 30, 31,  // 3장
-  31, 32, 32, 32, 50, 30, 34, 34, 34, 43,  // 4장
-  36, 36, 36, 40, 63, 38, 38, 38, 40, 63,  // 5장
-  33, 40, 40, 40, 51, 42, 42, 44, 44, 50,  // 6장
-  48, 48, 48, 50, 71, 43, 46, 46, 46, 52,  // 7장
-  51, 52, 52, 56, 72, 51, 51, 57, 57, 64,  // 8장
-  55, 66, 67, 67, 69, 56, 57, 57, 57, 57,  // 9장
+  18, 20, 23, 23, 37, 26, 26, 26, 26, 26,  // 3장
+  26, 27, 27, 27, 42, 26, 29, 29, 29, 37,  // 4장
+  31, 31, 31, 34, 54, 32, 32, 32, 34, 54,  // 5장
+  28, 34, 34, 34, 43, 36, 36, 37, 37, 42,  // 6장
+  41, 41, 41, 42, 60, 37, 39, 39, 39, 44,  // 7장
+  43, 44, 44, 48, 61, 43, 43, 48, 48, 54,  // 8장
+  47, 56, 57, 57, 59, 48, 48, 48, 48, 48,  // 9장
 ];
 
 /**
@@ -523,8 +523,16 @@ export function storyStages(difficulty: StoryDifficulty): readonly StageDef[] { 
  * 개체·인원·배치·정예는 쉬움 그대로이고, 레벨만 `statFactor`배 세기를 넘지 않는 가장 높은 레벨로 옮긴다. 100을 넘어도 된다.
  */
 function difficultyEnemy(enemy: StageEnemyDef, difficulty: StoryDifficulty): StageEnemyDef {
-  const level = equivalentEnemyLevel(enemy.level, getRelic(enemy.relicId).rarity, STORY_DIFFICULTY[difficulty].statFactor);
+  return enemyAtFactor(enemy, STORY_DIFFICULTY[difficulty].statFactor);
+}
+function enemyAtFactor(enemy: StageEnemyDef, factor: number): StageEnemyDef {
+  const level = equivalentEnemyLevel(enemy.level, getRelic(enemy.relicId).rarity, factor);
   return { ...enemy, level, breakthrough: shownBreakthroughForLevel(level) };
+}
+/** 쉬움 관문을 정해진 세기 배수로 옮긴 사본 — 난이도 배수가 바뀌어도 기준이 움직이면 안 되는 자리(고대 지층 1층)가 쓴다. */
+export function storyBattleStageAtFactor(easyStageId: string, factor: number): BattleStageDef {
+  const base = getBattleStage(easyStageId);
+  return { ...base, enemies: base.enemies.map(enemy => enemyAtFactor(enemy, factor)) };
 }
 const EXTRA_STORY_STAGES: readonly BattleStageDef[] = STORY_DIFFICULTIES.slice(1).flatMap(difficulty => STAGES.filter((stage): stage is BattleStageDef => stage.kind === "battle").map(base => {
   const first = base.id === "1-1";

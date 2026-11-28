@@ -71,6 +71,8 @@ export const HELP_DE = {
   "help.tutorial.premium": "Premium",
   "help.tutorial.descendingMap": "Abwärtskarte",
   "help.tutorial.archaeology.sub": "Führt dich erneut durch Ruinenkarte und Schichtbrett",
+  "help.tutorial.duelDefense": "Duell-Verteidigung",
+  "help.tutorial.duelDefense.sub": "Zeigt dir erneut Verteidigungsteam und verdeckte Plätze",
   "help.group.collect": "Sammeln & Forschung",
   "help.group.growth": "Wachstum",
   "help.group.rune": "Runen",

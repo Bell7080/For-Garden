@@ -749,5 +749,34 @@
     "Inhalte",
     "Контент"
   ],
-  "help.tutorial.descendingMap": ["向下的地图", "แผนที่ขาลง", "Bản đồ đi xuống", "Peta Menurun", "Mapa descendente", "Mapa descendente", "Abwärtskarte", "Карта спуска"]
+  "help.tutorial.descendingMap": [
+    "向下的地图",
+    "แผนที่ขาลง",
+    "Bản đồ đi xuống",
+    "Peta Menurun",
+    "Mapa descendente",
+    "Mapa descendente",
+    "Abwärtskarte",
+    "Карта спуска"
+  ],
+  "help.tutorial.duelDefense": [
+    "决斗场防守队",
+    "ทีมป้องกันสนามดวล",
+    "Đội phòng thủ đấu trường",
+    "Tim Pertahanan Duel",
+    "Defensa de duelos",
+    "Defesa de duelos",
+    "Duell-Verteidigung",
+    "Защита на арене"
+  ],
+  "help.tutorial.duelDefense.sub": [
+    "再次讲解防守队编组和隐藏位",
+    "แนะนำการจัดทีมป้องกันและช่องซ่อนอีกครั้ง",
+    "Hướng dẫn lại cách xếp đội phòng thủ và ô ẩn",
+    "Memandu lagi cara menyiapkan tim pertahanan dan slot tersembunyi",
+    "Vuelve a guiarte por la defensa y las casillas ocultas",
+    "Mostra de novo como montar a defesa e os espaços ocultos",
+    "Zeigt dir erneut Verteidigungsteam und verdeckte Plätze",
+    "Снова покажет, как собрать защиту и скрыть ячейки"
+  ]
 }

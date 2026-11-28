@@ -77,7 +77,7 @@ function buildNpc(index: number, random: () => number): DuelNpc {
     score,
     favoriteRelicId: units[Math.floor(random() * units.length)].relicId,
     units,
-    blindOrder: duelBlindOrder(units.map(({ relicId, power }) => ({ relicId, power }))),
+    blindOrder: duelBlindOrder(units.map(({ relicId, power }) => ({ relicId, power })), [], { fill: "power" }),
   };
 }
 

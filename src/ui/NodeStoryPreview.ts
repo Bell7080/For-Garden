@@ -1,19 +1,20 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
+import type { StageFirstClearReward } from "../core/stageRewards";
 import { chipPoints, drawHairline, drawLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
-import { anchorEnemyPreview, NODE_ENEMY_PREVIEW, NODE_PREVIEW_GLASS_ALPHA } from "./nodeEnemyPreviewLayout";
+import { anchorEnemyPreview, NODE_ENEMY_PREVIEW, NODE_PREVIEW_GLASS_ALPHA, STORY_PREVIEW, storyPreviewRewardColumns, subStoryPreviewLayout } from "./nodeEnemyPreviewLayout";
 import { addNodePreviewArt } from "./nodePreviewArt";
-
-/** 서브 노드 판의 배치 — 전투 판의 제목·줄거리 칸에서 캐릭터를 뺀 모양이다. */
-export const NODE_STORY_PREVIEW = { titleY: 34, titleSize: 32, dividerGap: 18, labelSize: 22, textSize: 26, textGap: 16, bottom: 36, bevel: 30, inset: 56 } as const;
+import { addStageRewardFrame, addStageRewardTag } from "./stageRewardFrame";
 
 export interface NodeStoryPreviewOptions {
   title: string;
-  /** 줄거리 한두 문장. 이 판은 전투 판처럼 접지 않는다 — 읽을 것이 이것뿐이다. */
+  /** 줄거리 한두 문장. 이 판은 접지 않는다 — 읽을 것이 이것뿐이다. */
   summary: string;
-  /** 이미 읽은 서브는 제목 오른쪽에 「읽음」이 선다. */
+  /** 이미 읽은 서브는 제목 오른쪽에 「읽음」이 서고 보상 액자에 받은 표시가 선다. */
   read: boolean;
+  /** 처음 읽으면 받는 보상(서브는 젬 50). 비우면 보상 줄을 세우지 않는다. */
+  rewards?: readonly StageFirstClearReward[];
   /** 판 안에 옅게 비치는 원화 — 전투 판과 같은 결이다(`addNodePreviewArt`). */
   art?: string;
   top: number;
@@ -23,8 +24,9 @@ export interface NodeStoryPreviewOptions {
 /**
  * 서브 노드(SUB)를 눌렀을 때 노드에 붙는 줄거리 판.
  *
- * 전투 노드의 `NodeEnemyPreview`와 같은 폭·깎임·꼬리·등장 연출을 쓰되 적 칸과 보상 줄이 없다. 판 높이는 줄거리 글의
- * 높이에서 거꾸로 구한다 — 글이 길어지거나 언어가 바뀌어도 아래 여백이 어긋나지 않는다.
+ * **전투 관문 판(`NodeEnemyPreview`의 칸 판)과 한 벌이다** — 같은 폭·깎임·제목 크기·구분선, 같은 「줄거리」 머리줄,
+ * 같은 초회 보상 이름표·액자 줄이고 적 칸만 없다(응태 2026-11-28 — 「글 미리보기도 전투 미리보기처럼 일관되게」).
+ * 자리는 `subStoryPreviewLayout`이 글 높이에서 거꾸로 구한다.
  */
 export class NodeStoryPreview extends Phaser.GameObjects.Container {
   private options: NodeStoryPreviewOptions;
@@ -40,31 +42,37 @@ export class NodeStoryPreview extends Phaser.GameObjects.Container {
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.destroy());
   }
 
-  showAt(nodeY: number, options: Partial<Pick<NodeStoryPreviewOptions, "title" | "summary" | "read" | "art">>): void {
-    this.options = { ...this.options, ...options };
+  showAt(nodeY: number, options: Partial<Pick<NodeStoryPreviewOptions, "title" | "summary" | "read" | "art" | "rewards">>): void {
+    this.options = { ...this.options, rewards: undefined, ...options };
     this.removeAll(true);
-    const spec = NODE_STORY_PREVIEW;
+    const spec = STORY_PREVIEW;
     const width = NODE_ENEMY_PREVIEW.width;
-    const left = -width / 2 + spec.inset;
-    const textWidth = width - spec.inset * 2 - 24;
-    const body = this.scene.add.text(left, 0, this.options.summary, textStyle({ role: "body", size: spec.textSize, color: COLOR.ink, wrap: textWidth })).setOrigin(0, 0);
-    const dividerY = spec.titleY + spec.titleSize + spec.dividerGap;
-    const labelY = dividerY + 22;
-    const textY = labelY + spec.labelSize + spec.textGap;
-    const height = textY + body.height + spec.bottom;
+    const textWidth = width - spec.storyText.inset * 2;
+    const body = this.scene.add.text(0, 0, this.options.summary, textStyle({ role: "body", size: spec.storyText.size + 2, color: COLOR.ink, wrap: textWidth })).setOrigin(0, 0);
+    const rewards = this.options.rewards ?? [];
+    const layout = subStoryPreviewLayout({ storyTextHeight: body.height, rewardCount: rewards.length });
+    const height = layout.height;
     this.panelHeight = height;
     const top = -height / 2;
     const { y, above } = anchorEnemyPreview(nodeY, this.options.top, this.options.bottom, height);
     this.setY(y);
-    const shape = chipPoints(width, height, { bevel: { topLeft: spec.bevel, bottomRight: spec.bevel } });
+    const bevel = spec.bevel;
+    const shape = chipPoints(width, height, { bevel: { topLeft: bevel, bottomRight: bevel } });
     this.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x0b0f15, alpha: NODE_PREVIEW_GLASS_ALPHA, edge: COLOR.accent, edgeAlpha: 0.6 }));
     addNodePreviewArt(this.scene, this, this.options.art, width, height, shape);
     this.tail = this.scene.add.graphics(); this.add(this.tail); this.drawTail(above);
-    this.add(this.scene.add.text(left, top + spec.titleY, this.options.title, textStyle({ role: "display", size: spec.titleSize })).setOrigin(0, 0));
-    if (this.options.read) this.add(this.scene.add.text(width / 2 - 40, top + spec.titleY + 6, t("stageMap.subRead"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0));
-    this.add(drawHairline(this.scene, 0, top + dividerY, width - 60, { color: COLOR.accent, alpha: 0.3 }));
-    this.add(this.scene.add.text(left, top + labelY, t("enemyPreview.story"), textStyle({ role: "emphasis", size: spec.labelSize, color: COLOR.inkDim })).setOrigin(0, 0));
-    body.setPosition(left, top + textY); this.add(body);
+    const left = -width / 2 + Math.max(56, bevel * 0.7);
+    const right = width / 2 - 40;
+    this.add(this.scene.add.text(left, top + layout.titleY, this.options.title, textStyle({ role: "display", size: spec.titleSize })).setOrigin(0, 0));
+    if (this.options.read) this.add(this.scene.add.text(right, top + layout.titleY + 6, t("stageMap.subRead"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0));
+    for (const divider of layout.dividers) this.add(drawHairline(this.scene, 0, top + divider, width - 60, { color: COLOR.accent, alpha: 0.3 }));
+    this.add(this.scene.add.text(left, top + layout.storyHeaderY!, t("enemyPreview.story"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    body.setPosition(left, top + layout.storyTextY!); this.add(body);
+    if (layout.rewardLabelY !== undefined && layout.rewardRowY !== undefined) {
+      addStageRewardTag(this.scene, this, left, top + layout.rewardLabelY + spec.reward.tag.height / 2, t("stageComplete.firstClear"), "first");
+      const columns = storyPreviewRewardColumns(rewards.length, width);
+      rewards.forEach((reward, index) => addStageRewardFrame(this.scene, this, columns[index], top + layout.rewardRowY!, spec.reward.frame, reward, { claimed: this.options.read }));
+    }
     if (!this.shown) {
       this.shown = true; this.setVisible(true).setAlpha(0).setScale(0.94);
       this.scene.tweens.add({ targets: this, alpha: 1, scale: 1, duration: 260, ease: "Cubic.Out" });

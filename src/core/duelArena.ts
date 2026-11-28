@@ -202,17 +202,29 @@ export function duelBlindCount(score: number): number {
 /**
  * 방어덱에서 가릴 렐릭의 **우선순위**.
  *
- * 사람이 고른 것을 앞에 두고, 모자라면 전투력이 높은 개체부터 채운다 — 처음 방어덱을 세우면
- * 저절로 가장 센 둘이 가려지고, 직접 고르면 그 선택이 먼저다. 편성에서 빠진 개체는 버린다.
+ * 사람이 고른 것을 앞에 두고, 모자라면 **자리 순서(왼쪽 1번부터)**로 채운다 — 처음 방어덱을 세우면 맨 왼쪽이
+ * 저절로 가려지고, 직접 고르면 그 선택이 먼저다(응태 2026-11-28 — 전투력 순으로 채우던 때는 어느 칸이 가려질지
+ * 화면에서 짐작하기 어려웠다). NPC처럼 고를 사람이 없는 덱만 `fill: "power"`로 센 개체부터 가린다.
+ * 편성에서 빠진 개체는 버린다.
  */
-export function duelBlindOrder(members: readonly { relicId: string; power: number }[], chosen: readonly string[] = []): string[] {
+export function duelBlindOrder(
+  members: readonly { relicId: string; power: number }[], chosen: readonly string[] = [], options: { fill?: "slot" | "power" } = {},
+): string[] {
   const ids = new Set(members.map(({ relicId }) => relicId));
   const picked = [...new Set(chosen.filter((id) => ids.has(id)))].slice(0, DUEL_MAX_BLIND);
-  const rest = [...members]
-    .filter(({ relicId }) => !picked.includes(relicId))
-    .sort((a, b) => b.power - a.power || members.indexOf(a) - members.indexOf(b))
-    .map(({ relicId }) => relicId);
-  return [...picked, ...rest].slice(0, DUEL_MAX_BLIND);
+  const rest = [...members].filter(({ relicId }) => !picked.includes(relicId));
+  if (options.fill === "power") rest.sort((a, b) => b.power - a.power || members.indexOf(a) - members.indexOf(b));
+  return [...picked, ...rest.map(({ relicId }) => relicId)].slice(0, DUEL_MAX_BLIND);
+}
+
+/**
+ * 방어덱 편성 화면에서 숨김 칸을 누른 뒤의 선택. 숨김은 늘 `count`칸이 차 있다 — 이미 숨긴 칸을 누르면 그대로이고,
+ * 드러난 칸을 누르면 그 칸이 숨겨지며 가장 먼저 고른 칸이 드러난다(한 칸일 때는 고르기가 곧 옮기기다).
+ */
+export function toggleDuelBlind(current: readonly string[], relicId: string, count: number): string[] {
+  const limit = Math.max(0, Math.min(DUEL_MAX_BLIND, count));
+  if (limit === 0 || current.includes(relicId)) return current.slice(0, limit);
+  return [...current, relicId].slice(-limit);
 }
 
 /** 실제로 가려지는 렐릭. 우선순위의 앞에서부터 그 판의 칸 수만큼이다. */

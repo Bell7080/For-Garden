@@ -18,7 +18,7 @@ import {
   TITLE_MOVIE_SOURCES,
 } from "../ui/titleMovie";
 import { attendanceManager } from "../managers/AttendanceManager";
-import { LOADING_STEPS, refreshTextTextures, runLoadingSteps, startBackgroundDownloads } from "./loadingSteps";
+import { LOADING_STEPS, refreshTextTextures, retryUnresolvedLater, runLoadingSteps } from "./loadingSteps";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { drawCornerShroud, drawVignette } from "../ui/holo";
 import packageInfo from "../../package.json" with { type: "json" };
@@ -144,6 +144,8 @@ export class TitleScene extends Phaser.Scene {
   private revealed = false;
   /** 제목 연출도 영상이 시작하지 않는 기기에서 한 번은 반드시 열려야 하므로 같은 빗장을 쓴다. */
   private headerOpened = false;
+  /** 제목이 열리면 풀리는 문 — 무거운 로딩 단계는 그때부터 망을 쓴다(그전엔 타이틀 영상의 몫). */
+  private releaseHeavy?: () => void;
   /** 언어가 바뀌면 문장을 다시 읽어 갈아 끼울 글자들. 그릴 때 문장을 굳히지 않고 읽는 법을 들고 있다. */
   private localized: Array<{ text: Phaser.GameObjects.Text; read: () => string }> = [];
   private actionRow?: TitleActionRow;
@@ -167,6 +169,7 @@ export class TitleScene extends Phaser.Scene {
     setDebugScene("title");
     this.revealed = false;
     this.headerOpened = false;
+    this.releaseHeavy = undefined;
     this.localized = [];
     this.actionRow = undefined;
     this.loginButtons = [];
@@ -269,12 +272,12 @@ export class TitleScene extends Phaser.Scene {
       },
       LOADING_STEPS,
       (ratio) => percent.setRatio(ratio),
+      this.headerOpened ? undefined : new Promise<void>((resolve) => { this.releaseHeavy = resolve; }),
     ).then(async () => {
       if (!this.scene.isActive()) return;
-      // Puppet·뽑기 연출·캐시 받기와 못 받은 파일 다시 받기는 지금부터 뒤에서 돈다 — 입장을 기다리게 하지 않는다.
-      // 로더는 화면이 바뀌어도 살아 있는 겹의 것을 빌린다(타이틀은 입장과 함께 닫힌다).
+      // 끝내 못 받은 파일만 입장 뒤에 다시 받는다. 로더는 화면이 바뀌어도 살아 있는 겹의 것을 빌린다(타이틀은 입장과 함께 닫힌다).
       const game = this.game;
-      startBackgroundDownloads(() => game.scene.getScene("effect-overlay") ?? undefined);
+      retryUnresolvedLater(() => game.scene.getScene("effect-overlay") ?? undefined);
       // 따라가기를 건너뛰고 정확히 100.00%에 멈춘 뒤 그 자리를 진입 문구에 넘긴다.
       percent.complete();
       percent.handOver();
@@ -356,6 +359,8 @@ export class TitleScene extends Phaser.Scene {
   ): void {
     if (this.headerOpened || !this.scene.isActive()) return;
     this.headerOpened = true;
+    this.releaseHeavy?.();
+    this.releaseHeavy = undefined;
 
     // 판때기를 받치지 않는다. 글자 모양 그대로 진 복제 그림자가 대비를 만들고 배경은 비친다.
     const lines = [

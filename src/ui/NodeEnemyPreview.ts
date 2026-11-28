@@ -17,7 +17,7 @@ import { anchorEnemyPreview, enemyPreviewColumns, enemyPreviewRow, NODE_ENEMY_PR
 import { addSdFootShadow } from "./SdFootShadow";
 import type { StageFirstClearReward } from "../core/stageRewards";
 import { drawGlyph } from "./glyphs";
-import { addStageRewardFrame } from "./stageRewardFrame";
+import { addStageRewardFrame, addStageRewardTag } from "./stageRewardFrame";
 import { ANCIENT_TRIAL_BACKDROP, type TrialBackdrop } from "./ancientTrialTheme";
 import { addNodePreviewArt } from "./nodePreviewArt";
 
@@ -305,29 +305,9 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     this.publishDebug(above);
   }
 
-  /**
-   * 보상 줄의 이름표 칩 — 왼쪽 위·오른쪽 아래만 깎인 판(화면 전체의 실루엣)에 글자를 얹는다. 초회는 강조색으로
-   * 채워 판 맨 아래에서도 먼저 읽히고, 반복은 어두운 유리에 흐린 강조선만 둘러 한 단계 가볍다.
-   */
+  /** 보상 줄의 이름표 칩 — 서브 이야기 판과 같은 한 장(`addStageRewardTag`)이다. */
   private addRewardTag(left: number, centerY: number, label: string, kind: "first" | "repeat"): void {
-    const first = kind === "first";
-    const spec = STORY_PREVIEW;
-    const height = spec.reward.tag.height;
-    const style = first
-      ? textStyle({ role: "display", size: spec.reward.labelSize, color: "#1a1205" })
-      : textStyle({ role: "emphasis", size: spec.reward.labelSize, color: COLOR.ink });
-    const text = this.scene.add.text(0, centerY, label, style).setOrigin(0, 0.5);
-    const width = text.width + spec.reward.tag.padX * 2 + (first ? 18 : 0);
-    const bevel = spec.reward.tag.bevel;
-    this.add(drawLayer(this.scene, left + width / 2, centerY, chipPoints(width, height, { bevel: { topLeft: bevel, bottomRight: bevel } }), first
-      ? { fill: COLOR.accent, alpha: 0.96, shadow: { x: 3, y: 4 } }
-      : { fill: 0x1a222c, alpha: 0.95, edge: COLOR.accent, edgeAlpha: 0.4, shadow: { x: 3, y: 4 } }));
-    if (first) {
-      // 제목표와 같은 빗금이 이름표 왼쪽에 서서 「보상」이라는 한 덩어리를 판에 묶는다.
-      this.add(this.scene.add.text(left + spec.reward.tag.padX - 2, centerY, "/", textStyle({ role: "display", size: spec.reward.labelSize + 4, color: "#5a3e0c" })).setOrigin(0, 0.5));
-    }
-    text.setX(left + spec.reward.tag.padX + (first ? 18 : 0));
-    this.add(text);
+    addStageRewardTag(this.scene, this, left, centerY, label, kind);
   }
 
   /** SD 발끝의 화면 y. 적 칸이 접혀 있으면 없다. */

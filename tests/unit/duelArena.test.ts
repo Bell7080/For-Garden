@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  applyDuelScore, DUEL_MAX_BLIND, DUEL_TIERS, duelBlindCount, duelBlindOrder, duelDivisionNumeral, duelExtraAttemptPrice,
+  applyDuelScore, DUEL_MAX_BLIND, DUEL_TIERS, duelBlindCount, duelBlindOrder, toggleDuelBlind, duelDivisionNumeral, duelExtraAttemptPrice,
   duelHiddenRelicIds, duelNewlyReachedTiers, duelRefreshPrice, duelScoreDelta, duelSeasonEndsAt, duelSeasonId,
   duelSeasonResetScore, duelStanding, duelStreakBonus, pickDuelOpponents,
 } from "../../src/core/duelArena";
@@ -75,8 +75,15 @@ describe("결투장 점수", () => {
 
 describe("결투장 블라인드", () => {
   const members = [{ relicId: "a", power: 100 }, { relicId: "b", power: 300 }, { relicId: "c", power: 200 }];
-  it("고르지 않으면 전투력이 높은 순으로 가린다", () => {
-    expect(duelBlindOrder(members)).toEqual(["b", "c"]);
+  it("고르지 않으면 맨 왼쪽 자리부터 가린다 — NPC만 센 순서다", () => {
+    expect(duelBlindOrder(members)).toEqual(["a", "b"]);
+    expect(duelBlindOrder(members, [], { fill: "power" })).toEqual(["b", "c"]);
+  });
+  it("숨김 칸을 누르면 그 칸으로 옮기고, 늘 칸 수만큼 찬다", () => {
+    expect(toggleDuelBlind(["a"], "b", 1)).toEqual(["b"]);
+    expect(toggleDuelBlind(["a"], "a", 1)).toEqual(["a"]);
+    expect(toggleDuelBlind(["a", "b"], "c", 2)).toEqual(["b", "c"]);
+    expect(toggleDuelBlind(["a", "b"], "c", 0)).toEqual([]);
   });
   it("고른 것을 먼저 두고 편성에 없는 것은 버린다", () => {
     expect(duelBlindOrder(members, ["a", "zz"])).toEqual(["a", "b"]);

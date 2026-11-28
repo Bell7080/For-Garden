@@ -71,6 +71,8 @@ export const HELP_VI = {
   "help.tutorial.premium": "Cao cấp",
   "help.tutorial.descendingMap": "Bản đồ đi xuống",
   "help.tutorial.archaeology.sub": "Hướng dẫn lại bản đồ di tích và bàn tầng đất",
+  "help.tutorial.duelDefense": "Đội phòng thủ đấu trường",
+  "help.tutorial.duelDefense.sub": "Hướng dẫn lại cách xếp đội phòng thủ và ô ẩn",
   "help.group.collect": "Sưu tầm & Nghiên cứu",
   "help.group.growth": "Phát triển",
   "help.group.rune": "Rune",

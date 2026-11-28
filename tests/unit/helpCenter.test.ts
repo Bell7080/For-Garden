@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { HELP_BASICS_PAGE_COUNT, HELP_TERM_GROUPS, HELP_TERM_IDS } from "../../src/data/helpCenter";
-import { CONTENT_INTRO_IDS, GUIDED_INTRO_IDS } from "../../src/core/tutorial";
+import { CONTENT_INTRO_IDS } from "../../src/core/tutorial";
 import { HELP_LAYOUT, helpRevealScroll, helpRowAt, helpTermRowHeight, helpViewportHeight, stackHelpRows } from "../../src/ui/helpLayout";
 import KO from "../../src/i18n/ko";
 
@@ -41,10 +41,9 @@ describe("도움말", () => {
     }
   });
 
-  it("모든 첫 방문 안내가 다시 보기 이름을 갖는다 — 안내형은 고고학 한 줄로 묶인다", () => {
-    const guided = new Set<string>(GUIDED_INTRO_IDS);
+  it("모든 첫 방문 안내가 다시 보기 이름을 갖는다 — 고고학 안내 둘은 한 줄로 묶인다", () => {
     for (const id of CONTENT_INTRO_IDS) {
-      const entry = guided.has(id) ? "archaeology" : id;
+      const entry = id.startsWith("archaeology") ? "archaeology" : id;
       expect(keys.has(`help.tutorial.${entry}`), id).toBe(true);
     }
   });

@@ -1154,6 +1154,7 @@ export class LobbyScene extends Phaser.Scene {
     if (!this.popupLayer) return;
     new HelpPopup(this, this.popupLayer, {
       onReplayArchaeology: contentOpen("archaeology") ? () => startScene(this, "archaeology", { replayTour: true }) : undefined,
+      onReplayDuelDefense: contentOpen("duel") ? () => startScene(this, "duel", { replayTour: true }) : undefined,
     }).open();
   }
 

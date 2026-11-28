@@ -12,15 +12,15 @@ export const NOKAN: RelicDef = {
   squadNote: "공멸의 대장. 궁니르라는 이름으로 선두를 이끌며, 아르겐이 퇴로를 정하는 동안 적의 전선을 뚫는다.", researcherTitle: "연구원",
   reachTier: "melee", strike: "slash", ferocityMax: 110,
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
-  stats: { hp: 1150, def: 66, res: 56, atk: 182, ap: 25, attackSpeed: 108, moveSpeed: 110, ...COMMON_SECONDARY_STATS },
+  stats: { hp: 1150, def: 66, res: 56, atk: 164, ap: 43, attackSpeed: 108, moveSpeed: 110, ...COMMON_SECONDARY_STATS },
   // 3대1에 특화된 세팅(응태 2026-11-27) — 세 번째 공격 「뼈긁기」가 주위 적 전부를 함께 벤다.
   frontlineBoss: { kind: "gungnir", growthPercent: 40, attackPercentPerStack: 8, stackLimit: 4, cleave: { radius: 200, percent: 80 } },
   passive: { id: "gigano-passive", name: "죽음이 키운 몸", kind: "battleMomentum", value: 40, durationSeconds: 0, iconAssetId: "skill-icon-buff", effectType: "buff",
     desc: "최대 체력·방어력·저항력이 각각 40% 증가한다. 자신의 스킬로 체력을 회복하면 한 공격당 [[battle-momentum|기세]]를 1겹 얻는다. 겹당 공격력 8%가 증가하며 전투가 끝날 때까지 최대 4겹 쌓인다." },
-  basic: { id: "gigano-basic", name: "뼈긁기", power: 120, targeting: "single", damageType: "physical", effectType: "physical", iconAssetId: "skill-icon-physical",
-    cycle: [{ name: "베기", power: 120 }, { name: "베기", power: 120 }, { name: "뼈긁기", power: 200, damageHealingPercent: 35 }], // v0.558.8 응태: 평타 120 · 셋째 200
+  basic: { id: "gigano-basic", name: "뼈긁기", power: 110, targeting: "single", damageType: "physical", effectType: "physical", iconAssetId: "skill-icon-physical",
+    cycle: [{ name: "베기", power: 110 }, { name: "베기", power: 110 }, { name: "뼈긁기", power: 145, damageHealingPercent: 35 }], // v0.558.10 응태: 110/145/240으로 되돌림
     bossDescription: "적 한 명에게 {step:0}를 준다. 세 번째 공격 「뼈긁기」는 {step:2}를 주고 준 피해의 35%만큼 체력을 회복하며, 자신의 주위 모든 적에게도 그 위력의 80%만큼 물리 피해를 준다." },
-  ultimate: { id: "gigano-ult", name: "전선을 찢어라", power: 300, radius: 230, cost: 145, targeting: "nearbyEnemies", breaksShield: true,
+  ultimate: { id: "gigano-ult", name: "전선을 찢어라", power: 240, radius: 230, cost: 145, targeting: "nearbyEnemies", breaksShield: true,
     damageType: "physical", effectType: "physical", iconAssetId: "skill-icon-physical", damageHealingPercent: 30 },
   ferocityTrait: { name: "궁니르, 피의 행군", effectId: "gungnirMarch", speedPercent: 30, passiveMultiplier: 2 },
   breakthroughEffects: { basic: { kind: "frontlineBasic", percent: 25 }, ultimate: { kind: "frontlineUltimate", percent: 35 },
@@ -38,7 +38,7 @@ export const EUNTE: RelicDef = {
   squadNote: "공멸의 대장. 철갑이라는 이름으로 퇴로와 전열을 붙들며, 기가노가 선봉에 설 때 마지막으로 현장을 빠져나온다.", researcherTitle: "연구원",
   reachTier: "melee", strike: "smash", ferocityMax: 115,
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
-  stats: { hp: 1600, def: 130, res: 125, atk: 74, ap: 20, attackSpeed: 70, moveSpeed: 67, ...COMMON_SECONDARY_STATS },
+  stats: { hp: 1440, def: 130, res: 125, atk: 74, ap: 44, attackSpeed: 70, moveSpeed: 67, ...COMMON_SECONDARY_STATS },
   frontlineBoss: { kind: "ironclad", layers: 10, reductionPerLayer: 10, stripInterval: 1, restoreInterval: 3,
     basicGuardScale: 80, ultimateGuardScale: 220, shieldGuardScale: 150, shieldSeconds: 5, windup: 0.8,
     // 3대1에 특화된 세팅(응태 2026-11-27) — 세 번째 공격 「골절선」이 주위 적 전부에게 같은 위력으로 들어간다.

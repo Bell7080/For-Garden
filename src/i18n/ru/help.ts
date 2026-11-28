@@ -71,6 +71,8 @@ export const HELP_RU = {
   "help.tutorial.premium": "Премиум",
   "help.tutorial.descendingMap": "Карта спуска",
   "help.tutorial.archaeology.sub": "Снова проведёт по карте руин и доске пластов",
+  "help.tutorial.duelDefense": "Защита на арене",
+  "help.tutorial.duelDefense.sub": "Снова покажет, как собрать защиту и скрыть ячейки",
   "help.group.collect": "Сбор и исследования",
   "help.group.growth": "Развитие",
   "help.group.rune": "Руны",

@@ -60,7 +60,6 @@ export const BATTLE_ES = {
   "tutorial.battle.presentation": "¡Opciones de cinemática desbloqueadas! Tócalo para acortar la animación de la definitiva",
   "tutorial.battle.presentation.again": "¡Tócalo otra vez para omitirla por completo!",
   "tutorial.battle.contribution": "¡Contribución desbloqueada! Tócala para ver quién destacó más",
-  "tutorial.skip": "Omitir",
   "tutorial.lobby.relics": "¿Criamos reliquias? Toca el Archivo",
   "tutorial.relics.feed": "¡Aliméntala con Tarta de queso para que crezca tu reliquia!",
   "tutorial.gift.title": "Regalo de restauración",

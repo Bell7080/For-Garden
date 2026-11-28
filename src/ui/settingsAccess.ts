@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 
-type Rect = { x: number; y: number; width: number; height: number };
 type Raisable = Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Depth;
 
 /**
@@ -12,7 +11,7 @@ type Raisable = Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.De
  */
 interface SceneAccess {
   objects: Raisable[];
-  /** 누르는 면 — 건너뛰기 칩이 이 자리를 피해 선다. */
+  /** 누르는 면 — 다른 막보다 한 뼘 더 위에 선다. */
   hits: Raisable[];
   /** 지금 걸린 올림 요청의 깊이들. 비면 원래 깊이로 돌아간다. */
   raises: Map<number, number>;
@@ -71,14 +70,4 @@ export function raiseSettingsAccess(scene: Phaser.Scene, depth: number): () => v
     if (!access.raises.delete(id)) return;
     apply(access);
   };
-}
-
-/** 설정 조각이 누르는 자리. 튜토리얼 건너뛰기 칩이 그 위에 겹쳐 서지 않게 피할 때 쓴다. */
-export function settingsAccessRects(scene: Phaser.Scene): Rect[] {
-  const access = ACCESS.get(scene);
-  if (!access) return [];
-  return access.hits.filter((hit) => hit.scene).map((hit) => {
-    const bounds = (hit as unknown as { getBounds(): Phaser.Geom.Rectangle }).getBounds();
-    return { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height };
-  });
 }

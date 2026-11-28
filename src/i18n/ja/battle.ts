@@ -63,7 +63,6 @@ export const BATTLE_JA = {
   "tutorial.battle.presentation": "演出設定が解放されました！タップすると必殺技の演出が短くなります",
   "tutorial.battle.presentation.again": "もう一度タップすると演出を飛ばせます！",
   "tutorial.battle.contribution": "貢献度が解放されました！タップして活躍を確認しよう",
-  "tutorial.skip": "スキップ",
   "tutorial.lobby.relics": "レリックを育てよう！図鑑をタップしてください",
   "tutorial.relics.feed": "チーズケーキを与えてレリックを育てよう！",
   "tutorial.gift.title": "復元素材のプレゼント",

@@ -76,6 +76,8 @@ export const RELIC_RESET_POPUP = {
   backdrop: {
     afraid: { wash: 0x6b2a4f, deep: 0x3a1636, panel: 0x22101f, ray: 0xff8fb8, dot: 0xffb3cf, spark: 0xffd0e2 },
     excited: { wash: 0x7a5418, deep: 0x40240c, panel: 0x241509, ray: 0xffd36b, dot: 0xffe39a, spark: 0xfff1b8 },
+    /** 유대 각성 초기화 — 시무룩하지 않고 밝은 분홍(다른 능력치에 다시 쓰면 그만이다). */
+    cheerful: { wash: 0x8a3a64, deep: 0x40142c, panel: 0x2a0f1e, ray: 0xff9db1, dot: 0xffc2cf, spark: 0xffe0ea },
     /** 위 물들임의 진하기 · 빛살 수와 진하기 · 점 무늬 간격. */
     washAlpha: 0.48,
     rays: 12,
@@ -84,11 +86,11 @@ export const RELIC_RESET_POPUP = {
     dotAlpha: 0.11,
     sparks: 6,
     /** 빛살이 한 바퀴 도는 시간(ms) — 느릴수록 잔잔하다. */
-    spinMs: { afraid: 70000, excited: 50000 },
+    spinMs: { afraid: 70000, excited: 50000, cheerful: 50000 },
   },
 } as const;
 
-export type RelicAskMood = "afraid" | "excited";
+export type RelicAskMood = "afraid" | "excited" | "cheerful";
 
 /** 재화 판의 높이 — 줄이 하나(치즈케이크)면 짧고, 젬이 들면 한 줄 더 선다. */
 export function relicResetWalletHeight(rows: number): number {

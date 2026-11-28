@@ -3,7 +3,9 @@ import { hasRemoteState } from "../api/resultState";
 import { RAID_TICKET_TEST_KIT } from "../data/raid";
 import { previewCompletedRaids, RAID_HISTORY_PREVIEW_PREFIX } from "../core/raid";
 import { SWEEP_TICKET_TEST_KIT } from "../core/dungeonShortcut";
-import { calculateFinalStats, breakthroughGrade, UNIVERSAL_FRAGMENT_ITEM } from "../core/relicProgression";
+import { activeBreakthroughOf, calculateFinalStats, breakthroughGrade, UNIVERSAL_FRAGMENT_ITEM } from "../core/relicProgression";
+import { displayCombatStats } from "../core/combatStats";
+import type { RuneInstance } from "../core/runes";
 import { resonanceOf } from "../core/relicResonance";
 import type { RelicProgress, RelicRarity, Stats } from "../core/types";
 import { getRelic } from "../data/relics";
@@ -173,14 +175,30 @@ export class RelicProgressionManager {
 
   /** 표시 전투력 — 최종 능력치를 태생 능력치와 함께 잰다(공속이 공격 능력치와 함께 자란다, `combatPower`). */
   getCombatPower(relicId: string, options: { pvp?: boolean } = {}): number {
-    return combatPower(this.getFinalStats(relicId, options), getRelic(relicId).stats);
+    return combatPower(this.getCombatStats(relicId, options), getRelic(relicId).stats);
+  }
+
+  /**
+   * 싸울 때의 능력치 — 최종 능력치에 패시브 돌파·룬 특성의 상시 몫을 얹는다(`displayCombatStats`).
+   * 전투력·정보창 오각형이 읽는다. 전투 입력은 `getFinalStats`를 넘기고 전투 코어가 같은 몫을 얹으므로 섞지 않는다.
+   */
+  getCombatStats(relicId: string, options: { pvp?: boolean } = {}): Stats {
+    const progress = this.getProgress(relicId);
+    return displayCombatStats(getRelic(relicId), this.getFinalStats(relicId, options), activeBreakthroughOf(progress), this.equippedRunes(progress));
+  }
+
+  private equippedRunes(progress: RelicProgress): RuneInstance[] {
+    return progress.heartGemSlots.flatMap((id) => {
+      const rune = id === null ? undefined : this.state.runeInventory.find((candidate) => candidate.instanceId === id);
+      return rune ? [rune] : [];
+    });
   }
 
   /** UI와 전투가 공유할 최종 능력치를 순수 코어 계산기로 구한다. */
-  /** `withoutBond`는 유대 몫(레벨 % + 각성)을 뺀 값 — 유대 각성 판의 오각형이 오른 몫만 붉게 가른다. */
-  getFinalStats(relicId: string, options: { pvp?: boolean; withoutBond?: boolean } = {}): Stats {
+  /** `withoutAwakening`은 유대 각성 몫만 뺀 값 — 유대 각성 판의 오각형이 각성으로 오른 축만 붉게 가른다. */
+  getFinalStats(relicId: string, options: { pvp?: boolean; withoutAwakening?: boolean } = {}): Stats {
     const current = this.getProgress(relicId);
-    const progress = options.withoutBond ? { ...current, bondLevel: 0, bondAwakening: undefined } : current;
+    const progress = options.withoutAwakening ? { ...current, bondAwakening: undefined } : current;
     // 인스턴스 전체를 넘겨 성공 이력과 각인을 코어의 단일 계산기가 해석하게 한다.
     const gems = progress.heartGemSlots.flatMap((id) => {
       const rune = id === null ? undefined : this.state.runeInventory.find((candidate) => candidate.instanceId === id);

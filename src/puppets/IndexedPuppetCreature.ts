@@ -100,6 +100,9 @@ const tableBuffers = new Map<SkinTable, TableBuffers>();
  */
 let gpuGeneration = 0;
 
+/** 기본 자세에 닿은 뒤 머리카락·옷자락 흔들림이 가라앉도록 더 굴리는 시간(ms). 실제 묶음에서 1초면 흔들림이 0.2px 안쪽으로 잦아든다. `setAnimationRested` 참고. */
+const REST_SETTLE_MS = 1000;
+
 /** 렌더러 하나에 복구 구독을 한 번만 건다. 개체마다 걸면 전투 여섯이 여섯 번 듣는다. */
 const contextWatched = new WeakSet<Phaser.Renderer.WebGL.WebGLRenderer>();
 
@@ -376,6 +379,18 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
    */
   private animationFrozen = false;
   /**
+   * 기본 자세로 가라앉는 정도(1 = 동작 그대로, 0 = 원화 기본 자세). `setAnimationRested` 참고.
+   * 지금 동작의 움직임 크기(`playStrength`)에 이 값을 곱해 재생기에 넘긴다.
+   */
+  private restLevel = 1;
+  private restTarget = 1;
+  private restMs = 0;
+  /** 기본 자세에 닿은 뒤 흔들림(secondary)이 가라앉도록 더 굴리는 시간. 다 지나면 멈춘다. */
+  private restHoldMs = 0;
+  private restSettled = false;
+  /** 지금 재생 중인 동작의 원래 움직임 크기. 쉬는 동안 줄였다가 이 값으로 되돌린다. */
+  private playStrength = 1;
+  /**
    * 자세를 빌려 오는 개체. 있으면 제 재생기를 굴리지 않고 그 개체가 계산한 정점을 그대로 쓴다.
    *
    * 같은 묶음·같은 동작을 같은 순간에 시작한 개체들은 어차피 **매 프레임 같은 정점**을 만든다 —
@@ -424,7 +439,10 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   }
 
   play(name: string, options?: PlayOptions): boolean {
-    return this.puppet.play(name, options);
+    const strength = options?.strength ?? this.puppet.project.animations[name]?.strength ?? 1;
+    const played = this.puppet.play(name, this.restLevel < 1 ? { ...options, strength: strength * this.restLevel } : options);
+    if (played) this.playStrength = strength;
+    return played;
   }
 
   /**
@@ -453,6 +471,28 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
    */
   setAnimationFrozen(frozen: boolean): this {
     this.animationFrozen = frozen;
+    return this;
+  }
+
+  /**
+   * 동작을 원화의 기본 자세로 가라앉힌 뒤 멈추거나, 그 자리에서 다시 살려 낸다.
+   *
+   * `setAnimationFrozen`은 그 프레임 그대로 굳혀서, idle이 눈을 감는 순간에 멈추면 눈을 반쯤 감은 채로
+   * 서 있었다(대사 화면에서 말하지 않는 사람 — 응태 2026-11-28). 이것은 움직임 크기를 `durationMs`에 걸쳐
+   * 0까지 줄여 기본 자세(눈 뜬 원화)로 돌아간 뒤 흔들림이 가라앉으면 멈춘다. 풀면 멈춘 시각에서
+   * 움직임 크기만 다시 차오르므로 자세가 튀지 않는다. `durationMs`가 0이면 곧바로 바꾼다.
+   */
+  setAnimationRested(rested: boolean, durationMs = 220): this {
+    const target = rested ? 0 : 1;
+    if (target === this.restTarget && durationMs > 0) return this;
+    this.restTarget = target;
+    this.restMs = Math.max(0, durationMs);
+    this.restSettled = false;
+    this.restHoldMs = rested ? REST_SETTLE_MS : 0;
+    if (this.restMs <= 0) {
+      this.restLevel = target;
+      this.puppet.setStrength(this.playStrength * target);
+    }
     return this;
   }
 
@@ -493,7 +533,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     // 브라우저 비가시성은 저장된 절전과 별도 정지이며 hidden delta를 임의 애니메이션으로 따라잡지 않는다.
     if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
     // 멈춘 동안은 시간만 흘려보낸다. 위에서 벽시계를 먼저 갱신했으므로 풀린 뒤 따라잡지 않는다.
-    if (this.animationFrozen || !this.visible || this.alpha <= 0) return;
+    if (this.animationFrozen || this.restSettled || !this.visible || this.alpha <= 0) return;
     const leader = this.poseLeader;
     if (leader) {
       if (leader.active) {
@@ -516,6 +556,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     this.decorativeUpdateCredit -= 1;
     const elapsed = frameElapsed + this.decorativeCarryMs;
     this.decorativeCarryMs = 0;
+    this.stepRest(elapsed);
     // 편집기보다 긴 프레임을 한 번에 적분하면 pinnedSoft 발 주변의 spring이 튀므로 잘게 나눈다.
     const started = debugPerfEnabled ? performance.now() : 0;
     // GPU 스키닝을 쓸 수 있으면 관절 행렬만 굴린다. 못 쓰는 기기로 판명되면 예전처럼 정점을 옮긴다.
@@ -527,6 +568,22 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
       if (next) { this.positions = next; this.skin = null; this.poseVersion += 1; }
     }
     if (debugPerfEnabled) countDebugPuppetUpdate(performance.now() - started);
+  }
+
+  /** 기본 자세로 가라앉거나 다시 살아나는 움직임 크기를 이번 프레임만큼 옮긴다. 다 가라앉으면 멈춘다. */
+  private stepRest(elapsedMs: number): void {
+    if (this.restLevel !== this.restTarget) {
+      const step = this.restMs > 0 ? elapsedMs / this.restMs : 1;
+      this.restLevel = this.restTarget > this.restLevel
+        ? Math.min(this.restTarget, this.restLevel + step)
+        : Math.max(this.restTarget, this.restLevel - step);
+      this.puppet.setStrength(this.playStrength * this.restLevel);
+      return;
+    }
+    if (this.restTarget !== 0) return;
+    // 이번 프레임은 그대로 그리고, 흔들림이 가라앉을 시간이 다 지났으면 다음 프레임부터 멈춘다.
+    this.restHoldMs -= elapsedMs;
+    if (this.restHoldMs <= 0) this.restSettled = true;
   }
 
   private acceptSkinFrame(frame: PuppetSkinFrame): void {

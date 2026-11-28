@@ -106,7 +106,7 @@ import { replayGuildWar } from "../core/guildWarBattle";
 import { guildGuardElement, guildGuardEndsAt } from "../core/guildPages";
 import { guildGuardRoster } from "../data/guildGuard";
 import { guildQaClockShift } from "./guildQaClock";
-import { endFreeRuneCraft, FREE_RUNE_CRAFT_STAGE, isFreeRuneCraft, nextTutorialStep, advanceTutorialOnStageClear, canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialState } from "../core/tutorial";
+import { endFreeRuneCraft, FREE_RUNE_CRAFT_STAGE, isFreeRuneCraft, nextTutorialStep, advanceTutorialOnStageClear, canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialReward, type TutorialState } from "../core/tutorial";
 import { mileageFragmentRelicId } from "../data/mileageClerk";
 import { BOND_STORY_GEM_REWARD, BOND_STORY_LEVELS, DIARY_QUESTION_GEM_REWARD, bondChapterId, diaryQuestionUnlockAt, type BondStoryLevel } from "../core/relicStory";
 import { relicStoryFor } from "../data/relicStories";
@@ -4855,12 +4855,19 @@ export class FakeServer implements GameApi {
     if (request.stepId === "gift" && !this.state.cleared.has("1-5")) throw new GameApiError("INVALID_STATE", "1-5 클리어 후 연구 지원품을 받을 수 있습니다.");
     const tutorial: TutorialState = { ...current, completedStepIds: [...current.completedStepIds, request.stepId] };
     const reward = TUTORIAL_REWARDS[request.stepId];
-    const fossil = reward ? Math.max(0, Math.min(reward.fossil, WALLET_CAPS.fossil - this.state.wallet.fossil)) : 0;
-    const nextWallet = { ...this.state.wallet, fossil: this.state.wallet.fossil + fossil };
+    // 상한을 넘는 몫은 깎아서 준다(던지면 지갑이 찬 계정은 튜토리얼을 넘지 못한다).
+    const granted: TutorialReward = {};
+    const nextWallet = { ...this.state.wallet };
+    for (const key of ["fossil", "cheesecake"] as const) {
+      const amount = reward?.[key];
+      if (amount === undefined) continue;
+      granted[key] = Math.max(0, Math.min(amount, WALLET_CAPS[key] - nextWallet[key]));
+      nextWallet[key] += granted[key]!;
+    }
     this.persist({ ...this.state, tutorial, wallet: nextWallet });
     this.state.tutorial = tutorial;
     this.state.wallet = nextWallet;
-    return { tutorial, ...(reward ? { granted: { fossil } } : {}), wallet: { ...nextWallet }, serverTime: this.now().toISOString() };
+    return { tutorial, ...(reward ? { granted } : {}), wallet: { ...nextWallet }, serverTime: this.now().toISOString() };
   }
 
   /** 콘텐츠 첫 방문 안내를 봤다고 남긴다. 순서·선물이 없어 알려진 ID면 그대로 기록한다. */

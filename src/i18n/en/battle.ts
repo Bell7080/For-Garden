@@ -60,7 +60,6 @@ export const BATTLE_EN = {
   "tutorial.battle.presentation": "Cut-in options are unlocked! Tap to shorten ultimate animations",
   "tutorial.battle.presentation.again": "Tap once more to skip them entirely!",
   "tutorial.battle.contribution": "Contribution is unlocked! Tap it to see who did the most",
-  "tutorial.skip": "Skip",
   "tutorial.lobby.relics": "Ready to grow your relics? Tap the Archive",
   "tutorial.relics.feed": "Feed it cheesecake to level up your relic!",
   "tutorial.gift.title": "Restoration Gift",

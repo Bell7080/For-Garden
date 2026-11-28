@@ -2,6 +2,7 @@ import { QA_TOOLS_ENABLED } from "./buildFlavor";
 import { DUEL_NPC_NAMES } from "../data/duelNpcs";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { combatPower } from "./combatPower";
+import { applyBattleStatBonuses } from "./combatStats";
 import { duelBlindOrder, duelGrownStats, duelNpcLevel } from "./duelArena";
 import { expeditionRewardRandom } from "./expeditionRewards";
 import { shownBreakthroughForLevel } from "./levelDesign";
@@ -67,7 +68,7 @@ function buildNpc(index: number, random: () => number): DuelNpc {
   const picked = pickTeam(random);
   const units = arrangeByRole(picked).map((def) => {
     const stats = duelGrownStats(def, level, breakthrough);
-    return { relicId: def.id, level, breakthrough, stats, power: combatPower(stats, def.stats) };
+    return { relicId: def.id, level, breakthrough, stats, power: combatPower(applyBattleStatBonuses(def, stats, breakthrough, []), def.stats) };
   });
   const name = DUEL_NPC_NAMES[index % DUEL_NPC_NAMES.length];
   const house = Math.floor(index / DUEL_NPC_NAMES.length) + 1;

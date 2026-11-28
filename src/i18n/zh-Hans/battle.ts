@@ -60,7 +60,6 @@ export const BATTLE_ZH_HANS = {
   "tutorial.battle.presentation": "特写设置已开放！点击后必杀技演出会变短",
   "tutorial.battle.presentation.again": "再点一次就能完全跳过演出！",
   "tutorial.battle.contribution": "贡献度已开放！点击来查看谁的表现最好",
-  "tutorial.skip": "跳过",
   "tutorial.lobby.relics": "来培养遗物吧？请点击图鉴",
   "tutorial.relics.feed": "喂食芝士蛋糕来培养遗物吧！",
   "tutorial.gift.title": "复原材料礼物",

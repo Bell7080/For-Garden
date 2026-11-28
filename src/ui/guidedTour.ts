@@ -26,7 +26,7 @@ export interface GuidedTourStep {
 const ADVANCE_GUARD_MS = 260;
 
 /**
- * 칸들을 차례로 짚는다. 건너뛰기는 어느 칸에서나 오른쪽 위에 서고, 누르면 안내 전체가 끝난다.
+ * 칸들을 차례로 짚는다. 건너뛰기는 없다 — 끝까지 짚는다.
  * 화면이 바뀌면(씬 종료) 조용히 걷힌다. 돌려주는 함수를 부르면 바깥에서 끝낼 수 있다.
  */
 export function runGuidedTour(scene: Phaser.Scene, steps: readonly GuidedTourStep[], onEnd?: () => void): () => void {
@@ -55,7 +55,6 @@ export function runGuidedTour(scene: Phaser.Scene, steps: readonly GuidedTourSte
         enabled: () => !finished && !done(),
         rect: step.rect,
         text: step.text,
-        onSkip: finish,
         side: () => step.side,
       });
       // 조작이 끝나면 따라가기가 스스로 걷히므로, 그 순간을 매 프레임 확인해 안내 전체를 닫는다.
@@ -70,8 +69,6 @@ export function runGuidedTour(scene: Phaser.Scene, steps: readonly GuidedTourSte
       text: step.text(),
       side: step.side,
       hint: t("tutorial.tour.next", { step: viewedSoFar, total: viewed }),
-      onSkip: finish,
-      skipLabel: t("tutorial.skip"),
       onAdvance: () => { if (scene.time.now - shownAt >= ADVANCE_GUARD_MS) advance(); },
     });
   };

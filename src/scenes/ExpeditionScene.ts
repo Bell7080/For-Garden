@@ -53,6 +53,7 @@ import { ExpeditionAugmentStatusPopup } from "../ui/ExpeditionAugmentStatusPopup
 import { ExpeditionAugmentChip } from "../ui/ExpeditionAugmentChip";
 import { EXPEDITION_DAILY_POLICY, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_REWARD_IDS } from "../data/expedition";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
+import { sortByRewardPriority } from "../data/rewardPriority";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { ExpeditionRewardPopup } from "../ui/ExpeditionRewardPopup";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
@@ -351,9 +352,11 @@ export class ExpeditionScene extends Phaser.Scene {
     // 액자는 고정 넷이 아니라 **보류 보상 목록**(`EXPEDITION_REWARD_IDS`)에서 읽는다. 넷만 적어 두던
     // 때는 노드마다 쌓이는 인양 기록과 보물 노드의 몫이 판에 서지 않아, 받은 것이 결산에서야 보였다.
     // 노드가 늘 주는 몫(`EXPEDITION_NODE_REWARD_BALANCE`)은 0이어도 자리를 지키고, 그 밖의 것은 쌓였을 때만 선다.
-    const items = EXPEDITION_REWARD_IDS
-      .filter((key) => key in EXPEDITION_NODE_REWARD_BALANCE || Math.floor(rewards[key] ?? 0) > 0)
-      .map((key) => [CURRENCY_ICON_BY_WALLET[key], key] as const);
+    // 보상 팝업과 같은 중요도 순으로 선다(`sortByRewardPriority` — 지갑 키가 곧 중요도 키다).
+    const items = sortByRewardPriority(
+      EXPEDITION_REWARD_IDS.filter((key) => key in EXPEDITION_NODE_REWARD_BALANCE || Math.floor(rewards[key] ?? 0) > 0),
+      (key) => key,
+    ).map((key) => [CURRENCY_ICON_BY_WALLET[key], key] as const);
     // 액자 수가 늘어도 판 안에 들도록 간격만 좁힌다(액자 크기는 그대로다).
     const step = items.length > 1 ? Math.min(LOOT.step, (LOOT.span - LOOT.frame) / (items.length - 1)) : 0;
     // 지도 위에 떠 있는 하나의 전리품 레이어로 읽히도록 제목과 얇은 상단선을 먼저 놓는다.

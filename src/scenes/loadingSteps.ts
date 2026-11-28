@@ -45,16 +45,37 @@ export interface LoadingStep {
 export const LOAD_RETRY_ROUNDS = 2;
 
 /**
- * 실패한 파일을 같은 종류로 다시 줄 세운다. 키가 같아 이미 올라온 것은 Phaser가 건너뛴다.
+ * 다시 받을 파일 한 장. Phaser의 `File`은 로더가 끝나면 부서지므로 다시 줄 세울 값만 떼어 둔다.
  * 이미지·SVG·소리만 다루는 이유는 이 로딩 단계가 그 셋만 읽기 때문이다.
  */
-function requeueFailed(scene: Phaser.Scene, failed: readonly Phaser.Loader.File[], round: number): number {
+interface RetryableFile {
+  readonly type: string;
+  readonly key: string;
+  readonly url: string;
+  readonly width?: number;
+  readonly height?: number;
+}
+
+function retryableOf(file: Phaser.Loader.File): RetryableFile | undefined {
+  if (typeof file.url !== "string") return undefined;
+  const config = file.config as { width?: number; height?: number } | undefined;
+  return { type: file.type, key: file.key, url: file.url.replace(/[?&]retry=\d+$/, ""), width: config?.width, height: config?.height };
+}
+
+/**
+ * 단계 안의 재시도로도 끝내 받지 못한 파일. **입장을 막지 않고** 게임에 들어간 뒤 뒤에서 다시 받는다
+ * (`startBackgroundDownloads`). 텍스처·소리 캐시는 게임 전체가 함께 쓰므로 받는 순간 다음 화면부터 선다.
+ */
+const unresolvedFiles = new Map<string, RetryableFile>();
+
+/** 실패한 파일을 같은 종류로 다시 줄 세운다. 키가 같아 이미 올라온 것은 건너뛴다. */
+function requeueFailed(scene: Phaser.Scene, failed: readonly RetryableFile[], round: number): number {
   let queued = 0;
   for (const file of failed) {
-    const url = typeof file.url === "string" ? retryUrl(file.url.replace(/[?&]retry=\d+$/, ""), round) : undefined;
-    if (!url || scene.textures.exists(file.key) || scene.cache.audio.exists(file.key)) continue;
+    if (scene.textures.exists(file.key) || scene.cache.audio.exists(file.key)) continue;
+    const url = retryUrl(file.url, round);
     if (file.type === "image") scene.load.image(file.key, url);
-    else if (file.type === "svg") scene.load.svg(file.key, url, { width: file.config?.width, height: file.config?.height });
+    else if (file.type === "svg") scene.load.svg(file.key, url, { width: file.width, height: file.height });
     else if (file.type === "audio") scene.load.audio(file.key, url);
     else continue;
     queued += 1;
@@ -76,9 +97,12 @@ function loadWithPhaser(scene: Phaser.Scene, queue: () => void): Promise<void> {
       resolve();
       return;
     }
-    let failed: Phaser.Loader.File[] = [];
+    let failed: RetryableFile[] = [];
     let round = 0;
-    const onError = (file: Phaser.Loader.File): void => { failed.push(file); };
+    const onError = (file: Phaser.Loader.File): void => {
+      const retryable = retryableOf(file);
+      if (retryable) failed.push(retryable);
+    };
     const onComplete = (): void => {
       if (failed.length > 0 && round < LOAD_RETRY_ROUNDS && scene.scene.isActive()) {
         round += 1;
@@ -91,6 +115,7 @@ function loadWithPhaser(scene: Phaser.Scene, queue: () => void): Promise<void> {
         }
       }
       scene.load.off("loaderror", onError);
+      failed.forEach((file) => unresolvedFiles.set(file.key, file));
       resolve();
     };
     scene.load.on("loaderror", onError);
@@ -116,32 +141,14 @@ const SVG_BAKE = { skill: 256, uiScale: 2 } as const;
 const CONTENT_ART_ASSETS = [...CHEST_ART_ASSETS] as const;
 
 /**
- * **출시 전에 채울 자리 — 지금 목록은 일부러 좁다.**
+ * **입장 문구가 서기 전에 반드시 끝내는 것만 둔다** — 글꼴·문구 표, 소리, 첫 화면 배경, 아이콘. 없으면 화면 자체가
+ * 서지 않는 것들이다. Puppet 묶음·뽑기 연출·캐시 받기는 `BACKGROUND_DOWNLOADS`로 옮겨 입장 뒤에 뒤에서 받는다
+ * (첫 실행의 느린 망에서 그 하나가 타이틀 전체를 붙잡았다). 여기서도 끝내 못 받은 파일은 입장을 막지 않고 입장 뒤에
+ * 다시 받는다.
  *
- * 아래 Puppet 단계는 `PUPPET_PRELOAD_GROUPS`가 가진 것만 읽는데, 그 표에는 전신 원화 25종 중
- * 여섯과 아군 SD 19종 중 다섯만 들어 있다. 나머지 개체는 정보창을 열거나 전투에 들어가는 그
- * 순간에 처음 내려받아 파싱하므로, 화면이 먼저 뜨고 캐릭터가 한 박자 늦게 나타난다.
- *
- * **개발 중에는 이대로 둔다.** 게임에 빨리 들어가는 것이 더 중요하고, 개체가 늘 때마다 타이틀
- * 대기 시간이 함께 늘면 매번 확인하는 화면이 그만큼 멀어진다.
- *
- * **둘은 v0.151.0에서 끝냈다.** `spawnFighters`는 여섯을 `Promise.all`로 한꺼번에 읽고(그전에는
- * 루프 안의 `await`가 한 마리씩 줄을 세워 일꾼 넷 중 하나만 일했다), 전투를 여는 네 화면이
- * 들어오는 순간 `prefetchBattlePuppets`로 편성과 적을 미리 읽는다 — 고르는 동안이 그대로
- * 로딩 시간이 된다.
- *
- * 남은 것은 둘이다.
- * 1. 저장을 읽은 뒤 **보유 렐릭**의 전신·SD를 로비 유휴 중에 읽는다. 다만 **전부 읽으면 안
- *    된다** — 디코드된 SD 한 장이 6.3MB라 19종이면 120MB, 전신까지 더하면 280MB다. 배경은
- *    `backgroundResidency.ts`가 내리는 규칙을 갖지만 **Puppet에는 그것이 없어**, 미리 읽기를
- *    넓히려면 내리는 규칙을 함께 만들어야 한다.
- * 2. 아래 `궁극기 컷인 원화` 단계는 바로 앞 단계와 **같은 그룹**을 가리켜 캐시에 걸린다. 실제로
- *    읽는 것이 없으므로 진행 칸 하나가 즉시 차 버린다 — 컷인이 쓰는 묶음이 전신과 갈리는 날
- *    이 단계에 그 표를 준다.
- *
- * 늦게 뜨는 것이 화면을 **멎게 하지는 않는다** — 내려받기·ZIP 해제·puppet.json 파싱·WebP
- * 디코드는 모두 일꾼(`puppetParseWorker`)이 하고 메인 스레드에는 GPU 업로드만 남는다. 그래도
- * 화면보다 한 박자 늦게 서는 것은 그대로이므로, 위 세 가지는 출시 전에 손봐야 한다.
+ * **출시 전에 채울 자리** — Puppet 미리 읽기 목록(`PUPPET_PRELOAD_GROUPS`)은 일부러 좁다. 전신 25종 중 여섯과 아군 SD
+ * 19종 중 다섯만 들어 있고 나머지는 정보창·전투에 들어가는 순간 처음 읽는다. 넓히려면 **전부 읽으면 안 된다** — 디코드된
+ * 그림이 첫 스폰까지 남으므로(한 장 6.5MB) 보유 렐릭·현재 편성만 골라 로비 유휴 중에 읽는다.
  */
 export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
   {
@@ -171,7 +178,7 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
           if (path) scene.load.image(key, path);
         });
         CONTENT_ART_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
-      }).then(() => prefetchCachedFiles(CONTENT_ENTRY_ART_PATHS)),
+      }),
   },
   {
     label: "조작·스킬 아이콘",
@@ -200,36 +207,65 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
         // 발굴 특화는 카드 보조 정보 크기의 단색 SVG라 UI 아이콘과 같은 배율로 미리 굽는다.
         EXCAVATION_TRAIT_ICON_ASSETS.forEach(([key, path]) => scene.load.svg(key, path, { width: 64, height: 64 }));
         // 전용 스킬 일러스트(흰 실루엣 WebP)는 **캐시에만** 받는다 — 214장을 다 올리면 56MB인데 한 번에 보는 것은
-        // 렐릭 몇 명 몫이다. 그 액자가 설 때 올린다(`skillArtLoader.ts`).
-      }).then(() => prefetchCachedFiles(SKILL_ART_ASSETS.map(([, path]) => path))),
-  },
-  {
-    label: "렐릭 스탠딩",
-    run: () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[0]),
-  },
-  {
-    // 궁극기 컷인은 portraitAssetFor가 가리키는 같은 캐시를 재사용한다. 단계로 등록해 두면
-    // 첫 발동 도중 ZIP 파싱이 일어나 연출이 끊기는 일이 없다.
-    label: "궁극기 컷인 원화",
-    run: () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[0]),
-  },
-  {
-    label: "SD·적 묶음",
-    run: () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[1]),
-  },
-  {
-    // 뽑기의 3D 시네마틱과 SSR 전조 무대는 합쳐 1MB 남짓한 스크립트라, 첫 뽑기에서 받으면 그
-    // 자리에서 화면이 멎는다. 여기서 받아 파싱까지 끝내 둔다.
-    //
-    // 새로 만난 렐릭의 소개 장면이 세울 원화(뽑을 수 있는 개체의 전신·SD)는 여기서 받지 않는다 — 합쳐 35MB
-    // 남짓이라, 타이틀에서 걸어 두었을 때는 첫 실행의 오프닝·1-1·튜토리얼 내내 그 내려받기가 망을 나눠 먹었다
-    // (실측: 타이틀이 준비된 뒤 15초 동안 35MB가 더 내려왔다). 연구소에 들어갈 때 건다(`prefetchGachaPuppetFiles`).
-    label: "뽑기 연출",
-    run: async () => {
-      await Promise.all([preloadResearchCinematic(), preloadSsrOmen()?.then(() => undefined, () => undefined)]);
-    },
+        // 렐릭 몇 명 몫이다. 그 액자가 설 때 올린다(`skillArtLoader.ts`). 그 캐시 받기는 입장 뒤의 몫이다(아래).
+      }),
   },
 ];
+/**
+ * **입장한 뒤 뒤에서** 받는 것들 — 타이틀이 기다리지 않는다.
+ *
+ * 예전에는 Puppet 묶음·뽑기 연출·캐시 받기(스킬 일러스트 214장 등)까지 타이틀이 다 받아야 입장 문구가 섰다.
+ * 첫 실행의 느린 망에서는 그 하나가 끝나지 않아 30초 시한을 몇 번씩 기다렸고, 그동안 타이틀 영상과 망을 나눠 먹어
+ * 영상이 서지 않았다. 여기 것들은 모두 **없어도 화면이 선다** — Puppet은 세우는 순간 같은 캐시로 읽고(`loadPuppet`이
+ * 진행 중인 받기를 함께 기다린다), 캐시 받기는 그 그림이 설 때 다시 받는다. 그래서 필수 단계가 끝나는 즉시 뒤에서
+ * 걸어 두고 입장은 막지 않는다. 순서는 곧 쓰일 차례다(로비 전신 → 전투 SD → 뽑기 → 캐시).
+ */
+const BACKGROUND_DOWNLOADS: ReadonlyArray<() => Promise<unknown>> = [
+  () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[0]),
+  () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[1]),
+  // 뽑기의 3D 시네마틱과 SSR 전조 무대는 합쳐 1MB 남짓한 스크립트라, 첫 뽑기에서 받으면 그 자리에서 화면이 멎는다.
+  // 새로 만난 렐릭의 소개 원화(35MB 남짓)는 여기서도 받지 않는다 — 연구소에 들어갈 때 건다(`prefetchGachaPuppetFiles`).
+  () => Promise.all([preloadResearchCinematic(), preloadSsrOmen()?.then(() => undefined, () => undefined)]),
+  () => prefetchCachedFiles(CONTENT_ENTRY_ART_PATHS),
+  () => prefetchCachedFiles(SKILL_ART_ASSETS.map(([, path]) => path)),
+];
+
+/** 끝내 못 받은 필수 파일을 다시 받아 보는 시각(입장 뒤 ms). 망이 돌아오는 순간을 몇 번에 걸쳐 노린다. */
+export const UNRESOLVED_RETRY_DELAYS_MS = [4000, 15000, 45000] as const;
+
+let backgroundStarted = false;
+
+/**
+ * 뒤에서 받을 것들을 건다. 한 실행에 한 번만 걸리고, 하나가 실패해도 다음으로 넘어간다.
+ *
+ * `loaderScene`은 못 받은 필수 파일을 다시 받을 로더를 빌려 줄 씬이다 — 화면이 바뀌어도 살아 있는 겹
+ * (`effect-overlay`)을 준다. 타이틀의 로더를 쓰면 입장과 함께 타이틀이 닫히며 받던 것이 끊긴다.
+ */
+export function startBackgroundDownloads(loaderScene: () => Phaser.Scene | undefined): void {
+  if (backgroundStarted) return;
+  backgroundStarted = true;
+  void (async () => {
+    for (const run of BACKGROUND_DOWNLOADS) {
+      try { await run(); } catch { /* 그 묶음은 쓰는 순간 다시 받는다. */ }
+    }
+  })();
+  UNRESOLVED_RETRY_DELAYS_MS.forEach((delay, index) => setTimeout(() => retryUnresolved(loaderScene(), LOAD_RETRY_ROUNDS + index + 1), delay));
+}
+
+function retryUnresolved(scene: Phaser.Scene | undefined, round: number): void {
+  if (unresolvedFiles.size === 0 || !scene?.sys.isActive()) return;
+  // 그사이 다른 길로 올라온 것은 지운다.
+  for (const [key] of unresolvedFiles) if (scene.textures.exists(key) || scene.cache.audio.exists(key)) unresolvedFiles.delete(key);
+  const batch = [...unresolvedFiles.values()];
+  if (batch.length === 0) return;
+  // 겹의 로더가 다른 일로 돌고 있으면 이번 차례는 건너뛴다(같은 로더에 끼우면 그 일의 완료 신호가 섞인다).
+  if (scene.load.isLoading()) return;
+  const onLoaded = (key: string): void => { unresolvedFiles.delete(key); };
+  scene.load.on("filecomplete", onLoaded);
+  scene.load.once("complete", () => scene.load.off("filecomplete", onLoaded));
+  if (requeueFailed(scene, batch, round) > 0) scene.load.start();
+  else scene.load.off("filecomplete", onLoaded);
+}
 
 let gachaPuppetFilesRequested = false;
 

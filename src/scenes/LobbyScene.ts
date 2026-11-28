@@ -315,6 +315,8 @@ export class LobbyScene extends Phaser.Scene {
     // 이전 씬의 true를 지우고, 로비가 끝날 때도 다음 씬에 준비 상태가 새지 않게 한다.
     bindDebugReadyLifecycle(this.events);
     setDebugScene("lobby");
+    // 출석 판을 저절로 열 로비라면 화면을 세우는 동안 상태를 미리 묻는다 — 판이 들어서자마자 서게(`autoOpenAttendance`).
+    if (!this.returnMenu && ATTENDANCE_AUTO_POPUP && tutorialManager.next() === undefined) attendanceManager.prefetch();
     this.popupLayer = new PopupLayer(this);
     // Phaser는 씬 인스턴스를 다시 쓰므로 **지난 로비의 판 참조가 필드에 남는다.** 판 위에서 다른 씬으로
     // 넘어가면(이벤트 카드 → 이벤트 화면) 닫힘 콜백이 돌지 않아, 돌아왔을 때 `??=`가 죽은 판을 다시
@@ -547,16 +549,21 @@ export class LobbyScene extends Phaser.Scene {
     const finish = (): void => { if (finished) return; finished = true; done(); };
     // 튜토리얼이 끝나기 전에는 열지 않는다. 연 날로 남기지도 않으므로 끝난 뒤 처음 선 로비가 연다.
     if (tutorialManager.next() !== undefined) { finish(); return; }
-    void attendanceManager.status().then((status) => {
+    // 로비가 서는 동안 미리 물어 둔 답을 쓴다(`create`·타이틀의 `prefetch`). 첫 판도 그 답으로 곧바로 세운다 —
+    // 같은 순간에 두 번 묻던 왕복이 판이 뜨는 텀이었다. 다음 판부터는 앞 판을 받은 뒤라 다시 읽는다.
+    void attendanceManager.takeStatus().then((status) => {
       if (!status.autoShow || !this.sys.isActive()) { finish(); return; }
       const queue = ATTENDANCE_TRACK_IDS.filter((id) => status.tracks.some((track) => track.id === id && track.claimableToday));
       if (queue.length === 0) { finish(); return; }
       // 다음 판은 **열기 직전에 서버에서 다시 읽는다.** 앞 판을 받는 사이 상태가 바뀌므로(지갑·덤·바퀴),
       // 로비에 들어올 때 읽어 둔 모습으로 세우면 판이 실제와 어긋난다.
+      let initial: typeof status | undefined = status;
       const openNext = (): void => {
         const id = queue.shift();
         if (!id || !this.popupLayer || !this.sys.isActive()) { finish(); return; }
-        void attendanceManager.status().then((fresh) => {
+        const read = initial ? Promise.resolve(initial) : attendanceManager.status();
+        initial = undefined;
+        void read.then((fresh) => {
           const track = fresh.tracks.find((entry) => entry.id === id);
           if (!this.popupLayer || !this.sys.isActive()) return;
           if (!track?.claimableToday) { openNext(); return; }

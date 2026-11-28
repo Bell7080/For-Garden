@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
+import { retryUrl } from "../core/retryUrl";
 
 /** 타이틀 영상의 텍스처 키. */
 export const TITLE_MOVIE_KEY = "title-movie";
@@ -28,6 +29,24 @@ export const TITLE_MOVIE_FADE_MS = 900;
  * 아트 파일 하나가 화면 전체를 붙잡지 않는다는 로딩 단계의 태도를 그대로 쓴다.
  */
 export const TITLE_MOVIE_FALLBACK_MS = 2600;
+
+/**
+ * 영상을 받지 못했거나(망 끊김) 재생에 실패했을 때 다시 걸어 보는 횟수와 그 사이 쉬는 시간.
+ *
+ * 첫 실행은 다른 파일과 망을 나눠 먹어 영상 요청 하나가 끊기기 쉽다. 예전에는 한 번 실패하면 그 실행 내내 정지
+ * 원화만 서 있었다. 다시 걸 때는 주소에 표식을 붙여 실패한 응답을 캐시에서 되돌려받지 않고, 고른 형식(WebM)을 이
+ * 기기가 끝내 못 읽으면 다른 한 벌(MP4)로 바꿔 건다. 끝내 안 되면 지금처럼 정지 원화로 남는다.
+ */
+export const TITLE_MOVIE_RETRY = { attempts: 3, delayMs: 1500 } as const;
+
+/** 다음에 걸 주소. 형식이 문제였으면 다른 한 벌로, 아니면 같은 파일을 새 표식으로. */
+export function titleMovieRetrySource(current: string, attempt: number, unsupported: boolean): string {
+  const base = current.replace(/[?&]retry=\d+$/, "");
+  const next = unsupported
+    ? TITLE_MOVIE_SOURCES.find((source) => !base.endsWith(source)) ?? TITLE_MOVIE_SOURCES[TITLE_MOVIE_SOURCES.length - 1]
+    : base;
+  return retryUrl(next, attempt);
+}
 
 /** 세워 둔 영상과 그 수명주기. */
 export interface TitleMovie {
@@ -78,6 +97,25 @@ export function startTitleMovie(
     onPlaying();
   };
 
+  // 받지 못했거나 읽지 못하면 잠깐 쉬고 다시 건다 — 정지 원화가 그 사이를 지키므로 화면은 비지 않는다.
+  let retries = 0;
+  let retryTimer: Phaser.Time.TimerEvent | undefined;
+  const retry = (unsupported: boolean): void => {
+    if (entered || retries >= TITLE_MOVIE_RETRY.attempts || retryTimer || !scene.scene.isActive()) return;
+    retries += 1;
+    const current = (video.video as HTMLVideoElement | null)?.currentSrc || (video.video as HTMLVideoElement | null)?.src || TITLE_MOVIE_SOURCES[0];
+    retryTimer = scene.time.delayedCall(TITLE_MOVIE_RETRY.delayMs, () => {
+      retryTimer = undefined;
+      if (entered || !scene.scene.isActive()) return;
+      video.loadURL(titleMovieRetrySource(current, retries, unsupported), true);
+      video.setLoop(true);
+      video.play(true);
+    });
+  };
+  const onError = (): void => retry(false);
+  const onUnsupported = (): void => retry(true);
+  video.on(Phaser.GameObjects.Events.VIDEO_ERROR, onError);
+  video.on(Phaser.GameObjects.Events.VIDEO_UNSUPPORTED, onUnsupported);
   video.on(Phaser.GameObjects.Events.VIDEO_PLAYING, enter);
   // 일부 브라우저는 PLAYING 대신 첫 텍스처 갱신만 알린다. 둘 중 먼저 오는 쪽을 쓴다.
   video.on(Phaser.GameObjects.Events.VIDEO_TEXTURE, enter);
@@ -90,6 +128,9 @@ export function startTitleMovie(
     destroy: () => {
       video.off(Phaser.GameObjects.Events.VIDEO_PLAYING, enter);
       video.off(Phaser.GameObjects.Events.VIDEO_TEXTURE, enter);
+      video.off(Phaser.GameObjects.Events.VIDEO_ERROR, onError);
+      video.off(Phaser.GameObjects.Events.VIDEO_UNSUPPORTED, onUnsupported);
+      retryTimer?.remove();
       scene.events.off(Phaser.Scenes.Events.UPDATE, enter);
       video.destroy();
     },

@@ -69,6 +69,11 @@ export interface NodeEnemyPreviewOptions {
   bottom: number;
   depth?: number;
   onEnemyClick: (enemy: RelicDef, growth: Pick<StageEnemyDef, "level" | "breakthrough">) => void;
+  /**
+   * 마주 설 아군 편성의 전투력. 주면 판 아래 줄이 「적 N VS 내 M」으로 마주 선다 — 편성 화면을 거치지
+   * 않는 원정 지도처럼 노드 판이 곧 대치선인 자리에서만 넘긴다(원정은 떠날 때 굳힌 값).
+   */
+  allyPower?: number;
 }
 
 /** 스토리와 원정 지도가 공유하는 노드 부착형 적 SD 편성 프리팹이다. */
@@ -105,9 +110,9 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   }
 
   /** 새 노드의 제목·레벨·편성을 원자적으로 갈아 끼우고 노드에 꼬리를 붙인다. */
-  showAt(nodeY: number, options: Partial<Pick<NodeEnemyPreviewOptions, "title" | "situation" | "growth" | "enemies" | "elite" | "backdrop" | "art" | "onEnemyClick" | "sections">> = {}): void {
+  showAt(nodeY: number, options: Partial<Pick<NodeEnemyPreviewOptions, "title" | "situation" | "growth" | "enemies" | "elite" | "backdrop" | "art" | "onEnemyClick" | "sections" | "allyPower">> = {}): void {
     // 넘기지 않은 칸 구성이 직전 노드의 것으로 남지 않게 한다.
-    this.options = { ...this.options, sections: undefined, backdrop: undefined, art: undefined, ...options };
+    this.options = { ...this.options, sections: undefined, backdrop: undefined, art: undefined, allyPower: undefined, ...options };
     this.nodeY = nodeY;
     this.nodeVisible = true;
     if (this.options.sections) { this.renderSectioned(false); this.reveal(); return; }
@@ -143,10 +148,21 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     // 이름표는 짧게 둔다 — "예상"이나 "종합" 같은 수식은 무엇을 재는지 바꾸지 않는다.
     const power = encounterGroupPower(withBaseStats(this.options.enemies));
     this.add(drawHairline(this.scene, 0, NODE_ENEMY_SLOT.footerDividerY, NODE_ENEMY_PREVIEW.width - 60, { color: COLOR.accent, alpha: 0.28 }));
-    this.add(this.scene.add
-      .text(0, NODE_ENEMY_SLOT.powerY, t("enemyPreview.totalPower", { power: power.toLocaleString() }), textStyle({ role: "display", size: 28, color: COLOR.dangerText }))
-      .setOrigin(0.5, 0)
-      .setShadow(0, 3, "#05070a", 4, false, true));
+    if (this.options.allyPower === undefined) {
+      this.add(this.scene.add
+        .text(0, NODE_ENEMY_SLOT.powerY, t("enemyPreview.totalPower", { power: power.toLocaleString() }), textStyle({ role: "display", size: 28, color: COLOR.dangerText }))
+        .setOrigin(0.5, 0)
+        .setShadow(0, 3, "#05070a", 4, false, true));
+    } else {
+      // 편성 화면의 대치선과 같은 문법 — 적은 붉게 왼쪽, 아군은 강조색으로 오른쪽, 그 사이에 VS.
+      const gap = 26;
+      const vs = this.scene.add.text(0, NODE_ENEMY_SLOT.powerY + 2, t("enemyPreview.vs"), textStyle({ role: "display", size: 24, color: COLOR.inkDim })).setOrigin(0.5, 0);
+      const enemyText = this.scene.add.text(-vs.width / 2 - gap, NODE_ENEMY_SLOT.powerY, t("enemyPreview.enemyPower", { power: power.toLocaleString() }), textStyle({ role: "display", size: 28, color: COLOR.dangerText })).setOrigin(1, 0);
+      const allyText = this.scene.add.text(vs.width / 2 + gap, NODE_ENEMY_SLOT.powerY, t("enemyPreview.allyPower", { power: this.options.allyPower.toLocaleString() }), textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(0, 0);
+      // 두 줄 폭이 다르면 VS가 판 가운데에서 비켜 보이므로, 묶음 전체를 가운데로 옮긴다.
+      const shift = (enemyText.width - allyText.width) / 2;
+      for (const text of [vs, enemyText, allyText]) this.add(text.setX(text.x + shift).setShadow(0, 3, "#05070a", 4, false, true));
+    }
     // 상세 진입 E2E는 고정 숫자를 복제하지 않고 실제 적 입력 중심을 사용한다.
     setDebugEnemyPreview({ top: this.options.top, bottom: this.options.bottom, panelTop: y - NODE_ENEMY_PREVIEW.height / 2, panelBottom: y + NODE_ENEMY_PREVIEW.height / 2, above, enemyTargets: columns.map((x) => ({ x: this.x + x, y: y + NODE_ENEMY_SLOT.ground })) });
     this.reveal();

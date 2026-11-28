@@ -330,6 +330,9 @@ export const MISC_KO = {
   // 적 미리보기·룬 확률
   "enemyPreview.title": "적 편성",
   "enemyPreview.totalPower": "총 전투력 {power}",
+  "enemyPreview.enemyPower": "적 전투력 {power}",
+  "enemyPreview.allyPower": "내 전투력 {power}",
+  "enemyPreview.vs": "VS",
   "enemyPreview.enemyInfo": "적 정보",
   "enemyPreview.story": "줄거리",
   "stageRune.title": "룬 미리보기",

@@ -72,6 +72,7 @@ import { createLobbyUtilityRail } from "../ui/lobbyUtilityRail";
 import { bindFreeRuneBagHint } from "../ui/freeRuneBagHint";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicSkinManager } from "../managers/RelicSkinManager";
+import { EXPEDITION_MAP_BALANCE } from "../data/expedition";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { PVP_ACTIVE_MODES, PVP_MODE_SELECT_ENABLED } from "../data/pvpModes";
 import { PVP_MENU, pvpEntryHeight, pvpMenuLayout } from "../ui/pvpLayout";
@@ -196,6 +197,8 @@ interface SortieEntry {
   sdSide?: "left" | "right";
   sd?: PuppetAsset;
   split?: "left" | "right";
+  /** 제목 곁 딱지(원정 「진행 중」). */
+  tag?: string;
   /** 개체마다 원화 크기가 달라 혼자 커 보이는 SD만 이 배율로 줄인다. */
   sdScale?: number;
   /**
@@ -850,7 +853,9 @@ export class LobbyScene extends Phaser.Scene {
         // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
         // 원정만 SD가 오른쪽에 서고 글자가 왼쪽 아래로 간다 — 20층 보스가 판 밖을 보는 자리다.
         {
-          content: "expedition", y: SORTIE_ENTRY_SPOT.expedition.y, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET,
+          content: "expedition", y: SORTIE_ENTRY_SPOT.expedition.y, width: 800, height: 230, status: t("lobby.expedition.status", { floors: EXPEDITION_MAP_BALANCE.bossFloor }), sdSide: "right", sd: PONTOS_SD_ASSET,
+          // 끝내지 않은 원정이 있으면 제목 곁에 「진행 중」 딱지가 숨 쉰다 — 들어가면 곧바로 지도로 이어진다.
+          tag: status.active ? t("lobby.expedition.inProgress") : undefined,
           onClick: () => { close(); startScene(this, "expedition"); },
         },
         // 고대 지층은 맨 아래 전체 폭 칸이다. 쉬움 3-10 클리어로 열리고 실제 입장은 순차 해금과 서버 검증을 거친다.
@@ -879,7 +884,7 @@ export class LobbyScene extends Phaser.Scene {
           width: entry.width, height: entry.height, label: entry.label, labelSize: entry.labelSize, status: entry.status,
           artKey: entry.artKey, accentColor: entry.accentColor, accentTextColor: entry.accentTextColor,
           // 끌어서 굴린 손이 칸 위에서 떨어져도 그 칸이 열리지 않게 한다.
-          sdSide, split: entry.split, onClick: () => {
+          sdSide, split: entry.split, tag: entry.tag, onClick: () => {
             if (this.sortieScroll.moved > view.slop) return;
             if (entry.content !== undefined && contentOpen(entry.content)) markContentEntered(entry.content);
             entry.onClick();
@@ -1082,14 +1087,6 @@ export class LobbyScene extends Phaser.Scene {
     this.sortieScrollHandlers = undefined; this.sortieContent = undefined;
     this.sortieSdLayer?.destroy(true); this.sortieSdLayer = undefined;
     this.sortieBackButton?.destroy(); this.sortieBackButton = undefined;
-  }
-
-  /** 오늘의 횟수·진행·주간 최고점을 한 줄의 짧은 원정 상태로 합친다. */
-  private expeditionStatus(status = expeditionManager.status()): string {
-    const plays = status.playsToday;
-    const best = status.bestScore.toLocaleString();
-    if (status.active) return t("lobby.expedition.resume", { plays, best });
-    return t("lobby.expedition.weekly", { plays, best });
   }
 
   /** 연구소에서 옮긴 채광 설비·식물 원화를 로비 광장 배경으로 사용한다. */

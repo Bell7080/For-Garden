@@ -22,8 +22,8 @@ export const LOBBY_JA = {
   "ancient.prev": "前の区間",
   "ancient.next": "次の区間",
 
-  "lobby.expedition.resume": "つづきから · {plays}回 · 最高 {best}",
-  "lobby.expedition.weekly": "本日 {plays}回 · 最高 {best}",
+  "lobby.expedition.status": "{floors}層探検 · 週間記録",
+  "lobby.expedition.inProgress": "進行中",
 
   "lobby.rail.mission": "ミッション",
   "lobby.rail.shop": "ショップ",

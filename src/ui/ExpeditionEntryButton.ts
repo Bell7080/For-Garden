@@ -5,6 +5,7 @@ import { chipPoints, drawFrameVignette, drawLayer, drawShapeOutline, HOLO } from
 import { COLOR, textStyle } from "./theme";
 import { shapeClipMask } from "./popupArt";
 import { pressIn, pressOut } from "./pressFeedback";
+import { settingsManager } from "../managers/SettingsManager";
 
 /** 로컬 좌표 도형을 지금의 월드 좌표로 옮긴다. 팝업 안에서 마스크가 엉뚱한 자리에 남지 않게 한다. */
 function worldPoints(matrix: Phaser.GameObjects.Components.TransformMatrix, flat: readonly number[]): Phaser.Geom.Point[] {
@@ -51,6 +52,11 @@ export interface IllustratedSortieButtonOptions {
    * 변은 깎지 않고 곧게 두어 **한 장을 `|`로 끊은 것**처럼 읽히게 한다.
    */
   split?: "left" | "right";
+  /**
+   * 제목 옆에 붙는 작은 딱지(원정의 「진행 중」). 끝내지 않은 판이 있다는 것을 칸이 먼저 말한다 —
+   * 붉은 점(받을 보상)·「NEW」(처음 들르기)와 뜻이 달라 모서리가 아니라 제목 곁에 선다.
+   */
+  tag?: string;
 }
 
 /**
@@ -94,6 +100,29 @@ export interface SortieSdSpot {
 export function sortieEntryBevel(height: number, split?: "left" | "right"): { topLeft: number; bottomRight: number } {
   const corner = height * 0.46;
   return { topLeft: split === "right" ? 0 : corner, bottomRight: split === "left" ? 0 : corner };
+}
+
+/**
+ * 제목 곁의 딱지 — 칸의 강조색으로 채운 작은 칩에 검은 글자. 왼쪽 위·오른쪽 아래만 깎아 판과 같은 실루엣을 쓰고,
+ * 빛무리만 천천히 숨 쉬어 「아직 끝나지 않았다」를 조용히 강조한다(움직임 줄이기에서는 서 있기만 한다).
+ */
+function addEntryTag(scene: Phaser.Scene, label: Phaser.GameObjects.Text, text: string, accent: number, textRight: boolean): Phaser.GameObjects.Container {
+  const word = scene.add.text(0, 0, text, textStyle({ role: "display", size: 24, color: "#0b0f15" })).setOrigin(0.5);
+  const width = word.width + 30;
+  const height = 40;
+  const shape = chipPoints(width, height, { bevel: { topLeft: 12, bottomRight: 12 } });
+  const gap = 18;
+  const x = textRight ? label.x - label.width - gap - width / 2 : label.x + label.width + gap + width / 2;
+  // 제목 글자의 세로 가운데보다 살짝 아래 — 큰 글자의 아랫선에 맞춰야 한 줄로 읽힌다.
+  const y = label.y - label.height * 0.42;
+  const tag = scene.add.container(x, y).setName("entry-tag");
+  const glow = drawLayer(scene, 0, 0, chipPoints(width + 14, height + 14, { bevel: { topLeft: 16, bottomRight: 16 } }), { fill: accent, alpha: 0.32 });
+  tag.add([glow, drawLayer(scene, 0, 0, shape, { fill: accent, alpha: 1, edge: 0xffffff, edgeAlpha: 0.6, shadow: { x: 3, y: 4 } }), word]);
+  if (!settingsManager.get().accessibility.reduceMotion) {
+    glow.setAlpha(0.35);
+    scene.tweens.add({ targets: glow, alpha: 1, duration: 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+  }
+  return tag;
 }
 
 /** 원정 일러스트와 출격 계열의 주황 강조를 한 입력면으로 묶는 재사용 진입 버튼이다. */
@@ -160,6 +189,7 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
       .setOrigin(originX, 1)
       .setShadow(4, 5, "#04060a", 0, true, true);
     this.add([label, status]);
+    if (options.tag) this.add(addEntryTag(scene, label, options.tag, accent, textRight));
 
     if (options.sdSide) {
       // 칩 몸통과 머리 띠를 한 장에 채워 SD를 가둔다. 두 도형의 합집합이라 몸은 칸 안에,

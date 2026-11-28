@@ -14,6 +14,7 @@ import { GameApiError } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { ExpeditionMapNode } from "../core/expeditionMap";
 import { getRelic } from "../data/relics";
+import { combatPower } from "../core/combatPower";
 import { setDebugExpeditionFormation, setDebugExpeditionSweepEnabled, setDebugFormationDragVisual, setDebugScene } from "../debug";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { showExpeditionRelic } from "../ui/expeditionRelicInfo";
@@ -282,11 +283,9 @@ export class ExpeditionScene extends Phaser.Scene {
     }
 
     this.add.text(54, 34, t("expedition.weekly.title"), textStyle({ role: "display", size: 48 })).setOrigin(0, 0);
-    // 점수 런 중에는 이 줄이 「보상이 없는 판」임을 말한다 — 전리품 판이 비어 있는 이유가 거기서 읽힌다.
-    const summary = status.run?.scoreOnly
-      ? t("expedition.scoreRun.summary")
-      : t("expedition.weekly.summary", { plays: status.playsToday, max: EXPEDITION_DAILY_POLICY.maxPlaysPerDay, best: status.bestScore.toLocaleString() });
-    this.add.text(54, 94, summary, textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0);
+    // 오늘 횟수·주간 최고 줄은 기록·편성 화면에만 선다. 지도에서는 지금 판의 점수와 전리품이 이미 말하고 있어
+    // 같은 수를 제목 밑에 한 번 더 적지 않는다(응태 2026-11-28). 점수 도전 판이라는 말은 전리품 판 제목이 맡는다.
+    if (!status.active) this.add.text(54, 94, t("expedition.weekly.summary", { plays: status.playsToday, max: EXPEDITION_DAILY_POLICY.maxPlaysPerDay, best: status.bestScore.toLocaleString() }), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0);
     drawHairline(this, BASE_WIDTH / 2, 224, BASE_WIDTH - 108, { color: COLOR.accent, alpha: 0.34 });
 
     if (status.active) this.buildActive(status.active.score, status.run?.selectedAugments ?? []);
@@ -316,7 +315,7 @@ export class ExpeditionScene extends Phaser.Scene {
       // 조회에 실패하면 그 자리를 비운다 — 못 읽었다는 말은 플레이어가 지금 할 일을 바꾸지 않는다.
       .catch(() => { if (weekly.active) weekly.setText(""); });
     // 지도 HUD는 마지막 노드 증가분이 아니라 서버 저장 런 합계를 명시적으로 넘긴다.
-    this.buildRewardBar(run.pendingRewards, { scope: "run", value: score }, run.lastNodeRewards);
+    this.buildRewardBar(run.pendingRewards, { scope: "run", value: score }, run.lastNodeRewards, run.scoreOnly === true);
     this.buildMap(run.nodes, run.currentNodeId, run.visitedNodeIds);
     this.buildAugmentChips(augments);
     this.buildRelicHud(run.relics, augments);
@@ -346,6 +345,7 @@ export class ExpeditionScene extends Phaser.Scene {
     rewards: Readonly<Record<string, number>>,
     confirmedScore: { scope: "node" | "run"; value: number },
     last: { nodeScore: number; rewards: Record<string, number>; cappedCurrencies: string[] } | null,
+    scoreOnly = false,
   ): void {
     // 액자는 고정 넷이 아니라 **보류 보상 목록**(`EXPEDITION_REWARD_IDS`)에서 읽는다. 넷만 적어 두던
     // 때는 노드마다 쌓이는 인양 기록과 보물 노드의 몫이 판에 서지 않아, 받은 것이 결산에서야 보였다.
@@ -357,7 +357,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const step = items.length > 1 ? Math.min(LOOT.step, (LOOT.span - LOOT.frame) / (items.length - 1)) : 0;
     // 지도 위에 떠 있는 하나의 전리품 레이어로 읽히도록 제목과 얇은 상단선을 먼저 놓는다.
     drawLayer(this, BASE_WIDTH / 2, LOOT.panelY, chipPoints(972, LOOT.panelHeight, { bevel: { topLeft: 30, bottomRight: 22 } }), { fill: 0x0d131b, alpha: 0.82, edge: COLOR.accent, edgeAlpha: 0.55 });
-    this.add.text(86, 137, t("expedition.loot"), textStyle({ role: "display", size: 25, color: COLOR.accentText })).setOrigin(0, 0.5);
+    this.add.text(86, 137, t(scoreOnly ? "expedition.scoreRun.summary" : "expedition.loot"), textStyle({ role: "display", size: 25, color: COLOR.accentText })).setOrigin(0, 0.5);
     items.forEach(([icon, key], index) => {
       // 네 액자는 판 가운데에 모여 선다. 넓게 벌리면 네 재화가 각자 다른 정보처럼 읽힌다.
       const x = BASE_WIDTH / 2 + (index - (items.length - 1) / 2) * step; const y = LOOT.frameY; const size = LOOT.frame;
@@ -424,7 +424,9 @@ export class ExpeditionScene extends Phaser.Scene {
       // 층에서 정보창이 상한보다 높은 레벨을 세운다.
       const finalBoss = node.type === "boss" && node.floor === 20;
       const growth = enemies.map(() => ({ level, breakthrough: finalBoss ? expeditionBossGrowth().breakthrough : requiredBreakthroughForLevel(level) }));
-      this.enemyPreview?.showAt(nodeY, { title: t("expedition.node.title", { floor: node.floor, type: names[node.type] }), growth, enemies, onEnemyClick: (enemy, slot) => this.enemyInfo?.show({ def: enemy, level: slot.level, breakthrough: slot.breakthrough }) });
+      // 원정에는 편성 화면이 없어 노드 판이 곧 대치선이다. 아군 전투력은 **떠날 때 굳힌 모습**이고, 쓰러진 렐릭은 싸우지 않으니 뺀다.
+      const allyPower = run.relics.filter(({ alive }) => alive).reduce((sum, { relicId }) => sum + combatPower(expeditionManager.snapshotFor(relicId).stats, getRelic(relicId).stats), 0);
+      this.enemyPreview?.showAt(nodeY, { title: t("expedition.node.title", { floor: node.floor, type: names[node.type] }), growth, enemies, allyPower, onEnemyClick: (enemy, slot) => this.enemyInfo?.show({ def: enemy, level: slot.level, breakthrough: slot.breakthrough }) });
       return;
     }
     this.nodeTransitionPending = true;

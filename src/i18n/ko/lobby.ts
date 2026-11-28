@@ -21,8 +21,8 @@ export const LOBBY_KO = {
   "ancient.prev": "이전 구간",
   "ancient.next": "다음 구간",
 
-  "lobby.expedition.resume": "이어하기 · {plays}회 · 최고 {best}",
-  "lobby.expedition.weekly": "오늘 {plays}회 · 최고 {best}",
+  "lobby.expedition.status": "{floors}층 탐험 · 주간 기록",
+  "lobby.expedition.inProgress": "진행 중",
 
   "lobby.rail.mission": "임무",
   "lobby.rail.shop": "상점",

@@ -314,6 +314,9 @@ export const MISC_JA = {
 
   "enemyPreview.title": "敵編成",
   "enemyPreview.totalPower": "総戦闘力 {power}",
+  "enemyPreview.enemyPower": "敵戦闘力 {power}",
+  "enemyPreview.allyPower": "自分の戦闘力 {power}",
+  "enemyPreview.vs": "VS",
   "enemyPreview.enemyInfo": "敵情報",
   "enemyPreview.story": "あらすじ",
   "stageRune.title": "ルーンプレビュー",

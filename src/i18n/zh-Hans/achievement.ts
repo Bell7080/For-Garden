@@ -78,7 +78,7 @@ export const ACHIEVEMENT_ZH_HANS = {
   "achievement.objective.relicsOwned": "拥有{value}种遗物",
   "achievement.objective.maxRelicLevel": "将一名遗物培养至{value}级",
   "achievement.objective.relicsMaxBreakthrough": "完成{value}名遗物的突破",
-  "achievement.objective.relicsMaxBond": "与{value}名遗物的羁绊达到最大",
+  "achievement.objective.relicsMaxBond": "与{value}名遗物的羁绊达到10级",
   "achievement.objective.playerLevel": "研究员等级达到{value}",
   "achievement.objective.victories": "赢得{value}场战斗",
   "achievement.objective.storyStagesCleared": "通关{value}个剧情关卡",

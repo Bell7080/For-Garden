@@ -78,7 +78,7 @@ export const ACHIEVEMENT_ID = {
   "achievement.objective.relicsOwned": "Miliki {value} jenis Relik",
   "achievement.objective.maxRelicLevel": "Naikkan satu Relik ke level {value}",
   "achievement.objective.relicsMaxBreakthrough": "Selesaikan Terobosan {value} Relik",
-  "achievement.objective.relicsMaxBond": "Maksimalkan Ikatan dengan {value} Relik",
+  "achievement.objective.relicsMaxBond": "Capai Ikatan 10 dengan {value} Relik",
   "achievement.objective.playerLevel": "Capai level Periset {value}",
   "achievement.objective.victories": "Menang {value} pertempuran",
   "achievement.objective.storyStagesCleared": "Selesaikan {value} tahap cerita",

@@ -104,8 +104,10 @@ export interface RelicProgress {
   breakthrough: number;
   /** 공명 단계(0~4) — 돌파 IV 뒤 중복 파편으로 올리는 오각형 성장(`core/relicResonance.ts`). 없으면 0이다. */
   resonance?: number;
-  /** 플레이어별 유대 레벨. 야성 증가를 완화하며 정적 렐릭 정의에는 두지 않는다. */
+  /** 플레이어별 유대 레벨(상한 없음 — 1~10레벨이 오각형 +1%씩). 정적 렐릭 정의에는 두지 않는다. */
   bondLevel: number;
+  /** 유대 각성 — 어느 축에 몇 번 넣었는가(`core/bond.ts`). 없으면 아무 데도 넣지 않았다. 무료로 초기화된다. */
+  bondAwakening?: Partial<Record<"hp" | "def" | "res" | "atk" | "ap", number>>;
   /** 유대 레벨을 산출하는 누적 경험치다. 애착(favorite) 선택과는 무관하다. */
   bondXp: number;
   /** 해당 렐릭이 로비 일일 유대 보상을 마지막으로 받은 UTC 날짜키다. */

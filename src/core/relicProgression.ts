@@ -2,7 +2,7 @@ import type { HeartGemStatEffect } from "../data/heartGems";
 import { assertValidRuneInstance, RUNE_STAT_UNIT, runeOptionValue, type RuneInstance, type RuneStatKey } from "./runes";
 import { RARITY_LEVEL_GROWTH } from "./rarityScaling";
 import { resonanceOf, resonanceStatEffect } from "./relicResonance";
-import { bondStatPercent } from "./bond";
+import { bondStatBonus } from "./bond";
 import type { RelicDef, RelicProgress, RelicRarity, Stats } from "./types";
 
 /** 연구원 레벨 1의 렐릭 레벨 상한 — 막 시작한 계정이 1장을 도는 동안의 상한이다. */
@@ -467,14 +467,14 @@ export function applyHeartGems(stats: Stats, gems: readonly RuneInstance[]): Sta
  * 최종 능력치는 기본 → 레벨 → 공명·유대 → 별 → Heart Gem 순서로만 계산한다.
  *
  * **공명은 PvE에서만 든다** — 결투·아레나는 `resonance: false`로 부른다(`RelicProgressionManager.getFinalStats`의 `pvp`).
- * **유대는 어디서나 든다**(레벨당 오각형 다섯 +1% — `bondStatPercent`). 공명과 더해 한 번에 곱한다.
+ * **유대는 어디서나 든다**(1~10레벨 오각형 다섯 +1%씩 + 고른 축의 유대 각성 — `bondStatBonus`). 공명과 더해 한 번에 곱한다.
  */
 export function calculateFinalStats(base: Stats, progress: RelicProgress, gems: readonly RuneInstance[], rarity: RelicRarity, options: { resonance?: boolean } = {}): Stats {
   if (progress.heartGemSlots.length !== 3) throw new RangeError("Heart Gem 슬롯은 정확히 3개여야 합니다.");
   const breakthrough = activeBreakthroughOf(progress);
   const grown = applyLevelGrowth(base, progress.level, rarity, breakthrough);
   const resonance = options.resonance === false || breakthrough < BREAKTHROUGH_CAP ? 0 : resonanceOf(progress);
-  const bond = bondStatPercent(progress.bondLevel);
-  const resonated = resonance > 0 || bond > 0 ? applyStatPercent(grown, resonanceStatEffect(resonance, bond)) : grown;
+  const bond = bondStatBonus(progress);
+  const resonated = resonance > 0 || Object.values(bond).some((value) => value > 0) ? applyStatPercent(grown, resonanceStatEffect(resonance, bond)) : grown;
   return applyHeartGems(applyBreakthrough(resonated, breakthrough), gems);
 }

@@ -78,7 +78,7 @@ export const ACHIEVEMENT_RU = {
   "achievement.objective.relicsOwned": "Иметь {value} видов реликтов",
   "achievement.objective.maxRelicLevel": "Развить реликт до уровня {value}",
   "achievement.objective.relicsMaxBreakthrough": "Завершить прорыв {value} реликтов",
-  "achievement.objective.relicsMaxBond": "Достичь максимальной связи с {value} реликтами",
+  "achievement.objective.relicsMaxBond": "Достичь Связи 10 с {value} реликтами",
   "achievement.objective.playerLevel": "Достичь уровня исследователя {value}",
   "achievement.objective.victories": "Победить в {value} боях",
   "achievement.objective.storyStagesCleared": "Пройти {value} сюжетных этапов",

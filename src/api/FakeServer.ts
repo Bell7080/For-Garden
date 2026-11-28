@@ -14,7 +14,7 @@ import { isRegularEventActive } from "../core/regularEventRotation";
 import { CHEST_FORGE, chestBox, chestCard, chestForgePlayable, chestForgeStatus, chestRunBox, normalizeChestForgeState, rollChestCard, rollChestForgeWeek, rollChestOffer, type ChestBoxId, type ChestForgeState } from "../core/chestForge";
 import { duelParticipant, duelCombatSetup, recordPlayerDefense, type PlayerDuelContext } from "../server/playerDuels";
 import { combatJournal, combatVerdictFor, consumeCombat } from "../server/combatAuthority";
-import { BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "../core/bond";
+import { BOND_XP_MAX } from "../core/bond";
 import { assertStoryUnlocked, resolveStoryChoice, assertStoryChoiceReachable, redeemDeferredStoryBond } from "./storyAuthority";
 import type { SharedRaidContext } from "../server/sharedRaids";
 import { recordGiftChange, type GiftContext } from "../server/playerGifts";
@@ -53,7 +53,7 @@ import { bountyRunCost, isBountyTierCleared, isBountyTierUnlocked, markBountyTie
 import { BOUNTY, getBountyTier, type BountyTierDef } from "../data/bounty";
 import { BREAKTHROUGH_CAP, breakthroughFragmentSpend, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade, activeBreakthroughOf } from "../core/relicProgression";
 import { canResetRelic, relicResetRefund, resetRelicProgress } from "../core/relicReset";
-import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
+import { BOND_XP_REWARD, compactBondAwakening, grantBondXp, grantDailyLobbyBondXp, isValidBondAwakening, storyVictoryBondXp, type BondAwakening } from "../core/bond";
 import { MISSIONS, RESEARCH_REWARD_STAGES, maxResearchPoints, mergeMissionRewards, type MissionReward, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, LIFETIME_COUNT_CAP, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
 import { CHAPTERS, DAILY_RESTORATION, getStage, getStageEnemies, STAGES, SUB_STORY_GEM_REWARDS } from "../data/stages";
 import { PROGRESS_PASSES, findProgressPass, type ProgressPassDefinition } from "../data/progressPasses";
@@ -74,7 +74,7 @@ import { normalizeSettings } from "../core/settings";
 import type { GameSettings } from "../state/session";
 import type { UpdateAccountSettingsRequest, UpdateAccountSettingsResponse } from "./contracts";
 import type { BeginExpeditionAugmentRequest, BeginExpeditionAugmentResponse, ChooseExpeditionAugmentRequest, CompleteExpeditionRestRequest, PrepareExpeditionBossRequest, PrepareExpeditionBossResponse, StartExpeditionRunRequest, StartExpeditionRunResponse } from "./contracts";
-import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type ResetRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type FreeResearchStatusDto, type RechargeStaminaRequest, type RechargeStaminaResponse, type StaminaRechargeStatusDto, type ClaimProgressPassRequest, type ClaimProgressPassResponse, type ProgressPassDto, type ProgressPassListResponse } from "./contracts";
+import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type ResetRelicResponse, type SetBondAwakeningResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type FreeResearchStatusDto, type RechargeStaminaRequest, type RechargeStaminaResponse, type StaminaRechargeStatusDto, type ClaimProgressPassRequest, type ClaimProgressPassResponse, type ProgressPassDto, type ProgressPassListResponse } from "./contracts";
 import type { ProductDefinition, ProductGrant } from "../data/shopCatalog";
 import { PRODUCTS } from "../data/shopCatalog";
 import type { ProductListResponse, PurchaseProductRequest, PurchaseProductResponse } from "./contracts";
@@ -1599,7 +1599,7 @@ export class FakeServer implements GameApi {
         relicProgress[effect.relicId] = result.progress; xpGained = result.xpGained;
       } else {
         const previous = journal.pendingStoryBondXp?.[effect.relicId] ?? 0;
-        const pending = Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], previous + effect.amount);
+        const pending = Math.min(BOND_XP_MAX, previous + effect.amount);
         if (pending > 0) journal.pendingStoryBondXp = { ...journal.pendingStoryBondXp, [effect.relicId]: pending };
         xpDeferred = pending - previous;
       }
@@ -3121,6 +3121,26 @@ export class FakeServer implements GameApi {
   }
 
   /**
+   * 유대 각성 배분.
+   *
+   * 배분 전체를 받아 받은 횟수 안인지 서버가 다시 검사하고 통째로 갈아 끼운다. 비우면 무료 초기화다 — 각성은
+   * 쓰는 재화가 없어 되돌려 줄 것도 없다. 유대 레벨·경험치는 건드리지 않는다.
+   */
+  async setBondAwakening(relicId: string, awakening: BondAwakening): Promise<SetBondAwakeningResponse> {
+    await this.delay();
+    const current = this.state.relicProgress[relicId];
+    if (!this.state.owned.has(relicId) || !current) throw new GameApiError("RELIC_NOT_FOUND", "보유하지 않은 렐릭입니다.");
+    if (!isValidBondAwakening(awakening, current.bondLevel)) throw new GameApiError("INVALID_STATE", "유대 각성 횟수가 맞지 않습니다.");
+    const compact = compactBondAwakening(awakening);
+    const { bondAwakening: _dropped, ...rest } = current;
+    const nextRelic: typeof current = compact ? { ...rest, bondAwakening: compact } : rest;
+    const nextProgress = { ...this.state.relicProgress, [relicId]: nextRelic };
+    this.persist({ ...this.state, relicProgress: nextProgress });
+    this.state.relicProgress = nextProgress;
+    return { ...this.snapshot(), relicId, awakening: compact ?? {} };
+  }
+
+  /**
    * 돌파.
    *
    * 파편 검사와 차감, 단계 확정을 한 처리 단위로 끝낸다. 레벨·치즈케이크는 들지 않는다(응태 결정 2026-11-15). 화면은 결과만 받아 다시 그린다.
@@ -3270,9 +3290,10 @@ export class FakeServer implements GameApi {
       cheesecakeGranted = Math.max(0, Math.min(stage.rewards.repeatClearCheesecake, WALLET_CAPS.cheesecake - nextWallet.cheesecake));
       nextWallet.cheesecake += cheesecakeGranted;
     }
-    // 승리한 전투에 실제 편성된 세 렐릭에게만 유대 경험치를 지급한다.
+    // 승리한 전투에 실제 편성된 세 렐릭에게만 유대 경험치를 지급한다. 스토리 관문은 장이 높을수록 조금 더 준다(`storyVictoryBondXp`).
+    const stageBondXp = !owningEvent && stage.ancientFloor === undefined ? storyVictoryBondXp(stage.chapter ?? 1) : BOND_XP_REWARD.partyVictory;
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id,
-      victory && (stage.ancientFloor === undefined || firstClear) && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress]));
+      victory && (stage.ancientFloor === undefined || firstClear) && this.state.party.includes(id) ? grantBondXp(progress, stageBondXp).progress : progress]));
     const nextMissions = stage.ancientFloor !== undefined && !firstClear ? base.missions : applyMissionEvent(base.missions, { type: "battle_completed", victory }, this.now());
     // 튜토리얼은 지정 관문 승리와 같은 저장에서만 진행한다. 멈춘 기록은 재클리어로 복구한다.
     const currentTutorial = normalizeTutorialState(this.state.tutorial);

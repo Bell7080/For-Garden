@@ -78,7 +78,7 @@ export const ACHIEVEMENT_TH = {
   "achievement.objective.relicsOwned": "มีเรลิก {value} ชนิด",
   "achievement.objective.maxRelicLevel": "เลี้ยงเรลิกหนึ่งตัวถึงเลเวล {value}",
   "achievement.objective.relicsMaxBreakthrough": "ทะลวงเรลิก {value} ตัวจนสมบูรณ์",
-  "achievement.objective.relicsMaxBond": "เพิ่มสายสัมพันธ์เรลิก {value} ตัวจนสูงสุด",
+  "achievement.objective.relicsMaxBond": "สายสัมพันธ์เรลิก {value} ตัวถึงเลเวล 10",
   "achievement.objective.playerLevel": "นักวิจัยถึงเลเวล {value}",
   "achievement.objective.victories": "ชนะการต่อสู้ {value} ครั้ง",
   "achievement.objective.storyStagesCleared": "ผ่านด่านเนื้อเรื่อง {value} ด่าน",

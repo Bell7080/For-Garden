@@ -78,7 +78,7 @@ export const ACHIEVEMENT_EN = {
   "achievement.objective.relicsOwned": "Own {value} Relic types",
   "achievement.objective.maxRelicLevel": "Raise a Relic to level {value}",
   "achievement.objective.relicsMaxBreakthrough": "Complete Breakthrough for {value} Relics",
-  "achievement.objective.relicsMaxBond": "Max Bond with {value} Relics",
+  "achievement.objective.relicsMaxBond": "Reach Bond 10 with {value} Relics",
   "achievement.objective.playerLevel": "Reach Researcher Level {value}",
   "achievement.objective.victories": "Win {value} battles",
   "achievement.objective.storyStagesCleared": "Clear {value} story stages",

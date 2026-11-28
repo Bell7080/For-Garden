@@ -1,5 +1,5 @@
 import type { DialogueChoice, DialogueNode, DialogueStory } from "../core/dialogue";
-import { grantBondXp, BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "../core/bond";
+import { grantBondXp, BOND_XP_MAX } from "../core/bond";
 import { isStageUnlockedByProgress } from "../core/stageProgress";
 import { emptyServerJournal } from "../core/serverJournal";
 import { getRecollectionStory } from "../data/dialogues/recollections";
@@ -73,7 +73,7 @@ export function redeemDeferredStoryBond(next: Session, acquired: readonly string
   for (const id of new Set(acquired)) {
     const amount = journal.pendingStoryBondXp?.[id] ?? 0;
     if (!amount || !next.owned.has(id) || !next.relicProgress[id]) continue;
-    next.relicProgress[id] = grantBondXp(next.relicProgress[id], Math.min(amount, BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])).progress;
+    next.relicProgress[id] = grantBondXp(next.relicProgress[id], Math.min(amount, BOND_XP_MAX)).progress;
     delete journal.pendingStoryBondXp![id];
   }
   next.serverJournal = journal;

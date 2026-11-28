@@ -78,7 +78,7 @@ export const ACHIEVEMENT_ZH_HANT = {
   "achievement.objective.relicsOwned": "擁有{value}種遺物",
   "achievement.objective.maxRelicLevel": "將一名遺物培養至{value}級",
   "achievement.objective.relicsMaxBreakthrough": "完成{value}名遺物的突破",
-  "achievement.objective.relicsMaxBond": "與{value}名遺物的羈絆達到最大",
+  "achievement.objective.relicsMaxBond": "與{value}名遺物的羈絆達到10級",
   "achievement.objective.playerLevel": "研究員等級達到{value}",
   "achievement.objective.victories": "贏得{value}場戰鬥",
   "achievement.objective.storyStagesCleared": "通關{value}個劇情關卡",

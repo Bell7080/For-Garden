@@ -379,7 +379,7 @@ export class StageMapScene extends Phaser.Scene {
 
       // 가지도 기록 보상 길 규칙처럼 얇은 실선만 써 본편 장축보다 가볍게 보인다. 깬 곳·열린 서브의 가지는 난이도 색이다.
       const branchColor = state === "cleared" || state === "current" || (sub && state === "open") ? tone.color : COLOR.panelEdge;
-      const branchAlpha = sub && state === "open" ? spec.branch.subOpenAlpha : 1;
+      const branchAlpha = sub && state === "open" ? spec.branch.subOpenAlpha : state === "locked" ? spec.locked.branchAlpha : 1;
       this.map.add(this.add.line(0, 0, cx, y, x, y, branchColor, branchAlpha).setOrigin(0).setLineWidth(sub ? spec.branch.sub : spec.branch.main));
 
       const node = this.add.container(x, y);
@@ -415,6 +415,7 @@ export class StageMapScene extends Phaser.Scene {
         node.add(drawGlyph(this, "lock", cornerX, cornerY, spec.corner.size * 0.78, 0x8a929c, 0.85));
       }
       if (state === "current") node.setScale(spec.currentScale);
+      if (state === "locked") node.setAlpha(spec.locked.nodeAlpha);
       this.map.add(node);
       if (state === "current") {
         // 머리 위 꺾쇠가 통통 떠서 "여기"를 짚는다.
@@ -438,7 +439,7 @@ export class StageMapScene extends Phaser.Scene {
       this.nodes.set(stage.id, { ring, label, state });
 
       if (!unlocked) {
-        name.setAlpha(0.5);
+        name.setAlpha(spec.locked.nameAlpha);
         return;
       }
       ring.setInteractive({ useHandCursor: true }).on("pointerup", () => {

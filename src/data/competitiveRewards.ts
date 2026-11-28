@@ -115,39 +115,39 @@ export const GUILD_GUARD_DAILY_RANK_COINS: RankRewardTable = {
  * 결투장 월간 순위(`competitiveMonthlyOn` — 2026-11-28 응태 요청). 한 달이 닫히면 그 달 마지막 점수의 순위로 우편을 보낸다
  * (`server_competitive_rewards_v3`, 보드 `duel_month`). 티어 몫은 매주 따로 온다(`DuelTierDef.weeklyReward`).
  *
- * **주마다 주던 순위 몫을 한 달에 한 번만 준다**(응태 2026-11-28 「주간 보상마다 주던 걸 월간 한 번만 주게 너프」) — 금액은 예전 주간
- * 순위 젬(`WEEKLY_RANK_GEMS`) 한 주 치(1위 3,000 · 참여 500)이고, 그 사이를 칸마다 100 이상 오르게 끊었다(원정 표와 같은 사다리).
+ * **주마다 주던 순위 몫을 한 달에 한 번만 준다**(응태 2026-11-28 「너프」 → 「2주 치로」) — 금액은 예전 주간
+ * 순위 젬(`WEEKLY_RANK_GEMS`) 두 주 치(1위 6,000 · 참여 1,000)이고, 그 사이를 칸마다 100 이상 오르게 끊었다.
  * 휘장은 50 단위다.
  */
 export const DUEL_MONTHLY_RANK_REWARDS: RankRewardPool = {
   ranks: [
-    { upTo: 1, rewards: { gems: 3000, duelEmblem: 700 } },
-    { upTo: 2, rewards: { gems: 2700, duelEmblem: 600 } },
-    { upTo: 3, rewards: { gems: 2500, duelEmblem: 550 } },
-    { upTo: 10, rewards: { gems: 2000, duelEmblem: 500 } },
-    { upTo: 50, rewards: { gems: 1500, duelEmblem: 450 } },
-    { upTo: 100, rewards: { gems: 1200, duelEmblem: 400 } },
-    { upTo: 300, rewards: { gems: 1000, duelEmblem: 350 } },
-    { upTo: 1000, rewards: { gems: 900, duelEmblem: 300 } },
+    { upTo: 1, rewards: { gems: 6000, duelEmblem: 700 } },
+    { upTo: 2, rewards: { gems: 5500, duelEmblem: 600 } },
+    { upTo: 3, rewards: { gems: 5000, duelEmblem: 550 } },
+    { upTo: 10, rewards: { gems: 4000, duelEmblem: 500 } },
+    { upTo: 50, rewards: { gems: 3000, duelEmblem: 450 } },
+    { upTo: 100, rewards: { gems: 2000, duelEmblem: 400 } },
+    { upTo: 300, rewards: { gems: 1800, duelEmblem: 350 } },
+    { upTo: 1000, rewards: { gems: 1600, duelEmblem: 300 } },
   ],
   percents: [
-    { upToPercent: 10, rewards: { gems: 800, duelEmblem: 250 } },
-    { upToPercent: 30, rewards: { gems: 700, duelEmblem: 200 } },
-    { upToPercent: 50, rewards: { gems: 600, duelEmblem: 150 } },
+    { upToPercent: 10, rewards: { gems: 1500, duelEmblem: 250 } },
+    { upToPercent: 30, rewards: { gems: 1300, duelEmblem: 200 } },
+    { upToPercent: 50, rewards: { gems: 1200, duelEmblem: 150 } },
   ],
-  participation: { gems: 500, duelEmblem: 100 },
+  participation: { gems: 1000, duelEmblem: 100 },
 };
 
 /**
  * 아레나 월간 순위(같은 구조). 티어 몫은 지금처럼 매주(`ArenaTierDef.weeklyReward`)이고, 예전 주간 순위 젬(100위 밖 0)을 걷어 내고
- * 이 표가 한 달에 한 번 예전 주간 순위 한 주 치(`ARENA_WEEKLY_RANK_GEMS` — 1위 2,500)를 준다. 100위 밖도 칸마다 오르는 몫을 받는다.
+ * 이 표가 한 달에 한 번 예전 주간 순위 두 주 치(`ARENA_WEEKLY_RANK_GEMS` ×2 — 1위 5,000)를 준다. 100위 밖도 칸마다 오르는 몫을 받는다.
  */
 export const ARENA_MONTHLY_RANK_REWARDS: RankRewardPool = {
   ranks: [
-    { upTo: 1, rewards: { gems: 2500 } }, { upTo: 2, rewards: { gems: 2200 } }, { upTo: 3, rewards: { gems: 2000 } },
-    { upTo: 10, rewards: { gems: 1500 } }, { upTo: 50, rewards: { gems: 1000 } }, { upTo: 100, rewards: { gems: 800 } },
-    { upTo: 300, rewards: { gems: 700 } }, { upTo: 1000, rewards: { gems: 600 } },
+    { upTo: 1, rewards: { gems: 5000 } }, { upTo: 2, rewards: { gems: 4500 } }, { upTo: 3, rewards: { gems: 4000 } },
+    { upTo: 10, rewards: { gems: 3000 } }, { upTo: 50, rewards: { gems: 2000 } }, { upTo: 100, rewards: { gems: 1000 } },
+    { upTo: 300, rewards: { gems: 900 } }, { upTo: 1000, rewards: { gems: 800 } },
   ],
-  percents: [{ upToPercent: 10, rewards: { gems: 500 } }, { upToPercent: 30, rewards: { gems: 400 } }, { upToPercent: 50, rewards: { gems: 300 } }],
-  participation: { gems: 200 },
+  percents: [{ upToPercent: 10, rewards: { gems: 700 } }, { upToPercent: 30, rewards: { gems: 600 } }, { upToPercent: 50, rewards: { gems: 500 } }],
+  participation: { gems: 400 },
 };

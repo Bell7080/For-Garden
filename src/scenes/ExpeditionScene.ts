@@ -1,3 +1,4 @@
+import { addSectionTitle } from "../ui/SectionTitle";
 import { bindNotificationDot } from "../ui/NotificationDot";
 import { squeezeTextToWidth } from "../ui/textFit";
 import { playFormationTapSound } from "../ui/formationSound";
@@ -357,7 +358,8 @@ export class ExpeditionScene extends Phaser.Scene {
     const step = items.length > 1 ? Math.min(LOOT.step, (LOOT.span - LOOT.frame) / (items.length - 1)) : 0;
     // 지도 위에 떠 있는 하나의 전리품 레이어로 읽히도록 제목과 얇은 상단선을 먼저 놓는다.
     drawLayer(this, BASE_WIDTH / 2, LOOT.panelY, chipPoints(972, LOOT.panelHeight, { bevel: { topLeft: 30, bottomRight: 22 } }), { fill: 0x0d131b, alpha: 0.82, edge: COLOR.accent, edgeAlpha: 0.55 });
-    this.add.text(86, 137, t(scoreOnly ? "expedition.scoreRun.summary" : "expedition.loot"), textStyle({ role: "display", size: 25, color: COLOR.accentText })).setOrigin(0, 0.5);
+    // 제목은 다른 판과 같은 공용 제목표로 판 윗변에 걸터앉는다 — 판 안의 맨 글자는 같은 위계를 혼자 다르게 말했다.
+    addSectionTitle(this, BASE_WIDTH / 2 - 486 + 22, LOOT.panelY - LOOT.panelHeight / 2, t(scoreOnly ? "expedition.scoreRun.summary" : "expedition.loot"), { size: 28 });
     items.forEach(([icon, key], index) => {
       // 네 액자는 판 가운데에 모여 선다. 넓게 벌리면 네 재화가 각자 다른 정보처럼 읽힌다.
       const x = BASE_WIDTH / 2 + (index - (items.length - 1) / 2) * step; const y = LOOT.frameY; const size = LOOT.frame;

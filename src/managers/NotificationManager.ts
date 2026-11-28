@@ -12,6 +12,8 @@ const FREE_KEYS = ["premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly"
 export class NotificationManager {
   private state: NotificationState = EMPTY_NOTIFICATION_STATE;
   private refreshGeneration = 0;
+  /** 마지막으로 받은 결투 방어덱 알림 서명 — 신호 조회가 실패해도 점이 갑자기 꺼지지 않게 둔다. */
+  private duelDefenseNotice = "";
 
   private refreshQueued = false;
   /** 지금 서버에 나가 있는 조회. 겹친 요청은 새로 보내지 않고 끝난 뒤 한 번만 다시 읽는다. */
@@ -29,7 +31,7 @@ export class NotificationManager {
   }
 
   /** 한 처리에서 저장이 여러 번 일어나도 한 번만 다시 읽는다. 실패는 기존 상태를 둔다. */
-  private queueRefresh(): void {
+  queueRefresh(): void {
     if (this.refreshQueued) return;
     this.refreshQueued = true;
     queueMicrotask(() => { this.refreshQueued = false; void this.refresh().catch(() => undefined); });
@@ -109,11 +111,14 @@ export class NotificationManager {
       freeResearchAvailable: signals.status === "fulfilled" ? signals.value.freeResearchAvailable === true : previous.freeResearch,
       claimableInteractionCount: signals.status === "fulfilled" ? signals.value.claimableInteractionCount ?? 0 : Number(previous.interactionReturned),
       duelSeasonRewardReady: signals.status === "fulfilled" ? signals.value.duelSeasonRewardReady === true : previous.duelSeasonReward,
+      duelDefenseNotice: signals.status === "fulfilled" ? signals.value.duelDefenseNotice ?? "" : this.duelDefenseNotice,
+      duelDefenseSeen: session.settings.game.duelDefenseSeen,
       claimableSubscriptionBonusCount: signals.status === "fulfilled" ? signals.value.claimableSubscriptionBonusCount ?? 0 : Number(previous.premiumSubscription),
       guildAttendanceReady: signals.status === "fulfilled" ? signals.value.guildAttendanceReady === true : previous.guildAttendance,
       patronClaimable: signals.status === "fulfilled" ? signals.value.patronClaimable === true : previous.patronDaily,
     });
     // 전체 조회 결과도 같은 manager 이벤트 계약으로 발행해 UI 구독 경로를 하나로 유지한다.
+    if (signals.status === "fulfilled") this.duelDefenseNotice = signals.value.duelDefenseNotice ?? "";
     this.state = next; this.events.publishNotification(next);
     // 운영팀 조정은 서버가 응답 상태(session)에 이미 반영했다. 지갑·가방 표시를 갱신하고 안내를 띄운다.
     const notices = signals.status === "fulfilled" ? signals.value.opsNotices : undefined;

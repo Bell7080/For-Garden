@@ -44,7 +44,7 @@ export type PartyContent =
   /** 결투 공격 — 위에 상대 방어덱이 서고, 전투 시작이 도전권 하나를 쓴다. 시작 편성은 지난 공격덱이다. */
   | { content: "duel"; opponent: DuelPartyOpponent; attack: readonly string[] }
   /** 결투 방어덱 — 위에 적이 없고, 저장이 곧 게시다. 가릴 렐릭의 순서도 여기서 고른다. */
-  | { content: "duelDefense"; defense: readonly string[]; blindChoice: readonly string[]; score: number; tour?: boolean }
+  | { content: "duelDefense"; defense: readonly string[]; blindChoice: readonly string[]; score: number; tour?: boolean; /** 저장한 뒤로 약해진 렐릭 — 칸에 「약해짐」 표식이 선다. */ weakened?: readonly string[] }
   /** 길드 수호전 — 위에 적이 없고(웨이브로 몰려온다) 여섯 칸 두 줄이다. 그날의 적 속성을 함께 든다. */
   | { content: "guildGuard"; element: Element }
   /**
@@ -86,7 +86,7 @@ function normalizeDuelOpponent(value: unknown, minUnits = 3): DuelPartyOpponent 
  * 지난 진입의 값으로 엉뚱한 던전의 편성이 뜨면 안 된다.
  */
 export function normalizePartyContent(input: unknown): PartyContent {
-  const data = (input ?? {}) as Partial<{ content: string; tierId: string; raidId: string; bossRelicId: string; difficulty: string; auto: unknown; opponent: unknown; attack: unknown; defense: unknown; blindChoice: unknown; score: unknown; tour: unknown; element: string; slotId: string | null; deck: unknown; defenderName: string; units: unknown; friend: unknown }>;
+  const data = (input ?? {}) as Partial<{ content: string; tierId: string; raidId: string; bossRelicId: string; difficulty: string; auto: unknown; opponent: unknown; attack: unknown; defense: unknown; blindChoice: unknown; score: unknown; tour: unknown; weakened: unknown; element: string; slotId: string | null; deck: unknown; defenderName: string; units: unknown; friend: unknown }>;
   if (data.content === "friendly") {
     // 친구의 방어팀은 셋이 안 될 수 있다(보유 렐릭이 적은 계정) — 한 명부터 받는다. 가려진 칸은 없다.
     const opponent = normalizeDuelOpponent(data.opponent, 1);
@@ -102,7 +102,8 @@ export function normalizePartyContent(input: unknown): PartyContent {
   if (data.content === "duelDefense") {
     const defense = stringIds(data.defense, 3);
     const score = typeof data.score === "number" && Number.isFinite(data.score) ? Math.max(0, data.score) : 0;
-    return { content: "duelDefense", defense, blindChoice: stringIds(data.blindChoice, 3).filter((id) => defense.includes(id)).slice(0, 2), score, ...(data.tour === true ? { tour: true } : {}) };
+    const weakened = stringIds(data.weakened, 3).filter((id) => defense.includes(id));
+    return { content: "duelDefense", defense, blindChoice: stringIds(data.blindChoice, 3).filter((id) => defense.includes(id)).slice(0, 2), score, ...(data.tour === true ? { tour: true } : {}), ...(weakened.length > 0 ? { weakened } : {}) };
   }
   if (data.content === "guildWarDefense" && (data.slotId === null || data.slotId === undefined || parseGuildWarSlotId(data.slotId))) {
     return { content: "guildWarDefense", slotId: data.slotId ?? null, deck: stringIds(data.deck, 3) };

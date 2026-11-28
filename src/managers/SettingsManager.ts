@@ -126,6 +126,12 @@ export class SettingsManager extends EventTarget {
     this.update({ game: { guildSeen: { ...current, [page]: key } } });
   }
 
+  /** 결투장 방어덱을 열어 봤다고 적는다 — [방어]의 빨간 점이 꺼진다(저장하지 않아도). */
+  rememberDuelDefenseSeen(signature: string): void {
+    if (this.get().game.duelDefenseSeen === signature) return;
+    this.update({ game: { duelDefenseSeen: signature } });
+  }
+
   /** 지금 길드 레벨을 봤다고 적는다(`guildLevelUpNotice`의 키). */
   rememberGuildLevel(key: string): void {
     if (this.get().game.guildLevelSeen === key) return;

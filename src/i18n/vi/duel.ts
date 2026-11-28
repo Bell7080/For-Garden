@@ -71,6 +71,7 @@ export const DUEL_VI = {
   "duel.ticketPopup.failed": "Nạp thất bại. Vui lòng thử lại sau ít phút.",
   "duel.defense.label": "Phòng thủ",
   "duel.defense.weakened": "Một Di vật trong đội phòng thủ đã yếu hơn lúc lưu. Hãy kiểm tra đội phòng thủ.",
+  "duel.defense.weakenedMark": "Yếu đi",
   "duel.opponents.title": "Chọn đối thủ",
   "duel.profile.title": "Hồ sơ chiến đấu",
   "duel.profile.current": "Hạng hiện tại",

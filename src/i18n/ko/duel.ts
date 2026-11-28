@@ -71,6 +71,7 @@ export const DUEL_KO = {
   "duel.ticketPopup.failed": "충전에 실패했습니다. 잠시 뒤 다시 시도해 주세요.",
   "duel.defense.label": "방어",
   "duel.defense.weakened": "방어덱의 렐릭이 저장할 때보다 약해졌습니다. 방어덱을 확인해 주세요.",
+  "duel.defense.weakenedMark": "약해짐",
   "duel.opponents.title": "상대 선택",
   "duel.profile.title": "전투 프로필",
   "duel.profile.current": "현재 티어",

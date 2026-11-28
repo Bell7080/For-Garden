@@ -31,6 +31,8 @@ import { addBackButton } from "../ui/IconButton";
 import { PopupLayer } from "../ui/PopupLayer";
 import { NotificationDot } from "../ui/NotificationDot";
 import { notificationManager } from "../managers/NotificationManager";
+import { settingsManager } from "../managers/SettingsManager";
+import { duelDefenseNoticeSignature } from "../core/duelState";
 import { openRewardPopup } from "../ui/RewardPopup";
 import { currencyRecordToRewardItems } from "../ui/rewardPopupModel";
 import { playSceneEntrance, slideTabPage, startScene } from "../ui/screenTransition";
@@ -307,22 +309,26 @@ export class DuelScene extends Phaser.Scene {
    */
   private paintDefense(status: DuelStatusResponse): void {
     const { y, height, defense } = S.actions;
+    const notice = duelDefenseNoticeSignature(status.defenseIsDefault, status.defenseWeakened);
     const button = new Button(this, defense.x + defense.width / 2, y, {
       width: defense.width, height, label: t("duel.defense.label"), fontSize: 46, ...DEFENSE_BUTTON_STYLE,
       onClick: () => {
         if (this.busy) return;
+        settingsManager.rememberDuelDefenseSeen(notice);
+        notificationManager.queueRefresh();
         const tour = this.defenseTourActive;
         this.defenseTourActive = false;
-        startScene(this, "party", { content: "duelDefense", defense: status.defense, blindChoice: status.blindChoice, score: status.score, ...(tour ? { tour: true } : {}) });
+        startScene(this, "party", { content: "duelDefense", defense: status.defense, blindChoice: status.blindChoice, score: status.score, weakened: status.defenseWeakened, ...(tour ? { tour: true } : {}) });
       },
     });
     button.fitLabel(defense.labelRoom);
     this.view.add(button);
     // 방어덱이 아직 기본 셋 그대로면 빨간 점 하나만 단다 — 라벨을 붉히면 푸른 판이 붉게 읽혀 [도전]과 색이 섞인다.
     // 저장한 뒤로 약해진 렐릭이 있어도 같은 점이 서고, 한 번은 말로도 알린다 — 방어전은 늘 지금 상태로 싸운다.
-    const weakened = status.defenseWeakened.length > 0;
-    if (status.defenseIsDefault || weakened) new NotificationDot(this, button, { x: defense.width / 2 - 16, y: -height / 2 + 14 });
-    if (weakened && !this.weakenedNoticeShown && !this.tourRunning) {
+    // 방어덱을 열어 보기만 해도 점은 꺼진다(같은 알림의 서명을 기기에 남긴다) — 새로 약해지면 다시 선다.
+    const unseen = notice !== "" && notice !== settingsManager.get().game.duelDefenseSeen;
+    if (unseen) new NotificationDot(this, button, { x: defense.width / 2 - 16, y: -height / 2 + 14 });
+    if (unseen && status.defenseWeakened.length > 0 && !this.weakenedNoticeShown && !this.tourRunning) {
       this.weakenedNoticeShown = true;
       showContentToast(this, t("duel.defense.weakened"), "info");
     }

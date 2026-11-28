@@ -891,6 +891,8 @@ describe("메테 전투 계약", () => {
     expect(ally.stunnedFor).toBe(0);
     expect(ally.shield.amount).toBe(mette.def.stats.atk * 1);
     expect(first).toContainEqual(expect.objectContaining({ kind: "shieldGranted", providerId: mette.id }));
+    // 두른 막은 그 순간 메테의 회복 기여(보호막 칸)로 들어간다.
+    expect(state.contributions[mette.id]?.shieldGranted).toBe(mette.def.stats.atk * 1);
     expect(mette.adagioCooldownRemaining).toBe(7);
 
     applyStagger(ally, 0.1, state);
@@ -5026,5 +5028,25 @@ describe("테리사 「성의」", () => {
     expect(new Set(others).size).toBe(1);
     expect(Math.abs(amountOf(terisa.id) - others[0] / 2)).toBeLessThanOrEqual(1);
     for (const ally of allies) expect(ally.shield.amount).toBeGreaterThan(before.get(ally.id)!);
+  });
+});
+
+describe("전투 기여도 — 사건이 따로인 피해", () => {
+  it("파치의 뇌진탕은 제 사건으로 뜨지만 파치의 공격 기여도에 든다", () => {
+    const state = createSkirmish([getRelic("pachi")], [getRelic("amo")], ARENA);
+    const enemy = state.fighters.find(({ id }) => id === "enemy-0")!;
+    let concussion = 0;
+    let lost = 0;
+    for (let i = 0; i < 60 * 40 && state.phase === "fight"; i += 1) {
+      const before = enemy.hp;
+      for (const event of stepSkirmish(state, 1 / 60, () => 0.5)) {
+        if (event.kind === "concussion" && event.sourceId === "player-0") concussion += event.amount;
+      }
+      lost += Math.max(0, before - enemy.hp);
+    }
+    expect(concussion).toBeGreaterThan(0);
+    const attack = state.contributions["player-0"].attack;
+    // 파치 혼자 때리는 판이라 적이 잃은 체력 전부가 파치의 몫이다 — 뇌진탕이 빠지면 그만큼 모자란다.
+    expect(attack.attackPower + attack.abilityPower).toBeGreaterThanOrEqual(lost - 1);
   });
 });

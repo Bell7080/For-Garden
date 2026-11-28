@@ -3392,7 +3392,10 @@ export class BattleScene extends Phaser.Scene {
       const popups = new PopupLayer(this, 2200);
       if (result.unlockedStoryDifficulty) await openStoryDifficultyUnlocked(this, popups, result.unlockedStoryDifficulty);
       if (!this.scene.isActive() || generation !== this.combatGeneration) return;
-      const fighters = this.stageCompleteFighters();
+      const fighters = this.stageCompleteFighters().map((fighter) => {
+        const gain = result.bondGains?.find(({ relicId }) => relicId === fighter.relicId);
+        return gain ? { ...fighter, bond: { beforeXp: gain.beforeXp, afterXp: gain.afterXp } } : fighter;
+      });
       // 오프닝에서 곧장 들어온 판은 이어지는 이야기를 거쳐 나가야 하므로 길을 고르게 하지 않는다.
       const opening = this.battleInput.mode === "stage" && this.battleInput.exitTo === "lobby";
       let chosen = false;

@@ -1004,6 +1004,8 @@ export interface CompleteStageResponse extends PlayerStateDto {
   staminaRefunded: number;
   /** 이긴 판만 연구원 경험치가 오른다. */
   playerExp?: PlayerExpReceipt;
+  /** 이 판이 유대를 올린 편성원 — 결과판이 SD 아래 유대 줄로 그린다. 오른 렐릭이 없으면 빠진다. */
+  bondGains?: import("../core/bond").BondGainReceipt[];
 }
 /** 초회 보상으로 실제 들어온 한 줄. 룬은 발급된 인스턴스의 등급·자리를 그대로 싣는다. */
 export type StageClearGrantDto =

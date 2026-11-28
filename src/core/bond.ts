@@ -146,3 +146,33 @@ export function grantDailyLobbyBondXp(progress: RelicProgress, utcDate: string):
   const result = grantBondXp(progress, BOND_XP_REWARD.firstLobbyInteraction);
   return { ...result, progress: { ...result.progress, lastLobbyInteractionDate: utcDate } };
 }
+
+/**
+ * 한 판이 올린 유대 — 결과판이 줄을 차오르게 그리려고 서버가 돌려주는 영수증.
+ *
+ * 화면이 결과 확정 전 값을 기억했다가 빼지 않는다(그 사이 다른 경계가 바꾼 값까지 한 판의 몫이 된다).
+ * 실제로 경험치를 준 렐릭만 싣는다 — 저장 끝에 닿아 0이 된 몫은 빠진다.
+ */
+export interface BondGainReceipt { relicId: string; beforeXp: number; afterXp: number; }
+
+/** 누적 경험치가 그 레벨 줄에서 몇 할인가. 저장 끝 레벨은 가득 찬 줄이다. */
+export function bondLevelRatio(xp: number, level: number): number {
+  if (level >= BOND_LEVEL_MAX) return 1;
+  const base = BOND_TOTAL_XP_BY_LEVEL[level];
+  const span = BOND_TOTAL_XP_BY_LEVEL[level + 1] - base;
+  return span > 0 ? Math.max(0, Math.min(1, (xp - base) / span)) : 1;
+}
+
+/**
+ * 결과판 유대 줄의 구간 — 연구원 경험치 줄(`playerExpBarSegments`)과 같은 문법이다. 레벨이 오르면
+ * 그 줄이 끝까지 찼다가 다음 레벨의 빈 줄에서 다시 시작한다.
+ */
+export function bondGaugeSegments(beforeXp: number, afterXp: number): { level: number; from: number; to: number }[] {
+  const before = bondLevelForXp(Math.max(0, Math.floor(beforeXp)));
+  const after = bondLevelForXp(Math.max(0, Math.floor(Math.max(beforeXp, afterXp))));
+  if (after <= before) return [{ level: before, from: bondLevelRatio(beforeXp, before), to: bondLevelRatio(afterXp, before) }];
+  const segments = [{ level: before, from: bondLevelRatio(beforeXp, before), to: 1 }];
+  for (let level = before + 1; level < after; level += 1) segments.push({ level, from: 0, to: 1 });
+  segments.push({ level: after, from: 0, to: bondLevelRatio(afterXp, after) });
+  return segments;
+}

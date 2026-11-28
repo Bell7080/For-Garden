@@ -256,6 +256,23 @@ test("전투 결과판에 연구원 경험치가 차오르고 레벨업 보상�
     E2E_SAVE_STORAGE_KEY)).toBe(5);
 });
 
+test("전투 결과판의 SD 아래에 유대 줄이 차오르고 레벨이 오르면 UP!이 선다", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
+  await page.addInitScript(() => { window.__PF_BATTLE_TEST__ = { seed: 0x5eed, preset: "result" }; });
+  // 토리카는 이 판으로 한 레벨 오르게(18/20), 도디·파루아는 1레벨 줄 중간에서 차오르게 둔다(`enterBattle`이 고르는 셋).
+  await enterBattle(page, (session) => {
+    for (const [relicId, bondXp] of [["torika", 18], ["dodi", 24], ["parua", 32]] as const) {
+      const progress = session.relicProgress[relicId];
+      if (progress) session.relicProgress[relicId] = { ...progress, bondLevel: bondXp >= 20 ? 1 : 0, bondXp };
+    }
+  });
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup), { timeout: 15_000 }).toBe(true);
+  await page.waitForTimeout(3000);
+  await captureGame(page, `test-results/${testInfo.project.name}-battle-result-bond-1080x1920.png`);
+  const bond = await page.evaluate((saveKey) => JSON.parse(localStorage.getItem(saveKey) ?? "null")?.relicProgress?.torika, E2E_SAVE_STORAGE_KEY);
+  expect(bond).toMatchObject({ bondLevel: 1, bondXp: 30 });
+});
+
 test("전투 시작의 빠른 연속 탭은 한 번만 진입하고 유효 편성을 보존한다", async ({ page }) => {
   await enterParty(page);
   await pickParty(page);

@@ -27,6 +27,7 @@ import { addDuelStandingRow, type DuelStandingResult } from "./DuelStandingRow";
 import { addGrowthPathTiles, GROWTH_TILES } from "./GrowthPathTiles";
 import type { GrowthPath } from "../core/growthPaths";
 import { addSdFootShadow } from "./SdFootShadow";
+import { addBondGainGauge, BOND_GAIN_GAUGE, type BondGain } from "./BondGainGauge";
 import type { StageFirstClearReward } from "../core/stageRewards";
 import { addStageRewardFrame } from "./stageRewardFrame";
 import { openRuneInfoPopup } from "./RunePopup";
@@ -46,6 +47,8 @@ import type { GuardReport } from "../core/guildGuardReport";
 export interface StageCompleteFighter {
   relicId: string;
   isMvp: boolean;
+  /** 이 판이 올린 유대(서버 영수증). 있으면 이름줄 아래에 작은 유대 줄이 차오른다. */
+  bond?: BondGain;
 }
 
 /**
@@ -549,6 +552,7 @@ export class StageCompletePopup {
       });
       const level = relicProgression.getProgress(relic.id).level;
       body.add(this.scene.add.text(cx, SD.groundY + 34, `Lv.${level}  ${relic.name}`, textStyle({ role: "emphasis", size: slot === "mvp" ? 24 : 19, color: slot === "mvp" ? this.accentText() : COLOR.ink })).setOrigin(0.5));
+      if (fighter.bond) addBondGainGauge(this.scene, body, cx, SD.groundY + BOND_GAIN_GAUGE.belowGround, fighter.bond, slot === "mvp");
       if (slot === "mvp") this.buildMvpLabel(body, cx, SD.groundY - size.height - 26);
       x += size.width + SD.gap;
     });

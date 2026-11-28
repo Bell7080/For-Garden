@@ -1,11 +1,15 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { tutorialManager } from "../managers/TutorialManager";
-import { settingsManager } from "../managers/SettingsManager";
 import { session } from "../state/session";
-import { drawIcon, type BottomNav } from "./BottomNav";
-import { Button } from "./Button";
-import { COLOR, textStyle } from "./theme";
+import type { BottomNav } from "./BottomNav";
+import type { Button } from "./Button";
+import { TUTORIAL_REWARDS } from "../core/tutorial";
+import { formatCurrency } from "../core/formatCurrency";
+import { openCuteGuide } from "./CuteGuidePopup";
+import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
+import { chipPoints, drawLayer } from "./holo";
+import { addFramedIcon } from "./itemFrame";
 import { anyPopupOpen, type PopupLayer } from "./PopupLayer";
 import { currencyRecordToRewardItems, openRewardPopup } from "./RewardPopup";
 import { followTutorialTarget } from "./tutorialTarget";
@@ -35,16 +39,7 @@ export function startLobbyTutorial(scene: Phaser.Scene, nav: BottomNav, popups: 
     if (anyPopupOpen()) { scene.time.delayedCall(500, () => void step()); return; }
     if (!giftAnnounced) {
       giftAnnounced = true;
-      popups.open({ width: 820, height: 650, title: t("tutorial.research.open.title"), hideCloseButton: true, closeOnBackdrop: false }, (body, close) => {
-        const icon = drawIcon(scene, "lab", 0, -125, COLOR.accent, 2);
-        body.add(icon);
-        if (!settingsManager.get().accessibility.reduceMotion) {
-          icon.setScale(1).setAlpha(0);
-          scene.tweens.add({ targets: icon, scale: 2, alpha: 1, duration: 420, ease: "Back.Out" });
-        }
-        body.add(scene.add.text(0, 5, t("tutorial.research.open.body"), textStyle({ role: "body", size: 30, wrap: 690, align: "center" })).setOrigin(.5));
-        body.add(new Button(scene, 0, 205, { width: 520, height: 90, label: t("settings.action.confirm"), variant: "primary", onClick: () => { close(); void step(); } }));
-      });
+      openResearchOpenGuide(scene, popups, () => void step());
       return;
     }
     const response = await tutorialManager.complete("gift");
@@ -54,4 +49,23 @@ export function startLobbyTutorial(scene: Phaser.Scene, nav: BottomNav, popups: 
     if (fossil > 0) openRewardPopup(scene, popups, { title: t("tutorial.gift.title"), items: currencyRecordToRewardItems({ fossil }) });
   };
   scene.time.delayedCall(900, () => void step());
+}
+
+/** 연구소를 여는 안내 — 애착 렐릭이 무대에서 뛰며 받을 지원품(화석)을 미리 보여 준다. 지급은 확인 뒤 서버가 한다. */
+export function openResearchOpenGuide(scene: Phaser.Scene, popups: PopupLayer, onConfirm: () => void): void {
+  openCuteGuide(scene, popups, {
+    title: t("intro.title"),
+    tone: "lilac",
+    required: true,
+    confirmLabel: t("settings.action.confirm"),
+    pages: [{ heading: t("tutorial.research.open.title"), body: t("tutorial.research.open.body"), icon: CURRENCY_ICON_BY_WALLET.fossil }],
+    extra: {
+      height: 150,
+      paint: (_scene, slot, width, tone) => {
+        slot.add(drawLayer(scene, 0, 0, chipPoints(width, 150, { bevel: { topLeft: 30, bottomRight: 30 } }), { fill: tone.deep, alpha: 0.72, shadow: false }));
+        addFramedIcon(scene, slot, 0, 0, 116, CURRENCY_ICON_BY_WALLET.fossil, { amount: formatCurrency(TUTORIAL_REWARDS.gift?.fossil ?? 0) });
+      },
+    },
+    onConfirm,
+  });
 }

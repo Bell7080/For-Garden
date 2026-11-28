@@ -612,7 +612,7 @@ describe("FakeServer", () => {
     expect(state.tutorial.completedStepIds).toEqual(["ultimate", "auto"]);
   });
 
-  it("1-5 전에는 연구와 지원품 지급을 막고 클리어 후 8개를 한 번만 준다", async () => {
+  it("1-5 전에는 연구와 지원품 지급을 막고 클리어 후 10개를 한 번만 준다", async () => {
     const state = makeSession(0);
     state.tutorial = { completedStepIds: ["ultimate", "auto", "feed", "feedLevel", "presentation", "speed", "contribution"] };
     const server = new FakeServer(state, { latencyMs: 0 });
@@ -623,11 +623,11 @@ describe("FakeServer", () => {
     await expect(server.completeTutorialStep({ stepId: "gift" })).rejects.toMatchObject({ code: "INVALID_STATE" });
     await server.completeStage("1-5", true);
     const stageFossil = state.wallet.fossil;
-    expect((await server.completeTutorialStep({ stepId: "gift" })).granted).toEqual({ fossil: 8 });
+    expect((await server.completeTutorialStep({ stepId: "gift" })).granted).toEqual({ fossil: 10 });
     expect((await server.completeTutorialStep({ stepId: "gift" })).granted).toBeUndefined();
-    expect(state.wallet.fossil).toBe(stageFossil + 8);
+    expect(state.wallet.fossil).toBe(stageFossil + 10);
     await server.pullRelics({ bannerId: "welcome", count: 10 });
-    expect(state.wallet.fossil).toBe(stageFossil);
+    expect(state.wallet.fossil).toBe(stageFossil + 2);
     expect(state.tutorial.completedStepIds.at(-1)).toBe("pull");
   });
 
@@ -1939,11 +1939,11 @@ describe("첫 플레이 튜토리얼 칸", () => {
   it("은 선물 칸에서 화석을 한 번만 준다", async () => {
     const server = make(ORDER, 0);
     const first = await server.completeTutorialStep({ stepId: "gift" });
-    expect(first.granted).toEqual({ fossil: 8 });
-    expect(first.wallet.fossil).toBe(8);
+    expect(first.granted).toEqual({ fossil: 10 });
+    expect(first.wallet.fossil).toBe(10);
     const again = await server.completeTutorialStep({ stepId: "gift" });
     expect(again.granted).toBeUndefined();
-    expect(again.wallet.fossil).toBe(8);
+    expect(again.wallet.fossil).toBe(10);
   });
 
   it("은 지갑 상한을 넘기는 선물을 깎아서 준다", async () => {

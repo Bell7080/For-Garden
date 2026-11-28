@@ -71,6 +71,7 @@ export const DUEL_RU = {
   "duel.ticketPopup.failed": "Не удалось пополнить. Попробуйте ещё раз чуть позже.",
   "duel.defense.label": "Защита",
   "duel.defense.weakened": "Один из реликтов в защитной колоде стал слабее, чем при сохранении. Проверьте защитную колоду.",
+  "duel.defense.weakenedMark": "Ослаб",
   "duel.opponents.title": "Выбор соперника",
   "duel.profile.title": "Боевой профиль",
   "duel.profile.current": "Текущий ранг",

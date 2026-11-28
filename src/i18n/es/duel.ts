@@ -71,6 +71,7 @@ export const DUEL_ES = {
   "duel.ticketPopup.failed": "No se pudo recargar. Inténtalo de nuevo en unos instantes.",
   "duel.defense.label": "Defensa",
   "duel.defense.weakened": "Una reliquia de tu mazo de defensa es más débil que cuando lo guardaste. Revisa tu mazo de defensa.",
+  "duel.defense.weakenedMark": "Más débil",
   "duel.opponents.title": "Elegir rival",
   "duel.profile.title": "Perfil de combate",
   "duel.profile.current": "Rango actual",

@@ -81,7 +81,7 @@ import type { ProductListResponse, PurchaseProductRequest, PurchaseProductRespon
 import { totalGrantAmount } from "../core/purchase";
 import { getRelicSkin } from "../data/relicSkins";
 import { applyDuelScore, DUEL_BATTLE_REWARD, DUEL_MAX_BLIND, DUEL_OPPONENT_COUNT, duelStreakBonus, duelBlindCount, duelBlindOrder, duelExtraAttemptPrice, duelHiddenRelicIds, duelNewlyReachedTiers, duelAllOpponentsFought, duelFreeRefreshesLeft, duelRefreshPrice, duelScoreDelta, duelSeasonId, duelTierRose, duelSeasonEndsAt, duelStanding, duelTier, getDuelTier, pickDuelOpponents } from "../core/duelArena";
-import { DUEL_FORFEIT_AFTER_MS, DUEL_HISTORY_LIMIT, normalizeDuelState, weakenedDefenseRelics, duelAttemptsLeft, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
+import { DUEL_FORFEIT_AFTER_MS, DUEL_HISTORY_LIMIT, normalizeDuelState, weakenedDefenseRelics, duelDefenseNoticeSignature, duelAttemptsLeft, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
 import { duelNpcPool } from "../core/duelNpcPool";
 import { simulateDuelDefenses } from "../core/duelDefense";
 import { ancientHighestCleared, rollAncientSeason } from "../core/ancientStrata";
@@ -4011,7 +4011,12 @@ export class FakeServer implements GameApi {
     const guildAttendanceReady = isContentUnlocked("guild", this.state.playerResearch.level)
       && (this.guildRead?.attendanceReady ?? await this.guildAttendanceReady());
     const patronClaimable = patronHasClaimable(this.patronState(), now);
-    return { patronClaimable, guildAttendanceReady, freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
+    // [방어]의 빨간 점 — 기본 셋 그대로이거나 저장한 뒤 약해진 렐릭이 있다. 본 적이 있는지는 기기 설정이 가린다.
+    const duelForNotice = normalizeDuelState(this.state.duel, [...this.state.owned]);
+    const duelDefenseNotice = (QA_TOOLS_ENABLED || this.duelContext !== undefined) && isContentUnlocked("duel", this.state.playerResearch.level)
+      ? duelDefenseNoticeSignature(!duelForNotice.defenseCustomized, weakenedDefenseRelics(duelForNotice, (relicId) => this.duelRelicPower(relicId)))
+      : "";
+    return { duelDefenseNotice, patronClaimable, guildAttendanceReady, freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
   }
 
   /**

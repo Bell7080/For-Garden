@@ -54,3 +54,32 @@ export function addDuelBlindMark(scene: Phaser.Scene, parent: Phaser.GameObjects
   const { mark } = DUEL_BLIND_STYLE;
   parent.add(scene.add.text(x, y, "?", textStyle({ role: "display", size: mark.size, color: mark.color })).setStroke(mark.stroke, 12).setOrigin(0.5).setAlpha(0.92));
 }
+
+/**
+ * 저장한 뒤로 약해진 렐릭의 표식 — 방어덱 칸의 SD 어깨 위에 붉은 칩(내림 화살표 + 「약해짐」)이 숨 쉬며 선다(응태 2026-11-28).
+ * 로비·결투장의 빨간 점이 「누가」를 말하지 못하므로 방어덱에 들어오면 이 칩이 그 렐릭을 짚는다. 누를 것이 없는 표식이다.
+ */
+export const DUEL_WEAKENED_STYLE = {
+  chip: { width: 150, height: 46 },
+  fill: 0x7a1424, edge: 0xff8a8a, glow: 0xff4d5e, text: "#ffffff",
+  /** SD 발끝 줄에서 칩 중심까지(위로) · 칸 가운데에서 오른쪽으로. */
+  rise: 150, shift: 70,
+  pulse: { from: 0.7, durationMs: 620 },
+} as const;
+
+export function addDuelWeakenedMark(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, reduceMotion: boolean): Phaser.GameObjects.Container {
+  const S = DUEL_WEAKENED_STYLE;
+  const box = scene.add.container(x, y);
+  box.add(drawLayer(scene, 0, 0, slantedRect(S.chip.width, S.chip.height), { fill: S.fill, alpha: 0.96, edge: S.edge, edgeAlpha: 1, edgeWidth: 3, glow: { color: S.glow, strength: 0.5, height: 0.9 } }));
+  const glyphX = -S.chip.width / 2 + 28;
+  box.add(drawGlyph(scene, "demote", glyphX, 0, 28, 0xffffff, 1, 3.5));
+  const label = scene.add.text(glyphX + 20, 0, t("duel.defense.weakenedMark"), textStyle({ role: "display", size: 24, color: S.text })).setOrigin(0, 0.5);
+  squeezeTextToWidth(label, S.chip.width / 2 + 28 - 20 - 12);
+  box.add(label);
+  parent.add(box);
+  if (!reduceMotion) {
+    const tween = scene.tweens.add({ targets: box, alpha: S.pulse.from, scale: 1.06, duration: S.pulse.durationMs, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    box.once(Phaser.GameObjects.Events.DESTROY, () => tween.remove());
+  }
+  return box;
+}

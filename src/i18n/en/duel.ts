@@ -71,6 +71,7 @@ export const DUEL_EN = {
   "duel.ticketPopup.failed": "Recharge failed. Please try again in a moment.",
   "duel.defense.label": "Defense",
   "duel.defense.weakened": "A relic in your defense deck is weaker than when you saved it. Check your defense deck.",
+  "duel.defense.weakenedMark": "Weaker",
   "duel.opponents.title": "Choose Opponent",
   "duel.profile.title": "Battle Profile",
   "duel.profile.current": "Current Tier",

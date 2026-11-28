@@ -73,7 +73,7 @@ export const AUGMENT_TH = {
   "augment.tag.detail.shield": "ได้รับโล่ {maxHpPercent}% ของ HP สูงสุดตนเอง ตามกฎโล่และการดูดซับเดิม",
   "augment.tag.name.ferocity": "ความดุร้าย",
   "augment.tag.name.cleanse": "ชำระล้าง",
-  "augment.tag.detail.ferocity": "ได้รับความดุร้ายพื้นฐาน {points} ใช้โบนัสสายสัมพันธ์และการได้รับความดุร้ายเดิม ไม่ได้รับเพิ่มระหว่างโหมดคลุ้มคลั่ง",
+  "augment.tag.detail.ferocity": "ได้รับความดุร้ายพื้นฐาน {points} ใช้โบนัสการได้รับความดุร้ายเดิม ไม่ได้รับเพิ่มระหว่างโหมดคลุ้มคลั่ง",
   "augment.tag.detail.cleanse": "ลบผลเสียตามกฎชำระล้างเดิม คงบัฟที่เป็นประโยชน์ ไม่มอบภูมิคุ้มกันใหม่",
   "augment.tag.selfReceived": "ทุกการโจมตีตรงที่ทำให้ HP ลด {every} ครั้ง ใช้ {tag} ×{stacks} กับตนเอง",
   "augment.tag.name.receivedEffect": "ตอบสนอง{tag}",

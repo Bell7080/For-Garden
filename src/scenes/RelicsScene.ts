@@ -414,6 +414,8 @@ export class RelicsScene extends Phaser.Scene {
       this.content.add(card);
       if (this.playIntro) this.playCardIntro(card, introIndex, y);
       // 카드를 누르면 바로 정보창이 열린다. 애착 설정도 그 안의 뱃지가 맡는다.
+      // 눌리는 손맛 — 끌어 스크롤한 손은 튀지 않고 조용히 돌아온다.
+      card.enablePressFeedback(() => this.draggedDistance <= DRAG_SLOP);
       card.hit.on("pointerup", () => {
         // 드래그 종료가 카드 선택으로 새지 않도록 포인터 이동 허용치를 넘은 탭은 버린다.
         if (this.draggedDistance <= DRAG_SLOP) this.info.showRelic(relic, relicCollection.owns(relic.id));

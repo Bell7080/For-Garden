@@ -77,7 +77,7 @@ export const AUGMENT_KO = {
   "augment.tag.detail.shield": "자신의 최대 체력 {maxHpPercent}%만큼 보호막을 얻는다. 기존 보호막 처리와 실제 흡수량을 사용한다.",
   "augment.tag.name.ferocity": "야성",
   "augment.tag.name.cleanse": "정화",
-  "augment.tag.detail.ferocity": "기본 야성 {points} 획득. 기존 유대·야성 획득 보정을 적용하며 폭주 중에는 추가 획득하지 않는다.",
+  "augment.tag.detail.ferocity": "기본 야성 {points} 획득. 기존 야성 획득 보정을 적용하며 폭주 중에는 추가 획득하지 않는다.",
   "augment.tag.detail.cleanse": "기존 정화 규칙에 따라 해로운 효과를 제거한다. 이로운 강화는 유지하며 새 면역을 부여하지 않는다.",
   "augment.tag.selfReceived": "직접 피해를 {every}회 받을 때마다 자신에게 {tag} {stacks}회 적용.",
   "augment.tag.name.receivedEffect": "{tag} 반응",

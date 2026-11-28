@@ -82,7 +82,7 @@ import { fitTextToBox, squeezeTextToWidth } from "./textFit";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmCardLayout, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
 import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, breakthroughFragmentSpend, type BreakthroughStep, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as simulateFeed, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade, breakthroughGrowthPercent, RELIC_MAX_LEVEL } from "../core/relicProgression";
-import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
+import { bondStatPercent, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
 import { attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, periodicStackKeyword, plumeKeyword, frostbiteKeyword, skillDescription, passiveStackKeywords, casterRatioKeywords } from "./skillPresentation";
@@ -358,6 +358,12 @@ const BREAK_BUTTON = { width: 260, height: 86, labelY: -18, costY: 18, costSize:
 const UNIVERSAL_SPEND_TEXT = "#ffd66b";
 
 /** 뚫을 수 있을 때 판 안쪽에서 번지는 빛의 숨. 느려야 재촉이 아니라 신호로 읽힌다. */
+/** 룬 칸을 눌렀을 때의 맥동 — 그 조각이 한 번 부풀며 빛나고, 그 박자 끝에 창이 열린다. */
+/** 이만큼 넘게 끌고 뗀 손은 칸 누르기로 치지 않는다. */
+const PANEL_TAP_SLOP = 24;
+
+const RUNE_SLOT_PULSE = { scale: 1.12, glow: 0.9, ms: 260, openAfterMs: 170 } as const;
+
 const BREAK_ARM = { low: 0.35, high: 1, duration: 900 } as const;
 
 /**
@@ -643,6 +649,8 @@ export class InfoManager {
   private breakButton?: { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Container; arm: Phaser.GameObjects.Graphics };
   /** 돌파할 수 있을 때만 도는 숨. 조건이 풀리면 멈추고 빛을 끈다. */
   private breakPulse?: Phaser.Tweens.Tween;
+  /** 돌파 버튼을 마지막으로 칠한 값 — 같으면 다시 칠하지 않는다(급여 연타 중 비용 줄·숨 다시 세우기를 막는다). */
+  private breakSignature?: { key: string; button: object };
   private feedPlate?: { on: Phaser.GameObjects.Graphics; off: Phaser.GameObjects.Graphics };
   /** 급여 버튼의 치즈케이크 값줄 — `가진 수/한 번에 드는 수`. */
   private feedCost?: Phaser.GameObjects.Text;
@@ -861,6 +869,10 @@ export class InfoManager {
     // 친구·적에게는 유대와 룬 판을 세우지 않는다.
     bondPanel.setVisible(this.capabilities.showBond);
     gemPanel.setVisible(this.capabilities.mutateProgress);
+    // 돋보기를 찾아 누르지 않아도 칸 어디든 누르면 그 상세가 열린다(응태 2026-11-28). 칸의 다른
+    // 입력(돋보기·버튼)보다 먼저 깔아 그 아래에 둔다.
+    this.addPanelTap(bondPanel, COLUMN.width, 144, (from) => this.openBondDetail(from));
+    this.addPanelTap(statPanel, COLUMN.width, 396, (from) => this.openExtraStats(from));
 
     // 레벨 · 경험치 · 급여.
     this.addSectionTitle(t("info.level"), 442 - 166);
@@ -999,6 +1011,21 @@ export class InfoManager {
   }
 
   /** 더 볼 것이 있다는 표시. 자리만 다를 뿐 생김새와 크기는 같다. */
+  /** 칸 전체를 누르는 면. 끌다 뗀 손(넘기기)은 열지 않는다. */
+  private addPanelTap(panel: Phaser.GameObjects.Container, width: number, height: number, onClick: (from: PopupSource) => void): void {
+    const hit = this.scene.add.rectangle(panel.x, panel.y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => pressIn(panel));
+    hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(panel, "normal", { pop: false }); });
+    hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (Phaser.Math.Distance.Between(pointer.downX, pointer.downY, pointer.upX, pointer.upY) > PANEL_TAP_SLOP) {
+        pressOut(panel, "normal", { pop: false });
+        return;
+      }
+      onClick({ x: panel.x, y: panel.y - height / 2, onClose: () => pressOut(panel) });
+    });
+    attach(panel, hit);
+  }
+
   private addMagnifier(x: number, y: number, onClick: (from: PopupSource) => void, panel?: Phaser.GameObjects.Container): void {
     addInfoMagnifier(this.scene, this.popups, panel ?? this.chrome, x, y, onClick, panel !== undefined);
   }
@@ -1182,11 +1209,16 @@ export class InfoManager {
     const ready = this.ownedNow && def !== undefined && (step
       ? canBreakThrough(def.rarity, progress, held, universal)
       : canResonate(def.rarity, progress, BREAKTHROUGH_STEPS.length, held, universal));
+    // 급여는 돌파 버튼이 읽는 값을 하나도 바꾸지 않는다 — 다다닥 두드리는 동안 응답마다 비용 줄을 다시
+    // 세우고 숨 쉬는 빛을 처음부터 다시 틀던 것이 급여 렉의 한 몫이었다. 읽는 값이 같으면 그대로 둔다.
+    const signature = [def?.id, progress.breakthrough, resonance, held, universal, this.ownedNow, ready].join(":");
+    if (this.breakButton && signature === this.breakSignature?.key && this.breakButton === this.breakSignature.button) return;
+    if (this.breakButton) this.breakSignature = { key: signature, button: this.breakButton };
     this.breakButton?.container.setAlpha(step || resonating ? (ready ? 1 : 0.7) : 0.35);
     // 문구가 바뀌면 폭도 함께 바뀐다 — 처음 그릴 때만 누르면 `돌파 완료`가 판을 넘는다.
     const label = step ? t("info.breakthrough") : resonating ? t("info.resonance") : t("info.resonance.max");
     if (this.breakButton) squeezeTextToWidth(this.breakButton.label.setText(label), BREAK_BUTTON.width - BREAK_BUTTON.labelInset);
-    this.breakButton?.label.setColor(ready ? COLOR.ink : COLOR.inkDim);
+    if (this.breakButton) keepColor(this.breakButton.label, ready ? COLOR.ink : COLOR.inkDim);
     this.paintBreakArm(ready);
     if (resonating && def) this.paintBreakCost(def, true, held, resonanceFragmentCost(def.rarity, resonance), universal, resonanceFragmentSpend(def.rarity, resonance, held, universal));
     else this.paintBreakCost(def, step !== undefined, held, need, universal);
@@ -1552,7 +1584,7 @@ export class InfoManager {
       hideCloseButton: true,
       closeOnBackdrop: true,
       inputPassthrough: { x: bounds.x - 8, y: bounds.y - 8, width: bounds.width + 16, height: bounds.height + 16 },
-      onClose: () => { this.feedPopupOpen = false; this.feedOneTutorialHit = undefined; this.repaintFeedBulk = undefined; },
+      onClose: () => { this.feedPopupOpen = false; this.feedOneTutorialHit = undefined; this.repaintFeedBulk = undefined; this.feedBulkRows = undefined; },
     }, (body, close) => {
       // **쪽지는 한 번 먹였다고 닫히지 않는다.** 한 레벨씩 올리는 일은 보통 연달아 일어나므로,
       // 누를 때마다 닫히면 같은 자리를 다시 길게 눌러 쪽지를 여는 손이 매번 더 든다. 값과
@@ -1568,27 +1600,46 @@ export class InfoManager {
     });
   }
 
-  /** 한 번에 급여 쪽지의 내용. 먹일 때마다 값이 달라지므로 같은 판 위에 다시 그린다. */
+  /** 한 번에 급여 쪽지가 지금 세워 둔 칸 — 칸마다 값줄만 갈아 끼운다(`paintFeedBulk`). */
+  private feedBulkRows?: { body: Phaser.GameObjects.Container; signature: string; prices: ((available: number, cost: number) => void)[] };
+
+  /**
+   * 한 번에 급여 쪽지의 내용. 먹일 때마다 값이 달라지므로 같은 판 위에 다시 그린다.
+   *
+   * **칸을 매번 새로 세우지 않는다** — 응답마다 판 넷·글자 여덟·값줄 넷을 부수고 다시 세우던 때는 그 한 번이 급여 처리의
+   * 절반을 넘게 먹어, 연타하는 동안 응답이 올 때마다 화면이 멎었다(2026-11-28 프로파일). 칸마다 먹일 수 있는지(판·글자 색)가
+   * 그대로면 값줄의 수만 바꾸고, 하나라도 갈리면 그때만 통째로 다시 세운다.
+   */
   private paintFeedBulk(body: Phaser.GameObjects.Container, close: () => void, repaint: () => void, burst: FeedTapEffect): void {
-    body.removeAll(true);
-    this.feedOneTutorialHit = undefined;
     const def = this.currentDef;
-    if (!def) { close(); return; }
+    const reset = (): void => { body.removeAll(true); this.feedOneTutorialHit = undefined; this.feedBulkRows = undefined; };
+    if (!def) { reset(); close(); return; }
     const progress = this.previewProgress(def.id);
     const available = this.availableCheesecake();
     // 상한에 닿는 순간 쪽지가 스스로 닫힌다 — 더 먹일 수 없는 판에 남아 있을 이유가 없고,
     // 다음에 할 일(한계 돌파)은 별 옆의 버튼이 제 자리에서 말한다.
-    if (progress.level >= this.relicCap()) { close(); return; }
+    if (progress.level >= this.relicCap()) { reset(); close(); return; }
     // 두 줄 — 1 → 5 → 10 → MAX 차례로 위 줄 1·5, 아래 줄 10·MAX다. 차례가 곧 세기라 색도 같은 차례로 강렬해지고,
     // 칸 사이에는 엄지가 옆 칸을 함께 누르지 않을 여백을 둔다(`feedBulkStyle.ts`). MAX는 지금 치즈케이크로 상한까지
     // 갈 수 있는 만큼 먹이고, 누르면 그 아이가 묻는 확인 창이 먼저 뜬다.
     const max = this.feedMaxPlan();
+    const spots = feedBulkSpots().map((spot) => {
+      const cost = spot.levels === "max" ? max.feeds * FEED_UNIT.cheesecake : this.feedsForLevels(spot.levels) * FEED_UNIT.cheesecake;
+      const enough = spot.levels === "max" ? max.feeds > 0 : available >= cost;
+      return { ...spot, cost, enough };
+    });
+    const signature = def.id + ":" + spots.map((spot) => (spot.enough ? "1" : "0")).join("");
+    const kept = this.feedBulkRows;
+    if (kept && kept.body === body && kept.signature === signature && body.length > 0) {
+      spots.forEach((spot, index) => kept.prices[index]?.(available, spot.cost));
+      return;
+    }
+    reset();
+    const prices: ((available: number, cost: number) => void)[] = [];
     const P = FEED_BULK_PANEL;
     const labelKeys = { one: "info.feed.one", five: "info.feed.five", ten: "info.feed.ten", max: "info.feed.max" } as const;
-    feedBulkSpots().forEach(({ tier, levels, x: bx, y: by }) => {
+    spots.forEach(({ tier, levels, x: bx, y: by, cost, enough }) => {
       const tone = FEED_BULK_TONES[tier];
-      const cost = levels === "max" ? max.feeds * FEED_UNIT.cheesecake : this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
-      const enough = levels === "max" ? max.feeds > 0 : available >= cost;
       // 칸 하나를 한 덩어리로 묶어야 눌림이 판·이름·값줄을 함께 누른다.
       const option = this.scene.add.container(bx, by);
       // 급여 버튼과 같은 덩어리에 단계의 색을 입힌다. 모자란 칸은 꺼진 판으로 가라앉는다.
@@ -1602,9 +1653,13 @@ export class InfoManager {
       option.add(squeezeTextToWidth(label, P.button.width - 40));
       // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
       const price = feedCostRow(this.scene, 0, P.priceY, P.priceWidth, 50, 32, `info-feed-popup:cheesecake:${levels}`, enough ? tone.window : undefined);
-      price.text.setText(formatCurrency(available) + "/" + formatCurrency(cost));
       price.text.setColor(enough ? FEED_TEXT : COLOR.dangerText);
-      price.layout();
+      const paintPrice = (left: number, need: number): void => {
+        price.text.setText(formatCurrency(left) + "/" + formatCurrency(need));
+        price.layout();
+      };
+      paintPrice(available, cost);
+      prices.push(paintPrice);
       option.add(price.container);
       body.add(option);
       if (!enough) return;
@@ -1631,6 +1686,7 @@ export class InfoManager {
       });
       option.add(hit);
     });
+    this.feedBulkRows = { body, signature, prices };
   }
 
   /**
@@ -1980,11 +2036,38 @@ export class InfoManager {
     const hit = this.scene.add
       .rectangle(center.x + spot.x, center.y + spot.y, size * 0.46, size * 0.46, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
-    hit.on("pointerup", open);
+    // 누른 칸이 무엇이었는지 보이게 — 그 조각이 한 번 맥동하며 빛나고 나서 창이 그 자리에서 열린다(응태 2026-11-28).
+    // 곧바로 열면 판이 조각을 덮어 어느 룬을 눌렀는지 읽을 틈이 없었다. 소리는 손이 닿는 순간 울린다.
+    let opening = false;
+    const pulseThenOpen = (): void => {
+      if (opening) return;
+      opening = true;
+      audioManager?.playUi("ui.click");
+      const quiet = motionPolicy(session.settings).nonEssentialRepeatFactor === 0;
+      const sx = piece.scaleX, sy = piece.scaleY;
+      const glowBase = glow.alpha;
+      const plateBase = rowPlate.alpha;
+      this.scene.tweens.killTweensOf([piece, glow, rowPlate]);
+      if (!quiet) {
+        this.scene.tweens.add({ targets: piece, scaleX: sx * RUNE_SLOT_PULSE.scale, scaleY: sy * RUNE_SLOT_PULSE.scale, duration: RUNE_SLOT_PULSE.ms / 2, yoyo: true, ease: "Quad.Out" });
+        glow.setTexture(piece.texture.key).setDisplaySize(piece.displayWidth * 1.22, piece.displayHeight * 1.22).setPosition(piece.x, piece.y).setAlpha(Math.max(glowBase, RUNE_SLOT_PULSE.glow));
+        if (!currentRuneId) glow.setTint(COLOR.accent);
+        this.scene.tweens.add({ targets: glow, alpha: glowBase, duration: RUNE_SLOT_PULSE.ms, ease: "Quad.In" });
+        rowPlate.setAlpha(1);
+        this.scene.tweens.add({ targets: rowPlate, alpha: plateBase, duration: RUNE_SLOT_PULSE.ms, ease: "Quad.In" });
+      }
+      // 씬 시계가 아니라 setTimeout — 바쁜 기기에서 씬 타이머가 밀려도 창이 늦게 열리지 않는다(급여 쪽지와 같은 이유).
+      window.setTimeout(() => {
+        opening = false;
+        piece.setScale(sx, sy);
+        if (piece.active && this.isOpen && !this.popups.isOpen) open();
+      }, quiet ? 0 : RUNE_SLOT_PULSE.openAfterMs);
+    };
+    hit.on("pointerup", pulseThenOpen);
     const rowHit = this.scene.add
       .rectangle(rowCenter, rowY, rowWidth, rows.height, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
-    rowHit.on("pointerup", open);
+    rowHit.on("pointerup", pulseThenOpen);
     attach(panel, rim, glow, piece, fill, number, rowPlate, badgePlate, badgeText, nameText, statText, hit, rowHit);
 
     return {
@@ -2242,7 +2325,7 @@ export class InfoManager {
       const body = this.scene.add.container(0, BOND_DETAIL.shift);
       frame.add(body);
       const rows: [string, string, string][] = [
-        [t("info.bond.ferocityGain"), "+" + Math.round((BOND_FEROCITY_MULTIPLIER[level] - 1) * 100) + "%", "+" + Math.round((BOND_FEROCITY_MULTIPLIER[next] - 1) * 100) + "%"],
+        [t("info.bond.statGain"), "+" + bondStatPercent(level) + "%", "+" + bondStatPercent(next) + "%"],
         [t("info.bond.lobbyInteraction"), t("info.bond.oncePerDay", { amount: `${BOND_XP_REWARD.firstLobbyInteraction} EXP` }), t("info.bond.same")],
         [t("info.bond.battleWin"), t("info.bond.partyAll", { amount: `${BOND_XP_REWARD.partyVictory} EXP` }), t("info.bond.same")],
       ];
@@ -2907,6 +2990,9 @@ export class InfoManager {
     this.root.setVisible(true);
     this.chrome.setVisible(true);
     if (!wasOpen) {
+      // 정보창이 열리는 순간의 소리 — 판 팝업과 같은 소리를 쓴다. 카드를 눌러 들어올 때 아무 소리도 없어
+      // 눌렸는지 손이 확신하지 못했다(응태 2026-11-28). 다른 개체로 넘길 때는 울리지 않는다.
+      audioManager?.playUi("ui.panel.open");
       playFadeIn(this.scene, [this.root, this.chrome]);
       this.playAssembleIntro();
     }
@@ -2994,7 +3080,7 @@ export class InfoManager {
     const maxed = progress.level >= cap;
 
     // 사거리는 성장하지 않는 정적 값이지만, 다른 캐릭터로 넘길 때 함께 갈아 끼워야 한다.
-    this.reachLabel.setText(`${t("stat.range")} · ${reachLabel(def.reachTier)}`).setColor(reachToneHex(def.reachTier));
+    keepColor(this.reachLabel.setText(`${t("stat.range")} · ${reachLabel(def.reachTier)}`), reachToneHex(def.reachTier));
     this.paintReachChip(Phaser.Display.Color.HexStringToColor(reachToneHex(def.reachTier)).color);
     this.levelValue.setText(String(previewFeedProgress(progress, this.publicProfile ? 0 : this.pendingFeeds(), this.relicCap()).level));
     this.levelCap.setText("/ " + cap);
@@ -3016,7 +3102,7 @@ export class InfoManager {
     // 치즈케이크가 모자란 것처럼 읽히고, 정작 "다 컸다"는 말을 하지 않는다.
     this.feedCost?.setText(maxed ? "MAX" : formatCurrency(session.wallet.cheesecake) + "/" + String(FEED_UNIT.cheesecake));
     // 모자라면 줄 전체가 붉어진다. 두 수 중 하나만 물들이면 어느 쪽이 모자란 것인지 되레 헷갈린다.
-    this.feedCost?.setColor(!maxed && session.wallet.cheesecake < FEED_UNIT.cheesecake ? COLOR.dangerText : FEED_TEXT);
+    if (this.feedCost) keepColor(this.feedCost, !maxed && session.wallet.cheesecake < FEED_UNIT.cheesecake ? COLOR.dangerText : FEED_TEXT);
     this.feedCostLayout?.();
     this.paintBreakButton(progress);
     // 되돌릴 레벨이 없으면 칩이 가라앉는다. 지금 먹이는 중인 누름이 남아 있을 때도 같다.
@@ -3027,9 +3113,9 @@ export class InfoManager {
     const bondNext = bondMaxed ? bondBase : BOND_TOTAL_XP_BY_LEVEL[progress.bondLevel + 1];
     this.bondValue.setText(String(progress.bondLevel));
     this.bondBar.setValue(bondMaxed ? 1 : (progress.bondXp - bondBase) / (bondNext - bondBase));
-    // 유대는 야성을 눌러 주는 것이 아니라 더 빨리 끓게 한다. 피버로 가는 지름길이다.
-    const boost = Math.round((BOND_FEROCITY_MULTIPLIER[progress.bondLevel] - 1) * 100);
-    this.bondLabel.setText(`${bondMaxed ? "MAX" : `${progress.bondXp} / ${bondNext} EXP`}   ·   ${t("info.bond.ferocityGain")} +${boost}%`);
+    // 유대는 레벨마다 오각형 다섯을 1%씩 올린다(`bondStatPercent`) — 위 오각형의 수치에 이미 든 몫이다.
+    const boost = bondStatPercent(progress.bondLevel);
+    this.bondLabel.setText(`${bondMaxed ? "MAX" : `${progress.bondXp} / ${bondNext} EXP`}   ·   ${t("info.bond.statGain")} +${boost}%`);
 
     this.statRadar?.draw(finalStats, STAT_RADAR_RADIUS, baseStatsOf(def.id));
 
@@ -4011,4 +4097,12 @@ export function buildSkillViewModel(options: {
 function swallowCancelled(error: unknown): undefined {
   if (error instanceof PuppetSpawnCancelled) return undefined;
   throw error;
+}
+
+/**
+ * 글자색이 이미 그 색이면 건드리지 않는다. Phaser의 `setColor`는 같은 색이어도 글자 텍스처를 다시 굽는데,
+ * 급여 응답마다 부르는 줄에서는 그 굽기가 연타 내내 쌓였다(`setText`는 같은 글이면 스스로 건너뛴다).
+ */
+function keepColor(text: Phaser.GameObjects.Text, color: string): void {
+  if (text.style.color !== color) text.setColor(color);
 }

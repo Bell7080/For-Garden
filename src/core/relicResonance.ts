@@ -70,8 +70,10 @@ export function canResonate(rarity: RelicRarity, progress: Pick<RelicProgress, "
 const GROWTH_KEYS: readonly (keyof Stats)[] = ["hp", "def", "res", "atk", "ap"];
 
 /** 공명 단계만큼 오각형 다섯을 올린 효과 — 성장 파이프라인(`calculateFinalStats`)이 레벨 다음에 한 번 곱한다. */
-export function resonanceStatEffect(resonance: number): HeartGemStatEffect {
-  const percent = Math.max(0, Math.min(RESONANCE_CAP, resonance)) * RESONANCE_STAT_PERCENT;
+export function resonanceStatEffect(resonance: number, extraPercent = 0): HeartGemStatEffect {
+  // `extraPercent`는 같은 다섯 축에 **더해서** 함께 곱하는 몫이다(유대 — `bondStatPercent`). 따로 곱하면 두 몫이
+  // 겹칠 때 반올림이 두 번 들고 순서가 결과에 낀다(룬끼리 합연산과 같은 이유).
+  const percent = Math.max(0, Math.min(RESONANCE_CAP, resonance)) * RESONANCE_STAT_PERCENT + extraPercent;
   return Object.fromEntries(GROWTH_KEYS.map((key) => [key, percent])) as HeartGemStatEffect;
 }
 

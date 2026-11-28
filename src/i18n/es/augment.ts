@@ -73,7 +73,7 @@ export const AUGMENT_ES = {
   "augment.tag.detail.shield": "Obtiene escudo del {maxHpPercent}% de sus PV máximos. Usa las reglas actuales de escudos y absorción.",
   "augment.tag.name.ferocity": "Ferocidad",
   "augment.tag.name.cleanse": "Purificación",
-  "augment.tag.detail.ferocity": "Obtén {points} de Ferocidad base. Se aplican modificadores existentes de Vínculo y ganancia de Ferocidad. Sin ganancia extra durante el modo Frenesí.",
+  "augment.tag.detail.ferocity": "Obtén {points} de Ferocidad base. Se aplican modificadores existentes de ganancia de Ferocidad. Sin ganancia extra durante el modo Frenesí.",
   "augment.tag.detail.cleanse": "Elimina efectos perjudiciales con las reglas de purificación existentes. Conserva mejoras beneficiosas, sin nueva inmunidad.",
   "augment.tag.selfReceived": "Cada {every} golpes directos que reducen PV: {tag} ×{stacks} a sí mismo.",
   "augment.tag.name.receivedEffect": "Reacción de {tag}",

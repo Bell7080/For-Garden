@@ -8,7 +8,7 @@ import { FakeServer } from "../../src/api/FakeServer";
 import { setLiveSchedule } from "../../src/core/liveSchedule";
 import { rotationOffer } from "../../src/core/shopRotation";
 import { rotationSlot } from "../../src/data/runeRotation";
-import { breakthroughFragmentCost, RELIC_BASE_LEVEL_CAP } from "../../src/core/relicProgression";
+import { breakthroughFragmentCost, FEED_UNIT, RELIC_BASE_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
 import { createEmptyRaidState, createInitialPlayerResearchProgress, createEmptyPlayerCard, type Session } from "../../src/state/session";
 import { createRuneInstance, enhanceRune as applyRuneEnhancement, runeBatchEnhancementTargets, runeEnhancementIncrease, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
@@ -497,11 +497,11 @@ describe("FakeServer", () => {
     await expect(server.engraveRune({ runeInstanceId: "rune-1", statId: rune.mainStats[0].key })).rejects.toMatchObject({ code: "RUNE_ENGRAVING_NOT_ALLOWED" });
   });
   it("급여 재화를 검사·차감하고 오른 레벨을 서버 상태에 반영한다", async () => {
-    const state = makeSession(); state.wallet.cheesecake = 25;
+    const state = makeSession(); state.wallet.cheesecake = 2 * FEED_UNIT.cheesecake + 4;
     const server = new FakeServer(state, { latencyMs: 0 });
     // 열 번 요청해도 치즈케이크가 두 번 치뿐이다. 레벨 2는 80 EXP가 필요해 아직 오르지 않는다.
     const response = await server.feedRelic("torika", 10);
-    expect(response).toMatchObject({ relicId: "torika", feeds: 2, cheesecakeSpent: 20, wallet: { cheesecake: 5 } });
+    expect(response).toMatchObject({ relicId: "torika", feeds: 2, cheesecakeSpent: 2 * FEED_UNIT.cheesecake, wallet: { cheesecake: 4 } });
     expect(state.relicProgress.torika).toMatchObject({ level: 2, exp: 40 });
     await expect(server.feedRelic("torika")).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
   });

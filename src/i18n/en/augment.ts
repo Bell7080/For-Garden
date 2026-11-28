@@ -73,7 +73,7 @@ export const AUGMENT_EN = {
   "augment.tag.detail.shield": "Gain a shield equal to {maxHpPercent}% own max HP, using existing shield and absorption rules.",
   "augment.tag.name.ferocity": "Ferocity",
   "augment.tag.name.cleanse": "Cleanse",
-  "augment.tag.detail.ferocity": "Gain {points} base Ferocity. Existing Bond and Ferocity gain modifiers apply. No extra gain during Frenzy mode.",
+  "augment.tag.detail.ferocity": "Gain {points} base Ferocity. Existing Ferocity gain modifiers apply. No extra gain during Frenzy mode.",
   "augment.tag.detail.cleanse": "Remove harmful effects using existing cleanse rules. Keep beneficial buffs and grant no new immunity.",
   "augment.tag.selfReceived": "Every {every} direct HP-damaging hits received: self {tag} ×{stacks}.",
   "augment.tag.name.receivedEffect": "{tag} Response",

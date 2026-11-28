@@ -2,6 +2,7 @@ import type { HeartGemStatEffect } from "../data/heartGems";
 import { assertValidRuneInstance, RUNE_STAT_UNIT, runeOptionValue, type RuneInstance, type RuneStatKey } from "./runes";
 import { RARITY_LEVEL_GROWTH } from "./rarityScaling";
 import { resonanceOf, resonanceStatEffect } from "./relicResonance";
+import { bondStatPercent } from "./bond";
 import type { RelicDef, RelicProgress, RelicRarity, Stats } from "./types";
 
 /** 연구원 레벨 1의 렐릭 레벨 상한 — 막 시작한 계정이 1장을 도는 동안의 상한이다. */
@@ -289,8 +290,14 @@ export function remainingBreakthroughFragments(rarity: RelicRarity, breakthrough
   return fragments;
 }
 
-/** 급여 한 번에 드는 치즈케이크와 그때 오르는 경험치. */
-export const FEED_UNIT = { cheesecake: 10, exp: 20 } as const;
+/**
+ * 급여 한 번에 드는 치즈케이크와 그때 오르는 경험치.
+ *
+ * **치즈케이크는 10에서 8로 내렸다**(응태 요청 2026-11-28 — 키우는 값 20% 절감). 경험치 곡선과 한 번의 경험치는
+ * 그대로라 저장된 레벨·경험치는 손대지 않는다. 초기화 회수량은 같은 단가로 거꾸로 구하므로 함께 8로 셈한다 —
+ * 회수만 옛 값(10)으로 두면 8에 먹이고 10에 돌려받는 환전이 생긴다.
+ */
+export const FEED_UNIT = { cheesecake: 8, exp: 20 } as const;
 
 /**
  * 레벨 N에서 N+1로 가는 데 필요한 경험치.
@@ -457,15 +464,17 @@ export function applyHeartGems(stats: Stats, gems: readonly RuneInstance[]): Sta
 }
 
 /**
- * 최종 능력치는 기본 → 레벨 → 공명 → 별 → Heart Gem 순서로만 계산한다.
+ * 최종 능력치는 기본 → 레벨 → 공명·유대 → 별 → Heart Gem 순서로만 계산한다.
  *
  * **공명은 PvE에서만 든다** — 결투·아레나는 `resonance: false`로 부른다(`RelicProgressionManager.getFinalStats`의 `pvp`).
+ * **유대는 어디서나 든다**(레벨당 오각형 다섯 +1% — `bondStatPercent`). 공명과 더해 한 번에 곱한다.
  */
 export function calculateFinalStats(base: Stats, progress: RelicProgress, gems: readonly RuneInstance[], rarity: RelicRarity, options: { resonance?: boolean } = {}): Stats {
   if (progress.heartGemSlots.length !== 3) throw new RangeError("Heart Gem 슬롯은 정확히 3개여야 합니다.");
   const breakthrough = activeBreakthroughOf(progress);
   const grown = applyLevelGrowth(base, progress.level, rarity, breakthrough);
   const resonance = options.resonance === false || breakthrough < BREAKTHROUGH_CAP ? 0 : resonanceOf(progress);
-  const resonated = resonance > 0 ? applyStatPercent(grown, resonanceStatEffect(resonance)) : grown;
+  const bond = bondStatPercent(progress.bondLevel);
+  const resonated = resonance > 0 || bond > 0 ? applyStatPercent(grown, resonanceStatEffect(resonance, bond)) : grown;
   return applyHeartGems(applyBreakthrough(resonated, breakthrough), gems);
 }

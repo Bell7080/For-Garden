@@ -137,7 +137,7 @@ export const INFO_EN = {
   "info.journal.noInterview": "No interview has been recorded yet.",
   "info.journal.historyEntry": "Q. {question}\n\nA. {answer}\n\nFound  {habit}",
   "info.bond.level": "Bond {level}",
-  "info.bond.ferocityGain": "Ferocity Gain",
+  "info.bond.statGain": "All Stats",
   "info.bond.lobbyInteraction": "Lobby interaction",
   "info.bond.oncePerDay": "{amount} once a day",
   "info.bond.same": "Same",

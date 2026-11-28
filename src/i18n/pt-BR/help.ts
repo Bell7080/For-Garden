@@ -21,7 +21,7 @@ export const HELP_PT_BR = {
   "help.term.resonance.name": "Ressonância",
   "help.term.resonance.body": "A etapa após a Ruptura IV. Custa apenas Fragmentos e aumenta os atributos em 5% por etapa. Fica desativada na Arena de Duelos.",
   "help.term.bond.name": "Vínculo",
-  "help.term.bond.body": "Valor de relação de cada Relíquia. Sobe ao obtê-la, ao vencer e com a interação diária; quanto maior, mais rápido a Ferocidade enche em batalha.",
+  "help.term.bond.body": "Valor de relação de cada Relíquia. Sobe ao obtê-la, ao vencer e com a interação diária; cada nível aumenta todos os atributos dela em 1%.",
   "help.term.favorite.name": "Favorita",
   "help.term.favorite.body": "A Relíquia que fica no saguão. Trocá-la não altera o Vínculo.",
   "help.term.rune.name": "Runa",

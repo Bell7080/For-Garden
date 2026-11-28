@@ -73,7 +73,7 @@ export const AUGMENT_JA = {
   "augment.tag.detail.shield": "自分の最大HPの{maxHpPercent}%のシールド。既存のシールド・吸収規則を使用。",
   "augment.tag.name.ferocity": "野性",
   "augment.tag.name.cleanse": "浄化",
-  "augment.tag.detail.ferocity": "基本野性を{points}獲得。既存の絆・野性獲得補正を適用。暴走中は追加獲得しない。",
+  "augment.tag.detail.ferocity": "基本野性を{points}獲得。既存の野性獲得補正を適用。暴走中は追加獲得しない。",
   "augment.tag.detail.cleanse": "既存の浄化規則で有害効果を除去。有利な強化を維持し、新たな免疫は与えない。",
   "augment.tag.selfReceived": "直接ダメージ{every}回ごとに、自分に{tag}を{stacks}回付与。",
   "augment.tag.name.receivedEffect": "{tag}反応",

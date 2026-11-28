@@ -137,7 +137,7 @@ export const INFO_RU = {
   "info.journal.noInterview": "Интервью пока нет.",
   "info.journal.historyEntry": "В. {question}\n\nО. {answer}\n\nЗамечено  {habit}",
   "info.bond.level": "Связь {level}",
-  "info.bond.ferocityGain": "Прирост ярости",
+  "info.bond.statGain": "Все характеристики",
   "info.bond.lobbyInteraction": "Общение в лобби",
   "info.bond.oncePerDay": "{amount} раз в день",
   "info.bond.same": "Без изменений",

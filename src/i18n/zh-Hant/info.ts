@@ -137,7 +137,7 @@ export const INFO_ZH_HANT = {
   "info.journal.noInterview": "尚未記錄任何訪談。",
   "info.journal.historyEntry": "Q. {question}\n\nA. {answer}\n\n發現  {habit}",
   "info.bond.level": "羈絆 {level}",
-  "info.bond.ferocityGain": "野性獲取",
+  "info.bond.statGain": "全部能力值",
   "info.bond.lobbyInteraction": "大廳互動",
   "info.bond.oncePerDay": "每日1次 {amount}",
   "info.bond.same": "相同",

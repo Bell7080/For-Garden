@@ -151,7 +151,7 @@ describe("급여", () => {
     // 레벨 1은 60 EXP가 필요하다. 한 번에 20씩 오르므로 네 번 먹이면 한 번 오르고 20이 남는다.
     expect(relicExpToNext(1)).toBe(60);
     const result = feedRelic(base(), 100, 4, RELIC_BASE_LEVEL_CAP);
-    expect(result).toMatchObject({ feeds: 4, cheesecake: 60, levelsGained: 1 });
+    expect(result).toMatchObject({ feeds: 4, cheesecake: 100 - 4 * FEED_UNIT.cheesecake, levelsGained: 1 });
     expect(result.progress).toMatchObject({ level: 2, exp: 20 });
   });
 
@@ -164,7 +164,7 @@ describe("급여", () => {
 
   it("는 치즈케이크가 모자라면 가능한 횟수까지만 먹인다", () => {
     const result = feedRelic(base(), 25, 10, RELIC_BASE_LEVEL_CAP);
-    expect(result).toMatchObject({ feeds: 2, cheesecake: 5 });
+    expect(result).toMatchObject({ feeds: 3, cheesecake: 25 - 3 * FEED_UNIT.cheesecake });
   });
 
   it("는 최대 레벨에서 멈추고 치즈케이크를 더 쓰지 않는다", () => {

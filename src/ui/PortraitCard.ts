@@ -11,6 +11,7 @@ import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addGrowthGradeMark, RARITY_TONE } from "./rarityMark";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut } from "./pressFeedback";
 import { portraitCardHeadWindow, portraitCardOverhang } from "./portraitGrid";
 import { addBookmarkMark } from "./bookmarkMark";
 import { session } from "../state/session";
@@ -230,6 +231,9 @@ export { portraitCardOverhang, portraitGridFirstRowY, portraitGridHeadroom } fro
  * 빠져나오게 둔다. 아래에는 살짝 넓은 레이어를 겹쳐 레벨과 이름을 얹고, 오른쪽 위에는 로마자 등급을
  * 찍는다. 도감·편성·전투 프로필·연구 결과가 모두 이 한 장을 공유한다.
  */
+/** 눌림 연출(들어갔다 튀어 오르기)이 끝날 때까지 마스크를 따라 맞추는 시간. `PRESS_FEEDBACK`의 가장 긴 튕김보다 길다. */
+const PRESS_FOLLOW_MS = 520;
+
 export class PortraitCard extends Phaser.GameObjects.Container {
   /** 씬이 pointerdown·pointerup을 붙이는 카드 전체 입력 영역이다. */
   readonly hit: Phaser.GameObjects.Rectangle;
@@ -847,6 +851,32 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   /** notchMask와 동일한 사다리꼴을 평평한 좌표로 되돌린다. */
   private notchShape(): number[] {
     return this.headShape;
+  }
+
+  /**
+   * 누르면 꾹 눌렸다가 톡 튀어 오르는 손맛(`pressFeedback`)을 카드에 건다 — 목록에서 카드를 눌러 정보창을 여는 자리용.
+   *
+   * 카드 안의 원화는 기하 마스크로 잘려 있어 배율이 바뀌면 `syncMask`로 다시 맞춰야 한다. 그래서 눌림 연출이 도는
+   * 짧은 동안만 매 프레임 마스크를 따라 맞춘다(그 뒤로는 떼어 둔다). 전투 궁극기 카드에는 쓰지 않는다.
+   */
+  enablePressFeedback(isTap: () => boolean = () => true): this {
+    let follow: (() => void) | undefined;
+    let until = 0;
+    const track = (): void => {
+      until = this.scene.time.now + PRESS_FOLLOW_MS;
+      if (follow) return;
+      follow = () => {
+        if (!this.active) { this.scene?.events.off(Phaser.Scenes.Events.POST_UPDATE, follow); follow = undefined; return; }
+        this.syncMask();
+        if (this.scene.time.now > until) { this.scene.events.off(Phaser.Scenes.Events.POST_UPDATE, follow); follow = undefined; }
+      };
+      this.scene.events.on(Phaser.Scenes.Events.POST_UPDATE, follow);
+    };
+    this.once(Phaser.GameObjects.Events.DESTROY, () => { if (follow) this.scene?.events.off(Phaser.Scenes.Events.POST_UPDATE, follow); });
+    this.hit.on("pointerdown", () => { pressIn(this); track(); });
+    this.hit.on("pointerup", () => { pressOut(this, "normal", { pop: isTap() }); track(); });
+    this.hit.on("pointerout", () => { pressOut(this, "normal", { pop: false }); track(); });
+    return this;
   }
 
   /** 마스크를 카드의 현재 화면 위치·배율에 맞춘다. 카드를 옮기거나 키운 뒤에 부른다. */

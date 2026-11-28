@@ -21,7 +21,7 @@ export const HELP_EN = {
   "help.term.resonance.name": "Resonance",
   "help.term.resonance.body": "The step after Breakthrough IV. It costs only Shards and raises stats by 5% per step. It is turned off in the Duel Arena.",
   "help.term.bond.name": "Bond",
-  "help.term.bond.body": "A relationship value each Relic builds through obtaining, winning and daily interaction. The higher it is, the faster Ferocity fills in battle.",
+  "help.term.bond.body": "A relationship value each Relic builds through obtaining, winning and daily interaction. Each level raises all of that Relic's stats by 1%.",
   "help.term.favorite.name": "Favorite",
   "help.term.favorite.body": "The one Relic who stands in the lobby. Changing it leaves Bond untouched.",
   "help.term.rune.name": "Rune",

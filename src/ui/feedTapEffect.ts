@@ -4,6 +4,7 @@ import { motionPolicy } from "../core/settings";
 import { settingsManager } from "../managers/SettingsManager";
 import { FEED_TAP, feedArcPoint, feedBurstPath, feedComboVisible, feedCakeScale } from "./feedTapStyle";
 import { textStyle } from "./theme";
+import { bakeKey, bakedCenteredImage } from "./bakedGraphics";
 
 /**
  * 급여 버튼 위에서 터지는 손맛. 버튼 컨테이너의 **자식**으로 그려 버튼과 함께 움직이고 함께 사라진다.
@@ -111,14 +112,17 @@ export class FeedTapEffect {
     for (let index = 0; index < spec.count; index += 1) {
       const angle = -Math.PI / 2 + (index - 1) * 0.9 + (seed % 3) * 0.2;
       const size = spec.size * (index === 1 ? 1 : 0.7);
-      const gem = this.scene.add.graphics({ x, y }).setBlendMode(Phaser.BlendModes.ADD);
-      gem.fillStyle(spec.color, 0.95);
-      gem.fillPoints([
-        new Phaser.Math.Vector2(0, -size),
-        new Phaser.Math.Vector2(size * 0.62, -size * 0.08),
-        new Phaser.Math.Vector2(0, size * 0.86),
-        new Phaser.Math.Vector2(-size * 0.54, size * 0.1),
-      ], true);
+      // 같은 마름모를 매번 Graphics로 다시 그리면 연타 내내 도형 명령이 프레임마다 다시 풀린다 —
+      // 크기마다 한 번 굽고 같은 그림을 돌려 쓴다(모양·색·합성은 예전과 같다).
+      const gem = bakedCenteredImage(this.scene, bakeKey("feed-sparkle", [size, spec.color]), size + 2, (g) => {
+        g.fillStyle(spec.color, 0.95);
+        g.fillPoints([
+          new Phaser.Math.Vector2(0, -size),
+          new Phaser.Math.Vector2(size * 0.62, -size * 0.08),
+          new Phaser.Math.Vector2(0, size * 0.86),
+          new Phaser.Math.Vector2(-size * 0.54, size * 0.1),
+        ], true);
+      }).setPosition(x, y).setBlendMode(Phaser.BlendModes.ADD);
       this.host.add(gem);
       gem.once(Phaser.GameObjects.Events.DESTROY, () => this.scene.tweens.killTweensOf(gem));
       this.scene.tweens.add({

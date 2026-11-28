@@ -21,7 +21,7 @@ export const HELP_ZH_HANS = {
   "help.term.resonance.name": "共鸣",
   "help.term.resonance.body": "突破IV之后的阶段。只消耗碎片，每一阶能力值提升5%。在决斗场中无效。",
   "help.term.bond.name": "羁绊",
-  "help.term.bond.body": "每个遗物各自累积的关系数值。通过获得、胜利和每日互动提升，越高战斗中野性积累越快。",
+  "help.term.bond.body": "每个遗物各自累积的关系数值。通过获得、胜利和每日互动提升，每升一级该遗物的全部能力值提高1%。",
   "help.term.favorite.name": "最爱",
   "help.term.favorite.body": "站在大厅的代表遗物，只能选一位。更换后羁绊保持不变。",
   "help.term.rune.name": "符文",

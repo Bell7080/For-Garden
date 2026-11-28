@@ -73,7 +73,7 @@ export const AUGMENT_VI = {
   "augment.tag.detail.shield": "Nhận khiên bằng {maxHpPercent}% HP tối đa bản thân, theo quy tắc khiên và hấp thụ hiện có.",
   "augment.tag.name.ferocity": "Cuồng tính",
   "augment.tag.name.cleanse": "Thanh tẩy",
-  "augment.tag.detail.ferocity": "Nhận {points} Cuồng tính cơ bản. Áp dụng điều chỉnh Gắn kết và nhận Cuồng tính hiện có. Không nhận thêm trong chế độ Cuồng bạo.",
+  "augment.tag.detail.ferocity": "Nhận {points} Cuồng tính cơ bản. Áp dụng điều chỉnh nhận Cuồng tính hiện có. Không nhận thêm trong chế độ Cuồng bạo.",
   "augment.tag.detail.cleanse": "Xóa hiệu ứng có hại theo quy tắc thanh tẩy hiện có. Giữ cường hóa có lợi, không cấp miễn nhiễm mới.",
   "augment.tag.selfReceived": "Mỗi {every} đòn trực tiếp làm giảm HP: {tag} ×{stacks} lên bản thân.",
   "augment.tag.name.receivedEffect": "Phản ứng {tag}",

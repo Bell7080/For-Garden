@@ -73,7 +73,7 @@ export const AUGMENT_ID = {
   "augment.tag.detail.shield": "Dapatkan perisai sebesar {maxHpPercent}% HP maksimum sendiri, memakai aturan perisai dan penyerapan yang ada.",
   "augment.tag.name.ferocity": "Keganasan",
   "augment.tag.name.cleanse": "Pemurnian",
-  "augment.tag.detail.ferocity": "Dapatkan {points} Keganasan dasar. Pengubah Ikatan dan perolehan Keganasan yang ada berlaku. Tanpa tambahan saat mode Mengamuk.",
+  "augment.tag.detail.ferocity": "Dapatkan {points} Keganasan dasar. Pengubah perolehan Keganasan yang ada berlaku. Tanpa tambahan saat mode Mengamuk.",
   "augment.tag.detail.cleanse": "Hapus efek berbahaya memakai aturan pemurnian yang ada. Pertahankan penguatan bermanfaat dan tanpa kekebalan baru.",
   "augment.tag.selfReceived": "Setiap {every} serangan langsung yang mengurangi HP: {tag} ×{stacks} ke diri sendiri.",
   "augment.tag.name.receivedEffect": "Reaksi {tag}",

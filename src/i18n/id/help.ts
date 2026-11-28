@@ -21,7 +21,7 @@ export const HELP_ID = {
   "help.term.resonance.name": "Resonansi",
   "help.term.resonance.body": "Tahap setelah Terobosan IV. Hanya butuh Serpihan dan menaikkan stat 5% per tahap. Tidak berlaku di Arena Duel.",
   "help.term.bond.name": "Ikatan",
-  "help.term.bond.body": "Nilai hubungan tiap Relik. Naik lewat perolehan, kemenangan, dan interaksi harian; makin tinggi, makin cepat Keganasan terisi saat bertarung.",
+  "help.term.bond.body": "Nilai hubungan tiap Relik. Naik lewat perolehan, kemenangan, dan interaksi harian; setiap level menaikkan semua stat Relik itu sebesar 1%.",
   "help.term.favorite.name": "Favorit",
   "help.term.favorite.body": "Satu Relik perwakilan yang berdiri di lobi. Menggantinya tidak mengubah Ikatan.",
   "help.term.rune.name": "Rune",

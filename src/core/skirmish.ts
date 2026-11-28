@@ -1,6 +1,5 @@
 import { dHypot, dSin, dCos, dAtan2, dExp, dPow } from "./detMath";
 import { EXPEDITION_CC_POLICY, EXPEDITION_CONTROL_TAGS, controlRemaining, capExpeditionControl } from "./expeditionCcPolicy";
-import { amplifyFerocityGain } from "./bond";
 import { deathClockSurvivalMultiplier, deathClockTickPercent, deathClockTicksAt } from "./battleClock";
 import type { Combatant, DamageInput } from "./combatTypes";
 import { computeDamage, computeDamageContribution, currentAbilityPower, isCriticalHit } from "./damage";
@@ -7682,10 +7681,11 @@ export function gainFerocity(fighter: Fighter, base: number, state: SkirmishStat
   const before = fighter.ferocity;
   // 피버 중 추가 획득은 무시해 한 번 열린 보상 구간이 정해진 시간 안에 반드시 끝나게 한다.
   if (fighter.ferocityFever) return;
-  // 폭주한 지원가의 팀 보정은 유대·룬 보정 앞에서 사건별 기본 충전량 자체를 키운다.
+  // 폭주한 지원가의 팀 보정은 사건별 기본 충전량 자체를 키운다.
   const rallied = base + tailwindRally(state, fighter.side).ferocity;
-  // 룬·증강의 야성 몫은 깡 수치라 공격 행동의 기본량(`actionFerocityGain`)에 이미 들어 있다. 여기서는 유대만 곱한다.
-  const adjusted = amplifyFerocityGain(rallied, fighter.bondLevel);
+  // 룬·증강의 야성 몫은 깡 수치라 공격 행동의 기본량(`actionFerocityGain`)에 이미 들어 있다. 유대는 더 이상 야성을
+  // 곱하지 않는다(2026-11-28 — 능력치 몫으로 옮겼다, `bondStatPercent`). 소수 둘째 자리 반올림은 예전 그대로다.
+  const adjusted = Math.max(0, Math.round(rallied * 100) / 100);
   const ferocityMax = ferocityMaxOf(fighter.def);
   fighter.ferocity = Math.min(ferocityMax, before + adjusted);
   // 처음 최대치에 닿은 순간 피버 카운트다운을 켠다.

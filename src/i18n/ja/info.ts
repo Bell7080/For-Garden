@@ -142,7 +142,7 @@ export const INFO_JA = {
 
 
   "info.bond.level": "絆 {level}",
-  "info.bond.ferocityGain": "野性上昇",
+  "info.bond.statGain": "全能力値",
   "info.bond.lobbyInteraction": "ロビーでの交流",
   "info.bond.oncePerDay": "1日1回 {amount}",
   "info.bond.same": "同じ",

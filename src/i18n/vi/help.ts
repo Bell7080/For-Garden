@@ -21,7 +21,7 @@ export const HELP_VI = {
   "help.term.resonance.name": "Cộng hưởng",
   "help.term.resonance.body": "Bậc tiếp theo sau Đột phá IV. Chỉ tốn Mảnh và tăng chỉ số 5% mỗi bậc. Bị tắt trong Đấu trường.",
   "help.term.bond.name": "Gắn kết",
-  "help.term.bond.body": "Chỉ số quan hệ riêng của mỗi Di vật. Tăng qua việc nhận được, chiến thắng và tương tác hằng ngày; càng cao thì Dã tính trong trận càng đầy nhanh.",
+  "help.term.bond.body": "Chỉ số quan hệ riêng của mỗi Di vật. Tăng qua việc nhận được, chiến thắng và tương tác hằng ngày; mỗi cấp tăng mọi chỉ số của Di vật đó thêm 1%.",
   "help.term.favorite.name": "Yêu thích",
   "help.term.favorite.body": "Một Di vật đại diện đứng ở sảnh. Đổi cũng không ảnh hưởng đến Gắn kết.",
   "help.term.rune.name": "Rune",

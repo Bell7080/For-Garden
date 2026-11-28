@@ -73,7 +73,7 @@ export const AUGMENT_RU = {
   "augment.tag.detail.shield": "Щит на {maxHpPercent}% собственных максимальных ОЗ. Действуют существующие правила щитов и поглощения.",
   "augment.tag.name.ferocity": "Свирепость",
   "augment.tag.name.cleanse": "Очищение",
-  "augment.tag.detail.ferocity": "Получить {points} базовой Свирепости. Действуют имеющиеся поправки Связи и прироста Свирепости. Без добавочного прироста в режиме Неистовства.",
+  "augment.tag.detail.ferocity": "Получить {points} базовой Свирепости. Действуют имеющиеся поправки прироста Свирепости. Без добавочного прироста в режиме Неистовства.",
   "augment.tag.detail.cleanse": "Удаляет вредные эффекты по существующим правилам очищения. Сохраняет полезные усиления, не даёт нового иммунитета.",
   "augment.tag.selfReceived": "Каждые {every} прямых ударов с потерей ОЗ: {tag} ×{stacks} на себя.",
   "augment.tag.name.receivedEffect": "Реакция: {tag}",

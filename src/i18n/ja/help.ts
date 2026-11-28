@@ -21,7 +21,7 @@ export const HELP_JA = {
   "help.term.resonance.name": "共鳴",
   "help.term.resonance.body": "限界突破IVの次の段階です。欠片だけで進み、段階ごとに能力値が5%上がります。決闘場では無効です。",
   "help.term.bond.name": "絆",
-  "help.term.bond.body": "レリックごとにたまる関係の数値です。獲得・勝利・日々のふれあいで上がり、高いほど戦闘で野性が早くたまります。",
+  "help.term.bond.body": "レリックごとにたまる関係の数値です。獲得・勝利・日々のふれあいで上がり、レベルごとにそのレリックの全能力値が1%ずつ上がります。",
   "help.term.favorite.name": "お気に入り",
   "help.term.favorite.body": "ロビーに立つ代表のレリック一体です。変えても絆はそのままです。",
   "help.term.rune.name": "ルーン",

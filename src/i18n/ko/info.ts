@@ -154,7 +154,7 @@ export const INFO_KO = {
   "info.diary.answerChip": "답변 {n}",
 
   "info.bond.level": "유대 {level}",
-  "info.bond.ferocityGain": "야성 상승",
+  "info.bond.statGain": "모든 능력치",
   "info.bond.lobbyInteraction": "로비 상호작용",
   "info.bond.oncePerDay": "하루 한 번 {amount}",
   "info.bond.same": "같음",

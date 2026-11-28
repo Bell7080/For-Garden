@@ -21,7 +21,7 @@ export const HELP_ES = {
   "help.term.resonance.name": "Resonancia",
   "help.term.resonance.body": "El paso tras la Ruptura IV. Solo cuesta Fragmentos y sube los atributos un 5% por paso. Se desactiva en la Arena de duelos.",
   "help.term.bond.name": "Vínculo",
-  "help.term.bond.body": "Valor de relación propio de cada Reliquia. Sube al obtenerla, al ganar y con la interacción diaria; cuanto más alto, antes se llena la Ferocidad en combate.",
+  "help.term.bond.body": "Valor de relación propio de cada Reliquia. Sube al obtenerla, al ganar y con la interacción diaria; cada nivel aumenta un 1% todas sus estadísticas.",
   "help.term.favorite.name": "Favorita",
   "help.term.favorite.body": "La Reliquia que se luce en el vestíbulo. Cambiarla no altera el Vínculo.",
   "help.term.rune.name": "Runa",

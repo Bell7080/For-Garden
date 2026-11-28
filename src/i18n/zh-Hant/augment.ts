@@ -73,7 +73,7 @@ export const AUGMENT_ZH_HANT = {
   "augment.tag.detail.shield": "獲得自身最大生命{maxHpPercent}%的護盾，沿用現有護盾與吸收規則。",
   "augment.tag.name.ferocity": "野性",
   "augment.tag.name.cleanse": "淨化",
-  "augment.tag.detail.ferocity": "獲得{points}點基礎野性，套用現有羈絆與野性獲取加成，暴走期間不額外獲得。",
+  "augment.tag.detail.ferocity": "獲得{points}點基礎野性，套用現有野性獲取加成，暴走期間不額外獲得。",
   "augment.tag.detail.cleanse": "依現有淨化規則移除有害效果，保留有益強化，不提供新的免疫。",
   "augment.tag.selfReceived": "每受到{every}次直接傷害，對自身施加{stacks}次{tag}。",
   "augment.tag.name.receivedEffect": "{tag}反應",

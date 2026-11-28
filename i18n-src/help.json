@@ -210,14 +210,14 @@
     "Связь"
   ],
   "help.term.bond.body": [
-    "每个遗物各自累积的关系数值。通过获得、胜利和每日互动提升，越高战斗中野性积累越快。",
-    "ค่าความสัมพันธ์ของเรลิกแต่ละตัว เพิ่มจากการได้รับ ชัยชนะ และการโต้ตอบรายวัน ยิ่งสูงพลังป่าเถื่อนยิ่งเต็มเร็วในการต่อสู้",
-    "Chỉ số quan hệ riêng của mỗi Di vật. Tăng qua việc nhận được, chiến thắng và tương tác hằng ngày; càng cao thì Dã tính trong trận càng đầy nhanh.",
-    "Nilai hubungan tiap Relik. Naik lewat perolehan, kemenangan, dan interaksi harian; makin tinggi, makin cepat Keganasan terisi saat bertarung.",
-    "Valor de relación propio de cada Reliquia. Sube al obtenerla, al ganar y con la interacción diaria; cuanto más alto, antes se llena la Ferocidad en combate.",
-    "Valor de relação de cada Relíquia. Sobe ao obtê-la, ao vencer e com a interação diária; quanto maior, mais rápido a Ferocidade enche em batalha.",
-    "Ein Beziehungswert jedes Relikts. Er steigt durch Erhalt, Siege und tägliche Interaktion; je höher er ist, desto schneller füllt sich im Kampf die Wildheit.",
-    "Показатель отношений каждого Реликта. Растёт за получение, победы и ежедневное общение; чем выше, тем быстрее в бою копится свирепость."
+    "每个遗物各自累积的关系数值。通过获得、胜利和每日互动提升，每升一级该遗物的全部能力值提高1%。",
+    "ค่าความสัมพันธ์ของเรลิกแต่ละตัว เพิ่มจากการได้รับ ชัยชนะ และการโต้ตอบรายวัน ทุกเลเวลเพิ่มค่าสถานะทั้งหมดของเรลิกนั้น 1%",
+    "Chỉ số quan hệ riêng của mỗi Di vật. Tăng qua việc nhận được, chiến thắng và tương tác hằng ngày; mỗi cấp tăng mọi chỉ số của Di vật đó thêm 1%.",
+    "Nilai hubungan tiap Relik. Naik lewat perolehan, kemenangan, dan interaksi harian; setiap level menaikkan semua stat Relik itu sebesar 1%.",
+    "Valor de relación propio de cada Reliquia. Sube al obtenerla, al ganar y con la interacción diaria; cada nivel aumenta un 1% todas sus estadísticas.",
+    "Valor de relação de cada Relíquia. Sobe ao obtê-la, ao vencer e com a interação diária; cada nível aumenta todos os atributos dela em 1%.",
+    "Ein Beziehungswert jedes Relikts. Er steigt durch Erhalt, Siege und tägliche Interaktion; jede Stufe erhöht alle Werte dieses Relikts um 1 %.",
+    "Показатель отношений каждого Реликта. Растёт за получение, победы и ежедневное общение; каждый уровень повышает все характеристики Реликта на 1%."
   ],
   "help.term.favorite.name": [
     "最爱",

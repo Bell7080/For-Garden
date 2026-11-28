@@ -21,7 +21,7 @@ export const HELP_DE = {
   "help.term.resonance.name": "Resonanz",
   "help.term.resonance.body": "Die Stufe nach Durchbruch IV. Sie kostet nur Splitter und erhöht die Werte um 5% pro Stufe. In der Duellarena ist sie deaktiviert.",
   "help.term.bond.name": "Bindung",
-  "help.term.bond.body": "Ein Beziehungswert jedes Relikts. Er steigt durch Erhalt, Siege und tägliche Interaktion; je höher er ist, desto schneller füllt sich im Kampf die Wildheit.",
+  "help.term.bond.body": "Ein Beziehungswert jedes Relikts. Er steigt durch Erhalt, Siege und tägliche Interaktion; jede Stufe erhöht alle Werte dieses Relikts um 1 %.",
   "help.term.favorite.name": "Favorit",
   "help.term.favorite.body": "Das eine Relikt, das in der Lobby steht. Ein Wechsel lässt die Bindung unverändert.",
   "help.term.rune.name": "Rune",

@@ -137,7 +137,7 @@ export const INFO_TH = {
   "info.journal.noInterview": "ยังไม่มีการบันทึกการสัมภาษณ์",
   "info.journal.historyEntry": "Q. {question}\n\nA. {answer}\n\nพบ  {habit}",
   "info.bond.level": "สายสัมพันธ์ {level}",
-  "info.bond.ferocityGain": "การสะสมความดุร้าย",
+  "info.bond.statGain": "ค่าสถานะทั้งหมด",
   "info.bond.lobbyInteraction": "โต้ตอบในล็อบบี้",
   "info.bond.oncePerDay": "วันละครั้ง {amount}",
   "info.bond.same": "เหมือนเดิม",

@@ -13,14 +13,20 @@ export const BOND_TOTAL_XP_BY_LEVEL = [0, 20, 50, 90, 140, 200, 270, 350, 440, 5
 export const BOND_XP_REWARD = { firstAcquisition: 20, partyVictory: 12, firstLobbyInteraction: 5, firstObservationInterview: 5 } as const;
 
 /**
- * 유대 레벨별 야성 증가 배율.
+ * 유대 한 레벨이 올리는 능력치(%) — 오각형 다섯(체력·방어·저항·공격·주문력)에 레벨마다 1%씩, 10레벨이면 10%다.
  *
- * 야성은 벌이 아니라 이 게임의 피버다. 게이지가 차고 터지고 가라앉는 것은 전부 전투가
- * 스스로 하며 플레이어가 그 시점을 고르지 않는다 — 플레이어가 바꿀 수 있는 것은 **얼마나
- * 오래 함께 싸웠는가**뿐이고, 오래 함께 싸운 렐릭일수록 본능을 더 빨리 끌어올린다. 그래서
- * 유대가 높을수록 배율이 **커진다**.
+ * 예전에는 유대가 야성이 차는 속도를 최대 +50%까지 올렸다. 응태 결정(2026-11-28)으로 걷어 내고 능력치로 옮겼다 —
+ * 폭주 시각이 유대 하나로 크게 당겨지면 같은 편성도 얼마나 오래 함께했는지에 따라 판이 통째로 갈렸고, 그 몫은
+ * 화면의 오각형에 서지 않았다. **성장은 오각형 다섯만 올린다**는 규칙(공명·레벨과 같은 축)을 그대로 따르고,
+ * 공명과 더해서 한 번에 곱한다(`calculateFinalStats`). 대인전에서도 그대로 든다 — 꺼지는 것은 공명뿐이다.
  */
-export const BOND_FEROCITY_MULTIPLIER = [1, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5] as const;
+export const BOND_STAT_PERCENT_PER_LEVEL = 1;
+
+/** 그 유대 레벨이 오각형 다섯에 더하는 몫(%). 상한을 넘긴 값은 상한 몫으로 자른다. */
+export function bondStatPercent(bondLevel: number): number {
+  if (!Number.isFinite(bondLevel) || bondLevel <= 0) return 0;
+  return Math.min(BOND_LEVEL_CAP, Math.floor(bondLevel)) * BOND_STAT_PERCENT_PER_LEVEL;
+}
 
 export interface BondXpResult { progress: RelicProgress; xpGained: number; levelsGained: number; }
 
@@ -46,12 +52,4 @@ export function grantDailyLobbyBondXp(progress: RelicProgress, utcDate: string):
   if (progress.lastLobbyInteractionDate === utcDate) return { progress: { ...progress, heartGemSlots: [...progress.heartGemSlots] as RelicProgress["heartGemSlots"] }, xpGained: 0, levelsGained: 0 };
   const result = grantBondXp(progress, BOND_XP_REWARD.firstLobbyInteraction);
   return { ...result, progress: { ...result.progress, lastLobbyInteractionDate: utcDate } };
-}
-
-/** 전투 엔진이 정적 유대 효과표와 같은 반올림 규칙을 사용하게 한다. */
-export function amplifyFerocityGain(amount: number, bondLevel: number): number {
-  if (!Number.isFinite(amount) || amount < 0 || !Number.isInteger(bondLevel) || bondLevel < 0) throw new RangeError("야성 증가량과 유대 레벨이 올바르지 않습니다.");
-  // 외부 전투 스냅샷에 상한 초과 값이 와도 최대 해금 효과로 안전하게 제한한다.
-  // 정수로 자르지 않는다 — 룬·증강의 야성 몫이 소수(+1.5 등)라 반올림하면 그 몫이 사라지거나 두 배로 튄다.
-  return Math.max(0, Math.round(amount * BOND_FEROCITY_MULTIPLIER[Math.min(BOND_LEVEL_CAP, bondLevel)] * 100) / 100);
 }

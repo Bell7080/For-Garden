@@ -137,7 +137,7 @@ export const INFO_VI = {
   "info.journal.noInterview": "Chưa có buổi phỏng vấn nào được ghi.",
   "info.journal.historyEntry": "H. {question}\n\nĐ. {answer}\n\nPhát hiện  {habit}",
   "info.bond.level": "Gắn kết {level}",
-  "info.bond.ferocityGain": "Tích Dã tính",
+  "info.bond.statGain": "Mọi chỉ số",
   "info.bond.lobbyInteraction": "Tương tác ở sảnh",
   "info.bond.oncePerDay": "{amount} mỗi ngày một lần",
   "info.bond.same": "Như cũ",

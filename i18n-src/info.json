@@ -817,15 +817,15 @@
 "Bindung {level}",
 "Связь {level}"
 ],
-"info.bond.ferocityGain": [
-"野性获取",
-"การสะสมความดุร้าย",
-"Tích Dã tính",
-"Perolehan Keganasan",
-"Ganancia de Ferocidad",
-"Ganho de Ferocidade",
-"Wildheitsgewinn",
-"Прирост ярости"
+"info.bond.statGain": [
+"全部能力值",
+"ค่าสถานะทั้งหมด",
+"Mọi chỉ số",
+"Semua Stat",
+"Todas las estadísticas",
+"Todos os atributos",
+"Alle Werte",
+"Все характеристики"
 ],
 "info.bond.lobbyInteraction": [
 "大厅互动",

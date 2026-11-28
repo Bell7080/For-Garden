@@ -137,7 +137,7 @@ export const INFO_ID = {
   "info.journal.noInterview": "Belum ada wawancara yang dicatat.",
   "info.journal.historyEntry": "T. {question}\n\nJ. {answer}\n\nTemuan  {habit}",
   "info.bond.level": "Ikatan {level}",
-  "info.bond.ferocityGain": "Perolehan Keganasan",
+  "info.bond.statGain": "Semua Stat",
   "info.bond.lobbyInteraction": "Interaksi lobi",
   "info.bond.oncePerDay": "{amount} sekali sehari",
   "info.bond.same": "Sama",

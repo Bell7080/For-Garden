@@ -73,7 +73,7 @@ export const AUGMENT_DE = {
   "augment.tag.detail.shield": "Schild in Höhe von {maxHpPercent}% eigener maximaler LP. Bestehende Schild- und Absorptionsregeln gelten.",
   "augment.tag.name.ferocity": "Wildheit",
   "augment.tag.name.cleanse": "Reinigung",
-  "augment.tag.detail.ferocity": "Erhalte {points} grundlegende Wildheit. Bestehende Bindungs- und Wildheitsboni gelten. Kein Zusatzgewinn im Rasereimodus.",
+  "augment.tag.detail.ferocity": "Erhalte {points} grundlegende Wildheit. Bestehende Wildheitsboni gelten. Kein Zusatzgewinn im Rasereimodus.",
   "augment.tag.detail.cleanse": "Entfernt schädliche Effekte nach bestehenden Reinigungsregeln. Positive Verstärkungen bleiben, keine neue Immunität.",
   "augment.tag.selfReceived": "Nach {every} direkten LP-Treffern: {tag} ×{stacks} auf sich selbst.",
   "augment.tag.name.receivedEffect": "{tag}-Reaktion",

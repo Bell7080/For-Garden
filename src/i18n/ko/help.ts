@@ -21,7 +21,7 @@ export const HELP_KO = {
   "help.term.resonance.name": "공명",
   "help.term.resonance.body": "돌파 IV 다음 단계예요. 파편만 들고, 단계마다 능력치가 5% 올라요. 결투장에서는 꺼져요.",
   "help.term.bond.name": "유대",
-  "help.term.bond.body": "렐릭마다 쌓이는 관계 수치예요. 획득·승리·매일의 상호작용으로 오르고, 높을수록 전투에서 야성이 빨리 차요.",
+  "help.term.bond.body": "렐릭마다 쌓이는 관계 수치예요. 획득·승리·매일의 상호작용으로 오르고, 레벨마다 그 렐릭의 모든 능력치가 1%씩 올라요.",
   "help.term.favorite.name": "애착",
   "help.term.favorite.body": "로비에 세울 대표 렐릭 하나예요. 바꿔도 유대는 그대로예요.",
   "help.term.rune.name": "룬",

@@ -21,7 +21,7 @@ export const HELP_ZH_HANT = {
   "help.term.resonance.name": "共鳴",
   "help.term.resonance.body": "突破IV之後的階段。只消耗碎片，每一階能力值提升5%。在決鬥場中無效。",
   "help.term.bond.name": "羈絆",
-  "help.term.bond.body": "每個遺物各自累積的關係數值。透過獲得、勝利和每日互動提升，越高戰鬥中野性積累越快。",
+  "help.term.bond.body": "每個遺物各自累積的關係數值。透過獲得、勝利和每日互動提升，每升一級該遺物的全部能力值提高1%。",
   "help.term.favorite.name": "最愛",
   "help.term.favorite.body": "站在大廳的代表遺物，只能選一位。更換後羈絆保持不變。",
   "help.term.rune.name": "符文",

@@ -7803,4 +7803,12 @@ export default {
   "dialogue.bond.ar.10.n9.body": "ลมพัดมา ปลายผ้าพันแผลไหวไปมา อาร์เอานิ้วพันปลายนั้นไว้แล้วกำ",
   "dialogue.bond.ar.10.n10.speaker": "อาร์",
   "dialogue.bond.ar.10.n10.body": "เพราะงั้นต่อจากนี้ก็อยู่ตรงนั้นนะ จะไล่ไปไกลแค่ไหน ที่ที่ฉันจะกลับมาก็คือคุณ",
+  "item.rune-box-uncommon.name": "กล่องรูนขั้นสูงแบบสุ่ม",
+  "item.rune-box-uncommon.description": "เปิดแล้วจะได้รูนขั้นสูงแบบสุ่ม 1 ชิ้นเข้ากระเป๋ารูน",
+  "item.rune-box-rare.name": "กล่องรูนหายากแบบสุ่ม",
+  "item.rune-box-rare.description": "เปิดแล้วจะได้รูนหายากแบบสุ่ม 1 ชิ้นเข้ากระเป๋ารูน",
+  "item.rune-box-epic.name": "กล่องรูนมหากาพย์แบบสุ่ม",
+  "item.rune-box-epic.description": "เปิดแล้วจะได้รูนมหากาพย์แบบสุ่ม 1 ชิ้นเข้ากระเป๋ารูน",
+  "item.rune-box-legendary.name": "กล่องรูนตำนานแบบสุ่ม",
+  "item.rune-box-legendary.description": "เปิดแล้วจะได้รูนตำนานแบบสุ่ม 1 ชิ้นเข้ากระเป๋ารูน",
 };

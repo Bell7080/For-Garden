@@ -2008,8 +2008,17 @@ describe("1-5 무료 세공·각인 체험", () => {
       expect((await server.enhanceRune({ runeInstanceId: runeId, statId: next })).goldSpent).toBe(0);
     }
     expect(state.wallet.gold).toBe(0);
-    await server.engraveRune({ runeInstanceId: runeId, statId });
+    const engraved = await server.engraveRune({ runeInstanceId: runeId, statId });
     expect(state.tutorial?.freeRuneCraft).toBeUndefined();
+    // 체험을 끝까지 마친 보상 — 무작위 영웅 룬 상자 하나가 같은 저장에서 가방에 든다.
+    expect(engraved.tutorialReward).toEqual({ itemId: "rune-box-epic", quantity: 1 });
+    expect(state.itemInventory.find((stack) => stack.itemId === "rune-box-epic")?.quantity).toBe(1);
+    // 상자를 열면 영웅 룬 하나가 되고 상자는 사라진다.
+    const runesBefore = state.runeInventory.length;
+    const opened = await server.useConsumable({ itemId: "rune-box-epic", quantity: 1 });
+    expect(opened.runes?.map((rune) => rune.rarity)).toEqual(["epic"]);
+    expect(state.runeInventory.length).toBe(runesBefore + 1);
+    expect(state.itemInventory.find((stack) => stack.itemId === "rune-box-epic")).toBeUndefined();
     // 두 번째 1-5 승리는 체험을 다시 세우지 않는다.
     await server.completeStage("1-5", true);
     expect(state.tutorial?.freeRuneCraft).toBeUndefined();

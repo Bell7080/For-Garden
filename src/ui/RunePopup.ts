@@ -3,7 +3,7 @@ import { bindPressFlash } from "./pressFeedback";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
-import type { GameApi } from "../api/contracts";
+import type { GameApi, RuneTutorialRewardDto } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
 import { setDebugRuneForgeRename, setDebugRuneNoteCraft } from "../debug";
 import { canEngraveRune, canEnhanceRune, formatRuneOptionValue, runeOptionValue, runeBatchEnhancementTargets, runePartLabel, runeRarityLabel, runeEnhancementAttempts, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../core/runes";
@@ -18,10 +18,13 @@ import { Button } from "./Button";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawHairline, drawLayer, slantedRect, toPoints } from "./holo";
 import { openCuteGuide } from "./CuteGuidePopup";
+import { addItemDefinitionIcon } from "./itemDefinitionIcon";
+import { findItem } from "../data/items";
 import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
 import { RUNE_CRAFT_MARKS, RUNE_CRAFT_PANEL, RUNE_NOTE_PANEL, runeCraftLayout, runeNoteLayout } from "./runeCraftLayout";
 import { BATCH_LAND_STEP_MS, planRuneCraftTap, RUNE_CRAFT_IMPACT, RUNE_CRAFT_STRIKE, RUNE_MARK, type RuneCraftImpactKind } from "./runeCraftMotion";
 import { addEmptyRuneMark, addRuneFrame, addRuneMark, RUNE_ACCENT, RuneChanceLine } from "./runeIcons";
+import { addFramedIcon } from "./itemFrame";
 import { addCurrencyChip } from "./CurrencyChip";
 import { KeywordManager } from "../managers/KeywordManager";
 import { runeTraitView } from "./runeTraitPresentation";
@@ -660,6 +663,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
           ? await inventory.engraveRune(api, rune!.instanceId, statKey)
           : await inventory.enhanceRune(api, rune!.instanceId, statKey);
         rune = response.rune;
+        const tutorialReward = "tutorialReward" in response ? response.tutorialReward : undefined;
         if (closed) { pending = false; return; }
         options.onChanged?.(rune);
         const succeeded = "succeeded" in response && response.succeeded;
@@ -679,7 +683,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
             if (closed) return;
             // 마지막 한 칸은 끼우는 자리를 짚어 주는 것까지다 — 토리카 정보창으로 데려가 룬 칸을 비추고, 장착은 시키지 않는다.
             const guideId = relicCollection.owns(RUNE_EQUIP_GUIDE_RELIC) ? RUNE_EQUIP_GUIDE_RELIC : undefined;
-            openRuneDoneGuide(scene, popups, rune!, guideId, () => { if (guideId && scene.scene.isActive()) startScene(scene, "relics", { openRelicId: guideId, runeEquipHint: true }); });
+            openRuneDoneGuide(scene, popups, rune!, guideId, () => { if (guideId && scene.scene.isActive()) startScene(scene, "relics", { openRelicId: guideId, runeEquipHint: true }); }, tutorialReward);
           });
         }
       } catch (error) {
@@ -971,19 +975,33 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
  * 체험 세공을 마친 순간의 안내 — 무엇을 해냈는지는 글이 아니라 막 완성한 그 룬이 말한다(각인의 금빛까지 두른 액자가
  * 덤 칸에 선다). 끼울 렐릭이 있으면 그 아이가 무대에 서고, 버튼이 그 정보창으로 데려간다.
  */
-export function openRuneDoneGuide(scene: Phaser.Scene, popups: PopupLayer, done: RuneInstance, guideId: string | undefined, onConfirm: () => void): void {
+export function openRuneDoneGuide(scene: Phaser.Scene, popups: PopupLayer, done: RuneInstance, guideId: string | undefined, onConfirm: () => void, reward?: RuneTutorialRewardDto): void {
+  const rewardItem = reward ? findItem(reward.itemId) : undefined;
+  const height = rewardItem ? 220 : 170;
   openCuteGuide(scene, popups, {
     title: t("intro.title"),
     tone: "mint",
     required: true,
-    ...(guideId ? { guide: guideId } : {}),
+    // 무대에 서는 것은 애착 렐릭이다(`cuteGuideRelic`). 끼울 렐릭(`guideId`)은 버튼이 데려가는 곳일 뿐이다.
     confirmLabel: guideId ? t("tutorial.rune.done.go", { name: getRelic(guideId).name }) : t("settings.action.confirm"),
-    pages: [{ heading: t("tutorial.rune.done.title"), body: t("tutorial.rune.done.body") }],
+    pages: [{ heading: t("tutorial.rune.done.title"), body: t(rewardItem ? "tutorial.rune.done.bodyReward" : "tutorial.rune.done.body") }],
     extra: {
-      height: 170,
+      height,
       paint: (_scene, slot, width, tone) => {
-        slot.add(drawLayer(scene, 0, 0, chipPoints(width, 170, { bevel: { topLeft: 32, bottomRight: 32 } }), { fill: tone.deep, alpha: 0.72, shadow: false }));
-        slot.add(addRuneFrame(scene, 0, 0, 136, done.rarity, done.part, { mainStats: done.mainStats, engraved: done.engravings.length > 0 }));
+        slot.add(drawLayer(scene, 0, 0, chipPoints(width, height, { bevel: { topLeft: 32, bottomRight: 32 } }), { fill: tone.deep, alpha: 0.72, shadow: false }));
+        if (!rewardItem || !reward) {
+          slot.add(addRuneFrame(scene, 0, 0, 136, done.rarity, done.part, { mainStats: done.mainStats, engraved: done.engravings.length > 0 }));
+          return;
+        }
+        // 왼쪽은 막 완성한 룬, 오른쪽은 체험을 마친 보상(가방에 들어간 상자) — 글 대신 두 액자가 말한다.
+        const frameY = -14;
+        const labelY = height / 2 - 26;
+        slot.add(addRuneFrame(scene, -150, frameY, 136, done.rarity, done.part, { mainStats: done.mainStats, engraved: done.engravings.length > 0 }));
+        slot.add(scene.add.text(0, frameY, "▶", textStyle({ role: "display", size: 34, color: "#ffffff" })).setOrigin(0.5).setAlpha(0.7));
+        const box = addFramedIcon(scene, slot, 150, frameY, 136, "", { amount: `×${reward.quantity}` });
+        box.addAt(addItemDefinitionIcon(scene, rewardItem.icon, 0, 0, 136 * 0.78), 1);
+        slot.add(scene.add.text(-150, labelY, t("tutorial.rune.done.made"), textStyle({ role: "emphasis", size: 24, color: "#ffffff" })).setOrigin(0.5));
+        slot.add(scene.add.text(150, labelY, t("tutorial.rune.done.reward"), textStyle({ role: "emphasis", size: 24, color: "#ffe08a" })).setOrigin(0.5));
       },
     },
     onConfirm,

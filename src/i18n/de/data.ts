@@ -7803,4 +7803,12 @@ export default {
   "dialogue.bond.ar.10.n9.body": "Der Wind wehte, und das Ende des Verbands flatterte. Ar wickelte es sich um den Finger und hielt es fest.",
   "dialogue.bond.ar.10.n10.speaker": "Ar",
   "dialogue.bond.ar.10.n10.body": "Also bleib auch weiterhin da. Egal wie weit ich jage, zurück komm ich zu dir.",
+  "item.rune-box-uncommon.name": "Zufällige ungewöhnliche Runenkiste",
+  "item.rune-box-uncommon.description": "Öffne sie, um 1 zufällige ungewöhnliche Rune in deine Runentasche zu legen.",
+  "item.rune-box-rare.name": "Zufällige seltene Runenkiste",
+  "item.rune-box-rare.description": "Öffne sie, um 1 zufällige seltene Rune in deine Runentasche zu legen.",
+  "item.rune-box-epic.name": "Zufällige epische Runenkiste",
+  "item.rune-box-epic.description": "Öffne sie, um 1 zufällige epische Rune in deine Runentasche zu legen.",
+  "item.rune-box-legendary.name": "Zufällige legendäre Runenkiste",
+  "item.rune-box-legendary.description": "Öffne sie, um 1 zufällige legendäre Rune in deine Runentasche zu legen.",
 };

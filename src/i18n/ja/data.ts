@@ -7841,4 +7841,12 @@ export default {
   "dialogue.bond.ar.10.n9.body": "風が吹いて包帯の端が揺れた。アルがその端を指に巻きつけて握った。",
   "dialogue.bond.ar.10.n10.speaker": "アル",
   "dialogue.bond.ar.10.n10.body": "だからこれからもそこにいて。どこまで追っても、帰ってくるのはあなたのところにするから。",
+  "item.rune-box-uncommon.name": "ランダム上級ルーンボックス",
+  "item.rune-box-uncommon.description": "開けるとランダムな上級ルーン1個がルーンバッグに入ります。",
+  "item.rune-box-rare.name": "ランダムレアルーンボックス",
+  "item.rune-box-rare.description": "開けるとランダムなレアルーン1個がルーンバッグに入ります。",
+  "item.rune-box-epic.name": "ランダム英雄ルーンボックス",
+  "item.rune-box-epic.description": "開けるとランダムな英雄ルーン1個がルーンバッグに入ります。",
+  "item.rune-box-legendary.name": "ランダム伝説ルーンボックス",
+  "item.rune-box-legendary.description": "開けるとランダムな伝説ルーン1個がルーンバッグに入ります。",
 };

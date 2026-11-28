@@ -7803,4 +7803,12 @@ export default {
   "dialogue.bond.ar.10.n9.body": "Подул ветер, и кончик бинта затрепетал. Ар намотала его на палец и сжала.",
   "dialogue.bond.ar.10.n10.speaker": "Ар",
   "dialogue.bond.ar.10.n10.body": "Так что и дальше будь там. Как далеко бы я ни гналась, вернусь к тебе.",
+  "item.rune-box-uncommon.name": "Случайный ящик необычной руны",
+  "item.rune-box-uncommon.description": "Откройте, чтобы получить 1 случайную руну (необычная) в сумку рун.",
+  "item.rune-box-rare.name": "Случайный ящик редкой руны",
+  "item.rune-box-rare.description": "Откройте, чтобы получить 1 случайную руну (редкая) в сумку рун.",
+  "item.rune-box-epic.name": "Случайный ящик эпической руны",
+  "item.rune-box-epic.description": "Откройте, чтобы получить 1 случайную руну (эпическая) в сумку рун.",
+  "item.rune-box-legendary.name": "Случайный ящик легендарной руны",
+  "item.rune-box-legendary.description": "Откройте, чтобы получить 1 случайную руну (легендарная) в сумку рун.",
 };

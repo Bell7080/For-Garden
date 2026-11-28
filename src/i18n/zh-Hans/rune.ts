@@ -185,4 +185,5 @@ export const RUNE_ZH_HANS = {
   "rune.traitBulk.result.sortHolder": "按装备者",
   "rune.traitBulk.failed": "批量赋予特性失败。",
   "rune.traitBulk.lacking": "未知的古代核心不足。",
+  "rune.bulkCraft.tutorialReward": "作为完成奖励，随机英雄符文箱已放入背包。",
 } as const;

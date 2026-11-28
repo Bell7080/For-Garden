@@ -84,7 +84,7 @@ export interface DeleteMailsRequest { mailIds: string[]; }
 /** `lotExpiresAt`을 주면 그 묶음에서 쓴다(가방에서 누른 칸). 없으면 가장 먼저 사라질 묶음부터다. */
 export interface UseConsumableRequest { itemId: string; quantity: number; lotExpiresAt?: string; /** 렐릭 선택권(`select_relic`)에서 고른 렐릭. 서버가 그 등급의 상시 풀인지 다시 검증한다. */ relicId?: string; }
 /** 실제 적용량을 반환해 상한에서 버려진 회복을 UI가 추측하지 않게 한다. */
-export interface UseConsumableResponse extends InventoryResponse { itemId: string; quantityUsed: number; effect: ItemUseEffect; appliedAmount: number; overflowAmount: number; wallet: Wallet; stamina: StaminaDto; /** 렐릭 선택권으로 처음 데려온 렐릭. */ newRelicIds?: readonly string[]; /** 렐릭 선택권이 이미 있던 렐릭의 파편 한 장이 되었을 때 그 렐릭. */ fragmentRelicId?: string; }
+export interface UseConsumableResponse extends InventoryResponse { itemId: string; quantityUsed: number; effect: ItemUseEffect; appliedAmount: number; overflowAmount: number; wallet: Wallet; stamina: StaminaDto; /** 렐릭 선택권으로 처음 데려온 렐릭. */ newRelicIds?: readonly string[]; /** 렐릭 선택권이 이미 있던 렐릭의 파편 한 장이 되었을 때 그 렐릭. */ fragmentRelicId?: string; /** 룬 상자에서 나온 룬. */ runes?: RuneInstance[]; /** 룬 상자를 연 뒤의 룬 가방. */ runeInventory?: RuneInventoryDto; }
 
 /**
  * 렐릭 추가 외형 구매.
@@ -198,7 +198,9 @@ export interface EnhanceRuneAllResponse { goldSpent: number; results: boolean[];
 /** 각인 요청 역시 대상 룬과 실제 옵션만 고르며 등급과 증가량은 서버가 정한다. */
 export interface EngraveRuneRequest { runeInstanceId: string; statId: RuneStatKey; }
 /** 각인 뒤 갱신된 룬과 인벤토리를 반환한다. */
-export interface EngraveRuneResponse { rune: RuneInstance; inventory: RuneInventoryDto; }
+/** 무료 각인 체험을 끝까지 마친 순간의 보상(가방에 들어간 아이템). 그 각인에서만 실린다. */
+export interface RuneTutorialRewardDto { itemId: string; quantity: number; }
+export interface EngraveRuneResponse { rune: RuneInstance; inventory: RuneInventoryDto; tutorialReward?: RuneTutorialRewardDto; }
 /** 이름 원문은 서버 경계에서 정규화하므로 요청에는 별도 정규화 플래그가 없다. */
 export interface RenameRuneRequest { runeInstanceId: string; name: string; }
 /** 공백 제거와 검증을 마친 이름이 반영된 룬이다. */
@@ -269,6 +271,8 @@ export interface CraftRunesResponse {
   runes: RuneInstance[];
   inventory: RuneInventoryDto;
   wallet: Wallet;
+  /** 체험 룬의 각인이 들어 체험을 끝낸 판이면 그 보상. */
+  tutorialReward?: RuneTutorialRewardDto;
 }
 /** 룬 합성 — 각인까지 마친 같은 등급 룬 셋. 결과 등급·자리·옵션·특성은 서버가 굴린다. */
 export interface SynthesizeRunesRequest { requestId: string; runeInstanceIds: readonly string[]; }

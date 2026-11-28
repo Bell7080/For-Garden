@@ -5,8 +5,6 @@
  * 레벨 초기화·MAX 급여 창과 같은 문법으로 꾸민다: 위 **무대**에 안내하는 아이의 SD가 통통 뛰고 빛살·마름모 점 무늬·
  * 반짝임이 판의 색으로 깔리며, 하얀 **말풍선**이 큰 제목과 본문을 싣는다. 아래에는 덤 칸(받는 지원품·완성한 룬)과
  * 넘김 점·버튼이 선다. 창 높이는 손으로 적지 않고 칸이 있는지·넘길 쪽이 있는지에서 거꾸로 구한다.
- *
- * 이름 설정 창(`NicknamePopup`)도 같은 무대·말풍선을 쓰되 SD 둘이 양옆에 서고 입력 칸을 크게 둔다(`NICKNAME_POPUP`).
  */
 
 /** 판 한 벌의 색 — 무대의 물들임 · 가라앉는 결 · 몸판 · 빛살 · 점 무늬 · 반짝임 · 강조선 · 버튼 · 말풍선 제목. */
@@ -81,54 +79,4 @@ export function cuteGuideSpots(options: { extraHeight?: number; pages: number })
   const dotsY = options.pages > 1 ? stageBottom + extra + L.dots.room / 2 + 6 : undefined;
   const buttonY = stageBottom + extra + dots + L.buttonRoom;
   return { height: stack, stageTop, stageBottom, ...(extraY !== undefined ? { extraY } : {}), ...(dotsY !== undefined ? { dotsY } : {}), buttonY };
-}
-
-/**
- * 이름 설정 창 — 같은 무대에 도디·파루아가 양옆에서 통통 뛰고, 가운데 위 말풍선이 「이름이 무엇인가요?」를 크게 묻는다.
- * 아래 입력 칸·글자 수·조건·주기 안내를 예전보다 한 뼘씩 크게 세운다(응태 요청 — 가시성).
- */
-export const NICKNAME_POPUP = {
-  width: 940,
-  topRoom: 74,
-  stage: {
-    height: 400,
-    sd: { xs: [-300, 300], ground: 358, height: 232, shadow: 140, labelDy: 24, labelSize: 28 },
-    bubble: { x: 0, y: 100, width: 520, height: 150, tail: 34, size: 40, wrap: 460 },
-  },
-  fieldLabelGap: 46, fieldLabelSize: 32,
-  help: { size: 64 },
-  field: { width: 800, height: 112, fontSize: 40 },
-  fieldGap: 88,
-  countGap: 50, countSize: 28,
-  rulesGap: 34, rulesSize: 28,
-  noticeGap: 128, noticeSize: 27,
-  saveGap: 120, save: { width: 700, height: 108, fontSize: 36 },
-  bottomPad: 74,
-} as const;
-
-export interface NicknamePopupSpots {
-  height: number;
-  stageTop: number;
-  stageBottom: number;
-  fieldLabelY: number;
-  fieldY: number;
-  countY: number;
-  rulesY: number;
-  noticeY: number;
-  saveY: number;
-}
-
-export function nicknamePopupSpots(): NicknamePopupSpots {
-  const L = NICKNAME_POPUP;
-  const stack = L.topRoom + L.stage.height + L.fieldLabelGap + L.fieldGap + L.countGap + L.rulesGap + L.noticeGap + L.saveGap + L.save.height / 2 + L.bottomPad;
-  const top = -stack / 2;
-  const stageTop = top + L.topRoom;
-  const stageBottom = stageTop + L.stage.height;
-  const fieldLabelY = stageBottom + L.fieldLabelGap;
-  const fieldY = fieldLabelY + L.fieldGap;
-  const countY = fieldY + L.countGap + L.field.height / 2 - 20;
-  const rulesY = countY + L.rulesGap;
-  const noticeY = rulesY + L.noticeGap;
-  const saveY = noticeY + L.saveGap;
-  return { height: stack, stageTop, stageBottom, fieldLabelY, fieldY, countY, rulesY, noticeY, saveY };
 }

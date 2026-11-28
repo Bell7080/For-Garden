@@ -185,4 +185,5 @@ export const RUNE_DE = {
   "rune.traitBulk.result.sortHolder": "Nach Träger",
   "rune.traitBulk.failed": "Massenverleihung fehlgeschlagen.",
   "rune.traitBulk.lacking": "Nicht genug Unbekannte uralte Kerne.",
+  "rune.bulkCraft.tutorialReward": "Als Belohnung liegt eine zufällige epische Runenkiste in deiner Tasche.",
 } as const;

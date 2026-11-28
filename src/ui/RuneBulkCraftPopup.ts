@@ -152,6 +152,7 @@ export function openRuneBulkCraftPopup(scene: Phaser.Scene, popups: PopupLayer, 
             : t("rune.bulkCraft.done", {
               attempts: response.attempts.toLocaleString(), successes: response.successes.toLocaleString(), engraved: response.engraved.toLocaleString(),
             }), "info");
+          if (response.tutorialReward) scene.time.delayedCall(900, () => { if (scene.scene.isActive()) showContentToast(scene, t("rune.bulkCraft.tutorialReward"), "info"); });
           // 끝난 룬은 목록에서 빠진다(더 할 일이 없다). 고른 표시도 비운다.
           selected.clear();
           if (countText.active) { grid.repaint(); paint(); }

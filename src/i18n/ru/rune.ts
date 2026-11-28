@@ -185,4 +185,5 @@ export const RUNE_RU = {
   "rune.traitBulk.result.sortHolder": "По владельцу",
   "rune.traitBulk.failed": "Не удалось выдать черты.",
   "rune.traitBulk.lacking": "Не хватает Неизвестных древних ядер.",
+  "rune.bulkCraft.tutorialReward": "В награду в сумку добавлен случайный ящик эпической руны.",
 } as const;

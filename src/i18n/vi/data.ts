@@ -7803,4 +7803,12 @@ export default {
   "dialogue.bond.ar.10.n9.body": "Gió thổi, đầu dải băng phấp phới. Ar quấn đầu băng quanh ngón tay rồi nắm lấy.",
   "dialogue.bond.ar.10.n10.speaker": "Ar",
   "dialogue.bond.ar.10.n10.body": "Nên từ giờ cũng ở đó nhé. Đuổi tới đâu đi nữa, tôi cũng sẽ quay về chỗ cậu.",
+  "item.rune-box-uncommon.name": "Hộp Rune Cao cấp ngẫu nhiên",
+  "item.rune-box-uncommon.description": "Mở ra để nhận 1 Rune Cao cấp ngẫu nhiên vào túi Rune.",
+  "item.rune-box-rare.name": "Hộp Rune Hiếm ngẫu nhiên",
+  "item.rune-box-rare.description": "Mở ra để nhận 1 Rune Hiếm ngẫu nhiên vào túi Rune.",
+  "item.rune-box-epic.name": "Hộp Rune Sử thi ngẫu nhiên",
+  "item.rune-box-epic.description": "Mở ra để nhận 1 Rune Sử thi ngẫu nhiên vào túi Rune.",
+  "item.rune-box-legendary.name": "Hộp Rune Huyền thoại ngẫu nhiên",
+  "item.rune-box-legendary.description": "Mở ra để nhận 1 Rune Huyền thoại ngẫu nhiên vào túi Rune.",
 };

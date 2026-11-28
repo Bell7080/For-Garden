@@ -101,4 +101,5 @@ export const INVENTORY_ID = {
   "guide.route.relicFeed": "Makanan untuk Relik (naik level)",
   "guide.route.runeCraft": "Asah·Ukir·Sintesis Rune",
   "guide.route.runeTrait": "Interpretasi ulang sifat Rune",
+  "inventory.runeBoxOpened": "Mendapat Rune {rarity}!",
 } as const;

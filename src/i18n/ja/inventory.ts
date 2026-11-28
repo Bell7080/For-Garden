@@ -23,6 +23,7 @@ export const INVENTORY_JA = {
   "inventory.source.ad": "広告報酬",
   "inventory.useButton": "使用する",
   "inventory.staminaGained": "スタミナ +{amount}",
+  "inventory.runeBoxOpened": "{rarity}ルーンを手に入れました！",
   "inventory.staminaFull": "スタミナが満タンです",
 
   "stamina.sources": "入手先",

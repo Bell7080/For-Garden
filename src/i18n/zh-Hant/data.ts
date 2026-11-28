@@ -7803,4 +7803,12 @@ export default {
   "dialogue.bond.ar.10.n9.body": "風吹過，繃帶的一頭飄動起來。阿爾把那一頭纏在指尖握住。",
   "dialogue.bond.ar.10.n10.speaker": "阿爾",
   "dialogue.bond.ar.10.n10.body": "所以以後也要待在那裡。不管追到哪裡，我都會回到你身邊。",
+  "item.rune-box-uncommon.name": "隨機高階符文箱",
+  "item.rune-box-uncommon.description": "開啟後，隨機1個高階符文會放入符文背包。",
+  "item.rune-box-rare.name": "隨機稀有符文箱",
+  "item.rune-box-rare.description": "開啟後，隨機1個稀有符文會放入符文背包。",
+  "item.rune-box-epic.name": "隨機英雄符文箱",
+  "item.rune-box-epic.description": "開啟後，隨機1個英雄符文會放入符文背包。",
+  "item.rune-box-legendary.name": "隨機傳說符文箱",
+  "item.rune-box-legendary.description": "開啟後，隨機1個傳說符文會放入符文背包。",
 };

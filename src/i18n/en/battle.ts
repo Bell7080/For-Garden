@@ -73,5 +73,8 @@ export const BATTLE_EN = {
   "tutorial.rune.done.title": "Rune Complete!",
   "tutorial.rune.done.body": "Polishing and Engraving are all done. From now on, Polishing costs Gold.",
   "tutorial.rune.done.go": "Equip on {name}",
+  "tutorial.rune.done.bodyReward": "Polishing and Engraving are all done! As a reward, a Random Epic Rune Box is waiting in your Bag.",
+  "tutorial.rune.done.made": "Your Rune",
+  "tutorial.rune.done.reward": "Reward",
   "tutorial.rune.equip": "You can equip Runes here!",
 } as const;

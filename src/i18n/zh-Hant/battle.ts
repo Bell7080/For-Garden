@@ -74,4 +74,7 @@ export const BATTLE_ZH_HANT = {
   "tutorial.rune.done.body": "打磨和刻印都完成了。之後打磨需要消耗金幣。",
   "tutorial.rune.done.go": "去給{name}裝備",
   "tutorial.rune.equip": "符文可以在這裡裝備！",
+  "tutorial.rune.done.bodyReward": "打磨和刻印都完成了！作為完成獎勵，隨機英雄符文箱已放入背包。",
+  "tutorial.rune.done.made": "完成的符文",
+  "tutorial.rune.done.reward": "完成獎勵",
 } as const;

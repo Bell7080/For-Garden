@@ -74,4 +74,7 @@ export const BATTLE_DE = {
   "tutorial.rune.done.body": "Veredeln und Gravieren sind fertig. Ab jetzt kostet Veredeln Gold.",
   "tutorial.rune.done.go": "Bei {name} anlegen",
   "tutorial.rune.equip": "Hier kannst du Runen anlegen!",
+  "tutorial.rune.done.bodyReward": "Veredeln und Gravieren sind fertig! Als Belohnung liegt eine zufällige epische Runenkiste in deiner Tasche.",
+  "tutorial.rune.done.made": "Deine Rune",
+  "tutorial.rune.done.reward": "Belohnung",
 } as const;

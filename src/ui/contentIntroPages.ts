@@ -28,7 +28,7 @@ export const CONTENT_INTRO_PAGES: Readonly<Record<IconIntroId, readonly IconIntr
   party: pages("party", [ROLE_ICON.tank, ROLE_ICON.assassin], "mint"),
   shop: pages("shop", [W.cheesecake, W.gold], "amber"),
   cakeOperation: pages("cakeOperation", [W.cheesecake, "item-sweep-ticket"], "amber"),
-  bounty: pages("bounty", [ROLE_ICON.assassin, W.gold], "sky"),
+  bounty: pages("bounty", [W.gold, W.gold], "sky"),
   interaction: pages("interaction", [ROLE_ICON.support, W.gold], "sky"),
   duel: pages("duel", [ROLE_ICON.tank, "item-duel-ticket"], "pink"),
   friends: pages("friends", [ROLE_ICON.support, "item-raid-ticket"], "lilac"),

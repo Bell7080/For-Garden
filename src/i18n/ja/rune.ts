@@ -176,6 +176,7 @@ export const RUNE_JA = {
   "rune.bulkCraft.done": "研磨{attempts}回中{successes}回成功 · 刻印{engraved}個",
   "rune.bulkCraft.doneEngrave": "刻印{engraved}個完了",
   "rune.bulkCraft.failed": "一括研磨に失敗しました。",
+  "rune.bulkCraft.tutorialReward": "完了報酬として、ランダム英雄ルーンボックスをバッグに入れておきました。",
   "rune.traitBulk.title": "特性一括付与",
   "rune.traitBulk.selected": "選択 {count} / {total}",
   "rune.traitBulk.cost": "消費",

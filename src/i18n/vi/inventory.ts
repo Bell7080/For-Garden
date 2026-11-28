@@ -101,4 +101,5 @@ export const INVENTORY_VI = {
   "guide.route.relicFeed": "Cho ăn Di vật (tăng cấp)",
   "guide.route.runeCraft": "Mài·Khắc·Hợp nhất Rune",
   "guide.route.runeTrait": "Tái diễn giải đặc tính Rune",
+  "inventory.runeBoxOpened": "Nhận được Rune {rarity}!",
 } as const;

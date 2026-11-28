@@ -174,6 +174,7 @@ export const RUNE_EN = {
   "rune.bulkCraft.done": "{successes} of {attempts} polishes succeeded · {engraved} engraved",
   "rune.bulkCraft.doneEngrave": "{engraved} engraved",
   "rune.bulkCraft.failed": "Bulk polish failed.",
+  "rune.bulkCraft.tutorialReward": "A Random Epic Rune Box has been added to your Bag as a reward.",
   "rune.traitBulk.title": "Bulk Grant Traits",
   "rune.traitBulk.selected": "Selected {count} / {total}",
   "rune.traitBulk.cost": "Cost",

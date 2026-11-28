@@ -101,4 +101,5 @@ export const INVENTORY_ES = {
   "guide.route.relicFeed": "Alimentar Reliquias (subir nivel)",
   "guide.route.runeCraft": "Tallado, Grabado y Síntesis de Runas",
   "guide.route.runeTrait": "Reinterpretación de rasgos de Runa",
+  "inventory.runeBoxOpened": "¡Obtuviste una runa {rarity}!",
 } as const;

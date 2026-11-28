@@ -1,4 +1,5 @@
 import { registerDataText } from "../i18n";
+import type { RuneRarity } from "../core/runes";
 /** 인벤토리가 표시하고 서버가 해석하는 정적 아이템 분류다. */
 export type ItemCategory = "rune" | "currency" | "consumable" | "material";
 
@@ -7,6 +8,8 @@ export type ItemUseEffect =
   | { readonly kind: "restore_stamina"; readonly amount: number }
   /** 렐릭 선택권 — 고른 렐릭을 처음 만났으면 그 렐릭을, 이미 가졌으면 그 렐릭 파편 한 장을 준다(돌파를 끝낸 렐릭은 고를 수 없다). */
   | { readonly kind: "select_relic"; readonly rarity: "SR" }
+  /** 룬 상자 — 연 수만큼 그 등급의 룬을 서버 난수(자리·옵션)로 만들어 룬 가방에 넣는다. */
+  | { readonly kind: "open_rune_box"; readonly rarity: RuneRarity }
   | { readonly kind: "none" };
 
 /** 아이콘은 기존 glyph 또는 구운 재화 이미지 키를 가리키며 임의 SVG를 만들지 않는다. */
@@ -67,6 +70,11 @@ export const ITEMS = [
   { id: "stamina-tonic-large", name: "에너지 드링크+", description: "스테미나를 {amount} 회복합니다.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic-large" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 120 } },
   // 계정 첫 결제 선물(`FIRST_PAYMENT_GIFT`)로 받는 선택권. 가방에서 쓰면 7일 가이드와 같은 SR 고르기 창이 열린다.
   { id: "sr-select-ticket", name: "SR 렐릭 선택권", description: "SR 렐릭 한 명을 골라 데려옵니다. 이미 함께하는 렐릭을 고르면 그 렐릭의 파편 1개가 됩니다.", category: "consumable", icon: { kind: "asset", key: "item-sr-select-ticket" }, maxStack: 99, useEffect: { kind: "select_relic", rarity: "SR" } },
+  // 룬 상자 넷 — 그림은 전용 원화가 오기 전까지 하트 표식이다(원화가 오면 `asset`으로 바꾼다).
+  { id: "rune-box-uncommon", name: "무작위 고급 룬 상자", description: "열면 무작위 고급 룬 하나가 룬 가방에 들어옵니다.", category: "consumable", icon: { kind: "glyph", key: "heart" }, maxStack: 999, useEffect: { kind: "open_rune_box", rarity: "uncommon" } },
+  { id: "rune-box-rare", name: "무작위 희귀 룬 상자", description: "열면 무작위 희귀 룬 하나가 룬 가방에 들어옵니다.", category: "consumable", icon: { kind: "glyph", key: "heart" }, maxStack: 999, useEffect: { kind: "open_rune_box", rarity: "rare" } },
+  { id: "rune-box-epic", name: "무작위 영웅 룬 상자", description: "열면 무작위 영웅 룬 하나가 룬 가방에 들어옵니다.", category: "consumable", icon: { kind: "glyph", key: "heart" }, maxStack: 999, useEffect: { kind: "open_rune_box", rarity: "epic" } },
+  { id: "rune-box-legendary", name: "무작위 전설 룬 상자", description: "열면 무작위 전설 룬 하나가 룬 가방에 들어옵니다.", category: "consumable", icon: { kind: "glyph", key: "heart" }, maxStack: 999, useEffect: { kind: "open_rune_box", rarity: "legendary" } },
   { id: "ancient-core", name: "미지의 고대 핵", description: "룬에 특성 한 줄을 새로 부여합니다. 이미 특성이 있으면 지우고 다시 부여합니다.", category: "material", icon: { kind: "asset", key: "item-ancient-core" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "refined-core", name: "정제된 고대 핵", description: "영웅 이상 등급의 특성을 확정으로 부여합니다. 이미 영웅 이상인 특성에는 사용할 수 없습니다.", category: "material", icon: { kind: "asset", key: "item-refined-core" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "restoration-crystal", name: "완전 복원 결정", description: "특성의 종류는 그대로 두고 등급을 전설로 확정 상승시킵니다. 이미 전설인 특성에는 사용할 수 없습니다.", category: "material", icon: { kind: "asset", key: "item-restoration-crystal" }, maxStack: 999, useEffect: { kind: "none" } },

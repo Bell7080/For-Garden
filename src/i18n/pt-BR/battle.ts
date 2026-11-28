@@ -74,4 +74,7 @@ export const BATTLE_PT_BR = {
   "tutorial.rune.done.body": "Lapidação e gravação concluídas. A partir de agora, lapidar custa Ouro.",
   "tutorial.rune.done.go": "Equipar em {name}",
   "tutorial.rune.equip": "Você pode equipar Runas aqui!",
+  "tutorial.rune.done.bodyReward": "Lapidação e gravação concluídas! Como recompensa, há uma Caixa de runa épica aleatória na Bolsa.",
+  "tutorial.rune.done.made": "Sua runa",
+  "tutorial.rune.done.reward": "Recompensa",
 } as const;

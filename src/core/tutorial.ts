@@ -67,6 +67,12 @@ export interface TutorialState {
 /** 무료 각인 체험 룬을 주는 관문. 그 관문의 초회 룬이 체험 대상이 된다. */
 export const FREE_RUNE_CRAFT_STAGE = "1-5";
 
+/**
+ * 무료 각인 체험을 끝까지(각인 확정) 마친 보상 — 무작위 영웅 룬 상자 하나. 가방에 들어가 거기서 연다.
+ * 건너뛰기에는 주지 않는다. 지급은 각인을 확정하는 서버 경계(`engraveRune`·`craftRunes`)가 같은 저장에서 한다.
+ */
+export const RUNE_TUTORIAL_REWARD = { itemId: "rune-box-epic", quantity: 1 } as const;
+
 /** 체험 대상 룬 ID. 없으면 체험이 없다. */
 export function freeRuneCraftId(state: TutorialState | undefined): string | undefined { return state?.freeRuneCraft?.runeInstanceId; }
 

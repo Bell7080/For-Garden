@@ -185,4 +185,5 @@ export const RUNE_TH = {
   "rune.traitBulk.result.sortHolder": "ตามผู้สวมใส่",
   "rune.traitBulk.failed": "มอบคุณลักษณะแบบรวมล้มเหลว",
   "rune.traitBulk.lacking": "แกนโบราณไร้ชื่อไม่พอ",
+  "rune.bulkCraft.tutorialReward": "ได้รับกล่องรูนมหากาพย์แบบสุ่มเป็นรางวัล อยู่ในกระเป๋าแล้ว",
 } as const;

@@ -61,3 +61,27 @@ export const BETA_POPUP = {
   okY: 480, ok: { width: 600, height: 108, tone: 0xb9a6ff },
   sparkles: SPARKLES.map((spot) => ({ ...spot, y: spot.y - 540 })),
 } as const;
+
+/**
+ * 이름 등록·변경창 — 도디·파루아가 양옆에서 통통 뛰고 가운데 말풍선이 이름을 묻는다. 입력 칸·글자 수·조건은 크게 선다.
+ * 「?」는 그림자 없는 동그란 사탕 단추라 옆 이름표를 덮지 않는다(응태 2026-11-28).
+ */
+export const NICKNAME_POPUP = {
+  width: 900, height: 1100,
+  backdrop: { top: 0xffeef6, bottom: 0xffe0ee },
+  wordmark: { y: -468, size: 96, angle: -4, gradient: ["#fffbe8", "#ff9ed0", "#ff6fa8"] as const },
+  sd: { xs: [-300, 300] as const, groundY: -150, height: 200, shadowWidth: 130 },
+  nameY: -124,
+  /** 말풍선 윗변은 제목 글자 아랫변보다 아래, 좌우는 두 SD 머리 안쪽에 둔다. */
+  bubble: { x: 0, y: -290, width: 390, height: 170, radius: 34, rim: 6, outline: 5, tail: 26, size: 34 },
+  labelY: -78, labelSize: 34, labelX: -390,
+  help: { x: 352, size: 64 },
+  card: { y: 30, width: 800, height: 140, radius: 40, rim: 9, outline: 5 },
+  field: { width: 720, height: 104, fontSize: 40 },
+  countY: 128, countSize: 28,
+  rulesY: 168, rulesSize: 27,
+  noticeY: 300, noticeSize: 27,
+  saveY: 400, save: { width: 620, height: 108, tone: 0xff8fb8 },
+  sparkles: SPARKLES.map((spot) => ({ ...spot, y: spot.y - 470 })),
+  loot: [[-410, -500, "gems", 66, -14], [410, -470, "gold", 62, 12], [-415, 470, "gold", 60, 10], [415, 500, "gems", 64, -10]] as const,
+} as const;

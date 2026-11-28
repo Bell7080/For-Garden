@@ -76,5 +76,8 @@ export const BATTLE_JA = {
   "tutorial.rune.done.title": "ルーン完成！",
   "tutorial.rune.done.body": "研磨と刻印をすべて終えました。次からは研磨にゴールドがかかります。",
   "tutorial.rune.done.go": "{name}に装着しに行く",
+  "tutorial.rune.done.bodyReward": "研磨と刻印をすべて終えました！完了報酬として、ランダム英雄ルーンボックスをバッグに入れておきました。",
+  "tutorial.rune.done.made": "完成したルーン",
+  "tutorial.rune.done.reward": "完了報酬",
   "tutorial.rune.equip": "ルーンはここで装着できます！",
 } as const;

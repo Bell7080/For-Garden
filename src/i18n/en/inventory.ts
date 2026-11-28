@@ -23,6 +23,7 @@ export const INVENTORY_EN = {
   "inventory.source.ad": "Ad rewards",
   "inventory.useButton": "Use",
   "inventory.staminaGained": "Stamina +{amount}",
+  "inventory.runeBoxOpened": "You got a {rarity} Rune!",
   "inventory.staminaFull": "Stamina is full",
   "stamina.sources": "Sources",
   "stamina.uses": "Used for",

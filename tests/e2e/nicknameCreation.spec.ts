@@ -52,20 +52,20 @@ test("1-1 뒤 닉네임 생성 · SD 안내 · 정책 도움말 · 저장 실패
     // 생성창은 배경을 눌러도 닫히지 않는다.
     await tap(page, 30, 500);
     await expect(page.getByLabel("닉네임", { exact: true })).toHaveCount(1);
-    await tap(page, 908, 946);
+    await tap(page, 892, 882);
     await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("이름 사용 안내");
     await captureGame(page, info.outputPath("nickname-help.png"));
     await tap(page, 30, 500);
     await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).not.toContain("이름 사용 안내");
     await page.getByLabel("닉네임", { exact: true }).fill("도디의연구원");
-    await tap(page, 540, 1402);
+    await tap(page, 540, 1360);
     await expect(page.getByLabel("닉네임", { exact: true })).toHaveCount(1);
     expect(server.state().playerCard.nickname).toBe("");
     await page.evaluate(async () => {
       const root = "/src/"; const profile = await import(/* @vite-ignore */root+"managers/PlayerCardManager.ts");
       profile.playerCardManager.setNickname = (window as any).__NICK_RESTORE;
     });
-    await tap(page, 540, 1402);
+    await tap(page, 540, 1360);
     await expect.poll(() => server.state().playerCard.nickname).toBe("도디의연구원");
     await expect(page.getByLabel("닉네임", { exact: true })).toHaveCount(0);
     expect(server.state().tutorial.completedStepIds).toEqual(["ultimate"]);

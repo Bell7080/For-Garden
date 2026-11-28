@@ -7803,4 +7803,12 @@ export default {
   "dialogue.bond.ar.10.n9.body": "风吹过，绷带的一头飘动起来。阿尔把那一头缠在指尖握住。",
   "dialogue.bond.ar.10.n10.speaker": "阿尔",
   "dialogue.bond.ar.10.n10.body": "所以以后也要待在那里。不管追到哪里，我都会回到你身边。",
+  "item.rune-box-uncommon.name": "随机高级符文箱",
+  "item.rune-box-uncommon.description": "打开后，随机1个高级符文会放入符文背包。",
+  "item.rune-box-rare.name": "随机稀有符文箱",
+  "item.rune-box-rare.description": "打开后，随机1个稀有符文会放入符文背包。",
+  "item.rune-box-epic.name": "随机英雄符文箱",
+  "item.rune-box-epic.description": "打开后，随机1个英雄符文会放入符文背包。",
+  "item.rune-box-legendary.name": "随机传说符文箱",
+  "item.rune-box-legendary.description": "打开后，随机1个传说符文会放入符文背包。",
 };

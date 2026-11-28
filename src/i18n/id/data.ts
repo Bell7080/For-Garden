@@ -7803,4 +7803,12 @@ export default {
   "dialogue.bond.ar.10.n9.body": "Angin bertiup, ujung perban berkibar. Ar melilitkan ujung itu di jarinya dan menggenggamnya.",
   "dialogue.bond.ar.10.n10.speaker": "Ar",
   "dialogue.bond.ar.10.n10.body": "Jadi mulai sekarang tetaplah di sana. Sejauh apa pun aku mengejar, aku akan kembali padamu.",
+  "item.rune-box-uncommon.name": "Kotak Rune Unggul Acak",
+  "item.rune-box-uncommon.description": "Buka untuk mendapat 1 Rune Unggul acak di tas Rune.",
+  "item.rune-box-rare.name": "Kotak Rune Langka Acak",
+  "item.rune-box-rare.description": "Buka untuk mendapat 1 Rune Langka acak di tas Rune.",
+  "item.rune-box-epic.name": "Kotak Rune Epik Acak",
+  "item.rune-box-epic.description": "Buka untuk mendapat 1 Rune Epik acak di tas Rune.",
+  "item.rune-box-legendary.name": "Kotak Rune Legendaris Acak",
+  "item.rune-box-legendary.description": "Buka untuk mendapat 1 Rune Legendaris acak di tas Rune.",
 };

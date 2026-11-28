@@ -101,4 +101,5 @@ export const INVENTORY_TH = {
   "guide.route.relicFeed": "ป้อนเรลิก (เพิ่มเลเวล)",
   "guide.route.runeCraft": "เจียระไน·สลัก·ผสมรูน",
   "guide.route.runeTrait": "ตีความคุณสมบัติรูนใหม่",
+  "inventory.runeBoxOpened": "ได้รับรูน{rarity}!",
 } as const;

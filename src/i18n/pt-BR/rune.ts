@@ -185,4 +185,5 @@ export const RUNE_PT_BR = {
   "rune.traitBulk.result.sortHolder": "Por portador",
   "rune.traitBulk.failed": "Falha ao conceder traços em massa.",
   "rune.traitBulk.lacking": "Núcleos antigos desconhecidos insuficientes.",
+  "rune.bulkCraft.tutorialReward": "Uma Caixa de runa épica aleatória foi adicionada à sua Bolsa como recompensa.",
 } as const;

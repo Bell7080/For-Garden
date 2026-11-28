@@ -121,6 +121,8 @@ export class InventoryManager {
   /** 소비 명령의 최종 서버 스냅샷까지 같은 경계에서 반영해 화면이 DTO를 보관하지 않게 한다. */
   async useConsumable(api: GameApi, itemId: string, lotExpiresAt?: string, relicId?: string): Promise<UseConsumableResponse> {
     const response = await api.useConsumable({ itemId, quantity: 1, ...(lotExpiresAt !== undefined ? { lotExpiresAt } : {}), ...(relicId !== undefined ? { relicId } : {}) });
+    // 룬 상자는 룬 가방도 함께 바꾼다 — 응답의 가방을 같은 경계에서 받는다.
+    if (!hasRemoteState(response) && response.runeInventory) this.state.runeInventory = response.runeInventory.runes.map((rune) => structuredClone(rune));
     if (!hasRemoteState(response)) this.applySnapshot(response.items, response.wallet);
     else this.publishCurrentInventory();
     return response;
@@ -247,7 +249,10 @@ export class InventoryManager {
 
   /** 모든 세공을 마친 룬에 한 번뿐인 각인을 새긴다. */
   async engraveRune(api: GameApi, instanceId: string, statId: RuneStatKey): Promise<EngraveRuneResponse> {
-    return this.applyRuneMutation(await api.engraveRune({ runeInstanceId: instanceId, statId }));
+    const response = this.applyRuneMutation(await api.engraveRune({ runeInstanceId: instanceId, statId }));
+    // 체험을 마친 보상은 가방(아이템)에 들어간다 — 같은 조회 경계로 다시 읽는다.
+    if (response.tutorialReward) await this.refresh(api);
+    return response;
   }
 
   /** 서버 이름 정책을 통과한 사용자 이름으로 바꾼다. */
@@ -276,6 +281,7 @@ export class InventoryManager {
     if (!hasRemoteState(response)) this.state.wallet = { ...response.wallet };
     this.events.publish("wallet", { wallet: this.state.wallet });
     this.events.publishInventory();
+    if (response.tutorialReward) await this.refresh(api);
     return response;
   }
 

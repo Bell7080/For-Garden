@@ -185,4 +185,5 @@ export const RUNE_VI = {
   "rune.traitBulk.result.sortHolder": "Theo người trang bị",
   "rune.traitBulk.failed": "Ban đặc tính hàng loạt thất bại.",
   "rune.traitBulk.lacking": "Không đủ Lõi cổ đại chưa rõ.",
+  "rune.bulkCraft.tutorialReward": "Hộp Rune Sử thi ngẫu nhiên đã được cho vào Túi đồ làm phần thưởng.",
 } as const;

@@ -29,6 +29,8 @@ export const REWARD_PRIORITY: readonly string[] = [
   // 단품 — 만능 파편은 렐릭 파편과 같은 돌파 재료라 그 바로 앞이다.
   "universal-fragment-ssr", "universal-fragment-sr", "universal-fragment-r",
   // 단품 — 파편·룬·장식은 재화가 아니라 한 점씩 받는 물건이라 가장 마지막이다
+  // 룬 상자 — 열면 룬 한 점이 되므로 룬 바로 앞이다(등급 높은 상자가 먼저).
+  "rune-box-legendary", "rune-box-epic", "rune-box-rare", "rune-box-uncommon",
   "relicFragment", "rune", "profileDecoration",
 ];
 

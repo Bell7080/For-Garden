@@ -7841,4 +7841,12 @@ export default {
   "dialogue.bond.ar.10.n9.body": "The wind blew, and the end of the bandage fluttered. Ar wound it around her finger and held it.",
   "dialogue.bond.ar.10.n10.speaker": "Ar",
   "dialogue.bond.ar.10.n10.body": "So stay there from now on too. However far I chase, I'll come back to you.",
+  "item.rune-box-uncommon.name": "Random Uncommon Rune Box",
+  "item.rune-box-uncommon.description": "Open it to add one random Uncommon Rune to your Rune bag.",
+  "item.rune-box-rare.name": "Random Rare Rune Box",
+  "item.rune-box-rare.description": "Open it to add one random Rare Rune to your Rune bag.",
+  "item.rune-box-epic.name": "Random Epic Rune Box",
+  "item.rune-box-epic.description": "Open it to add one random Epic Rune to your Rune bag.",
+  "item.rune-box-legendary.name": "Random Legendary Rune Box",
+  "item.rune-box-legendary.description": "Open it to add one random Legendary Rune to your Rune bag.",
 };

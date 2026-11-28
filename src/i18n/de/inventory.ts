@@ -101,4 +101,5 @@ export const INVENTORY_DE = {
   "guide.route.relicFeed": "Relikte füttern (Levelaufstieg)",
   "guide.route.runeCraft": "Runen veredeln, gravieren und verschmelzen",
   "guide.route.runeTrait": "Runen-Merkmal neu deuten",
+  "inventory.runeBoxOpened": "Du hast eine Rune ({rarity}) erhalten!",
 } as const;

@@ -175,6 +175,7 @@ export const RUNE_KO = {
   "rune.bulkCraft.done": "세공 {attempts}회 중 {successes}회 성공 · 각인 {engraved}개",
   "rune.bulkCraft.doneEngrave": "각인 {engraved}개 완료",
   "rune.bulkCraft.failed": "일괄 세공에 실패했습니다.",
+  "rune.bulkCraft.tutorialReward": "완료 보상으로 무작위 영웅 룬 상자를 가방에 넣어 두었어요.",
   "rune.traitBulk.title": "특성 일괄 부여",
   "rune.traitBulk.selected": "선택 {count} / {total}",
   "rune.traitBulk.cost": "소모",

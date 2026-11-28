@@ -6,13 +6,21 @@ export const ACCOUNT_ID_POPUP = {
   width: 900,
   field: { width: 760, height: 84 },
   tabs: { width: 300, height: 76, gap: 18 },
-  /** 윗변(제목이 걸터앉는다)에서 첫 줄까지. */
-  topRoom: 70,
+  /** 윗변(제목이 걸터앉는다)에서 첫 줄까지 — 그 사이에 굵은 제목 글자 「ACCOUNT」가 선다. */
+  topRoom: 170,
+  /** 사탕 결 — 타이틀의 「계정 로그인」 버튼과 같은 청록으로 물든다(응태 2026-11-28). */
+  candy: {
+    backdrop: { top: 0xe8fcff, bottom: 0xd4f1fb },
+    rim: 0x6fd3e0,
+    wordmark: { dy: 96, size: 84, angle: -4, gradient: ["#fffbe8", "#8fe6f2", "#2f9fc8"] as const },
+    fieldPad: { x: 20, y: 8 },
+    tabTone: 0x6fd3e0,
+  },
   tabRoom: 100,
-  labelRoom: 40,
+  labelRoom: 60,
   fieldRoom: 108,
   noteRoom: 92,
-  submit: { width: 360, height: 92 },
+  submit: { width: 520, height: 104 },
   /** 제출 버튼 아래 여백. 닫기는 판 밖 우하단의 공용 뒤로가기가 맡아 판 안에 취소 줄이 없다. */
   bottomRoom: 96,
 } as const;

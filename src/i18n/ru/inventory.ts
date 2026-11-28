@@ -101,4 +101,5 @@ export const INVENTORY_RU = {
   "guide.route.relicFeed": "Кормление Реликтов (рост уровня)",
   "guide.route.runeCraft": "Огранка, гравировка и синтез рун",
   "guide.route.runeTrait": "Переосмысление свойств руны",
+  "inventory.runeBoxOpened": "Получена руна: {rarity}!",
 } as const;

@@ -418,6 +418,18 @@ export class InventoryPopup {
       return;
     }
     const itemId = definition.id;
+    // 룬 상자는 열자마자 나온 룬의 쪽지를 띄운다 — 무엇이 나왔는지가 곧 영수증이다.
+    if (definition.useEffect.kind === "open_rune_box") {
+      const rarity = definition.useEffect.rarity;
+      void withBusy(this.scene, this.inventory.useConsumable(this.api, itemId, lotExpiresAt)).then((result) => {
+        audioManager?.playUi("rune.success");
+        showContentToast(this.scene, t("inventory.runeBoxOpened", { rarity: t(`rune.rarity.${rarity}`) }), "info");
+        if (this.view) this.render(this.view);
+        const first = result.runes?.[0];
+        if (first) this.openRuneNote(first.instanceId);
+      }).catch((error: unknown) => reportError("inventory.openRuneBox", error, { itemId }));
+      return;
+    }
     void this.inventory.useConsumable(this.api, itemId, lotExpiresAt).then((result) => {
       audioManager?.playUi("stamina.refill");
       showContentToast(this.scene, t("inventory.staminaGained", { amount: result.appliedAmount }), "info");

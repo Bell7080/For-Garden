@@ -2,13 +2,19 @@ import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import { accountApi, type AccountFailureCode, type AccountState } from "../api/AccountApi";
 import { accountCredentialProblem, ACCOUNT_ID_MAX, ACCOUNT_PASSWORD_MAX } from "../core/accountCredentials";
+import { motionPolicy } from "../core/settings";
+import { session } from "../state/session";
 import { addAccountGuide } from "./AccountGuide";
-import { Button } from "./Button";
-import { addCategoryTab } from "./CategoryTab";
+import { paintCandyBackdrop } from "./candyBackdrop";
+import { addCandyWordmark, drawCandyPlate } from "./candyPopupKit";
+import { COUPON_TONE as TONE } from "./couponPopupLayout";
+import { pressIn, pressOut } from "./pressFeedback";
+import { RouletteSpinButton } from "./RouletteSpinButton";
 import { slideTabPage } from "./screenTransition";
 import type { PopupLayer } from "./PopupLayer";
 import { TextInputField } from "./TextInputField";
-import { COLOR, textStyle } from "./theme";
+import { shrinkTextToWidth } from "./textFit";
+import { textStyle } from "./theme";
 import { ACCOUNT_ID_POPUP, accountIdPopupRows, type AccountIdPopupMode, type AccountIdPopupTab } from "./accountIdPopupLayout";
 
 export interface AccountIdPopupOptions {
@@ -17,6 +23,31 @@ export interface AccountIdPopupOptions {
   onClose?: () => void;
   /** 인증이 끝난 뒤 부른다. 창은 이미 닫혀 있다. 이후의 저장 이어받기는 부른 쪽이 맡는다. */
   onDone: (state: AccountState, how: AccountIdPopupTab) => void;
+}
+
+/** 맨 위 굵은 제목 글자. 어느 언어에서나 같은 표식이라 번역하지 않는다. */
+const ACCOUNT_WORDMARK = "ACCOUNT";
+
+/** 사탕 결 탭 하나 — 고른 쪽은 말랑한 판이 솟고, 안 고른 쪽은 옅은 유리 알약으로 가라앉는다. */
+function addCandyTab(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, spec: { x: number; y: number; width: number; height: number; label: string; selected: boolean; tone: number; onSelect: () => void }): void {
+  const tab = scene.add.container(spec.x, spec.y);
+  const { width, height } = spec;
+  if (spec.selected) tab.add(drawCandyPlate(scene, 0, 0, width, height, height / 2, 7, 5, spec.tone));
+  else {
+    const g = scene.add.graphics();
+    g.fillStyle(TONE.ink, 0.18).fillRoundedRect(-width / 2, -height / 2 + 6, width, height - 6, (height - 6) / 2);
+    g.fillStyle(0xffffff, 0.55).fillRoundedRect(-width / 2 + 6, -height / 2 + 10, width - 12, height - 18, (height - 18) / 2);
+    tab.add(g);
+  }
+  const text = scene.add.text(0, spec.selected ? 0 : 3, spec.label, textStyle({ role: "display", size: spec.selected ? 32 : 28, color: spec.selected ? TONE.inkText : TONE.soft })).setOrigin(.5);
+  shrinkTextToWidth(text, width - 40);
+  tab.add(text);
+  const hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  hit.on("pointerdown", () => pressIn(tab));
+  hit.on("pointerout", () => pressOut(tab, "normal", { pop: false }));
+  hit.on("pointerup", () => { pressOut(tab); spec.onSelect(); });
+  tab.add(hit);
+  parent.add(tab);
 }
 
 const FAILURE_KEY: Partial<Record<AccountFailureCode, TextKey>> = {
@@ -43,6 +74,10 @@ export function openAccountIdPopup(scene: Phaser.Scene, layer: PopupLayer, optio
   const retryAt: Record<AccountIdPopupTab, number> = { signIn: 0, register: 0 };
 
   layer.open({ width: L.width, height: rows.height, title: t(options.mode === "link" ? "account.id.linkTitle" : "account.id.title"), dim: true, backButton: true, canClose: () => !busy, onClose: () => { alive = false; options.onClose?.(); } }, (body, close) => {
+    const animate = motionPolicy(session.settings).nonEssentialDistanceFactor > 0;
+    const C = L.candy;
+    paintCandyBackdrop(scene, body, { width: L.width, height: rows.height, top: C.backdrop.top, bottom: C.backdrop.bottom, glowY: -rows.height / 2 + C.wordmark.dy }, animate);
+    addCandyWordmark(scene, body, ACCOUNT_WORDMARK, { ...C.wordmark, y: -rows.height / 2 + C.wordmark.dy }, animate);
     const tabs = scene.add.container(0, 0);
     const view = scene.add.container(0, 0);
     body.add([tabs, view]);
@@ -54,8 +89,8 @@ export function openAccountIdPopup(scene: Phaser.Scene, layer: PopupLayer, optio
       if (rows.tabsY === null) return;
       const { width, height, gap } = L.tabs;
       (["signIn", "register"] as const).forEach((which, index) => {
-        addCategoryTab(scene, tabs, {
-          x: (index - 0.5) * (width + gap), y: rows.tabsY!, width, height, label: t(which === "signIn" ? "account.id.tab.signIn" : "account.id.tab.register"), selected: tab === which, face: "down",
+        addCandyTab(scene, tabs, {
+          x: (index - 0.5) * (width + gap), y: rows.tabsY!, width, height, label: t(which === "signIn" ? "account.id.tab.signIn" : "account.id.tab.register"), selected: tab === which, tone: C.tabTone,
           onSelect: () => {
             if (busy || tab === which) return;
             const order = ["signIn", "register"] as const;
@@ -67,31 +102,39 @@ export function openAccountIdPopup(scene: Phaser.Scene, layer: PopupLayer, optio
     };
 
     const label = (text: string, y: number): void => {
-      view.add(scene.add.text(-L.field.width / 2, y, text, textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      view.add(scene.add.text(-L.field.width / 2, y, text, textStyle({ role: "display", size: 28, color: TONE.inkText })).setOrigin(0, 0.5));
+    };
+    // 입력 칸 뒤의 크림빛 사탕 판 + 흰 칸 — 피드백·닉네임 창과 같은 결.
+    const palette = { fill: 0xffffff, fillAlpha: 1, ink: TONE.inkText, placeholder: TONE.placeholder, accent: C.rim };
+    const fieldPlate = (y: number): void => {
+      view.add(drawCandyPlate(scene, 0, y, L.field.width + C.fieldPad.x * 2, L.field.height + C.fieldPad.y * 2, 30, 7, 5, C.rim));
     };
 
     const paint = (): void => {
       view.removeAll(true);
       const register = tab === "register";
-      const note = scene.add.text(0, rows.noteY, "", textStyle({ role: "body", size: 24, color: COLOR.inkDim, align: "center", wrap: L.field.width })).setOrigin(0.5);
-      const setNote = (text: string, danger = false): void => { note.setText(text); note.setColor(danger ? COLOR.dangerText : COLOR.inkDim); };
+      const note = scene.add.text(0, rows.noteY, "", textStyle({ role: "emphasis", size: 25, color: TONE.soft, align: "center", wrap: L.field.width })).setOrigin(0.5);
+      const setNote = (text: string, danger = false): void => { note.setText(text); note.setColor(danger ? TONE.danger : TONE.soft); };
       setNote(register ? t("account.id.note.register") : "");
 
       label(t("account.id.field.id"), rows.idLabelY);
-      view.add(new TextInputField(scene, 0, rows.idFieldY, { ...L.field, value: id, maxGlyphs: ACCOUNT_ID_MAX, ariaLabel: t("account.id.field.id"), autocomplete: "username", onChange: (v) => { id = v; } }));
+      fieldPlate(rows.idFieldY);
+      view.add(new TextInputField(scene, 0, rows.idFieldY, { ...L.field, palette, value: id, maxGlyphs: ACCOUNT_ID_MAX, ariaLabel: t("account.id.field.id"), autocomplete: "username", onChange: (v) => { id = v; } }));
       label(t("account.id.field.password"), rows.passwordLabelY);
-      view.add(new TextInputField(scene, 0, rows.passwordFieldY, { ...L.field, value: password, maxGlyphs: ACCOUNT_PASSWORD_MAX, ariaLabel: t("account.id.field.password"), mask: true, autocomplete: register ? "new-password" : "current-password", onChange: (v) => { password = v; } }));
+      fieldPlate(rows.passwordFieldY);
+      view.add(new TextInputField(scene, 0, rows.passwordFieldY, { ...L.field, palette, value: password, maxGlyphs: ACCOUNT_PASSWORD_MAX, ariaLabel: t("account.id.field.password"), mask: true, autocomplete: register ? "new-password" : "current-password", onChange: (v) => { password = v; } }));
       if (register) {
         label(t("account.id.field.confirm"), rows.confirmLabelY);
-        view.add(new TextInputField(scene, 0, rows.confirmFieldY, { ...L.field, value: confirm, maxGlyphs: ACCOUNT_PASSWORD_MAX, ariaLabel: t("account.id.field.confirm"), mask: true, autocomplete: "new-password", onChange: (v) => { confirm = v; } }));
+        fieldPlate(rows.confirmFieldY);
+        view.add(new TextInputField(scene, 0, rows.confirmFieldY, { ...L.field, palette, value: confirm, maxGlyphs: ACCOUNT_PASSWORD_MAX, ariaLabel: t("account.id.field.confirm"), mask: true, autocomplete: "new-password", onChange: (v) => { confirm = v; } }));
       } else {
         // 회원가입의 확인 칸 자리가 비므로 안내 한 줄을 비밀번호 칸과 제출 버튼 사이 한가운데에 세운다.
-        view.add(scene.add.text(0, (rows.passwordFieldY + L.field.height / 2 + rows.submitY - L.submit.height / 2) / 2, t("account.id.hint.signIn"), textStyle({ role: "body", size: 26, color: COLOR.inkDim, align: "center", wrap: L.field.width })).setOrigin(0.5));
+        view.add(scene.add.text(0, (rows.passwordFieldY + L.field.height / 2 + rows.submitY - L.submit.height / 2) / 2, t("account.id.hint.signIn"), textStyle({ role: "body", size: 27, color: TONE.soft, align: "center", wrap: L.field.width })).setOrigin(0.5));
       }
       view.add(note);
 
-      const submit = new Button(scene, 0, rows.submitY, {
-        ...L.submit, label: t(register ? (options.mode === "link" ? "account.id.link" : "account.id.register") : "account.id.signIn"), variant: "primary",
+      const submit = new RouletteSpinButton(scene, 0, rows.submitY, {
+        ...L.submit, tone: C.rim, label: t(register ? (options.mode === "link" ? "account.id.link" : "account.id.register") : "account.id.signIn"),
         onClick: () => {
           if (register) {
             const problem = accountCredentialProblem(id, password);

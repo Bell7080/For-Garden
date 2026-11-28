@@ -106,7 +106,7 @@ import { replayGuildWar } from "../core/guildWarBattle";
 import { guildGuardElement, guildGuardEndsAt } from "../core/guildPages";
 import { guildGuardRoster } from "../data/guildGuard";
 import { guildQaClockShift } from "./guildQaClock";
-import { endFreeRuneCraft, FREE_RUNE_CRAFT_STAGE, isFreeRuneCraft, nextTutorialStep, advanceTutorialOnStageClear, canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialReward, type TutorialState } from "../core/tutorial";
+import { endFreeRuneCraft, FREE_RUNE_CRAFT_STAGE, RUNE_TUTORIAL_REWARD, isFreeRuneCraft, nextTutorialStep, advanceTutorialOnStageClear, canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialReward, type TutorialState } from "../core/tutorial";
 import { mileageFragmentRelicId } from "../data/mileageClerk";
 import { BOND_STORY_GEM_REWARD, BOND_STORY_LEVELS, DIARY_QUESTION_GEM_REWARD, bondChapterId, diaryQuestionUnlockAt, type BondStoryLevel } from "../core/relicStory";
 import { relicStoryFor } from "../data/relicStories";
@@ -1468,6 +1468,7 @@ export class FakeServer implements GameApi {
     const stack = this.state.itemInventory.find(({ itemId }) => itemId === request.itemId);
     if (!stack || stack.quantity < request.quantity) throw new GameApiError("INSUFFICIENT_ITEMS", "아이템 수량이 부족합니다.");
     if (definition.useEffect.kind === "select_relic") return this.useRelicSelector(request, definition.useEffect);
+    if (definition.useEffect.kind === "open_rune_box") return this.openRuneBox(request, definition.useEffect);
     // 병은 레벨 상한을 넘어 채운다 — 치른 대가를 상한에서 버리지 않는다. 막는 것은 보유 끝뿐이다.
     if (this.state.wallet.stamina >= STAMINA_HOLD_LIMIT) throw new GameApiError("STAMINA_FULL", "스테미나가 이미 가득 찼습니다.");
     const requested = definition.useEffect.amount * request.quantity;
@@ -1505,6 +1506,27 @@ export class FakeServer implements GameApi {
     return {
       ...inventory, itemId: request.itemId, quantityUsed: 1, effect, appliedAmount: 0, overflowAmount: 0, wallet: { ...this.state.wallet }, stamina: this.staminaDto(this.now()),
       newRelicIds: selection.newRelicIds, ...(selection.fragmentRelicId ? { fragmentRelicId: selection.fragmentRelicId } : {}),
+    };
+  }
+
+  /**
+   * 룬 상자를 연다 — 연 수만큼 그 등급의 룬을 서버 난수로 만들어(자리·옵션은 상점 랜덤 룬과 같은 `createGrantedRune`)
+   * 상자 차감과 함께 한 번의 persist로 확정한다.
+   */
+  private async openRuneBox(request: UseConsumableRequest, effect: Extract<ItemDefinition["useEffect"], { kind: "open_rune_box" }>): Promise<UseConsumableResponse> {
+    const nextItems = request.lotExpiresAt !== undefined
+      ? removeItemLotAt(this.state.itemInventory, request.itemId, request.quantity, request.lotExpiresAt)
+      : removeItemLot(this.state.itemInventory, request.itemId, request.quantity);
+    if (!nextItems) throw new GameApiError("INSUFFICIENT_ITEMS", "아이템 수량이 부족합니다.");
+    const granted: RuneInstance[] = [];
+    for (let index = 0; index < request.quantity; index += 1) granted.push(this.createGrantedRune(effect.rarity, [...this.state.runeInventory, ...granted]));
+    const nextRunes = [...this.state.runeInventory, ...granted];
+    this.persist({ ...this.state, itemInventory: nextItems, runeInventory: nextRunes });
+    this.state.itemInventory = nextItems; this.state.runeInventory = nextRunes;
+    const inventory = await this.getInventory();
+    return {
+      ...inventory, itemId: request.itemId, quantityUsed: request.quantity, effect, appliedAmount: 0, overflowAmount: 0, wallet: { ...this.state.wallet }, stamina: this.staminaDto(this.now()),
+      runes: granted.map((rune) => this.cloneRune(rune)), runeInventory: this.runeInventoryDto(),
     };
   }
 
@@ -4722,6 +4744,7 @@ export class FakeServer implements GameApi {
     let successes = 0;
     let engraved = 0;
     let tutorial = normalizeTutorialState(this.state.tutorial);
+    let finishedTutorial = false;
     const crafted = selected.map((current) => {
       let rune = current;
       for (const statKey of runeBatchEnhancementTargets(current)) {
@@ -4734,18 +4757,23 @@ export class FakeServer implements GameApi {
         rune = applyRuneEngraving(rune, { statKey, valueAdded: runeEnhancementIncrease(rune.rarity, statKey) });
         engraved += 1;
         // 체험 룬의 각인이 곧 체험의 끝이다 — 한 줄 각인과 같은 저장에서 걷는다.
-        if (isFreeRuneCraft(tutorial, rune.instanceId)) tutorial = endFreeRuneCraft(tutorial);
+        if (isFreeRuneCraft(tutorial, rune.instanceId)) { tutorial = endFreeRuneCraft(tutorial); finishedTutorial = true; }
       }
       return rune;
     });
     const byId = new Map(crafted.map((rune) => [rune.instanceId, rune]));
     const nextRunes = this.state.runeInventory.map((candidate) => byId.get(candidate.instanceId) ?? candidate);
     const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold - goldSpent };
-    this.persist({ ...this.state, wallet: nextWallet, runeInventory: nextRunes, tutorial });
+    const nextItems = finishedTutorial ? this.grantItem(this.state.itemInventory, RUNE_TUTORIAL_REWARD.itemId, RUNE_TUTORIAL_REWARD.quantity, this.now()).inventory : this.state.itemInventory;
+    this.persist({ ...this.state, wallet: nextWallet, runeInventory: nextRunes, tutorial, itemInventory: nextItems });
     this.state.wallet = nextWallet;
     this.state.runeInventory = nextRunes;
     this.state.tutorial = tutorial;
-    const response: CraftRunesResponse = { goldSpent, attempts, successes, engraved, runes: crafted.map((rune) => this.cloneRune(rune)), inventory: this.runeInventoryDto(), wallet: { ...nextWallet } };
+    this.state.itemInventory = nextItems;
+    const response: CraftRunesResponse = {
+      goldSpent, attempts, successes, engraved, runes: crafted.map((rune) => this.cloneRune(rune)), inventory: this.runeInventoryDto(), wallet: { ...nextWallet },
+      ...(finishedTutorial ? { tutorialReward: { ...RUNE_TUTORIAL_REWARD } } : {}),
+    };
     this.runeCraftResults.set(request.requestId, structuredClone(response));
     return response;
   }
@@ -4762,12 +4790,16 @@ export class FakeServer implements GameApi {
     const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
     // 체험 룬의 각인이 곧 체험의 끝이다 — 같은 저장에서 체험 표시를 걷는다.
     const currentTutorial = normalizeTutorialState(this.state.tutorial);
-    const nextTutorial = isFreeRuneCraft(currentTutorial, rune.instanceId) ? endFreeRuneCraft(currentTutorial) : currentTutorial;
-    const nextState = { ...this.state, runeInventory: nextRunes, tutorial: nextTutorial };
+    const finishedTutorial = isFreeRuneCraft(currentTutorial, rune.instanceId);
+    const nextTutorial = finishedTutorial ? endFreeRuneCraft(currentTutorial) : currentTutorial;
+    // 체험을 끝까지 마친 보상(무작위 영웅 룬 상자)도 같은 저장에서 가방에 넣는다.
+    const nextItems = finishedTutorial ? this.grantItem(this.state.itemInventory, RUNE_TUTORIAL_REWARD.itemId, RUNE_TUTORIAL_REWARD.quantity, this.now()).inventory : this.state.itemInventory;
+    const nextState = { ...this.state, runeInventory: nextRunes, tutorial: nextTutorial, itemInventory: nextItems };
     this.persist(nextState);
     this.state.runeInventory = nextRunes;
     this.state.tutorial = nextTutorial;
-    return { rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
+    this.state.itemInventory = nextItems;
+    return { rune: this.cloneRune(rune), inventory: this.runeInventoryDto(), ...(finishedTutorial ? { tutorialReward: { ...RUNE_TUTORIAL_REWARD } } : {}) };
   }
 
   /** 이름을 다듬은 뒤(`normalizeRuneName`) 빈 값·길이·제어문자·금칙어를 서버 경계에서 거부한다. */

@@ -7803,4 +7803,12 @@ export default {
   "dialogue.bond.ar.10.n9.body": "Sopló el viento y el extremo de la venda ondeó. Ar se lo enrolló en el dedo y lo sujetó.",
   "dialogue.bond.ar.10.n10.speaker": "Ar",
   "dialogue.bond.ar.10.n10.body": "Así que sigue ahí a partir de ahora. Por lejos que persiga, volveré a ti.",
+  "item.rune-box-uncommon.name": "Caja de runa poco común aleatoria",
+  "item.rune-box-uncommon.description": "Ábrela para añadir 1 runa poco común aleatoria a tu bolsa de runas.",
+  "item.rune-box-rare.name": "Caja de runa rara aleatoria",
+  "item.rune-box-rare.description": "Ábrela para añadir 1 runa rara aleatoria a tu bolsa de runas.",
+  "item.rune-box-epic.name": "Caja de runa épica aleatoria",
+  "item.rune-box-epic.description": "Ábrela para añadir 1 runa épica aleatoria a tu bolsa de runas.",
+  "item.rune-box-legendary.name": "Caja de runa legendaria aleatoria",
+  "item.rune-box-legendary.description": "Ábrela para añadir 1 runa legendaria aleatoria a tu bolsa de runas.",
 };

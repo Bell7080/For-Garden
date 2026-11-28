@@ -74,4 +74,7 @@ export const BATTLE_ID = {
   "tutorial.rune.done.body": "Asah dan Ukir sudah selesai. Mulai sekarang Asah memakai Emas.",
   "tutorial.rune.done.go": "Pakaikan ke {name}",
   "tutorial.rune.equip": "Rune bisa dipakai di sini!",
+  "tutorial.rune.done.bodyReward": "Asah dan Ukir sudah selesai! Sebagai hadiah, Kotak Rune Epik Acak sudah masuk ke Tas.",
+  "tutorial.rune.done.made": "Rune jadi",
+  "tutorial.rune.done.reward": "Hadiah",
 } as const;

@@ -185,4 +185,5 @@ export const RUNE_ID = {
   "rune.traitBulk.result.sortHolder": "Per Pemakai",
   "rune.traitBulk.failed": "Pemberian sifat massal gagal.",
   "rune.traitBulk.lacking": "Inti Purba Tak Dikenal tidak cukup.",
+  "rune.bulkCraft.tutorialReward": "Kotak Rune Epik Acak sudah masuk ke Tas sebagai hadiah.",
 } as const;

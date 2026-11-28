@@ -74,6 +74,7 @@ export const INVENTORY_KO = {
   "guide.route.runeTrait": "룬 특성 재해석",
   "inventory.useButton": "사용하기",
   "inventory.staminaGained": "스테미나 +{amount}",
+  "inventory.runeBoxOpened": "{rarity} 룬을 얻었습니다!",
   "inventory.staminaFull": "스테미나가 가득 찼습니다",
 
   "stamina.sources": "획득처",

@@ -101,4 +101,5 @@ export const INVENTORY_ZH_HANS = {
   "guide.route.relicFeed": "遗物喂食（等级成长）",
   "guide.route.runeCraft": "符文打磨·刻印·合成",
   "guide.route.runeTrait": "符文特性重解",
+  "inventory.runeBoxOpened": "获得了{rarity}符文！",
 } as const;

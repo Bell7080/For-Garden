@@ -5673,7 +5673,7 @@ export class FakeServer implements GameApi {
     this.mails.unshift({
       id, title: t("mail.expeditionRank.title"), sender: t("mail.expeditionRank.sender"),
       body: t("mail.expeditionRank.body", { rank, score: pending.score.toLocaleString() }),
-      sentAt: sentAt.toISOString(), expiresAt: null, read: false, claimed: false, rewards,
+      sentAt: sentAt.toISOString(), expiresAt: null, read: false, claimed: false, rewards, special: { kind: "expeditionRank", rank, period: pending.weekKey },
     });
     }
   }
@@ -5693,7 +5693,7 @@ export class FakeServer implements GameApi {
       this.mails.unshift({
         id, title: t("guild.mail.weekly.title"), sender: t("guild.mail.weekly.sender"),
         body: t("guild.mail.weekly.body", { guild: award.guildName, rank: award.rank.toLocaleString() }),
-        sentAt: sentAt.toISOString(), expiresAt: null, read: false, claimed: false, rewards: [{ kind: "currency", currency: "gems", amount: award.gems }],
+        sentAt: sentAt.toISOString(), expiresAt: null, read: false, claimed: false, rewards: [{ kind: "currency", currency: "gems", amount: award.gems }], special: { kind: "guildRank", rank: award.rank, period: award.week },
       });
     }
   }

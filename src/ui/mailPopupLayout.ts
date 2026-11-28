@@ -56,9 +56,13 @@ export function isMailExpired(mail: Pick<MailDto, "expiresAt">, nowMs: number): 
   return mail.expiresAt !== null && Date.parse(mail.expiresAt) <= nowMs;
 }
 
+/** 받기 전 우편 중 이 안에 사라지는 것은 맨 위로 올린다 — 최근 것이 위라는 규칙만 두면 곧 사라질 우편이 아래에 묻힌다. */
+export const MAIL_URGENT_MS = 3 * 86_400_000;
+
 /**
- * 한 탭의 줄 순서 — 지금 손이 갈 것부터. 우편은 받을 것 → 받은 것 → 만료, 안내는 안 읽은 것 →
- * 읽은 것이고, 같은 무리 안에서는 최근 것이 위다.
+ * 한 탭의 줄 순서 — 지금 손이 갈 것부터. 우편은 받을 것 → 받은 것 → 만료, 안내는 안 읽은 것 → 읽은 것이다.
+ * 받을 것 안에서는 **곧 사라질 것(3일 안)이 먼저, 가장 빨리 사라지는 순**이고 나머지는 최근 것이 위다.
+ * 같은 시각이면 ID로 끊어 다시 그려도 줄이 뒤바뀌지 않는다(콘텐츠 우편은 같은 순간에 여러 통이 온다).
  */
 export function sortMails(mails: readonly MailDto[], tab: MailTab, nowMs: number): MailDto[] {
   const rank = (mail: MailDto): number => {
@@ -66,8 +70,18 @@ export function sortMails(mails: readonly MailDto[], tab: MailTab, nowMs: number
     if (isMailExpired(mail, nowMs)) return 2;
     return mail.claimed ? 1 : 0;
   };
+  const urgency = (mail: MailDto): number => {
+    if (tab !== "reward" || rank(mail) !== 0 || !mail.expiresAt) return Number.POSITIVE_INFINITY;
+    const left = Date.parse(mail.expiresAt) - nowMs;
+    return left < MAIL_URGENT_MS ? left : Number.POSITIVE_INFINITY;
+  };
+  const byUrgency = (a: MailDto, b: MailDto): number => {
+    const ua = urgency(a); const ub = urgency(b);
+    if (ua === ub) return 0;
+    return ua < ub ? -1 : 1;
+  };
   return mails.filter((mail) => mailTabOf(mail) === tab)
-    .sort((a, b) => rank(a) - rank(b) || Date.parse(b.sentAt) - Date.parse(a.sentAt));
+    .sort((a, b) => rank(a) - rank(b) || byUrgency(a, b) || Date.parse(b.sentAt) - Date.parse(a.sentAt) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
 
 /** 첨부물을 보상 중요도 순으로 세운다 — 재화는 지갑 키, 아이템은 아이템 ID가 키다. */

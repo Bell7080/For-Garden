@@ -79,6 +79,14 @@ export function arenaTierIndex(score: number): number {
   return index;
 }
 
+/**
+ * 월간 시즌이 넘어갈 때의 RP — 시작값 위의 몫을 절반 남겨 50 단위로 내린다(마스터 2,400 → 1,700). 시작값 아래는 시작값으로 돌아온다.
+ * 서버 `server_arena_season_reset`이 같은 식이다(`arenaStanding.test`).
+ */
+export function arenaSeasonResetScore(score: number): number {
+  return ARENA_START_SCORE + Math.floor(Math.max(0, score - ARENA_START_SCORE) * 0.5 / 50) * 50;
+}
+
 export function arenaTierId(score: number): ArenaTierId {
   return ARENA_TIERS[arenaTierIndex(score)].id;
 }

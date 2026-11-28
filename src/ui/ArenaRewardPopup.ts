@@ -1,7 +1,9 @@
 import type Phaser from "phaser";
 import { t } from "../i18n";
 import { ARENA_TIERS, ARENA_WEEKLY_RANK_GEMS, arenaTierId } from "../core/arenaStanding";
-import { rankBands, rankTitle } from "./CompetitiveRewardPopup";
+import { openRankPoolRewards, rankBands, rankTitle } from "./CompetitiveRewardPopup";
+import { ARENA_MONTHLY_RANK_REWARDS } from "../data/competitiveRewards";
+import { COMPETITIVE_MONTHLY_ENABLED } from "../core/competitiveSeason";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import type { PopupLayer } from "./PopupLayer";
 import { openRewardTable } from "./RewardTable";
@@ -16,7 +18,7 @@ export function openArenaTierRewards(scene: Phaser.Scene, popups: PopupLayer, sc
   const myTier = score === null ? null : arenaTierId(score);
   openRewardTable(scene, popups, {
     title: t("arena.weekly.tierSection"),
-    rules: t("rewardTable.rules.arena"),
+    rules: t(COMPETITIVE_MONTHLY_ENABLED ? "rewardTable.rules.arenaTier" : "rewardTable.rules.arena"),
     compact: true,
     sections: [{
       rows: [...ARENA_TIERS].reverse().map((tier) => ({
@@ -34,6 +36,11 @@ export function openArenaTierRewards(scene: Phaser.Scene, popups: PopupLayer, sc
 }
 
 export function openArenaWeeklyRewards(scene: Phaser.Scene, popups: PopupLayer, rank: number | null): void {
+  // 월간 시즌이 켜지면 순위 몫은 시즌 마감 한 번이고 1,000위 밖도 백분율·참여 구간으로 받는다.
+  if (COMPETITIVE_MONTHLY_ENABLED) {
+    openRankPoolRewards(scene, popups, { pool: ARENA_MONTHLY_RANK_REWARDS, period: "monthly", title: t("arena.monthly.title"), rules: t("rewardTable.rules.arenaMonthly"), myRank: rank });
+    return;
+  }
   const ranks = rankBands(ARENA_WEEKLY_RANK_GEMS).filter((band) => band.gems > 0);
   openRewardTable(scene, popups, {
     title: t("arena.weekly.title"),

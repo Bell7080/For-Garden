@@ -130,6 +130,8 @@ const KOREAN_ALLOWED: Readonly<Record<string, string>> = {
   "../../src/api/FakeGuildServer.ts": "QA 표본 길드",
   // ZIP 안의 실제 관절 키라 옮기면 찾지 못한다.
   "../../src/puppets/anchors.ts": "Puppet 관절 이름",
+  // SQL 함수가 쓰던 예전 우편 제목과 맞춰 갈래를 되짚는 값이다. 화면에 그리지 않는다.
+  "../../src/core/mailCategory.ts": "예전 우편 제목 대조",
   // 화면에 그리지 않는다. E2E가 어느 단계인지 확인하는 데만 쓴다.
   "../../src/scenes/loadingSteps.ts": "로딩 단계 이름",
   // 화면에 그리는 곳이 없다. 테스트와 개발자만 읽는다.

@@ -1,6 +1,7 @@
 import type Phaser from "phaser";
 import { t } from "../i18n";
 import { DUEL_TIERS, DUEL_SEASON_DAYS, type DuelTierId } from "../core/duelArena";
+import { COMPETITIVE_MONTHLY_ENABLED } from "../core/competitiveSeason";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import type { PopupLayer } from "./PopupLayer";
 import { openRewardTable } from "./RewardTable";
@@ -12,9 +13,11 @@ import { COLOR } from "./theme";
  * 값은 전부 `DUEL_TIERS` 한 표에서 읽는다. 화면이 수를 따로 적지 않는다. 양식은 주간 보상표와 같은 한 장이다(`RewardTable`).
  */
 export function openDuelTierGuide(scene: Phaser.Scene, popups: PopupLayer, current: DuelTierId): void {
+  // 월간 시즌이 켜지면 티어 보상은 매주 마감 때 우편으로 오고, 티어 자체는 달이 바뀔 때 초기화된다.
+  const monthly = COMPETITIVE_MONTHLY_ENABLED;
   openRewardTable(scene, popups, {
     title: t("duel.link.tiers"),
-    rules: t("duel.season.rules", { days: DUEL_SEASON_DAYS }),
+    rules: monthly ? t("duel.season.rules.monthly") : t("duel.season.rules", { days: DUEL_SEASON_DAYS }),
     sections: [{
       rows: DUEL_TIERS.map((tier) => ({
         badge: { kind: "tier", tier: tier.id },
@@ -22,8 +25,8 @@ export function openDuelTierGuide(scene: Phaser.Scene, popups: PopupLayer, curre
         sub: `${t("duel.tierGuide.floor", { score: tier.floor.toLocaleString() })} · ${tier.blind > 0 ? t("duel.tierGuide.blind", { count: tier.blind }) : t("duel.tierGuide.noBlind")}`,
         subColor: tier.blind > 0 ? COLOR.dangerText : undefined,
         rewards: [
-          { texture: CURRENCY_ICON_BY_WALLET.duelEmblem, amount: tier.seasonReward.duelEmblem },
-          { texture: CURRENCY_ICON_BY_WALLET.gems, amount: tier.seasonReward.gems },
+          { texture: CURRENCY_ICON_BY_WALLET.duelEmblem, amount: (monthly ? tier.weeklyReward : tier.seasonReward).duelEmblem },
+          { texture: CURRENCY_ICON_BY_WALLET.gems, amount: (monthly ? tier.weeklyReward : tier.seasonReward).gems },
         ],
         current: tier.id === current,
       })),

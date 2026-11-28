@@ -1,3 +1,4 @@
+import type { MailSpecial } from "../core/mailCategory";
 import type { RouletteReward, RouletteStatus } from "../core/roulette";
 import type { ChestBoxId, ChestForgeRun, ChestForgeStatus } from "../core/chestForge";
 import type { DelophyHuntStatus, HuntDifficultyId, HuntFlip, HuntMove, HuntRun } from "../core/delophyHunt";
@@ -68,7 +69,7 @@ export type MailRewardDto =
   /** `expiresInDays`는 기한이 있는 아이템을 받은 날로부터 며칠 두는가(1~7). 없으면 아이템의 기본 날수다. */
   | { kind: "item"; itemId: string; amount: number; expiresInDays?: number };
 /** 목록 한 행이 표시와 행동 가능 여부를 모두 판단할 수 있는 서버 확정 우편 스냅샷이다. */
-export interface MailDto { id: string; title: string; sender: string; body: string; sentAt: string; expiresAt: string | null; read: boolean; claimed: boolean; rewards: MailRewardDto[]; }
+export interface MailDto { id: string; title: string; sender: string; body: string; sentAt: string; expiresAt: string | null; read: boolean; claimed: boolean; rewards: MailRewardDto[]; /** 콘텐츠 보상 우편(결투장·아레나·원정·지층·길드). 있으면 우편함이 특수 우편으로 세운다. */ special?: MailSpecial; }
 /** 클라이언트 시계 대신 같은 응답의 서버 시각으로 만료를 판단한다. */
 export interface MailListResponse { mails: MailDto[]; serverTime: string; unreadCount: number; claimableCount: number; }
 /** 단일·일괄 수령은 같은 요청 형태를 사용하고 requestId로 재전송을 멱등 처리한다. */

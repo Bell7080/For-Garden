@@ -1,6 +1,7 @@
 import type { MailDto, MailRewardDto } from "../api/contracts";
 import { WALLET_CAPS } from "../data/economy";
 import { findItem } from "../data/items";
+import { legacyMailSpecial, mailSpecialFromKind } from "./mailCategory";
 import { addItemLot, removeItemLot } from "./itemLots";
 import type { Wallet } from "./gacha";
 import type { Session } from "../state/session";
@@ -12,7 +13,7 @@ import type { Session } from "../state/session";
  */
 
 /** 서버 DB가 내려 주는 운영 우편. 첨부는 지갑 키 + 수량이다. */
-export interface OpsMailSource { id: string; title: string; body: string; rewards: { asset: string; amount: number }[]; sentAt: string; expiresAt: string | null; }
+export interface OpsMailSource { id: string; title: string; body: string; rewards: { asset: string; amount: number }[]; sentAt: string; expiresAt: string | null; /** 콘텐츠 보상 우편의 갈래(`mails.kind`)와 티어·순위·기간(`mails.meta`). 열이 생기기 전 우편은 없다. */ kind?: string | null; meta?: unknown; }
 /** 아직 반영되지 않은 재화 조정. */
 export interface OpsAdjustmentSource { id: string; asset: string; delta: number; note?: string | null; createdAt: string; }
 /** 어드민이 올린 패치노트. 게임의 우편함에서는 첨부 없는 「패치노트」 탭의 안내 한 통이 된다. */
@@ -135,7 +136,8 @@ export function opsMailToDto(source: OpsMailSource, sender: string, readIds: Rea
       ? { kind: "currency", currency: reward.asset, amount: reward.amount }
       : { kind: "item", itemId: reward.asset.slice(OPS_ITEM_PREFIX.length), amount: reward.amount });
   const id = `${OPS_MAIL_PREFIX}${source.id}`;
-  return { id, title: source.title, sender, body: source.body, sentAt: source.sentAt, expiresAt: source.expiresAt, read: readIds.has(id), claimed: false, rewards };
+  const special = mailSpecialFromKind(source.kind, source.meta) ?? legacyMailSpecial(source);
+  return { id, title: source.title, sender, body: source.body, sentAt: source.sentAt, expiresAt: source.expiresAt, read: readIds.has(id), claimed: false, rewards, ...(special ? { special } : {}) };
 }
 
 /** 패치노트 우편의 ID 접두 — 운영 우편(`ops:`)이라 읽음·삭제 기록이 그대로 남는다. */

@@ -140,7 +140,6 @@ export const INFO_ZH_HANT = {
   "info.bond.statGain": "全部能力值",
   "info.bond.lobbyInteraction": "大廳互動",
   "info.bond.oncePerDay": "每日1次 {amount}",
-  "info.bond.partyAll": "編隊中所有遺物 {amount}",
   "info.bond.story": "羈絆故事",
   "info.bond.opened": "已開放",
   "info.bond.required": "需要羈絆 {level}",

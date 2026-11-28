@@ -140,7 +140,6 @@ export const INFO_ZH_HANS = {
   "info.bond.statGain": "全部能力值",
   "info.bond.lobbyInteraction": "大厅互动",
   "info.bond.oncePerDay": "每日1次 {amount}",
-  "info.bond.partyAll": "编队中所有遗物 {amount}",
   "info.bond.story": "羁绊故事",
   "info.bond.opened": "已开放",
   "info.bond.required": "需要羁绊 {level}",

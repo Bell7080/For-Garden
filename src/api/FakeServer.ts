@@ -3445,9 +3445,8 @@ export class FakeServer implements GameApi {
     const index = cakeOperationTierIndex(tier.id);
     const unlockedNextTier = request.victory && index > this.state.cakeOperation.clearedIndex;
     const nextCake = unlockedNextTier ? { clearedIndex: index } : { ...this.state.cakeOperation };
-    // 승리한 전투에 실제 편성된 렐릭에게만 유대 경험치를 지급한다 — 스토리 전투와 같은 규칙이다.
-    const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id,
-      request.victory && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress]));
+    // 대작전은 유대를 올리지 않는다(응태 결정 2026-11-28) — 유대의 반복 수급처는 스토리 전투다.
+    const nextProgress = this.state.relicProgress;
     const nextMissions = applyMissionEvent(spent?.missions ?? this.state.missions, { type: "battle_completed", victory: request.victory }, this.now());
     const nextResearch = spent?.playerResearch ?? this.state.playerResearch;
     const { items: nextItems, drops: bonusItems } = this.rollBonusDrops(request.victory ? 1 : 0, spent?.itemInventory ?? this.state.itemInventory, this.now());

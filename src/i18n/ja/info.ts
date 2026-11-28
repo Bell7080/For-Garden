@@ -145,7 +145,6 @@ export const INFO_JA = {
   "info.bond.statGain": "全能力値",
   "info.bond.lobbyInteraction": "ロビーでの交流",
   "info.bond.oncePerDay": "1日1回 {amount}",
-  "info.bond.partyAll": "編成レリック全員 {amount}",
   "info.bond.story": "絆エピソード",
   "info.bond.opened": "解放",
   "info.bond.required": "絆 {level} が必要",

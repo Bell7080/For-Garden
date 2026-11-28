@@ -249,7 +249,6 @@ export function openBondGuide(ctx: BondPopupContext): void {
   const lastChapter = Math.max(1, CHAPTERS.length);
   const rows: { label: string; amount: string; recommended?: boolean }[] = [
     { label: t("info.bond.storyBattle"), amount: t("info.bond.storyBattleAmount", { from: storyVictoryBondXp(1), to: storyVictoryBondXp(lastChapter) }), recommended: true },
-    { label: t("cake.title"), amount: t("info.bond.partyAll", { amount: `${BOND_XP_REWARD.partyVictory} EXP` }) },
     { label: t("info.bond.lobbyInteraction"), amount: t("info.bond.oncePerDay", { amount: `${BOND_XP_REWARD.firstLobbyInteraction} EXP` }) },
     { label: t("info.bond.interview"), amount: t("info.bond.oncePerDay", { amount: `${BOND_XP_REWARD.firstObservationInterview} EXP` }) },
     { label: t("info.bond.firstMeet"), amount: t("info.bond.once", { amount: `${BOND_XP_REWARD.firstAcquisition} EXP` }) },

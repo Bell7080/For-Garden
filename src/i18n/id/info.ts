@@ -140,7 +140,6 @@ export const INFO_ID = {
   "info.bond.statGain": "Semua Stat",
   "info.bond.lobbyInteraction": "Interaksi lobi",
   "info.bond.oncePerDay": "{amount} sekali sehari",
-  "info.bond.partyAll": "{amount} untuk setiap Relik dalam formasi",
   "info.bond.story": "Cerita Ikatan",
   "info.bond.opened": "Terbuka",
   "info.bond.required": "Butuh Ikatan {level}",

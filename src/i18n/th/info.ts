@@ -140,7 +140,6 @@ export const INFO_TH = {
   "info.bond.statGain": "ค่าสถานะทั้งหมด",
   "info.bond.lobbyInteraction": "โต้ตอบในล็อบบี้",
   "info.bond.oncePerDay": "วันละครั้ง {amount}",
-  "info.bond.partyAll": "เรลิกทุกตัวในการจัดทีม {amount}",
   "info.bond.story": "เรื่องราวสายสัมพันธ์",
   "info.bond.opened": "เปิดแล้ว",
   "info.bond.required": "ต้องมีสายสัมพันธ์ {level}",

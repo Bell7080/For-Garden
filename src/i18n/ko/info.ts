@@ -157,7 +157,6 @@ export const INFO_KO = {
   "info.bond.statGain": "모든 능력치",
   "info.bond.lobbyInteraction": "로비 상호작용",
   "info.bond.oncePerDay": "하루 한 번 {amount}",
-  "info.bond.partyAll": "편성 렐릭 전원 {amount}",
   "info.bond.story": "유대 이야기",
   "info.bond.opened": "열림",
   "info.bond.required": "유대 {level} 필요",

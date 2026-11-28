@@ -1,6 +1,6 @@
 import { ANCIENT_UNLOCK_STAGE } from "./contentUnlock";
 import { getRelic } from "../data/relics";
-import { getBattleStage, getStageEnemies } from "../data/stages";
+import { getStageEnemies, storyBattleStageAtFactor } from "../data/stages";
 import { ancientStageId, ANCIENT_DIFFICULTY_BANDS, ANCIENT_GROWTH_CATCHUP_LAST_FLOOR, ANCIENT_GROWTH_CATCHUP_PER_FLOOR, ancientFirstClearReward, ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR, ANCIENT_STRATA_ENEMY_LEVEL, ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import { ANCIENT_ENCOUNTERS, ANCIENT_TRIAL_IDS, ANCIENT_TRIALS, ancientEncounterRole, type AncientTrial } from "../data/ancientStrataEncounters";
 import { ancientSeasonIndex } from "./ancientStrata";
@@ -24,8 +24,12 @@ let activeSeason = "";
 export function setActiveAncientSeason(season: string): void { activeSeason = season; }
 export function activeAncientSeason(): string { return activeSeason; }
 
-/** 1층의 출발점 — 보통 1-5 전체의 체력·압박·방어 예산(2026-10-27, 응태 요청으로 보통 2-10에서 낮췄다). */
-const ANCIENT_REFERENCE_STAGE = "normal:1-5";
+/**
+ * 1층의 출발점 — 보통 1-5 전체의 체력·압박·방어 예산(2026-10-27, 응태 요청으로 보통 2-10에서 낮췄다).
+ * 보통 배수가 1.5 → 1.75로 오른 뒤에도(2026-11-28) 지층은 그대로 두도록 그때의 배수 1.5에 묶는다.
+ */
+const ANCIENT_REFERENCE_STAGE = "1-5";
+const ANCIENT_REFERENCE_FACTOR = 1.5;
 
 /** 보통 1-5의 예산을 출발점으로 삼되, 층마다 조우와 시련을 바꾼다. */
 export function ancientStrataMultipliers(floor: number): { hp: number; attack: number; defense: number } {
@@ -47,7 +51,7 @@ let referenceCache: { hp: number; pressure: number; defense: number } | undefine
 /** 출발 관문 적 전체의 합 — 체력·압박(공격 × 공속)은 합, 방어·저항은 한 명 평균이다. */
 function ancientReferenceBudget(): { hp: number; pressure: number; defense: number } {
   if (referenceCache) return referenceCache;
-  const enemies = getStageEnemies(getBattleStage(ANCIENT_REFERENCE_STAGE));
+  const enemies = getStageEnemies(storyBattleStageAtFactor(ANCIENT_REFERENCE_STAGE, ANCIENT_REFERENCE_FACTOR));
   referenceCache = {
     hp: enemies.reduce((sum, enemy) => sum + enemy.stats.hp, 0),
     pressure: enemies.reduce((sum, enemy) => sum + Math.max(enemy.stats.atk, enemy.stats.ap) * enemy.stats.attackSpeed / 100, 0),

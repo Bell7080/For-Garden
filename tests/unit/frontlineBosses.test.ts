@@ -1,3 +1,4 @@
+import { STORY_DIFFICULTY } from "../../src/core/storyDifficulty";
 import { describe, expect, it } from "vitest";
 import {
   createSkirmish, currentAttackSpeed, defensiveDefinition, fireUltimate, gainFerocity,
@@ -188,7 +189,7 @@ describe("공멸 대장", () => {
       const base = easy.enemies[index];
       const rarity = getRelic(base.relicId).rarity;
       expect(enemy.breakthrough).toBe(4);
-      expect(enemyLevelMultiplier(enemy.level, rarity) / enemyLevelMultiplier(base.level, rarity)).toBeCloseTo(3, 1);
+      expect(enemyLevelMultiplier(enemy.level, rarity) / enemyLevelMultiplier(base.level, rarity)).toBeCloseTo(STORY_DIFFICULTY.rampage.statFactor, 1);
     }
     expect(breakthroughEffectText(getRelic("argen"), "ferocity")).toContain("5초간");
   });

@@ -155,7 +155,6 @@ export const INFO_EN = {
   "info.bond.awakenReset.wallet": "Awaken points",
   "info.bond.awakenReset.note": "Bond level and stories stay as they are.",
   "info.bond.awakenResetDone": "Awaken reset",
-  "info.bond.awakenRecord": "Allocation",
   "info.bond.awakenTimes": "×{count}",
   "info.bond.howTo": "How to earn!",
   "info.bond.howToTitle": "How to earn Bond",

@@ -155,7 +155,6 @@ export const INFO_TH = {
   "info.bond.awakenReset.wallet": "ปลุกพลังคงเหลือที่เปลี่ยนไป",
   "info.bond.awakenReset.note": "เลเวลสายสัมพันธ์และเนื้อเรื่องยังอยู่เหมือนเดิม",
   "info.bond.awakenResetDone": "รีเซ็ตปลุกพลังแล้ว",
-  "info.bond.awakenRecord": "การจัดสรร",
   "info.bond.awakenTimes": "{count} ครั้ง",
   "info.bond.howTo": "วิธีรับ!",
   "info.bond.howToTitle": "วิธีรับสายสัมพันธ์",

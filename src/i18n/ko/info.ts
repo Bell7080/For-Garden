@@ -172,7 +172,6 @@ export const INFO_KO = {
   "info.bond.awakenReset.wallet": "남은 각성 변화",
   "info.bond.awakenReset.note": "유대 레벨과 스토리는 그대로 남아요.",
   "info.bond.awakenResetDone": "각성을 초기화했습니다",
-  "info.bond.awakenRecord": "투자 내역",
   "info.bond.awakenTimes": "{count}회",
   "info.bond.howTo": "획득 방법!",
   "info.bond.howToTitle": "유대 획득 방법",

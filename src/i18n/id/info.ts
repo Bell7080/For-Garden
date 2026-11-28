@@ -155,7 +155,6 @@ export const INFO_ID = {
   "info.bond.awakenReset.wallet": "Perubahan sisa Bangkit",
   "info.bond.awakenReset.note": "Level Ikatan dan cerita tetap seperti semula.",
   "info.bond.awakenResetDone": "Bangkit telah direset",
-  "info.bond.awakenRecord": "Alokasi",
   "info.bond.awakenTimes": "{count}x",
   "info.bond.howTo": "Cara dapat!",
   "info.bond.howToTitle": "Cara dapat Ikatan",

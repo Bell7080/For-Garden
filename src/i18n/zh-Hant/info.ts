@@ -155,7 +155,6 @@ export const INFO_ZH_HANT = {
   "info.bond.awakenReset.wallet": "剩餘覺醒變化",
   "info.bond.awakenReset.note": "羈絆等級和故事會保持不變。",
   "info.bond.awakenResetDone": "已重置覺醒",
-  "info.bond.awakenRecord": "分配記錄",
   "info.bond.awakenTimes": "{count}次",
   "info.bond.howTo": "獲取方式！",
   "info.bond.howToTitle": "羈絆獲取方式",

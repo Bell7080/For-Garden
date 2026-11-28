@@ -155,7 +155,6 @@ export const INFO_ES = {
   "info.bond.awakenReset.wallet": "Cambio de Despertares restantes",
   "info.bond.awakenReset.note": "El nivel de Vínculo y las historias se mantienen.",
   "info.bond.awakenResetDone": "Despertares reiniciados",
-  "info.bond.awakenRecord": "Asignación",
   "info.bond.awakenTimes": "×{count}",
   "info.bond.howTo": "¡Cómo conseguir!",
   "info.bond.howToTitle": "Cómo conseguir Vínculo",

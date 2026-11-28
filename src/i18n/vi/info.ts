@@ -155,7 +155,6 @@ export const INFO_VI = {
   "info.bond.awakenReset.wallet": "Thay đổi lượt Thức tỉnh còn lại",
   "info.bond.awakenReset.note": "Cấp Gắn kết và câu chuyện vẫn được giữ nguyên.",
   "info.bond.awakenResetDone": "Đã đặt lại Thức tỉnh",
-  "info.bond.awakenRecord": "Đã phân bổ",
   "info.bond.awakenTimes": "{count} lần",
   "info.bond.howTo": "Cách nhận!",
   "info.bond.howToTitle": "Cách nhận Gắn kết",

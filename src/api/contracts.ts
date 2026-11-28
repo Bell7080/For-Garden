@@ -1062,6 +1062,8 @@ export interface DuelStatusResponse {
   attack: string[]; defense: string[]; blindChoice: string[];
   /** 방어덱이 아직 기본 셋 그대로인가(직접 세운 적이 없다). [방어] 버튼의 빨간 점이 읽는다. */
   defenseIsDefault: boolean;
+  /** 저장한 뒤로 대인전 전투력이 떨어진 방어덱 렐릭(레벨 초기화·룬 해제 등). 방어전은 지금 상태로 싸우므로 [방어]가 빨간 점과 안내로 알린다. */
+  defenseWeakened: string[];
   /** 게시한 방어덱에서 실제로 가려지는 순서(고른 것 → 전투력 순). */
   defenseBlindOrder: string[];
   pendingSeasonReward: { seasonId: string; tierId: import("../core/duelArena").DuelTierId; duelEmblem: number; gems: number } | null;

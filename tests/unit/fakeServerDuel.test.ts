@@ -256,4 +256,16 @@ describe("FakeServer 결투장", () => {
     const set = await server.setDuelDefense({ relicIds: TEAM, blindChoice: [] });
     expect(set.defenseIsDefault).toBe(false);
   });
+  it("저장한 뒤 방어덱 렐릭이 약해지면 그 렐릭을 알리고, 다시 저장하면 기준이 새로 선다", async () => {
+    clock = new Date("2026-10-06T12:00:00Z");
+    const state = makeSession();
+    state.relicProgress.rexia.level = 10;
+    const server = make(state);
+    const saved = await server.setDuelDefense({ relicIds: TEAM, blindChoice: [] });
+    expect(saved.defenseWeakened).toEqual([]);
+    state.relicProgress.rexia.level = 1;
+    expect((await server.getDuelStatus()).defenseWeakened).toEqual(["rexia"]);
+    const resaved = await server.setDuelDefense({ relicIds: TEAM, blindChoice: [] });
+    expect(resaved.defenseWeakened).toEqual([]);
+  });
 });

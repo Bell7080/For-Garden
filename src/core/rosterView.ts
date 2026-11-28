@@ -14,10 +14,11 @@ export interface RosterView {
   readonly descending: boolean;
 }
 
+/** 처음 여는 목록은 강한 순(전투력 내림차순)이다(응태 2026-11-28). 한 번 바꾸면 화면마다 그 값을 기억한다. */
 export const DEFAULT_ROSTER_VIEW: RosterView = {
   filter: EMPTY_RELIC_FILTER,
-  sortMode: "number",
-  descending: SORT_DEFAULT_DESCENDING.number,
+  sortMode: "power",
+  descending: SORT_DEFAULT_DESCENDING.power,
 };
 
 /** 기준을 바꾸면 그 기준이 처음 보여 주는 방향으로 되돌린다(도감과 같은 규칙). */

@@ -75,6 +75,11 @@ export interface DuelState {
   defenseSimAt: string;
   /** 방어덱에서 먼저 가릴 렐릭. 비어 있으면 전투력 순으로 저절로 가린다. */
   blindChoice: string[];
+  /**
+   * 방어덱을 저장한 순간 렐릭마다 잰 대인전 전투력. 방어전은 늘 지금 상태로 싸우고, 이 값은 그 렐릭이 저장 뒤로
+   * 약해졌는지(레벨 초기화·룬 해제)를 알리는 데만 쓴다(응태 2026-11-28). 비어 있으면 비교하지 않는다.
+   */
+  defensePower: Record<string, number>;
   pendingSeasonReward: DuelSeasonRewardPending | null;
   /** 최근 판부터. 길이는 `DUEL_HISTORY_LIMIT`까지. */
   history: DuelHistoryEntry[];
@@ -98,7 +103,7 @@ export function createEmptyDuelState(): DuelState {
   return {
     seasonId: "", score: DUEL_START_SCORE, wins: 0, losses: 0, reachedTierIds: [],
     dayKey: "", attemptsUsed: 0, attemptsPurchased: 0, attemptsFromAds: 0, refreshesUsed: 0, candidateIds: [], foughtIds: [],
-    attack: [], defense: [...DUEL_DEFAULT_DEFENSE], defenseCustomized: false, defenseSimAt: "", blindChoice: [], pendingSeasonReward: null, history: [],
+    attack: [], defense: [...DUEL_DEFAULT_DEFENSE], defenseCustomized: false, defenseSimAt: "", blindChoice: [], defensePower: {}, pendingSeasonReward: null, history: [],
     winStreak: 0, bestStreak: 0, seasonBestScore: DUEL_START_SCORE, lastSeasonTierId: null, lastSeasonScore: 0,
   };
 }
@@ -106,10 +111,29 @@ export function createEmptyDuelState(): DuelState {
 export function cloneDuelState(state: DuelState): DuelState {
   return {
     ...state, reachedTierIds: [...state.reachedTierIds], candidateIds: [...state.candidateIds], foughtIds: [...state.foughtIds],
-    attack: [...state.attack], defense: [...state.defense], blindChoice: [...state.blindChoice],
+    attack: [...state.attack], defense: [...state.defense], blindChoice: [...state.blindChoice], defensePower: { ...state.defensePower },
     pendingSeasonReward: state.pendingSeasonReward ? { ...state.pendingSeasonReward } : null,
     history: state.history.map((entry) => ({ ...entry, ...(entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {}) })),
   };
+}
+
+function normalizeDefensePower(value: unknown, defense: readonly string[]): Record<string, number> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const source = value as Record<string, unknown>;
+  const out: Record<string, number> = {};
+  for (const id of defense) {
+    const power = source[id];
+    if (typeof power === "number" && Number.isFinite(power) && power >= 0) out[id] = power;
+  }
+  return out;
+}
+
+/** 저장한 순간보다 대인전 전투력이 낮아진 방어덱 렐릭. 반올림 차이로 깜빡이지 않게 1 넘게 떨어진 것만 센다. */
+export function weakenedDefenseRelics(state: Pick<DuelState, "defense" | "defensePower">, powerOf: (id: string) => number): string[] {
+  return state.defense.filter((id) => {
+    const saved = state.defensePower[id];
+    return saved !== undefined && powerOf(id) < saved - 1;
+  });
 }
 
 const isCount = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) >= 0;
@@ -170,6 +194,7 @@ export function normalizeDuelState(value: unknown, ownedRelicIds: readonly strin
     defenseCustomized,
     defenseSimAt,
     blindChoice: stringList(source.blindChoice, 2).filter((id) => defense.includes(id)),
+    defensePower: normalizeDefensePower(source.defensePower, defense),
     pendingSeasonReward: reward && typeof reward.seasonId === "string" && reward.tierId && getDuelTier(reward.tierId)
       ? { seasonId: reward.seasonId, tierId: reward.tierId } : null,
     history,

@@ -36,7 +36,7 @@ describe("stage enemy design", () => {
     for (const stage of battles) {
       for (const difficulty of STORY_DIFFICULTIES) {
         const repeat = difficultyStageRewards(stage.rewards, difficulty).repeatClearCheesecake;
-        const tier = difficulty === "easy" ? reachableAt(stage) : [reachableAt(stage), gate].sort((a, b) => b.rewardCheesecake - a.rewardCheesecake)[0];
+        const tier = difficulty === "easy" ? reachableAt(stage) : [reachableAt(getBattleStage(`${difficulty}:${stage.id}`)), gate].sort((a, b) => b.rewardCheesecake - a.rewardCheesecake)[0];
         expect(repeat * 2, `${difficulty}:${stage.id}`).toBeLessThanOrEqual(tier.rewardCheesecake);
       }
     }

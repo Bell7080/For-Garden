@@ -8,8 +8,8 @@ export type StoryDifficulty = typeof STORY_DIFFICULTIES[number];
  */
 export const STORY_DIFFICULTY = {
   easy: { color: 0xe6bc57, text: "#f5d47b", fill: 0x3a3016, reward: 1, statFactor: 1 },
-  normal: { color: 0xec9144, text: "#ffb76e", fill: 0x412719, reward: 1.25, statFactor: 1.5 },
-  hard: { color: 0xe66168, text: "#ff9297", fill: 0x401f2a, reward: 1.5, statFactor: 2 },
+  normal: { color: 0xec9144, text: "#ffb76e", fill: 0x412719, reward: 1.25, statFactor: 1.75 },
+  hard: { color: 0xe66168, text: "#ff9297", fill: 0x401f2a, reward: 1.5, statFactor: 2.25 },
   rampage: { color: 0xb778ed, text: "#dfafff", fill: 0x392047, reward: 1.75, statFactor: 3 },
 } as const;
 /*

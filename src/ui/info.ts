@@ -88,6 +88,7 @@ import { attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword
 import type { KeywordDef } from "../data/keywords";
 import { SummonInfoPopup } from "./SummonInfoPopup";
 import { openRelicFeedMaxPopup, openRelicResetPopup } from "./RelicResetPopup";
+import { addResetChip } from "./ResetChip";
 import { galleryPortraitPlacement, INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
 import { skinsForRelic } from "../data/relicSkins";
 import { relicSkinManager } from "../managers/RelicSkinManager";
@@ -1177,22 +1178,7 @@ export class InfoManager {
   }
 
   private addResetChip(x: number, y: number, panel: Phaser.GameObjects.Container): Phaser.GameObjects.Container {
-    const container = this.scene.add.container(x, y);
-    const shape = slantedRect(RESET_CHIP.width, RESET_CHIP.height, 8);
-    container.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x161b24, alpha: 0.9, edge: COLOR.danger, edgeAlpha: 0.5 }));
-    const label = this.scene.add.text(0, 0, t("info.reset"), textStyle({ role: "emphasis", size: RESET_CHIP.size, color: COLOR.ink })).setOrigin(0, 0.5);
-    const icon = drawGlyph(this.scene, "restore", 0, 0, RESET_CHIP.icon, 0xe8ecf2, 1, 3);
-    const room = RESET_CHIP.width - 28 - RESET_CHIP.icon - 6;
-    squeezeTextToWidth(label, room);
-    const total = RESET_CHIP.icon + 6 + label.displayWidth;
-    icon.setX(-total / 2 + RESET_CHIP.icon / 2);
-    label.setX(-total / 2 + RESET_CHIP.icon + 6);
-    container.add([icon, label]);
-    const hit = this.scene.add.rectangle(0, 0, RESET_CHIP.width + 12, RESET_CHIP.height + 16, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => pressIn(container));
-    hit.on("pointerout", () => pressOut(container, "normal", { pop: false }));
-    hit.on("pointerup", () => { pressOut(container); this.openRelicReset(); });
-    container.add(hit);
+    const container = addResetChip(this.scene, x, y, RESET_CHIP, () => this.openRelicReset());
     attach(panel, container);
     return container;
   }
@@ -2351,6 +2337,7 @@ export class InfoManager {
       readChapter: (level: BondStoryLevel, storyId: string) => this.readBondChapter(relicId, level, storyId, from),
       onChanged: () => this.refreshGrowth(),
       onClose: from?.onClose,
+      sdAsset: this.currentDef?.id === relicId ? this.figureAssetOf(this.currentDef) : undefined,
     };
   }
 

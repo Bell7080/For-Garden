@@ -59,7 +59,7 @@ export function runeLoadoutPower(relic: RuneLoadoutRelic, slots: RuneLoadoutSlot
     return rune ? [rune] : [];
   });
   const stats = calculateFinalStats(relic.base, { ...relic.progress, heartGemSlots: [...slots] as [string | null, string | null, string | null] }, gems, relic.rarity);
-  return combatPower(displayCombatStats(getRelic(relic.relicId), stats, activeBreakthroughOf(relic.progress), gems), relic.base);
+  return combatPower(displayCombatStats(getRelic(relic.relicId), stats, activeBreakthroughOf(relic.progress), gems), getRelic(relic.relicId).role);
 }
 
 function traitRank(rune: RuneInstance): number {

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { applyEncounterScaling, encounterHpShare, ENCOUNTER_ROLE } from "../../src/core/levelDesign";
 import { createSkirmish, stepSkirmish, type Arena } from "../../src/core/skirmish";
 import { RARITY_STAT_BAND } from "../../src/core/rarityScaling";
-import { combatPower } from "../../src/core/combatPower";
+import { statTotal } from "../../src/core/combatPower";
 import { findKeyword } from "../../src/data/keywords";
 import { getRelic } from "../../src/data/relics";
 import { CHAPTERS, getStageEnemies, stageEnemyRole } from "../../src/data/stages";
@@ -19,8 +19,8 @@ describe("회수조", () => {
     for (const id of IDS) {
       const relic = getRelic(id);
       const band = RARITY_STAT_BAND[relic.rarity];
-      expect(combatPower(relic.stats), id).toBeGreaterThanOrEqual(band.min);
-      expect(combatPower(relic.stats), id).toBeLessThanOrEqual(band.max);
+      expect(statTotal(relic.stats), id).toBeGreaterThanOrEqual(band.min);
+      expect(statTotal(relic.stats), id).toBeLessThanOrEqual(band.max);
       expect(relic.enemyOnly, id).toBe(true);
       expect(relic.squad, id).toBe("annihilation");
     }

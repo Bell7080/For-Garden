@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FEAR_DEFENSE_REDUCTION_PERCENT, applyCombatStatusEffect, createSkirmish, defensiveDefinition, gainFerocity, fireUltimate, stepSkirmish, type Arena, type Fighter, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
-import { combatPower } from "../../src/core/combatPower";
+import { statTotal } from "../../src/core/combatPower";
 import { ferocityMaxOf } from "../../src/core/ferocity";
 import { withinRarityBand } from "../../src/core/rarityScaling";
 import { getRelic } from "../../src/data/relics";
@@ -55,7 +55,7 @@ describe("아크 — 정체성", () => {
   });
 
   it("은 SSR 띠 안의 태생 전투력을 갖고, 탱커 중 가장 느리게 때리며 주문력은 낮다", () => {
-    expect(withinRarityBand(combatPower(ARK.stats), "SSR")).toBe(true);
+    expect(withinRarityBand(statTotal(ARK.stats), "SSR")).toBe(true);
     for (const id of ["ella", "nodonia", "anka", "kento", "mosana"]) expect(ARK.stats.attackSpeed, id).toBeLessThan(getRelic(id).stats.attackSpeed);
     expect(ARK.stats.ap).toBeLessThan(ARK.stats.atk / 4);
   });

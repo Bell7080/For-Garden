@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { activeCombatBuffs, attackInterval, createSkirmish, fireUltimate, isFighterAlive, stepSkirmish, type Arena, type Fighter, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
-import { combatPower } from "../../src/core/combatPower";
+import { statTotal } from "../../src/core/combatPower";
 import { withinRarityBand } from "../../src/core/rarityScaling";
 import { getRelic } from "../../src/data/relics";
 import { findKeyword } from "../../src/data/keywords";
@@ -53,7 +53,7 @@ describe("모사나 — 정체성", () => {
   });
 
   it("은 SR 띠 안의 태생 전투력을 갖는다", () => {
-    expect(withinRarityBand(combatPower(getRelic("mosana").stats), "SR")).toBe(true);
+    expect(withinRarityBand(statTotal(getRelic("mosana").stats), "SR")).toBe(true);
   });
 });
 

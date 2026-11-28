@@ -3126,7 +3126,7 @@ export class InfoManager {
     squeezeTextToWidth(this.bondLabel, COLUMN.width - BOND_ROW.label.left - 40);
     this.paintBondAwakenDot(def.id);
 
-    this.statRadar?.draw(finalStats, STAT_RADAR_RADIUS, baseStatsOf(def.id));
+    this.statRadar?.draw(finalStats, STAT_RADAR_RADIUS, baseStatsOf(def.id), def.role);
 
     progress.heartGemSlots.forEach((id, index) => this.gemSlots[index].paint(id));
     // 칠한 결과를 그대로 알린다. 조각을 누르는 자동화가 "언제 칠해지는가"를 시간으로 짐작하지
@@ -3842,7 +3842,7 @@ export function openExtraStatsPopup(
     body.add(scene.add.text(-edge, top + 100, t("info.stats.power"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
     body.add(
       scene.add
-        .text(edge, top + 100, combatPower(stats, baseStatsOf(def.id)).toLocaleString(), textStyle({ role: "display", size: 52 }))
+        .text(edge, top + 100, combatPower(stats, def.role).toLocaleString(), textStyle({ role: "display", size: 52 }))
         .setOrigin(1, 0.5)
         .setScale(1, 1.12)
         .setShadow(3, 6, "#05070a", 8, false, true),

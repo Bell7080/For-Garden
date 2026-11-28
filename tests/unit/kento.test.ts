@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { activeCombatBuffs, createSkirmish, fireUltimate, isFighterAlive, stepSkirmish, type Arena, type Fighter, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
-import { combatPower } from "../../src/core/combatPower";
+import { statTotal } from "../../src/core/combatPower";
 import { getRelic } from "../../src/data/relics";
 import { ferocityTraitDescription, passiveDescription, prickleKeyword, skillDescription } from "../../src/ui/skillPresentation";
 
@@ -164,7 +164,7 @@ describe("켄토 — 표시 계약", () => {
   });
 
   it("은 R 등급 띠 안의 태생 전투력을 갖는다", () => {
-    expect(combatPower(kento.stats)).toBeGreaterThanOrEqual(2080);
-    expect(combatPower(kento.stats)).toBeLessThanOrEqual(2200);
+    expect(statTotal(kento.stats)).toBeGreaterThanOrEqual(2080);
+    expect(statTotal(kento.stats)).toBeLessThanOrEqual(2200);
   });
 });

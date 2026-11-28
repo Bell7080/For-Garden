@@ -5,7 +5,7 @@ import {
   RELIC_SORT_MODES, SORT_DEFAULT_DESCENDING, sortRelicsBy, type RelicSortMode,
 } from "../../src/core/relicSort";
 
-const powerOf = (relic: (typeof RELICS)[number]) => combatPower(relic.stats);
+const powerOf = (relic: (typeof RELICS)[number]) => combatPower(relic.stats, relic.role);
 const numbers = (list: readonly (typeof RELICS)[number][]) => list.map(({ specimenNumber }) => specimenNumber);
 
 describe("도감 정렬", () => {

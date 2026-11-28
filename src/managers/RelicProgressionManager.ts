@@ -173,9 +173,9 @@ export class RelicProgressionManager {
     this.persistSharedSession();
   }
 
-  /** 표시 전투력 — 최종 능력치를 태생 능력치와 함께 잰다(공속이 공격 능력치와 함께 자란다, `combatPower`). */
+  /** 표시 전투력 — 싸울 때의 능력치로 잰다(`combatPower`). */
   getCombatPower(relicId: string, options: { pvp?: boolean } = {}): number {
-    return combatPower(this.getCombatStats(relicId, options), getRelic(relicId).stats);
+    return combatPower(this.getCombatStats(relicId, options), getRelic(relicId).role);
   }
 
   /**

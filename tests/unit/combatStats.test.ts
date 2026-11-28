@@ -29,7 +29,7 @@ describe("전투가 얹는 상시 몫은 전투와 전투력이 같은 함수로
     expect(closed).toEqual(rexia.stats);
     expect(open.hp).toBeCloseTo(rexia.stats.hp * 1.25, 6);
     expect(open.res).toBeCloseTo(rexia.stats.res * 1.25, 6);
-    expect(combatPower(open, rexia.stats)).toBeGreaterThan(combatPower(closed, rexia.stats));
+    expect(combatPower(open, rexia.role)).toBeGreaterThan(combatPower(closed, rexia.role));
     // 다른 개체의 돌파는 이 몫을 갖지 않는다.
     const torika = getRelic("torika");
     expect(applyBattleStatBonuses(torika, torika.stats, 4, [])).toEqual(torika.stats);
@@ -46,6 +46,6 @@ describe("전투가 얹는 상시 몫은 전투와 전투력이 같은 함수로
     const torika = getRelic("torika");
     const shown = displayCombatStats(torika, torika.stats, 0, [], [ATK_UP]);
     expect(shown.atk).toBeCloseTo(torika.stats.atk * 1.16, 6);
-    expect(combatPower(shown, torika.stats)).toBeGreaterThan(combatPower(torika.stats, torika.stats));
+    expect(combatPower(shown, torika.role)).toBeGreaterThan(combatPower(torika.stats, torika.role));
   });
 });

@@ -580,7 +580,7 @@ export function openBondAwakening(ctx: BondPopupContext, fx?: AwakenFx): void {
       holo: true,
       axisLabels: false,
     });
-    radar.draw(finalStats, R.radius, getRelic(relicId).stats);
+    radar.draw(finalStats, R.radius, getRelic(relicId).stats, getRelic(relicId).role);
     radar.setGain(relicProgression.getFinalStats(relicId, { withoutAwakening: true }));
     body.add(radar);
 

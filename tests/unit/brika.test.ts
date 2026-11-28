@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createSkirmish, fireUltimate, stepSkirmish, type Arena, type SkirmishState } from "../../src/core/skirmish";
-import { combatPower } from "../../src/core/combatPower";
+import { statTotal } from "../../src/core/combatPower";
 import { withinRarityBand } from "../../src/core/rarityScaling";
 import { FEROCITY_RULES, ferocityMaxOf } from "../../src/core/ferocity";
 import { getRelic } from "../../src/data/relics";
@@ -26,7 +26,7 @@ describe("브리카 — 정체성", () => {
   });
 
   it("은 SR 띠 안의 태생 전투력을 갖는다", () => {
-    expect(withinRarityBand(combatPower(getRelic("brika").stats), "SR")).toBe(true);
+    expect(withinRarityBand(statTotal(getRelic("brika").stats), "SR")).toBe(true);
   });
 
   it("의 그늘은 넓다(응태 2026-11-17 — 360 → 520)", () => {

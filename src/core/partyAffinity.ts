@@ -90,7 +90,7 @@ export function autoPickParty(
   roster: readonly RelicDef[],
   enemies: readonly RelicDef[],
   size = 3,
-  powerOf: (relic: RelicDef) => number = (relic) => combatPower(relic.stats),
+  powerOf: (relic: RelicDef) => number = (relic) => combatPower(relic.stats, relic.role),
   focus?: AutoPickFocus,
 ): string[] {
   const picked = roster
@@ -109,7 +109,7 @@ export function autoPickParty(
 export function autoPickLanes(
   roster: readonly RelicDef[],
   laneEnemies: readonly RelicDef[],
-  powerOf: (relic: RelicDef) => number = (relic) => combatPower(relic.stats),
+  powerOf: (relic: RelicDef) => number = (relic) => combatPower(relic.stats, relic.role),
   focus: AutoPickFocus = "single",
 ): (string | null)[] {
   const pairs = roster.flatMap((relic, index) => {

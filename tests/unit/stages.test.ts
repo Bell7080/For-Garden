@@ -27,8 +27,10 @@ describe("stage enemy design", () => {
     const repeats = battles.map((stage) => stage.rewards.repeatClearCheesecake);
     expect(Math.min(...repeats)).toBe(10);
     expect(Math.max(...repeats)).toBe(26);
+    // 그 관문에 닿은 사람은 앞 관문(벽 포함)을 이미 넘었다 — 지금까지 넘은 가장 높은 레벨로 갈 수 있는 단계를 잰다(2026-11-28 응태 곡선 — 4-1이 3-5 벽보다 낮게 선다).
     const reachableAt = (stage: BattleStageDef) => {
-      const level = Math.max(...stage.enemies.map((enemy) => enemy.level));
+      const prefix = battles.filter((item) => (item.chapter ?? 0) < (stage.chapter ?? 0) || (item.chapter === stage.chapter && (item.chapterOrder ?? 0) <= (stage.chapterOrder ?? 0)));
+      const level = Math.max(...stage.enemies.map((enemy) => enemy.level), ...(stage.id.includes(":") ? [] : prefix.flatMap((item) => item.enemies.map((enemy) => enemy.level))));
       return CAKE_OPERATION_TIERS.filter((tier) => tier.enemyLevel <= level).at(-1) ?? CAKE_OPERATION_TIERS[0];
     };
     // 보통·어려움은 쉬움 4-10을 넘어야 열리므로 그 자리에서 갈 수 있는 대작전 단계를 바닥으로 잡는다.
@@ -112,7 +114,7 @@ describe("stage enemy design", () => {
      */
     expect(ladder).toEqual([
       // 장마다 두 벽(2026-11-27): 1~4는 막 시작한 연구원이 배치·궁극기를 틀려도 이기게 1·2·3·4(2026-11-27 적 평타 100% 바닥으로 리파가 세져 1·2·4·5에서 내렸다), 1-5 토비가 첫 벽,
-      // 1-6에서 내려섰다 다시 올라 1-10 코마가 둘째 벽이다. 1장은 돌파 문턱(LV.21) 아래라 돌파 0이고, 장을 닫는 1-10 코마만 LV.21 돌파 1이다(2026-11-27 응태 — 표시 전투력이 1-9·2-1보다 높아야 벽으로 읽힌다. 정예 공격 ×1.35로 23 → 21).
+      // 1-6에서 내려섰다 다시 올라 1-10 코마가 둘째 벽이다. 1장은 열 관문 모두 돌파 문턱(LV.21) 아래라 돌파 0이다 — 1-10 코마도 LV.20(2026-11-28 응태 — LV.21의 돌파 출혈로 스타터 파티가 0/8이었다. 표시 전투력은 여전히 1-9·2-1보다 높다).
       { 아모: [1, 0], 토비: [1, 0], 리파: [1, 0] },
       { 아모: [2, 0], 토비: [2, 0], 리파: [2, 0] },
       { 아모: [3, 0], 토비: [3, 0], 리파: [3, 0] },
@@ -122,7 +124,7 @@ describe("stage enemy design", () => {
       { 아모: [10, 0], 토비: [10, 0], 리파: [10, 0] },
       { 아모: [12, 0], 토비: [12, 0], 리파: [12, 0] },
       { 아모: [14, 0], 토비: [14, 0], 리파: [14, 0] },
-      { 코마: [21, 1] },
+      { 코마: [20, 0] },
     ]);
     /*
      * **레벨은 관문을 따라 내려가지 않는다.** 1-10까지 마지막 관문이 직전보다 쉬운 구간이
@@ -235,8 +237,8 @@ describe("stage enemy design", () => {
     }
     const chapterOne = battles.filter(({ id }) => id.startsWith("1-"));
     for (const stage of chapterOne) {
-      // 장을 닫는 1-10 벽만 돌파 1이다(2026-11-27 응태 결정).
-      for (const enemy of stage.enemies) expect(requiredBreakthroughForLevel(enemy.level), stage.id).toBe(stage.id === "1-10" ? 1 : 0);
+      // 1-10 코마도 LV.20이라 돌파가 없다(2026-11-28 응태 — LV.21의 돌파 출혈이 스타터 파티를 0/8로 막았다).
+      for (const enemy of stage.enemies) expect(requiredBreakthroughForLevel(enemy.level), stage.id).toBe(0);
     }
   });
 
@@ -299,9 +301,8 @@ describe("stage enemy design", () => {
       if (stage.kind !== "battle" || stage.chapter === undefined) continue;
       for (const enemy of stage.enemies) {
         // 적 레벨이 곧 그 관문의 권장 레벨이다 — 유형이 얹는 차가 없다.
-        // 1-10 코마(LV.23)는 장을 닫는 벽이라 한 단계를 더 허락한다(2026-11-27 응태 결정).
         expect(requiredBreakthroughForLevel(enemy.level), `${stage.id} 권장 LV.${enemy.level}`)
-          .toBeLessThanOrEqual((ceiling[stage.chapter] ?? BREAKTHROUGH_CAP) + (stage.id === "1-10" ? 1 : 0));
+          .toBeLessThanOrEqual(ceiling[stage.chapter] ?? BREAKTHROUGH_CAP);
       }
     }
   });
@@ -376,9 +377,12 @@ describe("stage enemy design", () => {
 });
 
 describe("story walls read as walls", () => {
-  const power = (id: string) => encounterGroupPower(getStageEnemies(getBattleStage(id)).map((enemy) => ({ stats: enemy.stats, encounterRole: enemy.encounterRole, base: getRelic(enemy.id).stats })));
-  /** 6-5는 6-1~6-4(셋·넷 편성, 응태가 유지)가 표시로 더 무겁다 — 편성을 다시 정하기 전까지 예외. */
-  const KNOWN = new Set(["6-5"]);
+  const power = (id: string) => encounterGroupPower(getStageEnemies(getBattleStage(id)));
+  /**
+   * 2026-11-28 새 전투력(실제 세기 그대로 — 응태)으로 다시 쟀다. 4-10 LV.24 → 25, 6-5 43 → 44, 9-10 48 → 51로 한 뼘씩 올려 벽으로 섰다.
+   * 8-10(아르겐 혼자 LV.54)은 그 장의 잡졸 넷보다 실제로 가벼워 LV.73까지 올려야 넘는다 — 6~9장을 실전 하네스로 다시 잴 때까지 예외.
+   */
+  const KNOWN = new Set(["8-10"]);
   it("X-5·X-10의 표시 전투력이 그 절반과 바로 다음 관문보다 높다 (응태 2026-11-27)", () => {
     for (let chapter = 1; chapter <= 9; chapter += 1) {
       for (const wall of [5, 10]) {

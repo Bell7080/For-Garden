@@ -28,7 +28,7 @@ describe('제보된 진행 경로 회귀',()=>{
   expect(map.get('enemy-0')).toEqual({def:boss,...raidBossGrowth('normal')});
  });
  it('4-10 전체 편성 전투력은 3-10보다 높다',()=>{
-  const power=(id:string)=>groupCombatPower(getStageEnemies(getBattleStage(id)).map(e=>e.stats));
+  const power=(id:string)=>groupCombatPower(getStageEnemies(getBattleStage(id)));
   expect(power('4-10')).toBeGreaterThan(power('3-10'));
  });
 });

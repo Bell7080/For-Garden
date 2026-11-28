@@ -15,7 +15,7 @@ import { storyStageNumberLabel } from "../ui/storyStageLabel";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { setDebugGridCards, setDebugGridOffset, setDebugParty, setDebugScene } from "../debug";
 import type { RelicDef } from "../core/types";
-import { baseStatsOf, getRelic, withBaseStats } from "../data/relics";
+import { getRelic } from "../data/relics";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { CharacterInfoManager, roleLabel } from "../managers/CharacterInfoManager";
@@ -24,7 +24,7 @@ import { bindLongPress } from "../ui/longPressInfo";
 import type { PuppetCreature } from "../puppets/assets";
 import { placePuppet, spawnPuppet } from "../puppets/assets";
 import { getBattleStage } from "../data/stages";
-import { ENCOUNTER_ROLE, encounterEliteCount, encounterGroupPower, encounterUnitPower, requiredBreakthroughForLevel, soloEnemyPower } from "../core/levelDesign";
+import { ENCOUNTER_ROLE, encounterGroupPower, requiredBreakthroughForLevel } from "../core/levelDesign";
 import { addStageEliteMark } from "../ui/stageEliteMark";
 import { session } from "../state/session";
 import { gameApi } from "../api/FakeServer";
@@ -49,7 +49,7 @@ import { AffinityBadge } from "../ui/AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "../ui/affinityIcons";
 import { addBreakthroughGradeMark, addGrowthGradeMark } from "../ui/rarityMark";
 import { addUnitNameplate, addUnitPower } from "../ui/unitNameplate";
-import { groupCombatPower } from "../core/combatPower";
+import { combatPower, groupCombatPower, groupPowerOf } from "../core/combatPower";
 import { applyRosterView, DEFAULT_ROSTER_VIEW, deployedFirst, type RosterView } from "../core/rosterView";
 import { RosterControls, ROSTER_CONTROLS } from "../ui/RosterControls";
 import { dropRosterRelic, formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
@@ -698,7 +698,7 @@ export class PartyScene extends Phaser.Scene {
     const groups = [entries];
     const layout = guardRosterPopupLayout(groups.map((group) => group.length));
     const L = PARTY_GUARD_ROSTER;
-    const power = groupCombatPower(firstWave.units.map((unit) => unit.def.stats), firstWave.units.length, firstWave.units.map((unit) => baseStatsOf(unit.def.id) ?? unit.def.stats));
+    const power = groupCombatPower(firstWave.units.map((unit) => unit.def));
     this.guardPopups ??= new PopupLayer(this, 2100);
     this.guardPopups.open({ width: L.width, height: layout.height, title: t("guild.guard.preview.title"), dim: true, closeOnBackdrop: true }, (body) => {
       body.add(this.add.text(0, layout.info[0], t("guild.guard.preview.power", { power: power.toLocaleString() }), textStyle({ role: "display", size: 32, color: COLOR.dangerText })).setOrigin(0.5));
@@ -789,10 +789,8 @@ export class PartyScene extends Phaser.Scene {
     // 두 총 전투력이다. 이름줄은 노드 미리보기와 같은 프리팹을 쓴다(레벨 강조색·이름 흰색).
     addUnitNameplate(this, undefined, x, ENEMY_ROW + 26, enemy.level, def.name, crowded ? 24 : 30);
     // 개체 하나의 전투력은 이름줄 바로 위, 발밑에 선다. 대치선의 총합이 누가 짊어진 무게인지 말해 준다.
-    // 현상수배는 1대1이라 혼자 서는 적의 배수를 쓴다(`soloEnemyPower`) — 입구 화면과 같은 수가 선다.
-    const unitPower = this.content.content === "bounty"
-      ? soloEnemyPower(def.stats, baseStatsOf(def.id))
-      : encounterUnitPower(def.stats, def.encounterRole, encounterEliteCount(this.enemies), baseStatsOf(def.id), this.enemies.length);
+    // 자리·머릿수와 무관하게 그 개체의 실제 능력치 전투력이다 — 입구 화면과 같은 수가 선다.
+    const unitPower = combatPower(def.stats, def.role);
     addUnitPower(this, undefined, x, ENEMY_ROW + 22, unitPower, crowded ? 20 : 24, COLOR.dangerText).setDepth(3);
     // **적을 누르면 상세가 열린다.** 옆에 물음표를 하나 더 세우면 SD와 표식 사이에 눌러야 할
     // 것이 둘이 되고, 정작 크게 서 있는 SD는 눌러도 아무 일이 없다.
@@ -1285,13 +1283,15 @@ export class PartyScene extends Phaser.Scene {
     for (const { creature } of moving.values()) creature.destroy();
 
     // 어느 편이 센지는 두 수가 마주 보는 것으로 말한다. 표시·정렬 전용 값이라 전투에는 쓰지 않는다.
-    const enemyPower = this.preview.totalPower ?? encounterGroupPower(withBaseStats(this.enemies), { horde: this.preview.hordeCount !== undefined });
+    const enemyPower = this.preview.totalPower ?? encounterGroupPower(this.enemies);
     // 방어덱 편성에는 적 전투력 줄 자체가 없다(`buildPreview`의 `allyOnly`).
     this.enemyPowerText?.setText(t("party.enemyPower", { power: enemyPower.toLocaleString() }));
     this.firstBlindChip = undefined;
     if (this.content.content === "duelDefense" && chrome) this.paintBlindChips(chrome, marks);
     if (this.content.content === "duelDefense" && chrome) this.paintWeakenedMarks(chrome);
-    const allyPower = members.reduce((sum, id) => sum + relicProgression.getCombatPower(id, { pvp: this.pvp }), 0).toLocaleString();
+    // 아군도 적과 같은 규칙이다 — 개체 합 × 머릿수 몫(`groupPowerOf`). 현상수배는 1대1 세 판이라 두 편 모두 합 그대로다.
+    const allyPowers = members.map((id) => relicProgression.getCombatPower(id, { pvp: this.pvp }));
+    const allyPower = (this.content.content === "bounty" ? allyPowers.reduce((sum, power) => sum + power, 0) : groupPowerOf(allyPowers)).toLocaleString();
     // 마주 선 편이 없으면 「N 아군」처럼 VS 오른쪽에 붙던 꼴이 아니라 전투력 한 줄로 선다.
     this.allyPowerText?.setText(this.defenseOnly || this.guard ? t("duel.power", { power: allyPower }) : t("party.allyPower", { power: allyPower }));
 

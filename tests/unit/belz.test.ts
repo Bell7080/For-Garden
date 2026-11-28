@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createSkirmish, fireUltimate, stepSkirmish, type Arena, type SkirmishState } from "../../src/core/skirmish";
-import { combatPower } from "../../src/core/combatPower";
+import { statTotal } from "../../src/core/combatPower";
 import { withinRarityBand } from "../../src/core/rarityScaling";
 import { findKeyword } from "../../src/data/keywords";
 import { getRelic } from "../../src/data/relics";
@@ -32,7 +32,7 @@ describe("벨즈 — 정체성", () => {
   });
 
   it("은 SR 띠 안의 태생 전투력을 갖는다", () => {
-    expect(withinRarityBand(combatPower(getRelic("belz").stats), "SR")).toBe(true);
+    expect(withinRarityBand(statTotal(getRelic("belz").stats), "SR")).toBe(true);
   });
 });
 

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { simulateDuel } from "../../src/core/duelBalance";
 import { applyLevelGrowth, referenceBreakthroughAt } from "../../src/core/relicProgression";
-import { shownBreakthroughForLevel, soloEnemyPower } from "../../src/core/levelDesign";
+import { shownBreakthroughForLevel } from "../../src/core/levelDesign";
 import { combatPower } from "../../src/core/combatPower";
 import { BOUNTY_TIERS, bountyRoundEnemy } from "../../src/data/bounty";
-import { PLAYABLE_RELICS, getRelic } from "../../src/data/relics";
+import { PLAYABLE_RELICS } from "../../src/data/relics";
 import type { RelicDef } from "../../src/core/types";
 
 /**
@@ -101,23 +101,25 @@ describe("현상수배 등급 검수", () => {
  * 9·10급의 표시가 레벨 100 아군보다 높아 셀 짝이 없으므로 모든 등급을 함께 센다(9.4%).
  */
 describe("현상수배 표시 전투력", () => {
-  it("표시를 넘긴 아군이 지는 짝은 드물다", () => {
+  it("표시를 막 넘긴 아군이 지는 짝은 절반에 못 미친다", () => {
     const grown = (def: RelicDef, level: number): RelicDef => ({ ...def, stats: applyLevelGrowth(def.stats, level, def.rarity, referenceBreakthroughAt(level)) });
     const wins = (def: RelicDef, level: number, enemy: RelicDef) => SEEDS.every((seed) => simulateDuel(grown(def, level), enemy, seed).winner === "left");
     let losses = 0, total = 0;
     for (const tier of BOUNTY_TIERS) {
       for (const round of tier.rounds) {
         const enemy = bountyRoundEnemy(round);
-        const shown = soloEnemyPower(enemy.stats, getRelic(round.relicId).stats);
+        const shown = combatPower(enemy.stats, enemy.role);
         for (const def of PLAYABLE_RELICS) {
           let level = 1;
-          while (level < 100 && combatPower(grown(def, level).stats, def.stats) < shown) level += 1;
+          while (level < 100 && combatPower(grown(def, level).stats, def.role) < shown) level += 1;
           if (level >= 100) continue;
           total += 1;
           if (!wins(def, level, enemy)) losses += 1;
         }
       }
     }
-    expect(losses / total).toBeLessThan(0.12);
+    // 2026-11-28(응태 — 「애매하게 얹어둔 값은 지우고 저거로 계산하자」): 혼자 선 적의 표시 배수 1.8을 걷어 내 표시가 실제 세기 그대로다.
+    // 표시를 막 넘긴 아군은 상성·키트에 따라 갈려 37.6%가 진다(배수가 있던 때 9.4%). 표시가 한쪽으로 기울지 않았는지만 지킨다.
+    expect(losses / total).toBeLessThan(0.42);
   }, 240_000);
 });

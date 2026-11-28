@@ -396,7 +396,7 @@ export function paintInfoStats(ctx: InfoPopupContext, chrome: Phaser.GameObjects
   panel.add(chart);
   // 스테이지가 성장시킨 정의를 그대로 읽는다 — 창이 레벨 보정을 다시 하면 지도·편성·전투가
   // 같은 적을 다른 수치로 말한다.
-  chart.draw(def.stats, radar.radius, baseStatsOf(def.id));
+  chart.draw(def.stats, radar.radius, baseStatsOf(def.id), def.role);
 }
 
 /**

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { DUNGEON_RUN_STAMINA } from "../../src/core/dungeonShortcut";
 import { CAKE_OPERATION_ENEMY_IDS, CAKE_OPERATION_TIERS, cakeOperationRunCost, cakeOperationTierIndex, cakeOperationEnemies, getCakeOperationTier, isCakeTierUnlocked, cakeOperationEnemyDisplayLevel, cakeOperationRole } from "../../src/data/cakeOperation";
-import { getRelic, withBaseStats } from "../../src/data/relics";
+import { getRelic } from "../../src/data/relics";
 import { applyEncounterScaling, encounterGroupPower } from "../../src/core/levelDesign";
 import { applyLevelGrowth, referenceBreakthroughAt } from "../../src/core/relicProgression";
 import { summarizeStageDifficulty } from "../../src/core/stageDifficulty";
 import { battleArena } from "../../src/core/battleArena";
-import { combatPower } from "../../src/core/combatPower";
+import { groupCombatPower } from "../../src/core/combatPower";
 import { arrangeByRole } from "../../src/core/partyAffinity";
 import { MAX_ENEMY_COUNT } from "../../src/core/skirmish";
 
@@ -85,7 +85,7 @@ describe("치즈케이크 대작전 단계 표", () => {
  * 무작위 파티 10종(엘라·마키·스테라 · 토리카·도디·파루아 + 무작위 여덟)이 6판 중 5판을 이기는 최저 레벨의 중앙값이
  * 단계마다 1 · 10 · 17 · 24 · 30 · 38 · 46 · 53으로 고르게 오르게 레벨(9~57)과 머릿수(10~13)를 다시 놓았다.
  * 예전 사다리(LV.4~53 · 10~15마리)는 1~3단계를 레벨 1~6이 넘고 7~8단계는 표기보다 높아야 넘어 곡선이 앞에서 눕고 뒤에서 섰다.
- * 같은 측정에서 **지는 마지막 레벨의 아군 전투력은 적 합의 0.20~0.32배**였다 — 그 위(`HORDE_POWER_SHARE` 0.35)에 표시를 두었다.
+ * 같은 측정에서 **지는 마지막 레벨의 아군 전투력은 적 합의 0.20~0.32배**였다 — 그 위(옛 `HORDE_POWER_SHARE` 0.35)에 표시를 두었다 — 2026-11-28 머릿수 보정(`headcountFactor`) 하나로 바꿨다.
  * 여기서는 그 약속을 빠르게 지킨다: 표시를 처음 넘는 레벨의 아군은 이긴다.
  */
 describe("치즈케이크 대작전 표시 전투력", () => {
@@ -95,12 +95,12 @@ describe("치즈케이크 대작전 표시 전투력", () => {
     const def = getRelic(id);
     return { ...def, stats: applyLevelGrowth(def.stats, level, def.rarity, referenceBreakthroughAt(level)) };
   }));
-  const power = (party: ReturnType<typeof grow>) => party.reduce((sum, def) => sum + combatPower(def.stats, getRelic(def.id).stats), 0);
+  const power = (party: ReturnType<typeof grow>) => groupCombatPower(party);
 
   it.each([0, 3, 7])("%i번째 단계에서 표시를 넘긴 아군은 이긴다", (index) => {
     const tier = CAKE_OPERATION_TIERS[index];
     const enemies = cakeOperationEnemies(tier);
-    const shown = encounterGroupPower(withBaseStats(enemies), { horde: true });
+    const shown = encounterGroupPower(enemies);
     for (const ids of PARTIES) {
       let level = 1;
       while (level < 100 && power(grow(ids, level)) < shown) level += 1;

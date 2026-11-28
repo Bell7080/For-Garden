@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createSkirmish, fireUltimate, type Arena, type SkirmishState } from "../../src/core/skirmish";
-import { combatPower } from "../../src/core/combatPower";
+import { statTotal } from "../../src/core/combatPower";
 import { computeDamage } from "../../src/core/damage";
 import { withinRarityBand } from "../../src/core/rarityScaling";
 import { getRelic } from "../../src/data/relics";
@@ -33,7 +33,7 @@ describe("이르나 — 정체성", () => {
   });
 
   it("은 SR 띠 안에서 공격력이 가장 몰리고 전사 중 공격 속도가 가장 느리다", () => {
-    expect(withinRarityBand(combatPower(IRNA.stats), "SR")).toBe(true);
+    expect(withinRarityBand(statTotal(IRNA.stats), "SR")).toBe(true);
     expect(IRNA.stats.atk).toBeGreaterThan(IRNA.stats.hp / 10);
     expect(IRNA.stats.ap).toBeLessThan(IRNA.stats.atk / 5);
     for (const id of ["keris", "rexia", "maddy", "pachi"]) expect(IRNA.stats.attackSpeed, id).toBeLessThan(getRelic(id).stats.attackSpeed);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createSkirmish, feverRamp, stepSkirmish, type Arena, type SkirmishState } from "../../src/core/skirmish";
-import { combatPower } from "../../src/core/combatPower";
+import { statTotal } from "../../src/core/combatPower";
 import { withinRarityBand } from "../../src/core/rarityScaling";
 import { ferocityMaxOf } from "../../src/core/ferocity";
 import { getRelic } from "../../src/data/relics";
@@ -35,7 +35,7 @@ describe("아르 — 정체성", () => {
 
   it("은 SR 띠 안의 태생 전투력을 갖고, 게이지가 작아 빨리 찬다", () => {
     const ar = getRelic("ar");
-    expect(withinRarityBand(combatPower(ar.stats), "SR")).toBe(true);
+    expect(withinRarityBand(statTotal(ar.stats), "SR")).toBe(true);
     expect(ferocityMaxOf(ar)).toBe(80);
     expect(ar.stats.ferocityGain).toBe(12);
   });

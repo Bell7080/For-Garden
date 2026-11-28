@@ -8,7 +8,6 @@ import type { RelicDef } from './types';
 import type { ExpeditionAugmentEffect } from './expeditionAugments';
 import { combatPower } from './combatPower';
 import { applyBattleStatBonuses } from './combatStats';
-import { getRelic } from '../data/relics';
 
 /**
  * `unique`는 교차 공개 배치에서 **상대가 이미 고른 렐릭을 고르지 못하게** 한다(기본 켜짐 — 저장된 옛 방은 키가 없어 켜진 것으로 읽는다).
@@ -145,7 +144,7 @@ export function applyArenaAction(source: ArenaRoom, actor: string, action: Arena
  */
 /** 화면의 전투력과 같은 값 — 태생 능력치(공속 몫)와 돌파·룬 특성의 상시 몫을 함께 잰다. */
 function unitPower(unit: ArenaUnit): number {
-  return combatPower(applyBattleStatBonuses(unit.def, unit.def.stats, unit.breakthrough, unit.traits), getRelic(unit.def.id).stats);
+  return combatPower(applyBattleStatBonuses(unit.def, unit.def.stats, unit.breakthrough, unit.traits), unit.def.role);
 }
 export function arenaAutoResolve(r: ArenaRoom, now: number): void {
   const strongest = (units: readonly ArenaUnit[]): ArenaUnit | undefined =>

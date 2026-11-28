@@ -1,6 +1,6 @@
 import { GROWTH_STAT_KEYS, breakthroughGrowthPercent } from "./relicProgression";
-import { combatPower, POWER_COMPARISON_SLOTS } from "./combatPower";
-import type { RelicRarity, Stats } from "./types";
+import { combatPower, groupPowerOf } from "./combatPower";
+import type { RelicRarity, Role, Stats } from "./types";
 
 /**
  * **레벨 디자인 키트** — 적의 세기를 수치가 아니라 **시간**에서 역산하기 위한 한 표.
@@ -152,16 +152,6 @@ export interface EncounterRoleSpec {
    * **비율 피해만** 줄이므로 무엇으로 때리면 되는지는 그대로 읽힌다.
    */
   percentHpResistance?: number;
-  /**
-   * **전투력 표시에 얹는 자리 몫** — 능력치가 말하지 못하는 그 자리의 무게(강인함·치유 감소)를 전투력 숫자에 싣는다.
-   * 표시 전용이며 전투에는 들지 않는다(`encounterUnitPower`). 없으면 1이다.
-   */
-  powerWeight?: number;
-  /**
-   * **혼자 선 자리의 표시 몫**(있으면 그 무리에 이 개체 하나만 설 때 — 잡졸을 거느린 정예는 아니다 — `powerWeight` 대신 쓴다). 정예 하나가 셋 몫을 버티는 벽은
-   * 셋·넷이 서는 이웃 관문보다 실제로 어려운데, 머릿수를 더하는 표시에서는 더 가볍게 읽혔다(응태 2026-11-27).
-   */
-  soloPowerWeight?: number;
 }
 
 /**
@@ -188,7 +178,6 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * 1.24배가 드는 것은 그 조합의 상성 벽이다(같은 관문을 렉시아 조합은 0.82배로 넘는다). ×0.9(1-6 약 7,300)로 내리면
      * 3장 일반 관문 여럿에서 렉시아 조합이 1.1배 넘게 들어 「내 전투력이 더 센데 졌다」가 상성 없이도 나온다.
      */
-    powerWeight: 1,
     ttkSeconds: [10, 16], remainingHp: [0.72, 0.95],
   },
   swarm: {
@@ -247,18 +236,6 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * 출혈·뇌진탕 같은 최대 체력 비례 피해가 그 두께를 그대로 녹였다. 보스·불사(30%)의 절반만 덜어 낸다.
      */
     percentHpResistance: 15,
-    /*
-     * **혼자 선 정예는 전투력이 더 무겁게 읽힌다**(응태 요청, 2026-11-12 — "왜 내 전투력이 더 센데 져"가 없어야 한다).
-     * 강인함과 치유 감소는 능력치에 없어 실제 능력치만 세면 정예가 가볍게 선다. 1-5 토비가 이기는 아군 선(약 6,200~6,700)을
-     * 표시가 그대로 말하도록 실제 능력치 전투력에 1.6을 곱한다(`encounterUnitPower`).
-     */
-    powerWeight: 1.6,
-    /*
-     * **혼자 선 정예는 2.0이다**(응태 결정 2026-11-27). 1.6이면 장의 벽(X-5·X-10)이 앞뒤의 셋·넷 관문이나 정예 둘 관문보다 낮게
-     * 읽혀(5-10 15,574 < 6-1 18,855 · 9-5 18,382 < 9-4 22,913) 벽으로 보이지 않았다. 실제로 이기는 레벨은 벽이 더 높다.
-     * 정예 둘 관문은 각자 체력을 나눠 가져 1.6 그대로다.
-     */
-    soloPowerWeight: 2,
   },
   boss: {
     /*
@@ -383,70 +360,19 @@ export function encounterHpShare(role: EncounterRole, countOnField: number): num
 }
 
 /**
- * **자리를 아는 전투력** — 적 한 무리의 개체별 표시 전투력(응태 요청, 2026-11-12: 정예가 전투력보다 훨씬 세다).
+ * **적 한 무리의 개체별 표시 전투력** — 실제 능력치(정예의 체력·공격 몫이 든 값) 그대로의 전투력이다.
  *
- * 정예의 체력 몫(×3)은 「셋이 나눠 내던 몫을 혼자 대신한다」는 뜻인데, 전투력 식은 체력을 선형으로 낮게 세어 혼자 선
- * 정예가 실제 세기의 절반쯤으로 읽혔다. 한때 몫을 덜어 낸 한 몸 × 머릿수로 셌더니 방어·저항·주문력까지 4.8배로 불어 1-5 토비가
- * 아군 두 배(12,900)로 읽혔다(응태: 「수치 표기가 높다」). 지금은 **실제 능력치(몫이 든 값)의 전투력 × 자리 몫**(정예 1.6 · 일반 1 — 아군과 같은 척도)이다 —
- * 토비가 실제로 이기는 아군 선(약 6,200~6,700)과 맞는다. 이카닉시아·코마가 선 벽(1-10·3-10·4-10·7-5)은 편성 상성 때문에 이 표시보다 세다.
- * 표시 전용이며 전투에는 쓰지 않는다.
+ * 한때 자리마다 표시 몫을 얹었다(정예 ×1.6 · 혼자 선 정예 ×2.0 · 물량 던전 합 ×0.35 · 1대1 ×1.8). 전투력이 능력치를 더하는
+ * 식이라 체감보다 낮게 읽히던 틈을 눈대중으로 메운 값이었는데, 전투력이 곱셈 식(`combatPower`)이 되면서 걷어 냈다
+ * (응태 결정 2026-11-28 — 「애매하게 얹어 둔 값은 지우고 저거로 계산하자」). 머릿수 차이는 무리 합이 맡는다(`groupPowerOf`).
  */
-export function encounterUnitPowers(units: readonly { stats: Stats; encounterRole?: EncounterRole; base?: Stats }[]): number[] {
-  const elites = encounterEliteCount(units);
-  return units.map(({ stats, encounterRole, base }) => encounterUnitPower(stats, encounterRole, elites, base, units.length));
+export function encounterUnitPowers(units: readonly { stats: Stats; role: Role }[]): number[] {
+  return units.map(({ stats, role }) => combatPower(stats, role));
 }
 
-/** 한 무리에 선 정예의 수 — 개체 하나만 그릴 때도 몫을 같은 값으로 나누도록 따로 둔다. */
-export function encounterEliteCount(units: readonly { encounterRole?: EncounterRole }[]): number {
-  return units.filter((unit) => unit.encounterRole === "elite").length;
-}
-
-/** 개체 하나의 자리를 아는 전투력(`encounterUnitPowers`의 한 칸). `elites`는 그 무리에 선 정예 수, `fieldCount`는 그 무리의 머릿수다(1이면 혼자 선 몫 `soloPowerWeight`). */
-export function encounterUnitPower(stats: Stats, encounterRole: EncounterRole | undefined, elites: number, base?: Stats, fieldCount = 0): number {
-  void elites;
-  const spec = encounterRole ? ENCOUNTER_ROLE[encounterRole] : undefined;
-  const weight = (fieldCount === 1 ? spec?.soloPowerWeight : undefined) ?? spec?.powerWeight ?? 1;
-  return Math.round(combatPower(stats, base) * weight);
-}
-
-/**
- * `encounterUnitPowers`의 합 — **화면에 서는 개체 전부를 그대로 더한다**(응태 2026-11-13: 「나보다 약한데 내가 진다」).
- *
- * 한때 셋보다 많이 서면 평균 × 셋으로 줄였는데, 스토리의 넷·다섯 무리는 그 몸이 전부 동시에 싸운다 — 7-4가 지도에서는
- * 19,962, 편성 화면에서는 14,972로 서서 아군이 그보다 높아도 졌다(모의: 무리 넷은 표시 ×1.0에서 승률 56~90%,
- * 다섯은 24~33%. 셋이 서는 관문은 78~96%). 합 그대로 적으면 머릿수와 무관하게 「표시가 같으면 대개 이긴다」로 맞는다.
- * **열 명 넘게 몰려오는 던전(`horde`)만** 합에 `HORDE_POWER_SHARE`를 곱한다 — 한 번에 맞붙지 않는 몸까지 더하면 숫자만
- * 부푼다. 표시 전용이며 전투에는 쓰지 않는다.
- */
-export function encounterGroupPower(units: readonly { stats: Stats; encounterRole?: EncounterRole; base?: Stats }[], options: { horde?: boolean } = {}): number {
-  const powers = encounterUnitPowers(units);
-  if (powers.length === 0) return 0;
-  const total = powers.reduce((sum, power) => sum + power, 0);
-  return options.horde !== true || powers.length <= POWER_COMPARISON_SLOTS ? total : Math.round(total * HORDE_POWER_SHARE);
-}
-
-/**
- * **물량 던전(치즈케이크 대작전)의 표시 전투력 = 몰려오는 전부의 합 × 이 몫**(응태 2026-11-15: 「적이 높게 표기돼도 괜찮다.
- * 아군보다 낮은데 아군이 지는 일은 웬만해선 없어야 한다」).
- *
- * 예전에는 머릿수로 나눠 셋 몫(합 × 3/N)으로 적었는데, 머릿수가 늘수록 숫자가 실제 세기보다 작아져 7단계는 12,511로
- * 서는데 아군 16,555가 있어야 넘었다. 무작위 파티 10종이 단계마다 **지는 마지막 레벨**의 전투력을 재 보니 합의
- * 0.20~0.32배였다 — 머릿수(10~13)와 무관하게 한 띠라, 몫 하나를 그 위(0.35)에 두면 표시를 넘긴 아군이 지는 일이 없다.
- * 다시 재는 법은 `cakeOperation.test`의 표.
- */
-export const HORDE_POWER_SHARE = 0.35;
-
-/**
- * **1대1로 혼자 서는 적(현상수배)의 표시 배수.** 맞붙는 상대 하나와 개체 대 개체로 겨루므로 상성이 결과를 크게 가르고,
- * 같은 전투력이라도 지는 짝이 많았다(31종 × 30라운드 모의에서 표시를 처음 넘는 레벨의 아군이 지는 짝이 ×1.6에서 15%).
- * ×1.8이면 11%이고 그중 셋에 둘이 아모다 — 아모를 빼면 4% 남짓이라 남는 것은 그 개체의 1대1 세기다(개체마다 표시를
- * 고치지 않는다). 다시 재는 법은 `bountyBalance.test`.
- */
-export const SOLO_ENEMY_POWER_WEIGHT = 1.8;
-
-/** 1대1로 서는 적 하나의 표시 전투력 — 현상수배의 입구·편성 레인이 같은 값을 읽는다. */
-export function soloEnemyPower(stats: Stats, base?: Stats): number {
-  return Math.round(combatPower(stats, base) * SOLO_ENEMY_POWER_WEIGHT);
+/** 적 한 무리의 표시 전투력 — 개체 전투력의 합 × 머릿수 몫(`headcountFactor`). 아군 편성과 같은 규칙이다. */
+export function encounterGroupPower(units: readonly { stats: Stats; role: Role }[]): number {
+  return groupPowerOf(encounterUnitPowers(units));
 }
 
 /**

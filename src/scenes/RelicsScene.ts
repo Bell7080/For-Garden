@@ -409,7 +409,7 @@ export class RelicsScene extends Phaser.Scene {
    * 넘긴다 — 미보유는 성장이 없으므로 기본 능력치로 줄을 세운다.
    */
   private sortRelics(catalog: readonly RelicDef[]): RelicDef[] {
-    const powerOf = (relic: RelicDef): number => relicCollection.owns(relic.id) ? relicProgression.getCombatPower(relic.id) : combatPower(relic.stats);
+    const powerOf = (relic: RelicDef): number => relicCollection.owns(relic.id) ? relicProgression.getCombatPower(relic.id) : combatPower(relic.stats, relic.role);
     return sortRelicsBy(catalog, this.sortMode, this.descending, powerOf);
   }
 

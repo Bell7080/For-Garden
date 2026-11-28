@@ -282,11 +282,11 @@ describe("돌파", () => {
 
 describe("전투력", () => {
   it("은 능력치가 오르면 함께 오르고 같은 능력치에는 늘 같은 수를 준다", () => {
-    const weak = combatPower(BASE);
-    expect(weak).toBe(combatPower({ ...BASE }));
-    expect(combatPower({ ...BASE, atk: BASE.atk + 100 })).toBeGreaterThan(weak);
+    const weak = combatPower(BASE, "warrior");
+    expect(weak).toBe(combatPower({ ...BASE }, "warrior"));
+    expect(combatPower({ ...BASE, atk: BASE.atk + 100 }, "warrior")).toBeGreaterThan(weak);
     // 체력 한 점은 공격 한 점보다 가볍다. 수가 큰 능력치가 전투력을 통째로 지배하지 않는다.
-    expect(combatPower({ ...BASE, hp: BASE.hp + 10 })).toBeLessThan(combatPower({ ...BASE, atk: BASE.atk + 10 }));
+    expect(combatPower({ ...BASE, hp: BASE.hp + 10 }, "warrior")).toBeLessThan(combatPower({ ...BASE, atk: BASE.atk + 10 }, "warrior"));
   });
 });
 

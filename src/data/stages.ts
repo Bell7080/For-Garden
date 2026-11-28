@@ -24,6 +24,9 @@ const STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"] as const;
  * 4-6은 코마 정예를 걷었다(v0.557.0) — 4-5 벽만큼 무거웠다. 장 중간 벽(3-5·5-5)은 혼자 서는 정예라 이 표가 아니라 편성이 하나다.
  */
 const SOLO_ELITE_ENEMIES: Readonly<Record<string, readonly string[]>> = {
+  // 2-5는 정예 토비에 아모가 붙는 둘, 2-10은 셋이 모두 정예다(응태 2026-11-28 — X-5·X-10에는 정예가 하나 이상 선다).
+  "2-5": ["toby"],
+  "2-10": ["amo", "toby", "ripa"],
   "6-1": ["magasa"],
   "6-3": ["magasa"],
   "6-2": ["atra"],
@@ -62,15 +65,15 @@ function enemyGrowth(relicId: string, level: number, formationSlot: 0 | 1 | 2 | 
  * 혼자 선 하나는 레벨을 올려도 셋보다 세기가 더디게 올라, 같은 벽이 되려면 화면의 `LV`가 그 장의 잡졸보다 한참 높다(1-5 토비 · 3-5 아트라 · 5-5 라자).
  */
 const STORY_RECOMMENDED_LEVELS: readonly number[] = [
-  1, 2, 3, 4, 19, 8, 10, 12, 14, 21,  // 1장
-  16, 17, 18, 19, 21, 19, 19, 19, 19, 34,  // 2장
-  18, 20, 23, 23, 37, 26, 26, 26, 26, 26,  // 3장
-  26, 27, 27, 27, 42, 26, 29, 29, 29, 37,  // 4장
-  31, 31, 31, 34, 54, 32, 32, 32, 34, 54,  // 5장
-  28, 34, 34, 34, 43, 36, 36, 37, 37, 42,  // 6장
+  1, 2, 3, 4, 19, 8, 10, 12, 14, 20,  // 1장
+  12, 13, 14, 15, 20, 14, 15, 16, 18, 19,  // 2장
+  16, 17, 18, 19, 31, 16, 17, 18, 18, 18,  // 3장
+  17, 18, 19, 20, 28, 19, 20, 20, 20, 25,  // 4장
+  24, 25, 26, 27, 40, 27, 28, 29, 30, 41,  // 5장
+  28, 34, 34, 34, 44, 36, 36, 37, 37, 42,  // 6장
   41, 41, 41, 42, 60, 37, 39, 39, 39, 44,  // 7장
   43, 44, 44, 48, 61, 43, 43, 48, 48, 54,  // 8장
-  47, 56, 57, 57, 59, 48, 48, 48, 48, 48,  // 9장
+  47, 56, 57, 57, 59, 48, 48, 48, 48, 51,  // 9장
 ];
 
 /**
@@ -97,8 +100,10 @@ const CHAPTER_ONE_ELITES: Readonly<Record<number, string>> = {
  * 회수조는 3-2부터 옛 셋과 섞여 하나씩 드러난다(3-2 미르 · 3-3 펄시, 네우리는 3-8 — 3-4에 세우면 바닥 파티가 3-4를 열었다). 3-1은 옛 셋 그대로다.
  */
 const LATE_CHAPTER_FORMATIONS: Readonly<Record<string, readonly (readonly [string, 0 | 1 | 2 | 3 | 4])[]>> = {
+  "2-5": [["amo", 0], ["toby", 1]],
   "2-7": [["amo", 0], ["ripa", 2]],
   "2-9": [["amo", 0], ["toby", 1]],
+  "2-10": [["amo", 0], ["toby", 1], ["ripa", 2]],
   "3-2": [["amo", 0], ["mir", 1], ["ripa", 2]],
   "3-3": [["amo", 0], ["mir", 1], ["pulsi", 2]],
   "3-4": [["amo", 0], ["pulsi", 1], ["ripa", 2]],
@@ -522,13 +527,41 @@ export function storyStages(difficulty: StoryDifficulty): readonly StageDef[] { 
  * 보통·어려움의 적은 배율이 아니라 **그 난이도의 레벨**에 선다(응태 결정 2026-11-13 — 눈에 보이는 난이도 곡선).
  * 개체·인원·배치·정예는 쉬움 그대로이고, 레벨만 `statFactor`배 세기를 넘지 않는 가장 높은 레벨로 옮긴다. 100을 넘어도 된다.
  */
-function difficultyEnemy(enemy: StageEnemyDef, difficulty: StoryDifficulty): StageEnemyDef {
-  return enemyAtFactor(enemy, STORY_DIFFICULTY[difficulty].statFactor);
-}
-function enemyAtFactor(enemy: StageEnemyDef, factor: number): StageEnemyDef {
-  const level = equivalentEnemyLevel(enemy.level, getRelic(enemy.relicId).rarity, factor);
+function enemyAtFactor(enemy: StageEnemyDef, factor: number, lift = 0): StageEnemyDef {
+  const level = equivalentEnemyLevel(enemy.level, getRelic(enemy.relicId).rarity, factor) + lift;
   return { ...enemy, level, breakthrough: shownBreakthroughForLevel(level) };
 }
+/**
+ * 확장 난이도의 사다리는 **멈추지 않는다**(응태 결정 2026-11-28). 배수만 레벨로 옮기면 돌파 문턱 근처에서 쉬움 12·13·14가
+ * 보통 38·38·38로 뭉개져, 쉬움이 오르는데 보통은 그 자리에 섰다. 본편 사다리를 차례로 지나며 쉬움 레벨이 오른 관문은
+ * 앞 관문보다 **적어도 1** 오르게 올림 몫(`lift`)을 얹는다 — 그 몫만큼 배수를 조금 넘을 수 있다. 쉬움이 같으면 같은 레벨,
+ * 쉬움이 내려서면(절반의 첫 관문) 배수 그대로다. 다음 난이도 1-1은 이전 난이도 4-10보다 높이 서지 않는다.
+ * 서브 전투는 사다리 밖이라 배수 그대로다. 고대 지층 기준(`storyBattleStageAtFactor`)은 올림 몫을 쓰지 않는다.
+ */
+const STORY_LADDER_LIFT: ReadonlyMap<string, number> = (() => {
+  const lifts = new Map<string, number>();
+  const main = STAGES.filter((stage): stage is BattleStageDef => stage.kind === "battle" && !stage.sub);
+  const stageLevel = (stage: BattleStageDef) => Math.max(...stage.enemies.map(enemy => enemy.level));
+  let ceiling = stageLevel(main.find(stage => stage.id === "4-10")!);
+  for (const difficulty of STORY_DIFFICULTIES.slice(1)) {
+    const factor = STORY_DIFFICULTY[difficulty].statFactor;
+    let previousEasy = 0;
+    let previous = 0;
+    for (const stage of main) {
+      const easy = stageLevel(stage);
+      const plain = equivalentEnemyLevel(easy, "R", factor);
+      let level = plain;
+      if (stage.id === "1-1") level = Math.min(plain, ceiling);
+      else if (easy > previousEasy) level = Math.max(plain, previous + 1);
+      else if (easy === previousEasy) level = Math.max(plain, previous);
+      lifts.set(storyStageId(difficulty, stage.id), level - plain);
+      if (stage.id === "4-10") ceiling = level;
+      previousEasy = easy;
+      previous = level;
+    }
+  }
+  return lifts;
+})();
 /** 쉬움 관문을 정해진 세기 배수로 옮긴 사본 — 난이도 배수가 바뀌어도 기준이 움직이면 안 되는 자리(고대 지층 1층)가 쓴다. */
 export function storyBattleStageAtFactor(easyStageId: string, factor: number): BattleStageDef {
   const base = getBattleStage(easyStageId);
@@ -538,7 +571,7 @@ const EXTRA_STORY_STAGES: readonly BattleStageDef[] = STORY_DIFFICULTIES.slice(1
   const first = base.id === "1-1";
   const prerequisiteStageIds = first ? [storyDifficultyRequirement(difficulty)!] : base.prerequisiteStageIds.map(id => storyStageId(difficulty, id));
   return { ...base, id: storyStageId(difficulty, base.id), prerequisiteStageIds,
-    enemies: base.enemies.map(enemy => difficultyEnemy(enemy, difficulty)),
+    enemies: base.enemies.map(enemy => enemyAtFactor(enemy, STORY_DIFFICULTY[difficulty].statFactor, STORY_LADDER_LIFT.get(storyStageId(difficulty, base.id)) ?? 0)),
     rewards: difficultyStageRewards(base.rewards, difficulty), situation: undefined };
 }));
 export const ALL_STORY_STAGES: readonly StageDef[] = [...STAGES, ...EXTRA_STORY_STAGES];

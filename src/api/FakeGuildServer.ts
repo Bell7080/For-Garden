@@ -111,7 +111,7 @@ export class FakeGuildServer implements GuildBackend {
         const frameId = level >= 45 ? "garden" : level >= 30 ? "abyss" : level >= 20 ? "amber" : "holo";
         const card: GuildMemberCard = {
           uid: `QA${String(seed).padStart(10, "0").slice(0, 10)}`, bio: SAMPLE_BIOS[seed % SAMPLE_BIOS.length],
-          favorite: { relicId: relic.id, level, breakthroughGrade: Math.min(4, Math.floor(level / 14)), power: Math.round(combatPower(relic.stats) * (0.6 + level / 40)), skinId: null },
+          favorite: { relicId: relic.id, level, breakthroughGrade: Math.min(4, Math.floor(level / 14)), power: Math.round(combatPower(relic.stats, relic.role) * (0.6 + level / 40)), skinId: null },
           highestStageId: level >= 30 ? "2-5" : "1-8", expeditionBest: (seed % 90) * 1_000,
         };
         const member = this.newMember({ userId, name: memberName, level, avatarRelicId: relic.id, frameId, card }, role, this.now() - i * 3_600_000);
@@ -579,7 +579,7 @@ export class FakeGuildServer implements GuildBackend {
       const deck: GuildWarDeckEntry[] = [0, 1, 2].map((offset) => {
         const relic = PLAYABLE_RELICS[(h + offset * 7) % PLAYABLE_RELICS.length];
         const level = Math.max(1, member.level - offset * 2);
-        return { relicId: relic.id, level, breakthrough: Math.min(5, Math.max(0, Math.ceil((level - 20) / 10))), power: Math.round(combatPower(relic.stats) * (0.6 + level / 40)) };
+        return { relicId: relic.id, level, breakthrough: Math.min(5, Math.max(0, Math.ceil((level - 20) / 10))), power: Math.round(combatPower(relic.stats, relic.role) * (0.6 + level / 40)) };
       });
       if (new Set(deck.map(({ relicId }) => relicId)).size < deck.length) continue;
       war.set(slot.id, { userId: member.userId, deck, lineup: null, placedAt: guild.createdAt });

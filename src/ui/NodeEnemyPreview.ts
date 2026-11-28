@@ -1,5 +1,4 @@
 import Phaser from "phaser";
-import { baseStatsOf, withBaseStats } from "../data/relics";
 import { t } from "../i18n";
 import type { RelicDef, StageEnemyDef } from "../core/types";
 import { setDebugEnemyPreview } from "../debug";
@@ -11,7 +10,8 @@ import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addBreakthroughGradeMark } from "./rarityMark";
 
-import { ENCOUNTER_ROLE, encounterEliteCount, encounterGroupPower, encounterRoleFor, encounterUnitPower } from "../core/levelDesign";
+import { ENCOUNTER_ROLE, encounterGroupPower, encounterRoleFor } from "../core/levelDesign";
+import { combatPower } from "../core/combatPower";
 import { addStageEliteMark } from "./stageEliteMark";
 import { anchorEnemyPreview, enemyPreviewColumns, enemyPreviewRow, NODE_ENEMY_PREVIEW, NODE_ENEMY_SITUATION, NODE_ENEMY_SLOT, NODE_PREVIEW_GLASS_ALPHA, STORY_PREVIEW, storyPreviewLayout, storyPreviewRewardColumns } from "./nodeEnemyPreviewLayout";
 import { addSdFootShadow } from "./SdFootShadow";
@@ -146,7 +146,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     // **판 아래는 이 편성이 얼마나 센가 한 줄이다.** 개체별 수치를 다 읽지 않고도 붙어 볼지
     // 말지를 정할 수 있어야 한다. 전투력은 표시·정렬 전용이라 전투 계산에는 들어가지 않는다.
     // 이름표는 짧게 둔다 — "예상"이나 "종합" 같은 수식은 무엇을 재는지 바꾸지 않는다.
-    const power = encounterGroupPower(withBaseStats(this.options.enemies));
+    const power = encounterGroupPower(this.options.enemies);
     this.add(drawHairline(this.scene, 0, NODE_ENEMY_SLOT.footerDividerY, NODE_ENEMY_PREVIEW.width - 60, { color: COLOR.accent, alpha: 0.28 }));
     if (this.options.allyPower === undefined) {
       this.add(this.scene.add
@@ -260,7 +260,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     for (const divider of layout.dividers) this.add(drawHairline(this.scene, 0, top + divider, width - 60, { color: COLOR.accent, alpha: 0.3 }));
 
     // ── 적 칸: 머리줄이 곧 총 전투력이다. 접어도 "얼마나 센가"는 남는다.
-    const power = encounterGroupPower(withBaseStats(this.options.enemies));
+    const power = encounterGroupPower(this.options.enemies);
     this.addSectionHeader(top + layout.enemyHeaderY, spec.enemyHeader, sectionOpen.enemies, () => { sectionOpen.enemies = !sectionOpen.enemies; this.renderSectioned(false); this.publishDebug(this.isAbove()); });
     this.add(this.scene.add
       .text(left, top + layout.enemyHeaderY, t("enemyPreview.totalPower", { power: power.toLocaleString() }), textStyle({ role: "display", size: 30, color: COLOR.dangerText }))
@@ -378,7 +378,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       this.add(new AffinityBadge(this.scene, badgeX, badgeTop + badge * 0.94, ROLE_ICON[enemy.role], badge * 0.74, 0.62));
       addBreakthroughGradeMark(this.scene, this, x + half - badge * 0.38, badgeTop - 4, badge * 0.8, growth.breakthrough);
       addUnitNameplate(this.scene, this, x, nameY, growth.level, enemy.name, row.nameSize, row.nameWidth);
-      this.overlay.add(addUnitPower(this.scene, undefined, x, nameY - 4, encounterUnitPower(enemy.stats, enemy.encounterRole, encounterEliteCount(this.options.enemies), baseStatsOf(enemy.id), this.options.enemies.length), row.powerSize, COLOR.dangerText));
+      this.overlay.add(addUnitPower(this.scene, undefined, x, nameY - 4, combatPower(enemy.stats, enemy.role), row.powerSize, COLOR.dangerText));
       const hit = this.scene.add.rectangle(x, ground - 70, slotWidth, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });
       // 누른 칸의 성장 상태를 함께 넘긴다 — 화면이 배열 index로 다시 찾으면 순서가 바뀌는 날 어긋난다.
       hit.on("pointerup", () => this.options.onEnemyClick(enemy, growth)); this.add(hit);

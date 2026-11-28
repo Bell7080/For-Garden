@@ -131,7 +131,7 @@ function favoriteShowcase(state: Session): FavoriteRelicShowcase | null {
   return {
     relicId: relic.id, displayName: relic.name, portraitAssetId: relic.portraitAssetId,
     level: progress?.level ?? 1, breakthroughGrade: breakthroughGrade(activeBreakthroughOf(progress)), resonance: resonanceOf(progress), bondLevel: progress?.bondLevel ?? 0,
-    rarity: relic.rarity, element: relic.element, role: relic.role, power: combatPower(progress ? displayCombatStats(relic, stats, activeBreakthroughOf(progress), gems) : stats, relic.stats),
+    rarity: relic.rarity, element: relic.element, role: relic.role, power: combatPower(progress ? displayCombatStats(relic, stats, activeBreakthroughOf(progress), gems) : stats, relic.role),
   };
 }
 
@@ -216,7 +216,7 @@ export function friendProfileDisplay(friend: {
     relicId: relic.id, displayName: relic.name, portraitAssetId: relic.portraitAssetId,
     level: friend.favoriteRelic.level, breakthroughGrade: friend.favoriteRelic.breakthroughGrade,
     skinId: friend.favoriteRelic.equippedSkinId ?? null,
-    rarity: relic.rarity, element: relic.element, role: relic.role, power: combatPower(friend.favoriteRelic.stats, relic.stats),
+    rarity: relic.rarity, element: relic.element, role: relic.role, power: combatPower(friend.favoriteRelic.stats, relic.role),
   } : null;
   const avatarRelic = RELICS.find(({ id }) => id === (friend.avatarRelicId ?? friend.favoriteRelic.relicId));
   const stats = friend.competitiveStats;

@@ -7,8 +7,9 @@ import type { RelicRarity, Stats } from "./types";
  * 자유롭게 다르지만, 같은 등급끼리는 **총량이 비슷한 띠 안**에 있어야 한다 — R이 SSR보다
  * 태생부터 세면 등급이 뽑을 이유를 말해 주지 못한다.
  *
- * 총량은 전투력(`combatPower`)으로 잰다. 전투력은 곧 그 오각형의 넓이라, "넓이가 등급을
- * 따른다"가 그대로 규칙이 된다. 실제 전투는 여전히 능력치를 그대로 쓰고 이 값은 데이터
+ * 총량은 **종족값 총량**(`statTotal` — 능력치마다 가중을 곱해 더한 오각형의 넓이)으로 잰다. 표시 전투력
+ * (`combatPower`)은 체감 세기를 재는 곱셈 식이라 역할마다 생김새가 다르면 같은 총량도 다르게 읽혀, 등급 띠에는 쓰지
+ * 않는다(응태 결정 2026-11-28). "넓이가 등급을 따른다"가 그대로 규칙이 된다. 실제 전투는 여전히 능력치를 그대로 쓰고 이 값은 데이터
  * 검수와 표시에만 쓴다.
  */
 export const RARITY_STAT_BAND: Readonly<Record<RelicRarity, { readonly min: number; readonly max: number }>> = {

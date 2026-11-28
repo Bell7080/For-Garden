@@ -6710,14 +6710,9 @@ validateSpecimenNumbers(RELICS);
 
 const BY_ID = new Map(RELICS.map((r) => [r.id, r]));
 
-/** 그 개체의 태생 능력치 — 전투력의 공속 성장(`combatPower`의 `base`)이 읽는다. 모르는 id면 `undefined`. */
+/** 그 개체의 태생 능력치 — 오각형의 면(`statRadarRatios`)이 읽는다. 모르는 id면 `undefined`. */
 export function baseStatsOf(id: string): Stats | undefined {
   return BY_ID.get(id)?.stats;
-}
-
-/** 무리 전투력(`encounterUnitPowers`)에 넘길 태생 능력치를 붙인다. */
-export function withBaseStats<T extends { id: string }>(units: readonly T[]): (T & { base?: Stats })[] {
-  return units.map((unit) => ({ ...unit, base: baseStatsOf(unit.id) }));
 }
 
 export function getRelic(id: string): RelicDef {

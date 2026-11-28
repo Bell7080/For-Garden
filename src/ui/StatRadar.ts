@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { Stats } from "../core/types";
+import type { Role, Stats } from "../core/types";
 import { statRadarRatios } from "../config/statRadar";
 import { combatPower } from "../core/combatPower";
 import { COLOR, textStyle } from "./theme";
@@ -64,6 +64,7 @@ export class StatRadar extends Phaser.GameObjects.Container {
   private readonly holo: boolean;
   private readonly axisColors: number[] = [];
   private base?: Stats;
+  private role?: Role;
   /** 덧붙은 몫을 가를 기준 오각형 — 주면 기준선은 옅게, 그 위로 오른 몫은 붉게 칠한다(`setGain`). */
   private gainFrom?: Stats;
   /** 각성으로 실제로 오른 축 — 꼭짓점 표식과 수치 색이 같은 판정을 읽는다. */
@@ -202,11 +203,17 @@ export class StatRadar extends Phaser.GameObjects.Container {
     return text;
   }
 
+  /** 직군을 모르면(전투력을 세우지 않는 자리) 전사로 잰다. */
+  private powerOf(stats: Stats): number {
+    return combatPower(stats, this.role ?? "warrior");
+  }
+
   /** 각 수치를 공용 상한으로 제한·정규화한 뒤 비교 가능한 면을 그린다. */
-  /** `base`는 태생 능력치 — 주면 전투력의 공속이 공격 능력치와 함께 자란다(`combatPower`). */
-  draw(stats: Stats, radius = 112, base?: Stats): void {
+  /** `base`는 태생 능력치(면의 비율), `role`은 전투력을 재는 직군이다(`combatPower`). */
+  draw(stats: Stats, radius = 112, base?: Stats, role?: Role): void {
     this.stats = stats;
     this.base = base;
+    this.role = role;
     this.radius = radius;
     if (this.holo) { this.paint(this.scene.time.now); return; }
     this.graph.clear();
@@ -228,7 +235,7 @@ export class StatRadar extends Phaser.GameObjects.Container {
     AXES.forEach(([key], index) => this.valueTexts[index]?.setText(stats[key].toLocaleString()));
     // 면이 넓을수록 숫자도 함께 커진다. 전투력은 곧 이 면의 넓이라, 크기가 값을 한 번 더 말한다.
     const fill = ratios.reduce((sum, ratio) => sum + ratio, 0) / ratios.length;
-    this.powerText?.setText(combatPower(stats, base).toLocaleString()).setScale(0.8 + fill * 0.34);
+    this.powerText?.setText(this.powerOf(stats).toLocaleString()).setScale(0.8 + fill * 0.34);
   }
 
   /**
@@ -329,6 +336,6 @@ export class StatRadar extends Phaser.GameObjects.Container {
       const color = up ? "#ff8a96" : (text.getData("baseColor") as string | undefined);
       if (color && text.style.color !== color) text.setColor(color);
     });
-    this.powerText?.setText(Math.round(combatPower(stats, this.base) * this.grow).toLocaleString());
+    this.powerText?.setText(Math.round(this.powerOf(stats) * this.grow).toLocaleString());
   }
 }

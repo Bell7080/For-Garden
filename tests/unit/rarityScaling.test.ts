@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { combatPower } from "../../src/core/combatPower";
+import { statTotal } from "../../src/core/combatPower";
 import { applyLevelGrowth, RELIC_BASE_LEVEL_CAP } from "../../src/core/relicProgression";
 import { COMMON_SECONDARY_STATS, RARITY_LEVEL_GROWTH, RARITY_ORDER, RARITY_STAT_BAND, withinRarityBand } from "../../src/core/rarityScaling";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
@@ -62,7 +62,7 @@ describe("등급별 태생 능력치", () => {
   it("의 모든 플레이어블 렐릭은 제 등급 띠 안에 든다", () => {
     // 새 개체를 띠 밖 수치로 넣으면 여기서 걸린다 — 등급이 뽑을 이유를 말하지 못하기 때문이다.
     for (const relic of PLAYABLE_RELICS) {
-      const power = combatPower(relic.stats);
+      const power = statTotal(relic.stats);
       const band = RARITY_STAT_BAND[relic.rarity];
       expect(withinRarityBand(power, relic.rarity), `${relic.name} ${relic.rarity} ${power} (${band.min}~${band.max})`).toBe(true);
     }
@@ -73,8 +73,8 @@ describe("등급별 태생 능력치", () => {
     const maddy = getRelic("maddy");
     expect(maddy.rarity).toBe("SR");
     expect(maddy.stats).toMatchObject({ hp: 980, def: 82, res: 82, atk: 136, ap: 64 });
-    expect(combatPower(maddy.stats)).toBe(2304);
-    expect(withinRarityBand(combatPower(maddy.stats), maddy.rarity)).toBe(true);
+    expect(statTotal(maddy.stats)).toBe(2304);
+    expect(withinRarityBand(statTotal(maddy.stats), maddy.rarity)).toBe(true);
   });
 
   it("의 공멸 신규 3개체도 적 전용 예외 없이 R 띠와 지정 역할을 지킨다", () => {
@@ -87,7 +87,7 @@ describe("등급별 태생 능력치", () => {
 
     for (const identity of identities) {
       const relic = getRelic(identity.id);
-      const power = combatPower(relic.stats);
+      const power = statTotal(relic.stats);
       expect(relic.rarity, identity.id).toBe("R");
       expect(withinRarityBand(power, "R"), `${identity.id} R ${power}`).toBe(true);
       expect(relic.element, identity.id).toBe(identity.element);
@@ -96,7 +96,7 @@ describe("등급별 태생 능력치", () => {
   });
 
   it("의 등급별 최저 태생이 한 단계 아래 등급의 최고 태생보다 높다", () => {
-    const best = new Map(RARITY_ORDER.map((rarity) => [rarity, PLAYABLE_RELICS.filter((r) => r.rarity === rarity).map((r) => combatPower(r.stats))] as const));
+    const best = new Map(RARITY_ORDER.map((rarity) => [rarity, PLAYABLE_RELICS.filter((r) => r.rarity === rarity).map((r) => statTotal(r.stats))] as const));
     for (const [index, rarity] of RARITY_ORDER.entries()) {
       const previous = RARITY_ORDER[index - 1];
       const here = best.get(rarity)!; const below = previous ? best.get(previous)! : [];
@@ -147,8 +147,8 @@ describe("공통 부가 능력치", () => {
     const dian = getRelic("dian");
     expect(dian.summons?.map(({ def }) => def.id)).toEqual(["kuro", "shiro"]);
     for (const key of KEYS) expect(dian.stats[key], `dian ${key}`).toBe(COMMON_SECONDARY_STATS[key]);
-    expect(combatPower(dian.stats)).toBeGreaterThanOrEqual(RARITY_STAT_BAND.SSR.min);
-    expect(combatPower(dian.stats)).toBeLessThanOrEqual(RARITY_STAT_BAND.SSR.max);
+    expect(statTotal(dian.stats)).toBeGreaterThanOrEqual(RARITY_STAT_BAND.SSR.min);
+    expect(statTotal(dian.stats)).toBeLessThanOrEqual(RARITY_STAT_BAND.SSR.max);
   });
 });
 

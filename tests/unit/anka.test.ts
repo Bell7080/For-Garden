@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyCombatStatusEffect, attackInterval, createSkirmish, fireUltimate, stepSkirmish, type Arena, type Fighter, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
-import { combatPower } from "../../src/core/combatPower";
+import { statTotal } from "../../src/core/combatPower";
 import { withinRarityBand } from "../../src/core/rarityScaling";
 import { getRelic } from "../../src/data/relics";
 import { findKeyword } from "../../src/data/keywords";
@@ -52,7 +52,7 @@ describe("안카 — 정체성", () => {
   });
 
   it("은 R 띠 안의 태생 전투력을 갖고, 체력·저항력이 높고 주문력이 낮다", () => {
-    expect(withinRarityBand(combatPower(ANKA.stats), "R")).toBe(true);
+    expect(withinRarityBand(statTotal(ANKA.stats), "R")).toBe(true);
     expect(ANKA.stats.res).toBeGreaterThan(ANKA.stats.atk);
     expect(ANKA.stats.ap).toBeLessThan(ANKA.stats.atk);
   });

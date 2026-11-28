@@ -1,6 +1,5 @@
 import { combatState } from "../../src/core/combatProtocol";
-import { combatPower } from "../../src/core/combatPower";
-import { ENCOUNTER_ROLE, enemyLevelMultiplier, shownBreakthroughForLevel } from "../../src/core/levelDesign";
+import { ENCOUNTER_ROLE, encounterGroupPower, enemyLevelMultiplier, shownBreakthroughForLevel } from "../../src/core/levelDesign";
 import { getRelic } from "../../src/data/relics";
 import type { BattleStageDef } from "../../src/core/types";
 import { partyPreview } from "../../src/data/partyContent";
@@ -85,11 +84,13 @@ describe("스토리 확장 난이도", () => {
     expect(manager.load()?.selectedStageId).toBe("normal:1-2");
   });
   it("난이도 전환은 이전 4-10에서 다음 1-1로 넘어갈 때 표시 전투력이 튀어 오르지 않는다", () => {
-    const power = (id: string) => getStageEnemies(getBattleStage(id)).reduce((sum, enemy) => sum + combatPower(enemy.stats), 0);
+    const power = (id: string) => encounterGroupPower(getStageEnemies(getBattleStage(id)));
     // 보통 ×1.5 · 어려움 ×2(응태 결정 2026-11-12 — 4배는 과하다)와 4-10 보스 레벨(LV.41)로 다음 1-1은 이전 4-10보다 15~25% 가볍게 시작한다. 정예 공격 ×1.35(2026-11-27) 뒤로 4-10이 무거워져 하한을 0.65로 낮췄다(0.67).
     for (const [end, start] of [["4-10", "normal:1-1"], ["normal:4-10", "hard:1-1"]]) {
       expect(power(start) / power(end)).toBeLessThan(1.21);
-      expect(power(start) / power(end)).toBeGreaterThan(0.65);
+      // 2026-11-28(응태): 다음 1-1은 레벨로 이전 4-10을 넘지 않는다(STORY_LADDER_LIFT). 4-10은 정예 둘이라 새 전투력(머릿수 보정)으로
+      // 같은 레벨의 잡졸 셋보다 두 배 가까이 읽혀, 다음 1-1은 절반 언저리에서 다시 오른다.
+      expect(power(start) / power(end)).toBeGreaterThan(0.45);
     }
     expect(power("hard:4-10")).toBeGreaterThan(power("normal:4-10"));
   });
@@ -140,16 +141,21 @@ describe("스토리 확장 난이도", () => {
         const stage = getBattleStage(storyStageId(difficulty, base.id));
         expect(stage.enemies).not.toBe(base.enemies);
         expect(stage.enemies.map(e => [e.relicId, e.formationSlot, e.elite])).toEqual(base.enemies.map(e => [e.relicId, e.formationSlot, e.elite]));
-        stage.enemies.forEach((enemy, i) => {
+        const lifts = stage.enemies.map((enemy, i) => {
           const rarity = getRelic(enemy.relicId).rarity, from = base.enemies[i].level;
           expect(enemy.level).toBeGreaterThan(from);
           expect(enemy.breakthrough).toBe(shownBreakthroughForLevel(enemy.level));
-          // 쉬움의 factor배를 넘지 않고, 그 상한에서 새로 연 돌파 단계(스킬 칸) 수만큼만 내려 선다.
-          expect(enemyLevelMultiplier(enemy.level, rarity)).toBeLessThanOrEqual(factor * enemyLevelMultiplier(from, rarity) + 1e-9);
+          // 쉬움의 factor배를 넘지 않고, 그 상한에서 새로 연 돌파 단계(스킬 칸) 수만큼만 내려 선다 — 여기에 사다리 올림 몫이 얹힌다.
           let ceiling = from;
           while (enemyLevelMultiplier(ceiling + 1, rarity) <= factor * enemyLevelMultiplier(from, rarity) + 1e-9) ceiling++;
-          expect(enemy.level).toBe(Math.max(from + 1, ceiling - (shownBreakthroughForLevel(ceiling) - shownBreakthroughForLevel(from))));
+          return enemy.level - Math.max(from + 1, ceiling - (shownBreakthroughForLevel(ceiling) - shownBreakthroughForLevel(from)));
         });
+        // 올림 몫(응태 2026-11-28 — 쉬움이 오르면 보통도 최소 +1)은 관문 하나에 한 값이다. 서브는 사다리 밖이라 0,
+        // 1-1만 이전 난이도 4-10보다 높이 서지 않도록 내려설 수 있고 나머지는 올리기만 한다.
+        expect(new Set(lifts).size, stage.id).toBe(1);
+        if (base.sub) expect(lifts[0], stage.id).toBe(0);
+        else if (base.id === "1-1") expect(lifts[0], stage.id).toBeLessThanOrEqual(0);
+        else expect(lifts[0], stage.id).toBeGreaterThanOrEqual(0);
         const easy = getStageEnemies(base), grown = getStageEnemies(stage);
         grown.forEach((enemy, i) => {
           for (const key of ["attackSpeed", "moveSpeed", "critChance", "critDamage", "energyGain"] as const) expect(enemy.stats[key]).toBe(easy[i].stats[key]);

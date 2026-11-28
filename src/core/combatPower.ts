@@ -1,18 +1,83 @@
 import { ferocityGainBonus } from "./ferocity";
-import type { Stats } from "./types";
+import type { Role, Stats } from "./types";
 
 /**
  * 전투력 — 한 개체가 지금 얼마나 센지를 나타내는 한 숫자.
  *
- * 능력치는 열두 개라 두 개체를 나란히 놓아도 어느 쪽이 센지 바로 읽히지 않는다. 그래서
- * "지금 얼마나 컸는가"를 묻는 자리(정보창·정렬)만 이 한 숫자로 답한다. 전투 계산에는 절대
- * 쓰지 않는다 — 실제 전투는 능력치를 그대로 쓰고, 이 값은 표시와 정렬 전용이다.
+ * 능력치는 열두 개라 두 개체를 나란히 놓아도 어느 쪽이 센지 바로 읽히지 않는다. 그래서 "지금 얼마나 센가"를 묻는 자리
+ * (정보창·정렬·편성의 두 편 비교·관문 미리보기)만 이 한 숫자로 답한다. 전투 계산에는 절대 쓰지 않는다.
  *
- * 가중치는 "한 점이 전투에서 얼마나 값어치를 하는가"에 맞춘다. 체력은 수가 크므로 낮게,
- * 공격·주문은 피해로 곧장 이어지므로 높게, 치명타 확률처럼 백분율로 오르는 값은 한 점의
- * 무게가 크므로 더 높게 둔다. 표가 한 곳뿐이라 화면마다 다른 전투력이 나오지 않는다.
+ * **체감 세기에 맞춘 식이다**(응태 결정 2026-11-28 — 「전투력과 체감 강함을 맞추자, 적군과 아군 모두 같은 규칙으로」).
+ * 예전에는 능력치마다 가중을 곱해 **더했는데**, 실제 전투는 「얼마나 버티나 × 얼마나 세게 때리나」라 곱으로 오른다 —
+ * 레벨이 오를수록 표시가 체감보다 낮게 읽혔고(같은 표시에서 아군 승률 LV10 92% → LV40 54%), 그 틈을 정예·무리·1대1마다
+ * 눈대중 배수(×1.6·×2.0·×0.35·×1.8)로 메우고 있었다. 지금은 피해 공식(`computeDamage` — 피해 × 100/(100+방어))에서
+ * 나온 두 몫의 기하평균 하나다.
+ *
+ * - **버티는 몫** E = 체력 × (1 + (방어 + 저항)/200) — 방어·저항이 받는 피해를 줄이는 만큼 실효 체력이 는다.
+ * - **때리는 몫** D = max(공격, 주문) × 공속/100 × 치명타 기대 배율.
+ * - 전투력 = `POWER_SCALE` × E^0.45 × D^0.55 — 때리는 몫을 조금 더 무겁게 본다(응태 2026-11-28 「전투력은 활약하는 정도」).
+ * - **지원가는 때리는 몫을 절반만 센다**(`SUPPORT_OFFENSE_SHARE`) — 지원가의 공격·주문력은 대부분 회복·강화로 나가 피해가
+ *   되지 않는다. 직군이 숨은 전투 보정이 아니라 표시 식의 한 항이며, 적과 아군이 같은 규칙을 쓴다.
+ *
+ * 1만 2천 판 모의(스토리 1~7장 무작위 편성·레벨)에서 승패 예측이 예전 가중합보다 맞았다(log loss 0.492 → 0.403).
+ * 남는 오차는 대부분 그 개체의 스킬(기술 몫)이라 숫자 하나로 말하지 않는다. 정예·보스의 체력·공격 몫은 이미 실제
+ * 능력치에 들어 있으므로 따로 곱하지 않는다.
  */
-const WEIGHTS: Readonly<Record<keyof Stats, number>> = {
+export function combatPower(stats: Stats, role: Role): number {
+  const endurance = Math.max(0, stats.hp) * (1 + Math.max(0, stats.def + stats.res) / 200);
+  const crit = 1 + Math.min(100, Math.max(0, stats.critChance)) / 100 * Math.max(0, stats.critDamage / 100 - 1);
+  const share = role === "support" ? SUPPORT_OFFENSE_SHARE : 1;
+  const offense = Math.max(0, stats.atk, stats.ap) * Math.max(0, stats.attackSpeed) / 100 * crit * share;
+  return Math.round(POWER_SCALE * endurance ** ENDURANCE_EXPONENT * offense ** (1 - ENDURANCE_EXPONENT));
+}
+
+/** 버티는 몫의 지수(때리는 몫은 1 − 이 값). 모의에서 맞춘 값이다. */
+export const ENDURANCE_EXPONENT = 0.45;
+
+/** 지원가의 때리는 몫 — 공격·주문력의 절반쯤이 회복·강화로 나간다. 모의에서 맞춘 값이다. */
+export const SUPPORT_OFFENSE_SHARE = 0.5;
+
+/** 전투력의 눈금 — 1레벨 개체가 예전 표시(2천 남짓)와 비슷한 자릿수로 서게 둔다. 비교에는 영향이 없다. */
+export const POWER_SCALE = 5;
+
+/** 편성이 한 번에 맞서는 자리 수. 머릿수 몫(`headcountFactor`)의 기준이다. */
+export const POWER_COMPARISON_SLOTS = 3;
+
+/** 머릿수 몫의 지수 — 모의에서 맞춘 값이다(셋보다 적게 서면 무겁게, 많이 서면 가볍게). */
+export const HEADCOUNT_EXPONENT = 0.35;
+
+/**
+ * **머릿수 몫** — 같은 능력치 합이라도 몇이 나눠 서느냐에 따라 세기가 다르다(혼자 선 하나는 한 번에 하나만 때리지만
+ * 셋에게 둘러싸여도 쓰러지기 전까지 제 몫을 다 낸다). 합에 (셋 ÷ 머릿수)^0.35를 곱한다. 직군·자리와 무관하게
+ * **적과 아군 모두에** 같은 규칙이다 — 둘만 세운 아군 편성도 같은 몫을 받는다.
+ */
+export function headcountFactor(count: number): number {
+  return count <= 0 ? 0 : (POWER_COMPARISON_SLOTS / count) ** HEADCOUNT_EXPONENT;
+}
+
+/** 한 무리(적이든 아군이든)의 표시 전투력 — 개체 전투력의 합 × 머릿수 몫. */
+export function groupCombatPower(units: readonly { stats: Stats; role: Role }[]): number {
+  return groupPowerOf(units.map((unit) => combatPower(unit.stats, unit.role)));
+}
+
+/** 이미 잰 개체 전투력들로 무리 전투력을 낸다(화면이 개체마다 잰 값을 다시 재지 않게). */
+export function groupPowerOf(powers: readonly number[]): number {
+  if (powers.length === 0) return 0;
+  return Math.round(powers.reduce((sum, power) => sum + power, 0) * headcountFactor(powers.length));
+}
+
+/**
+ * **종족값 총량** — 등급 띠(`RARITY_STAT_BAND`)가 재는 태생 오각형의 넓이. 표시 전투력이 아니다.
+ *
+ * 직군은 받지 않는다 — 태생 넓이는 직군과 무관하게 같은 띠를 따른다. 전투력이 체감 세기를 재게 되면서(곱셈 식), 역할마다 생김새가 다른 오각형의 「총량」은 따로 재야 한다 — 같은 총량이라도
+ * 체력·공격이 한쪽에 몰리면 곱셈 식이 달라진다. 등급 띠의 검수는 예전처럼 능력치마다 가중을 곱해 더한 이 값으로만 한다.
+ */
+export function statTotal(stats: Stats): number {
+  return Math.round((Object.keys(TOTAL_WEIGHTS) as (keyof typeof TOTAL_WEIGHTS)[])
+    .reduce((sum, key) => sum + stats[key] * TOTAL_WEIGHTS[key], 0) + ferocityGainBonus(stats) * 2);
+}
+
+const TOTAL_WEIGHTS = {
   hp: 0.5,
   def: 2.4,
   res: 2.4,
@@ -24,56 +89,4 @@ const WEIGHTS: Readonly<Record<keyof Stats, number>> = {
   critDamage: 1.6,
   energyGain: 2,
   lifeSteal: 3,
-  ferocityGain: 2,
-};
-
-/**
- * 공격 속도가 공격력·주문력과 함께 자라는 배율 — 지금 공격 능력치 합 ÷ 태생 합.
- *
- * 성장은 오각형 다섯만 올리고 공속은 그대로라(`GROWTH_STAT_KEYS`), 공속을 고정 가중으로만 세던 때는 레벨이 오를수록
- * 공속형(암살자)의 몫이 줄고 오각형이 두꺼운 탱커만 가파르게 올라갔다 — 레벨 100에서 R 켄토가 SR 루카보다, SR 토리카가
- * SSR 스피나보다 높게 읽혔다(2026-11-13 검토). 실제 피해는 공격력 × 공속이라 **공속 한 점의 값어치도 공격 능력치가 큰 만큼
- * 커져야** 한다(응태 결정 2026-11-13). 태생이 없으면(1) 예전 값 그대로라 레벨 1·등급 띠는 움직이지 않는다.
- */
-export function offenseGrowth(stats: Stats, base?: Stats): number {
-  if (!base) return 1;
-  const born = base.atk + base.ap;
-  return born > 0 ? Math.max(0, (stats.atk + stats.ap) / born) : 1;
-}
-
-/**
- * 표시용 전투력. 정수로 떨어뜨려 같은 능력치가 늘 같은 수로 보이게 한다.
- *
- * `base`는 그 개체의 **태생 능력치**(`RelicDef.stats`, 적도 유형 몫을 얹기 전 값)다. 주면 공속이 공격 능력치와 함께 자란다
- * (`offenseGrowth`). 적과 아군이 같은 규칙으로 잰다 — 성장한 개체의 전투력을 셀 때는 늘 넘긴다.
- */
-export function combatPower(stats: Stats, base?: Stats): number {
-  const speedGrowth = offenseGrowth(stats, base);
-  return Math.round((Object.keys(WEIGHTS) as (keyof Stats)[])
-    .reduce((sum, key) => sum + statForPower(stats, key) * WEIGHTS[key] * (key === "attackSpeed" ? speedGrowth : 1), 0));
-}
-
-/**
- * 야성 획득량은 전 개체 공통값(12)이 깔려 있어 그 몫까지 세면 모든 개체의 전투력이 같은 양만큼 불어날 뿐이다 —
- * 공통값 위에 룬·증강이 더한 몫만 센다(퍼센트로 세던 때도 그 몫만 셌다).
- */
-function statForPower(stats: Stats, key: keyof Stats): number {
-  return key === "ferocityGain" ? ferocityGainBonus(stats) : stats[key];
-}
-
-/** 편성이 한 번에 맞서는 자리 수. 아군 전투력 합은 이 수만큼의 개체로 셈한다. */
-export const POWER_COMPARISON_SLOTS = 3;
-
-/**
- * 적 한 무리의 표시 전투력 — **아군 편성(셋)과 같은 머릿수로 맞춘 합**이다.
- *
- * 마주 서는 아군 합은 늘 셋의 합인데, 열다섯이 몰려오는 던전(치즈케이크 대작전)의 적 전투력을
- * 열다섯의 합으로 적으면 개체 하나하나는 약해도 숫자만 부풀어 아군 합과 같은 척도로 읽히지
- * 않는다. 셋 이하로 서는 자리(스토리·정예·보스)는 예전처럼 합 그대로이고, 셋보다 많이 서면
- * 개체 평균 × 셋이다. 표시 전용이며 전투에는 쓰지 않는다.
- */
-export function groupCombatPower(stats: readonly Stats[], slots: number = POWER_COMPARISON_SLOTS, bases?: readonly Stats[]): number {
-  if (stats.length === 0) return 0;
-  const total = stats.reduce((sum, entry, index) => sum + combatPower(entry, bases?.[index]), 0);
-  return stats.length <= slots ? total : Math.round(total * slots / stats.length);
-}
+} as const satisfies Partial<Record<keyof Stats, number>>;

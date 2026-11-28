@@ -140,7 +140,6 @@ export const INFO_EN = {
   "info.bond.statGain": "All Stats",
   "info.bond.lobbyInteraction": "Lobby interaction",
   "info.bond.oncePerDay": "{amount} once a day",
-  "info.bond.partyAll": "{amount} for every Relic in the formation",
   "info.bond.story": "Bond Stories",
   "info.bond.opened": "Opened",
   "info.bond.required": "Needs Bond {level}",

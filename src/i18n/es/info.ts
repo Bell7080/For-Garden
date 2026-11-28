@@ -140,7 +140,6 @@ export const INFO_ES = {
   "info.bond.statGain": "Todas las estadísticas",
   "info.bond.lobbyInteraction": "Interacción en el vestíbulo",
   "info.bond.oncePerDay": "{amount} una vez al día",
-  "info.bond.partyAll": "{amount} para cada Reliquia de la formación",
   "info.bond.story": "Historias de Vínculo",
   "info.bond.opened": "Abierta",
   "info.bond.required": "Requiere Vínculo {level}",

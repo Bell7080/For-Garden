@@ -140,7 +140,6 @@ export const INFO_DE = {
   "info.bond.statGain": "Alle Werte",
   "info.bond.lobbyInteraction": "Lobby-Interaktion",
   "info.bond.oncePerDay": "{amount} einmal täglich",
-  "info.bond.partyAll": "{amount} für jedes Relikt der Formation",
   "info.bond.story": "Bindungsgeschichten",
   "info.bond.opened": "Geöffnet",
   "info.bond.required": "Benötigt Bindung {level}",

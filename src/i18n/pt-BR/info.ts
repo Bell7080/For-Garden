@@ -140,7 +140,6 @@ export const INFO_PT_BR = {
   "info.bond.statGain": "Todos os atributos",
   "info.bond.lobbyInteraction": "Interação no saguão",
   "info.bond.oncePerDay": "{amount} uma vez por dia",
-  "info.bond.partyAll": "{amount} para cada Relíquia da formação",
   "info.bond.story": "Histórias de Vínculo",
   "info.bond.opened": "Aberta",
   "info.bond.required": "Requer Vínculo {level}",

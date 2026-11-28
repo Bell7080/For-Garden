@@ -140,7 +140,6 @@ export const INFO_VI = {
   "info.bond.statGain": "Mọi chỉ số",
   "info.bond.lobbyInteraction": "Tương tác ở sảnh",
   "info.bond.oncePerDay": "{amount} mỗi ngày một lần",
-  "info.bond.partyAll": "{amount} cho mọi Di vật trong đội hình",
   "info.bond.story": "Chuyện Gắn kết",
   "info.bond.opened": "Đã mở",
   "info.bond.required": "Cần Gắn kết {level}",

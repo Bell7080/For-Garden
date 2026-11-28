@@ -140,7 +140,6 @@ export const INFO_RU = {
   "info.bond.statGain": "Все характеристики",
   "info.bond.lobbyInteraction": "Общение в лобби",
   "info.bond.oncePerDay": "{amount} раз в день",
-  "info.bond.partyAll": "{amount} каждому реликту в построении",
   "info.bond.story": "Истории связи",
   "info.bond.opened": "Открыто",
   "info.bond.required": "Нужна связь {level}",

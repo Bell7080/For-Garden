@@ -13,10 +13,11 @@ import { t, type TextKey } from "../i18n";
  * 문맥 사전을 물려받지 못해 눌리지 않는다. ID에서 읽으면 어디에 서든 같은 쪽지가 열린다.
  */
 export type ValueTagKind = "damage" | "shield" | "heal" | "amount";
-export type ValueTagStat = "atk" | "ap" | "def" | "res" | "hp";
+export type ValueTagStat = "atk" | "ap" | "def" | "res" | "hp" | "guard";
 
 const KINDS: readonly ValueTagKind[] = ["damage", "shield", "heal", "amount"];
-const STATS: readonly ValueTagStat[] = ["atk", "ap", "def", "res", "hp"];
+/** `guard`는 방어력·저항력의 합이다(철갑 보스의 보호막·피해가 그 합에서 나온다). */
+const STATS: readonly ValueTagStat[] = ["atk", "ap", "def", "res", "hp", "guard"];
 
 /** 비율의 소수점은 ID 문자가 아니라 `p`로 싣는다(3.5 → 3p5). */
 function encodePercent(percent: number): string {
@@ -34,7 +35,7 @@ export function valueTag(kind: ValueTagKind, stat: ValueTagStat, percent: number
   return `[[v-${kind}-${stat}-${encodePercent(percent)}-${rounded}|${valueTagAmount(percent, rounded)}]]`;
 }
 
-const PATTERN = /^v-(damage|shield|heal|amount)-(atk|ap|def|res|hp)-(\d+(?:p\d+)?)-(\d+)$/;
+const PATTERN = /^v-(damage|shield|heal|amount)-(atk|ap|def|res|hp|guard)-(\d+(?:p\d+)?)-(\d+)$/;
 
 /** 수치 태그의 ID를 읽어 쪽지를 짓는다. 수치 태그가 아니면 `undefined`. */
 export function resolveValueTag(id: string): KeywordDef | undefined {

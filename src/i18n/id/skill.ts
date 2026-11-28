@@ -38,6 +38,7 @@ export const SKILL_ID = {
   "skill.stat.def": "Pertahanan",
   "skill.stat.res": "Resistensi",
   "skill.stat.hp": "HP Maks",
+  "skill.stat.guard": "Pertahanan + Resistensi",
   "skill.keywordKind.debuff": "Debuff",
   "skill.keywordKind.buff": "Buff",
   "skill.keywordKind.state": "Status",

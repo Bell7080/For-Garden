@@ -4002,6 +4002,7 @@ export function buildSkillViewModel(options: {
         cycleDamage,
         maxHp,
         resistance,
+        guard: attacker === undefined ? undefined : attacker.def.stats.def + attacker.def.stats.res,
       }),
   };
 }

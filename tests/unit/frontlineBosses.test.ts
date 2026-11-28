@@ -129,10 +129,10 @@ describe("공멸 대장", () => {
       if (i < 9) advance(1.05);
     }
     expect(boss.frontline?.armor).toBe(0);
-    expect(boss.shield.amount / boss.maxHp).toBeCloseTo(1, 1);
+    expect(boss.shield.amount / boss.maxHp).toBeCloseTo(0.5, 1);
     expect(boss.frontline?.lastStandUsed).toBe(true);
     advance(4);
-    expect(boss.shield.amount / boss.maxHp).toBeCloseTo(0.5, 1);
+    expect(boss.shield.amount / boss.maxHp).toBeCloseTo(0.25, 1);
     advance(4);
     expect(boss.shield.amount).toBeCloseTo(0);
   });

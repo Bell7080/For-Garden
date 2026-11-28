@@ -38,6 +38,7 @@ export const SKILL_RU = {
   "skill.stat.def": "защиты",
   "skill.stat.res": "сопротивления",
   "skill.stat.hp": "макс. здоровья",
+  "skill.stat.guard": "защиты и сопротивления",
   "skill.keywordKind.debuff": "Дебафф",
   "skill.keywordKind.buff": "Бафф",
   "skill.keywordKind.state": "Состояние",

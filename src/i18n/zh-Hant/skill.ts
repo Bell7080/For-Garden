@@ -38,6 +38,7 @@ export const SKILL_ZH_HANT = {
   "skill.stat.def": "防禦力",
   "skill.stat.res": "抗性",
   "skill.stat.hp": "最大生命",
+  "skill.stat.guard": "防禦力與抗性之和",
   "skill.keywordKind.debuff": "減益",
   "skill.keywordKind.buff": "增益",
   "skill.keywordKind.state": "狀態",

@@ -645,8 +645,10 @@ describe("스킬 설명문 양식 계약", () => {
         cycleDamage: cycle?.map(() => 123),
       });
       if ("bossDescription" in skill && skill.bossDescription) {
-        // 보스 설명문도 대상 → 피해로 시작한다. 방어력에서 나오는 피해(철갑)는 그 몫을 막으로 돌려받는다는 말까지 한다.
-        expect(text).toMatch(/^(적 한 명|자신의 주위 모든 적)에게 .*%만큼 물리 피해를|^적 한 명에게 .*방어력.*%를 합한 물리 피해를/);
+        // 보스 설명문도 대상 → 피해로 시작하고, 능력치를 알면 다른 스킬처럼 **실제 피해 수치 태그**로 선다 —
+        // 「공격력의 N%」를 손으로 적어 두면 양식이 갈리고 위력을 고친 뒤 옛 수가 남는다(기가노·아르겐, v0.558.8).
+        expect(text).toMatch(/^(적 한 명|자신의 주위 모든 적)에게 (시전 [\d.]+초 뒤 )?\[\[damage-value\|\d+\]\]의 \[\[physical-damage\|물리 피해\]\]를/);
+        expect(text).not.toMatch(/(공격력|방어력)의 \d+%/);
         if (text.includes("방어력")) expect(text).toContain("보호막");
         expect(text.endsWith(".")).toBe(true);
         return;

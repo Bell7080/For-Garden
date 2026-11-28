@@ -43,6 +43,7 @@ export const SKILL_JA = {
   "skill.stat.def": "防御力",
   "skill.stat.res": "抵抗力",
   "skill.stat.hp": "最大体力",
+  "skill.stat.guard": "防御力・抵抗力の合計",
 
   "skill.keywordKind.debuff": "デバフ",
   "skill.keywordKind.buff": "バフ",

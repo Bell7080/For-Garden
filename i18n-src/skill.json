@@ -13,6 +13,7 @@
 "skill.stat.def": ["防御力", "พลังป้องกัน", "Thủ", "Pertahanan", "Defensa", "Defesa", "der Verteidigung", "защиты"],
 "skill.stat.res": ["抗性", "ต้านทาน", "Kháng", "Resistensi", "Resistencia", "Resistência", "des Widerstands", "сопротивления"],
 "skill.stat.hp": ["最大生命", "HP สูงสุด", "HP tối đa", "HP Maks", "PV máx.", "PV máx.", "des max. Lebens", "макс. здоровья"],
+"skill.stat.guard": ["防御力与抗性之和", "พลังป้องกันรวมต้านทาน", "Thủ + Kháng", "Pertahanan + Resistensi", "Defensa + Resistencia", "Defesa + Resistência", "der Verteidigung + des Widerstands", "защиты и сопротивления"],
 "skill.keywordKind.debuff": ["减益", "ดีบัฟ", "Suy yếu", "Debuff", "Penalización", "Penalidade", "Debuff", "Дебафф"],
 "skill.keywordKind.buff": ["增益", "บัฟ", "Tăng cường", "Buff", "Mejora", "Bônus", "Buff", "Бафф"],
 "skill.keywordKind.state": ["状态", "สถานะ", "Trạng thái", "Status", "Estado", "Estado", "Zustand", "Состояние"],

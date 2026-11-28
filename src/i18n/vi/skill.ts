@@ -38,6 +38,7 @@ export const SKILL_VI = {
   "skill.stat.def": "Thủ",
   "skill.stat.res": "Kháng",
   "skill.stat.hp": "HP tối đa",
+  "skill.stat.guard": "Thủ + Kháng",
   "skill.keywordKind.debuff": "Suy yếu",
   "skill.keywordKind.buff": "Tăng cường",
   "skill.keywordKind.state": "Trạng thái",

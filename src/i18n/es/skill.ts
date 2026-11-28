@@ -38,6 +38,7 @@ export const SKILL_ES = {
   "skill.stat.def": "Defensa",
   "skill.stat.res": "Resistencia",
   "skill.stat.hp": "PV máx.",
+  "skill.stat.guard": "Defensa + Resistencia",
   "skill.keywordKind.debuff": "Penalización",
   "skill.keywordKind.buff": "Mejora",
   "skill.keywordKind.state": "Estado",

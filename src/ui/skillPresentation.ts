@@ -11,7 +11,7 @@ import { BLEED, VANDALISM_REBURST_SECONDS } from "../core/skirmish";
 import { valueTag, type ValueTagKind, type ValueTagStat } from "../data/valueTags";
 
 /** 능력치 이름은 스킬 본문·태그·돌파 줄이 모두 같은 표에서 고른다. */
-function statName(stat: ScalingStatId | "res"): string {
+function statName(stat: ScalingStatId | "res" | "guard"): string {
   return t(`skill.stat.${stat}`);
 }
 
@@ -1037,6 +1037,8 @@ export interface SkillDescriptionStats {
   maxHp?: number;
   /** 저항력 비례 보호막(자장가)을 실제 값으로 환산할 때 쓴다. 없으면 위력(%)으로 되돌아간다. */
   resistance?: number;
+  /** 방어력·저항력의 합. 철갑 보스 설명문의 `{guardShield:N}` 자리를 실제 값으로 환산할 때 쓴다. */
+  guard?: number;
 }
 
 /** 순환 걸음 둘이 같은 일을 하는가. 이름까지 같아야 화면에서도 같은 한 방으로 읽힌다. */
@@ -1072,7 +1074,7 @@ export function skillDescription(
   skill: DescribedSkill,
   stats: SkillDescriptionStats = {},
 ): string {
-  if ("bossDescription" in skill && skill.bossDescription) return skill.bossDescription;
+  if ("bossDescription" in skill && skill.bossDescription) return bossDescriptionText(skill, skill.bossDescription, stats);
   // 순수 회복기는 때리는 대상이 없어 "대상 → 피해"로 시작할 수 없다. 회복 계약에서 바로 짓는다.
   if (skill.damageType === undefined || skill.power === undefined) {
     if ("healing" in skill && skill.healing?.kind === "teamMissingHpPercent") {
@@ -1670,6 +1672,36 @@ function skillDamagePhrase(skill: DescribedSkill, stats: SkillDescriptionStats):
     secondStat: label(secondary.stat), secondPercent: secondary.power, type,
   });
   return t("skill.damage.scaling", { stat: label(skill.scalingStat), percent: skill.power, type });
+}
+
+/**
+ * 손으로 적은 보스 설명문의 피해 자리를 채운다.
+ *
+ * 보스 설명문은 문장을 데이터가 갖지만, **피해 수치까지 적어 두면 다른 스킬과 양식이 갈린다** —
+ * 다른 스킬은 지금 능력치로 계산한 실제 값이 태그로 서는데 보스만 「공격력의 N%」로 남고, 위력을
+ * 고친 뒤에도 옛 수가 그대로 남는다(기가노·아르겐이 그랬다). 그래서 수치 자리를 비워 두고 여기서 일반 스킬과
+ * 같은 함수로 채운다.
+ * - `{damage}` — 이 스킬의 위력.
+ * - `{step:N}` — 순환의 N번째 걸음(0부터). `{step:N+guard:G}`는 그 걸음에 방어력·저항력 합의 G%가 얹힌
+ *   한 방이다(철갑) — 능력치를 알면 미리보기가 이미 그 몫을 더한 값이고, 모르면 두 축을 함께 적는다.
+ * - `{guardShield:N}` — 방어력·저항력 합의 N%인 보호막.
+ */
+function bossDescriptionText(skill: DescribedSkill, text: string, stats: SkillDescriptionStats): string {
+  const cycle = "cycle" in skill ? skill.cycle : undefined;
+  const type = t(skill.damageType === "physical" ? "skill.damageType.physical" : "skill.damageType.magical");
+  return text
+    .replaceAll("{damage}", () => skillDamagePhrase(skill, stats))
+    .replace(/\{step:(\d+)(?:\+guard:(\d+))?\}/g, (whole, raw: string, guard: string | undefined) => {
+      const index = Number(raw);
+      const step = cycle?.[index];
+      if (step === undefined) return whole;
+      const damage = stats.cycleDamage?.[index];
+      if (guard !== undefined && damage === undefined) {
+        return t("skill.damage.dualScaling", { stat: statName("atk"), percent: step.power, secondStat: statName("guard"), secondPercent: Number(guard), type });
+      }
+      return skillDamagePhrase({ ...skill, power: step.power } as DescribedSkill, { ...stats, damage });
+    })
+    .replace(/\{guardShield:(\d+)\}/g, (_whole, raw: string) => scaled("shield", "guard", Number(raw), stats.guard));
 }
 
 /** 스킬별 피해 회복은 최대 체력 회복과 다른 계약이므로 실제 피해 기준임을 명시한다. */

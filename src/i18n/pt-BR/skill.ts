@@ -38,6 +38,7 @@ export const SKILL_PT_BR = {
   "skill.stat.def": "Defesa",
   "skill.stat.res": "Resistência",
   "skill.stat.hp": "PV máx.",
+  "skill.stat.guard": "Defesa + Resistência",
   "skill.keywordKind.debuff": "Penalidade",
   "skill.keywordKind.buff": "Bônus",
   "skill.keywordKind.state": "Estado",

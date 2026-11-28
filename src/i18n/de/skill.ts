@@ -38,6 +38,7 @@ export const SKILL_DE = {
   "skill.stat.def": "der Verteidigung",
   "skill.stat.res": "des Widerstands",
   "skill.stat.hp": "des max. Lebens",
+  "skill.stat.guard": "der Verteidigung + des Widerstands",
   "skill.keywordKind.debuff": "Debuff",
   "skill.keywordKind.buff": "Buff",
   "skill.keywordKind.state": "Zustand",

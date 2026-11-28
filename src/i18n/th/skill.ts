@@ -38,6 +38,7 @@ export const SKILL_TH = {
   "skill.stat.def": "พลังป้องกัน",
   "skill.stat.res": "ต้านทาน",
   "skill.stat.hp": "HP สูงสุด",
+  "skill.stat.guard": "พลังป้องกันรวมต้านทาน",
   "skill.keywordKind.debuff": "ดีบัฟ",
   "skill.keywordKind.buff": "บัฟ",
   "skill.keywordKind.state": "สถานะ",

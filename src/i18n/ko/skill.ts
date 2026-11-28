@@ -50,6 +50,7 @@ export const SKILL_KO = {
   "skill.stat.def": "방어력",
   "skill.stat.res": "저항력",
   "skill.stat.hp": "최대 체력",
+  "skill.stat.guard": "방어력·저항력 합",
 
   // ── 용어 쪽지의 분류 ─────────────────────────────────────────────────────
   "skill.keywordKind.debuff": "디버프",

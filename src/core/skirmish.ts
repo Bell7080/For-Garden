@@ -4362,7 +4362,11 @@ function tickFrontline(fighter: Fighter, dt: number, rng: () => number, state: S
     boss.restoreAt += plan.restoreInterval;
   }
   const decay = Math.min(boss.lastStandShield, boss.lastStandDecay * dt);
-  const expired = state.elapsed >= boss.ultimateShieldUntil ? boss.ultimateShield : 0;
+  // 궁극기 막은 두른 순간부터 끝나는 시각까지 고르게 줄어든다(응태 2026-11-28 — 한꺼번에 사라지던 것을 서서히).
+  // 남은 막을 남은 시간에 나눠 깎으므로 맞아서 줄어든 막도 같은 시각에 함께 닿는다.
+  const fadeLeft = boss.ultimateShieldUntil - state.elapsed;
+  const expired = boss.ultimateShield <= 0 ? 0
+    : fadeLeft <= 1e-8 ? boss.ultimateShield : boss.ultimateShield * Math.min(1, dt / fadeLeft);
   boss.lastStandShield -= decay;
   boss.ultimateShield -= expired;
   if (decay + expired > 0) {

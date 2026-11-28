@@ -112,8 +112,8 @@ describe("공멸 대장", () => {
 
   it("아르겐의 장갑은 직접 체력 피해로 벗겨지고 마지막 한 겹 보상은 한 번만 서서히 사라진다", () => {
     const { boss, targets: [attacker], advance } = setup("argen");
-    expect(resolveReceivedDamage(boss, 1000).applied).toBe(349);
-    expect(unitStatusViews(boss).find((status) => status.id === "fixedArmor")?.stacks).toBe(10);
+    expect(resolveReceivedDamage(boss, 1000).applied).toBe(590);
+    expect(unitStatusViews(boss).find((status) => status.id === "fixedArmor")?.stacks).toBe(5);
     const cycle = () => {
       boss.hp = boss.maxHp;
       attacker.attackCooldown = 0;
@@ -122,12 +122,12 @@ describe("공멸 대장", () => {
     };
     cycle();
     cycle();
-    expect(boss.frontline?.armor).toBe(9);
+    expect(boss.frontline?.armor).toBe(4);
     advance(3.05);
-    expect(boss.frontline?.armor).toBe(10);
-    for (let i = 0; i < 10; i += 1) {
+    expect(boss.frontline?.armor).toBe(5);
+    for (let i = 0; i < 5; i += 1) {
       cycle();
-      if (i < 9) advance(1.05);
+      if (i < 4) advance(1.05);
     }
     expect(boss.frontline?.armor).toBe(0);
     expect(boss.shield.amount / boss.maxHp).toBeCloseTo(0.5, 1);
@@ -138,7 +138,7 @@ describe("공멸 대장", () => {
     expect(boss.shield.amount).toBeCloseTo(0);
   });
 
-  it("아르겐 궁극기는 준비 후 한 번 내리치고 장갑을 쓰지 않은 채 시간제 보호막을 준다", () => {
+  it("아르겐 궁극기는 준비 후 한 번 내리치고 장갑을 쓰지 않은 채 서서히 사라지는 보호막을 준다", () => {
     const { state, boss, targets: [target], advance } = setup("argen");
     boss.energy = 155;
     const startingHp = target.hp;
@@ -149,11 +149,13 @@ describe("공멸 대장", () => {
     expect(boss.shield.amount).toBe(0);
     expect(advance(0.05).some((event) => event.kind === "attack" && event.skill === "ultimate")).toBe(true);
     expect(target.stunnedFor).toBeCloseTo(1.4);
-    expect(boss.frontline?.armor).toBe(10);
+    expect(boss.frontline?.armor).toBe(5);
     const { def, res } = defensiveDefinition(boss, state).def.stats;
-    expect(boss.shield.amount).toBeCloseTo((def + res) * 1.5);
+    expect(boss.shield.amount / ((def + res) * 0.75)).toBeCloseTo(1, 1);
     boss.attackCooldown = 100;
-    advance(5.05);
+    advance(2.5);
+    expect(boss.shield.amount / ((def + res) * 0.75)).toBeCloseTo(0.5, 1);
+    advance(2.55);
     expect(boss.shield.amount).toBe(0);
   });
 

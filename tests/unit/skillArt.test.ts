@@ -820,20 +820,20 @@ describe("스피나 스킬 표시 계약", () => {
        * 흐려졌다. 본문이 적는 것은 **주기(4회)** 하나뿐이다. 스킬마다 다를 수 있는 수라
        * 태그가 못 박으면 거짓말이 된다(출혈과 같은 규칙).
        */
-      + " 적 주위에 [[shallows|여울]]이 고이고, [[basic-attack|기본 공격]] 4회마다 [[dive|강하]]해 공격력의 140% [[physical-damage|물리 피해]]를 준다.",
+      + " 적 주위에 [[shallows|여울]]이 고이고, [[basic-attack|기본 공격]] 4회마다 [[dive|강하]]해 공격력의 120% [[physical-damage|물리 피해]]를 준다.",
     );
     expect(spina.basic.shallows).toMatchObject({
       radius: 240, seconds: 6, moveSlowPercent: 35,
-      behindDistance: 120, minSpacing: 300, leapEveryHits: 4, leapPower: 140, submergedLeapBonusPercent: 40,
+      behindDistance: 120, minSpacing: 300, leapEveryHits: 4, leapPower: 120, submergedLeapBonusPercent: 40,
     });
     // 궁극기는 깔아 둔 물을 회수한다 — 평타로 판을 까는 일과 같은 축에 선다.
-    expect(spina.ultimate.detonateShallows).toMatchObject({ power: 165 });
+    expect(spina.ultimate.detonateShallows).toMatchObject({ power: 120 });
     // 터지는 판의 피해도 본문이 적는다 — 능력치에서 환산해야 나오는 수라 태그가 가질 수 없다.
-    expect(skillDescription(spina.ultimate)).toContain("깔린 [[shallows|여울]]이 모두 터져 판마다 공격력의 165% [[physical-damage|물리 피해]]를 준다");
+    expect(skillDescription(spina.ultimate)).toContain("깔린 [[shallows|여울]]이 모두 터져 판마다 공격력의 120% [[physical-damage|물리 피해]]를 준다");
     // 능력치를 알면 두 둘째 피해도 주 피해와 같은 실제 수치 태그로 선다.
     const withStats = { damage: 430, atk: { atk: spina.stats.atk, attackSpeed: spina.stats.attackSpeed } };
-    expect(skillDescription(spina.basic, withStats)).toContain(`[[dive|강하]]해 [[v-damage-atk-140-${spina.stats.atk}|${Math.round(spina.stats.atk * 140 / 100)}]]`);
-    expect(skillDescription(spina.ultimate, withStats)).toContain(`판마다 [[v-damage-atk-165-${spina.stats.atk}|${Math.round(spina.stats.atk * 165 / 100)}]]`);
+    expect(skillDescription(spina.basic, withStats)).toContain(`[[dive|강하]]해 [[v-damage-atk-120-${spina.stats.atk}|${Math.round(spina.stats.atk * 120 / 100)}]]`);
+    expect(skillDescription(spina.ultimate, withStats)).toContain(`판마다 [[v-damage-atk-120-${spina.stats.atk}|${Math.round(spina.stats.atk * 120 / 100)}]]`);
     expect(spina.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, statusEffects: [{ kind: "stun", seconds: 3 }] });
     // 능력치를 모르면(대상 없이 도감만 보는 경우) 옛 %-표기로 되돌아간다.
     expect(skillDescription(spina.ultimate)).toContain("현재 [[attack-speed|공격 속도]]의 150%");

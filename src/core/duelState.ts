@@ -136,6 +136,16 @@ export function weakenedDefenseRelics(state: Pick<DuelState, "defense" | "defens
   });
 }
 
+/**
+ * [방어]의 빨간 점이 알리는 것의 서명 — 기본 셋 그대로면 `default`, 약해진 렐릭이 있으면 그 ID들, 알릴 것이 없으면 빈 문자열.
+ * 방어덱을 **열어 보기만 해도** 이 값을 기기에 남겨 점을 끈다(저장을 요구하지 않는다). 알릴 것이 바뀌면(새로 약해진 렐릭)
+ * 서명이 달라져 점이 다시 선다.
+ */
+export function duelDefenseNoticeSignature(isDefault: boolean, weakened: readonly string[]): string {
+  if (isDefault) return "default";
+  return [...weakened].sort().join(",");
+}
+
 const isCount = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) >= 0;
 const stringList = (value: unknown, limit: number): string[] =>
   Array.isArray(value) ? [...new Set(value.filter((item): item is string => typeof item === "string" && item.length > 0))].slice(0, limit) : [];

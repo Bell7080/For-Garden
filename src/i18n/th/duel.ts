@@ -71,6 +71,7 @@ export const DUEL_TH = {
   "duel.ticketPopup.failed": "เติมไม่สำเร็จ โปรดลองอีกครั้งในอีกสักครู่",
   "duel.defense.label": "ป้องกัน",
   "duel.defense.weakened": "เรลิกในเด็คป้องกันอ่อนแอลงกว่าตอนที่บันทึกไว้ โปรดตรวจสอบเด็คป้องกัน",
+  "duel.defense.weakenedMark": "อ่อนลง",
   "duel.opponents.title": "เลือกคู่ต่อสู้",
   "duel.profile.title": "โปรไฟล์การรบ",
   "duel.profile.current": "ระดับปัจจุบัน",

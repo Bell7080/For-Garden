@@ -5778,7 +5778,6 @@ var INFO_KO = {
   "info.bond.statGain": "\uBAA8\uB4E0 \uB2A5\uB825\uCE58",
   "info.bond.lobbyInteraction": "\uB85C\uBE44 \uC0C1\uD638\uC791\uC6A9",
   "info.bond.oncePerDay": "\uD558\uB8E8 \uD55C \uBC88 {amount}",
-  "info.bond.partyAll": "\uD3B8\uC131 \uB810\uB9AD \uC804\uC6D0 {amount}",
   "info.bond.story": "\uC720\uB300 \uC774\uC57C\uAE30",
   "info.bond.opened": "\uC5F4\uB9BC",
   "info.bond.required": "\uC720\uB300 {level} \uD544\uC694",
@@ -8770,6 +8769,7 @@ var DUEL_KO = {
   "duel.ticketPopup.failed": "\uCDA9\uC804\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "duel.defense.label": "\uBC29\uC5B4",
   "duel.defense.weakened": "\uBC29\uC5B4\uB371\uC758 \uB810\uB9AD\uC774 \uC800\uC7A5\uD560 \uB54C\uBCF4\uB2E4 \uC57D\uD574\uC84C\uC2B5\uB2C8\uB2E4. \uBC29\uC5B4\uB371\uC744 \uD655\uC778\uD574 \uC8FC\uC138\uC694.",
+  "duel.defense.weakenedMark": "\uC57D\uD574\uC9D0",
   "duel.opponents.title": "\uC0C1\uB300 \uC120\uD0DD",
   "duel.profile.title": "\uC804\uD22C \uD504\uB85C\uD544",
   "duel.profile.current": "\uD604\uC7AC \uD2F0\uC5B4",
@@ -27225,7 +27225,8 @@ var activeSeason = "";
 function setActiveAncientSeason(season) {
   activeSeason = season;
 }
-var ANCIENT_REFERENCE_STAGE = "normal:1-5";
+var ANCIENT_REFERENCE_STAGE = "1-5";
+var ANCIENT_REFERENCE_FACTOR = 1.5;
 function ancientStrataMultipliers(floor) {
   assertAncientFloor(floor);
   const result = { hp: 1, attack: 1, defense: 1 };
@@ -27243,7 +27244,7 @@ function ancientStrataMultipliers(floor) {
 var referenceCache;
 function ancientReferenceBudget() {
   if (referenceCache) return referenceCache;
-  const enemies = getStageEnemies(getBattleStage(ANCIENT_REFERENCE_STAGE));
+  const enemies = getStageEnemies(storyBattleStageAtFactor(ANCIENT_REFERENCE_STAGE, ANCIENT_REFERENCE_FACTOR));
   referenceCache = {
     hp: enemies.reduce((sum, enemy) => sum + enemy.stats.hp, 0),
     pressure: enemies.reduce((sum, enemy) => sum + Math.max(enemy.stats.atk, enemy.stats.ap) * enemy.stats.attackSpeed / 100, 0),
@@ -27337,8 +27338,8 @@ init_define_import_meta_env();
 var STORY_DIFFICULTIES = ["easy", "normal", "hard", "rampage"];
 var STORY_DIFFICULTY = {
   easy: { color: 15121495, text: "#f5d47b", fill: 3813398, reward: 1, statFactor: 1 },
-  normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25, statFactor: 1.5 },
-  hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5, statFactor: 2 },
+  normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25, statFactor: 1.75 },
+  hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5, statFactor: 2.25 },
   rampage: { color: 12024045, text: "#dfafff", fill: 3743815, reward: 1.75, statFactor: 3 }
 };
 function storyDifficultyOf(id) {
@@ -27411,82 +27412,82 @@ var STORY_RECOMMENDED_LEVELS = [
   19,
   34,
   // 2장
-  21,
+  18,
+  20,
   23,
-  27,
-  27,
-  43,
-  30,
-  30,
-  30,
-  30,
-  31,
+  23,
+  37,
+  26,
+  26,
+  26,
+  26,
+  26,
   // 3장
-  31,
-  32,
-  32,
-  32,
-  50,
-  30,
-  34,
-  34,
-  34,
-  43,
+  26,
+  27,
+  27,
+  27,
+  42,
+  26,
+  29,
+  29,
+  29,
+  37,
   // 4장
-  36,
-  36,
-  36,
-  40,
-  63,
-  38,
-  38,
-  38,
-  40,
-  63,
+  31,
+  31,
+  31,
+  34,
+  54,
+  32,
+  32,
+  32,
+  34,
+  54,
   // 5장
-  33,
-  40,
-  40,
-  40,
-  51,
-  42,
-  42,
-  44,
-  44,
-  50,
-  // 6장
-  48,
-  48,
-  48,
-  50,
-  71,
+  28,
+  34,
+  34,
+  34,
   43,
-  46,
-  46,
-  46,
-  52,
+  36,
+  36,
+  37,
+  37,
+  42,
+  // 6장
+  41,
+  41,
+  41,
+  42,
+  60,
+  37,
+  39,
+  39,
+  39,
+  44,
   // 7장
-  51,
-  52,
-  52,
-  56,
-  72,
-  51,
-  51,
-  57,
-  57,
-  64,
+  43,
+  44,
+  44,
+  48,
+  61,
+  43,
+  43,
+  48,
+  48,
+  54,
   // 8장
-  55,
-  66,
-  67,
-  67,
-  69,
+  47,
   56,
   57,
   57,
-  57,
-  57
+  59,
+  48,
+  48,
+  48,
+  48,
+  48
   // 9장
 ];
 var CHAPTER_ONE_ELITES = {
@@ -27814,8 +27815,15 @@ function storyStages(difficulty) {
   return difficulty === "easy" ? STAGES : EXTRA_STORY_STAGES.filter((stage) => stage.id.startsWith(`${difficulty}:`));
 }
 function difficultyEnemy(enemy, difficulty) {
-  const level = equivalentEnemyLevel(enemy.level, getRelic(enemy.relicId).rarity, STORY_DIFFICULTY[difficulty].statFactor);
+  return enemyAtFactor(enemy, STORY_DIFFICULTY[difficulty].statFactor);
+}
+function enemyAtFactor(enemy, factor) {
+  const level = equivalentEnemyLevel(enemy.level, getRelic(enemy.relicId).rarity, factor);
   return { ...enemy, level, breakthrough: shownBreakthroughForLevel(level) };
+}
+function storyBattleStageAtFactor(easyStageId, factor) {
+  const base = getBattleStage(easyStageId);
+  return { ...base, enemies: base.enemies.map((enemy) => enemyAtFactor(enemy, factor)) };
 }
 var EXTRA_STORY_STAGES = STORY_DIFFICULTIES.slice(1).flatMap((difficulty) => STAGES.filter((stage) => stage.kind === "battle").map((base) => {
   const first = base.id === "1-1";
@@ -29826,6 +29834,10 @@ function weakenedDefenseRelics(state, powerOf) {
     const saved = state.defensePower[id];
     return saved !== void 0 && powerOf(id) < saved - 1;
   });
+}
+function duelDefenseNoticeSignature(isDefault, weakened) {
+  if (isDefault) return "default";
+  return [...weakened].sort().join(",");
 }
 var isCount = (value) => Number.isSafeInteger(value) && value >= 0;
 var stringList = (value, limit) => Array.isArray(value) ? [...new Set(value.filter((item3) => typeof item3 === "string" && item3.length > 0))].slice(0, limit) : [];
@@ -31950,7 +31962,7 @@ function createDefaultSettings() {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, rhythmOffsetMs: 0, feedbackAsked: false, adRewardDot: false, ultimatePresentation: "full", textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null, arenaSeen: null, rosterViews: {}, runeViews: {}, friendView: { ...DEFAULT_FRIEND_LIST_VIEW }, traitBulkResultView: { ...DEFAULT_TRAIT_BULK_RESULT_VIEW }, runeMultiPick: false, interactionParties: {} },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, pullAgainTaught: false, rhythmOffsetMs: 0, feedbackAsked: false, adRewardDot: false, ultimatePresentation: "full", textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", duelDefenseSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS }, contentSeen: null, arenaSeen: null, rosterViews: {}, runeViews: {}, friendView: { ...DEFAULT_FRIEND_LIST_VIEW }, traitBulkResultView: { ...DEFAULT_TRAIT_BULK_RESULT_VIEW }, runeMultiPick: false, interactionParties: {} },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" }
@@ -32020,6 +32032,7 @@ function normalizeSettings(value) {
       // 단계가 실제로 있는지는 입구가 가린다 — 여기서는 짧은 문자열인지만 본다.
       dungeonTiers: { bounty: tierId(record3(g.dungeonTiers).bounty), cake: tierId(record3(g.dungeonTiers).cake) },
       guildSeen: { war: seenKey(record3(g.guildSeen).war), guard: seenKey(record3(g.guildSeen).guard), guardReward: seenKey(record3(g.guildSeen).guardReward), warResult: seenKey(record3(g.guildSeen).warResult) },
+      duelDefenseSeen: typeof g.duelDefenseSeen === "string" && g.duelDefenseSeen.length <= 512 ? g.duelDefenseSeen : "",
       guildLevelSeen: typeof g.guildLevelSeen === "string" && /^[\w-]{1,64}:\d{1,2}$/.test(g.guildLevelSeen) ? g.guildLevelSeen : "",
       // 보유·중복은 편성 화면이 다시 가린다 — 여기서는 여섯 칸 이하의 짧은 ID·빈 칸인지만 본다.
       partyPresets: normalizePartyPresets(g.partyPresets),
@@ -48213,10 +48226,17 @@ function deriveNotificationState(conditions) {
     freeResearch: conditions.freeResearchAvailable === true,
     interactionReturned: (conditions.claimableInteractionCount ?? 0) > 0,
     duelSeasonReward: conditions.duelSeasonRewardReady === true,
+    duelDefense: duelDefenseUnseen(conditions),
+    // 로비 결투 입구는 시즌 보상과 방어덱 둘 중 하나만 있어도 점을 단다.
+    duel: conditions.duelSeasonRewardReady === true || duelDefenseUnseen(conditions),
     premiumSubscription: (conditions.claimableSubscriptionBonusCount ?? 0) > 0,
     guildAttendance: conditions.guildAttendanceReady === true,
     patronDaily: conditions.patronClaimable === true
   };
+}
+function duelDefenseUnseen(conditions) {
+  const notice = conditions.duelDefenseNotice ?? "";
+  return notice !== "" && notice !== (conditions.duelDefenseSeen ?? "");
 }
 var EMPTY_NOTIFICATION_STATE = deriveNotificationState({
   claimableMissionCount: 0,
@@ -48769,7 +48789,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.562.0",
+  version: "0.563.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -49458,6 +49478,11 @@ var SettingsManager = class extends EventTarget {
     const current2 = this.get().game.guildSeen;
     if (current2[page] === key) return;
     this.update({ game: { guildSeen: { ...current2, [page]: key } } });
+  }
+  /** 결투장 방어덱을 열어 봤다고 적는다 — [방어]의 빨간 점이 꺼진다(저장하지 않아도). */
+  rememberDuelDefenseSeen(signature) {
+    if (this.get().game.duelDefenseSeen === signature) return;
+    this.update({ game: { duelDefenseSeen: signature } });
   }
   /** 지금 길드 레벨을 봤다고 적는다(`guildLevelUpNotice`의 키). */
   rememberGuildLevel(key) {
@@ -52777,10 +52802,7 @@ var FakeServer = class {
     const index = cakeOperationTierIndex(tier.id);
     const unlockedNextTier = request.victory && index > this.state.cakeOperation.clearedIndex;
     const nextCake = unlockedNextTier ? { clearedIndex: index } : { ...this.state.cakeOperation };
-    const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [
-      id,
-      request.victory && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress
-    ]));
+    const nextProgress = this.state.relicProgress;
     const nextMissions = applyMissionEvent(spent?.missions ?? this.state.missions, { type: "battle_completed", victory: request.victory }, this.now());
     const nextResearch = spent?.playerResearch ?? this.state.playerResearch;
     const { items: nextItems, drops: bonusItems } = this.rollBonusDrops(request.victory ? 1 : 0, spent?.itemInventory ?? this.state.itemInventory, this.now());
@@ -53377,7 +53399,9 @@ var FakeServer = class {
     const claimableSubscriptionBonusCount = PRODUCTS.filter((product) => product.passBenefit && this.subscriptionInfo(product, now).subscription?.dailyBonusClaimed === false).length;
     const guildAttendanceReady = isContentUnlocked("guild", this.state.playerResearch.level) && (this.guildRead?.attendanceReady ?? await this.guildAttendanceReady());
     const patronClaimable = patronHasClaimable(this.patronState(), now);
-    return { patronClaimable, guildAttendanceReady, freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
+    const duelForNotice = normalizeDuelState(this.state.duel, [...this.state.owned]);
+    const duelDefenseNotice = (QA_TOOLS_ENABLED || this.duelContext !== void 0) && isContentUnlocked("duel", this.state.playerResearch.level) ? duelDefenseNoticeSignature(!duelForNotice.defenseCustomized, weakenedDefenseRelics(duelForNotice, (relicId) => this.duelRelicPower(relicId))) : "";
+    return { duelDefenseNotice, patronClaimable, guildAttendanceReady, freeResearchAvailable: freeResearch, claimableInteractionCount, duelSeasonRewardReady, claimableSubscriptionBonusCount, claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableCodexCount: this.codexDto(this.state).claimableCount, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(rouletteNeedsAttention(roulette, false)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now), shopFreeSupply: this.shopFreeSupply(now), situationalOfferCount, adOnlyEventCount: Number(rouletteAdOnlyAttention(roulette)) };
   }
   /**
    * **상황 특가를 지금 상태에서 읽어 세운다**(`core/situationalOffers.ts`). 조회(붉은 점·프리미엄 목록)가 부르며, 바뀐 것이 있을 때만 저장한다.

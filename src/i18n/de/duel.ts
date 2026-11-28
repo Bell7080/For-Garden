@@ -71,6 +71,7 @@ export const DUEL_DE = {
   "duel.ticketPopup.failed": "Aufladen fehlgeschlagen. Bitte versuche es gleich noch einmal.",
   "duel.defense.label": "Verteidigung",
   "duel.defense.weakened": "Ein Relikt in deinem Verteidigungsdeck ist schwächer als beim Speichern. Prüfe dein Verteidigungsdeck.",
+  "duel.defense.weakenedMark": "Schwächer",
   "duel.opponents.title": "Gegner wählen",
   "duel.profile.title": "Kampfprofil",
   "duel.profile.current": "Aktueller Rang",

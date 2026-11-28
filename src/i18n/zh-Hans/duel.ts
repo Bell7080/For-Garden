@@ -71,6 +71,7 @@ export const DUEL_ZH_HANS = {
   "duel.ticketPopup.failed": "充值失败，请稍后再试。",
   "duel.defense.label": "防守",
   "duel.defense.weakened": "防守队伍中的遗物比保存时变弱了。请检查防守队伍。",
+  "duel.defense.weakenedMark": "变弱",
   "duel.opponents.title": "选择对手",
   "duel.profile.title": "战斗档案",
   "duel.profile.current": "当前段位",

@@ -9,6 +9,9 @@ import { expeditionDayKey, normalizeExpeditionState, rollExpeditionPeriods } fro
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { captureExpeditionRelicSnapshot, isExpeditionRelicSnapshot, type ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import { getRelic } from "../data/relics";
+import { displayCombatStats } from "../core/combatStats";
+import { expeditionBattleEffects } from "../core/expeditionBattle";
+import type { Stats } from "../core/types";
 import { createInitialRelicProgress, session, type ExpeditionRunState, type Session } from "../state/session";
 import { GameApiError, type ApiErrorCode, type GameApi, type SettleExpeditionRunResponse, type SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
@@ -291,6 +294,17 @@ export class ExpeditionManager {
     return structuredClone(frozen ?? this.capture(relicId));
   }
 
+  /**
+   * 이 렐릭이 **이 런에서 실제로 싸우는 능력치** — 굳힌 값에 돌파·룬 특성과 지금까지 고른 증강의 상시 몫을 얹는다.
+   * 전투(`makeFighter`)가 같은 함수(`applyBattleStatBonuses`)로 얹으므로 노드 미리보기·정보창의 전투력이 전투와 갈리지 않는다.
+   * 전투 입력에는 넘기지 않는다 — 전투는 `snapshotFor`의 값에 증강을 직접 얹는다.
+   */
+  combatStatsFor(relicId: string): Stats {
+    const snapshot = this.snapshotFor(relicId);
+    const augments = expeditionBattleEffects(this.state.expedition.run?.selectedAugments ?? []);
+    return displayCombatStats(getRelic(relicId), snapshot.stats, snapshot.breakthrough, snapshot.runes, augments);
+  }
+
   private capture(relicId: string): ExpeditionRelicSnapshot {
     const progress = this.state.relicProgress[relicId] ?? createInitialRelicProgress();
     return captureExpeditionRelicSnapshot(getRelic(relicId), progress, this.state.runeInventory, this.state.equippedRelicSkinIds[relicId]);
@@ -336,6 +350,7 @@ export class ExpeditionClient {
 
   status(): ExpeditionStatus { return this.view.status(); }
   snapshotFor(relicId: string): ExpeditionRelicSnapshot { return this.view.snapshotFor(relicId); }
+  combatStatsFor(relicId: string): Stats { return this.view.combatStatsFor(relicId); }
 
   start(relicIds: readonly string[]): Promise<StartExpeditionResult> {
     return this.api.startExpeditionRun({ relicIds: [...relicIds] }) as Promise<StartExpeditionResult>;

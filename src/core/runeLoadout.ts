@@ -1,8 +1,10 @@
 import { combatPower } from "./combatPower";
-import { calculateFinalStats } from "./relicProgression";
+import { activeBreakthroughOf, calculateFinalStats } from "./relicProgression";
+import { displayCombatStats } from "./combatStats";
 import type { RuneInstance, RunePart } from "./runes";
 import { RUNE_TRAIT_GRADES } from "./runeTraits";
 import type { RelicProgress, RelicRarity, Stats } from "./types";
+import { getRelic } from "../data/relics";
 
 /**
  * 룬 장착 추천 — 렐릭 하나의 세 칸에 무엇을 낄지 고른다.
@@ -57,7 +59,7 @@ export function runeLoadoutPower(relic: RuneLoadoutRelic, slots: RuneLoadoutSlot
     return rune ? [rune] : [];
   });
   const stats = calculateFinalStats(relic.base, { ...relic.progress, heartGemSlots: [...slots] as [string | null, string | null, string | null] }, gems, relic.rarity);
-  return combatPower(stats, relic.base);
+  return combatPower(displayCombatStats(getRelic(relic.relicId), stats, activeBreakthroughOf(relic.progress), gems), relic.base);
 }
 
 function traitRank(rune: RuneInstance): number {

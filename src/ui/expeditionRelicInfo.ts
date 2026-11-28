@@ -1,18 +1,20 @@
 import type Phaser from "phaser";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import type { ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
+import type { Stats } from "../core/types";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { sceneInfoManager, type InfoManager } from "./info";
 
 /** 굳힌 모습을 정보창이 읽는 공개 프로필 모양으로 옮긴다. 친구 창과 같은 읽기 전용 길을 쓴다. */
-export function expeditionSnapshotProfile(relicId: string, snapshot: ExpeditionRelicSnapshot): PublicRelicProfileDto {
+export function expeditionSnapshotProfile(relicId: string, snapshot: ExpeditionRelicSnapshot, combatStats: Stats = snapshot.stats): PublicRelicProfileDto {
   return {
     relicId,
     equippedSkinId: snapshot.skinId ?? undefined,
     level: snapshot.level,
     breakthroughGrade: snapshot.breakthrough,
     resonance: snapshot.resonance,
-    stats: { ...snapshot.stats },
+    // 오각형·전투력은 이 런에서 싸우는 값이다 — 돌파·룬 특성·고른 증강의 상시 몫까지 든다.
+    stats: { ...combatStats },
     skillIds: [],
   };
 }
@@ -26,6 +28,6 @@ export function expeditionSnapshotProfile(relicId: string, snapshot: ExpeditionR
  */
 export function showExpeditionRelic(scene: Phaser.Scene, relicId: string, depth?: { portraitDepth: number; baseDepth: number }): InfoManager {
   const info = sceneInfoManager(scene, { key: "expedition-frozen", context: "friend", ...depth });
-  info.showFriend(expeditionSnapshotProfile(relicId, expeditionManager.snapshotFor(relicId)));
+  info.showFriend(expeditionSnapshotProfile(relicId, expeditionManager.snapshotFor(relicId), expeditionManager.combatStatsFor(relicId)));
   return info;
 }

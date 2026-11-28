@@ -7,8 +7,9 @@ import { computeDamage, computeDamageContribution, currentAbilityPower, isCritic
 export { currentAbilityPower } from "./damage";
 import { actionFerocityGain, drainFerocityFever, FEROCITY_RULES, feverDrainPerSecond, ferocityMaxOf, ferocityMirrored } from "./ferocity";
 import { isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
+import { applyBattleStatBonuses } from "./combatStats";
 import { ENCOUNTER_ROLE, encounterRampFactor, type EncounterDamageReduction, type EncounterTenacity } from "./levelDesign";
-import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, flatStatPoints, highHpDamageMultiplier, lowHpDamageMultiplier, nthBasicBonusMultiplier, openingCritCount, periodicCritEvery, sameTargetStreakMultiplier, shieldedDamageMultiplier, warmUpAttackSpeedPercent, type ExpeditionAugmentEffect, type FlatStatKind, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
+import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, highHpDamageMultiplier, lowHpDamageMultiplier, nthBasicBonusMultiplier, openingCritCount, periodicCritEvery, sameTargetStreakMultiplier, shieldedDamageMultiplier, warmUpAttackSpeedPercent, type ExpeditionAugmentEffect, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
 import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, Passive, ReachTier, RelicDef, Role, Side, Skill, Stats, TeamBuff, DeepCleanBuff, GulpBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX, ultimateEnergyCap } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
@@ -1342,28 +1343,8 @@ export const EMERGENCY_RECOVERY = {
 const NO_CRIT = (): number => 0.999999;
 
 function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: number, bondLevel = 0, breakthrough = 0, bodyScale = 1, augmentEffects: readonly ExpeditionAugmentEffect[] = []): Fighter {
-  // 정적 정의를 복제한 전투 스냅샷에만 단순 능력치 증강을 한 번 반영한다.
-  const multipliers = expeditionAugmentStatMultipliers(augmentEffects, def.id);
-  const flatPoints = (stat: FlatStatKind): number => flatStatPoints(augmentEffects, def.id, stat);
-  const passiveBreakthrough = isBreakthroughSlotOpen(breakthrough, "passive")
-    && def.breakthroughEffects?.passive?.kind === "battleMaidAscension" ? def.breakthroughEffects.passive : undefined;
-  const durability = 1 + (passiveBreakthrough?.durabilityPercent ?? 0) / 100;
-  const battleDef: RelicDef = { ...def, stats: { ...def.stats,
-    hp: def.stats.hp * multipliers.maxHpPercent * durability,
-    def: def.stats.def * multipliers.defensePercent * durability,
-    res: def.stats.res * multipliers.resistancePercent * durability,
-    atk: def.stats.atk * multipliers.attackPowerPercent,
-    ap: def.stats.ap * multipliers.spellPowerPercent,
-    attackSpeed: def.stats.attackSpeed * multipliers.attackSpeedPercent,
-    // 셋은 이미 퍼센트로 세는 수치라 덧셈으로 붙는다. 곱셈 배율과 섞으면 같은 「+10」이
-    // 능력치마다 다른 크기가 된다.
-    moveSpeed: def.stats.moveSpeed * multipliers.moveSpeedPercent,
-    critDamage: def.stats.critDamage + flatPoints("critDamage"),
-    lifeSteal: def.stats.lifeSteal + flatPoints("lifeSteal"),
-    critChance: def.stats.critChance + flatPoints("critChance"),
-    energyGain: def.stats.energyGain + flatPoints("energyGain"),
-    ferocityGain: def.stats.ferocityGain + flatPoints("ferocityGain"),
-  } };
+  // 정적 정의를 복제한 전투 스냅샷에만 상시 몫(증강·룬 특성·패시브 돌파)을 한 번 반영한다 — 표시 전투력도 같은 함수를 지난다.
+  const battleDef: RelicDef = { ...def, stats: applyBattleStatBonuses(def, def.stats, breakthrough, augmentEffects) };
   // 궁극기 돌파(`lightChorus`)가 줄이는 게이지는 **전투 스냅샷의 정의**에 반영한다 — 화면의 게이지·자동 발동·재현이
   // 모두 `def.ultimate.cost`를 직접 읽으므로, 전투 코어 안에서만 줄이면 같은 개체의 게이지가 화면마다 갈린다.
   const chorus = isBreakthroughSlotOpen(breakthrough, "ultimate") ? def.breakthroughEffects?.ultimate : undefined;
@@ -1493,7 +1474,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     shallowLeapCount: 0,
     tauntHealBudget: def.passive.tauntHeal?.maxPerSecond ?? 0,
     submergedIn: null,
-    statusPotencyMultiplier: multipliers.statusPotencyPercent,
+    statusPotencyMultiplier: expeditionAugmentStatMultipliers(augmentEffects, def.id).statusPotencyPercent,
     conditionalAttackPowerMultiplier: (hpPercent) => conditionalAttackPowerMultiplier(augmentEffects, def.id, hpPercent),
     basicAttackCount: 0,
     basicCycleStep: 0,

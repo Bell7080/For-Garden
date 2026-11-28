@@ -2744,7 +2744,7 @@ export class InfoManager {
   }
 
   private shownStats(def: RelicDef): Stats {
-    return this.publicProfile ? { ...this.publicProfile.stats } : relicProgression.getFinalStats(def.id);
+    return this.publicProfile ? { ...this.publicProfile.stats } : relicProgression.getCombatStats(def.id);
   }
 
   /**

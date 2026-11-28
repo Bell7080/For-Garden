@@ -166,8 +166,14 @@ const SORTIE_MENU = {
    * `bottomPad`만큼 아래 여유를 두어 마지막 칸이 밑변에 붙지 않게 한다. 끌기와 눌림을 가르는 거리가 `slop`이다.
    * 판 밑변은 굴리지 않아도 맨 아래 칸(고대 지층)의 윗머리가 한 뼘 비치는 자리다 — 아래에 더 있다는 것을 그 칸이 말한다.
    */
-  scroll: { viewTop: -635, viewBottom: 665, bottomPad: 40, slop: 14 },
+  scroll: { viewTop: -635, viewBottom: 665, bottomPad: 40, slop: 14, sdHeadroom: 26 },
 } as const;
+/** 판 몸 기준 세로 구간을 월드 좌표로 옮긴다(판이 떠오르며 커지는 동안에도 따라간다). */
+function sortieSdClip(body: Phaser.GameObjects.Container, top: number, bottom: number): { top: number; bottom: number } {
+  const matrix = body.getWorldTransformMatrix();
+  return { top: matrix.transformPoint(0, top).y, bottom: matrix.transformPoint(0, bottom).y };
+}
+
 /** 출격판 전체 폭 칸의 반폭. 판 반폭과의 사이가 꺾쇠가 서는 여백 띠다. */
 const SORTIE_ENTRY_HALF_WIDTH = 400;
 /** 팝업 판(2000) 위. 화면에 직접 세우는 SD는 판보다 앞에 서야 버튼 위로 빠져나온다. */
@@ -245,7 +251,6 @@ export class LobbyScene extends Phaser.Scene {
   private sortieScroll = { y: 0, min: 0, dragStart: undefined as number | undefined, dragOrigin: 0, moved: 0 };
   private sortieScrollHandlers?: { down: (p: Phaser.Input.Pointer) => void; move: (p: Phaser.Input.Pointer) => void; up: () => void; wheel: (...args: number[]) => void };
   /** 칸마다 그 칸 SD들이 보이는 굴림 구간. SD는 판 마스크를 못 물려 칸이 판 밖으로 나가면 통째로 숨긴다. */
-  private sortieSdSpots: Array<{ top: number; bottom: number; puppets: PuppetCreature[] }> = [];
   /** 본체와 복제 그림자를 짝으로 들고 있어야 같은 동작을 함께 재생할 수 있다. */
   private sortieSdPairs: SortieSdPair[] = [];
   private sortieSdTimer?: Phaser.Time.TimerEvent;
@@ -870,7 +875,6 @@ export class LobbyScene extends Phaser.Scene {
       this.sortieScroll = { y: 0, min: Math.min(0, view.viewBottom - view.bottomPad - bottom), dragStart: undefined, dragOrigin: 0, moved: 0 };
       // 꺾쇠는 칸 오른쪽 여백 띠에 선다 — 가운데에 두면 밑변에 비치는 고대 지층 칸의 자물쇠·SD와 겹친다.
       addScrollHint(this, body, { x: (panel.width / 2 + SORTIE_ENTRY_HALF_WIDTH) / 2, y: (view.viewTop + view.viewBottom) / 2, width: 0, height: view.viewBottom - view.viewTop, owner: content, read: () => ({ offset: this.sortieScroll.y, min: this.sortieScroll.min }) });
-      this.sortieSdSpots = [];
       entries.forEach((entry) => {
         const x = entry.x ?? 0;
         // SD가 서는 칸만 마스크를 만든다. 쪽을 적지 않은 칸은 왼쪽이 기본이다.
@@ -879,6 +883,9 @@ export class LobbyScene extends Phaser.Scene {
           width: entry.width, height: entry.height, label: entry.label, labelSize: entry.labelSize, status: entry.status,
           artKey: entry.artKey, accentColor: entry.accentColor, accentTextColor: entry.accentTextColor,
           // 끌어서 굴린 손이 칸 위에서 떨어져도 그 칸이 열리지 않게 한다.
+          // SD는 판이 보여 주는 구간까지만 비친다 — 칸이 반쯤 걸쳐 있어도 보이는 만큼은 선다. 윗변은 맨 위 칸(스토리)의
+          // 머리가 쉬는 자리에서 잘리지 않을 만큼(`sdHeadroom`) 제목표 쪽으로 열어 둔다.
+          sdClip: () => sortieSdClip(body, view.viewTop - view.sdHeadroom, view.viewBottom),
           sdSide, split: entry.split, onClick: () => {
             if (this.sortieScroll.moved > view.slop) return;
             if (entry.content !== undefined && contentOpen(entry.content)) markContentEntered(entry.content);
@@ -917,8 +924,6 @@ export class LobbyScene extends Phaser.Scene {
         const sdAsset = entry.sd;
         if (!sdAsset) return;
         const spot = sortieEntrySdSpot(entry.width, entry.height, sdSide ?? "left");
-        const range: { top: number; bottom: number; puppets: PuppetCreature[] } = { top: entry.y - entry.height / 2, bottom: entry.y + entry.height / 2, puppets: [] };
-        this.sortieSdSpots.push(range);
         const spawn = () => void this.spawnSortieSd(sdAsset, {
           x: BASE_WIDTH / 2 + x + spot.x,
           groundY: panelY + entry.y + spot.groundY,
@@ -927,7 +932,6 @@ export class LobbyScene extends Phaser.Scene {
           shadowOffsetY: spot.shadowOffsetY,
           mask: button.sdMask,
           dim: entry.comingSoon !== undefined,
-          range,
         });
         if (sdDelay > 0) this.time.delayedCall(sdDelay, spawn); else spawn();
       });
@@ -984,8 +988,9 @@ export class LobbyScene extends Phaser.Scene {
   /**
    * 출격판 안 칸 굴리기 — 끌어서도 휠로도 굴리고, SD 층도 같은 만큼 움직인다.
    *
-   * 칸은 컨테이너 마스크가 자르지만 SD는 칸마다 제 마스크를 달고 있어 판 마스크를 겹쳐 물지 못한다. 그래서 칸이 보이는
-   * 구간에 온전히 들어올 때만 그 칸의 SD를 세운다(`applySortieScroll`).
+   * 칸은 컨테이너 마스크가 자르지만 SD는 칸마다 제 마스크를 달고 있어 판 마스크를 겹쳐 물지 못한다. 그래서 SD 마스크 도형을
+   * 판이 보여 주는 구간으로 먼저 잘라(`sdClip`) 칸이 반쯤 걸쳐 있어도 보이는 만큼은 선다 — 온전히 들어온 칸에만 SD를 세우던
+   * 때는 맨 위·맨 아래 칸의 SD가 늘 하나씩 사라져 있었다.
    */
   private bindSortieScroll(content: Phaser.GameObjects.Container, panelY: number): void {
     this.sortieContent = content;
@@ -1020,13 +1025,8 @@ export class LobbyScene extends Phaser.Scene {
   /** 굴림을 칸 컨테이너·SD 층에 옮기고, 보이는 구간 밖으로 나간 칸의 SD는 숨긴다. */
   private applySortieScroll(): void {
     const { y } = this.sortieScroll;
-    const view = SORTIE_MENU.scroll;
     this.sortieContent?.setY(y);
     this.sortieSdLayer?.setY(y);
-    for (const range of this.sortieSdSpots) {
-      const shown = range.top + y >= view.viewTop - 6 && range.bottom + y <= view.viewBottom;
-      for (const puppet of range.puppets) puppet.setVisible(shown);
-    }
   }
 
   /**
@@ -1036,7 +1036,7 @@ export class LobbyScene extends Phaser.Scene {
    * 판에서 떠오른다. 그림자도 같은 동작을 재생해야 두 겹이 어긋나지 않는다. 늦게 도착한
    * 결과는 이미 닫힌 판 위에 남지 않도록 현재 레이어일 때만 붙인다.
    */
-  private async spawnSortieSd(asset: PuppetAsset, place: { x: number; groundY: number; height: number; shadowOffsetX: number; shadowOffsetY: number; mask?: Phaser.Display.Masks.GeometryMask; dim?: boolean; range?: { top: number; bottom: number; puppets: PuppetCreature[] } }): Promise<void> {
+  private async spawnSortieSd(asset: PuppetAsset, place: { x: number; groundY: number; height: number; shadowOffsetX: number; shadowOffsetY: number; mask?: Phaser.Display.Masks.GeometryMask; dim?: boolean }): Promise<void> {
     const layer = this.sortieSdLayer;
     if (!layer) return;
     const pair: SortieSdPair = {};
@@ -1052,7 +1052,6 @@ export class LobbyScene extends Phaser.Scene {
       if (place.dim) puppet.setAlpha(shadow ? SORTIE_SD_SHADOW.alpha * 0.5 : 0.5);
       layer.add(puppet);
       this.sortieSdPuppets.add(puppet);
-      place.range?.puppets.push(puppet);
       this.applySortieScroll();
     };
     const spawn = (shadow: boolean) => loadOwnedPuppet({
@@ -1076,7 +1075,7 @@ export class LobbyScene extends Phaser.Scene {
   private clearSortieChrome(): void {
     this.sortieSdTimer?.remove(false); this.sortieSdTimer = undefined;
     for (const puppet of this.sortieSdPuppets) { this.sortieSdLayer?.remove(puppet, false); puppet.destroy(); }
-    this.sortieSdPuppets.clear(); this.sortieSdPairs = []; this.sortieSdSpots = [];
+    this.sortieSdPuppets.clear(); this.sortieSdPairs = [];
     const handlers = this.sortieScrollHandlers;
     if (handlers) { this.input.off("pointerdown", handlers.down); this.input.off("pointermove", handlers.move); this.input.off("pointerup", handlers.up); this.input.off("wheel", handlers.wheel); }
     this.sortieScrollHandlers = undefined; this.sortieContent = undefined;

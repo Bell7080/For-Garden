@@ -417,7 +417,7 @@ export const MISC_EN = {
   "intro.premium.1.body": "Premium shows passes, subscriptions and special offers.",
   "intro.premium.2.heading": "Grab free supplies",
   "intro.premium.2.body": "A red dot lets you know when free supplies are waiting. Pick them up whenever you drop by.",
-  "intro.descendingMap.1.heading": "…This time, it's down.",
+  "intro.descendingMap.1.heading": "…This chapter, we go down.",
   "intro.descendingMap.1.body": "The Detention Block digs down from the very top. Read the map from the top, too. The next gate is always under your feet. …Stop looking up. You'll just hurt your neck.",
   "intro.descendingMap.2.heading": "Don't get lost.",
   "intro.descendingMap.2.body": "I'm not climbing back up to find you. …So just come down. I'll be waiting below.",

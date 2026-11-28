@@ -415,7 +415,7 @@ export const MISC_VI = {
   "intro.premium.1.body": "Cao cấp có thẻ, gói đăng ký và sản phẩm ưu đãi.",
   "intro.premium.2.heading": "Nhận cả tiếp tế miễn phí",
   "intro.premium.2.body": "Khi có tiếp tế miễn phí sẽ báo bằng chấm đỏ. Ghé qua là nhận nhé.",
-  "intro.descendingMap.1.heading": "…Lần này là đi xuống.",
+  "intro.descendingMap.1.heading": "…Chương này, ta đi xuống dưới.",
   "intro.descendingMap.1.body": "Khu giam giữ đào sâu xuống từ tầng trên cùng. Bản đồ cũng đọc từ trên xuống. Cửa ải tiếp theo luôn ở dưới chân. …Đừng cứ ngước lên nữa. Chỉ mỏi cổ thôi.",
   "intro.descendingMap.2.heading": "Đừng lạc đấy.",
   "intro.descendingMap.2.body": "Ta không muốn phải leo ngược lên tìm đâu. …Nên cứ xuống đi. Ta sẽ đợi ở bên dưới.",

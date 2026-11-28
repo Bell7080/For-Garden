@@ -415,7 +415,7 @@ export const MISC_ZH_HANS = {
   "intro.premium.1.body": "在高级商店中可以查看通行证、订阅和特价商品。",
   "intro.premium.2.heading": "别忘了免费补给",
   "intro.premium.2.body": "有免费补给时会用红点提醒你。每次来都记得领取。",
-  "intro.descendingMap.1.heading": "……这次，是往下。",
+  "intro.descendingMap.1.heading": "……这一章，要往下走。",
   "intro.descendingMap.1.body": "监禁楼从最顶层一路往下挖。地图也从上往下看。下一个关卡总在你脚下。……别老往上看，只会脖子酸。",
   "intro.descendingMap.2.heading": "别迷路。",
   "intro.descendingMap.2.body": "我可不想再爬上去找你。……所以，直接下来。我在下面等着。",

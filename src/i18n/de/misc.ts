@@ -415,7 +415,7 @@ export const MISC_DE = {
   "intro.premium.1.body": "Im Premium findest du Pässe, Abos und Sonderangebote.",
   "intro.premium.2.heading": "Gratis-Lieferungen abholen",
   "intro.premium.2.body": "Ein roter Punkt zeigt dir, wenn Gratis-Lieferungen warten. Hol sie bei jedem Besuch ab.",
-  "intro.descendingMap.1.heading": "…Diesmal geht's nach unten.",
+  "intro.descendingMap.1.heading": "…In diesem Kapitel geht es nach unten.",
   "intro.descendingMap.1.body": "Der Haftblock gräbt sich von ganz oben in die Tiefe. Lies auch die Karte von oben nach unten. Das nächste Tor liegt immer unter deinen Füßen. …Hör auf, nach oben zu schauen. Davon kriegst du nur einen steifen Nacken.",
   "intro.descendingMap.2.heading": "Verlauf dich nicht.",
   "intro.descendingMap.2.body": "Ich klettere nicht noch mal hoch, um dich zu suchen. …Also komm einfach runter. Ich warte unten.",

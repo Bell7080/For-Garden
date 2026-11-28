@@ -415,7 +415,7 @@ export const MISC_ID = {
   "intro.premium.1.body": "Premium menampilkan pass, langganan, dan penawaran spesial.",
   "intro.premium.2.heading": "Ambil pasokan gratis",
   "intro.premium.2.body": "Titik merah akan memberi tahu saat pasokan gratis tersedia. Ambil setiap kali mampir.",
-  "intro.descendingMap.1.heading": "…Kali ini, ke bawah.",
+  "intro.descendingMap.1.heading": "…Bab ini, kita turun ke bawah.",
   "intro.descendingMap.1.body": "Blok tahanan menggali ke bawah dari puncak. Baca petanya dari atas juga. Gerbang berikutnya selalu di bawah kakimu. …Berhenti mendongak. Lehermu cuma bakal pegal.",
   "intro.descendingMap.2.heading": "Jangan tersesat.",
   "intro.descendingMap.2.body": "Aku tidak mau naik lagi untuk mencarimu. …Jadi turun saja. Aku menunggu di bawah.",

@@ -434,7 +434,7 @@ export const MISC_JA = {
   "intro.premium.1.body": "プレミアムでは、パス・サブスクリプション・特価商品を確認できます。",
   "intro.premium.2.heading": "無料補給もお忘れなく",
   "intro.premium.2.body": "無料の補給があると赤い点でお知らせします。立ち寄るたびに受け取ってください。",
-  "intro.descendingMap.1.heading": "…今回は、下だ。",
+  "intro.descendingMap.1.heading": "…今回の章は、下へ降りていく。",
   "intro.descendingMap.1.body": "監禁棟は最上層から下へ掘り下がっている。地図も上から読め。次の関門は、いつも足元だ。…上ばかり見るな。首が痛くなるだけだ。",
   "intro.descendingMap.2.heading": "迷うな。",
   "intro.descendingMap.2.body": "あなたを探しに上まで戻るのは御免だ。…だから、黙って降りてこい。下で待っている。",

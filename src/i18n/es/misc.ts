@@ -415,7 +415,7 @@ export const MISC_ES = {
   "intro.premium.1.body": "En Premium verás pases, suscripciones y ofertas especiales.",
   "intro.premium.2.heading": "Recoge los suministros gratis",
   "intro.premium.2.body": "Un punto rojo te avisa cuando hay suministros gratis. Recógelos cada vez que pases.",
-  "intro.descendingMap.1.heading": "…Esta vez, hacia abajo.",
+  "intro.descendingMap.1.heading": "…En este capítulo, bajamos.",
   "intro.descendingMap.1.body": "El bloque de detención se hunde desde lo más alto. Lee el mapa de arriba abajo. La siguiente puerta siempre está bajo tus pies. …Deja de mirar hacia arriba. Solo te dolerá el cuello.",
   "intro.descendingMap.2.heading": "No te pierdas.",
   "intro.descendingMap.2.body": "No pienso volver a subir a buscarte. …Así que baja de una vez. Esperaré abajo.",

@@ -415,7 +415,7 @@ export const MISC_ZH_HANT = {
   "intro.premium.1.body": "在高階商店中可以檢視通行證、訂閱和特價商品。",
   "intro.premium.2.heading": "別忘了免費補給",
   "intro.premium.2.body": "有免費補給時會用紅點提醒你。每次來都記得領取。",
-  "intro.descendingMap.1.heading": "……這次，是往下。",
+  "intro.descendingMap.1.heading": "……這一章，要往下走。",
   "intro.descendingMap.1.body": "監禁樓從最頂層一路往下挖。地圖也從上往下看。下一個關卡總在你腳下。……別老往上看，只會脖子酸。",
   "intro.descendingMap.2.heading": "別迷路。",
   "intro.descendingMap.2.body": "我可不想再爬上去找你。……所以，直接下來。我在下面等著。",

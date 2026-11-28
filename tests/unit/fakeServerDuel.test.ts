@@ -269,3 +269,12 @@ describe("FakeServer 결투장", () => {
     expect(resaved.defenseWeakened).toEqual([]);
   });
 });
+
+describe("방어덱 알림 서명", () => {
+  it("기본 셋이면 default, 약해진 렐릭은 순서와 무관한 같은 서명이다", async () => {
+    const { duelDefenseNoticeSignature } = await import("../../src/core/duelState");
+    expect(duelDefenseNoticeSignature(true, ["a"])).toBe("default");
+    expect(duelDefenseNoticeSignature(false, [])).toBe("");
+    expect(duelDefenseNoticeSignature(false, ["b", "a"])).toBe(duelDefenseNoticeSignature(false, ["a", "b"]));
+  });
+});

@@ -847,16 +847,6 @@
 "{amount} einmal täglich",
 "{amount} раз в день"
 ],
-"info.bond.partyAll": [
-"编队中所有遗物 {amount}",
-"เรลิกทุกตัวในการจัดทีม {amount}",
-"{amount} cho mọi Di vật trong đội hình",
-"{amount} untuk setiap Relik dalam formasi",
-"{amount} para cada Reliquia de la formación",
-"{amount} para cada Relíquia da formação",
-"{amount} für jedes Relikt der Formation",
-"{amount} каждому реликту в построении"
-],
 "info.bond.story": [
 "羁绊故事",
 "เรื่องราวสายสัมพันธ์",
@@ -1312,16 +1302,6 @@
 "Tippe einen Wert an, um ihn zu Erwachen: je +{percent}%",
 "Нажмите параметр для Пробуждения: +{percent}% за раз"
 ],
-"info.bond.awakenReset": [
-"免费重置",
-"รีเซ็ตฟรี",
-"Đặt lại miễn phí",
-"Reset gratis",
-"Reinicio gratis",
-"Redefinição grátis",
-"Kostenlos zurücksetzen",
-"Бесплатный сброс"
-],
 "info.bond.awakenResetConfirm": [
 "返还所有已分配的觉醒，不消耗任何资源。",
 "คืนปลุกพลังที่ใช้ไปทั้งหมด ไม่มีค่าใช้จ่าย",
@@ -1393,14 +1373,14 @@
 "Совет"
 ],
 "info.bond.recommendLine": [
-"反复挑战剧情战斗是最稳定的方式。\n章节越靠后，羁绊提升越多一些。",
-"ต่อสู้เนื้อเรื่องซ้ำเป็นวิธีที่สม่ำเสมอที่สุด\nบทที่สูงขึ้นให้สายสัมพันธ์มากขึ้นเล็กน้อย",
-"Lặp lại trận cốt truyện là cách đều đặn nhất.\nChương càng cao, Gắn kết tăng thêm một chút.",
-"Mengulang pertarungan cerita adalah cara paling stabil.\nBab lebih tinggi memberi Ikatan sedikit lebih banyak.",
-"Repetir batallas de historia es la vía más constante.\nLos capítulos avanzados dan algo más de Vínculo.",
-"Repetir batalhas da história é o caminho mais constante.\nCapítulos mais altos dão um pouco mais de Vínculo.",
-"Story-Kämpfe zu wiederholen ist der beständigste Weg.\nSpätere Kapitel geben etwas mehr Bindung.",
-"Повтор сюжетных боёв — самый надёжный путь.\nПоздние главы дают немного больше Связи."
+"和我一起反复挑战剧情战斗，就能慢慢变得更亲近哦！\n章节越靠后，羁绊提升越多一些。",
+"มาต่อสู้เนื้อเรื่องซ้ำไปด้วยกันนะ แล้วเราจะสนิทกันขึ้นเรื่อย ๆ!\nบทที่สูงขึ้นให้สายสัมพันธ์มากขึ้นเล็กน้อย",
+"Cùng mình lặp lại trận cốt truyện, chúng ta sẽ thân nhau hơn từng chút!\nChương càng cao, Gắn kết tăng thêm một chút.",
+"Ulangi pertarungan cerita bersamaku, kita akan makin dekat sedikit demi sedikit!\nBab lebih tinggi memberi Ikatan sedikit lebih banyak.",
+"¡Repite las batallas de historia conmigo y nos uniremos poco a poco!\nLos capítulos avanzados dan algo más de Vínculo.",
+"Repita as batalhas da história comigo e vamos ficar mais próximos aos poucos!\nCapítulos mais altos dão um pouco mais de Vínculo.",
+"Wiederhole Story-Kämpfe mit mir, dann kommen wir uns Stück für Stück näher!\nSpätere Kapitel geben etwas mehr Bindung.",
+"Повторяй сюжетные бои вместе со мной — и мы будем становиться ближе!\nПоздние главы дают немного больше Связи."
 ],
 "info.bond.storyBattle": [
 "剧情战斗胜利",

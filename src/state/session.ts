@@ -97,6 +97,8 @@ export interface GameSettings {
     guildSeen: { war: number; guard: number; guardReward: number; warResult: number };
     /** 마지막으로 본 길드 레벨(`길드 id:레벨`, 비었으면 아직 없음). 오르면 길드 화면이 레벨업 창을 한 번 띄운다 — 기기 선호다. */
     guildLevelSeen: string;
+    /** 결투장 [방어]의 빨간 점을 끈 서명(`duelDefenseNoticeSignature`). 방어덱을 열어 보기만 해도 남는다 — 기기 선호다. */
+    duelDefenseSeen: string;
     /** 수호전 여섯 칸 편성(앞줄 0~2 · 뒷줄 3~5, 빈 칸은 `null`). 마지막으로 출격한 편성을 다시 세운다 — 기기 선호다. */
     guardFormation: (string | null)[];
     /** 편성 프리셋 다섯 벌(이름 + 세 자리)과 지금 펼친 벌 — 세 자리 편성 화면이 좌우로 넘긴다(`core/partyPresets.ts`). 계정의 값이다. */

@@ -1,3 +1,4 @@
+import { compactBondAwakening, isValidBondAwakening, type BondAwakening } from "./bond";
 import { calculateFinalStats, activeBreakthroughOf } from "./relicProgression";
 import { resonanceOf } from "./relicResonance";
 import type { RuneInstance } from "./runes";
@@ -6,7 +7,7 @@ import type { RelicDef, RelicProgress, RelicSkinId, Stats } from "./types";
 /**
  * 원정을 떠난 순간의 렐릭 한 기 — **런이 끝날 때까지 이 값으로 싸운다.**
  *
- * 원정은 스무 층을 한 번에 오르는 콘텐츠라, 도중에 급여·한계 돌파·룬·외형을 바꾸면 막판에
+ * 원정은 스무 층을 한 번에 오르는 콘텐츠라, 도중에 급여·한계 돌파·공명·유대·유대 각성·룬·외형을 바꾸면 막판에
  * 다른 개체가 싸우게 된다. 출발할 때 성장 결과를 통째로 굳혀 두고 전투·지도·서버 재현·정보창이
  * 모두 이 값을 읽는다. 편성 화면은 아직 떠나지 않았으므로 지금 값을 그대로 읽는다.
  */
@@ -16,7 +17,9 @@ export interface ExpeditionRelicSnapshot {
   bondLevel: number;
   /** 떠난 순간의 공명 단계(0~5). 공명 표식만 이 값을 읽는다 — 능력치는 `stats`에 이미 들어 있다. 예전 스냅샷에는 없다. */
   resonance?: number;
-  /** 레벨·돌파·룬까지 반영한 최종 능력치. */
+  /** 떠난 순간 고른 유대 각성. 능력치는 `stats`에 이미 들어 있고, 이 값은 무엇이 굳었는지 남기는 기록이다. 예전 스냅샷에는 없다. */
+  bondAwakening?: BondAwakening;
+  /** 레벨·돌파·공명·유대(레벨 보너스 + 각성)·룬까지 반영한 최종 능력치. */
   stats: Stats;
   /** 끼고 떠난 룬의 사본. 룬 특성도 이 목록에서 돈다. */
   runes: RuneInstance[];
@@ -41,6 +44,8 @@ export function captureExpeditionRelicSnapshot(
     breakthrough: activeBreakthroughOf(progress),
     bondLevel: progress.bondLevel,
     resonance: resonanceOf(progress),
+    // 떠난 뒤 각성을 다시 고르거나 초기화해도 이 런의 몫은 그대로다.
+    ...(compactBondAwakening(progress.bondAwakening) ? { bondAwakening: structuredClone(compactBondAwakening(progress.bondAwakening)) } : {}),
     stats: { ...calculateFinalStats(def.stats, progress, runes, def.rarity) },
     runes,
     skinId: skinId ?? null,
@@ -54,6 +59,7 @@ export function isExpeditionRelicSnapshot(value: unknown): value is ExpeditionRe
   const whole = (n: unknown): boolean => Number.isInteger(n) && (n as number) >= 0;
   return whole(snapshot.level) && (snapshot.level as number) >= 1 && whole(snapshot.breakthrough) && whole(snapshot.bondLevel)
     && (snapshot.resonance === undefined || whole(snapshot.resonance))
+    && (snapshot.bondAwakening === undefined || isValidBondAwakening(snapshot.bondAwakening, snapshot.bondLevel as number))
     && !!snapshot.stats && typeof snapshot.stats === "object" && Object.values(snapshot.stats).every((stat) => Number.isFinite(stat))
     && Array.isArray(snapshot.runes)
     && (snapshot.skinId === null || typeof snapshot.skinId === "string");

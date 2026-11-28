@@ -86,6 +86,14 @@ describe("FakeServer 치즈케이크 대작전", () => {
     expect(state.wallet.cheesecake).toBe(TIER.rewardCheesecake * 2);
   });
 
+  it("이겨도 편성의 유대는 오르지 않는다 — 유대의 반복 수급처는 스토리다(응태 2026-11-28)", async () => {
+    const state = makeSession(); const server = make(state);
+    const before = JSON.stringify(state.relicProgress);
+    await server.enterCakeOperation({ tierId: TIER.id, requestId: "enter-bond" });
+    await server.completeCakeOperation({ tierId: TIER.id, requestId: "enter-bond", victory: true });
+    expect(JSON.stringify(state.relicProgress)).toBe(before);
+  });
+
   it("패배는 보상도 해금도 남기지 않는다", async () => {
     const state = makeSession(); const server = make(state);
     await server.enterCakeOperation({ tierId: TIER.id, requestId: "enter-4" });

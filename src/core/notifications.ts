@@ -1,5 +1,5 @@
 /** 화면 이름과 무관하게 서버 상태에서 판별할 수 있는 공용 알림 키다. */
-export const NOTIFICATION_KEYS = ["raidReward", "expeditionReward", "sortieReward", "missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "premiumOffer", "passReward", "premiumNotice", "achievementReward", "codexReward", "shopFree", "freeResearch", "interactionReturned", "duelSeasonReward", "premiumSubscription", "guildAttendance", "patronDaily"] as const;
+export const NOTIFICATION_KEYS = ["raidReward", "expeditionReward", "sortieReward", "missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "premiumOffer", "passReward", "premiumNotice", "achievementReward", "codexReward", "shopFree", "freeResearch", "interactionReturned", "duelSeasonReward", "duelDefense", "duel", "premiumSubscription", "guildAttendance", "patronDaily"] as const;
 export type NotificationKey = (typeof NOTIFICATION_KEYS)[number];
 
 /** API 응답을 합성하기 전의 최소 조건이며, 항목이 없으면 추측하지 않고 false로 둔다. */
@@ -33,6 +33,9 @@ export interface NotificationConditions {
   claimableInteractionCount?: number;
   /** 결투 시즌 보상이 받을 수 있게 대기 중인가. */
   duelSeasonRewardReady?: boolean;
+  /** 결투 방어덱이 알릴 것의 서명(빈 값이면 없음)과, 이 기기에서 방어덱을 열어 본 서명. 다르면 점이 선다. */
+  duelDefenseNotice?: string;
+  duelDefenseSeen?: string;
   /** 오늘 몫을 아직 받지 않은 구독 수. */
   claimableSubscriptionBonusCount?: number;
   /** 길드에 들었는데 오늘 출석 도장을 아직 찍지 않았는가. 길드가 없으면 서버가 false로 보낸다. */
@@ -70,10 +73,18 @@ export function deriveNotificationState(conditions: NotificationConditions): Not
     freeResearch: conditions.freeResearchAvailable === true,
     interactionReturned: (conditions.claimableInteractionCount ?? 0) > 0,
     duelSeasonReward: conditions.duelSeasonRewardReady === true,
+    duelDefense: duelDefenseUnseen(conditions),
+    // 로비 결투 입구는 시즌 보상과 방어덱 둘 중 하나만 있어도 점을 단다.
+    duel: conditions.duelSeasonRewardReady === true || duelDefenseUnseen(conditions),
     premiumSubscription: (conditions.claimableSubscriptionBonusCount ?? 0) > 0,
     guildAttendance: conditions.guildAttendanceReady === true,
     patronDaily: conditions.patronClaimable === true,
   };
+}
+
+function duelDefenseUnseen(conditions: NotificationConditions): boolean {
+  const notice = conditions.duelDefenseNotice ?? "";
+  return notice !== "" && notice !== (conditions.duelDefenseSeen ?? "");
 }
 
 /** 첫 조회 전에는 데이터가 없는 알림을 임의로 켜지 않는 안전한 초기 상태다. */

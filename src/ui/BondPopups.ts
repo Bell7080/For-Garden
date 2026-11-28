@@ -16,6 +16,9 @@ import { audioManager } from "../managers/AudioManager";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { DIALOGUE_BACKDROP } from "./dialogueStageLayout";
+import { spawnPuppet, type PuppetAsset } from "../puppets/assets";
+import { startPuppetHop } from "./puppetHop";
+import { addSdFootShadow } from "./SdFootShadow";
 import { chipPoints, drawLayer, HoloBar } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { addSectionTitle } from "./SectionTitle";
@@ -26,6 +29,7 @@ import { STAT_TONE } from "./statTones";
 import { pressIn, pressOut } from "./pressFeedback";
 import { shrinkTextToWidth, squeezeTextToWidth } from "./textFit";
 import { showContentToast } from "./ContentToast";
+import { addResetChip } from "./ResetChip";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 
@@ -50,6 +54,8 @@ export interface BondPopupContext {
   onChanged: () => void;
   /** 판이 닫힐 때 — 누른 칸을 되돌린다. */
   onClose?: () => void;
+  /** 그 렐릭의 SD(입은 외형) — 획득 방법 판의 말하는 사람이다. */
+  sdAsset?: PuppetAsset;
 }
 
 /** 유대 하트·게이지의 분홍. 정보창의 하트와 같은 색이다. */
@@ -242,41 +248,96 @@ function addStoryRow(scene: Phaser.Scene, body: Phaser.GameObjects.Container, in
   }
 }
 
-/** 유대 획득 방법 — 스토리 반복 전투를 추천하고 다른 길을 함께 적는다. */
+/**
+ * 획득 방법 판의 자리 — 위는 그 렐릭이 말하는 말풍선, 왼쪽 아래는 총총 뛰는 SD, 오른쪽은 좁힌 목록이다(응태 2026-11-28).
+ * 높이는 말풍선 + 목록 줄 수에서 거꾸로 구한다.
+ */
+export const BOND_GUIDE_LAYOUT = {
+  width: 880,
+  pad: 40,
+  bubble: { top: 54, height: 150, textSize: 25, tail: 30 },
+  sd: { x: -282, height: 400, shadow: 200 },
+  list: { width: 520, top: 248, rowH: 104, gap: 14 },
+  bottom: 56,
+} as const;
+
+/** 유대 획득 방법 — 그 렐릭이 말풍선으로 스토리 반복 전투를 권하고, 오른쪽 목록이 길마다 얼마인지 적는다. */
 export function openBondGuide(ctx: BondPopupContext): void {
   const { scene, popups } = ctx;
-  const width = 800;
+  const L = BOND_GUIDE_LAYOUT;
+  const width = L.width;
   const lastChapter = Math.max(1, CHAPTERS.length);
   const rows: { label: string; amount: string; recommended?: boolean }[] = [
     { label: t("info.bond.storyBattle"), amount: t("info.bond.storyBattleAmount", { from: storyVictoryBondXp(1), to: storyVictoryBondXp(lastChapter) }), recommended: true },
-    { label: t("cake.title"), amount: t("info.bond.partyAll", { amount: `${BOND_XP_REWARD.partyVictory} EXP` }) },
     { label: t("info.bond.lobbyInteraction"), amount: t("info.bond.oncePerDay", { amount: `${BOND_XP_REWARD.firstLobbyInteraction} EXP` }) },
     { label: t("info.bond.interview"), amount: t("info.bond.oncePerDay", { amount: `${BOND_XP_REWARD.firstObservationInterview} EXP` }) },
     { label: t("info.bond.firstMeet"), amount: t("info.bond.once", { amount: `${BOND_XP_REWARD.firstAcquisition} EXP` }) },
   ];
-  const rowH = 104, gap = 14, top = 150;
-  const height = top + rows.length * (rowH + gap) + 90;
+  const listHeight = rows.length * L.list.rowH + (rows.length - 1) * L.list.gap;
+  const height = L.list.top + listHeight + L.bottom;
+  const loops = motionPolicy(session.settings).nonEssentialDistanceFactor > 0;
   popups.open({ width, height, title: t("info.bond.howToTitle"), dim: true, dimAlpha: 0.4 }, (body) => {
-    const startY = -height / 2;
-    // 추천 한 줄 — 하트 둘 사이에 분홍 글.
-    const tip = scene.add.text(0, startY + 92, t("info.bond.recommendLine"), textStyle({ role: "emphasis", size: 26, color: BOND_PINK_TEXT, align: "center", wrap: width - 120 })).setOrigin(0.5);
-    body.add(tip);
+    const top = -height / 2;
+    addFloatingHearts(scene, body, width, height - 120, top + 80);
+    const listX = width / 2 - L.pad - L.list.width / 2;
+    const listTop = top + L.list.top;
+    const sdGround = listTop + listHeight - 10;
+
+    // 말풍선 — 판 폭을 거의 다 쓰는 밝은 판, 꼬리는 왼쪽 아래의 SD를 가리킨다.
+    const B = L.bubble;
+    const bubbleWidth = width - L.pad * 2;
+    const bubble = scene.add.container(0, top + B.top + B.height / 2);
+    const bevel = B.height * 0.22;
+    bubble.add(drawLayer(scene, 0, 0, chipPoints(bubbleWidth, B.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0xfff1f4, alpha: 0.97, shadow: { x: 6, y: 9 } }));
+    const tailX = L.sd.x;
+    bubble.add(scene.add.graphics().fillStyle(0xfff1f4, 0.97).fillPoints([
+      new Phaser.Math.Vector2(tailX - B.tail, B.height / 2 - 2),
+      new Phaser.Math.Vector2(tailX + B.tail, B.height / 2 - 2),
+      new Phaser.Math.Vector2(tailX - B.tail * 0.2, B.height / 2 + B.tail * 1.2),
+    ], true));
+    bubble.add(drawGlyph(scene, "heart", -bubbleWidth / 2 + 48, -B.height / 2 + 34, 26, BOND_PINK, 0.9, 2));
+    const tip = scene.add.text(14, 0, t("info.bond.recommendLine"), textStyle({ role: "emphasis", size: B.textSize, color: "#3a1420", align: "center", lineSpacing: 6, wrap: bubbleWidth - 120 })).setOrigin(0.5);
+    shrinkTextToWidth(tip, bubbleWidth - 110);
+    bubble.add(tip);
+    body.add(bubble);
+    if (loops) {
+      bubble.setScale(0.7).setAlpha(0);
+      scene.tweens.add({ targets: bubble, scale: 1, alpha: 1, duration: 320, delay: 140, ease: "Back.Out" });
+    }
+
+    // SD — 왼쪽 기둥에 발밑 그림자 위로 서서 총총 뛴다.
+    body.add(addSdFootShadow(scene, L.sd.x, sdGround, L.sd.shadow));
+    if (ctx.sdAsset) {
+      void spawnPuppet(scene, ctx.sdAsset, { x: L.sd.x, groundY: sdGround, height: L.sd.height, depth: 0 })
+        .then((puppet) => {
+          if (!body.active) { puppet.destroy(); return; }
+          puppet.disableInteractive();
+          body.add(puppet);
+          body.bringToTop(bubble);
+          const hop = startPuppetHop(scene, puppet, 0);
+          puppet.once(Phaser.GameObjects.Events.DESTROY, () => hop.remove());
+        })
+        .catch((error) => logError("puppet.display", "유대 획득 방법 SD 표시 실패", error));
+    }
+
+    // 목록 — 오른쪽 기둥.
     rows.forEach((row, index) => {
-      const y = startY + top + index * (rowH + gap) + rowH / 2;
-      const shape = chipPoints(width - 80, rowH, { bevel: { topLeft: 22, bottomRight: 22 } });
-      body.add(drawLayer(scene, 0, y, shape, { fill: row.recommended ? 0x2a1220 : 0x141b26, alpha: 0.92, edge: row.recommended ? BOND_PINK : COLOR.accent, edgeAlpha: row.recommended ? 0.7 : 0.2 }));
-      const left = -(width - 80) / 2 + 40;
-      const label = scene.add.text(left, y - 20, row.label, textStyle({ role: "display", size: 28, color: "#ffffff" })).setOrigin(0, 0.5);
+      const y = listTop + index * (L.list.rowH + L.list.gap) + L.list.rowH / 2;
+      const shape = chipPoints(L.list.width, L.list.rowH, { bevel: { topLeft: 22, bottomRight: 22 } });
+      body.add(drawLayer(scene, listX, y, shape, { fill: row.recommended ? 0x2a1220 : 0x141b26, alpha: 0.92, edge: row.recommended ? BOND_PINK : COLOR.accent, edgeAlpha: row.recommended ? 0.7 : 0.2 }));
+      const left = listX - L.list.width / 2 + 34;
+      const label = scene.add.text(left, y - 20, row.label, textStyle({ role: "display", size: 27, color: "#ffffff" })).setOrigin(0, 0.5);
+      squeezeTextToWidth(label, L.list.width - (row.recommended ? 180 : 70));
       body.add(label);
       if (row.recommended) {
-        const badge = scene.add.container(left + label.width + 66, y - 20);
-        badge.add(drawLayer(scene, 0, 0, chipPoints(96, 38, { bevel: { topLeft: 10, bottomRight: 10 } }), { fill: BOND_PINK, alpha: 0.95 }));
-        badge.add(scene.add.text(0, 0, t("info.bond.recommend"), textStyle({ role: "emphasis", size: 21, color: "#3a0712" })).setOrigin(0.5));
+        const badge = scene.add.container(left + label.displayWidth + 62, y - 20);
+        badge.add(drawLayer(scene, 0, 0, chipPoints(92, 36, { bevel: { topLeft: 10, bottomRight: 10 } }), { fill: BOND_PINK, alpha: 0.95 }));
+        badge.add(scene.add.text(0, 0, t("info.bond.recommend"), textStyle({ role: "emphasis", size: 20, color: "#3a0712" })).setOrigin(0.5));
         body.add(badge);
         breathe(scene, badge, 1.08);
       }
-      const amount = scene.add.text(left, y + 22, row.amount, textStyle({ role: "body", size: 23, color: row.recommended ? BOND_PINK_TEXT : COLOR.inkDim })).setOrigin(0, 0.5);
-      squeezeTextToWidth(amount, width - 160);
+      const amount = scene.add.text(left, y + 22, row.amount, textStyle({ role: "body", size: 22, color: row.recommended ? BOND_PINK_TEXT : COLOR.inkDim })).setOrigin(0, 0.5);
+      squeezeTextToWidth(amount, L.list.width - 64);
       body.add(amount);
     });
   });
@@ -349,25 +410,49 @@ export function openBondAwakening(ctx: BondPopupContext): void {
     const awakening = progress.bondAwakening ?? {};
     const canSpend = ctx.mutable && left > 0;
 
-    // 남은 횟수 — 판 머리에 크게.
-    const head = scene.add.container(0, top + 120);
-    head.add(drawLayer(scene, 0, 0, chipPoints(560, 96, { bevel: { topLeft: 24, bottomRight: 24 } }), { fill: 0x2a1220, alpha: 0.88, edge: 0xffb36b, edgeAlpha: 0.6 }));
-    head.add(scene.add.text(0, 0, t("info.bond.awakenPoints", { left, total }), textStyle({ role: "display", size: 38, color: left > 0 ? "#ffd59a" : COLOR.ink })).setOrigin(0.5).setStroke("#2a1205", 6));
+    addFloatingHearts(scene, body, width, height - 200, top + 100);
+
+    // 남은 횟수 — 판 머리에 크게. 오른쪽 위에는 레벨 초기화와 같은 「초기화」 칩이 선다.
+    const head = scene.add.container(spent > 0 && ctx.mutable ? -70 : 0, top + 120);
+    head.add(drawLayer(scene, 0, 0, chipPoints(520, 96, { bevel: { topLeft: 24, bottomRight: 24 } }), { fill: 0x2a1220, alpha: 0.9, edge: BOND_PINK, edgeAlpha: 0.75, shadow: { x: 0, y: 8 } }));
+    const pointsText = scene.add.text(0, 0, t("info.bond.awakenPoints", { left, total }), textStyle({ role: "display", size: 36, color: left > 0 ? "#ffd2dc" : COLOR.ink })).setOrigin(0, 0.5).setStroke("#2a0812", 6);
+    squeezeTextToWidth(pointsText, 400);
+    const headIcon = 40;
+    const headSpan = headIcon + 14 + pointsText.displayWidth;
+    head.add(drawGlyph(scene, "heart", -headSpan / 2 + headIcon / 2, 0, headIcon, BOND_PINK, 1, 3));
+    pointsText.setX(-headSpan / 2 + headIcon + 14);
+    head.add(pointsText);
     body.add(head);
     if (left > 0 && ctx.mutable) breathe(scene, head, 1.03);
+    if (ctx.mutable && spent > 0) {
+      body.add(addResetChip(scene, width / 2 - 112, top + 120, { width: 136, height: 54, icon: 24, size: 23 }, () => {
+        if (busy) return;
+        popups.confirm({ title, message: t("info.bond.awakenResetConfirm"), confirmLabel: t("info.reset.confirm") }, () => {
+          if (busy) return;
+          busy = true;
+          void gameApi.setBondAwakening(relicId, {}).then(() => {
+            ctx.onChanged();
+            showContentToast(scene, t("info.bond.awakenResetDone"), "info");
+            popups.closeTop();
+            openBondAwakening(ctx);
+          }, (error: unknown) => { logError("bond.awakenReset", "유대 각성 초기화 실패", error); busy = false; });
+        });
+      }));
+    }
     const hint = total === 0
       ? t("info.bond.awakenLocked", { level: BOND_AWAKENING_LADDER.everyLevelFrom })
       : t("info.bond.awakenHint", { percent: BOND_AWAKENING_PERCENT });
-    body.add(scene.add.text(0, top + 196, hint, textStyle({ role: "body", size: 23, color: COLOR.inkDim, align: "center", wrap: width - 100 })).setOrigin(0.5));
+    body.add(scene.add.text(0, top + 200, hint, textStyle({ role: "body", size: 23, color: COLOR.inkDim, align: "center", wrap: width - 100 })).setOrigin(0.5));
 
-    // 오각형 — 지금 능력치. 축 이름을 눌러도 각성한다.
-    const radarY = top + 470;
-    const radar = new StatRadar(scene, 0, radarY, 170, {
+    // 홀로그램 상태창 — 분홍 유리판 위에 주사선 · 모서리 꺾쇠 · 훑는 빛띠, 그 안에 지금 능력치 오각형.
+    const radarY = top + 478;
+    paintBondStatusScreen(scene, body, 0, radarY, width - 90, 470, progress.bondLevel);
+    const radar = new StatRadar(scene, 0, radarY + 20, 146, {
       size: 26,
       colors: Object.fromEntries(AXIS_ORDER.map((key) => [key, hex(STAT_TONE[key])])),
       values: true,
     });
-    radar.draw(relicProgression.getFinalStats(relicId), 170);
+    radar.draw(relicProgression.getFinalStats(relicId), 146);
     body.add(radar);
 
     const spend = async (key: BondAwakeningKey): Promise<void> => {
@@ -389,26 +474,27 @@ export function openBondAwakening(ctx: BondPopupContext): void {
     AXIS_ORDER.forEach((key) => {
       const anchor = radar.valueAnchor(key);
       if (!anchor || !canSpend) return;
-      const hit = scene.add.rectangle(anchor.x, radarY + anchor.y, 150, 90, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const hit = scene.add.rectangle(anchor.x, radarY + 20 + anchor.y, 150, 90, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerup", () => void spend(key));
       body.add(hit);
     });
 
     // 다섯 줄 — 축 이름 · 각성 횟수 · 오른 % · [+].
-    const listTop = top + 720, rowH = 74;
+    const listTop = top + 760, rowH = 74;
     AXIS_ORDER.forEach((key, index) => {
       const y = listTop + index * rowH;
       const count = awakening[key] ?? 0;
       const tone = STAT_TONE[key];
-      body.add(drawLayer(scene, 0, y, chipPoints(width - 100, rowH - 10, { bevel: { topLeft: 14, bottomRight: 14 } }), { fill: count > 0 ? 0x1f1a14 : 0x121820, alpha: 0.9, edge: tone, edgeAlpha: count > 0 ? 0.55 : 0.18 }));
+      body.add(drawLayer(scene, 0, y, chipPoints(width - 100, rowH - 10, { bevel: { topLeft: 14, bottomRight: 14 } }), { fill: count > 0 ? 0x24121c : 0x121820, alpha: 0.9, edge: count > 0 ? BOND_PINK : tone, edgeAlpha: count > 0 ? 0.6 : 0.18 }));
+      body.add(scene.add.rectangle(-(width - 100) / 2 + 12, y, 5, rowH - 30, tone, count > 0 ? 0.95 : 0.4));
       const leftX = -(width - 100) / 2 + 36;
       body.add(scene.add.text(leftX, y, t(AXIS_LABEL[key]), textStyle({ role: "display", size: 28, color: hex(tone) })).setOrigin(0, 0.5));
       body.add(scene.add.text(leftX + 200, y, t("info.bond.awakenTimes", { count }), textStyle({ role: "emphasis", size: 25, color: count > 0 ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0.5));
-      body.add(scene.add.text(leftX + 380, y, `+${awakenPercent(awakening, key)}%`, textStyle({ role: "display", size: 28, color: count > 0 ? "#ffd59a" : COLOR.inkDim })).setOrigin(0, 0.5));
+      body.add(scene.add.text(leftX + 380, y, `+${awakenPercent(awakening, key)}%`, textStyle({ role: "display", size: 28, color: count > 0 ? BOND_PINK_TEXT : COLOR.inkDim })).setOrigin(0, 0.5));
       if (!ctx.mutable) return;
       const plus = scene.add.container((width - 100) / 2 - 58, y);
-      plus.add(drawLayer(scene, 0, 0, chipPoints(84, 52, { bevel: { topLeft: 12, bottomRight: 12 } }), { fill: canSpend ? 0xffb36b : 0x2a2f38, alpha: canSpend ? 0.95 : 0.6 }));
-      plus.add(scene.add.text(0, -2, "+", textStyle({ role: "display", size: 40, color: canSpend ? "#2a1205" : COLOR.inkDim })).setOrigin(0.5));
+      plus.add(drawLayer(scene, 0, 0, chipPoints(84, 52, { bevel: { topLeft: 12, bottomRight: 12 } }), { fill: canSpend ? BOND_PINK : 0x2a2f38, alpha: canSpend ? 0.95 : 0.6, shadow: canSpend ? { x: 0, y: 5 } : undefined }));
+      plus.add(scene.add.text(0, -2, "+", textStyle({ role: "display", size: 40, color: canSpend ? "#ffffff" : COLOR.inkDim })).setOrigin(0.5).setStroke(canSpend ? "#5a0f1c" : "#05070a", 4));
       body.add(plus);
       if (!canSpend) return;
       const hit = scene.add.rectangle(plus.x, y, 100, 66, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -418,32 +504,52 @@ export function openBondAwakening(ctx: BondPopupContext): void {
       body.add(hit);
     });
 
-    // 투자 내역 · 무료 초기화.
+    // 투자 내역.
     const footY = listTop + AXIS_ORDER.length * rowH + 20;
     const record = bondAwakeningSummary(awakening);
     body.add(scene.add.text(-width / 2 + 56, footY, t("info.bond.awakenRecord"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
     const recordText = scene.add.text(-width / 2 + 56, footY + 36, record || t("info.bond.awakenNone"), textStyle({ role: "body", size: 23, color: record ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0.5);
     squeezeTextToWidth(recordText, width - 360);
     body.add(recordText);
-    if (ctx.mutable && spent > 0) {
-      addPillButton(scene, body, width / 2 - 150, footY + 18, 210, 66, {
-        label: t("info.bond.awakenReset"), glyph: "refresh", tone: 0x8fe8ff,
-        onTap: () => {
-          if (busy) return;
-          popups.confirm({ title, message: t("info.bond.awakenResetConfirm"), confirmLabel: t("info.bond.awakenReset") }, () => {
-            if (busy) return;
-            busy = true;
-            void gameApi.setBondAwakening(relicId, {}).then(() => {
-              ctx.onChanged();
-              showContentToast(scene, t("info.bond.awakenResetDone"), "info");
-              popups.closeTop();
-              openBondAwakening(ctx);
-            }, (error: unknown) => { logError("bond.awakenReset", "유대 각성 초기화 실패", error); busy = false; });
-          });
-        },
-      });
-    }
   });
+}
+
+/**
+ * 유대 각성의 홀로그램 상태창 — 분홍빛 유리판, 가는 주사선, 네 모서리 꺾쇠, 위에서 아래로 훑는 빛띠.
+ * 왼쪽 위 이름표(BOND LV.n)는 어느 언어에서나 같은 글자다. 훑는 빛은 움직임 줄이기에서 서 있기만 한다.
+ */
+function paintBondStatusScreen(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, width: number, height: number, level: number): void {
+  const screen = scene.add.container(x, y);
+  parent.add(screen);
+  const shape = chipPoints(width, height, { bevel: { topLeft: 36, bottomRight: 36 } });
+  screen.add(drawLayer(scene, 0, 0, shape, { fill: 0x1c0d17, alpha: 0.82, edge: BOND_PINK, edgeAlpha: 0.55, shadow: { x: 0, y: 10 } }));
+  const lines = scene.add.graphics();
+  for (let ly = -height / 2 + 10; ly < height / 2 - 6; ly += 7) lines.lineStyle(1, BOND_PINK_SOFT, 0.05).lineBetween(-width / 2 + 24, ly, width / 2 - 24, ly);
+  // 가운데 동심 마름모 — 오각형 뒤에 깔리는 투영 바닥.
+  for (let ring = 1; ring <= 3; ring += 1) {
+    const r = 70 * ring;
+    lines.lineStyle(1.5, BOND_PINK, 0.1 + 0.04 * (3 - ring));
+    lines.strokePoints([new Phaser.Geom.Point(0, -r * 0.62 + 16), new Phaser.Geom.Point(r, 16), new Phaser.Geom.Point(0, r * 0.62 + 16), new Phaser.Geom.Point(-r, 16)], true);
+  }
+  screen.add(lines);
+  const brackets = scene.add.graphics();
+  const arm = 34, inset = 18;
+  brackets.lineStyle(4, BOND_PINK_SOFT, 0.85);
+  for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
+    // 깎인 두 모서리(왼쪽 위 · 오른쪽 아래)는 빗변 안쪽으로 물린다.
+    const cut = (sx === -1 && sy === -1) || (sx === 1 && sy === 1) ? 30 : 0;
+    const cx = sx * (width / 2 - inset - cut * 0.5), cy = sy * (height / 2 - inset - cut * 0.5);
+    brackets.lineBetween(cx, cy, cx - sx * arm, cy).lineBetween(cx, cy, cx, cy - sy * arm);
+  }
+  screen.add(brackets);
+  screen.add(drawGlyph(scene, "heart", -width / 2 + 70, -height / 2 + 40, 22, BOND_PINK, 1, 2));
+  screen.add(scene.add.text(-width / 2 + 90, -height / 2 + 40, `BOND LV.${level}`, textStyle({ role: "emphasis", size: 22, color: BOND_PINK_TEXT })).setOrigin(0, 0.5).setShadow(0, 2, "#05070a", 4, false, true));
+  const sweep = scene.add.rectangle(0, -height / 2 + 30, width - 60, 3, BOND_PINK_SOFT, 0.28);
+  screen.add(sweep);
+  if (motionPolicy(session.settings).nonEssentialDistanceFactor <= 0) { sweep.setAlpha(0); return; }
+  const tween = scene.tweens.add({ targets: sweep, y: height / 2 - 30, duration: 3200, repeat: -1, repeatDelay: 900, ease: "Sine.InOut",
+    onUpdate: () => { const p = (sweep.y + height / 2) / height; sweep.setAlpha(0.32 * Math.sin(Math.PI * Math.min(1, Math.max(0, p)))); } });
+  sweep.once(Phaser.GameObjects.Events.DESTROY, () => tween.remove());
 }
 
 /** 분홍 결의 알약 버튼 한 장(아이콘 + 글). 판 안의 작은 조작에만 쓴다. */

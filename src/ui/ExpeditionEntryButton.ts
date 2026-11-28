@@ -5,6 +5,7 @@ import { chipPoints, drawFrameVignette, drawLayer, drawShapeOutline, HOLO } from
 import { COLOR, textStyle } from "./theme";
 import { shapeClipMask } from "./popupArt";
 import { pressIn, pressOut } from "./pressFeedback";
+import { clipPolygonToBand } from "../core/polygonClip";
 
 /** 로컬 좌표 도형을 지금의 월드 좌표로 옮긴다. 팝업 안에서 마스크가 엉뚱한 자리에 남지 않게 한다. */
 function worldPoints(matrix: Phaser.GameObjects.Components.TransformMatrix, flat: readonly number[]): Phaser.Geom.Point[] {
@@ -15,6 +16,8 @@ function worldPoints(matrix: Phaser.GameObjects.Components.TransformMatrix, flat
   }
   return points;
 }
+
+const IDENTITY = new Phaser.GameObjects.Components.TransformMatrix();
 
 /** 로딩 표에 등록된 원정 진입 일러스트 키. 프리팹 밖에서 문자열을 반복하지 않는다. */
 const EXPEDITION_ENTRY_ART = "content-expedition-entry";
@@ -51,6 +54,11 @@ export interface IllustratedSortieButtonOptions {
    * 변은 깎지 않고 곧게 두어 **한 장을 `|`로 끊은 것**처럼 읽히게 한다.
    */
   split?: "left" | "right";
+  /**
+   * SD 마스크를 가둘 세로 띠(월드 좌표). 굴러가는 판 안의 칸은 판이 보여 주는 구간 밖으로 SD가 비치면 안 되는데,
+   * 기하 마스크는 겹쳐 물릴 수 없어 SD 마스크 도형을 그 띠로 먼저 자른다. 없으면 자르지 않는다.
+   */
+  sdClip?: () => { top: number; bottom: number };
 }
 
 /**
@@ -179,8 +187,13 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
         if (!this.active || !sdMaskGraphics.active) return;
         const matrix = this.getWorldTransformMatrix();
         sdMaskGraphics.clear().fillStyle(0xffffff, 1);
-        sdMaskGraphics.fillPoints(worldPoints(matrix, shape), true);
-        sdMaskGraphics.fillPoints(worldPoints(matrix, band), true);
+        const clip = options.sdClip?.();
+        for (const polygon of [shape, band]) {
+          const points = worldPoints(matrix, polygon);
+          if (!clip) { sdMaskGraphics.fillPoints(points, true); continue; }
+          const clipped = clipPolygonToBand(points.flatMap((point) => [point.x, point.y]), clip.top, clip.bottom);
+          if (clipped.length > 0) sdMaskGraphics.fillPoints(worldPoints(IDENTITY, clipped), true);
+        }
       };
       scene.events.on(Phaser.Scenes.Events.PRE_RENDER, syncSdMask);
       syncSdMask();

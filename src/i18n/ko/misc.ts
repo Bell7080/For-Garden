@@ -519,10 +519,10 @@ export const MISC_KO = {
   "intro.premium.1.body": "프리미엄에서는 패스, 구독, 특가 상품을 볼 수 있어요.",
   "intro.premium.2.heading": "무료 보급도 챙겨요",
   "intro.premium.2.body": "무료 보급이 있으면 붉은 점으로 알려 드려요. 들를 때마다 받아 가세요.",
-  "intro.descendingMap.1.heading": "…이번 길은 아래로 난다.",
-  "intro.descendingMap.1.body": "감금동은 꼭대기에서 시작해 아래로 파고든다. 지도도 위에서부터 읽어라. 다음 관문은 늘 발밑에 있다.",
-  "intro.descendingMap.2.heading": "착각하지 마라.",
-  "intro.descendingMap.2.body": "당신이 길을 잃으면 데려가기 번거로울 뿐이다. …아래에서 기다리겠다.",
+  "intro.descendingMap.1.heading": "…이번엔 아래다.",
+  "intro.descendingMap.1.body": "감금동은 꼭대기부터 아래로 파고든다. 지도도 위에서부터 읽어라. 다음 관문은 늘 발밑이다. …위를 두리번거리지 마라. 목만 아프다.",
+  "intro.descendingMap.2.heading": "길 잃지 마라.",
+  "intro.descendingMap.2.body": "당신 찾으러 다시 올라오는 건 질색이다. …그러니까, 그냥 내려와라. 아래에서 기다리겠다.",
   "rail.guild": "길드",
 
   // 하단 탭·레일
